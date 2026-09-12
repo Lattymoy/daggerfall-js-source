@@ -1113,8 +1113,8 @@ function portRowsEnhanced({ pause = false } = {}) {
   out.push(prefRow('pixelatedSky', 'Pixelated sky',
     'The port\u2019s own sky drawn the way the painted one was: an angular pixel the size of the '
     + 'original\u2019s and a stepped palette, so the dome and its clouds sit with the rest of the art. '
-    + 'Off is the smooth dome. Takes effect when the world next loads. Dynamic Skies draws its own '
-    + 'pixel sheets while its switch in the Mods pane is on, whatever this says.'));   // PS1
+    + 'Off is the smooth sky. Applies to the port\u2019s dome, to Dynamic Skies\u2019 skybox and to the volumetric clouds over either. '
+    + 'Takes effect when the world next loads.'));   // PS1; PS2: every sky pass
   out.push(choiceRow('landViewDistance', 'Land view distance',
     'How far the land streams around you, in map pixels each way: Daggerfall\u2019s own 3, or further. '
     + 'The rings past the second are drawn coarse and show only their trees and fires, so the far land '

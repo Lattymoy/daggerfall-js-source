@@ -34,8 +34,8 @@ export const MOD_SETTINGS = Object.freeze({
   // the Physical Combat And Armor Overhaul and Unleveled Loot alike -
   // and the Mods pane is where a player turns one off. While this one
   // is on the mod's skybox is the enhanced lane's sky, as DS1 shipped
-  // it; the port's dome, its volumetric clouds and the Pixelated sky
-  // switch (uiPrefs) draw only while it is off.
+  // it - with the volumetric clouds over it (DS2) and the Pixelated sky
+  // switch on it (PS2); the port's own dome draws while it is off.
   'dynamic-skies': Object.freeze({
     title: 'Dynamic Skies',
     author: 'BadLuckBurt and carademono',

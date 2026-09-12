@@ -17,8 +17,9 @@ colour posterise ARE that look, and they are the mod's to keep, so the
 port's own dome became the lane's sky and the mod the player's choice;
 on by default AGAIN since MO1, 2026-09-12 - Mac: "All mods should be
 enabled by default" - so the mod's skybox is the lane's sky until its
-switch is turned off, and the dome with its clouds and its Pixelated
-sky switch draws while it is), the lane draws the mod's skybox in place of the port's own
+switch is turned off - the volumetric clouds over it since DS2 and the
+Pixelated sky switch on it since PS2; the port's own dome draws while
+it is), the lane draws the mod's skybox in place of the port's own
 dome (ES1). The classic lane keeps Daggerfall's painted sky, untouched.
 
 ## What the mod is, and where each part landed

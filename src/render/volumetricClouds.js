@@ -56,6 +56,7 @@
 import { createRenderTarget, withTarget } from './renderTarget.js';
 import { CloudNoise } from './cloudNoise.js';
 import { WEATHER_EASE_MINUTES } from './enhancedSky.js';
+import { RETRO_GLSL, RETRO_SNAP_GLSL, retroPosteriseGlsl, RETRO_UNIFORM_GLSL, RETRO_UNIFORMS, setRetroUniforms } from './retroPixel.js';   // PS2: the clouds' pixels are the sky's pixels
 
 /** The streaming world's pixel, in metres (terrainSampler.js TERRAIN_SIZE). */
 export const PIXEL_METRES = 819.2;
@@ -322,19 +323,24 @@ uniform float uPitch;
 uniform float uTanHalfFov;
 uniform float uAspect;
 uniform float uFlash;     // lightning: the WHOLE sky lit for the frame (the march writes one stripe a frame; the flash cannot ride it)
+${RETRO_UNIFORM_GLSL}
 out vec4 outColor;
 const float PI = 3.14159265;
+${RETRO_GLSL}
 void main() {
   vec3 ray = normalize(vec3(vNdc.x * uTanHalfFov * uAspect, vNdc.y * uTanHalfFov, 1.0));
   float cp = cos(uPitch), sp = sin(uPitch);
   vec3 r1 = vec3(ray.x, ray.y * cp + ray.z * sp, -ray.y * sp + ray.z * cp);
   float cy = cos(uYaw), sy = sin(uYaw);
   vec3 dir = normalize(vec3(r1.x * cy + r1.z * sy, r1.y, -r1.x * sy + r1.z * cy));
+  // PS2: the same angular cell as the sky under it, so a cloud's pixel is a sky pixel
+${RETRO_SNAP_GLSL}
   float el = asin(clamp(dir.y, -1.0, 1.0));
   if (el <= 0.0) discard;
   float az = atan(dir.x, dir.z);
   vec2 uv = vec2(az / (2.0 * PI), el / (0.5 * PI));
   vec4 c = texture(uMap, uv);
+${retroPosteriseGlsl('c')}
   outColor = vec4(c.rgb * (1.0 + uFlash * 2.0), c.a);
 }`;
 
@@ -365,7 +371,7 @@ function link(gl, vs, fs) {
 export const FIELD_UNIFORMS = ['uShape', 'uDetail', 'uCover', 'uSoft', 'uBase', 'uTop', 'uDensity', 'uFlat', 'uShear', 'uDrift', 'uShift', 'uCamXZ'];
 export const MARCH_UNIFORMS = [...FIELD_UNIFORMS, 'uMapSize', 'uLightDir', 'uLightColor', 'uCloudLit', 'uCloudShade', 'uHorizonColor', 'uDark', 'uSteps', 'uLightSteps'];
 export const SHADOW_UNIFORMS = [...FIELD_UNIFORMS, 'uMapSize', 'uOrigin', 'uExtent', 'uLightDir', 'uSteps'];
-export const COMPOSITE_UNIFORMS = ['uMap', 'uYaw', 'uPitch', 'uTanHalfFov', 'uAspect', 'uFlash'];
+export const COMPOSITE_UNIFORMS = ['uMap', 'uYaw', 'uPitch', 'uTanHalfFov', 'uAspect', 'uFlash', ...RETRO_UNIFORMS];   // PS2
 
 export class VolumetricClouds {
   /** `quality` a QUALITY key; `viewport` the caller's rect to restore
@@ -405,6 +411,7 @@ export class VolumetricClouds {
     this.shift = [0, 0];      // the floating origin's recenters, accumulated (metres)
     this.cam = [0, 0];        // the camera's world XZ
     this.flash = 0;
+    this.retro = null;   // PS2: the host's retro (retroFor) - the composite snaps to the sky's cells and posterises with them
     this.stripe = 0;
     this.sweeps = 0;          // full sweeps of the sky map completed (the probe waits for one); the first is striped like every other - no stall
     this.origin = null;       // the shadow square's corner the camera asks for
@@ -570,6 +577,7 @@ export class VolumetricClouds {
     gl.uniform1f(u.uYaw, yaw); gl.uniform1f(u.uPitch, pitch);
     gl.uniform1f(u.uTanHalfFov, Math.tan(fovY / 2)); gl.uniform1f(u.uAspect, aspect);
     gl.uniform1f(u.uFlash, this.flash);
+    setRetroUniforms(gl, u, this.retro);   // PS2
     gl.bindVertexArray(this.vao);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     gl.bindVertexArray(null);

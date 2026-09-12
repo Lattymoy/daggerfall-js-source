@@ -461,10 +461,33 @@ by default) as its answer when the URL is silent; `?sky=retro` and
 `?sky=smooth` still win, so every probe that spells either keeps its
 meaning, and the sky lab's bare call reads the default. The row sits
 under Enhanced environments; off is the smooth dome; it takes effect
-when the world next loads like its neighbours. Under Dynamic Skies (on
+when the world next loads like its neighbours. ~~Under Dynamic Skies (on
 by default again since MO1) the mod draws its own 512-pixel sheets
-whatever the switch says - the mod's look, 1:1. Ledger row PS1. Pinned:
+whatever the switch says - the mod's look, 1:1.~~ PS2 below. Ledger row PS1. Pinned:
 `test/macfive.test.js` PS1, `test/enhancedSky.test.js` ES1e.
+
+PS2 (2026-09-12, Mac: "Volumetric clouds and pixelated should be
+compatible with dynamic skies though"): THE PIXEL ON EVERY SKY. The
+clouds already were compatible - DS2 draws the slab over the mod's
+skybox, its sheets standing down - and the report before this one said
+otherwise, wrongly. The pixel was not: cubeSnap and bayer4 lived inside
+the dome's fragment shader, so PS1's switch stopped at the dome, the
+clouds composited smooth over its pixels and the mod's skybox never
+saw it. `render/retroPixel.js` holds the two functions as ONE GLSL
+string (moved out of the dome verbatim) plus the snap and posterise
+lines every pass writes, and three shaders carry it with the same two
+uniforms: the dome as before; the clouds' composite - direction snapped
+before the map is read, colour AND transmittance posterised by the cell
+before the sky*T+cloud blend, so a cloud's pixel is a sky pixel; and
+the mod's skybox - snapped before anything is computed, the dome's own
+rule, so its sun, moons, stars and sheets all land on the grid, the
+encoded colour posterised last, and 0/0 is the mod's shader exactly as
+written (its NEAREST sheets and REDUCE_COLOR are its own and stay).
+The host decides one `retro` and hands it to whichever passes it built;
+the lab likewise. Ledger row PS2. Pinned: `test/macfive.test.js` PS2,
+`test/enhancedSky.test.js` (the shader-text pins read the shared
+module too), `test/volumetricClouds.test.js` (every declared uniform
+fetched, on all three).
 
 LV1 (2026-09-12, Mac: "I wanna push the draw distance as far as we
 can push it while keeping performance perfect"): LAND VIEW DISTANCE,

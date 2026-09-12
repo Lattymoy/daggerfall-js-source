@@ -48,7 +48,7 @@
 | `layoutMessageBox` hard‑codes `(320‑w)/2, (200‑h)/2`; `drawMessageBox` returns `false` unless SPOP.RCI is preloaded — and nothing preloads it before the game | `src/ui/messageBox.js:143`, `:184` |
 | `ListPickerWindow.draw` calls `nativeMetrics(canvas)` **itself** | `src/ui/listPicker.js:148` |
 | `attachTouch` is called only by world/interior/exterior/dungeon; it unconditionally builds F5/F6/☰/C/SV/LD + a movement stick claiming the left half of the viewport | `src/ui/touch.js:51‑190` |
-| `ensureAudio(fetch)` is exported from `src/scenes/shared.js:447`, is safe un‑awaited, and `audio.ensure` attaches its own gesture‑resume (`src/systems/audio.js:69‑87`) | — |
+| `ensureAudio(fetch)` is exported from `src/scenes/shared.js:454`, is safe un‑awaited, and `audio.ensure` attaches its own gesture‑resume (`src/systems/audio.js:69‑87`) | — |
 | `audio._out()` re‑reads `Controls/SoundVolume` on every connection (`audio.js:48`) — so a `DungeonDoorOpen` preview really demonstrates the slider | — |
 | `lookSettings.js:20` clamps `MouseLookSensitivity` to **0.1..4.0** while DFU's slider runs to 16.0 | — |
 | `saveSettings()`'s boolean is discarded at `launcher.js:100, :122, :193` **and inside `settings.js:240`** | — |

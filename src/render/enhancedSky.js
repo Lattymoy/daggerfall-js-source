@@ -39,6 +39,7 @@
 // a texture.
 
 import { dayFraction, daylightScale, isNight } from '../world/worldClock.js';
+import { RETRO_GLSL } from './retroPixel.js';   // PS2: cubeSnap and bayer4, shared with the clouds' composite and the mod's skybox
 import { lunarPhaseFractionsFromMinutes, LUNAR_PHASES } from '../systems/gameDate.js';   // CLK3: the dome takes the phase as a number on the clock
 
 const hex = (h) => [parseInt(h.slice(1, 3), 16) / 255, parseInt(h.slice(3, 5), 16) / 255, parseInt(h.slice(5, 7), 16) / 255];
@@ -502,46 +503,7 @@ uniform float uRetroLevels; // 0 = no posterise
 // centre for the eye to find.
 // The n argument is cells per face; the cell id (with the face folded in) comes
 // back in cellOut for the dither and the star field.
-vec3 cubeSnap(vec3 dir, float n, out vec2 cellOut) {
-  vec3 a = abs(dir);
-  float m = max(a.x, max(a.y, a.z));
-  vec2 raw; float face;
-  if (a.x >= m) { raw = dir.zy / a.x; face = dir.x > 0.0 ? 0.0 : 1.0; }
-  else if (a.y >= m) { raw = dir.xz / a.y; face = dir.y > 0.0 ? 2.0 : 3.0; }
-  else { raw = dir.xy / a.z; face = dir.z > 0.0 ? 4.0 : 5.0; }
-  // EQUI-ANGULAR faces (ES1f, second pass). A plain cube face is a
-  // TANGENT plane, so its cells cover 2.6x less sky at the corners than
-  // at the centre - and a cell size that varies across the frame beats
-  // against the screen's own grid and draws curved moire rings, which
-  // is the pole artifact's ghost rather than its cure. Warping the face
-  // by atan (the equi-angular cubemap of 360 video) makes every cell
-  // the SAME ANGLE everywhere, so the grid reads as an even bitmap in
-  // every direction. A face spans 90 degrees, so n = (PI/2)/step gives
-  // the painted sky's pixel: 256 a face, 512 across 180 degrees, which
-  // is SKY??.DAT's own width.
-  vec2 uv = atan(raw) * 1.27323954;                 // 4/PI: [-1,1] over the face
-  vec2 cell = floor(uv * n);
-  vec2 t = tan((cell + 0.5) / n * 0.78539816);      // PI/4: back to the tangent plane
-  // AUDIT 39 F53: cellOut is CONTINUOUS - the cell id is floor(cellOut),
-  // and its fraction is where the fragment sits INSIDE the cell, which
-  // is what the star field draws a star at. Handing back the floored id
-  // made fract() of it exactly zero, so the bright first star layer
-  // could not produce a lit pixel anywhere on the sphere. Callers floor
-  // it for the id; the face offset is integral, so flooring here or
-  // there names the same cell.
-  cellOut = uv * n + face * 977.0;                  // a face's cells are its own
-  if (a.x >= m) return normalize(vec3(sign(dir.x), t.y, t.x));
-  if (a.y >= m) return normalize(vec3(t.x, sign(dir.y), t.y));
-  return normalize(vec3(t.x, t.y, sign(dir.z)));
-}
-
-// Bayer 4x4, the ordered dither a 256-colour gradient used.
-float bayer4(vec2 p) {
-  int x = int(mod(p.x, 4.0)), y = int(mod(p.y, 4.0));
-  int i = y * 4 + x;
-  float m[16] = float[16](0.0, 8.0, 2.0, 10.0, 12.0, 4.0, 14.0, 6.0, 3.0, 11.0, 1.0, 9.0, 15.0, 7.0, 13.0, 5.0);
-  return m[i] / 16.0;
-}
+${RETRO_GLSL}
 out vec4 outColor;
 
 float hash21(vec2 p) { p = mod(p, ${DECK_LATTICE}.0); p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }   // CLK1 review: the lattice has a period

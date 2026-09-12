@@ -34,7 +34,7 @@ test('GR3: the sky CONTROLLER exposes the cloud-shadow deck the hosts read', () 
 
 test('GR3: the VALUE that reaches the grass shader - sunny is the lab\'s 70, not 0', () => {
   // The controller's shape, as it now is, driven by the dome's own
-  // sunny row (enhancedSky.js:81). This is the assertion GR2 lacked:
+  // sunny row (enhancedSky.js:82). This is the assertion GR2 lacked:
   // not "the mapping exists" but "the number the host computes from
   // what it can actually reach".
   const dome = { cloudShadow: { cover: 0.32, soft: 0.34, wind: [0.010, 0.004], time: 0, amount: 0.62 } };

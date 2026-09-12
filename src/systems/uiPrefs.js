@@ -73,7 +73,9 @@ export const PREF_DEFAULTS = Object.freeze({
   // and the 26-level Bayer posterise - VC1 turned off in 2026-09-07 and
   // this switch turns back on. `?sky=retro` / `?sky=smooth` still win
   // for the probes (render/enhancedSky.js retroFor, the one door).
-  // Dynamic Skies draws its own pixel sheets whatever this says.
+  // PS2: the switch reaches every sky pass - the dome, Dynamic Skies'
+  // skybox and the volumetric clouds' composite share the one grid
+  // (render/retroPixel.js).
   pixelatedSky: true,
   // LV1: LAND VIEW DISTANCE, ENHANCED (2026-09-12, Mac: "push the draw
   // distance as far as we can push it while keeping performance

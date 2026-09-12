@@ -396,9 +396,9 @@ test('ES1e retro: the enhanced sky is drawn on the PAINTED sky\'s own angular pi
   assert.equal(retroFor('?sky=smooth'), null, 'and the smooth door wins the other way');
   assert.equal(retroFor('?sky=smooth', true), null);
   assert.equal(retroFor('?sky=classic'), retroFor(''), 'classic is the OTHER pass entirely; it never reaches here - a door that is neither retro nor smooth is a silent URL');
-  assert.match(read('src/scenes/shared.js'), /enhancedSky\.retro = retroFor\(params\.toString\(\), getPref\('pixelatedSky'\)\);/);   // PS1: the pane's switch decides when the URL is silent
+  assert.match(read('src/scenes/shared.js'), /const retro = retroFor\(params\.toString\(\), getPref\('pixelatedSky'\)\);[\s\S]{0,200}if \(enhancedSky\) enhancedSky\.retro = retro;/);   // PS1: the pane's switch decides when the URL is silent; PS2: one retro for every sky pass
   assert.match(read('src/tools/skyLab.js'), /sky\.retro = retroFor\(location\.search\);/);
-  const fs = read('src/render/enhancedSky.js');
+  const fs = read('src/render/enhancedSky.js') + read('src/render/retroPixel.js');   // PS2: cubeSnap and bayer4 are the shared module's, interpolated into the dome
   // The snap happens to the DIRECTION, before anything is computed - so
   // the sun, the moons, the stars and the cloud edges are all ON the grid.
   assert.match(fs, /if \(uRetroStep > 0\.0\) dir = cubeSnap\(dir, 1\.57079633 \/ uRetroStep, cell\);/);
@@ -422,7 +422,7 @@ test('ES1e retro: the enhanced sky is drawn on the PAINTED sky\'s own angular pi
 // rings became concentric circles and the azimuth cells converged to
 // nothing, so looking straight up was a bullseye.
 test('ES1f: the grid is cast on a CUBE, and its faces are equi-angular - no pole and no beat', () => {
-  const fs = read('src/render/enhancedSky.js');
+  const fs = read('src/render/enhancedSky.js') + read('src/render/retroPixel.js');   // PS2: cubeSnap and bayer4 are the shared module's, interpolated into the dome
   // The lat-long snap is gone, root and branch.
   assert.doesNotMatch(fs, /floor\(vec2\(az, el\) \/ uRetroStep\)/, 'no azimuth/elevation snap');
   assert.doesNotMatch(fs, /vec2 sc = vec2\(atan\(d\.x, d\.z\), asin\(clamp\(d\.y, -1\.0, 1\.0\)\)\);/, 'and no lat-long star field');

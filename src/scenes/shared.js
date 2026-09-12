@@ -190,7 +190,12 @@ export function createSkyController(gl, params) {
   const skyDoor = params.get('sky');
   const dynamicOn = enhancedLane && (skyDoor === 'dynamic' || (skyDoor === null && modSetting('dynamic-skies', 'Enabled')));
   const enhancedSky = enhancedLane && !dynamicOn ? new EnhancedSkyRenderer(gl) : null;
-  if (enhancedSky) enhancedSky.retro = retroFor(params.toString(), getPref('pixelatedSky'));   // ES1e: retro unless ?sky=smooth - one door, shared with the lab; PS1: the Enhanced pane's Pixelated sky switch decides when the URL is silent
+  // PS2 (Mac: "Volumetric clouds and pixelated should be compatible with
+  // dynamic skies though"): ONE retro for every sky pass - the dome, the
+  // mod's skybox and the clouds' composite - so the switch reaches all
+  // three and their pixels share a grid.
+  const retro = retroFor(params.toString(), getPref('pixelatedSky'));   // ES1e: retro unless ?sky=smooth - one door, shared with the lab; PS1: the Enhanced pane's Pixelated sky switch decides when the URL is silent
+  if (enhancedSky) enhancedSky.retro = retro;
   // VC3: THE VOLUMETRIC CLOUDS ride the port's own dome - never the mod's
   // sky - behind the one switch; `?clouds=off` is the kill switch and
   // `?clouds=lo|hi` the quality doors. Built here at boot (its noise is
@@ -209,8 +214,10 @@ export function createSkyController(gl, params) {
   const clouds = enhancedLane && cloudsDoor !== 'off'
     ? new VolumetricClouds(gl, Object.hasOwn(CLOUD_QUALITY, cloudsDoor) ? cloudsDoor : (Object.hasOwn(CLOUD_QUALITY, getPref('cloudQuality')) ? getPref('cloudQuality') : 'default'), [0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight]) : null;
   if (clouds && enhancedSky) enhancedSky.cloudsExternal = true;
+  if (clouds) clouds.retro = retro;   // PS2
   const dynamicSky = dynamicOn ? new DynamicSkiesRenderer(gl) : null;
   if (clouds && dynamicSky) dynamicSky.cloudsExternal = true;
+  if (dynamicSky) dynamicSky.retro = retro;   // PS2: the mod's skybox takes the port's pixel too
   const dynamic = dynamicOn ? new DynamicSkies(dynamicSkiesAssets(), modSettingsOf('dynamic-skies')) : null;   // no clock here: the first use() is Init's WorldTime.Now, and its tick runs ChangeLunarPhases first
   setLightCurve(dynamic ? dynamic.lightCurve : null);
   if (dynamicSky) {
