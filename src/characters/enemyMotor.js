@@ -1811,4 +1811,20 @@ export class EnemyAI {
     const l = Math.hypot(dx, dy, dz) || 1;
     return [dx / l, dy / l, dz / l];
   }
+
+  /** WORLD2: the motor resumes LIVE from a PUPPET's pose (the seat came to this client): the feet and the yaw stand as
+   *  the stream left them and everything the motor decided on its own is forgotten - the grounding (the first step
+   *  would bill a phantom fall from the last grounded height), the target and its senses (re-acquired live, from where
+   *  the player actually stands), the path and the detour, the stuck clocks, the fixed-step accumulator a puppet frame
+   *  never drained, the knockback. isHostile and hasEncounteredPlayer stand: they are the foe's, not the frame's. */
+  resumeLive() {
+    this.lastGroundedY = this.feet[1]; this._airborne = false; this.velY = 0; this.landedFall = 0;
+    this.target = null; this.secondaryTarget = null; this.targetSenses = null;
+    this.lastKnownTargetPos = null; this.oldLastKnownTargetPos = null; this.predictedTargetPos = null; this._predictedTargetPosWithoutLead = null;
+    this.lastHadLOSTimer = 0; this.giveUpTimer = 0; this.classicTargetUpdateTimer = 0;
+    this.destination = [this.feet[0], this.feet[1], this.feet[2]]; this.detourDestination = [this.feet[0], this.feet[1], this.feet[2]];
+    this.obstacleDetected = false; this.fallDetected = false; this.foundUpwardSlope = false; this.foundDoor = false;
+    this.avoidObstaclesTimer = 0; this.checkingClockwiseTimer = 0; this.didClockwiseCheck = false; this.lastTimeWasStuck = -Infinity;
+    this._acc = 0; this.knockbackSpeed = 0; this.hurtKnock = false; this.moving = false;
+  }
 }

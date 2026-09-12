@@ -205,7 +205,9 @@ import { getStaticDoors } from '../world/staticDoors.js';
 import { Collider } from '../player/collider.js';
 import { createDataPipeline } from './dataPipeline.js';
 import { createWorldModes } from './worldModes.js';
-import { OnlineSession, roomKeyFor, DEFAULT_SERVER } from '../net/online.js';   // ONLINE1: the session
+import { OnlineSession, roomKeyFor, DEFAULT_SERVER, WORLD_PUBLISH_MS, FOES_MS, FOES_FULL_MS } from '../net/online.js';   // ONLINE1: the session; WORLD1: the room's memory
+import { POSE_STRIKES, isWorldRoom } from '../net/wire.js';   // MAC7 #1: the swing's kind on the wire
+import { hasDaggerfallArrows } from '../combat/fpArm.js';   // MAC7 #2: the arrow bit on the wire - weaponRig's own read
 import { drawText } from '../ui/text.js';   // ONLINE1: the session's status line
 import { RemotePlayers, composeLook } from '../net/remotePlayers.js';   // ONLINE1: the others, drawn
 import { PeerBodies } from '../net/peerBodies.js';   // MWBODY1: the others in the Morrowind body
@@ -2612,10 +2614,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2081 mounts the same one, gated on
+  // and dungeonContext.js:2091 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:4519
+  // that context through modes.dungeonCtx - so worldModes.js:4520
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -4132,7 +4134,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:4722), so exterior mode and a
+    // composer, dungeonContext.js:4885), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -5423,7 +5425,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7108-7120 -
+  // worldModes answers it in BOTH modes (worldModes.js:7111-7123 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -6584,6 +6586,40 @@ export async function bootWorld(canvas, renderer, params, status) {
   const onlineOn = params.has('online');
   let online = null, remotePlayers = null, peerBodies = null, _onlineLast = null, _onlineKey = null, _onlineKeySince = 0;
   let chatLog = null, chatPanel = null, chatLinks = null;   // CHAT1: the log, the panel, one channel session per tab (Map tabId -> OnlineSession)
+  let _worldPublishedAt = -Infinity;   // WORLD1: when this host last published the room's memory (the frame clock)
+  // WORLD1 (Mac: "The world is the server ... True persistence"): the room's memory out - this player's, when the
+  // relay says they are the room's host and a dungeon stands: every WORLD_PUBLISH_MS, and at once on the way out
+  // (the dungeon's exit, a load's teardown, the death screen, the page's hide) so the room keeps the last state
+  // AUDIT WORLD: into the dungeon's own room alone (B8: during the room hold the socket still sits in the cell's
+  // room, which discards it); a forced publish is a FAREWELL - the relay admits one per socket inside its floor
+  // (B5); a refusal is said once and not retried at frame rate (B9)
+  const worldPublish = (now, force = false) => {
+    if (!online || !online.isHost() || online.status !== 'open' || !isWorldRoom(online.room)) return false;
+    if (!force && now - _worldPublishedAt < WORLD_PUBLISH_MS) return false;
+    const shared = modes?.dungeonSharedWorld?.();
+    if (!shared) return false;
+    _worldPublishedAt = now;
+    const ok = online.sendWorld(shared, { final: force });
+    if (!ok) console.warn('[online] the room\'s memory did not go');
+    return ok;
+  };
+  // WORLD2: ONE SIMULATION PER ROOM. While I host a world room the dungeon's layout foes are mine to step and I
+  // stream every changed one FOES_MS apart (every one FOES_FULL_MS apart, so a dropped delta heals); while another
+  // hosts, my layout foes are puppets that follow the stream and my blows on them go to the host as hits.
+  let _foesSentAt = -Infinity, _foesFullAt = -Infinity;
+  const foesStream = (now) => {
+    if (!online || !online.isHost() || online.status !== 'open' || !isWorldRoom(online.room)) return false;
+    if (now - _foesSentAt < FOES_MS) return false;
+    const full = now - _foesFullAt >= FOES_FULL_MS;
+    const frame = modes?.dungeonFoesFrame?.(full);
+    if (!frame) return false;
+    _foesSentAt = now;
+    if (!online.sendFoes(frame)) return false;
+    if (full) _foesFullAt = now;
+    return true;
+  };
+  /** Who runs my dungeon's layout foes: me, unless a world room's socket is open and another holds the seat. */
+  const dungeonAuthority = () => !(online?.room && isWorldRoom(online.room) && online.status === 'open' && !online.isHost());
   let onlineToScene = (p) => [p.x, p.y, p.z];
   const ROOM_HOLD_MS = 500;   // AUDIT ONLINE D11: a room key holds this long before the socket moves - a cell edge is not a churn
   const onlineStart = () => {
@@ -6592,12 +6628,18 @@ export async function bootWorld(canvas, renderer, params, status) {
       name: params.get('name') || getPref('onlineName') || playerEntity.name || 'Traveller',
       look: composeLook(playerEntity),
     });
+    // WORLD1: the room's memory in - a welcome that carries the world the room keeps lands on the standing dungeon
+    // (the mode machine refuses another dungeon's); a new host publishes at once
+    online.onWorld = (shared) => { if (modes?.restoreDungeonSharedWorld?.(shared)) console.info('[online] the room\'s memory restored'); };
+    online.onHost = (id, mine) => { if (mine) { _worldPublishedAt = -Infinity; _foesFullAt = -Infinity; } modes?.setDungeonAuthority?.(dungeonAuthority()); };   // WORLD2: the seat decides who steps the foes; a new host streams every foe at once
+    online.onFoes = (id, data) => { modes?.applyDungeonFoes?.(data); };
+    online.onHit = (id, data) => { modes?.applyDungeonHit?.(id, data); };
     remotePlayers = new RemotePlayers({ renderer, deps: { fetchBytes, palette, getTexture } });
     // MWBODY1: the enhanced skin with Morrowind data attached puts every peer in a body of its own; otherwise the doll
     const enhanced = isEnhanced();   // the skin cannot change without a reload (switchSkin), so it is read once, not per frame
     peerBodies = new PeerBodies({ renderer, enabled: () => enhanced && !!getPref('mwArms') && morrowindDataCount() > 0, generation: morrowindDataGeneration });
     if (enhanced && typeof document !== 'undefined') chatStart();   // CHAT1: the live chat is the enhanced skin's (a DOM panel); classic has no place for it yet   // the player's own arms switch (MWA1) turns the layer on; new data, new bodies
-    globalThis.addEventListener?.('pagehide', () => { online?.leave(); for (const link of chatLinks?.values() ?? []) link.leave(); peerBodies?.destroy(); remotePlayers?.destroy(); });   // the panel stays: a page restored from the cache gets its chat back through chatFrame's rejoin (AUDIT CHAT B4)   // AUDIT ONLINE D12: a clean goodbye - the room's leave, not a silence; the rigs and the dolls released
+    globalThis.addEventListener?.('pagehide', () => { worldPublish(performance.now(), true); online?.leave(); for (const link of chatLinks?.values() ?? []) link.leave(); peerBodies?.destroy(); remotePlayers?.destroy(); });   // the panel stays: a page restored from the cache gets its chat back through chatFrame's rejoin (AUDIT CHAT B4)   // AUDIT ONLINE D12: a clean goodbye - the room's leave, not a silence; the rigs and the dolls released
   };
   // CHAT1 (Mac: "the live chat in enhanced format ... one world tab with
   // the ability to add more tabs at a later time"): one channel session
@@ -6639,7 +6681,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const onlineFrame = (now, dt) => {
     chatFrame();   // CHAT1: before the dead return, so the channels keep their heartbeat and their reconnect while the death screen is up (the panel itself is paused away like any HUD - AUDIT CHAT B7)
     // AUDIT ONLINE D12: the dead broadcast nothing and see no one
-    if (townTalk.overlay instanceof DeathScreen) { if (online.room) online.leave(); peerBodies.destroy(); remotePlayers.sync([], onlineToScene); return; }   // AUDIT MWBODY B7: and no body stands frozen over the death screen
+    if (townTalk.overlay instanceof DeathScreen || modes?.deathUp?.()) { if (online.room) { worldPublish(now, true); online.leave(); } peerBodies.destroy(); remotePlayers.sync([], onlineToScene); return; }   // AUDIT WORLD B6: the dungeon's and the building's death screens stand in the mode's slot   // AUDIT MWBODY B7: and no body stands frozen over the death screen
     const mode = modes?.mode ?? 'exterior';   // audit24_wave37: guarded on the OBJECT above its own declaration (the frame runs after it)
     const overworld = mode === 'exterior';
     const wc = state.worldCoords(player.pos);
@@ -6670,11 +6712,27 @@ export async function bootWorld(canvas, renderer, params, status) {
     const moved = _onlineLast ? (player.pos[0] - _onlineLast[0]) ** 2 + (player.pos[2] - _onlineLast[2]) ** 2 > 1e-6 : false;
     _onlineLast = [player.pos[0], player.pos[1], player.pos[2]];
     if (key !== _onlineKey) { _onlineKey = key; _onlineKeySince = now; }
-    const mv = moved ? (player.isRunning ? 2 : 1) : 0;   // the wire's move bit: 1 walking, 2 running (the peers' bodies pick the clip off it)
+    const mv = moved ? (player.isRunning ? 2 : 1) : 0;
+    // MAC7 #1 (Mac: "no weapons"): the drawn flag and the swing ride the pose - the peers' bodies draw and swing off them;
+    // MAC7 #2: the bow's hold (wd 2 while the machine sits in StrikeUp - BowDrawback's draw), the arrow, the spell stance, the cast
+    // AUDIT WORLD C1: the MODE's rig - world.js's own is never stepped indoors or underground, so a peer in a
+    // dungeon stood with the street's sheath flag and never swung; the mode machine names the live one
+    const live = modes?.liveArm?.() ?? null;
+    const rig = live?.rig ?? weaponRig;
+    const wm = rig.playerWeapon.machine;
+    const arm = {
+      mv,
+      wd: rig.playerWeapon.sheathed ? 0 : (wm?.isBow && wm.state === 'StrikeUp' ? 2 : 1),
+      an: rig.swing.n, as: Math.max(0, POSE_STRIKES.indexOf(rig.swing.strike)),
+      am: hasDaggerfallArrows(playerEntity.items) ? 1 : 0, sr: (live ? live.armed : magic.spellArmed()) ? 1 : 0,
+      cn: rig.cast.n, cr: rig.cast.rangeType | 0,
+    };   // the wire's move bit: 1 walking, 2 running (the peers' bodies pick the clip off it)
     if (!key) { if (online.room) online.leave(); }   // AUDIT ONLINE D4: a place the host cannot name is no room, not the old one in the wrong frame
-    else if (key !== online.room) { if (!online.room || now - _onlineKeySince >= ROOM_HOLD_MS) { online.look = composeLook(playerEntity); online.join(key, { ...pose, mv }); } }   // the look re-composed: the next room's hello carries the gear worn now
-    else online.sendPose({ ...pose, mv });
+    else if (key !== online.room) { if (!online.room || now - _onlineKeySince >= ROOM_HOLD_MS) { online.look = composeLook(playerEntity); online.join(key, { ...pose, ...arm }); } }   // the look re-composed: the next room's hello carries the gear worn now
+    else online.sendPose({ ...pose, ...arm });
     online.tick();
+    worldPublish(now);   // WORLD1: the room's memory, every WORLD_PUBLISH_MS while this player hosts a dungeon
+    foesStream(now);   // WORLD2: the host's changed foes, every FOES_MS
     const drawable = online.drawable();
     peerBodies.sync(drawable, onlineToScene, dt, player.pos);   // the nearest first, the far ones asleep
     remotePlayers.sync(drawable, onlineToScene, { bodyHeight: (id) => peerBodies.heightOf(id) });
@@ -6699,6 +6757,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     extraBillboards: () => remotePlayers?.batches() ?? [],
     drawPeerNames: ({ proj, view, eye }) => drawPeerNames(proj, view, eye),
     drawPeerBodies: ({ proj, view, eye }) => drawPeerBodies(proj, view, eye),   // MWBODY1: the others' bodies, after the player's own
+    onDungeonLeave: () => worldPublish(performance.now(), true),   // WORLD1: the room's memory goes out while the dungeon still stands
+    onFoeHit: (hit) => online?.sendHit(hit) ?? false,   // WORLD2: a blow on a puppet goes to the host
+    dungeonAuthority,   // WORLD2: a dungeon built while another hosts starts as puppets
     activateDir: () => _tapDir,   // TI1: the tap's ray for the modal ladders (eyeDir)
     activateLockOnly: () => _tapLockOnly,   // TS1: the stick-half tap - the modal ladders stop after the lock pick
     currentRegionIndex: () => _questRegionIndex(),   // UL1: PlayerGPS.CurrentRegionIndex for the mode machine's mods

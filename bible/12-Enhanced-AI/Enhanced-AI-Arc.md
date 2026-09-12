@@ -337,6 +337,6 @@ unwritten (this container has no ARENA2), so the pin now reports what it
 is - SKIPPED when `ARENA2_PATH` is unset or does not exist, TODO when it
 does, asserting nothing either way - with the body it owes written out
 beside it: the loader through the host's own path, `collider.addMesh
-('dungeon', ...)` as `dungeonContext.js:495` feeds it, a bake anchored at
+('dungeon', ...)` as `dungeonContext.js:504` feeds it, a bake anchored at
 the entry marker, then `bake.stats.polys > 0`, every waypoint locating on
 the mesh, and the path across the first hall.

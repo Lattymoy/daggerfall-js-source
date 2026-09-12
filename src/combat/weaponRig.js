@@ -116,8 +116,8 @@ export async function autoBuildArms(entity, { wanted = () => getPref('mwArms'), 
  *                     The note that hosts without a HUD text layer
  *                     pass console is retired: every call site hands
  *                     over a real one - hudText.add
- *                     (dungeonContext.js:2121), townTalk.say
- *                     (exterior.js:1306, world.js:2448) and
+ *                     (dungeonContext.js:2131), townTalk.say
+ *                     (exterior.js:1306, world.js:2450) and
  *                     worldModes' own interior sink (worldModes.js:369,
  *                     which warns to console only where a host mounts
  *                     no townTalk at all), so the empty default below
@@ -283,7 +283,13 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
    * Daggerfall swing is. It becomes live the moment the drawback path
    * does, with nothing here to change.
    */
+  /** MAC7 #1: the wire's swing - counted at every strike the machine starts, before the Morrowind arm's own gate
+   *  (a classic-skin player swings too, and the peers in Morrowind bodies must see it); the host reads it into the pose. */
+  const swing = { n: 0, strike: 'StrikeDown' };
+  /** MAC7 #2: the wire's cast - { n, rangeType }, counted at castSpellAnim, the one door both lanes' hands come through. */
+  const cast = { n: 0, rangeType: 2 };
   function fpAttack(strike) {
+    swing.n = (swing.n + 1) & 0xffff; swing.strike = strike;
     if (!fpArm.ready()) return;
     const m = playerWeapon.machine;
     // MW-D16: no `bow` flag. The arm derives "shoot" from its own
@@ -327,10 +333,13 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
      *  refused - already playing, or an element with no CIF archive -
      *  in which case the engine resolves on the spot. */
     castSpellAnim: (rangeType, element, onRelease = null) => {
+      cast.n = (cast.n + 1) & 0xffff; cast.rangeType = rangeType | 0;   // MAC7 #2: the wire's cast, counted before either lane's own gate
       fpArm.castSpell(rangeType);
       return fpsSpellCasting.playOneShot(element, onRelease);
     },
     playerWeapon,
+    swing,   // MAC7 #1: { n, strike } - the count and the kind of the last strike started, for the wire
+    cast,    // MAC7 #2: { n, rangeType } - the count and the range of the last cast, for the wire
     /** Host mouse events buffer here (sheathed = no attack processing).
      *  CH3 (characters-13): a running SWAP PAUSE blocks the attack
      *  the same way (WeaponManager.cs:276-278 returns before the

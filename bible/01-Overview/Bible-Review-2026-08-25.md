@@ -59,7 +59,7 @@ FM-bank audit. Audio.md also still disowns `ActivateLockUnlock = 316`
 (`:158` "NOT OURS... neither of which is ported") - it sits in
 `soundClips.js:10` with three consumers (R1) - and still claims
 `deps.inCastle` stays false (`:105`), live since AUDIT 21
-(`dungeonContext.js:2265`). This is the one page whose live-queue
+(`dungeonContext.js:2275`). This is the one page whose live-queue
 claims actively contradict the code, the Ledger, and the rest of the
 bible at once.
 
@@ -131,7 +131,7 @@ per arc:
   first-arm); S40's "house ledger is unported" flag
   (`banking.js:172 isHouseOwned` feeds the rest seam); S16's
   "monsters 0-42 still spawn as billboards" (C11 pivoted them to real
-  foes, `dungeonContext.js:666-726`); the mid-file Queue
+  foes, `dungeonContext.js:675-735`); the mid-file Queue
   (`:742-748`) still carries FreeAction / Create Item / enchantment
   value / rest-UI / "Later: guilds, shops, dialog, calendar" - all
   shipped, list actively maintained (it struck its fatigue line).
@@ -163,7 +163,7 @@ per arc:
   `:3368`); `:4722` is now flatly false ("the interior host's
   char-sheet and inventory panels swallow their click and do
   nothing") and contradicts U43 in the same file
-  (`worldModes.js:4185-4186` routes them). UI-Arc carries no records
+  (`worldModes.js:4186-4187` routes them). UI-Arc carries no records
   at all for H1-H3 - the banking windows exist only in the Ledger.
 - *Combat.md*: the status head (first 51 lines) is the stale part -
   DrainMagicka "INTERIM no-op" (`:19`, real since S4a and
@@ -233,8 +233,8 @@ opposite of their own code and deserve a slice's attention:
 
 ## Line-citation drift (low, batched)
 
-`Port-Ledger.md:486` (save.js:28/:472/:481 → :28/:498/:528), `:492`
-(world.js:1916 → :2409); `Quest-Arc.md:719`/`:2905`
+`Port-Ledger.md:486` (save.js:28/:472/:481 → :28/:498/:528), `:484`
+(world.js:1918 → :2409); `Quest-Arc.md:719`/`:2905`
 (worldModes.js:476 → :903); `Player-Arc.md:955` (worldModes.js:621 →
 :2764), `:304` (world.js "531 lines" → 3,564); `Characters-Arc.md:190`
 (CHAR_PIXEL "7" - `renderer.js:446` ships 9, and the doc missed two

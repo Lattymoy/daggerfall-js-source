@@ -2568,9 +2568,10 @@ export function createFpArm() {
         // MW-D39: the cast's section finished - back to the stance, and
         // the idle replays from its start (the reference's own
         // resetCurrentIdleState on leaving an upper-body action).
+        // AUDIT WORLD C2: the stance a sheathed caster came from is None.
         actionState = null;
         actionSource = null;
-        upper = UPPER_BODY.WeaponEquipped;
+        upper = sheathed ? UPPER_BODY.None : UPPER_BODY.WeaponEquipped;
         if (resetIdleOnAttackEnd) { resetIdleOnAttackEnd = false; resetIdle(); }
         break;
       default:
@@ -2994,7 +2995,7 @@ export function createFpArm() {
       // A cast in flight is abandoned by an un-ready (the spell was
       // aborted): the arm returns to its stance rather than finishing
       // an animation for a spell that is not going out.
-      if (!want && upper === UPPER_BODY.Casting) { actionState = null; actionSource = null; upper = UPPER_BODY.WeaponEquipped; }
+      if (!want && upper === UPPER_BODY.Casting) { actionState = null; actionSource = null; upper = sheathed ? UPPER_BODY.None : UPPER_BODY.WeaponEquipped; }   // AUDIT WORLD C2: a sheathed caster's stance is None
       refreshWeaponGroup();
       resetIdle();
       resetMovement();
@@ -3015,7 +3016,11 @@ export function createFpArm() {
      *  still flies. */
     castSpell(rangeType = 2) {
       if (!built || !built.ok) return false;
-      if (upper !== UPPER_BODY.WeaponEquipped && upper !== UPPER_BODY.Casting) return false;
+      // AUDIT WORLD C2: a SHEATHED arm casts too. Sheathed the stance is None, which the gate below refused, so a
+      // caster with nothing drawn - the peer whose wd is 0, and the player's own arm alike - never played a cast,
+      // though animWeaponType composes the spellcast group for the stance regardless (the spell survives the
+      // sheath). The cast plays from None and stepUpper hands the arm back to None when it ends.
+      if (upper !== UPPER_BODY.WeaponEquipped && upper !== UPPER_BODY.Casting && !(upper === UPPER_BODY.None && sheathed)) return false;
       // AUDIT 36 F2 (severe): THE CAST LATCHES ITS OWN STANCE. A
       // CasterOnly spell is readied and cast in ONE synchronous call -
       // hostMagic's readySpell runs castInput immediately for
@@ -3033,11 +3038,12 @@ export function createFpArm() {
       attackReversed = false;   // MS1: a cast has no side
       attackStrength = 1;
       resetIdleOnAttackEnd = true;
+      const from = upper;   // C2: None while sheathed
       upper = UPPER_BODY.Casting;
       if (!playAction(`${type} start`, `${type} stop`, 0)) {
         // no keys for this range in this group: the stance stands, and
         // the note on the card says which group could not answer.
-        upper = UPPER_BODY.WeaponEquipped;
+        upper = from;
         attackType = null;
         return false;
       }

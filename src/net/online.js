@@ -4,7 +4,10 @@
 // see and traverse with other players"): THE SESSION.
 //
 // THE SHAPE. Every player runs their own world from their own save;
-// nothing is shared but presence. This module holds one WebSocket to
+// presence is shared (ONLINE1), words (CHAT1), a world room's memory
+// (WORLD1 - the host's snapshot of the place, handed to whoever comes
+// next) and its live foes (WORLD2 - the host's, streamed to the rest;
+// a blow on them goes to the host). This module holds one WebSocket to
 // the relay (server/src/index.js on Cloudflare), in one ROOM at a time,
 // says hello once with the player's look, sends the player's pose at
 // POSE_HZ when it changes (and a heartbeat pose every HEARTBEAT_MS
@@ -55,9 +58,16 @@
 // session that never changes rooms (A6/B6) or was left by the page's
 // goodbye (B4); statusLine takes its label (B5).
 //
+// WORLD1 (2026-09-12, Mac: "The world is the server ... True
+// persistence"): the room's HOST - the relay's word, in the welcome
+// and in a host frame - and the room's MEMORY: a welcome may carry
+// the world the room keeps (onWorld), and the host publishes its own
+// through sendWorld (the host of a world room alone; the relay ignores
+// the rest). WORLD_PUBLISH_MS is how often.
+//
 // Not a DFU member: Daggerfall Unity has no multiplayer. Ledger A row.
 import { tabStorage } from '../systems/appStorage.js';   // the tab's own storage - the seam, never the browser's own (a PIN)
-import { WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, validPose, validLook, sanitizeName, sanitizeChat, chatGate, worldRoom, inRange, relayUrl } from './wire.js';
+import { WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, validPose, validLook, sanitizeName, sanitizeChat, chatGate, worldRoom, inRange, relayUrl, isWorldRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES } from './wire.js';
 
 export { WORLD_CELL, RANGE_PIXELS, worldRoom };
 
@@ -73,6 +83,12 @@ export const PEER_TIMEOUT_MS = 20000;
 /** Reconnect backoff bounds, ms. */
 export const BACKOFF_MIN_MS = 1000;
 export const BACKOFF_MAX_MS = 8000;
+/** How often a world room's host publishes the room's memory (WORLD1); the relay drops one sooner than WORLD_MIN_MS. */
+export const WORLD_PUBLISH_MS = 15000;
+/** WORLD2: how often the host streams its changed foes (5 a second - under FOES_HZ_MAX with room for a burst). */
+export const FOES_MS = 200;
+/** WORLD2: how often the stream carries EVERY layout foe, not the changed alone - a dropped delta heals within it. */
+export const FOES_FULL_MS = 2000;
 /** A pose farther than this from the drawn one is a teleport: the peer snaps rather than sweeps (world frame / scene frame). */
 export const SNAP_WORLD_UNITS = PIXEL_UNITS / 8;
 export const SNAP_SCENE_UNITS = 30;
@@ -106,7 +122,9 @@ export function roomKeyFor({ host, mode, mapId = null, regionIndex = -1, locatio
 export function poseChanged(a, b, eps = 0.01) {
   if (!a || !b) return true;
   return Math.abs(a.x - b.x) > eps || Math.abs(a.y - b.y) > eps || Math.abs(a.z - b.z) > eps
-    || Math.abs(a.yaw - b.yaw) > eps || Math.abs(a.pitch - b.pitch) > eps || (a.mv | 0) !== (b.mv | 0);
+    || Math.abs(a.yaw - b.yaw) > eps || Math.abs(a.pitch - b.pitch) > eps || (a.mv | 0) !== (b.mv | 0)
+    || (a.wd | 0) !== (b.wd | 0) || (a.an | 0) !== (b.an | 0)   // MAC7 #1: a draw and a swing go out at once, as a step does
+    || (a.am | 0) !== (b.am | 0) || (a.sr | 0) !== (b.sr | 0) || (a.cn | 0) !== (b.cn | 0);   // MAC7 #2: and the arrow, the spell stance, the cast
 }
 
 const lerpAngle = (a, b, t) => {
@@ -123,6 +141,8 @@ export function lerpPose(from, to, t) {
   return {
     x: from.x + (to.x - from.x) * k, y: from.y + (to.y - from.y) * k, z: from.z + (to.z - from.z) * k,
     yaw: lerpAngle(from.yaw, to.yaw, k), pitch: from.pitch + (to.pitch - from.pitch) * k, mv: to.mv,
+    wd: to.wd ?? 0, an: to.an ?? 0, as: to.as ?? 0,   // MAC7 #1: the arm's three ride the drawn pose whole - nothing to ease
+    am: to.am ?? 0, sr: to.sr ?? 0, cn: to.cn ?? 0, cr: to.cr ?? 0,   // MAC7 #2: and the other four
   };
 }
 
@@ -164,6 +184,12 @@ export class OnlineSession {
     this.name = name;
     this.presence = !!presence;   // false: a channel's session (CHAT1) - no pose out, a ping for a heartbeat
     this.onChat = null;           // (line) => void: a chat line in - {id, name, text, at, mine}
+    this.onFoes = null;           // WORLD2: (id, data) => void - the host's live foes in (a non-host's, from the room's host alone)
+    this.onHit = null;            // WORLD2: (id, data) => void - a blow on my foe in (the host's, from anyone)
+    this._fbucket = null;         // WORLD2: the foes stream's own gate, the relay's law kept at home
+    this.host = null;             // WORLD1: the room's host, the relay's word; null until the welcome
+    this.onHost = null;           // (id, mine) => void: the host changed
+    this.onWorld = null;          // (world) => void: the welcome carried the room's memory
     this.look = look ?? { race: 'Breton', gender: 'male', faceIndex: 0, items: [] };
     this.id = id ?? peerId();
     this._WS = WebSocketImpl;
@@ -182,7 +208,7 @@ export class OnlineSession {
     this._backoff = BACKOFF_MIN_MS;
     this._retryAt = null;
     this._closedByUs = false;
-    this.stats = { sent: 0, poses: 0, received: 0, reconnects: 0, chats: 0 };
+    this.stats = { sent: 0, poses: 0, received: 0, reconnects: 0, chats: 0, worlds: 0, foes: 0, hits: 0 };
   }
 
   /** Enter a room (leaving the last). The pose is the hello's. */
@@ -206,7 +232,53 @@ export class OnlineSession {
     this._retryAt = null;
     this.room = null;
     this.peers.clear();
+    this.host = null;
     this.status = 'closed';
+  }
+
+  /** Am I the room's host (WORLD1)? False until the welcome says so. */
+  isHost() { return !!this.id && this.host === this.id; }
+
+  /** The room's memory out (WORLD1): the host's alone - the relay ignores anyone else's - and never a frame past
+   *  WORLD_FRAME_MAX, which the relay would refuse with a terminal close. False when nothing went. */
+  sendWorld(data, { final = false } = {}) {
+    if (!data || typeof data !== 'object' || Array.isArray(data)) return false;
+    if (!this.isHost() || !this._ws || this.status !== 'open') return false;
+    const s = JSON.stringify(final ? { t: 'world', data, final: true } : { t: 'world', data });   // final: the socket's one farewell inside the relay's floor (AUDIT WORLD B5)
+    if (s.length > WORLD_FRAME_MAX) return false;
+    try { this._ws.send(s); this.stats.sent++; this.stats.worlds++; return true; } catch { return false; }
+  }
+
+  /** WORLD2: the host's live foes out - the host's alone, in a world room, FOES_HZ_MAX a second on the stream's own
+   *  bucket (a frame over it is kept home rather than struck by the relay), never past FOES_FRAME_MAX. */
+  sendFoes(data) {
+    if (!data || typeof data !== 'object' || Array.isArray(data)) return false;
+    if (!this.isHost() || !isWorldRoom(this.room) || !this._ws || this.status !== 'open') return false;
+    const gate = foesGate(this._fbucket, this._now());
+    if (!gate.pass) return false;
+    const s = JSON.stringify({ t: 'foes', data });
+    if (s.length > FOES_FRAME_MAX) return false;
+    try { this._ws.send(s); } catch { return false; }
+    this._fbucket = gate.bucket; this.stats.sent++; this.stats.foes++;
+    return true;
+  }
+
+  /** WORLD2: a blow on the host's foe out - anyone but the host (the host applies its own), in a world room. */
+  sendHit(data) {
+    if (!data || typeof data !== 'object' || Array.isArray(data)) return false;
+    if (this.isHost() || !this.host || !isWorldRoom(this.room) || !this._ws || this.status !== 'open') return false;
+    const s = JSON.stringify({ t: 'hit', data });
+    if (s.length > MAX_FRAME_BYTES) return false;
+    try { this._ws.send(s); } catch { return false; }
+    this.stats.sent++; this.stats.hits++;
+    return true;
+  }
+
+  _setHost(id) {
+    const host = typeof id === 'string' ? id : null;
+    if (host === this.host) return;
+    this.host = host;
+    this.onHost?.(host, this.isHost());
   }
 
   _open() {
@@ -301,6 +373,16 @@ export class OnlineSession {
         if (have) this._refresh(have, p, now); else this.peers.set(p.id, this._peer(p, now));
       }
       for (const id of [...this.peers.keys()]) if (!keep.has(id)) this.peers.delete(id);
+      this._setHost(m.host);   // WORLD1: the room's host, and the room's memory when it keeps one
+      if (m.world && typeof m.world === 'object' && !Array.isArray(m.world)) this.onWorld?.(m.world);
+    } else if (m.t === 'host') {
+      this._setHost(m.id);
+    } else if (m.t === 'foes') {
+      // WORLD2: the host's live foes - the room's host's alone (a stale frame from a host that just left is not the world)
+      if (typeof m.id === 'string' && m.id === this.host && m.id !== this.id && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) this.onFoes?.(m.id, m.data);
+    } else if (m.t === 'hit') {
+      // WORLD2: a blow on my foe - mine to apply only while I host
+      if (this.isHost() && typeof m.id === 'string' && m.id !== this.id && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) this.onHit?.(m.id, m.data);
     } else if (m.t === 'join') {
       if (typeof m.id === 'string' && m.id !== this.id) {
         const have = this.peers.get(m.id);

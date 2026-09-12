@@ -6,7 +6,7 @@
 // dict has to exist before the window can draw a single dot.
 //
 // The port had no ContentReader: world.js indexes FULLY LOADED
-// locations by "x,y" (scenes/world.js:204-221), which costs a
+// locations by "x,y" (scenes/world.js:204-223), which costs a
 // getLocation per location and carries the whole DFLocation. The
 // window needs the SUMMARY only - type, region, discovery flag -
 // so this walks the map TABLES exactly as EnumerateMaps does and
