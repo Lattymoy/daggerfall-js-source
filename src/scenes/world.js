@@ -207,6 +207,8 @@ import { createWorldModes } from './worldModes.js';
 import { OnlineSession, roomKeyFor, DEFAULT_SERVER } from '../net/online.js';   // ONLINE1: the session
 import { drawText } from '../ui/text.js';   // ONLINE1: the session's status line
 import { RemotePlayers, composeLook } from '../net/remotePlayers.js';   // ONLINE1: the others, drawn
+import { PeerBodies } from '../net/peerBodies.js';   // MWBODY1: the others in the Morrowind body
+import { morrowindDataCount } from './dataSource.js';   // MWBODY1: the bodies' gate - Morrowind data attached
 // Q4-v: THE QUEST BRIDGE - the machine goes live in this host.
 import { createQuestBridge, tokensToRows } from './questBridge.js';
 import { loadQuestPack } from './questData.js';
@@ -5388,7 +5390,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7081-7093 -
+  // worldModes answers it in BOTH modes (worldModes.js:7083-7095 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -6547,7 +6549,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // front door never boots, and its interior frame and town room
   // disagreed with this one's (AUDIT ONLINE D6/D8).
   const onlineOn = params.has('online');
-  let online = null, remotePlayers = null, _onlineLast = null, _onlineKey = null, _onlineKeySince = 0;
+  let online = null, remotePlayers = null, peerBodies = null, _onlineLast = null, _onlineKey = null, _onlineKeySince = 0;
   let onlineToScene = (p) => [p.x, p.y, p.z];
   const ROOM_HOLD_MS = 500;   // AUDIT ONLINE D11: a room key holds this long before the socket moves - a cell edge is not a churn
   const onlineStart = () => {
@@ -6557,9 +6559,11 @@ export async function bootWorld(canvas, renderer, params, status) {
       look: composeLook(playerEntity),
     });
     remotePlayers = new RemotePlayers({ renderer, deps: { fetchBytes, palette, getTexture } });
+    // MWBODY1: the enhanced skin with Morrowind data attached puts every peer in a body of its own; otherwise the doll
+    peerBodies = new PeerBodies({ renderer, enabled: () => isEnhanced() && !!getPref('mwArms') && morrowindDataCount() > 0 });   // the player's own arms switch (MWA1) turns the layer on
     globalThis.addEventListener?.('pagehide', () => online?.leave());   // AUDIT ONLINE D12: a clean goodbye - the room's leave, not a silence
   };
-  const onlineFrame = (now) => {
+  const onlineFrame = (now, dt) => {
     // AUDIT ONLINE D12: the dead broadcast nothing and see no one
     if (townTalk.overlay instanceof DeathScreen) { if (online.room) online.leave(); return; }
     const mode = modes?.mode ?? 'exterior';   // audit24_wave37: guarded on the OBJECT above its own declaration (the frame runs after it)
@@ -6596,8 +6600,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     else if (key !== online.room) { if (!online.room || now - _onlineKeySince >= ROOM_HOLD_MS) online.join(key, pose); }
     else online.sendPose({ ...pose, mv: moved ? 1 : 0 });
     online.tick();
-    remotePlayers.sync(online.drawable(), onlineToScene);
+    const drawable = online.drawable();
+    peerBodies.sync(drawable, onlineToScene, dt);
+    remotePlayers.sync(drawable, onlineToScene, { bodyHeight: (id) => peerBodies.heightOf(id) });
   };
+  const drawPeerBodies = (proj, view, eye) => { if (peerBodies) peerBodies.draw(canvas, { proj, view, eye }); };
   const drawPeerNames = (proj, view, eye) => {
     if (!remotePlayers) return;
     if (townTalk.hudCovered || (modes?.hudCovered ?? false)) return;   // a window over the HUD covers the names too
@@ -6616,6 +6623,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // ONLINE1: the peers in a modal mode - their billboards on the mode's own pass, their names after its HUD
     extraBillboards: () => remotePlayers?.batches() ?? [],
     drawPeerNames: ({ proj, view, eye }) => drawPeerNames(proj, view, eye),
+    drawPeerBodies: ({ proj, view, eye }) => drawPeerBodies(proj, view, eye),   // MWBODY1: the others' bodies, after the player's own
     activateDir: () => _tapDir,   // TI1: the tap's ray for the modal ladders (eyeDir)
     // AUDIT 62 F8 (review): THE FINGER'S PRESS, published. worldModes
     // owns the interior and world-hosted-dungeon activate gate and has
@@ -7191,7 +7199,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       player.bobOffset = [cy * bob[0], bob[1], -sy * bob[0]];
     }
     last = now;
-    if (onlineOn && playerSpawned) { if (!online) onlineStart(); onlineFrame(now); }   // ONLINE1: the pose out, the peers in - after the look is paid, before the camera is read and any mode draws
+    if (onlineOn && playerSpawned) { if (!online) onlineStart(); onlineFrame(now, dt); }   // ONLINE1: the pose out, the peers in - after the look is paid, before the camera is read and any mode draws
     lookGate(gamePaused());   // a window up frees the cursor; closing re-locks
     const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
     const right = [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)];   // HANDEDNESS (mat4's law): screen-right = (cos, 0, -sin) under the mirrored projection - Unity's own right
@@ -7905,6 +7913,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // MW-D24: the player's own body, in third person only.
     renderer.setCloudShadow(sky?.cloudShadow ?? null);   // VC4: the frame's deck, for the body and everything before the pixel loop
     mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.feetAt(), yaw: cam.yaw });
+    drawPeerBodies(proj, view, mwv.eye);   // MWBODY1: the others' bodies, the same pass
 
     // WM2b: read the eased wind ONCE a frame, not once a mill.
     const windNow = sky.wind();

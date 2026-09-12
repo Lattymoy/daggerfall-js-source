@@ -240,12 +240,60 @@ What they found that was real:
   `test/online_relay.test.js` (7, the Room over fake sockets and a fake
   state).
 
+## MWBODY1 (2026-09-12): the others in the Morrowind body
+
+**Mac: "Can we go ahead and knock out the deferred morrowind model."**
+ONLINE1 deferred it because the rig was read as a singleton. It is
+not: `src/combat/fpArm.js` exports one INSTANCE (`fpArm =
+createFpArm()`) of a factory, every mutable the machine owns lives in
+the instance's closure, and what the module keeps at its level (the
+ESM walk, the textures, the face matches, the clip reports, the icons)
+is keyed by content and shared by design. So a peer is one more
+`createFpArm()` - `src/net/peerBodies.js`, `PeerBodies`:
+
+- **Built from the look** through the same door the player's own arms
+  take (`buildFpArm`): `peerBuildOpts` maps the look onto the inputs
+  weaponRig's `armBuildOptsOf` maps the entity onto - the race in the
+  ESM's spelling (`mwRaceId`), the female flag, the face, the worn
+  readout (`dfWornEquipment` over the stub's equip table), the right
+  hand. Builds run one at a time; a body that will not build (a race
+  with no body records, a build that threw) is released and the doll
+  stands, retried after `BODY_RETRY_MS`; bodies are capped at
+  `BODIES_MAX` (a build parses meshes for seconds and holds a GPU
+  mesh), and the rest keep the doll.
+- **Fed a camera of its own.** The rig reads a camera callback once a
+  frame (the player's own is world.js's `{ pos, yaw, pitch, move }`);
+  a peer's is a stub from the pose - the yaw, `mv` as the forward
+  move, so the movement slot (MW-D26) picks the walk and the idle
+  otherwise, and the ground speed measured off the drawn pose, which
+  sets the clip's rate and the run past `RUN_SPEED`. The view is
+  switched to third once built (`setViewMode`; a build resets it to
+  first) and the machine stepped by the frame's dt. The pitch is not
+  applied: the body stands level, vanilla's own law.
+- **Drawn by its own `drawThird`** at the peer's feet with its yaw -
+  the same sprite-box pass the player's body takes (MW-D24), right
+  after it, in the exterior pass and in both modal passes
+  (`host.drawPeerBodies`). A peer in a body draws no doll; its name
+  rides the doll pass's own list, at the capsule's head.
+- **The gate** is the host's: the enhanced skin, the player's own arms
+  switch (MWA1's `mwArms` pref - the layer is on when the arms are)
+  and Morrowind data attached. Off, every body is released and every
+  peer is a doll. The name rides the doll pass's list at the body's own
+  head (the capsule by the race's height scale, MW-D34).
+
+Pinned in `test/mwbody1.test.js` (5): the look's mapping and the stub
+camera execute; PeerBodies over a fake rig factory (one rig per peer,
+the build order, the view, the step, the draw, the release, the cap,
+the retry, the gate); the doll pass's skip and the name; the host by
+source. Not seen with two real players and the data attached from
+here: Mac's two browsers are the gate. The look is still sent once,
+so a peer's body wears what it logged in with.
+
 ## What it does not do (yet)
 
-- **The Morrowind body for a peer.** The enhanced third person rides
-  the player's own rig (`src/combat/fpArm.js`: one instance, built from
-  the player's own race and gear), so a peer wears the paperdoll in
-  both skins. The next iteration makes the rig instantiable per body.
+- **The Morrowind body** ships (MWBODY1, below); a client without the
+  Morrowind data, or on the classic skin, sees the paperdoll instead
+  (Mac: acceptable), and so does everyone past `BODIES_MAX` bodies.
 - **The look is sent once**, in the hello: gear changed mid-session is
   not seen by the peers until the next room (a `look` frame is the
   next iteration's).
