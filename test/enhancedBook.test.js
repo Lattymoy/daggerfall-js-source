@@ -12,7 +12,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
-import { paginateBook, leafSize, uiScale, LEAF_INSET, bookKey } from '../src/ui/enhancedBook.js';
+import { paginateBook, leafSize, uiScale, LEAF_INSET, bookKey, canvasFace, bodySize, FACE_OF_PREFIX, BOOK_FAMILY } from '../src/ui/enhancedBook.js';
+import { measureText } from '../src/ui/text.js';
+import { wrapText } from '../src/ui/talkWindow.js';
 import { placeBookLabels, BookReaderWindow } from '../src/ui/bookReader.js';
 import { createBookReaderWindow, makeOpenBookHook } from '../src/ui/bookDoor.js';
 import { BOOK, createBook, resizeBook, spreadCount, clampSpread, spreadPages } from '../vendor/raum-book/book.js';
@@ -124,13 +126,46 @@ test('EB1 keys and the vendored book: Mac\'s own, its seams marked, its fold unt
   assert.match(book, /const drawClothLeaf = \(ctx, frontC, backC, spineX, y, dir, t, drag\) => \{/);
   assert.match(book, /const reach = SW \* c; \/\/ signed/);
   assert.match(book, /if \(crestX !== null\) \{ ctx\.fillStyle = css\(PAPER\.bright, 0\.95\);/);
-  assert.equal((book.match(/PORT/g) ?? []).length, 4, 'four PORT marks: the seam note, the cover fields, the cover line, resizeBook');
+  assert.equal((book.match(/PORT/g) ?? []).length, 9, 'nine PORT marks: the inscription seam (3), resizeBook, and EB2\'s paper scale (the field, pixelLayer, the sheet, the board, the stack)');
+  assert.match(book, /paperScale: 1,/);
+  assert.match(book, /const pixelLayer = \(ctx, w, h, draw\) => \{/, 'EB2: the paper, the board and the stack at Raum\'s pixel size, blitted up');
   // the face: paint and bones - the model's law is imported, never re-read
   const src = read('src/ui/enhancedBook.js');
-  assert.match(src, /import \{ bookFont, bookFontsVersion, placeBookLabels \} from '\.\/bookReader\.js';/);
+  assert.match(src, /import \{ placeBookLabels \} from '\.\/bookReader\.js';/);
   assert.doesNotMatch(src.replace(/^\s*\/\/.*$/gm, ''), /getPageTokens|RSC\.|TOKEN_TEXT/, 'no second reading of the token stream');
-  assert.match(src, /placeBookLabels\(model\.lines, \(x\) => bookFont\(x\) \?\? defaultFont, wrapW\)/, "LayoutBookLabels over FontPrefix's faces, at the leaf's width");
+  assert.match(src, /placeBookLabels\(model\.lines, \(x\) => faces\[x\] \?\? faces\[0\], wrapW\)/, "LayoutBookLabels over FontPrefix's five cuts, at the leaf's width");
   assert.match(src, /if \(flipBook\(book, dir, now\(\)\)\) audio\.playOneShot\(SOUND\.PageTurn, 1\);/, 'the page turn per leaf');
   assert.match(src, /if \(!model\.done\) model\.input\('Escape'\);\s*\n\s*relock\(\);\s*\n\s*closeBook\(book, now\(\)\);/, "the exit is the classic's arm, the relock rides it, then the cover shuts");
   assert.match(src, /BOOK\.cover = \{ title: model\.book\?\.title \|\| 'A Book'/, "the cover carries the book's own title");
+});
+
+test('EB2 type: a canvas face wears FntFile\'s shape, so the classic\'s measure and wrap lay it out; the five prefixes are five cuts', () => {
+  // a browser-less measurer: every glyph 6 wide, the space 4
+  globalThis.document = { createElement: () => ({ getContext: () => ({ font: '', measureText: (t) => ({ width: t === ' ' ? 4 : 6 * t.length }) }) }) };
+  try {
+    const f = canvasFace(20, 400).fnt;   // { fnt }: makeFont's shape, the one placeBookLabels reads
+    assert.equal(f.canvas, true);
+    assert.equal(f.font, `400 20px ${BOOK_FAMILY}`);
+    assert.equal(f.fixedHeight, 26, 'the line is 1.3 ems');
+    assert.equal(f.fixedWidth, 5, 'the space plus one: spaceGlyphWidth is fixedWidth - 1');
+    assert.equal(f.glyphWidth(0), 5, 'the advance less the spacing the measure adds back');
+    assert.equal(measureText(f, 'ab'), 12, 'so a word measures as it draws: 6 a glyph');
+    assert.equal(measureText(f, 'a b'), 17, '6 + (4 + 1) + 6');
+    assert.deepEqual(wrapText(f, 'aa bb cc', 13), ['aa', 'bb', 'cc'], "and the classic's wrap cuts on the measure");
+    // the classic's own layout takes the face whole
+    const { placed, maxHeight } = placeBookLabels([{ text: 'aa bb cc', center: false, font: 0 }], () => canvasFace(20, 400), 13);
+    assert.deepEqual(placed[0].rows, ['aa', 'bb', 'cc']);
+    assert.equal(maxHeight, 78);
+  } finally { delete globalThis.document; }
+  assert.match(BOOK_FAMILY, /^Cormorant, /, "the skin's display face, the system serifs behind it");
+  assert.deepEqual(Object.keys(FACE_OF_PREFIX), ['0', '1', '2', '3', '4', '5'], 'no prefix and FONT0000..FONT0004');
+  assert.equal(FACE_OF_PREFIX[4].scale, 1, 'FONT0003 is the default face');
+  assert.ok(FACE_OF_PREFIX[5].scale > FACE_OF_PREFIX[3].scale && FACE_OF_PREFIX[3].scale > 1, 'FONT0004 is the title cut, FONT0002 the big one');
+  assert.equal(bodySize(756, 1), 22, 'about twenty-seven lines a leaf');
+  assert.equal(bodySize(300, 3), 39, 'never under thirteen CSS pixels on a phone');
+  assert.equal(bodySize(100, 1), 13);
+  const src = read('src/ui/enhancedBook.js');
+  assert.match(src, /injectEnhancedFonts\(\);/, 'the one web-font request the skin makes');
+  assert.match(src, /BOOK\.paperScale = uiScale\(W, H, dpr\);/, 'the paper stays pixel art at the old scale');
+  assert.match(src, /ctx\.fillText\(text, Math\.round\(dx\), Math\.round\(y\)\);/, 'the type is drawn by the browser, anti-aliased');
 });

@@ -12469,3 +12469,35 @@ on a page turns it (Raum's tap-anywhere: left back, right forward);
 a mid-flight tap snaps and chains; the arrows, N/P and the wheel
 turn too. Credited on the About screen under BUILT ON, beside the
 game, DFU and Silkscreen.
+
+## EB2 - THE BOOK'S TYPE (2026-09-12)
+
+**Mac, of EB1's first cut: "This is beautiful. Can we use a more
+legible text?"**
+
+The first cut set the pages in Daggerfall's FNT faces - 7-pixel
+bitmaps scaled up - which were the least legible thing on the screen.
+The pages are set in the enhanced skin's own serif now: Cormorant,
+the display face the menus already load through the skin's one
+web-font request, the system serifs behind it, anti-aliased at DEVICE
+resolution in a size taken from the leaf so a page carries about
+twenty-seven lines whatever the screen and never drops under thirteen
+CSS pixels on a phone. FontPrefix still switches the face: DFU's five
+FNTs become five cuts of the one serif (the small pair, the body, the
+big one, the title cut at 1.4x and semibold), so a book that sets its
+title in FONT0004 sets it large here too.
+
+**The measure stays the classic's.** A canvas face wears FntFile's
+shape - `fixedHeight`, `fixedWidth`, `glyphWidth(index)` - measured
+from the browser, so the classic's own `measureText` and `wrapText`
+lay the rows out unchanged and the wrap law is DFU's (a word is its
+glyph advances plus the spacing; kerning is not counted, as DFU does
+not count it). A browser-less measurer in the test proves the measure
+and the wrap.
+
+**The book keeps its pixels.** The canvas is the view in device
+pixels; the paper, the board and the fore-edge stack are drawn at
+Raum's pixel size and blitted up by an integer with smoothing off
+(`BOOK.paperScale`, a marked seam in the vendored book), the type
+drawn over them full-size. The pages are cut again when the web font
+lands, since the measures change.

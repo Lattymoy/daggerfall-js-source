@@ -19,7 +19,7 @@
 // rows, its input arm is the exit's ButtonClick. Under the enhanced
 // skin the face over it is project-raum's animated book
 // (ui/enhancedBook.js over vendor/raum-book/), which cuts the model's
-// laid-out labels into leaves and paints them in Daggerfall's faces.
+// laid-out labels into leaves and sets them in the skin's serif.
 //
 // ── THE HAND-OFF LAW STANDS ──────────────────────────────────────
 //

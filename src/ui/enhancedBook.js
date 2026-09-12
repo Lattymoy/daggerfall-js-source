@@ -1,15 +1,16 @@
 // EB1 - THE ENHANCED BOOK (2026-09-12).
 //
 // Mac: "For the book reader, I was wondering if we could use the
-// animated book in my repo project-raum." Then: "Do it."
+// animated book in my repo project-raum." Then: "Do it." Then, of
+// the first cut: "This is beautiful. Can we use a more legible text?"
 //
 // So a Daggerfall book is READ IN A BOOK: project-raum's physical
 // journal (vendor/raum-book/, Mac's own - a leather cover that flips
 // open, two-page spreads, leaves that turn as a cloth fold about the
 // spine, the fore-edge stack, the slide up from below the screen),
-// with Daggerfall's words on its pages in Daggerfall's FNT faces. The
-// world stays standing behind it: Raum's rule ("only the book, not
-// the entire screen") is the talk panel's rule too.
+// with Daggerfall's words on its pages. The world stays standing
+// behind it: Raum's rule ("only the book, not the entire screen") is
+// the talk panel's rule too.
 //
 // ── PAINT AND BONES (PX23), AGAIN ────────────────────────────────
 //
@@ -19,42 +20,52 @@
 // (one row per text token, sticky centring and FontPrefix, the empty
 // line's reset - AUDIT B-P1, 26 F150, 24 ui), `placeBookLabels` is
 // LayoutBookLabels (a wrapping label per row, its height its own
-// face's rows), `bookFont(x)` is FontPrefix's face table, and its
-// input() is the exit's ButtonClick. What this face adds is the one
-// thing a two-page book needs that a scroll does not: PAGINATION.
-// The placed label stream is cut into leaves by ROW - a row never
-// straddles a leaf - which is a typesetter's cut over DFU's own
-// layout, not a second layout. The page-turn plays per leaf turned,
-// as DFU plays it per centre-page crossed.
+// face's rows), and its input() is the exit's ButtonClick. What this
+// face adds is the one thing a two-page book needs that a scroll does
+// not: PAGINATION. The placed label stream is cut into leaves by ROW
+// - a row never straddles a leaf - which is a typesetter's cut over
+// DFU's own layout, not a second layout. The page-turn plays per leaf
+// turned, as DFU plays it per centre-page crossed.
 //
-// ── THE GLYPHS ───────────────────────────────────────────────────
+// ── THE TYPE (EB2, Mac: "a more legible text") ───────────────────
 //
-// Raum's pages are 2D canvases and the port's text path draws through
-// the GL renderer, so the FNT faces get a 2D painter here: each face
-// is expanded ONCE per ink colour into a 16x15 cell atlas canvas from
-// FntFile.getGlyphPixels, and a row is drawImage per glyph with
-// DrawText's own laws - the ASCII fold, a missing glyph drawn as a
-// space, the drawn space advancing by the glyph width alone
-// (DaggerfallFont.cs:328) while the measure adds the spacing.
+// The first cut set the pages in Daggerfall's FNT faces, 7-pixel
+// bitmaps scaled up, which were the least legible thing on the
+// screen. The pages are set in the enhanced skin's own serif now -
+// the display face the menus already load (Cormorant, with the
+// system serif behind it) - anti-aliased at DEVICE resolution, in a
+// size taken from the leaf so a page carries about twenty-seven
+// lines whatever the screen. FontPrefix still switches the face:
+// DFU's five FNTs become five cuts of the one serif - the small
+// pair, the body, the big one and the title cut - so a book that
+// sets its title in FONT0004 sets it large here too. The book
+// itself keeps its pixels: the paper, the board and the stack are
+// drawn at Raum's pixel size and blitted up (BOOK.paperScale), the
+// type is drawn over them full-size.
+//
+// A canvas face wears FntFile's SHAPE - fixedHeight, fixedWidth and
+// glyphWidth(index) - measured from the browser, so the classic's
+// own measureText and wrapText lay the rows out unchanged and the
+// wrap law stays the classic's (a word is measured as its glyph
+// advances plus the spacing; kerning is not, which is DFU's law).
 //
 // ── THE SIZE ─────────────────────────────────────────────────────
 //
-// The book paints at a LOGICAL resolution (UIK device pixels per
-// logical pixel, an integer, so the pixel glyphs and Raum's pixel
-// paper stay crisp) on a canvas the size of the view. The leaf is
-// sized off the view's HEIGHT - a book is tall - and capped by half
-// the width; the text wraps to the leaf. A portrait phone gets a
-// narrow leaf, as it gets a small classic page: the two-page spread
-// is the book's shape and turning the phone is the answer.
+// The book paints on a canvas the size of the view in device pixels.
+// The leaf is sized off the view's HEIGHT - a book is tall - and
+// capped by half the width; the text wraps to the leaf. A portrait
+// phone gets a narrow leaf, as it gets a small classic page: the
+// two-page spread is the book's shape and turning the phone is the
+// answer.
 
 import {
   BOOK, createBook, resizeBook, paintBook, openBook, closeBook, flipBook, finishFlip, bookHit, spreadCount,
 } from '../../vendor/raum-book/book.js';
 import { PAPER } from '../../vendor/raum-book/paper.js';
-import { bookFont, bookFontsVersion, placeBookLabels } from './bookReader.js';
-import { measureText, asciiFold, hasGlyph, spaceGlyphWidth, FNT_SPACE_CODE } from './text.js';
+import { placeBookLabels } from './bookReader.js';
+import { injectEnhancedFonts } from './enhancedStyle.js';
 import { wrapText } from './talkWindow.js';
-import { FNT_GLYPH_DIM, FNT_GLYPH_COUNT, FNT_ASCII_START } from '../formats/fntFile.js';
+import { FNT_ASCII_START } from '../formats/fntFile.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 
@@ -62,68 +73,92 @@ const css = (c, a = 1) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
 /** The page's ink: Raum's journal ink, on Raum's parchment. */
 export const INK = css(PAPER.ink);
 /** The leaf's text inset - Raum's own (book.js pageCanvas: x 8/12, y 10,
- *  w pageW-20, h pageH-24); the inner margin sits at the gutter. */
+ *  w pageW-20, h pageH-24) - in device pixels now, so the face adds a
+ *  margin of its own on top (`margin` below). */
 export const LEAF_INSET = Object.freeze({ x: 8, y: 10, w: 20, h: 24 });
 
-// ── the FNT painter ───────────────────────────────────────────────
-const ATLAS_COLS = 16;
-const _atlases = new WeakMap();   // fnt -> Map(color -> canvas)
+/** The serif the pages are set in: the enhanced skin's display face
+ *  (enhancedStyle.js FONT_DISPLAY), the system serifs behind it. */
+export const BOOK_FAMILY = "Cormorant, 'Cormorant Garamond', Georgia, 'Times New Roman', serif";
 
-/** The face's glyphs as ONE canvas per ink: 240 cells of 16x16, the
- *  glyph in each cell's left `width` columns (FNT_GLYPH_DIM cells,
- *  the atlas text.js builds for GL, drawn here with fillRect). */
-export function fntAtlas(fnt, color = INK) {
-  let byColor = _atlases.get(fnt);
-  if (!byColor) { byColor = new Map(); _atlases.set(fnt, byColor); }
-  let c = byColor.get(color);
-  if (c) return c;
-  c = document.createElement('canvas');
-  c.width = ATLAS_COLS * FNT_GLYPH_DIM;
-  c.height = (FNT_GLYPH_COUNT / ATLAS_COLS) * FNT_GLYPH_DIM;
-  const ctx = c.getContext('2d');
-  ctx.fillStyle = color;
-  for (let gi = 0; gi < FNT_GLYPH_COUNT; gi++) {
-    const px = fnt.getGlyphPixels(gi, 1);
-    if (!px) continue;
-    const ox = (gi % ATLAS_COLS) * FNT_GLYPH_DIM, oy = Math.floor(gi / ATLAS_COLS) * FNT_GLYPH_DIM;
-    for (let y = 0; y < fnt.fixedHeight; y++) {
-      for (let x = 0; x < FNT_GLYPH_DIM; x++) if (px[y * FNT_GLYPH_DIM + x]) ctx.fillRect(ox + x, oy + y, 1, 1);
-    }
-  }
-  byColor.set(color, c);
-  return c;
+/** FontPrefix's five faces (DaggerfallFont.FontName, bookReader.js
+ *  BOOK_FONT_NAMES: x 1..5 = FONT0000..FONT0004; 0 = no prefix, the
+ *  default) as CUTS of the one serif: a scale on the body size and a
+ *  weight. FONT0003 is DaggerfallUI.DefaultFont; FONT0004 is the
+ *  large face a title page sets. */
+export const FACE_OF_PREFIX = Object.freeze({
+  0: { scale: 1, weight: 400 },      // no prefix: the default face
+  1: { scale: 0.9, weight: 400 },    // FONT0000
+  2: { scale: 0.9, weight: 400 },    // FONT0001
+  3: { scale: 1.15, weight: 600 },   // FONT0002
+  4: { scale: 1, weight: 400 },      // FONT0003, the default
+  5: { scale: 1.4, weight: 600 },    // FONT0004, the title
+});
+
+/** The body size, from the leaf: about twenty-seven lines a page, and
+ *  never under thirteen CSS pixels on a phone. */
+export const bodySize = (pageH, dpr = 1) => Math.max(12, Math.min(64, Math.max(Math.round(pageH / 27 / 1.3), Math.round(13 * dpr))));
+
+// ── canvas faces, in FntFile's shape ──────────────────────────────
+let _measure = null;   // an offscreen 2D context for measuring
+const measurer = () => {
+  if (!_measure) _measure = document.createElement('canvas').getContext('2d');
+  return _measure;
+};
+
+/**
+ * A face the classic's measureText and wrapText can lay out, in the
+ * shape makeFont hands the classic window - `{ fnt }` - where the fnt
+ * wears FntFile's: `fixedHeight` the line height, `fixedWidth` the
+ * space plus one (spaceGlyphWidth is fixedWidth - 1), and
+ * `glyphWidth(index)` the browser's advance for the glyph at
+ * FNT_ASCII_START + index, less the one-pixel spacing the measure
+ * adds back - so a word measures as it will draw. `fnt.font` is the
+ * CSS font the row is drawn with.
+ */
+export function canvasFace(px, weight = 400, family = BOOK_FAMILY) {
+  const font = `${weight} ${px}px ${family}`;
+  const cache = new Map();
+  const m = measurer();
+  const advance = (ch) => { m.font = font; return m.measureText(ch).width; };
+  const space = Math.max(1, Math.round(advance(' ')));
+  const fnt = {
+    canvas: true,
+    font,
+    px,
+    fixedHeight: Math.round(px * 1.3),
+    fixedWidth: space + 1,
+    glyphWidth(index) {
+      let w = cache.get(index);
+      if (w === undefined) { w = Math.max(0, Math.round(advance(String.fromCharCode(FNT_ASCII_START + index))) - 1); cache.set(index, w); }
+      return w;
+    },
+    getGlyphPixels() { return null; },
+  };
+  return { fnt };
 }
 
-/** DrawText's walk (DaggerfallFont.cs:305-330), onto a 2D context:
- *  the fold, a glyph the face lacks CAST TO A SPACE, the drawn space
- *  advancing by the glyph width alone. `w` with align 'center'
- *  centres the row in that width (TextLabel's HorizontalAlignment). */
-export function paintFnt(ctx, fnt, text, x, y, { color = INK, align = 'left', w = 0 } = {}) {
-  if (!fnt || !text) return;
-  const atlas = fntAtlas(fnt, color);
-  let cx = Math.round(align === 'center' ? x + Math.max(0, (w - measureText(fnt, text)) / 2) : x);
-  const h = fnt.fixedHeight;
-  for (const ch of text) {
-    let code = asciiFold(ch.charCodeAt(0));
-    if (!hasGlyph(code)) code = FNT_SPACE_CODE;
-    if (code === FNT_SPACE_CODE) { cx += spaceGlyphWidth(fnt); continue; }
-    const gi = code - FNT_ASCII_START;
-    const gw = fnt.glyphWidth(gi);
-    if (gw > 0) {
-      ctx.drawImage(atlas, (gi % ATLAS_COLS) * FNT_GLYPH_DIM, Math.floor(gi / ATLAS_COLS) * FNT_GLYPH_DIM, gw, h, cx, y, gw, h);
-    }
-    cx += gw + 1;   // classicGlyphSpacing
-  }
+/** A row of type on a page: the face's font, the ink, top-aligned at
+ *  (x, y); `w` with align 'center' centres it in that width. */
+export function paintRow(ctx, face, text, x, y, { color = INK, align = 'left', w = 0 } = {}) {
+  const fnt = face?.fnt ?? face;
+  if (!fnt?.font || !text) return;
+  ctx.font = fnt.font;
+  ctx.fillStyle = color;
+  ctx.textBaseline = 'top';
+  ctx.textAlign = 'left';
+  const dx = align === 'center' ? x + Math.max(0, (w - ctx.measureText(text).width) / 2) : x;
+  ctx.fillText(text, Math.round(dx), Math.round(y));
 }
 
 // ── pagination (pure, tested) ─────────────────────────────────────
 /**
  * Cut the placed label stream (placeBookLabels' output) into leaves of
- * `pageH` logical pixels, BY ROW: every wrapped row keeps its label's
- * face, centring and height, and a row that would cross the leaf's
- * foot opens the next leaf instead. A leaf never opens on a blank
- * row (the typesetter's rule; DFU's scroll has no leaves to open),
- * and a book with no rows is one blank leaf. Returns
+ * `pageH` pixels, BY ROW: every wrapped row keeps its label's face,
+ * centring and height, and a row that would cross the leaf's foot
+ * opens the next leaf instead. A leaf never opens on a blank row (the
+ * typesetter's rule; DFU's scroll has no leaves to open), and a book
+ * with no rows is one blank leaf. Returns
  * [[{ text, center, face, rowH, y }...]...].
  */
 export function paginateBook(placed, pageH) {
@@ -143,9 +178,9 @@ export function paginateBook(placed, pageH) {
   return pages;
 }
 
-/** UIK: device pixels per logical pixel - an integer, from the view's
- *  short edge, so a phone and a desktop both get a leaf whose glyphs
- *  are a readable size and stay pixel-crisp. */
+/** The PAPER scale: device pixels per Raum pixel - an integer, from
+ *  the view's short edge, so the paper's grain and tears stay chunky
+ *  on a phone and a desktop alike. */
 export const uiScale = (w, h, dpr = 1) => Math.max(1, Math.round(Math.min(w, h) * dpr / 300));
 
 /** The leaf, off the view: as tall as the view allows (a book is
@@ -165,57 +200,70 @@ let model = null;
 let book = null;
 let onExit = () => {};
 let relock = () => {};
-let uiW = 0, uiH = 0, uik = 1;
-let layoutKey = '';   // what the pages were cut against: font version, default font, leaf size
+let uiW = 0, uiH = 0, dpr = 1;
+let layoutKey = '';   // what the pages were cut against: leaf size and the fonts' arrival
+let fontsReady = false;
 let closing = false;
 let listeners = [];
 
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
+/** The five cuts for this leaf's body size. */
+function facesFor(px) {
+  const faces = {};
+  for (const [x, cut] of Object.entries(FACE_OF_PREFIX)) faces[x] = canvasFace(Math.round(px * cut.scale), cut.weight);
+  return faces;
+}
+
 /** The book's pages, cut fresh from the model's layout law over THIS
- *  leaf's width and height. Each page paints its rows with the FNT
- *  painter inside Raum's own inset. */
-function cutPages(defaultFont) {
-  const wrapW = BOOK.pageW - LEAF_INSET.w;
-  const { placed } = placeBookLabels(model.lines, (x) => bookFont(x) ?? defaultFont, wrapW);
-  const pages = paginateBook(placed, BOOK.pageH - LEAF_INSET.h);
+ *  leaf's width and height. Each page paints its rows inside Raum's
+ *  own inset plus a margin of the type's own size. */
+function cutPages(px, faces) {
+  const margin = Math.round(px * 0.9);
+  const wrapW = BOOK.pageW - LEAF_INSET.w - margin * 2;
+  const { placed } = placeBookLabels(model.lines, (x) => faces[x] ?? faces[0], wrapW);
+  const pages = paginateBook(placed, BOOK.pageH - LEAF_INSET.h - margin);
   return pages.map((rows) => ({
     paint(pctx, x, y, w) {
       for (const row of rows) {
-        const fnt = row.face?.fnt ?? defaultFont?.fnt;
-        paintFnt(pctx, fnt, row.text, x, y + row.y, { align: row.center ? 'center' : 'left', w });
+        paintRow(pctx, row.face ?? faces[0], row.text, x + margin, y + Math.round(margin / 2) + row.y, { align: row.center ? 'center' : 'left', w: w - margin * 2 });
       }
     },
   }));
 }
 
 /** Raum's inscription seam (vendor/raum-book/book.js drawJournal), in
- *  this port's faces: the cover's title in the largest FNT loaded
- *  (FontPrefix 5, FONT0004), everything else in the default face; a
- *  `w` wraps the words to it. */
-function inscribe(defaultFont) {
+ *  this port's faces: the cover's title in the title cut, everything
+ *  else in the body; a `w` wraps the words to it and centres them. */
+function inscribe(faces) {
   return (ictx, str, x, y, { face, color = INK, w = 0 } = {}) => {
-    const fnt = (face === 'title' ? (bookFont(5)?.fnt ?? defaultFont?.fnt) : defaultFont?.fnt) ?? null;
-    if (!fnt) return;
-    const rows = w > 0 ? wrapText(fnt, String(str ?? ''), w) : [String(str ?? '')];
-    rows.forEach((row, i) => paintFnt(ictx, fnt, row, x, y + i * fnt.fixedHeight, { color, align: w > 0 ? 'center' : 'left', w }));
+    // the cover's words wrap to `w`; a bare call is a page number or
+    // BLANK, set small at Raum's corner (its y is a 7-pixel hand's row,
+    // so the small cut is lifted to sit inside the leaf)
+    if (!(w > 0)) { const sm = faces[1]; paintRow(ictx, sm, String(str ?? ''), x, y - sm.fnt.fixedHeight + 8, { color }); return; }
+    const f = face === 'title' ? faces[5] : faces[0];
+    const rows = wrapText(f.fnt, String(str ?? ''), w);
+    rows.forEach((row, i) => paintRow(ictx, f, row, x, y + i * f.fnt.fixedHeight, { color, align: 'center', w }));
   };
 }
 
-function fit(defaultFont) {
-  const dpr = Math.min(globalThis.devicePixelRatio || 1, 3);
+function fit() {
+  dpr = Math.min(globalThis.devicePixelRatio || 1, 3);
   const W = globalThis.innerWidth || 1, H = globalThis.innerHeight || 1;
-  uik = uiScale(W, H, dpr);
-  const w = Math.max(1, Math.floor(W * dpr / uik)), h = Math.max(1, Math.floor(H * dpr / uik));
+  const w = Math.max(1, Math.floor(W * dpr)), h = Math.max(1, Math.floor(H * dpr));
   if (el.width !== w || el.height !== h) { el.width = w; el.height = h; }
   uiW = w; uiH = h;
+  BOOK.paperScale = uiScale(W, H, dpr);
   const { pw, ph } = leafSize(uiW, uiH);
-  const key = `${pw}x${ph}#${bookFontsVersion()}#${defaultFont?.fnt?.fixedHeight ?? 0}`;
+  const key = `${pw}x${ph}#${fontsReady ? 1 : 0}`;
   if (key === layoutKey) return;
   layoutKey = key;
   resizeBook(book, pw, ph);
-  book.pages = cutPages(defaultFont);
-  BOOK.inscribe = inscribe(defaultFont);
+  const px = bodySize(ph, dpr);
+  const faces = facesFor(px);
+  book.pages = cutPages(px, faces);
+  BOOK.inscribe = inscribe(faces);
+  book.cache.clear();
 }
 
 /** A turn, Raum's way: a mid-flight tap snaps the flip and chains. */
@@ -246,8 +294,7 @@ export function bookKey(code) {
 function onPointer(e) {
   if (!book) return;
   e.preventDefault();
-  const dpr = Math.min(globalThis.devicePixelRatio || 1, 3);
-  const hit = bookHit(book, uiW, uiH, e.clientX * dpr / uik, e.clientY * dpr / uik);
+  const hit = bookHit(book, uiW, uiH, e.clientX * dpr, e.clientY * dpr);
   if (hit === 'outside') { exit(); return; }
   if (hit && typeof hit === 'object') turn(hit.side ? +1 : -1);   // TAP ANYWHERE FLIPS (Raum): left back, right forward
 }
@@ -258,9 +305,10 @@ function onWheel(e) { e.preventDefault(); if (e.deltaY) turn(Math.sign(e.deltaY)
  * is the classic BookReaderWindow; `d.onExit` runs when the closed
  * book has left the screen; `d.relock` is the host's pointer-lock
  * request, run inside the closing gesture (MAC1). Returns the frame
- * arm the door's draw() calls with the host's default font.
+ * arm the door's draw() calls.
  */
 export function mountEnhancedBook(canvasEl, d = {}) {
+  injectEnhancedFonts();
   el = canvasEl;
   ctx = el.getContext('2d');
   model = d.model;
@@ -268,19 +316,26 @@ export function mountEnhancedBook(canvasEl, d = {}) {
   relock = d.relock ?? (() => {});
   closing = false;
   layoutKey = '';
+  fontsReady = false;
+  // the serif arrives async (the skin's one web-font request); the
+  // pages are cut again when it lands, since the measures change
+  const fonts = globalThis.document?.fonts;
+  if (fonts?.load) {
+    Promise.all([fonts.load(`400 20px ${BOOK_FAMILY}`), fonts.load(`600 20px ${BOOK_FAMILY}`)])
+      .then(() => { fontsReady = true; layoutKey = ''; }, () => { fontsReady = true; layoutKey = ''; });
+  } else fontsReady = true;
   BOOK.cover = { title: model.book?.title || 'A Book', subtitle: model.book?.author ? `by ${model.book.author}` : '' };
   book = createBook([]);
   listeners = [['pointerdown', onPointer], ['wheel', onWheel], ['contextmenu', (e) => e.preventDefault()]];
   for (const [type, fn] of listeners) el.addEventListener(type, fn, { passive: false });
   return {
-    /** Per frame: size to the view, cut the pages when the fonts or
-     *  the leaf changed, paint; the first frame opens the cover. */
-    frame(defaultFont) {
+    /** Per frame: size to the view, cut the pages when the leaf or
+     *  the fonts changed, paint; the first frame opens the cover. */
+    frame() {
       if (!el || !ctx) return;
-      fit(defaultFont);
+      fit();
       if (book.phase === 'closed' && !book.open && !closing) openBook(book, now());
       ctx.clearRect(0, 0, uiW, uiH);
-      ctx.imageSmoothingEnabled = false;
       paintBook(ctx, book, uiW, uiH, null, now());
       if (closing && book.phase === 'closed') { const done = onExit; onExit = () => {}; done(); }
     },
@@ -290,6 +345,7 @@ export function mountEnhancedBook(canvasEl, d = {}) {
       for (const [type, fn] of listeners) el?.removeEventListener(type, fn);
       listeners = [];
       BOOK.inscribe = null;
+      BOOK.paperScale = 1;
       el = null; ctx = null; model = null; book = null; onExit = () => {}; relock = () => {};
     },
   };

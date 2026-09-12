@@ -27,6 +27,20 @@ export const BOOK = {
   // PORT (EB1): the cover's words and the inscription seam - see drawJournal above.
   cover: { title: 'RAUM', subtitle: 'FIELD JOURNAL' },
   inscribe: null,
+  // PORT (EB2): the PAPER SCALE. The port paints the book in device pixels
+  // so its type can be a real face, anti-aliased; the paper, the board and
+  // the stack are still drawn at Raum's pixel size and scaled up by this
+  // integer, smoothing off, so the pixel look survives. 1 = Raum's own.
+  paperScale: 1,
+};
+/** PORT (EB2): paint `draw` at 1/paperScale and blit it up, pixel-crisp. */
+const pixelLayer = (ctx, w, h, draw) => {
+  const ps = Math.max(1, BOOK.paperScale | 0);
+  if (ps === 1) { draw(ctx, w, h); return; }
+  const t = document.createElement('canvas');
+  t.width = Math.max(1, Math.round(w / ps)); t.height = Math.max(1, Math.round(h / ps));
+  draw(t.getContext('2d'), t.width, t.height);
+  ctx.save(); ctx.imageSmoothingEnabled = false; ctx.drawImage(t, 0, 0, t.width, t.height, 0, 0, w, h); ctx.restore();
 };
 /** Size the book to the screen: the object should command the view (MAC's eye). */
 const WIDTH_ENVELOPE_AR = 192 / 101; // preserve the pre-tune width at every viewport, including capped landscape
@@ -79,14 +93,16 @@ const pageCanvas = (book, pageIdx, runRef) => {
   const c = document.createElement('canvas');
   c.width = BOOK.pageW; c.height = BOOK.pageH;
   const ctx = c.getContext('2d');
-  // the leaf itself: a quieter sheet than the floating panels -- shallow tears, no tape
-  drawPaperPanel(ctx, 0, 0, BOOK.pageW, BOOK.pageH, { seed: 900 + pageIdx * 7, tape: false, shadow: false, rule: false, creases: pageIdx % 3 === 0 });
-  // the gutter's curvature: the page bows into the spine, so its inner edge falls into shade
   const side = pageIdx % 2; // 0 = a left page (spine on its right), 1 = a right page (spine on its left)
-  for (let i = 0; i < 10; i++) {
-    ctx.fillStyle = `rgba(60,44,30,${0.16 * (1 - i / 10)})`;
-    ctx.fillRect(side ? i : BOOK.pageW - 1 - i, 2, 1, BOOK.pageH - 4);
-  }
+  pixelLayer(ctx, BOOK.pageW, BOOK.pageH, (x, w, h) => { // PORT (EB2): the sheet at Raum's pixel size
+    // the leaf itself: a quieter sheet than the floating panels -- shallow tears, no tape
+    drawPaperPanel(x, 0, 0, w, h, { seed: 900 + pageIdx * 7, tape: false, shadow: false, rule: false, creases: pageIdx % 3 === 0 });
+    // the gutter's curvature: the page bows into the spine, so its inner edge falls into shade
+    for (let i = 0; i < 10; i++) {
+      x.fillStyle = `rgba(60,44,30,${0.16 * (1 - i / 10)})`;
+      x.fillRect(side ? i : w - 1 - i, 2, 1, h - 4);
+    }
+  });
   const page = book.pages[pageIdx];
   if (page) page.paint(ctx, side ? 12 : 8, 10, BOOK.pageW - 20, BOOK.pageH - 24, runRef);
   else { drawJournal(ctx, 'BLANK', (BOOK.pageW >> 1) - 16, BOOK.pageH >> 1, { face: BODY, color: css(PAPER.inkFaded, 0.6) }); }
@@ -105,7 +121,9 @@ const getCover = () => {
   if (coverCanvas) return coverCanvas;
   const c = document.createElement('canvas');
   c.width = BOOK.pageW; c.height = BOOK.pageH;
-  const x = c.getContext('2d');
+  const x0 = c.getContext('2d');
+  pixelLayer(x0, c.width, c.height, (x, cw, ch) => { // PORT (EB2): the board at Raum's pixel size
+  const c = { width: cw, height: ch };
   x.fillStyle = css(BOOK.board); x.fillRect(0, 0, c.width, c.height);
   for (let i = 0; i < 260; i++) { // the board's grain
     const gx = (i * 37) % c.width, gy = (i * 53) % c.height;
@@ -130,6 +148,8 @@ const getCover = () => {
   x.fillStyle = css([120, 112, 96]); x.fillRect(c.width - 7, clY, 7, 10);
   x.fillStyle = css([164, 156, 136]); x.fillRect(c.width - 7, clY, 7, 2);
   x.fillStyle = css(BOOK.boardDark); x.fillRect(c.width - 5, clY + 4, 2, 2);
+  });
+  const x = x0;
   // the title, embossed: dark inset under, lit face over
   const tx = 18, ty = Math.max(30, (c.height >> 2) - 8);
   drawJournal(x, BOOK.cover.title, tx + 1, ty + 1, { face: TITLE, color: css(BOOK.boardDark), w: c.width - tx * 2 });   // PORT: the book's own title
@@ -144,7 +164,7 @@ const getCover = () => {
 export function bookOrigin(uiW, uiH) { return [uiW >> 1, (uiH - BOOK.pageH) >> 1]; }
 
 const drawStack = (ctx, sx, sy, sides = 3) => { // the closed pages' fore-edges; sides: 1 = left, 2 = right, 3 = both
-  const d = 4; // stack thickness
+  const d = 4 * Math.max(1, BOOK.paperScale | 0); // stack thickness (PORT (EB2): in paper pixels)
   ctx.fillStyle = css(BOOK.stack);
   if (sides & 1) ctx.fillRect(sx - BOOK.pageW - d, sy + 3, BOOK.pageW + d, BOOK.pageH + d);
   if (sides & 2) ctx.fillRect(sx, sy + 3, BOOK.pageW + d, BOOK.pageH + d);

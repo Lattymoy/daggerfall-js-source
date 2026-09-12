@@ -22,6 +22,11 @@ animated book in my repo project-raum").
 - `book.js` gains `resizeBook(book, pw, ph)`, a sizing seam beside
   `layoutBook`: the port sizes the leaf off the view's height where
   Raum keys off the short edge, and the cover is cleared with it.
+- `book.js` gains `BOOK.paperScale` and `pixelLayer` (EB2, Mac: "Can we
+  use a more legible text?"): the port paints the book in device
+  pixels so its type can be a real face, anti-aliased; the sheet, the
+  board and the stack are still drawn at Raum's pixel size and blitted
+  up by this integer with smoothing off, so the pixel look survives.
 - `paper.js` imports `mix32` from `./rng.js` here instead of Raum's
   engine core.
 
