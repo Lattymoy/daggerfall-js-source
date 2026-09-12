@@ -247,7 +247,7 @@ test('TI1 touch.js: the five buttons, the gate-by-hook dial, and the three route
   // TI1b: canvas-relative coordinates, a tap on the stick's half too, the dot offset by the canvas rect
   assert.match(s, /const local = \(tch\) => \{ const r = canvas\.getBoundingClientRect\(\);/, 'touch points are canvas-relative');
   assert.doesNotMatch(s, /innerWidth \/ 2/, 'the half split is the canvas\'s, not the window\'s');
-  assert.match(s, /stickTravel < TAP_PX && \(e\.timeStamp - stickStart\) <= TAP_MS\) \{\s*\n\s*hooks\.tap\?\.\(stickOrigin\[0\], stickOrigin\[1\]\);/, 'a still short touch on the stick half is a tap');
+  assert.match(s, /stickTravel < TAP_PX && \(e\.timeStamp - stickStart\) <= TAP_MS\) \{[\s\S]{0,900}?hooks\.tap\?\.\(stickOrigin\[0\], stickOrigin\[1\], \{ lockOnly: true \}\);/, 'a still short touch on the stick half is a tap - LOCK-ONLY (TS1)');
   assert.match(s, /dot\.style\.left = `\$\{x \+ r\.left\}px`;/, 'the dot is placed in the overlay\'s space');
   assert.match(s, /if \(!paused\) hooks\.look\?\.\(ev\.dx \* TOUCH_LOOK_GAIN/, 'look routes - and AUDIT 62 F7: not under a window, where PlayerMouseLook.cs:238-244 drops the delta');
   assert.match(s, /hooks\.attack\?\.\(ev\.dx, ev\.dy, ev\.held\);/, 'the swipe routes to the drag seam');
@@ -262,7 +262,8 @@ test('TI1 hosts: the three combat hosts wire swipe, tap, lock and dial; the fly-
     const s = read(h);
     assert.match(s, /const inputHooks = \{[\s\S]*?const touch = attachTouch\(canvas, inputHooks\);/, `${h}: the layer's handle is kept for the dot (GP1: the hooks are one object the pad shares)`);
     assert.match(s, /\n\s*attack: \(dx, dy, held\) =>/, `${h}: the swipe hook`);
-    assert.match(s, /\n\s*tap: \(x, y\) =>/, `${h}: the tap hook`);
+    assert.match(s, /\n\s*tap: \(x, y, opts = null\) =>/, `${h}: the tap hook`);
+    assert.match(s, /_tapLockOnly = !!opts\?\.lockOnly;/, `${h}: the tap carries the stick-half flag (TS1)`);
     assert.match(s, /locked: \(\) => lockOn\.locked,/, `${h}: the lock predicate`);
     assert.match(s, /dial: isEnhanced\(\),/, `${h}: AUDIT 62 F10 - it draws the dial only where Tab OPENS one (pixelDial refuses off the enhanced skin), not merely where the host routes Tab`);
     assert.match(s, /\(rightHeld \|\| swipeHeld\) && walkMode/, `${h}: the swipe holds the swing-settle law like the mouse button`);
@@ -277,4 +278,37 @@ test('TI1 hosts: the three combat hosts wire swipe, tap, lock and dial; the fly-
   assert.match(read('src/scenes/worldModes.js'), /const eyeDir = \(\) => host\.activateDir\?\.\(\) \?\?/, 'the modal ladders take the tap ray through eyeDir');
   const interior = read('src/scenes/interior.js');
   assert.doesNotMatch(interior, /attack:|tap:|dial:|attackTap/, 'the fly-cam interior draws no sword, no dial');
+});
+
+// TS1 (2026-09-12) - Mac: "Sometimes in the interiors, walking into the
+// exit door puts you outside without interaction." The stick-half tap
+// (TI1b) exists so a foe left of centre can be locked, and it went down
+// the whole activation ladder: a thumb re-placed on the stick beside
+// the exit door walked the player out. The stick's tap now rides a
+// lock-only flag, every host publishes it, and every ladder stops
+// after the lock pick when it is up - the quest-click arm included.
+test('TS1: the stick-half tap LOCKS and opens nothing - the flag from touch.js through every host and every ladder (mutant: any ladder running on)', () => {
+  const touch = read('src/ui/touch.js');
+  assert.match(touch, /hooks\.tap\?\.\(stickOrigin\[0\], stickOrigin\[1\], \{ lockOnly: true \}\);/, 'the stick half says which tap it is');
+  assert.match(touch, /hooks\.tap\?\.\(ev\.x, ev\.y\);/, 'the look half\'s tap is the plain one - it still activates');
+  for (const h of ['world', 'exterior', 'dungeon']) {
+    const s = read(`src/scenes/${h}.js`);
+    assert.match(s, /let _tapArmed = 0, _tapPoint = null, _tapDir = null, _tapLockOnly = false;/, `${h}: the flag beside the ray`);
+    assert.match(s, /_tapPoint = null; _tapDir = null; _tapLockOnly = false; \}/, `${h}: cleared with the ray`);
+  }
+  for (const h of ['world', 'exterior']) {
+    const s = read(`src/scenes/${h}.js`);
+    assert.match(s, /activateLockOnly: \(\) => _tapLockOnly,/, `${h}: published to the modal ladders`);
+    assert.match(s, /if \(getInteractionMode\(\) !== 'info' && !_tapLockOnly\) \{/, `${h}: the quest-click arm is no click either`);
+    assert.match(s, /if \(_lockFoe\) lockOn\.toggle\(_lockFoe\);\n\s*else if \(_tapLockOnly\) \{ \/\* TS1/, `${h}: the exterior ladder ends at the lock`);
+  }
+  const d = read('src/scenes/dungeon.js');
+  assert.match(d, /if \(_lockFoe\) \{ lockOn\.toggle\(_lockFoe\); return null; \}\n\s*if \(_tapLockOnly\) return null;/, 'dungeon: the ladder ends at the lock');
+  const wm = read('src/scenes/worldModes.js');
+  const exit = wm.slice(wm.indexOf('function tryExit() {'), wm.indexOf('function tryExitDungeon() {'));
+  const dexit = wm.slice(wm.indexOf('function tryExitDungeon() {'), wm.indexOf('function exitDungeonNow() {'));
+  for (const [name, fn] of [['tryExit', exit], ['tryExitDungeon', dexit]]) {
+    assert.match(fn, /!host\.activateLockOnly\?\.\(\)\) \{/, `${name}: the quest-click arm is gated`);
+    assert.match(fn, /if \(f\) \{ host\.lockToggle\?\.\(f\); return true; \}[\s\S]{0,700}?if \(host\.activateLockOnly\?\.\(\)\) return false;/, `${name}: the ladder ends at the lock`);
+  }
 });
