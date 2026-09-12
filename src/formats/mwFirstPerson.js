@@ -1264,16 +1264,34 @@ export function dfWeaponToMw(item, weaponsTable) {
   return MW_WEAPON_TYPE.None;
 }
 
-export function pickWeaponRecord(records, type, material = null) {
+export function pickWeaponRecord(records, type, material = null, { has = null } = {}) {
   // AUDIT MW-A F3: id-sorted, for the face's own reason (D27) - file
   // order is a property of the LOAD, and `ofType[0]` handed a player
   // whichever record their archive arrangement listed first. Sorted,
   // the same character draws the same sword on every machine, and on
   // retail the alphabetical first is the iron/chitin commons the old
   // pick usually landed on anyway.
-  const ofType = (records ?? []).filter((r) => r.type === type && !r.enchanted)
+  const sorted = (records ?? []).filter((r) => r.type === type && !r.enchanted)
     .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
-  if (!ofType.length) return null;
+  if (!sorted.length) return null;
+  // MW-D50 (Mac: on a Morrowind bow "the arrow is never shown being
+  // ready"): A RECORD WHOSE MESH THE ARCHIVES CARRY. The records come
+  // from EVERY .esm attached and the meshes from whichever .bsa files
+  // are - and the two need not agree. With Tribunal.esm or
+  // Bloodmoon.esm beside Morrowind.esm, the id-sorted first Arrow is
+  // an expansion's ("adamantium arrow"), whose mesh lives in the
+  // expansion's .bsa; without that archive attached the pick landed
+  // on a file the store did not have, resolveWeaponParts noted "not in
+  // your archives", and the bow drew EMPTY, for ever, while the base
+  // game's own iron arrow sat one id further down. The bow itself
+  // escaped by its material chain (an iron bow finds "long bow" in
+  // the base game). So, given `has` (the archives' directory), the
+  // pool is first the records whose model is actually there; only
+  // when NONE is does the old pick stand, so the note still names the
+  // file the player is missing. weaponPartPaths and resolveWeaponParts
+  // pass the same `has`, so the preload and the read agree.
+  const present = has ? sorted.filter((r) => has(`meshes/${r.model}`)) : sorted;
+  const ofType = present.length ? present : sorted;
   const chain = material ? DF_TO_MW_MATERIAL[material] : null;
   for (const want of (Array.isArray(chain) ? chain : chain ? [chain] : [])) {
     const hit = ofType.find((r) => r.id.includes(want));

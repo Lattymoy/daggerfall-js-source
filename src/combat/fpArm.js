@@ -881,28 +881,47 @@ export function hasDaggerfallArrows(items) {
  * branches - is answered off skeleton bytes the caller already holds and
  * needs nothing from an archive.
  */
-export function weaponPartPaths({ weapon, hasAmmo = false, allWeapons }) {
+export function weaponPartPaths({ weapon, hasAmmo = false, allWeapons, has = null }) {
   const paths = [];
   const mwType = dfWeaponToMw(weapon, WEAPONS);
   if (mwType === MW_WEAPON_TYPE.None) return paths;
-  const rec = pickWeaponRecord(allWeapons, mwType, weapon ? materialName(weapon) : null);
+  const rec = pickWeaponRecord(allWeapons, mwType, weapon ? materialName(weapon) : null, { has });   // MW-D50: a record the archives carry
   if (rec) paths.push(`meshes/${rec.model}`);
   const ammoType = ammoTypeFor(mwType);
   if (ammoType !== MW_WEAPON_TYPE.None && hasAmmo) {
-    const ammoRec = pickWeaponRecord(allWeapons, ammoType);
+    const ammoRec = pickWeaponRecord(allWeapons, ammoType, null, { has });
     if (ammoRec) paths.push(`meshes/${ammoRec.model}`);
   }
   return paths;
 }
 
-export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, skeletonBytes }) {
+/** MW-D50: the archives' DIRECTORY - "is this path in any attached
+ *  .bsa" - the one question pickWeaponRecord asks of them. Not
+ *  findLoaded: that one throws for a path known but not yet read
+ *  (MW-LOAD's guard), and a candidate's presence is asked BEFORE the
+ *  preload that reads it. */
+export const archiveHas = (archives) => (p) => (archives ?? []).some((a) => a.has(p));
+
+/** MW-D50: said ONCE per reason, on the console, beside the card. A
+ *  bow that resolves with ammunition in the pack and no arrow on it is
+ *  a fault the player sees from the chair and could not name - the
+ *  card's note is the same sentence, but the card is a menu away. */
+const saidArrow = new Set();
+function sayNoArrow(notes) {
+  const why = notes.filter((n) => n.startsWith('arrow')).join('; ') || 'no reason recorded';
+  if (saidArrow.has(why)) return;
+  saidArrow.add(why);
+  console.warn(`[mw] the bow carries no arrow - ${why}`);
+}
+
+export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, skeletonBytes, has = null }) {
   const notes = [];
   const parts = [];
   let weaponInfo = null;
   let arrowInfo = null;
   const mwType = dfWeaponToMw(weapon, WEAPONS);
   if (mwType !== MW_WEAPON_TYPE.None) {
-    const rec = pickWeaponRecord(allWeapons, mwType, weapon ? materialName(weapon) : null);   // MW-D38
+    const rec = pickWeaponRecord(allWeapons, mwType, weapon ? materialName(weapon) : null, { has });   // MW-D38; MW-D50: a record the archives carry
     if (!rec) {
       notes.push(`weapon: your archives carry no unenchanted Morrowind weapon of type ${mwType}`);
     } else {
@@ -931,7 +950,7 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
         // "shoot attach" key.
         const ammoType = ammoTypeFor(mwType);
         if (ammoType !== MW_WEAPON_TYPE.None && hasAmmo) {
-          const ammoRec = pickWeaponRecord(allWeapons, ammoType);
+          const ammoRec = pickWeaponRecord(allWeapons, ammoType, null, { has });   // MW-D50
           if (!ammoRec) {
             notes.push(`arrow: your archives carry no unenchanted Morrowind ammunition of type ${ammoType}`);
           } else {
@@ -975,6 +994,9 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
   } else if (weapon) {
     notes.push('weapon: Morrowind has no weapon type for what you are holding');
   }
+  // MW-D50: ammunition in the pack, a weapon that takes it, and no
+  // arrow resolved - say so where the player can read it.
+  if (hasAmmo && weaponInfo && ammoTypeFor(mwType) !== MW_WEAPON_TYPE.None && !arrowInfo) sayNoArrow(notes);
   return { mwType, parts, weaponInfo, arrowInfo, notes };
 }
 
@@ -1024,7 +1046,7 @@ async function buildTpBody({
     // meshes resolveWeaponParts reads further down.
     await loadFromArchives(archives, [
       ...[...skinRows, ...worn.adds].map((row) => `meshes/${row.model}`),
-      ...weaponPartPaths({ weapon, hasAmmo, allWeapons }),
+      ...weaponPartPaths({ weapon, hasAmmo, allWeapons, has: archiveHas(archives) }),   // MW-D50
     ]);
     const partBytes = [];
     for (const row of [...skinRows, ...worn.adds]) {
@@ -1041,7 +1063,7 @@ async function buildTpBody({
     // Rule 8 on THIS skeleton: the third-person rig carries its own
     // Weapon Bone (vanilla parents it under Bip01 R Hand), so the same
     // record hangs off the same column with no new law.
-    const resolvedWeapon = resolveWeaponParts({ weapon, hasAmmo, allWeapons, find, skeletonBytes });
+    const resolvedWeapon = resolveWeaponParts({ weapon, hasAmmo, allWeapons, find, skeletonBytes, has: archiveHas(archives) });   // MW-D50
     partBytes.push(...resolvedWeapon.parts);
 
     const arm = await assembleFirstPersonArm({ skeletonBytes, parts: partBytes });
@@ -1375,7 +1397,7 @@ export async function buildFpArm({
     await loadFromArchives(archives, [
       ...fpRows.map((w) => w.path),
       ...fpWornAdds(worn.adds).map((add) => `meshes/${add.model}`),
-      ...weaponPartPaths({ weapon, hasAmmo, allWeapons }),
+      ...weaponPartPaths({ weapon, hasAmmo, allWeapons, has: archiveHas(archives) }),   // MW-D50
       ...sourcePaths,
     ]);
     for (const w of fpRows) {
@@ -1397,7 +1419,7 @@ export async function buildFpArm({
     // gave it so a live weapon swap resolves through the very same door
     // as the build. Its two reads are covered by the preload above,
     // through weaponPartPaths.
-    const resolvedWeapon = resolveWeaponParts({ weapon, hasAmmo, allWeapons, find, skeletonBytes });
+    const resolvedWeapon = resolveWeaponParts({ weapon, hasAmmo, allWeapons, find, skeletonBytes, has: archiveHas(archives) });   // MW-D50
     partBytes.push(...resolvedWeapon.parts);
     const weaponNotes = resolvedWeapon.notes;
     const weaponInfo = resolvedWeapon.weaponInfo;
@@ -2772,10 +2794,10 @@ export function createFpArm() {
           // below read synchronously - this rig's and, further down, the
           // third-person one's. The two resolves pick the SAME records
           // off the same allWeapons, so one load serves both.
-          await loadFromArchives(archives, weaponPartPaths({ weapon: item, hasAmmo, allWeapons: token.allWeapons }));
+          await loadFromArchives(archives, weaponPartPaths({ weapon: item, hasAmmo, allWeapons: token.allWeapons, has: archiveHas(archives) }));   // MW-D50
           const resolved = resolveWeaponParts({
             weapon: item, hasAmmo, allWeapons: token.allWeapons, find,
-            skeletonBytes: token.skeletonBytes,
+            skeletonBytes: token.skeletonBytes, has: archiveHas(archives),   // MW-D50
           });
           const arm = token.arm;
           arm.pieces = arm.pieces.filter((p) => p.slot !== 'weapon' && p.slot !== 'arrow');
@@ -2816,7 +2838,7 @@ export function createFpArm() {
             const t = thirdBuilt;
             const tResolved = resolveWeaponParts({
               weapon: item, hasAmmo, allWeapons: token.allWeapons, find,
-              skeletonBytes: t.skeletonBytes,
+              skeletonBytes: t.skeletonBytes, has: archiveHas(archives),   // MW-D50
             });
             t.arm.pieces = t.arm.pieces.filter((p) => p.slot !== 'weapon' && p.slot !== 'arrow');
             bindPartsInto(t.arm, tResolved.parts);
