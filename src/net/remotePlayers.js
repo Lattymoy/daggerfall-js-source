@@ -5,10 +5,10 @@
 // iteration draws every peer as their PAPERDOLL: the same composite the
 // inventory shows, minus its panel background, cropped to the figure and
 // stood on the ground as a billboard at the peer's feet, the name over
-// its head. The Morrowind body rides the player's own rig
-// (combat/fpArm.js, one instance, built from the player's own race and
-// gear), so a peer in it is the next iteration's work: the rig made
-// instantiable per body. Recorded in Online-Arc.md.
+// its head. With the Morrowind layer on, the
+// body instead (MWBODY1, net/peerBodies.js: one rig instance per
+// peer), the doll standing wherever a body does not. Recorded in
+// Online-Arc.md.
 //
 // THE LOOK travels in the hello (net/online.js): race, gender, face,
 // and the equipped items' doll fields (paperdollItemImage reads
@@ -125,6 +125,7 @@ export class RemotePlayers {
     this._now = now;
     this._dolls = new Map();     // lookKey -> { rec, w, h } ready | Promise composing | { failedUntil } (insertion-ordered: the oldest first)
     this._batches = new Map();   // peer id -> { batch, key, doll, peer }
+    this._shown = [];            // the last sync's drawable peers with their head heights - the name pass reads it
     this._queue = Promise.resolve();
   }
 
@@ -186,10 +187,14 @@ export class RemotePlayers {
    * it); a peer whose look changed gets a new batch (AUDIT ONLINE
    * C12); the batches of peers gone are released.
    */
-  sync(peers, toScene = (p) => [p.x, p.y, p.z]) {
+  sync(peers, toScene = (p) => [p.x, p.y, p.z], { bodyHeight = () => 0 } = {}) {
     const live = new Set();
+    this._shown = [];   // every drawable peer, doll or body, for the name pass
     for (const peer of peers) {
       if (!peer?.shown) continue;
+      // MWBODY1: a peer standing in a Morrowind body (net/peerBodies.js) draws no doll; its name still rides this pass, at the body's own head
+      const bodyH = bodyHeight(peer.id);
+      if (bodyH > 0) { this._shown.push({ peer, height: bodyH }); continue; }
       live.add(peer.id);
       const key = lookKey(peer.look);
       let entry = this._batches.get(peer.id);
@@ -205,6 +210,7 @@ export class RemotePlayers {
       const f = toScene(peer.shown);
       entry.batch.origin[0] = f[0]; entry.batch.origin[1] = f[1]; entry.batch.origin[2] = f[2];
       entry.peer = peer;
+      this._shown.push({ peer, height: entry.doll.h });
     }
     for (const [id, entry] of this._batches) {
       if (live.has(id)) continue;
@@ -227,10 +233,10 @@ export class RemotePlayers {
    */
   namePoints(proj, view, w, h, eye, toScene = (p) => [p.x, p.y, p.z], rect = null) {
     const out = [];
-    for (const e of this._batches.values()) {
+    for (const e of this._shown ?? []) {
       const f = toScene(e.peer.shown);
       if (eye) { const dx = f[0] - eye[0], dz = f[2] - eye[2]; if (dx * dx + dz * dz > NAME_RANGE * NAME_RANGE) continue; }
-      const s = projectToScreen([f[0], f[1] + e.doll.h + 0.25, f[2]], w, h, proj, view, rect);
+      const s = projectToScreen([f[0], f[1] + e.height + 0.25, f[2]], w, h, proj, view, rect);
       if (!s.front || s.x < -200 || s.x > w + 200 || s.y < -50 || s.y > h + 50) continue;
       out.push({ id: e.peer.id, name: e.peer.name ?? '', x: s.x, y: s.y });
     }
