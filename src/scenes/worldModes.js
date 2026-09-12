@@ -142,7 +142,8 @@ import { peopleAreVisible, updateNpcPresence } from '../characters/interiorPeopl
 import { exteriorLockpickingChance, lookAtLockText, LOCKPICKING_SUCCESS_TEXT, LOCKPICKING_FAILURE_TEXT, isActionDoorObject } from '../world/actionSystem.js';   // AUDIT 63 F42: GetComponent<DaggerfallActionDoor>() with a name
 import { tallyCrimeGuildRequirements } from '../systems/crimeGuilds.js';   // CG2: the break-in tally
 import { theftBasket, privatePropertyTheft, shopShelfTheft } from '../systems/theft.js';   // PT1: the two stealing laws
-import { buildingGreeting, shopQualityPresentation } from '../systems/buildingGreeting.js';   // BG1: the shop quality + the householder's greeting
+import { buildingGreeting, shopQualityPresentation } from '../systems/buildingGreeting.js';
+import { setUnleveledLootWorld, unleveledLootPreTransition, unleveledLootExteriorTransition } from '../systems/unleveledLoot.js';   // UL1: PlayerEnterExit's world and its transition events   // BG1: the shop quality + the householder's greeting
 import { discoverBuilding, undiscoverBuilding, getDiscoveredBuilding, getLastLockpickAttempt, setLastLockpickAttempt } from '../systems/discovery.js';   // H3: selling a house takes its name back off the map
 import { BUILDING_KEY_0 } from '../systems/talkTopics.js';   // H3: the no-key key both ship interiors are filed under
 import { getHolidayId } from '../systems/holidays.js';
@@ -883,9 +884,9 @@ export function createWorldModes(host) {
    *
    *  This host owned two pools and ran NO fan-out at all - no
    *  runMagicRoundsFor, so no tickActiveEffects and no updatePoisons
-   *  (worldTick.js:211-212), and no killIfAnyLiveStatZero. Both pools
-   *  READ the effect list every frame (exteriorFoes.js:537-538 and
-   *  cityGuards.js:766-767 each take `entityIsParalyzed` +
+   *  (worldTick.js:213-214), and no killIfAnyLiveStatZero. Both pools
+   *  READ the effect list every frame (exteriorFoes.js:538-539 and
+   *  cityGuards.js:767-768 each take `entityIsParalyzed` +
    *  `applyEnemyMotorEffectFlags`), and nothing ever ended one: a
    *  Continuous Damage bundle on a foe in a shop never took a round,
    *  a poison inflicted at this host's own onInflictPoison never
@@ -954,6 +955,18 @@ export function createWorldModes(host) {
   }
   // E2: the entered building's identity + the shop browse overlay.
   let interiorBuilding = null;
+  // UL1: what Unleveled Loot reads of PlayerEnterExit, PlayerGPS and the
+  // player - IsPlayerInsideOpenShop, Interior.BuildingData.Quality,
+  // IsPlayerInsideDungeon, CurrentRegionIndex, CurrentLocation's
+  // MapTableData.DungeonType - published live from this machine.
+  setUnleveledLootWorld({
+    playerEntity: () => playerEntity,
+    insideOpenShop: () => mode === 'interior' && !!interiorBuilding?.insideOpenShop,
+    buildingQuality: () => interiorBuilding?.quality ?? 0,
+    insideDungeon: () => mode === 'dungeon',
+    regionIndex: () => host.currentRegionIndex?.() ?? -1,
+    locationDungeonType: () => host.currentLocation?.()?.mapTableData?.dungeonType ?? 255,
+  });
   /** ROAD-B B4: PlayerEnterExit.IsPlayerInsideTavern / IsPlayerInsideResidence
    *  (PlayerEnterExit.cs:160-170). Plain auto-properties, "set upon entry"
    *  by PlayerActivate.TransitionInterior (:1121-1122) - NOT live reads of
@@ -1200,10 +1213,10 @@ export function createWorldModes(host) {
    *  billboard is CENTRE-anchored, so the base ends up ON the marker
    *  inside a building and half a height BELOW it inside a dungeon.
    *  This port's billboard shader is BOTTOM-anchored (position = base,
-   *  the C11 law dungeonContext.js:1516 states), so the same visual
+   *  the C11 law dungeonContext.js:1517 states), so the same visual
    *  result needs the shift on the DUNGEON side - which is exactly the
    *  shift the dungeon's own RDB flats already take
-   *  (dungeonContext.js:1421, `y - size.h / 2`), and which a building's
+   *  (dungeonContext.js:1422, `y - size.h / 2`), and which a building's
    *  flats correctly do not (interiorContext.js passes its centers
    *  straight through).
    *
@@ -4395,6 +4408,7 @@ export function createWorldModes(host) {
     // TR5: TransportManager.HandleTransition (:196-202) - a BUILDING
     // interior puts you back on foot. The law shipped in TR1 with no
     // caller; this is it.
+    unleveledLootPreTransition();   // UL1: OnPreTransition (TransitionInterior) - a listener beside TransportManager's HandleTransition, the raise itself is one
     dismountPlayer('ToBuildingInterior');
     transitioning = true;
     try {
@@ -4873,6 +4887,7 @@ export function createWorldModes(host) {
     if (!landing) { console.error('exit: no exterior landing (empty sibling doors)'); return false; }   // tryEnter guards its landing; this path was unguarded - a null here killed the frame loop
     // P1: CacheScene (:860) - BEFORE the teardown, while the shelves
     // and the action objects are still alive to be read.
+    unleveledLootPreTransition();   // UL1: OnPreTransition (TransitionExterior)
     cacheInteriorScene();
     teardownQuestFlats();   // Q4-v: OnDestroy for the quest stands, before the batch teardown
     interiorCtx.destroy();
@@ -4907,6 +4922,7 @@ export function createWorldModes(host) {
     host.unlockOn?.();   // AUDIT 62 F16/F28: the lock never outlives a mode change
     questBridge?.onExteriorTransition();   // Q4-v: CreateFoe's pending-wave invalidation
     npcSession?.onWorldChanged();          // TK-v: OnTransitionToExterior (:3599-3603)
+    unleveledLootExteriorTransition();     // UL1: OnTransitionExterior - the BUILDING exit alone clears the mod's dungeon
     console.log('exterior: returned at door');
     return true;
   }
@@ -4924,6 +4940,7 @@ export function createWorldModes(host) {
     const dfLocation = dungeonLocationFor(hit.dfLocation, { questMachine: questBridge?.machine });
     if (!dfLocation || !dfLocation.hasDungeon) return false;
     dismountPlayer('ToDungeonInterior');   // TR5: the other half of :196-202
+    unleveledLootPreTransition();   // UL1: OnPreTransition (TransitionDungeonInterior)
     transitioning = true;
     try {
       const ctx = await buildDungeonContext(
@@ -4976,7 +4993,7 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:4901), so the OUTER host's one rides in.
+          // (dungeonContext.js:4903), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:524 -> the
@@ -5267,6 +5284,7 @@ export function createWorldModes(host) {
   /** TransitionDungeonExterior(true): the exit itself, split from the
    *  activation so the wagon prompt's No can take it a frame later. */
   function exitDungeonNow() {
+    unleveledLootPreTransition();   // UL1: OnPreTransition (TransitionDungeonExterior) - and NO OnTransitionExterior here, bug for bug
     // Verbatim PositionPlayerToDungeonExit; the camera faces the normal.
     const landing = dungeonEntranceLanding(dungeonReturn.candidates.map((e) => e.door));
     host.onDungeonLeave?.();   // WORLD1: the room's memory goes out while the dungeon still stands
@@ -5882,7 +5900,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:6289's own wave-46 note); the interior
+          // a blow (world.js:6298's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage();
@@ -5920,7 +5938,7 @@ export function createWorldModes(host) {
         // (cityGuards.js:572-577), so this seam splits by pool exactly
         // as `dealDamage` above it does rather than dropping the
         // non-encounter half - the zero-damage SWING already reaches
-        // that door (cityGuards.js:1005) and the shaft owes the same.
+        // that door (cityGuards.js:1006) and the shaft owes the same.
         onAttackFromPlayer: (f) => (f._encounter
           ? interiorFoes?.handleAttackFromPlayer(f, player.pos)
           : interiorGuards?.handleAttackFromPlayer(f, player.pos)),
@@ -6631,7 +6649,7 @@ export function createWorldModes(host) {
    *      ... cursorActive = !cursorActive;
    *  This mode machine used to register a SECOND bindCursorToggle of
    *  its own, and `bindCursorToggle` installs a fresh window listener
-   *  per call over a MODULE-global flag (player/pointerLock.js:56-102).
+   *  per call over a MODULE-global flag (player/pointerLock.js:57-135).
    *  ?world and ?exterior build this machine unconditionally, so one
    *  Enter ran both handlers and flipped the flag TWICE - net zero -
    *  and `cursorActive()` could never rise in the two shipping outdoor
@@ -7738,6 +7756,7 @@ export function createWorldModes(host) {
      *  OnDestroy, so the resource side never decoupled. */
     forceExitToExterior({ cacheScene = true } = {}) {
       const wasInside = mode !== 'exterior';
+      if (wasInside) unleveledLootPreTransition();   // UL1: TransitionDungeonExteriorImmediate / the teleport raise OnPreTransition alone (PlayerEnterExit.cs:1209-1215)
       if (interiorCtx) {
         // Teleport.cs:145-148, "Cache scene before departing": inside a
         // building that is CacheScene(playerEnterExit.Interior.name) -
@@ -7983,7 +8002,7 @@ export function createWorldModes(host) {
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
      *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:2586-2608), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
-     *  unconditionally (world.js:4163). So an F9 pressed in a shop
+     *  unconditionally (world.js:4172). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them
      *  back into the street's rig; the rig actually in the player's
      *  hands was in no envelope at all.
@@ -8011,7 +8030,7 @@ export function createWorldModes(host) {
      *  presenter for the whole visit) or the interior's? world.js's gate read townTalk's slot alone. */
     deathUp() { return mode === 'dungeon' ? !!dungeonCtx?.deathUp?.() : interiorOverlay instanceof DeathScreen; },
     /** The restore half - and NOT gated on the mode, deliberately.
-     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:4223)
+     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:4232)
      *  and only re-enters the building at :4217, so the mode at apply
      *  time is whatever the LOAD landed in, not whatever the SAVE was
      *  taken in: an outdoor save loaded while the player was indoors
@@ -8019,8 +8038,8 @@ export function createWorldModes(host) {
      *  building entry meets the outgoing session's drawn weapon. DFU
      *  has one manager, so the same bit belongs in every rig.
      *
-     *  FLAG ONLY, presence-gated, exactly as world.js:4329/:4329 and
-     *  dungeonContext.js:4977/:4983 are: the C# restore sets the
+     *  FLAG ONLY, presence-gated, exactly as world.js:4338/:4338 and
+     *  dungeonContext.js:4979/:4983 are: the C# restore sets the
      *  property and calls no ApplyWeapon, because UpdateHands ends in
      *  ApplyWeapon on the next frame (WeaponManager.cs:699) - the
      *  port's twin is the rig's per-frame syncWorn. */

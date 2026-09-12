@@ -16,6 +16,7 @@
 //   6. FormulaHelper.cs:707/:712-716 - the Ring of Namira payload
 //      passes a null sourceItem and drops the PayloadCallbackResults,
 //      so the ring is never worn down. (Pinned in artifacts.test.js.)
+import './modsOff.js';   // MO1: this suite pins Daggerfall Unity's own numbers - the game without its mods
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';

@@ -34,9 +34,9 @@ matrix/draw path (GC spikes riding the beat).
 FOUND ON THE WAY, both real: a recenter injects 819.2 units into
 footsteps' stride accumulator (a spurious footstep at every map-pixel
 crossing, footsteps.js:134), and `_playerStill` reads one moving
-frame per crossing (world.js:5554-5556).
+frame per crossing (world.js:5563-5565).
 
-frame per crossing (world.js:8101-8103).
+frame per crossing (world.js:8112-8114).
 
 THE DISTANCE IS FOG-BOUND, NOT STREAM-BOUND. Linear fog ends at 2400
 units (weather.js:42-49, DFU's own number) while the default 7x7
@@ -449,3 +449,63 @@ drifts. Watched, not fixed: SNAP_SPAN vs terminal fall speed, and the
 hole's symmetric half-pixel spike exposure. The escape hatches, in
 one line: ?cull=off, ?terrainthread=off, ?ring=off - each read once
 at scene build, each falling back to the pre-slice path.
+
+PS1 (2026-09-12, Mac: "Bring back the pixelated sky we removed in a
+past commit. On by default and apart of a new toggle within enhanced
+environments"): THE PIXELATED SKY RETURNS. ES1e's retro pass over the
+port's dome - the angular pixel (RETRO.step pi/512, the painted sky's
+own) and the 26-level ordered posterise - was VC1's casualty (off by
+default, `?sky=retro` the door). `retroFor(search, pixelated)` now takes
+the Enhanced pane's Pixelated sky switch (uiPrefs `pixelatedSky`, true
+by default) as its answer when the URL is silent; `?sky=retro` and
+`?sky=smooth` still win, so every probe that spells either keeps its
+meaning, and the sky lab's bare call reads the default. The row sits
+under Enhanced environments; off is the smooth dome; it takes effect
+when the world next loads like its neighbours. ~~Under Dynamic Skies (on
+by default again since MO1) the mod draws its own 512-pixel sheets
+whatever the switch says - the mod's look, 1:1.~~ PS2 below. Ledger row PS1. Pinned:
+`test/macfive.test.js` PS1, `test/enhancedSky.test.js` ES1e.
+
+PS2 (2026-09-12, Mac: "Volumetric clouds and pixelated should be
+compatible with dynamic skies though"): THE PIXEL ON EVERY SKY. The
+clouds already were compatible - DS2 draws the slab over the mod's
+skybox, its sheets standing down - and the report before this one said
+otherwise, wrongly. The pixel was not: cubeSnap and bayer4 lived inside
+the dome's fragment shader, so PS1's switch stopped at the dome, the
+clouds composited smooth over its pixels and the mod's skybox never
+saw it. `render/retroPixel.js` holds the two functions as ONE GLSL
+string (moved out of the dome verbatim) plus the snap and posterise
+lines every pass writes, and three shaders carry it with the same two
+uniforms: the dome as before; the clouds' composite - direction snapped
+before the map is read, colour AND transmittance posterised by the cell
+before the sky*T+cloud blend, so a cloud's pixel is a sky pixel; and
+the mod's skybox - snapped before anything is computed, the dome's own
+rule, so its sun, moons, stars and sheets all land on the grid, the
+encoded colour posterised last, and 0/0 is the mod's shader exactly as
+written (its NEAREST sheets and REDUCE_COLOR are its own and stay).
+The host decides one `retro` and hands it to whichever passes it built;
+the lab likewise. Ledger row PS2. Pinned: `test/macfive.test.js` PS2,
+`test/enhancedSky.test.js` (the shader-text pins read the shared
+module too), `test/volumetricClouds.test.js` (every declared uniform
+fetched, on all three).
+
+LV1 (2026-09-12, Mac: "I wanna push the draw distance as far as we
+can push it while keeping performance perfect"): LAND VIEW DISTANCE,
+ENHANCED. The streamed grid's radius was DFU's Experimental/
+TerrainDistance on both lanes, 1..4 with 3 the default (StreamingWorld.
+cs:55-56). The 1:1 lane keeps exactly that. The enhanced lane already
+pays less for a far pixel than DFU does - EV4's stride-4 ring from the
+third ring out, MAC1's tall-or-moving flats rule, PERF2's near-pixel
+grass, EV4's fog end scaling with the radius - so it takes its own
+radius: `world/landView.js`, `landViewDistance({enhanced, pref,
+setting})`, pure, the Enhanced pane's Land view distance (uiPrefs
+`landViewDistance`, tiers 3/4/5/6, 5 by default - 121 pixels, 72 of
+them strided, the haze at 4000 units) on the enhanced lane and DFU's
+setting clamped 1..4 on the other. Six is the ceiling: past it the far
+province ring (EV8, radius 48) and the build queue on a pixel crossing
+(13 pixels an edge at 6) bind, not the draw. The world host reads it
+ONCE (`fogDistance`) for both the fog scale and `StreamingWorldState`.
+NOT MEASURED on a GPU in this session - no ARENA2 here; `npm run perf`
+(PERF9) before and after on Mac's machine is the number that matters,
+and the tier drops back to 3 or 4 in the pane if it says so. Ledger row
+LV1. Pinned: `test/macfive.test.js` LV1, `test/streaming.test.js`.

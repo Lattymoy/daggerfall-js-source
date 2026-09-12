@@ -2723,7 +2723,7 @@ distinction: `AssignBowDamageToTarget`'s player arm
 (DaggerfallMissile.cs:660-688) calls `WeaponManager.WeaponDamage`, so
 :630 runs for the shaft exactly as for the swing. The pool's door is
 PUBLIC now (beside `removeGuard` on the returned surface, as the
-encounter pool has always exported its own at `exteriorFoes.js:1084`)
+encounter pool has always exported its own at `exteriorFoes.js:1085`)
 and all three seams ROUTE by pool membership, mirroring the
 `dealDamage` router directly above each of them. A DAMAGING shaft now
 runs the pair twice for a guard - once inside `damageGuard`, once

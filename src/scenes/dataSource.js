@@ -915,7 +915,7 @@ export const ASSET_PICKER_Z = 40;
 /** MWFIX: is the asset picker on screen? A modal opened FROM another
  *  overlay has to be able to say so, because the opener may own the
  *  keyboard - the enhanced shell takes Escape on `globalThis` in
- *  CAPTURE and stops it (enhancedMenu.js:1820), which is right for a
+ *  CAPTURE and stops it (enhancedMenu.js:1842), which is right for a
  *  screen with nothing above it and wrong the moment something is.
  *  Its own stated law is that a modal overlay owns its input; this is
  *  how the one above it says "that's me". */

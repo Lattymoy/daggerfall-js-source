@@ -42,6 +42,7 @@
 //      could not see a walk.
 //  12. VampirismEffect.cs:362 - `const int skillModAmount = 30;` (pinned
 //      as a literal in vampirism.test.js, beside its twin).
+import './modsOff.js';   // MO1: this suite pins Daggerfall Unity's own numbers - the game without its mods
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';

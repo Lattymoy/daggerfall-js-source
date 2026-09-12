@@ -323,7 +323,7 @@ rewritten.
   port's depenetrating resolver still displaces a wedged capsule
   vertically where Unity leaves it clipping. The mirror clamp the
   verifier asked for fixes the sink band and breaks the step-up ladder's
-  ceiling cap (`test/motorStairs.test.js:160`); re-specifying that
+  ceiling cap (`test/motorStairs.test.js:161`); re-specifying that
   contract is engine surgery in a collider every foe shares, for a low
   finding, and is left with both measured bands recorded on the Player
   arc page.

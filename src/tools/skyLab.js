@@ -32,6 +32,7 @@ if (dynamicOn) {
   }
 }
 if (!dynamicOn) sky.retro = retroFor(location.search);   // ES1e: the lab shows what the game shows
+if (dynamicOn) sky.retro = retroFor(location.search);    // PS2: and the mod's skybox takes the same pixel
 // VC3: the volumetric clouds over the dome, as the game draws them; built on the first frame
 const cloudsDoor = params.get('clouds');
 let clouds = null;
@@ -109,6 +110,7 @@ function frame() {
   sky.draw(yaw, pitch, 65 * Math.PI / 180, w / h);
   if (cloudsDoor !== 'off') {
     clouds ??= new VolumetricClouds(gl, Object.hasOwn(CLOUD_QUALITY, cloudsDoor) ? cloudsDoor : 'default', [0, 0, w, h]);
+    clouds.retro = sky.retro;   // PS2: the clouds' pixels are the sky's
     // DS2: under the mod the clouds take the synthesised state the game
     // gives them - the mod's sun, moons and horizon, the port's colours
     const row = WEATHER_SKY[$('weather').value] ?? WEATHER_SKY.sunny;

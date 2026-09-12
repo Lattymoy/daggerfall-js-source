@@ -9,7 +9,7 @@
 import { FlatAnimator, armFlatAnim } from '../render/flatAnimation.js';   // FA1: the flats that move
 import { SKY_CLEAR } from '../render/renderer.js'; import { centreFromFeet } from '../characters/enemyAnchor.js';   // REVIEW 2026-09-05: one line, so the cites below it hold
 import { Arch3dFile } from '../formats/arch3dFile.js';
-import { requestLook, releaseLook, makeLookGate, bindCursorToggle } from '../player/pointerLock.js';   // U45: bindCursorToggle is PlayerMouseLook.cursorActive; releaseLook: the chat's open (AUDIT CHAT C2)
+import { requestLook, releaseLook, makeLookGate, bindCursorToggle, setCursorActive } from '../player/pointerLock.js';   // U45: bindCursorToggle is PlayerMouseLook.cursorActive; releaseLook: the chat's open (AUDIT CHAT C2)
 import { attachTouch } from '../ui/touch.js';
 import { attachGamepad } from '../ui/gamepadInput.js';   // GP1: the pad speaks the same hooks
 import { BlocksFile } from '../formats/blocksFile.js';
@@ -178,6 +178,7 @@ import { locationArrivalLanding, locationStartMarkers } from '../world/locationE
 import { preloadPrisonScreenArt, preloadCourtScreenArt } from '../ui/prisonScreen.js';   // PRIS00I0 - the serving-time screen   // ROAD-B B5: CORT01I0 - the courtroom the trial is pushed over
 import { TerrainGenClient } from '../world/terrainGenClient.js';   // EV7: the pixel kernel, off the main thread (samples/blend/tiles/grid/nature moved whole to terrainGen.js)
 import { getPref } from '../systems/uiPrefs.js';
+import { landViewDistance } from '../world/landView.js';   // LV1: the enhanced lane's own streamed radius
 import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
 import { dungeonLocationFor } from '../world/smallerDungeons.js';   // AUDIT 28 F-B2: the quest layer sees the sized dungeon
 import { audio, QuestAudioSource } from '../systems/audio.js';   // E6: the QuestMachine's own DaggerfallAudioSource (PlaySound's busy-skip)
@@ -529,7 +530,15 @@ export async function bootWorld(canvas, renderer, params, status) {
   // EV4: the distance haze follows the live Land View Distance (the
   // scale is 1 at DFU's default 3, so the classic path is untouched);
   // the exp weather rows pass through scaleFogForDistance unchanged.
-  const fogDistance = getInt('Experimental', 'TerrainDistance', 1, 4);
+  // LV1: on the enhanced lane the distance is the Enhanced pane's own
+  // (uiPrefs landViewDistance, 1..6, 5 by default - world/landView.js);
+  // the 1:1 lane keeps DFU's Experimental/TerrainDistance and its 1..4.
+  // ONE read, here, and the streamed grid below takes the same number.
+  const fogDistance = landViewDistance({
+    enhanced: isEnhanced() && getPref('enhancedEnvironments'),
+    pref: getPref('landViewDistance'),
+    setting: getInt('Experimental', 'TerrainDistance', 1, 4),
+  });
   // DS1: WeatherManager's fog settings are the mod's while Dynamic Skies
   // is the sky - and INSTALLED VERBATIM (BLBSkybox.SetFogDistance writes
   // the row's end distance as authored, AUDIT 61): EV4's distance scale
@@ -1439,7 +1448,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // 7x7). Read once at scene mount - DFU applies it the same way, at
   // StartGameBehaviour.ApplyStartSettings (:283), never rebuilding a
   // live world mid-session.
-  const state = new StreamingWorldState(getInt('Experimental', 'TerrainDistance', 1, 4));
+  const state = new StreamingWorldState(fogDistance);   // LV1: the one read above - DFU's setting on the 1:1 lane, the Enhanced pane's Land view distance on the enhanced
   const queue = state.init(startPixel.x, startPixel.y);
   let building = false;
 
@@ -2605,10 +2614,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2090 mounts the same one, gated on
+  // and dungeonContext.js:2091 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:4506
+  // that context through modes.dungeonCtx - so worldModes.js:4520
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -2695,9 +2704,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // encounter pool's remover for both. That was not a leak: removeFoe
     // (exteriorFoes.js:289-294) never looks the record up in `foes`, and
     // both pools share this host's one renderer, so a struck WATCHMAN
-    // got exactly what removeGuard (cityGuards.js:1214-1218) gives it -
+    // got exactly what removeGuard (cityGuards.js:1215-1219) gives it -
     // batch freed, `dead = true`, no corpse, skipped by the next AI pass
-    // (cityGuards.js:758) and spliced out at the end of it (:940).
+    // (cityGuards.js:759) and spliced out at the end of it (:941).
     // Routing by POOL MEMBERSHIP is an OWNERSHIP fix: each pool owns the
     // teardown of its own records so the two can diverge safely, and
     // removeFoe's `questBehaviour?.notifyDestroyed()` (exteriorFoes.js
@@ -4125,7 +4134,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:4883), so exterior mode and a
+    // composer, dungeonContext.js:4885), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -5094,7 +5103,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // AUDIT 58 (f3/input) - THE ONE READER. This host builds the mode
   // machine unconditionally, and that machine used to register a
   // SECOND bindCursorToggle over the same module-global flag
-  // (player/pointerLock.js:56-102), so ONE Enter flipped it twice and
+  // (player/pointerLock.js:57-135), so ONE Enter flipped it twice and
   // `cursorActive()` could never rise here at all - the large HUD's
   // eleven panels were unreachable by mouse in this host, and the
   // second flip fired a releaseLook/requestLook pair inside one event.
@@ -5416,7 +5425,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7093-7105 -
+  // worldModes answers it in BOTH modes (worldModes.js:7111-7123 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -6653,7 +6662,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       log: chatLog,
       onSend: (tabId, text) => chatLinks.get(tabId)?.sendChat(text) ?? false,   // false keeps the line in the field (B2)
       canOpen: () => !gamePaused() && !(townTalk.hudCovered || (modes?.hudCovered ?? false)),   // no chat under a window: the window's keys are the window's
-      onOpen: () => releaseLook(),   // AUDIT CHAT C2: the panel is a pointer surface - the mouse is freed on open
+      onOpen: () => { setCursorActive(false); releaseLook(); },   // AUDIT CHAT C2: the panel is a pointer surface - the mouse is freed on open   // PL3: the Enter that opened the chat is the CHAT'S - the toggle (the same key, a capture listener bound earlier) had already flipped cursorActive on it, and the close's relock was refused by the precedence line for the rest of the session
       onClose: () => { if (!gamePaused()) requestLook(canvas); },   // and taken back inside the closing gesture (MAC1's rule, ui/pauseDoor.js)
     });
   };
@@ -6753,6 +6762,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     dungeonAuthority,   // WORLD2: a dungeon built while another hosts starts as puppets
     activateDir: () => _tapDir,   // TI1: the tap's ray for the modal ladders (eyeDir)
     activateLockOnly: () => _tapLockOnly,   // TS1: the stick-half tap - the modal ladders stop after the lock pick
+    currentRegionIndex: () => _questRegionIndex(),   // UL1: PlayerGPS.CurrentRegionIndex for the mode machine's mods
+    currentLocation: () => _questLoc(),              // UL1: PlayerGPS.CurrentLocation
     // AUDIT 62 F8 (review): THE FINGER'S PRESS, published. worldModes
     // owns the interior and world-hosted-dungeon activate gate and has
     // no sight of `_tapArmed` - it is a host-local `let`. While the tap
@@ -8471,7 +8482,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // as `dealDamage` above it does, instead of excluding the
         // guards - a zero-damage shaft into a pacified watchman has to
         // reach the same door the zero-damage SWING already reaches
-        // (cityGuards.js:1005). DFU makes no pool distinction:
+        // (cityGuards.js:1006). DFU makes no pool distinction:
         // AssignBowDamageToTarget's player arm (DaggerfallMissile.cs
         // :660-688) calls WeaponDamage, so :630 runs for the shaft as
         // for the swing.

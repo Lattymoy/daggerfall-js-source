@@ -50,9 +50,10 @@ test('MM1: the row at mint - the edit over the base row under the mod\'s Enabled
   assert.equal(applyMeanerMonsters(128 + 17, ENEMY_BASICS[128 + 17], true), ENEMY_BASICS[128 + 17]);
   assert.equal(applyMeanerMonsters(1, ENEMY_BASICS[1], true), ENEMY_BASICS[1], 'an unnamed monster (the Imp) is untouched');
   _resetModSettings();
-  assert.equal(meanerMonstersEnabled(), false, 'off by default - the player lists the mod');
+  assert.equal(meanerMonstersEnabled(), true, 'MO1 (Mac, 2026-09-12): on by default - every mod is');
+  setModSetting('meanerMonsters', 'Enabled', false);
   assert.equal(makeEnemyEntity(0, ENEMY_BASICS[0], career(), 5, () => 0.5).basics.maxHealth, ENEMY_BASICS[0].maxHealth);
-  setModSetting('meanerMonsters', 'Enabled', true);
+  setModSetting('meanerMonsters', 'Enabled', true); setModSetting('pcaao', 'Enabled', false);   // MO1: the overhaul is on by default too - this is Ralzar's alone
   const rat = makeEnemyEntity(0, ENEMY_BASICS[0], career(), 5, () => 0.5);
   assert.equal(rat.basics.maxHealth, 25, 'Ralzar\'s rat'); assert.equal(rat.basics.armorValue, 8);
   assert.equal(rat.maxHealth, 20, 'Range(15, 26) at a half roll');
@@ -66,7 +67,7 @@ test('MM1: the row at mint - the edit over the base row under the mod\'s Enabled
   assert.equal(makeEnemyEntity(0, ENEMY_BASICS[0], career(), 5, () => 0.5).basics.maxHealth, ENEMY_BASICS[0].maxHealth, 'the overhaul on ALONE: DFU\'s "Meaner Monsters is loaded" arm is off, the base row stands');
   _resetModSettings();
   assert.equal(modSettingIfDeclared('roleplayRealism', 'advancedArchery'), undefined, 'a mod the port has not vendored reads as not loaded');
-  assert.equal(modSettingIfDeclared('meanerMonsters', 'Enabled'), false);
+  assert.equal(modSettingIfDeclared('meanerMonsters', 'Enabled'), true, 'MO1: on by default');
 });
 
 test('MM1: the forty-six xml files - the vendored files equal the table (werewolf and wereboar x1.2, the dragonling x2.5, its corpse x2), and DFU\'s SetBillboardScale applies them after the record\'s own scale, under the switch alone (mutants: the scale before the truncation, or always on)', () => {
@@ -141,7 +142,7 @@ test('MM1: the seams - the archive on a parsed TEXTURE.###, every billboard size
   const wt = rd('src/systems/worldTick.js');
   assert.ok(wt.indexOf('installMeanerMonsters();') < wt.indexOf('installPcaao();'), 'the dependency Awakes first');
   const m = MOD_SETTINGS.meanerMonsters;
-  assert.equal(m.author, 'Ralzar'); assert.deepEqual(Object.keys(m.keys), ['Enabled']); assert.equal(m.keys.Enabled.default, false);
+  assert.equal(m.author, 'Ralzar'); assert.deepEqual(Object.keys(m.keys), ['Enabled']); assert.equal(m.keys.Enabled.default, true);   // MO1
   assert.ok(Object.keys(MOD_SETTINGS).indexOf('meanerMonsters') < Object.keys(MOD_SETTINGS).indexOf('pcaao'), 'listed before the overhaul, as it loads');
   assert.equal(MOD_SETTINGS.pcaao.keys.meanerMonsters, undefined, 'Mac: no compatibility switches between mods');
   assert.equal(MOD_SETTINGS.pcaao.keys.rolePlayRealismArchery, undefined);

@@ -294,7 +294,7 @@ function crashOverlay(msg) {
   }
   const el = document.createElement('pre');
   el.id = 'crash';
-  el.style.cssText = 'position:fixed;left:8px;right:8px;bottom:8px;max-height:45%;overflow:auto;background:#300;color:#f88;font:12px monospace;padding:8px;border:1px solid #f66;z-index:20;white-space:pre-wrap';
+  el.style.cssText = 'position:fixed;left:8px;right:8px;bottom:8px;max-height:45%;overflow:auto;background:#300;color:#f88;font:12px monospace;padding:8px;border:1px solid #f66;z-index:20;white-space:pre-wrap;pointer-events:none';   // PL3: a report, not a wall - it sat over the bottom half of the canvas and ate every click that should have relocked the pointer
   el.textContent = `CRASH\n${msg}`;
   document.body.appendChild(el);
 }
