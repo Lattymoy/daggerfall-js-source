@@ -7490,3 +7490,23 @@ NOT folded in: the `onLevelUp` `console.log` beside each of those sinks.
 `dfuiOpenCharacterSheetWindow` and adds no HUD text at all, so
 `worldModes`' `say('You have gained a level!')` is a separate
 pre-existing departure and not a law to copy outward.
+
+## UL1 - UNLEVELED LOOT, THE MOD, 1:1 (2026-09-12, Mac's call) - SHIPPED
+
+Mac: "Heres the next mod unleveled loot. Again 1:1"
+
+Ralzar's Unleveled Loot 1.1.2 - loot and shop materials that roll by
+luck, the shop's quality and the dungeon's kind instead of the level; a
+corpse's gold divided by the level and multiplied by luck; Daedra and
+Orcs dropping their own metal; ten material switches - ported from the
+shipped DLL decompiled beside the repository's 1.1.1 source (the DLL
+stands where they differ): `systems/unleveledLoot.js`, on formulas'
+registry (`enemyEquipment.randomMaterial` / `randomArmorMaterial` now
+consult it), a new OnEnemyDeath registry in `scenes/corpseMarker.js`
+raised at the three kills, the world published by `scenes/worldModes.js`
+and its two transition arms at DFU's six doors, and the Mods pane's new
+MultipleChoiceKey. Bug for bug: `ModifyFoundLootItems` is registered
+and read by nothing (DFU 1.1.1 has no such hook), the dungeon exit does
+not clear the mod's dungeon, the armour drop's condition comes from the
+random piece's max. Off by default. Pins: 8 in
+`test/unleveledLoot.test.js`. The page: `06-Systems/Unleveled-Loot.md`.

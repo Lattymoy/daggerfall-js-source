@@ -15,7 +15,7 @@
 // Unity Random slots stay uniform rolls, as in DFU itself.
 
 import { mintCondition, templateByIndex, itemBaseValue } from '../systems/itemTemplates.js';   // AUDIT 23 (items-5); F103: SetItem's value
-import { WEAPON_MIN_DAMAGE, WEAPON_MAX_DAMAGE, dice100 } from './formulas.js';
+import { WEAPON_MIN_DAMAGE, WEAPON_MAX_DAMAGE, dice100, formulaOverride } from './formulas.js';   // UL1: RandomMaterial / RandomArmorMaterial consult the registry
 import { materialArmorValue } from '../systems/armorMaterials.js';
 import { KNIGHT_CITY_WATCH } from '../characters/mobileTypes.js';   // AUDIT 24 (wave 41): one home
 import { ARROW_TEMPLATE } from '../systems/inventory.js';   // X11b: CreateWeapon's one special case
@@ -67,6 +67,8 @@ export const shieldProtectedBodyParts = (templateIndex) => SHIELD_PARTS[template
 // ---- ItemBuilder.materialsByModifier + FormulaHelper.RandomMaterial ----
 export const MATERIALS_BY_MODIFIER = Object.freeze([64, 128, 10, 21, 13, 8, 5, 3, 2, 5]);
 export function randomMaterial(playerLevel, rolls = Math.random) {
+  const o = formulaOverride('randomMaterial')?.(playerLevel, rolls);   // UL1: TryGetOverride("RandomMaterial")
+  if (o !== undefined) return o;
   let levelModifier = playerLevel - 10;
   levelModifier *= levelModifier >= 0 ? 2 : 4;
   const randomModifier = Math.floor(rolls() * 256);          // Range(0, 256)
@@ -81,6 +83,8 @@ export function randomMaterial(playerLevel, rolls = Math.random) {
 // ---- ArmorMaterialTypes + RandomArmorMaterial ----
 export const ARMOR_MATERIAL = Object.freeze({ Leather: 0x0000, Chain: 0x0100, PLATE_BASE: 0x0200 });
 export function randomArmorMaterial(playerLevel, rolls = Math.random) {
+  const o = formulaOverride('randomArmorMaterial')?.(playerLevel, rolls);   // UL1: TryGetOverride("RandomArmorMaterial")
+  if (o !== undefined) return o;
   const roll = 1 + Math.floor(rolls() * 100);                // Dice100.Roll
   if (roll >= 70) {
     if (roll >= 90) return ARMOR_MATERIAL.PLATE_BASE + randomMaterial(playerLevel, rolls);

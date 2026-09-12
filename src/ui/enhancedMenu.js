@@ -129,7 +129,7 @@ import { playerEntity } from '../characters/playerEntity.js';
 // PX6: the Stats page's skill labels - the one home (systems/skills.js).
 import { SKILLS, SKILL_NAMES } from '../systems/skills.js';
 import { overlayAction } from './input.js';   // U51: Escape, through the shared table
-import { MOD_SETTINGS, modSetting, setModSetting, isIntKey } from '../systems/modSettings.js';   // ROADS 24; DS1: the integer keys
+import { MOD_SETTINGS, modSetting, setModSetting, isIntKey, isChoiceKey } from '../systems/modSettings.js';   // ROADS 24; DS1: the integer keys; UL1: the choice keys
 import { CREDITS } from './credits.js';   // CR1: who made what the port carries
 // FIX-F (Mac: "changing keybinds in classic/enhanced do not work"): the
 // rebinding pane. The enhanced skin is the DEFAULT and had no door to
@@ -1423,7 +1423,18 @@ function paneMods(body) {
       main.append(el('div', 'meta', def.description));
       row.append(main);
       const ctl = el('div', 'ctl');
-      if (isIntKey(def)) {
+      if (isChoiceKey(def)) {
+        // UL1: a MultipleChoiceKey (Unleveled Loot's ten materials) -
+        // the same stepper, over the option NAMES, wrapping at the ends
+        // as a dropdown would.
+        const val = el('span', 'val', def.options[modSetting(vendor, key)]);
+        const step = (delta, label) => {
+          const b = el('button', 'step', label);
+          b.onclick = () => { const n = def.options.length; val.textContent = def.options[setModSetting(vendor, key, (modSetting(vendor, key) + delta + n) % n)]; };
+          return b;
+        };
+        ctl.append(step(-1, '\u2039'), val, step(1, '\u203a'));
+      } else if (isIntKey(def)) {
         // DS1: a SliderIntKey (Dynamic Skies' fog density and snow
         // sizes) - the HUD-scale stepper's shape, over the key's own
         // range, the value beside it.

@@ -392,7 +392,7 @@ export class SaveWindow {
    *
    *  RECORDED (structural): DFU routes the wheel to the component under
    *  the pointer; the hosts carry the point on the overlay wheel seam
-   *  now (AUDIT 65 UI-5: townTalk.js:1198-1205, worldModes.js:7245-7261,
+   *  now (AUDIT 65 UI-5: townTalk.js:1198-1205, worldModes.js:7263-7279,
    *  dungeonContext's overlayWheel), and this window has one scrolling
    *  list, so it still ignores the point and forwards the sign to it. */
   wheel(dir) {

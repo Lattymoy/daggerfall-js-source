@@ -102,6 +102,17 @@ export async function mintCorpseMarker({
  * table down to the leaf. A mobile type with no name in the list says
  * nothing rather than "undefined just died."
  */
+// UL1: EnemyDeath.OnEnemyDeath (EnemyDeath.cs:29, raised at :139 after
+// the corpse container took the entity's items at :123). The pools
+// raise it at the kill; a vendored mod registers a handler by name.
+const _deathHandlers = new Map();
+export function registerEnemyDeathHandler(name, fn) { if (fn) _deathHandlers.set(name, fn); else _deathHandlers.delete(name); }
+export function raiseEnemyDeath(entity, opts = {}) {
+  for (const fn of _deathHandlers.values()) {
+    try { fn(entity, opts); } catch (e) { console.warn('[enemyDeath] a handler threw', e); }
+  }
+}
+
 export function sayEnemyDied(say, mobileType) {
   // AUDIT 28 W1: the gate the comment above quotes was never read - the
   // setting sat `stored` while every kill spoke. GetBool, as :82.

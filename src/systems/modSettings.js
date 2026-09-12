@@ -90,6 +90,23 @@ export const MOD_SETTINGS = Object.freeze({
       softMaterialRequirements: Object.freeze({ default: true, description: 'Weapon Material Requirements are relaxed, large damage penalty for being below required material. !!!! This Module Is Dependent On Armor Hit Formula Redone' }),
     }),
   }),
+  // UL1: UNLEVELED LOOT 1.1.2 (Ralzar). Its one section, MaterialSwitching,
+  // ten MultipleChoiceKeys named for the ten materials, each defaulting
+  // to itself, as modsettings.json ships them, plus the port's `Enabled`.
+  // Listed AFTER the overhaul: its manifest orders it after Roleplay
+  // Realism, and its two overrides register last.
+  'unleveledLoot': Object.freeze({
+    title: 'Unleveled Loot',
+    author: 'Ralzar',
+    keys: Object.freeze({
+      Enabled: Object.freeze({ default: false, description: 'Ralzar\u2019s Unleveled Loot 1.1.2, 1:1: "Makes loot and shop stock materials not scale to your level." Weapon and armour materials roll by your luck, the shop\u2019s quality and the dungeon\u2019s kind instead of your level; a corpse\u2019s gold is divided by your level and multiplied by your luck; Daedra and Orcs may drop their own metal. Off returns Daggerfall Unity\u2019s own rolls.' }),
+      ...Object.fromEntries(['Iron', 'Steel', 'Silver', 'Elven', 'Dwarven', 'Mithril', 'Adamantium', 'Ebony', 'Orcish', 'Daedric'].map((name, i) => [name, Object.freeze({
+        default: i,
+        options: Object.freeze(['Iron', 'Steel', 'Silver', 'Elven', 'Dwarven', 'Mithril', 'Adamantium', 'Ebony', 'Orcish', 'Daedric']),
+        description: 'Whenever this material would drop, change it to the selected material.',
+      })])),
+    }),
+  }),
 });
 
 let memory = null;
@@ -110,7 +127,13 @@ function save() {
  *  clamped to its range; every other key is a ToggleKey and reads as a
  *  boolean, exactly as before. */
 export function isIntKey(def) { return def && typeof def.min === 'number' && typeof def.max === 'number'; }
+/** UL1: a MultipleChoiceKey - `options` is the list, the value its index. */
+export function isChoiceKey(def) { return def && Array.isArray(def.options); }
 function coerce(def, v) {
+  if (isChoiceKey(def)) {
+    const n = Math.trunc(Number(v));
+    return Number.isFinite(n) ? Math.max(0, Math.min(def.options.length - 1, n)) : def.default;
+  }
   if (!isIntKey(def)) return !!v;
   const n = Math.trunc(Number(v));
   return Number.isFinite(n) ? Math.max(def.min, Math.min(def.max, n)) : def.default;
