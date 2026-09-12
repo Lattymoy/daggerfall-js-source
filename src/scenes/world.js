@@ -206,6 +206,7 @@ import { createDataPipeline } from './dataPipeline.js';
 import { createWorldModes } from './worldModes.js';
 import { OnlineSession, roomKeyFor, DEFAULT_SERVER } from '../net/online.js';   // ONLINE1: the session
 import { POSE_STRIKES } from '../net/wire.js';   // MAC7 #1: the swing's kind on the wire
+import { hasDaggerfallArrows } from '../combat/fpArm.js';   // MAC7 #2: the arrow bit on the wire - weaponRig's own read
 import { drawText } from '../ui/text.js';   // ONLINE1: the session's status line
 import { RemotePlayers, composeLook } from '../net/remotePlayers.js';   // ONLINE1: the others, drawn
 import { PeerBodies } from '../net/peerBodies.js';   // MWBODY1: the others in the Morrowind body
@@ -6663,8 +6664,16 @@ export async function bootWorld(canvas, renderer, params, status) {
     _onlineLast = [player.pos[0], player.pos[1], player.pos[2]];
     if (key !== _onlineKey) { _onlineKey = key; _onlineKeySince = now; }
     const mv = moved ? (player.isRunning ? 2 : 1) : 0;
-    // MAC7 #1 (Mac: "no weapons"): the drawn flag and the swing ride the pose - the peers' bodies draw and swing off them
-    const arm = { mv, wd: weaponRig.playerWeapon.sheathed ? 0 : 1, an: weaponRig.swing.n, as: Math.max(0, POSE_STRIKES.indexOf(weaponRig.swing.strike)) };   // the wire's move bit: 1 walking, 2 running (the peers' bodies pick the clip off it)
+    // MAC7 #1 (Mac: "no weapons"): the drawn flag and the swing ride the pose - the peers' bodies draw and swing off them;
+    // MAC7 #2: the bow's hold (wd 2 while the machine sits in StrikeUp - BowDrawback's draw), the arrow, the spell stance, the cast
+    const wm = weaponRig.playerWeapon.machine;
+    const arm = {
+      mv,
+      wd: weaponRig.playerWeapon.sheathed ? 0 : (wm?.isBow && wm.state === 'StrikeUp' ? 2 : 1),
+      an: weaponRig.swing.n, as: Math.max(0, POSE_STRIKES.indexOf(weaponRig.swing.strike)),
+      am: hasDaggerfallArrows(playerEntity.items) ? 1 : 0, sr: magic.spellArmed() ? 1 : 0,
+      cn: weaponRig.cast.n, cr: weaponRig.cast.rangeType | 0,
+    };   // the wire's move bit: 1 walking, 2 running (the peers' bodies pick the clip off it)
     if (!key) { if (online.room) online.leave(); }   // AUDIT ONLINE D4: a place the host cannot name is no room, not the old one in the wrong frame
     else if (key !== online.room) { if (!online.room || now - _onlineKeySince >= ROOM_HOLD_MS) { online.look = composeLook(playerEntity); online.join(key, { ...pose, ...arm }); } }   // the look re-composed: the next room's hello carries the gear worn now
     else online.sendPose({ ...pose, ...arm });

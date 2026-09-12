@@ -222,7 +222,7 @@ narrowed while E3 closed the two console verbs
 (`ui/exteriorAutomapWindow.js:96` - the site id the flag list was
 measured on; the closure narrates at `:100` today) by building the
 console host they were waiting on. The SHIP LANDING then took a seventh
-(`scenes/world.js:3582`, the two ship pixels): the owner supplied the
+(`scenes/world.js:3583`, the two ship pixels): the owner supplied the
 real MAPS.BSA, the pixels turned out to carry the two "Your Ship"
 locations rather than open sea, and the boarding became an ordinary
 location arrival. **ROAD-F then took three more**: GS1 closed the

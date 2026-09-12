@@ -21,10 +21,14 @@
 // map-pixel origin, PIXEL_UNITS a pixel), every other room's in the
 // scene's own - mv 1 when walking, 2 when running (the sender's own
 // isRunning - AUDIT MWBODY B3: a speed guess sat under every walk); wd 1
-// while the sender's weapon is drawn; an the sender's swing count (a
-// peer plays a swing when it changes) and as the swing's WeaponStates
-// index (POSE_STRIKES) - MAC7 #1: a peer's body stood with its weapon
-// sheathed and never swung, since nothing of either travelled. A look is the paperdoll's recipe: race, gender,
+// while the sender's weapon is drawn, 2 while a bow is held at full
+// draw (MAC7 #2); an the sender's swing count (a peer plays a swing
+// when it changes) and as the swing's WeaponStates index
+// (POSE_STRIKES) - MAC7 #1: a peer's body stood with its weapon
+// sheathed and never swung, since nothing of either travelled; am 1
+// while the sender has arrows (the look carries no inventory), sr 1
+// while a spell is readied, cn the sender's cast count and cr the
+// cast's range type (spellcast.js TARGET_TYPES' index) - MAC7 #2. A look is the paperdoll's recipe: race, gender,
 // face, and the equipped items projected onto the six fields the doll
 // art reads (AUDIT ONLINE A12: nothing else travels, so a look is small
 // by construction and never a stranger's junk rebroadcast).
@@ -88,6 +92,8 @@ export const LOOK_GROUPS = Object.freeze(['MensClothing', 'WomensClothing', 'Arm
 export const NAME_MAX = 24;
 /** A swing's kind on the wire: DFU's WeaponStates order (combat/fpsWeapon.js STATE_INDEX), the pose's `as` an index into it (MAC7 #1). */
 export const POSE_STRIKES = Object.freeze(['Idle', 'StrikeDown', 'StrikeDownLeft', 'StrikeLeft', 'StrikeRight', 'StrikeDownRight', 'StrikeUp']);
+/** A cast's range on the wire: DFU's TargetTypes order (systems/spellcast.js TARGET_TYPES), the pose's `cr` an index into it (MAC7 #2). */
+export const POSE_CAST_RANGES = 5;
 /** World units per map pixel in the frame the streaming world's poses
  *  travel in: MapsFile's (world/streamingWorld.js NATIVE_PIXEL). */
 export const PIXEL_UNITS = 32768;
@@ -165,11 +171,15 @@ export const isChatRoom = (key) => CHAT_ROOMS.has(String(key ?? ''));
 /** A pose the room will relay, or null. */
 export function validPose(p) {
   if (!p || typeof p !== 'object') return null;
-  const { x, y, z, yaw, pitch, mv, wd, an, as } = p;
+  const { x, y, z, yaw, pitch, mv, wd, an, as, am, sr, cn, cr } = p;
   if (![x, y, z, yaw, pitch].every(finite)) return null;
   if (Math.abs(x) > POSE_BOUND || Math.abs(z) > POSE_BOUND || Math.abs(y) > POSE_Y_BOUND) return null;
-  // MAC7 #1: the arm's three, clamped - a pose from before them reads sheathed and unswung
-  return { x, y, z, yaw, pitch, mv: mv === 2 ? 2 : mv ? 1 : 0, wd: wd ? 1 : 0, an: uint(an, 65535) ?? 0, as: uint(as, POSE_STRIKES.length - 1) ?? 0 };
+  // MAC7: the arm's seven, clamped - a pose from before them reads sheathed, unswung, unarrowed and uncast
+  return {
+    x, y, z, yaw, pitch, mv: mv === 2 ? 2 : mv ? 1 : 0,
+    wd: wd === 2 ? 2 : wd ? 1 : 0, an: uint(an, 65535) ?? 0, as: uint(as, POSE_STRIKES.length - 1) ?? 0,
+    am: am ? 1 : 0, sr: sr ? 1 : 0, cn: uint(cn, 65535) ?? 0, cr: uint(cr, POSE_CAST_RANGES - 1) ?? 0,
+  };
 }
 
 /** One equipped item as the look carries it - the six fields, clamped - or null. */

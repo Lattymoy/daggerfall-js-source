@@ -629,16 +629,42 @@ swung. Now:
   never while sheathed - and `release()` runs every frame as weaponRig
   gives its own rig, so a wind-up that is not held lets go.
 
-Not done: a bow's hold (the port's own bow fires instantly, so a peer's
-does too), a spell cast, the arrow (the wire carries no inventory), and
-the doll (the paperdoll billboard has no arm to swing).
+**#2 (Mac: "Do bow hold, spell casting and arrows on bow").** Four
+more bits on the same pose, the same doors on the same rig:
 
-Pinned in `test/mac7.test.js` (3): the wire's three at both ends and
+- **the bow's hold**: `wd` is 2 while the sender's machine sits in
+  StrikeUp - BowDrawback's draw (`combat/playerWeapon.js`'s gesture:
+  the press draws, the release fires) - and a swing that arrives with
+  wd 2 is the draw: `attack('StrikeUp', { hold: true })`, and
+  `release()` waits while wd stays 2, exactly as weaponRig withholds
+  it while the machine holds. The shot is the next count (StrikeDown,
+  which the held rig refuses and release fires); a draw let down
+  without a shot (the undraw) releases too, as the player's own does.
+- **the arrow**: `am` is `hasDaggerfallArrows(entity.items)` - the
+  read weaponRig's own per-frame `setWeapon` takes - and a body hands
+  its weapon back through `setWeapon(weapon, { hasAmmo })` once per
+  change of the bit; a body with nothing in hand is handed no arrow.
+- **the spell stance**: `sr` is the host's `magic.spellArmed()`
+  (HasReadySpell) and the body stands in it through `readySpell`, a
+  boolean compare on the rig's side.
+- **the cast**: `cn` and `cr` are weaponRig's `cast` {n, rangeType},
+  counted at `castSpellAnim` - the one door both lanes' hands come
+  through (CastReadySpell's PlayOneShot moment) - and a body casts
+  once per count with the wire's range through `castSpell(rangeType)`
+  (TargetTypes' index: self, touch or target by the arm's own map),
+  never the count it was born with.
+
+Not done: the doll (the paperdoll billboard has no arm to swing), and
+a peer's cast is the arm's motion alone - no missile, no hands in the
+classic lane.
+
+Pinned in `test/mac7.test.js` (4): the wire's seven at both ends and
 the session's change and easing; the body over the fake rig with the
-three doors recorded (drawn, sheathed, once per count, never on birth,
-never sheathed, the throw law); the rig and the host by source. Not
-seen with two real players from here - Mac's two browsers are the
-gate.
+doors recorded (drawn, sheathed, once per count, never on birth, never
+sheathed, the throw law; the hold and its withheld release, the arrow
+once per change and never without a weapon, the stance, the cast once
+per count); the rig and the host by source. Not seen with two real
+players from here - Mac's two browsers are the gate.
 
 ## What it does not do (yet)
 
@@ -705,11 +731,13 @@ with two real players from here either.
 both ways, the finder by dungeon id over fake locations (any iterable,
 the first match), the dungeon host's split load arm, the mode
 machine's forward and the boot's third arm by source.
-`test/mac7.test.js` (3): the pose's drawn flag, swing count and swing
-kind at both ends (clamped, the WeaponStates order pinned against
-fpsWeapon's index, a pose from before them sheathed and unswung), the
-session's change and easing, the body over a fake rig with the three
-doors recorded, the rig's counter and the host's pose by source.
+`test/mac7.test.js` (4): the pose's arm - drawn or held, swing count
+and kind, arrow, spell stance, cast count and range - at both ends
+(clamped, the WeaponStates order pinned against fpsWeapon's index and
+the cast ranges against spellcast's TargetTypes, a pose from before
+them sheathed, unswung, unarrowed and uncast), the session's change
+and easing, the body over a fake rig with every door recorded, the
+rig's two counters and the host's pose by source.
 
 ## OD1 - THE PEER DOLL GOES UP BOTTOM-UP (2026-09-12, Mac's report)
 

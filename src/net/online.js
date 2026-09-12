@@ -107,7 +107,8 @@ export function poseChanged(a, b, eps = 0.01) {
   if (!a || !b) return true;
   return Math.abs(a.x - b.x) > eps || Math.abs(a.y - b.y) > eps || Math.abs(a.z - b.z) > eps
     || Math.abs(a.yaw - b.yaw) > eps || Math.abs(a.pitch - b.pitch) > eps || (a.mv | 0) !== (b.mv | 0)
-    || (a.wd | 0) !== (b.wd | 0) || (a.an | 0) !== (b.an | 0);   // MAC7 #1: a draw and a swing go out at once, as a step does
+    || (a.wd | 0) !== (b.wd | 0) || (a.an | 0) !== (b.an | 0)   // MAC7 #1: a draw and a swing go out at once, as a step does
+    || (a.am | 0) !== (b.am | 0) || (a.sr | 0) !== (b.sr | 0) || (a.cn | 0) !== (b.cn | 0);   // MAC7 #2: and the arrow, the spell stance, the cast
 }
 
 const lerpAngle = (a, b, t) => {
@@ -125,6 +126,7 @@ export function lerpPose(from, to, t) {
     x: from.x + (to.x - from.x) * k, y: from.y + (to.y - from.y) * k, z: from.z + (to.z - from.z) * k,
     yaw: lerpAngle(from.yaw, to.yaw, k), pitch: from.pitch + (to.pitch - from.pitch) * k, mv: to.mv,
     wd: to.wd ?? 0, an: to.an ?? 0, as: to.as ?? 0,   // MAC7 #1: the arm's three ride the drawn pose whole - nothing to ease
+    am: to.am ?? 0, sr: to.sr ?? 0, cn: to.cn ?? 0, cr: to.cr ?? 0,   // MAC7 #2: and the other four
   };
 }
 

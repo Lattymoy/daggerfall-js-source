@@ -178,7 +178,7 @@ export class PeerBodies {
     for (const w of want) {
       if (this._bodies.size >= BODIES_MAX && !this._yield(w.d2)) break;
       const peer = w.peer;
-      const b = { id: peer.id, key: lookKey(peer.look), rig: this._createRig(), state: 'building', cam: null, feet: null, yaw: peer.shown.yaw, speed: 0, goneAt: null, far: false, d2: w.d2, builtAt: now, swing: null };
+      const b = { id: peer.id, key: lookKey(peer.look), rig: this._createRig(), state: 'building', cam: null, feet: null, yaw: peer.shown.yaw, speed: 0, goneAt: null, far: false, d2: w.d2, builtAt: now, swing: null, cast: null, ammo: null, weapon: null };
       this._bodies.set(peer.id, b);
       b.rig.attach(this.renderer, () => b.cam);
       this._place(b, peer, toScene, dt, near);
@@ -230,14 +230,24 @@ export class PeerBodies {
   /** MAC7 #1 (Mac: "no weapons"): the weapon and the swing, off the wire's own bits - the rig's weapon drawn while
    *  the sender's is (setSheathed, the player's own rig's door), a swing once per count and never the count the body
    *  was born with (a late joiner does not replay an old blow), and release() every frame as weaponRig gives its own
-   *  rig - a wind-up that is not held lets go on the next frame. */
+   *  rig - a wind-up that is not held lets go on the next frame.
+   *  MAC7 #2: the arrow (setWeapon with the wire's ammo bit, the same door weaponRig's per-frame read takes), the
+   *  spell stance (readySpell, a boolean compare on the rig's side), a cast once per count with the wire's range,
+   *  and the bow's hold - a swing that arrives with wd 2 is the draw (attack with hold), and release() waits while
+   *  wd stays 2, exactly as weaponRig withholds it while the machine sits in StrikeUp. */
   _arm(b, shown) {
     const drawn = !!shown.wd;
     b.rig.setSheathed?.(!drawn);
-    const an = shown.an | 0;
-    if (b.swing == null) b.swing = an;
-    else if (an !== b.swing) { b.swing = an; if (drawn) b.rig.attack?.(POSE_STRIKES[shown.as | 0] ?? 'StrikeDown'); }
-    b.rig.release?.();
+    const am = shown.am ? 1 : 0;
+    if (b.weapon && b.ammo !== am) { b.ammo = am; b.rig.setWeapon?.(b.weapon, { hasAmmo: !!am }); }
+    b.rig.readySpell?.(!!shown.sr);
+    const an = shown.an | 0, cn = shown.cn | 0;
+    if (b.swing == null) { b.swing = an; b.cast = cn; }
+    else {
+      if (an !== b.swing) { b.swing = an; if (drawn) b.rig.attack?.(POSE_STRIKES[shown.as | 0] ?? 'StrikeDown', { hold: shown.wd === 2 }); }
+      if (cn !== b.cast) { b.cast = cn; b.rig.castSpell?.(shown.cr | 0); }
+    }
+    if (shown.wd !== 2) b.rig.release?.();
   }
 
   /** A body that failed - refused, or threw - is released and its look waited out, the reason kept and said once. */
@@ -250,7 +260,7 @@ export class PeerBodies {
   async _build(b, look) {
     if (this._bodies.get(b.id) !== b) return;   // released before its turn: no parse for a body already gone
     let res = null, reason = 'threw';
-    try { res = await b.rig.build(this._buildOpts(look)); } catch (e) { res = null; reason = `threw: ${e?.message ?? e}`; }
+    try { const opts = this._buildOpts(look); b.weapon = opts.weapon ?? null; res = await b.rig.build(opts); } catch (e) { res = null; reason = `threw: ${e?.message ?? e}`; }
     if (this._bodies.get(b.id) !== b) { try { b.rig.unload(); } catch { /* gone */ } return; }   // released while building
     if (res && res.ok && b.rig.canThirdPerson() && b.rig.setViewMode('third')) { b.state = 'ok'; b.builtAt = this._now(); this._failed.delete(b.key); return; }
     if (res) reason = res.ok ? 'no third-person body' : `${res.stage}: ${res.error}`;
