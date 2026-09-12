@@ -344,3 +344,33 @@ instead. **The naming is 1:1; the transport is not.**
   GetBlockName(block) + ".json" so it should. Check on the first real run.
 - The road-system deep audit launched before this study was still
   running when the session paused; its findings are unreported.
+
+## MO1 - EVERY MOD ON (2026-09-12, Mac's law)
+
+Mac: "All mods should be enabled by default."
+
+Four vendored mods shipped `Enabled` false - Dynamic Skies (since VC1),
+Meaner Monsters, the Physical Combat And Armor Overhaul, Unleveled Loot
+- each "the player's choice in the Mods pane" on the DS1/VC1 precedent,
+DFU enabling a mod by listing it and the port having no list. The law
+replaces the precedent: every switch defaults TRUE (`systems/
+modSettings.js`), Seasons of the Iliac Bay already did, Basic Roads has
+no switch, and the Mods pane is where a mod is turned off. MM1's rule
+stands with it - no compatibility switches between mods; each reads the
+other's own switch.
+
+Two consequences, both recorded on the Ledger row. Unleveled Loot's
+arms could be asked before any world had handed in a player and read
+Luck off null: `installUnleveledLoot`'s `on` is the switch AND a player
+now, DFU's own roll standing otherwise. And a suite that pins Daggerfall
+Unity's OWN numbers is a suite about the game without its mods:
+`test/modsOff.js` turns every switch off for the process, and the eleven
+DFU-verbatim suites import it first (`audit18_combat`, `audit58_combat`,
+`audit58_pins`, `monstercareer`, `littlelaws`, `enemyentity`, `backstab`,
+`chargenart`, `audit64_chargen`, `audit39_worldmodes`,
+`road_a4_saveimport`); the two mod suites that assumed the other mod
+off (`pcaao`, `meanerMonsters`) say so where they mean it. With Dynamic
+Skies on the mod's skybox is the enhanced lane's sky as DS1 shipped it,
+and the port's dome, VC3's clouds and PS1's Pixelated sky switch draw
+while it is off - flagged to Mac in the slice's report. Ledger row MO1.
+Pinned: `test/macfive.test.js` MO1.

@@ -18,6 +18,7 @@
 // a refusal is covered by the hosts' relock-on-gesture arms).
 
 import { isTextEntryTarget } from '../ui/input.js';   // PL2: a typed field's Enter is the field's (CG2)
+import { overlayOpen } from '../ui/enhancedOverlays.js';   // PL3: an enhanced overlay up (the dial, the pack) owns Enter too
 
 let _errBound = false;
 
@@ -69,8 +70,24 @@ export function toggleCursorActive(canvas) {
  *  window up is this port's paused. */
 export function bindCursorToggle(canvas, isWindowUp = () => false, actionOf = null) {
   if (typeof addEventListener !== 'function' || !actionOf) return () => {};
+  // PL3 (2026-09-12, Mac: "The mouse pointer can still get stuck outside
+  // of the game, not allowing you to interact with the game unless
+  // refreshing"). The flag is a module global that NOTHING reset: a
+  // host that booted after it had latched true (a new game from the
+  // menu, a scene the last one left it in) had every relock arm refused
+  // at requestLook's precedence line from its first frame. A host boot
+  // is a fresh PlayerMouseLook (cursorActive is an instance field,
+  // :32) - so the bind is the reset.
+  setCursorActive(false);
   const onKey = (e) => {
     if (isWindowUp()) return;
+    // PL3: the enhanced overlays the host's predicate never saw - the
+    // pixel dial (Tab) and whatever it opened - own Enter while they
+    // are up (the dial's Enter is its commit). The toggle fired FIRST
+    // (a window capture listener registered at boot), flipped the flag
+    // and released the lock, and the dial's own close never relocked:
+    // every later click was refused by the precedence line, for good.
+    if (overlayOpen()) return;
     if (isTextEntryTarget(e.target)) return;   // PL2: a name being typed into a DOM field is not the toggle
     if (actionOf(e) !== 'ActivateCursor') return;
     e.preventDefault();
@@ -98,13 +115,36 @@ export function bindCursorToggle(canvas, isWindowUp = () => false, actionOf = nu
   // bubble listener can pop the window, so a press under a window is
   // the window's and only a press with nothing up is the toggle.
   addEventListener('keydown', onKey, true);
-  return () => removeEventListener('keydown', onKey, true);
+  // PL3: THE NET. A click that lands on the page itself - the canvas,
+  // or the body beside it - with nothing up, no cursor activated and no
+  // lock held is the player asking for the game back; take the lock
+  // inside that gesture whatever swallowed the canvas arm (a DOM
+  // element the hosts never knew, a host without the arm). A click on
+  // any element of the page's UI is that element's and is left alone,
+  // and a finger never holds a lock (ui/touch.js).
+  const onDown = (e) => {
+    if (e.pointerType === 'touch') return;
+    if (typeof document === 'undefined' || document.pointerLockElement) return;
+    const t = e.target;
+    if (t !== canvas && t !== document.body && t !== document.documentElement) return;
+    if (isWindowUp() || overlayOpen() || _cursorActive) return;
+    requestLook(canvas);
+  };
+  if (typeof document !== 'undefined') document.addEventListener?.('pointerdown', onDown, true);
+  return () => { removeEventListener('keydown', onKey, true); if (typeof document !== 'undefined') document.removeEventListener?.('pointerdown', onDown, true); };
 }
+
+// PL3: the moment of the last honoured request - the look gate's grace
+// (below) reads it.
+let _lastRequestAt = -Infinity;
+export const RELOCK_GRACE_MS = 150;
+const nowMs = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
 export function requestLook(canvas) {
   // The precedence above: a cursor the player activated is not taken
   // back by the next gesture, only by the toggle.
   if (_cursorActive) return;
+  _lastRequestAt = nowMs();
   if (!_errBound && typeof document !== 'undefined') {
     document.addEventListener('pointerlockerror', () => {
       console.warn('[input] pointer lock refused (focus/cooldown); the next gesture retries');
@@ -149,7 +189,15 @@ export function releaseLook() {
 export function makeLookGate(canvas) {
   let wasHeld = false;
   return (held) => {
-    if (held) releaseLook();
+    // PL3: a door that relocks INSIDE its closing gesture (ui/pauseDoor.js,
+    // the talk panel, the chat) is a frame ahead of the host's "window
+    // up" - the overlay slot drains after this gate runs - so the very
+    // next frame saw `held` still true and released the lock the
+    // gesture had just won, and the frame after asked for it back with
+    // no gesture at all, which the browser refuses after an Escape exit.
+    // A request honoured within the grace holds; a window that is
+    // really still up releases on the frame after it.
+    if (held) { if (nowMs() - _lastRequestAt > RELOCK_GRACE_MS) releaseLook(); }
     else if (wasHeld) requestLook(canvas);
     wasHeld = held;
   };

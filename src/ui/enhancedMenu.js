@@ -106,6 +106,7 @@ import {
 import { mostRecentRestorable, restorableSaves, deleteSave, QUICK_SAVE_NAME } from '../systems/saveSlots.js';   // SAV4: the slot store; SLOTS1: every slot
 import { uiSkin, otherSkin, setUiSkin, SKIN_NAMES, isEnhanced } from '../systems/uiSkin.js';   // FD1: which boot rail
 import { getPref, setPref, isOpen, setOpen } from '../systems/uiPrefs.js';
+import { LAND_VIEW_TIERS } from '../world/landView.js';   // LV1: the Enhanced pane's Land view distance tiers
 import { DEFAULT_SERVER } from '../net/online.js';   // ONLINE1: the relay this port hosts, the field's placeholder   // R7: the port's own switches; SO1: the folded tiers' memory
 import { replacementCount } from '../systems/musicReplacement.js';   // M-EXT: the packs card reports what the pick covers
 import { textureReplacementCount } from '../systems/textureReplacement.js';   // M-TEX: and the texture half
@@ -1109,6 +1110,16 @@ function portRowsEnhanced({ pause = false } = {}) {
     + 'panorama and its own weather. Takes effect when the world next loads. The sky is the port\u2019s own dome; '
     + 'Dynamic Skies\u2019 skybox (BadLuckBurt and carademono, carried with permission - see the Mods pane and About) '
     + 'replaces it while its own switch there is on.'));   // DS1; VC1: the dome is the default
+  out.push(prefRow('pixelatedSky', 'Pixelated sky',
+    'The port\u2019s own sky drawn the way the painted one was: an angular pixel the size of the '
+    + 'original\u2019s and a stepped palette, so the dome and its clouds sit with the rest of the art. '
+    + 'Off is the smooth dome. Takes effect when the world next loads. Dynamic Skies draws its own '
+    + 'pixel sheets while its switch in the Mods pane is on, whatever this says.'));   // PS1
+  out.push(choiceRow('landViewDistance', 'Land view distance',
+    'How far the land streams around you, in map pixels each way: Daggerfall\u2019s own 3, or further. '
+    + 'The rings past the second are drawn coarse and show only their trees and fires, so the far land '
+    + 'is cheap - but a walk across the map builds more of it. The haze reaches as far. Takes effect when the world next loads.',
+    LAND_VIEW_TIERS));   // LV1
   out.push(choiceRow('grassDensity', 'Grass density',
     'How much of the meadow grows: the full field, half, a quarter, or none. The single heaviest thing outdoors - '
     + 'try half first if the FPS counter says the frame is the GPU\u2019s. Takes effect when the world next loads.',

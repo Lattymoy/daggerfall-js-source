@@ -216,7 +216,7 @@ uploads as-is with `UNPACK_FLIP_Y_WEBGL` off (`renderer.js:1831`), and
 (`renderer.js:301-304`). The seasonal record arrived in PNG raster
 order instead - `decodeTexture2D` flips Unity's bottom-up rows to
 top-down for its own consumers, and the loose arm is a canvas
-`getImageData` - and `world.js:1182` / `exterior.js:792` handed that
+`getImageData` - and `world.js:1191` / `exterior.js:792` handed that
 straight to `uploadTexture`. So a seasonal flat drew mirrored against
 the classic flat uploaded five lines later in the same batch loop. In
 DFU there is nothing to reconcile: the mod's asset is a Unity

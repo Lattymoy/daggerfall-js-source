@@ -1,5 +1,6 @@
 // C8 E3d: back-facing wheel (Unity rounding preserved), the backstab
 // channels, FP pose composition.
+import './modsOff.js';   // MO1: this suite pins Daggerfall Unity's own numbers - the game without its mods
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { isBackFacing } from '../src/characters/enemyMotor.js';

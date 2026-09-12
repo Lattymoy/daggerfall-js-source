@@ -206,7 +206,7 @@ test('UL1: the registry - installed, the two rolls answer the mod\'s when Enable
   assert.match(rd('src/combat/enemyEquipment.js'), /formulaOverride\('randomMaterial'\)\?\.\(playerLevel, rolls\)/); assert.match(rd('src/combat/enemyEquipment.js'), /formulaOverride\('randomArmorMaterial'\)\?\.\(playerLevel, rolls\)/);
   // the pane
   const m = MOD_SETTINGS.unleveledLoot;
-  assert.equal(m.author, 'Ralzar'); assert.deepEqual(Object.keys(m.keys), ['Enabled', ...UNLEVELED_MATERIAL_NAMES]); assert.equal(m.keys.Enabled.default, false);
+  assert.equal(m.author, 'Ralzar'); assert.deepEqual(Object.keys(m.keys), ['Enabled', ...UNLEVELED_MATERIAL_NAMES]); assert.equal(m.keys.Enabled.default, true);   // MO1
   const shipped = JSON.parse(rd('vendor/unleveledLoot/modsettings.json').replace(/,(\s*[}\]])/g, '$1')).Sections[0];
   assert.equal(shipped.Name, 'MaterialSwitching');
   for (const k of shipped.Keys) {

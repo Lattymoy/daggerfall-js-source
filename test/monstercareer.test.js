@@ -1,5 +1,6 @@
 // E4a: monster careers - ENEMY{nnn}.CFG inside MONSTER.BSA through the
 // shared BsaFile + ClassFile readers, on a crafted container.
+import './modsOff.js';   // MO1: this suite pins Daggerfall Unity's own numbers - the game without its mods
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { loadMonsterCareer, makeEnemyEntity } from '../src/characters/enemyEntity.js';

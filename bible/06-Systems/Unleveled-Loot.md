@@ -11,7 +11,9 @@ vendored under `vendor/unleveledLoot/` (the manifest, the shipped
 modsettings, a README), it is credited on the About screen, and it is
 ported as `src/systems/unleveledLoot.js`. Its ten switches and
 `Enabled` live in the Mods pane; off by default, as DFU without the mod
-listed.
+listed, until MO1 (2026-09-12, Mac: "All mods should be enabled by
+default") turned it on - and with it the mod's arms decline without a
+player to read (no world yet: DFU's own roll stands).
 
 ## The source the port reads
 
@@ -78,7 +80,10 @@ scenes/worldModes.js (`setUnleveledLootWorld`); the two hosts hand it
 
 ## Port-side decisions, recorded
 
-- **`Enabled` off by default** (the precedent).
+- **`Enabled` off by default** (the precedent). ~~Off~~ ON since MO1
+  (2026-09-12), and `installUnleveledLoot`'s `on` requires the world's
+  player as well as the switch - a shelf minted before any world, a foe
+  spawned in a host without the reader, read Luck off null otherwise.
 - **The ten switches are MultipleChoiceKeys** - the Mods pane grew the
   type (`isChoiceKey`: `options`, the value its index, clamped) and
   steps through the names.

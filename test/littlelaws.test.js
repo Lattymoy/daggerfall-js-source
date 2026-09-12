@@ -3,6 +3,7 @@
 // gate in GP-unit arithmetic, and the material-ineffective HUD line.
 // (entity-7 was REFUTED - the rest catch-up already runs per game
 // minute under the 2880 cap; see the Port-Ledger.)
+import './modsOff.js';   // MO1: this suite pins Daggerfall Unity's own numbers - the game without its mods
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { canHoldAmount, weightInGPUnits, effectiveUnitWeightInKg, itemWeight, totalWeight, goldStack, carriedWeight } from '../src/systems/inventory.js';

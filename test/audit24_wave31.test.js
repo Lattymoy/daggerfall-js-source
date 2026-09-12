@@ -1,6 +1,7 @@
 // AUDIT 24, wave 31: the twelve-slice sweep's two effects highs - the
 // normal-power concealment break, unported at every door, and the
 // stat-zero kill.
+import './modsOff.js';   // MO1: this suite pins Daggerfall Unity's own numbers - the game without its mods
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';

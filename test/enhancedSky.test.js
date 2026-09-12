@@ -390,11 +390,13 @@ test('ES1e retro: the enhanced sky is drawn on the PAINTED sky\'s own angular pi
   // game and the lab cannot disagree about what the sky looks like.
   // VC1 (2026-09-07, Mac: "remove the pixelated sky look"): smooth is
   // the default; ?sky=retro is the door back; ?sky=smooth still means smooth.
-  assert.equal(retroFor(''), null, 'VC1: smooth by default');
-  assert.equal(retroFor('?sky=retro'), RETRO, 'the retro pass is a door now');
-  assert.equal(retroFor('?sky=smooth'), null);
-  assert.equal(retroFor('?sky=classic'), null, 'classic is the OTHER pass entirely; it never reaches here');
-  assert.match(read('src/scenes/shared.js'), /enhancedSky\.retro = retroFor\(params\.toString\(\)\);/);
+  assert.equal(retroFor(''), RETRO, 'PS1: pixelated by default again (the Enhanced pane\'s switch, true by default)');
+  assert.equal(retroFor('', false), null, 'the switch off is the smooth dome');
+  assert.equal(retroFor('?sky=retro', false), RETRO, 'the retro door wins over the switch');
+  assert.equal(retroFor('?sky=smooth'), null, 'and the smooth door wins the other way');
+  assert.equal(retroFor('?sky=smooth', true), null);
+  assert.equal(retroFor('?sky=classic'), retroFor(''), 'classic is the OTHER pass entirely; it never reaches here - a door that is neither retro nor smooth is a silent URL');
+  assert.match(read('src/scenes/shared.js'), /enhancedSky\.retro = retroFor\(params\.toString\(\), getPref\('pixelatedSky'\)\);/);   // PS1: the pane's switch decides when the URL is silent
   assert.match(read('src/tools/skyLab.js'), /sky\.retro = retroFor\(location\.search\);/);
   const fs = read('src/render/enhancedSky.js');
   // The snap happens to the DIRECTION, before anything is computed - so

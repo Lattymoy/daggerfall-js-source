@@ -135,12 +135,20 @@ export const RETRO = Object.freeze({ step: Math.PI / 512, levels: 26 });   // st
 
 /** ONE DOOR for the retro decision, so the game and the lab cannot
  *  disagree about what the sky looks like. VC1 (2026-09-07, Mac:
- *  "remove the pixelated sky look"): SMOOTH is the default now and
- *  `?sky=retro` is the door back to ES1e's angular pixel and its
- *  posterise; `?sky=smooth` still answers smooth, so every probe that
- *  spells it keeps its meaning. */
-export const retroFor = (search = globalThis.location?.search ?? '') =>
-  (new URLSearchParams(search).get('sky') === 'retro' ? RETRO : null);
+ *  "remove the pixelated sky look"): SMOOTH became the default and
+ *  `?sky=retro` the door back to ES1e's angular pixel and its
+ *  posterise. PS1 (2026-09-12, Mac: "Bring back the pixelated sky...
+ *  On by default and a part of a new toggle within enhanced
+ *  environments"): the second argument is that toggle (uiPrefs
+ *  pixelatedSky, true by default) and decides when the URL is silent;
+ *  `?sky=retro` and `?sky=smooth` still win, so every probe that spells
+ *  either keeps its meaning. */
+export const retroFor = (search = globalThis.location?.search ?? '', pixelated = true) => {
+  const door = new URLSearchParams(search).get('sky');
+  if (door === 'retro') return RETRO;
+  if (door === 'smooth') return null;
+  return pixelated ? RETRO : null;
+};
 
 /** The pole the star field turns about: north (+Z here, since the sun's
  *  arc is the XZ east-west line), leaned toward the zenith so the field

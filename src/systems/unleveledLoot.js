@@ -296,7 +296,13 @@ export function unlevelDroppedLoot(entity, { rolls = Math.random, r = null } = {
  *  overrides, the dead third, the death handler. Each reads `Enabled`
  *  live and declines when off, so DFU's own rolls stand. */
 export function installUnleveledLoot({ read: r = null } = {}) {
-  const on = () => unleveledLootEnabled(r);
+  // MO1 (2026-09-12): the mod is on by default now, so its arms can be
+  // asked before any world has handed in a player (a shelf minted at
+  // boot, a foe spawned in a host that never mounts the reader, every
+  // test that never did). DFU's PlayerEntity always exists; the port's
+  // reader may not, and the mod without a player is a null read of
+  // Luck and Level - so no player is no mod, and DFU's own roll stands.
+  const on = () => unleveledLootEnabled(r) && player() != null;
   registerFormulaOverride('randomMaterial', (playerLevel, rolls = Math.random) => (on() ? unleveledRandomMaterial(rolls, matSwitchList(r)) : undefined));
   registerFormulaOverride('randomArmorMaterial', (playerLevel, rolls = Math.random) => (on() ? unleveledRandomArmorMaterial(rolls, matSwitchList(r)) : undefined));
   registerFormulaOverride('modifyFoundLootItems', (lootItems) => (on() ? unleveledGoldLootPiles(lootItems) : undefined));   // read nowhere, as in DFU 1.1.1

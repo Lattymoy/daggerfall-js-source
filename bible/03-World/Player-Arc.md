@@ -1694,7 +1694,7 @@ at the shipped `Mouse2` default, and handed it to the input lane.
 `worldModes` has no `keys` Set of its own: it destructures one from
 `host` (`worldModes.js:357`), and its only two callers are `world.js`
 (`:6147`) and `exterior.js` (`:2769`), both of which pass their own Set
-and both of whose WINDOW-level handlers (`world.js:5206-5207`,
+and both of whose WINDOW-level handlers (`world.js:5215-5216`,
 `exterior.js:2519-2520`) call `mouseCode(e.button)` and add/delete
 unconditionally - outside every mode and overlay gate. `MOUSE_CODES`
 maps button 2 to `Mouse2` (`input.js:281`), which is the shipped
@@ -1713,7 +1713,7 @@ not gate on `HasAction`; it gates on `playerMotor.IsStandingStill`
 that `GroundedMovement` writes straight into `moveDirection`, so DFU
 plays the stride. The port walked the autorunner forward in silence in
 every host. All four now pass `standingStill: player.standing`, the
-motor's own mirror of that getter (`world.js:8542` already did at its
+motor's own mirror of that getter (`world.js:8551` already did at its
 other footstep site) - which is also still the paralysis answer,
 because the hosts zero both axes for a frozen player.
 
@@ -1870,3 +1870,50 @@ Pins: 2 in `test/audit64_motor.test.js` - a paralysed 80 kg swimmer must
 not move at all, the same swimmer unfrozen must still sink (so the guard
 cannot silently revert AUDIT 26 F027), and the vector zeroing above the
 guard must still run. Mutant: the guard removed; 1 killed.
+
+## SH1 - A TABLE IS A WALL (2026-09-12, Mac's report)
+
+Mac: "3D geometry has this issue where while it has collision, you can
+immediately walk over things (like interior tables, tree trunks, etc)."
+
+**The mechanism, measured.** `collider.js`'s step-up ladder lifted the
+capsule by rungs to stepOffset, moved it forward at the raised height
+and KEPT that height, leaving the ground snap to "settle it onto the
+tread as forward progress clears the edge". Beside a tabletop that is
+what mounted it: the capsule hovered at +0.5 beside the edge (no
+contact - the lower sphere's centre 0.85 up, the edge 0.3 away), the
+next frame's ladder lifted it +0.5 again from the hover, and the top
+edge's contact - a normal well inside slopeLimit 70 - grounded each
+slice and pushed it up. A headless walk into boxes: 0.55 mounted to
+0.38, 0.6 to 0.6 (in nine airborne frames), 0.7 to 0.51. The stairs
+test's own comment licensed it ("a lone box above 0.5 crests via its
+~45-deg edge contact, as Unity") - Unity's CharacterController does no
+such thing; its slope limit governs sliding on a slope, and a step is a
+surface at most stepOffset ABOVE THE FEET.
+
+**Three moves, all in `_moveStep` and the ladder alone.** The stand
+ceiling, `entryY + STEP_OFFSET`, threads through `_resolveCapsule` into
+`_resolveSphere` for the ladder's three resolves (the raised start, the
+retry, the down leg): a contact above it whose normal leans up is a
+WALL there - pushed out sideways by its whole penetration (the plain
+push only when it sits dead under a face), never ground. A rung whose
+resolve lifted the capsule past the ceiling is refused. And the DOWN
+LEG, Unity's third move (up, forward, down): from the raised, advanced
+position the capsule comes down by eighths of stepOffset to the first
+height at which it STANDS - grounded, on a contact under the ceiling,
+the forward gain kept - and a rung with nothing to stand on is refused,
+so the plain move's block stands and the player slides along the table
+as along any wall. Every other caller passes Infinity and resolves
+bit-for-bit as before: the 0.3 staircase, the 0.45 riser, the 60- and
+78-degree ramps, the facade ladder, the 2.2 stairwell, the MAC3 floor
+snap - all 35 pins in `motorStairs`, `player`, `mac3_downhill` and
+`mac1_playreport` hold. The same walk now: 0.55 through 1.2 blocked
+flat with no airborne frame, 0.3 and 0.4 stepped and crossed.
+
+Trees: wilderness trees are billboards with no collider at all (the 3D
+tree lane was reverted whole, Audit-58); a trunk that blocks is an RMB
+model in the same triangle soup, and blocks like the table now. Noted
+and left: thin free-standing geometry (a 0.2 column) can be walked
+through - opposing pushes cancel and `d2 === 0` contacts are skipped -
+a different bug, its own slice. Ledger row SH1. Pinned:
+`test/macfive.test.js` SH1.

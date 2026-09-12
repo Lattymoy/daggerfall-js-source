@@ -9,6 +9,7 @@
 //   F32  the class-questions confirm box's DEFAULT button is No
 //   F33  the summary's stat bonus pool is a SECOND rollout, never
 //        copied back to the bonus-stats window
+import './modsOff.js';   // MO1: this suite pins Daggerfall Unity's own numbers - the game without its mods
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 

@@ -407,7 +407,7 @@ test('PCO1: the Meaner Monsters edit rides the row a foe is minted from, only un
   assert.equal(rat.maxHealth, 25, 'Range(15, 36) at a half roll');
   setModSetting('meanerMonsters', 'Enabled', false);
   assert.equal(makeEnemyEntity(0, ENEMY_BASICS[0], career(), 5, () => 0.5).basics.maxHealth, ENEMY_BASICS[0].maxHealth, 'Meaner Monsters off: the overhaul\'s edit has no mod to edit');
-  _resetModSettings();
+  _resetModSettings(); setModSetting('meanerMonsters', 'Enabled', false); setModSetting('pcaao', 'Enabled', false);   // MO1: both on by default now - "plain" is both off
   const plain = makeEnemyEntity(0, ENEMY_BASICS[0], career(), 5, () => 0.5);
   assert.equal(plain.basics.minHealth, ENEMY_BASICS[0].minHealth);
 });
@@ -422,7 +422,7 @@ test('PCO1: the seams - the Mods pane entry, the credit, the vendor folder, worl
     assert.equal(m.keys[k.Name].default, k.Value, `${k.Name} defaults as shipped`);
     assert.equal(m.keys[k.Name].description, k.Description, `${k.Name}'s description is the mod's own`);
   }
-  assert.equal(m.keys.Enabled.default, false, 'the mod is the player\'s choice in the Mods pane (DFU enables a mod by listing it)');
+  assert.equal(m.keys.Enabled.default, true, 'MO1 (Mac, 2026-09-12): every mod is on by default; the Mods pane is where it is turned off');
   assert.equal(m.keys.rolePlayRealismArchery, undefined, 'MM1: no compatibility switches between mods (Mac)'); assert.equal(m.keys.meanerMonsters, undefined);
   const credit = CREDITS.mods.find((c) => c.title === 'Physical Combat And Armor Overhaul');
   assert.ok(credit); assert.equal(credit.author, 'Kirk.O'); assert.deepEqual([...credit.vendor], ['pcaao']); assert.equal(credit.version, '1.44');

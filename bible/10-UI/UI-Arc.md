@@ -55,14 +55,14 @@ does the pack's USE arm.
                         worldModes.js:1784 (the factory) and :1904 (a
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
-                        dungeonContext.js:918, world.js:1633,
+                        dungeonContext.js:918, world.js:1642,
                         exterior.js:1979. It is the only window TWO
                         enhanced screens already push - the sheet's
                         button and the pack's USE hand-off, whose
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:1672, dungeonContext.js:3351. A seam
+    / NOTEBOOK          world.js:1681, dungeonContext.js:3351. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -7854,7 +7854,7 @@ mutations, 4 dead.
 
 PX24 (Mac: "with the logbook and history, I want them as one detailed
 UI"): THE CHRONICLE. Two classic windows built at four sites -
-questJournal.js from charSheetNav:53, world.js:1935 and
+questJournal.js from charSheetNav:53, world.js:1944 and
 dungeonContext.js, playerHistory.js from charSheetNav:61 - become ONE
 seam (ui/chronicleDoor.js, the U52/U53/PX23 shape a sixth time) and,
 on the enhanced skin, ONE WINDOW.
@@ -9725,9 +9725,9 @@ re-resolved the `exterior.js` half of a three-file sentence and left the
 `ExteriorAutomapWindow` construction, `:4101` on a `locationName:`
 field). Both halves are now read by `test/citedrift.test.js` - the
 existing entries only ever captured the exterior number, which is how
-the other half went stale unnoticed. (The rest cite named `world.js:5050`,
+the other half went stale unnoticed. (The rest cite named `world.js:5059`,
 the first of the host's TWO identical `act === 'Rest'` arms; ROAD-H H5
-deleted the second and the cite is `world.js:5056` now.)
+deleted the second and the cite is `world.js:5065` now.)
 
 ## AUDIT 62 F24/F25 - THE SENTINEL SWEEP WAS TWO WINDOWS SHORT (2026-09-07)
 
@@ -12804,3 +12804,55 @@ window's, and only a press with nothing up is the toggle. A typed DOM
 field keeps its Enter too (`isTextEntryTarget`, CG2). The unbind
 removes the capture listener. Ledger row PL2. Pinned:
 `test/cursortoggle.test.js` PL2.
+
+## PL3 - THE POINTER COMES BACK (2026-09-12, Mac's report)
+
+Mac: "The mouse pointer can still get stuck outside of the game, not
+allowing you to interact with the game unless refreshing. I'm not sure
+if this is an issue with interacting with UI elements itself."
+
+It was, three ways past PL2, all of them the same shape: a state the
+hosts' relock arms could not see.
+
+**(1) The latch nothing reset.** `cursorActive` is a module global in
+`player/pointerLock.js` and no host ever wrote it at boot or teardown.
+A host that started after the flag had latched true - a new game from
+the menu, a scene the last one left it in - had every relock arm
+(`requestLook`'s precedence line) refused from its first frame.
+`bindCursorToggle` resets it: a host boot is a fresh PlayerMouseLook,
+and cursorActive is an instance field there (:32).
+
+**(2) Two surfaces that own Enter and the toggle never knew.** The
+toggle is a window capture listener bound at boot, so it runs before
+any listener bound later on the same target. The pixel dial (Tab) is
+on the overlay stack (`ui/enhancedOverlays.js`) but not in any host's
+window predicate, and its Enter is its commit: Tab, Enter flipped the
+flag and released the lock, the dial committed, and the dial's close
+never relocked. The chat opens on the SAME Enter (CHAT_OPEN_ACTION is
+ActivateCursor, AUDIT CHAT): the toggle flipped first, the chat opened
+and freed the pointer, and the chat's closing relock was refused by
+the precedence line for the rest of the session. Now: the toggle
+declines while `overlayOpen()`; the chat's `onOpen` reclaims its Enter
+(`setCursorActive(false)` before `releaseLook`); the dial remembers the
+element that held the lock and asks for it back as it goes.
+
+**(3) The gate that undid the gesture.** MAC1 taught the doors to
+relock INSIDE their closing gesture (`ui/pauseDoor.js`), because the
+browser refuses a gesture-less request after an Escape exit. But the
+host's overlay slot drains after the look gate runs, so the frame
+after a Resume click saw `held` still true, released the lock the
+click had just won, and the frame after that asked again with no
+gesture. `makeLookGate` now keeps a lock requested within
+RELOCK_GRACE_MS (150 ms); a window that is really up still releases on
+the frame past the grace.
+
+**The net, and the wall.** A pointerdown on the canvas or the body
+with nothing up, no cursor activated and no lock held takes the lock
+inside that gesture - whatever swallowed the canvas arm, and in a host
+without one; a click on any element of the page's UI is that element's,
+and a finger never holds a lock. And the crash report (`#crash` in
+`main.js`) sat over the bottom 45% of the viewport with pointer-events
+auto, eating every click that should have relocked: it is
+pointer-events none now, a report and not a wall. Ledger row PL3.
+Pinned: `test/macfive.test.js` PL3 (two), `test/cursortoggle.test.js`,
+`test/chat1.test.js`.

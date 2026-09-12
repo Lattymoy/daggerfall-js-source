@@ -29,11 +29,18 @@ export const MOD_SETTINGS = Object.freeze({
   // its own colour posterise - is the pixelation Mac named, and it is
   // the mod's to keep; the port's own dome is the enhanced lane's sky
   // and the mod is a choice in the Mods pane (Ledger row DS1).
+  // MO1 (2026-09-12, Mac: "All mods should be enabled by default"):
+  // every mod's `Enabled` defaults TRUE - this one, Meaner Monsters,
+  // the Physical Combat And Armor Overhaul and Unleveled Loot alike -
+  // and the Mods pane is where a player turns one off. While this one
+  // is on the mod's skybox is the enhanced lane's sky, as DS1 shipped
+  // it; the port's dome, its volumetric clouds and the Pixelated sky
+  // switch (uiPrefs) draw only while it is off.
   'dynamic-skies': Object.freeze({
     title: 'Dynamic Skies',
     author: 'BadLuckBurt and carademono',
     keys: Object.freeze({
-      Enabled: Object.freeze({ default: false, description: 'Dynamic Skies\u2019 procedural skybox in place of the port\u2019s own dome, under the enhanced environments: its sun and scattering, textured cloud layers per weather, twinkling stars, both moons on their orbits, its fog colours and distances, its longer sunrise and sunset, and a lightning flash under thunder. Off returns the port\u2019s own procedural sky.' }),
+      Enabled: Object.freeze({ default: true, description: 'Dynamic Skies\u2019 procedural skybox in place of the port\u2019s own dome, under the enhanced environments: its sun and scattering, textured cloud layers per weather, twinkling stars, both moons on their orbits, its fog colours and distances, its longer sunrise and sunset, and a lightning flash under thunder. Off returns the port\u2019s own procedural sky.' }),
       densitySetting: Object.freeze({ default: 1, min: 1, max: 10, description: 'Makes fog thicker' }),
       ActivatePixelSnow: Object.freeze({ default: false, description: 'Turn the pixel snow replacement on or off' }),
       MinParticleSize: Object.freeze({ default: 100, min: 100, max: 800, description: 'Minimum snow particle size' }),
@@ -65,7 +72,7 @@ export const MOD_SETTINGS = Object.freeze({
     title: 'Meaner Monsters',
     author: 'Ralzar',
     keys: Object.freeze({
-      Enabled: Object.freeze({ default: false, description: 'Ralzar\u2019s Meaner Monsters 1.5.2, 1:1: "Buffs many monsters. Debuffs rats, bats and zombies." - twenty monsters\u2019 damage, health, level and armour rewritten, werewolves and wereboars drawn a fifth larger, the dragonling two and a half times its size. Takes effect on monsters spawned after the switch. With Physical Combat And Armor Overhaul also on, its own edit of these numbers takes over, as in Daggerfall Unity.' }),
+      Enabled: Object.freeze({ default: true, description: 'Ralzar\u2019s Meaner Monsters 1.5.2, 1:1: "Buffs many monsters. Debuffs rats, bats and zombies." - twenty monsters\u2019 damage, health, level and armour rewritten, werewolves and wereboars drawn a fifth larger, the dragonling two and a half times its size. Takes effect on monsters spawned after the switch. With Physical Combat And Armor Overhaul also on, its own edit of these numbers takes over, as in Daggerfall Unity.' }),
     }),
   }),
   // PCO1: PHYSICAL COMBAT AND ARMOR OVERHAUL 1.44 (Kirk.O). Its seven
@@ -80,7 +87,7 @@ export const MOD_SETTINGS = Object.freeze({
     title: 'Physical Combat And Armor Overhaul',
     author: 'Kirk.O',
     keys: Object.freeze({
-      Enabled: Object.freeze({ default: false, description: 'Kirk.O\u2019s Physical Combat And Armor Overhaul 1.44, 1:1: armour reduces the damage you take instead of your chance to be hit, skills decide the hit, weapons wear by their kind and material, shields block by their material and your stats, critical strikes multiply damage. Off returns Daggerfall Unity\u2019s own combat formulas.' }),
+      Enabled: Object.freeze({ default: true, description: 'Kirk.O\u2019s Physical Combat And Armor Overhaul 1.44, 1:1: armour reduces the damage you take instead of your chance to be hit, skills decide the hit, weapons wear by their kind and material, shields block by their material and your stats, critical strikes multiply damage. Off returns Daggerfall Unity\u2019s own combat formulas.' }),
       equipmentDamageEnhanced: Object.freeze({ default: true, description: 'Equipment condition damage is increased significantly, the amount of wear your equipment takes is based on many different factors; Material, Damage Source, Etc' }),
       fadingEnchantedItems: Object.freeze({ default: true, description: 'Enchanted Weapons and Armor will be destroyed upon breaking from physical combat. !!!! This Module Is Dependent On Equipment Damage Enhanced' }),
       fixedStrengthDamageModifier: Object.freeze({ default: true, description: 'Fixes a bug in DFU 0.10.21, the strength modifier for damage is double what classic had. This module fixes that, so 10 points = +1, instead of 10 points = +2' }),
@@ -99,7 +106,7 @@ export const MOD_SETTINGS = Object.freeze({
     title: 'Unleveled Loot',
     author: 'Ralzar',
     keys: Object.freeze({
-      Enabled: Object.freeze({ default: false, description: 'Ralzar\u2019s Unleveled Loot 1.1.2, 1:1: "Makes loot and shop stock materials not scale to your level." Weapon and armour materials roll by your luck, the shop\u2019s quality and the dungeon\u2019s kind instead of your level; a corpse\u2019s gold is divided by your level and multiplied by your luck; Daedra and Orcs may drop their own metal. Off returns Daggerfall Unity\u2019s own rolls.' }),
+      Enabled: Object.freeze({ default: true, description: 'Ralzar\u2019s Unleveled Loot 1.1.2, 1:1: "Makes loot and shop stock materials not scale to your level." Weapon and armour materials roll by your luck, the shop\u2019s quality and the dungeon\u2019s kind instead of your level; a corpse\u2019s gold is divided by your level and multiplied by your luck; Daedra and Orcs may drop their own metal. Off returns Daggerfall Unity\u2019s own rolls.' }),
       ...Object.fromEntries(['Iron', 'Steel', 'Silver', 'Elven', 'Dwarven', 'Mithril', 'Adamantium', 'Ebony', 'Orcish', 'Daedric'].map((name, i) => [name, Object.freeze({
         default: i,
         options: Object.freeze(['Iron', 'Steel', 'Silver', 'Elven', 'Dwarven', 'Mithril', 'Adamantium', 'Ebony', 'Orcish', 'Daedric']),

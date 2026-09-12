@@ -11,6 +11,7 @@
 // round-trip pin alone proves only that a field made the trip, not
 // that anything on the far side reads it (the AUDIT 39 lesson).
 
+import './modsOff.js';   // MO1: this suite pins Daggerfall Unity's own numbers - the game without its mods
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';

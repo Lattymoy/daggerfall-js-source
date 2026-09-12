@@ -190,7 +190,7 @@ export function createSkyController(gl, params) {
   const skyDoor = params.get('sky');
   const dynamicOn = enhancedLane && (skyDoor === 'dynamic' || (skyDoor === null && modSetting('dynamic-skies', 'Enabled')));
   const enhancedSky = enhancedLane && !dynamicOn ? new EnhancedSkyRenderer(gl) : null;
-  if (enhancedSky) enhancedSky.retro = retroFor(params.toString());   // ES1e: retro unless ?sky=smooth - one door, shared with the lab
+  if (enhancedSky) enhancedSky.retro = retroFor(params.toString(), getPref('pixelatedSky'));   // ES1e: retro unless ?sky=smooth - one door, shared with the lab; PS1: the Enhanced pane's Pixelated sky switch decides when the URL is silent
   // VC3: THE VOLUMETRIC CLOUDS ride the port's own dome - never the mod's
   // sky - behind the one switch; `?clouds=off` is the kill switch and
   // `?clouds=lo|hi` the quality doors. Built here at boot (its noise is
