@@ -99,8 +99,8 @@ test('the classic door still gates its data first', () => {
 test('only game actions resolve the door - never a destination', () => {
   const src = read('src/ui/enhancedMenu.js');
   const calls = [...new Set([...src.matchAll(/onAction\('([a-z]+)'\)/g)].map((m) => m[1]))].sort();
-  assert.deepEqual(calls, ['begin', 'continue', 'exit', 'load', 'new', 'resume', 'save'],
-    'boot resolves continue/new/load (and begin on the classic rail, FD1); pause resolves resume/save/exit');
+  assert.deepEqual(calls, ['begin', 'continue', 'exit', 'load', 'new', 'online', 'resume', 'save'],
+    'boot resolves continue/new/load/online (and begin on the classic rail, FD1); pause resolves resume/save/exit');
   for (const dest of ['settings', 'mods', 'about']) {
     assert.ok(!calls.includes(dest),
       `${dest} is a destination INSIDE this screen, not an exit from it`);
@@ -138,13 +138,15 @@ test('the two rails differ only where the question does', () => {
   // Game it answers "which game", settled once one is running.
   // SO1: ENHANCED left the rail for a category of Settings, reachable
   // from BOTH doors through the one pane
+  // ONLINE1: Online joins the boot-only set - "which game" again, the
+  // one brought into the shared world.
   assert.deepEqual(boot.filter((x) => !shared.includes(x)),
-    ['Continue', 'New Game', 'Test Room']);
+    ['Continue', 'New Game', 'Online', 'Test Room']);
   assert.ok(!pause.includes('Test Room'), 'the room is a front door, not a pause row');
   assert.ok(!boot.includes('Enhanced') && !pause.includes('Enhanced'), 'Enhanced is a settings category, not a rail entry (SO1)');
   // FD1: the classic rail is the shared set behind one door
   const classic = list('SECTIONS_CLASSIC');
-  assert.deepEqual(classic, ['Begin', 'Settings', 'Controls', 'Mods', 'About']);
+  assert.deepEqual(classic, ['Begin', 'Online', 'Settings', 'Controls', 'Mods', 'About'], 'ONLINE1: the classic player goes online too');
   assert.deepEqual(pause.filter((x) => !shared.includes(x)), ['Resume', 'Save Game', 'Exit']);
   // SETTINGS IS THE POINT. U49's own record says settings were
   // reachable only at boot; a pause rail without them would have left
@@ -318,7 +320,11 @@ test('both front doors test the save VERSION, through one predicate', () => {
 
 test('main.js maps the actions to the load flag, both ways', () => {
   const branch = enhancedBranch();
-  assert.match(branch, /choice === 'continue' \|\| choice === 'load'\) params\.set\('load', '1'\)/);
+  assert.match(branch, /choice === 'continue' \|\| choice === 'load' \|\| choice === 'online'\) params\.set\('load', '1'\)/, 'ONLINE1: Online brings the save in');
+  // AUDIT ONLINE E1: the online flag is SET on this door and DELETED on
+  // every other, IN THIS BRANCH - the first cut put it in the classic
+  // start window's branch, which never answers 'online'.
+  assert.match(branch, /if \(choice === 'online'\) params\.set\('online', '1'\);\s*\n\s*else params\.delete\('online'\);/);
   assert.match(branch, /else params\.delete\('load'\)/,
     'AUDIT 19 F12: a URL already carrying ?load must not make New Game restore the save');
   assert.match(branch, /params\.set\('classic', '1'\)/);

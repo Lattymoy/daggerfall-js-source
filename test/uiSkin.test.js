@@ -89,7 +89,7 @@ test('a corrupt stored value falls to the default, never throws', () => {
 // rail, and the way back is the door's own switch - the pin below.
 test('FD1: the CLASSIC skin opens on the same door, whose switch is its way back', () => {
   const src = readFileSync(new URL('../src/ui/enhancedMenu.js', import.meta.url), 'utf8');
-  assert.match(src, /const SECTIONS_CLASSIC = \['Begin', 'Settings', 'Controls', 'Mods', 'About'\]/);
+  assert.match(src, /const SECTIONS_CLASSIC = \['Begin', 'Online', 'Settings', 'Controls', 'Mods', 'About'\]/);
   assert.match(src, /sections = mode === 'pause' \? SECTIONS_PAUSE : isEnhanced\(\) \? SECTIONS_BOOT : SECTIONS_CLASSIC;/);
   assert.ok(!existsSync(new URL('../src/ui/settingsWindow.js', import.meta.url)), 'the keyed screen is gone');
 });

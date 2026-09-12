@@ -66,6 +66,10 @@ export const PREF_DEFAULTS = Object.freeze({
   // default like the other enhanced visuals; off (or the classic skin)
   // draws the tile as DFU does. Kill door `?water=off` (render/waterSurface.js).
   enhancedWater: true,
+  // ONLINE1 (2026-09-12): the Online door's two fields - the name over the
+  // player's head and the relay to join (net/online.js DEFAULT_SERVER when empty).
+  onlineName: '',
+  onlineServer: '',
   // TI2: THE PHONE IN HAND, TUNED (2026-09-11, Mac: "enhance the mobile
   // element... camera movement, character movement and a more phone
   // built feel"). The touch layer's own knobs - DFU has no touch input

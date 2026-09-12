@@ -160,33 +160,47 @@ let _pending = null;   // AUDIT 17e F16: the coalesced follow-up
  *  boot, and the doll must follow) - `_identity` is the guard that
  *  used to be a bare `if (_art) return`. */
 let _identity = null;
-export async function preloadPaperDollArt(deps, { race = 'Breton', gender = 'male', faceIndex = 0, context = 'town', where = null } = {}) {
-  const key = `${race}|${gender}|${faceIndex}|${context}|${where?.region ?? -1}`;
+/** The art set's key: who the doll is, and where. */
+export const paperDollIdentityKey = ({ race = 'Breton', gender = 'male', faceIndex = 0, context = 'town', where = null } = {}) =>
+  `${race}|${gender}|${faceIndex}|${context}|${where?.region ?? -1}`;
+
+/** ONLINE1 (AUDIT ONLINE C1-C4, C8, C9): the art set - BODY, FACE, SCBG -
+ *  loaded fresh for whoever asks, PURE: nothing of the singleton's is
+ *  read or written, and a failure THROWS (the caller decides). The
+ *  local player's set below and a peer's (composePaperDollPixels)
+ *  both ride it. */
+async function loadArtSet(deps, { race = 'Breton', gender = 'male', faceIndex = 0, context = 'town', where = null } = {}) {
+  const { fetchBytes, palette } = deps;
+  const art = raceArt(race, gender);
+  const [unclothed, clothed] = art.body;
+  const loadImgBmp = async (name) => {
+    const img = new ImgFile();
+    img.load(await fetchBytes(name), name, palette);
+    return { bmp: img.getDFBitmap(), off: img.imageOffset };
+  };
+  const face = new CifRciFile();
+  face.load(await fetchBytes(art.heads), art.heads, palette);
+  const fi = Math.max(0, Math.min(FACES_PER_RACE - 1, faceIndex | 0));
+  return {
+    palette,
+    // UI3: the SETTING decides, not the caller's context word. Off -
+    // which is how it ships - every race gets its own backdrop.
+    bg: await loadImgBmp(paperDollBackground(art.background, {
+      inTown: context === 'town', inDungeon: context === 'dungeon', inGraveyard: context === 'graveyard',
+      region: where?.region ?? -1, regionCount: where?.regionCount ?? REGION_BACKGROUND_CHARS.length,
+    })),
+    nude: await loadImgBmp(unclothed),
+    clothed: await loadImgBmp(clothed),
+    head: { bmp: face.getDFBitmap(fi, 0), off: face.getOffset(fi) },
+  };
+}
+
+export async function preloadPaperDollArt(deps, ident = {}) {
+  const { race = 'Breton', gender = 'male' } = ident;
+  const key = paperDollIdentityKey(ident);
   if (_art && _identity === key) return;
   try {
-    const { fetchBytes, palette } = deps;
-    const art = raceArt(race, gender);
-    const [unclothed, clothed] = art.body;
-    const loadImgBmp = async (name) => {
-      const img = new ImgFile();
-      img.load(await fetchBytes(name), name, palette);
-      return { bmp: img.getDFBitmap(), off: img.imageOffset };
-    };
-    const face = new CifRciFile();
-    face.load(await fetchBytes(art.heads), art.heads, palette);
-    const fi = Math.max(0, Math.min(FACES_PER_RACE - 1, faceIndex | 0));
-    _art = {
-      palette,
-      // UI3: the SETTING decides, not the caller's context word. Off -
-      // which is how it ships - every race gets its own backdrop.
-      bg: await loadImgBmp(paperDollBackground(art.background, {
-        inTown: context === 'town', inDungeon: context === 'dungeon', inGraveyard: context === 'graveyard',
-        region: where?.region ?? -1, regionCount: where?.regionCount ?? REGION_BACKGROUND_CHARS.length,
-      })),
-      nude: await loadImgBmp(unclothed),
-      clothed: await loadImgBmp(clothed),
-      head: { bmp: face.getDFBitmap(fi, 0), off: face.getOffset(fi) },
-    };
+    _art = await loadArtSet(deps, ident);
     _identity = key;
     // AUDIT 17f: _deps carries the identity paperdollItemImage keys
     // off, so it may only advance once the new art is actually in
@@ -228,7 +242,7 @@ export const paperDollArtLoaded = () => !!_art;
    whoever tries this again should build the mask locally and publish
    it beside `_pixels`, in the same statement, or not at all. */
 
-function blit(out, img, { rows = null, remap = null, atOffset = null } = {}) {
+function blit(out, img, palette, { rows = null, remap = null, atOffset = null } = {}) {
   const [orgX, orgY] = PAPERDOLL_ORIGIN;
   const off = atOffset ?? img.off;
   const px = off.x - orgX, py = off.y - orgY;
@@ -243,7 +257,7 @@ function blit(out, img, { rows = null, remap = null, atOffset = null } = {}) {
       let idx = data[y * width + x];
       if (idx === 0 || idx === 0xff) continue;
       if (remap) idx = remap(idx);
-      const c = _art.palette.get(idx);
+      const c = palette.get(idx);
       const o = (dy * PAPERDOLL_W + dx) * 4;
       out[o] = c.r; out[o + 1] = c.g; out[o + 2] = c.b; out[o + 3] = 255;
     }
@@ -259,24 +273,107 @@ function blit(out, img, { rows = null, remap = null, atOffset = null } = {}) {
 // mid-session - so it rides its own small cache. A failed load falls
 // back to the racial art, the never-traps rule.
 const _overrideArt = new Map();   // 'FILE#record' -> { bmp, off } | null
-async function loadOverrideArt(file, record = 0) {
+async function loadOverrideArt(file, record, deps, palette) {
   const key = `${file}#${record}`;
   if (_overrideArt.has(key)) return _overrideArt.get(key);
   let art = null;
   try {
     if (file.endsWith('.CIF')) {
       const cif = new CifRciFile();
-      cif.load(await _deps.fetchBytes(file), file, _art.palette);
+      cif.load(await deps.fetchBytes(file), file, palette);
       art = { bmp: cif.getDFBitmap(record, 0), off: cif.getOffset(record) };
     } else {
       const img = new ImgFile();
-      img.load(await _deps.fetchBytes(file), file, _art.palette);
+      img.load(await deps.fetchBytes(file), file, palette);
       art = { bmp: img.getDFBitmap(), off: img.imageOffset };
     }
     if (!art.bmp?.width) art = null;
   } catch { console.warn('[paperdoll] override art unavailable:', key); art = null; }
   _overrideArt.set(key, art);
   return art;
+}
+
+/**
+ * ONLINE1 (AUDIT ONLINE C1-C4): THE COMPOSE, PURE. PaperDollRenderer's
+ * layer order, dye bands and offsets over `art` (an art set) and
+ * `deps` ({ gender, race, fetchBytes, getTexture }), for `entity`'s
+ * equip table, into a fresh RGBA buffer: { out, layout }. Reads and
+ * writes NOTHING of the singleton below, so a peer's doll composes
+ * while the inventory shows the player's own, untouched.
+ * `background` false leaves the panel clear (a peer's billboard).
+ */
+async function composeDoll(art, deps, entity, { background = true } = {}) {
+  const out = new Uint8Array(PAPERDOLL_W * PAPERDOLL_H * 4);
+  const layout = [];
+  // V5: the racial override's three art laws - the beast/crypt
+  // background, the whole-body suppression (PaperDollRenderer:165 -
+  // the transformed panel is the background ALONE, empty click mask
+  // included), and the vampire's head.
+  const bgOverrideName = racialPaperDollBackground(entity);
+  const suppress = racialSuppressPaperDollBodyAndItems(entity);
+  const bgOverride = bgOverrideName ? await loadOverrideArt(bgOverrideName, 0, deps, art.palette) : null;
+  // background subrect fills the panel
+  const bg = (bgOverride ?? art.bg).bmp;
+  for (let y = 0; background && y < PAPERDOLL_H; y++) {
+    for (let x = 0; x < PAPERDOLL_W; x++) {
+      const idx = bg.data[(y + BG_SUBRECT[1]) * bg.width + (x + BG_SUBRECT[0])];
+      const c = art.palette.get(idx);
+      const o = (y * PAPERDOLL_W + x) * 4;
+      out[o] = c.r; out[o + 1] = c.g; out[o + 2] = c.b; out[o + 3] = 255;
+    }
+  }
+  const table = equipTableOf(entity);
+  const worn = table.filter(Boolean).map((it) => ({ it, t: getTemplate(it.templateIndex) })).filter((w) => w.t);
+  // cloak interiors first (BlitCloakInterior: cloak2 then cloak1,
+  // the template's own record = the interior image)
+  for (const slot of suppress ? [] : [EQUIP_SLOTS.Cloak2, EQUIP_SLOTS.Cloak1]) {
+    const it = table[slot];
+    if (!it || !CLOAK_TEMPLATES.has(it.templateIndex)) continue;
+    const t = getTemplate(it.templateIndex);
+    const img = await loadRecord(t.playerTextureArchive + (raceByKey(deps.race)?.morphologyIndex ?? HUMAN_MORPHOLOGY), t.playerTextureRecord, deps.getTexture);
+    if (img) {
+      blit(out, img, art.palette, { remap: (i) => applyDyeToIndex(i, it.dye ?? DYE_COLORS.Blue, DYE_TARGETS.Clothing) });
+      // AUDIT 18: BlitCloakInterior passes the cloak to DrawTexture
+      // (PaperDollRenderer.cs:384-400), whose tail (:284-292) pushes
+      // an ItemElement into itemLayout - so the interior IS in the
+      // GetEquipIndex click mask, and because Refresh blits it FIRST
+      // (:169) it is the LAST thing that backwards walk checks. The
+      // port drew it and entered nothing, so a click on the lining
+      // beside the body did nothing where DFU unequips the cloak.
+      layout.push({ slot: it.equipSlot ?? slot, img });
+    }
+    break;   // DFU stops at the first drawn cloak interior
+  }
+  // body + welds + head (BlitBody) - all skipped while suppressed
+  if (!suppress) {
+    blit(out, art.nude, art.palette);
+    const split = WAIST_HEIGHT;
+    // BlitBody (PaperDollRenderer.cs:346-353): the WELDS as a whole
+    // hang off the setting - the nude body above is drawn either
+    // way, and the two slot tests only decide whether a weld would
+    // show around real clothes. The setting ships False, which is
+    // why the port drawing the welds unconditionally looked right.
+    if (!getBool('ChildGuard', 'PlayerNudity')) {
+      if (!table[EQUIP_SLOTS.ChestClothes] && !table[EQUIP_SLOTS.ChestArmor]) blit(out, art.clothed, art.palette, { rows: [0, split] });
+      if (!table[EQUIP_SLOTS.LegsClothes]) blit(out, art.clothed, art.palette, { rows: [split, art.clothed.bmp.height] });
+    }
+    // V5: the vampire's clanless head replaces the racial one
+    const headOv = racialOverrideHeadArt(entity);
+    const headArt = headOv ? await loadOverrideArt(headOv.file, headOv.record, deps, art.palette) : null;
+    blit(out, headArt ?? art.head, art.palette);
+  }
+  // items ascending drawOrder (BlitItems)
+  const ordered = suppress ? [] : paperdollOrder(worn.map((w) => ({ ...w.it, drawOrder: w.t.drawOrderOrEffect })));
+  for (const it of ordered) {
+    const res = paperdollItemImage(it, { gender: deps.gender, race: deps.race });
+    if (!res) continue;
+    const img = await loadRecord(res.archive, res.record, deps.getTexture);
+    if (!img) continue;
+    const remap = res.target == null ? null : (i) => applyDyeToIndex(i, res.dye, res.target);
+    blit(out, img, art.palette, { remap });
+    layout.push({ slot: it.equipSlot, img });
+  }
+  return { out, layout };
 }
 
 export async function refreshPaperDoll(entity) {
@@ -289,76 +386,7 @@ export async function refreshPaperDoll(entity) {
   if (_refreshing) { _pending = entity; return; }
   _refreshing = true;
   try {
-    const out = new Uint8Array(PAPERDOLL_W * PAPERDOLL_H * 4);
-    const layout = [];
-    // V5: the racial override's three art laws - the beast/crypt
-    // background, the whole-body suppression (PaperDollRenderer:165 -
-    // the transformed panel is the background ALONE, empty click mask
-    // included), and the vampire's head.
-    const bgOverrideName = racialPaperDollBackground(entity);
-    const suppress = racialSuppressPaperDollBodyAndItems(entity);
-    const bgOverride = bgOverrideName ? await loadOverrideArt(bgOverrideName) : null;
-    // background subrect fills the panel
-    const bg = (bgOverride ?? _art.bg).bmp;
-    for (let y = 0; y < PAPERDOLL_H; y++) {
-      for (let x = 0; x < PAPERDOLL_W; x++) {
-        const idx = bg.data[(y + BG_SUBRECT[1]) * bg.width + (x + BG_SUBRECT[0])];
-        const c = _art.palette.get(idx);
-        const o = (y * PAPERDOLL_W + x) * 4;
-        out[o] = c.r; out[o + 1] = c.g; out[o + 2] = c.b; out[o + 3] = 255;
-      }
-    }
-    const table = equipTableOf(entity);
-    const worn = table.filter(Boolean).map((it) => ({ it, t: getTemplate(it.templateIndex) })).filter((w) => w.t);
-    // cloak interiors first (BlitCloakInterior: cloak2 then cloak1,
-    // the template's own record = the interior image)
-    for (const slot of suppress ? [] : [EQUIP_SLOTS.Cloak2, EQUIP_SLOTS.Cloak1]) {
-      const it = table[slot];
-      if (!it || !CLOAK_TEMPLATES.has(it.templateIndex)) continue;
-      const t = getTemplate(it.templateIndex);
-      const img = await loadRecord(t.playerTextureArchive + (raceByKey(_deps.race)?.morphologyIndex ?? HUMAN_MORPHOLOGY), t.playerTextureRecord);
-      if (img) {
-        blit(out, img, { remap: (i) => applyDyeToIndex(i, it.dye ?? DYE_COLORS.Blue, DYE_TARGETS.Clothing) });
-        // AUDIT 18: BlitCloakInterior passes the cloak to DrawTexture
-        // (PaperDollRenderer.cs:384-400), whose tail (:284-292) pushes
-        // an ItemElement into itemLayout - so the interior IS in the
-        // GetEquipIndex click mask, and because Refresh blits it FIRST
-        // (:169) it is the LAST thing that backwards walk checks. The
-        // port drew it and entered nothing, so a click on the lining
-        // beside the body did nothing where DFU unequips the cloak.
-        layout.push({ slot: it.equipSlot ?? slot, img });
-      }
-      break;   // DFU stops at the first drawn cloak interior
-    }
-    // body + welds + head (BlitBody) - all skipped while suppressed
-    if (!suppress) {
-      blit(out, _art.nude);
-      const split = WAIST_HEIGHT;
-      // BlitBody (PaperDollRenderer.cs:346-353): the WELDS as a whole
-      // hang off the setting - the nude body above is drawn either
-      // way, and the two slot tests only decide whether a weld would
-      // show around real clothes. The setting ships False, which is
-      // why the port drawing the welds unconditionally looked right.
-      if (!getBool('ChildGuard', 'PlayerNudity')) {
-        if (!table[EQUIP_SLOTS.ChestClothes] && !table[EQUIP_SLOTS.ChestArmor]) blit(out, _art.clothed, { rows: [0, split] });
-        if (!table[EQUIP_SLOTS.LegsClothes]) blit(out, _art.clothed, { rows: [split, _art.clothed.bmp.height] });
-      }
-      // V5: the vampire's clanless head replaces the racial one
-      const headOv = racialOverrideHeadArt(entity);
-      const headArt = headOv ? await loadOverrideArt(headOv.file, headOv.record) : null;
-      blit(out, headArt ?? _art.head);
-    }
-    // items ascending drawOrder (BlitItems)
-    const ordered = suppress ? [] : paperdollOrder(worn.map((w) => ({ ...w.it, drawOrder: w.t.drawOrderOrEffect })));
-    for (const it of ordered) {
-      const res = paperdollItemImage(it, { gender: _deps.gender, race: _deps.race });
-      if (!res) continue;
-      const img = await loadRecord(res.archive, res.record);
-      if (!img) continue;
-      const remap = res.target == null ? null : (i) => applyDyeToIndex(i, res.dye, res.target);
-      blit(out, img, { remap });
-      layout.push({ slot: it.equipSlot, img });
-    }
+    const { out, layout } = await composeDoll(_art, _deps, entity);
     const key = `paperdoll_v${++_version}`;
     const prevKey = _live?.key ?? null;
     // U59: the composite is KEPT, not just uploaded. `out` is already
@@ -382,9 +410,9 @@ export async function refreshPaperDoll(entity) {
 
 /** One TEXTURE.### record as an indexed bitmap + its baked offset
  *  (with DFU's 237/52+54 bad-offset fix). */
-async function loadRecord(archive, record) {
+async function loadRecord(archive, record, getTexture) {
   try {
-    const tex = await _deps.getTexture(archive);
+    const tex = await getTexture(archive);
     if (!tex || record >= tex.recordCount) return null;
     const off = (archive === 237 && (record === 52 || record === 54)) ? { x: 237, y: 43 } : tex.getOffset(record);
     return { bmp: tex.getDFBitmap(record, 0), off };
@@ -432,6 +460,31 @@ export function slotAtPaperDoll(px, py) {
  */
 export const paperDollPixels = () => _pixels;
 
+
+/**
+ * ONLINE1 (AUDIT ONLINE C1-C4, C8, C9): A DOLL FOR SOMEONE ELSE. The
+ * art set for the entity's own identity (a small cache, the peers'
+ * identities) and the compose above, PURE of the singleton: the
+ * inventory's doll, its click mask and its identity are untouched,
+ * whoever composes and whenever. Answers { width, height, rgba }, or
+ * null when the art is unavailable - never a doll on the wrong body.
+ */
+const _artSets = new Map();   // identity key -> art set, insertion-ordered (the oldest goes first)
+export const PEER_ART_SETS_MAX = 8;
+export async function composePaperDollPixels(deps, entity, { context = 'town', background = true } = {}) {
+  const ident = { race: entity?.race ?? 'Breton', gender: entity?.gender ?? 'male', faceIndex: entity?.faceIndex ?? 0, context };
+  const key = paperDollIdentityKey(ident);
+  try {
+    let art = _artSets.get(key);
+    if (!art) {
+      art = await loadArtSet(deps, ident);
+      if (_artSets.size >= PEER_ART_SETS_MAX) _artSets.delete(_artSets.keys().next().value);
+      _artSets.set(key, art);
+    }
+    const { out } = await composeDoll(art, { ...deps, gender: ident.gender, race: ident.race }, entity, { background });
+    return { width: PAPERDOLL_W, height: PAPERDOLL_H, rgba: out };
+  } catch { return null; }
+}
 
 /** Test seam. */
 export const _debugPaperDoll = () => ({ live: !!_live, layers: _layout.map((l) => l.slot), version: _version });

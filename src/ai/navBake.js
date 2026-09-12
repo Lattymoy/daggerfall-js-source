@@ -48,7 +48,7 @@ export function navInputFromCollider(collider, { buckets = null } = {}) {
 /**
  * Bake. `anchor` is where the agents live - the player's entry - and it
  * is REQUIRED: his buildRegions elects the component that holds it and
- * drops the rest (project-final/main.js:236 bakes anchored, always).
+ * drops the rest (project-final/main.js:238 bakes anchored, always).
  * @returns {{ chf, cols, agent, stats }}
  */
 /**
