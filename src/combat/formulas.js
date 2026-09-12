@@ -55,6 +55,26 @@ const _overrides = new Map();
 export function registerFormulaOverride(name, fn) { if (fn) _overrides.set(name, fn); else _overrides.delete(name); }
 export const formulaOverride = (name) => _overrides.get(name) ?? null;
 
+// ---- FormulaHelper.AdjustWeaponHitChanceMod / AdjustWeaponAttackDamage ----
+/** AUDIT PCO1: DFU's two "mod hook" members - no-ops in FormulaHelper
+ *  itself ("Mod hook for adjusting final hit chance mod and adding new
+ *  elements to calculation"), called by the STOCK CalculateAttackDamage
+ *  after CalculateWeaponToHit and at the tail of
+ *  CalculateWeaponAttackDamage, and the two Roleplay Realism's archery
+ *  registers. Physical Combat And Armor Overhaul registers its copies
+ *  of them when its archery arm is on WHATEVER its armour module says,
+ *  so with the redone formula off DFU still bends a bow's hit and
+ *  damage by the draw here; the port's stock path consults the same
+ *  registry. Identity when nothing is registered. */
+export function adjustWeaponHitChanceMod(attacker, target, hitChanceMod, weaponAnimTime, weapon) {
+  const r = _overrides.get('adjustWeaponHitChanceMod')?.(attacker, target, hitChanceMod, weaponAnimTime, weapon);
+  return r === undefined ? hitChanceMod : r;
+}
+export function adjustWeaponAttackDamage(attacker, target, damage, weaponAnimTime, weapon) {
+  const r = _overrides.get('adjustWeaponAttackDamage')?.(attacker, target, damage, weaponAnimTime, weapon);
+  return r === undefined ? damage : r;
+}
+
 // ---- FormulaHelper.DamageModifier ----
 export function damageModifier(strength) {
   const r = _overrides.get('damageModifier')?.(strength);   // PCO1
@@ -418,7 +438,7 @@ export const SKELETAL_WARRIOR_INDEX = 15;   // MonsterCareers.SkeletalWarrior
  *  had lifted a single group number into a parameter, which could not
  *  express DFU's two discriminants and left `target.group` - a field
  *  NOTHING in the codebase mints - as this arm's fallback. */
-export function weaponAttackDamage(attacker, target, damageMod, weapon, rolls = Math.random) {
+export function weaponAttackDamage(attacker, target, damageMod, weapon, rolls = Math.random, weaponAnimTime = 0) {
   const wMin = baseDamageMin(weapon), wMax = baseDamageMax(weapon);
   let damage = wMin + Math.floor(rolls() * (wMax + 1 - wMin)) + damageMod;
   if (!target.isPlayer && target.careerIndex === SKELETAL_WARRIOR_INDEX) {
@@ -429,6 +449,9 @@ export function weaponAttackDamage(attacker, target, damageMod, weapon, rolls = 
   damage += WEAPON_MATERIAL_MODIFIER[weapon.material] ?? 0;   // half of the in-game display, per the source comment
   if (damage < 1) damage = 0;
   damage += bonusOrPenaltyByEnemyType(attacker, target);
+  // "Mod hook for adjusting final damage. (no-op by default)" - the
+  // stock's last line (AUDIT PCO1: Roleplay Realism's archery lands here)
+  damage = adjustWeaponAttackDamage(attacker, target, damage, weaponAnimTime, weapon);
   return damage;
 }
 
@@ -586,6 +609,7 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
   // CalculateWeaponToHit: material modifier x 10 rides the WEAPON
   // branch only, verbatim (audit F3).
   if (weapon) chanceToHitMod += (WEAPON_MATERIAL_MODIFIER[weapon.material] ?? 0) * 10;
+  if (weapon) chanceToHitMod = adjustWeaponHitChanceMod(attacker, target, chanceToHitMod, weaponAnimTime, weapon);   // AUDIT PCO1: the stock's mod hook, right after CalculateWeaponToHit
   const struck = calculateStruckBodyPart(rolls());
   if (!weapon) {
     // Monster weaponless attacks (audit F2): DFU's multi-attack loop
@@ -635,7 +659,7 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
   } else {
     if (calculateSuccessfulHit(attacker, target, chanceToHitMod, struck, rolls, notes)) {
       notes.hit = true;
-      damage = weaponAttackDamage(attacker, target, damageModifiers, weapon, rolls);
+      damage = weaponAttackDamage(attacker, target, damageModifiers, weapon, rolls, weaponAnimTime);
       const before = damage;
       damage = backstabDamage(damage, backstabChance, rolls, say);   // :688
       if (before > 0 && damage === before * 3) notes.backstab = true;

@@ -1176,10 +1176,22 @@ export function installPcaao({ read = null } = {}) {
     if (!m.armorHitFormulaRedone) return undefined;
     return pcaaoAttackDamage(attacker, target, { ...opts, modules: m });
   });
+  // AUDIT PCO1: InitMod's archery arm registers AdjustWeaponHitChanceMod
+  // and AdjustWeaponAttackDamage on FormulaHelper whatever the armour
+  // module says, so DFU's STOCK CalculateAttackDamage bends a bow's hit
+  // and damage by the draw when the redone formula is off. The port's
+  // stock path consults these two names (formulas.js); the overhaul's
+  // own core reads the switch directly.
+  registerFormulaOverride('adjustWeaponHitChanceMod', (attacker, target, hitChanceMod, weaponAnimTime, weapon) =>
+    (modules().rolePlayRealismArchery ? pcaaoAdjustWeaponHitChanceMod(attacker, target, hitChanceMod, weaponAnimTime, weapon) : undefined));
+  registerFormulaOverride('adjustWeaponAttackDamage', (attacker, target, damage, weaponAnimTime, weapon) =>
+    (modules().rolePlayRealismArchery ? pcaaoAdjustWeaponAttackDamage(attacker, target, damage, weaponAnimTime, weapon) : undefined));
   return true;
 }
 export function uninstallPcaao() {
   registerFormulaOverride('damageModifier', null);
   registerFormulaOverride('damageEquipment', null);
   registerFormulaOverride('calculateAttackDamage', null);
+  registerFormulaOverride('adjustWeaponHitChanceMod', null);
+  registerFormulaOverride('adjustWeaponAttackDamage', null);
 }

@@ -51,7 +51,7 @@ its `modsettings.json`:
 | `CriticalStrikeHandler` | luck's `Mathf.Floor((luck-50)/25f)` term (clamp discarded) bending the divisor | `pcaaoCriticalStrike` |
 | `GetBonusOrPenaltyByEnemyType` | willpower's `Random.Range(0, n)` bonus and the level penalty on the career's Bonus/Phobia bits, the Humanoid arm on GetEnemyGroup | `pcaaoBonusOrPenaltyByEnemyType` |
 | `CalculateHandToHandAttackDamage` / `CalculateWeaponAttackDamage` | the strength term, the Skeletal Warrior's halving and the silver six's doubling, a two-handed non-bow doubling the strength term | `pcaaoHandToHandAttackDamage`, `pcaaoWeaponAttackDamage`, `SILVER_DOUBLED_CAREERS` |
-| `AdjustWeaponHitChanceMod` / `AdjustWeaponAttackDamage` | Roleplay Realism's archery: the bow's draw time in ms bends hit and damage | `pcaaoAdjustWeaponHitChanceMod`, `pcaaoAdjustWeaponAttackDamage`; the draw timer is `playerWeapon.lastDrawMs` (below) |
+| `AdjustWeaponHitChanceMod` / `AdjustWeaponAttackDamage` | Roleplay Realism's archery: the bow's draw time in ms bends hit and damage; registered on FormulaHelper whatever the armour module says (AUDIT PCO1) | `pcaaoAdjustWeaponHitChanceMod`, `pcaaoAdjustWeaponAttackDamage`, registered on `formulas.adjustWeaponHitChanceMod` / `adjustWeaponAttackDamage` - DFU's two no-op hooks, grown into the stock core at the C#'s two sites (AUDIT PCO1); the draw timer is `playerWeapon.lastDrawMs` (below) |
 | `AlterDamageBasedOnWepCondition` / `AlterArmorReducBasedOnItemCondition` | the condition bands | `pcaaoAlterDamageBasedOnWepCondition`, `pcaaoAlterArmorReducBasedOnItemCondition` |
 | `ArmorMaterialIdentifier` / `ArmorMaterialModifierFinder` / `EqualizeMaterialConditions` / `SpecificWeaponConditionDamage` | the four material ladders | the four `pcaao*` of the same names |
 | `DamageEquipment` + `ApplyConditionDamageThrough*` + `MaterialDifferenceDamageCalculation` + `WarningMessagePlayerEquipmentCondition` | "Believable Equipment Characteristics And Durability": the weapon wears by its kind, the struck side by the material difference, a fist wears the piece; the fading module destroys the player's enchanted piece; the player is warned in the mod's words | `pcaaoDamageEquipment` and the helpers; `equip.lowerCondition` grew LowerCondition's `removeFromCollectionWhenBreaks`; registered on `formulas.damageEquipment` for DFU's own path |
@@ -84,6 +84,14 @@ its `modsettings.json`:
 - A left-hand item that is not a shield still goes through the shield
   roll (the C# never asks IsShield there); `GetShieldProtectedBodyParts`
   answers nothing for it, so it rolls the weak spot.
+- A CLASS enemy's bare fists deal NOTHING (AUDIT PCO1). The mod's
+  `CalculateHandToHandAttackDamage` rolls the fist only for `player`;
+  a non-player gets its `damageModifier` alone, and the mod's
+  CalculateAttackDamage hands a class enemy 0 there (the swing,
+  proficiency and racial terms are the player's) - `< 1` floors it to
+  0 and the enemy-type term never adds. A monster's modifier is its
+  summed natural damage, so monsters are unaffected; a knight whose
+  sword the wear broke fights for 0 until it finds another. Carried.
 
 ## Port-side decisions, recorded
 
@@ -107,7 +115,7 @@ its `modsettings.json`:
   the switch** - DFU rewrites the table at Awake; the port overlays the
   row at mint.
 
-## Pinned (`test/pcaao.test.js`, 22)
+## Pinned (`test/pcaao.test.js`, 24)
 
 The ladder; the half-to-even round through a float32 half; DamageModifier
 and the material hit bonus; every hit helper against a hand-worked cell;
@@ -124,3 +132,57 @@ branch (a sword, the soft material's line, a monster's assigned axe
 wearing the player's cuirass); the registry declining and accepting;
 the Meaner Monsters row at mint; and the seams. Not run here: a game;
 the numbers Mac feels from the chair are the next report.
+
+## AUDIT PCO1 (2026-09-12, Mac: "do a 1:1 parity audit to ensure everything is perfect and working")
+
+The port read against the decompiled 1.44 again, method for method, the
+day it shipped. Checked and standing: `Awake`/`InitMod`'s ladder and
+every register it makes; `CalculateAttackDamage` line for line (the
+enemy's weapon-vs-natural swap, the material gate and the soft
+multiplier, the 150% skill, the two critical arms, the player's four
+terms, the three-attack monster loop with its reflex gate and its
+assigned weapons, the poison, the max/round/round, the HUD line, the
+natural resistance and its discarded clamp, the shield roll and the
+under-armour comparison, the condition alter, the `< 1` return, the
+class's own DamageEquipment, the monster/piece/shield reductions, the
+Ring of Namira dispatch); every to-hit helper; the damage helpers; the
+archery tables; the condition bands; the four material ladders;
+`DamageEquipment` and its three wear paths, the warnings word for word;
+the material-difference arithmetic; the eight reduction tables cell for
+cell (eighty rows, the default row too); the monsters' hides;
+`SpecialWeaponCheckForMonsters` and the seventeen weapons;
+`ShieldBlockChanceCalculation` and `CompareShieldToUnderArmor`; the
+twenty-slot body table; the backstab pair; `CriticalStrikeHandler`;
+`GetBonusOrPenaltyByEnemyType`; the Meaner Monsters table value for
+value (forty-two rows, a script diffing the C# assignments against
+`MEANER_MONSTERS`: no difference); the enum facts (EnemyGroups None -1,
+the body parts, the skill and race ids, the proficiency bits, the
+equip slot); and that no port caller reaches an overridable helper
+outside the core (so InitMod's fourteen per-helper registers need no
+port-side twin: DFU's own callers of them are all inside
+CalculateAttackDamage, which the mod replaces whole).
+
+**Two findings, both fixed or recorded:**
+
+1. **The archery arm's stock-path registers were missing.** InitMod
+   registers `AdjustWeaponHitChanceMod` and `AdjustWeaponAttackDamage`
+   on FormulaHelper under `rolePlayRealismArcheryModule` ALONE, and
+   DFU's stock `CalculateAttackDamage` calls them (after
+   `CalculateWeaponToHit`, and as `CalculateWeaponAttackDamage`'s last
+   line - "Mod hook for adjusting final hit chance mod"; no-ops in
+   FormulaHelper). So with the redone armour formula OFF and the archery
+   arm on, DFU still bends a bow by its draw; the port's stock core had
+   no such hooks, so it did not. `formulas.js` grew the two members
+   (identity when nothing is registered) at the C#'s two sites, the
+   stock weapon roll takes `weaponAnimTime`, and `installPcaao`
+   registers the overhaul's copies under the archery switch. Pinned.
+2. **A class enemy's bare fists deal 0** - a behaviour of the mod, not
+   of the port; recorded above under bug for bug, and pinned so a later
+   hand does not "fix" it.
+
+Not changed, noted: the reflexes the monster loop reads are the
+player's in the C# (`playerEntity.Reflexes`); the port's core reads the
+same `playerReflexes`-or-target fallback its stock core does, which
+hands the player's in every fight the player is in. The break message
+on a foe's gear follows the stock port (DFU's ItemBreaks pops it for
+any owner). Pins: 24 in `test/pcaao.test.js`.
