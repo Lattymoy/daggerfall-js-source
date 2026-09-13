@@ -29,7 +29,7 @@ import { MobileUnit, MOBILE_DAEDRA_SEDUCER, SeducerTransformBehaviour } from '..
 import { dfMeshToModel, GLOBAL_SCALE } from '../world/meshReader.js';
 import { RDB_SIDE, MOVE_ACTION_FLAGS, ACTION_FLAGS } from '../world/rdbLayout.js';   // WAVE D: the move family - an acting FLAT tweens like the model beside it
 import { NPC_CONTEXT } from '../characters/staticNpc.js';   // AUDIT 64 F13: StaticNPC.SetLayoutData(RdbObject) stamps Context.Dungeon
-import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S, isActionDoorObject, hasActionCollision, classifyPlacementAction, lookAtLockText, LOCKPICKING_SUCCESS_TEXT, LOCKPICKING_FAILURE_TEXT, DOOR_TEXT_HUD_DELAY_S, sharedRecord } from '../world/actionSystem.js';   // AUDIT WORLD3 B1: the shared half of a record - the picker's latch stays home
+import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S, isActionDoorObject, hasActionCollision, classifyPlacementAction, lookAtLockText, LOCKPICKING_SUCCESS_TEXT, LOCKPICKING_FAILURE_TEXT, DOOR_TEXT_HUD_DELAY_S, sharedRecord, validActionRecord } from '../world/actionSystem.js';   // AUDIT WORLD3 B1: the shared half of a record - the picker's latch stays home; AUDIT WORLD34 C2: and the memory's records projected like an act's
 import { TextRsc } from '../formats/textRsc.js';
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // U51 picks the skin
 import { longitudeLatitudeToMapPixel } from '../formats/mapsFile.js';   // MAC6 #1: the save names the pixel the dungeon stands on
@@ -2828,7 +2828,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:8526,
+              // playerArrowHitFoe is the one copy world.js:8533,
               // exterior.js:4202 and worldModes.js:5927 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
@@ -3075,7 +3075,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       f._sentKey = key;
       out.push(r);
     }
-    if (!out.length) return null;
+    // AUDIT WORLD34 B3: a FULL frame goes even when it carries nothing - it is the seat's heartbeat (FOES_STALE_MS
+    // reads it), and a layout with no foes to say left every joiner flipping to its own authority six seconds in
+    if (!out.length && !full) return null;
     return { n: ++_foesSeq, k: _locationKey, f: out };   // k: the dungeon (AUDIT WORLD2 C8: never another dungeon's foes by index)
   }
 
@@ -3089,7 +3091,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // re-latches (no phantom strike, no frame judged stale by the old host's high-water mark)
     if (from !== _foesFrom) { _foesFrom = from; _foesSeqIn = -1; for (let i = 0; i < _layoutFoes; i++) { const f = foes[i]; if (f) { f._pup = null; f._pupMismatch = false; } } }
     if (Number.isFinite(data.n)) { if (data.n <= _foesSeqIn) return false; _foesSeqIn = data.n; }
-    if (data.k != null && data.k !== _locationKey) return false;   // C8: another dungeon's stream
+    if (data.k != null && data.k !== _locationKey) { if (!_keyMismatchSaid) { _keyMismatchSaid = true; console.warn(`[online] the host streams ${data.k}, this dungeon is ${_locationKey} - the stream is refused`); } return false; }   // C8: another dungeon's stream; AUDIT WORLD34 B2: said once
     for (const r of data.f) {
       if (!r || typeof r !== 'object') continue;
       const i = r.i | 0;
@@ -3208,6 +3210,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   let _foesSeq = 0;        // the host's frame counter out
   let _foesSeqIn = -1;     // the last frame counter in (an older frame is stale, not the world)
   let _foesFrom = null;    // AUDIT WORLD2 A1: whose stream the counter counts - a new host's starts over
+  let _keyMismatchSaid = false;   // AUDIT WORLD34 B2: a stream keyed to another layout is refused and said once
   // WORLD3 (Mac: "Begin"): THE LIVE WORLD AS EVENTS.
   // - THE DOORS: every change an outermost entry makes to the action graph (a click, a bash, a pick, a walk onto a
   //   trigger, the host's foe opening a door) goes out as its changed records (actions.onChanged -> opts.onActions,
@@ -3375,14 +3378,17 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   }
   const _retyping = new Set();
   /** WORLD3: the room's roster - the layout foe at `i` rebuilt as another species (and gender) through the one build
-   *  chain, standing at its marker until the stream or the record poses it; once at a time per index, never a
-   *  dead one, never past the layout's run. */
+   *  chain, standing at its marker until the stream or the record poses it; once at a time per index, never past
+   *  the layout's run. AUDIT WORLD34 B1: a DEAD one too - two players' random flats differ by level, so a joiner
+   *  whose own save had killed the foe at `i` refused the rebuild for the life of the context, and the room's live
+   *  foe there stood mismatched: frozen, and invulnerable to that joiner (damageFoe keeps a mismatched puppet's blow
+   *  home). The record that follows the rebuild lands it dead or alive as the room has it. */
   async function retypeFoe(i, mobileType, gender = null) {
     const f = foes[i];
     // AUDIT WORLD3 E3: the same guard buildFoeAt uses. ENEMY_BASICS[39] exists with maleTexture 0, so both build
     // branches skip it, the fallback flat runs, stand() is never called and the retry fires again on every frame of
     // the stream - pushing a dead entry into the build-time-only flatGroups map each time, for ever.
-    if (!f || i >= _layoutFoes || f.dead || !f.src || _retyping.has(i) || !canStandFoe(mobileType)) return false;
+    if (!f || i >= _layoutFoes || !f.src || _retyping.has(i) || !canStandFoe(mobileType)) return false;
     _retyping.add(i);
     try {
       const rec = await buildFoeAt({ ...f.src, mobileType, gender: gender === 'female' || gender === 'male' ? gender : undefined }, true, { at: i });
@@ -5367,6 +5373,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       delete w.piles;
       for (const f of w.foes) delete f.items;
       w.loot = lootRecords([..._lootSeen]);
+      // AUDIT WORLD34 C2: the memory's action records are the SHARED half, as an act's are (AUDIT WORLD3 B1) - the
+      // save record carried the picker's per-player latch, so one host's failed pick silenced every joiner's attempt
+      w.actions = (w.actions ?? []).map(sharedRecord);
       return { locationKey: _locationKey, stamp: _sharedStamp, world: w };
     },
     /** WORLD1: the room's memory applied - the layout's foes patched in place, each its own species (B4), and every
@@ -5380,7 +5389,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // WORLD4 (the relay keeps one for WORLD_TTL_MS) still blanket-replaced a joiner's own rolls, the very thing the
       // slice removed, and any host that sent the field could do it deliberately. What this client will not say, it
       // will not hear.
-      applyWorld({ ...shared.world, piles: undefined, foes: Array.isArray(shared.world.foes) ? shared.world.foes.slice(0, _layoutFoes) : [] }, { truncate: false, wire: true });
+      // AUDIT WORLD34 C2: and projected on the way in, as applyRemote projects an act's (AUDIT WORLD3 A2) - the relay
+      // serves the stored bytes back unparsed for WORLD_TTL_MS, so one bad tween in a memory bricked a door for
+      // every joiner for thirty days
+      const acts = Array.isArray(shared.world.actions) ? shared.world.actions.map(validActionRecord).filter(Boolean) : [];
+      applyWorld({ ...shared.world, piles: undefined, actions: acts, foes: Array.isArray(shared.world.foes) ? shared.world.foes.slice(0, _layoutFoes) : [] }, { truncate: false, wire: true });
       applyLoot(shared.world.loot);   // WORLD4: the containers the room has opened, through the live door
       return true;
     },

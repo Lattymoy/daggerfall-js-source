@@ -83,14 +83,36 @@
 // ACT_ROOM_BYTES_PER_S bytes times its listeners - AUDIT WORLD3 A1, the
 // foes fan's law); over either the frame is dropped and nobody struck. Not the host's alone: a door is whoever
 // touched it. The relay reads none of it.
+//
+// AUDIT WORLD34 (2026-09-13, Mac: "enemies, doors, and everything else
+// doesn't persist between connected players"): the root was the wire's
+// own law (relay.js isWorldRoom: eight digits, and a real map id has
+// nine or ten), so nothing here changed for it - but the relay must be
+// REDEPLOYED, since it refuses by the same regex. Three relay findings
+// beside it: a socket the ROOM closes (a refusal, a failed send) got no
+// webSocketClose from the runtime, so its leave and its seat were never
+// said and the survivors kept a phantom host (D1 - every door out of the
+// object now reaps through _leave); the memory's floor read the room's
+// last stamp whoever wrote it, so a new host's first publish after a
+// handover was dropped while its client believed it went (D2 - the
+// floor is per author); and the memory rode the welcome ALONE, so two
+// players entering together were both handed null and never re-synced
+// (C1 - a stored memory is now pushed once to every hello'd socket whose
+// welcome carried none, as {t:'world', id, data}). /health says which
+// relay this is (RELAY_VERSION), so a stale deploy can be told from a
+// browser tab.
 import { roomOf, parseClient, inRange, poseGate, chatGate, tokenGate, rosterFor, isChatRoom, isWorldRoom, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY } from './relay.js';
+
+/** AUDIT WORLD34 D4: the relay names itself in /health - the deploy is by hand (`npx wrangler deploy`), nothing in
+ *  CI does it, and until now nothing said which relay was live. Bump it with every relay-changing slice. */
+export const RELAY_VERSION = 'world34';
 
 const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*' } });
 
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    if (url.pathname === '/health') return json({ ok: true, service: 'daggerfall-online', t: Date.now() });
+    if (url.pathname === '/health') return json({ ok: true, service: 'daggerfall-online', version: RELAY_VERSION, t: Date.now() });
     const key = roomOf(url.pathname);
     if (!key || (key.startsWith('chat:') && !isChatRoom(key))) return json({ error: 'no such room' }, 404);   // AUDIT CHAT A1: no object is minted for a channel the port does not run
     if (String(request.headers.get('Upgrade') ?? '').toLowerCase() !== 'websocket') return json({ error: 'websocket only' }, 426);
@@ -113,6 +135,8 @@ export class Room {
     this._roomHits = null;   // AUDIT WORLD2 A6: the room's hit budget onto its host's one socket
     this._roomActs = null;   // WORLD3: the room's action-frame budget (a door, a lever, a platform moved)
     this._roomActBytes = null;   // AUDIT WORLD3 A1: and its BYTE budget - the frame times its listeners, as the foes fan has
+    this._dead = new Set();      // AUDIT WORLD34 D1: the sockets this object closed itself, whose leave the runtime will not deliver - reaped on the way out of every door
+    this._gone = new WeakSet();  // AUDIT WORLD34 D1: and the ones whose leave has been said, so a runtime that does deliver a close says it once
     try {
       // the runtime answers the client's ping while the object sleeps
       if (state.setWebSocketAutoResponse && typeof WebSocketRequestResponsePair === 'function') state.setWebSocketAutoResponse(new WebSocketRequestResponsePair('{"t":"ping"}', '{"t":"pong"}'));
@@ -152,12 +176,25 @@ export class Room {
     try { ws.send(s); return true; } catch {
       this._forget(ws);
       try { ws.close(1011, 'send failed'); } catch { /* gone */ }
+      this._dead.add(ws);   // AUDIT WORLD34 D1: closed by the object - its leave is ours to say
       return false;
     }
   }
   _refuse(ws, m, code = CLOSE_POLICY) {
     this._send(ws, JSON.stringify({ t: 'error', m }));
     try { ws.close(code, m); } catch { /* already closed */ }
+    this._dead.add(ws);   // AUDIT WORLD34 D1: the runtime calls no webSocketClose for a close the object made
+  }
+  /** AUDIT WORLD34 D1: every socket this object closed itself leaves the room as a peer's close would - the leave
+   *  said, the seat re-said, the looks and secrets gone. The runtime delivers webSocketClose for the PEER's close
+   *  alone; a refusal or a failed send left the survivors with a phantom host that never streamed again. Awaited on
+   *  the way out of every door (webSocketMessage, webSocketClose, webSocketError). */
+  async _reap() {
+    while (this._dead.size) {
+      const [ws] = this._dead;
+      this._dead.delete(ws);
+      try { await this._leave(ws); } catch { /* the next door reaps again */ }
+    }
   }
 
   /** WORLD1: the room's host - the hello'd socket in the room longest (the earliest hello stamp; ties by id), or null. */
@@ -240,6 +277,10 @@ export class Room {
   }
 
   async webSocketMessage(ws, message) {
+    try { await this._message(ws, message); } finally { await this._reap(); }
+  }
+
+  async _message(ws, message) {
     let a = this._attach(ws);
     // AUDIT WORLD A1: a large frame - or any frame shaped as a world frame - is the host's memory or nothing, and is
     // answered BEFORE any parse: a socket with no hello is refused, the frame is metered on the pose bucket, and
@@ -301,6 +342,9 @@ export class Room {
       const host = this._hostOf();
       if (host !== before && others.length) this._sayHost({ skip: ws });
       const world = isWorldRoom(a.key) ? await this._worldRaw() : null;
+      // AUDIT WORLD34 C1: whether this welcome carried a memory rides the attachment - a socket whose welcome carried
+      // NONE (the room was empty-handed, or the host had not published yet) is handed the next one the host publishes
+      if (isWorldRoom(a.key)) this._setAttach(ws, { ...this._attach(ws), worldSeen: !!world });
       const welcome = `{"t":"welcome","id":${JSON.stringify(m.id)},"peers":${JSON.stringify(roster)},"host":${JSON.stringify(host)},"world":${world ?? 'null'}}`;
       if (!this._send(ws, welcome)) return;
       const join = JSON.stringify({ t: 'join', id: m.id, name: m.name, look: m.look, pose: m.pose });
@@ -317,7 +361,9 @@ export class Room {
       if (!isWorldRoom(a.key) || a.id !== this._hostOf()) return;
       const old = await this.state.storage.get(WORLD_META);
       const final = m.final && !a.finalUsed;
-      if (!final && old && now - old.at < WORLD_MIN_MS) return;
+      // AUDIT WORLD34 D2: the floor is the AUTHOR's - a new host's first memory after a handover fell inside the old
+      // host's stamp and was dropped, while its client had already spent its publish clock on it
+      if (!final && old && old.by === a.id && now - old.at < WORLD_MIN_MS) return;
       if (final) this._setAttach(ws, { ...a, finalUsed: true });
       const raw = JSON.stringify(m.data);
       const chunks = Math.max(1, Math.ceil(raw.length / WORLD_CHUNK));
@@ -329,6 +375,17 @@ export class Room {
       const ops = [this.state.storage.put(puts)];
       if (old && old.chunks > chunks) ops.push(this.state.storage.delete(Array.from({ length: old.chunks - chunks }, (_, i) => worldChunkKey(chunks + i))));   // a smaller world leaves no stale tail
       await Promise.all(ops);
+      // AUDIT WORLD34 C1: the memory rode the welcome ALONE, so two players entering a room together were both handed
+      // null and nothing ever re-synced what stood before they touched it. Everyone hello'd whose welcome carried no
+      // memory is handed this one, once ({t:'world', id, data} - the host's id, the client checks it), under the foes
+      // fan's byte budget (it is the foes' snapshot, and a socket is handed at most one in its life)
+      const unseen = [...this._all()].filter(([other, b]) => other !== ws && b.id && !b.worldSeen);
+      if (unseen.length) {
+        const out = `{"t":"world","id":${JSON.stringify(a.id)},"data":${raw}}`;
+        const budget = byteGate(this._roomFoes, now, out.length * unseen.length, FOES_ROOM_BYTES_PER_S);
+        this._roomFoes = budget.bucket;
+        if (budget.pass) for (const [other, b] of unseen) { this._setAttach(other, { ...b, worldSeen: true }); this._send(other, out); }
+      }
       return;
     }
     if (m.t === 'foes') {
@@ -418,13 +475,16 @@ export class Room {
   }
 
   async webSocketClose(ws, code, reason) {
-    await this._leave(ws);
+    try { await this._leave(ws); } finally { await this._reap(); }
     try { ws.close(code, reason); } catch { /* already closed */ }
   }
 
-  async webSocketError(ws) { await this._leave(ws); }
+  async webSocketError(ws) { try { await this._leave(ws); } finally { await this._reap(); } }
 
   async _leave(ws) {
+    if (this._gone.has(ws)) return;   // AUDIT WORLD34 D1: said once - the reap and a runtime's own close are the same leave
+    this._gone.add(ws);
+    this._dead.delete(ws);
     const a = this._attach(ws);
     this._forget(ws);
     // AUDIT CHAT A7: a room that drained sweeps its own storage on the way out - the empty-hello sweep never

@@ -1678,6 +1678,161 @@ frame one byte over `MAX_FRAME_BYTES` fanned to NOBODY, with no error
 frame back and both sockets kept, which is the live-lock's fuel: the
 sender learns nothing from the wire, so the law has to live at home.
 
+## AUDIT WORLD34 (2026-09-13)
+
+**Mac: "So I think both slice 3/4 need a comprehensive audit because
+enemies, doors, and everything else doesnt persist between connected
+players. They still see their own enemies and stuff."** Five opus
+lenses over WORLD3 and WORLD4 together, each told the live report and
+made to find it: the boot path and the room's lifecycle; the foes
+stream end to end; the acts, the loot and the memory; the relay as it
+runs on Cloudflare and the story of its deploy; and the shipped scope
+against what a player standing somewhere actually sees. Neither the
+deployed relay nor the game data was reachable from the audit's
+container, so every claim below is either EXECUTED over the real
+session and the real Room (the fakes in `test/fakeRoom.mjs` and
+`test/fakeSocket.mjs`) or cited to a line; the record says which.
+Thirteen findings fixed, five recorded and not paid.
+
+**THE ONE ROOT (A1).** The wire's world-room law - `isWorldRoom`,
+`/^dungeon:m\d{1,8}$/`, ONE HOME at both ends - admitted eight digits
+of map id, and a real `MapTableData.MapId` is a 32-bit integer:
+Privateer's Hold is **187853213**, Daggerfall 1291010263, Wayrest
+630439035 (the port's own table, `world/dungeonTextures.js`
+MAIN_STORY_DUNGEON_IDS, DFU's `IsMainStoryDungeon` verbatim). So every
+real dungeon minted a key the law refused, at the client and at the
+relay alike; the room was joined all the same (a key is a key), the
+poses and the chat relayed (presence worked, which is why Mac saw the
+other player), and `sendFoes`, `sendAct`, `worldPublish`, the welcome's
+memory and `dungeonAuthority` all read the same predicate and all went
+silent - both players kept their own authority and stepped their own
+foes, with no status line, no console line and no error frame, because
+a silent drop was the law's design for a town. Four slices shipped
+green over it because every fixture used a three-digit id, and
+`test/auditworld.test.js` PINNED `dungeon:m123456789` as no world room
+(AUDIT WORLD A3's bound, written without a real number in hand). The
+bound is ten digits now, the unsigned 32-bit ceiling; the pin is
+turned; `test/auditworld34.test.js` runs the port's fourteen real ids
+through the law and two real sessions through the real Room in
+Privateer's Hold's own room. The same lesson BR3 had the same day: a
+law pinned on a synthetic value is not pinned.
+
+**THE RELAY MUST BE REDEPLOYED** for this fix to reach a player
+(`cd server && npx wrangler deploy`): it refuses by the same regex, and
+the deploy is by hand, not in CI. `/health` now answers with
+`RELAY_VERSION` (`world34`) so a stale relay can be told from a browser
+tab (D4).
+
+- **A2 (high) a map id with bit 31 set read negative.** MAPS.BSA's id
+  is read `getInt32`; `roomKeyFor` asked `mapId > 0` and fell to the
+  name slug - a joinable room the wire keeps no world for, and one two
+  clients could spell differently. The unsigned value is the id.
+- **B1 (high) a dead foe was never retyped.** Two players' random
+  flats differ by level (dungeonEnemies.js bands the pick), so a
+  joiner's roster disagreed with the host's at EVERY index (executed:
+  24 of 24 markers between a level-3 and a level-12 character), and
+  `retypeFoe` refused a dead one - a joiner whose own save had killed
+  the foe at `i` stood the room's live foe there mismatched for the
+  life of the context: frozen, and invulnerable to that joiner, since
+  `damageFoe` keeps a mismatched puppet's blow home. Retyped now; the
+  record that follows lands it dead or alive as the room has it.
+- **B2 (high) two layouts under one key.** Smaller Dungeons is a
+  per-client setting (and a quest's frozen copy of one), and its clone
+  keeps `recordElement.header.locationId`, so a five-block client and a
+  full-dungeon client shared one `_locationKey`, accepted each other's
+  frames and landed foes and doors on the wrong markers, silently.
+  ONLINE, THE WHOLE DUNGEON: `useSmallerDungeon` answers false under
+  `online` (the world host's `dungeonOnline`, through the entry seam
+  and the quest layer's two location doors), and a stream keyed to
+  another layout is refused and said once.
+- **B3 (med) an empty layout had no heartbeat.** `foesFrame` returned
+  null when nothing changed AND when there was nothing to say, so a
+  dungeon with no layout foes streamed nothing, `FOES_STALE_MS` expired
+  six seconds in, and every joiner flipped to its own authority and
+  back on the next frame, running `setAuthority` over the pool each
+  time. A FULL frame goes even when empty: it is the seat's heartbeat.
+- **C1 (high) the memory rode the welcome alone.** The relay stored a
+  world frame and never sent it to anyone but the next joiner, so two
+  players entering a room together were both handed `null`, and nothing
+  ever re-synced what stood before either touched it (executed: B's
+  memory stayed null through six seconds of A publishing). A stored
+  memory is now pushed once, as `{t:'world', id, data}`, to every
+  hello'd socket whose welcome carried none (the mark rides the
+  attachment, so a wake keeps it; under the foes fan's byte budget;
+  the session takes it from the host alone).
+- **C2 (high) the memory's records unprojected, and the latch on
+  them.** `sharedWorld` shipped the SAVE record - `failedSkillLevel`,
+  the picker's per-player latch AUDIT WORLD3 B1 had kept off the act
+  path - and `restoreSharedWorld` handed it to `restoreSaveData` raw,
+  where the act path runs `validActionRecord` (A2). Executed: one
+  host's failed pick silenced every joiner's attempt at that skill,
+  and one `t` of NaN in a stored memory bricked a door for every joiner
+  for `WORLD_TTL_MS`. The shared half out, projected in.
+- **C3 (med) a refused act was thrown away when the socket was away.**
+  `actSend` and `actFlush` CLEARED the pending set whenever the socket
+  was not open - a reconnect's second, a room hold - and the seam is a
+  delta, so every door touched inside it was lost for good. The set
+  outlives the socket now and is flushed on its return; it is cleared
+  only when the room is no world room at all.
+- **D1 (med, relay) a socket the room closed itself said no leave.**
+  The runtime delivers `webSocketClose` for the PEER's close alone; a
+  refusal or a failed send closed the socket and told nobody, so the
+  survivors kept the gone host's id, `isHost()` stayed false for the
+  one the relay had already seated, and the foes froze while the
+  memory stopped being written (executed). Every door out of the object
+  reaps through `_leave` now, and a leave is said once.
+- **D2 (low, relay) the memory's floor was the room's, not the
+  author's.** A new host's first publish after a handover fell inside
+  the old host's `WORLD_MIN_MS` stamp and was dropped, while its client
+  had already spent its publish clock and heard `true`. Per author.
+- **D3 (low) `sendWorld` was the one out-frame without the room's
+  guard** - it said `true` in a town while the relay kept nothing.
+- **D5 (med) nothing said whether a dungeon was shared.** `statusLine`
+  is null on an open socket, the session logged nothing on a join or a
+  host change, and the Online pane's copy still read the pre-WORLD1
+  sentence ("Nothing else is shared yet"). The session says
+  `[online] room <key> - a shared world | presence only` on every join
+  and `[online] host <id>` on every seat in a world room; the pane says
+  what a dungeon shares and what a town does not. Had either existed,
+  the root would have been one console line to find.
+
+**Recorded, not paid.** E1: Chrome copies `sessionStorage` on
+"Duplicate tab", so two tabs made that way share `peerId` and the
+second replaces the first for the life of the page (AUDIT ONLINE B4's
+deliberate terminal close, "this character is online in another
+window") - open the second tab fresh. E2: a quickload inside a shared
+dungeon restores the save's doors and piles locally through
+`applyWorld` with nothing said to the room (AUDIT WORLD4 D7's cost,
+sharper now). E3: a trigger plate re-enters `receive` every
+`COLLISION_TIMEOUT_S` (8.3 a second) against `ACT_HZ_MAX` (5), and
+`_changed` walks the whole graph twice per entry - the refusals heal
+through the pending set, the cost stands. E4: `corpse:<i>` loot cannot
+land while the foe at `i` is not dead locally. E5: leave, re-enter and
+leave a dungeon inside `WORLD_MIN_MS` and the second farewell is
+dropped. And THE SCOPE, restated for Mac plainly: towns, the open
+country and buildings share who is there and nothing else (a town is a
+world CELL on the shipped path - `town:` is minted only by the dev
+city); in a dungeon the layout's foes, the doors, levers and platforms
+and every opened container are the room's, while random encounters,
+summons, quest foes, untouched piles and dropped loot are each
+client's own by design; no shared clock or weather (slice 5). The
+desktop app's three releases (app-v0.1.x, 2026-08-31) predate ONLINE1
+entirely - the site is the only place this code runs.
+
+Pinned in `test/auditworld34.test.js` (13): the law on the fourteen
+real ids at both ends and the unsigned id; two real sessions through
+the real Room in `dungeon:m187853213` (foes, act and memory crossing)
+against the slug room (presence and nothing else); the reap (a
+refusal and a failed send each saying a leave and a seat, once); the
+floor per author; the memory pushed once to the socket whose welcome
+carried none, across a wake, and taken from the host alone; the guard
+on `sendWorld`; the whole dungeon online through the law and the two
+seams; and by source the dead foe's retype, the heartbeat, the memory's
+two projections, the pending set, the console lines (executed on the
+session), the pane's copy, the relay's version and this record.
+`test/auditworld.test.js` A3 turned; the WORLD1-3 and AUDIT 28 source
+pins restamped where the law moved. Relay change: yes - REDEPLOY.
+
 ## What it does not do (yet)
 
 - **The Morrowind body** ships (MWBODY1, above); a client without the
@@ -1694,9 +1849,12 @@ sender learns nothing from the wire, so the law has to live at home.
   who was there mirrored the death and publishes it). Since WORLD3 the
   host's foes hunt every player in the room and its doors, levers and
   platforms move for everyone (an act from whoever touched them).
-  Towns, cells and buildings keep nothing yet; no shared clock or
-  weather (slice 5); the quest clocks still run online; no
-  player-versus-player. A memory is forgotten
+  Towns, cells and buildings keep nothing yet (the pane says so since
+  AUDIT WORLD34 D5); no shared clock or weather (slice 5); the quest
+  clocks still run online; no player-versus-player. Until AUDIT
+  WORLD34 no real dungeon was a world room at all (A1: the law's
+  eight-digit bound against nine-digit map ids), and the relay must be
+  redeployed for one to be. A memory is forgotten
   `WORLD_TTL_MS` (thirty days) after its room last emptied (AUDIT
   WORLD A3 - a bound on parked storage, Mac's to change), and two
   players' random flats differ by level, so a foe whose species the
