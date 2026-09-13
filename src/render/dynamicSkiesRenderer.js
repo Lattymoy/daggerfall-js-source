@@ -56,7 +56,7 @@
 // over this pass like every other sky, and PS3 gave REDUCE_COLOR the
 // ordered dither its bare ceil() never had - see the block itself.
 
-import { RETRO_GLSL, RETRO_SNAP_GLSL, retroPosteriseGlsl, RETRO_UNIFORM_GLSL, setRetroUniforms } from './retroPixel.js';   // PS2: the port's retro pass, shared with the dome and the clouds
+import { RETRO_GLSL, RETRO_SNAP_GLSL, retroPosteriseGlsl, RETRO_UNIFORM_GLSL, setRetroUniforms, BAYER_MEAN } from './retroPixel.js';   // PS2: the port's retro pass, shared with the dome and the clouds
 import { MATERIAL_DEFAULTS, TEXTURE_SLOTS, TEXTURE_IMPORTS, SLOT_DEFAULT_TEXEL, srgbToLinear } from '../systems/dynamicSkies.js';
 
 /** Which material properties are COLOURS (SetColor -> linearised at
@@ -702,7 +702,18 @@ ${RETRO_SNAP_GLSL}
     // period look) and by the fragment otherwise (so it is fine grain).
     // uBandDither 0 restores the mod's raw ceil, bug for bug: ?bands=raw.
     float bandStep = _stepSize - (lerpScale_pow * _stepSize) + 0.001;
-    float bandB = uBandDither * (bayer4(uRetroStep > 0.0 ? cell : gl_FragCoord.xy) - 0.5);
+    // THE DITHER MUST BE WORLD-FIXED. Indexed by gl_FragCoord it is locked
+    // to the screen while the sky slides beneath it, so it CRAWLS as the
+    // camera turns - and half of the mod's band is 7/255 in the darks, not
+    // the half-LSB the dome's smooth pass dithers with and calls "never
+    // itself visible". Pixelated, the index is the sky's own cell; smooth,
+    // it is a cell a third that size, so the stipple sits near the
+    // screen's own pixel and still stays put when you look around.
+    vec2 bandCell = cell;
+    if (uRetroStep <= 0.0) { vec2 fineCell; ringSnap(dir, 0.00204531, fineCell); bandCell = floor(fineCell); }
+    // ...and ZERO-MEAN (bayer4 averages 7.5/16, not 8/16), so the mod's
+    // upward ceil() bias is the one it always had, to the bit.
+    float bandB = uBandDither * (bayer4(bandCell) - ${BAYER_MEAN});
     col.r = ceil(col.r / bandStep - bandB) * bandStep;
     col.g = ceil(col.g / bandStep - bandB) * bandStep;
     col.b = ceil(col.b / bandStep - bandB) * bandStep;

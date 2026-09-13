@@ -577,16 +577,32 @@ every one of them bands; the finest (Thunder) least.
 an ORDERED dither, the same Bayer cell, half a step either way, so the
 quantizer's threshold moves per cell and the contours dissolve into a
 stipple. The palette is untouched, the mod's step formula is untouched
-to the character, and the mod's upward `ceil()` bias survives - the mean
-of a symmetric half-step offset is the value it replaced. The same sweep
-resolves 577 distinct levels instead of 50. The dither is indexed by the
-retro CELL while the sky is pixelated, so the stipple lands on the sky's
-own pixels and reads as period dithering rather than noise, and by the
-fragment otherwise, so it is fine grain under a smooth sky.
+to the character, and the mod's upward `ceil()` bias survives because
+the offset is ZERO-MEAN: `bayer4 - 0.46875`, not `- 0.5`, since bayer4
+averages 7.5/16 and the naive form would have raised the bias by 1/32 of
+a band. Over the same sweep a four-row average resolves 577 distinct
+values instead of 50.
+
+THE INDEX IS WORLD-FIXED, which the adversarial pass earned. It is the
+sky's own cell while the sky is pixelated, so the stipple lands on the
+sky's own pixels and reads as period dithering rather than noise; and
+when the sky is SMOOTH it is a cell a third that size, not the fragment.
+Indexed by `gl_FragCoord` the pattern is locked to the display while the
+sky slides beneath it, so it crawls as the camera turns - and half of
+the mod's band is 7/255 in the darks, nothing like the half-LSB the
+dome's own smooth pass dithers with and calls "never itself visible".
 
 **Recorded as a departure from 1:1**, because it is one: the mod's raw
 threshold is one door away, `?bands=raw` (the uniform `uBandDither` at
 0), and the shader is otherwise the mod's. It is NOT a compatibility
 switch between mods (MM1) - it is this mod's own posterise, and it
-applies whether or not any other mod is loaded. Ledger row PS3. Pinned:
-`test/dynamicSkies.test.js`.
+applies whether or not any other mod is loaded. The DOOR and the UPLOAD
+are pinned, not just the shader: delete the upload and `uBandDither`
+sits at its default 0, the mod's raw ceil, and the slice silently does
+nothing - which is exactly the `_CloudTopColorBoost` failure the
+renderer's own header cites, a property read by the shader and fetched
+by nobody. Ledger row PS3. Pinned: `test/dynamicSkies.test.js` - the
+step formula, the dither's form and its zero mean, the uniform fetched
+and uploaded, the default, the door reachable in both hosts, no
+`gl_FragCoord` in the block, and the plateau count raw against
+dithered.

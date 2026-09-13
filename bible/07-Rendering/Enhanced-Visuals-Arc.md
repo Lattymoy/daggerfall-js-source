@@ -533,17 +533,33 @@ constant elevation, each one `step` tall, each holding
 The ring count FALLING toward the pole is the whole trick, and it is the
 one thing the lat-long grid got wrong - that one kept `2*PI/step` cells
 on every ring, so they narrowed to slivers and the zenith pinwheeled.
-Measured over the whole sphere: cell width 0.3506-0.3533 degrees against
-a height of 0.3516; the largest jump between neighbouring directions is
-0.4966 where one cell's diagonal is 0.4972, i.e. quantization and no
-seam, through both poles and across the azimuth wrap. The cells stay
-SQUARE all the way up as well - even the top ring, which holds three of
-them, is 1.047 wide for one tall. RECORDED cost: the last couple of
-degrees around the zenith and the nadir, where consecutive rings hold
-very different counts (3, 9, 16, 22, 28 coming down) so the rows stop
-lining up and the grid reads there as a rosette rather than a
+The count is then ROUNDED TO A MULTIPLE OF FOUR, which the adversarial
+pass earned: the dither is a 4x4 tile indexed by the cell, so a ring
+whose count is not a multiple of 4 steps its Bayer phase across the
+azimuth wrap - a dislocation running up the az=0 meridian, the same
+CLASS of defect as the cube's edges, and it stood on 370 of 512 rings.
+Rounded, 0 of 512. Measured: cell width 0.3465-0.3572 degrees below 85
+degrees of elevation against a height of exactly 0.3516 everywhere
+(width:height 0.986 to 1.016); the largest jump between neighbouring
+directions is under one cell's diagonal, 0.4972, anywhere on the sphere
+- quantization and no seam, through both poles and across the wrap, in
+the GEOMETRY and in the CELL NUMBERING the dither reads. RECORDED cost:
+the last degree or so around the zenith and the nadir, where the counts
+run 4, 8, 16, 20, 28 coming down, the rows stop lining up and the cells
+go 0.785 to 1.178 wide for one tall - a rosette rather than a
 checkerboard. The cube spent a hard edge across the entire sky to buy
-that. And rings are the painted sky's own
+that.
+
+THREE MORE the adversarial pass found, all shipped in the same slice.
+The ring COUNT is rounded rather than truncated: `PI / step` lands
+exactly on an integer, and GLSL ES permits a divide to be 2.5 ULP out,
+so `floor()` answered 512 on one GPU and 511 on another - the zenith cap
+a whole pixel different between a phone and a desktop, and the top row
+two pixels tall on half the hardware. `atan(0, 0)` is UNDEFINED in GLSL
+and the exact zenith and nadir reach it, so both poles are guarded to a
+defined cell. And the parameter is `stepRad`: `step` is a GLSL built-in,
+and shadowing it in three shaders is the one compile risk this slice
+adds that no test here can run. And rings are the painted sky's own
 shape - SKY??.DAT is a panorama STRIP, horizontal rows of pixels wrapped
 around the horizon, which is exactly what the artwork was drawn on.
 
@@ -561,5 +577,23 @@ fails on the cube. The dome also writes the SHARED snap lines now
 drift. The star field is untouched and keeps its own cube coordinate
 (EE2 F2): a sparse random field has no grid to break, and the face
 offset is what stops a mirrored id drawing the same star either side of
-an edge. Ledger row ES1g. Pinned: `test/enhancedSky.test.js` ES1g,
-`test/macfive.test.js` PS2, `test/audit39_render.test.js` F53.
+an edge - and the doubled pixel costs it little, though the dome does
+sample stars() on the SNAPPED direction so the sampling pitch doubled
+with everything else: a lit cell is four times the area, and the
+measured mean light over a patch of night sky falls 4.7% (0.00256 to
+0.00244) with the lit fraction flat at 0.79%. Fewer, chunkier stars
+rather than a dimmer sky, recorded so a later step change cannot move it
+unnoticed.
+
+THE PINS ARE THE OTHER HALF OF THIS SLICE, because ES1f's were what let
+the half-size pixel ship: it asserted `n === 256`, the VARIABLE, and
+called that "256 cells a face" while the code cut 512. ES1g pins every
+line of the snap by text (so a shader edit a JS mirror does not follow
+fails), and measures the cell's angle AND its height off the snap rather
+than off the constant - the first cut of this very test pushed a
+constant and compared it to itself, an assertion no shader could fail,
+which is the same disease one layer up. The seam sweep runs to 89.99
+degrees and over every ring boundary, and the wrap's dither phase is
+checked on all 512 rings. Four mutants run, four killed. Ledger row
+ES1g. Pinned: `test/enhancedSky.test.js` ES1g, `test/macfive.test.js`
+PS2, `test/audit39_render.test.js` F53.

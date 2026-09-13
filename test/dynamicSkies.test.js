@@ -29,6 +29,7 @@ import {
 } from '../src/systems/dynamicSkies.js';
 import { DynamicSkies } from '../src/systems/dynamicSkiesRuntime.js';
 import { FS, COLOR_PROPERTIES, FLOAT_PROPERTIES, UNIFORM_NAMES } from '../src/render/dynamicSkiesRenderer.js';
+import { BAYER_MEAN } from '../src/render/retroPixel.js';   // PS3: the zero-mean Bayer offset
 import { LUNAR_PHASES, lunarPhase, dateFromClassicMinutes, MINUTES_PER_DAY } from '../src/systems/gameDate.js';
 import { evaluateCurve, daylightScale, setLightCurve, sunDirection } from '../src/world/worldClock.js';
 import { FOG_SETTINGS, fogForWeather, fogFactor } from '../src/world/weather.js';
@@ -558,9 +559,31 @@ test('DS1 shader: every property the mod declares is a uniform of the same name,
   for (const ch of ['r', 'g', 'b']) {
     assert.match(FS, new RegExp(`col\\.${ch} = ceil\\(col\\.${ch} / bandStep - bandB\\) \\* bandStep;`), `REDUCE_COLOR: the mod's ceil on ${ch}`);
   }
-  assert.match(FS, /float bandB = uBandDither \* \(bayer4\(uRetroStep > 0\.0 \? cell : gl_FragCoord\.xy\) - 0\.5\);/,
-    'PS3: half a step either way, on the sky\'s own cell while it is pixelated and on the fragment otherwise');
+  assert.match(FS, /float bandB = uBandDither \* \(bayer4\(bandCell\) - 0\.46875\);/,
+    'PS3: half a step either way, zero-mean, on a world-fixed cell');
   assert.ok(UNIFORM_NAMES.includes('uBandDither'), 'and the switch is fetched like every other uniform');
+  // THE DOOR IS WHAT MAKES THE DEPARTURE LEGAL, so it is pinned like the
+  // shader is. Delete the upload and uBandDither sits at its default 0 -
+  // the mod's raw ceil - and PS3 silently does nothing, which is exactly
+  // the _CloudTopColorBoost failure this file's own comment cites.
+  const rend = read('src/render/dynamicSkiesRenderer.js');
+  assert.match(rend, /this\.bandDither = true;/, 'the dither is on by default');
+  assert.match(rend, /gl\.uniform1f\(u\.uBandDither, this\.bandDither \? 1 : 0\);/, 'and it is actually uploaded');
+  assert.match(read('src/scenes/shared.js'), /dynamicSky\.bandDither = params\.get\('bands'\) !== 'raw';/, '?bands=raw reaches the game');
+  assert.match(read('src/tools/skyLab.js'), /sky\.bandDither = params\.get\('bands'\) !== 'raw';/, 'and the lab shows what the game shows');
+  // WORLD-FIXED, never the screen. Indexed by gl_FragCoord the stipple is
+  // locked to the display while the sky slides under it, so it crawls when
+  // the camera turns - at half of the mod's band, which in the darks is
+  // 7/255, not the half-LSB the dome's smooth pass calls invisible.
+  const reduce = FS.slice(FS.indexOf('// REDUCE_COLOR'), FS.indexOf('// NO HOST FOG'))
+    .split('\n').filter((l) => !/^\s*\/\//.test(l)).join('\n');   // the CODE, not the comment that explains why
+  assert.doesNotMatch(reduce, /gl_FragCoord/, 'the band dither never indexes the screen');
+  assert.match(reduce, /if \(uRetroStep <= 0\.0\) \{ vec2 fineCell; ringSnap\(dir, 0\.00204531, fineCell\); bandCell = floor\(fineCell\); \}/,
+    'smooth, it snaps a finer cell rather than falling back to the fragment');
+  // ...and ZERO-MEAN: bayer4 averages 7.5/16, so subtracting 0.5 would
+  // raise the mod's ceil bias by 1/32 of a band.
+  assert.match(reduce, /bayer4\(bandCell\) - 0\.46875/, 'the offset is zero-mean, so the mod\'s bias is the one it had');
+  assert.equal(BAYER_MEAN, 0.46875);
   // THE CIRCLES, MEASURED. A JS mirror of the block over a radial sweep
   // out of the sun, in the linear light the shader works in, encoded to
   // sRGB the way the pass encodes its output. Raw, the shipped Sunny

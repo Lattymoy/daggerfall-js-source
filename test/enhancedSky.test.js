@@ -378,6 +378,7 @@ test('ES1d shadow: the sun dims under the cloud the SHADER draws, and the two ca
 
 // ── ES1e: THE RETRO PASS ──────────────────────────────────────────
 import { RETRO, retroFor } from '../src/render/enhancedSky.js';
+import { RETRO_GLSL } from '../src/render/retroPixel.js';   // ES1g: the snap's own text, so the mirror below cannot drift from it
 import { SKY_ANGLE_PER_PIXEL } from '../src/render/skyRenderer.js';
 
 test('ES1e retro: the enhanced sky is drawn on the PAINTED sky\'s own angular pixel, posterised with an ordered dither', () => {
@@ -425,7 +426,7 @@ test('ES1e retro: the enhanced sky is drawn on the PAINTED sky\'s own angular pi
 // azimuth/elevation, which puts its POLE at the zenith: the elevation
 // rings became concentric circles and the azimuth cells converged to
 // nothing, so looking straight up was a bullseye.
-test('ES1g: the grid is cast on RINGS - no pole, no face, no edge, and the cell is the painted pixel', () => {
+test('ES1g: the grid is cast on RINGS - no pole, no face, no edge, no dither seam, and the cell is the painted pixel', () => {
   const fs = read('src/render/enhancedSky.js') + read('src/render/retroPixel.js');   // PS2/ES1g: the snap and bayer4 are the shared module's, interpolated into the dome
   // ES1f's cube is gone, root and branch - it is what put a hard line at
   // 45 degrees elevation (Mac: "the frame of a square skybox").
@@ -436,65 +437,142 @@ test('ES1g: the grid is cast on RINGS - no pole, no face, no edge, and the cell 
   // and pinwheeled at the zenith. The ring count FALLS with the ring.
   assert.doesNotMatch(fs, /floor\(vec2\(az, el\) \/ uRetroStep\)/, 'no fixed-count azimuth/elevation snap');
   assert.doesNotMatch(fs, /vec2 sc = vec2\(atan\(d\.x, d\.z\), asin\(clamp\(d\.y, -1\.0, 1\.0\)\)\);/, 'and no lat-long star field');
-  assert.match(fs, /vec3 ringSnap\(vec3 dir, float step, out vec2 cellOut\) \{/);
-  assert.match(fs, /float m = max\(1\.0, floor\(6\.28318531 \* ce \/ step \+ 0\.5\)\);/, 'as many cells as fit at one step wide');
-  assert.match(fs, /float ring = min\(floor\(\(el \+ 1\.57079633\) \/ step\), floor\(3\.14159265 \/ step\) - 1\.0\);/, 'and the top ring is clamped, or the zenith mirrors through the pole');
-  assert.match(fs, /az -= 6\.28318531 \* floor\(az \/ 6\.28318531\);/, 'the azimuth wrap is a cell boundary, not a seam');
-  assert.match(fs, /cell = floor\(cell\);/, 'and the dither indexes the cell, not its interior');
+
+  // EVERY LINE OF THE SNAP, pinned by text. ES1f pinned its rebuild line
+  // and ES1g's first cut did not restate that - which left the geometry
+  // that actually ships guarded only by a hand-written JS mirror, and a
+  // mirror that drifts measures a grid the GPU does not draw. These are
+  // the same strings the mirror below is built from.
+  const SNAP = [
+    'vec3 ringSnap(vec3 dir, float stepRad, out vec2 cellOut) {',
+    'float el = asin(clamp(dir.y, -1.0, 1.0));',
+    'float rings = floor(3.14159265 / stepRad + 0.5);',
+    'float ring = min(floor((el + 1.57079633) / stepRad), rings - 1.0);',
+    'float elC = (ring + 0.5) * stepRad - 1.57079633;',
+    'float ce = cos(elC);',
+    'float m = max(4.0, 4.0 * floor(6.28318531 * ce / stepRad * 0.25 + 0.5));',
+    'float az = (dir.x == 0.0 && dir.z == 0.0) ? 0.0 : atan(dir.x, dir.z);',
+    'az -= 6.28318531 * floor(az / 6.28318531);',
+    'float g = az * m / 6.28318531;',
+    'float azC = (floor(g) + 0.5) * 6.28318531 / m;',
+    'cellOut = vec2(g, ring + fract((el + 1.57079633) / stepRad));',
+    'return vec3(sin(azC) * ce, sin(elC), cos(azC) * ce);',
+  ];
+  for (const line of SNAP) assert.ok(RETRO_GLSL.includes(line), `the snap carries: ${line}`);
+  // The ring count is ROUNDED, not truncated: PI/step lands exactly on an
+  // integer and GLSL ES permits a divide 2.5 ULP out, so floor() would cap
+  // the zenith at 511 on one GPU and 510 on another.
+  assert.doesNotMatch(fs, /floor\(3\.14159265 \/ stepRad\) - 1\.0/, 'the ring count must not be truncated onto a tie');
+  // `step` is a GLSL built-in; shadowing it in three shaders is a compile
+  // risk no test here can run.
+  assert.doesNotMatch(fs, /vec3 ringSnap\(vec3 dir, float step,/, 'the parameter does not shadow the built-in');
+
+  const px = RETRO.step * 180 / Math.PI;   // 0.3516 deg: SKY??.DAT is 512 across 180
+  assert.ok(Math.abs(px - 180 / 512) < 1e-9, `${px} degrees a pixel`);
+  const snap = ringSnapJs(RETRO.step);
+  const rings = Math.floor(3.14159265 / RETRO.step + 0.5);
+
   // THE LAW THAT ES1f's PIN MISSED. It asserted n === 256 and called that
   // "256 cells a face" - but the face coordinate spans [-1,1], so
   // floor(uv*n) cut 2n of them and every retro pixel was HALF of
-  // SKY??.DAT's. Pin the ANGLE the snap actually produces instead, which
-  // is the number the law is written in.
-  const snap = ringSnapJs(RETRO.step);
-  const widths = [], heights = [];
-  for (let el = -85; el <= 85; el += 0.5) {
-    const a = snap(0.0001 * Math.PI / 180, el * Math.PI / 180);
-    const elC = (a.ring + 0.5) * RETRO.step - Math.PI / 2;
-    widths.push(360 * Math.cos(elC) / a.m);   // the arc ON THE SPHERE, not in azimuth
-    heights.push(RETRO.step * 180 / Math.PI);
+  // SKY??.DAT's. Measure the ANGLE the snap produces, which is the number
+  // the law is written in - and measure the HEIGHT off the snap too, not
+  // off the constant (the first cut pushed the constant and compared it to
+  // itself, an assertion no shader could fail).
+  let wMin = Infinity; let wMax = 0; let hMin = Infinity; let hMax = 0;
+  for (let r = 0; r < rings; r += 1) {
+    const elC = (r + 0.5) * RETRO.step - Math.PI / 2;
+    const here = snap(0.7, elC);
+    assert.equal(here.ring, r, `ring ${r} addresses itself`);
+    const w = 360 * Math.cos(elC) / here.m;   // the arc ON THE SPHERE, not in azimuth
+    if (Math.abs(elC) < 85 * Math.PI / 180) { wMin = Math.min(wMin, w); wMax = Math.max(wMax, w); }
+    if (r + 1 < rings) {
+      const above = snap(0.7, (r + 1.5) * RETRO.step - Math.PI / 2);
+      const h = (Math.asin(above.dir[1]) - Math.asin(here.dir[1])) * 180 / Math.PI;
+      hMin = Math.min(hMin, h); hMax = Math.max(hMax, h);
+    }
   }
-  const px = RETRO.step * 180 / Math.PI;   // 0.3516 deg: SKY??.DAT is 512 across 180
-  assert.ok(Math.abs(px - 180 / 512) < 1e-9, `${px} degrees a pixel`);
-  assert.ok(Math.max(...widths) - px < 0.01 && px - Math.min(...widths) < 0.01,
-    `cell width ${Math.min(...widths).toFixed(4)}..${Math.max(...widths).toFixed(4)} is the painted pixel ${px.toFixed(4)}`);
-  assert.deepEqual([...new Set(heights)], [px], 'and every ring is exactly one pixel tall');
+  assert.ok(Math.abs(hMin - px) < 1e-6 && Math.abs(hMax - px) < 1e-6,
+    `every ring is one pixel tall, measured from the snap: ${hMin.toFixed(6)}..${hMax.toFixed(6)} against ${px.toFixed(6)}`);
+  assert.ok(wMin > px - 0.01 && wMax < px + 0.01,
+    `cell width below 85 degrees is ${wMin.toFixed(4)}..${wMax.toFixed(4)}, the painted pixel being ${px.toFixed(4)}`);
+
   // NO SEAM: neighbouring directions never snap further apart than one
-  // cell's diagonal, anywhere on the sphere - through both poles and
-  // across the azimuth wrap. On the cube this test fails at 45 degrees.
+  // cell's diagonal, ANYWHERE - to the poles, across the azimuth wrap, and
+  // straddling every ring boundary. On the cube this fails at 45 degrees.
+  const diag = px * Math.SQRT2;
   let worst = 0;
-  for (let el = -89.5; el <= 89.5; el += 1.7) {
-    for (let az = 0; az < 360; az += 1.3) {
+  const jump = (a, b) => Math.acos(Math.min(1, a[0] * b[0] + a[1] * b[1] + a[2] * b[2])) * 180 / Math.PI;
+  for (let el = -89.99; el <= 89.99; el += 0.37) {
+    for (let az = 0; az < 360; az += 0.53) {
       const b = snap(az * Math.PI / 180, el * Math.PI / 180).dir;
-      for (const [da, de] of [[0.02, 0], [0, 0.02]]) {
-        const c = snap((az + da) * Math.PI / 180, (el + de) * Math.PI / 180).dir;
-        worst = Math.max(worst, Math.acos(Math.min(1, b[0] * c[0] + b[1] * c[1] + b[2] * c[2])) * 180 / Math.PI);
+      for (const [da, de] of [[0.02, 0], [0, 0.02], [-0.02, 0]]) {
+        const c = snap((az + da) * Math.PI / 180, Math.max(-89.999, Math.min(89.999, el + de)) * Math.PI / 180).dir;
+        worst = Math.max(worst, jump(b, c));
       }
     }
   }
-  assert.ok(worst <= px * Math.SQRT2 + 1e-3, `worst neighbour jump ${worst.toFixed(4)} is one cell diagonal ${(px * Math.SQRT2).toFixed(4)}`);
-  // The star field keeps its OWN cube coordinate (EE2 F2): a sparse
-  // random field has no grid to break, and the face offset is what stops
-  // a mirrored id drawing the same star either side of an edge.
+  for (let r = 1; r < rings; r += 1) {   // every ring boundary explicitly
+    const elB = r * RETRO.step - Math.PI / 2;
+    for (const az of [0, 1.1, 3.0, 5.9]) {
+      worst = Math.max(worst, jump(snap(az, elB - 1e-7).dir, snap(az, elB + 1e-7).dir));
+    }
+  }
+  assert.ok(worst <= diag + 1e-3, `worst neighbour jump ${worst.toFixed(4)} is within one cell diagonal ${diag.toFixed(4)}`);
+
+  // AND NO DITHER SEAM, which is the law ES1f's `face * 977.0` pin carried
+  // and the cube broke. The ordered dither is a 4x4 tile indexed by the
+  // cell, so a ring whose count is not a multiple of 4 steps its Bayer
+  // phase across the azimuth wrap - a dislocation up the az=0 meridian,
+  // the same class of defect as the cube's edges. Every ring, both sides.
+  let broken = 0;
+  for (let r = 0; r < rings; r += 1) {
+    const elC = (r + 0.5) * RETRO.step - Math.PI / 2;
+    assert.equal(snap(0.7, elC).m % 4, 0, `ring ${r}'s cell count is a multiple of 4`);
+    const below = Math.floor(snap(-0.0005, elC).cellOut[0]);
+    const above = Math.floor(snap(0.0005, elC).cellOut[0]);
+    if ((((below % 4) + 4) % 4 + 1) % 4 !== (((above % 4) + 4) % 4)) broken += 1;
+  }
+  assert.equal(broken, 0, 'the Bayer phase runs on across the azimuth wrap on every ring');
+
+  // The poles are DEFINED, not a driver's choice: atan(0,0) is undefined
+  // in GLSL and the exact zenith reaches it.
+  for (const d of [[0, 1, 0], [0, -1, 0]]) {
+    const s = ringSnapJs(RETRO.step).raw(d);
+    assert.ok(Number.isFinite(s.dir[0] + s.dir[1] + s.dir[2]), 'the pole snaps to a real direction');
+    assert.ok(Math.abs(Math.hypot(...s.dir) - 1) < 1e-9, 'and a unit one');
+    assert.ok(s.ring >= 0 && s.ring <= rings - 1, `the pole's ring ${s.ring} is inside the grid`);
+  }
+
+  // The star field keeps its OWN cube coordinate (EE2 F2): a sparse random
+  // field has no grid to break, and the face offset is what stops a
+  // mirrored id drawing the same star either side of an edge.
   assert.match(fs, /vec2 g = atan\(raw2\) \* 1\.27323954 \* scale \+ vec2\(face2 \* 977\.0/);
   assert.match(fs, /float scale = layer == 0 \? 127\.0 : 236\.0;/);
 });
 
-/** The GLSL ringSnap, mirrored in JS so the pins above can measure it. */
-function ringSnapJs(step) {
-  const HALF = 1.57079633, TAU = 6.28318531;
-  return (az0, el0) => {
-    const dir = [Math.sin(az0) * Math.cos(el0), Math.sin(el0), Math.cos(az0) * Math.cos(el0)];
+/** The GLSL ringSnap, mirrored in JS so the pins above can measure it.
+ *  Every expression here is asserted to appear verbatim in RETRO_GLSL by
+ *  the SNAP list above, so the mirror cannot quietly model another grid. */
+function ringSnapJs(stepRad) {
+  const HALF = 1.57079633; const TAU = 6.28318531;
+  const fract = (x) => x - Math.floor(x);
+  const raw = (dir) => {
     const el = Math.asin(Math.max(-1, Math.min(1, dir[1])));
-    const ring = Math.min(Math.floor((el + HALF) / step), Math.floor(3.14159265 / step) - 1);
-    const elC = (ring + 0.5) * step - HALF;
+    const rings = Math.floor(3.14159265 / stepRad + 0.5);
+    const ring = Math.min(Math.floor((el + HALF) / stepRad), rings - 1);
+    const elC = (ring + 0.5) * stepRad - HALF;
     const ce = Math.cos(elC);
-    const m = Math.max(1, Math.floor(TAU * ce / step + 0.5));
-    let az = Math.atan2(dir[0], dir[2]);
+    const m = Math.max(4, 4 * Math.floor(TAU * ce / stepRad * 0.25 + 0.5));
+    let az = (dir[0] === 0 && dir[2] === 0) ? 0 : Math.atan2(dir[0], dir[2]);
     az -= TAU * Math.floor(az / TAU);
-    const azC = (Math.floor(az * m / TAU) + 0.5) * TAU / m;
-    return { dir: [Math.sin(azC) * ce, Math.sin(elC), Math.cos(azC) * ce], m, ring };
+    const g = az * m / TAU;
+    const azC = (Math.floor(g) + 0.5) * TAU / m;
+    return { dir: [Math.sin(azC) * ce, Math.sin(elC), Math.cos(azC) * ce], cellOut: [g, ring + fract((el + HALF) / stepRad)], ring, m, rings };
   };
+  const byAngle = (az, el) => raw([Math.sin(az) * Math.cos(el), Math.sin(el), Math.cos(az) * Math.cos(el)]);
+  byAngle.raw = raw;
+  return byAngle;
 }
 
 // ═══ EE2: the sky's four fixes, from the Enhanced Environments lab ═══

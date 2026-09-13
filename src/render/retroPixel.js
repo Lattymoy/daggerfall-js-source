@@ -31,15 +31,15 @@
 // step WIDE as well - the count falls as the rings shorten, which is
 // exactly what the lat-long grid failed to do (it kept 2*PI/step cells
 // on every ring, so they became slivers and pinwheeled at the zenith).
-// Measured over the whole sphere: cell width 0.3506..0.3533 degrees
-// against a height of 0.3516, the largest jump between neighbouring
-// directions is 0.4966 degrees where one cell's diagonal is 0.4972 -
-// i.e. quantization, and NO seam anywhere, through both poles and
-// across the azimuth wrap. The cells stay SQUARE all the way up, too -
-// even the top ring, which holds three of them, is 1.047 wide for one
-// tall. What it costs is the last couple of degrees around the zenith
-// and the nadir, where consecutive rings hold very different counts (3,
-// 9, 16, 22, 28 coming down) so the rows no longer line up and the grid
+// Measured: cell width 0.3465..0.3572 degrees below 85 degrees of
+// elevation against a height of 0.3516 everywhere, widening to
+// 0.2761..0.4142 in the last handful of rings at each pole; the largest
+// jump between neighbouring directions is under one cell's diagonal
+// (0.4972) anywhere on the sphere - i.e. quantization, and NO seam,
+// through both poles and across the azimuth wrap, in the GEOMETRY and in
+// the CELL NUMBERING the dither reads. What it costs is the last couple
+// of degrees around the zenith and the nadir, where consecutive rings
+// hold very different counts so the rows stop lining up and the grid
 // reads there as a rosette rather than a checkerboard. The old cube
 // spent a hard edge across the whole sky to buy that.
 //
@@ -59,28 +59,43 @@
 // before its output - kept as text here so a shader cannot drift from
 // its siblings, and pinned by test/macfive.test.js.
 
-/** ringSnap(dir, step, cellOut) and bayer4(p). */
+/** ringSnap(dir, stepRad, cellOut) and bayer4(p). */
 export const RETRO_GLSL = `
-// The sky's pixel: rings of constant elevation, each one \`step\` tall,
-// each holding as many cells as fit at one \`step\` wide. No faces, so no
+// The sky's pixel: rings of constant elevation, each one stepRad tall,
+// each holding as many cells as fit at one stepRad wide. No faces, so no
 // edge; the ring count falls toward the pole, so no pinwheel either.
 // cellOut is CONTINUOUS (AUDIT 39 F53's law): floor() is the cell's id
 // and fract() is where the fragment sits inside it, which is what the
 // dither indexes and what a per-cell feature would place against.
-vec3 ringSnap(vec3 dir, float step, out vec2 cellOut) {
+// (The parameter is stepRad, not step: \`step\` is a GLSL built-in and
+// shadowing it in three shaders is a compile risk nothing here can test.)
+vec3 ringSnap(vec3 dir, float stepRad, out vec2 cellOut) {
   float el = asin(clamp(dir.y, -1.0, 1.0));
-  // The last ring is clamped: a fragment at exactly the zenith would
-  // otherwise index one ring past the top and rebuild with a NEGATIVE
-  // cosine, mirroring itself through the pole.
-  float ring = min(floor((el + 1.57079633) / step), floor(3.14159265 / step) - 1.0);
-  float elC = (ring + 0.5) * step - 1.57079633;
+  // The ring count is ROUNDED, never truncated. PI / stepRad lands exactly
+  // on an integer here, and GLSL ES allows a divide to be 2.5 ULP out, so
+  // floor() would answer 512 on one GPU and 511 on another - a zenith cap
+  // that differs by a whole pixel between a phone and a desktop, and the
+  // top row two pixels tall on half the hardware.
+  float rings = floor(3.14159265 / stepRad + 0.5);
+  float ring = min(floor((el + 1.57079633) / stepRad), rings - 1.0);
+  float elC = (ring + 0.5) * stepRad - 1.57079633;
   float ce = cos(elC);
-  float m = max(1.0, floor(6.28318531 * ce / step + 0.5));   // floor(x+0.5), not round(): a tie must land the same way on every GPU
-  float az = atan(dir.x, dir.z);
+  // As many cells as fit at one stepRad wide, ROUNDED TO A MULTIPLE OF
+  // FOUR. The ordered dither is a 4x4 tile indexed by the cell, so a ring
+  // whose count is not a multiple of 4 steps its Bayer phase across the
+  // azimuth wrap - a dither dislocation running up the az = 0 meridian,
+  // which is the same class of defect the cube's edges had and the reason
+  // this grid exists. Rounding the count kills it on every ring (370 of
+  // 512 carried one otherwise). The cost is cell width: 0.3465 to 0.3572
+  // degrees below 85 degrees against 0.3506 to 0.3533 unrounded.
+  float m = max(4.0, 4.0 * floor(6.28318531 * ce / stepRad * 0.25 + 0.5));
+  // atan(0, 0) is UNDEFINED in GLSL and the exact zenith and nadir reach
+  // it; a NaN there would poison the direction and the cell id both.
+  float az = (dir.x == 0.0 && dir.z == 0.0) ? 0.0 : atan(dir.x, dir.z);
   az -= 6.28318531 * floor(az / 6.28318531);                 // [0, 2PI) - and the wrap is a cell boundary, not a seam
   float g = az * m / 6.28318531;
   float azC = (floor(g) + 0.5) * 6.28318531 / m;
-  cellOut = vec2(g, (el + 1.57079633) / step);
+  cellOut = vec2(g, ring + fract((el + 1.57079633) / stepRad));   // id and interior off ONE value, and the clamped top ring keeps its own id
   return vec3(sin(azC) * ce, sin(elC), cos(azC) * ce);       // already unit: ce is cos(elC)
 }
 
@@ -92,6 +107,11 @@ float bayer4(vec2 p) {
   return m[i] / 16.0;
 }
 `;
+
+/** bayer4's mean is 7.5/16, so `bayer4(p) - 0.5` is biased low by 1/32 of
+ *  a step. Anything that must not move a quantizer's MEAN subtracts this
+ *  instead. (ES1e's own posterise keeps the 0.5 it shipped with.) */
+export const BAYER_MEAN = 0.46875;
 
 /** The snap, after \`dir\` is built: uniform uRetroStep (radians per pixel, 0 = smooth). */
 export const RETRO_SNAP_GLSL = `  vec2 cell = vec2(0.0);
