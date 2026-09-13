@@ -37,7 +37,19 @@ test('MO1: every mod with a switch ships ON - the Mods pane is where one is turn
     assert.equal(def.keys.Enabled.default, true, `${vendor} ships on`);
     assert.equal(modSetting(vendor, 'Enabled'), true, `${vendor} reads on with nothing stored`);
   }
-  assert.equal(MOD_SETTINGS['roads-hazelnut'].keys.Enabled, undefined, 'Basic Roads has no switch - it is the road network itself');
+  // BR3 (2026-09-13, Mac: "can you do an audit on basic roads. I dont
+  // think its working") REVERSES MO1'S ONE EXEMPTION, and the reason it
+  // was made is the reason it could go. MO1 held Basic Roads out because
+  // it "is the road network itself" - a switch that could leave a player
+  // with no roads at all is not a mod switch, it is a way to break the
+  // world. That is no longer what OFF means: the port has had its own
+  // network since ROADS 3, it is already the fallback for a map his
+  // arrays cannot load, and OFF now takes that same path. So the switch
+  // costs nobody their roads, and the exemption cost something real -
+  // Basic Roads was not enabled-by-default, it was UNCONDITIONAL, with
+  // the only card in the Mods pane that had no on/off row.
+  assert.equal(MOD_SETTINGS['roads-hazelnut'].keys.Enabled.default, true, 'Basic Roads has the switch now, and ships on');
+  assert.equal(switched.length, Object.keys(MOD_SETTINGS).length, 'EVERY vendored mod has one - no exemptions left to go stale');
   // the DFU-verbatim suites state their precondition (the game without its mods) through one helper
   assert.match(read('test/modsOff.js'), /if \(def\.keys\.Enabled\) setModSetting\(vendor, 'Enabled', false\)/);
   assert.match(read('test/audit18_combat.test.js'), /^import '\.\/modsOff\.js';/m, 'the formula suite runs without the mods');

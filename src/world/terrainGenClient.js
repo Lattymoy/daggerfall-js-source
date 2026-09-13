@@ -132,6 +132,13 @@ export class TerrainGenClient {
 
   setRoadsData(net, onStats = null) {
     this._settlements = null;
+    // BR3: the switches ride HERE too. setRoads kept them in `_switches`
+    // and this did not, so the three rebuilds that read `_switches` (the
+    // worker's net-back arm and _roadsFallback) would have rebuilt his
+    // network with the switches dropped - the AUDIT 58 F3 defect exactly,
+    // in the one place that fix did not reach. Inert today only because
+    // `_roads` below is set inline and _roadsFallback early-returns on it.
+    this._switches = { water: !!net.water, smooth: net.smooth !== false };
     // AUDIT 58 F3: `smooth` rides his data too. It was dropped by all three
     // rebuilds of the network object below while `water` survived them, so the
     // Mods pane's SmoothRoads switch reached the kernel only on the fallback

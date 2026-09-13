@@ -406,6 +406,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // as the world loads - SmoothRoads on, RiversAndStreams off, as the
   // mod ships them - and carried on the network object into the kernel.
   const roadSwitches = { smooth: modSetting('roads-hazelnut', 'SmoothRoads'), water: modSetting('roads-hazelnut', 'RiversAndStreams') };
+  // BR3: and the mod's OWN switch, which it did not have. Off is not a
+  // roadless world - it is the port's own network (ROADS 3), the same
+  // fallback a map his arrays cannot load already takes.
+  const basicRoadsOn = modSetting('roads-hazelnut', 'Enabled');
   // ROADS 25 (Mac: "some roads are missing even though they show on
   // the map"): the network arrives AFTER the world has started
   // building, so the first pixels - the ones around the spawn - were
@@ -453,7 +457,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     }));
     console.log(`[roads] ${again.length} pixel(s) built before the network landed - rebuilt with roads`);
   }
-  loadModRoads().then((his) => {
+  (basicRoadsOn ? loadModRoads() : Promise.resolve(null)).then((his) => {
+    if (!basicRoadsOn) {
+      console.log('[roads] Basic Roads off in the Mods pane - generating the port\'s own network');
+      terrainGen.setRoads(settlementsOf(maps), logRoads, roadSwitches);
+      rebuildRoadless();
+      return;
+    }
     if (his) { terrainGen.setRoadsData({ ...his, ...roadSwitches }, (st) => console.log(`[roads] Basic Roads, 1:1: ${st.roadPixels ?? '?'} road pixels (Hazelnut)${roadSwitches.water ? ', rivers and streams on' : ''}${roadSwitches.smooth ? '' : ', smoothing off'}`)); rebuildRoadless(); return; }
     console.warn('[roads] Basic Roads data did not load - generating our own network');
     terrainGen.setRoads(settlementsOf(maps), logRoads, roadSwitches);
