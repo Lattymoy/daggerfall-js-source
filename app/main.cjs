@@ -248,7 +248,7 @@ async function checkForUpdates({ silent }) {
     if (!silent) dialog.showMessageBox({
       type: 'info',
       message: `You're up to date`,
-      detail: `Daggerfall JavaScript v${app.getVersion()} is the latest release.`,
+      detail: `Daggerfall Enhanced v${app.getVersion()} is the latest release.`,
     });
     return;
   }
@@ -365,7 +365,7 @@ async function createWindow() {
     width: 1280,
     height: 800,
     backgroundColor: '#111111',
-    title: 'Daggerfall JavaScript',
+    title: 'Daggerfall Enhanced',
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,

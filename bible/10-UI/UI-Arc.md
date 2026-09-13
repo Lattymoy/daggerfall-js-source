@@ -613,7 +613,9 @@ and are recorded as his: a LANDING PAGE in front of the game (what it
 is, how to play, credits, Play) rather than a docs site or a redesigned
 in-game door; the SAME REPO at the GitHub Pages root, with the game
 moving one directory down to /play/; and the public name DAGGERFALL
-JAVASCRIPT. Everything below follows from those three.
+JAVASCRIPT (~~the name~~ DAGGERFALL ENHANCED since BR1, 2026-09-13 -
+Mac's rebrand; the two structural decisions stand untouched). Everything
+below follows from those three.
 
 THE PAGE IS THE SKIN'S OUTERMOST ROOM. The enhanced menu is a rail of
 words and a pane that answers them, and it is the first thing a player
@@ -678,8 +680,9 @@ middleware answered /arena2/* only, and dataSource fetches
 would have fallen through to the picker - the mount is doubled, same
 handler; and staleChunkProbe's static server had no directory index,
 which GitHub Pages does have. The boot title, the menu's About card and
-the data picker now say Daggerfall JavaScript; project-dagger is the
-repo's name and the IndexedDB's, and those stay.
+the data picker now say ~~Daggerfall JavaScript~~ Daggerfall Enhanced
+(BR1, 2026-09-13); project-dagger is the repo's name and the IndexedDB's,
+and those stay.
 
 NOTED, NOT FIXED (Mac's call): there is no LICENSE file, and the
 doctrine's attribution rule names one. And test/doctrine.test.js's
