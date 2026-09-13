@@ -432,7 +432,7 @@ test('ROAD-H H2: the sweep and the player arm are wired through the one helper, 
   // ...including the enemy AreaAroundCaster arm, which reaches
   // explodeAt through the shared cast executor.
   assert.match(src('characters/enemyCasting.js'), /\{ excludeFoe: f, playerHeight \}\);/);
-  assert.match(src('scenes/dungeonContext.js'), /playerFeet: lastPlayerFeet, playerHeight: lastPlayerHeight,/);
+  assert.match(src('scenes/dungeonContext.js'), /playerFeet: _pt\?\.feet \?\? lastPlayerFeet, playerHeight: _pt\?\.height \?\? lastPlayerHeight,/);
   assert.match(src('scenes/exteriorFoes.js'), /playerFeet, playerHeight: _lastPlayerHeight,/);
   // ...and the PRODUCERS that keep those two latches live. The review
   // round found the consumers pinned and the producers not: delete

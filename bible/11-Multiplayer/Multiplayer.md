@@ -8,8 +8,10 @@
 > of a dungeon's world for whoever comes next, while the world still
 > runs in the host's browser - and WORLD2 (2026-09-12) made that
 > literal for a dungeon's foes: one simulation per room, the host's,
-> streamed to the rest, whose foes are puppets. Shared time and
-> weather are the arc's next slices. This page is the co-op design the arc grows into; where
+> streamed to the rest, whose foes are puppets - and WORLD3 (2026-09-12)
+> made its doors, levers and platforms everyone's and its foes every
+> player's hunters. Loot, then shared time and weather, are the arc's
+> next slices. This page is the co-op design the arc grows into; where
 > the two disagree, the arc is what runs.
 
 Co-op for Daggerfall Enhanced (BR1; the page was written while the
@@ -207,7 +209,7 @@ convenience.
 
 ## Open questions, deliberately open
 
-- Host migration (a client becomes host when the host drops): the seat, WORLD1 (the relay's word); a dungeon's foes, WORLD2 (the puppets go live); the rest of the room, slice 3.
+- Host migration (a client becomes host when the host drops): the seat, WORLD1 (the relay's word); a dungeon's foes, WORLD2 (the puppets go live); its doors, levers and platforms need no seat at all, WORLD3 (an act is whoever touched them, the memory carries them); its loot, slice 4.
 - Splitting the party across interiors. Later.
 - Voice chat. Text chat shipped in the ONLINE arc (CHAT1, `06-Systems/Online-Arc.md`) - one World tab in the enhanced HUD; a co-op party tab is the next row of its CHAT_TABS. Voice is not basics.
 - Whether a client's damage claim ever gets validated. Not planned.

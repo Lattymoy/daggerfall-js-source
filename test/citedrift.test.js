@@ -649,7 +649,7 @@ const SOURCE_CITES = [
   // "Original finding" is a dated snapshot, so where its subject still
   // stands the cite is re-resolved and where the fix DELETED the
   // subject the number is gone and the seam is named instead.
-  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)`, `dungeonContext\.js:1293`/,
+  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)`, `dungeonContext\.js:1317`/,
     EX, /drinkPotion: \(key\) => magic\.drinkPotion\(key\)/],
   ['bible/01-Overview/Port-Ledger.md', /`world\.js:3783`, `exterior\.js:(\d+)`/,
     EX, /renderer\.setWindowEmission\(windowEmissionRGB\(/],

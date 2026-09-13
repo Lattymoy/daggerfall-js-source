@@ -14,6 +14,7 @@
 //                    {t:'world', data, final?}          the room's memory, from its host alone (WORLD1); final once, the farewell
 //                    {t:'foes', data}                   the host's live foes, FOES_HZ_MAX a second at most (WORLD2)
 //                    {t:'hit', data}                    a blow on the host's foe, from anyone but the host (WORLD2)
+//                    {t:'act', data}                    a change to the room's doors, levers and movers, from anyone in it (WORLD3)
 //   room -> client:  {t:'welcome', id, peers:[{id,name,look,pose}], host, world}
 //                    {t:'join', id, name, look, pose}   {t:'leave', id}
 //                    {t:'pose', id, p}                  {t:'pong'}
@@ -21,6 +22,7 @@
 //                    {t:'host', id}                     the room's host changed (WORLD1)
 //                    {t:'foes', id, data}               the host's live foes, to everyone but the host (WORLD2)
 //                    {t:'hit', id, data}                a blow on the host's foe, to the host alone (WORLD2)
+//                    {t:'act', id, data}                a change to the room's doors, levers and movers, to everyone but its author (WORLD3)
 //                    {t:'error', m}                     then the socket closes
 // A pose is {x, y, z, yaw, pitch, mv, wd, an, as, am, sr, cn, cr} in the room's frame -
 // a world cell's in MapsFile world units (the streaming world's
@@ -96,6 +98,17 @@
 // to the host's socket alone, under the room's hit budget
 // (HIT_ROOM_HZ_MAX) and the joiner's own gate at home (HIT_HZ_MAX).
 // The relay reads neither; the client checks the sender.
+//
+// THE LIVE DOORS (WORLD3, 2026-09-12). Whoever moves a dungeon's door, lever
+// or platform - a click, a bash, a pick, a walk onto a trigger, the host's
+// foe opening a door - sends what changed ({t:'act', data}: the changed
+// action records, under the small cap, on the actions' own bucket at the
+// relay - ACT_HZ_MAX, a door never starving a pose) and the room fans it
+// to everyone hello'd but its author, under the room's own budgets
+// (ACT_ROOM_HZ_MAX frames and ACT_ROOM_BYTES_PER_S bytes, the frame times
+// its listeners; ACT_HZ_MAX at home too). Every player in a world room may
+// send one, not the host alone: a door is whoever touched it. The relay
+// reads none of it.
 
 /** The streaming world's shard: a square of map pixels. */
 export const WORLD_CELL = 16;
@@ -179,6 +192,17 @@ export const HIT_ROOM_HZ_MAX = 60;
 /** AUDIT WORLD2 A6: a joiner's own hits a second, at home - the pose bucket's headroom over the client's POSE_HZ (10),
  *  so a blow never starves the joiner's poses at the relay and an over-rate blow is refused to its caller. */
 export const HIT_HZ_MAX = 10;
+/** WORLD3: the action frames a room fans a second, all senders together - a door, a lever, a platform moved. */
+export const ACT_ROOM_HZ_MAX = 30;
+/** AUDIT WORLD3 A1: a room's act fan spends this many bytes a second - the frame's size times its listeners, the
+ *  same law AUDIT WORLD2 A5 wrote for the foes fan. Counting FRAMES alone left the cost unbounded in bytes: six
+ *  hello'd sockets sending the largest act frame at their own rate is 119.6 MiB/s out of one Durable Object, 30x
+ *  the foes fan's ceiling. A door's honest traffic is a few kilobytes a second even in a full room, so this sits
+ *  well above every real cascade and far below the hole. */
+export const ACT_ROOM_BYTES_PER_S = 1024 * 1024;
+/** WORLD3: a client's action frames a second - a click's worth, on their own bucket at the relay (a door never
+ *  starves a pose) and refused to the caller at home past it. */
+export const ACT_HZ_MAX = 5;
 /** A byte budget: `rate` bytes a second, a second's worth at most; passes when the cost fits, spending it. */
 export function byteGate(bucket, nowMs, cost, rate) {
   const b = bucket ?? { bytes: rate, at: nowMs };
@@ -312,7 +336,7 @@ export function inRange(roomKey, from, to) {
   return pixelDistance(from, to) <= RANGE_PIXELS;
 }
 
-/** One client frame, parsed and checked: {t:'hello'|'pose'|'ping'|'chat'|'world'|'foes'|'hit', ...}
+/** One client frame, parsed and checked: {t:'hello'|'pose'|'ping'|'chat'|'world'|'foes'|'hit'|'act', ...}
  *  or {error} - the caller closes on an error. */
 export function parseClient(text, { hasHello = false } = {}) {
   if (typeof text !== 'string') return { error: 'text frames only' };
@@ -332,7 +356,7 @@ export function parseClient(text, { hasHello = false } = {}) {
     if (!m.data || typeof m.data !== 'object' || Array.isArray(m.data)) return { error: 'bad world' };
     return { t: 'world', data: m.data, final: m.final === true };
   }
-  if (m.t === 'foes' || m.t === 'hit') {   // WORLD2: the host's live foes out, a blow on them in - objects from a hello'd socket, read by no relay
+  if (m.t === 'foes' || m.t === 'hit' || m.t === 'act') {   // WORLD2: the host's live foes out, a blow on them in; WORLD3: a door moved - objects from a hello'd socket, read by no relay
     if (!hasHello) return { error: `${m.t} before hello` };
     if (!m.data || typeof m.data !== 'object' || Array.isArray(m.data)) return { error: `bad ${m.t}` };
     return { t: m.t, data: m.data };
@@ -378,6 +402,8 @@ export const poseGate = (bucket, nowMs) => tokenGate(bucket, nowMs, POSE_HZ_MAX)
 export const foesGate = (bucket, nowMs) => tokenGate(bucket, nowMs, FOES_HZ_MAX);
 /** The hit rate gate at home: HIT_HZ_MAX a second (AUDIT WORLD2 A6). */
 export const hitGate = (bucket, nowMs) => tokenGate(bucket, nowMs, HIT_HZ_MAX);
+/** The action rate gate at home: ACT_HZ_MAX a second (WORLD3). */
+export const actGate = (bucket, nowMs) => tokenGate(bucket, nowMs, ACT_HZ_MAX);
 /** The chat rate gate: CHAT_HZ_MAX a second (CHAT1). */
 export const chatGate = (bucket, nowMs) => tokenGate(bucket, nowMs, CHAT_HZ_MAX);
 

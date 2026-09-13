@@ -301,8 +301,13 @@ export const RESTING_DISTANCE = 12;
 export function areEnemiesNearby(foes, { resting = false, includingPacified = false } = {}) {
   for (const f of foes ?? []) {
     if (!f || f.dead || !f.ai) continue;
-    const canSee = !!(f.ai.detected && f.ai.inSight);
-    if (resting && !canSee && (f.ai._dist ?? Infinity) > RESTING_DISTANCE) continue;
+    // AUDIT WORLD3 C3: "nearby" means near ME. Since WORLD3 a foe's detected/inSight pair can be its sense of ANOTHER
+    // player (a peer candidate on the host's target machine) and `_dist` the distance to that player - so a foe across
+    // the dungeon fighting the joiner refused the host's rest and, through onExhausted, killed it. The motor latches
+    // both answers: targetIsLocalPlayer (absent on a bare ai stub, which is the unarmed player-only shape) and
+    // _distLocal, the spawn band's own measure to my feet.
+    const canSee = !!(f.ai.detected && f.ai.inSight && f.ai.targetIsLocalPlayer !== false);
+    if (resting && !canSee && (f.ai._distLocal ?? f.ai._dist ?? Infinity) > RESTING_DISTANCE) continue;
     if (!(canSee || f.ai.wouldBeSpawned)) continue;
     // :709 - the hostility/team gate, INSIDE the proximity arm
     if (includingPacified) return true;

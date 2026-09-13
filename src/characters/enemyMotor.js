@@ -529,6 +529,10 @@ export class EnemyAI {
     // and moves the transform by heightChange/2), not the 1.8 constant.
     const yDiff = (this.feet[1] + this.centreOffset) - (playerFeet[1] + this._playerHeight / 2);
     const dist = Math.hypot(dxp, yDiff, dzp);   // distanceToPlayer (:376-377), transforms
+    // AUDIT WORLD3 C3: the distance to MY player, latched beside the spawn band that already measures it. `_dist` is
+    // the distance to the TARGET, which since WORLD3 can be another player entirely - the rest gate's proximity arm
+    // asked it and got the joiner's distance.
+    this._distLocal = dist;
     this.wouldBeSpawned = wouldBeSpawnedInClassic(
       dist, yDiff, this.wouldBeSpawned, this.spawnDistanceType, this.playerInside);
   }
@@ -545,8 +549,12 @@ export class EnemyAI {
     // two runs on a tick that found no target.
     if (this.lastHadLOSTimer > 0) this.lastHadLOSTimer--;
     if (!senses) return;
-    const foeTarget = this._armedTargeting && this.target && !this.target.isPlayer;
-    const flags = foeTarget
+    // AUDIT WORLD3 C2: NOT-THE-LOCAL-PLAYER, not "a foe" - a PEER (WORLD3) carries isPlayer and has no concealment()
+    // of its own, so the old spelling read the LOCAL player's invisibility for a foe hunting somebody else: the host
+    // going invisible blinded every foe chasing the joiner. A peer takes the empty bag, which is what "I do not know"
+    // must mean here (a peer's flags are a later slice's wire field).
+    const notLocal = this._armedTargeting && this.target && (!this.target.isPlayer || this.target.isPeer === true);
+    const flags = notLocal
       ? (this.target.concealment?.() ?? {})
       : {
           invisible: senses.playerInvisible ?? false,
@@ -573,6 +581,9 @@ export class EnemyAI {
     // gates all read. Feet to feet coincided with it only while every
     // foe's transform sat 0.9 above its feet like the player's.
     this._dist = Math.hypot(dx, (playerFeet[1] + this._targetCentreOffset()) - (this.feet[1] + this.centreOffset), dz);
+    // AUDIT WORLD3 C3: unarmed - a puppet's bare senses call, an unarmed pool - the senses ARE the local player's, so
+    // both latches follow from here (a puppet never reaches _step or the classic block).
+    if (!this._armedTargeting) { this._distLocal = this._dist; this.targetIsLocalPlayer = true; }
     // C-slice: EnemySenses clears actionDoor at every CanSeeTarget
     // (:879) and records the ray's blocking door; the host resolves
     // the key against its action registry for OpenDoors.
@@ -588,8 +599,10 @@ export class EnemyAI {
     // the target eye from `controller.center` + `controller.height / 3`
     // (EnemySenses.cs:896-898), which for a crouched player is feet +
     // 0.75, not feet + 1.50.
-    const _targetHeight = this._armedTargeting && this._targetCandidate && !this._targetCandidate.isPlayer
-      ? (this._targetCandidate.ai?.height ?? undefined) : this._playerHeight;
+    // AUDIT WORLD3 C1: ONE HOME for "the target's own capsule" - this was the THIRD reading of it and the only one
+    // WORLD3 left unpatched, so the ray to a PEER was aimed at the LOCAL player's live capsule (0.9 crouched) planted
+    // on the peer's feet, while _dist beside it already measured the peer's own.
+    const _targetHeight = this._targetHeight();
     this.inSight = canSeeTarget(this.collider, this.feet, this.yaw, this.height, playerFeet, _targetHeight, _blocker, this._dist);   // the sight-radius gate (:881) reads distanceToTarget
     this.doorKey = _blocker.key;
     // AUDIT 24 (the re-read): DFU's NON-HOSTILE MODE is a TARGET drop,
@@ -656,7 +669,10 @@ export class EnemyAI {
    *  detecting a FOE target (MT-i, armed pools) never spends the
    *  player-encounter edge or the pacification roll it feeds. */
   _encounterEdge() {
-    if (this._armedTargeting && this._targetCandidate && !this._targetCandidate.isPlayer) return;
+    // AUDIT WORLD3 C4: a PEER is not my first meeting either - justEncountered's one consumer resolves the whole
+    // language check with the LOCAL player (its skill, its sheathed hand, its HUD line, its tally) and can stand the
+    // foe down on the host's roll for a foe that has only ever seen the joiner.
+    if (this._armedTargeting && this._targetCandidate && (!this._targetCandidate.isPlayer || this._targetCandidate.isPeer === true)) return;
     if (!this.hasEncounteredPlayer) { this.hasEncounteredPlayer = true; this.justEncountered = true; }
   }
 
@@ -777,7 +793,11 @@ export class EnemyAI {
     // the half-speed minute skip, the encountered fast-mover
     // auto-detect and the Stealth TALLY are the PLAYER target's; a
     // foe target (armed pools) rolls on its own live Stealth below.
-    const foeTarget = this._armedTargeting && this._targetCandidate && !this._targetCandidate.isPlayer;
+    // AUDIT WORLD3 C5: a PEER takes neither half of the LOCAL player's stealth - not the half-speed minute skip, not
+    // the encountered auto-detect, and above all not the TALLY (a foe hunting the joiner advanced the host's Stealth)
+    // and not senses.playerStealth against a distance measured to the joiner. Its own skill is a later slice's wire
+    // field; until then the candidate answers 0, the same fallback the foe arm below already takes.
+    const foeTarget = this._armedTargeting && this._targetCandidate && (!this._targetCandidate.isPlayer || this._targetCandidate.isPeer === true);
     if (!foeTarget) {
       if (senses.movingLessThanHalfSpeed) {
         if ((gameMinutes & 1) === 1) return this.detected;
@@ -1177,7 +1197,7 @@ export class EnemyAI {
     // AUDIT 62 F23: the PLAYER arm is the live capsule, not 1.8 - DFU
     // reads the controller component itself, and a crouched player's is
     // 0.9 (a mounted one's 2.6).
-    return (t && !t.isPlayer && t.ai?.height) || this._playerHeight;
+    return (t && !t.isPlayer && t.ai?.height) || (t?.isPeer && t.height) || this._playerHeight;   // WORLD3: a peer's own capsule
   }
 
   /** REVIEW 2026-09-05 (PR #57 review): where the TARGET's transform sits
@@ -1195,7 +1215,7 @@ export class EnemyAI {
     // (PlayerHeightChanger.cs:477-478 moves it by heightChange/2 while
     // the capsule bottom stays planted), so a crouched player's sits at
     // feet + 0.45.
-    if (!t || t.isPlayer || !t.ai) return this._playerHeight / 2;
+    if (!t || t.isPlayer || !t.ai) return ((t?.isPeer && t.height) || this._playerHeight) / 2;   // WORLD3: a peer's own capsule
     return t.ai.centreOffset ?? (t.ai.height ?? CAPSULE_HEIGHT) / 2;
   }
 
@@ -1562,8 +1582,12 @@ export class EnemyAI {
     if (targeting) {
       this._targetCandidate = this.target;
       targetFeet = this.target == null ? null
-        : (this.target.isPlayer ? playerFeet : this.target.ai.feet);
+        : (this.target.isPlayer ? (this.target.feet ?? playerFeet) : this.target.ai.feet);   // WORLD3: a peer target at its own feet
     } else this._targetCandidate = null;
+    // AUDIT WORLD3 C3: whose player these senses answer for. inSight/detected mean "this foe senses its TARGET", and
+    // since WORLD3 that can be another player in the room - the alert, the rest gate and the exhaustion collapse all
+    // read the pair and all mean MY player.
+    this.targetIsLocalPlayer = !this._armedTargeting || (this.target != null && this.target.isPlayer === true && this.target.isPeer !== true);
     // MT-iii's hostility narrowing, now on THIS step's target machine.
     const foeTarget = this._armedTargeting && this.target != null && !this.target.isPlayer;
     this.canAct = !paralyzed && !knocked && (this.isHostile || foeTarget);

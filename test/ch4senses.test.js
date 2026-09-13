@@ -85,7 +85,7 @@ test('CH4: the dungeon snapshot carries isHostile/hasEncounteredPlayer/magicka, 
   assert.ok(collect.includes('hostile: f.ai.isHostile !== false'), 'SerializableEnemy :113');
   assert.ok(collect.includes('encountered: !!f.ai.hasEncounteredPlayer'), 'SerializableEnemy :114');
   assert.ok(collect.includes('magicka: f.entity.magicka ?? 0'), 'a discharged caster must not refill on load (:112/:178)');
-  const ai = dc.indexOf('function applyWorld(w, { truncate = true } = {})');
+  const ai = dc.indexOf('function patchFoe(f, sf)');   // WORLD3: the per-foe body is patchFoe, above applyWorld
   const apply = dc.slice(ai, dc.indexOf('w.piles?.forEach', ai));
   assert.ok(apply.includes('if (sf.hostile != null) f.ai.isHostile = !!sf.hostile;'), ':182 restore, old saves keep live state');
   assert.ok(apply.includes('if (sf.encountered != null) f.ai.hasEncounteredPlayer = !!sf.encountered;'), ':183 restore');
