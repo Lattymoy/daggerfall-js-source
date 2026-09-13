@@ -133,7 +133,7 @@ test('CD1: Ledger A row TB1 exists, in section A, and names the windows that cit
   // ...and the departure it describes is still LIVE, or the row is the lie.
   assert.match(pause, /import \{ BUILD_TAG \} from '\.\.\/buildTag\.js';/,
     'the version line no longer draws the port build tag - re-read the Ledger row before editing this');
-  assert.match(pause, /const ver = `project-dagger \$\{BUILD_TAG\}`;/,
+  assert.match(pause, /const ver = `Daggerfall Enhanced \$\{BUILD_TAG\}`;/,   // BR1: the product's name, not the working name
     'the substituted string is not the one the Ledger row records');
 
   // AUDIT 58 (seams): THE SAME SHAPE, EIGHT MORE TIMES. `grep` over

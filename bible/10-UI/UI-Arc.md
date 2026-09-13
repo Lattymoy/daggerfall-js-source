@@ -185,7 +185,7 @@ MENU THAT NO LONGER EXISTS, which is wrong rather than stale.
 REORGANIZED MEANS THE SHELL WENT. The old page was the old menu's shape:
 a sticky rail beside a scrolling pane. The home face has no rail - it is
 centred and boxless - so the site is now a DOOR: a full-viewport stage
-with the wordmark, the tracked JAVASCRIPT sub-line, a rule with the
+with the wordmark, the tracked ~~JAVASCRIPT~~ ENHANCED sub-line (BR1), a rule with the
 brass gem, the one line of what it is, the ARENA2 sentence said before
 anything asks for it, and PLAY as THE ONE BOX (the About plaque's own
 shape, on a page with no other box). The sections below stack centred,
@@ -621,7 +621,8 @@ THE PAGE IS THE SKIN'S OUTERMOST ROOM. The enhanced menu is a rail of
 words and a pane that answers them, and it is the first thing a player
 sees after Play - so the page in front of it is built on that shell
 and not on a landing-page template: the same brand block with one word
-swapped (JavaScript where the menu says Enhanced), the same rail, the
+swapped (~~JavaScript where the menu says Enhanced~~ - since BR1 both
+say ENHANCED, so nothing is swapped), the same rail, the
 same one-line heads, the same brass-outlined primary action, the same
 phone rule (the rail to the bottom, in the thumb's arc - here it
 carries the one door, and the gate's own Play hides on a phone so the

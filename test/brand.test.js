@@ -81,6 +81,8 @@ test('BR1: every surface the player reads carries the one name', () => {
   assert.match(ds, new RegExp(`document\\.title = '${NAME} - close other game tabs to continue'`), 'the second-tab title');
   assert.match(ds, new RegExp(`<h2 style="margin-top:0">${NAME}</h2>`), 'and the second-tab panel');
 
+  assert.match(read('src/ui/pauseWindow.js'), new RegExp(`const ver = \\\`${NAME} \\$\\{BUILD_TAG\\}\\\`;`),
+    'the PAUSE SCREEN\'s version line - the whole of the branding surface a player reads in game, and the working name sat on it');
   assert.match(read('README.md'), new RegExp(`^# ${NAME}\\n`), 'the repository\'s own first line');
 });
 
@@ -107,7 +109,11 @@ test('BR1: no surface still says the old name', () => {
   } catch (e) {
     assert.equal(e.status, 1, `git grep failed: ${e.stderr || e.message}`);
   }
-  assert.equal(hits, '', `the old name survives:\n${hits}`);
+  // THE ONE EXEMPTION, and it is a path not a name: the desktop shell's
+  // storage root keeps the folder the shipped versions created, so the
+  // old spelling appears there on purpose. It is pinned below.
+  const survivors = hits.split('\n').filter((l) => l && !/appData/.test(l)).join('\n');
+  assert.equal(survivors, '', `the old name survives:\n${survivors}`);
 
   // ...and the split form the adjacency sweep above is blind to.
   let split = '';
@@ -146,4 +152,13 @@ test('BR1: what the rebrand deliberately did NOT touch, and why', () => {
   assert.equal(JSON.parse(read('package.json')).name, 'daggerfall-js-source', 'and the package name follows the repository');
   assert.match(read('src/systems/modSettings.js'), /const STORE_KEY = 'dfjs-mod-settings';/,
     'the mod settings key is a LIVE localStorage key - rename it and every player silently loses the mods they had turned on');
+  // AND THE ONE THE REBRAND ITSELF BROKE FIRST. Electron derives
+  // app.getPath('userData') from app.getName(), which prefers
+  // productName - so renaming the product moved <appData>/Daggerfall
+  // JavaScript out from under every existing install: saves, Prefs, and
+  // config.json with the ARENA2 path in it. The storage root is pinned
+  // to the folder that already exists, whatever the product is called.
+  assert.match(read('app/main.cjs'),
+    /else app\.setPath\('userData', path\.join\(app\.getPath\('appData'\), 'Daggerfall JavaScript'\)\);/,
+    'the desktop shell keeps writing where it already wrote - a rebrand is a name, not a migration');
 });
