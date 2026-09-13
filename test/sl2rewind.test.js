@@ -15,7 +15,7 @@ import { fileURLToPath } from 'node:url';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const dc = readFileSync(join(root, 'src/scenes/dungeonContext.js'), 'utf8');
 const applyWorldSrc = () => {
-  const i = dc.indexOf('function patchFoe(f, sf)');   // WORLD3: the per-foe body is patchFoe, above applyWorld
+  const i = dc.indexOf('function patchFoe(f, sf, wire = false)');   // WORLD3: the per-foe body is patchFoe, above applyWorld
   assert.ok(i > 0, 'patchFoe exists');
   // ...to the end of the function; the action-object half moved to
   // ActionSystem.restoreSaveData (save-load-11), so anchor on the
@@ -48,13 +48,18 @@ test('SL2 save-load-2: the pile flat FOLLOWS the restored items, both directions
   const fn = applyWorldSrc();
   const piles = fn.slice(fn.indexOf('w.piles?.forEach'), fn.indexOf('droppedLoot.restorePiles'));
   assert.ok(piles.includes('p.items = sp.items.map((it) => ({ ...it }));'), 'items restore from the save');
+  // AUDIT WORLD4 C3/D2: BOTH directions live in `settleLootFlat` now, which this arm calls and the room's word
+  // calls too - the settle had only the freeing half on the WORLD4 path, so a pile the room refilled kept its
+  // items with no batch and went invisible, un-hoverable and un-openable for ever. ONE HOME, read here.
+  assert.ok(piles.includes('settleLootFlat(i);'), 'the save\'s arm settles through the one home');
+  const settle = dc.slice(dc.indexOf('function settleLootFlat(i) {'), dc.indexOf('\n  }\n', dc.indexOf('function settleLootFlat(i) {')));
   // emptied-in-save -> the flat leaves (RemoveLootContainer on restore, :158-160)
-  const down = piles.slice(piles.indexOf('if (!p.items.length && p.batch)'));
+  const down = settle.slice(settle.indexOf('if (!p.items.length && p.batch)'));
   assert.ok(down.includes('billboardBatches.indexOf(p.batch)'), 'the empty pile leaves the draw list');
   assert.ok(down.includes('renderer.destroyBillboardBatch(p.batch)'), 'and frees its GL batch');
   // refilled-by-rewind -> the rebuild's own mint comes back at the
   // build-time size; a pile the build never mounted (no half) stays out
-  const up = piles.slice(piles.indexOf('else if (p.items.length && !p.batch && p.half)'));
+  const up = settle.slice(settle.indexOf('else if (p.items.length && !p.batch && p.half)'));
   assert.ok(up.length > 20, 'the re-mint arm exists and gates on the build-time size');
   assert.ok(up.includes('createBillboardBatch(RANDOM_TREASURE_ARCHIVE, p.record'), 'the flat re-mints with the PILE record, never rerolled');
   assert.ok(up.includes('billboardBatches.push(p.batch)'), 'and rejoins the draw list');

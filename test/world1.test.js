@@ -115,8 +115,7 @@ test('WORLD1: the Room - the host is the hello\'d socket in the room longest, sa
   await r.drop(a);
   assert.deepEqual(ofType(b, 'host').at(-1), { t: 'host', id: 'bbbb-0002' }, 'b has been here longest now');
   assert.deepEqual(ofType(c, 'host').at(-1), { t: 'host', id: 'bbbb-0002' });
-  r.store.get('world:meta').at -= WORLD_MIN_MS + 1;   // the floor is the room's: the new host waits it out like anyone
-  await r.world(b, small);
+  await r.world(b, small);   // AUDIT WORLD34 D2: the floor is the AUTHOR's - a new host's first memory is not held behind the old host's stamp
   assert.equal(r.store.get('world:meta').by, 'bbbb-0002', 'the new host publishes');
   // the drain: looks, secrets and the bucket go; the world stays
   await r.drop(b); await r.drop(c);
@@ -183,10 +182,10 @@ test('WORLD1: the session - the host from the welcome and the host frame, isHost
 
 test('WORLD1: the hosts by source - the dungeon host\'s shared world is the layout\'s foes alone (the leading run before any quest foe) with nothing of the player\'s own, keyed by the dungeon, and its restore leaves the quest owner\'s foes standing (applyWorld without its cut); the mode machine forwards both and fires the leave hook before either teardown; the world host restores on the welcome, publishes every WORLD_PUBLISH_MS while it hosts, and at once on the dungeon\'s exit, the death screen and the page\'s hide', () => {
   const d = rd('src/scenes/dungeonContext.js');
-  assert.match(d, /function applyWorld\(w, \{ truncate = true \} = \{\}\) \{/);
+  assert.match(d, /function applyWorld\(w, \{ truncate = true, wire = false \} = \{\}\) \{/);
   assert.match(d, /for \(let i = foes\.length - 1; truncate && i >= \(w\.foes\?\.length \?\? 0\); i--\) \{/, 'the cut is the save\'s alone');
-  assert.match(d, /sharedWorld\(\) \{\s*const w = collectWorld\(\);\s*w\.foes = w\.foes\.slice\(0, _layoutFoes\);\s*delete w\.teleportedIntoDungeon;\s*delete w\.droppedLoot;\s*return \{ locationKey: _locationKey, stamp: _sharedStamp, world: w \};\s*\},/, 'the layout\'s run alone (AUDIT WORLD B2), nothing of the player\'s own - not the drops (B3) - keyed and stamped (B1)');
-  assert.match(d, /restoreSharedWorld\(shared\) \{\s*if \(!shared \|\| shared\.locationKey !== _locationKey \|\| !shared\.world \|\| typeof shared\.world !== 'object'\) return false;\s*if \(shared\.stamp === _sharedStamp \|\| _sharedApplied\) return false;\s*_sharedApplied = true;\s*applyWorld\(\{ \.\.\.shared\.world, foes: Array\.isArray\(shared\.world\.foes\) \? shared\.world\.foes\.slice\(0, _layoutFoes\) : \[\] \}, \{ truncate: false \}\);\s*return true;\s*\},/, 'another dungeon\'s memory refused, its own refused (B1), once (B7), the layout\'s run alone in (B2), the rest left standing');
+  assert.match(d, /sharedWorld\(\) \{\s*const w = collectWorld\(\);\s*w\.foes = w\.foes\.slice\(0, _layoutFoes\);\s*delete w\.teleportedIntoDungeon;\s*delete w\.droppedLoot;\s*(?:\/\/[^\n]*\n\s*)*delete w\.piles;\s*for \(const f of w\.foes\) delete f\.items;\s*w\.loot = lootRecords\(\[\.\.\._lootSeen\]\);\s*(?:\/\/[^\n]*\n\s*)*w\.actions = \(w\.actions \?\? \[\]\)\.map\(sharedRecord\);\s*return \{ locationKey: _locationKey, stamp: _sharedStamp, world: w \};\s*\},/, 'the layout\'s run alone (AUDIT WORLD B2), nothing of the player\'s own - not the drops (B3) - keyed and stamped (B1); and since WORLD4 the containers the room has OPENED in place of every pile\'s contents, and since AUDIT WORLD4 D4 no foe item list either - `corpse:<i>` reads exactly that array');
+  assert.match(d, /restoreSharedWorld\(shared\) \{\s*if \(!shared \|\| shared\.locationKey !== _locationKey \|\| !shared\.world \|\| typeof shared\.world !== 'object'\) return false;\s*if \(shared\.stamp === _sharedStamp \|\| _sharedApplied\) return false;\s*_sharedApplied = true;\s*(?:\/\/[^\n]*\n\s*)*(?:const acts = [^\n]*\n\s*)?applyWorld\(\{ \.\.\.shared\.world, piles: undefined, actions: acts, foes: Array\.isArray\(shared\.world\.foes\) \? shared\.world\.foes\.slice\(0, _layoutFoes\) : \[\] \}, \{ truncate: false, wire: true \}\);\s*applyLoot\(shared\.world\.loot\);[^\n]*\n\s*return true;\s*\},/, 'another dungeon\'s memory refused, its own refused (B1), once (B7), the layout\'s run alone in (B2), the rest left standing; and since WORLD4 the room\'s opened containers through the live door');
   assert.match(d, /for \(const e of enemies\) await buildFoeAt\(e\);\s*const _layoutFoes = foes\.length;/, 'the run measured right after the markers\' build');
   const m = rd('src/scenes/worldModes.js');
   assert.match(m, /dungeonSharedWorld\(\) \{ return mode === 'dungeon' && dungeonCtx \? dungeonCtx\.sharedWorld\(\) : null; \},/);
@@ -205,7 +204,7 @@ test('WORLD1: the hosts by source - the dungeon host\'s shared world is the layo
   assert.match(w, /'pagehide', \(\) => \{ worldPublish\(performance\.now\(\), true\); online\?\.leave\(\);/, 'the page\'s hide too');
   assert.match(w, /onDungeonLeave: \(\) => worldPublish\(performance\.now\(\), true\),/, 'and the dungeon\'s exit, through the mode machine\'s hook');
   const online = rd('src/net/online.js');
-  assert.match(online, /if \(!this\.isHost\(\) \|\| !this\._ws \|\| this\.status !== 'open'\) return false;\s*const s = JSON\.stringify\(final \? \{ t: 'world', data, final: true \} : \{ t: 'world', data \}\);[^\n]*\n\s*if \(s\.length > WORLD_FRAME_MAX\) return false;/, 'the cap kept at the client: the relay\'s refusal is terminal; t first, the prefix the relay reads');
+  assert.match(online, /if \(!this\.isHost\(\) \|\| !isWorldRoom\(this\.room\) \|\| !this\._ws \|\| this\.status !== 'open'\) return false;[^\n]*\n\s*const s = JSON\.stringify\(final \? \{ t: 'world', data, final: true \} : \{ t: 'world', data \}\);[^\n]*\n\s*if \(s\.length > WORLD_FRAME_MAX\) return false;/, 'the cap kept at the client: the relay\'s refusal is terminal; t first, the prefix the relay reads');
   const room = rd('server/src/index.js');
   assert.doesNotMatch(room, /storage\.deleteAll\(\)/, 'no sweep forgets the world');
   assert.match(room, /for \(const prefix of \['look:', 'secret:'\]\) \{ const m = await this\.state\.storage\.list\(\{ prefix \}\);/, 'the sweep by prefix');

@@ -206,7 +206,7 @@ import { Collider } from '../player/collider.js';
 import { createDataPipeline } from './dataPipeline.js';
 import { createWorldModes } from './worldModes.js';
 import { OnlineSession, roomKeyFor, DEFAULT_SERVER, WORLD_PUBLISH_MS, FOES_MS, FOES_FULL_MS, FOES_STALE_MS } from '../net/online.js';   // ONLINE1: the session; WORLD1: the room's memory
-import { POSE_STRIKES, isWorldRoom } from '../net/wire.js';   // MAC7 #1: the swing's kind on the wire
+import { POSE_STRIKES, isWorldRoom, actFrameFits } from '../net/wire.js';   // MAC7 #1: the swing's kind on the wire; AUDIT WORLD4 A1: whether an act frame can be said at all
 import { hasDaggerfallArrows } from '../combat/fpArm.js';   // MAC7 #2: the arrow bit on the wire - weaponRig's own read
 import { drawText } from '../ui/text.js';   // ONLINE1: the session's status line
 import { RemotePlayers, composeLook } from '../net/remotePlayers.js';   // ONLINE1: the others, drawn
@@ -2624,7 +2624,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2115 mounts the same one, gated on
+  // and dungeonContext.js:2118 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
   // that context through modes.dungeonCtx - so worldModes.js:4520
@@ -4144,7 +4144,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:5098), so exterior mode and a
+    // composer, dungeonContext.js:5230), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -5435,7 +5435,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7112-7124 -
+  // worldModes answers it in BOTH modes (worldModes.js:7113-7125 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -5502,8 +5502,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     // machine the same way - another quest's link on the same dungeon
     // wins there too).
     maps: Object.create(maps, {
-      getLocation: { value: (r, l) => dungeonLocationFor(maps.getLocation(r, l), { questMachine: questBridge?.machine }) },
-      getLocationByName: { value: (rn, ln) => dungeonLocationFor(maps.getLocationByName(rn, ln), { questMachine: questBridge?.machine }) },
+      getLocation: { value: (r, l) => dungeonLocationFor(maps.getLocation(r, l), { questMachine: questBridge?.machine, online: onlineOn }) },   // AUDIT WORLD34 B2: online, the whole dungeon
+      getLocationByName: { value: (rn, ln) => dungeonLocationFor(maps.getLocationByName(rn, ln), { questMachine: questBridge?.machine, online: onlineOn }) },
     }),
     getBlock: (name) => blocks.getBlockByName(name),
     // NPC1: the =symbol_ macro's flat caption. The quest machine has
@@ -6632,22 +6632,39 @@ export async function bootWorld(canvas, renderer, params, status) {
   // both refusals are silent to the room: the relay drops over its room budget without a word, and sendAct refuses
   // over ACT_HZ_MAX at home. So the refused KEYS are held, and the next frame that goes carries their CURRENT records
   // (re-read from the graph, never the stale ones the refusal carried); a quiet room flushes them from the frame.
+  // WORLD4: a container's key rides the same set, and is re-read the same way.
   const _actPend = new Set();
   const _actLive = () => !!(online && online.status === 'open' && isWorldRoom(online.room));
+  // AUDIT WORLD34 C3: a refused act was CLEARED whenever the socket was not open - a reconnect's second or a room hold
+  // lost every door touched inside it for good (the seam is a delta, nothing re-sends). The pending set now outlives
+  // the socket and is flushed when it comes back; it is cleared only when the room is no world room at all
+  const _actRoom = () => !!(online && isWorldRoom(online.room));
+  // AUDIT WORLD4 A1: a frame the wire refuses for its SIZE is not a refusal the pending set can heal - the same keys
+  // are re-read and re-refused every frame, and every later door is folded into the same oversized union and never
+  // sent again. Said once per key, then dropped: a word that can never be said is not a word to keep saying.
+  const _actTooBig = new Set();
+  const actTooBig = (keys) => { for (const k of keys) if (!_actTooBig.has(k)) { _actTooBig.add(k); console.warn(`[online] act frame too large to send, dropped: ${k}`); } };
   const actSend = (data) => {
-    if (!_actLive()) { _actPend.clear(); return false; }
-    if (!data || !Array.isArray(data.a) || !data.a.length) return false;
-    const keys = data.a.map((r) => r.key);
-    const out = _actPend.size ? (modes?.dungeonActionRecords?.([...new Set([..._actPend, ...keys])]) ?? data) : data;
+    if (!_actRoom()) { _actPend.clear(); return false; }
+    if (!_actLive()) { for (const k of [...((data?.a ?? []).map((r) => r.key)), ...((data?.l ?? []).map((r) => r.k))]) _actPend.add(k); return false; }   // AUDIT WORLD34 C3: kept for the socket's return
+    // WORLD4: the frame carries the doors (`a`, keyed by the action object) and the room's loot (`l`, keyed by the
+    // container) - either half or both, and the pending set holds whichever keys the wire refused
+    const keys = [...((data?.a ?? []).map((r) => r.key)), ...((data?.l ?? []).map((r) => r.k))];
+    if (!keys.length) return false;
+    let out = _actPend.size ? (modes?.dungeonActionRecords?.([...new Set([..._actPend, ...keys])]) ?? data) : data;
+    if (out !== data && !actFrameFits(out)) out = data;   // AUDIT WORLD4 A1: shed the union first - the healing keys wait for the flush, this act goes now
+    if (!actFrameFits(out)) { actTooBig(keys); return false; }
     if (!online.sendAct(out)) { for (const k of keys) _actPend.add(k); return false; }
     _actPend.clear();
     return true;
   };
   const actFlush = () => {
     if (!_actPend.size) return false;
-    if (!_actLive()) { _actPend.clear(); return false; }
+    if (!_actRoom()) { _actPend.clear(); return false; }
+    if (!_actLive()) return false;   // AUDIT WORLD34 C3: the socket is away - the keys wait
     const data = modes?.dungeonActionRecords?.([..._actPend]);
     if (!data) { _actPend.clear(); return false; }
+    if (!actFrameFits(data)) { actTooBig([..._actPend]); _actPend.clear(); return false; }   // AUDIT WORLD4 A1: never a live-lock
     if (!online.sendAct(data)) return false;
     _actPend.clear();
     return true;
@@ -6803,6 +6820,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     // WORLD3: a door moved goes to the room (the session refuses it outside a world room); the peers in my room at
     // their scene feet, for the foes to see and a puppet's shaft to fly at; whose blow a puppet's is
     onActions: actSend,   // AUDIT WORLD3 A3: through the pending set, so a refused door heals
+    // AUDIT WORLD4 C2/D5: a container this client has just claimed is the room's now, so the room's MEMORY must say
+    // so before the next joiner reads a snapshot that predates the claim and un-empties the chest for everyone. The
+    // publish clock is reset, not the publish forced: the frame's own worldPublish sends it this same frame.
+    onLootClaimed: () => { _worldPublishedAt = -Infinity; },
     peers: () => {
       if (!online || !online.room || online.status !== 'open') return null;
       const now = performance.now(), out = [];
@@ -6811,6 +6832,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     },
     selfId: () => online?.id ?? null,
     dungeonAuthority,   // WORLD2: a dungeon built while another hosts starts as puppets
+    dungeonOnline: () => onlineOn,   // AUDIT WORLD34 B2: online, the dungeon that gets built is the WHOLE dungeon - the room's layout is one layout
     activateDir: () => _tapDir,   // TI1: the tap's ray for the modal ladders (eyeDir)
     activateLockOnly: () => _tapLockOnly,   // TS1: the stick-half tap - the modal ladders stop after the lock pick
     currentRegionIndex: () => _questRegionIndex(),   // UL1: PlayerGPS.CurrentRegionIndex for the mode machine's mods

@@ -89,7 +89,7 @@ export function applyTextureTable(archive, textureTable, climateBaseType) {
 
 /** DaggerfallDungeon.IsMainStoryDungeon (:146-172), the fourteen ids,
  *  keyed on Summary.ID = MapTableData.MapId (raw, :104). */
-const MAIN_STORY_DUNGEON_IDS = Object.freeze(new Set([
+export const MAIN_STORY_DUNGEON_IDS = Object.freeze(new Set([
   187853213,    // Daggerfall/Privateer's Hold
   630439035,    // Wayrest/Wayrest
   1291010263,   // Daggerfall/Daggerfall

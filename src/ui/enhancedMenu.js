@@ -486,7 +486,8 @@ function paneOnline(body) {
   const c = el('div', 'card');
   c.append(el('span', 'tag', 'Online'));
   c.append(el('h3', null, 'Bring your character into the shared world'));
-  c.append(el('p', 'meta', 'Everyone runs their own game from their own save; you see each other and walk together. Nothing else is shared yet.'));
+  // AUDIT WORLD34 D5: the copy said the pre-WORLD1 truth ("Nothing else is shared yet") - what a player is promised here is the law
+  c.append(el('p', 'meta', 'Everyone brings their own save; you see each other everywhere and can talk. A dungeon is one shared world: its foes, doors, levers, platforms and every chest anyone has opened are the same for everyone in it, and it remembers. Towns, the open country and buildings share only who is there.'));
   const field = (label, key, placeholder, maxLength = 24) => {
     const wrap = el('label', 'field');
     wrap.append(el('span', 'fieldlabel', label));

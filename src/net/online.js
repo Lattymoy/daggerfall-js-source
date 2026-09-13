@@ -69,7 +69,7 @@
 //
 // Not a DFU member: Daggerfall Unity has no multiplayer. Ledger A row.
 import { tabStorage } from '../systems/appStorage.js';   // the tab's own storage - the seam, never the browser's own (a PIN)
-import { WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, validPose, validLook, sanitizeName, sanitizeChat, chatGate, worldRoom, inRange, relayUrl, isWorldRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate } from './wire.js';
+import { WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, validPose, validLook, sanitizeName, sanitizeChat, chatGate, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits } from './wire.js';
 
 export { WORLD_CELL, RANGE_PIXELS, worldRoom };
 
@@ -115,7 +115,11 @@ export const slug = (s) => String(s ?? '').replace(/[^A-Za-z0-9_.-]+/g, '_').sli
  * @param {{x:number,y:number}} [p.mapPixel] the player's map pixel (the streaming world's overworld)
  */
 export function roomKeyFor({ host, mode, mapId = null, regionIndex = -1, locationName = '', buildingKey = 0, mapPixel = null }) {
-  const loc = Number.isFinite(mapId) && mapId > 0 ? `m${mapId}` : (locationName && regionIndex >= 0 ? `${regionIndex}.${slug(locationName)}` : null);
+  // AUDIT WORLD34 A1: the map id is MAPS.BSA's 32-bit integer read SIGNED (formats/mapsFile.js getInt32), so one with
+  // bit 31 set read negative here and fell to the name slug - a room the wire keeps no world for. The UNSIGNED value
+  // is the id, the same on every client; 0 alone is "no map row" (the probe's fixture)
+  const id = Number.isFinite(mapId) ? mapId >>> 0 : 0;
+  const loc = id > 0 ? `m${id}` : (locationName && regionIndex >= 0 ? `${regionIndex}.${slug(locationName)}` : null);
   if (mode === 'dungeon') return loc ? `dungeon:${loc}` : null;
   if (mode === 'interior') return loc && buildingKey ? `interior:${loc}.${buildingKey}` : null;   // a door the directory cannot key (0) is no room, not a pool of them
   if (host === 'exterior') return loc ? `town:${loc}` : null;
@@ -197,7 +201,7 @@ export class OnlineSession {
     this._hbucket = null;         // AUDIT WORLD2 A6: the hits' own gate at home (HIT_HZ_MAX), so a blow never starves the poses at the relay
     this.host = null;             // WORLD1: the room's host, the relay's word; null until the welcome
     this.onHost = null;           // (id, mine) => void: the host changed
-    this.onWorld = null;          // (world) => void: the welcome carried the room's memory
+    this.onWorld = null;          // (world) => void: the welcome carried the room's memory, or the host published one after it (AUDIT WORLD34 C1)
     this.look = look ?? { race: 'Breton', gender: 'male', faceIndex: 0, items: [] };
     this.id = id ?? peerId();
     this._WS = WebSocketImpl;
@@ -219,11 +223,14 @@ export class OnlineSession {
     this.stats = { sent: 0, poses: 0, received: 0, reconnects: 0, chats: 0, worlds: 0, foes: 0, hits: 0, acts: 0 };
   }
 
-  /** Enter a room (leaving the last). The pose is the hello's. */
+  /** Enter a room (leaving the last). The pose is the hello's. AUDIT WORLD34 D5: said out loud, with whether the
+   *  wire keeps a world for it - until now nothing on screen or in the console told a player whether the dungeon
+   *  they stood in was shared or merely peopled. */
   join(room, pose = null) {
     if (room === this.room && this._ws) return;
     this.leave();
     this.room = room;
+    console.info(`[online] room ${room} - ${isWorldRoom(room) ? 'a shared world' : isChatRoom(room) ? 'a chat channel' : 'presence only'}`);
     this._pose = pose ?? this._pose;
     this._closedByUs = false;
     this.terminal = false;
@@ -251,7 +258,7 @@ export class OnlineSession {
    *  WORLD_FRAME_MAX, which the relay would refuse with a terminal close. False when nothing went. */
   sendWorld(data, { final = false } = {}) {
     if (!data || typeof data !== 'object' || Array.isArray(data)) return false;
-    if (!this.isHost() || !this._ws || this.status !== 'open') return false;
+    if (!this.isHost() || !isWorldRoom(this.room) || !this._ws || this.status !== 'open') return false;   // AUDIT WORLD34 D3: the one out-frame without the room's guard said true where the relay kept nothing
     const s = JSON.stringify(final ? { t: 'world', data, final: true } : { t: 'world', data });   // final: the socket's one farewell inside the relay's floor (AUDIT WORLD B5)
     if (s.length > WORLD_FRAME_MAX) return false;
     try { this._ws.send(s); this.stats.sent++; this.stats.worlds++; return true; } catch { return false; }
@@ -291,8 +298,8 @@ export class OnlineSession {
     if (!isWorldRoom(this.room) || !this._ws || this.status !== 'open') return false;
     const gate = actGate(this._abucket, this._now());
     if (!gate.pass) return false;
+    if (!actFrameFits(data)) return false;   // AUDIT WORLD4 A1: the one home the host reads too
     const s = JSON.stringify({ t: 'act', data });
-    if (s.length > MAX_FRAME_BYTES) return false;
     try { this._ws.send(s); } catch { return false; }
     this._abucket = gate.bucket; this.stats.sent++; this.stats.acts++;
     return true;
@@ -302,6 +309,7 @@ export class OnlineSession {
     const host = typeof id === 'string' ? id : null;
     if (host === this.host) return;
     this.host = host;
+    if (host && isWorldRoom(this.room)) console.info(`[online] host ${host}${host === this.id ? ' (me)' : ''}`);   // AUDIT WORLD34 D5
     this.onHost?.(host, this.isHost());
   }
 
@@ -402,6 +410,9 @@ export class OnlineSession {
       if (m.world && typeof m.world === 'object' && !Array.isArray(m.world)) this.onWorld?.(m.world);
     } else if (m.t === 'host') {
       this._setHost(m.id);
+    } else if (m.t === 'world') {
+      // AUDIT WORLD34 C1: the room's memory pushed after the welcome - the host's alone (the relay says whose), never my own back
+      if (typeof m.id === 'string' && m.id === this.host && m.id !== this.id && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) this.onWorld?.(m.data);
     } else if (m.t === 'foes') {
       // WORLD2: the host's live foes - the room's host's alone (a stale frame from a host that just left is not the world)
       if (typeof m.id === 'string' && m.id === this.host && m.id !== this.id && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) this.onFoes?.(m.id, m.data);

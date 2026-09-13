@@ -14,15 +14,16 @@
 //                    {t:'world', data, final?}          the room's memory, from its host alone (WORLD1); final once, the farewell
 //                    {t:'foes', data}                   the host's live foes, FOES_HZ_MAX a second at most (WORLD2)
 //                    {t:'hit', data}                    a blow on the host's foe, from anyone but the host (WORLD2)
-//                    {t:'act', data}                    a change to the room's doors, levers and movers, from anyone in it (WORLD3)
+//                    {t:'act', data}                    a change to the room's doors, levers, movers and loot, from anyone in it (WORLD3/WORLD4)
 //   room -> client:  {t:'welcome', id, peers:[{id,name,look,pose}], host, world}
 //                    {t:'join', id, name, look, pose}   {t:'leave', id}
 //                    {t:'pose', id, p}                  {t:'pong'}
 //                    {t:'chat', id, name, text, at}     to everyone who hears it, the sender included
 //                    {t:'host', id}                     the room's host changed (WORLD1)
+//                    {t:'world', id, data}              the room's memory, to a socket whose welcome carried none (AUDIT WORLD34 C1)
 //                    {t:'foes', id, data}               the host's live foes, to everyone but the host (WORLD2)
 //                    {t:'hit', id, data}                a blow on the host's foe, to the host alone (WORLD2)
-//                    {t:'act', id, data}                a change to the room's doors, levers and movers, to everyone but its author (WORLD3)
+//                    {t:'act', id, data}                a change to the room's doors, levers, movers and loot, to everyone but its author (WORLD3/WORLD4)
 //                    {t:'error', m}                     then the socket closes
 // A pose is {x, y, z, yaw, pitch, mv, wd, an, as, am, sr, cn, cr} in the room's frame -
 // a world cell's in MapsFile world units (the streaming world's
@@ -99,16 +100,19 @@
 // (HIT_ROOM_HZ_MAX) and the joiner's own gate at home (HIT_HZ_MAX).
 // The relay reads neither; the client checks the sender.
 //
-// THE LIVE DOORS (WORLD3, 2026-09-12). Whoever moves a dungeon's door, lever
-// or platform - a click, a bash, a pick, a walk onto a trigger, the host's
-// foe opening a door - sends what changed ({t:'act', data}: the changed
-// action records, under the small cap, on the actions' own bucket at the
-// relay - ACT_HZ_MAX, a door never starving a pose) and the room fans it
-// to everyone hello'd but its author, under the room's own budgets
+// THE LIVE DOORS (WORLD3, 2026-09-12) AND THE ROOM'S LOOT (WORLD4,
+// 2026-09-13). Whoever moves a dungeon's door, lever or platform - a click,
+// a bash, a pick, a walk onto a trigger, the host's foe opening a door - or
+// OPENS one of its containers, sends what changed ({t:'act', data}: the
+// changed action records and the containers whose contents are now the
+// room's, under the small cap, on the actions' own bucket at the relay -
+// ACT_HZ_MAX, a door never starving a pose) and the room fans it to
+// everyone hello'd but its author, under the room's own budgets
 // (ACT_ROOM_HZ_MAX frames and ACT_ROOM_BYTES_PER_S bytes, the frame times
 // its listeners; ACT_HZ_MAX at home too). Every player in a world room may
-// send one, not the host alone: a door is whoever touched it. The relay
-// reads none of it.
+// send one, not the host alone: a door is whoever touched it, and so is a
+// chest. The relay reads none of it - the frame's `data` is opaque to it,
+// so WORLD4 needed no relay change and no budget of its own.
 
 /** The streaming world's shard: a square of map pixels. */
 export const WORLD_CELL = 16;
@@ -261,8 +265,12 @@ export const isChatRoom = (key) => CHAT_ROOMS.has(String(key ?? ''));
  *  snapshot with a restore arm at both hosts; towns, cells and buildings are the next rooms. The key is a MAP ID's
  *  (roomKeyFor's `dungeon:m<mapId>`), not a prefix (AUDIT WORLD A3): a client can name any room, and a world room
  *  is a Durable Object that keeps up to WORLD_FRAME_MAX for WORLD_TTL_MS - the Bay's dungeons are a bounded set,
- *  eighty free characters are not. */
-const WORLD_ROOM = /^dungeon:m\d{1,8}$/;
+ *  eighty free characters are not.
+ *  AUDIT WORLD34 A1 (THE ROOT): the bound was eight digits, and a real MapTableData.MapId is a 32-bit integer -
+ *  Privateer's Hold is 187853213, Daggerfall 1291010263 (world/dungeonTextures.js MAIN_STORY_DUNGEON_IDS) - so
+ *  every real dungeon failed this law at BOTH ends, was joined all the same, relayed poses and nothing else, and
+ *  every player kept stepping their own foes with no word said. Ten digits is the unsigned 32-bit bound. */
+const WORLD_ROOM = /^dungeon:m\d{1,10}$/;
 export const isWorldRoom = (key) => WORLD_ROOM.test(String(key ?? ''));
 
 /** A pose the room will relay, or null. */
@@ -404,6 +412,11 @@ export const foesGate = (bucket, nowMs) => tokenGate(bucket, nowMs, FOES_HZ_MAX)
 export const hitGate = (bucket, nowMs) => tokenGate(bucket, nowMs, HIT_HZ_MAX);
 /** The action rate gate at home: ACT_HZ_MAX a second (WORLD3). */
 export const actGate = (bucket, nowMs) => tokenGate(bucket, nowMs, ACT_HZ_MAX);
+/** AUDIT WORLD4 A1: will this act frame FIT? ONE HOME, so a host can tell a refusal it may retry (the rate, which
+ *  the next token heals) from one it never can (the size). A size refusal fed to WORLD3's refused-act heal is not a
+ *  heal but a LIVE-LOCK: the key is re-read and re-refused every frame, and every later door is folded into the same
+ *  oversized union frame and never sent. */
+export const actFrameFits = (data) => JSON.stringify({ t: 'act', data }).length <= MAX_FRAME_BYTES;
 /** The chat rate gate: CHAT_HZ_MAX a second (CHAT1). */
 export const chatGate = (bucket, nowMs) => tokenGate(bucket, nowMs, CHAT_HZ_MAX);
 

@@ -46,7 +46,10 @@ test('AUDIT WORLD A: the relay - a large frame is the host\'s memory or nothing,
   for (const t of ['chat', 'hello', 'ping']) assert.deepEqual(parseClient('{"t":"world","pad":"' + 'x'.repeat(MAX_FRAME_BYTES * 2) + '","t":"' + t + '"}', { hasHello: true }), { error: 'frame too large' }, t);
   // A3: the key is a map id's
   assert.equal(isWorldRoom('dungeon:m187'), true); assert.equal(isWorldRoom('dungeon:m12345678'), true);
-  for (const k of ['dungeon:187', 'dungeon:m', 'dungeon:m123456789', 'dungeon:smoke', 'dungeon:3.privateers-hold', 'dungeon:m187x', 'dungeon:M187', 'dungeon:m187/x']) assert.equal(isWorldRoom(k), false, k);
+  // AUDIT WORLD34 A1: a real map id is nine or ten digits (Privateer's Hold 187853213) - this line once pinned
+  // 'dungeon:m123456789' as NO world room, which is why every slice shipped green over a feature no real dungeon could reach
+  assert.equal(isWorldRoom('dungeon:m123456789'), true); assert.equal(isWorldRoom('dungeon:m4294967295'), true, 'the unsigned 32-bit bound');
+  for (const k of ['dungeon:187', 'dungeon:m', 'dungeon:m12345678901', 'dungeon:smoke', 'dungeon:3.privateers-hold', 'dungeon:m187x', 'dungeon:M187', 'dungeon:m187/x', 'dungeon:m-187']) assert.equal(isWorldRoom(k), false, k);
   assert.equal(relay.WORLD_TTL_MS, WORLD_TTL_MS, 'one home'); assert.equal(WORLD_TTL_MS, 30 * 24 * 3600 * 1000);
   // A1: the door before the parse
   const r = fakeRoom('dungeon:m187');
