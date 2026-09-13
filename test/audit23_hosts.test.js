@@ -40,7 +40,7 @@ test('AUDIT 23 C2: both exterior hosts read the ONE clock; ?tod sets it, ?timesc
   for (const [name, text] of [['exterior', EXTERIOR], ['world', WORLD]]) {
     assert.ok(text.includes('const minuteNow = () => worldMinutes() % 1440;'), `${name}: one clock`);
     assert.ok(text.includes('setWorldMinutes(Math.floor(worldMinutes() / 1440) * 1440 + bootTod)'), `${name}: ?tod sets the clock`);
-    assert.ok(text.includes("params.has('timescale') ? Number(params.get('timescale')) / 12 : 1"), `${name}: ?timescale scales the tick`);
+    assert.ok(text.includes("Number(params.get('timescale')) / 12 : 1"), `${name}: ?timescale scales the tick`);   // WORLD5: the world host's stands down under the shared clock (world5.test.js pins the guard)
     assert.equal(/performance\.now\(\) - bootedAt/.test(text), false, `${name}: the demo clock is gone`);
   }
 });

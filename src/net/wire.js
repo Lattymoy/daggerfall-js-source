@@ -15,7 +15,7 @@
 //                    {t:'foes', data}                   the host's live foes, FOES_HZ_MAX a second at most (WORLD2)
 //                    {t:'hit', data}                    a blow on the host's foe, from anyone but the host (WORLD2)
 //                    {t:'act', data}                    a change to the room's doors, levers, movers and loot, from anyone in it (WORLD3/WORLD4)
-//   room -> client:  {t:'welcome', id, peers:[{id,name,look,pose}], host, world}
+//   room -> client:  {t:'welcome', id, peers:[{id,name,look,pose}], host, world, now}   now: the relay's clock, ms (WORLD5)
 //                    {t:'join', id, name, look, pose}   {t:'leave', id}
 //                    {t:'pose', id, p}                  {t:'pong'}
 //                    {t:'chat', id, name, text, at}     to everyone who hears it, the sender included
@@ -113,6 +113,27 @@
 // send one, not the host alone: a door is whoever touched it, and so is a
 // chest. The relay reads none of it - the frame's `data` is opaque to it,
 // so WORLD4 needed no relay change and no budget of its own.
+//
+// THE SHARED CLOCK (WORLD5, 2026-09-13, Mac: "the shared clock and
+// weather, and the quest clocks stood down online"). Online, the world's
+// time is nobody's to keep: it is a FUNCTION OF WALL TIME, the same on
+// every client with no frame to carry it and no host to hand it over -
+// ONLINE_EPOCH_MS is the instant the world stood at the classic game
+// start (13:30, 4 Morning Star 3E405), and it has run at DFU's default
+// TimeScale (12: a game minute every five real seconds, a day every two
+// real hours) since. The relay says its own clock in the welcome (`now`,
+// ms) so a client whose machine's clock is off reads the world's time
+// through the offset, not its own. Nothing local moves it: no rest, no
+// fast travel, no sentence, no ?tod, no ?timescale.
+
+/** WORLD5: the instant the online world stood at the classic game start - 2026-09-14T00:00:00Z. */
+export const ONLINE_EPOCH_MS = Date.UTC(2026, 8, 14, 0, 0, 0);
+/** WORLD5: DaggerfallDateTime.classicGameStartTime in classic minutes (gameDate.js CLASSIC_GAME_START_TIME - pinned equal). */
+export const ONLINE_EPOCH_MINUTES = 523530;
+/** WORLD5: classic minutes per real millisecond at TimeScale 12 (worldTick.js CLASSIC_MINUTES_PER_SECOND / 1000 - pinned equal). */
+export const ONLINE_MINUTES_PER_MS = 12 / 60 / 1000;
+/** WORLD5: the online world's clock, classic minutes, for a wall-clock instant (ms). One home for every client. */
+export const sharedClassicMinutes = (nowMs) => ONLINE_EPOCH_MINUTES + (nowMs - ONLINE_EPOCH_MS) * ONLINE_MINUTES_PER_MS;
 
 /** The streaming world's shard: a square of map pixels. */
 export const WORLD_CELL = 16;

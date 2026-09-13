@@ -15,7 +15,7 @@
 // save and mutates rep in place, and both halves are here now. The
 // rep deltas landed with S25's systems/factionRep.js (changeReputation
 // :116, propagateReputationChange :165) and are driven by court.js
-// :181, quest/quest.js:336's QuestSuccessRep/FailureRep, quest/
+// :181, quest/quest.js:337's QuestSuccessRep/FailureRep, quest/
 // actions.js:2058 and guildServiceActions.js:181. The save arc carries
 // them: save.js:391 snapshotFactionRep writes and :379
 // restoreFactionRep reads back INTO the store the loader rebuilt from

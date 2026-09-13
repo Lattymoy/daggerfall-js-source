@@ -356,7 +356,7 @@ test('ROAD-Ar R1: fast travel hands the teleport core the minute it is about to 
   // AUDIT 64 F18 threaded DirectionFromStartMarker through this same
   // call (DaggerfallTravelPopUp.cs:334), so the literal grew - the
   // ORDER is still what this pin is about.
-  const teleport = fn.indexOf('await _teleportToPixel(pick.pixel.x, pick.pixel.y, null,\n        { arriveMinutes: worldMinutes() + computed.minutes,\n          reposition: REPOSITION.DirectionFromStartMarker,\n          travelStart, modEvent: \'travel\' });');
+  const teleport = fn.indexOf('await _teleportToPixel(pick.pixel.x, pick.pixel.y, null,\n        { arriveMinutes: sharedClockOn() ? worldMinutes() : worldMinutes() + computed.minutes,');   // WORLD5: the trip takes no world time under the shared clock
   const raise = fn.indexOf('playerTicker.advance(computed.minutes)');
   assert.ok(teleport > 0, 'the arrival minute rides the teleport');
   assert.ok(raise > teleport, 'and RaiseTime still comes after it (:333 then :344)');

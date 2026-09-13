@@ -1833,6 +1833,102 @@ session), the pane's copy, the relay's version and this record.
 `test/auditworld.test.js` A3 turned; the WORLD1-3 and AUDIT 28 source
 pins restamped where the law moved. Relay change: yes - REDEPLOY.
 
+## WORLD5 (2026-09-13): the shared clock and weather, the quest clocks stood down
+
+**Mac: "Let's tackle slice 5 first."** Slice 5 of the persistent shared
+world, the last of WORLD1's plan: THE SHARED CLOCK AND WEATHER, and the
+quest clocks stood down online (Mac, WORLD1: "When it comes to time
+limits on quest, I think these should be naturally disabled while
+online").
+
+**THE CLOCK IS NOBODY'S TO KEEP.** Online, the world's time is a
+FUNCTION OF WALL TIME - `net/wire.js sharedClassicMinutes`, one home at
+both ends: `ONLINE_EPOCH_MS` (2026-09-14T00:00Z) is the instant the
+world stood at the classic game start (13:30, 4 Morning Star 3E405 -
+`ONLINE_EPOCH_MINUTES` is gameDate's own constant, pinned equal), and it
+has run at DFU's default TimeScale since (`ONLINE_MINUTES_PER_MS`, the
+ticker's own rate: a game minute every five real seconds, a day every
+two real hours, a year every thirty real days). No frame carries it, no
+host hands it over, no handover races it, no hibernation loses it. The
+relay says its own clock in every place room's welcome (`now`, ms) so a
+machine whose clock is off reads the world's time through the offset
+(the session's `clockOffsetMs`, `onClock`; a clock a year off is no
+clock). The world host installs it at boot (`setSharedClock`, before
+anything reads the time, and `setSharedWeather` beside it), and while it stands `worldMinutes()` reads it
+and EVERY write is refused - `setWorldMinutes`, `advanceWorldMinutes`,
+the ticker's `advance` (RaiseTime: the exhaustion collapse, a training
+session, a sentence), `?tod`, `?timescale`. The tick claims what the
+clock owes between two readings (the rounds, the days) and fabricates
+not one minute from dt, so a frame that comes late owes what passed and
+a frame of fabricated time owes nothing.
+
+**THE SAVE ARRIVES, IT DOES NOT CATCH UP.** A save a month behind the
+world would have fired a month of loans, diseases and price walks on
+its first online frame; one a year ahead would have read a negative
+day. `alignEntityClocks` sets the player's own markers to the world's
+when the session starts - the day marker, the broker's, every
+disease's day and every poison's minute - and the day's weather is
+rolled from the shared day's seed whatever sky the save carried. The
+world's time is where the player has arrived, not this save's
+continuation; a save made online carries the world's time and plays on
+from it offline.
+
+**A REST TAKES THE TIME IT TAKES.** `RestSession` is paced by the
+world's clock online (`deps.sharedMinutes`, every host's rest deps):
+a sub-tick when the clock has moved `MINUTES_PER_TICK`, an hour of
+rest when it has moved sixty - five real minutes at TimeScale 12 - and
+the window's own timer is not consulted. The rounds a sub-tick owes are
+the ones the clock owes (the ticker's `advance` runs them, the
+dungeon's own rest arm claims them), the vitals tick per rested hour
+as ever, and a rest is ended early as ever. A FAST TRAVEL takes no
+world time: the arrival minute is now, the trip's jump and the
+arrival clamp (the vampire's dusk) stand down, the fare and the
+cautious heal stand.
+
+**THE DAY PICKS THE SKY.** The six-zone climate array was rolled from
+`Math.random` once per game date, so two players under one sky rolled
+two. With the shared clock on (`setSharedWeather`), every roll of the
+array - the day change's, the boot's lazy one, a respawn's re-roll into
+another climate base - draws from a generator seeded by the DAY (and
+the climate, for a respawn), so every client rolls one sky for one
+date with no frame to carry it. The enhanced lane's hourly evolution
+(CLK2) was already seeded by the hour and the zone, so it agrees for
+free between two enhanced clients; a classic-lane client and an
+enhanced one still differ within the day (recorded, below).
+
+**THE QUEST CLOCKS STAND DOWN.** `questClocksStoodDown` rides the quest
+machine's deps through the bridge and the parser to every live quest,
+and `Clock.tick` charges nothing while it answers true - the world-time
+sample still moves, so the hours a clock stood down are never charged
+when it stands up again offline. The journal shows the clock as it
+stood.
+
+What it does not do. The clock is the world's for everyone online in
+every room - a cell, a town, a building, a dungeon - which is the
+point; a classic-lane and an enhanced client under the same date may
+differ within the day (the evolution is the enhanced lane's); the
+weather a climate crossing keeps until the world turns is still each
+client's own walk (DFU's law, unchanged); two clients that boot online
+minutes apart roll one array and may still apply it on different
+frames (the drain is the exterior frame's, as ever); no shared moon,
+no shared holiday beyond what the date already decides. Relay change:
+the welcome's `now` - REDEPLOYED (RELAY_VERSION `world5`).
+
+Pinned in `test/world5.test.js` (8): the wire's constants against the
+calendar's and the ticker's, at both ends; the welcome's clock in a
+dungeon and a cell and not a channel, the session's offset and its
+refusal of a clock a year off; the ticker under the shared clock (the
+source read, every write refused, three minutes of the world three
+rounds whatever the frame's dt, a frame of three thousand real seconds
+owing nothing, RaiseTime running the owed seven minutes and moving
+nothing); the markers aligned; the shared weather (one date one sky
+whatever generator the caller handed in, the boot's lazy roll the
+same, forty dates not one sky, a respawn's roll repeatable, offline the
+caller's own again); the rest paced by the clock and the timer law
+untouched offline; the quest clock stood down and standing up; and the
+hosts by source. The AUDIT 23, AUDIT 63, ROAD-Ar, TL3, TP1, MAC7,
+AUDIT WORLD4 and ONLINE1 pins restamped where the law moved.
+
 ## What it does not do (yet)
 
 - **The Morrowind body** ships (MWBODY1, above); a client without the
@@ -1850,8 +1946,9 @@ pins restamped where the law moved. Relay change: yes - REDEPLOY.
   host's foes hunt every player in the room and its doors, levers and
   platforms move for everyone (an act from whoever touched them).
   Towns, cells and buildings keep nothing yet (the pane says so since
-  AUDIT WORLD34 D5); no shared clock or weather (slice 5); the quest
-  clocks still run online; no player-versus-player. Until AUDIT
+  AUDIT WORLD34 D5); since WORLD5 the clock and the day's weather are
+  the world's and the quest clocks stand down online; no
+  player-versus-player. Until AUDIT
   WORLD34 no real dungeon was a world room at all (A1: the law's
   eight-digit bound against nine-digit map ids), and the relay must be
   redeployed for one to be. A memory is forgotten

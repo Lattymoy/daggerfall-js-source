@@ -380,7 +380,12 @@ export function tickPlayerMinutes({
   // a drained stat. Defaults to dt, which is the frame case.
   realSeconds = dt,
 } = {}) {
-  const next = classicMinutes + dt * CLASSIC_MINUTES_PER_SECOND;
+  // WORLD5: under the SHARED clock the world's time moved on its own between two ticks - this tick owes the rounds
+  // and the days from the last tick's reading to now, and fabricates nothing from dt (a jump has no dt, and dt
+  // still feeds the real-time arms below: the fatigue drain, the tallies, the torch)
+  if (_sharedClock) { classicMinutes = _sharedLastTick ?? _sharedClock(); }
+  const next = _sharedClock ? Math.max(classicMinutes, _sharedClock()) : classicMinutes + dt * CLASSIC_MINUTES_PER_SECOND;
+  if (_sharedClock) _sharedLastTick = next;
   // AUDIT 39: the clock as it stood when this tick began. A sink can move
   // the WORLD clock from inside this call (the exhaustion collapse -
   // PlayerEntity.cs:2429's RaiseTime(1 hour), which the hosts fire out of
@@ -731,6 +736,20 @@ export { CLASSIC_GAME_START_TIME as CLASSIC_GAME_START_MINUTES } from './gameDat
 
 let _worldMinutes = CLASSIC_GAME_START_TIME;
 
+// WORLD5 (Mac: "the shared clock and weather, and the quest clocks stood down online"): THE SHARED CLOCK. Online the
+// world's time is a function of wall time (net/wire.js sharedClassicMinutes), the same on every client, and nothing
+// local may move it - a rest, a fast travel, a sentence, a training session, ?tod. The source is installed by the
+// world host at boot; while it stands, worldMinutes() reads it and every write is refused. The tick claims what the
+// clock owes between two readings (tickPlayerMinutes) rather than fabricating minutes from dt.
+let _sharedClock = null;
+let _sharedLastTick = null;
+/** Install (a function answering classic minutes) or remove (null) the shared clock. */
+export function setSharedClock(source) {
+  _sharedClock = typeof source === 'function' ? source : null;
+  _sharedLastTick = null;
+}
+export const sharedClockOn = () => _sharedClock !== null;
+
 /** EntityEffectBroker.maxCatchupDays = 2, i.e. 2880 game minutes
  *  (EntityEffectBroker.cs:36, applied at :223). DFU's own reasoning: the
  *  longest spell duration is under 2000 minutes, constant-state effects need
@@ -746,12 +765,31 @@ let _lastMagicRoundMinute = null;
 /** Classic minutes from the CLASSIC EPOCH - DaggerfallDateTime's own unit,
  *  which is what ToClassicDaggerfallTime returns and what gameDays divides.
  *  A new game starts at CLASSIC_GAME_START_MINUTES, not at zero. */
-export const worldMinutes = () => _worldMinutes;
+export const worldMinutes = () => (_sharedClock ? _sharedClock() : _worldMinutes);
 
-/** Set the clock - a load restores it, a rest or a court sentence jumps it. */
+/** Set the clock - a load restores it, a rest or a court sentence jumps it. WORLD5: refused under the shared clock. */
 export function setWorldMinutes(v) {
+  if (_sharedClock) return _sharedClock();
   _worldMinutes = Number.isFinite(v) ? v : 0;
   return _worldMinutes;
+}
+
+/** WORLD5: a player's own time markers set to the world's - the day marker, the broker's, every disease's day and
+ *  every poison's minute - so a save from another time (a month behind, a year ahead) neither catches up a month of
+ *  loans and diseases on its first online frame nor reads a negative day. The world's time is not this save's
+ *  continuation; it is where the player has arrived. */
+export function alignEntityClocks(entity, nowMinutes) {
+  if (!entity || !Number.isFinite(nowMinutes)) return false;
+  const now = Math.floor(nowMinutes);
+  entity.lastGameMinutes = now;
+  resetMagicRoundMarker(now);
+  _sharedLastTick = _sharedClock ? nowMinutes : null;
+  for (const a of entity.activeEffects ?? []) {
+    if (!a || typeof a !== 'object') continue;
+    if (Number.isFinite(a.lastDay)) a.lastDay = Math.floor(now / MINUTES_PER_DAY);
+    if (Number.isFinite(a.lastMinute)) a.lastMinute = now;
+  }
+  return true;
 }
 
 /** A LOAD resets the marker rather than catching up across it - DFU's
@@ -767,7 +805,8 @@ export function resetMagicRoundMarker(v = null) {
   return _lastMagicRoundMinute;
 }
 
-/** Move the clock forward (or back, for a load). */
+/** Move the clock forward (or back, for a load). WORLD5: refused under the shared clock. */
 export function advanceWorldMinutes(delta) {
+  if (_sharedClock) return _sharedClock();
   return setWorldMinutes(_worldMinutes + (Number(delta) || 0));
 }

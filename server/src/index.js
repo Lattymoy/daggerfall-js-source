@@ -101,11 +101,15 @@
 // welcome carried none, as {t:'world', id, data}). /health says which
 // relay this is (RELAY_VERSION), so a stale deploy can be told from a
 // browser tab.
+//
+// WORLD5 (2026-09-13): THE SHARED CLOCK is a function of wall time (relay.js
+// sharedClassicMinutes) and needs no frame; the welcome carries the relay's
+// own `now` so a client corrects for its machine's clock. Nothing else here.
 import { roomOf, parseClient, inRange, poseGate, chatGate, tokenGate, rosterFor, isChatRoom, isWorldRoom, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY } from './relay.js';
 
 /** AUDIT WORLD34 D4: the relay names itself in /health - the deploy is by hand (`npx wrangler deploy`), nothing in
  *  CI does it, and until now nothing said which relay was live. Bump it with every relay-changing slice. */
-export const RELAY_VERSION = 'world34';
+export const RELAY_VERSION = 'world5';
 
 const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*' } });
 
@@ -345,7 +349,8 @@ export class Room {
       // AUDIT WORLD34 C1: whether this welcome carried a memory rides the attachment - a socket whose welcome carried
       // NONE (the room was empty-handed, or the host had not published yet) is handed the next one the host publishes
       if (isWorldRoom(a.key)) this._setAttach(ws, { ...this._attach(ws), worldSeen: !!world });
-      const welcome = `{"t":"welcome","id":${JSON.stringify(m.id)},"peers":${JSON.stringify(roster)},"host":${JSON.stringify(host)},"world":${world ?? 'null'}}`;
+      // WORLD5: the relay's clock rides the welcome, so a client whose machine's clock is off reads the shared world time through the offset
+      const welcome = `{"t":"welcome","id":${JSON.stringify(m.id)},"peers":${JSON.stringify(roster)},"host":${JSON.stringify(host)},"world":${world ?? 'null'},"now":${now}}`;
       if (!this._send(ws, welcome)) return;
       const join = JSON.stringify({ t: 'join', id: m.id, name: m.name, look: m.look, pose: m.pose });
       for (const [other, b] of [...this._all()]) if (other !== ws && b.id) this._send(other, join);

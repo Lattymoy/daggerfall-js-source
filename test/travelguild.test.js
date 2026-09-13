@@ -118,9 +118,9 @@ test('TP1: RaiseSkills has ONE home and fast travel calls it after the clamp', (
   // raised before the flag goes up at :383), so the anchor grew to the
   // whole armed statement - the ORDER this pin owns is unchanged, and
   // the guard stays inside the anchor rather than outside it.
-  assert.match(world, /\n      if \(clamp > 0\) \{ setSyntheticTimeIncrease\(true\); playerTicker\.advance\(clamp\); \}/,
+  assert.match(world, /\n      if \(clamp > 0 && !sharedClockOn\(\)\) \{ setSyntheticTimeIncrease\(true\); playerTicker\.advance\(clamp\); \}/,   // WORLD5: and not at all under the shared clock
     'the arrival advance is a guarded statement at the top of the block, not a bare call');
-  const clamp = world.indexOf('\n      if (clamp > 0) { setSyntheticTimeIncrease(true); playerTicker.advance(clamp); }');
+  const clamp = world.indexOf('\n      if (clamp > 0 && !sharedClockOn()) { setSyntheticTimeIncrease(true); playerTicker.advance(clamp); }');   // WORLD5
   // matched with its LINE START and indentation, not as a bare
   // substring: the campaign wrapped the call in `if (false)` and a
   // substring test still found the text, which is PY1's lesson in

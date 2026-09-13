@@ -89,7 +89,7 @@ export function ensureUidAtLeast(uid) { if (uid > _uid) _uid = uid; }
 export function resetUid() { _uid = 0; }
 
 export class Quest {
-  constructor({ rolls = Math.random, nowSeconds = null, hooks = null, actionFactory = null } = {}) {
+  constructor({ rolls = Math.random, nowSeconds = null, hooks = null, actionFactory = null, questClocksStoodDown = null } = {}) {
     this.uid = nextUid();
     this.questName = '';
     // AUDIT 24 (wave 26): NULL, because Quest.cs:56 is a bare
@@ -116,6 +116,7 @@ export class Quest {
     this.resources = new Map();    // symbol name -> QuestResource
     this.rolls = rolls;
     this.nowSeconds = nowSeconds;  // () => classic game seconds (machine-injected)
+    this.questClocksStoodDown = questClocksStoodDown;   // WORLD5: () => bool - every Clock resource charges nothing while true (machine-injected)
     this.hooks = hooks;            // machine hooks: showPopup/changeReputation/log
     this.actionFactory = actionFactory;   // (line, quest) -> action | null (the machine's registry)
     // Q3-i: Clock's travel arms over the world seam - flag&16's 2.5x
