@@ -33,6 +33,7 @@ if (dynamicOn) {
 }
 if (!dynamicOn) sky.retro = retroFor(location.search);   // ES1e: the lab shows what the game shows
 if (dynamicOn) sky.retro = retroFor(location.search);    // PS2: and the mod's skybox takes the same pixel
+if (dynamicOn) sky.bandDither = params.get('bands') !== 'raw';   // PS3: the lab shows what the game shows
 // VC3: the volumetric clouds over the dome, as the game draws them; built on the first frame
 const cloudsDoor = params.get('clouds');
 let clouds = null;
