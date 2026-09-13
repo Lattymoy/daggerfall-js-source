@@ -129,7 +129,7 @@ export const newSkillsRecentlyRaised = () => [0, 0];
  *  Masque of Clavicus buffed five social groups instead of eleven for
  *  the life of that character. Dropping the member costs nothing:
  *  enchantmentMagicRound clears the player's array at the head of
- *  every magic round (enchantments.js:825, DFU's ClearReactionMods at
+ *  every magic round (enchantments.js:827, DFU's ClearReactionMods at
  *  PlayerEntity.cs:1567-1570) and the folds re-apply it in the same
  *  pass, off worldTick.js:221 - so a load lands DFU's own shape, the
  *  live mods left standing until the next DoMagicRound re-derives

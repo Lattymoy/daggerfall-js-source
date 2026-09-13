@@ -719,7 +719,9 @@ the next rooms.
   (the leading run before the first `isQuestFoe` - a quest's foes are
   the quest owner's, and quests stay separate: Multiplayer.md's first
   lock), nothing of the player's own (no `teleportedIntoDungeon`),
-  keyed by the dungeon's `locationKey`; `restoreSharedWorld(shared)`
+  keyed by the dungeon's `locationKey` (and, since WORLD4, no pile's
+  contents - only the containers the room has opened);
+  `restoreSharedWorld(shared)`
   refuses another dungeon's memory and applies with `truncate: false`
   - `applyWorld`'s cut past the record's length is the save's alone
   (a save holds the whole pool), so a memory from a player without
@@ -915,11 +917,16 @@ fixed level or the location's seed for the random flats online, or the
 layout roster published beside the memory)~~ - WORLD3 took the
 disagreement instead of preventing it (`retypeFoe` rebuilds the
 mismatched foe at its index); a seeded layout is still the cheaper cure
-and is unclaimed; loot's memory should carry
-"emptied", not contents (slice 4); a host's quickload inside a dungeon
+and is unclaimed; ~~loot's memory should carry
+"emptied", not contents (slice 4)~~ - WORLD4 did exactly that: a
+container nobody has opened carries nothing at all, and one the room
+has opened carries what is left in it; a host's quickload inside a dungeon
 rewinds the layout's foes for every joiner since WORLD2 (the next
-stream carries the rewound records) and nothing else of theirs (the
-doors, the piles, their own), and is itself rewound by the room's
+stream carries the rewound records) and ~~nothing else of theirs (the
+doors, the piles, their own)~~ - AUDIT WORLD4 D7: since WORLD4 it
+rewinds the room's OPENED containers too, because the reloaded lists
+are what the next publish and the next close carry; the doors are
+still their own - and is itself rewound by the room's
 memory on re-entry - persistence, but it will read as "F12 does nothing
 to the dungeon"; publishes and applies happen under an open window or
 a pause, ~~which slice 3 gates explicitly~~ - WORLD3 gated nothing of
@@ -1270,7 +1277,7 @@ on a landed blow); the host's pause still freezes the room for everyone
 (the stream's full frames are its heartbeat); a foe's spell's other
 effects (a paralysis, a drain) land on the puppet locally and the stream
 overwrites what it carries; the bash's sound and the pick's line are the
-author's alone; loot is still slice 4; the shared clock and weather and
+author's alone; the shared clock and weather and
 the quest clocks are slice 5; no player-versus-player.
 
 Pinned in `test/world3.test.js` (5): the wire and the Room over the one
@@ -1472,6 +1479,205 @@ them still firing for a foe hunting me); and the hosts and the record
 by source. `test/world3.test.js` restamped where the law moved, its
 peer pin made to fail.
 
+## WORLD4 (2026-09-13): the room's loot
+
+**Mac: "Lets start on slice 4."** Slice 4 of the persistent shared
+world: A CONTAINER THE ROOM HAS OPENED IS THE ROOM'S. Until now a
+dungeon's loot was every client's own roll, and the room's memory
+carried the host's whole pile list - so a joiner's own loot was
+replaced wholesale by the host's, fifteen seconds stale, and a chest
+one player emptied could refill for another.
+
+THE LAW, in one breath: a container nobody has opened stays each
+client's own and the room knows nothing of it; the moment anyone OPENS
+one it becomes the room's, and stays the room's.
+
+- **The wire** (`src/net/wire.js`): nothing new. The loot rides
+  WORLD3's `{t:'act', data}` frame as a second half beside the doors -
+  `{k, a?, l?}`, either or both - and the relay reads none of that
+  frame's `data`, so slice 4 needed NO relay change, no frame of its
+  own and no budget of its own: AUDIT WORLD3's act budgets (the rate,
+  the room's frames, the room's bytes) and its refused-act heal cover
+  it as they stand. Proved live against the relay already deployed.
+- **The dungeon host** (`src/scenes/dungeonContext.js`): `lootHolder`
+  names what a key holds in takeLoot's own vocabulary - `loot:<i>` a
+  layout pile (the block markers' order, the same on every client) and
+  `corpse:<i>` a layout foe's body, bounded by `_layoutFoes` exactly as
+  the stream and the hit are: a quest spawn's or a summon's body is the
+  player's own, and so is a DROPPED pile (AUDIT WORLD B3 - a drop is
+  the dropper's). `publishLoot` says the container is the room's TWICE:
+  on the OPEN, which CLAIMS it (a second reader opening the same chest
+  a moment later adopts the first's list rather than their own roll),
+  and on the CLOSE, which says what is left - the same moment DFU's own
+  law frees an emptied container's flat, and the moment the taking is
+  finished rather than half done. `applyLoot` lands another's word
+  through the projection and IN PLACE (`held.length = 0`, then push),
+  ~~so a window already open on that container updates under the
+  reader's hands~~ - AUDIT WORLD4 C1: it does not, and could not: the
+  pack binds each loot row to the item OBJECT and never repaints, so
+  that landing orphaned every row and the next click took the item AND
+  left it in the chest. **A container you have open is yours until you
+  close it**, and your close is then the room's newest word.
+  `settleLootFlat` frees the flat of a pile the ROOM emptied while this
+  player stood beside it (and re-mints one the room refilled - AUDIT
+  WORLD4 C3/D2 gave the settle its second direction).
+- **The projection** (`src/systems/loot.js`): AUDIT WORLD3 A2's law
+  applied to the other thing the frame now carries. An item record is
+  an OPEN shape (the inventory arc grows it; a magic item carries its
+  enchantments), so `validLootItem`/`validLootList` CLAMP rather than
+  whitelist - a plain object of bounded breadth (`LOOT_ITEM_KEYS_MAX`)
+  and depth (`LOOT_DEPTH_MAX`, an enchantment list is 2), bounded
+  strings, finite numbers, a `templateIndex` a template could carry,
+  at most `LOOT_LIST_MAX` items, and no prototype key. What survives is
+  a COPY: no reference off the wire reaches the pack. An EMPTY list is
+  valid and is the commonest word a room says about a container.
+- **The memory** (`sharedWorld`): the piles' blanket contents are gone
+  and the opened containers stand in their place, so an untouched pile
+  is every client's own roll as it was before anyone arrived, and a
+  joiner is told about exactly the chests somebody has been into.
+  (AUDIT WORLD4 D4: true of the piles and false of the CORPSES until
+  the audit - every layout body's item list rode the foes half of the
+  same envelope, opened or not, so the law held for half its own
+  container vocabulary. The foes half now carries no `items` at all.)
+  `restoreSharedWorld` lands them through the same door the live frame
+  takes. The SAVE keeps its whole pile list, untouched:
+  `collectWorld`/`applyWorld` are the save's and did not move.
+
+What it does not do: the take is seen by the room when the window
+CLOSES, not per item, so two players who open the same untouched chest
+in the same breath both take it and both keep it (the claim on the open
+narrows that window to the time between two opens, and the room's list
+is then whoever closed last); a player's own dropped pile is still
+theirs alone, so handing an item to a friend by dropping it does not
+work yet; gold, the wagon and the quest reward pile are each player's
+own; a container in a town, a cell or a building is nobody's yet
+(a dungeon is still the only room with a world); and a corpse past the
+layout's run - a quest spawn's, a summon's - is the player's own body
+to loot, as its foe is their own to fight.
+
+Pinned in `test/world4.test.js` (3): the projection executed (the empty
+list valid, the copy a copy, the bounds on breadth, depth, strings,
+count and templateIndex, a magic item's enchantments surviving whole, a
+prototype key refused); the wire and the Room over the one fake (an
+`l`-only frame parsed, fanned to everyone hello'd but its author,
+spending the ACT bucket and not the poses', a town relaying none, and
+the session sending and taking it under the same gate and cap); the
+dungeon host and the memory by source. Live, against the relay already
+deployed (840669fa) and with no deploy of its own: a claim fanned, an
+emptied fanned, a door and a chest in one frame, the author hearing
+neither and no error. Not seen with two real players from here - Mac's
+browsers are the gate: one player empties a chest and the other finds
+it empty, and finds the flat gone.
+
+## AUDIT WORLD4 (2026-09-13)
+
+**Mac: "Lets do an audit on thid."** Four opus lenses over WORLD4 - the
+wire and the budgets; the projection and everything downstream that
+READS an item; the dungeon host's claim, land and settle; the memory,
+the pins and the record - each refuting its own candidates and proving
+the survivors by execution, then refuted again adversarially. Fifteen
+findings after de-duplication, four of them high. One cost is recorded
+rather than paid (C5, below).
+
+**THE ONE ROOT.** WORLD4 wrote two caps - `LOOT_LIST_MAX` (64 items in
+a container's word) and the wire's `MAX_FRAME_BYTES` - and enforced
+both at the FAR end only. The mint never asked whether what it was
+about to say could be said, so a container a player had stored into
+past the cap produced, in order: a frame every receiver dropped in
+silence (A2/B2), then a frame the SENDER refused for its size, whose
+key the AUDIT WORLD3 A3 heal put in the pending set and re-read and
+re-refused every frame for ever, folding every later door into the same
+oversized union and sending none of them (A1 - a live-lock, not a
+heal), and finally, on the next reader's claim, the WIPE of the stash
+that started it (D1). `actFrameFits` is now the wire's own law with ONE
+HOME, so the host can tell a refusal the next token heals from one
+nothing will; `lootRecords` is the one home of what may be said at all,
+and skips - once, out loud - a container it cannot say, which stays
+its owner's own.
+
+- **B1 (high) an `enchantments` STRING froze the tab for good.** The
+  projection clamps rather than whitelists, and a bounded string is a
+  legal value, so `enchantments: 'abc'` survived it entire. Three
+  readers then walked the field as an array (`itemEnchantments`,
+  `hasArtifactSubtype`, `hasArtifactEffect`); the first is the
+  enchantment magic round, called from the frame body with no `try`
+  above it, so the throw escaped the frame and the tab stopped
+  rendering - permanently, because the item was now in the pack.
+  `LOOT_ARRAY_FIELDS` names the fields the readers walk, the projection
+  refuses an item whose field is not an array (before AND after the
+  clamp), and the three readers hold `Array.isArray` of their own.
+- **C1 (high) the room's word under an open window made two of one
+  item.** Above, and struck in WORLD4's own paragraph.
+- **C2/D5 (high) a claim un-emptied a chest for everyone.** The claim
+  on the OPEN asserted this client's list unconditionally. A joiner
+  inside the memory's fifteen-second publish window - or anyone whose
+  frame the relay had dropped - opened an emptied chest, found their
+  own untouched roll in it, and told the room. A claim now speaks only
+  where the room has not already spoken (`_lootSeen`), and the first
+  word about a container makes the room's MEMORY due that same frame
+  (`onLootClaimed` through the mode to the host's publish clock)
+  instead of up to fifteen seconds later.
+- **C3/D2 an emptied pile the room refilled went invisible for ever.**
+  The settle had only the freeing half; the save's own restore arm has
+  always had both. Every read that lets a player see, hover or open a
+  pile gates on its batch, so a refilled pile kept its items and
+  nothing else: un-seeable, un-openable, and still real for everyone
+  else. One home for both directions, and the save's arm calls it.
+- **C4 a peer could freeze the room's memory.** The container key
+  arrived off the wire beside the list, and only the list was
+  projected: `loot:0x0a`, `loot:1e1`, `loot: 10 ` and `loot:0000000010`
+  all named pile 10 to `Number()`, so one peer could mint an unbounded
+  family of aliases for one container, each landing in `_lootSeen` and
+  each emitting a full record into the memory until the memory itself
+  was too large to publish. One canonical spelling (`lootKeyOf`), and
+  nothing else is a key.
+- **C6 a claim for a container nobody opened.** `openInventory`
+  REFUSES a transformed lycanthrope (GetSuppressInventory) and returns
+  null. The claim went first, so a werewolf brushing a chest told the
+  room its contents while seeing nothing. The claim follows the mount.
+- **B3/D4 the foes' item lists.** `corpse:<i>` reads a foe's `items`
+  array, so the foes half of the memory was carrying the same
+  containers as the loot half - every layout body, opened or not
+  (D4: the law was false for half its own vocabulary), and landing them
+  through `patchFoe` with no projection at all (B3), where one
+  malformed record threw after `_sharedApplied` was set and left the
+  restore half applied and never retried. The envelope's foes carry no
+  `items`; a list that does arrive off the WIRE goes through the
+  projection or nowhere; a save off disk is this client's own word and
+  keeps its list whole.
+- **D3 what this client will not say, it will not hear.** The memory
+  stopped SENDING `piles` and went on APPLYING them, so a snapshot
+  written before WORLD4 (the relay keeps one for `WORLD_TTL_MS`) still
+  blanket-replaced a joiner's own rolls - the very thing the slice
+  removed - and any host that sent the field could do it deliberately.
+- **C5, recorded and not fixed:** a shooter's arrows recovered from a
+  corpse the room has opened are destroyed by the room's next word
+  about it, because the word is the whole list. Per-item takes are
+  slice 4's known cost (see "what it does not do"), and this is that
+  cost in its sharpest form.
+- **D6/D7 the pins and the record.** Three of `test/world4.test.js`'s
+  source pins had `[\s\S]*?` gaps wide enough for a mutation to walk
+  through, and the mint itself was unpinned; the quickload sentence
+  above was left true of the doors and false of the piles.
+
+Pinned in `test/auditworld4.test.js` (6): the wire executed (the fit at
+its exact boundary, the session refusing on the same law it publishes
+with a rate token in hand, and the host's two arms by source - the
+union shed, then the act dropped, never re-pended); the projection and
+its three readers executed on a string, a number, an object and an
+honest array; the mint and the canon (the cap obeyed at the mint, said
+once, and every alias the old key read as one container refused); the
+claim, the deferral and the memory's due date; the memory's two halves;
+and the record itself, which must carry the sentences this audit
+struck. `test/world4.test.js` restamped where the law moved, its three
+slack pins closed and the mint pinned. No relay change and no deploy:
+every fix is client-side. Live against the relay already deployed
+(840669fa): a claim on the open, an emptied on the close, a door and a
+chest in one frame, the author hearing neither and no error - and a
+frame one byte over `MAX_FRAME_BYTES` fanned to NOBODY, with no error
+frame back and both sockets kept, which is the live-lock's fuel: the
+sender learns nothing from the wire, so the law has to live at home.
+
 ## What it does not do (yet)
 
 - **The Morrowind body** ships (MWBODY1, above); a client without the
@@ -1585,6 +1791,9 @@ executed, the hosts by source.
 byte budget; the record projection, the picker's latch and the instant
 mover's sound, executed on bare graphs; the local player told from any
 player, executed on the motor; the hosts and the record by source.
+`test/world4.test.js` (3): the loot projection executed, the act
+frame's loot half over the one fake and through the session, the
+dungeon host and the memory by source.
 
 ## OD1 - THE PEER DOLL GOES UP BOTTOM-UP (2026-09-12, Mac's report)
 

@@ -1213,10 +1213,10 @@ export function createWorldModes(host) {
    *  billboard is CENTRE-anchored, so the base ends up ON the marker
    *  inside a building and half a height BELOW it inside a dungeon.
    *  This port's billboard shader is BOTTOM-anchored (position = base,
-   *  the C11 law dungeonContext.js:1541 states), so the same visual
+   *  the C11 law dungeonContext.js:1544 states), so the same visual
    *  result needs the shift on the DUNGEON side - which is exactly the
    *  shift the dungeon's own RDB flats already take
-   *  (dungeonContext.js:1446, `y - size.h / 2`), and which a building's
+   *  (dungeonContext.js:1449, `y - size.h / 2`), and which a building's
    *  flats correctly do not (interiorContext.js passes its centers
    *  straight through).
    *
@@ -4947,6 +4947,7 @@ export function createWorldModes(host) {
         { renderer, arch, getGpuMesh, cpuModels, getTexture, uploadRecord, uploadRecordFrame, palette },
         dfLocation, blocks, dfLocation.climate.climateType, { activateHeld: () => held(keys, 'ActivateCenterObject') || !!host.activateDown?.(), useMagicItem: (item) => host.useMagicItem?.(item), onFoeHit: (hit) => host.onFoeHit?.(hit),   // WORLD2: a puppet's blow goes to the host
           onActions: (data) => host.onActions?.(data), peers: () => host.peers?.() ?? null, selfId: () => host.selfId?.() ?? null,   // WORLD3: a door moved goes out; the peers the foes see; whose blow a puppet's is
+          onLootClaimed: () => host.onLootClaimed?.(),   // AUDIT WORLD4 C2/D5: a claimed container makes the room's memory due this frame
           // A10: the Recall prompt (Teleport.cs:81-98). The outer host
           // owns it - the plan's arms are its pixel teleport, its mode
           // teardown and its dungeon mount - so a cast underground in
@@ -4994,7 +4995,7 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:5116), so the OUTER host's one rides in.
+          // (dungeonContext.js:5242), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:524 -> the
@@ -7501,7 +7502,8 @@ export function createWorldModes(host) {
     applyDungeonHit(id, data) { return mode === 'dungeon' && dungeonCtx ? !!dungeonCtx.applyHit?.(id, data) : false; },
     /** WORLD3: another's change to the dungeon's doors, levers and movers - landed on the standing dungeon (its own by key). */
     applyDungeonActions(id, data) { return mode === 'dungeon' && dungeonCtx ? !!dungeonCtx.applyActions?.(id, data) : false; },
-    /** AUDIT WORLD3 A3: the standing dungeon's CURRENT records for the keys an earlier act could not send. */
+    /** AUDIT WORLD3 A3: the standing dungeon's CURRENT records for the keys an earlier act could not send - a door's
+     *  (WORLD3) or a container's (WORLD4), told apart by the key. */
     dungeonActionRecords(keys) { return mode === 'dungeon' && dungeonCtx ? (dungeonCtx.actionRecords?.(keys) ?? null) : null; },
     /** WORLD2: who runs the layout's foes - me (the AI steps) or the room's host (my layout foes are puppets). Kept
      *  here so a dungeon built later starts under the seat as it stands. */
@@ -8044,7 +8046,7 @@ export function createWorldModes(host) {
      *  has one manager, so the same bit belongs in every rig.
      *
      *  FLAG ONLY, presence-gated, exactly as world.js:4338/:4338 and
-     *  dungeonContext.js:5192/:5196 are: the C# restore sets the
+     *  dungeonContext.js:5318/:5322 are: the C# restore sets the
      *  property and calls no ApplyWeapon, because UpdateHands ends in
      *  ApplyWeapon on the next frame (WeaponManager.cs:699) - the
      *  port's twin is the rig's per-frame syncWorn. */
