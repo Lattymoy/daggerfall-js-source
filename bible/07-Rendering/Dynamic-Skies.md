@@ -549,3 +549,60 @@ The lab draws the same: `?sky=dynamic` shows the clouds over the mod's
 pass, with the synthesised state. The Dynamic Skies probe still passes
 (11/11); the VC and enhanced-sky probes unchanged. Pinned in
 ds2_cloudsUnderMod.test.js; the VC3 seam pins re-aimed at the lane.
+
+## PS3 - THE PROGRESSING CIRCLES (2026-09-12, Mac's report)
+
+Mac: "with the dynamic skies mod there's these progressing circles in
+the sky when I want it to be a smooth sky transition."
+
+**They are the mod's REDUCE_COLOR.** The keyword is baked on (the
+material ships it), and the block quantizes each channel with a bare
+`ceil()` and no dither, in linear light, at a step the sun's height
+drives: `_stepSize - lerpScale^5 * _stepSize + 0.001`. Two consequences
+the mod has always had and the port carried 1:1. The sky's
+iso-luminance contours around the sun are concentric RINGS, so a hard
+quantizer draws them as hard-edged bands. And the step changes as the
+sun climbs - `lerpScale` is a smoothstep on the sun's elevation - so the
+bands MIGRATE, which is the "progressing".
+
+**Measured**, on the shipped Sunny preset (`stepSize` 0.015) with the
+sun high, over a synthetic halo in the linear light the shader works in,
+encoded to sRGB the way the pass encodes its output: FIFTY flat plateaus
+through the halo, the worst of them a 0.033 sRGB edge - some eight
+levels of 255, several times the threshold at which a smooth gradient
+shows a contour. The shipped presets run `stepSize` 0.001 to 0.015, so
+every one of them bands; the finest (Thunder) least.
+
+**The fix is the device ES1e already applies to the port's own dome**:
+an ORDERED dither, the same Bayer cell, half a step either way, so the
+quantizer's threshold moves per cell and the contours dissolve into a
+stipple. The palette is untouched, the mod's step formula is untouched
+to the character, and the mod's upward `ceil()` bias survives because
+the offset is ZERO-MEAN: `bayer4 - 0.46875`, not `- 0.5`, since bayer4
+averages 7.5/16 and the naive form would have raised the bias by 1/32 of
+a band. Over the same sweep a four-row average resolves 577 distinct
+values instead of 50.
+
+THE INDEX IS WORLD-FIXED, which the adversarial pass earned. It is the
+sky's own cell while the sky is pixelated, so the stipple lands on the
+sky's own pixels and reads as period dithering rather than noise; and
+when the sky is SMOOTH it is a cell a third that size, not the fragment.
+Indexed by `gl_FragCoord` the pattern is locked to the display while the
+sky slides beneath it, so it crawls as the camera turns - and half of
+the mod's band is 7/255 in the darks, nothing like the half-LSB the
+dome's own smooth pass dithers with and calls "never itself visible".
+
+**Recorded as a departure from 1:1**, because it is one: the mod's raw
+threshold is one door away, `?bands=raw` (the uniform `uBandDither` at
+0), and the shader is otherwise the mod's. It is NOT a compatibility
+switch between mods (MM1) - it is this mod's own posterise, and it
+applies whether or not any other mod is loaded. The DOOR and the UPLOAD
+are pinned, not just the shader: delete the upload and `uBandDither`
+sits at its default 0, the mod's raw ceil, and the slice silently does
+nothing - which is exactly the `_CloudTopColorBoost` failure the
+renderer's own header cites, a property read by the shader and fetched
+by nobody. Ledger row PS3. Pinned: `test/dynamicSkies.test.js` - the
+step formula, the dither's form and its zero mean, the uniform fetched
+and uploaded, the default, the door reachable in both hosts, no
+`gl_FragCoord` in the block, and the plateau count raw against
+dithered.

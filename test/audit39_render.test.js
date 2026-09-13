@@ -275,8 +275,13 @@ test('audit39 F53: the bright star layer draws - a zero intra-cell offset could 
   }
   // ...which is what the continuous cellOut buys. (The shader text is
   // pinned in enhancedSky.test.js, ES1f.)
-  const fs = src('src/render/enhancedSky.js') + src('src/render/retroPixel.js');   // PS2: cubeSnap is the shared module's
-  assert.match(fs, /cellOut = uv \* n \+ face \* 977\.0;/);
+  const fs = src('src/render/enhancedSky.js') + src('src/render/retroPixel.js');   // PS2: the snap is the shared module's
+  // ES1g (2026-09-12) replaced the cube with rings, so the cell id is no
+  // longer a face coordinate - but F53's law is untouched and is what is
+  // pinned: cellOut is CONTINUOUS, floor() names the cell and fract() is
+  // the fragment's place inside it.
+  assert.match(fs, /cellOut = vec2\(g, ring \+ fract\(\(el \+ 1\.57079633\) \/ stepRad\)\);/, 'the snap hands back a continuous cell coordinate - and the clamped top ring keeps its own id');
+  assert.doesNotMatch(fs, /cellOut = floor\(/, 'never the floored id - fract() of an integer is the F53 defect');
   assert.match(fs, /vec2 cell = floor\(g\), f = fract\(g\);/, 'the field still reads the id and the interior off one value');
 });
 

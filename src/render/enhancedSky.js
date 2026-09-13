@@ -39,7 +39,7 @@
 // a texture.
 
 import { dayFraction, daylightScale, isNight } from '../world/worldClock.js';
-import { RETRO_GLSL } from './retroPixel.js';   // PS2: cubeSnap and bayer4, shared with the clouds' composite and the mod's skybox
+import { RETRO_GLSL, RETRO_SNAP_GLSL } from './retroPixel.js';   // PS2: the snap and bayer4, shared with the clouds' composite and the mod's skybox; ES1g: the dome writes the shared snap lines too, so the three passes cannot drift
 import { lunarPhaseFractionsFromMinutes, LUNAR_PHASES } from '../systems/gameDate.js';   // CLK3: the dome takes the phase as a number on the clock
 
 const hex = (h) => [parseInt(h.slice(1, 3), 16) / 255, parseInt(h.slice(3, 5), 16) / 255, parseInt(h.slice(5, 7), 16) / 255];
@@ -495,14 +495,19 @@ uniform float uRetroLevels; // 0 = no posterise
 // Snapping azimuth and elevation put the grid's POLE at the zenith:
 // the elevation rings became concentric circles and the azimuth cells
 // converged to nothing, so looking straight up was a bullseye with
-// everything woven into it. A cube has no pole. The direction is
-// projected onto whichever of the six faces it points at, snapped on
-// that face's square grid, and rebuilt - cells stay near-square
-// everywhere, the zenith is an ordinary patch of an ordinary face, and
-// the only cost is the cube's own mild corner distortion, which has no
-// centre for the eye to find.
-// The n argument is cells per face; the cell id (with the face folded in) comes
-// back in cellOut for the dither and the star field.
+// everything woven into it. A cube has no pole. ...and a cube has
+// TWELVE EDGES, which is what ES1g (2026-09-12) came back for: adjacent
+// faces' axes differ by 90 degrees, so the cell numbering mirrors at
+// every edge and the ordered dither breaks along a hard line at 45
+// degrees elevation - Mac saw the four of them as "the frame of a
+// square skybox". The grid is RINGS now (render/retroPixel.js): rows of
+// constant elevation one step tall, each ring holding as many cells as
+// fit at one step wide, so the count falls toward the pole instead of
+// the cells becoming slivers - which is the one thing the lat-long grid
+// got wrong. No faces, no edges, no pinwheel, and the rows lie the way
+// SKY??.DAT's own panorama rows do.
+// cellOut is the CONTINUOUS cell coordinate: floor() is the id the
+// dither indexes, fract() is the fragment's place inside it (F53).
 ${RETRO_GLSL}
 out vec4 outColor;
 
@@ -574,7 +579,7 @@ float stars(vec3 dir, float amount) {
     // 6n^2 = 2*pi^2*70^2 gives n ~ 127, and the second layer follows.
     float scale = layer == 0 ? 127.0 : 236.0;
 
-    // EE2 F2: THE STARS WERE RULED INTO ROWS. cubeSnap returns the
+    // EE2 F2: THE STARS WERE RULED INTO ROWS. The snap used to return the
     // cell's INTEGER id, and fract() of an integer is a CONSTANT - so
     // every star sat at the same offset inside its cell, and a field of
     // stars all at one sub-cell position is a grid of lines. The cell
@@ -609,15 +614,14 @@ void main() {
   vec3 dir = normalize(vec3(r1.x * cy + r1.z * sy, r1.y, -r1.x * sy + r1.z * cy));
 
   // ES1e: THE ANGULAR PIXEL, on the painted sky's own scale
-  // (SKY_ANGLE_PER_PIXEL) - and ES1f: on a CUBE, so it has no pole. The
-  // direction is snapped BEFORE anything is computed, so every feature
-  // below is drawn on the grid and the pixels are fixed to the world
-  // rather than to the screen. The faces are equi-angular, so a face's
-  // 90 degrees over n cells makes every cell exactly one step wide:
-  // n = (PI/2)/step is 256 a face, 512 across 180 degrees - SKY??.DAT.
-  vec2 cell = vec2(0.0);
-  if (uRetroStep > 0.0) dir = cubeSnap(dir, 1.57079633 / uRetroStep, cell);
-  cell = floor(cell);                               // F53: bayer4 indexes the CELL, not its interior
+  // (SKY_ANGLE_PER_PIXEL) - and ES1g: on RINGS, so it has neither a pole
+  // nor an edge. The direction is snapped BEFORE anything is computed,
+  // so every feature below is drawn on the grid and the pixels are fixed
+  // to the world rather than to the screen. A cell is one step tall
+  // and one step wide - PI/512, SKY??.DAT's own pixel, 512 across 180
+  // degrees, which is what ES1f's cells-per-face argument was meant to
+  // say and did not (it cut them at half that width).
+${RETRO_SNAP_GLSL}
 
   // The dome: horizon to zenith.
   float e = clamp(dir.y, 0.0, 1.0);

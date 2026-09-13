@@ -1,9 +1,9 @@
 {
   "name": "daggerfall-js-app",
-  "productName": "Daggerfall JavaScript",
+  "productName": "Daggerfall Enhanced",
   "private": true,
   "version": "0.1.2",
-  "description": "Daggerfall JavaScript - the downloadable desktop shell. Loads the same dist/ the website deploys; adds ARENA2-from-disk and file-backed saves.",
+  "description": "Daggerfall Enhanced - the downloadable desktop shell. Loads the same dist/ the website deploys; adds ARENA2-from-disk and file-backed saves.",
   "author": "Lattymoy",
   "homepage": "https://daggerfalljs.dev/",
   "repository": {
@@ -22,8 +22,8 @@
   },
   "build": {
     "appId": "dev.daggerfalljs.app",
-    "productName": "Daggerfall JavaScript",
-    "artifactName": "DaggerfallJS-${version}-${os}-${arch}.${ext}",
+    "productName": "Daggerfall Enhanced",
+    "artifactName": "DaggerfallEnhanced-${version}-${os}-${arch}.${ext}",
     "directories": {
       "output": "release"
     },

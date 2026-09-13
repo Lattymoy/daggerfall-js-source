@@ -189,7 +189,7 @@ test('U60: the build stamp fills every stamp on the page, links the commit, and 
     'the foot carries both figures, once each');
   assert.equal(figure(122323), '122,323');
   assert.match(landing, /\.stat\[data-stat="tests"\]::after \{ content: ' tests'; \}/);
-  assert.match(landing, /\.stat\[data-stat="lines"\]::after \{ content: ' lines of JS'; \}/);
+  assert.match(landing, /\.stat\[data-stat="lines"\]::after \{ content: ' lines of code'; \}/);   // BR1: the last JS the page said out loud
 });
 
 test('U60: the plugin is wired, touches only the root document, and stamps only a build', async () => {

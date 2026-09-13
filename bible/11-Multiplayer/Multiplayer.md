@@ -14,7 +14,8 @@
 > next slices. This page is the co-op design the arc grows into; where
 > the two disagree, the arc is what runs.
 
-Co-op for the Daggerfall JavaScript port. Locked with Mac on 2026-09-01
+Co-op for Daggerfall Enhanced (BR1; the page was written while the
+public name was Daggerfall JavaScript). Locked with Mac on 2026-09-01
 after a survey of what the port actually has; the three decisions below
 are his, the reasoning under each is why they are the version that
 ships.

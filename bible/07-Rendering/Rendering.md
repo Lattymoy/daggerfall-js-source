@@ -247,12 +247,15 @@ directory by `test/audit18_bible_docs.test.js`:
   + Worley at 8/16/32) and a 32^3 detail volume (Worley at 4/8/16), tiling on
   every axis, generated on the GPU one layer per draw; the lab's slice viewer
   (`?noise=`) behind tools/cloudNoiseProbe.mjs.
-- `retroPixel.js` - PS2 THE PIXEL ON EVERY SKY: ES1e's cubeSnap (the angular
-  pixel on an equi-angular cube) and bayer4 (the ordered posterise) as one
+- `retroPixel.js` - PS2 THE PIXEL ON EVERY SKY, ES1g THE GRID IS RINGS: the
+  snap (rows of constant elevation one step tall, each ring holding as many
+  cells as fit at one step wide - no faces, so no edge; the ring count falls
+  toward the pole, so no pinwheel) and bayer4 (the ordered posterise) as one
   GLSL string, with the snap and posterise lines every sky pass writes and
   the two uniforms it sets - carried by the dome, the clouds' composite and
   Dynamic Skies' skybox, so the Pixelated sky switch reaches all three on
-  one grid.
+  one grid. ES1f's equi-angular cube lived here until 2026-09-12, when its
+  twelve edges turned out to be the square frame Mac could see.
 - `volumetricClouds.js` - VC3 THE VOLUMETRIC CLOUDS: a raymarched slab between
   two altitudes, shaped by the VC2 volumes, lit by the sun (the moon at night)
   with a short light march, driven by the eased weather row, a per-weather

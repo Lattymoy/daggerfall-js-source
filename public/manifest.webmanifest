@@ -1,7 +1,7 @@
 {
-  "name": "Daggerfall JavaScript",
+  "name": "Daggerfall Enhanced",
   "short_name": "Daggerfall",
-  "description": "The Elder Scrolls II: Daggerfall in your browser, from your own game files.",
+  "description": "An open-source reimplementation of The Elder Scrolls II: Daggerfall, from your own game files.",
   "start_url": "./play/",
   "scope": "./",
   "display": "fullscreen",

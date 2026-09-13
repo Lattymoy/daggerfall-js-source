@@ -34,7 +34,7 @@ async function boot() {
   const params = new URLSearchParams(location.search);
   mountFpsCounter({ enabled: () => params.has('fps') || !!getPref('showFps'), stats: () => renderer.stats });   // FPS1: over every host, on the pref or the probe door; PERF3: with the renderer's counts
   const status = (msg) => {
-    document.title = `Daggerfall JavaScript - ${msg}`;
+    document.title = `Daggerfall Enhanced - ${msg}`;
   };
   // Data gate: readers load user-supplied ARENA2 at runtime
   // (Port-Doctrine) - dev serves it via middleware, production asks

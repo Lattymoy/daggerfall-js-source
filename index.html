@@ -3,14 +3,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Daggerfall JavaScript</title>
+  <title>Daggerfall Enhanced</title>
   <!-- TI2 (2026-09-11): the phone's chrome colour. The manifest and the
        home-screen icons are the GAME page's (play/index.html): this page
        references no file, by its own test's law. -->
   <meta name="theme-color" content="#0a0c11" />
-  <meta name="description" content="A 1:1 port of The Elder Scrolls II: Daggerfall to the browser. Bring your own ARENA2 folder; nothing is uploaded." />
-  <meta property="og:title" content="Daggerfall JavaScript" />
-  <meta property="og:description" content="Daggerfall in your browser, running from your own game files. Works on desktop or phone with no install, or as a downloadable app." />
+  <meta name="description" content="An open-source reimplementation of The Elder Scrolls II: Daggerfall. Bring your own ARENA2 folder; nothing is uploaded." />
+  <meta property="og:title" content="Daggerfall Enhanced" />
+  <meta property="og:description" content="An open-source reimplementation of The Elder Scrolls II: Daggerfall, running from your own game files. Works on desktop or phone with no install, or as a downloadable app." />
   <meta property="og:type" content="website" />
   <!--
     THE DOOR IN FRONT OF THE DOOR (U60, restyled U63). The game lives at
@@ -132,7 +132,7 @@
     .build::before { content: 'build '; }
     .build:empty, .stat:empty { display: none; }
     .stat[data-stat="tests"]::after { content: ' tests'; }
-    .stat[data-stat="lines"]::after { content: ' lines of JS'; }
+    .stat[data-stat="lines"]::after { content: ' lines of code'; }
 
     /* SECTIONS: centered, boxless, a rule and a gem between them. */
     main { max-width: 1000px; margin: 0 auto; padding: 0 24px 40px; }
@@ -186,9 +186,9 @@
     <a class="kofi" href="https://ko-fi.com/dfjs" rel="noopener">
       <i class="cup" aria-hidden="true"></i>Support on Ko-fi
     </a>
-    <h1 class="wordmark">Daggerfall<small>JavaScript</small></h1>
+    <h1 class="wordmark">Daggerfall<small>Enhanced</small></h1>
     <div class="rule"><i class="gem"></i></div>
-    <p class="dek">The 1996 game with its rules intact, running on a renderer built from scratch. Works on desktop or phone, and there's nothing to install unless you want to.</p>
+    <p class="dek">An open-source reimplementation of The Elder Scrolls II: Daggerfall, with its rules intact and a renderer built from scratch. Works on desktop or phone, and there's nothing to install unless you want to.</p>
     <p class="gate">You need <b>your own copy</b> of Daggerfall. The game has been free since 2009, but the files aren't ours to give away. Point it at your ARENA2 folder once and it stays on your device.</p>
     <div class="doorplaques">
       <a class="plaque" href="./play/">Play</a>
@@ -218,16 +218,16 @@
       <div class="rule"><i class="gem"></i></div>
       <div class="cols">
         <div>
-          <h3>Ported 1:1</h3>
+          <h3>Reimplemented 1:1</h3>
           <p>The rules come straight from Daggerfall: the file formats, the world, combat math, quests, magic, guilds, even the calendar and the courts. All of it was translated line by line from Daggerfall Unity's C#, and the quirks were kept on purpose.</p>
         </div>
         <div>
           <h3>Rebuilt</h3>
-          <p>The presentation is new. The renderer is hand-rolled WebGL2 with no engine underneath, the sky is procedural, phones get touch controls, and you can use the classic screens or an enhanced pixel-art interface.</p>
+          <p>The presentation is new. The renderer is hand-rolled WebGL2 with no engine underneath, the sky is procedural, phones get touch controls, and you can use the classic screens or a modern pixel-art interface.</p>
         </div>
         <div>
           <h3>In progress</h3>
-          <p>Daggerfall Unity took a decade to build, and this port is catching up piece by piece. <a href="https://github.com/Lattymoy/daggerfall-js-source/blob/main/bible/01-Overview/Port-Ledger.md">Read the ledger</a> before you expect a finished game.</p>
+          <p>Daggerfall Unity took a decade to build, and Daggerfall Enhanced is catching up piece by piece. <a href="https://github.com/Lattymoy/daggerfall-js-source/blob/main/bible/01-Overview/Port-Ledger.md">Read the ledger</a> before you expect a finished game.</p>
         </div>
       </div>
     </section>
@@ -244,7 +244,7 @@
         <div><dt>Magic</dt><dd>The spellbook, the spell, potion and item makers, magic items and the Daedric artifacts. Ninety of the game's ninety-one spell effects are in.</dd></div>
         <div><dt>Your character</dt><dd>Character creation with the class questions, custom classes and the biography. After that comes levelling, skills, faction reputation, and a wagon behind your pack.</dd></div>
         <div><dt>Quests</dt><dd>265 quests running on the game's own scripts. They get offered, argued over in the talk window, tracked in the journal, and kept across saves.</dd></div>
-        <div><dt>The screens</dt><dd>Every classic window laid out from the original art, with an enhanced set beside it. The switch is one press at the foot of the menu.</dd></div>
+        <div><dt>The screens</dt><dd>Every classic window laid out from the original art, with a modern set beside it. The switch is one press at the foot of the menu.</dd></div>
         <div><dt>Sound and music</dt><dd>The game's sounds, footsteps that know what floor you're on, and its MIDI played by a synth written for this port. Your own tracks work too.</dd></div>
       </dl>
       <p class="notyet"><b>Not yet:</b> importing classic or Daggerfall Unity saves, and mods.</p>
@@ -308,11 +308,11 @@
         <dt>Where do my files and saves go?</dt>
         <dd>Into your browser's storage, on your device. There's no account and no server. The desktop app keeps them as real files instead, and works fully offline.</dd>
 
-        <dt>Classic or enhanced?</dt>
-        <dd>Enhanced by default, but the classic screens are all there. The switch sits at the foot of the menu.</dd>
+        <dt>Classic or modern screens?</dt>
+        <dd>The modern screens are the default, but the classic ones are all there. The switch sits at the foot of the menu.</dd>
 
         <dt>Is this Daggerfall Unity?</dt>
-        <dd>No, it's a port of it. Daggerfall Unity is the reference and has years more polish plus a mod scene. This is the same rules in a browser tab.</dd>
+        <dd>No. Daggerfall Enhanced is a separate reimplementation that follows Daggerfall Unity's rules. Daggerfall Unity is the reference and has years more polish plus a mod scene. This is the same rules in a browser tab.</dd>
 
         <dt>Something's wrong.</dt>
         <dd>Reload the page first, since the site rebuilds several times a day. If it's a real bug, file it on the <a href="https://github.com/Lattymoy/daggerfall-js-source/issues">issue tracker</a> with what you did and what happened.</dd>
@@ -324,7 +324,7 @@
       <div class="rule"><i class="gem"></i></div>
       <dl class="qa">
         <dt><a href="https://github.com/Interkarma/daggerfall-unity">Daggerfall Unity</a></dt>
-        <dd>Interkarma and contributors, MIT licence. This port was translated from its C#. Without it there would be nothing to port.</dd>
+        <dd>Interkarma and contributors, MIT licence. Daggerfall Enhanced was translated from its C#. Without it there would be nothing to port.</dd>
 
         <dt>The Elder Scrolls II: Daggerfall</dt>
         <dd>Bethesda Softworks, 1996. This is a fan project, not affiliated with or endorsed by Bethesda or ZeniMax.</dd>
@@ -333,12 +333,12 @@
         <dd>The format documentation the readers were checked against.</dd>
 
         <dt><a href="https://github.com/Lattymoy">Lattymoy</a></dt>
-        <dd>Built the port. Source, docs and the ledger are on <a href="https://github.com/Lattymoy/daggerfall-js-source">GitHub</a>.<span class="meta">Set in Jacquard 12 and Pixelify Sans from Google Fonts, the one request this site makes to anyone else.</span></dd>
+        <dd>Built Daggerfall Enhanced. Source, docs and the ledger are on <a href="https://github.com/Lattymoy/daggerfall-js-source">GitHub</a>.<span class="meta">Set in Jacquard 12 and Pixelify Sans from Google Fonts, the one request this site makes to anyone else.</span></dd>
       </dl>
     </section>
 
     <footer class="end">
-      <span>Daggerfall JavaScript</span>
+      <span>Daggerfall Enhanced</span>
       <a class="build" data-build="" href="https://github.com/Lattymoy/daggerfall-js-source/commit/"></a>
       <a href="https://github.com/Lattymoy/daggerfall-js-source">Source</a>
     </footer>

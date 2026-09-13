@@ -1,10 +1,12 @@
-# daggerfall-js-source
+# Daggerfall Enhanced
 
-**Daggerfall JavaScript** - a 1:1 JavaScript port of Daggerfall. Data layer
-and game logic translated from Daggerfall Unity (MIT, Interkarma and
-contributors); presentation rebuilt on hand-rolled WebGL2. MIT licensed, with
-Daggerfall Unity's notice alongside (LICENSE). The project's working name in
-the docs and the code is `project-dagger`.
+**Daggerfall Enhanced** - an open-source reimplementation of The Elder Scrolls
+II: Daggerfall. Data layer and game logic translated from Daggerfall Unity
+(MIT, Interkarma and contributors); presentation rebuilt on hand-rolled WebGL2.
+MIT licensed, with Daggerfall Unity's notice alongside (LICENSE). The project's
+working name in the docs and the code is `project-dagger`, and the repository,
+the live domain and the desktop app's identifier still carry the old
+`daggerfall-js` spelling - renaming those is a move outside this tree (BR1).
 
 Play it: https://daggerfalljs.dev/
 
