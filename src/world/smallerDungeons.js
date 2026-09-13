@@ -48,8 +48,13 @@ export function smallerDungeonsStateNow(enabled = getBool('Experimental', 'Small
  * this dungeon defers to ITS quest's frozen state, first link wins.
  */
 export function useSmallerDungeon(dfLocation, { questMachine = null,
-  setting = getBool('Experimental', 'SmallerDungeons') } = {}) {
+  setting = getBool('Experimental', 'SmallerDungeons'), online = false } = {}) {
   if (!dfLocation?.hasDungeon || isMainStoryDungeon(dfLocation.mapTableData?.mapId)) return false;
+  // AUDIT WORLD34 B2: ONLINE, THE WHOLE DUNGEON. The room's stream, its acts and its memory address foes, doors and
+  // piles by their index in the layout, and the layout was a per-client SETTING (or a quest's frozen copy of one):
+  // a five-block client and a full-dungeon client shared one `_locationKey`, accepted each other's frames, and
+  // landed them on the wrong markers. Online there is one layout, the dungeon as MAPS.BSA has it.
+  if (online) return false;
   const links = questMachine?.getSiteLinks(SITE_TYPES.Dungeon, dfLocation.mapTableData?.mapId) ?? [];
   if (links.length > 0) {
     const quest = questMachine.getQuest(links[0].questUID);

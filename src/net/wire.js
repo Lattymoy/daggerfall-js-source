@@ -20,6 +20,7 @@
 //                    {t:'pose', id, p}                  {t:'pong'}
 //                    {t:'chat', id, name, text, at}     to everyone who hears it, the sender included
 //                    {t:'host', id}                     the room's host changed (WORLD1)
+//                    {t:'world', id, data}              the room's memory, to a socket whose welcome carried none (AUDIT WORLD34 C1)
 //                    {t:'foes', id, data}               the host's live foes, to everyone but the host (WORLD2)
 //                    {t:'hit', id, data}                a blow on the host's foe, to the host alone (WORLD2)
 //                    {t:'act', id, data}                a change to the room's doors, levers, movers and loot, to everyone but its author (WORLD3/WORLD4)
@@ -264,8 +265,12 @@ export const isChatRoom = (key) => CHAT_ROOMS.has(String(key ?? ''));
  *  snapshot with a restore arm at both hosts; towns, cells and buildings are the next rooms. The key is a MAP ID's
  *  (roomKeyFor's `dungeon:m<mapId>`), not a prefix (AUDIT WORLD A3): a client can name any room, and a world room
  *  is a Durable Object that keeps up to WORLD_FRAME_MAX for WORLD_TTL_MS - the Bay's dungeons are a bounded set,
- *  eighty free characters are not. */
-const WORLD_ROOM = /^dungeon:m\d{1,8}$/;
+ *  eighty free characters are not.
+ *  AUDIT WORLD34 A1 (THE ROOT): the bound was eight digits, and a real MapTableData.MapId is a 32-bit integer -
+ *  Privateer's Hold is 187853213, Daggerfall 1291010263 (world/dungeonTextures.js MAIN_STORY_DUNGEON_IDS) - so
+ *  every real dungeon failed this law at BOTH ends, was joined all the same, relayed poses and nothing else, and
+ *  every player kept stepping their own foes with no word said. Ten digits is the unsigned 32-bit bound. */
+const WORLD_ROOM = /^dungeon:m\d{1,10}$/;
 export const isWorldRoom = (key) => WORLD_ROOM.test(String(key ?? ''));
 
 /** A pose the room will relay, or null. */
