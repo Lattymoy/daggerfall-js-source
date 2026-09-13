@@ -474,3 +474,44 @@ test('FIX-D: the digit five is Silkscreen\u2019s - one glyph, a data URI, first 
   // the one request is still one request: the five is a data URI, not a fetch
   assert.equal((ENHANCED_FONTS_URL.match(/family=/g) || []).length, 4, 'four families requested, as before - Silkscreen is not among them');
 });
+
+// ═══ HK1: the page's shape, after the housekeeping pass ═══════════════
+test('HK1: four sections, every nav link lands on one, and none is orphaned', () => {
+  // The page had six sections and a nav to match, two of them labelled
+  // "What it is" and "What's in it" - indistinguishable while scanning -
+  // with the step that GATES a first visit (you need your own copy of
+  // Daggerfall) sitting third, behind the longest section on the page.
+  // Four now, in the order a visitor asks them: what is this, can I play
+  // it, what is in it, who made it.
+  const landing = read('index.html');
+  const ids = [...landing.matchAll(/<section id="([\w-]+)"/g)].map((m) => m[1]);
+  const nav = [...landing.matchAll(/<a href="#([\w-]+)">/g)].map((m) => m[1]);
+  assert.deepEqual(ids, ['what', 'how', 'inside', 'credits'], 'the four sections, in reading order');
+  assert.deepEqual(nav, ids, 'and the nav is exactly them, in the same order - no broken anchor, no orphan');
+  for (const id of ids) {
+    assert.match(landing, new RegExp(`<section id="${id}" aria-labelledby="${id}-h">`), `${id} names its own heading`);
+    assert.match(landing, new RegExp(`<h2 id="${id}-h">`), `...and the heading exists`);
+  }
+});
+
+test('HK1: one home per idea - the page does not say the same thing six times', () => {
+  // WHAT THIS GUARDS. Four ideas were each repeated six to eight times
+  // across the old page: the phone's touch controls (8), needing your own
+  // copy (7), that nothing is uploaded (7), classic versus modern screens
+  // (6). Deduplicating them is most of what took the page from 973 words
+  // to under 700, and it is the kind of thing that grows back one
+  // well-meant sentence at a time.
+  const landing = read('index.html');
+  const body = landing.slice(landing.indexOf('<header class="door">'));
+  const words = body.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().split(' ').length;
+  assert.ok(words < 760, `the page is ${words} words of prose`);
+  const text = body.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+  const count = (re) => (text.match(re) || []).length;
+  // Each of these may be SAID, and said where it does work - a folder
+  // named in the step that asks for it is not a repetition of the pitch.
+  assert.ok(count(/nothing is uploaded|no account|browser's storage|your device/gi) <= 4,
+    'that your files stay yours is the hero\'s line, not every section\'s');
+  assert.ok(count(/classic screens|classic window|modern (pixel-art )?(interface|set|screens)/gi) <= 3,
+    'classic versus modern screens is answered once, where the screens are listed');
+  assert.ok(count(/touch control/gi) <= 2, 'the touch controls are mentioned where they appear, not as a selling point three times over');
+});
