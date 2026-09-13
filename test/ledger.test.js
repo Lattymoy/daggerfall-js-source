@@ -314,7 +314,12 @@ test('AUDIT 58 F5 ledger: the RE-INTEGRATED road system has its own section A ro
   // and the whole suite green. So the wiring's ENCLOSING SCOPE is what is
   // pinned: it must be a bare statement in bootWorld's own body, at
   // brace depth one, with nothing conditional between.
-  const start = host.indexOf('\n  loadModRoads().then((his) => {\n');
+  // BR3: the wiring is gated on the mod's own Enabled now, so the literal
+  // moved. The LAW did not: it is still one bare statement in bootWorld's
+  // body, and the ternary is inside the expression rather than an `if`
+  // around the block for exactly the reason this pin exists - a lane or a
+  // mode must never be able to take the whole road system with it.
+  const start = host.indexOf('\n  (basicRoadsOn ? loadModRoads() : Promise.resolve(null)).then((his) => {\n');
   assert.ok(start > 0, 'the road wiring is not a bare two-space statement - something prefixes or re-indents it');
   const scopes = enclosingBraces(host, start);
   assert.equal(scopes.length, 1, `the road wiring sits inside ${scopes.length} blocks, not just the scene builder\u2019s body`);
@@ -323,9 +328,16 @@ test('AUDIT 58 F5 ledger: the RE-INTEGRATED road system has its own section A ro
   const block = host.slice(start, host.indexOf('\n  });', start));
   assert.ok(!/isEnhanced/.test(block), `the road wiring is ungated: ${block.trim().slice(0, 80)}`);
   const wiring = block.split('\n').filter((l) => /terrainGen\.setRoads(Data)?\(/.test(l));
-  assert.equal(wiring.length, 2, 'both road wires are in that block');
-  assert.equal(host.split('\n').filter((l) => /terrainGen\.setRoads(Data)?\(/.test(l)).length, 2,
-    'and world.js holds no third wire outside it');
+  // BR3: THREE arms now, and all three are still inside this one ungated
+  // block, which is the whole point of the pin. His data (setRoadsData),
+  // ours when his will not load, and ours when the player has turned the
+  // mod off - every path ends at a network, none of them at no roads.
+  assert.equal(wiring.length, 3, 'all three road wires are in that block');
+  assert.equal(wiring.filter((l) => /setRoadsData\(/.test(l)).length, 1, 'one of them is his');
+  assert.equal(wiring.filter((l) => /setRoads\(settlementsOf\(maps\)/.test(l)).length, 2,
+    'and two fall to the port\u2019s own network - the mod off, and the mod unloadable');
+  assert.equal(host.split('\n').filter((l) => /terrainGen\.setRoads(Data)?\(/.test(l)).length, wiring.length,
+    'and world.js holds no road wire OUTSIDE that block - every one of them is in the ungated statement above');
 
   // AUDIT 58 R1 (a): the row's own line cite RESOLVES. It read
   // `world.js:390-393` - four lines of the ROADS 3/22 comment block - from
@@ -342,7 +354,7 @@ test('AUDIT 58 F5 ledger: the RE-INTEGRATED road system has its own section A ro
   // ...and it is the WHOLE block, first line to last: a range that merely
   // happens to still contain the wires is how the old number stayed
   // plausible for a whole wave.
-  assert.equal(citedLines.at(0), '  loadModRoads().then((his) => {', 'the cite does not start at the wiring statement');
+  assert.equal(citedLines.at(0), '  (basicRoadsOn ? loadModRoads() : Promise.resolve(null)).then((his) => {', 'the cite does not start at the wiring statement');
   assert.equal(citedLines.at(-1), '  });', 'the cite does not end at the block\u2019s close');
   assert.match(rootFile('src/world/terrainGen.js'), /paintRoads\(tileData, tilemap/, 'the paint is in the shared kernel');
   const travel = rootFile('src/systems/travel.js');

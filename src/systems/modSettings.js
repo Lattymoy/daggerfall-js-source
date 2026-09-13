@@ -56,10 +56,22 @@ export const MOD_SETTINGS = Object.freeze({
       Enabled: Object.freeze({ default: true, description: 'RosyTheRascal\u2019s seasonal nature flats: autumn, spring and winter repaints of the woodland, hills, haunted and mountain trees, rocks and plants, drawn at the mod\u2019s 3.1x size. The textures come from your own copy of the mod (its .dfmod, or its Textures folders) through the Your own textures pick; without them the classic flats draw. Off leaves the classic flats in every season.' }),
     }),
   }),
+  // AUDIT BASIC ROADS (BR3, 2026-09-13, Mac: "can you do an audit on
+  // basic roads, I dont think its working"). THIS MOD HAD NO `Enabled`
+  // AND NO GATE - the only one of the six. MO1 gave every mod the
+  // switch and defaulted it TRUE; this one was missed, so Basic Roads
+  // was not enabled-by-default, it was UNCONDITIONAL: world.js called
+  // loadModRoads() with nothing to ask, and a player could neither see
+  // that it was on nor turn it off. OFF does not mean a roadless map -
+  // the port has had its OWN network since ROADS 3 and it is the
+  // fallback for a map his arrays cannot load. So the switch reads the
+  // way Dynamic Skies' does: on, the mod's network 1:1; off, the
+  // port's own, generated from the player's map.
   'roads-hazelnut': Object.freeze({
     title: 'Basic Roads',
     author: 'Hazelnut',
     keys: Object.freeze({
+      Enabled: Object.freeze({ default: true, description: 'Hazelnut\u2019s Basic Roads, 1:1: his own road, track, river and stream network for the whole Iliac Bay, painted onto the terrain as the mod paints it. Off draws the port\u2019s own network instead - generated from the settlements on your map - so the world keeps its roads either way.' }),
       SmoothRoads: Object.freeze({ default: true, description: 'Enables light smoothing of road surfaces, disable for minor extra performance.' }),
       RiversAndStreams: Object.freeze({ default: false, description: 'Enables rendering of rivers and streams on terrain' }),
     }),

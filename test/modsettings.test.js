@@ -14,6 +14,10 @@ test('ROADS 24: the switches are the mod\u2019s own - names, defaults, descripti
   assert.equal(m.keys.RiversAndStreams.default, false);
   assert.match(m.keys.SmoothRoads.description, /light smoothing of road surfaces/);
   assert.match(m.keys.RiversAndStreams.description, /rivers and streams on terrain/);
+  // BR3: the switch this mod did not have. It was the only one of the six
+  // with no `Enabled` and no gate, so it was not enabled-by-default, it was
+  // unconditional - loadModRoads() ran with nothing to ask it.
+  assert.equal(modSetting('roads-hazelnut', 'Enabled'), true, 'Basic Roads is ON by default, like every other mod (MO1)');
   assert.equal(modSetting('roads-hazelnut', 'SmoothRoads'), true, 'default read');
   assert.equal(modSetting('roads-hazelnut', 'RiversAndStreams'), false);
   setModSetting('roads-hazelnut', 'RiversAndStreams', true);
@@ -26,6 +30,13 @@ test('ROADS 24: the switches are the mod\u2019s own - names, defaults, descripti
 test('ROADS 24: the switches reach the kernel on both paths, and the Mods pane shows them', () => {
   const host = readFileSync('src/scenes/world.js', 'utf8');
   assert.match(host, /smooth: modSetting\('roads-hazelnut', 'SmoothRoads'\), water: modSetting\('roads-hazelnut', 'RiversAndStreams'\)/, 'read as the world loads');
+  // BR3: and the gate, which is the point of the key. OFF is not a roadless
+  // world - it is the port's own network (ROADS 3), the same fallback a map
+  // his arrays cannot load already takes, so the switch can never cost a
+  // player their roads.
+  assert.match(host, /const basicRoadsOn = modSetting\('roads-hazelnut', 'Enabled'\);/, 'the mod\u2019s own switch is read');
+  assert.match(host, /\(basicRoadsOn \? loadModRoads\(\) : Promise\.resolve\(null\)\)/, 'and it gates the fetch - OFF asks his data for nothing');
+  assert.match(host, /if \(!basicRoadsOn\) \{[\s\S]{0,400}?terrainGen\.setRoads\(settlementsOf\(maps\), logRoads, roadSwitches\);/, 'OFF falls to the port\u2019s own network, never to no roads');
   assert.match(host, /setRoadsData\(\{ \.\.\.his, \.\.\.roadSwitches \}/, 'on his data');
   assert.match(host, /setRoads\(settlementsOf\(maps\), logRoads, roadSwitches\)/, 'and on the fallback');
   const worker = readFileSync('src/world/terrainGenWorker.js', 'utf8');
@@ -176,6 +187,13 @@ test('the Mods pane puts each creator\'s name in the mod title (Mac, 2026-09-08)
   const manifest = (f) => JSON.parse(readFileSync(f, 'utf8'));
   assert.equal(MOD_SETTINGS['dynamic-skies'].author, manifest('vendor/dynamic-skies/dynamic-skies.dfmod.json').ModAuthor);
   assert.equal(MOD_SETTINGS['seasons-iliac-bay'].author, manifest('vendor/seasons-iliac-bay/seasons-of-the-iliac-bay.dfmod.json').ModAuthor);
+  // BR3: MO1's law, swept rather than spot-checked. It was stated mod by
+  // mod and Basic Roads was simply left out of the sweep, so the one mod
+  // without the switch was the one nobody asserted about.
+  for (const [vendor, mod] of Object.entries(MOD_SETTINGS)) {
+    assert.ok('Enabled' in mod.keys, `${vendor} has no Enabled switch - a player cannot turn it off`);
+    assert.equal(mod.keys.Enabled.default, true, `${vendor} is not on by default (MO1)`);
+  }
   assert.equal(MOD_SETTINGS['roads-hazelnut'].author, 'Hazelnut');
   assert.match(readFileSync('vendor/roads-hazelnut/README.md', 'utf8'), /by Hazelnut/);
   for (const [vendor, mod] of Object.entries(MOD_SETTINGS)) assert.ok(typeof mod.author === 'string' && mod.author.length > 0, `${vendor}: an author`);

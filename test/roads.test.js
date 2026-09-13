@@ -772,7 +772,10 @@ test('ROADS 22: Basic Roads loads byte-exact, refuses the wrong size, and falls 
   // The behavioural half lives in test/modsettings.test.js.
   assert.match(worker, /if \(m\.net\) \{ roads = \{ roads: m\.net\.roads, tracks: m\.net\.tracks, rivers: m\.net\.rivers \?\? null, streams: m\.net\.streams \?\? null, water: !!m\.net\.water, smooth: m\.net\.smooth !== false \};/, 'the worker takes his arrays ready-made, water and smoothing included');
   const host = fs.readFileSync('src/scenes/world.js', 'utf8');
-  assert.match(host, /loadModRoads\(\)\.then\(\(his\) => \{\s*\n\s*if \(his\) \{ terrainGen\.setRoadsData\(\{ \.\.\.his, \.\.\.roadSwitches \}/, 'his first, with the switches');
+  // BR3: the fetch is gated on the mod's own Enabled now. OFF asks his
+  // data for nothing and falls to ours - never to a roadless world.
+  assert.match(host, /const basicRoadsOn = modSetting\('roads-hazelnut', 'Enabled'\);/, 'the mod has its own switch');
+  assert.match(host, /\(basicRoadsOn \? loadModRoads\(\) : Promise\.resolve\(null\)\)\.then\(\(his\) => \{[\s\S]{0,500}?if \(his\) \{ terrainGen\.setRoadsData\(\{ \.\.\.his, \.\.\.roadSwitches \}/, 'his first, with the switches');
   assert.match(host, /terrainGen\.setRoads\(settlementsOf\(maps\), logRoads, roadSwitches\);/, 'ours as the fallback, with the switches');
 });
 
