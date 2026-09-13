@@ -27,6 +27,7 @@ import { readFileSync } from 'node:fs';
 import { parseClient, isWorldRoom, WORLD_PREFIX, WORLD_TTL_MS, MAX_FRAME_BYTES, PIXEL_UNITS, CLOSE_REPLACED } from '../src/net/wire.js';
 import * as relay from '../server/src/relay.js';
 import { fakeRoom } from './fakeRoom.mjs';
+import { fakeSocketClass } from './fakeSocket.mjs';
 import { OnlineSession } from '../src/net/online.js';
 import { PeerBodies, PENDING_FRAMES, BODY_RANGE } from '../src/net/peerBodies.js';
 import { EQUIP_SLOTS } from '../src/systems/equip.js';
@@ -89,23 +90,12 @@ test('AUDIT WORLD A: the relay - a large frame is the host\'s memory or nothing,
   assert.equal(town.alarm.at, null, 'a town arms nothing');
   // A1 and A6 by source
   const room = rd('server/src/index.js');
-  assert.match(room, /if \(typeof message === 'string' && \(message\.length > MAX_FRAME_BYTES \|\| message\.startsWith\(WORLD_PREFIX\) \|\| message\.startsWith\(FOES_PREFIX\)\)\) \{\s*if \(!a\.id\) \{ this\._refuse\(ws, 'world before hello'\); return; \}\s*a = message\.startsWith\(FOES_PREFIX\) \? this\._meterFoes\(ws, a, Date\.now\(\)\) : this\._meter\(ws, a, Date\.now\(\)\);\s*if \(!a\) return;\s*if \(!isWorldRoom\(a\.key\) \|\| a\.id !== this\._hostOf\(\)\) return;\s*doored = true;\s*\}\s*const m = parseClient\(/, 'A1: the door before the parse (WORLD2: the foes frame through it on its own bucket)');
+  assert.match(room, /if \(typeof message === 'string' && \(message\.length > MAX_FRAME_BYTES \|\| message\.startsWith\(WORLD_PREFIX\) \|\| message\.startsWith\(FOES_PREFIX\)\)\) \{\s*const foesLike = message\.startsWith\(FOES_PREFIX\);\s*if \(!a\.id\) \{ this\._refuse\(ws, foesLike \? 'foes before hello' : 'world before hello'\); return; \}[\s\S]*?if \(!isWorldRoom\(a\.key\) && message\.length > MAX_FRAME_BYTES\) \{ this\._refuse\(ws, 'frame too large'\); return; \}\s*a = foesLike \? this\._meterFoes\(ws, a, Date\.now\(\)\) : this\._meter\(ws, a, Date\.now\(\)\);\s*if \(!a\) return;\s*if \(!isWorldRoom\(a\.key\) \|\| a\.id !== this\._hostOf\(\)\) \{[\s\S]*?const junk = \(a\.junk \?\? 0\) \+ 1;[\s\S]*?if \(junk > DROP_STRIKES_MAX\) this\._refuse\(ws, 'too many frames'\);\s*return;\s*\}\s*doored = foesLike \? 'foes' : 'world';\s*\}\s*const m = parseClient\(/, 'A1: the door before the parse (WORLD2: the foes frame through it on its own bucket; AUDIT WORLD2 A3/A4/A7: the prefix remembered, a large frame refused outside a world room, a non-host\'s stream struck out, the refusal named right)');
   assert.match(room, /const ops = \[this\.state\.storage\.put\(puts\)\];\s*if \(old && old\.chunks > chunks\) ops\.push\(this\.state\.storage\.delete\(/, 'A6: the put and the tail\'s delete issued together');
   assert.match(room, /await Promise\.all\(ops\);/, 'and awaited together');
   assert.doesNotMatch(room, /worldAt/, 'A5: no stamp on the socket');
 });
 
-function fakeSocketClass() {
-  const sockets = [];
-  class FakeWS {
-    constructor(url) { this.url = url; this.sent = []; this.closed = null; sockets.push(this); }
-    send(s) { this.sent.push(s); }
-    close(code, reason) { this.closed = { code, reason }; }
-    open() { this.onopen?.(); }
-    receive(o) { this.onmessage?.({ data: JSON.stringify(o) }); }
-  }
-  return { FakeWS, sockets };
-}
 
 test('AUDIT WORLD: the session - a farewell rides sendWorld as final, t first (the relay\'s door reads the prefix), and an ordinary publish carries no mark (B5); worlds is minted at birth (D12)', () => {
   const { FakeWS, sockets } = fakeSocketClass();

@@ -438,7 +438,7 @@ test('AUDIT 63 F16: a Silence LANDING says so - once, and only to the player hos
     }),
     1, foe, { hurt: () => {}, heal: () => {} }, () => 0.99, null, {});
   assert.ok(foe.activeEffects.some((a) => a.kind === 'silenced'), 'the silence still lands on the foe');
-  const foeSinkBlock = src('src/scenes/dungeonContext.js').split('const foeSinks = (f) => ({')[1].split('});')[0];
+  const foeSinkBlock = src('src/scenes/dungeonContext.js').split('const foeSinks = (f, fromPlayer = true) => ({')[1].split('});')[0];
   assert.ok(!/\bsay\b/.test(foeSinkBlock), 'and the foe sink set has no `say` at all');
 });
 

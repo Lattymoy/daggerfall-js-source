@@ -209,7 +209,7 @@ test('AUDIT 58: every player-attack resolver reaches the door on a zero-damage c
     'cityGuards: through the damage door, with no knock ray');
   // ...and the pair is a MEMBER now, called from both places in each
   // pool, with the C# line that says why.
-  for (const [f, sig] of [['scenes/dungeonContext.js', 'function handleAttackFromPlayer(foe, playerFeet = null) {'],
+  for (const [f, sig] of [['scenes/dungeonContext.js', 'function handleAttackFromPlayer(foe, playerFeet = null, peer = false) {'],   // AUDIT WORLD2 B9: a peer's blow wakes the struck foe alone
     ['scenes/exteriorFoes.js', 'function handleAttackFromPlayer(f, playerFeet = null) {']]) {
     const s = src(f);
     assert.ok(s.includes(sig), `${f} carries the lifted member`);

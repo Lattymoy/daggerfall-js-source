@@ -21,7 +21,8 @@ import assert from 'node:assert/strict';
 import { parseClient, frameCap, foesGate, FOES_FRAME_MAX, FOES_HZ_MAX, FOES_PREFIX, WORLD_PREFIX, WORLD_FRAME_MAX, MAX_FRAME_BYTES, PIXEL_UNITS } from '../src/net/wire.js';
 import * as relay from '../server/src/relay.js';
 import { fakeRoom } from './fakeRoom.mjs';
-import { OnlineSession, FOES_MS, FOES_FULL_MS } from '../src/net/online.js';
+import { fakeSocketClass } from './fakeSocket.mjs';
+import { OnlineSession, FOES_MS, FOES_FULL_MS, FOES_STALE_MS } from '../src/net/online.js';
 import { readFileSync } from 'node:fs';
 import { EnemyAI } from '../src/characters/enemyMotor.js';
 import { EnhancedEnemyAI } from '../src/ai/enhancedMotor.js';
@@ -94,25 +95,23 @@ test('WORLD2: the Room - the host\'s foes frame reaches everyone hello\'d but th
   const cHad = ofType(c, 'foes').length;
   await r.raw(b, JSON.stringify({ t: 'foes', data: foes }));
   assert.deepEqual(ofType(c, 'foes').at(-1), { t: 'foes', id: 'bbbb-0002', data: foes }, 'and streams'); assert.equal(ofType(c, 'foes').length, cHad + 1);
+  // AUDIT WORLD2 D4: a SMALL frame without the prefix comes in by the ordinary door - the foes arm itself meters it on
+  // the stream's bucket and asks who sent it (the door never saw it)
+  const small = JSON.stringify({ data: foes, t: 'foes' });
+  const bHad = ofType(b, 'foes').length;
+  await r.raw(c, small);
+  assert.equal(ofType(b, 'foes').length, bHad, 'a non-host\'s unprefixed frame reaches no one'); assert.equal(c.closed, null);
+  const fb = JSON.stringify(b.att.fbucket ?? null);
+  let got2 = 0; for (let i = 0; i < 40; i++) { const had = ofType(c, 'foes').length; await r.raw(b, small); if (ofType(c, 'foes').length > had) got2++; }
+  assert.ok(got2 >= FOES_HZ_MAX - 3 && got2 < 40, `the host\'s unprefixed burst is metered on the stream\'s bucket: ${got2} of 40`); assert.notEqual(JSON.stringify(b.att.fbucket ?? null), fb);
   // a town keeps no simulation
   const town = fakeRoom('town:m9');
   const t = town.connect(), u = town.connect();
   await town.hello(t, 'town-0001', at(1, 1)); await town.hello(u, 'town-0002', at(1, 1));
-  await town.raw(t, JSON.stringify({ t: 'foes', data: foes })); await town.raw(u, JSON.stringify({ t: 'hit', data: hit }));
-  assert.equal(ofType(u, 'foes').length + ofType(t, 'hit').length, 0, 'a town relays neither'); assert.equal(t.closed, null); assert.equal(u.closed, null);
+  await town.raw(t, JSON.stringify({ t: 'foes', data: foes })); await town.raw(u, JSON.stringify({ t: 'hit', data: hit })); await town.raw(t, small);
+  assert.equal(ofType(u, 'foes').length + ofType(t, 'hit').length, 0, 'a town relays neither, prefixed or not'); assert.equal(t.closed, null); assert.equal(u.closed, null);
 });
 
-function fakeSocketClass() {
-  const sockets = [];
-  class FakeWS {
-    constructor(url) { this.url = url; this.sent = []; this.closed = null; sockets.push(this); }
-    send(s) { this.sent.push(s); }
-    close(code, reason) { this.closed = { code, reason }; }
-    open() { this.onopen?.(); }
-    receive(o) { this.onmessage?.({ data: JSON.stringify(o) }); }
-  }
-  return { FakeWS, sockets };
-}
 
 test('WORLD2: the session - sendFoes is the host\'s alone, in a world room, under the stream\'s own gate and its cap, t first; sendHit is anyone else\'s; onFoes hears the room\'s host alone (never a peer, never myself); onHit hears anyone while I host and no one otherwise', () => {
   const { FakeWS, sockets } = fakeSocketClass();
@@ -135,6 +134,8 @@ test('WORLD2: the session - sendFoes is the host\'s alone, in a world room, unde
   ws.receive({ t: 'hit', id: 'eve-0003', data: hit });
   assert.equal(hitsIn.length, 0, 'not hosting: no blow is mine to apply');
   ws.receive({ t: 'host', id: 'mac-0001' });
+  ws.receive({ t: 'foes', id: 'mac-0001', data: foes });
+  assert.equal(foesIn.length, 1, 'my own id as the host: my stream is not the world in (AUDIT WORLD2 D11)');
   assert.equal(s.sendHit(hit), false, 'the host applies its own blows');
   assert.equal(s.sendFoes(foes), true); assert.equal(ws.sent.at(-1), '{"t":"foes","data":{"seq":1,"f":[]}}', 't first: the relay\'s door reads the prefix');
   assert.equal(s.sendFoes({ pad: 'x'.repeat(FOES_FRAME_MAX) }), false, 'past the cap: kept home');
@@ -152,25 +153,31 @@ test('WORLD2: the session - sendFoes is the host\'s alone, in a world room, unde
   assert.equal(s.sendFoes(foes), false, 'a town streams no foes'); assert.equal(s.sendHit(hit), false);
 });
 
-test('WORLD2: the hosts by source - the dungeon host\'s hit door first in damageFoe (a puppet\'s blow goes out with its kind, a fall\'s or a foe\'s dropped), the kind riding the spell and arrow doors; the puppet branch in the foe loop with the attack count and its ranged bit; puppetStep (eased or snapped, the hurt once, the latches cleared); the frame out (the changed alone unless full), the frame in (never the authority\'s, never stale, the attack once per count and never the count it arrived with, death through the one kill door), the hit in (the host\'s door, the layout\'s foes alone), the handover (the motor resumed, the machines idle, the stream from every foe); the mode machine and the world host; the motor resumes live from a puppet\'s pose, executed', () => {
+test('WORLD2: the hosts by source - the dungeon host\'s hit door (the striker\'s HUD marks first, never for a peer\'s blow; a puppet\'s blow out with its kind, a zero blow too, a mismatched species kept home; a fall\'s or a foe\'s dropped), the kinds and the sink\'s provenance; the puppet branch in the foe loop (the stream\'s pose, the senses as observation, the barks and the swing\'s sound) with the attack count and its ranged bit; puppetStep; the frame out (the layout\'s run alone, the changed alone unless full, the species and the dungeon on it); the frame in (never the authority\'s, a new host started over with every puppet re-latched, never stale, never another dungeon\'s, the layout\'s run alone, a species mismatch left alone, the attack once per count, death through the one kill door where the host\'s foe fell); the hit in (the host\'s door as a peer\'s blow, seen and heard); the peer arm of the aggro and the death; the handover; one corpse mint in flight; the API; the mode machine\'s forwards and the seat; the world host\'s stream, its heartbeat, the seat re-read every frame, the hold exempt; the motor\'s resume executed on both motors with no collider', () => {
   const d = rd('src/scenes/dungeonContext.js');
-  assert.match(d, /let _authority = true;\s*let _foesSeq = 0;[^\n]*\n\s*let _foesSeqIn = -1;/, 'the state');
-  assert.match(d, /function damageFoe\(foe, damage, playerFeet = null, knockDir = null, \{ fromPlayer = true, bypassShield = false, kind = 'melee' \} = \{\}\) \{\s*(?:\/\/[^\n]*\n\s*)*if \(!_authority\) \{\s*const pi = foes\.indexOf\(foe\);\s*if \(pi >= 0 && pi < _layoutFoes\) \{ if \(fromPlayer && damage > 0\) opts\.onFoeHit\?\.\(\{ i: pi, dmg: damage, kind \}\); return; \}\s*\}\s*markFoeStruck\(foe/, 'the hit door: first - before the HUD, the aggro, the shield, the health');
-  assert.match(d, /hurt: \(n\) => damageFoe\(f, n, null, null, \{ kind: 'spell' \}\)/, 'a spell\'s kind'); assert.match(d, /damageFoe\(t, d, lastPlayerFeet, m\.dir, \{ kind: 'arrow' \}\)/, 'an arrow\'s kind');
+  assert.match(d, /let _authority = true;\s*let _foesSeq = 0;[^\n]*\n\s*let _foesSeqIn = -1;[^\n]*\n\s*let _foesFrom = null;/, 'the state');
+  assert.match(d, /function damageFoe\(foe, damage, playerFeet = null, knockDir = null, \{ fromPlayer = true, bypassShield = false, kind = 'melee', peer = false \} = \{\}\) \{\s*(?:\/\/[^\n]*\n\s*)*if \(!peer\) \{ markFoeStruck\(foe, \{ fromPlayer \}\); if \(damage > 0\) markConcealedHit\(foe, _ecvT\); \}\s*(?:\/\/[^\n]*\n\s*)*if \(!_authority\) \{\s*const pi = foes\.indexOf\(foe\);\s*if \(pi >= 0 && pi < _layoutFoes\) \{ if \(fromPlayer && damage >= 0 && !foe\._pupMismatch\) opts\.onFoeHit\?\.\(\{ i: pi, dmg: damage, kind \}\); return; \}\s*\}\s*(?:\/\/[^\n]*\n\s*)*if \(fromPlayer && foe\.ai\) \{\s*handleAttackFromPlayer\(foe, playerFeet, peer\);/, 'the hit door: the striker\'s own HUD marks first (AUDIT WORLD2 B6) and never for a peer\'s blow (C4), then the divert - a zero blow goes too (B13), a mismatched species keeps home (B5) - before the aggro, the shield, the health');
+  assert.match(d, /const foeSinks = \(f, fromPlayer = true\) => \(\{\s*hurt: \(n\) => damageFoe\(f, n, null, null, \{ kind: 'spell', fromPlayer \}\)/, 'a spell\'s kind, and the sink names its striker (B7)');
+  assert.match(d, /af\.entity, foeSinks\(af, false\), Math\.random, fCaster\)/, 'a foe\'s missile is not the player\'s blow (B7)');
+  assert.match(rd('src/scenes/hostMagic.js'), /foeSinks\(foe, !caster \|\| caster\.entity === playerEntity\)/, 'nor a foe\'s cast through the one cast engine (B7)');
+  assert.match(d, /damageFoe\(t, d, lastPlayerFeet, m\.dir, \{ kind: 'arrow' \}\)/, 'an arrow\'s kind');
   assert.match(d, /let _fi = -1;\s*for \(const f of foes\) \{\s*_fi\+\+;\s*if \(f\.dead\) continue;/, 'the loop counts');
-  assert.match(d, /const _puppet = !_authority && _fi < _layoutFoes;\s*let _tgt = null, _strikeEdge = false;\s*if \(_puppet\) \{\s*_strikeEdge = puppetStep\(f, dt\);\s*f\.sounds \?\?= new EnemySoundSource\(f\.mobileType\);\s*tickEnemySound\([^\n]*\n\s*if \(_strikeEdge\) playEnemyClip\(audio, f\.sounds\.attack\(\), f\.ai\.feet, acuteHearingMultiplier\(playerEntity\)\);[^\n]*\n\s*\}\s*else \{/, 'the branch: a puppet steps by the stream - its barks and its swing\'s sound its own - the authority by itself');
-  assert.match(d, /\}   \/\/ WORLD2: the end of the authority's own step - a puppet skipped it\s*if \(f\.mobile\) \{/, 'and the mobile arm draws both');
+  assert.match(d, /const _puppet = !_authority && _fi < _layoutFoes;\s*let _tgt = null, _strikeEdge = false;\s*if \(_puppet\) \{\s*_strikeEdge = puppetStep\(f, dt\);\s*f\.ai\._senses\?\.\(_pf, null\);[^\n]*\n\s*f\.sounds \?\?= new EnemySoundSource\(f\.mobileType\);\s*tickEnemySound\(f\.sounds,[^\n]*\n\s*if \(_strikeEdge\) playEnemyClip\(audio, f\.sounds\.attack\(\), f\.ai\.feet, acuteHearingMultiplier\(playerEntity\)\);[^\n]*\n\s*\}\s*else \{/, 'the branch: a puppet steps by the stream, senses as observation (B4), its barks and its swing\'s sound its own; the authority by itself');
+  assert.match(d, /resolveFoeMelee\(f, _pf\);\s*\}\s*\}[^\n]*\n\s*if \(f\.mobile\) \{/, 'and the mobile arm draws both (the else closes before it)');
   assert.match(d, /if \(_strikeEdge\) f\._atkA = \(\(\(f\._atkA \| 0\) >> 1\) \+ 1\) \* 2 \+ \(f\.attack\.firedRanged \? 1 : 0\);/, 'the attack count, the ranged bit low');
   assert.match(d, /function puppetStep\(f, dt\) \{[\s\S]*?if \(d2 > PUPPET_SNAP \* PUPPET_SNAP\) \{ feet\[0\] = t\[0\]; feet\[1\] = t\[1\]; feet\[2\] = t\[2\]; \}\s*else \{ const k = Math\.min\(1, dt \/ PUPPET_EASE_S\); feet\[0\] \+= dx \* k;[\s\S]*?f\.ai\.hurtKnock = p\.hurt; p\.hurt = false;\s*if \(p\.strike != null\) \{ edge = true; if \(f\.attack\) f\.attack\.firedRanged = p\.strike === 'ranged'; p\.strike = null; \}[\s\S]*?if \(f\.mobile\) \{ f\.mobile\.doMeleeDamage = false; f\.mobile\.shootArrow = false; \}[^\n]*\n\s*f\._castPending = false;\s*return edge;/, 'the puppet: eased or snapped in place (the batch aliases the feet), the hurt once, the edge once, the latches cleared');
-  assert.match(d, /const PUPPET_EASE_S = 0\.2;/, 'the stream\'s interval'); assert.equal(FOES_MS, 200, 'and it is FOES_MS'); assert.ok(FOES_FULL_MS > FOES_MS);
-  assert.match(d, /function foesFrame\(full = false\) \{\s*if \(!_authority\) return null;[\s\S]*?const r = \{ i, f: \[q2\(f\.ai\.feet\[0\]\), q2\(f\.ai\.feet\[1\]\), q2\(f\.ai\.feet\[2\]\)\], y: q3\(f\.ai\.yaw\), h: f\.entity\.health, d: f\.dead \? 1 : 0, a: f\._atkA \| 0, m: f\.ai\.moving \? 1 : 0 \};[\s\S]*?if \(!full && f\._sentKey === key\) continue;[\s\S]*?if \(!out\.length\) return null;\s*return \{ n: \+\+_foesSeq, f: out \};/, 'the frame out: the changed alone unless full, nothing when nothing');
-  assert.match(d, /function applyFoes\(data\) \{\s*if \(_authority \|\| !data \|\| !Array\.isArray\(data\.f\)\) return false;\s*if \(Number\.isFinite\(data\.n\)\) \{ if \(data\.n <= _foesSeqIn\) return false; _foesSeqIn = data\.n; \}/, 'the frame in: never the authority\'s, never stale');
+  assert.match(d, /const PUPPET_EASE_S = 0\.2;/, 'the stream\'s interval'); assert.equal(FOES_MS, 200, 'and it is FOES_MS'); assert.ok(FOES_FULL_MS > FOES_MS); assert.equal(FOES_STALE_MS, 3 * FOES_FULL_MS);
+  assert.match(d, /function foesFrame\(full = false\) \{\s*if \(!_authority\) return null;\s*const out = \[\];\s*for \(let i = 0; i < _layoutFoes; i\+\+\) \{\s*const f = foes\[i\];\s*if \(!f\) continue;\s*const r = \{ i, t: f\.mobileType, f: \[q2\(f\.ai\.feet\[0\]\), q2\(f\.ai\.feet\[1\]\), q2\(f\.ai\.feet\[2\]\)\], y: q3\(f\.ai\.yaw\), h: f\.entity\.health, d: f\.dead \? 1 : 0, a: f\._atkA \| 0, m: f\.ai\.moving \? 1 : 0 \};[^\n]*\n\s*const key = [^\n]*\n\s*if \(!full && f\._sentKey === key\) continue;\s*f\._sentKey = key;\s*out\.push\(r\);\s*\}\s*if \(!out\.length\) return null;\s*return \{ n: \+\+_foesSeq, k: _locationKey, f: out \};/, 'the frame out: the layout\'s run alone (D2), the changed alone unless full, the species (B5) and the dungeon (C8) on it, nothing when nothing');
+  assert.match(d, /function applyFoes\(data, from = null\) \{\s*if \(_authority \|\| !data \|\| !Array\.isArray\(data\.f\)\) return false;\s*(?:\/\/[^\n]*\n\s*)*if \(from !== _foesFrom\) \{ _foesFrom = from; _foesSeqIn = -1; for \(let i = 0; i < _layoutFoes; i\+\+\) \{ const f = foes\[i\]; if \(f\) \{ f\._pup = null; f\._pupMismatch = false; \} \} \}\s*if \(Number\.isFinite\(data\.n\)\) \{ if \(data\.n <= _foesSeqIn\) return false; _foesSeqIn = data\.n; \}\s*if \(data\.k != null && data\.k !== _locationKey\) return false;[^\n]*\n\s*for \(const r of data\.f\) \{\s*if \(!r \|\| typeof r !== 'object'\) continue;\s*const i = r\.i \| 0;\s*const f = foes\[i\];\s*if \(!f \|\| i >= _layoutFoes\) continue;\s*if \(r\.t != null && r\.t !== f\.mobileType\) \{ f\._pupMismatch = true; continue; \}/, 'the frame in: never the authority\'s; a new host starts over with every puppet re-latched (A1/B2); never stale; never another dungeon\'s (C8); the layout\'s run alone (D3); a species mismatch left alone (B5)');
   assert.match(d, /if \(Number\.isFinite\(r\.h\)\) \{ if \(r\.h < f\.entity\.health\) p\.hurt = true; f\.entity\.health = r\.h; \}/, 'a drop is the hurt');
   assert.match(d, /if \(r\.a != null\) \{ const a = r\.a \| 0; if \(p\.a != null && a !== p\.a\) p\.strike = \(a & 1\) \? 'ranged' : 'melee'; p\.a = a; \}/, 'the attack once per count, never the count it arrived with');
-  assert.match(d, /if \(r\.d === 1\) setFoeDead\(f, true\); else if \(r\.d === 0\) setFoeDead\(f, false\);/, 'death through the one kill door');
-  assert.match(d, /function applyHit\(id, data\) \{\s*if \(!_authority \|\| !data \|\| typeof data !== 'object'\) return false;[\s\S]*?if \(!f \|\| i >= _layoutFoes \|\| f\.dead \|\| !Number\.isFinite\(dmg\) \|\| dmg <= 0\) return false;\s*damageFoe\(f, dmg, null, null, \{ fromPlayer: true, kind: data\.kind === 'arrow' \|\| data\.kind === 'spell' \? data\.kind : 'melee' \}\);/, 'the hit in: the host\'s door, the layout\'s foes alone, a finite blow');
-  assert.match(d, /function setAuthority\(on\) \{\s*on = !!on;\s*if \(on === _authority\) return;\s*_authority = on;\s*_foesSeqIn = -1;[\s\S]*?if \(p\) \{ f\.ai\.feet\[0\] = p\.feet\[0\];[\s\S]*?f\.ai\.resumeLive\?\.\(\);[\s\S]*?f\._prevMState = 'Idle';[\s\S]*?f\._pup = null;\s*f\._sentKey = null;/, 'the handover: the puppet\'s pose stands, the motor resumes, no phantom edge, the stream from every foe');
+  assert.match(d, /if \(r\.d === 1\) \{ if \(!f\.dead\) \{ f\.ai\.feet\[0\] = p\.feet\[0\]; f\.ai\.feet\[1\] = p\.feet\[1\]; f\.ai\.feet\[2\] = p\.feet\[2\]; \} setFoeDead\(f, true\); \}[^\n]*\n\s*else if \(r\.d === 0\) setFoeDead\(f, false\);/, 'death through the one kill door, where the host\'s foe fell (B10)');
+  assert.match(d, /function applyHit\(id, data\) \{\s*if \(!_authority \|\| !data \|\| typeof data !== 'object'\) return false;[\s\S]*?if \(!f \|\| i >= _layoutFoes \|\| f\.dead \|\| !Number\.isFinite\(dmg\) \|\| dmg < 0\) return false;[\s\S]*?if \(dmg > 0\) \{\s*audio\.play3d\(hitSoundFor\(null\), f\.ai\.feet, ENEMY_HIT_VOLUME, \{ maxDistance: 16 \}\);\s*hitEffects\?\.showBloodSplash\([\s\S]*?damageFoe\(f, dmg, null, null, \{ fromPlayer: true, peer: true, kind \}\);/, 'the hit in: the host\'s door as a PEER\'s blow (C4/B9), a zero blow admitted (B13), seen and heard on the host (B8)');
+  assert.match(d, /function handleAttackFromPlayer\(foe, playerFeet = null, peer = false\) \{[\s\S]*?if \(!peer && !foe\.ai\.isHostile\) makeEnemiesHostile\(foes\);\s*if \(foeDeps\) \{\s*foe\.ai\.makeEnemyHostileToAttacker\?\.\(foeDeps\.PLAYER_TARGET, playerFeet \?\? lastPlayerFeet\);\s*if \(!peer\) foeDeps\.resetAllyTeamOnPlayerAttack/, 'a peer\'s blow turns the struck foe alone (B9)');
+  assert.match(d, /const trap = peer \? \{ allowDeath: true \} : attemptSoulTrap\(/, 'a peer\'s kill reads no gem of the host\'s (B9)'); assert.match(d, /if \(!peer && foe\.mobileType < 128 && isAzurasStarEquipped\(playerEntity\)/, 'nor fills its Star');
+  assert.match(d, /function setAuthority\(on\) \{\s*on = !!on;\s*if \(on === _authority\) return;\s*_authority = on;\s*_foesSeqIn = -1;\s*for \(let i = 0; i < _layoutFoes; i\+\+\) \{[\s\S]*?if \(p\) \{ f\.ai\.feet\[0\] = p\.feet\[0\];[\s\S]*?f\.ai\.resumeLive\?\.\(\);[\s\S]*?f\._prevMState = 'Idle';[\s\S]*?f\._pup = null;\s*f\._pupMismatch = false;\s*f\._sentKey = null;\s*\}\s*if \(!on\) _foesFrom = null;/, 'the handover: the puppet\'s pose stands, the motor resumes, no phantom edge, the stream from every foe, the next stream\'s count starts over');
   assert.match(d, /function setFoeDead\(f, dead\) \{\s*if \(dead\) \{ if \(!f\.dead\) \{ f\.dead = true; spawnCorpse\(f\); \} return; \}\s*if \(!f\.dead\) return;\s*f\.dead = false;\s*if \(f\.corpseBatch\) \{/, 'one kill door for the save and the stream');
+  assert.match(d, /async function spawnCorpse\(f\) \{\s*(?:\/\/[^\n]*\n\s*)*if \(f\._corpseMinting\) return;\s*f\._corpseMinting = true;\s*try \{ await spawnCorpseNow\(f\); \} finally \{ f\._corpseMinting = false; \}\s*\}/, 'one corpse mint in flight per foe (B14)');
   assert.match(d, /if \(sf\.dead && !f\.dead\) setFoeDead\(f, true\);/); assert.match(d, /else if \(!sf\.dead && f\.dead\) setFoeDead\(f, false\);/);
   assert.match(d, /    foesFrame,\s*applyFoes,\s*applyHit,\s*setAuthority,\s*isAuthority: \(\) => _authority,/, 'the API');
   const m = rd('src/scenes/worldModes.js');
@@ -178,20 +185,24 @@ test('WORLD2: the hosts by source - the dungeon host\'s hit door first in damage
   assert.match(m, /dungeonCtx = ctx;\s*_dungeonAuthority = host\.dungeonAuthority\?\.\(\) \?\? true; ctx\.setAuthority\?\.\(_dungeonAuthority\);/, 'a dungeon built under the seat as it stands');
   assert.match(m, /setDungeonAuthority\(on\) \{ _dungeonAuthority = !!on; dungeonCtx\?\.setAuthority\?\.\(_dungeonAuthority\); \},/, 'the seat kept for the next dungeon');
   assert.match(m, /dungeonFoesFrame\(full = false\) \{ return mode === 'dungeon' && dungeonCtx \? \(dungeonCtx\.foesFrame\?\.\(full\) \?\? null\) : null; \},/);
+  assert.match(m, /applyDungeonFoes\(id, data\) \{ return mode === 'dungeon' && dungeonCtx \? !!dungeonCtx\.applyFoes\?\.\(data, id\) : false; \}/, 'the host\'s id rides in (A1)');
   const w = rd('src/scenes/world.js');
-  assert.match(w, /const foesStream = \(now\) => \{\s*if \(!online \|\| !online\.isHost\(\) \|\| online\.status !== 'open' \|\| !isWorldRoom\(online\.room\)\) return false;\s*if \(now - _foesSentAt < FOES_MS\) return false;\s*const full = now - _foesFullAt >= FOES_FULL_MS;\s*const frame = modes\?\.dungeonFoesFrame\?\.\(full\);\s*if \(!frame\) return false;\s*_foesSentAt = now;\s*if \(!online\.sendFoes\(frame\)\) return false;\s*if \(full\) _foesFullAt = now;/, 'the stream: the host\'s, in a world room, FOES_MS apart, every foe FOES_FULL_MS apart');
-  assert.match(w, /const dungeonAuthority = \(\) => !\(online\?\.room && isWorldRoom\(online\.room\) && online\.status === 'open' && !online\.isHost\(\)\);/, 'the seat: mine unless a world room\'s open socket says another');
-  assert.match(w, /online\.onFoes = \(id, data\) => \{ modes\?\.applyDungeonFoes\?\.\(data\); \};\s*online\.onHit = \(id, data\) => \{ modes\?\.applyDungeonHit\?\.\(id, data\); \};/, 'the stream and the hits routed');
-  assert.match(w, /worldPublish\(now\);[^\n]*\n\s*foesStream\(now\);/, 'every frame asks'); assert.match(w, /onFoeHit: \(hit\) => online\?\.sendHit\(hit\) \?\? false,/, 'a puppet\'s blow out');
-  // the motor's resume, executed: a puppet's pose stands, everything decided is forgotten
+  assert.match(w, /const foesStream = \(now\) => \{\s*if \(!online \|\| !online\.isHost\(\) \|\| online\.status !== 'open' \|\| !isWorldRoom\(online\.room\)\) return false;\s*if \(now - _foesSentAt < FOES_MS\) return false;\s*_foesSentAt = now;[^\n]*\n\s*const full = now - _foesFullAt >= FOES_FULL_MS;\s*const frame = modes\?\.dungeonFoesFrame\?\.\(full\);\s*if \(!frame\) return false;\s*if \(!online\.sendFoes\(frame\)\) \{ _foesFullAt = -Infinity; return false; \}[^\n]*\n\s*if \(full\) _foesFullAt = now;/, 'the stream: the host\'s, in a world room, FOES_MS apart with the clock re-armed whether or not anything changed (B11), every foe FOES_FULL_MS apart, a refusal made good by the next full frame (A9)');
+  assert.match(w, /const dungeonAuthority = \(now = performance\.now\(\)\) => !\(online\?\.room && isWorldRoom\(online\.room\) && online\.status === 'open' && online\.host && !online\.isHost\(\) && now - _foesInAt < FOES_STALE_MS\);/, 'the seat: mine unless a world room\'s open socket names another, and that seat was heard from within FOES_STALE_MS (C2/C3/C5)');
+  assert.match(w, /online\.onFoes = \(id, data\) => \{ _foesInAt = performance\.now\(\); modes\?\.applyDungeonFoes\?\.\(id, data\); \};/, 'the stream is the seat\'s heartbeat, the host\'s id rides in');
+  assert.match(w, /online\.onHit = \(id, data\) => \{ modes\?\.applyDungeonHit\?\.\(id, data\); \};/, 'the hits routed');
+  assert.match(w, /foesStream\(now\);[^\n]*\n\s*modes\?\.setDungeonAuthority\?\.\(dungeonAuthority\(now\)\);/, 'the seat re-read every frame (C2)');
+  assert.match(w, /if \(!online\.room \|\| isWorldRoom\(key\) \|\| isWorldRoom\(online\.room\) \|\| now - _onlineKeySince >= ROOM_HOLD_MS\)/, 'a world room\'s edge is never held (C8)');
+  assert.match(w, /onFoeHit: \(hit\) => online\?\.sendHit\(hit\) \?\? false,/, 'a puppet\'s blow out');
+  // the motor's resume, executed: a puppet's pose stands, everything decided is forgotten - the resume reads no collider (D15)
   for (const AI of [EnemyAI, EnhancedEnemyAI]) {
-    const ai = new AI({ raycast: () => null, groundAt: () => 0 }, [1, 2, 3], 0.5, {});
+    const ai = new AI(null, [1, 2, 3], 0.5, {});
     ai.feet[0] = 10; ai.feet[1] = 4; ai.feet[2] = 20; ai.yaw = 1.25;
-    Object.assign(ai, { lastGroundedY: 30, _airborne: true, velY: -9, landedFall: 2, target: { x: 1 }, secondaryTarget: { x: 2 }, targetSenses: {}, lastKnownTargetPos: [0, 0, 0], oldLastKnownTargetPos: [0, 0, 0], predictedTargetPos: [0, 0, 0], _predictedTargetPosWithoutLead: [0, 0, 0], lastHadLOSTimer: 5, giveUpTimer: 5, classicTargetUpdateTimer: 5, destination: [0, 0, 0], detourDestination: [0, 0, 0], obstacleDetected: true, fallDetected: true, foundUpwardSlope: true, foundDoor: true, avoidObstaclesTimer: 5, checkingClockwiseTimer: 5, didClockwiseCheck: true, lastTimeWasStuck: 5, _acc: 0.5, knockbackSpeed: 3, hurtKnock: true, moving: true, isHostile: true, hasEncounteredPlayer: true });
+    Object.assign(ai, { lastGroundedY: 30, _airborne: true, velY: -9, landedFall: 2, target: { x: 1 }, secondaryTarget: { x: 2 }, targetSenses: {}, lastKnownTargetPos: [0, 0, 0], oldLastKnownTargetPos: [0, 0, 0], predictedTargetPos: [0, 0, 0], _predictedTargetPosWithoutLead: [0, 0, 0], lastHadLOSTimer: 5, giveUpTimer: 5, classicTargetUpdateTimer: 5, destination: [0, 0, 0], detourDestination: [0, 0, 0], obstacleDetected: true, fallDetected: true, foundUpwardSlope: true, foundDoor: true, avoidObstaclesTimer: 5, checkingClockwiseTimer: 5, didClockwiseCheck: true, lastTimeWasStuck: 5, _acc: 0.5, knockbackSpeed: 3, hurtKnock: true, moving: true, isHostile: true, hasEncounteredPlayer: true, _restGrounded: true });
     if (AI === EnhancedEnemyAI) Object.assign(ai, { path: [[0, 0, 0]], pathI: 3, repathT: 2, pathEpoch: 7 });
     ai.resumeLive();
     assert.deepEqual([ai.feet, ai.yaw], [[10, 4, 20], 1.25], `${AI.name}: the puppet's pose stands`);
-    assert.deepEqual([ai.lastGroundedY, ai._airborne, ai.velY, ai.landedFall], [4, false, 0, 0], 'grounded where it stands: no phantom fall');
+    assert.deepEqual([ai.lastGroundedY, ai._airborne, ai.velY, ai.landedFall, ai._restGrounded], [4, false, 0, 0, false], 'grounded where it stands: no phantom fall, and it re-grounds on its first step (AUDIT WORLD2 B12)');
     assert.deepEqual([ai.target, ai.secondaryTarget, ai.targetSenses, ai.lastKnownTargetPos, ai.oldLastKnownTargetPos, ai.predictedTargetPos, ai._predictedTargetPosWithoutLead], [null, null, null, null, null, null, null], 'the target forgotten');
     assert.deepEqual([ai.lastHadLOSTimer, ai.giveUpTimer, ai.classicTargetUpdateTimer], [0, 0, 0]);
     assert.deepEqual([ai.destination, ai.detourDestination], [[10, 4, 20], [10, 4, 20]], 'the path from here');

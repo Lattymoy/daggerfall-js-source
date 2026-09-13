@@ -735,12 +735,10 @@ the next rooms.
   the cap too (`sendWorld` refuses a frame past `WORLD_FRAME_MAX`
   rather than earn the relay's terminal close).
 
-Not done: the live moment. Two players in one dungeon still each run
-their own foes - the memory is a snapshot, so a foe killed between
-two publishes by a host that vanished comes back, and a joiner's foes
-are the host's as of the last publish, not as of now (slice 3's
-events). The shape of a day is `WORLD_PUBLISH_MS`: a save's world
-published every fifteen seconds and on every farewell.
+Not done here: the live moment - two players in one dungeon each ran
+their own foes until WORLD2 (below) made the layout's foes one
+simulation per room. The shape of a day is `WORLD_PUBLISH_MS`: a
+save's world published every fifteen seconds and on every farewell.
 
 Pinned in `test/world1.test.js` (4): the wire's world frame at both
 ends (after hello, an object, past the small cap by its prefix alone,
@@ -912,7 +910,9 @@ shared half of the pool must not band on the live player level - a
 fixed level or the location's seed for the random flats online, or the
 layout roster published beside the memory); loot's memory should carry
 "emptied", not contents (slice 4); a host's quickload inside a dungeon
-rewinds nothing for anyone else and is itself rewound by the room's
+rewinds the layout's foes for every joiner since WORLD2 (the next
+stream carries the rewound records) and nothing else of theirs (the
+doors, the piles, their own), and is itself rewound by the room's
 memory on re-entry - persistence, but it will read as "F12 does nothing
 to the dungeon"; publishes and applies happen under an open window or
 a pause, which slice 3 gates explicitly.
@@ -1020,6 +1020,154 @@ seat's move re-routing both. Not seen with two real players from here
 walking and dying on the other screen, a blow from the joiner landing
 through the host, the host leaving and the joiner's foes coming alive.
 
+## AUDIT WORLD2 (2026-09-12)
+
+Mac: "Lets do an audit on slice 2." Four opus finders over WORLD2 - the
+relay and the wire for the two new frames; the puppets; the world
+host's lifecycle across every transition; the pins by mutation and the
+record by drift - each refuting its own candidates against the code
+and proving what stood with scratch tests and live probes. Every
+survivor refuted again here; every one that stood fixed on the
+branch:
+
+**The seat and the stream (the three lenses agreed).**
+
+- **A1/B1/C1 (high) a handover between two OTHER players froze a
+  third.** `_foesSeqIn` reset only when MY authority changed, so a
+  joiner who stayed a joiner kept the old host's high-water mark and
+  judged every frame of the new host stale - for as long as the old
+  host had streamed. The stream's host id rides in
+  (`applyDungeonFoes(id, data)` → `applyFoes(data, from)`); a new id
+  starts the count over and re-latches every puppet (no phantom
+  strike from the old host's attack counts - B2/C7).
+- **A2/B3/C2 (high) a dead socket froze a joiner's dungeon, for ever
+  on a terminal close.** The seat was a latch set on a host CHANGE
+  alone; a drop, a terminal close or `leave()` cleared nothing, so
+  the puppets stood still and every blow went to a socket that could
+  not take it. Now a dead socket and a leave clear the seat through
+  the one door (`_setHost(null)` in `onclose` and `leave()`), and
+  `dungeonAuthority()` is read EVERY FRAME - mine unless a world
+  room's open socket names another, and that seat is alive.
+- **C5 (med) no watchdog on a silent stream:** a host whose socket
+  died without the relay's notice left the joiner frozen and
+  invulnerable until the runtime noticed. The stream is the seat's
+  heartbeat (`_foesInAt`; the welcome's word its first): a seat not
+  heard from within `FOES_STALE_MS` (three full frames) is no seat,
+  and the joiner steps its own foes until it speaks again.
+- **C3 (low)** a dungeon rebuilt inside the welcome window started as
+  puppets with no host to send to: `online.host` is a term of the
+  seat now.
+- **C8 (med) the room hold applied to dungeon keys,** delaying every
+  handover half a second and letting one dungeon's stream land in
+  another by index on a load or a teleport inside the hold. A world
+  room's edge is never held, and every frame names its dungeon
+  (`k`), refused elsewhere.
+
+**The relay.**
+
+- **A3 (med) the door metered by prefix, the arms dispatched by
+  type:** a duplicate-key frame spent the wrong bucket. `doored`
+  remembers the prefix and an arm whose type disagrees meters again.
+- **A4 (med) the door was a free ingress sink:** a large frame in any
+  room was metered, discarded unparsed and never refused. Outside a
+  world room a large frame is refused as the small cap always was; a
+  non-host's stream of prefixed frames in a world room is counted
+  (`junk`) and struck out; **A7** the refusal names the prefix.
+- **A5 (med) the foes fan had no room budget:** one host into a full
+  room was 191 MiB/s out of one object. The fan spends a byte budget
+  on the instance (`FOES_ROOM_BYTES_PER_S`: the frame times its
+  listeners; over it, dropped without a strike).
+- **A6 (med) the hit funnel was unbudgeted and ungated:** every
+  joiner could aim `POSE_HZ_MAX` hits at the host's one socket, and a
+  blow over the joiner's own pose bucket vanished unseen. The room
+  budgets the funnel (`HIT_ROOM_HZ_MAX`) and `sendHit` gates at home
+  (`HIT_HZ_MAX`, the pose bucket's headroom over `POSE_HZ`), refusing
+  an over-rate blow to its caller.
+- **A8/D12 (low)** the relay's and the wire's heads say the two frames
+  and both buckets.
+
+**The puppets and the doors.**
+
+- **B4 (high) a joiner was blind to "enemies nearby":** the senses
+  ran inside the authority's step alone, so `areEnemiesNearby` let a
+  joiner sleep in a room full of the host's live foes and refused the
+  exhaustion collapse among them. A puppet runs the motor's senses as
+  observation off the streamed pose (`_senses`), never a decision.
+- **B5 (med) the stream had no species guard where the memory has
+  one:** two clients' random flats differ by level, so a rat's death
+  landed on a joiner's daedroth by index and its blows went out under
+  the wrong index. The record carries `t` (the species); a mismatch
+  is left alone and its blows kept home.
+- **B6 (med) the joiner's own blows never marked its HUD** (the divert
+  returned before the target frame and the concealed reveal); **C4
+  (med) a peer's blow hijacked the HOST's target frame** instead. The
+  marks come first, the striker's own, and never for a peer's blow.
+- **B7 (med) a foe's spell on a puppet went to the host as the
+  player's blow** (the sink hard-defaulted `fromPlayer`), waking the
+  host's whole room. The sink names its striker; a foe's missile and a
+  foe's cast through the one cast engine are not the player's.
+- **B8/C4 (med) on the host a peer's blow was silent and invisible;
+  B9 (med) it woke the host's whole dungeon, reverted its charmed
+  allies, and read the host's gems on the kill.** `applyHit` plays the
+  hit's ring, the blood and the pain, and applies the blow as a PEER's
+  (`peer: true`): the struck foe alone turns, no room-wide wake, no
+  ally revert, no soul trap or Star of the host's.
+- **B10 (low)** a streamed death dropped the corpse at the eased feet,
+  behind a running foe: the corpse falls where the host's foe fell.
+- **B12 (low)** `resumeLive` left `_restGrounded` set, so a foe that
+  took the seat standing still never re-grounded until it moved.
+- **B13 (low)** a connecting swing of no damage sent nothing, so it
+  never woke the host's foe (DFU's own rule): a zero blow goes too.
+- **B14 (low)** a dead/alive/dead flap while the corpse texture warmed
+  minted two batches and freed one: one mint in flight per foe.
+- **A9/C6 (low)** a refused stream frame lost its deltas until the next
+  full frame: a refusal makes the next frame full. **B11 (low)** the
+  stream's clock re-armed only when something was sent, so a quiet
+  room rebuilt forty keys a frame: it re-arms regardless.
+
+**The pins and the record.**
+
+- **D2/D3/D4/D5/D11/D13/D15** pins that could not fail (the frame's
+  layout bound and its delta stamp, the frame-in's index gate, a small
+  unprefixed frame's meter and its sender, a small unprefixed world
+  frame's meter, my own id as the host, comment-anchored regexes, a
+  fake collider the producer never mints) repinned; **D14** the fake
+  socket is one home (`test/fakeSocket.mjs`) for the two string-shaped
+  copies (the three older object-shaped copies are a later hygiene
+  row); **D16** two stale sibling cites.
+- **D1/D6/D7/D8/D9/D10** the sentences WORLD2 falsified - Home.md's
+  "the live moment is the next iteration", WORLD1's "not done", the
+  Ledger's "still each player's own", Multiplayer.md's "slice 2 hands
+  it over", the bullet's "still comes back", AUDIT WORLD's "rewinds
+  nothing for anyone else" - struck or amended.
+
+Pinned in `test/auditworld2.test.js` (3): the relay over the one fake
+(the budgets one home and the byte gate, a duplicate-key frame
+spending the type's bucket, a large frame refused outside a world room
+and a small prefixed one ignored with the socket kept, a non-host's
+stream struck out, the refusal named for its prefix, the fan's byte
+budget and the hit funnel both dropping without a strike, a small
+unprefixed world frame metered, the heads); the session (a dead socket
+and a leave clearing the seat through the one door with the world
+host told, the hits' gate at home, my own id as the host, the stale
+constant); the record's struck sentences. `test/world2.test.js`'s
+hosts-by-source pins rewritten to the audited law and strengthened.
+Relay redeployed (ff7f7e70); live: the stream, the hit and the seat's
+move as before, a large frame in a town refused with the socket
+closed, a non-host's prefixed frame in a dungeon ignored with the
+socket kept, a foes frame under a world prefix fanned.
+
+For later slices, from the lenses: the hurt one-shot inferred from a
+health drop (a shield-absorbed knockback plays nothing; carry `k`);
+the yaw snapped where the feet ease; a hit with no pose (the aggro,
+the knockback, the arrow's shaft and the kill's credit belong to the
+striker - slice 3's hit carries `{x,y,z}` and `dir`); the seducer
+transforming on each client alone; `meleeTimer` zero after a
+handover; the joiner's first half-second underground simulated
+locally before the welcome; the host's pause freezing the room for
+everyone; a per-host stream epoch on the wire; the three
+object-shaped fake sockets to fold into `test/fakeSocket.mjs`.
+
 ## What it does not do (yet)
 
 - **The Morrowind body** ships (MWBODY1, above); a client without the
@@ -1032,7 +1180,8 @@ through the host, the host leaving and the joiner's foes coming alive.
 - **The room's memory** (WORLD1, above) is a dungeon's alone, and
   since WORLD2 the layout's foes are ONE simulation per room - the
   host's, streamed; a foe killed between two publishes by a host that
-  vanished still comes back for the next visitor. The host's foes
+  vanished ALONE in the room comes back for the next visitor (a joiner
+  who was there mirrored the death and publishes it). The host's foes
   target the host alone until slice 3; doors, levers and platforms
   are still each client's own. Towns, cells and buildings keep
   nothing yet; no shared clock or weather (slice 5); the quest clocks
@@ -1118,7 +1267,11 @@ record by source.
 the Room's stream and hit routing over the one fake, the session's
 sendFoes/sendHit/onFoes/onHit, the hosts by source (the puppet branch,
 the frame out and in, the hit door, the handover) and the motor's
-resume executed.
+resume executed - strengthened by AUDIT WORLD2.
+`test/auditworld2.test.js` (3): AUDIT WORLD2's fixes - the relay's
+budgets, the type's bucket, the refusals, the strikes; the session's
+seat cleared on a dead socket and a leave, the hits' gate at home; the
+record.
 
 ## OD1 - THE PEER DOLL GOES UP BOTTOM-UP (2026-09-12, Mac's report)
 

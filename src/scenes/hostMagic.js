@@ -184,7 +184,7 @@ export function createPlayerMagic({
   // monster. The foe's own sinks carry no `say` and should not: the
   // line belongs to the caster, not the target.
   function applySpellToFoe(spell, casterLevel, foe, caster = null, ctx = undefined) {
-    const r = applySpell(spell, casterLevel, foe.entity, foeSinks(foe), rolls, caster, ctx);
+    const r = applySpell(spell, casterLevel, foe.entity, foeSinks(foe, !caster || caster.entity === playerEntity), rolls, caster, ctx);   // AUDIT WORLD2 B7: a foe's spell is not the player's blow (the dungeon's sink reads the second arg; the exterior's ignores it)
     if (r.trapAlert) say(SOUL_TRAP_TEXT[r.trapAlert]);
     // X8: PACIFY / CHARM. The effect answers whether the target was
     // pacified; the AI flag lives on the foe RECORD rather than the
