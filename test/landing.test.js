@@ -5,8 +5,10 @@
 // /play/. What is pinned here is the shape of that arrangement:
 //
 //   - the landing page is a DOCUMENT. It mounts no game code, draws no
-//     canvas, carries no image and names no game file - the doctrine's
-//     "a render of game data is game data" has nothing to catch on it;
+//     canvas and names no game file - the doctrine's "a render of game
+//     data is game data" has nothing to catch on it. BR2 gave it ONE
+//     raster and it is the only one it may have: the WORDMARK, which is
+//     the product's own logo and not a frame of the game;
 //   - it has NO PALETTE OF ITS OWN. Every colour in its stylesheet is a
 //     var() the enhanced skin declares, and the block that declares them
 //     is injected from src/ui/enhancedStyle.js at serve and build - one
@@ -18,7 +20,7 @@
 //     page cannot swing a sword.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync, existsSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { readFileSync, readdirSync, existsSync, statSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
@@ -45,15 +47,34 @@ test('U60: the root document is a page about the game, and the game is at /play/
   // raster at all. Its only drawings are CSS (the night, the gem, the
   // cup), which is the strongest shape of "a render of game data is
   // game data" a page about the game can hold.
-  // <img\s, not <img: the Ko-fi comment SAYS "<img>" while explaining
-  // why the cup is drawn in box-shadow instead of being one.
   // FIX-D: one url() is allowed, and it is not a picture - the digit five's
   // @font-face data URI (a 520-byte OFL glyph; see below). Every other url()
-  // is still forbidden.
-  assert.doesNotMatch(landing.replace(/url\(data:font\/woff2;base64,[A-Za-z0-9+/=]+\)/g, ''), /<img\s|<canvas|<video|<picture|url\(/i, 'the landing page draws nothing but CSS');
-  assert.doesNotMatch(landing, /\.(png|jpe?g|gif|webp|svg|bmp)\b/i, 'no image file is referenced at all');
+  // is still forbidden, INCLUDING for the wordmark: the logo is an <img>
+  // with width, height and alt, not a background nobody can read or size.
+  assert.doesNotMatch(landing.replace(/url\(data:font\/woff2;base64,[A-Za-z0-9+/=]+\)/g, ''), /<canvas|<video|<picture|url\(/i, 'the landing page draws nothing but CSS and its one logo');
+  // BR2 (Mac, 2026-09-13, with the logo attached: "I want to implement
+  // this into the website and adjust the colour scheme to follow along
+  // with the style without being overbearing"). The page's no-raster law
+  // was never about rasters, it was about GAME DATA: the U60c pictures
+  // this replaced were menu SCREENSHOTS, renders of ARENA2 content, which
+  // is the thing the doctrine catches. A wordmark is the product's own
+  // mark and renders nothing. So the law narrows rather than lifts, and it
+  // is spelled as a WHITELIST OF ONE - every <img> on the page, and every
+  // image file it names, must be this file and nothing else. A second
+  // picture fails here, whatever it is of.
+  const imgs = [...landing.matchAll(/<img\s[^>]*>/g)].map((m) => m[0]);
+  assert.equal(imgs.length, 1, 'the page carries exactly one image, and it is the wordmark');
+  assert.match(imgs[0], /^<img src="\.\/brand\/daggerfall-enhanced\.webp" width="800" height="507" alt="Daggerfall Enhanced" \/>$/,
+    'the logo declares its own size (so the door does not jump as it loads) and its name in alt (so the wordmark is still TEXT to a reader who cannot see it)');
+  assert.deepEqual([...new Set(landing.match(/[\w./-]+\.(?:png|jpe?g|gif|webp|svg|bmp)\b/gi) ?? [])], ['./brand/daggerfall-enhanced.webp'],
+    'and it is the ONLY image file the page names');
+  // ...and it is a file that exists, tracked, where the page says.
+  assert.equal(execFileSync('git', ['ls-files', 'public/brand'], { cwd: root, encoding: 'utf8' }).trim(), 'public/brand/daggerfall-enhanced.webp',
+    'public/brand/ holds the mark and nothing else - public/ is served at the site root, so ./brand/... is this file');
+  assert.ok(statSync(join(root, 'public/brand/daggerfall-enhanced.webp')).size < 200 * 1024,
+    'the door\'s one image stays under 200 KB - it is the first paint on a phone');
   assert.equal(execFileSync('git', ['ls-files', 'public/site'], { cwd: root, encoding: 'utf8' }).trim(), '',
-    'public/site/ is empty - the retired pictures may not quietly return without re-earning their doctrine rows');
+    'public/site/ is still empty - the retired SCREENSHOTS are what the doctrine caught, and they may not return under the wordmark\'s exemption');
   assert.ok(!existsSync(join(root, 'tools/siteShots.mjs')), 'the shots tool went with its pictures');
   assert.doesNotMatch(landing, /\/src\//, 'the landing page reaches into no game code');
   assert.doesNotMatch(landing, /\.(BSA|IMG|CIF|COL|RSC|VID|DAT|PAK|SND|XMI|HMI)\b/, 'no ARENA2 file is named');
@@ -330,7 +351,7 @@ test('U63: the night is the MENU\'s night - pixelGround\'s ramp, seed and star l
   assert.equal((css.match(/radial-gradient/g) ?? []).length, 2, 'two fog blobs, as the menu has');
   assert.match(css, /repeating-linear-gradient\(0deg[^)]*\) 0 2px/, 'the dither is a 2px checker');
   assert.match(css, /\.night::after \{[\s\S]*box-shadow:/, 'and the stars are one box-shadow list');
-  assert.doesNotMatch(css, /url\(/, 'no image, on a page that may not carry one');
+  assert.doesNotMatch(css, /url\(/, 'the ground is drawn, not photographed - the wordmark is the page\'s one image');
   // ...injected, not typed into the page.
   const out = transformLanding(landing, {});
   const block = out.tags.find((t) => t.tag === 'style' && t.attrs.id === 'pixel-ground');
@@ -351,7 +372,12 @@ test('U63: the page is the pixel face\'s own idioms, not the shell it replaced',
   assert.match(skin, /\.px-rule::before, \.px-rule::after \{ content: ''; flex: 1; height: 2px;/, '...which is the menu\'s rule');
   assert.match(css, /0 -4px 0 var\(--brass\), 0 4px 0 var\(--brass\)/, 'the gem, drawn as a box-shadow cross');
   assert.match(skin, /0 -4px 0 var\(--brass\), 0 4px 0 var\(--brass\)/, '...which is the menu\'s gem');
-  assert.match(css, /letter-spacing: 0\.5em; text-indent: 0\.5em/, 'the wordmark\'s tracked sub-line');
+  // BR2: the wordmark's tracked sub-line WAS type here ("ENHANCED" under
+  // "Daggerfall", letter-spacing 0.5em). It is painted into the logo now,
+  // so what is pinned is that the type went and the image took its place -
+  // not two wordmarks, one on top of the other.
+  assert.doesNotMatch(css, /\.wordmark small/, 'the typed sub-line went with the type it sat under');
+  assert.match(css, /\.wordmark img \{ display: block; width: min\(88vw, 520px\); height: auto;/, 'the logo is the wordmark, sized off the viewport');
   assert.match(css, /rgb\(243,239,44\)/, 'the classic shadowed-label pair, for what is live');
   assert.match(css, /text-shadow: 2px 2px 0 rgb\(93,77,12\)/);
   assert.match(skin, /color: rgb\(243,239,44\); text-shadow: 2px 2px 0 rgb\(93,77,12\)/, '...which is the menu\'s pair');
