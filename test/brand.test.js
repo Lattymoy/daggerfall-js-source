@@ -45,18 +45,27 @@ test('BR1: every surface the player reads carries the one name', () => {
   const landing = read('index.html');
   assert.match(landing, new RegExp(`<title>${NAME}</title>`), 'the landing page\'s title');
   assert.match(landing, new RegExp(`<meta property="og:title" content="${NAME}" />`), 'and what a link preview shows');
-  // The wordmark is one word over a tracked sub-line - the shape ES1's
-  // door has always had, with the sub-line's letter-spacing pinned in
-  // landing.test.js. Only the word changed.
-  assert.match(landing, /<h1 class="wordmark">Daggerfall<small>Enhanced<\/small><\/h1>/, 'the wordmark');
+  // BR2: the LANDING page's wordmark is the logo now, so the name lives
+  // in its alt - which is still text, and still has to say the one name.
+  // An <img> with no alt would take the product's name off the front door
+  // for every reader who cannot see it, and no adjacency sweep would ever
+  // notice; this is the pin that would.
+  assert.match(landing, new RegExp(`<h1 class="wordmark"><img [^>]*alt="${NAME}" /></h1>`), 'the wordmark, whose name is its alt');
   // THE WORDMARK SPLITS THE NAME ACROSS TWO ELEMENTS, so no adjacency
   // sweep can ever see it whole: the front door rendered DAGGERFALL over
   // a tracked sub-line reading JAVASCRIPT for the length of the rebrand
   // with `git grep 'Daggerfall JavaScript'` finding nothing. Every
   // wordmark is therefore pinned STRUCTURALLY - the sub-line's own text,
   // wherever the halves live.
+  // ...and IN GAME it is still TYPE, on purpose. enhancedStyle.js's BRAND
+  // note is the reason: the classic PICK03I0 paints its labels into a
+  // 320x200 bitmap, which cannot reflow, scale or be read on a phone, and
+  // that is the exact thing this overhaul exists to stop doing. The
+  // landing page's logo is a FIXED BANNER on a document - one heading, no
+  // state, sized off the viewport, with its text in alt. A menu is not.
   assert.match(read('src/ui/enhancedMenu.js'), /const mark = el\('h1', 'px-wordmark', 'Daggerfall'\);\s*\n\s*mark\.append\(el\('small', null, 'Enhanced'\)\);/,
     'the IN-GAME wordmark, which is the first thing a player sees');
+  assert.doesNotMatch(read('src/ui/enhancedMenu.js'), /<img|\.webp|\.png/, 'and it is still type - the menu paints no wordmark');
   for (const proto of ['menu-pixel.html', 'menu-redesign.html']) {
     assert.match(read(proto), /<h1 class="wordmark">Daggerfall<small>Enhanced<\/small><\/h1>/, `${proto}'s wordmark`);
   }

@@ -40,6 +40,7 @@ export const ENHANCED_TOKENS = `:root {
   --dim: #8b8578;
   --brass: #c08a3e;
   --blood: #8c3a32;
+  --ruby: #b91309;
   --verdigris: #4e7f72;
 
   --display: 'Cormorant', Georgia, serif;
