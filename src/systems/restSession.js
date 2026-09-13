@@ -394,6 +394,7 @@ export class RestSession {
     this.totalHours = 0;
     this._minutesOfHour = 0;
     this._timer = 0;
+    this._sharedAt = null;   // WORLD5: the shared clock's reading at the last counted sub-tick (null: not yet read)
     this._abortEnemySpawn = false;   // B1: the OnEncounter latch, read at the next tick
     // waitTimePerHour / minutesPerTick, verbatim (NOT per-hour /
     // ticks-per-hour - see the header quirk note).
@@ -454,6 +455,32 @@ export class RestSession {
   /** `uiManager.TopWindow != this` (:364, :399). See the ctor note:
    *  no seam means no stack above this window. */
   _covered() { return this.isTopWindow ? !this.isTopWindow() : false; }
+
+  /** The frame's real seconds, banked for the timer - unless WORLD5's shared clock paces this rest, in which case
+   *  the timer is never consulted and the world's clock is read per sub-tick (deps.sharedMinutes answers null
+   *  offline). */
+  _accrue(dt) {
+    if (Number.isFinite(this.deps.sharedMinutes?.())) return;
+    this._timer += dt;
+  }
+
+  /** ONE sub-tick taken, if one is owed - and only then, so a rest the window covers mid-frame keeps what it still
+   *  owes for the next frame, exactly as the timer always did. The window's own timer (REST_WAIT_PER_HOUR real
+   *  seconds a rested hour) or, WORLD5, the WORLD'S CLOCK: online a rest fabricates no minutes, so an hour of rest is
+   *  an hour of the shared world's time - five real minutes at DFU's TimeScale - and the window counts the clock's
+   *  own MINUTES_PER_TICK boundaries as they pass. */
+  _takeSubTick() {
+    const shared = this.deps.sharedMinutes?.();
+    if (Number.isFinite(shared)) {
+      if (this._sharedAt == null) this._sharedAt = shared;
+      if (shared - this._sharedAt < MINUTES_PER_TICK) return false;
+      this._sharedAt += MINUTES_PER_TICK;
+      return true;
+    }
+    if (this._timer < this._subTickEvery) return false;
+    this._timer -= this._subTickEvery;
+    return true;
+  }
 
   /** CheckRent (:441-448), run at the END of every rested hour
    *  (:435-436) after the mode's own completion test. Verbatim, and
@@ -521,9 +548,8 @@ export class RestSession {
     // advance its clock.
     if (this._covered()) return null;
 
-    this._timer += dt;
-    while (this._timer >= this._subTickEvery) {
-      this._timer -= this._subTickEvery;
+    this._accrue(dt);
+    while (this._takeSubTick()) {
       this.deps.advanceMinutes(MINUTES_PER_TICK);
       // TickRest :376-379, `RaiseTime` then `QuestMachine.Instance.
       // Tick()`, in that order and inside the SAME sub-tick. DFU's own

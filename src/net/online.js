@@ -202,6 +202,8 @@ export class OnlineSession {
     this.host = null;             // WORLD1: the room's host, the relay's word; null until the welcome
     this.onHost = null;           // (id, mine) => void: the host changed
     this.onWorld = null;          // (world) => void: the welcome carried the room's memory, or the host published one after it (AUDIT WORLD34 C1)
+    this.clockOffsetMs = 0;       // WORLD5: the relay's clock minus this machine's, from the welcome - the shared world time is read through it
+    this.onClock = null;          // WORLD5: (offsetMs) => void - the welcome said the relay's clock
     this.look = look ?? { race: 'Breton', gender: 'male', faceIndex: 0, items: [] };
     this.id = id ?? peerId();
     this._WS = WebSocketImpl;
@@ -407,6 +409,7 @@ export class OnlineSession {
       }
       for (const id of [...this.peers.keys()]) if (!keep.has(id)) this.peers.delete(id);
       this._setHost(m.host);   // WORLD1: the room's host, and the room's memory when it keeps one
+      if (Number.isFinite(m.now) && Math.abs(m.now - Date.now()) < 366 * 24 * 3600 * 1000) { this.clockOffsetMs = m.now - Date.now(); this.onClock?.(this.clockOffsetMs); }   // WORLD5: the relay's clock - a year off is no clock
       if (m.world && typeof m.world === 'object' && !Array.isArray(m.world)) this.onWorld?.(m.world);
     } else if (m.t === 'host') {
       this._setHost(m.id);

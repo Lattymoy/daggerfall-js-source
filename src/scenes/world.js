@@ -60,7 +60,7 @@ import { preloadSpellbookArt, spellbookArtLoaded } from '../ui/spellbookWindow.j
 import { createSpellbookWindow } from '../ui/spellbookDoor.js';   // PX23: the book's one door
 import { calculateCastCost } from '../systems/spellcost.js';   // M2   // T3b
 import { rangedDamageSpells } from '../systems/spellcast.js';   // U42: the flight probe's picker
-import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';   // AUDIT 23 (C2): the ONE clock
+import { worldMinutes, setWorldMinutes, setSharedClock, sharedClockOn, alignEntityClocks } from '../systems/worldTick.js';   // AUDIT 23 (C2): the ONE clock
 import { setSyntheticTimeIncrease } from '../systems/effectBroker.js';   // AUDIT 63 F13: DaggerfallTravelPopUp_OnPostFastTravel (EntityEffectBroker.cs:846-847)
 import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS, playerPainVoice, playPlayerVoice, makeEnemiesHostile } from './hostCombat.js';   // ROAD-B: GameManager.MakeEnemiesHostile
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 46): the arrow owes the flash too   // AUDIT 23 (C14)
@@ -206,7 +206,7 @@ import { Collider } from '../player/collider.js';
 import { createDataPipeline } from './dataPipeline.js';
 import { createWorldModes } from './worldModes.js';
 import { OnlineSession, roomKeyFor, DEFAULT_SERVER, WORLD_PUBLISH_MS, FOES_MS, FOES_FULL_MS, FOES_STALE_MS } from '../net/online.js';   // ONLINE1: the session; WORLD1: the room's memory
-import { POSE_STRIKES, isWorldRoom, actFrameFits } from '../net/wire.js';   // MAC7 #1: the swing's kind on the wire; AUDIT WORLD4 A1: whether an act frame can be said at all
+import { POSE_STRIKES, isWorldRoom, actFrameFits, sharedClassicMinutes } from '../net/wire.js';   // MAC7 #1: the swing's kind on the wire; AUDIT WORLD4 A1: whether an act frame can be said at all
 import { hasDaggerfallArrows } from '../combat/fpArm.js';   // MAC7 #2: the arrow bit on the wire - weaponRig's own read
 import { drawText } from '../ui/text.js';   // ONLINE1: the session's status line
 import { RemotePlayers, composeLook } from '../net/remotePlayers.js';   // ONLINE1: the others, drawn
@@ -263,7 +263,7 @@ import { PrecipitationRenderer } from '../render/precipitation.js';
 import { ROTOR_HUB, rotorPhase, advanceRotor, mountRotor, MILL_SOUND, millSoundPosition } from '../world/windmills.js';   // WM2b: the sails; WM4c: the hum
 import { BODY } from '../world/windmillMesh.js';   // WM2d: the tower, for the collider
 import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
-import { setWeather, currentWeather, tickWeather, weatherRespawn, applyClimateWeather, importClimateWeathers, weatherJumpStamp } from '../systems/weatherSim.js';   // W1: the live weather state (the save halves ride save.js); SAV3: the classic import's zone array
+import { setWeather, currentWeather, tickWeather, weatherRespawn, applyClimateWeather, importClimateWeathers, weatherJumpStamp, setSharedWeather, rollClimateWeathersForDay } from '../systems/weatherSim.js';   // W1: the live weather state (the save halves ride save.js); SAV3: the classic import's zone array
 import { classicSaveToSnapshot, takePendingClassicSave, peekPendingClassicSave } from '../systems/classicSave.js';   // SAV3: the classic-save import arm
 import { readTokens as readRscTokens, RSC } from '../formats/textRsc.js';   // SAV3: the classic rumors' token payloads
 import { lookScale, lookInvert, keyboardLookRate } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
@@ -613,11 +613,16 @@ export async function bootWorld(canvas, renderer, params, status) {
   // AUDIT 23 (C2: hosts-8 = audio-1): ONE clock - see exterior.js's
   // twin note. ?tod SETS the world clock's time-of-day at boot,
   // ?timescale SCALES the world tick (DFU's TimeScale, default 12).
+  // WORLD5 (Mac: "the shared clock and weather, and the quest clocks stood down online"): ONLINE, THE WORLD'S CLOCK IS
+  // A FUNCTION OF WALL TIME (net/wire.js sharedClassicMinutes), read through the relay's offset once the welcome says
+  // it. Installed before anything below reads the time, so a load's own clock, ?tod and ?timescale never stand.
+  let _sharedOffsetMs = 0;   // the relay's clock minus this machine's, heard when the session's welcome arrives
+  if (params.has('online')) { setSharedClock(() => sharedClassicMinutes(Date.now() + _sharedOffsetMs)); setSharedWeather(true); }   // and the day picks the sky from here on (weatherSim)
   {
     const bootTod = parseTimeOfDay(params.get('tod'));
-    if (bootTod != null) setWorldMinutes(Math.floor(worldMinutes() / 1440) * 1440 + bootTod);
+    if (bootTod != null && !sharedClockOn()) setWorldMinutes(Math.floor(worldMinutes() / 1440) * 1440 + bootTod);
   }
-  const timeScaleMult = params.has('timescale') ? Number(params.get('timescale')) / 12 : 1;
+  const timeScaleMult = params.has('timescale') && !sharedClockOn() ? Number(params.get('timescale')) / 12 : 1;
   const minuteNow = () => worldMinutes() % 1440;
 
   // A5b: OUTDOOR MUSIC. AssignPlaylist's City/Wilderness arms - night
@@ -3994,7 +3999,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // pick towards the side the journey came from.
       const travelStart = state.worldCoords(walkMode ? player.pos : cam.pos);
       await _teleportToPixel(pick.pixel.x, pick.pixel.y, null,
-        { arriveMinutes: worldMinutes() + computed.minutes,
+        { arriveMinutes: sharedClockOn() ? worldMinutes() : worldMinutes() + computed.minutes,   // WORLD5: online the trip takes no world time - the arrival is now
           reposition: REPOSITION.DirectionFromStartMarker,
           travelStart, modEvent: 'travel' });
       // cautious arrival heals in full; magicka honors NoRegenSpellPoints
@@ -4018,8 +4023,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       // spends that jump in TWO advances, each of which claims its own
       // window, so the flag is raised before each of them; the claim
       // itself retires it (effectBroker.js).
-      setSyntheticTimeIncrease(true);
-      playerTicker.advance(computed.minutes);
+      // WORLD5: online the clock is the world's and a trip moves it not at all - no jump, no catch-up window, no
+      // arrival clamp (the vampire arrives when they arrive); the fare and the cautious heal stand
+      if (!sharedClockOn()) { setSyntheticTimeIncrease(true); playerTicker.advance(computed.minutes); }
       // W1 review: DFU fast travel never fires the respawner's direct
       // re-roll - TeleportToCoordinates raises OnInitWorld, whose
       // weather half applies the destination climate's ARRAY slot
@@ -4051,7 +4057,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // per-round burn already reads them (passiveSpecials.js:113).
         sunAverse: !!playerEntity.racialOverride?.sunDamage || careerSunDamage(playerEntity.career),
       });
-      if (clamp > 0) { setSyntheticTimeIncrease(true); playerTicker.advance(clamp); }   // AUDIT 63 F13: the arrival clamp is inside DFU's one shielded Update too
+      if (clamp > 0 && !sharedClockOn()) { setSyntheticTimeIncrease(true); playerTicker.advance(clamp); }   // AUDIT 63 F13: the arrival clamp is inside DFU's one shielded Update too
       _lastEncMinutes = Math.floor(playerTicker.classicMinutes);   // X-slice: PreventEnemySpawns parity - no spawn catch-up for the traveled window
       // TP1 - performFastTravel's tail (:380): RaiseSkills fires AFTER
       // the arrival clamp, so a trip that lands at 7:10am raises
@@ -6258,6 +6264,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     removeQuestorPostMessage: (uid) => rumorMill.removeQuestorPostQuestMessage(uid),
     removeQuestRumors: (uid) => rumorMill.removeQuestRumorsFromRumorMill(uid),
     classicSeconds: () => playerTicker.classicMinutes * 60,
+    questClocksStoodDown: () => sharedClockOn(),   // WORLD5: online, every quest clock charges nothing (Mac: "naturally disabled while online")
     playerEntity,
     // AUDIT 24 (the seven-slice sweep): three more seams the bridge has
     // declared since Q2/Q3 that this host never answered. The bridge's
@@ -6689,6 +6696,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     online.onFoes = (id, data) => { _foesInAt = performance.now(); modes?.applyDungeonFoes?.(id, data); };   // AUDIT WORLD2 C5: the stream is the seat's heartbeat; A1: the host's id rides in
     online.onHit = (id, data) => { modes?.applyDungeonHit?.(id, data); };
     online.onAct = (id, data) => { modes?.applyDungeonActions?.(id, data); };   // WORLD3: another's door, lever or platform
+    online.onClock = (offsetMs) => { _sharedOffsetMs = offsetMs; };   // WORLD5: the relay's clock corrects this machine's
+    // WORLD5: this save's time markers are set to the WORLD's time - a save a month behind catches up no loans and no
+    // diseases on its first frame, one a year ahead reads no negative day - and the day's weather is rolled from the
+    // shared day's own seed, whatever sky the save carried
+    alignEntityClocks(playerEntity, worldMinutes());
+    rollClimateWeathersForDay(worldMinutes());
+    refreshSeason(worldMinutes());
     remotePlayers = new RemotePlayers({ renderer, deps: { fetchBytes, palette, getTexture } });
     // MWBODY1: the enhanced skin with Morrowind data attached puts every peer in a body of its own; otherwise the doll
     const enhanced = isEnhanced();   // the skin cannot change without a reload (switchSkin), so it is read once, not per frame
