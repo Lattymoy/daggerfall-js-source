@@ -124,8 +124,11 @@ section points at `releases/latest`, so cutting a release IS
 updating the site's download - no site change needed per release.
 `workflow_dispatch` builds the same installers as run artifacts
 without cutting a release. Artifact names are
-`DaggerfallJS-<version>-<os>-<arch>.<ext>`; bump `app/package.json`'s
-version with the tag.
+~~`DaggerfallJS-...`~~ `DaggerfallEnhanced-<version>-<os>-<arch>.<ext>`
+(BR1, 2026-09-13); bump `app/package.json`'s version with the tag. The
+update check reads the release TAG and its html_url, never an asset
+name, so the rename does not reach it - and the appId is deliberately
+unchanged, or every installed copy would stop seeing updates.
 
 ## Updating (DA6)
 

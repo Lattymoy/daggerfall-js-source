@@ -1483,8 +1483,8 @@ function paneMods(body) {
 // ── ABOUT ────────────────────────────────────────────────────────
 function paneAbout(body) {
   const c = el('div', 'card');
-  c.append(el('h3', null, 'Daggerfall JavaScript'));   // the public name (U60); project-dagger is the repo
-  c.append(el('p', 'meta', 'A 1:1 JavaScript port of Daggerfall.'));
+  c.append(el('h3', null, 'Daggerfall Enhanced'));   // the public name (BR1); project-dagger is the repo
+  c.append(el('p', 'meta', 'An open-source reimplementation of The Elder Scrolls II: Daggerfall.'));
   c.append(stats([
     ['Build', BUILD_TAG],
     ['Interface', SKIN_NAMES[uiSkin()]],
@@ -1600,7 +1600,7 @@ function renderHome() {
 
   const stage = el('div', 'px-stage');
   const mark = el('h1', 'px-wordmark', 'Daggerfall');
-  mark.append(el('small', null, 'JavaScript'));
+  mark.append(el('small', null, 'Enhanced'));   // BR1: the front door's own wordmark - the name is SPLIT across two elements here, which is why the brand sweep pins it structurally and not by adjacency
   stage.append(mark);
   const rule = el('div', 'px-rule');
   rule.append(el('span', 'px-gem'));

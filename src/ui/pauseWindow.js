@@ -383,7 +383,7 @@ export class PauseOptionsWindow {
     // the version line, right-aligned at the top (:146-152) - the
     // PORT's identity, not DFU's VersionInfo strings (Ledger A, THE
     // PAUSE WINDOW'S VERSION LINE IS THE PORT'S OWN BUILD TAG)
-    const ver = `project-dagger ${BUILD_TAG}`;
+    const ver = `Daggerfall Enhanced ${BUILD_TAG}`;   // BR1: the PRODUCT's name here, not the working name - this line is the whole of the branding surface a player sees in game
     shadowText(renderer, font, ver, m, 320 - 2 - measureText(font.fnt, ver), 2,
       { color: [0.75, 0.75, 0.75, 1] });
     // the stacked box (exit confirm / note), the U23 shape: laid out

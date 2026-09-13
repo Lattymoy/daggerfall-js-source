@@ -40,7 +40,18 @@ const { pathToFileURL } = require('node:url');
 // DAGGER_USER_DATA points saves/config somewhere else - the probe's
 // door (tools/appShellProbe.mjs writes into a temp dir it can read
 // back), and a portable install's (point it beside the executable).
+//
+// BR1 (2026-09-13): and FAILING THAT, the storage root is PINNED to the
+// folder the shipped versions wrote. Electron derives userData from
+// app.getName(), which prefers package.json's `productName` - so
+// renaming the product to "Daggerfall Enhanced" would have moved
+// <appData>/Daggerfall JavaScript out from under every existing install
+// on its next launch: saves, Prefs, and config.json with the ARENA2 path
+// in it, all silently unreachable, the first-run folder prompt back. A
+// rebrand is a name, not a migration. The folder keeps the name it was
+// created with, whatever the product is called on the outside.
 if (process.env.DAGGER_USER_DATA) app.setPath('userData', process.env.DAGGER_USER_DATA);
+else app.setPath('userData', path.join(app.getPath('appData'), 'Daggerfall JavaScript'));
 
 // ONE instance per userData. Two shells over the same Saves folder
 // hold two independent storage indexes that go mutually stale (the
@@ -248,7 +259,7 @@ async function checkForUpdates({ silent }) {
     if (!silent) dialog.showMessageBox({
       type: 'info',
       message: `You're up to date`,
-      detail: `Daggerfall JavaScript v${app.getVersion()} is the latest release.`,
+      detail: `Daggerfall Enhanced v${app.getVersion()} is the latest release.`,
     });
     return;
   }
@@ -365,7 +376,7 @@ async function createWindow() {
     width: 1280,
     height: 800,
     backgroundColor: '#111111',
-    title: 'Daggerfall JavaScript',
+    title: 'Daggerfall Enhanced',
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
