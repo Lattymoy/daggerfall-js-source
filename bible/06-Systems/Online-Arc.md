@@ -1453,6 +1453,11 @@ addressed to "slice 3" by name (the seeded layout, the window/pause
 gate) were left standing after slice 3 shipped without either - struck
 in place, naming what actually happened.
 
+Relay redeployed (840669fa); live, in a map-id room: six senders into
+one room fanned 85 of the 150 deliveries their frames asked for - the
+byte budget biting on the fan, every socket kept and no error frame -
+and an honest door still travelling afterwards.
+
 Pinned in `test/auditworld3.test.js` (4): the relay's act byte budget
 over the one fake (the fan costing the frame times its listeners, over
 it dropped and nobody struck, the frame budget still beside it); the
