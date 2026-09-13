@@ -2614,7 +2614,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2115 mounts the same one, gated on
+  // and dungeonContext.js:2118 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
   // that context through modes.dungeonCtx - so worldModes.js:4520
@@ -4134,7 +4134,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:5098), so exterior mode and a
+    // composer, dungeonContext.js:5167), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -6622,12 +6622,15 @@ export async function bootWorld(canvas, renderer, params, status) {
   // both refusals are silent to the room: the relay drops over its room budget without a word, and sendAct refuses
   // over ACT_HZ_MAX at home. So the refused KEYS are held, and the next frame that goes carries their CURRENT records
   // (re-read from the graph, never the stale ones the refusal carried); a quiet room flushes them from the frame.
+  // WORLD4: a container's key rides the same set, and is re-read the same way.
   const _actPend = new Set();
   const _actLive = () => !!(online && online.status === 'open' && isWorldRoom(online.room));
   const actSend = (data) => {
     if (!_actLive()) { _actPend.clear(); return false; }
-    if (!data || !Array.isArray(data.a) || !data.a.length) return false;
-    const keys = data.a.map((r) => r.key);
+    // WORLD4: the frame carries the doors (`a`, keyed by the action object) and the room's loot (`l`, keyed by the
+    // container) - either half or both, and the pending set holds whichever keys the wire refused
+    const keys = [...((data?.a ?? []).map((r) => r.key)), ...((data?.l ?? []).map((r) => r.k))];
+    if (!keys.length) return false;
     const out = _actPend.size ? (modes?.dungeonActionRecords?.([...new Set([..._actPend, ...keys])]) ?? data) : data;
     if (!online.sendAct(out)) { for (const k of keys) _actPend.add(k); return false; }
     _actPend.clear();

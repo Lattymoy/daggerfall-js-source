@@ -147,6 +147,7 @@ import { CLASSIC_UPDATE_INTERVAL } from '../characters/weaponStates.js';
 import { BUILD_TAG } from '../buildTag.js';
 import {
   generateItems as generateLootItems, addEnemyLootExtras, addPileLootExtras,   // AUDIT 24 (wave 43)
+  validLootList,   // WORLD4: a container's list off the wire, projected and clamped (AUDIT WORLD3 A2's law)
   RANDOM_TREASURE_ARCHIVE, RANDOM_TREASURE_ICONS,
   RANDOM_TREASURE_MARKER_RECORD, DUNGEON_LOOT_KEYS,
 } from '../systems/loot.js';
@@ -1331,7 +1332,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     });
   }
 
-  function openInventory(lootItems, onEmptied = null, { wagonPrompt = false, lootHooks = null } = {}) {
+  function openInventory(lootItems, onEmptied = null, { wagonPrompt = false, lootHooks = null, lootKey = null } = {}) {
     // V4: GetSuppressInventory (LycanthropyEffect.cs:409-421) - a
     // transformed lycanthrope opens NO inventory, loot included; the
     // caller assigns the null and no overlay mounts.
@@ -1388,7 +1389,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       onDrop: (items, icon = null, at = null) => (lastPlayerFeet
         ? droppedLoot.dropPile(items, containerDropPos(at, [...lastPlayerFeet]), null, icon)
         : console.warn('[loot] dropped before the first frame; no ground position yet')),
-      onClose: () => { onEmptied?.(); droppedLoot.releaseEmptied(); surfacePlayer(); },
+      // WORLD4: what is LEFT goes to the room on the close - the same moment DFU frees an emptied container's flat,
+      // and the moment the taking is finished rather than half done
+      onClose: () => { onEmptied?.(); if (lootKey) publishLoot(lootKey); droppedLoot.releaseEmptied(); surfacePlayer(); },
     });
   }
 
@@ -2825,7 +2828,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:8511,
+              // playerArrowHitFoe is the one copy world.js:8514,
               // exterior.js:4202 and worldModes.js:5926 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
@@ -3244,8 +3247,74 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   if (opts.onActions) actions.onChanged = (recs) => opts.onActions({ k: _locationKey, a: recs });
   /** WORLD3: another's change to this dungeon's doors, levers and movers - keyed by this dungeon. */
   function applyActions(id, data) {
-    if (!data || typeof data !== 'object' || data.k !== _locationKey || !Array.isArray(data.a)) return false;
-    return actions.applyRemote(data.a) > 0;
+    if (!data || typeof data !== 'object' || data.k !== _locationKey) return false;
+    // WORLD3 the doors, WORLD4 the loot - one frame, either half or both
+    const n = (Array.isArray(data.a) ? actions.applyRemote(data.a) : 0) + (Array.isArray(data.l) ? applyLoot(data.l) : 0);
+    return n > 0;
+  }
+  // WORLD4 (Mac: "Lets start on slice 4"): THE ROOM'S LOOT. A container nobody has opened is each client's OWN roll -
+  // the room knows nothing of it and the memory carries nothing for it, which is what "the memory carries emptied,
+  // not contents" asked for. The moment anyone OPENS one it becomes the ROOM's: its contents are published, everyone
+  // adopts them in place (so a window already open updates under the reader's hands), and every later take is
+  // published on the window's close - the same moment DFU's own law frees an emptied pile's flat. From then on the
+  // room's memory carries that container, and only that container.
+  const _lootSeen = new Set();   // the containers this client knows the room has opened
+  /** WORLD4: the container a loot key names - the pile or the corpse whose items ARE the room's list, or null.
+   *  The key vocabulary is takeLoot's own (`loot:<i>` the layout's pile order, `corpse:<i>` the layout's foe run);
+   *  a dropped pile is the dropper's alone (AUDIT WORLD B3) and is not one of these. */
+  function lootHolder(key) {
+    if (typeof key !== 'string') return null;
+    const [kind, iStr] = key.split(':');
+    const i = Number(iStr);
+    if (!Number.isInteger(i) || i < 0) return null;
+    if (kind === 'loot') { const p = lootPiles[i]; return p && Array.isArray(p.items) ? p.items : null; }
+    // a corpse past the layout's run is this player's own foe (a quest spawn, a summon) and its body is too
+    if (kind === 'corpse') { const f = foes[i]; return i < _layoutFoes && f?.dead && Array.isArray(f.entity?.items) ? f.entity.items : null; }
+    return null;
+  }
+  /** WORLD4: the pile's flat leaves when its container is emptied - DFU frees it on the window's CLOSE, and the same
+   *  settle runs for a container the ROOM emptied while I stood beside it. */
+  function settleLootPile(i) {
+    const p = lootPiles[i];
+    if (!p || !p.batch || p.items.length) return;
+    const bi = billboardBatches.indexOf(p.batch);
+    if (bi >= 0) billboardBatches.splice(bi, 1);
+    renderer.destroyBillboardBatch(p.batch);
+    p.batch = null;
+  }
+  /** WORLD4: what this client would tell the room about these containers RIGHT NOW - the shape the room adopts. */
+  function lootRecords(keys) {
+    const out = [];
+    for (const key of keys ?? []) {
+      const held = lootHolder(key);
+      if (held) out.push({ k: key, r: held.map((it) => ({ ...it })) });
+    }
+    return out;
+  }
+  /** WORLD4: this container is the room's now - said on the OPEN (so a second reader adopts the first's list rather
+   *  than their own roll) and again on the CLOSE (what is left after the taking). */
+  function publishLoot(key) {
+    if (!lootHolder(key)) return false;
+    _lootSeen.add(key);
+    return !!opts.onActions?.({ k: _locationKey, l: lootRecords([key]) });
+  }
+  /** WORLD4: the room's word about a container, landed IN PLACE so a window open on it updates under the reader.
+   *  A container the room has opened is the room's from then on, so its key is remembered for the memory. */
+  function applyLoot(list) {
+    let n = 0;
+    for (const rec of Array.isArray(list) ? list : []) {
+      const items = validLootList(rec?.r);
+      if (!items) continue;
+      const held = lootHolder(rec.k);
+      if (!held) continue;
+      held.length = 0;
+      for (const it of items) held.push(it);
+      _lootSeen.add(rec.k);
+      const [kind, iStr] = rec.k.split(':');
+      if (kind === 'loot') settleLootPile(Number(iStr));
+      n++;
+    }
+    return n;
   }
   const _retyping = new Set();
   /** WORLD3: the room's roster - the layout foe at `i` rebuilt as another species (and gender) through the one build
@@ -5231,6 +5300,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       w.foes = w.foes.slice(0, _layoutFoes);
       delete w.teleportedIntoDungeon;
       delete w.droppedLoot;
+      // WORLD4: the memory carries EMPTIED, not contents - the piles' blanket list goes, and in its place the
+      // containers the room has actually opened, each with what is left in it. A pile nobody has touched stays
+      // every client's own roll, as it was before anyone arrived.
+      delete w.piles;
+      w.loot = lootRecords([..._lootSeen]);
       return { locationKey: _locationKey, stamp: _sharedStamp, world: w };
     },
     /** WORLD1: the room's memory applied - the layout's foes patched in place, each its own species (B4), and every
@@ -5241,6 +5315,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (shared.stamp === _sharedStamp || _sharedApplied) return false;
       _sharedApplied = true;
       applyWorld({ ...shared.world, foes: Array.isArray(shared.world.foes) ? shared.world.foes.slice(0, _layoutFoes) : [] }, { truncate: false });
+      applyLoot(shared.world.loot);   // WORLD4: the containers the room has opened, through the live door
       return true;
     },
     locationKey: () => _locationKey,
@@ -5251,7 +5326,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     setAuthority,
     isAuthority: () => _authority,
     // WORLD3: the live world as events - another's doors in, the roster's rebuild, the peers the foes see
+    // WORLD4: and the room's loot - a container the room has opened, and what it holds now
     applyActions,
+    lootSeen: () => [..._lootSeen],
     /** AUDIT WORLD3 A3: the CURRENT shared record of each named object, for an act the wire refused. The seam is a
      *  DELTA and nothing re-sends it, so a dropped frame is a permanent disagreement about where a door stands; the
      *  host holds the refused KEYS and re-reads them here, never re-sending the stale record the refusal carried. */
@@ -5259,7 +5336,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (!Array.isArray(keys) || !keys.length) return null;
       const want = new Set(keys);
       const a = actions.collectSaveData().filter((r) => want.has(r.key)).map(sharedRecord);
-      return a.length ? { k: _locationKey, a } : null;
+      const l = lootRecords(keys.filter((k) => lootHolder(k)));   // WORLD4: a container's current list, re-read like a door's
+      return a.length || l.length ? { k: _locationKey, ...(a.length ? { a } : {}), ...(l.length ? { l } : {}) } : null;
     },
     retypeFoe,
     peerCandidates,
@@ -5757,7 +5835,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       }
       if (!source) return 0;
       if (activeOverlay) return source.length;
-      activeOverlay = openInventory(source, onEmptied, { lootHooks });
+      // WORLD4: opening one of the room's containers CLAIMS it - the room hears this client's list before a single
+      // item moves, so a second reader opening the same pile a moment later reads the room's and not their own roll
+      if (lootHolder(key)) publishLoot(key);
+      activeOverlay = openInventory(source, onEmptied, { lootHooks, lootKey: lootHolder(key) ? key : null });
       return source.length;
     },
     /** RW1: GivePc's reward container (GivePc.cs:167-171) - a dropped

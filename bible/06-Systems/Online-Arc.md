@@ -719,7 +719,9 @@ the next rooms.
   (the leading run before the first `isQuestFoe` - a quest's foes are
   the quest owner's, and quests stay separate: Multiplayer.md's first
   lock), nothing of the player's own (no `teleportedIntoDungeon`),
-  keyed by the dungeon's `locationKey`; `restoreSharedWorld(shared)`
+  keyed by the dungeon's `locationKey` (and, since WORLD4, no pile's
+  contents - only the containers the room has opened);
+  `restoreSharedWorld(shared)`
   refuses another dungeon's memory and applies with `truncate: false`
   - `applyWorld`'s cut past the record's length is the save's alone
   (a save holds the whole pool), so a memory from a player without
@@ -915,8 +917,10 @@ fixed level or the location's seed for the random flats online, or the
 layout roster published beside the memory)~~ - WORLD3 took the
 disagreement instead of preventing it (`retypeFoe` rebuilds the
 mismatched foe at its index); a seeded layout is still the cheaper cure
-and is unclaimed; loot's memory should carry
-"emptied", not contents (slice 4); a host's quickload inside a dungeon
+and is unclaimed; ~~loot's memory should carry
+"emptied", not contents (slice 4)~~ - WORLD4 did exactly that: a
+container nobody has opened carries nothing at all, and one the room
+has opened carries what is left in it; a host's quickload inside a dungeon
 rewinds the layout's foes for every joiner since WORLD2 (the next
 stream carries the rewound records) and nothing else of theirs (the
 doors, the piles, their own), and is itself rewound by the room's
@@ -1270,7 +1274,7 @@ on a landed blow); the host's pause still freezes the room for everyone
 (the stream's full frames are its heartbeat); a foe's spell's other
 effects (a paralysis, a drain) land on the puppet locally and the stream
 overwrites what it carries; the bash's sound and the pick's line are the
-author's alone; loot is still slice 4; the shared clock and weather and
+author's alone; the shared clock and weather and
 the quest clocks are slice 5; no player-versus-player.
 
 Pinned in `test/world3.test.js` (5): the wire and the Room over the one
@@ -1472,6 +1476,86 @@ them still firing for a foe hunting me); and the hosts and the record
 by source. `test/world3.test.js` restamped where the law moved, its
 peer pin made to fail.
 
+## WORLD4 (2026-09-13): the room's loot
+
+**Mac: "Lets start on slice 4."** Slice 4 of the persistent shared
+world: A CONTAINER THE ROOM HAS OPENED IS THE ROOM'S. Until now a
+dungeon's loot was every client's own roll, and the room's memory
+carried the host's whole pile list - so a joiner's own loot was
+replaced wholesale by the host's, fifteen seconds stale, and a chest
+one player emptied could refill for another.
+
+THE LAW, in one breath: a container nobody has opened stays each
+client's own and the room knows nothing of it; the moment anyone OPENS
+one it becomes the room's, and stays the room's.
+
+- **The wire** (`src/net/wire.js`): nothing new. The loot rides
+  WORLD3's `{t:'act', data}` frame as a second half beside the doors -
+  `{k, a?, l?}`, either or both - and the relay reads none of that
+  frame's `data`, so slice 4 needed NO relay change, no frame of its
+  own and no budget of its own: AUDIT WORLD3's act budgets (the rate,
+  the room's frames, the room's bytes) and its refused-act heal cover
+  it as they stand. Proved live against the relay already deployed.
+- **The dungeon host** (`src/scenes/dungeonContext.js`): `lootHolder`
+  names what a key holds in takeLoot's own vocabulary - `loot:<i>` a
+  layout pile (the block markers' order, the same on every client) and
+  `corpse:<i>` a layout foe's body, bounded by `_layoutFoes` exactly as
+  the stream and the hit are: a quest spawn's or a summon's body is the
+  player's own, and so is a DROPPED pile (AUDIT WORLD B3 - a drop is
+  the dropper's). `publishLoot` says the container is the room's TWICE:
+  on the OPEN, which CLAIMS it (a second reader opening the same chest
+  a moment later adopts the first's list rather than their own roll),
+  and on the CLOSE, which says what is left - the same moment DFU's own
+  law frees an emptied container's flat, and the moment the taking is
+  finished rather than half done. `applyLoot` lands another's word
+  through the projection and IN PLACE (`held.length = 0`, then push),
+  so a window already open on that container updates under the reader's
+  hands, and `settleLootPile` frees the flat of a pile the ROOM
+  emptied while this player stood beside it.
+- **The projection** (`src/systems/loot.js`): AUDIT WORLD3 A2's law
+  applied to the other thing the frame now carries. An item record is
+  an OPEN shape (the inventory arc grows it; a magic item carries its
+  enchantments), so `validLootItem`/`validLootList` CLAMP rather than
+  whitelist - a plain object of bounded breadth (`LOOT_ITEM_KEYS_MAX`)
+  and depth (`LOOT_DEPTH_MAX`, an enchantment list is 2), bounded
+  strings, finite numbers, a `templateIndex` a template could carry,
+  at most `LOOT_LIST_MAX` items, and no prototype key. What survives is
+  a COPY: no reference off the wire reaches the pack. An EMPTY list is
+  valid and is the commonest word a room says about a container.
+- **The memory** (`sharedWorld`): the piles' blanket contents are gone
+  and the opened containers stand in their place, so an untouched pile
+  is every client's own roll as it was before anyone arrived, and a
+  joiner is told about exactly the chests somebody has been into.
+  `restoreSharedWorld` lands them through the same door the live frame
+  takes. The SAVE keeps its whole pile list, untouched:
+  `collectWorld`/`applyWorld` are the save's and did not move.
+
+What it does not do: the take is seen by the room when the window
+CLOSES, not per item, so two players who open the same untouched chest
+in the same breath both take it and both keep it (the claim on the open
+narrows that window to the time between two opens, and the room's list
+is then whoever closed last); a player's own dropped pile is still
+theirs alone, so handing an item to a friend by dropping it does not
+work yet; gold, the wagon and the quest reward pile are each player's
+own; a container in a town, a cell or a building is nobody's yet
+(a dungeon is still the only room with a world); and a corpse past the
+layout's run - a quest spawn's, a summon's - is the player's own body
+to loot, as its foe is their own to fight.
+
+Pinned in `test/world4.test.js` (3): the projection executed (the empty
+list valid, the copy a copy, the bounds on breadth, depth, strings,
+count and templateIndex, a magic item's enchantments surviving whole, a
+prototype key refused); the wire and the Room over the one fake (an
+`l`-only frame parsed, fanned to everyone hello'd but its author,
+spending the ACT bucket and not the poses', a town relaying none, and
+the session sending and taking it under the same gate and cap); the
+dungeon host and the memory by source. Live, against the relay already
+deployed (840669fa) and with no deploy of its own: a claim fanned, an
+emptied fanned, a door and a chest in one frame, the author hearing
+neither and no error. Not seen with two real players from here - Mac's
+browsers are the gate: one player empties a chest and the other finds
+it empty, and finds the flat gone.
+
 ## What it does not do (yet)
 
 - **The Morrowind body** ships (MWBODY1, above); a client without the
@@ -1585,6 +1669,9 @@ executed, the hosts by source.
 byte budget; the record projection, the picker's latch and the instant
 mover's sound, executed on bare graphs; the local player told from any
 player, executed on the motor; the hosts and the record by source.
+`test/world4.test.js` (3): the loot projection executed, the act
+frame's loot half over the one fake and through the session, the
+dungeon host and the memory by source.
 
 ## OD1 - THE PEER DOLL GOES UP BOTTOM-UP (2026-09-12, Mac's report)
 

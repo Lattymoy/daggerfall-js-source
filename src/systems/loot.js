@@ -17,7 +17,7 @@
 // MI (magic items) rolls need the MAGIC.DEF registry
 // (setMagicItemTemplates), and EVERY host that can generate loot now
 // loads it: scenes/shared.js:104-107 (loadMagicRegistries) feeds the
-// module table this file reads, called from dungeonContext.js:1062,
+// module table this file reads, called from dungeonContext.js:1063,
 // world.js:1591 and exterior.js:1062 - interiors run inside those hosts
 // and read the same table. What is left is the data-absent boot, and
 // that is DFU's own answer rather than a stand-in: shared.js:107
@@ -449,6 +449,67 @@ export function getMagicItemTemplates() { return _magicItemTemplates; }
 
 /** DaggerfallLoot.GenerateItems: key -> matrix -> loot. Unknown keys
  *  fall to '-' (empty), matching GetMatrix's null-safe use. */
+// ---- WORLD4: a container's list off the wire -----------------------
+// AUDIT WORLD3 A2's law, applied to the other thing WORLD3's frame now
+// carries: a record from another player is a stranger's until it is
+// projected and clamped. An item record is an OPEN shape (the inventory
+// arc grows it, and a magic item carries its enchantments), so this
+// clamps rather than whitelists - a plain object of bounded breadth and
+// depth whose strings are bounded and whose numbers are finite, with a
+// templateIndex that could name a template. What survives is a COPY: no
+// reference from the wire reaches the pack.
+
+/** The most items a container may hand the room. DFU's fullest pile is a
+ *  handful; this is far past every honest one. */
+export const LOOT_LIST_MAX = 64;
+/** The most fields an item record may carry, the longest string it may
+ *  hold, and how deep it may nest (an enchantment list is depth 2). */
+export const LOOT_ITEM_KEYS_MAX = 48;
+export const LOOT_STR_MAX = 128;
+export const LOOT_DEPTH_MAX = 4;
+
+function clampLootValue(v, depth) {
+  if (v === null) return null;
+  const t = typeof v;
+  if (t === 'boolean') return v;
+  if (t === 'number') return Number.isFinite(v) ? v : undefined;
+  if (t === 'string') return v.length > LOOT_STR_MAX ? v.slice(0, LOOT_STR_MAX) : v;
+  if (t !== 'object' || depth >= LOOT_DEPTH_MAX) return undefined;
+  if (Array.isArray(v)) {
+    if (v.length > LOOT_LIST_MAX) return undefined;
+    const out = [];
+    for (const e of v) { const c = clampLootValue(e, depth + 1); if (c === undefined) return undefined; out.push(c); }
+    return out;
+  }
+  if (Object.getPrototypeOf(v) !== Object.prototype && Object.getPrototypeOf(v) !== null) return undefined;
+  const keys = Object.keys(v);
+  if (keys.length > LOOT_ITEM_KEYS_MAX) return undefined;
+  const out = {};
+  for (const k of keys) {
+    if (!k || k.length > LOOT_STR_MAX || k === '__proto__') return undefined;
+    const c = clampLootValue(v[k], depth + 1);
+    if (c !== undefined) out[k] = c;
+  }
+  return out;
+}
+
+/** One item record off the wire, clamped to a copy - or null when it is not one this port could have minted. */
+export function validLootItem(v) {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return null;
+  if (!Number.isInteger(v.templateIndex) || v.templateIndex < 0 || v.templateIndex > 65535) return null;
+  const out = clampLootValue(v, 0);
+  return out && typeof out === 'object' && !Array.isArray(out) ? out : null;
+}
+
+/** A container's whole list off the wire - every item clamped, or null when the list is not one. An EMPTY list is
+ *  the commonest word a room says about a container ("it is emptied"), so it is valid and is not null. */
+export function validLootList(v) {
+  if (!Array.isArray(v) || v.length > LOOT_LIST_MAX) return null;
+  const out = [];
+  for (const e of v) { const it = validLootItem(e); if (!it) return null; out.push(it); }
+  return out;
+}
+
 export function generateItems(lootTableKey, who, rolls = Math.random) {
   const matrix = LOOT_MATRICES[lootTableKey] ?? LOOT_MATRICES['-'];
   return generateRandomLoot(matrix, who, rolls);

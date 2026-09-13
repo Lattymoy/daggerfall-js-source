@@ -75,7 +75,7 @@ test('WORLD3: the wire and the Room - an act is an object from a hello\'d socket
   await town.raw(t1, JSON.stringify({ t: 'act', data: act }));
   assert.equal(ofType(t2, 'act').length, 0, 'a town has no shared doors'); assert.equal(t1.closed, null);
   // the heads
-  assert.match(rd('server/src/index.js'), /WORLD3 \(2026-09-12\): THE LIVE DOORS\./); assert.match(rd('src/net/wire.js'), /THE LIVE DOORS \(WORLD3, 2026-09-12\)\./);
+  assert.match(rd('server/src/index.js'), /WORLD3 \(2026-09-12\): THE LIVE DOORS, and WORLD4 \(2026-09-13\): THE\n\/\/ ROOM'S LOOT\./, 'the Room\'s head says what the frame now carries'); assert.match(rd('src/net/wire.js'), /THE LIVE DOORS \(WORLD3, 2026-09-12\) AND THE ROOM'S LOOT \(WORLD4,/, 'the wire\'s head says what the frame now carries');
   assert.match(rd('src/net/wire.js'), /\{t:'act', data\}/); assert.match(rd('src/net/wire.js'), /\{t:'act', id, data\}/);
 });
 
@@ -229,7 +229,7 @@ test('WORLD3: the hosts by source - the dungeon host (the state, the doors\' sea
   const d = rd('src/scenes/dungeonContext.js');
   assert.match(d, /let _foesFrom = null;[^\n]*\n\s*\/\/ WORLD3 \(Mac: "Begin"\): THE LIVE WORLD AS EVENTS\./, 'the state, under WORLD2\'s');
   assert.match(d, /if \(opts\.onActions\) actions\.onChanged = \(recs\) => opts\.onActions\(\{ k: _locationKey, a: recs \}\);/, 'the doors out, keyed by this dungeon');
-  assert.match(d, /function applyActions\(id, data\) \{\s*if \(!data \|\| typeof data !== 'object' \|\| data\.k !== _locationKey \|\| !Array\.isArray\(data\.a\)\) return false;\s*return actions\.applyRemote\(data\.a\) > 0;\s*\}/, 'the doors in, this dungeon\'s alone');
+  assert.match(d, /function applyActions\(id, data\) \{\s*if \(!data \|\| typeof data !== 'object' \|\| data\.k !== _locationKey\) return false;\s*(?:\/\/[^\n]*\n\s*)*const n = \(Array\.isArray\(data\.a\) \? actions\.applyRemote\(data\.a\) : 0\) \+ \(Array\.isArray\(data\.l\) \? applyLoot\(data\.l\) : 0\);\s*return n > 0;\s*\}/, 'the doors in, this dungeon\'s alone - and since WORLD4 the room\'s loot in the same frame');
   assert.match(d, /async function retypeFoe\(i, mobileType, gender = null\) \{\s*const f = foes\[i\];\s*(?:\/\/[^\n]*\n\s*)*if \(!f \|\| i >= _layoutFoes \|\| f\.dead \|\| !f\.src \|\| _retyping\.has\(i\) \|\| !canStandFoe\(mobileType\)\) return false;/, 'the rebuild: the layout\'s run, a live foe, once at a time, a species the chain can stand (AUDIT WORLD3 E3)');
   assert.match(d, /const rec = await buildFoeAt\(\{ \.\.\.f\.src, mobileType, gender: gender === 'female' \|\| gender === 'male' \? gender : undefined \}, true, \{ at: i \}\);/, 'through the one build chain, in place');
   assert.match(d, /async function buildFoeAt\(e, fallbackFlat = true, \{ at = -1 \} = \{\}\) \{/); assert.match(d, /const stand = \(rec\) => \{\s*const old = at >= 0 \? foes\[at\] : null;\s*if \(!old\) \{ foes\.push\(rec\); return; \}\s*(?:\/\/[^\n]*\n\s*)*if \(_ctxDead\) \{ if \(rec\.batch\) \{ renderer\.destroyBillboardBatch\(rec\.batch\); rec\.batch = null; \} rec\.dead = true; return; \}\s*if \(old\.batch\) \{ renderer\.destroyBillboardBatch\(old\.batch\); old\.batch = null; \}\s*old\.dead = true;\s*dropCandidate\(old\);\s*foes\[at\] = rec;\s*\};/, 'the old freed, dead to everything, the new at its index - and a rebuild that lands after the teardown frees what it minted (AUDIT WORLD3 E4)');
@@ -249,7 +249,7 @@ test('WORLD3: the hosts by source - the dungeon host (the state, the doors\' sea
   assert.match(d, /if \(data\.ar === 1 && kind === 'arrow'\) addItem\(f\.entity\.items \?\?= \[\], \{ group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 \}\);/, 'the shaft where BowDamage puts it');
   assert.match(d, /foe\.ai\.makeEnemyHostileToAttacker\?\.\(\(peer && peerCandidate\(peerId\)\) \|\| foeDeps\.PLAYER_TARGET, playerFeet \?\? lastPlayerFeet\);/, 'the aggro on the peer, at its feet');
   assert.match(d, /f\._pupTarget = null; f\._pupMine = false;   \/\/ WORLD3/, 'the handover clears them');
-  assert.match(d, /isAuthority: \(\) => _authority,\s*(?:\/\/[^\n]*\n\s*)*applyActions,\s*(?:\/\*\*[\s\S]*?\*\/\s*)?actionRecords\(keys\) \{/, 'the API'); assert.match(d, /\n    retypeFoe,\n    peerCandidates,/, 'and the rebuild and the peers on it');
+  assert.match(d, /isAuthority: \(\) => _authority,\s*(?:\/\/[^\n]*\n\s*)*applyActions,\s*lootSeen: \(\) => \[\.\.\._lootSeen\],\s*(?:\/\*\*[\s\S]*?\*\/\s*)?actionRecords\(keys\) \{/, 'the API'); assert.match(d, /\n    retypeFoe,\n    peerCandidates,/, 'and the rebuild and the peers on it');
   const m = rd('src/scenes/worldModes.js');
   assert.match(m, /onActions: \(data\) => host\.onActions\?\.\(data\), peers: \(\) => host\.peers\?\.\(\) \?\? null, selfId: \(\) => host\.selfId\?\.\(\) \?\? null,/, 'into the build');
   assert.match(m, /applyDungeonActions\(id, data\) \{ return mode === 'dungeon' && dungeonCtx \? !!dungeonCtx\.applyActions\?\.\(id, data\) : false; \},/);

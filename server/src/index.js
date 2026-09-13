@@ -74,8 +74,9 @@
 // host goes to the host's socket alone, under the room's hit budget
 // (_roomHits, HIT_ROOM_HZ_MAX - A6). The relay reads neither.
 //
-// WORLD3 (2026-09-12): THE LIVE DOORS. A change to the room's doors,
-// levers and movers ({t:'act', data}, on its own bucket - _meterActs,
+// WORLD3 (2026-09-12): THE LIVE DOORS, and WORLD4 (2026-09-13): THE
+// ROOM'S LOOT. A change to the room's doors, levers, movers and
+// containers ({t:'act', data}, on its own bucket - _meterActs,
 // ACT_HZ_MAX - so a door never starves a pose) from anyone hello'd in a
 // world room goes to everyone hello'd but its author, under the room's own
 // budgets (_roomActs ACT_ROOM_HZ_MAX frames, _roomActBytes

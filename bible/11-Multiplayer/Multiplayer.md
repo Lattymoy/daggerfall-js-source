@@ -209,7 +209,7 @@ convenience.
 
 ## Open questions, deliberately open
 
-- Host migration (a client becomes host when the host drops): the seat, WORLD1 (the relay's word); a dungeon's foes, WORLD2 (the puppets go live); its doors, levers and platforms need no seat at all, WORLD3 (an act is whoever touched them, the memory carries them); its loot, slice 4.
+- Host migration (a client becomes host when the host drops): the seat, WORLD1 (the relay's word); a dungeon's foes, WORLD2 (the puppets go live); its doors, levers and platforms need no seat at all, WORLD3 (an act is whoever touched them, the memory carries them); its loot, WORLD4 (a container the room has opened is the room's, and needs no seat either).
 - Splitting the party across interiors. Later.
 - Voice chat. Text chat shipped in the ONLINE arc (CHAT1, `06-Systems/Online-Arc.md`) - one World tab in the enhanced HUD; a co-op party tab is the next row of its CHAT_TABS. Voice is not basics.
 - Whether a client's damage claim ever gets validated. Not planned.
