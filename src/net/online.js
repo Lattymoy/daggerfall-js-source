@@ -69,7 +69,7 @@
 //
 // Not a DFU member: Daggerfall Unity has no multiplayer. Ledger A row.
 import { tabStorage } from '../systems/appStorage.js';   // the tab's own storage - the seam, never the browser's own (a PIN)
-import { WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, validPose, validLook, sanitizeName, sanitizeChat, chatGate, worldRoom, inRange, relayUrl, isWorldRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate } from './wire.js';
+import { WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, validPose, validLook, sanitizeName, sanitizeChat, chatGate, worldRoom, inRange, relayUrl, isWorldRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits } from './wire.js';
 
 export { WORLD_CELL, RANGE_PIXELS, worldRoom };
 
@@ -291,8 +291,8 @@ export class OnlineSession {
     if (!isWorldRoom(this.room) || !this._ws || this.status !== 'open') return false;
     const gate = actGate(this._abucket, this._now());
     if (!gate.pass) return false;
+    if (!actFrameFits(data)) return false;   // AUDIT WORLD4 A1: the one home the host reads too
     const s = JSON.stringify({ t: 'act', data });
-    if (s.length > MAX_FRAME_BYTES) return false;
     try { this._ws.send(s); } catch { return false; }
     this._abucket = gate.bucket; this.stats.sent++; this.stats.acts++;
     return true;

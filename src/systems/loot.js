@@ -254,7 +254,7 @@ export function createRegularMagicItem(templates, playerLevel, gender, rolls = M
   // G4: THE VALUE IS OVERWRITTEN (:632). The gap that stood here from
   // S4c - the enchantment cost sum unported, so a magic item sold at
   // its mundane base - closed with M4's catalogue: the sum is
-  // legacyEnchantmentValue (enchantments.js:220-238) and it is called
+  // legacyEnchantmentValue (enchantments.js:222-240) and it is called
   // on the `value:` line below. `newItem.value = value` REPLACES
   // whatever the base item was
   // worth, so a daedric longsword and a leather boot with the same
@@ -459,8 +459,11 @@ export function getMagicItemTemplates() { return _magicItemTemplates; }
 // templateIndex that could name a template. What survives is a COPY: no
 // reference from the wire reaches the pack.
 
-/** The most items a container may hand the room. DFU's fullest pile is a
- *  handful; this is far past every honest one. */
+/** The most items a container may hand the room. Far past every honest ROLL - measured over millions of piles the
+ *  fattest is 28 - but a dungeon container is not only its roll: the inventory's Remove arm stores from the pack
+ *  into the pile's own array with no count cap, so a player CAN put more than this in one. AUDIT WORLD4 A2/B2/D1:
+ *  the bound is therefore a law the SENDER obeys too (dungeonContext's lootRecords), because a list refused here is
+ *  refused whole and in silence, and the next player's claim would then overwrite the storer's stash. */
 export const LOOT_LIST_MAX = 64;
 /** The most fields an item record may carry, the longest string it may
  *  hold, and how deep it may nest (an enchantment list is depth 2). */
@@ -493,12 +496,24 @@ function clampLootValue(v, depth) {
   return out;
 }
 
+/** AUDIT WORLD4 B1: the fields the port reads with an ARRAY METHOD. The clamp types values as primitive, array or
+ *  plain object and says nothing about which is which, so a `enchantments` of "!" survived it - and every reader of
+ *  that field (`itemEnchantments`'s filter, the two artifact predicates' some) is guarded only by a truthiness or a
+ *  `.length` test, which a string passes. One such item in a chest froze the tab: the throw escapes the frame body,
+ *  which has no try, and the loop is never rescheduled. A named field's SHAPE is not open even when the record is. */
+export const LOOT_ARRAY_FIELDS = Object.freeze(['enchantments', 'customEnchantments']);
+
 /** One item record off the wire, clamped to a copy - or null when it is not one this port could have minted. */
 export function validLootItem(v) {
   if (!v || typeof v !== 'object' || Array.isArray(v)) return null;
   if (!Number.isInteger(v.templateIndex) || v.templateIndex < 0 || v.templateIndex > 65535) return null;
+  for (const f of LOOT_ARRAY_FIELDS) if (v[f] != null && !Array.isArray(v[f])) return null;   // B1
   const out = clampLootValue(v, 0);
-  return out && typeof out === 'object' && !Array.isArray(out) ? out : null;
+  if (!out || typeof out !== 'object' || Array.isArray(out)) return null;
+  // ...and the clamp must not have turned one INTO something else on the way (a depth cut drops a field whole,
+  // which is safe; a survivor that is no longer an array is not)
+  for (const f of LOOT_ARRAY_FIELDS) if (out[f] != null && !Array.isArray(out[f])) return null;
+  return out;
 }
 
 /** A container's whole list off the wire - every item clamped, or null when the list is not one. An EMPTY list is

@@ -296,7 +296,7 @@ test('EC1: the world host consumes the shared law rather than a second copy of i
 
 test('AUDIT 58 (f2/hosts): the EXTERIOR host mounts the same body over its own pools', () => {
   // The third host that can hold an enchanted item and mounted nothing.
-  // `_defaultCtx` is a session singleton (enchantments.js:251-253) and
+  // `_defaultCtx` is a session singleton (enchantments.js:253-255) and
   // in a ?exterior session it stayed null for the whole boot, so every
   // arm that folds it in optional-chained into silence - CastWhenUsed
   // and CastWhenStrikes found no record and still billed 10 condition,

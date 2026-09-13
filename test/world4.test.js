@@ -5,8 +5,10 @@
 // 'emptied', not contents" asked for. The moment anyone OPENS one it
 // becomes the ROOM's: its list is published on the open (so a second
 // reader adopts the first's rather than their own roll) and again on the
-// close (what is left after the taking), landed IN PLACE so a window
-// already open updates under the reader's hands. It rides WORLD3's act
+// close (what is left after the taking), landed IN PLACE - except on a
+// container you have open, which is yours until you close it (AUDIT
+// WORLD4 C1 struck WORLD4's own "a window already open updates under the
+// reader's hands"; test/auditworld4.test.js). It rides WORLD3's act
 // frame - the relay reads none of that frame's `data`, so slice 4 needed
 // no relay change, no new frame and no budget of its own. THE ARM
 // EXECUTES: the projection (a container's list off the wire, clamped);
@@ -98,20 +100,25 @@ test('WORLD4: the wire and the Room - the loot rides WORLD3\'s act frame, so the
 test('WORLD4: the dungeon host and the memory by source - the container vocabulary is takeLoot\'s own and a corpse past the layout\'s run is the player\'s alone; the open CLAIMS a container and the close says what is left; another\'s word lands IN PLACE, through the projection, and settles an emptied pile\'s flat; the memory carries the OPENED containers in place of every pile\'s contents; the refused-act heal re-reads a container like a door', () => {
   const d = rd('src/scenes/dungeonContext.js');
   assert.match(d, /const _lootSeen = new Set\(\);/, 'the containers the room has opened');
-  assert.match(d, /function lootHolder\(key\) \{[\s\S]*?if \(kind === 'loot'\) \{ const p = lootPiles\[i\]; return p && Array\.isArray\(p\.items\) \? p\.items : null; \}[\s\S]*?if \(kind === 'corpse'\) \{ const f = foes\[i\]; return i < _layoutFoes && f\?\.dead && Array\.isArray\(f\.entity\?\.items\) \? f\.entity\.items : null; \}\s*return null;\s*\}/,
+  // AUDIT WORLD4 D6: no `[\s\S]*?` across a law - the gaps let a mutation walk in over the top of them. The body,
+  // whole, from its brace to its close, and through AUDIT WORLD4 C4's canon.
+  assert.match(d, /function lootHolder\(key\) \{\s*const canon = lootKeyOf\(key\);\s*if \(!canon\) return null;\s*const \[kind, iStr\] = canon\.split\(':'\);\s*const i = Number\(iStr\);\s*if \(kind === 'loot'\) \{ const p = lootPiles\[i\]; return p && Array\.isArray\(p\.items\) \? p\.items : null; \}\s*\/\/[^\n]*\n\s*if \(kind === 'corpse'\) \{ const f = foes\[i\]; return i < _layoutFoes && f\?\.dead && Array\.isArray\(f\.entity\?\.items\) \? f\.entity\.items : null; \}\s*return null;\s*\}/,
     'the vocabulary: a layout pile and a layout corpse - a quest spawn\'s body is the player\'s own, the bound the stream and the hit already take');
   const holderBody = d.slice(d.indexOf('function lootHolder'), d.indexOf('\n  }', d.indexOf('function lootHolder')));
   assert.doesNotMatch(holderBody, /droppedLoot/, 'and never a dropped pile: a drop is the dropper\'s (AUDIT WORLD B3)');
-  assert.match(d, /function settleLootPile\(i\) \{\s*const p = lootPiles\[i\];\s*if \(!p \|\| !p\.batch \|\| p\.items\.length\) return;[\s\S]*?renderer\.destroyBillboardBatch\(p\.batch\);\s*p\.batch = null;\s*\}/, 'an emptied pile\'s flat leaves, whoever emptied it');
-  assert.match(d, /function publishLoot\(key\) \{\s*if \(!lootHolder\(key\)\) return false;\s*_lootSeen\.add\(key\);\s*return !!opts\.onActions\?\.\(\{ k: _locationKey, l: lootRecords\(\[key\]\) \}\);\s*\}/, 'the room hears it, keyed by this dungeon');
-  assert.match(d, /if \(lootHolder\(key\)\) publishLoot\(key\);\s*activeOverlay = openInventory\(source, onEmptied, \{ lootHooks, lootKey: lootHolder\(key\) \? key : null \}\);/, 'the OPEN claims the container');
-  assert.match(d, /onClose: \(\) => \{ onEmptied\?\.\(\); if \(lootKey\) publishLoot\(lootKey\); droppedLoot\.releaseEmptied\(\); surfacePlayer\(\); \},/, 'and the CLOSE says what is left, where DFU frees the flat');
-  assert.match(d, /function applyLoot\(list\) \{[\s\S]*?const items = validLootList\(rec\?\.r\);\s*if \(!items\) continue;\s*const held = lootHolder\(rec\.k\);\s*if \(!held\) continue;\s*held\.length = 0;\s*for \(const it of items\) held\.push\(it\);\s*_lootSeen\.add\(rec\.k\);/,
-    'another\'s word: projected, then landed IN PLACE so a window open on it updates under the reader');
-  assert.match(d, /if \(kind === 'loot'\) settleLootPile\(Number\(iStr\)\);/, 'and the flat settles');
-  assert.match(d, /delete w\.piles;\s*w\.loot = lootRecords\(\[\.\.\._lootSeen\]\);/, 'the memory carries EMPTIED, not contents: the opened containers, and no pile\'s blanket list');
+  assert.match(d, /function settleLootFlat\(i\) \{\s*const p = lootPiles\[i\];\s*if \(!p\) return;\s*if \(!p\.items\.length && p\.batch\) \{\s*const bi = billboardBatches\.indexOf\(p\.batch\);\s*if \(bi >= 0\) billboardBatches\.splice\(bi, 1\);\s*renderer\.destroyBillboardBatch\(p\.batch\);\s*p\.batch = null;\s*\}/, 'an emptied pile\'s flat leaves, whoever emptied it (and AUDIT WORLD4 C3/D2 gave it the other direction)');
+  assert.match(d, /return !!opts\.onActions\?\.\(\{ k: _locationKey, l \}\);\s*\}/, 'the room hears it, keyed by this dungeon');
+  assert.match(d, /activeOverlay = openInventory\(source, onEmptied, \{ lootHooks, lootKey: _k \}\);\s*if \(activeOverlay && _k\) \{ _lootOpenKey = _k; publishLoot\(_k, \{ claim: true \}\); \}/, 'the OPEN claims the container (AUDIT WORLD4 C6: once the window is known to have mounted)');
+  assert.match(d, /onClose: \(\) => \{ onEmptied\?\.\(\); if \(lootKey\) \{ _lootOpenKey = null; publishLoot\(lootKey\); \} droppedLoot\.releaseEmptied\(\); surfacePlayer\(\); \},/, 'and the CLOSE says what is left, where DFU frees the flat');
+  assert.match(d, /const canon = lootKeyOf\(rec\?\.k\);\s*if \(!canon\) continue;\s*const items = validLootList\(rec\.r\);\s*if \(!items\) continue;\s*const held = lootHolder\(canon\);\s*if \(!held\) continue;\s*_lootSeen\.add\(canon\);[^\n]*\n\s*if \(canon === _lootOpenKey\) \{ n\+\+; continue; \}[^\n]*\n\s*held\.length = 0;\s*for \(const it of items\) held\.push\(it\);/,
+    'another\'s word: projected, then landed IN PLACE - except under this player\'s own open window (AUDIT WORLD4 C1)');
+  assert.match(d, /if \(canon\.startsWith\('loot:'\)\) settleLootFlat\(Number\(canon\.slice\(5\)\)\);/, 'and the flat settles');
+  assert.match(d, /delete w\.piles;\s*for \(const f of w\.foes\) delete f\.items;\s*w\.loot = lootRecords\(\[\.\.\._lootSeen\]\);/, 'the memory carries EMPTIED, not contents: the opened containers, and no pile\'s blanket list - nor a corpse\'s, which is the same vocabulary (AUDIT WORLD4 D4)');
   assert.match(d, /applyLoot\(shared\.world\.loot\);/, 'and lands them through the same door the live frame takes');
-  assert.match(d, /const l = lootRecords\(keys\.filter\(\(k\) => lootHolder\(k\)\)\);/, 'a refused container is re-read like a refused door (AUDIT WORLD3 A3)');
+  assert.match(d, /const a = actions\.collectSaveData\(\)\.filter\(\(r\) => want\.has\(r\.key\)\)\.map\(sharedRecord\);\s*const l = lootRecords\(keys\);/, 'a refused container is re-read like a refused door (AUDIT WORLD3 A3)');
+  // AUDIT WORLD4 D6: and the MINT itself, which the slice never pinned - the shape every one of those arms sends
+  assert.match(d, /function lootRecords\(keys\) \{\s*const out = \[\];\s*for \(const key of keys \?\? \[\]\) \{\s*const canon = lootKeyOf\(key\);\s*const held = canon && lootHolder\(canon\);\s*if \(!held\) continue;\s*if \(held\.length > LOOT_LIST_MAX\) \{/, 'the mint: canon, holder, cap');
+  assert.match(d, /out\.push\(\{ k: canon, r: held\.map\(\(it\) => \(\{ \.\.\.it \}\)\) \}\);\s*\}\s*return out;\s*\}/, 'and a COPY of the list, keyed canonically');
   assert.match(d, /return a\.length \|\| l\.length \? \{ k: _locationKey, \.\.\.\(a\.length \? \{ a \} : \{\}\), \.\.\.\(l\.length \? \{ l \} : \{\}\) \} : null;/);
   assert.match(d, /lootSeen: \(\) => \[\.\.\._lootSeen\],/, 'the API');
   const w = rd('src/scenes/world.js');

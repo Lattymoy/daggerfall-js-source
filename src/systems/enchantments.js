@@ -141,7 +141,9 @@ export const VAMPIRIC_DRAIN_RANGE = 2.25;     // VampiricEffect.cs:26
  *  Special effect class is missing). */
 export function itemEnchantments(item) {
   const list = item?.enchantments;
-  if (!list || !list.length) return null;
+  // AUDIT WORLD4 B1: an ARRAY, or nothing. `!list || !list.length` passes a string, and the filter below then throws
+  // out of whatever called it - which for the enchantment magic round is the frame body itself.
+  if (!Array.isArray(list) || !list.length) return null;
   const out = list.filter((e) => e && e.type !== ENCHANTMENT_TYPES.None);
   return out.length ? out : null;
 }

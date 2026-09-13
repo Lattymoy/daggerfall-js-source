@@ -108,14 +108,15 @@ export function maceState(entity, mint = false) {
  *  nothing but an artifact carries type 26 at all. */
 export function hasArtifactSubtype(item, subtype) {
   const magic = item?.enchantments;
-  if (!magic || magic.length === 0) return false;
+  if (!Array.isArray(magic) || magic.length === 0) return false;   // AUDIT WORLD4 B1: an array, or nothing
+  
   return magic.some((e) => e?.type === ENCHANTMENT_TYPES.SpecialArtifactEffect && e.param === subtype);
 }
 
 /** GetItemInfo's Books arm (:782) asks only for the TYPE - any Special
  *  artifact effect on a book is the Oghma, no param tested. Kept as
  *  written. */
-export const hasArtifactEffect = (item) => (item?.enchantments ?? [])
+export const hasArtifactEffect = (item) => (Array.isArray(item?.enchantments) ? item.enchantments : [])   // AUDIT WORLD4 B1
   .some((e) => e?.type === ENCHANTMENT_TYPES.SpecialArtifactEffect);
 
 /** IsRingOfNamira / isWearingHircineRing's shape: an EQUIPPED item

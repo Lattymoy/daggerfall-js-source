@@ -407,6 +407,11 @@ export const foesGate = (bucket, nowMs) => tokenGate(bucket, nowMs, FOES_HZ_MAX)
 export const hitGate = (bucket, nowMs) => tokenGate(bucket, nowMs, HIT_HZ_MAX);
 /** The action rate gate at home: ACT_HZ_MAX a second (WORLD3). */
 export const actGate = (bucket, nowMs) => tokenGate(bucket, nowMs, ACT_HZ_MAX);
+/** AUDIT WORLD4 A1: will this act frame FIT? ONE HOME, so a host can tell a refusal it may retry (the rate, which
+ *  the next token heals) from one it never can (the size). A size refusal fed to WORLD3's refused-act heal is not a
+ *  heal but a LIVE-LOCK: the key is re-read and re-refused every frame, and every later door is folded into the same
+ *  oversized union frame and never sent. */
+export const actFrameFits = (data) => JSON.stringify({ t: 'act', data }).length <= MAX_FRAME_BYTES;
 /** The chat rate gate: CHAT_HZ_MAX a second (CHAT1). */
 export const chatGate = (bucket, nowMs) => tokenGate(bucket, nowMs, CHAT_HZ_MAX);
 

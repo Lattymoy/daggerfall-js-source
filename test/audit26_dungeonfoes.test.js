@@ -189,7 +189,7 @@ test('F051: the ?dungeon fly-cam is gated on the OVERLAY, not on the imported in
 // =====================================================================
 
 test('F218: applyWorld destroys the live foes past the snapshot (SerializableStateManager.cs:404-425)', () => {
-  const i = DUNGEON_CTX.indexOf('function applyWorld(w, { truncate = true } = {})');
+  const i = DUNGEON_CTX.indexOf('function applyWorld(w, { truncate = true, wire = false } = {})');
   const fn = DUNGEON_CTX.slice(i, DUNGEON_CTX.indexOf('w.piles?.forEach', i));
   assert.ok(i > 0 && fn.length > 200, 'applyWorld\'s foe half was found');
   // DFU's load rebuilds the scene and instantiates one object per saved
