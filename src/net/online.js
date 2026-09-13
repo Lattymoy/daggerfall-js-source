@@ -7,7 +7,9 @@
 // presence is shared (ONLINE1), words (CHAT1), a world room's memory
 // (WORLD1 - the host's snapshot of the place, handed to whoever comes
 // next) and its live foes (WORLD2 - the host's, streamed to the rest;
-// a blow on them goes to the host). This module holds one WebSocket to
+// a blow on them goes to the host) and its live doors (WORLD3 - a door,
+// a lever or a platform moved by anyone, told to everyone else). This
+// module holds one WebSocket to
 // the relay (server/src/index.js on Cloudflare), in one ROOM at a time,
 // says hello once with the player's look, sends the player's pose at
 // POSE_HZ when it changes (and a heartbeat pose every HEARTBEAT_MS
@@ -67,7 +69,7 @@
 //
 // Not a DFU member: Daggerfall Unity has no multiplayer. Ledger A row.
 import { tabStorage } from '../systems/appStorage.js';   // the tab's own storage - the seam, never the browser's own (a PIN)
-import { WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, validPose, validLook, sanitizeName, sanitizeChat, chatGate, worldRoom, inRange, relayUrl, isWorldRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate } from './wire.js';
+import { WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, validPose, validLook, sanitizeName, sanitizeChat, chatGate, worldRoom, inRange, relayUrl, isWorldRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate } from './wire.js';
 
 export { WORLD_CELL, RANGE_PIXELS, worldRoom };
 
@@ -189,6 +191,8 @@ export class OnlineSession {
     this.onChat = null;           // (line) => void: a chat line in - {id, name, text, at, mine}
     this.onFoes = null;           // WORLD2: (id, data) => void - the host's live foes in (a non-host's, from the room's host alone)
     this.onHit = null;            // WORLD2: (id, data) => void - a blow on my foe in (the host's, from anyone)
+    this.onAct = null;            // WORLD3: (id, data) => void - a door, a lever or a platform moved by another in my room
+    this._abucket = null;         // WORLD3: the actions' own gate at home (ACT_HZ_MAX)
     this._fbucket = null;         // WORLD2: the foes stream's own gate, the relay's law kept at home
     this._hbucket = null;         // AUDIT WORLD2 A6: the hits' own gate at home (HIT_HZ_MAX), so a blow never starves the poses at the relay
     this.host = null;             // WORLD1: the room's host, the relay's word; null until the welcome
@@ -212,7 +216,7 @@ export class OnlineSession {
     this._backoff = BACKOFF_MIN_MS;
     this._retryAt = null;
     this._closedByUs = false;
-    this.stats = { sent: 0, poses: 0, received: 0, reconnects: 0, chats: 0, worlds: 0, foes: 0, hits: 0 };
+    this.stats = { sent: 0, poses: 0, received: 0, reconnects: 0, chats: 0, worlds: 0, foes: 0, hits: 0, acts: 0 };
   }
 
   /** Enter a room (leaving the last). The pose is the hello's. */
@@ -277,6 +281,20 @@ export class OnlineSession {
     if (s.length > MAX_FRAME_BYTES) return false;
     try { this._ws.send(s); } catch { return false; }
     this._hbucket = gate.bucket; this.stats.sent++; this.stats.hits++;
+    return true;
+  }
+
+  /** WORLD3: a change to my room's doors, levers or movers out - anyone's, in a world room, ACT_HZ_MAX a second at
+   *  home (refused to the caller past it), under the small cap. */
+  sendAct(data) {
+    if (!data || typeof data !== 'object' || Array.isArray(data)) return false;
+    if (!isWorldRoom(this.room) || !this._ws || this.status !== 'open') return false;
+    const gate = actGate(this._abucket, this._now());
+    if (!gate.pass) return false;
+    const s = JSON.stringify({ t: 'act', data });
+    if (s.length > MAX_FRAME_BYTES) return false;
+    try { this._ws.send(s); } catch { return false; }
+    this._abucket = gate.bucket; this.stats.sent++; this.stats.acts++;
     return true;
   }
 
@@ -390,6 +408,9 @@ export class OnlineSession {
     } else if (m.t === 'hit') {
       // WORLD2: a blow on my foe - mine to apply only while I host
       if (this.isHost() && typeof m.id === 'string' && m.id !== this.id && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) this.onHit?.(m.id, m.data);
+    } else if (m.t === 'act') {
+      // WORLD3: a door, a lever or a platform moved by another in my world room - never my own back, never outside one
+      if (isWorldRoom(this.room) && typeof m.id === 'string' && m.id !== this.id && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) this.onAct?.(m.id, m.data);
     } else if (m.t === 'join') {
       if (typeof m.id === 'string' && m.id !== this.id) {
         const have = this.peers.get(m.id);

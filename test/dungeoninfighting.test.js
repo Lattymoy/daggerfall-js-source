@@ -24,15 +24,15 @@ test('MT-iv: the target machine rides the LAZY foe subsystem, not a static impor
   // imports enemyMotor, so a static import here defeats that gate.
   assert.ok(DG.includes("import('../characters/enemyTargets.js')"), 'the import is DYNAMIC');
   assert.ok(!/^import .*enemyTargets/m.test(DG), 'and never static');
-  assert.match(DG, /runTargetMachine, isPlayerTarget, PLAYER_TARGET, resetAllyTeamOnPlayerAttack,/,
-    'all four members are published on foeDeps for the consumers below the block');
+  assert.match(DG, /runTargetMachine, isPlayerTarget, isLocalPlayerTarget, PLAYER_TARGET, resetAllyTeamOnPlayerAttack,/,
+    'every member is published on foeDeps for the consumers below the block (AUDIT WORLD3 C3: and the local player, told from any player)');
   // every consumer guards on foeDeps, because the subsystem can fail
   // to load and the host must degrade rather than throw
   for (const guard of ['foeDeps.isPlayerTarget', 'foeDeps.runTargetMachine', 'foeDeps.resetAllyTeamOnPlayerAttack']) {
     const i = DG.indexOf(guard);
     assert.ok(i > 0, `${guard} is consumed`);
   }
-  assert.ok(DG.includes('candidates: foeDeps ? () => foes.filter((f) => !f.dead && f.ai) : null'),
+  assert.ok(DG.includes('candidates: foeDeps ? (streamed = false) => [...foes.filter((f) => !f.dead && f.ai), ...(_authority && streamed ? peerCandidates() : [])] : null'),
     'and the candidate getter itself idles without the subsystem');
 });
 
@@ -40,7 +40,7 @@ test('MT-iv: the candidate list is this host\'s whole active-enemy database, fil
   // EnemySenses.cs:741-749. Unlike world.js there is nothing to join -
   // the dungeon has no guard or encounter pool - but corpses and
   // culled records must leave the database the frame they die.
-  assert.match(DG, /candidates: foeDeps \? \(\) => foes\.filter\(\(f\) => !f\.dead && f\.ai\) : null/);
+  assert.match(DG, /candidates: foeDeps \? \(streamed = false\) => \[\.\.\.foes\.filter\(\(f\) => !f\.dead && f\.ai\), \.\.\.\(_authority && streamed \? peerCandidates\(\) : \[\]\)\] : null/);
   // the activity bag is PERSISTENT: spread, never mutate
   assert.match(DG, /sensesContext\(playerEntity, classicMinutesRef\.value, \{\n\s*\.\.\._activity,/,
     'the shared builder, with the bag spread rather than written through');
@@ -71,15 +71,15 @@ test('MT-iv: MeleeDamage\'s two-arm split lives in ONE home, above both call sit
   // (the rig path and the sprite marker path), so the fork sits
   // inside the resolver rather than being copied to each.
   const fork = DG.indexOf('function resolveFoeMeleeVsFoe(f) {');
-  const player = DG.indexOf('function resolveFoeMelee(f, playerFeet) {');
+  const player = DG.indexOf('function resolveFoeMelee(f, playerFeet, { vsPlayer = false } = {}) {');
   assert.ok(fork > 0 && player > fork, 'the foe arm is declared above the player arm');
-  assert.match(DG, /if \(resolveFoeMeleeVsFoe\(f\)\) return;/, 'and the player arm is the ELSE');
+  assert.match(DG, /if \(!vsPlayer && resolveFoeMeleeVsFoe\(f\)\) return;/, 'and the player arm is the ELSE');
   assert.match(DG, /applyDamageToNonPlayer\(f, t, \{/, 'the foe arm routes through the SHARED payload');
   assert.match(DG, /dealDamage: \(tt, d\) => tt\.hurtFromFoe\?\.\(d, fwd\)/,
     'and the TARGET\'s own pool owns its death chain');
   // both call sites reach it, and neither gates on the player's feet
   assert.ok(DG.includes('if (!f.mobile) resolveFoeMelee(f, _pf);'), 'the rig path');
-  assert.ok(DG.includes('if (_tgt && !_fParalyzed && f.mobile.doMeleeDamage)'), 'the sprite marker path, gated on a live TARGET');
+  assert.ok(DG.includes('if ((_tgt || f._pupMine) && !_fParalyzed && f.mobile.doMeleeDamage)'), 'the sprite marker path, gated on a live TARGET (WORLD3: or a puppet\'s blow at ME)');
 });
 
 test('MT-iv: BowDamage forks too - an arrow aimed at a foe LANDS on it, and the shaft is recoverable there', () => {
@@ -87,7 +87,7 @@ test('MT-iv: BowDamage forks too - an arrow aimed at a foe LANDS on it, and the 
   // arrow at another foe while the impact test still knew only the
   // player would have made it fly through and hit nothing, which is
   // worse than never aiming there.
-  assert.match(DG, /m\.aimFoe = \(foeDeps && ct && !foeDeps\.isPlayerTarget\(ct\)\) \? ct : null;/,
+  assert.match(DG, /m\.aimFoe = \(foeDeps && ct && \(!foeDeps\.isPlayerTarget\(ct\) \|\| ct\.isPeer\)\) \? ct : null;/,
     'the missile REMEMBERS its victim at fire time');
   // ROAD-H tail (review): the impact still forks on that memory, but
   // as BowDamage's DAMAGE gate rather than as the contact gate - the
@@ -110,10 +110,10 @@ test('MT-iv: both alert gates carry EnemySenses\' target==player term', () => {
   // :531-535 raise, EnemyDeath:131-136 clear. Unobservable while
   // every foe targeted the player; armed, two foes brawling must not
   // hold the player's alert state up or clear it by dying.
-  assert.match(DG, /foeDeps\.isPlayerTarget\(f\.ai\.target\)\)\n\s*&& f\.ai\.inSight && f\.ai\.detected && !f\.dead\) setEnemyAlert\(playerEntity, true/);
-  assert.match(DG, /foeDeps\.isPlayerTarget\(foe\.ai\?\.target\)\) && foe\.ai\?\.detected\) setEnemyAlert\(playerEntity, false\)/);
+  assert.match(DG, /foeDeps\.isLocalPlayerTarget\(f\.ai\.target\)\)\n\s*&& f\.ai\.inSight && f\.ai\.detected && !f\.dead\) setEnemyAlert\(playerEntity, true/);   // AUDIT WORLD3 C3: MY player's alert, not a peer's
+  assert.match(DG, /foeDeps\.isLocalPlayerTarget\(foe\.ai\?\.target\)\) && foe\.ai\?\.detected\) setEnemyAlert\(playerEntity, false\)/);
   // and both degrade to the old behaviour with no subsystem
-  assert.ok(DG.includes('(!foeDeps || !f.ai._armedTargeting || foeDeps.isPlayerTarget(f.ai.target))'),
+  assert.ok(DG.includes('(!foeDeps || !f.ai._armedTargeting || foeDeps.isLocalPlayerTarget(f.ai.target))'),
     'the raise idles its new term when the subsystem never loaded');
 });
 

@@ -38,7 +38,7 @@ test('F035/F041: every damage door takes a provenance flag, defaulting TRUE', ()
   // SetHealth(0) door is not damage (DaggerfallEntity.cs:313-328).
   assert.ok(src('scenes/cityGuards.js').includes('function damageGuard(g, damage, playerFeet, knockDir, { fromPlayer = true, bypassShield = false } = {})'));
   assert.ok(src('scenes/exteriorFoes.js').includes('function damageFoe(f, damage, playerFeet, knockDir = null, { fromPlayer = true, bypassShield = false } = {})'));
-  assert.ok(src('scenes/dungeonContext.js').includes('function damageFoe(foe, damage, playerFeet = null, knockDir = null, { fromPlayer = true, bypassShield = false, kind = \'melee\', peer = false } = {})'));   // WORLD2: and the blow's kind, for the hit that goes to the host; AUDIT WORLD2 C4: and whether it is a peer's
+  assert.ok(src('scenes/dungeonContext.js').includes('function damageFoe(foe, damage, playerFeet = null, knockDir = null, { fromPlayer = true, bypassShield = false, kind = \'melee\', peer = false, peerId = null } = {})'));   // WORLD3: and the striker's id (the aggro turns on the peer); WORLD2: and the blow's kind, for the hit that goes to the host; AUDIT WORLD2 C4: and whether it is a peer's
 });
 
 test('F035: the Murder crime is gated on the player being the source', () => {
@@ -84,7 +84,7 @@ test('F041: the hostility flip is gated the same way, in both foe pools', () => 
   // fail to load and a foe must still stand up).
   const dg = src('scenes/dungeonContext.js');
   assert.match(dg, /if \(fromPlayer && foe\.ai\) \{/, 'scenes/dungeonContext.js re-hostiles only for a PLAYER source');
-  assert.match(dg, /foe\.ai\.makeEnemyHostileToAttacker\?\.\(foeDeps\.PLAYER_TARGET/, 'through the whole C# method');
+  assert.match(dg, /foe\.ai\.makeEnemyHostileToAttacker\?\.\(\(peer && peerCandidate\(peerId\)\) \|\| foeDeps\.PLAYER_TARGET/, 'through the whole C# method (WORLD3: a peer\'s blow names the peer)');
   assert.match(dg, /\} else if \(!foe\.ai\.isHostile\) \{/, 'with the legacy raise as the no-subsystem fallback');
   const xf = src('scenes/exteriorFoes.js');
   // ROAD-B MOVED THIS NEEDLE. The two statements are no longer

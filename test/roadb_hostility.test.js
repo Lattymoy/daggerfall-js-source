@@ -209,7 +209,7 @@ test('ROAD-B: the dungeon host wires both MakeEnemiesHostile sites to its own po
     'and so do the senses, for StealthCheck');
   // DaggerfallEntityBehaviour.cs:255-258: the AREA before the one foe.
   const i = d.indexOf('if (!peer && !foe.ai.isHostile) makeEnemiesHostile(foes);');   // AUDIT WORLD2 B9: a peer's blow wakes the struck foe alone
-  const j = d.indexOf('foe.ai.makeEnemyHostileToAttacker?.(foeDeps.PLAYER_TARGET');
+  const j = d.indexOf('foe.ai.makeEnemyHostileToAttacker?.((peer && peerCandidate(peerId)) || foeDeps.PLAYER_TARGET');   // WORLD3: a peer\'s blow names the peer
   assert.ok(i > 0 && j > i, 'the whole room turns first, then the struck foe learns where you are');
 });
 

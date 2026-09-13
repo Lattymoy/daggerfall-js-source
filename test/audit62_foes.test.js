@@ -299,8 +299,8 @@ test('AUDIT 62 F23: the senses context carries the LIVE player capsule, and ever
   // and the target machine's player arms take it too
   const t = src('src/characters/enemyTargets.js');
   assert.match(t, /playerHeight = CAPSULE_HEIGHT,/);
-  assert.match(t, /const tOff = isPlayer \? playerHeight \/ 2 :/);
-  assert.match(t, /isPlayer \? playerHeight : targetAi\.height, null, distance\)/);
+  assert.match(t, /const tHeight = isPlayer \? \(c\.height \?\? playerHeight\) : targetAi\.height;/, 'WORLD3: a peer at its own capsule, the player at the live one'); assert.match(t, /const tOff = isPlayer \? tHeight \/ 2 :/);
+  assert.match(t, /tFeet, tHeight, null, distance\)/);
   for (const f of ['src/scenes/dungeonContext.js', 'src/scenes/cityGuards.js', 'src/scenes/exteriorFoes.js']) {
     assert.match(src(f), /playerHeight: (?:sn|senses)\.playerHeight,/, `${f}: the targeting closure forwards it`);
   }

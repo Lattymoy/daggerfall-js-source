@@ -136,10 +136,10 @@ test('ROAD-H tail: the dungeon archer takes BowDamage\'s two-arm split - the sha
   // EnemyAttack.cs:136-137 - BowDamage returns at `senses.Target == null`:
   // the arm is gated on the live target, the shape the melee arm and the
   // exterior pool already carry.
-  assert.match(d, /else if \(_tgt && !_fParalyzed && f\.mobile\.shootArrow\) \{/, 'gated on the live target');
+  assert.match(d, /else if \(\(_tgt \|\| f\._pupTarget != null\) && !_fParalyzed && f\.mobile\.shootArrow\) \{/, 'gated on the live target (WORLD3: or a puppet\'s streamed one)');
   assert.doesNotMatch(d, /else if \(playerFeet && !_fParalyzed && f\.mobile\.shootArrow\) \{/, 'no longer on the player alone');
   // :139-143 - the player arm or the non-player arm, by the selected target
-  assert.match(d, /const _at = f\.ai\.target \?\? foeDeps\.PLAYER_TARGET, _atPlayer = foeDeps\.isPlayerTarget\(_at\);/, 'the target is read');
+  assert.match(d, /const _at = f\._pupTarget != null \? \(f\._pupMine \? foeDeps\.PLAYER_TARGET : peerCandidate\(f\._pupTarget\)\) : \(f\.ai\.target \?\? foeDeps\.PLAYER_TARGET\);[\s\S]*?const _atPlayer = foeDeps\.isPlayerTarget\(_at\) && !_at\.isPeer;/, 'the target is read (WORLD3: a puppet\'s streamed one; a peer is no player arm)');
   assert.match(d, /const aim = foeDeps\.targetAimPoint\(_at, _pf, playerHeight\);/, 'the aim point is the target\'s transform through the one law');
   assert.match(d, /arrowAimDirection\(foeDeps\.enemyTransformPoint\(f\.ai\), aim, \{ targetIsPlayer: _atPlayer, playerCrouching: !!_senses\.playerCrouching \}\)/,
     'the crouch dip keys on WHO the target is (DaggerfallMissile.cs:584), not on a constant');

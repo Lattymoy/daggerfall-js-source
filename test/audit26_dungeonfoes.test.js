@@ -152,8 +152,8 @@ test('F050: every dungeon foe gets its spell list at BUILD time (EnemyEntity.cs:
   // BOTH build branches (class enemies and monsters) run it before the
   // record joins the pool - so the load loop, the rest interruption and
   // the quest spawner are the same chain.
-  const pushes = DUNGEON_CTX.match(/assignFoeSpells\(rec\);\s+\/\/[^\n]*\n\s+foes\.push\(rec\);/g) ?? [];
-  assert.equal(pushes.length, 2, 'the class branch and the monster branch, each assigning before the push');
+  const pushes = DUNGEON_CTX.match(/assignFoeSpells\(rec\);\s+\/\/[^\n]*\n\s+stand\(rec\);/g) ?? [];
+  assert.equal(pushes.length, 2, 'the class branch and the monster branch, each assigning before the stand (WORLD3: a rebuild stands in place, a build pushes)');
 
   // ...and the load site now only PUBLISHES the table (SPELLS.STD lands
   // after the marker foes are built) and re-runs the same function.

@@ -164,7 +164,7 @@ test('audit26 F220: the dungeon foe record gains maxHealth, fatigue and the live
   assert.ok(collect.includes('maxHealth: f.entity.maxHealth'), 'startingHealth (:109)');
   assert.ok(collect.includes('fatigue: f.entity.fatigue ?? 0'), 'currentFatigue (:111)');
   assert.ok(collect.includes('activeEffects: (f.entity.activeEffects ?? []).map(copyEffectEntry)'), 'the instanced bundles (:120)');
-  const apply = d.slice(d.indexOf('function applyWorld'), d.indexOf('function applyWorld') + 3600);
+  const apply = d.slice(d.indexOf('function patchFoe'), d.indexOf('function patchFoe') + 3600);   // WORLD3: the per-foe body is patchFoe, above applyWorld
   assert.ok(apply.includes('if (sf.maxHealth != null) { f.entity.maxHealth = sf.maxHealth; f.entity.health = Math.min(f.entity.health, sf.maxHealth); }'),
     'the saved max replaces the re-roll and re-clamps health under it');
   assert.ok(apply.includes('if (sf.activeEffects) f.entity.activeEffects = sf.activeEffects'),

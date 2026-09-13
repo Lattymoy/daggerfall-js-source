@@ -95,7 +95,7 @@ test('bats 1: both spawn hosts build the capsule from the idle sprite and drop a
   assert.match(d, /const pos = behaviour === 'Flying' \? feetFromCentre\(\[e\.x, e\.y, e\.z\], idleH\) : D\.floorLanding\(collider, \[e\.x, e\.y \+ 0\.2, e\.z\]\);/);
   assert.doesNotMatch(d, /const canFly = behaviour === 'Flying' \|\| behaviour === 'Spectral';/, 'a Spectral grounds at the layout');
   assert.equal([...d.matchAll(/height: enemyControllerHeight\(idleH, /g)].length, 2, 'the class and monster branches both size the capsule');
-  assert.equal([...d.matchAll(/gender: e\.gender, idleH, marker: \[e\.x, e\.y, e\.z\] \}\);/g)].length, 2, 'both records carry the idle height for the draw (and the layout marker, REVIEW 2026-09-05)');
+  assert.equal([...d.matchAll(/gender: e\.gender, idleH, marker: \[e\.x, e\.y, e\.z\], src: e \}\);/g)].length, 2, 'both records carry the idle height for the draw (and the layout marker, REVIEW 2026-09-05)');
   assert.match(d, /o\[1\] = spriteOriginY\(f\.ai\.feet\[1\], f\.idleH, sz\.h, _bh\);/, 'the dungeon draw pins a flyer\'s centre');
   const x = src('src/scenes/exteriorFoes.js');
   // REVIEW 2026-09-05: a DELTA on the live pending array (offsetAll may
@@ -234,7 +234,7 @@ test('bats review: every host passes centreOffset; the watch sizes its capsule t
     "...and that site reads the foe's own capsule, feet and height both (ROAD-H H2)");
   assert.match(d, /feet: \[\.\.\.f\.ai\.feet\], yaw: f\.ai\.yaw, anchor: 1,/);
   assert.match(d, /if \(!keepRebuiltSpawn\(sf, f\.ai\.feet, f\.idleH, f\.mobile\?\.basics\?\.behaviour \?\? 'General', f\.marker \?\? null\)\) \{ f\.ai\.feet\[0\] = sf\.feet\[0\];/);
-  assert.equal([...d.matchAll(/idleH, marker: \[e\.x, e\.y, e\.z\] \}\);/g)].length, 2, 'both dungeon records carry the layout marker');
+  assert.equal([...d.matchAll(/idleH, marker: \[e\.x, e\.y, e\.z\], src: e \}\);/g)].length, 2, 'both dungeon records carry the layout marker');
 });
 
 // ---------------------------------------------------------------------------

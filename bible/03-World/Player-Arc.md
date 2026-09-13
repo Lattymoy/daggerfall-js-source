@@ -1713,7 +1713,7 @@ not gate on `HasAction`; it gates on `playerMotor.IsStandingStill`
 that `GroundedMovement` writes straight into `moveDirection`, so DFU
 plays the stride. The port walked the autorunner forward in silence in
 every host. All four now pass `standingStill: player.standing`, the
-motor's own mirror of that getter (`world.js:8617` already did at its
+motor's own mirror of that getter (`world.js:8653` already did at its
 other footstep site) - which is also still the paralysis answer,
 because the hosts zero both axes for a frozen player.
 
