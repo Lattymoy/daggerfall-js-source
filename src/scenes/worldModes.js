@@ -1213,10 +1213,10 @@ export function createWorldModes(host) {
    *  billboard is CENTRE-anchored, so the base ends up ON the marker
    *  inside a building and half a height BELOW it inside a dungeon.
    *  This port's billboard shader is BOTTOM-anchored (position = base,
-   *  the C11 law dungeonContext.js:1527 states), so the same visual
+   *  the C11 law dungeonContext.js:1541 states), so the same visual
    *  result needs the shift on the DUNGEON side - which is exactly the
    *  shift the dungeon's own RDB flats already take
-   *  (dungeonContext.js:1432, `y - size.h / 2`), and which a building's
+   *  (dungeonContext.js:1446, `y - size.h / 2`), and which a building's
    *  flats correctly do not (interiorContext.js passes its centers
    *  straight through).
    *
@@ -4994,7 +4994,7 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:5055), so the OUTER host's one rides in.
+          // (dungeonContext.js:5116), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:524 -> the
@@ -7501,6 +7501,8 @@ export function createWorldModes(host) {
     applyDungeonHit(id, data) { return mode === 'dungeon' && dungeonCtx ? !!dungeonCtx.applyHit?.(id, data) : false; },
     /** WORLD3: another's change to the dungeon's doors, levers and movers - landed on the standing dungeon (its own by key). */
     applyDungeonActions(id, data) { return mode === 'dungeon' && dungeonCtx ? !!dungeonCtx.applyActions?.(id, data) : false; },
+    /** AUDIT WORLD3 A3: the standing dungeon's CURRENT records for the keys an earlier act could not send. */
+    dungeonActionRecords(keys) { return mode === 'dungeon' && dungeonCtx ? (dungeonCtx.actionRecords?.(keys) ?? null) : null; },
     /** WORLD2: who runs the layout's foes - me (the AI steps) or the room's host (my layout foes are puppets). Kept
      *  here so a dungeon built later starts under the seat as it stands. */
     setDungeonAuthority(on) { _dungeonAuthority = !!on; dungeonCtx?.setAuthority?.(_dungeonAuthority); },
@@ -8042,7 +8044,7 @@ export function createWorldModes(host) {
      *  has one manager, so the same bit belongs in every rig.
      *
      *  FLAG ONLY, presence-gated, exactly as world.js:4338/:4338 and
-     *  dungeonContext.js:5131/:5135 are: the C# restore sets the
+     *  dungeonContext.js:5192/:5196 are: the C# restore sets the
      *  property and calls no ApplyWeapon, because UpdateHands ends in
      *  ApplyWeapon on the next frame (WeaponManager.cs:699) - the
      *  port's twin is the rig's per-frame syncWorn. */

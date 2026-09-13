@@ -29,7 +29,7 @@ import { MobileUnit, MOBILE_DAEDRA_SEDUCER, SeducerTransformBehaviour } from '..
 import { dfMeshToModel, GLOBAL_SCALE } from '../world/meshReader.js';
 import { RDB_SIDE, MOVE_ACTION_FLAGS, ACTION_FLAGS } from '../world/rdbLayout.js';   // WAVE D: the move family - an acting FLAT tweens like the model beside it
 import { NPC_CONTEXT } from '../characters/staticNpc.js';   // AUDIT 64 F13: StaticNPC.SetLayoutData(RdbObject) stamps Context.Dungeon
-import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S, isActionDoorObject, hasActionCollision, classifyPlacementAction, lookAtLockText, LOCKPICKING_SUCCESS_TEXT, LOCKPICKING_FAILURE_TEXT, DOOR_TEXT_HUD_DELAY_S } from '../world/actionSystem.js';
+import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S, isActionDoorObject, hasActionCollision, classifyPlacementAction, lookAtLockText, LOCKPICKING_SUCCESS_TEXT, LOCKPICKING_FAILURE_TEXT, DOOR_TEXT_HUD_DELAY_S, sharedRecord } from '../world/actionSystem.js';   // AUDIT WORLD3 B1: the shared half of a record - the picker's latch stays home
 import { TextRsc } from '../formats/textRsc.js';
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // U51 picks the skin
 import { longitudeLatitudeToMapPixel } from '../formats/mapsFile.js';   // MAC6 #1: the save names the pixel the dungeon stands on
@@ -191,6 +191,14 @@ const PUPPET_SNAP = 3;
 const PUPPET_STILL = 0.02;
 const q2 = (v) => Math.round(v * 100) / 100;
 const q3 = (v) => Math.round(v * 1000) / 1000; const GENDER_BIT = ['male', 'female'];   // WORLD3: the stream's x bit, decoded (no roll - the host's word)
+/** AUDIT WORLD3 F2: how far from the origin a streamed striker's feet may be before the host stops believing them.
+ *  A dungeon block is 4096 classic units and a location is at most 8 of them a side, so this is orders past any
+ *  honest position and still far inside the range where the collider's substep arithmetic is bounded. */
+const HIT_POS_MAX = 1e6;
+/** AUDIT WORLD3 E3: can the ONE build chain actually stand this species? Both of buildFoeAt's branches need a truthy
+ *  maleTexture (ENEMY_BASICS[39] has 0), and without this the rebuild fell to the build-time flat fallback, never
+ *  stood, and was retried on every frame of the stream. ONE HOME for the two readings. */
+const canStandFoe = (mobileType) => !!ENEMY_BASICS[mobileType]?.maleTexture;
 
 export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseType, opts = {}) {
   const { renderer, arch, getGpuMesh, cpuModels, getTexture, uploadRecord, uploadRecordFrame, palette } = deps;
@@ -690,7 +698,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // caught in review, hoisted).
     const [shared, engineRig, { buildRaceCharacter },
       { EnemyAI, withinYaw, isBackFacing, openDoorsStep }, { EnemyAttack }, { makeEnemyEntity, loadMonsterCareer }, { EnemyCaster, castEnemySpell: castShared, hasMagickaToCast },
-      { runTargetMachine, isPlayerTarget, PLAYER_TARGET, resetAllyTeamOnPlayerAttack, targetAimPoint, enemyArrowOrigin, enemyTransformPoint, arrowAimDirection },
+      { runTargetMachine, isPlayerTarget, isLocalPlayerTarget, PLAYER_TARGET, resetAllyTeamOnPlayerAttack, targetAimPoint, enemyArrowOrigin, enemyTransformPoint, arrowAimDirection },
       { EnhancedEnemyAI, makeNavWorld }] = await Promise.all([
       import('./shared.js'), import('../characters/engineRig.js'),
       import('../characters/raceCharacter.js'),
@@ -733,7 +741,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // MT-iv: the target machine. Every consumer below the lazy block
       // reads foeDeps.* and must guard on foeDeps first, as
       // resolvePlayerHit already does.
-      runTargetMachine, isPlayerTarget, PLAYER_TARGET, resetAllyTeamOnPlayerAttack,
+      runTargetMachine, isPlayerTarget, isLocalPlayerTarget, PLAYER_TARGET, resetAllyTeamOnPlayerAttack,   // AUDIT WORLD3 C3: the local player, told from any player
       targetAimPoint, enemyArrowOrigin, enemyTransformPoint, arrowAimDirection,   // AUDIT 62 F21 (review): the ONE aim-point law, shared with the exterior pool   // ROAD-H H1/H1b: and the ONE arrow loose point + the crouch dip beside it
     };
     // ENHANCED AI 4: the routes' world - the per-frame findPath budget
@@ -852,11 +860,17 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   async function buildFoeAt(e, fallbackFlat = true, { at = -1 } = {}) {
     const basics = ENEMY_BASICS[e.mobileType];
     if (!basics) return;
+    if (at >= 0 && !canStandFoe(e.mobileType)) return;   // AUDIT WORLD3 E3: a rebuild has a live record standing there - the flat fallback has nothing to draw and its flatGroups push is dead after the build
     // WORLD3: a rebuild (retypeFoe) stands in the OLD record's place - the old batch freed, the old record dead to
     // everything still holding it (the target machine's cull, a stale frame), the new one posed by the next frame
     const stand = (rec) => {
       const old = at >= 0 ? foes[at] : null;
       if (!old) { foes.push(rec); return; }
+      // AUDIT WORLD3 E4: the context died while this rebuild awaited its art (a stream frame can start one at any
+      // moment, and destroy() has already walked the pool). Free what we minted rather than write a live VAO into an
+      // array nothing will iterate again. `at >= 0` short-circuits the read, so the initial build - which runs long
+      // before _ctxDead is declared - never touches it.
+      if (_ctxDead) { if (rec.batch) { renderer.destroyBillboardBatch(rec.batch); rec.batch = null; } rec.dead = true; return; }
       if (old.batch) { renderer.destroyBillboardBatch(old.batch); old.batch = null; }
       old.dead = true;
       dropCandidate(old);
@@ -2811,7 +2825,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:8486,
+              // playerArrowHitFoe is the one copy world.js:8511,
               // exterior.js:4202 and worldModes.js:5926 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
@@ -3021,6 +3035,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       f._pupTarget = p.target === '.' ? _foesFrom : (p.target || null);
       const me = opts.selfId?.() ?? null;
       f._pupMine = f._pupTarget != null && me != null && f._pupTarget === me;
+      // AUDIT WORLD3 D2: a streamed target IS the host's word that this foe is fighting somebody. My own copy's
+      // hostility is not on the wire and my blows never raise it (damageFoe diverts before handleAttackFromPlayer),
+      // so a passive-marker foe - a castle guard - stayed pacified-BLIND here: _senses refuses sight for a
+      // non-hostile record, meleeHitConnects then read inSight false, and every blow the host landed on me became a
+      // miss. The host's word wins.
+      if (f._pupTarget != null && f.ai.isHostile === false) f.ai.isHostile = true;
       if (p.cast != null) {
         const sp = f._pupMine ? (spellsByIndex?.get(p.cast) ?? null) : null;
         if (sp) castEnemySpell(f, sp, true); else f._castPending = true;
@@ -3072,20 +3092,35 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const i = r.i | 0;
       const f = foes[i];
       if (!f || i >= _layoutFoes) continue;
-      if (r.t != null && r.t !== f.mobileType) { f._pupMismatch = true; retypeFoe(i, r.t, GENDER_BIT[r.x === 1 ? 1 : 0]); continue; }   // B5: another species at this index - left alone and its blows kept home; WORLD3: and REBUILT as the room's
+      if (r.t != null && r.t !== f.mobileType) {   // B5: another species at this index - left alone and its blows kept home; WORLD3: and REBUILT as the room's
+        f._pupMismatch = true;
+        // AUDIT WORLD3 E2: the record that triggered the rebuild lands ON the rebuilt foe. The build stands a FRESH
+        // record - alive, at full health, at its marker - and the host re-sends this index only on its next full
+        // frame (and, once I take the seat, never), so a foe the room knows is dead stood up, and after a handover
+        // became my simulation's live foe and went back out to the whole room that way.
+        retypeFoe(i, r.t, GENDER_BIT[r.x === 1 ? 1 : 0]).then((ok) => { if (ok && !_authority && foes[i]) applyFoeRecord(foes[i], r); });
+        continue;
+      }
       f._pupMismatch = false;
-      const p = f._pup ?? (f._pup = { feet: [f.ai.feet[0], f.ai.feet[1], f.ai.feet[2]], yaw: f.ai.yaw, moving: false, hurt: false, strike: null, a: null, target: null, c: null, cast: null });
-      if (typeof r.g === 'string') p.target = r.g;   // WORLD3: whose blow this puppet's is
-      if (r.c != null) { const c = r.c | 0; if (p.c != null && c !== p.c) p.cast = r.s | 0; p.c = c; }   // WORLD3: a cast once per count, never the count a joiner arrived with
-      if (Array.isArray(r.f) && r.f.length === 3 && r.f.every(Number.isFinite)) { p.feet[0] = r.f[0]; p.feet[1] = r.f[1]; p.feet[2] = r.f[2]; }
-      if (Number.isFinite(r.y)) p.yaw = r.y;
-      p.moving = !!r.m;
-      if (Number.isFinite(r.h)) { if (r.h < f.entity.health) p.hurt = true; f.entity.health = r.h; }
-      if (r.a != null) { const a = r.a | 0; if (p.a != null && a !== p.a) p.strike = (a & 1) ? 'ranged' : 'melee'; p.a = a; }
-      if (r.d === 1) { if (!f.dead) { f.ai.feet[0] = p.feet[0]; f.ai.feet[1] = p.feet[1]; f.ai.feet[2] = p.feet[2]; } setFoeDead(f, true); }   // B10: the corpse where the host's foe fell, not where the ease had got to
-      else if (r.d === 0) setFoeDead(f, false);
+      applyFoeRecord(f, r);
     }
     return true;
+  }
+
+  /** WORLD2/WORLD3: ONE streamed record onto its puppet - the target pose, the target it hunts and the cast it made,
+   *  the health (a drop is the hurt one-shot), death and un-death through the one kill door. Called from the frame's
+   *  loop, and again on a foe that frame REBUILT (AUDIT WORLD3 E2), so the rebuilt body stands as the room has it. */
+  function applyFoeRecord(f, r) {
+    const p = f._pup ?? (f._pup = { feet: [f.ai.feet[0], f.ai.feet[1], f.ai.feet[2]], yaw: f.ai.yaw, moving: false, hurt: false, strike: null, a: null, target: null, c: null, cast: null });
+    if (typeof r.g === 'string') p.target = r.g;   // WORLD3: whose blow this puppet's is
+    if (r.c != null) { const c = r.c | 0; if (p.c != null && c !== p.c) p.cast = r.s | 0; p.c = c; }   // WORLD3: a cast once per count, never the count a joiner arrived with
+    if (Array.isArray(r.f) && r.f.length === 3 && r.f.every(Number.isFinite)) { p.feet[0] = r.f[0]; p.feet[1] = r.f[1]; p.feet[2] = r.f[2]; }
+    if (Number.isFinite(r.y)) p.yaw = r.y;
+    p.moving = !!r.m;
+    if (Number.isFinite(r.h)) { if (r.h < f.entity.health) p.hurt = true; f.entity.health = r.h; }
+    if (r.a != null) { const a = r.a | 0; if (p.a != null && a !== p.a) p.strike = (a & 1) ? 'ranged' : 'melee'; p.a = a; }
+    if (r.d === 1) { if (!f.dead) { f.ai.feet[0] = p.feet[0]; f.ai.feet[1] = p.feet[1]; f.ai.feet[2] = p.feet[2]; } setFoeDead(f, true); }   // B10: the corpse where the host's foe fell, not where the ease had got to
+    else if (r.d === 0) setFoeDead(f, false);
   }
 
   /** WORLD2: a peer's blow on my foe, while I host - through the one damage door with the peer's number and kind
@@ -3097,9 +3132,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const f = foes[i];
     if (!f || i >= _layoutFoes || f.dead || !Number.isFinite(dmg) || dmg < 0) return false;
     const kind = data.kind === 'arrow' || data.kind === 'spell' ? data.kind : 'melee';
-    // WORLD3: the striker's feet and the blow's direction (a spell knocks nothing, verbatim), the shaft
+    // WORLD3: the striker's feet and the blow's direction (a spell knocks nothing, verbatim), the shaft.
+    // AUDIT WORLD3 F2: BOUNDED. The direction is multiplied by the knockback SPEED and handed to collider.move, whose
+    // substep count is linear in the magnitude - an unnormalised [1e9,0,0] from one 85-byte frame asked the host's
+    // collider for 2.4e8 substeps and froze the tab for every player in the room. A direction is a UNIT vector or it
+    // is nothing; a position outside the dungeon's own reach is nothing.
     const v3 = (v) => (Array.isArray(v) && v.length === 3 && v.every(Number.isFinite) ? [v[0], v[1], v[2]] : null);
-    const at = v3(data.p), dir = kind === 'spell' ? null : v3(data.d);
+    const unit = (v) => { const u = v3(v); if (!u) return null; const L = Math.hypot(u[0], u[1], u[2]); return L > 1e-6 && L < 1e6 ? [u[0] / L, u[1] / L, u[2] / L] : null; };
+    const inReach = (v) => { const q = v3(v); return q && q.every((c) => Math.abs(c) <= HIT_POS_MAX) ? q : null; };
+    const at = inReach(data.p), dir = kind === 'spell' ? null : unit(data.d);
     // AUDIT WORLD2 B8/C4: the blow is seen and heard on the host too - the hit's ring, the blood, the pain (the
     // striker's callers play these before their own door; here the door is all there is)
     if (dmg > 0) {
@@ -3135,6 +3176,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         if (f.mobile) { f.mobile.doMeleeDamage = false; f.mobile.shootArrow = false; }   // WORLD2 dropped unconsumed: no blow from a puppet's last frame on the first live one
         f._castPending = false;
       }
+      // AUDIT WORLD3 D3: the OFF direction forgot the motor's target, and nothing on a puppet ever writes it again -
+      // so a stale PEER candidate sat in ai.target and updateMissiles minted a streamed cast's aimFoe from it, which
+      // no capsule test can ever strike: an ex-host took no spell damage from the room's foes at all.
+      if (!on) { f.ai.target = null; f.ai.secondaryTarget = null; f.ai.targetSenses = null; }
       f._pup = null;
       f._pupMismatch = false;
       f._pupTarget = null; f._pupMine = false;   // WORLD3
@@ -3208,7 +3253,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  dead one, never past the layout's run. */
   async function retypeFoe(i, mobileType, gender = null) {
     const f = foes[i];
-    if (!f || i >= _layoutFoes || f.dead || !f.src || _retyping.has(i) || !ENEMY_BASICS[mobileType]) return false;
+    // AUDIT WORLD3 E3: the same guard buildFoeAt uses. ENEMY_BASICS[39] exists with maleTexture 0, so both build
+    // branches skip it, the fallback flat runs, stand() is never called and the retry fires again on every frame of
+    // the stream - pushing a dead entry into the build-time-only flatGroups map each time, for ever.
+    if (!f || i >= _layoutFoes || f.dead || !f.src || _retyping.has(i) || !canStandFoe(mobileType)) return false;
     _retyping.add(i);
     try {
       const rec = await buildFoeAt({ ...f.src, mobileType, gender: gender === 'female' || gender === 'male' ? gender : undefined }, true, { at: i });
@@ -3363,8 +3411,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const f = foes[i];
       if (!f) return;
       if (sf.mobileType != null && sf.mobileType !== f.mobileType) {   // AUDIT WORLD B4: another species at this index (a save from before the field patches blind)
-        // WORLD3: the room's memory names the roster - rebuilt as its species, the record landing on the rebuilt foe
-        if (!truncate) retypeFoe(i, sf.mobileType, sf.gender ?? null).then((ok) => { if (ok && foes[i] && !foes[i].dead) patchFoe(foes[i], sf); });
+        // WORLD3: the roster is the ROOM's - rebuilt as the record's species, the record landing on the rebuilt foe.
+        // AUDIT WORLD3 E1: the SAVE's restore takes the same arm. Before WORLD3 a mismatch here could only be a save
+        // written by another build, and dropping it was the safe read; since WORLD3 the live roster can be the room's,
+        // so this player's OWN save routinely disagrees with the fresh level-banded build - and the old `return`
+        // silently discarded that slot's death, health, items, effects and team every time.
+        retypeFoe(i, sf.mobileType, sf.gender ?? null).then((ok) => { if (ok && foes[i]) patchFoe(foes[i], sf); });
         return;
       }
       patchFoe(f, sf);
@@ -3494,8 +3546,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (pi >= 0 && pi < _layoutFoes) {
         // WORLD3: the striker's feet (p) and the blow's direction (d) ride the hit - the aggro turns toward the striker
         // and the shove goes the way the blow went; an arrow's shaft lands in the host's copy (ar)
+        // AUDIT WORLD3 F1: the striker's feet ride EVERY kind, not only the ones that carry a knock ray - the spell
+        // sink hands playerFeet null (a spell knocks nothing, verbatim), so a joiner's spell turned the host's foe
+        // toward the HOST, at the host's feet, while naming the joiner as its attacker.
+        const _pAt = playerFeet ?? lastPlayerFeet;
         if (fromPlayer && damage >= 0 && !foe._pupMismatch) opts.onFoeHit?.({ i: pi, dmg: damage, kind,
-          ...(playerFeet ? { p: [q2(playerFeet[0]), q2(playerFeet[1]), q2(playerFeet[2])] } : {}),
+          ...(_pAt ? { p: [q2(_pAt[0]), q2(_pAt[1]), q2(_pAt[2])] } : {}),
           ...(knockDir ? { d: [q3(knockDir[0]), q3(knockDir[1]), q3(knockDir[2])] } : {}),
           ...(kind === 'arrow' ? { ar: 1 } : {}) });
         return;
@@ -3558,7 +3614,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // EnemyDeath:131-136 gates on `senses.Target ==
       // PlayerEntityBehaviour` - a foe killed while fighting ANOTHER
       // foe never touches the player's alert (MT-iv).
-      if ((!foeDeps || !foe.ai?._armedTargeting || foeDeps.isPlayerTarget(foe.ai?.target)) && foe.ai?.detected) setEnemyAlert(playerEntity, false);
+      if ((!foeDeps || !foe.ai?._armedTargeting || foeDeps.isLocalPlayerTarget(foe.ai?.target)) && foe.ai?.detected) setEnemyAlert(playerEntity, false);   // AUDIT WORLD3 C3: mine, not a peer's
       spawnCorpse(foe);
       raiseEnemyDeath(foe.entity);   // UL1: OnEnemyDeath (EnemyDeath.cs:139) - the kill, not the load's rewind
       return;
@@ -3999,7 +4055,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // `_activity` is a persistent mutable bag: spread, never mutate.
     const _senses = sensesContext(playerEntity, classicMinutesRef.value, {
       ..._activity, playerHeight, playerCrouching,   // AUDIT 62 F23: playerHeight is the LIVE capsule drawFoes already holds (crouch 0.9, ride 2.6)   // ROAD-H H1b: and the LATCHED crouch state beside it (PlayerMotor.cs:132-136) - the swim case is 0.9 too and draws no arrow dip
-      candidates: foeDeps ? () => [...foes.filter((f) => !f.dead && f.ai), ...(_authority ? peerCandidates() : [])] : null,   // WORLD3: the peers in the room, while I step the foes
+      // WORLD3: the peers in the room ride the list - but only for a foe the STREAM carries (AUDIT WORLD3 D1: a quest
+      // spawn, a summon or an encounter past the layout's run is nobody's puppet, so a peer it picked was fought by
+      // no one: the host took nothing and the peer never learned it existed)
+      candidates: foeDeps ? (streamed = false) => [...foes.filter((f) => !f.dead && f.ai), ...(_authority && streamed ? peerCandidates() : [])] : null,
       // ROAD-B: EnemySenses.StealthCheck's first statement (:619-621).
       // This is the ONE host that can answer it true, off the same
       // block read the music and the ambient take.
@@ -4160,9 +4219,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // pair, one spelling. Unarmed (no candidates, or the foe
       // subsystem never loaded) both fall through to the legacy
       // player-only path untouched.
-      const _armed = (rec, sn) => (sn?.candidates && foeDeps ? {
+      const _armed = (rec, sn, streamed = false) => (sn?.candidates && foeDeps ? {
         ...sn,
-        targeting: (ai, pf, cdt) => foeDeps.runTargetMachine(rec, sn.candidates(), pf, cdt, {
+        targeting: (ai, pf, cdt) => foeDeps.runTargetMachine(rec, sn.candidates(streamed), pf, cdt, {
           playerEntity: sn.playerEntity ?? playerEntity, playerHeight: sn.playerHeight,   // AUDIT 62 F23: GetTargets measures the player at its LIVE capsule too
         }),
       } : sn);
@@ -4175,7 +4234,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // flyerFalls) - senses keep running, decisions stop, paralyzed
       // FLYERS fall out of the air, swimmers freeze.
       applyEnemyMotorEffectFlags(f.ai, f.entity);   // A5: Levitate.SetEnemyMotor's IsLevitating, folded from the effect's presence
-      f.ai.update(dt, _pf, _armed(f, _senses), _fParalyzed, _fPaused);   // E2 senses + pursuit; P13: the stealth context; MT-iv: the target machine
+      f.ai.update(dt, _pf, _armed(f, _senses, _fi < _layoutFoes), _fParalyzed, _fPaused);   // E2 senses + pursuit; P13: the stealth context; MT-iv: the target machine; AUDIT WORLD3 D1: the peers only for a foe the stream carries
       _tgt = _targetFeet(f);   // MT-iv: whatever it SELECTED
       // CH3 (characters-8): a past-threshold landing bills the
       // player's fall formula - trunc(5 x (drop - 5)) - through the
@@ -4205,7 +4264,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // EnemySenses:531-535 - `Target == PlayerEntityBehaviour &&
       // TargetInSight`. MT-iv: two foes brawling must not hold the
       // player's alert state up.
-      if ((!foeDeps || !f.ai._armedTargeting || foeDeps.isPlayerTarget(f.ai.target))
+      // AUDIT WORLD3 C3: MY player's alert - a foe that has only ever seen a PEER held it up (isPlayerTarget is true
+      // for a peer since WORLD3), and the alert is what refuses the rest and arms its encounter roll
+      if ((!foeDeps || !f.ai._armedTargeting || foeDeps.isLocalPlayerTarget(f.ai.target))
         && f.ai.inSight && f.ai.detected && !f.dead) setEnemyAlert(playerEntity, true, classicMinutesRef.value);
       // C-slice (AUDIT 23 characters-3): EnemyMotor.OpenDoors - a
       // CanOpenDoors foe whose sight ray to the player is blocked by
@@ -5191,6 +5252,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     isAuthority: () => _authority,
     // WORLD3: the live world as events - another's doors in, the roster's rebuild, the peers the foes see
     applyActions,
+    /** AUDIT WORLD3 A3: the CURRENT shared record of each named object, for an act the wire refused. The seam is a
+     *  DELTA and nothing re-sends it, so a dropped frame is a permanent disagreement about where a door stands; the
+     *  host holds the refused KEYS and re-reads them here, never re-sending the stale record the refusal carried. */
+    actionRecords(keys) {
+      if (!Array.isArray(keys) || !keys.length) return null;
+      const want = new Set(keys);
+      const a = actions.collectSaveData().filter((r) => want.has(r.key)).map(sharedRecord);
+      return a.length ? { k: _locationKey, a } : null;
+    },
     retypeFoe,
     peerCandidates,
     // U3: ONE overlay seam (chargen, level-up, char sheet) - hosts

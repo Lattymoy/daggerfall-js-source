@@ -210,7 +210,7 @@ test('AUDIT WORLD: the hosts by source - the dungeon host stamps its memory and 
   const d = rd('src/scenes/dungeonContext.js');
   assert.match(d, /const _sharedStamp = Math\.random\(\)\.toString\(36\)\.slice\(2\);/, 'B1: the stamp'); assert.match(d, /let _sharedApplied = false;/, 'B7: the once');
   assert.match(d, /mobileType: f\.mobileType,\s*gender: f\.gender,[^\n]*\n\s*maxHealth: f\.entity\.maxHealth,/, 'B4: the record carries the species (WORLD3: and the gender)');
-  assert.match(d, /if \(!f\) return;\s*if \(sf\.mobileType != null && sf\.mobileType !== f\.mobileType\) \{[^\n]*\n\s*(?:\/\/[^\n]*\n\s*)*if \(!truncate\) retypeFoe\(i, sf\.mobileType, sf\.gender \?\? null\)[^\n]*\n\s*return;/, 'B4: another species at the index is never patched blind (WORLD3: the room\'s memory rebuilds it as its own; a save\'s is left alone)');
+  assert.match(d, /if \(!f\) return;\s*if \(sf\.mobileType != null && sf\.mobileType !== f\.mobileType\) \{[^\n]*\n\s*(?:\/\/[^\n]*\n\s*)*retypeFoe\(i, sf\.mobileType, sf\.gender \?\? null\)[^\n]*\n\s*return;/, 'B4: another species at the index is never patched blind (WORLD3: rebuilt as the record\'s own, on both paths since AUDIT WORLD3 E1)');
   assert.match(d, /if \(truncate\) droppedLoot\.restorePiles\(w\.droppedLoot\);/, 'B3: the clearing restore is the save\'s alone');
   assert.match(d, /deathUp: \(\) => activeOverlay instanceof DeathScreen,/, 'B6: the dungeon says its death');
   assert.match(d, /restoreSaved\(extras, setPlayerPos, \{ session = true, announce = session \} = \{\}\) \{/, 'B10'); assert.match(d, /if \(announce\) hudText\.add\('Game loaded\.'\);/, 'B10: once');

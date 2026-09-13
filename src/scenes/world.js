@@ -2614,7 +2614,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2101 mounts the same one, gated on
+  // and dungeonContext.js:2115 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
   // that context through modes.dungeonCtx - so worldModes.js:4520
@@ -4134,7 +4134,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:5037), so exterior mode and a
+    // composer, dungeonContext.js:5098), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -6618,6 +6618,30 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (full) _foesFullAt = now;
     return true;
   };
+  // AUDIT WORLD3 A3: an act the wire refused must not be LOST. The seam is a delta - nothing re-sends a change - and
+  // both refusals are silent to the room: the relay drops over its room budget without a word, and sendAct refuses
+  // over ACT_HZ_MAX at home. So the refused KEYS are held, and the next frame that goes carries their CURRENT records
+  // (re-read from the graph, never the stale ones the refusal carried); a quiet room flushes them from the frame.
+  const _actPend = new Set();
+  const _actLive = () => !!(online && online.status === 'open' && isWorldRoom(online.room));
+  const actSend = (data) => {
+    if (!_actLive()) { _actPend.clear(); return false; }
+    if (!data || !Array.isArray(data.a) || !data.a.length) return false;
+    const keys = data.a.map((r) => r.key);
+    const out = _actPend.size ? (modes?.dungeonActionRecords?.([...new Set([..._actPend, ...keys])]) ?? data) : data;
+    if (!online.sendAct(out)) { for (const k of keys) _actPend.add(k); return false; }
+    _actPend.clear();
+    return true;
+  };
+  const actFlush = () => {
+    if (!_actPend.size) return false;
+    if (!_actLive()) { _actPend.clear(); return false; }
+    const data = modes?.dungeonActionRecords?.([..._actPend]);
+    if (!data) { _actPend.clear(); return false; }
+    if (!online.sendAct(data)) return false;
+    _actPend.clear();
+    return true;
+  };
   /** Who runs my dungeon's layout foes: me, unless a world room's socket is open, another holds the seat, and that
    *  seat is ALIVE - its stream, or its word in the welcome, heard within FOES_STALE_MS (AUDIT WORLD2 C2/C5: a dead
    *  socket, a terminal close or a silent host left a joiner's dungeon frozen with every blow dropped). Read every
@@ -6738,6 +6762,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     online.tick();
     worldPublish(now);   // WORLD1: the room's memory, every WORLD_PUBLISH_MS while this player hosts a dungeon
     foesStream(now);   // WORLD2: the host's changed foes, every FOES_MS
+    actFlush();        // AUDIT WORLD3 A3: an act the wire refused, re-read and re-sent
     modes?.setDungeonAuthority?.(dungeonAuthority(now));   // AUDIT WORLD2 C2: the seat re-read every frame - a dead socket, a terminal close or a silent host hands the foes back
     const drawable = online.drawable();
     peerBodies.sync(drawable, onlineToScene, dt, player.pos);   // the nearest first, the far ones asleep
@@ -6767,7 +6792,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     onFoeHit: (hit) => online?.sendHit(hit) ?? false,   // WORLD2: a blow on a puppet goes to the host
     // WORLD3: a door moved goes to the room (the session refuses it outside a world room); the peers in my room at
     // their scene feet, for the foes to see and a puppet's shaft to fly at; whose blow a puppet's is
-    onActions: (data) => online?.sendAct(data) ?? false,
+    onActions: actSend,   // AUDIT WORLD3 A3: through the pending set, so a refused door heals
     peers: () => {
       if (!online || !online.room || online.status !== 'open') return null;
       const now = performance.now(), out = [];

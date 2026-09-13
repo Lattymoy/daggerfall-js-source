@@ -77,11 +77,12 @@
 // WORLD3 (2026-09-12): THE LIVE DOORS. A change to the room's doors,
 // levers and movers ({t:'act', data}, on its own bucket - _meterActs,
 // ACT_HZ_MAX - so a door never starves a pose) from anyone hello'd in a
-// world room goes to everyone hello'd but its author, under the room's
-// own budget (_roomActs, ACT_ROOM_HZ_MAX); over it the frame is dropped
-// and nobody struck. Not the host's alone: a door is whoever
+// world room goes to everyone hello'd but its author, under the room's own
+// budgets (_roomActs ACT_ROOM_HZ_MAX frames, _roomActBytes
+// ACT_ROOM_BYTES_PER_S bytes times its listeners - AUDIT WORLD3 A1, the
+// foes fan's law); over either the frame is dropped and nobody struck. Not the host's alone: a door is whoever
 // touched it. The relay reads none of it.
-import { roomOf, parseClient, inRange, poseGate, chatGate, tokenGate, rosterFor, isChatRoom, isWorldRoom, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY } from './relay.js';
+import { roomOf, parseClient, inRange, poseGate, chatGate, tokenGate, rosterFor, isChatRoom, isWorldRoom, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY } from './relay.js';
 
 const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*' } });
 
@@ -110,6 +111,7 @@ export class Room {
     this._roomFoes = null;   // AUDIT WORLD2 A5: the room's foes byte budget (the frame times its listeners)
     this._roomHits = null;   // AUDIT WORLD2 A6: the room's hit budget onto its host's one socket
     this._roomActs = null;   // WORLD3: the room's action-frame budget (a door, a lever, a platform moved)
+    this._roomActBytes = null;   // AUDIT WORLD3 A1: and its BYTE budget - the frame times its listeners, as the foes fan has
     try {
       // the runtime answers the client's ping while the object sleeps
       if (state.setWebSocketAutoResponse && typeof WebSocketRequestResponsePair === 'function') state.setWebSocketAutoResponse(new WebSocketRequestResponsePair('{"t":"ping"}', '{"t":"pong"}'));
@@ -372,7 +374,12 @@ export class Room {
       this._roomActs = budget.bucket;
       if (!budget.pass) return;
       const out = JSON.stringify({ t: 'act', id: a.id, data: m.data });
-      for (const [other, b] of [...this._all()]) if (other !== ws && b.id) this._send(other, out);
+      const listeners = [...this._all()].filter(([other, b]) => other !== ws && b.id);
+      // AUDIT WORLD3 A1: the fan is the frame times its listeners, and a frame count is no bound on it
+      const bytes = byteGate(this._roomActBytes, now, out.length * listeners.length, ACT_ROOM_BYTES_PER_S);
+      this._roomActBytes = bytes.bucket;
+      if (!bytes.pass) return;
+      for (const [other] of listeners) this._send(other, out);
       return;
     }
     if (m.t === 'pose' || m.t === 'ping') {

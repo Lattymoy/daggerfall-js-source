@@ -821,7 +821,11 @@ one that stood fixed on the PR:
   same index** (`chooseRandomEnemyType` bands on the live player level)
   and the record carried no type. The record carries `mobileType` and
   patches only its own kind; a save from before the field patches as
-  before. The cure - a seeded layout - is slice 3's (below).
+  before. ~~The cure - a seeded layout - is slice 3's (below).~~ WORLD3
+  cured it the other way round: the roster is the ROOM's, and a foe
+  whose species the stream or the memory disagrees with is REBUILT at
+  its index (`retypeFoe`). A seeded layout would still be cheaper and
+  is unclaimed.
 - **B5 (med) one farewell in three was dropped:** the forced publish
   on exit, death or hide fell inside the relay's five-second floor. A
   forced publish is marked `final` and the relay admits one per socket
@@ -905,17 +909,22 @@ ignored with the socket kept, the host's reconnect keeping its seat
 with no host frame to the peer, an ordinary publish inside the floor
 dropped and the farewell taken.
 
-For later slices, from the lenses: a SEEDED LAYOUT before slice 3 (the
-shared half of the pool must not band on the live player level - a
+For later slices, from the lenses: ~~a SEEDED LAYOUT before slice 3
+(the shared half of the pool must not band on the live player level - a
 fixed level or the location's seed for the random flats online, or the
-layout roster published beside the memory); loot's memory should carry
+layout roster published beside the memory)~~ - WORLD3 took the
+disagreement instead of preventing it (`retypeFoe` rebuilds the
+mismatched foe at its index); a seeded layout is still the cheaper cure
+and is unclaimed; loot's memory should carry
 "emptied", not contents (slice 4); a host's quickload inside a dungeon
 rewinds the layout's foes for every joiner since WORLD2 (the next
 stream carries the rewound records) and nothing else of theirs (the
 doors, the piles, their own), and is itself rewound by the room's
 memory on re-entry - persistence, but it will read as "F12 does nothing
 to the dungeon"; publishes and applies happen under an open window or
-a pause, which slice 3 gates explicitly.
+a pause, ~~which slice 3 gates explicitly~~ - WORLD3 gated nothing of
+the sort and says so in its own "what it does not do"; the gate is
+unclaimed.
 
 ## WORLD2 (2026-09-12): one simulation per room
 
@@ -983,20 +992,24 @@ and everyone else's are puppets.
   forwards; a dungeon built while another hosts starts under the seat
   as it stands; the hit routed into the build.
 
-What it did not do, until WORLD3 (below) took the first four: the
-host's foes TARGETED THE HOST ALONE - a layout foe did not see a non-host, so a non-host beside the host is not
-attacked and one alone with a foe strikes it unopposed (the host's
-senses see peers in slice 3); a blow carries no direction (a peer's
-blow never shoves) and no position (the aggro turns toward the host);
-the arrow's shaft lands in the host's copy of the foe's items; soul
-trap and Azura's Star on a peer's kill read the host's inventory; a
-spell's other effects (a paralysis, a drain) still land on the puppet
-locally, and the stream overwrites what it carries; doors, levers and
-platforms are still each client's own (slice 3); two players' random
-flats differ by level, so a puppet mirrors a species that may not be
-its own until the layout is seeded (slice 3); the foes past the
-layout's run - an encounter's, a summon's, a quest's - are still each
-player's own.
+What it did not do. WORLD3 (below) took the foes' sight of every
+player, the blow's direction and position, the arrow's shaft, the
+shared doors and the room's roster; AUDIT WORLD2 B9 had already taken
+the peer's kill. So, as WORLD2 shipped: the host's foes TARGETED THE
+HOST ALONE - a layout foe did not see a non-host, so a non-host beside
+the host was not attacked and one alone with a foe struck it unopposed
+(WORLD3: the peers ride the target machine); a blow carried no
+direction and no position, so it never shoved and the aggro turned
+toward the host (WORLD3: `p` and `d` ride the hit); the arrow's shaft
+landed in the host's copy of the foe's items (WORLD3: `ar`); doors,
+levers and platforms were each client's own (WORLD3: the act frame);
+two players' random flats differ by level, so a puppet mirrored a
+species that might not be its own (WORLD3: the roster is the room's -
+`retypeFoe`). Still open after WORLD3: a spell's other effects (a
+paralysis, a drain) land on the puppet locally, and the stream
+overwrites what it carries; the foes past the layout's run - an
+encounter's, a summon's, a quest's - are each player's own, and since
+AUDIT WORLD3 D1 the peers do not ride their target machine at all.
 
 Pinned in `test/world2.test.js` (4): the wire's two frames at both
 ends (the foes frame past the small cap by its prefix alone, never
@@ -1283,6 +1296,177 @@ reaching the host and the other joiner and never its author, the host's
 reaching both joiners, a town relaying none with the author's socket
 kept.
 
+## AUDIT WORLD3 (2026-09-13)
+
+**Mac: "Begin."** Six opus lenses over WORLD3 - the relay and the wire;
+the action graph's change seam; the peers as targets; the puppet's
+blows at its own player; the roster rebuild; the hit, the pins and the
+record - each refuting its own candidates and proving the survivors by
+execution, then every survivor refuted again by two or three
+adversaries. Sixteen findings confirmed and six upheld out of a split
+vote; four refuted and dropped (among them a claim of mine that the
+change seam costs a millisecond a frame - the entry rate is nothing
+like once a frame, because the motor reassigns `doorKey` each senses
+pass).
+
+**THE ONE ROOT.** WORLD3 made a peer `isPlayer: true` so it would pass
+every gate of `GetTargets` - and four guards elsewhere spelled "not
+another foe, therefore MINE" the same way. Each of them then read the
+LOCAL player's state for a foe hunting somebody else. `isLocalPlayerTarget`
+names the distinction once (`enemyTargets.js`), and the four sites take
+it:
+
+- **C3 (high) a foe that saw only a PEER raised the local player's
+  enemy alert, refused their rest, and killed them.** `inSight` and
+  `detected` mean "this foe senses its TARGET"; `areEnemiesNearby`
+  reads the pair with no target test at all, and `_dist` beside it is
+  the distance to that target. So the host, alone in a cleared corridor
+  half a map from the joiner's fight, could not rest - and when its
+  fatigue ran out `onExhausted` read enemies nearby and set health to
+  0. The motor latches whose player it answers for
+  (`targetIsLocalPlayer`) and how far MY player is (`_distLocal`, the
+  spawn band's own measure); the alert and the rest gate read both, and
+  a bare ai stub - the unarmed player-only shape - reads as before.
+- **C1 (med)** the ray to a peer was aimed at the LOCAL player's live
+  capsule planted on the peer's feet - the third reading of "the
+  target's own capsule" in that file, and the only one WORLD3 left
+  unpatched. Folded onto the one home.
+- **C2 (med)** the illusion gate read the LOCAL player's invisibility
+  for a peer target, so the host going invisible blinded every foe
+  hunting the joiner. A peer has no concealment of its own and now
+  takes the empty bag, which is what "I do not know" must mean.
+- **C4 (med)** a foe's first sight of a peer spent the HOST's
+  language-pacification edge - the host's skill, the host's tally, the
+  host's HUD line, and a foe stood down on a roll about somebody else.
+- **C5 (low)** and its stealth roll rolled the HOST's Stealth against a
+  distance measured to the joiner, and advanced the host's skill for
+  it.
+
+**The relay and the wire.**
+
+- **A1 (high) the act fan had no BYTE budget** - only a frame count -
+  and an act frame is capped at `MAX_FRAME_BYTES` and read by nobody.
+  Six hello'd sockets sending the largest frame at their own rate is
+  119.6 MiB/s out of one Durable Object, measured over the one fake:
+  29.9x the ceiling AUDIT WORLD2 A5 set for the foes fan after
+  measuring exactly this class. The act fan now spends
+  `ACT_ROOM_BYTES_PER_S` the same way - the frame times its listeners,
+  over it dropped and nobody struck.
+- **A2 (high) an act's records were validated by NEITHER end.** A `t`
+  of `"x"` made the receiver's tween arithmetic NaN, which never
+  satisfies `t >= 1`, so the object hung mid-swing for the life of the
+  session: one 146-byte frame from a stranger bricked a door for every
+  other player in the room, permanently. `validActionRecord` projects
+  and clamps a record to the shape the graph itself mints - the four
+  states, a tween in [0,1], a lock inside DFU's own range - inside
+  `applyRemote`, where the save's own restore reads it too.
+- **A3 (med) a dropped act never healed.** The seam is a DELTA and both
+  refusals are silent (the relay drops over its room budget without a
+  word; `sendAct` refuses over the rate at home), so a change that fell
+  in the gap was a permanent disagreement about where a door stands -
+  where WORLD2 built the opposite for the same shape of loss (the foes
+  stream re-sends every foe every `FOES_FULL_MS`). The host holds the
+  refused KEYS and the next frame carries their CURRENT records,
+  re-read from the graph; a quiet room flushes them from the frame.
+
+**The action graph.**
+
+- **B1 (high) a peer's FAILED LOCKPICK wrote its retry latch onto every
+  other client's door.** `failedSkillLevel` is
+  `DaggerfallActionDoor`'s PER-PLAYER latch and the seam shipped it: a
+  same-skill peer's pick then did nothing at all - no line, no sound,
+  no tally, no roll - for ever, and two players of different skill
+  taking turns defeated the latch entirely and tallied Lockpicking
+  without bound. `sharedRecord` is the half a room may know, so a
+  failed pick now emits no act at all and no sender's latch is
+  believed.
+- **B3 (low)** `applyRemote` rang the RDB sound only when a TWEEN
+  began, but `_play` rings it on every Play - so every zero-duration
+  mover (an acting flat's Translation) slid in silence on every screen
+  but the author's. A Play always moves the record's own state; that is
+  the test now.
+
+**The puppets and the seat.**
+
+- **D1 (high) the peers rode the candidate list of foes PAST the
+  layout's run** - a quest spawn, a summon, an encounter - which are
+  never streamed. Such a foe could pick a peer and then nobody resolved
+  its blows: the host took nothing, the peer never learned it existed,
+  and the quest fight was dead until the peer walked away. The peers
+  ride a STREAMED foe's list alone.
+- **D2 (high) a puppet whose LOCAL record was not hostile read blind,
+  so every blow the host's foe landed became a miss.** `_senses`
+  refuses sight for a non-hostile record; hostility is not on the wire
+  and a joiner's own blows never raise it (the divert returns before
+  `handleAttackFromPlayer`). A joiner was invulnerable to a
+  passive-marker foe - a castle guard - for the whole fight, while the
+  host watched a dozen of them beat on it. A streamed target IS the
+  host's word that the foe is fighting; the puppet takes it.
+- **D3 (med)** losing the seat left every puppet's motor target
+  dangling - very often a PEER candidate - and `updateMissiles` mints a
+  streamed cast's `aimFoe` from it, which no capsule test can strike:
+  an ex-host took no spell damage from the room's foes at all. The off
+  direction forgets the target as the on direction always did.
+
+**The roster and the hit.**
+
+- **E1 (med) a roster rebuilt online broke the player's OWN save.** The
+  save records the rebuilt species; a fresh build re-derives the layout
+  at the local level, so the record disagrees and `applyWorld`'s
+  mismatch arm silently discarded that slot's death, health, items,
+  effects and team. The save's restore takes the rebuild too - the
+  record IS the truth for its slot.
+- **E2 (med)** the record that TRIGGERED a rebuild was dropped, so the
+  replacement stood alive at full health where the room had a corpse,
+  and the host's next full frame was up to two seconds away - or, after
+  a handover, never. `applyFoeRecord` is one body and the rebuild's
+  continuation calls it.
+- **E3 (low)** `retypeFoe` admitted a species the build chain can never
+  stand (`ENEMY_BASICS[39]`, `maleTexture` 0), so the rebuild failed
+  silently and retried on every frame of the stream, pushing a dead
+  entry into the build-time-only `flatGroups` map each time. One
+  predicate (`canStandFoe`) for the rebuild and the build.
+- **E4 (low)** a rebuild in flight across a dungeon exit minted a live
+  billboard batch into a torn-down context, after `destroy()` had
+  already walked the pool. `stand` reads the teardown latch.
+- **F1 (med)** the striker's feet rode only the kinds that carry a
+  knock ray, and the spell sink hands none - so a joiner's spell turned
+  the host's foe toward the HOST while naming the joiner as its
+  attacker. They ride every kind.
+- **F2 (high) the hit's direction was applied as a knockback vector
+  unnormalised and unbounded.** The motor clamps the SPEED and then
+  multiplies the raw direction by it, and the collider substeps
+  proportionally to the magnitude - so one 85-byte frame carrying
+  `d:[1e9,0,0]` asked the host's collider for 2.4e8 substeps and froze
+  the tab, taking every other player's simulation with it. A direction
+  is a unit vector or it is nothing; a position outside the dungeon's
+  reach is nothing.
+
+**The pins and the record.** F5: WORLD3's executed peer pin could not
+fail - the fixture's peer height was the default, so both arms of the
+capsule ternary evaluated to the same number and a mutant that ignored
+the peer's capsule passed; the fixture now differs from the local
+player's. F3/F4: the head of WORLD2's gap list credited WORLD3 with an
+item AUDIT WORLD2 B9 had already closed while leaving the two the slice
+DID take standing in the present tense, and two AUDIT WORLD promises
+addressed to "slice 3" by name (the seeded layout, the window/pause
+gate) were left standing after slice 3 shipped without either - struck
+in place, naming what actually happened.
+
+Pinned in `test/auditworld3.test.js` (4): the relay's act byte budget
+over the one fake (the fan costing the frame times its listeners, over
+it dropped and nobody struck, the frame budget still beside it); the
+action graph executed on bare graphs (the projection refusing every
+shape the graph never mints and the brick with it, the latch travelling
+in neither direction and a failed pick emitting nothing while the
+second player's pick still runs, an instant mover heard by the peers);
+the motor and the targets executed (the peer's own capsule, the
+target's concealment, the two latches and the rest gate over them, the
+encounter edge and the stealth tally kept for MY player, and each of
+them still firing for a foe hunting me); and the hosts and the record
+by source. `test/world3.test.js` restamped where the law moved, its
+peer pin made to fail.
+
 ## What it does not do (yet)
 
 - **The Morrowind body** ships (MWBODY1, above); a client without the
@@ -1392,6 +1576,10 @@ record.
 over the one fake, the session's sendAct/onAct, the action graph's
 change seam and remote apply executed, the target machine with a peer
 executed, the hosts by source.
+`test/auditworld3.test.js` (4): AUDIT WORLD3's fixes - the act fan's
+byte budget; the record projection, the picker's latch and the instant
+mover's sound, executed on bare graphs; the local player told from any
+player, executed on the motor; the hosts and the record by source.
 
 ## OD1 - THE PEER DOLL GOES UP BOTTOM-UP (2026-09-12, Mac's report)
 

@@ -190,6 +190,12 @@ test('WORLD3: the target machine with a PEER, executed - a peer is a player to e
   // the motor: a targeting closure that names the peer - the senses aim at its feet, the capsule read is its own
   const ai = new EnemyAI(collider, [0, 0, 0], 0, {});
   ai.isHostile = true;
+  // AUDIT WORLD3 F5: the fixture's own height must DIFFER from the local player's, or every executed assertion below
+  // reads the same number down both arms of the ternary and a mutant that ignores the peer's capsule passes.
+  const tallGot = getTargets(self, [{ ...peer, height: 2.6 }], playerFeet, { infighting: true, playerHeight: 0.9 });
+  assert.equal(tallGot.target.height, 2.6);
+  assert.ok(Math.abs(tallGot.distanceToTarget - Math.hypot(2, 2.6 / 2 - 0.9)) < 1e-9,
+    'the peer is measured at ITS OWN capsule, not the local player\'s: 2.0396, where reading playerHeight gives 2.05');
   const tall = { isPlayer: true, isPeer: true, id: 'tall-0003', feet: [0, 0, 3], height: 2.6, health: 1 };   // ahead (yaw 0 faces +z), in sight
   for (let i = 0; i < 12; i++) ai.update(1 / 60, [0, 0, 50], { targeting: (m) => { m.target = tall; }, playerHeight: 0.9 });   // past a classic tick
   assert.equal(ai.target, tall);
@@ -200,7 +206,8 @@ test('WORLD3: the target machine with a PEER, executed - a peer is a player to e
   assert.match(d, /const _peerCands = new Map\(\);/); assert.match(d, /function peerCandidates\(\) \{\s*if \(_peerRead === _peerFrame\) return \[\.\.\._peerCands\.values\(\)\];/, 'the peers read once a frame');
   assert.match(d, /c = \{ isPlayer: true, isPeer: true, id: q\.id, feet: \[0, 0, 0\], height: CAPSULE_HEIGHT, health: 1 \}; _peerCands\.set\(q\.id, c\);/, 'one identity per id');
   assert.match(d, /for \(const \[id, c\] of _peerCands\) if \(!seen\.has\(id\)\) \{ c\.health = 0; _peerCands\.delete\(id\); \}/, 'a peer gone is dead to the machine');
-  assert.match(d, /candidates: foeDeps \? \(\) => \[\.\.\.foes\.filter\(\(f\) => !f\.dead && f\.ai\), \.\.\.\(_authority \? peerCandidates\(\) : \[\]\)\] : null,/, 'the peers ride the candidate list while I step the foes');
+  assert.match(d, /candidates: foeDeps \? \(streamed = false\) => \[\.\.\.foes\.filter\(\(f\) => !f\.dead && f\.ai\), \.\.\.\(_authority && streamed \? peerCandidates\(\) : \[\]\)\] : null,/, 'the peers ride the candidate list of a STREAMED foe while I step them (AUDIT WORLD3 D1)');
+  assert.match(d, /f\.ai\.update\(dt, _pf, _armed\(f, _senses, _fi < _layoutFoes\), _fParalyzed, _fPaused\);/, 'D1: and the foe loop says which those are');
   assert.match(d, /return foeDeps\?\.isPlayerTarget\?\.\(t\) \? \(t\.feet \?\? _pf\) : t\.ai\.feet;/, 'the selected target\'s feet: a peer\'s own');
   assert.match(d, /function resolveFoeMelee\(f, playerFeet, \{ vsPlayer = false \} = \{\}\) \{\s*if \(!vsPlayer && resolveFoeMeleeVsFoe\(f\)\) return;[^\n]*\n\s*(?:\/\/[^\n]*\n\s*)*if \(!vsPlayer && f\.ai\.target\?\.isPeer\) \{ foeAttackVoice\(f\); return; \}/, 'a peer target: the blow is the peer\'s to resolve, the voice alone here');
   assert.match(d, /if \(\(_tgt \|\| f\._pupMine\) && !_fParalyzed && f\.mobile\.doMeleeDamage\) \{ f\.mobile\.doMeleeDamage = false; resolveFoeMelee\(f, _pf, \{ vsPlayer: !!f\._pupMine \}\); \}/, 'a puppet\'s blow at ME lands with my own reach');
@@ -223,31 +230,35 @@ test('WORLD3: the hosts by source - the dungeon host (the state, the doors\' sea
   assert.match(d, /let _foesFrom = null;[^\n]*\n\s*\/\/ WORLD3 \(Mac: "Begin"\): THE LIVE WORLD AS EVENTS\./, 'the state, under WORLD2\'s');
   assert.match(d, /if \(opts\.onActions\) actions\.onChanged = \(recs\) => opts\.onActions\(\{ k: _locationKey, a: recs \}\);/, 'the doors out, keyed by this dungeon');
   assert.match(d, /function applyActions\(id, data\) \{\s*if \(!data \|\| typeof data !== 'object' \|\| data\.k !== _locationKey \|\| !Array\.isArray\(data\.a\)\) return false;\s*return actions\.applyRemote\(data\.a\) > 0;\s*\}/, 'the doors in, this dungeon\'s alone');
-  assert.match(d, /async function retypeFoe\(i, mobileType, gender = null\) \{\s*const f = foes\[i\];\s*if \(!f \|\| i >= _layoutFoes \|\| f\.dead \|\| !f\.src \|\| _retyping\.has\(i\) \|\| !ENEMY_BASICS\[mobileType\]\) return false;/, 'the rebuild: the layout\'s run, a live foe, once at a time');
+  assert.match(d, /async function retypeFoe\(i, mobileType, gender = null\) \{\s*const f = foes\[i\];\s*(?:\/\/[^\n]*\n\s*)*if \(!f \|\| i >= _layoutFoes \|\| f\.dead \|\| !f\.src \|\| _retyping\.has\(i\) \|\| !canStandFoe\(mobileType\)\) return false;/, 'the rebuild: the layout\'s run, a live foe, once at a time, a species the chain can stand (AUDIT WORLD3 E3)');
   assert.match(d, /const rec = await buildFoeAt\(\{ \.\.\.f\.src, mobileType, gender: gender === 'female' \|\| gender === 'male' \? gender : undefined \}, true, \{ at: i \}\);/, 'through the one build chain, in place');
-  assert.match(d, /async function buildFoeAt\(e, fallbackFlat = true, \{ at = -1 \} = \{\}\) \{/); assert.match(d, /const stand = \(rec\) => \{\s*const old = at >= 0 \? foes\[at\] : null;\s*if \(!old\) \{ foes\.push\(rec\); return; \}\s*if \(old\.batch\) \{ renderer\.destroyBillboardBatch\(old\.batch\); old\.batch = null; \}\s*old\.dead = true;\s*dropCandidate\(old\);\s*foes\[at\] = rec;\s*\};/, 'the old freed, dead to everything, the new at its index');
+  assert.match(d, /async function buildFoeAt\(e, fallbackFlat = true, \{ at = -1 \} = \{\}\) \{/); assert.match(d, /const stand = \(rec\) => \{\s*const old = at >= 0 \? foes\[at\] : null;\s*if \(!old\) \{ foes\.push\(rec\); return; \}\s*(?:\/\/[^\n]*\n\s*)*if \(_ctxDead\) \{ if \(rec\.batch\) \{ renderer\.destroyBillboardBatch\(rec\.batch\); rec\.batch = null; \} rec\.dead = true; return; \}\s*if \(old\.batch\) \{ renderer\.destroyBillboardBatch\(old\.batch\); old\.batch = null; \}\s*old\.dead = true;\s*dropCandidate\(old\);\s*foes\[at\] = rec;\s*\};/, 'the old freed, dead to everything, the new at its index - and a rebuild that lands after the teardown frees what it minted (AUDIT WORLD3 E4)');
   assert.equal((d.match(/marker: \[e\.x, e\.y, e\.z\], src: e \}\)/g) ?? []).length, 2, 'the source record on both branches\' records'); assert.equal((d.match(/\n\s*stand\(rec\);\n/g) ?? []).length, 2);
-  assert.match(d, /if \(!truncate\) retypeFoe\(i, sf\.mobileType, sf\.gender \?\? null\)\.then\(\(ok\) => \{ if \(ok && foes\[i\] && !foes\[i\]\.dead\) patchFoe\(foes\[i\], sf\); \}\);/, 'the memory rebuilds a mismatch and lands on the rebuilt foe; a save\'s is left alone');
+  assert.match(d, /retypeFoe\(i, sf\.mobileType, sf\.gender \?\? null\)\.then\(\(ok\) => \{ if \(ok && foes\[i\]\) patchFoe\(foes\[i\], sf\); \}\);/, 'the memory rebuilds a mismatch and lands on the rebuilt foe - and so does the SAVE\'s, since the roster it recorded is the room\'s (AUDIT WORLD3 E1)');
   assert.match(d, /function patchFoe\(f, sf\) \{/); assert.match(d, /gender: f\.gender,   \/\/ WORLD3/);
   assert.match(d, /const _t = f\.ai\.target, g = _t\?\.isPeer \? _t\.id : \(_t == null \? \(f\.ai\._armedTargeting \? '' : '\.'\) : \(_t\.isPlayer \? '\.' : ''\)\);/, 'g: the host, a peer, none');
   assert.match(d, /m: f\.ai\.moving \? 1 : 0, g, c: f\._castN \| 0, s: f\._castIdx \| 0, \.\.\.\(f\.gender === 'female' \? \{ x: 1 \} : \{\}\) \};/); assert.match(d, /\$\{r\.m\},\$\{r\.g\},\$\{r\.c\},\$\{r\.s\}`;/, 'on the key');
   assert.match(d, /if \(typeof r\.g === 'string'\) p\.target = r\.g;/); assert.match(d, /if \(r\.c != null\) \{ const c = r\.c \| 0; if \(p\.c != null && c !== p\.c\) p\.cast = r\.s \| 0; p\.c = c; \}/, 'a cast once per count, never the count a joiner arrived with');
-  assert.match(d, /f\._pupMismatch = true; retypeFoe\(i, r\.t, GENDER_BIT\[r\.x === 1 \? 1 : 0\]\); continue;/, 'the stream rebuilds a mismatch'); assert.match(d, /const GENDER_BIT = \['male', 'female'\];/);
+  assert.match(d, /f\._pupMismatch = true;\s*(?:\/\/[^\n]*\n\s*)*retypeFoe\(i, r\.t, GENDER_BIT\[r\.x === 1 \? 1 : 0\]\)\.then\(\(ok\) => \{ if \(ok && !_authority && foes\[i\]\) applyFoeRecord\(foes\[i\], r\); \}\);\s*continue;/, 'the stream rebuilds a mismatch AND lands the record that triggered it on the rebuilt foe (AUDIT WORLD3 E2)'); assert.match(d, /const GENDER_BIT = \['male', 'female'\];/);
+  assert.match(d, /function applyFoeRecord\(f, r\) \{/, 'E2: one record onto one puppet, from both callers');
   assert.match(d, /f\._pupTarget = p\.target === '\.' \? _foesFrom : \(p\.target \|\| null\);\s*const me = opts\.selfId\?\.\(\) \?\? null;\s*f\._pupMine = f\._pupTarget != null && me != null && f\._pupTarget === me;/, 'whose blow a puppet\'s is');
   assert.match(d, /if \(p\.cast != null\) \{\s*const sp = f\._pupMine \? \(spellsByIndex\?\.get\(p\.cast\) \?\? null\) : null;\s*if \(sp\) castEnemySpell\(f, sp, true\); else f\._castPending = true;\s*p\.cast = null;\s*\}/, 'a cast at me is the spell; at another its one-shot');
   assert.match(d, /if \(!f\._pupMine\) f\.mobile\.doMeleeDamage = false;[^\n]*\n\s*if \(f\._pupTarget == null\) f\.mobile\.shootArrow = false;/, 'the latches kept for a blow at me and a shaft at anyone');
-  assert.match(d, /opts\.onFoeHit\?\.\(\{ i: pi, dmg: damage, kind,\s*\.\.\.\(playerFeet \? \{ p: \[q2\(playerFeet\[0\]\), q2\(playerFeet\[1\]\), q2\(playerFeet\[2\]\)\] \} : \{\}\),\s*\.\.\.\(knockDir \? \{ d: \[q3\(knockDir\[0\]\), q3\(knockDir\[1\]\), q3\(knockDir\[2\]\)\] \} : \{\}\),\s*\.\.\.\(kind === 'arrow' \? \{ ar: 1 \} : \{\}\) \}\);/, 'the hit out: the feet, the direction, the shaft');
-  assert.match(d, /const at = v3\(data\.p\), dir = kind === 'spell' \? null : v3\(data\.d\);/, 'the hit in: a spell knocks nothing'); assert.match(d, /damageFoe\(f, dmg, at, dir, \{ fromPlayer: true, peer: true, kind, peerId: id \}\);/);
+  assert.match(d, /const _pAt = playerFeet \?\? lastPlayerFeet;\s*if \(fromPlayer && damage >= 0 && !foe\._pupMismatch\) opts\.onFoeHit\?\.\(\{ i: pi, dmg: damage, kind,\s*\.\.\.\(_pAt \? \{ p: \[q2\(_pAt\[0\]\), q2\(_pAt\[1\]\), q2\(_pAt\[2\]\)\] \} : \{\}\),\s*\.\.\.\(knockDir \? \{ d: \[q3\(knockDir\[0\]\), q3\(knockDir\[1\]\), q3\(knockDir\[2\]\)\] \} : \{\}\),\s*\.\.\.\(kind === 'arrow' \? \{ ar: 1 \} : \{\}\) \}\);/, 'the hit out: the feet on EVERY kind (AUDIT WORLD3 F1 - a spell carries no knock ray and still names its striker), the direction, the shaft');
+  assert.match(d, /const at = inReach\(data\.p\), dir = kind === 'spell' \? null : unit\(data\.d\);/, 'the hit in: a spell knocks nothing, and both numbers are BOUNDED (AUDIT WORLD3 F2)'); assert.match(d, /damageFoe\(f, dmg, at, dir, \{ fromPlayer: true, peer: true, kind, peerId: id \}\);/);
   assert.match(d, /if \(data\.ar === 1 && kind === 'arrow'\) addItem\(f\.entity\.items \?\?= \[\], \{ group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 \}\);/, 'the shaft where BowDamage puts it');
   assert.match(d, /foe\.ai\.makeEnemyHostileToAttacker\?\.\(\(peer && peerCandidate\(peerId\)\) \|\| foeDeps\.PLAYER_TARGET, playerFeet \?\? lastPlayerFeet\);/, 'the aggro on the peer, at its feet');
   assert.match(d, /f\._pupTarget = null; f\._pupMine = false;   \/\/ WORLD3/, 'the handover clears them');
-  assert.match(d, /isAuthority: \(\) => _authority,\s*(?:\/\/[^\n]*\n\s*)*applyActions,\s*retypeFoe,\s*peerCandidates,/, 'the API');
+  assert.match(d, /isAuthority: \(\) => _authority,\s*(?:\/\/[^\n]*\n\s*)*applyActions,\s*(?:\/\*\*[\s\S]*?\*\/\s*)?actionRecords\(keys\) \{/, 'the API'); assert.match(d, /\n    retypeFoe,\n    peerCandidates,/, 'and the rebuild and the peers on it');
   const m = rd('src/scenes/worldModes.js');
   assert.match(m, /onActions: \(data\) => host\.onActions\?\.\(data\), peers: \(\) => host\.peers\?\.\(\) \?\? null, selfId: \(\) => host\.selfId\?\.\(\) \?\? null,/, 'into the build');
   assert.match(m, /applyDungeonActions\(id, data\) \{ return mode === 'dungeon' && dungeonCtx \? !!dungeonCtx\.applyActions\?\.\(id, data\) : false; \},/);
   const w = rd('src/scenes/world.js');
   assert.match(w, /online\.onAct = \(id, data\) => \{ modes\?\.applyDungeonActions\?\.\(id, data\); \};/, 'the doors routed');
-  assert.match(w, /onActions: \(data\) => online\?\.sendAct\(data\) \?\? false,/);
+  assert.match(w, /onActions: actSend,/, 'the door out through the pending set (AUDIT WORLD3 A3)');
+  assert.match(w, /const actSend = \(data\) => \{[\s\S]*?if \(!online\.sendAct\(out\)\) \{ for \(const k of keys\) _actPend\.add\(k\); return false; \}\s*_actPend\.clear\(\);/, 'A3: a refused act holds its KEYS');
+  assert.match(w, /const actFlush = \(\) => \{[\s\S]*?const data = modes\?\.dungeonActionRecords\?\.\(\[\.\.\._actPend\]\);/, 'A3: and the next frame re-reads them CURRENT');
+  assert.match(w, /foesStream\(now\);[^\n]*\n\s*actFlush\(\);/, 'A3: flushed from the frame, so a quiet room heals too');
   assert.match(w, /peers: \(\) => \{\s*if \(!online \|\| !online\.room \|\| online\.status !== 'open'\) return null;\s*const now = performance\.now\(\), out = \[\];\s*for \(const p of online\.peers\.values\(\)\) if \(online\.visible\(p, now\)\) out\.push\(\{ id: p\.id, feet: onlineToScene\(p\.shown\), height: peerBodies\?\.heightOf\(p\.id\) \|\| undefined \}\);\s*return out;\s*\},/, 'the peers at their scene feet, the drawn pose');
   assert.match(w, /selfId: \(\) => online\?\.id \?\? null,/);
 });

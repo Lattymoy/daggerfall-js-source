@@ -104,8 +104,9 @@
 // foe opening a door - sends what changed ({t:'act', data}: the changed
 // action records, under the small cap, on the actions' own bucket at the
 // relay - ACT_HZ_MAX, a door never starving a pose) and the room fans it
-// to everyone hello'd but its author, under the room's own budget
-// (ACT_ROOM_HZ_MAX; ACT_HZ_MAX at home too). Every player in a world room may
+// to everyone hello'd but its author, under the room's own budgets
+// (ACT_ROOM_HZ_MAX frames and ACT_ROOM_BYTES_PER_S bytes, the frame times
+// its listeners; ACT_HZ_MAX at home too). Every player in a world room may
 // send one, not the host alone: a door is whoever touched it. The relay
 // reads none of it.
 
@@ -193,6 +194,12 @@ export const HIT_ROOM_HZ_MAX = 60;
 export const HIT_HZ_MAX = 10;
 /** WORLD3: the action frames a room fans a second, all senders together - a door, a lever, a platform moved. */
 export const ACT_ROOM_HZ_MAX = 30;
+/** AUDIT WORLD3 A1: a room's act fan spends this many bytes a second - the frame's size times its listeners, the
+ *  same law AUDIT WORLD2 A5 wrote for the foes fan. Counting FRAMES alone left the cost unbounded in bytes: six
+ *  hello'd sockets sending the largest act frame at their own rate is 119.6 MiB/s out of one Durable Object, 30x
+ *  the foes fan's ceiling. A door's honest traffic is a few kilobytes a second even in a full room, so this sits
+ *  well above every real cascade and far below the hole. */
+export const ACT_ROOM_BYTES_PER_S = 1024 * 1024;
 /** WORLD3: a client's action frames a second - a click's worth, on their own bucket at the relay (a door never
  *  starves a pose) and refused to the caller at home past it. */
 export const ACT_HZ_MAX = 5;

@@ -52,6 +52,11 @@ export const isPlayerTarget = (c) => c === PLAYER_TARGET || c?.isPlayer === true
  *  team chain, the quest gate, the NoTarget mode) and to the melee fork, measured at its OWN feet and height
  *  where the local player is measured at playerFeet; its health the host's word (0 once it left). */
 export const isPeerTarget = (c) => c?.isPeer === true;
+/** AUDIT WORLD3 C3: THE LOCAL player - the one this client answers for. WORLD3 made `isPlayer` true for a PEER, so
+ *  every guard that spelled "not another foe, therefore mine" as isPlayerTarget now admits another player's body: the
+ *  alert, the rest gate, the exhaustion collapse, the encounter edge, the stealth roll. A site that means MY player
+ *  reads this; a site that means ANY player reads isPlayerTarget. */
+export const isLocalPlayerTarget = (c) => isPlayerTarget(c) && !isPeerTarget(c);
 
 /**
  * `MobileEnemy.Team` - the per-instance STRUCT COPY's team, which

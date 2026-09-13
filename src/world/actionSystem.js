@@ -143,6 +143,48 @@ export const TRIGGER_GATE = Object.freeze({
   [TRIGGER_FLAGS.Collision09]: ['Direct', 'WalkInto'],
   [TRIGGER_FLAGS.Door]: ['Door'],
 });
+/** The four states an action record's tween can be in - the only ones the graph ever mints
+ *  (start / end at rest, forward / reverse mid-tween). */
+export const ACTION_STATES = Object.freeze(['start', 'forward', 'end', 'reverse']);
+/** The largest lock a record may carry off the wire: DFU's own values run 0..20 (MAGIC_LOCK_THRESHOLD), and a byte
+ *  is past every one of them. */
+export const ACTION_LOCK_MAX = 255;
+
+/** AUDIT WORLD3 B1: the SHARED half of a save record - a save record with the picker's own retry latch removed.
+ *  What a room may know about a door is where it stands and whether it is locked; `failedSkillLevel` is the LOCAL
+ *  player's failed-attempt latch and belongs to nobody else. */
+export function sharedRecord(r) {
+  if (!r || typeof r !== 'object') return r;
+  const { failedSkillLevel: _latch, ...rest } = r;
+  void _latch;
+  return rest;
+}
+
+/** AUDIT WORLD3 A2: one action record off the wire, projected and clamped - the shape restoreSaveData may be handed.
+ *  Returns a NEW record carrying only the fields it could verify (presence-gating is restoreSaveData's own law, so an
+ *  absent field simply leaves the live value), or null when the record is not one this graph could ever have minted.
+ *  The picker's latch is dropped here whatever the sender said (B1). */
+export function validActionRecord(r) {
+  if (!r || typeof r !== 'object' || Array.isArray(r)) return null;
+  if (typeof r.key !== 'string' || !r.key || r.key.length > 128) return null;
+  if (!ACTION_STATES.includes(r.state)) return null;
+  const unit = (v) => (typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= 1 ? v : null);
+  const t = unit(r.t);
+  if (t == null) return null;
+  const out = { key: r.key, state: r.state, t };
+  if (r.lock != null) {
+    if (typeof r.lock !== 'number' || !Number.isInteger(r.lock) || r.lock < 0 || r.lock > ACTION_LOCK_MAX) return null;
+    out.lock = r.lock;
+  }
+  if (r.moveState != null) {
+    if (!ACTION_STATES.includes(r.moveState)) return null;
+    const mt = unit(r.moveT ?? 0);
+    if (mt == null) return null;
+    out.moveState = r.moveState; out.moveT = mt;
+  }
+  return out;
+}
+
 export const COLLISION_TIMEOUT_S = 0.12;   // DaggerfallActionCollision.Timeout
 
 /** AUDIT 63 F45 (review round): WHICH OBJECTS HAVE A
@@ -367,15 +409,21 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
    *  the outer one. Nothing is diffed without a listener. */
   _changed(fn) {
     if (!this.onChanged || this._depth > 0) { this._depth++; try { return fn(); } finally { this._depth--; } }
-    const before = new Map(this.collectSaveData().map((r) => [r.key, JSON.stringify(r)]));
+    const before = new Map(this.collectSaveData().map((r) => [r.key, JSON.stringify(sharedRecord(r))]));
     this._depth++;
     try { return fn(); } finally {
       this._depth--;
-      const changed = this.collectSaveData().filter((r) => before.get(r.key) !== JSON.stringify(r));
+      const changed = this.collectSaveData().map(sharedRecord).filter((r) => before.get(r.key) !== JSON.stringify(r));
       if (changed.length) this.onChanged(changed);
     }
   }
 
+  /** AUDIT WORLD3 B1: THE SHARED HALF of a save record - what a room may know about a door.
+   *  `failedSkillLevel` is DaggerfallActionDoor's PER-PLAYER retry latch (the skill this player last failed at,
+   *  :157's `==` gate), so shipping it made one player's failure silence another's pick attempt entirely - no line,
+   *  no sound, no tally, no roll - and let two players of different skill defeat the latch by taking turns. It stays
+   *  home in both directions: the seam does not send a latch-only difference (a failed pick emits nothing at all),
+   *  and applyRemote never lands one. The save (collectSaveData/restoreSaveData, AUDIT 26 F187) keeps it. */
   /** WORLD3: another player's change to this graph - the records as
    *  restoreSaveData takes them (state, tween, lock; the settle), the
    *  transitions HEARD as this scene hears its own: a door beginning
@@ -386,16 +434,24 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
   applyRemote(records) {
     if (!Array.isArray(records)) return 0;
     let n = 0;
-    for (const rec of records) {
+    for (const raw of records) {
+      // AUDIT WORLD3 A2: a record off the wire is a stranger's until it is checked. Every other frame on this wire is
+      // projected at both ends (validPose, validLook, sanitizeChat), and this one reached `o.t = sa.t` unread: a `t`
+      // of "x" made the tween arithmetic NaN, which never satisfies `t >= 1`, so the object hung mid-swing for the
+      // life of the session - a door bricked open, for every player in the room, by one 146-byte frame.
+      const rec = validActionRecord(raw);
       const o = rec && this.objects.get(rec.key);
       if (!o) continue;
-      const playing = (st) => st === 'forward' || st === 'reverse';
       const opening = o.kind === 'door' && o.state !== 'forward' && rec.state === 'forward';
-      const started = o.kind !== 'door' ? (playing(rec.state) && rec.state !== o.state)
-        : (rec.moveState != null && playing(rec.moveState) && rec.moveState !== o.moveState);
+      // AUDIT WORLD3 B3: the author rings the RDB soundIndex on EVERY Play (`_play`, "if (PlaySound && Index > 0)"),
+      // and a Play always moves the record's own state - a tween's start, or an INSTANT flip. Gating the peers' ring
+      // on a tween start alone left every zero-duration mover (an acting flat's Translation, a duration-0 model)
+      // sliding in silence on every screen but the author's.
+      const played = rec.state !== o.state
+        || (o.kind === 'door' && rec.moveState != null && rec.moveState !== o.moveState);
       this.restoreSaveData([rec]);
       if (opening) this.onDoorState?.(o, true);
-      if (started && o.index > 0) this.onActionSound?.(o);
+      if (played && o.index > 0) this.onActionSound?.(o);
       n++;
     }
     return n;
