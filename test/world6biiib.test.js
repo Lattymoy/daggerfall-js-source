@@ -7,7 +7,8 @@
 // cell's room, and a blow goes through the OWNER's cell (the room its frame was keyed to). A crossing PROMOTES the
 // halo's socket in place (no close, no reconnect, no roster wiped, no puppet lost); the cell left steps down to a halo
 // until it is out of range (a pixel of hysteresis keeps a player pacing the edge from churning sockets). No relay
-// change: a halo member is a member.
+// change: a halo member is a member. AUDIT WORLD6b-iii(b): a blow is struck where its owner is REPORTED (the frame's
+// cell a preference), a crossing is joined the moment the cell is held, only a live halo is promoted.
 //
 // These pins EXECUTE the wire's geometry, the session over fake sockets, and the pool over a crafted MONSTER.BSA.
 import './modsOff.js';
@@ -85,8 +86,10 @@ test('WORLD6b-iii(b): the session - a halo room is hello\'d into and posed into;
     assert.equal(s.sendHit({ to: 'eve-0003', k: 'world:2,12', i: 1, dmg: 3, kind: 'arrow' }), true, 'Eve\'s foe: through Eve\'s cell');
     assert.equal(hw.sent.at(-1), '{"t":"hit","data":{"to":"eve-0003","k":"world:2,12","i":1,"dmg":3,"kind":"arrow"}}');
     now += 1000;
-    assert.equal(s.sendHit({ to: 'eve-0003', k: 'world:3,12', i: 1, dmg: 3, kind: 'arrow' }), false, 'keyed to my cell, where Eve is not reported: refused');
-    assert.equal(s.sendHit({ to: 'eve-0003', k: 'world:9,9', i: 1, dmg: 3, kind: 'arrow' }), false, 'keyed to a cell I do not hold: refused');
+    assert.equal(s.sendHit({ to: 'eve-0003', k: 'world:3,12', i: 1, dmg: 3, kind: 'arrow' }), true, 'keyed to my cell, where Eve is not reported: struck where she IS (AUDIT WORLD6b-iii(b) A3 - the key is a preference; a crossing made it stale for a foes interval)');
+    assert.equal(hw.sent.at(-1), '{"t":"hit","data":{"to":"eve-0003","k":"world:3,12","i":1,"dmg":3,"kind":"arrow"}}', 'through her cell');
+    now += 1000;
+    assert.equal(s.sendHit({ to: 'eve-0003', k: 'world:9,9', i: 1, dmg: 3, kind: 'arrow' }), true, 'keyed to a cell I do not hold: the same');
     assert.equal(s.sendHit({ to: 'bob-0002', k: 'world:2,12', i: 1, dmg: 3, kind: 'arrow' }), true, 'Bob is in both: through the one the blow names');
     assert.equal(hw.sent.at(-1), '{"t":"hit","data":{"to":"bob-0002","k":"world:2,12","i":1,"dmg":3,"kind":"arrow"}}');
     // the roster: gone from one room, kept by the other
@@ -156,11 +159,11 @@ test('WORLD6b-iii(b): the pool - a frame keyed to a cell I hold across the seam 
 
 test('WORLD6b-iii(b): the world host by source - the halo held from the map pixel with the hysteresis, a cell crossing keeps the puppets, the pool told which cells I hold; the record', () => {
   const w = rd('src/scenes/world.js');
-  assert.match(w, /online\.setHalo\(mp && isCellRoom\(online\.room\) \? cellHaloFor\(mp\.x, mp\.y, \{ current: online\.haloRooms\(\) \}\) : \[\]\);/, 'the halo, every frame, from the pixel the room is keyed by');
+  assert.match(w, /const wantHalo = mp && isCellRoom\(online\.room\) \? cellHaloFor\(mp\.x, mp\.y, \{ current: online\.haloRooms\(\) \}\) : \[\];\s*\n\s*if \(mp && isCellRoom\(online\.room\) && isCellRoom\(key\) && key !== online\.room\) wantHalo\.push\(key\);[^\n]*\n\s*if \(wantHalo\.some\(\(r\) => !online\.haloRooms\(\)\.includes\(r\)\)\) online\.look = composeLook\(playerEntity\);[^\n]*\n\s*online\.setHalo\(wantHalo\);/, 'the halo, every frame, from the pixel the room is keyed by - the cell I stand in held until the join (AUDIT WORLD6b-iii(b) B1), the look composed before a halo opens (C5)');
   assert.match(w, /const seam = isCellRoom\(online\.room\) && isCellRoom\(_foesRoom\); _foesRoom = online\.room; _foesFullAt = -Infinity; if \(!seam\) exteriorFoes\.clearPuppets\(\);/, 'the seam keeps the puppets, and the new cell still hears every foe of mine at once');
   assert.match(w, /inRoom: \(k\) => online\?\.inRoom\?\.\(k\) \?\? false,/, 'the pool reads which cells I hold');
   const o = rd('src/net/online.js');
-  assert.match(o, /if \(h && this\._ws && isCellRoom\(room\) && isCellRoom\(this\.room\)\) \{/, 'the promotion');
-  assert.match(o, /if \(k !== this\.room\) \{ const h = this\._halo\.get\(k\); if \(!h \|\| h\.status !== 'open' \|\| !h\.ws\) return false; ws = h\.ws; \}/, 'a hit through the owner\'s cell');
+  assert.match(o, /if \(h && h\.ws && h\.status === 'open' && this\._ws && isCellRoom\(room\) && isCellRoom\(this\.room\)\) \{/, 'the promotion (AUDIT WORLD6b-iii(b) A1: a live halo alone)');
+  assert.match(o, /for \(const r of \[k, this\.room, \.\.\.this\._halo\.keys\(\)\]\) if \(has\(r\) && sock\(r\)\) \{ via = sock\(r\); break; \}/, 'a hit through the owner\'s cell - the frame\'s first, then wherever it is reported (AUDIT WORLD6b-iii(b) A3)');
   assert.match(rd('bible/06-Systems/Online-Arc.md'), /### 6b-iii\(b\): the cell seam/, 'the record');
 });

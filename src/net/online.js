@@ -238,11 +238,16 @@ export class OnlineSession {
   join(room, pose = null) {
     if (room === this.room && this._ws) return;
     const h = this._halo.get(room);
-    if (h && this._ws && isCellRoom(room) && isCellRoom(this.room)) {
+    // AUDIT WORLD6b-iii(b) A1/B7/C2: a LIVE, OPEN halo alone is promoted - one dropped and pending its retry (ws null)
+    // handed a dead socket to the primary and the next setHalo closed the good one; a stale entry is dropped and the
+    // ordinary join stands the cell's socket at once
+    if (h && !(h.ws && h.status === 'open')) this._halo.delete(room);
+    if (h && h.ws && h.status === 'open' && this._ws && isCellRoom(room) && isCellRoom(this.room)) {
       // WORLD6b-iii(b): a crossing into a cell already hello'd as a halo PROMOTES its socket - no close, no reconnect,
       // no roster wiped (the seam crossing was a churn: every puppet gone, every peer re-said); the cell left steps
-      // down to a halo, and setHalo lets it go once it is out of range
-      const old = { ws: this._ws, status: this.status, retryAt: null, backoff: BACKOFF_MIN_MS };
+      // down to a halo, and setHalo lets it go once it is out of range. AUDIT WORLD6b-iii(b) A6: the demoted entry's
+      // status is the SOCKET's - open, or still connecting (an 'error' after a relay error frame is a close on its way)
+      const old = { ws: this._ws, status: this.status === 'open' ? 'open' : 'connecting', retryAt: null, backoff: BACKOFF_MIN_MS, since: this._now() };
       this._halo.delete(room);
       this._halo.set(this.room, old);
       this._ws = h.ws; this.status = h.status; this.error = null; this._retryAt = h.retryAt; this._backoff = h.backoff;
@@ -269,8 +274,7 @@ export class OnlineSession {
     const ws = this._ws;
     this._ws = null;
     if (ws) { try { ws.close(1000, 'leaving'); } catch { /* already closed */ } }
-    for (const [, h] of this._halo) { try { h.ws?.close(1000, 'leaving'); } catch { /* already closed */ } }
-    this._halo.clear();
+    this._endHalo();
     this._rooms.clear();
     this._retryAt = null;
     this.room = null;
@@ -283,7 +287,9 @@ export class OnlineSession {
    *  wanted and not held is hello'd into, a room held and not wanted is left (its peers go unless another room holds
    *  them). Only a cell has a halo; anywhere else the list is emptied. */
   setHalo(rooms) {
-    const want = new Set(isCellRoom(this.room) && this._ws ? (rooms ?? []).filter((r) => isCellRoom(r) && r !== this.room) : []);
+    // AUDIT WORLD6b-iii(b) A5: the halo's life is the ROOM's, not the primary socket's - a one-second blip of my own
+    // cell's socket closed every halo, wiped the seam's roster and re-hello'd the neighbours on the way back
+    const want = new Set(isCellRoom(this.room) && !this.terminal ? (rooms ?? []).filter((r) => isCellRoom(r) && r !== this.room) : []);
     for (const [room, h] of [...this._halo]) {
       if (want.has(room)) continue;
       this._halo.delete(room);
@@ -291,6 +297,12 @@ export class OnlineSession {
       this._forgetRoom(room);
     }
     for (const room of want) if (!this._halo.has(room)) this._openHalo(room);
+  }
+  /** AUDIT WORLD6b-iii(b) A4: every halo ended - leave's, and the primary's terminal close (the verdict is the
+   *  session's, not one socket's; the halos posed my ghost and stood puppets I could not strike back until now). */
+  _endHalo() {
+    for (const [room, h] of this._halo) { try { h.ws?.close(1000, 'leaving'); } catch { /* already closed */ } this._forgetRoom(room); }
+    this._halo.clear();
   }
   /** WORLD6b-iii(b): the halo rooms held now (for the next cellHaloFor, its hysteresis). */
   haloRooms() { return [...this._halo.keys()]; }
@@ -304,23 +316,23 @@ export class OnlineSession {
     const have = this.peers.get(id);
     if (have) this._refresh(have, p, now); else this.peers.set(id, this._peer(p, now));
   }
-  _heldElsewhere(id, but) { for (const [room, s] of this._rooms) if (room !== but && s.has(id)) return true; return false; }
+  _held(id) { for (const s of this._rooms.values()) if (s.has(id)) return true; return false; }
   _unmember(room, id) {
     this._rooms.get(room)?.delete(id);
-    if (!this._heldElsewhere(id, null)) this.peers.delete(id);
+    if (!this._held(id)) this.peers.delete(id);
   }
   _forgetRoom(room) {
     const s = this._rooms.get(room);
     this._rooms.delete(room);
-    if (s) for (const id of s) if (!this._heldElsewhere(id, null)) this.peers.delete(id);
+    if (s) for (const id of s) if (!this._held(id)) this.peers.delete(id);
   }
-  _openHalo(room) {
+  _openHalo(room, backoff = BACKOFF_MIN_MS) {
     if (!this.url || !this._WS) return;
     let ws;
-    try { ws = new this._WS(`${this.url}/room/${room}`); } catch { return; }
-    const h = { ws, status: 'connecting', retryAt: null, backoff: BACKOFF_MIN_MS };
-    this._halo.set(room, h);
-    this._bind(ws, room);
+    // AUDIT WORLD6b-iii(b) A7: a socket that cannot be made is an entry with a retry, not nothing (nothing was re-tried every frame)
+    try { ws = new this._WS(`${this.url}/room/${room}`); } catch { this._halo.set(room, { ws: null, status: 'closed', retryAt: this._now() + backoff, backoff: Math.min(BACKOFF_MAX_MS, backoff * 2), since: this._now() }); return; }
+    this._halo.set(room, { ws, status: 'connecting', retryAt: null, backoff, since: this._now() });
+    this._bind(ws);
   }
   /** Which room a socket serves NOW - the primary's, a halo's, or none (a stale socket's events are ignored). The
    *  role is read at event time, so a promoted or demoted socket keeps its handlers (WORLD6b-iii(b)). */
@@ -329,7 +341,6 @@ export class OnlineSession {
     for (const [room, h] of this._halo) if (h.ws === ws) return room;
     return null;
   }
-  _holder(room) { return room === this.room ? this : this._halo.get(room); }
 
   /** Am I the room's host (WORLD1)? False until the welcome says so. */
   isHost() { return !!this.id && this.host === this.id; }
@@ -372,9 +383,16 @@ export class OnlineSession {
     // one room); an owner in no room I hold is not mine to strike
     let ws = this._ws;
     if (cell) {
+      // AUDIT WORLD6b-iii(b) A3: the frame's cell is a PREFERENCE, not a veto - an owner that crossed since the frame
+      // that keyed my blow is struck where it is REPORTED: its cell, then my own, then any halo; a blow was refused
+      // for a foes interval at every crossing until now, and silently
       const owner = hitOwnerOf(data), k = typeof data.k === 'string' ? data.k : this.room;
-      if (k !== this.room) { const h = this._halo.get(k); if (!h || h.status !== 'open' || !h.ws) return false; ws = h.ws; }
-      if (!this._rooms.get(k)?.has(owner)) return false;
+      const has = (r) => !!this._rooms.get(r)?.has(owner);
+      const sock = (r) => (r === this.room ? (this.status === 'open' ? this._ws : null) : (this._halo.get(r)?.status === 'open' ? this._halo.get(r).ws : null));
+      let via = null;
+      for (const r of [k, this.room, ...this._halo.keys()]) if (has(r) && sock(r)) { via = sock(r); break; }
+      if (!via) return false;
+      ws = via;
     }
     const gate = hitGate(this._hbucket, this._now());   // AUDIT WORLD2 A6: HIT_HZ_MAX a second at home - refused to the caller, never dropped by the relay unseen
     if (!gate.pass) return false;
@@ -414,7 +432,7 @@ export class OnlineSession {
     try { ws = new this._WS(`${this.url}/room/${this.room}`); } catch (e) { this.status = 'error'; this.error = String(e?.message ?? e); this._scheduleRetry(); return; }
     this._ws = ws;
     this.status = 'connecting';
-    this._bind(ws, this.room);
+    this._bind(ws);
   }
 
   /** The one handler set for a socket, the primary's or a halo's - the role is read at event time (_roomOf). */
@@ -444,7 +462,10 @@ export class OnlineSession {
         // the halo (the primary hears the same verdict on its own socket), a busy or dropped one is retried on tick
         const h = this._halo.get(room);
         this._forgetRoom(room);
-        if (code === CLOSE_REPLACED || code === CLOSE_POLICY || this._closedByUs) { this._halo.delete(room); return; }
+        if (this._closedByUs) { this._halo.delete(room); return; }
+        // AUDIT WORLD6b-iii(b) A2: a terminal verdict is REMEMBERED (ws null, no retry) - the entry deleted, setHalo
+        // re-opened the room the next frame, and a refused hello became connect-hello-refuse at the wire's rate
+        if (code === CLOSE_REPLACED || code === CLOSE_POLICY) { h.ws = null; h.status = 'terminal'; h.retryAt = null; return; }
         h.ws = null; h.status = 'closed';
         if (code === CLOSE_BUSY) h.backoff = Math.max(h.backoff, BACKOFF_MAX_MS / 2);
         h.retryAt = this._now() + h.backoff; h.backoff = Math.min(BACKOFF_MAX_MS, h.backoff * 2);
@@ -452,8 +473,8 @@ export class OnlineSession {
       }
       this._ws = null;
       this._setHost(null);   // AUDIT WORLD2 A2/C2: a dead socket holds no seat - the host is unknown until the next welcome, and the world host hears it (onHost)
-      if (code === CLOSE_REPLACED) { this.terminal = true; this.terminalAt = this._now(); this.status = 'error'; this.error = 'this character is online in another window'; return; }
-      if (code === CLOSE_POLICY) { this.terminal = true; this.terminalAt = this._now(); this.status = 'error'; this.error = this.error ?? 'the relay refused a frame'; return; }
+      if (code === CLOSE_REPLACED) { this.terminal = true; this.terminalAt = this._now(); this.status = 'error'; this.error = 'this character is online in another window'; this._endHalo(); return; }   // AUDIT WORLD6b-iii(b) A4
+      if (code === CLOSE_POLICY) { this.terminal = true; this.terminalAt = this._now(); this.status = 'error'; this.error = this.error ?? 'the relay refused a frame'; this._endHalo(); return; }
       if (code === CLOSE_BUSY) { this.status = 'closed'; this.error = 'the room is busy'; this._backoff = Math.max(this._backoff, BACKOFF_MAX_MS / 2); this._scheduleRetry(); return; }   // full or gated: back off hard, then try again
       this.status = 'closed';
       if (!this._closedByUs) this._scheduleRetry();
@@ -479,10 +500,13 @@ export class OnlineSession {
     const now = this._now();
     if (now - this._lastSentAt < 1000 / POSE_HZ) return false;
     if (now - this._lastSentAt < HEARTBEAT_MS && !poseChanged(this._lastSent, pose)) return false;
-    if (!this._send({ t: 'pose', p: pose })) return false;
+    // WORLD6b-iii(b): the halo rooms hear my pose too - their fans range me by it and their rosters place me. AUDIT
+    // WORLD6b-iii(b) A5: through every OPEN socket, my own cell's down or not (the halos rode out nothing while the
+    // fan sat behind the primary's send)
+    let went = this._send({ t: 'pose', p: pose });
+    if (this._halo.size) { const s = JSON.stringify({ t: 'pose', p: pose }); for (const [, h] of this._halo) if (h.status === 'open' && h.ws) { try { h.ws.send(s); this.stats.sent++; went = true; } catch { /* the close will say */ } } }
+    if (!went) return false;
     this._lastSent = { ...pose }; this._lastSentAt = now; this.stats.poses++;
-    // WORLD6b-iii(b): the halo rooms hear my pose too - their fans range me by it and their rosters place me
-    if (this._halo.size) { const s = JSON.stringify({ t: 'pose', p: pose }); for (const [, h] of this._halo) if (h.status === 'open' && h.ws) { try { h.ws.send(s); this.stats.sent++; } catch { /* the close will say */ } } }
     return true;
   }
 
@@ -583,6 +607,7 @@ export class OnlineSession {
 
   /** A pose in: eased from where the peer is drawn, or snapped there when it jumped. */
   _arrive(p, pose, now) {
+    if (p.pose && !poseChanged(p.pose, pose)) { p.seenAt = now; return; }   // AUDIT WORLD6b-iii(b) C6: the same pose again (through a second room, or a standing heartbeat) is seen, not re-eased
     const snap = String(this.room ?? '').startsWith('world:') ? SNAP_WORLD_UNITS : SNAP_SCENE_UNITS;
     const from = p.shown && groundDist(p.shown, pose) <= snap ? { ...p.shown } : { ...pose };
     p.from = from; p.pose = pose; p.at = now; p.seenAt = now;
@@ -594,7 +619,11 @@ export class OnlineSession {
   tick() {
     const now = this._now();
     if (this._retryAt != null && now >= this._retryAt && !this._ws && !this._closedByUs && !this.terminal && this.room) { this._retryAt = null; this.stats.reconnects++; this._open(); }
-    for (const [room, h] of this._halo) if (!h.ws && h.retryAt != null && now >= h.retryAt && !this._closedByUs && !this.terminal) { this._halo.delete(room); this.stats.reconnects++; this._openHalo(room); }   // WORLD6b-iii(b)
+    for (const [room, h] of [...this._halo]) {   // WORLD6b-iii(b): the halo's retries
+      if (!h.ws && h.retryAt != null && now >= h.retryAt && !this._closedByUs && !this.terminal) { this._halo.delete(room); this.stats.reconnects++; this._openHalo(room, h.backoff); continue; }
+      // AUDIT WORLD6b-iii(b) A7: a halo that never opens and never closes is not immortal - past the longest backoff it is dropped and retried
+      if (h.ws && h.status === 'connecting' && now - (h.since ?? now) > BACKOFF_MAX_MS) { const ws = h.ws; h.ws = null; h.status = 'closed'; h.retryAt = now + h.backoff; h.backoff = Math.min(BACKOFF_MAX_MS, h.backoff * 2); try { ws.close(1000, 'timeout'); } catch { /* already closed */ } }
+    }
     if (!this.presence && this.status === 'open' && now - this._lastSentAt >= HEARTBEAT_MS && this._send({ t: 'ping' })) this._lastSentAt = now;   // CHAT1: a channel's keepalive, answered without waking the room
     for (const p of this.peers.values()) {
       if (!p.pose) continue;
