@@ -426,3 +426,34 @@ fake renderer whose `uploadTexture` accepts anything, and a fake
 `loadSprite` that answered `{ width, height, data: null }` - the wrong
 shape, taught by the rig. The fake now answers `colors`, and TEX1's pin
 runs the real renderer.
+
+## HT2 - LIGHTING ONE FROM THE PACK (2026-09-14)
+
+Mac, the same evening the sprite door was fixed: *"So you cant equip
+the torch in your offhand, you can only drop it on the ground"*.
+
+**Not the mod.** The mod puts a lit light in a free hand; it never gets
+one to put there unless something sets `entity.lightSource`. The three
+ways into that slot are the toggle key (`Handling.ToggleLightInput`,
+`F` by default), a pickup under OnPick, and the INVENTORY - and the
+inventory is the one Mac had. The enhanced pack, which is the default
+skin and the only one online, had no act that lights a light source:
+its primary button was `Wear`, and no light source has an equip slot,
+so it answered "cannot be worn." - and the only act beside it that
+named the torch honestly was Drop. (The generic `Use` button did light
+it; nothing on the card said that, and a player told a torch cannot be
+worn has been told there is no place for it.) The mod's own drop key
+answers the same way, which is why the report reads as one behaviour.
+
+**The cure** is the pack's, not this mod's, and is written up in
+`bible/10-UI/UI-Arc.md`'s HT2 section: the card's primary act on a
+light source is `Light` (or `Douse` for the one already lit), and it
+performs DFU's own equip-click arm - `UseItem(item)` with no
+collection. With the light lit, this mod does what it always did: the
+hand law takes it, the sprite draws, `PlayerTorch` follows the hand.
+
+**Worth keeping in mind for the next report of this shape:** with
+`Handling.OnStow` at its default (Drop), a lit light whose hands both
+fill IS dropped on the ground - a shield in the left and a weapon in
+the right leaves no free hand, and the mod drops rather than stows.
+That is the mod's law, 1:1, not a bug.
