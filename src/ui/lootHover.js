@@ -19,6 +19,8 @@
 // costs nothing after the first frame.
 import { injectEnhancedStyle } from './enhancedStyle.js';
 import { isEnhanced } from '../systems/uiSkin.js';
+import { rarityAttr } from '../systems/lootRarity.js';   // LR1: a pile's rows wear their tier
+import { resolveItemName } from '../systems/itemInfo.js';   // LR1: an unidentified item reads as its template on the plaque too
 
 /** How many lines before the plaque says "and N more" instead. A pile
  *  is a glance, not a list to read; DFU's own loot windows scroll. */
@@ -40,8 +42,9 @@ function ensure() {
 /** The lines a pile shows: name, and a count when a stack. Pure. */
 export function hoverLines(items, max = HOVER_MAX) {
   const rows = (items ?? []).filter(Boolean).map((it) => ({
-    name: it.name ?? 'Something',
+    name: resolveItemName(it) || it.name || 'Something',   // LR1: ResolveItemName - an unidentified enchanted item is its bare template
     stack: (it.stackCount ?? 1) > 1 ? it.stackCount : 0,
+    rarity: rarityAttr(it),   // LR1: null with the switch off or for Common
   }));
   const shown = rows.slice(0, max);
   const rest = rows.length - shown.length;
@@ -82,6 +85,7 @@ export function showLootHover(key, items, title = 'Loot') {
   for (const r of shown) {
     const row = document.createElement('div');
     row.className = 'loothover-row';
+    if (r.rarity) row.dataset.rarity = r.rarity;   // LR1
     const nm = document.createElement('span');
     nm.textContent = r.name;
     row.append(nm);

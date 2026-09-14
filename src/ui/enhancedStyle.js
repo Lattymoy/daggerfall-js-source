@@ -684,6 +684,17 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .bigicon img { image-rendering: pixelated; max-width: 100%; max-height: 120px; }
 .itemname { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
 .itemname small { color: var(--dim); font-size: 11.5px; }
+/* LR1: THE TIER COLOURS (systems/lootRarity.js RARITIES - the four
+   hexes here are pinned against that table). A rolled row wears
+   data-rarity; the picked card's heading and the pile plaque's rows
+   wear the same attribute. Common wears nothing. */
+.itemrow[data-rarity="magic"] .itemname > span:first-child, .packdetail .card[data-rarity="magic"] h3, .loothover-row[data-rarity="magic"] > span:first-child { color: #6f9ee8; }
+.itemrow[data-rarity="rare"] .itemname > span:first-child, .packdetail .card[data-rarity="rare"] h3, .loothover-row[data-rarity="rare"] > span:first-child { color: #e4c34f; }
+.itemrow[data-rarity="legendary"] .itemname > span:first-child, .packdetail .card[data-rarity="legendary"] h3, .loothover-row[data-rarity="legendary"] > span:first-child { color: #e07a2e; }
+.itemrow[data-rarity="artifact"] .itemname > span:first-child, .packdetail .card[data-rarity="artifact"] h3, .loothover-row[data-rarity="artifact"] > span:first-child { color: #b57bee; }
+.packdetail ul.rarity { list-style: none; margin: 4px 0 10px; padding: 0; font-family: var(--data); font-size: 13px; line-height: 1.5; }
+.packdetail ul.rarity li:first-child { text-transform: uppercase; letter-spacing: 0.16em; font-size: 10.5px; color: var(--dim); }
+.packdetail ul.rarity li:last-child:not(:first-child):not(:nth-child(2)) { color: var(--dim); font-style: italic; }
 .itemwt { flex: 0 0 auto; color: var(--dim); font-size: 12px; font-variant-numeric: tabular-nums; }
 .packempty { color: var(--dim); font-size: 14px; margin: 10px 2px; }
 .packdetail .sheet-close { display: none; }

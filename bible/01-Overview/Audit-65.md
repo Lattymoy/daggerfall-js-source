@@ -356,7 +356,7 @@ half the lanes' own mutation tallies could not see.
   `Hand-to-Hand 30%` on one line and a damage range computed from 60 on
   the next. `charsheet.js:659` and `enhancedCharSheet.js:126` read
   `skillValue` now, which moves the enhanced skin's meter with its
-  number (`enhancedMenu.js:1777-1778`) - correctly, since the attribute
+  number (`enhancedMenu.js:1784-1785`) - correctly, since the attribute
   bars beside it were already live. The art-less `_drawFallback` pane
   still prints `''` for an absent skill (both refuters: decide the
   blank case first); DFU has no such pane.
@@ -493,7 +493,7 @@ half the lanes' own mutation tallies could not see.
   purpose and is asserted bare: `PlayerMotor.cs:296-306` does not zero
   `moveDirection`, so a write there would be the divergence. The
   finding's headline fatigue-band consequence was FALSE and is not
-  repeated - `worldTick.js:536-537` is climb-first, matching
+  repeated - `worldTick.js:541-542` is climb-first, matching
   `PlayerEntity.cs:406-408`.
 - *Review round:* fixup. The "without the bob" half of the `feetAt`
   pin was vacuous - the fixture minted no bob, so both bob mutants

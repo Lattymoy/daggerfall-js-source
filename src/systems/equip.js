@@ -107,7 +107,7 @@ export function unequipSlot(entity, slot) {
   slots[slot] = null;
   delete item.equipSlot;
   updateEquippedArmorValues(entity, item, false);   // U8h: the armor table adds back
-  _hooks.onEquipChange?.(entity);   // E1: the fold follows the worn set
+  fireEquipChange(entity);   // E1: the fold follows the worn set (LR2: and every listener's)
   _hooks.onItemUnequipped?.(entity, item);   // E2: StopEquippedItem - the Unequipped payloads (ItemEquipTable.cs:163/:202/:231)
   return item;
 }
@@ -257,7 +257,7 @@ export function equipItem(entity, item) {
   item.equipSlot = slot;
   slots[slot] = item;
   updateEquippedArmorValues(entity, item, true);   // U8h: the armor table subtracts
-  _hooks.onEquipChange?.(entity);   // E1: the fold follows the worn set
+  fireEquipChange(entity);   // E1: the fold follows the worn set (LR2: and every listener's)
   // ES2: "Play equip sound" (ItemEquipTable.cs:144-146) - BEFORE
   // StartEquippedItem, C#'s own order. SoundClips.None plays nothing.
   { const clip = getEquipSound(item); if (clip != null) _equipSoundSink?.(clip); }
@@ -290,6 +290,11 @@ export function rebuildEquipState(entity) {
   const av = armorValuesOf(entity);
   av.fill(100);   // "Initialize body part armor values to 100 (no armor)"
   for (const it of slots) if (it) updateEquippedArmorValues(entity, it, true);
+  // LR2: the listeners' folds follow the rebuilt set at once (the affix
+  // fold reads at liveStat before any magic round has run). The
+  // enchantment hook is NOT fired here - its restore is
+  // restartHeldEnchantments' and the first round's, as DFU's is.
+  for (const fn of _equipListeners) fn(entity);
   return slots;
 }
 
@@ -342,6 +347,20 @@ const SLOT_BODY_PART = new Map([
 ]);
 
 export const armorValuesOf = (entity) => (entity.armorValues ??= new Array(NUMBER_BODY_PARTS).fill(100));
+
+/** LR4 (the loot-rarity audit): THE BODY PARTS A PIECE OF ARMOUR
+ *  COVERS - a shield its SHIELD_PARTS, any other piece the one part
+ *  its template's slot maps to, anything else none. The armour affix
+ *  fold lands its points on these parts exactly as
+ *  updateEquippedArmorValues lands the material's, so a Rare cuirass
+ *  hardens the chest and not the feet. */
+export function armorBodyParts(item) {
+  if (!item || item.group !== 'Armor') return [];
+  if (isShieldTemplate(item.templateIndex)) return SHIELD_PARTS.get(item.templateIndex) ?? [];
+  const rule = SLOT_RULES.Armor[item.templateIndex];
+  const part = rule ? SLOT_BODY_PART.get(EQUIP_SLOTS[rule.slot]) : null;
+  return part == null ? [] : [part];
+}
 
 export function updateEquippedArmorValues(entity, item, equipping) {
   // AUDIT 17e F10 - UpdateEquippedArmorValues verbatim
@@ -479,4 +498,13 @@ export function setEnchantmentHooks({ onEquipChange = null, onItemBroken = null,
   _hooks.onItemEquipped = onItemEquipped;
   _hooks.onItemUnequipped = onItemUnequipped;
 }
-export const notifyEquipChange = (entity) => _hooks.onEquipChange?.(entity);
+/** LR2: OTHER folds that follow the worn set (the loot-rarity affix
+ *  fold), beside the enchantment hook - a listener list, so a second
+ *  fold never has to overwrite the first's door. */
+const _equipListeners = [];
+export function addEquipChangeListener(fn) { if (typeof fn === 'function' && !_equipListeners.includes(fn)) _equipListeners.push(fn); }
+function fireEquipChange(entity) {
+  _hooks.onEquipChange?.(entity);
+  for (const fn of _equipListeners) fn(entity);
+}
+export const notifyEquipChange = (entity) => fireEquipChange(entity);

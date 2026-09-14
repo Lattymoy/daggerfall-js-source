@@ -59,6 +59,11 @@ export function liveStat(entity, statName) {
       else if (a.kind === 'drainAttribute' || a.kind === 'transferAttribute') mod -= a.magnitude;
     }
   }
+  // LR2: the loot-rarity affix fold's attribute channel
+  // (lootRarity.computeAffixMods writes entity._affixMods at every
+  // equip change and every magic round) - a field read, so this leaf
+  // stays import-free; empty with the switch off.
+  mod += entity._affixMods?.stats?.[statName] ?? 0;
   return Math.min(Math.max(base + mod, 0), MAX_STAT_VALUE);
 }
 

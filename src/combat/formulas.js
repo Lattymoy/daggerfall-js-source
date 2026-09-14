@@ -24,6 +24,7 @@ import { MELEE_DISTANCE } from '../characters/enemyMotor.js';   // single source
 import { CLASSIC_TO_UNITY_RATIO } from '../player/motor.js';   // C15 knockback units
 import { rand } from '../formats/dfRandom.js';
 import { enchantArmorMod, enchantChanceToHitMod, enchantWeightAllowanceMult, doItemEnchantmentPayloads, PAYLOAD, isEnchantedItem, entityImprovedAdrenalineRush } from '../systems/enchantments.js';   // E1: the enchantment channels + the Strikes payload; AUDIT 39: ImprovesTalents' adrenaline flag lives in the fold's bag   // the monster multi-attack reflex gate (F2)
+import { affixArmor, affixWeightMult, affixWeaponDamage } from '../systems/lootRarity.js';   // LR2: the affix fold's three reads in this file
 import { liveStat } from '../systems/statMods.js';   // S14: fortify-aware stat reads
 import { skillValue, SKILLS } from '../systems/skills.js';   // S3: real skills (enemies stay flat, verbatim)
 import { RACES } from '../systems/races.js';   // CalculateRacialModifiers reads the DFU-numbered race id
@@ -104,7 +105,7 @@ export const maxEncumbrance = (strength) => Math.floor(strength * 1.5);
  *  (CreateCharAddBonusStats.cs:157), because there is no entity yet. */
 export const entityMaxEncumbrance = (entity) => {
   const amount = maxEncumbrance(liveStat(entity, 'strength'));
-  const mult = enchantWeightAllowanceMult(entity);
+  const mult = enchantWeightAllowanceMult(entity) + affixWeightMult(entity);   // LR2: a carrying-capacity affix rides the same multiplier
   return mult > 0 ? amount + Math.trunc(amount * mult) : amount;
 };
 /** L-slice (combat-16): the HUD line for a weapon whose material
@@ -399,7 +400,7 @@ export function calculateSuccessfulHit(attacker, target, chanceToHitMod, struckB
   // IncreasedArmorValueModifier + DecreasedArmorValueModifier. The
   // channels are the enchantment fold's (Strengthens/WeakensArmor,
   // BadReactionsFrom) - the audit-F5 zeros, live at last.
-  chance += (target.armorValues?.[struckBodyPart] ?? 0) + enchantArmorMod(target);
+  chance += (target.armorValues?.[struckBodyPart] ?? 0) + enchantArmorMod(target) - affixArmor(target, struckBodyPart);   // LR2: an armour affix is points OFF the blow's chance, on the struck part (LR4)
   // AUDIT 21 F2: the adrenaline rush is APPLIED now, in DFU's own slot
   // (FormulaHelper.cs:811, between the armour term and the stats term).
   chance += adrenalineRushToHit(attacker, target);
@@ -440,7 +441,7 @@ export const SKELETAL_WARRIOR_INDEX = 15;   // MonsterCareers.SkeletalWarrior
  *  NOTHING in the codebase mints - as this arm's fallback. */
 export function weaponAttackDamage(attacker, target, damageMod, weapon, rolls = Math.random, weaponAnimTime = 0) {
   const wMin = baseDamageMin(weapon), wMax = baseDamageMax(weapon);
-  let damage = wMin + Math.floor(rolls() * (wMax + 1 - wMin)) + damageMod;
+  let damage = affixWeaponDamage(weapon, wMin + Math.floor(rolls() * (wMax + 1 - wMin))) + damageMod;   // LR2: the weapon's own damage affix over ITS roll, before the swing's mods
   if (!target.isPlayer && target.careerIndex === SKELETAL_WARRIOR_INDEX) {
     if ((weapon.flags & 0x10) === 0) damage = Math.trunc(damage / 2);   // edged-weapon rule
     if (weapon.material === 2) damage *= 2;                             // Silver

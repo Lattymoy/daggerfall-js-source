@@ -33,6 +33,8 @@ import { ARMOR_MATERIAL } from './armorMaterials.js';
 import { TRANSPORT_HORSE_TEMPLATE, hasHorse } from './inventorySession.js';   // TSR4: the mount is the pack's own question
 import { BOOK_TEMPLATE, createBook } from './books.js';   // EB3: books in the pack, for the reader
 import { BOOK_ID_TITLES } from './booksData.js';
+import { setPref } from './uiPrefs.js';   // LR3: the loot door turns the ladder on for the session
+import { applyRarity, LEGENDARIES, ROLLED_TIERS } from './lootRarity.js';   // LR3: one of everything the ladder can mint
 
 /** The prebuilt characters. `race` is the DF race key (races.js RACES
  *  spelling - mwRaceId derives the Morrowind id from it), `classIndex`
@@ -68,11 +70,23 @@ export const TEST_RIDE = Object.freeze({
   blurb: 'The Nord Warrior on a horse, outside the town - the riding sprite. Press T to dismount.',
 });
 
+/** LR3 (loot rarity): THE LOOT LADDER - a door that opens with one of
+ *  everything the ladder can mint in the pack: a Magic and a Rare of
+ *  each of ten base items, and every Legendary on a fitting base. The
+ *  switch is turned ON for the session at the door, so the colours,
+ *  the lines and the folds show; the Nord Warrior carries it. */
+export const TEST_LOOT = Object.freeze({
+  id: 'loot', label: 'The loot ladder', preset: 'nord-warrior',
+  blurb: 'The Nord Warrior with a Magic and a Rare of ten base items and every Legendary in the pack - the tier colours, the affix lines, the unidentified names, and the folds on the paperdoll. Turns Loot rarity on.',
+});
+
 /** The one door for a `test=` id: a preset (ride false), the ride
- *  entry (its preset, ride true), or null - an unknown id resolves to
- *  NOTHING so the boot falls through to the wizard, never a guess. */
+ *  entry (its preset, ride true), the loot ladder (loot true), or null
+ *  - an unknown id resolves to NOTHING so the boot falls through to
+ *  the wizard, never a guess. */
 export function testEntryById(id) {
   if (id === TEST_RIDE.id) return { preset: testPresetById(TEST_RIDE.preset), ride: true };
+  if (id === TEST_LOOT.id) return { preset: testPresetById(TEST_LOOT.preset), ride: false, loot: true };
   const preset = testPresetById(id);
   return preset ? { preset, ride: false } : null;
 }
@@ -177,6 +191,45 @@ export function seedTestGear(entity) {
     const item = testItemOf(row);
     addItem(entity.items, item);
     added.push(item);
+  }
+  return added;
+}
+
+/** LR3: the ladder's bases - ten items across the three groups the
+ *  ladder rolls, each minted the way the loot factories mint them. */
+export const TEST_LOOT_BASES = Object.freeze([
+  { kind: 'weapon', label: 'Steel Longsword', templateIndex: WEAPONS_ENUM.Longsword, material: 1 },
+  { kind: 'weapon', label: 'Steel Dagger', templateIndex: WEAPONS_ENUM.Dagger, material: 1 },
+  { kind: 'weapon', label: 'Steel Battle Axe', templateIndex: WEAPONS_ENUM['Battle Axe'] ?? 127, material: 1 },
+  { kind: 'weapon', label: 'Steel Long Bow', templateIndex: WEAPONS_ENUM['Long Bow'] ?? 130, material: 1 },
+  { kind: 'armor', label: 'Steel Cuirass', templateIndex: ARMOR_ENUM.Cuirass, material: ARMOR_MATERIAL.Steel },
+  { kind: 'armor', label: 'Steel Helm', templateIndex: ARMOR_ENUM.Helm, material: ARMOR_MATERIAL.Steel },
+  { kind: 'armor', label: 'Steel Boots', templateIndex: ARMOR_ENUM.Boots, material: ARMOR_MATERIAL.Steel },
+  { kind: 'armor', label: 'Steel Kite Shield', templateIndex: ARMOR_ENUM.Kite_Shield ?? 111, material: ARMOR_MATERIAL.Steel },
+  { kind: 'jewellery', label: 'Ring', templateIndex: 135, group: 'Jewellery' },
+  { kind: 'jewellery', label: 'Amulet', templateIndex: 133, group: 'Jewellery' },
+]);
+
+/** LR3: the loot ladder's pack - a Magic and a Rare of every base, then
+ *  every Legendary on the first base its record fits (a record with no
+ *  fitting base here mints on its own group's first template). Pure
+ *  over `rolls`; turns the switch on. Returns what it added. */
+export function seedTestLoot(entity, rolls = Math.random) {
+  setPref('lootRarity', true);
+  const added = [];
+  const base = (row) => (row.kind === 'jewellery'
+    ? mintCondition({ group: 'Jewellery', templateIndex: row.templateIndex, name: templateByIndex(row.templateIndex)?.name ?? row.label, flags: 0 })
+    : testItemOf(row));
+  for (const tier of ROLLED_TIERS.filter((t) => t !== 'legendary')) {
+    for (const row of TEST_LOOT_BASES) { const it = applyRarity(base(row), tier, rolls); addItem(entity.items, it); added.push(it); }
+  }
+  for (const rec of LEGENDARIES) {
+    const row = TEST_LOOT_BASES.find((r) => (r.group ?? (r.kind === 'weapon' ? 'Weapons' : 'Armor')) === rec.group && (!rec.templates || rec.templates.includes(r.templateIndex)))
+      ?? TEST_LOOT_BASES.find((r) => (r.group ?? (r.kind === 'weapon' ? 'Weapons' : 'Armor')) === rec.group);
+    const it = base(rec.templates && !rec.templates.includes(row.templateIndex) ? { ...row, templateIndex: rec.templates[0], label: templateByIndex(rec.templates[0])?.name ?? row.label } : row);
+    // the record is CHOSEN, not rolled: a one-record pool through the same door
+    applyRarity(it, 'legendary', () => 0, [rec]);
+    addItem(entity.items, it); added.push(it);
   }
   return added;
 }

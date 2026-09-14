@@ -17,7 +17,7 @@
 // MI (magic items) rolls need the MAGIC.DEF registry
 // (setMagicItemTemplates), and EVERY host that can generate loot now
 // loads it: scenes/shared.js:104-107 (loadMagicRegistries) feeds the
-// module table this file reads, called from dungeonContext.js:1064,
+// module table this file reads, called from dungeonContext.js:1067,
 // world.js:1950 and exterior.js:1063 - interiors run inside those hosts
 // and read the same table. What is left is the data-absent boot, and
 // that is DFU's own answer rather than a stand-in: shared.js:107
@@ -30,6 +30,7 @@ import { goldStack } from './inventory.js';
 import { ITEM_TEMPLATES, mintCondition, GROUP_TEMPLATE_INDICES, templateByIndex, itemBaseValue } from './itemTemplates.js';   // F103: SetItem writes the value with the name
 import { CLOTHING_DYES } from '../characters/dyes.js';
 import { legacyEnchantmentValue } from './enchantments.js';   // G4: ItemBuilder's closing value sum
+import { validAffixList } from './lootRarity.js';   // LR4: an affix record off the wire is checked, not just typed
 import { createRandomBook, BOOK_TEMPLATE } from './books.js';   // IM1: CreateRandomBook whole (A2: + its book-file price)
 import { potionRecipeByKey, POTION_DEFAULT_TEXTURE_RECORD } from './potions.js';   // F103: PotionRecipeKey's price side effect; AUDIT 63 F20: and its texture-record half
 import { RANDOM_TREASURE_ARCHIVE, RANDOM_TREASURE_ICONS, DROP_ICON_ARCHIVES, DROP_ICON_IDXS } from './lootDataTables.js';   // G5: DaggerfallLootDataTables.cs, its own file again
@@ -501,7 +502,7 @@ function clampLootValue(v, depth) {
  *  that field (`itemEnchantments`'s filter, the two artifact predicates' some) is guarded only by a truthiness or a
  *  `.length` test, which a string passes. One such item in a chest froze the tab: the throw escapes the frame body,
  *  which has no try, and the loop is never rescheduled. A named field's SHAPE is not open even when the record is. */
-export const LOOT_ARRAY_FIELDS = Object.freeze(['enchantments', 'customEnchantments']);
+export const LOOT_ARRAY_FIELDS = Object.freeze(['enchantments', 'customEnchantments', 'affixes']);   // LR1: the rarity affix list is read with array methods too
 
 /** One item record off the wire, clamped to a copy - or null when it is not one this port could have minted. */
 export function validLootItem(v) {
@@ -514,6 +515,7 @@ export function validLootItem(v) {
   // ...and the clamp must not have turned one INTO something else on the way (a depth cut drops a field whole,
   // which is safe; a survivor that is no longer an array is not)
   for (const f of LOOT_ARRAY_FIELDS) if (out[f] != null && !Array.isArray(out[f])) return null;
+  if (out.affixes != null && !validAffixList(out.affixes)) return null;   // LR4: a forged affix (+1e9 armour, a stat with no attribute, a null) is not an item
   // AUDIT WORLD6a B1: THE PRICE IS NOT THE WIRE'S. A shelf's list lands on every client (WORLD6a) and calculateCost
   // reads `value`, so a peer minted a Daedric dai-katana at `value: 0` onto a shop's shelf and every player in the
   // Bay could buy it for 2 gold, and the room remembered it for thirty days. The value is floored at what the port

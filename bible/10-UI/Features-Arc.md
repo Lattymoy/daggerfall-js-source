@@ -438,7 +438,8 @@ says so by name. `test/ft11_dfu_rest.test.js`.
 
 THE INVENTORY IS CLOSED. Every row on it is moved, condensed, removed
 or decided. The home holds 21 rows: 7 Enhanced, 6 Mod Authored, 10 DFU
-Classic, two of them wearing two labels. What remains outside it by
+Classic, two of them wearing two labels (22 and 8 since LR1 added the
+first row BUILT for the home - Loot rarity, below). What remains outside it by
 decision: the mods' own knobs under their cards on the Mods page, the
 dials in Settings, the two dead DFU keys as the unavailable rows they
 are, and the outdoors test door.
@@ -472,3 +473,31 @@ re-aim at FT11); the Features probe checks the rail has no Enhanced
 entry. Pins re-aimed: SO1's category count and order, MENU T1's
 per-category counts, FT8's pointer pins, R7/SO1's category sweep (it
 walks the registry's pref rows now).
+
+## LR1 - LOOT RARITY, THE FIRST ROW BUILT FOR THE HOME (2026-09-14)
+
+Mac: "building on unleveled loot. My goal is to transform things into
+a diablo style system with rarity ... Make this the most detailed and
+best that it can be." The first Enhanced row that is not a move - a
+feature built in house for the home: `loot-rarity`, over the pref
+`lootRarity`, off by default (it changes what drops, and DFU's loot is
+the 1:1 law), forced on online (OL1). The ladder, the roll, the affixes,
+the fold, the identify loop, the skins and the drop chime are one
+module (`src/systems/lootRarity.js`) with its own page,
+`bible/06-Systems/Loot-Rarity.md`; the record here is the row's.
+
+The row's note says the whole law in the player's words: the ladder
+(Magic, Rare, Legendary; Daggerfall's own magic items as Magic, its
+artifacts at the top), that affixes are numbers you can read, that the
+odds follow the SOURCE and never your level, that a Rare or Legendary
+drops unidentified until the Identify spell or the Mages Guild reads
+it, and that Off is Daggerfall's loot exactly - items already rolled
+keep their tier and names but their affixes rest. `effect`: the next
+roll; a worn set follows within a magic round. The home holds 22 rows
+now: 8 Enhanced, 6 Mod Authored, 10 DFU Classic. Pins re-aimed: FT0's
+id list, FT2's and FT8's counts.
+
+The Test Room gains a door beside the ride: "The loot ladder", one of
+everything the ladder can mint in the pack, the switch turned on for
+the session. `test/lr1_lootrarity.test.js` (16, after the LR4 audit -
+`bible/06-Systems/Loot-Rarity.md`).

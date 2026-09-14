@@ -220,7 +220,7 @@ test('audit24 wave38: PlayerActivate\'s CorpseMarker arm - empty, arrows, and th
   // the list; DFU reaches it because :957 opens the window over the
   // corpse. The port's bulk take is the residue this file records, so
   // the door is spelled in takeCorpseLoot - without it a corpse's
-  // loot-table gold (loot.js:169) lands in the pack, where
+  // loot-table gold (loot.js:170) lands in the pack, where
   // court.goldAmount cannot see it and it is unspendable forever.
   say.length = 0;
   player.items = [];
@@ -311,9 +311,9 @@ test('audit24 wave38: the encounter pool exports the seam, and the host asks BOT
 
   // ...and the ROUTER itself, RUN off the fixed-city host's own line.
   // Routing a `foeCorpse:` key into the watch pool is not a harmless
-  // miss: cityGuards.js:1036-1038 turns the key into
+  // miss: cityGuards.js:1039-1041 turns the key into
   // `guards.find((g) => g.id === id)` over ids minted by
-  // `_nextGuardId++`, and takeCorpseLoot (corpseMarker.js:181-204)
+  // `_nextGuardId++`, and takeCorpseLoot (corpseMarker.js:195-218)
   // tests only `corpseDisabled` and `entity.items` - never death - so
   // opening an encounter corpse would empty a LIVE watchman's pack.
   // AUDIT 65 MC-2 MADE THE ARM TWO RUNGS: the corpse now competes for

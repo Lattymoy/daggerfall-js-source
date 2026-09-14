@@ -46,7 +46,8 @@ import { onMonsterHit, SPIDER_TOUCH_SPELL_INDEX } from '../systems/diseases.js';
 import { MINUTES_PER_DAY } from '../systems/worldTick.js';
 import { validFoeRecord, CELL_PUPPETS_MAX, POSE_BOUND, POSE_Y_BOUND, tokenGate } from '../net/wire.js';
 import { createWeapon } from '../combat/enemyEquipment.js';   // AUDIT WORLD6b-ii B2: a puppet's weapon is its owner's word, rebuilt from the descriptor   // AUDIT WORLD6b B3/C2: a cell's record projected and its puppets capped, the wire's law
-import { mintCorpseMarker, playBodyFall, corpseLootTargets, takeCorpseLoot, sayEnemyDied, raiseEnemyDeath } from './corpseMarker.js';
+import { mintCorpseMarker, playBodyFall, playRareDrop, corpseLootTargets, takeCorpseLoot, sayEnemyDied, raiseEnemyDeath } from './corpseMarker.js';
+import { rollCorpseLoot } from '../systems/lootRarity.js';   // LR1: the item ladder over the corpse's list
 import { bloodCentre } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
 import { addItem } from '../systems/inventory.js';   // AR1: BowDamage's recoverable arrow, in the TARGET's items
 import { EnemySoundSource, acuteHearingMultiplier } from '../characters/enemySounds.js';   // AUDIT 24 (wave 41): EnemySounds.cs, one home
@@ -219,6 +220,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         entity.items = generateLootItems(basics.lootTableKey ?? '-', { level: playerEntity.level, gender: playerEntity.gender });
         equipEnemy(entity, mobileType, playerEntity.level);
         addEnemyLootExtras(entity.items, basics, rolls);   // AUDIT 24 (wave 43): EnemyEntity.cs:388-397, after the equipment as DFU has it
+        rollCorpseLoot(entity, basics, { rolls, luck: liveStat(playerEntity, 'luck') });   // LR1: at the SOURCE's tier, off the same stream; LR4: the worn kit stays DFU's
       }
       // NT2 (F210): GetTextureArchive's gender arm - a DFRandom draw off
       // the shared stream (Ledger A: a DFRandom site never rides the
@@ -386,6 +388,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     c.pixelKey = f.corpsePixelKey = _corpsePixel;
     corpseBatches.push(c);
     playBodyFall(audio, c.pos);
+    playRareDrop(audio, c.pos, f.entity.items);   // LR3: the chime for a Rare or better on the body
   }).catch(() => {});
   }
 
