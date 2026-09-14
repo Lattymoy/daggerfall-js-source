@@ -2720,19 +2720,416 @@ puppet's cast at me (the joiner's latch, once per count, the missile
 and the blast, the one-shot at another and at nobody, the budget, the
 leap); the hosts by source.
 
+### 6b-iii(b): the cell seam
+
+**Mac: "Continue"** (after AUDIT WORLD6b-iii(a)). D9's strip: the cell
+is sixteen pixels and the relay's range three, so two players a pixel
+apart astride a cell edge were in two rooms and saw nothing of each
+other - a three-pixel strip along every edge where the country went
+empty.
+
+- **The halo.** A player hellos into every neighbouring cell room whose
+  nearest pixel is within RANGE_PIXELS of its own (`cellHaloFor`, the
+  wire's law: Chebyshev as the fan is; none mid-cell, one along an
+  edge, three at a corner; a held room stays a pixel past the range -
+  the hysteresis that keeps a player pacing the edge from churning
+  sockets). A halo room is posed into (its fan ranges me by the pose,
+  its roster places me) and listened to (its roster, a peer's foes, a
+  blow at me, a line), never streamed to: by symmetry everyone within
+  range of me is a member of MY cell's room, so my foes, my chat and my
+  pose through my own cell reach every peer in range.
+- **One roster.** The session's `peers` merges every room held (a peer
+  stays while any room reports it, goes when the last does); a frame
+  from a halo room places its peers and carries their foes and blows;
+  the host, the clock and the memory are my own room's alone.
+- **A blow through the owner's cell.** A foes frame is keyed to its
+  owner's cell (`k`); the pool accepts one keyed to any cell I hold
+  (`inRoom`) and remembers the owner's; my hit on that owner's puppet is
+  keyed to the OWNER's cell and sent through that room's socket, where
+  the owner is reported - the relay routes `to` inside one room. AUDIT
+  WORLD6b-iii(b) A3: the key is a PREFERENCE - the owner is struck where
+  it is reported (its cell, my own, any halo), since a crossing makes
+  the key stale for a foes interval; and a blow at MY foe keyed to any
+  cell I hold is mine (C1).
+- **The crossing.** A step into a cell already held as a halo PROMOTES
+  its socket in place: no close, no reconnect, no roster wiped, and the
+  puppets stand (the seam is no room change to them; the prune takes
+  back any whose owner the hunt no longer sees); the cell left steps
+  down to a halo until it is out of range. A new cell still hears every
+  foe of mine at once (the full frame). AUDIT WORLD6b-iii(b) B1/B8: the
+  join is at ONCE when the cell is held (the 500 ms hold bought a strip
+  with no socket in the cell stood in), the cell stood in is wanted
+  until the join, and a LIVE halo alone is promoted (A1).
+- **No relay change**: a halo member is a member; the door's budgets,
+  the roster cap and the ranged fan apply to it as to anyone. A dropped
+  halo socket is retried on the session's clock; a terminal close ends
+  the halo (the primary hears the same verdict on its own).
+
+Pinned in `test/world6biiib.test.js` (4), EXECUTED: the wire's geometry
+(mid-cell, an edge, a corner, the hysteresis, the map's edge); the
+session over fake sockets (the halo hello'd and posed into, the merged
+roster, a peer's foes and blow and line through it, foes and chat
+through my own cell alone, a hit through the owner's cell and refused
+elsewhere, the promotion, the halo left, leave closing all, the retry,
+no halo outside a cell); the pool (a frame keyed to a held cell stands
+its puppet, one to an unheld cell does not, my blow keyed to the
+owner's cell); the world host by source.
+
+## AUDIT WORLD6b-iii(b) (2026-09-14)
+
+**Mac: "Audit".** Three opus lenses over the cell seam - A the session's
+halo, B the geometry, the relay and the world host, C the pool, the
+hits and the hunt across the seam. Every finding verified against the
+code; paid at the root; pinned by execution in
+`test/auditworld6biiib.test.js` - the session driven in the world
+host's OWN frame order, which the slice's pin never was. No relay
+change.
+
+### The critical
+
+- **B1 (critical, paid): the world host closed the halo of the cell it
+  was entering on the crossing frame, so the promotion never fired.**
+  The wanted list is the new pixel's: `cellHaloFor` names neither the
+  pixel's own cell (the one stepped into) nor, after `setHalo`'s own
+  filter, the cell left (my own) - so on the crossing frame, inside the
+  500 ms hold, the halo the promotion was for was closed, and the join
+  after the hold found no halo and took the old leave-and-reconnect:
+  both sockets closed, two opened, the roster wiped, `status` off
+  'open' and so every puppet pruned. The record's crossing was
+  reachable from the pin alone. Paid: the cell stood in is wanted
+  until the join (`wantHalo.push(key)`), and a cell already HELD is
+  joined at once - the hold (AUDIT WORLD2 C8's, against a world room's
+  churn) bought a cell crossing nothing but a strip with no socket in
+  the cell stood in (B8). Executed in the host's own frame order:
+  two sockets across the crossing, neither closed, nobody wiped.
+
+### A - the session
+
+- **A1/B7/C2 (high, paid): a promotion onto a dropped halo demoted the
+  live socket.** The guard tested the entry, not its socket: a halo
+  pending its retry (ws null) handed a dead socket to the primary, and
+  the next `setHalo` (keyed on `this._ws`) closed the good one - the
+  player offline in both cells for a backoff. A LIVE, OPEN halo alone
+  is promoted; a stale entry is dropped and the ordinary join stands
+  the cell's socket at once.
+- **A3/C1/B6 (high, paid): a blow keyed to a cell the owner had just
+  crossed out of was refused for a foes interval, silently.** The hit's
+  `k` was a veto (the owner had to be reported in that room) and the
+  owner's `applyHit` demanded its own cell exactly; the pool discards
+  the divert's verdict. The key is a preference: the owner is struck
+  where it is REPORTED (its cell, my own, any halo; refused only when
+  no held room reports it), and a blow at my foe keyed to any cell I
+  hold is mine.
+- **A2 (high, paid): a halo's terminal close was re-opened every
+  frame.** The entry was deleted, `setHalo`'s only idempotence was the
+  entry's presence, and a refused hello became connect-hello-refuse at
+  the wire's rate against a shared hello gate. The verdict is
+  remembered (`status: 'terminal'`, no socket, no retry) until the room
+  leaves the wanted set.
+- **A4 (medium, paid): the primary's terminal close left the halos
+  posing my ghost** and standing puppets I could not strike back; the
+  record claimed the opposite direction only. One door (`_endHalo`)
+  for `leave` and both terminal closes.
+- **A5 (medium, paid): the halo's life hung on the primary's socket.**
+  A one-second blip closed every halo, wiped the seam's roster, lost
+  the hysteresis and re-hello'd the neighbours on the way back - the
+  churn the slack was written against, by the back door; and the pose
+  fan sat behind the primary's send. The want-set is the ROOM's
+  (`isCellRoom(this.room) && !this.terminal`), and the pose goes
+  through every open socket.
+- **A6 (medium, paid): a demoted primary kept a stale status** ('error'
+  after a relay error frame, its close on its way) - a zombie halo,
+  never posed into, never retried, never closed. The demoted entry's
+  status is the socket's: open, or connecting.
+- **A7 (medium, paid): a halo stuck connecting was immortal**, and a
+  socket that could not be made was nothing (re-tried every frame).
+  Stamped `since`; past the longest backoff it is dropped and retried;
+  a failed constructor is an entry with a retry.
+- **A8 (declined): the merged roster past ROSTER_MAX.** Bounded at four
+  rooms' worth; the per-frame cost is a lerp per entry and the fans are
+  ranged by the relay, so a far entry is static. Recorded, with AUDIT
+  WORLD6b's ROSTER_MAX residual.
+- **A9 (note, paid): dead code** - `_holder`, `_heldElsewhere`'s unused
+  parameter, `_bind`'s ignored argument. Gone.
+- **A11 (note, recorded): a promotion consumed the new cell's welcome
+  as a halo** - no host, no clock offset from it. A cell reads neither;
+  the relay does seat a host in a cell room, inert at both ends.
+
+### B - the geometry, the relay, the world host
+
+- **B2/B3 (verified): the halo's lattice IS the fan's.** Map pixel x is
+  floor(worldX / PIXEL_UNITS) and y its 499-flip, over 200 000 poses; a
+  cell's sixteen map rows are sixteen consecutive world rows; Chebyshev
+  is flip-invariant; `cellHaloFor` matches a brute-force nearest-pixel
+  law over a four-cell window; the symmetry law (everyone within range
+  holds my cell) held over 200 000 pairs. Off the map `trunc` and
+  `floor` differ by one pixel - unreachable in the placed world.
+- **B4 (note, recorded): no relay change**, verified by diff; but the
+  seam's population now shares a cell's ROOM budgets (the foes fan's
+  bytes per second, the roster and socket caps) with its neighbours'
+  seam members, and a halo member can be elected the host of a cell it
+  only borders (inert). The client sends one pose to up to four
+  sockets at a corner.
+- **B5/C3 (high, paid): an unanswerable roster pruned every owner.**
+  `peersNear()` answers null while the socket is not open, and `?? []`
+  read that as nobody: every owner and every puppet swept every frame
+  while the halos - independent now - kept feeding frames, a
+  spawn-and-discard loop per foe per frame (six builds for six frames
+  in the probe). No answer is no prune; the stale sweep still reaps a
+  quiet owner.
+- **B9 (low, paid): the geometry pin never told max from min** - the
+  diagonals were all (1, 1). Pinned at (3, 4) and (3, 3), and the y
+  reach.
+
+### C - the pool, the hits, the hunt
+
+- **C5 (medium, paid in part): a promotion sends no hello, so the look
+  composed for the crossing was dropped** - peers in the new cell saw
+  the gear worn when the halo opened. The look is composed before a
+  halo opens (the host's frame); the residual (gear changed within the
+  last pixels before the edge) is recorded - a look travels in a hello
+  alone.
+- **C6 (low, paid): the same pose through two rooms restarted the
+  ease** (and a halo's welcome walked a peer back once). A pose within
+  a hair of the last is seen, not re-eased.
+- **C7 (verified): the frame's `k` is unvalidated on the wire but
+  unstorable** - `inRoom` admits only a key I hold.
+- **C8 (note, recorded): the halo is silent on the HUD** - a halo that
+  refuses to connect is never said; `statusLine` is the primary's.
+
+Pinned in `test/auditworld6biiib.test.js` (6), EXECUTED: the crossing
+in the world host's own frame order (the halo kept on the crossing
+frame, the join at once, nothing closed, nobody wiped, the old cell
+held on and then let go); a dropped halo not promoted and the ordinary
+join at once, a demoted primary stepping down as connecting; a halo's
+terminal close remembered and cleared once out of range, a primary
+blip ridden out with the pose through the halo, a stuck halo dropped
+and retried, the primary's terminal close ending every halo; the blow
+struck where its owner is reported and refused only when nowhere, the
+pool taking a blow keyed to a held cell, the duplicated pose seen not
+re-eased; the diagonal and the y reach; by source the host's join, the
+wanted cell, the look, the prune, the session's doors, the records.
+
+### 6b-iii(c): a puppet's corpse loot
+
+**Mac: "Continue"** (after AUDIT WORLD6b-iii(b)). A puppet's body was
+its owner's and nobody else's ("no loot of this player's", WORLD6b
+B14): a peer who killed my rat, or stood over the one I killed, found a
+body that could not be opened. THE PILE IS THE OWNER'S ROLL, TAKEN
+UNDER THE OWNER'S WORD - no per-foe room, no relay change: the take
+and the grant ride the hit frame, which the relay routes by `to` and
+reads no further.
+
+- **The word.** The owner's record says how many items the body holds
+  (`o`, a u8 - 0 alive, 0 once emptied; the wire's law); the reader
+  latches it, and a puppet's body is a loot target while it says more
+  than none (a word of none re-closes it, a later word of some re-opens
+  it).
+- **The ask.** A peer's take sends `{to: owner, k: the owner's cell, i,
+  take: 1}` through the session's hit door (the owner's budget, the
+  owner reported); nothing is taken and nothing said on the taker's
+  word. A body its word says is empty is told "The body has no
+  treasure." at home, no frame.
+- **The grant.** The owner answers a take with `{to: taker, k, i,
+  grant: [...]}` - as much of the pile as one frame carries under
+  GRANT_FRAME_MAX, through WORLD4's projection (`validLootList`: an item
+  the port could have minted, its price floored) - and empties the pile
+  of what went ONLY once the frame left (a refused frame - the rate, the
+  size - takes nothing); a larger pile goes in parts and the record
+  still says it holds something. A body it no longer has, or one with
+  nothing on it, answers an empty grant.
+- **The landing.** The taker lands the grant through the ONE take law
+  (`takeCorpseLoot` over a stand-in body: arrows taken whole, gold to
+  the counter, the count said); an empty grant says the body has no
+  treasure and disables it. Two takers race at the owner: the second is
+  told so. A grant that is not a list, or carries an item the port
+  could not mint, is refused whole.
+- **Found on the way**: a killing blow that overshot left a NEGATIVE
+  health on the death record, the wire refused the record whole, and
+  the full frame then REMOVED the puppet - no body ever streamed to a
+  peer (WORLD6b's, live since 6b-i). The record clamps `h` into the
+  wire's bound.
+
+Pinned in `test/world6biiic.test.js` (4), EXECUTED on two pools joined
+by nets: the wire's `o`; the owner's body saying what it holds and the
+death record in bound; the puppet's body a target; the ask routed to
+the owner, nothing taken and nothing said; the grant through the
+projection, the pile emptied once the frame left, the next record
+saying none; the landing through the one take law with the count said,
+the body no target after; a second taker told the body has no treasure;
+asked again at home with no frame; a refused frame taking nothing; a
+body not mine and a malformed grant; a pile larger than a frame granted
+in parts; by source.
+
+## AUDIT WORLD6b-iii(c) (2026-09-14)
+
+**Mac: "Continue"** (after WORLD6b-iii(c)). Three opus lenses over a
+puppet's corpse loot - A the owner's grant, B the taker's landing and
+the world host, C the wire, the relay, the session and the records.
+Every finding verified against the code; paid at the root; pinned by
+execution in `test/auditworld6biiic.test.js`. The relay changed
+(`world64`): the hit arm counts bytes.
+
+### The criticals
+
+- **A1/C7 (critical, paid): the take answered ANY peer for ANY body of
+  mine by number.** No range, no roster, no sight: a peer across the
+  cell - or one I could not see at all - walked the sequence numbers
+  and emptied every body I killed the instant it fell. The taker's
+  reach law lived at the untrusted end alone. Paid: the asker must be
+  a peer the hunt SEES (`peerCandidate`) standing within the corpse's
+  activation distance plus the pose's slack of the body; otherwise
+  silence. **A5** with it: a quest's foe (never streamed) answers as a
+  body that does not exist.
+- **A3/C2 (critical, paid): a refused projection became an EMPTY grant
+  that still spliced the pile.** `validLootList` answers null for a
+  list it refuses (an item the port could not mint, a list past
+  LOOT_LIST_MAX) and `?? []` read that as "nothing here" - then the
+  pile was spliced by the count that never went: the owner's whole
+  roll destroyed and the taker told the body was empty. A pile past
+  sixty-four items walked into it on its own. Paid: a refusal narrows
+  to the one item and DROPS it (it can never be granted), the rest
+  goes; the pile is emptied of what WENT (`grant.length`). **A4/C10**
+  with it: one item larger than a frame is dropped rather than
+  re-offered for ever, and the click always answers.
+- **B1/C1 (critical, paid): the grant arm had no "I asked" latch.** A
+  grant landed for a puppet I never asked about, a body I never saw, a
+  peer whose foes I did not stand - the first door in the port by which
+  a peer wrote into another player's PACK. Paid: the ask latches on the
+  puppet only when the frame left; a grant lands only for a body of
+  that owner's asked inside TAKE_WINDOW_MS, once (**B8**: one ask in
+  flight, a double-click sends nothing and a second grant is refused);
+  otherwise refused whole.
+- **B2/C1 (critical, paid): the projection left the stack count
+  open.** One gold pile at 1e15 minted a fortune, at -5 drained the
+  purse (`addGoldPieces` is unclamped by DFU's law); a negative stack on
+  arrows negated the stack it merged into. Paid in WORLD4's projection
+  for every consumer (chests, shelves, grants): a stack is a whole
+  number in [1, LOOT_STACK_MAX] or the item is no item.
+
+### A - the owner's side
+
+- **A2/B3/C4 (high, paid): every take made me spend my own hit
+  budget.** A take for a number invented on the spot bought a frame
+  out of me for free, and six peers at their own gate exhausted my
+  outgoing HIT_HZ_MAX for good - every blow I landed on a puppet
+  refused at home, silently. Paid: a body I do not have, a live foe, an
+  asker out of reach answer NOTHING; an answer is under the asker's own
+  budget (TAKES_PER_S) - over it, silence.
+- **A6/B4 (medium, paid): the projection let `equipSlot` and
+  `questItem` through.** A wire-borne worn mark re-linked into the
+  pack's slots on the next load and pushed my own out; a quest mark
+  clogged the pack for good. Stripped in the projection: those marks
+  are the receiver's, never a container's word.
+- **A7 (low, paid): a record in flight at the splice re-opened a body
+  the empty grant just closed.** The grant carries the owner's frame
+  counter; a word no newer than it re-opens nothing.
+- **A8 (verified): a forged `k` on a take is self-harm only** - refused
+  unless it names a cell I hold, and the answer routes where the taker
+  is reported.
+
+### B - the taker's side
+
+- **B5 (recorded): the landing has no weight and no pack cap** - the
+  exterior's bulk take never had one (the recorded UI residue); the ask
+  latch bounds the honest case to one pile per ask and the projection
+  bounds the pile. The dungeon's corpse take is a window.
+- **B6 (recorded): a body that vanishes under the taker says nothing**
+  (its owner left, or the puppet was rebuilt - a rebuilt corpse is
+  never re-stood); the ask expires in silence and the next click asks
+  again.
+- **B10 (note, paid): the rare-drop chime rings over a peer's body
+  too** - a puppet's own pile is empty by B14, so LR3's one cue never
+  rang for a grant.
+
+### C - the wire, the relay, the records
+
+- **C3 (high, paid, RELAY): the hit arm carried a frame's worth of
+  items with no byte budget.** Since 6b-iii(c) a hit is a 12 KiB bulk
+  carrier, not a 150-byte control frame; three sockets pushed 720
+  KiB/s into one destination through an arm that counted frames alone
+  (AUDIT WORLD3 A1's law, unpaid here). Paid: HIT_ROOM_BYTES_PER_S (256
+  KiB a second, the room's) through the one byteGate the foes and the
+  acts use; over it the frame is dropped, nobody struck. `world64`.
+- **C5 (high, paid): the frame had no record bound.** Corpses ride
+  until the pixel is left, the relay junks a frame past
+  CELL_FRAME_RECORDS_MAX whole and strikes the socket out in the end -
+  a player who fought in one pixel stopped streaming to everyone,
+  silently, in minutes. Paid: the sender keeps the live foes first and
+  the newest bodies; the oldest leave the roll and the readers' sweep
+  takes them down.
+- **C8 (low, paid): the dungeon's record streamed the overshoot raw** -
+  a negative health onto every joiner's puppet (WORLD2's bound, never
+  refused there). Clamped.
+- **C9 (low, paid): a live foe with no number streamed as alive at
+  zero.** A health that is no number is omitted.
+- **C2's arithmetic (verified): 4 KiB of headroom is eighty times the
+  relay's envelope.** The frame cap counts UTF-16 units, not bytes -
+  pre-existing, recorded.
+- **Back-compat (verified): an older client refuses a take or a grant
+  as a blow with no damage; an older owner's bodies are never targets
+  (no `o`).**
+
+Pinned in `test/auditworld6biiic.test.js` (7), EXECUTED: the owner's
+laws (a peer unseen, a peer across the cell, a body not mine, a live
+foe, a quest's foe: silence; in reach the grant; the asker's budget);
+the refused projection (the unmintable item dropped and the rest
+granted in two takes, a pile past the list bound in parts, one item
+larger than a frame dropped and the good one behind it granted); the
+taker's latch (no puppet, a body not asked, a second click, a grant
+past the window, inside it, a second grant, the stale record and the
+newer one); the projection's stack bound and stripped marks, a
+negative gold pile refused through the arm; the frame's record bound
+(the live foe first, the newest bodies, the oldest gone); the Room's
+hit bytes (inside the budget a grant lands, over it dropped and nobody
+struck, a budget of one grant); by source the dungeon's clamp, the
+chime, the omitted health, the roster read, the relay's gate, the
+record.
+
 ### 6b-iii (recorded, next)
 
 - **The guards** (`cityGuards.js`): the watch is a crime's - the
   player's own; not until the crime is shared.
-- **A puppet's corpse loot**: its owner's roll; the take would be the
-  loot law over a per-foe room.
-- **The cell seam**: two players a pixel apart astride an edge are in
-  two rooms (D9); the 3x3 neighbourhood.
+- ~~**A puppet's corpse loot**: its owner's roll; the take would be the
+  loot law over a per-foe room.~~ Paid by 6b-iii(c), over the hit frame.
+- ~~**The cell seam**: two players a pixel apart astride an edge are in
+  two rooms (D9); the 3x3 neighbourhood.~~ Paid by 6b-iii(b).
 - **One economy**: the region's prices and powers as a world's.
-- **Buildings' foes** and the interior pools: a building streams no
-  foes still (AUDIT WORLD6a B8).
+- ~~**Buildings' foes** and the interior pools: a building streams no
+  foes still (AUDIT WORLD6a B8).~~ Closed by 6b-iii(d): none, by the
+  lockbook - not an omission.
 - The striker's poison and disease riders on the hit; the roster's
   `ROSTER_MAX` bound (AUDIT WORLD6b).
+
+### 6b-iii(d): buildings' foes - none, by the lockbook
+
+**Mac: "Continue"** (after AUDIT WORLD6b-iii(c)). The plan carried "a
+building streams no foes still" as the last 6b-iii item that stood on
+its own. Read against the code and the locks, it is not a gap:
+
+- **A building interior carries no static enemies in DFU** (the IF
+  record, Characters-Arc: DaggerfallInterior's marker vocabulary is
+  `Rest, Enter, Treasure, LadderBottom, LadderTop`; the layout chain
+  mints none). The interior pool is a HOME, not a spawner, for exactly
+  three things: a quest's CreateFoe, the Daedra summoning's punishment,
+  and the watch called into it.
+- **Each of the three is the player's own by a lock already written.**
+  A quest's foe is the quest owner's alone and never rides
+  (Multiplayer.md's first lock, "quests stay separate" - the dungeon's
+  stream skips its quest foes for the same reason); the summoning's
+  punishment is the summoner's own trial; the watch is a crime's, and
+  the crime is not shared (the guards item, above).
+- So a building's room streams nothing and lands nothing - the world
+  host streams a world room's frame from the dungeon alone and lands
+  one on the dungeon alone (AUDIT WORLD6a B8 already keeps a building's
+  frame off the dungeon's heartbeat) - and no net is installed on the
+  interior pool. The day the crime or a quest is shared, the pool is
+  ready: it is the exterior pool's own factory, puppet arm and all.
+
+Pinned in `test/world6biiid.test.js` (1), by source: the interior
+pool's spawn sites are the summon's, the quest's and the enchant
+replace alone; no net on it; the world host's frame out and in are the
+dungeon's; the fact and the lock in their records.
 
 Pinned in `test/world6b.test.js` (8), EXECUTED: the wire at both ends;
 the real Room fanning a non-host's frame in a cell and routing a hit
@@ -3307,10 +3704,12 @@ moved.
   players' random flats differ by level, so a foe whose species the
   room's memory or the host's stream disagrees with is REBUILT as the
   room's at its index (WORLD3 - the roster is the room's).
-- A peer across a world-cell border is not seen until both stand in
+- ~~A peer across a world-cell border is not seen until both stand in
   the same cell (D9: two players a pixel apart astride a cell edge are
   in two rooms; the cell is sixteen pixels, the range three, so the
-  seam is a strip - the 3x3 neighbourhood is the next iteration's).
+  seam is a strip - the 3x3 neighbourhood is the next iteration's).~~
+  Paid by WORLD6b-iii(b): the halo - a player holds the neighbouring
+  cells within range too.
 - The relay is one Durable Object per room and has not been measured
   past a handful of players; interest management filters what is sent,
   not what is iterated.

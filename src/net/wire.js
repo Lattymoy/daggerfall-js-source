@@ -237,6 +237,10 @@ export const ACT_ROOM_HZ_MAX = 30;
  *  the foes fan's ceiling. A door's honest traffic is a few kilobytes a second even in a full room, so this sits
  *  well above every real cascade and far below the hole. */
 export const ACT_ROOM_BYTES_PER_S = 1024 * 1024;
+/** AUDIT WORLD6b-iii(c) C3: the room's HIT bytes a second, fanned - the hit frame carries a corpse's GRANT since
+ *  WORLD6b-iii(c) (up to a frame's worth of items), so the arm that was a 150-byte control channel is a bulk one and
+ *  counts its bytes as the foes and the acts do (AUDIT WORLD3 A1's law); over it a blow is dropped, nobody struck. */
+export const HIT_ROOM_BYTES_PER_S = 256 * 1024;
 /** WORLD3: a client's action frames a second - a click's worth, on their own bucket at the relay (a door never
  *  starves a pose) and refused to the caller at home past it. */
 export const ACT_HZ_MAX = 5;
@@ -371,6 +375,9 @@ export function validFoeRecord(r) {
   // was at, in `g`'s spelling ('.' the owner, a peer id, '' none): `g` is the LIVE hunt when the frame goes out, and a
   // foe that cast at its owner then turned to a peer inside the frame's 200 ms sent the peer a cast it never made
   for (const k of ['u', 'b']) if (r[k] !== undefined) { if (typeof r[k] !== 'string' || !(r[k] === '' || r[k] === '.' || ID_RE.test(r[k]))) return null; out[k] = r[k]; }
+  // WORLD6b-iii(c): `o` how many items the corpse's pile holds (0 a live foe, an emptied body) - a peer's body is a loot
+  // target while it says more than none; the pile itself travels in the owner's GRANT (a hit frame), never here
+  if (r.o !== undefined) { if (!Number.isInteger(r.o) || r.o < 0 || r.o > 255) return null; out.o = r.o; }
   if (r.w !== undefined) {
     if (r.w === null) out.w = null;
     else if (Array.isArray(r.w) && r.w.length === 2 && Number.isInteger(r.w[0]) && r.w[0] >= 0 && r.w[0] <= 1023 && Number.isInteger(r.w[1]) && r.w[1] >= 0 && r.w[1] <= 255) out.w = [r.w[0], r.w[1]];
@@ -429,6 +436,32 @@ export function relayUrl(url) {
 
 /** The streaming world's room for a MAP PIXEL (the client mints it; the relay only reads the key). */
 export const worldRoom = (px, py) => `world:${Math.floor(px / WORLD_CELL)},${Math.floor(py / WORLD_CELL)}`;
+
+/** WORLD6b-iii(b) THE CELL SEAM (D9: two players a pixel apart astride a cell edge were in two rooms). The HALO: the
+ *  neighbouring cell rooms whose nearest pixel is within `reach` map pixels of (px, py) - Chebyshev, as inRange is -
+ *  which a player hellos into besides its own cell. By symmetry everyone within RANGE_PIXELS of me is then a member
+ *  of MY cell's room (a peer within range of me is within range of the cell I stand in), so a pose, a foes frame, a
+ *  chat line sent to my own cell reaches every peer in range, and a halo room is posed into and listened to alone.
+ *  `current` (the rooms held now) and `slack`: a held room stays until it is `reach + slack` away - the hysteresis
+ *  that keeps a player pacing the edge from opening and closing a socket every step. The map's edge: no negative
+ *  cell (the key regex admits none). */
+export function cellHaloFor(px, py, { reach = RANGE_PIXELS, slack = 1, current = null } = {}) {
+  if (!Number.isFinite(px) || !Number.isFinite(py)) return [];
+  const held = current ? new Set(current) : null;
+  const cx = Math.floor(px / WORLD_CELL), cy = Math.floor(py / WORLD_CELL);
+  const out = [];
+  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+    if (!dx && !dy) continue;
+    const nx = cx + dx, ny = cy + dy;
+    if (nx < 0 || ny < 0 || nx > 999 || ny > 999) continue;
+    const ddx = dx < 0 ? px - (cx * WORLD_CELL - 1) : dx > 0 ? (cx + 1) * WORLD_CELL - px : 0;
+    const ddy = dy < 0 ? py - (cy * WORLD_CELL - 1) : dy > 0 ? (cy + 1) * WORLD_CELL - py : 0;
+    const d = Math.max(ddx, ddy);
+    const key = `world:${nx},${ny}`;
+    if (d <= reach || (held?.has(key) && d <= reach + slack)) out.push(key);
+  }
+  return out;
+}
 
 /** A world-frame pose's cell coordinates - floor(x / PIXEL_UNITS),
  *  floor(z / PIXEL_UNITS). NOT the map pixel (the map's y runs the

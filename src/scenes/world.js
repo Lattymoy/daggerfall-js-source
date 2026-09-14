@@ -207,7 +207,7 @@ import { Collider } from '../player/collider.js';
 import { createDataPipeline } from './dataPipeline.js';
 import { createWorldModes } from './worldModes.js';
 import { OnlineSession, roomKeyFor, DEFAULT_SERVER, WORLD_PUBLISH_MS, FOES_MS, FOES_FULL_MS, FOES_STALE_MS } from '../net/online.js';   // ONLINE1: the session; WORLD1: the room's memory
-import { POSE_STRIKES, isWorldRoom, isCellRoom, actFrameFits, sharedClassicMinutes, wallMsForClassicMinutes } from '../net/wire.js';   // MAC7 #1: the swing's kind on the wire; AUDIT WORLD4 A1: whether an act frame can be said at all
+import { POSE_STRIKES, isWorldRoom, isCellRoom, cellHaloFor, actFrameFits, sharedClassicMinutes, wallMsForClassicMinutes } from '../net/wire.js';   // WORLD6b-iii(b): the cell seam's halo   // MAC7 #1: the swing's kind on the wire; AUDIT WORLD4 A1: whether an act frame can be said at all
 import { hasDaggerfallArrows } from '../combat/fpArm.js';   // MAC7 #2: the arrow bit on the wire - weaponRig's own read
 import { drawText } from '../ui/text.js';   // ONLINE1: the session's status line
 import { RemotePlayers, composeLook } from '../net/remotePlayers.js';   // ONLINE1: the others, drawn
@@ -2730,7 +2730,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // through the one that owns the billboard - `exteriorFoePool` is
     // the watch AND the encounter foes, and this arm reached the
     // encounter pool's remover for both. That was not a leak: removeFoe
-    // (exteriorFoes.js:341-346) never looks the record up in `foes`, and
+    // (exteriorFoes.js:354-359) never looks the record up in `foes`, and
     // both pools share this host's one renderer, so a struck WATCHMAN
     // got exactly what removeGuard (cityGuards.js:1213-1217) gives it -
     // batch freed, `dead = true`, no corpse, skipped by the next AI pass
@@ -4166,7 +4166,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:5231), so exterior mode and a
+    // composer, dungeonContext.js:5232), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -6720,6 +6720,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // this scene's feet stand here
     exteriorFoes.setNet({
       room: () => online?.room ?? null,
+      inRoom: (k) => online?.inRoom?.(k) ?? false,   // WORLD6b-iii(b): a frame keyed to a halo's cell is its owner's cell
       selfId: () => online?.id ?? null,   // WORLD6b-ii: whose blow a streamed target names - mine, when the target is me
       peers: peersNear,   // WORLD6b-ii: the peers as MY foes' target candidates (WORLD3's law for the dungeon host's foes, per owner)
       now: () => performance.now(),
@@ -6805,7 +6806,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     const overworld = mode === 'exterior';
     const wc = state.worldCoords(player.pos);
     let key;
-    if (overworld) key = roomKeyFor({ host: 'world', mode, mapPixel: worldCoordToMapPixel(wc.x, wc.z) });
+    const mp = overworld ? worldCoordToMapPixel(wc.x, wc.z) : null;
+    if (overworld) key = roomKeyFor({ host: 'world', mode, mapPixel: mp });
     else {
       const ident = modes?.roomIdentity?.();
       const loc = _questLoc();   // the location under the player: an interior's room is named by it
@@ -6848,12 +6850,22 @@ export async function bootWorld(canvas, renderer, params, status) {
     };   // the wire's move bit: 1 walking, 2 running (the peers' bodies pick the clip off it)
     if (!key) { if (online.room) online.leave(); }   // AUDIT ONLINE D4: a place the host cannot name is no room, not the old one in the wrong frame
     // AUDIT WORLD2 C8: a world room's edge is never a churn - the hold delayed every handover and let one dungeon's stream land in another
-    else if (key !== online.room) { if (!online.room || isWorldRoom(key) || isWorldRoom(online.room) || now - _onlineKeySince >= ROOM_HOLD_MS) { online.look = composeLook(playerEntity); online.join(key, { ...pose, ...arm }); } }   // the look re-composed: the next room's hello carries the gear worn now
+    // AUDIT WORLD6b-iii(b) B1/B8: a cell crossing is joined the moment the cell is HELD (the halo's socket promotes in
+    // place - the hold bought nothing but a 500 ms strip with no socket in the cell I stood in); otherwise the hold
+    else if (key !== online.room) { if (!online.room || isWorldRoom(key) || isWorldRoom(online.room) || (isCellRoom(key) && online.inRoom(key)) || now - _onlineKeySince >= ROOM_HOLD_MS) { online.look = composeLook(playerEntity); online.join(key, { ...pose, ...arm }); } }   // the look re-composed: the next room's hello carries the gear worn now
     else online.sendPose({ ...pose, ...arm });
+    // WORLD6b-iii(b) THE CELL SEAM: the neighbouring cells within the relay's range are held as a HALO - hello'd and
+    // posed into, so a peer a pixel across the edge is in my room and I in theirs (D9); a crossing promotes the halo
+    const wantHalo = mp && isCellRoom(online.room) ? cellHaloFor(mp.x, mp.y, { current: online.haloRooms() }) : [];
+    if (mp && isCellRoom(online.room) && isCellRoom(key) && key !== online.room) wantHalo.push(key);   // AUDIT WORLD6b-iii(b) B1: the cell I STAND in, until the join promotes it - the list is the new pixel's, which names neither the old cell (my own) nor the new one (the pixel's), so the crossing frame CLOSED the halo the promotion was for
+    if (wantHalo.some((r) => !online.haloRooms().includes(r))) online.look = composeLook(playerEntity);   // AUDIT WORLD6b-iii(b) C5: a halo about to open hellos with the gear worn NOW (a promotion sends no hello of its own)
+    online.setHalo(wantHalo);
     online.tick();
-    // WORLD6b: a room change leaves every puppet in the old cell; a peer gone from the room takes its puppets with it
-    if (online.room !== _foesRoom) { _foesRoom = online.room; _foesFullAt = -Infinity; exteriorFoes.clearPuppets(); }   // AUDIT WORLD6b C7: a new room hears every foe of mine at once
-    if (isCellRoom(online.room)) exteriorFoes.pruneOwners(new Set((peersNear() ?? []).map((p) => p.id)), now);   // AUDIT WORLD6b-ii C2: ONE liveness for the owner - the peers the hunt reads (visible: a pose, in range, inside the timeout) are the peers whose puppets stand
+    // WORLD6b: a room change leaves every puppet in the old cell; a peer gone from the room takes its puppets with it.
+    // WORLD6b-iii(b): a cell crossing is no room change to the puppets - their owners' cells are still held (the
+    // halo) and the prune below takes back any whose owner the hunt no longer sees
+    if (online.room !== _foesRoom) { const seam = isCellRoom(online.room) && isCellRoom(_foesRoom); _foesRoom = online.room; _foesFullAt = -Infinity; if (!seam) exteriorFoes.clearPuppets(); }   // AUDIT WORLD6b C7: a new room hears every foe of mine at once
+    if (isCellRoom(online.room)) { const near = peersNear(); if (near) exteriorFoes.pruneOwners(new Set(near.map((p) => p.id)), now); }   // AUDIT WORLD6b-iii(b) C3/B5: no answer (the socket not open) is not "nobody" - it pruned every owner while the halos kept feeding frames, a spawn-and-discard loop per frame   // AUDIT WORLD6b-ii C2: ONE liveness for the owner - the peers the hunt reads (visible: a pose, in range, inside the timeout) are the peers whose puppets stand
     worldPublish(now);   // WORLD1: the room's memory, every WORLD_PUBLISH_MS while this player hosts a dungeon
     foesStream(now);   // WORLD2: the host's changed foes, every FOES_MS; WORLD6b: mine, in a cell
     actFlush();        // AUDIT WORLD3 A3: an act the wire refused, re-read and re-sent
@@ -8614,7 +8626,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // AFTER the damage fork closes (:615), so a shaft that lost the
         // roll still enrages what it hit and wakes the area. ROAD-G G1
         // (review): the WATCH carries the pair now
-        // (cityGuards.js:569-574), so this seam ROUTES by pool exactly
+        // (cityGuards.js:575-580), so this seam ROUTES by pool exactly
         // as `dealDamage` above it does, instead of excluding the
         // guards - a zero-damage shaft into a pacified watchman has to
         // reach the same door the zero-damage SWING already reaches

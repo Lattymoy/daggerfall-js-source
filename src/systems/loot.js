@@ -471,6 +471,10 @@ export const LOOT_LIST_MAX = 64;
 export const LOOT_ITEM_KEYS_MAX = 48;
 export const LOOT_STR_MAX = ITEM_STR_MAX;   // RF5: the schema's own string bound
 export const LOOT_DEPTH_MAX = 4;
+/** AUDIT WORLD6b-iii(c) B2/C1: the widest stack the port mints (DFU's stackCount is a ushort) - a count is the one
+ *  number on the record read as a QUANTITY, and it was open: a grant of one gold pile at 1e15, or at -5, minted or
+ *  drained a purse. */
+export const LOOT_STACK_MAX = 65535;
 
 function clampLootValue(v, depth) {
   if (v === null) return null;
@@ -526,6 +530,11 @@ export function validLootItem(v) {
   // above it (an enchantment's worth, a book's price) stands. A forged item still lands, at its true price: that is
   // a peer selling a conjured thing, which the WORLD4 law already accepts for a chest, and is recorded.
   out.value = Math.max(Number.isFinite(out.value) ? out.value : 0, itemBaseValue(out));
+  // AUDIT WORLD6b-iii(c) B2/C1: a stack is a whole number in [1, LOOT_STACK_MAX] or absent - not an item otherwise
+  if (out.stackCount !== undefined && (!Number.isInteger(out.stackCount) || out.stackCount < 1 || out.stackCount > LOOT_STACK_MAX)) return null;
+  // AUDIT WORLD6b-iii(c) A6/B4: the marks that mean "worn by me" and "bound to my quest" are the RECEIVER's, never a
+  // container's word - a wire-borne equipSlot re-linked into the pack's slots on the next load and pushed my own out
+  delete out.equipSlot; delete out.questItem;
   return out;
 }
 

@@ -2824,7 +2824,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:8606,
+              // playerArrowHitFoe is the one copy world.js:8618,
               // exterior.js:4202 and worldModes.js:6017 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
@@ -3061,7 +3061,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (!f) continue;
       // WORLD3: g the target ('.' the host, an id a peer, '' none), c the cast count with s its spell, x the gender
       const _t = f.ai.target, g = _t?.isPeer ? _t.id : (_t == null ? (f.ai._armedTargeting ? '' : '.') : (_t.isPlayer ? '.' : ''));
-      const r = { i, t: f.mobileType, f: [q2(f.ai.feet[0]), q2(f.ai.feet[1]), q2(f.ai.feet[2])], y: q3(f.ai.yaw), h: f.entity.health, d: f.dead ? 1 : 0, a: f._atkA | 0, m: f.ai.moving ? 1 : 0, g, c: f._castN | 0, s: f._castIdx | 0, ...(f.gender === 'female' ? { x: 1 } : {}) };   // t: the species (AUDIT WORLD2 B5)
+      // AUDIT WORLD6b-iii(c) C8: a killing overshoot streamed a NEGATIVE health (WORLD2's bound) onto every joiner's puppet
+      const r = { i, t: f.mobileType, f: [q2(f.ai.feet[0]), q2(f.ai.feet[1]), q2(f.ai.feet[2])], y: q3(f.ai.yaw), h: Number.isFinite(f.entity.health) ? Math.max(0, f.entity.health) : 0, d: f.dead ? 1 : 0, a: f._atkA | 0, m: f.ai.moving ? 1 : 0, g, c: f._castN | 0, s: f._castIdx | 0, ...(f.gender === 'female' ? { x: 1 } : {}) };   // t: the species (AUDIT WORLD2 B5)
       const key = `${r.f[0]},${r.f[1]},${r.f[2]},${r.y},${r.h},${r.d},${r.a},${r.m},${r.g},${r.c},${r.s}`;
       if (!full && f._sentKey === key) continue;
       f._sentKey = key;
@@ -3530,7 +3531,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // InstantiatePrefab's a fresh GameObject per saved record, so
     // EnemyEntity's `PickpocketByPlayerAttempted` default is the loaded
     // truth for every enemy. The re-minting pools match that by
-    // construction (exteriorFoes.js:1229's restoreWorld goes through
+    // construction (exteriorFoes.js:1274's restoreWorld goes through
     // spawnFoe), but this host patches the LIVE foes in place, so a
     // same-dungeon reload kept a raised latch and a failed pickpocket
     // could never be retried - falsifying the law
