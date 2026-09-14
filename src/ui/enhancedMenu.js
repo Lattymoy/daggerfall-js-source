@@ -106,7 +106,6 @@ import {
 import { mostRecentRestorable, restorableSaves, deleteSave, QUICK_SAVE_NAME } from '../systems/saveSlots.js';   // SAV4: the slot store; SLOTS1: every slot
 import { uiSkin, otherSkin, setUiSkin, SKIN_NAMES, isEnhanced } from '../systems/uiSkin.js';   // FD1: which boot rail
 import { getPref, setPref, isOpen, setOpen } from '../systems/uiPrefs.js';
-import { LAND_VIEW_TIERS } from '../world/landView.js';   // LV1: the Enhanced pane's Land view distance tiers
 import { DEFAULT_SERVER } from '../net/online.js';   // ONLINE1: the relay this port hosts, the field's placeholder   // R7: the port's own switches; SO1: the folded tiers' memory
 import { replacementCount } from '../systems/musicReplacement.js';   // M-EXT: the packs card reports what the pick covers
 import { textureReplacementCount } from '../systems/textureReplacement.js';   // M-TEX: and the texture half
@@ -1000,7 +999,8 @@ function write(key, next) {
 // cannot run here says what it needs instead of failing silently.
 
 /** One toggle over a uiPrefs key. */
-function prefRow(key, name, note, { onChange = null } = {}) {
+function prefRow(key, name, note, { onChange = null, home = false } = {}) {
+  if (!home) { const moved = featureForControl('prefs', key); if (moved) return movedRow(moved); }   // FT2: one home per idea, every store
   const row = el('div', 'row');
   const main = el('button', 'row-main');
   main.append(el('div', 'row-name', name));
@@ -1038,14 +1038,16 @@ function prefRow(key, name, note, { onChange = null } = {}) {
 
 /** A choice row: the button names the CURRENT tier and a click steps
  *  to the next, wrapping (PERF1). */
-function choiceRow(key, name, note, tiers) {
-  const cur = String(getPref(key));
+function choiceRow(key, name, note, tiers, { home = false, read = null, write = null } = {}) {
+  if (!home) { const moved = featureForControl('prefs', key); if (moved) return movedRow(moved); }   // FT2
+  // FT2: a condensed row reads the lane's live value and writes both stores
+  const cur = String(read ? read() : getPref(key));
   const at = Math.max(0, tiers.findIndex(([v]) => String(v) === cur));
   const row = el('div', 'row');
   const main = el('button', 'row-main');
   main.append(el('div', 'row-name', name));
   main.append(el('div', 'row-note', note));
-  const step = () => { setPref(key, tiers[(at + 1) % tiers.length][0]); render(); };
+  const step = () => { (write ?? ((v) => setPref(key, v)))(tiers[(at + 1) % tiers.length][0]); render(); };
   main.onclick = step;
   row.append(main);
   const ctl = el('div', 'ctl');
@@ -1163,11 +1165,7 @@ function portRowsEnhanced({ pause = false } = {}) {
     + 'original\u2019s and a stepped palette, so the dome and its clouds sit with the rest of the art. '
     + 'Off is the smooth sky. Applies to the port\u2019s dome, to Dynamic Skies\u2019 skybox and to the volumetric clouds over either. '
     + 'Takes effect when the world next loads.'));   // PS1; PS2: every sky pass
-  out.push(choiceRow('landViewDistance', 'Land view distance',
-    'How far the land streams around you, in map pixels each way: Daggerfall\u2019s own 3, or further. '
-    + 'The rings past the second are drawn coarse and show only their trees and fires, so the far land '
-    + 'is cheap - but a walk across the map builds more of it. The haze reaches as far. Takes effect when the world next loads.',
-    LAND_VIEW_TIERS));   // LV1
+  // FT2: Land view distance moved to the Features home (systems/features.js) - one row for both lanes.
   out.push(choiceRow('grassDensity', 'Grass density',
     'How much of the meadow grows: the full field, half, a quarter, or none. The single heaviest thing outdoors - '
     + 'try half first if the FPS counter says the frame is the GPU\u2019s. Takes effect when the world next loads.',
@@ -1494,7 +1492,8 @@ function paneMods(body) {
  *  modSettings.js. FT0 lifted it out of paneMods so the features home
  *  draws the same row; `name`/`note` override the mod's own key name and
  *  description when the registry has better words. */
-function modRow(vendor, key, def, { name = null, note = null } = {}) {
+function modRow(vendor, key, def, { name = null, note = null, home = false } = {}) {
+  if (!home) { const moved = featureForControl('mods', key, vendor); if (moved) return movedRow(moved); }   // FT2
   const row = el('div', 'row');
   const main = el('div', 'row-main');
   main.append(el('div', 'row-name', name ?? key.replace(/([a-z])([A-Z])/g, '$1 $2')));
@@ -1585,7 +1584,7 @@ function featureRow(f) {
   const c = f.control;
   let row;
   if (c.store === 'prefs') {
-    row = c.tiers ? choiceRow(c.key, f.title, f.note, c.tiers) : prefRow(c.key, f.title, f.note);
+    row = c.tiers ? choiceRow(c.key, f.title, f.note, c.tiers, { home: true, read: c.read, write: c.write }) : prefRow(c.key, f.title, f.note, { home: true });
   } else if (c.store === 'settings') {
     row = settingRow(c.key, { compact: true, home: true });
     const main = row.querySelector('.row-main');
@@ -1598,7 +1597,7 @@ function featureRow(f) {
       main.onclick = () => write(c.key, stepValue(c.key, effective()[sec]?.[k], 1));
     }
   } else {
-    row = modRow(c.vendor, c.key, MOD_SETTINGS[c.vendor].keys[c.key], { name: f.title, note: f.note });
+    row = modRow(c.vendor, c.key, MOD_SETTINGS[c.vendor].keys[c.key], { name: f.title, note: f.note, home: true });
   }
   row.classList.add('feature');
   const main = row.querySelector('.row-main');

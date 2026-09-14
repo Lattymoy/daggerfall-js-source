@@ -178,7 +178,7 @@ import { locationArrivalLanding, locationStartMarkers } from '../world/locationE
 import { preloadPrisonScreenArt, preloadCourtScreenArt } from '../ui/prisonScreen.js';   // PRIS00I0 - the serving-time screen   // ROAD-B B5: CORT01I0 - the courtroom the trial is pushed over
 import { TerrainGenClient } from '../world/terrainGenClient.js';   // EV7: the pixel kernel, off the main thread (samples/blend/tiles/grid/nature moved whole to terrainGen.js)
 import { getPref } from '../systems/uiPrefs.js';
-import { landViewDistance } from '../world/landView.js';   // LV1: the enhanced lane's own streamed radius
+import { landViewRead } from '../world/landView.js';   // LV1: the enhanced lane's own streamed radius; FT2: the read is the module's
 import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
 import { dungeonLocationFor } from '../world/smallerDungeons.js';   // AUDIT 28 F-B2: the quest layer sees the sized dungeon
 import { audio, QuestAudioSource } from '../systems/audio.js';   // E6: the QuestMachine's own DaggerfallAudioSource (PlaySound's busy-skip)
@@ -544,11 +544,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   // (uiPrefs landViewDistance, 1..6, 5 by default - world/landView.js);
   // the 1:1 lane keeps DFU's Experimental/TerrainDistance and its 1..4.
   // ONE read, here, and the streamed grid below takes the same number.
-  const fogDistance = landViewDistance({
-    enhanced: isEnhanced() && getPref('enhancedEnvironments'),
-    pref: getPref('landViewDistance'),
-    setting: getInt('Experimental', 'TerrainDistance', 1, 4),
-  });
+  // FT2: the composition (which lane, which store) is landViewRead's,
+  // the same read the Features row shows.
+  const fogDistance = landViewRead();
   // DS1: WeatherManager's fog settings are the mod's while Dynamic Skies
   // is the sky - and INSTALLED VERBATIM (BLBSkybox.SetFogDistance writes
   // the row's end distance as authored, AUDIT 61): EV4's distance scale

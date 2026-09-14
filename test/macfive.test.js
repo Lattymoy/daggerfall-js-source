@@ -106,12 +106,12 @@ test('LV1: the enhanced lane streams its own radius - 5 by default, 6 at most - 
   assert.equal(landViewDistance({ enhanced: true, pref: 9, setting: 3 }), 6, 'clamped to the enhanced ceiling');
   assert.equal(landViewDistance({ enhanced: true, pref: 'x', setting: 3 }), LAND_VIEW_DEFAULT, 'a bad pref is the default');
   assert.equal(landViewDistance({ enhanced: true, pref: 0, setting: 3 }), 1);
-  assert.deepEqual(LAND_VIEW_TIERS.map(([v]) => v), [3, 4, 5, 6]);
+  assert.deepEqual(LAND_VIEW_TIERS.map(([v]) => v), [1, 2, 3, 4, 5, 6], 'FT2: DFU\'s whole 1..4 and the enhanced 5..6 - the one row names any value either lane holds');
   assert.match(read('src/systems/uiPrefs.js'), /landViewDistance: 5,/);
   const world = read('src/scenes/world.js');
-  assert.match(world, /const fogDistance = landViewDistance\(\{/, 'ONE read for the fog scale and the grid');
+  assert.match(world, /const fogDistance = landViewRead\(\);/, 'ONE read for the fog scale and the grid (FT2: the module\'s)');
   assert.match(world, /new StreamingWorldState\(fogDistance\)/);
-  assert.match(read('src/ui/enhancedMenu.js'), /choiceRow\('landViewDistance', 'Land view distance',[\s\S]{0,600}LAND_VIEW_TIERS\)\);/);
+  assert.ok(!/choiceRow\('landViewDistance'/.test(read('src/ui/enhancedMenu.js')), 'FT2: the row left the Enhanced category for the Features home (systems/features.js)');
 });
 
 // A window/document just real enough for pointerLock.js's toggle and net.

@@ -114,7 +114,7 @@ test('FT1: the registry row - DFU Classic, over the settings key, sound', () => 
   assert.match(f.effect, /next dungeon you enter/);
   assert.deepEqual(checkFeature(f), []);
   assert.equal(featureForControl('settings', 'Experimental/SmallerDungeons'), f);
-  assert.equal(featureForControl('settings', 'Experimental/TerrainDistance'), null, 'a key not on the home');
+  assert.equal(featureForControl('settings', 'Experimental/CustomBooksImport'), null, 'a key not on the home');
   assert.equal(featureForControl('prefs', 'Experimental/SmallerDungeons'), null, 'the store is part of the address');
 });
 

@@ -30,7 +30,7 @@ the one switch drives the two keys. Candidates already visible:
 | Row | Labels | Today's switches | Note |
 |---|---|---|---|
 | The outdoors sky | Enhanced + Mod Authored | `enhancedEnvironments`, Dynamic Skies `Enabled`, `pixelatedSky` | Mac's example. One sky, three switches in two panes |
-| Land view distance | Enhanced + DFU Classic | `landViewDistance`, `Experimental/TerrainDistance` | two controls for one radius, read side by side |
+| Land view distance | Enhanced + DFU Classic | `landViewDistance`, `Experimental/TerrainDistance` | **CONDENSED (FT2, 2026-09-14)** - one row, shows the lane's radius, writes both stores |
 | Enemy movement | Enhanced + DFU Classic | `enhancedAI`, `Enhancements/EnhancedCombatAI` | NOT a merge - different things, one dead. The slice decides what the row says |
 | Monster stats | Mod Authored x2 | Meaner Monsters `Enabled`, PCAAO `Enabled` | the meaner numbers change under the overhaul; one row may explain both |
 
@@ -63,7 +63,7 @@ finding and the move.
 | `enhancedAI` | Enhanced AI | off | open. NAME COLLIDES with DFU's `Enhancements/EnhancedCombatAI` (below), which is a different thing and unavailable |
 | `enhancedEnvironments` | Enhanced environments | on | open. One switch over sky, ground, clouds, grass, weather; overlaps Dynamic Skies' `Enabled` and its pixel snow |
 | `pixelatedSky` | Pixelated sky | on | open |
-| `landViewDistance` | Land view distance | 5 | open. DUPLICATE SUSPECT: DFU's `Experimental/TerrainDistance` is LIVE and read beside it in `scenes/world.js:547-550` - two view-distance controls in two panes |
+| `landViewDistance` | Land view distance | 5 | **MOVED (FT2, 2026-09-14)** - condensed with `Experimental/TerrainDistance` into one row wearing both labels |
 | `grassDensity` | Grass density | 1 | open |
 | `cloudQuality` | Cloud quality | default | open |
 | `enhancedWater` | Enhanced water | on | open |
@@ -104,7 +104,7 @@ Video/GUI keys that are features rather than settings.
 | `Enhancements/PlayerTorchLightScale` | - | 1.0 | stored | open. Its sibling is live; this one is not read |
 | `Enhancements/GuildQuestListBox` | - | False | live | open |
 | `Video/RandomDungeonTextures` | Dungeon Wall Style | - | live | open |
-| `Experimental/TerrainDistance` | - | 3 | live | open. See `landViewDistance` |
+| `Experimental/TerrainDistance` | - | 3 | live | **COVERED (FT2, 2026-09-14)** - written by the condensed row, capped at 4; its Video row is a pointer |
 | `Enhancements/EnhancedCombatAI` | - | True | UNAVAILABLE | open. Ledger A: the port runs the classic AI only. Stored True, runs False. Decide: honest row on the list, or off it |
 | `Enhancements/AdvancedClimbing` | - | False | UNAVAILABLE | open. Ledger A, same shape |
 | `Experimental/CustomBooksImport` | - | True | unavailable | open |
@@ -114,6 +114,7 @@ Video/GUI keys that are features rather than settings.
 
 - **FT0** - SHIPPED 2026-09-14. The home, empty. Below.
 - **FT1** - SHIPPED 2026-09-14. Smaller Dungeons. Below.
+- **FT2** - SHIPPED 2026-09-14. Land view distance, the first condensed row. Below.
 - One slice per open row after that, in the order Mac picks.
 
 ## FT0 - THE HOME (2026-09-14)
@@ -198,3 +199,35 @@ struck Ledger C row already says. Building on the feature (Mac's
 "genuine enhanced feature we can build on") is a design decision, not
 taken here: a size tier, a shape other than the plus, or a seed the
 player picks would each earn the Enhanced label. `test/ft1_smallerdungeons.test.js`.
+
+## FT2 - LAND VIEW DISTANCE, THE FIRST CONDENSED ROW (2026-09-14)
+
+**The fault.** Two controls for one radius: the Enhanced category's Land
+view distance over `uiPrefs.landViewDistance` (LV1, the enhanced lane's
+1..6) and Video's Land View Distance over DFU's
+`Experimental/TerrainDistance` (D1, the 1:1 lane's 1..4), both named
+"Land view distance", in two panes. A player who set one could not see
+they had not moved the other, and the world host composed the read
+inline at its mount (LV1) - a second copy of "which lane, which store".
+
+**The row.** ONE row wearing Enhanced and DFU Classic (Mac's condensing
+rule). It SHOWS the radius the current lane will use - `landViewRead`,
+the same function the world host now reads at mount - and its control
+WRITES BOTH STORES - `landViewWrite`: the pref whole, DFU's key capped
+at its own [Range(1,4)] - so the lanes agree after every press. The
+tiers span both lanes, 1..6, because the row must be able to name any
+value either lane can hold (an imported settings.ini with
+TerrainDistance 2 shows 2 on the classic skin). The registry grew the
+words for it: `control.read`/`control.write` (functions, together or
+neither) and `control.also` (the other controls the write covers - a
+real key of its store, and a covered control is a control, so two rows
+cannot own one key). `featureForControl` resolves a covered key to the
+row that writes it, so Video's TerrainDistance row is a POINTER to the
+home, as is any pane's row over a moved key: `prefRow`, `choiceRow`
+and `modRow` all ask the registry first now, the way `settingRow` did
+from FT1 - one rule, every store. The Enhanced category's row left with
+its copy.
+
+**Not done, by name.** DFU's Video category still lists
+`TerrainDistance` (the map is total; the row there is the pointer).
+`test/ft2_landview.test.js`.

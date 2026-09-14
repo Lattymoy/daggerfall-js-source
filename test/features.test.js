@@ -35,7 +35,7 @@ test('FT0: three kinds in label order, three stores, and the registry is empty a
   assert.deepEqual(KIND_ORDER, ['enhanced', 'mod', 'classic']);
   assert.deepEqual(KIND_ORDER.map((k) => KINDS[k].label), ['Enhanced', 'Mod Authored', 'DFU Classic'], "Mac's three labels");
   assert.deepEqual(STORES, ['prefs', 'settings', 'mods']);
-  assert.deepEqual(FEATURES.map((f) => f.id), ['smaller-dungeons'], 'FT0 shipped the home empty; FT1 moved the first row in (one slice at a time)');
+  assert.deepEqual(FEATURES.map((f) => f.id), ['smaller-dungeons', 'land-view-distance'], 'FT0 shipped the home empty; FT1 and FT2 moved rows in (one slice at a time)');
   assert.deepEqual(checkFeatures(FEATURES), []);
 });
 
@@ -72,6 +72,7 @@ test('FT0: the list refuses a repeated id and two rows over one switch', () => {
   assert.deepEqual(checkFeatures([prefsRow, { ...settingsRow, id: 'p' }]), ['p: id repeated']);
   assert.deepEqual(checkFeatures([prefsRow, { ...prefsRow, id: 'p2' }]), ['p2: control repeated (prefs::enhancedAI)']);
   assert.deepEqual(checkFeatures([modRow, { ...modRow, id: 'm2' }]), ['m2: control repeated (mods:dynamic-skies:Enabled)']);
+  assert.deepEqual(checkFeatures([settingsRow, { ...prefsRow, control: { ...prefsRow.control, also: [settingsRow.control] } }]), ['p: control repeated (settings::Experimental/SmallerDungeons)'], 'FT2: a covered control is a control - two rows cannot both own a key');
   assert.deepEqual(checkFeatures([{ id: 'x', title: 'X', kinds: ['nope'], control: { store: 'prefs', key: 'zzz' } }]),
     ["x: unknown kind 'nope'", "x: prefs has no key 'zzz'"], 'every problem, prefixed by the row');
 });
@@ -103,11 +104,11 @@ test('FT0: Features is on every rail and both dispatch tables, and the pane is t
   assert.match(menu, /if \(!FEATURES\.length\) \{\s*body\.append\(empty\('Nothing here yet'/, 'an empty registry says so - the rail-hole law - rather than hiding the section');
   assert.match(menu, /const rows = filterFeatures\(FEATURES, featureKind\);/);
   // the three builders: a row is the row its store already draws, dressed
-  assert.match(menu, /function featureRow\(f\) \{[\s\S]*?c\.tiers \? choiceRow\(c\.key, f\.title, f\.note, c\.tiers\) : prefRow\(c\.key, f\.title, f\.note\)[\s\S]*?settingRow\(c\.key, \{ compact: true, home: true \}\)[\s\S]*?modRow\(c\.vendor, c\.key, MOD_SETTINGS\[c\.vendor\]\.keys\[c\.key\], \{ name: f\.title, note: f\.note \}\)/);
+  assert.match(menu, /function featureRow\(f\) \{[\s\S]*?c\.tiers \? choiceRow\(c\.key, f\.title, f\.note, c\.tiers, \{ home: true, read: c\.read, write: c\.write \}\) : prefRow\(c\.key, f\.title, f\.note, \{ home: true \}\)[\s\S]*?settingRow\(c\.key, \{ compact: true, home: true \}\)[\s\S]*?modRow\(c\.vendor, c\.key, MOD_SETTINGS\[c\.vendor\]\.keys\[c\.key\], \{ name: f\.title, note: f\.note, home: true \}\)/);
   assert.match(menu, /main\.prepend\(kindTags\(f\.kinds\)\);/, 'every row wears its labels');
   assert.match(menu, /function kindTags\(kinds\) \{[\s\S]*?for \(const k of KIND_ORDER\) if \(kinds\.includes\(k\)\)/, 'labels in KIND_ORDER, whatever order the row lists them');
   // modRow was lifted out of paneMods, which still draws through it - one row, two homes
-  assert.match(menu, /^function modRow\(vendor, key, def, \{ name = null, note = null \} = \{\}\) \{/m);
+  assert.match(menu, /^function modRow\(vendor, key, def, \{ name = null, note = null, home = false \} = \{\}\) \{/m);
   assert.match(menu, /for \(const \[key, def\] of Object\.entries\(mod\.keys\)\) mc\.append\(modRow\(vendor, key, def\)\);/, 'the Mods pane draws the same row');
   assert.match(menu, /let featureKind = null;/, 'the chip is per-mount state like the rest');
 });

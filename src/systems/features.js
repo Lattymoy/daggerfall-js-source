@@ -25,6 +25,7 @@
 import { PREF_DEFAULTS } from './uiPrefs.js';
 import { ALL_KEYS } from './settings.js';
 import { MOD_SETTINGS } from './modSettings.js';
+import { LAND_VIEW_TIERS, landViewRead, landViewWrite } from '../world/landView.js';   // FT2: the one row for both lanes
 
 /** The three kinds, in label order. `label` is what the row wears and
  *  the chip says; the colour is the skin's (ui/enhancedStyle.js .kind). */
@@ -40,10 +41,14 @@ export const STORES = Object.freeze(['prefs', 'settings', 'mods']);
 
 /** The rows. Shape:
  *    { id, title, note, effect?, kinds: [kind, ...],
- *      control: { store: 'prefs',    key, tiers?: [[value, label], ...] }
+ *      control: { store: 'prefs',    key, tiers?: [[value, label], ...], read?: () => value, write?: (value) => void }
  *             | { store: 'settings', key: 'Section/Key' }
  *             | { store: 'mods',     vendor, key } }
- *  `effect` is the "takes effect when" line, if the switch has one. */
+ *  `effect` is the "takes effect when" line, if the switch has one.
+ *  `read`/`write` (FT2) let a row that CONDENSES two stores show the
+ *  live one and write both; absent, the row is getPref/setPref over its key.
+ *  `also` (FT2) names the OTHER controls the row's write covers, so their
+ *  own panes draw a pointer to this row instead of a second switch. */
 export const FEATURES = Object.freeze([
   // FT1 (2026-09-14): SMALLER DUNGEONS - DFU's Experimental/SmallerDungeons,
   // ported 1:1 at AUDIT 28 W4 (world/smallerDungeons.js). Mac's first
@@ -61,6 +66,25 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['classic']),
     control: Object.freeze({ store: 'settings', key: 'Experimental/SmallerDungeons' }),
   }),
+  // FT2 (2026-09-14): LAND VIEW DISTANCE - the first CONDENSED row. Two
+  // controls for one radius: the pref (LV1, the enhanced lane's 1..6)
+  // and DFU's Experimental/TerrainDistance (D1, the 1:1 lane's 1..4).
+  // One row wearing both labels; it shows the lane's live radius and
+  // writes both stores (world/landView.js landViewRead/landViewWrite).
+  Object.freeze({
+    id: 'land-view-distance',
+    title: 'Land view distance',
+    note: 'How far the land streams around you, in map pixels each way. Daggerfall Unity\u2019s own is 3 and its furthest is 4; '
+      + 'the enhanced outdoors go to 6, drawing the far rings coarse - only their trees and fires - with the haze reaching as far, '
+      + 'and a walk across the map building more land. One choice for both lanes: the classic skin, and the enhanced skin with '
+      + 'enhanced environments off, read it capped at Daggerfall Unity\u2019s 4.',
+    effect: 'Takes effect when the world next loads.',
+    kinds: Object.freeze(['enhanced', 'classic']),
+    control: Object.freeze({
+      store: 'prefs', key: 'landViewDistance', tiers: LAND_VIEW_TIERS, read: landViewRead, write: landViewWrite,
+      also: Object.freeze([Object.freeze({ store: 'settings', key: 'Experimental/TerrainDistance' })]),   // written by landViewWrite, capped at 4
+    }),
+  }),
 ]);
 
 /** The row whose control is this store's key, or null. The settings
@@ -68,8 +92,8 @@ export const FEATURES = Object.freeze([
  *  is drawn there as a pointer, not as a second switch (one home per
  *  idea). */
 export function featureForControl(store, key, vendor = null) {
-  return FEATURES.find((f) => f.control.store === store && f.control.key === key
-    && (store !== 'mods' || f.control.vendor === vendor)) ?? null;
+  const is = (k) => k.store === store && k.key === key && (store !== 'mods' || k.vendor === vendor);
+  return FEATURES.find((f) => is(f.control) || (f.control.also ?? []).some(is)) ?? null;   // FT2: a covered control points here too
 }
 
 /** Does this store hold this key? The three stores answer differently
@@ -102,6 +126,20 @@ export function checkFeature(f) {
     if (!Array.isArray(c.tiers) || !c.tiers.length) out.push('tiers is not a list');
     else if (!c.tiers.some(([v]) => String(v) === String(PREF_DEFAULTS[c.key]))) out.push(`tiers do not include the default ${PREF_DEFAULTS[c.key]}`);
   }
+  if (c && typeof c === 'object' && c.also !== undefined) {
+    // FT2: every control the row ALSO covers is a real key of its store
+    if (!Array.isArray(c.also)) out.push('also is not a list');
+    else for (const a of c.also) {
+      if (!a || !STORES.includes(a.store)) out.push(`also: unknown store '${a?.store}'`);
+      else if (!storeHas(a)) out.push(`also: ${a.store} has no key '${a.store === 'mods' ? `${a.vendor}/` : ''}${a.key}'`);
+    }
+  }
+  if (c && typeof c === 'object') {
+    // FT2: a condensed row's read and write are functions or absent - never one without the other
+    if (c.read !== undefined && typeof c.read !== 'function') out.push('read is not a function');
+    if (c.write !== undefined && typeof c.write !== 'function') out.push('write is not a function');
+    if ((c.read === undefined) !== (c.write === undefined)) out.push('read and write come together');
+  }
   return out;
 }
 
@@ -118,9 +156,11 @@ export function checkFeatures(list) {
     ids.add(f?.id);
     const c = f?.control;
     if (c && typeof c === 'object') {
-      const sig = `${c.store}:${c.vendor ?? ''}:${c.key}`;
-      if (controls.has(sig)) out.push(`${name}: control repeated (${sig})`);
-      controls.add(sig);
+      for (const k of [c, ...(Array.isArray(c.also) ? c.also : [])]) {   // FT2: a covered control is a control
+        const sig = `${k.store}:${k.vendor ?? ''}:${k.key}`;
+        if (controls.has(sig)) out.push(`${name}: control repeated (${sig})`);
+        controls.add(sig);
+      }
     }
   });
   return out;
