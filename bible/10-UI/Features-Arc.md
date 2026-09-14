@@ -124,6 +124,7 @@ Video/GUI keys that are features rather than settings.
 - **FT9** - SHIPPED 2026-09-14. The five packs with a switch. Below.
 - **FT10** - SHIPPED 2026-09-14. Three of DFU's dungeon enhancements. Below.
 - **FT11** - SHIPPED 2026-09-14. The rest of DFU's switches; the dials stay. Below.
+- **FT12** - SHIPPED 2026-09-14. The outdoors test door to the Test Room; the Enhanced category off the rail. Below.
 - One slice per open row after that, in the order Mac picks.
 
 ## FT0 - THE HOME (2026-09-14)
@@ -455,3 +456,19 @@ first category, its home-door count was R7's six, its classic block
 predated FD1's Begin pane and ONLINE1's rail), re-aimed: the Game
 category clicked before its rows are read, the Enhanced-section step
 now the home's outdoors row, 29/29.
+
+## FT12 - THE TEST DOOR TO THE TEST ROOM, THE CATEGORY OFF THE RAIL (2026-09-14)
+
+Mac: "Move the test the outdoors to the test room tab and remove the
+enhanced tab from settings." The outdoors test door - a season, a
+weather, a random town - is a card on the Test Room pane now, with the
+other test doors (it is boot-only, as the Test Room is). The Enhanced
+category of Settings, emptied by FT2-FT8 and standing as a pointer
+since FT8, is off the rail: `settingsMap.js` no longer declares it,
+Game leads the rail again, and `portRowsEnhanced`/`featuresPointerRow`
+are gone. The category map is seven categories over the 171 keys. The
+settings step of the menu probe already clicked Game by name (its
+re-aim at FT11); the Features probe checks the rail has no Enhanced
+entry. Pins re-aimed: SO1's category count and order, MENU T1's
+per-category counts, FT8's pointer pins, R7/SO1's category sweep (it
+walks the registry's pref rows now).

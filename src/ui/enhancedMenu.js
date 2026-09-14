@@ -481,6 +481,14 @@ function paneTest(body) {
   ride.append(el('p', 'meta', TEST_RIDE.blurb));
   ride.append(acts([{ label: 'Ride out', primary: true, onClick: () => onAction(`test:${TEST_RIDE.id}`) }]));
   body.append(ride);
+  // FT12 (Mac, 2026-09-14: "move the test the outdoors to the test room
+  // tab"): the outdoors test door lives with the other test doors. It
+  // was the last row of the Enhanced category of Settings, which is off
+  // the rail now - every switch it held is the Features home's.
+  const outdoors = el('div', 'card');
+  outdoors.append(el('h3', null, 'The outdoors'));
+  outdoors.append(outdoorsTestRow());
+  body.append(outdoors);
 }
 
 // ── LOAD GAME ────────────────────────────────────────────────────
@@ -1152,37 +1160,6 @@ function outdoorsTestRow() {
   return test;
 }
 
-/** The ENHANCED category: the port's departures from Daggerfall, each
- *  with a classic side. `pause` keeps only the rows that take effect
- *  without a reload. */
-function portRowsEnhanced({ pause = false } = {}) {
-  // FT2-FT8 (2026-09-14): every switch this category held moved to the
-  // FEATURES home (systems/features.js) - one list, every enhanceable
-  // feature, each row wearing its kind. The category stays on the
-  // settings rail (a rail with a hole in it teaches the player the hole
-  // is permanent) as a POINTER to the home, and keeps the outdoors test
-  // door, which is a test door and not a switch.
-  const out = [featuresPointerRow()];
-  if (!pause) out.push(outdoorsTestRow());
-  return out;
-}
-
-/** FT8: the Enhanced category's one row - where its switches went. */
-function featuresPointerRow() {
-  const row = el('div', 'row moved');
-  const main = el('button', 'row-main');
-  main.append(kindTags(KIND_ORDER));
-  main.append(el('div', 'row-name', 'The port\u2019s own switches'));
-  main.append(el('div', 'row-note', 'Every enhanceable feature is on the Features page - one list, each row labelled Enhanced, Mod Authored or DFU Classic.'));
-  main.onclick = goFeatures;
-  row.append(main);
-  const ctl = el('div', 'ctl');
-  const b = el('button', 'act rowact', 'Features \u203a');
-  b.onclick = goFeatures;
-  ctl.append(b);
-  row.append(ctl);
-  return row;
-}
 
 /** The CONTROLS category's port rows: the touch layer's knobs, only
  *  where the device reports touch (TI2). */
@@ -1247,8 +1224,7 @@ function portRowsInterface({ pause = false } = {}) {
 
 /** Every port-own row of a category, or none. */
 function portRows(catId, opts = {}) {
-  if (catId === 'enhanced') return portRowsEnhanced(opts);
-  if (catId === 'controls') return portRowsControls(opts);
+  if (catId === 'controls') return portRowsControls(opts);   // FT12: the Enhanced category is gone - its switches are the Features home's, its test door the Test Room's
   if (catId === 'interface') return portRowsInterface(opts);
   return [];
 }

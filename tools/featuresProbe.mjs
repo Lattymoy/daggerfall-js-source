@@ -51,12 +51,15 @@ await page.evaluate(async () => { const { landViewWrite } = await import('/src/w
 
 // the Settings pane draws a moved key as a pointer (FT1), and the emptied Enhanced category as one (FT8)
 await page.locator('#enhanced-menu .railbtn', { hasText: 'Settings' }).click(); await page.waitForTimeout(200);
-check('Settings > Enhanced is a pointer to the home', (await page.$$eval('#enhanced-menu .row.moved .row-name', (ns) => ns.map((n) => n.textContent))).includes('The port’s own switches'));
+check('FT12: the settings rail has no Enhanced category', !(await page.$$eval('#enhanced-menu .subbtn', (bs) => bs.map((b) => b.textContent))).some((t) => /^Enhanced/.test(t)));
 await page.locator('#enhanced-menu .subbtn').filter({ hasText: /^Game/ }).first().click(); await page.waitForTimeout(200);
 const moved = await page.$$eval('#enhanced-menu .row.moved .row-name', (ns) => ns.map((n) => n.textContent));
 check('Settings > Game draws Smaller dungeons as a pointer, not a second switch', moved.includes('Smaller dungeons'), moved.join(', '));
 await page.locator('#enhanced-menu .row.moved', { hasText: 'Smaller dungeons' }).locator('.ctl .act').click(); await page.waitForTimeout(200);
 check('...and the pointer walks to the home', (await page.locator('#enhanced-menu .chips').count()) === 1);
+// FT12: the outdoors test door is the Test Room's
+await page.locator('#enhanced-menu .railbtn', { hasText: 'Test Room' }).click(); await page.waitForTimeout(200);
+check('FT12: the Test Room carries the outdoors test door', (await page.locator('#enhanced-menu .row-name', { hasText: 'Test the outdoors' }).count()) === 1);
 check('no page errors', errors.length === 0, errors.join(' | '));
 
 await browser.close();
