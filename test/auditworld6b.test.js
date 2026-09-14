@@ -201,7 +201,7 @@ test('AUDIT WORLD6b B1/B2/B10: the pool - a fall\'s, another foe\'s and a relaye
   const x = rd('src/scenes/exteriorFoes.js');
   assert.match(x, /const trap = peer \? \{ allowDeath: true \} : attemptSoulTrap\(f\.entity, f\.mobileType, playerEntity\.items, Math\.random\(\)\);/, 'B2: the trap, by source');
   assert.match(x, /if \(!peer && f\.mobileType < 128 && isAzurasStarEquipped\(playerEntity\)/, 'B2: the Star, by source');
-  assert.match(x, /if \(fromPlayer && !peer\) _net\?\.onPeerHit\?\.\(\{ to: f\.puppet, k: _net\.room\?\.\(\) \?\? null, i: f\.seq, dmg: Math\.max\(0, Math\.round\(Number\(damage\) \|\| 0\)\), kind \}\);\s*return;/, 'B1: the divert\'s gate, by source');
+  assert.match(x, /if \(fromPlayer && !peer\) _net\?\.onPeerHit\?\.\(\{ to: f\.puppet, k: _net\.room\?\.\(\) \?\? null, i: f\.seq, dmg: Math\.max\(0, Math\.round\(Number\(damage\) \|\| 0\)\), kind,\s*\.\.\.\(_pAt \? \{ p: [^\n]*\n\s*\.\.\.\(knockDir \? \{ d: [^\n]*\}\);\s*return;/, 'B1: the divert\'s gate, by source (WORLD6b-ii: the striker\'s feet and the blow\'s direction ride)');
   assert.match(rd('src/scenes/shared.js'), /if \(!f \|\| f\.dead \|\| !f\.entity \|\| f\.puppet\) continue;/, 'B1: the magic-round broker skips a puppet');
 });
 
@@ -380,7 +380,7 @@ test('AUDIT WORLD6b C4/C5: the day\'s rolls - online the walk is one day at a ti
   assert.match(h, /exteriorFoes\.pruneOwners\(new Set\(online\.peers\.keys\(\)\), now\);/, 'C3: the prune reads the clock');
   assert.match(h, /candidates: \(\) => \[\.\.\.cityGuards\.guards, \.\.\.exteriorFoes\.foes\]\.filter\(\(f\) => !f\.dead && !f\.puppet\),/, 'B8');
   assert.match(h, /const f = enchantFoes\(\)\.find\(\(x\) => !x\.dead && x\.entity === targetEntity\);\s*if \(!f \|\| f\.puppet\) return;/, 'B9');
-  assert.doesNotMatch(h.slice(h.indexOf('exteriorFoes.setNet({'), h.indexOf('exteriorFoes.setNet({') + 800), /selfId/, 'C11: no dead wiring on the net');
+  assert.match(rd('src/scenes/exteriorFoes.js'), /const me = _net\?\.selfId\?\.\(\) \?\? null;/, 'C11: selfId on the net is READ now (WORLD6b-ii: whose blow a streamed target names) - no dead wiring');
   assert.match(rd('src/ui/enhancedMenu.js'), /everyone nearby sees and can help fight\./, 'C9');
   assert.match(rd('bible/06-Systems/Online-Arc.md'), /## AUDIT WORLD6b \(2026-09-14\)/, 'the record');
 });

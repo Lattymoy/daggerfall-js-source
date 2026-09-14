@@ -317,7 +317,7 @@ test('ROAD-H tail (review): an enemy shaft is SPENT on whatever it meets and DAM
   assert.deepEqual(log, ['bear', 'player hurt', 'player shaft: wolf']);
   // the pool decides the target ONCE and hands it to every host's fire
   const x = src('src/scenes/exteriorFoes.js');
-  assert.match(x, /const _at = f\.ai\.target \?\? PLAYER_TARGET, _atPlayer = isPlayerTarget\(_at\);/);
+  assert.match(x, /const _at = f\.ai\.target \?\? PLAYER_TARGET, _atPlayer = isLocalPlayerTarget\(_at\);/);
   assert.match(x, /onArrow\(from, dir, f, _atPlayer \? null : _at\);/, 'the selected foe rides the shaft; the player is null');
   for (const [h, call] of [['src/scenes/world.js', 'arrows.fire'], ['src/scenes/exterior.js', 'arrows.fire'], ['src/scenes/worldModes.js', 'interiorArrows.fire']]) {
     const s = src(h);

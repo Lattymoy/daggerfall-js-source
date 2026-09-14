@@ -216,7 +216,7 @@ test('ROAD-B: the dungeon host wires both MakeEnemiesHostile sites to its own po
 test('ROAD-B: both exterior/interior foe pools take the area walk on a struck passive foe', () => {
   const f = src('src/scenes/exteriorFoes.js');
   const i = f.indexOf('if (!peer && !f.ai.isHostile) makeAreaHostile?.();');   // WORLD6b: a peer's blow wakes no area (AUDIT WORLD2 B9's law)
-  const j = f.indexOf('f.ai.makeEnemyHostileToAttacker?.(PLAYER_TARGET');
+  const j = f.indexOf('f.ai.makeEnemyHostileToAttacker?.((peer && peerCandidate(peerId)) || PLAYER_TARGET');   // WORLD6b-ii: a peer\'s blow names the peer
   assert.ok(i > 0 && j > i, 'the area walk precedes the per-foe law, and reads isHostile before it');
   assert.ok(f.includes('makeAreaHostile = null,'), 'the dep defaults absent (the pre-wiring shape)');
   const wm = src('src/scenes/worldModes.js');

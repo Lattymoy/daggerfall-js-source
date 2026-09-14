@@ -174,7 +174,7 @@ test('WORLD6b: the pool streams MINE - numbered from one, every changed foe (eve
   const rat = await pool.spawnFoe(0, [10, 0, 10], { yaw: 1.5, feetGiven: true });
   assert.ok(rat, 'the rat stands on the crafted career'); assert.equal(rat.seq, 1, 'mine, numbered from one'); assert.equal(rat.puppet, null);
   const f1 = pool.foesFrame(false);
-  assert.deepEqual(f1, { n: 1, k: 'world:3,12', full: 0, f: [{ i: 1, t: 0, x: rat.gender === 'female' ? 1 : 0, f: [10, 0, 10], y: 1.5, h: rat.entity.health, d: 0, a: 0, m: 0 }] }, 'the first frame carries the rat');
+  assert.deepEqual(f1, { n: 1, k: 'world:3,12', full: 0, f: [{ i: 1, t: 0, x: rat.gender === 'female' ? 1 : 0, f: [10, 0, 10], y: 1.5, h: rat.entity.health, d: 0, a: 0, m: 0, g: '.' }] }, 'the first frame carries the rat (WORLD6b-ii: and its target - me, unarmed)');
   assert.equal(pool.foesFrame(false), null, 'nothing changed: nothing goes');
   const full = pool.foesFrame(true);
   assert.equal(full.n, 2); assert.equal(full.full, 1); assert.equal(full.f.length, 1, 'a full frame carries every foe of mine');
@@ -241,7 +241,7 @@ test('WORLD6b: the pool stands a peer\'s foes as PUPPETS - through the one spawn
   assert.equal(pup.mobile.doMeleeDamage, false, 'no blow of its own'); assert.equal(pup.mobile.shootArrow, false);
   // a blow on a puppet goes to its owner, not into its health
   pool.damageFoe(pup, 4, [0, 0, 0], null, { kind: 'arrow' });
-  assert.deepEqual(hits, [{ to: 'bob-0002', k: 'world:3,12', i: 5, dmg: 4, kind: 'arrow' }], 'to Bob, with Bob\'s number and the kind, keyed to the cell (AUDIT WORLD6b A7)'); assert.equal(pup.entity.health, 5, 'my blow lands nothing here');
+  assert.deepEqual(hits, [{ to: 'bob-0002', k: 'world:3,12', i: 5, dmg: 4, kind: 'arrow', p: [0, 0, 0] }], 'to Bob, with Bob\'s number and the kind, keyed to the cell (AUDIT WORLD6b A7), the striker\'s feet on it (WORLD6b-ii)'); assert.equal(pup.entity.health, 5, 'my blow lands nothing here');
   // death by the stream, the body where it fell
   pool.applyFoes('bob-0002', { n: 9, k: 'world:3,12', full: 0, f: [{ i: 5, f: [41, 0, 41], d: 1 }] });
   assert.equal(pup.dead, true); assert.equal(pup.corpse, true); assert.deepEqual(pup.ai.feet, [41, 0, 41], 'where the stream let it fall');
@@ -322,7 +322,7 @@ test('WORLD6b: the world host by source - the stream\'s cell arm is everyone\'s 
   assert.match(w, /const frame = cell \? \(\(modes\?\.mode \?\? 'exterior'\) === 'exterior' \? exteriorFoes\.foesFrame\(full\) : null\) : modes\?\.dungeonFoesFrame\?\.\(full\);/, 'the exterior pool\'s frame, above ground alone');
   assert.match(w, /if \(isCellRoom\(online\.room\)\) \{ if \(\(modes\?\.mode \?\? 'exterior'\) === 'exterior'\) exteriorFoes\.applyFoes\(id, data\); return; \}/, 'a cell\'s frame is the pool\'s, never a dungeon heartbeat');
   assert.match(w, /online\.onHit = \(id, data\) => \{ if \(isCellRoom\(online\.room\)\) exteriorFoes\.applyHit\(id, data\); else modes\?\.applyDungeonHit\?\.\(id, data\); \};/);
-  assert.match(w, /exteriorFoes\.setNet\(\{\s*room: \(\) => online\?\.room \?\? null,\s*now: \(\) => performance\.now\(\),\s*staleMs: FOES_STALE_MS,[^\n]*\n\s*onPeerHit: \(hit\) => online\?\.sendHit\(hit\) \?\? false,\s*toWire: \(feet\) => \{ const wc = state\.worldCoords\(feet\); return \[wc\.x, feet\[1\] - state\.compensation\[1\], wc\.z\]; \},\s*toScene: \(p\) => \{ const l = state\.localFromWorld\(p\[0\], p\[2\]\); return \[l\[0\], p\[1\] \+ state\.compensation\[1\], l\[1\]\]; \},\s*\}\);/, 'the net: the pose\'s own frame on the wire (AUDIT ONLINE D7), this scene\'s feet here');
+  assert.match(w, /exteriorFoes\.setNet\(\{\s*room: \(\) => online\?\.room \?\? null,\s*selfId: \(\) => online\?\.id \?\? null,[^\n]*\n\s*peers: peersNear,[^\n]*\n\s*now: \(\) => performance\.now\(\),\s*staleMs: FOES_STALE_MS,[^\n]*\n\s*onPeerHit: \(hit\) => online\?\.sendHit\(hit\) \?\? false,\s*toWire: \(feet\) => \{ const wc = state\.worldCoords\(feet\); return \[wc\.x, feet\[1\] - state\.compensation\[1\], wc\.z\]; \},\s*toScene: \(p\) => \{ const l = state\.localFromWorld\(p\[0\], p\[2\]\); return \[l\[0\], p\[1\] \+ state\.compensation\[1\], l\[1\]\]; \},\s*\}\);/, 'the net: the pose\'s own frame on the wire (AUDIT ONLINE D7), this scene\'s feet here');
   assert.match(w, /if \(online\.room !== _foesRoom\) \{ _foesRoom = online\.room; _foesFullAt = -Infinity; exteriorFoes\.clearPuppets\(\); \}[^\n]*\n\s*if \(isCellRoom\(online\.room\)\) exteriorFoes\.pruneOwners\(new Set\(online\.peers\.keys\(\)\), now\);/, 'every frame (AUDIT WORLD6b C7: a new room hears every foe at once; C3: the prune reads the clock)');
   assert.match(rd('src/ui/enhancedMenu.js'), /Towns and the open country share who is there and the creatures that find you: what one player meets, everyone nearby sees and can help fight\./);   // AUDIT WORLD6b C9: nearby (the fan is ranged), help (a puppet lands no blow)
   assert.match(rd('bible/06-Systems/Online-Arc.md'), /## WORLD6b \(2026-09-14\)/, 'the record');

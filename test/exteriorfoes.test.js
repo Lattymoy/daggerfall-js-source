@@ -39,9 +39,9 @@ test('exteriorfoes: the pool laws - cull AFTER fresh senses, the alert raise, th
   // measures to the PLAYER - `_dist` is the distance to the SELECTED
   // TARGET now, so reading it would leave a pair of brawlers
   // uncullable forever.
-  assert.ok(s.includes('if (isPlayerTarget(f.ai.target) && f.ai.inSight && f.ai.detected) setEnemyAlert(playerEntity, true'),
+  assert.ok(s.includes('if (isLocalPlayerTarget(f.ai.target) && f.ai.inSight && f.ai.detected) setEnemyAlert(playerEntity, true'),   // WORLD6b-ii: the LOCAL player - a peer in sight raises no alert of mine
     'sight raises the enemy alert above ground too, for a PLAYER target (EnemySenses:531-535)');
-  assert.ok(s.includes('if (isPlayerTarget(f.ai?.target) && f.ai?.detected) setEnemyAlert(playerEntity, false)'),
+  assert.ok(s.includes('if (isLocalPlayerTarget(f.ai?.target) && f.ai?.detected) setEnemyAlert(playerEntity, false)'),
     'the targeting kill clears it - and only when the player was the target (EnemyDeath:131-136)');
   assert.ok(s.includes('const _playerDist = Math.hypot(playerFeet[0]'), 'the cull measures to the PLAYER, not the target');
   assert.ok(!s.includes('f.ai._dist > ENCOUNTER_CULL_DISTANCE'), 'and never to _dist again');

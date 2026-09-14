@@ -37,7 +37,7 @@ test('F035/F041: every damage door takes a provenance flag, defaulting TRUE', ()
   // idiom for the same reason - Shield mitigates DAMAGE, and the
   // SetHealth(0) door is not damage (DaggerfallEntity.cs:313-328).
   assert.ok(src('scenes/cityGuards.js').includes('function damageGuard(g, damage, playerFeet, knockDir, { fromPlayer = true, bypassShield = false } = {})'));
-  assert.ok(src('scenes/exteriorFoes.js').includes("function damageFoe(f, damage, playerFeet, knockDir = null, { fromPlayer = true, bypassShield = false, kind = 'melee', peer = false } = {})"));   // WORLD6b: the kind and the peer flag, as the dungeon's
+  assert.ok(src('scenes/exteriorFoes.js').includes("function damageFoe(f, damage, playerFeet, knockDir = null, { fromPlayer = true, bypassShield = false, kind = 'melee', peer = false, peerId = null } = {})"));   // WORLD6b-ii: and the striker's id, as the dungeon's   // WORLD6b: the kind and the peer flag, as the dungeon's
   assert.ok(src('scenes/dungeonContext.js').includes('function damageFoe(foe, damage, playerFeet = null, knockDir = null, { fromPlayer = true, bypassShield = false, kind = \'melee\', peer = false, peerId = null } = {})'));   // WORLD3: and the striker's id (the aggro turns on the peer); WORLD2: and the blow's kind, for the hit that goes to the host; AUDIT WORLD2 C4: and whether it is a peer's
 });
 
@@ -103,10 +103,10 @@ test('F041: the hostility flip is gated the same way, in both foe pools', () => 
   // member of its own now (`handleAttackFromPlayer`) that the damage
   // door and the zero-damage arm both call. The gate is still the
   // player-source one; the body is where the slice reads it.
-  assert.match(xf, /if \(fromPlayer && f\.ai\) \{\n\s*handleAttackFromPlayer\(f, playerFeet, peer\);/,   // WORLD6b: and whose blow it was
+  assert.match(xf, /if \(fromPlayer && f\.ai\) \{\n\s*handleAttackFromPlayer\(f, playerFeet, peer, peerId\);/,   // WORLD6b: and whose blow it was
     'the damage door calls it inside the same gate');
-  const xfGate = xf.slice(xf.indexOf('function handleAttackFromPlayer(f, playerFeet = null, peer = false) {'));   // WORLD6b: the peer arm
-  assert.match(xfGate.slice(0, 900), /f\.ai\.makeEnemyHostileToAttacker\?\.\(PLAYER_TARGET/, 'through the whole C# method');   // WORLD6b: the peer arm's note widened the window (a proximity bound, not a law)
+  const xfGate = xf.slice(xf.indexOf('function handleAttackFromPlayer(f, playerFeet = null, peer = false, peerId = null) {'));   // WORLD6b: the peer arm
+  assert.match(xfGate.slice(0, 1200), /f\.ai\.makeEnemyHostileToAttacker\?\.\(\(peer && peerCandidate\(peerId\)\) \|\| PLAYER_TARGET/, 'through the whole C# method (WORLD6b-ii: a peer\'s blow names the peer, the dungeon\'s spelling)');   // WORLD6b: the peer arm's note widened the window (a proximity bound, not a law)
   assert.ok(xfGate.indexOf('makeAreaHostile?.()') < xfGate.indexOf('makeEnemyHostileToAttacker'),
     'and the area walk reads isHostile BEFORE the per-foe law flips it');
   assert.ok(!/f\.ai\.makeEnemyHostileToAttacker\?\.\(PLAYER_TARGET[\s\S]{0,400}\n  \}/.test(xf.slice(xf.indexOf('function damageFoe')).split('if (fromPlayer')[0]),

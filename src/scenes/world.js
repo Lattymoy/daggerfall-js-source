@@ -2720,7 +2720,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // through the one that owns the billboard - `exteriorFoePool` is
     // the watch AND the encounter foes, and this arm reached the
     // encounter pool's remover for both. That was not a leak: removeFoe
-    // (exteriorFoes.js:320-325) never looks the record up in `foes`, and
+    // (exteriorFoes.js:331-336) never looks the record up in `foes`, and
     // both pools share this host's one renderer, so a struck WATCHMAN
     // got exactly what removeGuard (cityGuards.js:1215-1219) gives it -
     // batch freed, `dead = true`, no corpse, skipped by the next AI pass
@@ -6715,6 +6715,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     // this scene's feet stand here
     exteriorFoes.setNet({
       room: () => online?.room ?? null,
+      selfId: () => online?.id ?? null,   // WORLD6b-ii: whose blow a streamed target names - mine, when the target is me
+      peers: peersNear,   // WORLD6b-ii: the peers as MY foes' target candidates (WORLD3's law for the dungeon host's foes, per owner)
       now: () => performance.now(),
       staleMs: FOES_STALE_MS,   // AUDIT WORLD6b C3: an owner whose stream has died is swept as the seat is (WORLD2's own window)
       onPeerHit: (hit) => online?.sendHit(hit) ?? false,
@@ -6775,6 +6777,14 @@ export async function bootWorld(canvas, renderer, params, status) {
       hidden: townTalk.hudCovered || (modes?.hudCovered ?? false) || gamePaused(),   // a window over the HUD covers the chat too, and closes it
       status: link?.statusLine('chat') ?? null,   // connecting, reconnecting, refused - the session's own line (D12; AUDIT CHAT B5)
     });
+  };
+  /** WORLD3: the peers in my room as target candidates - each with its feet in THIS scene and its body's height; null
+   *  when there is no room. The dungeon host's foes read it (peerCandidates) and, since WORLD6b-ii, the cell's own. */
+  const peersNear = () => {
+    if (!online || !online.room || online.status !== 'open') return null;
+    const now = performance.now(), out = [];
+    for (const p of online.peers.values()) if (online.visible(p, now)) out.push({ id: p.id, feet: onlineToScene(p.shown), height: peerBodies?.heightOf(p.id) || undefined });
+    return out;
   };
   const onlineFrame = (now, dt) => {
     chatFrame();   // CHAT1: before the dead return, so the channels keep their heartbeat and their reconnect while the death screen is up (the panel itself is paused away like any HUD - AUDIT CHAT B7)
@@ -6871,12 +6881,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so before the next joiner reads a snapshot that predates the claim and un-empties the chest for everyone. The
     // publish clock is reset, not the publish forced: the frame's own worldPublish sends it this same frame.
     onLootClaimed: () => { _worldPublishedAt = -Infinity; },
-    peers: () => {
-      if (!online || !online.room || online.status !== 'open') return null;
-      const now = performance.now(), out = [];
-      for (const p of online.peers.values()) if (online.visible(p, now)) out.push({ id: p.id, feet: onlineToScene(p.shown), height: peerBodies?.heightOf(p.id) || undefined });
-      return out;
-    },
+    peers: peersNear,
     selfId: () => online?.id ?? null,
     dungeonAuthority,   // WORLD2: a dungeon built while another hosts starts as puppets
     dungeonOnline: () => onlineOn,   // AUDIT WORLD34 B2: online, the dungeon that gets built is the WHOLE dungeon - the room's layout is one layout
