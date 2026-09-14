@@ -936,7 +936,7 @@ export function createWorldModes(host) {
    *  This host owned two pools and ran NO fan-out at all - no
    *  runMagicRoundsFor, so no tickActiveEffects and no updatePoisons
    *  (worldTick.js:232-233), and no killIfAnyLiveStatZero. Both pools
-   *  READ the effect list every frame (exteriorFoes.js:799-800 and
+   *  READ the effect list every frame (exteriorFoes.js:802-803 and
    *  cityGuards.js:765-766 each take `entityIsParalyzed` +
    *  `applyEnemyMotorEffectFlags`), and nothing ever ended one: a
    *  Continuous Damage bundle on a foe in a shop never took a round,
@@ -5084,7 +5084,7 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:5251), so the OUTER host's one rides in.
+          // (dungeonContext.js:5266), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:524 -> the
@@ -6020,10 +6020,10 @@ export function createWorldModes(host) {
         // host's sinks do (`insideFoeSinks`), so a killed watchman
         // runs the crime and the corpse in the pool that owns it.
         dealDamage: (f, d) => (f._encounter
-          ? interiorFoes?.damageFoe(f, d, player.pos, m.dir)
+          ? interiorFoes?.damageFoe(f, d, player.pos, m.dir, { kind: 'arrow' })   // WORLD6b-iii(e): the kind rides the hit
           : interiorGuards?.hurtGuard(f, d, player.pos, m.dir)),
         audio, hitEffects: interiorHitEffects, say: (l) => say(l),
-        onInflictPoison: (att, tgt, pt) => inflictPoison(tgt, pt, false, { currentMinute: Math.floor(interiorTicker.classicMinutes) }),
+        onInflictPoison: (att, tgt, pt) => (t._encounter ? interiorFoes?.poisonFoe(t, pt) : inflictPoison(tgt, pt, false, { currentMinute: Math.floor(interiorTicker.classicMinutes) })),   // WORLD6b-iii(e): the pool's one poison door, split by pool as the damage door above
         // AUDIT 58: WeaponManager.cs:630 after the damage fork - a
         // zero-damage shaft still enrages its mark and the room.
         // ROAD-G G1 (review): the interior WATCH carries the pair now
@@ -8163,7 +8163,7 @@ export function createWorldModes(host) {
      *  has one manager, so the same bit belongs in every rig.
      *
      *  FLAG ONLY, presence-gated, exactly as world.js:4370/:4372 and
-     *  dungeonContext.js:5324/:5324 are: the C# restore sets the
+     *  dungeonContext.js:5339/:5339 are: the C# restore sets the
      *  property and calls no ApplyWeapon, because UpdateHands ends in
      *  ApplyWeapon on the next frame (WeaponManager.cs:699) - the
      *  port's twin is the rig's per-frame syncWorn. */

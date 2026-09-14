@@ -321,7 +321,7 @@ test('AUDIT39 #65: the interior arrow update takes the four impact options it ne
   // billboard, the same `_encounter` split this host's sinks take -
   // world.js:8238's own law, so a killed watchman still runs the crime
   // and the corpse.
-  assert.match(call, /dealDamage: \(f, d\) => \(f\._encounter\n\s+\? interiorFoes\?\.damageFoe\(f, d, player\.pos, m\.dir\)\n\s+: interiorGuards\?\.hurtGuard\(f, d, player\.pos, m\.dir\)\),/);
+  assert.match(call, /dealDamage: \(f, d\) => \(f\._encounter\n\s+\? interiorFoes\?\.damageFoe\(f, d, player\.pos, m\.dir, \{ kind: 'arrow' \}\)[^\n]*\n\s+: interiorGuards\?\.hurtGuard\(f, d, player\.pos, m\.dir\)\),/);
   // the player-side arm of the same call
   assert.match(call, /onPlayerArrowHitFoe: \(m, t\) => playerArrowHitFoe\(m, t, \{/);
   // the enemy hit runs the melee arm's own payload: pain voice, sound,

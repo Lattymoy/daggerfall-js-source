@@ -44,7 +44,7 @@ import { setEnemyAlert } from '../systems/encounters.js';
 import { inflictPoison } from '../systems/poisons.js';
 import { onMonsterHit, SPIDER_TOUCH_SPELL_INDEX } from '../systems/diseases.js';   // AUDIT 24 (wave 30): the monster special-attack rider, above ground
 import { MINUTES_PER_DAY } from '../systems/worldTick.js';
-import { validFoeRecord, CELL_PUPPETS_MAX, CELL_FRAME_RECORDS_MAX, POSE_BOUND, POSE_Y_BOUND, tokenGate, FOE_HEALTH_MAX } from '../net/wire.js';
+import { validFoeRecord, CELL_PUPPETS_MAX, CELL_FRAME_RECORDS_MAX, POSE_BOUND, POSE_Y_BOUND, tokenGate, FOE_HEALTH_MAX, hitPoisonOf } from '../net/wire.js';
 import { CORPSE_ACTIVATION_DISTANCE } from '../player/activate.js';   // AUDIT WORLD6b-iii(c) A1/C7: the owner reads the taker's reach
 import { createWeapon } from '../combat/enemyEquipment.js';   // AUDIT WORLD6b-ii B2: a puppet's weapon is its owner's word, rebuilt from the descriptor   // AUDIT WORLD6b B3/C2: a cell's record projected and its puppets capped, the wire's law
 import { mintCorpseMarker, playBodyFall, playRareDrop, corpseLootTargets, takeCorpseLoot, sayEnemyDied, raiseEnemyDeath } from './corpseMarker.js';
@@ -525,10 +525,13 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // WORLD6b-ii: the striker's feet (p, in the world frame) and the blow's direction (d) ride the hit - the owner's foe
       // turns on ME and the shove goes the way the blow went (WORLD3's spelling for the dungeon's hit)
       const _pAt = playerFeet && _net?.toWire ? _net.toWire(playerFeet) : null;
+      const _pt = f._divertPt ?? null; f._divertPt = null;   // WORLD6b-iii(e): the blade's or the shaft's dose (poisonFoe, inside this blow's calc) - spent by this door, once
       if (fromPlayer && !peer) f._divertFrame = _peerFrame;
       if (fromPlayer && !peer) _net?.onPeerHit?.({ to: f.puppet, k: _owners.get(f.puppet)?.k ?? _net.room?.() ?? null, i: f.seq, dmg: Math.max(0, Math.round(Number(damage) || 0)), kind,   // WORLD6b-iii(b): keyed to the OWNER's cell (its frame's k) - across the seam that is not mine
         ...(_pAt ? { p: [q2(_pAt[0]), q2(_pAt[1]), q2(_pAt[2])] } : {}),
-        ...(knockDir ? { d: [q3(knockDir[0]), q3(knockDir[1]), q3(knockDir[2])] } : {}) });
+        ...(knockDir ? { d: [q3(knockDir[0]), q3(knockDir[1]), q3(knockDir[2])] } : {}),
+        ...(_pt != null && damage > 0 ? { pt: _pt } : {}),   // WORLD6b-iii(e): the striker's poison rides to the owner's foe (FormulaHelper doses on a damaging hit alone)
+        ...(kind === 'arrow' ? { ar: 1 } : {}) });   // WORLD6b-iii(e): the shaft lands in the owner's copy, where BowDamage puts it (WORLD3's spelling for the dungeon's hit)
       return;
     }
     if (fromPlayer && f.ai) {
@@ -993,6 +996,17 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   }
 
   /** The player's melee against the pool - cityGuards' shape. */
+  /** WORLD6b-iii(e): THE ONE DOOR for this player's poison at a foe of this pool - the blade's (resolvePlayerHit) or the
+   *  shaft's (the hosts' playerArrowHitFoe hook), which FormulaHelper inflicts INSIDE the damage calc (:682-686) and
+   *  clears from the weapon either way. Mine: dosed here. A PUPPET's: this shadow's entity is nobody's - the dose
+   *  rides the blow's divert to the owner (`pt` on the hit, spent by damageFoe's puppet arm, which the same calc's
+   *  damage reaches next), and the owner's foe rolls its own saving throw there. Until now the dose ran on the shadow
+   *  and the owner's foe never felt it (AUDIT WORLD6b, recorded). */
+  function poisonFoe(f, pt) {
+    if (!f) return null;
+    if (f.puppet) { f._divertPt = pt; return null; }
+    return inflictPoison(f.entity, pt, false, { rolls, currentMinute: Math.floor(currentMinute()) });   // ENGINE-PRNG RULE: the pool's uniform seam
+  }
   function resolvePlayerHit(playerWeapon, eye, lookDir, playerFeet, inViewFn, onHitSound) {
     const live = foes.filter((f) => !f.dead);
     if (!live.length) return false;
@@ -1012,7 +1026,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     { const v = lycanthropeAttackVoice(playerEntity, rolls); if (v != null) audio?.playOneShot?.(v, 1); }   // V4: OnWeaponHitEntity's transformed voice (10% attack / 20% bark)
     for (const { foe, damage } of playerWeapon.resolveHit(live, playerEntity, canSee, rolls,
       (f) => backstabChanceOf(playerEntity, isBackFacing(f.ai.yaw, f.ai.feet, eye)), say,
-      (f, pt) => inflictPoison(f.entity, pt, false, { currentMinute: Math.floor(currentMinute()) }))) {   // C2-slice (combat-11)
+      (f, pt) => poisonFoe(f, pt))) {   // C2-slice (combat-11); WORLD6b-iii(e): through the one poison door (a puppet's rides the hit)
       any = true;
       if (damage > 0) {
         onHitSound?.(foe);
@@ -1601,6 +1615,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     const pw = v3(data.p);
     const at = pw && Math.abs(pw[0]) <= POSE_BOUND && Math.abs(pw[2]) <= POSE_BOUND && Math.abs(pw[1]) <= POSE_Y_BOUND && _net?.toScene ? _net.toScene(pw) : null;
     const dir = kind === 'spell' ? null : unit(data.d);
+    const pt = hitPoisonOf(data);   // WORLD6b-iii(e): the striker's poison (the wire's bound - outside the enum DFU registers nothing either)
     // AUDIT WORLD2 B8/C4's law: the blow is seen and heard at the owner too - the hit's ring, the blood, the pain
     if (dmg > 0) {
       audio?.play3d?.(hitSoundFor(null), f.ai.feet, ENEMY_HIT_VOLUME, { maxDistance: 16 });
@@ -1608,7 +1623,11 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       const pain = enemyPainVoice(f, dmg);
       if (pain && pain.clip >= 0) audio?.play3d?.(pain.clip, [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], 1, { maxDistance: 16, pitch: 1 + pain.pitchLift });
     }
+    // WORLD6b-iii(e): the dose lands on MY foe as FormulaHelper lands it - inside a damaging blow, before the health
+    // moves, the target's own saving throw (inflictPoison's) rolled here where the foe is real
+    if (pt != null && dmg > 0) inflictPoison(f.entity, pt, false, { rolls, currentMinute: Math.floor(currentMinute()) });   // ENGINE-PRNG RULE: the pool's uniform seam
     damageFoe(f, dmg, at, dir, { fromPlayer: true, kind, peer: true, peerId: from });
+    if (data.ar === 1 && kind === 'arrow') addItem(f.entity.items ??= [], { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });   // WORLD6b-iii(e): the shaft, where BowDamage puts it (:145-147) - the body's pile says so (o) and the grant carries it
     return true;
   }
   /** The owners gone from the cell (the session's peer map no longer holds them) or gone quiet (no frame in staleMs,
@@ -1627,7 +1646,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     _pupPending.clear();
   }
 
-  return { foes, spawnFoe, damageFoe, handleAttackFromPlayer, attackFromPlayer, update, resolvePlayerHit, batches, offsetAll, activeCount, lootTargets, takeLoot, snapshotWorld, restoreWorld, destroy,
+  return { foes, spawnFoe, damageFoe, handleAttackFromPlayer, attackFromPlayer, update, resolvePlayerHit, poisonFoe, batches, offsetAll, activeCount, lootTargets, takeLoot, snapshotWorld, restoreWorld, destroy,
     /** AUDIT 39: CleanupUntrackedObjects' enemy half (StreamingWorld.cs
      *  :1624-1635), which a teleport reaches too through
      *  ClearStreamingWorld -> CollectLooseObjects(true) (:993-998) -

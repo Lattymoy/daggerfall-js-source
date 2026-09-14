@@ -164,7 +164,7 @@ test('AUDIT WORLD6b-iii(c) C5: the frame obeys CELL_FRAME_RECORDS_MAX - the live
 });
 
 test('AUDIT WORLD6b-iii(c) C3: the Room - the hit arm counts BYTES (HIT_ROOM_BYTES_PER_S a second, the room\'s) - over the budget a frame is dropped and nobody struck; inside it a grant lands; the relay says world64', async () => {
-  assert.equal(HIT_ROOM_BYTES_PER_S, 256 * 1024); assert.equal(RELAY_VERSION, 'world64');
+  assert.equal(HIT_ROOM_BYTES_PER_S, 256 * 1024); assert.equal(RELAY_VERSION, 'world65');
   const at = (px, pz) => ({ x: px * PIXEL_UNITS + 10, y: 0, z: pz * PIXEL_UNITS + 10, yaw: 0, pitch: 0, mv: 0 });
   const r = fakeRoom('world:3,12');
   const a = r.connect(), c = r.connect();

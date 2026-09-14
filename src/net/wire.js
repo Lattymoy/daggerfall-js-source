@@ -332,6 +332,16 @@ export const streamsFoes = (key) => isWorldRoom(key) || isCellRoom(key);
  *  AUDIT WORLD6b A5: an id is what the wire's own law says an id is (ID_RE) - a `to` no socket could ever carry
  *  named nobody yet bought a funnel token. */
 export const hitOwnerOf = (data) => (data && typeof data.to === 'string' && ID_RE.test(data.to) ? data.to : null);
+/** WORLD6b-iii(e): the striker's POISON on a hit (`pt`) - the blade's or the shaft's dose, which FormulaHelper inflicts
+ *  inside the damage calc and clears from the weapon (formulas.js's onInflictPoison seam), so at a puppet it rides
+ *  the hit to the owner's foe instead of dosing the local shadow. The enum is ItemEnums.Poisons, 128..139
+ *  (poisons.js's POISON_START_VALUE and TOTAL_POISON_VARIANTS - pinned equal here so the worker's bundle carries no
+ *  systems import); a value outside it registers nothing in DFU either (startPoison's refusal). Null when none. */
+export const HIT_POISON_MIN = 128;
+export const HIT_POISON_MAX = 139;
+export const hitPoisonOf = (data) => (data && Number.isInteger(data.pt) && data.pt >= HIT_POISON_MIN && data.pt <= HIT_POISON_MAX ? data.pt : null);
+/** WORLD6b-iii(e): a stranger asked for by name (`who`, an id the wire's law admits); null when the frame names none. */
+export const whoIdOf = (m) => (m && typeof m.id === 'string' && ID_RE.test(m.id) ? m.id : null);
 /** AUDIT WORLD6b B3/C2: A CELL'S FRAME IS BOUNDED, at both ends. A dungeon's frame is the host's alone and keys
  *  into a layout every client built (`i >= _layoutFoes` refuses the rest); a cell's comes from anyone and MINTS a
  *  foe per record it names, so a record is projected like a pose (validPose's own bounds on the feet) and a frame
@@ -483,7 +493,7 @@ export function inRange(roomKey, from, to) {
   return pixelDistance(from, to) <= RANGE_PIXELS;
 }
 
-/** One client frame, parsed and checked: {t:'hello'|'pose'|'ping'|'chat'|'world'|'foes'|'hit'|'act', ...}
+/** One client frame, parsed and checked: {t:'hello'|'pose'|'ping'|'chat'|'world'|'foes'|'hit'|'act'|'who', ...}
  *  or {error} - the caller closes on an error. */
 export function parseClient(text, { hasHello = false } = {}) {
   if (typeof text !== 'string') return { error: 'text frames only' };
@@ -530,6 +540,10 @@ export function parseClient(text, { hasHello = false } = {}) {
     const text = typeof m.text === 'string' ? sanitizeChat(m.text) : '';
     return text ? { t: 'chat', text } : { error: 'bad chat' };   // the client sanitizes before it sends, so an empty line here is not the port's client
   }
+  if (m.t === 'who') {   // WORLD6b-iii(e): a member beyond the welcome's roster asked for by name, from a hello'd socket; the name's law the Room reads (whoIdOf), a bad one junk there
+    if (!hasHello) return { error: 'who before hello' };
+    return { t: 'who', id: m.id };
+  }
   return { error: 'unknown message' };
 }
 
@@ -549,6 +563,14 @@ export const poseGate = (bucket, nowMs) => tokenGate(bucket, nowMs, POSE_HZ_MAX)
 export const foesGate = (bucket, nowMs) => tokenGate(bucket, nowMs, FOES_HZ_MAX);
 /** The hit rate gate at home: HIT_HZ_MAX a second (AUDIT WORLD2 A6). */
 export const hitGate = (bucket, nowMs) => tokenGate(bucket, nowMs, HIT_HZ_MAX);
+/** WORLD6b-iii(e): the asks (`who`) a socket may make a second, at the relay and at home. ROSTER_MAX bounds the WELCOME
+ *  (the nearest, AUDIT ONLINE A5), not the room: a member beyond it whose pose, foes or blow reaches me is asked for
+ *  by name and answered with its join to the asker alone - a stranger is learned from the relay's own traffic. */
+export const WHO_HZ_MAX = 2;
+/** WORLD6b-iii(e): how long a stranger asked for stays asked at home before the next of its frames asks again. */
+export const WHO_RETRY_MS = 10_000;
+/** The who rate gate: WHO_HZ_MAX a second (WORLD6b-iii(e)). */
+export const whoGate = (bucket, nowMs) => tokenGate(bucket, nowMs, WHO_HZ_MAX);
 /** The action rate gate at home: ACT_HZ_MAX a second (WORLD3). */
 export const actGate = (bucket, nowMs) => tokenGate(bucket, nowMs, ACT_HZ_MAX);
 /** AUDIT WORLD4 A1: will this act frame FIT? ONE HOME, so a host can tell a refusal it may retry (the rate, which
