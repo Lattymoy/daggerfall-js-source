@@ -33,7 +33,7 @@ import { makeEnemyEntity, loadMonsterCareer } from '../characters/enemyEntity.js
 import { MobileUnit, MOBILE_DAEDRA_SEDUCER, SeducerTransformBehaviour } from '../characters/mobileUnit.js';   // A5: the Seducer transform pair + its trigger
 import { ClassFile } from '../formats/classFile.js';
 import { equipEnemy, hasBowAttack, backstabChanceOf, zeroDamageHitSound, enemyMissSound, enemyAttackVoice, enemyPainVoice, playerAttackGrunt, tickEnemySound, playEnemyClip, tryLanguagePacification, applyDamageToNonPlayer } from './hostCombat.js';   // C2-slice (combat-9/17); MT-ii: the foe-vs-foe payload
-import { generateItems as generateLootItems, addEnemyLootExtras } from '../systems/loot.js';   // AUDIT 24 (wave 43)
+import { generateItems as generateLootItems, addEnemyLootExtras, validLootList } from '../systems/loot.js';   // AUDIT 24 (wave 43); WORLD6b-iii(c): the pile on the wire, WORLD4's projection
 import { calculateAttackDamage, meleeHitConnects, MELEE_HIT_YAW_DEG, chooseEnemyWeapon, dropWeaponIfTargetImmune, enemyWeightClassicUnits, weaponKnockbackSpeed, weaponKnockbackApplies, enemyLanguageSkill, calculateEnemyPacification } from '../combat/formulas.js';   // AUDIT 24 (wave 42): pacification
 import { tallySkill, SKILLS } from '../systems/skills.js';
 import { liveStat } from '../systems/statMods.js';
@@ -44,7 +44,7 @@ import { setEnemyAlert } from '../systems/encounters.js';
 import { inflictPoison } from '../systems/poisons.js';
 import { onMonsterHit, SPIDER_TOUCH_SPELL_INDEX } from '../systems/diseases.js';   // AUDIT 24 (wave 30): the monster special-attack rider, above ground
 import { MINUTES_PER_DAY } from '../systems/worldTick.js';
-import { validFoeRecord, CELL_PUPPETS_MAX, POSE_BOUND, POSE_Y_BOUND, tokenGate } from '../net/wire.js';
+import { validFoeRecord, CELL_PUPPETS_MAX, POSE_BOUND, POSE_Y_BOUND, tokenGate, FOE_HEALTH_MAX } from '../net/wire.js';
 import { createWeapon } from '../combat/enemyEquipment.js';   // AUDIT WORLD6b-ii B2: a puppet's weapon is its owner's word, rebuilt from the descriptor   // AUDIT WORLD6b B3/C2: a cell's record projected and its puppets capped, the wire's law
 import { mintCorpseMarker, playBodyFall, playRareDrop, corpseLootTargets, takeCorpseLoot, sayEnemyDied, raiseEnemyDeath } from './corpseMarker.js';
 import { rollCorpseLoot } from '../systems/lootRarity.js';   // LR1: the item ladder over the corpse's list
@@ -70,6 +70,8 @@ const GENDER_BIT = ['male', 'female'];
 // of a full pool of foes at their fastest cadence - and a puppet that LEAPT (moved faster than PUPPET_LEAP times its
 // species' own speed since its last record) lands nothing until it has walked: an honest foe cannot teleport to me.
 const PUPPET_BLOWS_PER_S = 6;
+/** WORLD6b-iii(c): a grant frame's ceiling, under the wire's MAX_FRAME_BYTES with the envelope's room (the relay refuses a larger one whole). */
+const GRANT_FRAME_MAX = 12 * 1024;
 const PUPPET_LEAP = 3;
 const PUPPET_LEAP_SLACK = 2;   // the stream's x bit, decoded (no roll - the owner's word; WORLD3's spelling)
 export const ENCOUNTER_CULL_DISTANCE = 120;
@@ -212,7 +214,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // frozen basics row (the STATIC table the ally-revert reads)
       // does not. Getting that wrong would ally every foe of the type.
       if (allied) { entity.team = 'PlayerAlly'; entity.mobileTeam = 'PlayerAlly'; }
-      // AUDIT WORLD6b B14: a PUPPET carries no loot of this player's (its body is its owner's - recorded), wears no
+      // AUDIT WORLD6b B14: a PUPPET carries no loot of this player's (its body is its owner's - WORLD6b-iii(c): taken under the owner's grant), wears no
       // kit of its own and casts nothing, so its stand rolls no table and draws nothing off the injectable roll or
       // the shared stream: what my neighbours stream must not move my own dice
       if (puppet) entity.items = [];
@@ -1049,7 +1051,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   // corpseMarker.js for both).
   function lootTargets() {
     return corpseLootTargets(foes, 'foeCorpse', {
-      isCorpse: (f) => !!f.corpse && !!f.entity && !f.puppet,   // WORLD6b: a puppet's body carries its owner's loot, not here (recorded)
+      isCorpse: (f) => !!f.corpse && !!f.entity && (!f.puppet || (f._pup?.o | 0) > 0),   // WORLD6b-iii(c): a puppet's body is a target while its owner's word says it holds something
       idOf: (f) => (f.uid ??= _nextUid++),   // AUDIT WORLD6b B15: stable across the puppets' splices, where an index is not (AUDIT 39's law, the watch's shape)
       // the GROUND position the marker landed on, not where the foe
       // died - a flyer's body is metres below its last feet.
@@ -1058,7 +1060,30 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   }
   function takeLoot(key, say2 = () => {}) {
     const uid = Number(key.split(':')[1]);
-    return takeCorpseLoot(foes.find((f) => f.uid === uid), playerEntity, say2);   // AUDIT WORLD6b B15: by the stable key
+    const f = foes.find((x) => x.uid === uid);
+    // WORLD6b-iii(c): a PUPPET's body is its owner's pile - the take is ASKED of the owner (a hit frame naming the body)
+    // and the owner's GRANT lands the items here (applyHit's grant arm says the take); nothing is taken on this word
+    if (f?.puppet) {
+      if (!f._pup?.o || f.corpseDisabled) { f.corpseDisabled = true; say2('The body has no treasure.'); return 0; }
+      _net?.onPeerHit?.({ to: f.puppet, k: _owners.get(f.puppet)?.k ?? _net.room?.() ?? null, i: f.seq, take: 1 });
+      return 0;
+    }
+    return takeCorpseLoot(f, playerEntity, say2);   // AUDIT WORLD6b B15: by the stable key
+  }
+  /** WORLD6b-iii(c): the owner's answer to a take - as much of the body's pile as one hit frame carries (the rest
+   *  stays, and the next record still says it holds something), through WORLD4's projection; the pile is emptied of
+   *  what went only once the frame LEFT (a refused frame - the rate, the size - takes nothing). */
+  function grantCorpse(f, to, k) {
+    const items = f.entity?.items ?? [];
+    let n = items.length;
+    while (n > 0) {
+      const grant = validLootList(items.slice(0, n)) ?? [];
+      const frame = { to, k, i: f.seq, grant };
+      if (JSON.stringify({ t: 'hit', data: frame }).length > GRANT_FRAME_MAX && n > 1) { n = Math.max(1, n >> 1); continue; }
+      if (_net?.onPeerHit?.(frame)) items.splice(0, n);
+      return;
+    }
+    _net?.onPeerHit?.({ to, k, i: f.seq, grant: [] });   // nothing on it: the body says so
   }
 
   /** Live sprite + corpse batches for the draw - the guard shape:
@@ -1325,8 +1350,8 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       const _t = f.ai.target, g = _t?.isPeer ? _t.id : (_t == null ? '' : (_t.isPlayer ? '.' : ''));   // AUDIT WORLD6b-ii A8: no target is '' (none) - '.' was the word for a foe that had not stepped yet, and it latched the puppet hostile
       // AUDIT WORLD6b-ii B2/B3: the attacker's terms - its level and its right-hand weapon - so a puppet's blow is this foe's
       const wpn = f.entity.weapon, wd = wpn && Number.isInteger(wpn.templateIndex) ? [wpn.templateIndex, wpn.material | 0] : null;
-      const r = { i: f.seq, t: f.mobileType, x: f.gender === 'female' ? 1 : 0, f: [q2(w[0]), q2(w[1]), q2(w[2])], y: q3(f.ai.yaw), h: f.entity.health, d: f.dead ? 1 : 0, a: f._atkA | 0, b: f._atkB ?? '', m: f.ai.moving ? 1 : 0, g, l: f.entity.level | 0, w: wd, c: f._castN | 0, s: f._castIdx | 0, u: f._castU ?? '' };   // WORLD6b-iii: the cast count and its spell; AUDIT WORLD6b-iii(a) A3: b/u whom the last blow/cast was at
-      const key = `${r.f[0]},${r.f[1]},${r.f[2]},${r.y},${r.h},${r.d},${r.a},${r.b},${r.m},${r.g},${r.l},${wd ? wd.join('/') : '-'},${r.c},${r.s},${r.u}`;
+      const r = { i: f.seq, t: f.mobileType, x: f.gender === 'female' ? 1 : 0, f: [q2(w[0]), q2(w[1]), q2(w[2])], y: q3(f.ai.yaw), h: Math.max(0, Math.min(FOE_HEALTH_MAX, Number(f.entity.health) || 0)), d: f.dead ? 1 : 0, a: f._atkA | 0, b: f._atkB ?? '', m: f.ai.moving ? 1 : 0, g, l: f.entity.level | 0, w: wd, c: f._castN | 0, s: f._castIdx | 0, u: f._castU ?? '', o: f.corpse ? Math.min(255, f.entity?.items?.length | 0) : 0 };   // WORLD6b-iii: the cast count and its spell; AUDIT WORLD6b-iii(a) A3: b/u whom the last blow/cast was at; WORLD6b-iii(c): o the body's pile
+      const key = `${r.f[0]},${r.f[1]},${r.f[2]},${r.y},${r.h},${r.d},${r.a},${r.b},${r.m},${r.g},${r.l},${wd ? wd.join('/') : '-'},${r.c},${r.s},${r.u},${r.o}`;
       if (!full && f._sentKey === key) continue;
       f._sentKey = key;
       out.push(r);
@@ -1410,6 +1435,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       else if (!cur || cur.templateIndex !== r.w[0] || (cur.material | 0) !== r.w[1]) f.entity.weapon = createWeapon(r.w[0], r.w[1], () => 0.5);
     }
     if (r.g !== undefined) p.target = r.g;   // WORLD6b-ii: whose blow this puppet's is
+    if (r.o !== undefined) { p.o = r.o; if (r.o > 0) f.corpseDisabled = false; }   // WORLD6b-iii(c): the body's pile, its owner's word - a refilled word (a body I found empty, said full again) re-opens it
     if (r.y !== undefined) p.yaw = r.y;
     if (r.m !== undefined) p.moving = r.m === 1;
     if (r.h !== undefined) { if (p.h != null && r.h < p.h) p.hurt = true; p.h = r.h; f.entity.health = r.h; }   // AUDIT WORLD6b-iii(a) B6: a drop against the last STREAMED health - a self-heal cast here made every record after it a hurt
@@ -1502,6 +1528,21 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   function applyHit(from, data) {
     if (!data || typeof data !== 'object') return false;
     if (data.k != null && _net?.room && data.k !== _net.room() && !_net.inRoom?.(data.k)) return false;   // AUDIT WORLD6b-iii(b) C1/B6: keyed to any cell I HOLD - the striker remembers my cell from my last frame, and for a foes interval after a crossing that was the cell I left (still held as a halo); a cell I do not hold is not the world
+    // WORLD6b-iii(c): a TAKE at my foe's body (a peer asking for its pile) and a GRANT for a puppet's body I asked for
+    if (data.take === 1) {
+      const f = foes.find((x) => !x.puppet && x.seq === (data.i | 0));
+      if (!f || !f.corpse) { _net?.onPeerHit?.({ to: from, k: data.k ?? _net?.room?.() ?? null, i: data.i | 0, grant: [] }); return true; }   // no body of mine by that number: nothing on it
+      grantCorpse(f, from, data.k ?? _net?.room?.() ?? null);
+      return true;
+    }
+    if (data.grant !== undefined) {
+      const grant = validLootList(data.grant);
+      if (!grant) return false;
+      const f = _pupIndex.get(pupKey(from, data.i | 0)) ?? null;
+      const n = takeCorpseLoot({ entity: { items: grant } }, playerEntity, say ?? (() => {}));   // the one take law: arrows whole, gold to the counter, the count said
+      if (f) { f._pup && (f._pup.o = 0); if (n === 0) f.corpseDisabled = true; }
+      return true;
+    }
     const f = foes.find((x) => !x.puppet && x.seq === (data.i | 0));
     const dmg = Number(data.dmg);
     if (!f || f.dead || !Number.isFinite(dmg) || dmg < 0 || dmg > 10000) return false;
