@@ -501,3 +501,33 @@ The Test Room gains a door beside the ride: "The loot ladder", one of
 everything the ladder can mint in the pack, the switch turned on for
 the session. `test/lr1_lootrarity.test.js` (16, after the LR4 audit -
 `bible/06-Systems/Loot-Rarity.md`).
+
+## RF4 - ONE FEATURE DECLARATION (2026-09-14)
+
+Mac's refactor pass, the fourth. Adding loot rarity's switch touched
+four places: the pref default on the uiPrefs shelf (with a paragraph
+of prose), the online lane's forced list, the row here, and the count
+pins. The row is the ONE declaration now: a prefs-store control
+carries `initial` (the shelf's default) and `online` (the lane's
+answer - `true`/`false` forces it, `'player'` leaves it to the player
+by name), and the two stores derive theirs (`FEATURE_PREF_DEFAULTS`
+spread into PREF_DEFAULTS; `declareOnlinePrefs(FEATURE_PREF_ONLINE)`
+at the registry's load). The eight switches' prose (RA1/EE1, the AI,
+ECV1, WATER1, LV1, PERF1, LR1) moved from the shelf onto the rows.
+
+THE REGISTRY SITS UNDER THE STORES. To be their source it can import
+neither, and it used to import the two lane modules (world/landView.js,
+world/outdoors.js) for the condensed rows' tiers and read/write - both
+of which import the shelf, a cycle that would have put this file's
+constants in the TDZ from one entry point and not another. So a
+condensed row names a `lane`, the lane module registers itself
+(`registerFeatureLane`) at its own load, and the menu and the checks
+read the row through `resolveControl`, which folds the lane in at use;
+the menu loads both lanes so a row is never drawn before its lane
+stands. The registry's law grew three checks: a prefs row declares
+its initial value, its online answer, and a lane it names must be
+registered. `test/rf4_featuredecl.test.js` (3); FT0's, FT2's and FT4's
+pins re-aimed at the resolved control; the graph proved from three
+entry points (the shelf, a lane, the mod store).
+
+Adding a switch is one row now, and the two count pins.

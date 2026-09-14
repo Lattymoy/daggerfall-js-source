@@ -26,6 +26,8 @@ import { fileURLToPath } from 'node:url';
 import { setPref, _resetForTests, PREF_DEFAULTS } from '../src/systems/uiPrefs.js';
 import { ONLINE_FORCED_PREFS } from '../src/systems/onlineLane.js';
 import { FEATURES, checkFeatures } from '../src/systems/features.js';
+import '../src/world/landView.js';   // RF4: the condensed rows' lanes register themselves; checkFeatures reads them
+import '../src/world/outdoors.js';
 import * as LR from '../src/systems/lootRarity.js';
 import { createRandomWeapon, createRandomArmor, LOOT_ARRAY_FIELDS, validLootItem } from '../src/systems/loot.js';
 import { createWeapon } from '../src/combat/enemyEquipment.js';
@@ -66,7 +68,7 @@ test('LR1: the switch - off by default (DFU\'s loot is the 1:1 law), forced on o
   const row = FEATURES.find((f) => f.id === 'loot-rarity');
   assert.ok(row, 'the row is on the home');
   assert.deepEqual(row.kinds, ['enhanced']);
-  assert.deepEqual(row.control, { store: 'prefs', key: 'lootRarity' });
+  assert.deepEqual(row.control, { store: 'prefs', key: 'lootRarity', initial: false, online: true }, 'RF4: the row declares its default and the lane\'s answer');
   assert.match(row.note, /Magic .*Rare .*Legendary/s, 'the note names the ladder');
   assert.match(row.note, /never your level/, 'and the source law');
   assert.match(row.note, /unidentified/, 'and the identify loop');

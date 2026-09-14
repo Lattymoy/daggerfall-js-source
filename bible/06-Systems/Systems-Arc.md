@@ -5493,6 +5493,15 @@ seams, each passing every pin around it:
    the Test Room's "Ride out" is the door to look through on a machine
    that has it. `test/hc1_horsecart.test.js`.
 
+### RF4 - ONE FEATURE DECLARATION (2026-09-14, Mac's refactor pass, the fourth)
+
+The Features row is the one declaration of the port's own switches -
+`initial` and `online` ride it, the uiPrefs shelf and the online lane
+derive theirs, and the registry sits under the stores with the
+condensed rows' lanes registering themselves. The record is the
+Features arc's: `bible/10-UI/Features-Arc.md` RF4.
+`test/rf4_featuredecl.test.js` (3).
+
 ### RF3 - THE CITE TOOL LEARNS THE THREE HAND CASES (2026-09-14, Mac's refactor pass, the third)
 
 Every merge of the loot-rarity slice ended with a person re-aiming

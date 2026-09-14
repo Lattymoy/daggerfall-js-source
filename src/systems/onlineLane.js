@@ -39,25 +39,31 @@ export const isOnlinePage = (search = globalThis.location?.search ?? '') => new 
 
 /** Every port-owned switch the online lane forces, and the value it
  *  forces. The skin is here too: uiSkin.js reads it through
- *  onlineForcedPref before its own override. */
-export const ONLINE_FORCED_PREFS = Object.freeze({
+ *  onlineForcedPref before its own override. RF4: the FEATURE switches
+ *  (the enhanced outdoors, AI, combat visuals, water, loot rarity) are
+ *  declared on their registry rows (`online`) and land here through
+ *  declareOnlinePrefs at the registry's load - this table holds only
+ *  the two the registry has no row for. */
+export const ONLINE_FORCED_PREFS = {
   skin: 'enhanced',
-  enhancedEnvironments: true,
-  enhancedAI: true,
-  enhancedCombatVisuals: true,
-  enhancedWater: true,
-  // (pixelatedSky was here until FT3 removed the pass, 2026-09-14)
-  lootRarity: true,   // LR1: the item ladder is the enhanced lane's rules, whole
   mwArms: true,   // the Morrowind arms build at boot where the archives are attached (weaponRig.js autoBuildArms guards the data); without them the doll stands, as offline
-});
+};
+/** RF4: the registry's door - `true`/`false` forces the key online,
+ *  `'player'` leaves it to the player by name. Idempotent. */
+export function declareOnlinePrefs(table) {
+  for (const [key, answer] of Object.entries(table ?? {})) {
+    if (answer === 'player') { if (!ONLINE_PLAYERS_OWN_PREFS.includes(key)) ONLINE_PLAYERS_OWN_PREFS.push(key); delete ONLINE_FORCED_PREFS[key]; }
+    else if (typeof answer === 'boolean') { ONLINE_FORCED_PREFS[key] = answer; const i = ONLINE_PLAYERS_OWN_PREFS.indexOf(key); if (i >= 0) ONLINE_PLAYERS_OWN_PREFS.splice(i, 1); }
+  }
+}
 
 /** The boolean switches the lane deliberately leaves to the player -
  *  the pin fails on a boolean uiPrefs key that is in neither list. */
-export const ONLINE_PLAYERS_OWN_PREFS = Object.freeze([
+export const ONLINE_PLAYERS_OWN_PREFS = [
   'touchAnalogStick', 'touchGyroLook', 'touchHaptics', 'touchFullscreen',   // TI2: how this phone is held
   'showFps',          // FPS1: a diagnostic over the game
   'proceduralSky',    // EE1's legacy key, read only by the migration
-]);
+];   // (RF4: grown by declareOnlinePrefs with the registry's 'player' answers - the dials)
 
 /** The forced value of a uiPrefs key on an online page, else undefined. */
 export function onlineForcedPref(key, search) {

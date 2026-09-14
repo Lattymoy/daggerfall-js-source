@@ -19,7 +19,7 @@ import { fileURLToPath } from 'node:url';
 import {
   LAND_VIEW_TIERS, LAND_VIEW_DFU_MAX, LAND_VIEW_MAX, LAND_VIEW_DEFAULT, landViewRead, landViewWrite,
 } from '../src/world/landView.js';
-import { FEATURES, checkFeature, featureForControl, featureCounts, filterFeatures } from '../src/systems/features.js';
+import { FEATURES, checkFeature, resolveControl, featureForControl, featureCounts, filterFeatures } from '../src/systems/features.js';
 import { getPref, setPref, PREF_DEFAULTS } from '../src/systems/uiPrefs.js';
 import { getInt, setValue, resetToDefaults } from '../src/systems/settings.js';
 
@@ -72,8 +72,11 @@ test('FT2: the registry row - both labels, over the pref, showing and writing th
   assert.ok(f);
   assert.deepEqual(f.kinds, ['enhanced', 'classic'], 'Mac: a row that condenses two origins wears both');
   assert.equal(f.control.store, 'prefs'); assert.equal(f.control.key, 'landViewDistance');
-  assert.equal(f.control.tiers, LAND_VIEW_TIERS);
-  assert.equal(f.control.read, landViewRead); assert.equal(f.control.write, landViewWrite);
+  const c = resolveControl(f);   // RF4: the lane's fields, registered by landView.js
+  assert.equal(f.control.lane, 'landView');
+  assert.equal(c.tiers, LAND_VIEW_TIERS);
+  assert.equal(c.read, landViewRead); assert.equal(c.write, landViewWrite);
+  assert.equal(c.initial, 5); assert.equal(c.online, 'player', 'a dial is the player\'s online');
   assert.match(f.note, /capped at Daggerfall Unity’s 4/); assert.match(f.effect, /world next loads/);
   assert.deepEqual(checkFeature(f), []);
   assert.equal(featureForControl('prefs', 'landViewDistance'), f);
@@ -87,7 +90,7 @@ test('FT2: the registry row - both labels, over the pref, showing and writing th
 
 test('FT2: a condensed row\'s read and write are functions and come together - the registry law', () => {
   const f = FEATURES.find((x) => x.id === 'land-view-distance');
-  const mut = (control) => checkFeature({ ...f, control: { ...f.control, ...control } });
+  const mut = (control) => checkFeature({ ...f, control: { ...resolveControl(f), lane: undefined, ...control } });   // RF4: over the resolved control, the lane taken out so the patch is what stands
   assert.deepEqual(mut({ read: 'landViewRead' }), ['read is not a function']);
   assert.deepEqual(mut({ write: 3 }), ['write is not a function']);
   assert.deepEqual(mut({ read: undefined }), ['read and write come together']);

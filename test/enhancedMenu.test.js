@@ -8,6 +8,7 @@
 // design, a data gate that drifts back in front of the door, or an
 // exit where there should not be one.
 import { test } from 'node:test';
+import { PREF_DEFAULTS } from '../src/systems/uiPrefs.js';   // RF4: the shelf derives the switches from the rows
 import { execSync } from 'node:child_process';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -168,9 +169,11 @@ test('R7/SO1/FT12: the port\'s own switches are the Features home\'s, every one 
   const src = read('src/ui/enhancedMenu.js');
   assert.doesNotMatch(src, /function paneEnhanced\(|function portRowsEnhanced\(/, 'the pane and the category are gone');
   const reg = read('src/systems/features.js');
-  const prefs = read('src/systems/uiPrefs.js');
+  // RF4: the row IS the shelf's declaration of its key (initial + online) and PREF_DEFAULTS derives it - so a key the home
+  // toggles is a real pref because the registry declared it, which is what the shelf's own table answers here
   for (const m of reg.matchAll(/store: 'prefs', key: '(\w+)'/g)) {
-    assert.match(prefs, new RegExp(`\\n\\s*${m[1]}:`), `the home toggles '${m[1]}', which is not a uiPrefs key`);
+    assert.ok(Object.hasOwn(PREF_DEFAULTS, m[1]), `the home toggles '${m[1]}', which is not a uiPrefs key`);
+    assert.match(reg, new RegExp(`key: '${m[1]}', initial: [^,]+, online: (true|false|'player')`), `${m[1]} declares its default and its online answer on its row`);
   }
   for (const gone of ['music', 'mwfp', 'roads']) assert.ok(!new RegExp(`key: '${gone}`).test(reg), `${gone} has no engine in this tree and must not be a switch`);
   assert.ok(!/not built/.test(reg), 'no row labels a shipped thing a hole');
@@ -378,7 +381,8 @@ test('AUDIT UI: the 44px law follows the POINTER, not the viewport width', () =>
 // ═══ EE1: Enhanced Environments replaces the procedural sky switch ═══
 test('EE1: one switch for the whole outdoors, migrated once from the old sky answer', () => {
   const prefs = read('src/systems/uiPrefs.js');
-  assert.match(prefs, /enhancedEnvironments: true,/, 'the new key defaults ON');
+  assert.equal(PREF_DEFAULTS.enhancedEnvironments, true, 'the new key defaults ON');
+  assert.match(read('src/systems/features.js'), /key: 'enhancedEnvironments', initial: true, online: true/, 'RF4: declared on its row, the shelf deriving it');
   assert.match(prefs, /proceduralSky: true,\s+\/\/ LEGACY: read only by the migration in loadPrefs/,
     'the old key stays only for the migration');
   assert.match(prefs, /if \(p\.enhancedEnvironments === undefined && p\.proceduralSky !== undefined\) \{\s*\n\s*_prefs\.enhancedEnvironments = !!p\.proceduralSky;/,

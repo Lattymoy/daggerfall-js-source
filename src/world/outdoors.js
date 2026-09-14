@@ -18,6 +18,7 @@
 
 import { getPref, setPref } from '../systems/uiPrefs.js';
 import { modSetting, setModSetting } from '../systems/modSettings.js';
+import { registerFeatureLane } from '../systems/features.js';   // RF4: the row's lane is this module's
 
 /** The row's tiers: value and label. */
 export const OUTDOORS_TIERS = Object.freeze([
@@ -43,3 +44,6 @@ export function outdoorsWrite(v) {
   if (tier !== 'off') setModSetting('dynamic-skies', 'Enabled', tier === 'dynamic');
   return tier;
 }
+
+// RF4: the Features row `enhanced-environments` reads its tiers, its default and its read/write from here.
+registerFeatureLane('outdoors', { tiers: OUTDOORS_TIERS, default: OUTDOORS_DEFAULT, read: outdoorsRead, write: outdoorsWrite });
