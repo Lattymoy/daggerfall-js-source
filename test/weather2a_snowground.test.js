@@ -130,7 +130,7 @@ test('WEATHER2a the wind blows by the table\'s word: a storm turned to snow buil
 
 test('WEATHER2a the hosts: the arrival hands the sim its minute, the sky is handed the violence word, and the sim has one write of the worn word', () => {
   const w = rd('src/scenes/world.js'), e = rd('src/scenes/exterior.js');
-  assert.equal((w.match(/applyClimateWeather\(maps\.getClimateIndex\(pick\.pixel\.x, pick\.pixel\.y\), Math\.floor\(playerTicker\.classicMinutes\)\);/g) || []).length, 2, 'both arrivals (the travel landing and the respawn drain) carry the minute');
+  assert.equal((w.match(/applyClimateWeather\(maps\.getClimateIndex\(pick\.pixel\.x, pick\.pixel\.y\), Math\.floor\(playerTicker\.classicMinutes\), fieldXZ\(\), climateAt\);/g) || []).length, 2, 'both arrivals (the travel landing and the respawn drain) carry the minute (WEATHER2b: and the field\'s place)');
   for (const [name, s] of [['world', w], ['exterior', e]]) {
     assert.match(s, /violence: weatherOverride \?\? currentWeatherRaw\(\), classicMinutes: playerTicker\.classicMinutes/, `${name}: the sky's bag carries the violence word`);
     assert.match(s, /currentWeatherRaw[^\n]*from '\.\.\/systems\/weatherSim\.js'/, `${name}: imported`);

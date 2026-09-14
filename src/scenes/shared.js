@@ -12,7 +12,7 @@ import { SkyFile } from '../formats/skyFile.js';
 import { SkyRenderer, buildDaySkyPanorama, buildNightSkyPanorama, buildFallbackSkyPanorama, nightSkyImageName } from '../render/skyRenderer.js';
 import { SEASON } from '../world/climateSwaps.js';
 import { skyFrameForTime, isNight, setLightCurve, daylightScale } from '../world/worldClock.js';   // DS1: isNight for the mod's moonlight, setLightCurve for the mod's own curve; CLK3 review: daylightScale for its moonlight's ramp
-import { createWindModel, FRONT_LEAD_MIN } from '../systems/wind.js';   // WIND1
+import { createWindModel } from '../systems/wind.js';   // WIND1; WEATHER2b: the lead is the front's own (leadMinutes)
 import { EnhancedSkyRenderer, skyState, easeWeather, weatherRow, CLOUD_SHADOW, moonlightTerm, WEATHER_EASE_MINUTES, WIND_SECONDS_PER_MINUTE } from '../render/enhancedSky.js';   // ES1: the enhanced sky, behind the skin; EV5: its moons light the world
 import { VolumetricClouds, QUALITY as CLOUD_QUALITY } from '../render/volumetricClouds.js';   // VC3: the clouds over the dome
 import { cloudsStateUnderMod, dynamicMoonState, dynamicMoonlight } from '../render/dynamicSkiesBridge.js';   // DS1/DS2: the mod's state in the port's shapes - the moons, the clouds, and the moons' own term (AUDIT 65 MC-3: the bridge's third export had no caller and this file carried its body inline)
@@ -426,6 +426,10 @@ export function createSkyController(gl, params) {
       dynamic?.weatherJump();   // DS1: SaveLoadManager_OnLoad's forced re-apply
       clouds?.jump();   // VC3: the profile takes the new weather whole, both maps re-marched whole
     },
+    /** WEATHER2b: the sim's word changed by a CROSSING - the player walked
+     *  into a cell of the field, or it drifted over them. The wind builds
+     *  its front on the short lead and the sky eases on the same. */
+    weatherArrive() { windModel.arrive(); },
     /** ES1d: how much the world's KEY light is taken by the cloud that
      *  is in front of the sun this frame - the number the shader uses to
      *  hide the disc, handed to the light so the two agree. 1 under a
@@ -506,7 +510,7 @@ export function createSkyController(gl, params) {
         // from the change until the front's arrival. CLK1: both sides in
         // game minutes now - the ease's span over the lead's length, no
         // time scale hard-coded between them.
-        const easeDt = windModel.inLead() ? dt * (WEATHER_EASE_MINUTES / FRONT_LEAD_MIN) : dt;
+        const easeDt = windModel.inLead() ? dt * (WEATHER_EASE_MINUTES / windModel.leadMinutes()) : dt;   // WEATHER2b: the front's own lead - a crossing's few minutes, the day roll's three hours
         weatherRowNow = easeWeather(weatherRowNow, want, easeDt);
         weatherRowNow.wind = windModel.vector();
         // WIND2: the cloud DRIFT is integrated here, once - the one place

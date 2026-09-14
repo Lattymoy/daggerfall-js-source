@@ -134,3 +134,68 @@ controller hands and shifted with every recenter - for the eye and the
 probe, and the seam slice B fills with the field's cells.
 
 `test/weather2c_cloudcells.test.js`.
+
+## B - THE WEATHER FIELD (WEATHER2b, 2026-09-14)
+
+Mac: "a dynamic world space event system where weather can be traveled
+out of and into instead of just starting and stopping in your
+location."
+
+**What stood.** DFU's weather is a state of the player's climate ZONE:
+six words a day, the player's zone's word applied, the sky that word
+to the horizon. A rain day rains everywhere in the Woodlands at once;
+a storm has no edge. The classic lane keeps that, 1:1.
+
+**The field** (`systems/weatherField.js`, pure). The ENHANCED lane
+reads the same six words - the sim's array, the shared day's roll
+online - as a field over the map. A precipitating word (rain, thunder,
+snow) becomes CELLS scattered over the zone's land: a jittered lattice
+at the word's spacing (22-26 km), each candidate present by a seeded
+coin (`CELL_WORDS.*.p`), each with its own radius from the word's
+range (thunderheads 3.5-7.5 km, rain and snow decks 9-18 km), its word
+the day's word for the CLIMATE under its seat - so a thunder day over
+the mountains scatters thunderheads on mountain pixels, and a woodland
+traveller sees them from the plain. Between the cells the zone's BASE
+sky stands: overcast on a rain or snow day, cloudy between the storms
+of a thunder day, so the storms are seen coming. A whole-sky word
+(sunny, cloudy, overcast, fog) stays the zone's, as DFU has it. The
+cells DRIFT on the day's own wind (a heading seeded by the day, 15 m a
+game minute, ~22 km a day), so a storm rolls over a standing player as
+well as being walked into. Seeded by the day, the lattice index and
+the word: the same field for every player, replayable, nothing to
+carry. Positions are FIELD METRES - the map's natives at the streaming
+world's 819.2 m pixel; the hosts convert (`fieldFromNative`, the
+fixed location's `fieldOfPixelLocal`).
+
+**The seam** (`weatherSim.js` sampleWeatherField). The player's word
+is what the field says AT THE PLAYER, sampled every exterior frame
+after the drain and through the same `_set` (the ground law of A
+included). A change on a LIVE frame is a CROSSING - the player walked
+into the cell or it drifted over them - stamped apart from the jumps
+(`weatherCrossingStamp`); the hosts read it beside the jump stamp and
+tell the sky (`weatherArrive`), and the wind builds its front on the
+SHORT lead (`CROSS_LEAD_MIN`, six game minutes) with the sky's ease
+stretched to the same (`leadMinutes`) rather than the day roll's three
+hours - the storm was already in view. A change the drain made (the
+day's words turned) keeps the day roll's front; an arrival's (travel,
+respawn) is a jump, whole: `applyClimateWeather` samples the
+destination after the array's slot, and `weatherRespawn` samples
+instead of rolling - DFU's fresh roll for the climate stands down on
+the lane, since a roll beside the field would be a second sky. The
+nearby cells are kept (`currentFieldCells`) and both hosts hand them
+to the clouds as C's cells (`cellOf` in the host's space), so the
+storm on the horizon is the storm walked into, and its shadow is
+where it stands.
+
+**Lane and door.** The enhanced skin, Enhanced Environments and the
+`weather-events` row (`weatherEvents`, on by default, FORCED ON
+ONLINE - one field for every player); `?wxfield=off` the door;
+`setWeatherFieldLaw` the seam.
+
+**Not DFU, and why.** WeatherManager has no field, no edge, no drift;
+the port's departure, recorded on the Ledger. Residual: the wind does
+not yet rise with a storm's APPROACH before the crossing (the field
+knows the distance to the nearest rim; a later slice can hand it to
+the wind as a lead of its own).
+
+`test/weather2b_weatherfield.test.js`.
