@@ -91,7 +91,7 @@
 
 import { fpArm, hasDaggerfallArrows } from '../combat/fpArm.js';
 import { closeOnOutsideTap } from './enhancedOverlays.js';   // OT1: a tap on the scrim resumes
-import { TEST_PRESETS, TEST_RIDE } from '../systems/testRoom.js';   // TR3: the one home the pane shows; TSR4: the ride
+import { TEST_PRESETS, TEST_RIDE, TEST_LOOT } from '../systems/testRoom.js';   // TR3: the one home the pane shows; TSR4: the ride; LR3: the loot ladder
 import { mwRaceId } from '../formats/mwNpc.js';
 import { EQUIP_SLOTS, equipTableOf } from '../systems/equip.js';
 import { dfWornEquipment } from '../formats/mwItemMap.js';
@@ -481,6 +481,13 @@ function paneTest(body) {
   ride.append(el('p', 'meta', TEST_RIDE.blurb));
   ride.append(acts([{ label: 'Ride out', primary: true, onClick: () => onAction(`test:${TEST_RIDE.id}`) }]));
   body.append(ride);
+  // LR3: the loot ladder - one of everything Loot rarity can mint, in
+  // the pack, through the same `test:<id>` door.
+  const loot = el('div', 'card');
+  loot.append(el('h3', null, TEST_LOOT.label));
+  loot.append(el('p', 'meta', TEST_LOOT.blurb));
+  loot.append(acts([{ label: 'Enter with the ladder', primary: true, onClick: () => onAction(`test:${TEST_LOOT.id}`) }]));
+  body.append(loot);
   // FT12 (Mac, 2026-09-14: "move the test the outdoors to the test room
   // tab"): the outdoors test door lives with the other test doors. It
   // was the last row of the Enhanced category of Settings, which is off

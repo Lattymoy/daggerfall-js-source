@@ -4655,7 +4655,7 @@ affinity scans saw an empty room. Nothing threw and nothing was
 logged - the enchantment simply had no effect where the fighting is.
 
 And it really was the only ctx in play: **no host passes an
-`enchantCtx` at the strike site** (`formulas.js:504` defaults it
+`enchantCtx` at the strike site** (`formulas.js:505` defaults it
 `null`), so `mergeCtx` folds this one mount under every dispatch, in
 every mode. FS1 had just found the other half of the same hole - the
 standalone `?dungeon` host mounts no ctx at all - and that half is
@@ -5492,6 +5492,36 @@ seams, each passing every pin around it:
    pinned so. Not proved in a browser here: no ARENA2 in this container;
    the Test Room's "Ride out" is the door to look through on a machine
    that has it. `test/hc1_horsecart.test.js`.
+
+### LR1-LR3 - LOOT RARITY, THE PORT'S OWN ITEM LADDER (2026-09-14, Mac: "transform things into a diablo style system with rarity ... the most detailed and best that it can be")
+
+ENHANCED, built in house, one row on the Features home, off by
+default and on online. Its own page carries the design whole:
+`bible/06-Systems/Loot-Rarity.md`. In one paragraph: five tiers
+(Common, Magic, Rare, Legendary, DFU's artifacts as the ceiling) over
+DFU's loot - one ladder, DFU's own magic items reading as Magic, never
+re-rolled; the odds follow the SOURCE (the dead thing's level, the
+dungeon's kind, a Daedra or a deep dungeon paying best, luck) and never
+the player's level, Unleveled Loot's own law kept; six affix kinds that
+are NUMBERS (damage%, armour, attribute, resistance, skill, carrying
+capacity), banded per tier, on an `affixes` list of the item and NOT in
+FallExe's closed enchantment enum, folded onto the wearer at the equip
+seam (a listener list beside the enchantment hook, and the save's
+rebuild) and every magic round, read at DFU's own read sites (the hit
+formula's armour term and PCAAO's, the weapon roll, liveStat,
+skillValue, savingThrow, entityMaxEncumbrance); a Rare's one DFU
+catalogue enchantment and a Legendary's record-set one make them drop
+UNIDENTIFIED under DFU's own IsIdentified law, so the Identify spell
+and the Mages Guild are the loop with no new mechanism; ten Legendary
+records with names, signatures and lore; the tier colours on both
+skins and the plaque, the lines on the tooltip and the card, an
+armour affix on the paperdoll's numbers; the enchanter's chime at a
+body carrying a Rare or better; the four hosts rolling every list they
+mint at its source (shops and quest rewards decided out); the wire and
+the save carrying the fields, a forged affix list refused; a Test Room
+door with one of everything. The enhanced pack names through
+ResolveItemName now, which it never did (an unidentified magic item
+read its name raw there). `test/lr1_lootrarity.test.js` (15).
 
 ### TR4 CLOSED: the ship, and THE ARC WITH IT
 

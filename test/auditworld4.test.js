@@ -58,7 +58,7 @@ test('AUDIT WORLD4 A1: whether an act frame FITS is ONE HOME the sender reads be
 });
 
 test('AUDIT WORLD4 B1: an item field the readers walk as an ARRAY must BE an array - a string `enchantments` survived the clamp entire (it is a bounded string, which is a legal value) and then threw out of three readers, one of them the enchantment round inside the frame body itself, freezing the tab for good', () => {
-  assert.deepEqual([...LOOT_ARRAY_FIELDS], ['enchantments', 'customEnchantments'], 'the fields the readers walk');
+  assert.deepEqual([...LOOT_ARRAY_FIELDS], ['enchantments', 'customEnchantments', 'affixes'], 'the fields the readers walk (LR1: the rarity affix list too)');
   for (const f of LOOT_ARRAY_FIELDS) {
     assert.equal(validLootItem({ templateIndex: 133, [f]: 'abc' }), null, `${f} as a string is not an item`);
     assert.equal(validLootItem({ templateIndex: 133, [f]: 7 }), null, `${f} as a number is not an item`);

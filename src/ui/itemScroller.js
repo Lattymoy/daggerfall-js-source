@@ -17,7 +17,8 @@ import { loadImg, drawImgCrop, drawRect } from './nativePanel.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import { thumbSpan, drawScrollThumb, VerticalScrollBar } from './verticalScrollBar.js';
-import { itemLongName } from '../systems/itemInfo.js';   // D7: ResolveItemLongName, the tooltip's text
+import { itemLongName } from '../systems/itemInfo.js';
+import { rarityTint, rarityLines } from '../systems/lootRarity.js';   // LR1: the cell's tier tint and the tooltip's tier lines   // D7: ResolveItemLongName, the tooltip's text
 import { bookTitle } from '../systems/books.js';         // D7: GetBookTitle, the Books arm
 import { ToolTip } from './toolTip.js';                  // D7: itemButtons[i].ToolTip = toolTip (:340)
 import { isSummoned } from '../systems/inventory.js';    // AUDIT 64 F53: IsSummoned, the handler's third arm
@@ -206,7 +207,7 @@ export function itemBackgroundColour(item, entity) {
   if (item.questItem) return QUEST_ITEM_BG;
   if (entity?.lightSource === item) return LIGHT_SOURCE_BG;
   if (isSummoned(item)) return SUMMONED_ITEM_BG;
-  return null;
+  return rarityTint(item);   // LR1: the tier's tint, after DFU's own three (null with the switch off, or Common)
 }
 
 /** Paint one cell's background colour, BEFORE the icon and the stack
@@ -315,7 +316,10 @@ export function scrollerToolTipText(item, { getQuest = null, books = true } = {}
   if (!item) return null;
   const long = itemLongName(item, { getQuest });
   if (books && item.group === 'Books' && !item.artifact) return bookTitle(item.message ?? -1) ?? long;
-  return long;
+  // LR1: the tier and the affix lines under the name, one per row (the
+  // tooltip splits on \r); nothing with the switch off or for Common.
+  const lines = rarityLines(item);
+  return lines.length ? [long, ...lines].join('\r') : long;
 }
 
 /** The window's shared ToolTip over a scroller (DaggerfallBaseWindow's

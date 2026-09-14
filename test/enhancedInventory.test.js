@@ -90,7 +90,7 @@ test('U53: encumbrance is the same expression the sheet and the classic window u
     'LIVE strength - a drained player must not be told they can carry the undrained amount');
   // ...and the OTHER half. PlayerEntity.CarriedWeight (:184) is the
   // items PLUS the gold counter's weight, and the pane composes it by
-  // hand (enhancedInventory.js:174-175) because it is handed the list
+  // hand (enhancedInventory.js:175-176) because it is handed the list
   // and not the entity - so it must still land on inventory
   // .carriedWeight's answer.
   assert.equal(m.encumbrance.now, Math.trunc(carriedWeight(e)));
@@ -1042,7 +1042,7 @@ test('PX21c: the hover plaque names a pile without opening it, on the take\'s ow
   const { hoverLines, HOVER_MAX } = await import('../src/ui/lootHover.js');
   assert.deepEqual(hoverLines([]), { shown: [], rest: 0, empty: true });
   assert.deepEqual(hoverLines([{ name: 'Ruby', stackCount: 3 }, { name: 'Helm' }]),
-    { shown: [{ name: 'Ruby', stack: 3 }, { name: 'Helm', stack: 0 }], rest: 0, empty: false });
+    { shown: [{ name: 'Ruby', stack: 3, rarity: null }, { name: 'Helm', stack: 0, rarity: null }], rest: 0, empty: false });   // LR1: a row wears its tier, null with the switch off
   const many = hoverLines(Array.from({ length: HOVER_MAX + 4 }, (_, i) => ({ name: `x${i}` })));
   assert.equal(many.shown.length, HOVER_MAX);
   assert.equal(many.rest, 4);

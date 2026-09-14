@@ -47,6 +47,7 @@ export const ONLINE_FORCED_PREFS = Object.freeze({
   enhancedCombatVisuals: true,
   enhancedWater: true,
   // (pixelatedSky was here until FT3 removed the pass, 2026-09-14)
+  lootRarity: true,   // LR1: the item ladder is the enhanced lane's rules, whole
   mwArms: true,   // the Morrowind arms build at boot where the archives are attached (weaponRig.js autoBuildArms guards the data); without them the doll stands, as offline
 });
 

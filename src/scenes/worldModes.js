@@ -936,9 +936,9 @@ export function createWorldModes(host) {
    *
    *  This host owned two pools and ran NO fan-out at all - no
    *  runMagicRoundsFor, so no tickActiveEffects and no updatePoisons
-   *  (worldTick.js:231-232), and no killIfAnyLiveStatZero. Both pools
-   *  READ the effect list every frame (exteriorFoes.js:753-754 and
-   *  cityGuards.js:767-768 each take `entityIsParalyzed` +
+   *  (worldTick.js:232-233), and no killIfAnyLiveStatZero. Both pools
+   *  READ the effect list every frame (exteriorFoes.js:756-757 and
+   *  cityGuards.js:770-771 each take `entityIsParalyzed` +
    *  `applyEnemyMotorEffectFlags`), and nothing ever ended one: a
    *  Continuous Damage bundle on a foe in a shop never took a round,
    *  a poison inflicted at this host's own onInflictPoison never
@@ -1265,10 +1265,10 @@ export function createWorldModes(host) {
    *  billboard is CENTRE-anchored, so the base ends up ON the marker
    *  inside a building and half a height BELOW it inside a dungeon.
    *  This port's billboard shader is BOTTOM-anchored (position = base,
-   *  the C11 law dungeonContext.js:1545 states), so the same visual
+   *  the C11 law dungeonContext.js:1548 states), so the same visual
    *  result needs the shift on the DUNGEON side - which is exactly the
    *  shift the dungeon's own RDB flats already take
-   *  (dungeonContext.js:1450, `y - size.h / 2`), and which a building's
+   *  (dungeonContext.js:1453, `y - size.h / 2`), and which a building's
    *  flats correctly do not (interiorContext.js passes its centers
    *  straight through).
    *
@@ -2723,6 +2723,7 @@ export function createWorldModes(host) {
       pool: interiorDropped,
       level: playerEntity.level,
       gender: playerEntity.gender,
+      luck: liveStat(playerEntity, 'luck'),   // LR1: the rarity roll's luck
     });
   }
 
@@ -5084,7 +5085,7 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:5261), so the OUTER host's one rides in.
+          // (dungeonContext.js:5266), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:524 -> the
@@ -5782,7 +5783,7 @@ export function createWorldModes(host) {
     const _act = activateFrame((latch.activate ??= createActivateGate()), {
       down: held(keys, 'ActivateCenterObject') || !!host.activateDown?.(),
       hasReadySpell: (mode === 'dungeon' ? dungeonCtx?.spellArmed?.() : magic?.spellArmed()) ?? false,
-      touchSpell: ((mode === 'dungeon' ? dungeonCtx?.readiedSpell?.() : magic?.readied()) ?? null)?.rangeType === 1,   // rangeType 1 is ByTouch (spellcast.js:198)
+      touchSpell: ((mode === 'dungeon' ? dungeonCtx?.readiedSpell?.() : magic?.readied()) ?? null)?.rangeType === 1,   // rangeType 1 is ByTouch (spellcast.js:205)
       hudBlocked: activeMouseOverLargeHUD(),
       paused: overlayHeld,
     });
@@ -5992,7 +5993,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:6327's own wave-46 note); the interior
+          // a blow (world.js:6328's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage();
@@ -6027,10 +6028,10 @@ export function createWorldModes(host) {
         // AUDIT 58: WeaponManager.cs:630 after the damage fork - a
         // zero-damage shaft still enrages its mark and the room.
         // ROAD-G G1 (review): the interior WATCH carries the pair now
-        // (cityGuards.js:572-577), so this seam splits by pool exactly
+        // (cityGuards.js:574-579), so this seam splits by pool exactly
         // as `dealDamage` above it does rather than dropping the
         // non-encounter half - the zero-damage SWING already reaches
-        // that door (cityGuards.js:1006) and the shaft owes the same.
+        // that door (cityGuards.js:1009) and the shaft owes the same.
         onAttackFromPlayer: (f) => (f._encounter
           ? interiorFoes?.handleAttackFromPlayer(f, player.pos)
           : interiorGuards?.handleAttackFromPlayer(f, player.pos)),
@@ -8126,7 +8127,7 @@ export function createWorldModes(host) {
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
      *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:2586-2608), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
-     *  unconditionally (world.js:4204). So an F9 pressed in a shop
+     *  unconditionally (world.js:4205). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them
      *  back into the street's rig; the rig actually in the player's
      *  hands was in no envelope at all.
@@ -8154,7 +8155,7 @@ export function createWorldModes(host) {
      *  presenter for the whole visit) or the interior's? world.js's gate read townTalk's slot alone. */
     deathUp() { return mode === 'dungeon' ? !!dungeonCtx?.deathUp?.() : interiorOverlay instanceof DeathScreen; },
     /** The restore half - and NOT gated on the mode, deliberately.
-     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:4264)
+     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:4265)
      *  and only re-enters the building at :4217, so the mode at apply
      *  time is whatever the LOAD landed in, not whatever the SAVE was
      *  taken in: an outdoor save loaded while the player was indoors
@@ -8162,8 +8163,8 @@ export function createWorldModes(host) {
      *  building entry meets the outgoing session's drawn weapon. DFU
      *  has one manager, so the same bit belongs in every rig.
      *
-     *  FLAG ONLY, presence-gated, exactly as world.js:4370/:4370 and
-     *  dungeonContext.js:5334/:5337 are: the C# restore sets the
+     *  FLAG ONLY, presence-gated, exactly as world.js:4371/:4384 and
+     *  dungeonContext.js:5339/:5345 are: the C# restore sets the
      *  property and calls no ApplyWeapon, because UpdateHands ends in
      *  ApplyWeapon on the next frame (WeaponManager.cs:699) - the
      *  port's twin is the rig's per-frame syncWorn. */

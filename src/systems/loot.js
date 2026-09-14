@@ -17,7 +17,7 @@
 // MI (magic items) rolls need the MAGIC.DEF registry
 // (setMagicItemTemplates), and EVERY host that can generate loot now
 // loads it: scenes/shared.js:104-107 (loadMagicRegistries) feeds the
-// module table this file reads, called from dungeonContext.js:1064,
+// module table this file reads, called from dungeonContext.js:1067,
 // world.js:1949 and exterior.js:1062 - interiors run inside those hosts
 // and read the same table. What is left is the data-absent boot, and
 // that is DFU's own answer rather than a stand-in: shared.js:107
@@ -501,7 +501,7 @@ function clampLootValue(v, depth) {
  *  that field (`itemEnchantments`'s filter, the two artifact predicates' some) is guarded only by a truthiness or a
  *  `.length` test, which a string passes. One such item in a chest froze the tab: the throw escapes the frame body,
  *  which has no try, and the loop is never rescheduled. A named field's SHAPE is not open even when the record is. */
-export const LOOT_ARRAY_FIELDS = Object.freeze(['enchantments', 'customEnchantments']);
+export const LOOT_ARRAY_FIELDS = Object.freeze(['enchantments', 'customEnchantments', 'affixes']);   // LR1: the rarity affix list is read with array methods too
 
 /** One item record off the wire, clamped to a copy - or null when it is not one this port could have minted. */
 export function validLootItem(v) {

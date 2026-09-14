@@ -48,6 +48,7 @@ import { INTERIOR_ELEMENT_NAMES } from '../systems/automapModel.js';   // ROAD-C
 // markers, which is the member DFU puts them in.
 import { BUILDING_TYPES } from '../world/buildingNames.js';
 import { THIEVES_GUILD_FACTION_ID, DARK_BROTHERHOOD_FACTION_ID } from '../systems/crimeGuilds.js';   // FactionFile.cs:91/:135
+import { rollLootRarity, pileSource, INTERIOR_RARITY_TIER } from '../systems/lootRarity.js';   // LR1: a tavern's pile rolls at the town's tier
 import { generateItems as generateLootItems, addPileLootExtras, DUNGEON_LOOT_KEYS, DROP_ICON_ARCHIVES } from '../systems/loot.js';
 
 /** AUDIT 63 F22: DaggerfallInterior.AddFlats' treasure arm
@@ -92,7 +93,7 @@ import { generateItems as generateLootItems, addPileLootExtras, DUNGEON_LOOT_KEY
  *  @param pool      - the host's createDroppedLoot pool
  *  @param level/gender - the PLAYER's (LootTables.cs:229/:237)
  */
-export function seedInteriorTreasure({ markers, building, locationType, pool, level, gender }) {
+export function seedInteriorTreasure({ markers, building, locationType, pool, level, gender, luck = 50 }) {
   if (!markers?.length || !pool) return [];
   if (!(building?.buildingType === BUILDING_TYPES.Tavern
     || building?.factionId === THIEVES_GUILD_FACTION_ID
@@ -104,7 +105,7 @@ export function seedInteriorTreasure({ markers, building, locationType, pool, le
     if (pool.containerSeeded(key)) return;   // the cache already holds this container
     // LootTables.cs:146-159 - the matrix, then the J..O map/potion/
     // recipe tail, on the PLAYER's level and gender.
-    const items = addPileLootExtras(generateLootItems(lootKey, { level, gender }), lootKey);
+    const items = rollLootRarity(addPileLootExtras(generateLootItems(lootKey, { level, gender }), lootKey), pileSource(INTERIOR_RARITY_TIER), { luck });   // LR1
     minted.push(pool.seedPile(items, pos, { archive: DROP_ICON_ARCHIVES.clothing, record: 0 }, key));
   });
   return minted;

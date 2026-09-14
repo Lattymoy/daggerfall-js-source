@@ -92,6 +92,7 @@ export function skillValue(entity, skillId) {
       if (a.kind === 'racialOverride' && !a.ended) mod += a.skillMods?.[skillId] ?? 0;
     }
   }
+  mod += entity._affixMods?.skills?.[skillId] ?? 0;   // LR2: the loot-rarity affix fold's skill channel (a field read; empty with the switch off)
   return permanentSkillValue(entity, skillId) + mod;
 }
 

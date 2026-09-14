@@ -171,7 +171,8 @@ import { combatVisualsOn, foeDraw, markConcealedHit } from '../systems/combatVis
 import { UnderwaterFog } from '../render/underwaterFog.js';   // ROAD-B (b3): UnderwaterFog.cs, called from PlayerEnterExit.Update's dungeon guard
 import { NavClient } from '../ai/navClient.js';   // ENHANCED AI 3b
 import { getPref } from '../systems/uiPrefs.js';   // ENHANCED AI 3b: the Enhanced tab's switch
-import { raiseEnemyDeath } from './corpseMarker.js';   // UL1: OnEnemyDeath
+import { raiseEnemyDeath, playRareDrop } from './corpseMarker.js';   // UL1: OnEnemyDeath; LR3: the drop chime
+import { rollLootRarity, corpseSource, pileSource, dungeonRarityTier } from '../systems/lootRarity.js';   // LR1: the item ladder over every list this host mints
 
 
 
@@ -917,6 +918,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // branch and the city watch run the same chain.
       equipEnemy(entity, e.mobileType, D.playerEntity.level);
       addEnemyLootExtras(entity.items, basics, Math.random);   // AUDIT 24 (wave 43): EnemyEntity.cs:388-397
+      rollLootRarity(entity.items, corpseSource(basics, entity.level), { luck: liveStat(D.playerEntity, 'luck') });   // LR1: the ladder over the corpse's list, at the SOURCE's tier
       const ai = new (getPref('enhancedAI') ? D.EnhancedEnemyAI : D.EnemyAI)(collider, pos, yawDeg * Math.PI / 180, {   // ENHANCED AI 4: the switch chooses the motor; the bake is read per step
         nav: () => enhancedNav.chf, navWorld: enhancedNav.world, navSeed: (yawDeg * 1000) | 0,
         // AUDIT 39: a THUNK, not a snapshot - TakeAction re-reads
@@ -998,6 +1000,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // weapon, no armorValues, no equipment on the corpse.
       equipEnemy(entity, e.mobileType, D.playerEntity.level);
       addEnemyLootExtras(entity.items, basics, Math.random);   // AUDIT 24 (wave 43): EnemyEntity.cs:388-397
+      rollLootRarity(entity.items, corpseSource(basics, entity.level), { luck: liveStat(D.playerEntity, 'luck') });   // LR1
       // C12: the behaviour motors - flying/spectral pursue in 3D at
       // the face with no gravity, aquatic ride WaterMove against the
       // block water surface (beached = frozen, verbatim).
@@ -1411,7 +1414,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:6560 / exterior.js:2920), set
+  // host's own townTalk sink (world.js:6561 / exterior.js:2920), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -2363,7 +2366,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:898 against :929; worldModes.js:5890 against :5898).
+    // (dungeon.js:898 against :929; worldModes.js:5891 against :5898).
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -2408,6 +2411,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // map chance comes from a six-entry table indexed by the loot
         // key, only J..O roll at all, and the potion chance is FOUR.
         addPileLootExtras(items, lootKey);
+        rollLootRarity(items, pileSource(dungeonRarityTier(dfLocation.mapTableData.dungeonType)), { luck: liveStat(playerEntity, 'luck') });   // LR1: a pile rolls at its DUNGEON's tier
         lootPiles.push({ pos: [m.x + b.originX, m.y, m.z + b.originZ], record, items, isFixed, batch: null });
       }
     }
@@ -2836,8 +2840,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:8606,
-              // exterior.js:4203 and worldModes.js:6017 already ran;
+              // playerArrowHitFoe is the one copy world.js:8607,
+              // exterior.js:4203 and worldModes.js:6018 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -3542,7 +3546,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // InstantiatePrefab's a fresh GameObject per saved record, so
     // EnemyEntity's `PickpocketByPlayerAttempted` default is the loaded
     // truth for every enemy. The re-minting pools match that by
-    // construction (exteriorFoes.js:1277's restoreWorld goes through
+    // construction (exteriorFoes.js:1280's restoreWorld goes through
     // spawnFoe), but this host patches the LIVE foes in place, so a
     // same-dungeon reload kept a raised latch and a failed pickpocket
     // could never be retried - falsifying the law
@@ -3752,6 +3756,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // foe never touches the player's alert (MT-iv).
       if ((!foeDeps || !foe.ai?._armedTargeting || foeDeps.isLocalPlayerTarget(foe.ai?.target)) && foe.ai?.detected) setEnemyAlert(playerEntity, false);   // AUDIT WORLD3 C3: mine, not a peer's
       spawnCorpse(foe);
+      playRareDrop(audio, foe.ai.feet, foe.entity.items);   // LR3: the chime for a Rare or better on the body
       raiseEnemyDeath(foe.entity);   // UL1: OnEnemyDeath (EnemyDeath.cs:139) - the kill, not the load's rewind
       return;
     }

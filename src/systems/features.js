@@ -207,6 +207,24 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'enhancedCombatVisuals' }),
   }),
+  // LR1 (2026-09-14): LOOT RARITY - the port's own item ladder
+  // (systems/lootRarity.js): Common, Magic, Rare, Legendary, with
+  // DFU's artifacts as the ceiling. Enhanced, off by default: it
+  // changes what drops, and DFU's loot is the 1:1 law.
+  Object.freeze({
+    id: 'loot-rarity',
+    title: 'Loot rarity',
+    note: 'A Diablo-style ladder over Daggerfall\u2019s loot. A weapon, a piece of armour or a piece of jewellery that drops from a '
+      + 'corpse or a treasure pile may roll Magic (one or two affixes), Rare (three or four, a two-part name, and one of Daggerfall\u2019s own '
+      + 'enchantments) or Legendary (a named item with a set signature); Daggerfall\u2019s own magic items read as Magic and its artifacts sit at the top. '
+      + 'Affixes are numbers you can read - damage, armour, an attribute, a resistance, a skill, carrying capacity - shown on the item and coloured by tier. '
+      + 'The odds follow the SOURCE, never your level: the dead thing\u2019s own level or the dungeon\u2019s kind, a Daedra or a deep dungeon paying best, and your luck. '
+      + 'A Rare or Legendary drops unidentified, as any enchanted item does, until the Identify spell or the Mages Guild reads it. '
+      + 'Off is Daggerfall\u2019s loot exactly; items already rolled keep their tier and their names but their affixes rest.',
+    effect: 'Takes effect on the next roll; worn affixes follow within a magic round.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'lootRarity' }),
+  }),
   // FT9 (2026-09-14): THE FIVE PACKS WITH A SWITCH (Dynamic Skies' is
   // the outdoors row's, FT4). Windmills (Kamer) has no switch and so no
   // row - a row needs a control. The order is the Mods pane's.
