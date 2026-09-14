@@ -363,6 +363,14 @@ export function validFoeRecord(r) {
   // [templateIndex, material] or null (none) - so a puppet's blow at me is the owner's foe's blow (its level, its
   // weapon), resolved against MY stats; copied, never rolled (AUDIT WORLD6b B14)
   if (r.l !== undefined) { if (!Number.isInteger(r.l) || r.l < 0 || r.l > FOE_LEVEL_MAX) return null; out.l = r.l; }
+  // WORLD6b-iii: the cast rides the record - `c` the cast count, `s` the spell index (WORLD3's spelling for the dungeon)
+  // AUDIT WORLD6b-iii(a) C8: `s` is a SPELLS.STD record index, a u8 (spellsStd.js reads it as one) - bounded as `t` is
+  if (r.c !== undefined) { if (!Number.isInteger(r.c) || r.c < 0 || r.c > 0xffff) return null; out.c = r.c; }
+  if (r.s !== undefined) { if (!Number.isInteger(r.s) || r.s < 0 || r.s > 255) return null; out.s = r.s; }
+  // AUDIT WORLD6b-iii(a) A3: the RECIPIENT rides with the count - `u` whom the last cast was at, `b` whom the last blow
+  // was at, in `g`'s spelling ('.' the owner, a peer id, '' none): `g` is the LIVE hunt when the frame goes out, and a
+  // foe that cast at its owner then turned to a peer inside the frame's 200 ms sent the peer a cast it never made
+  for (const k of ['u', 'b']) if (r[k] !== undefined) { if (typeof r[k] !== 'string' || !(r[k] === '' || r[k] === '.' || ID_RE.test(r[k]))) return null; out[k] = r[k]; }
   if (r.w !== undefined) {
     if (r.w === null) out.w = null;
     else if (Array.isArray(r.w) && r.w.length === 2 && Number.isInteger(r.w[0]) && r.w[0] >= 0 && r.w[0] <= 1023 && Number.isInteger(r.w[1]) && r.w[1] >= 0 && r.w[1] <= 255) out.w = [r.w[0], r.w[1]];

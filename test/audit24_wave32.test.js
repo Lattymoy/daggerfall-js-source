@@ -142,7 +142,7 @@ test('audit24 wave32: every foe pool in the port is a subscriber, and the dungeo
     'the interior host subscribes BOTH of its pools, on the window its own ticker claims');
   // ...through ONE set of doors per entity, the same set the cast engine takes
   for (const [name, src] of [['world.js', w], ['exterior.js', x]]) {
-    assert.equal((src.match(/const foeSinks = \(g\) => \(\{/g) ?? []).length, 1, `${name}: one foeSinks`);
+    assert.equal((src.match(/const foeSinks = \(g(?:, fromPlayer = true)?\) => \(\{/g) ?? []).length, 1, `${name}: one foeSinks`);   // AUDIT WORLD6b-iii(a) B2: the world host's reads the engine's provenance
   }
   // ROAD-G G2: the town host's cast engine takes it through the SAME
   // pool-membership router the world host's does, and for the same

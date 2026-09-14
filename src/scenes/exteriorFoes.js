@@ -18,11 +18,11 @@ import { markFoeStruck } from '../ui/hudFoeTarget.js';   // PX30
 import { damageShieldPool } from '../characters/playerEntity.js';   // AUDIT 58: DecreaseHealth's shield hook is the BASE class's (DaggerfallEntity.cs:313-328)
 import { lycanthropeAttackVoice } from '../systems/lycanthropy.js';   // V4: the beast's attack voice
 import { copyEffectEntry } from '../systems/save.js';   // AUDIT 26 F216: the caster-stripping effect copy, one home
-import { EnemyAI, isBackFacing, withinYaw } from '../characters/enemyMotor.js';
-import { runTargetMachine, isPlayerTarget, isLocalPlayerTarget, isPeerTarget, resetAllyTeamOnPlayerAttack, PLAYER_TARGET, targetAimPoint, enemyArrowOrigin, enemyTransformPoint, arrowAimDirection } from '../characters/enemyTargets.js';   // WORLD6b-ii: the local player told from a peer, the peer told from a foe   // MT-ii   // ROAD-H H1/H1b: the ONE arrow loose point and the crouch dip
+import { EnemyAI, isBackFacing, withinYaw, MELEE_DISTANCE } from '../characters/enemyMotor.js';   // AUDIT WORLD6b-iii(a) B4: the puppet's cast is read against the owner's own bands
+import { runTargetMachine, isPlayerTarget, isLocalPlayerTarget, isPeerTarget, resetAllyTeamOnPlayerAttack, PLAYER_TARGET, PEER_CAST_TARGET, targetAimPoint, enemyArrowOrigin, enemyTransformPoint, arrowAimDirection } from '../characters/enemyTargets.js';   // WORLD6b-ii: the local player told from a peer, the peer told from a foe   // MT-ii   // ROAD-H H1/H1b: the ONE arrow loose point and the crouch dip
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT } from '../player/motor.js';   // CH3: the shared fall formula
 import { SOUND, hitSoundFor, ENEMY_HIT_VOLUME } from '../systems/soundClips.js';   // CH3: the FallDamage clip; WORLD6b: a peer's blow rung at the owner
-import { EnemyCaster, castEnemySpell, hasMagickaToCast } from '../characters/enemyCasting.js';   // X3: the shared decision + the ONE cast executor
+import { EnemyCaster, castEnemySpell, hasMagickaToCast, MIN_RANGED_DISTANCE, MAX_RANGED_DISTANCE } from '../characters/enemyCasting.js';   // X3: the shared decision + the ONE cast executor
 import { assignEnemySpells, SPELL_CAST_SOUND } from '../systems/enemySpells.js';   // X3
 import { applySpell, maxFatigue, entityIsParalyzed, applyEnemyMotorEffectFlags, concealmentFlags } from '../systems/effects.js';   // X3: self-casts land through the effect spine   // A5: the enemy Levitate arm, the foe-target concealment closure + EntityConcealmentBehaviour's visual
 import { calculateCastCost } from '../systems/spellcost.js';   // X3: costs priced off the player (magic-15 note)
@@ -273,8 +273,11 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // driver. No SPELLS.STD yet (the map loads async) = no lists,
       // exactly like a degraded dungeon boot.
       const sbi = spellsByIndex?.();
-      if (sbi && !puppet) assignEnemySpells(entity, sbi);   // AUDIT WORLD6b B14
-      const caster = entity.spells?.length ? new EnemyCaster(entity, rolls) : null;
+      // AUDIT WORLD6b-iii(a) B1: a PUPPET carries its species' (or its class level's) list too - no dice in it (SetEnemySpells
+      // is a table read, AUDIT WORLD6b B14's law holds) - because the streamed cast (`s`) is resolved OUT OF THIS LIST and
+      // nowhere else: a rat's puppet casts nothing, a lich's casts a lich's spells, whatever its owner's word says
+      if (sbi) assignEnemySpells(entity, sbi);
+      const caster = entity.spells?.length && !puppet ? new EnemyCaster(entity, rolls) : null;   // a puppet decides nothing (its owner's foe does)
       const mobile = new MobileUnit(mobileType, basics, (rec) => tex.getFrameCount(rec), Math.random, gender);
       const batch = renderer.createBillboardBatch(archive, 0, { w: 1, h: 1 }, [[0, 0, 0]]);
       const f = { mobile, ai, attack, entity, caster, batch, tex, archive, mobileType, gender, idleH, dead: false, _encounter: true, _prevMState: 'Idle', _mout: null,
@@ -394,7 +397,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   /** X3-slice: the per-foe sinks the cast executor feeds (the
    *  dungeon's foeSinks shape - self-casts heal/buff through these). */
   const foeSinks = (f) => ({
-    hurt: (n) => damageFoe(f, n, null, null),
+    hurt: (n) => damageFoe(f, n, null, null, { fromPlayer: false, kind: 'spell' }),   // AUDIT WORLD6b-iii(a) B2: a foe's OWN spell is not my blow - a puppet's self-cast went to its owner as MY hit through this door (the dungeon's sink had the law)
     heal: (n) => { f.entity.health = Math.min(f.entity.maxHealth ?? Infinity, f.entity.health + n); },
     drainMagicka: (n) => { if (n > 0) f.entity.magicka = Math.max(0, (f.entity.magicka ?? 0) - n); },
     restoreMagicka: (n) => { if (n > 0) f.entity.magicka = Math.min(f.entity.maxMagicka ?? Infinity, (f.entity.magicka ?? 0) + n); },
@@ -406,18 +409,37 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
    *  (characters/enemyCasting.js), the dungeon host's shape. Both
    *  callers go through here - the S16 casting decision and wave 30's
    *  spider/scorpion paralyze rider - so the deps are written once. */
-  function castSpellFrom(f, spell, playerFeet, noSpellPointCost = false) {
-    castEnemySpell(f, spell, {
+  function castSpellFrom(f, spell, playerFeet, noSpellPointCost = false, { aimAt = null } = {}) {   // playerFeet: MINE - the blast's probe for the LOCAL player, never a target's
+    // WORLD6b-iii: a cast at a PEER (or, AUDIT WORLD6b-iii(a) A2, at another FOE) leaves here as its missile aimed at
+    // the target's transform; the touch and the blast land at the PEER through its puppet (the record's c/s/u).
+    // AUDIT WORLD6b-iii(a) A1/C4: my capsule stays in the blast's sphere WHOEVER the target is - DFU's AreaAroundCaster
+    // is an OverlapSphere over colliders, not a target test, and the missile's own blast (rangeType 4, the one the pick
+    // can reach) was measured against me all along; a null here bought a strictly-safe stand beside a Daedra hunting
+    // a peer and nothing else
+    const ok = castEnemySpell(f, spell, {
       noSpellPointCost, playerEntity, playerFeet, playerHeight: _lastPlayerHeight,   // ROAD-H H2: the AreaAroundCaster blast is an OverlapSphere against the player's CAPSULE
+      aimAt,
       applySpell, foeSinks, calculateCastCost, silenceBlocksCast,
       // AUDIT 58: play3dId - SPELL_CAST_SOUND is ID space (EntityEffectManager.cs:44-48)
       playCastSound: (element, from) => audio?.play3dId?.(SPELL_CAST_SOUND[element] ?? SPELL_CAST_SOUND[4], from, 1, { maxDistance: 16 }),
       hitEffects,   // AUDIT 24 (wave 44): ShowMagicSparkles on the caster
       explodeAt: magicHooks?.explodeAt,
-      fireMissile: magicHooks?.fireMissile,
+      fireMissile: (from, sp, lvl, foe, at) => magicHooks?.fireMissile?.(from, sp, lvl, foe, at),
       rolls,
     });
+    // WORLD6b-iii: a cast is a count on the wire - `c` the count, `s` the spell, `u` whom it was at (AUDIT WORLD6b-iii(a)
+    // A3: latched HERE with the count, not read off the live hunt when the frame goes out). AUDIT WORLD6b-iii(a) A9:
+    // counted at the ONE release, so the spider's free paralyze rider counts as the decision's cast does; a refused
+    // release (silenced, no magicka) counts nothing
+    if (ok !== false) { f._castN = ((f._castN | 0) + 1) & 0xffff; f._castIdx = spell.index | 0; f._castU = recipientOf(f.ai.target); }
+    return ok;
   }
+  /** WORLD6b-ii's `g` spelling for whom a blow or a cast was at: '.' me (its owner), a peer's id, '' none. */
+  const recipientOf = (t) => (t?.isPeer ? t.id : (t == null ? '' : (t.isPlayer ? '.' : '')));
+  /** AUDIT WORLD6b-iii(a) A2: where the decision's missile flies - the SELECTED target's transform through the ONE aim
+   *  law (enemyTargets.targetAimPoint: a peer's capsule half, a foe's centre offset), null for me (the host's hook aims
+   *  at my live transform). The slice aimed at a PEER alone, and a foe duelling another foe still fireballed me. */
+  const castAimAt = (f, playerFeet) => (isLocalPlayerTarget(f.ai.target) || !f.ai._armedTargeting) ? null : targetAimPoint(f.ai.target, playerFeet, _lastPlayerHeight);
 
   /** Free a foe's live billboard batch once nothing will draw it. */
   function releaseFoeBatch(f) {
@@ -711,37 +733,49 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // those, on its owner - a foe hunting a peer is the next slice's)
       if (f.puppet) {
         const edge = puppetStep(f, dt);
-        f._mout = f.mobile.update(dt, { moving: f.ai.moving, striking: edge && !f.attack.firedRanged, rangedStriking: edge && !!f.attack.firedRanged, hurting: f.ai.hurtKnock, casting: false }, f.ai.yaw, f.ai.feet, eye);
-        if (edge) playEnemyClip(audio, f.sounds.attack(), f.ai.feet, acuteHearingMultiplier(playerEntity));
         // WORLD6b-ii (AUDIT WORLD2 B4's shape): observation, not decision - the blow at me reads inSight and _dist off the
         // streamed pose. AUDIT WORLD6b-ii A6/B8: the latch tells the truth the stream carries (a puppet hunting another
-        // peer is no enemy that has detected ME - the rest gate reads it), and the senses run for a puppet at me alone
+        // peer is no enemy that has detected ME - the rest gate reads it), and the senses run for a puppet at me alone.
+        // AUDIT WORLD6b-iii(a) B4: BEFORE the cast, which reads the bands off them
         f.ai.targetIsLocalPlayer = f._pupMine;
         if (f._pupMine) {
           f.ai._senses?.(playerFeet, null);
           if (f.ai.inSight && f.ai.detected) setEnemyAlert(playerEntity, true, currentMinute());   // B6: a peer's foe beating on me is an enemy alert of mine (the rest, the trip, the roll)
         }
+        const _pupParalyzed = entityIsParalyzed(f.entity);   // AUDIT WORLD6b-iii(a) A4/B5: my Paralysis on a puppet stops its cast as it stops its swing (DFU's CanAct gates both)
+        // WORLD6b-iii: the streamed CAST - at ME the spell itself (its owner's foe cast it; the missile flies at me, the
+        // blast is measured against my capsule), under the owner's blow budget and the leap gate as a blow is; at
+        // another its one-shot alone. AUDIT WORLD6b-iii(a): at ME by the cast's OWN recipient (A3), a spell of THIS
+        // puppet's own list and no other (B1 - the wire named any spell in SPELLS.STD), inside the owner's bands (B4),
+        // never paralysed (A4)
+        const pc = f._pup?.cast;
+        if (pc != null) {
+          const sp = recipientIsMe(f, pc.at) ? (f.entity.spells?.find((x) => (x.index | 0) === pc.s) ?? null) : null;
+          if (sp && !_pupParalyzed && puppetCastInBand(f, sp) && blowAllowed(f)) castSpellFrom(f, sp, playerFeet, true); else f._castPending = true;
+          f._pup.cast = null;
+        }
+        f._mout = f.mobile.update(dt, { moving: f.ai.moving, striking: edge && !f.attack.firedRanged, rangedStriking: edge && !!f.attack.firedRanged, hurting: f.ai.hurtKnock, casting: !!f._castPending }, f.ai.yaw, f.ai.feet, eye);
+        f._castPending = false;
+        if (edge) playEnemyClip(audio, f.sounds.attack(), f.ai.feet, acuteHearingMultiplier(playerEntity));
         tickEnemySound(f.sounds, f.ai.feet, playerFeet, dt, { audio, collider, hearing: acuteHearingMultiplier(playerEntity) });
-        // WORLD6b-ii: a puppet lands no blow of its own (WORLD2) - unless the blow is at ME, and a shaft at anyone flies
-        if (!f._pupMine) f.mobile.doMeleeDamage = false;   // WORLD2 dropped unconsumed: a puppet lands no blow of its own
-        if (f._pupTarget == null) f.mobile.shootArrow = false;   // WORLD2 dropped unconsumed: a puppet lands no blow of its own
-        const _pupParalyzed = entityIsParalyzed(f.entity);
-        if (f._pupMine && !_pupParalyzed && f.mobile.doMeleeDamage) {   // its owner's foe's blow at ME, my reach and my stats
+        // WORLD6b-ii: a puppet lands no blow of its own (WORLD2) - unless the blow is at ME, and a shaft at anyone flies.
+        // AUDIT WORLD6b-iii(a) A3: at ME by the SWING's own recipient (b), latched at its edge - not the hunt's live word
+        const _blowMine = f._pupBlowAt != null && recipientIsMe(f, f._pupBlowAt);
+        if (!_blowMine) f.mobile.doMeleeDamage = false;   // WORLD2 dropped unconsumed: a puppet lands no blow of its own
+        if (!f._pupBlowAt) f.mobile.shootArrow = false;   // WORLD2 dropped unconsumed: a puppet lands no blow of its own
+        if (_blowMine && !_pupParalyzed && f.mobile.doMeleeDamage) {   // its owner's foe's blow at ME, my reach and my stats
           f.mobile.doMeleeDamage = false;
           // AUDIT WORLD6b-ii B1/C1: bounded - the owner's blow budget, and no blow from a puppet that leapt to me
-          const o = _owners.get(f.puppet);
-          const budget = tokenGate(o?.blows ?? null, _now(), PUPPET_BLOWS_PER_S);
-          if (o) o.blows = budget.bucket;
-          if (budget.pass && !f._pup?.leap) resolveFoeMeleeVsPlayer(f, playerFeet);
+          if (blowAllowed(f)) resolveFoeMeleeVsPlayer(f, playerFeet);
         }
-        else if (f._pupTarget != null && !_pupParalyzed && f.mobile.shootArrow && onArrow) {
+        else if (f._pupBlowAt && !_pupParalyzed && f.mobile.shootArrow && onArrow) {
           f.mobile.shootArrow = false;
-          const _at = f._pupMine ? PLAYER_TARGET : peerCandidate(f._pupTarget);
+          const _at = _blowMine ? PLAYER_TARGET : peerCandidate(f._pupBlowAt === '.' ? f.puppet : f._pupBlowAt);
           if (_at) {   // a target I cannot see: no shaft
             const from = enemyArrowOrigin(f.ai);
             const aim = targetAimPoint(_at, playerFeet, senses.playerHeight ?? CAPSULE_HEIGHT);
-            const dir = arrowAimDirection(enemyTransformPoint(f.ai), aim, { targetIsPlayer: f._pupMine, playerCrouching: !!senses.playerCrouching });
-            onArrow(from, dir, f, f._pupMine ? null : _at);   // at a peer: a shaft that pays nothing (the flight lands only on the foe it names); the loose rings at the host's seam (AUDIT WORLD6b-ii B7)
+            const dir = arrowAimDirection(enemyTransformPoint(f.ai), aim, { targetIsPlayer: _blowMine, playerCrouching: !!senses.playerCrouching });
+            onArrow(from, dir, f, _blowMine ? null : _at);   // at a peer: a shaft that pays nothing (the flight lands only on the foe it names); the loose rings at the host's seam (AUDIT WORLD6b-ii B7)
           }
         }
         continue;
@@ -827,17 +861,16 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // target; a foe target hands its own (the decision reads the
       // target's live effects for its school picks).
       const _castTargetEntity = isLocalPlayerTarget(f.ai.target) || !f.ai._armedTargeting
-        ? playerEntity : (f.ai.target?.entity ?? null);   // AUDIT WORLD6b-ii A9: a peer's effects are not mine to read (the cast at a peer is suppressed, 6b-iii's)
+        ? playerEntity : (f.ai.target?.entity ?? PEER_CAST_TARGET);   // AUDIT WORLD6b-ii A9 / WORLD6b-iii: a peer's effects are not mine to read - the pick sees none on it
       // ROAD-U: DoRangedAttack's spell branch and DoTouchSpell both sit
       // BELOW TakeAction's pause return (EnemyMotor.cs:466), so a
       // transforming Seducer casts nothing either.
       if (_tgt && f.caster && !_fParalyzed && !_fPaused && f.ai.isHostile) {
-        // WORLD6b-ii: no cast at a peer (the cast at a peer is 6b-iii's) - AUDIT WORLD6b-ii A1: the tick still runs, SUPPRESSED,
-        // so the pick clears on its own cadence and the motor's stand-off band lets go (gated off, the foe stood rooted)
-        const dec = f.caster.update(dt, f.ai, f.attack, _tgt, _castTargetEntity, { suppress: isPeerTarget(f.ai.target) });
-        if (dec) {
-          castSpellFrom(f, dec.spell, _tgt);
-        }
+        // WORLD6b-iii: the cast at a PEER - the decision runs as at me (AUDIT WORLD6b-ii A1: never gated off, or the pick
+        // latches and the stand-off band roots the foe), the missile leaves toward the peer, and the cast rides the
+        // stream (c the count, s the spell) so the peer's puppet casts the spell itself at the peer
+        const dec = f.caster.update(dt, f.ai, f.attack, _tgt, _castTargetEntity);
+        if (dec) castSpellFrom(f, dec.spell, playerFeet, false, { aimAt: castAimAt(f, playerFeet) });   // the count and its recipient latch at the release; AUDIT WORLD6b-iii(a) A1 (review): MY feet for the blast's probe - the TARGET's went in here (masked by the null), the dungeon's C2 in this pool
       }
       // AUDIT 24 (wave 42): EnemySenses:504-527 - the first-encounter
       // language roll, which only the dungeon ran. An Orc that speaks
@@ -854,7 +887,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       const mstate = f.attack.machine.state;
       const strikeEdge = mstate !== 'Idle' && (f._prevMState ?? 'Idle') === 'Idle';
       f._prevMState = mstate;
-      if (strikeEdge) f._atkA = ((((f._atkA | 0) >> 1) + 1) << 1) | (f.attack.firedRanged ? 1 : 0);   // WORLD6b: the attack count on the wire, the ranged bit low (WORLD2's spelling)
+      if (strikeEdge) { f._atkA = ((((f._atkA | 0) >> 1) + 1) << 1) | (f.attack.firedRanged ? 1 : 0); f._atkB = recipientOf(f.ai.target); }   // WORLD6b: the attack count on the wire, the ranged bit low (WORLD2's spelling); AUDIT WORLD6b-iii(a) A3: and whom the swing is at, latched with it
       // PlayAttackSound at the START of the swing, as the dungeon does
       // (MeleeAnimation fires it once on the edge, not at the hit).
       if (strikeEdge) playEnemyClip(audio, f.sounds.attack(), f.ai.feet, acuteHearingMultiplier(playerEntity));   // CF1: acute hearing
@@ -1292,8 +1325,8 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       const _t = f.ai.target, g = _t?.isPeer ? _t.id : (_t == null ? '' : (_t.isPlayer ? '.' : ''));   // AUDIT WORLD6b-ii A8: no target is '' (none) - '.' was the word for a foe that had not stepped yet, and it latched the puppet hostile
       // AUDIT WORLD6b-ii B2/B3: the attacker's terms - its level and its right-hand weapon - so a puppet's blow is this foe's
       const wpn = f.entity.weapon, wd = wpn && Number.isInteger(wpn.templateIndex) ? [wpn.templateIndex, wpn.material | 0] : null;
-      const r = { i: f.seq, t: f.mobileType, x: f.gender === 'female' ? 1 : 0, f: [q2(w[0]), q2(w[1]), q2(w[2])], y: q3(f.ai.yaw), h: f.entity.health, d: f.dead ? 1 : 0, a: f._atkA | 0, m: f.ai.moving ? 1 : 0, g, l: f.entity.level | 0, w: wd };
-      const key = `${r.f[0]},${r.f[1]},${r.f[2]},${r.y},${r.h},${r.d},${r.a},${r.m},${r.g},${r.l},${wd ? wd.join('/') : '-'}`;
+      const r = { i: f.seq, t: f.mobileType, x: f.gender === 'female' ? 1 : 0, f: [q2(w[0]), q2(w[1]), q2(w[2])], y: q3(f.ai.yaw), h: f.entity.health, d: f.dead ? 1 : 0, a: f._atkA | 0, b: f._atkB ?? '', m: f.ai.moving ? 1 : 0, g, l: f.entity.level | 0, w: wd, c: f._castN | 0, s: f._castIdx | 0, u: f._castU ?? '' };   // WORLD6b-iii: the cast count and its spell; AUDIT WORLD6b-iii(a) A3: b/u whom the last blow/cast was at
+      const key = `${r.f[0]},${r.f[1]},${r.f[2]},${r.y},${r.h},${r.d},${r.a},${r.b},${r.m},${r.g},${r.l},${wd ? wd.join('/') : '-'},${r.c},${r.s},${r.u}`;
       if (!full && f._sentKey === key) continue;
       f._sentKey = key;
       out.push(r);
@@ -1361,7 +1394,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
    *  the health (a drop is the hurt one-shot), the attack once per count (a joiner latches the count it arrives with
    *  and replays nothing), death through the puppet's own fall. */
   function applyPuppetRecord(f, r) {
-    const p = f._pup ?? (f._pup = { wire: null, yaw: f.ai.yaw, moving: false, hurt: false, strike: null, a: null, target: null, at: _now(), leap: false });
+    const p = f._pup ?? (f._pup = { wire: null, yaw: f.ai.yaw, moving: false, hurt: false, strike: null, a: null, target: null, at: _now(), leap: false, c: null, cast: null, h: null });
     if (r.f) {
       // AUDIT WORLD6b-ii C1: a LEAP - farther since the last record than PUPPET_LEAP times the species' own speed could
       // carry it (plus a slack) - lands no blow until the next record walks it; a dropped frame's catch-up is inside the law
@@ -1378,9 +1411,39 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     if (r.g !== undefined) p.target = r.g;   // WORLD6b-ii: whose blow this puppet's is
     if (r.y !== undefined) p.yaw = r.y;
     if (r.m !== undefined) p.moving = r.m === 1;
-    if (r.h !== undefined) { if (r.h < f.entity.health) p.hurt = true; f.entity.health = r.h; }
-    if (r.a !== undefined) { if (p.a != null && r.a !== p.a) p.strike = (r.a & 1) ? 'ranged' : 'melee'; p.a = r.a; }
+    if (r.h !== undefined) { if (p.h != null && r.h < p.h) p.hurt = true; p.h = r.h; f.entity.health = r.h; }   // AUDIT WORLD6b-iii(a) B6: a drop against the last STREAMED health - a self-heal cast here made every record after it a hurt
+    // AUDIT WORLD6b-iii(a) A3: the blow's and the cast's RECIPIENT ride with their counts (b, u); an older record without
+    // them falls back on the live hunt (g), the slice's law
+    if (r.a !== undefined) { if (p.a != null && r.a !== p.a) p.strike = { kind: (r.a & 1) ? 'ranged' : 'melee', at: r.b ?? r.g ?? p.target }; p.a = r.a; }
+    // WORLD6b-iii: a cast once per count, never the count a joiner arrived with; AUDIT WORLD6b-iii(a) B3/C9: no spell, no cast
+    if (r.c !== undefined) { if (p.c != null && r.c !== p.c && Number.isInteger(r.s)) p.cast = { s: r.s, at: r.u ?? r.g ?? p.target }; p.c = r.c; }
     if (r.d === 1 && !f.dead) { const t = p.wire ? _net.toScene(p.wire) : null; if (t) { f.ai.feet[0] = t[0]; f.ai.feet[1] = t[1]; f.ai.feet[2] = t[2]; } puppetDie(f); }
+  }
+  /** AUDIT WORLD6b-ii B1/C1: whether a blow (or a cast, WORLD6b-iii) of this puppet's owner's may land on me now - the
+   *  owner's budget spent, and never from a puppet that leapt. */
+  function blowAllowed(f) {
+    if (f._pup?.leap) return false;   // AUDIT WORLD6b-iii(a) B7: a leapt puppet spends no token of its owner's (it starved the owner's other puppets)
+    const o = _owners.get(f.puppet);
+    const budget = tokenGate(o?.blows ?? null, _now(), PUPPET_BLOWS_PER_S);
+    if (o) o.blows = budget.bucket;
+    return budget.pass;
+  }
+  /** AUDIT WORLD6b-iii(a) B4: a streamed cast at me lands only inside the band the owner's own decision needed -
+   *  DoRangedAttack's 6..51.2 in sight for a missile or a blast at range (rangeType 2/4), DoTouchSpell's melee reach
+   *  for a touch, a self-cast or a blast around the caster - read off the streamed pose with the leap's slack. A
+   *  puppet is never distance-culled, and one across the map cast at me until now. */
+  function puppetCastInBand(f, sp) {
+    const d = f.ai._dist;
+    if (!Number.isFinite(d)) return false;
+    if (sp.rangeType === 2 || sp.rangeType === 4) return d > MIN_RANGED_DISTANCE - PUPPET_LEAP_SLACK && d < MAX_RANGED_DISTANCE + PUPPET_LEAP_SLACK && !!f.ai.inSight;
+    return d <= MELEE_DISTANCE + PUPPET_LEAP_SLACK;
+  }
+  /** AUDIT WORLD6b-iii(a) A3: whether a streamed blow's or cast's RECIPIENT ('.' its owner, a peer id, '' none) is ME -
+   *  and its owner a peer the hunt sees (AUDIT WORLD6b-ii C2's liveness). */
+  function recipientIsMe(f, at) {
+    const me = _net?.selfId?.() ?? null;
+    const id = at === '.' ? f.puppet : (at || null);
+    return id != null && me != null && id === me && peerCandidate(f.puppet) != null;
   }
   /** One puppet frame: the eased pose (toward the streamed feet in THIS frame's coordinates), the walk, the hurt, the
    *  strike edge; the mobile's damage latches are the caller's to drop (a puppet lands no blow). */
@@ -1406,7 +1469,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     f.ai.yaw = p.yaw;
     f.ai.moving = p.moving || d2 > PUPPET_STILL * PUPPET_STILL;
     f.ai.hurtKnock = p.hurt; p.hurt = false;
-    if (p.strike != null) { edge = true; if (f.attack) f.attack.firedRanged = p.strike === 'ranged'; p.strike = null; }
+    if (p.strike != null) { edge = true; if (f.attack) f.attack.firedRanged = p.strike.kind === 'ranged'; f._pupBlowAt = p.strike.at; p.strike = null; }   // AUDIT WORLD6b-iii(a) A3: whom THIS swing is at rides to its damage frame
     return edge;
   }
   /** A puppet's death: the body where its owner's stream let it fall, no loot of this player's, no kill notice, no

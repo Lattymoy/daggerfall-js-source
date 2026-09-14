@@ -216,7 +216,8 @@ test('WORLD3: the target machine with a PEER, executed - a peer is a player to e
   assert.match(d, /if \(dec\) \{ f\._castN = \(\(f\._castN \| 0\) \+ 1\) & 0xffff; f\._castIdx = dec\.spell\.index \| 0; castEnemySpell\(f, dec\.spell\); \}/, 'the cast rides the stream');
   assert.match(d, /m\.aimFoe = \(foeDeps && ct && \(!foeDeps\.isPlayerTarget\(ct\) \|\| ct\.isPeer\)\) \? ct : null;/, 'a spell missile at a peer aims at the peer');
   assert.match(d, /if \(!m\.aimFoe\?\.isPeer && missileHitsCapsule\(m\.pos, playerFeet, playerHeight, PLAYER_BODY_RADIUS\)\) \{/, 'and pays nothing on me');
-  assert.match(d, /const _pt = f\.ai\?\.target\?\.isPeer \? f\.ai\.target : null;[^\n]*\n\s*foeDeps\.castEnemySpell\(f, spell, \{\s*noSpellPointCost, playerEntity, playerFeet: _pt\?\.feet \?\? lastPlayerFeet, playerHeight: _pt\?\.height \?\? lastPlayerHeight,/, 'a cast at a peer leaves toward the peer');
+  assert.match(d, /foeDeps\.castEnemySpell\(f, spell, \{\s*noSpellPointCost, playerEntity, playerFeet: lastPlayerFeet, playerHeight: lastPlayerHeight,/, 'a cast at a peer: MY capsule in the blast whoever the target (AUDIT WORLD6b-iii(a) C2 - the peer\'s feet as the probe landed the blast on me); the missile aims itself in flight');
+  assert.match(d, /m\.aimFoe = \(foeDeps && ct && \(!foeDeps\.isPlayerTarget\(ct\) \|\| ct\.isPeer\)\) \? ct : null;/, 'a cast at a peer leaves toward the peer');
   const s = rd('src/characters/enemyTargets.js');
   assert.match(s, /export const isPeerTarget = \(c\) => c\?\.isPeer === true;/); assert.match(s, /const tFeet = isPlayer \? \(c\.feet \?\? playerFeet\) : targetAi\.feet;/); assert.match(s, /const tHeight = isPlayer \? \(c\.height \?\? playerHeight\) : targetAi\.height;/);
   assert.match(s, /\(isPlayerTarget\(c\) \? \(c\.health \?\? playerEntity\?\.health \?\? 1\) : \(c\.entity\?\.health \?\? 0\)\)/, 'targetHealth: a peer\'s own');

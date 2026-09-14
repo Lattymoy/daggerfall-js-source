@@ -150,8 +150,8 @@ test('AUDIT39 #39: an interior foe carries its spell lists and its caster, as Se
   assert.match(body, /\n\s+spellsByIndex,/, 'SetEnemySpells has no scene test in DFU');
   assert.match(body, /magicHooks: magic \? \{/, 'and the release seams ride the host\'s ONE engine');
   assert.match(body, /explodeAt: \(\.\.\.a\) => magic\.explodeAt\(\.\.\.a\),/);
-  assert.match(body, /magic\.fireEnemyMissile\(from, \[d\[0\] \/ l, d\[1\] \/ l, d\[2\] \/ l\], spell, casterLevel, foe\);/,
-    'aimed at the walking player\'s mid-capsule at fire time, the exterior shape');
+  assert.match(body, /magic\.fireEnemyMissile\(from, missileAimDirection\(from, aimAt \?\? targetAimPoint\(null, player\.pos, player\.height\)\), spell, casterLevel, foe\);/,
+    'aimed where the executor says, at the walking player\'s live transform otherwise, at fire time - the exterior shape through the ONE law (AUDIT WORLD6b-iii(a) C3)');
 });
 
 // ---------------------------------------------------------------
@@ -319,7 +319,7 @@ test('AUDIT39 #65: the interior arrow update takes the four impact options it ne
   assert.match(call, /onFoeHit: \(m, t\) => interiorFoes\?\.arrowHitFoe\(m, t\),/);
   // ...and the PLAYER's shaft damages through the pool that owns the
   // billboard, the same `_encounter` split this host's sinks take -
-  // world.js:8227's own law, so a killed watchman still runs the crime
+  // world.js:8225's own law, so a killed watchman still runs the crime
   // and the corpse.
   assert.match(call, /dealDamage: \(f, d\) => \(f\._encounter\n\s+\? interiorFoes\?\.damageFoe\(f, d, player\.pos, m\.dir\)\n\s+: interiorGuards\?\.hurtGuard\(f, d, player\.pos, m\.dir\)\),/);
   // the player-side arm of the same call
