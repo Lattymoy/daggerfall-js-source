@@ -2294,6 +2294,110 @@ cooldown bounds it to what DFU allows); (4) the pause-menu catch-up (a
 shared world does not pause); (8)'s residue, the probes' URL kill
 doors; (9) the uninstall no caller uses.
 
+## WORLD6 (2026-09-14): towns, cells and buildings share more than presence
+
+**Mac: "Lets tackle #1 next."** The first of the arc's "not yet" list
+after WORLD5 closed WORLD1's plan: a dungeon is one shared world with a
+memory, and outside one, players share only who is there. THE PLAN,
+from a survey of every piece of mutable world state outside a dungeon
+(an opus lens over the exterior, the interiors and the per-player set):
+
+1. **6a - the building is a world room** (this slice). A building
+   interior has had a relay room of its own since ONLINE1
+   (`interior:m<mapId>.<buildingKey>`) and carried presence alone,
+   because the wire's world-room law admitted dungeons only. Its
+   mutable state is small and already save-shaped in the scene cache:
+   the shelves and cupboards (stock, and the day it was stocked), the
+   doors' action records, the player's own piles. Widen the law, give
+   the interior mode the dungeon's three laws (the memory, the acts,
+   the loot), and buildings are shared.
+2. **6b - the cell is a world room.** The open country and the towns
+   keep guards, encounter foes, corpses and dropped piles per player,
+   each pool with its own AI loop (`cityGuards.js`, `exteriorFoes.js`)
+   and freed with the map pixel. One simulation per cell needs the
+   puppet arm WORLD2 gave the dungeon's foes, in two more pools, over
+   a room that is a sixteen-pixel cell rather than a place - and the
+   cell seam (two players a pixel apart astride an edge are in two
+   rooms) is the same slice's problem. The region's prices and
+   conditions walk by the day block and can be seeded by the shared
+   day as the weather is (WORLD5), which is the cheap half.
+3. **Recorded, not planned:** the wandering population (no identity
+   across a pixel unload for one player either); building discovery
+   and the talk state (knowledge - the player's own by DFU's design);
+   quests, banks, houses, ships, rentals (the player's own); a dropped
+   pile (AUDIT WORLD B3 - the dropper's); the treasure markers' roll
+   (it reads the player's level and gender).
+
+### 6a: the building is a world room
+
+- **The wire** (`src/net/wire.js`, both ends through `server/src/
+  relay.js`): `isWorldRoom` admits `interior:m<mapId>.<buildingKey>` -
+  the map id unsigned as roomKeyFor mints it (AUDIT WORLD34 A2), the
+  building key up to eight digits (`MakeBuildingKey`: (x<<16)+(y<<8)+i,
+  or the 1<<24 sentinel). A slugged location (no map id), a town's
+  room and a cell are still no world room. Everything gated on the
+  predicate - the memory, the acts, `sendWorld`/`sendAct`/`onAct`,
+  the relay's own admission - follows without a second switch; the
+  relay MUST BE REDEPLOYED (`RELAY_VERSION` `world6`).
+- **The pure half** (`src/world/interiorShared.js`): the memory
+  mirrors the dungeon's and is subtracted the same way - the action
+  records' SHARED half (`sharedRecord`, AUDIT WORLD3 B1), projected
+  before they land (`validActionRecord`, A2/WORLD34 C2) and RESTORED
+  rather than heard (where the doors stand as I walk in is a restore,
+  like the cache's); the loot as WORLD4's law, in the cache's own
+  vocabulary (`shelf:<i>`, `container:<i>`, one spelling each): a
+  container nobody has opened (`items: null`) is every client's own
+  lazy roll and the memory says nothing of it; one the room has opened
+  is the room's, with what is left and THE DAY IT WAS STOCKED (`d`) -
+  the restock is a day comparison against the world's day (WORLD5),
+  so the day rides the record and every client agrees on when a shelf
+  turns over. The word lands IN PLACE on an opened container, WHOLE on
+  one this client never opened (a second reader adopts the first's
+  roll), never under this player's open window (AUDIT WORLD4 C1); a
+  list past `LOOT_LIST_MAX` is not said, once, out loud (A2/B2/D1).
+  `interiorLocationKey` spells the memory's key exactly as the room's,
+  so the two agree by construction.
+- **The interior mode** (`src/scenes/worldModes.js`): at the mount the
+  room's key and this context's stamp (AUDIT WORLD B1), the seen set,
+  the said-once set, the applied latch (B7) and the open window; an
+  OWNED house or ship keeps no room - ownership is the player's own
+  (DFU has one player), so an owner's storage is never the room's and
+  a stranger's roll never lands on it. The doors go out the moment
+  they move (the graph's own change seam, keyed by the building). A
+  container is the room's from the OPEN (a claim, which speaks only
+  for one the room has not spoken about - C2/D5, and makes the memory
+  due this frame), on a RESTOCK (the new day's stock is the room's,
+  whoever browsed first), and on the CLOSE - which, because a trade
+  window has no close hook of its own (X6), is the frame's settle: the
+  window opened on the container is gone, through whichever drain
+  freed it. The leave fires after the cache and before both teardowns
+  (the exit door, the load-or-teleport), as the dungeon's does.
+  `placeSharedWorld` / `restorePlaceSharedWorld` / `applyPlaceActions`
+  / `placeActionRecords` dispatch on the standing PLACE, a dungeon's
+  four arms untouched beneath them.
+- **The world host** (`src/scenes/world.js`): one path - the publish,
+  the welcome's restore, the act in, the pending re-read - through the
+  place; `onInteriorLeave` publishes at once as `onDungeonLeave` does.
+  The room's own key was already the building's, so a player walking
+  through a shop door already changes socket; now the room means
+  something.
+- **The pane** says it: a building is a shared world too - its doors,
+  and every shelf and cupboard anyone has opened.
+
+Not done here, on purpose: the interior's foes and guards (a quest's
+or a crime's - the player's own, not streamed); the dropped piles and
+the treasure markers' piles (B3, and a per-player roll); bookshelves
+(a library's, a guild's, a temple's - the books taken are a shelf's
+items, but the flow has no window to settle on; next); a last-writer-
+wins on a restock two players make in one day (each rolls their own
+and the later close stands, as the dungeon's loot already runs).
+
+Pinned in `test/world6.test.js` (6): the wire at both ends; the real
+Room keeping a building's memory and handing it on, a town's ignored;
+the pure half's vocabulary, records, landing, memory and re-read; the
+hosts by source. The WORLD1, WORLD3, WORLD5, AUDIT WORLD34 and AUDIT
+WORLD5 pins restamped where the law and the path moved.
+
 ## What it does not do (yet)
 
 - **The Morrowind body** ships (MWBODY1, above); a client without the
@@ -2310,8 +2414,9 @@ doors; (9) the uninstall no caller uses.
   who was there mirrored the death and publishes it). Since WORLD3 the
   host's foes hunt every player in the room and its doors, levers and
   platforms move for everyone (an act from whoever touched them).
-  Towns, cells and buildings keep nothing yet (the pane says so since
-  AUDIT WORLD34 D5); since WORLD5 the clock and the day's weather are
+  Since WORLD6a a BUILDING is a world room too - its doors, and every
+  shelf and cupboard anyone has opened, with the day it was stocked;
+  towns and cells keep nothing yet (6b); since WORLD5 the clock and the day's weather are
   the world's and the quest clocks stand down online; no
   player-versus-player. Until AUDIT
   WORLD34 no real dungeon was a world room at all (A1: the law's

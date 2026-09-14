@@ -49,7 +49,8 @@ test('AUDIT WORLD34 A1 (THE ROOT): the world-room law admits a REAL map id - eve
     assert.ok(roomOf(`/room/${key}`) === key, 'and a room the worker opens');
   }
   assert.equal(isWorldRoom('dungeon:m4294967295'), true, 'the unsigned 32-bit bound');
-  for (const k of ['dungeon:m12345678901', 'dungeon:m-1', 'dungeon:17.Privateer_s_Hold', 'town:m187853213', 'interior:m187853213.4', 'world:3,12']) assert.equal(isWorldRoom(k), false, k);
+  for (const k of ['dungeon:m12345678901', 'dungeon:m-1', 'dungeon:17.Privateer_s_Hold', 'town:m187853213', 'interior:17.Privateer_s_Hold.4', 'interior:m187853213.123456789', 'world:3,12']) assert.equal(isWorldRoom(k), false, k);
+  assert.equal(isWorldRoom('interior:m187853213.4'), true, 'WORLD6a: a building is a world room');
   assert.equal(relay.isWorldRoom, isWorldRoom, 'one home');
 });
 
@@ -243,7 +244,7 @@ test('AUDIT WORLD34 D4/D5: the relay names itself in /health; the session says t
   assert.deepEqual(lines, [`[online] room dungeon:m${PRIVATEERS_HOLD} - a shared world`, '[online] host bbbb-0002', '[online] room world:3,12 - presence only'], 'a cell says its room and no host');
   const menu = rd('src/ui/enhancedMenu.js');
   assert.doesNotMatch(menu, /el\('p', 'meta', 'Everyone runs their own game from their own save; you see each other and walk together\. Nothing else is shared yet\.'\)/, 'the pre-WORLD1 promise is gone');
-  assert.match(menu, /A dungeon is one shared world: its foes, doors, levers, platforms and every chest anyone has opened are the same for everyone in it, and it remembers\. Towns, the open country and buildings share only who is there\./);
+  assert.match(menu, /A dungeon is one shared world: its foes, doors, levers, platforms and every chest anyone has opened are the same for everyone in it, and it remembers\. A building is a shared world too: its doors, and every shelf and cupboard anyone has opened, are the same for everyone in it, and it remembers\. Towns and the open country share only who is there\./);   // WORLD6a: the building joined the sentence
 });
 
 test('AUDIT WORLD34: the record carries the root and the pins that enshrined it are turned', () => {
