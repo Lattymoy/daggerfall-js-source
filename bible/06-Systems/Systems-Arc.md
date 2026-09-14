@@ -4572,7 +4572,7 @@ the true clause along with the false ones is in the campaign, because
 over-retiring is the equal and opposite failure.
 
 **And one delegation pointed at a flag nobody had ever written.**
-`world.js:1645` said the dungeon-mode enchant ctx was "FLAGGED there
+`world.js:1657` said the dungeon-mode enchant ctx was "FLAGGED there
 with the rest of its enchant wiring" in `dungeonContext.js`. It was
 not. `setDefaultEnchantCtx` had exactly **one** caller in the tree, so
 the standalone `?dungeon` host ran every arm that needs a host
@@ -5458,6 +5458,40 @@ transitions dismount through one helper, both interior hosts refuse
 with the line, and the mode change is ONE place (U53) that the T-key
 pick and the interior dismount both take, so the mount's art is dropped
 on every change rather than only on the pick.
+
+### HC1 - THE HORSE AND CART, AUDITED FOR PLAY (2026-09-14, Mac: "audit the horse and cart ensuring it works properly ingame and the sprites actually show")
+
+They did not show, on the deployed site, ever - three faults at three
+seams, each passing every pin around it:
+
+1. **The diet.** TR2's sprites are `MRED00I0.CFA` and `MRED01I0.CFA`,
+   and `dataSource.KEEP` never kept a `.CFA`: the browser's ARENA2
+   store never held them, the network arm 404s in production, and
+   `loadRidingArt` failed into a console warning. AUDIT 18 F2's pin
+   re-derives the fetch list from every ARENA2 name `src/` carries - by
+   an extension list that did not include CFA, so a constant-held name
+   was invisible to it. The dev server, which serves the folder whole,
+   hid it: the F2 shape exactly. Fixed: CFA rides wholesale, the F2
+   regex lists CFA and BSS, and `MANIFEST_V` is 10 so a stored set from
+   before re-ingests (the diet's own rule; the cost is one folder pick
+   per deployed player).
+2. **The one place.** U53 made `setTransportModeHere` the one place the
+   mode changes; TR3 loaded the art on the T-key pick alone. Three other
+   paths set the mode and nulled the art and loaded nothing - a loaded
+   save on horseback (the pose restore), the Test Room's ride out, the
+   ship's landing. Fixed: the art loads in the one place, the pick
+   carries no copy, and a dismount or swap mid-load keeps what the mode
+   says. TR5's "nothing hangs off the door" pin was re-aimed to allow
+   the sprite's load and nothing else (the 3D horse it guards against
+   stays out).
+3. **Read as it stands:** the draw is under the HUD on either skin (the
+   HUD art loads unconditionally; the gate is "art loaded"), hidden
+   while paused (F-E1), lifted over the large HUD (D10). THE FOUR HOSTS:
+   the world host draws the mount; the two indoor hosts dismount and
+   refuse the T key (TR5); the fixed-city dev host has no saddle and is
+   pinned so. Not proved in a browser here: no ARENA2 in this container;
+   the Test Room's "Ride out" is the door to look through on a machine
+   that has it. `test/hc1_horsecart.test.js`.
 
 ### TR4 CLOSED: the ship, and THE ARC WITH IT
 

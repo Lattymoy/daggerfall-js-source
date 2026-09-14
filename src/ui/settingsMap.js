@@ -23,12 +23,11 @@
 // rather than quietly dropping a row off the screen.
 
 export const CATEGORIES = Object.freeze([
-  // SO1 (2026-09-11): THE PORT'S OWN switches - what it does that
-  // Daggerfall Unity does not - are a category here rather than a rail
-  // entry of their own. It carries NO store key (the map below stays
-  // total over DFU's 171); its rows are drawn by ui/enhancedMenu.js off
-  // the uiPrefs shelf.
-  { id: "enhanced", title: "Enhanced", blurb: "What this port adds on top of Daggerfall lives on the Features page now - one list, every enhanceable feature. This category points there and keeps the outdoors test door." },
+  // SO1 (2026-09-11) put THE PORT'S OWN switches here as an Enhanced
+  // category; FT2-FT8 moved every one of them to the FEATURES home
+  // (systems/features.js) and FT12 (Mac, 2026-09-14) took the emptied
+  // category off the rail. The map below is total over DFU's 171 keys
+  // and nothing else; the port's own rows are the home's.
   { id: "game", title: "Game", blurb: "How the world plays: fighting, dungeons, repairs and the rules you start out with." },
   { id: "controls", title: "Controls", blurb: "Looking, moving and swinging, whether you play with a mouse, a keyboard or a touchscreen." },
   { id: "audio", title: "Audio", blurb: "Music, sound effects and the noises people make in a fight." },
@@ -42,7 +41,6 @@ export const CATEGORY_IDS = Object.freeze(CATEGORIES.map((c) => c.id));
 
 /** category id -> the store keys under it, IN SCREEN ORDER. */
 export const CATEGORY_KEYS = Object.freeze({
-  "enhanced": [],
   "game": [
     "Enhancements/LoiterLimitInHours",
     "Enhancements/PlayerTorchFromItems",

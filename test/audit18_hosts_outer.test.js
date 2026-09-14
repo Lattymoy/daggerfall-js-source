@@ -731,7 +731,8 @@ test('audit F2: editing the diet without bumping MANIFEST_V fails HERE', () => {
   // MOVED at AUDIT 39 F156: PAINT.DAT joined the diet - the painting
   // descriptions had no reader host at all, and a name KEEP rejects
   // has no source in production. v8 -> v9 re-ingests the stale sets.
-  assert.deepEqual([version, sum], [9, 'f898f68bcee8501a'],
+  // v9 -> v10 (HC1, 2026-09-14): .CFA joined the diet - the riding sprites the deployed site never held.
+  assert.deepEqual([version, sum], [10, '4c7b641cf6ba72fe'],
     'THE DIET CHANGED: bump MANIFEST_V so stale stores re-ingest, then re-pin [version, sum] here');
 });
 

@@ -1611,12 +1611,24 @@ export async function bootWorld(canvas, renderer, params, status) {
   const ridingAnimator = new RidingAnimator();   // TR2: the mount's frames, loop and neigh
   /** U53's one-builder law: ONE place changes the mode, and both the
    *  T-key pick and the interior hosts' dismount take it. TR5. */
+  let ridingArt = null;   // TR2: the four CFA frames of the mount under you
   const setTransportModeHere = (mode) => {
     player.setTransportMode(mode);   // F-E3: the height action rides with the mode
     ridingAnimator.mount(mode);
     ridingArt = null;
+    // HC1 (2026-09-14, Mac: "audit the horse and cart ... the sprites
+    // actually show"): the mount's art loads HERE, in the ONE place the
+    // mode changes (U53) - not on the T-key pick alone. Three other
+    // paths set the mode and used to leave the art null for good: a
+    // loaded save on horseback (the pose restore), the Test Room's ride
+    // out, and the ship's landing. A rider from any of them had the
+    // speed, the bob and the hoof loop, and no horse under them.
+    if (isRiding(mode)) {
+      loadRidingArt(fetchBytes, palette, renderer, mode)
+        .then((art) => { if (player.transportMode === mode) ridingArt = art; })   // still that mount: a dismount mid-load keeps null
+        .catch((e) => console.warn('[transport] mount art unavailable:', e?.message ?? e));
+    }
   };
-  let ridingArt = null;   // TR2: the four CFA frames of the mount under you
   let rightHeld = false;   // AUDIT 28 F-C2: HasAction(SwingWeapon) - the raw button, ungated
   // TI1: the touch layer's state. swipeHeld is the swipe's SwingWeapon
   // truth beside rightHeld (the settle law reads both); a tap arms a
@@ -4872,12 +4884,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           // TR4: "Ship" is not a mode you travel IN (DFU's own comment
           // on the enum) - it is a teleport that lands back on Foot.
           if (mode === TRANSPORT_MODES.Ship) { boardOrDisembark(); return; }
-          setTransportModeHere(mode);
-          if (isRiding(mode)) {
-            loadRidingArt(fetchBytes, palette, renderer, mode)
-              .then((art) => { if (isRiding(player.transportMode)) ridingArt = art; })
-              .catch((e) => console.warn('[transport] mount art unavailable:', e?.message ?? e));
-          }
+          setTransportModeHere(mode);   // HC1: the art loads with the mode, in the one place
         },
       }));
     },

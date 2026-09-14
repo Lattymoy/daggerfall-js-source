@@ -33,15 +33,12 @@ test('FT8: the registry row - Enhanced, over the pref, on by default, taking eff
   for (const h of ['src/scenes/dungeonContext.js', 'src/scenes/cityGuards.js', 'src/scenes/exteriorFoes.js']) assert.match(read(h), /const ecvOn = combatVisualsOn\(\);/, `${h} reads the switch once per frame`);
 });
 
-test('FT8: the Enhanced category is a pointer to the home and the test door, and its blurb says so', () => {
+test('FT8/FT12: the Enhanced category emptied into the home and then left the settings rail; its test door is the Test Room\'s', () => {
   const menu = read('src/ui/enhancedMenu.js');
-  const from = menu.indexOf('function portRowsEnhanced('); const body = menu.slice(from, menu.indexOf('\n}', from));
-  assert.ok(!/prefRow\('|choiceRow\('/.test(body), 'no switch left in the category');
-  assert.match(body, /const out = \[featuresPointerRow\(\)\];\s*\n\s*if \(!pause\) out\.push\(outdoorsTestRow\(\)\);/, 'the pointer, then the test door at boot');
-  assert.match(menu, /function featuresPointerRow\(\) \{[\s\S]*?kindTags\(KIND_ORDER\)[\s\S]*?'On the Features page'|function featuresPointerRow\(\) \{[\s\S]*?main\.onclick = goFeatures;[\s\S]*?b\.onclick = goFeatures;/, 'labels, and the walk from face and control');
-  const cat = CATEGORIES.find((c) => c.id === 'enhanced');
-  assert.match(cat.blurb, /lives on the Features page now/);
-  assert.match(cat.blurb, /keeps the outdoors test door/);
+  assert.ok(!/function portRowsEnhanced\(|function featuresPointerRow\(/.test(menu), 'FT12: no category, no pointer - the rail has no Enhanced entry to point from');
+  assert.equal(CATEGORIES.find((c) => c.id === 'enhanced'), undefined, 'gone from the category map');
+  const test = menu.slice(menu.indexOf('function paneTest('), menu.indexOf('\n}', menu.indexOf('function paneTest(')));
+  assert.match(test, /outdoors\.append\(outdoorsTestRow\(\)\);/, 'the outdoors test door is the Test Room\'s');
   // the home holds every switch the category ever drew
   assert.deepEqual(featureCounts(FEATURES).enhanced, 7);
 });
