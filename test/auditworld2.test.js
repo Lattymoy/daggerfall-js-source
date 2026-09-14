@@ -76,7 +76,7 @@ test('AUDIT WORLD2 A: the relay - the budgets are one home and the byte gate spe
   await r2.raw(h, frame);
   assert.equal(ofType(j1, 'foes').length, 1); assert.equal(ofType(j2, 'foes').length, 1);
   assert.ok(r2.room._roomFoes && r2.room._roomFoes.bytes < FOES_ROOM_BYTES_PER_S - 2 * frame.length && r2.room._roomFoes.bytes > FOES_ROOM_BYTES_PER_S - 2 * (frame.length + 60), `A5: the fan cost the budget twice the frame (${FOES_ROOM_BYTES_PER_S - r2.room._roomFoes.bytes} for ${frame.length} x 2)`);
-  r2.room._roomFoes = { bytes: 10, at: Date.now() };   // the budget spent
+  r2.room._roomFoes = { bytes: 10, at: Date.now() + 1000 };   // the budget spent (AUDIT WORLD6b: stamped a second AHEAD - a refill of four kilobytes a millisecond made the pin a race under load)
   await r2.raw(h, frame.replace('"n":1', '"n":2'));
   assert.equal(ofType(j1, 'foes').length, 1, 'A5: over the budget - dropped'); assert.equal(h.closed, null, 'and no strike');
   r2.room._roomFoes = { bytes: 10, at: Date.now() - 1000 };   // a second on: refilled
@@ -85,9 +85,10 @@ test('AUDIT WORLD2 A: the relay - the budgets are one home and the byte gate spe
   // A6: the hit funnel onto the host's one socket is the room's to budget
   const hit = JSON.stringify({ t: 'hit', data: { i: 0, dmg: 1, kind: 'melee' } });
   await r2.raw(j1, hit); assert.equal(ofType(h, 'hit').length, 1);
-  r2.room._roomHits = { tokens: 0, at: Date.now() };
-  await r2.raw(j2, hit); assert.equal(ofType(h, 'hit').length, 1, 'A6: over the room\'s hit budget - dropped'); assert.equal(j2.closed, null, 'and no strike');
-  r2.room._roomHits = { tokens: 0, at: Date.now() - 1000 };
+  // AUDIT WORLD6b A1/A2: the funnel is the DESTINATION socket's own bucket (`hbucket` on its attachment), not the room's
+  r2.room._setAttach(h, { ...r2.room._attach(h), hbucket: { tokens: 0, at: Date.now() + 1000 } });   // through the relay's own door (the index caches the attachment); stamped ahead, no refill under load
+  await r2.raw(j2, hit); assert.equal(ofType(h, 'hit').length, 1, 'A6: over the host\'s hit budget - dropped'); assert.equal(j2.closed, null, 'and no strike');
+  r2.room._setAttach(h, { ...r2.room._attach(h), hbucket: { tokens: 0, at: Date.now() - 1000 } });
   await r2.raw(j2, hit); assert.equal(ofType(h, 'hit').length, 2, 'refilled: forwarded');
   assert.equal(HIT_ROOM_HZ_MAX, 60);
   // the header says the truth (A8)

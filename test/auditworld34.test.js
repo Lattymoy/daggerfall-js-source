@@ -244,7 +244,7 @@ test('AUDIT WORLD34 D4/D5: the relay names itself in /health; the session says t
   assert.deepEqual(lines, [`[online] room dungeon:m${PRIVATEERS_HOLD} - a shared world`, '[online] host bbbb-0002', '[online] room world:3,12 - shared country (each player\'s foes are everyone\'s)'], 'a cell says its room and no host (WORLD6b: and what it shares)');
   const menu = rd('src/ui/enhancedMenu.js');
   assert.doesNotMatch(menu, /el\('p', 'meta', 'Everyone runs their own game from their own save; you see each other and walk together\. Nothing else is shared yet\.'\)/, 'the pre-WORLD1 promise is gone');
-  assert.match(menu, /A dungeon is one shared world: its foes, doors, levers, platforms and every chest anyone has opened are the same for everyone in it, and it remembers\. A building is a shared world too: its doors, and every shelf and cupboard anyone has opened, are the same for everyone in it, and it remembers\. Towns and the open country share who is there and the creatures that find you: what one player meets, everyone sees and can fight\./);   // WORLD6a: the building joined the sentence; WORLD6b: the cell's foes
+  assert.match(menu, /A dungeon is one shared world: its foes, doors, levers, platforms and every chest anyone has opened are the same for everyone in it, and it remembers\. A building is a shared world too: its doors, and every shelf and cupboard anyone has opened, are the same for everyone in it, and it remembers\. Towns and the open country share who is there and the creatures that find you: what one player meets, everyone nearby sees and can help fight\./);   // WORLD6a: the building joined the sentence; WORLD6b: the cell's foes
 });
 
 test('AUDIT WORLD34: the record carries the root and the pins that enshrined it are turned', () => {
