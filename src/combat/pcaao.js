@@ -87,8 +87,8 @@ import { SHIELD_PARTS, isShieldTemplate, itemArmorValue } from '../systems/armor
 import { conditionPercentage, itemLongName } from '../systems/itemInfo.js';
 import { effectiveUnitWeightInKg } from '../systems/inventory.js';
 import { templateByIndex } from '../systems/itemTemplates.js';
-import { enchantArmorMod, enchantChanceToHitMod, isEnchantedItem, entityImprovedAdrenalineRush } from '../systems/enchantments.js';
-import { affixArmor } from '../systems/lootRarity.js';   // LR2: the port's armour affix, beside the enchantment channels the mod already reads
+import { enchantChanceToHitMod, isEnchantedItem, entityImprovedAdrenalineRush } from '../systems/enchantments.js';
+import { entityArmorMod } from '../systems/entityMods.js';   // RF1: the enchantment channels and the port's, one read
 import { getItemHands, ITEM_HANDS } from '../characters/equipTable.js';
 import { createWeapon } from './enemyEquipment.js';
 import {
@@ -317,7 +317,7 @@ export function pcaaoArmorToHit(target, struckBodyPart) {
   let result = 0;
   const values = target.armorValues ?? [];
   if (struckBodyPart <= values.length) result = values[struckBodyPart] ?? 0;
-  if (isPlayer(target)) result = 100 - enchantArmorMod(target) - affixArmor(target, struckBodyPart);   // LR2: the affix fold beside the channels PCAAO reads, the struck part's (LR4)
+  if (isPlayer(target)) result = 100 - entityArmorMod(target, struckBodyPart);   // RF1: Increased + Decreased, and the port's points on the struck part
   else if (isClassEnemy(target)) result = 60;
   return result;
 }

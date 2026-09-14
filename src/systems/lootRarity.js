@@ -28,11 +28,12 @@
 // weak as a comparison loop. The port's affixes are the numbers a
 // Diablo player compares two swords by: +damage%, +armour, +attribute,
 // +resistance, +skill, +carrying capacity. They ride an `affixes` list
-// on the item, folded onto the wearer at the equip seam
-// (computeAffixMods) and read at DFU's own read sites beside the
-// enchantment fold's channels (the hit formula's armour term, the
-// weapon damage roll, liveStat, skillValue, savingThrow,
-// entityMaxEncumbrance). They are NOT entries in `item.enchantments`:
+// on the item, folded onto the wearer as ONE of the entity's folds
+// (RF1: systems/entityMods.js - affixFold, registered there, summed
+// with every other fold at the equip seam and the magic round, and
+// read by DFU's formulas through one accessor per channel: the hit
+// formula's armour term, the weapon damage roll, liveStat, skillValue,
+// savingThrow, entityMaxEncumbrance). They are NOT entries in `item.enchantments`:
 // that list is FallExe's closed enum, and a foreign type in it would
 // make every DFU reader of the list (the value sum, the item maker,
 // the payload dispatcher's unknown-key abort) affix-aware. Two lists,
@@ -58,7 +59,8 @@
 // below, per mille, so the feel can be tuned without touching a roll.
 
 import { getPref } from './uiPrefs.js';
-import { addEquipChangeListener, armorBodyParts, equipTableOf } from './equip.js';   // LR2: the fold follows the worn set; LR4: the parts a piece covers, the foe's worn table
+import { armorBodyParts, equipTableOf } from './equip.js';   // LR4: the parts a piece covers, the foe's worn table
+import { registerEntityFold, registerWeaponDamageMod, newMods, EMPTY_MODS } from './entityMods.js';   // RF1: the fold is one of the entity's, read once per channel
 import { templateByIndex, itemBaseValue } from './itemTemplates.js';
 import { STAT_KEYS_ORDER } from './statMods.js';
 import { SKILL_NAMES, SKILL_COUNT } from './skills.js';
@@ -494,24 +496,23 @@ export function bestRarity(items) {
 }
 
 // ── the fold and its readers ───────────────────────────────────────
-const EMPTY_MODS = Object.freeze({ armorParts: Object.freeze([0, 0, 0, 0, 0, 0, 0]), weightMult: 0, stats: Object.freeze({}), skills: Object.freeze({}), resist: Object.freeze({}) });
-
 function wornItems(entity) {
   const slots = entity?.equip?.slots;
   if (slots) return slots.filter((it) => it && Array.isArray(it.affixes) && it.affixes.length);
   return (entity?.items ?? []).filter((it) => it && it.equipSlot != null && Array.isArray(it.affixes) && it.affixes.length);
 }
 
-/** The constant fold: every worn affix summed onto the wearer, cached
- *  on `entity._affixMods`. Written at every equip change (equip.js's
- *  listener) and every magic round (worldTick), so a switch press is
- *  felt within a round; with the switch off the fold is EMPTY_MODS and
- *  every reader answers 0. A weapon's damage affix is NOT folded - it
- *  is the weapon's own and read off the item in hand. */
-export function computeAffixMods(entity) {
-  if (!entity) return EMPTY_MODS;
-  if (!lootRarityOn()) { entity._affixMods = EMPTY_MODS; return EMPTY_MODS; }
-  const mods = { armorParts: [0, 0, 0, 0, 0, 0, 0], weightMult: 0, stats: {}, skills: {}, resist: {} };
+/** THE FOLD (RF1: one of the entity's, systems/entityMods.js): every
+ *  worn affix summed into one mods record - run by computeEntityMods
+ *  at every equip change (equip.js's listener; the save's
+ *  rebuildEquipState) and every magic round (worldTick), so a switch
+ *  press is felt within a round; with the switch off it answers
+ *  EMPTY_MODS and every channel reads 0. Pure over the entity. A
+ *  weapon's damage affix is NOT folded - it is the weapon's own,
+ *  registered below as a weapon-damage modifier. */
+export function affixFold(entity) {
+  if (!entity || !lootRarityOn()) return EMPTY_MODS;
+  const mods = newMods();
   for (const it of wornItems(entity)) {
     for (const a of it.affixes) {
       if (!validAffix(a)) continue;   // LR4: a malformed record off the wire folds nothing
@@ -529,29 +530,7 @@ export function computeAffixMods(entity) {
       }
     }
   }
-  entity._affixMods = mods;
   return mods;
-}
-export const affixModsOf = (entity) => entity?._affixMods ?? EMPTY_MODS;
-addEquipChangeListener(computeAffixMods);   // every equipItem/unequipItem, and the save's rebuildEquipState
-
-/** The armour term for ONE struck body part: points OFF a blow's
- *  chance to land there (the hit formula adds that part's armour
- *  value; this subtracts). */
-export const affixArmor = (entity, bodyPart) => affixModsOf(entity).armorParts?.[bodyPart] ?? 0;
-/** The paperdoll's number for a part runs the other way - a bonus reads positive. */
-export const affixArmorDisplay = (entity, bodyPart) => affixArmor(entity, bodyPart);
-export const affixStat = (entity, stat) => affixModsOf(entity).stats?.[stat] ?? 0;
-export const affixSkill = (entity, skillId) => affixModsOf(entity).skills?.[skillId] ?? 0;
-export const affixWeightMult = (entity) => affixModsOf(entity).weightMult;
-/** The saving-throw bonus for the elements a spell carries - the sum
- *  over every element named (the caller maps its EFFECT_FLAGS to the
- *  names), so a Fire+Frost spell meets both. */
-export function affixResist(entity, elements) {
-  const r = affixModsOf(entity).resist;
-  let out = 0;
-  for (const el of elements ?? []) if (r?.[el]) out += r[el];
-  return out;
 }
 /** The weapon's own damage affix over its rolled damage, truncated. */
 export function affixWeaponDamage(weapon, damage) {
@@ -559,6 +538,9 @@ export function affixWeaponDamage(weapon, damage) {
   const pct = weapon.affixes.reduce((n, a) => n + (a.id === 'damage' ? (a.value | 0) : 0), 0);
   return pct ? Math.trunc(damage * (1 + pct / 100)) : damage;
 }
+export const LOOT_RARITY_FOLD = 'lootRarity';
+registerEntityFold(LOOT_RARITY_FOLD, affixFold);
+registerWeaponDamageMod(LOOT_RARITY_FOLD, affixWeaponDamage);
 
 // ── the display ────────────────────────────────────────────────────
 /** IsIdentified as DFU derives it (tradeModes.itemIsIdentified): an

@@ -84,7 +84,8 @@ test('AUDIT WORLD6b-iii(c) A3/C2, A4/C10: a refused projection is not an empty g
   assert.equal(bobHits.at(-1).grant.length, 35, 'a part'); assert.equal(rat2.entity.items.length, 35, 'the rest stays');
   assert.equal(bob.foesFrame(true).f.find((r) => r.i === rat2.seq).o, 35, 'and the body still says so');
   // one item larger than a frame, a good one behind it
-  const fat = { ...one(), enchantments: Array.from({ length: 64 }, () => Object.fromEntries(Array.from({ length: 40 }, (_, i) => ['k' + i, 'x'.repeat(120)]))) };
+  // RF5: a DECLARED field's shape is closed (an enchantment is two integers), so the fat rides an UNDECLARED field, which the projection clamps but carries
+  const fat = { ...one(), notes: Array.from({ length: 64 }, () => Object.fromEntries(Array.from({ length: 40 }, (_, i) => ['k' + i, 'x'.repeat(120)]))) };
   assert.ok(JSON.stringify(validLootItem(fat)).length > 16 * 1024, 'the projection keeps it fat');
   const rat3 = await bob.spawnFoe(0, [12, 0, 12], { feetGiven: true });
   rat3.entity.items = [fat, one()];

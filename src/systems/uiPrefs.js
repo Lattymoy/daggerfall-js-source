@@ -12,6 +12,7 @@ const STORAGE_KEY = 'dagger.ui.v1';
 
 import { appStorage } from './appStorage.js';   // DA1: the storage seam
 import { onlineForcedPref } from './onlineLane.js';   // OL1: the online lane's forcing, read before the shelf
+import { FEATURE_PREF_DEFAULTS } from './features.js';   // RF4: the port's own switches, declared once on their rows
 
 export const PREF_DEFAULTS = Object.freeze({
   // PX30c: the enhanced HUD's scale. It lives HERE and not in DFU's
@@ -26,55 +27,6 @@ export const PREF_DEFAULTS = Object.freeze({
   // uiSkin.js rather than here - that module resolves the ?skin
   // override on top of this and is the one place the vocabulary lives.
   skin: 'enhanced',
-  // RA1 (Mac, 2026-08-28): THE ENHANCED SKY GETS ITS SWITCH. ES1 has
-  // been the enhanced skin's default sky since it landed, but the
-  // Enhanced pane still listed it "not built" with no control - a
-  // shipped enhancement wearing a hole's label, the exact thing the
-  // rail-hole law forbids. On = the procedural dome (sun, both moons
-  // on their real phases, stars, weather clouds); off = Daggerfall's
-  // own painted SKY*.DAT panorama under the same enhanced skin.
-  // ?sky=classic stays the URL door and forces the panorama either
-  // way (probe pins ride it).
-  // EE1: ENHANCED ENVIRONMENTS. The outdoors as ONE switch - the sky,
-  // the ground's sampling and surfaces, the cloud shadows, the grass,
-  // the weather (and, since CLK2, its evolution within the day) and the
-  // surface field - because they are one system:
-  // the sky lights the ground, the ground holds the weather's water,
-  // the grass stands in what the field says is there. Separate toggles
-  // would let a player build a state none of them was written for.
-  //
-  // It REPLACES proceduralSky, whose job it now contains. The old key
-  // stays ONLY so the migration below can read it: a player who turned
-  // the sky off gets environments off, because that is the choice they
-  // made about the only part of this that existed when they made it.
-  enhancedEnvironments: true,
-  // ENHANCED AI (2026-09-02, Mac): the navmesh-driven enemy motor. OFF
-  // by default and it stays off by default: DFU's classic motor is the
-  // 1:1 law, and this is the port's departure from it, opt-in exactly
-  // as EnhancedCombatAI is DFU's own opt-in departure from classic.
-  enhancedAI: false,
-  // ECV1: ENHANCED COMBAT VISUALS (2026-09-07, Mac). What the enhanced
-  // skin DRAWS for a state the rules already hold: a chameleoned foe
-  // shimmers, a shade is a silhouette, a hit on an unseen foe flashes
-  // it. On by default like the other enhanced visuals; the rules are
-  // untouched either way, and off (or the classic skin) takes DFU's
-  // renderer-disabled draw verbatim (systems/combatVisuals.js).
-  enhancedCombatVisuals: true,
-  // WATER1: ENHANCED WATER (2026-09-08, Mac: "develop proper water shader
-  // for the oceans/rivers/ponds"). A second pass over the terrain grid
-  // that shades every water tile as a surface - waves on the wind, the
-  // sky by Fresnel, the sun's glint, rain, the shore feathered. On by
-  // default like the other enhanced visuals; off (or the classic skin)
-  // draws the tile as DFU does. Kill door `?water=off` (render/waterSurface.js).
-  enhancedWater: true,
-  // LV1: LAND VIEW DISTANCE, ENHANCED (2026-09-12, Mac: "push the draw
-  // distance as far as we can push it while keeping performance
-  // perfect"). The streamed grid's radius in map pixels on the enhanced
-  // lane, 1..6 (world/landView.js) - DFU's own Land View Distance stays
-  // the 1:1 lane's and its 1..4 range. Every ring past the second is
-  // strided 4x (EV4) and draws only its tall and moving flats (MAC1),
-  // so the added land is the cheap kind; the fog end scales with it.
-  landViewDistance: 5,
   // ONLINE1 (2026-09-12): the Online door's two fields - the name over the
   // player's head and the relay to join (net/online.js DEFAULT_SERVER when empty).
   onlineName: '',
@@ -107,21 +59,18 @@ export const PREF_DEFAULTS = Object.freeze({
   // on for a probe; this is the player's own switch on the Enhanced
   // pane. Off by default - a number over the game is a diagnostic.
   showFps: false,
-  // LR1 (2026-09-14, Mac: "transform things into a diablo style system
-  // with rarity"): LOOT RARITY - the port's own item ladder over
-  // Daggerfall's loot (systems/lootRarity.js). OFF by default and it
-  // stays off by default, as enhancedAI is: it changes the RULES of
-  // what drops, and DFU's loot is the 1:1 law; the online lane forces
-  // it on with every other enhancement (OL1).
-  lootRarity: false,
-  // PERF1 (2026-09-11, RookieG via Mac: "its like 45fps on the outside").
-  // The two dials on the enhanced outdoors' heaviest layers, so a
-  // player whose machine cannot hold the full field can keep the lane.
-  // Both take effect when the world next loads (the grass field is
-  // baked per world, the cloud march built at boot).
-  grassDensity: 1,           // a fraction of the lab's 1.2 million blades over the 420 m window: 1, 0.5, 0.25, or 0 for none
-  cloudQuality: 'default',   // volumetricClouds.js QUALITY: 'lo' | 'default' | 'hi'
   proceduralSky: true,   // LEGACY: read only by the migration in loadPrefs
+  // RF4 (2026-09-14, Mac's refactor pass, the fourth): THE PORT'S OWN
+  // FEATURE SWITCHES ARE DECLARED ONCE, ON THEIR ROWS. The Features
+  // registry (systems/features.js) is the one declaration of an
+  // enhanced switch - its default (`initial`) and the online lane's
+  // answer (`online`) ride the row beside its title and note - and
+  // this shelf takes the defaults from it: enhancedEnvironments,
+  // enhancedAI, enhancedCombatVisuals, enhancedWater, landViewDistance,
+  // grassDensity, cloudQuality, lootRarity. The prose each carried here
+  // (RA1/EE1, the AI, ECV1, WATER1, LV1, PERF1, LR1) is the row's note
+  // now. Adding a switch is one row; nothing here.
+  ...FEATURE_PREF_DEFAULTS,
   textScale: 0,        // 0 = normal, 1 = large (buys a whole scale step)
   category: 'game',
   open: {},            // "video:stored" -> true

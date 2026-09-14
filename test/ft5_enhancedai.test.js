@@ -25,7 +25,7 @@ test('FT5: the registry row - Enhanced only, over the pref, off by default, soun
   const f = FEATURES.find((x) => x.id === 'enhanced-ai');
   assert.ok(f);
   assert.deepEqual(f.kinds, ['enhanced'], 'the port\'s own; DFU\'s EnhancedCombatAI is a different thing and wears no label here');
-  assert.deepEqual(f.control, { store: 'prefs', key: 'enhancedAI' });
+  assert.deepEqual(f.control, { store: 'prefs', key: 'enhancedAI', initial: false, online: true });   // RF4: the row declares its default and the lane's answer
   assert.equal(PREF_DEFAULTS.enhancedAI, false, 'off by default: the classic motor is the 1:1 law');
   assert.equal(f.effect, 'Takes effect on the next dungeon you enter.');
   assert.deepEqual(checkFeature(f), []);

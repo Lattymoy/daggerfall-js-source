@@ -5493,6 +5493,125 @@ seams, each passing every pin around it:
    the Test Room's "Ride out" is the door to look through on a machine
    that has it. `test/hc1_horsecart.test.js`.
 
+### RF6 - THE ENHANCED SKIN READS THE ONE NAME RESOLVER (2026-09-14, Mac's refactor pass, the sixth)
+
+`src/systems/itemInfo.js` itemNameParts answers ResolveItemLongName's
+two parts - the material prefix and the rest - in DFU's arm order,
+once; itemLongName is their join. The enhanced inventory's line, the
+loot plaque, the wear notices and the HUD's held-weapon plaque read it
+instead of re-deriving the arms (and losing four: arrow, helm setting,
+artifact, Legendary; potion %po, plant variant, soul suffix, letter
+signoff). The record is the UI arc's: `bible/10-UI/UI-Arc.md` RF6.
+`test/rf6_itemnames.test.js` (3).
+
+### RF5 - THE ITEM FIELD SCHEMA (2026-09-14, Mac's refactor pass, the fifth)
+
+An item record is an open shape and the knowledge of what each field
+IS lived only in its readers: the wire's validator (`src/systems/loot.js`
+validLootItem) typed a record as "primitives, arrays and plain objects,
+bounded" and carried the exceptions by hand - the three array fields of
+AUDIT WORLD4 B1, LR4's affix check, the templateIndex bounds - so every
+field the port departs from DFU with (LR1's `rarity`, `affixes`,
+`legendary`) was another hand line there, or none and the next frozen
+tab. `src/systems/itemFields.js` now declares every field once - kind
+(int with bounds, number, bool, bounded string, enum, array with an
+element check, object with a record check) - for DFU's own fields
+(the factories', the classic importer's, equip's slot, the repair
+ticket, the quest link) and the port's (rarity's three). The validator
+checks every DECLARED field against it (`validItemFields`), the array
+list is DERIVED from the kinds (`LOOT_ARRAY_FIELDS`), and the string
+bound is the schema's. What is unchanged on purpose: a field nobody
+declared still rides the bounded clamp (refusing it would be a
+behaviour change, not a refactor), a non-finite price is dropped before
+the kinds and floored at the template's (AUDIT WORLD6a B1), and the
+look's six fields on the hello keep their own clamp-not-refuse contract
+in the net leaf (`src/net/wire.js` validLookItem) - pinned as a subset
+of the declaration. Every mint the port has is run under the pin: no
+undeclared key, every value its kind. `test/rf5_itemfields.test.js` (3).
+
+### RF4 - ONE FEATURE DECLARATION (2026-09-14, Mac's refactor pass, the fourth)
+
+The Features row is the one declaration of the port's own switches -
+`initial` and `online` ride it, the uiPrefs shelf and the online lane
+derive theirs, and the registry sits under the stores with the
+condensed rows' lanes registering themselves. The record is the
+Features arc's: `bible/10-UI/Features-Arc.md` RF4.
+`test/rf4_featuredecl.test.js` (3).
+
+### RF3 - THE CITE TOOL LEARNS THE THREE HAND CASES (2026-09-14, Mac's refactor pass, the third)
+
+Every merge of the loot-rarity slice ended with a person re-aiming
+the same three kinds of cite by hand, and the tax fell on every slice,
+parity or not. `tools/citeShift.mjs` carries them now. (1) BARE
+CONTINUATIONS MOVE: a `:N`, `/:N`, `/N`, `, :N` or `(:N` after a cite
+into the target, up to the next cite of ANY file - a `.cs:N` included,
+so a C# `(:N)` after `SerializablePlayer.cs:421` is the C#'s - belongs
+to that cite and moves under the same content check; citeMerge had
+done this since CS2 and citeShift only reported them, so the two
+regexes are one law now, exported from citeShift (`ANY_CITE`,
+`CONTINUATION`) and imported by citeMerge. (2) A TEST'S ESCAPED
+LITERAL FOLLOWS THE ROW IT PINS: `world\.js:3808` in citedrift.test.js
+is a quote of a Ledger row's text; the row is STRUCK and its number
+held, and the literal used to move anyway, parting the pin from its
+row at every shift. The CLI plans every doc first, learns which
+numbers the docs carry on struck lines only, and holds the escaped
+spelling for those (`pinned-struck`); `--struck` moves both. (3) THE
+TOOLS' OWN FIXTURES ARE NOT DOCS: the header's and the two pin files'
+synthetic cites were rewritten on every run and restored by hand;
+`SELF_DOCS` are skipped by both tools. `test/citeshift.test.js` (7);
+the citemerge pins unchanged. What it still cannot do stands in the
+header: a continuation wrapped onto the line BELOW its prose name
+(chargenSession's `overlayHover` `(:N)`, which CD8 gates), the
+Port-Status row identifiers, and one run per base.
+
+### RF2 - THE ONE ENEMY-LOOT SEAM (2026-09-14, Mac's refactor pass, the second)
+
+Four hosts stood the same four lines each - GenerateItems on the
+player's level and gender (EnemyEntity.cs:328), equipEnemy, the
+map/potion/recipe trio (:388-397), loot rarity's roll - the dungeon's
+two spawn arms, the exterior foes, the watch; the first departure from
+DFU's rules had to visit all four and the next would have too.
+`hostCombat.spawnEnemyLoot(entity, mobileType, basics, player, {rolls})`
+is the one seam: SetEnemyCareer's chain in DFU's order, the port's arm
+after it (the corpse door, LR4), one call per host; `rolls` is the
+host's stream for the trio and the rarity roll (the exterior pool's
+injectable one; a puppet stands with an empty list and never comes
+here), the table roll itself on Math.random as UnityEngine.Random is,
+as every host passed before - no behaviour moved. The dungeon's dead
+deps-bag `generateItems` entry went with its one reader. A loot
+feature lands in the seam now, not in four hosts. AUDIT 24 wave 43's
+order pin reads the seam; the LR host pins read the calls.
+`test/rf2_spawnloot.test.js` (3).
+
+### RF1 - ENTITY MODIFIER CHANNELS (2026-09-14, Mac: "is there anything in the codebase that can benefit from a refactor. This is our first time going against parity with DFU ... Lets tackle each one at a time")
+
+The first of the refactors the loot-rarity slice showed the need
+for. LR1-LR4 had to add a term of its own INSIDE five DFU-verbatim
+formulas beside the enchantment fold's - the hit formula's armour
+line, PCAAO's copy of it, the weapon damage roll, liveStat,
+skillValue, the saving throw and the carrying capacity - two
+producers and two reads at every site, and the next departure a
+third. `src/systems/entityMods.js` is the one home now: every
+producer of a modifier is a FOLD (`fn(entity) -> mods` over the
+channels armorParts[7], stats, skills, resist, weightMult; and a
+weapon-damage modifier over the item in hand) registered by name,
+run together by `computeEntityMods` at the two seams a worn set
+changes (equip.js's listener, which the save's rebuild also runs;
+the magic round after DFU's own enchant fold) and summed onto ONE
+field, `entity._mods`. Each formula reads ONE accessor per channel
+(`entityArmorMod`, `entityArmorDisplayMod`, `entitySkillMod`,
+`entityStatMod`, `entityWeightMult`, `entityResistMod`,
+`weaponDamageMods`), and the accessor adds DFU's own enchantment
+channel, kept verbatim in enchantments.js with its min-set quirks;
+statMods.js and skills.js stay import-free leaves reading the field.
+Loot rarity is the first fold (`affixFold`, `affixWeaponDamage`,
+registered under `LOOT_RARITY_FOLD`); its own readers are gone. Off
+is DFU exactly: no fold, or every fold empty, and every accessor
+answers the enchantment channel alone. A fold that throws is skipped
+and logged, never a frame lost. `test/rf1_entitymods.test.js` (5);
+the LR pins read through the channels; AUDIT 24 wave 28's and AUDIT
+26 F122's regexes re-aimed at the one read.
+
 ### LR1-LR3 - LOOT RARITY, THE PORT'S OWN ITEM LADDER (2026-09-14, Mac: "transform things into a diablo style system with rarity ... the most detailed and best that it can be")
 
 ENHANCED, built in house, one row on the Features home, off by

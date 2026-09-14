@@ -64,7 +64,7 @@ test('LV1: the enhanced lane streams its own radius - 5 by default, 6 at most - 
   assert.equal(landViewDistance({ enhanced: true, pref: 'x', setting: 3 }), LAND_VIEW_DEFAULT, 'a bad pref is the default');
   assert.equal(landViewDistance({ enhanced: true, pref: 0, setting: 3 }), 1);
   assert.deepEqual(LAND_VIEW_TIERS.map(([v]) => v), [1, 2, 3, 4, 5, 6], 'FT2: DFU\'s whole 1..4 and the enhanced 5..6 - the one row names any value either lane holds');
-  assert.match(read('src/systems/uiPrefs.js'), /landViewDistance: 5,/);
+  assert.match(read('src/systems/features.js'), /key: 'landViewDistance', initial: 5, online: 'player'/, 'RF4: declared on its row; the shelf derives it');
   const world = read('src/scenes/world.js');
   assert.match(world, /const fogDistance = landViewRead\(\);/, 'ONE read for the fog scale and the grid (FT2: the module\'s)');
   assert.match(world, /new StreamingWorldState\(fogDistance\)/);

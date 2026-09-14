@@ -24,7 +24,7 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join, basename, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { hunksFromDiff, lineMap, citeSpellings } from './citeShift.mjs';
+import { hunksFromDiff, lineMap, citeSpellings, ANY_CITE, CONTINUATION, SELF_DOCS } from './citeShift.mjs';   // RF3: one law for the continuations, and the tools' own fixtures skipped
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -36,10 +36,6 @@ export function provenance(line, theirs, ours) {
   return theirs?.has(line) ? 'theirs' : ours?.has(line) ? 'ours' : null;
 }
 
-/** A cite of any file on a line - where the continuations after one cite
- *  stop belonging to it. */
-const ANY_CITE = /(?<![\w/])(?:[\w./-]*\/)?[\w.-]+\\?\.(?:js|mjs|md|sh):\d+|(?:Port-Ledger row|Ledger rows?|ledger rows?) `?:\d+/g;
-const CONTINUATION = /(`:|\/:|\/|, :)(\d+)(?:-(\d+))?(?=[`'\s,;:)./-]|$)/g;
 
 /**
  * Move one line's cites into `t` (the primary spellings and the bare
@@ -105,7 +101,7 @@ function main(argv) {
   }
   const linesOf = (base, doc) => { try { return new Set(git('show', `${base}:${doc}`).split('\n')); } catch { return null; } };
   let moved = 0, held = 0, news = 0;
-  for (const doc of git('ls-files', 'bible', 'test', 'src', 'tools').split('\n').filter((f) => /\.(js|mjs|md|sh)$/.test(f))) {
+  for (const doc of git('ls-files', 'bible', 'test', 'src', 'tools').split('\n').filter((f) => /\.(js|mjs|md|sh)$/.test(f) && !SELF_DOCS.includes(f))) {   // RF3
     const lines = readFileSync(join(ROOT, doc), 'utf8').split('\n');
     const theirs = linesOf(THEIRS, doc), ours = linesOf(OURS, doc);
     let changed = false;

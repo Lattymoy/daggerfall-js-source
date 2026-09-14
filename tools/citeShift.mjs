@@ -29,11 +29,33 @@
 // struck row - and moved only under --struck, which the gated ones
 // (citedrift CD4/CD5) sometimes need.
 //
-// WHAT IT CANNOT DO, said plainly:
-//   - BARE CONTINUATIONS. "`world.js:1898`, `:1667`" - the second number
-//     is a cite too, but so is the C# `:524-525` on the next line. They
-//     are REPORTED with their mapped value and never applied; a person
-//     reads the line.
+// RF3 (2026-09-14, Mac's refactor pass, the third): THE THREE CASES A
+// PERSON RE-AIMED BY HAND AT EVERY MERGE OF THE LOOT-RARITY SLICE, now
+// the tool's:
+//   - BARE CONTINUATIONS ARE MOVED. "`world.js:4371/:4384`",
+//     "`dungeonContext.js:5339/:5345`", "(cityGuards.js:757) ... (:939)",
+//     "`world.js:1898`, `:1667`" - a `:N`, `/:N`, `/N`, `, :N` or `(:N`
+//     after a cite into the target, up to the next cite of ANY file
+//     (a `.cs:N` included), belongs to that cite. citeMerge moved them
+//     under the content check since CS2; citeShift only reported them,
+//     and every slice paid for the difference. One law now, exported
+//     from here (ANY_CITE, CONTINUATION) and imported there.
+//   - A TEST'S ESCAPED LITERAL FOLLOWS THE ROW IT PINS. `world\\.js:3808`
+//     inside test/citedrift.test.js is a quote of a Ledger row's text.
+//     When that row is STRUCK the row's number is held (below) - and
+//     the literal used to move anyway, so the pin and its row parted
+//     at every shift. The escaped spelling is held whenever the target
+//     number appears in the docs ONLY on struck lines (holdEscaped).
+//   - THE TOOL'S OWN FIXTURES ARE NOT DOCS. This file's header and the
+//     two pin files carry example cites (`world.js:1861`) that are
+//     synthetic; they were rewritten on every run and restored by hand.
+//     SELF_DOCS are skipped.
+//
+// WHAT IT STILL CANNOT DO, said plainly:
+//   - A CONTINUATION ON THE NEXT LINE. A wrapped docstring that names the
+//     file in prose ("dungeonContext's `overlayHover`") and puts "(:5623)"
+//     on the line below carries no cite on that line to belong to; the
+//     gated pin (citedrift CD8) is the catch, and a person re-aims it.
 //   - THE PORT-STATUS ROW IDENTIFIERS. Section 2's `**\`:601\`** the
 //     classic .SAV reader` headers name Ledger rows by number alone.
 //     Reported when the Ledger is a target; citedrift's CD3 resolves
@@ -48,7 +70,7 @@
 // Usage:
 //   node tools/citeShift.mjs                    # list what moved (exit 1 if anything did)
 //   node tools/citeShift.mjs --apply            # rewrite the verified moves on unstruck lines
-//   node tools/citeShift.mjs --apply --struck   # ...and on struck lines too
+//   node tools/citeShift.mjs --apply --struck   # ...and on struck lines too (and the test literals that quote them)
 //   node tools/citeShift.mjs --base <ref>       # map from another base (default HEAD)
 //   node tools/citeShift.mjs --target <path>    # one target only (repeatable)
 import { execFileSync } from 'node:child_process';
@@ -58,6 +80,15 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const LEDGER = 'bible/01-Overview/Port-Ledger.md';
+/** RF3: the cite tools and their pin files carry SYNTHETIC cites - never docs. */
+export const SELF_DOCS = Object.freeze(['tools/citeShift.mjs', 'tools/citeMerge.mjs', 'test/citeshift.test.js', 'test/citemerge.test.js']);
+
+/** A cite of any file on a line - where the continuations after one cite
+ *  stop belonging to it. A C# cite stops them too (RF3: the `.cs` arm),
+ *  so "(:N)" after `SerializablePlayer.cs:421` is the C#'s, not ours. */
+export const ANY_CITE = /(?<![\w/])(?:[\w./-]*\/)?[\w.-]+\\?\.(?:js|mjs|md|sh|cs):\d+|(?:Port-Ledger row|Ledger rows?|ledger rows?) `?:\d+/g;
+/** The bare continuations after a cite: `:N, /:N, /N, `, :N` and (RF3) `(:N`. */
+export const CONTINUATION = /(`:|\/:|\/|, :|\(:)(\d+)(?:-(\d+))?(?=[`'\s,;:)./-]|$)/g;
 
 // ---- the pure half (pinned in test/citeshift.test.js) ---------------------
 
@@ -104,33 +135,54 @@ export function citeSpellings(target) {
 }
 
 /**
- * Plan the moves for one target over one doc's text.
- * @returns [{line, col, text, from:[a,b|null], to:[a',b'|null], status}]
- *   status: 'move' | 'struck' | 'inside' | 'mismatch' | 'same'
+ * Plan the moves for one target over one doc's text: the primary
+ * spellings, and (RF3) the bare continuations after each primary up to
+ * the next cite of any file, each under the same content check.
+ * @param holdEscaped  (RF3) target numbers whose escaped test literal
+ *   must stay - the docs carry them on struck lines only (see the CLI).
+ * @returns [{line, col, text, from:[a,b|null], to:[a',b'|null], status, spelling, kind}]
+ *   status: 'move' | 'struck' | 'inside' | 'mismatch' | 'same' | 'pinned-struck'
+ *   spelling: 'path' | 'escaped' | 'ledger'; kind: 'cite' | 'cont'
  */
-export function planDoc({ docText, target, oldLines, newLines, map, moveStruck = false }) {
+export function planDoc({ docText, target, oldLines, newLines, map, moveStruck = false, holdEscaped = null }) {
   const plan = [];
   const lines = docText.split('\n');
-  for (const re of citeSpellings(target)) {
-    lines.forEach((l, i) => {
+  const same1 = (x, y) => x != null && y != null && x.trim() === y.trim();
+  const verdict = (l, a, b, spelling) => {
+    const ma = map(a), mb = b != null ? map(b) : null;
+    if (ma === a && (b == null || mb === b)) return { status: 'same', ma, mb };
+    if (ma == null || (b != null && mb == null)) return { status: 'inside', ma, mb };
+    // the same text on both sides, and a line that EXISTS on both -
+    // a cite past the end of a file is a mismatch, not two empties
+    const ok = same1(oldLines[a - 1], newLines[ma - 1]) && (b == null || same1(oldLines[b - 1], newLines[mb - 1]));
+    if (!ok) return { status: 'mismatch', ma, mb };
+    if (/~~/.test(l) && !moveStruck) return { status: 'struck', ma, mb };
+    if (spelling === 'escaped' && holdEscaped?.has(a)) return { status: 'pinned-struck', ma, mb };
+    return { status: 'move', ma, mb };
+  };
+  const spellings = citeSpellings(target).map((re, i) => [re, i === 0 ? 'path' : i === 1 ? 'escaped' : 'ledger']);
+  lines.forEach((l, i) => {
+    const spans = [];
+    for (const [re, spelling] of spellings) {
       for (const m of l.matchAll(re)) {
         const a = +m[1], b = m[2] ? +m[2] : null;
-        const ma = map(a), mb = b != null ? map(b) : null;
-        const same = ma === a && (b == null || mb === b);
-        const rec = { line: i + 1, col: m.index, text: m[0], from: [a, b], to: [ma, mb] };
-        if (same) { plan.push({ ...rec, status: 'same' }); continue; }
-        if (ma == null || (b != null && mb == null)) { plan.push({ ...rec, status: 'inside' }); continue; }
-        // the same text on both sides, and a line that EXISTS on both -
-        // a cite past the end of a file is a mismatch, not two empties
-        const same1 = (x, y) => x != null && y != null && x.trim() === y.trim();
-        const ok = same1(oldLines[a - 1], newLines[ma - 1])
-          && (b == null || same1(oldLines[b - 1], newLines[mb - 1]));
-        if (!ok) { plan.push({ ...rec, status: 'mismatch' }); continue; }
-        if (/~~/.test(l) && !moveStruck) { plan.push({ ...rec, status: 'struck' }); continue; }
-        plan.push({ ...rec, status: 'move' });
+        const v = verdict(l, a, b, spelling);
+        plan.push({ line: i + 1, col: m.index, text: m[0], from: [a, b], to: [v.ma, v.mb], status: v.status, spelling, kind: 'cite' });
+        spans.push(m.index + m[0].length);
       }
-    });
-  }
+    }
+    if (!spans.length) return;
+    // RF3: a continuation belongs to the cite just before it, up to the next cite of ANY file
+    const stops = [...l.matchAll(ANY_CITE)].map((m) => m.index);
+    for (const from of spans.sort((x, y) => x - y)) {
+      const to = stops.find((x) => x >= from) ?? l.length;
+      for (const m of l.slice(from, to).matchAll(CONTINUATION)) {
+        const a = +m[2], b = m[3] ? +m[3] : null;
+        const v = verdict(l, a, b, 'path');
+        plan.push({ line: i + 1, col: from + m.index, text: m[0], from: [a, b], to: [v.ma, v.mb], status: v.status, spelling: 'path', kind: 'cont' });
+      }
+    }
+  });
   return plan;
 }
 
@@ -151,21 +203,14 @@ export function applyPlan(docText, plan) {
   return lines.join('\n');
 }
 
-/** The bare continuations on a line that carries a cite into `target`:
- *  the `` `:N` `` tokens after it, with their mapped values. Reported only. */
-export function continuations(docText, target, map) {
-  const out = [];
-  const [pathRe] = citeSpellings(target);
-  docText.split('\n').forEach((l, i) => {
-    const first = [...l.matchAll(pathRe)][0];
-    if (!first) return;
-    const rest = l.slice(first.index + first[0].length);
-    for (const m of rest.matchAll(/`:(\d+)(?:-(\d+))?`/g)) {
-      const a = +m[1]; const ma = map(a);
-      if (ma !== a) out.push({ line: i + 1, text: m[0], from: a, to: ma });
-    }
-  });
-  return out;
+/** The bare continuations a plan found (RF3: they are plan entries of
+ *  kind 'cont' now, moved under the content check like any cite; this
+ *  is the view of them the old report printed). */
+export function continuations(docText, target, map, extra = {}) {
+  const oldLines = extra.oldLines ?? [], newLines = extra.newLines ?? [];
+  return planDoc({ docText, target, oldLines, newLines, map, ...extra })
+    .filter((p) => p.kind === 'cont' && p.status !== 'same')
+    .map((p) => ({ line: p.line, text: p.text, from: p.from[0], to: p.to[0], status: p.status }));
 }
 
 // ---- the CLI --------------------------------------------------------------
@@ -179,7 +224,7 @@ function main(argv) {
   const git = (...args) => execFileSync('git', args, { cwd: ROOT, encoding: 'utf8' });
   const changed = git('diff', '--name-only', base, '--', 'src', 'bible', 'test', 'tools').split('\n').filter(Boolean);
   const targets = (only.length ? only : changed).filter((f) => /\.(js|mjs|md)$/.test(f));
-  const docs = git('ls-files', 'bible', 'test', 'src', 'tools').split('\n').filter((f) => /\.(js|mjs|md|sh)$/.test(f));
+  const docs = git('ls-files', 'bible', 'test', 'src', 'tools').split('\n').filter((f) => /\.(js|mjs|md|sh)$/.test(f) && !SELF_DOCS.includes(f));   // RF3: the tools' own fixtures are not docs
   let moved = 0, applied = 0, held = 0;
   for (const target of targets) {
     const hunks = hunksFromDiff(git('diff', '-U0', base, '--', target));
@@ -188,18 +233,31 @@ function main(argv) {
     let oldLines; try { oldLines = git('show', `${base}:${target}`).split('\n'); } catch { continue; }   // a new file cites nothing yet
     if (!existsSync(join(ROOT, target))) continue;   // MAC5 (the water revert): a target the change DELETED has no lines to land on; its cites are the record's to strike
     const newLines = readFileSync(join(ROOT, target), 'utf8').split('\n');
+    // RF3, pass one: plan every doc, and learn which numbers the docs
+    // carry on STRUCK lines only - a test's escaped literal of one of
+    // those is a quote of the struck row and must stay with it.
+    const plans = new Map();
+    const struckNums = new Set(), movedNums = new Set();
     for (const doc of docs) {
       if (doc === target) continue;
       const text = readFileSync(join(ROOT, doc), 'utf8');
-      const plan = planDoc({ docText: text, target, oldLines, newLines, map, moveStruck }).filter((p) => p.status !== 'same');
-      const cont = continuations(text, target, map);
-      if (!plan.length && !cont.length) continue;
+      const plan = planDoc({ docText: text, target, oldLines, newLines, map, moveStruck });
+      plans.set(doc, { text, plan });
       for (const p of plan) {
-        const arrow = `${p.text} -> ${p.to[0]}${p.from[1] != null ? '-' + p.to[1] : ''}`;
+        if (p.spelling === 'escaped') continue;
+        if (p.status === 'struck') struckNums.add(p.from[0]);
+        else if (p.status === 'move') movedNums.add(p.from[0]);
+      }
+    }
+    const holdEscaped = new Set([...struckNums].filter((n) => !movedNums.has(n)));
+    for (const [doc, { text }] of plans) {
+      const plan = planDoc({ docText: text, target, oldLines, newLines, map, moveStruck, holdEscaped }).filter((p) => p.status !== 'same');
+      if (!plan.length) continue;
+      for (const p of plan) {
+        const arrow = `${p.text} -> ${p.to[0]}${p.from[1] != null ? '-' + p.to[1] : ''}${p.kind === 'cont' ? ' (a continuation)' : ''}`;
         if (p.status === 'move') { moved++; console.log(`  ${apply ? 'moved  ' : 'MOVE   '} ${doc}:${p.line}  ${arrow}`); }
         else { held++; console.log(`  ${p.status.toUpperCase().padEnd(8)} ${doc}:${p.line}  ${p.status === 'inside' ? p.text + ' (inside an edited hunk)' : arrow}`); }
       }
-      for (const c of cont) { held++; console.log(`  CONTIN.  ${doc}:${c.line}  ${c.text} -> ${c.to ?? 'inside'} (a bare continuation - read the line)`); }
       if (apply) { const out = applyPlan(text, plan); if (out !== text) { writeFileSync(join(ROOT, doc), out); applied += plan.filter((p) => p.status === 'move').length; } }
     }
   }
