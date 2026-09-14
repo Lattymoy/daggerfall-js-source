@@ -209,6 +209,7 @@ export function createSkyController(gl, params) {
   const clouds = enhancedLane && cloudsDoor !== 'off'
     ? new VolumetricClouds(gl, Object.hasOwn(CLOUD_QUALITY, cloudsDoor) ? cloudsDoor : (Object.hasOwn(CLOUD_QUALITY, getPref('cloudQuality')) ? getPref('cloudQuality') : 'default'), [0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight]) : null;
   if (clouds && enhancedSky) enhancedSky.cloudsExternal = true;
+  if (clouds) clouds.testCellSpec = params.get('cloudcell');   // WEATHER2c: `?cloudcell=<weather>[,<ahead>[,<radius>]]` - one static cell, for the eye and the probe
   const dynamicSky = dynamicOn ? new DynamicSkiesRenderer(gl) : null;
   if (clouds && dynamicSky) dynamicSky.cloudsExternal = true;
   // PS3 (Mac: "there's these progressing circles in the sky when I want it
@@ -541,7 +542,7 @@ export function createSkyController(gl, params) {
           // the MOD's horizon; and the ground's deck takes their shadow.
           if (clouds) {
             clouds.setState(cloudsStateUnderMod(st, dynamicMoons, { minuteOfDay, weather: weatherName, classicMinutes: nowMinutes, seconds, drift: driftXZ, row: weatherRowNow }),
-              weatherRowNow, weatherName, easeDt, driftXZ, extra?.flash ?? 0, extra?.pos ?? null);
+              weatherRowNow, weatherName, easeDt, driftXZ, extra?.flash ?? 0, extra?.pos ?? null, extra?.cells ?? null);   // WEATHER2c: the field's cells
             if (clouds.shadow) Object.assign(dynamicDeck, clouds.shadow);
           }
           return;
@@ -557,7 +558,7 @@ export function createSkyController(gl, params) {
         // VC3: the clouds take the dome's state, the SAME eased row and
         // the SAME front-stretched ease dt (their profile eases on it),
         // the one drift integral, and the host's lightning flash.
-        clouds?.setState(enhancedSky.state, weatherRowNow, weatherName, easeDt, driftXZ, extra?.flash ?? 0, extra?.pos ?? null);
+        clouds?.setState(enhancedSky.state, weatherRowNow, weatherName, easeDt, driftXZ, extra?.flash ?? 0, extra?.pos ?? null, extra?.cells ?? null);   // WEATHER2c: the field's cells
         // VC4: the ground's deck carries the slab's own shadow map and its square
         if (clouds?.shadow) Object.assign(enhancedSky.cloudShadow, clouds.shadow);
         return;
