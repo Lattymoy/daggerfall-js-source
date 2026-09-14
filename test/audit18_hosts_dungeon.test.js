@@ -162,12 +162,14 @@ test('audit18: the five equipment-using monsters are equipped', { skip: skipReal
 test('audit18 sweep: all three spawn sites run the one shared equip chain', () => {
   const dungeon = hostSrc('dungeonContext.js');
   const guards = hostSrc('cityGuards.js');
-  assert.equal((dungeon.match(/\bequipEnemy\(/g) ?? []).length, 2, 'class + monster branch');
-  assert.equal((guards.match(/\bequipEnemy\(/g) ?? []).length, 1, 'the city watch');
+  // RF2: the equip chain rides the ONE enemy-loot seam (hostCombat.spawnEnemyLoot) - a host calls that, once per branch
+  assert.equal((dungeon.match(/\bspawnEnemyLoot\(/g) ?? []).length, 2, 'class + monster branch');
+  assert.equal((guards.match(/\bspawnEnemyLoot\(/g) ?? []).length, 1, 'the city watch');
   for (const [name, src] of allHosts()) {
     if (name === 'hostCombat.js') continue;   // the one shared home
-    assert.equal(/assignEnemyEquipment\(/.test(src), false, `${name} keeps a private copy of the equip chain`);
+    assert.equal(/assignEnemyEquipment\(|\bequipEnemy\(/.test(src), false, `${name} keeps a private copy of the equip chain`);
   }
+  assert.match(hostSrc('hostCombat.js'), /^  equipEnemy\(entity, mobileType, player\.level\);$/m, 'the seam runs the shared chain');
 });
 
 // ---------------------------------------------------------------
@@ -526,9 +528,11 @@ test('audit18 sweep: enemy cast cost is priced off the PLAYER skills', () => {
 });
 
 test('audit18 sweep: enemy loot rolls the PLAYER gender at both dungeon spawn sites', () => {
+  // RF2: both arms hand the PLAYER entity to the one seam, whose table roll reads its gender
   const src = hostSrc('dungeonContext.js');
-  assert.equal((src.match(/gender: D\.playerEntity\.gender/g) ?? []).length, 2);
+  assert.equal((src.match(/spawnEnemyLoot\(entity, e\.mobileType, basics, D\.playerEntity\)/g) ?? []).length, 2);
   assert.equal(/generateItems\([^)]*gender: e\.gender/.test(src), false);
+  assert.match(hostSrc('hostCombat.js'), /generateItems\(basics\?\.lootTableKey \?\? '-', \{ level: player\.level, gender: player\.gender \}\)/, 'the PLAYER\'s gender, LootTables.cs:212/:229/:237');
 });
 
 test('audit18 sweep: the swing fatigue and the tally arm are wired into the dungeon rig', () => {

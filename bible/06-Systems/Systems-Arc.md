@@ -5493,6 +5493,25 @@ seams, each passing every pin around it:
    the Test Room's "Ride out" is the door to look through on a machine
    that has it. `test/hc1_horsecart.test.js`.
 
+### RF2 - THE ONE ENEMY-LOOT SEAM (2026-09-14, Mac's refactor pass, the second)
+
+Four hosts stood the same four lines each - GenerateItems on the
+player's level and gender (EnemyEntity.cs:328), equipEnemy, the
+map/potion/recipe trio (:388-397), loot rarity's roll - the dungeon's
+two spawn arms, the exterior foes, the watch; the first departure from
+DFU's rules had to visit all four and the next would have too.
+`hostCombat.spawnEnemyLoot(entity, mobileType, basics, player, {rolls})`
+is the one seam: SetEnemyCareer's chain in DFU's order, the port's arm
+after it (the corpse door, LR4), one call per host; `rolls` is the
+host's stream for the trio and the rarity roll (the exterior pool's
+injectable one; a puppet stands with an empty list and never comes
+here), the table roll itself on Math.random as UnityEngine.Random is,
+as every host passed before - no behaviour moved. The dungeon's dead
+deps-bag `generateItems` entry went with its one reader. A loot
+feature lands in the seam now, not in four hosts. AUDIT 24 wave 43's
+order pin reads the seam; the LR host pins read the calls.
+`test/rf2_spawnloot.test.js` (3).
+
 ### RF1 - ENTITY MODIFIER CHANNELS (2026-09-14, Mac: "is there anything in the codebase that can benefit from a refactor. This is our first time going against parity with DFU ... Lets tackle each one at a time")
 
 The first of the refactors the loot-rarity slice showed the need

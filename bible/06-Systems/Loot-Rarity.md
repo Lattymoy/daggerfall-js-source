@@ -190,10 +190,11 @@ budget; a drop is not made.
 ## The hosts (four-hosts law)
 
 Every list a host mints rolls at its source, right after DFU's own
-extras: the dungeon's two spawn arms and its treasure piles
-(`dungeonContext.js` - a pile at `dungeonRarityTier(dungeonType)`),
-the exterior foes (`exteriorFoes.js`, off the same injectable roll
-stream), the watch (`cityGuards.js`), a tavern's or a guild's treasure
+extras: a foe's through the ONE enemy-loot seam
+(`hostCombat.spawnEnemyLoot`, RF2 - the dungeon's two spawn arms, the
+exterior foes off their injectable stream, the watch, each one call),
+the dungeon's treasure piles (`dungeonContext.js` - a pile at
+`dungeonRarityTier(dungeonType)`), a tavern's or a guild's treasure
 markers (`interiorContext.js`, the host handing its luck in). Shops
 and quest rewards do NOT roll (decided): a shelf is DFU's economy and
 a quest's item is the quest's.

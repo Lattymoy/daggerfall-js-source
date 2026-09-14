@@ -231,17 +231,19 @@ test('audit24 wave43: the potion registry, and CreatePotion', () => {
 test('audit24 wave43: all four spawn sites roll, AFTER the equipment', () => {
   // AssignEnemyStartingEquipment has already pushed the gear into
   // `items` by EnemyEntity.cs:388, so a map lands after a helmet in
-  // the list and not before it.
-  for (const f of ['src/scenes/dungeonContext.js', 'src/scenes/exteriorFoes.js', 'src/scenes/cityGuards.js']) {
+  // the list and not before it. RF2: the chain has ONE home now
+  // (hostCombat.spawnEnemyLoot) - the order is pinned there, and each
+  // host is pinned to call it once per spawn branch and never the
+  // trio or the equipment on its own.
+  const hc = rd('src/scenes/hostCombat.js').split('\n');
+  const at = (needle) => hc.findIndex((l) => l.trim().startsWith(needle));
+  const gen = at('entity.items = generateItems('); const eq = at('equipEnemy(entity, mobileType, player.level);'); const ex = at('addEnemyLootExtras(entity.items, basics, rolls);');
+  assert.ok(gen >= 0 && eq > gen && ex > eq, 'hostCombat: the table, then the equipment, then the trio');
+  for (const [f, branches] of [['src/scenes/dungeonContext.js', 2], ['src/scenes/exteriorFoes.js', 1], ['src/scenes/cityGuards.js', 1]]) {
     const src = rd(f);
-    const lines = src.split('\n');
-    const eq = lines.map((l, i) => [l, i]).filter(([l]) => l.includes('equipEnemy('));
-    const ex = lines.map((l, i) => [l, i]).filter(([l]) => l.trim().startsWith('addEnemyLootExtras('));
-    assert.ok(ex.length > 0, `${f}: the trio runs`);
-    assert.equal(ex.length, eq.length, `${f}: once per spawn branch (${eq.length})`);
-    for (let k = 0; k < ex.length; k++) {
-      assert.ok(ex[k][1] > eq[k][1], `${f}: after the equipment, not before`);
-    }
+    const calls = src.split('\n').filter((l) => /^\s*spawnEnemyLoot\(entity, /.test(l));
+    assert.equal(calls.length, branches, `${f}: once per spawn branch`);
+    assert.doesNotMatch(src, /^\s*addEnemyLootExtras\(|^\s*equipEnemy\(/m, `${f}: the trio and the equipment run in the one seam, not here`);
   }
   // the dungeon pile takes the OTHER trio, and only it
   const dc = rd('src/scenes/dungeonContext.js');

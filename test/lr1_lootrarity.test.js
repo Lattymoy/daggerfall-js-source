@@ -370,10 +370,11 @@ test('LR1: rollLootRarity - off or sourceless returns the DFU list untouched; on
 
 test('LR1: four hosts - every list a host mints rolls at its source, and the pile\'s tier is the dungeon\'s', () => {
   const dc = read('src/scenes/dungeonContext.js');
-  assert.equal((dc.match(/rollCorpseLoot\(entity, basics, \{ luck: liveStat\(D\.playerEntity, 'luck'\) \}\)/g) ?? []).length, 2, 'both dungeon spawn arms, through the corpse door (LR4)');
+  assert.equal((dc.match(/spawnEnemyLoot\(entity, e\.mobileType, basics, D\.playerEntity\)/g) ?? []).length, 2, 'both dungeon spawn arms, through the one seam (RF2), whose corpse door is LR4\'s');
   assert.match(dc, /rollLootRarity\(items, pileSource\(dungeonRarityTier\(dfLocation\.mapTableData\.dungeonType\)\), \{ luck: liveStat\(playerEntity, 'luck'\) \}\)/, 'the treasure piles at the dungeon\'s tier');
-  assert.match(read('src/scenes/exteriorFoes.js'), /rollCorpseLoot\(entity, basics, \{ rolls, luck: liveStat\(playerEntity, 'luck'\) \}\)/, 'the exterior foes, off the same stream');
-  assert.match(read('src/scenes/cityGuards.js'), /rollCorpseLoot\(entity, basics, \{ luck: liveStat\(playerEntity, 'luck'\) \}\)/, 'the watch');
+  assert.match(read('src/scenes/exteriorFoes.js'), /spawnEnemyLoot\(entity, mobileType, basics, playerEntity, \{ rolls \}\)/, 'the exterior foes, off the same stream');
+  assert.match(read('src/scenes/cityGuards.js'), /spawnEnemyLoot\(entity, GUARD_MOBILE_TYPE, basics, playerEntity, \{ rolls: rand \}\)/, 'the watch');
+  assert.match(read('src/scenes/hostCombat.js'), /rollCorpseLoot\(entity, basics, \{ rolls, luck: liveStat\(player, 'luck'\) \}\);/, 'the corpse door, in the one seam (RF2)');
   assert.match(read('src/scenes/interiorContext.js'), /rollLootRarity\(addPileLootExtras\(generateLootItems\(lootKey, \{ level, gender \}\), lootKey\), pileSource\(INTERIOR_RARITY_TIER\), \{ luck \}\)/, 'a tavern\'s pile');
   assert.match(read('src/scenes/worldModes.js'), /luck: liveStat\(playerEntity, 'luck'\),   \/\/ LR1/, 'the interior host hands its luck in');
   // the reads, at DFU's own read sites
