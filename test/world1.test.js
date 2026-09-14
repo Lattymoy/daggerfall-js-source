@@ -204,7 +204,7 @@ test('WORLD1: the hosts by source - the dungeon host\'s shared world is the layo
   assert.match(w, /'pagehide', \(\) => \{ worldPublish\(performance\.now\(\), true\); online\?\.leave\(\);/, 'the page\'s hide too');
   assert.match(w, /onDungeonLeave: \(\) => worldPublish\(performance\.now\(\), true\),/, 'and the dungeon\'s exit, through the mode machine\'s hook');
   const online = rd('src/net/online.js');
-  assert.match(online, /if \(!this\.isHost\(\) \|\| !isWorldRoom\(this\.room\) \|\| !this\._ws \|\| this\.status !== 'open'\) return false;[^\n]*\n\s*const s = JSON\.stringify\(final \? \{ t: 'world', data, final: true \} : \{ t: 'world', data \}\);[^\n]*\n\s*if \(s\.length > WORLD_FRAME_MAX\) return false;/, 'the cap kept at the client: the relay\'s refusal is terminal; t first, the prefix the relay reads');
+  assert.match(online, /if \(!this\.isHost\(\) \|\| !isWorldRoom\(this\.room\) \|\| !this\._ws \|\| this\.status !== 'open'\) return false;[^\n]*\n\s*const s = JSON\.stringify\(final \? \{ t: 'world', data, final: true \} : \{ t: 'world', data \}\);[^\n]*\n\s*if \(s\.length > worldFrameMaxFor\(this\.room\)\) return false;/, 'the cap kept at the client: the relay\'s refusal is terminal; t first, the prefix the relay reads');
   const room = rd('server/src/index.js');
   assert.doesNotMatch(room, /storage\.deleteAll\(\)/, 'no sweep forgets the world');
   assert.match(room, /for \(const prefix of \['look:', 'secret:'\]\) \{ const m = await this\.state\.storage\.list\(\{ prefix \}\);/, 'the sweep by prefix');

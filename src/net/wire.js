@@ -194,6 +194,16 @@ export const CHAT_ROOM_HZ_MAX = 20;
 export const CHAT_WORLD_ROOM = 'chat:world';
 /** The largest world frame the room stores (UTF-16 units) - WORLD1; anything else keeps MAX_FRAME_BYTES. */
 export const WORLD_FRAME_MAX = 512 * 1024;
+/** AUDIT WORLD6a B3: a BUILDING's memory is a shelf or two and a handful of doors (a shop shelf measured at 2-4 KB;
+ *  a whole shop single-digit KB), and the namespace of buildings is 10^18 names an attacker may fill for
+ *  WORLD_TTL_MS each - so an interior room stores this much and no more, at both ends. */
+export const WORLD_FRAME_MAX_INTERIOR = 64 * 1024;
+/** The world-frame cap a ROOM earns once its key is known: an interior's, else the dungeon's. */
+export const worldFrameMaxFor = (key) => (String(key ?? '').startsWith('interior:') ? WORLD_FRAME_MAX_INTERIOR : WORLD_FRAME_MAX);
+/** AUDIT WORLD6a B7: a context's mark on the memory it publishes (AUDIT WORLD B1) - `Math.random().toString(36)
+ *  .slice(2)` could be ONE character, and a collision refused the room's memory in silence; twelve base-36 digits
+ *  of the clock and the roll, always. */
+export const mintSharedStamp = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10).padEnd(8, '0')}`;
 /** The least time between two of one host's world frames, ms; a sooner one is dropped. */
 export const WORLD_MIN_MS = 5000;
 /** The room's storage chunk for a world (a Durable Object value is capped at 128 KiB). */
@@ -297,7 +307,11 @@ export const isChatRoom = (key) => CHAT_ROOMS.has(String(key ?? ''));
 //  roomKeyFor has minted for every interior since ONLINE1 (a real map id, unsigned; a building key from
 //  BuildingDirectory.MakeBuildingKey, (x<<16)+(y<<8)+i or the 1<<24 sentinel - eight digits at most). A town's cell
 //  and the fixed city's room are still no world room: the exterior's memory is the next slice's.
-const WORLD_ROOM = /^(?:dungeon:m\d{1,10}|interior:m\d{1,10}\.\d{1,8})$/;
+//  AUDIT WORLD6a B4: no zero and no leading zero in either number - roomKeyFor never mints a 0 id ("no map row") or
+//  a 0 key ("a door the directory cannot key"), and a padded alias (`m0000000187853213`) was refused by the digit
+//  bound alone, which is luck, not law. The wire admits exactly what the game can name, and nothing the relay would
+//  pay for that no player can reach.
+const WORLD_ROOM = /^(?:dungeon:m[1-9]\d{0,9}|interior:m[1-9]\d{0,9}\.[1-9]\d{0,7})$/;
 export const isWorldRoom = (key) => WORLD_ROOM.test(String(key ?? ''));
 
 /** A pose the room will relay, or null. */
