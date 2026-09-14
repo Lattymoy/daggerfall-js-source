@@ -100,7 +100,7 @@ test('audit26 F033: the flash is record 1 of the MISSILE\'s archive at 15fps, wi
   assert.equal(missileArchive(4), 379);
   // the pool takes them per-spawn, and the blood defaults are untouched
   const he = src('src/scenes/hitEffects.js');
-  assert.match(he, /function spawn\(record, pos, facing = null, \{ archive = BLOOD_ARCHIVE, fps = BLOOD_FPS \} = \{\}\)/);
+  assert.match(he, /function spawn\(record, pos, facing = null, \{ archive = BLOOD_ARCHIVE, fps = BLOOD_FPS, scale = 1 \} = \{\}\)/);   // WW1: DoClang/DoThud's x2 rides `scale`, 1 by default - the flash is unscaled
   assert.match(he, /showImpactFlash: \(archive, pos\) => spawn\(IMPACT_RECORD, pos, null, \{ archive, fps: IMPACT_FPS \}\)/);
   assert.equal(BLOOD_ARCHIVE, 380);
   assert.equal(BLOOD_FPS, 10);
@@ -108,7 +108,7 @@ test('audit26 F033: the flash is record 1 of the MISSILE\'s archive at 15fps, wi
   // FORWARD_NUDGE, unlike a blood splash.
   assert.match(he, /spawn\(IMPACT_RECORD, pos, null,/);
   // the entry carries archive/fps so a recenter can REBUILD the batch
-  assert.match(he, /const entry = \{ batch: null, anim: null, dead: false, record, pos: at, size: null, archive, fps \};/);
+  assert.match(he, /const entry = \{ batch: null, anim: null, dead: false, record, pos: at, size: null, archive, fps, scale \};/);
   assert.match(he, /e\.batch = renderer\.createBillboardBatch\(e\.archive, e\.record, e\.size, \[e\.pos\]\);/);
   // ...and the ANIM is built on the entry's archive too. That is
   // unobservable today - flatFps overrides only ANIMALS (201) and

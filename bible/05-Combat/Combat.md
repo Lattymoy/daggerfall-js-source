@@ -1360,19 +1360,19 @@ the step, and the dip only ever makes `|dir|` larger.
 `onAttackFromPlayer` the sentence is about is `:215`, which is where the
 sibling comment in `cityGuards.js` was pointed in the same round). The
 dungeon's three-host sentence had its `exterior.js` number re-resolved
-and its `world.js:7648` left naming a `WorldTime`/`PauseWhileOpen` note
-800 lines from the host's `onPlayerArrowHitFoe` (`world.js:8619`); all
+and its `world.js:7650` left naming a `WorldTime`/`PauseWhileOpen` note
+800 lines from the host's `onPlayerArrowHitFoe` (`world.js:8621`); all
 three halves are read in `citedrift.test.js` now, the shape AUDIT 62's
 review had to apply to `pauseWindow`/`restWindow`. And `listPicker.js`'s
 "three routers that mount a bare picker" named three lines, none of
 which was a router — the round bumped the dungeon's `:4112` to `:4113`
 mechanically, and a wrong number moved by the right offset is still
 wrong. All three are resolved by content (`townTalk.js:1132`,
-`worldModes.js:7275`, `dungeonContext.js:5640`) and pinned as a set.
+`worldModes.js:7277`, `dungeonContext.js:5641`) and pinned as a set.
 
 The `worldModes.js` fix inserts one line, so cites into that host past
-it move by one: the dungeon's `worldModes.js:6016` and
-`chargenSession.js`'s `worldModes.js:7388` are bumped and pinned. Four
+it move by one: the dungeon's `worldModes.js:6018` and
+`chargenSession.js`'s `worldModes.js:7390` are bumped and pinned. Four
 `worldModes.js` cites elsewhere (`interior.js`, `world.js`,
 `tradeModes.js`, `saveWindow.js`) and `UI-Arc.md`'s notebook trio were
 ALREADY stale before this round and are left as found rather than
@@ -1437,3 +1437,27 @@ class enemy's bare fists deal 0. Pins 24. The page's AUDIT PCO1 section
 has the list.
 
 **MM1 (2026-09-12).** Meaner Monsters vendored (`04-Characters/Meaner-Monsters.md`), and Mac's rule - no compatibility switches between mods: the overhaul's `meanerMonsters` and `rolePlayRealismArchery` switches are gone; its two derived arms read the other mods' own switches (`modSettingIfDeclared`), and Ralzar's row lands before the overhaul's edit at mint, as DFU Awakes the dependency first.
+
+## WW1 - WEAPON WIDGET, THE MOD, 1:1, AND THE MORROWIND ARMS (2026-09-14, Mac's call) - SHIPPED
+
+Mac: "This is our next mod I want to add 1:1 while also having it work
+with morrowind's first person view." The whole account is
+`Weapon-Widget.md` beside this file; the ledger row is Port-Ledger A.
+The short of it: RedRoryOTheGlen's Weapon Widget 1.6 - FPSWeaponClone,
+a compiled DLL read off its IL method by method - ported into
+`combat/weaponWidget.js` as a component the weapon rig runs BESIDE the
+machine, the way the clone runs beside FPSWeapon: its three coroutines
+are generators on Unity's own WaitForSeconds / WaitForEndOfFrame clock,
+its nine modules read their switches every frame, its Recoil is fed
+from `resolveHit` through `playerWeapon.onAttackResult`, its clang and
+thud ride each host's hit-effects pool, its environment check the
+host's collider. The channels it publishes - Position, Scale, Offset -
+place the classic sprite through `GetWeaponRect`, and Position and
+Scale place the Morrowind arms' composite through
+`fpArm.setScreenTransform` (the Offset slide is the sprite's sheathe and
+stays off the arms). The 173 double-scale textures are the player's to
+supply through the textures pick (renders of ARENA2, the doctrine's own
+case), read by the SIB1 bundle door under the mod's GUID. On by default
+in the Mods pane with a Mod Authored row on the Features home; the
+Mods pane grew SliderFloatKey for its speeds and sizes. Pins: 14 in
+`test/ww1_weaponwidget.test.js`. Not filmed: a game.

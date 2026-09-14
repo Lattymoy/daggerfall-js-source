@@ -127,6 +127,63 @@ export const MOD_SETTINGS = Object.freeze({
       })])),
     }),
   }),
+  // WW1 (2026-09-14, Mac: "This is our next mod I want to add 1:1 while
+  // also having it work with morrowind's first person view"): WEAPON
+  // WIDGET 1.6 (RedRoryOTheGlen). Its nine sections as modsettings.json
+  // ships them - Modules' nine toggles, then each module's own knobs -
+  // the key named section-dot-name because four names repeat across
+  // sections (Speed, Length, Offset, Condition). A key with `float`
+  // is a SliderFloatKey and reads as a number on its range; `step` is
+  // the Mods pane's stepper for it. Descriptions are the mod's own where
+  // it wrote one. Plus the port's `Enabled` (MO1: on).
+  'weapon-widget': Object.freeze({
+    title: 'Weapon Widget',
+    author: 'RedRoryOTheGlen',
+    keys: Object.freeze({
+      Enabled: Object.freeze({ default: true, description: 'RedRoryOTheGlen\u2019s Weapon Widget 1.6, 1:1: the first-person weapon sprite handled anew - swings that wind up from the idle pose and recover, the sprite in the hand you swing with, a sheathe that slides it off the screen, a walking bob, look inertia, stepped movement, double-size idle textures, a recoil on a hit or a parry. The same channels move the Morrowind arms.' }),
+      'Modules.Swings': Object.freeze({ default: true, description: 'Swings: the strike winds up from the idle pose, plays at its own speed, and recovers - in reverse after a hit.' }),
+      'Modules.Ambidexterity': Object.freeze({ default: true, description: 'Ambidexterity: the sprite is drawn in the hand you are swinging with (H), mirrored for the left.' }),
+      'Modules.Offset': Object.freeze({ default: true, description: 'Offset: sheathing slides the sprite off the screen and drawing slides it back; a swing returns from below.' }),
+      'Modules.Bob': Object.freeze({ default: true, description: 'Bob: the sprite sways as you walk.' }),
+      'Modules.Inertia': Object.freeze({ default: false, description: 'Inertia: the sprite lags the look and your movement. Requires double-scaled weapon textures.' }),
+      'Modules.Step': Object.freeze({ default: false, description: 'Step: the sprite\u2019s position is rounded so it moves in steps.' }),
+      'Modules.DoubleScaleTextures': Object.freeze({ default: false, description: 'DoubleScaleTextures: the idle pose is drawn at double size from the mod\u2019s own textures (attach the mod\u2019s .dfmod through the textures pick).' }),
+      'Modules.TrueTextureSize': Object.freeze({ default: false, description: 'TrueTextureSize: a custom texture is drawn at its own pixel size, divided by the scale factor below.' }),
+      'Modules.Recoil': Object.freeze({ default: false, description: 'Recoil: the swing recoils on a hit, a parry or a miss, by the condition below.' }),
+      'Swings.Speed': Object.freeze({ default: 1.0, min: 0.0, max: 5.0, float: true, step: 0.25, description: 'Speed of the swing\u2019s frames.' }),
+      'Swings.Windup': Object.freeze({ default: 1, options: Object.freeze(['Hide', 'Idle', 'First Frame']), description: 'What shows while the swing winds up.' }),
+      'Swings.Recovery': Object.freeze({ default: 0, options: Object.freeze(['Hide', 'Last Frame']), description: 'What shows while the swing recovers.' }),
+      'Swings.VanillaAlignmentOverride': Object.freeze({ default: true, description: 'Centres the down and up strikes of the vanilla weapons at the screen\u2019s middle edge.' }),
+      'Swings.VanillaRecoveryOverride': Object.freeze({ default: true, description: 'Plays the StrikeUp animation in reverse during recovery for some vanilla weapons' }),
+      'Swings.NoDaggerMirroredStrikes': Object.freeze({ default: true, description: 'Prevents Daggers from using the opposite hand animations' }),
+      'Offset.Speed': Object.freeze({ default: 1.0, min: 0.0, max: 5.0, float: true, step: 0.25, description: 'Speed of the slide on and off the screen.' }),
+      'Bob.Length': Object.freeze({ default: 100, min: 0, max: 200, description: 'Amount of bobs in a single stride' }),
+      'Bob.Offset': Object.freeze({ default: 0.0, min: 0.0, max: 1.0, float: true, step: 0.1, description: 'Advances the bob timing. For use with weapon bob.' }),
+      'Bob.SizeX': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'Extent of horizontal movement when bobbing' }),
+      'Bob.SizeY': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'Extent of vertical movement when bobbing' }),
+      'Bob.SpeedMove': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'Speed of transition between stationary and moving' }),
+      'Bob.SpeedState': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'Speed of transition between movement states' }),
+      'Bob.Shape': Object.freeze({ default: 0, options: Object.freeze(['U', 'Sideways 8', 'Inverted U']), description: 'Shape of bob' }),
+      'Bob.BobWhileIdle': Object.freeze({ default: true, description: 'Whether the shield will slightly bob while stationary' }),
+      'Step.Length': Object.freeze({ default: 1, min: 1, max: 10, description: 'The number (x8) whose multiples will be used for snapping' }),
+      'Step.Condition': Object.freeze({ default: 0, options: Object.freeze(['Sheathe/Attack Only', 'All Transforms']), description: 'Whether the snapping only affects Sheathing or also other options like Bob, Inertia and Recoil' }),
+      'Inertia.Scale': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'The maximum distance that the sprite will be offset' }),
+      'Inertia.Speed': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'The speed that the sprite will move at towards the target offset' }),
+      'Inertia.ForwardDepth': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'Multiplier for the change in scale when moving forward or backward' }),
+      'Inertia.ForwardSpeed': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'The speed that the sprite will scale towards the target depth' }),
+      'TrueTextureSize.TextureScaleFactor': Object.freeze({ default: 1, min: 1, max: 8, description: 'A custom texture\u2019s pixels per screen pixel of the 320x200 surface.' }),
+      'Recoil.Condition': Object.freeze({ default: 0, options: Object.freeze(['Hits Only', 'Hits and Parries', 'Parries Only', 'Parries and Misses', 'Misses Only', 'All Attacks']), description: 'When the swing recoils.' }),
+      'Recoil.Chance': Object.freeze({ default: 100, min: 0, max: 100, description: '% chance of recoil happening when condition is met' }),
+      'Recoil.PlayEntityMissEffects': Object.freeze({ default: true, description: 'A clang or a thud at a foe that parried or was missed.' }),
+      'Recoil.DetectEnvironment': Object.freeze({ default: true, description: 'A swing into a wall or a door within reach recoils too.' }),
+      'Recoil.PlayEnvironmentMissEffects': Object.freeze({ default: true, description: 'A thud where the swing met the wall.' }),
+      'Recoil.MissEffectPlacement': Object.freeze({ default: 0, options: Object.freeze(['Target', 'Crosshair']), description: 'Where the clang or thud is drawn.' }),
+      'Miscellaneous.MirrorBows': Object.freeze({ default: false, description: 'Draws the bow mirrored.' }),
+      'Miscellaneous.MirrorTwoHandedSwords': Object.freeze({ default: false, description: 'Draws a two-handed sword mirrored in the right hand.' }),
+      'Miscellaneous.MirrorTwoHandedAxes': Object.freeze({ default: false, description: 'Draws a two-handed axe mirrored in the right hand.' }),
+      'Miscellaneous.MirrorTwoHandedBlunts': Object.freeze({ default: false, description: 'Draws a two-handed staff, hammer or flail mirrored in the right hand.' }),
+    }),
+  }),
 });
 
 let memory = null;
@@ -146,13 +203,20 @@ function save() {
 /** DS1: a SliderIntKey (declared with min/max) reads as an integer
  *  clamped to its range; every other key is a ToggleKey and reads as a
  *  boolean, exactly as before. */
-export function isIntKey(def) { return def && typeof def.min === 'number' && typeof def.max === 'number'; }
+export function isIntKey(def) { return def && typeof def.min === 'number' && typeof def.max === 'number' && !def.float; }
+/** WW1: a SliderFloatKey (Weapon Widget's speeds and sizes) - `float`
+ *  declared, min/max its range, `step` the pane's stepper. */
+export function isFloatKey(def) { return def && def.float === true && typeof def.min === 'number' && typeof def.max === 'number'; }
 /** UL1: a MultipleChoiceKey - `options` is the list, the value its index. */
 export function isChoiceKey(def) { return def && Array.isArray(def.options); }
 function coerce(def, v) {
   if (isChoiceKey(def)) {
     const n = Math.trunc(Number(v));
     return Number.isFinite(n) ? Math.max(0, Math.min(def.options.length - 1, n)) : def.default;
+  }
+  if (isFloatKey(def)) {
+    const f = Number(v);
+    return Number.isFinite(f) ? Math.max(def.min, Math.min(def.max, Math.round(f * 1000) / 1000)) : def.default;   // WW1: on its range, to a thousandth
   }
   if (!isIntKey(def)) return !!v;
   const n = Math.trunc(Number(v));

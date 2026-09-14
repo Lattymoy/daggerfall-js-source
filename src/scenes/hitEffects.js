@@ -91,7 +91,7 @@ export function createHitEffects({ renderer, getTexture, uploadRecordFrame, onSp
   // list per frame and use batches() instead. One pool either way.
   const live = [];   // { batch, anim }
 
-  function spawn(record, pos, facing = null, { archive = BLOOD_ARCHIVE, fps = BLOOD_FPS } = {}) {
+  function spawn(record, pos, facing = null, { archive = BLOOD_ARCHIVE, fps = BLOOD_FPS, scale = 1 } = {}) {
     if (!(record >= 0) || !pos) return null;
     const at = [pos[0], pos[1], pos[2]];
     if (facing) {
@@ -105,7 +105,7 @@ export function createHitEffects({ renderer, getTexture, uploadRecordFrame, onSp
     // AUDIT 26 F033: `archive` and `fps` ride on the ENTRY for the same
     // reason record/size/pos do - a recenter REBUILDS the batch and
     // cannot read them back out of the one it destroys.
-    const entry = { batch: null, anim: null, dead: false, record, pos: at, size: null, archive, fps };
+    const entry = { batch: null, anim: null, dead: false, record, pos: at, size: null, archive, fps, scale };
     live.push(entry);
     getTexture(archive).then((t) => {
       // the pool can be cleared while the archive warms (a scene torn
@@ -115,6 +115,7 @@ export function createHitEffects({ renderer, getTexture, uploadRecordFrame, onSp
       const frameCount = t.getFrameCount?.(record) ?? 1;
       for (let f = 0; f < frameCount; f++) uploadRecordFrame(archive, record, f);
       entry.size = billboardSize(t, record);
+      if (scale !== 1 && entry.size) entry.size = Array.isArray(entry.size) ? entry.size.map((v) => v * scale) : entry.size * scale;   // WW1: DoClang/DoThud's localScale x2
       entry.batch = renderer.createBillboardBatch(archive, record, entry.size, [entry.pos]);
       entry.batch.frame = 0;
       onSpawn?.(entry.batch);
@@ -163,6 +164,12 @@ export function createHitEffects({ renderer, getTexture, uploadRecordFrame, onSp
      *  self-destruct - not the missile's 0.6s lifetime, which governs
      *  the parent rather than the billboard. */
     showImpactFlash: (archive, pos) => spawn(IMPACT_RECORD, pos, null, { archive, fps: IMPACT_FPS }),
+    /** WW1: Weapon Widget's DoClang / DoThud (FPSWeaponClone IL 0xe0c,
+     *  0xf58): TEXTURE.380 record 2, one-shot at 20 fps, twice its size,
+     *  at the point the widget worked out. The CLANG's emissive material
+     *  (`_EMISSION` on the billboard) has no twin in this renderer's
+     *  flat batches and is not carried. */
+    showMissEffect: (kind, pos, { archive = BLOOD_ARCHIVE, record = 2, fps = 20, scale = 2 } = {}) => spawn(record, pos, null, { archive, fps, scale }),
     tick(dt) {
       for (let i = live.length - 1; i >= 0; i--) {
         const e = live[i];

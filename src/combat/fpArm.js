@@ -1772,6 +1772,8 @@ export function esmDiagnosis(names, parts, race) {
 // default; the action-named button re-persists a deliberate choice
 // under the new key.
 const FOLLOW_CAMERA_KEY = 'dagger.mwArmsFollowCamera2';
+/** WW1: a screen-space transform over the arms' composite, or null - set per frame by the rig from the weapon widget. */
+let screenTransform = null;
 // DA1: through the storage seam, not localStorage directly - the pin
 // in test/filestorage.test.js caught this landing bare on the merge,
 // which would have split the toggle out of the desktop app's file
@@ -3320,6 +3322,17 @@ export function createFpArm() {
       const near = Math.max((built.idleReach ?? built.reach) / 200, 1e-4);
       const proj = perspective(FP_FIELD_OF_VIEW, pw / ph, near, built.reach * 4);
       const tex = renderer.renderCharacterSprite(mesh, NIF_TO_PASS, proj, view, pw, ph, { lensLocal: true });   // VC5 review: lens-local - no cloud deck on the arm
+      // WW1: Weapon Widget's channels move the composite as they move the
+      // classic sprite - a screen-space rect in place of the fullscreen
+      // overlay when a transform is set, the same alpha cut either way
+      // (the overlay samples v from 0 at the bottom; drawScreenQuad's dst
+      // is top-left, so its v runs from the top: 1 - ph/RT down to 1).
+      if (screenTransform) {
+        const W = canvas.clientWidth || canvas.width, H = canvas.clientHeight || canvas.height;
+        const rect = screenTransform({ x: 0, y: 0, w: W, h: H });
+        renderer.drawScreenQuad(tex, rect, { u0: 0, v0: ph / CHAR_SPRITE_RT_SIZE, u1: pw / CHAR_SPRITE_RT_SIZE, v1: 0 });
+        return true;
+      }
       renderer.drawScreenOverlayQuad(tex, pw / CHAR_SPRITE_RT_SIZE, ph / CHAR_SPRITE_RT_SIZE);
       return true;
     },
@@ -3357,6 +3370,9 @@ export function createFpArm() {
     /** IG4: follow-camera mode - the shipped default. See the module
      *  head above createFpArm; the pause card's toggle flips it live. */
     followCamera: () => followCam,
+    /** WW1: the rig sets the weapon widget's transform over the composite (null: the fullscreen overlay). */
+    setScreenTransform(fn) { screenTransform = typeof fn === 'function' ? fn : null; },
+    screenTransform: () => screenTransform,
     setFollowCamera(v) {
       followCam = !!v;
       try { appStorage()?.setItem(FOLLOW_CAMERA_KEY, followCam ? 'true' : 'false'); } catch { /* a full store still keeps the in-session choice */ }
