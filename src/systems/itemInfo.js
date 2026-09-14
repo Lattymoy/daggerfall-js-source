@@ -438,19 +438,37 @@ export function resolveItemName(item) {
  *  `getQuest` is QuestMachine.GetQuest for the parchment arm; a caller
  *  with no quest machine passes none and the plain name stands, which
  *  is questLetterName's own null answer. */
-export function itemLongName(item, { getQuest = null, differentiatePlantIngredients = true } = {}) {
-  let result = resolveItemName(item);
-  if (!itemIsIdentified(item) || item?.artifact || item?.legendary) return result;   // LR2: a Legendary is named like an artifact - no material prefix
+export function itemLongName(item, opts) {
+  const { name, material } = itemNameParts(item, opts);
+  return material ? `${material} ${name}` : name;
+}
+
+/** RF6: THE LONG NAME IN ITS TWO PARTS - the material prefix and the
+ *  rest - for a skin that draws them on two lines (the enhanced
+ *  inventory's tile, the loot plaque's row). This IS
+ *  ResolveItemLongName's arm order, once: itemLongName joins the two
+ *  parts and nothing else derives them. Before this, the enhanced skin
+ *  rebuilt the arms by hand - ResolveItemName for the name and
+ *  materialName for the sub-line - and lost four of them: an arrow, a
+ *  helm under HelmAndShieldMaterialDisplay, an artifact and a Legendary
+ *  all showed a material DFU withholds, and a potion read "Glass
+ *  Bottle", a plant lost its (northern), a soul trap its soul, a quest
+ *  letter its signoff. `material` is '' when the long name carries
+ *  no prefix. */
+export function itemNameParts(item, { getQuest = null, differentiatePlantIngredients = true } = {}) {
+  const base = resolveItemName(item);
+  if (!itemIsIdentified(item) || item?.artifact || item?.legendary) return { name: base, material: '' };   // LR2: a Legendary is named like an artifact - no material prefix
   if (differentiatePlantIngredients) {
-    if (item?.group === 'PlantIngredients1' && item.templateIndex < 18) return `${result} (northern)`;
-    if (item?.group === 'PlantIngredients2' && item.templateIndex < 18) return `${result} (southern)`;
+    if (item?.group === 'PlantIngredients1' && item.templateIndex < 18) return { name: `${base} (northern)`, material: '' };
+    if (item?.group === 'PlantIngredients2' && item.templateIndex < 18) return { name: `${base} (southern)`, material: '' };
   }
-  if (item?.group === 'Weapons' && item.templateIndex !== TEMPLATES.Arrow) result = `${materialName(item)} ${result}`;
-  if (item?.group === 'Armor' && armorShouldShowMaterial(item)) result = `${materialName(item)} ${result}`;
-  if (isPotion(item)) return potionMacroName(item) ?? result;
+  let material = '';
+  if (item?.group === 'Weapons' && item.templateIndex !== TEMPLATES.Arrow) material = materialName(item);
+  if (item?.group === 'Armor' && armorShouldShowMaterial(item)) material = materialName(item);
+  if (isPotion(item)) return { name: potionMacroName(item) ?? base, material };
   const signoff = questLetterName(item, getQuest);
-  if (signoff) return signoff;
-  return result + soulTrapNameSuffix(item, enemyDisplayName);
+  if (signoff) return { name: signoff, material: '' };
+  return { name: base + soulTrapNameSuffix(item, enemyDisplayName), material };
 }
 
 export function expandItemInfo(text, item, { name = null, soul = null, potion = null, bookTitle: macroBookTitle = null, bookAuthor = null, painting = null } = {}) {

@@ -5493,6 +5493,17 @@ seams, each passing every pin around it:
    the Test Room's "Ride out" is the door to look through on a machine
    that has it. `test/hc1_horsecart.test.js`.
 
+### RF6 - THE ENHANCED SKIN READS THE ONE NAME RESOLVER (2026-09-14, Mac's refactor pass, the sixth)
+
+`src/systems/itemInfo.js` itemNameParts answers ResolveItemLongName's
+two parts - the material prefix and the rest - in DFU's arm order,
+once; itemLongName is their join. The enhanced inventory's line, the
+loot plaque, the wear notices and the HUD's held-weapon plaque read it
+instead of re-deriving the arms (and losing four: arrow, helm setting,
+artifact, Legendary; potion %po, plant variant, soul suffix, letter
+signoff). The record is the UI arc's: `bible/10-UI/UI-Arc.md` RF6.
+`test/rf6_itemnames.test.js` (3).
+
 ### RF5 - THE ITEM FIELD SCHEMA (2026-09-14, Mac's refactor pass, the fifth)
 
 An item record is an open shape and the knowledge of what each field

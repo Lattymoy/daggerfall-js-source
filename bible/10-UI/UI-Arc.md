@@ -12860,3 +12860,38 @@ auto, eating every click that should have relocked: it is
 pointer-events none now, a report and not a wall. Ledger row PL3.
 Pinned: `test/macfive.test.js` PL3 (two), `test/cursortoggle.test.js`,
 `test/chat1.test.js`.
+
+## RF6 - THE ENHANCED SKIN READS THE ONE NAME RESOLVER (2026-09-14, Mac's refactor pass, the sixth)
+
+THE FAULT. The enhanced inventory's line (`src/ui/enhancedInventory.js`
+itemLine) and the loot plaque (`src/ui/lootHover.js` hoverLines) rebuilt
+ResolveItemLongName's arms by hand - ResolveItemName for the name,
+materialName for the sub-line, gated on "Armor or Weapons, identified"
+- and lost four of DFU's arms on the way: an arrow, a helm or shield
+under HelmAndShieldMaterialDisplay, an artifact and a Legendary all
+showed a material DFU withholds; a potion read "Glass Bottle" where the
+classic skin reads "Potion of Stamina" (%po), a plant lost its
+(northern)/(southern), a soul trap its soul, a quest letter its
+signoff. The wear notices ("X is broken", "may not use X", "X cannot
+be worn") and the HUD's held-weapon plaque read the record's raw
+`name`, which names an unidentified magic item before Identify has.
+Every one of these was a departure from parity the enhanced skin took
+by re-deriving what `src/systems/itemInfo.js` already knew.
+
+THE SHAPE. itemInfo.itemNameParts(item, { getQuest,
+differentiatePlantIngredients }) answers `{ name, material }` - the
+long name's two parts, in ResolveItemLongName's own arm order (the
+unidentified / artifact / Legendary early return, the plant variants,
+the weapon and armour prefixes, %po, the letter signoff, the soul
+suffix) - and itemLongName is now their join and nothing else. The
+line reads the parts (name on the line, prefix on the sub-line, the
+host's quest machine through for the signoff), the plaque the name
+part, the notices and the HUD the long name. No enhanced module reads
+materialName, resolveItemName or the raw record name for a label; the
+plaque's dead `|| it.name` fallback (the resolver already answers a
+template-less item its own name) is gone.
+
+Not proved in a browser here (no ARENA2); the pins run every loot
+table and every arm through the line and the plaque against the long
+name. `test/rf6_itemnames.test.js` (3); LR1's and U53's source pins
+re-aimed at the parts.

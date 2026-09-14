@@ -20,7 +20,7 @@
 import { injectEnhancedStyle } from './enhancedStyle.js';
 import { isEnhanced } from '../systems/uiSkin.js';
 import { rarityAttr } from '../systems/lootRarity.js';   // LR1: a pile's rows wear their tier
-import { resolveItemName } from '../systems/itemInfo.js';   // LR1: an unidentified item reads as its template on the plaque too
+import { itemNameParts } from '../systems/itemInfo.js';   // RF6: ResolveItemLongName's name part (LR1: an unidentified item reads as its template on the plaque too)
 
 /** How many lines before the plaque says "and N more" instead. A pile
  *  is a glance, not a list to read; DFU's own loot windows scroll. */
@@ -42,7 +42,7 @@ function ensure() {
 /** The lines a pile shows: name, and a count when a stack. Pure. */
 export function hoverLines(items, max = HOVER_MAX) {
   const rows = (items ?? []).filter(Boolean).map((it) => ({
-    name: resolveItemName(it) || it.name || 'Something',   // LR1: ResolveItemName - an unidentified enchanted item is its bare template
+    name: itemNameParts(it).name || 'Something',   // RF6: the long name's name part - a potion its %po, a soul trap its soul; LR1: unidentified is the bare template (the resolver already answers a template-less item its own name)
     stack: (it.stackCount ?? 1) > 1 ? it.stackCount : 0,
     rarity: rarityAttr(it),   // LR1: null with the switch off or for Common
   }));

@@ -91,8 +91,7 @@ import {
 } from '../systems/inventorySession.js';
 import { entityMaxEncumbrance } from '../combat/formulas.js';   // AUDIT 26: PlayerEntity.MaxEncumbrance, enchantment allowance and all
 import { liveStat } from '../systems/statMods.js';
-import { conditionWord, conditionPercentage, materialName, resolveItemName } from '../systems/itemInfo.js';
-import { itemIsIdentified } from '../systems/tradeModes.js';   // LR4: an unidentified item names no material (ItemHelper's %mat)
+import { conditionWord, conditionPercentage, itemNameParts, itemLongName } from '../systems/itemInfo.js';   // RF6: the long name's two parts, ResolveItemLongName's arms once
 import { rarityAttr, rarityLines } from '../systems/lootRarity.js';   // LR1: the row's tier attribute and the card's lines
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { closeOnOutsideTap } from './enhancedOverlays.js';   // OT1
@@ -289,18 +288,20 @@ export function itemLine(item, identity = undefined) {
   // this dropped that fallback for one commit when the template read
   // it replaced went away with it.
   const t = templateByIndex(item.templateIndex);
+  // RF6: ResolveItemLongName's two parts (itemInfo.itemNameParts) - the
+  // name on the line, the material prefix on the sub-line - so the
+  // skin derives none of the arms itself. LR1's law rides it: an
+  // UNIDENTIFIED enchanted item reads as its bare template
+  // (ItemHelper.cs:265-292's early return) and shows no material
+  // (LR4, as %mat is). The template stays the fallback.
+  const parts = itemNameParts(item, { getQuest: deps.getQuest ?? null });
   return {
     item,   // MW-D38: the icon door resolves the item itself
-    // LR1: through ResolveItemName, so an UNIDENTIFIED enchanted item
-    // reads as its bare template here as it does on the classic skin
-    // (ItemHelper.cs:265-292's early return) - the skin showed
-    // `item.name` raw before, which named a magic item before the
-    // Identify spell had. The template stays the fallback.
-    name: resolveItemName(item) || t?.name || 'Unknown',
+    name: parts.name || t?.name || 'Unknown',
     weight: itemWeight(item),
     condition: (item.maxCondition ?? 0) > 0 ? conditionPercentage(item) : null,
     word: (item.maxCondition ?? 0) > 0 ? conditionWord(item) : null,
-    material: (item.group === 'Armor' || item.group === 'Weapons') && itemIsIdentified(item) ? materialName(item) : null,   // LR4: hidden until identified, as %mat is
+    material: parts.material || null,
     stack: (item.stackCount ?? 1) > 1 ? item.stackCount : null,
     equipped: isEquipped(item),
     broken: isBrokenItem(item),
@@ -487,12 +488,13 @@ function refreshFigure() {
  *  press that silently does nothing is what the anti-lie law forbids. */
 function wear(item) {
   notice = null;
-  if (isBrokenItem(item)) { notice = `${item.name} is broken and cannot be worn.`; return render(); }
+  const named = itemLongName(item, { getQuest: deps.getQuest ?? null });   // RF6: the resolver's name, never the record's raw one (an unidentified magic item's)
+  if (isBrokenItem(item)) { notice = `${named} is broken and cannot be worn.`; return render(); }
   if (isForbiddenEquip(deps.entity?.career, item)) {
-    notice = `A ${deps.entity?.career?.name ?? 'character'} may not use ${item.name}.`;
+    notice = `A ${deps.entity?.career?.name ?? 'character'} may not use ${named}.`;
     return render();
   }
-  if (equipItem(deps.entity, item) === null) { notice = `${item.name} cannot be worn.`; return render(); }
+  if (equipItem(deps.entity, item) === null) { notice = `${named} cannot be worn.`; return render(); }
   refresh();
   refreshFigure();   // U59: the avatar is wearing it now
   picked = null;     // PX24 (Mac): an action taken CLOSES the tooltip; a refusal above keeps it
