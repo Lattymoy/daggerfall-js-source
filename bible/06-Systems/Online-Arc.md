@@ -2147,6 +2147,64 @@ executed, C9 through C14 by source. The WORLD5 pins moved with the law
 leap a sub-tick a frame); the AUDIT 24 wave 30, AUDIT 26 F204,
 encounters and S40 pins restamped for the arm's new signature.
 
+## OL1 (2026-09-14): online is the enhanced lane, whole
+
+**Mac: "with online, specifically #8, I definitely think I want any
+current and future enhancements/mods enabled on for online."** AUDIT
+WORLD5's eighth recorded item was that the classic and enhanced lanes
+diverge under one shared seed - the weather's hourly evolution is the
+enhanced lane's, a mod's roads and seasons are a mod's - so two players
+in one world could stand under two skies on two road networks. Mac's
+answer is a lane, not a per-switch rule: WHILE THE PAGE IS ONLINE the
+skin is enhanced (over `?skin=classic` too - a shared world has one
+lane), every enhancement the port owns is on, and every vendored mod is
+enabled, whatever the player's shelf says.
+
+**A read, not a write.** The forcing lives in `systems/onlineLane.js`
+and is asked FIRST by the three places a switch is read - `uiSkin.js`
+(the skin), `uiPrefs.js getPref` (the port's own switches) and
+`modSettings.js modSetting` (a mod's `Enabled`). Nothing is forced at a
+mount site (there are forty-seven `isEnhanced()` sites and the
+forty-eighth would be missed), and nothing is written: the shelf and
+the mod store keep the player's own choices, which stand again the
+moment they play offline. `?online` is the fact (main.js sets it for
+Play Online and deletes it on every other door), read off the URL like
+the skin override is.
+
+**What is forced:** the skin; `enhancedEnvironments`, `enhancedAI`,
+`enhancedCombatVisuals`, `enhancedWater`, `pixelatedSky`; `mwArms` (the
+Morrowind arms build at boot where the archives are attached -
+`autoBuildArms` guards the data, so a machine without them wears the
+doll as offline); and every vendored mod's `Enabled` (Dynamic Skies,
+Seasons of the Iliac Bay, Basic Roads, Meaner Monsters, the Physical
+Combat And Armor Overhaul, Unleveled Loot). Enhanced AI is the one that
+was OFF by default as the port's opt-in departure from DFU's classic
+motor; online it is on for everyone, which is also the first time both
+clients in a dungeon step their foes by one motor.
+
+**What stays the player's:** the dials - grass density, cloud quality,
+land view distance - because a machine that cannot hold the full field
+keeps the lane at a lower cost, and none of them decides what the world
+is, only how this machine draws it; the touch knobs, the FPS counter,
+the HUD scale and the text size; and a mod's own dials (a fog density,
+a material swap), as its own modsettings would leave them. The probes'
+URL kill doors (`?sky=classic`, `?water=off`, `?evolve=off`) stay
+doors: an online page never carries one.
+
+**The future half is a pin, not a promise.** `test/onlinelane.test.js`
+walks every boolean key in `PREF_DEFAULTS` and fails on one the lane
+has neither forced (`ONLINE_FORCED_PREFS`) nor left to the player by
+name (`ONLINE_PLAYERS_OWN_PREFS`), pins that every key beginning
+`enhanced` is forced, and that every vendored mod carries the one key
+the lane forces. A new enhancement cannot land without answering the
+question.
+
+**Said to the player.** A forced switch in the Settings and Mods panes
+is shown locked - "On (online)", disabled, with the reason in its
+title - so a press teaches rather than changes nothing; the Mods pane
+says it once at the top; the Online pane's copy says the lane at the
+door.
+
 ## What it does not do (yet)
 
 - **The Morrowind body** ships (MWBODY1, above); a client without the
