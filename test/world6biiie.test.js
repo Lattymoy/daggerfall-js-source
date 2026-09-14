@@ -57,12 +57,12 @@ test('WORLD6b-iii(e): the wire - pt is a whole number inside ItemEnums.Poisons (
   for (const d of [{ pt: 127 }, { pt: 140 }, { pt: -1 }, { pt: 130.5 }, { pt: '130' }, { pt: null }, {}, null, undefined, { pt: POISONS.None }]) assert.equal(hitPoisonOf(d), null, JSON.stringify(d));
   assert.equal(whoIdOf({ t: 'who', id: 'bbbb-0002' }), 'bbbb-0002'); assert.equal(whoIdOf({ id: 'x'.repeat(40) }), 'x'.repeat(40));
   for (const m of [{ id: '' }, { id: 'a' }, { id: 'x'.repeat(41) }, { id: 'bbbb 0002' }, { id: 7 }, {}, null, undefined]) assert.equal(whoIdOf(m), null, JSON.stringify(m));
-  assert.equal(WHO_HZ_MAX, 2); assert.equal(WHO_RETRY_MS, 10_000);
-  let b = null, passed = 0; for (let i = 0; i < 5; i++) { const g = whoGate(b, 1000); b = g.bucket; if (g.pass) passed++; }
+  assert.equal(WHO_HZ_MAX, 5); assert.equal(WHO_RETRY_MS, 10_000);   // AUDIT WORLD6b-iii(e) B5: five a second, so a halo let go re-learns its peers in seconds
+  let b = null, passed = 0; for (let i = 0; i < 9; i++) { const g = whoGate(b, 1000); b = g.bucket; if (g.pass) passed++; }
   assert.equal(passed, WHO_HZ_MAX, 'WHO_HZ_MAX asks a second, the rest refused');
   assert.equal(ROSTER_MAX, 64); assert.ok(SOCKETS_MAX > ROSTER_MAX, 'the room holds more than the welcome names - the gap the ask closes');
   assert.equal(relay.hitPoisonOf, hitPoisonOf); assert.equal(relay.whoIdOf, whoIdOf); assert.equal(relay.whoGate, whoGate);
-  assert.equal(RELAY_VERSION, 'world65', 'the relay says which one it is');
+  assert.equal(RELAY_VERSION, 'world66', 'the relay says which one it is');
 });
 
 test('WORLD6b-iii(e): the pools - the striker\'s dose at a PUPPET does not run on the shadow: it rides the blow (pt, with the arrow\'s kind and shaft) to the owner, who doses its foe once inside a damaging blow and lands the Arrow; a second blow carries no dose (spent); a dose outside the enum, or on a blow of no damage, lands nothing; the owner\'s own dose at its own foe lands directly', async () => {
@@ -97,26 +97,24 @@ test('WORLD6b-iii(e): the pools - the striker\'s dose at a PUPPET does not run o
   assert.equal(bob.applyHit('mac-0001', hit), true);
   assert.deepEqual(poisonsOf(rat.entity), [POISONS.Moonseed], 'the owner\'s foe is dosed'); assert.equal(arrowsOf(rat.entity), 1, 'the Arrow is in the owner\'s copy');
   assert.ok(rat.entity.health < hp, 'and the blow landed');
-  assert.equal(bob.applyHit('mac-0001', { ...hit, pt: POISONS.Moonseed, dmg: 0 }), true);
-  assert.equal(poisonsOf(rat.entity).length, 1, 'a blow of no damage doses nothing (FormulaHelper\'s `damage > 0`) - and the same poison twice is one entry either way');
   assert.equal(bob.applyHit('mac-0001', { ...hit, pt: POISONS.Arsenic, dmg: 0 }), true);
-  assert.deepEqual(poisonsOf(rat.entity), [POISONS.Moonseed], 'no damage, no dose');
-  assert.equal(arrowsOf(rat.entity), 3, 'but a shaft that CONNECTED lands its Arrow, damage or none (BowDamage\'s :145-147 is outside the damage fork - the dungeon\'s law since WORLD3)');
-  for (const pt of [127, 140, 130.5, '130']) { assert.equal(bob.applyHit('mac-0001', { ...hit, pt, ar: undefined }), true); assert.deepEqual(poisonsOf(rat.entity), [POISONS.Moonseed], `pt ${JSON.stringify(pt)} is nothing`); }
-  assert.equal(bob.applyHit('mac-0001', { ...hit, pt: POISONS.Arsenic, ar: undefined }), true);
-  assert.deepEqual(poisonsOf(rat.entity), [POISONS.Moonseed, POISONS.Arsenic], 'another poison lands beside it');
-  assert.equal(arrowsOf(rat.entity), 3, 'the melee-spelled blows landed no shaft');
+  assert.deepEqual(poisonsOf(rat.entity), [POISONS.Moonseed, POISONS.Arsenic], 'a blow of no damage doses too - the dose is the CALC\'s word (AUDIT WORLD6b-iii(e) A3: FormulaHelper dosed before the Strikes payload could zero the number)');
+  assert.equal(arrowsOf(rat.entity), 2, 'and a shaft that CONNECTED lands its Arrow, damage or none (BowDamage\'s :145-147 is outside the damage fork - the dungeon\'s law since WORLD3)');
+  for (const pt of [127, 140, 130.5, '130']) { assert.equal(bob.applyHit('mac-0001', { ...hit, pt, ar: undefined }), true); assert.deepEqual(poisonsOf(rat.entity), [POISONS.Moonseed, POISONS.Arsenic], `pt ${JSON.stringify(pt)} is nothing`); }
+  assert.equal(bob.applyHit('mac-0001', { ...hit, pt: POISONS.Drothweed, ar: undefined, kind: 'melee' }), true);
+  assert.deepEqual(poisonsOf(rat.entity), [POISONS.Moonseed, POISONS.Arsenic, POISONS.Drothweed], 'another poison lands beside them');
+  assert.equal(arrowsOf(rat.entity), 2, 'the melee-spelled blows landed no shaft');
   // the owner's own dose at its own foe: the door lands it directly
-  const own = bob.poisonFoe(rat, POISONS.Drothweed);
-  assert.ok(own && own.kind === 'poison' && own.poison === POISONS.Drothweed, 'dosed here, the entry back');
+  const own = bob.poisonFoe(rat, POISONS.Somnalius);
+  assert.ok(own && own.kind === 'poison' && own.poison === POISONS.Somnalius, 'dosed here, the entry back');
   assert.match(rd('src/scenes/exteriorFoes.js'), /return inflictPoison\(f\.entity, pt, false, \{ rolls, currentMinute: Math\.floor\(currentMinute\(\)\) \}\);/, 'the pool\'s own uniform seam rolls the saving throw (ENGINE-PRNG RULE), so the pin is not a coin');
   assert.equal(rat._divertPt, undefined, 'nothing set aside on a foe of mine');
   // the pool's doors, by source: the melee chain through poisonFoe; the divert's spend; the owner's landing order
   const e = rd('src/scenes/exteriorFoes.js');
   assert.match(e, /\(f, pt\) => poisonFoe\(f, pt\)\)\) \{\s+\/\/ C2-slice \(combat-11\); WORLD6b-iii\(e\)/, 'resolvePlayerHit\'s poison through the one door');
   assert.match(e, /const _pt = f\._divertPt \?\? null; f\._divertPt = null;/, 'spent by the divert, once');
-  assert.match(e, /\.\.\.\(_pt != null && damage > 0 \? \{ pt: _pt \} : \{\}\),[^\n]*\n\s*\.\.\.\(kind === 'arrow' \? \{ ar: 1 \} : \{\}\) \}\);/, 'the dose on a damaging blow, the shaft on an arrow');
-  assert.match(e, /if \(pt != null && dmg > 0\) inflictPoison\(f\.entity, pt, false, \{ rolls, currentMinute: Math\.floor\(currentMinute\(\)\) \}\);[^\n]*\n\s*damageFoe\(f, dmg, at, dir, \{ fromPlayer: true, kind, peer: true, peerId: from \}\);\s*\n\s*if \(data\.ar === 1 && kind === 'arrow'\) addItem\(f\.entity\.items \?\?= \[\], \{ group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 \}\);/, 'the owner: the dose before the health moves, the shaft after (BowDamage\'s order)');
+  assert.match(e, /\.\.\.\(_pt != null \? \{ pt: _pt \} : \{\}\),[^\n]*\n\s*\.\.\.\(kind === 'arrow' \? \{ ar: 1 \} : \{\}\) \}\);/, 'the dose on the blow (the calc\'s word), the shaft on an arrow');
+  assert.match(e, /if \(pt != null\) inflictPoison\(f\.entity, pt, false, \{ rolls, currentMinute: Math\.floor\(currentMinute\(\)\) \}\);[^\n]*\n\s*damageFoe\(f, dmg, at, dir, \{ fromPlayer: true, kind, peer: true, peerId: from \}\);\s*\n\s*(?:\/\/[^\n]*\n\s*)*if \(data\.ar === 1 && kind === 'arrow' && arrowsIn\(f\.entity\.items \?\?= \[\]\) < HIT_ARROWS_MAX\) addItem\(f\.entity\.items, \{ group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 \}\);/, 'the owner: the dose before the health moves, the shaft after (BowDamage\'s order), bounded');
 });
 
 test('WORLD6b-iii(e): the hosts and the dungeon twin, by source - the exterior\'s arrow blow says its kind and routes its poison through the pool\'s door (the watch dosed here); the interior host splits by pool; the dungeon has the same door, the same divert and the same landing; the disease rider is the monster\'s alone', () => {
@@ -131,8 +129,8 @@ test('WORLD6b-iii(e): the hosts and the dungeon twin, by source - the exterior\'
   const d = rd('src/scenes/dungeonContext.js');
   assert.match(d, /function poisonFoe\(f, pt\) \{\s*\n\s*if \(!f\) return null;\s*\n\s*const pi = foes\.indexOf\(f\);\s*\n\s*if \(!_authority && pi >= 0 && pi < _layoutFoes\) \{ f\._divertPt = pt; return null; \}\s*\n\s*return inflictPoison\(f\.entity, pt, false, \{ currentMinute: Math\.floor\(classicMinutesRef\.value\) \}\);/, 'the dungeon\'s door: a layout foe while another hosts is a puppet');
   assert.match(d, /\(f, pt\) => poisonFoe\(f, pt\)\)\) \{\s+\/\/ C2-slice \(combat-11\)/, 'the melee chain'); assert.match(d, /onInflictPoison: \(att, tgt, pt\) => poisonFoe\(f, pt\),/, 'the shaft');
-  assert.match(d, /const _pt = foe\._divertPt \?\? null; foe\._divertPt = null;/); assert.match(d, /\.\.\.\(_pt != null && damage > 0 \? \{ pt: _pt \} : \{\}\),[^\n]*\n\s*\.\.\.\(kind === 'arrow' \? \{ ar: 1 \} : \{\}\) \}\);/);
-  assert.match(d, /const pt = hitPoisonOf\(data\);/); assert.match(d, /if \(pt != null && dmg > 0\) inflictPoison\(f\.entity, pt, false, \{ currentMinute: Math\.floor\(classicMinutesRef\.value\) \}\);[^\n]*\n\s*damageFoe\(f, dmg, at, dir, \{ fromPlayer: true, peer: true, kind, peerId: id \}\);/, 'the host lands the dose before the health moves');
+  assert.match(d, /const _pt = fromPlayer \? \(foe\._divertPt \?\? null\) : null; if \(fromPlayer\) foe\._divertPt = null;/); assert.match(d, /\.\.\.\(_pt != null \? \{ pt: _pt \} : \{\}\),[^\n]*\n\s*\.\.\.\(kind === 'arrow' \? \{ ar: 1 \} : \{\}\) \}\);/);
+  assert.match(d, /const pt = hitPoisonOf\(data\);/); assert.match(d, /if \(pt != null\) inflictPoison\(f\.entity, pt, false, \{ currentMinute: Math\.floor\(classicMinutesRef\.value\) \}\);[^\n]*\n\s*damageFoe\(f, dmg, at, dir, \{ fromPlayer: true, peer: true, kind, peerId: id \}\);/, 'the host lands the dose before the health moves');
   // the disease rider: FormulaHelper.OnMonsterHit rides the MONSTER's weaponless loop alone - a player's blow carries none
   const fm = rd('src/combat/formulas.js');
   assert.match(fm, /if \(!attacker\.isPlayer && attacker\.isClass === false && attacker\.basics\) \{[\s\S]{0,2000}if \(hitDamage > 0 && onMonsterHit\) onMonsterHit\(attacker, target, hitDamage\);/, 'the disease rider is inside the monster arm');
@@ -166,12 +164,14 @@ test('WORLD6b-iii(e): the session - a stranger\'s pose, foes or blow (an id held
     // a stranger's blow at my foe lands (the relay routed it) and the striker is asked for
     ws.receive({ t: 'hit', id: 'ned-0004', data: { to: 'mac-0001', i: 1, dmg: 2, kind: 'melee' } });
     assert.deepEqual(hitsIn, ['ned-0004'], 'the blow lands'); assert.deepEqual(whos(), ['eve-0003', 'ned-0004']);
-    // the gate at home: WHO_HZ_MAX a second - the third stranger this second is not asked and not marked
-    ws.receive({ t: 'pose', id: 'oli-0005', p: pose });
-    assert.deepEqual(whos(), ['eve-0003', 'ned-0004'], 'the gate refused the third');
+    // the gate at home: WHO_HZ_MAX a second - the sixth stranger this second is not asked and not marked
+    for (const id of ['oli-0005', 'pam-0008', 'quin-0009']) ws.receive({ t: 'pose', id, p: pose });
+    assert.deepEqual(whos(), ['eve-0003', 'ned-0004', 'oli-0005', 'pam-0008', 'quin-0009'], 'five this second');
+    ws.receive({ t: 'pose', id: 'rob-0010', p: pose });
+    assert.deepEqual(whos().length, 5, 'the gate refused the sixth'); assert.equal(s._who.has('rob-0010'), false, 'and did not mark it');
     now += 1000;
-    ws.receive({ t: 'pose', id: 'oli-0005', p: pose });
-    assert.deepEqual(whos(), ['eve-0003', 'ned-0004', 'oli-0005'], 'asked on the next frame once the gate lets it');
+    ws.receive({ t: 'pose', id: 'rob-0010', p: pose });
+    assert.deepEqual(whos().at(-1), 'rob-0010', 'asked on the next frame once the gate lets it');
     // the relay's answer: a join to me alone - the frame the session already reads
     ws.receive({ t: 'join', id: 'eve-0003', name: 'Eve', look, pose: { ...pose, x: 10 } });
     assert.equal(s.peers.has('eve-0003'), true, 'a peer now'); assert.equal(s.peers.get('eve-0003').name, 'Eve');
@@ -179,11 +179,11 @@ test('WORLD6b-iii(e): the session - a stranger\'s pose, foes or blow (an id held
     assert.equal(s.peers.get('eve-0003').pose.x, 11, 'her pose is placed');
     ws.receive({ t: 'foes', id: 'eve-0003', data: { n: 2, k: 'world:3,12', full: 1, f: [] } });
     assert.deepEqual(foesIn, ['eve-0003'], 'her foes are heard');
-    assert.deepEqual(whos(), ['eve-0003', 'ned-0004', 'oli-0005'], 'a peer is never asked');
+    assert.equal(whos().length, 6, 'a peer is never asked');
     // past the retry a stranger still unknown is asked again
     now += WHO_RETRY_MS;
     ws.receive({ t: 'pose', id: 'ned-0004', p: pose });
-    assert.deepEqual(whos(), ['eve-0003', 'ned-0004', 'oli-0005', 'ned-0004']);
+    assert.deepEqual(whos().at(-1), 'ned-0004'); assert.equal(whos().length, 7);
     // through a halo: the ask goes on the halo's socket, the one the frame came on
     s.setHalo(['world:2,12']); const hw = sockets[1]; hw.open();
     hw.receive({ t: 'welcome', id: 'mac-0001', peers: [], host: null, world: null });
@@ -210,17 +210,17 @@ test('WORLD6b-iii(e): the Room - who answers the asker alone with the member\'s 
   assert.equal(ofType(a, 'join').filter((m) => m.id === 'bbbb-0002').length, 1, 'the asker alone hears it (a\'s one is the hello\'s own join)');
   assert.equal(ofType(b, 'join').filter((m) => m.id === 'bbbb-0002').length, 0);
   assert.equal(c.att.junk ?? 0, 0);
-  await who(c, 'zzzz-0009'); assert.equal(c.att.junk, 1, 'nobody: junk');
+  await who(c, 'zzzz-0009'); assert.equal(c.att.junk ?? 0, 0, 'nobody: no answer and NO junk (AUDIT WORLD6b-iii(e) B3: the honest race with a leave)');
   assert.equal(ofType(c, 'join').length, 1, 'the one answer - nothing more (c heard no hello after its own)');
-  const e = r.connect(); await r.hello(e, 'eeee-0005', at(1, 1));   // its own bucket (WHO_HZ_MAX a second: c's is spent)
+  const e = r.connect(); await r.hello(e, 'eeee-0005', at(1, 1));   // its own bucket
   await who(e, 'eeee-0005'); assert.equal(e.att.junk, 1, 'my own name: junk');
-  await who(e, ''); assert.equal(e.att.junk, 2, 'no name: junk');
-  assert.equal(ofType(e, 'join').length, 0, 'nothing answered');
+  assert.equal(ofType(e, 'join').length, 0, 'nothing answered'); assert.equal(e.closed, null);
+  await who(e, ''); assert.ok(e.closed, 'no name: the parser\'s error, the socket closed (B6: what the relay refuses the client never sends)');
   // the asks' own bucket: WHO_HZ_MAX in one instant, the rest dropped and counted; the strikes close the socket
   const d = r.connect(); await r.hello(d, 'dddd-0004', at(1, 1));
-  for (let i = 0; i < 5; i++) await who(d, 'aaaa-0001');
+  for (let i = 0; i < 8; i++) await who(d, 'aaaa-0001');
   assert.equal(ofType(d, 'join').filter((m) => m.id === 'aaaa-0001').length, WHO_HZ_MAX, `WHO_HZ_MAX answers (${ofType(d, 'join').length}; a's join predates d, its welcome carried a)`);
-  assert.equal(d.att.wdrops, 5 - WHO_HZ_MAX, 'the rest dropped'); assert.equal(d.closed, null);
+  assert.equal(d.att.wdrops, 8 - WHO_HZ_MAX, 'the rest dropped'); assert.equal(d.closed, null);
   assert.equal(d.att.drops ?? 0, 0, 'the pose bucket untouched');
   // a channel: no roster, no answer
   const ch = fakeRoom('chat:world'); const x = ch.connect(), y = ch.connect();
@@ -232,5 +232,5 @@ test('WORLD6b-iii(e): the Room - who answers the asker alone with the member\'s 
   assert.equal(ofType(n, 'join').length, 0);
   const s = rd('server/src/index.js');
   assert.match(s, /if \(m\.t === 'who'\) \{[\s\S]{0,1200}a = this\._meterWho\(ws, a, now\); if \(!a\) return;\s*\n\s*if \(isChatRoom\(a\.key\)\) return;/, 'the ask\'s own meter, then the channel refusal');
-  assert.match(s, /const look = await this\.state\.storage\.get\(lookKey\(b\.id\)\);\s*\n\s*this\._send\(ws, JSON\.stringify\(\{ t: 'join', id: b\.id, name: b\.name, look: look \?\? null, pose: b\.pose \?\? null \}\)\);/, 'the answer: the asker alone');
+  assert.match(s, /this\._send\(ws, JSON\.stringify\(\{ t: 'join', id: b\.id, name: b\.name, look, pose: inRange\(a\.key \?\? '', a\.pose, b\.pose\) \? \(b\.pose \?\? null\) : null \}\)\);/, 'the answer: the asker alone, the pose within range (AUDIT WORLD6b-iii(e) B2)');
 });

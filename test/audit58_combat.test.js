@@ -200,7 +200,7 @@ test('AUDIT 58: every player-attack resolver reaches the door on a zero-damage c
   // returns the 15/ratio floor).
   // MUTANT: delete any one of these three lines and this pin is red.
   const dg = src('scenes/dungeonContext.js');
-  assert.match(dg, /else if \(snd\) audio\.playOneShot\(snd\.sound, 1\.1\);[\s\S]{0,600}handleAttackFromPlayer\(foe, playerFeet\);\n\s*continue;/,
+  assert.match(dg, /else if \(snd\) audio\.playOneShot\(snd\.sound, 1\.1\);[\s\S]{0,600}attackFromPlayer\(foe, playerFeet\);[^\n]*\n\s*continue;/,
     'dungeonContext: the zero-damage arm enrages before it continues');
   assert.match(src('scenes/exteriorFoes.js'),
     /parrySounds: !!ENEMY_BASICS\[foe\.mobileType\]\?\.parrySounds[\s\S]{0,900}attackFromPlayer\(foe, playerFeet\);/,   // AUDIT WORLD6b B10 / AUDIT WORLD6b-ii B4: the one door (a foe of mine wakes through handleAttackFromPlayer, a puppet's owner hears the zero blow)
@@ -222,14 +222,14 @@ test('AUDIT 58: every player-attack resolver reaches the door on a zero-damage c
   // cityGuards carries the hostility pair itself (cityGuards.js
   // :543-548) and DFU runs :630 for the shaft as for the swing
   // (DaggerfallMissile.cs:660-688 -> WeaponManager.cs:630).
-  assert.match(src('scenes/world.js'), /onAttackFromPlayer: \(f\) => \(cityGuards\.guards\.includes\(f\)\n\s+\? cityGuards\.handleAttackFromPlayer\(f, player\.pos\)\n\s+: exteriorFoes\.attackFromPlayer\(f, player\.pos\)\),/);   // AUDIT WORLD6b-ii B4: the online host's encounter arm is the one door (a puppet's is its owner's, a foe of mine wakes through handleAttackFromPlayer)
-  assert.match(src('scenes/worldModes.js'), /onAttackFromPlayer: \(f\) => \(f\._encounter\n\s+\? interiorFoes\?\.handleAttackFromPlayer\(f, player\.pos\)\n\s+: interiorGuards\?\.handleAttackFromPlayer\(f, player\.pos\)\),/);
-  assert.match(dg, /onAttackFromPlayer: \(t\) => handleAttackFromPlayer\(t, lastPlayerFeet\),/);
+  assert.match(src('scenes/world.js'), /onAttackFromPlayer: \(f\) => \(cityGuards\.guards\.includes\(f\)\n\s+\? cityGuards\.handleAttackFromPlayer\(f, player\.pos\)\n\s+: exteriorFoes\.attackFromPlayer\(f, player\.pos, 'arrow'\)\),/);   // AUDIT WORLD6b-ii B4: the online host's encounter arm is the one door (a puppet's is its owner's, a foe of mine wakes through handleAttackFromPlayer)
+  assert.match(src('scenes/worldModes.js'), /onAttackFromPlayer: \(f\) => \(f\._encounter\n\s+\? interiorFoes\?\.attackFromPlayer\(f, player\.pos, 'arrow'\)[^\n]*\n\s+: interiorGuards\?\.handleAttackFromPlayer\(f, player\.pos\)\),/);
+  assert.match(dg, /onAttackFromPlayer: \(t, landed\) => attackFromPlayer\(t, lastPlayerFeet, 'arrow', landed\),/);   // AUDIT WORLD6b-iii(e) C2: the dungeon's one door
   // ROAD-G G2: the fourth host has a pool with a hostility door now,
   // so the absence this pin used to hold ("no onAttackFromPlayer here -
   // this host mounts the WATCH pool alone") is GONE rather than
   // annotated: its arrow seam runs the same router world.js's does.
-  assert.match(src('scenes/exterior.js'), /onAttackFromPlayer: \(f\) => \(cityGuards\.guards\.includes\(f\)\n\s+\? cityGuards\.handleAttackFromPlayer\(f, player\.pos\)\n\s+: exteriorFoes\.handleAttackFromPlayer\(f, player\.pos\)\),/);
+  assert.match(src('scenes/exterior.js'), /onAttackFromPlayer: \(f\) => \(cityGuards\.guards\.includes\(f\)\n\s+\? cityGuards\.handleAttackFromPlayer\(f, player\.pos\)\n\s+: exteriorFoes\.attackFromPlayer\(f, player\.pos, 'arrow'\)\),/);
   assert.doesNotMatch(src('scenes/exterior.js'), /AUDIT 58: no onAttackFromPlayer here/,
     'the retired sentence is deleted, not annotated');
 });
