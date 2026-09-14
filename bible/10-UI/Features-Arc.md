@@ -6,8 +6,9 @@ pane toggles into one universal place to toggle enhanceable features
 build on instead of being hidden in the settings menu ... go one by
 one, ensure proper detail and development and then organize everything
 under one roof." Decided the same day: ONE home on the menu rail - ONE LIST, not
-tabs (Mac, 2026-09-14): every row wears exactly one of three
-colour-coded labels, and a filter row at the top shows all of them or
+tabs (Mac, 2026-09-14): every row wears one OR MORE of three
+colour-coded labels (Mac, 2026-09-14: a row that condenses switches
+from two origins wears both), and a filter row at the top shows all of them or
 one kind:
 
 - **Enhanced** - built in house (the port's own departures).
@@ -18,6 +19,20 @@ The law of the work: NOTHING MOVES IN BULK. Each row below is its own
 slice - read against its source, its consumers and its neighbours
 (duplicates, dead switches, wrong defaults), fixed where wrong, THEN
 moved. A row moves when its slice closes, not before.
+
+## Condensing: one row, two labels
+
+Switches that govern one thing from two origins condense into ONE
+row wearing both labels. The stores behind them stay separate; the
+row is the presentation, and the slice that condenses it decides how
+the one switch drives the two keys. Candidates already visible:
+
+| Row | Labels | Today's switches | Note |
+|---|---|---|---|
+| The outdoors sky | Enhanced + Mod Authored | `enhancedEnvironments`, Dynamic Skies `Enabled`, `pixelatedSky` | Mac's example. One sky, three switches in two panes |
+| Land view distance | Enhanced + DFU Classic | `landViewDistance`, `Experimental/TerrainDistance` | two controls for one radius, read side by side |
+| Enemy movement | Enhanced + DFU Classic | `enhancedAI`, `Enhancements/EnhancedCombatAI` | NOT a merge - different things, one dead. The slice decides what the row says |
+| Monster stats | Mod Authored x2 | Meaner Monsters `Enabled`, PCAAO `Enabled` | the meaner numbers change under the overhaul; one row may explain both |
 
 ## The stores stay (what "one roof" does not mean)
 
