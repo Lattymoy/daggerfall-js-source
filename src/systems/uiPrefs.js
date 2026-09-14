@@ -11,6 +11,7 @@
 const STORAGE_KEY = 'dagger.ui.v1';
 
 import { appStorage } from './appStorage.js';   // DA1: the storage seam
+import { onlineForcedPref } from './onlineLane.js';   // OL1: the online lane's forcing, read before the shelf
 
 export const PREF_DEFAULTS = Object.freeze({
   // PX30c: the enhanced HUD's scale. It lives HERE and not in DFU's
@@ -159,7 +160,12 @@ export function savePrefs() {
   try { storage()?.setItem(STORAGE_KEY, JSON.stringify(_prefs ?? PREF_DEFAULTS)); return true; }
   catch (e) { console.warn('[uiPrefs] screen preferences could not be saved', e); return false; }
 }
-export function getPref(k) { if (_prefs === null) loadPrefs(); return _prefs[k] ?? PREF_DEFAULTS[k]; }
+export function getPref(k) {
+  const forced = onlineForcedPref(k);   // OL1: online is the enhanced lane, whole - a forced switch reads forced and the shelf is not written
+  if (forced !== undefined) return forced;
+  if (_prefs === null) loadPrefs();
+  return _prefs[k] ?? PREF_DEFAULTS[k];
+}
 export function setPref(k, v) { if (_prefs === null) loadPrefs(); _prefs[k] = v; savePrefs(); }
 export function isOpen(catId, group) { return !!getPref('open')[`${catId}:${group}`]; }
 export function setOpen(catId, group, open) {

@@ -130,7 +130,8 @@ import { playerEntity } from '../characters/playerEntity.js';
 // PX6: the Stats page's skill labels - the one home (systems/skills.js).
 import { SKILLS, SKILL_NAMES } from '../systems/skills.js';
 import { overlayAction } from './input.js';   // U51: Escape, through the shared table
-import { MOD_SETTINGS, modSetting, setModSetting, isIntKey, isChoiceKey } from '../systems/modSettings.js';   // ROADS 24; DS1: the integer keys; UL1: the choice keys
+import { MOD_SETTINGS, modSetting, setModSetting, isIntKey, isChoiceKey } from '../systems/modSettings.js';
+import { isOnlinePage, onlineForcedPref, onlineForcedModSetting } from '../systems/onlineLane.js';   // OL1: online is the enhanced lane, whole - a forced switch is shown locked   // ROADS 24; DS1: the integer keys; UL1: the choice keys
 import { CREDITS } from './credits.js';   // CR1: who made what the port carries
 // FIX-F (Mac: "changing keybinds in classic/enhanced do not work"): the
 // rebinding pane. The enhanced skin is the DEFAULT and had no door to
@@ -487,7 +488,7 @@ function paneOnline(body) {
   c.append(el('span', 'tag', 'Online'));
   c.append(el('h3', null, 'Bring your character into the shared world'));
   // AUDIT WORLD34 D5: the copy said the pre-WORLD1 truth ("Nothing else is shared yet") - what a player is promised here is the law
-  c.append(el('p', 'meta', 'Everyone brings their own save; you see each other everywhere and can talk. A dungeon is one shared world: its foes, doors, levers, platforms and every chest anyone has opened are the same for everyone in it, and it remembers. Towns, the open country and buildings share only who is there. The clock and the sky are the world\'s and run on real time: a rest, a trip, a sentence or a lesson takes none of it, and the quest clocks stand still.'));   // AUDIT WORLD5 C12: the shared clock, said at the door
+  c.append(el('p', 'meta', 'Everyone brings their own save; you see each other everywhere and can talk. A dungeon is one shared world: its foes, doors, levers, platforms and every chest anyone has opened are the same for everyone in it, and it remembers. Towns, the open country and buildings share only who is there. The clock and the sky are the world\'s and run on real time: a rest, a trip, a sentence or a lesson takes none of it, and the quest clocks stand still. Online is the enhanced lane, whole: every enhancement and every mod is on for everyone, and your own switches return when you play offline.'));   // AUDIT WORLD5 C12: the shared clock, said at the door; OL1: the lane, said at the door
   const field = (label, key, placeholder, maxLength = 24) => {
     const wrap = el('label', 'field');
     wrap.append(el('span', 'fieldlabel', label));
@@ -952,6 +953,18 @@ function write(key, next) {
 // yet is listed, greyed, with the reason - and one that exists but
 // cannot run here says what it needs instead of failing silently.
 
+/** OL1: the lock a forced switch wears online - the button says so and
+ *  answers nothing, so a player who presses it learns why rather than
+ *  watching a press change nothing. */
+const ONLINE_LOCK_NOTE = 'On while online - the shared world is the enhanced lane, whole. Your own choice returns when you play offline.';
+function lockOnline(b, main) {
+  b.textContent = 'On (online)';
+  b.disabled = true;
+  b.title = ONLINE_LOCK_NOTE;
+  b.setAttribute('aria-disabled', 'true');
+  if (main) main.onclick = null;
+}
+
 /** One toggle over a uiPrefs key. */
 function prefRow(key, name, note, { onChange = null } = {}) {
   const row = el('div', 'row');
@@ -966,6 +979,7 @@ function prefRow(key, name, note, { onChange = null } = {}) {
   b.classList.add('rowact');   // AUDIT UI: sized by the sheet, so the coarse-pointer rule can reach it
   b.setAttribute('aria-pressed', String(on));
   b.onclick = () => { setPref(key, !on); onChange?.(!on); render(); };
+  if (onlineForcedPref(key) !== undefined) lockOnline(b, main);   // OL1
   ctl.append(b, el('span', 'tier live'));
   row.append(ctl);
   return row;
@@ -1425,6 +1439,7 @@ function paneMods(body) {
   // ROADS 24: a vendored mod's OWN switches, under the mod's own name,
   // with the mod's own descriptions - where DFU's modsettings puts them.
   // The row is a switch like DFU's, writing through modSettings.js.
+  if (isOnlinePage()) body.append(el('p', 'meta', ONLINE_LOCK_NOTE));   // OL1: said once at the top, and on every Enabled row
   for (const [vendor, mod] of Object.entries(MOD_SETTINGS)) {
     const mc = el('div', 'card');
     mc.append(el('h3', null, `${mod.title} by ${mod.author}`));   // the creator's name in the title (Mac, 2026-09-08)
@@ -1462,6 +1477,7 @@ function paneMods(body) {
         const b = el('button', 'act rowact', on ? 'On' : 'Off');
         if (on) b.classList.add('primary');
         b.onclick = () => { setModSetting(vendor, key, !modSetting(vendor, key)); render(); };
+        if (onlineForcedModSetting(vendor, key) !== undefined) lockOnline(b, null);   // OL1: every mod's Enabled, online
         ctl.append(b);
       }
       row.append(ctl);
