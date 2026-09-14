@@ -111,6 +111,27 @@ export const FEATURES = Object.freeze([
       also: Object.freeze([Object.freeze({ store: 'mods', vendor: 'dynamic-skies', key: 'Enabled' })]),   // written by outdoorsWrite while the outdoors are on
     }),
   }),
+  // FT5 (2026-09-14): ENHANCED AI - the navmesh-driven enemy motor
+  // (12-Enhanced-AI/Enhanced-AI-Arc.md), off by default because DFU's
+  // classic motor is the 1:1 law. The words are AUDIT 59 F3's, kept
+  // true by test/ft5_enhancedai.test.js against the arc's own list of
+  // what is still ahead. NOT a merge with DFU's Enhancements/
+  // EnhancedCombatAI ("Smarter Enemies", UNAVAILABLE in settings.js: the port runs the
+  // classic path only) - a different thing that shares half a name,
+  // which the note says outright so the two cannot be read as one.
+  Object.freeze({
+    id: 'enhanced-ai',
+    title: 'Enhanced AI',
+    note: 'Enemies find their way: a navmesh baked from each dungeon, so they path around pillars and down '
+      + 'corridors instead of walking into walls the way classic Daggerfall\u2019s do. Senses, decisions and '
+      + 'attacks stay classic; only the way an enemy moves changes. Dungeons for now - towns, interiors and '
+      + 'doors are still to come, and enemies bunch up until the crowd slice lands. Off keeps the 1:1 classic motor. '
+      + 'This is the port\u2019s own, not Daggerfall Unity\u2019s \u201cSmarter Enemies\u201d setting (EnhancedCombatAI), '
+      + 'which the port does not run.',
+    effect: 'Takes effect on the next dungeon you enter.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'enhancedAI' }),
+  }),
 ]);
 
 /** The row whose control is this store's key, or null. The settings

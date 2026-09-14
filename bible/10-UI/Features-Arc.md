@@ -31,7 +31,7 @@ the one switch drives the two keys. Candidates already visible:
 |---|---|---|---|
 | The outdoors sky | Enhanced + Mod Authored | `enhancedEnvironments`, Dynamic Skies `Enabled` | **CONDENSED (FT4, 2026-09-14)** - one three-way row: off, the port's sky, Dynamic Skies' sky (`pixelatedSky` was a third switch until FT3 removed it) |
 | Land view distance | Enhanced + DFU Classic | `landViewDistance`, `Experimental/TerrainDistance` | **CONDENSED (FT2, 2026-09-14)** - one row, shows the lane's radius, writes both stores |
-| Enemy movement | Enhanced + DFU Classic | `enhancedAI`, `Enhancements/EnhancedCombatAI` | NOT a merge - different things, one dead. The slice decides what the row says |
+| Enemy movement | Enhanced + DFU Classic | `enhancedAI`, `Enhancements/EnhancedCombatAI` | **DECIDED (FT5, 2026-09-14)** - not a merge: the AI row wears Enhanced alone and names DFU's "Smarter Enemies" as a different thing the port does not run; the DFU key stays in Settings, unavailable |
 | Monster stats | Mod Authored x2 | Meaner Monsters `Enabled`, PCAAO `Enabled` | the meaner numbers change under the overhaul; one row may explain both |
 
 ## The stores stay (what "one roof" does not mean)
@@ -60,7 +60,7 @@ finding and the move.
 
 | Key | Row today | Default | Status / notes |
 |---|---|---|---|
-| `enhancedAI` | Enhanced AI | off | open. NAME COLLIDES with DFU's `Enhancements/EnhancedCombatAI` (below), which is a different thing and unavailable |
+| `enhancedAI` | Enhanced AI | off | **MOVED (FT5, 2026-09-14)** - Enhanced; the note names the DFU key it is not |
 | `enhancedEnvironments` | Enhanced environments | on | **MOVED (FT4, 2026-09-14)** - condensed with Dynamic Skies' `Enabled` into one three-way row wearing both labels |
 | `pixelatedSky` | Pixelated sky | on | **REMOVED (FT3, 2026-09-14, Mac: "Remove our version of pixelated sky")** - the pass, the pref, the row, the doors |
 | `landViewDistance` | Land view distance | 5 | **MOVED (FT2, 2026-09-14)** - condensed with `Experimental/TerrainDistance` into one row wearing both labels |
@@ -105,7 +105,7 @@ Video/GUI keys that are features rather than settings.
 | `Enhancements/GuildQuestListBox` | - | False | live | open |
 | `Video/RandomDungeonTextures` | Dungeon Wall Style | - | live | open |
 | `Experimental/TerrainDistance` | - | 3 | live | **COVERED (FT2, 2026-09-14)** - written by the condensed row, capped at 4; its Video row is a pointer |
-| `Enhancements/EnhancedCombatAI` | - | True | UNAVAILABLE | open. Ledger A: the port runs the classic AI only. Stored True, runs False. Decide: honest row on the list, or off it |
+| `Enhancements/EnhancedCombatAI` | - | True | UNAVAILABLE | **DECIDED (FT5)** - off the list: a row for a feature the port does not run would be a lie with a switch. Stays in Settings as the unavailable row it is, named from the AI row's note |
 | `Enhancements/AdvancedClimbing` | - | False | UNAVAILABLE | open. Ledger A, same shape |
 | `Experimental/CustomBooksImport` | - | True | unavailable | open |
 | `Enhancements/LypyL_GameConsole`, `LypyL_ModSystem`, `AssetInjection`, `CompressModdedTextures`, `Experimental/AssetCacheThreshold`, `TerrainHeightmapPixelError` | - | - | stored | NOT features. DFU's mod-system and cache plumbing; stay in Settings > Data & Mods |
@@ -117,6 +117,7 @@ Video/GUI keys that are features rather than settings.
 - **FT2** - SHIPPED 2026-09-14. Land view distance, the first condensed row. Below.
 - **FT3** - SHIPPED 2026-09-14. The pixelated sky removed. Below.
 - **FT4** - SHIPPED 2026-09-14. The outdoors, one row. Below.
+- **FT5** - SHIPPED 2026-09-14. Enhanced AI. Below.
 - One slice per open row after that, in the order Mac picks.
 
 ## FT0 - THE HOME (2026-09-14)
@@ -291,3 +292,28 @@ it is a tier (the pref's own value, `true`, is no tier here).
 **Not done, by name.** The Enhanced category still holds the AI, the
 water, the grass, the clouds and the combat visuals - each its own
 slice. `test/ft4_outdoors.test.js`.
+
+## FT5 - ENHANCED AI (2026-09-14)
+
+**The audit.** The row's words (AUDIT 59 F3's) read against the arc:
+still true - dungeons only, the doors and the crowd (4b) and the
+exteriors and interiors (5) still ahead. The switch's reach (AUDIT 55:
+the motor, the dungeon host, the pref, the row) unchanged. One thing
+nothing said: the pref shares half a name with DFU's
+`Enhancements/EnhancedCombatAI` ("Smarter Enemies" in Settings), a
+DIFFERENT feature the port does not run (Ledger A). A player reading
+"Enhanced AI" beside an unavailable "Smarter Enemies" could take them
+for one thing.
+
+**The row.** Enhanced alone, over the pref, off by default. The note
+keeps its claims and gains one sentence: this is the port's own, not
+DFU's Smarter Enemies, which the port does not run. The claims are
+PINNED AGAINST THE ARC, not remembered: the test reads the arc's
+"slices ahead" list and fails the day it stops listing what the note
+still calls ahead.
+
+**Decided, not merged.** The condensing candidate "enemy movement" is
+two things, one dead. The DFU key stays in Settings as the unavailable
+row it is - a row for it on the home would be a lie with a switch. The
+readers pin (AUDIT 55) moved its menu reader to the registry.
+`test/ft5_enhancedai.test.js`.

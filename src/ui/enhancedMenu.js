@@ -1143,12 +1143,7 @@ function outdoorsTestRow() {
 function portRowsEnhanced({ pause = false } = {}) {
   const out = [];
   if (!pause) {
-  out.push(prefRow('enhancedAI', 'Enhanced AI',
-    'Enemies find their way: a navmesh baked from each dungeon, so they path around pillars and down '
-    + 'corridors instead of walking into walls the way classic Daggerfall\'s do. Senses, decisions and '
-    + 'attacks stay classic; only the way an enemy moves changes. Dungeons for now - towns, interiors and '
-    + 'doors are still to come, and enemies bunch up until the crowd slice lands. Takes effect on the '
-    + 'next dungeon you enter. Off keeps the 1:1 classic motor.'));
+  // FT5: the enemy-motor switch moved to the Features home (systems/features.js).
   // FT4: Enhanced environments moved to the Features home (systems/features.js) - one three-way row with Dynamic Skies.
   // FT2: Land view distance moved to the Features home (systems/features.js) - one row for both lanes.
   out.push(choiceRow('grassDensity', 'Grass density',
