@@ -377,10 +377,10 @@ test('AUDIT WORLD6b C4/C5: the day\'s rolls - online the walk is one day at a ti
   assert.match(h, /else if \(id && isWorldRoom\(online\.room\)\) _foesInAt = performance\.now\(\);/, 'A9');
   assert.match(h, /if \(online\.room\) \{ worldPublish\(now, true\); online\.leave\(\); exteriorFoes\.clearPuppets\(\); _foesRoom = null; \}/, 'C8');
   assert.match(h, /if \(online\.room !== _foesRoom\) \{ _foesRoom = online\.room; _foesFullAt = -Infinity; exteriorFoes\.clearPuppets\(\); \}/, 'C7');
-  assert.match(h, /exteriorFoes\.pruneOwners\(new Set\(online\.peers\.keys\(\)\), now\);/, 'C3: the prune reads the clock');
+  assert.match(h, /exteriorFoes\.pruneOwners\(new Set\(\(peersNear\(\) \?\? \[\]\)\.map\(\(p\) => p\.id\)\), now\);/, 'C3: the prune reads the clock');
   assert.match(h, /candidates: \(\) => \[\.\.\.cityGuards\.guards, \.\.\.exteriorFoes\.foes\]\.filter\(\(f\) => !f\.dead && !f\.puppet\),/, 'B8');
   assert.match(h, /const f = enchantFoes\(\)\.find\(\(x\) => !x\.dead && x\.entity === targetEntity\);\s*if \(!f \|\| f\.puppet\) return;/, 'B9');
   assert.match(rd('src/scenes/exteriorFoes.js'), /const me = _net\?\.selfId\?\.\(\) \?\? null;/, 'C11: selfId on the net is READ now (WORLD6b-ii: whose blow a streamed target names) - no dead wiring');
-  assert.match(rd('src/ui/enhancedMenu.js'), /everyone nearby sees and can help fight\./, 'C9');
+  assert.match(rd('src/ui/enhancedMenu.js'), /everyone nearby sees and fights - and its creatures can hurt you too\./, 'C9 (AUDIT WORLD6b-ii C3: since the hunt a peer\'s creature can hurt me)');
   assert.match(rd('bible/06-Systems/Online-Arc.md'), /## AUDIT WORLD6b \(2026-09-14\)/, 'the record');
 });

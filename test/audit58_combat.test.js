@@ -203,7 +203,7 @@ test('AUDIT 58: every player-attack resolver reaches the door on a zero-damage c
   assert.match(dg, /else if \(snd\) audio\.playOneShot\(snd\.sound, 1\.1\);[\s\S]{0,600}handleAttackFromPlayer\(foe, playerFeet\);\n\s*continue;/,
     'dungeonContext: the zero-damage arm enrages before it continues');
   assert.match(src('scenes/exteriorFoes.js'),
-    /parrySounds: !!ENEMY_BASICS\[foe\.mobileType\]\?\.parrySounds[\s\S]{0,900}handleAttackFromPlayer\(foe, playerFeet\);/,   // AUDIT WORLD6b B10: a puppet's zero blow goes through the door first, the note widened the window
+    /parrySounds: !!ENEMY_BASICS\[foe\.mobileType\]\?\.parrySounds[\s\S]{0,900}attackFromPlayer\(foe, playerFeet\);/,   // AUDIT WORLD6b B10 / AUDIT WORLD6b-ii B4: the one door (a foe of mine wakes through handleAttackFromPlayer, a puppet's owner hears the zero blow)
     'exteriorFoes: the same, in its else arm');
   assert.match(src('scenes/cityGuards.js'), /damageGuard\(foe, 0, playerFeet, null\);/,
     'cityGuards: through the damage door, with no knock ray');
@@ -222,7 +222,7 @@ test('AUDIT 58: every player-attack resolver reaches the door on a zero-damage c
   // cityGuards carries the hostility pair itself (cityGuards.js
   // :543-548) and DFU runs :630 for the shaft as for the swing
   // (DaggerfallMissile.cs:660-688 -> WeaponManager.cs:630).
-  assert.match(src('scenes/world.js'), /onAttackFromPlayer: \(f\) => \(cityGuards\.guards\.includes\(f\)\n\s+\? cityGuards\.handleAttackFromPlayer\(f, player\.pos\)\n\s+: exteriorFoes\.handleAttackFromPlayer\(f, player\.pos\)\),/);
+  assert.match(src('scenes/world.js'), /onAttackFromPlayer: \(f\) => \(cityGuards\.guards\.includes\(f\)\n\s+\? cityGuards\.handleAttackFromPlayer\(f, player\.pos\)\n\s+: exteriorFoes\.attackFromPlayer\(f, player\.pos\)\),/);   // AUDIT WORLD6b-ii B4: the online host's encounter arm is the one door (a puppet's is its owner's, a foe of mine wakes through handleAttackFromPlayer)
   assert.match(src('scenes/worldModes.js'), /onAttackFromPlayer: \(f\) => \(f\._encounter\n\s+\? interiorFoes\?\.handleAttackFromPlayer\(f, player\.pos\)\n\s+: interiorGuards\?\.handleAttackFromPlayer\(f, player\.pos\)\),/);
   assert.match(dg, /onAttackFromPlayer: \(t\) => handleAttackFromPlayer\(t, lastPlayerFeet\),/);
   // ROAD-G G2: the fourth host has a pool with a hostility door now,

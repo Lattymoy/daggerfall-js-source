@@ -204,7 +204,7 @@ test('audit24 wave36: hostility SEEDS the remembered position - the freeze wave 
   // enemy's blow - never reaches it at all now, which is the
   // stronger form of the same law.
   const xfs = rd('src/scenes/exteriorFoes.js');
-  assert.ok(xfs.includes('f.ai.makeEnemyHostileToAttacker?.((peer && peerCandidate(peerId)) || PLAYER_TARGET, playerFeet ?? null);'));   // WORLD6b-ii: a peer's blow names the peer, the player's the player
+  assert.ok(xfs.includes('if (_striker) f.ai.makeEnemyHostileToAttacker?.(_striker, playerFeet ?? null);'));   // WORLD6b-ii: a peer's blow names the peer, the player's the player; AUDIT WORLD6b-ii A3: never me
   assert.match(xfs, /if \(fromPlayer && f\.ai\) \{/, 'and only for a PLAYER source');
   assert.ok(rd('src/scenes/dungeonContext.js').includes('foe.ai.makeHostileToPlayer?.(undefined, lastPlayerFeet);'));
 });

@@ -174,7 +174,7 @@ test('WORLD6b: the pool streams MINE - numbered from one, every changed foe (eve
   const rat = await pool.spawnFoe(0, [10, 0, 10], { yaw: 1.5, feetGiven: true });
   assert.ok(rat, 'the rat stands on the crafted career'); assert.equal(rat.seq, 1, 'mine, numbered from one'); assert.equal(rat.puppet, null);
   const f1 = pool.foesFrame(false);
-  assert.deepEqual(f1, { n: 1, k: 'world:3,12', full: 0, f: [{ i: 1, t: 0, x: rat.gender === 'female' ? 1 : 0, f: [10, 0, 10], y: 1.5, h: rat.entity.health, d: 0, a: 0, m: 0, g: '.' }] }, 'the first frame carries the rat (WORLD6b-ii: and its target - me, unarmed)');
+  assert.deepEqual(f1, { n: 1, k: 'world:3,12', full: 0, f: [{ i: 1, t: 0, x: rat.gender === 'female' ? 1 : 0, f: [10, 0, 10], y: 1.5, h: rat.entity.health, d: 0, a: 0, m: 0, g: '', l: rat.entity.level | 0, w: null }] }, 'the first frame carries the rat (WORLD6b-ii: and its target - none yet, AUDIT WORLD6b-ii A8; its level and no weapon, B2)');
   assert.equal(pool.foesFrame(false), null, 'nothing changed: nothing goes');
   const full = pool.foesFrame(true);
   assert.equal(full.n, 2); assert.equal(full.full, 1); assert.equal(full.f.length, 1, 'a full frame carries every foe of mine');
@@ -273,7 +273,7 @@ test('WORLD6b: a peer\'s blow on MY foe lands through the one damage door - by m
   const h0 = rat.entity.health;
   assert.equal(pool.applyHit('bob-0002', { i: 1, dmg: 3, kind: 'arrow' }), true);
   assert.equal(rat.entity.health, h0 - 3, 'the blow landed'); assert.equal(woke, 0, 'a peer\'s blow wakes no area (AUDIT WORLD2 B9\'s law)');
-  assert.equal(rat.ai.target != null, true, 'the struck foe turns on me, its owner (the striker\'s feet are not on the hit - recorded)');
+  assert.equal(rat.ai.target, null, 'AUDIT WORLD6b-ii A3: a peer\'s blow names no target of mine - with no candidate for the striker the foe wakes and the next machine pass picks'); assert.ok(rat.ai.giveUpTimer > 0, 'woken');
   assert.equal(pool.applyHit('bob-0002', { i: 1, dmg: 0, kind: 'melee' }), true, 'a zero blow is a blow');
   assert.equal(pool.applyHit('bob-0002', { i: 2, dmg: 3 }), false, 'no foe of mine numbered two');
   assert.equal(pool.applyHit('bob-0002', { i: 1, dmg: 10001 }), false, 'past the bound'); assert.equal(pool.applyHit('bob-0002', { i: 1, dmg: -1 }), false); assert.equal(pool.applyHit('bob-0002', { i: 1, dmg: 'x' }), false); assert.equal(pool.applyHit('bob-0002', null), false);
@@ -323,7 +323,7 @@ test('WORLD6b: the world host by source - the stream\'s cell arm is everyone\'s 
   assert.match(w, /if \(isCellRoom\(online\.room\)\) \{ if \(\(modes\?\.mode \?\? 'exterior'\) === 'exterior'\) exteriorFoes\.applyFoes\(id, data\); return; \}/, 'a cell\'s frame is the pool\'s, never a dungeon heartbeat');
   assert.match(w, /online\.onHit = \(id, data\) => \{ if \(isCellRoom\(online\.room\)\) exteriorFoes\.applyHit\(id, data\); else modes\?\.applyDungeonHit\?\.\(id, data\); \};/);
   assert.match(w, /exteriorFoes\.setNet\(\{\s*room: \(\) => online\?\.room \?\? null,\s*selfId: \(\) => online\?\.id \?\? null,[^\n]*\n\s*peers: peersNear,[^\n]*\n\s*now: \(\) => performance\.now\(\),\s*staleMs: FOES_STALE_MS,[^\n]*\n\s*onPeerHit: \(hit\) => online\?\.sendHit\(hit\) \?\? false,\s*toWire: \(feet\) => \{ const wc = state\.worldCoords\(feet\); return \[wc\.x, feet\[1\] - state\.compensation\[1\], wc\.z\]; \},\s*toScene: \(p\) => \{ const l = state\.localFromWorld\(p\[0\], p\[2\]\); return \[l\[0\], p\[1\] \+ state\.compensation\[1\], l\[1\]\]; \},\s*\}\);/, 'the net: the pose\'s own frame on the wire (AUDIT ONLINE D7), this scene\'s feet here');
-  assert.match(w, /if \(online\.room !== _foesRoom\) \{ _foesRoom = online\.room; _foesFullAt = -Infinity; exteriorFoes\.clearPuppets\(\); \}[^\n]*\n\s*if \(isCellRoom\(online\.room\)\) exteriorFoes\.pruneOwners\(new Set\(online\.peers\.keys\(\)\), now\);/, 'every frame (AUDIT WORLD6b C7: a new room hears every foe at once; C3: the prune reads the clock)');
-  assert.match(rd('src/ui/enhancedMenu.js'), /Towns and the open country share who is there and the creatures that find you: what one player meets, everyone nearby sees and can help fight\./);   // AUDIT WORLD6b C9: nearby (the fan is ranged), help (a puppet lands no blow)
+  assert.match(w, /if \(online\.room !== _foesRoom\) \{ _foesRoom = online\.room; _foesFullAt = -Infinity; exteriorFoes\.clearPuppets\(\); \}[^\n]*\n\s*if \(isCellRoom\(online\.room\)\) exteriorFoes\.pruneOwners\(new Set\(\(peersNear\(\) \?\? \[\]\)\.map\(\(p\) => p\.id\)\), now\);/, 'every frame (AUDIT WORLD6b C7: a new room hears every foe at once; C3: the prune reads the clock)');
+  assert.match(rd('src/ui/enhancedMenu.js'), /Towns and the open country share who is there and the creatures that find you: what one player meets, everyone nearby sees and fights - and its creatures can hurt you too\./);   // AUDIT WORLD6b C9: nearby (the fan is ranged), help (a puppet lands no blow)
   assert.match(rd('bible/06-Systems/Online-Arc.md'), /## WORLD6b \(2026-09-14\)/, 'the record');
 });

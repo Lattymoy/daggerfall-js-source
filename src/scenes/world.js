@@ -2718,7 +2718,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // through the one that owns the billboard - `exteriorFoePool` is
     // the watch AND the encounter foes, and this arm reached the
     // encounter pool's remover for both. That was not a leak: removeFoe
-    // (exteriorFoes.js:342-347) never looks the record up in `foes`, and
+    // (exteriorFoes.js:352-357) never looks the record up in `foes`, and
     // both pools share this host's one renderer, so a struck WATCHMAN
     // got exactly what removeGuard (cityGuards.js:1215-1219) gives it -
     // batch freed, `dead = true`, no corpse, skipped by the next AI pass
@@ -4154,7 +4154,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:5238), so exterior mode and a
+    // composer, dungeonContext.js:5242), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -6778,10 +6778,16 @@ export async function bootWorld(canvas, renderer, params, status) {
   };
   /** WORLD3: the peers in my room as target candidates - each with its feet in THIS scene and its body's height; null
    *  when there is no room. The dungeon host's foes read it (peerCandidates) and, since WORLD6b-ii, the cell's own. */
+  const _peerHeights = new Map();   // AUDIT WORLD6b-ii C5: a peer's height is the peer's - the doll answers 0 while it is not standing (a slot churn, a load), and the aim point flickered with it
   const peersNear = () => {
     if (!online || !online.room || online.status !== 'open') return null;
     const now = performance.now(), out = [];
-    for (const p of online.peers.values()) if (online.visible(p, now)) out.push({ id: p.id, feet: onlineToScene(p.shown), height: peerBodies?.heightOf(p.id) || undefined });
+    for (const p of online.peers.values()) {
+      if (!online.visible(p, now)) continue;
+      const h = peerBodies?.heightOf(p.id) || 0;
+      if (h > 0) _peerHeights.set(p.id, h);
+      out.push({ id: p.id, feet: onlineToScene(p.shown), height: _peerHeights.get(p.id) });
+    }
     return out;
   };
   const onlineFrame = (now, dt) => {
@@ -6840,7 +6846,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     online.tick();
     // WORLD6b: a room change leaves every puppet in the old cell; a peer gone from the room takes its puppets with it
     if (online.room !== _foesRoom) { _foesRoom = online.room; _foesFullAt = -Infinity; exteriorFoes.clearPuppets(); }   // AUDIT WORLD6b C7: a new room hears every foe of mine at once
-    if (isCellRoom(online.room)) exteriorFoes.pruneOwners(new Set(online.peers.keys()), now);
+    if (isCellRoom(online.room)) exteriorFoes.pruneOwners(new Set((peersNear() ?? []).map((p) => p.id)), now);   // AUDIT WORLD6b-ii C2: ONE liveness for the owner - the peers the hunt reads (visible: a pose, in range, inside the timeout) are the peers whose puppets stand
     worldPublish(now);   // WORLD1: the room's memory, every WORLD_PUBLISH_MS while this player hosts a dungeon
     foesStream(now);   // WORLD2: the host's changed foes, every FOES_MS; WORLD6b: mine, in a cell
     actFlush();        // AUDIT WORLD3 A3: an act the wire refused, re-read and re-sent
@@ -8611,7 +8617,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // for the swing.
         onAttackFromPlayer: (f) => (cityGuards.guards.includes(f)
           ? cityGuards.handleAttackFromPlayer(f, player.pos)
-          : exteriorFoes.handleAttackFromPlayer(f, player.pos)),
+          : exteriorFoes.attackFromPlayer(f, player.pos)),   // AUDIT WORLD6b-ii B4: the one door - a PUPPET's is its owner's (a zero blow diverted, a damaging one already was), no area of mine wakes
       }),
     });
     arrows.draw(renderer);

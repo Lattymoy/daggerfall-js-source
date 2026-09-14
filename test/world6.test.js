@@ -161,6 +161,6 @@ test('WORLD6a: the hosts by source - the interior mode keys and stamps its room 
   assert.match(w, /const shared = modes\?\.placeSharedWorld\?\.\(\);/); assert.match(w, /modes\?\.restorePlaceSharedWorld\?\.\(shared\)/); assert.match(w, /modes\?\.applyPlaceActions\?\.\(id, data\)/);
   assert.equal((w.match(/modes\?\.placeActionRecords\?\./g) ?? []).length, 2, 'the act and the flush');
   assert.match(w, /onInteriorLeave: \(\) => worldPublish\(performance\.now\(\), true\),/);
-  assert.match(rd('src/ui/enhancedMenu.js'), /A building is a shared world too: its doors, and every shelf and cupboard anyone has opened, are the same for everyone in it, and it remembers\. Towns and the open country share who is there and the creatures that find you: what one player meets, everyone nearby sees and can help fight\./);
+  assert.match(rd('src/ui/enhancedMenu.js'), /A building is a shared world too: its doors, and every shelf and cupboard anyone has opened, are the same for everyone in it, and it remembers\. Towns and the open country share who is there and the creatures that find you: what one player meets, everyone nearby sees and fights - and its creatures can hurt you too\./);
   assert.match(rd('bible/06-Systems/Online-Arc.md'), /## WORLD6 \(2026-09-14\)/, 'the record');
 });
