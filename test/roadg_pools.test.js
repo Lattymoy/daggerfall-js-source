@@ -23,7 +23,7 @@
 //      the refusal into the code instead. In the street the arm handed
 //      a struck watchman to the ENCOUNTER pool's `removeFoe` - which
 //      was not a leak: that remover never looks the record up in
-//      `foes` (exteriorFoes.js:331-336) and both pools share the host's
+//      `foes` (exteriorFoes.js:342-347) and both pools share the host's
 //      one renderer, so the watchman got exactly what `removeGuard`
 //      gives it. Routing by POOL MEMBERSHIP is an OWNERSHIP law: each
 //      pool owns the teardown of its own records, and `removeFoe`'s
@@ -311,7 +311,7 @@ test('ROAD-G G1(b): both hosts route the transform by POOL MEMBERSHIP', () => {
 
   // ROAD-G G1 (review): the RATIONALE this lane first wrote was FALSE
   // and is struck in all seven places it reached. `removeFoe`
-  // (exteriorFoes.js:331-336) never looks a record up in `foes` and
+  // (exteriorFoes.js:342-347) never looks a record up in `foes` and
   // both pools share the host's one renderer, so the old arm tore a
   // watchman down exactly as `removeGuard` does - batch freed,
   // `dead = true`, no corpse, skipped by cityGuards.js:759 and spliced
