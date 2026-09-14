@@ -2624,24 +2624,71 @@ can fight; what nobody is near, nobody simulates.
   stays each player's - the prices and the powers live on the entity,
   DFU has one player; one economy is the region as a world (6b-ii).
 
-### 6b-ii (recorded, next)
+### 6b-ii: the foe hunts every player in the cell
 
+**Mac: "Continue"** (after AUDIT WORLD6b). WORLD3's law for the dungeon
+host's foes, per owner: MY foe hunts every player in the cell, and a
+peer's copy of it hunts the peer.
+
+- **The peers ride MY foes' target machine** as candidates minted off
+  the pose stream (`peerCandidates` in the pool, off the net's `peers`
+  - the one closure the dungeon host reads, `peersNear`; one identity
+  per id, so the machine's reference compares hold; a peer the net no
+  longer lists is dead to the machine and dropped). The attack and the
+  cast aim at the target's OWN feet (`_targetFeet`: the local player,
+  a peer at its feet, a foe at its motor's); every site that meant ME
+  reads `isLocalPlayerTarget` (the alert, the death's alert clear, the
+  shaft's player arm). A puppet is never a candidate (AUDIT WORLD6b B8).
+- **The record carries the target** (`g`: '.' me, an id a peer, ''
+  none - WORLD3's spelling, in `validFoeRecord`'s law).
+- **A PUPPET whose streamed target is ME resolves its owner's foe's
+  blow here** - the mobile's damage frame through the one player arm
+  (`resolveFoeMeleeVsPlayer`, factored out of the loop: my reach and my
+  yaw cone read off the streamed pose by the senses as observation,
+  Dodging tallied, my own stats, the riders, the hurt and the flash),
+  and its shaft flies at me for real; at another peer the frame is
+  dropped and the shaft names the peer's candidate (the flight lands
+  only on the foe it names - one that pays nothing); at its owner
+  ('.') neither. A streamed target is the owner's word that the foe is
+  fighting somebody (AUDIT WORLD3 D2): a passive one turns hostile
+  here, or every blow would be a miss.
+- **MY foe's blow at a peer is the peer's to resolve**: here the
+  swing's voice alone, nothing on me, no Dodging of mine.
+- **A peer's hit on my foe carries the striker's feet (`p`, the world
+  frame - bounded as a pose is, then this scene's) and the blow's
+  direction (`d`, a unit vector or nothing; a spell knocks nothing,
+  verbatim - AUDIT WORLD3 F2's law)**: the foe turns on the striker's
+  CANDIDATE at those feet (`handleAttackFromPlayer`'s peer arm names
+  the peer, the dungeon's spelling) and the shove goes the way the
+  blow went. The divert out spells both.
+- **No cast at a peer** (6b-iii): a foe whose target is a peer does not
+  cast - the cast at a peer is the puppet's to cast at the peer (the
+  dungeon's `c`/`s`), and the pool's caster is the owner's own still.
+
+Pinned in `test/world6bii.test.js` (5), EXECUTED: the wire's target
+law; my foe picking the peer off the machine (the identity, the live
+feet, the record's `g`, its blow at the peer landing nothing on me, the
+peer gone dead to the machine, a puppet never a candidate); the
+puppet's blow at me (Dodging tallied, the hostility the owner's word,
+at another dropped, the shaft at me, at a peer's body and at nobody);
+the hit's feet and direction in (the striker's candidate, the seeded
+feet, the shove, the bounds, the spell) and out; the hosts by source.
+
+### 6b-iii (recorded, next)
+
+- **The cast at a peer**: the owner's foe casting at a peer, the
+  puppet casting it at the peer (the dungeon's `c`/`s`).
 - **The guards** (`cityGuards.js`): the watch is a crime's - the
-  player's own - and the same per-foe law would stream a guard chasing
-  ME to everyone; not done until the crime itself is shared.
-- **A foe hunting a peer**: a puppet lands no blow, and MY foe hunts
-  me alone (WORLD3 gave the dungeon's host foes every player in the
-  room through the peer candidates; the pool's target machine has the
-  seam). The striker's feet on the hit, as WORLD3 put them on the
-  dungeon's.
+  player's own; not until the crime is shared.
 - **A puppet's corpse loot**: its owner's roll; the take would be the
-  loot law over a per-foe room (WORLD4 keyed a dungeon's by index).
+  loot law over a per-foe room.
 - **The cell seam**: two players a pixel apart astride an edge are in
   two rooms (D9); the 3x3 neighbourhood.
-- **One economy**: the region's prices and powers as a world's, not a
-  seeded walk each player takes alone.
-- **Buildings' foes** (a quest's or a crime's) and the interior pools:
-  a building streams no foes still (AUDIT WORLD6a B8).
+- **One economy**: the region's prices and powers as a world's.
+- **Buildings' foes** and the interior pools: a building streams no
+  foes still (AUDIT WORLD6a B8).
+- The striker's poison and disease riders on the hit; the roster's
+  `ROSTER_MAX` bound (AUDIT WORLD6b).
 
 Pinned in `test/world6b.test.js` (8), EXECUTED: the wire at both ends;
 the real Room fanning a non-host's frame in a cell and routing a hit

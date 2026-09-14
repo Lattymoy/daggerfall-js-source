@@ -356,6 +356,8 @@ export function validFoeRecord(r) {
   if (r.y !== undefined) { if (!Number.isFinite(r.y)) return null; out.y = r.y; }
   if (r.h !== undefined) { if (!Number.isFinite(r.h) || r.h < 0 || r.h > FOE_HEALTH_MAX) return null; out.h = r.h; }
   if (r.a !== undefined) { if (!Number.isInteger(r.a) || r.a < 0 || r.a >= 2 ** 31) return null; out.a = r.a; }
+  // WORLD6b-ii: `g` the foe's target - '.' its owner, a peer id, '' none (WORLD3's spelling for the dungeon's stream)
+  if (r.g !== undefined) { if (typeof r.g !== 'string' || !(r.g === '' || r.g === '.' || ID_RE.test(r.g))) return null; out.g = r.g; }
   return out;
 }
 

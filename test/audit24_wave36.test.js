@@ -148,7 +148,7 @@ test('audit24 wave36: the watch raises and lowers the alert, and takes fall dama
   assert.ok(xf.includes('setEnemyAlert(playerEntity, true, currentMinute());'));
   // MT-ii: the encounter pool's clear gained the same target==player
   // gate the watch's did (EnemyDeath:131-136).
-  assert.ok(xf.includes('if (isPlayerTarget(f.ai?.target) && f.ai?.detected) setEnemyAlert(playerEntity, false);'));
+  assert.ok(xf.includes('if (isLocalPlayerTarget(f.ai?.target) && f.ai?.detected) setEnemyAlert(playerEntity, false);'));   // WORLD6b-ii: mine, not a peer's
 
   // ApplyFallDamage runs for EVERY enemy (:173) - the motor has always
   // produced landedFall for guards, and nobody read it.
@@ -204,7 +204,7 @@ test('audit24 wave36: hostility SEEDS the remembered position - the freeze wave 
   // enemy's blow - never reaches it at all now, which is the
   // stronger form of the same law.
   const xfs = rd('src/scenes/exteriorFoes.js');
-  assert.ok(xfs.includes('f.ai.makeEnemyHostileToAttacker?.(PLAYER_TARGET, playerFeet ?? null);'));
+  assert.ok(xfs.includes('f.ai.makeEnemyHostileToAttacker?.((peer && peerCandidate(peerId)) || PLAYER_TARGET, playerFeet ?? null);'));   // WORLD6b-ii: a peer's blow names the peer, the player's the player
   assert.match(xfs, /if \(fromPlayer && f\.ai\) \{/, 'and only for a PLAYER source');
   assert.ok(rd('src/scenes/dungeonContext.js').includes('foe.ai.makeHostileToPlayer?.(undefined, lastPlayerFeet);'));
 });
