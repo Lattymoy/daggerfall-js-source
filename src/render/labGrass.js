@@ -196,7 +196,7 @@ export function labWindSlider(w) {
   return Math.min(200, mag * 6500);
 }
 /** the lab's weather dim table, for uDim */
-export const LAB_DIM = Object.freeze({ sunny: 1.00, cloudy: 0.90, overcast: 0.72, fog: 0.66, rain: 0.60, thunder: 0.46, snow: 0.80 });
+export const LAB_DIM = Object.freeze({ sunny: 1.00, cloudy: 0.90, overcast: 0.72, fog: 0.66, rain: 0.60, thunder: 0.46, snow: 0.80, sandstorm: 0.55 });   // WEATHER2d: the port's own row, the lab's table untouched
 
 /**
  * The lab's scatter, verbatim in its law, around `centre` (world xz):

@@ -37,6 +37,14 @@ import { UMRandom } from '../formats/umRandom.js';
 
 export const WEATHER_TYPES = Object.freeze([
   'sunny', 'cloudy', 'overcast', 'fog', 'rain', 'thunder', 'snow',
+  // WEATHER2d (2026-09-14, Mac: "a new sand storm weather event for
+  // desert regions"): the port's own EIGHTH word, APPENDED so DFU's
+  // seven keep their enum values (a save's byte, the classic array's
+  // 0x7f mask and 5<->6 swap, WeatherTable.json's seven columns are all
+  // untouched). It is never rolled: the weather field (systems/
+  // weatherField.js) stands it as cells over the desert tables' land on
+  // a cloudy or thunder day, on the enhanced lane only.
+  'sandstorm',
 ]);
 
 export const FOG_SETTINGS = Object.freeze({
@@ -47,6 +55,7 @@ export const FOG_SETTINGS = Object.freeze({
   heavy: { mode: 'exp', density: 0.05, start: 0, end: 0, excludeSky: false },
   interior: { mode: 'exp', density: 0.001, start: 0, end: 0, excludeSky: false },
   dungeon: { mode: 'exp', density: 0.005, start: 0, end: 0, excludeSky: false },
+  sandstorm: { mode: 'exp', density: 0.09, start: 0, end: 0, excludeSky: false },   // WEATHER2d: the port's own row - denser than the heavy fog, the sky in it (the wall is fog and cloud both)
 });
 
 /** EV4: the DISTANCE HAZE follows the streamed horizon. DFU's linear
@@ -82,6 +91,7 @@ export function fogForWeather(weather, table = FOG_SETTINGS) {
     case 'rain':
     case 'thunder': return table.rainy;
     case 'snow': return table.snowy;
+    case 'sandstorm': return table.sandstorm ?? table.heavy;   // WEATHER2d: the port's row; a mod's five settings (Dynamic Skies) have none, so the heavy fog stands in
     default: return table.sunny; // sunny, cloudy
   }
 }
@@ -119,6 +129,7 @@ export function weatherSunlightScale(weather, isWinter) {
   else if (weather === 'thunder') scale = 0.25;
   else if (weather === 'snow') scale = 0.45;
   else if (weather === 'overcast' || weather === 'fog') scale = 0.65;
+  else if (weather === 'sandstorm') scale = 0.35;   // WEATHER2d: the port's own - between a rain and a storm
   return scale;
 }
 
@@ -127,6 +138,7 @@ export function precipitationForWeather(weather) {
   if (weather === 'rain') return 'rain';
   if (weather === 'thunder') return 'storm';
   if (weather === 'snow') return 'snow';
+  if (weather === 'sandstorm') return 'sand';   // WEATHER2d: the wind-borne sand (render/windWisps.js SAND_LOOK), not the rain program
   return null;
 }
 

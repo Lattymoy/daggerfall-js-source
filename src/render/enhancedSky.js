@@ -85,6 +85,7 @@ export const WEATHER_SKY = Object.freeze({
   rain:     { cover: 0.97, soft: 0.20, grey: 0.85, lit: '#7f8890', shade: '#444b53', wind: [0.030, 0.010] },
   snow:     { cover: 0.95, soft: 0.26, grey: 0.80, lit: '#c3c8ce', shade: '#7f878f', wind: [0.012, 0.004] },
   thunder:  { cover: 1.00, soft: 0.18, grey: 0.95, lit: '#5b626b', shade: '#262b31', wind: [0.045, 0.016] },
+  sandstorm: { cover: 0.90, soft: 0.30, grey: 0.70, lit: '#d8b47a', shade: '#8a6a3c', wind: [0.040, 0.014] },   // WEATHER2d: a tan lid under a gale
 });
 export const GREY_ZENITH = '#66707c';
 export const GREY_HORIZON = '#9aa3ac';

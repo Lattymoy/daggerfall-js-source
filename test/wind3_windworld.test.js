@@ -12,7 +12,7 @@ import { readFileSync } from 'node:fs';
 import {
   windDrive, legacyGust, floraSwayOf, floraSwayOn, WIND_NONE, WIND_STEP_DT_MAX, LAB_WIND_RATE, WIND_SLIDER_MAX,
 } from '../src/systems/windDrive.js';
-import { WindWispsRenderer, wispCount, wispsOn, WISP_MAX, WISP_FLOOR, WISP_BOX, WISP_VS, WISP_FS } from '../src/render/windWisps.js';
+import { WindWispsRenderer, wispCount, wispsOn, WISP_MAX, WISP_FLOOR, WISP_BOX, WISP_VS, WISP_FS, WISP_LOOK } from '../src/render/windWisps.js';
 import {
   createWindAudio, windGain, windClipFor, windPitchFor, windSoundOn, WIND_GAIN_MAX, WIND_SLEW_PER_S, WIND_GAIN_FLOOR, WIND_BLOW_AT, WIND_LOOP,
 } from '../src/systems/windAudio.js';
@@ -100,7 +100,8 @@ test('WIND3 wisps: the count follows the strength with a floor; the renderer com
   assert.match(WISP_VS, /p \+= vec3\(uWindOff\.x, 0\.0, uWindOff\.y\) \* gust;/, 'PROTO-19: a distance already travelled, never wind x time');
   assert.match(WISP_VS, /vLife = sin\(fract\(uTime\*rate \+ seed\*7\.0\) \* 3\.14159\);/);
   assert.match(WISP_VS, /p \+= vel \* \(aCorner\.y-0\.5\) \* len;/, 'stretched along the wind');
-  assert.match(WISP_FS, /a \*= vLife \* \(0\.10 \+ 0\.12 \* uStrength\);/, 'never more than a breath');
+  assert.match(WISP_FS, /a \*= vLife \* \(uAlpha\.x \+ uAlpha\.y \* uStrength\);/, 'never more than a breath (WEATHER2d: the look\'s alpha)');
+  assert.deepEqual([...WISP_LOOK.alpha], [0.10, 0.12]); assert.deepEqual([...WISP_LOOK.color], [0.86, 0.89, 0.94]);
   assert.doesNotMatch(WISP_VS + WISP_FS, /uTime \* uWindV|uWindV \* uTime/, 'no wind x time anywhere');
   const { gl, calls } = stubGl();
   const r = new WindWispsRenderer(gl);
