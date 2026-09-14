@@ -32,7 +32,7 @@ test('ECV1: the switch - the enhanced skin and the pref, with ?combatvisuals=off
   assert.equal(combatVisualsOn('', false), false, 'the pref is the switch');
   assert.equal(combatVisualsOn('?skin=classic', true), false, 'the classic skin never draws it');
   assert.equal(combatVisualsOn('?combatvisuals=off', true), false, 'the kill switch');
-  assert.match(read('src/ui/enhancedMenu.js'), /prefRow\('enhancedCombatVisuals', 'Enhanced combat visuals',/, 'the Enhanced menu carries the row');
+  assert.match(read('src/systems/features.js'), /id: 'enhanced-combat-visuals',\s*\n\s*title: 'Enhanced combat visuals',/, 'the Features home carries the row (FT8)');
 });
 
 test('ECV1: the law - plain, hidden, and the three concealed draws with invisible over blending over shade', () => {

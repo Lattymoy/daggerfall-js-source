@@ -200,7 +200,7 @@ test('WATER1: the renderer - one program, the deck\'s shadow key, and a draw sta
 
 test('WATER1: both exterior hosts - the gate, the has-water skip, and the slot after the opaque passes and before the first flat', () => {
   const w = rd('src/scenes/world.js');
-  assert.match(w, /const waterOn = isEnhanced\(\) && getPref\('enhancedWater'\) && new URLSearchParams\(globalThis\.location\?\.search \?\? ''\)\.get\('water'\) !== 'off';/, 'world: enhanced skin, the switch, the kill door');
+  assert.match(w, /const waterOn = waterSwitchOn\(\);/, 'world: the one composition (FT6, render/waterSurface.js)');
   // WATER-AUDIT (M4): the water's own index set, built with the pixel and rebuilt with its restride, destroyed before the buffers it rides
   assert.match(w, /const waterIndices = waterOn \? buildWaterIndices\(tilemapBytes, stride\) : null;\s*\n\s*const water = waterIndices \? renderer\.createWaterSurface\(terrain, waterIndices\) : null;/, 'decided at the build');
   assert.match(w, /px, py, terrain, water, tilemapTex,/, 'carried on the built pixel');
@@ -217,7 +217,7 @@ test('WATER1: both exterior hosts - the gate, the has-water skip, and the slot a
     'the clock, the eased wind the mills take, the front\'s rain, the dome\'s colours');
   assert.match(w, /if \(!p\._visible \|\| !p\.water\) continue;\s*\n\s*renderer\.drawWaterSurface\(p\.water, p\._pixelMatrix, renderer\.tileArrays\.get\(p\.groundArchive\), p\.tilemapTex, 6\.4, wu\);/);
   const e = rd('src/scenes/exterior.js');
-  assert.match(e, /const waterOn = isEnhanced\(\) && getPref\('enhancedWater'\) && new URLSearchParams\(globalThis\.location\?\.search \?\? ''\)\.get\('water'\) !== 'off'\s*\n\s*&& tilemapRectHasWater\(tilemapBytes, tilemapDim, loc\.width \* GROUND_TILE_DIM, loc\.height \* GROUND_TILE_DIM\);/, 'exterior: the same gate, and a town without water never enters - asked over the town\'s real extent (WATER-AUDIT L1: the padding is zero, and zero is water)');
+  assert.match(e, /const waterOn = waterSwitchOn\(\)[^\n]*\n\s*&& tilemapRectHasWater\(tilemapBytes, tilemapDim, loc\.width \* GROUND_TILE_DIM, loc\.height \* GROUND_TILE_DIM\);/, 'exterior: the one composition, and the town\'s own has-water question beside it (FT6)');
   const eslot = e.indexOf('    if (waterOn) {\n      renderer.drawWaterSurface(groundSurface, identityMatrix,');
   assert.ok(eslot > 0);
   assert.ok(eslot > e.indexOf('renderer.drawTerrain(groundSurface, identityMatrix,'), 'after the ground');
@@ -231,7 +231,7 @@ test('WATER1: both exterior hosts - the gate, the has-water skip, and the slot a
 
 test('WATER1: the switch, the row, the sky\'s colours, the lab, the probe and the record', () => {
   assert.match(rd('src/systems/uiPrefs.js'), /enhancedWater: true,/, 'on by default like the other enhanced visuals');
-  assert.match(rd('src/ui/enhancedMenu.js'), /prefRow\('enhancedWater', 'Enhanced water',/);
+  assert.ok(!/prefRow\('enhancedWater'/.test(rd('src/ui/enhancedMenu.js')), 'FT6: the row is the Features home\'s (systems/features.js)');
   const shared = rd('src/scenes/shared.js');
   assert.match(shared, /waterSky\(\) \{\s*\n\s*if \(enhancedSky\?\.state\) return \{ zenith: enhancedSky\.state\.zenith, horizon: enhancedSky\.state\.horizon \};/, 'the dome\'s own state');
   assert.match(shared, /const h = dynamic\?\.fogColor \?\? dynamicSky\.clearColor;\s*\n\s*return \{ zenith: \[h\[0\] \* 0\.55, h\[1\] \* 0\.65, h\[2\] \* 0\.85\], horizon: h \};/, 'the mod\'s one colour, with a zenith derived from it (WATER-AUDIT L3: the mod\'s fill IS its clear IS its fog - a copy made the reflection flat)');

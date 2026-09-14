@@ -720,7 +720,7 @@ NOTHING ELSE. Under a cloud the direct sun goes; the sky itself still
 lights the ground, so the ambient and the indirect are untouched. Both
 halves pinned.
 
-## ES1e - THE RETRO PASS (2026-08-27, Mac's call) - SHIPPED
+## ES1e - THE RETRO PASS (2026-08-27, Mac's call) - SHIPPED, REMOVED (FT3, 2026-09-14, Mac: "Remove our version of pixelated sky")
 
 Mac: "I really want to try and match the retro artwork aesthetic of
 Daggerfall." A smooth 24-bit dome beside a chunky classic sprite was
@@ -769,7 +769,7 @@ coloured, the Bayer indexed by the angular cell, and IGN on the smooth
 pass). 6 mutants, 6 dead. Probe 10/10, with retro measured against
 smooth: 124 changes and 8 levels across a row, against 376 and 69.
 
-## ES1f - NO POLE, NO CIRCLE (2026-08-27, Mac's report) - SHIPPED
+## ES1f - NO POLE, NO CIRCLE (2026-08-27, Mac's report) - SHIPPED, REMOVED (FT3, 2026-09-14, Mac: "Remove our version of pixelated sky")
 
 Mac, looking up: "any way to get rid of the circle that everything
 weaves into. The circle when you look up at the very middle."

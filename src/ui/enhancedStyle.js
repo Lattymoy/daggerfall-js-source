@@ -243,6 +243,29 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 }
 .tag.grey { color: var(--dim); border-color: var(--iron); }
 
+/* ── FT0: THE FEATURES HOME ─────────────────────────────────
+   One list; every row wears its kind(s) as a coloured label and the
+   chip row filters by kind. Three kinds, three of the skin's OWN
+   tokens - brass is the port's, verdigris the modders' (the live
+   tier's colour already), bone Daggerfall's - so no fourth colour
+   is born here. A row wearing two kinds wears two labels. */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.chip {
+  font-family: var(--data); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 7px 12px; border: 1px solid var(--iron); color: var(--dim); background: transparent; cursor: pointer;
+}
+.chip .n { margin-left: 8px; color: var(--dim); }
+.chip:hover { color: var(--bone); border-color: var(--dim); }
+.chip.on { background: var(--iron); color: var(--bone); }
+.chip.enhanced.on { color: var(--brass); border-color: var(--brass); }
+.chip.mod.on { color: var(--verdigris); border-color: var(--verdigris); }
+.chip.classic.on { color: var(--bone); border-color: var(--bone); }
+.kinds { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
+.kind { font-size: 9.5px; letter-spacing: 0.16em; text-transform: uppercase; padding: 2px 6px; border: 1px solid; }
+.kind.enhanced { color: var(--brass); border-color: var(--brass); }
+.kind.mod { color: var(--verdigris); border-color: var(--verdigris); }
+.kind.classic { color: var(--bone); border-color: var(--dim); }
+
 /* ── SETTINGS: RAIL | LIST | DETAIL ────────────────────────
    The same three-pane shape the in-game screens use, because it
    is the same problem: too many rows to show at once, and no row

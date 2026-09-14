@@ -103,7 +103,46 @@ export function generateSmallerDungeon(dfLocation) {
     generateRdbBlock(1, 0, true, false, dfLocation),    // East border block
     generateRdbBlock(0, 1, true, false, dfLocation),    // South border block
   ];
-  return { ...dfLocation, dungeon: { ...dfLocation.dungeon, blocks: layout } };
+  // FT1: the clone SAYS it is small, so the save stamp below can read
+  // the build rather than re-deriving it from deps it no longer has.
+  return { ...dfLocation, dungeon: { ...dfLocation.dungeon, blocks: layout, smaller: true } };
+}
+
+/** Was this location BUILT small - a clone generateSmallerDungeon
+ *  answered? False for the source location, for a dungeon already at or
+ *  under the threshold, and for anything else. */
+export function isSmallerDungeon(dfLocation) {
+  return dfLocation?.dungeon?.smaller === true;
+}
+
+/**
+ * The save stamp - PlayerPositionData_v1.smallerDungeonsState
+ * (SerializablePlayer.cs:224). DEPARTURE (recorded, Ledger A: THE
+ * SMALLER-DUNGEON SAVE STAMP IS THE BUILD): DFU stamps the RAW SETTING
+ * as of the save; the port stamps the size ACTUALLY BUILT. They agree
+ * wherever DFU can reach - but online the dungeon is always full
+ * (AUDIT WORLD34 B2, above) whatever the setting says, and under a
+ * quest's frozen state the build and the setting differ too, so a save
+ * made online with the setting on and loaded offline stood the player
+ * in a block the five-block dungeon does not have, and never warped
+ * because the SETTING had not changed. The warp asks about the build;
+ * the stamp answers about the build.
+ */
+export function smallerDungeonsStamp(dfLocation) {
+  return isSmallerDungeon(dfLocation) ? SMALLER_DUNGEONS_STATE.Enabled : SMALLER_DUNGEONS_STATE.Disabled;
+}
+
+/**
+ * The load-time warp (SerializablePlayer.cs:462-472): the position was
+ * saved in the OTHER layout, so it may sit in blocks this build does
+ * not have - warp to the start marker. Never on an old envelope (no
+ * field, NotSet), never in a main-story dungeon (:466-468, they never
+ * use the setting), never when the layouts agree.
+ */
+export function needsStartWarp(savedState, dfLocation) {
+  if (!savedState) return false;
+  if (isMainStoryDungeon(dfLocation?.mapTableData?.mapId)) return false;
+  return (savedState === SMALLER_DUNGEONS_STATE.Enabled) !== isSmallerDungeon(dfLocation);
 }
 
 /** The one door the hosts use: the location to BUILD, sized by the law. */

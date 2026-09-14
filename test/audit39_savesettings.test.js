@@ -84,7 +84,7 @@ test('AUDIT 39 #121: snapshotPlayer NAMES the three, and the hosts that own them
   // WorldContext.Dungeon`, so the exterior host has nothing to say
   // here and world.js correctly passes none.
   assert.match(read('src/scenes/dungeonContext.js'),
-    /smallerDungeonsState: getBool\('Experimental', 'SmallerDungeons'\) \? 2 : 1,/);
+    /smallerDungeonsState: smallerDungeonsStamp\(dfLocation\),/);   // FT1: the stamp is the module's export, and it stamps the BUILD
   assert.ok(!read('src/scenes/world.js').includes('smallerDungeonsState'),
     'the exterior save has no dungeon warp to describe (worldContext gate)');
 });

@@ -50,13 +50,13 @@
 //
 // The contract is EnhancedSkyRenderer's: draw(yaw, pitch, fovY, aspect)
 // after beginFrame, fogMix / fogColor written by the host, clearColor /
-// fillColor read by it. ~~The mod does no retro pass of its own kind
-// (REDUCE_COLOR is its posterise), so the port's retro snap is not
-// applied over it.~~ PS2 (2026-09-12) put the port's snap and posterise
-// over this pass like every other sky, and PS3 gave REDUCE_COLOR the
-// ordered dither its bare ceil() never had - see the block itself.
+// fillColor read by it. The mod does no retro pass of its own kind
+// (REDUCE_COLOR is its posterise) and the port applies none over it -
+// PS2's copy of the port's pixelated sky was removed at FT3 with the
+// pass itself; PS3 gave REDUCE_COLOR the ordered dither its bare ceil()
+// never had - see the block itself.
 
-import { RETRO_GLSL, RETRO_SNAP_GLSL, retroPosteriseGlsl, RETRO_UNIFORM_GLSL, setRetroUniforms, BAYER_MEAN } from './retroPixel.js';   // PS2: the port's retro pass, shared with the dome and the clouds
+import { DITHER_GLSL, BAYER_MEAN } from './orderedDither.js';   // PS2: the port's retro pass, shared with the dome and the clouds
 import { MATERIAL_DEFAULTS, TEXTURE_SLOTS, TEXTURE_IMPORTS, SLOT_DEFAULT_TEXEL, srgbToLinear } from '../systems/dynamicSkies.js';
 
 /** Which material properties are COLOURS (SetColor -> linearised at
@@ -91,7 +91,7 @@ const ST_PROPERTIES = TEXTURE_SLOTS.map((s) => s + '_ST');
  *  read by the shader and fetched by nobody, so its upload was a silent
  *  no-op and the mod's red-only boost never happened). Pinned against
  *  the FS's own declarations in test/dynamicSkies.test.js. */
-export const UNIFORM_NAMES = Object.freeze(['uYaw', 'uPitch', 'uTanHalfFov', 'uAspect', 'uRetroStep', 'uRetroLevels', 'uBandDither', '_WorldSpaceLightPos0', '_LightColor0',
+export const UNIFORM_NAMES = Object.freeze(['uYaw', 'uPitch', 'uTanHalfFov', 'uAspect', 'uBandDither', '_WorldSpaceLightPos0', '_LightColor0',
   '_CloudTopColorBoost',   // the float3-fed-by-a-float quirk, uploaded apart from the float list
   ...FLOAT_PROPERTIES, ...COLOR_PROPERTIES, ...VEC4_RAW, ...VEC3_RAW, ...TEXTURE_SLOTS, ...ST_PROPERTIES]);
 
@@ -108,7 +108,6 @@ out vec4 outColor;
 
 // the host's view (the same ray the enhanced sky builds)
 uniform float uYaw, uPitch, uTanHalfFov, uAspect;
-${RETRO_UNIFORM_GLSL}   // PS2: the port's retro pass over the mod's sky - 0/0 is the shader as the mod wrote it
 uniform float uBandDither;  // PS3: 1 = the mod's colour reduction gets an ordered dither; 0 = its raw ceil, 1:1
 // Unity's per-frame light globals for the skybox pass
 uniform vec3 _WorldSpaceLightPos0;   // toward the sun (SunlightManager's rotation, unclamped)
@@ -422,7 +421,7 @@ V2F vertAsMesh(vec3 dir) {
 // ── frag ─────────────────────────────────────────────────────────
 float linearToSrgb(float c) { return c <= 0.0031308 ? c * 12.92 : 1.055 * pow(c, 1.0 / 2.4) - 0.055; }
 
-${RETRO_GLSL}
+${DITHER_GLSL}
 void main() {
   // the host's ray: the enhanced sky's own construction, so both passes
   // agree with the same yaw and pitch
@@ -431,11 +430,7 @@ void main() {
   vec3 r1 = vec3(ray0.x, ray0.y * cp + ray0.z * sp, -ray0.y * sp + ray0.z * cp);
   float cy = cos(uYaw), sy = sin(uYaw);
   vec3 worldPos = normalize(vec3(r1.x * cy + r1.z * sy, r1.y, -r1.x * sy + r1.z * cy));
-  // PS2: the angular pixel BEFORE anything is computed, the dome's own
-  // rule - the mod's sun, moons, stars and sheets all land on the grid.
-  vec3 dir = worldPos;
-${RETRO_SNAP_GLSL}
-  worldPos = dir;
+  vec3 dir = worldPos;   // PS3's dither names a world-fixed cell off it below
 
   V2F IN = vertAsMesh(worldPos);
 
@@ -697,20 +692,19 @@ ${RETRO_SNAP_GLSL}
     // into a stipple. The palette and the mod's upward ceil() bias are
     // untouched - the mean of a symmetric half-step offset is the value
     // it replaced - and the same sweep yields 577 distinct levels
-    // instead of 50. Indexed by the retro CELL while the sky is
-    // pixelated (so the stipple is on the sky's own pixels, which is the
-    // period look) and by the fragment otherwise (so it is fine grain).
+    // instead of 50. Indexed by a world-fixed cell, so it is fine grain
+    // that stays put (FT3 removed the pixelated arm that indexed the
+    // sky's own pixel instead).
     // uBandDither 0 restores the mod's raw ceil, bug for bug: ?bands=raw.
     float bandStep = _stepSize - (lerpScale_pow * _stepSize) + 0.001;
     // THE DITHER MUST BE WORLD-FIXED. Indexed by gl_FragCoord it is locked
     // to the screen while the sky slides beneath it, so it CRAWLS as the
     // camera turns - and half of the mod's band is 7/255 in the darks, not
     // the half-LSB the dome's smooth pass dithers with and calls "never
-    // itself visible". Pixelated, the index is the sky's own cell; smooth,
-    // it is a cell a third that size, so the stipple sits near the
-    // screen's own pixel and still stays put when you look around.
-    vec2 bandCell = cell;
-    if (uRetroStep <= 0.0) { vec2 fineCell; ringSnap(dir, 0.00204531, fineCell); bandCell = floor(fineCell); }
+    // itself visible". The index is a cell about a third of a degree
+    // across, so the stipple sits near the screen's own pixel and still
+    // stays put when you look around.
+    vec2 fineCell; ringSnap(dir, 0.00204531, fineCell); vec2 bandCell = floor(fineCell);
     // ...and ZERO-MEAN (bayer4 averages 7.5/16, not 8/16), so the mod's
     // upward ceil() bias is the one it always had, to the bit.
     float bandB = uBandDither * (bayer4(bandCell) - ${BAYER_MEAN});
@@ -731,8 +725,6 @@ ${RETRO_SNAP_GLSL}
   // apply it to.
   vec3 lin = clamp(col.rgb, 0.0, 1.0);
   vec3 enc = vec3(linearToSrgb(lin.r), linearToSrgb(lin.g), linearToSrgb(lin.b));
-  // PS2: the ordered posterise on the encoded colour, indexed by the cell
-${retroPosteriseGlsl('enc')}
   outColor = vec4(enc, 1.0);
 }`;
 
@@ -777,7 +769,6 @@ export class DynamicSkiesRenderer {
     gl.bindTexture(gl.TEXTURE_2D, null);
     /** the vendored textures by file name, once uploaded */
     this.textures = new Map();
-    this.retro = null;                                 // PS2: the host's retro (retroFor); null draws the mod's shader as written
     this.bandDither = true;                            // PS3: the ordered dither over the mod's own colour reduction; false is its raw ceil, 1:1
     this.cloudsExternal = false;                       // DS2: the volumetric clouds are drawn over this pass - its two cloud sheets stand down (the dome's cloudsExternal, one pass over)
     this.fogMix = 0;                                   // written by the host on every pass; unread here - the mod's skybox takes no fog (see the FS)
@@ -849,7 +840,6 @@ export class DynamicSkiesRenderer {
     gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL);   // PERF2: only where nothing nearer has drawn - z is the far plane
     gl.uniform1f(u.uYaw, yaw); gl.uniform1f(u.uPitch, pitch);
     gl.uniform1f(u.uTanHalfFov, Math.tan(fovY / 2)); gl.uniform1f(u.uAspect, aspect);
-    setRetroUniforms(gl, u, this.retro);   // PS2
     gl.uniform1f(u.uBandDither, this.bandDither ? 1 : 0);   // PS3
     gl.uniform3f(u._WorldSpaceLightPos0, s.sunDir[0], s.sunDir[1], s.sunDir[2]);
     gl.uniform3f(u._LightColor0, s.lightColor[0], s.lightColor[1], s.lightColor[2]);

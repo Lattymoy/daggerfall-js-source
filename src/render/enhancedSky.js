@@ -39,7 +39,6 @@
 // a texture.
 
 import { dayFraction, daylightScale, isNight } from '../world/worldClock.js';
-import { RETRO_GLSL, RETRO_SNAP_GLSL } from './retroPixel.js';   // PS2: the snap and bayer4, shared with the clouds' composite and the mod's skybox; ES1g: the dome writes the shared snap lines too, so the three passes cannot drift
 import { lunarPhaseFractionsFromMinutes, LUNAR_PHASES } from '../systems/gameDate.js';   // CLK3: the dome takes the phase as a number on the clock
 
 const hex = (h) => [parseInt(h.slice(1, 3), 16) / 255, parseInt(h.slice(3, 5), 16) / 255, parseInt(h.slice(5, 7), 16) / 255];
@@ -101,55 +100,11 @@ export const MOONS = Object.freeze({
  *  every game sun is, so it reads at a glance. */
 export const SUN_RADIUS = 0.032;
 
-/* ── THE RETRO PASS (ES1e, 2026-08-27, Mac: "I really want to try and
-   match the retro artwork aesthetic of Daggerfall") ──────────────────
-   Daggerfall drew at 320x200 in a 256-colour palette, and its painted
-   skies are 512x220 bitmaps the port already blits with NEAREST - so a
-   smooth 24-bit dome next to a chunky classic sprite is the one thing
-   in the enhanced sky that does NOT look like the game. Two knobs, both
-   the era's own techniques rather than a filter over the top:
-
-   PIXELS, AND THE RIGHT SIZE. Not a screen grid: the CLASSIC SKY'S OWN
-   ANGULAR GRID. SKY??.DAT is 512 pixels across 180 degrees, which
-   skyRenderer already names SKY_ANGLE_PER_PIXEL (PI/512), so the ray's
-   azimuth and elevation are snapped to exactly that step before
-   anything is computed. Three things follow, and they are the whole
-   argument for doing it this way. The enhanced sky's pixels are the
-   SAME SIZE as the painted sky's, so the two skins read as one game.
-   They are fixed to the WORLD, not the screen - turn your head and the
-   sky's pixels stay where they are, as a bitmap sky's do, instead of
-   crawling with the camera. And they do not change with the field of
-   view or the window, so a phone and a desktop see the same sky at the
-   same scale. Everything is drawn ON that grid - the sun's disc, the
-   moons' terminators, the stars, the cloud edges - so it is 1996 art
-   rather than a modern render with a mosaic laid over it.
-
-   LEVELS. Then the colour is posterised with an ORDERED (Bayer 4x4)
-   dither - the exact thing a 256-colour gradient did in 1996, and the
-   reason Daggerfall's own skies have that woven look up close. The
-   smooth triangular dither of ES1c is for the SMOOTH pass; here the
-   ordered one replaces it, because random noise on a posterised
-   gradient is film grain and a Bayer pattern is a palette.
-
-   `?sky=smooth` turns both off and keeps the modern dome. */
-export const RETRO = Object.freeze({ step: Math.PI / 512, levels: 26 });   // step: SKY_ANGLE_PER_PIXEL, the painted sky's own pixel
-
-/** ONE DOOR for the retro decision, so the game and the lab cannot
- *  disagree about what the sky looks like. VC1 (2026-09-07, Mac:
- *  "remove the pixelated sky look"): SMOOTH became the default and
- *  `?sky=retro` the door back to ES1e's angular pixel and its
- *  posterise. PS1 (2026-09-12, Mac: "Bring back the pixelated sky...
- *  On by default and a part of a new toggle within enhanced
- *  environments"): the second argument is that toggle (uiPrefs
- *  pixelatedSky, true by default) and decides when the URL is silent;
- *  `?sky=retro` and `?sky=smooth` still win, so every probe that spells
- *  either keeps its meaning. */
-export const retroFor = (search = globalThis.location?.search ?? '', pixelated = true) => {
-  const door = new URLSearchParams(search).get('sky');
-  if (door === 'retro') return RETRO;
-  if (door === 'smooth') return null;
-  return pixelated ? RETRO : null;
-};
+// THE RETRO PASS IS GONE (FT3, 2026-09-14, Mac: "Remove our version of
+// pixelated sky"). ES1e's angular pixel and posterise, ES1f/ES1g's grid,
+// PS1's switch and PS2's copy over the other sky passes were removed
+// whole; the dome is the smooth pass only, and there is no `?sky=retro`
+// or `?sky=smooth` door. Record: bible/10-UI/Features-Arc.md FT3.
 
 /** The pole the star field turns about: north (+Z here, since the sun's
  *  arc is the XZ east-west line), leaned toward the zenith so the field
@@ -488,27 +443,7 @@ uniform vec2 uDrift;   // WIND2: the integrated cloud offset
 uniform float uFogMix;
 uniform vec3 uStarPole;
 uniform float uStarAngle;
-uniform float uRetroStep;   // 0 = the smooth pass; else the angular pixel (radians)
-uniform float uRetroLevels; // 0 = no posterise
 
-// ES1f: A CELL ON THE CUBE, NOT ON A LAT-LONG GRID.
-// Snapping azimuth and elevation put the grid's POLE at the zenith:
-// the elevation rings became concentric circles and the azimuth cells
-// converged to nothing, so looking straight up was a bullseye with
-// everything woven into it. A cube has no pole. ...and a cube has
-// TWELVE EDGES, which is what ES1g (2026-09-12) came back for: adjacent
-// faces' axes differ by 90 degrees, so the cell numbering mirrors at
-// every edge and the ordered dither breaks along a hard line at 45
-// degrees elevation - Mac saw the four of them as "the frame of a
-// square skybox". The grid is RINGS now (render/retroPixel.js): rows of
-// constant elevation one step tall, each ring holding as many cells as
-// fit at one step wide, so the count falls toward the pole instead of
-// the cells becoming slivers - which is the one thing the lat-long grid
-// got wrong. No faces, no edges, no pinwheel, and the rows lie the way
-// SKY??.DAT's own panorama rows do.
-// cellOut is the CONTINUOUS cell coordinate: floor() is the id the
-// dither indexes, fract() is the fragment's place inside it (F53).
-${RETRO_GLSL}
 out vec4 outColor;
 
 float hash21(vec2 p) { p = mod(p, ${DECK_LATTICE}.0); p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }   // CLK1 review: the lattice has a period
@@ -613,15 +548,6 @@ void main() {
   float cy = cos(uYaw), sy = sin(uYaw);
   vec3 dir = normalize(vec3(r1.x * cy + r1.z * sy, r1.y, -r1.x * sy + r1.z * cy));
 
-  // ES1e: THE ANGULAR PIXEL, on the painted sky's own scale
-  // (SKY_ANGLE_PER_PIXEL) - and ES1g: on RINGS, so it has neither a pole
-  // nor an edge. The direction is snapped BEFORE anything is computed,
-  // so every feature below is drawn on the grid and the pixels are fixed
-  // to the world rather than to the screen. A cell is one step tall
-  // and one step wide - PI/512, SKY??.DAT's own pixel, 512 across 180
-  // degrees, which is what ES1f's cells-per-face argument was meant to
-  // say and did not (it cut them at half that width).
-${RETRO_SNAP_GLSL}
 
   // The dome: horizon to zenith.
   float e = clamp(dir.y, 0.0, 1.0);
@@ -703,22 +629,13 @@ ${RETRO_SNAP_GLSL}
   // decorrelates it from the signal - a flat one left a third of the
   // rows still identical to the row above.
   vec3 out3 = mix(clamp(color, 0.0, 1.0), uFogColor, uFogMix);
-  if (uRetroLevels > 0.0) {
-    // ES1e: posterise with an ORDERED dither, indexed by the ANGULAR
-    // cell - one Bayer cell per sky pixel, or it is a fine weave under a
-    // coarse one, which is two eras at once, and it would crawl when the
-    // camera turned.
-    float b = bayer4(uRetroStep > 0.0 ? cell : gl_FragCoord.xy) - 0.5;
-    out3 = floor(out3 * uRetroLevels + 0.5 + b) / uRetroLevels;
-  } else {
-    // The SMOOTH pass's dither. Interleaved gradient noise, not a hash:
-    // the hash of ES1c measured well (46% of identical rows to 25%) but
-    // it is STRUCTURED at integer coordinates - a visible weave under
-    // magnification, which is the one thing a dither must not be. IGN is
-    // the standard for exactly this and is three constants.
-    float ign = fract(52.9829189 * fract(0.06711056 * gl_FragCoord.x + 0.00583715 * gl_FragCoord.y));
-    out3 += (ign - 0.5) / 255.0;
-  }
+  // The SMOOTH pass's dither. Interleaved gradient noise, not a hash:
+  // the hash of ES1c measured well (46% of identical rows to 25%) but
+  // it is STRUCTURED at integer coordinates - a visible weave under
+  // magnification, which is the one thing a dither must not be. IGN is
+  // the standard for exactly this and is three constants.
+  float ign = fract(52.9829189 * fract(0.06711056 * gl_FragCoord.x + 0.00583715 * gl_FragCoord.y));
+  out3 += (ign - 0.5) / 255.0;
   outColor = vec4(out3, 1.0);
 }`;
 
@@ -743,8 +660,7 @@ export class EnhancedSkyRenderer {
     this.u = {};
     for (const name of ['uYaw', 'uPitch', 'uTanHalfFov', 'uAspect', 'uZenith', 'uHorizon', 'uSunColor', 'uGlowColor', 'uCloudLit', 'uCloudShade',
       'uFogColor', 'uSunDir', 'uSunRadius', 'uSunVis', 'uGlowAmount', 'uStars', 'uMoonA', 'uMoonB', 'uMoonAColor', 'uMoonBColor',
-      'uMoonAVis', 'uMoonBVis', 'uCloudCover', 'uCloudSoft', 'uTime', 'uWind', 'uDrift', 'uFogMix', 'uStarPole', 'uStarAngle',
-      'uRetroStep', 'uRetroLevels']) {
+      'uMoonAVis', 'uMoonBVis', 'uCloudCover', 'uCloudSoft', 'uTime', 'uWind', 'uDrift', 'uFogMix', 'uStarPole', 'uStarAngle']) {
       this.u[name] = gl.getUniformLocation(prog, name);
     }
     this.vao = gl.createVertexArray();
@@ -760,10 +676,6 @@ export class EnhancedSkyRenderer {
     this.clearColor = new Float32Array([0.66, 0.78, 0.92]);
     this.fillColor = new Float32Array([0.17, 0.35, 0.72]);
     this.state = null;
-    // ES1e: the retro pass, on by default - Mac's call; VC1 (2026-09-07,
-    // Mac: "remove the pixelated sky look"): off by default, `?sky=retro`
-    // the door back. The host sets it through retroFor, the one door.
-    this.retro = null;
     // VC3: with the volumetric clouds on the lane, the dome's own two
     // noise decks stand down (cover 0 to the shader); the state keeps
     // the row's cover for every other reader (the moonlight, the deck
@@ -820,8 +732,6 @@ export class EnhancedSkyRenderer {
     gl.uniform1f(u.uFogMix, this.fogMix);
     gl.uniform3fv(u.uStarPole, s.starPole);
     gl.uniform1f(u.uStarAngle, s.starAngle);
-    gl.uniform1f(u.uRetroStep, this.retro ? this.retro.step : 0);
-    gl.uniform1f(u.uRetroLevels, this.retro ? this.retro.levels : 0);
     // HANDEDNESS: as the classic pass - the triangle winds CCW under a
     // CW front face, so culling is off for it.
     gl.disable(gl.CULL_FACE);

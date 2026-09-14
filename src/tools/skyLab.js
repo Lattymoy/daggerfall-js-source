@@ -3,7 +3,7 @@
 // the fog on sliders - the tuning surface and the eyeball tool, no game
 // data needed. `?hour=&weather=&day=&yaw=&pitch=&fog=` pins any of them
 // for the probe, and `?still` freezes the clouds' drift.
-import { EnhancedSkyRenderer, skyState, retroFor, WEATHER_SKY, WIND_SECONDS_PER_MINUTE } from '../render/enhancedSky.js';
+import { EnhancedSkyRenderer, skyState, WEATHER_SKY, WIND_SECONDS_PER_MINUTE } from '../render/enhancedSky.js';
 import { cloudsStateUnderMod, dynamicMoonState } from '../render/dynamicSkiesBridge.js';   // DS2: the clouds' state under the mod, as the game builds it
 import { MINUTES_PER_DAY, lunarPhaseFractionsFromMinutes } from '../systems/gameDate.js';   // CLK3: the clock's own fraction, as the dome takes it
 import { DynamicSkiesRenderer } from '../render/dynamicSkiesRenderer.js';   // DS1: the mod's pass in the lab too - ?sky=dynamic
@@ -31,8 +31,6 @@ if (dynamicOn) {
     loadDynamicSkiesTexture(name).then((img) => sky.setTexture(name, img)).catch((e) => console.warn(e?.message ?? e)).finally(() => { texturesPending--; });
   }
 }
-if (!dynamicOn) sky.retro = retroFor(location.search);   // ES1e: the lab shows what the game shows
-if (dynamicOn) sky.retro = retroFor(location.search);    // PS2: and the mod's skybox takes the same pixel
 if (dynamicOn) sky.bandDither = params.get('bands') !== 'raw';   // PS3: the lab shows what the game shows
 // VC3: the volumetric clouds over the dome, as the game draws them; built on the first frame
 const cloudsDoor = params.get('clouds');
@@ -111,7 +109,6 @@ function frame() {
   sky.draw(yaw, pitch, 65 * Math.PI / 180, w / h);
   if (cloudsDoor !== 'off') {
     clouds ??= new VolumetricClouds(gl, Object.hasOwn(CLOUD_QUALITY, cloudsDoor) ? cloudsDoor : 'default', [0, 0, w, h]);
-    clouds.retro = sky.retro;   // PS2: the clouds' pixels are the sky's
     // DS2: under the mod the clouds take the synthesised state the game
     // gives them - the mod's sun, moons and horizon, the port's colours
     const row = WEATHER_SKY[$('weather').value] ?? WEATHER_SKY.sunny;

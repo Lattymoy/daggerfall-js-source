@@ -34,9 +34,9 @@ matrix/draw path (GC spikes riding the beat).
 FOUND ON THE WAY, both real: a recenter injects 819.2 units into
 footsteps' stride accumulator (a spurious footstep at every map-pixel
 crossing, footsteps.js:134), and `_playerStill` reads one moving
-frame per crossing (world.js:5586-5588).
+frame per crossing (world.js:5584-5586).
 
-frame per crossing (world.js:8232-8234).
+frame per crossing (world.js:8230-8232).
 
 THE DISTANCE IS FOG-BOUND, NOT STREAM-BOUND. Linear fog ends at 2400
 units (weather.js:42-49, DFU's own number) while the default 7x7
@@ -450,7 +450,7 @@ hole's symmetric half-pixel spike exposure. The escape hatches, in
 one line: ?cull=off, ?terrainthread=off, ?ring=off - each read once
 at scene build, each falling back to the pre-slice path.
 
-PS1 (2026-09-12, Mac: "Bring back the pixelated sky we removed in a
+**REMOVED (FT3, 2026-09-14, Mac: "Remove our version of pixelated sky").** PS1 (2026-09-12, Mac: "Bring back the pixelated sky we removed in a
 past commit. On by default and apart of a new toggle within enhanced
 environments"): THE PIXELATED SKY RETURNS. ES1e's retro pass over the
 port's dome - the angular pixel (RETRO.step pi/512, the painted sky's
@@ -466,7 +466,7 @@ by default again since MO1) the mod draws its own 512-pixel sheets
 whatever the switch says - the mod's look, 1:1.~~ PS2 below. Ledger row PS1. Pinned:
 `test/macfive.test.js` PS1, `test/enhancedSky.test.js` ES1e.
 
-PS2 (2026-09-12, Mac: "Volumetric clouds and pixelated should be
+**REMOVED (FT3, 2026-09-14, Mac: "Remove our version of pixelated sky").** PS2 (2026-09-12, Mac: "Volumetric clouds and pixelated should be
 compatible with dynamic skies though"): THE PIXEL ON EVERY SKY. The
 clouds already were compatible - DS2 draws the slab over the mod's
 skybox, its sheets standing down - and the report before this one said
@@ -510,7 +510,7 @@ NOT MEASURED on a GPU in this session - no ARENA2 here; `npm run perf`
 and the tier drops back to 3 or 4 in the pane if it says so. Ledger row
 LV1. Pinned: `test/macfive.test.js` LV1, `test/streaming.test.js`.
 
-ES1g (2026-09-12, Mac: "the returning pixelated sky look exposes the
+**REMOVED (FT3, 2026-09-14, Mac: "Remove our version of pixelated sky"); `ringSnap` outlives it in `render/orderedDither.js` for PS3's dither alone.** ES1g (2026-09-12, Mac: "the returning pixelated sky look exposes the
 frame of a square skybox"): THE GRID IS RINGS. It did expose one, and
 the frame was real. ES1f fled the lat-long pole onto an equi-angular
 CUBE, and a cube has twelve edges. The GEOMETRY tiles across them

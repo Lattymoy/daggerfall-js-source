@@ -13,7 +13,7 @@ import { SkyRenderer, buildDaySkyPanorama, buildNightSkyPanorama, buildFallbackS
 import { SEASON } from '../world/climateSwaps.js';
 import { skyFrameForTime, isNight, setLightCurve, daylightScale } from '../world/worldClock.js';   // DS1: isNight for the mod's moonlight, setLightCurve for the mod's own curve; CLK3 review: daylightScale for its moonlight's ramp
 import { createWindModel, FRONT_LEAD_MIN } from '../systems/wind.js';   // WIND1
-import { EnhancedSkyRenderer, skyState, easeWeather, weatherRow, CLOUD_SHADOW, moonlightTerm, retroFor, WEATHER_EASE_MINUTES, WIND_SECONDS_PER_MINUTE } from '../render/enhancedSky.js';   // ES1: the enhanced sky, behind the skin; EV5: its moons light the world
+import { EnhancedSkyRenderer, skyState, easeWeather, weatherRow, CLOUD_SHADOW, moonlightTerm, WEATHER_EASE_MINUTES, WIND_SECONDS_PER_MINUTE } from '../render/enhancedSky.js';   // ES1: the enhanced sky, behind the skin; EV5: its moons light the world
 import { VolumetricClouds, QUALITY as CLOUD_QUALITY } from '../render/volumetricClouds.js';   // VC3: the clouds over the dome
 import { cloudsStateUnderMod, dynamicMoonState, dynamicMoonlight } from '../render/dynamicSkiesBridge.js';   // DS1/DS2: the mod's state in the port's shapes - the moons, the clouds, and the moons' own term (AUDIT 65 MC-3: the bridge's third export had no caller and this file carried its body inline)
 import { isEnhanced } from '../systems/uiSkin.js';
@@ -190,12 +190,6 @@ export function createSkyController(gl, params) {
   const skyDoor = params.get('sky');
   const dynamicOn = enhancedLane && (skyDoor === 'dynamic' || (skyDoor === null && modSetting('dynamic-skies', 'Enabled')));
   const enhancedSky = enhancedLane && !dynamicOn ? new EnhancedSkyRenderer(gl) : null;
-  // PS2 (Mac: "Volumetric clouds and pixelated should be compatible with
-  // dynamic skies though"): ONE retro for every sky pass - the dome, the
-  // mod's skybox and the clouds' composite - so the switch reaches all
-  // three and their pixels share a grid.
-  const retro = retroFor(params.toString(), getPref('pixelatedSky'));   // ES1e: retro unless ?sky=smooth - one door, shared with the lab; PS1: the Enhanced pane's Pixelated sky switch decides when the URL is silent
-  if (enhancedSky) enhancedSky.retro = retro;
   // VC3: THE VOLUMETRIC CLOUDS ride the port's own dome - never the mod's
   // sky - behind the one switch; `?clouds=off` is the kill switch and
   // `?clouds=lo|hi` the quality doors. Built here at boot (its noise is
@@ -214,10 +208,8 @@ export function createSkyController(gl, params) {
   const clouds = enhancedLane && cloudsDoor !== 'off'
     ? new VolumetricClouds(gl, Object.hasOwn(CLOUD_QUALITY, cloudsDoor) ? cloudsDoor : (Object.hasOwn(CLOUD_QUALITY, getPref('cloudQuality')) ? getPref('cloudQuality') : 'default'), [0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight]) : null;
   if (clouds && enhancedSky) enhancedSky.cloudsExternal = true;
-  if (clouds) clouds.retro = retro;   // PS2
   const dynamicSky = dynamicOn ? new DynamicSkiesRenderer(gl) : null;
   if (clouds && dynamicSky) dynamicSky.cloudsExternal = true;
-  if (dynamicSky) dynamicSky.retro = retro;   // PS2: the mod's skybox takes the port's pixel too
   // PS3 (Mac: "there's these progressing circles in the sky when I want it
   // to be a smooth sky transition"): the mod's own REDUCE_COLOR quantizes
   // with a bare ceil and no dither, so the sky's iso-luminance contours -

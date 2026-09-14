@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { identity } from '../src/world/mat4.js';
 import { Renderer } from '../src/render/renderer.js';
-import { hash21, RETRO, sunOcclusion, skyState } from '../src/render/enhancedSky.js';
+import { hash21, sunOcclusion, skyState } from '../src/render/enhancedSky.js';
 import { isEmissive, isEmissiveArchive, FIRE_WALLS_ARCHIVE } from '../src/world/emissiveTextures.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -238,9 +238,10 @@ test('audit39 F52: a cache miss re-resolves but never re-mints the key', () => {
 test('audit39 F53: the bright star layer draws - a zero intra-cell offset could not light one pixel', () => {
   // The shader's layer-0 arithmetic against the module's own hash, over
   // a face's cells: brightness is exp(-d*d*60) at d = |f - star| with
-  // star uniform in [0.15, 0.85]^2, and the retro pass posterises at
-  // 1/RETRO.levels, so anything below one level is never drawn.
-  const level = 1 / RETRO.levels;
+  // star uniform in [0.15, 0.85]^2. The retro pass that posterised at
+  // 1/26 is gone (FT3); the floor stands as the visibility bar it was,
+  // because a star under it was the invisible layer this pin caught.
+  const level = 1 / 26;
   const layer0 = (fx, fy) => {
     let max = 0, lit = 0;
     for (let face = 0; face < 6; face++) {
@@ -265,7 +266,7 @@ test('audit39 F53: the bright star layer draws - a zero intra-cell offset could 
   // the whole 1.4-weight layer stayed below one posterise level.
   const dead = layer0(0, 0);
   assert.equal(dead.lit, 0, 'a zero offset lights nothing');
-  assert.ok(dead.max < level, `${dead.max.toFixed(4)} never reaches one posterise level (${level.toFixed(4)})`);
+  assert.ok(dead.max < level, `${dead.max.toFixed(4)} never reaches the visibility bar (${level.toFixed(4)})`);
   // THE LAW NOW: f is where the fragment sits inside its cell, so a
   // fragment near the star is bright.
   for (const [fx, fy] of [[0.5, 0.5], [0.3, 0.7]]) {
@@ -273,14 +274,11 @@ test('audit39 F53: the bright star layer draws - a zero intra-cell offset could 
     assert.ok(live.lit > 300, `f=(${fx},${fy}): ${live.lit} cells draw (a ninth of the face is sampled)`);
     assert.ok(live.max > 1, `and the layer reaches full brightness (${live.max.toFixed(3)})`);
   }
-  // ...which is what the continuous cellOut buys. (The shader text is
-  // pinned in enhancedSky.test.js, ES1f.)
-  const fs = src('src/render/enhancedSky.js') + src('src/render/retroPixel.js');   // PS2: the snap is the shared module's
-  // ES1g (2026-09-12) replaced the cube with rings, so the cell id is no
-  // longer a face coordinate - but F53's law is untouched and is what is
-  // pinned: cellOut is CONTINUOUS, floor() names the cell and fract() is
-  // the fragment's place inside it.
-  assert.match(fs, /cellOut = vec2\(g, ring \+ fract\(\(el \+ 1\.57079633\) \/ stepRad\)\);/, 'the snap hands back a continuous cell coordinate - and the clamped top ring keeps its own id');
+  // ...which is what a continuous cell coordinate buys. FT3 removed the
+  // retro snap from the dome; the star field's own cell keeps the law,
+  // and so does the ring grid PS3's dither still reads (orderedDither.js).
+  const fs = src('src/render/enhancedSky.js') + src('src/render/orderedDither.js');
+  assert.match(fs, /cellOut = vec2\(g, ring \+ fract\(\(el \+ 1\.57079633\) \/ stepRad\)\);/, 'the snap hands back a continuous cell coordinate');
   assert.doesNotMatch(fs, /cellOut = floor\(/, 'never the floored id - fract() of an integer is the F53 defect');
   assert.match(fs, /vec2 cell = floor\(g\), f = fract\(g\);/, 'the field still reads the id and the interior off one value');
 });
