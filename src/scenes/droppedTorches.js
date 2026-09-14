@@ -83,9 +83,16 @@ export const PROJECTILE_FIXED_DT = 0.02;
 export const PROJECTILE = Object.freeze({ gravityAccel: -9.81, restFraction: 0.2, spinRate: 20, restRaise: 0.016, audioGap: 0.2, baseSpeed: 25 });
 /** A dropped light under a dungeon's water is doused (0x3726-0x3775): its top 1.25 above the point, below the water plane. */
 export const WATER_HEAD = 1.25;
-/** The dropped torch's own light: 1.25 x PlayerTorchLightScale, the item's range; and the burn law's range - 1 + range x (time left / the item's full burn) (0x1b87-0x1bbf). */
-export const DROPPED_LIGHT_INTENSITY = 1.25;
-/** The dropped torch's billboard is base-aligned here; the mod raises its centred quad by half its height so the base lands on the point (0x37f4). */
+/** AUDIT 66 F1: WHERE THE LIGHT SITS. The mod raises the CENTRED
+ *  billboard by half its texture height so its base lands on the drop
+ *  point (0x37f4), and then hangs the light half a unit above the
+ *  BILLBOARD (0x38b0-0x38cf) - so the flame is at
+ *  `point + halfHeight + 0.5`, over the torch's head. The port's
+ *  batches are base-aligned (render/frustum.js: "the quad rises a full
+ *  height above the base"), so the drop point IS the centre the mod
+ *  computes - but the light was read off the point alone and sat half a
+ *  torch (0.425) too low, under the floor of anything it stood on. */
+export const LIGHT_ABOVE_BILLBOARD = 0.5;
 
 const RECORD_FOR = Object.freeze({ [TEMPLATES.Torch]: DROPPED_RECORD.Torch, [TEMPLATES.Candle]: DROPPED_RECORD.Candle, [TEMPLATES.Holy_candle]: DROPPED_RECORD.HolyCandle });
 const GROUP_FOR = Object.freeze({ [TEMPLATES.Torch]: 'UselessItems2', [TEMPLATES.Candle]: 'UselessItems2', [TEMPLATES.Holy_candle]: 'ReligiousItems' });
@@ -95,12 +102,12 @@ export const droppedTextureUrl = (record, frame, emission = false) =>
 /**
  * deps = { renderer, audio, getTexture, uploadRecordFrame, collider(), foes(), foeSinks(f), makeEnemiesHostile(),
  *          entity (the player), camera() -> { pos, feet, yaw, pitch, forward, right, up }, inside(), waterLevel() (a dungeon's, or null),
- *          pixelKeyAt(pos) (the streaming host's, or null), settings(), rolls, say, torchLightScale(), loadTexture(record, frame) }
+ *          pixelKeyAt(pos) (the streaming host's, or null), settings(), rolls, say, loadTexture(record, frame) }
  */
 export function createDroppedTorches({
   renderer, audio = null, getTexture = null, uploadRecordFrame = null, collider = () => null, foes = () => [], foeSinks = null, makeEnemiesHostile = null,
   entity = null, camera = () => null, inside = () => true, waterLevel = () => null, pixelKeyAt = () => null,
-  settings = readTorchSettings, rolls = Math.random, say = () => {}, torchLightScale = () => 1, loadTexture = defaultLoadTexture,
+  settings = readTorchSettings, rolls = Math.random, say = () => {}, loadTexture = defaultLoadTexture,
   onPickedUp = null,
 } = {}) {
   const dropped = [];      // { id, template, record, pos, time, batch, anim, size, loop, mirrored, pixelKey, dead }
@@ -178,6 +185,7 @@ export function createDroppedTorches({
     if (record == null) return null;
     const d = { id: ++_nextId, template, record, pos: [pos[0], pos[1], pos[2]], time, batch: null, anim: null, size: null, loop: null,
       mirrored: rolls() > 0.5, pixelKey: inside?.() ? null : (pixelKeyAt?.(pos) ?? null), dead: false };
+    if (!dropped.length) _lastMinutes = worldMinutes();   // AUDIT 66 F2: the first light into an empty pool starts its own clock - an empty pool burns nothing, so the hours it slept are nobody's
     dropped.push(d);
     mount(d);
     if (lit(d) && template === TEMPLATES.Torch) d.loop = audio?.loop3d?.(CLIPS.burning, d.pos, s().sfxVolume, { maxDistance: 5, distanceModel: 'linear' }) ?? null;
@@ -200,13 +208,20 @@ export function createDroppedTorches({
     const speedStart = PROJECTILE.baseSpeed * (liveStat(entity, 'strength') / 100) * st.throwStrength * strength;
     const p = { template, time, record, pos: at, dirStart: d0, speedStart, speedCurrent: speedStart, gravityDrag: 0.05 * st.throwGravity,
       bounce: st.throwBounce, gravity: [0, 0, 0], batch: null, size: null, base: null, lastAudio: -Infinity, dead: false, acc: 0, loop: null };
+    // AUDIT 66 F3: the THROWN torch's billboard is set to the flight
+    // point RAW (0x3a9b) - no half-height raise, unlike the dropped
+    // one - so the mod's centred quad is centred ON the flight point.
+    // The port's batches are base-aligned, so the base goes half a
+    // height below it; read off the point alone the sprite flew half a
+    // torch above its own arc (and above the light at +0.5, which the
+    // mod hangs over the quad's middle).
     projectiles.push(p);
     const ready = ensureRecord(record);
     const build = (entry) => {
       if (p.dead || !entry?.count) return;
       p.base = { w: entry.size.w / scale(), h: entry.size.h / scale() };
       p.size = { ...p.base };
-      p.batch = renderer?.createBillboardBatch?.(DROPPED_ARCHIVE, record, p.size, [p.pos]) ?? null;
+      p.batch = renderer?.createBillboardBatch?.(DROPPED_ARCHIVE, record, p.size, [flightBase(p)]) ?? null;
       if (p.batch) p.batch.frame = 0;
       p.anim = entry.count > 1 ? new FlatAnim(DROPPED_ARCHIVE, entry.count, false) : null;
     };
@@ -214,6 +229,9 @@ export function createDroppedTorches({
     if (lit({ record }) && template === TEMPLATES.Torch) p.loop = audio?.loop3d?.(CLIPS.burning, p.pos, st.sfxVolume, { maxDistance: 5, distanceModel: 'linear' }) ?? null;
     return p;
   }
+
+  /** AUDIT 66 F3: the base a CENTRED quad needs to sit on the flight point. */
+  const flightBase = (p) => [p.pos[0], p.pos[1] - Math.abs(p.base?.h ?? 0) / 2, p.pos[2]];
 
   /** Projectile.FixedUpdate (0x47a4), one 0.02 s step. */
   function stepProjectile(p) {
@@ -264,7 +282,7 @@ export function createDroppedTorches({
     } else {
       p.pos = [p.pos[0] + step[0], p.pos[1] + step[1], p.pos[2] + step[2]];
     }
-    if (p.batch) { renderer.destroyBillboardBatch(p.batch); p.batch = renderer.createBillboardBatch(DROPPED_ARCHIVE, p.record, p.size, [p.pos]); p.batch.frame = p.anim?.frame ?? 0; }
+    if (p.batch) { renderer.destroyBillboardBatch(p.batch); p.batch = renderer.createBillboardBatch(DROPPED_ARCHIVE, p.record, p.size, [flightBase(p)]); p.batch.frame = p.anim?.frame ?? 0; }
     p.loop?.move?.(p.pos);
   }
   function retireProjectile(p) {
@@ -341,6 +359,14 @@ export function createDroppedTorches({
   function tick(dt) {
     _time += dt;
     const now = worldMinutes();
+    // AUDIT 66 F2: the world clock is the burn's clock, so every JUMP
+    // in it burned - and a load is a jump. DFU's per-frame arm reads
+    // Time.deltaTime (0x1a4c), which no load inflates, and the only
+    // clock jump the mod answers is the REST window's own
+    // (OnRestWindowClose, 0x45b-0x48c). The pool re-latches wherever
+    // the clock can move without the player living through it (a
+    // restore, a transition sweep), so a rest still ages the torches
+    // and a load never does.
     const burn = _lastMinutes == null ? 0 : Math.max(0, (now - _lastMinutes) * 60 / 12);
     _lastMinutes = now;
     for (let i = dropped.length - 1; i >= 0; i--) {
@@ -360,14 +386,21 @@ export function createDroppedTorches({
   /** The lights the host composes: a lit dropped light's range by the time left, and a burning foe's - the player torch's range. */
   function lights() {
     const out = [];
-    const ls = torchLightScale();
     for (const d of dropped) {
       if (!lit(d)) continue;
       const t = templateByIndex(d.template);
       const full = (t?.hitPoints ?? 1) * SECONDS_PER_CONDITION;
-      out.push({ x: d.pos[0], y: d.pos[1] + 0.5, z: d.pos[2], range: 1 + (t?.capacityOrTarget ?? 0) * (d.time / full) * ls });
+      // AUDIT 66 F1: over the billboard's head, as the mod hangs it.
+      // AUDIT 66 F10: and NOT scaled by PlayerTorchLightScale - the mod
+      // multiplies this range by it (0x1bb3), but the port's own lane
+      // holds that setting inert for exactly this reason
+      // (playerTorch.js:56-59: "it is a 0..1 BRIGHTNESS ... mapping a
+      // brightness slider onto a radius would be a worse lie"). One
+      // decision, one place; the dep the hosts never passed is gone.
+      out.push({ x: d.pos[0], y: d.pos[1] + Math.abs(d.size?.h ?? 0) / 2 + LIGHT_ABOVE_BILLBOARD, z: d.pos[2], range: 1 + (t?.capacityOrTarget ?? 0) * (d.time / full) });
     }
-    for (const p of projectiles) if (lit(p)) out.push({ x: p.pos[0], y: p.pos[1] + 0.5, z: p.pos[2], range: templateByIndex(p.template)?.capacityOrTarget ?? 0 });
+    // the thrown torch's light hangs over its quad's own centre (0x3ad0-0x3aea), and its range is the template's, flat (0x3b41)
+    for (const p of projectiles) if (lit(p)) out.push({ x: p.pos[0], y: p.pos[1] + LIGHT_ABOVE_BILLBOARD, z: p.pos[2], range: templateByIndex(p.template)?.capacityOrTarget ?? 0 });
     const playerRange = entity?.lightSource ? torchRange(entity.lightSource) : (templateByIndex(TEMPLATES.Torch)?.capacityOrTarget ?? 14);
     for (const [f, fl] of flames) if (!f.dead) out.push({ x: fl.pos[0], y: fl.pos[1], z: fl.pos[2], range: playerRange });
     return out;
@@ -406,6 +439,7 @@ export function createDroppedTorches({
 
   /** DestroyLightSources (0x403c): every transition and every load. */
   function destroyAll() {
+    _lastMinutes = worldMinutes();   // AUDIT 66 F2: the sweep is a transition - what the clock did across it is not this pool's to burn
     for (const d of dropped) unmount(d);
     dropped.length = 0;
     for (const p of [...projectiles]) retireProjectile(p);
@@ -424,13 +458,28 @@ export function createDroppedTorches({
       if (d.batch) { renderer.destroyBillboardBatch(d.batch); d.batch = renderer.createBillboardBatch(DROPPED_ARCHIVE, d.record, d.size, [d.pos]); d.batch.frame = d.anim?.frame ?? 0; }
       d.loop?.move?.(d.pos);
     }
-    for (const p of projectiles) { p.pos[0] += dx; p.pos[1] += dy; p.pos[2] += dz; }
-    for (const [, fl] of flames) { fl.pos[0] += dx; fl.pos[1] += dy; fl.pos[2] += dz; }
+    for (const p of projectiles) {
+      p.pos = [p.pos[0] + dx, p.pos[1] + dy, p.pos[2] + dz];
+      if (p.batch) { renderer.destroyBillboardBatch(p.batch); p.batch = renderer.createBillboardBatch(DROPPED_ARCHIVE, p.record, p.size, [flightBase(p)]); p.batch.frame = p.anim?.frame ?? 0; }
+      p.loop?.move?.(p.pos);   // AUDIT 66 F3: a recenter moves the flight's sprite and its loop, as it moves a dropped light's
+    }
+    // AUDIT 66 F12: the burning foe's flame moved its POSITION and left
+    // its quad where it stood. The dropped lights above rebuild theirs
+    // because a batch's centers are baked at build; the flame's only
+    // other rebuild is tickFlames' "the foe moved" test, which compares
+    // the foe's own (already recentred) feet against this (already
+    // recentred) position and finds them equal - so the flame stayed at
+    // the pre-recenter spot for as long as the foe burned.
+    for (const [, fl] of flames) {
+      fl.pos = [fl.pos[0] + dx, fl.pos[1] + dy, fl.pos[2] + dz];
+      if (fl.batch) { renderer.destroyBillboardBatch(fl.batch); fl.batch = renderer.createBillboardBatch(PUFF.archive, PUFF.record, fl.size, [fl.pos]); fl.batch.frame = fl.anim?.frame ?? 0; }
+    }
   }
   /** HandheldTorchesSaveData (0x4c34 / 0x4cc8): position, time and template of each; restored by spawning each. */
   const snapshot = (toWorld = (p) => p) => dropped.filter((d) => d.template).map((d) => { const p = toWorld(d.pos); return { position: [p[0], p[1], p[2]], time: d.time, itemTemplateIndex: d.template }; });
   function restore(list, fromWorld = (p) => p) {
     destroyAll();
+    _lastMinutes = worldMinutes();   // AUDIT 66 F2: the save's own clock, not the outgoing session's
     for (const r of list ?? []) {
       if (!r || RECORD_FOR[r.itemTemplateIndex] == null || !(r.time > 0)) continue;   // record 0 is the torch: a null test, never a truth test
       const p = fromWorld(r.position);

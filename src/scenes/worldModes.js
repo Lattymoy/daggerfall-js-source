@@ -4497,6 +4497,16 @@ export function createWorldModes(host) {
     dismountPlayer('ToBuildingInterior');
     transitioning = true;
     try {
+      // AUDIT 66 F4: DestroyLightSources_OnTransition fires with the
+      // TRANSITION (the mod's Awake subscribes it to
+      // PlayerEnterExit.OnTransitionInterior, 0x7d1). It used to run at
+      // the foot of this function - AFTER restoreInteriorScene() below
+      // put the room's saved torches back - so a light left in a shop
+      // was destroyed by the very entry that restored it: it survived
+      // neither walking out and back in nor a save and load, while the
+      // sibling pile pool (interiorDropped) restored correctly beside
+      // it. The sweep belongs here, where the transition is.
+      interiorTorches.destroyAll();   // HT1: DestroyLightSources_OnTransition
       // E2/P1: the building's identity, resolved BEFORE the interior
       // stands. DFU's transition does the same three things in this
       // order (PlayerActivate.cs:1119-1121): take the discovered
@@ -4666,7 +4676,6 @@ export function createWorldModes(host) {
       player.spawn(spot[0], spot[1], spot[2]);
       mode = 'interior';
       host.unlockOn?.();   // AUDIT 62 F16/F28: the lock never outlives a mode change - the foe pool and the coordinate frame both change here, and lockOn breaks only on death, a null chest or 32 m, none of which fire for a street foe you walked away from through a door (the interior is parented at the building's world matrix, so it stays metres away).
-      interiorTorches.destroyAll();   // HT1: DestroyLightSources_OnTransition
       console.log(`interior: ${ctx.drawList.length} draws, ${ctx.doors.length} doors, ${ctx.lights.length} lights, ${ctx.people.length} people`);
     } finally {
       transitioning = false;
@@ -7934,6 +7943,7 @@ export function createWorldModes(host) {
         interiorGuards?.clearLive?.();   // ROAD-B: same teardown, the quest-teleport / load arm
         interiorGuards = null;
         interiorDropped.restorePiles(null);   // ID1: same teardown, the quest-teleport / load arm
+        interiorTorches.destroyAll();   // AUDIT 66 F6: HT1's pool was the one that never joined this list - a quest teleport or a load out of a building left the room's torches lit, batched and burning in the ear
         interiorHitEffects.clear();   // HE1: the same
         // ...and the OnPop the comment above is about, on every window
         // the stack holds (ROAD-B B1).

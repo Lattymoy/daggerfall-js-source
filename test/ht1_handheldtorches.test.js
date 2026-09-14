@@ -26,6 +26,7 @@ import {
   HANDHELD_TORCHES_VENDOR, HANDHELD_TORCHES_MOD, ON_STOW, ON_PICK, BOB_SHAPE, STEP_CONDITION, FREE_HAND,
   DROPPED_ARCHIVE, SPRITE_ARCHIVE, DROPPED_RECORD, CLIPS, MESSAGES, ANIMATION_TIME, DROP_FORWARD_CAST, DROP_DOWN_CAST,
   THROW_HAND_OFFSET, THROW_STRENGTH_MIN, THROW_STRENGTH_MAX, TORCH_LIGHT_AT, SECONDS_PER_CONDITION,
+  throwArcPoints, TRAJECTORY_STEPS, TRAJECTORY_FIXED_DT, TRAJECTORY_SPEED, TRAJECTORY_GRAVITY,
 } from '../src/systems/handheldTorches.js';
 import {
   createDroppedTorches, ENEMY_LIGHT_EFFECT_KEY, ENEMY_FIRE_KIND, PUFF, ENEMY_LIGHT_LOCAL, PICKUP_REACH, PROJECTILE_FIXED_DT, PROJECTILE,
@@ -218,6 +219,8 @@ test('HT1: LoadSettings - the fields carry the mod\'s own multipliers (Speed x20
   assert.match(spriteUrl(1, 2), /vendor\/handheld-torches\/Textures\/112359_1-2\.png$/);
   assert.match(droppedTextureUrl(0, 3, true), /Textures\/112358_0-3_Emission\.png$/);
   assert.equal(SECONDS_PER_CONDITION, 20); assert.equal(ANIMATION_TIME, 0.0625); assert.deepEqual([DROP_FORWARD_CAST, DROP_DOWN_CAST, THROW_HAND_OFFSET], [1.45, 145, 0.35]);
+  assert.deepEqual([THROW_STRENGTH_MIN, THROW_STRENGTH_MAX], [0.25, 2], 'the wind-up clamp, as the IL writes it (0x19a6) - the literals, not the constants compared to themselves');
+  assert.deepEqual([TRAJECTORY_STEPS, TRAJECTORY_FIXED_DT, TRAJECTORY_SPEED, TRAJECTORY_GRAVITY], [300, 0.02, 25, 9.8], 'DrawTrajectory\'s own numbers - 9.8, NOT the flight\'s 9.81');
   assert.deepEqual([CLIPS.burning, CLIPS.drop, CLIPS.throwSwing, CLIPS.douse, CLIPS.ignite, CLIPS.stow], [420, 380, 106, 381, 16, 417]);
   assert.equal(CLIPS.burning, SOUND.Burning); assert.equal(CLIPS.ignite, SOUND.Ignite);
 });
@@ -371,7 +374,8 @@ test('HT1: the throw key - the press douses the lit light (a relaxed lantern exc
   const ln = lantern(); r.entity.items = [ln, torch(30), torch(20)]; r.entity.lightSource = ln;
   r.press('KeyX', 0.1);
   assert.equal(r.entity.lightSource, null, 'the wind-up douses the lantern (0x18d9)');
-  near(r.h._w.throwTimer, 0.2, 1e-9, 'dt x ThrowScaleSpeed'); assert.ok(Array.isArray(r.h.trajectory) && r.h.trajectory.length > 100, 'the arc drawn (no wall: 300 steps)');
+  near(r.h._w.throwTimer, 0.2, 1e-9, 'dt x ThrowScaleSpeed');
+  near(r.h.throwStrength, THROW_STRENGTH_MIN, 1e-9, 'AUDIT 66 F9: the wind-up the arc would be drawn at, published; the arc itself is no longer integrated per frame - nothing can draw it');
   r.frame(0.1); r.frame(0.1); near(r.h._w.throwTimer, 0.6, 1e-9);
   r.release('KeyX');
   assert.equal(r.pool.thrown.length, 1);
@@ -380,7 +384,7 @@ test('HT1: the throw key - the press douses the lit light (a relaxed lantern exc
   assert.deepEqual(centre, [0, 0.9, 0]); assert.deepEqual(dir, [0, 0, 1]); near(strength, 0.6); assert.equal(hand, FREE_HAND.Left);
   assert.deepEqual(r.entity.items.map((i) => i.templateIndex), [T.Lantern, T.Torch], 'gone from the pack');
   assert.deepEqual(r.shots.at(-1), [CLIPS.throwSwing, 1, 1]); assert.equal(r.said.at(-1), 'You throw the used torch');
-  assert.equal(r.h.trajectory, null); assert.equal(r.h._w.throwTimer, 0);
+  assert.equal(r.h._w.throwTimer, 0);
   // the clamp: a tap throws at a quarter, a long hold at twice
   r.tap('KeyX'); near(r.pool.thrown[1][4], THROW_STRENGTH_MIN);
   r.entity.items.push(torch()); r.press('KeyX', 5); r.release('KeyX'); near(r.pool.thrown[2][4], THROW_STRENGTH_MAX);
@@ -587,10 +591,15 @@ test('HT1: SpawnLightSource - the billboard of the mod\'s record at the point (a
   // the lights: 1 + the item's range x (time left / the item's full burn) x PlayerTorchLightScale, half a unit up
   const lights = q.p.lights();
   assert.equal(lights.length, 3);
-  near(lights[0].range, 1 + 14 * (990 / (50 * 20))); assert.deepEqual([lights[0].x, lights[0].y, lights[0].z], [1, 0.5, 2]);
+  near(lights[0].range, 1 + 14 * (990 / (50 * 20)));
+  assert.deepEqual([lights[0].x, lights[0].z], [1, 2]);
+  near(lights[0].y, 34 * GLOBAL_SCALE / 2 + 0.5, 1e-9, 'AUDIT 66 F1: half the texture height (the raise the mod gives the centred quad) and then 0.5 over it');
   near(lights[1].range, 1 + 8 * (90 / (16 * 20)));
+  near(lights[1].y, 19 * GLOBAL_SCALE / 2 + 0.5, 1e-9, 'the candle is shorter, so its flame sits lower');
   assert.equal(templateByIndex(T.Torch).hitPoints, 50); assert.equal(templateByIndex(T.Torch).capacityOrTarget, 14);
-  const scaled = pool({}, { lightScale: 2 }); scaled.p.tick(0); scaled.p.spawnLightSource(T.Torch, [0, 0, 0], 1000); near(scaled.p.lights()[0].range, 1 + 14 * 2);
+  // AUDIT 66 F10: no PlayerTorchLightScale term - the mod multiplies this range by it, the port's own lane holds that setting inert for a radius (playerTorch.js), and no host could feed the dep anyway
+  assert.ok(!/torchLightScale/.test(rd('src/scenes/droppedTorches.js')), 'the dep no host passed is gone');
+  assert.ok(!/DROPPED_LIGHT_INTENSITY/.test(rd('src/scenes/droppedTorches.js')), 'and the constant nothing read');
   // a rest of an hour: the candle (90 s left) dies, the torch burns 300 s
   setWorldMinutes(5062); q.p.tick(0.016);
   assert.equal(q.p.dropped.length, 1); near(d.time, 690); assert.equal(c.dead, true); assert.ok(!q.alive.has(c.batch), 'its billboard gone');
@@ -730,11 +739,13 @@ test('HT1: the rig runs the component beside the widget - one per rig, the pool 
   assert.match(rig, /const handheld = createHandheldTorches\(\{ audio, say, torches \}\);/);
   assert.match(rig, /const handheldOn = \(\) => modSetting\('handheld-torches', 'Enabled'\);/);
   assert.match(rig, /pool\.setOnPickedUp\?\.\(\(item\) => handheld\.receivePickedUp\(item\)\);/, 'the pool hands a picked-up light to the component');
-  assert.match(rig, /const _torchesOn = handheldOn\(\);\s*if \(widgetOn\(\) \|\| _torchesOn\) \{/);
+  assert.match(rig, /const _torchesOn = handheldOn\(\);\s*(?:\/\/[^\n]*\n\s*)*if \(!_torchesOn && _handheldWasOn\) handheld\.dispose\(\);[^\n]*\n\s*_handheldWasOn = _torchesOn;\s*if \(widgetOn\(\) \|\| _torchesOn\) \{/);
   assert.match(rig, /if \(_torchesOn\) \{\s*bindTorches\(\);\s*const tctx = \{\s*renderer, canvas: c, entity, machine: playerWeapon\.machine, sheathed: playerWeapon\.sheathed, usingRightHand: playerWeapon\.usingRightHand,\s*castPlaying: fpsSpellCasting\.isPlayingAnim, spellArmed: spellArmed\(\), thirdPerson: fpArm\.thirdActive\(\),\s*climbing: !!cam\?\.climbing, swimming: !!mv\.swimming, transformedLycanthrope: !!entity && isTransformedLycanthrope\(entity\),/);
   assert.match(rig, /look, swingHeld: _held, cursorActive: cursorActive\(\), camera: camThunk, collider: \(\) => collider\?\.\(\) \?\? null,\s*keyDown: \(code\) => !!keyDown\?\.\(code\), sheathWeapons: \(\) => \{ if \(!playerWeapon\.sheathed\) playerWeapon\.toggleSheath\(\); \},\s*\};\s*handheld\.update\(dt, tctx\);\s*handheld\.lateUpdate\(dt, tctx\);/);
   assert.match(rig, /if \(fpArm\.active\(\)\) \{[^}]*fpArm\.draw\(c\);[^}]*return; \}\s*(?:\/\/[^\n]*\n\s*)*if \(handheldOn\(\) && c\) handheld\.draw\(renderer, c\);\s*if \(widgetOn\(\) && c && widget\.draw\(renderer, c\)\) return;/, 'the arms return first (no classic hand under the Morrowind arms), the torch hand under the weapon');
   assert.match(rig, /keyDown = null, torches = \(\) => null \}\)/, 'the two deps the hosts feed');
+  assert.match(rig, /if \(!_torchesOn && _handheldWasOn\) handheld\.dispose\(\);/, 'AUDIT 66 F8: the switch off is a teardown - update() runs only while the mod is on, so the burning loop could not stop itself');
+  assert.match(rig, /dispose\(\) \{ handheld\.dispose\(\); _handheldWasOn = false; \}/, 'AUDIT 66 F8: and the host has a door to call');
   assert.match(rig, /handheld,\s*\/\/ HT1/);
   assert.match(rd('src/systems/lycanthropy.js'), /export const isTransformedLycanthrope = \(entity\) => isTransformedNow\(entity\);/);
   assert.match(rd('src/systems/playerTorch.js'), /const o = _offsetOverride \?\? TORCH_OFFSET;/);
@@ -752,9 +763,10 @@ test('HT1: the five hosts - each owns a pool, feeds the rig its raw keys and the
   for (const [name, src] of [['world', world], ['exterior', ext]]) {
     assert.match(src, /\.\.\.droppedTorches\.lights\(\)\)/, `${name}: the dropped lights in the point-light channel`);
     assert.match(src, /const _torchPick = pickActivatableHit\(cam\.pos, useFwd, droppedTorches\.targets\(\), collider\);/, `${name}: the mod's RegisterCustomActivation on the same ray`);
-    assert.match(src, /const _torchNearest = !!_torchPick && _torchPick\.distance <= Math\.min\(_lootPick\?\.distance \?\? Infinity, _dropPick\?\.distance \?\? Infinity\);/, `${name}: nearest wins`);
+    assert.match(src, /const _torchNearest = !!_torchPick && _torchPick\.distance <= Math\.min\(_lootPick\?\.distance \?\? Infinity, _dropPick\?\.distance \?\? Infinity, _doorDist\);/, `${name}: AUDIT 66 F7 - nearest wins, the DOOR included`);
+    assert.match(src, /const _doorDist = modes\.exteriorActivationDistance\(cam\.pos, useFwd\);/, `${name}: the door's distance, read once`);
     assert.match(src, /if \(_torchNearest\) \{ if \(_torchPick\.distance > _torchPick\.reach\) setMidScreenText\(TOO_FAR_AWAY_TEXT\); else droppedTorches\.activate\(_torchPick\.key, getInteractionMode\(\)\); \}/, `${name}: the 3.2 reach and the mode`);
-    assert.match(src, /if \(_mode\(\) !== _torchesMode\) \{ droppedTorches\.destroyAll\(\); _torchesMode = _mode\(\); \}/, `${name}: DestroyLightSources on a transition`);
+    assert.match(src, /if \(_mode\(\) !== _torchesMode\) \{ droppedTorches\.destroyAll\(\); _torchesMode = _mode\(\); \}[^\n]*\n\s*if \(modes\.frame\(dt, now\)\) \{/, `${name}: AUDIT 66 F11 - the transition sweep runs ABOVE the modal return, where the transition is`);
     assert.match(src, /droppedTorches\.tick\(dt\);/, `${name}: the burn`);
     assert.match(src, /\.\.\.droppedTorches\.batches\(\)\)/, `${name}: drawn with the people`);
   }
@@ -768,8 +780,12 @@ test('HT1: the five hosts - each owns a pool, feeds the rig its raw keys and the
   assert.match(wm, /\.\.\.interiorTorches\.lights\(\)\);/); assert.match(wm, /interiorTorches\.tick\(dt\);/); assert.match(wm, /const _torches = interiorTorches\.batches\(\);/);
   assert.match(wm, /targets\.push\(\.\.\.interiorTorches\.targets\(\)\);/);
   assert.match(wm, /if \(key\.startsWith\('droppedTorch:'\)\) \{ interiorTorches\.activate\(key, getInteractionMode\(\)\); return true; \}/);
-  assert.match(wm, /host\.unlockOn\?\.\(\);\s*(?:\/\/[^\n]*\n\s*)*interiorTorches\.destroyAll\(\);/, 'AUDIT 62: after the unlock, on the way in');
-  assert.equal((wm.match(/interiorTorches\.destroyAll\(\);/g) ?? []).length, 2, 'the way in and the way out');
+  // AUDIT 66 F4: the sweep runs with the TRANSITION, before the scene cache puts the room's own torches back - it used to sit at the foot of the same function and destroyed what the restore had just spawned
+  assert.match(wm, /dismountPlayer\('ToBuildingInterior'\);\s*transitioning = true;\s*try \{\s*(?:\/\/[^\n]*\n\s*)*interiorTorches\.destroyAll\(\);/, 'the way in: before the build, not after the restore');
+  const _wmEnter = wm.indexOf("interiorTorches.destroyAll();");
+  assert.ok(_wmEnter > 0 && _wmEnter < wm.indexOf('restoreInteriorScene();'), 'and it lands ABOVE the restore in the file, as it does in the frame');
+  assert.equal((wm.match(/interiorTorches\.destroyAll\(\);/g) ?? []).length, 3, 'the way in, the way out, and AUDIT 66 F6 the quest-teleport / load exit');
+  assert.match(wm, /interiorDropped\.restorePiles\(null\);[^\n]*\n\s*interiorTorches\.destroyAll\(\);[^\n]*\n\s*interiorHitEffects\.clear\(\);/, 'AUDIT 66 F6: in the teardown list with its siblings');
   assert.match(wm, /const droppedTorches = interiorTorches\.snapshot\(\);/); assert.match(wm, /interiorTorches\.restore\(data\.droppedTorches\);/);
   assert.match(wm, /key\.startsWith\('droppedTorch:'\)\) \{/, 'the dungeon arm\'s loot ladder takes the key');
   assert.match(wm, /\.\.\.dungeonCtx\.torchLights\(\)\)/); assert.match(wm, /\.\.\.dungeonCtx\.torchBatches\(\)/);
@@ -779,6 +795,7 @@ test('HT1: the five hosts - each owns a pool, feeds the rig its raw keys and the
   assert.match(dc, /droppedTorches: droppedTorches\.snapshot\(\),/); assert.match(dc, /if \(truncate\) droppedTorches\.restore\(w\.droppedTorches\);/);
   assert.match(dc, /delete w\.droppedLoot;\s*delete w\.droppedTorches;/, 'the shared world carries nothing of the player\'s own');
   assert.match(dc, /waterLevel: \(\) => \(_fpFeet \? blockWaterLevelAt\(/, 'the dungeon\'s water plane for the douse');
+  assert.match(dc, /droppedTorches\.destroyAll\(\);\s*weaponRig\.dispose\?\.\(\);/, 'AUDIT 66 F5/F8: the pool and the rig\'s component leave with the dungeon, beside the foes\' batches and the wall torches\' loops');
   assert.match(dj, /\.\.\.ctx\.torchLights\(\)\)/); assert.match(dj, /\.\.\.ctx\.torchBatches\(\)\]/); assert.match(dj, /key\.startsWith\('droppedTorch:'\)\)\) \{/);
   assert.match(dj, /keyDown: \(code\) => keys\.has\(code\)/);
 });

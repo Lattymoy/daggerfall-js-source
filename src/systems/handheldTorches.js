@@ -100,6 +100,11 @@ export const DROP_DOWN_CAST = 145;
 export const THROW_HAND_OFFSET = 0.35;
 /** The wind-up's clamp (0x19a6): a quarter to twice. */
 export const THROW_STRENGTH_MIN = 0.25, THROW_STRENGTH_MAX = 2;
+/** DrawTrajectory's own arithmetic (0x1cc1-0x1dcc): 300 steps of Unity's
+ *  fixed 0.02, the same 25-and-Strength speed the throw leaves at, and
+ *  gravity 9.8 - NOT the flight's 9.81 (Projectile .ctor 0x4be5). The
+ *  mod's two numbers, both kept. */
+export const TRAJECTORY_STEPS = 300, TRAJECTORY_FIXED_DT = 0.02, TRAJECTORY_SPEED = 25, TRAJECTORY_GRAVITY = 9.8;
 /** PlayerTorch's local position the mod writes on a flip (0x2f1c, 0x2f50), in the port's left/up/forward words. */
 export const TORCH_LIGHT_AT = Object.freeze({ torch: { left: 0.34, up: 0.9, forward: 0.25 }, lantern: { left: 0.26, up: 0, forward: 0.25 } });
 /** The item's burn-time law: currentCondition * 20 seconds (0x30a6), back as ceil(time / 20) (0x3db2). */
@@ -176,7 +181,7 @@ export function createHandheldTorches({
     positionCurrent: { x: 0, y: 0, w: 0, h: 0 }, positionTarget: { x: 0, y: 0, w: 0, h: 0 },
     position: [0, 0], offset: [0, 0], scale: [1, 1],   // the published channels; Scale is zeroed each LateUpdate (0x1e9a) so the rect grows by it
     moveSmooth: 0, bobSmooth: [0, 0], inertiaCurrent: [0, 0], inertiaTarget: [0, 0], inertiaSpeedMod: 1, inertiaForwardCurrent: [0, 0], inertiaForwardTarget: [0, 0],
-    throwTimer: 0, throwTime: 1, keysLast: new Set(), loop: null, loopVolume: 0, trajectory: null, time: 0, s: settings(),
+    throwTimer: 0, throwTime: 1, keysLast: new Set(), loop: null, loopVolume: 0, time: 0, s: settings(),
   };
   let ctx = null;
   let lightOffsetSet = null;   // the PlayerTorch position the mod last wrote (its transform keeps it)
@@ -424,32 +429,6 @@ export function createHandheldTorches({
     oneShot(CLIPS.stow, 1, 1);
   }
 
-  // ---- DrawTrajectory (0x1bec): the arc while the throw winds up ----
-  function drawTrajectory() {
-    const cam = ctx?.camera?.();
-    const col = ctx?.collider?.();
-    if (!cam?.pos) return;
-    const centre = cam.feet ? [cam.feet[0], cam.feet[1] + 0.9, cam.feet[2]] : [cam.pos[0], cam.pos[1] - 0.8, cam.pos[2]];
-    const right = cam.right ?? [Math.cos(cam.yaw || 0), 0, -Math.sin(cam.yaw || 0)];
-    const side = getFreeHand() === FREE_HAND.Right ? THROW_HAND_OFFSET : -THROW_HAND_OFFSET;
-    let pos = [centre[0] + right[0] * side, centre[1] + right[1] * side, centre[2] + right[2] * side];
-    const points = [pos];
-    const dir = rotateAboutAxis(cam.forward ?? [0, 0, 1], right, -w.s.throwAngle);
-    const speed = 25 * (liveStat(ctx.entity, 'strength') / 100) * w.s.throwStrength * clampStrength(w.throwTimer / w.throwTime);
-    const vel = [dir[0] * speed, dir[1] * speed, dir[2] * speed];
-    let gravity = [0, 0, 0];
-    const fixedDt = 0.02;
-    for (let i = 0; i < 300; i++) {
-      gravity = [gravity[0], gravity[1] - 9.8 * (w.s.throwGravity * 0.05), gravity[2]];
-      const step = [(vel[0] + gravity[0]) * fixedDt, (vel[1] + gravity[1]) * fixedDt, (vel[2] + gravity[2]) * fixedDt];
-      const len = Math.hypot(step[0], step[1], step[2]) || 1;
-      const d = col?.raycast?.(pos, [step[0] / len, step[1] / len, step[2] / len], len);
-      if (Number.isFinite(d)) { points.push([pos[0] + step[0] / len * d, pos[1] + step[1] / len * d, pos[2] + step[2] / len * d]); break; }
-      pos = [pos[0] + step[0], pos[1] + step[1], pos[2] + step[2]];
-      points.push(pos);
-    }
-    w.trajectory = points;
-  }
   const clampStrength = (v) => Math.max(THROW_STRENGTH_MIN, Math.min(THROW_STRENGTH_MAX, v));
 
   // ---- Update (IL 0x13b0) ----
@@ -528,11 +507,19 @@ export function createHandheldTorches({
     }
     if (down(w.s.throwKey) && contains('UselessItems2', T.Torch) && hasFreeHand()) {
       w.throwTimer += dt * w.s.throwScale;
-      if (w.s.throwDrawTrajectory) drawTrajectory();
+      // AUDIT 66 F9: DrawTrajectory is NOT run here. The mod feeds its
+      // 300 integration steps to a LineRenderer (0x1e4a-0x1e60); this
+      // renderer has no world-space line - `drawMeshWire` wants a
+      // mesh's own edge buffer (render/renderer.js) and the only other
+      // gl.LINES is the 2D world map's - so the arc had no consumer and
+      // the port was spending 300 steps and up to 300 raycasts a frame
+      // on points nothing could see. The LAW is kept whole and pinned
+      // as `throwArcPoints` below, for the host that can draw it;
+      // `Throwing.ShowTrajectory` is inert until then, and says so on
+      // the pane, beside EmissionShadows.
     }
     if (released(w.s.throwKey)) {
       if (hasFreeHand()) throwLightSourceAction(light(), clampStrength(w.throwTimer / w.throwTime)); else say(MESSAGES.noFreeHand);
-      w.trajectory = null;
       w.throwTimer = 0;
     }
     w.keysLast = new Set([w.s.toggleKey, w.s.dropKey, w.s.throwKey].filter((k) => k && down(k)));
@@ -640,9 +627,9 @@ export function createHandheldTorches({
     get rect() { return getSpriteRect(); },
     get positionTarget() { return { ...w.positionTarget }; },
     get positionCurrent() { return { ...w.positionCurrent }; },
-    get trajectory() { return w.trajectory; },
     get settings() { return w.s; },
     get lastLightSource() { return w.lastLightSource; },
+    get throwStrength() { return clampStrength(w.throwTimer / w.throwTime); },   // AUDIT 66 F9: the wind-up a host would draw the arc at
     get burning() { return !!w.loop; },
     _w: w,
   };
@@ -655,6 +642,46 @@ async function defaultLoadSprite(record, frame) {
   if (!res.ok) return null;
   const bytes = new Uint8Array(await res.arrayBuffer());
   return toColor32(await decodePng(bytes));   // TEX1: `{ width, height, colors }` - the shape uploadTexture reads
+}
+
+/**
+ * DrawTrajectory (IL 0x1bec), whole, as a pure law: the thrown torch's
+ * arc from the free hand, integrated on Unity's fixed step until it
+ * meets a wall or runs 300 steps out. The mod feeds these points to a
+ * LineRenderer; this port has no world-space line to draw them with
+ * (AUDIT 66 F9), so nothing calls this yet - it is kept because it IS
+ * the mod's arithmetic and because the arc must match the flight the
+ * pool integrates (scenes/droppedTorches.js): the two forms differ in
+ * the IL - the flight scales its gravity by fixedDeltaTime and adds it
+ * as a displacement (0x47c3-0x481f), the arc accumulates 9.8 x 0.05 x
+ * GravityStrength as a VELOCITY and scales the sum (0x1d96-0x1dcc) -
+ * and they come out the same curve. Both are kept as written.
+ *
+ * @param {object} p  { origin (the body's centre), forward, right, freeHand, strength (the wind-up, clamped),
+ *                      throwAngle, throwGravity, throwStrength, bodyStrength (the caster's live STR), collider }
+ * @returns {number[][]} the points, the first at the hand
+ */
+export function throwArcPoints({
+  origin, forward = [0, 0, 1], right = [1, 0, 0], freeHand = FREE_HAND.Right, strength = 1,
+  throwAngle = 0, throwGravity = 1, throwStrength = 1, bodyStrength = 50, collider = null,
+} = {}) {
+  const side = freeHand === FREE_HAND.Right ? THROW_HAND_OFFSET : -THROW_HAND_OFFSET;
+  let pos = [origin[0] + right[0] * side, origin[1] + right[1] * side, origin[2] + right[2] * side];
+  const points = [pos];
+  const dir = rotateAboutAxis(forward, right, -throwAngle);
+  const speed = TRAJECTORY_SPEED * (bodyStrength / 100) * throwStrength * strength;
+  const vel = [dir[0] * speed, dir[1] * speed, dir[2] * speed];
+  let gravity = [0, 0, 0];
+  for (let i = 0; i < TRAJECTORY_STEPS; i++) {
+    gravity = [gravity[0], gravity[1] - TRAJECTORY_GRAVITY * (throwGravity * 0.05), gravity[2]];
+    const step = [(vel[0] + gravity[0]) * TRAJECTORY_FIXED_DT, (vel[1] + gravity[1]) * TRAJECTORY_FIXED_DT, (vel[2] + gravity[2]) * TRAJECTORY_FIXED_DT];
+    const len = Math.hypot(step[0], step[1], step[2]) || 1;
+    const d = collider?.raycast?.(pos, [step[0] / len, step[1] / len, step[2] / len], len);
+    if (Number.isFinite(d)) { points.push([pos[0] + step[0] / len * d, pos[1] + step[1] / len * d, pos[2] + step[2] / len * d]); break; }
+    pos = [pos[0] + step[0], pos[1] + step[1], pos[2] + step[2]];
+    points.push(pos);
+  }
+  return points;
 }
 
 /** Quaternion.AngleAxis(deg, axis) * v: Rodrigues' rotation. */

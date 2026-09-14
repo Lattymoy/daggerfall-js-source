@@ -171,7 +171,8 @@ A dropped light is a billboard of TEXTURE.112358 (record 0 a torch,
 four frames with `_Emission` twins; 1 a candle, five; 2 a holy candle,
 five; +10 doused, one frame, no emission), mirrored on a coin, a point
 light for the lit ones (`1 + the item's range x (time left / the item's
-full burn) x PlayerTorchLightScale`, half a unit up), a 3D burning loop
+full burn)`, hung over the billboard's HEAD - half the texture's own
+height, then half a unit; AUDIT 66 F1, F10), a 3D burning loop
 for a torch (clip 420, linear to 5), a TIME in seconds (`condition x
 20`) dead at 0. Under a dungeon's water (`its top 1.25 above the point
 below the block's water plane`) it lands doused. Activation: Grab or
@@ -189,13 +190,20 @@ twelve (DFU's TimeScale is 12 world seconds a real second), so the port
 burns every dropped light by the world-minute delta each tick (`x 60 /
 12`) - which ages them through a rest, a loiter or a wait exactly as the
 rest hook does, and through nothing the mod does not (a fast travel is
-a transition, and the pool is destroyed on it).
+a transition, and the pool is destroyed on it). **AUDIT 66 F2:** and
+through no JUMP either - `Time.deltaTime` is not inflated by a load but
+a world clock is, so the pool re-latches its clock wherever time can
+pass without the player living through it (a `restore`, a `destroyAll`,
+and the first light into an empty pool). Before that, an in-session load
+of a save three days ahead destroyed every torch it had just restored.
 
 The projectile (`Initialize` 0x4688, `FixedUpdate` 0x47a4): from the
 free hand's side (0.35 off the camera's right, signed by the hand), the
 look tilted up by `ThrowAngleOffset` about the right and scattered by
 `Random.Range(-1, 1) x ThrowDispersion` about the right and the up,
-speed `25 x STR / 100 x ThrowStrength x wind-up`; Unity's 0.02 s step
+speed `25 x STR / 100 x ThrowStrength x wind-up`; its quad CENTRED on
+the flight point where the dropped light's is raised (the mod gives this
+one no half-height raise, 0x3a9b - AUDIT 66 F3); Unity's 0.02 s step
 (accumulated), the gravity vector growing by `9.81 x 0.05 x
 GravityStrength` a step, the sprite's width swung by `sin(20t)` (the
 spin), a cast along the step: a foe first (see below), a wall at under a
@@ -264,6 +272,19 @@ the fire takes on every hit that lands. Kept.
   effect declares no chance (above).
 - **The `ThrowLightSourceAction` lit arm** is unreachable from the key
   (above) - kept as the mod has it, not "fixed".
+- **The throw's ARC** (`DrawTrajectory`, 0x1bec). The mod feeds its 300
+  integration steps to a `LineRenderer`; this renderer has no
+  world-space line - `drawMeshWire` wants a mesh's own edge buffer, and
+  the only other `gl.LINES` is the 2D world map's - so there is nothing
+  to draw it with. The law is kept whole and pinned as the exported
+  `throwArcPoints` (the arc must match the flight the pool integrates),
+  it is NOT run per frame, and `Throwing.ShowTrajectory` says on the
+  pane that it is DFU-only (AUDIT 66 F9).
+- **`PlayerTorchLightScale` on a dropped light's range** (0x1bb3): this
+  port holds that setting inert for a radius by its own decision
+  (`playerTorch.js` - "mapping a brightness slider onto a radius would
+  be a worse lie"), and the dropped lights follow the same law. One
+  decision, one place (AUDIT 66 F10).
 
 ## The textures, and the doctrine
 
@@ -325,6 +346,16 @@ frame - "Takes effect at once."
   `droppedTorch` arm, `collectWorld` / `applyWorld` with the save data
   and `sharedWorld` dropping it (nothing of the player's own), exported
   for `scenes/dungeon.js`'s lights, draw pass and loot ladder.
+- **Lifetimes (AUDIT 66 F4-F8, F11, F12).** The component is the rig's
+  and ends with it: `weaponRig.dispose()` frees the burning loop and
+  hands PlayerTorch its offset back, and the switch falling to off is a
+  teardown too (update runs only while it is on). Each pool ends with
+  its host - the interior's on the transition ABOVE its own scene
+  restore, on the way out, and on the quest-teleport / load exit; the
+  dungeon's in `dungeonContext.destroy()` beside the foes' batches and
+  the wall torches' loops; the exteriors' at the mode branch above the
+  modal return, because a transition is an event, not a chore at the
+  foot of a frame the indoor modes never reach.
 - `systems/playerTorch.js`: `setPlayerTorchOffsetOverride`;
   `systems/lycanthropy.js`: `isTransformedLycanthrope`;
   `systems/features.js`: the Mod Authored row; `ui/credits.js`: the

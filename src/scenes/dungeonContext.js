@@ -2352,7 +2352,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:898 against :929; worldModes.js:5906 against :5915).
+    // (dungeon.js:898 against :929; worldModes.js:5915 against :5915).
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -2842,8 +2842,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:8674,
-              // exterior.js:4240 and worldModes.js:6033 already ran;
+              // playerArrowHitFoe is the one copy world.js:8695,
+              // exterior.js:4257 and worldModes.js:6042 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -6101,6 +6101,18 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       for (const c of corpses) if (c) renderer.destroyBillboardBatch(c);
       for (const m of missiles) if (m.batch) renderer.destroyBillboardBatch(m.batch);
       for (const t of torches) { t.handle?.stop(); t.handle = null; }   // A2: free looping sources
+      // AUDIT 66 F5 / EVERY ALLOCATION HAS AN OWNER: the DROPPED
+      // torches own one billboard batch and one 3D burning loop each
+      // (HT1), and this teardown - which frees the foes', the corpses'
+      // and the missiles' batches two lines up, and the static wall
+      // torches' loops one line up - walked straight past them. Every
+      // dungeon exit leaked a batch and a loop per torch on the floor,
+      // and the loop kept burning in the player's ear above ground.
+      // The rig's own component goes with it: it holds the burning
+      // loop of the torch in the player's HAND and PlayerTorch's
+      // position override (AUDIT 66 F8).
+      droppedTorches.destroyAll();
+      weaponRig.dispose?.();
       // AUDIT 64 F41: the scene ambience leaves with the scene too -
       // it holds the dungeon loop handles AND a row in the module's
       // live-instance registry (the port's stand-in for DFU's static
