@@ -106,7 +106,7 @@ test('F041: the hostility flip is gated the same way, in both foe pools', () => 
   assert.match(xf, /if \(fromPlayer && f\.ai\) \{\n\s*handleAttackFromPlayer\(f, playerFeet, peer, peerId\);/,   // WORLD6b: and whose blow it was
     'the damage door calls it inside the same gate');
   const xfGate = xf.slice(xf.indexOf('function handleAttackFromPlayer(f, playerFeet = null, peer = false, peerId = null) {'));   // WORLD6b: the peer arm
-  assert.match(xfGate.slice(0, 1200), /f\.ai\.makeEnemyHostileToAttacker\?\.\(\(peer && peerCandidate\(peerId\)\) \|\| PLAYER_TARGET/, 'through the whole C# method (WORLD6b-ii: a peer\'s blow names the peer, the dungeon\'s spelling)');   // WORLD6b: the peer arm's note widened the window (a proximity bound, not a law)
+  assert.match(xfGate.slice(0, 1600), /const _striker = peer \? peerCandidate\(peerId\) : PLAYER_TARGET;\s*if \(_striker\) f\.ai\.makeEnemyHostileToAttacker\?\.\(_striker, playerFeet \?\? null\);/, 'through the whole C# method (WORLD6b-ii: a peer\'s blow names the peer; AUDIT WORLD6b-ii A3: never me)');   // WORLD6b: the peer arm's note widened the window (a proximity bound, not a law)
   assert.ok(xfGate.indexOf('makeAreaHostile?.()') < xfGate.indexOf('makeEnemyHostileToAttacker'),
     'and the area walk reads isHostile BEFORE the per-foe law flips it');
   assert.ok(!/f\.ai\.makeEnemyHostileToAttacker\?\.\(PLAYER_TARGET[\s\S]{0,400}\n  \}/.test(xf.slice(xf.indexOf('function damageFoe')).split('if (fromPlayer')[0]),

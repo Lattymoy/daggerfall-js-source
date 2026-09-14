@@ -109,7 +109,7 @@ test('WORLD6b-ii: MY foe hunts a peer - the peers ride the target machine as can
 
 test('WORLD6b-ii: a PUPPET\'s blow at ME lands here - its streamed target is me, so the mobile\'s damage frame is mine to resolve with my own reach and stats (Dodging tallied, the hurt door), the hostility the owner\'s word; at another peer or at its owner the frame is dropped; its shaft flies at me (a real one) or at the peer\'s body (one that pays nothing)', async () => {
   const hits = [], hurt = [], shots = [];
-  const peers = { list: [{ id: 'eve-0003', feet: [20, 0, 20], height: 1.8 }] };
+  const peers = { list: [{ id: 'bob-0002', feet: [30, 0, 30], height: 1.8 }, { id: 'eve-0003', feet: [20, 0, 20], height: 1.8 }] };   // AUDIT WORLD6b-ii C2: the owner must be a peer the hunt sees for its puppet's blow to land
   const pe = playerEntity();
   const pool = createExteriorFoes(poolRig({ playerEntity: pe, onPlayerHurt: (d) => hurt.push(d), onArrow: (from, dir, f, aimFoe) => shots.push(aimFoe) }));
   pool.setNet(netFor(hits, peers));
@@ -190,14 +190,14 @@ test('WORLD6b-ii: by source - the world host hands the pool my id and the peers 
   assert.match(w, /const peersNear = \(\) => \{\s*if \(!online \|\| !online\.room \|\| online\.status !== 'open'\) return null;/);
   assert.match(w, /exteriorFoes\.setNet\(\{\s*room: \(\) => online\?\.room \?\? null,\s*selfId: \(\) => online\?\.id \?\? null,/);
   const x = rd('src/scenes/exteriorFoes.js');
-  assert.match(x, /runTargetMachine\(f, f\.puppet \? senses\.candidates\(\) : \[\.\.\.senses\.candidates\(\), \.\.\.peerCandidates\(\)\], pf, cdt, \{/, 'the peers are MY foes\' candidates');
+  assert.match(x, /runTargetMachine\(f, \[\.\.\.senses\.candidates\(\), PLAYER_TARGET, \.\.\.peerCandidates\(\)\], pf, cdt, \{/, 'the peers are MY foes\' candidates (AUDIT WORLD6b-ii A5: after me)');
   assert.match(x, /return isLocalPlayerTarget\(t\) \? playerFeet : \(isPeerTarget\(t\) \? t\.feet : t\.ai\.feet\);/, 'the attack aims at a peer\'s own feet');
   assert.match(x, /if \(isLocalPlayerTarget\(f\.ai\.target\) && f\.ai\.inSight && f\.ai\.detected\) setEnemyAlert\(playerEntity, true, currentMinute\(\)\);/, 'the alert is mine alone');
   assert.match(x, /if \(isLocalPlayerTarget\(f\.ai\?\.target\) && f\.ai\?\.detected\) setEnemyAlert\(playerEntity, false\);/);
-  assert.match(x, /f\.ai\.isHostile && !isPeerTarget\(f\.ai\.target\)\) \{/, 'no cast at a peer (6b-iii)');
+  assert.match(x, /f\.caster\.update\(dt, f\.ai, f\.attack, _tgt, _castTargetEntity, \{ suppress: isPeerTarget\(f\.ai\.target\) \}\)/, 'no cast at a peer (6b-iii) - the tick suppressed, not skipped (AUDIT WORLD6b-ii A1)');
   assert.match(x, /const _at = f\.ai\.target \?\? PLAYER_TARGET, _atPlayer = isLocalPlayerTarget\(_at\);/, 'my foe\'s shaft at a peer pays nothing here');
   assert.match(x, /if \(isPeerTarget\(f\.ai\.target\)\) \{\s*const pv = enemyAttackVoice\(f\);/, 'the swing\'s voice alone at a peer');
-  assert.match(x, /if \(f\._pupMine && !_pupParalyzed && f\.mobile\.doMeleeDamage\) \{ f\.mobile\.doMeleeDamage = false; resolveFoeMeleeVsPlayer\(f, playerFeet\); \}/, 'the puppet\'s blow at me through the one player arm');
-  assert.match(x, /const _t = f\.ai\.target, g = _t\?\.isPeer \? _t\.id : \(_t == null \? \(f\.ai\._armedTargeting \? '' : '\.'\) : \(_t\.isPlayer \? '\.' : ''\)\);/, 'the target on the wire, WORLD3\'s spelling');
+  assert.match(x, /if \(f\._pupMine && !_pupParalyzed && f\.mobile\.doMeleeDamage\) \{[^\n]*\n\s*f\.mobile\.doMeleeDamage = false;[\s\S]{0,600}if \(budget\.pass && !f\._pup\?\.leap\) resolveFoeMeleeVsPlayer\(f, playerFeet\);/, 'the puppet\'s blow at me through the one player arm, bounded (AUDIT WORLD6b-ii B1)');
+  assert.match(x, /const _t = f\.ai\.target, g = _t\?\.isPeer \? _t\.id : \(_t == null \? '' : \(_t\.isPlayer \? '\.' : ''\)\);/, 'the target on the wire, WORLD3\'s spelling (AUDIT WORLD6b-ii A8: none is none)');
   assert.match(rd('bible/06-Systems/Online-Arc.md'), /### 6b-ii: the foe hunts every player in the cell/, 'the record');
 });

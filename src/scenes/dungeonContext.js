@@ -1411,7 +1411,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:6560 / exterior.js:2920), set
+  // host's own townTalk sink (world.js:6553 / exterior.js:2920), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -2836,7 +2836,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:8600,
+              // playerArrowHitFoe is the one copy world.js:8599,
               // exterior.js:4203 and worldModes.js:6017 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
@@ -3058,10 +3058,6 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         p.cast = null;
       }
     } else { f.ai.moving = false; f.ai.hurtKnock = false; }
-    if (f.mobile) {   // a puppet lands no blow of its own (WORLD2) - unless the blow is at ME, and a shaft at anyone flies (WORLD3, the arm consumes those)
-      if (!f._pupMine) f.mobile.doMeleeDamage = false;   // WORLD2 dropped unconsumed, WORLD3: unless mine
-      if (f._pupTarget == null) f.mobile.shootArrow = false;   // WORLD2 dropped unconsumed, WORLD3: unless at anyone
-    }
     return edge;
   }
 
@@ -3546,7 +3542,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // InstantiatePrefab's a fresh GameObject per saved record, so
     // EnemyEntity's `PickpocketByPlayerAttempted` default is the loaded
     // truth for every enemy. The re-minting pools match that by
-    // construction (exteriorFoes.js:1241's restoreWorld goes through
+    // construction (exteriorFoes.js:1277's restoreWorld goes through
     // spawnFoe), but this host patches the LIVE foes in place, so a
     // same-dungeon reload kept a raised latch and a failed pickpocket
     // could never be retried - falsifying the law
@@ -4350,6 +4346,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (_puppet) {
         _strikeEdge = puppetStep(f, dt);
         f.ai._senses?.(_pf, null);   // AUDIT WORLD2 B4: observation, not decision - the rest gate and the exhaustion collapse read detected/inSight/_dist off the streamed pose
+        if (f._pupMine && f.ai.inSight && f.ai.detected && !f.dead) setEnemyAlert(playerEntity, true, classicMinutesRef.value);   // AUDIT WORLD6b-ii B6: the host's foe beating on me is an enemy alert of mine
         f.sounds ??= new EnemySoundSource(f.mobileType);
         tickEnemySound(f.sounds, f.ai.feet, playerFeet || eye, dt, { audio, collider, hearing: acuteHearingMultiplier(playerEntity) });   // the barks are the foe's, not the frame's
         if (_strikeEdge) playEnemyClip(audio, f.sounds.attack(), f.ai.feet, acuteHearingMultiplier(playerEntity));   // the streamed swing's own sound
@@ -4565,7 +4562,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           // it raises. Its one input is `enemySenses.Target ==
           // PlayerEntityBehaviour`, spelled here exactly as the alert
           // arm below spells it (an unarmed host targets the player).
-          f.seducer?.update(dt, !foeDeps || !f.ai._armedTargeting || foeDeps.isPlayerTarget(f.ai.target));
+          f.seducer?.update(dt, !foeDeps || !f.ai._armedTargeting || foeDeps.isLocalPlayerTarget(f.ai.target));   // AUDIT WORLD6b-ii A4: DFU's trigger is Target == PlayerEntityBehaviour - ME, not a peer
           // EnemyMotor.CanFly (:837-845) reads `mobile.Enemy.Behaviour`
           // LIVE - "This can change in the case of a transformed
           // Seducer" - where the port's motor captured it at spawn.
@@ -4582,6 +4579,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
             casting: !!f._castPending,   // C14: the cast decision's edge (Spell one-shot)
           }, f.ai.yaw, f.ai.feet, eye);
           f._castPending = false;
+          // a puppet lands no blow of its own (WORLD2) - unless the blow is at ME, and a shaft at anyone flies (WORLD3, the arm consumes
+          // those). AUDIT WORLD6b-ii B10: dropped AFTER the mobile set them this frame, not in puppetStep before it - a frame latched
+          // while the target was another survived to the next frame, and fired at me if the streamed target flipped in between
+          if (_puppet && f.mobile) {
+            if (!f._pupMine) f.mobile.doMeleeDamage = false;   // WORLD2 dropped unconsumed, WORLD3: unless mine
+            if (f._pupTarget == null) f.mobile.shootArrow = false;   // WORLD2 dropped unconsumed, WORLD3: unless at anyone
+          }
           // C17: the ranged -1 (shootArrow) looses the arrow at the
           // player - the machine's hit event no longer fires it for
           // sprite archers.

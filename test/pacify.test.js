@@ -180,8 +180,8 @@ test('X8: the pacify reaches the AI, and attacking restores hostility', () => {
   assert.match(xfs, /if \(fromPlayer && f\.ai\) \{\n\s*handleAttackFromPlayer\(f, playerFeet, peer, peerId\);/,   // WORLD6b: and whose blow it was
     'the damage door runs it inside the player-source gate');
   assert.match(xfs.slice(xfs.indexOf('function handleAttackFromPlayer(f, playerFeet = null, peer = false, peerId = null) {'),
-    xfs.indexOf('function handleAttackFromPlayer(f, playerFeet = null, peer = false, peerId = null) {') + 1200),   // WORLD6b-ii: the peer arm's note widened the window
-    /f\.ai\.makeEnemyHostileToAttacker\?\.\(\(peer && peerCandidate\(peerId\)\) \|\| PLAYER_TARGET/, 'through the whole C# method (WORLD6b-ii: a peer\'s blow names the peer)');
+    xfs.indexOf('function handleAttackFromPlayer(f, playerFeet = null, peer = false, peerId = null) {') + 1800),   // WORLD6b-ii / AUDIT WORLD6b-ii A3: the peer arm's notes widened the window (a proximity bound, not a law)
+    /const _striker = peer \? peerCandidate\(peerId\) : PLAYER_TARGET;\s*if \(_striker\) f\.ai\.makeEnemyHostileToAttacker\?\.\(_striker, playerFeet \?\? null\);/, 'through the whole C# method (WORLD6b-ii: a peer\'s blow names the peer; AUDIT WORLD6b-ii A3: never me)');
   assert.match(xfs, /resetAllyTeamOnPlayerAttack\(f\.ai, f\.entity, f\.mobileType\)/,
     'and reverts a struck former ally to its species');
   // the motor's own field names the mechanic it was waiting for.

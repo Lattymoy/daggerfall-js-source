@@ -2894,6 +2894,147 @@ WORLD3 put the arrow's shaft on the dungeon's); the roster's
 `ROSTER_MAX` bound leaves a 65th player's foes unseen; the peer's blow
 carries no feet (the owner's foe turns on the owner).
 
+## AUDIT WORLD6b-ii (2026-09-14)
+
+**Mac: "Lead the way."** The last two audits each found criticals in
+freshly shipped code, and 6b-ii touched the target machine and the
+combat resolution, so the audit came before 6b-iii. Three opus lenses
+- A the owner's side of the hunt, B the puppet's side and the hit-in,
+C the wiring, the merge with the Features arc and the record. Every
+finding verified against the code; paid at the root; pinned by
+execution in `test/auditworld6bii.test.js`. No relay change.
+
+### The criticals
+
+- **B1/C1 (critical, paid): a puppet's blow at me was unbounded on an
+  untrusted client's word.** WORLD3's law was carried across a
+  boundary it was not written for: the dungeon has ONE streamer, the
+  relay-elected host; a cell has every peer. A hostile client streams
+  eight Daedra at my feet, facing me, naming me, striking every frame
+  (`t` any species, `f` inside the pose's bounds, `g` my id, `a` a
+  count): measured eleven blows a second, the full monster formula,
+  the riders, the flash - dead in under a second, no cheat beyond a
+  crafted frame. Bounded now, at the reader: per puppet the mobile's
+  own attack state already bounds a streamed strike to one blow per
+  attack animation (a strike edge mid-swing is ignored - verified);
+  per OWNER the blows are budgeted (`PUPPET_BLOWS_PER_S`, a token
+  bucket on the owner's record: the honest maximum of a full pool of
+  foes at their fastest cadence); and a puppet that LEAPT - moved
+  farther since its last record than three times its species' own
+  speed could carry it, plus a slack - lands nothing until its next
+  record walks it: an honest foe cannot teleport to me, and a dropped
+  frame's catch-up is inside the law. Recorded, not paid: the eight
+  puppets that stand still at my feet from their first record (the
+  cell's substitute for the host seat is a bound, not a seat).
+- **A1 (critical, paid): a caster that switched to a peer froze for
+  ever.** The cast gate skipped the caster's whole update while the
+  target was a peer; `selectedSpell` latched, the motor's stand-off
+  band read it live (`canCastRangedSpell`) and the foe stood rooted
+  inside its band - never closing, never swinging, never re-picking -
+  for as long as the peer was nearer. Reproduced headlessly (200
+  steps: rooted at 10 units vs closed to 2.17). The decision is state,
+  not an action: the tick runs always, SUPPRESSED at a peer inside the
+  caster (the pick clears on its own cadence, the timers keep
+  counting), so the motor closes to melee. The cast at a peer stays
+  6b-iii's.
+
+### A - the owner's side
+
+- **A2 (major, paid):** the distance cull read `detected` unnarrowed -
+  since the hunt it is of ITS target, so a foe that walked off with a
+  peer across the cell was never culled, and eight of them held the
+  pool full (no encounter near me) for the session. The cull reads MY
+  relevance (`targetIsLocalPlayer`, AUDIT WORLD3 C3's own latch).
+- **A3/B5 (major, paid):** a peer's blow with no candidate for the
+  striker (a pose hiccup, out of range, past the roster) fell through
+  to `PLAYER_TARGET` - my pacified foe woke on ME, seeded at a
+  stranger's feet. A peer's blow never names me: with no candidate the
+  foe is woken (the give-up timer) with no target and no feet, and the
+  next machine pass picks. The dungeon's identical fallback is
+  recorded for its own audit.
+- **A4/C4 (minor, paid):** the Seducer's transform read a peer as me
+  (DFU's trigger is Target == PlayerEntityBehaviour) - both pools.
+- **A5 (note, paid):** peers walked AHEAD of the player in the target
+  list and won priority ties against me; the caller now names the
+  player's slot (`PLAYER_TARGET` in the list) and the peers walk after.
+- **A6/B8 (note, paid):** a puppet's senses latched
+  `targetIsLocalPlayer = true` and ran for every puppet - a peer's foe
+  hunting another peer refused my rest as an enemy that had detected
+  me, and raycast forever; the latch tells the stream's truth
+  (`_pupMine`) and the senses run for a puppet at me alone.
+- **A7 (note, paid):** the melee block's two `continue`s were dead and
+  a trap; an if/else now.
+- **A8 (note, paid):** a foe with no target streamed `'.'` (hunting its
+  owner) and latched the puppet hostile; none is `''`.
+- **A9 (note, paid):** the cast target entity read MY effects for a peer
+  target; a peer's is not mine to read.
+
+### B - the puppet's side
+
+- **B2/B3 (major, paid): a class puppet punched me at MY level with no
+  weapon.** A puppet's entity was built at my level with no kit (B14's
+  own law), so `calculateAttackDamage` took the weaponless fork and my
+  level: a Knight's blow was 4.3 at my level 3 and 15.6 at my level 20,
+  decided by whose client resolved it; a peer's archer's shaft the
+  same. The ATTACKER's terms ride the record - `l` the foe's level, `w`
+  its right-hand weapon as [template, material] or null - in the
+  wire's law; the puppet is built at the owner's level (a mismatch
+  rebuilds, as a species does) and wears the owner's weapon, rebuilt
+  from the descriptor with no dice. "My own stats" means the target's.
+- **B4 (major, paid):** a player arrow into a puppet ran
+  `handleAttackFromPlayer` with `peer` false - my whole area woke for a
+  blow on a peer's foe, and a zero-damage shaft never reached the
+  owner. One door (`attackFromPlayer`): a puppet's owner hears the zero
+  blow unless a damaging one went this frame; no area of mine wakes.
+- **B6 (medium, paid):** a puppet beating on me raised no enemy alert
+  (the rest, the trip, the roll) - both pools raise it, and the
+  exterior clears it when the puppet ends.
+- **B7 (minor, paid):** a puppet's shaft rang `ArrowShoot` twice.
+- **B9 (note, paid):** the hostility flip's comment described the
+  dungeon's castle guard; it is a guard here.
+- **B10 (note, paid, the dungeon's):** the dungeon dropped a puppet's
+  latches in `puppetStep`, BEFORE the mobile set them - a frame latched
+  while the target was another survived to the next frame and fired at
+  me if the target flipped; dropped after the mobile now, the
+  exterior's order.
+- **B11 (note, recorded):** a peer's blow at me draws my dice
+  (`calculateAttackDamage` on the shared stream); the number of draws
+  is set by peers' cadence.
+
+### C - the wiring, the merge, the record
+
+- **C2 (major, paid): the hunt was gated on the POSE stream, the blow
+  on the FOES stream.** A peer gone quiet past `PEER_TIMEOUT_MS` was
+  undrawn and dead to my foes' machine, and its puppets kept resolving
+  blows on me - an attacker off screen that could not be hunted back.
+  One liveness: a puppet's blow needs its owner among the peers the
+  hunt sees (visible), and the prune reads the same list.
+- **C3 (major, paid):** the pane still promised a cooperative hunt
+  ("can help fight" - C9's own words, written when a puppet landed no
+  blow); it says a peer's creatures can hurt you too. The pin's title
+  claimed a pane assertion its body did not make; the audit's pin
+  reads the pane.
+- **C5 (minor, paid):** a peer's aim height flickered with the body
+  slot (the doll answers 0 while not standing); the last standing
+  height is the peer's.
+- **The merge (sound):** every hunk between the slice's commit and the
+  PR merge is the Features arc's own; nothing of 6b-i, 6b-ii or AUDIT
+  WORLD6b was reverted; `buildTag.js` is generated at prebuild and
+  pinned only against its own read.
+- **Notes (recorded):** `canSeeTarget` raycasts per peer per foe per
+  classic tick (memo it beside `_peerFrame`, next); the watch reads
+  `isPlayerTarget` throughout and would misfire the day peers enter
+  its list (6b-iii's guards).
+
+Pinned in `test/auditworld6bii.test.js` (9), EXECUTED: the caster's
+suppressed tick and its wiring; the cull of a foe that walked off
+with a peer; a peer's blow with no candidate naming nobody; a fresh
+foe's empty target; the owner's blow budget and the leap; the
+attacker's level and weapon on the record and on the puppet; the one
+attack door for a puppet and a foe of mine; the alert from a puppet
+at me, the senses for a puppet at me alone, the owner's liveness; the
+hosts by source.
+
 ## What it does not do (yet)
 
 - **The Morrowind body** ships (MWBODY1, above); a client without the
