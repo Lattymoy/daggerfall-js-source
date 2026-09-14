@@ -165,19 +165,9 @@ export class EnemyCaster {
    *   activeEffects)
    * @returns { spell, touch } once per decision, or null
    */
-  update(dt, ai, attack, playerFeet, playerEntity, { suppress = false } = {}) {
+  update(dt, ai, attack, playerFeet, playerEntity) {
     const ent = this.entity;
     if (!ent.spells?.length) return null;
-    // AUDIT WORLD6b-ii A1: a SUPPRESSED tick - the decision is state, not an action: the exterior pool gated the whole
-    // update off while a foe's target was a peer, which latched `selectedSpell` and the motor's stand-off band read it
-    // live (canCastRangedSpell) - the caster stood rooted for ever, never closing, never swinging. Suppressed, the
-    // pick is cleared on the same cadence the decision runs, the timers keep counting, and the motor closes to melee.
-    if (suppress) {
-      this._classicTimer += dt;
-      while (this._classicTimer >= CLASSIC_UPDATE_INTERVAL) this._classicTimer -= CLASSIC_UPDATE_INTERVAL;
-      this.selectedSpell = null;
-      return null;
-    }
     const dist = ai._dist;
     const idle = attack.machine.state === 'Idle';
     // AUDIT 26 F010: both cast branches live inside TakeAction, behind
@@ -290,6 +280,7 @@ export function castEnemySpell(f, spell, {
   playCastSound = null, explodeAt = null, fireMissile = null,
   hitEffects = null,   // AUDIT 24 (wave 44): ShowMagicSparkles
   rolls = Math.random,
+  aimAt = null,   // WORLD6b-iii: the missile's aim point when the target is not the local player (a peer's transform) - null aims at the player, as ever
 } = {}) {
   if (!noSpellPointCost && silenceBlocksCast(f.entity)) return false;
   if (!noSpellPointCost) {
@@ -339,6 +330,6 @@ export function castEnemySpell(f, spell, {
       { entity: f.entity, sinks: foeSinks(f) }, { excludeFoe: f, playerHeight });
     return true;
   }
-  fireMissile?.(from, spell, f.entity.level, f);
+  fireMissile?.(from, spell, f.entity.level, f, aimAt);
   return true;
 }

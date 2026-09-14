@@ -2273,9 +2273,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     spellsByIndex: () => spellsByIndex,
     magicHooks: {
       explodeAt: (...a) => magic.explodeAt(...a),
-      fireMissile: (from, spell, casterLevel, foe) => {
+      fireMissile: (from, spell, casterLevel, foe, aimAt = null) => {   // WORLD6b-iii: aimed at a peer's transform when the caster hunts a peer
         if (!(walkMode && playerSpawned)) return;
-        const d = [player.pos[0] - from[0], player.pos[1] + player.height / 2 - from[1], player.pos[2] - from[2]];   // AUDIT 62 F21 (review): the player's TRANSFORM at its LIVE height (DaggerfallMissile.cs:571-581 -> EnemySenses.cs:453; PlayerHeightChanger.cs:477-478), not the standing half-capsule
+        const at = aimAt ?? [player.pos[0], player.pos[1] + player.height / 2, player.pos[2]];
+        const d = [at[0] - from[0], at[1] - from[1], at[2] - from[2]];   // AUDIT 62 F21 (review): the player's TRANSFORM at its LIVE height (DaggerfallMissile.cs:571-581 -> EnemySenses.cs:453; PlayerHeightChanger.cs:477-478), not the standing half-capsule
         const l = Math.hypot(...d) || 1;
         magic.fireEnemyMissile(from, [d[0] / l, d[1] / l, d[2] / l], spell, casterLevel, foe);
       },
@@ -2730,7 +2731,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // through the one that owns the billboard - `exteriorFoePool` is
     // the watch AND the encounter foes, and this arm reached the
     // encounter pool's remover for both. That was not a leak: removeFoe
-    // (exteriorFoes.js:352-357) never looks the record up in `foes`, and
+    // (exteriorFoes.js:353-358) never looks the record up in `foes`, and
     // both pools share this host's one renderer, so a struck WATCHMAN
     // got exactly what removeGuard (cityGuards.js:1215-1219) gives it -
     // batch freed, `dead = true`, no corpse, skipped by the next AI pass

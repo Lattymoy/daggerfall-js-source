@@ -2674,10 +2674,43 @@ at another dropped, the shaft at me, at a peer's body and at nobody);
 the hit's feet and direction in (the striker's candidate, the seeded
 feet, the shove, the bounds, the spell) and out; the hosts by source.
 
+### 6b-iii(a): the cast at a peer
+
+**Mac: "Continue"** (after AUDIT WORLD6b-ii). WORLD3's cast law for the
+dungeon host's foes, per owner, with the audit's bounds.
+
+- **The owner's foe casts at the peer it hunts.** The decision runs as
+  at me (AUDIT WORLD6b-ii A1's law: never gated off, or the pick
+  latches and the stand-off band roots the foe - the audit's
+  suppression arm is RETIRED, superseded; the tick was the pay-out),
+  reading no effects of mine (`PEER_CAST_TARGET`: a peer's effects are
+  none to the pick); the missile leaves toward the peer's transform
+  (the executor takes `aimAt`, the world host's hook aims where it is
+  told and at me otherwise); an area cast blasts the foes around the
+  caster and puts nothing of mine in its sphere (I am not its target).
+  The cast rides the record - `c` the count, `s` the spell (WORLD3's
+  spelling) - in the wire's law.
+- **The puppet at me casts the spell itself**: a count up by one is
+  one cast (a joiner latches the count it arrives with and replays
+  nothing); the missile flies at me, the blast is measured against my
+  capsule, a self-cast lands on the puppet's own entity; UNDER the
+  owner's blow budget and the leap gate (AUDIT WORLD6b-ii B1/C1: a
+  cast is a blow - the same bucket); at another peer or at nobody its
+  Spell one-shot alone.
+- The dungeon's own cast at a peer (`castEnemySpell` there) still
+  aims its missile at the host and hands the peer's feet to the blast
+  - recorded for the dungeon's next audit.
+
+Pinned in `test/world6biii.test.js` (4), EXECUTED: the wire's c/s law;
+the owner's cast at a peer (the decision run against the stand-in,
+the missile's aim point, the blast with nothing of mine, the count and
+the spell on the record, at me the hook's own aim and my feet); the
+puppet's cast at me (the joiner's latch, once per count, the missile
+and the blast, the one-shot at another and at nobody, the budget, the
+leap); the hosts by source.
+
 ### 6b-iii (recorded, next)
 
-- **The cast at a peer**: the owner's foe casting at a peer, the
-  puppet casting it at the peer (the dungeon's `c`/`s`).
 - **The guards** (`cityGuards.js`): the watch is a crime's - the
   player's own; not until the crime is shared.
 - **A puppet's corpse loot**: its owner's roll; the take would be the

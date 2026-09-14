@@ -194,10 +194,10 @@ test('WORLD6b-ii: by source - the world host hands the pool my id and the peers 
   assert.match(x, /return isLocalPlayerTarget\(t\) \? playerFeet : \(isPeerTarget\(t\) \? t\.feet : t\.ai\.feet\);/, 'the attack aims at a peer\'s own feet');
   assert.match(x, /if \(isLocalPlayerTarget\(f\.ai\.target\) && f\.ai\.inSight && f\.ai\.detected\) setEnemyAlert\(playerEntity, true, currentMinute\(\)\);/, 'the alert is mine alone');
   assert.match(x, /if \(isLocalPlayerTarget\(f\.ai\?\.target\) && f\.ai\?\.detected\) setEnemyAlert\(playerEntity, false\);/);
-  assert.match(x, /f\.caster\.update\(dt, f\.ai, f\.attack, _tgt, _castTargetEntity, \{ suppress: isPeerTarget\(f\.ai\.target\) \}\)/, 'no cast at a peer (6b-iii) - the tick suppressed, not skipped (AUDIT WORLD6b-ii A1)');
+  assert.match(x, /const dec = f\.caster\.update\(dt, f\.ai, f\.attack, _tgt, _castTargetEntity\);\s*if \(dec\) \{\s*f\._castN = \(\(f\._castN \| 0\) \+ 1\) & 0xffff; f\._castIdx = dec\.spell\.index \| 0;\s*castSpellFrom\(f, dec\.spell, _tgt, false, \{ atPeer: isPeerTarget\(f\.ai\.target\) \? f\.ai\.target : null \}\);/, 'the cast at a peer (WORLD6b-iii): the tick runs as at me, the cast rides the stream');
   assert.match(x, /const _at = f\.ai\.target \?\? PLAYER_TARGET, _atPlayer = isLocalPlayerTarget\(_at\);/, 'my foe\'s shaft at a peer pays nothing here');
   assert.match(x, /if \(isPeerTarget\(f\.ai\.target\)\) \{\s*const pv = enemyAttackVoice\(f\);/, 'the swing\'s voice alone at a peer');
-  assert.match(x, /if \(f\._pupMine && !_pupParalyzed && f\.mobile\.doMeleeDamage\) \{[^\n]*\n\s*f\.mobile\.doMeleeDamage = false;[\s\S]{0,600}if \(budget\.pass && !f\._pup\?\.leap\) resolveFoeMeleeVsPlayer\(f, playerFeet\);/, 'the puppet\'s blow at me through the one player arm, bounded (AUDIT WORLD6b-ii B1)');
+  assert.match(x, /if \(f\._pupMine && !_pupParalyzed && f\.mobile\.doMeleeDamage\) \{[^\n]*\n\s*f\.mobile\.doMeleeDamage = false;[\s\S]{0,400}if \(blowAllowed\(f\)\) resolveFoeMeleeVsPlayer\(f, playerFeet\);/, 'the puppet\'s blow at me through the one player arm, bounded (AUDIT WORLD6b-ii B1; WORLD6b-iii: one budget for the blow and the cast)');
   assert.match(x, /const _t = f\.ai\.target, g = _t\?\.isPeer \? _t\.id : \(_t == null \? '' : \(_t\.isPlayer \? '\.' : ''\)\);/, 'the target on the wire, WORLD3\'s spelling (AUDIT WORLD6b-ii A8: none is none)');
   assert.match(rd('bible/06-Systems/Online-Arc.md'), /### 6b-ii: the foe hunts every player in the cell/, 'the record');
 });

@@ -263,7 +263,7 @@ test('AUDIT 62 F21 (review): ONE aim-point law, and the player arm of it is the 
     /const aim = foeDeps\.targetAimPoint\(_at, _pf, playerHeight\);/,
     "the dungeon archer aims at its target's transform - the player at its live height");
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/worldModes.js']) {
-    assert.match(src(f), /player\.pos\[1\] \+ player\.height \/ 2 - from\[1\]/, `${f}: the fireMissile hook too`);
+    assert.match(src(f), f === 'src/scenes/world.js' ? /const at = aimAt \?\? \[player\.pos\[0\], player\.pos\[1\] \+ player\.height \/ 2, player\.pos\[2\]\];/ : /player\.pos\[1\] \+ player\.height \/ 2 - from\[1\]/, `${f}: the fireMissile hook too`);   // WORLD6b-iii: the online host's hook aims where it is told, and at the live transform otherwise
     assert.doesNotMatch(src(f), /player\.pos\[1\] \+ 0\.9 - from\[1\]/, `${f}: and not the standing constant`);
   }
   assert.match(src('src/scenes/hostMagic.js'), /if \(missileHitsCapsule\(m\.pos, playerFeet, playerHeight, PLAYER_BODY_RADIUS\)\) \{/,
