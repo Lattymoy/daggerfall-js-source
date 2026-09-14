@@ -69,7 +69,7 @@
 //
 // Not a DFU member: Daggerfall Unity has no multiplayer. Ledger A row.
 import { tabStorage } from '../systems/appStorage.js';   // the tab's own storage - the seam, never the browser's own (a PIN)
-import { WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, sanitizeChat, chatGate, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits } from './wire.js';
+import { WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, sanitizeChat, chatGate, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS } from './wire.js';
 
 export { WORLD_CELL, RANGE_PIXELS, worldRoom };
 
@@ -203,6 +203,8 @@ export class OnlineSession {
     this._abucket = null;         // WORLD3: the actions' own gate at home (ACT_HZ_MAX)
     this._fbucket = null;         // WORLD2: the foes stream's own gate, the relay's law kept at home
     this._hbucket = null;         // AUDIT WORLD2 A6: the hits' own gate at home (HIT_HZ_MAX), so a blow never starves the poses at the relay
+    this._wbucket = null;         // WORLD6b-iii(e): the asks' own gate at home (WHO_HZ_MAX)
+    this._who = new Map();        // WORLD6b-iii(e): id -> when it was asked for (a stranger beyond the welcome's roster, asked once per WHO_RETRY_MS)
     this.host = null;             // WORLD1: the room's host, the relay's word; null until the welcome
     this.onHost = null;           // (id, mine) => void: the host changed
     this.onWorld = null;          // (world) => void: the welcome carried the room's memory, or the host published one after it (AUDIT WORLD34 C1)
@@ -317,6 +319,25 @@ export class OnlineSession {
     if (have) this._refresh(have, p, now); else this.peers.set(id, this._peer(p, now));
   }
   _held(id) { for (const s of this._rooms.values()) if (s.has(id)) return true; return false; }
+  /** WORLD6b-iii(e): a frame from an id I hold in NO room - a member beyond the welcome's roster (ROSTER_MAX bounds the
+   *  welcome, the nearest; a room holds up to SOCKETS_MAX) whose pose, foes or blow reached me through the relay, which
+   *  relays only a hello'd socket's frames. Asked for by name through the socket the frame came on, once per
+   *  WHO_RETRY_MS per id and WHO_HZ_MAX a second in all; the relay answers with its join, and the next frame is a
+   *  peer's. An ask that cannot be sent (no open socket, the gate) is not marked, so the next frame asks. */
+  _askWho(room, id, now) {
+    if (typeof id !== 'string' || id === this.id || this.peers.has(id)) return false;
+    const at = this._who.get(id);
+    if (at != null && now - at < WHO_RETRY_MS) return false;
+    const ws = room === this.room ? (this.status === 'open' ? this._ws : null) : (this._halo.get(room)?.status === 'open' ? this._halo.get(room).ws : null);
+    if (!ws) return false;
+    const gate = whoGate(this._wbucket, now);
+    this._wbucket = gate.bucket;
+    if (!gate.pass) return false;
+    try { ws.send(JSON.stringify({ t: 'who', id })); this.stats.sent++; } catch { return false; }
+    if (this._who.size >= 256) for (const [k, t] of [...this._who]) if (now - t >= WHO_RETRY_MS) this._who.delete(k);   // the asked list is bounded by its own retry
+    this._who.set(id, now);
+    return true;
+  }
   _unmember(room, id) {
     this._rooms.get(room)?.delete(id);
     if (!this._held(id)) this.peers.delete(id);
@@ -568,10 +589,11 @@ export class OnlineSession {
       // WORLD6b: in a cell every peer's frame is its own foes; in a world room the host's alone
       // AUDIT WORLD6b A8/C6: in a cell a frame is a PEER's - one the roster holds; past ROSTER_MAX a stranger's frames stood puppets the prune took back every frame
       if (typeof m.id === 'string' && (isCellRoom(this.room) ? this.peers.has(m.id) : m.id === this.host) && m.id !== this.id && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) this.onFoes?.(m.id, m.data);
+      else if (isCellRoom(this.room)) this._askWho(room, m.id, now);   // WORLD6b-iii(e): a stranger's foes - asked for, its frames a peer's once the join lands
     } else if (m.t === 'hit') {
       // WORLD2: a blow on my foe - mine to apply only while I host
       // WORLD6b: in a cell a blow is mine when it names me (the relay routed it, and the frame says so); in a world room while I host
-      if ((isCellRoom(this.room) ? hitOwnerOf(m.data) === this.id : this.isHost()) && typeof m.id === 'string' && m.id !== this.id && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) this.onHit?.(m.id, m.data);
+      if ((isCellRoom(this.room) ? hitOwnerOf(m.data) === this.id : this.isHost()) && typeof m.id === 'string' && m.id !== this.id && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) { this.onHit?.(m.id, m.data); if (isCellRoom(this.room)) this._askWho(room, m.id, now); }   // WORLD6b-iii(e): a stranger's blow lands (the relay routed it to me) and the striker is asked for, so my foe finds its candidate
     } else if (m.t === 'act') {
       // WORLD3: a door, a lever or a platform moved by another in my world room - never my own back, never outside one
       if (primary && isWorldRoom(this.room) && typeof m.id === 'string' && m.id !== this.id && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) this.onAct?.(m.id, m.data);
@@ -583,6 +605,7 @@ export class OnlineSession {
       const p = this.peers.get(m.id);
       const pose = p ? validPose(m.p) : null;
       if (p && pose) this._arrive(p, pose, now);
+      else if (!p) this._askWho(room, m.id, now);   // WORLD6b-iii(e): a stranger's pose - a member beyond the welcome's roster, asked for
     } else if (m.t === 'chat') {
       // CHAT1: checked by the relay's own law (B7) - the id's shape, the name's, the line's; `mine` is the sender's own line back
       const text = typeof m.text === 'string' ? sanitizeChat(m.text) : '';

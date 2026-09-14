@@ -3098,8 +3098,11 @@ record.
 - ~~**Buildings' foes** and the interior pools: a building streams no
   foes still (AUDIT WORLD6a B8).~~ Closed by 6b-iii(d): none, by the
   lockbook - not an omission.
-- The striker's poison and disease riders on the hit; the roster's
-  `ROSTER_MAX` bound (AUDIT WORLD6b).
+- ~~The striker's poison and disease riders on the hit; the roster's
+  `ROSTER_MAX` bound (AUDIT WORLD6b).~~ Paid by 6b-iii(e): the poison
+  and the shaft ride the hit; a stranger beyond the welcome is asked
+  for (`who`). The disease rider was never a player's (the monster's
+  alone, `onMonsterHit`) - the wording was over-broad.
 
 ### 6b-iii(d): buildings' foes - none, by the lockbook
 
@@ -3144,6 +3147,93 @@ WORLD2, WORLD5, WORLD6a, AUDIT WORLD (A1), WORLD34, WORLD4, WORLD5,
 WORLD6a pins restamped where the law moved; the pool's provenance,
 latch, voice and hostility pins (audit24/26/58, pacify, roadb, nt2)
 restamped for the peer arm.
+
+### 6b-iii(e): the striker's rider and the roster's bound
+
+**Mac: "Continue"** (after WORLD6b-iii(d)). The two residuals AUDIT
+WORLD6b recorded and did not pay, each standing on its own.
+
+**The striker's poison.** FormulaHelper inflicts a poisoned blade's or
+shaft's dose INSIDE the damage calc and clears it from the weapon
+either way (`formulas.js` :682-686, the `onInflictPoison` seam), so at
+a puppet the dose ran on the local shadow's entity - an entity nobody
+reads - and the owner's foe never felt it; the dose was spent for
+nothing. Now:
+
+- **The pool has ONE poison door, `poisonFoe(f, pt)`** (the exterior's
+  and the dungeon's twin): a foe of mine is dosed there, through the
+  pool's own uniform seam (ENGINE-PRNG RULE); a PUPPET's dose is set
+  aside on the foe (`_divertPt`) and spent by the blow's divert, which
+  the same calc's damage reaches next. The melee chain
+  (`resolvePlayerHit`'s hook) and the shaft (the hosts'
+  `playerArrowHitFoe` hook, routed by pool as the damage door is: the
+  watch dosed at the host, a pool foe through its door; the interior
+  host splits by `_encounter`) both go through it.
+- **The hit carries it** - `pt`, a whole number inside
+  ItemEnums.Poisons (`hitPoisonOf`, 128..139; `HIT_POISON_MIN/MAX`
+  pinned equal to poisons.js's own bound so the worker's bundle carries
+  no systems import), on a damaging blow alone (FormulaHelper's
+  `damage > 0`). The owner lands it as FormulaHelper lands it: inside a
+  damaging blow, before the health moves, the foe's OWN saving throw
+  rolled where the foe is real; outside the enum nothing (DFU's
+  `startPoison` registers nothing for it either).
+- **The shaft, too.** The exterior's arrow blow said `kind: 'melee'`
+  (the hosts' `dealDamage` passed no kind) and the puppet's local copy
+  took the Arrow. Now the kind rides and the hit carries `ar: 1`, and
+  the owner's copy lands the Arrow where BowDamage puts it - after the
+  damage, for every shaft that CONNECTED (:145-147 is outside the
+  damage fork; WORLD3's spelling for the dungeon's hit). The body's
+  pile says so (`o`) and the grant carries it back.
+- **The disease rider is the MONSTER's alone.** `onMonsterHit` rides
+  the weaponless monster arm (`!attacker.isPlayer`) and nowhere else;
+  a player's blow carries one rider, the poison. AUDIT WORLD6b's
+  "poison and disease riders" was over-broad - pinned by source, the
+  record amended.
+
+**The roster's bound.** `ROSTER_MAX` (64) bounds the WELCOME - the
+nearest, AUDIT ONLINE A5's bill bound - not the room, which holds
+`SOCKETS_MAX` (256). A member beyond the welcome was unseen for good:
+its poses dropped (no peer to place), its foes refused (AUDIT WORLD6b
+A8/C6), its blow's striker unknown to my foe. Every later joiner is
+announced (`join`), so the gap was exactly the members present before
+me and beyond the nearest 64. Now the stranger is learned from the
+relay's own traffic:
+
+- **`who`.** A frame from an id I hold in NO room - a pose, a foes
+  frame in a cell, a blow that landed - asks the relay for it by name
+  through the socket the frame came on (`_askWho`), once per
+  `WHO_RETRY_MS` (10 s) per id and `WHO_HZ_MAX` (2) a second in all; an
+  ask the gate or a dead socket refused is not marked, so the next
+  frame asks. The relay relays only a hello'd socket's frames, so a
+  stranger's frame is the relay's word that it is a member.
+- **The answer is its JOIN**, to the asker alone - the member's hello
+  name and look (from storage) and its latest metered pose - the frame
+  the session already reads; its next pose is placed and its foes are
+  heard. A name that is no hello'd socket in the room, or the asker's
+  own, answers nothing and is junk (AUDIT WORLD2 A4's instrument, a
+  stream struck out); a channel answers nothing; the asks ride their
+  own bucket at the relay (`_meterWho`, the same strikes) and
+  `parseClient` admits the frame from a hello'd socket alone. The
+  roster stays the welcome's size; a member is asked for only when it
+  is heard.
+
+Relay `world65`. Pinned in `test/world6biiie.test.js` (5), EXECUTED:
+the wire's bounds and one home at both ends; two pools (the striker's
+dose at a puppet not on the shadow but on the hit with the kind and
+the shaft, spent once, the owner dosing its foe inside a damaging blow
+and landing the Arrow for every connecting shaft, nothing outside the
+enum or on a blow of no damage, the owner's own dose direct); the
+session (a stranger's pose, foes and blow ask once per retry under
+the gate, a peer and my own never, the join answer making a peer whose
+pose is placed and foes heard, the ask on the halo's socket, a dead
+socket marking nothing); the real Room (the answer to the asker alone
+with the latest pose, nobody and one's own name junk, a channel
+silent, the asks' own bucket, a socket not hello'd refused); by source
+the hosts' doors, the dungeon twin and the monster-only disease rider.
+Restamped: world2/world3 (the dungeon divert), world6b/world6bii (the
+arrow hit's `ar`), auditworld6b (the divert's gate), auditworld2 (the
+parser's doc), audit39_worldmodes (the interior arrow's kind), the
+relay version pins.
 
 ## AUDIT WORLD6b (2026-09-14)
 
@@ -3333,7 +3423,10 @@ poison and disease riders run on the local puppet's entity before the
 divert and never reach the owner's foe (the hit should carry them, as
 WORLD3 put the arrow's shaft on the dungeon's); the roster's
 `ROSTER_MAX` bound leaves a 65th player's foes unseen; the peer's blow
-carries no feet (the owner's foe turns on the owner).
+carries no feet (the owner's foe turns on the owner). [The feet: paid
+by WORLD6b-ii. The poison and the roster's bound: paid by
+WORLD6b-iii(e), which also found the "disease" half was never a
+player's rider.]
 
 ## AUDIT WORLD6b-ii (2026-09-14)
 

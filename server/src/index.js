@@ -105,11 +105,11 @@
 // WORLD5 (2026-09-13): THE SHARED CLOCK is a function of wall time (relay.js
 // sharedClassicMinutes) and needs no frame; the welcome carries the relay's
 // own `now` so a client corrects for its machine's clock. Nothing else here.
-import { roomOf, parseClient, inRange, poseGate, chatGate, tokenGate, rosterFor, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S } from './relay.js';
+import { roomOf, parseClient, inRange, poseGate, chatGate, tokenGate, rosterFor, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf } from './relay.js';
 
 /** AUDIT WORLD34 D4: the relay names itself in /health - the deploy is by hand (`npx wrangler deploy`), nothing in
  *  CI does it, and until now nothing said which relay was live. Bump it with every relay-changing slice. */
-export const RELAY_VERSION = 'world64';   // AUDIT WORLD6b: a cell's hit funnel is its owner's, its foes fan ranged, budgeted at the door and bounded
+export const RELAY_VERSION = 'world65';   // WORLD6b-iii(e): a member beyond the welcome's roster is asked for by name (who) and answered with its join
 
 const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*' } });
 
@@ -251,6 +251,15 @@ export class Room {
     const next = { ...a, ...patch, bucket: gate.bucket, drops };
     this._setAttach(ws, next);
     if (!gate.pass) { if (drops > DROP_STRIKES_MAX) this._refuse(ws, 'too many poses'); return null; }
+    return next;
+  }
+  /** WORLD6b-iii(e): the asks' own bucket (WHO_HZ_MAX), the same strikes - a question beside the poses, never starving them. */
+  _meterWho(ws, a, now) {
+    const gate = whoGate(a.wbucket, now);
+    const wdrops = gate.pass ? 0 : (a.wdrops ?? 0) + 1;
+    const next = { ...a, wbucket: gate.bucket, wdrops };
+    this._setAttach(ws, next);
+    if (!gate.pass) { if (wdrops > DROP_STRIKES_MAX) this._refuse(ws, 'too many asks'); return null; }
     return next;
   }
   /** WORLD3: the action frames' own bucket (ACT_HZ_MAX), the same strikes - a door beside the poses, never starving them. */
@@ -487,6 +496,23 @@ export class Room {
       this._roomActBytes = bytes.bucket;
       if (!bytes.pass) return;
       for (const [other] of listeners) this._send(other, out);
+      return;
+    }
+    if (m.t === 'who') {
+      // WORLD6b-iii(e): a member beyond the welcome's roster (ROSTER_MAX, the nearest - AUDIT ONLINE A5's bound on the
+      // WELCOME, not on the room) asked for by name, on the asks' own bucket (WHO_HZ_MAX, the same strikes); answered
+      // to the asker alone with the member's JOIN (its hello's name and look, its latest pose) - the frame the
+      // session already reads. A name that is no hello'd socket in the room (gone, or made up) answers nothing and is
+      // counted as junk (AUDIT WORLD2 A4's instrument), so a stream of them is struck out; one's own name likewise.
+      const now = Date.now();
+      a = this._meterWho(ws, a, now); if (!a) return;
+      if (isChatRoom(a.key)) return;   // a channel has no roster and no doll
+      const id = whoIdOf(m);
+      const target = id && id !== a.id ? [...this._all()].find(([other, b]) => other !== ws && b.id === id) ?? null : null;
+      if (!target) { this._junk(ws, a); return; }
+      const b = target[1];
+      const look = await this.state.storage.get(lookKey(b.id));
+      this._send(ws, JSON.stringify({ t: 'join', id: b.id, name: b.name, look: look ?? null, pose: b.pose ?? null }));
       return;
     }
     if (m.t === 'pose' || m.t === 'ping') {
