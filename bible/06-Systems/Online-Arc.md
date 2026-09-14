@@ -2127,10 +2127,10 @@ so a lesson costs fatigue and gold and no afternoon; the daily
 cooldown (`timeOfLastSkillTraining`) still holds, on the shared clock.
 (4) The pause-menu catch-up is bounded (the broker's 2,880-round cap,
 one day block) and measured at 8.8 ms for a real day away; DFU freezes
-time under a pausing window and this world cannot. (5) The rest window
+time under a pausing window and this world cannot. (5, PAID BY OL2) The rest window
 does not say it is clock-paced: an hour of rest is five real minutes
 and the counter moves once per five, which a player will read as a
-hang. (6) The travel popup counts down the trip's days for a trip that
+hang. (6, PAID BY OL2) The travel popup counts down the trip's days for a trip that
 takes none, inn nights are charged for nights nobody spends, and
 `arrivalClampMinutes` is computed and discarded online; the sun-averse
 traveller arrives when they arrive (WORLD5's own record). (7) The
@@ -2204,6 +2204,43 @@ is shown locked - "On (online)", disabled, with the reason in its
 title - so a press teaches rather than changes nothing; the Mods pane
 says it once at the top; the Online pane's copy says the lane at the
 door.
+
+## OL2 (2026-09-14): the rest window says the clock, the trip says it arrives now
+
+**Mac: "Now tackle #s 5/6."** AUDIT WORLD5's fifth and sixth recorded
+items, paid.
+
+**(5) THE REST WINDOW SAYS IT IS CLOCK-PACED.** Under the shared clock
+an hour of rest is five real minutes and the counter moved once per
+five, on a page that showed a bare hour count - a working rest read as
+a hang. `RestWindow.status()` now carries the world's minutes while the
+session is paced by them (the same `deps.sharedMinutes` the session
+reads; null offline, and then nothing is added and the page is what it
+was), and both pages - the native counter page under the vitals, the
+text chain between the hours and the vitals - say the world's time of
+day and the pace: "World time 15:05 - an hour here is 5 real minutes".
+The five is DERIVED from the wire's one rate
+(`REAL_MINUTES_PER_WORLD_HOUR = round(60 / (ONLINE_MINUTES_PER_MS *
+60000))`), not spelled, so a rate change cannot leave a stale number
+on the page. The text page's lines moved into `restingLines()` so the
+pin reads the same body the page draws.
+
+**(6) THE TRIP SAYS IT ARRIVES NOW.** Online the trip takes no world
+time (WORLD5) and the popup still counted down the trip's days,
+charged inn nights for nights nobody spent, and said nothing. The host
+now says the fact through one dep, `noWorldTime` (world.js:
+`sharedClockOn`, threaded through the map window; a host that says
+nothing travels as DFU does), and while it is true: the day countdown
+is empty and the trip begins on the next tick; no inn night is paid -
+not even DFU's "always at least one stay", which is a night too
+(`sleepModeInn && !noWorldTime()` into `calculateTripCost`); the days
+label says "now"; and a line under the panel says why ("Online: the
+world's clock does not wait. You arrive now, and no inn is paid."). The
+fare for a ship's passage stands, because a crossing is a crossing,
+and the trip's DFU minutes are still computed because the host reads
+them offline. `arrivalClampMinutes` is still computed and discarded
+online (the sun-averse traveller arrives when they arrive, WORLD5's own
+record) - two source pins hold that line and it costs nothing.
 
 ## What it does not do (yet)
 

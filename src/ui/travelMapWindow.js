@@ -965,6 +965,7 @@ export class TravelMapWindow {
       // TravelTimeCalculator.cs:163's Knightly Order consult, passed
       // through for the same reason FastTravel's entity is.
       freeTavernRooms: this.deps.freeTavernRooms,
+      noWorldTime: this.deps.noWorldTime,   // OL2: the host's word that the trip takes no world time (online)
       diseaseCount: this.deps.diseaseCount,
       poisonCount: this.deps.poisonCount,
       textRsc: _art?.textRsc ?? null,
