@@ -13,8 +13,7 @@ Play it: https://daggerfalljs.dev/
 The site is `index.html` (what it is, how to play, credits); the game is
 `play/index.html`, served at `/play/`. Both deploy from `main` to GitHub
 Pages. The landing page takes its palette and fonts from the enhanced skin
-at build (`scripts/landingHtml.mjs`) and carries no game data - its one
-image is the wordmark (`public/brand/`); everything else on it is CSS.
+at build (`scripts/landingHtml.mjs`) and carries no game data or imagery.
 
 Docs live in `bible/` - start at `bible/Home.md`.
 

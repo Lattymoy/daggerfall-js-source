@@ -340,7 +340,7 @@ export class Collider {
     return this.capsuleCast(origin, origin, radius, dir, maxDist, 1);
   }
 
-  _resolveSphere(center, radius, out, standCeil = Infinity) {
+  _resolveSphere(center, radius, out, standCeil = Infinity, oneWayFloor = false) {
     // Push a sphere out of every nearby triangle; returns strongest
     // ground-ness and whether any ceiling-ish contact happened.
     // SH1 (2026-09-12, Mac: "you can immediately walk over things (like
@@ -357,6 +357,7 @@ export class Collider {
     let ceiling = false;
     let pushedDown = false;
     let groundKey = null;
+    let groundY = -Infinity;
     for (const [bkey, bucket] of this._buckets) {
       const t = bucket.t();
       const gx = Math.floor((center[0] - t[0]) / CELL);
@@ -395,6 +396,34 @@ export class Collider {
             // center minus closest); above the stand ceiling with an
             // upward-leaning normal it is a wall, not a tread.
             const wallAbove = dy > 0 && center[1] - dy > standCeil;
+            // PH1 (2026-09-14, Mac: "it's possible to randomly walk into
+            // the floor in dungeons and get stuck in the ground"): A FLOOR
+            // IS ONE-WAY FOR THE LOWER SPHERE. The push-out is along
+            // centre-minus-closest, so once the lower sphere's centre had
+            // crossed a floor's plane (a mover's mesh advancing past it in
+            // one slow frame, the ceiling clamp's sink band, a thin slab's
+            // cancelling pushes) the floor pushed it DOWN, and kept pushing
+            // until the head sphere caught the same floor from beneath:
+            // measured, feet 0.36 below a floor become feet 1.10 below it,
+            // "grounded", forever - the dungeon has no heightAt floor to
+            // catch it and nothing called findClearFloor. Unity's sweep
+            // never crosses a plane, so it never meets this; the port's
+            // resolve can, so the law is written where the sign flips: a
+            // near-horizontal surface just ABOVE the lower sphere's centre,
+            // within its radius, is a floor the body is under, and the
+            // sphere is set ON it. Nothing legal stands there - a surface
+            // 0.35-0.7 above the feet is inside the crouched capsule too.
+            // The head sphere keeps the plain push: a ceiling is a ceiling.
+            const floorAbove = oneWayFloor && d < radius && !wallAbove && dy / d <= -GROUND_NY;
+            if (floorAbove) {
+              const dh2 = dx * dx + dz * dz;
+              const cy = t[1] + (ly - dy);   // the closest point's world y
+              center[1] = cy + Math.sqrt(Math.max(0, radius * radius - dh2));   // the sphere ON the surface
+              grounded = true;
+              if (cy > groundY) groundY = cy;
+              if (groundKey == null || bkey !== 'dungeon') groundKey = bkey;
+              continue;
+            }
             if (d < radius) {
               if (wallAbove) {
                 const dh = Math.sqrt(dx * dx + dz * dz);
@@ -431,6 +460,8 @@ export class Collider {
             const touching = d < radius;
             if (ny >= GROUND_NY && !wallAbove) {
               grounded = true;
+              const cy = center[1] - dy;   // the contact's world y
+              if (cy > groundY) groundY = cy;
               // Platform riding (Ledger C row, 2026-08-14): the KEY of
               // the grounding bucket - a non-static bucket (mover)
               // wins over the static floor within the skin shell.
@@ -445,6 +476,7 @@ export class Collider {
     out.grounded = out.grounded || grounded;
     out.hitCeiling = out.hitCeiling || ceiling;
     out.pushedDown = out.pushedDown || pushedDown;
+    if (grounded) out.groundY = Math.max(out.groundY ?? -Infinity, groundY);
     if (groundKey != null && (out.groundKey == null || groundKey !== 'dungeon')) out.groundKey = groundKey;
   }
 
@@ -466,11 +498,15 @@ export class Collider {
     const low = [feet[0], feet[1] + CAPSULE_RADIUS, feet[2]];
     const high = [feet[0], feet[1] + CAPSULE_RADIUS + axis, feet[2]];
     for (let iter = 0; iter < 3; iter++) {
-      this._resolveSphere(low, CAPSULE_RADIUS, out, standCeil);
+      this._resolveSphere(low, CAPSULE_RADIUS, out, standCeil, true);   // PH1: the lower sphere's floor is one-way
       high[0] = low[0];
       high[2] = low[2];
       high[1] = low[1] + axis;
-      this._resolveSphere(high, CAPSULE_RADIUS, out, standCeil);
+      // The head sphere keeps the plain push (a ceiling is a ceiling; a
+      // head above a thin plane is pushed off it, never set on it - the
+      // CanStand sweep's 1.2 ceiling stands on that). The swim stance's
+      // zero axis makes the two spheres one, and that one is the lower.
+      this._resolveSphere(high, CAPSULE_RADIUS, out, standCeil, axis === 0);
       low[0] = high[0];
       low[2] = high[2];
       low[1] = high[1] - axis;
@@ -666,17 +702,48 @@ export class Collider {
     // descent in one frame - rise 200ms, "fall" 33ms, the launch-era
     // snap-down bug. Walking down stairs keeps the snap and is
     // bit-identical either way.
+    // PH2 (2026-09-14, Mac: "running up/down stairs makes the screen
+    // really jitter"): the snap used to drop the WHOLE capsule
+    // STEP_OFFSET and resolve it there - and on a staircase that point
+    // is inside the stair's mass, so the resolve ejected the probe up
+    // and BACK along the riser (measured: feet z 8.19 -> probe z 9.43)
+    // and the gate refused it. Every tread on the way down was an
+    // airborne frame: grounded flipped, `falling` rose, the eye filter
+    // (MAC1) let go and the head bob re-armed - 24 flips on a 12-tread
+    // descent at a walk. So the probe DESCENDS, a quantum at a time
+    // (STEP_OFFSET / 8, SH1's down leg), to the first height at which
+    // the capsule STANDS - grounded, not pushed down, not slid - and
+    // stops there. A tread is met from just above it, never from inside.
     if (snap && dy <= 0 && !out.grounded) {
-      const probe = [feet[0], feet[1] - STEP_OFFSET, feet[2]];
-      const probeOut = { grounded: false, hitCeiling: false, pushedDown: false };
-      this._resolveCapsule(probe, probeOut, height);
-      // A down-pushed probe tunneled under geometry (a step top's
-      // underside) - snapping to it drags the player through the mesh.
-      if (probeOut.grounded && !probeOut.pushedDown
-        && probe[1] > feet[1] - STEP_OFFSET + 1e-4 && probe[1] <= feet[1] + 1e-4) {
-        feet[1] = probe[1];
-        out.grounded = true;
-        out.groundKey = probeOut.groundKey;   // platform riding survives the snap
+      for (let y = feet[1] - STEP_OFFSET / 8; y >= feet[1] - STEP_OFFSET - 1e-9; y -= STEP_OFFSET / 8) {
+        const probe = [feet[0], y, feet[2]];
+        const probeOut = { grounded: false, hitCeiling: false, pushedDown: false };
+        this._resolveCapsule(probe, probeOut, height);
+        const slidSq = (probe[0] - feet[0]) ** 2 + (probe[2] - feet[2]) ** 2;
+        // A down-pushed probe tunneled under geometry (a step top's
+        // underside) - snapping to it drags the player through the mesh.
+        // A probe may SLIDE a hair: a sphere leaving a tread's edge rests
+        // on the edge and the resolve eases it down and off it - Unity's
+        // Move sliding along the contact - and that arc is the descent.
+        // More than a quantum sideways is the old eject (backwards, up
+        // the riser) and is refused.
+        if (probeOut.grounded && !probeOut.pushedDown && slidSq <= (STEP_OFFSET / 8) ** 2
+          && probe[1] > feet[1] - STEP_OFFSET + 1e-4 && probe[1] <= feet[1] + 1e-4) {
+          // Grounding reaches into the SKIN shell, so the quantum that
+          // first stands may hover a hair above the tread: settle it a
+          // skin further, where the resolve places the feet ON the
+          // contact (the old whole-drop probe landed exact; so does this).
+          const settle = [probe[0], probe[1] - SKIN, probe[2]];
+          const settleOut = { grounded: false, hitCeiling: false, pushedDown: false };
+          this._resolveCapsule(settle, settleOut, height);
+          const settled = settleOut.grounded && !settleOut.pushedDown && settle[1] <= probe[1] + 1e-6
+            && (settle[0] - probe[0]) ** 2 + (settle[2] - probe[2]) ** 2 <= (STEP_OFFSET / 8) ** 2;
+          const land = settled ? settle : probe;
+          feet[0] = land[0]; feet[1] = land[1]; feet[2] = land[2];
+          out.grounded = true;
+          out.groundKey = (settled ? settleOut : probeOut).groundKey;   // platform riding survives the snap
+          break;
+        }
       }
     }
 

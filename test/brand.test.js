@@ -45,12 +45,11 @@ test('BR1: every surface the player reads carries the one name', () => {
   const landing = read('index.html');
   assert.match(landing, new RegExp(`<title>${NAME}</title>`), 'the landing page\'s title');
   assert.match(landing, new RegExp(`<meta property="og:title" content="${NAME}" />`), 'and what a link preview shows');
-  // BR2: the LANDING page's wordmark is the logo now, so the name lives
-  // in its alt - which is still text, and still has to say the one name.
-  // An <img> with no alt would take the product's name off the front door
-  // for every reader who cannot see it, and no adjacency sweep would ever
-  // notice; this is the pin that would.
-  assert.match(landing, new RegExp(`<h1 class="wordmark"><img [^>]*alt="${NAME}" /></h1>`), 'the wordmark, whose name is its alt');
+  // BR3 (Mac, 2026-09-14): the landing page's wordmark is TYPE again - one
+  // word over a tracked sub-line, the shape ES1's door has always had -
+  // after BR2's one day as an uploaded logo.
+  assert.match(landing, /<h1 class="wordmark">Daggerfall<small>Enhanced<\/small><\/h1>/, 'the wordmark');
+  assert.doesNotMatch(landing, /<img\s/, 'and no image stands in for it (BR3)');
   // THE WORDMARK SPLITS THE NAME ACROSS TWO ELEMENTS, so no adjacency
   // sweep can ever see it whole: the front door rendered DAGGERFALL over
   // a tracked sub-line reading JAVASCRIPT for the length of the rebrand

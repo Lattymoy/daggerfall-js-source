@@ -67,7 +67,7 @@ finding and the move.
 | `grassDensity` | Grass density | 1 | **MOVED (FT7, 2026-09-14)** - Enhanced; the note says it is under the outdoors row |
 | `cloudQuality` | Cloud quality | default | **MOVED (FT7, 2026-09-14)** - Enhanced; its tiers pinned as the march table's own keys |
 | `enhancedWater` | Enhanced water | on | **MOVED (FT6, 2026-09-14)** - Enhanced; the switch's composition given one home first |
-| `enhancedCombatVisuals` | Enhanced combat visuals | on | **MOVED (FT8, 2026-09-14)** - Enhanced; the Settings category it emptied is a pointer now |
+| `enhancedCombatVisuals` | Enhanced combat visuals | on | **MOVED (FT8, 2026-09-14)** - Enhanced; the Settings category it emptied is off the rail (FT12) |
 | `mwArms` | (no switch - a load/unload button under Morrowind data) | off | open. Needs a real switch on the list |
 | `hudScale`, `showFps`, `textScale`, `skin`, `touch*`, `online*` | scattered | - | NOT features. Settings, and they stay in Settings |
 
@@ -75,7 +75,7 @@ finding and the move.
 
 | Vendor | Mod | Author | Switches | Status / notes |
 |---|---|---|---|---|
-| `dynamic-skies` | Dynamic Skies 2.3.4 | BadLuckBurt and carademono | Enabled + 5 | `Enabled` **COVERED (FT4)** by the outdoors row - the Mods pane's row is a pointer; the five knobs open. `MaxParticles` is read and never applied (AUDIT 61, carried as it ships) |
+| `dynamic-skies` | Dynamic Skies 2.3.4 | BadLuckBurt and carademono | Enabled + 5 | `Enabled` **COVERED (FT4)** by the outdoors row - the Mods pane draws no `Enabled` row (FT13; it was a pointer until then); the five knobs open. `MaxParticles` is read and never applied (AUDIT 61, carried as it ships) |
 | `seasons-iliac-bay` | Seasons of the Iliac Bay | RosyTheRascal | Enabled | **MOVED (FT9, 2026-09-14)** |
 | `roads-hazelnut` | Basic Roads 1.3.1 | Hazelnut | Enabled + 2 | `Enabled` **MOVED (FT9)**; the two knobs stay under its card. BR3 (2026-09-13) had found it had no switch at all |
 | `meanerMonsters` | Meaner Monsters 1.5.2 | Ralzar | Enabled | **MOVED (FT9)**. The gate checked: `pcaaoMeanerMonsters.js meanerMonstersOn` reads BOTH switches, as DFU's "is loaded" does |
@@ -104,7 +104,7 @@ Video/GUI keys that are features rather than settings.
 | `Enhancements/PlayerTorchLightScale` | - | 1.0 | stored | **DECIDED (FT11)** - a dial, and not read; stays in Settings as stored. Its sibling is live |
 | `Enhancements/GuildQuestListBox` | - | False | live | **MOVED (FT11)** |
 | `Video/RandomDungeonTextures` | Dungeon Wall Style | 0 | live | **MOVED (FT11)** - the one choice row over a DFU key |
-| `Experimental/TerrainDistance` | - | 3 | live | **COVERED (FT2, 2026-09-14)** - written by the condensed row, capped at 4; its Video row is a pointer |
+| `Experimental/TerrainDistance` | - | 3 | live | **COVERED (FT2, 2026-09-14)** - written by the condensed row, capped at 4; its Video row is not drawn (FT13; a pointer until then) |
 | `Enhancements/EnhancedCombatAI` | - | True | UNAVAILABLE | **DECIDED (FT5)** - off the list: a row for a feature the port does not run would be a lie with a switch. Stays in Settings as the unavailable row it is, named from the AI row's note |
 | `Enhancements/AdvancedClimbing` | - | False | UNAVAILABLE | open. Ledger A, same shape |
 | `Experimental/CustomBooksImport` | - | True | unavailable | open |
@@ -239,7 +239,7 @@ from FT1 - one rule, every store. The Enhanced category's row left with
 its copy.
 
 **Not done, by name.** DFU's Video category still lists
-`TerrainDistance` (the map is total; the row there is the pointer).
+`TerrainDistance` (the map is total; the row there was a pointer until FT13 took it off the pane).
 `test/ft2_landview.test.js`.
 
 ## FT3 - THE PIXELATED SKY, REMOVED (2026-09-14)
@@ -290,7 +290,7 @@ both - OFF leaves the mod's switch as it was, so off-and-on-again gets
 the sky the player had. The host's composition (`shared.js` enhancedLane,
 dynamicOn) is untouched: the row writes the stores that line reads.
 The mod's other knobs - fog density, the pixel snow - are the mod's own
-and stay on the Mods page; its `Enabled` row there is a pointer.
+and stay on the Mods page; its `Enabled` row there was a pointer (gone with FT13).
 
 **The registry grew** `control.default`: a condensed row's tiers are
 its own vocabulary, so it names its default itself, and the law checks
@@ -367,7 +367,7 @@ category that vanished would teach the player its switches vanished)
 as a POINTER to the home - one row wearing all three labels, "The
 port's own switches", walking to Features from face and control - and
 keeps the outdoors test door. Its blurb says so. The pause door's
-quick settings draw the same pointer.
+quick settings drew the same pointer (gone with FT13).
 
 The Enhanced category's six switches are all on the home now: the
 outdoors (with Dynamic Skies' switch), the AI, the water, the grass,
@@ -393,7 +393,7 @@ gate: `meanerMonstersOn` reads both switches, as DFU's "is loaded"
 does. **What stays on the Mods page.** Each mod's other knobs - Basic
 Roads' two, the overhaul's seven modules, Unleveled Loot's ten
 materials, Dynamic Skies' five - under the mod's card, whose `Enabled`
-row is a pointer to the home. **Windmills** has no switch and so no
+row is not drawn (FT13; a pointer until then). **Windmills** has no switch and so no
 row: a row needs a control. Pinned both ways: every vendored mod with a
 switch has a row, and every mod row names a real switch, so a mod
 vendored tomorrow fails the pin rather than sitting off the home.
@@ -531,3 +531,25 @@ pins re-aimed at the resolved control; the graph proved from three
 entry points (the shelf, a lane, the mod store).
 
 Adding a switch is one row now, and the two count pins.
+
+## FT13 - THE MOVED ROWS LEAVE THE SETTINGS PANE (2026-09-14, Mac's report)
+
+Mac: "Remove the now moved settings options that are now in our new
+Features pane." FT1's law was one home per idea, and its shape was a
+POINTER: a key whose switch lives on the Features home was drawn on
+the settings pane, the Mods page and the pause door as a row wearing
+the home's labels, "On the Features page.", walking there from face
+and control. Mac read those rows as the options still being there.
+They are not drawn now. **The seam is the same one** - every row
+builder asks the registry first and answers through `movedRow`, which
+answers null - and every list that draws or COUNTS keys (a category's
+rows, its rail count, the pause door's live list, the folded tiers, a
+mod's card) filters the moved keys out first (`paneKeys`), so the
+count on the rail is what the pane shows. The category map stays
+total (settingsMap's law: every store key has a category - the map is
+where a key LIVES; the pane shows the keys that live on it). The walk
+(`goFeatures`) went with the rows. Off the pane: Experimental/
+SmallerDungeons and TerrainDistance, Video/RandomDungeonTextures, the
+seven Enhancements rows the home carries, and every vendored mod's
+`Enabled` on its card. `test/ft13_movedrows.test.js`; FT1's pointer
+pin re-aimed.

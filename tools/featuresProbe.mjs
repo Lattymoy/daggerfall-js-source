@@ -3,7 +3,7 @@
 // registry row with its labels, the chip row filters by kind and its
 // counts agree with the rows, a condensed row's one press moves BOTH
 // stores (Land view distance: the pref and DFU's TerrainDistance), and
-// the Settings pane draws a moved key as a pointer.
+// the Settings pane draws a moved key NOT AT ALL (FT13).
 //
 // Run against a dev server with NO arena2 on disk:
 //     npx vite --port 5199 &
@@ -49,14 +49,15 @@ check('...and ONE press wrote BOTH stores, DFU\'s capped at 4', stores.pref === 
 await lv().locator('.ctl .act').click();   // wraps to 1
 await page.evaluate(async () => { const { landViewWrite } = await import('/src/world/landView.js'); landViewWrite(5); });   // the default back
 
-// the Settings pane draws a moved key as a pointer (FT1), and the emptied Enhanced category as one (FT8)
+// FT13: the Settings pane draws NO row for a moved key (FT1 drew a pointer; Mac had it removed), and the rail count agrees
 await page.locator('#enhanced-menu .railbtn', { hasText: 'Settings' }).click(); await page.waitForTimeout(200);
 check('FT12: the settings rail has no Enhanced category', !(await page.$$eval('#enhanced-menu .subbtn', (bs) => bs.map((b) => b.textContent))).some((t) => /^Enhanced/.test(t)));
 await page.locator('#enhanced-menu .subbtn').filter({ hasText: /^Game/ }).first().click(); await page.waitForTimeout(200);
-const moved = await page.$$eval('#enhanced-menu .row.moved .row-name', (ns) => ns.map((n) => n.textContent));
-check('Settings > Game draws Smaller dungeons as a pointer, not a second switch', moved.includes('Smaller dungeons'), moved.join(', '));
-await page.locator('#enhanced-menu .row.moved', { hasText: 'Smaller dungeons' }).locator('.ctl .act').click(); await page.waitForTimeout(200);
-check('...and the pointer walks to the home', (await page.locator('#enhanced-menu .chips').count()) === 1);
+const gameRows = await page.$$eval('#enhanced-menu .list .row .row-name', (ns) => ns.map((n) => n.textContent));
+check('FT13: Settings > Game draws no row for Smaller dungeons - not a switch, not a pointer', !gameRows.some((t) => /Smaller dungeons/i.test(t)) && (await page.locator('#enhanced-menu .row.moved').count()) === 0, gameRows.join(', '));
+check('FT13: ...nor for the other moved Game keys', !gameRows.some((t) => /Enemy infighting|Varied dungeon monsters|Torches from items|Choose guild jobs|Dungeon wall style/i.test(t)), gameRows.join(', '));
+const gameCount = Number(await page.locator('#enhanced-menu .subbtn').filter({ hasText: /^Game/ }).first().locator('.count').textContent());
+check('FT13: the rail count is what the pane shows', gameCount === (await page.locator('#enhanced-menu .list > .row').count()), `${gameCount} on the rail`);
 // FT12: the outdoors test door is the Test Room's
 await page.locator('#enhanced-menu .railbtn', { hasText: 'Test Room' }).click(); await page.waitForTimeout(200);
 check('FT12: the Test Room carries the outdoors test door', (await page.locator('#enhanced-menu .row-name', { hasText: 'Test the outdoors' }).count()) === 1);

@@ -1917,3 +1917,74 @@ and left: thin free-standing geometry (a 0.2 column) can be walked
 through - opposing pushes cancel and `d2 === 0` contacts are skipped -
 a different bug, its own slice. Ledger row SH1. Pinned:
 `test/macfive.test.js` SH1.
+
+## PH1 - THE FLOOR IS ONE-WAY FOR THE BODY (2026-09-14, Mac's report)
+
+Mac: "It's possible to randomly walk into the floor in dungeons and get
+stuck in the ground." **The terminal state, measured.** The resolve
+pushes a sphere along centre-minus-closest, so once the lower sphere's
+centre had crossed a floor's plane by any amount the floor pushed it
+DOWN, and kept pushing until the HEAD sphere caught the same floor from
+beneath and grounded on it: feet 0.36 below a floor became feet 1.10
+below it, `grounded: true`, no fall, no way out. Feet 0.34 below
+recovered; the cliff is the radius. A dungeon has no `heightAt` floor
+(`dungeonContext.js` passes `() => -Infinity`), both floor arms of
+`_moveStep` are dead there, and `findClearFloor` - the collider's own
+documented escape hatch - had no caller. **The entries** are several,
+which is what "randomly" means: a mover's collision mesh advancing past
+the lower sphere's centre in one slow frame (`actionSystem` moves the
+mesh on render dt; measured, a lift at 0.40 a frame left the rider 5.9
+below it), the ceiling clamp's sink band (recorded open at AUDIT 64
+F5's residue), thin geometry's cancelling pushes (SH1's own residual).
+**The law**, written where the sign flips (`collider.js`
+`_resolveSphere`, `oneWayFloor`): a near-horizontal surface just
+ABOVE the lower sphere's centre, within its radius, is a floor the body
+is under, and the sphere is set ON it and grounds there. Nothing legal
+stands in that band - a surface 0.35 to 0.7 above the feet is inside
+the crouched capsule too. The head sphere keeps the plain push: a
+ceiling is a ceiling, and a head above a thin plane is pushed off it,
+never set on it (the CanStand sweep's 1.2 ceiling stands on that; a
+first cut that set the body on any floor the head grounded on
+teleported the F5 stand onto its ceiling and was dropped). The swim
+stance's zero axis makes the two spheres one, and that one is the
+lower. `ridePlatform` (`scenes/shared.js`) resolves the rider with
+`player.height`, not the standing default. Measured after: feet 0.36
+and 0.60 below a floor are on it within two steps; a lift at 0.40 and
+0.60 a frame carries its rider. Left open, its own slice: a body
+already a whole capsule deep (a load inside geometry, a mover past 0.7
+a frame) still has no caller for `findClearFloor`. Pinned:
+`test/ph1_physics.test.js` PH1 (two).
+
+## PH2 - THE STAIRS ARE DESCENDED, NOT FALLEN (2026-09-14, Mac's report)
+
+Mac: "Running up/down stairs makes the screen really jitter." **What
+juddered.** The ground snap dropped the WHOLE capsule STEP_OFFSET (0.5)
+and resolved it there. On a staircase that point is inside the stair's
+mass, so the resolve ejected the probe up and BACK along the riser
+(measured: feet z 8.19, probe z 9.43) and the gate refused it. Every
+tread on the way down was therefore an airborne frame - 24 grounded
+flips on a 12-tread 0.3-riser descent at a walk, 20 at a run - and
+each flip cost three things the eye sees: `falling` rose, which is the
+one flag that disengages MAC1's eye low-pass (`_smoothEyeFeet` answers
+raw while falling), so the filter that takes a rung's 0.153 rise down
+to 0.055 on the way UP did nothing on the way down (drop 0.141 at a
+walk, 0.213 at a run, raw); the head bobber's `!grounded` gate took the
+frame's nod off and did not put it back (Running's nod is 0.6 degrees,
+Walking's 0.25 - "worse when running"); and the fall bookkeeping
+churned. Ascending never went airborne: the ladder is a different
+seam. MAC3 had fixed exactly this class for terrain with the
+`heightAt` arm, and that arm is dead underground. **The law.** The
+snap DESCENDS a quantum at a time (STEP_OFFSET / 8, SH1's down leg)
+from the feet to the first height at which the capsule STANDS -
+grounded, not pushed down - and stops there, so a tread is met from
+just above it, never from inside. A probe may SLIDE a hair (at most a
+quantum): a sphere leaving a tread's edge rests on the edge and the
+resolve eases it down and off - Unity's Move sliding along the contact
+- and that arc IS the descent; more is the old eject and is refused.
+The quantum that first stands may hover in the SKIN shell, so it is
+settled a skin further onto the contact (the old whole-drop landed
+exact; so does this). Measured after, 12 treads at 0.3/0.6, 0.45/0.7
+and 0.25/0.4, walk and run: 0 airborne frames, 0 flips, the eye only
+descends, worst eye drop 0.073 at a walk and 0.097 at a run (from
+0.141 / 0.213). MAC3's terrain pins and the eleven P14/P16 stair
+traces hold. Pinned: `test/ph1_physics.test.js` PH2 (two).

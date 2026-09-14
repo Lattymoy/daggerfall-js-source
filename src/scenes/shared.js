@@ -910,7 +910,7 @@ export function ridePlatform(player, actions) {
   const gk = player.groundKey;
   if (!gk || gk === 'dungeon') return;
   const d = actions?.objects?.get(gk)?.frameDelta;
-  if (d && (d[0] || d[1] || d[2])) player.collider.move(player.pos, d[0], d[1], d[2]);
+  if (d && (d[0] || d[1] || d[2])) player.collider.move(player.pos, d[0], d[1], d[2], player.height);   // PH1: the rider's own stance, not the standing default
 }
 
 /** AcrobatMotor.AdjustFallStart (:231-237), called by

@@ -177,7 +177,7 @@ test('SO1: the settings pane is organised - the port\'s rows sit in the categori
   assert.match(menu, /await ds\.pickMusicFolder\(\); render\(\);/, 'the music pack is reachable without the launcher');
   assert.match(menu, /await ds\.pickTextureFolder\(\); render\(\);/);
   // tier is a group: live flat, the other two folded with a count, remembered on the shelf
-  assert.match(menu, /for \(const key of keys\) if \(tierOf\(key\) === 'live'\) out\.push\(settingRow\(key\)\);/);
+  assert.match(menu, /for \(const key of keys\) if \(tierOf\(key\) === 'live'\) \{ const r = settingRow\(key\); if \(r\) out\.push\(r\); \}/);   // FT13: a moved key answers nothing
   assert.match(menu, /const TIER_GROUPS = Object\.freeze\(\[\s*\n\s*\['stored', 'Saved for later'/);
   assert.match(menu, /\['unavailable', 'Not available here'/);
   assert.match(menu, /const open = isOpen\(catId, tier\);[\s\S]*?headBtn\.onclick = \(\) => \{ setOpen\(catId, tier, !open\); render\(\); \};/, 'the fold is the shelf\'s open map');
