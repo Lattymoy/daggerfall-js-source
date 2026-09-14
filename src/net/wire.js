@@ -371,6 +371,9 @@ export function validFoeRecord(r) {
   // was at, in `g`'s spelling ('.' the owner, a peer id, '' none): `g` is the LIVE hunt when the frame goes out, and a
   // foe that cast at its owner then turned to a peer inside the frame's 200 ms sent the peer a cast it never made
   for (const k of ['u', 'b']) if (r[k] !== undefined) { if (typeof r[k] !== 'string' || !(r[k] === '' || r[k] === '.' || ID_RE.test(r[k]))) return null; out[k] = r[k]; }
+  // WORLD6b-iii(c): `o` how many items the corpse's pile holds (0 a live foe, an emptied body) - a peer's body is a loot
+  // target while it says more than none; the pile itself travels in the owner's GRANT (a hit frame), never here
+  if (r.o !== undefined) { if (!Number.isInteger(r.o) || r.o < 0 || r.o > 255) return null; out.o = r.o; }
   if (r.w !== undefined) {
     if (r.w === null) out.w = null;
     else if (Array.isArray(r.w) && r.w.length === 2 && Number.isInteger(r.w[0]) && r.w[0] >= 0 && r.w[0] <= 1023 && Number.isInteger(r.w[1]) && r.w[1] >= 0 && r.w[1] <= 255) out.w = [r.w[0], r.w[1]];

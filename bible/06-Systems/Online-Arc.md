@@ -2910,12 +2910,63 @@ pool taking a blow keyed to a held cell, the duplicated pose seen not
 re-eased; the diagonal and the y reach; by source the host's join, the
 wanted cell, the look, the prune, the session's doors, the records.
 
+### 6b-iii(c): a puppet's corpse loot
+
+**Mac: "Continue"** (after AUDIT WORLD6b-iii(b)). A puppet's body was
+its owner's and nobody else's ("no loot of this player's", WORLD6b
+B14): a peer who killed my rat, or stood over the one I killed, found a
+body that could not be opened. THE PILE IS THE OWNER'S ROLL, TAKEN
+UNDER THE OWNER'S WORD - no per-foe room, no relay change: the take
+and the grant ride the hit frame, which the relay routes by `to` and
+reads no further.
+
+- **The word.** The owner's record says how many items the body holds
+  (`o`, a u8 - 0 alive, 0 once emptied; the wire's law); the reader
+  latches it, and a puppet's body is a loot target while it says more
+  than none (a word of none re-closes it, a later word of some re-opens
+  it).
+- **The ask.** A peer's take sends `{to: owner, k: the owner's cell, i,
+  take: 1}` through the session's hit door (the owner's budget, the
+  owner reported); nothing is taken and nothing said on the taker's
+  word. A body its word says is empty is told "The body has no
+  treasure." at home, no frame.
+- **The grant.** The owner answers a take with `{to: taker, k, i,
+  grant: [...]}` - as much of the pile as one frame carries under
+  GRANT_FRAME_MAX, through WORLD4's projection (`validLootList`: an item
+  the port could have minted, its price floored) - and empties the pile
+  of what went ONLY once the frame left (a refused frame - the rate, the
+  size - takes nothing); a larger pile goes in parts and the record
+  still says it holds something. A body it no longer has, or one with
+  nothing on it, answers an empty grant.
+- **The landing.** The taker lands the grant through the ONE take law
+  (`takeCorpseLoot` over a stand-in body: arrows taken whole, gold to
+  the counter, the count said); an empty grant says the body has no
+  treasure and disables it. Two takers race at the owner: the second is
+  told so. A grant that is not a list, or carries an item the port
+  could not mint, is refused whole.
+- **Found on the way**: a killing blow that overshot left a NEGATIVE
+  health on the death record, the wire refused the record whole, and
+  the full frame then REMOVED the puppet - no body ever streamed to a
+  peer (WORLD6b's, live since 6b-i). The record clamps `h` into the
+  wire's bound.
+
+Pinned in `test/world6biiic.test.js` (4), EXECUTED on two pools joined
+by nets: the wire's `o`; the owner's body saying what it holds and the
+death record in bound; the puppet's body a target; the ask routed to
+the owner, nothing taken and nothing said; the grant through the
+projection, the pile emptied once the frame left, the next record
+saying none; the landing through the one take law with the count said,
+the body no target after; a second taker told the body has no treasure;
+asked again at home with no frame; a refused frame taking nothing; a
+body not mine and a malformed grant; a pile larger than a frame granted
+in parts; by source.
+
 ### 6b-iii (recorded, next)
 
 - **The guards** (`cityGuards.js`): the watch is a crime's - the
   player's own; not until the crime is shared.
-- **A puppet's corpse loot**: its owner's roll; the take would be the
-  loot law over a per-foe room.
+- ~~**A puppet's corpse loot**: its owner's roll; the take would be the
+  loot law over a per-foe room.~~ Paid by 6b-iii(c), over the hit frame.
 - ~~**The cell seam**: two players a pixel apart astride an edge are in
   two rooms (D9); the 3x3 neighbourhood.~~ Paid by 6b-iii(b).
 - **One economy**: the region's prices and powers as a world's.

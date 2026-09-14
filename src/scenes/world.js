@@ -2730,7 +2730,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // through the one that owns the billboard - `exteriorFoePool` is
     // the watch AND the encounter foes, and this arm reached the
     // encounter pool's remover for both. That was not a leak: removeFoe
-    // (exteriorFoes.js:346-351) never looks the record up in `foes`, and
+    // (exteriorFoes.js:348-353) never looks the record up in `foes`, and
     // both pools share this host's one renderer, so a struck WATCHMAN
     // got exactly what removeGuard (cityGuards.js:1218-1222) gives it -
     // batch freed, `dead = true`, no corpse, skipped by the next AI pass
