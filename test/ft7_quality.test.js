@@ -50,5 +50,5 @@ test('FT7: cloud quality - the tiers are the march table\'s own keys, default by
 test('FT7: the Enhanced category\'s two rows left with their copy', () => {
   const menu = read('src/ui/enhancedMenu.js');
   assert.ok(!/choiceRow\('grassDensity'|choiceRow\('cloudQuality'/.test(menu));
-  assert.match(menu, /FT7: Grass density and Cloud quality moved to the Features home/);
+  assert.match(menu, /FT2-FT8 \(2026-09-14\): every switch this category held moved to the\s*\n\s*\/\/ FEATURES home/, 'the category says where its rows went (FT8 consolidated the per-slice notes)');
 });

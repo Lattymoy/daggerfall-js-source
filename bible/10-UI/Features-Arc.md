@@ -67,7 +67,7 @@ finding and the move.
 | `grassDensity` | Grass density | 1 | **MOVED (FT7, 2026-09-14)** - Enhanced; the note says it is under the outdoors row |
 | `cloudQuality` | Cloud quality | default | **MOVED (FT7, 2026-09-14)** - Enhanced; its tiers pinned as the march table's own keys |
 | `enhancedWater` | Enhanced water | on | **MOVED (FT6, 2026-09-14)** - Enhanced; the switch's composition given one home first |
-| `enhancedCombatVisuals` | Enhanced combat visuals | on | open |
+| `enhancedCombatVisuals` | Enhanced combat visuals | on | **MOVED (FT8, 2026-09-14)** - Enhanced; the Settings category it emptied is a pointer now |
 | `mwArms` | (no switch - a load/unload button under Morrowind data) | off | open. Needs a real switch on the list |
 | `hudScale`, `showFps`, `textScale`, `skin`, `touch*`, `online*` | scattered | - | NOT features. Settings, and they stay in Settings |
 
@@ -120,6 +120,7 @@ Video/GUI keys that are features rather than settings.
 - **FT5** - SHIPPED 2026-09-14. Enhanced AI. Below.
 - **FT6** - SHIPPED 2026-09-14. Enhanced water. Below.
 - **FT7** - SHIPPED 2026-09-14. Grass density and cloud quality. Below.
+- **FT8** - SHIPPED 2026-09-14. Combat visuals, and the emptied category as a pointer. Below.
 - One slice per open row after that, in the order Mac picks.
 
 ## FT0 - THE HOME (2026-09-14)
@@ -350,3 +351,23 @@ Enhanced, over their prefs, PERF1's tiers and defaults.
 
 What is left in the Enhanced category of Settings: the combat visuals,
 and the outdoors test door (a test door, not a switch).
+
+## FT8 - COMBAT VISUALS, AND THE EMPTIED CATEGORY (2026-09-14)
+
+ECV1's switch, the last row the Enhanced category of Settings held.
+**The row.** Enhanced, over the pref, on by default; ECV1's words; it
+takes effect AT ONCE, because every foe host reads `combatVisualsOn`
+once per frame - the one row on the home with no reload behind it.
+**The category.** Emptied of switches, it stays on the settings rail (a
+category that vanished would teach the player its switches vanished)
+as a POINTER to the home - one row wearing all three labels, "The
+port's own switches", walking to Features from face and control - and
+keeps the outdoors test door. Its blurb says so. The pause door's
+quick settings draw the same pointer.
+
+The Enhanced category's six switches are all on the home now: the
+outdoors (with Dynamic Skies' switch), the AI, the water, the grass,
+the clouds, the combat visuals - and land view distance beside them.
+Left on the inventory: the Mods pane's packs and Dynamic Skies' five
+knobs (Mod Authored), and DFU's own Enhancements (DFU Classic), one
+by one. `test/ft8_combatvisuals.test.js`.

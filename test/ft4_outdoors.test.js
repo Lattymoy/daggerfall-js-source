@@ -93,7 +93,7 @@ test('FT4: the registry law - a condensed row names its own default, and it must
 test('FT4: the Enhanced category\'s row left with its copy; the host\'s composition is untouched', () => {
   const menu = read('src/ui/enhancedMenu.js');
   assert.ok(!/prefRow\('enhancedEnvironments'/.test(menu), 'the registry holds the words now');
-  assert.match(menu, /FT4: Enhanced environments moved to the Features home/);
+  assert.match(menu, /FT2-FT8 \(2026-09-14\): every switch this category held moved to the\s*\n\s*\/\/ FEATURES home/, 'the category says where its rows went (FT8 consolidated the per-slice notes)');
   const shared = read('src/scenes/shared.js');
   assert.match(shared, /const enhancedLane = isEnhanced\(\) && params\.get\('sky'\) !== 'classic' && getPref\('enhancedEnvironments'\);/);
   assert.match(shared, /const dynamicOn = enhancedLane && \(skyDoor === 'dynamic' \|\| \(skyDoor === null && modSetting\('dynamic-skies', 'Enabled'\)\)\);/, 'the row writes the stores this line reads; it does not replace the line');

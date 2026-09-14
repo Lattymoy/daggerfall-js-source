@@ -1141,22 +1141,32 @@ function outdoorsTestRow() {
  *  with a classic side. `pause` keeps only the rows that take effect
  *  without a reload. */
 function portRowsEnhanced({ pause = false } = {}) {
-  const out = [];
-  if (!pause) {
-  // FT5: the enemy-motor switch moved to the Features home (systems/features.js).
-  // FT4: Enhanced environments moved to the Features home (systems/features.js) - one three-way row with Dynamic Skies.
-  // FT2: Land view distance moved to the Features home (systems/features.js) - one row for both lanes.
-  // FT7: Grass density and Cloud quality moved to the Features home (systems/features.js).
-  // FT6: Enhanced water moved to the Features home (systems/features.js).
-  }
-  out.push(prefRow('enhancedCombatVisuals', 'Enhanced combat visuals',
-    'How a magically concealed enemy is drawn. Classic Daggerfall and Daggerfall Unity hide it '
-    + 'completely - an imp that casts Chameleon on itself vanishes, and still takes your hits. On, a '
-    + 'chameleoned enemy shimmers at low opacity, a shadow-spell enemy is a dark silhouette, and a hit '
-    + 'on an unseen enemy flashes it for a moment - an invisible one included, the one thing this shows that the classic draw never does. Otherwise invisibility still hides it. Nothing about '
-    + 'the rules changes: what the enemy can do, and what can hit it, are classic. Off keeps the 1:1 draw.'));
+  // FT2-FT8 (2026-09-14): every switch this category held moved to the
+  // FEATURES home (systems/features.js) - one list, every enhanceable
+  // feature, each row wearing its kind. The category stays on the
+  // settings rail (a rail with a hole in it teaches the player the hole
+  // is permanent) as a POINTER to the home, and keeps the outdoors test
+  // door, which is a test door and not a switch.
+  const out = [featuresPointerRow()];
   if (!pause) out.push(outdoorsTestRow());
   return out;
+}
+
+/** FT8: the Enhanced category's one row - where its switches went. */
+function featuresPointerRow() {
+  const row = el('div', 'row moved');
+  const main = el('button', 'row-main');
+  main.append(kindTags(KIND_ORDER));
+  main.append(el('div', 'row-name', 'The port\u2019s own switches'));
+  main.append(el('div', 'row-note', 'Every enhanceable feature is on the Features page - one list, each row labelled Enhanced, Mod Authored or DFU Classic.'));
+  main.onclick = goFeatures;
+  row.append(main);
+  const ctl = el('div', 'ctl');
+  const b = el('button', 'act rowact', 'Features \u203a');
+  b.onclick = goFeatures;
+  ctl.append(b);
+  row.append(ctl);
+  return row;
 }
 
 /** The CONTROLS category's port rows: the touch layer's knobs, only

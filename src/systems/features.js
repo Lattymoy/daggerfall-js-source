@@ -170,6 +170,25 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'cloudQuality', tiers: Object.freeze([['default', 'Default'], ['lo', 'Low'], ['hi', 'High']]) }),
   }),
+  // FT8 (2026-09-14): ENHANCED COMBAT VISUALS (ECV1) - what the enhanced
+  // skin DRAWS for a concealed foe; the rules are DFU's either way. The
+  // last row of the Enhanced category of Settings, which is a pointer
+  // here now. Read once per frame by every foe host through
+  // combatVisualsOn (systems/combatVisuals.js; `?combatvisuals=off` the
+  // kill door), so a press takes effect at once.
+  Object.freeze({
+    id: 'enhanced-combat-visuals',
+    title: 'Enhanced combat visuals',
+    note: 'How a magically concealed enemy is drawn. Classic Daggerfall and Daggerfall Unity hide it '
+      + 'completely - an imp that casts Chameleon on itself vanishes, and still takes your hits. On, a '
+      + 'chameleoned enemy shimmers at low opacity, a shadow-spell enemy is a dark silhouette, and a hit '
+      + 'on an unseen enemy flashes it for a moment - an invisible one included, the one thing this shows that the classic draw never does. '
+      + 'Otherwise invisibility still hides it. Nothing about the rules changes: what the enemy can do, and what can hit it, are classic. '
+      + 'Off keeps the 1:1 draw.',
+    effect: 'Takes effect at once.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'enhancedCombatVisuals' }),
+  }),
 ]);
 
 /** The row whose control is this store's key, or null. The settings
