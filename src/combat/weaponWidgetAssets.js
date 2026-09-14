@@ -21,7 +21,7 @@
 // (the classic frame at double size).
 
 import { readUnityBundle } from '../formats/unityBundle.js';
-import { toColor32Order } from '../formats/color32Order.js';
+import { toColor32 } from '../formats/color32Order.js';   // WW3: the ORDER *and* the shape the upload path reads - `{ colors }`, never a decoded PNG's `{ data }`
 import { decodePng } from '../systems/textureReplacement.js';
 import { MATERIAL_NAMES } from '../systems/itemInfo.js';   // MetalTypes' names, Iron..Daedric
 import { WEAPON_MATERIALS } from '../characters/weapons.js';
@@ -104,17 +104,30 @@ export async function weaponWidgetBundle() {
   return _bundle;
 }
 
-/** One texture by name - `{ width, height, data }` RGBA in the port's
- *  color32 (bottom-up) order, the order renderer.uploadTexture takes -
+/** One texture by name - `{ width, height, colors }` RGBA in the port's
+ *  color32 (bottom-up) order, the SHAPE renderer.uploadTexture reads -
  *  or null when neither the bundle nor a loose PNG carries it. Cached
- *  per name, misses included. */
+ *  per name, misses included.
+ *
+ *  WW3 (2026-09-14, Mac's live crash: `TypeError: can't access property
+ *  "buffer"` out of `asBytes`, from `uploadTexture`, from this chunk):
+ *  this door answered `toColor32Order`'s `{ width, height, data }` and
+ *  weaponWidget.js handed it straight to `uploadTexture`, which reads
+ *  `color32.colors` - undefined, and `asBytes` threw on the first frame
+ *  a player's attached bundle actually carried. The order was right and
+ *  the shape was not, and `formats/color32Order.js` says so in the open:
+ *  `toColor32` is the same conversion "handed back in the shape the
+ *  upload path reads". This door takes it. (The seasons door converts
+ *  with `toColor32Order` and re-wraps at its two upload sites instead -
+ *  the divergence that made this easy to get wrong; it is live and
+ *  pinned, and left alone here.) */
 export function weaponWidgetImage(name) {
   if (!_images.has(name)) {
     _images.set(name, (async () => {
       const b = await weaponWidgetBundle();
       const tex = b?.bundle?.textures?.find((t) => t.name === name);
       if (tex) {
-        try { return toColor32Order(tex.rgba()); } catch (e) { console.warn(`[weapon widget] ${name} would not decode:`, e?.message ?? e); }
+        try { return toColor32(tex.rgba()); } catch (e) { console.warn(`[weapon widget] ${name} would not decode:`, e?.message ?? e); }
       }
       if (!_load) return null;
       const loose = _names.find((n) => isPng(n) && n.slice(n.lastIndexOf('/') + 1).replace(/\.png$/i, '') === name);
@@ -122,7 +135,7 @@ export function weaponWidgetImage(name) {
       try {
         const bytes = await _load(loose);
         if (!bytes || !bytes.byteLength) return null;
-        return toColor32Order(await decodePng(bytes));
+        return toColor32(await decodePng(bytes));
       } catch (e) {
         console.warn(`[weapon widget] ${loose} would not decode:`, e?.message ?? e);
         return null;
