@@ -3,11 +3,12 @@
 // HT1 shipped the mod 1:1 with 19 pins and a green gate. This audit read
 // the four MonoBehaviours' IL again method by method against the two
 // modules and the five hosts, and the pins again against the laws they
-// claim to hold. Eleven findings, all paid; each one has a pin here that
+// claim to hold. TWELVE findings, all paid; each one has a pin here that
 // FAILS on the code as HT1 shipped it, because a fix nobody can break
-// again is the only kind worth making.
+// again is the only kind worth making. The twelfth was found by a pin in
+// this file, written to certify a fix for another - pins pay twice.
 //
-// The eleven, in the order the record tells them
+// The twelve, in the order the record tells them
 // (bible/01-Overview/Audit-66.md):
 //
 //   F1  the dropped light sat half a torch too low
@@ -23,6 +24,8 @@
 //   F10 a range multiplied by a brightness, through a dep no host passed
 //   F11 the transition sweep sat below the modal return, so the street's
 //       torches burned in the player's ear all through a shop visit
+//   F12 a floating-origin recenter moved a burning foe's flame and left
+//       its quad where the world used to be
 //
 // ...and, beside them, the pins HT1 wrote that a mutation would have
 // survived: the masked bow arm, the burning loop's kind gate, the
