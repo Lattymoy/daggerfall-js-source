@@ -117,7 +117,7 @@ test('FT0: Features is on every rail and both dispatch tables, and the pane is t
   assert.match(menu, /function kindTags\(kinds\) \{[\s\S]*?for \(const k of KIND_ORDER\) if \(kinds\.includes\(k\)\)/, 'labels in KIND_ORDER, whatever order the row lists them');
   // modRow was lifted out of paneMods, which still draws through it - one row, two homes
   assert.match(menu, /^function modRow\(vendor, key, def, \{ name = null, note = null, home = false \} = \{\}\) \{/m);
-  assert.match(menu, /for \(const \[key, def\] of Object\.entries\(mod\.keys\)\) mc\.append\(modRow\(vendor, key, def\)\);/, 'the Mods pane draws the same row');
+  assert.match(menu, /for \(const \[key, def\] of Object\.entries\(mod\.keys\)\) put\(mc, modRow\(vendor, key, def\)\);/, 'the Mods pane draws the same row (FT13: and nothing for a switch that lives on the home)');
   assert.match(menu, /let featureKind = null;/, 'the chip is per-mount state like the rest');
 });
 

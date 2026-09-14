@@ -82,12 +82,11 @@
     /* THE DOOR: the home face's own stage - centered, boxless, the
        wordmark over a rule, one thing to press. */
     .door { min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 24px 118px; text-align: center; }
-    /* BR2: the wordmark IS the logo now. It carries its own gold rule and
-       red stone, so the page's rule under it went with the type it used to
-       part. width/height are the asset's, so the door does not jump while
-       it loads; the name lives in alt, where it is still text. */
-    .wordmark { margin: 0 0 22px; line-height: 0; }
-    .wordmark img { display: block; width: min(88vw, 520px); height: auto; margin: 0 auto; }
+    /* BR3 (Mac, 2026-09-14: "revert the logo to the original Daggerfall
+       Enhanced text"): the wordmark is TYPE again - one word over a tracked
+       sub-line, over the page's own rule - and the page carries no image. */
+    .wordmark { font-size: clamp(64px, 12vw, 112px); line-height: 1; }
+    .wordmark small { display: block; font-family: 'Pixelify Five', 'Pixelify Sans', monospace; font-size: 16px; letter-spacing: 0.5em; text-indent: 0.5em; text-transform: uppercase; color: #7d7460; margin-top: 10px; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
     .dek { max-width: 46ch; margin: 0 auto 24px; }
     .gate { max-width: 54ch; margin: 0 auto 26px; color: #a89f88; font-size: 15px; }
     .gate b { color: #d8cfae; font-weight: 400; }
@@ -96,9 +95,9 @@
 
     /* THE KO-FI MARK (U64). Top right of the door, the ONE thing above
        the wordmark - a small plaque with a CUP drawn in box-shadow
-       pixels beside the word. BR2 put the one raster this page carries
-       in the wordmark and nowhere else; a nine-pixel cup drawn in CSS is
-       cheaper than an image request either way. The cup is
+       pixels beside the word, because an <img> would be the page's only
+       raster and a raster is what this site does not carry (BR3: the
+       wordmark is type again, so the law is whole). The cup is
        nine pixels: a body, a lip, a handle and a curl of steam that is
        simply two more pixels; at 3px a piece it reads at a glance and it
        is the same square pixel as everything else on the page. */
@@ -194,7 +193,8 @@
     <a class="kofi" href="https://ko-fi.com/dfjs" rel="noopener">
       <i class="cup" aria-hidden="true"></i>Support on Ko-fi
     </a>
-    <h1 class="wordmark"><img src="./brand/daggerfall-enhanced.webp" width="800" height="507" alt="Daggerfall Enhanced" /></h1>
+    <h1 class="wordmark">Daggerfall<small>Enhanced</small></h1>
+    <div class="rule"><i class="gem"></i></div>
     <p class="dek">An open-source reimplementation of The Elder Scrolls II: Daggerfall. The rules intact, the renderer built from scratch, on desktop or phone with nothing to install.</p>
     <p class="gate">You need <b>your own copy</b> of Daggerfall, free since 2009. It stays on your device: nothing is uploaded, and there is no account.</p>
     <div class="doorplaques">

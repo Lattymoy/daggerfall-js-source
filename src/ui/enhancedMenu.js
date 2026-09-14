@@ -434,7 +434,7 @@ function paneNew(body) {
   const opts = el('div', 'card');
   opts.append(el('h3', null, 'Where you wake up'));
   for (const key of ['Startup/StartInDungeon', 'Startup/StartCellX', 'Startup/StartCellY']) {
-    opts.append(settingRow(key, { compact: true }));
+    put(opts, settingRow(key, { compact: true }));
   }
   body.append(opts);
 }
@@ -736,11 +736,11 @@ function paneQuickSettings(pane) {
   // rows flat read as a wall; the dividers give the scroll a spine
   // without bringing back the chip strip this pane exists to shed.
   for (const cat of CATEGORIES) {
-    const liveKeys = keysOf(cat.id).filter((key) => tierOf(key) === 'live');
+    const liveKeys = paneKeys(cat.id).filter((key) => tierOf(key) === 'live');   // FT13: the moved keys are not here
     if (!liveKeys.length) continue;
     any = true;
     list.append(pxDivider(cat.title));
-    for (const key of liveKeys) list.append(settingRow(key));
+    for (const key of liveKeys) put(list, settingRow(key));
   }
   // SO1: and the port's own rows that take effect without a reload,
   // under the categories they live in on the main menu
@@ -885,10 +885,13 @@ let _eff = null;
 const effective = () => (_eff ??= effectiveSettings());
 
 function settingRow(key, { compact = false, home = false } = {}) {
-  // FT1: a key whose switch lives on the FEATURES home is drawn here as
-  // a pointer, never as a second switch - one home per idea. The row
-  // stays (the category map is total; a key that vanished from its
-  // category would read as a key that vanished) and says where it went.
+  // FT1: a key whose switch lives on the FEATURES home is never drawn
+  // here as a second switch - one home per idea. FT13 (Mac, 2026-09-14:
+  // "Remove the now moved settings options that are now in our new
+  // Features pane"): nor as a pointer - the row is NOT drawn at all
+  // (movedRow answers null, and every list filters the key out before
+  // it counts). The category map stays total (settingsMap's law); what
+  // the pane SHOWS of it is the keys that still live here.
   if (!home) {
     const moved = featureForControl('settings', key);
     if (moved) return movedRow(moved);
@@ -958,32 +961,19 @@ function settingRow(key, { compact = false, home = false } = {}) {
 /** FT1: the settings row of a key that lives on the Features home -
  *  its labels, its name, and a walk to the home from either the face
  *  or the control. */
-function movedRow(f) {
-  const row = el('div', 'row moved');
-  const main = el('button', 'row-main');
-  main.append(kindTags(f.kinds));
-  main.append(el('div', 'row-name', f.title));
-  main.append(el('div', 'row-note', 'On the Features page.'));
-  main.onclick = goFeatures;
-  row.append(main);
-  const ctl = el('div', 'ctl');
-  const b = el('button', 'act rowact', 'Features \u203a');
-  b.onclick = goFeatures;
-  ctl.append(b);
-  row.append(ctl);
-  return row;
-}
+/** FT13: a key whose switch lives on the Features home draws NOTHING on
+ *  the settings pane, the Mods page or the pause door - not a pointer
+ *  (FT1's pointer row is gone: Mac, 2026-09-14, "Remove
+ *  the now moved settings options that are now in our new Features
+ *  pane"). Every seam that draws a row asks the registry and answers
+ *  null through here; every caller appends only what it is handed. */
+function movedRow(_f) { return null; }
+/** FT13: the keys of a category that still LIVE on the settings pane -
+ *  the moved ones are the home's and are neither drawn nor counted. */
+const paneKeys = (catId) => keysOf(catId).filter((key) => !featureForControl('settings', key));
+/** Append what a row builder handed back, or nothing (FT13). */
+const put = (parent, row) => { if (row) parent.append(row); };
 
-/** FT1: the walk to the Features home from wherever a moved row is
- *  drawn - the boot door's rail, or the pause door's system rail. */
-function goFeatures() {
-  if (mode === 'pause') {
-    discardControlsStaging();
-    sysSec = 'features'; confirming = null; sheetOpen = false; pickedKey = null; render();
-  } else {
-    go('features');
-  }
-}
 
 /** Write through the real store and persist, exactly as the shipped
  *  screen does. setValue drops an override that equals the default
@@ -1216,7 +1206,7 @@ function portRowsControls() {
   out.push(prefRow('touchFullscreen', 'Fullscreen on touch',
     'The first touch asks the browser for fullscreen and a landscape lock. Where the browser will not '
     + '(Safari on iPhone), add the game to the home screen instead - it opens fullscreen from there.'));
-  return out;
+  return out.filter(Boolean);   // FT13: a pref that lives on the home draws nothing
 }
 
 /** The INTERFACE category's port rows: the interface style, the HUD's
@@ -1228,7 +1218,7 @@ function portRowsInterface({ pause = false } = {}) {
   out.push(prefRow('showFps', 'FPS counter',
     'Frames a second in the top-right corner, with the frame\u2019s milliseconds and the slowest frame of the '
     + 'last second. Takes effect at once. ?fps in the address bar forces it on for a probe.'));
-  return out;
+  return out.filter(Boolean);   // FT13
 }
 
 /** Every port-own row of a category, or none. */
@@ -1261,7 +1251,7 @@ function tierGroup(catId, tier, title, blurb, keys) {
   if (open) {
     const body = el('div', 'group-body');
     body.append(el('p', 'note', blurb));
-    for (const key of keys) body.append(settingRow(key));
+    for (const key of keys) put(body, settingRow(key));
     g.append(body);
   }
   return g;
@@ -1270,9 +1260,9 @@ function tierGroup(catId, tier, title, blurb, keys) {
 /** A category's rows, in order: the port's own, the live store keys
  *  flat, then the two folded tiers. */
 function categoryRows(catId) {
-  const keys = keysOf(catId);
+  const keys = paneKeys(catId);   // FT13: the moved keys are the home's
   const out = [...portRows(catId)];
-  for (const key of keys) if (tierOf(key) === 'live') out.push(settingRow(key));
+  for (const key of keys) if (tierOf(key) === 'live') { const r = settingRow(key); if (r) out.push(r); }
   for (const [tier, title, blurb] of TIER_GROUPS) {
     const ks = keys.filter((k) => tierOf(k) === tier);
     if (ks.length) out.push(tierGroup(catId, tier, title, blurb, ks));
@@ -1281,7 +1271,7 @@ function categoryRows(catId) {
 }
 
 /** What the sub-rail counts: the rows that DO something here. */
-const liveCount = (catId) => portRows(catId).length + keysOf(catId).filter((k) => tierOf(k) === 'live').length;
+const liveCount = (catId) => portRows(catId).length + paneKeys(catId).filter((k) => tierOf(k) === 'live').length;   // FT13: what is drawn
 
 /** The Morrowind assets card, on the Mods page (MW-IMPORT, MW-D8, MWA1). */
 function morrowindCard() {
@@ -1453,7 +1443,7 @@ function paneMods(body) {
   for (const [vendor, mod] of Object.entries(MOD_SETTINGS)) {
     const mc = el('div', 'card');
     mc.append(el('h3', null, `${mod.title} by ${mod.author}`));   // the creator's name in the title (Mac, 2026-09-08)
-    for (const [key, def] of Object.entries(mod.keys)) mc.append(modRow(vendor, key, def));
+    for (const [key, def] of Object.entries(mod.keys)) put(mc, modRow(vendor, key, def));   // FT13: a mod's Enabled that lives on the home is not drawn here
     mc.append(el('p', 'meta', 'Takes effect when the world next loads.'));
     body.append(mc);
   }
@@ -1463,7 +1453,7 @@ function paneMods(body) {
   c.append(el('h3', null, "DFU's mod switches"));
   for (const key of ['Enhancements/LypyL_ModSystem', 'Enhancements/AssetInjection',
     'Enhancements/CompressModdedTextures', 'Experimental/CustomBooksImport']) {
-    c.append(settingRow(key));
+    put(c, settingRow(key));
   }
   body.append(c);
 }

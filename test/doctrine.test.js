@@ -190,26 +190,6 @@ const PUBLIC_ALLOWLIST = new Map([
   ['vendor/dynamic-skies/Textures/CdMThunder.png', "THIRD-PARTY - Dynamic Skies 2.3.4 (BadLuckBurt, carademono), carried on the authors' permission; PROVENANCE OPEN, Mac's ruling pending - see vendor/dynamic-skies/README.md"],
   ['vendor/dynamic-skies/Textures/VanillaStars.png', "THIRD-PARTY - Dynamic Skies 2.3.4 (BadLuckBurt, carademono), carried on the authors' permission; PROVENANCE OPEN, Mac's ruling pending - see vendor/dynamic-skies/README.md"],
   ['vendor/dynamic-skies/Textures/VanillaStarsTwinkleMask.png', "THIRD-PARTY - Dynamic Skies 2.3.4 (BadLuckBurt, carademono), carried on the authors' permission; PROVENANCE OPEN, Mac's ruling pending - see vendor/dynamic-skies/README.md"],
-  // THE WORDMARK (BR2, 2026-09-13). The first row here that is neither
-  // ours nor a third party's mod: it is the PRODUCT'S OWN MARK, supplied
-  // by Mac with the instruction to put it on the site, and it is
-  // Daggerfall's classic logo lettering with ENHANCED set beneath it.
-  // THE ANSWER TO THIS LIST'S QUESTION IS NOT "OURS", and writing that
-  // would be the exact failure the list exists to prevent. The classic
-  // logo is in ARENA2 too - the title screen draws it - so lettering
-  // that looks like it CANNOT be cleared by inspection the way a
-  // generated head turnaround can. What IS settled is the other half of
-  // the doctrine: this is a MARK, not a render of game content. No
-  // dungeon, no sprite, no frame of play, nothing a player could use in
-  // place of owning the game - which is what "a render of game data is
-  // game data" is written to keep out of a public tree, and the reason
-  // the U60c screenshots went and this did not follow them back in.
-  // The site's credits already say this project is not affiliated with
-  // or endorsed by Bethesda or ZeniMax. Recorded rather than waved
-  // through, FLAGGED FOR MAC, and if he rules the other way it is one
-  // file and one <img> - redrawn lettering drops in without touching
-  // anything else.
-  ['public/brand/daggerfall-enhanced.webp', "THE PRODUCT'S MARK - supplied by Mac for the landing page (BR2 2026-09-13); a WORDMARK, not a render of game content. PROVENANCE OF THE LETTERFORMS OPEN, Mac's ruling pending - the classic logo is also in ARENA2, so this row records the question rather than claiming the pixels are ours"],
 ]);
 
 test('doctrine: nothing ships out of public/ that is not provably ours', () => {
