@@ -204,3 +204,61 @@ restamped: the per-file grep that let a second, partial site pass is a
 per-site count now, and the Bob channel pin gained its idle half - the
 slight stride inside the 0.1 bound, and none at all with BobWhileIdle
 off.
+
+## WW3 - THE TEXTURE DOOR'S SHAPE (2026-09-14, Mac's live crash)
+
+Mac attached his copy of the mod on daggerfalljs.dev and the page died:
+
+```
+CRASH / unhandled rejection
+TypeError: can't access property "buffer", l is undefined
+  k@renderer.js              <- asBytes
+  uploadTexture@renderer.js
+  ...@weaponRig-*.js         <- the widget's texture load
+```
+
+**The root cause is a SHAPE, one word wide.** `weaponWidgetImage`
+converted with `toColor32Order`, which answers the port's bottom-up
+texel ORDER in a decoded PNG's `{ width, height, data }`, and
+`weaponWidget.js` handed that straight to `renderer.uploadTexture`,
+which reads `color32.colors`. Undefined; `asBytes` died on `.buffer`
+three frames down, naming neither the texture nor the cure. The order
+was right the whole time and the shape never was.
+
+`formats/color32Order.js` had written this exact trap down before it
+happened: `toColor32` is the same conversion "handed back in the shape
+the upload path reads", and its doc says a decoded PNG's `{ data }` "is
+NOT that shape - `color32.colors` would be `undefined` and `asBytes`
+would throw on the first swapped record". The door takes `toColor32`
+now, in both its arms (the bundle's texture and the loose PNG).
+
+**Why no pin caught it.** WW1 shipped the door and pinned the MISS -
+`weaponWidgetImage(...)` answering null with nothing attached - and
+never once landed an image, so the door's answer never reached an
+upload in a test. The art is ARENA2-derived and not in the repository,
+which is what made the miss the easy thing to pin. `test/ww3_widget
+texture.test.js` closes it by EXECUTION: a loose PNG registered through
+the real door, decoded through the real `decodePng` (its two browser
+globals stubbed), converted by the real door and handed to the real
+`Renderer.uploadTexture` on the audit39 gl stub - the whole path the
+crash took - asserting the bytes that reach `texImage2D` are the
+picture bottom-up. The old shape through the same call is pinned to
+throw, so the regression cannot return quietly.
+
+**Two things beside the fix, both about why it reached a player.**
+The load's `catch (() => {})` swallowed everything - a silent door is
+how a shape fault ships - and now warns by name, as the rig's own art
+and spell loads next door already did. And the upload path names the
+fault: `color32Bytes` throws with the key, what it got and the cure in
+the sentence, where a `TypeError` inside a helper said nothing. The
+behaviour is unchanged (it threw before, it throws now); only the
+console is.
+
+**The divergence that made this easy to get wrong, recorded rather
+than changed:** the seasons door (`systems/seasonsIliacBayAssets.js`)
+converts with `toColor32Order` and re-wraps at its TWO upload sites
+(`colors: img.data`, world.js and exterior.js), where M-TEX
+(`systems/textureReplacement.js`) converts with `toColor32` at the
+door, which is the H4 law ("into the port's color32 contract at the
+door, never at the upload sites"). Both work. The widget now follows
+M-TEX. Folding seasons onto the same door is a slice of its own.

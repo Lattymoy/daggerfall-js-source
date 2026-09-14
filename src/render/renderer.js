@@ -648,6 +648,22 @@ export function asBytes(view) {
   return new Uint8Array(view.buffer, view.byteOffset, view.byteLength);
 }
 
+/** WW3 (2026-09-14, Mac's live crash): the upload path's ONE contract,
+ *  said out loud. Every image that reaches the GL here is in the port's
+ *  color32 shape - `{ width, height, colors }` (formats/color32Order.js
+ *  toColor32) - and a door that hands a decoded PNG's `{ width, height,
+ *  data }` instead used to die three frames down inside `asBytes` with
+ *  `can't access property "buffer"`, naming neither the caller nor the
+ *  texture. It throws HERE now, with the key and the cure in the
+ *  sentence; the behaviour is unchanged (it threw before and it throws
+ *  now), only what the console says. */
+export function color32Bytes(color32, where) {
+  if (!color32?.colors) {
+    throw new Error(`${where}: the image carries no \`colors\` (got ${color32 ? `{ ${Object.keys(color32).join(', ')} }` : String(color32)}) - a decoded PNG's { width, height, data } crosses toColor32 (formats/color32Order.js) on the way in`);
+  }
+  return asBytes(color32.colors);
+}
+
 /** The two clear colours: the sky behind an exterior frame, and
  *  CameraClearManager's black behind an interior one. */
 export const SKY_CLEAR = Object.freeze([0.53, 0.7, 0.92, 1.0]);
@@ -1868,7 +1884,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       // whole buffer from zero. Nothing did that wrongly today; it is a
       // trap that would have gone unnoticed because the pin watching it
       // shared the same blind spot.
-      gl.RGBA, gl.UNSIGNED_BYTE, asBytes(color32.colors)
+      gl.RGBA, gl.UNSIGNED_BYTE, color32Bytes(color32, `uploadTexture(${archive}, ${record})`)   // WW3: the shape's own error, not a TypeError three frames down
     );
     const { wrap, filter } = textureParams(gl, opts);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrap);
@@ -2459,7 +2475,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
     gl.texImage2D(
       gl.TEXTURE_2D, 0, gl.RGBA, color32.width, color32.height, 0,
-      gl.RGBA, gl.UNSIGNED_BYTE, asBytes(color32.colors)   // AUDIT 19 F7: the view, not its buffer
+      gl.RGBA, gl.UNSIGNED_BYTE, color32Bytes(color32, `uploadEmissionTexture(${archive}, ${record})`)   // AUDIT 19 F7: the view, not its buffer; WW3: named when the shape is wrong
     );
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
