@@ -5,8 +5,10 @@ pane toggles into one universal place to toggle enhanceable features
 ... smaller dungeons should be a genuine enhanced feature that we can
 build on instead of being hidden in the settings menu ... go one by
 one, ensure proper detail and development and then organize everything
-under one roof." Decided the same day: ONE home on the menu rail, and
-every selection lives on exactly one of three tabs:
+under one roof." Decided the same day: ONE home on the menu rail - ONE LIST, not
+tabs (Mac, 2026-09-14): every row wears exactly one of three
+colour-coded labels, and a filter row at the top shows all of them or
+one kind:
 
 - **Enhanced** - built in house (the port's own departures).
 - **Mod Authored** - the mods ported 1:1 so far, under their authors' names.
@@ -29,7 +31,7 @@ Three stores back these rows and all three stay where they are:
 
 The roof is the PRESENTATION: one declared registry that says, per
 feature, its tab, its store and key, its classic side and when it
-takes effect. The tabs render from the registry. The settings pane's
+takes effect. The list renders from the registry; the labels and the filter come from its kind. The settings pane's
 `enhanced` category (empty in `settingsMap.js`; its rows are hand-built
 in `enhancedMenu.js` `portRowsEnhanced`) and the `Mods` rail section
 (`paneMods`) are what the home replaces, one row at a time.
@@ -51,7 +53,7 @@ finding and the move.
 | `cloudQuality` | Cloud quality | default | open |
 | `enhancedWater` | Enhanced water | on | open |
 | `enhancedCombatVisuals` | Enhanced combat visuals | on | open |
-| `mwArms` | (no switch - a load/unload button under Morrowind data) | off | open. Needs a real switch on the tab |
+| `mwArms` | (no switch - a load/unload button under Morrowind data) | off | open. Needs a real switch on the list |
 | `hudScale`, `showFps`, `textScale`, `skin`, `touch*`, `online*` | scattered | - | NOT features. Settings, and they stay in Settings |
 
 ### Mod Authored (mod settings, `modSettings.js`) - today on the Mods rail section
@@ -65,7 +67,7 @@ finding and the move.
 | `pcaao` | Physical Combat And Armor Overhaul 1.44 | Kirk.O | Enabled + 7 | open |
 | `unleveledLoot` | Unleveled Loot 1.1.2 | Ralzar | Enabled + 10 | open |
 | `windmills-kamer` | Windmills | Kamer | none | open. Vendored with permission, no switch - decide whether it gets one |
-| `raum-book`, `silkscreen-five` | a book, a font | - | none | not features; data. Stay off the tab |
+| `raum-book`, `silkscreen-five` | a book, a font | - | none | not features; data. Stay off the list |
 
 ### DFU Classic (DFU settings, `settings.js`) - today under Settings > Game
 
@@ -88,13 +90,13 @@ Video/GUI keys that are features rather than settings.
 | `Enhancements/GuildQuestListBox` | - | False | live | open |
 | `Video/RandomDungeonTextures` | Dungeon Wall Style | - | live | open |
 | `Experimental/TerrainDistance` | - | 3 | live | open. See `landViewDistance` |
-| `Enhancements/EnhancedCombatAI` | - | True | UNAVAILABLE | open. Ledger A: the port runs the classic AI only. Stored True, runs False. Decide: honest row on the tab, or off it |
+| `Enhancements/EnhancedCombatAI` | - | True | UNAVAILABLE | open. Ledger A: the port runs the classic AI only. Stored True, runs False. Decide: honest row on the list, or off it |
 | `Enhancements/AdvancedClimbing` | - | False | UNAVAILABLE | open. Ledger A, same shape |
 | `Experimental/CustomBooksImport` | - | True | unavailable | open |
 | `Enhancements/LypyL_GameConsole`, `LypyL_ModSystem`, `AssetInjection`, `CompressModdedTextures`, `Experimental/AssetCacheThreshold`, `TerrainHeightmapPixelError` | - | - | stored | NOT features. DFU's mod-system and cache plumbing; stay in Settings > Data & Mods |
 
 ## Slices
 
-- **FT0** - the home: the rail section, the three tabs, the registry and its pins. Empty tabs are allowed (the rail-hole law: a section with no engine still has a home). Not started.
+- **FT0** - the home: the rail section, the one list with its three labels and the filter row, the registry and its pins. An empty list is allowed (the rail-hole law: a section with no engine still has a home). Not started.
 - **FT1** - Smaller Dungeons. Not started.
 - One slice per open row after that, in the order Mac picks.
