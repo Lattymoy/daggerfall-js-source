@@ -168,9 +168,12 @@ test('MWFIX: the classic sprite path is the ONLY path, and fpsWeapon never hears
   // now fail: an arm branch with no `return` (both composite, a weapon
   // sprite pasted over a pair of hands), and a sprite draw hoisted above
   // the branch.
+  // WW1: Weapon Widget's clone stands between - it draws in the sprite's
+  // place while its switch is on and returns; off, the sprite draws as
+  // it always has. The arm still returns first, so the two never both draw.
   assert.match(rig,
-    /if \(fpArm\.active\(\)\) \{ fpArm\.draw\(c\); return; \}\s*const art = c && artFor\(playerWeapon\.weapon\);/,
-    'an inactive arm falls STRAIGHT THROUGH to the sprite, and an active one returns so the two never both draw');
+    /if \(fpArm\.active\(\)\) \{ fpArm\.draw\(c\); return; \}\s*if \(widgetOn\(\) && c && widget\.draw\(renderer, c\)\) return;\s*const art = c && artFor\(playerWeapon\.weapon\);/,
+    'an inactive arm falls STRAIGHT THROUGH to the clone-or-sprite, and an active one returns so the two never both draw');
   // and the branch must name a module the file actually imports, or it is
   // a literal that satisfies a regex and does nothing.
   assert.match(rig, /import \{ fpArm(?:, [\w$, ]+)? \} from '\.\/fpArm\.js';/,

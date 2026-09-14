@@ -450,6 +450,7 @@ export class PlayerWeapon {
         onInflictPoison: onPoison ? (att, tgt, pt) => onPoison(foe, pt) : null,
       });
       results.push({ foe, damage });
+      this.onAttackResult?.({ foe, damage });   // WW1: OnAttackDamageCalculated's one consumer, the weapon widget's recoil
     };
     for (const foe of foes) {
       if (foe.dead || !foe.entity) continue;

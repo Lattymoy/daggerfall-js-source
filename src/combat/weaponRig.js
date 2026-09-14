@@ -47,6 +47,12 @@ import { objectAabb, rayAabb } from '../player/activate.js';   // AUDIT 63 F37: 
 import { SOUND } from '../systems/soundClips.js';
 import { equipSoundFor } from '../characters/weapons.js';   // F023: GetEquipSound
 import { setMidScreenText } from '../ui/midScreenText.js';   // AUDIT 64 F34: FPSWeapon.cs:365's mid-screen line
+import { createWeaponWidget } from './weaponWidget.js';   // WW1: Weapon Widget's FPSWeaponClone, beside the machine
+import { modSetting } from '../systems/modSettings.js';   // WW1: its Enabled
+import { takeFrameLook } from '../player/lookFilter.js';   // WW1: the frame's look for the widget's inertia
+import { cursorActive } from '../player/pointerLock.js';   // WW1: PlayerMouseLook.cursorActive
+import { liveStat } from '../systems/statMods.js';   // WW1: the widget's speed ratio
+import { walkSpeed } from '../player/motor.js';   // WW1: GetBaseSpeed's walk arm
 
 /**
  * TR2: THE ARMS-BUILD OPTS, ONE HOME. The pause card and the Test
@@ -117,7 +123,7 @@ export async function autoBuildArms(entity, { wanted = () => getPref('mwArms'), 
  *                     pass console is retired: every call site hands
  *                     over a real one - hudText.add
  *                     (dungeonContext.js:2151), townTalk.say
- *                     (exterior.js:1308, world.js:2479) and
+ *                     (exterior.js:1308, world.js:2480) and
  *                     worldModes' own interior sink (worldModes.js:371,
  *                     which warns to console only where a host mounts
  *                     no townTalk at all), so the empty default below
@@ -126,8 +132,32 @@ export async function autoBuildArms(entity, { wanted = () => getPref('mwArms'), 
  *                     (hosts without casting omit it),
  * }
  */
-export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, entity, camera = null, say = () => {}, spellArmed = () => false, bindWorn = true, activateHeld = () => false }) {   // AUDIT 28 W12: HasAction(ActivateCenterObject) - the drawn bow's un-draw
+export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, entity, camera = null, say = () => {}, spellArmed = () => false, bindWorn = true, activateHeld = () => false, envHit = null, missEffect = null, collider = null }) {   // AUDIT 28 W12: HasAction(ActivateCenterObject) - the drawn bow's un-draw; WW1: the widget's recoil doors
   const playerWeapon = new PlayerWeapon({});
+  // WW1: WEAPON WIDGET. One clone per rig, as DFU has one FPSWeaponClone
+  // beside its one FPSWeapon; it reads the machine every frame and draws
+  // in the sprite's place while its Enabled is on. The recoil's word on
+  // each struck foe arrives through playerWeapon.onAttackResult - the
+  // OnAttackDamageCalculated seam the port had no consumer for until now.
+  // CheckForEnvDamage (FPSWeaponClone IL 0x1730): a cast along the look
+  // within the weapon's reach; here the host's collider from the eye
+  // (the mod's starts at the body's centre - the same ray, a head's
+  // height higher).
+  const envCast = envHit ?? ((reach) => {
+    const col = collider?.();
+    const cam = camera?.();
+    if (!col?.raycast || !cam?.pos) return null;
+    const yaw = cam.yaw || 0, pitch = cam.pitch || 0;
+    const fwd = [Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch)];
+    const d = col.raycast(cam.pos, fwd, reach);
+    if (!Number.isFinite(d)) return null;
+    return [cam.pos[0] + fwd[0] * d, cam.pos[1] + fwd[1] * d, cam.pos[2] + fwd[2] * d];
+  });
+  const widget = createWeaponWidget({ audio, envHit: envCast, missEffect });
+  const widgetOn = () => modSetting('weapon-widget', 'Enabled');
+  playerWeapon.onAttackResult = ({ foe, damage }) => widget.onAttackDamageCalculated({ damage, parrySounds: !!foe?.basics?.parrySounds, pos: foe?.pos ?? foe?.ai?.pos ?? null, isEnemy: true });
+  let _activatePrev = false, _activateStarted = false;
+  let _lastEye = null;   // WW1: PlayerMotor.MoveDirection, read off the eye's motion between frames, in the body's own frame
   // MW-D8. `camera` is REQUIRED for the Morrowind arm and there is no
   // fallback: a host that does not pass one gets the classic sprite and
   // a named reason, never a plausible arm in the wrong place. An arm
@@ -505,6 +535,35 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // The rule's own reason was the hit frame - it never argued the
       // arrow should leave before the string does.
       const evs = playerWeapon.update(dt);
+      // WW1: the clone's LateUpdate, after the original's frame advance -
+      // the same order DFU's LateUpdate has against FPSWeapon's Update.
+      if (widgetOn()) {
+        const cam = camera?.() ?? null;
+        const mv = cam?.move ?? {};
+        const held = activateHeld();
+        _activateStarted = held && !_activatePrev; _activatePrev = held;
+        const spd = entity ? liveStat(entity, 'speed') : 50;
+        const base = Number.isFinite(mv.baseSpeed) ? mv.baseSpeed : walkSpeed(spd);
+        const ratio = Number.isFinite(mv.speedRatio) ? mv.speedRatio : (Number.isFinite(mv.speedField) && base > 0 ? mv.speedField / base : 1);
+        let localVel = [0, 0, 0];
+        if (cam?.pos && _lastEye && dt > 0) {
+          const v = [(cam.pos[0] - _lastEye[0]) / dt, (cam.pos[1] - _lastEye[1]) / dt, (cam.pos[2] - _lastEye[2]) / dt];
+          const yaw = cam.yaw || 0, sy = Math.sin(yaw), cy = Math.cos(yaw);
+          localVel = [v[0] * cy - v[2] * sy, v[1], v[0] * sy + v[2] * cy];   // InverseTransformVector: right, up, forward
+        }
+        _lastEye = cam?.pos ? [cam.pos[0], cam.pos[1], cam.pos[2]] : null;
+        widget.lateUpdate(dt, {
+          renderer, canvas: c, entity, art: c ? artFor(playerWeapon.weapon) : null, weapon: playerWeapon.weapon,
+          weaponType: weaponTypeForItem(playerWeapon.weapon), material: playerWeapon.weapon?.material ?? -1,
+          machine: playerWeapon.machine, sheathed: playerWeapon.sheathed, usingRightHand: playerWeapon.usingRightHand,
+          equipCountdown: entity?.equipCountdown ?? 0, shown: shown(), castPlaying: fpsSpellCasting.isPlayingAnim, spellArmed: spellArmed(),
+          thirdPerson: fpArm.thirdActive(), reach: WEAPON_REACH,
+          motion: { grounded: mv.grounded !== false, crouching: !!mv.crouching, riding: !!mv.riding, standing: !!mv.standing,
+            speedRatio: ratio, baseSpeed: base, localVel },
+          look: takeFrameLook(), swingHeld: _held, cursorActive: cursorActive(), camera: () => (cam ? { ...cam, forward: [Math.sin(cam.yaw || 0) * Math.cos(cam.pitch || 0), Math.sin(cam.pitch || 0), Math.cos(cam.yaw || 0) * Math.cos(cam.pitch || 0)] } : null),
+          activateStarted: () => _activateStarted,
+        });
+      }
       // MW-D42c (Mac: "in third person, clicking instantly triggers the
       // attack, unlike the changes we made to first person. Ensure
       // parity"): THE ARM IS ANIMATING IN EITHER VIEW. active() is the
@@ -560,6 +619,12 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     /** The overlay draw, LAST in the host's frame (composites over the
      *  scene; any HUD draws over it). Runs the bow guard first. */
     draw({ paralyzed = false } = {}) {
+      try { return drawInner({ paralyzed }); } finally { widget.endOfFrame(); }   // WW1: WaitForEndOfFrame resumes after the frame's draw
+    },
+    widget,   // WW1: the clone, for the pins
+  };
+  function drawInner({ paralyzed = false } = {}) {
+    {
       bindArm();    // AUDIT 39: the DRAWING rig owns it too - the arm renders through it
       bowArrowGuard();
       const c = cv();
@@ -592,11 +657,20 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // and the classic sprite draws exactly as it always has. The return
       // is load-bearing: without it both composite and the player sees a
       // weapon sprite pasted over a pair of hands.
+      // WW1: the widget's channels reach the Morrowind arms as a screen
+      // transform over their composite (Bob, Inertia, Step); the Offset
+      // module's slide is the sprite's own sheathe and stays with it.
+      fpArm.setScreenTransform(widgetOn() ? (base) => widget.armsTransform(base) : null);
+      // WW1: THE CLONE DRAWS IN THE SPRITE'S PLACE. DFU's clone hides the
+      // original every frame and draws itself in OnGUI; here the one
+      // draw seam picks the clone while its switch is on - after the arm
+      // (which returns), before the sprite (which the clone stands in for).
       if (fpArm.active()) { fpArm.draw(c); return; }
+      if (widgetOn() && c && widget.draw(renderer, c)) return;
       const art = c && artFor(playerWeapon.weapon);
       if (art) drawFpsWeapon(renderer, c, art, playerWeapon.machine.state, playerWeapon.machine.frame);
-    },
-  };
+    }
+  }
 }
 
 /**

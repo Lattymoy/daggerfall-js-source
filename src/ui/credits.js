@@ -86,6 +86,16 @@ export const CREDITS = Object.freeze({
       link: 'https://github.com/magicono43/DFU-Mod_Physical-Combat-And-Armor-Overhaul',
     }),
     Object.freeze({
+      title: 'Weapon Widget',
+      version: '1.6',
+      author: 'RedRoryOTheGlen',
+      what: 'The first-person weapon sprite handled anew (WW1): swings that wind up from the idle pose and recover, the sprite in the hand you swing with, a sheathe that slides it off the screen, a walking bob, look inertia, stepped movement, double-size idle textures off the mod\u2019s own bundle, and a recoil on a hit, a parry or a miss - the same channels moving the Morrowind arms.',
+      terms: 'Ported 1:1 from the shipped bundle, read off its compiled script method by method; see vendor/weapon-widget/README.md for the permission record.',
+      contact: 'RedRoryOTheGlen, through the Nexus page (daggerfallunity mod 860)',
+      vendor: Object.freeze(['weapon-widget']),
+      link: 'https://www.nexusmods.com/daggerfallunity/mods/860',
+    }),
+    Object.freeze({
       title: 'Windmills of Daggerfall',
       version: '2.0',
       author: 'Kamer',
