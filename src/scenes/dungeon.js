@@ -121,7 +121,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // below, after this context; null falls to standing defaults.
       motorState: () => (_motorRef ? { eyeLevel: _motorRef.eye[1] - _motorRef.pos[1], capsule: _motorRef.height } : null),
       // MAC1 J: this host's canvas, for the pause door's relock. The
-      // context owns none of its own (dungeonContext.js:5281), so each
+      // context owns none of its own (dungeonContext.js:5282), so each
       // dungeon host hands its own in and the resume gesture carries
       // the pointer back with it (ui/pauseDoor.js:164-181).
       relock: () => requestLook(canvas) });
@@ -926,7 +926,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       requestAnimationFrame(frame);
       return;   // U2b/U3: hold gameplay, keep the loop (AUDIT 18 F5: the overlay's own clock still runs - DFU's RestWindow.Update ticks on realtime under timeScale 0)
     }
-    ctx.drawFoes(dt, canvas, proj, view, cam.pos, player.pos, anyMove(moveHeld(keys)), player.height, !!player.isSneaking, { forward: player.moveForward || 0, strafe: player.moveStrafe || 0, running: !!player.isRunning, speed: player.moveSpeed || 0, grounded: player.grounded !== false, jumping: !!player.jumping, swimming: !!player.swimming, levitating: !!player.levitating }, player.bobOffset ? player.bobOffset[1] : 0, !!player.crouching);   // ROAD-H H1b: PlayerMotor.IsCrouching rides in beside the live height - the archer's 0.05 dip (DaggerfallMissile.cs:583-585) is the latched STATE, not a 0.9 capsule   // moveHeld: the collision-trigger input gate (verbatim)   // internally gated (S4b: missiles fire without foes)   // C8 E1+E2: rigged class enemies, classic senses + pursuit
+    ctx.drawFoes(dt, canvas, proj, view, cam.pos, player.pos, anyMove(moveHeld(keys)), player.height, !!player.isSneaking, { forward: player.moveForward || 0, strafe: player.moveStrafe || 0, running: !!player.isRunning, speed: player.moveSpeed || 0, grounded: player.grounded !== false, jumping: !!player.jumping, swimming: !!player.swimming, levitating: !!player.levitating, crouching: !!player.crouching, riding: !!player.riding, standing: !!player.standing, speedField: player.speed || 0 }, player.bobOffset ? player.bobOffset[1] : 0, !!player.crouching);   // ROAD-H H1b: PlayerMotor.IsCrouching rides in beside the live height - the archer's 0.05 dip (DaggerfallMissile.cs:583-585) is the latched STATE, not a 0.9 capsule   // moveHeld: the collision-trigger input gate (verbatim)   // internally gated (S4b: missiles fire without foes)   // C8 E1+E2: rigged class enemies, classic senses + pursuit
     renderer.drawWater(ctx.waterQuads, WATER_COLOR,
       renderer.textures.get(`${waterArchive}_0`),
       (now / 1000) * WATER_SCROLL_TILES_PER_SEC);

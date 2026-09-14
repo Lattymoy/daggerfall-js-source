@@ -8,7 +8,7 @@
 //
 //   - `ui/spellMakerWindow.js` declared "RECORDED DEPARTURES" and closed
 //     the first with "Ledger A carries the widget row already
-//     (Port-Ledger.md:737)". Section A carried no widget row at all -
+//     (Port-Ledger.md:738)". Section A carried no widget row at all -
 //     the AUDIT 17m / F7 shape, a claim of approval standing in for one -
 //     and :686 was the stat-colour NIT row by then. The row exists now
 //     (Ledger A, TB1) and the sites cite it BY NAME.
@@ -544,7 +544,7 @@ const SOURCE_CITES = [
   // the line goes red at the citation instead of at a reader.
   ['src/characters/playerEntity.js', /exterior\.js:(\d+) and applyHeadlessChargen/,
     EX, /createChargenFlow\(fetchBytes\)\.then/],
-  ['src/combat/weaponRig.js', /\(exterior\.js:(\d+), world\.js:2478\)/,
+  ['src/combat/weaponRig.js', /\(exterior\.js:(\d+), world\.js:2479\)/,
     EX, /^ {4}say: \(l\) => townTalk\.say\(l\),$/],
   ['src/scenes/dungeonContext.js', /exterior\.js:(\d+) and worldModes\.js:\d+/,
     EX, /onPlayerArrowHitFoe: \(m, t\) => playerArrowHitFoe\(/],
@@ -625,17 +625,17 @@ const SOURCE_CITES = [
     EX, /if \(townTalk\.overlay\?\.isRestWindow\) townTalk\.closeOverlay\?\.\(\);/],
   ['test/overlayreentry.test.js', /exterior\.js:(\d+), world\.js:2258/,
     EX, /if \(townTalk\.overlay\?\.isRestWindow\) townTalk\.closeOverlay\?\.\(\);/],
-  ['test/probehygiene.test.js', /keydown ladder, exterior\.js:(\d+)-2278/,
+  ['test/probehygiene.test.js', /keydown ladder, exterior\.js:(\d+)-2280/,
     EX, /addEventListener\('keydown', \(e\) => \{/],
   ['test/probehygiene.test.js', /exterior\.js:(\d+)-1158 and world\.js's copy/,
     EX, /if \(!playerEntity\.chargenDone && params\.has\('class'\)\) \{/],
-  ['test/roade_up_seam.test.js', /exterior\.js:(\d+)\/:2371/,
+  ['test/roade_up_seam.test.js', /exterior\.js:(\d+)\/:2373/,
     EX, /if \(act === 'Rest'\) \{ e\.preventDefault\(\); hudCtx\.toggleRest\(\); return; \}/],
-  ['test/roade_up_seam.test.js', /exterior\.js:2363\/:(\d+)/,
+  ['test/roade_up_seam.test.js', /exterior\.js:2365\/:(\d+)/,
     EX, /if \(act === 'Escape' && pauseDoorReady\(\)\) \{ hudCtx\.togglePause\(\); return; \}/],
   ['bible/01-Overview/Audit-58.md', /`src\/scenes\/exterior\.js:(\d+)` now/, EX, /setDefaultEnchantCtx/],
   ['bible/06-Systems/Systems-Arc.md', /`exterior\.js:(\d+)`, `world\.js:812`/, EX, /playerTicker\.advance\(60\);/],
-  ['bible/09-Testing/Testing.md', /keydown ladder \(exterior\.js:(\d+)-2278\)/,
+  ['bible/09-Testing/Testing.md', /keydown ladder \(exterior\.js:(\d+)-2280\)/,
     EX, /addEventListener\('keydown', \(e\) => \{/],
   ['bible/10-UI/UI-Arc.md', /exterior\.js:(\d+)\. It is the only window/, EX, /createSpellbookWindow\(\{/],
   ['bible/10-UI/Settings-Screen-Spec.md', /`exterior\.js:(\d+)`, `dungeon\.js:834`/, EX, /^ {6}fieldOfView\(\),$/],
@@ -672,9 +672,9 @@ const SOURCE_CITES = [
     EX, /inTownOutside: _isPlayerInTownStrict\(\),/],
   ['bible/01-Overview/Port-Ledger.md', /\(`_isPlayerInTownStrict`, `exterior\.js:(\d+)`\)/,
     EX, /const _isPlayerInTownStrict = \(\) => _musicInLocationRect\(\)/],
-  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)-3607` return on modal frames/,
+  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)-3609` return on modal frames/,
     EX, /if \(modes\.frame\(dt, now\)\) \{/],
-  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:3582-(\d+)` return on modal frames/,
+  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:3584-(\d+)` return on modal frames/,
     EX, /^ {4}\}$/],
   ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)`\), and `ambientEffects\.js:118-145`/,
     EX, /ambience\.update\(dt, \{ playerPos: eye, inside: false \}\)/],
@@ -859,8 +859,8 @@ test('CD6: every `src/` line Port-Status cites is the line it describes', () => 
 //
 // The G1 lane re-resolved ~180 `:NNN` cites after moving code in four
 // hosts, and the pass advanced only the LEADING number of every
-// multi-number citation: `cityGuards.js:743-693`, `world.js:5579-5553`,
-// `worldModes.js:1150 against :1056`. Forty of them came out as ranges
+// multi-number citation: `cityGuards.js:743-693`, `world.js:5581-5555`,
+// `worldModes.js:1152 against :1056`. Forty of them came out as ranges
 // that cannot exist, and every pin in this file was green throughout,
 // because each one resolves a single number a human chose to list.
 //

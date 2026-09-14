@@ -259,6 +259,7 @@ export const FEATURES = Object.freeze([
   modFeature('meanerMonsters', 'Takes effect on monsters spawned after the switch.'),
   modFeature('pcaao', 'Takes effect at once.'),
   modFeature('unleveledLoot', 'Takes effect on the next roll.'),
+  modFeature('weapon-widget', 'Takes effect at once.'),   // WW1: the widget reads its switches every frame
   // FT10 (2026-09-14): DFU'S OWN DUNGEON ENHANCEMENTS - three of the
   // Enhancements section's switches, each read by the port at the point
   // of use as DFU reads it. DFU Classic: Daggerfall Unity's departures
