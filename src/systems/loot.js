@@ -30,7 +30,7 @@ import { goldStack } from './inventory.js';
 import { ITEM_TEMPLATES, mintCondition, GROUP_TEMPLATE_INDICES, templateByIndex, itemBaseValue } from './itemTemplates.js';   // F103: SetItem writes the value with the name
 import { CLOTHING_DYES } from '../characters/dyes.js';
 import { legacyEnchantmentValue } from './enchantments.js';   // G4: ItemBuilder's closing value sum
-import { validAffixList } from './lootRarity.js';   // LR4: an affix record off the wire is checked, not just typed
+import { validItemField, validItemFields, itemFieldsOfKind, ITEM_STR_MAX } from './itemFields.js';   // RF5: the one declaration of every item field's kind (LR4's affix check rides it)
 import { createRandomBook, BOOK_TEMPLATE } from './books.js';   // IM1: CreateRandomBook whole (A2: + its book-file price)
 import { potionRecipeByKey, POTION_DEFAULT_TEXTURE_RECORD } from './potions.js';   // F103: PotionRecipeKey's price side effect; AUDIT 63 F20: and its texture-record half
 import { RANDOM_TREASURE_ARCHIVE, RANDOM_TREASURE_ICONS, DROP_ICON_ARCHIVES, DROP_ICON_IDXS } from './lootDataTables.js';   // G5: DaggerfallLootDataTables.cs, its own file again
@@ -469,7 +469,7 @@ export const LOOT_LIST_MAX = 64;
 /** The most fields an item record may carry, the longest string it may
  *  hold, and how deep it may nest (an enchantment list is depth 2). */
 export const LOOT_ITEM_KEYS_MAX = 48;
-export const LOOT_STR_MAX = 128;
+export const LOOT_STR_MAX = ITEM_STR_MAX;   // RF5: the schema's own string bound
 export const LOOT_DEPTH_MAX = 4;
 
 function clampLootValue(v, depth) {
@@ -501,21 +501,24 @@ function clampLootValue(v, depth) {
  *  plain object and says nothing about which is which, so a `enchantments` of "!" survived it - and every reader of
  *  that field (`itemEnchantments`'s filter, the two artifact predicates' some) is guarded only by a truthiness or a
  *  `.length` test, which a string passes. One such item in a chest froze the tab: the throw escapes the frame body,
- *  which has no try, and the loop is never rescheduled. A named field's SHAPE is not open even when the record is. */
-export const LOOT_ARRAY_FIELDS = Object.freeze(['enchantments', 'customEnchantments', 'affixes']);   // LR1: the rarity affix list is read with array methods too
+ *  which has no try, and the loop is never rescheduled. A named field's SHAPE is not open even when the record is.
+ *  RF5: the list is DERIVED from the schema's kinds now (itemFields.js), not carried here by hand - and the check
+ *  below covers every declared field's kind, not the arrays alone. */
+export const LOOT_ARRAY_FIELDS = Object.freeze(itemFieldsOfKind('array'));
 
 /** One item record off the wire, clamped to a copy - or null when it is not one this port could have minted. */
 export function validLootItem(v) {
   if (!v || typeof v !== 'object' || Array.isArray(v)) return null;
-  if (!Number.isInteger(v.templateIndex) || v.templateIndex < 0 || v.templateIndex > 65535) return null;
+  if (v.templateIndex == null || validItemField('templateIndex', v.templateIndex) === undefined) return null;
   if (!templateByIndex(v.templateIndex)) return null;   // AUDIT WORLD6a B1: an item the port has no template for is not an item
-  for (const f of LOOT_ARRAY_FIELDS) if (v[f] != null && !Array.isArray(v[f])) return null;   // B1
   const out = clampLootValue(v, 0);
   if (!out || typeof out !== 'object' || Array.isArray(out)) return null;
-  // ...and the clamp must not have turned one INTO something else on the way (a depth cut drops a field whole,
-  // which is safe; a survivor that is no longer an array is not)
-  for (const f of LOOT_ARRAY_FIELDS) if (out[f] != null && !Array.isArray(out[f])) return null;
-  if (out.affixes != null && !validAffixList(out.affixes)) return null;   // LR4: a forged affix (+1e9 armour, a stat with no attribute, a null) is not an item
+  // RF5: every DECLARED field is its declared kind - the three array fields (B1), the affix list's records (LR4:
+  // a forged affix, +1e9 armour or a stat with no attribute or a null, is not an item), a rarity off the ladder,
+  // a slot past the table, a string where a number goes. A field nobody declared rides the clamp alone. The clamp
+  // ran first, so a depth cut has dropped a field whole (safe) and a non-finite number is gone (the floor below
+  // answers a missing value with the template's own).
+  if (!validItemFields(out)) return null;
   // AUDIT WORLD6a B1: THE PRICE IS NOT THE WIRE'S. A shelf's list lands on every client (WORLD6a) and calculateCost
   // reads `value`, so a peer minted a Daedric dai-katana at `value: 0` onto a shop's shelf and every player in the
   // Bay could buy it for 2 gold, and the room remembered it for thirty days. The value is floored at what the port

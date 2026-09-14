@@ -5493,6 +5493,31 @@ seams, each passing every pin around it:
    the Test Room's "Ride out" is the door to look through on a machine
    that has it. `test/hc1_horsecart.test.js`.
 
+### RF5 - THE ITEM FIELD SCHEMA (2026-09-14, Mac's refactor pass, the fifth)
+
+An item record is an open shape and the knowledge of what each field
+IS lived only in its readers: the wire's validator (`src/systems/loot.js`
+validLootItem) typed a record as "primitives, arrays and plain objects,
+bounded" and carried the exceptions by hand - the three array fields of
+AUDIT WORLD4 B1, LR4's affix check, the templateIndex bounds - so every
+field the port departs from DFU with (LR1's `rarity`, `affixes`,
+`legendary`) was another hand line there, or none and the next frozen
+tab. `src/systems/itemFields.js` now declares every field once - kind
+(int with bounds, number, bool, bounded string, enum, array with an
+element check, object with a record check) - for DFU's own fields
+(the factories', the classic importer's, equip's slot, the repair
+ticket, the quest link) and the port's (rarity's three). The validator
+checks every DECLARED field against it (`validItemFields`), the array
+list is DERIVED from the kinds (`LOOT_ARRAY_FIELDS`), and the string
+bound is the schema's. What is unchanged on purpose: a field nobody
+declared still rides the bounded clamp (refusing it would be a
+behaviour change, not a refactor), a non-finite price is dropped before
+the kinds and floored at the template's (AUDIT WORLD6a B1), and the
+look's six fields on the hello keep their own clamp-not-refuse contract
+in the net leaf (`src/net/wire.js` validLookItem) - pinned as a subset
+of the declaration. Every mint the port has is run under the pin: no
+undeclared key, every value its kind. `test/rf5_itemfields.test.js` (3).
+
 ### RF4 - ONE FEATURE DECLARATION (2026-09-14, Mac's refactor pass, the fourth)
 
 The Features row is the one declaration of the port's own switches -
