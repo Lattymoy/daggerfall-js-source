@@ -35,7 +35,7 @@ test('FT0: three kinds in label order, three stores, and the registry is empty a
   assert.deepEqual(KIND_ORDER, ['enhanced', 'mod', 'classic']);
   assert.deepEqual(KIND_ORDER.map((k) => KINDS[k].label), ['Enhanced', 'Mod Authored', 'DFU Classic'], "Mac's three labels");
   assert.deepEqual(STORES, ['prefs', 'settings', 'mods']);
-  assert.deepEqual(FEATURES, [], 'FT0 ships the home empty; rows move in one slice at a time');
+  assert.deepEqual(FEATURES.map((f) => f.id), ['smaller-dungeons'], 'FT0 shipped the home empty; FT1 moved the first row in (one slice at a time)');
   assert.deepEqual(checkFeatures(FEATURES), []);
 });
 
@@ -98,12 +98,12 @@ test('FT0: Features is on every rail and both dispatch tables, and the pane is t
   }
   assert.match(menu, /\['features', 'Features'\],/, 'the pause system rail (SYSTEM_PANES)');
   assert.equal((menu.match(/features: paneFeatures,/g) ?? []).length, 2, 'both dispatch tables (boot and pause)');
-  assert.match(menu, /import \{ FEATURES, KINDS, KIND_ORDER, filterFeatures, featureCounts \} from '\.\.\/systems\/features\.js';/);
+  assert.match(menu, /import \{ FEATURES, KINDS, KIND_ORDER, filterFeatures, featureCounts, featureForControl \} from '\.\.\/systems\/features\.js';/);
   assert.match(menu, /function paneFeatures\(body\) \{[\s\S]*?featureCounts\(FEATURES\)[\s\S]*?chip\(null, 'All', counts\.all\)[\s\S]*?for \(const k of KIND_ORDER\) chips\.append\(chip\(k, KINDS\[k\]\.label, counts\[k\]\)\)/, 'All then the three kind chips, with counts');
   assert.match(menu, /if \(!FEATURES\.length\) \{\s*body\.append\(empty\('Nothing here yet'/, 'an empty registry says so - the rail-hole law - rather than hiding the section');
   assert.match(menu, /const rows = filterFeatures\(FEATURES, featureKind\);/);
   // the three builders: a row is the row its store already draws, dressed
-  assert.match(menu, /function featureRow\(f\) \{[\s\S]*?c\.tiers \? choiceRow\(c\.key, f\.title, f\.note, c\.tiers\) : prefRow\(c\.key, f\.title, f\.note\)[\s\S]*?settingRow\(c\.key, \{ compact: true \}\)[\s\S]*?modRow\(c\.vendor, c\.key, MOD_SETTINGS\[c\.vendor\]\.keys\[c\.key\], \{ name: f\.title, note: f\.note \}\)/);
+  assert.match(menu, /function featureRow\(f\) \{[\s\S]*?c\.tiers \? choiceRow\(c\.key, f\.title, f\.note, c\.tiers\) : prefRow\(c\.key, f\.title, f\.note\)[\s\S]*?settingRow\(c\.key, \{ compact: true, home: true \}\)[\s\S]*?modRow\(c\.vendor, c\.key, MOD_SETTINGS\[c\.vendor\]\.keys\[c\.key\], \{ name: f\.title, note: f\.note \}\)/);
   assert.match(menu, /main\.prepend\(kindTags\(f\.kinds\)\);/, 'every row wears its labels');
   assert.match(menu, /function kindTags\(kinds\) \{[\s\S]*?for \(const k of KIND_ORDER\) if \(kinds\.includes\(k\)\)/, 'labels in KIND_ORDER, whatever order the row lists them');
   // modRow was lifted out of paneMods, which still draws through it - one row, two homes

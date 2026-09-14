@@ -140,7 +140,7 @@ import { CREDITS } from './credits.js';   // CR1: who made what the port carries
 // dicts, neither of which belongs in a screen that repaints itself.
 import { paneControls, discardControlsStaging, captureArmed } from './enhancedControls.js';
 // FT0: the features home - one list over the three stores, filtered by kind
-import { FEATURES, KINDS, KIND_ORDER, filterFeatures, featureCounts } from '../systems/features.js';
+import { FEATURES, KINDS, KIND_ORDER, filterFeatures, featureCounts, featureForControl } from '../systems/features.js';
 
 // ── THE RAIL ─────────────────────────────────────────────────────
 // Six destinations. Mac's call: the menus get set up now even where
@@ -867,7 +867,15 @@ function helpCard(key) {
 let _eff = null;
 const effective = () => (_eff ??= effectiveSettings());
 
-function settingRow(key, { compact = false } = {}) {
+function settingRow(key, { compact = false, home = false } = {}) {
+  // FT1: a key whose switch lives on the FEATURES home is drawn here as
+  // a pointer, never as a second switch - one home per idea. The row
+  // stays (the category map is total; a key that vanished from its
+  // category would read as a key that vanished) and says where it went.
+  if (!home) {
+    const moved = featureForControl('settings', key);
+    if (moved) return movedRow(moved);
+  }
   const widget = widgetFor(key);
   const [_sec, _k] = key.split('/');
   const raw = effective()[_sec]?.[_k];
@@ -928,6 +936,36 @@ function settingRow(key, { compact = false } = {}) {
   if (!compact) ctl.append(el('span', `tier ${tier}`));
   row.append(ctl);
   return row;
+}
+
+/** FT1: the settings row of a key that lives on the Features home -
+ *  its labels, its name, and a walk to the home from either the face
+ *  or the control. */
+function movedRow(f) {
+  const row = el('div', 'row moved');
+  const main = el('button', 'row-main');
+  main.append(kindTags(f.kinds));
+  main.append(el('div', 'row-name', f.title));
+  main.append(el('div', 'row-note', 'On the Features page.'));
+  main.onclick = goFeatures;
+  row.append(main);
+  const ctl = el('div', 'ctl');
+  const b = el('button', 'act rowact', 'Features \u203a');
+  b.onclick = goFeatures;
+  ctl.append(b);
+  row.append(ctl);
+  return row;
+}
+
+/** FT1: the walk to the Features home from wherever a moved row is
+ *  drawn - the boot door's rail, or the pause door's system rail. */
+function goFeatures() {
+  if (mode === 'pause') {
+    discardControlsStaging();
+    sysSec = 'features'; confirming = null; sheetOpen = false; pickedKey = null; render();
+  } else {
+    go('features');
+  }
 }
 
 /** Write through the real store and persist, exactly as the shipped
@@ -1549,10 +1587,16 @@ function featureRow(f) {
   if (c.store === 'prefs') {
     row = c.tiers ? choiceRow(c.key, f.title, f.note, c.tiers) : prefRow(c.key, f.title, f.note);
   } else if (c.store === 'settings') {
-    row = settingRow(c.key, { compact: true });
+    row = settingRow(c.key, { compact: true, home: true });
     const main = row.querySelector('.row-main');
     main.querySelector('.row-name').textContent = f.title;
     if (f.note) main.append(el('div', 'row-note', f.note));
+    // FT1: the home draws no help sheet, so the face of a switch row
+    // toggles it - the same door prefRow's face is.
+    if (widgetFor(c.key) === 'switch') {
+      const [sec, k] = c.key.split('/');
+      main.onclick = () => write(c.key, stepValue(c.key, effective()[sec]?.[k], 1));
+    }
   } else {
     row = modRow(c.vendor, c.key, MOD_SETTINGS[c.vendor].keys[c.key], { name: f.title, note: f.note });
   }

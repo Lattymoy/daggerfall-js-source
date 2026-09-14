@@ -4995,7 +4995,7 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:5248), so the OUTER host's one rides in.
+          // (dungeonContext.js:5249), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:524 -> the
@@ -8046,7 +8046,7 @@ export function createWorldModes(host) {
      *  has one manager, so the same bit belongs in every rig.
      *
      *  FLAG ONLY, presence-gated, exactly as world.js:4348/:4348 and
-     *  dungeonContext.js:5324/:5328 are: the C# restore sets the
+     *  dungeonContext.js:5322/:5328 are: the C# restore sets the
      *  property and calls no ApplyWeapon, because UpdateHands ends in
      *  ApplyWeapon on the next frame (WeaponManager.cs:699) - the
      *  port's twin is the rig's per-frame syncWorn. */

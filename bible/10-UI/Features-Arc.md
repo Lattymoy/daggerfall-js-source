@@ -91,7 +91,7 @@ Video/GUI keys that are features rather than settings.
 
 | Key | Row today | Default | Tier | Status / notes |
 |---|---|---|---|---|
-| `Experimental/SmallerDungeons` | Smaller Dungeons | False | live | open. **Mac: the first one.** AUDIT 28 W4 ported it 1:1; the slice designs what building on it means, then it moves |
+| `Experimental/SmallerDungeons` | Smaller Dungeons | False | live | **MOVED (FT1, 2026-09-14)** - DFU Classic. Two seam faults fixed first (below). Building on it is the open door: the day the port adds its own arm, the row wears Enhanced too |
 | `Enhancements/EnemyInfighting` | Enemies Fight Each Other | True | live | open |
 | `Enhancements/AlternateRandomEnemySelection` | Varied Dungeon Monsters | False | live | open |
 | `Enhancements/PlayerTorchFromItems` | Torches Light Your Way | False | live | open |
@@ -113,7 +113,7 @@ Video/GUI keys that are features rather than settings.
 ## Slices
 
 - **FT0** - SHIPPED 2026-09-14. The home, empty. Below.
-- **FT1** - Smaller Dungeons. Not started.
+- **FT1** - SHIPPED 2026-09-14. Smaller Dungeons. Below.
 - One slice per open row after that, in the order Mac picks.
 
 ## FT0 - THE HOME (2026-09-14)
@@ -149,3 +149,52 @@ the menu probe) were widened by the one word.
 the settings help sheet (`pickedKey`), which only the Settings pane
 draws; the first settings row to move (Smaller Dungeons) decides what
 that click does on the home. `test/features.test.js`.
+
+## FT1 - SMALLER DUNGEONS (2026-09-14)
+
+**The audit.** `world/smallerDungeons.js` (AUDIT 28 W4) read again
+against MapsFile's four members and its consumers. The 1:1 body stands:
+the gate order, the five-block plus, the raw-MapId seed, the border
+filter, the two verbatim throws, the quest's frozen state. Three of the
+four hosts size the location through `dungeonLocationFor` and the
+fourth (`dungeonContext.js`) is handed the sized one; `exterior.js`
+passes no `online` because it has no online arm. Two faults at the
+seams, both in the dungeon host:
+
+1. **Two enum literals.** The save stamp was `getBool(...) ? 2 : 1` and
+   the load warp compared `=== 2`, two copies of
+   QuestSmallerDungeonsState beside the module that exports it. ONE DFU
+   MEMBER, ONE EXPORT: both are the module's now (`smallerDungeonsStamp`,
+   `needsStartWarp`), the host reads neither the setting nor the enum.
+2. **The stamp recorded the setting where the build differs from it.**
+   DFU stamps the raw setting (SerializablePlayer.cs:224) and warps when
+   the setting at load differs (:462-472), which is exact wherever DFU
+   can reach. The port builds a size the setting did not choose in two
+   places - online every dungeon is full (AUDIT WORLD34 B2), and a
+   quest's frozen state overrides the setting - so a save made online
+   with the setting on, loaded offline, stood the player in a block the
+   plus does not have and never warped. The clone now says it is small
+   (`dungeon.smaller`), the stamp is the BUILD, the warp compares the
+   saved layout with the built one. A recorded departure: Ledger A,
+   THE SMALLER-DUNGEON SAVE STAMP IS THE BUILD. Mac has not been asked
+   about this one specifically; it is the slice's "some settings might
+   need fixing" and it is a one-line revert if he would rather keep
+   DFU's wrong answer.
+
+**The move.** The registry's first row: DFU Classic, over
+`Experimental/SmallerDungeons`, with the law in plain words and its
+"takes effect" line. The settings pane keeps the key in its category -
+the map is total, and a key that vanished from Game would read as a key
+that vanished - but draws it as a POINTER (`movedRow`: the labels, the
+name, "On the Features page.", a walk to the home from face and control
+alike, `goFeatures` knowing both doors' rails). One home per idea: the
+switch operates nowhere but the home. On the home a settings switch's
+face toggles it (there is no help sheet there to open), as prefRow's
+face does.
+
+**Not done, by name.** The standalone dev host `scenes/dungeon.js:102`
+still reads the raw location - a probe door, sized by nothing, as the
+struck Ledger C row already says. Building on the feature (Mac's
+"genuine enhanced feature we can build on") is a design decision, not
+taken here: a size tier, a shape other than the plus, or a seed the
+player picks would each earn the Enhanced label. `test/ft1_smallerdungeons.test.js`.

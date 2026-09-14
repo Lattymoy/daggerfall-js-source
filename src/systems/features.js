@@ -44,7 +44,33 @@ export const STORES = Object.freeze(['prefs', 'settings', 'mods']);
  *             | { store: 'settings', key: 'Section/Key' }
  *             | { store: 'mods',     vendor, key } }
  *  `effect` is the "takes effect when" line, if the switch has one. */
-export const FEATURES = Object.freeze([]);
+export const FEATURES = Object.freeze([
+  // FT1 (2026-09-14): SMALLER DUNGEONS - DFU's Experimental/SmallerDungeons,
+  // ported 1:1 at AUDIT 28 W4 (world/smallerDungeons.js). Mac's first
+  // pick: "smaller dungeons should be a genuine enhanced feature that we
+  // can build on instead of being hidden in the settings menu". DFU
+  // Classic today; it wears Enhanced too the day the port builds on it.
+  Object.freeze({
+    id: 'smaller-dungeons',
+    title: 'Smaller dungeons',
+    note: 'Daggerfall\u2019s dungeons are enormous. On, any dungeon over five blocks is rebuilt as a plus of five - '
+      + 'a random central block with four border blocks around it, drawn from its own block list, the same five every visit. '
+      + 'Main-story dungeons never shrink, a dungeon a quest sent you to keeps the size it had when the quest began, '
+      + 'and online every dungeon is full size.',
+    effect: 'Takes effect on the next dungeon you enter. A save made at the other size puts you at the dungeon\u2019s start.',
+    kinds: Object.freeze(['classic']),
+    control: Object.freeze({ store: 'settings', key: 'Experimental/SmallerDungeons' }),
+  }),
+]);
+
+/** The row whose control is this store's key, or null. The settings
+ *  pane asks it for every key it draws: a key that lives on the home
+ *  is drawn there as a pointer, not as a second switch (one home per
+ *  idea). */
+export function featureForControl(store, key, vendor = null) {
+  return FEATURES.find((f) => f.control.store === store && f.control.key === key
+    && (store !== 'mods' || f.control.vendor === vendor)) ?? null;
+}
 
 /** Does this store hold this key? The three stores answer differently
  *  and this is the one place that knows how. */
