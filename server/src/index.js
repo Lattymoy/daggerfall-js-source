@@ -105,11 +105,11 @@
 // WORLD5 (2026-09-13): THE SHARED CLOCK is a function of wall time (relay.js
 // sharedClassicMinutes) and needs no frame; the welcome carries the relay's
 // own `now` so a client corrects for its machine's clock. Nothing else here.
-import { roomOf, parseClient, inRange, poseGate, chatGate, tokenGate, rosterFor, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY } from './relay.js';
+import { roomOf, parseClient, inRange, poseGate, chatGate, tokenGate, rosterFor, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S } from './relay.js';
 
 /** AUDIT WORLD34 D4: the relay names itself in /health - the deploy is by hand (`npx wrangler deploy`), nothing in
  *  CI does it, and until now nothing said which relay was live. Bump it with every relay-changing slice. */
-export const RELAY_VERSION = 'world63';   // AUDIT WORLD6b: a cell's hit funnel is its owner's, its foes fan ranged, budgeted at the door and bounded
+export const RELAY_VERSION = 'world64';   // AUDIT WORLD6b: a cell's hit funnel is its owner's, its foes fan ranged, budgeted at the door and bounded
 
 const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*' } });
 
@@ -139,6 +139,7 @@ export class Room {
     this._roomFoesIn = null;   // AUDIT WORLD6b A3: a cell's foes INGRESS budget, spent at the door before the parse
     // AUDIT WORLD6b A1/A2: the hit funnel (AUDIT WORLD2 A6) is the DESTINATION socket's own bucket (`hbucket` on its attachment), not the room's
     this._roomActs = null;   // WORLD3: the room's action-frame budget (a door, a lever, a platform moved)
+    this._roomHits = null;   // AUDIT WORLD6b-iii(c) C3: the room's hit BYTES budget (a grant is a frame's worth of items)
     this._roomActBytes = null;   // AUDIT WORLD3 A1: and its BYTE budget - the frame times its listeners, as the foes fan has
     this._dead = new Set();      // AUDIT WORLD34 D1: the sockets this object closed itself, whose leave the runtime will not deliver - reaped on the way out of every door
     this._gone = new WeakSet();  // AUDIT WORLD34 D1: and the ones whose leave has been said, so a runtime that does deliver a close says it once
@@ -460,7 +461,14 @@ export class Room {
       const funnel = tokenGate(tb.hbucket ?? null, now, HIT_ROOM_HZ_MAX);
       this._setAttach(tws, { ...tb, hbucket: funnel.bucket });
       if (!funnel.pass) return;
-      this._send(tws, JSON.stringify({ t: 'hit', id: a.id, data: m.data }));
+      const out = JSON.stringify({ t: 'hit', id: a.id, data: m.data });
+      // AUDIT WORLD6b-iii(c) C3: the room's hit bytes - a grant carries a corpse's pile, so the arm counts bytes as the
+      // foes and the acts do; over the budget the frame is dropped, nobody struck (three sockets pushed 720 KiB/s of
+      // grants into one destination through an arm that counted frames alone)
+      const bytes = byteGate(this._roomHits, now, out.length, HIT_ROOM_BYTES_PER_S);
+      this._roomHits = bytes.bucket;
+      if (!bytes.pass) return;
+      this._send(tws, out);
       return;
     }
     if (m.t === 'act') {
