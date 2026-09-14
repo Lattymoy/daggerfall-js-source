@@ -132,9 +132,9 @@ test('audit26 F122: the paperdoll armorMod is Decreased MINUS Increased, the com
 
   // ...and the window actually feeds it, which it never did before.
   assert.match(src('src/ui/nativeInventory.js'),
-    /const armorMod = enchantArmorDisplayMod\(this\.hooks\.entity\);/);
+    /const armorMod = enchantArmorDisplayMod\(this\.hooks\.entity\);/);   // (LR4: the loot-rarity armour affix rides the per-part label, armorLabelValue's second argument)
   assert.match(src('src/ui/nativeInventory.js'),
-    /armorLabelValue\(av\[i\] \?\? 100, armorMod\)/);
+    /armorLabelValue\(av\[i\] \?\? 100, armorMod \+ affixArmorDisplay\(this\.hooks\.entity, i\)\)/);   // LR4: the loot-rarity armour affix rides the label, per part
 });
 
 // ---------------------------------------------------------------

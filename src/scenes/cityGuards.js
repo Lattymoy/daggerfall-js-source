@@ -85,7 +85,8 @@ import { enemyControllerHeight, idleSpriteHeight } from '../characters/enemyAnch
 import { tallySkill, SKILLS } from '../systems/skills.js';
 import { WEAPON_REACH } from '../combat/playerWeapon.js';
 import { rayPersonDistance } from './townTalk.js';
-import { mintCorpseMarker, playBodyFall, corpseLootTargets, takeCorpseLoot, sayEnemyDied, raiseEnemyDeath } from './corpseMarker.js';
+import { mintCorpseMarker, playBodyFall, playRareDrop, corpseLootTargets, takeCorpseLoot, sayEnemyDied, raiseEnemyDeath } from './corpseMarker.js';
+import { rollCorpseLoot } from '../systems/lootRarity.js';   // LR1: the item ladder over the watch's list
 import { bloodCentre } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
 import { EnemySoundSource, acuteHearingMultiplier } from '../characters/enemySounds.js';   // AUDIT 24 (wave 41): EnemySounds.cs, one home
 import { placeFoeEnv, entityOccupancy } from './questFoeHost.js';   // D9: FoeSpawner.PlaceFoeFreely's env, over THIS pool's collider
@@ -148,7 +149,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
   // with no Y test. The default keeps the two street pools as they were.
   playerInside = false,
   // ROAD-G G1: GameManager.MakeEnemiesHostile over the HOST's whole
-  // area, the encounter pool's dep to the line (exteriorFoes.js:98).
+  // area, the encounter pool's dep to the line (exteriorFoes.js:99).
   // DaggerfallEntityBehaviour.cs:255-258 fires it when a NON-hostile
   // enemy is struck by the player, and Knight_CityWatch is an
   // EnemyClass - one of the two EntityTypes that walk (:250). This
@@ -238,6 +239,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       // the dungeon host's two spawn branches (hostCombat.equipEnemy).
       equipEnemy(entity, GUARD_MOBILE_TYPE, playerEntity.level);
       addEnemyLootExtras(entity.items, basics, rand);   // AUDIT 24 (wave 43): EnemyEntity.cs:388-397
+      rollCorpseLoot(entity, basics, { luck: liveStat(playerEntity, 'luck') });   // LR1: a guard is a class enemy - its entity level is its tier; LR4: its kit stays DFU's
       const archive = basics.maleTexture;
       const tex = await getTexture(archive);
       // AUDIT-39r: a sweep crossed this spawn - the town it was posted
@@ -574,7 +576,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
    *  which arrowFlight.js calls unconditionally (arrowFlight.js:229)
    *  because `dealDamage` is inside its own `dmg > 0` fork - so the
    *  door is PUBLIC (the returned surface below), exactly as the
-   *  encounter pool's is (exteriorFoes.js:1539). */
+   *  encounter pool's is (exteriorFoes.js:1542). */
   function handleAttackFromPlayer(g, playerFeet = null) {
     if (!g?.ai) return;
     if (!g.ai.isHostile) makeAreaHostile?.();
@@ -675,6 +677,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
         c.pixelKey = g.corpsePixelKey = _corpsePixel;
         corpseBatches.push(c);
         playBodyFall(audio, c.pos);
+        playRareDrop(audio, c.pos, g.entity.items);   // LR3
       }).catch(() => {});
       return;
     }

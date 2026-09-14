@@ -38,6 +38,7 @@ import { floorLanding } from '../player/enterExit.js';
 import { billboardSize } from '../world/rmbFlats.js';
 import { addItem, isGoldPieces, addGoldPieces } from '../systems/inventory.js';
 import { SOUND } from '../systems/soundClips.js';
+import { lootRarityOn, bestRarity, RARITIES } from '../systems/lootRarity.js';   // LR3: the drop chime asks the body's best tier
 import { CORPSE_ACTIVATION_DISTANCE, RAY_DISTANCE } from '../player/activate.js';
 import { enemyDisplayName } from '../characters/enemyBasics.js';
 
@@ -128,6 +129,19 @@ export function sayEnemyDied(say, mobileType) {
  *  one), not where the enemy was standing. */
 export function playBodyFall(audio, pos) {
   audio?.play3d?.(SOUND.BodyFall, [pos[0], pos[1], pos[2]], 1, { maxDistance: 16 });
+}
+
+/** LR3 (loot rarity): THE DROP CHIME. A body carrying a Rare or better
+ *  rings the enchanter's chime (SoundClips.MakeItem) at the corpse,
+ *  beside the body fall - the one cue a Diablo player has that a fight
+ *  paid. Silent with the switch off, for Common or Magic, and for an
+ *  empty body. Answers the tier it rang for, or null. */
+export function playRareDrop(audio, pos, items) {
+  if (!lootRarityOn() || !pos) return null;
+  const best = bestRarity(items);
+  if (!best || RARITIES[best].rank < RARITIES.rare.rank) return null;
+  audio?.play3d?.(SOUND.MakeItem, [pos[0], pos[1], pos[2]], 1, { maxDistance: 20 });
+  return best;
 }
 
 /**

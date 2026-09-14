@@ -107,6 +107,13 @@ export const PREF_DEFAULTS = Object.freeze({
   // on for a probe; this is the player's own switch on the Enhanced
   // pane. Off by default - a number over the game is a diagnostic.
   showFps: false,
+  // LR1 (2026-09-14, Mac: "transform things into a diablo style system
+  // with rarity"): LOOT RARITY - the port's own item ladder over
+  // Daggerfall's loot (systems/lootRarity.js). OFF by default and it
+  // stays off by default, as enhancedAI is: it changes the RULES of
+  // what drops, and DFU's loot is the 1:1 law; the online lane forces
+  // it on with every other enhancement (OL1).
+  lootRarity: false,
   // PERF1 (2026-09-11, RookieG via Mac: "its like 45fps on the outside").
   // The two dials on the enhanced outdoors' heaviest layers, so a
   // player whose machine cannot hold the full field can keep the lane.

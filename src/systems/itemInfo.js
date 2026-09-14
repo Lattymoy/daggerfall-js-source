@@ -440,7 +440,7 @@ export function resolveItemName(item) {
  *  is questLetterName's own null answer. */
 export function itemLongName(item, { getQuest = null, differentiatePlantIngredients = true } = {}) {
   let result = resolveItemName(item);
-  if (!itemIsIdentified(item) || item?.artifact) return result;
+  if (!itemIsIdentified(item) || item?.artifact || item?.legendary) return result;   // LR2: a Legendary is named like an artifact - no material prefix
   if (differentiatePlantIngredients) {
     if (item?.group === 'PlantIngredients1' && item.templateIndex < 18) return `${result} (northern)`;
     if (item?.group === 'PlantIngredients2' && item.templateIndex < 18) return `${result} (southern)`;

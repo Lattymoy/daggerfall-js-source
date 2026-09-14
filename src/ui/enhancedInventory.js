@@ -91,7 +91,9 @@ import {
 } from '../systems/inventorySession.js';
 import { entityMaxEncumbrance } from '../combat/formulas.js';   // AUDIT 26: PlayerEntity.MaxEncumbrance, enchantment allowance and all
 import { liveStat } from '../systems/statMods.js';
-import { conditionWord, conditionPercentage, materialName } from '../systems/itemInfo.js';
+import { conditionWord, conditionPercentage, materialName, resolveItemName } from '../systems/itemInfo.js';
+import { itemIsIdentified } from '../systems/tradeModes.js';   // LR4: an unidentified item names no material (ItemHelper's %mat)
+import { rarityAttr, rarityLines } from '../systems/lootRarity.js';   // LR1: the row's tier attribute and the card's lines
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { closeOnOutsideTap } from './enhancedOverlays.js';   // OT1
 import { repaintKeepingScroll } from './domRepaint.js';
@@ -289,11 +291,16 @@ export function itemLine(item, identity = undefined) {
   const t = templateByIndex(item.templateIndex);
   return {
     item,   // MW-D38: the icon door resolves the item itself
-    name: item.name ?? t?.name ?? 'Unknown',
+    // LR1: through ResolveItemName, so an UNIDENTIFIED enchanted item
+    // reads as its bare template here as it does on the classic skin
+    // (ItemHelper.cs:265-292's early return) - the skin showed
+    // `item.name` raw before, which named a magic item before the
+    // Identify spell had. The template stays the fallback.
+    name: resolveItemName(item) || t?.name || 'Unknown',
     weight: itemWeight(item),
     condition: (item.maxCondition ?? 0) > 0 ? conditionPercentage(item) : null,
     word: (item.maxCondition ?? 0) > 0 ? conditionWord(item) : null,
-    material: item.group === 'Armor' || item.group === 'Weapons' ? materialName(item) : null,
+    material: (item.group === 'Armor' || item.group === 'Weapons') && itemIsIdentified(item) ? materialName(item) : null,   // LR4: hidden until identified, as %mat is
     stack: (item.stackCount ?? 1) > 1 ? item.stackCount : null,
     equipped: isEquipped(item),
     broken: isBrokenItem(item),
@@ -1079,6 +1086,7 @@ function itemTile(line) {
 function itemRow(item, from = 'local') {
   const line = itemLine(item, deps.entity);
   const row = el('button', `itemrow${picked === item && side === from ? ' on' : ''}`);
+  { const r = rarityAttr(item); if (r) row.dataset.rarity = r; }   // LR1: the tier colours the name (enhancedStyle's [data-rarity] rules)
   const wasPicked = picked === item && side === from;
   row.append(itemTile(line));
   const mid = el('span', 'itemname');
@@ -1283,8 +1291,12 @@ function detailCol() {
     c.append(fig);
   }
   c.append(el('h3', null, line.name));
+  { const r = rarityAttr(picked); if (r) c.dataset.rarity = r; }   // LR1: the card's heading wears the tier too
   const meta = [line.material, line.stack ? `${line.stack} of them` : null].filter(Boolean).join(' · ');
   if (meta) c.append(el('p', 'meta', meta));
+  // LR1: the tier, then each affix as a line, then the enchantment - or
+  // "Unidentified" until the Identify spell or the guild reads it.
+  { const lines = rarityLines(picked); if (lines.length) { const ul = el('ul', 'rarity'); for (const l of lines) ul.append(el('li', null, l)); c.append(ul); } }
   const dl = el('dl', 'stats');
   const pair = (k, v) => { if (v != null) dl.append(el('dt', null, k), el('dd', null, String(v))); };
   pair('Weight', `${line.weight.toFixed(2)} kg`);
