@@ -69,7 +69,7 @@
 //
 // Not a DFU member: Daggerfall Unity has no multiplayer. Ledger A row.
 import { tabStorage } from '../systems/appStorage.js';   // the tab's own storage - the seam, never the browser's own (a PIN)
-import { WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, validPose, validLook, sanitizeName, sanitizeChat, chatGate, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits } from './wire.js';
+import { WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, sanitizeChat, chatGate, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits } from './wire.js';
 
 export { WORLD_CELL, RANGE_PIXELS, worldRoom };
 
@@ -121,7 +121,8 @@ export function roomKeyFor({ host, mode, mapId = null, regionIndex = -1, locatio
   const id = Number.isFinite(mapId) ? mapId >>> 0 : 0;
   const loc = id > 0 ? `m${id}` : (locationName && regionIndex >= 0 ? `${regionIndex}.${slug(locationName)}` : null);
   if (mode === 'dungeon') return loc ? `dungeon:${loc}` : null;
-  if (mode === 'interior') return loc && buildingKey ? `interior:${loc}.${buildingKey}` : null;   // a door the directory cannot key (0) is no room, not a pool of them
+  const bk = Number.isFinite(buildingKey) ? buildingKey >>> 0 : 0;   // AUDIT WORLD6a B5: unsigned, as the id is - the memory's key (interiorLocationKey) spells it so, and the two must agree by construction
+  if (mode === 'interior') return loc && bk ? `interior:${loc}.${bk}` : null;   // a door the directory cannot key (0) is no room, not a pool of them
   if (host === 'exterior') return loc ? `town:${loc}` : null;
   if (!mapPixel) return null;
   return worldRoom(mapPixel.x, mapPixel.y);
@@ -186,6 +187,9 @@ export const peerSecret = (storage = tabStorage()) => keptToken(storage, 'dagger
  * stamp inside is the handed-in clock's (Date.now() unless told
  * otherwise); nothing outside passes a time in.
  */
+/** OL3: the HUD line while the relay's clock and this machine's disagree by more than a year - the world's time is read uncorrected. */
+export const CLOCK_WARNING = 'this machine\'s clock is more than a year from the world\'s - set it, or the shared time is wrong here';
+
 export class OnlineSession {
   constructor({ url = DEFAULT_SERVER, name = 'Traveller', look = null, id = null, secret = null, presence = true, WebSocketImpl = globalThis.WebSocket, now = () => Date.now() } = {}) {
     this.url = relayUrl(url || DEFAULT_SERVER);   // wss:// anywhere, ws:// on localhost alone; anything else is no relay (A16/E11)
@@ -202,6 +206,9 @@ export class OnlineSession {
     this.host = null;             // WORLD1: the room's host, the relay's word; null until the welcome
     this.onHost = null;           // (id, mine) => void: the host changed
     this.onWorld = null;          // (world) => void: the welcome carried the room's memory, or the host published one after it (AUDIT WORLD34 C1)
+    this.clockOffsetMs = 0;       // WORLD5: the relay's clock minus this machine's, from the welcome - the shared world time is read through it
+    this.clockWarning = null;     // OL3: the welcome's clock was a year off this machine's - said on the HUD line while it stands
+    this.onClock = null;          // WORLD5: (offsetMs) => void - the welcome said the relay's clock
     this.look = look ?? { race: 'Breton', gender: 'male', faceIndex: 0, items: [] };
     this.id = id ?? peerId();
     this._WS = WebSocketImpl;
@@ -230,7 +237,7 @@ export class OnlineSession {
     if (room === this.room && this._ws) return;
     this.leave();
     this.room = room;
-    console.info(`[online] room ${room} - ${isWorldRoom(room) ? 'a shared world' : isChatRoom(room) ? 'a chat channel' : 'presence only'}`);
+    console.info(`[online] room ${room} - ${isWorldRoom(room) ? 'a shared world' : isCellRoom(room) ? 'shared country (each player\'s foes are everyone\'s)' : isChatRoom(room) ? 'a chat channel' : 'presence only'}`);   // WORLD6b: a cell says what it shares
     this._pose = pose ?? this._pose;
     this._closedByUs = false;
     this.terminal = false;
@@ -260,7 +267,7 @@ export class OnlineSession {
     if (!data || typeof data !== 'object' || Array.isArray(data)) return false;
     if (!this.isHost() || !isWorldRoom(this.room) || !this._ws || this.status !== 'open') return false;   // AUDIT WORLD34 D3: the one out-frame without the room's guard said true where the relay kept nothing
     const s = JSON.stringify(final ? { t: 'world', data, final: true } : { t: 'world', data });   // final: the socket's one farewell inside the relay's floor (AUDIT WORLD B5)
-    if (s.length > WORLD_FRAME_MAX) return false;
+    if (s.length > worldFrameMaxFor(this.room)) return false;   // AUDIT WORLD6a B3: a building's memory has its own, smaller cap
     try { this._ws.send(s); this.stats.sent++; this.stats.worlds++; return true; } catch { return false; }
   }
 
@@ -268,7 +275,8 @@ export class OnlineSession {
    *  bucket (a frame over it is kept home rather than struck by the relay), never past FOES_FRAME_MAX. */
   sendFoes(data) {
     if (!data || typeof data !== 'object' || Array.isArray(data)) return false;
-    if (!this.isHost() || !isWorldRoom(this.room) || !this._ws || this.status !== 'open') return false;
+    // WORLD6b: in a cell anyone streams (a foe is its spawner's); in a world room the host alone
+    if (!(isCellRoom(this.room) || (this.isHost() && isWorldRoom(this.room))) || !this._ws || this.status !== 'open') return false;
     const gate = foesGate(this._fbucket, this._now());
     if (!gate.pass) return false;
     const s = JSON.stringify({ t: 'foes', data });
@@ -281,7 +289,11 @@ export class OnlineSession {
   /** WORLD2: a blow on the host's foe out - anyone but the host (the host applies its own), in a world room. */
   sendHit(data) {
     if (!data || typeof data !== 'object' || Array.isArray(data)) return false;
-    if (this.isHost() || !this.host || !isWorldRoom(this.room) || !this._ws || this.status !== 'open') return false;
+    // WORLD6b: in a cell the blow names its owner (`to`, a peer, never me); in a world room it goes to the host, as WORLD2 has it
+    const cell = isCellRoom(this.room);
+    // AUDIT WORLD6b A6: the owner must be a peer I KNOW (the roster's) - a blow to an owner already gone bought the relay's funnel for nothing
+    if (cell ? (!hitOwnerOf(data) || hitOwnerOf(data) === this.id || !this.peers.has(hitOwnerOf(data))) : (this.isHost() || !this.host || !isWorldRoom(this.room))) return false;
+    if (!this._ws || this.status !== 'open') return false;
     const gate = hitGate(this._hbucket, this._now());   // AUDIT WORLD2 A6: HIT_HZ_MAX a second at home - refused to the caller, never dropped by the relay unseen
     if (!gate.pass) return false;
     const s = JSON.stringify({ t: 'hit', data });
@@ -407,6 +419,10 @@ export class OnlineSession {
       }
       for (const id of [...this.peers.keys()]) if (!keep.has(id)) this.peers.delete(id);
       this._setHost(m.host);   // WORLD1: the room's host, and the room's memory when it keeps one
+      if (Number.isFinite(m.now)) {   // WORLD5: the relay's clock - a year off is no clock; OL3: and is SAID, on the console and the HUD line, rather than run uncorrected in silence
+        if (Math.abs(m.now - Date.now()) < 366 * 24 * 3600 * 1000) { this.clockOffsetMs = m.now - Date.now(); this.clockWarning = null; this.onClock?.(this.clockOffsetMs); }
+        else if (!this.clockWarning) { this.clockWarning = CLOCK_WARNING; console.warn(`[online] ${CLOCK_WARNING} (relay ${new Date(m.now).toISOString()}, this machine ${new Date().toISOString()})`); }
+      }
       if (m.world && typeof m.world === 'object' && !Array.isArray(m.world)) this.onWorld?.(m.world);
     } else if (m.t === 'host') {
       this._setHost(m.id);
@@ -415,10 +431,13 @@ export class OnlineSession {
       if (typeof m.id === 'string' && m.id === this.host && m.id !== this.id && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) this.onWorld?.(m.data);
     } else if (m.t === 'foes') {
       // WORLD2: the host's live foes - the room's host's alone (a stale frame from a host that just left is not the world)
-      if (typeof m.id === 'string' && m.id === this.host && m.id !== this.id && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) this.onFoes?.(m.id, m.data);
+      // WORLD6b: in a cell every peer's frame is its own foes; in a world room the host's alone
+      // AUDIT WORLD6b A8/C6: in a cell a frame is a PEER's - one the roster holds; past ROSTER_MAX a stranger's frames stood puppets the prune took back every frame
+      if (typeof m.id === 'string' && (isCellRoom(this.room) ? this.peers.has(m.id) : m.id === this.host) && m.id !== this.id && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) this.onFoes?.(m.id, m.data);
     } else if (m.t === 'hit') {
       // WORLD2: a blow on my foe - mine to apply only while I host
-      if (this.isHost() && typeof m.id === 'string' && m.id !== this.id && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) this.onHit?.(m.id, m.data);
+      // WORLD6b: in a cell a blow is mine when it names me (the relay routed it, and the frame says so); in a world room while I host
+      if ((isCellRoom(this.room) ? hitOwnerOf(m.data) === this.id : this.isHost()) && typeof m.id === 'string' && m.id !== this.id && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) this.onHit?.(m.id, m.data);
     } else if (m.t === 'act') {
       // WORLD3: a door, a lever or a platform moved by another in my world room - never my own back, never outside one
       if (isWorldRoom(this.room) && typeof m.id === 'string' && m.id !== this.id && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) this.onAct?.(m.id, m.data);
@@ -493,7 +512,7 @@ export class OnlineSession {
 
   /** One line for a person, or null when all is well; `label` names the session (AUDIT CHAT B5: the chat's line is this one, not a remake). */
   statusLine(label = 'online') {
-    if (this.status === 'open') return null;
+    if (this.status === 'open') return this.clockWarning ? `${label}: ${this.clockWarning}` : null;   // OL3: an open session with a clock a year off says so
     if (this.terminal || this.status === 'error') return `${label}: ${this.error ?? 'error'}`;
     if (this.status === 'connecting') return `${label}: connecting`;
     if (this._retryAt != null) return `${label}: reconnecting`;

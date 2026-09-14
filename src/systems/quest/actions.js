@@ -2246,6 +2246,14 @@ export class CreateFoe extends ActionTemplate {
     // (Range(0, interval) on the quest's injectable rolls - see _range
     // for the overload and the unconditional draw)
     if (this.lastSpawnTime === 0) this.lastSpawnTime = gameSeconds - this._range(this.spawnInterval);
+    // OL3 (Mac, WORLD1: "time limits on quest ... should be naturally
+    // disabled while online"): the spawn interval is a quest timer too,
+    // and online it stands down with the Clock (WORLD5) - the marker
+    // rides the clock so no interval accrues while the player idles or
+    // is away, and stands up where it stood. A wave already in flight
+    // still lands: the placement below is not a timer.
+    const stoodDown = !!this.parentQuest.questClocksStoodDown?.();
+    if (stoodDown && !this.spawnInProgress) this.lastSpawnTime = gameSeconds;
 
     // Max spawns reached - cleared only by a set/rearm
     if (this.spawnCounter >= this.spawnMaxTimes && this.spawnMaxTimes !== -1) return;
@@ -2258,7 +2266,7 @@ export class CreateFoe extends ActionTemplate {
     }
 
     // A new spawn event - only one can be in flight at a time
-    if (gameSeconds >= this.lastSpawnTime + this.spawnInterval && !this.spawnInProgress) {
+    if (gameSeconds >= this.lastSpawnTime + this.spawnInterval && !this.spawnInProgress && !stoodDown) {
       // the interval is consumed BEFORE the chance roll - a failed
       // roll still waits out a full cycle
       this.lastSpawnTime = gameSeconds;

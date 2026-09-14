@@ -203,14 +203,14 @@ test('AUDIT 58: every player-attack resolver reaches the door on a zero-damage c
   assert.match(dg, /else if \(snd\) audio\.playOneShot\(snd\.sound, 1\.1\);[\s\S]{0,600}handleAttackFromPlayer\(foe, playerFeet\);\n\s*continue;/,
     'dungeonContext: the zero-damage arm enrages before it continues');
   assert.match(src('scenes/exteriorFoes.js'),
-    /parrySounds: !!ENEMY_BASICS\[foe\.mobileType\]\?\.parrySounds[\s\S]{0,600}handleAttackFromPlayer\(foe, playerFeet\);/,
+    /parrySounds: !!ENEMY_BASICS\[foe\.mobileType\]\?\.parrySounds[\s\S]{0,900}handleAttackFromPlayer\(foe, playerFeet\);/,   // AUDIT WORLD6b B10: a puppet's zero blow goes through the door first, the note widened the window
     'exteriorFoes: the same, in its else arm');
   assert.match(src('scenes/cityGuards.js'), /damageGuard\(foe, 0, playerFeet, null\);/,
     'cityGuards: through the damage door, with no knock ray');
   // ...and the pair is a MEMBER now, called from both places in each
   // pool, with the C# line that says why.
   for (const [f, sig] of [['scenes/dungeonContext.js', 'function handleAttackFromPlayer(foe, playerFeet = null, peer = false, peerId = null) {'],   // AUDIT WORLD2 B9: a peer's blow wakes the struck foe alone
-    ['scenes/exteriorFoes.js', 'function handleAttackFromPlayer(f, playerFeet = null) {']]) {
+    ['scenes/exteriorFoes.js', 'function handleAttackFromPlayer(f, playerFeet = null, peer = false) {']]) {   // WORLD6b: the exterior pool's peer arm
     const s = src(f);
     assert.ok(s.includes(sig), `${f} carries the lifted member`);
     assert.equal((s.match(/handleAttackFromPlayer\(/g) ?? []).length >= 3, true, `${f}: declared, called by the damage door, called by the zero arm`);

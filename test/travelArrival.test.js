@@ -28,7 +28,7 @@ test('TL3: the fast-travel arrival takes DFU\'s reposition - the start marker or
   // AUDIT 64 F18 (integrated the same day): the method is DFU's own
   // DirectionFromStartMarker (DaggerfallTravelPopUp.cs:334) with the
   // cached departure as the facing hint; SIB2's travel event rides too.
-  assert.match(fn, /await _teleportToPixel\(pick\.pixel\.x, pick\.pixel\.y, null,\s*\n\s*\{ arriveMinutes: worldMinutes\(\) \+ computed\.minutes,\s*\n\s*reposition: REPOSITION\.DirectionFromStartMarker,\s*\n\s*travelStart, modEvent: 'travel' \}\);/, 'the arrival asks for the start-marker landing');
+  assert.match(fn, /await _teleportToPixel\(pick\.pixel\.x, pick\.pixel\.y, null,\s*\n\s*\{ arriveMinutes: sharedClockOn\(\) \? worldMinutes\(\) : worldMinutes\(\) \+ computed\.minutes,[^\n]*\n\s*reposition: REPOSITION\.DirectionFromStartMarker,\s*\n\s*travelStart, modEvent: 'travel' \}\);/, 'the arrival asks for the start-marker landing');
   assert.equal(REPOSITION.DirectionFromStartMarker, 'DirectionFromStartMarker');
   assert.equal(REPOSITION.RandomStartMarker, 'RandomStartMarker');
   // the teleport core: the landing is computed only for that method, the default point is the pixel's centre,

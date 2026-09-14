@@ -1833,6 +1833,1020 @@ session), the pane's copy, the relay's version and this record.
 `test/auditworld.test.js` A3 turned; the WORLD1-3 and AUDIT 28 source
 pins restamped where the law moved. Relay change: yes - REDEPLOY.
 
+## WORLD5 (2026-09-13): the shared clock and weather, the quest clocks stood down
+
+**Mac: "Let's tackle slice 5 first."** Slice 5 of the persistent shared
+world, the last of WORLD1's plan: THE SHARED CLOCK AND WEATHER, and the
+quest clocks stood down online (Mac, WORLD1: "When it comes to time
+limits on quest, I think these should be naturally disabled while
+online").
+
+**THE CLOCK IS NOBODY'S TO KEEP.** Online, the world's time is a
+FUNCTION OF WALL TIME - `net/wire.js sharedClassicMinutes`, one home at
+both ends: `ONLINE_EPOCH_MS` (2026-09-14T00:00Z) is the instant the
+world stood at the classic game start (13:30, 4 Morning Star 3E405 -
+`ONLINE_EPOCH_MINUTES` is gameDate's own constant, pinned equal), and it
+has run at DFU's default TimeScale since (`ONLINE_MINUTES_PER_MS`, the
+ticker's own rate: a game minute every five real seconds, a day every
+two real hours, a year every thirty real days). No frame carries it, no
+host hands it over, no handover races it, no hibernation loses it. The
+relay says its own clock in every place room's welcome (`now`, ms) so a
+machine whose clock is off reads the world's time through the offset
+(the session's `clockOffsetMs`, `onClock`; a clock a year off is no
+clock). The world host installs it at boot (`setSharedClock`, before
+anything reads the time, and `setSharedWeather` beside it), and while it stands `worldMinutes()` reads it
+and EVERY write is refused - `setWorldMinutes`, `advanceWorldMinutes`,
+the ticker's `advance` (RaiseTime: the exhaustion collapse, a training
+session, a sentence), `?tod`, `?timescale`. The tick claims what the
+clock owes between two readings (the rounds, the days) and fabricates
+not one minute from dt, so a frame that comes late owes what passed and
+a frame of fabricated time owes nothing.
+
+**THE SAVE ARRIVES, IT DOES NOT CATCH UP.** A save a month behind the
+world would have fired a month of loans, diseases and price walks on
+its first online frame; one a year ahead would have read a negative
+day. `alignEntityClocks` sets the player's own markers to the world's
+when the session starts - the day marker, the broker's, every
+disease's day and every poison's minute - and the day's weather is
+rolled from the shared day's seed whatever sky the save carried. The
+world's time is where the player has arrived, not this save's
+continuation; a save made online carries the world's time and plays on
+from it offline.
+
+**A REST TAKES THE TIME IT TAKES.** `RestSession` is paced by the
+world's clock online (`deps.sharedMinutes`, every host's rest deps):
+a sub-tick when the clock has moved `MINUTES_PER_TICK`, an hour of
+rest when it has moved sixty - five real minutes at TimeScale 12 - and
+the window's own timer is not consulted. The rounds a sub-tick owes are
+the ones the clock owes (the ticker's `advance` runs them, the
+dungeon's own rest arm claims them), the vitals tick per rested hour
+as ever, and a rest is ended early as ever. A FAST TRAVEL takes no
+world time: the arrival minute is now, the trip's jump and the
+arrival clamp (the vampire's dusk) stand down, the fare and the
+cautious heal stand.
+
+**THE DAY PICKS THE SKY.** The six-zone climate array was rolled from
+`Math.random` once per game date, so two players under one sky rolled
+two. With the shared clock on (`setSharedWeather`), every roll of the
+array - the day change's, the boot's lazy one, a respawn's re-roll into
+another climate base - draws from a generator seeded by the DAY (and
+the climate, for a respawn), so every client rolls one sky for one
+date with no frame to carry it. The enhanced lane's hourly evolution
+(CLK2) was already seeded by the hour and the zone, so it agrees for
+free between two enhanced clients; a classic-lane client and an
+enhanced one still differ within the day (recorded, below).
+
+**THE QUEST CLOCKS STAND DOWN.** `questClocksStoodDown` rides the quest
+machine's deps through the bridge and the parser to every live quest,
+and `Clock.tick` charges nothing while it answers true - the world-time
+sample still moves, so the hours a clock stood down are never charged
+when it stands up again offline. The journal shows the clock as it
+stood.
+
+What it does not do. The clock is the world's for everyone online in
+every room - a cell, a town, a building, a dungeon - which is the
+point; a classic-lane and an enhanced client under the same date may
+differ within the day (the evolution is the enhanced lane's); the
+weather a climate crossing keeps until the world turns is still each
+client's own walk (DFU's law, unchanged); two clients that boot online
+minutes apart roll one array and may still apply it on different
+frames (the drain is the exterior frame's, as ever); no shared moon,
+no shared holiday beyond what the date already decides. Relay change:
+the welcome's `now` - REDEPLOYED (RELAY_VERSION `world5`).
+
+Pinned in `test/world5.test.js` (8): the wire's constants against the
+calendar's and the ticker's, at both ends; the welcome's clock in a
+dungeon and a cell and not a channel, the session's offset and its
+refusal of a clock a year off; the ticker under the shared clock (the
+source read, every write refused, three minutes of the world three
+rounds whatever the frame's dt, a frame of three thousand real seconds
+owing nothing, RaiseTime running the owed seven minutes and moving
+nothing); the markers aligned; the shared weather (one date one sky
+whatever generator the caller handed in, the boot's lazy roll the
+same, forty dates not one sky, a respawn's roll repeatable, offline the
+caller's own again); the rest paced by the clock and the timer law
+untouched offline; the quest clock stood down and standing up; and the
+hosts by source. The AUDIT 23, AUDIT 63, ROAD-Ar, TL3, TP1, MAC7,
+AUDIT WORLD4 and ONLINE1 pins restamped where the law moved.
+
+## AUDIT WORLD5 (2026-09-13)
+
+**Mac: "Lets do an audit on this."** Four opus lenses over WORLD5,
+each told the live report and made to find it: the wire, the relay and
+what the player is told; the weather and the boot; the clock and the
+ticker; the rest, the travel and the quests. Every finding below was
+EXECUTED against the real modules (`test/auditworld5.test.js` runs the
+ticker, the rest session, the weather sim, the collapse and the save
+door under a shared clock the test holds) or cited to a line; the
+record says which. Fourteen findings fixed in this slice, the rest
+recorded and not paid. The relay changed (C11) and **must be
+redeployed** (`cd server && npx wrangler deploy`); `/health` answers
+`world51` when it has been.
+
+**THE ONE SHAPE.** WORLD5 made the clock a function of wall time and
+refused every local write, and then left four things that used to be
+moves of the clock standing as if the clock had moved: the dungeon's
+rest arm claimed its own broker window (C1), the exhaustion collapse
+paid its hour (C6), the sentence refilled the pools (C9) and the
+cautious trip healed (C14). Under a clock nobody moves, a thing that
+charged time and paid in kind now pays for nothing - the collapse and
+the sentence were free heals, the cautious trip a free instant full
+heal on a black screen - and a thing that claimed its own window ran
+it twice, because the tick's own reading was left behind. The same
+shape, four times: the price was the clock move, and the clock move
+is gone.
+
+**C1 (CRITICAL) - THE DUNGEON'S RESTED NIGHT RAN ITS ROUNDS TWICE.**
+`dungeonContext.js`'s `_restAdvance` claims its own broker window
+(AUDIT 24 wave 30's fix: the rest window runs no frame body), and
+under the shared clock that claim moved `_lastMagicRoundMinute` past
+the tick's `_sharedLastTick`; the next frame's tick read from the old
+reading, `claimMagicRounds` found `here < _lastMagicRoundMinute` and
+took it for a load's rewind - its backstop - re-anchored, and ran the
+night again: every poison, disease and continuous-damage effect twice
+per rested hour, in the dungeon only. The claim now moves the tick's
+reading with it (`worldTick.js`, in `claimMagicRounds` under
+`_sharedClock`); executed: the arm's claim of ten minutes, then the
+tick owing nothing, then two more minutes owing two.
+
+**C2 - A SOURCE THAT STEPPED BACKWARDS FROZE THE TICK.** `next =
+max(reading, source)`: when the relay's offset corrected this machine's
+clock backwards (or the machine's clock was set back) the reading stood
+ahead of the source and every tick owed nothing until the clock caught
+its old self up - a hundred-minute correction was eight real minutes
+with no round and no day. The tick re-anchors on a source below its
+reading. And the world host's `onClock` was a bare assignment: the
+first welcome's offset landed AFTER the boot-time arrival (the socket
+opens later), so until then every marker stood at the uncorrected
+clock's time and the first corrected tick caught up (or froze for) the
+difference. A correction over a second now runs the same
+`onlineArrival` the session's start runs (the markers, the day's roll,
+the season); a room move's welcome saying the same offset again moves
+nothing.
+
+**C3 - THE ALIGNMENT STAMPED FOUR MARKERS AND THE REST STAYED DATED BY
+THE SAVE.** WORLD5's `alignEntityClocks` set the day marker, the
+broker's, each disease's day and each poison's minute to now, and
+nothing else - `lastSkillCheckTime`, `timeOfLastSkillTraining`, the
+enemy-alert stamp, the two crime-guild letter clocks, every loan's
+due date, every rented room's expiry, every summoned item's hour, the
+vampire's `lastTimeFed`, every guild rank's `lastRankChange`. The
+rest lens executed the worst case: an ordinary sixty-day save joining
+a world at day 375 read its skill check 69,120 minutes in the future
+and raised NO skill for 48 game days (four real days) with 100,000
+uses banked; training refused as too soon; a room rented for a day
+reading 1,176 hours left. The other way round (a save far ahead of a
+young world) every deadline read as long past. The alignment is a
+SHIFT now: every marker moves by the distance from the save's own
+clock (its day marker) to the world's, so a room keeps its hours, a
+loan its week, a summoned item what it had left, a skill check that
+was due is due now; a "last" marker never lands ahead of now; a zero
+stays zero (the letter clocks, a summoned item's hour, a first skill
+check - zero means none); a fresh character with no day marker moves
+nothing. Executed both ways, and through `liveVampirism`, which now
+steps over a hole in the effects list rather than throwing on it.
+
+**C4 - A LOAD ONLINE WAS NOT AN ARRIVAL.** The alignment ran once, at
+the session's start, over the save the boot restored - a quick load, a
+boot `?load`, the classic import and the dungeon's own load all
+restored the SAVE's clock into every marker, and the next tick caught
+up the distance to the world (a month of loans and diseases in one
+frame) or read it negative; and `restoreWeather` put the saved sky up
+to stand until the next day change. The one door every host loads
+through is `save.js restorePlayer`, and under the shared clock it now
+aligns and rolls the day's array from the shared seed (the first
+exterior frame drains it over the saved sky, and the drain is a jump).
+Executed over a real snapshot.
+
+**C5 - THE SHARED ROLL WAS THE ROLLER'S, NOT THE DAY'S.** The roll's
+stamp was the roll's own minute, so a joiner at noon drained a "live"
+roll and got a three-hour front for a sky that changed at midnight;
+and the enhanced lane's hourly evolution re-anchored on the joiner's
+first hour (`_evolveHour === null` rolls nothing), so a client that
+joined at 15:00 was missing fifteen hours of evolution the client that
+stood there since midnight had applied - two skies under one seed.
+Under the shared clock the roll is THE DAY'S: stamped at the day's
+first minute (a noon drain is a jump, a five-past-midnight drain a
+front - both executed) and the evolution re-anchored at the hour
+before the day's first, so the next evolve replays every hour of the
+day up to now (executed: a client evolving hour by hour from midnight
+and one joining at 15:07 carry one array). Offline the stamp is the
+roll's own minute and CLK2's re-anchor stands.
+
+**C6 - THE COLLAPSE PAID ITS HOUR FOR FREE.** `RaiseTime(1 hour)` is
+refused online; the three recovery rates were not. Fatigue drained to
+zero was an hour's health and magicka for nothing, as often as the
+drain reached zero. The one home (`rest.js exhaustionOutcome`) pays
+the fatigue hour every collapse - it is what stands the player up; the
+next frame collapses again without it - and the health and the magicka
+once per WORLD hour, which is what an hour's rest yields over the same
+five real minutes. Offline unchanged.
+
+**C7 - A COVERED REST BANKED THE WORLD'S TIME AND RESOLVED THE NIGHT
+IN ONE FRAME.** The rest lens executed it: a nine-hour rest covered by
+the pause menu (or a quest box, or a hidden tab) while the clock ran a
+real hour, then one uncovered frame - 54 sub-ticks, nine rested hours,
+nine enemy checks against ONE snapshot of the foe list, the spawn-abort
+latch armed for a next frame that never came, `_spawnEncounter` landing
+after the rest had ended. Offline this cannot happen: a covered frame
+never reaches `_accrue`, and the frame's dt is clamped under one
+sub-tick's wait, so the timer takes at most one sub-tick a frame. The
+same two laws now hold under the shared clock: a covered frame moves
+the reading up to the clock keeping less than one sub-tick owed (the
+covered time is LOST, as the timer loses it), and a leap is taken ONE
+sub-tick a frame, so each hourly check reads the foes on a frame of
+its own (executed: a foe wandering in during the first hour breaks the
+rest on the sixth frame).
+
+**C8 - THE DUNGEON'S REST ARM ROLLED THE SAME TEN MINUTES EVERY
+SUB-TICK.** `const start = floor(classicMinutesRef.value); value += n`
+- the write refused, `start` read AFTER it, so every sub-tick offered
+`intermittentEnemySpawn` the same ten minutes, ten minutes ahead of
+the clock, once per sub-tick (a night whose window missed the
+12-in-144 band rolled nothing; one that hit it rolled it 54 times).
+The session now hands `advanceMinutes` the sub-tick's own END (the
+reading just counted; null offline) and the arm derives `[start, end)`
+from it for the spawner and the broker alike. Executed: two sub-ticks,
+two ends ten apart.
+
+**C9 - A SENTENCE SERVED NO DAYS AND REFILLED THE POOLS.** The prison's
+refill lands "when daysInPrisonLeft hits 0, after the RaiseTime" - the
+days are its price, and online `advanceDays` is refused. A surrender
+was a free full heal of all three pools for the walk to the guardhouse.
+Online the sentence refills nothing; the rescue's and the acquittal's
+refills stand (neither costs a day offline either).
+
+**C10 - `exterior.js`'S BRIDGE SAID NOTHING.** Its quest bridge ctx
+carried no `questClocksStoodDown`, and the bridge's fallback is
+`false` - unreachable today (`?exterior` never carries `online`), but a
+host that says nothing charges every clock. It says the same word
+world.js does.
+
+**C11 - THE WELCOME'S CLOCK WAS THE HELLO'S.** `now` was taken at the
+top of the hello and the welcome built four storage awaits later, so
+every millisecond of them rode to the client as the relay's clock.
+Stamped as the welcome is built. `RELAY_VERSION` is `world51`.
+
+**C12 - THE PANE DID NOT SAY THE CLOCK.** AUDIT WORLD34 made the
+Online pane's copy the law of what is shared; WORLD5 shared the clock
+and the sky and said nothing. One sentence: the clock and the sky are
+the world's and run on real time; a rest, a trip, a sentence or a
+lesson takes none of it; the quest clocks stand still.
+
+**C13 - THE INSTALL SAT BELOW THE SEASON READS.** `bootWorld` read
+`worldMinutes()` for the climate season and the mod's four-valued one
+BEFORE the shared clock was installed, so an online boot dressed the
+world in the session clock's season and the shared clock's turned it
+over on the first frame (a full re-skin). The install is the boot's
+first act now, and the pin reads that nothing between the boot's door
+and it reads the clock.
+
+**C14 - THE CAUTIOUS TRIP WAS A FREE INSTANT FULL HEAL.** DFU's
+cautious traveller arrives rested because the days passed; online the
+trip takes no world time, and Cautious + Camp Out is a zero fare
+(`calculateTripCost` executed: `{piecesCost: 0, totalCost: 0}`), so
+every pool refilled in full on a 1.5-second black screen, repeatable,
+which retired resting, potions and the temples as a healing economy.
+The heal is the trip's nights, and online there are none.
+
+**Recorded, not paid.** (1, PAID BY OL3) Every world-time deadline now runs on wall
+time INCLUDING while the player is logged off: a room rented for a day
+is gone in two real hours whether or not the tab is open; the 350-day
+ceiling is 700 real hours; the tombstoned-quest week fourteen real
+hours; a loan's month sixty. That is what a shared clock means, and the
+alternative (per-player deadlines in a shared world) is a different
+design; the pane's sentence says the clock runs on real time. (2, `CreateFoe` PAID BY OL3) Only
+`Clock` stands down. `DailyFrom`, `GivePc`'s daylight gate,
+`PlaySound`'s interval, `CreateFoe`'s `spawnInterval`, the tombstone
+week and `TrainPc`'s three hours all read the shared clock and PACE
+correctly (one event per tick, no bursts); `CreateFoe` keeps its waves
+coming on wall time while the player idles, which is a cadence, not a
+deadline, and stays deliberately. (3) Training costs no time online:
+`TrainPc`'s `raiseTime(3h)` and the guild trainer's hours are refused,
+so a lesson costs fatigue and gold and no afternoon; the daily
+cooldown (`timeOfLastSkillTraining`) still holds, on the shared clock.
+(4) The pause-menu catch-up is bounded (the broker's 2,880-round cap,
+one day block) and measured at 8.8 ms for a real day away; DFU freezes
+time under a pausing window and this world cannot. (5, PAID BY OL2) The rest window
+does not say it is clock-paced: an hour of rest is five real minutes
+and the counter moves once per five, which a player will read as a
+hang. (6, PAID BY OL2) The travel popup counts down the trip's days for a trip that
+takes none, inn nights are charged for nights nobody spends, and
+`arrivalClampMinutes` is computed and discarded online; the sun-averse
+traveller arrives when they arrive (WORLD5's own record). (7, PAID BY OL3) The
+session refuses a welcome clock more than a year off - a machine a
+year wrong reads the world's time uncorrected rather than not at all.
+(8) The classic and enhanced lanes diverge under one seed by design
+(the evolution is the enhanced lane's), and `?weather` still pins a
+sky locally. (9) `setSharedClock(null)` has no caller outside the
+tests: the clock is installed for the page's life.
+
+**Pinned** in `test/auditworld5.test.js` (nine tests): C1 through C8
+executed, C9 through C14 by source. The WORLD5 pins moved with the law
+(`onClock`, the arrival, the relay's version and stamp, the rest's
+leap a sub-tick a frame); the AUDIT 24 wave 30, AUDIT 26 F204,
+encounters and S40 pins restamped for the arm's new signature.
+
+## OL1 (2026-09-14): online is the enhanced lane, whole
+
+**Mac: "with online, specifically #8, I definitely think I want any
+current and future enhancements/mods enabled on for online."** AUDIT
+WORLD5's eighth recorded item was that the classic and enhanced lanes
+diverge under one shared seed - the weather's hourly evolution is the
+enhanced lane's, a mod's roads and seasons are a mod's - so two players
+in one world could stand under two skies on two road networks. Mac's
+answer is a lane, not a per-switch rule: WHILE THE PAGE IS ONLINE the
+skin is enhanced (over `?skin=classic` too - a shared world has one
+lane), every enhancement the port owns is on, and every vendored mod is
+enabled, whatever the player's shelf says.
+
+**A read, not a write.** The forcing lives in `systems/onlineLane.js`
+and is asked FIRST by the three places a switch is read - `uiSkin.js`
+(the skin), `uiPrefs.js getPref` (the port's own switches) and
+`modSettings.js modSetting` (a mod's `Enabled`). Nothing is forced at a
+mount site (there are forty-seven `isEnhanced()` sites and the
+forty-eighth would be missed), and nothing is written: the shelf and
+the mod store keep the player's own choices, which stand again the
+moment they play offline. `?online` is the fact (main.js sets it for
+Play Online and deletes it on every other door), read off the URL like
+the skin override is.
+
+**What is forced:** the skin; `enhancedEnvironments`, `enhancedAI`,
+`enhancedCombatVisuals`, `enhancedWater`, `pixelatedSky`; `mwArms` (the
+Morrowind arms build at boot where the archives are attached -
+`autoBuildArms` guards the data, so a machine without them wears the
+doll as offline); and every vendored mod's `Enabled` (Dynamic Skies,
+Seasons of the Iliac Bay, Basic Roads, Meaner Monsters, the Physical
+Combat And Armor Overhaul, Unleveled Loot). Enhanced AI is the one that
+was OFF by default as the port's opt-in departure from DFU's classic
+motor; online it is on for everyone, which is also the first time both
+clients in a dungeon step their foes by one motor.
+
+**What stays the player's:** the dials - grass density, cloud quality,
+land view distance - because a machine that cannot hold the full field
+keeps the lane at a lower cost, and none of them decides what the world
+is, only how this machine draws it; the touch knobs, the FPS counter,
+the HUD scale and the text size; and a mod's own dials (a fog density,
+a material swap), as its own modsettings would leave them. The probes'
+URL kill doors (`?sky=classic`, `?water=off`, `?evolve=off`) stay
+doors: an online page never carries one.
+
+**The future half is a pin, not a promise.** `test/onlinelane.test.js`
+walks every boolean key in `PREF_DEFAULTS` and fails on one the lane
+has neither forced (`ONLINE_FORCED_PREFS`) nor left to the player by
+name (`ONLINE_PLAYERS_OWN_PREFS`), pins that every key beginning
+`enhanced` is forced, and that every vendored mod carries the one key
+the lane forces. A new enhancement cannot land without answering the
+question.
+
+**Said to the player.** A forced switch in the Settings and Mods panes
+is shown locked - "On (online)", disabled, with the reason in its
+title - so a press teaches rather than changes nothing; the Mods pane
+says it once at the top; the Online pane's copy says the lane at the
+door.
+
+## OL2 (2026-09-14): the rest window says the clock, the trip says it arrives now
+
+**Mac: "Now tackle #s 5/6."** AUDIT WORLD5's fifth and sixth recorded
+items, paid.
+
+**(5) THE REST WINDOW SAYS IT IS CLOCK-PACED.** Under the shared clock
+an hour of rest is five real minutes and the counter moved once per
+five, on a page that showed a bare hour count - a working rest read as
+a hang. `RestWindow.status()` now carries the world's minutes while the
+session is paced by them (the same `deps.sharedMinutes` the session
+reads; null offline, and then nothing is added and the page is what it
+was), and both pages - the native counter page under the vitals, the
+text chain between the hours and the vitals - say the world's time of
+day and the pace: "World time 15:05 - an hour here is 5 real minutes".
+The five is DERIVED from the wire's one rate
+(`REAL_MINUTES_PER_WORLD_HOUR = round(60 / (ONLINE_MINUTES_PER_MS *
+60000))`), not spelled, so a rate change cannot leave a stale number
+on the page. The text page's lines moved into `restingLines()` so the
+pin reads the same body the page draws.
+
+**(6) THE TRIP SAYS IT ARRIVES NOW.** Online the trip takes no world
+time (WORLD5) and the popup still counted down the trip's days,
+charged inn nights for nights nobody spent, and said nothing. The host
+now says the fact through one dep, `noWorldTime` (world.js:
+`sharedClockOn`, threaded through the map window; a host that says
+nothing travels as DFU does), and while it is true: the day countdown
+is empty and the trip begins on the next tick; no inn night is paid -
+not even DFU's "always at least one stay", which is a night too
+(`sleepModeInn && !noWorldTime()` into `calculateTripCost`); the days
+label says "now"; and a line under the panel says why ("Online: the
+world's clock does not wait. You arrive now, and no inn is paid."). The
+fare for a ship's passage stands, because a crossing is a crossing,
+and the trip's DFU minutes are still computed because the host reads
+them offline. `arrivalClampMinutes` is still computed and discarded
+online (the sun-averse traveller arrives when they arrive, WORLD5's own
+record) - two source pins hold that line and it costs nothing.
+
+## OL3 (2026-09-14): the clock does not punish absence
+
+**Mac: "Yeah you got it my man. Go ahead and get these done per your
+opinion."** Three of AUDIT WORLD5's recorded items, paid together
+because they are one thing: a shared clock that runs while the player
+is away must not charge them for being away without saying so.
+
+**(1) THE PRICE IS SAID IN REAL TIME.** Every world-time deadline runs
+on wall time through a logout - a week's lodging is fourteen real
+hours, a loan's month sixty - and the shared world keeps ONE clock, so
+per-player deadlines would be a different design. The honest fix is
+that the player buys what they think they are buying. The shared
+clock's inverse now rides beside its source: `wire.js
+wallMsForClassicMinutes` (the relay-clock millisecond at which the
+world reads a classic minute), installed by the world host through
+the relay's offset as `setSharedClock(source, wallOf)`, and read as
+`worldTick.js sharedWallMs` / `sharedRealTimeText` ("Tue 15 Sep
+18:05", in the font's own ASCII, this machine's zone; null offline).
+The tavern's offer carries a row under DFU's - "The room is yours
+until Tue 15 Sep 18:05 by your clock - the world's time runs while you
+are away." - through one hook, `realTimeOf` (a fresh rental from now,
+a renewal from the standing expiry, exactly RentRoom's own arithmetic;
+a host that answers nothing offers as DFU does). The bank's due-by
+label carries the real time in brackets beside DFU's date, since a
+default lowers reputation and brings the guards; offline it is the
+date alone. The loan reminder letters are the safety net and are
+untouched.
+
+**(2) `CreateFoe` STANDS DOWN WITH THE CLOCK.** Mac's WORLD1 word was
+that quest time limits should not punish being online, and a quest
+that keeps spawning ambush waves on wall time while the player idles
+or is away is the same punishment by another door. The spawn interval
+now reads the quest's `questClocksStoodDown` as the Clock does: while
+stood down the marker rides the clock so no interval accrues (no
+backdate on a first tick either), a wave already in flight still lands
+and is counted (the placement is not a timer), and standing up the
+first wave waits a full interval from there. `DailyFrom`, the daylight
+gate and `PlaySound` are pacing, not pressure, and stay as recorded.
+
+**(7) A CLOCK A YEAR OFF IS SAID.** The session refused a welcome clock
+more than a year from this machine's and ran the world's time
+uncorrected in silence. It now keeps `clockWarning` while the fault
+stands - the console hears it once, with both clocks, and the HUD's
+status line shows it on an OPEN session ("this machine's clock is more
+than a year from the world's - set it, or the shared time is wrong
+here") - and a sane welcome clears it.
+
+**Left as recorded, on purpose:** (3) training's free hours (the daily
+cooldown bounds it to what DFU allows); (4) the pause-menu catch-up (a
+shared world does not pause); (8)'s residue, the probes' URL kill
+doors; (9) the uninstall no caller uses.
+
+## WORLD6 (2026-09-14): towns, cells and buildings share more than presence
+
+**Mac: "Lets tackle #1 next."** The first of the arc's "not yet" list
+after WORLD5 closed WORLD1's plan: a dungeon is one shared world with a
+memory, and outside one, players share only who is there. THE PLAN,
+from a survey of every piece of mutable world state outside a dungeon
+(an opus lens over the exterior, the interiors and the per-player set):
+
+1. **6a - the building is a world room** (this slice). A building
+   interior has had a relay room of its own since ONLINE1
+   (`interior:m<mapId>.<buildingKey>`) and carried presence alone,
+   because the wire's world-room law admitted dungeons only. Its
+   mutable state is small and already save-shaped in the scene cache:
+   the shelves and cupboards (stock, and the day it was stocked), the
+   doors' action records, the player's own piles. Widen the law, give
+   the interior mode the dungeon's three laws (the memory, the acts,
+   the loot), and buildings are shared.
+2. **6b - the cell is a world room.** The open country and the towns
+   keep guards, encounter foes, corpses and dropped piles per player,
+   each pool with its own AI loop (`cityGuards.js`, `exteriorFoes.js`)
+   and freed with the map pixel. One simulation per cell needs the
+   puppet arm WORLD2 gave the dungeon's foes, in two more pools, over
+   a room that is a sixteen-pixel cell rather than a place - and the
+   cell seam (two players a pixel apart astride an edge are in two
+   rooms) is the same slice's problem. The region's prices and
+   conditions walk by the day block and can be seeded by the shared
+   day as the weather is (WORLD5), which is the cheap half.
+3. **Recorded, not planned:** the wandering population (no identity
+   across a pixel unload for one player either); building discovery
+   and the talk state (knowledge - the player's own by DFU's design);
+   quests, banks, houses, ships, rentals (the player's own); a dropped
+   pile (AUDIT WORLD B3 - the dropper's); the treasure markers' roll
+   (it reads the player's level and gender).
+
+### 6a: the building is a world room
+
+- **The wire** (`src/net/wire.js`, both ends through `server/src/
+  relay.js`): `isWorldRoom` admits `interior:m<mapId>.<buildingKey>` -
+  the map id unsigned as roomKeyFor mints it (AUDIT WORLD34 A2), the
+  building key up to eight digits (`MakeBuildingKey`: (x<<16)+(y<<8)+i,
+  or the 1<<24 sentinel). A slugged location (no map id), a town's
+  room and a cell are still no world room. Everything gated on the
+  predicate - the memory, the acts, `sendWorld`/`sendAct`/`onAct`,
+  the relay's own admission - follows without a second switch; the
+  relay MUST BE REDEPLOYED (`RELAY_VERSION` `world6`).
+- **The pure half** (`src/world/interiorShared.js`): the memory
+  mirrors the dungeon's and is subtracted the same way - the action
+  records' SHARED half (`sharedRecord`, AUDIT WORLD3 B1), projected
+  before they land (`validActionRecord`, A2/WORLD34 C2) and RESTORED
+  rather than heard (where the doors stand as I walk in is a restore,
+  like the cache's); the loot as WORLD4's law, in the cache's own
+  vocabulary (`shelf:<i>`, `container:<i>`, one spelling each): a
+  container nobody has opened (`items: null`) is every client's own
+  lazy roll and the memory says nothing of it; one the room has opened
+  is the room's, with what is left and THE DAY IT WAS STOCKED (`d`) -
+  the restock is a day comparison against the world's day (WORLD5),
+  so the day rides the record and every client agrees on when a shelf
+  turns over. The word lands IN PLACE on an opened container, WHOLE on
+  one this client never opened (a second reader adopts the first's
+  roll), never under this player's open window (AUDIT WORLD4 C1); a
+  list past `LOOT_LIST_MAX` is not said, once, out loud (A2/B2/D1).
+  `interiorLocationKey` spells the memory's key exactly as the room's,
+  so the two agree by construction.
+- **The interior mode** (`src/scenes/worldModes.js`): at the mount the
+  room's key and this context's stamp (AUDIT WORLD B1), the seen set,
+  the said-once set, the applied latch (B7) and the open window; an
+  OWNED house or ship keeps no room - ownership is the player's own
+  (DFU has one player), so an owner's storage is never the room's and
+  a stranger's roll never lands on it. The doors go out the moment
+  they move (the graph's own change seam, keyed by the building). A
+  container is the room's from the OPEN (a claim, which speaks only
+  for one the room has not spoken about - C2/D5, and makes the memory
+  due this frame), on a RESTOCK (the new day's stock is the room's,
+  whoever browsed first), and on the CLOSE - which, because a trade
+  window has no close hook of its own (X6), is the frame's settle: the
+  window opened on the container is gone, through whichever drain
+  freed it. The leave fires after the cache and before both teardowns
+  (the exit door, the load-or-teleport), as the dungeon's does.
+  `placeSharedWorld` / `restorePlaceSharedWorld` / `applyPlaceActions`
+  / `placeActionRecords` dispatch on the standing PLACE, a dungeon's
+  four arms untouched beneath them.
+- **The world host** (`src/scenes/world.js`): one path - the publish,
+  the welcome's restore, the act in, the pending re-read - through the
+  place; `onInteriorLeave` publishes at once as `onDungeonLeave` does.
+  The room's own key was already the building's, so a player walking
+  through a shop door already changes socket; now the room means
+  something.
+- **The pane** says it: a building is a shared world too - its doors,
+  and every shelf and cupboard anyone has opened.
+
+Not done here, on purpose: the interior's foes and guards (a quest's
+or a crime's - the player's own, not streamed); the dropped piles and
+the treasure markers' piles (B3, and a per-player roll); bookshelves
+(a library's, a guild's, a temple's - the books taken are a shelf's
+items, but the flow has no window to settle on; next); a last-writer-
+wins on a restock two players make in one day (each rolls their own
+and the later close stands, as the dungeon's loot already runs).
+
+Pinned in `test/world6.test.js` (6): the wire at both ends; the real
+Room keeping a building's memory and handing it on, a town's ignored;
+the pure half's vocabulary, records, landing, memory and re-read; the
+hosts by source. The WORLD1, WORLD3, WORLD5, AUDIT WORLD34 and AUDIT
+WORLD5 pins restamped where the law and the path moved.
+
+## AUDIT WORLD6a (2026-09-14)
+
+**Mac: "Audit before we move on."** Three opus lenses over the
+building-as-a-world-room slice, each told the live record and made to
+find it: the wire, the relay and the keys; the interior's live wiring
+and the world host; the pure half and what the slice left out. Every
+finding below was executed against the real modules (the fake Room
+and socket, the pure half on a bare context, the loot projector) or
+cited to a line. Fourteen paid in this slice, four recorded. The relay
+changed (B3) and **must be redeployed**; `/health` answers `world61`.
+
+**A1 (CRITICAL) - THE BUILDING'S MEMORY WAS NEVER PUBLISHED.** The
+interior mode built its wiring bag with the key spelled `key` and
+handed the whole bag to `composeInteriorShared`, which read
+`locationKey` - so every publish answered null, the relay stored
+nothing for any interior room, and no joiner was ever handed the
+building as the host left it; only the live acts worked, and only for
+players already standing in the room. The slice's headline law was
+inert, and the only pin on the call site was a source regex that
+matched the broken line verbatim. The bag is minted by the pure half
+now (`mintInteriorShared`), the field names live in one home, no site
+reads the old spelling (a pin counts them), and the audit's test
+EXECUTES the composition through the very bag the mode hands in. The
+lesson is AUDIT WORLD34 A1's again: a law pinned by its spelling is
+not pinned.
+
+**B1 (CRITICAL) - A PEER MINTED PRICED GOODS ONTO A SHOP'S SHELF.**
+`validLootItem` took any `templateIndex` and clamped every other field
+without reading it; a shelf's list lands on every client and
+`calculateCost` reads `value`, so a forged Daedric dai-katana at
+`value: 0` sat on a shop's shelf for two gold, for everyone, and the
+room remembered it for thirty days. THE PRICE IS NOT THE WIRE'S: the
+projector floors an item's value at what the port itself mints for the
+template and material (`itemBaseValue`, ItemBuilder's own arithmetic)
+and refuses a template the port does not have; an honest value above
+the floor (an enchantment's worth, a book's price) stands. A forged
+item still lands, at its true price - a peer selling a conjured thing,
+which WORLD4's law already accepts for a chest - and that is recorded
+below. The floor is the projector's, so the dungeon's chests take it
+too.
+
+**A2/B2 - THE STOCKED DAY LANDED UNREAD.** `d` is the one field the
+interior's record carries that the dungeon's never did; `needsRestock`
+is `stockedDate < today`, so a `d` of 1e15 froze a shelf's restock for
+ever, a `d` of 0 rerolled it on every browse, and either rode the
+scene cache into the victim's SAVE and the room's memory for thirty
+days. The day is projected like the list: a whole number no later
+than tomorrow (the world's day is shared - a peer a day ahead has a
+clock a day off, not a time machine), the RECORD refused whole
+otherwise (a list without its day would land, restock and republish
+over the room). **A3** - and the day only moves FORWARD: a stale close
+from a window opened yesterday un-restocked a shelf the new day had
+rolled, and the roll repeated. The mode hands `today` in for the
+memory and for an act.
+
+**A3 (CRITICAL) - A WINDOW PUSHED OVER AN OPEN SHELF WAS ITS CLOSE.**
+The settle read "the window is gone" as `interiorOverlay !== openWin`,
+and `interiorOverlay` mirrors the TOP of a STACK (ROAD-B B1) that
+`mountInterior` pushes onto - so a quest popup, an inventory or a text
+box over an open shelf sent the close mid-transaction, cleared
+`openKey`, let a peer's word land under the live window (AUDIT WORLD4
+C1's orphaned rows: an item taken twice) and moved the shelf under
+both theft comparisons - a peer's purchase made this player a thief,
+a peer's sale hid a theft. The stack is asked whether the window still
+exists (`containsWindow`), after the frame's reconcile.
+
+**A4 - THE KEYED SHOP FALLBACK CLAIMED NOTHING.** Without the trade art
+the shop runs through `showShelfList`, which opened no claim and set
+no `openKey`: a purchase was never told to the room, and a peer's word
+landed under its rows - where `doBuy` spliced at `indexOf(it)`, which
+was `-1` for a moved row, so the LAST item left the shelf and the
+row's went into the pack. Every page of the fallback is an open now,
+and a row the shelf no longer holds buys nothing.
+
+**A5 - A RESTOCK WAS SAID BEFORE THE PROMPT (WORLD4 C6 again).** The
+container arm rolled a stranger's cupboard and published it before the
+private-property prompt, so a player who answered No - DFU's "No
+claims nothing" - had already made the cupboard the room's. A restock
+is said where the window mounts: `interiorLootOpened` takes the arm's
+word that this open rolled the new day's stock, and says it as the
+room's stock rather than a claim; No says nothing.
+
+**A6/B6 - AN OWNED BUILDING KEPT A ROOM NOBODY FED.** An owner's
+`_intShared` had no key, but the host still minted the room, the owner
+joined it and could hold the seat, and published nothing while the
+others could not. And DFU does not distinguish ships (owning one owns
+them all), so two players in one hull disagreed about whether the room
+existed. An owned house and ANY ship keep no room at all: the mode
+reports a 0 building key and the host mints none.
+
+**A7 - THE FIRST ACT IN A NEW BUILDING WAS DROPPED.** AUDIT WORLD B8's
+window (the socket held in the cell's room for `ROOM_HOLD_MS` after
+the mode names a place) is one frame in a dungeon and a room change at
+every shop door now; `actSend` cleared the pending set when the SOCKET
+was in no world room. The room the mode NAMES counts: the act pends
+for the socket's arrival.
+
+**B8** - a foes frame in a building's room stamped the dungeon
+authority's heartbeat (`_foesInAt` is module-level and outlives a room
+change); the stamp is a dungeon's alone now. **B4** - the law admitted
+`interior:m1.0`, `m0.<key>` and padded aliases no end mints, rooms the
+relay would pay for that no player can reach; no zero and no leading
+zero in either number, for dungeons too. **B5** - the session spelt a
+negative building key raw where the memory spelt it unsigned (AUDIT
+WORLD34 A2 relocated to the second field); unsigned at both ends.
+**B3** - the namespace of buildings is 10^18 names an attacker may
+fill for `WORLD_TTL_MS` each, at 512 KiB; a shop's memory measured at
+2-4 KB a shelf, so an interior room stores `WORLD_FRAME_MAX_INTERIOR`
+(64 KiB) and no more, at the relay (once the key is known - the prefix
+door knows no room) and at the client. **B7** - the context's stamp
+could be one character (`Math.random().toString(36).slice(2)`) and a
+collision refused the room's memory in silence; twelve digits always,
+from the wire's one mint, for the dungeon too.
+
+**Recorded, not paid.** (1) A forged item at its true price still
+lands on a shelf - a peer selling a conjured thing, which is WORLD4's
+accepted cost for a chest; the fix is a per-item provenance the wire
+does not carry. (2) The seen set is per context and the memory lands
+once per context (WORLD1 B7, WORLD4): a joiner inside the window
+between a claim and the next publish, or a host handed the seat with
+a `seen` the acts never reached, can carry a stale list forward; the
+exposure is larger for a building (a shop door is a room change) and
+the cure is a per-key memory law, WORLD1's to change. (3) The scene
+cache writes the room's lists as this player's own, so an offline game
+carries a shop as the room last showed it - the world as last seen,
+which is what a cache is; the poisoned day (A2) was the harm, and it
+is bounded. (4) Bookshelves, treasure piles, dropped piles, interior
+foes and guards, and a same-day double restock stay as WORLD6a
+recorded them.
+
+**Pinned** in `test/auditworld6a.test.js` (6): the root executed
+through the bag (A1), the price floor (B1), the day's bound and
+direction (A2/B2/A3), the law and the interior's cap at the relay and
+the client (B3/B4/B5), the stamp (B7), and A3-A7/B6/B8 by source. The
+WORLD1, WORLD4, WORLD5, WORLD6, AUDIT WORLD34 and AUDIT WORLD5 pins
+restamped where the law moved.
+
+## WORLD6b (2026-09-14): the cell streams its foes
+
+**Mac: "Continue"** (after AUDIT WORLD6a). The second item of the WORLD6
+plan, in two halves; this is the first. The plan said "the cell is a
+world room", and the survey said why it cannot be one the way a
+dungeon is: a dungeon is a LAYOUT every client builds alike, so its
+foes have an index the room can name and a host can own the lot; the
+open country's room is a sixteen-pixel CELL, and nothing in it is
+built alike - every encounter foe was one client's roll, near that
+client, on terrain only the clients near it have built, freed with
+the map pixel. So a cell has NO HOST SIMULATION and NO MEMORY (it is
+no world room, `isWorldRoom` is untouched), and the law is per foe:
+**A FOE IS ITS SPAWNER'S.** The spawner steps it and streams it,
+everyone else in the cell puppets it, and a blow on another's foe
+goes to its OWNER as a hit. What one player meets, everyone sees and
+can fight; what nobody is near, nobody simulates.
+
+### 6b-i: a foe is its spawner's, everyone else's puppet
+
+- **The wire** (`src/net/wire.js`, both ends through `relay.js`):
+  `isCellRoom` (`world:<x>,<y>`, the cell `worldRoom` mints, up to
+  three digits each), `streamsFoes` (a world room or a cell), and
+  `hitOwnerOf` - a cell's hit carries the owner's id as `to` (a peer
+  id of at most 64), and names nobody otherwise.
+- **The relay** (`server/src/index.js`, `RELAY_VERSION` `world62` -
+  REDEPLOY): a cell's foes frame is admitted from ANYONE hello'd - at
+  the door before the parse (the prefix's own bucket, no strike
+  counted, AUDIT WORLD2 A3/A4) and in the arm - and fanned to everyone
+  else with the sender's id under the room's byte budget (A5); a cell's
+  hit goes to the ONE socket `to` names, never the striker's own, and
+  nowhere without a `to` or to one not in the room, under the room's
+  hit funnel (A6). A world room keeps WORLD2's host law untouched: a
+  joiner's stream ignored and counted, the hit to the host whatever
+  `to` says. A cell still keeps no memory (a large frame outside a
+  world room is refused, AUDIT WORLD A1).
+- **The session** (`src/net/online.js`): in a cell `sendFoes` is
+  anyone's (no seat asked), `sendHit` needs a `to` that is a peer and
+  never me (my foe is my own door's), `onFoes` hears every peer (never
+  myself, never a malformed frame), `onHit` hears a blow that names me
+  and no other. The join line says what a cell shares.
+- **The encounter pool** (`src/scenes/exteriorFoes.js`): every foe of
+  MINE carries `seq` (numbered from one) and streams in WORLD2's own
+  record (`i t x f y h d a m` - the feet through the world host's
+  converter into the WORLD frame, the pose's own law, AUDIT ONLINE D7;
+  the attack count with the ranged bit low) - the changed ones every
+  `FOES_MS`, every one every `FOES_FULL_MS`, keyed to the room; a
+  quest's foe never rides (Multiplayer.md's first lock), a puppet never
+  rides. A peer's record stands here as a PUPPET (`f.puppet` the owner,
+  `f.seq` the owner's number) through the pool's ONE spawn chain at
+  the streamed feet, species and gender (the bit decoded, no roll),
+  OUTSIDE my cap (`activeCount` is mine alone); a frame no newer than
+  the owner's last, or another cell's, is not the world; a corpse I
+  never saw stands nothing. The puppet branch in the foe loop (before
+  the senses, the cull, the attack) eases the feet to the stream
+  (`PUPPET_EASE_S`), snaps a far jump, sets the yaw, walks while the
+  streamed feet move, fires the hurt one-shot on a health drop and the
+  strike edge once per count, draws and sounds like any foe, and drops
+  both damage latches unconsumed - it lands no blow of its own (its
+  owner's foe lands those, on its owner). A blow on a puppet goes to
+  its owner through the one damage door (`damageFoe` diverts before
+  the shield pool: `{to, i, dmg, kind}`), the striker's own ring,
+  blood and pain played before it as ever. A peer's blow on MY foe
+  (`applyHit`, by my number, bounded, the kind kept) lands through the
+  same door as the dungeon's does (WORLD2/AUDIT WORLD2 B9/C4): seen and
+  heard at the owner, no HUD mark of mine, no area wake, no ally
+  revert, the foe turned on me - its owner - since the striker's feet
+  are not on the hit (recorded, as the dungeon's is). A puppet dies
+  where the stream says (its body through `mintCorpse`, the one home
+  the dungeon's law asked for - carrying none of my loot), and is
+  swept when a full frame stops naming it, its owner leaves the room
+  (`pruneOwners` from the session's peer map, every frame), or the
+  room changes (`clearPuppets`, the owners' frame numbers starting
+  over); nothing of a puppet rides my save (`snapshotWorld`).
+- **The world host** (`src/scenes/world.js`): the stream's cell arm
+  asks no seat and sends the exterior pool's frame above ground alone;
+  a cell's foes and hits route to the pool, a world room's to the
+  dungeon (a cell's frame is no dungeon heartbeat); the net is
+  installed once with the two frame converters; the pane says towns
+  and the open country share the creatures that find you.
+- **The day's rolls are the shared day's** (`src/systems/worldTick.js`
+  `dayRollsFor`): under the shared clock the price walk and the faction
+  powers' two arms draw from a generator the world's day seeds (the
+  weather's own law, WORLD5 `rollsFor`; the two power arms of one
+  minute share one generator, so the 266-day double walk does not
+  replay itself), so two players whose state agrees walk the region
+  alike, whatever their own dice; offline the caller's. The STATE
+  stays each player's - the prices and the powers live on the entity,
+  DFU has one player; one economy is the region as a world (6b-ii).
+
+### 6b-ii (recorded, next)
+
+- **The guards** (`cityGuards.js`): the watch is a crime's - the
+  player's own - and the same per-foe law would stream a guard chasing
+  ME to everyone; not done until the crime itself is shared.
+- **A foe hunting a peer**: a puppet lands no blow, and MY foe hunts
+  me alone (WORLD3 gave the dungeon's host foes every player in the
+  room through the peer candidates; the pool's target machine has the
+  seam). The striker's feet on the hit, as WORLD3 put them on the
+  dungeon's.
+- **A puppet's corpse loot**: its owner's roll; the take would be the
+  loot law over a per-foe room (WORLD4 keyed a dungeon's by index).
+- **The cell seam**: two players a pixel apart astride an edge are in
+  two rooms (D9); the 3x3 neighbourhood.
+- **One economy**: the region's prices and powers as a world's, not a
+  seeded walk each player takes alone.
+- **Buildings' foes** (a quest's or a crime's) and the interior pools:
+  a building streams no foes still (AUDIT WORLD6a B8).
+
+Pinned in `test/world6b.test.js` (8), EXECUTED: the wire at both ends;
+the real Room fanning a non-host's frame in a cell and routing a hit
+to `to`, the dungeon's law untouched; the session's four doors in a
+cell and in a world room; the pool on a crafted MONSTER.BSA with the
+net installed - my frame out, a peer's puppets in (the spawn chain,
+the cap, the stale and foreign frames, the eased and snapped follow,
+the hurt and the strikes, the divert, the death and the three sweeps),
+a peer's blow on mine (the door, the bounds, no area wake); the day
+change under the shared clock; the world host by source. The WORLD1,
+WORLD2, WORLD5, WORLD6a, AUDIT WORLD (A1), WORLD34, WORLD4, WORLD5,
+WORLD6a pins restamped where the law moved; the pool's provenance,
+latch, voice and hostility pins (audit24/26/58, pacify, roadb, nt2)
+restamped for the peer arm.
+
+## AUDIT WORLD6b (2026-09-14)
+
+**Mac: "Audit first."** Three opus lenses over WORLD6b-i - A the relay
+and the session, B the encounter pool's puppet and stream arms, C the
+world host's wiring, the day's rolls, the record and the pins. Every
+finding verified against the code before it was paid; the pay-outs are
+root fixes, pinned by execution in `test/auditworld6b.test.js`, the
+relay redeployed (`RELAY_VERSION` `world63`).
+
+### A - the relay and the session
+
+- **A1 (major, paid): the cell's hit funnel was charged before the
+  route was known.** In a cell the destination is the client's `to`;
+  the room-wide token was spent, THEN the socket looked up - so a `to`
+  naming nobody delivered nothing, bought a token, and counted no
+  junk. Three sockets streaming twenty unroutable blows a second
+  silenced every honest blow in the country for as long as they sat
+  there, nobody struck. Now the ROUTE is resolved first; a `to` no
+  socket carries delivers nothing, spends nothing, and is counted as
+  junk (AUDIT WORLD2 A4's instrument) so a stream of them is struck.
+- **A2 (major, paid): one room-wide hit budget served many owners.**
+  `HIT_ROOM_HZ_MAX` (60) funnelled onto ONE host in a dungeon; in a
+  cell six honest fights saturated it and the seventh's blows dropped
+  silently. The funnel is the DESTINATION socket's own bucket now
+  (`hbucket` on its attachment) - AUDIT WORLD2 A6's law as written,
+  "the funnel onto the host's ONE socket", per socket.
+- **A3 (major, paid): a cell's foes admission was an unbudgeted ingress
+  and a serialise sink.** The byte budget bounded egress only, and the
+  re-stringify ran before it; every hello'd socket could push 12 x 64
+  KiB a second of parsed-and-restringified junk, never struck. The
+  room budgets its cell INGRESS at the door, before the parse (dropped
+  unread, nobody struck - the fan's own law), and the fan's budget is
+  asked before the stringify on an estimate of the envelope.
+- **A4 (major, paid): the cell's foes fan ignored the range gate the
+  pose fan applies.** Two players ten pixels apart in one sixteen-pixel
+  cell heard no poses and every foe; my pool grew with the cell's
+  population for foes nobody near me could see. The fan is ranged as
+  the pose's is (`inRange`, `RANGE_PIXELS`); a dungeon's still reaches
+  every socket in the place.
+- **A5 (minor, paid):** `hitOwnerOf` took any string of 1-64; it tests
+  the wire's own id law (`ID_RE`).
+- **A6 (minor, paid):** the record said `sendHit` needs a `to` that is
+  "a peer" and the session never asked the roster; it does (an owner
+  already gone bought the funnel for nothing).
+- **A7 (note, paid):** the hit carries the cell key `k` as the frame
+  does, and `applyHit` refuses another room's.
+- **A8 (note, paid):** `onFoes` in a cell fires for a peer the roster
+  holds - past `ROSTER_MAX` a stranger's frames stood puppets the
+  prune took back every frame (C6, the same).
+- **A9 (note, paid):** a cell's host word no longer stamps the dungeon
+  seat's heartbeat (`_foesInAt` is a world room's).
+- Sound: no spoofing (the relay stamps `id` from the attachment);
+  CLOSE_REPLACED cannot yield two sockets with one id; every branch of
+  the pre-parse door for a cell, a dungeon, an interior, a town, a
+  chat room and a socket before hello; `sendWorld`/`sendAct`/`onAct`/
+  `onWorld` unreachable from a cell; in-flight frames from the old
+  socket dropped on a room change.
+
+### B - the encounter pool
+
+- **B1 (critical, paid): the puppet divert had no provenance gate.**
+  `damageFoe` diverted EVERY caller to the owner as the player's blow
+  - a fall, another foe's maul, a poison round, the magic-round broker
+  - so a bear mauling Bob's rat on my screen damaged Bob's rat and
+  turned it on Bob (AUDIT WORLD2 B7 re-opened). The divert is gated
+  on `fromPlayer && !peer` as the dungeon's door is; a non-player blow
+  on a puppet is dropped (the owner's simulation has its own); and the
+  magic-round broker skips a puppet's entity (`shared.js`).
+- **B2 (critical, paid): a peer's kill spent MY soul gems, filled MY
+  Azura's Star and spoke MY kill notice.** The death block never read
+  `peer` (a failed trap even refused the death). Threaded line for
+  line with the dungeon's (AUDIT WORLD2 B9): no trap, no Star, no
+  notice for a blow I did not strike; the corpse, the alert clear and
+  `raiseEnemyDeath` stay.
+- **B3 (critical, paid) / C2: puppets were unbounded.** One frame could
+  stand 400 foes (batches, entities, careers, textures) at every reader
+  - by accident in a crowded cell, on purpose from a hostile client.
+  Bounded at both ends, the wire's law: a cell's frame carries at most
+  `CELL_FRAME_RECORDS_MAX` (64) records or it is junk at the relay; a
+  record is PROJECTED (`validFoeRecord` - the feet inside the pose's
+  own bounds, the health, the numbers) or refused whole; a reader
+  stands at most `CELL_PUPPETS_MAX` (8, `MAX_ACTIVE_ENCOUNTER_FOES`)
+  live puppets per owner.
+- **B4 (major, paid): an owner that restarted its pool was frozen out
+  for ever.** The frame counter was per owner and cleared only on MY
+  room change; a reload keeps the id and numbers from one, so every
+  later frame was "stale". The counter is the owner's PRESENCE's: it
+  ends when the owner leaves (the prune) - and, C3, when the owner
+  goes quiet (`FOES_STALE_MS`, the seat's own window, `now` and
+  `staleMs` on the net).
+- **B5 (major, paid): a swept puppet's record was re-adopted before the
+  splice.** `removePuppet` flagged the record and left it in the roll
+  for the frame's tail splice; the owner's next record landed on the
+  corpse-less dead and stood nothing - every cell seam crossing lost a
+  peer's foes for up to `FOES_FULL_MS`. The record ENDS in
+  `removePuppet` (spliced), and the lookup is an owner:seq index (B16).
+- **B6 (major, paid): a build in flight survived the clear.** A puppet
+  built through the async spawn chain landed after `clearPuppets` or
+  the prune, at the old cell's feet, sometimes adopted as the new
+  cell's foe at the same number. The build carries the owner's
+  generation; a stale one ends on arrival.
+- **B7 (major, paid): a corpse mint in flight survived the sweep.** The
+  marker landed in `corpseBatches` owned by a record already gone.
+  `mintCorpse`'s late guard reads `_gone` beside the epoch.
+- **B8 (major, paid): my foes and the watch could pick a puppet as a
+  target and fight a ghost;** an archer's shaft into one added an
+  arrow to items nobody could loot. Puppets are out of the shared
+  candidate list at the host, and a foe's shaft into a puppet lands
+  nothing.
+- **B9 (major, paid): a Wabbajack strike on a puppet minted a local foe
+  of mine in a peer's foe's place;** `removeFoe`, `zeroFoeHealth` and
+  the replace arm refuse a puppet.
+- **B10 (minor, paid):** a puppet's zero-damage connect goes through
+  the one door (AUDIT WORLD2 B13: a zero blow is a blow, the owner's
+  foe turns).
+- **B11/B12 (minor, paid):** a record whose species disagrees with the
+  puppet's, or that says a dead puppet lives, ends the old puppet and
+  stands anew (the dungeon's retype law, per foe).
+- **B13 (minor, paid):** a record for a puppet still building is the
+  word that lands when the build does - a `d:1` no longer stood the
+  puppet alive until the next full frame.
+- **B14 (note, paid):** a puppet's stand rolls no loot table, wears no
+  kit, casts nothing: what my neighbours stream must not move my own
+  dice.
+- **B15 (note, paid):** the corpse loot keys by a stable id (`uid`) as
+  the watch's does (AUDIT 39) - puppets splice far more often than
+  the cull ever did.
+- **B16 (note, paid):** an owner:seq index replaces the per-record
+  `find`.
+- Sound: the save and the loot exclusions; `activeCount`; the frame's
+  quest-foe and puppet exclusions; the `k` and `n` guards within a
+  session; `collectPixel`, `destroy`, the cull and the fall skipped for
+  puppets; `puppetStep`; the joiner's attack latch; the HUD marks; the
+  ring, blood and pain at the owner; the peer arm's area wake.
+
+### C - the world host, the day's rolls, the record
+
+- **C1 (major, paid): the puppet's target was cached in the SCENE
+  frame and the floating origin did not move it.** `offsetAll` shifted
+  every foe's feet and not `_pup.feet`; at every map-pixel crossing
+  every standing puppet snapped a whole pixel (819.2 units) away for
+  up to `FOES_FULL_MS` (AUDIT 17e F23's class, AUDIT ONLINE D5's for
+  peer bodies). The target is kept in the WORLD frame and converted
+  through `toScene` every step - the pose's own law - so no
+  `offsetAll` entry can be forgotten.
+- **C2 (major, paid):** the frame's bounds - see B3.
+- **C3 (major, paid):** interest and staleness - see A4 and B4; a
+  puppet whose owner's stream has died is swept after `FOES_STALE_MS`.
+- **C4 (major, paid): "two players whose state agrees walk alike" was
+  not what the code did.** One generator seeded by today walked
+  `daysPast` days region-major, so the draw depended on when each
+  player LAST ran the day change: a player back from three days away
+  walked a different region than one there every day. Online the walk
+  is one day at a time, each day from its own generator; catching up
+  equals having stayed. Offline the caller's stream walks the span
+  whole, as DFU does.
+- **C5 (minor, paid):** the price walk and the powers drew the
+  IDENTICAL sequence on a day both fired; each consumer has a salt
+  (`DAY_SALT`), the weather's own shape.
+- **C6 (minor, paid):** see A8.
+- **C7 (minor, paid):** a room change resets the full-frame clock, so a
+  new room hears every foe of mine at once instead of after
+  `FOES_FULL_MS`.
+- **C8 (minor, paid):** the death branch returned before the room
+  latch; the puppets go with the room at the death.
+- **C9 (minor, paid):** the pane says "everyone NEARBY sees and can
+  HELP fight" - the fan is ranged and a puppet lands no blow.
+- **C10 (minor, paid):** the teardown ends the owners' records; an
+  orphan body - see B7.
+- **C11 (minor, paid):** `selfId` was dead wiring on the net; gone.
+- **Note:** a 30-day catch-up's per-minute generator mint measured
+  0.53 ms; the constants sat between imports - moved below them.
+- **Pins:** the converters and the compensation change were pinned by
+  source alone; the audit's pins execute a converting net through a
+  compensation change (C1), the per-day walk against a continuous one
+  (C4), the prune's clock (C3), the funnel per destination and the
+  unroutable blow (A1/A2), the ranged fan and the bounded frame
+  (A4/B3), the ingress budget (A3), the provenance gate and the peer
+  kill (B1/B2), the cap and the projection (B3/C2), the restart, the
+  splice, the cancelled build and the late body (B4-B7), the refusals
+  (B8/B9), the rebuild and the pending word (B11-B13), the stable
+  loot key (B15).
+
+**Recorded, not paid (6b-ii's, added to the list):** the striker's
+poison and disease riders run on the local puppet's entity before the
+divert and never reach the owner's foe (the hit should carry them, as
+WORLD3 put the arrow's shaft on the dungeon's); the roster's
+`ROSTER_MAX` bound leaves a 65th player's foes unseen; the peer's blow
+carries no feet (the owner's foe turns on the owner).
+
 ## What it does not do (yet)
 
 - **The Morrowind body** ships (MWBODY1, above); a client without the
@@ -1849,9 +2863,16 @@ pins restamped where the law moved. Relay change: yes - REDEPLOY.
   who was there mirrored the death and publishes it). Since WORLD3 the
   host's foes hunt every player in the room and its doors, levers and
   platforms move for everyone (an act from whoever touched them).
-  Towns, cells and buildings keep nothing yet (the pane says so since
-  AUDIT WORLD34 D5); no shared clock or weather (slice 5); the quest
-  clocks still run online; no player-versus-player. Until AUDIT
+  Since WORLD6a a BUILDING is a world room too - its doors, and every
+  shelf and cupboard anyone has opened, with the day it was stocked;
+  towns keep nothing yet, and since WORLD6b a CELL streams every
+  player's encounter foes to everyone in it (a foe is its spawner's;
+  no guards, no puppet loot, my foe hunts me alone - 6b-ii; audited:
+  the fan is ranged, the frame bounded, a foe is its spawner's to
+  hurt and to kill); since
+  WORLD5 the clock and the day's weather are
+  the world's and the quest clocks stand down online; no
+  player-versus-player. Until AUDIT
   WORLD34 no real dungeon was a world room at all (A1: the law's
   eight-digit bound against nine-digit map ids), and the relay must be
   redeployed for one to be. A memory is forgotten

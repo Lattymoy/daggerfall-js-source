@@ -164,6 +164,9 @@ export class Clock extends QuestResource {
   tick(caller) {
     if (!this.clockEnabled || this.clockFinished) return;
     const now = caller.nowSeconds?.() ?? 0;
+    // WORLD5 (Mac: "time limits on quests ... should be naturally disabled while online"): a clock STOOD DOWN charges
+    // nothing - the sample still moves, so the hours it stood down are never charged when it stands up again
+    if (caller.questClocksStoodDown?.()) { this._lastWorldTimeSample = now; return; }
     const difference = now - this._lastWorldTimeSample;
     this.remainingTimeInSeconds -= Math.trunc(difference);
     if (this.remainingTimeInSeconds <= 0) {

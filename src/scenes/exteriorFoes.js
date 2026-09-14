@@ -21,7 +21,7 @@ import { copyEffectEntry } from '../systems/save.js';   // AUDIT 26 F216: the ca
 import { EnemyAI, isBackFacing, withinYaw } from '../characters/enemyMotor.js';
 import { runTargetMachine, isPlayerTarget, resetAllyTeamOnPlayerAttack, PLAYER_TARGET, targetAimPoint, enemyArrowOrigin, enemyTransformPoint, arrowAimDirection } from '../characters/enemyTargets.js';   // MT-ii   // ROAD-H H1/H1b: the ONE arrow loose point and the crouch dip
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT } from '../player/motor.js';   // CH3: the shared fall formula
-import { SOUND } from '../systems/soundClips.js';   // CH3: the FallDamage clip
+import { SOUND, hitSoundFor, ENEMY_HIT_VOLUME } from '../systems/soundClips.js';   // CH3: the FallDamage clip; WORLD6b: a peer's blow rung at the owner
 import { EnemyCaster, castEnemySpell, hasMagickaToCast } from '../characters/enemyCasting.js';   // X3: the shared decision + the ONE cast executor
 import { assignEnemySpells, SPELL_CAST_SOUND } from '../systems/enemySpells.js';   // X3
 import { applySpell, maxFatigue, entityIsParalyzed, applyEnemyMotorEffectFlags, concealmentFlags } from '../systems/effects.js';   // X3: self-casts land through the effect spine   // A5: the enemy Levitate arm, the foe-target concealment closure + EntityConcealmentBehaviour's visual
@@ -44,6 +44,7 @@ import { setEnemyAlert } from '../systems/encounters.js';
 import { inflictPoison } from '../systems/poisons.js';
 import { onMonsterHit, SPIDER_TOUCH_SPELL_INDEX } from '../systems/diseases.js';   // AUDIT 24 (wave 30): the monster special-attack rider, above ground
 import { MINUTES_PER_DAY } from '../systems/worldTick.js';
+import { validFoeRecord, CELL_PUPPETS_MAX } from '../net/wire.js';   // AUDIT WORLD6b B3/C2: a cell's record projected and its puppets capped, the wire's law
 import { mintCorpseMarker, playBodyFall, corpseLootTargets, takeCorpseLoot, sayEnemyDied, raiseEnemyDeath } from './corpseMarker.js';
 import { bloodCentre } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
 import { addItem } from '../systems/inventory.js';   // AR1: BowDamage's recoverable arrow, in the TARGET's items
@@ -55,6 +56,11 @@ import { combatVisualsOn, foeDraw, markConcealedHit } from '../systems/combatVis
 // The port's allocation-owner guards (classic self-limits through the
 // 144-minute cadence; these keep a long session bounded).
 export const MAX_ACTIVE_ENCOUNTER_FOES = 8;
+// WORLD6b: the puppet's ease (the stream's interval), its snap distance and its stillness, WORLD2's own numbers
+const PUPPET_EASE_S = 0.2;
+const PUPPET_SNAP = 3;
+const PUPPET_STILL = 0.02;
+const GENDER_BIT = ['male', 'female'];   // the stream's x bit, decoded (no roll - the owner's word; WORLD3's spelling)
 export const ENCOUNTER_CULL_DISTANCE = 120;
 
 export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture, uploadRecordFrame,
@@ -126,8 +132,23 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   // epoch it started in against this and hands its GL objects back
   // instead of joining the new world.
   let epoch = 0;
+  // WORLD6b (Mac, 2026-09-14: "Continue"): A FOE IS ITS SPAWNER'S. Online, in a cell, every foe this pool spawns is
+  // mine and streams to the cell; every foe a peer streams stands here as a PUPPET (`f.puppet` the owner's id, `f.seq`
+  // the owner's number for it) that follows the stream, draws and sounds, and lands no blow of its own; a blow on a
+  // puppet goes to its owner as a hit. The world host installs the net (setNet) with the two frames' converters.
+  let _nextSeq = 1, _nextUid = 1;
+  let _net = null;              // { room, onPeerHit, toWire, toScene, now, staleMs }
+  let _foesSeq = 0;             // my frames out, numbered
+  // AUDIT WORLD6b B4/C3: an OWNER's record - the last frame number applied (a stale frame is not the world), when it
+  // arrived (an owner whose stream has died is swept after staleMs), and the build generation (a build the clear or
+  // the prune overtook ends on arrival, B6). The record is the owner's PRESENCE's: it goes when the owner does, so a
+  // reload (which keeps the id and numbers from one again) is heard
+  const _owners = new Map();
+  let _ownerGen = 0;
+  const _pupPending = new Map();   // owner:seq -> the latest record for a puppet being built (B13: it lands when the build does)
+  const _pupIndex = new Map();     // owner:seq -> the standing puppet (B16)
 
-  const activeCount = () => foes.filter((f) => !f.dead).length;
+  const activeCount = () => foes.filter((f) => !f.dead && !f.puppet).length;   // WORLD6b: a puppet is its owner's, not this cap's
 
   /** One encounter foe at a world position - the dungeon load chain's
    *  shape, host-owned. B1 opts: a QUEST foe rides the same chain -
@@ -149,8 +170,8 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
    *  guard pool and none here, so without the exemption a Wabbajack
    *  strike on a full street simply erased him and stood nothing -
    *  worse than either the reference or the refusal it replaced. */
-  async function spawnFoe(mobileType, pos, { gender: forcedGender = null, yaw = null, questBehaviour = null, allied = false, feetGiven = false, replacing = false } = {}) {
-    if (!questBehaviour && !replacing && activeCount() >= MAX_ACTIVE_ENCOUNTER_FOES) return null;
+  async function spawnFoe(mobileType, pos, { gender: forcedGender = null, yaw = null, questBehaviour = null, allied = false, feetGiven = false, replacing = false, puppet = null, seq = null } = {}) {
+    if (!questBehaviour && !replacing && !puppet && activeCount() >= MAX_ACTIVE_ENCOUNTER_FOES) return null;   // WORLD6b: a puppet is not this cap's
     const basics = ENEMY_BASICS[mobileType];
     if (!basics || !basics.maleTexture) return null;
     const pending = { feet: [pos[0], pos[1] + (feetGiven ? 0 : 0.1), pos[2]] };   // AUDIT 39: shifted by offsetAll until the record lands. REVIEW 2026-09-05: a restore hands back the exact saved feet (SerializableEnemy.cs:196) - a flyer never grounds, so the walker's lift would climb 0.1 per load
@@ -169,9 +190,15 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // frozen basics row (the STATIC table the ally-revert reads)
       // does not. Getting that wrong would ally every foe of the type.
       if (allied) { entity.team = 'PlayerAlly'; entity.mobileTeam = 'PlayerAlly'; }
-      entity.items = generateLootItems(basics.lootTableKey ?? '-', { level: playerEntity.level, gender: playerEntity.gender });
-      equipEnemy(entity, mobileType, playerEntity.level);
-      addEnemyLootExtras(entity.items, basics, rolls);   // AUDIT 24 (wave 43): EnemyEntity.cs:388-397, after the equipment as DFU has it
+      // AUDIT WORLD6b B14: a PUPPET carries no loot of this player's (its body is its owner's - recorded), wears no
+      // kit of its own and casts nothing, so its stand rolls no table and draws nothing off the injectable roll or
+      // the shared stream: what my neighbours stream must not move my own dice
+      if (puppet) entity.items = [];
+      else {
+        entity.items = generateLootItems(basics.lootTableKey ?? '-', { level: playerEntity.level, gender: playerEntity.gender });
+        equipEnemy(entity, mobileType, playerEntity.level);
+        addEnemyLootExtras(entity.items, basics, rolls);   // AUDIT 24 (wave 43): EnemyEntity.cs:388-397, after the equipment as DFU has it
+      }
       // NT2 (F210): GetTextureArchive's gender arm - a DFRandom draw off
       // the shared stream (Ledger A: a DFRandom site never rides the
       // injectable roll), humans only; monsters read the male texture.
@@ -223,7 +250,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // driver. No SPELLS.STD yet (the map loads async) = no lists,
       // exactly like a degraded dungeon boot.
       const sbi = spellsByIndex?.();
-      if (sbi) assignEnemySpells(entity, sbi);
+      if (sbi && !puppet) assignEnemySpells(entity, sbi);   // AUDIT WORLD6b B14
       const caster = entity.spells?.length ? new EnemyCaster(entity, rolls) : null;
       const mobile = new MobileUnit(mobileType, basics, (rec) => tex.getFrameCount(rec), Math.random, gender);
       const batch = renderer.createBillboardBatch(archive, 0, { w: 1, h: 1 }, [[0, 0, 0]]);
@@ -264,6 +291,10 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // else. RandomEncounters lists the seducer in five outdoor
       // tables, so this pool stands them too.
       if (mobileType === MOBILE_DAEDRA_SEDUCER) f.seducer = new SeducerTransformBehaviour(mobile, entity);
+      f.seq = seq ?? _nextSeq++;   // WORLD6b: mine numbered from one, a puppet's its owner's number
+      f.puppet = puppet ?? null;
+      f.uid = _nextUid++;   // AUDIT WORLD6b B15: the corpse loot's stable key (an index names another body once anything ahead is spliced)
+      if (f.puppet) _pupIndex.set(`${f.puppet}:${f.seq}`, f);
       foes.push(f);
       // B1: the quest resource behaviour couples at the stand - the
       // activation moment, where Unity runs the deferred Start.
@@ -287,18 +318,52 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
    *  teardown - gone with no corpse, the cull's own shape. */
   const questPoolOps = {
     removeFoe: (f) => {
-      if (f.dead) return;
+      if (f.dead || f.puppet) return;   // AUDIT WORLD6b B9: a peer's foe is not mine to remove (a dispel, a Wabbajack, a clear leave it to its owner's stream)
       releaseFoeBatch(f);
       f.dead = true;
       f.questBehaviour?.notifyDestroyed();
     },
     // AUDIT 58: the SetHealth(0) door, not a damage source - like
     // hurtPlayer's bypassShield it must not be mitigated.
-    zeroFoeHealth: (f) => { if (!f.dead) damageFoe(f, f.entity.health, null, null, { bypassShield: true }); },
+    zeroFoeHealth: (f) => { if (!f.dead && !f.puppet) damageFoe(f, f.entity.health, null, null, { bypassShield: true }); },   // AUDIT WORLD6b B9
     spellsByIndex: () => spellsByIndex?.(),
     foeSinks: (f) => foeSinks(f),
     rolls,
   };
+
+  /** EnemyDeath.CompleteDeath's corpse, through the one home - the fallen foe's body on the ground (AUDIT 24 wave 38),
+   *  tracked to the streamer's pixel at the death; WORLD6b: a puppet's body too, where its owner's stream let it fall. */
+  function mintCorpse(f) {
+  const _corpsePixel = currentPixelKey();
+  const _corpseGen = epoch;   // AUDIT-39r: the world this body falls in
+  mintCorpseMarker({
+    renderer, getTexture, uploadRecordFrame, collider,
+    // A5 - EnemyDeath.cs:86-92 reads `mobile.Enemy.CorpseTexture`,
+    // the per-mobile STRUCT COPY: SetSpecialTransformationCompleted
+    // swaps the seducer's unwinged corpse (400/6) for the winged
+    // one (400/5), which the static row cannot carry.
+    corpseTexture: f.mobile?.basics?.corpseTexture ?? ENEMY_BASICS[f.mobileType]?.corpseTexture,
+    feet: f.ai.feet,
+    fallbackSize: billboardSize(f.tex, 0),
+    stillDead: () => f.dead,
+  }).then((c) => {
+    if (!c) return;
+    // AUDIT-39r: the sweep took this pool's world while the marker
+    // was still loading its art. Its pixelKey would be the
+    // departure pixel, which the teleport has already torn down -
+    // so collectPixel could never reach the batch again and it
+    // would draw at the departure position for the session.
+    // AUDIT WORLD6b B7: and a record that ENDED while the art loaded (a puppet swept by the prune or the room change)
+    // takes its body with it - the marker landed in corpseBatches owned by nothing
+    if (_corpseGen !== epoch || f._gone) { renderer.destroyBillboardBatch(c.batch); return; }
+    f.corpseMarker = c;   // the loot seam reads the GROUND position from here
+    // TrackLooseObject's stamp: the streamer's pixel at the death,
+    // not the corpse's own position.
+    c.pixelKey = f.corpsePixelKey = _corpsePixel;
+    corpseBatches.push(c);
+    playBodyFall(audio, c.pos);
+  }).catch(() => {});
+  }
 
   /** The one damage door: corpse + loot on death (no crime - these
    *  are monsters and brigands, not the watch). */
@@ -360,23 +425,40 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
    *  unconditionally after it, so a swing that lost the to-hit roll
    *  still wakes a pacified foe and, through :255-258, its whole area.
    *  This pool skipped the door entirely at zero damage. */
-  function handleAttackFromPlayer(f, playerFeet = null) {
+  function handleAttackFromPlayer(f, playerFeet = null, peer = false) {
     if (!f?.ai) return;
     // ROAD-B: DaggerfallEntityBehaviour.cs:255-258 sits BEFORE the
     // call below and is a different law - the whole area turns, this
     // one foe additionally learns where the blow came from. The
     // `!isHostile` read must precede the walk, which flips this foe
     // too.
-    if (!f.ai.isHostile) makeAreaHostile?.();
+    // WORLD6b (AUDIT WORLD2 B9/C4's law, the dungeon's): a PEER's blow turns the struck foe alone - the area's wake
+    // and the charmed ally's revert are this player's own attack; the foe turns on this player, its owner, at the
+    // last feet it knew (the striker's feet are not on the hit - recorded)
+    if (!peer && !f.ai.isHostile) makeAreaHostile?.();
     f.ai.makeEnemyHostileToAttacker?.(PLAYER_TARGET, playerFeet ?? null);   // wave 36: seeded with where the attack came from
-    resetAllyTeamOnPlayerAttack(f.ai, f.entity, f.mobileType);
+    if (!peer) resetAllyTeamOnPlayerAttack(f.ai, f.entity, f.mobileType);
   }
 
-  function damageFoe(f, damage, playerFeet, knockDir = null, { fromPlayer = true, bypassShield = false } = {}) {
-    markFoeStruck(f, { fromPlayer });   // PX30: the enhanced HUD's target frame
-    if (damage > 0) markConcealedHit(f, _ecvT);   // ECV1: a hit on an unseen foe flashes it
+  function damageFoe(f, damage, playerFeet, knockDir = null, { fromPlayer = true, bypassShield = false, kind = 'melee', peer = false } = {}) {
+    // WORLD6b: a PEER's blow (applyHit) is the dungeon door's law (WORLD2): no HUD mark and no reveal of this
+    // player's - the striker's own rang at the striker
+    if (!peer) {
+      markFoeStruck(f, { fromPlayer });   // PX30: the enhanced HUD's target frame
+      if (damage > 0) markConcealedHit(f, _ecvT);   // ECV1: a hit on an unseen foe flashes it
+    }
+    // WORLD6b: a PUPPET takes no damage here - the blow goes to its owner as a hit (the owner's door applies it and
+    // the owner's next frame says so); the striker's own ring, blood and pain played before this door, as ever
+    if (f.puppet) {
+      // AUDIT WORLD6b B1: THE DIVERT HAS THE DUNGEON DOOR'S PROVENANCE GATE - only this PLAYER's own blow goes to the
+      // owner; a fall, another foe's maul, a poison round, a blow relayed here are not mine to report (the owner's
+      // simulation has its own), and every one went to the owner as MY blow until now (AUDIT WORLD2 B7 re-opened).
+      // A7: the blow is keyed to the cell as the frame is, so the owner refuses another room's
+      if (fromPlayer && !peer) _net?.onPeerHit?.({ to: f.puppet, k: _net.room?.() ?? null, i: f.seq, dmg: Math.max(0, Math.round(Number(damage) || 0)), kind });
+      return;
+    }
     if (fromPlayer && f.ai) {
-      handleAttackFromPlayer(f, playerFeet);
+      handleAttackFromPlayer(f, playerFeet, peer);
     }
     // AUDIT 58: THE SHIELD POOL, on the FOE door as well as the
     // player's. DFU's hook is inside the ABSTRACT BASE's
@@ -396,13 +478,15 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     if (f.entity.health <= 0) {
       // X5: the SOUL TRAP intercept, where EnemyEntity.SetHealth's
       // override sits (:157-177) - before the death, every source alike.
-      const trap = attemptSoulTrap(f.entity, f.mobileType, playerEntity.items, Math.random());
+      // AUDIT WORLD6b B2 (AUDIT WORLD2 B9's law, the dungeon's): a PEER's killing blow reads no gem of mine and fills
+      // no Star of mine, and speaks no kill notice of mine - the kill is the peer's
+      const trap = peer ? { allowDeath: true } : attemptSoulTrap(f.entity, f.mobileType, playerEntity.items, Math.random());
       if (trap.alert) say?.(SOUL_TRAP_TEXT[trap.alert]);
       if (!trap.allowDeath) { f.entity.health = 1; return; }
       // V3: the equipped AZURA'S STAR takes every slain MONSTER's soul
       // (DaggerfallEntityBehaviour.cs:240-247); after the trap, so a
       // trap-filled Star is no longer empty; classes have no soul.
-      if (f.mobileType < 128 && isAzurasStarEquipped(playerEntity)
+      if (!peer && f.mobileType < 128 && isAzurasStarEquipped(playerEntity)
         && fillEmptyTrap(playerEntity.items, f.mobileType, { azurasStarOnly: true })) {
         say?.(SOUL_TRAP_TEXT.trapSuccess);
       }
@@ -418,7 +502,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // PlayerEntityBehaviour` too - a foe killed while fighting
       // ANOTHER foe never touches the player's alert (MT-ii).
       if (isPlayerTarget(f.ai?.target) && f.ai?.detected) setEnemyAlert(playerEntity, false);
-      sayEnemyDied(say, f.mobileType);   // EnemyDeath:79-83, the kill notice
+      if (!peer) sayEnemyDied(say, f.mobileType);   // EnemyDeath:79-83, the kill notice - mine alone (AUDIT WORLD6b B2)
       raiseEnemyDeath(f.entity);   // UL1: OnEnemyDeath (:139) - the corpse's items are the entity's
       // AUDIT 24 (wave 38): EnemyDeath.CompleteDeath, through the one
       // home. This pool minted the marker inline at f.ai.feet - so a
@@ -427,33 +511,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // nothing ever played BodyFall (:126-129).
       // TrackLooseObject runs INSIDE CreateEnemyCorpseMarker, so the
       // pixel is read at the death, not when the texture lands.
-      const _corpsePixel = currentPixelKey();
-      const _corpseGen = epoch;   // AUDIT-39r: the world this body falls in
-      mintCorpseMarker({
-        renderer, getTexture, uploadRecordFrame, collider,
-        // A5 - EnemyDeath.cs:86-92 reads `mobile.Enemy.CorpseTexture`,
-        // the per-mobile STRUCT COPY: SetSpecialTransformationCompleted
-        // swaps the seducer's unwinged corpse (400/6) for the winged
-        // one (400/5), which the static row cannot carry.
-        corpseTexture: f.mobile?.basics?.corpseTexture ?? ENEMY_BASICS[f.mobileType]?.corpseTexture,
-        feet: f.ai.feet,
-        fallbackSize: billboardSize(f.tex, 0),
-        stillDead: () => f.dead,
-      }).then((c) => {
-        if (!c) return;
-        // AUDIT-39r: the sweep took this pool's world while the marker
-        // was still loading its art. Its pixelKey would be the
-        // departure pixel, which the teleport has already torn down -
-        // so collectPixel could never reach the batch again and it
-        // would draw at the departure position for the session.
-        if (_corpseGen !== epoch) { renderer.destroyBillboardBatch(c.batch); return; }
-        f.corpseMarker = c;   // the loot seam reads the GROUND position from here
-        // TrackLooseObject's stamp: the streamer's pixel at the death,
-        // not the corpse's own position.
-        c.pixelKey = f.corpsePixelKey = _corpsePixel;
-        corpseBatches.push(c);
-        playBodyFall(audio, c.pos);
-      }).catch(() => {});
+      mintCorpse(f);   // WORLD6b: one home for the body, a puppet's too
       return;
     }
     // C15 knockback, WeaponManager.cs:578-581. AUDIT 24 (wave 38): this
@@ -528,6 +586,18 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // and a corpse's component still runs in DFU.
       f.questBehaviour?.update();
       if (f.dead) continue;
+      // WORLD6b: a PUPPET - posed by its owner's stream (the feet eased toward the streamed feet, a far jump snapped, the
+      // yaw set), the walk while the streamed feet move, the hurt one-shot after a health drop, the strike edge once
+      // per streamed count; it draws and sounds like any foe and lands no blow of its own (its owner's foe lands
+      // those, on its owner - a foe hunting a peer is the next slice's)
+      if (f.puppet) {
+        const edge = puppetStep(f, dt);
+        f._mout = f.mobile.update(dt, { moving: f.ai.moving, striking: edge && !f.attack.firedRanged, rangedStriking: edge && !!f.attack.firedRanged, hurting: f.ai.hurtKnock, casting: false }, f.ai.yaw, f.ai.feet, eye);
+        if (edge) playEnemyClip(audio, f.sounds.attack(), f.ai.feet, acuteHearingMultiplier(playerEntity));
+        tickEnemySound(f.sounds, f.ai.feet, playerFeet, dt, { audio, collider, hearing: acuteHearingMultiplier(playerEntity) });
+        f.mobile.doMeleeDamage = false; f.mobile.shootArrow = false;   // WORLD2 dropped unconsumed: a puppet lands no blow of its own
+        continue;
+      }
       // AUDIT 24 (wave 32): PARALYSIS. This pool passed the literal `false`
       // for the motor's paralyzed argument and ran the attack machine
       // unconditionally, so a paralysed encounter foe kept walking and kept
@@ -632,6 +702,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       const mstate = f.attack.machine.state;
       const strikeEdge = mstate !== 'Idle' && (f._prevMState ?? 'Idle') === 'Idle';
       f._prevMState = mstate;
+      if (strikeEdge) f._atkA = ((((f._atkA | 0) >> 1) + 1) << 1) | (f.attack.firedRanged ? 1 : 0);   // WORLD6b: the attack count on the wire, the ranged bit low (WORLD2's spelling)
       // PlayAttackSound at the START of the swing, as the dungeon does
       // (MeleeAnimation fires it once on the edge, not at the hit).
       if (strikeEdge) playEnemyClip(audio, f.sounds.attack(), f.ai.feet, acuteHearingMultiplier(playerEntity));   // CF1: acute hearing
@@ -817,7 +888,9 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         // even at zero damage. Only the aggro half: :627's
         // DecreaseHealth(0) is a no-op and the knockback/hurt sit
         // inside DFU's own `damage > 0` arm.
-        handleAttackFromPlayer(foe, playerFeet);
+        // AUDIT WORLD6b B10: a PUPPET's zero-damage connect goes through the one door (AUDIT WORLD2 B13: a zero blow
+        // is a blow, the owner's foe turns) - the local wake is a stream-driven body's
+        if (foe.puppet) damageFoe(foe, 0, playerFeet, null); else handleAttackFromPlayer(foe, playerFeet);
       }
     }
     return any;
@@ -833,14 +906,16 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   // corpseMarker.js for both).
   function lootTargets() {
     return corpseLootTargets(foes, 'foeCorpse', {
-      isCorpse: (f) => !!f.corpse && !!f.entity,
+      isCorpse: (f) => !!f.corpse && !!f.entity && !f.puppet,   // WORLD6b: a puppet's body carries its owner's loot, not here (recorded)
+      idOf: (f) => (f.uid ??= _nextUid++),   // AUDIT WORLD6b B15: stable across the puppets' splices, where an index is not (AUDIT 39's law, the watch's shape)
       // the GROUND position the marker landed on, not where the foe
       // died - a flyer's body is metres below its last feet.
       feetOf: (f) => f.corpseMarker?.pos ?? f.ai?.feet ?? null,
     });
   }
   function takeLoot(key, say2 = () => {}) {
-    return takeCorpseLoot(foes[Number(key.split(':')[1])], playerEntity, say2);
+    const uid = Number(key.split(':')[1]);
+    return takeCorpseLoot(foes.find((f) => f.uid === uid), playerEntity, say2);   // AUDIT WORLD6b B15: by the stable key
   }
 
   /** Live sprite + corpse batches for the draw - the guard shape:
@@ -930,6 +1005,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     for (const c of corpseBatches) renderer.destroyBillboardBatch(c.batch);
     corpseBatches.length = 0;
     foes.length = 0;
+    _owners.clear(); _pupPending.clear(); _pupIndex.clear();   // AUDIT WORLD6b C10: the teardown ends the owners' records too
   }
 
   /** AUDIT 17e F23: the floating-origin recenter shifts everything. */
@@ -963,7 +1039,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
    *  teardown loses corpses on any teleport already, and DFU's own
    *  restore disables a dead record rather than re-minting it. */
   function snapshotWorld(toNative) {
-    return foes.filter((f) => !f.dead).map((f) => {
+    return foes.filter((f) => !f.dead && !f.puppet).map((f) => {   // WORLD6b: a puppet is its owner's, never this save's
       const wc = toNative(f.ai.feet);
       return {
         mobileType: f.mobileType, gender: f.gender,
@@ -1066,7 +1142,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
    *  (:146-148 - senses.Target.Entity.Items.AddItem), damage or not. */
   function arrowHitFoe(m, target) {
     const f = m.shooterFoe;
-    if (!f || f.dead || !target) return;
+    if (!f || f.dead || !target || target.puppet) return;   // AUDIT WORLD6b B8: a foe's shaft into a PUPPET is a ghost hit - nobody's
     const dir = [...m.dir];
     applyDamageToNonPlayer(f, target, {
       weapon: m.weapon, direction: dir, bowAttack: true, rolls, calculateAttackDamage,
@@ -1082,6 +1158,180 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     }
   }
 
+  // ---- WORLD6b: the cell's stream ----------------------------------------------------------------------------
+  const q2 = (v) => Math.round(v * 100) / 100;
+  const q3 = (v) => Math.round(v * 1000) / 1000;
+  /** The world host installs the net: room() (the cell the socket is in), now() and staleMs (C3), onPeerHit(hit) (a blow on a
+   *  puppet, to its owner), toWire(feet) -> the world frame's [x, y, z], toScene([x, y, z]) -> this scene's feet. */
+  function setNet(net) { _net = net ?? null; }
+  const _now = () => (_net?.now ? _net.now() : Date.now());
+  /** My foes out - every one of MINE whose streamed state changed since its last frame (every one when full, so a
+   *  dropped frame heals and a foe I culled is missed from the roll and so removed at the peers). A quest's foe is
+   *  the quest owner's alone (Multiplayer.md's first lock) and never rides. The record is WORLD2's: i my number for
+   *  it, t the species, x the gender bit, f the feet in the world frame, y the yaw, h the health, d dead, a the attack
+   *  count with the ranged bit low, m moving. */
+  function foesFrame(full = false) {
+    if (!_net?.toWire) return null;
+    const out = [];
+    for (const f of foes) {
+      if (f.puppet || f.isQuestFoe || (f.dead && !f.corpse)) continue;
+      const w = _net.toWire(f.ai.feet);
+      if (!w) continue;
+      const r = { i: f.seq, t: f.mobileType, x: f.gender === 'female' ? 1 : 0, f: [q2(w[0]), q2(w[1]), q2(w[2])], y: q3(f.ai.yaw), h: f.entity.health, d: f.dead ? 1 : 0, a: f._atkA | 0, m: f.ai.moving ? 1 : 0 };
+      const key = `${r.f[0]},${r.f[1]},${r.f[2]},${r.y},${r.h},${r.d},${r.a},${r.m}`;
+      if (!full && f._sentKey === key) continue;
+      f._sentKey = key;
+      out.push(r);
+    }
+    if (!out.length && !full) return null;
+    return { n: ++_foesSeq, k: _net.room?.() ?? null, full: full ? 1 : 0, f: out };
+  }
+  /** The owner's record (AUDIT WORLD6b B4/C3), minted on its first frame. */
+  function ownerOf(from) { let o = _owners.get(from); if (!o) { o = { n: -1, at: _now(), gen: ++_ownerGen }; _owners.set(from, o); } return o; }
+  const pupKey = (from, i) => `${from}:${i}`;
+  /** The puppets standing or building for an owner - the cap's count (B3). */
+  function livePuppetsOf(from) {
+    let n = 0;
+    for (const f of _pupIndex.values()) if (f.puppet === from && !f.dead) n++;
+    for (const k of _pupPending.keys()) if (k.startsWith(from + ':')) n++;
+    return n;
+  }
+  /** A peer's foes in - each record PROJECTED (validFoeRecord, AUDIT WORLD6b C2: refused whole otherwise) onto its
+   *  puppet; a record for a foe I have no puppet of standing one through the pool's ONE spawn chain (at the streamed
+   *  feet, the streamed species and gender; never a corpse I never saw; at most CELL_PUPPETS_MAX live per owner,
+   *  B3); a record whose species disagrees, or that says a dead puppet lives, ends the old puppet and stands anew
+   *  (B11/B12); a record for a puppet still building is the word that lands when the build does (B13); a full frame
+   *  removing every puppet of that owner it no longer names; a frame older than the owner's last, or from another
+   *  cell, is not the world. */
+  function applyFoes(from, data) {
+    if (!_net?.toScene || typeof from !== 'string' || !from || !data || !Array.isArray(data.f)) return false;
+    if (data.k != null && _net.room && data.k !== _net.room()) return false;
+    const o = ownerOf(from);
+    if (Number.isFinite(data.n)) { if (data.n <= o.n) return false; o.n = data.n; }
+    o.at = _now();
+    const seen = new Set();
+    for (const raw of data.f) {
+      const r = validFoeRecord(raw);
+      if (!r) continue;
+      seen.add(r.i);
+      const key = pupKey(from, r.i);
+      const f = _pupIndex.get(key) ?? null;
+      if (f) {
+        if ((r.t !== undefined && r.t !== f.mobileType) || (r.d === 0 && f.dead)) removePuppet(f);
+        else { applyPuppetRecord(f, r); continue; }
+      }
+      if (_pupPending.has(key)) { _pupPending.set(key, r); continue; }
+      if (r.d === 1 || r.t === undefined || !ENEMY_BASICS[r.t] || !r.f) continue;
+      if (livePuppetsOf(from) >= CELL_PUPPETS_MAX) continue;
+      const feet = _net.toScene(r.f);
+      if (!feet) continue;
+      _pupPending.set(key, r);
+      const gen = o.gen;
+      spawnFoe(r.t, feet, { puppet: from, seq: r.i, gender: GENDER_BIT[r.x === 1 ? 1 : 0], feetGiven: true, yaw: r.y ?? null })
+        .then((nf) => {
+          if (!nf) return;
+          const owner = _owners.get(from);
+          if (!owner || owner.gen !== gen) { removePuppet(nf); return; }   // B6: a build the clear or the prune overtook is a ghost - it ends on arrival
+          applyPuppetRecord(nf, _pupPending.get(key) ?? r);
+        })
+        .catch(() => {})
+        .finally(() => _pupPending.delete(key));
+    }
+    if (data.full === 1) for (const f of [..._pupIndex.values()]) if (f.puppet === from && !seen.has(f.seq)) removePuppet(f);
+    return true;
+  }
+  /** One streamed record onto its puppet: the target pose - kept in the WORLD frame and converted every step (AUDIT
+   *  WORLD6b C1: the floating origin moves this scene's frame under a cached target, so a standing puppet snapped a
+   *  map pixel away at every crossing; a peer's pose is converted every frame for the same reason, AUDIT ONLINE D5),
+   *  the health (a drop is the hurt one-shot), the attack once per count (a joiner latches the count it arrives with
+   *  and replays nothing), death through the puppet's own fall. */
+  function applyPuppetRecord(f, r) {
+    const p = f._pup ?? (f._pup = { wire: null, yaw: f.ai.yaw, moving: false, hurt: false, strike: null, a: null });
+    if (r.f) p.wire = r.f;
+    if (r.y !== undefined) p.yaw = r.y;
+    if (r.m !== undefined) p.moving = r.m === 1;
+    if (r.h !== undefined) { if (r.h < f.entity.health) p.hurt = true; f.entity.health = r.h; }
+    if (r.a !== undefined) { if (p.a != null && r.a !== p.a) p.strike = (r.a & 1) ? 'ranged' : 'melee'; p.a = r.a; }
+    if (r.d === 1 && !f.dead) { const t = p.wire ? _net.toScene(p.wire) : null; if (t) { f.ai.feet[0] = t[0]; f.ai.feet[1] = t[1]; f.ai.feet[2] = t[2]; } puppetDie(f); }
+  }
+  /** One puppet frame: the eased pose (toward the streamed feet in THIS frame's coordinates), the walk, the hurt, the
+   *  strike edge; the mobile's damage latches are the caller's to drop (a puppet lands no blow). */
+  function puppetStep(f, dt) {
+    const p = f._pup;
+    let edge = false;
+    if (!p) { f.ai.moving = false; f.ai.hurtKnock = false; return false; }
+    const feet = f.ai.feet, t = p.wire ? _net.toScene(p.wire) : null;
+    let d2 = 0;
+    if (t) {
+      const dx = t[0] - feet[0], dy = t[1] - feet[1], dz = t[2] - feet[2];
+      d2 = dx * dx + dy * dy + dz * dz;
+      if (d2 > PUPPET_SNAP * PUPPET_SNAP) { feet[0] = t[0]; feet[1] = t[1]; feet[2] = t[2]; }
+      else { const k = Math.min(1, dt / PUPPET_EASE_S); feet[0] += dx * k; feet[1] += dy * k; feet[2] += dz * k; }
+    }
+    f.ai.yaw = p.yaw;
+    f.ai.moving = p.moving || d2 > PUPPET_STILL * PUPPET_STILL;
+    f.ai.hurtKnock = p.hurt; p.hurt = false;
+    if (p.strike != null) { edge = true; if (f.attack) f.attack.firedRanged = p.strike === 'ranged'; p.strike = null; }
+    return edge;
+  }
+  /** A puppet's death: the body where its owner's stream let it fall, no loot of this player's, no kill notice, no
+   *  alert - the owner's world says those to the owner. */
+  function puppetDie(f) {
+    if (f.dead) return;
+    f.dead = true;
+    f.corpse = true;
+    releaseFoeBatch(f);
+    mintCorpse(f);
+  }
+  /** A puppet gone: its owner's roll no longer names it, its owner left the cell or went quiet, or the room changed.
+   *  AUDIT WORLD6b B5/B7: the record ENDS here - spliced out of the roll (a flag left it standing for the next frame,
+   *  where the owner's next record re-adopted the corpse-less dead and stood nothing), its body with it, a body still
+   *  loading refused on arrival (`_gone`). */
+  function removePuppet(f) {
+    f._gone = true;
+    releaseFoeBatch(f);
+    if (f.corpseMarker) { const i = corpseBatches.indexOf(f.corpseMarker); if (i >= 0) { renderer.destroyBillboardBatch(corpseBatches[i].batch); corpseBatches.splice(i, 1); } }
+    f.dead = true; f.corpse = false; f.corpseMarker = null;
+    _pupIndex.delete(pupKey(f.puppet, f.seq));
+    const i = foes.indexOf(f); if (i >= 0) foes.splice(i, 1);
+  }
+  /** A peer's blow on MY foe, through the one damage door with the peer's number and kind (the striker's feet
+   *  unknown to it: the aggro turns toward me, its owner - recorded); keyed to the cell as the frame is (AUDIT
+   *  WORLD6b A7). */
+  function applyHit(from, data) {
+    if (!data || typeof data !== 'object') return false;
+    if (data.k != null && _net?.room && data.k !== _net.room()) return false;
+    const f = foes.find((x) => !x.puppet && x.seq === (data.i | 0));
+    const dmg = Number(data.dmg);
+    if (!f || f.dead || !Number.isFinite(dmg) || dmg < 0 || dmg > 10000) return false;
+    const kind = data.kind === 'arrow' || data.kind === 'spell' ? data.kind : 'melee';
+    // AUDIT WORLD2 B8/C4's law: the blow is seen and heard at the owner too - the hit's ring, the blood, the pain
+    if (dmg > 0) {
+      audio?.play3d?.(hitSoundFor(null), f.ai.feet, ENEMY_HIT_VOLUME, { maxDistance: 16 });
+      hitEffects?.showBloodSplash(ENEMY_BASICS[f.mobileType]?.bloodIndex ?? 0, bloodCentre(f.ai.feet, f.ai.height));
+      const pain = enemyPainVoice(f, dmg);
+      if (pain && pain.clip >= 0) audio?.play3d?.(pain.clip, [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], 1, { maxDistance: 16, pitch: 1 + pain.pitchLift });
+    }
+    damageFoe(f, dmg, null, null, { fromPlayer: true, kind, peer: true });
+    void from;
+    return true;
+  }
+  /** The owners gone from the cell (the session's peer map no longer holds them) or gone quiet (no frame in staleMs,
+   *  AUDIT WORLD6b C3) - their puppets swept and their records ended, so a returning owner numbers from one again (B4). */
+  function pruneOwners(alive, now = _now()) {
+    for (const [from, o] of [..._owners]) {
+      if (alive.has(from) && !(_net?.staleMs > 0 && now - o.at > _net.staleMs)) continue;
+      for (const f of [..._pupIndex.values()]) if (f.puppet === from) removePuppet(f);
+      _owners.delete(from);
+    }
+  }
+  /** A room change: every puppet is the old cell's, every owner's record too. */
+  function clearPuppets() {
+    for (const f of [..._pupIndex.values()]) removePuppet(f);
+    _owners.clear();
+    _pupPending.clear();
+  }
+
   return { foes, spawnFoe, damageFoe, handleAttackFromPlayer, update, resolvePlayerHit, batches, offsetAll, activeCount, lootTargets, takeLoot, snapshotWorld, restoreWorld, destroy,
     /** AUDIT 39: CleanupUntrackedObjects' enemy half (StreamingWorld.cs
      *  :1624-1635), which a teleport reaches too through
@@ -1092,5 +1342,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
      *  is exactly that destroy and it is idempotent and reusable; this
      *  is the name the world host's teleport asks for it by. */
     clearLive: destroy,
-    collectPixel, arrowHitFoe, removeFoe: questPoolOps.removeFoe };
+    collectPixel, arrowHitFoe, removeFoe: questPoolOps.removeFoe,
+    // WORLD6b: the cell's stream - the net installed, my foes out, a peer's in, a peer's blow in, the puppets pruned
+    setNet, foesFrame, applyFoes, applyHit, pruneOwners, clearPuppets };
 }

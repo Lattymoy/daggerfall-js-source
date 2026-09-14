@@ -141,6 +141,30 @@ export function rollWeather(climateIndex, season, rolls = Math.random) {
 
 // ---- the module state ----------------------------------------------
 
+// WORLD5 (Mac: "the shared clock and weather"): ONLINE, THE DAY PICKS THE ROLL. The six-zone array is rolled once per
+// game date from Math.random, so two players under one sky rolled two skies. With the shared clock on, every roll of
+// the array - the day change's, the boot's, a respawn's - draws from a generator seeded by the DAY (and the climate,
+// for a respawn), so every client rolls the same six values for the same date without a frame to carry them. The
+// enhanced lane's hourly evolution (CLK2, below) was already seeded by the hour and the zone, so it agrees for free.
+let _sharedWeather = false;
+export function setSharedWeather(on) { _sharedWeather = !!on; }
+export const sharedWeatherOn = () => _sharedWeather;
+const SHARED_WEATHER_SEED = 0x57454154;   // 'WEAT'
+/** The generator a roll draws from: the day's own under the shared clock, the caller's otherwise. */
+const rollsFor = (nowMinutes, rolls, salt = 0) => (_sharedWeather ? seededRng((Math.floor(nowMinutes / 1440) * 31 + salt) ^ SHARED_WEATHER_SEED) : rolls);
+/** AUDIT WORLD5 C5: the stamp of a roll of the day's array. Under the shared clock the roll is THE DAY'S, whoever
+ *  rolled it and whenever they arrived: stamped at the day's first minute (so a joiner's drain at noon is a jump -
+ *  the sky changed hours ago - and a midnight roll's drain is a front, as it is offline), and the hourly evolution
+ *  re-anchored at the hour before the day's first, so the next evolve replays every hour of the day up to now and a
+ *  client that joined at noon carries the sky the one that stood under it since midnight does. Offline the stamp is
+ *  the roll's own minute and the evolution stands where it stood. */
+const stampRoll = (nowMinutes) => {
+  if (!_sharedWeather) return nowMinutes;
+  const day = Math.floor(nowMinutes / 1440);
+  _evolveHour = day * 24 - 1;
+  return day * 1440;
+};
+
 let _climateWeathers = new Uint8Array(6);   // [Desert, Mountain, Rainforest, Swamp, Subtropical, Woodlands] (WeatherManager.cs:421-426)
 let _current = WEATHER_ENUM.sunny;          // PlayerWeather.WeatherType - the one persisted value
 let _climateWeathersRolled = false;         // StartGameBehaviour.cs:435-436's one-shot "Randomize weathers"
@@ -256,10 +280,10 @@ export const weatherJumpStamp = () => _jumps;
  * the frames in between.
  */
 export function rollClimateWeathersForDay(nowMinutes, rolls = Math.random) {
-  setClimateWeathers(seasonValue(dateFromClassicMinutes(nowMinutes)), rolls);
+  setClimateWeathers(seasonValue(dateFromClassicMinutes(nowMinutes)), rollsFor(nowMinutes, rolls));   // WORLD5: the day's own roll online
   _climateWeathersRolled = true;
   _updateFromClimateArray = true;
-  _rolledAtMinutes = nowMinutes;   // WX2a: the drain measures its lateness from here
+  _rolledAtMinutes = stampRoll(nowMinutes);   // WX2a: the drain measures its lateness from here; AUDIT WORLD5 C5: the day's own minute online
 }
 
 /** THE EXTERIOR FRAME'S WEATHER DRAIN - WeatherManager.Update's
@@ -278,10 +302,10 @@ export function rollClimateWeathersForDay(nowMinutes, rolls = Math.random) {
  *  WeatherManager.cs:524-543) so the loaded sky survives. */
 export function tickWeather(nowMinutes, climateIndex, rolls = Math.random) {
   if (!_climateWeathersRolled) {
-    setClimateWeathers(seasonValue(dateFromClassicMinutes(nowMinutes)), rolls);
+    setClimateWeathers(seasonValue(dateFromClassicMinutes(nowMinutes)), rollsFor(nowMinutes, rolls));   // WORLD5: the day's own roll online
     _climateWeathersRolled = true;
     _updateFromClimateArray = true;   // OnInitWorld raises it at every non-load start (:534)
-    _rolledAtMinutes = nowMinutes;
+    _rolledAtMinutes = stampRoll(nowMinutes);   // AUDIT WORLD5 C5: the day's own minute online
   }
   if (!_updateFromClimateArray) return false;
   _updateFromClimateArray = false;
@@ -307,7 +331,7 @@ export function weatherRespawn(nowMinutes, climateIndex, rolls = Math.random) {
   const base = getWorldClimateSettings(climateIndex).climateType;
   if (base === _lastClimateBase) return false;
   _lastClimateBase = base;
-  const next = rollWeather(climateIndex, seasonValue(dateFromClassicMinutes(nowMinutes)), rolls);
+  const next = rollWeather(climateIndex, seasonValue(dateFromClassicMinutes(nowMinutes)), rollsFor(nowMinutes, rolls, 1 + climateIndex));   // WORLD5: the day's and the climate's roll online
   if (next === _current) return false;
   _current = next;
   _jumps++;   // WX2a: the respawn's "different sky at the destination" is the player arriving under it
@@ -420,6 +444,7 @@ export function evolveClimateWeathers(nowMinutes) {
 
 /** Test seam: back to the fresh-boot state. */
 export function resetWeatherSim() {
+  _sharedWeather = false;   // WORLD5
   _climateWeathers = new Uint8Array(6);
   _current = WEATHER_ENUM.sunny;
   _climateWeathersRolled = false;

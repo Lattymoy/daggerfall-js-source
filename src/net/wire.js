@@ -15,7 +15,7 @@
 //                    {t:'foes', data}                   the host's live foes, FOES_HZ_MAX a second at most (WORLD2)
 //                    {t:'hit', data}                    a blow on the host's foe, from anyone but the host (WORLD2)
 //                    {t:'act', data}                    a change to the room's doors, levers, movers and loot, from anyone in it (WORLD3/WORLD4)
-//   room -> client:  {t:'welcome', id, peers:[{id,name,look,pose}], host, world}
+//   room -> client:  {t:'welcome', id, peers:[{id,name,look,pose}], host, world, now}   now: the relay's clock, ms (WORLD5)
 //                    {t:'join', id, name, look, pose}   {t:'leave', id}
 //                    {t:'pose', id, p}                  {t:'pong'}
 //                    {t:'chat', id, name, text, at}     to everyone who hears it, the sender included
@@ -113,6 +113,29 @@
 // send one, not the host alone: a door is whoever touched it, and so is a
 // chest. The relay reads none of it - the frame's `data` is opaque to it,
 // so WORLD4 needed no relay change and no budget of its own.
+//
+// THE SHARED CLOCK (WORLD5, 2026-09-13, Mac: "the shared clock and
+// weather, and the quest clocks stood down online"). Online, the world's
+// time is nobody's to keep: it is a FUNCTION OF WALL TIME, the same on
+// every client with no frame to carry it and no host to hand it over -
+// ONLINE_EPOCH_MS is the instant the world stood at the classic game
+// start (13:30, 4 Morning Star 3E405), and it has run at DFU's default
+// TimeScale (12: a game minute every five real seconds, a day every two
+// real hours) since. The relay says its own clock in the welcome (`now`,
+// ms) so a client whose machine's clock is off reads the world's time
+// through the offset, not its own. Nothing local moves it: no rest, no
+// fast travel, no sentence, no ?tod, no ?timescale.
+
+/** WORLD5: the instant the online world stood at the classic game start - 2026-09-14T00:00:00Z. */
+export const ONLINE_EPOCH_MS = Date.UTC(2026, 8, 14, 0, 0, 0);
+/** WORLD5: DaggerfallDateTime.classicGameStartTime in classic minutes (gameDate.js CLASSIC_GAME_START_TIME - pinned equal). */
+export const ONLINE_EPOCH_MINUTES = 523530;
+/** WORLD5: classic minutes per real millisecond at TimeScale 12 (worldTick.js CLASSIC_MINUTES_PER_SECOND / 1000 - pinned equal). */
+export const ONLINE_MINUTES_PER_MS = 12 / 60 / 1000;
+/** WORLD5: the online world's clock, classic minutes, for a wall-clock instant (ms). One home for every client. */
+export const sharedClassicMinutes = (nowMs) => ONLINE_EPOCH_MINUTES + (nowMs - ONLINE_EPOCH_MS) * ONLINE_MINUTES_PER_MS;
+/** OL3: the inverse - the relay-clock millisecond at which the shared world reads a classic minute (a room's expiry, a loan's due date, as real time). */
+export const wallMsForClassicMinutes = (classicMinutes) => ONLINE_EPOCH_MS + (classicMinutes - ONLINE_EPOCH_MINUTES) / ONLINE_MINUTES_PER_MS;
 
 /** The streaming world's shard: a square of map pixels. */
 export const WORLD_CELL = 16;
@@ -171,6 +194,16 @@ export const CHAT_ROOM_HZ_MAX = 20;
 export const CHAT_WORLD_ROOM = 'chat:world';
 /** The largest world frame the room stores (UTF-16 units) - WORLD1; anything else keeps MAX_FRAME_BYTES. */
 export const WORLD_FRAME_MAX = 512 * 1024;
+/** AUDIT WORLD6a B3: a BUILDING's memory is a shelf or two and a handful of doors (a shop shelf measured at 2-4 KB;
+ *  a whole shop single-digit KB), and the namespace of buildings is 10^18 names an attacker may fill for
+ *  WORLD_TTL_MS each - so an interior room stores this much and no more, at both ends. */
+export const WORLD_FRAME_MAX_INTERIOR = 64 * 1024;
+/** The world-frame cap a ROOM earns once its key is known: an interior's, else the dungeon's. */
+export const worldFrameMaxFor = (key) => (String(key ?? '').startsWith('interior:') ? WORLD_FRAME_MAX_INTERIOR : WORLD_FRAME_MAX);
+/** AUDIT WORLD6a B7: a context's mark on the memory it publishes (AUDIT WORLD B1) - `Math.random().toString(36)
+ *  .slice(2)` could be ONE character, and a collision refused the room's memory in silence; twelve base-36 digits
+ *  of the clock and the roll, always. */
+export const mintSharedStamp = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10).padEnd(8, '0')}`;
 /** The least time between two of one host's world frames, ms; a sooner one is dropped. */
 export const WORLD_MIN_MS = 5000;
 /** The room's storage chunk for a world (a Durable Object value is capped at 128 KiB). */
@@ -270,8 +303,61 @@ export const isChatRoom = (key) => CHAT_ROOMS.has(String(key ?? ''));
  *  Privateer's Hold is 187853213, Daggerfall 1291010263 (world/dungeonTextures.js MAIN_STORY_DUNGEON_IDS) - so
  *  every real dungeon failed this law at BOTH ends, was joined all the same, relayed poses and nothing else, and
  *  every player kept stepping their own foes with no word said. Ten digits is the unsigned 32-bit bound. */
-const WORLD_ROOM = /^dungeon:m\d{1,10}$/;
+//  WORLD6a (Mac, 2026-09-14: "Lets tackle #1 next"): AND A BUILDING - `interior:m<mapId>.<buildingKey>`, the room
+//  roomKeyFor has minted for every interior since ONLINE1 (a real map id, unsigned; a building key from
+//  BuildingDirectory.MakeBuildingKey, (x<<16)+(y<<8)+i or the 1<<24 sentinel - eight digits at most). A town's cell
+//  and the fixed city's room are still no world room: the exterior's memory is the next slice's.
+//  AUDIT WORLD6a B4: no zero and no leading zero in either number - roomKeyFor never mints a 0 id ("no map row") or
+//  a 0 key ("a door the directory cannot key"), and a padded alias (`m0000000187853213`) was refused by the digit
+//  bound alone, which is luck, not law. The wire admits exactly what the game can name, and nothing the relay would
+//  pay for that no player can reach.
+const WORLD_ROOM = /^(?:dungeon:m[1-9]\d{0,9}|interior:m[1-9]\d{0,9}\.[1-9]\d{0,7})$/;
 export const isWorldRoom = (key) => WORLD_ROOM.test(String(key ?? ''));
+//  WORLD6b (Mac, 2026-09-14: "Continue"): A CELL STREAMS ITS FOES. The open country's room is a sixteen-pixel cell
+//  (worldRoom), and nothing in it is a layout every client builds alike: every foe was one client's roll, near that
+//  client, on terrain only the clients near it have built - so a cell has no HOST simulation and keeps no memory
+//  (it is no world room), and A FOE IS ITS SPAWNER'S: the spawner steps it and streams it, everyone else in the cell
+//  puppets it, and a blow on another's foe goes to its OWNER as a hit (`data.to`). The relay fans a cell's foes frames
+//  from ANYONE hello'd (each on its own bucket, under the room's byte budget) and routes a cell's hit to the socket
+//  `to` names; a world room keeps WORLD2's host law untouched.
+const CELL_ROOM = /^world:\d{1,3},\d{1,3}$/;
+export const isCellRoom = (key) => CELL_ROOM.test(String(key ?? ''));
+/** A room whose foes ride the wire: a world room (the host's) or a cell (each spawner's). */
+export const streamsFoes = (key) => isWorldRoom(key) || isCellRoom(key);
+/** WORLD6b: the owner a cell's hit is for - the frame's `to`, a peer id; null when the frame names none.
+ *  AUDIT WORLD6b A5: an id is what the wire's own law says an id is (ID_RE) - a `to` no socket could ever carry
+ *  named nobody yet bought a funnel token. */
+export const hitOwnerOf = (data) => (data && typeof data.to === 'string' && ID_RE.test(data.to) ? data.to : null);
+/** AUDIT WORLD6b B3/C2: A CELL'S FRAME IS BOUNDED, at both ends. A dungeon's frame is the host's alone and keys
+ *  into a layout every client built (`i >= _layoutFoes` refuses the rest); a cell's comes from anyone and MINTS a
+ *  foe per record it names, so a record is projected like a pose (validPose's own bounds on the feet) and a frame
+ *  carries at most CELL_FRAME_RECORDS_MAX records (the owner's live cap plus the corpses still riding), and a
+ *  reader stands at most CELL_PUPPETS_MAX live puppets per owner (MAX_ACTIVE_ENCOUNTER_FOES - the only number a
+ *  legitimate owner can exceed is by quest foes, which never ride). */
+export const CELL_FRAME_RECORDS_MAX = 64;
+export const CELL_PUPPETS_MAX = 8;
+export const FOE_SEQ_MAX = 1e9;
+export const FOE_HEALTH_MAX = 1e5;
+/** One streamed foe record projected: `i` a whole number in [0, FOE_SEQ_MAX]; `t` a whole number in [0, 255] or
+ *  absent; `x`, `d`, `m` 0 or 1 or absent; `f` three finite numbers inside the pose's bounds or absent; `y` finite
+ *  or absent; `h` finite in [0, FOE_HEALTH_MAX] or absent; `a` a whole number in [0, 2^31) or absent. Null when
+ *  any present field is outside its law - a record is refused whole, never half landed. */
+export function validFoeRecord(r) {
+  if (!r || typeof r !== 'object' || Array.isArray(r)) return null;
+  if (!Number.isInteger(r.i) || r.i < 0 || r.i > FOE_SEQ_MAX) return null;
+  const out = { i: r.i };
+  if (r.t !== undefined) { if (!Number.isInteger(r.t) || r.t < 0 || r.t > 255) return null; out.t = r.t; }
+  for (const k of ['x', 'd', 'm']) if (r[k] !== undefined) { if (r[k] !== 0 && r[k] !== 1) return null; out[k] = r[k]; }
+  if (r.f !== undefined) {
+    if (!Array.isArray(r.f) || r.f.length !== 3 || !r.f.every(Number.isFinite)) return null;
+    if (Math.abs(r.f[0]) > POSE_BOUND || Math.abs(r.f[2]) > POSE_BOUND || Math.abs(r.f[1]) > POSE_Y_BOUND) return null;
+    out.f = [r.f[0], r.f[1], r.f[2]];
+  }
+  if (r.y !== undefined) { if (!Number.isFinite(r.y)) return null; out.y = r.y; }
+  if (r.h !== undefined) { if (!Number.isFinite(r.h) || r.h < 0 || r.h > FOE_HEALTH_MAX) return null; out.h = r.h; }
+  if (r.a !== undefined) { if (!Number.isInteger(r.a) || r.a < 0 || r.a >= 2 ** 31) return null; out.a = r.a; }
+  return out;
+}
 
 /** A pose the room will relay, or null. */
 export function validPose(p) {

@@ -72,7 +72,7 @@ test('A2: the host takes the day comparison on all three loot arms, not a stock-
   assert.match(wm, /const stockedToday = \(\) => createStockedDate\(gameDate\(\)\);/,
     'CreateStockedDate over the live date, one home');
   // the SHELF arm (:881-886)
-  assert.match(wm, /if \(needsRestock\(shelf, today\)\) \{\s*\n\s*shelf\.stockedDate = today;\s*\n\s*shelf\.items = stockShopShelf\(/,
+  assert.match(wm, /const fresh = needsRestock\(shelf, today\);[^\n]*\n\s*if \(fresh\) \{\s*\n\s*shelf\.stockedDate = today;\s*\n\s*shelf\.items = stockShopShelf\(/,   // AUDIT WORLD6a A5: the comparison's answer is also the open's word to the room
     'the shelf stamps the day and re-mints - `items.Clear()` then StockShopShelf');
   // the HOUSE CONTAINER arm (:910-915) and the owned latch (:907)
   assert.match(wm, /c\.stockedDate = 1;/, 'the owned arm stamps DFU\'s literal 1');

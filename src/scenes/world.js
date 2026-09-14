@@ -60,7 +60,7 @@ import { preloadSpellbookArt, spellbookArtLoaded } from '../ui/spellbookWindow.j
 import { createSpellbookWindow } from '../ui/spellbookDoor.js';   // PX23: the book's one door
 import { calculateCastCost } from '../systems/spellcost.js';   // M2   // T3b
 import { rangedDamageSpells } from '../systems/spellcast.js';   // U42: the flight probe's picker
-import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';   // AUDIT 23 (C2): the ONE clock
+import { worldMinutes, setWorldMinutes, setSharedClock, sharedClockOn, alignEntityClocks } from '../systems/worldTick.js';   // AUDIT 23 (C2): the ONE clock
 import { setSyntheticTimeIncrease } from '../systems/effectBroker.js';   // AUDIT 63 F13: DaggerfallTravelPopUp_OnPostFastTravel (EntityEffectBroker.cs:846-847)
 import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS, playerPainVoice, playPlayerVoice, makeEnemiesHostile } from './hostCombat.js';   // ROAD-B: GameManager.MakeEnemiesHostile
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 46): the arrow owes the flash too   // AUDIT 23 (C14)
@@ -206,7 +206,7 @@ import { Collider } from '../player/collider.js';
 import { createDataPipeline } from './dataPipeline.js';
 import { createWorldModes } from './worldModes.js';
 import { OnlineSession, roomKeyFor, DEFAULT_SERVER, WORLD_PUBLISH_MS, FOES_MS, FOES_FULL_MS, FOES_STALE_MS } from '../net/online.js';   // ONLINE1: the session; WORLD1: the room's memory
-import { POSE_STRIKES, isWorldRoom, actFrameFits } from '../net/wire.js';   // MAC7 #1: the swing's kind on the wire; AUDIT WORLD4 A1: whether an act frame can be said at all
+import { POSE_STRIKES, isWorldRoom, isCellRoom, actFrameFits, sharedClassicMinutes, wallMsForClassicMinutes } from '../net/wire.js';   // MAC7 #1: the swing's kind on the wire; AUDIT WORLD4 A1: whether an act frame can be said at all
 import { hasDaggerfallArrows } from '../combat/fpArm.js';   // MAC7 #2: the arrow bit on the wire - weaponRig's own read
 import { drawText } from '../ui/text.js';   // ONLINE1: the session's status line
 import { RemotePlayers, composeLook } from '../net/remotePlayers.js';   // ONLINE1: the others, drawn
@@ -263,7 +263,7 @@ import { PrecipitationRenderer } from '../render/precipitation.js';
 import { ROTOR_HUB, rotorPhase, advanceRotor, mountRotor, MILL_SOUND, millSoundPosition } from '../world/windmills.js';   // WM2b: the sails; WM4c: the hum
 import { BODY } from '../world/windmillMesh.js';   // WM2d: the tower, for the collider
 import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
-import { setWeather, currentWeather, tickWeather, weatherRespawn, applyClimateWeather, importClimateWeathers, weatherJumpStamp } from '../systems/weatherSim.js';   // W1: the live weather state (the save halves ride save.js); SAV3: the classic import's zone array
+import { setWeather, currentWeather, tickWeather, weatherRespawn, applyClimateWeather, importClimateWeathers, weatherJumpStamp, setSharedWeather, rollClimateWeathersForDay } from '../systems/weatherSim.js';   // W1: the live weather state (the save halves ride save.js); SAV3: the classic import's zone array
 import { classicSaveToSnapshot, takePendingClassicSave, peekPendingClassicSave } from '../systems/classicSave.js';   // SAV3: the classic-save import arm
 import { readTokens as readRscTokens, RSC } from '../formats/textRsc.js';   // SAV3: the classic rumors' token payloads
 import { lookScale, lookInvert, keyboardLookRate } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
@@ -305,6 +305,14 @@ const CANNOT_TRAVEL_ENEMIES_TEXT = 'You cannot travel with enemies nearby.';
 export async function bootWorld(canvas, renderer, params, status) {
   const regionName = params.get('region') || 'Daggerfall';
   const locationName = params.get('loc') || 'Daggerfall';
+  // WORLD5 (Mac: "the shared clock and weather, and the quest clocks stood down online"): ONLINE, THE WORLD'S CLOCK IS
+  // A FUNCTION OF WALL TIME (net/wire.js sharedClassicMinutes), read through the relay's offset once the welcome says
+  // it. Installed before anything below reads the time, so a load's own clock, ?tod and ?timescale never stand.
+  // AUDIT WORLD5 C13: the FIRST thing this boot does - it stood below the season reads (the climate season and the
+  // mod's four-valued one, both off worldMinutes()), so an online boot dressed the world in the session clock's
+  // season and the shared clock's turned it over on the first frame.
+  let _sharedOffsetMs = 0;   // the relay's clock minus this machine's, heard when the session's welcome arrives
+  if (params.has('online')) { setSharedClock(() => sharedClassicMinutes(Date.now() + _sharedOffsetMs), (m) => wallMsForClassicMinutes(m) - _sharedOffsetMs); setSharedWeather(true); }   // and the day picks the sky from here on (weatherSim); OL3: the inverse beside it, for the prices said in real time
   // A1: THE TEXTURE SEASON IS THE CALENDAR'S, NOT A URL PARAM.
   // Every production site in the reference reads the world clock -
   // ClimateSwaps.cs:382-386, DaggerfallLocation.ApplyTimeAndSpace
@@ -613,9 +621,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?timescale SCALES the world tick (DFU's TimeScale, default 12).
   {
     const bootTod = parseTimeOfDay(params.get('tod'));
-    if (bootTod != null) setWorldMinutes(Math.floor(worldMinutes() / 1440) * 1440 + bootTod);
+    if (bootTod != null && !sharedClockOn()) setWorldMinutes(Math.floor(worldMinutes() / 1440) * 1440 + bootTod);
   }
-  const timeScaleMult = params.has('timescale') ? Number(params.get('timescale')) / 12 : 1;
+  const timeScaleMult = params.has('timescale') && !sharedClockOn() ? Number(params.get('timescale')) / 12 : 1;
   const minuteNow = () => worldMinutes() % 1440;
 
   // A5b: OUTDOOR MUSIC. AssignPlaylist's City/Wilderness arms - night
@@ -2622,10 +2630,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2118 mounts the same one, gated on
+  // and dungeonContext.js:2126 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:4520
+  // that context through modes.dungeonCtx - so worldModes.js:4593
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -2694,7 +2702,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  career under the struck enemy's OWN parent transform. */
   const enchantReplaceFoe = (targetEntity, mobileType) => {
     const f = enchantFoes().find((x) => !x.dead && x.entity === targetEntity);
-    if (!f) return;
+    if (!f || f.puppet) return;   // AUDIT WORLD6b B9: a peer's foe is not mine to re-stand (the pool refuses its removal too)
     if (f.questBehaviour && !f.questBehaviour.isFoeDead) return;
     const feet = f.ai?.feet ? centreFromFeet(f.ai.feet, f.idleH ?? f.ai.height) : enchantFeet();   // REVIEW 2026-09-05: WabbajackEffect.cs:90 hands CreateEnemy the struck foe's TRANSFORM (its sprite centre); the spawn chain reads a marker
     const missing = (targetEntity.maxHealth ?? 0) - (targetEntity.health ?? 0);
@@ -2710,7 +2718,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // through the one that owns the billboard - `exteriorFoePool` is
     // the watch AND the encounter foes, and this arm reached the
     // encounter pool's remover for both. That was not a leak: removeFoe
-    // (exteriorFoes.js:289-294) never looks the record up in `foes`, and
+    // (exteriorFoes.js:320-325) never looks the record up in `foes`, and
     // both pools share this host's one renderer, so a struck WATCHMAN
     // got exactly what removeGuard (cityGuards.js:1215-1219) gives it -
     // batch freed, `dead = true`, no corpse, skipped by the next AI pass
@@ -2899,7 +2907,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // DFU's database yields only ACTIVE behaviours. Passing the
     // getter (not the array) keeps one live view per frame with no
     // pool importing the other.
-    candidates: () => [...cityGuards.guards, ...exteriorFoes.foes].filter((f) => !f.dead),
+    candidates: () => [...cityGuards.guards, ...exteriorFoes.foes].filter((f) => !f.dead && !f.puppet),   // AUDIT WORLD6b B8: a puppet is nobody's target here - it lands no blow and takes none of mine (a foe hunting a peer is 6b-ii's)
     playerEntity,
   });
   // U32: ONE construction for the world inventory and spellbook - F6
@@ -3992,11 +4000,14 @@ export async function bootWorld(canvas, renderer, params, status) {
       // pick towards the side the journey came from.
       const travelStart = state.worldCoords(walkMode ? player.pos : cam.pos);
       await _teleportToPixel(pick.pixel.x, pick.pixel.y, null,
-        { arriveMinutes: worldMinutes() + computed.minutes,
+        { arriveMinutes: sharedClockOn() ? worldMinutes() : worldMinutes() + computed.minutes,   // WORLD5: online the trip takes no world time - the arrival is now
           reposition: REPOSITION.DirectionFromStartMarker,
           travelStart, modEvent: 'travel' });
       // cautious arrival heals in full; magicka honors NoRegenSpellPoints
-      if (opts.speedCautious) {
+      // AUDIT WORLD5 C14: the heal is the trip's NIGHTS - DFU's cautious traveller arrives rested because the days
+      // passed - and online the trip takes no world time, so it heals nothing: with it, a cautious trip with camping
+      // out (a zero fare) was a free, instant, repeatable full heal of every pool on a black screen
+      if (opts.speedCautious && !sharedClockOn()) {
         playerEntity.health = playerEntity.maxHealth;
         playerEntity.fatigue = maxFatigue(playerEntity);
         if (!hasSpecialAbility(playerEntity.career, SPECIAL_ABILITY.NoRegenSpellPoints)) {
@@ -4016,8 +4027,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       // spends that jump in TWO advances, each of which claims its own
       // window, so the flag is raised before each of them; the claim
       // itself retires it (effectBroker.js).
-      setSyntheticTimeIncrease(true);
-      playerTicker.advance(computed.minutes);
+      // WORLD5: online the clock is the world's and a trip moves it not at all - no jump, no catch-up window, no
+      // arrival clamp (the vampire arrives when they arrive); the fare and the cautious heal stand
+      if (!sharedClockOn()) { setSyntheticTimeIncrease(true); playerTicker.advance(computed.minutes); }
       // W1 review: DFU fast travel never fires the respawner's direct
       // re-roll - TeleportToCoordinates raises OnInitWorld, whose
       // weather half applies the destination climate's ARRAY slot
@@ -4049,7 +4061,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // per-round burn already reads them (passiveSpecials.js:113).
         sunAverse: !!playerEntity.racialOverride?.sunDamage || careerSunDamage(playerEntity.career),
       });
-      if (clamp > 0) { setSyntheticTimeIncrease(true); playerTicker.advance(clamp); }   // AUDIT 63 F13: the arrival clamp is inside DFU's one shielded Update too
+      if (clamp > 0 && !sharedClockOn()) { setSyntheticTimeIncrease(true); playerTicker.advance(clamp); }   // AUDIT 63 F13: the arrival clamp is inside DFU's one shielded Update too
       _lastEncMinutes = Math.floor(playerTicker.classicMinutes);   // X-slice: PreventEnemySpawns parity - no spawn catch-up for the traveled window
       // TP1 - performFastTravel's tail (:380): RaiseSkills fires AFTER
       // the arrival clamp, so a trip that lands at 7:10am raises
@@ -4142,7 +4154,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:5230), so exterior mode and a
+    // composer, dungeonContext.js:5238), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -4622,6 +4634,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       },
       diseaseCount: () => diseaseCount(playerEntity),
       poisonCount: () => poisonCount(playerEntity),
+      noWorldTime: () => sharedClockOn(),   // OL2: online the trip takes no world time (WORLD5), and the popup says so
       ...extra,
     });
   }
@@ -5433,7 +5446,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7113-7125 -
+  // worldModes answers it in BOTH modes (worldModes.js:7203-7215 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -6256,6 +6269,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     removeQuestorPostMessage: (uid) => rumorMill.removeQuestorPostQuestMessage(uid),
     removeQuestRumors: (uid) => rumorMill.removeQuestRumorsFromRumorMill(uid),
     classicSeconds: () => playerTicker.classicMinutes * 60,
+    questClocksStoodDown: () => sharedClockOn(),   // WORLD5: online, every quest clock charges nothing (Mac: "naturally disabled while online")
     playerEntity,
     // AUDIT 24 (the seven-slice sweep): three more seams the bridge has
     // declared since Q2/Q3 that this host never answered. The bridge's
@@ -6604,7 +6618,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const worldPublish = (now, force = false) => {
     if (!online || !online.isHost() || online.status !== 'open' || !isWorldRoom(online.room)) return false;
     if (!force && now - _worldPublishedAt < WORLD_PUBLISH_MS) return false;
-    const shared = modes?.dungeonSharedWorld?.();
+    const shared = modes?.placeSharedWorld?.();   // WORLD6a: the standing PLACE's - a dungeon's or a building's
     if (!shared) return false;
     _worldPublishedAt = now;
     const ok = online.sendWorld(shared, { final: force });
@@ -6615,12 +6629,16 @@ export async function bootWorld(canvas, renderer, params, status) {
   // stream every changed one FOES_MS apart (every one FOES_FULL_MS apart, so a dropped delta heals); while another
   // hosts, my layout foes are puppets that follow the stream and my blows on them go to the host as hits.
   let _foesSentAt = -Infinity, _foesFullAt = -Infinity, _foesInAt = -Infinity;
+  let _foesRoom = null;   // WORLD6b: the room the puppets belong to
   const foesStream = (now) => {
-    if (!online || !online.isHost() || online.status !== 'open' || !isWorldRoom(online.room)) return false;
+    if (!online || online.status !== 'open') return false;
+    // WORLD6b: in a CELL everyone streams their own foes; in a world room the host alone
+    const cell = isCellRoom(online.room);
+    if (!cell && (!online.isHost() || !isWorldRoom(online.room))) return false;
     if (now - _foesSentAt < FOES_MS) return false;
     _foesSentAt = now;   // AUDIT WORLD2 B11: the clock re-arms whether or not anything changed - a quiet room asked every frame
     const full = now - _foesFullAt >= FOES_FULL_MS;
-    const frame = modes?.dungeonFoesFrame?.(full);
+    const frame = cell ? ((modes?.mode ?? 'exterior') === 'exterior' ? exteriorFoes.foesFrame(full) : null) : modes?.dungeonFoesFrame?.(full);
     if (!frame) return false;
     if (!online.sendFoes(frame)) { _foesFullAt = -Infinity; return false; }   // AUDIT WORLD2 A9: a refused frame's deltas were already committed - the next frame carries every foe
     if (full) _foesFullAt = now;
@@ -6636,7 +6654,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // AUDIT WORLD34 C3: a refused act was CLEARED whenever the socket was not open - a reconnect's second or a room hold
   // lost every door touched inside it for good (the seam is a delta, nothing re-sends). The pending set now outlives
   // the socket and is flushed when it comes back; it is cleared only when the room is no world room at all
-  const _actRoom = () => !!(online && isWorldRoom(online.room));
+  const _actRoom = () => !!(online && (isWorldRoom(online.room) || isWorldRoom(_onlineKey)));   // AUDIT WORLD6a A7 (B8 for buildings): the room the mode NAMES counts while the socket is still held in the cell's - the act pends for the socket's arrival instead of being dropped, and every shop door is a room change now
   // AUDIT WORLD4 A1: a frame the wire refuses for its SIZE is not a refusal the pending set can heal - the same keys
   // are re-read and re-refused every frame, and every later door is folded into the same oversized union and never
   // sent again. Said once per key, then dropped: a word that can never be said is not a word to keep saying.
@@ -6649,7 +6667,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // container) - either half or both, and the pending set holds whichever keys the wire refused
     const keys = [...((data?.a ?? []).map((r) => r.key)), ...((data?.l ?? []).map((r) => r.k))];
     if (!keys.length) return false;
-    let out = _actPend.size ? (modes?.dungeonActionRecords?.([...new Set([..._actPend, ...keys])]) ?? data) : data;
+    let out = _actPend.size ? (modes?.placeActionRecords?.([...new Set([..._actPend, ...keys])]) ?? data) : data;
     if (out !== data && !actFrameFits(out)) out = data;   // AUDIT WORLD4 A1: shed the union first - the healing keys wait for the flush, this act goes now
     if (!actFrameFits(out)) { actTooBig(keys); return false; }
     if (!online.sendAct(out)) { for (const k of keys) _actPend.add(k); return false; }
@@ -6660,7 +6678,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!_actPend.size) return false;
     if (!_actRoom()) { _actPend.clear(); return false; }
     if (!_actLive()) return false;   // AUDIT WORLD34 C3: the socket is away - the keys wait
-    const data = modes?.dungeonActionRecords?.([..._actPend]);
+    const data = modes?.placeActionRecords?.([..._actPend]);
     if (!data) { _actPend.clear(); return false; }
     if (!actFrameFits(data)) { actTooBig([..._actPend]); _actPend.clear(); return false; }   // AUDIT WORLD4 A1: never a live-lock
     if (!online.sendAct(data)) return false;
@@ -6682,11 +6700,36 @@ export async function bootWorld(canvas, renderer, params, status) {
     });
     // WORLD1: the room's memory in - a welcome that carries the world the room keeps lands on the standing dungeon
     // (the mode machine refuses another dungeon's); a new host publishes at once
-    online.onWorld = (shared) => { if (modes?.restoreDungeonSharedWorld?.(shared)) console.info('[online] the room\'s memory restored'); };
-    online.onHost = (id, mine) => { if (mine) { _worldPublishedAt = -Infinity; _foesFullAt = -Infinity; } else if (id) _foesInAt = performance.now(); modes?.setDungeonAuthority?.(dungeonAuthority()); };   // WORLD2: the seat decides who steps the foes; a new host streams every foe at once; another's word is its first heartbeat
-    online.onFoes = (id, data) => { _foesInAt = performance.now(); modes?.applyDungeonFoes?.(id, data); };   // AUDIT WORLD2 C5: the stream is the seat's heartbeat; A1: the host's id rides in
-    online.onHit = (id, data) => { modes?.applyDungeonHit?.(id, data); };
-    online.onAct = (id, data) => { modes?.applyDungeonActions?.(id, data); };   // WORLD3: another's door, lever or platform
+    online.onWorld = (shared) => { if (modes?.restorePlaceSharedWorld?.(shared)) console.info('[online] the room\'s memory restored'); };   // WORLD6a: on the standing place, a dungeon or a building
+    online.onHost = (id, mine) => { if (mine) { _worldPublishedAt = -Infinity; _foesFullAt = -Infinity; } else if (id && isWorldRoom(online.room)) _foesInAt = performance.now(); modes?.setDungeonAuthority?.(dungeonAuthority()); };   // AUDIT WORLD6b A9: a cell's seat is no heartbeat   // WORLD2: the seat decides who steps the foes; a new host streams every foe at once; another's word is its first heartbeat
+    online.onFoes = (id, data) => {
+      if (isCellRoom(online.room)) { if ((modes?.mode ?? 'exterior') === 'exterior') exteriorFoes.applyFoes(id, data); return; }   // WORLD6b: a peer's foes in the cell, onto their puppets
+      if (modes?.mode === 'dungeon') _foesInAt = performance.now();   // AUDIT WORLD2 C5: the stream is the seat's heartbeat; A1: the host's id rides in; AUDIT WORLD6a B8: a building's room streams no foes, and a frame there is no dungeon heartbeat
+      modes?.applyDungeonFoes?.(id, data);
+    };
+    online.onHit = (id, data) => { if (isCellRoom(online.room)) exteriorFoes.applyHit(id, data); else modes?.applyDungeonHit?.(id, data); };   // WORLD6b: a peer's blow on my foe in the cell
+    // WORLD6b: the cell's net into the encounter pool - who I am, the room the socket is in, a blow on a puppet to its
+    // owner, and the two frames: the world frame's coordinates ride the wire (the pose's own law, AUDIT ONLINE D7),
+    // this scene's feet stand here
+    exteriorFoes.setNet({
+      room: () => online?.room ?? null,
+      now: () => performance.now(),
+      staleMs: FOES_STALE_MS,   // AUDIT WORLD6b C3: an owner whose stream has died is swept as the seat is (WORLD2's own window)
+      onPeerHit: (hit) => online?.sendHit(hit) ?? false,
+      toWire: (feet) => { const wc = state.worldCoords(feet); return [wc.x, feet[1] - state.compensation[1], wc.z]; },
+      toScene: (p) => { const l = state.localFromWorld(p[0], p[2]); return [l[0], p[1] + state.compensation[1], l[1]]; },
+    });
+    online.onAct = (id, data) => { modes?.applyPlaceActions?.(id, data); };   // WORLD3: another's door, lever or platform; WORLD6a: in a building too
+    // WORLD5: this save's time markers are set to the WORLD's time - a save a month behind catches up no loans and no
+    // diseases on its first frame, one a year ahead reads no negative day - and the day's weather is rolled from the
+    // shared day's own seed, whatever sky the save carried
+    // AUDIT WORLD5 C2: and the same arrival again whenever the relay's clock moves this machine's by more than a
+    // second - the first welcome's offset lands AFTER this boot-time arrival (the socket opens later), and until it
+    // did the markers stood at the uncorrected clock's time: a machine minutes off caught up (or froze for) the
+    // difference on its first corrected tick. A room move's welcome says the same offset again and moves nothing.
+    const onlineArrival = () => { alignEntityClocks(playerEntity, worldMinutes()); rollClimateWeathersForDay(worldMinutes()); refreshSeason(worldMinutes()); };
+    onlineArrival();
+    online.onClock = (offsetMs) => { const was = _sharedOffsetMs; _sharedOffsetMs = offsetMs; if (Math.abs(offsetMs - was) > 1000) onlineArrival(); };   // WORLD5: the relay's clock corrects this machine's
     remotePlayers = new RemotePlayers({ renderer, deps: { fetchBytes, palette, getTexture } });
     // MWBODY1: the enhanced skin with Morrowind data attached puts every peer in a body of its own; otherwise the doll
     const enhanced = isEnhanced();   // the skin cannot change without a reload (switchSkin), so it is read once, not per frame
@@ -6734,7 +6777,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const onlineFrame = (now, dt) => {
     chatFrame();   // CHAT1: before the dead return, so the channels keep their heartbeat and their reconnect while the death screen is up (the panel itself is paused away like any HUD - AUDIT CHAT B7)
     // AUDIT ONLINE D12: the dead broadcast nothing and see no one
-    if (townTalk.overlay instanceof DeathScreen || modes?.deathUp?.()) { if (online.room) { worldPublish(now, true); online.leave(); } peerBodies.destroy(); remotePlayers.sync([], onlineToScene); return; }   // AUDIT WORLD B6: the dungeon's and the building's death screens stand in the mode's slot   // AUDIT MWBODY B7: and no body stands frozen over the death screen
+    if (townTalk.overlay instanceof DeathScreen || modes?.deathUp?.()) { if (online.room) { worldPublish(now, true); online.leave(); exteriorFoes.clearPuppets(); _foesRoom = null; } peerBodies.destroy(); remotePlayers.sync([], onlineToScene); return; }   // AUDIT WORLD B6: the dungeon's and the building's death screens stand in the mode's slot   // AUDIT MWBODY B7: and no body stands frozen over the death screen
     const mode = modes?.mode ?? 'exterior';   // audit24_wave37: guarded on the OBJECT above its own declaration (the frame runs after it)
     const overworld = mode === 'exterior';
     const wc = state.worldCoords(player.pos);
@@ -6785,8 +6828,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     else if (key !== online.room) { if (!online.room || isWorldRoom(key) || isWorldRoom(online.room) || now - _onlineKeySince >= ROOM_HOLD_MS) { online.look = composeLook(playerEntity); online.join(key, { ...pose, ...arm }); } }   // the look re-composed: the next room's hello carries the gear worn now
     else online.sendPose({ ...pose, ...arm });
     online.tick();
+    // WORLD6b: a room change leaves every puppet in the old cell; a peer gone from the room takes its puppets with it
+    if (online.room !== _foesRoom) { _foesRoom = online.room; _foesFullAt = -Infinity; exteriorFoes.clearPuppets(); }   // AUDIT WORLD6b C7: a new room hears every foe of mine at once
+    if (isCellRoom(online.room)) exteriorFoes.pruneOwners(new Set(online.peers.keys()), now);
     worldPublish(now);   // WORLD1: the room's memory, every WORLD_PUBLISH_MS while this player hosts a dungeon
-    foesStream(now);   // WORLD2: the host's changed foes, every FOES_MS
+    foesStream(now);   // WORLD2: the host's changed foes, every FOES_MS; WORLD6b: mine, in a cell
     actFlush();        // AUDIT WORLD3 A3: an act the wire refused, re-read and re-sent
     modes?.setDungeonAuthority?.(dungeonAuthority(now));   // AUDIT WORLD2 C2: the seat re-read every frame - a dead socket, a terminal close or a silent host hands the foes back
     const drawable = online.drawable();
@@ -6814,6 +6860,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     drawPeerNames: ({ proj, view, eye }) => drawPeerNames(proj, view, eye),
     drawPeerBodies: ({ proj, view, eye }) => drawPeerBodies(proj, view, eye),   // MWBODY1: the others' bodies, after the player's own
     onDungeonLeave: () => worldPublish(performance.now(), true),   // WORLD1: the room's memory goes out while the dungeon still stands
+    onInteriorLeave: () => worldPublish(performance.now(), true),   // WORLD6a: and a building's while the building still stands
     onFoeHit: (hit) => online?.sendHit(hit) ?? false,   // WORLD2: a blow on a puppet goes to the host
     // WORLD3: a door moved goes to the room (the session refuses it outside a world room); the peers in my room at
     // their scene feet, for the foes to see and a puppet's shaft to fly at; whose blow a puppet's is

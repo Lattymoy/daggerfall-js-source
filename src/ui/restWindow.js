@@ -63,6 +63,8 @@ import { getBinding } from '../systems/inputActions.js';   // B5: InputManager.G
 import { loadImg, nativeMetrics, drawImg, shadowText, NATIVE_W } from './nativePanel.js';   // D3: the native-window idiom
 import { drawMenuBackdrop } from './chargenArt.js';   // D3: Setup :137-138, ParentPanel.BackgroundColor = Color.black
 import { isEnhanced } from '../systems/uiSkin.js';   // CLK4: the enhanced skin's rest is a veil, not a wall
+import { dateFromClassicMinutes } from '../systems/gameDate.js';   // OL2: the world's clock, read for the counter page
+import { ONLINE_MINUTES_PER_MS } from '../net/wire.js';   // OL2: the pace, derived from the one rate rather than spelled
 
 /** CLK4 (the Clock arc): on the ENHANCED skin the resting page is a
  *  translucent veil over the world instead of DFU's opaque black, so
@@ -143,6 +145,18 @@ export async function preloadRestArt(deps) {
 }
 export const restArtLoaded = () => !!_art;
 
+/** OL2: the world's time of day and the pace of a rested hour, for the
+ *  counter page under the shared clock. The pace is derived from the
+ *  wire's one rate (an hour of the world is 60 / (rate * 60000) real
+ *  minutes - five at TimeScale 12), not spelled, so a rate change
+ *  cannot leave a stale number on the page. */
+export const REAL_MINUTES_PER_WORLD_HOUR = Math.round(60 / (ONLINE_MINUTES_PER_MS * 60000));
+export function restClockLine(worldMinutes) {
+  const d = dateFromClassicMinutes(worldMinutes);
+  const two = (n) => String(n).padStart(2, '0');
+  return `World time ${two(d.hour)}:${two(d.minute)} - an hour here is ${REAL_MINUTES_PER_WORLD_HOUR} real minutes`;
+}
+
 export class RestWindow {
   /** deps: the RestSession deps + endLines(textId) -> string[] (the
    *  scene's TEXT.RSC lookup for the finish message).
@@ -204,7 +218,7 @@ export class RestWindow {
     // (InputManager.cs:634-637) - so the opening release is already
     // spent when DFU's window first runs, and :193's bare `GetKeyUp`
     // is safe there. Every host here opens on the key DOWN
-    // (world.js:5075, exterior.js:2364, ui/input.js:343), and that same
+    // (world.js:5088, exterior.js:2364, ui/input.js:343), and that same
     // key's release is then routed straight into the freshly mounted
     // window, so the release door needs the deferral DFU gives every
     // window whose open edge IS the down: DaggerfallAutomapWindow.cs
@@ -700,11 +714,34 @@ export class RestWindow {
   status() {
     if (this.state !== 'resting') return { panel: 'main' };
     const full = this.mode === 'full';
-    return {
+    const st = {
       panel: 'counter',
       texture: full ? 'hoursPast' : 'hoursRemaining',
       hours: full ? this.session.totalHours : this.session.hoursRemaining,
     };
+    // OL2 (AUDIT WORLD5's fifth recorded item, paid): under the shared
+    // clock the counter moves once per five real minutes, and a page
+    // that shows a bare hour count reads as a hang. The world's clock
+    // rides the status while the session is paced by it (the same
+    // deps.sharedMinutes the session reads - null offline, and then
+    // nothing is added and the page is what it was).
+    const shared = this.deps.sharedMinutes?.();
+    if (Number.isFinite(shared)) st.worldMinutes = shared;
+    return st;
+  }
+
+  /** OL2: the RESTING page's lines - the text chain's, and the pin's. */
+  restingLines() {
+    const v = this.deps.vitals?.() ?? null;
+    const st = this.status();
+    const lines = [
+      this.mode === 'loiter' ? 'Loitering...' : 'Resting...',
+      `${st.texture === 'hoursPast' ? 'Hours passed' : 'Hours remaining'}: ${st.hours}`,
+    ];
+    if (Number.isFinite(st.worldMinutes)) lines.push(restClockLine(st.worldMinutes));
+    if (v) lines.push(`Health ${v.health}/${v.maxHealth}  Fatigue ${v.fatigue}  Magicka ${v.magicka}`);
+    lines.push('', 'Esc - stop');
+    return lines;
   }
 
   /** D3 - the two native pages. Returns false when there is no art, so
@@ -750,6 +787,10 @@ export class RestWindow {
       shadowText(renderer, font, `Health ${v.health}/${v.maxHealth}  Fatigue ${v.fatigue}  Magicka ${v.magicka}`,
         m, 0, REST_PANEL_Y + REST_COUNTER_RECT[3] + 8, { align: 'center', w: NATIVE_W });
     }
+    // OL2: the world's clock and the pace, under the vitals, while the clock paces the rest
+    if (Number.isFinite(st.worldMinutes)) {
+      shadowText(renderer, font, restClockLine(st.worldMinutes), m, 0, REST_PANEL_Y + REST_COUNTER_RECT[3] + 18, { align: 'center', w: NATIVE_W });
+    }
     return true;
   }
 
@@ -767,7 +808,6 @@ export class RestWindow {
       // prompt self-closed before the handler ever saw the number.
       lines = [...(this.notice ?? [])];
     } else if (this.state === 'resting') {
-      const v = this.deps.vitals?.() ?? null;
       // ShowStatus (:317-346): FullRest shows hours PAST against the
       // hoursPastTexture; TimedRest and Loiter show hours REMAINING
       // against hoursRemainingTexture. Two numbers, and the port
@@ -776,13 +816,8 @@ export class RestWindow {
       // `status()` above so the art page and this text page cannot
       // drift apart: the counting half was already right here, and a
       // second copy of it beside the new one is how it stops being.
-      const st = this.status();
-      lines = [
-        this.mode === 'loiter' ? 'Loitering...' : 'Resting...',
-        `${st.texture === 'hoursPast' ? 'Hours passed' : 'Hours remaining'}: ${st.hours}`,
-      ];
-      if (v) lines.push(`Health ${v.health}/${v.maxHealth}  Fatigue ${v.fatigue}  Magicka ${v.magicka}`);
-      lines.push('', 'Esc - stop');
+      // OL2: the lines moved into restingLines() so the pin reads them.
+      lines = this.restingLines();
     } else if (this.state === 'refused') {
       lines = this.refusalLines ?? [''];
     } else {

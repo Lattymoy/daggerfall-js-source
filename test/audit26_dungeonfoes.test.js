@@ -91,7 +91,7 @@ test('F204: the 8-hour alert decay is part of the PLAYER TICK, so the ticker-les
 });
 
 test('F204: the dungeon REST window jumps the clock without the tick, so it decays before the roll it gates', () => {
-  const i = DUNGEON_CTX.indexOf('const _restAdvance = (n) => {');
+  const i = DUNGEON_CTX.indexOf('const _restAdvance = (n, sharedEnd = null) => {');
   const fn = DUNGEON_CTX.slice(i, DUNGEON_CTX.indexOf('\n  };', i));
   assert.ok(i > 0 && fn.length > 200, 'the rest advance arm was found whole');
   assert.ok(fn.includes('decayEnemyAlert(playerEntity, Math.floor(classicMinutesRef.value));'),

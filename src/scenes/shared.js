@@ -29,7 +29,7 @@ import { hasActiveEffect, isBlending, isInvisible, isAShade } from '../systems/e
 import { skillValue, tallySkill, SKILLS, SKILL_NAMES } from '../systems/skills.js';
 import { DOOR_SPELL_TEXT, castBySkeletonKey } from '../systems/mysticism.js';   // X1: the door-spell alert lines; D9: Open.CheckCastByItem
 import { raiseSkills } from '../systems/advancement.js';   // AUDIT 23 (entity-1): the rest-end raise
-import { tickPlayerMinutes, runMagicRoundsFor, worldMinutes, setWorldMinutes, advanceWorldMinutes, MINUTES_PER_DAY, CLASSIC_MINUTES_PER_SECOND } from '../systems/worldTick.js';
+import { tickPlayerMinutes, runMagicRoundsFor, worldMinutes, setWorldMinutes, advanceWorldMinutes, MINUTES_PER_DAY, CLASSIC_MINUTES_PER_SECOND, sharedClockOn } from '../systems/worldTick.js';
 import { setSyntheticTimeIncrease } from '../systems/effectBroker.js';   // AUDIT 63 F13: VampirismInfection.cs:161-162
 import { setInfectionHost, vampireClanForFaction } from '../systems/infection.js';   // V1: the host seam for the dream/death videos and the turn's clock raise
 import { findFactions } from '../systems/talk.js';   // V1: GetRegionFaction's FindFactions(Province, region)
@@ -1346,6 +1346,10 @@ export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null, o
      *  worth of fatigue charge it explicitly. */
     advance(minutes) {
       if (!(minutes > 0)) return null;
+      // WORLD5: the shared clock is not this player's to move - a rest, a training session, a fast travel or the
+      // exhaustion collapse fabricates no minutes online; the tick runs whatever the world's clock owes since the last
+      // reading, and nothing more
+      if (sharedClockOn()) return this.tick(0, undefined, 0);
       // T1 (AUDIT 39): the dt below is FABRICATED game time - a jump
       // costs no REAL seconds, because DFU's RaiseTime does not advance
       // Time.deltaTime. The third argument is what the two real-time
@@ -1378,7 +1382,7 @@ export function subscribeFoePools(ticker, pools, sinksFor) {
   return ticker.subscribe((from, to, dt) => {
     for (const pool of pools) {
       for (const f of pool() ?? []) {
-        if (!f || f.dead || !f.entity) continue;
+        if (!f || f.dead || !f.entity || f.puppet) continue;   // AUDIT WORLD6b B1: a PUPPET's entity is its owner's simulation - no round of mine ticks it (a poison put on it locally reached the divert as my blow)
         const sinks = sinksFor(f);
         runMagicRoundsFor(f.entity, from, to, { sinks });
         killIfAnyLiveStatZero(f.entity, sinks, dt);
@@ -1902,6 +1906,7 @@ export function createRestDeps(entity, opts = {}) {
     onRestFinished: () => raisePlayerSkills(entity, { say, onLevelUp, lines: rest.endLines, box }),
     tickVitals: () => restVitals(entity, { day: day(), inside: inside() }),
     fullyHealed: () => restFullyHealed(entity),
+    sharedMinutes: () => (sharedClockOn() ? worldMinutes() : null),   // WORLD5: a rest online is paced by the world's clock, not by the window's timer
     dead: () => entity.health <= 0,
     vitals: () => ({
       health: entity.health, maxHealth: entity.maxHealth,

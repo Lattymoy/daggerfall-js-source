@@ -9,6 +9,7 @@
 // defaults without a DOM.
 
 import { appStorage } from './appStorage.js';   // the one storage seam - localStorage lives there alone
+import { onlineForcedModSetting } from './onlineLane.js';   // OL1: online, every mod is enabled
 
 const STORE_KEY = 'dfjs-mod-settings';
 
@@ -168,6 +169,8 @@ export function modSettingIfDeclared(vendor, key) {
 export function modSetting(vendor, key) {
   const def = MOD_SETTINGS[vendor]?.keys?.[key];
   if (!def) throw new Error(`modSetting: ${vendor}/${key} is not a declared switch`);
+  const forced = onlineForcedModSetting(vendor, key);   // OL1: online is the enhanced lane, whole - `Enabled` reads true and the store is not written
+  if (forced !== undefined) return forced;
   const v = load()[vendor]?.[key];
   return v === undefined ? def.default : coerce(def, v);
 }

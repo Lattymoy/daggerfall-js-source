@@ -21,7 +21,7 @@
 import { updateDiseases } from './diseases.js';
 import { runInfections } from './infection.js';   // V1: UpdateDisease's override, which the base walk skips
 import { consumeRacialOverridePending, lycanthropyMagicRound } from './lycanthropy.js';   // V2a: the curse the deploy mints
-import { consumeVampirismPending, vampirismMagicRound } from './vampirism.js';   // V2b: the other curse
+import { consumeVampirismPending, vampirismMagicRound, liveVampirism } from './vampirism.js';   // V2b: the other curse; AUDIT WORLD5 C3: its feeding clock, aligned with the rest
 import { updatePoisons } from './poisons.js';
 import { tickActiveEffects } from './effects.js';
 import { skillValue, tallySkill, SKILLS } from './skills.js';
@@ -74,13 +74,26 @@ import { passiveSpecialsMagicRound } from './passiveSpecials.js';   // V2c: care
 // boundary, which is where PlayerEntity.Update runs them.
 import { updateRegionalPrices } from './shopStock.js';            // FormulaHelper.UpdateRegionalPrices (:2053)
 import { rollClimateWeathersForDay, evolveClimateWeathers } from './weatherSim.js';      // WeatherManager.SetClimateWeathers (:419); CLK2: the enhanced lane's hourly evolution
+import { seededRng } from './wind.js';   // WORLD6b: the shared day's own generator for the region's walk
 import { removeExpiredRooms } from './tavern.js';                 // PlayerEntity.RemoveExpiredRentedRooms (:257)
 import { removeExpiredItems } from './createItem.js';             // X11b: ItemCollection.RemoveExpiredItems (:125), the per-minute sweep
 import { tickPlayerTorch } from './playerTorch.js';               // T1: EnablePlayerTorch.Update, on the REAL clock
 import { checkOverdueLoans, settleOverdueLoan } from './banking.js';   // LoanChecker.CheckOverdueLoans (:17)
 import { lowerRepForCrime } from './court.js';                    // OverdueLoan's LowerRepForCrime (:70)
 import { REGION_NAMES } from '../formats/mapsFile.js';            // loanReminder2's %s
+
 import { handleStartingCrimeGuildQuests } from './crimeGuilds.js';   // CG2: PlayerEntity.Update:531
+
+const SHARED_DAY_SEED = 0x44415953;   // 'DAYS'
+/** AUDIT WORLD6b C5: each consumer of a day's rolls has its own SALT - the price walk and the faction powers fired
+ *  on one day from one seed and drew the identical sequence from index zero (the weather's rollsFor has a salt for
+ *  the same reason). */
+export const DAY_SALT = Object.freeze({ prices: 1, powers: 2 });
+/** WORLD6b: the generator a day's rolls come from. Under the shared clock the day's rolls are THE DAY'S - the price
+ *  walk's and the faction powers' generator is seeded by the world's day (the weather's own law, WORLD5 rollsFor)
+ *  and the consumer's salt; offline, the caller's own `rolls`. The STATE stays each player's (the prices and the
+ *  powers live on the entity - DFU has one player); one economy is the region as a world, and a later slice. */
+export const dayRollsFor = (minute, rolls, salt = 0) => (sharedClockOn() ? seededRng(((Math.floor(minute / MINUTES_PER_DAY) * 7919) ^ SHARED_DAY_SEED ^ Math.imul(salt | 0, 0x9E3779B1)) >>> 0) : rolls);
 
 export { MINUTES_PER_DAY };
 
@@ -173,6 +186,11 @@ export function claimMagicRounds(fromMinute, toMinute) {
   // The broker's own lastGameMinute advance (:237). It never moves BACKWARDS
   // here: a rewind is a load, and the re-anchor above owns that case.
   if (nextFloor > _lastMagicRoundMinute) _lastMagicRoundMinute = nextFloor;
+  // AUDIT WORLD5 C1: under the SHARED clock a claim made outside the tick (the dungeon's rest arm claims its own
+  // window) moves the tick's last reading with it - the next tick reads from here, not from a reading BEHIND the
+  // marker, which the backstop above would have taken for a load and re-anchored on, running the rested night's
+  // rounds a second time
+  if (_sharedClock && nextFloor > (_sharedLastTick ?? -Infinity)) _sharedLastTick = nextFloor;
   return { from, to: nextFloor, rounds: Math.max(0, nextFloor - from) };
 }
 
@@ -310,12 +328,19 @@ export function runDayChange({ entity, lastMinutes, nowMinutes, rolls = Math.ran
   if (!entity) return none;
   const daysPast = Math.floor(nowMinutes / MINUTES_PER_DAY) - Math.floor(lastMinutes / MINUTES_PER_DAY);
   if (!(daysPast > 0)) return none;
-
   // :446 - the merchants' tug-of-war on every region's price index.
   // S42: the condition store rides the entity like every other day-block
   // input, so the price walk's PricesHigh/PricesLow half reaches it with
   // no host wiring - the same reason the whole block lives here.
-  updateRegionalPrices(entity, entity.factionRep?.dict ?? null, daysPast, rolls, entity.regionConditions ?? null);
+  // AUDIT WORLD6b C4: under the shared clock the walk is ONE DAY AT A TIME, each day from its own generator - one
+  // generator seeded by today and walked `daysPast` days made the draw depend on when each player LAST ran the day
+  // change (the walk is region-major, day-minor), so a player back from three days away walked a different region
+  // than one who was there every day. Per day, the walk is a function of the state and the days walked alone:
+  // catching up equals having stayed. Offline the caller's stream walks the span whole, as DFU does.
+  if (sharedClockOn()) {
+    const firstDay = Math.floor(lastMinutes / MINUTES_PER_DAY) + 1, lastDay = Math.floor(nowMinutes / MINUTES_PER_DAY);
+    for (let d = firstDay; d <= lastDay; d++) updateRegionalPrices(entity, entity.factionRep?.dict ?? null, 1, dayRollsFor(d * MINUTES_PER_DAY, rolls, DAY_SALT.prices), entity.regionConditions ?? null);
+  } else updateRegionalPrices(entity, entity.factionRep?.dict ?? null, daysPast, rolls, entity.regionConditions ?? null);
 
   // :447-448 - roll the six climate zones and RAISE the pending-apply
   // flag; the exterior frame's tickWeather drains it. Splitting those
@@ -380,7 +405,17 @@ export function tickPlayerMinutes({
   // a drained stat. Defaults to dt, which is the frame case.
   realSeconds = dt,
 } = {}) {
-  const next = classicMinutes + dt * CLASSIC_MINUTES_PER_SECOND;
+  // WORLD5: under the SHARED clock the world's time moved on its own between two ticks - this tick owes the rounds
+  // and the days from the last tick's reading to now, and fabricates nothing from dt (a jump has no dt, and dt
+  // still feeds the real-time arms below: the fatigue drain, the tallies, the torch)
+  if (_sharedClock) {
+    classicMinutes = _sharedLastTick ?? _sharedClock();
+    // AUDIT WORLD5 C2: a source that stepped BACKWARDS (the relay's offset corrected, the machine's clock set back)
+    // re-anchors the reading rather than freezing every tick until the clock catches its old self up
+    if (_sharedClock() < classicMinutes) classicMinutes = _sharedClock();
+  }
+  const next = _sharedClock ? Math.max(classicMinutes, _sharedClock()) : classicMinutes + dt * CLASSIC_MINUTES_PER_SECOND;
+  if (_sharedClock) _sharedLastTick = next;
   // AUDIT 39: the clock as it stood when this tick began. A sink can move
   // the WORLD clock from inside this call (the exhaustion collapse -
   // PlayerEntity.cs:2429's RaiseTime(1 hour), which the hosts fire out of
@@ -605,8 +640,11 @@ export function tickPlayerMinutes({
     // faction's power, so S41's price walk - which tilts a region's
     // prices by The Merchants' power against the region's own - had a
     // constant for its whole tug-of-war term.
+    // WORLD6b: both power arms of one minute draw from ONE generator, the day's (the 266-day minute where the two
+    // align fires the walk twice, as DFU does, and the second walk must not replay the first's rolls)
+    const dayRolls = dayRollsFor(i, rolls, DAY_SALT.powers);
     if (i % FACTION_POWER_INTERVAL_MINUTES === 0) {
-      regionPowerUpdate(entity.factionRep ?? null, { rumorMill: entity.rumorMill ?? null, rolls });
+      regionPowerUpdate(entity.factionRep ?? null, { rumorMill: entity.rumorMill ?? null, rolls: dayRolls });   // WORLD6b: the shared day's roll
     }
     // :468-472, the THIRD arm: every 38 days DFU calls the SAME member
     // with updateConditions true, which runs this power half AND the
@@ -626,7 +664,7 @@ export function tickPlayerMinutes({
     // from classic, inherited deliberately.
     if (i % REGION_CONDITIONS_INTERVAL_MINUTES === 0) {
       regionPowerUpdate(entity.factionRep ?? null, {
-        rumorMill: entity.rumorMill ?? null, rolls,
+        rumorMill: entity.rumorMill ?? null, rolls: dayRolls,   // WORLD6b: the shared day's roll
         updateConditions: true, regionConditions: entity.regionConditions ?? null,
       });
       // :472 - StartRacialOverrideQuest(false) rides this same arm:
@@ -731,6 +769,45 @@ export { CLASSIC_GAME_START_TIME as CLASSIC_GAME_START_MINUTES } from './gameDat
 
 let _worldMinutes = CLASSIC_GAME_START_TIME;
 
+// WORLD5 (Mac: "the shared clock and weather, and the quest clocks stood down online"): THE SHARED CLOCK. Online the
+// world's time is a function of wall time (net/wire.js sharedClassicMinutes), the same on every client, and nothing
+// local may move it - a rest, a fast travel, a sentence, a training session, ?tod. The source is installed by the
+// world host at boot; while it stands, worldMinutes() reads it and every write is refused. The tick claims what the
+// clock owes between two readings (tickPlayerMinutes) rather than fabricating minutes from dt.
+let _sharedClock = null;
+let _sharedLastTick = null;
+/** Install (a function answering classic minutes) or remove (null) the shared clock. */
+export function setSharedClock(source, wallOf = null) {
+  _sharedClock = typeof source === 'function' ? source : null;
+  _sharedWall = _sharedClock && typeof wallOf === 'function' ? wallOf : null;
+  _sharedLastTick = null;
+}
+export const sharedClockOn = () => _sharedClock !== null;
+
+// OL3 (Mac, 2026-09-14): THE CLOCK DOES NOT PUNISH ABSENCE - the price is
+// said in real time. Under the shared clock every world-time deadline (a
+// rented room's expiry, a loan's due date) runs on wall time, through a
+// logout: a week's lodging is fourteen real hours. The shared world keeps
+// one clock, so the honest fix is that the player buys what they think
+// they are buying: the host installs, beside the source, the inverse -
+// the millisecond on THIS machine's clock at which the world reads a
+// classic minute (wire.js wallMsForClassicMinutes, less the relay's
+// offset) - and the tavern's offer and the bank's due-by say it.
+let _sharedWall = null;
+/** This machine's wall-clock ms for a classic minute under the shared clock, else null. */
+export const sharedWallMs = (classicMinutes) => (_sharedWall && Number.isFinite(classicMinutes) ? _sharedWall(classicMinutes) : null);
+const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+/** "Tue 15 Sep 18:00" on this machine's clock, in the game font's own ASCII (no locale, no glyph the font lacks). */
+export function realTimeText(ms) {
+  const d = new Date(ms);
+  if (!Number.isFinite(d.getTime())) return null;
+  const two = (n) => String(n).padStart(2, '0');
+  return `${WEEKDAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]} ${two(d.getHours())}:${two(d.getMinutes())}`;
+}
+/** The real time a classic minute falls at, as words, under the shared clock; null offline. */
+export const sharedRealTimeText = (classicMinutes) => { const ms = sharedWallMs(classicMinutes); return ms == null ? null : realTimeText(ms); };
+
 /** EntityEffectBroker.maxCatchupDays = 2, i.e. 2880 game minutes
  *  (EntityEffectBroker.cs:36, applied at :223). DFU's own reasoning: the
  *  longest spell duration is under 2000 minutes, constant-state effects need
@@ -746,12 +823,54 @@ let _lastMagicRoundMinute = null;
 /** Classic minutes from the CLASSIC EPOCH - DaggerfallDateTime's own unit,
  *  which is what ToClassicDaggerfallTime returns and what gameDays divides.
  *  A new game starts at CLASSIC_GAME_START_MINUTES, not at zero. */
-export const worldMinutes = () => _worldMinutes;
+export const worldMinutes = () => (_sharedClock ? _sharedClock() : _worldMinutes);
 
-/** Set the clock - a load restores it, a rest or a court sentence jumps it. */
+/** Set the clock - a load restores it, a rest or a court sentence jumps it. WORLD5: refused under the shared clock. */
 export function setWorldMinutes(v) {
+  if (_sharedClock) return _sharedClock();
   _worldMinutes = Number.isFinite(v) ? v : 0;
   return _worldMinutes;
+}
+
+/** WORLD5: a player's own time markers set to the world's - the day marker, the broker's, every disease's day and
+ *  every poison's minute - so a save from another time (a month behind, a year ahead) neither catches up a month of
+ *  loans and diseases on its first online frame nor reads a negative day. The world's time is not this save's
+ *  continuation; it is where the player has arrived. */
+export function alignEntityClocks(entity, nowMinutes) {
+  if (!entity || !Number.isFinite(nowMinutes)) return false;
+  const now = Math.floor(nowMinutes);
+  // AUDIT WORLD5 C3: a SHIFT, not a stamp. Every marker the save carries moves by the distance from the save's own
+  // clock (its day marker) to the world's, so a room rented with twenty hours left keeps twenty hours, a loan due in
+  // a week is due in a week, a summoned item lasts what it had left, and a skill check that was due is due now -
+  // where a stamp of the four markers WORLD5 aligned left the rest dated by the save's clock: a save further along
+  // than the world (an old character in a young world) raised no skill and trained nowhere for real days, and one
+  // behind it read every deadline as long past. A "last" marker never lands ahead of now; a zero stays zero (it
+  // means "never" or "none" - the letter clocks, a summoned item's hour, a first skill check). An entity with no day
+  // marker (a fresh character) has nothing to measure from: its "last" markers are stamped to now and nothing else moves.
+  const delta = Number.isFinite(entity.lastGameMinutes) ? now - Math.floor(entity.lastGameMinutes) : null;
+  const dayDelta = delta === null ? null : Math.floor(now / MINUTES_PER_DAY) - Math.floor((now - delta) / MINUTES_PER_DAY);
+  const past = (v) => (Number.isFinite(v) && v !== 0 ? Math.min(now, delta === null ? now : v + delta) : v);
+  const due = (v) => (Number.isFinite(v) && v !== 0 && delta !== null ? v + delta : v);
+  const pastDay = (v) => (Number.isFinite(v) && dayDelta !== null ? Math.min(Math.floor(now / MINUTES_PER_DAY), v + dayDelta) : v);
+  entity.lastGameMinutes = now;
+  resetMagicRoundMarker(now);
+  _sharedLastTick = _sharedClock ? nowMinutes : null;
+  for (const k of ['lastSkillCheckTime', 'timeOfLastSkillTraining', 'lastEnemyAlertTime']) if (k in entity) entity[k] = past(entity[k]);
+  for (const k of ['timeForThievesGuildLetter', 'timeForDarkBrotherhoodLetter']) if (k in entity) entity[k] = due(entity[k]);
+  for (const a of entity.activeEffects ?? []) {
+    if (!a || typeof a !== 'object') continue;
+    if (Number.isFinite(a.lastDay)) a.lastDay = pastDay(a.lastDay);
+    if (Number.isFinite(a.lastMinute)) a.lastMinute = past(a.lastMinute);
+  }
+  const vamp = liveVampirism(entity);
+  if (vamp && Number.isFinite(vamp.lastTimeFed)) vamp.lastTimeFed = past(vamp.lastTimeFed);
+  for (const acct of entity.bankAccounts ?? []) if (acct && acct.loanTotal > 0) acct.loanDueDate = due(acct.loanDueDate);
+  for (const room of entity.rentedRooms ?? []) if (room) room.expiryMinutes = due(room.expiryMinutes);
+  for (const it of entity.items ?? []) if (it && Number.isFinite(it.timeForItemToDisappear)) it.timeForItemToDisappear = due(it.timeForItemToDisappear);
+  const store = entity.guildMemberships;
+  const books = store && typeof store === 'object' ? (Object.hasOwn(store, 'mortal') && Object.hasOwn(store, 'vampire') ? [store.mortal, store.vampire] : [store]) : [];
+  for (const book of books) for (const m of Object.values(book ?? {})) if (m && Number.isFinite(m.lastRankChange)) m.lastRankChange = pastDay(m.lastRankChange);
+  return true;
 }
 
 /** A LOAD resets the marker rather than catching up across it - DFU's
@@ -767,7 +886,8 @@ export function resetMagicRoundMarker(v = null) {
   return _lastMagicRoundMinute;
 }
 
-/** Move the clock forward (or back, for a load). */
+/** Move the clock forward (or back, for a load). WORLD5: refused under the shared clock. */
 export function advanceWorldMinutes(delta) {
+  if (_sharedClock) return _sharedClock();
   return setWorldMinutes(_worldMinutes + (Number(delta) || 0));
 }

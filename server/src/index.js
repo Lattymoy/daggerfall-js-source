@@ -72,7 +72,7 @@
 // A5); a non-host's is ignored unparsed at the door. A blow on the
 // host's foe ({t:'hit', data}, on the pose bucket) from anyone but the
 // host goes to the host's socket alone, under the room's hit budget
-// (_roomHits, HIT_ROOM_HZ_MAX - A6). The relay reads neither.
+// (the destination socket's own `hbucket`, HIT_ROOM_HZ_MAX - A6; AUDIT WORLD6b A1). The relay reads neither.
 //
 // WORLD3 (2026-09-12): THE LIVE DOORS, and WORLD4 (2026-09-13): THE
 // ROOM'S LOOT. A change to the room's doors, levers, movers and
@@ -101,11 +101,15 @@
 // welcome carried none, as {t:'world', id, data}). /health says which
 // relay this is (RELAY_VERSION), so a stale deploy can be told from a
 // browser tab.
-import { roomOf, parseClient, inRange, poseGate, chatGate, tokenGate, rosterFor, isChatRoom, isWorldRoom, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY } from './relay.js';
+//
+// WORLD5 (2026-09-13): THE SHARED CLOCK is a function of wall time (relay.js
+// sharedClassicMinutes) and needs no frame; the welcome carries the relay's
+// own `now` so a client corrects for its machine's clock. Nothing else here.
+import { roomOf, parseClient, inRange, poseGate, chatGate, tokenGate, rosterFor, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY } from './relay.js';
 
 /** AUDIT WORLD34 D4: the relay names itself in /health - the deploy is by hand (`npx wrangler deploy`), nothing in
  *  CI does it, and until now nothing said which relay was live. Bump it with every relay-changing slice. */
-export const RELAY_VERSION = 'world34';
+export const RELAY_VERSION = 'world63';   // AUDIT WORLD6b: a cell's hit funnel is its owner's, its foes fan ranged, budgeted at the door and bounded
 
 const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*' } });
 
@@ -132,7 +136,8 @@ export class Room {
     this._idx = null;   // ws -> attachment, read once (A7); rebuilt when the socket set changes
     this._roomChat = null;   // AUDIT CHAT A2: the room's own chat budget - on the instance, since a sleeping room fans nothing
     this._roomFoes = null;   // AUDIT WORLD2 A5: the room's foes byte budget (the frame times its listeners)
-    this._roomHits = null;   // AUDIT WORLD2 A6: the room's hit budget onto its host's one socket
+    this._roomFoesIn = null;   // AUDIT WORLD6b A3: a cell's foes INGRESS budget, spent at the door before the parse
+    // AUDIT WORLD6b A1/A2: the hit funnel (AUDIT WORLD2 A6) is the DESTINATION socket's own bucket (`hbucket` on its attachment), not the room's
     this._roomActs = null;   // WORLD3: the room's action-frame budget (a door, a lever, a platform moved)
     this._roomActBytes = null;   // AUDIT WORLD3 A1: and its BYTE budget - the frame times its listeners, as the foes fan has
     this._dead = new Set();      // AUDIT WORLD34 D1: the sockets this object closed itself, whose leave the runtime will not deliver - reaped on the way out of every door
@@ -257,6 +262,13 @@ export class Room {
     return next;
   }
   /** WORLD2: the foes stream's own bucket (FOES_HZ_MAX), the same strikes - a stream beside the poses, never starving them. */
+  /** AUDIT WORLD2 A4's instrument, one home (AUDIT WORLD6b A1/B3): a frame that should not have been sent is counted
+   *  against its socket, and a stream of them is struck out. */
+  _junk(ws, a) {
+    const junk = (a.junk ?? 0) + 1;
+    this._setAttach(ws, { ...a, junk });
+    if (junk > DROP_STRIKES_MAX) this._refuse(ws, 'too many frames');
+  }
   _meterFoes(ws, a, now) {
     const gate = foesGate(a.fbucket, now);
     const fdrops = gate.pass ? 0 : (a.fdrops ?? 0) + 1;
@@ -293,10 +305,15 @@ export class Room {
       const foesLike = message.startsWith(FOES_PREFIX);
       if (!a.id) { this._refuse(ws, foesLike ? 'foes before hello' : 'world before hello'); return; }
       // A4: outside a world room no large frame has a home - refused, as the small cap always was, not sunk for free
-      if (!isWorldRoom(a.key) && message.length > MAX_FRAME_BYTES) { this._refuse(ws, 'frame too large'); return; }
+      // WORLD6b: a cell's foes frame has the stream's own cap too (a world room's memory or stream, a cell's stream; nothing else is large)
+      if (!(foesLike ? streamsFoes(a.key) : isWorldRoom(a.key)) && message.length > MAX_FRAME_BYTES) { this._refuse(ws, 'frame too large'); return; }
       a = foesLike ? this._meterFoes(ws, a, Date.now()) : this._meter(ws, a, Date.now());
       if (!a) return;
-      if (!isWorldRoom(a.key) || a.id !== this._hostOf()) {
+      // AUDIT WORLD6b A3: a CELL's stream is anyone's, so the room budgets its INGRESS here, before the parse - over it
+      // the frame is dropped unread and nobody struck (the fan's own law, AUDIT WORLD2 A5); a world room's stream is
+      // one socket's, the host's, and bounded by its own bucket already
+      if (foesLike && isCellRoom(a.key)) { const ingress = byteGate(this._roomFoesIn, Date.now(), message.length, FOES_ROOM_BYTES_PER_S); this._roomFoesIn = ingress.bucket; if (!ingress.pass) return; }
+      if (!(foesLike && isCellRoom(a.key)) && (!isWorldRoom(a.key) || a.id !== this._hostOf())) {   // WORLD6b: a cell's foes frame is anyone's
         // anyone but the host: ignored unparsed (a handover races) - and counted, so a stream of them is struck out (A4)
         const junk = (a.junk ?? 0) + 1;
         this._setAttach(ws, { ...a, junk });
@@ -345,7 +362,10 @@ export class Room {
       // AUDIT WORLD34 C1: whether this welcome carried a memory rides the attachment - a socket whose welcome carried
       // NONE (the room was empty-handed, or the host had not published yet) is handed the next one the host publishes
       if (isWorldRoom(a.key)) this._setAttach(ws, { ...this._attach(ws), worldSeen: !!world });
-      const welcome = `{"t":"welcome","id":${JSON.stringify(m.id)},"peers":${JSON.stringify(roster)},"host":${JSON.stringify(host)},"world":${world ?? 'null'}}`;
+      // WORLD5: the relay's clock rides the welcome, so a client whose machine's clock is off reads the shared world time through the offset
+      // AUDIT WORLD5 C11: stamped as the welcome is BUILT, not as the hello began - four storage awaits sit between the
+      // two, and every millisecond of them was an offset the client carried as the relay's clock
+      const welcome = `{"t":"welcome","id":${JSON.stringify(m.id)},"peers":${JSON.stringify(roster)},"host":${JSON.stringify(host)},"world":${world ?? 'null'},"now":${Date.now()}}`;
       if (!this._send(ws, welcome)) return;
       const join = JSON.stringify({ t: 'join', id: m.id, name: m.name, look: m.look, pose: m.pose });
       for (const [other, b] of [...this._all()]) if (other !== ws && b.id) this._send(other, join);
@@ -359,6 +379,7 @@ export class Room {
       const now = Date.now();
       if (doored !== 'world') { a = this._meter(ws, a, now); if (!a) return; }   // a small frame without the prefix, or one the door metered as the other kind (A3): metered here
       if (!isWorldRoom(a.key) || a.id !== this._hostOf()) return;
+      if (message.length > worldFrameMaxFor(a.key)) return;   // AUDIT WORLD6a B3: a building's memory past its own cap is ignored, not stored - the prefix door knows no room, this does
       const old = await this.state.storage.get(WORLD_META);
       const final = m.final && !a.finalUsed;
       // AUDIT WORLD34 D2: the floor is the AUTHOR's - a new host's first memory after a handover fell inside the old
@@ -394,14 +415,24 @@ export class Room {
       // relay reads none of it
       const now = Date.now();
       if (doored !== 'foes') { a = this._meterFoes(ws, a, now); if (!a) return; }
-      if (!isWorldRoom(a.key) || a.id !== this._hostOf()) return;
-      const out = JSON.stringify({ t: 'foes', id: a.id, data: m.data });
-      const listeners = [...this._all()].filter(([other, b]) => other !== ws && b.id);
+      // WORLD6b: in a CELL every hello'd socket streams its own foes (a foe is its spawner's); a world room's are the host's alone
+      const cell = isCellRoom(a.key);
+      if (!cell && (!isWorldRoom(a.key) || a.id !== this._hostOf())) return;
+      // AUDIT WORLD6b B3: a cell's frame carries at most CELL_FRAME_RECORDS_MAX records - each one MINTS a foe at every
+      // reader, and a dungeon's bound (`i >= _layoutFoes`, a layout every client built) has no cell equivalent; over
+      // it the frame is junk, counted (the relay still reads nothing inside a record)
+      if (cell && (!Array.isArray(m.data.f) || m.data.f.length > CELL_FRAME_RECORDS_MAX)) { this._junk(ws, a); return; }
+      // AUDIT WORLD6b A4: a cell's fan is RANGED as the pose's is (RANGE_PIXELS inside a sixteen-pixel cell) - a foe
+      // nobody near me can see stands nowhere on my screen; a dungeon's reaches every socket in the place
+      const listeners = [...this._all()].filter(([other, b]) => other !== ws && b.id && (!cell || inRange(a.key, a.pose, b.pose)));
       // A5: the room's byte budget - the fan is the frame times its listeners, and one host into a full room was
-      // 191 MiB/s out of one object; over it the frame is dropped and nobody struck (the next full frame heals it)
-      const budget = byteGate(this._roomFoes, now, out.length * listeners.length, FOES_ROOM_BYTES_PER_S);
+      // 191 MiB/s out of one object; over it the frame is dropped and nobody struck (the next full frame heals it).
+      // AUDIT WORLD6b A3: the budget is asked BEFORE the frame is re-serialised (the fan's bytes are the frame's plus
+      // the envelope's, estimated), so a dropped frame costs no stringify
+      const budget = byteGate(this._roomFoes, now, (message.length + a.id.length + 8) * listeners.length, FOES_ROOM_BYTES_PER_S);
       this._roomFoes = budget.bucket;
-      if (!budget.pass) return;
+      if (!budget.pass || !listeners.length) return;
+      const out = JSON.stringify({ t: 'foes', id: a.id, data: m.data });
       for (const [other] of listeners) this._send(other, out);
       return;
     }
@@ -410,16 +441,26 @@ export class Room {
       // host's socket alone (the host applies it through its own damage door and the next foes frame says so)
       const now = Date.now();
       a = this._meter(ws, a, now); if (!a) return;
-      if (!isWorldRoom(a.key)) return;
-      const host = this._hostOf();
+      // WORLD6b: in a CELL the blow goes to the foe's OWNER, the socket the frame's `to` names (never the striker's own);
+      // in a world room to the host's alone, as WORLD2 has it
+      const cell = isCellRoom(a.key);
+      if (!cell && !isWorldRoom(a.key)) return;
+      const host = cell ? hitOwnerOf(m.data) : this._hostOf();
       if (!host || host === a.id) return;
-      // A6: the funnel onto the host's ONE socket is the room's to budget - all joiners together, HIT_ROOM_HZ_MAX a
-      // second; over it the blow is dropped and nobody struck
-      const funnel = tokenGate(this._roomHits, now, HIT_ROOM_HZ_MAX);
-      this._roomHits = funnel.bucket;
+      // AUDIT WORLD6b A1: the ROUTE is resolved before anything is spent - a `to` that names no socket in the room (a
+      // peer gone, or a name a hostile client made up) delivers nothing, buys nothing, and is counted as junk (AUDIT
+      // WORLD2 A4's instrument), so a stream of them is struck out; a world room's host is always a socket
+      const target = [...this._all()].find(([other, b]) => other !== ws && b.id === host) ?? null;
+      if (!target) { if (cell) this._junk(ws, a); return; }
+      // A6: the funnel onto the destination's ONE socket - all strikers together, HIT_ROOM_HZ_MAX a second; over it
+      // the blow is dropped and nobody struck. AUDIT WORLD6b A1/A2: the budget is the DESTINATION's (its attachment's
+      // own bucket), not the room's - in a cell the blows go to many owners, and one room-wide bucket let six honest
+      // fights, or one stream of unroutable blows, silence every other blow in the country
+      const [tws, tb] = target;
+      const funnel = tokenGate(tb.hbucket ?? null, now, HIT_ROOM_HZ_MAX);
+      this._setAttach(tws, { ...tb, hbucket: funnel.bucket });
       if (!funnel.pass) return;
-      const out = JSON.stringify({ t: 'hit', id: a.id, data: m.data });
-      for (const [other, b] of [...this._all()]) if (other !== ws && b.id === host) { this._send(other, out); break; }
+      this._send(tws, JSON.stringify({ t: 'hit', id: a.id, data: m.data }));
       return;
     }
     if (m.t === 'act') {

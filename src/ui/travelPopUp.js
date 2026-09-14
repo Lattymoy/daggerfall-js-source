@@ -81,7 +81,7 @@
 // townTalk overlay seam forwards it from the hosts' existing keyup
 // listeners, which had bound the edge and never used it.
 
-import { loadImg, nativeMetrics, drawImg, drawRect, shadowText } from './nativePanel.js';
+import { loadImg, nativeMetrics, drawImg, drawRect, shadowText, NATIVE_W } from './nativePanel.js';   // OL2: the online line, centred under the panel
 import { hudFade } from './fadeLayer.js';   // D4: FadeBehaviour
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS, messageBoxArtLoaded } from './messageBox.js';
 import { drawText } from './text.js';
@@ -129,6 +129,8 @@ export const TRAVEL_TOGGLE_COLOR = Object.freeze([85 / 255, 117 / 255, 48 / 255,
 export const LABEL_POS = Object.freeze({ gold: [148, 97], cost: [117, 107], time: [129, 117] });
 /** secondsCountdownTickFastTravel (:31). */
 export const COUNTDOWN_TICK = 0.05;
+/** OL2: the line under the panel while the trip takes no world time. */
+export const ONLINE_TRAVEL_LINE = 'Online: the world\'s clock does not wait. You arrive now, and no inn is paid.';
 /** notEnoughGoldTextId (:396) and the diseased warning's record (:422). */
 export const NOT_ENOUGH_GOLD_TEXT_ID = 454;
 export const DISEASED_WARNING_TEXT_ID = 1010;
@@ -181,6 +183,17 @@ export class TravelPopUpWindow {
    *  Guild.FreeTavernRooms (false). */
   freeTavernRooms() { return !!this.deps.freeTavernRooms?.(); }
 
+  /** OL2 (AUDIT WORLD5's sixth recorded item, paid): ONLINE THE TRIP
+   *  TAKES NO WORLD TIME - the clock is the world's (WORLD5) and the
+   *  arrival is now. The host says so through `deps.noWorldTime`
+   *  (world.js: sharedClockOn); a host that says nothing travels as
+   *  DFU does. While it is true the day countdown is empty (the trip
+   *  begins on the next tick), no inn night is paid (there are no
+   *  nights - DFU's "always at least one stay" is a night too), and the
+   *  window says it under the panel; the fare for a ship's passage
+   *  stands, because a crossing is a crossing. */
+  noWorldTime() { return !!this.deps.noWorldTime?.(); }
+
   /** Refresh -> UpdateTogglePanels + UpdateLabels (:254-258). The
    *  toggle panels are positional state, so only the labels compute. */
   refresh() {
@@ -200,8 +213,9 @@ export class TravelPopUpWindow {
     // anyway (Guild.FastTravel is `return duration`).
     this.travelTimeTotalMins = guildFastTravel(this.deps.playerEntity?.() ?? null,
       this.travelTimeTotalMins);
+    // OL2: no nights online (noWorldTime), so no inn - the toggle stands, the cost ignores it
     const c = calculateTripCost(this.travelTimeTotalMins, t.oceanPixels, {
-      sleepModeInn: this.sleepModeInn,
+      sleepModeInn: this.sleepModeInn && !this.noWorldTime(),   // OL2
       hasShip: this.hasShip,
       travelShip: this.travelShip,
       // TravelTimeCalculator.cs:163 consults the Knightly Order's
@@ -211,7 +225,7 @@ export class TravelPopUpWindow {
       freeTavernRooms: this.freeTavernRooms(),
     });
     this.trip = { ...t, ...c };
-    this.countdownValueTravelTimeDays = travelDays(this.travelTimeTotalMins);
+    this.countdownValueTravelTimeDays = this.noWorldTime() ? 0 : travelDays(this.travelTimeTotalMins);   // OL2: online the arrival is now
   }
 
   /** enoughGoldCheck (:388-392). BOTH halves: GetGoldAmount (coins
@@ -399,7 +413,8 @@ export class TravelPopUpWindow {
     const pieces = this.deps.goldPieces?.() ?? this.deps.gold?.() ?? 0;
     shadowText(renderer, font, String(pieces), m, LABEL_POS.gold[0], LABEL_POS.gold[1]);
     shadowText(renderer, font, String(this.trip.totalCost), m, LABEL_POS.cost[0], LABEL_POS.cost[1]);
-    shadowText(renderer, font, String(this.countdownValueTravelTimeDays), m, LABEL_POS.time[0], LABEL_POS.time[1]);
+    shadowText(renderer, font, this.noWorldTime() ? 'now' : String(this.countdownValueTravelTimeDays), m, LABEL_POS.time[0], LABEL_POS.time[1]);   // OL2: the days label says "now" online
+    if (this.noWorldTime()) shadowText(renderer, font, ONLINE_TRAVEL_LINE, m, 0, POPUP_RECTS.native[1] + POPUP_RECTS.native[3] + 4, { align: 'center', w: NATIVE_W });
     if (!_art) {
       // art-less fallback: the option rows the classic art labels
       const rows = [

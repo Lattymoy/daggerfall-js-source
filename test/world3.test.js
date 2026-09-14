@@ -254,10 +254,10 @@ test('WORLD3: the hosts by source - the dungeon host (the state, the doors\' sea
   assert.match(m, /onActions: \(data\) => host\.onActions\?\.\(data\), peers: \(\) => host\.peers\?\.\(\) \?\? null, selfId: \(\) => host\.selfId\?\.\(\) \?\? null,/, 'into the build');
   assert.match(m, /applyDungeonActions\(id, data\) \{ return mode === 'dungeon' && dungeonCtx \? !!dungeonCtx\.applyActions\?\.\(id, data\) : false; \},/);
   const w = rd('src/scenes/world.js');
-  assert.match(w, /online\.onAct = \(id, data\) => \{ modes\?\.applyDungeonActions\?\.\(id, data\); \};/, 'the doors routed');
+  assert.match(w, /online\.onAct = \(id, data\) => \{ modes\?\.applyPlaceActions\?\.\(id, data\); \};/, 'the doors routed (WORLD6a: through the place - a dungeon or a building)');
   assert.match(w, /onActions: actSend,/, 'the door out through the pending set (AUDIT WORLD3 A3)');
   assert.match(w, /const actSend = \(data\) => \{[\s\S]*?if \(!online\.sendAct\(out\)\) \{ for \(const k of keys\) _actPend\.add\(k\); return false; \}\s*_actPend\.clear\(\);/, 'A3: a refused act holds its KEYS');
-  assert.match(w, /const actFlush = \(\) => \{[\s\S]*?const data = modes\?\.dungeonActionRecords\?\.\(\[\.\.\._actPend\]\);/, 'A3: and the next frame re-reads them CURRENT');
+  assert.match(w, /const actFlush = \(\) => \{[\s\S]*?const data = modes\?\.placeActionRecords\?\.\(\[\.\.\._actPend\]\);/, 'A3: and the next frame re-reads them CURRENT (WORLD6a: the place\'s)');
   assert.match(w, /foesStream\(now\);[^\n]*\n\s*actFlush\(\);/, 'A3: flushed from the frame, so a quiet room heals too');
   assert.match(w, /peers: \(\) => \{\s*if \(!online \|\| !online\.room \|\| online\.status !== 'open'\) return null;\s*const now = performance\.now\(\), out = \[\];\s*for \(const p of online\.peers\.values\(\)\) if \(online\.visible\(p, now\)\) out\.push\(\{ id: p\.id, feet: onlineToScene\(p\.shown\), height: peerBodies\?\.heightOf\(p\.id\) \|\| undefined \}\);\s*return out;\s*\},/, 'the peers at their scene feet, the drawn pose');
   assert.match(w, /selfId: \(\) => online\?\.id \?\? null,/);

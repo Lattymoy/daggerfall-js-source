@@ -96,6 +96,7 @@ import { tallySkill, skillValue, SKILLS, SKILL_NAMES } from '../systems/skills.j
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT, startRestGroundedCheck } from '../player/motor.js';   // the rest gate's grounded input, one home
 import { applyLevelUp } from '../systems/advancement.js';
 import { tickPlayerMinutes, claimMagicRounds, runMagicRoundsFor } from '../systems/worldTick.js';   // AUDIT 18: the player tick every host shares
+import { mintSharedStamp } from '../net/wire.js';   // AUDIT WORLD6a B7: the memory's stamp, from the wire's one mint
 import { spendPoolLowest } from '../systems/chargen.js';
 import { ClassFile } from '../formats/classFile.js';
 import { fetchBytes, ensureAudio, loadMagicRegistries, wireInfectionVideos, raisePlayerSkills, endRunToTitleMenu, exitToTitleMenu, sensesContext, wireDoorSpells, createDetectFeed, foeNearbyRecord, lootNearbyRecord, nearbyLootRecords, restVitals, restFullyHealed, createRestDeps, fatigueLossMultiplierFor} from './shared.js';
@@ -1410,7 +1411,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:6539 / exterior.js:2919), set
+  // host's own townTalk sink (world.js:6553 / exterior.js:2920), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -1626,12 +1627,19 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   /** The rest window's clock jump for THIS host: the world minutes
    *  plus IntermittentEnemySpawn's catch-up loop, which is a dungeon
    *  law and is the one rest dep createRestDeps cannot supply. */
-  const _restAdvance = (n) => {
+  const _restAdvance = (n, sharedEnd = null) => {
     // E-slice: IntermittentEnemySpawn's catch-up loop across the
     // advanced minutes (PlayerEntity.Update:486-492) - resting in
     // a dungeon under an active enemy alert can spawn ONE foe; the
     // hourly enemy check then breaks the rest, DFU's own flow.
-    const start = Math.floor(classicMinutesRef.value);
+    //
+    // AUDIT WORLD5 C8: the span is the SESSION's under the shared
+    // clock (the sub-tick's end rides in; the write below is refused
+    // there) - read off the clock after the refused write, every
+    // sub-tick of a rested night offered the spawner the same ten
+    // minutes, ahead of the clock, rolled once per sub-tick.
+    const end = sharedEnd ?? classicMinutesRef.value + n;
+    const start = Math.floor(end) - n;
     classicMinutesRef.value += n;
     // AUDIT 24 (wave 30) - THE BROKER RUNS UNDER THE REST WINDOW.
     // The old line here said "the round loop catches the magic
@@ -1647,7 +1655,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // Time.timeScale = 0 and interleaves, minute by minute, with
     // TickRest's hourly heal; a poison can kill you in your sleep
     // and the rest ends "You never awaken."
-    const _w = claimMagicRounds(start, classicMinutesRef.value);
+    const _w = claimMagicRounds(start, end);
     runMagicRoundsFor(playerEntity, _w.from, _w.to, { sinks: playerSinks, say: (msg) => hudText.add(msg) });
     // ...and the FOE half of the same broker event. OnNewMagicRound
     // is global - every EntityEffectManager in the scene subscribes
@@ -1707,7 +1715,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // the rest window had just left - and on the level-up path it is
     // not free at all.
     box: (rows) => pushDungeonWindow(new ActionTextBox(rows)),
-    advanceMinutes: (n) => _restAdvance(n),
+    advanceMinutes: (n, sharedEnd) => _restAdvance(n, sharedEnd),
     // TickRest :379 - QuestMachine.Instance.Tick() rides the same
     // sub-tick as the clock, UNPACED. This host holds the bridge as
     // opts.questBridge (world.js and worldModes hand theirs down); a
@@ -1880,7 +1888,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // copied mount would have diverged the first time an arm grew.
   /** DR1: THE TWO SPELL WINDOWS THIS HOST MOUNTS NOW, and the one door
    *  they go through. `mountSpellWindow` is worldModes'
-   *  mountSpellWindow DUNGEON ARM (worldModes.js:982,
+   *  mountSpellWindow DUNGEON ARM (worldModes.js:1034,
    *  `dungeonCtx?.showOverlay(win)`) resolved to what it actually
    *  calls here - this file's own pushDungeonWindow, which IS
    *  UserInterfaceManager.PushWindow. So a spell window raised over an
@@ -2355,7 +2363,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:898 against :929; worldModes.js:5800 against :5808).
+    // (dungeon.js:898 against :929; worldModes.js:5890 against :5898).
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -2828,8 +2836,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:8541,
-              // exterior.js:4202 and worldModes.js:5927 already ran;
+              // playerArrowHitFoe is the one copy world.js:8588,
+              // exterior.js:4203 and worldModes.js:6017 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -3200,7 +3208,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // restoreSaveData) - a mover's pose IS its {state, t}, and a door
   // carries a second pair for the record's Move tween.
   const _locationKey = `dungeon:${dfLocation?.dungeon?.recordElement?.header?.locationId ?? 'probe'}`;
-  const _sharedStamp = Math.random().toString(36).slice(2);   // AUDIT WORLD B1: this context's mark on the memory it publishes - a reconnect's welcome never hands it back
+  const _sharedStamp = mintSharedStamp();   // AUDIT WORLD B1: this context's mark on the memory it publishes - a reconnect's welcome never hands it back; AUDIT WORLD6a B7: twelve digits always, from the wire's one mint
   let _sharedApplied = false;   // AUDIT WORLD B7: the room's memory lands on a freshly built pool ONCE; a second apply onto a live fight is slice 3's events
   // WORLD2 (Mac: "Lets continue on with the next phase"): ONE SIMULATION PER ROOM. While another hosts the room I am
   // not the authority: my layout foes (the first _layoutFoes of the pool) are PUPPETS that follow the host's stream
@@ -3538,7 +3546,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // InstantiatePrefab's a fresh GameObject per saved record, so
     // EnemyEntity's `PickpocketByPlayerAttempted` default is the loaded
     // truth for every enemy. The re-minting pools match that by
-    // construction (exteriorFoes.js:1026's restoreWorld goes through
+    // construction (exteriorFoes.js:1102's restoreWorld goes through
     // spawnFoe), but this host patches the LIVE foes in place, so a
     // same-dungeon reload kept a raised latch and a failed pickpocket
     // could never be retried - falsifying the law
@@ -5097,7 +5105,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // through the overlay as 'back' (ends a running rest)": that route
     // was never real. ROAD-B B5 built the real one. With a window up,
     // overlayAction turns any single character into `char:<k>`, so
-    // KeyR arrives as 'char:r', and ui/restWindow.js:275-277 runs A8's
+    // KeyR arrives as 'char:r', and ui/restWindow.js:289-291 runs A8's
     // normalizeCode inverse to turn it back into 'KeyR' - DFU's
     // toggleClosedBinding - so a second Rest press ends a running rest
     // or closes the selection page (:302-315), which is
