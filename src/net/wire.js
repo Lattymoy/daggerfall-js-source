@@ -313,6 +313,19 @@ export const isChatRoom = (key) => CHAT_ROOMS.has(String(key ?? ''));
 //  pay for that no player can reach.
 const WORLD_ROOM = /^(?:dungeon:m[1-9]\d{0,9}|interior:m[1-9]\d{0,9}\.[1-9]\d{0,7})$/;
 export const isWorldRoom = (key) => WORLD_ROOM.test(String(key ?? ''));
+//  WORLD6b (Mac, 2026-09-14: "Continue"): A CELL STREAMS ITS FOES. The open country's room is a sixteen-pixel cell
+//  (worldRoom), and nothing in it is a layout every client builds alike: every foe was one client's roll, near that
+//  client, on terrain only the clients near it have built - so a cell has no HOST simulation and keeps no memory
+//  (it is no world room), and A FOE IS ITS SPAWNER'S: the spawner steps it and streams it, everyone else in the cell
+//  puppets it, and a blow on another's foe goes to its OWNER as a hit (`data.to`). The relay fans a cell's foes frames
+//  from ANYONE hello'd (each on its own bucket, under the room's byte budget) and routes a cell's hit to the socket
+//  `to` names; a world room keeps WORLD2's host law untouched.
+const CELL_ROOM = /^world:\d{1,3},\d{1,3}$/;
+export const isCellRoom = (key) => CELL_ROOM.test(String(key ?? ''));
+/** A room whose foes ride the wire: a world room (the host's) or a cell (each spawner's). */
+export const streamsFoes = (key) => isWorldRoom(key) || isCellRoom(key);
+/** WORLD6b: the owner a cell's hit is for - the frame's `to`, a peer id; null when the frame names none. */
+export const hitOwnerOf = (data) => (data && typeof data.to === 'string' && data.to.length > 0 && data.to.length <= 64 ? data.to : null);
 
 /** A pose the room will relay, or null. */
 export function validPose(p) {

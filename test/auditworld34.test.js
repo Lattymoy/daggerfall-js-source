@@ -207,7 +207,7 @@ test('AUDIT WORLD34 B1/B3 by source: a dead foe is retyped too (a joiner whose s
   assert.match(d, /if \(!out\.length && !full\) return null;\s*return \{ n: \+\+_foesSeq, k: _locationKey, f: out \};/, 'the empty full frame goes');
   const w = rd('src/scenes/world.js');
   assert.match(w, /const dungeonAuthority = \(now = performance\.now\(\)\) => !\(online\?\.room && isWorldRoom\(online\.room\) && online\.status === 'open' && online\.host && !online\.isHost\(\) && now - _foesInAt < FOES_STALE_MS\);/, 'the seat still reads the heartbeat');
-  assert.match(w, /online\.onFoes = \(id, data\) => \{ if \(modes\?\.mode === 'dungeon'\) _foesInAt = performance\.now\(\); modes\?\.applyDungeonFoes\?\.\(id, data\); \};/, 'and every frame in, empty or not, is the heartbeat (AUDIT WORLD6a B8: in a dungeon - a building\'s room streams no foes)');
+  assert.match(w, /online\.onFoes = \(id, data\) => \{\s*if \(isCellRoom\(online\.room\)\) \{[^\n]*\n\s*if \(modes\?\.mode === 'dungeon'\) _foesInAt = performance\.now\(\);[^\n]*\n\s*modes\?\.applyDungeonFoes\?\.\(id, data\);\s*\};/, 'and every frame in, empty or not, is the heartbeat (AUDIT WORLD6a B8: in a dungeon - a building\'s room streams no foes; WORLD6b: a cell\'s frame is the encounter pool\'s, no heartbeat)');
 });
 
 test('AUDIT WORLD34 C2 by source: the memory\'s action records are the SHARED half out (no picker\'s latch) and PROJECTED in (validActionRecord, as an act\'s are) - the relay serves the stored bytes back unparsed for thirty days', () => {
@@ -229,7 +229,7 @@ test('AUDIT WORLD34 D4/D5: the relay names itself in /health; the session says t
   assert.match(RELAY_VERSION, /^world\d+$/, 'bumped with every relay-changing slice - the latest slice pins its own value (WORLD5 pinned world5)');
   assert.match(rd('server/src/index.js'), /json\(\{ ok: true, service: 'daggerfall-online', version: RELAY_VERSION, t: Date\.now\(\) \}\)/);
   const o = rd('src/net/online.js');
-  assert.match(o, /console\.info\(`\[online\] room \$\{room\} - \$\{isWorldRoom\(room\) \? 'a shared world' : isChatRoom\(room\) \? 'a chat channel' : 'presence only'\}`\);/);
+  assert.match(o, /console\.info\(`\[online\] room \$\{room\} - \$\{isWorldRoom\(room\) \? 'a shared world' : isCellRoom\(room\) \? 'shared country \(each player\\'s foes are everyone\\'s\)' : isChatRoom\(room\) \? 'a chat channel' : 'presence only'\}`\);/);   // WORLD6b: the cell says what it shares
   assert.match(o, /if \(host && isWorldRoom\(this\.room\)\) console\.info\(`\[online\] host \$\{host\}\$\{host === this\.id \? ' \(me\)' : ''\}`\);/);
   const lines = [];
   const info = console.info; console.info = (l) => lines.push(l);
@@ -241,10 +241,10 @@ test('AUDIT WORLD34 D4/D5: the relay names itself in /health; the session says t
     s.leave(); s.join('world:3,12', at(1, 1)); sockets[1].open();
     sockets[1].receive({ t: 'welcome', id: 'aaaa-0001', peers: [], host: 'aaaa-0001', world: null });
   } finally { console.info = info; }
-  assert.deepEqual(lines, [`[online] room dungeon:m${PRIVATEERS_HOLD} - a shared world`, '[online] host bbbb-0002', '[online] room world:3,12 - presence only'], 'a cell says its room and no host');
+  assert.deepEqual(lines, [`[online] room dungeon:m${PRIVATEERS_HOLD} - a shared world`, '[online] host bbbb-0002', '[online] room world:3,12 - shared country (each player\'s foes are everyone\'s)'], 'a cell says its room and no host (WORLD6b: and what it shares)');
   const menu = rd('src/ui/enhancedMenu.js');
   assert.doesNotMatch(menu, /el\('p', 'meta', 'Everyone runs their own game from their own save; you see each other and walk together\. Nothing else is shared yet\.'\)/, 'the pre-WORLD1 promise is gone');
-  assert.match(menu, /A dungeon is one shared world: its foes, doors, levers, platforms and every chest anyone has opened are the same for everyone in it, and it remembers\. A building is a shared world too: its doors, and every shelf and cupboard anyone has opened, are the same for everyone in it, and it remembers\. Towns and the open country share only who is there\./);   // WORLD6a: the building joined the sentence
+  assert.match(menu, /A dungeon is one shared world: its foes, doors, levers, platforms and every chest anyone has opened are the same for everyone in it, and it remembers\. A building is a shared world too: its doors, and every shelf and cupboard anyone has opened, are the same for everyone in it, and it remembers\. Towns and the open country share who is there and the creatures that find you: what one player meets, everyone sees and can fight\./);   // WORLD6a: the building joined the sentence; WORLD6b: the cell's foes
 });
 
 test('AUDIT WORLD34: the record carries the root and the pins that enshrined it are turned', () => {

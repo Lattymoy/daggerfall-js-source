@@ -177,10 +177,10 @@ test('X8: the pacify reaches the AI, and attacking restores hostility', () => {
   // AUDIT 58: the player arm is its own member now (WeaponManager.cs
   // :627/:630 run it for every CONNECTING swing, damage or none), so
   // the gate calls it and the body is read where it lives.
-  assert.match(xfs, /if \(fromPlayer && f\.ai\) \{\n\s*handleAttackFromPlayer\(f, playerFeet\);/,
+  assert.match(xfs, /if \(fromPlayer && f\.ai\) \{\n\s*handleAttackFromPlayer\(f, playerFeet, peer\);/,   // WORLD6b: and whose blow it was
     'the damage door runs it inside the player-source gate');
-  assert.match(xfs.slice(xfs.indexOf('function handleAttackFromPlayer(f, playerFeet = null) {'),
-    xfs.indexOf('function handleAttackFromPlayer(f, playerFeet = null) {') + 900),
+  assert.match(xfs.slice(xfs.indexOf('function handleAttackFromPlayer(f, playerFeet = null, peer = false) {'),
+    xfs.indexOf('function handleAttackFromPlayer(f, playerFeet = null, peer = false) {') + 900),
     /f\.ai\.makeEnemyHostileToAttacker\?\.\(PLAYER_TARGET/, 'through the whole C# method');
   assert.match(xfs, /resetAllyTeamOnPlayerAttack\(f\.ai, f\.entity, f\.mobileType\)/,
     'and reverts a struck former ally to its species');

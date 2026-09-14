@@ -44,7 +44,7 @@ test('WORLD6a: the wire - a building is a world room at both ends (the room room
   assert.equal(key, 'interior:m187853213.4'); assert.equal(isWorldRoom(key), true, 'the room the session joins IS a world room');
   assert.equal(interiorLocationKey(PRIVATEERS | 0, 4), key, 'and the memory\'s key is the same spelling (a signed id read unsigned, AUDIT WORLD34 A2)');
   assert.equal(interiorLocationKey(0, 4), null); assert.equal(interiorLocationKey(5, 0), null, 'no id, no key: no room');
-  assert.equal(RELAY_VERSION, 'world61');
+  assert.equal(RELAY_VERSION, 'world62');   // WORLD6b bumped it
 });
 
 test('WORLD6a: the real Room keeps a building\'s memory and hands it to the next joiner; a town\'s frame is still ignored', async () => {
@@ -161,6 +161,6 @@ test('WORLD6a: the hosts by source - the interior mode keys and stamps its room 
   assert.match(w, /const shared = modes\?\.placeSharedWorld\?\.\(\);/); assert.match(w, /modes\?\.restorePlaceSharedWorld\?\.\(shared\)/); assert.match(w, /modes\?\.applyPlaceActions\?\.\(id, data\)/);
   assert.equal((w.match(/modes\?\.placeActionRecords\?\./g) ?? []).length, 2, 'the act and the flush');
   assert.match(w, /onInteriorLeave: \(\) => worldPublish\(performance\.now\(\), true\),/);
-  assert.match(rd('src/ui/enhancedMenu.js'), /A building is a shared world too: its doors, and every shelf and cupboard anyone has opened, are the same for everyone in it, and it remembers\. Towns and the open country share only who is there\./);
+  assert.match(rd('src/ui/enhancedMenu.js'), /A building is a shared world too: its doors, and every shelf and cupboard anyone has opened, are the same for everyone in it, and it remembers\. Towns and the open country share who is there and the creatures that find you: what one player meets, everyone sees and can fight\./);
   assert.match(rd('bible/06-Systems/Online-Arc.md'), /## WORLD6 \(2026-09-14\)/, 'the record');
 });

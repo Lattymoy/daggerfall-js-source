@@ -189,7 +189,7 @@ test('MAC7: the hosts by source - weaponRig counts every strike it starts before
   assert.match(rig, /\n    swing,   \/\/ MAC7 #1/); assert.match(rig, /\n    cast,    \/\/ MAC7 #2/);
   assert.equal((rig.match(/fpAttack\(strike\)/g) ?? []).length, 3, 'the one counter sits under both strike doors (the click and the gesture)');
   const w = rd('src/scenes/world.js');
-  assert.match(w, /import \{ POSE_STRIKES, isWorldRoom, actFrameFits, sharedClassicMinutes, wallMsForClassicMinutes \} from '\.\.\/net\/wire\.js';/);
+  assert.match(w, /import \{ POSE_STRIKES, isWorldRoom, isCellRoom, actFrameFits, sharedClassicMinutes, wallMsForClassicMinutes \} from '\.\.\/net\/wire\.js';/);   // WORLD6b: the cell's law rides the same import
   assert.match(w, /import \{ hasDaggerfallArrows \} from '\.\.\/combat\/fpArm\.js';/, 'the arrow read weaponRig\'s own per-frame read takes');
   assert.match(w, /const live = modes\?\.liveArm\?\.\(\) \?\? null;\s*const rig = live\?\.rig \?\? weaponRig;\s*const wm = rig\.playerWeapon\.machine;\s*const arm = \{\s*mv,\s*wd: rig\.playerWeapon\.sheathed \? 0 : \(wm\?\.isBow && wm\.state === 'StrikeUp' \? 2 : 1\),\s*an: rig\.swing\.n, as: Math\.max\(0, POSE_STRIKES\.indexOf\(rig\.swing\.strike\)\),\s*am: hasDaggerfallArrows\(playerEntity\.items\) \? 1 : 0, sr: \(live \? live\.armed : magic\.spellArmed\(\)\) \? 1 : 0,\s*cn: rig\.cast\.n, cr: rig\.cast\.rangeType \| 0,\s*\};/, 'the arm\'s seven off the MODE\'s rig (AUDIT WORLD C1: world.js\'s own is never stepped indoors or underground), the entity and the mode\'s spell seam');
   assert.equal((w.match(/\{ \.\.\.pose, \.\.\.arm \}/g) ?? []).length, 2, 'into the hello and every pose');

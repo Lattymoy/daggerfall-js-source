@@ -114,7 +114,7 @@ test('AUDIT WORLD6a B3/B4/B5: the law admits exactly what the game names (no zer
   quiet(() => sockets[0].receive({ t: 'welcome', id: 'aaaa-0001', peers: [], host: 'aaaa-0001', world: null, now: Date.now() }));
   assert.equal(s.sendWorld(big), false, 'the client keeps the building\'s cap too');
   assert.equal(s.sendWorld({ locationKey: 'interior:m187853213.4', world: {} }), true);
-  assert.equal(RELAY_VERSION, 'world61');
+  assert.equal(RELAY_VERSION, 'world62');   // WORLD6b bumped it
   assert.match(rd('server/src/index.js'), /if \(message\.length > worldFrameMaxFor\(a\.key\)\) return;/);
 });
 
@@ -136,6 +136,6 @@ test('AUDIT WORLD6a by source: the settle asks the stack (A3), the keyed shop fa
   assert.match(m, /buildingKey: _intShared\?\.owned \? 0 : \(interiorBuilding\?\.buildingKey \?\? 0\)/, 'A6: no room at all');
   const w = rd('src/scenes/world.js');
   assert.match(w, /const _actRoom = \(\) => !!\(online && \(isWorldRoom\(online\.room\) \|\| isWorldRoom\(_onlineKey\)\)\);/, 'A7');
-  assert.match(w, /online\.onFoes = \(id, data\) => \{ if \(modes\?\.mode === 'dungeon'\) _foesInAt = performance\.now\(\);/, 'B8');
+  assert.match(w, /online\.onFoes = \(id, data\) => \{\s*if \(isCellRoom\(online\.room\)\) \{[^\n]*\n\s*if \(modes\?\.mode === 'dungeon'\) _foesInAt = performance\.now\(\);/, 'B8 (WORLD6b: the cell\'s arm ahead of it)');
   assert.match(rd('bible/06-Systems/Online-Arc.md'), /## AUDIT WORLD6a \(2026-09-14\)/, 'the record');
 });
