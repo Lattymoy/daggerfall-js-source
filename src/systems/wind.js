@@ -140,7 +140,7 @@ export function createWindModel({ seed = 7 } = {}) {
   };
 
   return {
-    tick(nowMinutes, weather) {
+    tick(nowMinutes, weather, violenceWord = weather) {
       nowMin = nowMinutes;
       const d = Math.floor(nowMinutes / 1440);
       if (d !== day) rollDay(d);
@@ -156,7 +156,10 @@ export function createWindModel({ seed = 7 } = {}) {
           // stir. It leads by FRONT_LEAD_MIN, which from the ground reads
           // as the wind rising before the sky turns.
           const r = seededRng(seed * 7919 + Math.floor(nowMinutes));
-          const violence = VIOLENCE[weather] ?? 0.2;
+          // WEATHER2a: the front's strength is the VIOLENCE word's - the
+          // table's own word before the ground law turned it (a storm
+          // that falls as snow over a winter ground is a blizzard).
+          const violence = VIOLENCE[violenceWord] ?? VIOLENCE[weather] ?? 0.2;
           front = {
             at: nowMinutes + FRONT_LEAD_MIN,   // the sky finishes turning here; the wind is already up
             strength: violence * (0.6 + r() * 0.8),

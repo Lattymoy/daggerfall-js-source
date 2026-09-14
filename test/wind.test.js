@@ -72,7 +72,7 @@ test('WIND1: one seam - the row takes the model\'s vector, and the sky eases on 
   // seconds and the wind rose after it: the storm arrived and the wind
   // followed. The reverse of what was asked.
   assert.match(shared, /const easeDt = windModel\.inLead\(\) \? dt \* \(WEATHER_EASE_MINUTES \/ FRONT_LEAD_MIN\) : dt;/, 'CLK1: both in game minutes, no time scale between them');
-  assert.match(shared, /windModel\.tick\(extra\?\.classicMinutes \?\? 0, weatherName\);/, 'ticked on the GAME clock');
+  assert.match(shared, /windModel\.tick\(extra\?\.classicMinutes \?\? 0, weatherName, extra\?\.violence \?\? weatherName\);/, 'ticked on the GAME clock (WEATHER2a: the violence word beside the worn one)');
   // The rows' fixed vectors stay as the classic-sky fallback and are no
   // longer what a consumer sees under the enhanced one.
   assert.match(read('src/render/enhancedSky.js'), /sunny:.*wind: \[0\.010, 0\.004\]/);
