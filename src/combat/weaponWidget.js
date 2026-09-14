@@ -262,7 +262,7 @@ export function createWeaponWidget({
         if (!img) return;
         const tex = ctx.renderer.uploadTexture('img', `ww:${name}`, img);
         cache.set(name, { tex, width: img.width, height: img.height });
-      }).catch(() => {});
+      }).catch((e) => console.warn('[weapon widget] texture load failed', name, e));   // WW3: the rig's neighbours say so too (weaponRig.js art/spell loads) - a bare `catch (() => {})` here is how a shape fault reaches a player instead of a console line
     }
     return cache.get(name);
   }
