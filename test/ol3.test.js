@@ -82,38 +82,46 @@ test('OL3 (1): the tavern\'s offer says when the room ends by the player\'s cloc
   assert.match(rd('src/scenes/worldModes.js'), /dueDateText: \(minutes\) => \{\s*if \(!\(minutes > 0\)\) return '';\s*const real = sharedRealTimeText\(minutes\);\s*return dateString\(dateFromClassicMinutes\(minutes\)\) \+ \(real \? ` \(\$\{real\}\)` : ''\);/, 'the bank\'s due-by carries the real time beside the date online, and is the date alone offline');
 });
 
-test('OL3 (2): CreateFoe\'s spawn interval stands down with the Clock - no interval accrues while stood down, a wave in flight still lands, and standing up the first wave waits a full interval from there', () => {
+test('OL3 (2), re-spelt by WORLD7: CreateFoe\'s spawn interval charges PLAYED time - a tick\'s gap past the step is forgiven (one step charged, one wave, not thirty), a wave in flight still lands, a resume past a step waits a full interval from there, and offline the marker arithmetic is DFU\'s own', () => {
   const VENDOR = join(dirname(fileURLToPath(import.meta.url)), '..', 'vendor', 'dfu-quests');
   const sources = {};
-  for (const f of readdirSync(join(VENDOR, 'Tables'))) if (f.endsWith('.txt')) sources[f.replace('.txt', '')] = readFileSync(join(VENDOR, 'Tables', f), 'utf8').replace(/^﻿/, '');
+  for (const f of readdirSync(join(VENDOR, 'Tables'))) if (f.endsWith('.txt')) sources[f.replace('.txt', '')] = readFileSync(join(VENDOR, 'Tables', f), 'utf8').replace(/^\uFEFF/, '');
   loadQuestTables(sources);
   const world = { currentRegionIndex: () => 0, isPlayerInLocationRect: () => true, created: [], placed: [], createFoeGameObjects: (foe, count) => { world.created.push(count); return Array.from({ length: count }, (_, i) => ({ i })); }, tryPlaceFoe: (h) => { world.placed.push(h); return true; }, raiseOnEncounterEvent() {} };
-  let down = false;
+  let step = 1800;
   const clock = { t: 100000 };
-  const m = new QuestMachine({ nowSeconds: () => clock.t, world, questClocksStoodDown: () => down, showPopup() {} });
+  const m = new QuestMachine({ nowSeconds: () => clock.t, world, questClockStepMax: () => step, showPopup() {} });
   const q = m.scheduleQuest(['Quest: __QF', 'QRC:', 'Message:  1011', ' x', '', 'QBN:', 'Foe _rat_ is 2 Giant_rat', '', ' create foe _rat_ every 1 minutes 5 times with 100% success'], 0, { rolls: () => 0.4 });
   const act = [...q.tasks.values()][0].actions.find((a) => a.constructor.name === 'CreateFoe');
-  down = true;
   m.tick();
-  assert.equal(act.lastSpawnTime, clock.t, 'stood down from the first tick: no backdate, the marker is now');
-  clock.t += 3600; m.tick(); m.tick();
-  assert.equal(world.created.length, 0, 'an hour of the world stood down: no wave');
-  assert.equal(act.lastSpawnTime, clock.t, 'the marker rode the clock');
-  down = false;
-  m.tick();
-  assert.equal(world.created.length, 0, 'standing up: the first wave waits a full interval from here');
-  clock.t += 60; m.tick();
-  assert.deepEqual(world.created, [2], 'one interval on: the wave');
-  down = true;
-  m.tick();
-  assert.equal(world.placed.length, 2, 'a wave in flight still lands under the stand-down');
-  m.tick();
-  assert.equal(act.spawnCounter, 1, 'and is counted');
+  assert.equal(act.lastSpawnTime, clock.t - 24, 'the first tick backdates into the interval (DFU\'s Range), online too');
+  clock.t += 30; m.tick();
+  assert.equal(world.created.length, 0, 'half a minute played: not yet');
+  clock.t += 30; m.tick();
+  assert.deepEqual(world.created, [2], 'a minute played: the wave');
+  m.tick(); m.tick();
+  assert.equal(world.placed.length, 2); assert.equal(act.spawnCounter, 1, 'the wave lands and is counted');
   clock.t += 3600; m.tick();
-  assert.equal(world.created.length, 1, 'stood down again: no second wave');
+  assert.equal(world.created.length, 2, 'an hour away in one gap: the marker forgiven all but one step - one wave on return, not sixty'); assert.equal(act.lastSpawnTime, clock.t, 'the marker stands at the wave');
+  m.tick(); m.tick();
+  assert.equal(act.spawnCounter, 2, 'landed and counted');
+  // a resume: no tick sample (a load, a quest restored) and the time since the save past a step - forgiven whole
+  act._lastTick = null; act.lastSpawnTime = clock.t - 100000;
+  m.tick();
+  assert.equal(act.lastSpawnTime, clock.t, 'the marker stands here'); assert.equal(world.created.length, 2, 'the resume fired none');
+  clock.t += 30; m.tick();
+  assert.equal(world.created.length, 2, 'the first wave after a resume waits a full interval');
+  clock.t += 30; m.tick();
+  assert.equal(world.created.length, 3, 'and comes');
+  m.tick(); m.tick();
+  // offline: no step - an hour's gap counts whole, DFU's own
+  step = Infinity;
+  clock.t += 3600; m.tick();
+  assert.equal(act.lastSpawnTime, clock.t, 'offline the gap counted and the wave fired at once'); assert.equal(world.created.length, 4);
   const src = rd('src/systems/quest/actions.js');
-  assert.match(src, /const stoodDown = !!this\.parentQuest\.questClocksStoodDown\?\.\(\);\s*if \(stoodDown && !this\.spawnInProgress\) this\.lastSpawnTime = gameSeconds;/);
-  assert.match(src, /if \(gameSeconds >= this\.lastSpawnTime \+ this\.spawnInterval && !this\.spawnInProgress && !stoodDown\) \{/);
+  assert.match(src, /const step = this\.parentQuest\.questClockStepMax\?\.\(\) \?\? Infinity;/);
+  assert.match(src, /if \(gameSeconds >= this\.lastSpawnTime \+ this\.spawnInterval && !this\.spawnInProgress\) \{/);
+  assert.equal(src.includes('questClocksStoodDown'), false, 'the stand-down word is gone');
 });
 
 test('OL3 (7): a welcome clock more than a year from this machine\'s is said - the session keeps a warning the HUD line shows while open, the console hears it once, and a sane welcome clears it', () => {

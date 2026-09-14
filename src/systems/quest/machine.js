@@ -466,7 +466,7 @@ export class QuestMachine {
   scheduleQuest(sourceLines, factionId = 0, { rolls } = {}) {
     const nowSeconds = () => this.deps.nowSeconds?.() ?? 0;
     const quest = this.parser.parse(sourceLines, factionId,
-      { rolls, actionFactory: this._actionFactory, nowSeconds, hooks: this._buildHooks(), questClocksStoodDown: () => this.deps.questClocksStoodDown?.() ?? false });   // WORLD5
+      { rolls, actionFactory: this._actionFactory, nowSeconds, hooks: this._buildHooks(), questClockStepMax: () => this.deps.questClockStepMax?.() ?? Infinity });   // WORLD7
     this.questsToInvoke.push(quest);
     return quest;
   }
@@ -549,7 +549,7 @@ export class QuestMachine {
     // it where DFU drops that row and offers the rest.
     try {
       return this.parser.parse(lines, factionId,
-        { partialParse, rolls, actionFactory: this._actionFactory, nowSeconds, hooks: this._buildHooks(), questClocksStoodDown: () => this.deps.questClocksStoodDown?.() ?? false });   // WORLD5
+        { partialParse, rolls, actionFactory: this._actionFactory, nowSeconds, hooks: this._buildHooks(), questClockStepMax: () => this.deps.questClockStepMax?.() ?? Infinity });   // WORLD7
     } catch (ex) {
       console.warn(`[quest] Parsing quest FAILED!\r\n${ex?.message ?? ex}`);
       return null;
@@ -895,7 +895,7 @@ export class QuestMachine {
     const nowSeconds = () => this.deps.nowSeconds?.() ?? 0;
     for (const questData of data.quests ?? []) {
       try {
-        const quest = new Quest({ nowSeconds, actionFactory: this._actionFactory, hooks: this._buildHooks(), questClocksStoodDown: () => this.deps.questClocksStoodDown?.() ?? false });   // WORLD5: the clocks stand down online
+        const quest = new Quest({ nowSeconds, actionFactory: this._actionFactory, hooks: this._buildHooks(), questClockStepMax: () => this.deps.questClockStepMax?.() ?? Infinity });   // WORLD7: the clocks charge played time online
         quest.restoreSaveData(questData, this._saveResolvers());
         if (this.quests.has(quest.uid)) throw new Error('An item with the same key has already been added.');
         this.quests.set(quest.uid, quest);

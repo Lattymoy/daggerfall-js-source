@@ -2157,6 +2157,7 @@ export class CreateFoe extends ActionTemplate {
     this.lastSpawnTime = 0;
     this.spawnCounter = 0;
     this.isSendAction = false;
+    this._lastTick = null;   // WORLD7: the last tick's world seconds - transient, so a resume forgives the time since the save to one played step
     // transient scene state (CreateFoe.cs:37-39) - NOT save state:
     // an in-flight wave is lost on save/load, as in DFU
     this.spawnInProgress = false;
@@ -2245,15 +2246,15 @@ export class CreateFoe extends ActionTemplate {
     // interval so the first spawn lands anywhere within one cycle
     // (Range(0, interval) on the quest's injectable rolls - see _range
     // for the overload and the unconditional draw)
-    if (this.lastSpawnTime === 0) this.lastSpawnTime = gameSeconds - this._range(this.spawnInterval);
-    // OL3 (Mac, WORLD1: "time limits on quest ... should be naturally
-    // disabled while online"): the spawn interval is a quest timer too,
-    // and online it stands down with the Clock (WORLD5) - the marker
-    // rides the clock so no interval accrues while the player idles or
-    // is away, and stands up where it stood. A wave already in flight
-    // still lands: the placement below is not a timer.
-    const stoodDown = !!this.parentQuest.questClocksStoodDown?.();
-    if (stoodDown && !this.spawnInProgress) this.lastSpawnTime = gameSeconds;
+    // WORLD7 (OL3's law re-spelt): the spawn interval is a quest timer too, and online it charges PLAYED time as the
+    // Clock does - the quest's step (Infinity offline: DFU's own marker arithmetic, untouched). The marker moves
+    // forward by whatever a tick's gap exceeds the step (time away, forgiven); a resume (a load, a quest restored -
+    // no tick sample yet) forgives the time since the save to one step; a wave already in flight still lands, the
+    // placement below is not a timer. OL3 stood the interval down with the Clock instead, and no wave ever came.
+    const step = this.parentQuest.questClockStepMax?.() ?? Infinity;
+    if (this.lastSpawnTime === 0) { this.lastSpawnTime = gameSeconds - this._range(this.spawnInterval); this._lastTick = gameSeconds; }
+    else if (this._lastTick == null) { if (!this.spawnInProgress && gameSeconds - this.lastSpawnTime > step) this.lastSpawnTime = gameSeconds; this._lastTick = gameSeconds; }   // a resume past a step: the time away is forgiven whole and the first wave waits a full interval from here (OL3's standing-up arm)
+    else { const forgiven = Math.max(0, gameSeconds - this._lastTick - step); if (forgiven > 0 && !this.spawnInProgress) this.lastSpawnTime += forgiven; this._lastTick = gameSeconds; }
 
     // Max spawns reached - cleared only by a set/rearm
     if (this.spawnCounter >= this.spawnMaxTimes && this.spawnMaxTimes !== -1) return;
@@ -2266,7 +2267,7 @@ export class CreateFoe extends ActionTemplate {
     }
 
     // A new spawn event - only one can be in flight at a time
-    if (gameSeconds >= this.lastSpawnTime + this.spawnInterval && !this.spawnInProgress && !stoodDown) {
+    if (gameSeconds >= this.lastSpawnTime + this.spawnInterval && !this.spawnInProgress) {
       // the interval is consumed BEFORE the chance roll - a failed
       // roll still waits out a full cycle
       this.lastSpawnTime = gameSeconds;

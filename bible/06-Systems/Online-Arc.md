@@ -1901,7 +1901,9 @@ machine's deps through the bridge and the parser to every live quest,
 and `Clock.tick` charges nothing while it answers true - the world-time
 sample still moves, so the hours a clock stood down are never charged
 when it stands up again offline. The journal shows the clock as it
-stood.
+stood. [SUPERSEDED BY WORLD7: a Daggerfall clock is a delay as often
+as a limit, and stood down no delay ever ran - the letter never came.
+The clocks charge PLAYED time now; the word is `questClockStepMax`.]
 
 What it does not do. The clock is the world's for everyone online in
 every room - a cell, a town, a building, a dungeon - which is the
@@ -2280,6 +2282,9 @@ backdate on a first tick either), a wave already in flight still lands
 and is counted (the placement is not a timer), and standing up the
 first wave waits a full interval from there. `DailyFrom`, the daylight
 gate and `PlaySound` are pacing, not pressure, and stay as recorded.
+[WORLD7 re-spelt this with the Clock: the interval charges played
+time - a tick's gap past the step forgiven, a resume waiting a full
+interval from there; the stand-down word is gone.]
 
 **(7) A CLOCK A YEAR OFF IS SAID.** The session refused a welcome clock
 more than a year from this machine's and ran the world's time
@@ -3919,6 +3924,191 @@ edge (a damage frame with no swing lands nothing); `x3casting`,
 `audit62_foes`, `audit39_worldmodes`, `world3` restamped where the law
 moved.
 
+## STOP (2026-09-14): where the arc stands
+
+**Mac: "Lets actual stop here and log where we are at because there
+are a few things id like to discuss."** The log, so the discussion
+starts from the record and not from memory.
+
+**Shipped and live.** Everything from ONLINE1 through WORLD6b-iii(e)
+and its audit is merged to main; the relay is deployed at `world66`
+and answers on `/health`. The suite stands at 7474 tests across 755
+files, green. In one line each:
+
+- ONLINE1/SLOTS1/MWBODY1/CHAT1/MAC6/MAC7: presence, the doll, the
+  chat, the dungeon save, the peer's weapon and swing.
+- WORLD1-WORLD5: a dungeon is one shared world - its memory, one
+  simulation per room (the host's foes, everyone else's puppets), the
+  doors and levers, the loot, the shared clock and weather.
+- WORLD6a: a building is a world room (its shelves, doors, piles).
+- WORLD6b (i-iii): a cell streams every player's encounter foes; the
+  foe hunts every player; the cast at a peer; the cell seam (the
+  halo); a puppet's corpse loot; buildings' foes closed as none by the
+  lockbook; the striker's poison and the shaft on the hit; a stranger
+  beyond the welcome's roster asked for (`who`).
+- Every slice audited by three opus lenses, the findings paid or
+  recorded, pinned by execution.
+
+**Open, on the 6b-iii list** (each a design slice, not a residual;
+see "6b-iii (recorded, next)" above and the explanation given at the
+stop):
+
+- **The guards on a shared crime.** The watch is a crime's response
+  and the crime is the player's own (the flag, the witnesses, the
+  legal reputation). Sharing it is a crime event on the wire, the
+  witness test run once, then the guards as a pool with the laws the
+  encounter foes have. The open decision: whether a peer's murder
+  marks the region for everyone, and whom the watch hunts.
+- **One economy.** The day's rolls are the world's already (WORLD6b);
+  the STATE the walk applies to is each player's (the prices read the
+  player's own faction reputation; a returning player catches up from
+  its own starting state). Sharing it is a region memory like a
+  dungeon's, one owner walking the day, the reputation term split out
+  or dropped; it touches the shop, the bank and the guild halls. The
+  open decision: what a player away a week reads.
+- Recommended order at the stop: the guards first (contained in a
+  cell, the pool laws exist), the economy second.
+
+**Recorded, not paid** (the last audit's notes, standing): the
+striker's ask runs after the blow, so a stranger's first blow wakes
+my foe with no candidate; the merged roster's one-round-trip flicker
+when a halo lets a peer go; the rig's attachment cap is not the
+runtime's; the dungeon's poison seam rides Math.random; the shaft's
+Arrow on a puppet's shadow reaches the dungeon's memory on a
+handover; one BowDamage cite off by one.
+
+**The wider "not yet"** is the list below, unchanged: no
+player-versus-player, the look sent once, no identity beyond the
+name, the relay unmeasured past a handful of players.
+
+**Standing reminder:** the Cloudflare API token pasted into the chat
+during the deploys should be rotated.
+
+## WORLD7 (2026-09-14): the quest clocks run online, charging played time
+
+**Mac: "quests dont seem to work in online. I brought a newly created
+and saved character over and the journal is empty."** Then, on the
+suggestion: **"Go."** The save was never the fault - the Online door
+loads the picked slot through the same restore as Load, and the
+journal reads the same machine. The fault was WORLD5's law that every
+quest clock STANDS DOWN online, written for time limits: a Daggerfall
+clock is a DELAY as often as a limit, and the scripts say so.
+Brisienna's letter waits on a seven-to-fourteen-day clock (the
+journal's first entry is removed at the door of Privateer's Hold and
+the letter restarts it); the tutorial's pages wait on clocks of
+minutes; every "come back in three days" waits on one. Stood down, the
+letter never came, the journal stayed empty, and the main quest never
+began online.
+
+**THE LAW: A CLOCK CHARGES PLAYED TIME.** Online a quest clock charges
+the frame's world time and never more than one PLAYED STEP
+(`PLAYED_STEP_MAX_SECONDS`, thirty world minutes - two and a half real
+minutes under the shared clock's twelve-to-one; a browser-throttled
+tab still ticks within it, a frame never spans it). A gap past the
+step is time AWAY - the tab closed, the character off the world - and
+is forgiven, the sample moved. Offline there is no bound: a rest or a
+trip charges its whole span, DFU's own. So delays progress while you
+play; a limit still stands, in hours played; none expires while away;
+a login charges at most one step.
+
+- **The word rides the stand-down's chain**, renamed: the hosts hand
+  `questClockStepMax` (the step under the shared clock, `Infinity`
+  offline) to the bridge, the bridge to the machine, the machine's
+  three doors and the parser to every Quest, the Quest to every Clock.
+  `questClocksStoodDown` is gone from the tree.
+- **`CreateFoe`'s spawn interval charges the same way** (OL3's law
+  re-spelt): the marker moves forward by whatever a tick's gap exceeds
+  the step (time away, forgiven - one wave on return, not sixty); a
+  resume with no tick sample (a load, a quest restored) whose time
+  since the save is past a step is forgiven whole and the first wave
+  waits a full interval from there (OL3's standing-up arm); a wave in
+  flight still lands; offline the marker arithmetic is DFU's own.
+
+**What it does not do.** A limit is still a limit in played hours -
+Mac's WORLD1 word was "naturally disabled", and this is its spirit
+rather than its letter: nothing can expire while you are away, and a
+fourteen-day limit is many real hours of play. Suppressing the failing
+clocks alone is not possible: nothing in a script marks a clock as a
+deadline. A hidden tab is logged in and charges a step per throttled
+tick. The step is one home and one number; a machine that cannot hold
+a frame under two and a half real minutes charges one step per frame.
+
+Pinned in `test/world7.test.js` (3), EXECUTED over the real Clock and
+the real machine: a frame charges its seconds, a gap of a step the
+step, a day away one step with the hour then finishing on played time
+and the same-named task started; a fourteen-day letter arriving after
+fourteen played days with a week away between each; a resume charging
+one step; offline a span charging whole and a quest with no seam as
+ever; a scheduled quest's hour under the step through the whole chain;
+the chain by source. `test/world5.test.js`'s stand-down pin re-spelt
+to the played step; `test/ol3.test.js` (2) re-spelt to the interval's
+played time (executed: the backdate, the wave, the hour's gap forgiven
+to one step, the resume's full interval, offline whole);
+`test/auditworld5.test.js` C10 restamped. Suite 7483 across 758.
+
+## WORLD8 (2026-09-14): the hour's respawn
+
+**Mac: "I would like dungeons and the world to repsawn every hour not
+every dat"** - a real hour, on the second suggestion. A dungeon's
+memory (WORLD1) kept its dead foes dead and its emptied containers
+empty for as long as the relay remembered the room - thirty days
+after it last drained - and the country's foes were rolls that needed
+no law. Now:
+
+**THE LAW: A DEATH AND A TAKE ARE STAMPED, AND AN HOUR LATER THE THING
+IS DUE BACK.** `RESPAWN_MS` (one real hour) and `respawnDue(stamp,
+now)` in `wire.js`, one home at both ends; the stamp is the relay's
+clock (a wall millisecond, `sharedWallMs` over the shared world
+minute - null offline, so nothing is ever due offline and a save keeps
+its dead, DFU's own).
+
+- **A foe.** The one corpse door stamps `_diedAt`; the memory's record
+  carries it as `died`; a record applied keeps the ROOM's stamp, not
+  this client's arrival. A memory that arrives with a foe dead past
+  the hour skips that record whole - a fresh build stands as it is, a
+  live one already dead here (this host stayed) is rebuilt. The
+  rebuild is `respawnFoe(i)`: the corpse flat freed (the un-death
+  arm's own helper, `freeCorpse`), the body's loot record forgotten,
+  and the foe REBUILT fresh at its marker through the one build chain
+  (`retypeFoe` as its own species - a new entity at full health with
+  its own loot roll, the old record dead to everything holding it).
+  The host's stream then says the index is alive and every puppet
+  stands up through WORLD2's un-death door.
+- **A container.** The room's word about a container carries a stamp
+  (`t` on the loot record - set on this client's own claim, kept from
+  the record on an apply, now for a record without one). A record past
+  the hour is not applied and the room's word forgotten: this client's
+  own roll stands. A treasure pile the sweep forgets is rolled again
+  through the build's own roll, one home now (`rollPileItems`); a
+  window this player has open is theirs until they close it (AUDIT
+  WORLD4 C1's law).
+- **The sweep** runs once a second in the foe pass: the HOST rebuilds
+  its layout's foes dead past the hour (the stream carries the rest);
+  every client forgets the containers past the hour and rolls its
+  piles.
+
+**What it does not do.** The country's foes are rolls (DFU's
+encounter law, by the world clock) and come and go on their own; a
+building's shelves restock by the day, DFU's own, and stay so; the
+relay is untouched (the memory is bytes to it), and its thirty-day
+forgetting stands above the hour - a memory forgotten has long since
+respawned whole. A memory written before WORLD8 carries no stamp and
+is applied as it stands until the room is next drained. A foe of the
+player's own past the layout (a quest's, a summon's) is not the
+room's and does not return.
+
+Pinned in `test/world8.test.js` (2): the wire's law executed (the
+hour, what is due and what is not - no stamp, no clock, a stamp
+ahead, a minute short - one home at both ends, the thirty days
+above); the dungeon by source (the stamp at the corpse door and in
+the record, kept from the room's; the memory's arm; the rebuild
+through the one chain; the sweep; the loot's three stamps; the pile
+roll one home; the country's pool untouched). Restamped: world2
+(the corpse door, the un-death arm), world4 (the loot record and its
+apply), auditworld (the memory's arm), auditworld4 (the claim), sl2rewind
+(the corpse freed through the one helper), audit23_systems (the pile
+roll). Suite 7485 across 759.
+
 ## What it does not do (yet)
 
 - **The Morrowind body** ships (MWBODY1, above); a client without the
@@ -3943,13 +4133,15 @@ moved.
   the fan is ranged, the frame bounded, a foe is its spawner's to
   hurt and to kill); since
   WORLD5 the clock and the day's weather are
-  the world's and the quest clocks stand down online; no
+  the world's and the quest clocks charge played time online (WORLD7);
+  no
   player-versus-player. Until AUDIT
   WORLD34 no real dungeon was a world room at all (A1: the law's
   eight-digit bound against nine-digit map ids), and the relay must be
   redeployed for one to be. A memory is forgotten
   `WORLD_TTL_MS` (thirty days) after its room last emptied (AUDIT
-  WORLD A3 - a bound on parked storage, Mac's to change), and two
+  WORLD A3 - a bound on parked storage, Mac's to change; since WORLD8
+  its dead and its emptied containers come back after an hour), and two
   players' random flats differ by level, so a foe whose species the
   room's memory or the host's stream disagrees with is REBUILT as the
   room's at its index (WORLD3 - the roster is the room's).

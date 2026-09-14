@@ -55,14 +55,14 @@ does the pack's USE arm.
                         worldModes.js:1841 (the factory) and :1904 (a
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
-                        dungeonContext.js:946, world.js:1673,
-                        exterior.js:1980. It is the only window TWO
+                        dungeonContext.js:946, world.js:1674,
+                        exterior.js:1981. It is the only window TWO
                         enhanced screens already push - the sheet's
                         button and the pack's USE hand-off, whose
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:4839, dungeonContext.js:5769. A seam
+    / NOTEBOOK          world.js:4840, dungeonContext.js:5823. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -6712,7 +6712,7 @@ PX5 (same day, Mac): TIMERS, THE CLOCK, AND MAIN/SIDE. Three asks,
 each grounded in something the port already carries. (1) QUEST
 TIMERS: the world's questLog walk now reports the TIGHTEST RUNNING
 clock per quest - Clock resources carry remainingTimeInSeconds with
-clockEnabled/clockFinished (quest/clock.js:92,164) - and the journal
+clockEnabled/clockFinished (quest/clock.js:98,164) - and the journal
 draws it under the quest name as 'Time remains: N days N hours'
 (hours+min under a day, min alone under an hour), URGENT GOLD below
 one game day, with a gold gem pushed right on the rail row of any
@@ -7700,7 +7700,7 @@ hours, hours with minutes under a day, minutes alone under an hour,
 and never "0 min", because a live clock always has a minute left. The
 threshold is one GAME DAY in seconds, not a guess. The clock is the
 machine's - the TIGHTEST running Clock resource on the quest
-(clockEnabled && !clockFinished, quest/clock.js:92,164) - and all
+(clockEnabled && !clockFinished, quest/clock.js:98,164) - and all
 three log builders walk it identically, world.js twice on purpose (its
 own questLog and the pauseQuestLog worldModes borrows, so the modal
 host's journal shows the same timers the world's does). 1 pin, 5
@@ -7858,7 +7858,7 @@ mutations, 4 dead.
 
 PX24 (Mac: "with the logbook and history, I want them as one detailed
 UI"): THE CHRONICLE. Two classic windows built at four sites -
-questJournal.js from charSheetNav:53, world.js:1975 and
+questJournal.js from charSheetNav:53, world.js:1976 and
 dungeonContext.js, playerHistory.js from charSheetNav:61 - become ONE
 seam (ui/chronicleDoor.js, the U52/U53/PX23 shape a sixth time) and,
 on the enhanced skin, ONE WINDOW.
@@ -9729,9 +9729,9 @@ re-resolved the `exterior.js` half of a three-file sentence and left the
 `ExteriorAutomapWindow` construction, `:4101` on a `locationName:`
 field). Both halves are now read by `test/citedrift.test.js` - the
 existing entries only ever captured the exterior number, which is how
-the other half went stale unnoticed. (The rest cite named `world.js:5091`,
+the other half went stale unnoticed. (The rest cite named `world.js:5092`,
 the first of the host's TWO identical `act === 'Rest'` arms; ROAD-H H5
-deleted the second and the cite is `world.js:5097` now.)
+deleted the second and the cite is `world.js:5098` now.)
 
 ## AUDIT 62 F24/F25 - THE SENTINEL SWEEP WAS TWO WINDOWS SHORT (2026-09-07)
 

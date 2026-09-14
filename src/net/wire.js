@@ -212,6 +212,14 @@ export const WORLD_CHUNK = 96 * 1024;
 export const WORLD_PREFIX = '{"t":"world"';
 /** A world room's memory is forgotten this long after the room last drained, unless someone came back (AUDIT WORLD A3). */
 export const WORLD_TTL_MS = 30 * 24 * 3600 * 1000;
+/** WORLD8 (Mac: "I would like dungeons and the world to respawn every hour"): THE HOUR'S RESPAWN - a foe of the
+ *  room's layout dead this long, and a container the room emptied this long ago, come back: the foe rebuilt fresh at
+ *  its marker by the host (the stream then says so), the container this client's own roll again. The stamps are the
+ *  relay's clock (a wall millisecond, the shared clock's own), on the memory's records and on every act; a record
+ *  with no stamp (a memory written before WORLD8) is applied as it stands. */
+export const RESPAWN_MS = 3600 * 1000;
+/** WORLD8: whether a stamp is past the hour by `nowMs` - false for no stamp, no clock (offline), or a stamp ahead. */
+export const respawnDue = (stampMs, nowMs) => Number.isFinite(stampMs) && Number.isFinite(nowMs) && nowMs - stampMs >= RESPAWN_MS;
 /** WORLD2: the largest foes frame (UTF-16 units) - the host's live foes, a delta a few times a second. */
 export const FOES_FRAME_MAX = 64 * 1024;
 /** WORLD2: foes frames a second at most, on their own bucket (a stream beside the poses, never starving them). */

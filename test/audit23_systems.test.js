@@ -155,7 +155,7 @@ test('AUDIT 23 characters-7 + items-1: the spawn bands and the pile gender ride 
   const dc = src('src/scenes/dungeonContext.js');
   assert.equal((dc.match(/spawnDistanceType: e\.spawnDistanceType \?\? 0/g) ?? []).length, 2,
     'both foe constructions pass the marker band');
-  assert.ok(dc.includes('gender: playerEntity.gender });   // AUDIT 23 (items-1)'), 'piles roll the player gender');
+  assert.ok(dc.includes('const items = generateLootItems(lootKey, { level: playerEntity.level, gender: playerEntity.gender });') && dc.includes('const items = rollPileItems();'), 'piles roll the player gender (WORLD8: through the one pile roll)');
   // AUDIT 62 F22: the STREET watch runs the exterior band, and it is
   // the mount that says so - EnemySenses.cs:267 reads
   // PlayerEnterExit.IsPlayerInside per classic tick, so the pool that

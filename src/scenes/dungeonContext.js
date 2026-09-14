@@ -97,13 +97,13 @@ import { tallySkill, skillValue, SKILLS, SKILL_NAMES } from '../systems/skills.j
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT, startRestGroundedCheck } from '../player/motor.js';   // the rest gate's grounded input, one home
 import { applyLevelUp } from '../systems/advancement.js';
 import { tickPlayerMinutes, claimMagicRounds, runMagicRoundsFor } from '../systems/worldTick.js';   // AUDIT 18: the player tick every host shares
-import { mintSharedStamp, hitPoisonOf, HIT_ARROWS_MAX } from '../net/wire.js';   // AUDIT WORLD6a B7: the memory's stamp, from the wire's one mint
+import { mintSharedStamp, hitPoisonOf, HIT_ARROWS_MAX, respawnDue } from '../net/wire.js';   // WORLD8: the hour's respawn   // AUDIT WORLD6a B7: the memory's stamp, from the wire's one mint
 import { spendPoolLowest } from '../systems/chargen.js';
 import { ClassFile } from '../formats/classFile.js';
 import { fetchBytes, ensureAudio, loadMagicRegistries, wireInfectionVideos, raisePlayerSkills, endRunToTitleMenu, exitToTitleMenu, sensesContext, wireDoorSpells, createDetectFeed, foeNearbyRecord, lootNearbyRecord, nearbyLootRecords, restVitals, restFullyHealed, createRestDeps, fatigueLossMultiplierFor} from './shared.js';
 import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
 import { preloadBookArt } from '../ui/bookReader.js'; import { makeOpenBookHook } from '../ui/bookDoor.js';   // B1; EB1: the reader's ONE door
-import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';
+import { worldMinutes, setWorldMinutes, sharedWallMs, sharedClockOn } from '../systems/worldTick.js';   // WORLD8: the relay's clock stamps a death and a take
 import { ListPickerWindow, listPickerArtLoaded, preloadListPickerArt } from '../ui/listPicker.js';   // X11b: the Create Item picker
 import { createItemLabels, grantCreatedItem, lastCreateItemIndex, setLastCreateItemIndex } from '../systems/createItem.js';   // X11b
 import {
@@ -1396,7 +1396,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:6562 / exterior.js:2921), set
+  // host's own townTalk sink (world.js:6563 / exterior.js:2922), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -2381,21 +2381,26 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // generate by the dungeon-type key; fixed 216 flats keep their
   // record. Per-pile single batches so pickup can remove one pile.
   const lootPiles = [];
+  const lootKey = DUNGEON_LOOT_KEYS[dfLocation.mapTableData.dungeonType] ?? '-';
+  /** WORLD8: ONE HOME for a treasure pile's roll - the build's and the hour's respawn's (LootTables.cs:229/:237 on the
+   *  PLAYER's level and gender, the pile trio, the rarity roll at the dungeon's tier). */
+  function rollPileItems() {
+    const items = generateLootItems(lootKey, { level: playerEntity.level, gender: playerEntity.gender });
+    addPileLootExtras(items, lootKey);
+    rollLootRarity(items, pileSource(dungeonRarityTier(dfLocation.mapTableData.dungeonType)), { luck: liveStat(playerEntity, 'luck') });
+    return items;
+  }
   {
-    const lootKey = DUNGEON_LOOT_KEYS[dfLocation.mapTableData.dungeonType] ?? '-';
     for (const b of dungeon.blocks) {   // the PLACED blocks (layout + origins) - NOT the BlocksFile reader parameter (the S2 black-screen bug: 't is not iterable' at boot with real data)
       for (const m of b.layout.markers) {
         const isRandom = !m.archive && m.record === RANDOM_TREASURE_MARKER_RECORD;
         const isFixed = m.archive === RANDOM_TREASURE_ARCHIVE;
         if (!isRandom && !isFixed) continue;
         const record = isFixed ? m.record : RANDOM_TREASURE_ICONS[Math.floor(Math.random() * RANDOM_TREASURE_ICONS.length)];
-        const items = generateLootItems(lootKey, { level: playerEntity.level, gender: playerEntity.gender });   // AUDIT 23 (items-1): LootTables.cs:229/:237 pass the PLAYER's gender
-        // AUDIT 24 (wave 43): LootTables.GenerateLoot:147-159 - the
-        // PILE trio, which is a different one from the enemy's: the
-        // map chance comes from a six-entry table indexed by the loot
-        // key, only J..O roll at all, and the potion chance is FOUR.
-        addPileLootExtras(items, lootKey);
-        rollLootRarity(items, pileSource(dungeonRarityTier(dfLocation.mapTableData.dungeonType)), { luck: liveStat(playerEntity, 'luck') });   // LR1: a pile rolls at its DUNGEON's tier
+        // AUDIT 23 (items-1): LootTables.cs:229/:237 pass the PLAYER's gender; AUDIT 24 (wave 43): the PILE trio
+        // (LootTables.GenerateLoot:147-159); LR1: a pile rolls at its DUNGEON's tier - one home since WORLD8
+        // (rollPileItems), which the hour's respawn rolls again
+        const items = rollPileItems();
         lootPiles.push({ pos: [m.x + b.originX, m.y, m.z + b.originZ], record, items, isFixed, batch: null });
       }
     }
@@ -2558,6 +2563,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // publishing GPU batches onto a torn-down scene.
   let _ctxDead = false;
   async function spawnCorpse(f) {
+    if (f._diedAt == null) f._diedAt = _wallNow();   // WORLD8: the death's stamp, the relay's clock (null offline) - the memory carries it and the hour's respawn reads it
     // AUDIT WORLD2 B14: one mint in flight per foe - a dead/alive/dead flap while the texture warmed minted two
     // batches and freed one
     if (f._corpseMinting) return;
@@ -2825,8 +2831,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:8620,
-              // exterior.js:4204 and worldModes.js:6019 already ran;
+              // playerArrowHitFoe is the one copy world.js:8621,
+              // exterior.js:4205 and worldModes.js:6019 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -3002,12 +3008,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (dead) { if (!f.dead) { f.dead = true; spawnCorpse(f); } return; }
     if (!f.dead) return;
     f.dead = false;
-    if (f.corpseBatch) {
-      const ci = corpses.indexOf(f.corpseBatch); if (ci >= 0) corpses.splice(ci, 1);
-      const bi = billboardBatches.indexOf(f.corpseBatch); if (bi >= 0) billboardBatches.splice(bi, 1);
-      renderer.destroyBillboardBatch(f.corpseBatch);
-      f.corpseBatch = null;
-    }
+    f._diedAt = null;   // WORLD8
+    freeCorpse(f);
   }
 
   /** WORLD2: one PUPPET frame - the pose from the stream (the feet eased toward the streamed feet over the stream's
@@ -3285,6 +3287,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // row to the item OBJECT and never repaints, so that landing orphaned every row and the next click took the item
   // AND left it in the chest. That sentence is struck.
   const _lootSeen = new Set();   // the containers this client knows the room has opened
+  const _lootAt = new Map();     // WORLD8: canon -> when the room last spoke about it (the relay's clock); the hour's respawn reads it
   let _lootOpenKey = null;       // AUDIT WORLD4 C1: the container THIS player has a window open on
   const _lootTooBig = new Set(); // AUDIT WORLD4 A1/A2/B2/D1: the containers this client cannot say (said once)
   /** AUDIT WORLD4 C4: the CANONICAL spelling of a container key, or null. The key arrives off the wire beside the
@@ -3350,7 +3353,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         continue;
       }
       _lootTooBig.delete(canon);
-      out.push({ k: canon, r: held.map((it) => ({ ...it })) });
+      out.push({ k: canon, r: held.map((it) => ({ ...it })), ...(Number.isFinite(_lootAt.get(canon)) ? { t: _lootAt.get(canon) } : {}) });   // WORLD8: the stamp rides the record
     }
     return out;
   }
@@ -3368,6 +3371,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (!l.length) return false;                       // too large to say - it stays this player's own
     const first = !_lootSeen.has(canon);
     _lootSeen.add(canon);
+    const _t = _wallNow(); if (_t != null) _lootAt.set(canon, _t);   // WORLD8: my own word about it, stamped now
     if (first) opts.onLootClaimed?.();                 // D5: the memory goes out now, not up to fifteen seconds from now
     return !!opts.onActions?.({ k: _locationKey, l });
   }
@@ -3387,7 +3391,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (!items) continue;
       const held = lootHolder(canon);
       if (!held) continue;
+      const _now = _wallNow();
+      if (respawnDue(rec.t, _now)) continue;   // WORLD8: the room emptied it more than an hour ago - due back; my own roll stands and the record is not the room's word any more
       _lootSeen.add(canon);   // the room HAS opened it, whether or not I may land it right now
+      { const _t = Number.isFinite(rec.t) ? rec.t : _now; if (_t != null) _lootAt.set(canon, _t); }   // WORLD8: the room's stamp, or now for a record without one
       if (canon === _lootOpenKey) { n++; continue; }   // C1: not under an open window
       held.length = 0;
       for (const it of items) held.push(it);
@@ -3397,6 +3404,46 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     return n;
   }
   const _retyping = new Set();
+  /** WORLD8: the relay's clock now (a wall millisecond), null offline - the stamps' and the hour's one reading. */
+  const _wallNow = () => (sharedClockOn() ? sharedWallMs(worldMinutes()) : null);
+  /** WORLD8: the corpse flat freed by its foe - setFoeDead's un-death arm, shared with the respawn (which rebuilds the
+   *  record rather than waking the old one). */
+  function freeCorpse(f) {
+    if (!f.corpseBatch) return;
+    const ci = corpses.indexOf(f.corpseBatch); if (ci >= 0) corpses.splice(ci, 1);
+    const bi = billboardBatches.indexOf(f.corpseBatch); if (bi >= 0) billboardBatches.splice(bi, 1);
+    renderer.destroyBillboardBatch(f.corpseBatch);
+    f.corpseBatch = null;
+  }
+  /** WORLD8: THE HOUR'S RESPAWN of the layout foe at `i` - the corpse freed, its body's loot record forgotten, and the
+   *  foe REBUILT fresh at its marker through the one build chain (retypeFoe as its own species: a new entity at full
+   *  health with its own loot roll, the old record dead to everything still holding it). The host's stream then says
+   *  the index is alive and every puppet stands up through WORLD2's un-death door. */
+  function respawnFoe(i) {
+    const f = foes[i];
+    if (!f || !f.dead || i >= _layoutFoes) return false;
+    freeCorpse(f);
+    f._diedAt = null;
+    _lootSeen.delete(`corpse:${i}`); _lootAt.delete(`corpse:${i}`);
+    return retypeFoe(i, f.mobileType, f.gender ?? null);
+  }
+  let _respawnSweptAt = -Infinity;
+  /** WORLD8: the sweep, once a second - the HOST rebuilds its layout's foes dead past the hour (the stream carries the
+   *  rest); every client forgets the containers the room emptied past the hour and rolls its piles again. Offline the
+   *  clock answers null and nothing is due (a save keeps its dead, DFU's own). */
+  function respawnSweep(nowSeconds) {
+    if (nowSeconds - _respawnSweptAt < 1) return;
+    _respawnSweptAt = nowSeconds;
+    const now = _wallNow();
+    if (now == null) return;
+    if (_authority) for (let i = 0; i < Math.min(_layoutFoes, foes.length); i++) { const f = foes[i]; if (f?.dead && respawnDue(f._diedAt, now)) respawnFoe(i); }
+    for (const canon of [..._lootSeen]) {
+      if (!respawnDue(_lootAt.get(canon), now)) continue;
+      _lootSeen.delete(canon); _lootAt.delete(canon);
+      if (canon === _lootOpenKey) continue;   // a window I have open is mine until I close it (AUDIT WORLD4 C1)
+      if (canon.startsWith('loot:')) { const i = Number(canon.slice(5)); const p = lootPiles[i]; if (p && Array.isArray(p.items)) { p.items = rollPileItems(); settleLootFlat(i); } }
+    }
+  }
   /** WORLD3: the room's roster - the layout foe at `i` rebuilt as another species (and gender) through the one build
    *  chain, standing at its marker until the stream or the record poses it; once at a time per index, never past
    *  the layout's run. AUDIT WORLD34 B1: a DEAD one too - two players' random flats differ by level, so a joiner
@@ -3426,6 +3473,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     return {
       foes: foes.map((f) => ({
         health: f.entity.health, dead: !!f.dead,
+        died: f.dead && Number.isFinite(f._diedAt) ? f._diedAt : null,   // WORLD8: when it fell, the relay's clock - the hour's respawn reads it
         feet: [...f.ai.feet], yaw: f.ai.yaw, anchor: 1,   // REVIEW 2026-09-05: feet under the enemyAnchor law (a pre-fix save carries no stamp)
         items: (f.entity.items ?? []).map((it) => ({ ...it })),
         // CH4 (the senses verify pass): SerializableEnemy carries
@@ -3540,6 +3588,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       f.mobile.clearSpecialTransformationCompleted();
       if (f.seducer) f.seducer = new SeducerTransformBehaviour(f.mobile, f.entity);   // SetupDemoEnemy.cs:191-195' fresh component
     }
+    if (sf.dead && Number.isFinite(sf.died)) f._diedAt = sf.died;   // WORLD8: the room's stamp, not this client's arrival
     if (sf.dead && !f.dead) setFoeDead(f, true);
     // SL2 (AUDIT 23 save-load-2): the BACKWARD rewind. DFU's load
     // REBUILDS the location and RestoreSaveData SETS the saved
@@ -3566,9 +3615,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // A PRE-PASS over the WHOLE live pool, not a line in the loop
     // below: that loop visits only the indices the record carries.
     for (const f of foes) if (f?.entity) f.entity.pickpocketAttempted = false;
+    const _now = _wallNow();
     w.foes?.forEach((sf, i) => {
       const f = foes[i];
       if (!f) return;
+      // WORLD8: a foe the room remembers dead past the hour is not applied dead - it is due back. A fresh build stands
+      // as it is (the memory's record is skipped whole); a live one already dead here (this host stayed) is rebuilt
+      if (wire && sf.dead && respawnDue(sf.died, _now)) { if (f.dead) respawnFoe(i); return; }
       if (sf.mobileType != null && sf.mobileType !== f.mobileType) {   // AUDIT WORLD B4: another species at this index (a save from before the field patches blind)
         // WORLD3: the roster is the ROOM's - rebuilt as the record's species, the record landing on the rebuilt foe.
         // AUDIT WORLD3 E1: the SAVE's restore takes the same arm. Before WORLD3 a mismatch here could only be a save
@@ -4104,6 +4157,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   sceneAmbience.setPreset('dungeon');
   function drawFoes(dt, canvas, proj, view, eye, playerFeet, moveHeld = false, playerHeight = CAPSULE_HEIGHT, playerSneaking = false, playerMove = null, playerBobY = 0, playerCrouching = false) {
     _ecvT += dt;
+    respawnSweep(_ecvT);   // WORLD8: the hour's respawn, once a second
     const ecvOn = combatVisualsOn();   // ECV1: once per frame
     _weaponCanvas = canvas;   // C10: the rig's late canvas (gesture dim + the overlay draw)
     // MW-D8: latch the eye and heading THIS frame, before anything draws.
