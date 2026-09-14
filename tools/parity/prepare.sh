@@ -73,7 +73,7 @@ done
 #                 determinant and Xi/Yi/Zi to double. Vector3 is ALREADY
 #                 double in DFU (API/Vector3.cs:35-45, :151-160, :508-520,
 #                 :583-597), so nothing in the basis walk is touched.
-#                 The audit-18 F4 pin (test/audit18.test.js:190) carries
+#                 The audit-18 F4 pin (test/audit18.test.js:195) carries
 #                 expected values dumped from exactly this build; before
 #                 E8 the edit lived only in a scratchpad tree, so the
 #                 "re-runnable" claim on Port-Ledger row :551 was not true
