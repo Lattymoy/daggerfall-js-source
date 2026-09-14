@@ -41,7 +41,9 @@ test('RF2: spawnEnemyLoot runs SetEnemyCareer\'s chain in DFU\'s order - the tab
   // no table: the watch's kind carries no lootTableKey and the list is its equipment
   const g = foe(146 & 127, true);
   spawnEnemyLoot(g, 146, ENEMY_BASICS[146] ?? {}, player, { rolls: () => 0.999 });
-  assert.ok(g.items.every((it) => equipTableOf(g).includes(it) || isMap(it)), 'a foe with no table carries its kit alone');
+  // (a second piece for an occupied slot stays in the list unworn - the port's placement skips it, as DFU's alwaysEquip swap leaves the loser in Items - so the claim is about the TABLE roll, not the table)
+  assert.ok(!g.items.some((it) => it.group === 'Currency' || /Ingredients|Books|ReligiousItems/.test(it.group)), 'a foe with no table rolls no table loot: its list is its kit');
+  assert.ok(g.items.length > 0 && g.items.every((it) => ['Weapons', 'Armor', 'MensClothing', 'WomensClothing'].includes(it.group)), 'and the kit is weapons, armour and clothes');
 });
 
 test('RF2: the port\'s arm rides the seam - loot rarity rolls the carried loot and never the kit, and off it does nothing', () => {

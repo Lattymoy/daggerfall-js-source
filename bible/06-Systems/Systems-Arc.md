@@ -5493,6 +5493,32 @@ seams, each passing every pin around it:
    the Test Room's "Ride out" is the door to look through on a machine
    that has it. `test/hc1_horsecart.test.js`.
 
+### RF3 - THE CITE TOOL LEARNS THE THREE HAND CASES (2026-09-14, Mac's refactor pass, the third)
+
+Every merge of the loot-rarity slice ended with a person re-aiming
+the same three kinds of cite by hand, and the tax fell on every slice,
+parity or not. `tools/citeShift.mjs` carries them now. (1) BARE
+CONTINUATIONS MOVE: a `:N`, `/:N`, `/N`, `, :N` or `(:N` after a cite
+into the target, up to the next cite of ANY file - a `.cs:N` included,
+so a C# `(:N)` after `SerializablePlayer.cs:421` is the C#'s - belongs
+to that cite and moves under the same content check; citeMerge had
+done this since CS2 and citeShift only reported them, so the two
+regexes are one law now, exported from citeShift (`ANY_CITE`,
+`CONTINUATION`) and imported by citeMerge. (2) A TEST'S ESCAPED
+LITERAL FOLLOWS THE ROW IT PINS: `world\.js:3808` in citedrift.test.js
+is a quote of a Ledger row's text; the row is STRUCK and its number
+held, and the literal used to move anyway, parting the pin from its
+row at every shift. The CLI plans every doc first, learns which
+numbers the docs carry on struck lines only, and holds the escaped
+spelling for those (`pinned-struck`); `--struck` moves both. (3) THE
+TOOLS' OWN FIXTURES ARE NOT DOCS: the header's and the two pin files'
+synthetic cites were rewritten on every run and restored by hand;
+`SELF_DOCS` are skipped by both tools. `test/citeshift.test.js` (7);
+the citemerge pins unchanged. What it still cannot do stands in the
+header: a continuation wrapped onto the line BELOW its prose name
+(chargenSession's `overlayHover` `(:N)`, which CD8 gates), the
+Port-Status row identifiers, and one run per base.
+
 ### RF2 - THE ONE ENEMY-LOOT SEAM (2026-09-14, Mac's refactor pass, the second)
 
 Four hosts stood the same four lines each - GenerateItems on the
