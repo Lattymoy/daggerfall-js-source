@@ -109,7 +109,7 @@ import { roomOf, parseClient, inRange, poseGate, chatGate, tokenGate, rosterFor,
 
 /** AUDIT WORLD34 D4: the relay names itself in /health - the deploy is by hand (`npx wrangler deploy`), nothing in
  *  CI does it, and until now nothing said which relay was live. Bump it with every relay-changing slice. */
-export const RELAY_VERSION = 'world51';   // AUDIT WORLD5: WORLD5's relay, audited (the welcome's clock stamped as it is built)
+export const RELAY_VERSION = 'world6';   // WORLD6a: a building is a world room (the law widened at both ends)
 
 const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*' } });
 

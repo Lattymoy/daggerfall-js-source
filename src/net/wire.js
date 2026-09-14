@@ -293,7 +293,11 @@ export const isChatRoom = (key) => CHAT_ROOMS.has(String(key ?? ''));
  *  Privateer's Hold is 187853213, Daggerfall 1291010263 (world/dungeonTextures.js MAIN_STORY_DUNGEON_IDS) - so
  *  every real dungeon failed this law at BOTH ends, was joined all the same, relayed poses and nothing else, and
  *  every player kept stepping their own foes with no word said. Ten digits is the unsigned 32-bit bound. */
-const WORLD_ROOM = /^dungeon:m\d{1,10}$/;
+//  WORLD6a (Mac, 2026-09-14: "Lets tackle #1 next"): AND A BUILDING - `interior:m<mapId>.<buildingKey>`, the room
+//  roomKeyFor has minted for every interior since ONLINE1 (a real map id, unsigned; a building key from
+//  BuildingDirectory.MakeBuildingKey, (x<<16)+(y<<8)+i or the 1<<24 sentinel - eight digits at most). A town's cell
+//  and the fixed city's room are still no world room: the exterior's memory is the next slice's.
+const WORLD_ROOM = /^(?:dungeon:m\d{1,10}|interior:m\d{1,10}\.\d{1,8})$/;
 export const isWorldRoom = (key) => WORLD_ROOM.test(String(key ?? ''));
 
 /** A pose the room will relay, or null. */

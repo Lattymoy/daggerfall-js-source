@@ -2635,7 +2635,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // and dungeonContext.js:2125 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:4529
+  // that context through modes.dungeonCtx - so worldModes.js:4575
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -5448,7 +5448,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7122-7134 -
+  // worldModes answers it in BOTH modes (worldModes.js:7182-7194 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -6620,7 +6620,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const worldPublish = (now, force = false) => {
     if (!online || !online.isHost() || online.status !== 'open' || !isWorldRoom(online.room)) return false;
     if (!force && now - _worldPublishedAt < WORLD_PUBLISH_MS) return false;
-    const shared = modes?.dungeonSharedWorld?.();
+    const shared = modes?.placeSharedWorld?.();   // WORLD6a: the standing PLACE's - a dungeon's or a building's
     if (!shared) return false;
     _worldPublishedAt = now;
     const ok = online.sendWorld(shared, { final: force });
@@ -6665,7 +6665,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // container) - either half or both, and the pending set holds whichever keys the wire refused
     const keys = [...((data?.a ?? []).map((r) => r.key)), ...((data?.l ?? []).map((r) => r.k))];
     if (!keys.length) return false;
-    let out = _actPend.size ? (modes?.dungeonActionRecords?.([...new Set([..._actPend, ...keys])]) ?? data) : data;
+    let out = _actPend.size ? (modes?.placeActionRecords?.([...new Set([..._actPend, ...keys])]) ?? data) : data;
     if (out !== data && !actFrameFits(out)) out = data;   // AUDIT WORLD4 A1: shed the union first - the healing keys wait for the flush, this act goes now
     if (!actFrameFits(out)) { actTooBig(keys); return false; }
     if (!online.sendAct(out)) { for (const k of keys) _actPend.add(k); return false; }
@@ -6676,7 +6676,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!_actPend.size) return false;
     if (!_actRoom()) { _actPend.clear(); return false; }
     if (!_actLive()) return false;   // AUDIT WORLD34 C3: the socket is away - the keys wait
-    const data = modes?.dungeonActionRecords?.([..._actPend]);
+    const data = modes?.placeActionRecords?.([..._actPend]);
     if (!data) { _actPend.clear(); return false; }
     if (!actFrameFits(data)) { actTooBig([..._actPend]); _actPend.clear(); return false; }   // AUDIT WORLD4 A1: never a live-lock
     if (!online.sendAct(data)) return false;
@@ -6698,11 +6698,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     });
     // WORLD1: the room's memory in - a welcome that carries the world the room keeps lands on the standing dungeon
     // (the mode machine refuses another dungeon's); a new host publishes at once
-    online.onWorld = (shared) => { if (modes?.restoreDungeonSharedWorld?.(shared)) console.info('[online] the room\'s memory restored'); };
+    online.onWorld = (shared) => { if (modes?.restorePlaceSharedWorld?.(shared)) console.info('[online] the room\'s memory restored'); };   // WORLD6a: on the standing place, a dungeon or a building
     online.onHost = (id, mine) => { if (mine) { _worldPublishedAt = -Infinity; _foesFullAt = -Infinity; } else if (id) _foesInAt = performance.now(); modes?.setDungeonAuthority?.(dungeonAuthority()); };   // WORLD2: the seat decides who steps the foes; a new host streams every foe at once; another's word is its first heartbeat
     online.onFoes = (id, data) => { _foesInAt = performance.now(); modes?.applyDungeonFoes?.(id, data); };   // AUDIT WORLD2 C5: the stream is the seat's heartbeat; A1: the host's id rides in
     online.onHit = (id, data) => { modes?.applyDungeonHit?.(id, data); };
-    online.onAct = (id, data) => { modes?.applyDungeonActions?.(id, data); };   // WORLD3: another's door, lever or platform
+    online.onAct = (id, data) => { modes?.applyPlaceActions?.(id, data); };   // WORLD3: another's door, lever or platform; WORLD6a: in a building too
     // WORLD5: this save's time markers are set to the WORLD's time - a save a month behind catches up no loans and no
     // diseases on its first frame, one a year ahead reads no negative day - and the day's weather is rolled from the
     // shared day's own seed, whatever sky the save carried
@@ -6840,6 +6840,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     drawPeerNames: ({ proj, view, eye }) => drawPeerNames(proj, view, eye),
     drawPeerBodies: ({ proj, view, eye }) => drawPeerBodies(proj, view, eye),   // MWBODY1: the others' bodies, after the player's own
     onDungeonLeave: () => worldPublish(performance.now(), true),   // WORLD1: the room's memory goes out while the dungeon still stands
+    onInteriorLeave: () => worldPublish(performance.now(), true),   // WORLD6a: and a building's while the building still stands
     onFoeHit: (hit) => online?.sendHit(hit) ?? false,   // WORLD2: a blow on a puppet goes to the host
     // WORLD3: a door moved goes to the room (the session refuses it outside a world room); the peers in my room at
     // their scene feet, for the foes to see and a puppet's shaft to fly at; whose blow a puppet's is
