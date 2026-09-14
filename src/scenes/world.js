@@ -104,6 +104,7 @@ import { createBreather } from '../systems/buildBreather.js';   // PERF7: the st
 import { pieceIndex } from '../render/labGrass.js';   // PERF8: the piece under a point, by arithmetic
 import { LabGrassRenderer, createGrassField, grassRecordsOf, labWindSlider, LAB_GRASS, LAB_DIM } from '../render/labGrass.js';   // GR1: the lab's grass, byte for byte
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring
+import { PLAYED_STEP_MAX_SECONDS } from '../systems/quest/clock.js';   // WORLD7: the quest clocks' played step online
 import { mintQuestFoeWave, placeFoeEnv, entityOccupancy, questFoeGender, reviveQuestBehaviour } from './questFoeHost.js';   // B1   // AUDIT 63r F24: SerializableEnemy.cs:206-217's quest-link arm, the one home both hosts use
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';   // MERGE: FinalizeFoe's Flying lift reads the behaviour flag
 import { intermittentEnemySpawn, MIN_WILDERNESS_SPAWN_DISTANCE, setEnemyAlert, areEnemiesNearby, passiveGuardSpawns } from '../systems/encounters.js';   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
@@ -4963,7 +4964,7 @@ export async function bootWorld(canvas, renderer, params, status) {
               if (!messages.length) continue;
               // PX5: the tightest RUNNING clock on the quest - Clock
               // resources carry remainingTimeInSeconds in game seconds
-              // and clockEnabled/clockFinished (quest/clock.js:92,164).
+              // and clockEnabled/clockFinished (quest/clock.js:98,164).
               let clockSeconds = null;
               for (const r of q.resources.values()) {
                 if (r.clockEnabled && !r.clockFinished && Number.isFinite(r.remainingTimeInSeconds)) {
@@ -6276,7 +6277,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     removeQuestorPostMessage: (uid) => rumorMill.removeQuestorPostQuestMessage(uid),
     removeQuestRumors: (uid) => rumorMill.removeQuestRumorsFromRumorMill(uid),
     classicSeconds: () => playerTicker.classicMinutes * 60,
-    questClocksStoodDown: () => sharedClockOn(),   // WORLD5: online, every quest clock charges nothing (Mac: "naturally disabled while online")
+    questClockStepMax: () => (sharedClockOn() ? PLAYED_STEP_MAX_SECONDS : Infinity),   // WORLD7: online a quest clock charges PLAYED time - one step a frame, the time away forgiven (WORLD5 stood every clock down, and no delay ever ran)
     playerEntity,
     // AUDIT 24 (the seven-slice sweep): three more seams the bridge has
     // declared since Q2/Q3 that this host never answered. The bridge's

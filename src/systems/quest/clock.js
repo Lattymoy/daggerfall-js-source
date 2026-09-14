@@ -83,6 +83,12 @@ export function matchTimeValue(text) {
   return getTimeInSeconds(days, hours, minutes);
 }
 
+/** WORLD7 (Mac: "quests dont seem to work in online"): the most world seconds ONE played frame charges a quest clock
+ *  online - thirty world minutes, two and a half real minutes under the shared clock's twelve-to-one; a hidden tab the
+ *  browser throttles still ticks within that, a frame never spans it. A gap past it is time AWAY (the tab closed, the
+ *  character off the world) and is forgiven. Offline there is no bound: a rest or a trip charges its whole span, DFU's own. */
+export const PLAYED_STEP_MAX_SECONDS = 30 * 60;
+
 export class Clock extends QuestResource {
   constructor(parentQuest, line = null) {
     super(parentQuest);
@@ -164,10 +170,14 @@ export class Clock extends QuestResource {
   tick(caller) {
     if (!this.clockEnabled || this.clockFinished) return;
     const now = caller.nowSeconds?.() ?? 0;
-    // WORLD5 (Mac: "time limits on quests ... should be naturally disabled while online"): a clock STOOD DOWN charges
-    // nothing - the sample still moves, so the hours it stood down are never charged when it stands up again
-    if (caller.questClocksStoodDown?.()) { this._lastWorldTimeSample = now; return; }
-    const difference = now - this._lastWorldTimeSample;
+    // WORLD7: online a clock charges PLAYED time - the frame's world time, never more than one played step (the
+    // hosts' word through the quest: PLAYED_STEP_MAX_SECONDS under the shared clock, no bound offline). A gap past the
+    // step is time away and is forgiven, the sample moved. WORLD5 stood every clock down instead (Mac, WORLD1: "time
+    // limits on quest ... naturally disabled while online"), and a Daggerfall clock is a DELAY as often as a limit:
+    // Brisienna's letter (7-14 days), the tutorial's pages, every "come back in three days" never came, and the main
+    // quest never began online. A limit still stands, in hours played; none expires while away.
+    const step = caller.questClockStepMax?.() ?? Infinity;
+    const difference = Math.min(now - this._lastWorldTimeSample, step);
     this.remainingTimeInSeconds -= Math.trunc(difference);
     if (this.remainingTimeInSeconds <= 0) {
       this._triggerTask(caller);

@@ -141,7 +141,7 @@ export function createQuestBridge(ctx) {
   const machine = new QuestMachine({
     world: ctx.world ?? null,
     nowSeconds: () => ctx.classicSeconds?.() ?? 0,
-    questClocksStoodDown: () => ctx.questClocksStoodDown?.() ?? false,   // WORLD5: online, every quest clock charges nothing
+    questClockStepMax: () => ctx.questClockStepMax?.() ?? Infinity,   // WORLD7: online, a quest clock charges played time (the host's step); a host that says nothing charges every clock, DFU's own
     getQuestSourceLines: (name) => ctx.data.getQuestSourceLines(name),
     playerLevel: () => ctx.playerEntity?.level ?? 0,
     playerGender: () => ctx.playerEntity?.gender ?? 'male',

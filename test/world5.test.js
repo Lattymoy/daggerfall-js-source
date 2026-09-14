@@ -177,24 +177,24 @@ test('WORLD5: a rest online is paced by the world\'s clock - no sub-tick until t
   off.tick(sub); assert.ok(e.minutes === 60 && off.totalHours === 1, 'the timer\'s hour');
 });
 
-test('WORLD5: a quest clock stood down charges nothing, and the hours it stood down are never charged when it stands up', () => {
-  let now = 100_000, down = false;
-  const quest = { rolls: () => 0.5, nowSeconds: () => now, questClocksStoodDown: () => down, resources: new Map(), getPlace: () => null, travelSecondsTo: () => null };
+test('WORLD5 (superseded by WORLD7): the stand-down is gone - a quest clock charges played time online, the time away forgiven; a quest with no seam charges as ever', () => {
+  let now = 100_000, step = Infinity;
+  const quest = { rolls: () => 0.5, nowSeconds: () => now, questClockStepMax: () => step, resources: new Map(), getPlace: () => null, travelSecondsTo: () => null };
   const clock = new Clock(quest, 'Clock _c_ 02:00');
   assert.equal(clock.startingTimeInSeconds, 7200);
   clock.startTimer();
   now += 600; clock.tick(quest);
   assert.equal(clock.remainingTimeInSeconds, 6600, 'offline: ten minutes charged');
-  down = true;
-  now += 36_000; clock.tick(quest); now += 36_000; clock.tick(quest);
-  assert.equal(clock.remainingTimeInSeconds, 6600, 'twenty hours online: nothing charged');
+  step = 1800;
+  now += 36_000; clock.tick(quest);
+  assert.equal(clock.remainingTimeInSeconds, 4800, 'ten hours away online: one played step charged, the rest forgiven (WORLD7)');
   assert.equal(clock.clockFinished, false);
-  down = false;
   now += 60; clock.tick(quest);
-  assert.equal(clock.remainingTimeInSeconds, 6540, 'standing up again: the minute since, not the twenty hours');
+  assert.equal(clock.remainingTimeInSeconds, 4740, 'a played minute charges a minute');
   const never = new Clock({ rolls: () => 0.5, nowSeconds: () => now, resources: new Map() }, 'Clock _d_ 01:00');
   never.startTimer(); now += 60; never.tick(never.parentQuest);
-  assert.equal(never.remainingTimeInSeconds, 3540, 'a quest with no stand-down seam charges as ever');
+  assert.equal(never.remainingTimeInSeconds, 3540, 'a quest with no seam charges as ever');
+  assert.equal(rd('src/systems/quest/clock.js').includes('questClocksStoodDown'), false, 'the stand-down word is gone from the clock');
 });
 
 test('WORLD5: the hosts by source - the shared clock installed at the boot before anything reads the time, ?tod and ?timescale standing down, the markers aligned and the day rolled when the session starts, the relay\'s offset heard, the trip taking no world time, the jump refused, the rest paced, the quest clocks stood down through the bridge and the parser', () => {
@@ -207,15 +207,15 @@ test('WORLD5: the hosts by source - the shared clock installed at the boot befor
   assert.match(w, /\{ arriveMinutes: sharedClockOn\(\) \? worldMinutes\(\) : worldMinutes\(\) \+ computed\.minutes,/, 'the trip takes no world time');
   assert.match(w, /if \(!sharedClockOn\(\)\) \{ setSyntheticTimeIncrease\(true\); playerTicker\.advance\(computed\.minutes\); \}/, 'no jump');
   assert.match(w, /if \(clamp > 0 && !sharedClockOn\(\)\) \{ setSyntheticTimeIncrease\(true\); playerTicker\.advance\(clamp\); \}/, 'no arrival clamp');
-  assert.match(w, /questClocksStoodDown: \(\) => sharedClockOn\(\),/, 'the bridge\'s dep');
+  assert.match(w, /questClockStepMax: \(\) => \(sharedClockOn\(\) \? PLAYED_STEP_MAX_SECONDS : Infinity\),/, 'the bridge\'s dep (WORLD7: the played step, not the stand-down)');
   const sh = rd('src/scenes/shared.js');
   assert.match(sh, /advance\(minutes\) \{\s*if \(!\(minutes > 0\)\) return null;\s*(?:\/\/[^\n]*\n\s*)*if \(sharedClockOn\(\)\) return this\.tick\(0, undefined, 0\);/, 'RaiseTime under the shared clock runs the owed rounds and fabricates nothing');
   assert.match(sh, /sharedMinutes: \(\) => \(sharedClockOn\(\) \? worldMinutes\(\) : null\),/, 'every host\'s rest deps pace by the clock');
-  assert.match(rd('src/scenes/questBridge.js'), /questClocksStoodDown: \(\) => ctx\.questClocksStoodDown\?\.\(\) \?\? false,/);
+  assert.match(rd('src/scenes/questBridge.js'), /questClockStepMax: \(\) => ctx\.questClockStepMax\?\.\(\) \?\? Infinity,/);
   const m = rd('src/systems/quest/machine.js');
-  assert.equal((m.match(/questClocksStoodDown: \(\) => this\.deps\.questClocksStoodDown\?\.\(\) \?\? false/g) ?? []).length, 3, 'every door a live quest is born through');
-  assert.match(rd('src/systems/quest/parser.js'), /const quest = new Quest\(\{ rolls, actionFactory, nowSeconds, hooks, questClocksStoodDown \}\);/);
-  assert.match(rd('src/systems/quest/clock.js'), /if \(caller\.questClocksStoodDown\?\.\(\)\) \{ this\._lastWorldTimeSample = now; return; \}/);
+  assert.equal((m.match(/questClockStepMax: \(\) => this\.deps\.questClockStepMax\?\.\(\) \?\? Infinity/g) ?? []).length, 3, 'every door a live quest is born through');
+  assert.match(rd('src/systems/quest/parser.js'), /const quest = new Quest\(\{ rolls, actionFactory, nowSeconds, hooks, questClockStepMax \}\);/);
+  assert.match(rd('src/systems/quest/clock.js'), /const step = caller\.questClockStepMax\?\.\(\) \?\? Infinity;\s*\n\s*const difference = Math\.min\(now - this\._lastWorldTimeSample, step\);/, 'WORLD7: one played step a frame');
   const wt = rd('src/systems/worldTick.js');
   assert.match(wt, /export const worldMinutes = \(\) => \(_sharedClock \? _sharedClock\(\) : _worldMinutes\);/);
   assert.match(wt, /export function setWorldMinutes\(v\) \{\s*if \(_sharedClock\) return _sharedClock\(\);/);
