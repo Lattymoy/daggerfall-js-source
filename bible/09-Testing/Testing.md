@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 7316 tests across 727 files.
+Node 22). Suite: 7319 tests across 728 files.
 
 **THE ARENA2-GATED PINS ARE HALF-BLIND, AND THAT IS A KNOWN COST.** A
 pin behind `{ skip: skipReal }` never runs on CI, so a law change that
@@ -852,6 +852,7 @@ commit as any test change.
 | ft8_combatvisuals.test.js | 2 | FT8 - ENHANCED COMBAT VISUALS, THE LAST ROW LEAVES THE ENHANCED CATEGORY (2026-09-14, the Features arc). The registry row (Enhanced, over the pref, on by default, ECV1's words, taking effect AT ONCE because every foe host reads combatVisualsOn once per frame - the three hosts pinned reading it, and the switch's law untouched: the kill door, the skin, the pref); and the Settings category it emptied standing as a POINTER to the home - no switch left in it, the pointer row first (all three labels, the walk from face and control) then the outdoors test door at boot, the category's blurb saying so, and the home holding every switch the category ever drew. |
 | ft9_mods.test.js | 3 | FT9 - THE FIVE PACKS WITH A SWITCH (2026-09-14, the Features arc). One Mod Authored row per vendored mod over its own Enabled: every vendored mod with a switch has a row and every mod row names a real switch, both ways (five direct rows, Dynamic Skies riding the outdoors row's `also`, six under the filter); a row is the mod's own - the creator's name in the title, the modsettings description as the note, one source, shipping on (MO1), the Mods pane's order; and when each switch lands as the port knows it - the world's next load (Seasons, Basic Roads), monsters spawned after (Meaner Monsters, the sentence moved out of its description), at once (the overhaul's live arms), the next roll (Unleveled Loot) - with the mods' other knobs resolving to no row, so they stay the mod's own on the Mods page. |
 | ft10_dfu_dungeon.test.js | 3 | FT10 - THREE OF DFU'S DUNGEON ENHANCEMENTS (2026-09-14, the Features arc): Enemies Fight Each Other, Varied Dungeon Monsters, Torches Light Your Way as DFU Classic rows over live DFU keys, titled as the settings pane titles them (one name here and on the pointer row), sound and found by the lookup; each note's last sentence saying what DFU ships it as, pinned against the baked default so a re-bake cannot make the note lie; and the port reading each key where DFU reads it, live - infighting at the point of use, alternate selection as the dungeon's enemies are collected, the torch inside the tick and again for the starting gear and the shop shelf. |
+| ft11_dfu_rest.test.js | 3 | FT11 - THE REST OF DFU'S SWITCHES (2026-09-14, the Features arc): the four booleans (Combat Voices, Near Death Warning, Bows In Left Hand, Choose Guild Jobs) as DFU Classic rows - live, switch-shaped, titled as Settings titles them, each note ending with DFU's own default pinned against the baked ini; Dungeon Wall Style as the one choice row over a DFU key - the settings law's enum of five modes, Classic by default, every mode named in the note, the main-story law it describes pinned in dungeonTextures.js; the port reading each key where DFU reads it; and the section's dials (the wait limit, the light scales) pinned as NOT rows - a dial is a setting. |
 
 ## PY1 - THE PARITY PINS WERE BLIND (2026-08-28)
 

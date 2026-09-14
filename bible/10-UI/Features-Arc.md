@@ -95,15 +95,15 @@ Video/GUI keys that are features rather than settings.
 | `Enhancements/EnemyInfighting` | Enemies Fight Each Other | True | live | **MOVED (FT10, 2026-09-14)** - at once |
 | `Enhancements/AlternateRandomEnemySelection` | Varied Dungeon Monsters | False | live | **MOVED (FT10)** - the next dungeon |
 | `Enhancements/PlayerTorchFromItems` | Torches Light Your Way | False | live | **MOVED (FT10)** - at once; new gear and the next stocking follow |
-| `Enhancements/LoiterLimitInHours` | Maximum Wait Time | 3 | live | open |
-| `Enhancements/CombatVoices` | - | True | live | open |
-| `Enhancements/NearDeathWarning` | - | True | live | open |
-| `Enhancements/BowLeftHandWithSwitching` | - | False | live | open |
-| `Enhancements/DungeonAmbientLightScale` | - | 1.0 | live | open |
-| `Enhancements/NightAmbientLightScale` | - | 1.0 | live | open |
-| `Enhancements/PlayerTorchLightScale` | - | 1.0 | stored | open. Its sibling is live; this one is not read |
-| `Enhancements/GuildQuestListBox` | - | False | live | open |
-| `Video/RandomDungeonTextures` | Dungeon Wall Style | - | live | open |
+| `Enhancements/LoiterLimitInHours` | Maximum Wait Time | 3 | live | **DECIDED (FT11)** - a dial, not a feature; stays in Settings |
+| `Enhancements/CombatVoices` | - | True | live | **MOVED (FT11, 2026-09-14)** |
+| `Enhancements/NearDeathWarning` | - | True | live | **MOVED (FT11)** |
+| `Enhancements/BowLeftHandWithSwitching` | - | False | live | **MOVED (FT11)** |
+| `Enhancements/DungeonAmbientLightScale` | - | 1.0 | live | **DECIDED (FT11)** - a dial; stays in Settings |
+| `Enhancements/NightAmbientLightScale` | - | 1.0 | live | **DECIDED (FT11)** - a dial; stays in Settings |
+| `Enhancements/PlayerTorchLightScale` | - | 1.0 | stored | **DECIDED (FT11)** - a dial, and not read; stays in Settings as stored. Its sibling is live |
+| `Enhancements/GuildQuestListBox` | - | False | live | **MOVED (FT11)** |
+| `Video/RandomDungeonTextures` | Dungeon Wall Style | 0 | live | **MOVED (FT11)** - the one choice row over a DFU key |
 | `Experimental/TerrainDistance` | - | 3 | live | **COVERED (FT2, 2026-09-14)** - written by the condensed row, capped at 4; its Video row is a pointer |
 | `Enhancements/EnhancedCombatAI` | - | True | UNAVAILABLE | **DECIDED (FT5)** - off the list: a row for a feature the port does not run would be a lie with a switch. Stays in Settings as the unavailable row it is, named from the AI row's note |
 | `Enhancements/AdvancedClimbing` | - | False | UNAVAILABLE | open. Ledger A, same shape |
@@ -123,6 +123,7 @@ Video/GUI keys that are features rather than settings.
 - **FT8** - SHIPPED 2026-09-14. Combat visuals, and the emptied category as a pointer. Below.
 - **FT9** - SHIPPED 2026-09-14. The five packs with a switch. Below.
 - **FT10** - SHIPPED 2026-09-14. Three of DFU's dungeon enhancements. Below.
+- **FT11** - SHIPPED 2026-09-14. The rest of DFU's switches; the dials stay. Below.
 - One slice per open row after that, in the order Mac picks.
 
 ## FT0 - THE HOME (2026-09-14)
@@ -417,3 +418,26 @@ as, PINNED against the baked default, so a re-bake cannot make the
 note lie. The effects are the port's word: at once; the next dungeon;
 at once with new gear and the next stocking following.
 `test/ft10_dfu_dungeon.test.js`.
+
+## FT11 - THE REST OF DFU'S SWITCHES (2026-09-14)
+
+Combat Voices, Near Death Warning, Bows In Left Hand, Choose Guild
+Jobs - the four booleans left in DFU's Enhancements section - and
+Dungeon Wall Style, Video's RandomDungeonTextures, the one CHOICE row
+over a DFU key: the settings law's own enum (Classic, Climate, Climate
+Only, Random, Random Only), which the home draws with the law's own
+stepper. Each read against its port site (the voices at the point of
+use, the flicker per cycle, the bow hand at the weapon and the item's
+hands, the guild list at the offer, the wall style as the dungeon's
+table is chosen), each note ending with DFU's own default pinned
+against the baked ini. **Decided:** the section's DIALS - the wait
+limit, the two ambient light scales, the torch light scale (stored,
+not read) - are settings, not features, and stay in Settings; the pin
+says so by name. `test/ft11_dfu_rest.test.js`.
+
+THE INVENTORY IS CLOSED. Every row on it is moved, condensed, removed
+or decided. The home holds 21 rows: 7 Enhanced, 6 Mod Authored, 10 DFU
+Classic, two of them wearing two labels. What remains outside it by
+decision: the mods' own knobs under their cards on the Mods page, the
+dials in Settings, the two dead DFU keys as the unavailable rows they
+are, and the outdoors test door.

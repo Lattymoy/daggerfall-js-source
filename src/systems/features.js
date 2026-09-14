@@ -252,6 +252,59 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['classic']),
     control: Object.freeze({ store: 'settings', key: 'Enhancements/PlayerTorchFromItems' }),
   }),
+  // FT11 (2026-09-14): THE REST OF DFU'S SWITCHES - the four booleans
+  // left in the Enhancements section and the one choice (Video's
+  // RandomDungeonTextures, an enum the settings law already draws). The
+  // numeric tunings of the section (the wait limit, the light scales)
+  // are settings, not features, and stay in Settings.
+  Object.freeze({
+    id: 'combat-voices',
+    title: 'Combat Voices',
+    note: 'Daggerfall Unity\u2019s combat vocalisations: you and the people you fight grunt on a swing and cry out when hit - '
+      + 'sounds classic Daggerfall carries but never plays in a fight. Off, a fight is silent but for the blows. '
+      + 'Daggerfall Unity ships it on.',
+    effect: 'Takes effect at once.',
+    kinds: Object.freeze(['classic']),
+    control: Object.freeze({ store: 'settings', key: 'Enhancements/CombatVoices' }),
+  }),
+  Object.freeze({
+    id: 'near-death-warning',
+    title: 'Near Death Warning',
+    note: 'Daggerfall Unity\u2019s screen flicker as your health falls: a slow throb under two fifths, a fast burst when you are hurt '
+      + 'under a fifth. Off, nothing warns you but the bar. Daggerfall Unity ships it on.',
+    effect: 'Takes effect at once.',
+    kinds: Object.freeze(['classic']),
+    control: Object.freeze({ store: 'settings', key: 'Enhancements/NearDeathWarning' }),
+  }),
+  Object.freeze({
+    id: 'bows-left-hand',
+    title: 'Bows In Left Hand',
+    note: 'Daggerfall Unity\u2019s option: a bow equips in the left hand only, so a one-handed weapon can stay in the right and '
+      + 'you switch between them with a short delay, instead of a bow taking both hands. Off is classic Daggerfall\u2019s hands. '
+      + 'Daggerfall Unity ships it off.',
+    effect: 'Takes effect on the next weapon you equip.',
+    kinds: Object.freeze(['classic']),
+    control: Object.freeze({ store: 'settings', key: 'Enhancements/BowLeftHandWithSwitching' }),
+  }),
+  Object.freeze({
+    id: 'choose-guild-jobs',
+    title: 'Choose Guild Jobs',
+    note: 'Daggerfall Unity\u2019s guild quest list: a guild\u2019s quest-giver offers the jobs you are eligible for as a list to pick '
+      + 'from, instead of classic Daggerfall\u2019s one job drawn at random. Daggerfall Unity ships it off.',
+    effect: 'Takes effect the next time a guild offers you work.',
+    kinds: Object.freeze(['classic']),
+    control: Object.freeze({ store: 'settings', key: 'Enhancements/GuildQuestListBox' }),
+  }),
+  Object.freeze({
+    id: 'dungeon-wall-style',
+    title: 'Dungeon Wall Style',
+    note: 'Which textures a dungeon\u2019s walls wear. Classic is Daggerfall\u2019s own table for each dungeon; Climate picks the set '
+      + 'by the region\u2019s climate; Random draws a table from the dungeon\u2019s own seed. Climate and Random leave the main-story '
+      + 'dungeons classic; Climate Only and Random Only do not. Daggerfall Unity ships it Classic.',
+    effect: 'Takes effect on the next dungeon you enter.',
+    kinds: Object.freeze(['classic']),
+    control: Object.freeze({ store: 'settings', key: 'Video/RandomDungeonTextures' }),
+  }),
 ]);
 
 /** The row whose control is this store's key, or null. The settings
