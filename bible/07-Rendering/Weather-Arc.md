@@ -88,3 +88,49 @@ for a snow-free zone, so nothing in DFU keeps rain off snow. This is a
 departure, recorded on the Ledger, and it is the enhanced lane's.
 
 `test/weather2a_snowground.test.js`.
+
+## C - CLOUD TYPES BY PLACE (WEATHER2c, 2026-09-14)
+
+Mac: "different generative cloud types, like being able to see a
+thunderhead in the distance with the weather happening elsewhere."
+
+**What stood.** The volumetric field (the Volumetric Clouds arc) is
+one density function over the eye, shaped by ONE profile - the zone's
+weather word, eased - and the eased row's cover: the whole hemisphere
+is one kind of sky. A thunderhead on the horizon under a sunny zone
+had no way to exist.
+
+**The cells.** The field takes CELLS: a world position, a radius and a
+soft rim, and a profile of its own (`cellOf(weather, x, z, r)` - the
+weather's VC_PROFILE with its row's cover and grey). `resolveAt(xz)`
+in the shared field block resolves the terms at a place - the zone's
+first, then every cell whose rim reaches the point blended over them by
+its weight - and `density()` reads the RESOLVED terms (fBase, fTop,
+fDensity, fFlat, fShear, fCover) instead of the zone's uniforms. Both
+marches resolve once before they walk and again at EVERY step while
+cells stand (a grazing sky ray crosses 24 km; a cell 6 km out with a
+3 km radius is missed by any single resolution), and the light march
+reads what its step resolved. The slab both marches walk is the UNION
+of the zone's and the cells' (`slabOf`), so a thunderhead's tops are
+reached under a sunny zone's lower lid. A cell's `dark` and `grey`
+reach the lighting: the dark moved into the field block (a cell has
+its own), and the grey pulls the lit colour toward the shade's, so a
+storm under a sunny zone is a storm's colour and not a bright cumulus
+the size of one. The shadow is the cell's where it stands - the ground
+map marches the same field.
+
+**Where the cells live.** In the HOST's world metres, the space the
+camera's `pos` is in: the controller hands fresh cells every frame
+(`extra.cells`, both the dome path and the mod path), the floating
+origin moves the host and the cells with it, and the noise still
+samples at the absolute, wrapped position. Capped at the tier's count
+(`QUALITY.*.cells`: 3 on Low, 8 otherwise; the shader's arrays hold 8)
+and packed into three vec4 arrays (`packCells`).
+
+**The door.** `?cloudcell=<weather>[,<metres east>[,<radius>]]` stands
+one static cell of that weather east of the boot position (6 km and 3
+km across by default), resolved against the first camera position the
+controller hands and shifted with every recenter - for the eye and the
+probe, and the seam slice B fills with the field's cells.
+
+`test/weather2c_cloudcells.test.js`.
