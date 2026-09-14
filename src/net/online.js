@@ -186,6 +186,9 @@ export const peerSecret = (storage = tabStorage()) => keptToken(storage, 'dagger
  * stamp inside is the handed-in clock's (Date.now() unless told
  * otherwise); nothing outside passes a time in.
  */
+/** OL3: the HUD line while the relay's clock and this machine's disagree by more than a year - the world's time is read uncorrected. */
+export const CLOCK_WARNING = 'this machine\'s clock is more than a year from the world\'s - set it, or the shared time is wrong here';
+
 export class OnlineSession {
   constructor({ url = DEFAULT_SERVER, name = 'Traveller', look = null, id = null, secret = null, presence = true, WebSocketImpl = globalThis.WebSocket, now = () => Date.now() } = {}) {
     this.url = relayUrl(url || DEFAULT_SERVER);   // wss:// anywhere, ws:// on localhost alone; anything else is no relay (A16/E11)
@@ -203,6 +206,7 @@ export class OnlineSession {
     this.onHost = null;           // (id, mine) => void: the host changed
     this.onWorld = null;          // (world) => void: the welcome carried the room's memory, or the host published one after it (AUDIT WORLD34 C1)
     this.clockOffsetMs = 0;       // WORLD5: the relay's clock minus this machine's, from the welcome - the shared world time is read through it
+    this.clockWarning = null;     // OL3: the welcome's clock was a year off this machine's - said on the HUD line while it stands
     this.onClock = null;          // WORLD5: (offsetMs) => void - the welcome said the relay's clock
     this.look = look ?? { race: 'Breton', gender: 'male', faceIndex: 0, items: [] };
     this.id = id ?? peerId();
@@ -409,7 +413,10 @@ export class OnlineSession {
       }
       for (const id of [...this.peers.keys()]) if (!keep.has(id)) this.peers.delete(id);
       this._setHost(m.host);   // WORLD1: the room's host, and the room's memory when it keeps one
-      if (Number.isFinite(m.now) && Math.abs(m.now - Date.now()) < 366 * 24 * 3600 * 1000) { this.clockOffsetMs = m.now - Date.now(); this.onClock?.(this.clockOffsetMs); }   // WORLD5: the relay's clock - a year off is no clock
+      if (Number.isFinite(m.now)) {   // WORLD5: the relay's clock - a year off is no clock; OL3: and is SAID, on the console and the HUD line, rather than run uncorrected in silence
+        if (Math.abs(m.now - Date.now()) < 366 * 24 * 3600 * 1000) { this.clockOffsetMs = m.now - Date.now(); this.clockWarning = null; this.onClock?.(this.clockOffsetMs); }
+        else if (!this.clockWarning) { this.clockWarning = CLOCK_WARNING; console.warn(`[online] ${CLOCK_WARNING} (relay ${new Date(m.now).toISOString()}, this machine ${new Date().toISOString()})`); }
+      }
       if (m.world && typeof m.world === 'object' && !Array.isArray(m.world)) this.onWorld?.(m.world);
     } else if (m.t === 'host') {
       this._setHost(m.id);
@@ -496,7 +503,7 @@ export class OnlineSession {
 
   /** One line for a person, or null when all is well; `label` names the session (AUDIT CHAT B5: the chat's line is this one, not a remake). */
   statusLine(label = 'online') {
-    if (this.status === 'open') return null;
+    if (this.status === 'open') return this.clockWarning ? `${label}: ${this.clockWarning}` : null;   // OL3: an open session with a clock a year off says so
     if (this.terminal || this.status === 'error') return `${label}: ${this.error ?? 'error'}`;
     if (this.status === 'connecting') return `${label}: connecting`;
     if (this._retryAt != null) return `${label}: reconnecting`;

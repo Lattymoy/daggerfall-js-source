@@ -754,11 +754,36 @@ let _worldMinutes = CLASSIC_GAME_START_TIME;
 let _sharedClock = null;
 let _sharedLastTick = null;
 /** Install (a function answering classic minutes) or remove (null) the shared clock. */
-export function setSharedClock(source) {
+export function setSharedClock(source, wallOf = null) {
   _sharedClock = typeof source === 'function' ? source : null;
+  _sharedWall = _sharedClock && typeof wallOf === 'function' ? wallOf : null;
   _sharedLastTick = null;
 }
 export const sharedClockOn = () => _sharedClock !== null;
+
+// OL3 (Mac, 2026-09-14): THE CLOCK DOES NOT PUNISH ABSENCE - the price is
+// said in real time. Under the shared clock every world-time deadline (a
+// rented room's expiry, a loan's due date) runs on wall time, through a
+// logout: a week's lodging is fourteen real hours. The shared world keeps
+// one clock, so the honest fix is that the player buys what they think
+// they are buying: the host installs, beside the source, the inverse -
+// the millisecond on THIS machine's clock at which the world reads a
+// classic minute (wire.js wallMsForClassicMinutes, less the relay's
+// offset) - and the tavern's offer and the bank's due-by say it.
+let _sharedWall = null;
+/** This machine's wall-clock ms for a classic minute under the shared clock, else null. */
+export const sharedWallMs = (classicMinutes) => (_sharedWall && Number.isFinite(classicMinutes) ? _sharedWall(classicMinutes) : null);
+const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+/** "Tue 15 Sep 18:00" on this machine's clock, in the game font's own ASCII (no locale, no glyph the font lacks). */
+export function realTimeText(ms) {
+  const d = new Date(ms);
+  if (!Number.isFinite(d.getTime())) return null;
+  const two = (n) => String(n).padStart(2, '0');
+  return `${WEEKDAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]} ${two(d.getHours())}:${two(d.getMinutes())}`;
+}
+/** The real time a classic minute falls at, as words, under the shared clock; null offline. */
+export const sharedRealTimeText = (classicMinutes) => { const ms = sharedWallMs(classicMinutes); return ms == null ? null : realTimeText(ms); };
 
 /** EntityEffectBroker.maxCatchupDays = 2, i.e. 2880 game minutes
  *  (EntityEffectBroker.cs:36, applied at :223). DFU's own reasoning: the

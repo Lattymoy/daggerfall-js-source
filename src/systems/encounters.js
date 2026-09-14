@@ -296,7 +296,7 @@ export const RESTING_DISTANCE = 12;
  * nothing pending to count. Nor were quest spawns ever in that sweep
  * on either side - DFU's CreateFoe is a QuestAction that calls
  * CreateFoeGameObjects + TryPlacement itself (no CreateFoeSpawner in
- * CreateFoe.cs), which is systems/quest/actions.js:2283-2305 here.
+ * CreateFoe.cs), which is systems/quest/actions.js:2291-2313 here.
  */
 export function areEnemiesNearby(foes, { resting = false, includingPacified = false } = {}) {
   for (const f of foes ?? []) {

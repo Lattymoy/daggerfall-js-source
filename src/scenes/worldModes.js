@@ -46,7 +46,7 @@ import { getGroundArchive } from '../world/climateSwaps.js';
 import { DUNGEON_AMBIENT, DUNGEON_LIGHT_COLOR, DUNGEON_LIGHT_BLOCK_RANGE } from '../world/dungeonLights.js';   // A10: the block-range cut
 import { INTERIOR_AMBIENT, INTERIOR_NIGHT_AMBIENT, INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
 import { isNight } from '../world/worldClock.js';   // AUDIT 23 (C12)
-import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';   // AUDIT 23 (C12): the one clock; G4's probe moves it
+import { worldMinutes, setWorldMinutes, sharedRealTimeText } from '../systems/worldTick.js';   // AUDIT 23 (C12); OL3: the prices said in real time online: the one clock; G4's probe moves it
 import { exhaustionOutcome, EXHAUSTED_IN_WATER } from '../systems/rest.js';   // AUDIT 23 (C5)
 import { ActionTextBox } from '../ui/actionText.js';   // AUDIT 23 (C5)
 import { healthStatusRows, statusInfoRows } from '../systems/healthStatus.js';   // BS1/F198: the Status health box
@@ -2743,7 +2743,15 @@ export function createWorldModes(host) {
       regionName: () => buildingDirectory?.()?.regionName ?? '',
       // GetLoanDueDateString (:571-580) - empty when nothing is owed,
       // otherwise DateString(), which carries no year.
-      dueDateText: (minutes) => (minutes > 0 ? dateString(dateFromClassicMinutes(minutes)) : ''),
+      // OL3: and online, the real time beside it - the loan runs on the
+      // world's clock through a logout, and a default lowers reputation
+      // and brings the guards, so the date the player must be back by is
+      // said by their own clock.
+      dueDateText: (minutes) => {
+        if (!(minutes > 0)) return '';
+        const real = sharedRealTimeText(minutes);
+        return dateString(dateFromClassicMinutes(minutes)) + (real ? ` (${real})` : '');
+      },
       // H1: house ownership is live. D6: so is SHIP ownership - the
       // two fixed ship scenes were never the blocker (H3 wired both,
       // and the SELL path has been adding and dropping them since),
@@ -2905,6 +2913,7 @@ export function createWorldModes(host) {
       entity: playerEntity,
       rows: (id, pick) => townTalk?.lines?.(id, pick) ?? [],
       now: () => Math.floor(worldMinutes()),
+      realTimeOf: (m) => sharedRealTimeText(m),   // OL3: online the offer says when the room ends by the player's clock; null offline
       mapId: () => questSceneCtx?.()?.mapId ?? 0,
       buildingKey: () => b?.buildingKey ?? 0,
       buildingName: () => b?.name ?? '',

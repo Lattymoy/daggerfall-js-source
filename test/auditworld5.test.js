@@ -266,7 +266,7 @@ test('AUDIT WORLD5 by source: the sentence refills nothing online (C9), exterior
   assert.equal(RELAY_VERSION, 'world51', 'C11: the relay bumped');
   assert.match(rd('src/ui/enhancedMenu.js'), /The clock and the sky are the world\\'s and run on real time: a rest, a trip, a sentence or a lesson takes none of it, and the quest clocks stand still\./, 'C12');
   const w = rd('src/scenes/world.js');
-  const install = w.indexOf("if (params.has('online')) { setSharedClock(() => sharedClassicMinutes(Date.now() + _sharedOffsetMs)); setSharedWeather(true); }");
+  const install = w.indexOf("if (params.has('online')) { setSharedClock(() => sharedClassicMinutes(Date.now() + _sharedOffsetMs), (m) => wallMsForClassicMinutes(m) - _sharedOffsetMs); setSharedWeather(true); }");
   const boot = w.indexOf('export async function bootWorld(');
   const season = w.indexOf('let season = seasonPin ?? climateSeasonFromMinutes(worldMinutes());');
   assert.ok(boot > 0 && install > boot && season > install, 'C13: installed before the first read of the clock (the season)');

@@ -134,6 +134,8 @@ export const ONLINE_EPOCH_MINUTES = 523530;
 export const ONLINE_MINUTES_PER_MS = 12 / 60 / 1000;
 /** WORLD5: the online world's clock, classic minutes, for a wall-clock instant (ms). One home for every client. */
 export const sharedClassicMinutes = (nowMs) => ONLINE_EPOCH_MINUTES + (nowMs - ONLINE_EPOCH_MS) * ONLINE_MINUTES_PER_MS;
+/** OL3: the inverse - the relay-clock millisecond at which the shared world reads a classic minute (a room's expiry, a loan's due date, as real time). */
+export const wallMsForClassicMinutes = (classicMinutes) => ONLINE_EPOCH_MS + (classicMinutes - ONLINE_EPOCH_MINUTES) / ONLINE_MINUTES_PER_MS;
 
 /** The streaming world's shard: a square of map pixels. */
 export const WORLD_CELL = 16;

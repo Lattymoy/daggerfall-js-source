@@ -193,7 +193,7 @@ export function eatOrDrink(index, { gold = 0, gameMinutes = 0 } = {}) {
 }
 
 // The three clauses that stood here are all closed:
-//  - (RETIRED by TK-iv: the TALK button. tavernWindow.js:265, and the
+//  - (RETIRED by TK-iv: the TALK button. tavernWindow.js:285, and the
 //    KeyT arm at :256, fire hooks.onTalk; worldModes.js:2510 supplies
 //    it as openStaticNpc(pn, { forceTalk: true }), which reaches
 //    npcSession.talkToStaticNPC at worldModes.js:2029 - TalkManager.
