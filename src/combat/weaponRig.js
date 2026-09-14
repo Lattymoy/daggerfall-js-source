@@ -166,6 +166,20 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   const handheld = createHandheldTorches({ audio, say, torches });
   const handheldOn = () => modSetting('handheld-torches', 'Enabled');
   let _handheldBound = null;
+  // AUDIT 66 F8: THE COMPONENT'S OWN TEARDOWN HAD NO CALLER. It holds
+  // two things that outlive a frame - the burning AudioSource
+  // (systems/audio.js loops until it is stopped) and PlayerTorch's
+  // position override, a process global (playerTorch.js) - and both
+  // are freed by dispose(), which nothing called: not this rig, not a
+  // host. So a torch lit at a scene teardown roared on into the next
+  // scene, and one Ambidexterity flip welded the player's light to the
+  // torch hand for the life of the page, across a load and a new
+  // character. Worse, the switch: update() runs only while the mod is
+  // ON (the frame block below), so turning it OFF with a torch lit
+  // stranded the loop where even its own "stop" arm could not reach.
+  // The rig owns the component, so the rig owns its end: on the
+  // switch's falling edge, and at the host's own teardown (dispose).
+  let _handheldWasOn = false;
   const bindTorches = () => { const pool = torches?.(); if (pool && pool !== _handheldBound) { pool.setOnPickedUp?.((item) => handheld.receivePickedUp(item)); _handheldBound = pool; } };
   playerWeapon.onAttackResult = ({ foe, damage }) => widget.onAttackDamageCalculated({ damage, parrySounds: !!foe?.basics?.parrySounds, pos: foe?.pos ?? foe?.ai?.pos ?? null, isEnemy: true });
   let _activatePrev = false, _activateStarted = false;
@@ -550,6 +564,8 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // WW1: the clone's LateUpdate, after the original's frame advance -
       // the same order DFU's LateUpdate has against FPSWeapon's Update.
       const _torchesOn = handheldOn();
+      if (!_torchesOn && _handheldWasOn) handheld.dispose();   // AUDIT 66 F8: the switch off is a teardown
+      _handheldWasOn = _torchesOn;
       if (widgetOn() || _torchesOn) {
         const cam = camera?.() ?? null;
         const mv = cam?.move ?? {};
@@ -652,6 +668,9 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     },
     widget,   // WW1: the clone, for the pins
     handheld,   // HT1: Handheld Torches' component, for the pins and the pool
+    /** AUDIT 66 F8: the host's teardown - every long-lived thing this
+     *  rig owns is freed here, as the hosts free their pools. */
+    dispose() { handheld.dispose(); _handheldWasOn = false; },
   };
   function drawInner({ paralyzed = false } = {}) {
     {

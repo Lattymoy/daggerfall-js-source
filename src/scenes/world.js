@@ -2675,7 +2675,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // and dungeonContext.js:2113 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:4605
+  // that context through modes.dungeonCtx - so worldModes.js:4615
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -5487,7 +5487,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7225-7237 -
+  // worldModes answers it in BOTH modes (worldModes.js:7234-7246 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -7570,6 +7570,16 @@ export async function bootWorld(canvas, renderer, params, status) {
       },
     });
 
+    // AUDIT 66 F11: the torch sweep runs HERE, above the modal
+    // return, because that is where the transition is. It used to sit
+    // with the tick at the foot of the exterior frame - which this
+    // branch never reaches - so walking into a shop left the street's
+    // dropped torches standing: their billboard batches held and,
+    // worse, their 3D burning loops playing in the player's ear for
+    // the whole indoor visit, swept only on the first frame back
+    // outside. DestroyLightSources_OnTransition is an EVENT in the mod
+    // (0x7d1), not a frame-tail chore.
+    if (_mode() !== _torchesMode) { droppedTorches.destroyAll(); _torchesMode = _mode(); }   // HT1
     if (modes.frame(dt, now)) {
       if (!skyInside) { skyInside = true; sky.setInside(true); }   // DS1: InteriorTransitionEvent
       // WM4c: the exterior parent is inactive indoors in DFU and its
@@ -7935,11 +7945,12 @@ export async function bootWorld(canvas, renderer, params, status) {
           // rival that does not include the persons themselves - see
           // townTalk.tryActivate. The foe arm still measures against
           // everything, the townsfolk included.
+          const _doorDist = modes.exteriorActivationDistance(cam.pos, useFwd);   // AUDIT 66 F7: read once, and read by every arm that has to lose to a door
           const _nonPersonRival = Math.min(
             _lootPick?.distance ?? Infinity,
             _dropPick?.distance ?? Infinity,
             _torchPick?.distance ?? Infinity,   // HT1
-            modes.exteriorActivationDistance(cam.pos, useFwd),
+            _doorDist,
           );
           const _rivalDist = Math.min(_nonPersonRival,
             ..._livePersons.map((p) => rayPersonDistance(cam.pos, useFwd, p.pos)));
@@ -7956,7 +7967,18 @@ export async function bootWorld(canvas, renderer, params, status) {
             const lootKey = _lootPick?.key ?? null;
             const dropKey = _dropPick?.key ?? null;
             // HT1: a dropped torch under the ray, nearer than the corpse and the pile: picked up (Grab, Steal) or named (Info, Talk)
-            const _torchNearest = !!_torchPick && _torchPick.distance <= Math.min(_lootPick?.distance ?? Infinity, _dropPick?.distance ?? Infinity);
+            // AUDIT 66 F7: the torch must lose to the DOOR too. This
+            // arm compared the pick against the corpse and the pile
+            // alone, and stands above `modes.tryEnter()` - so a torch
+            // anywhere under the ray (the pick publishes the RAY's
+            // 76.8, reach 3.2, as every handler family does) ate the
+            // click a shop door, a bulletin board or a static NPC was
+            // owed and answered "You are too far away". The rival the
+            // enemy arm above already uses carries that distance:
+            // AUDIT 65 MC-2's law is that the NEAREST thing under the
+            // one ray takes the click, and this arm was the one that
+            // did not read it.
+            const _torchNearest = !!_torchPick && _torchPick.distance <= Math.min(_lootPick?.distance ?? Infinity, _dropPick?.distance ?? Infinity, _doorDist);
             if (_torchNearest) { if (_torchPick.distance > _torchPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT); else droppedTorches.activate(_torchPick.key, getInteractionMode()); }   // the mod's own activation, ahead of DFU's ladder
             else {
             // AUDIT 65 MC-2: the corpse's own refusal
@@ -8516,8 +8538,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // finished splash frees its batch inside tick().
     hitEffects.tick(dt);
     livePersonBatches.push(...hitEffects.batches());
-    // HT1: the dropped torches burn, the thrown one flies, a burning foe's flame follows it; every mode change destroys them (OnTransition*)
-    if (_mode() !== _torchesMode) { droppedTorches.destroyAll(); _torchesMode = _mode(); }
+    // HT1: the dropped torches burn, the thrown one flies, a burning foe's flame follows it (the transition sweep is at the mode branch above, AUDIT 66 F11)
     if (_mode() === 'exterior') { droppedTorches.tick(dt); livePersonBatches.push(...droppedTorches.batches()); }
     if (livePersonBatches.length) renderer.drawBillboards(livePersonBatches, camRight, UP_Y);
     // WX2: what falls is what the front SHOWS - under the enhanced sky the
