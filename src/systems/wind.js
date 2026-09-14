@@ -38,6 +38,7 @@
 /** How much wind a weather brings in with it, 0..1. */
 export const VIOLENCE = Object.freeze({
   sunny: 0.10, cloudy: 0.25, overcast: 0.30, fog: 0.08, rain: 0.55, snow: 0.45, thunder: 1.0,
+  sandstorm: 0.95,   // WEATHER2d: a gale, a shade under the storm's
 });
 
 /** A front's shape, in GAME MINUTES: the wind rises over the lead,

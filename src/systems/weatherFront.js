@@ -64,7 +64,7 @@ import { precipitationForWeather } from '../world/weather.js';
 /** Each mode's peak range, as a fraction of the profile's count: what
  *  a cut into that weather can roll. A rain can be a sprinkle; a storm
  *  never is; snow rarely buries the screen. */
-export const PRECIP_PEAK = Object.freeze({ rain: [0.25, 1.0], storm: [0.6, 1.0], snow: [0.2, 0.85] });
+export const PRECIP_PEAK = Object.freeze({ rain: [0.25, 1.0], storm: [0.6, 1.0], snow: [0.2, 0.85], sand: [0.5, 1.0] });   // WEATHER2d: a sandstorm is never thin
 /** The arrival window the drops fill in over: nothing falls until the
  *  front is past half in, and it is all down just before the front lands. */
 export const PRECIP_IN = Object.freeze([0.55, 0.95]);
@@ -89,7 +89,7 @@ export function smoothstep(a, b, x) {
 }
 
 /** The LOOK a mode has: storm shares the rain's. null for no mode. */
-export const precipKind = (mode) => (mode === 'snow' ? 'snow' : mode ? 'rain' : null);
+export const precipKind = (mode) => (mode === 'snow' ? 'snow' : mode === 'sand' ? 'sand' : mode ? 'rain' : null);   // WEATHER2d: the sand is its own look
 
 /** A roll `u` in 0..1 placed in the mode's peak range. */
 export function rollPeak(mode, u) {
@@ -138,7 +138,8 @@ export function blendTerms(from, to, t) {
 export function soundWeather(sample, weather) {
   if (sample.shown === 'storm') return 'thunder';
   if (sample.shown === 'rain') return 'rain';
-  return weather === 'rain' || weather === 'thunder' ? 'cloudy' : weather;
+  if (sample.shown === 'sand') return 'cloudy';   // WEATHER2d: DFU's ambience has no sand; the wind loop (WIND3) is the storm's voice
+  return weather === 'rain' || weather === 'thunder' || weather === 'sandstorm' ? 'cloudy' : weather;
 }
 
 /**

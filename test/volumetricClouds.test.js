@@ -21,7 +21,7 @@ const read = (f) => readFileSync(join(ROOT, f), 'utf8');
 test('VC3: the profile - one row per weather, eased on the weather ease\'s own exponential', () => {
   assert.deepEqual(Object.keys(VC_PROFILE).sort(), [...WEATHER_TYPES].sort(), 'a profile for every weather the sim can produce, and no more');
   for (const [name, p] of Object.entries(VC_PROFILE)) {
-    assert.ok(p.base > 0 && p.top > p.base, `${name}: a slab with a base below its top`);
+    assert.ok(p.base >= 0 && p.top > p.base, `${name}: a slab with a base below its top`);   // WEATHER2d: the sandstorm's wall stands on the ground (base 0)
     for (const k of ['density', 'dark', 'flat', 'shear']) assert.ok(p[k] >= 0 && p[k] <= 1, `${name}.${k} is 0..1`);   // AUDIT 65 PN-2: shear was the one field no assertion touched
   }
   // AUDIT 65 PN-2: the table itself. The inequalities below say WHY each

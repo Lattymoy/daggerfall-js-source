@@ -122,7 +122,11 @@ export const VC_PROFILE = Object.freeze({
   rain:     Object.freeze({ base: 600,  top: 2600, density: 0.90, dark: 0.50, flat: 0.70, shear: 0.30 }),
   snow:     Object.freeze({ base: 600,  top: 2000, density: 0.80, dark: 0.30, flat: 0.85, shear: 0.20 }),
   thunder:  Object.freeze({ base: 500,  top: 4200, density: 1.00, dark: 0.70, flat: 0.50, shear: 0.50 }),
+  sandstorm: Object.freeze({ base: 0,   top: 900,  density: 1.00, dark: 0.35, flat: 0.95, shear: 0.05 }),   // WEATHER2d: a wall on the ground, a lid 900 m up
 });
+/** WEATHER2d: a cell's TINT on the zone's cloud colours - the sandstorm's
+ *  tan; every other word takes the row's colours unchanged. */
+export const CELL_TINT = Object.freeze({ sandstorm: Object.freeze([0.88, 0.72, 0.46]) });
 const PROFILE_KEYS = ['base', 'top', 'density', 'dark', 'flat', 'shear'];
 
 // ═══ WEATHER2c (2026-09-14): CLOUD TYPES BY PLACE ═══════════════════
@@ -148,7 +152,7 @@ const PROFILE_KEYS = ['base', 'top', 'density', 'dark', 'flat', 'shear'];
 export function cellOf(weather, x, z, r) {
   const p = VC_PROFILE[weather];
   if (!p) return null;
-  return { x, z, r, edge: r * CELL_EDGE, ...p, cover: WEATHER_SKY[weather]?.cover ?? 1, grey: WEATHER_SKY[weather]?.grey ?? 0 };
+  return { x, z, r, edge: r * CELL_EDGE, ...p, cover: WEATHER_SKY[weather]?.cover ?? 1, grey: WEATHER_SKY[weather]?.grey ?? 0, ...(CELL_TINT[weather] ? { tint: CELL_TINT[weather] } : {}) };
 }
 
 /** The slab both marches walk: the zone's, widened to hold every
@@ -163,13 +167,16 @@ export function slabOf(profile, cells) {
  *  base, top, density, flat | dark, shear, cover, grey), capped at `cap`;
  *  the rim never narrower than a metre (smoothstep's edges must be
  *  ordered). Pure over the arrays it is handed. */
-export function packCells(cells, cap, out = { c: new Float32Array(MAX_CELLS * 4), a: new Float32Array(MAX_CELLS * 4), b: new Float32Array(MAX_CELLS * 4) }) {
+export function packCells(cells, cap, out = { c: new Float32Array(MAX_CELLS * 4), a: new Float32Array(MAX_CELLS * 4), b: new Float32Array(MAX_CELLS * 4), t: new Float32Array(MAX_CELLS * 4) }) {
   const n = Math.min(cells?.length ?? 0, cap, MAX_CELLS);
+  out.t ??= new Float32Array(MAX_CELLS * 4);   // WEATHER2d: the tints
   for (let i = 0; i < n; i++) {
     const c = cells[i], o = i * 4;
     out.c[o] = c.x; out.c[o + 1] = c.z; out.c[o + 2] = c.r; out.c[o + 3] = Math.max(1, c.edge ?? c.r * CELL_EDGE);
     out.a[o] = c.base; out.a[o + 1] = c.top; out.a[o + 2] = c.density; out.a[o + 3] = c.flat;
     out.b[o] = c.dark; out.b[o + 1] = c.shear; out.b[o + 2] = c.cover; out.b[o + 3] = c.grey ?? 0;
+    const t = c.tint ?? [1, 1, 1];
+    out.t[o] = t[0]; out.t[o + 1] = t[1]; out.t[o + 2] = t[2]; out.t[o + 3] = 1;
   }
   out.count = n;
   return out;
@@ -243,6 +250,7 @@ uniform int uCellCount;   // WEATHER2c: the cells, in the host's world metres
 uniform vec4 uCell[8];    // x, z, radius, the rim's width
 uniform vec4 uCellA[8];   // base, top, density, flat
 uniform vec4 uCellB[8];   // dark, shear, cover, grey
+uniform vec4 uCellC[8];   // WEATHER2d: the tint on the zone's cloud colours (rgb), w spare
 uniform vec2 uDrift;      // world metres
 uniform vec2 uShift;      // the floating origin's recenters, accumulated - added to every position so the field is sampled where it ABSOLUTELY is
 uniform vec2 uCamXZ;      // the camera's world position, the sky map's own origin
@@ -258,8 +266,9 @@ float remap(float v, float lo, float hi, float nlo, float nhi) { return nlo + (v
 // so a ray through a thunderhead takes the storm's terms only where the
 // storm is. The light march reads what the step resolved.
 float fBase, fTop, fDensity, fFlat, fShear, fCover, fDark, fGrey;
+vec3 fTint;
 void resolveAt(vec2 xz) {
-  fBase = uBase; fTop = uTop; fDensity = uDensity; fFlat = uFlat; fShear = uShear; fCover = uCover; fDark = uDark; fGrey = 0.0;
+  fBase = uBase; fTop = uTop; fDensity = uDensity; fFlat = uFlat; fShear = uShear; fCover = uCover; fDark = uDark; fGrey = 0.0; fTint = vec3(1.0);
   for (int i = 0; i < 8; i++) {
     if (i >= uCellCount) break;
     vec4 c = uCell[i];
@@ -268,6 +277,7 @@ void resolveAt(vec2 xz) {
     vec4 a = uCellA[i], b = uCellB[i];
     fBase = mix(fBase, a.x, w); fTop = mix(fTop, a.y, w); fDensity = mix(fDensity, a.z, w); fFlat = mix(fFlat, a.w, w);
     fDark = mix(fDark, b.x, w); fShear = mix(fShear, b.y, w); fCover = mix(fCover, b.z, w); fGrey = mix(fGrey, b.w, w);
+    fTint = mix(fTint, uCellC[i].rgb, w);   // WEATHER2d
   }
 }
 // the towers' profile against a stratus lid's, by the weather's flatness
@@ -359,8 +369,8 @@ void main() {
       // lid is mottled and an underside is not one flat grey
       float mottle = textureLod(uShape, vec3(p.x + uShift.x + uDrift.x, p.y, p.z + uShift.y + uDrift.y) / MOTTLE_M, 1.0).g;
       // WEATHER2c: a cell's grey pulls the lit colour toward the shade's, so a storm under a sunny zone is a storm's colour
-      vec3 ambient = mix(uCloudShade, uCloudLit, h * (1.0 - fGrey)) * (0.75 + 0.5 * mottle) * (1.0 - 0.5 * fDark * (1.0 - h));
-      vec3 S = uLightColor * light * phase * 0.7 * (1.0 - 0.8 * fDark) * (1.0 - 0.5 * fGrey) + ambient;
+      vec3 ambient = mix(uCloudShade, uCloudLit, h * (1.0 - fGrey)) * (0.75 + 0.5 * mottle) * (1.0 - 0.5 * fDark * (1.0 - h)) * fTint;   // WEATHER2d: the cell's tint
+      vec3 S = uLightColor * light * phase * 0.7 * (1.0 - 0.8 * fDark) * (1.0 - 0.5 * fGrey) * fTint + ambient;
       float Ti = exp(-rho * EXT * ds);
       col += T * S * (1.0 - Ti);
       T *= Ti;
@@ -458,7 +468,7 @@ function link(gl, vs, fs) {
 }
 
 /** The field's uniforms, shared by both marches. */
-export const FIELD_UNIFORMS = ['uShape', 'uDetail', 'uCover', 'uSoft', 'uBase', 'uTop', 'uDensity', 'uFlat', 'uShear', 'uDark', 'uSlabBase', 'uSlabTop', 'uCellCount', 'uCell', 'uCellA', 'uCellB', 'uDrift', 'uShift', 'uCamXZ'];   // WEATHER2c: uDark moved in (a cell has its own), the slab and the cells added
+export const FIELD_UNIFORMS = ['uShape', 'uDetail', 'uCover', 'uSoft', 'uBase', 'uTop', 'uDensity', 'uFlat', 'uShear', 'uDark', 'uSlabBase', 'uSlabTop', 'uCellCount', 'uCell', 'uCellA', 'uCellB', 'uCellC', 'uDrift', 'uShift', 'uCamXZ'];   // WEATHER2c: uDark moved in (a cell has its own), the slab and the cells added
 export const MARCH_UNIFORMS = [...FIELD_UNIFORMS, 'uMapSize', 'uLightDir', 'uLightColor', 'uCloudLit', 'uCloudShade', 'uHorizonColor', 'uSteps', 'uLightSteps'];
 export const SHADOW_UNIFORMS = [...FIELD_UNIFORMS, 'uMapSize', 'uOrigin', 'uExtent', 'uLightDir', 'uSteps'];
 export const COMPOSITE_UNIFORMS = ['uMap', 'uYaw', 'uPitch', 'uTanHalfFov', 'uAspect', 'uFlash'];
@@ -504,7 +514,7 @@ export class VolumetricClouds {
     this.cells = [];          // WEATHER2c: this frame's cells, in the host's world metres, capped at the tier's count
     this.testCellSpec = null; // WEATHER2c: `?cloudcell=` as handed by the controller; resolved against the first camera position seen
     this.testCell = null;
-    this._packed = { c: new Float32Array(MAX_CELLS * 4), a: new Float32Array(MAX_CELLS * 4), b: new Float32Array(MAX_CELLS * 4), count: 0 };
+    this._packed = { c: new Float32Array(MAX_CELLS * 4), a: new Float32Array(MAX_CELLS * 4), b: new Float32Array(MAX_CELLS * 4), t: new Float32Array(MAX_CELLS * 4), count: 0 };
     this.stripe = 0;
     this.sweeps = 0;          // full sweeps of the sky map completed (the probe waits for one); the first is striped like every other - no stall
     this.origin = null;       // the shadow square's corner the camera asks for
@@ -604,7 +614,7 @@ export class VolumetricClouds {
     gl.uniform1f(u.uSlabBase, slab.base); gl.uniform1f(u.uSlabTop, slab.top);
     const k = packCells(this.cells, this.q.cells ?? MAX_CELLS, this._packed);
     gl.uniform1i(u.uCellCount, k.count);
-    if (k.count > 0) { gl.uniform4fv(u.uCell, k.c); gl.uniform4fv(u.uCellA, k.a); gl.uniform4fv(u.uCellB, k.b); }
+    if (k.count > 0) { gl.uniform4fv(u.uCell, k.c); gl.uniform4fv(u.uCellA, k.a); gl.uniform4fv(u.uCellB, k.b); gl.uniform4fv(u.uCellC, k.t); }
     gl.uniform2f(u.uDrift, this.drift[0], this.drift[1]);
     gl.uniform2f(u.uShift, wrapField(this.shift[0]), wrapField(this.shift[1]));   // CLK1: wrapped to the field's period
     gl.uniform2f(u.uCamXZ, this.cam[0], this.cam[1]);

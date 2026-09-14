@@ -199,3 +199,57 @@ knows the distance to the nearest rim; a later slice can hand it to
 the wind as a lead of its own).
 
 `test/weather2b_weatherfield.test.js`.
+
+## D - THE SANDSTORM (WEATHER2d, 2026-09-14)
+
+Mac: "using our volumetric cloud system and fog, I want to add a new
+sand storm weather event for desert regions... being able to see a
+large wall of sandstorm cloud in the distance."
+
+**The word.** The port's own EIGHTH weather word, `sandstorm`,
+APPENDED to WEATHER_TYPES so DFU's seven keep their enum values (a
+save's byte, the classic array's 0x7f mask and 5<->6 swap, the
+Chronicles' seven columns - none touched). It is never rolled: the
+FIELD stands it (`CELL_WORDS.sandstorm`, walls 8-14 km across on a 30
+km lattice) over the DESERT TABLES' land - Desert and Desert2, the
+climates weatherTableFor sends to the desert table; the subtropics
+have their own - on a day whose word there is cloudy or thunder
+(`SAND_FROM`, `cellSeats`), the zone's own sky between them. So a
+desert traveller sees the wall on the horizon under a cloudy sky,
+walks into it, and out.
+
+**Every seam a word reaches.** The fog row (`FOG_SETTINGS.sandstorm`,
+exp 0.09 with the sky in it - denser than the heavy fog; a mod's five
+settings have none, so the heavy fog stands in under Dynamic Skies);
+the sun scale (0.35, between a rain and a storm); the sky row
+(WEATHER_SKY: a tan lid, cover 0.9, under a gale); the cloud profile
+(VC_PROFILE: base 0, top 900 - a wall on the ground, a lid 900 m up)
+and the cell's TINT (`CELL_TINT`, a fourth cell array in the field
+block, `fTint` on the lit and ambient colours - so the wall is tan and
+not the zone's grey); the wind's violence (0.95); the grass's dim
+(0.55); the front's kind (`sand`, a heavy peak 0.5-1.0, its own look
+so a change of kind tapers); the ear (DFU's ambience has no sand - a
+cloudy day, and the wind loop of WIND3 at a gale is the storm's
+voice). The music takes DFU's default arm (sunny), as any word DFU
+never knew would.
+
+**The sand.** Not the rain program (the lab's shaders, pinned byte for
+byte): the wisps' program (WIND3) in a LOOK - `SAND_LOOK`: tan, dense
+(7,000 instances), short streaks in a lower box, no floor - drawn by
+both hosts on the front's intensity as its strength, on the one wind's
+rate and travel, before the rain's branch and as a foreign pass; the
+rain renderer is never built for it. The look is a uniform set
+(colour, alpha, streak length, box, count), the wisps' own unchanged.
+
+**Not seen.** No ARENA2 here: the wall's tint and density, the sand's
+alpha and the fog's thickness go to Mac's eyes. `?cloudcell=sandstorm`
+stands one wall east of the boot position for a look.
+
+**The arc's close.** A (no rain over snow), C (cells), B (the field),
+D (the sandstorm) shipped 2026-09-14. Residuals: the wind rising with
+a storm's approach before the crossing (B); a spatial fog channel (the
+wall as thickening haze on the ground before its cloud is entered) -
+the front's fog crossing carries the immersion today; the ambience's
+birds in a sandstorm (DFU's player, kept 1:1).
+
+`test/weather2d_sandstorm.test.js`.
