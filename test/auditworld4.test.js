@@ -50,7 +50,7 @@ test('AUDIT WORLD4 A1: whether an act frame FITS is ONE HOME the sender reads be
   assert.equal(ws.sent.length, 2, 'and nothing went out - one hello, one act');
   // the host's arms: the union is shed before the act is dropped, and neither is ever re-pended
   const w = rd('src/scenes/world.js');
-  assert.match(w, /import \{ POSE_STRIKES, isWorldRoom, actFrameFits, sharedClassicMinutes \} from '\.\.\/net\/wire\.js';/, 'the host reads the same home');
+  assert.match(w, /import \{ POSE_STRIKES, isWorldRoom, actFrameFits, sharedClassicMinutes, wallMsForClassicMinutes \} from '\.\.\/net\/wire\.js';/, 'the host reads the same home');
   assert.match(w, /if \(out !== data && !actFrameFits\(out\)\) out = data;[^\n]*\n\s*if \(!actFrameFits\(out\)\) \{ actTooBig\(keys\); return false; \}\s*if \(!online\.sendAct\(out\)\) \{ for \(const k of keys\) _actPend\.add\(k\); return false; \}/,
     'shed the union, then drop the act itself - a size refusal never enters the pending set, which would re-read and re-refuse it every frame for ever');
   assert.match(w, /if \(!actFrameFits\(data\)\) \{ actTooBig\(\[\.\.\._actPend\]\); _actPend\.clear\(\); return false; \}/, 'and the flush cannot wedge either');

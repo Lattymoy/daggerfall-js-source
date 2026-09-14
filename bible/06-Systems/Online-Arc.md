@@ -2109,13 +2109,13 @@ every pool refilled in full on a 1.5-second black screen, repeatable,
 which retired resting, potions and the temples as a healing economy.
 The heal is the trip's nights, and online there are none.
 
-**Recorded, not paid.** (1) Every world-time deadline now runs on wall
+**Recorded, not paid.** (1, PAID BY OL3) Every world-time deadline now runs on wall
 time INCLUDING while the player is logged off: a room rented for a day
 is gone in two real hours whether or not the tab is open; the 350-day
 ceiling is 700 real hours; the tombstoned-quest week fourteen real
 hours; a loan's month sixty. That is what a shared clock means, and the
 alternative (per-player deadlines in a shared world) is a different
-design; the pane's sentence says the clock runs on real time. (2) Only
+design; the pane's sentence says the clock runs on real time. (2, `CreateFoe` PAID BY OL3) Only
 `Clock` stands down. `DailyFrom`, `GivePc`'s daylight gate,
 `PlaySound`'s interval, `CreateFoe`'s `spawnInterval`, the tombstone
 week and `TrainPc`'s three hours all read the shared clock and PACE
@@ -2133,7 +2133,7 @@ and the counter moves once per five, which a player will read as a
 hang. (6, PAID BY OL2) The travel popup counts down the trip's days for a trip that
 takes none, inn nights are charged for nights nobody spends, and
 `arrivalClampMinutes` is computed and discarded online; the sun-averse
-traveller arrives when they arrive (WORLD5's own record). (7) The
+traveller arrives when they arrive (WORLD5's own record). (7, PAID BY OL3) The
 session refuses a welcome clock more than a year off - a machine a
 year wrong reads the world's time uncorrected rather than not at all.
 (8) The classic and enhanced lanes diverge under one seed by design
@@ -2241,6 +2241,58 @@ and the trip's DFU minutes are still computed because the host reads
 them offline. `arrivalClampMinutes` is still computed and discarded
 online (the sun-averse traveller arrives when they arrive, WORLD5's own
 record) - two source pins hold that line and it costs nothing.
+
+## OL3 (2026-09-14): the clock does not punish absence
+
+**Mac: "Yeah you got it my man. Go ahead and get these done per your
+opinion."** Three of AUDIT WORLD5's recorded items, paid together
+because they are one thing: a shared clock that runs while the player
+is away must not charge them for being away without saying so.
+
+**(1) THE PRICE IS SAID IN REAL TIME.** Every world-time deadline runs
+on wall time through a logout - a week's lodging is fourteen real
+hours, a loan's month sixty - and the shared world keeps ONE clock, so
+per-player deadlines would be a different design. The honest fix is
+that the player buys what they think they are buying. The shared
+clock's inverse now rides beside its source: `wire.js
+wallMsForClassicMinutes` (the relay-clock millisecond at which the
+world reads a classic minute), installed by the world host through
+the relay's offset as `setSharedClock(source, wallOf)`, and read as
+`worldTick.js sharedWallMs` / `sharedRealTimeText` ("Tue 15 Sep
+18:05", in the font's own ASCII, this machine's zone; null offline).
+The tavern's offer carries a row under DFU's - "The room is yours
+until Tue 15 Sep 18:05 by your clock - the world's time runs while you
+are away." - through one hook, `realTimeOf` (a fresh rental from now,
+a renewal from the standing expiry, exactly RentRoom's own arithmetic;
+a host that answers nothing offers as DFU does). The bank's due-by
+label carries the real time in brackets beside DFU's date, since a
+default lowers reputation and brings the guards; offline it is the
+date alone. The loan reminder letters are the safety net and are
+untouched.
+
+**(2) `CreateFoe` STANDS DOWN WITH THE CLOCK.** Mac's WORLD1 word was
+that quest time limits should not punish being online, and a quest
+that keeps spawning ambush waves on wall time while the player idles
+or is away is the same punishment by another door. The spawn interval
+now reads the quest's `questClocksStoodDown` as the Clock does: while
+stood down the marker rides the clock so no interval accrues (no
+backdate on a first tick either), a wave already in flight still lands
+and is counted (the placement is not a timer), and standing up the
+first wave waits a full interval from there. `DailyFrom`, the daylight
+gate and `PlaySound` are pacing, not pressure, and stay as recorded.
+
+**(7) A CLOCK A YEAR OFF IS SAID.** The session refused a welcome clock
+more than a year from this machine's and ran the world's time
+uncorrected in silence. It now keeps `clockWarning` while the fault
+stands - the console hears it once, with both clocks, and the HUD's
+status line shows it on an OPEN session ("this machine's clock is more
+than a year from the world's - set it, or the shared time is wrong
+here") - and a sane welcome clears it.
+
+**Left as recorded, on purpose:** (3) training's free hours (the daily
+cooldown bounds it to what DFU allows); (4) the pause-menu catch-up (a
+shared world does not pause); (8)'s residue, the probes' URL kill
+doors; (9) the uninstall no caller uses.
 
 ## What it does not do (yet)
 

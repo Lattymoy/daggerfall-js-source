@@ -5495,7 +5495,7 @@ other two engine-owning hosts wire (`world.js:2457-2458`,
 `CastSpellDo`'s two world reads — `getClassicSpellEffects` and the
 byte-folded `spellHasMatchForClassicEffect` (`world.js:5529-5532`),
 absent which the action self-completes at *parse*
-(`actions.js:2742`/`:2749`) and the task can never arm at all.
+(`actions.js:2750`/`:2757`) and the task can never arm at all.
 
 Pins: 5 in `test/qx1_exterior_host.test.js` (the placement law RUN over
 the real `placeFoeFreely` with a stubbed world — the FOV cone bounded on

@@ -199,7 +199,7 @@ test('WORLD5: a quest clock stood down charges nothing, and the hours it stood d
 
 test('WORLD5: the hosts by source - the shared clock installed at the boot before anything reads the time, ?tod and ?timescale standing down, the markers aligned and the day rolled when the session starts, the relay\'s offset heard, the trip taking no world time, the jump refused, the rest paced, the quest clocks stood down through the bridge and the parser', () => {
   const w = rd('src/scenes/world.js');
-  assert.match(w, /let _sharedOffsetMs = 0;[^\n]*\n\s*if \(params\.has\('online'\)\) \{ setSharedClock\(\(\) => sharedClassicMinutes\(Date\.now\(\) \+ _sharedOffsetMs\)\); setSharedWeather\(true\); \}/, 'installed at the boot, the shared weather with it');
+  assert.match(w, /let _sharedOffsetMs = 0;[^\n]*\n\s*if \(params\.has\('online'\)\) \{ setSharedClock\(\(\) => sharedClassicMinutes\(Date\.now\(\) \+ _sharedOffsetMs\), \(m\) => wallMsForClassicMinutes\(m\) - _sharedOffsetMs\); setSharedWeather\(true\); \}/, 'installed at the boot, the shared weather with it (OL3: the inverse beside the source)');
   assert.match(w, /if \(bootTod != null && !sharedClockOn\(\)\) setWorldMinutes\(/, '?tod stands down');
   assert.match(w, /const timeScaleMult = params\.has\('timescale'\) && !sharedClockOn\(\) \? Number\(params\.get\('timescale'\)\) \/ 12 : 1;/, '?timescale stands down');
   assert.match(w, /online\.onClock = \(offsetMs\) => \{ const was = _sharedOffsetMs; _sharedOffsetMs = offsetMs; if \(Math\.abs\(offsetMs - was\) > 1000\) onlineArrival\(\); \};/, 'the relay\'s clock corrects this machine\'s (AUDIT WORLD5 C2: and a correction is an arrival)');

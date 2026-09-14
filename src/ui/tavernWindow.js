@@ -111,6 +111,9 @@ const inRect = ([rx, ry, rw, rh], x, y) => x >= rx + TAVERN_PANEL_X && y >= ry +
 
 /** A plain string as one centred row - the chain's own idiom. */
 const line = (text) => [{ text, center: true }];
+/** OL3: the offer's real-time row, online. */
+export const REAL_TIME_UNTIL = 'The room is yours until';
+export const REAL_TIME_NOTE = ' by your clock - the world\'s time runs while you are away.';
 
 /**
  * hooks:
@@ -124,6 +127,13 @@ const line = (text) => [{ text, center: true }];
  *   heal(amount)      the host's SetHealth (clamped by the entity's law)
  *   onTalk(), onClose()
  *   rolls()           the bed-marker roll
+ *   realTimeOf(minutes) -> OL3: the real time (this machine's clock) at
+ *                        which the world reads a classic minute, or null
+ *                        offline - the offer says when the room ends,
+ *                        because online the world's clock runs while the
+ *                        player is away and a week's lodging is fourteen
+ *                        real hours; a host that answers nothing offers
+ *                        as DFU does
  */
 export class TavernWindow {
   constructor(hooks) {
@@ -206,12 +216,22 @@ export class TavernWindow {
     // CalculateRoomCost (:1871), i.e. BEFORE the price offer - so the
     // player sees it and is then still asked to confirm a 0-gold room.
     const offer = {
-      rows: this._rows(OFFER_PRICE_ID, { amount: d.price, room, now }),
+      rows: [...this._rows(OFFER_PRICE_ID, { amount: d.price, room, now }), ...this._realTimeRows(room, d.days, now)],
       buttons: 'YesNo',
       onYes: () => this._confirm(room, d),
       onNo: () => null,      // the chain empties, which closes the tavern (:212)
     };
     return d.heartsDay ? [{ rows: line(ROOM_FREE_HEARTS_DAY) }, offer] : [offer];
+  }
+
+  /** OL3: the room's end in real time, under the offer - RentRoom's own
+   *  expiry (a renewal EXTENDS the standing expiry, a fresh rental runs
+   *  from now, tavern.js rentRoom) through the host's realTimeOf; no
+   *  rows when the host answers nothing (offline). */
+  _realTimeRows(room, days, now) {
+    const expiry = (room ? room.expiryMinutes : now) + 24 * 60 * days;
+    const t = this.hooks.realTimeOf?.(expiry);
+    return t ? [{ text: `${REAL_TIME_UNTIL} ${t}${REAL_TIME_NOTE}`, center: true }] : [];
   }
 
   /** ConfirmRenting_OnButtonClick's Yes arm (:213-223). */
