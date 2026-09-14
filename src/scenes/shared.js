@@ -1390,7 +1390,7 @@ export function subscribeFoePools(ticker, pools, sinksFor) {
   return ticker.subscribe((from, to, dt) => {
     for (const pool of pools) {
       for (const f of pool() ?? []) {
-        if (!f || f.dead || !f.entity) continue;
+        if (!f || f.dead || !f.entity || f.puppet) continue;   // AUDIT WORLD6b B1: a PUPPET's entity is its owner's simulation - no round of mine ticks it (a poison put on it locally reached the divert as my blow)
         const sinks = sinksFor(f);
         runMagicRoundsFor(f.entity, from, to, { sinks });
         killIfAnyLiveStatZero(f.entity, sinks, dt);

@@ -324,8 +324,40 @@ const CELL_ROOM = /^world:\d{1,3},\d{1,3}$/;
 export const isCellRoom = (key) => CELL_ROOM.test(String(key ?? ''));
 /** A room whose foes ride the wire: a world room (the host's) or a cell (each spawner's). */
 export const streamsFoes = (key) => isWorldRoom(key) || isCellRoom(key);
-/** WORLD6b: the owner a cell's hit is for - the frame's `to`, a peer id; null when the frame names none. */
-export const hitOwnerOf = (data) => (data && typeof data.to === 'string' && data.to.length > 0 && data.to.length <= 64 ? data.to : null);
+/** WORLD6b: the owner a cell's hit is for - the frame's `to`, a peer id; null when the frame names none.
+ *  AUDIT WORLD6b A5: an id is what the wire's own law says an id is (ID_RE) - a `to` no socket could ever carry
+ *  named nobody yet bought a funnel token. */
+export const hitOwnerOf = (data) => (data && typeof data.to === 'string' && ID_RE.test(data.to) ? data.to : null);
+/** AUDIT WORLD6b B3/C2: A CELL'S FRAME IS BOUNDED, at both ends. A dungeon's frame is the host's alone and keys
+ *  into a layout every client built (`i >= _layoutFoes` refuses the rest); a cell's comes from anyone and MINTS a
+ *  foe per record it names, so a record is projected like a pose (validPose's own bounds on the feet) and a frame
+ *  carries at most CELL_FRAME_RECORDS_MAX records (the owner's live cap plus the corpses still riding), and a
+ *  reader stands at most CELL_PUPPETS_MAX live puppets per owner (MAX_ACTIVE_ENCOUNTER_FOES - the only number a
+ *  legitimate owner can exceed is by quest foes, which never ride). */
+export const CELL_FRAME_RECORDS_MAX = 64;
+export const CELL_PUPPETS_MAX = 8;
+export const FOE_SEQ_MAX = 1e9;
+export const FOE_HEALTH_MAX = 1e5;
+/** One streamed foe record projected: `i` a whole number in [0, FOE_SEQ_MAX]; `t` a whole number in [0, 255] or
+ *  absent; `x`, `d`, `m` 0 or 1 or absent; `f` three finite numbers inside the pose's bounds or absent; `y` finite
+ *  or absent; `h` finite in [0, FOE_HEALTH_MAX] or absent; `a` a whole number in [0, 2^31) or absent. Null when
+ *  any present field is outside its law - a record is refused whole, never half landed. */
+export function validFoeRecord(r) {
+  if (!r || typeof r !== 'object' || Array.isArray(r)) return null;
+  if (!Number.isInteger(r.i) || r.i < 0 || r.i > FOE_SEQ_MAX) return null;
+  const out = { i: r.i };
+  if (r.t !== undefined) { if (!Number.isInteger(r.t) || r.t < 0 || r.t > 255) return null; out.t = r.t; }
+  for (const k of ['x', 'd', 'm']) if (r[k] !== undefined) { if (r[k] !== 0 && r[k] !== 1) return null; out[k] = r[k]; }
+  if (r.f !== undefined) {
+    if (!Array.isArray(r.f) || r.f.length !== 3 || !r.f.every(Number.isFinite)) return null;
+    if (Math.abs(r.f[0]) > POSE_BOUND || Math.abs(r.f[2]) > POSE_BOUND || Math.abs(r.f[1]) > POSE_Y_BOUND) return null;
+    out.f = [r.f[0], r.f[1], r.f[2]];
+  }
+  if (r.y !== undefined) { if (!Number.isFinite(r.y)) return null; out.y = r.y; }
+  if (r.h !== undefined) { if (!Number.isFinite(r.h) || r.h < 0 || r.h > FOE_HEALTH_MAX) return null; out.h = r.h; }
+  if (r.a !== undefined) { if (!Number.isInteger(r.a) || r.a < 0 || r.a >= 2 ** 31) return null; out.a = r.a; }
+  return out;
+}
 
 /** A pose the room will relay, or null. */
 export function validPose(p) {

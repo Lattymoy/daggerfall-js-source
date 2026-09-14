@@ -291,7 +291,8 @@ export class OnlineSession {
     if (!data || typeof data !== 'object' || Array.isArray(data)) return false;
     // WORLD6b: in a cell the blow names its owner (`to`, a peer, never me); in a world room it goes to the host, as WORLD2 has it
     const cell = isCellRoom(this.room);
-    if (cell ? (!hitOwnerOf(data) || hitOwnerOf(data) === this.id) : (this.isHost() || !this.host || !isWorldRoom(this.room))) return false;
+    // AUDIT WORLD6b A6: the owner must be a peer I KNOW (the roster's) - a blow to an owner already gone bought the relay's funnel for nothing
+    if (cell ? (!hitOwnerOf(data) || hitOwnerOf(data) === this.id || !this.peers.has(hitOwnerOf(data))) : (this.isHost() || !this.host || !isWorldRoom(this.room))) return false;
     if (!this._ws || this.status !== 'open') return false;
     const gate = hitGate(this._hbucket, this._now());   // AUDIT WORLD2 A6: HIT_HZ_MAX a second at home - refused to the caller, never dropped by the relay unseen
     if (!gate.pass) return false;
@@ -431,7 +432,8 @@ export class OnlineSession {
     } else if (m.t === 'foes') {
       // WORLD2: the host's live foes - the room's host's alone (a stale frame from a host that just left is not the world)
       // WORLD6b: in a cell every peer's frame is its own foes; in a world room the host's alone
-      if (typeof m.id === 'string' && (isCellRoom(this.room) || m.id === this.host) && m.id !== this.id && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) this.onFoes?.(m.id, m.data);
+      // AUDIT WORLD6b A8/C6: in a cell a frame is a PEER's - one the roster holds; past ROSTER_MAX a stranger's frames stood puppets the prune took back every frame
+      if (typeof m.id === 'string' && (isCellRoom(this.room) ? this.peers.has(m.id) : m.id === this.host) && m.id !== this.id && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) this.onFoes?.(m.id, m.data);
     } else if (m.t === 'hit') {
       // WORLD2: a blow on my foe - mine to apply only while I host
       // WORLD6b: in a cell a blow is mine when it names me (the relay routed it, and the frame says so); in a world room while I host

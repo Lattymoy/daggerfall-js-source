@@ -203,7 +203,7 @@ test('AUDIT 58: every player-attack resolver reaches the door on a zero-damage c
   assert.match(dg, /else if \(snd\) audio\.playOneShot\(snd\.sound, 1\.1\);[\s\S]{0,600}handleAttackFromPlayer\(foe, playerFeet\);\n\s*continue;/,
     'dungeonContext: the zero-damage arm enrages before it continues');
   assert.match(src('scenes/exteriorFoes.js'),
-    /parrySounds: !!ENEMY_BASICS\[foe\.mobileType\]\?\.parrySounds[\s\S]{0,600}handleAttackFromPlayer\(foe, playerFeet\);/,
+    /parrySounds: !!ENEMY_BASICS\[foe\.mobileType\]\?\.parrySounds[\s\S]{0,900}handleAttackFromPlayer\(foe, playerFeet\);/,   // AUDIT WORLD6b B10: a puppet's zero blow goes through the door first, the note widened the window
     'exteriorFoes: the same, in its else arm');
   assert.match(src('scenes/cityGuards.js'), /damageGuard\(foe, 0, playerFeet, null\);/,
     'cityGuards: through the damage door, with no knock ray');

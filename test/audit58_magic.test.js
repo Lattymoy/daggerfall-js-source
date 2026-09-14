@@ -143,7 +143,7 @@ test('AUDIT 58: all three foe damage doors consult the Shield pool, and the zero
   }
   // the SetHealth(0) door says bypassShield, the hurtPlayer idiom
   for (const file of ['scenes/dungeonContext.js', 'scenes/exteriorFoes.js']) {
-    assert.match(src(file), /zeroFoeHealth: \(f\) => \{ if \(!f\.dead\) damageFoe\(f, f\.entity\.health, null, null, \{ bypassShield: true \}\); \}/,
+    assert.match(src(file), /zeroFoeHealth: \(f\) => \{ if \(!f\.dead(?: && !f\.puppet)?\) damageFoe\(f, f\.entity\.health, null, null, \{ bypassShield: true \}\); \}/,   // AUDIT WORLD6b B9: the encounter pool's door refuses a peer's foe
       `${file}'s zeroFoeHealth is a kill, not a mitigated blow`);
   }
   // and the pool itself is the all-or-overflow consumer DamageShield is

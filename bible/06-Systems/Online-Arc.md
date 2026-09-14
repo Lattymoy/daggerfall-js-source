@@ -2657,6 +2657,196 @@ WORLD6a pins restamped where the law moved; the pool's provenance,
 latch, voice and hostility pins (audit24/26/58, pacify, roadb, nt2)
 restamped for the peer arm.
 
+## AUDIT WORLD6b (2026-09-14)
+
+**Mac: "Audit first."** Three opus lenses over WORLD6b-i - A the relay
+and the session, B the encounter pool's puppet and stream arms, C the
+world host's wiring, the day's rolls, the record and the pins. Every
+finding verified against the code before it was paid; the pay-outs are
+root fixes, pinned by execution in `test/auditworld6b.test.js`, the
+relay redeployed (`RELAY_VERSION` `world63`).
+
+### A - the relay and the session
+
+- **A1 (major, paid): the cell's hit funnel was charged before the
+  route was known.** In a cell the destination is the client's `to`;
+  the room-wide token was spent, THEN the socket looked up - so a `to`
+  naming nobody delivered nothing, bought a token, and counted no
+  junk. Three sockets streaming twenty unroutable blows a second
+  silenced every honest blow in the country for as long as they sat
+  there, nobody struck. Now the ROUTE is resolved first; a `to` no
+  socket carries delivers nothing, spends nothing, and is counted as
+  junk (AUDIT WORLD2 A4's instrument) so a stream of them is struck.
+- **A2 (major, paid): one room-wide hit budget served many owners.**
+  `HIT_ROOM_HZ_MAX` (60) funnelled onto ONE host in a dungeon; in a
+  cell six honest fights saturated it and the seventh's blows dropped
+  silently. The funnel is the DESTINATION socket's own bucket now
+  (`hbucket` on its attachment) - AUDIT WORLD2 A6's law as written,
+  "the funnel onto the host's ONE socket", per socket.
+- **A3 (major, paid): a cell's foes admission was an unbudgeted ingress
+  and a serialise sink.** The byte budget bounded egress only, and the
+  re-stringify ran before it; every hello'd socket could push 12 x 64
+  KiB a second of parsed-and-restringified junk, never struck. The
+  room budgets its cell INGRESS at the door, before the parse (dropped
+  unread, nobody struck - the fan's own law), and the fan's budget is
+  asked before the stringify on an estimate of the envelope.
+- **A4 (major, paid): the cell's foes fan ignored the range gate the
+  pose fan applies.** Two players ten pixels apart in one sixteen-pixel
+  cell heard no poses and every foe; my pool grew with the cell's
+  population for foes nobody near me could see. The fan is ranged as
+  the pose's is (`inRange`, `RANGE_PIXELS`); a dungeon's still reaches
+  every socket in the place.
+- **A5 (minor, paid):** `hitOwnerOf` took any string of 1-64; it tests
+  the wire's own id law (`ID_RE`).
+- **A6 (minor, paid):** the record said `sendHit` needs a `to` that is
+  "a peer" and the session never asked the roster; it does (an owner
+  already gone bought the funnel for nothing).
+- **A7 (note, paid):** the hit carries the cell key `k` as the frame
+  does, and `applyHit` refuses another room's.
+- **A8 (note, paid):** `onFoes` in a cell fires for a peer the roster
+  holds - past `ROSTER_MAX` a stranger's frames stood puppets the
+  prune took back every frame (C6, the same).
+- **A9 (note, paid):** a cell's host word no longer stamps the dungeon
+  seat's heartbeat (`_foesInAt` is a world room's).
+- Sound: no spoofing (the relay stamps `id` from the attachment);
+  CLOSE_REPLACED cannot yield two sockets with one id; every branch of
+  the pre-parse door for a cell, a dungeon, an interior, a town, a
+  chat room and a socket before hello; `sendWorld`/`sendAct`/`onAct`/
+  `onWorld` unreachable from a cell; in-flight frames from the old
+  socket dropped on a room change.
+
+### B - the encounter pool
+
+- **B1 (critical, paid): the puppet divert had no provenance gate.**
+  `damageFoe` diverted EVERY caller to the owner as the player's blow
+  - a fall, another foe's maul, a poison round, the magic-round broker
+  - so a bear mauling Bob's rat on my screen damaged Bob's rat and
+  turned it on Bob (AUDIT WORLD2 B7 re-opened). The divert is gated
+  on `fromPlayer && !peer` as the dungeon's door is; a non-player blow
+  on a puppet is dropped (the owner's simulation has its own); and the
+  magic-round broker skips a puppet's entity (`shared.js`).
+- **B2 (critical, paid): a peer's kill spent MY soul gems, filled MY
+  Azura's Star and spoke MY kill notice.** The death block never read
+  `peer` (a failed trap even refused the death). Threaded line for
+  line with the dungeon's (AUDIT WORLD2 B9): no trap, no Star, no
+  notice for a blow I did not strike; the corpse, the alert clear and
+  `raiseEnemyDeath` stay.
+- **B3 (critical, paid) / C2: puppets were unbounded.** One frame could
+  stand 400 foes (batches, entities, careers, textures) at every reader
+  - by accident in a crowded cell, on purpose from a hostile client.
+  Bounded at both ends, the wire's law: a cell's frame carries at most
+  `CELL_FRAME_RECORDS_MAX` (64) records or it is junk at the relay; a
+  record is PROJECTED (`validFoeRecord` - the feet inside the pose's
+  own bounds, the health, the numbers) or refused whole; a reader
+  stands at most `CELL_PUPPETS_MAX` (8, `MAX_ACTIVE_ENCOUNTER_FOES`)
+  live puppets per owner.
+- **B4 (major, paid): an owner that restarted its pool was frozen out
+  for ever.** The frame counter was per owner and cleared only on MY
+  room change; a reload keeps the id and numbers from one, so every
+  later frame was "stale". The counter is the owner's PRESENCE's: it
+  ends when the owner leaves (the prune) - and, C3, when the owner
+  goes quiet (`FOES_STALE_MS`, the seat's own window, `now` and
+  `staleMs` on the net).
+- **B5 (major, paid): a swept puppet's record was re-adopted before the
+  splice.** `removePuppet` flagged the record and left it in the roll
+  for the frame's tail splice; the owner's next record landed on the
+  corpse-less dead and stood nothing - every cell seam crossing lost a
+  peer's foes for up to `FOES_FULL_MS`. The record ENDS in
+  `removePuppet` (spliced), and the lookup is an owner:seq index (B16).
+- **B6 (major, paid): a build in flight survived the clear.** A puppet
+  built through the async spawn chain landed after `clearPuppets` or
+  the prune, at the old cell's feet, sometimes adopted as the new
+  cell's foe at the same number. The build carries the owner's
+  generation; a stale one ends on arrival.
+- **B7 (major, paid): a corpse mint in flight survived the sweep.** The
+  marker landed in `corpseBatches` owned by a record already gone.
+  `mintCorpse`'s late guard reads `_gone` beside the epoch.
+- **B8 (major, paid): my foes and the watch could pick a puppet as a
+  target and fight a ghost;** an archer's shaft into one added an
+  arrow to items nobody could loot. Puppets are out of the shared
+  candidate list at the host, and a foe's shaft into a puppet lands
+  nothing.
+- **B9 (major, paid): a Wabbajack strike on a puppet minted a local foe
+  of mine in a peer's foe's place;** `removeFoe`, `zeroFoeHealth` and
+  the replace arm refuse a puppet.
+- **B10 (minor, paid):** a puppet's zero-damage connect goes through
+  the one door (AUDIT WORLD2 B13: a zero blow is a blow, the owner's
+  foe turns).
+- **B11/B12 (minor, paid):** a record whose species disagrees with the
+  puppet's, or that says a dead puppet lives, ends the old puppet and
+  stands anew (the dungeon's retype law, per foe).
+- **B13 (minor, paid):** a record for a puppet still building is the
+  word that lands when the build does - a `d:1` no longer stood the
+  puppet alive until the next full frame.
+- **B14 (note, paid):** a puppet's stand rolls no loot table, wears no
+  kit, casts nothing: what my neighbours stream must not move my own
+  dice.
+- **B15 (note, paid):** the corpse loot keys by a stable id (`uid`) as
+  the watch's does (AUDIT 39) - puppets splice far more often than
+  the cull ever did.
+- **B16 (note, paid):** an owner:seq index replaces the per-record
+  `find`.
+- Sound: the save and the loot exclusions; `activeCount`; the frame's
+  quest-foe and puppet exclusions; the `k` and `n` guards within a
+  session; `collectPixel`, `destroy`, the cull and the fall skipped for
+  puppets; `puppetStep`; the joiner's attack latch; the HUD marks; the
+  ring, blood and pain at the owner; the peer arm's area wake.
+
+### C - the world host, the day's rolls, the record
+
+- **C1 (major, paid): the puppet's target was cached in the SCENE
+  frame and the floating origin did not move it.** `offsetAll` shifted
+  every foe's feet and not `_pup.feet`; at every map-pixel crossing
+  every standing puppet snapped a whole pixel (819.2 units) away for
+  up to `FOES_FULL_MS` (AUDIT 17e F23's class, AUDIT ONLINE D5's for
+  peer bodies). The target is kept in the WORLD frame and converted
+  through `toScene` every step - the pose's own law - so no
+  `offsetAll` entry can be forgotten.
+- **C2 (major, paid):** the frame's bounds - see B3.
+- **C3 (major, paid):** interest and staleness - see A4 and B4; a
+  puppet whose owner's stream has died is swept after `FOES_STALE_MS`.
+- **C4 (major, paid): "two players whose state agrees walk alike" was
+  not what the code did.** One generator seeded by today walked
+  `daysPast` days region-major, so the draw depended on when each
+  player LAST ran the day change: a player back from three days away
+  walked a different region than one there every day. Online the walk
+  is one day at a time, each day from its own generator; catching up
+  equals having stayed. Offline the caller's stream walks the span
+  whole, as DFU does.
+- **C5 (minor, paid):** the price walk and the powers drew the
+  IDENTICAL sequence on a day both fired; each consumer has a salt
+  (`DAY_SALT`), the weather's own shape.
+- **C6 (minor, paid):** see A8.
+- **C7 (minor, paid):** a room change resets the full-frame clock, so a
+  new room hears every foe of mine at once instead of after
+  `FOES_FULL_MS`.
+- **C8 (minor, paid):** the death branch returned before the room
+  latch; the puppets go with the room at the death.
+- **C9 (minor, paid):** the pane says "everyone NEARBY sees and can
+  HELP fight" - the fan is ranged and a puppet lands no blow.
+- **C10 (minor, paid):** the teardown ends the owners' records; an
+  orphan body - see B7.
+- **C11 (minor, paid):** `selfId` was dead wiring on the net; gone.
+- **Note:** a 30-day catch-up's per-minute generator mint measured
+  0.53 ms; the constants sat between imports - moved below them.
+- **Pins:** the converters and the compensation change were pinned by
+  source alone; the audit's pins execute a converting net through a
+  compensation change (C1), the per-day walk against a continuous one
+  (C4), the prune's clock (C3), the funnel per destination and the
+  unroutable blow (A1/A2), the ranged fan and the bounded frame
+  (A4/B3), the ingress budget (A3), the provenance gate and the peer
+  kill (B1/B2), the cap and the projection (B3/C2), the restart, the
+  splice, the cancelled build and the late body (B4-B7), the refusals
+  (B8/B9), the rebuild and the pending word (B11-B13), the stable
+  loot key (B15).
+
+**Recorded, not paid (6b-ii's, added to the list):** the striker's
+poison and disease riders run on the local puppet's entity before the
+divert and never reach the owner's foe (the hit should carry them, as
+WORLD3 put the arrow's shaft on the dungeon's); the roster's
+`ROSTER_MAX` bound leaves a 65th player's foes unseen; the peer's blow
+carries no feet (the owner's foe turns on the owner).
+
 ## What it does not do (yet)
 
 - **The Morrowind body** ships (MWBODY1, above); a client without the
@@ -2677,7 +2867,9 @@ restamped for the peer arm.
   shelf and cupboard anyone has opened, with the day it was stocked;
   towns keep nothing yet, and since WORLD6b a CELL streams every
   player's encounter foes to everyone in it (a foe is its spawner's;
-  no guards, no puppet loot, my foe hunts me alone - 6b-ii); since
+  no guards, no puppet loot, my foe hunts me alone - 6b-ii; audited:
+  the fan is ranged, the frame bounded, a foe is its spawner's to
+  hurt and to kill); since
   WORLD5 the clock and the day's weather are
   the world's and the quest clocks stand down online; no
   player-versus-player. Until AUDIT

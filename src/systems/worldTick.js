@@ -75,20 +75,25 @@ import { passiveSpecialsMagicRound } from './passiveSpecials.js';   // V2c: care
 import { updateRegionalPrices } from './shopStock.js';            // FormulaHelper.UpdateRegionalPrices (:2053)
 import { rollClimateWeathersForDay, evolveClimateWeathers } from './weatherSim.js';      // WeatherManager.SetClimateWeathers (:419); CLK2: the enhanced lane's hourly evolution
 import { seededRng } from './wind.js';   // WORLD6b: the shared day's own generator for the region's walk
-const SHARED_DAY_SEED = 0x44415953;   // 'DAYS'
-/** WORLD6b: the generator a day's rolls come from. Under the shared clock the day's rolls are THE DAY'S - the price
- *  walk's and the faction powers' generator is seeded by the world's day (the weather's own law, WORLD5 rollsFor),
- *  so two players whose state agrees walk the region alike; offline, the caller's own `rolls`. The STATE stays
- *  each player's (the prices and the powers live on the entity - DFU has one player); one economy is the region as
- *  a world, and a later slice. */
-export const dayRollsFor = (minute, rolls) => (sharedClockOn() ? seededRng((Math.floor(minute / MINUTES_PER_DAY) * 7919) ^ SHARED_DAY_SEED) : rolls);
 import { removeExpiredRooms } from './tavern.js';                 // PlayerEntity.RemoveExpiredRentedRooms (:257)
 import { removeExpiredItems } from './createItem.js';             // X11b: ItemCollection.RemoveExpiredItems (:125), the per-minute sweep
 import { tickPlayerTorch } from './playerTorch.js';               // T1: EnablePlayerTorch.Update, on the REAL clock
 import { checkOverdueLoans, settleOverdueLoan } from './banking.js';   // LoanChecker.CheckOverdueLoans (:17)
 import { lowerRepForCrime } from './court.js';                    // OverdueLoan's LowerRepForCrime (:70)
 import { REGION_NAMES } from '../formats/mapsFile.js';            // loanReminder2's %s
+
 import { handleStartingCrimeGuildQuests } from './crimeGuilds.js';   // CG2: PlayerEntity.Update:531
+
+const SHARED_DAY_SEED = 0x44415953;   // 'DAYS'
+/** AUDIT WORLD6b C5: each consumer of a day's rolls has its own SALT - the price walk and the faction powers fired
+ *  on one day from one seed and drew the identical sequence from index zero (the weather's rollsFor has a salt for
+ *  the same reason). */
+export const DAY_SALT = Object.freeze({ prices: 1, powers: 2 });
+/** WORLD6b: the generator a day's rolls come from. Under the shared clock the day's rolls are THE DAY'S - the price
+ *  walk's and the faction powers' generator is seeded by the world's day (the weather's own law, WORLD5 rollsFor)
+ *  and the consumer's salt; offline, the caller's own `rolls`. The STATE stays each player's (the prices and the
+ *  powers live on the entity - DFU has one player); one economy is the region as a world, and a later slice. */
+export const dayRollsFor = (minute, rolls, salt = 0) => (sharedClockOn() ? seededRng(((Math.floor(minute / MINUTES_PER_DAY) * 7919) ^ SHARED_DAY_SEED ^ Math.imul(salt | 0, 0x9E3779B1)) >>> 0) : rolls);
 
 export { MINUTES_PER_DAY };
 
@@ -323,13 +328,19 @@ export function runDayChange({ entity, lastMinutes, nowMinutes, rolls = Math.ran
   if (!entity) return none;
   const daysPast = Math.floor(nowMinutes / MINUTES_PER_DAY) - Math.floor(lastMinutes / MINUTES_PER_DAY);
   if (!(daysPast > 0)) return none;
-  const dayRolls = dayRollsFor(nowMinutes, rolls);   // WORLD6b: the shared day's own generator for the walk
-
   // :446 - the merchants' tug-of-war on every region's price index.
   // S42: the condition store rides the entity like every other day-block
   // input, so the price walk's PricesHigh/PricesLow half reaches it with
   // no host wiring - the same reason the whole block lives here.
-  updateRegionalPrices(entity, entity.factionRep?.dict ?? null, daysPast, dayRolls, entity.regionConditions ?? null);
+  // AUDIT WORLD6b C4: under the shared clock the walk is ONE DAY AT A TIME, each day from its own generator - one
+  // generator seeded by today and walked `daysPast` days made the draw depend on when each player LAST ran the day
+  // change (the walk is region-major, day-minor), so a player back from three days away walked a different region
+  // than one who was there every day. Per day, the walk is a function of the state and the days walked alone:
+  // catching up equals having stayed. Offline the caller's stream walks the span whole, as DFU does.
+  if (sharedClockOn()) {
+    const firstDay = Math.floor(lastMinutes / MINUTES_PER_DAY) + 1, lastDay = Math.floor(nowMinutes / MINUTES_PER_DAY);
+    for (let d = firstDay; d <= lastDay; d++) updateRegionalPrices(entity, entity.factionRep?.dict ?? null, 1, dayRollsFor(d * MINUTES_PER_DAY, rolls, DAY_SALT.prices), entity.regionConditions ?? null);
+  } else updateRegionalPrices(entity, entity.factionRep?.dict ?? null, daysPast, rolls, entity.regionConditions ?? null);
 
   // :447-448 - roll the six climate zones and RAISE the pending-apply
   // flag; the exterior frame's tickWeather drains it. Splitting those
@@ -631,7 +642,7 @@ export function tickPlayerMinutes({
     // constant for its whole tug-of-war term.
     // WORLD6b: both power arms of one minute draw from ONE generator, the day's (the 266-day minute where the two
     // align fires the walk twice, as DFU does, and the second walk must not replay the first's rolls)
-    const dayRolls = dayRollsFor(i, rolls);
+    const dayRolls = dayRollsFor(i, rolls, DAY_SALT.powers);
     if (i % FACTION_POWER_INTERVAL_MINUTES === 0) {
       regionPowerUpdate(entity.factionRep ?? null, { rumorMill: entity.rumorMill ?? null, rolls: dayRolls });   // WORLD6b: the shared day's roll
     }

@@ -2704,7 +2704,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  career under the struck enemy's OWN parent transform. */
   const enchantReplaceFoe = (targetEntity, mobileType) => {
     const f = enchantFoes().find((x) => !x.dead && x.entity === targetEntity);
-    if (!f) return;
+    if (!f || f.puppet) return;   // AUDIT WORLD6b B9: a peer's foe is not mine to re-stand (the pool refuses its removal too)
     if (f.questBehaviour && !f.questBehaviour.isFoeDead) return;
     const feet = f.ai?.feet ? centreFromFeet(f.ai.feet, f.idleH ?? f.ai.height) : enchantFeet();   // REVIEW 2026-09-05: WabbajackEffect.cs:90 hands CreateEnemy the struck foe's TRANSFORM (its sprite centre); the spawn chain reads a marker
     const missing = (targetEntity.maxHealth ?? 0) - (targetEntity.health ?? 0);
@@ -2720,7 +2720,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // through the one that owns the billboard - `exteriorFoePool` is
     // the watch AND the encounter foes, and this arm reached the
     // encounter pool's remover for both. That was not a leak: removeFoe
-    // (exteriorFoes.js:305-310) never looks the record up in `foes`, and
+    // (exteriorFoes.js:320-325) never looks the record up in `foes`, and
     // both pools share this host's one renderer, so a struck WATCHMAN
     // got exactly what removeGuard (cityGuards.js:1215-1219) gives it -
     // batch freed, `dead = true`, no corpse, skipped by the next AI pass
@@ -2909,7 +2909,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // DFU's database yields only ACTIVE behaviours. Passing the
     // getter (not the array) keeps one live view per frame with no
     // pool importing the other.
-    candidates: () => [...cityGuards.guards, ...exteriorFoes.foes].filter((f) => !f.dead),
+    candidates: () => [...cityGuards.guards, ...exteriorFoes.foes].filter((f) => !f.dead && !f.puppet),   // AUDIT WORLD6b B8: a puppet is nobody's target here - it lands no blow and takes none of mine (a foe hunting a peer is 6b-ii's)
     playerEntity,
   });
   // U32: ONE construction for the world inventory and spellbook - F6
@@ -6703,7 +6703,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // WORLD1: the room's memory in - a welcome that carries the world the room keeps lands on the standing dungeon
     // (the mode machine refuses another dungeon's); a new host publishes at once
     online.onWorld = (shared) => { if (modes?.restorePlaceSharedWorld?.(shared)) console.info('[online] the room\'s memory restored'); };   // WORLD6a: on the standing place, a dungeon or a building
-    online.onHost = (id, mine) => { if (mine) { _worldPublishedAt = -Infinity; _foesFullAt = -Infinity; } else if (id) _foesInAt = performance.now(); modes?.setDungeonAuthority?.(dungeonAuthority()); };   // WORLD2: the seat decides who steps the foes; a new host streams every foe at once; another's word is its first heartbeat
+    online.onHost = (id, mine) => { if (mine) { _worldPublishedAt = -Infinity; _foesFullAt = -Infinity; } else if (id && isWorldRoom(online.room)) _foesInAt = performance.now(); modes?.setDungeonAuthority?.(dungeonAuthority()); };   // AUDIT WORLD6b A9: a cell's seat is no heartbeat   // WORLD2: the seat decides who steps the foes; a new host streams every foe at once; another's word is its first heartbeat
     online.onFoes = (id, data) => {
       if (isCellRoom(online.room)) { if ((modes?.mode ?? 'exterior') === 'exterior') exteriorFoes.applyFoes(id, data); return; }   // WORLD6b: a peer's foes in the cell, onto their puppets
       if (modes?.mode === 'dungeon') _foesInAt = performance.now();   // AUDIT WORLD2 C5: the stream is the seat's heartbeat; A1: the host's id rides in; AUDIT WORLD6a B8: a building's room streams no foes, and a frame there is no dungeon heartbeat
@@ -6714,8 +6714,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // owner, and the two frames: the world frame's coordinates ride the wire (the pose's own law, AUDIT ONLINE D7),
     // this scene's feet stand here
     exteriorFoes.setNet({
-      selfId: () => online?.id ?? null,
       room: () => online?.room ?? null,
+      now: () => performance.now(),
+      staleMs: FOES_STALE_MS,   // AUDIT WORLD6b C3: an owner whose stream has died is swept as the seat is (WORLD2's own window)
       onPeerHit: (hit) => online?.sendHit(hit) ?? false,
       toWire: (feet) => { const wc = state.worldCoords(feet); return [wc.x, feet[1] - state.compensation[1], wc.z]; },
       toScene: (p) => { const l = state.localFromWorld(p[0], p[2]); return [l[0], p[1] + state.compensation[1], l[1]]; },
@@ -6778,7 +6779,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const onlineFrame = (now, dt) => {
     chatFrame();   // CHAT1: before the dead return, so the channels keep their heartbeat and their reconnect while the death screen is up (the panel itself is paused away like any HUD - AUDIT CHAT B7)
     // AUDIT ONLINE D12: the dead broadcast nothing and see no one
-    if (townTalk.overlay instanceof DeathScreen || modes?.deathUp?.()) { if (online.room) { worldPublish(now, true); online.leave(); } peerBodies.destroy(); remotePlayers.sync([], onlineToScene); return; }   // AUDIT WORLD B6: the dungeon's and the building's death screens stand in the mode's slot   // AUDIT MWBODY B7: and no body stands frozen over the death screen
+    if (townTalk.overlay instanceof DeathScreen || modes?.deathUp?.()) { if (online.room) { worldPublish(now, true); online.leave(); exteriorFoes.clearPuppets(); _foesRoom = null; } peerBodies.destroy(); remotePlayers.sync([], onlineToScene); return; }   // AUDIT WORLD B6: the dungeon's and the building's death screens stand in the mode's slot   // AUDIT MWBODY B7: and no body stands frozen over the death screen
     const mode = modes?.mode ?? 'exterior';   // audit24_wave37: guarded on the OBJECT above its own declaration (the frame runs after it)
     const overworld = mode === 'exterior';
     const wc = state.worldCoords(player.pos);
@@ -6830,8 +6831,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     else online.sendPose({ ...pose, ...arm });
     online.tick();
     // WORLD6b: a room change leaves every puppet in the old cell; a peer gone from the room takes its puppets with it
-    if (online.room !== _foesRoom) { _foesRoom = online.room; exteriorFoes.clearPuppets(); }
-    if (isCellRoom(online.room)) exteriorFoes.pruneOwners(new Set(online.peers.keys()));
+    if (online.room !== _foesRoom) { _foesRoom = online.room; _foesFullAt = -Infinity; exteriorFoes.clearPuppets(); }   // AUDIT WORLD6b C7: a new room hears every foe of mine at once
+    if (isCellRoom(online.room)) exteriorFoes.pruneOwners(new Set(online.peers.keys()), now);
     worldPublish(now);   // WORLD1: the room's memory, every WORLD_PUBLISH_MS while this player hosts a dungeon
     foesStream(now);   // WORLD2: the host's changed foes, every FOES_MS; WORLD6b: mine, in a cell
     actFlush();        // AUDIT WORLD3 A3: an act the wire refused, re-read and re-sent
