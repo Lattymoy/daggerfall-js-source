@@ -5493,6 +5493,35 @@ seams, each passing every pin around it:
    the Test Room's "Ride out" is the door to look through on a machine
    that has it. `test/hc1_horsecart.test.js`.
 
+### RF1 - ENTITY MODIFIER CHANNELS (2026-09-14, Mac: "is there anything in the codebase that can benefit from a refactor. This is our first time going against parity with DFU ... Lets tackle each one at a time")
+
+The first of the refactors the loot-rarity slice showed the need
+for. LR1-LR4 had to add a term of its own INSIDE five DFU-verbatim
+formulas beside the enchantment fold's - the hit formula's armour
+line, PCAAO's copy of it, the weapon damage roll, liveStat,
+skillValue, the saving throw and the carrying capacity - two
+producers and two reads at every site, and the next departure a
+third. `src/systems/entityMods.js` is the one home now: every
+producer of a modifier is a FOLD (`fn(entity) -> mods` over the
+channels armorParts[7], stats, skills, resist, weightMult; and a
+weapon-damage modifier over the item in hand) registered by name,
+run together by `computeEntityMods` at the two seams a worn set
+changes (equip.js's listener, which the save's rebuild also runs;
+the magic round after DFU's own enchant fold) and summed onto ONE
+field, `entity._mods`. Each formula reads ONE accessor per channel
+(`entityArmorMod`, `entityArmorDisplayMod`, `entitySkillMod`,
+`entityStatMod`, `entityWeightMult`, `entityResistMod`,
+`weaponDamageMods`), and the accessor adds DFU's own enchantment
+channel, kept verbatim in enchantments.js with its min-set quirks;
+statMods.js and skills.js stay import-free leaves reading the field.
+Loot rarity is the first fold (`affixFold`, `affixWeaponDamage`,
+registered under `LOOT_RARITY_FOLD`); its own readers are gone. Off
+is DFU exactly: no fold, or every fold empty, and every accessor
+answers the enchantment channel alone. A fold that throws is skipped
+and logged, never a frame lost. `test/rf1_entitymods.test.js` (5);
+the LR pins read through the channels; AUDIT 24 wave 28's and AUDIT
+26 F122's regexes re-aimed at the one read.
+
 ### LR1-LR3 - LOOT RARITY, THE PORT'S OWN ITEM LADDER (2026-09-14, Mac: "transform things into a diablo style system with rarity ... the most detailed and best that it can be")
 
 ENHANCED, built in house, one row on the Features home, off by

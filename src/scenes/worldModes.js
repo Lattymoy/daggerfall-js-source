@@ -5782,7 +5782,7 @@ export function createWorldModes(host) {
     const _act = activateFrame((latch.activate ??= createActivateGate()), {
       down: held(keys, 'ActivateCenterObject') || !!host.activateDown?.(),
       hasReadySpell: (mode === 'dungeon' ? dungeonCtx?.spellArmed?.() : magic?.spellArmed()) ?? false,
-      touchSpell: ((mode === 'dungeon' ? dungeonCtx?.readiedSpell?.() : magic?.readied()) ?? null)?.rangeType === 1,   // rangeType 1 is ByTouch (spellcast.js:205)
+      touchSpell: ((mode === 'dungeon' ? dungeonCtx?.readiedSpell?.() : magic?.readied()) ?? null)?.rangeType === 1,   // rangeType 1 is ByTouch (spellcast.js:206)
       hudBlocked: activeMouseOverLargeHUD(),
       paused: overlayHeld,
     });

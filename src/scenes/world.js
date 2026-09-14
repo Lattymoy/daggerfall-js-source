@@ -7821,7 +7821,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         const _act = activateFrame((latch.activate ??= createActivateGate()), {
           down: held(keys, 'ActivateCenterObject') || _tapArmed > 0,   // AUDIT 62 F8: the touch tap is the ACTION, not a synthesized 'Mouse0' - a rebind off Mouse0 must not kill the finger, and no key code can honestly stand for a mouse binding
           hasReadySpell: magic.spellArmed(),
-          touchSpell: magic.readied()?.rangeType === 1,   // rangeType 1 is ByTouch (spellcast.js:205)
+          touchSpell: magic.readied()?.rangeType === 1,   // rangeType 1 is ByTouch (spellcast.js:206)
           hudBlocked: activeMouseOverLargeHUD(),
           paused: _overlayHeld,
         });

@@ -14,7 +14,7 @@
 
 import { dice100 } from '../combat/formulas.js';
 import { liveStat } from './statMods.js';   // F9: MagicResist reads the LIVE willpower
-import { affixResist } from './lootRarity.js';   // LR2: a resistance affix rides the saving throw
+import { entityResistMod } from './entityMods.js';   // RF1: the port's resistance channel rides the saving throw
 import { magicResist } from '../combat/formulas.js';   // U10
 import { raceById, raceByKey } from './races.js';   // AUDIT 18: the racial saving-throw block
 import { getInt } from './settings.js';   // ROAD-H H1c: Controls/Handedness, the screen weapon's FlipHorizontal (DaggerfallMissile.cs:546)
@@ -95,7 +95,7 @@ export function elementalResistanceChance(target, element) {
   return total;
 }
 
-/** LR2: the effect flags a resistance affix can name (lootRarity RESIST_ELEMENTS). */
+/** LR2/RF1: the effect flags the resistance channel names (lootRarity RESIST_ELEMENTS). */
 const RESIST_NAMES = Object.freeze([[EFFECT_FLAGS.Fire, 'fire'], [EFFECT_FLAGS.Frost, 'frost'], [EFFECT_FLAGS.Shock, 'shock'], [EFFECT_FLAGS.Poison, 'poison'], [EFFECT_FLAGS.Magic, 'magic']]);
 
 export function savingThrow(element, effectFlags, target, modifier = 0, rolls = Math.random) {
@@ -148,9 +148,10 @@ export function savingThrow(element, effectFlags, target, modifier = 0, rolls = 
   if (tolerance.LowTolerance) saving -= 25;
   if (tolerance.Resistant) saving += 25;
   saving += biographyMod + modifier;
-  // LR2: a resistance affix on the target's worn set, per element the
-  // spell carries, in the same slot as the biography's mods.
-  saving += affixResist(target, RESIST_NAMES.filter(([flag]) => effectFlags & flag).map(([, name]) => name));
+  // RF1: the port's resistance channel (a worn affix, or whatever
+  // fold comes next), per element the spell carries, in the same slot
+  // as the biography's mods.
+  saving += entityResistMod(target, RESIST_NAMES.filter(([flag]) => effectFlags & flag).map(([, name]) => name));
   if (saving >= 100) return 0;
   // MagicResist = floor(LIVE willpower / 10) - fortify-aware (audit F9).
   // U10: through the FormulaHelper home, not a fourth inline copy.

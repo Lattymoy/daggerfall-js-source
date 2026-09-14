@@ -666,7 +666,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       hasReadySpell: ctx.spellArmed?.() ?? false,
       // PlayerActivate.cs:250-258's stated exception: a readied TOUCH
       // spell leaves doors reachable. rangeType 1 is ByTouch
-      // (spellcast.js:205 ClassicTargetIndexToTargetType).
+      // (spellcast.js:206 ClassicTargetIndexToTargetType).
       touchSpell: (ctx.readiedSpell?.() ?? null)?.rangeType === 1,
       hudBlocked: activeMouseOverLargeHUD(),   // PlayerActivate.cs:230-236 - the bar's own click is not the world's
       paused: overlayHeld,                     // InputManager.cs:486-503 - a window holds the action itself
