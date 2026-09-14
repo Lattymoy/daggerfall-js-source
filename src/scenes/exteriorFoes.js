@@ -518,7 +518,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // turns on ME and the shove goes the way the blow went (WORLD3's spelling for the dungeon's hit)
       const _pAt = playerFeet && _net?.toWire ? _net.toWire(playerFeet) : null;
       if (fromPlayer && !peer) f._divertFrame = _peerFrame;
-      if (fromPlayer && !peer) _net?.onPeerHit?.({ to: f.puppet, k: _net.room?.() ?? null, i: f.seq, dmg: Math.max(0, Math.round(Number(damage) || 0)), kind,
+      if (fromPlayer && !peer) _net?.onPeerHit?.({ to: f.puppet, k: _owners.get(f.puppet)?.k ?? _net.room?.() ?? null, i: f.seq, dmg: Math.max(0, Math.round(Number(damage) || 0)), kind,   // WORLD6b-iii(b): keyed to the OWNER's cell (its frame's k) - across the seam that is not mine
         ...(_pAt ? { p: [q2(_pAt[0]), q2(_pAt[1]), q2(_pAt[2])] } : {}),
         ...(knockDir ? { d: [q3(knockDir[0]), q3(knockDir[1]), q3(knockDir[2])] } : {}) });
       return;
@@ -1304,7 +1304,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   // ---- WORLD6b: the cell's stream ----------------------------------------------------------------------------
   const q2 = (v) => Math.round(v * 100) / 100;
   const q3 = (v) => Math.round(v * 1000) / 1000;
-  /** The world host installs the net: room() (the cell the socket is in), selfId() and peers() (WORLD6b-ii: whose blow a
+  /** The world host installs the net: room() (the cell the socket is in), inRoom(k) (WORLD6b-iii(b): my cell or a halo's), selfId() and peers() (WORLD6b-ii: whose blow a
    *  streamed target names, and MY foes' peer candidates), now() and staleMs (C3), onPeerHit(hit) (a blow on a
    *  puppet, to its owner), toWire(feet) -> the world frame's [x, y, z], toScene([x, y, z]) -> this scene's feet. */
   function setNet(net) { _net = net ?? null; }
@@ -1335,7 +1335,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     return { n: ++_foesSeq, k: _net.room?.() ?? null, full: full ? 1 : 0, f: out };
   }
   /** The owner's record (AUDIT WORLD6b B4/C3), minted on its first frame. */
-  function ownerOf(from) { let o = _owners.get(from); if (!o) { o = { n: -1, at: _now(), gen: ++_ownerGen }; _owners.set(from, o); } return o; }
+  function ownerOf(from) { let o = _owners.get(from); if (!o) { o = { n: -1, at: _now(), gen: ++_ownerGen, k: null }; _owners.set(from, o); } return o; }   // WORLD6b-iii(b): k the cell the owner's frames are keyed to - its own
   const pupKey = (from, i) => `${from}:${i}`;
   /** The puppets standing or building for an owner - the cap's count (B3). */
   function livePuppetsOf(from) {
@@ -1353,10 +1353,11 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
    *  cell, is not the world. */
   function applyFoes(from, data) {
     if (!_net?.toScene || typeof from !== 'string' || !from || !data || !Array.isArray(data.f)) return false;
-    if (data.k != null && _net.room && data.k !== _net.room()) return false;
+    if (data.k != null && _net.room && data.k !== _net.room() && !_net.inRoom?.(data.k)) return false;   // WORLD6b-iii(b): the owner's OWN cell, which I hold (my cell, or a halo's across the seam) - another is not the world
     const o = ownerOf(from);
     if (Number.isFinite(data.n)) { if (data.n <= o.n) return false; o.n = data.n; }
     o.at = _now();
+    if (typeof data.k === 'string') o.k = data.k;
     const seen = new Set();
     for (const raw of data.f) {
       const r = validFoeRecord(raw);

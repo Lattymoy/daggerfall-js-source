@@ -207,7 +207,7 @@ import { Collider } from '../player/collider.js';
 import { createDataPipeline } from './dataPipeline.js';
 import { createWorldModes } from './worldModes.js';
 import { OnlineSession, roomKeyFor, DEFAULT_SERVER, WORLD_PUBLISH_MS, FOES_MS, FOES_FULL_MS, FOES_STALE_MS } from '../net/online.js';   // ONLINE1: the session; WORLD1: the room's memory
-import { POSE_STRIKES, isWorldRoom, isCellRoom, actFrameFits, sharedClassicMinutes, wallMsForClassicMinutes } from '../net/wire.js';   // MAC7 #1: the swing's kind on the wire; AUDIT WORLD4 A1: whether an act frame can be said at all
+import { POSE_STRIKES, isWorldRoom, isCellRoom, cellHaloFor, actFrameFits, sharedClassicMinutes, wallMsForClassicMinutes } from '../net/wire.js';   // WORLD6b-iii(b): the cell seam's halo   // MAC7 #1: the swing's kind on the wire; AUDIT WORLD4 A1: whether an act frame can be said at all
 import { hasDaggerfallArrows } from '../combat/fpArm.js';   // MAC7 #2: the arrow bit on the wire - weaponRig's own read
 import { drawText } from '../ui/text.js';   // ONLINE1: the session's status line
 import { RemotePlayers, composeLook } from '../net/remotePlayers.js';   // ONLINE1: the others, drawn
@@ -6720,6 +6720,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // this scene's feet stand here
     exteriorFoes.setNet({
       room: () => online?.room ?? null,
+      inRoom: (k) => online?.inRoom?.(k) ?? false,   // WORLD6b-iii(b): a frame keyed to a halo's cell is its owner's cell
       selfId: () => online?.id ?? null,   // WORLD6b-ii: whose blow a streamed target names - mine, when the target is me
       peers: peersNear,   // WORLD6b-ii: the peers as MY foes' target candidates (WORLD3's law for the dungeon host's foes, per owner)
       now: () => performance.now(),
@@ -6805,7 +6806,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     const overworld = mode === 'exterior';
     const wc = state.worldCoords(player.pos);
     let key;
-    if (overworld) key = roomKeyFor({ host: 'world', mode, mapPixel: worldCoordToMapPixel(wc.x, wc.z) });
+    const mp = overworld ? worldCoordToMapPixel(wc.x, wc.z) : null;
+    if (overworld) key = roomKeyFor({ host: 'world', mode, mapPixel: mp });
     else {
       const ident = modes?.roomIdentity?.();
       const loc = _questLoc();   // the location under the player: an interior's room is named by it
@@ -6850,9 +6852,14 @@ export async function bootWorld(canvas, renderer, params, status) {
     // AUDIT WORLD2 C8: a world room's edge is never a churn - the hold delayed every handover and let one dungeon's stream land in another
     else if (key !== online.room) { if (!online.room || isWorldRoom(key) || isWorldRoom(online.room) || now - _onlineKeySince >= ROOM_HOLD_MS) { online.look = composeLook(playerEntity); online.join(key, { ...pose, ...arm }); } }   // the look re-composed: the next room's hello carries the gear worn now
     else online.sendPose({ ...pose, ...arm });
+    // WORLD6b-iii(b) THE CELL SEAM: the neighbouring cells within the relay's range are held as a HALO - hello'd and
+    // posed into, so a peer a pixel across the edge is in my room and I in theirs (D9); a crossing promotes the halo
+    online.setHalo(mp && isCellRoom(online.room) ? cellHaloFor(mp.x, mp.y, { current: online.haloRooms() }) : []);
     online.tick();
-    // WORLD6b: a room change leaves every puppet in the old cell; a peer gone from the room takes its puppets with it
-    if (online.room !== _foesRoom) { _foesRoom = online.room; _foesFullAt = -Infinity; exteriorFoes.clearPuppets(); }   // AUDIT WORLD6b C7: a new room hears every foe of mine at once
+    // WORLD6b: a room change leaves every puppet in the old cell; a peer gone from the room takes its puppets with it.
+    // WORLD6b-iii(b): a cell crossing is no room change to the puppets - their owners' cells are still held (the
+    // halo) and the prune below takes back any whose owner the hunt no longer sees
+    if (online.room !== _foesRoom) { const seam = isCellRoom(online.room) && isCellRoom(_foesRoom); _foesRoom = online.room; _foesFullAt = -Infinity; if (!seam) exteriorFoes.clearPuppets(); }   // AUDIT WORLD6b C7: a new room hears every foe of mine at once
     if (isCellRoom(online.room)) exteriorFoes.pruneOwners(new Set((peersNear() ?? []).map((p) => p.id)), now);   // AUDIT WORLD6b-ii C2: ONE liveness for the owner - the peers the hunt reads (visible: a pose, in range, inside the timeout) are the peers whose puppets stand
     worldPublish(now);   // WORLD1: the room's memory, every WORLD_PUBLISH_MS while this player hosts a dungeon
     foesStream(now);   // WORLD2: the host's changed foes, every FOES_MS; WORLD6b: mine, in a cell

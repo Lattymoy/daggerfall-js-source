@@ -2720,14 +2720,62 @@ puppet's cast at me (the joiner's latch, once per count, the missile
 and the blast, the one-shot at another and at nobody, the budget, the
 leap); the hosts by source.
 
+### 6b-iii(b): the cell seam
+
+**Mac: "Continue"** (after AUDIT WORLD6b-iii(a)). D9's strip: the cell
+is sixteen pixels and the relay's range three, so two players a pixel
+apart astride a cell edge were in two rooms and saw nothing of each
+other - a three-pixel strip along every edge where the country went
+empty.
+
+- **The halo.** A player hellos into every neighbouring cell room whose
+  nearest pixel is within RANGE_PIXELS of its own (`cellHaloFor`, the
+  wire's law: Chebyshev as the fan is; none mid-cell, one along an
+  edge, three at a corner; a held room stays a pixel past the range -
+  the hysteresis that keeps a player pacing the edge from churning
+  sockets). A halo room is posed into (its fan ranges me by the pose,
+  its roster places me) and listened to (its roster, a peer's foes, a
+  blow at me, a line), never streamed to: by symmetry everyone within
+  range of me is a member of MY cell's room, so my foes, my chat and my
+  pose through my own cell reach every peer in range.
+- **One roster.** The session's `peers` merges every room held (a peer
+  stays while any room reports it, goes when the last does); a frame
+  from a halo room places its peers and carries their foes and blows;
+  the host, the clock and the memory are my own room's alone.
+- **A blow through the owner's cell.** A foes frame is keyed to its
+  owner's cell (`k`); the pool accepts one keyed to any cell I hold
+  (`inRoom`) and remembers the owner's; my hit on that owner's puppet is
+  keyed to the OWNER's cell and sent through that room's socket, where
+  the owner is reported - the relay routes `to` inside one room.
+- **The crossing.** A step into a cell already held as a halo PROMOTES
+  its socket in place: no close, no reconnect, no roster wiped, and the
+  puppets stand (the seam is no room change to them; the prune takes
+  back any whose owner the hunt no longer sees); the cell left steps
+  down to a halo until it is out of range. A new cell still hears every
+  foe of mine at once (the full frame).
+- **No relay change**: a halo member is a member; the door's budgets,
+  the roster cap and the ranged fan apply to it as to anyone. A dropped
+  halo socket is retried on the session's clock; a terminal close ends
+  the halo (the primary hears the same verdict on its own).
+
+Pinned in `test/world6biiib.test.js` (4), EXECUTED: the wire's geometry
+(mid-cell, an edge, a corner, the hysteresis, the map's edge); the
+session over fake sockets (the halo hello'd and posed into, the merged
+roster, a peer's foes and blow and line through it, foes and chat
+through my own cell alone, a hit through the owner's cell and refused
+elsewhere, the promotion, the halo left, leave closing all, the retry,
+no halo outside a cell); the pool (a frame keyed to a held cell stands
+its puppet, one to an unheld cell does not, my blow keyed to the
+owner's cell); the world host by source.
+
 ### 6b-iii (recorded, next)
 
 - **The guards** (`cityGuards.js`): the watch is a crime's - the
   player's own; not until the crime is shared.
 - **A puppet's corpse loot**: its owner's roll; the take would be the
   loot law over a per-foe room.
-- **The cell seam**: two players a pixel apart astride an edge are in
-  two rooms (D9); the 3x3 neighbourhood.
+- ~~**The cell seam**: two players a pixel apart astride an edge are in
+  two rooms (D9); the 3x3 neighbourhood.~~ Paid by 6b-iii(b).
 - **One economy**: the region's prices and powers as a world's.
 - **Buildings' foes** and the interior pools: a building streams no
   foes still (AUDIT WORLD6a B8).
@@ -3307,10 +3355,12 @@ moved.
   players' random flats differ by level, so a foe whose species the
   room's memory or the host's stream disagrees with is REBUILT as the
   room's at its index (WORLD3 - the roster is the room's).
-- A peer across a world-cell border is not seen until both stand in
+- ~~A peer across a world-cell border is not seen until both stand in
   the same cell (D9: two players a pixel apart astride a cell edge are
   in two rooms; the cell is sixteen pixels, the range three, so the
-  seam is a strip - the 3x3 neighbourhood is the next iteration's).
+  seam is a strip - the 3x3 neighbourhood is the next iteration's).~~
+  Paid by WORLD6b-iii(b): the halo - a player holds the neighbouring
+  cells within range too.
 - The relay is one Durable Object per room and has not been measured
   past a handful of players; interest management filters what is sent,
   not what is iterated.

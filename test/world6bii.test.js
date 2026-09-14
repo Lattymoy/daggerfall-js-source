@@ -187,7 +187,7 @@ test('WORLD6b-ii: by source - the world host hands the pool my id and the peers 
   const w = rd('src/scenes/world.js');
   assert.equal((w.match(/peers: peersNear,/g) ?? []).length, 2, 'one closure, two readers');
   assert.match(w, /const peersNear = \(\) => \{\s*if \(!online \|\| !online\.room \|\| online\.status !== 'open'\) return null;/);
-  assert.match(w, /exteriorFoes\.setNet\(\{\s*room: \(\) => online\?\.room \?\? null,\s*selfId: \(\) => online\?\.id \?\? null,/);
+  assert.match(w, /exteriorFoes\.setNet\(\{\s*room: \(\) => online\?\.room \?\? null,\s*inRoom: \(k\) => online\?\.inRoom\?\.\(k\) \?\? false,[^\n]*\n\s*selfId: \(\) => online\?\.id \?\? null,/);   // WORLD6b-iii(b): and which cells I hold
   const x = rd('src/scenes/exteriorFoes.js');
   assert.match(x, /runTargetMachine\(f, \[\.\.\.senses\.candidates\(\), PLAYER_TARGET, \.\.\.peerCandidates\(\)\], pf, cdt, \{/, 'the peers are MY foes\' candidates (AUDIT WORLD6b-ii A5: after me)');
   assert.match(x, /return isLocalPlayerTarget\(t\) \? playerFeet : \(isPeerTarget\(t\) \? t\.feet : t\.ai\.feet\);/, 'the attack aims at a peer\'s own feet');
