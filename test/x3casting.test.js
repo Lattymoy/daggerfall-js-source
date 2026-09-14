@@ -102,11 +102,11 @@ test('x3 wiring: the pool spawns casters, the decision drives the shared executo
   // MT-ii: the decision aims at the SELECTED target, and reads that
   // target's own entity - a foe duelling another foe no longer picks
   // its school off the player's effects, nor releases at them.
-  assert.ok(xf.includes('f.caster.update(dt, f.ai, f.attack, _tgt, _castTargetEntity, { suppress: isPeerTarget(f.ai.target) })'), 'the decision rides beside the attack machine');   // AUDIT WORLD6b-ii A1: suppressed at a peer, on its own cadence
-  assert.ok(xf.includes('castSpellFrom(f, dec.spell, _tgt);'), 'and releases through the ONE executor, AT the target');
+  assert.ok(xf.includes('f.caster.update(dt, f.ai, f.attack, _tgt, _castTargetEntity)'), 'the decision rides beside the attack machine');
+  assert.ok(xf.includes('castSpellFrom(f, dec.spell, _tgt, false, { atPeer: isPeerTarget(f.ai.target) ? f.ai.target : null });'), 'and releases through the ONE executor, AT the target');   // WORLD6b-iii: a peer target aims the missile at the peer
   // wave 30: the deps of that executor are bound ONCE for this pool - the
   // decision and the spider/scorpion paralyze rider share the binding.
-  assert.ok(xf.includes('function castSpellFrom(f, spell, playerFeet, noSpellPointCost = false) {'), 'the pool binds the executor once');
+  assert.ok(xf.includes('function castSpellFrom(f, spell, playerFeet, noSpellPointCost = false, { atPeer = null } = {}) {'), 'the pool binds the executor once');
   assert.equal(xf.split('castEnemySpell(f,').length - 1, 1, 'exactly one call to the shared executor in this file');
   assert.ok(xf.includes('casting: !!f._castPending'), 'the sprite Spell one-shot rides the cast edge');
   const w = src('src/scenes/world.js');

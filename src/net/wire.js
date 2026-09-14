@@ -363,6 +363,8 @@ export function validFoeRecord(r) {
   // [templateIndex, material] or null (none) - so a puppet's blow at me is the owner's foe's blow (its level, its
   // weapon), resolved against MY stats; copied, never rolled (AUDIT WORLD6b B14)
   if (r.l !== undefined) { if (!Number.isInteger(r.l) || r.l < 0 || r.l > FOE_LEVEL_MAX) return null; out.l = r.l; }
+  // WORLD6b-iii: the cast rides the record - `c` the cast count, `s` the spell index (WORLD3's spelling for the dungeon)
+  for (const k of ['c', 's']) if (r[k] !== undefined) { if (!Number.isInteger(r[k]) || r[k] < 0 || r[k] > 0xffff) return null; out[k] = r[k]; }
   if (r.w !== undefined) {
     if (r.w === null) out.w = null;
     else if (Array.isArray(r.w) && r.w.length === 2 && Number.isInteger(r.w[0]) && r.w[0] >= 0 && r.w[0] <= 1023 && Number.isInteger(r.w[1]) && r.w[1] >= 0 && r.w[1] <= 255) out.w = [r.w[0], r.w[1]];

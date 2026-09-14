@@ -75,14 +75,13 @@ test('AUDIT WORLD6b-ii A1: the caster\'s tick runs always - SUPPRESSED while the
   step(pool, far, pe, 40);
   assert.ok(isPeerTarget(rat.ai.target), 'the rat hunts Bob');
   assert.ok(calls.length > 0, 'the tick RAN while the target was a peer (gated off, the pick latched and the foe stood rooted)');
-  assert.ok(calls.slice(-5).every((o) => o?.suppress === true), 'suppressed at a peer');
+  assert.ok(calls.slice(-5).every((o) => o === undefined), 'and is not suppressed - WORLD6b-iii superseded the suppression: the cast at a peer flies (the pay-out that mattered is the tick running)');
   peers.list = [];
   const me = [11, 0, 10];
   step(pool, me, pe, 10);
-  assert.ok(calls.slice(-3).every((o) => o?.suppress === false), 'unsuppressed at me');
+  assert.ok(calls.slice(-3).every((o) => o === undefined), 'at me the same');
   const c = rd('src/characters/enemyCasting.js');
-  assert.match(c, /update\(dt, ai, attack, playerFeet, playerEntity, \{ suppress = false \} = \{\}\) \{/);
-  assert.match(c, /if \(suppress\) \{\s*this\._classicTimer \+= dt;\s*while \(this\._classicTimer >= CLASSIC_UPDATE_INTERVAL\) this\._classicTimer -= CLASSIC_UPDATE_INTERVAL;\s*this\.selectedSpell = null;\s*return null;\s*\}/, 'the suppressed tick keeps the cadence and clears the pick');
+  assert.match(c, /update\(dt, ai, attack, playerFeet, playerEntity\) \{/, 'one signature (WORLD6b-iii retired the suppress arm)'); assert.doesNotMatch(c, /suppress/, 'no dead option');
 });
 
 test('AUDIT WORLD6b-ii A2: a foe of mine that walked off with a peer is culled by MY relevance - detected of a peer is not detected of me', async () => {

@@ -221,7 +221,7 @@ test('audit24 wave30: the exterior pool binds the paralyze free-cast the way the
     'SetReadySpell(spell, noSpellPointCost: true) - the cast is free and skips the silence gate');
   // ONE binding of the shared executor for this pool, not two.
   assert.equal(xf.split('castEnemySpell(f,').length - 1, 1);
-  assert.equal((xf.match(/(?<!function )castSpellFrom\(f, /g) ?? []).length, 2, 'the decision and the rider both use it');
+  assert.equal((xf.match(/(?<!function )castSpellFrom\(f, /g) ?? []).length, 3, 'the decision, the rider and the puppet\'s streamed cast (WORLD6b-iii) all use it');
 });
 
 test('audit24 wave30: the host ticker exposes the ONE set of player sinks, exhaustion and all', () => {
