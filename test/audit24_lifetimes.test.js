@@ -204,7 +204,7 @@ test('audit24: the three quest settings are LIVE reads, not hardcoded falses', a
   // could flip a switch that reached nothing: adult quests were
   // filtered out whatever ChildGuard said (questLists.js:154), the
   // guild list-box arm was unreachable (offerFlow.js:144), and the
-  // journal's clocks never counted down (clock.js:158). The settings
+  // journal's clocks never counted down (clock.js:164). The settings
   // tier map's own both-ways gate now covers them; this pins the
   // BEHAVIOUR the tier map cannot see.
   const { setValue, _resetForTests } = await import('../src/systems/settings.js');

@@ -1901,7 +1901,9 @@ machine's deps through the bridge and the parser to every live quest,
 and `Clock.tick` charges nothing while it answers true - the world-time
 sample still moves, so the hours a clock stood down are never charged
 when it stands up again offline. The journal shows the clock as it
-stood.
+stood. [SUPERSEDED BY WORLD7: a Daggerfall clock is a delay as often
+as a limit, and stood down no delay ever ran - the letter never came.
+The clocks charge PLAYED time now; the word is `questClockStepMax`.]
 
 What it does not do. The clock is the world's for everyone online in
 every room - a cell, a town, a building, a dungeon - which is the
@@ -2280,6 +2282,9 @@ backdate on a first tick either), a wave already in flight still lands
 and is counted (the placement is not a timer), and standing up the
 first wave waits a full interval from there. `DailyFrom`, the daylight
 gate and `PlaySound` are pacing, not pressure, and stay as recorded.
+[WORLD7 re-spelt this with the Clock: the interval charges played
+time - a tick's gap past the step forgiven, a resume waiting a full
+interval from there; the stand-down word is gone.]
 
 **(7) A CLOCK A YEAR OFF IS SAID.** The session refused a welcome clock
 more than a year from this machine's and ran the world's time
@@ -3979,6 +3984,68 @@ name, the relay unmeasured past a handful of players.
 **Standing reminder:** the Cloudflare API token pasted into the chat
 during the deploys should be rotated.
 
+## WORLD7 (2026-09-14): the quest clocks run online, charging played time
+
+**Mac: "quests dont seem to work in online. I brought a newly created
+and saved character over and the journal is empty."** Then, on the
+suggestion: **"Go."** The save was never the fault - the Online door
+loads the picked slot through the same restore as Load, and the
+journal reads the same machine. The fault was WORLD5's law that every
+quest clock STANDS DOWN online, written for time limits: a Daggerfall
+clock is a DELAY as often as a limit, and the scripts say so.
+Brisienna's letter waits on a seven-to-fourteen-day clock (the
+journal's first entry is removed at the door of Privateer's Hold and
+the letter restarts it); the tutorial's pages wait on clocks of
+minutes; every "come back in three days" waits on one. Stood down, the
+letter never came, the journal stayed empty, and the main quest never
+began online.
+
+**THE LAW: A CLOCK CHARGES PLAYED TIME.** Online a quest clock charges
+the frame's world time and never more than one PLAYED STEP
+(`PLAYED_STEP_MAX_SECONDS`, thirty world minutes - two and a half real
+minutes under the shared clock's twelve-to-one; a browser-throttled
+tab still ticks within it, a frame never spans it). A gap past the
+step is time AWAY - the tab closed, the character off the world - and
+is forgiven, the sample moved. Offline there is no bound: a rest or a
+trip charges its whole span, DFU's own. So delays progress while you
+play; a limit still stands, in hours played; none expires while away;
+a login charges at most one step.
+
+- **The word rides the stand-down's chain**, renamed: the hosts hand
+  `questClockStepMax` (the step under the shared clock, `Infinity`
+  offline) to the bridge, the bridge to the machine, the machine's
+  three doors and the parser to every Quest, the Quest to every Clock.
+  `questClocksStoodDown` is gone from the tree.
+- **`CreateFoe`'s spawn interval charges the same way** (OL3's law
+  re-spelt): the marker moves forward by whatever a tick's gap exceeds
+  the step (time away, forgiven - one wave on return, not sixty); a
+  resume with no tick sample (a load, a quest restored) whose time
+  since the save is past a step is forgiven whole and the first wave
+  waits a full interval from there (OL3's standing-up arm); a wave in
+  flight still lands; offline the marker arithmetic is DFU's own.
+
+**What it does not do.** A limit is still a limit in played hours -
+Mac's WORLD1 word was "naturally disabled", and this is its spirit
+rather than its letter: nothing can expire while you are away, and a
+fourteen-day limit is many real hours of play. Suppressing the failing
+clocks alone is not possible: nothing in a script marks a clock as a
+deadline. A hidden tab is logged in and charges a step per throttled
+tick. The step is one home and one number; a machine that cannot hold
+a frame under two and a half real minutes charges one step per frame.
+
+Pinned in `test/world7.test.js` (3), EXECUTED over the real Clock and
+the real machine: a frame charges its seconds, a gap of a step the
+step, a day away one step with the hour then finishing on played time
+and the same-named task started; a fourteen-day letter arriving after
+fourteen played days with a week away between each; a resume charging
+one step; offline a span charging whole and a quest with no seam as
+ever; a scheduled quest's hour under the step through the whole chain;
+the chain by source. `test/world5.test.js`'s stand-down pin re-spelt
+to the played step; `test/ol3.test.js` (2) re-spelt to the interval's
+played time (executed: the backdate, the wave, the hour's gap forgiven
+to one step, the resume's full interval, offline whole);
+`test/auditworld5.test.js` C10 restamped. Suite 7483 across 758.
+
 ## What it does not do (yet)
 
 - **The Morrowind body** ships (MWBODY1, above); a client without the
@@ -4003,7 +4070,8 @@ during the deploys should be rotated.
   the fan is ranged, the frame bounded, a foe is its spawner's to
   hurt and to kill); since
   WORLD5 the clock and the day's weather are
-  the world's and the quest clocks stand down online; no
+  the world's and the quest clocks charge played time online (WORLD7);
+  no
   player-versus-player. Until AUDIT
   WORLD34 no real dungeon was a world room at all (A1: the law's
   eight-digit bound against nine-digit map ids), and the relay must be
