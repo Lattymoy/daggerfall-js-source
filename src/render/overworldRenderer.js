@@ -1,3 +1,4 @@
+// @ts-check
 // ═══════════════════════════════════════════════════════════════════
 // U61 — THE OVERWORLD PASS: the Iliac Bay relief, its markers, the
 // route line and the cloud deck, as one self-contained pass.
@@ -388,12 +389,18 @@ export class OverworldRenderer {
       gl.useProgram(this.pLine);
       gl.uniformMatrix4fv(this.u.lProj, false, proj);
       gl.uniformMatrix4fv(this.u.lView, false, view);
-      for (const [kind, fallback] of [
+      // HARD3: the pairs are (layer name, fallback rgba). Without the
+      // annotation the literal infers `(string | number[])[]` for both
+      // halves, so `kind` reads as a possible number[] and the lookups
+      // below cannot be checked at all.
+      /** @type {Array<[string, number[]]>} */
+      const ROAD_LAYERS = [
         ['stream', [0.38, 0.50, 0.65, 0.85]],
         ['river', [0.23, 0.38, 0.59, 1.0]],
         ['track', [0.58, 0.49, 0.36, 0.85]],
         ['trunk', [0.72, 0.62, 0.45, 1.0]],
-      ]) {
+      ];
+      for (const [kind, fallback] of ROAD_LAYERS) {
         if (!layers[kind] || !this._roads[kind].length) continue;
         gl.uniform4fv(this.u.lColor, opts.roadColors?.[kind] ?? fallback);
         for (const set of this._roads[kind]) {

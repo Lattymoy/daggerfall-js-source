@@ -1,3 +1,4 @@
+// @ts-check
 // ═══════════════════════════════════════════════════════════════════
 // EV8 — THE FAR PROVINCE RING. Beyond the streamed grid the horizon
 // was fog meeting sky; the province's actual mountains were sitting

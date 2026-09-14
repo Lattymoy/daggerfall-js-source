@@ -1,3 +1,4 @@
+// @ts-check
 // THE WATER SURFACE (WATER1, 2026-09-08). Mac: "develop proper water
 // shader for the oceans/rivers/ponds of daggerfall."
 //

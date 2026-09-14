@@ -1,3 +1,4 @@
+// @ts-check
 // MWBODY1 (2026-09-12, Mac: "knock out the deferred morrowind model"):
 // THE OTHERS, IN THE MORROWIND BODY. ONLINE1's brief - "if using
 // enhanced, you would see the other person's Morrowind sprite" - was
@@ -109,11 +110,13 @@ const dist2 = (a, b) => (a[0] - b[0]) ** 2 + (a[2] - b[2]) ** 2;
 export class PeerBodies {
   /**
    * @param {object} p
-   * @param {object} p.renderer
+   * @param {import('../render/contract.js').RendererLike} p.renderer
    * @param {() => boolean} [p.enabled]  the host's gate (the enhanced skin, the arms switch, Morrowind data)
    * @param {Function} [p.createRig]     createFpArm; a test hands in its own
    * @param {Function} [p.buildOpts]     peerBuildOpts
    * @param {Function} [p.now]
+   * @param {() => number} [p.generation] HARD3: the Morrowind data's generation. Destructured since MWBODY1 and never documented, which is how a caller finds out a parameter exists - by reading the destructuring.
+   * @param {(m: string) => void} [p.warn] HARD3: likewise - the injected warn a test reads instead of the console.
    */
   constructor({ renderer, enabled = () => true, createRig = createFpArm, buildOpts = peerBuildOpts, now = () => Date.now(), generation = () => 0, warn = (m) => console.warn(m) }) {
     this.renderer = renderer;

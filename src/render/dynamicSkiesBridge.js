@@ -1,3 +1,4 @@
+// @ts-check
 // DS2 (2026-09-08): THE BRIDGE FROM THE MOD'S STATE TO THE PORT'S
 // READERS - the world's moonlight (DS1) and the volumetric clouds (DS2)
 // both read the port's own state shapes off the mod's material, sun and

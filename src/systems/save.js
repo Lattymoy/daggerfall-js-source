@@ -1,3 +1,4 @@
+// @ts-check
 // Save/load (Systems S11). DFU's own save system is a JSON
 // serialization of live state (SerializablePlayer et al.) - the
 // faithful port shape. This slice: THE PLAYER snapshot - entity

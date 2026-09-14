@@ -1,0 +1,37 @@
+{
+  // HARD3 - TYPES AT THE SEAMS THAT CRASH (bible/01-Overview/Hardening.md).
+  //
+  // This is NOT a repo-wide type checker and must not become one. The
+  // hardening program's own measurement says why: walking AUDIT 66's
+  // twelve findings against a type checker catches approximately none of
+  // them, because ordering, omission, placement, reachability and unit
+  // convention are not shapes. What IS a shape is what crosses the three
+  // boundaries where a wrong one THROWS instead of misbehaving - the
+  // renderer's inputs, the save envelope, and the wire - and that is the
+  // whole of what this config is aimed at.
+  //
+  // So `checkJs` is FALSE and every seam file opts in with `// @ts-check`
+  // on its first line. A file outside the seams is still PARSED (its
+  // exports give the seam files their inference) and never reported. The
+  // seam sets are derived, and the opt-in is enforced, by
+  // test/hard3_types.test.js - so a new file at a seam cannot join
+  // without one, and no `@ts-ignore` may buy greenness.
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": false,
+    "noEmit": true,
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    // `strict` off, deliberately. The value here is SHAPE agreement at a
+    // boundary, and strict's null and implicit-any arms would bury that
+    // under thousands of lines about a codebase written without them.
+    // Raising this is a decision to make on evidence, not by default.
+    "strict": false,
+    "noImplicitAny": false,
+    "skipLibCheck": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"]
+  },
+  "include": ["src/**/*.js"]
+}

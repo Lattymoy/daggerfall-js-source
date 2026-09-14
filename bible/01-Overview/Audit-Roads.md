@@ -125,7 +125,7 @@ Recorded so it is not re-audited:
   chain ENDS are pinned, so a spur's drawn end stops in open country
   beside a trunk that has swung away.
 - **5,658 draw calls in the map's resting view** against 6 for the rest
-  of the frame (`src/render/overworldRenderer.js:393`), plus 5,653 VAOs
+  of the frame (`src/render/overworldRenderer.js:399`), plus 5,653 VAOs
   and buffers allocated in one synchronous loop. The verifier validated
   the batching patch end to end: 5,658 -> 7 draw calls, picture
   byte-identical.

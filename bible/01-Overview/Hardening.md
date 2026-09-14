@@ -87,12 +87,13 @@ blood splash, and that context's teardown never retired them, while the
 interior host has called `clear()` on its own copy of the same pool since
 HE1. One line.
 
-### HARD2 - the host contract. NEXT, and the one that needs a decision.
+### HARD2 - the host contract. FIRST SEAM SHIPPED 2026-09-14.
 
 The four hosts are where the drift lives, and shrinking them is the
 highest-leverage change available. It is also the riskiest thing in this
 program, because a 1:1 port's behaviour is pinned by 7500 tests and its
-value IS that behaviour. So the approach matters more than the appetite:
+value IS that behaviour. So the approach matters more than the appetite,
+and these three rules are the approach:
 
 - **Not a rewrite.** Move composition, never laws. A cross-cutting system
   should enter each host through one contract instead of each host
@@ -104,19 +105,102 @@ value IS that behaviour. So the approach matters more than the appetite:
 - **Every extraction ends with the hosts' pins unchanged.** If a pin has
   to move, the extraction changed behaviour and is wrong.
 
-### HARD3 - types at the seams that crash.
+**The activation race, shipped.** `src/player/activationRace.js` is the
+one home for "the nearest thing under the one ray takes the click" - the
+body against the pile, the torch against both and the door, and the two
+rivals AUDIT 65 MC-2 split. It was written out by hand in both exterior
+hosts, character for character, which is how F7 shipped a torch that had
+to beat the pile but not the door. The hosts keep their ladders - the
+ARMS are theirs, because what each does with a win differs - and ask who
+won. `test/hard2_activationrace.test.js` pins the law directly and gates
+against a third copy appearing.
+
+Both rules held, and both were checked rather than asserted:
+
+- A differential over 20,000 input combinations against the old inline
+  arithmetic: **0 differ**.
+- **No behavioural pin moved.** The only pins touched quoted the
+  relocated text, and `audit63_guilds_court.test.js`'s got strictly
+  STRONGER: it used to lift the line out of a host with `new Function`,
+  because the law lived inline in two places and there was nothing to
+  import. It now calls the law. A pin getting simpler at an extraction is
+  the sign the extraction was real.
+
+What the slice also taught, at its own cost: the extraction added one
+import line per host, and moving every line below it cost more bookkeeping
+than the code change itself. One pin (`hudlarge.test.js` D10) went red for
+a reason that was never its law - it read "useFwd is built once, above the
+ladder" as a fixed window of source lines, already widened from 60 to 80 by
+two earlier audits. It reads the law now. **A pin that needs widening every
+time the file grows is measuring the file, not the rule.**
+
+Seams still open here: the two exterior hosts' draw ladders, the five-host
+save envelope assembly, and the mode-transition teardown order. Each is
+bigger than the race and each wants its own differential before it moves.
+
+### HARD3 - types at the seams that crash. SHIPPED 2026-09-14.
 
 Scoped, not repo-wide. The Weapon Widget crash was a shape mismatch at
 the renderer boundary, and that boundary is where a wrong shape throws
 rather than misbehaves. JSDoc plus `tsc --checkJs` over the renderer's
-inputs, the save envelope and the wire protocol would catch that class.
+inputs, the save envelope and the wire protocol catches that class.
 
-It is listed third deliberately. Walking AUDIT 66's twelve findings
-against a type checker, it catches approximately none: ordering,
-omission, placement, reachability and unit convention are not shapes.
-Types are worth having at three boundaries. They are not the answer to
-the measured failure mode, and buying them first would feel like progress
-while the actual defect distribution went untouched.
+It was listed third deliberately, and the reason still stands: walking
+AUDIT 66's twelve findings against a type checker, it catches
+approximately none. Ordering, omission, placement, reachability and unit
+convention are not shapes. Types are worth having at three boundaries.
+They are not the answer to the measured failure mode, and buying them
+first would have felt like progress while the actual defect distribution
+went untouched.
+
+**What shipped.** `tsconfig.json` with `checkJs: false`, `npm run types`
+in `npm run check`, and `// @ts-check` on the first line of every seam
+file. A file outside the seams is PARSED - the seams need their imports
+for inference - and never reported.
+
+The seam sets are DERIVED, which is what makes this a gate rather than a
+list: every file in `render/`, every file in `net/`, and every `systems/`
+module that knows `SAVE_VERSION`, because a module that knows the
+envelope's version reads or writes the envelope. `test/hard3_types.test.js`
+re-derives all three on every run, floor-checks each one so a refactor
+cannot quietly empty it, and bans `@ts-ignore`, `@ts-expect-error` and
+`@ts-nocheck` across `src/` with no allow-list. That last rule is the
+load-bearing one. Twice in this slice a red line meant the TYPE I had
+just written was wrong - a `Color32`'s view is not always 8-bit, and a
+SaveTree record's `parsedData` is a union keyed by `recordType` - and a
+hatch would have buried both findings under a silenced line.
+
+`src/render/contract.js` is the renderer's side of it: `BillboardBatch`,
+`MeshBundle`, `Color32` and `RendererLike`, types only, `export {}` so the
+bundle never carries it. The gate holds its `BillboardBatch` against what
+`createBillboardBatch` actually mints, field by field, so the contract
+cannot drift from the factory.
+
+**What it found.** Sixty-odd reported lines over three seams, which
+sorted into four classes:
+
+| class | what it was |
+|---|---|
+| a seam typed `{object}` | the dominant one, and the slice's whole thesis: the renderer, the batch, the record, the slot card |
+| an undeclared field | lazily `??=`-minted scratch (`renderer`), and twelve uniform locations assigned through a string list (`precipitation`) |
+| JSDoc that describes a different function | five `@param`s for one parameter; a `@returns` in prose; a type name no import resolved |
+| a literal inferred from a default | `-1` becoming a variable's whole type, so every later assignment reads as a mistake |
+
+Only the last is noise, and even it is answered by writing the true type
+rather than by silencing anything. One was a defect in shipped code:
+`classicSave.js`'s no-Character arm returned four of the five fields its
+own `@returns` promises, so `goldPieces` reached the save envelope as
+`undefined`. The one production caller throws before that arm can run, so
+it is unreachable there - and reachable from any direct caller, which a
+pin already is.
+
+One was mine, one day old. HARD2's `activationRace.js` documented five
+`@param`s for a function that takes one options bag, and gave each
+`@returns` field a prose clause where its type belongs. Every line of it
+described a signature the function does not have, and nothing but a
+person had ever read it. **A contract nothing checks drifts from its code
+at the speed the code changes**, which is the same sentence as HARD1's,
+pointed at documentation instead of at teardown.
 
 ### HARD4 - the mod-port registry.
 

@@ -394,7 +394,14 @@ test('ROADS 25: the network is traced into chains, simplified, rounded and lifte
   assert.match(map, /this\._ov\.setRoads\(roadModel\(chains, ctx\)\)/, 'the map hands the renderer the chains');
   assert.match(map, /roadLayers: this\._roadLayers/, 'and the chips choose the layers at draw time');
   const r = fs.readFileSync('src/render/overworldRenderer.js', 'utf8');
-  assert.match(r, /for \(const \[kind, fallback\] of \[\s*\['stream'/, 'water under the tracks, tracks under the trunk');
+  // HARD3 re-aimed this from the loop's SYNTAX to its LAW. It used to
+  // read `for (const [kind, fallback] of [ ['stream'`, which pinned the
+  // array's inline position and only ever checked the FIRST name; the
+  // order of all four is the actual rule, and the array is a named const
+  // now (the literal could not be type-annotated where it stood).
+  assert.deepEqual([...r.matchAll(/^ {8}\['(\w+)', \[/gm)].map((m) => m[1]),
+    ['stream', 'river', 'track', 'trunk'],
+    'water under the tracks, tracks under the trunk');
 });
 
 // ROADS 8 (Audit 45 F7, finished): A STRANDED TOWN IS NAMED. The other

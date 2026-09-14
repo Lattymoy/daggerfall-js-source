@@ -1,3 +1,4 @@
+// @ts-check
 // VC2 (2026-09-07): THE CLOUD NOISE, GENERATED ON THE GPU.
 //
 // Volumetric clouds (bible/07-Rendering/Volumetric-Clouds-Arc.md) are

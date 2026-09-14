@@ -1,3 +1,4 @@
+// @ts-check
 // HARD2 - THE ACTIVATION RACE, ONE HOME (2026-09-14, Mac: "make
 // everything clean, hardened and not spaghetti ... refactor where
 // absolutely needed").
@@ -42,20 +43,45 @@
 //     the pile.
 
 /**
+ * ONE PICK under the ray: what the host's pickers hand over.
+ * @typedef {object} RayPick
+ * @property {string} key       the host's own handle for the thing struck
+ * @property {number} distance  along the ray
+ * @property {number} reach     how near the ARM needs it; the race does not read this
+ */
+
+/**
+ * WHO WON.
+ *   `loot`           - the body, when it beat the pile (the host's `_lootPick`)
+ *   `drop`           - the pile, when it beat the body (the host's `_dropPick`)
+ *   `torchWins`      - the torch beat the body, the pile AND the door
+ *   `nonPersonRival` - what a PERSON arm must beat (the persons left out)
+ *   `rival`          - what the FOE arm must beat (the townsfolk included)
+ *
+ * @typedef {object} RaceResult
+ * @property {RayPick|null} loot
+ * @property {RayPick|null} drop
+ * @property {boolean} torchWins
+ * @property {number} nonPersonRival
+ * @property {number} rival
+ */
+
+/**
  * Race everything the one ray struck.
  *
- * @param {{key: string, distance: number, reach: number}|null} corpse  the nearest body (both pools, one pick)
- * @param {{key: string, distance: number, reach: number}|null} pile    the nearest dropped pile
- * @param {{key: string, distance: number, reach: number}|null} torch   the nearest dropped light
- * @param {number} doorDistance   the door / board / static-NPC set's nearest, or Infinity
- * @param {number[]} personDistances   the street's townsfolk, by the host's own cylinder pick
- * @returns {{
- *   loot: object|null,        the body, when it beat the pile - the host's `_lootPick`
- *   drop: object|null,        the pile, when it beat the body - the host's `_dropPick`
- *   torchWins: boolean,       the torch beat the body, the pile AND the door
- *   nonPersonRival: number,   what a PERSON arm must beat (the persons left out)
- *   rival: number,            what the FOE arm must beat (the townsfolk included)
- * }}
+ * HARD3 rewrote this block. It documented FIVE `@param`s for a function
+ * with ONE - the options bag - and gave each `@returns` field a prose
+ * clause where its type belongs, so every line of it described a
+ * signature this function does not have. Nothing had ever read it but a
+ * person, and a person reads past that.
+ *
+ * @param {object} [opts]
+ * @param {RayPick|null} [opts.corpse]  the nearest body (both pools, one pick)
+ * @param {RayPick|null} [opts.pile]    the nearest dropped pile
+ * @param {RayPick|null} [opts.torch]   the nearest dropped light
+ * @param {number} [opts.doorDistance]  the door / board / static-NPC set's nearest, or Infinity
+ * @param {number[]} [opts.personDistances]  the street's townsfolk, by the host's own cylinder pick
+ * @returns {RaceResult}
  */
 export function raceActivation({
   corpse = null, pile = null, torch = null, doorDistance = Infinity, personDistances = [],
