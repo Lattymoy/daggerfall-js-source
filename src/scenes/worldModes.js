@@ -146,7 +146,7 @@ import { buildingGreeting, shopQualityPresentation } from '../systems/buildingGr
 import { setUnleveledLootWorld, unleveledLootPreTransition, unleveledLootExteriorTransition } from '../systems/unleveledLoot.js';   // UL1: PlayerEnterExit's world and its transition events   // BG1: the shop quality + the householder's greeting
 import { discoverBuilding, undiscoverBuilding, getDiscoveredBuilding, getLastLockpickAttempt, setLastLockpickAttempt } from '../systems/discovery.js';   // H3: selling a house takes its name back off the map
 import { BUILDING_KEY_0 } from '../systems/talkTopics.js';   // H3: the no-key key both ship interiors are filed under
-import { interiorLocationKey, composeInteriorShared, applyInteriorShared, applyInteriorLoot, interiorActionRecords, interiorLootKeyOf, interiorLootRecords } from '../world/interiorShared.js';   // WORLD6a: the building as a world room - the pure half
+import { interiorLocationKey, mintInteriorShared, composeInteriorShared, applyInteriorShared, applyInteriorLoot, interiorActionRecords, interiorLootKeyOf, interiorLootRecords } from '../world/interiorShared.js';   // WORLD6a: the building as a world room - the pure half; AUDIT WORLD6a A1: the bag minted there
 import { getHolidayId } from '../systems/holidays.js';
 import { guildOfFaction, isMember } from '../systems/guilds.js';
 // V5: rest above ground. The window and the session have been finished
@@ -571,29 +571,39 @@ export function createWorldModes(host) {
   function interiorPublishLoot(key, { claim = false } = {}) {
     const s = _intShared;
     const canon = interiorLootKeyOf(key);
-    if (!s?.key || !canon || !interiorCtx) return false;
+    if (!s?.locationKey || !canon || !interiorCtx) return false;
     if (claim && s.seen.has(canon)) return false;
     const l = interiorLootRecords(interiorCtx, [canon], s.tooBig);
     if (!l.length) return false;   // never opened, or too large to say - it stays this player's own
     const first = !s.seen.has(canon);
     s.seen.add(canon);
     if (first) host.onLootClaimed?.();   // AUDIT WORLD4 D5: the memory goes out now, not up to fifteen seconds from now
-    return !!host.onActions?.({ k: s.key, l });
+    return !!host.onActions?.({ k: s.locationKey, l });
   }
   /** A window opened on a container: the claim, and the window remembered so its close - through WHICHEVER of the
-   *  slot's drains frees it (a trade window has no close hook of its own, X6) - says what is left. */
-  function interiorLootOpened(key, win) {
+   *  slot's drains frees it (a trade window has no close hook of its own, X6) - says what is left.
+   *  AUDIT WORLD6a A5 (WORLD4 C6 again): a RESTOCK is said HERE, at the window's mount, not where the roll was made -
+   *  the container arm rolled a stranger's cupboard before the private-property prompt, so a player who answered No
+   *  (DFU: "No claims nothing") had already told the room the cupboard's whole contents; `fresh` is the arm's word
+   *  that this open rolled the new day's stock, and then the word is not a claim but the room's new stock. */
+  function interiorLootOpened(key, win, { fresh = false } = {}) {
     const s = _intShared;
     const canon = interiorLootKeyOf(key);
-    if (!s?.key || !canon || !win) return;
+    if (!s?.locationKey || !canon || !win) return;
     s.openKey = canon; s.openWin = win;
-    interiorPublishLoot(canon, { claim: true });
+    interiorPublishLoot(canon, { claim: !fresh });
   }
-  /** Every interior frame: the open container's window is gone (freed by a drain, or done) - the close's word. */
+  /** Every interior frame: the open container's window is GONE - the close's word.
+   *  AUDIT WORLD6a A3 (CRITICAL): gone means gone from the STACK, not from the slot. `interiorOverlay` mirrors the TOP
+   *  of interiorWindows and mountInterior PUSHES (ROAD-B B1), so a quest popup, an inventory or a text box laid over
+   *  an open shelf made the slot another window while the shelf's stood beneath, still bound to its rows: the close
+   *  went out mid-transaction, `openKey` was cleared, a peer's word then landed under the live window (AUDIT WORLD4
+   *  C1's orphaned rows: an item taken twice), and the two theft comparisons read a shelf the room had moved - a
+   *  peer's purchase made this player a thief. The stack is asked whether the window still exists. */
   function interiorLootSettle() {
     const s = _intShared;
     if (!s?.openWin) return;
-    if (interiorOverlay === s.openWin && !s.openWin.done) return;
+    if (interiorWindows.containsWindow(s.openWin) && !s.openWin.done) return;
     const k = s.openKey;
     s.openKey = null; s.openWin = null;
     interiorPublishLoot(k);
@@ -1255,10 +1265,10 @@ export function createWorldModes(host) {
    *  billboard is CENTRE-anchored, so the base ends up ON the marker
    *  inside a building and half a height BELOW it inside a dungeon.
    *  This port's billboard shader is BOTTOM-anchored (position = base,
-   *  the C11 law dungeonContext.js:1544 states), so the same visual
+   *  the C11 law dungeonContext.js:1545 states), so the same visual
    *  result needs the shift on the DUNGEON side - which is exactly the
    *  shift the dungeon's own RDB flats already take
-   *  (dungeonContext.js:1449, `y - size.h / 2`), and which a building's
+   *  (dungeonContext.js:1450, `y - size.h / 2`), and which a building's
    *  flats correctly do not (interiorContext.js passes its centers
    *  straight through).
    *
@@ -1678,10 +1688,10 @@ export function createWorldModes(host) {
     // every shop in the world held whatever it rolled the first time
     // the player walked in, for ever.
     const today = stockedToday();
-    if (needsRestock(shelf, today)) {
+    const fresh = needsRestock(shelf, today);   // AUDIT WORLD6a A5: said at the window's mount, whichever window
+    if (fresh) {
       shelf.stockedDate = today;
       shelf.items = stockShopShelf({ buildingType: b.buildingType, quality: b.quality }, playerEntity);
-      interiorPublishLoot(`shelf:${i}`);   // WORLD6a: the new day's stock is the room's, whoever browsed first
     }
     // AUDIT 26 F066: DFU NEVER opens a paying trade window in a
     // closed shop. PlayerActivate gates shelf activation on
@@ -1705,17 +1715,17 @@ export function createWorldModes(host) {
           if (shopShelfTheft(shelfBefore, shelf.items.length)) tallyCrimeGuildRequirements(playerEntity, true, 1);
         },
       });
-      if (win) { interiorOverlay = win; interiorLootOpened(`shelf:${i}`, win); }   // WORLD6a: the shelf is the room's from the open
+      if (win) { interiorOverlay = win; interiorLootOpened(`shelf:${i}`, win, { fresh }); }   // WORLD6a: the shelf is the room's from the open
       return;
     }
     // U8c: the native trade screen when the art is up (the E2/E3
     // loop on INVE00I0 + TRAD00I0 + SHOP00I0; keyed fallback stays)
     if (tradeArtLoaded()) {
       interiorOverlay = openTradeWindow(shelf, b, 'Buy');
-      interiorLootOpened(`shelf:${i}`, interiorOverlay);   // WORLD6a: and so from the trade window - its close is the frame's settle
+      interiorLootOpened(`shelf:${i}`, interiorOverlay, { fresh });   // WORLD6a: and so from the trade window - its close is the frame's settle
       return;
     }
-    showShelfList(shelf, 0);
+    showShelfList(shelf, 0, fresh);   // AUDIT WORLD6a A4: the keyed fallback claims too
   }
 
   /** U40: the merchant's own Sell screen. DFU's merchant popup sells
@@ -1732,16 +1742,16 @@ export function createWorldModes(host) {
     // shelf, and a merchant screen opened on a new day must find the
     // new day's stock rather than yesterday's leavings.
     const today = stockedToday();
-    if (needsRestock(target, today)) {
+    const fresh = needsRestock(target, today);   // AUDIT WORLD6a A5: said at the window
+    if (fresh) {
       target.stockedDate = today;
       target.items = isShop(b.buildingType)
         ? stockShopShelf({ buildingType: b.buildingType, quality: b.quality }, playerEntity)
         : [];
-      if (shelf) interiorPublishLoot('shelf:0');   // WORLD6a
     }
     let win = null;
     win = openTradeWindow(target, b, 'Sell');
-    if (shelf) interiorLootOpened('shelf:0', win);   // WORLD6a: what is sold lands on the room's shelf
+    if (shelf) interiorLootOpened('shelf:0', win, { fresh });   // WORLD6a: what is sold lands on the room's shelf
     // NOTE (found wiring X6): this assignment is INERT. NativeTradeWindow
     // never calls hooks.onClose - it sets `done` on Escape/E and the
     // frame's sweep at :2450/:2517 frees the slot. Left in place because
@@ -1989,9 +1999,13 @@ export function createWorldModes(host) {
   // afford); doSell always sells.
   function doBuy(shelf, it) {
     const price = buyPrice(it);
+    // AUDIT WORLD6a A4: a row whose item the shelf no longer holds (the room's word moved it under the window) buys
+    // nothing - `splice(indexOf(it), 1)` with -1 took the LAST item off the shelf and put the row's into the pack
+    const at = shelf.items.indexOf(it);
+    if (at < 0) return undefined;
     if (goldAmount(playerEntity) < price) return null;
     deductGold(playerEntity, price);
-    shelf.items.splice(shelf.items.indexOf(it), 1);
+    shelf.items.splice(at, 1);
     playerEntity.items = playerEntity.items || [];
     addItem(playerEntity.items, it);
     tallySkill(playerEntity, SKILLS.Mercantile, 1);   // per completed trade (DFU OnTrade)
@@ -3959,7 +3973,7 @@ export function createWorldModes(host) {
     takeBack();
   }
 
-  function showShelfList(shelf, page) {
+  function showShelfList(shelf, page, fresh = false) {
     const per = 8;
     const slice = shelf.items.slice(page * per, (page + 1) * per);
     const options = slice.map((it, j) => ({
@@ -3976,6 +3990,10 @@ export function createWorldModes(host) {
       lines: [interiorBuilding.name || 'Shelves', shelf.items.length ? `Buy: (you have ${goldAmount(playerEntity)} gold)` : 'The shelf is empty.'],
       options,
     });
+    // AUDIT WORLD6a A4: the keyed fallback (no trade art) claimed nothing and guarded nothing - the room's word landed
+    // under its rows and a purchase was never told; every page of it is an open on the shelf, like the art's windows
+    const si = interiorCtx?.shelves?.indexOf(shelf) ?? -1;
+    if (si >= 0) interiorLootOpened(`shelf:${si}`, interiorOverlay, { fresh });
   }
   function buyItem(shelf, it) {
     if (doBuy(shelf, it) === null) {
@@ -4581,9 +4599,11 @@ export function createWorldModes(host) {
       // moment they move (WORLD3's change seam, the graph's own), keyed by the building.
       {
         const b = interiorBuilding;
-        const owned = (b?.buildingType === BUILDING_TYPES.Ship && ownsShip(playerEntity)) || isHouseOwned(playerEntity.houses ?? [], b?.regionIndex ?? 0, b?.buildingKey);
-        const key = owned ? null : interiorLocationKey(questSceneCtx?.()?.mapId ?? 0, b?.buildingKey ?? 0);
-        _intShared = { key, stamp: Math.random().toString(36).slice(2), seen: new Set(), tooBig: new Set(), applied: false, openKey: null, openWin: null };
+        // AUDIT WORLD6a B6: ANY ship interior is owned - DFU does not distinguish ships, so a player who owns one owns
+        // them all, and two players in one hull disagreed about whether the room existed; a hull is the boarder's own
+        const owned = b?.buildingType === BUILDING_TYPES.Ship || isHouseOwned(playerEntity.houses ?? [], b?.regionIndex ?? 0, b?.buildingKey);
+        _intShared = mintInteriorShared(interiorLocationKey(questSceneCtx?.()?.mapId ?? 0, b?.buildingKey ?? 0), { owned });   // AUDIT WORLD6a A1: the bag from the one mint, its key spelled as the pure half reads it
+        const key = _intShared.locationKey;
         if (key) ctx.actions.onChanged = (recs) => host.onActions?.({ k: key, a: recs });
       }
       interiorFoes = makeInteriorFoes(ctx);   // IF: the pool lives exactly as long as the interior does
@@ -4880,6 +4900,7 @@ export function createWorldModes(host) {
           // someone else's furniture. An owned house or ship reaches
           // openLoot() through the arm above with `privateProperty`
           // false, and is never a theft.
+          let fresh = false;   // AUDIT WORLD6a A5: this open rolled the new day's stock (said at the window, not at the roll)
           const openLoot = (privateProperty = false) => {
             const before = privateProperty ? [...(c.items ?? [])] : null;
             const win = interiorInventory({
@@ -4903,7 +4924,7 @@ export function createWorldModes(host) {
                 }
               },
             });
-            if (win) { interiorOverlay = win; if (!owned) interiorLootOpened(key, win); }   // WORLD6a: a stranger's cupboard is the room's from the open
+            if (win) { interiorOverlay = win; if (!owned) interiorLootOpened(key, win, { fresh }); }   // WORLD6a: a stranger's cupboard is the room's from the open
           };
           const owned = (b?.buildingType === BUILDING_TYPES.Ship && ownsShip(playerEntity))
             || isHouseOwned(playerEntity.houses ?? [], b?.regionIndex ?? 0, b?.buildingKey);
@@ -4925,7 +4946,7 @@ export function createWorldModes(host) {
             if (needsRestock(c, today)) {
               c.stockedDate = today;
               c.items = stockHouseContainer({ buildingType: b?.buildingType, record: c.record }, playerEntity);
-              interiorPublishLoot(key);   // WORLD6a: the new day's stock is the room's
+              fresh = true;   // AUDIT WORLD6a A5: said at the window's mount, after the prompt - No claims nothing
             }
             if (c.items.length === 0) return true;   // "If no contents, do nothing"
             interiorOverlay = new ChoiceWindow({
@@ -5063,7 +5084,7 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:5255), so the OUTER host's one rides in.
+          // (dungeonContext.js:5256), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:524 -> the
@@ -7442,7 +7463,7 @@ export function createWorldModes(host) {
     // ONLINE1: what the host needs to name the room - the mounted dungeon's
     // location, the interior's building; null in the exterior
     roomIdentity: () => (mode === 'dungeon' ? { kind: 'dungeon', mapId: dungeonLoc?.mapTableData?.mapId ?? null, regionIndex: dungeonLoc?.regionIndex ?? -1, name: dungeonLoc?.name ?? '' }
-      : mode === 'interior' ? { kind: 'interior', buildingKey: interiorBuilding?.buildingKey ?? 0 } : null),
+      : mode === 'interior' ? { kind: 'interior', buildingKey: _intShared?.owned ? 0 : (interiorBuilding?.buildingKey ?? 0) } : null),   // AUDIT WORLD6a A6/B6: an owned house or a ship keeps NO room - not a room nobody feeds (the owner joined it, could hold the seat, and published nothing)
     get dungeonLocation() { return dungeonLoc; },   // B2: playerInside's dungeon arm
     /** X7: the Identify SPELL's window (Identify.cs:71-76 pushes the
      *  trade window itself). The spell can be cast anywhere, but the
@@ -7584,25 +7605,25 @@ export function createWorldModes(host) {
     // its wiring (_intShared). Null or false outside a place with a room.
     placeSharedWorld() {
       if (mode === 'dungeon') return dungeonCtx ? dungeonCtx.sharedWorld() : null;
-      return mode === 'interior' && interiorCtx && _intShared?.key ? composeInteriorShared(interiorCtx, _intShared) : null;
+      return mode === 'interior' && interiorCtx && _intShared?.locationKey ? composeInteriorShared(interiorCtx, _intShared) : null;   // AUDIT WORLD6a A1: the bag as the pure half reads it
     },
     restorePlaceSharedWorld(shared) {
       if (mode === 'dungeon') return dungeonCtx ? dungeonCtx.restoreSharedWorld(shared) : false;
-      if (mode !== 'interior' || !interiorCtx || !_intShared?.key || _intShared.applied) return false;
-      const ok = applyInteriorShared(interiorCtx, shared, { locationKey: _intShared.key, stamp: _intShared.stamp, seen: _intShared.seen, openKey: _intShared.openKey });
+      if (mode !== 'interior' || !interiorCtx || !_intShared?.locationKey || _intShared.applied) return false;
+      const ok = applyInteriorShared(interiorCtx, shared, { ..._intShared, today: stockedToday() });   // AUDIT WORLD6a A2: the day bounded by today
       if (ok) _intShared.applied = true;
       return ok;
     },
     applyPlaceActions(id, data) {
       if (mode === 'dungeon') return dungeonCtx ? !!dungeonCtx.applyActions?.(id, data) : false;
-      if (mode !== 'interior' || !interiorCtx || !_intShared?.key || !data || data.k !== _intShared.key) return false;
+      if (mode !== 'interior' || !interiorCtx || !_intShared?.locationKey || !data || data.k !== _intShared.locationKey) return false;
       const n = (Array.isArray(data.a) ? interiorCtx.actions.applyRemote(data.a) : 0)
-        + (Array.isArray(data.l) ? applyInteriorLoot(interiorCtx, data.l, { seen: _intShared.seen, openKey: _intShared.openKey }) : 0);
+        + (Array.isArray(data.l) ? applyInteriorLoot(interiorCtx, data.l, { seen: _intShared.seen, openKey: _intShared.openKey, today: stockedToday() }) : 0);
       return n > 0;
     },
     placeActionRecords(keys) {
       if (mode === 'dungeon') return dungeonCtx ? (dungeonCtx.actionRecords?.(keys) ?? null) : null;
-      return mode === 'interior' && interiorCtx && _intShared?.key ? interiorActionRecords(interiorCtx, keys, { locationKey: _intShared.key, tooBig: _intShared.tooBig }) : null;
+      return mode === 'interior' && interiorCtx && _intShared?.locationKey ? interiorActionRecords(interiorCtx, keys, { locationKey: _intShared.locationKey, tooBig: _intShared.tooBig }) : null;
     },
     restoreDungeonSave(extras) {
       if (mode !== 'dungeon' || !dungeonCtx) return false;
@@ -8142,7 +8163,7 @@ export function createWorldModes(host) {
      *  has one manager, so the same bit belongs in every rig.
      *
      *  FLAG ONLY, presence-gated, exactly as world.js:4360/:4360 and
-     *  dungeonContext.js:5331/:5335 are: the C# restore sets the
+     *  dungeonContext.js:5332/:5335 are: the C# restore sets the
      *  property and calls no ApplyWeapon, because UpdateHands ends in
      *  ApplyWeapon on the next frame (WeaponManager.cs:699) - the
      *  port's twin is the rig's per-frame syncWorn. */

@@ -17,7 +17,7 @@
 // MI (magic items) rolls need the MAGIC.DEF registry
 // (setMagicItemTemplates), and EVERY host that can generate loot now
 // loads it: scenes/shared.js:104-107 (loadMagicRegistries) feeds the
-// module table this file reads, called from dungeonContext.js:1063,
+// module table this file reads, called from dungeonContext.js:1064,
 // world.js:1939 and exterior.js:1062 - interiors run inside those hosts
 // and read the same table. What is left is the data-absent boot, and
 // that is DFU's own answer rather than a stand-in: shared.js:107
@@ -507,12 +507,20 @@ export const LOOT_ARRAY_FIELDS = Object.freeze(['enchantments', 'customEnchantme
 export function validLootItem(v) {
   if (!v || typeof v !== 'object' || Array.isArray(v)) return null;
   if (!Number.isInteger(v.templateIndex) || v.templateIndex < 0 || v.templateIndex > 65535) return null;
+  if (!templateByIndex(v.templateIndex)) return null;   // AUDIT WORLD6a B1: an item the port has no template for is not an item
   for (const f of LOOT_ARRAY_FIELDS) if (v[f] != null && !Array.isArray(v[f])) return null;   // B1
   const out = clampLootValue(v, 0);
   if (!out || typeof out !== 'object' || Array.isArray(out)) return null;
   // ...and the clamp must not have turned one INTO something else on the way (a depth cut drops a field whole,
   // which is safe; a survivor that is no longer an array is not)
   for (const f of LOOT_ARRAY_FIELDS) if (out[f] != null && !Array.isArray(out[f])) return null;
+  // AUDIT WORLD6a B1: THE PRICE IS NOT THE WIRE'S. A shelf's list lands on every client (WORLD6a) and calculateCost
+  // reads `value`, so a peer minted a Daedric dai-katana at `value: 0` onto a shop's shelf and every player in the
+  // Bay could buy it for 2 gold, and the room remembered it for thirty days. The value is floored at what the port
+  // itself would mint for the template and material (itemBaseValue - ItemBuilder's own arithmetic); an honest value
+  // above it (an enchantment's worth, a book's price) stands. A forged item still lands, at its true price: that is
+  // a peer selling a conjured thing, which the WORLD4 law already accepts for a chest, and is recorded.
+  out.value = Math.max(Number.isFinite(out.value) ? out.value : 0, itemBaseValue(out));
   return out;
 }
 

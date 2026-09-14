@@ -96,6 +96,7 @@ import { tallySkill, skillValue, SKILLS, SKILL_NAMES } from '../systems/skills.j
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT, startRestGroundedCheck } from '../player/motor.js';   // the rest gate's grounded input, one home
 import { applyLevelUp } from '../systems/advancement.js';
 import { tickPlayerMinutes, claimMagicRounds, runMagicRoundsFor } from '../systems/worldTick.js';   // AUDIT 18: the player tick every host shares
+import { mintSharedStamp } from '../net/wire.js';   // AUDIT WORLD6a B7: the memory's stamp, from the wire's one mint
 import { spendPoolLowest } from '../systems/chargen.js';
 import { ClassFile } from '../formats/classFile.js';
 import { fetchBytes, ensureAudio, loadMagicRegistries, wireInfectionVideos, raisePlayerSkills, endRunToTitleMenu, exitToTitleMenu, sensesContext, wireDoorSpells, createDetectFeed, foeNearbyRecord, lootNearbyRecord, nearbyLootRecords, restVitals, restFullyHealed, createRestDeps, fatigueLossMultiplierFor} from './shared.js';
@@ -1887,7 +1888,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // copied mount would have diverged the first time an arm grew.
   /** DR1: THE TWO SPELL WINDOWS THIS HOST MOUNTS NOW, and the one door
    *  they go through. `mountSpellWindow` is worldModes'
-   *  mountSpellWindow DUNGEON ARM (worldModes.js:1024,
+   *  mountSpellWindow DUNGEON ARM (worldModes.js:1034,
    *  `dungeonCtx?.showOverlay(win)`) resolved to what it actually
    *  calls here - this file's own pushDungeonWindow, which IS
    *  UserInterfaceManager.PushWindow. So a spell window raised over an
@@ -2362,7 +2363,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:898 against :929; worldModes.js:5869 against :5877).
+    // (dungeon.js:898 against :929; worldModes.js:5890 against :5898).
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -2836,7 +2837,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
               // playerArrowHitFoe is the one copy world.js:8568,
-              // exterior.js:4203 and worldModes.js:5996 already ran;
+              // exterior.js:4203 and worldModes.js:6017 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -3207,7 +3208,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // restoreSaveData) - a mover's pose IS its {state, t}, and a door
   // carries a second pair for the record's Move tween.
   const _locationKey = `dungeon:${dfLocation?.dungeon?.recordElement?.header?.locationId ?? 'probe'}`;
-  const _sharedStamp = Math.random().toString(36).slice(2);   // AUDIT WORLD B1: this context's mark on the memory it publishes - a reconnect's welcome never hands it back
+  const _sharedStamp = mintSharedStamp();   // AUDIT WORLD B1: this context's mark on the memory it publishes - a reconnect's welcome never hands it back; AUDIT WORLD6a B7: twelve digits always, from the wire's one mint
   let _sharedApplied = false;   // AUDIT WORLD B7: the room's memory lands on a freshly built pool ONCE; a second apply onto a live fight is slice 3's events
   // WORLD2 (Mac: "Lets continue on with the next phase"): ONE SIMULATION PER ROOM. While another hosts the room I am
   // not the authority: my layout foes (the first _layoutFoes of the pool) are PUPPETS that follow the host's stream

@@ -23,6 +23,7 @@ import { validLootItem, validLootList, LOOT_LIST_MAX, LOOT_ITEM_KEYS_MAX, LOOT_S
 import { fakeRoom } from './fakeRoom.mjs';
 import { fakeSocketClass } from './fakeSocket.mjs';
 import { OnlineSession } from '../src/net/online.js';
+import { itemBaseValue } from '../src/systems/itemTemplates.js';   // AUDIT WORLD6a B1: the projector floors an item's value at the template's own
 
 const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
 const at = (px, pz) => ({ x: px * PIXEL_UNITS + 10, y: 0, z: pz * PIXEL_UNITS + 10, yaw: 0, pitch: 0, mv: 0 });
@@ -31,7 +32,7 @@ const ITEM = { group: 'Weapons', templateIndex: 131, name: 'Arrow', material: 0,
 
 test('WORLD4: a container\'s list off the wire is projected and clamped - an EMPTY list is the commonest word a room says and is valid; an item needs a templateIndex a template could carry; the copy is a COPY, its strings bounded, its breadth and depth bounded, its non-finite numbers dropped; anything else is refused whole', () => {
   assert.deepEqual(validLootList([]), [], 'emptied - the word the room says most');
-  assert.deepEqual(validLootList([ITEM]), [ITEM], 'an honest item survives entire');
+  assert.deepEqual(validLootList([ITEM]), [{ ...ITEM, value: Math.max(ITEM.value, itemBaseValue(ITEM)) }], 'an honest item survives entire - its value floored at the template\'s own (AUDIT WORLD6a B1)');
   const src = [ITEM];
   const out = validLootList(src);
   assert.notEqual(out[0], src[0], 'and survives as a COPY - no reference from the wire reaches the pack');
@@ -44,14 +45,14 @@ test('WORLD4: a container\'s list off the wire is projected and clamped - an EMP
   assert.equal(validLootList(new Array(LOOT_LIST_MAX).fill({ templateIndex: 1 })).length, LOOT_LIST_MAX, 'and exactly that many is fine');
   // the clamp inside one item
   assert.equal(validLootItem({ templateIndex: 1, name: 'x'.repeat(LOOT_STR_MAX + 200) }).name.length, LOOT_STR_MAX, 'a string is bounded, not refused');
-  assert.equal('value' in validLootItem({ templateIndex: 1, value: NaN }), false, 'a non-finite number is dropped');
-  assert.equal('value' in validLootItem({ templateIndex: 1, value: Infinity }), false);
+  assert.equal(validLootItem({ templateIndex: 1, value: NaN }).value, itemBaseValue({ templateIndex: 1 }), 'a non-finite value is the template\'s own (AUDIT WORLD6a B1: the price is never the wire\'s to lower)');
+  assert.equal(validLootItem({ templateIndex: 1, value: Infinity }).value, itemBaseValue({ templateIndex: 1 }));
   assert.equal('f' in validLootItem({ templateIndex: 1, f: () => 1 }), false, 'a function is not an item field');
   const wide = { templateIndex: 1 }; for (let i = 0; i < LOOT_ITEM_KEYS_MAX + 2; i++) wide[`k${i}`] = 1;
   assert.equal(validLootItem(wide), null, `at most ${LOOT_ITEM_KEYS_MAX} fields`);
   // an enchantment list is depth 2 and must survive whole
   const magic = { templateIndex: 200, group: 'Weapons', enchantments: [{ type: 1, param: 2 }, { type: 3, param: 4 }] };
-  assert.deepEqual(validLootItem(magic), magic, 'a magic item keeps its enchantments');
+  assert.deepEqual(validLootItem(magic), { ...magic, value: itemBaseValue(magic) }, 'a magic item keeps its enchantments (and takes the template\'s value where it carried none)');
   const deep = validLootItem({ templateIndex: 1, a: { b: { c: { d: { e: 1 } } } } });
   assert.ok(deep && !JSON.stringify(deep).includes('"e"'), `nesting past ${LOOT_DEPTH_MAX} is dropped, the item kept`);
   assert.equal(validLootItem(JSON.parse('{"templateIndex":1,"__proto__":{"polluted":1}}')), null, 'and a prototype key is not a field');

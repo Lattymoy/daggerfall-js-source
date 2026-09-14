@@ -2398,6 +2398,143 @@ the pure half's vocabulary, records, landing, memory and re-read; the
 hosts by source. The WORLD1, WORLD3, WORLD5, AUDIT WORLD34 and AUDIT
 WORLD5 pins restamped where the law and the path moved.
 
+## AUDIT WORLD6a (2026-09-14)
+
+**Mac: "Audit before we move on."** Three opus lenses over the
+building-as-a-world-room slice, each told the live record and made to
+find it: the wire, the relay and the keys; the interior's live wiring
+and the world host; the pure half and what the slice left out. Every
+finding below was executed against the real modules (the fake Room
+and socket, the pure half on a bare context, the loot projector) or
+cited to a line. Fourteen paid in this slice, four recorded. The relay
+changed (B3) and **must be redeployed**; `/health` answers `world61`.
+
+**A1 (CRITICAL) - THE BUILDING'S MEMORY WAS NEVER PUBLISHED.** The
+interior mode built its wiring bag with the key spelled `key` and
+handed the whole bag to `composeInteriorShared`, which read
+`locationKey` - so every publish answered null, the relay stored
+nothing for any interior room, and no joiner was ever handed the
+building as the host left it; only the live acts worked, and only for
+players already standing in the room. The slice's headline law was
+inert, and the only pin on the call site was a source regex that
+matched the broken line verbatim. The bag is minted by the pure half
+now (`mintInteriorShared`), the field names live in one home, no site
+reads the old spelling (a pin counts them), and the audit's test
+EXECUTES the composition through the very bag the mode hands in. The
+lesson is AUDIT WORLD34 A1's again: a law pinned by its spelling is
+not pinned.
+
+**B1 (CRITICAL) - A PEER MINTED PRICED GOODS ONTO A SHOP'S SHELF.**
+`validLootItem` took any `templateIndex` and clamped every other field
+without reading it; a shelf's list lands on every client and
+`calculateCost` reads `value`, so a forged Daedric dai-katana at
+`value: 0` sat on a shop's shelf for two gold, for everyone, and the
+room remembered it for thirty days. THE PRICE IS NOT THE WIRE'S: the
+projector floors an item's value at what the port itself mints for the
+template and material (`itemBaseValue`, ItemBuilder's own arithmetic)
+and refuses a template the port does not have; an honest value above
+the floor (an enchantment's worth, a book's price) stands. A forged
+item still lands, at its true price - a peer selling a conjured thing,
+which WORLD4's law already accepts for a chest - and that is recorded
+below. The floor is the projector's, so the dungeon's chests take it
+too.
+
+**A2/B2 - THE STOCKED DAY LANDED UNREAD.** `d` is the one field the
+interior's record carries that the dungeon's never did; `needsRestock`
+is `stockedDate < today`, so a `d` of 1e15 froze a shelf's restock for
+ever, a `d` of 0 rerolled it on every browse, and either rode the
+scene cache into the victim's SAVE and the room's memory for thirty
+days. The day is projected like the list: a whole number no later
+than tomorrow (the world's day is shared - a peer a day ahead has a
+clock a day off, not a time machine), the RECORD refused whole
+otherwise (a list without its day would land, restock and republish
+over the room). **A3** - and the day only moves FORWARD: a stale close
+from a window opened yesterday un-restocked a shelf the new day had
+rolled, and the roll repeated. The mode hands `today` in for the
+memory and for an act.
+
+**A3 (CRITICAL) - A WINDOW PUSHED OVER AN OPEN SHELF WAS ITS CLOSE.**
+The settle read "the window is gone" as `interiorOverlay !== openWin`,
+and `interiorOverlay` mirrors the TOP of a STACK (ROAD-B B1) that
+`mountInterior` pushes onto - so a quest popup, an inventory or a text
+box over an open shelf sent the close mid-transaction, cleared
+`openKey`, let a peer's word land under the live window (AUDIT WORLD4
+C1's orphaned rows: an item taken twice) and moved the shelf under
+both theft comparisons - a peer's purchase made this player a thief,
+a peer's sale hid a theft. The stack is asked whether the window still
+exists (`containsWindow`), after the frame's reconcile.
+
+**A4 - THE KEYED SHOP FALLBACK CLAIMED NOTHING.** Without the trade art
+the shop runs through `showShelfList`, which opened no claim and set
+no `openKey`: a purchase was never told to the room, and a peer's word
+landed under its rows - where `doBuy` spliced at `indexOf(it)`, which
+was `-1` for a moved row, so the LAST item left the shelf and the
+row's went into the pack. Every page of the fallback is an open now,
+and a row the shelf no longer holds buys nothing.
+
+**A5 - A RESTOCK WAS SAID BEFORE THE PROMPT (WORLD4 C6 again).** The
+container arm rolled a stranger's cupboard and published it before the
+private-property prompt, so a player who answered No - DFU's "No
+claims nothing" - had already made the cupboard the room's. A restock
+is said where the window mounts: `interiorLootOpened` takes the arm's
+word that this open rolled the new day's stock, and says it as the
+room's stock rather than a claim; No says nothing.
+
+**A6/B6 - AN OWNED BUILDING KEPT A ROOM NOBODY FED.** An owner's
+`_intShared` had no key, but the host still minted the room, the owner
+joined it and could hold the seat, and published nothing while the
+others could not. And DFU does not distinguish ships (owning one owns
+them all), so two players in one hull disagreed about whether the room
+existed. An owned house and ANY ship keep no room at all: the mode
+reports a 0 building key and the host mints none.
+
+**A7 - THE FIRST ACT IN A NEW BUILDING WAS DROPPED.** AUDIT WORLD B8's
+window (the socket held in the cell's room for `ROOM_HOLD_MS` after
+the mode names a place) is one frame in a dungeon and a room change at
+every shop door now; `actSend` cleared the pending set when the SOCKET
+was in no world room. The room the mode NAMES counts: the act pends
+for the socket's arrival.
+
+**B8** - a foes frame in a building's room stamped the dungeon
+authority's heartbeat (`_foesInAt` is module-level and outlives a room
+change); the stamp is a dungeon's alone now. **B4** - the law admitted
+`interior:m1.0`, `m0.<key>` and padded aliases no end mints, rooms the
+relay would pay for that no player can reach; no zero and no leading
+zero in either number, for dungeons too. **B5** - the session spelt a
+negative building key raw where the memory spelt it unsigned (AUDIT
+WORLD34 A2 relocated to the second field); unsigned at both ends.
+**B3** - the namespace of buildings is 10^18 names an attacker may
+fill for `WORLD_TTL_MS` each, at 512 KiB; a shop's memory measured at
+2-4 KB a shelf, so an interior room stores `WORLD_FRAME_MAX_INTERIOR`
+(64 KiB) and no more, at the relay (once the key is known - the prefix
+door knows no room) and at the client. **B7** - the context's stamp
+could be one character (`Math.random().toString(36).slice(2)`) and a
+collision refused the room's memory in silence; twelve digits always,
+from the wire's one mint, for the dungeon too.
+
+**Recorded, not paid.** (1) A forged item at its true price still
+lands on a shelf - a peer selling a conjured thing, which is WORLD4's
+accepted cost for a chest; the fix is a per-item provenance the wire
+does not carry. (2) The seen set is per context and the memory lands
+once per context (WORLD1 B7, WORLD4): a joiner inside the window
+between a claim and the next publish, or a host handed the seat with
+a `seen` the acts never reached, can carry a stale list forward; the
+exposure is larger for a building (a shop door is a room change) and
+the cure is a per-key memory law, WORLD1's to change. (3) The scene
+cache writes the room's lists as this player's own, so an offline game
+carries a shop as the room last showed it - the world as last seen,
+which is what a cache is; the poisoned day (A2) was the harm, and it
+is bounded. (4) Bookshelves, treasure piles, dropped piles, interior
+foes and guards, and a same-day double restock stay as WORLD6a
+recorded them.
+
+**Pinned** in `test/auditworld6a.test.js` (6): the root executed
+through the bag (A1), the price floor (B1), the day's bound and
+direction (A2/B2/A3), the law and the interior's cap at the relay and
+the client (B3/B4/B5), the stamp (B7), and A3-A7/B6/B8 by source. The
+WORLD1, WORLD4, WORLD5, WORLD6, AUDIT WORLD34 and AUDIT WORLD5 pins
+restamped where the law moved.
+
 ## What it does not do (yet)
 
 - **The Morrowind body** ships (MWBODY1, above); a client without the

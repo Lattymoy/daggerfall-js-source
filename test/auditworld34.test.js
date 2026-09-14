@@ -207,7 +207,7 @@ test('AUDIT WORLD34 B1/B3 by source: a dead foe is retyped too (a joiner whose s
   assert.match(d, /if \(!out\.length && !full\) return null;\s*return \{ n: \+\+_foesSeq, k: _locationKey, f: out \};/, 'the empty full frame goes');
   const w = rd('src/scenes/world.js');
   assert.match(w, /const dungeonAuthority = \(now = performance\.now\(\)\) => !\(online\?\.room && isWorldRoom\(online\.room\) && online\.status === 'open' && online\.host && !online\.isHost\(\) && now - _foesInAt < FOES_STALE_MS\);/, 'the seat still reads the heartbeat');
-  assert.match(w, /online\.onFoes = \(id, data\) => \{ _foesInAt = performance\.now\(\); modes\?\.applyDungeonFoes\?\.\(id, data\); \};/, 'and every frame in, empty or not, is the heartbeat');
+  assert.match(w, /online\.onFoes = \(id, data\) => \{ if \(modes\?\.mode === 'dungeon'\) _foesInAt = performance\.now\(\); modes\?\.applyDungeonFoes\?\.\(id, data\); \};/, 'and every frame in, empty or not, is the heartbeat (AUDIT WORLD6a B8: in a dungeon - a building\'s room streams no foes)');
 });
 
 test('AUDIT WORLD34 C2 by source: the memory\'s action records are the SHARED half out (no picker\'s latch) and PROJECTED in (validActionRecord, as an act\'s are) - the relay serves the stored bytes back unparsed for thirty days', () => {
@@ -219,7 +219,7 @@ test('AUDIT WORLD34 C2 by source: the memory\'s action records are the SHARED ha
 
 test('AUDIT WORLD34 C3 by source: a refused act is KEPT while the socket is away and flushed when it returns; it is cleared only when the room is no world room', () => {
   const w = rd('src/scenes/world.js');
-  assert.match(w, /const _actRoom = \(\) => !!\(online && isWorldRoom\(online\.room\)\);/);
+  assert.match(w, /const _actRoom = \(\) => !!\(online && \(isWorldRoom\(online\.room\) \|\| isWorldRoom\(_onlineKey\)\)\);/);   // AUDIT WORLD6a A7: or the room the mode names, while the socket is held
   assert.match(w, /const actSend = \(data\) => \{\s*if \(!_actRoom\(\)\) \{ _actPend\.clear\(\); return false; \}\s*if \(!_actLive\(\)\) \{ for \(const k of \[\.\.\.\(\(data\?\.a \?\? \[\]\)\.map\(\(r\) => r\.key\)\), \.\.\.\(\(data\?\.l \?\? \[\]\)\.map\(\(r\) => r\.k\)\)\]\) _actPend\.add\(k\); return false; \}/, 'kept');
   assert.match(w, /const actFlush = \(\) => \{\s*if \(!_actPend\.size\) return false;\s*if \(!_actRoom\(\)\) \{ _actPend\.clear\(\); return false; \}\s*if \(!_actLive\(\)\) return false;/, 'flushed when the socket is back');
   assert.doesNotMatch(w, /if \(!_actLive\(\)\) \{ _actPend\.clear\(\); return false; \}/, 'the old clear is gone');

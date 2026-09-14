@@ -211,7 +211,7 @@ test('AUDIT WORLD C: the peer\'s body - the doors in ORDER, sheathed before the 
 
 test('AUDIT WORLD: the hosts by source - the dungeon host stamps its memory and applies one once (B1/B7), carries and reads the species (B4), keeps the drops the save\'s alone (B3), says its death and its rig (B6/C1) and its one "Game loaded." (B10); the mode machine names the live rig and the death screen (C1/B6); the world host publishes into a world room alone as a farewell when forced and says a refusal once (B5/B8/B9) and gates the dead on the mode\'s slot (B6); the arm casts sheathed (C2); the body re-latches on the linger (C7); the record\'s false sentences are gone (D2/D6/D7/D8)', () => {
   const d = rd('src/scenes/dungeonContext.js');
-  assert.match(d, /const _sharedStamp = Math\.random\(\)\.toString\(36\)\.slice\(2\);/, 'B1: the stamp'); assert.match(d, /let _sharedApplied = false;/, 'B7: the once');
+  assert.match(d, /const _sharedStamp = mintSharedStamp\(\);/, 'B1: the stamp (AUDIT WORLD6a B7: twelve digits always, from the wire\'s one mint)'); assert.match(d, /let _sharedApplied = false;/, 'B7: the once');
   assert.match(d, /mobileType: f\.mobileType,\s*gender: f\.gender,[^\n]*\n\s*maxHealth: f\.entity\.maxHealth,/, 'B4: the record carries the species (WORLD3: and the gender)');
   assert.match(d, /if \(!f\) return;\s*if \(sf\.mobileType != null && sf\.mobileType !== f\.mobileType\) \{[^\n]*\n\s*(?:\/\/[^\n]*\n\s*)*retypeFoe\(i, sf\.mobileType, sf\.gender \?\? null\)[^\n]*\n\s*return;/, 'B4: another species at the index is never patched blind (WORLD3: rebuilt as the record\'s own, on both paths since AUDIT WORLD3 E1)');
   assert.match(d, /if \(truncate\) droppedLoot\.restorePiles\(w\.droppedLoot\);/, 'B3: the clearing restore is the save\'s alone');
