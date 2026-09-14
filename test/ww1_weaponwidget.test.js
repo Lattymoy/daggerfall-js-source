@@ -489,6 +489,16 @@ test('WW1: Offset, Bob and Inertia - the channels the frame publishes: the sheat
   const tgt = [(-1 + Math.sin(w.time * rate)) * -size[0], (1 - Math.sin(w.time * rate * 2)) * size[1]];
   near(w.bobSmooth[0], tgt[0], 1e-6, 'x: the U\'s sideways term'); near(w.bobSmooth[1], tgt[1], 1e-6, 'y: twice the rate');
   assert.ok(w.bobSmooth[1] >= 0, 'the U never rises above the rest');
+  // WW2: STANDING STILL - the slight idle stride (BobWhileIdle: s = 0.1, a tenth of the size and of the rate), never
+  // the walking one (the world-hosted dungeon lane left `standing` unsent and the full stride played at rest)
+  { const idle = bench({ over: { 'Modules.Offset': false, 'Modules.Inertia': false } }); idle.ctx.motion.standing = true;
+    let maxX = 0, maxY = 0;
+    for (let i = 0; i < 400; i++) { idle.frame(0.025); maxX = Math.max(maxX, Math.abs(idle.widget.position[0])); maxY = Math.max(maxY, Math.abs(idle.widget.position[1])); }
+    assert.ok(maxX > 0.2 && maxY > 0.1, `the sprite bobs slightly while idle (${maxX.toFixed(2)}, ${maxY.toFixed(2)})`);
+    assert.ok(maxX <= 640 * 0.01 * 0.1 * 2 * 2 + 1e-6 && maxY <= 400 * 0.01 * 0.1 * 2 * 2 + 1e-6, `and never past the 0.1 stride (${maxX.toFixed(2)} <= 2.56, ${maxY.toFixed(2)} <= 1.6) - the walking stride is ten times this`);
+    const still = bench({ over: { 'Modules.Offset': false, 'Modules.Inertia': false, 'Bob.BobWhileIdle': false } }); still.ctx.motion.standing = true;
+    for (let i = 0; i < 60; i++) still.frame(0.025);
+    assert.deepEqual(still.widget.position, [0, 0], 'BobWhileIdle off: no bob at all while standing'); }
   b.ctx.motion.grounded = false; for (let i = 0; i < 60; i++) b.frame(0.025);
   assert.deepEqual(b.widget.position, [0, 0], 'airborne: moveSmooth eases to 0 (at 4 a second) and the bob is silenced');
   const nb = bench({ over: { 'Modules.Bob': false, 'Modules.Offset': false } }); nb.ctx.motion.standing = false; for (let i = 0; i < 10; i++) nb.frame(0.025);
@@ -564,11 +574,14 @@ test('WW1: the rig runs the clone beside the machine - the late update after the
   assert.match(arm, /setScreenTransform\(fn\) \{ screenTransform = typeof fn === 'function' \? fn : null; \}/);
   assert.match(arm, /const rect = screenTransform\(\{ x: 0, y: 0, w: W, h: H \}\);/, 'the composite\'s whole rect through the transform');
   assert.match(arm, /renderer\.drawScreenQuad\(tex, rect, \{ u0: 0, v0: ph \/ CHAR_SPRITE_RT_SIZE, u1: pw \/ CHAR_SPRITE_RT_SIZE, v1: 0 \}\)/, 'drawn as a screen quad with the overlay\'s own uv');
-  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/worldModes.js']) {
-    assert.match(rd(host), /crouching: !!player\.crouching, riding: !!player\.riding, standing: !!player\.standing, speedField: player\.speed \|\| 0/, `${host}: the motor's words for the bob`);
-    assert.match(rd(host), /missEffect: \(k, p, o\) => hitEffects\.showMissEffect\(k, p, o\)|missEffect:/, `${host}: the miss billboard`);
+  // WW2: the motor's words for the bob ride ONE bag (motionBagOf) at every site - a per-file grep let a second, partial
+  // site in worldModes.js (the world-hosted dungeon lane) ship without `standing`, and the walking bob played at rest
+  for (const [host, sites] of [['src/scenes/world.js', 1], ['src/scenes/exterior.js', 1], ['src/scenes/worldModes.js', 2], ['src/scenes/dungeon.js', 1]]) {
+    const s = rd(host);
+    assert.equal((s.match(/motionBagOf\(player\)/g) ?? []).length, sites, `${host}: every motion bag is the one bag`);
+    assert.equal(/moveForward \|\| 0/.test(s), false, `${host}: no bag written out longhand`);
+    if (host !== 'src/scenes/dungeon.js') assert.match(s, /missEffect: \(k, p, o\) => hitEffects\.showMissEffect\(k, p, o\)|missEffect:/, `${host}: the miss billboard`);
   }
-  assert.match(rd('src/scenes/dungeon.js'), /crouching: !!player\.crouching, riding: !!player\.riding, standing: !!player\.standing, speedField: player\.speed \|\| 0/);
   assert.match(rd('src/scenes/dungeonContext.js'), /missEffect: \(k, p, o\) => hitEffects\.showMissEffect\(k, p, o\)/);
   assert.match(rd('src/scenes/hitEffects.js'), /showMissEffect: \(kind, pos, \{ archive = BLOOD_ARCHIVE, record = 2, fps = 20, scale = 2 \} = \{\}\) => spawn\(record, pos, null, \{ archive, fps, scale \}\)/);
   assert.match(rd('src/scenes/hitEffects.js'), /entry\.size\.map\(\(v\) => v \* scale\)/, 'DoClang/DoThud\'s localScale x2');

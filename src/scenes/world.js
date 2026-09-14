@@ -190,7 +190,7 @@ import { createWeatherFront, blendTerms, soundWeather } from '../systems/weather
 import { fetchBytes, loadMagicRegistries, seasonOverride, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, nearbyLootRecords, claimFrame, frameAlive, frameHeld, applyFallLanding, ensureAudio, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag , raisePlayerSkills, liveEnchantFoes, liveEnchantFoeSinks, enchantFoeHost } from './shared.js';   // TP1: PlayerEntity.RaiseSkills   // EC1: the live enchant pool + its sinks router; AUDIT 58: the membership question the Wabbajack door asks too
 import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
 import { dispelNearby } from '../systems/mysticism.js';   // X9: the destroy law (destroyed, not killed)
-import { PlayerMotor, startRestGroundedCheck } from '../player/motor.js';   // StartRestGroundedCheck's ONE home
+import { PlayerMotor, startRestGroundedCheck, motionBagOf } from '../player/motor.js';   // StartRestGroundedCheck's ONE home; WW2: the one motion bag
 import { exteriorSurfaces, downProbe, rayDistanceFor, ON_EXTERIOR_WATER, exteriorSwimming } from '../player/exteriorSurface.js';   // ROAD-B (b3): PlayerMotor's three exterior surface methods; OT1: IsPlayerSwimming above ground
 import { isOnFoot } from '../systems/transport.js';   // TransportManager.IsOnFoot - the raycast's reach and the mounted footstep gate
 import { floorLanding } from '../player/enterExit.js';   // FixStanding for the exterior arrivals (2026-08-27)
@@ -2494,9 +2494,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // reference's head_bobbing.lua drives setFirstPersonOffset's z
       // only); bobOffset[1] is the raw vertical, un-rotated.
       bob: [0, player.bobOffset ? player.bobOffset[1] : 0],
-      move: { forward: player.moveForward || 0, strafe: player.moveStrafe || 0, running: !!player.isRunning, speed: player.moveSpeed || 0,
-        grounded: player.grounded !== false, jumping: !!player.jumping, swimming: !!player.swimming, levitating: !!player.levitating,
-        crouching: !!player.crouching, riding: !!player.riding, standing: !!player.standing, speedField: player.speed || 0 } }),   // MW-D26: the movement-settings vector, the reference's own selection source; MW-D39 added the jump-state inputs (grounded/jumping/swimming/levitating)
+      move: motionBagOf(player) }),   // MW-D26: the movement-settings vector, the reference's own selection source; MW-D39 added the jump-state inputs; WW2: the one bag (a partial copy left the bob's idle gate unsent)
     spellArmed: () => magic.spellArmed(),   // M2
   });
   autoBuildArms(playerEntity);   // MWA1: a continuing session's arms, at boot (a new character's come after the wizard, a load's after the restore)
@@ -2648,7 +2646,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // and dungeonContext.js:2112 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:4595
+  // that context through modes.dungeonCtx - so worldModes.js:4593
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -5456,7 +5454,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7205-7217 -
+  // worldModes answers it in BOTH modes (worldModes.js:7203-7215 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a

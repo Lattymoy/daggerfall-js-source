@@ -625,17 +625,17 @@ const SOURCE_CITES = [
     EX, /if \(townTalk\.overlay\?\.isRestWindow\) townTalk\.closeOverlay\?\.\(\);/],
   ['test/overlayreentry.test.js', /exterior\.js:(\d+), world\.js:2259/,
     EX, /if \(townTalk\.overlay\?\.isRestWindow\) townTalk\.closeOverlay\?\.\(\);/],
-  ['test/probehygiene.test.js', /keydown ladder, exterior\.js:(\d+)-2281/,
+  ['test/probehygiene.test.js', /keydown ladder, exterior\.js:(\d+)-2279/,
     EX, /addEventListener\('keydown', \(e\) => \{/],
   ['test/probehygiene.test.js', /exterior\.js:(\d+)-1159 and world\.js's copy/,
     EX, /if \(!playerEntity\.chargenDone && params\.has\('class'\)\) \{/],
-  ['test/roade_up_seam.test.js', /exterior\.js:(\d+)\/:2374/,
+  ['test/roade_up_seam.test.js', /exterior\.js:(\d+)\/:2372/,
     EX, /if \(act === 'Rest'\) \{ e\.preventDefault\(\); hudCtx\.toggleRest\(\); return; \}/],
-  ['test/roade_up_seam.test.js', /exterior\.js:2366\/:(\d+)/,
+  ['test/roade_up_seam.test.js', /exterior\.js:2364\/:(\d+)/,
     EX, /if \(act === 'Escape' && pauseDoorReady\(\)\) \{ hudCtx\.togglePause\(\); return; \}/],
   ['bible/01-Overview/Audit-58.md', /`src\/scenes\/exterior\.js:(\d+)` now/, EX, /setDefaultEnchantCtx/],
   ['bible/06-Systems/Systems-Arc.md', /`exterior\.js:(\d+)`, `world\.js:813`/, EX, /playerTicker\.advance\(60\);/],
-  ['bible/09-Testing/Testing.md', /keydown ladder \(exterior\.js:(\d+)-2281\)/,
+  ['bible/09-Testing/Testing.md', /keydown ladder \(exterior\.js:(\d+)-2279\)/,
     EX, /addEventListener\('keydown', \(e\) => \{/],
   ['bible/10-UI/UI-Arc.md', /exterior\.js:(\d+)\. It is the only window/, EX, /createSpellbookWindow\(\{/],
   ['bible/10-UI/Settings-Screen-Spec.md', /`exterior\.js:(\d+)`, `dungeon\.js:834`/, EX, /^ {6}fieldOfView\(\),$/],
@@ -672,9 +672,9 @@ const SOURCE_CITES = [
     EX, /inTownOutside: _isPlayerInTownStrict\(\),/],
   ['bible/01-Overview/Port-Ledger.md', /\(`_isPlayerInTownStrict`, `exterior\.js:(\d+)`\)/,
     EX, /const _isPlayerInTownStrict = \(\) => _musicInLocationRect\(\)/],
-  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)-3610` return on modal frames/,
+  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)-3608` return on modal frames/,
     EX, /if \(modes\.frame\(dt, now\)\) \{/],
-  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:3585-(\d+)` return on modal frames/,
+  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:3583-(\d+)` return on modal frames/,
     EX, /^ {4}\}$/],
   ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)`\), and `ambientEffects\.js:118-145`/,
     EX, /ambience\.update\(dt, \{ playerPos: eye, inside: false \}\)/],
@@ -859,8 +859,8 @@ test('CD6: every `src/` line Port-Status cites is the line it describes', () => 
 //
 // The G1 lane re-resolved ~180 `:NNN` cites after moving code in four
 // hosts, and the pass advanced only the LEADING number of every
-// multi-number citation: `cityGuards.js:743-693`, `world.js:5582-5556`,
-// `worldModes.js:1152 against :1056`. Forty of them came out as ranges
+// multi-number citation: `cityGuards.js:743-693`, `world.js:5580-5554`,
+// `worldModes.js:1150 against :1056`. Forty of them came out as ranges
 // that cannot exist, and every pin in this file was green throughout,
 // because each one resolves a single number a human chose to list.
 //

@@ -2269,7 +2269,7 @@ test('MW-D32: raceRecords reads RADT by hand-laid offsets - heights at 120, flag
 test('MW-D34: the third-person model matrix carries the measured chirality flip and adjustScale', () => {
   // MEASURED through the real composite (mwArmProbe L5b): the 3P body
   // rides drawRigSpriteBox into the world's mirrorProjectionX lens, and
-  // the port's world convention is left-handed (motor.js:647 - the
+  // the port's world convention is left-handed (motor.js:662 - the
   // player's right is +X at yaw 0), so a right-handed NIF actor placed
   // with a pure rotation reads MIRRORED on screen. The -u on the local
   // side axis is the same basis adaptation the mirror gives every
@@ -2866,9 +2866,11 @@ test('MW-D39: THE FOUR HOSTS feed the jump-state inputs, named and swept', () =>
   // dungeon host routes through dungeonContext.drawFoes' playerMove
   // latch. All four carry the same spelling, so none can quietly hand
   // the arm a rig that never jumps.
+  // WW2: the spelling lives in ONE home now (player/motor.js motionBagOf) and every host reads the one bag
   const literal = 'grounded: player.grounded !== false, jumping: !!player.jumping, swimming: !!player.swimming, levitating: !!player.levitating';
+  assert.ok(readFileSync('src/player/motor.js', 'utf8').includes(literal), 'the motor\'s one bag carries the jump-state inputs');
   for (const host of ['src/scenes/exterior.js', 'src/scenes/world.js', 'src/scenes/worldModes.js', 'src/scenes/dungeon.js']) {
-    assert.ok(readFileSync(host, 'utf8').includes(literal), `${host} feeds the jump-state inputs`);
+    assert.ok(readFileSync(host, 'utf8').includes('motionBagOf(player)'), `${host} feeds the jump-state inputs through the one bag`);
   }
 });
 
@@ -3000,7 +3002,7 @@ test('PX26 F4: the interior lane sends the jump-state inputs - without them the 
   // every host that drives the rig sends them
   for (const [host, sites] of [['src/scenes/dungeon.js', 1], ['src/scenes/worldModes.js', 2], ['src/scenes/world.js', 1], ['src/scenes/exterior.js', 1]]) {
     const h = readFileSync(host, 'utf8');
-    const n = (h.match(/grounded: player\.grounded !== false, jumping: !!player\.jumping, swimming: !!player\.swimming, levitating: !!player\.levitating/g) || []).length;
+    const n = (h.match(/motionBagOf\(player\)/g) || []).length;   // WW2: the one bag at every site
     assert.equal(n, sites, `${host} sends the jump inputs at ${n} of ${sites} sites`);
   }
 });
