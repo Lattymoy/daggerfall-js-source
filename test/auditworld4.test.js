@@ -106,7 +106,7 @@ test('AUDIT WORLD4 C1/C2/C6 + D5: a container YOU have open is yours until you c
     'C6: openInventory REFUSES a transformed lycanthrope and returns null - no window, no claim');
   assert.match(d, /onClose: \(\) => \{ onEmptied\?\.\(\); if \(lootKey\) \{ _lootOpenKey = null; publishLoot\(lootKey\); \}/, 'and the window is closed before its last word goes, so the room\'s next word may land');
   assert.match(d, /if \(claim && _lootSeen\.has\(canon\)\) return false;/, 'C2: a claim never overwrites the room\'s newer word - a joiner inside the memory\'s window used to un-empty a chest for everyone');
-  assert.match(d, /const first = !_lootSeen\.has\(canon\);\s*_lootSeen\.add\(canon\);\s*if \(first\) opts\.onLootClaimed\?\.\(\);/, 'D5: and the first word about a container makes the memory due');
+  assert.match(d, /const first = !_lootSeen\.has\(canon\);\s*_lootSeen\.add\(canon\);\s*(?:const _t = _wallNow\(\); if \(_t != null\) _lootAt\.set\(canon, _t\);[^\n]*\n\s*)?if \(first\) opts\.onLootClaimed\?\.\(\);/, 'D5: and the first word about a container makes the memory due');
   assert.match(d, /if \(canon === _lootOpenKey\) \{ n\+\+; continue; \}/, 'C1: the room\'s word waits at an open window');
   // D5's chain, end to end: the host's bag, the mode's forward, the clock it resets
   assert.match(rd('src/scenes/worldModes.js'), /onLootClaimed: \(\) => host\.onLootClaimed\?\.\(\),/, 'forwarded');

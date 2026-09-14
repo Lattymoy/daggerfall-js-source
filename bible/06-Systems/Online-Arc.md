@@ -4046,6 +4046,69 @@ played time (executed: the backdate, the wave, the hour's gap forgiven
 to one step, the resume's full interval, offline whole);
 `test/auditworld5.test.js` C10 restamped. Suite 7483 across 758.
 
+## WORLD8 (2026-09-14): the hour's respawn
+
+**Mac: "I would like dungeons and the world to repsawn every hour not
+every dat"** - a real hour, on the second suggestion. A dungeon's
+memory (WORLD1) kept its dead foes dead and its emptied containers
+empty for as long as the relay remembered the room - thirty days
+after it last drained - and the country's foes were rolls that needed
+no law. Now:
+
+**THE LAW: A DEATH AND A TAKE ARE STAMPED, AND AN HOUR LATER THE THING
+IS DUE BACK.** `RESPAWN_MS` (one real hour) and `respawnDue(stamp,
+now)` in `wire.js`, one home at both ends; the stamp is the relay's
+clock (a wall millisecond, `sharedWallMs` over the shared world
+minute - null offline, so nothing is ever due offline and a save keeps
+its dead, DFU's own).
+
+- **A foe.** The one corpse door stamps `_diedAt`; the memory's record
+  carries it as `died`; a record applied keeps the ROOM's stamp, not
+  this client's arrival. A memory that arrives with a foe dead past
+  the hour skips that record whole - a fresh build stands as it is, a
+  live one already dead here (this host stayed) is rebuilt. The
+  rebuild is `respawnFoe(i)`: the corpse flat freed (the un-death
+  arm's own helper, `freeCorpse`), the body's loot record forgotten,
+  and the foe REBUILT fresh at its marker through the one build chain
+  (`retypeFoe` as its own species - a new entity at full health with
+  its own loot roll, the old record dead to everything holding it).
+  The host's stream then says the index is alive and every puppet
+  stands up through WORLD2's un-death door.
+- **A container.** The room's word about a container carries a stamp
+  (`t` on the loot record - set on this client's own claim, kept from
+  the record on an apply, now for a record without one). A record past
+  the hour is not applied and the room's word forgotten: this client's
+  own roll stands. A treasure pile the sweep forgets is rolled again
+  through the build's own roll, one home now (`rollPileItems`); a
+  window this player has open is theirs until they close it (AUDIT
+  WORLD4 C1's law).
+- **The sweep** runs once a second in the foe pass: the HOST rebuilds
+  its layout's foes dead past the hour (the stream carries the rest);
+  every client forgets the containers past the hour and rolls its
+  piles.
+
+**What it does not do.** The country's foes are rolls (DFU's
+encounter law, by the world clock) and come and go on their own; a
+building's shelves restock by the day, DFU's own, and stay so; the
+relay is untouched (the memory is bytes to it), and its thirty-day
+forgetting stands above the hour - a memory forgotten has long since
+respawned whole. A memory written before WORLD8 carries no stamp and
+is applied as it stands until the room is next drained. A foe of the
+player's own past the layout (a quest's, a summon's) is not the
+room's and does not return.
+
+Pinned in `test/world8.test.js` (2): the wire's law executed (the
+hour, what is due and what is not - no stamp, no clock, a stamp
+ahead, a minute short - one home at both ends, the thirty days
+above); the dungeon by source (the stamp at the corpse door and in
+the record, kept from the room's; the memory's arm; the rebuild
+through the one chain; the sweep; the loot's three stamps; the pile
+roll one home; the country's pool untouched). Restamped: world2
+(the corpse door, the un-death arm), world4 (the loot record and its
+apply), auditworld (the memory's arm), auditworld4 (the claim), sl2rewind
+(the corpse freed through the one helper), audit23_systems (the pile
+roll). Suite 7485 across 759.
+
 ## What it does not do (yet)
 
 - **The Morrowind body** ships (MWBODY1, above); a client without the
@@ -4077,7 +4140,8 @@ to one step, the resume's full interval, offline whole);
   eight-digit bound against nine-digit map ids), and the relay must be
   redeployed for one to be. A memory is forgotten
   `WORLD_TTL_MS` (thirty days) after its room last emptied (AUDIT
-  WORLD A3 - a bound on parked storage, Mac's to change), and two
+  WORLD A3 - a bound on parked storage, Mac's to change; since WORLD8
+  its dead and its emptied containers come back after an hour), and two
   players' random flats differ by level, so a foe whose species the
   room's memory or the host's stream disagrees with is REBUILT as the
   room's at its index (WORLD3 - the roster is the room's).

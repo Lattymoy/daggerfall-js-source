@@ -33,12 +33,15 @@ test('SL2 save-load-2: a foe killed after the save RESURRECTS on a backward load
   const arm = dc.slice(dc.indexOf('function setFoeDead(f, dead) {'), dc.indexOf('\n  }\n', dc.indexOf('function setFoeDead(f, dead) {')));
   assert.ok(arm.length > 20, 'the backward resurrect arm exists');
   assert.ok(arm.includes('f.dead = false;'), 'the foe stands back up (SetHealth restores; only data.isDead disables)');
+  // WORLD8: the corpse's freeing is one helper (freeCorpse), shared with the hour's respawn - the arm calls it
+  assert.ok(arm.includes('freeCorpse(f);'), 'the corpse freed through the one helper');
+  const helper = dc.slice(dc.indexOf('function freeCorpse(f) {'), dc.indexOf('\n  }\n', dc.indexOf('function freeCorpse(f) {')));
   // the corpse flat leaves with the rewind - freed from BOTH owner
   // lists and destroyed, the foe key cleared
-  assert.ok(arm.includes('corpses.indexOf(f.corpseBatch)'), 'spliced from corpses');
-  assert.ok(arm.includes('billboardBatches.indexOf(f.corpseBatch)'), 'spliced from the draw list');
-  assert.ok(arm.includes('renderer.destroyBillboardBatch(f.corpseBatch)'), 'GL freed (EVERY ALLOCATION HAS AN OWNER)');
-  assert.ok(arm.includes('f.corpseBatch = null'), 'the key clears for a later re-kill');
+  assert.ok(helper.includes('corpses.indexOf(f.corpseBatch)'), 'spliced from corpses');
+  assert.ok(helper.includes('billboardBatches.indexOf(f.corpseBatch)'), 'spliced from the draw list');
+  assert.ok(helper.includes('renderer.destroyBillboardBatch(f.corpseBatch)'), 'GL freed (EVERY ALLOCATION HAS AN OWNER)');
+  assert.ok(helper.includes('f.corpseBatch = null'), 'the key clears for a later re-kill');
   // health/items restore UNCONDITIONALLY above both arms (the full-restore law)
   assert.ok(fn.indexOf('f.entity.health = sf.health;') < fn.indexOf('if (sf.dead && !f.dead)'),
     'health is SET from the save before the dead reconciliation');
