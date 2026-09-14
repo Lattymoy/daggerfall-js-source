@@ -15,8 +15,10 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  FEATURES, KINDS, KIND_ORDER, STORES, checkFeature, checkFeatures, filterFeatures, featureCounts,
+  FEATURES, KINDS, KIND_ORDER, STORES, checkFeature, checkFeatures, filterFeatures, featureCounts, resolveControl,
 } from '../src/systems/features.js';
+import '../src/world/landView.js';   // RF4: the lanes register themselves; the checks read them
+import '../src/world/outdoors.js';
 import { PREF_DEFAULTS } from '../src/systems/uiPrefs.js';
 import { ALL_KEYS } from '../src/systems/settings.js';
 import { MOD_SETTINGS } from '../src/systems/modSettings.js';
@@ -26,10 +28,10 @@ const read = (f) => readFileSync(join(ROOT, f), 'utf8');
 
 // Fixtures built over REAL keys of each store, so a pin here fails if
 // the store loses the key (the shape-the-producer-mints law).
-const prefsRow = { id: 'p', title: 'P', note: 'n', kinds: ['enhanced'], control: { store: 'prefs', key: 'enhancedAI' } };
+const prefsRow = { id: 'p', title: 'P', note: 'n', kinds: ['enhanced'], control: { store: 'prefs', key: 'enhancedAI', initial: false, online: true } };   // RF4: a prefs row declares its switch
 const settingsRow = { id: 's', title: 'S', note: 'n', kinds: ['classic'], control: { store: 'settings', key: 'Experimental/SmallerDungeons' } };
 const modRow = { id: 'm', title: 'M', note: 'n', kinds: ['mod'], control: { store: 'mods', vendor: 'dynamic-skies', key: 'Enabled' } };
-const bothRow = { id: 'b', title: 'B', note: 'n', kinds: ['enhanced', 'mod'], control: { store: 'prefs', key: 'enhancedEnvironments' } };
+const bothRow = { id: 'b', title: 'B', note: 'n', kinds: ['enhanced', 'mod'], control: { store: 'prefs', key: 'enhancedEnvironments', initial: true, online: true } };
 
 test('FT0: three kinds in label order, three stores, and the registry is empty and sound', () => {
   assert.deepEqual(KIND_ORDER, ['enhanced', 'mod', 'classic']);
@@ -40,7 +42,8 @@ test('FT0: three kinds in label order, three stores, and the registry is empty a
 });
 
 test('FT0: a sound row passes for each store, and the fixtures ride real keys', () => {
-  assert.ok(Object.hasOwn(PREF_DEFAULTS, 'enhancedAI') && Object.hasOwn(PREF_DEFAULTS, 'enhancedEnvironments'));
+  assert.ok(Object.hasOwn(PREF_DEFAULTS, 'enhancedAI') && Object.hasOwn(PREF_DEFAULTS, 'enhancedEnvironments'), 'RF4: the shelf derives them from the rows');
+  assert.equal(typeof resolveControl, 'function');
   assert.ok(ALL_KEYS.includes('Experimental/SmallerDungeons'));
   assert.ok(MOD_SETTINGS['dynamic-skies'].keys.Enabled);
   for (const f of [prefsRow, settingsRow, modRow, bothRow]) assert.deepEqual(checkFeature(f), [], f.id);
@@ -56,15 +59,20 @@ test('FT0: every law of the row fails under a one-field mutation', () => {
   assert.deepEqual(mut(prefsRow, { kinds: ['enhanced', 'enhanced'] }), ['a kind repeated']);
   assert.deepEqual(mut(prefsRow, { control: null }), ['no control']);
   assert.deepEqual(mut(prefsRow, { control: { store: 'ini', key: 'enhancedAI' } }), ["unknown store 'ini'"]);
-  assert.deepEqual(mut(prefsRow, { control: { store: 'prefs', key: 'enhancedAi' } }), ["prefs has no key 'enhancedAi'"], 'a typo cannot ship a switch wired to nothing');
+  // RF4: a prefs row IS the shelf's declaration of its key, so a typo is a new key - what a row cannot do is stay silent on its default or its online answer
+  assert.deepEqual(mut(prefsRow, { control: { store: 'prefs', key: 'enhancedAI', online: true } }), ['a prefs row declares its initial value']);
+  assert.deepEqual(mut(prefsRow, { control: { store: 'prefs', key: 'enhancedAI', initial: false } }), ["a prefs row declares its online answer: true, false or 'player'"]);
+  assert.deepEqual(mut(prefsRow, { control: { store: 'prefs', key: 'enhancedAI', initial: false, online: 'maybe' } }), ["a prefs row declares its online answer: true, false or 'player'"]);
+  assert.deepEqual(mut(prefsRow, { control: { store: 'prefs', key: 'enhancedAI', initial: false, online: 'player', lane: 'nope' } }), ["lane 'nope' is not registered"]);
+  assert.deepEqual(mut(prefsRow, { control: { store: 'prefs', key: '' } }), ["prefs has no key ''"], 'an empty key is no key');
   assert.deepEqual(mut(settingsRow, { control: { store: 'settings', key: 'Experimental/SmallerDungeon' } }), ["settings has no key 'Experimental/SmallerDungeon'"]);
   assert.deepEqual(mut(modRow, { control: { store: 'mods', vendor: 'dynamic-sky', key: 'Enabled' } }), ["mods has no key 'dynamic-sky/Enabled'"]);
   assert.deepEqual(mut(modRow, { control: { store: 'mods', vendor: 'dynamic-skies', key: 'Enable' } }), ["mods has no key 'dynamic-skies/Enable'"]);
   // a choice row's tiers must include the pref's default, or the row opens on a value it cannot name
   const tiers = [[3, 'Classic'], [5, 'Far']];
-  assert.deepEqual(mut(prefsRow, { control: { store: 'prefs', key: 'landViewDistance', tiers } }), []);
-  assert.deepEqual(mut(prefsRow, { control: { store: 'prefs', key: 'landViewDistance', tiers: [[3, 'Classic'], [6, 'Farther']] } }), ['tiers do not include the default 5']);
-  assert.deepEqual(mut(prefsRow, { control: { store: 'prefs', key: 'landViewDistance', tiers: [] } }), ['tiers is not a list']);
+  assert.deepEqual(mut(prefsRow, { control: { store: 'prefs', key: 'landViewDistance', initial: 5, online: 'player', tiers } }), []);
+  assert.deepEqual(mut(prefsRow, { control: { store: 'prefs', key: 'landViewDistance', initial: 5, online: 'player', tiers: [[3, 'Classic'], [6, 'Farther']] } }), ['tiers do not include the default 5']);
+  assert.deepEqual(mut(prefsRow, { control: { store: 'prefs', key: 'landViewDistance', initial: 5, online: 'player', tiers: [] } }), ['tiers is not a list']);
   assert.deepEqual(checkFeature(null), ['not an object']);
 });
 
@@ -74,7 +82,7 @@ test('FT0: the list refuses a repeated id and two rows over one switch', () => {
   assert.deepEqual(checkFeatures([modRow, { ...modRow, id: 'm2' }]), ['m2: control repeated (mods:dynamic-skies:Enabled)']);
   assert.deepEqual(checkFeatures([settingsRow, { ...prefsRow, control: { ...prefsRow.control, also: [settingsRow.control] } }]), ['p: control repeated (settings::Experimental/SmallerDungeons)'], 'FT2: a covered control is a control - two rows cannot both own a key');
   assert.deepEqual(checkFeatures([{ id: 'x', title: 'X', kinds: ['nope'], control: { store: 'prefs', key: 'zzz' } }]),
-    ["x: unknown kind 'nope'", "x: prefs has no key 'zzz'"], 'every problem, prefixed by the row');
+    ["x: unknown kind 'nope'", 'x: a prefs row declares its initial value', "x: a prefs row declares its online answer: true, false or 'player'"], 'every problem, prefixed by the row');
 });
 
 test('FT0: the filter shows a two-kind row under both kinds, and the counts say so', () => {
@@ -99,7 +107,7 @@ test('FT0: Features is on every rail and both dispatch tables, and the pane is t
   }
   assert.match(menu, /\['features', 'Features'\],/, 'the pause system rail (SYSTEM_PANES)');
   assert.equal((menu.match(/features: paneFeatures,/g) ?? []).length, 2, 'both dispatch tables (boot and pause)');
-  assert.match(menu, /import \{ FEATURES, KINDS, KIND_ORDER, filterFeatures, featureCounts, featureForControl \} from '\.\.\/systems\/features\.js';/);
+  assert.match(menu, /import \{ FEATURES, KINDS, KIND_ORDER, filterFeatures, featureCounts, featureForControl, resolveControl \} from '\.\.\/systems\/features\.js';/);
   assert.match(menu, /function paneFeatures\(body\) \{[\s\S]*?featureCounts\(FEATURES\)[\s\S]*?chip\(null, 'All', counts\.all\)[\s\S]*?for \(const k of KIND_ORDER\) chips\.append\(chip\(k, KINDS\[k\]\.label, counts\[k\]\)\)/, 'All then the three kind chips, with counts');
   assert.match(menu, /if \(!FEATURES\.length\) \{\s*body\.append\(empty\('Nothing here yet'/, 'an empty registry says so - the rail-hole law - rather than hiding the section');
   assert.match(menu, /const rows = filterFeatures\(FEATURES, featureKind\);/);

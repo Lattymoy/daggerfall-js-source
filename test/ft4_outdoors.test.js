@@ -15,7 +15,7 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { OUTDOORS_TIERS, OUTDOORS_DEFAULT, outdoorsRead, outdoorsWrite } from '../src/world/outdoors.js';
-import { FEATURES, checkFeature, featureForControl, filterFeatures } from '../src/systems/features.js';
+import { FEATURES, checkFeature, resolveControl, featureForControl, filterFeatures } from '../src/systems/features.js';
 import { getPref, setPref, PREF_DEFAULTS } from '../src/systems/uiPrefs.js';
 import { modSetting, setModSetting, _resetModSettings } from '../src/systems/modSettings.js';
 
@@ -70,8 +70,11 @@ test('FT4: the registry row - both labels, a condensed choice with its own defau
   assert.ok(f);
   assert.deepEqual(f.kinds, ['enhanced', 'mod'], 'Mac\'s example: environments + Dynamic Skies wear both');
   assert.equal(f.control.store, 'prefs'); assert.equal(f.control.key, 'enhancedEnvironments');
-  assert.equal(f.control.tiers, OUTDOORS_TIERS); assert.equal(f.control.default, OUTDOORS_DEFAULT);
-  assert.equal(f.control.read, outdoorsRead); assert.equal(f.control.write, outdoorsWrite);
+  const c = resolveControl(f);   // RF4: the lane's fields, registered by outdoors.js
+  assert.equal(f.control.lane, 'outdoors');
+  assert.equal(c.tiers, OUTDOORS_TIERS); assert.equal(c.default, OUTDOORS_DEFAULT);
+  assert.equal(c.read, outdoorsRead); assert.equal(c.write, outdoorsWrite);
+  assert.equal(c.initial, true); assert.equal(c.online, true, 'the lane forces the outdoors on');
   assert.deepEqual(f.control.also, [{ store: 'mods', vendor: 'dynamic-skies', key: 'Enabled' }]);
   assert.match(f.note, /Off returns Daggerfall’s SKY\*\.DAT panorama/); assert.match(f.note, /BadLuckBurt and carademono/);
   assert.match(f.note, /fog density and pixel-snow knobs stay on the Mods page/, 'the mod\'s other knobs are the mod\'s');
@@ -84,7 +87,7 @@ test('FT4: the registry row - both labels, a condensed choice with its own defau
 
 test('FT4: the registry law - a condensed row names its own default, and it must be a tier', () => {
   const f = FEATURES.find((x) => x.id === 'enhanced-environments');
-  const mut = (control) => checkFeature({ ...f, control: { ...f.control, ...control } });
+  const mut = (control) => checkFeature({ ...f, control: { ...resolveControl(f), lane: undefined, ...control } });   // RF4
   assert.deepEqual(mut({ default: 'smooth' }), ['tiers do not include the default smooth']);
   assert.deepEqual(mut({ default: undefined }), ['tiers do not include the default true'], 'without its own default the pref\'s value is asked for, and true is no tier');
   assert.deepEqual(mut({ default: 'off' }), []);

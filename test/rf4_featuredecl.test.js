@@ -1,0 +1,87 @@
+// RF4 - ONE FEATURE DECLARATION (2026-09-14, Mac's refactor pass, the
+// fourth). A new switch used to touch four places: the pref default on
+// the uiPrefs shelf, the online lane's forced or player's-own list, the
+// registry row, and the count pins. The row is the one declaration now
+// - `initial` and `online` ride it - and the shelf and the lane DERIVE
+// theirs. The registry sits UNDER the stores: it imports neither, and
+// the condensed rows' lanes register themselves.
+
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { FEATURES, FEATURE_PREF_DEFAULTS, FEATURE_PREF_ONLINE, registerFeatureLane, featureLane, resolveControl, checkFeature } from '../src/systems/features.js';
+import { PREF_DEFAULTS, getPref, _resetForTests } from '../src/systems/uiPrefs.js';
+import { ONLINE_FORCED_PREFS, ONLINE_PLAYERS_OWN_PREFS, declareOnlinePrefs, onlineForcedPref } from '../src/systems/onlineLane.js';
+import '../src/world/landView.js';
+import '../src/world/outdoors.js';
+
+const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+const read = (p) => readFileSync(join(root, p), 'utf8');
+
+test('RF4: every prefs row declares its switch, and the shelf and the lane derive theirs from the rows', () => {
+  const prefsRows = FEATURES.filter((f) => f.control.store === 'prefs');
+  assert.ok(prefsRows.length >= 8);
+  for (const f of prefsRows) {
+    assert.ok(f.control.initial !== undefined, `${f.id} declares initial`);
+    assert.ok([true, false, 'player'].includes(f.control.online), `${f.id} declares online`);
+    assert.equal(PREF_DEFAULTS[f.control.key], f.control.initial, `${f.id}: the shelf's default is the row's`);
+    if (f.control.online === 'player') { assert.ok(ONLINE_PLAYERS_OWN_PREFS.includes(f.control.key), `${f.id}: the player's online, by name`); assert.ok(!Object.hasOwn(ONLINE_FORCED_PREFS, f.control.key)); }
+    else assert.equal(ONLINE_FORCED_PREFS[f.control.key], f.control.online, `${f.id}: forced online as the row says`);
+  }
+  assert.deepEqual(FEATURE_PREF_DEFAULTS, Object.fromEntries(prefsRows.map((f) => [f.control.key, f.control.initial])));
+  assert.deepEqual(FEATURE_PREF_ONLINE, Object.fromEntries(prefsRows.map((f) => [f.control.key, f.control.online])));
+  // the two the registry has no row for stay the lane's own
+  assert.equal(ONLINE_FORCED_PREFS.skin, 'enhanced'); assert.equal(ONLINE_FORCED_PREFS.mwArms, true);
+  // and the shelf reads them live: loot rarity off offline, forced on online
+  _resetForTests();
+  assert.equal(getPref('lootRarity'), false);
+  assert.equal(onlineForcedPref('lootRarity', '?online=1'), true);
+  assert.equal(onlineForcedPref('grassDensity', '?online=1'), undefined, 'a dial is the player\'s');
+  // the shelf carries no copy of a row's default any more
+  const shelf = read('src/systems/uiPrefs.js');
+  for (const f of prefsRows) assert.doesNotMatch(shelf, new RegExp(`^  ${f.control.key}:`, 'm'), `${f.control.key} is declared on its row, not the shelf`);
+  assert.match(shelf, /\.\.\.FEATURE_PREF_DEFAULTS,/);
+  const lane = read('src/systems/onlineLane.js');
+  for (const f of prefsRows) assert.doesNotMatch(lane, new RegExp(`^  ${f.control.key}:`, 'm'), `${f.control.key}'s online answer is the row's, not the lane's list`);
+});
+
+test('RF4: the lane door - true/false forces, \'player\' leaves it by name, idempotent and reversible', () => {
+  declareOnlinePrefs({ rf4x: true, rf4y: 'player', rf4z: false });
+  try {
+    assert.equal(ONLINE_FORCED_PREFS.rf4x, true); assert.equal(ONLINE_FORCED_PREFS.rf4z, false);
+    assert.ok(ONLINE_PLAYERS_OWN_PREFS.includes('rf4y') && !Object.hasOwn(ONLINE_FORCED_PREFS, 'rf4y'));
+    declareOnlinePrefs({ rf4y: 'player' });
+    assert.equal(ONLINE_PLAYERS_OWN_PREFS.filter((k) => k === 'rf4y').length, 1, 'idempotent');
+    declareOnlinePrefs({ rf4x: 'player', rf4y: true });
+    assert.ok(!Object.hasOwn(ONLINE_FORCED_PREFS, 'rf4x') && ONLINE_PLAYERS_OWN_PREFS.includes('rf4x'));
+    assert.equal(ONLINE_FORCED_PREFS.rf4y, true); assert.ok(!ONLINE_PLAYERS_OWN_PREFS.includes('rf4y'));
+    declareOnlinePrefs({ rf4q: 'nonsense' });
+    assert.ok(!Object.hasOwn(ONLINE_FORCED_PREFS, 'rf4q') && !ONLINE_PLAYERS_OWN_PREFS.includes('rf4q'), 'an unknown answer declares nothing');
+  } finally {
+    delete ONLINE_FORCED_PREFS.rf4x; delete ONLINE_FORCED_PREFS.rf4y; delete ONLINE_FORCED_PREFS.rf4z;
+    for (const k of ['rf4x', 'rf4y']) { const i = ONLINE_PLAYERS_OWN_PREFS.indexOf(k); if (i >= 0) ONLINE_PLAYERS_OWN_PREFS.splice(i, 1); }
+  }
+});
+
+test('RF4: the registry sits under the stores - it imports neither, the lanes register themselves, and a row resolves its lane at use', () => {
+  const reg = read('src/systems/features.js');
+  assert.doesNotMatch(reg, /from '\.\/uiPrefs\.js'|from '\.\.\/world\//, 'no import above the stores');
+  assert.match(reg, /^import \{ declareOnlinePrefs \} from '\.\/onlineLane\.js';/m);
+  assert.match(reg, /^declareOnlinePrefs\(FEATURE_PREF_ONLINE\);/m, 'the lane learns at the registry\'s load');
+  assert.match(read('src/systems/uiPrefs.js'), /^import \{ FEATURE_PREF_DEFAULTS \} from '\.\/features\.js';/m);
+  assert.match(read('src/world/landView.js'), /^registerFeatureLane\('landView', \{ tiers: LAND_VIEW_TIERS, read: landViewRead, write: landViewWrite \}\);/m);
+  assert.match(read('src/world/outdoors.js'), /^registerFeatureLane\('outdoors', \{ tiers: OUTDOORS_TIERS, default: OUTDOORS_DEFAULT, read: outdoorsRead, write: outdoorsWrite \}\);/m);
+  assert.match(read('src/ui/enhancedMenu.js'), /const c = resolveControl\(f\);/, 'the menu draws the resolved control');
+  assert.match(read('src/ui/enhancedMenu.js'), /^import '\.\.\/world\/landView\.js';/m, 'and loads the lanes so they are registered before a row is drawn');
+  assert.ok(featureLane('landView') && featureLane('outdoors'));
+  assert.equal(featureLane('nope'), null);
+  registerFeatureLane('rf4-lane', { tiers: [[1, 'One'], [2, 'Two']], read: () => 2, write: () => {} });
+  const row = { id: 'r', title: 'R', note: 'n', kinds: ['enhanced'], control: { store: 'prefs', key: 'rf4key', initial: 1, online: 'player', lane: 'rf4-lane' } };
+  assert.deepEqual(checkFeature(row), []);
+  assert.equal(resolveControl(row).read(), 2, 'the lane\'s read, at use');
+  assert.equal(resolveControl(row).tiers.length, 2);
+  assert.equal(resolveControl({ control: { store: 'prefs', key: 'k' } }).store, 'prefs', 'a row with no lane resolves to itself');
+  assert.deepEqual(checkFeature({ ...row, control: { ...row.control, lane: 'missing' } }), ["lane 'missing' is not registered"]);
+});

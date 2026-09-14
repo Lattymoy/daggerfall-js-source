@@ -63,7 +63,7 @@ import { itemInfoRows, itemInfoPanelRows, infoPanelShorten, questLetterName, INF
 import { paintingImage, setPaintingArtDeps } from './paintingImage.js';   // ROAD-A7: the painting's picture
 import { goldAmount, deductGold } from '../systems/court.js';
 import { enchantArmorDisplayMod } from '../systems/enchantments.js';   // AUDIT 26 F122
-import { affixArmorDisplay } from '../systems/lootRarity.js';   // LR2: an armour affix shows on the doll's numbers: PaperDoll.cs:161's armorMod
+import { entityArmorDisplayMod } from '../systems/entityMods.js';   // RF1: the doll's per-part modifier, one read: PaperDoll.cs:161's armorMod
 import { drawScreenDimBackdrop } from './chargenArt.js';
 import { addItem, isEnchanted, goldStack, canHoldAmount, totalWeight, carriedWeight, GOLD_PIECE_WEIGHT_KG } from '../systems/inventory.js';   // L-slice (items-9)
 import { entityMaxEncumbrance } from '../combat/formulas.js';   // AUDIT 58: PlayerEntity.MaxEncumbrance, the local target icon's denominator
@@ -1319,9 +1319,8 @@ export class NativeInventoryWindow {
     const av = this.hooks.entity?.armorValues;
     // F122: the same armorMod for every body part - RefreshArmourValues
     // recomputes it inside the loop but off entity-wide channels.
-    const armorMod = enchantArmorDisplayMod(this.hooks.entity);
     if (av) ARMOR_LABEL_POS.forEach(([lx, ly], i) =>
-      shadowText(renderer, font, String(armorLabelValue(av[i] ?? 100, armorMod + affixArmorDisplay(this.hooks.entity, i))), m, 49 + lx, 13 + ly));   // LR2/LR4: an armour affix on the part it covers
+      shadowText(renderer, font, String(armorLabelValue(av[i] ?? 100, entityArmorDisplayMod(this.hooks.entity, i))), m, 49 + lx, 13 + ly));   // RF1: Decreased - Increased, plus the port's points on the part
     // UpdateAccessoryItemsDisplay (:963-996): the twelve worn slots in
     // equip-slot order. An EMPTY slot draws nothing - the button's own
     // frame is already in INVE00I0.

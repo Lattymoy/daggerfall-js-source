@@ -13,6 +13,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { FEATURES, checkFeatures, featureForControl, filterFeatures } from '../src/systems/features.js';
+import '../src/world/landView.js';   // RF4: the condensed rows' lanes register themselves; checkFeatures reads them
+import '../src/world/outdoors.js';
 import { MOD_SETTINGS } from '../src/systems/modSettings.js';
 
 const rows = FEATURES.filter((f) => f.control.store === 'mods');

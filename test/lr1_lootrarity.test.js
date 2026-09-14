@@ -26,6 +26,8 @@ import { fileURLToPath } from 'node:url';
 import { setPref, _resetForTests, PREF_DEFAULTS } from '../src/systems/uiPrefs.js';
 import { ONLINE_FORCED_PREFS } from '../src/systems/onlineLane.js';
 import { FEATURES, checkFeatures } from '../src/systems/features.js';
+import '../src/world/landView.js';   // RF4: the condensed rows' lanes register themselves; checkFeatures reads them
+import '../src/world/outdoors.js';
 import * as LR from '../src/systems/lootRarity.js';
 import { createRandomWeapon, createRandomArmor, LOOT_ARRAY_FIELDS, validLootItem } from '../src/systems/loot.js';
 import { createWeapon } from '../src/combat/enemyEquipment.js';
@@ -35,7 +37,8 @@ import { itemLongName, resolveItemName } from '../src/systems/itemInfo.js';
 import { itemIsIdentified } from '../src/systems/tradeModes.js';
 import { enchantmentCost } from '../src/systems/enchantmentCatalogue.js';
 import { ENCHANTMENT_TYPES } from '../src/formats/magicDef.js';
-import { equipItem, unequipItem, addEquipChangeListener, equipTableOf, armorBodyParts } from '../src/systems/equip.js';
+import { equipItem, unequipItem, equipTableOf, armorBodyParts } from '../src/systems/equip.js';
+import { computeEntityMods, entityModsOf, entityArmorMod, entityResistMod, entityWeightMult, weaponDamageMods, entityFoldNames } from '../src/systems/entityMods.js';   // RF1: the fold is read through the entity's channels
 import { BODY_PARTS } from '../src/systems/armorMaterials.js';
 import { liveStat } from '../src/systems/statMods.js';
 import { skillValue, SKILLS } from '../src/systems/skills.js';
@@ -65,7 +68,7 @@ test('LR1: the switch - off by default (DFU\'s loot is the 1:1 law), forced on o
   const row = FEATURES.find((f) => f.id === 'loot-rarity');
   assert.ok(row, 'the row is on the home');
   assert.deepEqual(row.kinds, ['enhanced']);
-  assert.deepEqual(row.control, { store: 'prefs', key: 'lootRarity' });
+  assert.deepEqual(row.control, { store: 'prefs', key: 'lootRarity', initial: false, online: true }, 'RF4: the row declares its default and the lane\'s answer');
   assert.match(row.note, /Magic .*Rare .*Legendary/s, 'the note names the ladder');
   assert.match(row.note, /never your level/, 'and the source law');
   assert.match(row.note, /unidentified/, 'and the identify loop');
@@ -301,43 +304,45 @@ test('LR2: the fold - worn affixes land on liveStat, skillValue, the armour term
   equipItem(e, c);
   assert.equal(liveStat(e, 'strength'), base.str + 8);
   assert.equal(skillValue(e, SKILLS.Stealth), base.stealth + 15);
-  assert.equal(LR.affixArmor(e, BODY_PARTS.Chest), 6, 'LR4: on the cuirass\'s own part');
-  for (const p of [BODY_PARTS.Head, BODY_PARTS.Legs, BODY_PARTS.Feet, BODY_PARTS.Hands]) assert.equal(LR.affixArmor(e, p), 0, 'and no other');
+  assert.equal(entityArmorMod(e, BODY_PARTS.Chest), -6, 'LR4: on the cuirass\'s own part (RF1: read through the entity\'s channel, points OFF the blow)');
+  for (const p of [BODY_PARTS.Head, BODY_PARTS.Legs, BODY_PARTS.Feet, BODY_PARTS.Hands]) assert.equal(entityArmorMod(e, p), 0, 'and no other');
   assert.deepEqual(armorBodyParts(c), [BODY_PARTS.Chest]);
   assert.deepEqual(armorBodyParts({ group: 'Armor', templateIndex: 112 }), [BODY_PARTS.Head, BODY_PARTS.LeftArm, BODY_PARTS.Hands, BODY_PARTS.Legs], 'a tower shield covers its SHIELD_PARTS');
   assert.deepEqual(armorBodyParts(r), [], 'a ring covers nothing');
-  assert.equal(LR.affixResist(e, ['fire']), 40, 'two pieces sum');
-  assert.equal(LR.affixResist(e, ['frost']), 0);
-  assert.equal(LR.affixResist(e, ['fire', 'frost']), 40);
-  assert.equal(LR.affixWeightMult(e), 0.2);
+  assert.equal(entityResistMod(e, ['fire']), 40, 'two pieces sum');
+  assert.equal(entityResistMod(e, ['frost']), 0);
+  assert.equal(entityResistMod(e, ['fire', 'frost']), 40);
+  assert.equal(entityWeightMult(e), 0.2);
   assert.equal(entityMaxEncumbrance(e), maxEncumbrance(58) + Math.trunc(maxEncumbrance(58) * 0.2), 'the multiplier the enchantment fold\'s own read applies');
   // the saving throw: a Fire spell meets +40 in the biography slot; a resisted spell answers 0
   const rolls = () => 0.5;
   const save = savingThrow(0, EFFECT_FLAGS.Fire, e, 0, rolls);   // no elemental-resistance effect, so the roll runs
-  e._affixMods = null;
+  e._mods = null;
   const bare = savingThrow(0, EFFECT_FLAGS.Fire, e, 0, rolls);
-  LR.computeAffixMods(e);
+  computeEntityMods(e);
   assert.notEqual(save, bare, 'the resistance affix moved the saving throw');
   // unequip: the listener refolds
   unequipItem(e, c);
-  assert.equal(LR.affixArmor(e, BODY_PARTS.Chest), 0);
-  assert.equal(LR.affixResist(e, ['fire']), 30);
+  assert.equal(entityArmorMod(e, BODY_PARTS.Chest), 0);
+  assert.equal(entityResistMod(e, ['fire']), 30);
   // off: the fold empties on the next refold and every read is 0
   off();
-  LR.computeAffixMods(e);
+  computeEntityMods(e);
   assert.equal(liveStat(e, 'strength'), base.str);
   assert.equal(skillValue(e, SKILLS.Stealth), base.stealth);
-  assert.equal(LR.affixResist(e, ['fire']), 0);
+  assert.equal(entityResistMod(e, ['fire']), 0);
   assert.equal(entityMaxEncumbrance(e), base.carry);
   // the weapon's own damage affix, over its roll
   on();
   const w = sword();
   w.affixes = [{ id: 'damage', value: 50 }];
   assert.equal(LR.affixWeaponDamage(w, 10), 15);
+  assert.equal(weaponDamageMods(w, 10), 15, 'RF1: through the registered weapon modifier');
   assert.equal(LR.affixWeaponDamage(sword(), 10), 10);
   off();
   assert.equal(LR.affixWeaponDamage(w, 10), 10, 'off: the roll stands');
-  assert.equal(typeof addEquipChangeListener, 'function');
+  assert.equal(weaponDamageMods(w, 10), 10);
+  assert.ok(entityFoldNames().includes(LR.LOOT_RARITY_FOLD), 'the fold is registered with the entity');
 });
 
 test('LR1: rollLootRarity - off or sourceless returns the DFU list untouched; on, only eligible items roll, at the source', () => {
@@ -367,23 +372,17 @@ test('LR1: rollLootRarity - off or sourceless returns the DFU list untouched; on
 
 test('LR1: four hosts - every list a host mints rolls at its source, and the pile\'s tier is the dungeon\'s', () => {
   const dc = read('src/scenes/dungeonContext.js');
-  assert.equal((dc.match(/rollCorpseLoot\(entity, basics, \{ luck: liveStat\(D\.playerEntity, 'luck'\) \}\)/g) ?? []).length, 2, 'both dungeon spawn arms, through the corpse door (LR4)');
+  assert.equal((dc.match(/spawnEnemyLoot\(entity, e\.mobileType, basics, D\.playerEntity\)/g) ?? []).length, 2, 'both dungeon spawn arms, through the one seam (RF2), whose corpse door is LR4\'s');
   assert.match(dc, /rollLootRarity\(items, pileSource\(dungeonRarityTier\(dfLocation\.mapTableData\.dungeonType\)\), \{ luck: liveStat\(playerEntity, 'luck'\) \}\)/, 'the treasure piles at the dungeon\'s tier');
-  assert.match(read('src/scenes/exteriorFoes.js'), /rollCorpseLoot\(entity, basics, \{ rolls, luck: liveStat\(playerEntity, 'luck'\) \}\)/, 'the exterior foes, off the same stream');
-  assert.match(read('src/scenes/cityGuards.js'), /rollCorpseLoot\(entity, basics, \{ luck: liveStat\(playerEntity, 'luck'\) \}\)/, 'the watch');
+  assert.match(read('src/scenes/exteriorFoes.js'), /spawnEnemyLoot\(entity, mobileType, basics, playerEntity, \{ rolls \}\)/, 'the exterior foes, off the same stream');
+  assert.match(read('src/scenes/cityGuards.js'), /spawnEnemyLoot\(entity, GUARD_MOBILE_TYPE, basics, playerEntity, \{ rolls: rand \}\)/, 'the watch');
+  assert.match(read('src/scenes/hostCombat.js'), /rollCorpseLoot\(entity, basics, \{ rolls, luck: liveStat\(player, 'luck'\) \}\);/, 'the corpse door, in the one seam (RF2)');
   assert.match(read('src/scenes/interiorContext.js'), /rollLootRarity\(addPileLootExtras\(generateLootItems\(lootKey, \{ level, gender \}\), lootKey\), pileSource\(INTERIOR_RARITY_TIER\), \{ luck \}\)/, 'a tavern\'s pile');
   assert.match(read('src/scenes/worldModes.js'), /luck: liveStat\(playerEntity, 'luck'\),   \/\/ LR1/, 'the interior host hands its luck in');
   // the reads, at DFU's own read sites
   const f = read('src/combat/formulas.js');
-  assert.match(f, /\+ enchantArmorMod\(target\) - affixArmor\(target, struckBodyPart\)/, 'the hit formula\'s armour term, the struck part\'s');
-  assert.match(f, /affixWeaponDamage\(weapon, wMin \+ Math\.floor\(rolls\(\) \* \(wMax \+ 1 - wMin\)\)\) \+ damageMod/, 'the weapon roll, before the swing\'s mods');
-  assert.match(f, /enchantWeightAllowanceMult\(entity\) \+ affixWeightMult\(entity\)/, 'the carrying capacity');
-  assert.match(read('src/combat/pcaao.js'), /100 - enchantArmorMod\(target\) - affixArmor\(target, struckBodyPart\)/, 'PCAAO reads the same fold');
-  assert.match(read('src/systems/statMods.js'), /mod \+= entity\._affixMods\?\.stats\?\.\[statName\] \?\? 0;/, 'liveStat, import-free');
-  assert.match(read('src/systems/skills.js'), /mod \+= entity\._affixMods\?\.skills\?\.\[skillId\] \?\? 0;/, 'skillValue');
-  assert.match(read('src/systems/spellcast.js'), /saving \+= affixResist\(target, RESIST_NAMES/, 'the saving throw');
-  assert.match(read('src/systems/worldTick.js'), /enchantmentMagicRound\(entity, r \+ 1, \{[\s\S]*?\}\);\s*\/\/ LR2[\s\S]*?computeAffixMods\(entity\);/, 'the refold rides the magic round after the enchant fold');
-  assert.match(read('src/systems/lootRarity.js'), /addEquipChangeListener\(computeAffixMods\);/, 'and the equip seam');
+  // RF1: the reads are the entity's channels' - test/rf1_entitymods.test.js pins each site; here, that the fold is registered there
+  assert.match(read('src/systems/lootRarity.js'), /registerEntityFold\(LOOT_RARITY_FOLD, affixFold\);\nregisterWeaponDamageMod\(LOOT_RARITY_FOLD, affixWeaponDamage\);/, 'the fold and the weapon modifier, registered with the entity');
   assert.match(read('src/systems/equip.js'), /function fireEquipChange\(entity\) \{\n  _hooks\.onEquipChange\?\.\(entity\);\n  for \(const fn of _equipListeners\) fn\(entity\);\n\}/, 'the listener door beside the enchantment hook');
 });
 
@@ -403,7 +402,7 @@ test('LR1: the wire and the save carry the two fields - affixes is an array fiel
   restorePlayer(fresh, snap);
   const worn = fresh.items.find((it) => it.rarity === 'rare');
   assert.ok(worn && worn.equipSlot != null && worn.affixes.length === r.affixes.length && worn.name === r.name);
-  assert.deepEqual(LR.affixModsOf(fresh).stats, LR.computeAffixMods(e).stats, 'the same fold on both');
+  assert.deepEqual(entityModsOf(fresh).stats, computeEntityMods(e).stats, 'the same fold on both');
 });
 
 test('LR1: the skins - the native cell tints and the tooltip lists, the enhanced rows wear the tier, the plaque too; the CSS hexes are the table\'s', () => {
@@ -433,12 +432,12 @@ test('LR1: the skins - the native cell tints and the tooltip lists, the enhanced
     assert.match(css, new RegExp(`\\.itemrow\\[data-rarity="${t}"\\] \\.itemname > span:first-child, \\.packdetail \\.card\\[data-rarity="${t}"\\] h3, \\.loothover-row\\[data-rarity="${t}"\\] > span:first-child \\{ color: ${LR.RARITIES[t].colour}; \\}`), `${t}'s rule carries the table's colour`);
   }
   const inv = read('src/ui/enhancedInventory.js');
-  assert.match(inv, /name: resolveItemName\(item\) \|\| t\?\.name \|\| 'Unknown',/, 'the enhanced pack names through ResolveItemName now');
+  assert.match(inv, /name: parts\.name \|\| t\?\.name \|\| 'Unknown',/, 'the enhanced pack names through ResolveItemLongName\'s name part now (RF6; LR1: ResolveItemName inside it)');
   assert.match(inv, /const r = rarityAttr\(item\); if \(r\) row\.dataset\.rarity = r;/, 'a row wears its tier');
   assert.match(inv, /const lines = rarityLines\(picked\); if \(lines\.length\)/, 'the card lists the lines');
   assert.match(read('src/ui/lootHover.js'), /if \(r\.rarity\) row\.dataset\.rarity = r\.rarity;/);
-  assert.match(read('src/ui/nativeInventory.js'), /armorLabelValue\(av\[i\] \?\? 100, armorMod \+ affixArmorDisplay\(this\.hooks\.entity, i\)\)/, 'the doll\'s numbers, per part');
-  assert.match(read('src/ui/enhancedInventory.js'), /&& itemIsIdentified\(item\) \? materialName\(item\) : null/, 'LR4: the enhanced row names no material until identified');
+  assert.match(read('src/ui/nativeInventory.js'), /armorLabelValue\(av\[i\] \?\? 100, entityArmorDisplayMod\(this\.hooks\.entity, i\)\)/, 'the doll\'s numbers, per part (RF1)');
+  assert.match(read('src/ui/enhancedInventory.js'), /material: parts\.material \|\| null,/, 'LR4: the enhanced row names no material until identified - RF6: the long name\'s own prefix, which an unidentified item has none of');
 });
 
 test('LR3: the drop chime rings at the body for a Rare or better, never for Magic, never off; the three corpse sites ring it', () => {

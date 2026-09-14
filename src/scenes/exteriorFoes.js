@@ -32,8 +32,8 @@ import { EnemyAttack } from '../characters/enemyAttack.js';
 import { makeEnemyEntity, loadMonsterCareer } from '../characters/enemyEntity.js';
 import { MobileUnit, MOBILE_DAEDRA_SEDUCER, SeducerTransformBehaviour } from '../characters/mobileUnit.js';   // A5: the Seducer transform pair + its trigger
 import { ClassFile } from '../formats/classFile.js';
-import { equipEnemy, hasBowAttack, backstabChanceOf, zeroDamageHitSound, enemyMissSound, enemyAttackVoice, enemyPainVoice, playerAttackGrunt, tickEnemySound, playEnemyClip, tryLanguagePacification, applyDamageToNonPlayer } from './hostCombat.js';   // C2-slice (combat-9/17); MT-ii: the foe-vs-foe payload
-import { generateItems as generateLootItems, addEnemyLootExtras, validLootList } from '../systems/loot.js';   // AUDIT 24 (wave 43); WORLD6b-iii(c): the pile on the wire, WORLD4's projection
+import { spawnEnemyLoot, hasBowAttack, backstabChanceOf, zeroDamageHitSound, enemyMissSound, enemyAttackVoice, enemyPainVoice, playerAttackGrunt, tickEnemySound, playEnemyClip, tryLanguagePacification, applyDamageToNonPlayer } from './hostCombat.js';   // C2-slice (combat-9/17); MT-ii: the foe-vs-foe payload
+import { validLootList } from '../systems/loot.js';   // WORLD6b-iii(c): the pile on the wire, WORLD4's projection
 import { calculateAttackDamage, meleeHitConnects, MELEE_HIT_YAW_DEG, chooseEnemyWeapon, dropWeaponIfTargetImmune, enemyWeightClassicUnits, weaponKnockbackSpeed, weaponKnockbackApplies, enemyLanguageSkill, calculateEnemyPacification } from '../combat/formulas.js';   // AUDIT 24 (wave 42): pacification
 import { tallySkill, SKILLS } from '../systems/skills.js';
 import { liveStat } from '../systems/statMods.js';
@@ -48,7 +48,6 @@ import { validFoeRecord, CELL_PUPPETS_MAX, CELL_FRAME_RECORDS_MAX, POSE_BOUND, P
 import { CORPSE_ACTIVATION_DISTANCE } from '../player/activate.js';   // AUDIT WORLD6b-iii(c) A1/C7: the owner reads the taker's reach
 import { createWeapon } from '../combat/enemyEquipment.js';   // AUDIT WORLD6b-ii B2: a puppet's weapon is its owner's word, rebuilt from the descriptor   // AUDIT WORLD6b B3/C2: a cell's record projected and its puppets capped, the wire's law
 import { mintCorpseMarker, playBodyFall, playRareDrop, corpseLootTargets, takeCorpseLoot, sayEnemyDied, raiseEnemyDeath } from './corpseMarker.js';
-import { rollCorpseLoot } from '../systems/lootRarity.js';   // LR1: the item ladder over the corpse's list
 import { bloodCentre } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
 import { addItem } from '../systems/inventory.js';   // AR1: BowDamage's recoverable arrow, in the TARGET's items
 import { EnemySoundSource, acuteHearingMultiplier } from '../characters/enemySounds.js';   // AUDIT 24 (wave 41): EnemySounds.cs, one home
@@ -229,10 +228,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // the shared stream: what my neighbours stream must not move my own dice
       if (puppet) entity.items = [];
       else {
-        entity.items = generateLootItems(basics.lootTableKey ?? '-', { level: playerEntity.level, gender: playerEntity.gender });
-        equipEnemy(entity, mobileType, playerEntity.level);
-        addEnemyLootExtras(entity.items, basics, rolls);   // AUDIT 24 (wave 43): EnemyEntity.cs:388-397, after the equipment as DFU has it
-        rollCorpseLoot(entity, basics, { rolls, luck: liveStat(playerEntity, 'luck') });   // LR1: at the SOURCE's tier, off the same stream; LR4: the worn kit stays DFU's
+        spawnEnemyLoot(entity, mobileType, basics, playerEntity, { rolls });   // RF2: SetEnemyCareer's whole loot chain, one seam - the trio and the port's roll off this pool's stream
       }
       // NT2 (F210): GetTextureArchive's gender arm - a DFRandom draw off
       // the shared stream (Ledger A: a DFRandom site never rides the

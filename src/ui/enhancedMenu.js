@@ -140,7 +140,9 @@ import { CREDITS } from './credits.js';   // CR1: who made what the port carries
 // dicts, neither of which belongs in a screen that repaints itself.
 import { paneControls, discardControlsStaging, captureArmed } from './enhancedControls.js';
 // FT0: the features home - one list over the three stores, filtered by kind
-import { FEATURES, KINDS, KIND_ORDER, filterFeatures, featureCounts, featureForControl } from '../systems/features.js';
+import { FEATURES, KINDS, KIND_ORDER, filterFeatures, featureCounts, featureForControl, resolveControl } from '../systems/features.js';
+import '../world/landView.js';   // RF4: the land-view lane registers itself with the registry
+import '../world/outdoors.js';   // RF4: the outdoors lane too
 
 // ── THE RAIL ─────────────────────────────────────────────────────
 // Six destinations. Mac's call: the menus get set up now even where
@@ -1560,7 +1562,7 @@ function kindTags(kinds) {
 
 /** One registry row, drawn by its store's own builder and dressed. */
 function featureRow(f) {
-  const c = f.control;
+  const c = resolveControl(f);   // RF4: the lane's tiers/read/write folded in
   let row;
   if (c.store === 'prefs') {
     row = c.tiers ? choiceRow(c.key, f.title, f.note, c.tiers, { home: true, read: c.read, write: c.write }) : prefRow(c.key, f.title, f.note, { home: true });

@@ -103,17 +103,22 @@ repeats on an item; a kind with a parameter never repeats a parameter.
 The first pick leans to the group's own number half the time (a
 weapon's damage, a piece of armour's armour).
 
-THE FOLD. Affixes ride an `affixes` list on the item and are folded onto
-the wearer by `computeAffixMods` into `entity._affixMods` - at every
-equip change (equip.js's new listener list, `addEquipChangeListener`,
-beside the enchantment hook; and the save's `rebuildEquipState`, which
-runs the listeners so a load reads right before any magic round) and
-at every magic round (worldTick, after the enchant fold), which is
-where a switch press is felt on a worn set. The readers are field
-reads at DFU's own read sites, so `statMods.js` stays import-free;
-with the switch off the fold is empty and every reader answers 0. A
-weapon's damage affix is not folded - it is the weapon's own and read
-off the item in hand. A malformed record (LR4: `validAffix` - a known
+THE FOLD (RF1). Affixes ride an `affixes` list on the item and are
+folded onto the wearer by `affixFold`, ONE of the entity's modifier
+folds (`systems/entityMods.js`, registered under `LOOT_RARITY_FOLD`):
+`computeEntityMods` runs every fold and sums the channels onto
+`entity._mods` at every equip change (equip.js's listener list,
+`addEquipChangeListener`, beside the enchantment hook; and the save's
+`rebuildEquipState`, which runs the listeners so a load reads right
+before any magic round) and at every magic round (worldTick, after
+the enchant fold), which is where a switch press is felt on a worn
+set. DFU's formulas read one accessor per channel there
+(`entityArmorMod` on the struck part, `entityWeightMult`,
+`entityResistMod`, `weaponDamageMods`), and the leaves `statMods.js`
+and `skills.js` read the field, import-free; with the switch off the
+fold answers empty and every channel reads the enchantment's alone. A
+weapon's damage affix is not folded - it is the weapon's own,
+registered as a weapon-damage modifier and read off the item in hand. A malformed record (LR4: `validAffix` - a known
 kind, the kind's param or none, an integer value from 1 to the kind's
 Legendary ceiling) folds nothing and prints nothing; the wire's
 validator refuses a list carrying one, as it refuses a string
@@ -185,10 +190,11 @@ budget; a drop is not made.
 ## The hosts (four-hosts law)
 
 Every list a host mints rolls at its source, right after DFU's own
-extras: the dungeon's two spawn arms and its treasure piles
-(`dungeonContext.js` - a pile at `dungeonRarityTier(dungeonType)`),
-the exterior foes (`exteriorFoes.js`, off the same injectable roll
-stream), the watch (`cityGuards.js`), a tavern's or a guild's treasure
+extras: a foe's through the ONE enemy-loot seam
+(`hostCombat.spawnEnemyLoot`, RF2 - the dungeon's two spawn arms, the
+exterior foes off their injectable stream, the watch, each one call),
+the dungeon's treasure piles (`dungeonContext.js` - a pile at
+`dungeonRarityTier(dungeonType)`), a tavern's or a guild's treasure
 markers (`interiorContext.js`, the host handing its luck in). Shops
 and quest rewards do NOT roll (decided): a shelf is DFU's economy and
 a quest's item is the quest's.

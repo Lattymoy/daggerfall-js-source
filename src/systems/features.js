@@ -9,7 +9,8 @@
 // settings (systems/settings.js), the port's own prefs
 // (systems/uiPrefs.js), the vendored mods' modsettings
 // (systems/modSettings.js) - and this list is the presentation over
-// them: nothing here holds a value.
+// them: nothing here holds a LIVE value (RF4: a prefs row does declare
+// its switch's default and its online answer, which the stores derive).
 //
 // A row may wear MORE THAN ONE kind (Mac, 2026-09-14): a switch that
 // condenses the port's outdoors with Dynamic Skies' is Enhanced AND
@@ -22,11 +23,23 @@
 // control must name a key its store really has, so a typo cannot ship
 // a switch wired to nothing.
 
-import { PREF_DEFAULTS } from './uiPrefs.js';
+// RF4 (2026-09-14, Mac's refactor pass, the fourth): ONE DECLARATION.
+// A new switch used to touch four places - the pref default on the
+// uiPrefs shelf, the online lane's forced or player's-own list, the row
+// here, and the count pins. The row is the one declaration now: a
+// prefs-store control carries `initial` (the shelf's default) and
+// `online` (the lane's answer: true/false forces it, 'player' leaves it
+// to the player by name), and uiPrefs and onlineLane DERIVE theirs from
+// FEATURE_PREF_DEFAULTS / declareOnlinePrefs. So this module sits UNDER
+// the stores now and imports neither: the condensed rows' lanes (the
+// land view's tiers and read/write, the outdoors') are registered by
+// their own modules (registerFeatureLane) and resolved at use
+// (resolveControl), which is what keeps world/landView.js -> uiPrefs ->
+// features from closing a cycle on this file's constants.
+
 import { ALL_KEYS } from './settings.js';
 import { MOD_SETTINGS } from './modSettings.js';
-import { LAND_VIEW_TIERS, landViewRead, landViewWrite } from '../world/landView.js';   // FT2: the one row for both lanes
-import { OUTDOORS_TIERS, OUTDOORS_DEFAULT, outdoorsRead, outdoorsWrite } from '../world/outdoors.js';   // FT4: the outdoors as one three-way row
+import { declareOnlinePrefs } from './onlineLane.js';   // RF4: the lane learns its answers from the rows
 
 /** The three kinds, in label order. `label` is what the row wears and
  *  the chip says; the colour is the skin's (ui/enhancedStyle.js .kind). */
@@ -69,7 +82,11 @@ const modFeature = (vendor, effect) => {
  *  `also` (FT2) names the OTHER controls the row's write covers, so their
  *  own panes draw a pointer to this row instead of a second switch.
  *  `default` (FT4) is the tier a condensed row reads at the stores' own
- *  defaults, when its tiers are not the pref's values. */
+ *  defaults, when its tiers are not the pref's values.
+ *  `initial` and `online` (RF4) are a prefs row's declaration of its
+ *  switch: the shelf's default, and the lane's answer (true/false to
+ *  force it, 'player' to leave it). `lane` (RF4) names the registered
+ *  lane a condensed row takes its tiers/default/read/write from. */
 export const FEATURES = Object.freeze([
   // FT1 (2026-09-14): SMALLER DUNGEONS - DFU's Experimental/SmallerDungeons,
   // ported 1:1 at AUDIT 28 W4 (world/smallerDungeons.js). Mac's first
@@ -101,8 +118,12 @@ export const FEATURES = Object.freeze([
       + 'enhanced environments off, read it capped at Daggerfall Unity\u2019s 4.',
     effect: 'Takes effect when the world next loads.',
     kinds: Object.freeze(['enhanced', 'classic']),
+    // LV1 (2026-09-12, Mac: "push the draw distance as far as we can push
+    // it while keeping performance perfect"): the streamed grid's radius
+    // in map pixels on the enhanced lane, 1..6; DFU's own Land View
+    // Distance stays the 1:1 lane's 1..4. A dial: the player's online.
     control: Object.freeze({
-      store: 'prefs', key: 'landViewDistance', tiers: LAND_VIEW_TIERS, read: landViewRead, write: landViewWrite,
+      store: 'prefs', key: 'landViewDistance', initial: 5, online: 'player', lane: 'landView',   // the lane (world/landView.js) registers its tiers and its read/write
       also: Object.freeze([Object.freeze({ store: 'settings', key: 'Experimental/TerrainDistance' })]),   // written by landViewWrite, capped at 4
     }),
   }),
@@ -124,8 +145,13 @@ export const FEATURES = Object.freeze([
       + 'and a lightning flash under thunder. The mod\u2019s fog density and pixel-snow knobs stay on the Mods page.',
     effect: 'Takes effect when the world next loads.',
     kinds: Object.freeze(['enhanced', 'mod']),
+    // EE1: the outdoors as ONE switch (the sky, the ground's surfaces, the
+    // cloud shadows, the grass, the weather and its evolution) because
+    // they are one system; RA1 was the sky's own switch before it, and
+    // the shelf's migration still reads its proceduralSky. On by
+    // default; the lane forces it on.
     control: Object.freeze({
-      store: 'prefs', key: 'enhancedEnvironments', tiers: OUTDOORS_TIERS, default: OUTDOORS_DEFAULT, read: outdoorsRead, write: outdoorsWrite,
+      store: 'prefs', key: 'enhancedEnvironments', initial: true, online: true, lane: 'outdoors',   // the lane (world/outdoors.js) registers its tiers, its default and its read/write
       also: Object.freeze([Object.freeze({ store: 'mods', vendor: 'dynamic-skies', key: 'Enabled' })]),   // written by outdoorsWrite while the outdoors are on
     }),
   }),
@@ -148,7 +174,7 @@ export const FEATURES = Object.freeze([
       + 'which the port does not run.',
     effect: 'Takes effect on the next dungeon you enter.',
     kinds: Object.freeze(['enhanced']),
-    control: Object.freeze({ store: 'prefs', key: 'enhancedAI' }),
+    control: Object.freeze({ store: 'prefs', key: 'enhancedAI', initial: false, online: true }),   // OFF by default and it stays off: DFU's classic motor is the 1:1 law, this the port's departure (as EnhancedCombatAI is DFU's own opt-in)
   }),
   // FT6 (2026-09-14): ENHANCED WATER (WATER1) - the surface pass over the
   // terrain's water tiles on the enhanced skin; off, or the classic
@@ -163,7 +189,7 @@ export const FEATURES = Object.freeze([
       + 'flat water tile.',
     effect: 'Takes effect when the world next loads.',
     kinds: Object.freeze(['enhanced']),
-    control: Object.freeze({ store: 'prefs', key: 'enhancedWater' }),
+    control: Object.freeze({ store: 'prefs', key: 'enhancedWater', initial: true, online: true }),   // WATER1: on by default like the other enhanced visuals; `?water=off` the kill door
   }),
   // FT7 (2026-09-14): THE TWO QUALITY TIERS OF THE ENHANCED OUTDOORS
   // (PERF1) - the grass field's fraction and the clouds' march. Both
@@ -177,7 +203,7 @@ export const FEATURES = Object.freeze([
       + 'The single heaviest thing outdoors - try half first if the FPS counter says the frame is the GPU\u2019s.',
     effect: 'Takes effect when the world next loads.',
     kinds: Object.freeze(['enhanced']),
-    control: Object.freeze({ store: 'prefs', key: 'grassDensity', tiers: Object.freeze([[1, 'Full'], [0.5, 'Half'], [0.25, 'Quarter'], [0, 'Off']]) }),
+    control: Object.freeze({ store: 'prefs', key: 'grassDensity', initial: 1, online: 'player', tiers: Object.freeze([[1, 'Full'], [0.5, 'Half'], [0.25, 'Quarter'], [0, 'Off']]) }),   // PERF1: a fraction of the lab's 1.2 million blades; a dial, the player's online
   }),
   Object.freeze({
     id: 'cloud-quality',
@@ -186,7 +212,7 @@ export const FEATURES = Object.freeze([
       + 'High is for a machine with room to spare.',
     effect: 'Takes effect when the world next loads.',
     kinds: Object.freeze(['enhanced']),
-    control: Object.freeze({ store: 'prefs', key: 'cloudQuality', tiers: Object.freeze([['default', 'Default'], ['lo', 'Low'], ['hi', 'High']]) }),
+    control: Object.freeze({ store: 'prefs', key: 'cloudQuality', initial: 'default', online: 'player', tiers: Object.freeze([['default', 'Default'], ['lo', 'Low'], ['hi', 'High']]) }),   // PERF1: volumetricClouds.js QUALITY; a dial, the player's online
   }),
   // FT8 (2026-09-14): ENHANCED COMBAT VISUALS (ECV1) - what the enhanced
   // skin DRAWS for a concealed foe; the rules are DFU's either way. The
@@ -205,7 +231,7 @@ export const FEATURES = Object.freeze([
       + 'Off keeps the 1:1 draw.',
     effect: 'Takes effect at once.',
     kinds: Object.freeze(['enhanced']),
-    control: Object.freeze({ store: 'prefs', key: 'enhancedCombatVisuals' }),
+    control: Object.freeze({ store: 'prefs', key: 'enhancedCombatVisuals', initial: true, online: true }),   // ECV1: on by default like the other enhanced visuals; the rules are untouched either way
   }),
   // LR1 (2026-09-14): LOOT RARITY - the port's own item ladder
   // (systems/lootRarity.js): Common, Magic, Rare, Legendary, with
@@ -223,7 +249,7 @@ export const FEATURES = Object.freeze([
       + 'Off is Daggerfall\u2019s loot exactly; items already rolled keep their tier and their names but their affixes rest.',
     effect: 'Takes effect on the next roll; worn affixes follow within a magic round.',
     kinds: Object.freeze(['enhanced']),
-    control: Object.freeze({ store: 'prefs', key: 'lootRarity' }),
+    control: Object.freeze({ store: 'prefs', key: 'lootRarity', initial: false, online: true }),   // LR1: off by default as enhancedAI is - it changes what drops; the lane forces it on
   }),
   // FT9 (2026-09-14): THE FIVE PACKS WITH A SWITCH (Dynamic Skies' is
   // the outdoors row's, FT4). Windmills (Kamer) has no switch and so no
@@ -325,6 +351,29 @@ export const FEATURES = Object.freeze([
   }),
 ]);
 
+// ── RF4: the lanes, and what the stores derive ────────────────────
+const _lanes = new Map();
+/** A condensed row's LANE - its tiers, its `default` in the tiers'
+ *  vocabulary, its read/write over two stores - registered by the
+ *  module that owns them (world/landView.js, world/outdoors.js) at its
+ *  own load, so this registry imports nothing above the stores. */
+export function registerFeatureLane(name, lane) { _lanes.set(name, Object.freeze({ ...lane })); }
+export const featureLane = (name) => _lanes.get(name) ?? null;
+/** A row's control with its lane's fields folded in - what the menu
+ *  and the checks read. */
+export function resolveControl(f) {
+  const c = f?.control;
+  if (!c || typeof c !== 'object' || !c.lane) return c;
+  return { ...c, ...(_lanes.get(c.lane) ?? {}) };
+}
+/** The prefs-store keys the rows declare: key -> the shelf's default. */
+export const FEATURE_PREF_DEFAULTS = Object.freeze(Object.fromEntries(
+  FEATURES.filter((f) => f.control?.store === 'prefs').map((f) => [f.control.key, f.control.initial])));
+/** ...and key -> the online lane's answer (true/false forced, 'player'). */
+export const FEATURE_PREF_ONLINE = Object.freeze(Object.fromEntries(
+  FEATURES.filter((f) => f.control?.store === 'prefs').map((f) => [f.control.key, f.control.online])));
+declareOnlinePrefs(FEATURE_PREF_ONLINE);
+
 /** The row whose control is this store's key, or null. The settings
  *  pane asks it for every key it draws: a key that lives on the home
  *  is drawn there as a pointer, not as a second switch (one home per
@@ -338,7 +387,7 @@ export function featureForControl(store, key, vendor = null) {
  *  and this is the one place that knows how. */
 function storeHas(control) {
   switch (control.store) {
-    case 'prefs': return Object.hasOwn(PREF_DEFAULTS, control.key);
+    case 'prefs': return typeof control.key === 'string' && !!control.key;   // RF4: the row IS the shelf's declaration of the key
     case 'settings': return ALL_KEYS.includes(control.key);
     case 'mods': return !!MOD_SETTINGS[control.vendor]?.keys?.[control.key];
     default: return false;
@@ -356,16 +405,22 @@ export function checkFeature(f) {
     for (const k of f.kinds) if (!KINDS[k]) out.push(`unknown kind '${k}'`);
     if (new Set(f.kinds).size !== f.kinds.length) out.push('a kind repeated');
   }
-  const c = f.control;
+  const c = resolveControl(f);   // RF4: the lane's fields count as the row's
   if (!c || typeof c !== 'object') out.push('no control');
   else if (!STORES.includes(c.store)) out.push(`unknown store '${c.store}'`);
   else if (!storeHas(c)) out.push(`${c.store} has no key '${c.store === 'mods' ? `${c.vendor}/` : ''}${c.key}'`);
-  else if (c.store === 'prefs' && c.tiers !== undefined) {
-    if (!Array.isArray(c.tiers) || !c.tiers.length) out.push('tiers is not a list');
-    else {
-      // FT4: a condensed row's tiers are its own vocabulary, so it names its default itself
-      const def = c.default ?? PREF_DEFAULTS[c.key];
-      if (!c.tiers.some(([v]) => String(v) === String(def))) out.push(`tiers do not include the default ${def}`);
+  else if (c.store === 'prefs') {
+    // RF4: a prefs row is the ONE declaration of its switch - the shelf's default and the lane's answer ride it
+    if (c.initial === undefined) out.push('a prefs row declares its initial value');
+    if (!(c.online === true || c.online === false || c.online === 'player')) out.push("a prefs row declares its online answer: true, false or 'player'");
+    if (c.lane && !_lanes.has(c.lane)) out.push(`lane '${c.lane}' is not registered`);
+    if (c.tiers !== undefined) {
+      if (!Array.isArray(c.tiers) || !c.tiers.length) out.push('tiers is not a list');
+      else {
+        // FT4: a condensed row's tiers are its own vocabulary, so it names its default itself
+        const def = c.default ?? c.initial;
+        if (!c.tiers.some(([v]) => String(v) === String(def))) out.push(`tiers do not include the default ${def}`);
+      }
     }
   }
   if (c && typeof c === 'object' && c.also !== undefined) {

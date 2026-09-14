@@ -67,7 +67,7 @@ import { RACES } from './races.js';
 // AUDIT 24 (wave 24): one home, systems/gameDate.js.
 import { MINUTES_PER_DAY } from './gameDate.js';
 import { enchantmentMagicRound } from './enchantments.js';
-import { computeAffixMods } from './lootRarity.js';   // LR2: the affix fold rides the same round   // E1: the per-round item payload pump
+import { computeEntityMods } from './entityMods.js';   // RF1: the entity's folds ride the same round   // E1: the per-round item payload pump
 import { claimSyntheticTimeIncrease, resetSyntheticTimeIncrease } from './effectBroker.js';   // AUDIT 63 F13: EntityEffectBroker.SyntheticTimeIncrease (:81, :244-248)
 import { passiveSpecialsMagicRound } from './passiveSpecials.js';   // V2c: careers' regen/sun/holy/magery + the vampire's fire
 // S41 - the day-change block's four members. They live in their own
@@ -241,10 +241,10 @@ export function runMagicRoundsFor(entity, from, to, { sinks, rolls = Math.random
       nowMinutes: r + 1,
       ctx: { ...(enchantCtx ?? {}), hurtSelf: (n) => sinks?.hurt?.(n), say },
     });
-    // LR2: the loot-rarity affix fold rides the same round, AFTER the
-    // enchant fold - the equip listener keeps it current between
+    // RF1: the entity's modifier folds ride the same round, AFTER the
+    // enchant fold - the equip listener keeps them current between
     // rounds; here is where a switch press is felt on a worn set.
-    computeAffixMods(entity);
+    computeEntityMods(entity);
     // V2c: PassiveSpecials rides the same round, AFTER the enchant
     // fold - its magery arm SUMS the two producers into the one
     // maxMagickaModifier the accessor reads. Player-gated inside.

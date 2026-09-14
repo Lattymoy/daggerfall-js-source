@@ -5,7 +5,11 @@
 // over git.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { hunksFromDiff, lineMap, citeSpellings, planDoc, applyPlan, continuations } from '../tools/citeShift.mjs';
+import { hunksFromDiff, lineMap, citeSpellings, planDoc, applyPlan, continuations, ANY_CITE, CONTINUATION, SELF_DOCS } from '../tools/citeShift.mjs';
+import { readFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 test('CS1: hunk headers parse and a pure insertion moves only the lines below it', () => {
   const hunks = hunksFromDiff('@@ -10,0 +11,3 @@ ctx\n+a\n+b\n+c\n@@ -40,2 +44,5 @@\n-x\n-y\n+p\n+q\n+r\n+s\n+t\n');
@@ -84,12 +88,58 @@ test('CS1: the escaped spelling and the Ledger arm apply with their punctuation 
   assert.equal(lout, 'Port-Ledger.md:13, Port-Ledger row :13, Ledger row `:13` and Ledger rows `:13-14`');
 });
 
-test('CS1: bare continuations are reported with their mapped value and never applied', () => {
+test('RF3: bare continuations MOVE under the content check - every spelling, up to the next cite of any file, a C# one included', () => {
+  const oldLines = Array.from({ length: 6000 }, (_, i) => `l${i}`), newLines = ['NEW', ...oldLines];   // long enough for the real numbers below
   const map = lineMap([{ oldStart: 0, oldLen: 0, newStart: 1, newLen: 1 }]);
-  const doc = 'the fast-travel path (`world.js:1861`, `:1667`); C# `:524-525` is not a world line\nno cite here `:9`';
-  const c = continuations(doc, 'src/scenes/world.js', map);
-  assert.deepEqual(c.map((x) => [x.line, x.text, x.to]), [[1, '`:1667`', 1668], [1, '`:524-525`', 525]], 'every later token on a citing line is a candidate, C# ones included - a person reads the line');
-  const oldLines = Array.from({ length: 2000 }, (_, i) => `l${i}`), newLines = ['NEW', ...oldLines];
-  const out = applyPlan(doc, planDoc({ docText: doc, target: 'src/scenes/world.js', oldLines, newLines, map }));
-  assert.match(out, /`world\.js:1862`, `:1667`/, 'the explicit cite moved, the continuation did not');
+  const t = 'src/scenes/world.js';
+  const plan = (doc) => planDoc({ docText: doc, target: t, oldLines, newLines, map });
+  const out = (doc) => applyPlan(doc, plan(doc));
+  assert.equal(out('the fast-travel path (`world.js:1861`, `:1667`); C# `:524-525` is not a world line'),
+    'the fast-travel path (`world.js:1862`, `:1668`); C# `:525-526` is not a world line',
+    'the backtick continuation moves; the C# one on the SAME citing region moves too when the target really has such lines - a person still reads a line that mixes the two (the old CS1 caveat, unchanged)');
+  assert.equal(out('FLAG ONLY, presence-gated, exactly as world.js:4371/:4384 and'), 'FLAG ONLY, presence-gated, exactly as world.js:4372/:4385 and', 'the /:N pair');
+  assert.equal(out("expressions are world.js:5681/5681's verbatim"), "expressions are world.js:5682/5682's verbatim", 'the /N pair');
+  assert.equal(out('(world.js:757) and spliced out at the end of it (:939).'), '(world.js:758) and spliced out at the end of it (:940).', 'the (:N form');
+  assert.equal(out('see world.js:10, :12, :14-15 and :20'), 'see world.js:11, :13, :15-16 and :20', 'the ", :N" form and a range; a bare " :N" after "and" is no spelling (too loose to be one)');
+  assert.equal(out('world.js:100 sets it; SerializablePlayer.cs:421 reads it (:423)'), 'world.js:101 sets it; SerializablePlayer.cs:421 reads it (:423)', 'a C# cite stops the region: its (:N) is the C#\'s');
+  assert.equal(out('world.js:100 and talk.js:50/:60'), 'world.js:101 and talk.js:50/:60', 'another file\'s continuation is its own');
+  assert.equal(out('no cite here `:9`'), 'no cite here `:9`', 'a continuation with no cite before it is nothing');
+  // a continuation that would land on different text is held, like any cite
+  const drifted = ['a', 'b', 'c'], driftedNew = ['a', 'X', 'b', 'c'];
+  const map2 = lineMap([{ oldStart: 1, oldLen: 0, newStart: 2, newLen: 1 }]);
+  const p = planDoc({ docText: 'thing.js:2/:3', target: 'src/thing.js', oldLines: drifted, newLines: ['a', 'X', 'b', 'Q'], map: map2 });
+  assert.deepEqual(p.map((x) => [x.kind, x.status]), [['cite', 'move'], ['cont', 'mismatch']], 'the primary moves, the drifted continuation is held');
+  assert.equal(applyPlan('thing.js:2/:3', p), 'thing.js:3/:3');
+  assert.deepEqual(planDoc({ docText: 'thing.js:2/:3', target: 'src/thing.js', oldLines: drifted, newLines: driftedNew, map: map2 }).map((x) => x.status), ['move', 'move']);
+  // the old report view still answers, off the plan
+  assert.deepEqual(continuations('see world.js:10, :12', t, map, { oldLines, newLines }).map((c) => [c.text, c.from, c.to, c.status]), [[', :12', 12, 13, 'move']]);
+  // the two regexes are one law, shared with citeMerge
+  assert.ok(ANY_CITE.source.includes('|cs)') && CONTINUATION.source.includes('\\(:'), 'the .cs stop and the (: opener');
+  assert.match(readFileSync(join(root, 'tools/citeMerge.mjs'), 'utf8'), /import \{ hunksFromDiff, lineMap, citeSpellings, ANY_CITE, CONTINUATION, SELF_DOCS \} from '.\/citeShift\.mjs';/, 'citeMerge imports them');
+  assert.doesNotMatch(readFileSync(join(root, 'tools/citeMerge.mjs'), 'utf8'), /^const (ANY_CITE|CONTINUATION) =/m, 'and declares no copy');
+});
+
+test('RF3: a test\'s escaped literal follows the row it pins - held while the docs carry the number on struck lines only', () => {
+  const oldLines = ['a', 'b', 'c'], newLines = ['a', 'X', 'b', 'c'];
+  const map = lineMap([{ oldStart: 1, oldLen: 0, newStart: 2, newLen: 1 }]);
+  const t = 'src/scenes/dungeonContext.js';
+  const testDoc = "['bible/01-Overview/Port-Ledger.md', /`exterior\\.js:(\\d+)`, `dungeonContext\\.js:2`/]";
+  // no hold: the literal moves with the target
+  assert.equal(applyPlan(testDoc, planDoc({ docText: testDoc, target: t, oldLines, newLines, map })), testDoc.replace(':2`', ':3`'));
+  // the CLI's hold: the docs carry :2 on a struck line alone
+  const held = planDoc({ docText: testDoc, target: t, oldLines, newLines, map, holdEscaped: new Set([2]) });
+  assert.deepEqual(held.map((p) => [p.spelling, p.status]), [['escaped', 'pinned-struck']]);
+  assert.equal(applyPlan(testDoc, held), testDoc, 'the quote of a struck row stays with the row');
+  // the same number on an UNSTRUCK doc line is not held (the CLI only holds numbers the docs carry struck alone)
+  const both = planDoc({ docText: 'live dungeonContext.js:2\n~~struck dungeonContext.js:2~~', target: t, oldLines, newLines, map });
+  assert.deepEqual(both.map((p) => p.status), ['move', 'struck']);
+  const cli = readFileSync(join(root, 'tools/citeShift.mjs'), 'utf8');
+  assert.match(cli, /const holdEscaped = new Set\(\[\.\.\.struckNums\]\.filter\(\(n\) => !movedNums\.has\(n\)\)\);/, 'the CLI derives the hold from pass one');
+  assert.match(cli, /if \(p\.spelling === 'escaped'\) continue;/, 'a literal never votes for its own hold');
+});
+
+test('RF3: the tools\' own fixtures are not docs', () => {
+  assert.deepEqual([...SELF_DOCS], ['tools/citeShift.mjs', 'tools/citeMerge.mjs', 'test/citeshift.test.js', 'test/citemerge.test.js']);
+  assert.match(readFileSync(join(root, 'tools/citeShift.mjs'), 'utf8'), /&& !SELF_DOCS\.includes\(f\)\);   \/\/ RF3/, 'citeShift skips them');
+  assert.match(readFileSync(join(root, 'tools/citeMerge.mjs'), 'utf8'), /&& !SELF_DOCS\.includes\(f\)\)\) \{   \/\/ RF3/, 'citeMerge skips them');
 });

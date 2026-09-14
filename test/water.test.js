@@ -230,7 +230,7 @@ test('WATER1: both exterior hosts - the gate, the has-water skip, and the slot a
 });
 
 test('WATER1: the switch, the row, the sky\'s colours, the lab, the probe and the record', () => {
-  assert.match(rd('src/systems/uiPrefs.js'), /enhancedWater: true,/, 'on by default like the other enhanced visuals');
+  assert.match(rd('src/systems/features.js'), /key: 'enhancedWater', initial: true, online: true/, 'on by default like the other enhanced visuals (RF4: declared on its row; the shelf derives it)');
   assert.ok(!/prefRow\('enhancedWater'/.test(rd('src/ui/enhancedMenu.js')), 'FT6: the row is the Features home\'s (systems/features.js)');
   const shared = rd('src/scenes/shared.js');
   assert.match(shared, /waterSky\(\) \{\s*\n\s*if \(enhancedSky\?\.state\) return \{ zenith: enhancedSky\.state\.zenith, horizon: enhancedSky\.state\.horizon \};/, 'the dome\'s own state');

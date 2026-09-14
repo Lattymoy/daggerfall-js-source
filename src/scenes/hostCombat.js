@@ -19,7 +19,10 @@ import { combatVoicesEnabled, ATTACK_VOICE_CHANCE, PAIN_VOICE_CHANCE, combatVoic
 import { RACES } from '../systems/races.js';   // C2-slice: the player grunt's race
 import { assignEnemyEquipment, equipmentVariantFor, equipmentItems } from '../combat/enemyEquipment.js';
 import { rollEnemyWeaponPoison } from '../systems/poisons.js';
-import { EQUIP_SLOTS, equipTableOf, getEquipSlot } from '../systems/equip.js';   // AUDIT 58: ItemHelper's EquipItem half - a foe's equip table is what DamageEquipment's struck side reads
+import { EQUIP_SLOTS, equipTableOf, getEquipSlot } from '../systems/equip.js';
+import { generateItems, addEnemyLootExtras } from '../systems/loot.js';   // RF2: the spawn chain's DFU half, in its one home
+import { rollCorpseLoot } from '../systems/lootRarity.js';   // RF2: and the port's, after it
+import { liveStat } from '../systems/statMods.js';   // RF2: the player's live luck for the roll   // AUDIT 58: ItemHelper's EquipItem half - a foe's equip table is what DamageEquipment's struck side reads
 import { GLOBAL_SCALE } from '../world/meshReader.js';
 import { swingSoundFor, hitSoundFor, ENEMY_HIT_VOLUME } from '../systems/soundClips.js';
 import { bloodCentre } from './hitEffects.js';   // AUDIT 62 F19: EnemyAttack.cs:326-328's one home, the same law the four player-melee sites cite
@@ -82,6 +85,34 @@ export const isBowWeapon = (weapon) => attackSkillOf(weapon) === SKILLS.Archery;
  *  host did) meant no enemy in the game could ever fire one. */
 export const hasBowAttack = (basics) =>
   !!basics?.hasRangedAttack1 && (!basics?.castsMagic || !!basics?.hasRangedAttack2);
+
+// ---- RF2: THE ONE ENEMY-LOOT SEAM (2026-09-14, Mac's refactor pass) ----
+/** EnemyEntity.SetEnemyCareer's whole loot chain, in the order DFU
+ *  runs it, for every host that stands a foe: GenerateItems(LootTableKey)
+ *  on the PLAYER's level and gender (EnemyEntity.cs:328; LootTables.cs
+ *  :212/:229/:237 - AUDIT 18), the equipment chain appended and put on
+ *  (equipEnemy, :330-347), the map/potion/recipe trio (:388-397, AUDIT
+ *  24 wave 43), and then the port's own arm - loot rarity's roll over
+ *  the loot the foe carries and never the kit it wears (LR1/LR4).
+ *
+ *  Four hosts stood the same four lines each (the dungeon's two spawn
+ *  arms, the exterior foes, the watch), and the first departure from
+ *  DFU's rules had to visit all four; the next would have too. ONE
+ *  function now: a loot feature lands here, and a host says only
+ *  `spawnEnemyLoot(entity, mobileType, basics, playerEntity)`.
+ *
+ *  `rolls` is the host's stream for the trio and the rarity roll (the
+ *  exterior pool's injectable stream - a puppet stands with an empty
+ *  list and never comes here); the table roll itself stays on
+ *  Math.random as UnityEngine.Random is, which is what every host
+ *  passed before. Answers the entity's list. */
+export function spawnEnemyLoot(entity, mobileType, basics, player, { rolls = Math.random } = {}) {
+  entity.items = generateItems(basics?.lootTableKey ?? '-', { level: player.level, gender: player.gender });
+  equipEnemy(entity, mobileType, player.level);
+  addEnemyLootExtras(entity.items, basics, rolls);
+  rollCorpseLoot(entity, basics, { rolls, luck: liveStat(player, 'luck') });
+  return entity.items;
+}
 
 // ---- EnemyEntity.SetEnemyCareer, the equipment chain (EnemyEntity.cs:330-347) ----
 /** DFU runs the equipment chain by careerIndex BEFORE the class arm:

@@ -61,11 +61,10 @@ import { KNIGHT_CITY_WATCH } from '../characters/mobileTypes.js';
 import { MobileUnit } from '../characters/mobileUnit.js';
 import { EnemyAI, withinYaw, isBackFacing } from '../characters/enemyMotor.js';
 import { runTargetMachine, isPlayerTarget, PLAYER_TARGET, resetAllyTeamOnPlayerAttack } from '../characters/enemyTargets.js';   // MT-ii   // ROAD-G G1: MakeEnemyHostileToAttacker's entity-side half, for the watch too
-import { applyDamageToNonPlayer } from './hostCombat.js';   // MT-ii: EnemyAttack.ApplyDamageToNonPlayer
+import { applyDamageToNonPlayer, spawnEnemyLoot } from './hostCombat.js';   // MT-ii: EnemyAttack.ApplyDamageToNonPlayer
 import { EnemyAttack } from '../characters/enemyAttack.js';
 import { makeEnemyEntity } from '../characters/enemyEntity.js';
 import { ClassFile } from '../formats/classFile.js';
-import { generateItems, addEnemyLootExtras } from '../systems/loot.js';   // AUDIT 24 (wave 43)
 import { inflictPoison } from '../systems/poisons.js';
 import {
   calculateAttackDamage, meleeHitConnects, MELEE_HIT_YAW_DEG, chooseEnemyWeapon,
@@ -74,7 +73,7 @@ import {
   enemyLanguageSkill, calculateEnemyPacification,   // AUDIT 24 (wave 42)
 } from '../combat/formulas.js';
 import {
-  equipEnemy, backstabChanceOf, tallySwingSkills,
+  backstabChanceOf, tallySwingSkills,
   zeroDamageHitSound,
   enemyMissSound, enemyAttackVoice, enemyPainVoice, playerAttackGrunt,   // C2-slice (combat-9/17)
   tickEnemySound, playEnemyClip,   // AUDIT 24 (wave 41)
@@ -86,7 +85,6 @@ import { tallySkill, SKILLS } from '../systems/skills.js';
 import { WEAPON_REACH } from '../combat/playerWeapon.js';
 import { rayPersonDistance } from './townTalk.js';
 import { mintCorpseMarker, playBodyFall, playRareDrop, corpseLootTargets, takeCorpseLoot, sayEnemyDied, raiseEnemyDeath } from './corpseMarker.js';
-import { rollCorpseLoot } from '../systems/lootRarity.js';   // LR1: the item ladder over the watch's list
 import { bloodCentre } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
 import { EnemySoundSource, acuteHearingMultiplier } from '../characters/enemySounds.js';   // AUDIT 24 (wave 41): EnemySounds.cs, one home
 import { placeFoeEnv, entityOccupancy } from './questFoeHost.js';   // D9: FoeSpawner.PlaceFoeFreely's env, over THIS pool's collider
@@ -149,7 +147,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
   // with no Y test. The default keeps the two street pools as they were.
   playerInside = false,
   // ROAD-G G1: GameManager.MakeEnemiesHostile over the HOST's whole
-  // area, the encounter pool's dep to the line (exteriorFoes.js:111).
+  // area, the encounter pool's dep to the line (exteriorFoes.js:110).
   // DaggerfallEntityBehaviour.cs:255-258 fires it when a NON-hostile
   // enemy is struck by the player, and Knight_CityWatch is an
   // EnemyClass - one of the two EntityTypes that walk (:250). This
@@ -229,17 +227,14 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     try {
       const career = await ensureCareer();
       const entity = makeEnemyEntity(GUARD_MOBILE_TYPE, basics, career, playerEntity.level);
-      // AUDIT 18: LootTables.cs:212/:229/:237 pass the PLAYER's gender
-      // into the random-item builders; the hard-coded 'male' here made
-      // a female character's guard loot roll male clothing.
-      entity.items = generateItems(basics.lootTableKey ?? '-', { level: playerEntity.level, gender: playerEntity.gender });
-      // (Knight_CityWatch has NO LootTableKey in DFU - the table roll is
-      // legitimately empty; the corpse's loot is the EQUIPMENT below.)
-      // AUDIT 18: the whole SetEnemyEquipment chain is now shared with
-      // the dungeon host's two spawn branches (hostCombat.equipEnemy).
-      equipEnemy(entity, GUARD_MOBILE_TYPE, playerEntity.level);
-      addEnemyLootExtras(entity.items, basics, rand);   // AUDIT 24 (wave 43): EnemyEntity.cs:388-397
-      rollCorpseLoot(entity, basics, { luck: liveStat(playerEntity, 'luck') });   // LR1: a guard is a class enemy - its entity level is its tier; LR4: its kit stays DFU's
+      // RF2: SetEnemyCareer's whole loot chain, one seam
+      // (hostCombat.spawnEnemyLoot) - the table on the PLAYER's gender
+      // (AUDIT 18; Knight_CityWatch has NO LootTableKey in DFU, so the
+      // table roll is legitimately empty and the corpse's loot is the
+      // equipment), the kit put on, the trio off this host's stream,
+      // the port's roll (a guard is a class enemy - its entity level is
+      // its tier).
+      spawnEnemyLoot(entity, GUARD_MOBILE_TYPE, basics, playerEntity, { rolls: rand });
       const archive = basics.maleTexture;
       const tex = await getTexture(archive);
       // AUDIT-39r: a sweep crossed this spawn - the town it was posted
@@ -576,7 +571,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
    *  which arrowFlight.js calls unconditionally (arrowFlight.js:229)
    *  because `dealDamage` is inside its own `dmg > 0` fork - so the
    *  door is PUBLIC (the returned surface below), exactly as the
-   *  encounter pool's is (exteriorFoes.js:1653). */
+   *  encounter pool's is (exteriorFoes.js:1649). */
   function handleAttackFromPlayer(g, playerFeet = null) {
     if (!g?.ai) return;
     if (!g.ai.isHostile) makeAreaHostile?.();

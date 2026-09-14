@@ -39,6 +39,7 @@
 import { getPref, setPref } from '../systems/uiPrefs.js';
 import { getInt, setValue, saveSettings } from '../systems/settings.js';
 import { isEnhanced } from '../systems/uiSkin.js';
+import { registerFeatureLane } from '../systems/features.js';   // RF4: the row's lane is this module's
 
 export const LAND_VIEW_MIN = 1;
 export const LAND_VIEW_MAX = 6;         // the enhanced lane's ceiling
@@ -86,3 +87,6 @@ export function landViewWrite(v) {
   saveSettings();
   return n;
 }
+
+// RF4: the Features row `land-view-distance` reads its tiers and its two-store read/write from here.
+registerFeatureLane('landView', { tiers: LAND_VIEW_TIERS, read: landViewRead, write: landViewWrite });

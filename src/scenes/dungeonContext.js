@@ -61,7 +61,7 @@ import { setDefaultEnchantCtx } from '../systems/enchantments.js';   // FS1 (wav
 import { createEnchantCtx, standLooseFoe } from './hostEnchant.js';   // FS1 (wave D): the ONE ctx body + SD1's loose-foe placement
 import { playerArrowHitFoe } from '../combat/arrowFlight.js';   // AUDIT 39 (#64) wave D: the FOURTH host calls the shared player-arrow law rather than carrying a fourth body of it
 import {
-  equipEnemy, hasBowAttack, attackSkillOf, isBowWeapon, backstabChanceOf,
+  hasBowAttack, attackSkillOf, isBowWeapon, backstabChanceOf,
   tallySwingSkills, zeroDamageHitSound, SWING_WEAPON_FATIGUE_LOSS,
   CORPSE_ACTIVATION_DISTANCE,
   enemyMissSound, enemyAttackVoice, enemyPainVoice, playerAttackGrunt,   // C2-slice (combat-9/17)
@@ -70,6 +70,7 @@ import {
   playerPainVoice, playPlayerVoice,   // AUDIT 24 (wave 46): PlayerFootsteps.RemoveHealth's 40% cry
   applyDamageToNonPlayer,          // MT-iv: EnemyAttack.ApplyDamageToNonPlayer (:303-392)
   makeEnemiesHostile,              // ROAD-B: GameManager.cs:790-806
+  spawnEnemyLoot,                  // RF2: SetEnemyCareer's whole loot chain, one seam
 } from './hostCombat.js';   // AUDIT 18: the laws every host must share
 import { createCharacter, CLASS_CAREERS } from '../systems/chargen.js';
 import { createChargenFlow, createChargenWindow, finishChargen, applyHeadlessChargen, applyCreationExtras } from '../systems/chargenSession.js';   // S3c/U9 + 17i: one construction seam   // FS-slice (wave D): and the SKIN FORK, which this host held the raw flow to avoid
@@ -172,7 +173,7 @@ import { UnderwaterFog } from '../render/underwaterFog.js';   // ROAD-B (b3): Un
 import { NavClient } from '../ai/navClient.js';   // ENHANCED AI 3b
 import { getPref } from '../systems/uiPrefs.js';   // ENHANCED AI 3b: the Enhanced tab's switch
 import { raiseEnemyDeath, playRareDrop } from './corpseMarker.js';   // UL1: OnEnemyDeath; LR3: the drop chime
-import { rollLootRarity, rollCorpseLoot, pileSource, dungeonRarityTier } from '../systems/lootRarity.js';   // LR1: the item ladder over every list this host mints
+import { rollLootRarity, pileSource, dungeonRarityTier } from '../systems/lootRarity.js';   // LR1: the item ladder over every list this host mints (a foe's through hostCombat.spawnEnemyLoot, RF2)
 
 
 
@@ -726,7 +727,6 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       isBackFacing,
       chooseEnemyWeapon: formulas.chooseEnemyWeapon,
       dropWeaponIfTargetImmune: formulas.dropWeaponIfTargetImmune,   // AUDIT 58: EnemyAttack.cs:191-194
-      generateItems: generateLootItems,   // the static import (audit 06e: the dynamic pair was double-sourcing)
 
       calculateAttackDamage: formulas.calculateAttackDamage,
       openDoorsStep,   // C-slice: EnemyMotor.OpenDoors
@@ -903,22 +903,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const cf = new D.ClassFile();
       cf.load(await D.fetchBytes(`CLASS${String(careerIndex).padStart(2, '0')}.CFG`));
       const entity = D.makeEnemyEntity(e.mobileType, basics, cf.career, D.playerEntity.level);
-      // S1: GenerateItems(LootTableKey) per SetEnemyCareer order -
-      // the loot rides the entity; corpses carry it on death (pickup
-      // pends Player activation, flagged in the arc).
-      // AUDIT 18: LootTables.cs:212/:229/:237 pass the PLAYER's gender
-      // and race into CreateRandomArmor/MagicItem/Clothing, not the
-      // dead enemy's - the level in the same call is already the
-      // player's, and this argument was the odd one out.
-      entity.items = D.generateItems(basics.lootTableKey ?? '-', { level: D.playerEntity.level, gender: D.playerEntity.gender });
-      // E4b: SetEnemyEquipment verbatim - loadout + the per-part
-      // armor-value pass (init 100, subtract, class clamp 60);
-      // the right-hand weapon feeds the attack path. AUDIT 18: the
-      // whole block moved to hostCombat.equipEnemy so the monster
-      // branch and the city watch run the same chain.
-      equipEnemy(entity, e.mobileType, D.playerEntity.level);
-      addEnemyLootExtras(entity.items, basics, Math.random);   // AUDIT 24 (wave 43): EnemyEntity.cs:388-397
-      rollCorpseLoot(entity, basics, { luck: liveStat(D.playerEntity, 'luck') });   // LR1: the ladder over the corpse's list, at the SOURCE's tier; LR4: the worn kit stays DFU's
+      // S1/E4b/AUDIT 18/AUDIT 24/LR1: SetEnemyCareer's whole loot chain -
+      // the table on the PLAYER's level and gender, the equipment
+      // appended and put on, the map/potion/recipe trio, the port's
+      // rarity roll over the carried loot - ONE seam (RF2:
+      // hostCombat.spawnEnemyLoot); the loot rides the entity and the
+      // corpse carries it on death.
+      spawnEnemyLoot(entity, e.mobileType, basics, D.playerEntity);
       const ai = new (getPref('enhancedAI') ? D.EnhancedEnemyAI : D.EnemyAI)(collider, pos, yawDeg * Math.PI / 180, {   // ENHANCED AI 4: the switch chooses the motor; the bake is read per step
         nav: () => enhancedNav.chf, navWorld: enhancedNav.world, navSeed: (yawDeg * 1000) | 0,
         // AUDIT 39: a THUNK, not a snapshot - TakeAction re-reads
@@ -991,16 +982,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const yawDeg = ((e.mobileType * 73 + Math.round(e.x + e.z)) % 8) * 45;   // deterministic facing (Ledger A rule)
       const career = await D.loadMonsterCareer(e.mobileType, D.fetchBytes);
       const entity = D.makeEnemyEntity(e.mobileType, basics, career, D.playerEntity.level);
-      entity.items = D.generateItems(basics.lootTableKey ?? '-', { level: D.playerEntity.level, gender: D.playerEntity.gender });
-      // AUDIT 18: EnemyEntity.cs:330-347 runs the equipment chain BY
-      // careerIndex before the class arm, so Orc(7)/OrcShaman(21),
-      // Centaur(8)/OrcSergeant(12) and OrcWarlord(24) are equipped
-      // too. The monster branch went straight from GenerateItems to
-      // the AI, so five equipment-using monsters spawned naked - no
-      // weapon, no armorValues, no equipment on the corpse.
-      equipEnemy(entity, e.mobileType, D.playerEntity.level);
-      addEnemyLootExtras(entity.items, basics, Math.random);   // AUDIT 24 (wave 43): EnemyEntity.cs:388-397
-      rollCorpseLoot(entity, basics, { luck: liveStat(D.playerEntity, 'luck') });   // LR1/LR4
+      spawnEnemyLoot(entity, e.mobileType, basics, D.playerEntity);   // RF2: SetEnemyCareer's whole loot chain, one seam (the table, the kit, the trio, the port's roll)
       // C12: the behaviour motors - flying/spectral pursue in 3D at
       // the face with no gravity, aquatic ride WaterMove against the
       // block water surface (beached = frozen, verbatim).
@@ -3562,7 +3544,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // InstantiatePrefab's a fresh GameObject per saved record, so
     // EnemyEntity's `PickpocketByPlayerAttempted` default is the loaded
     // truth for every enemy. The re-minting pools match that by
-    // construction (exteriorFoes.js:1292's restoreWorld goes through
+    // construction (exteriorFoes.js:1288's restoreWorld goes through
     // spawnFoe), but this host patches the LIVE foes in place, so a
     // same-dungeon reload kept a raised latch and a failed pickpocket
     // could never be retried - falsifying the law

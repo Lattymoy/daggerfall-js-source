@@ -29,6 +29,7 @@ import { liveBundles } from '../systems/mysticism.js';   // PX30: the ONE bundle
 import { getPref } from '../systems/uiPrefs.js';   // PX30c: the port's own prefs, not DFU's settings
 import { compassScroll, breathShortThreshold, compassMarkerLerp, DETECT_MARKER_RGB } from './hud.js';
 import { maxBreath, maxFatigue, liveStat } from '../systems/statMods.js';   // PX30b/PX30d: DFU's own ceilings
+import { itemLongName } from '../systems/itemInfo.js';   // RF6: the held weapon's name is ResolveItemLongName's
 // (breathShortThreshold lives in hud.js, imported below with compassScroll)
 import { foeTarget, tickFoeTarget } from './hudFoeTarget.js';
 // PX32: the reticle's LAWS are the classic module's - which setting shows
@@ -408,7 +409,7 @@ export function drawEnhancedHud(vitals, heading01, dt = 0, opts = {}) {
     }
   }
   const held2 = opts.weapon ?? null;
-  const weaponName = held2 ? String(held2.name ?? '') : null;
+  const weaponName = held2 ? itemLongName(held2) : null;   // RF6: ResolveItemLongName, not the record's raw name
   if (last.weapon !== weaponName) {
     last.weapon = weaponName;
     parts.weapon.classList.toggle('on', !!weaponName);
