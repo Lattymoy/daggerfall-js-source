@@ -205,9 +205,19 @@ per-site count now, and the Bob channel pin gained its idle half - the
 slight stride inside the 0.1 bound, and none at all with BobWhileIdle
 off.
 
-## WW3 - THE TEXTURE DOOR'S SHAPE (2026-09-14, Mac's live crash)
+## WW3 - THE TEXTURE DOOR'S SHAPE (2026-09-14)
 
-Mac attached his copy of the mod on daggerfalljs.dev and the page died:
+**CORRECTED THE SAME DAY (TEX1):** this section first claimed the crash
+below as the widget's. It was not: the crash itself was HANDHELD TORCHES'
+(`06-Systems/Handheld-Torches.md` TEX1) - the stack's third frame,
+`e.texturesLoading`, is that mod's, and both ride the weaponRig chunk, so
+the file name pointed here. What is true of the widget is that its door
+carried the SAME fault, found by tracing Mac's stack, latent only because
+its `catch (() => {})` would have eaten the throw. The trace that opened
+it is kept below because the fault it names is real and was fixed here
+first.
+
+Mac's page died on daggerfalljs.dev with:
 
 ```
 CRASH / unhandled rejection
@@ -217,7 +227,8 @@ TypeError: can't access property "buffer", l is undefined
   ...@weaponRig-*.js         <- the widget's texture load
 ```
 
-**The root cause is a SHAPE, one word wide.** `weaponWidgetImage`
+**The same root cause, a SHAPE one word wide** (the widget's copy of it).
+`weaponWidgetImage`
 converted with `toColor32Order`, which answers the port's bottom-up
 texel ORDER in a decoded PNG's `{ width, height, data }`, and
 `weaponWidget.js` handed that straight to `renderer.uploadTexture`,
@@ -254,11 +265,10 @@ the sentence, where a `TypeError` inside a helper said nothing. The
 behaviour is unchanged (it threw before, it throws now); only the
 console is.
 
-**The divergence that made this easy to get wrong, recorded rather
-than changed:** the seasons door (`systems/seasonsIliacBayAssets.js`)
-converts with `toColor32Order` and re-wraps at its TWO upload sites
-(`colors: img.data`, world.js and exterior.js), where M-TEX
-(`systems/textureReplacement.js`) converts with `toColor32` at the
-door, which is the H4 law ("into the port's color32 contract at the
-door, never at the upload sites"). Both work. The widget now follows
-M-TEX. Folding seasons onto the same door is a slice of its own.
+**The divergence that made this easy to get wrong** - the seasons door
+converting with `toColor32Order` and re-wrapping at its two upload sites,
+against M-TEX converting at the door (the H4 law) - was recorded here as
+"a slice of its own", and TEX1 took it that same day, along with the two
+torch doors and the crash itself. Every door converts at the door now and
+nothing under `src/` imports `toColor32Order`:
+`06-Systems/Handheld-Torches.md` TEX1.

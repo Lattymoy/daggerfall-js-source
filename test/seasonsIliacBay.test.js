@@ -617,8 +617,10 @@ test('SIB1: the registry - a bundle answers over its manifest\'s file list, loos
   // picture's BOTTOM row, which is the row Unity stored first. (The
   // Texture2D reader still answers PNG raster order for its own
   // consumers, see the flip pinned above; this door undoes it.)
-  assert.deepEqual([...k[0].image.data.subarray(0, 4)], [10, 11, 12, 13]);
-  assert.deepEqual([...k[0].image.data.subarray(4, 8)], [20, 21, 22, 23]);
+  // TEX1: ...and in the SHAPE the upload path reads, `{ colors }`, so the hosts hand the image over whole
+  assert.deepEqual([...k[0].image.colors.subarray(0, 4)], [10, 11, 12, 13]);
+  assert.deepEqual([...k[0].image.colors.subarray(4, 8)], [20, 21, 22, 23]);
+  assert.equal(k[0].image.data, undefined, 'and carries no `data` for a site to re-wrap');
   assert.deepEqual(await loadSeasonsTextures('J'), [], 'a prefix the manifest does not carry');
   // another mod's bundle is not this mod
   const other = testBundle({ manifest: { ModTitle: 'Dynamic Skies', GUID: 'x', Files: ['a/K1.png'] } });
@@ -650,7 +652,7 @@ test('SIB1: the registry - a bundle answers over its manifest\'s file list, loos
   // this door in getColor32 order (row 0 = the picture's BOTTOM)
   const twoRow = async () => ({ width: 1, height: 2, data: new Uint8Array([30, 31, 32, 33, 10, 11, 12, 13]) });
   const flipped = await loadSeasonsTextures('K', { decode: twoRow });
-  assert.deepEqual([...flipped[0].image.data], [10, 11, 12, 13, 30, 31, 32, 33]);
+  assert.deepEqual([...flipped[0].image.colors], [10, 11, 12, 13, 30, 31, 32, 33]);   // TEX1: `colors`, the upload path's shape - the same bytes, the same flip
   clearSeasonsSources();
   assert.equal(seasonsSourcesCount(), 0);
   assert.equal(await seasonsInstalled(), false);
@@ -718,7 +720,7 @@ test('SIB1 (AUDIT 62 F26): a seasonal flat reaches texImage2D in getColor32 orde
   const log = [];
   const r = recordingRenderer(log);
   const img = sib.texture.image;
-  r.uploadTexture(505, `1#season${helper.installedSeason}`, { width: img.width, height: img.height, colors: img.data });
+  r.uploadTexture(505, `1#season${helper.installedSeason}`, img);   // TEX1: the door's answer, handed over whole - no re-wrap at the site
   const upload = log.find((c) => c[0] === 'texImage2D');
   assert.ok(upload, 'the seasonal record reached texImage2D');
   assert.deepEqual([upload[4], upload[5]], [1, 2], 'at the mod texture\'s size');
@@ -737,7 +739,7 @@ test('SIB1: both climate hosts take the cache\'s answer for a flat, and the stre
     assert.match(src, /new SeasonHelper\(\{/, `${name} builds the helper`);
     assert.match(src, /seasons\??\.lookup\(archive, record\)/, `${name} asks the cache per flat`);
     assert.match(src, /renderer\.createBillboardBatch\(archive, rkey, sib\.size, centers\)/, `${name} draws the seasonal record at the mod's size`);
-    assert.match(src, /renderer\.uploadTexture\(archive, rkey, \{ width: img\.width, height: img\.height, colors: img\.data \}, \{ mips: false, variant: '' \}\);/, `${name} uploads it WITHOUT a mip chain under the plain batch key (AUDIT 61: the mod's atlas is mipChain:false, Point)`);
+    assert.match(src, /renderer\.uploadTexture\(archive, rkey, img, \{ mips: false, variant: '' \}\);/, `${name} uploads it WITHOUT a mip chain under the plain batch key (AUDIT 61: the mod's atlas is mipChain:false, Point)`);
     assert.match(src, /modSetting\('seasons-iliac-bay', 'Enabled'\)/, `${name} honours the switch`);
     assert.match(src, /await seasonsInstalled\(\)/, `${name} is inert without the player's copy`);
     assert.match(src, /seasonValue\(dateFromClassicMinutes\(/, `${name} reads DFU's four-valued season`);

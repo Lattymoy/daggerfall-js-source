@@ -28,7 +28,7 @@
 // The loose folders are read only per prefix.
 
 import { readUnityBundle } from '../formats/unityBundle.js';
-import { toColor32Order } from '../formats/color32Order.js';   // ROAD-H H4: the flip moved to the shared door M-TEX takes too
+import { toColor32 } from '../formats/color32Order.js';   // ROAD-H H4: the flip moved to the shared door M-TEX takes too; TEX1: in the SHAPE the upload path reads, so the two hosts hand the image over whole
 import { decodePng } from './textureReplacement.js';
 import { SEASONS_MOD, PREFIX_FOLDER, filesForPrefix } from './seasonsIliacBay.js';
 
@@ -157,7 +157,7 @@ async function seasonsBundle() {
 // COLOR32 ORDER: row 0 is the picture's BOTTOM row, exactly what
 // `BaseImageFile.getColor32` produces (baseImageFile.js:143,
 // BaseImageFile.cs:250) and what `renderer.uploadTexture` uploads
-// as-is with UNPACK_FLIP_Y_WEBGL off (renderer.js:1873).
+// as-is with UNPACK_FLIP_Y_WEBGL off (renderer.js:1874).
 // In DFU the mod's asset is a Unity Texture2D, whose pixels are
 // bottom-up like every Texture2D the classic reader builds, so its
 // flats and the classic ones agree; here the seasonal record entered
@@ -175,7 +175,7 @@ async function seasonsBundle() {
  * SeasonHelper.LoadTexturesFromMod(prefix): every texture whose file
  * name starts with the prefix, loaded and decoded, as
  * `{ name, width, height, image }` where `image` is
- * `{ width, height, data }` RGBA in getColor32 (bottom-up) order - the
+ * `{ width, height, colors }` RGBA in getColor32 (bottom-up) order - the
  * order the hosts upload it in (see formats/color32Order.js). The bundle
  * is asked first, over ITS manifest's file list, as the mod does; the
  * loose folders answer when there is no bundle. Never throws: one bad
@@ -193,7 +193,7 @@ export async function loadSeasonsTextures(prefix, { decode = decodePng } = {}) {
       const tex = byName.get(stem);
       if (!tex) { console.warn(`LoadTexturesFromMod: failed to load asset ${base}`); continue; }
       try {
-        const image = toColor32Order(tex.rgba());
+        const image = toColor32(tex.rgba());
         out.push({ name: base, width: image.width, height: image.height, image });
       } catch (e) {
         console.warn(`[seasons] ${base} would not decode:`, e?.message ?? e);
@@ -208,7 +208,7 @@ export async function loadSeasonsTextures(prefix, { decode = decodePng } = {}) {
     try {
       const bytes = await _load(name);
       if (!bytes || !bytes.byteLength) continue;
-      const image = toColor32Order(await decode(bytes));
+      const image = toColor32(await decode(bytes));
       out.push({ name: base, width: image.width, height: image.height, image });
     } catch (e) {
       console.warn(`[seasons] ${base} would not decode:`, e?.message ?? e);

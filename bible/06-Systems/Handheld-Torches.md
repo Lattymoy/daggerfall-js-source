@@ -346,3 +346,52 @@ with the flip; the visible held torch is the classic lane's. A held
 Morrowind light mesh in the arms' left hand - the LIGH model on the
 `torch` group - is the lane's own design work, not the mod's, and pends
 Mac's word.
+
+## TEX1 - THE SPRITE DOOR'S SHAPE, AND MAC'S CRASH (2026-09-14)
+
+Mac's page died on daggerfalljs.dev the day HT1 shipped:
+
+```
+CRASH / unhandled rejection
+TypeError: can't access property "buffer", l is undefined
+  k@renderer.js (asBytes) <- uploadTexture <- .../weaponRig-*.js
+```
+
+**It was this mod.** The third frame reads `Ii/ue/e.texturesLoading`, a
+name no source file in the tree carries - it is in the SHIPPED bundle,
+because minification keeps property names: `w.texturesLoading` here, with
+the `ht:` upload key beside it in the same minified function. (Both mods
+ride the weaponRig chunk, which is why the file name pointed at the
+widget.)
+
+**The fault.** `defaultLoadSprite` converted with `toColor32Order`, which
+answers the port's bottom-up ORDER in a decoded PNG's `{ width, height,
+data }`, and `InitializeTextures` handed that straight to
+`renderer.uploadTexture`, which reads `color32.colors`. Undefined, so
+`asBytes` died on `.buffer`. The door takes `toColor32` now - the same
+conversion in the shape the upload path reads - and the documented
+contract on `loadSprite` says `colors`, which is what it always meant.
+
+**Why it killed the page rather than the sprite.** Nothing awaits
+`w.texturesLoading`: the load is fired and left, so the throw inside it
+became an UNHANDLED REJECTION, which `main.js` turns into the crash
+overlay. It carries its own `catch` now and fails to a console line; the
+mod then runs without its sprite, exactly as it does when the files are
+missing. `scenes/droppedTorches.js` had the same two faults - the same
+door shape, and a load promise only `.then`ed by a mount that may never
+come - and now guards its upload loop, recording an empty record that
+`build` already no-ops on.
+
+**The class, closed.** Four doors had walked into the same trap (see the
+Ledger's TEX1 row). Every texture door in the tree converts with
+`toColor32` at the door now, no module under `src/` imports
+`toColor32Order` at all, and `test/tex1_texturedoors.test.js` pins that -
+so a fifth door cannot be written wrong. The pin also EXECUTES this
+crash: the real component, the real `Renderer.uploadTexture` on a gl
+stub, the old shape proved unable to reject.
+
+**Why HT1's own pins missed it.** They drive the component through a
+fake renderer whose `uploadTexture` accepts anything, and a fake
+`loadSprite` that answered `{ width, height, data: null }` - the wrong
+shape, taught by the rig. The fake now answers `colors`, and TEX1's pin
+runs the real renderer.

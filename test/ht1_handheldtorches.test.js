@@ -434,7 +434,7 @@ test('HT1: PickupLightSource\'s pack half - Store stows with the clip, Equip lig
 // ═══ the sprite ═════════════════════════════════════════════════════════
 
 /** The mod's textures, as the loader hands them over: the torch hand 90x205 x4, the lantern 110x138 x4. */
-const loadSprite = async (record, frame) => (frame < 4 ? (record === 0 ? { width: 90, height: 205, data: null } : record === 1 ? { width: 110, height: 138, data: null } : null) : null);
+const loadSprite = async (record, frame) => (frame < 4 ? (record === 0 ? { width: 90, height: 205, colors: null } : record === 1 ? { width: 110, height: 138, colors: null } : null) : null);   // TEX1: `colors`, the shape the real door answers and uploadTexture reads
 const fakeRenderer = () => { const r = { uploads: [], quads: [], uploadTexture: (a, k, img) => { const t = { a, k, img }; r.uploads.push(t); return t; }, drawScreenQuad: (tex, rect, uv) => r.quads.push({ tex, rect, uv }) }; return r; };
 
 test('HT1: InitializeTextures, the three placements and GetSpriteRect - the guard by Offset over the screen, the attack at the corner, the sheathe a height below it, the slide at offsetSpeedLive (thrice off), the lantern\'s frames at 4, a candle without a sprite, the frame clock, Scale, the Step snap, third person and the module off drawing nothing', async () => {

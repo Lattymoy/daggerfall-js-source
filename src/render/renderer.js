@@ -659,7 +659,8 @@ export function asBytes(view) {
  *  now), only what the console says. */
 export function color32Bytes(color32, where) {
   if (!color32?.colors) {
-    throw new Error(`${where}: the image carries no \`colors\` (got ${color32 ? `{ ${Object.keys(color32).join(', ')} }` : String(color32)}) - a decoded PNG's { width, height, data } crosses toColor32 (formats/color32Order.js) on the way in`);
+    const shape = color32 ? `{ ${Object.keys(color32).map((k) => (k === 'colors' ? 'colors: undefined' : k)).join(', ')} }` : String(color32);
+    throw new Error(`${where}: the image carries no \`colors\` (got ${shape}) - a decoded PNG's { width, height, data } crosses toColor32 (formats/color32Order.js) on the way in`);
   }
   return asBytes(color32.colors);
 }

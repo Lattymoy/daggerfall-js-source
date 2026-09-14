@@ -54,7 +54,7 @@ import { SOUND } from './soundClips.js';
 import { domCodeForKeyCode } from './keyCodes.js';
 import { moveTowards, moveTowards2, snap, BOB_SHAPE, STEP_CONDITION } from '../combat/weaponWidget.js';   // WW1: Unity's pieces and the two choice tables, one home
 import { setPlayerTorchOffsetOverride } from './playerTorch.js';
-import { toColor32Order } from '../formats/color32Order.js';
+import { toColor32 } from '../formats/color32Order.js';   // TEX1: the SHAPE the upload path reads - `{ colors }`, never a decoded PNG's `{ data }`
 import { decodePng } from './textureReplacement.js';
 
 export const HANDHELD_TORCHES_VENDOR = 'handheld-torches';
@@ -156,7 +156,8 @@ export const spriteUrl = (record, frame) => new URL(`../../vendor/handheld-torch
  *   rolls          Random.value / Random.Range
  *   torches()      the host's dropped-torch pool (scenes/droppedTorches.js) or null
  *   handedness()   Settings Controls/Handedness == 1
- *   loadSprite(record, frame) -> Promise<{width, height, data} | null>   the mod's texture (color32 order)
+ *   loadSprite(record, frame) -> Promise<{width, height, colors} | null>   the mod's texture, in the port's
+ *                  color32 shape and order - what `renderer.uploadTexture` reads (TEX1)
  */
 export function createHandheldTorches({
   settings = readTorchSettings, audio = null, say = () => {}, rolls = Math.random, torches = () => null,
@@ -213,7 +214,7 @@ export function createHandheldTorches({
       w.textures = list; w.animTorchLength = torchLen; w.animLanternLength = lanternLen;
       w.currentTexture = list[0] ?? null;
       refreshSprite();
-    })();
+    })().catch((e) => console.warn('[handheld torches] the sprites would not load', e));   // TEX1: nothing awaits this promise, so a throw inside it was an UNHANDLED REJECTION that took the page down (Mac's crash) - the load fails to a console line and the mod runs without its sprite, as it does when the files are missing
   };
 
   // ---- RefreshSprite (0x26b8) and the three placements ----
@@ -653,7 +654,7 @@ async function defaultLoadSprite(record, frame) {
   const res = await fetch(spriteUrl(record, frame));
   if (!res.ok) return null;
   const bytes = new Uint8Array(await res.arrayBuffer());
-  return toColor32Order(await decodePng(bytes));
+  return toColor32(await decodePng(bytes));   // TEX1: `{ width, height, colors }` - the shape uploadTexture reads
 }
 
 /** Quaternion.AngleAxis(deg, axis) * v: Rodrigues' rotation. */
