@@ -1160,11 +1160,6 @@ function portRowsEnhanced({ pause = false } = {}) {
     + 'panorama and its own weather. Takes effect when the world next loads. The sky is the port\u2019s own dome; '
     + 'Dynamic Skies\u2019 skybox (BadLuckBurt and carademono, carried with permission - see the Mods pane and About) '
     + 'replaces it while its own switch there is on.'));   // DS1; VC1: the dome is the default
-  out.push(prefRow('pixelatedSky', 'Pixelated sky',
-    'The port\u2019s own sky drawn the way the painted one was: an angular pixel the size of the '
-    + 'original\u2019s and a stepped palette, so the dome and its clouds sit with the rest of the art. '
-    + 'Off is the smooth sky. Applies to the port\u2019s dome, to Dynamic Skies\u2019 skybox and to the volumetric clouds over either. '
-    + 'Takes effect when the world next loads.'));   // PS1; PS2: every sky pass
   // FT2: Land view distance moved to the Features home (systems/features.js) - one row for both lanes.
   out.push(choiceRow('grassDensity', 'Grass density',
     'How much of the meadow grows: the full field, half, a quarter, or none. The single heaviest thing outdoors - '

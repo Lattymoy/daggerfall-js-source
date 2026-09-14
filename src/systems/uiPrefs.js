@@ -66,17 +66,6 @@ export const PREF_DEFAULTS = Object.freeze({
   // default like the other enhanced visuals; off (or the classic skin)
   // draws the tile as DFU does. Kill door `?water=off` (render/waterSurface.js).
   enhancedWater: true,
-  // PS1: THE PIXELATED SKY (2026-09-12, Mac: "Bring back the pixelated
-  // sky we removed in a past commit. On by default and a part of a new
-  // toggle within enhanced environments"). ES1e's retro pass over the
-  // port's own dome - the angular pixel (pi/512, the painted sky's own)
-  // and the 26-level Bayer posterise - VC1 turned off in 2026-09-07 and
-  // this switch turns back on. `?sky=retro` / `?sky=smooth` still win
-  // for the probes (render/enhancedSky.js retroFor, the one door).
-  // PS2: the switch reaches every sky pass - the dome, Dynamic Skies'
-  // skybox and the volumetric clouds' composite share the one grid
-  // (render/retroPixel.js).
-  pixelatedSky: true,
   // LV1: LAND VIEW DISTANCE, ENHANCED (2026-09-12, Mac: "push the draw
   // distance as far as we can push it while keeping performance
   // perfect"). The streamed grid's radius in map pixels on the enhanced

@@ -29,7 +29,7 @@ the one switch drives the two keys. Candidates already visible:
 
 | Row | Labels | Today's switches | Note |
 |---|---|---|---|
-| The outdoors sky | Enhanced + Mod Authored | `enhancedEnvironments`, Dynamic Skies `Enabled`, `pixelatedSky` | Mac's example. One sky, three switches in two panes |
+| The outdoors sky | Enhanced + Mod Authored | `enhancedEnvironments`, Dynamic Skies `Enabled` | Mac's example. One sky, two switches in two panes (`pixelatedSky` was the third until FT3 removed it) |
 | Land view distance | Enhanced + DFU Classic | `landViewDistance`, `Experimental/TerrainDistance` | **CONDENSED (FT2, 2026-09-14)** - one row, shows the lane's radius, writes both stores |
 | Enemy movement | Enhanced + DFU Classic | `enhancedAI`, `Enhancements/EnhancedCombatAI` | NOT a merge - different things, one dead. The slice decides what the row says |
 | Monster stats | Mod Authored x2 | Meaner Monsters `Enabled`, PCAAO `Enabled` | the meaner numbers change under the overhaul; one row may explain both |
@@ -62,7 +62,7 @@ finding and the move.
 |---|---|---|---|
 | `enhancedAI` | Enhanced AI | off | open. NAME COLLIDES with DFU's `Enhancements/EnhancedCombatAI` (below), which is a different thing and unavailable |
 | `enhancedEnvironments` | Enhanced environments | on | open. One switch over sky, ground, clouds, grass, weather; overlaps Dynamic Skies' `Enabled` and its pixel snow |
-| `pixelatedSky` | Pixelated sky | on | open |
+| `pixelatedSky` | Pixelated sky | on | **REMOVED (FT3, 2026-09-14, Mac: "Remove our version of pixelated sky")** - the pass, the pref, the row, the doors |
 | `landViewDistance` | Land view distance | 5 | **MOVED (FT2, 2026-09-14)** - condensed with `Experimental/TerrainDistance` into one row wearing both labels |
 | `grassDensity` | Grass density | 1 | open |
 | `cloudQuality` | Cloud quality | default | open |
@@ -115,6 +115,7 @@ Video/GUI keys that are features rather than settings.
 - **FT0** - SHIPPED 2026-09-14. The home, empty. Below.
 - **FT1** - SHIPPED 2026-09-14. Smaller Dungeons. Below.
 - **FT2** - SHIPPED 2026-09-14. Land view distance, the first condensed row. Below.
+- **FT3** - SHIPPED 2026-09-14. The pixelated sky removed. Below.
 - One slice per open row after that, in the order Mac picks.
 
 ## FT0 - THE HOME (2026-09-14)
@@ -231,3 +232,32 @@ its copy.
 **Not done, by name.** DFU's Video category still lists
 `TerrainDistance` (the map is total; the row there is the pointer).
 `test/ft2_landview.test.js`.
+
+## FT3 - THE PIXELATED SKY, REMOVED (2026-09-14)
+
+Mac: "Remove our version of pixelated sky". Not a move - a deletion,
+root and branch, the way VC1 did it once before and PS1 undid: the
+port's retro pass over the sky. What went: ES1e's angular pixel and
+26-level ordered posterise over the dome (`RETRO`, `retroFor`, the
+`uRetroStep`/`uRetroLevels` uniforms, the snap before the dome and the
+posterise after it); ES1f/ES1g's grid as the dome's; PS2's copy of the
+same over the volumetric clouds' composite and Dynamic Skies' skybox;
+PS1's `pixelatedSky` pref and its row; the `?sky=retro` and
+`?sky=smooth` doors; the lab's and the probe's use of them; the
+retro-pass pins (ES1e/ES1f/ES1g in `enhancedSky.test.js`, PS1/PS2 in
+`macfive.test.js`). The dome is the smooth pass only - its interleaved
+gradient dither, the ONE dither it has now.
+
+What stays, by name: Dynamic Skies' OWN colour reduction (REDUCE_COLOR,
+the mod's) and PS3's ordered dither over it, which is the port's fix
+for the mod's progressing circles and not a pixelation. PS3 read two
+of the pass's GLSL functions, so they outlive it: `render/retroPixel.js`
+became `render/orderedDither.js` holding `ringSnap` (ES1g's ring grid,
+now only naming a world-fixed cell a third of a degree across) and
+`bayer4`. The world-fixed dither is still what stops the stipple
+crawling when the camera turns.
+
+Records: Ledger rows PS1, PS2, ES1g struck; the ENHANCED SKY row and
+the Rendering-Arc ES1e/ES1f headings say REMOVED; the Enhanced-Visuals
+arc's three paragraphs carry the note at their heads. AUDIT 39 F53's
+star-layer pin keeps its 1/26 visibility bar as the bar it was.
