@@ -16,10 +16,10 @@ import { executeConsoleCommand } from '../systems/consoleCommands.js';   // E3: 
 import { enterDungeonAutomap, exitDungeonAutomap, buildRevealIndex, bindAutomapLayout, automapRevealTick, automapEntranceTick, automapDungeonKey, SCAN_INTERVAL_S, recordTeleporterConnection, automapDebugTeleportMode, registerAutomapConsoleCommands } from '../systems/automap.js';   // A1; ROAD-C c2/S8 the teleport listener + the three console verbs, ROAD-E E3 on the command database
 import { automapWaterLevel, ELEMENT_NAMES } from '../systems/automapModel.js';   // ROAD-C c2/S1
 import { AutomapWindow, preloadAutomapArt, signalAutomapReset } from '../ui/automapWindow.js';   // A1: the M window; ROAD-C c2/S5: its native art + the reset signal
-import { applyTextureTable, isMainStoryDungeon } from '../world/dungeonTextures.js';   // AUDIT 28 W4: the warp arm's story-dungeon gate
+import { applyTextureTable } from '../world/dungeonTextures.js';
 import { createUseMagicItemWindow } from '../ui/useMagicItemWindow.js';   // UI1: the U key's window
 import { CANNOT_CHANGE_INDOORS } from '../ui/transportWindow.js';   // TR5: the indoors refusal
-import { getBool } from '../systems/settings.js';   // AUDIT 28 W4: the save-time SmallerDungeons stamp
+import { smallerDungeonsStamp, needsStartWarp } from '../world/smallerDungeons.js';   // AUDIT 28 W4 / FT1: the save-time stamp and the load-time warp, one home
 import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
 import { collectDungeonLights, dungeonAmbientFor, DUNGEON_AMBIENT, SPECIAL_AREA_BLOCK } from '../world/dungeonLights.js';   // AUDIT 26 F183: the castle / special-area ambients
 import { CityLightAnimator, MINUTES_PER_DAY } from '../world/worldClock.js';
@@ -1411,7 +1411,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:6555 / exterior.js:2920), set
+  // host's own townTalk sink (world.js:6553 / exterior.js:2920), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -2836,7 +2836,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:8595,
+              // playerArrowHitFoe is the one copy world.js:8588,
               // exterior.js:4203 and worldModes.js:6017 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
@@ -5244,11 +5244,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // re-enters (PlayerEnterExit.cs:534-537). The world host's boot
         // load had no way home for a dungeon save without it.
         dungeon: dungeonHome(),
-        // AUDIT 28 W4: SerializablePlayer.cs:224 - the RAW setting as of
-        // the save, so a load under the OTHER setting can warp to the
-        // start marker (:462-472) instead of standing in blocks that no
-        // longer exist.
-        smallerDungeonsState: getBool('Experimental', 'SmallerDungeons') ? 2 : 1,   // Enabled : Disabled, DFU's enum order (F-B3)
+        // AUDIT 28 W4: SerializablePlayer.cs:224 - the layout the
+        // position was saved in, so a load at the OTHER size can warp to
+        // the start marker (:462-472) instead of standing in blocks that
+        // no longer exist. FT1: the size BUILT, not the raw setting - the
+        // departure and its reason are on the export.
+        smallerDungeonsState: smallerDungeonsStamp(dfLocation),
         world: collectWorld(),
       });
       const r = saveSlot(playerEntity.name, saveName, snap);
@@ -5305,15 +5306,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // record the save itself carried (A1 review).
       automapRec = enterDungeonAutomap(automapKey, classicMinutesRef.value, { fromLoad: true });
       if (extras.position && extras.locationKey === _locationKey && setPlayerPos) setPlayerPos(extras.position);
-      // AUDIT 28 W4 (SerializablePlayer.cs:462-472): saved under the
-      // OTHER SmallerDungeons setting, the position may sit in blocks
-      // this build does not have - warp to the start marker and say so.
-      // Story dungeons never use the setting, so they never warp
-      // (:466-468), and an old envelope (no field) never warps either.
-      const savedSmaller = extras.smallerDungeonsState === 2;   // QuestSmallerDungeonsState.Enabled (F-B3: DFU's order)
-      if (extras.smallerDungeonsState && extras.locationKey === _locationKey && setPlayerPos
-        && savedSmaller !== getBool('Experimental', 'SmallerDungeons')
-        && !isMainStoryDungeon(dfLocation?.mapTableData?.mapId)) {
+      // AUDIT 28 W4 (SerializablePlayer.cs:462-472): saved in the OTHER
+      // layout, the position may sit in blocks this build does not have -
+      // warp to the start marker and say so. The law (story dungeons
+      // never, old envelopes never, agreeing layouts never) is
+      // needsStartWarp's; FT1 moved it there beside the stamp it reads.
+      if (extras.locationKey === _locationKey && setPlayerPos && needsStartWarp(extras.smallerDungeonsState, dfLocation)) {
         // F-B1 (self-audit 2): the first cut set the RAW marker position;
         // every other spawn in this port goes through the entry law -
         // floorLanding over m.y + 1.08 - and a raw marker y can stand

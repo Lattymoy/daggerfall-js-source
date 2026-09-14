@@ -371,6 +371,6 @@ DFU-verbatim suites import it first (`audit18_combat`, `audit58_combat`,
 `road_a4_saveimport`); the two mod suites that assumed the other mod
 off (`pcaao`, `meanerMonsters`) say so where they mean it. With Dynamic
 Skies on the mod's skybox is the enhanced lane's sky as DS1 shipped it,
-with the volumetric clouds over it (DS2) and, since PS2, the Pixelated
-sky switch on it; the port's own dome draws while it is off. Ledger row MO1.
+with the volumetric clouds over it (DS2); the port's own dome draws while
+it is off. (The Pixelated sky switch sat on it from PS2 until FT3 removed it.) Ledger row MO1.
 Pinned: `test/macfive.test.js` MO1.

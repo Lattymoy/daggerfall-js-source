@@ -28,7 +28,7 @@ export const CATEGORIES = Object.freeze([
   // entry of their own. It carries NO store key (the map below stays
   // total over DFU's 171); its rows are drawn by ui/enhancedMenu.js off
   // the uiPrefs shelf.
-  { id: "enhanced", title: "Enhanced", blurb: "What this port adds on top of Daggerfall: the sky, the water, the grass, the way enemies move. Every switch here has a classic side." },
+  { id: "enhanced", title: "Enhanced", blurb: "What this port adds on top of Daggerfall lives on the Features page now - one list, every enhanceable feature. This category points there and keeps the outdoors test door." },
   { id: "game", title: "Game", blurb: "How the world plays: fighting, dungeons, repairs and the rules you start out with." },
   { id: "controls", title: "Controls", blurb: "Looking, moving and swinging, whether you play with a mouse, a keyboard or a touchscreen." },
   { id: "audio", title: "Audio", blurb: "Music, sound effects and the noises people make in a fight." },

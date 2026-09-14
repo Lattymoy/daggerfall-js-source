@@ -144,21 +144,20 @@ test('AUDIT 28 W4: the entry seam - the location that gets BUILT is the sized cl
   assert.ok(fn.indexOf('dungeonLocationFor(') < fn.indexOf('buildDungeonContext('), 'sized BEFORE the context is built');
 });
 
-test('AUDIT 28 W4: the save stamps the raw setting, and a load under the other setting warps to the start marker - story dungeons and old envelopes never', () => {
+test('AUDIT 28 W4: the save stamps the layout, and a load at the other size warps to the start marker - story dungeons and old envelopes never (FT1: the stamp is the BUILD, both laws exported from the module)', () => {
   const ctx = read('src/scenes/dungeonContext.js');
-  assert.match(ctx, /smallerDungeonsState: getBool\('Experimental', 'SmallerDungeons'\) \? 2 : 1,/, 'SerializablePlayer.cs:224 - the stamp, in DFU\'s enum order (F-B3)');
-  const arm = ctx.slice(ctx.indexOf('const savedSmaller = extras.smallerDungeonsState === 2;'));
+  assert.match(ctx, /smallerDungeonsState: smallerDungeonsStamp\(dfLocation\),/, 'SerializablePlayer.cs:224 - the stamp, from the one export (FT1)');
+  assert.ok(!/\? 2 : 1|=== 2;/.test(ctx), 'no enum literal in the host - ONE DFU MEMBER, ONE EXPORT');
+  const arm = ctx.slice(ctx.indexOf('needsStartWarp(extras.smallerDungeonsState, dfLocation)'));
   assert.ok(arm.length > 100, 'the warp arm exists');
-  assert.match(arm, /extras\.smallerDungeonsState && extras\.locationKey === _locationKey/, 'an old envelope (no field) never warps, and neither does a different dungeon');
-  assert.match(arm, /savedSmaller !== getBool\('Experimental', 'SmallerDungeons'\)/, ':463 - the states must DIFFER');
-  assert.match(arm, /!isMainStoryDungeon\(dfLocation\?\.mapTableData\?\.mapId\)/, ':466-468 - story dungeons never warp');
+  assert.match(ctx, /if \(extras\.locationKey === _locationKey && setPlayerPos && needsStartWarp\(extras\.smallerDungeonsState, dfLocation\)\) \{/, 'a different dungeon never warps; the rest of the law is needsStartWarp\'s (ft1_smallerdungeons.test.js)');
   // F-B1: through the entry law (floorLanding over the START marker),
   // not the raw marker position - :470 names StartMarker, and the
   // port's spawn space is the landed one.
   assert.match(arm, /const p = this\.startSpawn\(\{ preferEnterMarker: false \}\);/, 'the start marker under the entry law is the destination');
   // The warp sits AFTER the position restore, so it overrides it.
   const posAt = ctx.indexOf('if (extras.position && extras.locationKey === _locationKey && setPlayerPos) setPlayerPos(extras.position);');
-  const warpAt = ctx.indexOf('const savedSmaller = extras.smallerDungeonsState === 2;');
+  const warpAt = ctx.indexOf('needsStartWarp(extras.smallerDungeonsState, dfLocation)');
   assert.ok(posAt > 0 && warpAt > posAt, 'restore first, then the warp');
 });
 

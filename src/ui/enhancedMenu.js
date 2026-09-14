@@ -106,7 +106,6 @@ import {
 import { mostRecentRestorable, restorableSaves, deleteSave, QUICK_SAVE_NAME } from '../systems/saveSlots.js';   // SAV4: the slot store; SLOTS1: every slot
 import { uiSkin, otherSkin, setUiSkin, SKIN_NAMES, isEnhanced } from '../systems/uiSkin.js';   // FD1: which boot rail
 import { getPref, setPref, isOpen, setOpen } from '../systems/uiPrefs.js';
-import { LAND_VIEW_TIERS } from '../world/landView.js';   // LV1: the Enhanced pane's Land view distance tiers
 import { DEFAULT_SERVER } from '../net/online.js';   // ONLINE1: the relay this port hosts, the field's placeholder   // R7: the port's own switches; SO1: the folded tiers' memory
 import { replacementCount } from '../systems/musicReplacement.js';   // M-EXT: the packs card reports what the pick covers
 import { textureReplacementCount } from '../systems/textureReplacement.js';   // M-TEX: and the texture half
@@ -140,6 +139,8 @@ import { CREDITS } from './credits.js';   // CR1: who made what the port carries
 // document-level capture listener and a staged copy of both binding
 // dicts, neither of which belongs in a screen that repaints itself.
 import { paneControls, discardControlsStaging, captureArmed } from './enhancedControls.js';
+// FT0: the features home - one list over the three stores, filtered by kind
+import { FEATURES, KINDS, KIND_ORDER, filterFeatures, featureCounts, featureForControl } from '../systems/features.js';
 
 // ── THE RAIL ─────────────────────────────────────────────────────
 // Six destinations. Mac's call: the menus get set up now even where
@@ -157,7 +158,13 @@ import { paneControls, discardControlsStaging, captureArmed } from './enhancedCo
 // packed armory, for trying gear on the rigs without playing there.
 // Boot-only for the same reason Continue and New Game are: it answers
 // "which game", which is settled once one is running.
-const SECTIONS_BOOT = ['Continue', 'New Game', 'Load Game', 'Online', 'Test Room', 'Settings', 'Controls', 'Mods', 'About'];   // ONLINE1: the shared world's door
+// FT0 (Mac, 2026-09-13): FEATURES on every rail - ONE home for every
+// enhanceable feature, a list where each row wears its kind (Enhanced,
+// Mod Authored, DFU Classic) as a coloured label and a chip row filters
+// by it. Empty at FT0; the Enhanced category of Settings and the Mods
+// section keep their rows until each one's slice moves it here
+// (bible/10-UI/Features-Arc.md).
+const SECTIONS_BOOT = ['Continue', 'New Game', 'Load Game', 'Online', 'Test Room', 'Settings', 'Controls', 'Features', 'Mods', 'About'];   // ONLINE1: the shared world's door
 // FD1 (Mac, 2026-09-11): the CLASSIC skin opens on this same door. Its
 // three game doors collapse into BEGIN, which leads into the classic
 // start sequence - the title, the film, Daggerfall's own start window -
@@ -166,7 +173,7 @@ const SECTIONS_BOOT = ['Continue', 'New Game', 'Load Game', 'Online', 'Test Room
 // SO1: ENHANCED left the rail for a category of Settings (settingsMap).
 // ONLINE1: ONLINE joins it - Mac: "if using classic, you'd see the
 // other user's paperdoll" - the same pane, the same save brought in.
-const SECTIONS_CLASSIC = ['Begin', 'Online', 'Settings', 'Controls', 'Mods', 'About'];
+const SECTIONS_CLASSIC = ['Begin', 'Online', 'Settings', 'Controls', 'Features', 'Mods', 'About'];
 
 // U51: the same rail with the boot-only questions swapped for the
 // in-game ones. Continue and New Game answer "which game", which is
@@ -179,7 +186,7 @@ const SECTIONS_CLASSIC = ['Begin', 'Online', 'Settings', 'Controls', 'Mods', 'Ab
 // mode's doors), and the pane says so in words. A rail that drops the
 // row instead teaches the player the door was never there - the same
 // argument the Mods section is built on.
-const SECTIONS_PAUSE = ['Resume', 'Save Game', 'Load Game', 'Settings', 'Controls', 'Mods', 'About', 'Exit'];
+const SECTIONS_PAUSE = ['Resume', 'Save Game', 'Load Game', 'Settings', 'Controls', 'Features', 'Mods', 'About', 'Exit'];
 
 const idOf = (label) => label.toLowerCase().split(' ')[0];
 
@@ -192,6 +199,7 @@ const RAIL_ACTS = Object.freeze({ resume: 'resume' });
 // could only be opened once; the game mounts and unmounts it, so a
 // second visit must not inherit the first one's open sheet.
 let section = 'continue';
+let featureKind = null;   // FT0: the chip - null is All, else a KINDS id; per mount like the rest
 let category = CATEGORIES[0].id;
 let pickedKey = null;
 let sheetOpen = false;   // the help pane is a sheet on a phone
@@ -859,7 +867,15 @@ function helpCard(key) {
 let _eff = null;
 const effective = () => (_eff ??= effectiveSettings());
 
-function settingRow(key, { compact = false } = {}) {
+function settingRow(key, { compact = false, home = false } = {}) {
+  // FT1: a key whose switch lives on the FEATURES home is drawn here as
+  // a pointer, never as a second switch - one home per idea. The row
+  // stays (the category map is total; a key that vanished from its
+  // category would read as a key that vanished) and says where it went.
+  if (!home) {
+    const moved = featureForControl('settings', key);
+    if (moved) return movedRow(moved);
+  }
   const widget = widgetFor(key);
   const [_sec, _k] = key.split('/');
   const raw = effective()[_sec]?.[_k];
@@ -922,6 +938,36 @@ function settingRow(key, { compact = false } = {}) {
   return row;
 }
 
+/** FT1: the settings row of a key that lives on the Features home -
+ *  its labels, its name, and a walk to the home from either the face
+ *  or the control. */
+function movedRow(f) {
+  const row = el('div', 'row moved');
+  const main = el('button', 'row-main');
+  main.append(kindTags(f.kinds));
+  main.append(el('div', 'row-name', f.title));
+  main.append(el('div', 'row-note', 'On the Features page.'));
+  main.onclick = goFeatures;
+  row.append(main);
+  const ctl = el('div', 'ctl');
+  const b = el('button', 'act rowact', 'Features \u203a');
+  b.onclick = goFeatures;
+  ctl.append(b);
+  row.append(ctl);
+  return row;
+}
+
+/** FT1: the walk to the Features home from wherever a moved row is
+ *  drawn - the boot door's rail, or the pause door's system rail. */
+function goFeatures() {
+  if (mode === 'pause') {
+    discardControlsStaging();
+    sysSec = 'features'; confirming = null; sheetOpen = false; pickedKey = null; render();
+  } else {
+    go('features');
+  }
+}
+
 /** Write through the real store and persist, exactly as the shipped
  *  screen does. setValue drops an override that equals the default
  *  rather than pinning today's value, which is settings.js's law. */
@@ -966,7 +1012,8 @@ function lockOnline(b, main) {
 }
 
 /** One toggle over a uiPrefs key. */
-function prefRow(key, name, note, { onChange = null } = {}) {
+function prefRow(key, name, note, { onChange = null, home = false } = {}) {
+  if (!home) { const moved = featureForControl('prefs', key); if (moved) return movedRow(moved); }   // FT2: one home per idea, every store
   const row = el('div', 'row');
   const main = el('button', 'row-main');
   main.append(el('div', 'row-name', name));
@@ -1005,19 +1052,22 @@ function prefRow(key, name, note, { onChange = null } = {}) {
 
 /** A choice row: the button names the CURRENT tier and a click steps
  *  to the next, wrapping (PERF1). */
-function choiceRow(key, name, note, tiers) {
-  const cur = String(getPref(key));
+function choiceRow(key, name, note, tiers, { home = false, read = null, write = null } = {}) {
+  if (!home) { const moved = featureForControl('prefs', key); if (moved) return movedRow(moved); }   // FT2
+  // FT2: a condensed row reads the lane's live value and writes both stores
+  const cur = String(read ? read() : getPref(key));
   const at = Math.max(0, tiers.findIndex(([v]) => String(v) === cur));
   const row = el('div', 'row');
   const main = el('button', 'row-main');
   main.append(el('div', 'row-name', name));
   main.append(el('div', 'row-note', note));
-  const step = () => { setPref(key, tiers[(at + 1) % tiers.length][0]); render(); };
+  const step = () => { (write ?? ((v) => setPref(key, v)))(tiers[(at + 1) % tiers.length][0]); render(); };
   main.onclick = step;
   row.append(main);
   const ctl = el('div', 'ctl');
   const b = el('button', 'act rowact', tiers[at][1]);
   b.onclick = step;
+  if (onlineForcedPref(key) !== undefined) { lockOnline(b, main); b.textContent = `${tiers[at][1]} (online)`; }   // OL1: the outdoors row reads the lane's forced answer and names its tier under the lock
   ctl.append(b, el('span', 'tier live'));
   row.append(ctl);
   return row;
@@ -1106,57 +1156,32 @@ function outdoorsTestRow() {
  *  with a classic side. `pause` keeps only the rows that take effect
  *  without a reload. */
 function portRowsEnhanced({ pause = false } = {}) {
-  const out = [];
-  if (!pause) {
-  out.push(prefRow('enhancedAI', 'Enhanced AI',
-    'Enemies find their way: a navmesh baked from each dungeon, so they path around pillars and down '
-    + 'corridors instead of walking into walls the way classic Daggerfall\'s do. Senses, decisions and '
-    + 'attacks stay classic; only the way an enemy moves changes. Dungeons for now - towns, interiors and '
-    + 'doors are still to come, and enemies bunch up until the crowd slice lands. Takes effect on the '
-    + 'next dungeon you enter. Off keeps the 1:1 classic motor.'));
-  out.push(prefRow('enhancedEnvironments', 'Enhanced environments',
-    'The enhanced outdoors: a procedural sky with the sun, both moons on their real phases, a star '
-    + 'field, a finely stepped sunrise and sunset, volumetric clouds that build with the weather and drift on the wind, '
-    + 'cast their shadows on the land; and rain and snow that fall through the world around you, '
-    + 'driven by the wind, rather than across the screen, arriving and clearing with the front - and the sky '
-    + 'turns through the day rather than only at midnight, a clear morning clouding over by noon and raining by dusk - '
-    + 'instead of switching on and off; and the prototype\u2019s grass, a million '
-    + 'blades in the meadows, bending in the same wind. Off returns Daggerfall\u2019s SKY*.DAT '
-    + 'panorama and its own weather. Takes effect when the world next loads. The sky is the port\u2019s own dome; '
-    + 'Dynamic Skies\u2019 skybox (BadLuckBurt and carademono, carried with permission - see the Mods pane and About) '
-    + 'replaces it while its own switch there is on.'));   // DS1; VC1: the dome is the default
-  out.push(prefRow('pixelatedSky', 'Pixelated sky',
-    'The port\u2019s own sky drawn the way the painted one was: an angular pixel the size of the '
-    + 'original\u2019s and a stepped palette, so the dome and its clouds sit with the rest of the art. '
-    + 'Off is the smooth sky. Applies to the port\u2019s dome, to Dynamic Skies\u2019 skybox and to the volumetric clouds over either. '
-    + 'Takes effect when the world next loads.'));   // PS1; PS2: every sky pass
-  out.push(choiceRow('landViewDistance', 'Land view distance',
-    'How far the land streams around you, in map pixels each way: Daggerfall\u2019s own 3, or further. '
-    + 'The rings past the second are drawn coarse and show only their trees and fires, so the far land '
-    + 'is cheap - but a walk across the map builds more of it. The haze reaches as far. Takes effect when the world next loads.',
-    LAND_VIEW_TIERS));   // LV1
-  out.push(choiceRow('grassDensity', 'Grass density',
-    'How much of the meadow grows: the full field, half, a quarter, or none. The single heaviest thing outdoors - '
-    + 'try half first if the FPS counter says the frame is the GPU\u2019s. Takes effect when the world next loads.',
-    [[1, 'Full'], [0.5, 'Half'], [0.25, 'Quarter'], [0, 'Off']]));
-  out.push(choiceRow('cloudQuality', 'Cloud quality',
-    'How finely the volumetric clouds are marched. Low is a coarser sky map with fewer steps; High is for a machine with room to spare. '
-    + 'Takes effect when the world next loads.',
-    [['default', 'Default'], ['lo', 'Low'], ['hi', 'High']]));
-  out.push(prefRow('enhancedWater', 'Enhanced water',
-    'The oceans, rivers and ponds drawn as water: waves that rise with the wind, the sky and the '
-    + 'sun reflected off the surface, the moon\u2019s glint at night, rain pocking it, the clouds\u2019 '
-    + 'shadows crossing it, and the shore feathered along its own edge. Off returns Daggerfall\u2019s '
-    + 'flat water tile. Takes effect when the world next loads.'));
-  }
-  out.push(prefRow('enhancedCombatVisuals', 'Enhanced combat visuals',
-    'How a magically concealed enemy is drawn. Classic Daggerfall and Daggerfall Unity hide it '
-    + 'completely - an imp that casts Chameleon on itself vanishes, and still takes your hits. On, a '
-    + 'chameleoned enemy shimmers at low opacity, a shadow-spell enemy is a dark silhouette, and a hit '
-    + 'on an unseen enemy flashes it for a moment - an invisible one included, the one thing this shows that the classic draw never does. Otherwise invisibility still hides it. Nothing about '
-    + 'the rules changes: what the enemy can do, and what can hit it, are classic. Off keeps the 1:1 draw.'));
+  // FT2-FT8 (2026-09-14): every switch this category held moved to the
+  // FEATURES home (systems/features.js) - one list, every enhanceable
+  // feature, each row wearing its kind. The category stays on the
+  // settings rail (a rail with a hole in it teaches the player the hole
+  // is permanent) as a POINTER to the home, and keeps the outdoors test
+  // door, which is a test door and not a switch.
+  const out = [featuresPointerRow()];
   if (!pause) out.push(outdoorsTestRow());
   return out;
+}
+
+/** FT8: the Enhanced category's one row - where its switches went. */
+function featuresPointerRow() {
+  const row = el('div', 'row moved');
+  const main = el('button', 'row-main');
+  main.append(kindTags(KIND_ORDER));
+  main.append(el('div', 'row-name', 'The port\u2019s own switches'));
+  main.append(el('div', 'row-note', 'Every enhanceable feature is on the Features page - one list, each row labelled Enhanced, Mod Authored or DFU Classic.'));
+  main.onclick = goFeatures;
+  row.append(main);
+  const ctl = el('div', 'ctl');
+  const b = el('button', 'act rowact', 'Features \u203a');
+  b.onclick = goFeatures;
+  ctl.append(b);
+  row.append(ctl);
+  return row;
 }
 
 /** The CONTROLS category's port rows: the touch layer's knobs, only
@@ -1443,46 +1468,7 @@ function paneMods(body) {
   for (const [vendor, mod] of Object.entries(MOD_SETTINGS)) {
     const mc = el('div', 'card');
     mc.append(el('h3', null, `${mod.title} by ${mod.author}`));   // the creator's name in the title (Mac, 2026-09-08)
-    for (const [key, def] of Object.entries(mod.keys)) {
-      const row = el('div', 'row');
-      const main = el('div', 'row-main');
-      main.append(el('div', 'row-name', key.replace(/([a-z])([A-Z])/g, '$1 $2')));
-      main.append(el('div', 'meta', def.description));
-      row.append(main);
-      const ctl = el('div', 'ctl');
-      if (isChoiceKey(def)) {
-        // UL1: a MultipleChoiceKey (Unleveled Loot's ten materials) -
-        // the same stepper, over the option NAMES, wrapping at the ends
-        // as a dropdown would.
-        const val = el('span', 'val', def.options[modSetting(vendor, key)]);
-        const step = (delta, label) => {
-          const b = el('button', 'step', label);
-          b.onclick = () => { const n = def.options.length; val.textContent = def.options[setModSetting(vendor, key, (modSetting(vendor, key) + delta + n) % n)]; };
-          return b;
-        };
-        ctl.append(step(-1, '\u2039'), val, step(1, '\u203a'));
-      } else if (isIntKey(def)) {
-        // DS1: a SliderIntKey (Dynamic Skies' fog density and snow
-        // sizes) - the HUD-scale stepper's shape, over the key's own
-        // range, the value beside it.
-        const val = el('span', 'val', String(modSetting(vendor, key)));
-        const step = (delta, label) => {
-          const b = el('button', 'step', label);
-          b.onclick = () => { val.textContent = String(setModSetting(vendor, key, modSetting(vendor, key) + delta)); };
-          return b;
-        };
-        ctl.append(step(-1, '\u2039'), val, step(1, '\u203a'));
-      } else {
-        const on = modSetting(vendor, key);
-        const b = el('button', 'act rowact', on ? 'On' : 'Off');
-        if (on) b.classList.add('primary');
-        b.onclick = () => { setModSetting(vendor, key, !modSetting(vendor, key)); render(); };
-        if (onlineForcedModSetting(vendor, key) !== undefined) lockOnline(b, null);   // OL1: every mod's Enabled, online
-        ctl.append(b);
-      }
-      row.append(ctl);
-      mc.append(row);
-    }
+    for (const [key, def] of Object.entries(mod.keys)) mc.append(modRow(vendor, key, def));
     mc.append(el('p', 'meta', 'Takes effect when the world next loads.'));
     body.append(mc);
   }
@@ -1495,6 +1481,125 @@ function paneMods(body) {
     c.append(settingRow(key));
   }
   body.append(c);
+}
+
+/** One row over a vendored mod's own switch (ROADS 24), writing through
+ *  modSettings.js. FT0 lifted it out of paneMods so the features home
+ *  draws the same row; `name`/`note` override the mod's own key name and
+ *  description when the registry has better words. */
+function modRow(vendor, key, def, { name = null, note = null, home = false } = {}) {
+  if (!home) { const moved = featureForControl('mods', key, vendor); if (moved) return movedRow(moved); }   // FT2
+  const row = el('div', 'row');
+  const main = el('div', 'row-main');
+  main.append(el('div', 'row-name', name ?? key.replace(/([a-z])([A-Z])/g, '$1 $2')));
+  main.append(el('div', 'meta', note ?? def.description));
+  row.append(main);
+  const ctl = el('div', 'ctl');
+  if (isChoiceKey(def)) {
+    // UL1: a MultipleChoiceKey (Unleveled Loot's ten materials) -
+    // the same stepper, over the option NAMES, wrapping at the ends
+    // as a dropdown would.
+    const val = el('span', 'val', def.options[modSetting(vendor, key)]);
+    const step = (delta, label) => {
+      const b = el('button', 'step', label);
+      b.onclick = () => { const n = def.options.length; val.textContent = def.options[setModSetting(vendor, key, (modSetting(vendor, key) + delta + n) % n)]; };
+      return b;
+    };
+    ctl.append(step(-1, '\u2039'), val, step(1, '\u203a'));
+  } else if (isIntKey(def)) {
+    // DS1: a SliderIntKey (Dynamic Skies' fog density and snow
+    // sizes) - the HUD-scale stepper's shape, over the key's own
+    // range, the value beside it.
+    const val = el('span', 'val', String(modSetting(vendor, key)));
+    const step = (delta, label) => {
+      const b = el('button', 'step', label);
+      b.onclick = () => { val.textContent = String(setModSetting(vendor, key, modSetting(vendor, key) + delta)); };
+      return b;
+    };
+    ctl.append(step(-1, '\u2039'), val, step(1, '\u203a'));
+  } else {
+    const on = modSetting(vendor, key);
+    const b = el('button', 'act rowact', on ? 'On' : 'Off');
+    if (on) b.classList.add('primary');
+    b.onclick = () => { setModSetting(vendor, key, !modSetting(vendor, key)); render(); };
+    if (onlineForcedModSetting(vendor, key) !== undefined) lockOnline(b, null);   // OL1: every mod's Enabled, online
+    ctl.append(b);
+  }
+  row.append(ctl);
+  return row;
+}
+
+// ── FT0: FEATURES ───────────────────────────────────────────────
+// ONE LIST over the three stores. A row is drawn by the builder its
+// store already has - prefRow/choiceRow over uiPrefs, settingRow over
+// DFU's keys, modRow over a mod's - so every law those rows carry
+// (write-through, the default-drop, the coarse step) is untouched; the
+// home adds the kind labels, the registry's words, and the chip row.
+// The registry (systems/features.js) is empty at FT0 and fills one
+// audited slice at a time; an empty list says so rather than hiding
+// the section (the rail-hole law, SECTIONS_BOOT).
+function paneFeatures(body) {
+  const counts = featureCounts(FEATURES);
+  const chips = el('div', 'chips');
+  const chip = (kind, label, n) => {
+    const b = el('button', `chip${kind ? ` ${kind}` : ''}${featureKind === kind ? ' on' : ''}`);
+    b.type = 'button';
+    b.setAttribute('aria-pressed', String(featureKind === kind));
+    b.append(document.createTextNode(label), el('span', 'n', String(n)));
+    b.onclick = () => { featureKind = kind; render(); };
+    return b;
+  };
+  chips.append(chip(null, 'All', counts.all));
+  for (const k of KIND_ORDER) chips.append(chip(k, KINDS[k].label, counts[k]));
+  body.append(chips);
+  if (!FEATURES.length) {
+    body.append(empty('Nothing here yet',
+      'Every enhanceable feature is moving here, one at a time, each audited before it moves. '
+      + 'Until then the port\u2019s own switches are under Settings \u203a Enhanced and the mods\u2019 under Mods.'));
+    return;
+  }
+  const rows = filterFeatures(FEATURES, featureKind);
+  if (!rows.length) {
+    body.append(empty(`No ${KINDS[featureKind].label} rows yet`, KINDS[featureKind].blurb));
+    return;
+  }
+  const c = el('div', 'card');
+  for (const f of rows) c.append(featureRow(f));
+  body.append(c);
+}
+
+/** The kind labels a row wears, in KIND_ORDER whatever order the row lists them. */
+function kindTags(kinds) {
+  const w = el('div', 'kinds');
+  for (const k of KIND_ORDER) if (kinds.includes(k)) w.append(el('span', `kind ${k}`, KINDS[k].label));
+  return w;
+}
+
+/** One registry row, drawn by its store's own builder and dressed. */
+function featureRow(f) {
+  const c = f.control;
+  let row;
+  if (c.store === 'prefs') {
+    row = c.tiers ? choiceRow(c.key, f.title, f.note, c.tiers, { home: true, read: c.read, write: c.write }) : prefRow(c.key, f.title, f.note, { home: true });
+  } else if (c.store === 'settings') {
+    row = settingRow(c.key, { compact: true, home: true });
+    const main = row.querySelector('.row-main');
+    main.querySelector('.row-name').textContent = f.title;
+    if (f.note) main.append(el('div', 'row-note', f.note));
+    // FT1: the home draws no help sheet, so the face of a switch row
+    // toggles it - the same door prefRow's face is.
+    if (widgetFor(c.key) === 'switch') {
+      const [sec, k] = c.key.split('/');
+      main.onclick = () => write(c.key, stepValue(c.key, effective()[sec]?.[k], 1));
+    }
+  } else {
+    row = modRow(c.vendor, c.key, MOD_SETTINGS[c.vendor].keys[c.key], { name: f.title, note: f.note, home: true });
+  }
+  row.classList.add('feature');
+  const main = row.querySelector('.row-main');
+  main.prepend(kindTags(f.kinds));
+  if (f.effect) main.append(el('div', 'row-sub', f.effect));
+  return row;
 }
 
 // ── ABOUT ────────────────────────────────────────────────────────
@@ -1714,6 +1819,7 @@ function pauseWindow() {
 export const SYSTEM_PANES = Object.freeze([
   ['resume', 'Resume'], ['save', 'Save Game'], ['load', 'Load Game'],
   ['settings', 'Settings'], ['controls', 'Controls'],
+  ['features', 'Features'],   // FT0
   ['mods', 'Mods'], ['about', 'About'], ['exit', 'Exit'],
 ]);
 
@@ -1750,6 +1856,7 @@ function pauseSystem(body) {
   } else {
     ({
       save: paneSave, load: paneLoad, controls: paneControlsPane,
+      features: paneFeatures,   // FT0
       mods: paneMods, about: paneAbout, exit: paneExit,
     })[sysSec](detail);
   }
@@ -2194,6 +2301,7 @@ function renderInto() {
         continue: paneContinue, new: paneNew, load: paneLoad, online: paneOnline,   // ONLINE1
         test: paneTest,
         save: paneSave, exit: paneExit,
+        features: paneFeatures,   // FT0
         mods: paneMods, about: paneAbout, begin: paneBegin,   // FD1: the classic rail's door; SO1: Enhanced is a Settings category now
         controls: paneControlsPane,
       })[section](body);

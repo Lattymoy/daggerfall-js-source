@@ -194,5 +194,5 @@ test('D1: the grid radius is the LIVE Land View Distance - DFU sizes and DFU cla
   // the port's getInt carries the identical law)
   const src = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
   assert.match(src, /new StreamingWorldState\(fogDistance\)/, 'LV1: the one read - landViewDistance over DFU\'s setting on the 1:1 lane, the Enhanced pane\'s on the enhanced');
-  assert.match(src, /const fogDistance = landViewDistance\(\{\s*enhanced: isEnhanced\(\) && getPref\('enhancedEnvironments'\),\s*pref: getPref\('landViewDistance'\),\s*setting: getInt\('Experimental', 'TerrainDistance', 1, 4\),\s*\}\);/);
+  assert.match(src, /const fogDistance = landViewRead\(\);/, 'FT2: the one read is the module\'s (world\/landView.js landViewRead)');
 });

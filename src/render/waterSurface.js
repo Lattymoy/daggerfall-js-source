@@ -33,6 +33,19 @@
 // art follows - feathered by SHORE_SOFTNESS.
 import { WATER_MASK_TABLE } from '../world/waterCorners.js';   // MAC2: the corner table is a leaf the player's feet share
 import { WIND_ROW_CALM, WIND_ROW_SPAN } from '../systems/wind.js';
+import { getPref } from '../systems/uiPrefs.js';   // FT6: the switch, read here alone
+import { isEnhanced } from '../systems/uiSkin.js';
+
+/** FT6 (2026-09-14, the Features arc): THE SWITCH, ONE HOME. Both
+ *  exterior hosts composed "the enhanced skin, the pref, the kill door"
+ *  inline, word for word - two copies of one law. This is the copy:
+ *  the enhanced skin (the classic lane draws DFU's flat tile), the
+ *  Enhanced water pref, and `?water=off` as the kill door. A town host
+ *  still asks tilemapRectHasWater beside it - that is the town's, not
+ *  the switch's. */
+export function waterSwitchOn(search = globalThis.location?.search ?? '') {
+  return isEnhanced() && !!getPref('enhancedWater') && new URLSearchParams(search).get('water') !== 'off';
+}
 
 /** How far above the ground the surface is drawn, in world units (a
  *  tile is 6.4). Enough to clear the depth test on a slope, too little

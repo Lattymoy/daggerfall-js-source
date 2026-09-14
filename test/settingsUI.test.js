@@ -137,8 +137,8 @@ test('FD1: the launcher and the keyed settings window are gone, nothing imports 
 
 test('FD1: both skins open on the enhanced door; classic collapses its game doors into BEGIN, which resolves into the classic sequence with the data gated first (mutant: Begin on the enhanced rail, or the classic rail keeping New Game)', () => {
   const menu = src('ui/enhancedMenu.js');
-  assert.match(menu, /const SECTIONS_CLASSIC = \['Begin', 'Online', 'Settings', 'Controls', 'Mods', 'About'\];/);
-  assert.match(menu, /const SECTIONS_BOOT = \['Continue', 'New Game', 'Load Game', 'Online', 'Test Room', 'Settings', 'Controls', 'Mods', 'About'\];/, 'the enhanced rail keeps its three doors and loses the Enhanced entry (SO1)');
+  assert.match(menu, /const SECTIONS_CLASSIC = \['Begin', 'Online', 'Settings', 'Controls', 'Features', 'Mods', 'About'\];/);
+  assert.match(menu, /const SECTIONS_BOOT = \['Continue', 'New Game', 'Load Game', 'Online', 'Test Room', 'Settings', 'Controls', 'Features', 'Mods', 'About'\];/, 'the enhanced rail keeps its three doors and loses the Enhanced entry (SO1)');
   assert.match(menu, /sections = mode === 'pause' \? SECTIONS_PAUSE : isEnhanced\(\) \? SECTIONS_BOOT : SECTIONS_CLASSIC;/);
   assert.match(menu, /function paneBegin\(body\) \{[\s\S]*?onClick: \(\) => onAction\('begin'\)/);
   assert.match(menu, /begin: paneBegin,/, 'the dispatch knows it');
@@ -165,7 +165,8 @@ test('SO1: the settings pane is organised - the port\'s rows sit in the categori
   const from = menu.indexOf('function portRowsEnhanced('); const pane = menu.slice(from, menu.indexOf('\n}', from));
   const prefs = src('systems/uiPrefs.js');
   for (const m of pane.matchAll(/(?:prefRow|choiceRow)\('(\w+)'/g)) assert.match(prefs, new RegExp(`\\n\\s*${m[1]}:`), `'${m[1]}' is a uiPrefs key`);
-  for (const k of ['enhancedAI', 'enhancedEnvironments', 'grassDensity', 'cloudQuality', 'enhancedWater', 'enhancedCombatVisuals']) assert.match(pane, new RegExp(`(?:prefRow|choiceRow)\\('${k}'`), k);
+  assert.ok(!/(?:prefRow|choiceRow)\('/.test(pane), 'FT2-FT8: every switch moved to the Features home; the category is a pointer');
+  assert.match(pane, /const out = \[featuresPointerRow\(\)\];/, 'the pointer row, first');
   assert.match(pane, /if \(!pause\) out\.push\(outdoorsTestRow\(\)\);/, 'the outdoors test door, boot only');
   // the touch knobs under Controls, where a finger's device looks; the skin, the HUD size and the FPS counter under Interface
   const ctl = menu.slice(menu.indexOf('function portRowsControls('), menu.indexOf('function portRowsInterface('));

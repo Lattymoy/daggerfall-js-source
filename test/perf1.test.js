@@ -67,7 +67,7 @@ test('PERF1 pins: every host stamps its frame, the grass takes the pref\'s fract
   assert.match(w, /createGrassField\(labGrass, \{ keep, ground, density: grassDensity \}\)/, 'the field is built at the fraction');
   assert.match(read('src/scenes/shared.js'), /Object\.hasOwn\(CLOUD_QUALITY, cloudsDoor\) \? cloudsDoor : \(Object\.hasOwn\(CLOUD_QUALITY, getPref\('cloudQuality'\)\) \? getPref\('cloudQuality'\) : 'default'\)/, 'the URL door still wins; the pref sits behind it; an unknown pref is the default');
   const menu = read('src/ui/enhancedMenu.js');
-  assert.match(menu, /choiceRow\('grassDensity', 'Grass density',[\s\S]{0,400}\[\[1, 'Full'\], \[0\.5, 'Half'\], \[0\.25, 'Quarter'\], \[0, 'Off'\]\]/);
-  assert.match(menu, /choiceRow\('cloudQuality', 'Cloud quality',[\s\S]{0,400}\[\['default', 'Default'\], \['lo', 'Low'\], \['hi', 'High'\]\]/);
+  // FT7: the two rows are the Features registry's now (test/ft7_quality.test.js pins their tiers); the menu holds no copy
+  assert.ok(!/choiceRow\('grassDensity'|choiceRow\('cloudQuality'/.test(menu), 'the rows left the Enhanced category for the Features home');
   assert.match(read('src/ui/fpsCounter.js'), /const cpu = frameCpu\(\);/, 'the counter reads the clock');
 });

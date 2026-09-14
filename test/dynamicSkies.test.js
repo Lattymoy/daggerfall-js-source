@@ -29,7 +29,7 @@ import {
 } from '../src/systems/dynamicSkies.js';
 import { DynamicSkies } from '../src/systems/dynamicSkiesRuntime.js';
 import { FS, COLOR_PROPERTIES, FLOAT_PROPERTIES, UNIFORM_NAMES } from '../src/render/dynamicSkiesRenderer.js';
-import { BAYER_MEAN } from '../src/render/retroPixel.js';   // PS3: the zero-mean Bayer offset
+import { BAYER_MEAN } from '../src/render/orderedDither.js';   // PS3: the zero-mean Bayer offset (retroPixel.js until FT3)
 import { LUNAR_PHASES, lunarPhase, dateFromClassicMinutes, MINUTES_PER_DAY } from '../src/systems/gameDate.js';
 import { evaluateCurve, daylightScale, setLightCurve, sunDirection } from '../src/world/worldClock.js';
 import { FOG_SETTINGS, fogForWeather, fogFactor } from '../src/world/weather.js';
@@ -578,7 +578,7 @@ test('DS1 shader: every property the mod declares is a uniform of the same name,
   const reduce = FS.slice(FS.indexOf('// REDUCE_COLOR'), FS.indexOf('// NO HOST FOG'))
     .split('\n').filter((l) => !/^\s*\/\//.test(l)).join('\n');   // the CODE, not the comment that explains why
   assert.doesNotMatch(reduce, /gl_FragCoord/, 'the band dither never indexes the screen');
-  assert.match(reduce, /if \(uRetroStep <= 0\.0\) \{ vec2 fineCell; ringSnap\(dir, 0\.00204531, fineCell\); bandCell = floor\(fineCell\); \}/,
+  assert.match(reduce, /vec2 fineCell; ringSnap\(dir, 0\.00204531, fineCell\); vec2 bandCell = floor\(fineCell\);/,
     'smooth, it snaps a finer cell rather than falling back to the fragment');
   // ...and ZERO-MEAN: bayer4 averages 7.5/16, so subtracting 0.5 would
   // raise the mod's ceil bias by 1/32 of a band.

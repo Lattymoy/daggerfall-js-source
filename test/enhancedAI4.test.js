@@ -473,7 +473,7 @@ test('AUDIT 55: the switch\u2019s reach is the dungeon host\u2019s foes and noth
   // none of them is a path a townsperson, a guard or an exterior foe
   // takes. This pins that reach so a future reader can answer the same
   // question in one test instead of a sweep.
-  const readers = ['src/ai/enhancedMotor.js', 'src/scenes/dungeonContext.js', 'src/systems/uiPrefs.js', 'src/ui/enhancedMenu.js'];
+  const readers = ['src/ai/enhancedMotor.js', 'src/scenes/dungeonContext.js', 'src/systems/uiPrefs.js', 'src/systems/features.js'];   // FT5: the row is the registry's, not the menu's
   for (const f of ['src/characters/mobilePerson.js', 'src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/cityGuards.js', 'src/scenes/exteriorFoes.js', 'src/characters/enemyMotor.js']) {
     const src = rd(f);
     assert.ok(!/enhancedAI|EnhancedEnemyAI|enhancedNav|enhancedMotor/.test(src), `${f} can see the switch`);

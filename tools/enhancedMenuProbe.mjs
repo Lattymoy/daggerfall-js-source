@@ -38,7 +38,7 @@ async function run(label, opts) {
   // 1. THE DOOR OPENED WITHOUT DATA. ensureArena2's picker is a fixed
   //    overlay with a #pick input; if it is up, the claim is false.
   check(`${label}: the menu draws with no ARENA2`,
-    (await page.locator('.px-menu button').count()) === 6)   // R7 added Enhanced;
+    (await page.locator('.px-menu button').count()) === 9)   // one door per SECTIONS_BOOT entry but About - nine since FT0 added Features (this read 6 from R7 on and nobody ran it)
 
   const sw = await page.evaluate(() => {
     const on = document.querySelector('.skinswitch .skinopt.on'), off = document.querySelector('.skinswitch .skinopt:not(.on)');
@@ -60,6 +60,11 @@ async function run(label, opts) {
   //    should hold - it is exactly what the U29/U30 split bought.
   await page.locator('.px-menu button').filter({ hasText: /Settings/ }).first().click();
   await page.waitForSelector('#enhanced-menu .row');
+  // SO1 (2026-09-11) put the Enhanced category first, and FT8 (2026-09-14)
+  // emptied it of switches (they are the Features home's now) - the rows
+  // this step reads and the one it presses are the GAME category's.
+  await page.locator('#enhanced-menu .subbtn').filter({ hasText: /^Game/ }).first().click();
+  await page.waitForTimeout(200);
   const rows = await page.locator('#enhanced-menu .row').count();
   check(`${label}: settings rows render`, rows > 10, `${rows} rows`);
 
@@ -87,41 +92,45 @@ async function run(label, opts) {
   // with the shell's 'switch anytime' hint hidden - the centred pair
   // reads as a control on its own.
 
-  // 2c. THE ENHANCED SECTION. A source sweep can say the pane exists
+  // 2c. THE FEATURES HOME. A source sweep can say the pane exists
   //     and is dispatched; only a browser can say the rail entry opens
   //     it without throwing, that its switch reads its default, and
   //     that a press PERSISTS.
   //
   //     This rode the ROADS switch until the road system was removed
-  //     whole (2026-08-29, Mac's call). Re-aimed at the procedural sky,
-  //     which is the enhanced pane's other real preference - the checks
-  //     are about the PANE and its switch machinery, not about which
-  //     enhancement happens to be sitting in it.
+  //     whole (2026-08-29, Mac's call), then the procedural sky in the
+  //     Enhanced pane; FT4 (2026-09-14) condensed that switch with
+  //     Dynamic Skies' into the Features home's three-way outdoors row,
+  //     and the home is where every enhanceable feature lives now. The
+  //     checks are about the HOME and its switch machinery
+  //     (tools/featuresProbe.mjs walks the rest of it).
   await page.goto(`${BASE}/play/`, { waitUntil: 'networkidle' });
-  await page.locator('.px-menu button').filter({ hasText: /Enhanced/ }).first().click();
-  await page.waitForTimeout(300);
+  await page.locator('.px-menu button').filter({ hasText: /Features/ }).first().click();
+  await page.waitForSelector('#enhanced-menu .chips', { timeout: 10000 });
   const pane = await page.evaluate(() => {
-    const rows = [...document.querySelectorAll('#enhanced-menu .row')];
+    const rows = [...document.querySelectorAll('#enhanced-menu .row.feature')];
     const find = (n) => rows.find((r) => r.querySelector('.row-name')?.textContent === n);
-    const sky = find('Enhanced environments');   // EE1
+    const sky = find('Enhanced environments');   // EE1, condensed at FT4
     return {
+      rows: rows.length,
       sky: sky ? sky.querySelector('.ctl .act')?.textContent : null,
       skyTarget: sky ? Math.round(sky.querySelector('.ctl .act').getBoundingClientRect().height) : 0,
-      skin: !!find('Interface Style'),
+      labels: sky ? [...sky.querySelectorAll('.kind')].map((k) => k.textContent) : [],
     };
   });
-  check(`${label}: the Enhanced section opens with its switches`,
-    pane.sky !== null && pane.skin, JSON.stringify(pane));
-  check(`${label}: the sky reads ON by default`, pane.sky === 'On', String(pane.sky));
-  if (label === 'phone') check("phone: the sky switch is a thumb's target", pane.skyTarget >= 38, `${pane.skyTarget}px`);
-  await page.locator('#enhanced-menu .row', { hasText: 'Enhanced environments' }).locator('.ctl .act').click();
+  check(`${label}: the Features home opens with its rows`, pane.rows >= 21 && pane.sky !== null, JSON.stringify(pane));
+  check(`${label}: the outdoors read Dynamic Skies by default, wearing both labels`,
+    pane.sky === 'On, with Dynamic Skies' && pane.labels.join('+') === 'Enhanced+Mod Authored', JSON.stringify(pane));
+  if (label === 'phone') check("phone: the outdoors switch is a thumb's target", pane.skyTarget >= 38, `${pane.skyTarget}px`);
+  // one press steps the three-way row past its last tier to OFF, which is the pref off
+  await page.locator('#enhanced-menu .row.feature').filter({ has: page.locator('.row-name', { hasText: /^Enhanced environments$/ }) }).locator('.ctl .act').click();
   const skyOff = await page.evaluate(async () => {
     const m = await import('/src/systems/uiPrefs.js');
     m._resetForTests();
     return m.getPref('enhancedEnvironments');   // EE1
   });
-  check(`${label}: the sky switch PERSISTS`, skyOff === false, String(skyOff));
-  await page.locator('#enhanced-menu .row', { hasText: 'Enhanced environments' }).locator('.ctl .act').click();
+  check(`${label}: the outdoors switch PERSISTS`, skyOff === false, String(skyOff));
+  for (let i = 0; i < 2; i++) await page.locator('#enhanced-menu .row.feature').filter({ has: page.locator('.row-name', { hasText: /^Enhanced environments$/ }) }).locator('.ctl .act').click();   // back to Dynamic Skies
 
   // 3. THE PICK APPEARS WHEN A GAME STARTS, and not one moment before.
   await page.goto(`${BASE}/play/`, { waitUntil: 'networkidle' });
@@ -141,16 +150,18 @@ await run('desktop', { viewport: { width: 1400, height: 900 } });
 await run('phone', { ...devices['Pixel 5'] });
 
 // 4. THE CLASSIC SKIN OPENS ON THE SAME DOOR (FD1, 2026-09-11): the
-//    rail collapses to Begin / Settings / Controls / Mods / About, and
-//    BEGIN gates the data - the pick is up before any classic screen.
+//    rail collapses to Begin / Online / Settings / Controls / Features / Mods / About
+//    (ONLINE1 and FT0 since), and BEGIN - the door, then the pane's own
+//    Begin - gates the data: the pick is up before any classic screen.
 {
   const ctx = await browser.newContext({ viewport: { width: 1400, height: 900 } });
   const page = await ctx.newPage();
   await page.goto(`${BASE}/play/?skin=classic`, { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('.px-menu button', { timeout: 20000 });
   const st = await page.evaluate(() => JSON.parse(window.__menu()));
-  check('classic: the enhanced door mounts with the classic rail', JSON.stringify(st.sections) === JSON.stringify(['begin', 'settings', 'controls', 'mods', 'about']), JSON.stringify(st.sections));
+  check('classic: the enhanced door mounts with the classic rail', JSON.stringify(st.sections) === JSON.stringify(['begin', 'online', 'settings', 'controls', 'features', 'mods', 'about']), JSON.stringify(st.sections));
   await page.locator('.px-menu .door-begin').click();
+  await page.locator('#enhanced-menu .act.primary', { hasText: 'Begin' }).click();   // FD1: the door opens the Begin pane; its button starts
   const picked = await page.waitForSelector('#pick', { timeout: 15000 }).then(() => true, () => false);
   check('classic: Begin gates the data before its own start sequence', picked);
   await ctx.close();
@@ -169,6 +180,7 @@ await run('phone', { ...devices['Pixel 5'] });
   // FD1: the classic door is this same screen with the Begin rail; the pick rises behind Begin
   await page.waitForSelector('.px-menu .door-begin', { timeout: 20000 });
   await page.locator('.px-menu .door-begin').click();
+  await page.locator('#enhanced-menu .act.primary', { hasText: 'Begin' }).click();   // FD1: the pane's own Begin
   const picked = await page.waitForSelector('#pick', { timeout: 15000 }).then(() => true, () => false);
   check('press Classic: the classic door opens, data first', picked && (await page.locator('#enhanced-menu').count()) === 0);
   check('press Classic: the URL carries no override - the choice is STORED', !new URL(page.url()).searchParams.has('skin'));

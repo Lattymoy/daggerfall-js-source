@@ -109,10 +109,11 @@ test('AUDIT 59 F2: the dungeon context disposes its nav client on destroy, first
 });
 
 test('AUDIT 59 F3: the Enhanced tab row says what ships - dungeons, the motor live, effect on the next dungeon', () => {
-  const menu = read('src/ui/enhancedMenu.js');
-  const at = menu.indexOf("prefRow('enhancedAI'");
-  // the row is one string built by `+` across lines - read it joined
-  const row = menu.slice(at, menu.indexOf('));', at)).replace(/'\s*\n\s*\+\s*'/g, '');
+  // FT5: the row is the Features registry's now; its note and effect are strings built by `+` across lines - read the object joined
+  const reg = read('src/systems/features.js');
+  const at = reg.indexOf("id: 'enhanced-ai'");
+  assert.ok(at > 0, 'the row is on the home');
+  const row = reg.slice(at, reg.indexOf('}),', at)).replace(/'\s*\n\s*\+\s*'/g, '');
   assert.ok(!/not yet driving/.test(row), 'the "not yet" clause died with ENHANCED AI 4');
   assert.ok(!/each dungeon, town and interior/.test(row), 'no promise of hosts the arc has not reached');
   assert.match(row, /Dungeons for now/);

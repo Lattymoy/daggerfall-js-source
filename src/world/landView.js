@@ -23,15 +23,32 @@
 // ONE FUNCTION decides, pure, so both of the world host's reads - the
 // grid's radius and the fog's scale - agree, and the tests can pin it
 // without a world.
+//
+// FT2 (2026-09-14, the Features arc): ONE ROW FOR BOTH LANES. Two
+// controls sat in two panes - the Enhanced category's Land view distance
+// over the pref, Video's Land View Distance over DFU's key - for the one
+// radius, and a player who set one could not see it had not moved the
+// other. The Features home draws ONE row, wearing Enhanced and DFU
+// Classic: it SHOWS the radius the current lane will use (landViewRead)
+// and its control WRITES BOTH STORES (landViewWrite) - the pref whole,
+// DFU's key capped at its own 4 - so the two lanes agree after every
+// press. The tiers now span both lanes, 1..6, because the row must be
+// able to name any value either lane can hold (an imported settings.ini
+// with TerrainDistance 2 shows 2 on the classic skin).
+
+import { getPref, setPref } from '../systems/uiPrefs.js';
+import { getInt, setValue, saveSettings } from '../systems/settings.js';
+import { isEnhanced } from '../systems/uiSkin.js';
 
 export const LAND_VIEW_MIN = 1;
 export const LAND_VIEW_MAX = 6;         // the enhanced lane's ceiling
 export const LAND_VIEW_DFU_MAX = 4;     // StreamingWorld.cs [Range(1,4)]
 export const LAND_VIEW_DEFAULT = 5;     // the Enhanced pane's default (uiPrefs landViewDistance)
 
-/** The Enhanced pane's tiers: value and label. Daggerfall's own 3 first. */
+/** The row's tiers: value and label, DFU's whole 1..4 and the enhanced
+ *  lane's 5..6 (FT2), Daggerfall's own 3 named. */
 export const LAND_VIEW_TIERS = Object.freeze([
-  [3, 'Daggerfall\u2019s (3)'], [4, '4'], [5, '5'], [6, 'Furthest (6)'],
+  [1, '1'], [2, '2'], [3, 'Daggerfall\u2019s (3)'], [4, '4'], [5, '5'], [6, 'Furthest (6)'],
 ]);
 
 const clampInt = (v, lo, hi, fallback) => {
@@ -47,4 +64,25 @@ const clampInt = (v, lo, hi, fallback) => {
 export function landViewDistance({ enhanced, pref, setting }) {
   if (!enhanced) return clampInt(setting, LAND_VIEW_MIN, LAND_VIEW_DFU_MAX, 3);
   return clampInt(pref, LAND_VIEW_MIN, LAND_VIEW_MAX, LAND_VIEW_DEFAULT);
+}
+
+/** Is this boot the enhanced outdoors - the enhanced skin with its
+ *  environments on? The world host's own question, asked once here. */
+export const enhancedOutdoors = () => isEnhanced() && !!getPref('enhancedEnvironments');
+
+/** FT2: the radius the current lane will use, off the live stores -
+ *  what the world host reads at mount and what the Features row shows. */
+export function landViewRead({ enhanced = enhancedOutdoors() } = {}) {
+  return landViewDistance({ enhanced, pref: getPref('landViewDistance'), setting: getInt('Experimental', 'TerrainDistance', 1, 4) });
+}
+
+/** FT2: ONE control writes BOTH stores - the pref whole (1..6), DFU's
+ *  Experimental/TerrainDistance capped at its own [Range(1,4)] - so
+ *  the lanes agree after every press. Answers the value written. */
+export function landViewWrite(v) {
+  const n = clampInt(v, LAND_VIEW_MIN, LAND_VIEW_MAX, LAND_VIEW_DEFAULT);
+  setPref('landViewDistance', n);
+  setValue('Experimental', 'TerrainDistance', String(Math.min(n, LAND_VIEW_DFU_MAX)));
+  saveSettings();
+  return n;
 }

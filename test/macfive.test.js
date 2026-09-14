@@ -7,7 +7,7 @@
 // refreshing 5. 3D geometry has this issue where while it has
 // collision, you can immediately walk over things (like interior
 // tables, tree trunks, etc)". MO1, PS1, LV1, PL3, SH1 - one pin each,
-// and the seams by source.
+// and the seams by source. (PS1 was removed again at FT3, 2026-09-14.)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -15,10 +15,6 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { MOD_SETTINGS, modSetting, _resetModSettings } from '../src/systems/modSettings.js';
-import { RETRO, retroFor } from '../src/render/enhancedSky.js';
-import { RETRO_GLSL } from '../src/render/retroPixel.js';
-import { FS as DS_FS, UNIFORM_NAMES as DS_UNIFORMS } from '../src/render/dynamicSkiesRenderer.js';
-import { COMPOSITE_FS, COMPOSITE_UNIFORMS } from '../src/render/volumetricClouds.js';
 import { landViewDistance, LAND_VIEW_TIERS, LAND_VIEW_MAX, LAND_VIEW_DEFAULT, LAND_VIEW_DFU_MAX } from '../src/world/landView.js';
 import { TERRAIN_DISTANCE } from '../src/world/streamingWorld.js';
 import { bindCursorToggle, makeLookGate, requestLook, cursorActive, setCursorActive, RELOCK_GRACE_MS } from '../src/player/pointerLock.js';
@@ -55,47 +51,8 @@ test('MO1: every mod with a switch ships ON - the Mods pane is where one is turn
   assert.match(read('test/audit18_combat.test.js'), /^import '\.\/modsOff\.js';/m, 'the formula suite runs without the mods');
 });
 
-test('PS1: the pixelated sky is the dome\'s default again, the Enhanced pane\'s switch, the URL doors still win', () => {
-  assert.deepEqual(RETRO, { step: Math.PI / 512, levels: 26 }, 'ES1e\'s pixel and palette, unchanged');
-  assert.equal(retroFor(''), RETRO, 'silent URL, switch on (the default)');
-  assert.equal(retroFor('', true), RETRO);
-  assert.equal(retroFor('', false), null, 'the switch off is the smooth dome');
-  assert.equal(retroFor('?sky=smooth', true), null, '?sky=smooth wins over the switch');
-  assert.equal(retroFor('?sky=retro', false), RETRO, '?sky=retro wins the other way');
-  assert.match(read('src/systems/uiPrefs.js'), /pixelatedSky: true,/, 'on by default');
-  assert.match(read('src/ui/enhancedMenu.js'), /prefRow\('pixelatedSky', 'Pixelated sky',/, 'a row in the Enhanced pane beside Enhanced environments');
-  const shared = read('src/scenes/shared.js');
-  assert.match(shared, /const retro = retroFor\(params\.toString\(\), getPref\('pixelatedSky'\)\);/, 'the host reads the switch through the one door');
-  assert.match(shared, /if \(enhancedSky\) enhancedSky\.retro = retro;/);
-});
-
-test('PS2: the pixel reaches every sky pass - the mod\'s skybox and the clouds\' composite carry the dome\'s snap and posterise, from the one retro', () => {
-  // Mac: "Volumetric clouds and pixelated should be compatible with dynamic skies though"
-  assert.ok(RETRO_GLSL.includes('vec3 ringSnap(vec3 dir, float stepRad, out vec2 cellOut) {') && RETRO_GLSL.includes('float bayer4(vec2 p) {'), 'the two functions, one string');   // ES1g: rings, not a cube
-  const dome = read('src/render/enhancedSky.js');
-  assert.ok(dome.includes('${RETRO_GLSL}') && !dome.includes('vec3 ringSnap('), 'the dome interpolates the shared functions and no longer carries its own copy');
-  assert.ok(dome.includes('${RETRO_SNAP_GLSL}'), 'ES1g: and the shared SNAP LINES too, so the three passes cannot drift');
-  for (const [name, fs] of [['the mod\'s skybox', DS_FS], ['the clouds\' composite', COMPOSITE_FS]]) {
-    assert.ok(fs.includes('vec3 ringSnap('), `${name} carries the snap`);
-    assert.ok(fs.indexOf('float bayer4(') < fs.indexOf('void main() {'), `${name} declares the functions before main`);
-    assert.match(fs, /uniform float uRetroStep;/); assert.match(fs, /uniform float uRetroLevels;/);
-    assert.match(fs, /if \(uRetroStep > 0\.0\) dir = ringSnap\(dir, uRetroStep, cell\);/, `${name} snaps its direction on the dome's grid`);
-    assert.match(fs, /float b = bayer4\(uRetroStep > 0\.0 \? cell : gl_FragCoord\.xy\) - 0\.5;/, `${name} dithers by the cell`);
-  }
-  assert.ok(DS_FS.indexOf('ringSnap(dir') < DS_FS.indexOf('V2F IN = vertAsMesh(worldPos);'), 'the mod\'s shader snaps BEFORE anything is computed - sun, moons, stars and sheets all on the grid');
-  assert.ok(DS_FS.indexOf('enc = floor(enc * uRetroLevels') < DS_FS.indexOf('outColor = vec4(enc, 1.0);'), 'and posterises the encoded colour last');
-  assert.ok(COMPOSITE_FS.indexOf('ringSnap(dir') < COMPOSITE_FS.indexOf('vec2 uv = vec2(az /'), 'the composite snaps before it builds the map coordinates');   // ES1g: not 'float el = asin(' - the snap itself opens with that line now, and not the texture read, which would let the snap slide past the uv
-  assert.ok(COMPOSITE_FS.indexOf('c = floor(c * uRetroLevels') < COMPOSITE_FS.indexOf('outColor = vec4(c.rgb'), 'and posterises colour AND transmittance before the blend');
-  assert.deepEqual(COMPOSITE_UNIFORMS.slice(-2), ['uRetroStep', 'uRetroLevels']);
-  assert.ok(DS_UNIFORMS.includes('uRetroStep') && DS_UNIFORMS.includes('uRetroLevels'));
-  const shared = read('src/scenes/shared.js');
-  assert.match(shared, /if \(clouds\) clouds\.retro = retro;/, 'the clouds take the one retro');
-  assert.match(shared, /if \(dynamicSky\) dynamicSky\.retro = retro;/, 'and so does the mod\'s skybox');
-  const lab = read('src/tools/skyLab.js');
-  assert.match(lab, /if \(dynamicOn\) sky\.retro = retroFor\(location\.search\);/, 'the lab shows what the game shows, under the mod too');
-  assert.match(lab, /clouds\.retro = sky\.retro;/);
-  for (const src of ['src/render/dynamicSkiesRenderer.js', 'src/render/volumetricClouds.js']) assert.match(read(src), /setRetroUniforms\(gl, u, this\.retro\);/, `${src} uploads its retro`);
-});
+// PS1 and PS2 (the pixelated sky and its reach) - REMOVED at FT3 (2026-09-14,
+// Mac: "Remove our version of pixelated sky"); their pins went with the pass.
 
 test('LV1: the enhanced lane streams its own radius - 5 by default, 6 at most - and the 1:1 lane keeps DFU\'s 1..4', () => {
   assert.equal(TERRAIN_DISTANCE, 3, 'StreamingWorld.cs:56, untouched');
@@ -106,12 +63,12 @@ test('LV1: the enhanced lane streams its own radius - 5 by default, 6 at most - 
   assert.equal(landViewDistance({ enhanced: true, pref: 9, setting: 3 }), 6, 'clamped to the enhanced ceiling');
   assert.equal(landViewDistance({ enhanced: true, pref: 'x', setting: 3 }), LAND_VIEW_DEFAULT, 'a bad pref is the default');
   assert.equal(landViewDistance({ enhanced: true, pref: 0, setting: 3 }), 1);
-  assert.deepEqual(LAND_VIEW_TIERS.map(([v]) => v), [3, 4, 5, 6]);
+  assert.deepEqual(LAND_VIEW_TIERS.map(([v]) => v), [1, 2, 3, 4, 5, 6], 'FT2: DFU\'s whole 1..4 and the enhanced 5..6 - the one row names any value either lane holds');
   assert.match(read('src/systems/uiPrefs.js'), /landViewDistance: 5,/);
   const world = read('src/scenes/world.js');
-  assert.match(world, /const fogDistance = landViewDistance\(\{/, 'ONE read for the fog scale and the grid');
+  assert.match(world, /const fogDistance = landViewRead\(\);/, 'ONE read for the fog scale and the grid (FT2: the module\'s)');
   assert.match(world, /new StreamingWorldState\(fogDistance\)/);
-  assert.match(read('src/ui/enhancedMenu.js'), /choiceRow\('landViewDistance', 'Land view distance',[\s\S]{0,600}LAND_VIEW_TIERS\)\);/);
+  assert.ok(!/choiceRow\('landViewDistance'/.test(read('src/ui/enhancedMenu.js')), 'FT2: the row left the Enhanced category for the Features home (systems/features.js)');
 });
 
 // A window/document just real enough for pointerLock.js's toggle and net.
