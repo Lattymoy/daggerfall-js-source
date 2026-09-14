@@ -158,22 +158,22 @@ test('the two rails differ only where the question does', () => {
     'the whole reason this door exists is that settings were reachable only at boot');
 });
 
-test('R7/SO1: the Enhanced CATEGORY carries the port\'s own switches, every one a real pref, and the tree\'s reverted features are not among them', () => {
-  // R7's law, one level down: the Enhanced pane became a Settings
-  // category (SO1). A switch it draws must exist on the prefs shelf,
-  // and a feature that was built and REVERTED WHOLE (the generative
-  // music, the first Morrowind 3D layer) must not be drawn as one.
+test('R7/SO1/FT12: the port\'s own switches are the Features home\'s, every one a real pref; the Enhanced pane and category are gone; the tree\'s reverted features are not among them', () => {
+  // R7's law, two levels down: the Enhanced pane became a Settings
+  // category (SO1), and the category emptied into the Features home
+  // (FT2-FT8) and left the rail (FT12). A switch the home draws must
+  // exist on the prefs shelf, and a feature that was built and
+  // REVERTED WHOLE (the generative music, the first Morrowind 3D
+  // layer) must not be drawn as one.
   const src = read('src/ui/enhancedMenu.js');
-  assert.doesNotMatch(src, /function paneEnhanced\(/, 'the pane is gone');
-  const from = src.indexOf('function portRowsEnhanced(');
-  const pane = src.slice(from, src.indexOf('\n}', from));
+  assert.doesNotMatch(src, /function paneEnhanced\(|function portRowsEnhanced\(/, 'the pane and the category are gone');
+  const reg = read('src/systems/features.js');
   const prefs = read('src/systems/uiPrefs.js');
-  for (const m of pane.matchAll(/(?:prefRow|choiceRow)\('(\w+)'/g)) {
-    assert.match(prefs, new RegExp(`\\n\\s*${m[1]}:`), `the category toggles '${m[1]}', which is not a uiPrefs key`);
+  for (const m of reg.matchAll(/store: 'prefs', key: '(\w+)'/g)) {
+    assert.match(prefs, new RegExp(`\\n\\s*${m[1]}:`), `the home toggles '${m[1]}', which is not a uiPrefs key`);
   }
-  assert.ok(!/prefRow\('enhancedEnvironments'/.test(pane), 'FT4: the ES1 sky\'s switch is the Features home\'s three-way row now (systems/features.js), not a category row');
-  for (const gone of ['music', 'mwfp', 'roads']) assert.ok(!new RegExp(`prefRow\\('${gone}`).test(pane), `${gone} has no engine in this tree and must not be a switch`);
-  assert.ok(!/not built/.test(pane), 'no row labels a shipped thing a hole');
+  for (const gone of ['music', 'mwfp', 'roads']) assert.ok(!new RegExp(`key: '${gone}`).test(reg), `${gone} has no engine in this tree and must not be a switch`);
+  assert.ok(!/not built/.test(reg), 'no row labels a shipped thing a hole');
   const ui = src.slice(src.indexOf('function portRowsInterface('), src.indexOf('function portRows('));
   assert.match(ui, /skinRow\(\)/, 'the skin switch lives under Interface');
   assert.match(src, /const idOf = \(label\) => label\.toLowerCase\(\)/);
@@ -417,7 +417,7 @@ test('EE1: the migration, exercised - stale OFF comes up OFF, an explicit answer
 // ═══ EE13: a season test door - drop into a random town ═════════════
 test('EE13: the Enhanced pane offers a season/weather test that spawns in a random town, and stores nothing', () => {
   const menu = read('src/ui/enhancedMenu.js');
-  const from = menu.indexOf('function outdoorsTestRow(');   // SO1: the door is a row of the Enhanced category
+  const from = menu.indexOf('function outdoorsTestRow(');   // SO1: the door was a row of the Enhanced category; FT12: it is the Test Room's
   const pane = menu.slice(from, menu.indexOf('\n}', from));
   assert.match(pane, /el\('div', 'row-name', 'Test the outdoors'\)/, 'the row exists');
   // EE14: a season is both an archive and a day - the game has three

@@ -33,9 +33,9 @@ test('MENU T1: the category map is TOTAL and DISJOINT over the store', () => {
   assert.equal(seen.size, 171);
   // the shape the design settled on, so a re-bake that renames a key
   // fails the build rather than quietly dropping a row
-  // SO1: ENHANCED is a category with no store key - its rows are the port's own
-  assert.deepEqual(CATEGORY_IDS.map((c) => keysOf(c).length), [0, 21, 16, 5, 66, 37, 19, 7]);
-  assert.deepEqual(CATEGORY_IDS, ['enhanced', 'game', 'controls', 'audio', 'video', 'interface', 'accessibility', 'mods']);
+  // SO1 gave ENHANCED a category with no store key; FT12 took it off the rail - seven categories over the 171
+  assert.deepEqual(CATEGORY_IDS.map((c) => keysOf(c).length), [21, 16, 5, 66, 37, 19, 7]);
+  assert.deepEqual(CATEGORY_IDS, ['game', 'controls', 'audio', 'video', 'interface', 'accessibility', 'mods']);   // FT12: the Enhanced category is gone - the Features home holds its switches
 });
 
 test('MENU T2: no player ever reads a raw ini identifier', () => {
@@ -157,17 +157,14 @@ test('SO1: the settings pane is organised - the port\'s rows sit in the categori
   const menu = src('ui/enhancedMenu.js');
   assert.doesNotMatch(menu, /function paneEnhanced\(/, 'the Enhanced pane is gone');
   assert.doesNotMatch(menu, /inertRow\(/, 'and the row about a removed feature with it');
-  for (const fn of ['portRowsEnhanced', 'portRowsControls', 'portRowsInterface', 'morrowindCard', 'packsCard', 'categoryRows', 'tierGroup']) {
+  for (const fn of ['portRowsControls', 'portRowsInterface', 'morrowindCard', 'packsCard', 'categoryRows', 'tierGroup']) {
     assert.match(menu, new RegExp(`function ${fn}\\(`), `${fn} exists`);
   }
-  assert.match(menu, /if \(catId === 'enhanced'\) return portRowsEnhanced\(opts\);\s*\n\s*if \(catId === 'controls'\) return portRowsControls\(opts\);\s*\n\s*if \(catId === 'interface'\) return portRowsInterface\(opts\);/);
-  // the Enhanced category carries the port's departures, each a real pref
-  const from = menu.indexOf('function portRowsEnhanced('); const pane = menu.slice(from, menu.indexOf('\n}', from));
-  const prefs = src('systems/uiPrefs.js');
-  for (const m of pane.matchAll(/(?:prefRow|choiceRow)\('(\w+)'/g)) assert.match(prefs, new RegExp(`\\n\\s*${m[1]}:`), `'${m[1]}' is a uiPrefs key`);
-  assert.ok(!/(?:prefRow|choiceRow)\('/.test(pane), 'FT2-FT8: every switch moved to the Features home; the category is a pointer');
-  assert.match(pane, /const out = \[featuresPointerRow\(\)\];/, 'the pointer row, first');
-  assert.match(pane, /if \(!pause\) out\.push\(outdoorsTestRow\(\)\);/, 'the outdoors test door, boot only');
+  assert.match(menu, /if \(catId === 'controls'\) return portRowsControls\(opts\);[^\n]*\n\s*if \(catId === 'interface'\) return portRowsInterface\(opts\);/);
+  // FT12: the Enhanced category is GONE from the settings rail - every switch it held is the Features home's, its test door the Test Room's
+  assert.ok(!/function portRowsEnhanced\(|function featuresPointerRow\(|catId === 'enhanced'/.test(menu), 'no Enhanced category, no pointer row');
+  const test = menu.slice(menu.indexOf('function paneTest('), menu.indexOf('\n}', menu.indexOf('function paneTest(')));
+  assert.match(test, /outdoors\.append\(outdoorsTestRow\(\)\);/, 'the outdoors test door is the Test Room\'s (boot only, as the Test Room is)');
   // the touch knobs under Controls, where a finger's device looks; the skin, the HUD size and the FPS counter under Interface
   const ctl = menu.slice(menu.indexOf('function portRowsControls('), menu.indexOf('function portRowsInterface('));
   assert.match(ctl, /if \(!isTouchDevice\(\)\) return out;/);
@@ -192,6 +189,7 @@ test('SO1: the settings pane is organised - the port\'s rows sit in the categori
   assert.match(menu, /const port = portRows\(cat\.id, \{ pause: true \}\);/);
   assert.match(src('ui/enhancedStyle.js'), /\.group-head \{/);
   // the category the port's departures live in is the first, with no store key
-  assert.equal(CATEGORIES[0].id, 'enhanced'); assert.deepEqual(keysOf('enhanced'), []);
+  assert.equal(CATEGORIES[0].id, 'game');   // FT12: Game leads the rail again
+  assert.equal(keysOf('enhanced').length, 0, 'no such category');
   assert.equal(CATEGORIES.find((c) => c.id === 'mods').title, 'Data & Mods');
 });

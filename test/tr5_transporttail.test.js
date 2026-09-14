@@ -41,11 +41,16 @@ test('TR5: ONE place changes the mode, and both the pick and the dismount take i
   const world = read('src/scenes/world.js');
   assert.match(world, /const setTransportModeHere = \(mode\) => \{\s*\n\s*player\.setTransportMode\(mode\);/);
   assert.match(world, /ridingAnimator\.mount\(mode\);\s*\n\s*ridingArt = null;/, 'the art is dropped on every change');
-  // The door ENDS on the art drop. MW-D42 once hung an enhanced-skin
-  // 3D-horse load off this tail; that horse was removed whole
-  // (2026-09-04), and nothing may grow back here unnoticed.
-  assert.match(world, /ridingArt = null;\s*\n\s*\};/,
-    'nothing hangs off the door after the art drop');
+  // The door ENDS on the art drop and the SPRITE's own load (HC1,
+  // 2026-09-14: the one place loads the mount it just set, so a loaded
+  // save, the Test Room's ride and the ship's landing draw a horse, not
+  // only the T-key pick). MW-D42 once hung an enhanced-skin 3D-horse
+  // load off this tail; that horse was removed whole (2026-09-04), and
+  // nothing but TR2's CFA load may grow back here unnoticed.
+  assert.match(world, /ridingArt = null;\s*\n(?:\s*\/\/[^\n]*\n)*\s*if \(isRiding\(mode\)\) \{\s*\n\s*loadRidingArt\(fetchBytes, palette, renderer, mode\)[\s\S]{0,400}?\n\s*\}\s*\n\s*\};/,
+    'the door: the drop, the sprite load, and nothing else');
+  const door = world.slice(world.indexOf('const setTransportModeHere = (mode) => {'), world.indexOf('\n  };', world.indexOf('const setTransportModeHere = (mode) => {')));
+  assert.ok(!/pegas|mesh|rig|nif/i.test(door), 'no 3D horse hangs off it');
   // TR4 put the Ship arm in front of the mode set - it is a teleport,
   // not a mode - so the pick reaches setTransportModeHere past it.
   assert.match(world, /if \(mode === TRANSPORT_MODES\.Ship\) \{ boardOrDisembark\(\); return; \}\s*\n\s*setTransportModeHere\(mode\);/, 'the T-key pick');

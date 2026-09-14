@@ -59,5 +59,5 @@ test('FT5: the Enhanced category\'s row left with its copy; the switch\'s reader
   const menu = read('src/ui/enhancedMenu.js');
   assert.ok(!/prefRow\('enhancedAI'/.test(menu));
   assert.ok(!/enhancedAI/.test(menu), 'the menu no longer knows the key at all (AUDIT 55\'s reach pin moved its reader to the registry)');
-  assert.match(menu, /FT2-FT8 \(2026-09-14\): every switch this category held moved to the\s*\n\s*\/\/ FEATURES home/, 'the category says where its rows went (FT8 consolidated the per-slice notes)');
+  assert.ok(!/function portRowsEnhanced\(/.test(menu), 'FT12: the Enhanced category is gone from the settings rail - its rows are the home\'s');
 });
