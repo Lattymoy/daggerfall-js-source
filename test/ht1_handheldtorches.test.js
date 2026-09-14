@@ -763,8 +763,7 @@ test('HT1: the five hosts - each owns a pool, feeds the rig its raw keys and the
   for (const [name, src] of [['world', world], ['exterior', ext]]) {
     assert.match(src, /\.\.\.droppedTorches\.lights\(\)\)/, `${name}: the dropped lights in the point-light channel`);
     assert.match(src, /const _torchPick = pickActivatableHit\(cam\.pos, useFwd, droppedTorches\.targets\(\), collider\);/, `${name}: the mod's RegisterCustomActivation on the same ray`);
-    assert.match(src, /const _torchNearest = !!_torchPick && _torchPick\.distance <= Math\.min\(_lootPick\?\.distance \?\? Infinity, _dropPick\?\.distance \?\? Infinity, _doorDist\);/, `${name}: AUDIT 66 F7 - nearest wins, the DOOR included`);
-    assert.match(src, /const _doorDist = modes\.exteriorActivationDistance\(cam\.pos, useFwd\);/, `${name}: the door's distance, read once`);
+    assert.match(src, /const _torchNearest = _race\.torchWins;/, `${name}: the torch arm reads the one race (HARD2)`);
     assert.match(src, /if \(_torchNearest\) \{ if \(_torchPick\.distance > _torchPick\.reach\) setMidScreenText\(TOO_FAR_AWAY_TEXT\); else droppedTorches\.activate\(_torchPick\.key, getInteractionMode\(\)\); \}/, `${name}: the 3.2 reach and the mode`);
     assert.match(src, /if \(_mode\(\) !== _torchesMode\) \{ droppedTorches\.destroyAll\(\); _torchesMode = _mode\(\); \}[^\n]*\n\s*if \(modes\.frame\(dt, now\)\) \{/, `${name}: AUDIT 66 F11 - the transition sweep runs ABOVE the modal return, where the transition is`);
     assert.match(src, /droppedTorches\.tick\(dt\);/, `${name}: the burn`);
