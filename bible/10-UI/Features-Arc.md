@@ -441,3 +441,17 @@ Classic, two of them wearing two labels. What remains outside it by
 decision: the mods' own knobs under their cards on the Mods page, the
 dials in Settings, the two dead DFU keys as the unavailable rows they
 are, and the outdoors test door.
+
+**Proved in a browser (2026-09-14).** `tools/featuresProbe.mjs`, against
+the dev server with no ARENA2: the home renders every registry row with
+its labels, the chip row's counts (21 / 7 / 6 / 10) agree with the rows
+each chip filters to, a two-label row shows under both of its chips, a
+condensed row's ONE press moves BOTH stores (Land view distance: the
+pref to 6, DFU's TerrainDistance to 4), and the Settings pane draws a
+moved key as a pointer that walks to the home. 12/12. And
+`tools/enhancedMenuProbe.mjs`, which had been stale since SO1 put the
+Enhanced category first (its settings step read the Game rows off the
+first category, its home-door count was R7's six, its classic block
+predated FD1's Begin pane and ONLINE1's rail), re-aimed: the Game
+category clicked before its rows are read, the Enhanced-section step
+now the home's outdoors row, 29/29.
