@@ -109,6 +109,21 @@ test('HT2 the view performs the act it was handed, and the card no longer calls 
   assert.match(read('src/ui/nativeInventory.js'), /if \(isLightSource\(it\)\) \{ this\._use\(it, null\); return; \}/);
 });
 
+test('HT2-AUDIT: the two switches a lit torch is invisible without are the MOD\'s and DFU\'s own, unchanged, and both are recorded', async () => {
+  // The audit's finding, held as the two facts it rests on: the port
+  // must not quietly flip either default, and if it ever does, this is
+  // the pin that says the record went stale.
+  const { MOD_SETTINGS } = await import('../src/systems/modSettings.js');
+  const { SETTINGS_DEFAULTS } = await import('../src/systems/settingsDefaults.js');
+  assert.equal(MOD_SETTINGS['handheld-torches'].keys['Modules.Sprite'].default, false,
+    'the mod ships Sprite = False (vendor/handheld-torches/modsettings.json) - 1:1');
+  assert.match(read('vendor/handheld-torches/modsettings.json'), /"Value": false,\s*\n\s*"Name": "Sprite",/,
+    'and that is what the shipped bundle says');
+  assert.equal(SETTINGS_DEFAULTS.Enhancements.PlayerTorchFromItems, 'False',
+    "DFU's own defaults.ini gates the torch's LIGHT off too");
+  assert.match(read('bible/06-Systems/Handheld-Torches.md'), /^## HT2-AUDIT - A LIT TORCH IS INVISIBLE BY DEFAULT/m);
+});
+
 test('HT2 records: the pack page, the ledger row and the testing row', () => {
   assert.match(read('bible/10-UI/UI-Arc.md'), /^## HT2 THE ACT ON A LIGHT SOURCE \(2026-09-14/m);
   assert.match(read('bible/06-Systems/Handheld-Torches.md'), /^## HT2 - LIGHTING ONE FROM THE PACK \(2026-09-14\)/m);
