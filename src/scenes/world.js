@@ -4636,6 +4636,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       },
       diseaseCount: () => diseaseCount(playerEntity),
       poisonCount: () => poisonCount(playerEntity),
+      noWorldTime: () => sharedClockOn(),   // OL2: online the trip takes no world time (WORLD5), and the popup says so
       ...extra,
     });
   }
