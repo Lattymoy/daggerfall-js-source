@@ -290,6 +290,8 @@ uniform vec3 uRight;
 uniform vec3 uUp;
 uniform vec3 uOrigin;
 uniform vec2 uSize;
+uniform vec4 uFlatWind;   // WIND3: the wind's rate x, z (m/s, the lab's rate from systems/windDrive.js), the clock, the gust
+uniform float uSway;      // WIND3: this batch's share of the lean (0 = stands still)
 out vec2 vUV;
 out vec3 vBBWorld;
 void main() {
@@ -297,6 +299,26 @@ void main() {
   vec3 world = aCenter + uOrigin
     + uRight * (aCorner.x * uSize.x)
     + uUp * ((aCorner.y + 0.5) * uSize.y);
+  // WIND3: THE FLATS LEAN WITH THE WIND. The lab's grass law (labGrass.js:
+  // a steady push plus a gust that travels ACROSS the field as a wave, the
+  // phase carrying the position along the wind), on the crown: the offset
+  // is weighted by the height up the quad, squared, so the root stands and
+  // the crown moves, and the per-flat phase keeps a wood from moving as a
+  // sheet. A tree's lean is a few percent of its height at most - the
+  // grass's 0.055 scaled to a trunk - and uSway is 0 for every batch that
+  // is not the climate's flora, which is the shader's off switch.
+  if (uSway > 0.0) {
+    vec2 wv = uFlatWind.xy;
+    float wl = length(wv);
+    vec2 wdir = wl > 1e-4 ? wv / wl : vec2(1.0, 0.0);
+    vec3 root = aCenter + uOrigin;
+    float along = dot(root.xz, wdir);
+    float ph = fract(root.x * 0.37 + root.z * 0.91) * 6.2832;
+    float gust = sin(uFlatWind.z * 1.7 - along * 0.35 + ph) * 0.5 + 0.5;
+    float push = wl * (0.55 + gust * 0.75) * 0.0015 * uSway;
+    float top = aCorner.y + 0.5;
+    world.xz += wdir * push * top * top * uSize.y;
+  }
   vBBWorld = world;
   // Textures are bottom-up (v=0 = image bottom), so the quad top
   // (aCorner.y = +0.5) samples v = 1 - matching the mesh path's negated-V
@@ -556,6 +578,7 @@ void main() {
 }`;
 
 const ZERO_ORIGIN = [0, 0, 0];
+const ZERO_FLAT_WIND = new Float32Array(4);   // WIND3: a bare prototype (the crash-report tests) has no wind
 // MaterialReader.cs:448-453: the auto-emissive arm's EmissionColor.
 const EMISSION_WHITE = new Float32Array([1, 1, 1]);
 
@@ -1033,6 +1056,9 @@ export class Renderer {
     this.bbUPointColors = gl.getUniformLocation(this.bbProgram, 'uPointColors');
     this.bbUIndirect = gl.getUniformLocation(this.bbProgram, 'uIndirect');
     this.bbUIndirectColor = gl.getUniformLocation(this.bbProgram, 'uIndirectColor');
+    this.bbUFlatWind = gl.getUniformLocation(this.bbProgram, 'uFlatWind');   // WIND3
+    this.bbUSway = gl.getUniformLocation(this.bbProgram, 'uSway');   // WIND3
+    this._flatWind = new Float32Array(4);   // WIND3: rate x, z, clock, gust - zero until an exterior host sets it, and zero is still
     this._proj = null;
     this._view = null;
 
@@ -2649,6 +2675,17 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
    *  amount} - or null. Numbers only; it binds nothing. */
   setCloudShadow(d) { d = d ?? null; if (d !== this._cloudShadow) { this._cloudShadow = d; this._csStamp++; } }   // VC4: the stamp moves only when the deck does (the hosts hand the same object per pixel)
 
+  /** WIND3: the wind the flats lean with, for this frame - [rate x, rate
+   *  z, seconds, gust] (systems/windDrive.js's windV and gust), or null
+   *  for none. Numbers only; uploaded by drawBillboards. A batch leans by
+   *  this times its own `sway` (0 for everything but the climate's flora,
+   *  floraSwayOf), so an interior or a dungeon that never sets it draws
+   *  as before whatever the last exterior frame left here. */
+  setFlatWind(v) {
+    const fw = this._flatWind ??= new Float32Array(4);
+    if (v) { fw[0] = v[0] || 0; fw[1] = v[1] || 0; fw[2] = v[2] || 0; fw[3] = v[3] || 0; } else fw.fill(0);
+  }
+
   /** VC4: bind the deck's shadow map (or nothing) on the reserved unit
    *  for one program, once per setCloudShadow - a draw-path step. */
   _uploadCloudShadow(key) {
@@ -2842,6 +2879,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniform3fv(this.bbURight, camRight);
     gl.uniform3fv(this.bbUUp, camUp);
     gl.uniform1i(this.bbUTex, 0);
+    if (this.bbUFlatWind) gl.uniform4fv(this.bbUFlatWind, this._flatWind ?? ZERO_FLAT_WIND);   // WIND3: one upload a call; uSway is the batch's
     this._uploadFog(this._bbFog);
     // Billboards take the scene's time-of-day light (DFU's ambient-lit
     // billboards): ambient plus the Lambert-average half of the sun term.
@@ -2881,6 +2919,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // and now binds them once. The blended pass keeps its back-to-front
     // order and only skips the repeats it happens to have.
     let lastKey = null;
+    let lastSway = null;   // WIND3
     const keyOf = (b) => {
       // FA1: an animated flat's frames are uploaded under `record#frame`
       // (the key uploadRecordFrame already mints for enemy sprites);
@@ -2914,6 +2953,8 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       gl.uniform2f(this.bbUSize, b.size.w, b.size.h);
       const o = b.origin || ZERO_ORIGIN;
       gl.uniform3f(this.bbUOrigin, o[0], o[1], o[2]);
+      const sw = b.sway || 0;   // WIND3: the batch's share of the lean, uploaded when it changes between batches
+      if (sw !== lastSway) { gl.uniform1f(this.bbUSway, sw); lastSway = sw; }
       this._bindVao(b.vao);
       gl.drawElements(gl.TRIANGLES, b.indexCount, gl.UNSIGNED_INT, 0);
       this.stats.draws++;
