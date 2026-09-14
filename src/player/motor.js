@@ -72,6 +72,21 @@ export const GROUNDED_JUMP_GATE_S = 0.1;
 // slows instead of the integrator exploding).
 export const FIXED_DT = 1 / 60;
 export const MAX_FRAME_DT = 0.25;
+
+/** WW2 (Mac: "the bob movement plays even when idle"): THE ONE MOTION BAG every host hands the weapon rig and the
+ *  dungeon's foe pass. It was written out longhand at five sites, and the world-hosted dungeon lane's copy stopped
+ *  four fields short - no `standing`, so the Bob's idle gate (`FPSWeaponClone`'s IsStandingStill) never fired and the
+ *  rig fell back to a speed ratio of 1: the WALKING stride played at rest, ten times the idle's size and speed (a
+ *  crouched or mounted walk lost its halving and a run its ratio the same way). One home, so a sixth host cannot ship
+ *  a partial one. `speed` is the frame's moveSpeed; `speedField` the setting (DFU's PlayerMotor.Speed, never zero);
+ *  `standing` the motor's own word (grounded and no input) - the mod's idle gate. */
+export function motionBagOf(player) {
+  return {
+    forward: player.moveForward || 0, strafe: player.moveStrafe || 0, running: !!player.isRunning, speed: player.moveSpeed || 0,
+    grounded: player.grounded !== false, jumping: !!player.jumping, swimming: !!player.swimming, levitating: !!player.levitating,
+    crouching: !!player.crouching, riding: !!player.riding, standing: !!player.standing, speedField: player.speed || 0,
+  };
+}
 export const CROUCH_JUMP_DELTA = 0.8;
 export const JUMP_FWD_BOOST = 0.05;
 /** AcrobatMotor.HandleJumpInput (:82-86): a mounted jump takes a FLAT

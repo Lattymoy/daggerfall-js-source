@@ -172,4 +172,35 @@ modes, the dungeon) feed the clone through the one rig; the miss
 billboard rides each host's hit-effects pool (the interior modes' own
 `interiorHitEffects`), the environment cast each host's collider. The
 hosts' move thunks carry the motor's crouching / riding / standing /
-speed for the bob.
+speed for the bob, through the one motion bag (`motionBagOf`, WW2).
+
+## WW2 - the bob played while idle (2026-09-14)
+
+**Mac: "The newly integrated weapon widget mod had an issue where the
+bob movement plays even when idle."** The Bob keys its idle on
+`standing` (FPSWeaponClone's IsStandingStill), because DFU's
+PlayerMotor.Speed is the SETTING and never zero. The hosts wrote the
+rig's motion bag out longhand at five sites, and the world-hosted
+dungeon lane's copy (worldModes' `drawFoes` call) stopped four fields
+short: no `standing`, no `speedField`, no `crouching`, no `riding`. The
+idle gate never fired, the speed ratio fell back to 1, and the
+WALKING stride played at rest - ten times the idle's size and speed
+(measured through the real component: 25.6 px against the idle's
+2.56); a crouched or mounted walk lost its halving and a run its
+ratio the same way. Note the same class of miss one round earlier at
+that very line (PX26 F4: the jump-state inputs the interior lane never
+sent).
+
+The root cause is the copying, not the copy: the bag is ONE HOME now,
+`motionBagOf(player)` in `player/motor.js`, and every host site reads
+it - a sixth host cannot ship a partial one. The mod's own gate
+(`weaponWidget.js`: `if (m.standing) s = bobWhileIdle ? 0.1 : 0`)
+stands unchanged.
+
+Pinned in `test/ww2_idlebob.test.js` (2): the bag executed from a
+player at rest, one walking and a bare one, and from the real motor;
+by source the five sites and the record. `test/ww1_weaponwidget.test.js`
+restamped: the per-file grep that let a second, partial site pass is a
+per-site count now, and the Bob channel pin gained its idle half - the
+slight stride inside the 0.1 bound, and none at all with BobWhileIdle
+off.
