@@ -268,7 +268,9 @@ import { PrecipitationRenderer } from '../render/precipitation.js';
 import { ROTOR_HUB, rotorPhase, advanceRotor, mountRotor, MILL_SOUND, millSoundPosition } from '../world/windmills.js';   // WM2b: the sails; WM4c: the hum
 import { BODY } from '../world/windmillMesh.js';   // WM2d: the tower, for the collider
 import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
-import { setWeather, currentWeather, currentWeatherRaw, tickWeather, weatherRespawn, applyClimateWeather, importClimateWeathers, weatherJumpStamp, setSharedWeather, rollClimateWeathersForDay } from '../systems/weatherSim.js';   // W1: the live weather state (the save halves ride save.js); SAV3: the classic import's zone array
+import { setWeather, currentWeather, currentWeatherRaw, tickWeather, weatherRespawn, applyClimateWeather, importClimateWeathers, weatherJumpStamp, setSharedWeather, rollClimateWeathersForDay, sampleWeatherField, weatherCrossingStamp, currentFieldCells } from '../systems/weatherSim.js';
+import { fieldFromNative, nativeFromField } from '../systems/weatherField.js';   // WEATHER2b: the field's metres from the streaming world's natives, and back
+import { cellOf } from '../render/volumetricClouds.js';   // WEATHER2c: the field's cells as the clouds' cells   // W1: the live weather state (the save halves ride save.js); SAV3: the classic import's zone array
 import { classicSaveToSnapshot, takePendingClassicSave, peekPendingClassicSave } from '../systems/classicSave.js';   // SAV3: the classic-save import arm
 import { readTokens as readRscTokens, RSC } from '../formats/textRsc.js';   // SAV3: the classic rumors' token payloads
 import { lookScale, lookInvert, keyboardLookRate } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
@@ -613,6 +615,11 @@ export async function bootWorld(canvas, renderer, params, status) {
   let wxNow = weatherTerms();
   let wxFrom = wxNow;
   let seenJump = weatherJumpStamp();   // WX2a: the sim's jump stamp as this host last saw it
+  let seenCrossing = weatherCrossingStamp();   // WEATHER2b: the sim's crossing stamp as this host last saw it
+  /** WEATHER2b: the player's place in the field's metres, the map's climate lookup, and the field's cells in this host's space for the clouds. */
+  const fieldXZ = () => { const wc = state.worldCoords(walkMode ? player.pos : cam.pos); return fieldFromNative(wc.x, wc.z); };
+  const climateAt = (px, py) => maps.getClimateIndex(px, py);
+  const fieldCellsHere = () => currentFieldCells().map((c) => { const n = nativeFromField(c.x, c.z); const h = state.localFromWorld(n[0], n[1]); return cellOf(c.word, h[0], h[1], c.r); });
   function applyWeather(w) {
     weather = w;
     weatherFog = weatherFogRow(w);   // EV4; DS1: the mod's table, unscaled
@@ -3882,7 +3889,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       await _teleportToPixel(pick.pixel.x, pick.pixel.y, null,
         { reposition: REPOSITION.RandomStartMarker });
       if (!weatherOverride) {
-        applyClimateWeather(maps.getClimateIndex(pick.pixel.x, pick.pixel.y), Math.floor(playerTicker.classicMinutes));   // WEATHER2a: over the ground the arrival lands on
+        applyClimateWeather(maps.getClimateIndex(pick.pixel.x, pick.pixel.y), Math.floor(playerTicker.classicMinutes), fieldXZ(), climateAt);   // WEATHER2a: over the ground the arrival lands on; WEATHER2b: the field's word there
         if (currentWeather() !== weather) applyWeather(currentWeather());
       }
       surfacePlayer();
@@ -3930,7 +3937,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // .cs:514-522) belongs to the RESPAWNER alone - quest teleports
     // and respawns, not fast travel (OnInitWorld's array slot) and
     // not quickload (the restored weather stands).
-    if (!weatherOverride && weatherRespawn(Math.floor(playerTicker.classicMinutes), maps.getClimateIndex(px.x, px.y))) {
+    if (!weatherOverride && weatherRespawn(Math.floor(playerTicker.classicMinutes), maps.getClimateIndex(px.x, px.y), Math.random, fieldXZ(), climateAt)) {   // WEATHER2b: the field's word at the destination on the lane
       applyWeather(currentWeather());
     }
     // insideDungeon TRUE always (TeleportPc.cs:116) - never a site-type
@@ -4060,7 +4067,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // tickWeather here is the drain that applies it.
       if (!weatherOverride) {
         tickWeather(Math.floor(playerTicker.classicMinutes), maps.getClimateIndex(pick.pixel.x, pick.pixel.y));
-        applyClimateWeather(maps.getClimateIndex(pick.pixel.x, pick.pixel.y), Math.floor(playerTicker.classicMinutes));   // WEATHER2a: over the ground the arrival lands on
+        applyClimateWeather(maps.getClimateIndex(pick.pixel.x, pick.pixel.y), Math.floor(playerTicker.classicMinutes), fieldXZ(), climateAt);   // WEATHER2a: over the ground the arrival lands on; WEATHER2b: the field's word there
         if (currentWeather() !== weather) applyWeather(currentWeather());
       }
       const clamp = arrivalClampMinutes(playerTicker.classicMinutes, {
@@ -8081,7 +8088,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // never ticks.
     if (!weatherOverride) {
       const _pp = playerTravelPixel();
-      tickWeather(Math.floor(playerTicker.classicMinutes), maps.getClimateIndex(_pp.x, _pp.y));
+      const drained = tickWeather(Math.floor(playerTicker.classicMinutes), maps.getClimateIndex(_pp.x, _pp.y));
+      // WEATHER2b: the field at the player, after the drain - a change on a live frame is a crossing
+      sampleWeatherField(Math.floor(playerTicker.classicMinutes), maps.getClimateIndex(_pp.x, _pp.y), fieldXZ(), climateAt, drained ? 'drain' : 'live');
       // drift-aware: a dungeon-side quickload restores the SIM but not
       // this host's derived lets - re-derive whenever they disagree
       if (currentWeather() !== weather) applyWeather(currentWeather());
@@ -8100,6 +8109,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     const jump = weatherJumpStamp() !== seenJump;
     seenJump = weatherJumpStamp();
     if (jump) sky.weatherJump();
+    // WEATHER2b: a CROSSING - the player walked into a cell of the field, or it drifted over them: a short front
+    const crossing = weatherCrossingStamp() !== seenCrossing;
+    seenCrossing = weatherCrossingStamp();
+    if (crossing && !jump) sky.weatherArrive();
     const fx = weatherFront.tick({ dt, weather, arrival: enhancedFront ? sky.frontArrival() : 1, nowMinutes: playerTicker.classicMinutes, tsec: now / 1000, jump });
     if (fx.changed) wxFrom = wxNow;
     wxNow = enhancedFront ? blendTerms(wxFrom, weatherTerms(), fx.t) : weatherTerms();
@@ -8169,7 +8182,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (skyInside) { skyInside = false; sky.setInside(false); }   // DS1: ExteriorTransitionEvent
     sky.use((currentEntry ? currentEntry.skyBase : 16) + (weatherSkyOffset === 0
       ? seasonValue(dateFromClassicMinutes(playerTicker.classicMinutes)) : weatherSkyOffset), minute, weatherSkyOffset === 0,
-    { weather, violence: weatherOverride ?? currentWeatherRaw(), classicMinutes: playerTicker.classicMinutes, sun: wxNow.sun, flash: flash - 1, pos: walkMode ? player.pos : cam.pos });   // WEATHER2a: the wind blows by the table's word   // ES1: the sky's clock and weather; VC4: the camera's world position, the clouds' and their shadow's origin; the enhanced sky's clouds and moons; VC3: the strobe lights the clouds; DS1 (AUDIT 61): the ONE sunlight scale the ground takes (the front's blend of the host's SetSunlightScale - pin and latch included; the raw row under ?front=off)
+    { weather, violence: weatherOverride ?? currentWeatherRaw(), classicMinutes: playerTicker.classicMinutes, sun: wxNow.sun, flash: flash - 1, pos: walkMode ? player.pos : cam.pos, cells: fieldCellsHere() });   // WEATHER2a: the wind blows by the table's word; WEATHER2b/c: the field's cells are the clouds' cells   // ES1: the sky's clock and weather; VC4: the camera's world position, the clouds' and their shadow's origin; the enhanced sky's clouds and moons; VC3: the strobe lights the clouds; DS1 (AUDIT 61): the ONE sunlight scale the ground takes (the front's blend of the host's SetSunlightScale - pin and latch included; the raw row under ?front=off)
     // Verbatim: fog is never disabled (SetFog keeps RenderSettings.fog on);
     // Sunny/Overcast ARE linear fog to 2400 - the classic distance haze.
     // DaggerfallSky.SetSkyFogColor (:318-325): anything denser than

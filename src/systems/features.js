@@ -287,6 +287,23 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'floraSway', initial: true, online: 'player' }),   // WIND3: systems/windDrive.js floraSwayOn; render/renderer.js BB_VS uSway
   }),
+  // WEATHER2b (2026-09-14, Mac: "a dynamic world space event system where
+  // weather can be traveled out of and into"): THE WEATHER FIELD - the
+  // day's words as places (systems/weatherField.js), read by the sim
+  // every exterior frame (weatherSim.js weatherFieldOn). FORCED ON
+  // ONLINE: one field for every player under the shared day's roll.
+  // `?wxfield=off` the kill door.
+  Object.freeze({
+    id: 'weather-events',
+    title: 'Weather as places',
+    note: 'Under the enhanced outdoors a day\u2019s rain, storm or snow is not everywhere in its climate at once: it stands in cells over the land - '
+      + 'a few thunderheads across the hills, broad rain decks over the plain - drifting on the day\u2019s wind, with an overcast or a cloudy sky between them. '
+      + 'You see a storm on the horizon, walk into it and out the other side, or wait for it to roll over you. Sunny, cloudy, overcast and fog days stay the whole sky\u2019s, as Daggerfall has them. '
+      + 'Off is Daggerfall\u2019s own: the climate\u2019s word to the horizon.',
+    effect: 'Takes effect at once.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'weatherEvents', initial: true, online: true }),   // WEATHER2b: weatherSim.js weatherFieldOn; forced on online - one sky
+  }),
   // FT9 (2026-09-14): THE FIVE PACKS WITH A SWITCH (Dynamic Skies' is
   // the outdoors row's, FT4). Windmills (Kamer) has no switch and so no
   // row - a row needs a control. The order is the Mods pane's.
