@@ -430,6 +430,32 @@ export function relayUrl(url) {
 /** The streaming world's room for a MAP PIXEL (the client mints it; the relay only reads the key). */
 export const worldRoom = (px, py) => `world:${Math.floor(px / WORLD_CELL)},${Math.floor(py / WORLD_CELL)}`;
 
+/** WORLD6b-iii(b) THE CELL SEAM (D9: two players a pixel apart astride a cell edge were in two rooms). The HALO: the
+ *  neighbouring cell rooms whose nearest pixel is within `reach` map pixels of (px, py) - Chebyshev, as inRange is -
+ *  which a player hellos into besides its own cell. By symmetry everyone within RANGE_PIXELS of me is then a member
+ *  of MY cell's room (a peer within range of me is within range of the cell I stand in), so a pose, a foes frame, a
+ *  chat line sent to my own cell reaches every peer in range, and a halo room is posed into and listened to alone.
+ *  `current` (the rooms held now) and `slack`: a held room stays until it is `reach + slack` away - the hysteresis
+ *  that keeps a player pacing the edge from opening and closing a socket every step. The map's edge: no negative
+ *  cell (the key regex admits none). */
+export function cellHaloFor(px, py, { reach = RANGE_PIXELS, slack = 1, current = null } = {}) {
+  if (!Number.isFinite(px) || !Number.isFinite(py)) return [];
+  const held = current ? new Set(current) : null;
+  const cx = Math.floor(px / WORLD_CELL), cy = Math.floor(py / WORLD_CELL);
+  const out = [];
+  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+    if (!dx && !dy) continue;
+    const nx = cx + dx, ny = cy + dy;
+    if (nx < 0 || ny < 0 || nx > 999 || ny > 999) continue;
+    const ddx = dx < 0 ? px - (cx * WORLD_CELL - 1) : dx > 0 ? (cx + 1) * WORLD_CELL - px : 0;
+    const ddy = dy < 0 ? py - (cy * WORLD_CELL - 1) : dy > 0 ? (cy + 1) * WORLD_CELL - py : 0;
+    const d = Math.max(ddx, ddy);
+    const key = `world:${nx},${ny}`;
+    if (d <= reach || (held?.has(key) && d <= reach + slack)) out.push(key);
+  }
+  return out;
+}
+
 /** A world-frame pose's cell coordinates - floor(x / PIXEL_UNITS),
  *  floor(z / PIXEL_UNITS). NOT the map pixel (the map's y runs the
  *  other way, 499 - this); distances between two of these equal map

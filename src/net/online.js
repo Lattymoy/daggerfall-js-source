@@ -219,7 +219,9 @@ export class OnlineSession {
     this.terminal = false;     // the relay closed with a reason a retry will not change (replaced, refused)
     this.terminalAt = null;    // when it did (the session's clock): rejoin() waits on it
     this._cbucket = null;      // the client's own chat gate (AUDIT CHAT A8): the relay's law, run first
-    this.peers = new Map();    // id -> { id, name, look, pose, from, at, shown, seenAt }
+    this.peers = new Map();    // id -> { id, name, look, pose, from, at, shown, seenAt } - MERGED over every room held (WORLD6b-iii(b))
+    this._rooms = new Map();   // WORLD6b-iii(b): room -> Set<id> - which rooms report which peers; a peer stays in `peers` while any room holds it
+    this._halo = new Map();    // WORLD6b-iii(b): room -> { ws, status, retryAt, backoff } - the neighbouring cells within range (hello'd and posed into, listened to, never streamed to: my own cell's fan reaches everyone in range)
     this._ws = null;
     this._lastSent = null;
     this._lastSentAt = -Infinity;
@@ -235,6 +237,22 @@ export class OnlineSession {
    *  they stood in was shared or merely peopled. */
   join(room, pose = null) {
     if (room === this.room && this._ws) return;
+    const h = this._halo.get(room);
+    if (h && this._ws && isCellRoom(room) && isCellRoom(this.room)) {
+      // WORLD6b-iii(b): a crossing into a cell already hello'd as a halo PROMOTES its socket - no close, no reconnect,
+      // no roster wiped (the seam crossing was a churn: every puppet gone, every peer re-said); the cell left steps
+      // down to a halo, and setHalo lets it go once it is out of range
+      const old = { ws: this._ws, status: this.status, retryAt: null, backoff: BACKOFF_MIN_MS };
+      this._halo.delete(room);
+      this._halo.set(this.room, old);
+      this._ws = h.ws; this.status = h.status; this.error = null; this._retryAt = h.retryAt; this._backoff = h.backoff;
+      this.room = room;
+      this._pose = pose ?? this._pose;
+      this._lastSent = null; this._lastSentAt = -Infinity;
+      this._setHost(null);   // a cell keeps no host
+      console.info(`[online] room ${room} - shared country (each player's foes are everyone's), crossed`);
+      return;
+    }
     this.leave();
     this.room = room;
     console.info(`[online] room ${room} - ${isWorldRoom(room) ? 'a shared world' : isCellRoom(room) ? 'shared country (each player\'s foes are everyone\'s)' : isChatRoom(room) ? 'a chat channel' : 'presence only'}`);   // WORLD6b: a cell says what it shares
@@ -245,18 +263,73 @@ export class OnlineSession {
     this._open();
   }
 
-  /** Leave the room: the socket closes, the peers go. */
+  /** Leave the room: the socket closes, the peers go - and every halo's with it (WORLD6b-iii(b)). */
   leave() {
     this._closedByUs = true;
     const ws = this._ws;
     this._ws = null;
     if (ws) { try { ws.close(1000, 'leaving'); } catch { /* already closed */ } }
+    for (const [, h] of this._halo) { try { h.ws?.close(1000, 'leaving'); } catch { /* already closed */ } }
+    this._halo.clear();
+    this._rooms.clear();
     this._retryAt = null;
     this.room = null;
     this.peers.clear();
     this.status = 'closed';
     this._setHost(null);   // AUDIT WORLD2 C2: through the one door, so the world host hears the seat go with the room
   }
+
+  /** WORLD6b-iii(b): the HALO - the neighbouring cell rooms to hold besides my own (wire.cellHaloFor's list): a room
+   *  wanted and not held is hello'd into, a room held and not wanted is left (its peers go unless another room holds
+   *  them). Only a cell has a halo; anywhere else the list is emptied. */
+  setHalo(rooms) {
+    const want = new Set(isCellRoom(this.room) && this._ws ? (rooms ?? []).filter((r) => isCellRoom(r) && r !== this.room) : []);
+    for (const [room, h] of [...this._halo]) {
+      if (want.has(room)) continue;
+      this._halo.delete(room);
+      try { h.ws?.close(1000, 'leaving'); } catch { /* already closed */ }
+      this._forgetRoom(room);
+    }
+    for (const room of want) if (!this._halo.has(room)) this._openHalo(room);
+  }
+  /** WORLD6b-iii(b): the halo rooms held now (for the next cellHaloFor, its hysteresis). */
+  haloRooms() { return [...this._halo.keys()]; }
+  /** WORLD6b-iii(b): do I hold a socket in this room - my own cell, or a halo's? A foes frame keyed to a halo room is
+   *  the world (its owner's cell), one keyed to a room I am not in is not. */
+  inRoom(key) { return !!key && ((key === this.room && !!this._ws) || this._halo.get(key)?.status === 'open'); }
+  _member(room, id, p, now) {
+    let s = this._rooms.get(room);
+    if (!s) this._rooms.set(room, s = new Set());
+    s.add(id);
+    const have = this.peers.get(id);
+    if (have) this._refresh(have, p, now); else this.peers.set(id, this._peer(p, now));
+  }
+  _heldElsewhere(id, but) { for (const [room, s] of this._rooms) if (room !== but && s.has(id)) return true; return false; }
+  _unmember(room, id) {
+    this._rooms.get(room)?.delete(id);
+    if (!this._heldElsewhere(id, null)) this.peers.delete(id);
+  }
+  _forgetRoom(room) {
+    const s = this._rooms.get(room);
+    this._rooms.delete(room);
+    if (s) for (const id of s) if (!this._heldElsewhere(id, null)) this.peers.delete(id);
+  }
+  _openHalo(room) {
+    if (!this.url || !this._WS) return;
+    let ws;
+    try { ws = new this._WS(`${this.url}/room/${room}`); } catch { return; }
+    const h = { ws, status: 'connecting', retryAt: null, backoff: BACKOFF_MIN_MS };
+    this._halo.set(room, h);
+    this._bind(ws, room);
+  }
+  /** Which room a socket serves NOW - the primary's, a halo's, or none (a stale socket's events are ignored). The
+   *  role is read at event time, so a promoted or demoted socket keeps its handlers (WORLD6b-iii(b)). */
+  _roomOf(ws) {
+    if (ws && this._ws === ws) return this.room;
+    for (const [room, h] of this._halo) if (h.ws === ws) return room;
+    return null;
+  }
+  _holder(room) { return room === this.room ? this : this._halo.get(room); }
 
   /** Am I the room's host (WORLD1)? False until the welcome says so. */
   isHost() { return !!this.id && this.host === this.id; }
@@ -294,11 +367,20 @@ export class OnlineSession {
     // AUDIT WORLD6b A6: the owner must be a peer I KNOW (the roster's) - a blow to an owner already gone bought the relay's funnel for nothing
     if (cell ? (!hitOwnerOf(data) || hitOwnerOf(data) === this.id || !this.peers.has(hitOwnerOf(data))) : (this.isHost() || !this.host || !isWorldRoom(this.room))) return false;
     if (!this._ws || this.status !== 'open') return false;
+    // WORLD6b-iii(b): in a cell the blow goes through the OWNER's cell - the room its frame was keyed to (`k`), where its
+    // socket is; a halo's when that is not my own. The owner must be reported there (the relay routes `to` inside the
+    // one room); an owner in no room I hold is not mine to strike
+    let ws = this._ws;
+    if (cell) {
+      const owner = hitOwnerOf(data), k = typeof data.k === 'string' ? data.k : this.room;
+      if (k !== this.room) { const h = this._halo.get(k); if (!h || h.status !== 'open' || !h.ws) return false; ws = h.ws; }
+      if (!this._rooms.get(k)?.has(owner)) return false;
+    }
     const gate = hitGate(this._hbucket, this._now());   // AUDIT WORLD2 A6: HIT_HZ_MAX a second at home - refused to the caller, never dropped by the relay unseen
     if (!gate.pass) return false;
     const s = JSON.stringify({ t: 'hit', data });
     if (s.length > MAX_FRAME_BYTES) return false;
-    try { this._ws.send(s); } catch { return false; }
+    try { ws.send(s); } catch { return false; }
     this._hbucket = gate.bucket; this.stats.sent++; this.stats.hits++;
     return true;
   }
@@ -332,26 +414,51 @@ export class OnlineSession {
     try { ws = new this._WS(`${this.url}/room/${this.room}`); } catch (e) { this.status = 'error'; this.error = String(e?.message ?? e); this._scheduleRetry(); return; }
     this._ws = ws;
     this.status = 'connecting';
+    this._bind(ws, this.room);
+  }
+
+  /** The one handler set for a socket, the primary's or a halo's - the role is read at event time (_roomOf). */
+  _bind(ws) {
     ws.onopen = () => {
-      if (this._ws !== ws) return;
-      this.status = 'open'; this.error = null; this._backoff = BACKOFF_MIN_MS;
-      this._lastSent = null; this._lastSentAt = -Infinity;
-      this._send({ t: 'hello', id: this.id, secret: this.secret, name: this.name, look: this.look, pose: this.presence ? this._pose : null });
-      if (!this.presence) this._lastSentAt = this._now();   // the heartbeat clock starts at the hello
+      const room = this._roomOf(ws);
+      if (room == null) return;
+      const hello = JSON.stringify({ t: 'hello', id: this.id, secret: this.secret, name: this.name, look: this.look, pose: this.presence ? this._pose : null });
+      if (room === this.room) {
+        this.status = 'open'; this.error = null; this._backoff = BACKOFF_MIN_MS;
+        this._lastSent = null; this._lastSentAt = -Infinity;
+        this._send({ t: 'hello', id: this.id, secret: this.secret, name: this.name, look: this.look, pose: this.presence ? this._pose : null });
+        if (!this.presence) this._lastSentAt = this._now();   // the heartbeat clock starts at the hello
+      } else {
+        const h = this._halo.get(room);
+        h.status = 'open'; h.backoff = BACKOFF_MIN_MS; h.retryAt = null;
+        try { ws.send(hello); this.stats.sent++; } catch { /* the close will say */ }
+      }
     };
-    ws.onmessage = (ev) => { if (this._ws === ws) this._receive(ev.data); };
+    ws.onmessage = (ev) => { const room = this._roomOf(ws); if (room != null) this._receive(ev.data, room); };
     ws.onclose = (ev) => {
-      if (this._ws !== ws) return;
+      const room = this._roomOf(ws);
+      if (room == null) return;
+      const code = ev?.code ?? 1005;
+      if (room !== this.room) {
+        // WORLD6b-iii(b): a halo's socket closed - its peers go unless another room holds them; a terminal close ends
+        // the halo (the primary hears the same verdict on its own socket), a busy or dropped one is retried on tick
+        const h = this._halo.get(room);
+        this._forgetRoom(room);
+        if (code === CLOSE_REPLACED || code === CLOSE_POLICY || this._closedByUs) { this._halo.delete(room); return; }
+        h.ws = null; h.status = 'closed';
+        if (code === CLOSE_BUSY) h.backoff = Math.max(h.backoff, BACKOFF_MAX_MS / 2);
+        h.retryAt = this._now() + h.backoff; h.backoff = Math.min(BACKOFF_MAX_MS, h.backoff * 2);
+        return;
+      }
       this._ws = null;
       this._setHost(null);   // AUDIT WORLD2 A2/C2: a dead socket holds no seat - the host is unknown until the next welcome, and the world host hears it (onHost)
-      const code = ev?.code ?? 1005;
       if (code === CLOSE_REPLACED) { this.terminal = true; this.terminalAt = this._now(); this.status = 'error'; this.error = 'this character is online in another window'; return; }
       if (code === CLOSE_POLICY) { this.terminal = true; this.terminalAt = this._now(); this.status = 'error'; this.error = this.error ?? 'the relay refused a frame'; return; }
       if (code === CLOSE_BUSY) { this.status = 'closed'; this.error = 'the room is busy'; this._backoff = Math.max(this._backoff, BACKOFF_MAX_MS / 2); this._scheduleRetry(); return; }   // full or gated: back off hard, then try again
       this.status = 'closed';
       if (!this._closedByUs) this._scheduleRetry();
     };
-    ws.onerror = () => { if (this._ws === ws) { this.status = 'error'; this.error = 'socket error'; } };
+    ws.onerror = () => { const room = this._roomOf(ws); if (room === this.room && room != null) { this.status = 'error'; this.error = 'socket error'; } };
   }
 
   _scheduleRetry() {
@@ -374,6 +481,8 @@ export class OnlineSession {
     if (now - this._lastSentAt < HEARTBEAT_MS && !poseChanged(this._lastSent, pose)) return false;
     if (!this._send({ t: 'pose', p: pose })) return false;
     this._lastSent = { ...pose }; this._lastSentAt = now; this.stats.poses++;
+    // WORLD6b-iii(b): the halo rooms hear my pose too - their fans range me by it and their rosters place me
+    if (this._halo.size) { const s = JSON.stringify({ t: 'pose', p: pose }); for (const [, h] of this._halo) if (h.status === 'open' && h.ws) { try { h.ws.send(s); this.stats.sent++; } catch { /* the close will say */ } } }
     return true;
   }
 
@@ -402,22 +511,23 @@ export class OnlineSession {
     return true;
   }
 
-  _receive(data) {
+  _receive(data, room = this.room) {
     let m;
     try { m = JSON.parse(data); } catch { return; }
     if (!m || typeof m !== 'object') return;
     this.stats.received++;
     const now = this._now();
+    const primary = room === this.room;   // WORLD6b-iii(b): a halo room's frames place its peers and carry a peer's foes and blows; the host, the clock and the memory are my own room's alone
     if (m.t === 'welcome') {
       // merged, not wiped: a peer already known keeps where it is drawn
       const keep = new Set();
       for (const p of Array.isArray(m.peers) ? m.peers : []) {
         if (!p || typeof p.id !== 'string' || p.id === this.id) continue;
         keep.add(p.id);
-        const have = this.peers.get(p.id);
-        if (have) this._refresh(have, p, now); else this.peers.set(p.id, this._peer(p, now));
+        this._member(room, p.id, p, now);
       }
-      for (const id of [...this.peers.keys()]) if (!keep.has(id)) this.peers.delete(id);
+      for (const id of [...(this._rooms.get(room) ?? [])]) if (!keep.has(id)) this._unmember(room, id);
+      if (!primary) return;
       this._setHost(m.host);   // WORLD1: the room's host, and the room's memory when it keeps one
       if (Number.isFinite(m.now)) {   // WORLD5: the relay's clock - a year off is no clock; OL3: and is SAID, on the console and the HUD line, rather than run uncorrected in silence
         if (Math.abs(m.now - Date.now()) < 366 * 24 * 3600 * 1000) { this.clockOffsetMs = m.now - Date.now(); this.clockWarning = null; this.onClock?.(this.clockOffsetMs); }
@@ -425,10 +535,10 @@ export class OnlineSession {
       }
       if (m.world && typeof m.world === 'object' && !Array.isArray(m.world)) this.onWorld?.(m.world);
     } else if (m.t === 'host') {
-      this._setHost(m.id);
+      if (primary) this._setHost(m.id);
     } else if (m.t === 'world') {
       // AUDIT WORLD34 C1: the room's memory pushed after the welcome - the host's alone (the relay says whose), never my own back
-      if (typeof m.id === 'string' && m.id === this.host && m.id !== this.id && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) this.onWorld?.(m.data);
+      if (primary && typeof m.id === 'string' && m.id === this.host && m.id !== this.id && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) this.onWorld?.(m.data);
     } else if (m.t === 'foes') {
       // WORLD2: the host's live foes - the room's host's alone (a stale frame from a host that just left is not the world)
       // WORLD6b: in a cell every peer's frame is its own foes; in a world room the host's alone
@@ -440,14 +550,11 @@ export class OnlineSession {
       if ((isCellRoom(this.room) ? hitOwnerOf(m.data) === this.id : this.isHost()) && typeof m.id === 'string' && m.id !== this.id && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) this.onHit?.(m.id, m.data);
     } else if (m.t === 'act') {
       // WORLD3: a door, a lever or a platform moved by another in my world room - never my own back, never outside one
-      if (isWorldRoom(this.room) && typeof m.id === 'string' && m.id !== this.id && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) this.onAct?.(m.id, m.data);
+      if (primary && isWorldRoom(this.room) && typeof m.id === 'string' && m.id !== this.id && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) this.onAct?.(m.id, m.data);
     } else if (m.t === 'join') {
-      if (typeof m.id === 'string' && m.id !== this.id) {
-        const have = this.peers.get(m.id);
-        if (have) this._refresh(have, m, now); else this.peers.set(m.id, this._peer(m, now));
-      }
+      if (typeof m.id === 'string' && m.id !== this.id) this._member(room, m.id, m, now);
     } else if (m.t === 'leave') {
-      this.peers.delete(m.id);
+      if (typeof m.id === 'string') this._unmember(room, m.id);   // WORLD6b-iii(b): gone from THIS room - kept while another holds it
     } else if (m.t === 'pose') {
       const p = this.peers.get(m.id);
       const pose = p ? validPose(m.p) : null;
@@ -487,6 +594,7 @@ export class OnlineSession {
   tick() {
     const now = this._now();
     if (this._retryAt != null && now >= this._retryAt && !this._ws && !this._closedByUs && !this.terminal && this.room) { this._retryAt = null; this.stats.reconnects++; this._open(); }
+    for (const [room, h] of this._halo) if (!h.ws && h.retryAt != null && now >= h.retryAt && !this._closedByUs && !this.terminal) { this._halo.delete(room); this.stats.reconnects++; this._openHalo(room); }   // WORLD6b-iii(b)
     if (!this.presence && this.status === 'open' && now - this._lastSentAt >= HEARTBEAT_MS && this._send({ t: 'ping' })) this._lastSentAt = now;   // CHAT1: a channel's keepalive, answered without waking the room
     for (const p of this.peers.values()) {
       if (!p.pose) continue;
