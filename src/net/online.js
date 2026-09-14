@@ -69,7 +69,7 @@
 //
 // Not a DFU member: Daggerfall Unity has no multiplayer. Ledger A row.
 import { tabStorage } from '../systems/appStorage.js';   // the tab's own storage - the seam, never the browser's own (a PIN)
-import { WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, validPose, validLook, sanitizeName, sanitizeChat, chatGate, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits } from './wire.js';
+import { WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, sanitizeChat, chatGate, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits } from './wire.js';
 
 export { WORLD_CELL, RANGE_PIXELS, worldRoom };
 
@@ -237,7 +237,7 @@ export class OnlineSession {
     if (room === this.room && this._ws) return;
     this.leave();
     this.room = room;
-    console.info(`[online] room ${room} - ${isWorldRoom(room) ? 'a shared world' : isChatRoom(room) ? 'a chat channel' : 'presence only'}`);
+    console.info(`[online] room ${room} - ${isWorldRoom(room) ? 'a shared world' : isCellRoom(room) ? 'shared country (each player\'s foes are everyone\'s)' : isChatRoom(room) ? 'a chat channel' : 'presence only'}`);   // WORLD6b: a cell says what it shares
     this._pose = pose ?? this._pose;
     this._closedByUs = false;
     this.terminal = false;
@@ -275,7 +275,8 @@ export class OnlineSession {
    *  bucket (a frame over it is kept home rather than struck by the relay), never past FOES_FRAME_MAX. */
   sendFoes(data) {
     if (!data || typeof data !== 'object' || Array.isArray(data)) return false;
-    if (!this.isHost() || !isWorldRoom(this.room) || !this._ws || this.status !== 'open') return false;
+    // WORLD6b: in a cell anyone streams (a foe is its spawner's); in a world room the host alone
+    if (!(isCellRoom(this.room) || (this.isHost() && isWorldRoom(this.room))) || !this._ws || this.status !== 'open') return false;
     const gate = foesGate(this._fbucket, this._now());
     if (!gate.pass) return false;
     const s = JSON.stringify({ t: 'foes', data });
@@ -288,7 +289,10 @@ export class OnlineSession {
   /** WORLD2: a blow on the host's foe out - anyone but the host (the host applies its own), in a world room. */
   sendHit(data) {
     if (!data || typeof data !== 'object' || Array.isArray(data)) return false;
-    if (this.isHost() || !this.host || !isWorldRoom(this.room) || !this._ws || this.status !== 'open') return false;
+    // WORLD6b: in a cell the blow names its owner (`to`, a peer, never me); in a world room it goes to the host, as WORLD2 has it
+    const cell = isCellRoom(this.room);
+    if (cell ? (!hitOwnerOf(data) || hitOwnerOf(data) === this.id) : (this.isHost() || !this.host || !isWorldRoom(this.room))) return false;
+    if (!this._ws || this.status !== 'open') return false;
     const gate = hitGate(this._hbucket, this._now());   // AUDIT WORLD2 A6: HIT_HZ_MAX a second at home - refused to the caller, never dropped by the relay unseen
     if (!gate.pass) return false;
     const s = JSON.stringify({ t: 'hit', data });
@@ -426,10 +430,12 @@ export class OnlineSession {
       if (typeof m.id === 'string' && m.id === this.host && m.id !== this.id && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) this.onWorld?.(m.data);
     } else if (m.t === 'foes') {
       // WORLD2: the host's live foes - the room's host's alone (a stale frame from a host that just left is not the world)
-      if (typeof m.id === 'string' && m.id === this.host && m.id !== this.id && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) this.onFoes?.(m.id, m.data);
+      // WORLD6b: in a cell every peer's frame is its own foes; in a world room the host's alone
+      if (typeof m.id === 'string' && (isCellRoom(this.room) || m.id === this.host) && m.id !== this.id && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) this.onFoes?.(m.id, m.data);
     } else if (m.t === 'hit') {
       // WORLD2: a blow on my foe - mine to apply only while I host
-      if (this.isHost() && typeof m.id === 'string' && m.id !== this.id && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) this.onHit?.(m.id, m.data);
+      // WORLD6b: in a cell a blow is mine when it names me (the relay routed it, and the frame says so); in a world room while I host
+      if ((isCellRoom(this.room) ? hitOwnerOf(m.data) === this.id : this.isHost()) && typeof m.id === 'string' && m.id !== this.id && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) this.onHit?.(m.id, m.data);
     } else if (m.t === 'act') {
       // WORLD3: a door, a lever or a platform moved by another in my world room - never my own back, never outside one
       if (isWorldRoom(this.room) && typeof m.id === 'string' && m.id !== this.id && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) this.onAct?.(m.id, m.data);

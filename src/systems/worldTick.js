@@ -74,6 +74,14 @@ import { passiveSpecialsMagicRound } from './passiveSpecials.js';   // V2c: care
 // boundary, which is where PlayerEntity.Update runs them.
 import { updateRegionalPrices } from './shopStock.js';            // FormulaHelper.UpdateRegionalPrices (:2053)
 import { rollClimateWeathersForDay, evolveClimateWeathers } from './weatherSim.js';      // WeatherManager.SetClimateWeathers (:419); CLK2: the enhanced lane's hourly evolution
+import { seededRng } from './wind.js';   // WORLD6b: the shared day's own generator for the region's walk
+const SHARED_DAY_SEED = 0x44415953;   // 'DAYS'
+/** WORLD6b: the generator a day's rolls come from. Under the shared clock the day's rolls are THE DAY'S - the price
+ *  walk's and the faction powers' generator is seeded by the world's day (the weather's own law, WORLD5 rollsFor),
+ *  so two players whose state agrees walk the region alike; offline, the caller's own `rolls`. The STATE stays
+ *  each player's (the prices and the powers live on the entity - DFU has one player); one economy is the region as
+ *  a world, and a later slice. */
+export const dayRollsFor = (minute, rolls) => (sharedClockOn() ? seededRng((Math.floor(minute / MINUTES_PER_DAY) * 7919) ^ SHARED_DAY_SEED) : rolls);
 import { removeExpiredRooms } from './tavern.js';                 // PlayerEntity.RemoveExpiredRentedRooms (:257)
 import { removeExpiredItems } from './createItem.js';             // X11b: ItemCollection.RemoveExpiredItems (:125), the per-minute sweep
 import { tickPlayerTorch } from './playerTorch.js';               // T1: EnablePlayerTorch.Update, on the REAL clock
@@ -315,12 +323,13 @@ export function runDayChange({ entity, lastMinutes, nowMinutes, rolls = Math.ran
   if (!entity) return none;
   const daysPast = Math.floor(nowMinutes / MINUTES_PER_DAY) - Math.floor(lastMinutes / MINUTES_PER_DAY);
   if (!(daysPast > 0)) return none;
+  const dayRolls = dayRollsFor(nowMinutes, rolls);   // WORLD6b: the shared day's own generator for the walk
 
   // :446 - the merchants' tug-of-war on every region's price index.
   // S42: the condition store rides the entity like every other day-block
   // input, so the price walk's PricesHigh/PricesLow half reaches it with
   // no host wiring - the same reason the whole block lives here.
-  updateRegionalPrices(entity, entity.factionRep?.dict ?? null, daysPast, rolls, entity.regionConditions ?? null);
+  updateRegionalPrices(entity, entity.factionRep?.dict ?? null, daysPast, dayRolls, entity.regionConditions ?? null);
 
   // :447-448 - roll the six climate zones and RAISE the pending-apply
   // flag; the exterior frame's tickWeather drains it. Splitting those
@@ -620,8 +629,11 @@ export function tickPlayerMinutes({
     // faction's power, so S41's price walk - which tilts a region's
     // prices by The Merchants' power against the region's own - had a
     // constant for its whole tug-of-war term.
+    // WORLD6b: both power arms of one minute draw from ONE generator, the day's (the 266-day minute where the two
+    // align fires the walk twice, as DFU does, and the second walk must not replay the first's rolls)
+    const dayRolls = dayRollsFor(i, rolls);
     if (i % FACTION_POWER_INTERVAL_MINUTES === 0) {
-      regionPowerUpdate(entity.factionRep ?? null, { rumorMill: entity.rumorMill ?? null, rolls });
+      regionPowerUpdate(entity.factionRep ?? null, { rumorMill: entity.rumorMill ?? null, rolls: dayRolls });   // WORLD6b: the shared day's roll
     }
     // :468-472, the THIRD arm: every 38 days DFU calls the SAME member
     // with updateConditions true, which runs this power half AND the
@@ -641,7 +653,7 @@ export function tickPlayerMinutes({
     // from classic, inherited deliberately.
     if (i % REGION_CONDITIONS_INTERVAL_MINUTES === 0) {
       regionPowerUpdate(entity.factionRep ?? null, {
-        rumorMill: entity.rumorMill ?? null, rolls,
+        rumorMill: entity.rumorMill ?? null, rolls: dayRolls,   // WORLD6b: the shared day's roll
         updateConditions: true, regionConditions: entity.regionConditions ?? null,
       });
       // :472 - StartRacialOverrideQuest(false) rides this same arm:

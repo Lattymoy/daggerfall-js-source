@@ -48,7 +48,7 @@ test('WORLD5: the wire\'s clock law - the epoch is the classic game start on 202
   assert.equal(sharedClassicMinutes(ONLINE_EPOCH_MS + 2 * 3600 * 1000), CLASSIC_GAME_START_TIME + MINUTES_PER_DAY, 'a day every two real hours');
   assert.equal(sharedClassicMinutes(ONLINE_EPOCH_MS - 5000), CLASSIC_GAME_START_TIME - 1, 'and a clock before the epoch reads before the start, never wraps');
   for (const k of ['ONLINE_EPOCH_MS', 'ONLINE_EPOCH_MINUTES', 'ONLINE_MINUTES_PER_MS', 'sharedClassicMinutes']) assert.equal(relay[k], { ONLINE_EPOCH_MS, ONLINE_EPOCH_MINUTES, ONLINE_MINUTES_PER_MS, sharedClassicMinutes }[k], `${k} at both ends`);
-  assert.equal(RELAY_VERSION, 'world61', 'the relay says which one it is (AUDIT WORLD5 bumped it for the welcome\'s clock; WORLD6a and its audit for the law)');
+  assert.equal(RELAY_VERSION, 'world62', 'the relay says which one it is (AUDIT WORLD5 bumped it for the welcome\'s clock; WORLD6a and its audit for the law; WORLD6b for the cell)');
 });
 
 test('WORLD5: the relay\'s welcome carries its clock (`now`, ms) in every place room and no channel; the session reads its offset from it, says so, and refuses a clock a year off', async () => {

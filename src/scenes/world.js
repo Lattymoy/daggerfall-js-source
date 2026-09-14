@@ -206,7 +206,7 @@ import { Collider } from '../player/collider.js';
 import { createDataPipeline } from './dataPipeline.js';
 import { createWorldModes } from './worldModes.js';
 import { OnlineSession, roomKeyFor, DEFAULT_SERVER, WORLD_PUBLISH_MS, FOES_MS, FOES_FULL_MS, FOES_STALE_MS } from '../net/online.js';   // ONLINE1: the session; WORLD1: the room's memory
-import { POSE_STRIKES, isWorldRoom, actFrameFits, sharedClassicMinutes, wallMsForClassicMinutes } from '../net/wire.js';   // MAC7 #1: the swing's kind on the wire; AUDIT WORLD4 A1: whether an act frame can be said at all
+import { POSE_STRIKES, isWorldRoom, isCellRoom, actFrameFits, sharedClassicMinutes, wallMsForClassicMinutes } from '../net/wire.js';   // MAC7 #1: the swing's kind on the wire; AUDIT WORLD4 A1: whether an act frame can be said at all
 import { hasDaggerfallArrows } from '../combat/fpArm.js';   // MAC7 #2: the arrow bit on the wire - weaponRig's own read
 import { drawText } from '../ui/text.js';   // ONLINE1: the session's status line
 import { RemotePlayers, composeLook } from '../net/remotePlayers.js';   // ONLINE1: the others, drawn
@@ -2720,7 +2720,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // through the one that owns the billboard - `exteriorFoePool` is
     // the watch AND the encounter foes, and this arm reached the
     // encounter pool's remover for both. That was not a leak: removeFoe
-    // (exteriorFoes.js:289-294) never looks the record up in `foes`, and
+    // (exteriorFoes.js:305-310) never looks the record up in `foes`, and
     // both pools share this host's one renderer, so a struck WATCHMAN
     // got exactly what removeGuard (cityGuards.js:1215-1219) gives it -
     // batch freed, `dead = true`, no corpse, skipped by the next AI pass
@@ -6631,12 +6631,16 @@ export async function bootWorld(canvas, renderer, params, status) {
   // stream every changed one FOES_MS apart (every one FOES_FULL_MS apart, so a dropped delta heals); while another
   // hosts, my layout foes are puppets that follow the stream and my blows on them go to the host as hits.
   let _foesSentAt = -Infinity, _foesFullAt = -Infinity, _foesInAt = -Infinity;
+  let _foesRoom = null;   // WORLD6b: the room the puppets belong to
   const foesStream = (now) => {
-    if (!online || !online.isHost() || online.status !== 'open' || !isWorldRoom(online.room)) return false;
+    if (!online || online.status !== 'open') return false;
+    // WORLD6b: in a CELL everyone streams their own foes; in a world room the host alone
+    const cell = isCellRoom(online.room);
+    if (!cell && (!online.isHost() || !isWorldRoom(online.room))) return false;
     if (now - _foesSentAt < FOES_MS) return false;
     _foesSentAt = now;   // AUDIT WORLD2 B11: the clock re-arms whether or not anything changed - a quiet room asked every frame
     const full = now - _foesFullAt >= FOES_FULL_MS;
-    const frame = modes?.dungeonFoesFrame?.(full);
+    const frame = cell ? ((modes?.mode ?? 'exterior') === 'exterior' ? exteriorFoes.foesFrame(full) : null) : modes?.dungeonFoesFrame?.(full);
     if (!frame) return false;
     if (!online.sendFoes(frame)) { _foesFullAt = -Infinity; return false; }   // AUDIT WORLD2 A9: a refused frame's deltas were already committed - the next frame carries every foe
     if (full) _foesFullAt = now;
@@ -6700,8 +6704,22 @@ export async function bootWorld(canvas, renderer, params, status) {
     // (the mode machine refuses another dungeon's); a new host publishes at once
     online.onWorld = (shared) => { if (modes?.restorePlaceSharedWorld?.(shared)) console.info('[online] the room\'s memory restored'); };   // WORLD6a: on the standing place, a dungeon or a building
     online.onHost = (id, mine) => { if (mine) { _worldPublishedAt = -Infinity; _foesFullAt = -Infinity; } else if (id) _foesInAt = performance.now(); modes?.setDungeonAuthority?.(dungeonAuthority()); };   // WORLD2: the seat decides who steps the foes; a new host streams every foe at once; another's word is its first heartbeat
-    online.onFoes = (id, data) => { if (modes?.mode === 'dungeon') _foesInAt = performance.now(); modes?.applyDungeonFoes?.(id, data); };   // AUDIT WORLD2 C5: the stream is the seat's heartbeat; A1: the host's id rides in; AUDIT WORLD6a B8: a building's room streams no foes, and a frame there is no dungeon heartbeat
-    online.onHit = (id, data) => { modes?.applyDungeonHit?.(id, data); };
+    online.onFoes = (id, data) => {
+      if (isCellRoom(online.room)) { if ((modes?.mode ?? 'exterior') === 'exterior') exteriorFoes.applyFoes(id, data); return; }   // WORLD6b: a peer's foes in the cell, onto their puppets
+      if (modes?.mode === 'dungeon') _foesInAt = performance.now();   // AUDIT WORLD2 C5: the stream is the seat's heartbeat; A1: the host's id rides in; AUDIT WORLD6a B8: a building's room streams no foes, and a frame there is no dungeon heartbeat
+      modes?.applyDungeonFoes?.(id, data);
+    };
+    online.onHit = (id, data) => { if (isCellRoom(online.room)) exteriorFoes.applyHit(id, data); else modes?.applyDungeonHit?.(id, data); };   // WORLD6b: a peer's blow on my foe in the cell
+    // WORLD6b: the cell's net into the encounter pool - who I am, the room the socket is in, a blow on a puppet to its
+    // owner, and the two frames: the world frame's coordinates ride the wire (the pose's own law, AUDIT ONLINE D7),
+    // this scene's feet stand here
+    exteriorFoes.setNet({
+      selfId: () => online?.id ?? null,
+      room: () => online?.room ?? null,
+      onPeerHit: (hit) => online?.sendHit(hit) ?? false,
+      toWire: (feet) => { const wc = state.worldCoords(feet); return [wc.x, feet[1] - state.compensation[1], wc.z]; },
+      toScene: (p) => { const l = state.localFromWorld(p[0], p[2]); return [l[0], p[1] + state.compensation[1], l[1]]; },
+    });
     online.onAct = (id, data) => { modes?.applyPlaceActions?.(id, data); };   // WORLD3: another's door, lever or platform; WORLD6a: in a building too
     // WORLD5: this save's time markers are set to the WORLD's time - a save a month behind catches up no loans and no
     // diseases on its first frame, one a year ahead reads no negative day - and the day's weather is rolled from the
@@ -6811,8 +6829,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     else if (key !== online.room) { if (!online.room || isWorldRoom(key) || isWorldRoom(online.room) || now - _onlineKeySince >= ROOM_HOLD_MS) { online.look = composeLook(playerEntity); online.join(key, { ...pose, ...arm }); } }   // the look re-composed: the next room's hello carries the gear worn now
     else online.sendPose({ ...pose, ...arm });
     online.tick();
+    // WORLD6b: a room change leaves every puppet in the old cell; a peer gone from the room takes its puppets with it
+    if (online.room !== _foesRoom) { _foesRoom = online.room; exteriorFoes.clearPuppets(); }
+    if (isCellRoom(online.room)) exteriorFoes.pruneOwners(new Set(online.peers.keys()));
     worldPublish(now);   // WORLD1: the room's memory, every WORLD_PUBLISH_MS while this player hosts a dungeon
-    foesStream(now);   // WORLD2: the host's changed foes, every FOES_MS
+    foesStream(now);   // WORLD2: the host's changed foes, every FOES_MS; WORLD6b: mine, in a cell
     actFlush();        // AUDIT WORLD3 A3: an act the wire refused, re-read and re-sent
     modes?.setDungeonAuthority?.(dungeonAuthority(now));   // AUDIT WORLD2 C2: the seat re-read every frame - a dead socket, a terminal close or a silent host hands the foes back
     const drawable = online.drawable();

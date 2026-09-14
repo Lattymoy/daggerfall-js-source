@@ -2535,6 +2535,128 @@ the client (B3/B4/B5), the stamp (B7), and A3-A7/B6/B8 by source. The
 WORLD1, WORLD4, WORLD5, WORLD6, AUDIT WORLD34 and AUDIT WORLD5 pins
 restamped where the law moved.
 
+## WORLD6b (2026-09-14): the cell streams its foes
+
+**Mac: "Continue"** (after AUDIT WORLD6a). The second item of the WORLD6
+plan, in two halves; this is the first. The plan said "the cell is a
+world room", and the survey said why it cannot be one the way a
+dungeon is: a dungeon is a LAYOUT every client builds alike, so its
+foes have an index the room can name and a host can own the lot; the
+open country's room is a sixteen-pixel CELL, and nothing in it is
+built alike - every encounter foe was one client's roll, near that
+client, on terrain only the clients near it have built, freed with
+the map pixel. So a cell has NO HOST SIMULATION and NO MEMORY (it is
+no world room, `isWorldRoom` is untouched), and the law is per foe:
+**A FOE IS ITS SPAWNER'S.** The spawner steps it and streams it,
+everyone else in the cell puppets it, and a blow on another's foe
+goes to its OWNER as a hit. What one player meets, everyone sees and
+can fight; what nobody is near, nobody simulates.
+
+### 6b-i: a foe is its spawner's, everyone else's puppet
+
+- **The wire** (`src/net/wire.js`, both ends through `relay.js`):
+  `isCellRoom` (`world:<x>,<y>`, the cell `worldRoom` mints, up to
+  three digits each), `streamsFoes` (a world room or a cell), and
+  `hitOwnerOf` - a cell's hit carries the owner's id as `to` (a peer
+  id of at most 64), and names nobody otherwise.
+- **The relay** (`server/src/index.js`, `RELAY_VERSION` `world62` -
+  REDEPLOY): a cell's foes frame is admitted from ANYONE hello'd - at
+  the door before the parse (the prefix's own bucket, no strike
+  counted, AUDIT WORLD2 A3/A4) and in the arm - and fanned to everyone
+  else with the sender's id under the room's byte budget (A5); a cell's
+  hit goes to the ONE socket `to` names, never the striker's own, and
+  nowhere without a `to` or to one not in the room, under the room's
+  hit funnel (A6). A world room keeps WORLD2's host law untouched: a
+  joiner's stream ignored and counted, the hit to the host whatever
+  `to` says. A cell still keeps no memory (a large frame outside a
+  world room is refused, AUDIT WORLD A1).
+- **The session** (`src/net/online.js`): in a cell `sendFoes` is
+  anyone's (no seat asked), `sendHit` needs a `to` that is a peer and
+  never me (my foe is my own door's), `onFoes` hears every peer (never
+  myself, never a malformed frame), `onHit` hears a blow that names me
+  and no other. The join line says what a cell shares.
+- **The encounter pool** (`src/scenes/exteriorFoes.js`): every foe of
+  MINE carries `seq` (numbered from one) and streams in WORLD2's own
+  record (`i t x f y h d a m` - the feet through the world host's
+  converter into the WORLD frame, the pose's own law, AUDIT ONLINE D7;
+  the attack count with the ranged bit low) - the changed ones every
+  `FOES_MS`, every one every `FOES_FULL_MS`, keyed to the room; a
+  quest's foe never rides (Multiplayer.md's first lock), a puppet never
+  rides. A peer's record stands here as a PUPPET (`f.puppet` the owner,
+  `f.seq` the owner's number) through the pool's ONE spawn chain at
+  the streamed feet, species and gender (the bit decoded, no roll),
+  OUTSIDE my cap (`activeCount` is mine alone); a frame no newer than
+  the owner's last, or another cell's, is not the world; a corpse I
+  never saw stands nothing. The puppet branch in the foe loop (before
+  the senses, the cull, the attack) eases the feet to the stream
+  (`PUPPET_EASE_S`), snaps a far jump, sets the yaw, walks while the
+  streamed feet move, fires the hurt one-shot on a health drop and the
+  strike edge once per count, draws and sounds like any foe, and drops
+  both damage latches unconsumed - it lands no blow of its own (its
+  owner's foe lands those, on its owner). A blow on a puppet goes to
+  its owner through the one damage door (`damageFoe` diverts before
+  the shield pool: `{to, i, dmg, kind}`), the striker's own ring,
+  blood and pain played before it as ever. A peer's blow on MY foe
+  (`applyHit`, by my number, bounded, the kind kept) lands through the
+  same door as the dungeon's does (WORLD2/AUDIT WORLD2 B9/C4): seen and
+  heard at the owner, no HUD mark of mine, no area wake, no ally
+  revert, the foe turned on me - its owner - since the striker's feet
+  are not on the hit (recorded, as the dungeon's is). A puppet dies
+  where the stream says (its body through `mintCorpse`, the one home
+  the dungeon's law asked for - carrying none of my loot), and is
+  swept when a full frame stops naming it, its owner leaves the room
+  (`pruneOwners` from the session's peer map, every frame), or the
+  room changes (`clearPuppets`, the owners' frame numbers starting
+  over); nothing of a puppet rides my save (`snapshotWorld`).
+- **The world host** (`src/scenes/world.js`): the stream's cell arm
+  asks no seat and sends the exterior pool's frame above ground alone;
+  a cell's foes and hits route to the pool, a world room's to the
+  dungeon (a cell's frame is no dungeon heartbeat); the net is
+  installed once with the two frame converters; the pane says towns
+  and the open country share the creatures that find you.
+- **The day's rolls are the shared day's** (`src/systems/worldTick.js`
+  `dayRollsFor`): under the shared clock the price walk and the faction
+  powers' two arms draw from a generator the world's day seeds (the
+  weather's own law, WORLD5 `rollsFor`; the two power arms of one
+  minute share one generator, so the 266-day double walk does not
+  replay itself), so two players whose state agrees walk the region
+  alike, whatever their own dice; offline the caller's. The STATE
+  stays each player's - the prices and the powers live on the entity,
+  DFU has one player; one economy is the region as a world (6b-ii).
+
+### 6b-ii (recorded, next)
+
+- **The guards** (`cityGuards.js`): the watch is a crime's - the
+  player's own - and the same per-foe law would stream a guard chasing
+  ME to everyone; not done until the crime itself is shared.
+- **A foe hunting a peer**: a puppet lands no blow, and MY foe hunts
+  me alone (WORLD3 gave the dungeon's host foes every player in the
+  room through the peer candidates; the pool's target machine has the
+  seam). The striker's feet on the hit, as WORLD3 put them on the
+  dungeon's.
+- **A puppet's corpse loot**: its owner's roll; the take would be the
+  loot law over a per-foe room (WORLD4 keyed a dungeon's by index).
+- **The cell seam**: two players a pixel apart astride an edge are in
+  two rooms (D9); the 3x3 neighbourhood.
+- **One economy**: the region's prices and powers as a world's, not a
+  seeded walk each player takes alone.
+- **Buildings' foes** (a quest's or a crime's) and the interior pools:
+  a building streams no foes still (AUDIT WORLD6a B8).
+
+Pinned in `test/world6b.test.js` (8), EXECUTED: the wire at both ends;
+the real Room fanning a non-host's frame in a cell and routing a hit
+to `to`, the dungeon's law untouched; the session's four doors in a
+cell and in a world room; the pool on a crafted MONSTER.BSA with the
+net installed - my frame out, a peer's puppets in (the spawn chain,
+the cap, the stale and foreign frames, the eased and snapped follow,
+the hurt and the strikes, the divert, the death and the three sweeps),
+a peer's blow on mine (the door, the bounds, no area wake); the day
+change under the shared clock; the world host by source. The WORLD1,
+WORLD2, WORLD5, WORLD6a, AUDIT WORLD (A1), WORLD34, WORLD4, WORLD5,
+WORLD6a pins restamped where the law moved; the pool's provenance,
+latch, voice and hostility pins (audit24/26/58, pacify, roadb, nt2)
+restamped for the peer arm.
+
 ## What it does not do (yet)
 
 - **The Morrowind body** ships (MWBODY1, above); a client without the
@@ -2553,7 +2675,10 @@ restamped where the law moved.
   platforms move for everyone (an act from whoever touched them).
   Since WORLD6a a BUILDING is a world room too - its doors, and every
   shelf and cupboard anyone has opened, with the day it was stocked;
-  towns and cells keep nothing yet (6b); since WORLD5 the clock and the day's weather are
+  towns keep nothing yet, and since WORLD6b a CELL streams every
+  player's encounter foes to everyone in it (a foe is its spawner's;
+  no guards, no puppet loot, my foe hunts me alone - 6b-ii); since
+  WORLD5 the clock and the day's weather are
   the world's and the quest clocks stand down online; no
   player-versus-player. Until AUDIT
   WORLD34 no real dungeon was a world room at all (A1: the law's

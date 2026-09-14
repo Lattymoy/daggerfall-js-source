@@ -936,8 +936,8 @@ export function createWorldModes(host) {
    *
    *  This host owned two pools and ran NO fan-out at all - no
    *  runMagicRoundsFor, so no tickActiveEffects and no updatePoisons
-   *  (worldTick.js:218-219), and no killIfAnyLiveStatZero. Both pools
-   *  READ the effect list every frame (exteriorFoes.js:538-539 and
+   *  (worldTick.js:226-227), and no killIfAnyLiveStatZero. Both pools
+   *  READ the effect list every frame (exteriorFoes.js:582-583 and
    *  cityGuards.js:767-768 each take `entityIsParalyzed` +
    *  `applyEnemyMotorEffectFlags`), and nothing ever ended one: a
    *  Continuous Damage bundle on a foe in a shop never took a round,

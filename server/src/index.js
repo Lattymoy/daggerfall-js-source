@@ -105,11 +105,11 @@
 // WORLD5 (2026-09-13): THE SHARED CLOCK is a function of wall time (relay.js
 // sharedClassicMinutes) and needs no frame; the welcome carries the relay's
 // own `now` so a client corrects for its machine's clock. Nothing else here.
-import { roomOf, parseClient, inRange, poseGate, chatGate, tokenGate, rosterFor, isChatRoom, isWorldRoom, worldFrameMaxFor, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY } from './relay.js';
+import { roomOf, parseClient, inRange, poseGate, chatGate, tokenGate, rosterFor, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY } from './relay.js';
 
 /** AUDIT WORLD34 D4: the relay names itself in /health - the deploy is by hand (`npx wrangler deploy`), nothing in
  *  CI does it, and until now nothing said which relay was live. Bump it with every relay-changing slice. */
-export const RELAY_VERSION = 'world61';   // WORLD6a, audited: the law tightened, an interior's memory capped at WORLD_FRAME_MAX_INTERIOR
+export const RELAY_VERSION = 'world62';   // WORLD6b: a cell streams its foes from anyone, and a hit goes to its owner
 
 const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*' } });
 
@@ -297,10 +297,11 @@ export class Room {
       const foesLike = message.startsWith(FOES_PREFIX);
       if (!a.id) { this._refuse(ws, foesLike ? 'foes before hello' : 'world before hello'); return; }
       // A4: outside a world room no large frame has a home - refused, as the small cap always was, not sunk for free
-      if (!isWorldRoom(a.key) && message.length > MAX_FRAME_BYTES) { this._refuse(ws, 'frame too large'); return; }
+      // WORLD6b: a cell's foes frame has the stream's own cap too (a world room's memory or stream, a cell's stream; nothing else is large)
+      if (!(foesLike ? streamsFoes(a.key) : isWorldRoom(a.key)) && message.length > MAX_FRAME_BYTES) { this._refuse(ws, 'frame too large'); return; }
       a = foesLike ? this._meterFoes(ws, a, Date.now()) : this._meter(ws, a, Date.now());
       if (!a) return;
-      if (!isWorldRoom(a.key) || a.id !== this._hostOf()) {
+      if (!(foesLike && isCellRoom(a.key)) && (!isWorldRoom(a.key) || a.id !== this._hostOf())) {   // WORLD6b: a cell's foes frame is anyone's
         // anyone but the host: ignored unparsed (a handover races) - and counted, so a stream of them is struck out (A4)
         const junk = (a.junk ?? 0) + 1;
         this._setAttach(ws, { ...a, junk });
@@ -402,7 +403,8 @@ export class Room {
       // relay reads none of it
       const now = Date.now();
       if (doored !== 'foes') { a = this._meterFoes(ws, a, now); if (!a) return; }
-      if (!isWorldRoom(a.key) || a.id !== this._hostOf()) return;
+      // WORLD6b: in a CELL every hello'd socket streams its own foes (a foe is its spawner's); a world room's are the host's alone
+      if (!isCellRoom(a.key) && (!isWorldRoom(a.key) || a.id !== this._hostOf())) return;
       const out = JSON.stringify({ t: 'foes', id: a.id, data: m.data });
       const listeners = [...this._all()].filter(([other, b]) => other !== ws && b.id);
       // A5: the room's byte budget - the fan is the frame times its listeners, and one host into a full room was
@@ -418,8 +420,11 @@ export class Room {
       // host's socket alone (the host applies it through its own damage door and the next foes frame says so)
       const now = Date.now();
       a = this._meter(ws, a, now); if (!a) return;
-      if (!isWorldRoom(a.key)) return;
-      const host = this._hostOf();
+      // WORLD6b: in a CELL the blow goes to the foe's OWNER, the socket the frame's `to` names (never the striker's own);
+      // in a world room to the host's alone, as WORLD2 has it
+      const cell = isCellRoom(a.key);
+      if (!cell && !isWorldRoom(a.key)) return;
+      const host = cell ? hitOwnerOf(m.data) : this._hostOf();
       if (!host || host === a.id) return;
       // A6: the funnel onto the host's ONE socket is the room's to budget - all joiners together, HIT_ROOM_HZ_MAX a
       // second; over it the blow is dropped and nobody struck
