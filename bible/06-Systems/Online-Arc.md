@@ -2082,7 +2082,8 @@ refills stand (neither costs a day offline either).
 carried no `questClocksStoodDown`, and the bridge's fallback is
 `false` - unreachable today (`?exterior` never carries `online`), but a
 host that says nothing charges every clock. It says the same word
-world.js does.
+world.js does. [WORLD7: the word is `questClockStepMax` now, the
+same on both hosts.]
 
 **C11 - THE WELCOME'S CLOCK WAS THE HELLO'S.** `now` was taken at the
 top of the hello and the welcome built four storage awaits later, so
@@ -4003,10 +4004,12 @@ began online.
 **THE LAW: A CLOCK CHARGES PLAYED TIME.** Online a quest clock charges
 the frame's world time and never more than one PLAYED STEP
 (`PLAYED_STEP_MAX_SECONDS`, thirty world minutes - two and a half real
-minutes under the shared clock's twelve-to-one; a browser-throttled
-tab still ticks within it, a frame never spans it). A gap past the
-step is time AWAY - the tab closed, the character off the world - and
-is forgiven, the sample moved. Offline there is no bound: a rest or a
+minutes under the shared clock's twelve-to-one; a frame never spans
+it). A gap past the step is time AWAY - the tab closed or hidden (the
+machine ticks off the frame loop, so a hidden tab runs no frames and
+charges one step when it comes back), a window held (the quest tick
+waits on an overlay), the character off the world - and is forgiven,
+the sample moved. Offline there is no bound: a rest or a
 trip charges its whole span, DFU's own. So delays progress while you
 play; a limit still stands, in hours played; none expires while away;
 a login charges at most one step.
@@ -4029,9 +4032,9 @@ Mac's WORLD1 word was "naturally disabled", and this is its spirit
 rather than its letter: nothing can expire while you are away, and a
 fourteen-day limit is many real hours of play. Suppressing the failing
 clocks alone is not possible: nothing in a script marks a clock as a
-deadline. A hidden tab is logged in and charges a step per throttled
-tick. The step is one home and one number; a machine that cannot hold
-a frame under two and a half real minutes charges one step per frame.
+deadline. A quest line's "=clock_ days" means played days online. The
+step is one home and one number; a machine that cannot hold a frame
+under two and a half real minutes charges one step per frame.
 
 Pinned in `test/world7.test.js` (3), EXECUTED over the real Clock and
 the real machine: a frame charges its seconds, a gap of a step the
@@ -4058,9 +4061,10 @@ no law. Now:
 **THE LAW: A DEATH AND A TAKE ARE STAMPED, AND AN HOUR LATER THE THING
 IS DUE BACK.** `RESPAWN_MS` (one real hour) and `respawnDue(stamp,
 now)` in `wire.js`, one home at both ends; the stamp is the relay's
-clock (a wall millisecond, `sharedWallMs` over the shared world
-minute - null offline, so nothing is ever due offline and a save keeps
-its dead, DFU's own).
+clock (a wall millisecond - the wire's inverse `wallMsForClassicMinutes`
+over the shared world minute, no offset subtracted, since AUDIT
+WORLD7/8 B1; null offline, so nothing is ever due offline and a save
+keeps its dead, DFU's own).
 
 - **A foe.** The one corpse door stamps `_diedAt`; the memory's record
   carries it as `died`; a record applied keeps the ROOM's stamp, not
@@ -4092,10 +4096,13 @@ encounter law, by the world clock) and come and go on their own; a
 building's shelves restock by the day, DFU's own, and stay so; the
 relay is untouched (the memory is bytes to it), and its thirty-day
 forgetting stands above the hour - a memory forgotten has long since
-respawned whole. A memory written before WORLD8 carries no stamp and
-is applied as it stands until the room is next drained. A foe of the
-player's own past the layout (a quest's, a summon's) is not the
-room's and does not return.
+respawned whole. A memory written before WORLD8 carries no stamp; it
+is applied as it stands and stamped at the arrival that applied it,
+so it is due an hour later. A foe of the player's own past the layout
+(a quest's, a summon's) is not the room's and does not return. A save written online carries its stamps,
+so loading it in an online session rebuilds what that save killed
+more than an hour ago, a second after the load (the law, not the
+save's word).
 
 Pinned in `test/world8.test.js` (2): the wire's law executed (the
 hour, what is due and what is not - no stamp, no clock, a stamp
@@ -4108,6 +4115,124 @@ roll one home; the country's pool untouched). Restamped: world2
 apply), auditworld (the memory's arm), auditworld4 (the claim), sl2rewind
 (the corpse freed through the one helper), audit23_systems (the pile
 roll). Suite 7485 across 759.
+
+## AUDIT WORLD7/8 (2026-09-14)
+
+**Mac: "Continue."** Three opus lenses over WORLD7 and WORLD8 together:
+A the Clock and the spawn interval, B the dungeon memory's foes (the
+stamp, the rebuild, the sweep, the stream), C the loot's stamps, the
+wire and the records. Thirty-three findings; twenty paid, the rest
+recorded. Pinned by EXECUTION in `test/auditworld78.test.js` (4)
+where a rig reaches, by source where it cannot.
+
+### The criticals
+
+- **A1/A2/A5 (critical, paid): a backward sample ADDED its span.**
+  `Math.min(gap, step)` bounded the positive side alone; a negative
+  gap - an offline save game-weeks past the shared calendar (the world
+  starts at the classic start plus wall time), the relay's welcome
+  correcting this machine's clock backwards - GREW every running clock
+  by the whole span, once, for good. Brisienna's fourteen days became
+  forty-four played for exactly the character Mac brought over. Online
+  a backward sample is a resume: nothing charged, the sample moved;
+  offline the raw gap stands, DFU's own. Executed.
+- **A3 (critical, paid): `CreateFoe` was blind to the same gap.** A
+  marker ahead of the world spawned nothing for the whole offset. A
+  backward gap online is a resume too (the marker stands here); a
+  backward gap mid-session the same. Executed through the machine.
+- **B1 (major, paid): the stamp was THIS MACHINE's clock.** `sharedWallMs`
+  subtracts the relay offset back out - right for OL3's display, wrong
+  for a stamp two machines compare: a host forty minutes slow made
+  every joiner see a cleared dungeon alive, and a wrong clock poisoned
+  the memory's stamps for thirty days. The stamp is the wire's inverse
+  over the shared minute now, no offset - the relay's own. Executed
+  under an installed offset.
+- **B3 (major, paid): the puppet's un-death stood the OLD body up.**
+  The host's respawn mints a fresh entity; the stream's `d:0` woke the
+  dead one - looted (no activation target, and a stale list the next
+  opener made the room's word), still cursed (a frozen drain killed it
+  again within a second and sent the host the blow, every hour,
+  invisibly), and with the dead foe's counts (phantom swing and cast
+  edges). The stream's un-death is a REBUILD now, WORLD3 E2's own arm;
+  the save's rewind keeps the plain door.
+- **C1 (major, paid): the claim minted its record BEFORE stamping.**
+  The record carried the PREVIOUS word's time, so a chest closed an
+  hour after its last use was skipped by every receiver as due back - a
+  stash lost in silence. Stamped first now.
+- **B2/C3 (major, paid): the rebuild freed the corpse before it could
+  refuse.** A rebuild that failed (a fetch, the context torn down, one
+  in flight) left the foe dead, bodiless and never due again, and the
+  memory then carried the unstamped death for thirty days. The refusals
+  are asked first; the corpse is freed and the body's record forgotten
+  on success; the stamp is kept on failure so the sweep tries again.
+
+### A - the Clock and the spawn interval
+
+- **A4 (major, record, paid):** the machine ticks off the frame loop; a
+  hidden tab runs no frames and charges one step on return - the record
+  said "a step per throttled tick". Reworded in the record and the
+  constant's note.
+- **A6 (minor, paid):** an away while a wave was in flight was not
+  forgiven (the marker stood, the away counted whole once the wave
+  landed). The marker moves on the in-flight path too. Executed with an
+  hour's interval.
+- **A11 (note, paid):** a save from before the sample field stamped NaN
+  into the remainder; the sample is now when the field is absent.
+- **A5 (minor, recorded):** legitimate gaps past the step that
+  under-charge by design - a window held (the quest tick waits on an
+  overlay), a full-screen video, a long load. Played time's own law.
+- **A7/A8 (note, recorded):** the arm runs past `spawnMaxTimes`
+  harmlessly; a quest line's `=clock_ days` means played days online;
+  no UI computes a deadline as a date.
+- **A10 (minor, paid):** the exterior host's import comment and AUDIT
+  WORLD5 C10's paragraph said the stand-down; stamped WORLD7.
+
+### B - the memory's foes
+
+- **B4 (minor, paid):** `died` was the one memory field with no
+  projection - a far-future stamp revoked the hour for every foe for
+  thirty days. Never ahead of now at both readers.
+- **B6 (minor, paid):** the quest pool's remove door (Wabbajack's
+  replace of a layout foe) left no stamp, so that index never came
+  back. It stamps.
+- **B7 (minor, paid):** the foe half of the sweep swapped a body out
+  from under an open corpse window; a body I have open is mine.
+- **B8 (minor, paid):** the memory's respawn arm skipped the record
+  whole, species included; the room's species is rebuilt first
+  (WORLD3's roster law), alive.
+- **B9 (minor, paid):** the sweep's burst is capped (`RESPAWN_BURST`,
+  four a tick) - a room cleared in one sitting comes back over seconds,
+  not in one.
+- **B5/B10 (note, recorded, the record amended):** a memory from before
+  WORLD8 is stamped at the arrival that applies it (due an hour later,
+  not "as it stands"); a save written online carries its stamps into an
+  online load.
+
+### C - the loot, the wire, the records
+
+- **C2 (major, paid):** a peer's far-future loot stamp switched the
+  hour off for a container for everyone and rode into the memory.
+  Clamped to now on the apply.
+- **C4 (minor, paid):** the sweep rolled a pile the room had merely
+  OPENED; the law says emptied. A pile with a remainder keeps it, as
+  the apply's skip keeps the local list.
+- **C6 (minor, paid):** the open window's guard sat below the
+  forgetting; it is asked first.
+- **C12 (minor, paid):** an un-death left the body's loot record in the
+  room's word, so the next corpse's claim was refused as already spoken.
+  The un-death forgets it.
+- **C9 (note, paid):** the Ledger's WORLD5 sentence stamped superseded.
+- **C5/C11 (note, recorded):** the loot record grew by a stamp - a few
+  kilobytes at most against the memory's half-megabyte; the memory's
+  total is still uncapped (pre-existing). Per-client divergence after
+  the hour is WORLD4's own law (each client its own roll until the next
+  claim).
+- **C10/B11 (note, recorded):** the dungeon context has no executed
+  harness; the loot and foe halves stay source-pinned. The clock law
+  and the wire's laws are executed.
+
+Restamped: world8 (every paid spelling), world2 (the un-death), world5
+and world7 (the clock line), auditworld (the memory's arm).
 
 ## What it does not do (yet)
 
