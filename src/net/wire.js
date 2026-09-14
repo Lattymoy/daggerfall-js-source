@@ -237,6 +237,10 @@ export const ACT_ROOM_HZ_MAX = 30;
  *  the foes fan's ceiling. A door's honest traffic is a few kilobytes a second even in a full room, so this sits
  *  well above every real cascade and far below the hole. */
 export const ACT_ROOM_BYTES_PER_S = 1024 * 1024;
+/** AUDIT WORLD6b-iii(c) C3: the room's HIT bytes a second, fanned - the hit frame carries a corpse's GRANT since
+ *  WORLD6b-iii(c) (up to a frame's worth of items), so the arm that was a 150-byte control channel is a bulk one and
+ *  counts its bytes as the foes and the acts do (AUDIT WORLD3 A1's law); over it a blow is dropped, nobody struck. */
+export const HIT_ROOM_BYTES_PER_S = 256 * 1024;
 /** WORLD3: a client's action frames a second - a click's worth, on their own bucket at the relay (a door never
  *  starves a pose) and refused to the caller at home past it. */
 export const ACT_HZ_MAX = 5;

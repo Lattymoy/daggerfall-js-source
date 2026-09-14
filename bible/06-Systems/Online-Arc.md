@@ -2961,6 +2961,131 @@ asked again at home with no frame; a refused frame taking nothing; a
 body not mine and a malformed grant; a pile larger than a frame granted
 in parts; by source.
 
+## AUDIT WORLD6b-iii(c) (2026-09-14)
+
+**Mac: "Continue"** (after WORLD6b-iii(c)). Three opus lenses over a
+puppet's corpse loot - A the owner's grant, B the taker's landing and
+the world host, C the wire, the relay, the session and the records.
+Every finding verified against the code; paid at the root; pinned by
+execution in `test/auditworld6biiic.test.js`. The relay changed
+(`world64`): the hit arm counts bytes.
+
+### The criticals
+
+- **A1/C7 (critical, paid): the take answered ANY peer for ANY body of
+  mine by number.** No range, no roster, no sight: a peer across the
+  cell - or one I could not see at all - walked the sequence numbers
+  and emptied every body I killed the instant it fell. The taker's
+  reach law lived at the untrusted end alone. Paid: the asker must be
+  a peer the hunt SEES (`peerCandidate`) standing within the corpse's
+  activation distance plus the pose's slack of the body; otherwise
+  silence. **A5** with it: a quest's foe (never streamed) answers as a
+  body that does not exist.
+- **A3/C2 (critical, paid): a refused projection became an EMPTY grant
+  that still spliced the pile.** `validLootList` answers null for a
+  list it refuses (an item the port could not mint, a list past
+  LOOT_LIST_MAX) and `?? []` read that as "nothing here" - then the
+  pile was spliced by the count that never went: the owner's whole
+  roll destroyed and the taker told the body was empty. A pile past
+  sixty-four items walked into it on its own. Paid: a refusal narrows
+  to the one item and DROPS it (it can never be granted), the rest
+  goes; the pile is emptied of what WENT (`grant.length`). **A4/C10**
+  with it: one item larger than a frame is dropped rather than
+  re-offered for ever, and the click always answers.
+- **B1/C1 (critical, paid): the grant arm had no "I asked" latch.** A
+  grant landed for a puppet I never asked about, a body I never saw, a
+  peer whose foes I did not stand - the first door in the port by which
+  a peer wrote into another player's PACK. Paid: the ask latches on the
+  puppet only when the frame left; a grant lands only for a body of
+  that owner's asked inside TAKE_WINDOW_MS, once (**B8**: one ask in
+  flight, a double-click sends nothing and a second grant is refused);
+  otherwise refused whole.
+- **B2/C1 (critical, paid): the projection left the stack count
+  open.** One gold pile at 1e15 minted a fortune, at -5 drained the
+  purse (`addGoldPieces` is unclamped by DFU's law); a negative stack on
+  arrows negated the stack it merged into. Paid in WORLD4's projection
+  for every consumer (chests, shelves, grants): a stack is a whole
+  number in [1, LOOT_STACK_MAX] or the item is no item.
+
+### A - the owner's side
+
+- **A2/B3/C4 (high, paid): every take made me spend my own hit
+  budget.** A take for a number invented on the spot bought a frame
+  out of me for free, and six peers at their own gate exhausted my
+  outgoing HIT_HZ_MAX for good - every blow I landed on a puppet
+  refused at home, silently. Paid: a body I do not have, a live foe, an
+  asker out of reach answer NOTHING; an answer is under the asker's own
+  budget (TAKES_PER_S) - over it, silence.
+- **A6/B4 (medium, paid): the projection let `equipSlot` and
+  `questItem` through.** A wire-borne worn mark re-linked into the
+  pack's slots on the next load and pushed my own out; a quest mark
+  clogged the pack for good. Stripped in the projection: those marks
+  are the receiver's, never a container's word.
+- **A7 (low, paid): a record in flight at the splice re-opened a body
+  the empty grant just closed.** The grant carries the owner's frame
+  counter; a word no newer than it re-opens nothing.
+- **A8 (verified): a forged `k` on a take is self-harm only** - refused
+  unless it names a cell I hold, and the answer routes where the taker
+  is reported.
+
+### B - the taker's side
+
+- **B5 (recorded): the landing has no weight and no pack cap** - the
+  exterior's bulk take never had one (the recorded UI residue); the ask
+  latch bounds the honest case to one pile per ask and the projection
+  bounds the pile. The dungeon's corpse take is a window.
+- **B6 (recorded): a body that vanishes under the taker says nothing**
+  (its owner left, or the puppet was rebuilt - a rebuilt corpse is
+  never re-stood); the ask expires in silence and the next click asks
+  again.
+- **B10 (note, paid): the rare-drop chime rings over a peer's body
+  too** - a puppet's own pile is empty by B14, so LR3's one cue never
+  rang for a grant.
+
+### C - the wire, the relay, the records
+
+- **C3 (high, paid, RELAY): the hit arm carried a frame's worth of
+  items with no byte budget.** Since 6b-iii(c) a hit is a 12 KiB bulk
+  carrier, not a 150-byte control frame; three sockets pushed 720
+  KiB/s into one destination through an arm that counted frames alone
+  (AUDIT WORLD3 A1's law, unpaid here). Paid: HIT_ROOM_BYTES_PER_S (256
+  KiB a second, the room's) through the one byteGate the foes and the
+  acts use; over it the frame is dropped, nobody struck. `world64`.
+- **C5 (high, paid): the frame had no record bound.** Corpses ride
+  until the pixel is left, the relay junks a frame past
+  CELL_FRAME_RECORDS_MAX whole and strikes the socket out in the end -
+  a player who fought in one pixel stopped streaming to everyone,
+  silently, in minutes. Paid: the sender keeps the live foes first and
+  the newest bodies; the oldest leave the roll and the readers' sweep
+  takes them down.
+- **C8 (low, paid): the dungeon's record streamed the overshoot raw** -
+  a negative health onto every joiner's puppet (WORLD2's bound, never
+  refused there). Clamped.
+- **C9 (low, paid): a live foe with no number streamed as alive at
+  zero.** A health that is no number is omitted.
+- **C2's arithmetic (verified): 4 KiB of headroom is eighty times the
+  relay's envelope.** The frame cap counts UTF-16 units, not bytes -
+  pre-existing, recorded.
+- **Back-compat (verified): an older client refuses a take or a grant
+  as a blow with no damage; an older owner's bodies are never targets
+  (no `o`).**
+
+Pinned in `test/auditworld6biiic.test.js` (7), EXECUTED: the owner's
+laws (a peer unseen, a peer across the cell, a body not mine, a live
+foe, a quest's foe: silence; in reach the grant; the asker's budget);
+the refused projection (the unmintable item dropped and the rest
+granted in two takes, a pile past the list bound in parts, one item
+larger than a frame dropped and the good one behind it granted); the
+taker's latch (no puppet, a body not asked, a second click, a grant
+past the window, inside it, a second grant, the stale record and the
+newer one); the projection's stack bound and stripped marks, a
+negative gold pile refused through the arm; the frame's record bound
+(the live foe first, the newest bodies, the oldest gone); the Room's
+hit bytes (inside the budget a grant lands, over it dropped and nobody
+struck, a budget of one grant); by source the dungeon's clamp, the
+chime, the omitted health, the roster read, the relay's gate, the
+record.
+
 ### 6b-iii (recorded, next)
 
 - **The guards** (`cityGuards.js`): the watch is a crime's - the

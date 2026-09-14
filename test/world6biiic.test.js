@@ -91,7 +91,7 @@ test('WORLD6b-iii(c): the owner\'s body says what it holds (o on the record, 0 a
   const epup = eve.foes.find((x) => x.puppet === 'bob-0002');
   eve.takeLoot(`foeCorpse:${epup.uid}`, (l) => eveSaid.push(l));
   assert.equal(bob.applyHit('eve-0003', eveHits[0]), true);
-  assert.deepEqual(bobHits[1], { to: 'eve-0003', k: 'world:3,12', i: rat.seq, grant: [] }, 'nothing on it');
+  assert.equal(bobHits[1].to, 'eve-0003'); assert.equal(bobHits[1].i, rat.seq); assert.deepEqual(bobHits[1].grant, [], 'nothing on it'); assert.ok(Number.isInteger(bobHits[1].n), 'the owner\'s frame counter rides the grant (AUDIT WORLD6b-iii(c) A7)');
   assert.equal(eve.applyHit('bob-0002', bobHits[1]), true);
   assert.equal(eveSaid.at(-1), 'The body has no treasure.'); assert.equal(epup.corpseDisabled, true); assert.deepEqual(eve.lootTargets(), []);
   assert.equal(eveE.items.length, 0);
@@ -108,8 +108,9 @@ test('WORLD6b-iii(c): the owner\'s body says what it holds (o on the record, 0 a
   assert.equal(rat2.entity.items.length, held, 'the frame did not leave: the pile stays');
   // a take for a body I do not have answers nothing on it; a grant that is not a list is refused
   bob.setNet(netFor('bob-0002', bobHits, roster));
+  const sent = bobHits.length;
   bob.applyHit('mac-0001', { to: 'bob-0002', k: 'world:3,12', i: 99, take: 1 });
-  assert.deepEqual(bobHits.at(-1), { to: 'mac-0001', k: 'world:3,12', i: 99, grant: [] });
+  assert.equal(bobHits.length, sent, 'a take for a body I do not have answers NOTHING (AUDIT WORLD6b-iii(c) A2/C4: an answer for a number invented on the spot was a frame out of me for free)');
   assert.equal(mac.applyHit('bob-0002', { to: 'mac-0001', k: 'world:3,12', i: rat.seq, grant: 'x' }), false);
   assert.equal(mac.applyHit('bob-0002', { to: 'mac-0001', k: 'world:3,12', i: rat.seq, grant: [{ templateIndex: 999999 }] }), false, 'an item the port could not mint is no grant');
 });
@@ -136,10 +137,10 @@ test('WORLD6b-iii(c): a pile larger than one frame is granted in parts - the fir
 test('WORLD6b-iii(c): by source - the record and the reader, the target, the ask, the grant emptied only once the frame left, the record', () => {
   const x = rd('src/scenes/exteriorFoes.js');
   assert.match(x, /o: f\.corpse \? Math\.min\(255, f\.entity\?\.items\?\.length \| 0\) : 0 \};/, 'the record');
-  assert.match(x, /if \(r\.o !== undefined\) \{ p\.o = r\.o; if \(r\.o > 0\) f\.corpseDisabled = false; \}/, 'the reader');
+  assert.match(x, /if \(r\.o !== undefined\) \{ p\.o = r\.o; if \(r\.o > 0 && !\(f\._closedN != null && \(_owners\.get\(f\.puppet\)\?\.n \?\? 0\) <= f\._closedN\)\) f\.corpseDisabled = false; \}/, 'the reader (AUDIT WORLD6b-iii(c) A7: a word older than the grant that closed it re-opens nothing)');
   assert.match(x, /isCorpse: \(f\) => !!f\.corpse && !!f\.entity && \(!f\.puppet \|\| \(f\._pup\?\.o \| 0\) > 0\),/, 'the target');
-  assert.match(x, /_net\?\.onPeerHit\?\.\(\{ to: f\.puppet, k: _owners\.get\(f\.puppet\)\?\.k \?\? _net\.room\?\.\(\) \?\? null, i: f\.seq, take: 1 \}\);/, 'the ask, keyed to the owner\'s cell');
-  assert.match(x, /if \(_net\?\.onPeerHit\?\.\(frame\)\) items\.splice\(0, n\);/, 'emptied once the frame left');
+  assert.match(x, /if \(_net\?\.onPeerHit\?\.\(\{ to: f\.puppet, k: _owners\.get\(f\.puppet\)\?\.k \?\? _net\.room\?\.\(\) \?\? null, i: f\.seq, take: 1 \}\)\) f\._takeAsked = _now\(\);/, 'the ask, keyed to the owner\'s cell, latched when the frame left (AUDIT WORLD6b-iii(c) B1)');
+  assert.match(x, /if \(_net\?\.onPeerHit\?\.\(frame\)\) items\.splice\(0, grant\.length\);/, 'emptied once the frame left, of what went (AUDIT WORLD6b-iii(c) A3/C2)');
   assert.match(x, /const n = takeCorpseLoot\(\{ entity: \{ items: grant \} \}, playerEntity, say \?\? \(\(\) => \{\}\)\);/, 'the one take law');
   assert.match(rd('bible/06-Systems/Online-Arc.md'), /### 6b-iii\(c\): a puppet's corpse loot/, 'the record');
 });
