@@ -152,6 +152,18 @@ export const sharedWeatherOn = () => _sharedWeather;
 const SHARED_WEATHER_SEED = 0x57454154;   // 'WEAT'
 /** The generator a roll draws from: the day's own under the shared clock, the caller's otherwise. */
 const rollsFor = (nowMinutes, rolls, salt = 0) => (_sharedWeather ? seededRng((Math.floor(nowMinutes / 1440) * 31 + salt) ^ SHARED_WEATHER_SEED) : rolls);
+/** AUDIT WORLD5 C5: the stamp of a roll of the day's array. Under the shared clock the roll is THE DAY'S, whoever
+ *  rolled it and whenever they arrived: stamped at the day's first minute (so a joiner's drain at noon is a jump -
+ *  the sky changed hours ago - and a midnight roll's drain is a front, as it is offline), and the hourly evolution
+ *  re-anchored at the hour before the day's first, so the next evolve replays every hour of the day up to now and a
+ *  client that joined at noon carries the sky the one that stood under it since midnight does. Offline the stamp is
+ *  the roll's own minute and the evolution stands where it stood. */
+const stampRoll = (nowMinutes) => {
+  if (!_sharedWeather) return nowMinutes;
+  const day = Math.floor(nowMinutes / 1440);
+  _evolveHour = day * 24 - 1;
+  return day * 1440;
+};
 
 let _climateWeathers = new Uint8Array(6);   // [Desert, Mountain, Rainforest, Swamp, Subtropical, Woodlands] (WeatherManager.cs:421-426)
 let _current = WEATHER_ENUM.sunny;          // PlayerWeather.WeatherType - the one persisted value
@@ -271,7 +283,7 @@ export function rollClimateWeathersForDay(nowMinutes, rolls = Math.random) {
   setClimateWeathers(seasonValue(dateFromClassicMinutes(nowMinutes)), rollsFor(nowMinutes, rolls));   // WORLD5: the day's own roll online
   _climateWeathersRolled = true;
   _updateFromClimateArray = true;
-  _rolledAtMinutes = nowMinutes;   // WX2a: the drain measures its lateness from here
+  _rolledAtMinutes = stampRoll(nowMinutes);   // WX2a: the drain measures its lateness from here; AUDIT WORLD5 C5: the day's own minute online
 }
 
 /** THE EXTERIOR FRAME'S WEATHER DRAIN - WeatherManager.Update's
@@ -293,7 +305,7 @@ export function tickWeather(nowMinutes, climateIndex, rolls = Math.random) {
     setClimateWeathers(seasonValue(dateFromClassicMinutes(nowMinutes)), rollsFor(nowMinutes, rolls));   // WORLD5: the day's own roll online
     _climateWeathersRolled = true;
     _updateFromClimateArray = true;   // OnInitWorld raises it at every non-load start (:534)
-    _rolledAtMinutes = nowMinutes;
+    _rolledAtMinutes = stampRoll(nowMinutes);   // AUDIT WORLD5 C5: the day's own minute online
   }
   if (!_updateFromClimateArray) return false;
   _updateFromClimateArray = false;

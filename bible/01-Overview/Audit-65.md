@@ -150,7 +150,7 @@ half the lanes' own mutation tallies could not see.
   player's slot from a stale array - the restored sky was gone by hour
   five. `WeatherManager.cs:538-542`'s else arm is not "at boot", it is
   "in case of loaded savegame", every time. One line at
-  `weatherSim.js:346`; no envelope change. The CLK4 pin stayed green
+  `weatherSim.js:358`; no envelope change. The CLK4 pin stayed green
   under this bug for a whole audit because it opens with
   `resetWeatherSim()` - a restore pin that starts from a fresh module
   tests the boot load only, and the boot load was never the broken
@@ -493,7 +493,7 @@ half the lanes' own mutation tallies could not see.
   purpose and is asserted bare: `PlayerMotor.cs:296-306` does not zero
   `moveDirection`, so a write there would be the divergence. The
   finding's headline fatigue-band consequence was FALSE and is not
-  repeated - `worldTick.js:506-507` is climb-first, matching
+  repeated - `worldTick.js:516-517` is climb-first, matching
   `PlayerEntity.cs:406-408`.
 - *Review round:* fixup. The "without the bob" half of the `feetAt`
   pin was vacuous - the fixture minted no bob, so both bob mutants

@@ -460,8 +460,20 @@ export class RestSession {
    *  the timer is never consulted and the world's clock is read per sub-tick (deps.sharedMinutes answers null
    *  offline). */
   _accrue(dt) {
+    this._sharedTaken = false;   // AUDIT WORLD5 C7: the frame's one shared sub-tick, not yet taken
     if (Number.isFinite(this.deps.sharedMinutes?.())) return;
     this._timer += dt;
+  }
+
+  /** AUDIT WORLD5 C7: a COVERED frame under the shared clock loses the world's time it covers, exactly as the timer
+   *  loses it offline (`_accrue` is never reached under a cover, so the timer banks nothing): the reading moves up to
+   *  the clock keeping less than one sub-tick owed, and a rest covered for a real hour by a quest box or the pause
+   *  menu resolves no night in one frame when the cover lifts. */
+  _holdShared() {
+    const shared = this.deps.sharedMinutes?.();
+    if (!Number.isFinite(shared) || this._sharedAt == null) return;
+    const owed = shared - this._sharedAt;
+    if (owed >= MINUTES_PER_TICK) this._sharedAt = shared - (owed % MINUTES_PER_TICK);
   }
 
   /** ONE sub-tick taken, if one is owed - and only then, so a rest the window covers mid-frame keeps what it still
@@ -473,8 +485,13 @@ export class RestSession {
     const shared = this.deps.sharedMinutes?.();
     if (Number.isFinite(shared)) {
       if (this._sharedAt == null) this._sharedAt = shared;
-      if (shared - this._sharedAt < MINUTES_PER_TICK) return false;
+      // AUDIT WORLD5 C7: ONE sub-tick a frame, as the timer's own law gives offline (a frame's dt is clamped under
+      // one sub-tick's wait) - a tab hidden for a real hour owes the world's minutes and takes them one sub-tick a
+      // FRAME, so every hourly enemy check reads the foes on a frame of its own, the spawn-abort latch is read on the
+      // next, and no night resolves in one frame
+      if (shared - this._sharedAt < MINUTES_PER_TICK || this._sharedTaken) return false;
       this._sharedAt += MINUTES_PER_TICK;
+      this._sharedTaken = true;
       return true;
     }
     if (this._timer < this._subTickEvery) return false;
@@ -546,11 +563,13 @@ export class RestSession {
     // the same reason DFU keeps it: it is the pair of the reachable one
     // below, and a host that ever ticks a covered window must not
     // advance its clock.
-    if (this._covered()) return null;
+    if (this._covered()) { this._holdShared(); return null; }
 
     this._accrue(dt);
     while (this._takeSubTick()) {
-      this.deps.advanceMinutes(MINUTES_PER_TICK);
+      // AUDIT WORLD5 C8: the sub-tick's own span rides along under the shared clock (its END - the reading just
+      // counted; null offline), because a host that is refused the clock write cannot read the span off the clock
+      this.deps.advanceMinutes(MINUTES_PER_TICK, this._sharedAt);
       // TickRest :376-379, `RaiseTime` then `QuestMachine.Instance.
       // Tick()`, in that order and inside the SAME sub-tick. DFU's own
       // comment two lines above says the ten-minute granularity exists
@@ -572,7 +591,7 @@ export class RestSession {
         // way; the port's loop is what has to be told. A quest popup
         // the tick above pushed suspends the rest AT ONCE rather than
         // running the rest of this dt out underneath it.
-        if (this._covered()) return null;
+        if (this._covered()) { this._holdShared(); return null; }
         continue;
       }
       this._minutesOfHour = 0;
@@ -585,7 +604,7 @@ export class RestSession {
       // counted (:394), so the covered hour reaches OnSleepEnd's
       // six-hour test while the sleeper gets no vitals and a timed rest
       // loses no hour off its counter.
-      if (this._covered()) return null;
+      if (this._covered()) { this._holdShared(); return null; }
       // A full hour: the enemy break first, then vitals/completion.
       if (this.deps.enemiesNearby()) return { textId: REST_TEXT.enemiesNearby, enemyBroke: true, died: false };
       // :405-410 - the poll AGAIN, after the enemies and before the
