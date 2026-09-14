@@ -129,7 +129,10 @@ export function getTargets(self, candidates, playerFeet, {
   // runTargetMachine for what that costs.
   let sawSecondaryTarget = false;
   let selectedDistance = 0;
-  const walk = [...(candidates ?? []), PLAYER_TARGET];
+  // AUDIT WORLD6b-ii A5: DFU appends the player LAST (:748) so the player loses priority ties to foes; a caller that
+  // carries PEERS names the player's slot by putting PLAYER_TARGET in the list itself, so the peers walk AFTER the
+  // local player and a peer never beats me on a tie (the recorded order: foes, me, the peers)
+  const walk = (candidates ?? []).includes(PLAYER_TARGET) ? [...candidates] : [...(candidates ?? []), PLAYER_TARGET];
   for (const c of walk) {
     const isPlayer = isPlayerTarget(c);
     const targetEntity = isPlayer ? null : c.entity;

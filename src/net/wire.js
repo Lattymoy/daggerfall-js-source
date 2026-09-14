@@ -338,6 +338,7 @@ export const CELL_FRAME_RECORDS_MAX = 64;
 export const CELL_PUPPETS_MAX = 8;
 export const FOE_SEQ_MAX = 1e9;
 export const FOE_HEALTH_MAX = 1e5;
+export const FOE_LEVEL_MAX = 100;
 /** One streamed foe record projected: `i` a whole number in [0, FOE_SEQ_MAX]; `t` a whole number in [0, 255] or
  *  absent; `x`, `d`, `m` 0 or 1 or absent; `f` three finite numbers inside the pose's bounds or absent; `y` finite
  *  or absent; `h` finite in [0, FOE_HEALTH_MAX] or absent; `a` a whole number in [0, 2^31) or absent. Null when
@@ -358,6 +359,15 @@ export function validFoeRecord(r) {
   if (r.a !== undefined) { if (!Number.isInteger(r.a) || r.a < 0 || r.a >= 2 ** 31) return null; out.a = r.a; }
   // WORLD6b-ii: `g` the foe's target - '.' its owner, a peer id, '' none (WORLD3's spelling for the dungeon's stream)
   if (r.g !== undefined) { if (typeof r.g !== 'string' || !(r.g === '' || r.g === '.' || ID_RE.test(r.g))) return null; out.g = r.g; }
+  // AUDIT WORLD6b-ii B2/B3: the ATTACKER'S terms ride the record - `l` the foe's level, `w` its right-hand weapon as
+  // [templateIndex, material] or null (none) - so a puppet's blow at me is the owner's foe's blow (its level, its
+  // weapon), resolved against MY stats; copied, never rolled (AUDIT WORLD6b B14)
+  if (r.l !== undefined) { if (!Number.isInteger(r.l) || r.l < 0 || r.l > FOE_LEVEL_MAX) return null; out.l = r.l; }
+  if (r.w !== undefined) {
+    if (r.w === null) out.w = null;
+    else if (Array.isArray(r.w) && r.w.length === 2 && Number.isInteger(r.w[0]) && r.w[0] >= 0 && r.w[0] <= 1023 && Number.isInteger(r.w[1]) && r.w[1] >= 0 && r.w[1] <= 255) out.w = [r.w[0], r.w[1]];
+    else return null;
+  }
   return out;
 }
 
