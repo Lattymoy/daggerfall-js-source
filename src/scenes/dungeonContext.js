@@ -6113,6 +6113,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // position override (AUDIT 66 F8).
       droppedTorches.destroyAll();
       weaponRig.dispose?.();
+      // HARD1 (the generative lifetime gate's first catch): the blood
+      // splashes own a billboard batch each while they animate
+      // (hitEffects.js mints one per spawn and frees it on retire), and
+      // this teardown never retired them - so a dungeon left with a
+      // splash in the air leaked one batch per live effect. The
+      // INTERIOR host has called `interiorHitEffects.clear()` in both
+      // its teardown paths since HE1; the dungeon's copy of the same
+      // pool was simply never given the same line.
+      hitEffects.clear();
       // AUDIT 64 F41: the scene ambience leaves with the scene too -
       // it holds the dungeon loop handles AND a row in the module's
       // live-instance registry (the port's stand-in for DFU's static
