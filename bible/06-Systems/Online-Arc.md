@@ -3172,18 +3172,22 @@ nothing. Now:
 - **The hit carries it** - `pt`, a whole number inside
   ItemEnums.Poisons (`hitPoisonOf`, 128..139; `HIT_POISON_MIN/MAX`
   pinned equal to poisons.js's own bound so the worker's bundle carries
-  no systems import), on a damaging blow alone (FormulaHelper's
-  `damage > 0`). The owner lands it as FormulaHelper lands it: inside a
-  damaging blow, before the health moves, the foe's OWN saving throw
-  rolled where the foe is real; outside the enum nothing (DFU's
-  `startPoison` registers nothing for it either).
+  no systems import). The dose is the CALC's word: FormulaHelper doses
+  on the calc's `damage > 0`, and the Strikes payload can zero the
+  number after it (AUDIT WORLD6b-iii(e) A3 - the slice gated the rider
+  on the final number and dropped a spent dose). The owner lands it as
+  FormulaHelper lands it: inside the blow, before the health moves,
+  the foe's OWN saving throw rolled where the foe is real; outside the
+  enum nothing (DFU's `startPoison` registers nothing for it either).
 - **The shaft, too.** The exterior's arrow blow said `kind: 'melee'`
   (the hosts' `dealDamage` passed no kind) and the puppet's local copy
   took the Arrow. Now the kind rides and the hit carries `ar: 1`, and
   the owner's copy lands the Arrow where BowDamage puts it - after the
   damage, for every shaft that CONNECTED (:145-147 is outside the
-  damage fork; WORLD3's spelling for the dungeon's hit). The body's
-  pile says so (`o`) and the grant carries it back.
+  damage fork; WORLD3's spelling for the dungeon's hit) - the zero blow
+  carrying its kind since AUDIT WORLD6b-iii(e) A2, and the landing
+  bounded (`HIT_ARROWS_MAX`, A1). The body's pile says so (`o`) and the
+  grant carries it back.
 - **The disease rider is the MONSTER's alone.** `onMonsterHit` rides
   the weaponless monster arm (`!attacker.isPlayer`) and nowhere else;
   a player's blow carries one rider, the poison. AUDIT WORLD6b's
@@ -3200,12 +3204,13 @@ me and beyond the nearest 64. Now the stranger is learned from the
 relay's own traffic:
 
 - **`who`.** A frame from an id I hold in NO room - a pose, a foes
-  frame in a cell, a blow that landed - asks the relay for it by name
-  through the socket the frame came on (`_askWho`), once per
-  `WHO_RETRY_MS` (10 s) per id and `WHO_HZ_MAX` (2) a second in all; an
-  ask the gate or a dead socket refused is not marked, so the next
-  frame asks. The relay relays only a hello'd socket's frames, so a
-  stranger's frame is the relay's word that it is a member.
+  frame in a cell, a blow that landed in a cell - asks the relay for it
+  by name through the socket the frame came on (`_askWho`), once per
+  `WHO_RETRY_MS` (10 s) per id and `WHO_HZ_MAX` (5, after AUDIT
+  WORLD6b-iii(e) B5) a second in all; an ask the gate or a dead socket
+  refused is not marked, so the next frame asks; the asked list goes
+  with the room (B4). The relay relays only a hello'd socket's frames,
+  so a stranger's frame is the relay's word that it is a member.
 - **The answer is its JOIN**, to the asker alone - the member's hello
   name and look (from storage) and its latest metered pose - the frame
   the session already reads; its next pose is placed and its foes are
@@ -3217,7 +3222,8 @@ relay's own traffic:
   roster stays the welcome's size; a member is asked for only when it
   is heard.
 
-Relay `world65`. Pinned in `test/world6biiie.test.js` (5), EXECUTED:
+Relay `world65` (`world66` after the audit). Pinned in
+`test/world6biiie.test.js` (5), EXECUTED:
 the wire's bounds and one home at both ends; two pools (the striker's
 dose at a puppet not on the shadow but on the hit with the kind and
 the shaft, spent once, the owner dosing its foe inside a damaging blow
@@ -3232,8 +3238,158 @@ silent, the asks' own bucket, a socket not hello'd refused); by source
 the hosts' doors, the dungeon twin and the monster-only disease rider.
 Restamped: world2/world3 (the dungeon divert), world6b/world6bii (the
 arrow hit's `ar`), auditworld6b (the divert's gate), auditworld2 (the
-parser's doc), audit39_worldmodes (the interior arrow's kind), the
-relay version pins.
+parser's doc), audit39_worldmodes (the interior arrow's kind),
+c2combat (the poison pin reads the one door), the relay version pins.
+
+## AUDIT WORLD6b-iii(e) (2026-09-14)
+
+**Mac: "Continue."** Three opus lenses over the striker's rider and the
+roster's bound: A the pools' poison door and the hit, B the wire, the
+relay and the session's `who`, C the dungeon twin, the records and the
+merge. Twenty-six findings; fourteen paid, the rest recorded. Every
+paid one is pinned by EXECUTION in `test/auditworld6biiie.test.js`
+(6) where a rig can reach it, by source where it cannot.
+
+### The majors
+
+- **A3 (major, paid): the dose was gated on the wrong number.**
+  FormulaHelper doses on the calc's `damage > 0` and clears the weapon
+  (formulas.js :682-686); the Strikes payload runs AFTER it at the
+  tail and can zero the number (LowDamageVs -5, clamped at 0). The
+  slice's divert sent `pt` only when the FINAL damage was positive, so
+  a poisoned, enchanted blade against a matching affinity spent its
+  dose at the shadow and the owner's foe never felt it; and when a
+  damaging divert had already gone that frame, the zero door skipped
+  `damageFoe` and the dose set aside rode the NEXT blow - a bare fist
+  a frame later carried a poison. Now the dose is the calc's word at
+  both ends (the divert sends it whatever the number, the owner lands
+  it whatever the number - bounded by `startPoison`'s own law: twelve
+  poisons, a live one refused again), and the zero door spends a dose
+  it does not send. Executed.
+- **A1 (major, paid): the hit's `ar` minted Arrows without bound.**
+  The owner added one Arrow per `ar: 1` frame with no damage gate and
+  no cap; the relay funnels sixty blows a second onto one socket, so a
+  crafted stream stacked thousands into a live foe's pile - free loot,
+  and past `LOOT_STACK_MAX` the projection refused the item whole and
+  the grant DROPPED it, so the pile was gone for every honest taker.
+  `HIT_ARROWS_MAX` (255) a body from peers' shafts, both twins;
+  executed to the bound.
+- **B1 (major, paid): `who` was the one arm past the hello that read
+  storage, per ask, for free.** Every other ingress arm carries a
+  room-wide budget; this one carried a per-socket gate alone and did a
+  storage read per answered ask - a full room of self-minted sockets
+  asking at their own rate was 1280 reads a second out of one object,
+  indefinitely, with nothing to strike (a real member answers, so no
+  junk). Now the room's own budget (`WHO_ROOM_HZ_MAX`, 60 a second,
+  every asker together, over it dropped and nobody struck) and the
+  looks kept on the instance from the hello (a repeat ask reads
+  nothing; after a hibernation the storage's copy once, then kept).
+  Executed: two asks, no read; after a wake, one.
+- **B2 (major, paid): the answer's pose crossed the range law.** The
+  pose fan says a member's position only within `RANGE_PIXELS`; the
+  answer said it for anyone named - the welcome's sixty-four ids
+  became a live position feed over the whole cell, a radar the fan
+  was built to deny. Now the pose rides within range alone (a
+  stranger heard through the fan is in range by construction; a room
+  without the law says it). Executed.
+- **C1/A2 (major, paid): the zero blow's kind.** The record claimed the
+  Arrow lands "for every shaft that CONNECTED"; a shaft that landed
+  nothing reached the owner through the zero door as a SWING (no
+  kind, no `ar`), so its Arrow was lost and the owner told wrong.
+  `attackFromPlayer` takes the kind; the hosts pass the shaft's.
+  Executed.
+- **C2 (major, paid): the dungeon had no zero-blow door.** AUDIT
+  WORLD6b-ii B4's `attackFromPlayer` was the exterior's alone: the
+  dungeon's melee zero arm and its arrow hook called
+  `handleAttackFromPlayer` directly, so a zero blow at a puppet woke
+  EVERY foe on my screen (puppets included - hostility is not on the
+  wire, so it never healed) and told the host nothing (WORLD2 B13
+  unpaid underground). The door, the dungeon's; the flight says what
+  landed so a damaging shaft sends no second frame.
+
+### A - the pools
+
+- **A5 (note, paid):** the dose is read inside the provenance gate -
+  a fall's or a foe's door on the puppet leaves it. Executed.
+- **A8 (minor, paid):** the melee chain is EXECUTED now through
+  `resolvePlayerHit` (a fake weapon standing in for
+  `playerWeapon.resolveHit`'s contract): the hook, then the results
+  loop reaching the divert with the dose on it.
+- **A4 (note):** the sender gated on the raw damage and the owner on
+  the rounded - moot now that neither gates.
+- **A6 (note, recorded):** the dungeon's `inflictPoison` rides
+  `Math.random` (its whole pool does, by its own note); the exterior's
+  `rolls` seam is `Math.random` in production too - the rule is a
+  test seam, not a stream.
+- **A7 (note):** the foe-vs-foe arm's `damageFoe(t, d, null, ffwd)`
+  fallback defaults `fromPlayer` true, but every pool foe carries
+  `hurtFromFoe`, so the fallback is dead for pool foes. Fine as is.
+
+### B - the wire, the relay, the session
+
+- **B3 (minor, paid):** a name that left between the frame that asked
+  and the ask is the honest race, and it was JUNK - a counter that
+  never decays, two hundred of them closing the socket. Junk is one's
+  own name alone now (the parser refuses a bad one); a name gone
+  answers nothing. Executed.
+- **B4 (minor, paid):** the asked list goes with the room - `leave`
+  and a crossing clear it (an answer lost in the last cell held the
+  stranger unseen for `WHO_RETRY_MS` in the next). Executed.
+- **B5 (minor, paid):** `WHO_HZ_MAX` 5 - a halo let go drops every
+  peer it alone held, and their puppets with them; re-learning twenty
+  at two a second was ten seconds of empty ground.
+- **B6 (minor, paid):** `parseClient` checks the name as it checks
+  every scalar ("what the relay refuses the client never sends") - a
+  bad one is an error, not a frame. Executed.
+- **B9 (note, paid):** the socket asked for is read again after the
+  storage await (input gates make it moot today; a ghost join after
+  a leave if they ever were not). By source.
+- **B7 (note, recorded):** the striker's ask runs after `onHit`, so a
+  stranger's FIRST blow wakes my foe with no candidate (AUDIT
+  WORLD6b-ii A3's law); the pose branch heals it within a frame.
+- **B8 (note, recorded):** the merged roster's guard is `peers`, so a
+  peer known through a halo alone is not asked for in the primary;
+  when the halo lets it go, its puppets pop and the next frame asks -
+  a one-round-trip flicker where there was a permanent loss.
+- **B10 (note, recorded):** the rig's attachment cap is 16 KiB; the
+  runtime's is 2 KiB. The worst attachment measures 796 bytes, so
+  nothing breaks, and `_setAttach`'s refusal is read at the hello
+  alone - a cap the rig cannot exercise.
+
+### C - the dungeon twin, the records, the merge
+
+- **C3 (minor, paid):** the "monster's alone" pin reads
+  `src/combat/pcaao.js` too (its core's `onMonsterHit` sits in the AI
+  arm, past the player and class-enemy arm).
+- **C4 (minor, paid):** a pin that passed either way (the same poison
+  twice) replaced by one that does not.
+- **C5 (minor, paid):** the restamped list names c2combat.
+- **C6 (minor, paid):** "a blow that landed" is a cell's; a dungeon's
+  stranger is asked for by its pose.
+- **C7 (note, paid):** two cites the shift carried stale
+  (`exteriorFoes.js`'s export line in Audit-58 and roadg_pools; the
+  notebook's three sites in UI-Arc) re-resolved by hand.
+- **C8 (note, recorded):** BowDamage's Arrow recovery is cited
+  `:145-147` in five places and `:146-148` in one
+  (`exteriorFoes.js`'s foe arm) - one is off by one; left until the
+  C# is at hand.
+- **C10 (note, recorded):** `playerArrowHitFoe` still adds an Arrow to
+  a PUPPET's shadow entity; the exterior never serializes a puppet,
+  but the dungeon's `collectWorld` writes every foe's items, so a
+  joiner that later takes the seat publishes its own shafts' Arrows
+  beside the host's. A divergence in the memory, not in play.
+- **Verified fine:** no stale `_divertPt` on any early return (the
+  hook fires only inside `damage > 0` at the calc, and only `Math.max`
+  follows it); no save leak (both serializers name their fields); the
+  quest foe and the summon past the layout dose locally; the wire's
+  bounds, the landing order, the saving throw at the owner, the
+  disease rider monster-only in both cores, the suite line, the cite
+  tests, the merge (no stray file, the tool's fixtures untouched).
+
+Relay `world66`. Restamped: world2/world3 (the dungeon divert and the
+bounded landing), auditworld6b (the divert's gate), auditworld6bii,
+audit58_combat and roadg_pools (the one door with the shaft's kind),
+citedrift (the flight's hook), the relay version pins.
 
 ## AUDIT WORLD6b (2026-09-14)
 

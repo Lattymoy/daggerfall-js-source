@@ -97,7 +97,7 @@ import { tallySkill, skillValue, SKILLS, SKILL_NAMES } from '../systems/skills.j
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT, startRestGroundedCheck } from '../player/motor.js';   // the rest gate's grounded input, one home
 import { applyLevelUp } from '../systems/advancement.js';
 import { tickPlayerMinutes, claimMagicRounds, runMagicRoundsFor } from '../systems/worldTick.js';   // AUDIT 18: the player tick every host shares
-import { mintSharedStamp, hitPoisonOf } from '../net/wire.js';   // AUDIT WORLD6a B7: the memory's stamp, from the wire's one mint
+import { mintSharedStamp, hitPoisonOf, HIT_ARROWS_MAX } from '../net/wire.js';   // AUDIT WORLD6a B7: the memory's stamp, from the wire's one mint
 import { spendPoolLowest } from '../systems/chargen.js';
 import { ClassFile } from '../formats/classFile.js';
 import { fetchBytes, ensureAudio, loadMagicRegistries, wireInfectionVideos, raisePlayerSkills, endRunToTitleMenu, exitToTitleMenu, sensesContext, wireDoorSpells, createDetectFeed, foeNearbyRecord, lootNearbyRecord, nearbyLootRecords, restVitals, restFullyHealed, createRestDeps, fatigueLossMultiplierFor} from './shared.js';
@@ -2666,7 +2666,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // Only the aggro half runs here: :627's DecreaseHealth(0)
         // changes nothing, and the knockback/hurt the damage door also
         // carries lives INSIDE WeaponManager's `damage > 0` arm.
-        handleAttackFromPlayer(foe, playerFeet);
+        attackFromPlayer(foe, playerFeet);   // AUDIT WORLD6b-iii(e) C2: through the one door - a puppet's zero blow goes to the host (WORLD2 B13), and no layout of mine wakes for it
         continue;
       }
       // EnemySounds.PlayHitSound at the struck foe, weapon-aware
@@ -2853,7 +2853,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
                 onInflictPoison: (att, tgt, pt) => poisonFoe(f, pt),   // C2-slice (combat-11): a poisoned arrow doses ITS mark; WORLD6b-iii(e): through the one poison door (a puppet's rides the hit)
                 // AUDIT 58: WeaponManager.cs:630 runs for every shaft that
                 // CONNECTED, damage or none.
-                onAttackFromPlayer: (t) => handleAttackFromPlayer(t, lastPlayerFeet),
+                onAttackFromPlayer: (t, landed) => attackFromPlayer(t, lastPlayerFeet, 'arrow', landed),   // AUDIT WORLD6b-iii(e) C2: the one door, the shaft's kind on the zero blow (its Arrow lands in the host's copy)
               });
               retireMissile(m);
               break;
@@ -3135,6 +3135,19 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (!_authority && pi >= 0 && pi < _layoutFoes) { f._divertPt = pt; return null; }
     return inflictPoison(f.entity, pt, false, { currentMinute: Math.floor(classicMinutesRef.value) });
   }
+  /** AUDIT WORLD6b-iii(e) A1: the Arrows a body holds - the bound the hit's `ar` lands under (the exterior's twin). */
+  function arrowsIn(items) { let n = 0; for (const it of items) if (it && it.templateIndex === 131 && it.name === 'Arrow') n += it.stackCount ?? 1; return n; }
+  /** AUDIT WORLD6b-iii(e) C2 (AUDIT WORLD6b-ii B4's door, the dungeon's): THE ONE DOOR for a connecting swing or shaft of
+   *  mine that landed no damage (WeaponManager.cs:630 runs for every connect) - the host's foe wakes and its room with
+   *  it (handleAttackFromPlayer); a PUPPET's host hears a zero blow with its kind (WORLD2 B13; a shaft's Arrow lands in
+   *  the host's copy) unless a damaging one already went from this hit, and no layout of mine wakes for it - until now
+   *  a zero blow at a puppet woke every foe on my screen, puppets included, and told the host nothing. */
+  function attackFromPlayer(foe, playerFeet = null, kind = 'melee', landed = 0) {
+    if (!foe) return;
+    const pi = foes.indexOf(foe);
+    if (!_authority && pi >= 0 && pi < _layoutFoes) { if (!(landed > 0)) damageFoe(foe, 0, playerFeet, null, { kind }); else foe._divertPt = null; return; }
+    handleAttackFromPlayer(foe, playerFeet);
+  }
   function applyHit(id, data) {
     if (!_authority || !data || typeof data !== 'object') return false;
     const i = data.i | 0, dmg = Number(data.dmg);
@@ -3159,9 +3172,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const pain = enemyPainVoice(f, dmg);
       if (pain && pain.clip >= 0) audio.play3d(pain.clip, [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], 1, { maxDistance: 16, pitch: 1 + pain.pitchLift });
     }
-    if (pt != null && dmg > 0) inflictPoison(f.entity, pt, false, { currentMinute: Math.floor(classicMinutesRef.value) });   // WORLD6b-iii(e): the dose lands on the host's foe as FormulaHelper lands it - inside a damaging blow, before the health moves, the foe's own saving throw rolled here
+    if (pt != null) inflictPoison(f.entity, pt, false, { currentMinute: Math.floor(classicMinutesRef.value) });   // WORLD6b-iii(e): the dose lands on the host's foe as FormulaHelper lands it - inside the blow, before the health moves, the foe's own saving throw rolled here; AUDIT WORLD6b-iii(e) A3: on the striker's word, whatever the number
     damageFoe(f, dmg, at, dir, { fromPlayer: true, peer: true, kind, peerId: id });
-    if (data.ar === 1 && kind === 'arrow') addItem(f.entity.items ??= [], { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });   // WORLD3: the shaft, where BowDamage puts it (:145-147) - the corpse's items are the record's
+    if (data.ar === 1 && kind === 'arrow' && arrowsIn(f.entity.items ??= []) < HIT_ARROWS_MAX) addItem(f.entity.items, { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });   // WORLD3: the shaft, where BowDamage puts it (:145-147) - the corpse's items are the record's; AUDIT WORLD6b-iii(e) A1: HIT_ARROWS_MAX a body from peers' shafts
     return true;
   }
 
@@ -3544,7 +3557,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // InstantiatePrefab's a fresh GameObject per saved record, so
     // EnemyEntity's `PickpocketByPlayerAttempted` default is the loaded
     // truth for every enemy. The re-minting pools match that by
-    // construction (exteriorFoes.js:1288's restoreWorld goes through
+    // construction (exteriorFoes.js:1292's restoreWorld goes through
     // spawnFoe), but this host patches the LIVE foes in place, so a
     // same-dungeon reload kept a raised latch and a failed pickpocket
     // could never be retried - falsifying the law
@@ -3688,11 +3701,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // sink hands playerFeet null (a spell knocks nothing, verbatim), so a joiner's spell turned the host's foe
         // toward the HOST, at the host's feet, while naming the joiner as its attacker.
         const _pAt = playerFeet ?? lastPlayerFeet;
-        const _pt = foe._divertPt ?? null; foe._divertPt = null;   // WORLD6b-iii(e): the blade's or the shaft's dose (poisonFoe, inside this blow's calc) - spent by this door, once
+        // WORLD6b-iii(e): the blade's or the shaft's dose (poisonFoe, inside this blow's calc) - spent by this door, once;
+        // AUDIT WORLD6b-iii(e) A5: by this player's own blow (a fall's or a foe's door leaves it)
+        const _pt = fromPlayer ? (foe._divertPt ?? null) : null; if (fromPlayer) foe._divertPt = null;
         if (fromPlayer && damage >= 0 && !foe._pupMismatch) opts.onFoeHit?.({ i: pi, dmg: damage, kind,
           ...(_pAt ? { p: [q2(_pAt[0]), q2(_pAt[1]), q2(_pAt[2])] } : {}),
           ...(knockDir ? { d: [q3(knockDir[0]), q3(knockDir[1]), q3(knockDir[2])] } : {}),
-          ...(_pt != null && damage > 0 ? { pt: _pt } : {}),   // WORLD6b-iii(e): the striker's poison rides to the host's foe (FormulaHelper doses on a damaging hit alone)
+          ...(_pt != null ? { pt: _pt } : {}),   // WORLD6b-iii(e): the striker's poison rides to the host's foe; AUDIT WORLD6b-iii(e) A3: the calc's word, whatever the number (the Strikes payload can zero it after the dose)
           ...(kind === 'arrow' ? { ar: 1 } : {}) });
         return;
       }
