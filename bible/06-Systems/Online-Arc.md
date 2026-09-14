@@ -3919,6 +3919,66 @@ edge (a damage frame with no swing lands nothing); `x3casting`,
 `audit62_foes`, `audit39_worldmodes`, `world3` restamped where the law
 moved.
 
+## STOP (2026-09-14): where the arc stands
+
+**Mac: "Lets actual stop here and log where we are at because there
+are a few things id like to discuss."** The log, so the discussion
+starts from the record and not from memory.
+
+**Shipped and live.** Everything from ONLINE1 through WORLD6b-iii(e)
+and its audit is merged to main; the relay is deployed at `world66`
+and answers on `/health`. The suite stands at 7474 tests across 755
+files, green. In one line each:
+
+- ONLINE1/SLOTS1/MWBODY1/CHAT1/MAC6/MAC7: presence, the doll, the
+  chat, the dungeon save, the peer's weapon and swing.
+- WORLD1-WORLD5: a dungeon is one shared world - its memory, one
+  simulation per room (the host's foes, everyone else's puppets), the
+  doors and levers, the loot, the shared clock and weather.
+- WORLD6a: a building is a world room (its shelves, doors, piles).
+- WORLD6b (i-iii): a cell streams every player's encounter foes; the
+  foe hunts every player; the cast at a peer; the cell seam (the
+  halo); a puppet's corpse loot; buildings' foes closed as none by the
+  lockbook; the striker's poison and the shaft on the hit; a stranger
+  beyond the welcome's roster asked for (`who`).
+- Every slice audited by three opus lenses, the findings paid or
+  recorded, pinned by execution.
+
+**Open, on the 6b-iii list** (each a design slice, not a residual;
+see "6b-iii (recorded, next)" above and the explanation given at the
+stop):
+
+- **The guards on a shared crime.** The watch is a crime's response
+  and the crime is the player's own (the flag, the witnesses, the
+  legal reputation). Sharing it is a crime event on the wire, the
+  witness test run once, then the guards as a pool with the laws the
+  encounter foes have. The open decision: whether a peer's murder
+  marks the region for everyone, and whom the watch hunts.
+- **One economy.** The day's rolls are the world's already (WORLD6b);
+  the STATE the walk applies to is each player's (the prices read the
+  player's own faction reputation; a returning player catches up from
+  its own starting state). Sharing it is a region memory like a
+  dungeon's, one owner walking the day, the reputation term split out
+  or dropped; it touches the shop, the bank and the guild halls. The
+  open decision: what a player away a week reads.
+- Recommended order at the stop: the guards first (contained in a
+  cell, the pool laws exist), the economy second.
+
+**Recorded, not paid** (the last audit's notes, standing): the
+striker's ask runs after the blow, so a stranger's first blow wakes
+my foe with no candidate; the merged roster's one-round-trip flicker
+when a halo lets a peer go; the rig's attachment cap is not the
+runtime's; the dungeon's poison seam rides Math.random; the shaft's
+Arrow on a puppet's shadow reaches the dungeon's memory on a
+handover; one BowDamage cite off by one.
+
+**The wider "not yet"** is the list below, unchanged: no
+player-versus-player, the look sent once, no identity beyond the
+name, the relay unmeasured past a handful of players.
+
+**Standing reminder:** the Cloudflare API token pasted into the chat
+during the deploys should be rotated.
+
 ## What it does not do (yet)
 
 - **The Morrowind body** ships (MWBODY1, above); a client without the
