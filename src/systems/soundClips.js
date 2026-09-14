@@ -38,6 +38,14 @@ export const SOUND = {
   NormalDoorClose: 93,
   NormalDoorOpen: 94,
   HorseClop: 97,          // TR2: the riding loop below half speed
+  // WIND3: the wind's own voice - DFU draws these only as dungeon
+  // one-shots (AMBIENT_SOUNDS.dungeon, SoundClips.cs:94-103); the port's
+  // wind loop (systems/windAudio.js) plays the moan and the blow.
+  AmbientWindMoan: 65,
+  AmbientWindMoanDeep: 66,
+  AmbientWindBlow1: 70,
+  AmbientWindBlow1a: 71,
+  AmbientWindBlow1b: 72,
   AnimalHorse: 99,
   AnimalDog: 100,
   AnimalCat: 101,

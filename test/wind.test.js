@@ -77,7 +77,9 @@ test('WIND1: one seam - the row takes the model\'s vector, and the sky eases on 
   // longer what a consumer sees under the enhanced one.
   assert.match(read('src/render/enhancedSky.js'), /sunny:.*wind: \[0\.010, 0\.004\]/);
   // The grass gusts on the wind's temper, through the controller.
-  assert.match(read('src/scenes/world.js'), /const gustG = sky\.gustAt\?\.\(tsec\) \?\?/);
+  // WIND3: through the one mapping (systems/windDrive.js), whose gust the host hands the grass as `wd.gust`
+  assert.match(read('src/systems/windDrive.js'), /const gust = sky\?\.gustAt\?\.\(tsec\) \?\? legacyGust\(tsec\);/);
+  assert.match(read('src/scenes/world.js'), /speed: wd\.slider \* wd\.gust/);
   assert.match(shared, /gustAt\(tsec\) \{ return windModel\.gust\(tsec\); \}/);
   // ENHANCED ONLY: the model lives inside the controller and the classic
   // sky never reaches the row.

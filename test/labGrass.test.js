@@ -85,7 +85,12 @@ test('AUDIT 49: the grass is double-sided, follows the origin, learns its record
   assert.match(w, /if \(!grassRecords\.has\(groundArchive\)\) \{\s*\n\s*const layers = \[\];/);
   assert.ok(!/renderer\.uploadTileArray\(groundArchive, layers\);\s*\n[^}]*grassRecords\.set/.test(w), 'not inside the cache-miss block');
   // F4: uWind carries the gust, as the lab's WIND.speed does; uWindV does not
-  assert.match(w, /speed: slider \* gustG, windV: \[dir\[0\] \* slider \* 0\.16, dir\[1\] \* slider \* 0\.16\]/);
+  // (WIND3: the pair comes from the one mapping, systems/windDrive.js - the
+  // rate without the gust is windV, the speed with it is slider * gust)
+  assert.match(w, /speed: wd\.slider \* wd\.gust, windV: wd\.windV/);
+  const d = readFileSync('src/systems/windDrive.js', 'utf8');
+  assert.match(d, /const rate = slider \* LAB_WIND_RATE;\s*\n\s*const windV = \[dir\[0\] \* rate, dir\[1\] \* rate\];/);
+  assert.match(d, /step: \[windV\[0\] \* gust \* ds, windV\[1\] \* gust \* ds\]/, 'the travel carries the gust, the rate does not');
 });
 
 test('GR2: darker green and a billboard about Y in the lab and the game alike; one wind mapping; a time-sliced walk', async () => {
@@ -102,10 +107,14 @@ test('GR2: darker green and a billboard about Y in the lab and the game alike; o
   assert.equal(Math.round(labWindSlider([0.010, 0.004])), 70, 'a sunny day is the lab\u2019s 70');
   assert.equal(labWindSlider([0.045, 0.016]), 200, 'a thunderstorm is the slider\u2019s top');
   assert.equal(labWindSlider([0, 0]), 0);
+  // WIND3: the one mapping moved INTO systems/windDrive.js, and the
+  // hosts read its answer (`wd`) for the grass and the rain alike - no
+  // host calls the slider itself any more
   const w = readFileSync('src/scenes/world.js', 'utf8');
-  assert.equal((w.match(/labWindSlider\(w\)/g) || []).length, 2, 'the grass and the rain share the one mapping');
-  assert.ok(!/mag \* 260/.test(w), 'the guessed scale is gone');
-  assert.match(readFileSync('src/scenes/exterior.js', 'utf8'), /labWindSlider\(w\)/, 'the exterior host too');
+  assert.equal((readFileSync('src/systems/windDrive.js', 'utf8').match(/const slider = labWindSlider\(w\);/g) || []).length, 1, 'the grass and the rain share the one mapping, in its one home');
+  assert.ok(!/labWindSlider/.test(w) && !/mag \* 260/.test(w), 'the guessed scale is gone, and the host holds no copy of the mapping');
+  assert.ok(!/labWindSlider/.test(readFileSync('src/scenes/exterior.js', 'utf8')), 'the exterior host too');
+  assert.match(w, /\{ dir: wd\.dir, speed: wd\.slider \* wd\.gust, windV: wd\.windV \}/, 'the grass takes the one answer');
   // 3. the walk is a generator that yields, and lands where the one-shot lands
   const keep = (x) => (x > 0 ? 0 : null);
   const whole = placeLabGrass({ centre: [3, 4], keep });

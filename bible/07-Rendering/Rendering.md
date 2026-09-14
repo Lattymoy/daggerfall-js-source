@@ -108,6 +108,52 @@ directory by `test/audit18_bible_docs.test.js`:
   stretched only while the front's factor was strictly between 0 and
   1, which is 0 at the change, so the sky turned in fourteen seconds
   and the wind followed - `inLead()` stretches it for the whole lead.
+- `systems/windDrive.js`, `render/windWisps.js`, `systems/windAudio.js`,
+  the flats' sway in `render/renderer.js` - **WIND3 (2026-09-14) THE WIND
+  SEEN AND HEARD.** Mac: "World space wisps that indicate the direction
+  of wind and wind audio without being too loud or overbearing; tree and
+  flora sprite movement with wind." Three consumers at once, and the
+  root first: the wind→units mapping (the lab's slider, the rate in
+  metres a second, the unit direction, the gust, the travel integrated
+  over the frame) stood written out three times in the hosts - twice for
+  the rain and once for the grass, the rain still on the fixed three-sine
+  gust WIND1 had replaced - and a fourth, fifth and sixth copy is the
+  fault WW2 had just closed on the motion bag. `windDrive(sky, tsec, dt)`
+  is the ONE home now, read once a frame by each exterior host (`wd`),
+  and the rain, the grass, the wisps, the loop and the flats take its
+  numbers by construction (the rain gained WIND1's gust in the move).
+  THE WISPS: faint streaks of air stretched along the wind's velocity,
+  born and gone on their own phase, in a 90 m box that follows the eye
+  and wraps by the lab's law, travelling by the integrated step (never
+  wind x time); their count (2,400 at a gale, a twelfth of that as the
+  floor so the direction stays readable in a calm) and their alpha
+  follow the strength. Drawn after the rain as a foreign pass, no depth
+  write, unfogged. THE LOOP: one named loop ('wind', the riding loop's
+  shape - a clip swapped at its end, never restarted) on DAGGER.SND's own
+  wind clips, which DFU draws only as dungeon one-shots - the moan under
+  0.62 of the strength, the blow from there; the gain is a smoothstep of
+  the strength breathing with the gust, slew-limited so a front is a
+  rise and a gust never pops, and capped at 0.18 - "not too loud" as a
+  pinned number. Not AmbientEffects (DFU's player, bug for bug, stays
+  so): ticked beside it on the exterior frame and STOPPED on every modal
+  frame, as the mills' hum is - the port's own sounds fall silent
+  indoors. THE SWAY: BB_VS takes the wind (`uFlatWind`, one upload a
+  call) and a share per batch (`uSway`, uploaded when it changes), and
+  leans the quad by the grass's own wave - the lab's 1.7 / -along*0.35
+  gust running across the field, the 0.55/0.75 push - weighted by the
+  square of the height up the quad so the root stands and the crown
+  moves, scaled to a trunk (a few percent of the height at a gale). Only
+  the climate's nature archive is tagged (`floraSwayOf`: a tree whole, a
+  bush six tenths; people, lights, signs, foes and every indoor flat 0),
+  which is the shader's off switch, so an interior or a dungeon that
+  never sets the wind draws as before. Three rows on the Features home
+  (`wind-wisps`, `wind-sound`, `flora-sway`; on by default, the player's
+  own online), read every frame; `?wisps=off`, `?windaudio=off`,
+  `?sway=off` the kill doors. ENHANCED ONLY: under the classic sky the
+  mapping answers nothing and nothing moves, blows or sounds. Not seen:
+  no ARENA2 here - the wisps' size and alpha, the loop's ceiling and the
+  sway's amplitude go to Mac's eyes and ears by the Incident's law.
+  `test/wind3_windworld.test.js`.
 - `systems/weatherFront.js` - **WX2 (2026-09-03) THE FRONT REACHES THE
   GROUND.** Mac: "Instead of rain/snow starting and stopping immediately,
   I want it to fade in and out slowly, how the grass prototype handles
@@ -218,6 +264,12 @@ directory by `test/audit18_bible_docs.test.js`:
   after it) on a FIXED 1/fps step, the three speeds (general 5, ANIMALS 5,
   LIGHTS 12), and the one arming seam all four static-flat batch sites call so
   the four hosts cannot drift.
+- `windWisps.js` - WIND3 THE WISPS: the wind, seen - faint streaks of air
+  stretched along the wind's velocity in a box that follows the eye and
+  wraps by the lab's law, travelling by the one integrated step, their
+  count and alpha the wind's strength. A sibling of the rain's program,
+  drawn after it as a foreign pass; the `wind-wisps` row, `?wisps=off`.
+  The record is WIND3 under `systems/wind.js` below.
 - `farRing.js` - EV8 THE FAR PROVINCE RING: the province's mountains
   on the horizon, one vertex per map pixel over woods.heightMapBuffer
   at the streamed terrain's own UN-exaggerated height law, tinted by

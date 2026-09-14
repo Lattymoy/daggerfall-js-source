@@ -102,7 +102,10 @@ import { createExteriorFoes } from './exteriorFoes.js';   // X-slice
 import { StaticBatchBuilder, keyResolver } from '../render/staticBatch.js';   // PERF4: a pixel's static models as one mesh
 import { createBreather } from '../systems/buildBreather.js';   // PERF7: the stream build yields to the frame
 import { pieceIndex } from '../render/labGrass.js';   // PERF8: the piece under a point, by arithmetic
-import { LabGrassRenderer, createGrassField, grassRecordsOf, labWindSlider, LAB_GRASS, LAB_DIM } from '../render/labGrass.js';   // GR1: the lab's grass, byte for byte
+import { LabGrassRenderer, createGrassField, grassRecordsOf, LAB_GRASS, LAB_DIM } from '../render/labGrass.js';   // GR1: the lab's grass, byte for byte
+import { windDrive, floraSwayOf, floraSwayOn } from '../systems/windDrive.js';   // WIND3: the one wind in every consumer's units; the flats' sway
+import { WindWispsRenderer, wispsOn } from '../render/windWisps.js';   // WIND3: the wind, seen
+import { createWindAudio, windSoundOn } from '../systems/windAudio.js';   // WIND3: the wind, heard
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring
 import { PLAYED_STEP_MAX_SECONDS } from '../systems/quest/clock.js';   // WORLD7: the quest clocks' played step online
 import { mintQuestFoeWave, placeFoeEnv, entityOccupancy, questFoeGender, reviveQuestBehaviour } from './questFoeHost.js';   // B1   // AUDIT 63r F24: SerializableEnemy.cs:206-217's quest-link arm, the one home both hosts use
@@ -580,6 +583,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   const precipOpts = { enhanced: sky.enhanced, countCap: Number(params.get('rain')) || null };
   if (sky.pixelSnow) precipOpts.pixelSnow = sky.pixelSnow;   // DS1: Dynamic Skies' InitSnow - the pixel snow replacement, when its switch is on
   let precip = precipMode ? new PrecipitationRenderer(renderer.gl, precipOpts) : null;
+  const wisps = sky.enhanced ? new WindWispsRenderer(renderer.gl) : null;   // WIND3: built on the enhanced lane, so a shader fault is a boot fault; its row is read per frame
+  const windAudio = createWindAudio();   // WIND3: the wind loop, ticked on the exterior frame and stopped on the modal one
   // GR1: the lab's grass - one scatter of the lab's 1,200,000 candidates in a
   // 420m window around the eye, kept where the tiles are grass, rebuilt when
   // the eye leaves the window's middle. Enhanced skin and switch only.
@@ -1211,6 +1216,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         renderer.uploadTexture(archive, rkey, { width: img.width, height: img.height, colors: img.data }, { mips: false, variant: '' });   // AUDIT 61: the mod's atlas has NO mip chain (mipChain:false, Apply(false), Point) - one NEAREST level at every distance, unlike the classic flats
         const batch = renderer.createBillboardBatch(archive, rkey, sib.size, centers);
         batch._box = flatBatchAabb(centers, sib.size);   // EV3
+        batch.sway = floraSwayOf(archive, natureArchive, sib.size.h);   // WIND3: the season's trees lean too
         unionBox(batch._box);
         batches.push(batch);
         continue;
@@ -1219,6 +1225,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       const size = billboardSize(t, record);
       const batch = renderer.createBillboardBatch(archive, record, size, centers);
       batch._box = flatBatchAabb(centers, size);   // EV3
+      batch.sway = floraSwayOf(archive, natureArchive, size.h);   // WIND3: the flora lean with the wind, nothing else does
       unionBox(batch._box);
       armFlatAnim(batch, t, archive, record, flatAnims, uploadRecordFrame);
       batches.push(batch);
@@ -7543,6 +7550,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // AudioSources stop with it; the mills fall silent and the
       // per-frame retry restarts them on the way out.
       for (const p of built.values()) for (const w of p.windmills) { w.hum?.stop(); w.hum = null; }
+      windAudio.stop();   // WIND3: the port's own wind falls silent indoors, as the mills do
       // AUDIT F2-I1: the modal frame RETURNS, so an overlay held in the
       // townTalk slot got neither its clock nor its draw while the
       // player was inside a building or a dungeon - chargen mounts
@@ -8095,6 +8103,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const fx = weatherFront.tick({ dt, weather, arrival: enhancedFront ? sky.frontArrival() : 1, nowMinutes: playerTicker.classicMinutes, tsec: now / 1000, jump });
     if (fx.changed) wxFrom = wxNow;
     wxNow = enhancedFront ? blendTerms(wxFrom, weatherTerms(), fx.t) : weatherTerms();
+    const wd = windDrive(sky, now / 1000, dt);   // WIND3: the frame's wind in every consumer's units, read once
     // A3: the exterior ambience (WeatherAmbientEffects 5/25) - the
     // weather/time preset per WeatherManager.SetAmbientEffects.
     audio.setListener(cam.pos, fwd);
@@ -8105,6 +8114,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     ambience.setPreset(presetForExterior(ambientWord, isNight(minute)));
     ambience.rainGain = enhancedFront ? fx.intensity : 1;
     ambience.update(dt, { playerPos: cam.pos, inside: false });   // AUDIT 58: `!playerEnterExit.IsPlayerInside` (:154-162), stated rather than left undefined - this tick is the exterior's
+    windAudio.update(wd, dt, windSoundOn());   // WIND3: the wind loop, beside DFU's ambience and never inside it
     animalAmbience.update(dt, cam.pos);   // A4: town animal barks (PlayRandomlyIfPlayerNear)
     // Storm lightning strobe. AUDIT 39 (#14): ENHANCED-SKIN ONLY -
     // shipped DFU renders no flash (PlayLightningEffect is 0 on both
@@ -8353,6 +8363,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         renderer.drawWaterSurface(p.water, p._pixelMatrix, renderer.tileArrays.get(p.groundArchive), p.tilemapTex, 6.4, wu);
       }
     }
+    renderer.setFlatWind(floraSwayOn() && wd.on ? [wd.windV[0], wd.windV[1], now / 1000, wd.gust] : null);   // WIND3: the flats lean with the one wind; the flora batches carry their share (sway)
     renderer.drawBillboards(allBatches, camRight, UP_Y);
     if (magic.batches().length) renderer.drawBillboards(magic.batches(), camRight, UP_Y);   // M2: spell missiles
     // T2 towns: every built populated pixel runs its own pool
@@ -8478,27 +8489,25 @@ export async function bootWorld(canvas, renderer, params, status) {
       precip.enhanced = !!sky?.cloudShadow;
       if (precip.enhanced) {
         precip.intensity = fx.intensity;   // WX2: the front's share of the profile
-        // WX1: THE LAB'S WIND LAW, term for term. The sky's eased row gives
-        // a direction and a speed (its wind vector, in the deck's units,
-        // times 260 for the lab's slider units); a slow three-sine GUST
-        // rides on the speed; the rate handed to the shader is
-        // speed * 0.16 (the lab's metres a second) WITHOUT the gust, and
-        // the travel integrated on the CPU is speed * gust * 0.16 * dt,
-        // exactly as grass-proto.html's frame() does it.
-        const w = sky.cloudShadow.wind;
-        const tsec = now / 1000;
-        const gust = 0.72 + 0.20 * Math.sin(tsec * 0.31) + 0.14 * Math.sin(tsec * 0.83 + 1.7) + 0.10 * Math.sin(tsec * 2.10 + 0.4);
-        const mag = Math.hypot(w[0], w[1]);
-        const dir = mag > 1e-6 ? [w[0] / mag, w[1] / mag] : [1, 0];
-        const slider = labWindSlider(w);   // GR2: one mapping for the rain and the grass
-        const dtp = Math.min(0.05, (now - (precip._lastNow ?? now)) / 1000);
-        precip.windV[0] = dir[0] * slider * 0.16; precip.windV[1] = dir[1] * slider * 0.16;
-        precip.windOff[0] += dir[0] * slider * gust * 0.16 * dtp;
-        precip.windOff[1] += dir[1] * slider * gust * 0.16 * dtp;
+        // WX1: THE LAB'S WIND LAW, term for term - the rate handed to the
+        // shader is the lab's metres a second WITHOUT the gust, and the
+        // travel integrated on the CPU carries it, as grass-proto.html's
+        // frame() does. WIND3: both come from the ONE mapping now
+        // (systems/windDrive.js, `wd` above) - the same rate the grass,
+        // the wisps and the flats take, and WIND1's gust in place of the
+        // fixed three-sine stack this block had kept.
+        precip.windV[0] = wd.windV[0]; precip.windV[1] = wd.windV[1];
+        precip.windOff[0] += wd.step[0]; precip.windOff[1] += wd.step[1];
       }
-      precip._lastNow = now;
       precip.draw(precipShown, proj, view, new Float32Array(cam.pos), camRight, now / 1000);
       renderer.markForeignPass();   // EV6: so did the rain
+    }
+    // WIND3: THE WISPS - the wind, seen (render/windWisps.js). After the
+    // rain and before the grass, on the same integrated wind; a foreign
+    // pass like the rain. Their row is read every frame.
+    if (wisps && wd.on && wispsOn()) {
+      wisps.draw(wd, proj, view, new Float32Array(cam.pos), now / 1000);
+      renderer.markForeignPass();
     }
     // GR1: THE LAB'S GRASS. The scatter is the lab's 1,200,000 candidates
     // over a 420m square around the eye, kept where they land on a GRASS
@@ -8553,20 +8562,16 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (!labGrassField) labGrassField = createGrassField(labGrass, { keep, ground, density: grassDensity });   // PERF1: the pref's fraction of the lab's field
       labGrassField.update(ex, ez, keep, ground);
       window.__grassStats = () => ({ blades: labGrass.count, drawn: labGrass.drawn, nearPixels: near.length, cells: labGrassField?.live.size ?? 0, slots: labGrassField?.slots ?? 0 });
-      const w = sky?.cloudShadow?.wind ?? [0, 0];
-      const mag = Math.hypot(w[0], w[1]); const dir = mag > 1e-6 ? [w[0] / mag, w[1] / mag] : [1, 0];
-      const slider = labWindSlider(w);   // GR2: the sky's row on the lab's slider - a sunny day is the lab's 70
-      // AUDIT 49 F4: the lab's uWind is WIND.speed, which carries the gust;
-      // uWindV is the rate without it - the same pair the rain is fed
-      const tsec = now / 1000;
-      // WIND1: the gust envelope is the WIND'S, shaped by its strength -
-      // a light wind breathes slow, a strong one gusts sharp and often -
-      // rather than one fixed sine stack for every weather. The vector
-      // above already carries the front; this carries its temper.
-      const gustG = sky.gustAt?.(tsec) ?? (0.72 + 0.20 * Math.sin(tsec * 0.31) + 0.14 * Math.sin(tsec * 0.83 + 1.7) + 0.10 * Math.sin(tsec * 2.10 + 0.4));
+      // GR2: the sky's row on the lab's slider - a sunny day is the lab's
+      // 70. AUDIT 49 F4: the lab's uWind is WIND.speed, which carries the
+      // gust; uWindV is the rate without it - the same pair the rain is
+      // fed. WIND1: the gust envelope is the WIND'S, shaped by its
+      // strength. WIND3: all of it off the one mapping (`wd`, systems/
+      // windDrive.js) - the grass, the rain, the wisps and the flats read
+      // the same numbers by construction.
       labGrass.draw(proj, view, new Float32Array(cam.pos), now / 1000,
         { sunDir: renderer._lightDir, amb: renderer._ambient, sunCol: renderer._sunColor, dim: wxNow.dim },   // WX2: the dim crosses on the front
-        { dir, speed: slider * gustG, windV: [dir[0] * slider * 0.16, dir[1] * slider * 0.16] });
+        { dir: wd.dir, speed: wd.slider * wd.gust, windV: wd.windV });
       renderer.markForeignPass();   // EV6: the grass changed programs behind the shadows' back
     }
     // C13: streaming-world arrows fly against the live pixel

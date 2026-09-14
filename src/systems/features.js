@@ -251,6 +251,42 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'lootRarity', initial: false, online: true }),   // LR1: off by default as enhancedAI is - it changes what drops; the lane forces it on
   }),
+  // WIND3 (2026-09-14, Mac: wisps that show the wind, a quiet wind, the
+  // trees moving with it): THE WIND SEEN AND HEARD - three rows over the
+  // one wind (systems/windDrive.js), each the player's own online (a
+  // look and a sound, nothing the room shares), each read every frame
+  // by the exterior hosts. Kill doors `?wisps=off`, `?windaudio=off`,
+  // `?sway=off`.
+  Object.freeze({
+    id: 'wind-wisps',
+    title: 'Wind wisps',
+    note: 'Faint streaks of air riding the wind across the land under the enhanced outdoors, so you can see which way it blows '
+      + 'and how hard: a few in a breeze, the air full of them in a gale. They travel with the same wind the clouds, the rain and '
+      + 'the grass take. Off draws none.',
+    effect: 'Takes effect at once.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'windWisps', initial: true, online: 'player' }),   // WIND3: render/windWisps.js wispsOn
+  }),
+  Object.freeze({
+    id: 'wind-sound',
+    title: 'Wind sound',
+    note: 'A quiet wind under the enhanced outdoors, from Daggerfall\u2019s own wind clips, rising and falling with the wind\u2019s strength '
+      + 'and breathing with its gusts - never more than a murmur under the rain and the birds, and silent indoors. '
+      + 'Off is Daggerfall\u2019s own soundscape, which has no wind.',
+    effect: 'Takes effect at once.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'windSound', initial: true, online: 'player' }),   // WIND3: systems/windAudio.js windSoundOn
+  }),
+  Object.freeze({
+    id: 'flora-sway',
+    title: 'Trees sway',
+    note: 'Trees and plants lean with the wind under the enhanced outdoors - the crown moves, the root stands - and a gust runs '
+      + 'across a wood as one thing, the same wave the grass takes. Only the trees and plants: people, signs and lights stand still. '
+      + 'Off keeps the classic still flats.',
+    effect: 'Takes effect at once.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'floraSway', initial: true, online: 'player' }),   // WIND3: systems/windDrive.js floraSwayOn; render/renderer.js BB_VS uSway
+  }),
   // FT9 (2026-09-14): THE FIVE PACKS WITH A SWITCH (Dynamic Skies' is
   // the outdoors row's, FT4). Windmills (Kamer) has no switch and so no
   // row - a row needs a control. The order is the Mods pane's.
