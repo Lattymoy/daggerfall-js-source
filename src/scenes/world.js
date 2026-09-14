@@ -305,6 +305,14 @@ const CANNOT_TRAVEL_ENEMIES_TEXT = 'You cannot travel with enemies nearby.';
 export async function bootWorld(canvas, renderer, params, status) {
   const regionName = params.get('region') || 'Daggerfall';
   const locationName = params.get('loc') || 'Daggerfall';
+  // WORLD5 (Mac: "the shared clock and weather, and the quest clocks stood down online"): ONLINE, THE WORLD'S CLOCK IS
+  // A FUNCTION OF WALL TIME (net/wire.js sharedClassicMinutes), read through the relay's offset once the welcome says
+  // it. Installed before anything below reads the time, so a load's own clock, ?tod and ?timescale never stand.
+  // AUDIT WORLD5 C13: the FIRST thing this boot does - it stood below the season reads (the climate season and the
+  // mod's four-valued one, both off worldMinutes()), so an online boot dressed the world in the session clock's
+  // season and the shared clock's turned it over on the first frame.
+  let _sharedOffsetMs = 0;   // the relay's clock minus this machine's, heard when the session's welcome arrives
+  if (params.has('online')) { setSharedClock(() => sharedClassicMinutes(Date.now() + _sharedOffsetMs)); setSharedWeather(true); }   // and the day picks the sky from here on (weatherSim)
   // A1: THE TEXTURE SEASON IS THE CALENDAR'S, NOT A URL PARAM.
   // Every production site in the reference reads the world clock -
   // ClimateSwaps.cs:382-386, DaggerfallLocation.ApplyTimeAndSpace
@@ -613,11 +621,6 @@ export async function bootWorld(canvas, renderer, params, status) {
   // AUDIT 23 (C2: hosts-8 = audio-1): ONE clock - see exterior.js's
   // twin note. ?tod SETS the world clock's time-of-day at boot,
   // ?timescale SCALES the world tick (DFU's TimeScale, default 12).
-  // WORLD5 (Mac: "the shared clock and weather, and the quest clocks stood down online"): ONLINE, THE WORLD'S CLOCK IS
-  // A FUNCTION OF WALL TIME (net/wire.js sharedClassicMinutes), read through the relay's offset once the welcome says
-  // it. Installed before anything below reads the time, so a load's own clock, ?tod and ?timescale never stand.
-  let _sharedOffsetMs = 0;   // the relay's clock minus this machine's, heard when the session's welcome arrives
-  if (params.has('online')) { setSharedClock(() => sharedClassicMinutes(Date.now() + _sharedOffsetMs)); setSharedWeather(true); }   // and the day picks the sky from here on (weatherSim)
   {
     const bootTod = parseTimeOfDay(params.get('tod'));
     if (bootTod != null && !sharedClockOn()) setWorldMinutes(Math.floor(worldMinutes() / 1440) * 1440 + bootTod);
@@ -2629,7 +2632,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2118 mounts the same one, gated on
+  // and dungeonContext.js:2125 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
   // that context through modes.dungeonCtx - so worldModes.js:4520
@@ -4003,7 +4006,10 @@ export async function bootWorld(canvas, renderer, params, status) {
           reposition: REPOSITION.DirectionFromStartMarker,
           travelStart, modEvent: 'travel' });
       // cautious arrival heals in full; magicka honors NoRegenSpellPoints
-      if (opts.speedCautious) {
+      // AUDIT WORLD5 C14: the heal is the trip's NIGHTS - DFU's cautious traveller arrives rested because the days
+      // passed - and online the trip takes no world time, so it heals nothing: with it, a cautious trip with camping
+      // out (a zero fare) was a free, instant, repeatable full heal of every pool on a black screen
+      if (opts.speedCautious && !sharedClockOn()) {
         playerEntity.health = playerEntity.maxHealth;
         playerEntity.fatigue = maxFatigue(playerEntity);
         if (!hasSpecialAbility(playerEntity.career, SPECIAL_ABILITY.NoRegenSpellPoints)) {
@@ -4150,7 +4156,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:5230), so exterior mode and a
+    // composer, dungeonContext.js:5237), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -6696,13 +6702,16 @@ export async function bootWorld(canvas, renderer, params, status) {
     online.onFoes = (id, data) => { _foesInAt = performance.now(); modes?.applyDungeonFoes?.(id, data); };   // AUDIT WORLD2 C5: the stream is the seat's heartbeat; A1: the host's id rides in
     online.onHit = (id, data) => { modes?.applyDungeonHit?.(id, data); };
     online.onAct = (id, data) => { modes?.applyDungeonActions?.(id, data); };   // WORLD3: another's door, lever or platform
-    online.onClock = (offsetMs) => { _sharedOffsetMs = offsetMs; };   // WORLD5: the relay's clock corrects this machine's
     // WORLD5: this save's time markers are set to the WORLD's time - a save a month behind catches up no loans and no
     // diseases on its first frame, one a year ahead reads no negative day - and the day's weather is rolled from the
     // shared day's own seed, whatever sky the save carried
-    alignEntityClocks(playerEntity, worldMinutes());
-    rollClimateWeathersForDay(worldMinutes());
-    refreshSeason(worldMinutes());
+    // AUDIT WORLD5 C2: and the same arrival again whenever the relay's clock moves this machine's by more than a
+    // second - the first welcome's offset lands AFTER this boot-time arrival (the socket opens later), and until it
+    // did the markers stood at the uncorrected clock's time: a machine minutes off caught up (or froze for) the
+    // difference on its first corrected tick. A room move's welcome says the same offset again and moves nothing.
+    const onlineArrival = () => { alignEntityClocks(playerEntity, worldMinutes()); rollClimateWeathersForDay(worldMinutes()); refreshSeason(worldMinutes()); };
+    onlineArrival();
+    online.onClock = (offsetMs) => { const was = _sharedOffsetMs; _sharedOffsetMs = offsetMs; if (Math.abs(offsetMs - was) > 1000) onlineArrival(); };   // WORLD5: the relay's clock corrects this machine's
     remotePlayers = new RemotePlayers({ renderer, deps: { fetchBytes, palette, getTexture } });
     // MWBODY1: the enhanced skin with Morrowind data attached puts every peer in a body of its own; otherwise the doll
     const enhanced = isEnhanced();   // the skin cannot change without a reload (switchSkin), so it is read once, not per frame

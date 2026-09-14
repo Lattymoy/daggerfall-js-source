@@ -16,7 +16,7 @@ import { defineLiveMaxMagicka } from './chargen.js';   // AUDIT 39: the live Max
 import { rebuildEquipState, isEquipped, unequipSlot } from './equip.js';   // AUDIT 17e C1   // AUDIT 63 F28: RemoveItem takes an EQUIPPED item off the doll on its way out
 import { templateByIndex } from './itemTemplates.js';   // AUDIT 63r F28: `shortName` is SetItem's template read, not an optional override
 import { restartHeldEnchantments } from './enchantments.js';   // E2: the held bundles' restore half
-import { snapshotWeather, restoreWeather } from './weatherSim.js';   // W1: playerPosition.weather (SerializablePlayer.cs:225) - one value, every host
+import { snapshotWeather, restoreWeather, rollClimateWeathersForDay } from './weatherSim.js';   // W1: playerPosition.weather (SerializablePlayer.cs:225) - one value, every host; AUDIT WORLD5 C4: the shared day's sky over a loaded one
 import { snapshotRegionConditions, restoreRegionConditions } from './regionConditions.js';   // S42: the CONDITION half of RegionDataRecord
 import { snapshotDiscovery, restoreDiscovery } from './discovery.js';   // T4
 import { snapshotAutomap, restoreAutomap } from './automap.js';   // A1: dictAutomapDungeonsDiscoveryState rides SaveData_v1
@@ -26,7 +26,7 @@ import { seedBundleSeq } from './effects.js';   // X10: the live-bundle counter'
 import { SOCIAL_GROUPS } from '../formats/factionFile.js';   // AUDIT 24
 import { travelMapSaveData, restoreTravelMapSaveData } from './travelMapState.js';   // U41: TravelMapSaveData
 import { getEscortFacesSaveData, restoreEscortFacesSaveData } from '../ui/hudEscortFaces.js';   // FE1: SaveData_v1.escortingFaces
-import { resetMagicRoundMarker } from './worldTick.js';   // EntityEffectBroker.InitMagicRoundTimer, on the LOAD arm (:230-233)
+import { resetMagicRoundMarker, sharedClockOn, worldMinutes, alignEntityClocks } from './worldTick.js';   // EntityEffectBroker.InitMagicRoundTimer, on the LOAD arm (:230-233); AUDIT WORLD5 C4: a load online is an arrival
 import { isMembershipStore } from './guilds.js';   // V2e: the two-book membership store rides the save whole
 import { restoreKnightlyOrderFlags } from './knightlyGifts.js';   // D9: KnightlyOrder.RestoreGuildData's armour-bit back-fill
 import { GUILD_GROUPS } from '../formats/factionFile.js';   // the membership book's key IS the guild group
@@ -131,7 +131,7 @@ export const newSkillsRecentlyRaised = () => [0, 0];
  *  enchantmentMagicRound clears the player's array at the head of
  *  every magic round (enchantments.js:827, DFU's ClearReactionMods at
  *  PlayerEntity.cs:1567-1570) and the folds re-apply it in the same
- *  pass, off worldTick.js:221 - so a load lands DFU's own shape, the
+ *  pass, off worldTick.js:226 - so a load lands DFU's own shape, the
  *  live mods left standing until the next DoMagicRound re-derives
  *  them eleven wide. An older snapshot's key is simply ignored (the
  *  restore loop skips what REP_ARRAYS does not name), so the envelope
@@ -679,6 +679,12 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // expiring restored buffs on the spot and bursting a restored
   // continuous-damage effect over a window the saved game never lived.
   resetMagicRoundMarker(Math.floor(snap.classicMinutes ?? 0));
+  // AUDIT WORLD5 C4: under the shared clock a LOAD is an arrival, in every host and through this one door - the
+  // restored markers shifted to the world's time (alignEntityClocks) and the day's sky rolled from the shared day's
+  // seed over the one the save carried. WORLD5 aligned the session's first save at the online start and nothing
+  // after it: a quick load, a boot ?load or a dungeon's own load restored the save's own clock into every marker,
+  // and the next tick caught up the distance to the world (or read it negative).
+  if (sharedClockOn()) { alignEntityClocks(entity, worldMinutes()); rollClimateWeathersForDay(worldMinutes()); }
   // AUDIT 39: the three extras above ride back out too - a save from
   // before they were carried reads the same null/0 they used to.
   return { position: snap.position, pose: snap.pose ?? null, classicMinutes: snap.classicMinutes, readiedSpellIndex: snap.readiedSpellIndex, world: snap.world ?? null, locationKey: snap.locationKey ?? null, quest: snap.quest ?? null, talk: snap.talk ?? null, interior: snap.interior ?? null, dungeon: snap.dungeon ?? null, travelMap: snap.travelMap ?? null, escortingFaces: snap.escortingFaces ?? null, smallerDungeonsState: snap.smallerDungeonsState ?? 0 };

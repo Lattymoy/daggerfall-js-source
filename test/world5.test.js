@@ -48,7 +48,7 @@ test('WORLD5: the wire\'s clock law - the epoch is the classic game start on 202
   assert.equal(sharedClassicMinutes(ONLINE_EPOCH_MS + 2 * 3600 * 1000), CLASSIC_GAME_START_TIME + MINUTES_PER_DAY, 'a day every two real hours');
   assert.equal(sharedClassicMinutes(ONLINE_EPOCH_MS - 5000), CLASSIC_GAME_START_TIME - 1, 'and a clock before the epoch reads before the start, never wraps');
   for (const k of ['ONLINE_EPOCH_MS', 'ONLINE_EPOCH_MINUTES', 'ONLINE_MINUTES_PER_MS', 'sharedClassicMinutes']) assert.equal(relay[k], { ONLINE_EPOCH_MS, ONLINE_EPOCH_MINUTES, ONLINE_MINUTES_PER_MS, sharedClassicMinutes }[k], `${k} at both ends`);
-  assert.equal(RELAY_VERSION, 'world5', 'the relay says which one it is');
+  assert.equal(RELAY_VERSION, 'world51', 'the relay says which one it is (AUDIT WORLD5 bumped it: the welcome\'s clock stamped as it is built)');
 });
 
 test('WORLD5: the relay\'s welcome carries its clock (`now`, ms) in every place room and no channel; the session reads its offset from it, says so, and refuses a clock a year off', async () => {
@@ -164,11 +164,11 @@ test('WORLD5: a rest online is paced by the world\'s clock - no sub-tick until t
   clock += 1;
   s.tick(0.016); assert.equal(d.minutes, MINUTES_PER_TICK, 'ten: one sub-tick, the owed rounds asked of the host');
   clock += 50;
-  s.tick(0.016);
+  for (let f = 0; f < 5; f++) s.tick(0.016);   // AUDIT WORLD5 C7: one sub-tick a frame, as the timer's clamped dt gives offline
   assert.deepEqual([d.minutes, d.vitals, s.totalHours], [60, 1, 1], 'sixty of the world\'s minutes: one rested hour, one vitals tick');
   clock += 120;
-  s.tick(0.016);
-  assert.equal(s.totalHours, 3, 'the clock leapt two hours (the tab was hidden): both counted');
+  for (let f = 0; f < 12; f++) s.tick(0.016);
+  assert.equal(s.totalHours, 3, 'the clock leapt two hours (the tab was hidden): both counted, a sub-tick a frame');
   // offline: the timer
   const e = deps();
   const off = new RestSession('timed', 2, e);
@@ -202,8 +202,8 @@ test('WORLD5: the hosts by source - the shared clock installed at the boot befor
   assert.match(w, /let _sharedOffsetMs = 0;[^\n]*\n\s*if \(params\.has\('online'\)\) \{ setSharedClock\(\(\) => sharedClassicMinutes\(Date\.now\(\) \+ _sharedOffsetMs\)\); setSharedWeather\(true\); \}/, 'installed at the boot, the shared weather with it');
   assert.match(w, /if \(bootTod != null && !sharedClockOn\(\)\) setWorldMinutes\(/, '?tod stands down');
   assert.match(w, /const timeScaleMult = params\.has\('timescale'\) && !sharedClockOn\(\) \? Number\(params\.get\('timescale'\)\) \/ 12 : 1;/, '?timescale stands down');
-  assert.match(w, /online\.onClock = \(offsetMs\) => \{ _sharedOffsetMs = offsetMs; \};/, 'the relay\'s clock corrects this machine\'s');
-  assert.match(w, /alignEntityClocks\(playerEntity, worldMinutes\(\)\);\s*rollClimateWeathersForDay\(worldMinutes\(\)\);\s*refreshSeason\(worldMinutes\(\)\);/, 'the session\'s start: the markers, the day\'s roll, the season');
+  assert.match(w, /online\.onClock = \(offsetMs\) => \{ const was = _sharedOffsetMs; _sharedOffsetMs = offsetMs; if \(Math\.abs\(offsetMs - was\) > 1000\) onlineArrival\(\); \};/, 'the relay\'s clock corrects this machine\'s (AUDIT WORLD5 C2: and a correction is an arrival)');
+  assert.match(w, /const onlineArrival = \(\) => \{ alignEntityClocks\(playerEntity, worldMinutes\(\)\); rollClimateWeathersForDay\(worldMinutes\(\)\); refreshSeason\(worldMinutes\(\)\); \};\s*onlineArrival\(\);/, 'the session\'s start: the markers, the day\'s roll, the season');
   assert.match(w, /\{ arriveMinutes: sharedClockOn\(\) \? worldMinutes\(\) : worldMinutes\(\) \+ computed\.minutes,/, 'the trip takes no world time');
   assert.match(w, /if \(!sharedClockOn\(\)\) \{ setSyntheticTimeIncrease\(true\); playerTicker\.advance\(computed\.minutes\); \}/, 'no jump');
   assert.match(w, /if \(clamp > 0 && !sharedClockOn\(\)\) \{ setSyntheticTimeIncrease\(true\); playerTicker\.advance\(clamp\); \}/, 'no arrival clamp');
@@ -220,7 +220,7 @@ test('WORLD5: the hosts by source - the shared clock installed at the boot befor
   assert.match(wt, /export const worldMinutes = \(\) => \(_sharedClock \? _sharedClock\(\) : _worldMinutes\);/);
   assert.match(wt, /export function setWorldMinutes\(v\) \{\s*if \(_sharedClock\) return _sharedClock\(\);/);
   assert.match(wt, /export function advanceWorldMinutes\(delta\) \{\s*if \(_sharedClock\) return _sharedClock\(\);/);
-  assert.match(rd('server/src/index.js'), /"world":\$\{world \?\? 'null'\},"now":\$\{now\}\}`;/, 'the welcome\'s clock');
+  assert.match(rd('server/src/index.js'), /"world":\$\{world \?\? 'null'\},"now":\$\{Date\.now\(\)\}\}`;/, 'the welcome\'s clock (AUDIT WORLD5 C11: stamped as the welcome is built)');
   const arc = rd('bible/06-Systems/Online-Arc.md');
   assert.match(arc, /## WORLD5 \(2026-09-13\)/, 'the record');
 });

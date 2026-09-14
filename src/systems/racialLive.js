@@ -26,5 +26,5 @@
 /** VampirismEffect's live curse entry, or null (the shape
  *  systems/vampirism.js mints and this predicate reads). */
 export const liveVampirism = (entity) =>
-  (entity?.activeEffects ?? []).find((a) => a.kind === 'racialOverride'
+  (entity?.activeEffects ?? []).find((a) => a?.kind === 'racialOverride'   // AUDIT WORLD5: a hole in the list is not a curse
     && a.racial === 'vampirism' && !a.ended) ?? null;

@@ -41,7 +41,7 @@ import {
 } from '../systems/court.js';
 import { guildOfFaction, membershipOf, activeMemberships } from '../systems/guilds.js';   // CR1: the rescue arms' member reads
 import { resolveVariantGuild } from '../systems/guildVariants.js';
-import { advanceWorldMinutes, MINUTES_PER_DAY } from '../systems/worldTick.js';
+import { advanceWorldMinutes, MINUTES_PER_DAY, sharedClockOn } from '../systems/worldTick.js';   // AUDIT WORLD5 C9: a sentence online serves no days
 import { setSyntheticTimeIncrease } from '../systems/effectBroker.js';   // AUDIT 63 F13: DaggerfallCourtWindow_OnEndPrisonTime (EntityEffectBroker.cs:841-842)
 import { fillVitalSigns } from '../systems/statMods.js';   // F038: the acquittal's refill; F98: every other non-execution exit's
 import { SEVERE_PUNISHMENT_BANISHED, SEVERE_PUNISHMENT_EXECUTED } from '../systems/encounters.js';   // F99: the court's own two bits
@@ -391,7 +391,12 @@ export function createArrestFlow({
           // (:478) the refill lands when daysInPrisonLeft hits 0,
           // AFTER the RaiseTime - the day the sentence ends, not the
           // day it began.
-          fillVitalSigns(playerEntity);
+          // AUDIT WORLD5 C9: and the days are its price. Online the
+          // sentence serves none (advanceDays is refused; the world's
+          // clock is not this player's), so it refills nothing - a
+          // surrender was a free full heal, three pools for the walk to
+          // the guardhouse.
+          if (!sharedClockOn()) fillVitalSigns(playerEntity);
         },
       // The window closes into state 100 with InPrison false, which is
       // ReleaseFromPrison (:318) - and repositionPlayer was set back

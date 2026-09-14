@@ -1929,6 +1929,224 @@ untouched offline; the quest clock stood down and standing up; and the
 hosts by source. The AUDIT 23, AUDIT 63, ROAD-Ar, TL3, TP1, MAC7,
 AUDIT WORLD4 and ONLINE1 pins restamped where the law moved.
 
+## AUDIT WORLD5 (2026-09-13)
+
+**Mac: "Lets do an audit on this."** Four opus lenses over WORLD5,
+each told the live report and made to find it: the wire, the relay and
+what the player is told; the weather and the boot; the clock and the
+ticker; the rest, the travel and the quests. Every finding below was
+EXECUTED against the real modules (`test/auditworld5.test.js` runs the
+ticker, the rest session, the weather sim, the collapse and the save
+door under a shared clock the test holds) or cited to a line; the
+record says which. Fourteen findings fixed in this slice, the rest
+recorded and not paid. The relay changed (C11) and **must be
+redeployed** (`cd server && npx wrangler deploy`); `/health` answers
+`world51` when it has been.
+
+**THE ONE SHAPE.** WORLD5 made the clock a function of wall time and
+refused every local write, and then left four things that used to be
+moves of the clock standing as if the clock had moved: the dungeon's
+rest arm claimed its own broker window (C1), the exhaustion collapse
+paid its hour (C6), the sentence refilled the pools (C9) and the
+cautious trip healed (C14). Under a clock nobody moves, a thing that
+charged time and paid in kind now pays for nothing - the collapse and
+the sentence were free heals, the cautious trip a free instant full
+heal on a black screen - and a thing that claimed its own window ran
+it twice, because the tick's own reading was left behind. The same
+shape, four times: the price was the clock move, and the clock move
+is gone.
+
+**C1 (CRITICAL) - THE DUNGEON'S RESTED NIGHT RAN ITS ROUNDS TWICE.**
+`dungeonContext.js`'s `_restAdvance` claims its own broker window
+(AUDIT 24 wave 30's fix: the rest window runs no frame body), and
+under the shared clock that claim moved `_lastMagicRoundMinute` past
+the tick's `_sharedLastTick`; the next frame's tick read from the old
+reading, `claimMagicRounds` found `here < _lastMagicRoundMinute` and
+took it for a load's rewind - its backstop - re-anchored, and ran the
+night again: every poison, disease and continuous-damage effect twice
+per rested hour, in the dungeon only. The claim now moves the tick's
+reading with it (`worldTick.js`, in `claimMagicRounds` under
+`_sharedClock`); executed: the arm's claim of ten minutes, then the
+tick owing nothing, then two more minutes owing two.
+
+**C2 - A SOURCE THAT STEPPED BACKWARDS FROZE THE TICK.** `next =
+max(reading, source)`: when the relay's offset corrected this machine's
+clock backwards (or the machine's clock was set back) the reading stood
+ahead of the source and every tick owed nothing until the clock caught
+its old self up - a hundred-minute correction was eight real minutes
+with no round and no day. The tick re-anchors on a source below its
+reading. And the world host's `onClock` was a bare assignment: the
+first welcome's offset landed AFTER the boot-time arrival (the socket
+opens later), so until then every marker stood at the uncorrected
+clock's time and the first corrected tick caught up (or froze for) the
+difference. A correction over a second now runs the same
+`onlineArrival` the session's start runs (the markers, the day's roll,
+the season); a room move's welcome saying the same offset again moves
+nothing.
+
+**C3 - THE ALIGNMENT STAMPED FOUR MARKERS AND THE REST STAYED DATED BY
+THE SAVE.** WORLD5's `alignEntityClocks` set the day marker, the
+broker's, each disease's day and each poison's minute to now, and
+nothing else - `lastSkillCheckTime`, `timeOfLastSkillTraining`, the
+enemy-alert stamp, the two crime-guild letter clocks, every loan's
+due date, every rented room's expiry, every summoned item's hour, the
+vampire's `lastTimeFed`, every guild rank's `lastRankChange`. The
+rest lens executed the worst case: an ordinary sixty-day save joining
+a world at day 375 read its skill check 69,120 minutes in the future
+and raised NO skill for 48 game days (four real days) with 100,000
+uses banked; training refused as too soon; a room rented for a day
+reading 1,176 hours left. The other way round (a save far ahead of a
+young world) every deadline read as long past. The alignment is a
+SHIFT now: every marker moves by the distance from the save's own
+clock (its day marker) to the world's, so a room keeps its hours, a
+loan its week, a summoned item what it had left, a skill check that
+was due is due now; a "last" marker never lands ahead of now; a zero
+stays zero (the letter clocks, a summoned item's hour, a first skill
+check - zero means none); a fresh character with no day marker moves
+nothing. Executed both ways, and through `liveVampirism`, which now
+steps over a hole in the effects list rather than throwing on it.
+
+**C4 - A LOAD ONLINE WAS NOT AN ARRIVAL.** The alignment ran once, at
+the session's start, over the save the boot restored - a quick load, a
+boot `?load`, the classic import and the dungeon's own load all
+restored the SAVE's clock into every marker, and the next tick caught
+up the distance to the world (a month of loans and diseases in one
+frame) or read it negative; and `restoreWeather` put the saved sky up
+to stand until the next day change. The one door every host loads
+through is `save.js restorePlayer`, and under the shared clock it now
+aligns and rolls the day's array from the shared seed (the first
+exterior frame drains it over the saved sky, and the drain is a jump).
+Executed over a real snapshot.
+
+**C5 - THE SHARED ROLL WAS THE ROLLER'S, NOT THE DAY'S.** The roll's
+stamp was the roll's own minute, so a joiner at noon drained a "live"
+roll and got a three-hour front for a sky that changed at midnight;
+and the enhanced lane's hourly evolution re-anchored on the joiner's
+first hour (`_evolveHour === null` rolls nothing), so a client that
+joined at 15:00 was missing fifteen hours of evolution the client that
+stood there since midnight had applied - two skies under one seed.
+Under the shared clock the roll is THE DAY'S: stamped at the day's
+first minute (a noon drain is a jump, a five-past-midnight drain a
+front - both executed) and the evolution re-anchored at the hour
+before the day's first, so the next evolve replays every hour of the
+day up to now (executed: a client evolving hour by hour from midnight
+and one joining at 15:07 carry one array). Offline the stamp is the
+roll's own minute and CLK2's re-anchor stands.
+
+**C6 - THE COLLAPSE PAID ITS HOUR FOR FREE.** `RaiseTime(1 hour)` is
+refused online; the three recovery rates were not. Fatigue drained to
+zero was an hour's health and magicka for nothing, as often as the
+drain reached zero. The one home (`rest.js exhaustionOutcome`) pays
+the fatigue hour every collapse - it is what stands the player up; the
+next frame collapses again without it - and the health and the magicka
+once per WORLD hour, which is what an hour's rest yields over the same
+five real minutes. Offline unchanged.
+
+**C7 - A COVERED REST BANKED THE WORLD'S TIME AND RESOLVED THE NIGHT
+IN ONE FRAME.** The rest lens executed it: a nine-hour rest covered by
+the pause menu (or a quest box, or a hidden tab) while the clock ran a
+real hour, then one uncovered frame - 54 sub-ticks, nine rested hours,
+nine enemy checks against ONE snapshot of the foe list, the spawn-abort
+latch armed for a next frame that never came, `_spawnEncounter` landing
+after the rest had ended. Offline this cannot happen: a covered frame
+never reaches `_accrue`, and the frame's dt is clamped under one
+sub-tick's wait, so the timer takes at most one sub-tick a frame. The
+same two laws now hold under the shared clock: a covered frame moves
+the reading up to the clock keeping less than one sub-tick owed (the
+covered time is LOST, as the timer loses it), and a leap is taken ONE
+sub-tick a frame, so each hourly check reads the foes on a frame of
+its own (executed: a foe wandering in during the first hour breaks the
+rest on the sixth frame).
+
+**C8 - THE DUNGEON'S REST ARM ROLLED THE SAME TEN MINUTES EVERY
+SUB-TICK.** `const start = floor(classicMinutesRef.value); value += n`
+- the write refused, `start` read AFTER it, so every sub-tick offered
+`intermittentEnemySpawn` the same ten minutes, ten minutes ahead of
+the clock, once per sub-tick (a night whose window missed the
+12-in-144 band rolled nothing; one that hit it rolled it 54 times).
+The session now hands `advanceMinutes` the sub-tick's own END (the
+reading just counted; null offline) and the arm derives `[start, end)`
+from it for the spawner and the broker alike. Executed: two sub-ticks,
+two ends ten apart.
+
+**C9 - A SENTENCE SERVED NO DAYS AND REFILLED THE POOLS.** The prison's
+refill lands "when daysInPrisonLeft hits 0, after the RaiseTime" - the
+days are its price, and online `advanceDays` is refused. A surrender
+was a free full heal of all three pools for the walk to the guardhouse.
+Online the sentence refills nothing; the rescue's and the acquittal's
+refills stand (neither costs a day offline either).
+
+**C10 - `exterior.js`'S BRIDGE SAID NOTHING.** Its quest bridge ctx
+carried no `questClocksStoodDown`, and the bridge's fallback is
+`false` - unreachable today (`?exterior` never carries `online`), but a
+host that says nothing charges every clock. It says the same word
+world.js does.
+
+**C11 - THE WELCOME'S CLOCK WAS THE HELLO'S.** `now` was taken at the
+top of the hello and the welcome built four storage awaits later, so
+every millisecond of them rode to the client as the relay's clock.
+Stamped as the welcome is built. `RELAY_VERSION` is `world51`.
+
+**C12 - THE PANE DID NOT SAY THE CLOCK.** AUDIT WORLD34 made the
+Online pane's copy the law of what is shared; WORLD5 shared the clock
+and the sky and said nothing. One sentence: the clock and the sky are
+the world's and run on real time; a rest, a trip, a sentence or a
+lesson takes none of it; the quest clocks stand still.
+
+**C13 - THE INSTALL SAT BELOW THE SEASON READS.** `bootWorld` read
+`worldMinutes()` for the climate season and the mod's four-valued one
+BEFORE the shared clock was installed, so an online boot dressed the
+world in the session clock's season and the shared clock's turned it
+over on the first frame (a full re-skin). The install is the boot's
+first act now, and the pin reads that nothing between the boot's door
+and it reads the clock.
+
+**C14 - THE CAUTIOUS TRIP WAS A FREE INSTANT FULL HEAL.** DFU's
+cautious traveller arrives rested because the days passed; online the
+trip takes no world time, and Cautious + Camp Out is a zero fare
+(`calculateTripCost` executed: `{piecesCost: 0, totalCost: 0}`), so
+every pool refilled in full on a 1.5-second black screen, repeatable,
+which retired resting, potions and the temples as a healing economy.
+The heal is the trip's nights, and online there are none.
+
+**Recorded, not paid.** (1) Every world-time deadline now runs on wall
+time INCLUDING while the player is logged off: a room rented for a day
+is gone in two real hours whether or not the tab is open; the 350-day
+ceiling is 700 real hours; the tombstoned-quest week fourteen real
+hours; a loan's month sixty. That is what a shared clock means, and the
+alternative (per-player deadlines in a shared world) is a different
+design; the pane's sentence says the clock runs on real time. (2) Only
+`Clock` stands down. `DailyFrom`, `GivePc`'s daylight gate,
+`PlaySound`'s interval, `CreateFoe`'s `spawnInterval`, the tombstone
+week and `TrainPc`'s three hours all read the shared clock and PACE
+correctly (one event per tick, no bursts); `CreateFoe` keeps its waves
+coming on wall time while the player idles, which is a cadence, not a
+deadline, and stays deliberately. (3) Training costs no time online:
+`TrainPc`'s `raiseTime(3h)` and the guild trainer's hours are refused,
+so a lesson costs fatigue and gold and no afternoon; the daily
+cooldown (`timeOfLastSkillTraining`) still holds, on the shared clock.
+(4) The pause-menu catch-up is bounded (the broker's 2,880-round cap,
+one day block) and measured at 8.8 ms for a real day away; DFU freezes
+time under a pausing window and this world cannot. (5) The rest window
+does not say it is clock-paced: an hour of rest is five real minutes
+and the counter moves once per five, which a player will read as a
+hang. (6) The travel popup counts down the trip's days for a trip that
+takes none, inn nights are charged for nights nobody spends, and
+`arrivalClampMinutes` is computed and discarded online; the sun-averse
+traveller arrives when they arrive (WORLD5's own record). (7) The
+session refuses a welcome clock more than a year off - a machine a
+year wrong reads the world's time uncorrected rather than not at all.
+(8) The classic and enhanced lanes diverge under one seed by design
+(the evolution is the enhanced lane's), and `?weather` still pins a
+sky locally. (9) `setSharedClock(null)` has no caller outside the
+tests: the clock is installed for the page's life.
+
+**Pinned** in `test/auditworld5.test.js` (nine tests): C1 through C8
+executed, C9 through C14 by source. The WORLD5 pins moved with the law
+(`onClock`, the arrival, the relay's version and stamp, the rest's
+leap a sub-tick a frame); the AUDIT 24 wave 30, AUDIT 26 F204,
+encounters and S40 pins restamped for the arm's new signature.
+
 ## What it does not do (yet)
 
 - **The Morrowind body** ships (MWBODY1, above); a client without the

@@ -21,7 +21,7 @@
 import { updateDiseases } from './diseases.js';
 import { runInfections } from './infection.js';   // V1: UpdateDisease's override, which the base walk skips
 import { consumeRacialOverridePending, lycanthropyMagicRound } from './lycanthropy.js';   // V2a: the curse the deploy mints
-import { consumeVampirismPending, vampirismMagicRound } from './vampirism.js';   // V2b: the other curse
+import { consumeVampirismPending, vampirismMagicRound, liveVampirism } from './vampirism.js';   // V2b: the other curse; AUDIT WORLD5 C3: its feeding clock, aligned with the rest
 import { updatePoisons } from './poisons.js';
 import { tickActiveEffects } from './effects.js';
 import { skillValue, tallySkill, SKILLS } from './skills.js';
@@ -173,6 +173,11 @@ export function claimMagicRounds(fromMinute, toMinute) {
   // The broker's own lastGameMinute advance (:237). It never moves BACKWARDS
   // here: a rewind is a load, and the re-anchor above owns that case.
   if (nextFloor > _lastMagicRoundMinute) _lastMagicRoundMinute = nextFloor;
+  // AUDIT WORLD5 C1: under the SHARED clock a claim made outside the tick (the dungeon's rest arm claims its own
+  // window) moves the tick's last reading with it - the next tick reads from here, not from a reading BEHIND the
+  // marker, which the backstop above would have taken for a load and re-anchored on, running the rested night's
+  // rounds a second time
+  if (_sharedClock && nextFloor > (_sharedLastTick ?? -Infinity)) _sharedLastTick = nextFloor;
   return { from, to: nextFloor, rounds: Math.max(0, nextFloor - from) };
 }
 
@@ -383,7 +388,12 @@ export function tickPlayerMinutes({
   // WORLD5: under the SHARED clock the world's time moved on its own between two ticks - this tick owes the rounds
   // and the days from the last tick's reading to now, and fabricates nothing from dt (a jump has no dt, and dt
   // still feeds the real-time arms below: the fatigue drain, the tallies, the torch)
-  if (_sharedClock) { classicMinutes = _sharedLastTick ?? _sharedClock(); }
+  if (_sharedClock) {
+    classicMinutes = _sharedLastTick ?? _sharedClock();
+    // AUDIT WORLD5 C2: a source that stepped BACKWARDS (the relay's offset corrected, the machine's clock set back)
+    // re-anchors the reading rather than freezing every tick until the clock catches its old self up
+    if (_sharedClock() < classicMinutes) classicMinutes = _sharedClock();
+  }
   const next = _sharedClock ? Math.max(classicMinutes, _sharedClock()) : classicMinutes + dt * CLASSIC_MINUTES_PER_SECOND;
   if (_sharedClock) _sharedLastTick = next;
   // AUDIT 39: the clock as it stood when this tick began. A sink can move
@@ -781,14 +791,37 @@ export function setWorldMinutes(v) {
 export function alignEntityClocks(entity, nowMinutes) {
   if (!entity || !Number.isFinite(nowMinutes)) return false;
   const now = Math.floor(nowMinutes);
+  // AUDIT WORLD5 C3: a SHIFT, not a stamp. Every marker the save carries moves by the distance from the save's own
+  // clock (its day marker) to the world's, so a room rented with twenty hours left keeps twenty hours, a loan due in
+  // a week is due in a week, a summoned item lasts what it had left, and a skill check that was due is due now -
+  // where a stamp of the four markers WORLD5 aligned left the rest dated by the save's clock: a save further along
+  // than the world (an old character in a young world) raised no skill and trained nowhere for real days, and one
+  // behind it read every deadline as long past. A "last" marker never lands ahead of now; a zero stays zero (it
+  // means "never" or "none" - the letter clocks, a summoned item's hour, a first skill check). An entity with no day
+  // marker (a fresh character) has nothing to measure from: its "last" markers are stamped to now and nothing else moves.
+  const delta = Number.isFinite(entity.lastGameMinutes) ? now - Math.floor(entity.lastGameMinutes) : null;
+  const dayDelta = delta === null ? null : Math.floor(now / MINUTES_PER_DAY) - Math.floor((now - delta) / MINUTES_PER_DAY);
+  const past = (v) => (Number.isFinite(v) && v !== 0 ? Math.min(now, delta === null ? now : v + delta) : v);
+  const due = (v) => (Number.isFinite(v) && v !== 0 && delta !== null ? v + delta : v);
+  const pastDay = (v) => (Number.isFinite(v) && dayDelta !== null ? Math.min(Math.floor(now / MINUTES_PER_DAY), v + dayDelta) : v);
   entity.lastGameMinutes = now;
   resetMagicRoundMarker(now);
   _sharedLastTick = _sharedClock ? nowMinutes : null;
+  for (const k of ['lastSkillCheckTime', 'timeOfLastSkillTraining', 'lastEnemyAlertTime']) if (k in entity) entity[k] = past(entity[k]);
+  for (const k of ['timeForThievesGuildLetter', 'timeForDarkBrotherhoodLetter']) if (k in entity) entity[k] = due(entity[k]);
   for (const a of entity.activeEffects ?? []) {
     if (!a || typeof a !== 'object') continue;
-    if (Number.isFinite(a.lastDay)) a.lastDay = Math.floor(now / MINUTES_PER_DAY);
-    if (Number.isFinite(a.lastMinute)) a.lastMinute = now;
+    if (Number.isFinite(a.lastDay)) a.lastDay = pastDay(a.lastDay);
+    if (Number.isFinite(a.lastMinute)) a.lastMinute = past(a.lastMinute);
   }
+  const vamp = liveVampirism(entity);
+  if (vamp && Number.isFinite(vamp.lastTimeFed)) vamp.lastTimeFed = past(vamp.lastTimeFed);
+  for (const acct of entity.bankAccounts ?? []) if (acct && acct.loanTotal > 0) acct.loanDueDate = due(acct.loanDueDate);
+  for (const room of entity.rentedRooms ?? []) if (room) room.expiryMinutes = due(room.expiryMinutes);
+  for (const it of entity.items ?? []) if (it && Number.isFinite(it.timeForItemToDisappear)) it.timeForItemToDisappear = due(it.timeForItemToDisappear);
+  const store = entity.guildMemberships;
+  const books = store && typeof store === 'object' ? (Object.hasOwn(store, 'mortal') && Object.hasOwn(store, 'vampire') ? [store.mortal, store.vampire] : [store]) : [];
+  for (const book of books) for (const m of Object.values(book ?? {})) if (m && Number.isFinite(m.lastRankChange)) m.lastRankChange = pastDay(m.lastRankChange);
   return true;
 }
 

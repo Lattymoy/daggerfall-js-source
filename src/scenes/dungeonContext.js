@@ -1410,7 +1410,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:6548 / exterior.js:2919), set
+  // host's own townTalk sink (world.js:6554 / exterior.js:2920), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -1626,12 +1626,19 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   /** The rest window's clock jump for THIS host: the world minutes
    *  plus IntermittentEnemySpawn's catch-up loop, which is a dungeon
    *  law and is the one rest dep createRestDeps cannot supply. */
-  const _restAdvance = (n) => {
+  const _restAdvance = (n, sharedEnd = null) => {
     // E-slice: IntermittentEnemySpawn's catch-up loop across the
     // advanced minutes (PlayerEntity.Update:486-492) - resting in
     // a dungeon under an active enemy alert can spawn ONE foe; the
     // hourly enemy check then breaks the rest, DFU's own flow.
-    const start = Math.floor(classicMinutesRef.value);
+    //
+    // AUDIT WORLD5 C8: the span is the SESSION's under the shared
+    // clock (the sub-tick's end rides in; the write below is refused
+    // there) - read off the clock after the refused write, every
+    // sub-tick of a rested night offered the spawner the same ten
+    // minutes, ahead of the clock, rolled once per sub-tick.
+    const end = sharedEnd ?? classicMinutesRef.value + n;
+    const start = Math.floor(end) - n;
     classicMinutesRef.value += n;
     // AUDIT 24 (wave 30) - THE BROKER RUNS UNDER THE REST WINDOW.
     // The old line here said "the round loop catches the magic
@@ -1647,7 +1654,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // Time.timeScale = 0 and interleaves, minute by minute, with
     // TickRest's hourly heal; a poison can kill you in your sleep
     // and the rest ends "You never awaken."
-    const _w = claimMagicRounds(start, classicMinutesRef.value);
+    const _w = claimMagicRounds(start, end);
     runMagicRoundsFor(playerEntity, _w.from, _w.to, { sinks: playerSinks, say: (msg) => hudText.add(msg) });
     // ...and the FOE half of the same broker event. OnNewMagicRound
     // is global - every EntityEffectManager in the scene subscribes
@@ -1707,7 +1714,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // the rest window had just left - and on the level-up path it is
     // not free at all.
     box: (rows) => pushDungeonWindow(new ActionTextBox(rows)),
-    advanceMinutes: (n) => _restAdvance(n),
+    advanceMinutes: (n, sharedEnd) => _restAdvance(n, sharedEnd),
     // TickRest :379 - QuestMachine.Instance.Tick() rides the same
     // sub-tick as the clock, UNPACED. This host holds the bridge as
     // opts.questBridge (world.js and worldModes hand theirs down); a
@@ -2828,8 +2835,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:8557,
-              // exterior.js:4202 and worldModes.js:5927 already ran;
+              // playerArrowHitFoe is the one copy world.js:8566,
+              // exterior.js:4203 and worldModes.js:5927 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that

@@ -109,7 +109,7 @@ import { roomOf, parseClient, inRange, poseGate, chatGate, tokenGate, rosterFor,
 
 /** AUDIT WORLD34 D4: the relay names itself in /health - the deploy is by hand (`npx wrangler deploy`), nothing in
  *  CI does it, and until now nothing said which relay was live. Bump it with every relay-changing slice. */
-export const RELAY_VERSION = 'world5';
+export const RELAY_VERSION = 'world51';   // AUDIT WORLD5: WORLD5's relay, audited (the welcome's clock stamped as it is built)
 
 const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*' } });
 
@@ -350,7 +350,9 @@ export class Room {
       // NONE (the room was empty-handed, or the host had not published yet) is handed the next one the host publishes
       if (isWorldRoom(a.key)) this._setAttach(ws, { ...this._attach(ws), worldSeen: !!world });
       // WORLD5: the relay's clock rides the welcome, so a client whose machine's clock is off reads the shared world time through the offset
-      const welcome = `{"t":"welcome","id":${JSON.stringify(m.id)},"peers":${JSON.stringify(roster)},"host":${JSON.stringify(host)},"world":${world ?? 'null'},"now":${now}}`;
+      // AUDIT WORLD5 C11: stamped as the welcome is BUILT, not as the hello began - four storage awaits sit between the
+      // two, and every millisecond of them was an offset the client carried as the relay's clock
+      const welcome = `{"t":"welcome","id":${JSON.stringify(m.id)},"peers":${JSON.stringify(roster)},"host":${JSON.stringify(host)},"world":${world ?? 'null'},"now":${Date.now()}}`;
       if (!this._send(ws, welcome)) return;
       const join = JSON.stringify({ t: 'join', id: m.id, name: m.name, look: m.look, pose: m.pose });
       for (const [other, b] of [...this._all()]) if (other !== ws && b.id) this._send(other, join);
