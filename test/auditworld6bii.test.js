@@ -62,7 +62,7 @@ const rec = (i, over = {}) => ({ i, t: 0, x: 0, f: [12, 0, 10], y: 0, h: 9, d: 0
 const frame = (n, f, full = 1) => ({ n, k: 'world:3,12', full, f });
 const step = (pool, me, pe, n = 1) => { for (let i = 0; i < n; i++) pool.update(0.05, me, [me[0], me[1] + 1.6, me[2]], senses(pe)); };
 
-test('AUDIT WORLD6b-ii A1: the caster\'s tick runs always - SUPPRESSED while the foe\'s target is a peer (the pick cleared on its own cadence, the timers counting, nothing decided), unsuppressed at me; the pool hands the flag; by source the caster\'s arm', async () => {
+test('AUDIT WORLD6b-ii A1: the caster\'s tick runs always, never gated off (the pick cleared on its own cadence, the timers counting) - at a peer as at me; the suppression this audit paid was retired by WORLD6b-iii (one signature, no flag); by source the caster\'s arm', async () => {
   const hits = [], calls = [];
   const peers = { list: [{ id: 'bob-0002', feet: [12, 0, 10], height: 1.8 }] };
   const pe = playerEntity();
@@ -137,29 +137,31 @@ test('AUDIT WORLD6b-ii B1/C1: a puppet\'s blow at me is BOUNDED - the owner\'s b
   step(pool, me, pe);
   assert.equal(pup._pupMine, true);
   const blows = () => pe.skillUses[SKILLS.Dodging];
-  for (let i = 0; i < 12; i++) { pup.mobile.doMeleeDamage = true; step(pool, me, pe); }
+  let fn = 1, a = 0;   // AUDIT WORLD6b-iii(a) A3: a damage frame lands only behind a SWING at me (its edge carries whom it was at)
+  const swing = (over = {}) => { pool.applyFoes('bob-0002', frame(++fn, [{ i: 5, a: (a += 2), ...over }], 0)); pup.mobile.doMeleeDamage = true; step(pool, me, pe); };
+  for (let i = 0; i < 12; i++) swing();
   assert.equal(blows(), 6, 'B1: six blows of one owner\'s, then none - the budget (the clock stands still)');
   clock.t = 1000;
-  for (let i = 0; i < 12; i++) { pup.mobile.doMeleeDamage = true; step(pool, me, pe); }
+  for (let i = 0; i < 12; i++) swing();
   assert.equal(blows(), 12, 'a second on: six more, no more');
   // the leap: fifty units in a fifth of a second is no rat's walk
   clock.t = 2000;
-  pool.applyFoes('bob-0002', frame(2, [{ i: 5, f: [61, 0, 10] }], 0));
+  pool.applyFoes('bob-0002', frame(++fn, [{ i: 5, f: [61, 0, 10] }], 0));
   clock.t = 2200;
-  pool.applyFoes('bob-0002', frame(3, [{ i: 5, f: [11, 0, 10] }], 0));
+  pool.applyFoes('bob-0002', frame(++fn, [{ i: 5, f: [11, 0, 10] }], 0));
   step(pool, me, pe);
   assert.equal(pup._pup.leap, true, 'C1: leapt');
-  pup.mobile.doMeleeDamage = true; step(pool, me, pe);
+  swing();
   assert.equal(blows(), 12, 'a puppet that leapt lands nothing');
   clock.t = 2400;
-  pool.applyFoes('bob-0002', frame(4, [{ i: 5, f: [11.2, 0, 10] }], 0));
+  pool.applyFoes('bob-0002', frame(++fn, [{ i: 5, f: [11.2, 0, 10] }], 0));
   step(pool, me, pe);
   assert.equal(pup._pup.leap, false, 'walked: inside the law again');
-  pup.mobile.doMeleeDamage = true; step(pool, me, pe);
+  swing();
   assert.equal(blows(), 13, 'and its blow lands');
   // a dropped frame's catch-up is inside the law: two seconds of walking
   clock.t = 4400;
-  pool.applyFoes('bob-0002', frame(5, [{ i: 5, f: [16, 0, 10] }], 0));
+  pool.applyFoes('bob-0002', frame(++fn, [{ i: 5, f: [16, 0, 10] }], 0));
   assert.equal(pup._pup.leap, false, 'five units in two seconds is a walk');
 });
 

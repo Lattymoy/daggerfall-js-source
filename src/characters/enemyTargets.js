@@ -46,6 +46,10 @@ export const enemyInfightingEnabled = () => getBool('Enhancements', 'EnemyInfigh
 /** The player's sentinel candidate - one identity so `target ===
  *  PLAYER_TARGET` is DFU's `target == player` reference compare. */
 export const PLAYER_TARGET = Object.freeze({ isPlayer: true });
+/** WORLD6b-iii / AUDIT WORLD6b-iii(a) A10: the ENTITY the cast decision reads for a PEER target - a peer's effects are
+ *  not mine to read (AUDIT WORLD6b-ii A9), so the pick's EffectsAlreadyOnTarget veto sees none on it. Frozen: the veto
+ *  only reads. ONE home for both pools (the dungeon read MY effects for a peer until the audit). */
+export const PEER_CAST_TARGET = Object.freeze({ activeEffects: Object.freeze([]) });
 export const isPlayerTarget = (c) => c === PLAYER_TARGET || c?.isPlayer === true;
 /** WORLD3: a PEER - another player in the room, a candidate the world host mints off the pose stream:
  *  `{ isPlayer: true, isPeer: true, id, feet, height, health }`. A player to every gate of GetTargets (the
@@ -319,6 +323,16 @@ export const ARROW_CROUCH_DIP = 0.05;
  * transform, not the offset loose point GetAimPosition returns - so
  * this takes the two apart at the call site, as DFU keeps them apart.
  */
+/** AUDIT WORLD6b-iii(a) C3: an ENEMY MISSILE's direction - normalized (aim - from), DaggerfallMissile.cs:571-581's
+ *  `direction = (target - transform.position).normalized`, no dip (the dip is the ARROW's, above). ONE law for the
+ *  three hosts' fireMissile hooks (world.js, exterior.js, worldModes.js) - each carried its own subtraction, and two of
+ *  them dropped the aim point the executor hands them, so a cast at a peer there flew at the local player. */
+export function missileAimDirection(from, aimPoint) {
+  const d = [aimPoint[0] - from[0], aimPoint[1] - from[1], aimPoint[2] - from[2]];
+  const l = Math.hypot(d[0], d[1], d[2]) || 1;
+  return [d[0] / l, d[1] / l, d[2] / l];
+}
+
 export function arrowAimDirection(casterTransform, aimPoint, { targetIsPlayer = false, playerCrouching = false } = {}) {
   if (!casterTransform || !aimPoint) return null;
   const dx = aimPoint[0] - casterTransform[0], dy = aimPoint[1] - casterTransform[1], dz = aimPoint[2] - casterTransform[2];

@@ -110,7 +110,7 @@ test('IF1 (7): the DUNGEON host arms the machine and acts on a foe target', () =
   assert.match(dc, /function resolveFoeMeleeVsFoe\(f\)/, 'melee');
   assert.match(dc, /if \(!vsPlayer && resolveFoeMeleeVsFoe\(f\)\) return;/, 'melee, from the one home');
   assert.match(dc, /dealDamage: \(tt, d\) => tt\.hurtFromFoe\?\.\(d, m\.dir\)/, 'missiles');
-  assert.match(dc, /f\.ai\.target\?\.entity \?\? playerEntity/, 'casting');
+  assert.match(dc, /f\.ai\.target\?\.entity \?\? foeDeps\.PEER_CAST_TARGET \?\? playerEntity/, 'casting');
 });
 
 test('IF1: the F8 census reads the answer off a live dungeon', () => {

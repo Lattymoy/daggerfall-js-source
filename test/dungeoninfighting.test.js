@@ -24,7 +24,7 @@ test('MT-iv: the target machine rides the LAZY foe subsystem, not a static impor
   // imports enemyMotor, so a static import here defeats that gate.
   assert.ok(DG.includes("import('../characters/enemyTargets.js')"), 'the import is DYNAMIC');
   assert.ok(!/^import .*enemyTargets/m.test(DG), 'and never static');
-  assert.match(DG, /runTargetMachine, isPlayerTarget, isLocalPlayerTarget, PLAYER_TARGET, resetAllyTeamOnPlayerAttack,/,
+  assert.match(DG, /runTargetMachine, isPlayerTarget, isLocalPlayerTarget, PLAYER_TARGET, PEER_CAST_TARGET, resetAllyTeamOnPlayerAttack,/,
     'every member is published on foeDeps for the consumers below the block (AUDIT WORLD3 C3: and the local player, told from any player)');
   // every consumer guards on foeDeps, because the subsystem can fail
   // to load and the host must degrade rather than throw
@@ -122,7 +122,7 @@ test('MT-iv: the attack component and the caster aim at the SELECTED target', ()
     'EnemyAttack reads senses.Target (:199-209), and holds when there is none (:136-137)');
   assert.ok(DG.includes('const dec = f.caster.update(dt, f.ai, f.attack, _tgt, _castEnt);'),
     'so does the casting decision');
-  assert.match(DG, /\? playerEntity : \(f\.ai\.target\?\.entity \?\? playerEntity\);/,
+  assert.match(DG, /\? playerEntity : \(f\.ai\.target\?\.entity \?\? foeDeps\.PEER_CAST_TARGET \?\? playerEntity\);/,   // AUDIT WORLD6b-iii(a) A10: a peer's is the bare stand-in
     'and it reads the TARGET\'s own entity, so a foe duelling a foe does not pick its school off the player');
 });
 
