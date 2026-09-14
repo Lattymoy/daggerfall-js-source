@@ -24,7 +24,7 @@ test('GR1: the shaders are the lab\u2019s own, verbatim, and the lab\u2019s heig
   assert.match(src, /id="range" type="range" min="10" max="200"/);
   assert.deepEqual({ ...LAB_GRASS }, { density: 1200000, height: 54, range: 200, span: 210, seed: 0x2f6e2b1 }, 'max blades, max range, no exceptions');
   assert.equal(labBladeCorners().length / 2, 30, 'five stacked quads, the lab\u2019s blade');
-  assert.deepEqual({ ...LAB_DIM }, { sunny: 1.00, cloudy: 0.90, overcast: 0.72, fog: 0.66, rain: 0.60, thunder: 0.46, snow: 0.80 });
+  assert.deepEqual({ ...LAB_DIM }, { sunny: 1.00, cloudy: 0.90, overcast: 0.72, fog: 0.66, rain: 0.60, thunder: 0.46, snow: 0.80, sandstorm: 0.55 });   // WEATHER2d: the port's own row appended; the lab's seven verbatim
 });
 
 test('GR1: the placer is the lab\u2019s law - same seed, span, clustering, height, lean, tint, width', () => {

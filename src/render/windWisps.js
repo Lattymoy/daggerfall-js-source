@@ -34,7 +34,7 @@ export const WISP_VS = HEAD + `layout(location=0) in vec2 aCorner;
 layout(location=1) in vec4 aSeed;      // x,y,z in the box + phase
 uniform mat4 uVP; uniform vec3 uEye;
 uniform float uTime, uBox, uStrength;
-uniform vec2 uWindV, uWindOff;
+uniform vec2 uWindV, uWindOff, uLen;   // WEATHER2d: the look's streak length (base, spread)
 out float vT; out float vLife;
 void main(){
   float seed = aSeed.w;
@@ -54,7 +54,7 @@ void main(){
   vec3 drift = vec3(uWindV.x, 0.0, uWindV.y) * gust;
   float dl = length(drift);
   vec3 vel = dl > 1e-3 ? drift / dl : vec3(1.0, 0.0, 0.0);
-  float len = (1.6 + fract(seed*13.1)*2.4) * (0.5 + uStrength);
+  float len = (uLen.x + fract(seed*13.1)*uLen.y) * (0.5 + uStrength);
   float sz = 0.05 + fract(seed*11.7)*0.05;
   p += vel * (aCorner.y-0.5) * len;
   vec3 toEye = uEye - p;
@@ -66,12 +66,14 @@ void main(){
 }`;
 export const WISP_FS = HEAD + `in float vT; in float vLife;
 uniform float uStrength;
+uniform vec3 uColor;   // WEATHER2d: the look's colour
+uniform vec2 uAlpha;   // WEATHER2d: the look's alpha (base, per strength)
 out vec4 o;
 void main(){
   // bright toward the head, faint at the tail; never more than a breath
   float a = smoothstep(0.0, 0.45, vT) * (1.0 - smoothstep(0.85, 1.0, vT));
-  a *= vLife * (0.10 + 0.12 * uStrength);
-  o = vec4(vec3(0.86, 0.89, 0.94), a);
+  a *= vLife * (uAlpha.x + uAlpha.y * uStrength);
+  o = vec4(uColor, a);
 }`;
 
 /** The box that follows the eye, metres a side (the rain's is 42; the
@@ -83,13 +85,19 @@ export const WISP_MAX = 2400;
  *  the direction readable. */
 export const WISP_FLOOR = 0.12;
 
+/** WEATHER2d: A LOOK - the program in a dress. The wisps' own, and the
+ *  sandstorm's: tan, dense, short streaks in a lower box, no floor (no
+ *  sand without a storm), the front's intensity its strength. */
+export const WISP_LOOK = Object.freeze({ color: Object.freeze([0.86, 0.89, 0.94]), alpha: Object.freeze([0.10, 0.12]), len: Object.freeze([1.6, 2.4]), count: WISP_MAX, floor: WISP_FLOOR, box: WISP_BOX });
+export const SAND_LOOK = Object.freeze({ color: Object.freeze([0.80, 0.64, 0.40]), alpha: Object.freeze([0.28, 0.30]), len: Object.freeze([0.8, 1.2]), count: 7000, floor: 0, box: 70 });
+
 /** How many wisps a wind of `strength01` draws: the floor plus the rest
  *  over a smoothstep of the strength. Pure. */
-export function wispCount(strength01) {
+export function wispCount(strength01, look = WISP_LOOK) {
   const s = Math.max(0, Math.min(1, strength01));
   const u = Math.max(0, Math.min(1, (s - 0.05) / 0.85));
   const ss = u * u * (3 - 2 * u);
-  return Math.round(WISP_MAX * (WISP_FLOOR + (1 - WISP_FLOOR) * ss));
+  return Math.round(look.count * (look.floor + (1 - look.floor) * ss));
 }
 
 /** The wisps' switch: the enhanced skin, the `windWisps` pref, and
@@ -118,8 +126,9 @@ function mat4Multiply(out, a, b) {
 export class WindWispsRenderer {
   /** Built by the enhanced lane at boot, so a shader fault is a
    *  constructor fault the boot probe sees (the rain's law). */
-  constructor(gl) {
+  constructor(gl, look = WISP_LOOK) {
     this.gl = gl;
+    this.look = look;   // WEATHER2d
     const prog = gl.createProgram();
     gl.attachShader(prog, compileShader(gl, gl.VERTEX_SHADER, WISP_VS));
     gl.attachShader(prog, compileShader(gl, gl.FRAGMENT_SHADER, WISP_FS));
@@ -127,13 +136,14 @@ export class WindWispsRenderer {
     if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
     this.program = prog;
     this.u = {};
-    for (const n of ['uVP', 'uEye', 'uTime', 'uBox', 'uStrength', 'uWindV', 'uWindOff']) this.u[n] = gl.getUniformLocation(prog, n);
+    for (const n of ['uVP', 'uEye', 'uTime', 'uBox', 'uStrength', 'uWindV', 'uWindOff', 'uLen', 'uColor', 'uAlpha']) this.u[n] = gl.getUniformLocation(prog, n);
     // the instances: x,y,z in [0, BOX) + a phase, from one seeded
     // xorshift so the field is the same field every load
-    const inst = new Float32Array(WISP_MAX * 4);
+    const n = look.count, box = look.box;
+    const inst = new Float32Array(n * 4);
     let s = 0x7a3d9f1b;
     const rnd = () => { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; };
-    for (let i = 0; i < WISP_MAX; i++) { inst[i * 4] = rnd() * WISP_BOX; inst[i * 4 + 1] = rnd() * WISP_BOX; inst[i * 4 + 2] = rnd() * WISP_BOX; inst[i * 4 + 3] = rnd(); }
+    for (let i = 0; i < n; i++) { inst[i * 4] = rnd() * box; inst[i * 4 + 1] = rnd() * box; inst[i * 4 + 2] = rnd() * box; inst[i * 4 + 3] = rnd(); }
     const vao = gl.createVertexArray();
     gl.bindVertexArray(vao);
     const q = new Float32Array([0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1]);
@@ -156,8 +166,9 @@ export class WindWispsRenderer {
   /** Advance the travel by the frame's step and wrap it. */
   advance(step) {
     for (let i = 0; i < 2; i++) {
+      const box = this.look.box;
       let v = this.windOff[i] + (step?.[i] ?? 0);
-      v = ((v % WISP_BOX) + WISP_BOX) % WISP_BOX;
+      v = ((v % box) + box) % box;
       this.windOff[i] = v;
     }
   }
@@ -168,16 +179,17 @@ export class WindWispsRenderer {
     this.drawn = 0;
     if (!wd?.on) return;
     this.advance(wd.step);
-    const count = wispCount(wd.strength01);
+    const count = wispCount(wd.strength01, this.look);
     if (count <= 0) return;
-    const gl = this.gl, U = this.u;
+    const gl = this.gl, U = this.u, look = this.look;
     mat4Multiply(this._vp, proj, view);
     gl.useProgram(this.program);
     gl.uniformMatrix4fv(U.uVP, false, this._vp);
     gl.uniform3fv(U.uEye, eye);
     gl.uniform1f(U.uTime, timeSeconds);
-    gl.uniform1f(U.uBox, WISP_BOX);
+    gl.uniform1f(U.uBox, look.box);
     gl.uniform1f(U.uStrength, wd.strength01);
+    gl.uniform2f(U.uLen, look.len[0], look.len[1]); gl.uniform3fv(U.uColor, look.color); gl.uniform2f(U.uAlpha, look.alpha[0], look.alpha[1]);   // WEATHER2d: the look
     gl.uniform2f(U.uWindV, wd.windV[0], wd.windV[1]);
     gl.uniform2fv(U.uWindOff, this.windOff);
     gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);

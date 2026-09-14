@@ -39,7 +39,7 @@
 // side; x east, z north as the native z is). The hosts convert.
 
 import { TERRAIN_SIZE, WORLD_MAP_TERRAIN_DIM } from '../world/terrainSampler.js';
-import { MAX_MAP_PIXEL_Y } from '../formats/mapsFile.js';
+import { MAX_MAP_PIXEL_Y, CLIMATES } from '../formats/mapsFile.js';
 import { seededRng } from './wind.js';
 
 /** Native world units to field metres (TERRAIN_SIZE per pixel). */
@@ -64,7 +64,22 @@ export const CELL_WORDS = Object.freeze({
   rain:    Object.freeze({ spacing: 24000, radius: [9000, 16000], p: 0.62, base: 'overcast' }),
   thunder: Object.freeze({ spacing: 22000, radius: [3500, 7500],  p: 0.55, base: 'cloudy' }),
   snow:    Object.freeze({ spacing: 26000, radius: [10000, 18000], p: 0.62, base: 'overcast' }),
+  // WEATHER2d: the sandstorm - never a zone's word; stood over the
+  // DESERT tables' land (Desert, Desert2 - the climates weatherTableFor
+  // sends to the desert table) on a day whose word there is cloudy or
+  // thunder, a wall 8-14 km across, the zone's own sky between
+  sandstorm: Object.freeze({ spacing: 30000, radius: [8000, 14000], p: 0.5, base: 'cloudy' }),
 });
+/** WEATHER2d: the zone words a sandstorm cell may stand under. */
+export const SAND_FROM = Object.freeze(['cloudy', 'thunder']);
+/** WEATHER2d: the desert tables' climates - where a sandstorm may seat. */
+export const sandCountry = (climateIndex) => climateIndex === CLIMATES.Desert || climateIndex === CLIMATES.Desert2;
+/** Does a cell of `word` stand on a seat whose climate is `climate` and
+ *  whose zone word today is `zoneWord`? Pure. */
+export function cellSeats(word, climate, zoneWord) {
+  if (word === 'sandstorm') return sandCountry(climate) && SAND_FROM.includes(zoneWord);
+  return zoneWord === word;
+}
 /** The lattice's jitter, as a fraction of the spacing either way. */
 export const CELL_JITTER = 0.35;
 /** The cells' drift on the day's wind, metres per game minute (~22 km a day). */
@@ -73,7 +88,7 @@ export const DRIFT_M_PER_MIN = 15;
  *  march reaches 24 km; the widest cell is 18 km across the radius). */
 export const FIELD_RANGE_M = 40000;
 const FIELD_SEED = 0x4649454C;   // 'FIEL'
-const WORD_SALT = Object.freeze({ rain: 1, thunder: 2, snow: 3 });   // each word its own lattice of coins
+const WORD_SALT = Object.freeze({ rain: 1, thunder: 2, snow: 3, sandstorm: 4 });   // each word its own lattice of coins
 
 /** The day's drift: a heading seeded by the day, the distance so far. Pure. */
 export function driftOfDay(day, minuteOfDay) {
@@ -129,7 +144,8 @@ export function fieldAt({ day, minuteOfDay, at, climateAt, wordOfClimate }) {
         if (d - c.r > FIELD_RANGE_M) continue;
         // the cell's word is the day's word for the climate under its (undrifted) seat
         const p = pixelOfField(c.x, c.z);
-        if (wordOfClimate(climateAt(p.x, p.y)) !== word) continue;
+        const seat = climateAt(p.x, p.y);
+        if (!cellSeats(word, seat, wordOfClimate(seat))) continue;   // WEATHER2d: a sandstorm seats on desert land under a cloudy or thunder word
         cells.push({ x: cx, z: cz, r: c.r, word, d });
       }
     }

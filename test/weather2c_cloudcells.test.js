@@ -9,7 +9,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  QUALITY, MAX_CELLS, CELL_EDGE, VC_PROFILE, cellOf, slabOf, packCells, parseCloudCellDoor,
+  QUALITY, MAX_CELLS, CELL_EDGE, CELL_TINT, VC_PROFILE, cellOf, slabOf, packCells, parseCloudCellDoor,
   CLOUD_FIELD_GLSL, MARCH_FS, SHADOW_FS, FIELD_UNIFORMS, MARCH_UNIFORMS, SHADOW_UNIFORMS,
 } from '../src/render/volumetricClouds.js';
 import { WEATHER_SKY } from '../src/render/enhancedSky.js';
@@ -25,7 +25,7 @@ test('WEATHER2c cells: every tier caps its cells under the shader\'s eight; a ce
   assert.equal(CELL_EDGE, 0.35);
   for (const w of WEATHER_TYPES) {
     const c = cellOf(w, 100, -200, 3000);
-    assert.deepEqual(c, { x: 100, z: -200, r: 3000, edge: 3000 * CELL_EDGE, ...VC_PROFILE[w], cover: WEATHER_SKY[w].cover, grey: WEATHER_SKY[w].grey }, `${w}: the profile, the row's cover and grey`);
+    assert.deepEqual(c, { x: 100, z: -200, r: 3000, edge: 3000 * CELL_EDGE, ...VC_PROFILE[w], cover: WEATHER_SKY[w].cover, grey: WEATHER_SKY[w].grey, ...(CELL_TINT[w] ? { tint: CELL_TINT[w] } : {}) }, `${w}: the profile, the row's cover and grey (WEATHER2d: and a tint where the word has one)`);
   }
   const storm = cellOf('thunder', 0, 0, 3000);
   assert.equal(storm.top, 4200); assert.equal(storm.dark, 0.7); assert.equal(storm.cover, 1.0); assert.ok(storm.grey > 0.9, 'a thunderhead is dark');
@@ -72,7 +72,7 @@ test('WEATHER2c the field: the cells and the slab declared once for both marches
   assert.match(CLOUD_FIELD_GLSL, /uniform vec4 uCellA\[8\];/); assert.match(CLOUD_FIELD_GLSL, /uniform vec4 uCellB\[8\];/);
   assert.match(CLOUD_FIELD_GLSL, /uniform float uSlabBase;/); assert.match(CLOUD_FIELD_GLSL, /uniform float uSlabTop;/);
   assert.match(CLOUD_FIELD_GLSL, /uniform float uDark;/, 'the dark moved into the field - a cell has its own');
-  assert.match(CLOUD_FIELD_GLSL, /float fBase, fTop, fDensity, fFlat, fShear, fCover, fDark, fGrey;\s*\n\s*void resolveAt\(vec2 xz\) \{/);
+  assert.match(CLOUD_FIELD_GLSL, /float fBase, fTop, fDensity, fFlat, fShear, fCover, fDark, fGrey;\s*\n\s*vec3 fTint;\s*\n\s*void resolveAt\(vec2 xz\) \{/);   // WEATHER2d: and the tint
   assert.match(CLOUD_FIELD_GLSL, /fBase = uBase; fTop = uTop; fDensity = uDensity; fFlat = uFlat; fShear = uShear; fCover = uCover; fDark = uDark; fGrey = 0\.0;/, 'the zone\'s terms first');
   assert.match(CLOUD_FIELD_GLSL, /for \(int i = 0; i < 8; i\+\+\) \{\s*\n\s*if \(i >= uCellCount\) break;/, 'a fixed loop under a uniform count');
   assert.match(CLOUD_FIELD_GLSL, /float w = 1\.0 - smoothstep\(c\.z - c\.w, c\.z, length\(xz - c\.xy\)\);/, 'the rim\'s weight');
@@ -87,7 +87,7 @@ test('WEATHER2c the field: the cells and the slab declared once for both marches
   assert.match(MARCH_FS, /resolveAt\(\(cam \+ dir \* t0\)\.xz\);[^\n]*\n\s*for \(int i = 0; i < 96; i\+\+\) \{\s*\n\s*if \(i >= uSteps\) break;\s*\n\s*vec3 p = cam \+ dir \* t;\s*\n\s*if \(uCellCount > 0\) resolveAt\(p\.xz\);/, 'resolved before the march and at every step while cells stand');
   assert.match(MARCH_FS, /float ds = \(fTop - fBase\) \/ float\(uLightSteps\) \* 0\.5;/, 'the light march reads what the step resolved');
   assert.match(MARCH_FS, /mix\(uCloudShade, uCloudLit, h \* \(1\.0 - fGrey\)\)/, 'a cell\'s grey');
-  assert.match(MARCH_FS, /\(1\.0 - 0\.8 \* fDark\) \* \(1\.0 - 0\.5 \* fGrey\) \+ ambient;/);
+  assert.match(MARCH_FS, /\(1\.0 - 0\.8 \* fDark\) \* \(1\.0 - 0\.5 \* fGrey\) \* fTint \+ ambient;/);   // WEATHER2d: and the cell's tint
   assert.doesNotMatch(MARCH_FS.replace(CLOUD_FIELD_GLSL, ''), /uniform float uDark;/, 'declared once, in the field');
   assert.match(SHADOW_FS, /float t0 = uSlabBase \/ uLightDir\.y, t1 = uSlabTop \/ uLightDir\.y;/, 'the shadow march walks the union slab');
   assert.match(SHADOW_FS, /resolveAt\(g\);[^\n]*\n\s*for \(int i = 0; i < 24; i\+\+\) \{\s*\n\s*if \(i >= steps\) break;\s*\n\s*vec3 p = vec3\(g\.x, 0\.0, g\.y\) \+ uLightDir \* t;\s*\n\s*if \(uCellCount > 0\) resolveAt\(p\.xz\);/, 'the shadow is the cell\'s where it stands');
@@ -110,7 +110,7 @@ test('WEATHER2c the class and the controller: setState takes the cells (the cont
   assert.match(vc, /if \(this\.testCellSpec && !this\.testCell && pos\) this\.testCell = parseCloudCellDoor\(this\.testCellSpec, pos\);/);
   assert.match(vc, /this\.cells = \(cells \?\? \(this\.testCell \? \[this\.testCell\] : \[\]\)\)\.slice\(0, this\.q\.cells \?\? MAX_CELLS\);/);
   assert.match(vc, /gl\.uniform1f\(u\.uDark, p\.dark\);\s*\n[^\n]*\n\s*const slab = slabOf\(p, this\.cells\);\s*\n\s*gl\.uniform1f\(u\.uSlabBase, slab\.base\); gl\.uniform1f\(u\.uSlabTop, slab\.top\);/, 'uploaded with the field, for both marches');
-  assert.match(vc, /const k = packCells\(this\.cells, this\.q\.cells \?\? MAX_CELLS, this\._packed\);\s*\n\s*gl\.uniform1i\(u\.uCellCount, k\.count\);\s*\n\s*if \(k\.count > 0\) \{ gl\.uniform4fv\(u\.uCell, k\.c\); gl\.uniform4fv\(u\.uCellA, k\.a\); gl\.uniform4fv\(u\.uCellB, k\.b\); \}/, 'the arrays only when there are cells');
+  assert.match(vc, /const k = packCells\(this\.cells, this\.q\.cells \?\? MAX_CELLS, this\._packed\);\s*\n\s*gl\.uniform1i\(u\.uCellCount, k\.count\);\s*\n\s*if \(k\.count > 0\) \{ gl\.uniform4fv\(u\.uCell, k\.c\); gl\.uniform4fv\(u\.uCellA, k\.a\); gl\.uniform4fv\(u\.uCellB, k\.b\); gl\.uniform4fv\(u\.uCellC, k\.t\); \}/, 'the arrays only when there are cells');
   assert.match(vc, /if \(this\.testCell\) \{ this\.testCell\.x \+= offset\[0\]; this\.testCell\.z \+= offset\[2\]; \}/, 'the recenter');
   assert.equal((vc.match(/gl\.uniform1f\(u\.uDark, p\.dark\);/g) || []).length, 1, 'the dark is uploaded once, by the field');
   const shared = rd('src/scenes/shared.js');

@@ -60,7 +60,7 @@ test('WEATHER2b coordinates: field metres are the natives scaled to the pixel\'s
 });
 
 test('WEATHER2b the cells: three precipitating words with a spacing, a radius range, a coin and a base sky; the candidate is seeded by day, index and word; the drift is the day\'s heading times the minutes', () => {
-  assert.deepEqual(Object.keys(CELL_WORDS), ['rain', 'thunder', 'snow']);
+  assert.deepEqual(Object.keys(CELL_WORDS), ['rain', 'thunder', 'snow', 'sandstorm']);   // WEATHER2d: the sandstorm, never a zone's word, seats on desert land
   for (const w of Object.values(CELL_WORDS)) { assert.ok(w.spacing > 2 * w.radius[0] && w.radius[1] > w.radius[0] && w.p > 0 && w.p < 1); assert.ok(['overcast', 'cloudy'].includes(w.base)); }
   assert.equal(baseWordOf('rain'), 'overcast'); assert.equal(baseWordOf('thunder'), 'cloudy'); assert.equal(baseWordOf('snow'), 'overcast');
   for (const w of ['sunny', 'cloudy', 'overcast', 'fog']) assert.equal(baseWordOf(w), w, 'a whole-sky word makes no cells');

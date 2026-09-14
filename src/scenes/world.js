@@ -104,7 +104,7 @@ import { createBreather } from '../systems/buildBreather.js';   // PERF7: the st
 import { pieceIndex } from '../render/labGrass.js';   // PERF8: the piece under a point, by arithmetic
 import { LabGrassRenderer, createGrassField, grassRecordsOf, LAB_GRASS, LAB_DIM } from '../render/labGrass.js';   // GR1: the lab's grass, byte for byte
 import { windDrive, floraSwayOf, floraSwayOn } from '../systems/windDrive.js';   // WIND3: the one wind in every consumer's units; the flats' sway
-import { WindWispsRenderer, wispsOn } from '../render/windWisps.js';   // WIND3: the wind, seen
+import { WindWispsRenderer, wispsOn, SAND_LOOK } from '../render/windWisps.js';   // WIND3: the wind, seen; WEATHER2d: the sandstorm's sand in the same program
 import { createWindAudio, windSoundOn } from '../systems/windAudio.js';   // WIND3: the wind, heard
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring
 import { PLAYED_STEP_MAX_SECONDS } from '../systems/quest/clock.js';   // WORLD7: the quest clocks' played step online
@@ -587,6 +587,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   let precip = precipMode ? new PrecipitationRenderer(renderer.gl, precipOpts) : null;
   const wisps = sky.enhanced ? new WindWispsRenderer(renderer.gl) : null;   // WIND3: built on the enhanced lane, so a shader fault is a boot fault; its row is read per frame
   const windAudio = createWindAudio();   // WIND3: the wind loop, ticked on the exterior frame and stopped on the modal one
+  const sand = sky.enhanced ? new WindWispsRenderer(renderer.gl, SAND_LOOK) : null;   // WEATHER2d: the sandstorm's sand - the wisps' program in the sand's look
   // GR1: the lab's grass - one scatter of the lab's 1,200,000 candidates in a
   // 420m window around the eye, kept where the tiles are grass, rebuilt when
   // the eye leaves the window's middle. Enhanced skin and switch only.
@@ -626,7 +627,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     weatherSkyOffset = skyOffsetForWeather(w, weatherSeed);   // SetRainOvercast's 50/50 pick, re-rolled per change
     weatherSun = weatherSunlightScale(w, season === SEASON.Winter);
     precipMode = precipitationForWeather(w);
-    if (precipMode && !precip) precip = new PrecipitationRenderer(renderer.gl, precipOpts);
+    if (precipMode && precipMode !== 'sand' && !precip) precip = new PrecipitationRenderer(renderer.gl, precipOpts);   // WEATHER2d: the sand is not the rain program's
     lightning = w === 'thunder'
       ? (lightning ?? new LightningPlayer(Number(params.get('wseed')) || 1)) : null;
   }
@@ -8494,7 +8495,14 @@ export async function bootWorld(canvas, renderer, params, status) {
     // outgoing rain tapers after the sim has cleared and the incoming
     // holds off until the deck is in. Classic: the sim's mode, as W1.
     const precipShown = enhancedFront ? fx.shown : precipMode;
-    if (precipShown && precip) {   // W1 review: the gate is the MODE, never the object - the renderer outlives a clear-up
+    if (precipShown === 'sand') {
+      // WEATHER2d: THE SANDSTORM'S SAND - the wisps' program in the sand's look, the front's intensity its
+      // strength, on the one wind's rate and travel; the rain program never draws it
+      if (sand) {
+        sand.draw({ on: true, strength01: fx.intensity, windV: wd.windV, step: wd.step, gust: wd.gust }, proj, view, new Float32Array(cam.pos), now / 1000);
+        renderer.markForeignPass();
+      }
+    } else if (precipShown && precip) {   // W1 review: the gate is the MODE, never the object - the renderer outlives a clear-up
       // EE8: the enhanced profile rides the switch, and the wind that drives
       // its rain is the SKY'S OWN - the deck's wind from the eased weather
       // row - INTEGRATED here as travel, so a change in the wind moves what
