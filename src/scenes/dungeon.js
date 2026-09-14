@@ -108,7 +108,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   let _poseCam = null;   // AUDIT 26 F222: filled once the camera exists
   let _motorRef = null;   // DC1: filled once the motor exists (the same late-bound shape)
   const ctx = await buildDungeonContext(
-    { ...pipeline, renderer, arch, palette }, dfLocation, blocks, dfLocation.climate.climateType, { activateHeld: () => held(keys, 'ActivateCenterObject') || _tapArmed > 0, /* AUDIT 62 F8: the finger's press too - it was 'Mouse0' in the held set until the tap stopped speaking a literal code */ foes: !params.has('nofoes'), playerClass: params.has('class') ? Number(params.get('class')) : undefined, playerSpell: params.has('spell') ? Number(params.get('spell')) : undefined, playerWeapon: params.get('weapon') ?? undefined,
+    { ...pipeline, renderer, arch, palette }, dfLocation, blocks, dfLocation.climate.climateType, { activateHeld: () => held(keys, 'ActivateCenterObject') || _tapArmed > 0, keyDown: (code) => keys.has(code),   // HT1: the torch keys /* AUDIT 62 F8: the finger's press too - it was 'Mouse0' in the held set until the tap stopped speaking a literal code */ foes: !params.has('nofoes'), playerClass: params.has('class') ? Number(params.get('class')) : undefined, playerSpell: params.has('spell') ? Number(params.get('spell')) : undefined, playerWeapon: params.get('weapon') ?? undefined,
       // AUDIT 26 F222/F223: the dev scene's half of the pose. The cam
       // is created AFTER the context (from startSpawn), so the seam
       // closes over the slot lazily.
@@ -121,7 +121,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // below, after this context; null falls to standing defaults.
       motorState: () => (_motorRef ? { eyeLevel: _motorRef.eye[1] - _motorRef.pos[1], capsule: _motorRef.height } : null),
       // MAC1 J: this host's canvas, for the pause door's relock. The
-      // context owns none of its own (dungeonContext.js:5336), so each
+      // context owns none of its own (dungeonContext.js:5351), so each
       // dungeon host hands its own in and the resume gesture carries
       // the pointer back with it (ui/pauseDoor.js:164-181).
       relock: () => requestLook(canvas) });
@@ -257,8 +257,8 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // they carry the droppedLoot: prefix. Without this arm a dungeon
     // drop was one-way - the pile drew, the ray found it, and E did
     // nothing. The probe caught it on the first pickup.
-    if (key !== null && (key.startsWith('loot:') || key.startsWith('corpse:') || key.startsWith('droppedLoot:'))) {
-      ctx.takeLoot(key);
+    if (key !== null && (key.startsWith('loot:') || key.startsWith('corpse:') || key.startsWith('droppedLoot:') || key.startsWith('droppedTorch:'))) {
+      ctx.takeLoot(key, getInteractionMode());   // HT1: a dropped torch takes the mode (Grab/Steal picks it up, Info/Talk names it)
       return key;
     }
     if (key) ctx.actions.activate(key, { steal: getInteractionMode() === 'steal', doorSpell: doorSpellFor(playerEntity) });   // R1: Steal mode picks a locked door; X1: an armed Open/Lock fires here
@@ -888,7 +888,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // 16-slot shader cap picks from what survives (dungeonLights.js
       // carries the composition and why that order).
       withPlayerLights(nearestLights(ctx.lights, cam.pos, 16, ctx.flicker.ranges, null, DUNGEON_LIGHT_BLOCK_RANGE),
-        ctx.candleLight?.(), playerTorchLight(playerEntity, player.pos, cam.yaw)),   // X11 candle; T1 torch
+        ctx.candleLight?.(), playerTorchLight(playerEntity, player.pos, cam.yaw), ...ctx.torchLights()),   // X11 candle; T1 torch; HT1 the dropped lights
       new Float32Array(DUNGEON_LIGHT_COLOR));
     renderer.setWorldViewport(largeHudViewportRect(canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
     renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR);
@@ -900,7 +900,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     ctx.flatAnims.tick(dt);   // FA1: whoever draws the flats runs their clock
     // (the blood pool's clock runs inside ctx.drawFoes now - both dungeon
     // hosts call it, so neither can forget it; 2026-08-27)
-    renderer.drawBillboards(ctx.billboardBatches, camRight, UP_Y);
+    renderer.drawBillboards([...ctx.billboardBatches, ...ctx.torchBatches()], camRight, UP_Y);   // HT1: the dropped torches on the same pass
     // AUDIT 23 (hosts-9 = audio-3) - SongManager.cs:193: Update() runs
     // every frame, windows open or not - THE MUSIC CONTEXT IS FED
     // BEFORE THE MODAL RETURN (AUDIT 21 F1's law, which this host

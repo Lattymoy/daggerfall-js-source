@@ -184,6 +184,72 @@ export const MOD_SETTINGS = Object.freeze({
       'Miscellaneous.MirrorTwoHandedBlunts': Object.freeze({ default: false, description: 'Draws a two-handed staff, hammer or flail mirrored in the right hand.' }),
     }),
   }),
+  // HT1 (2026-09-14): HANDHELD TORCHES 1.4.1 (RedRoryOTheGlen), ported
+  // 1:1 - the shipped modsettings.json (vendor/handheld-torches/) key
+  // for key, section and name joined with a dot. Two kinds are new
+  // here: a TextKey (a Unity KeyCode name - `text`), and the two Tuple
+  // keys (`tuple: 'int' | 'float'`, the value a pair). Where the mod
+  // wrote a description it is the pane's; where it wrote none the port
+  // did.
+  'handheld-torches': Object.freeze({
+    title: 'Handheld Torches',
+    author: 'RedRoryOTheGlen',
+    keys: Object.freeze({
+      Enabled: Object.freeze({ default: true, description: 'RedRoryOTheGlen\u2019s Handheld Torches 1.4.1, 1:1: a lit torch, candle or lantern needs a free hand - drawing a weapon that takes both stows or drops it, and a hand freed lights it again; a key to ignite or douse, a key to drop, a key to throw a torch (which can set a foe alight); a first-person hand holding the light; dropped torches burn on the ground, light the room, and can be picked up.' }),
+      'Handling.ToggleLightInput': Object.freeze({ default: "F", text: true, description: 'Button used to quickly ignite or douse your light source' }),
+      'Handling.RememberLastLightSource': Object.freeze({ default: true, description: 'Igniting with the key re-lights the light you last doused, if you still carry one.' }),
+      'Handling.ManualDropInput': Object.freeze({ default: "Tab", text: true, description: 'Button used to manually drop a light source' }),
+      'Handling.OnStow': Object.freeze({ default: 1, options: Object.freeze(["Unequip", "Drop"]), description: 'Behavior when forced to stow a light source' }),
+      'Handling.OnPick': Object.freeze({ default: 1, options: Object.freeze(["Store", "Equip", "Force Equip"]), description: 'Behavior when picking up a light source' }),
+      'Handling.StowWhenSpellcasting': Object.freeze({ default: true, description: 'Casting, or holding a readied spell, stows the light: no free hand.' }),
+      'Handling.StowWhenClimbing': Object.freeze({ default: true, description: 'Climbing stows the light: no free hand.' }),
+      'Handling.StowWhenSwimming': Object.freeze({ default: true, description: 'Swimming stows the light: no free hand.' }),
+      'Handling.RelaxedTwoHandedWeapons': Object.freeze({ default: true, description: 'Two-handed weapons will only occupy your off-hand when attacking' }),
+      'Handling.RelaxedLanterns': Object.freeze({ default: false, description: 'If enabled, will not stow lanterns when both hands are occupied' }),
+      'Throwing.ThrowTorchInput': Object.freeze({ default: "X", text: true, description: 'Hold to wind up a throw, release to throw a torch.' }),
+      'Throwing.ThrowStrength': Object.freeze({ default: 1.0, min: 0.0, max: 10.0, float: true, step: 0.25, description: 'Multiplier on the throw\u2019s speed (25 at full Strength).' }),
+      'Throwing.GravityStrength': Object.freeze({ default: 1.0, min: 0.0, max: 10.0, float: true, step: 0.25, description: 'Multiplier on the thrown torch\u2019s fall.' }),
+      'Throwing.ThrowAngleOffset': Object.freeze({ default: 15.0, min: 0.0, max: 45.0, float: true, step: 0.25, description: 'Degrees above the look the torch leaves at.' }),
+      'Throwing.ThrowDispersion': Object.freeze({ default: 1.0, min: 0.0, max: 3.0, float: true, step: 0.1, description: 'Degrees of random spread on the throw.' }),
+      'Throwing.ThrowScaleSpeed': Object.freeze({ default: 1.0, min: 0.0, max: 10.0, float: true, step: 0.25, description: 'How fast the wind-up charges while the key is held.' }),
+      'Throwing.ShowTrajectory': Object.freeze({ default: true, description: 'Draws the throw\u2019s arc while the key is held.' }),
+      'Throwing.Bounciness': Object.freeze({ default: 0.5, min: 0.0, max: 1.0, float: true, step: 0.05, description: 'How much speed a thrown torch keeps when it bounces.' }),
+      'Throwing.Combustion': Object.freeze({ default: true, description: 'A thrown torch that strikes a foe can set it alight.' }),
+      'Throwing.Accuracy': Object.freeze({ default: 50, min: 0, max: 100, description: 'The to-hit modifier of the thrown torch.' }),
+      'Throwing.Duration': Object.freeze({ default: 3, min: 0, max: 60, description: 'Rounds the fire burns on a struck foe.' }),
+      'Throwing.Chance': Object.freeze({ default: 50, min: 0, max: 100, description: '% chance the fire takes on a struck foe.' }),
+      'Throwing.Magnitude': Object.freeze({ default: Object.freeze([1, 2]), tuple: 'int', description: 'Fire damage a round, least and most.' }),
+      'Throwing.Emission': Object.freeze({ default: true, description: 'A burning foe carries a light.' }),
+      'Throwing.EmissionShadows': Object.freeze({ default: false, description: 'A burning foe\u2019s light casts shadows (DFU only; no twin here).' }),
+      'Modules.Sprite': Object.freeze({ default: false, description: 'Sprite: a first-person hand holding the lit torch or lantern.' }),
+      'Modules.Bob': Object.freeze({ default: false, description: 'Bob: the sprite sways as you walk.' }),
+      'Modules.Inertia': Object.freeze({ default: false, description: 'Inertia: the sprite lags the look and your movement.' }),
+      'Modules.Step': Object.freeze({ default: false, description: 'Step: the sprite\u2019s position is rounded so it moves in steps.' }),
+      'Presentation.Tint': Object.freeze({ default: true, description: 'Matches the weapon sprite\'s tint when using First-Person-Lighting.' }),
+      'Presentation.Ambidexterity': Object.freeze({ default: false, description: 'Mirror the first-person graphic depending on the free hand. Recommended when using Shield Widget.' }),
+      'Presentation.Scale': Object.freeze({ default: 0.8, min: 0.8, max: 1.2, float: true, step: 0.05, description: 'Size of the first-person sprite.' }),
+      'Presentation.Offset': Object.freeze({ default: Object.freeze([0.5, 0.5]), tuple: 'float', description: 'Where the sprite rests: in from the side (of half the screen) and up from the bottom (of a quarter).' }),
+      'Presentation.Speed': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'How fast the sprite slides on and off the screen.' }),
+      'Presentation.LockAspectRatio': Object.freeze({ default: true, description: 'The sprite scales by the screen\u2019s width alone, keeping its proportions.' }),
+      'Presentation.PlayerTorchAudio': Object.freeze({ default: true, description: 'Plays a looping burning SFX when you have a torch equipped' }),
+      'Presentation.AudioVolume': Object.freeze({ default: 0.5, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'Volume of the burning loop and the torch sounds.' }),
+      'Bob.Length': Object.freeze({ default: 100, min: 0, max: 200, description: 'Amount of bobs in a single stride' }),
+      'Bob.Offset': Object.freeze({ default: 0.0, min: 0.0, max: 1.0, float: true, step: 0.05, description: 'Advances the bob timing. For use with weapon bob.' }),
+      'Bob.SizeX': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'Extent of horizontal movement when bobbing' }),
+      'Bob.SizeY': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'Extent of vertical movement when bobbing' }),
+      'Bob.SpeedMove': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'Speed of transition between stationary and moving' }),
+      'Bob.SpeedState': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'Speed of transition between movement states' }),
+      'Bob.Shape': Object.freeze({ default: 0, options: Object.freeze(["U", "Sideways 8", "Inverted U"]), description: 'Shape of bob' }),
+      'Bob.BobWhileIdle': Object.freeze({ default: true, description: 'Whether the shield will slightly bob while stationary' }),
+      'Inertia.Scale': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'The maximum distance that the sprite will be offset' }),
+      'Inertia.Speed': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'The speed that the sprite will move at towards the target offset' }),
+      'Inertia.ForwardDepth': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'Multiplier for the change in scale when moving forward or backward' }),
+      'Inertia.ForwardSpeed': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'The speed that the sprite will scale towards the target depth' }),
+      'Step.Length': Object.freeze({ default: 1, min: 1, max: 10, description: 'The number (x8) whose multiples will be used for snapping' }),
+      'Step.Condition': Object.freeze({ default: 0, options: Object.freeze(["Sheathe/Attack Only", "All Transforms"]), description: 'Whether the snapping only affects Sheathing or also other options like Bob, Inertia and Recoil' }),
+      'Compatibility.TextureScaleFactor': Object.freeze({ default: 1, min: 0, max: 8, description: 'A custom texture\u2019s pixels per screen pixel of the 320x200 surface.' }),
+    }),
+  }),
 });
 
 let memory = null;
@@ -209,7 +275,22 @@ export function isIntKey(def) { return def && typeof def.min === 'number' && typ
 export function isFloatKey(def) { return def && def.float === true && typeof def.min === 'number' && typeof def.max === 'number'; }
 /** UL1: a MultipleChoiceKey - `options` is the list, the value its index. */
 export function isChoiceKey(def) { return def && Array.isArray(def.options); }
+/** HT1: a TextKey (Handheld Torches' three key bindings) - a Unity
+ *  KeyCode name, `text` declared; the pane captures a key for it. */
+export function isTextKey(def) { return def && def.text === true; }
+/** HT1: a TupleIntKey / TupleFloatKey - `tuple` names the pair's kind,
+ *  the value `[first, second]`. */
+export function isTupleKey(def) { return def && (def.tuple === 'int' || def.tuple === 'float'); }
 function coerce(def, v) {
+  if (isTextKey(def)) {
+    const t = typeof v === 'string' ? v.trim() : '';
+    return t.length ? t : def.default;
+  }
+  if (isTupleKey(def)) {
+    if (!Array.isArray(v) || v.length !== 2) return def.default;
+    const pair = v.map((x) => (def.tuple === 'int' ? Math.trunc(Number(x)) : Math.round(Number(x) * 1000) / 1000));
+    return pair.every(Number.isFinite) ? Object.freeze(pair) : def.default;
+  }
   if (isChoiceKey(def)) {
     const n = Math.trunc(Number(v));
     return Number.isFinite(n) ? Math.max(0, Math.min(def.options.length - 1, n)) : def.default;

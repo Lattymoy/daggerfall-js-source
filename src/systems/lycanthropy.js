@@ -345,6 +345,8 @@ export function onLycanthropeHit(entity, target, { nowMinutes = 0, isCivilian = 
 
 /** The live entry's isTransformed, the gate every law below shares. */
 const isTransformedNow = (entity) => !!liveLycanthropy(entity)?.isTransformed;
+/** HT1: EntityEffectManager.IsTransformedLycanthrope, the mods' read of it (Handheld Torches stows the light on a transformed player). */
+export const isTransformedLycanthrope = (entity) => isTransformedNow(entity);
 
 /** GetSuppressInventory / GetSuppressTalk (:409-437): while
  *  transformed the inventory and every conversation refuse with DFU's

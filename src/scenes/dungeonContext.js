@@ -160,7 +160,8 @@ import { Collider } from '../player/collider.js';
 import { ActionSystem } from '../world/actionSystem.js';
 import { collectDungeonEnemies } from '../characters/dungeonEnemies.js';
 import { ENEMY_BASICS, enemyDisplayName } from '../characters/enemyBasics.js';
-import { createHitEffects, bloodCentre } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
+import { createHitEffects, bloodCentre } from './hitEffects.js';
+import { createDroppedTorches } from './droppedTorches.js';   // HT1: Handheld Torches' dropped lights in the dungeon   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
 import { EnemySoundSource, acuteHearingMultiplier } from '../characters/enemySounds.js';   // AUDIT 24 (wave 41): EnemySounds.cs, one home
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage
 import { activeMemberships } from '../systems/guilds.js';   // F117
@@ -1396,7 +1397,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:6563 / exterior.js:2922), set
+  // host's own townTalk sink (world.js:6581 / exterior.js:2933), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -1873,7 +1874,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // copied mount would have diverged the first time an arm grew.
   /** DR1: THE TWO SPELL WINDOWS THIS HOST MOUNTS NOW, and the one door
    *  they go through. `mountSpellWindow` is worldModes'
-   *  mountSpellWindow DUNGEON ARM (worldModes.js:1035,
+   *  mountSpellWindow DUNGEON ARM (worldModes.js:1045,
    *  `dungeonCtx?.showOverlay(win)`) resolved to what it actually
    *  calls here - this file's own pushDungeonWindow, which IS
    *  UserInterfaceManager.PushWindow. So a spell window raised over an
@@ -2350,7 +2351,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:898 against :929; worldModes.js:5892 against :5898).
+    // (dungeon.js:898 against :929; worldModes.js:5908 against :5917).
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -2535,17 +2536,26 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // until the first frame, which makes the arm inactive rather than
   // placed at the origin.
   let _fpEye = null;
+  let _fpFeet = null;   // HT1: the player's feet this frame, for the torch's drop and throw
   let _fpYaw = 0;
   let _fpPitch = 0;
   let _fpBobY = 0;   // IG1: the head bob's vertical, latched with the rest
   let _fpSneaking = false;
   let _fpMove = null;   // MW-D26: the frame's movement report
+  // HT1: the dungeon's dropped-torch pool - doused under the block water, aged by the world clock, saved with the room
+  const droppedTorches = createDroppedTorches({
+    renderer, audio, getTexture, uploadRecordFrame, collider: () => collider, foes: () => foes, foeSinks: (f) => foeSinks(f), makeEnemiesHostile: () => makeAreaHostile(),
+    entity: playerEntity, camera: () => (_fpEye ? { pos: _fpEye, feet: _fpFeet, yaw: _fpYaw, pitch: _fpPitch,
+      forward: [Math.sin(_fpYaw) * Math.cos(_fpPitch), Math.sin(_fpPitch), Math.cos(_fpYaw) * Math.cos(_fpPitch)], right: [Math.cos(_fpYaw), 0, -Math.sin(_fpYaw)], up: [0, 1, 0] } : null),
+    inside: () => true, waterLevel: () => (_fpFeet ? blockWaterLevelAt(_fpFeet[0], _fpFeet[2]) : null), say: (l) => hudText.add(l),   // PlayerEnterExit.blockWaterLevel: the player's block
+  });
   const weaponRig = createWeaponRig({
     renderer, canvas: () => _weaponCanvas, fetchBytes, palette, audio, entity: playerEntity,
     collider: () => collider, missEffect: (k, p, o) => hitEffects.showMissEffect(k, p, o),   // WW1: the weapon widget's recoil doors
+    keyDown: (code) => !!opts.keyDown?.(code), torches: () => droppedTorches,   // HT1
     activateHeld: () => !!opts.activateHeld?.(),   // AUDIT 28 W12: the host's ActivateCenterObject, for the drawn bow's un-draw
     // MW-D10: rule 54's neck pitch; MW-D15: rule 32(a)'s sneak sink.
-    camera: () => (_fpEye ? { pos: _fpEye, yaw: _fpYaw, pitch: _fpPitch, sneaking: _fpSneaking, move: _fpMove, bob: [0, _fpBobY] } : null),   // MW-D26; IG1: the bob rides too
+    camera: () => (_fpEye ? { pos: _fpEye, yaw: _fpYaw, pitch: _fpPitch, feet: _fpFeet, climbing: !!_fpMove?.climbing, sneaking: _fpSneaking, move: _fpMove, bob: [0, _fpBobY] } : null),   // HT1: feet and the climb   // MW-D26; IG1: the bob rides too
     bindWorn: opts.playerWeapon !== 'bow',   // AUDIT 17e F17: the ?weapon=bow debug flag keeps its scripted weapon
     say: (l) => hudText.add(l),
     spellArmed: () => magic.spellArmed(),
@@ -2831,8 +2841,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:8621,
-              // exterior.js:4205 and worldModes.js:6019 already ran;
+              // playerArrowHitFoe is the one copy world.js:8650,
+              // exterior.js:4221 and worldModes.js:6035 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -3519,6 +3529,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // G5: textureArchive rides beside textureRecord - the PAIR is
       // what LootContainerData_v1 stores, and a cycled drop icon is
       // lost without it.
+      droppedTorches: droppedTorches.snapshot(),   // HT1: HandheldTorchesSaveData
       droppedLoot: droppedLoot._piles.map((p) => ({
         pos: [...p.pos], archive: p.archive, record: p.record, items: p.items.map((it) => ({ ...it })),
       })),
@@ -3679,6 +3690,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // AUDIT WORLD B3: the save's alone - the room's memory carries no drops (a drop is the dropper's own), and a
     // clearing restore would delete this player's floor stash and mint the host's under their feet
     if (truncate) droppedLoot.restorePiles(w.droppedLoot);   // AUDIT 23: absent list clears, per rebuild-from-save
+    if (truncate) droppedTorches.restore(w.droppedTorches);   // HT1: the same law
     // P10 + AUDIT 23 (save-load-11): state, lock and BOTH tweens
     // restore, then each object settles its matrix and collider bucket
     // (an open door no longer restores solid-and-closed, and a door
@@ -4165,6 +4177,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // behind the camera - a lag you only see while turning, which is
     // most of what a first-person arm does.
     _fpEye = eye;
+    _fpFeet = playerFeet;   // HT1
     _fpYaw = Math.atan2(-view[2], -view[10]);
     // The view matrix's third row is the camera's BACKWARD axis, so the
     // look direction is its negation and the pitch is that vector's y.
@@ -4184,6 +4197,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // clock lives here and no host can forget it. Real dt, and it ENDS
     // (a finished splash frees its batch inside tick).
     hitEffects.tick(dt);
+    droppedTorches.tick(dt);   // HT1: the burn, the flight, the flames
     // PX21c: THE HOVER PLAQUE, from the frame function both dungeon
     // hosts already call - the splash clock's reasoning, one slice on.
     // It runs the SAME pick the take runs, at 10Hz rather than every
@@ -4931,6 +4945,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     billboardBatches,
     flatAnims,   // FA1: the host ticks the flats it draws
     hitEffects,  // AUDIT 24 (wave 39): and the blood splashes it draws
+    droppedTorches, torchBatches: () => droppedTorches.batches(), torchLights: () => droppedTorches.lights(),   // HT1: the dropped torches, for the hosts' draw pass and light channel
     lights,
     /** X11: the Light effect's candle. The engine owns the candle (it
      *  is the player's, and every casting host builds one engine); the
@@ -5448,6 +5463,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       w.foes = w.foes.slice(0, _layoutFoes);
       delete w.teleportedIntoDungeon;
       delete w.droppedLoot;
+      delete w.droppedTorches;   // HT1
       // WORLD4: the memory carries EMPTIED, not contents - the piles' blanket list goes, and in its place the
       // containers the room has actually opened, each with what is left in it. A pile nobody has touched stays
       // every client's own roll, as it was before anyone arrived.
@@ -5932,6 +5948,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         targets.push({ key: `corpse:${i}`, aabb: { min: [p[0] - 0.5, p[1], p[2] - 0.5], max: [p[0] + 0.5, p[1] + 0.6, p[2] + 0.5] }, distance: RAY_DISTANCE, reach: CORPSE_ACTIVATION_DISTANCE });
       });
       targets.push(...droppedLoot.lootTargets());   // U26: the player's own drops
+      targets.push(...droppedTorches.targets());   // HT1: the dropped torches, at the mod's 3.2
       return targets;
     },
     /** PX21c: what a loot key HOLDS, without opening it - the same
@@ -5952,9 +5969,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      *  teleporting into the pack on one keypress. Returns the number
      *  of items the target holds, so the caller's "did anything
      *  happen" test still reads. */
-    takeLoot(key) {
+    takeLoot(key, mode = 'grab') {
       const [kind, iStr] = key.split(':');
       const i = Number(iStr);
+      if (kind === 'droppedTorch') return droppedTorches.activate(key, mode) ? 1 : 0;   // HT1: PickUpLightSource
       let source = null;
       let onEmptied = null;
       let lootHooks = null;   // G5: DaggerfallLoot's identity, per kind

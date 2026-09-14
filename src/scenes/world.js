@@ -117,7 +117,8 @@ import { locationCompassDirection, buildingCompassDirection, findFactionByTypeAn
 import { seasonValue, SEASONS, MINUTES_PER_DAY, dateFromClassicMinutes, dateTimeString, midDateTimeString, lunarPhasesFromMinutes, LUNAR_PHASES, isDayFromMinutes } from '../systems/gameDate.js';   // AUDIT 23 (wts-1); Q4-v: the notebook's header shapes; V2c: the enchant ctx's moon arms
 import { regionPriceAdjustment, TRANSPORT_HORSE, TRANSPORT_SMALL_CART } from '../systems/shopStock.js';   // Q4-v: CreateGold's regional term (the shops' own producer); U41: Items.Contains(Transportation, ...)
 import { getNameBankOfRegion, getRandomFullName } from '../characters/nameHelper.js';   // AUDIT 23 (characters-5); AUDIT 58: MacroHelper.GetRandomFullName, one home
-import { createHitEffects } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
+import { createHitEffects } from './hitEffects.js';
+import { createDroppedTorches } from './droppedTorches.js';   // HT1: Handheld Torches' dropped lights, thrown torches and burning foes   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
 import { createCityGuards } from './cityGuards.js';   // G1
 import { createArrestFlow } from './arrestFlow.js';
 import { clearCrimeOnLocationExit, addGold, goldAmount, deductGold, totalGoldAmount, deductGoldPieces } from '../systems/court.js';   // AUDIT 17e F6   // G2   // F-slice: travel gold; U41: GetGoldAmount + the pieces half of DeductFastTravelGold
@@ -1447,6 +1448,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // reference's mid-session collection sweep (CollectLooseObjects);
     // only the F9 envelope brings one back.
     if (collectLoose) droppedLoot.collectPixel(key);
+    if (collectLoose) droppedTorches.collectPixel(key);   // HT1: a dropped torch is a loose object too
     // ...and so does an exterior CORPSE, which is the same kind of
     // loose object (GameObjectHelper.cs:836-839 tracks the marker) and
     // was the half of :1040-1052 the port never wired: nothing removed
@@ -2194,6 +2196,17 @@ export async function bootWorld(canvas, renderer, params, status) {
   // draw. EnemyBlood is per-entity in DFU only because Unity hangs a
   // component off each enemy; there is one archive and one clock.
   const hitEffects = createHitEffects({ renderer, getTexture, uploadRecordFrame });
+  // HT1: the exterior host's dropped-torch pool. Destroyed whole on
+  // every mode change (the mod's OnTransition* handlers), swept with a
+  // pixel outdoors (TrackLooseObject), aged by the world clock.
+  const droppedTorches = createDroppedTorches({
+    renderer, audio, getTexture, uploadRecordFrame, collider: () => collider,
+    foes: () => [...cityGuards.guards, ...exteriorFoes.foes], foeSinks: (f) => foeSinks(f), makeEnemiesHostile: () => _makeEnemiesHostile(),
+    entity: playerEntity, camera: () => ({ pos: player.eyeAt(), feet: player.pos, yaw: cam.yaw, pitch: cam.pitch,
+      forward: [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)], right: [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)], up: [0, 1, 0] }),
+    inside: () => false, waterLevel: () => null, pixelKeyAt: () => `${playerTravelPixel().x},${playerTravelPixel().y}`, say: (l) => townTalk.say(l),
+  });
+  let _torchesMode = 'exterior';
   // ROAD-B: THE AREA, for GameManager.MakeEnemiesHostile.
   // DFU's ActiveGameObjectDatabase is ONE database for the scene, so
   // "all enemies in an area" is every live enemy this host can reach -
@@ -2477,6 +2490,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     activateHeld: () => held(keys, 'ActivateCenterObject') || _tapArmed > 0,   // AUDIT 62 F8: the finger's press too (it was 'Mouse0' in the held set until the tap stopped speaking a literal code)   // AUDIT 28 W12: the drawn bow's un-draw key
     renderer, canvas, fetchBytes, palette, audio, entity: playerEntity,
     collider: () => collider, missEffect: (k, p, o) => hitEffects.showMissEffect(k, p, o),   // WW1: the weapon widget's recoil doors
+    keyDown: (code) => keys.has(code), torches: () => droppedTorches,   // HT1: the mod's own key bindings, and the host's pool
     say: (l) => townTalk.say(l),
     // MW-D8: the Morrowind arm rides the player's eye. Required, not
     // optional - a host that forgets it gets the classic sprite and a
@@ -2489,7 +2503,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // doing - and the pitch already proved that is the seam every host
     // has. Morrowind's Sneak STANCE, which is DFU's Sneak binding; its
     // Crouch is a collider height, not an animation state.
-    camera: () => ({ pos: player.eyeAt(), yaw: cam.yaw, pitch: cam.pitch, sneaking: !!player.isSneaking,
+    camera: () => ({ pos: player.eyeAt(), yaw: cam.yaw, pitch: cam.pitch, sneaking: !!player.isSneaking, feet: player.pos, climbing: !!player.climb?.isClimbing,   // HT1: the body's centre and the climb, for the torch
       // IG1: the head bob's VERTICAL feeds the first-person offset (the
       // reference's head_bobbing.lua drives setFirstPersonOffset's z
       // only); bobOffset[1] is the raw vertical, un-rotated.
@@ -2645,10 +2659,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2111 mounts the same one, gated on
+  // and dungeonContext.js:2112 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:4595
+  // that context through modes.dungeonCtx - so worldModes.js:4607
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -3592,6 +3606,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     cacheScene(_sceneCache(), worldSceneName(pixel.x, pixel.y), {
       lootContainers: droppedLoot.snapshotWorld((pos) => state.worldCoords(pos))
         .map((sp) => ({ ...sp, containerType: LOOT_CONTAINER_TYPES.DroppedLoot, y: sp.y - state.compensation[1] })),
+      droppedTorches: droppedTorches.snapshot((pos) => { const wc = state.worldCoords(pos); return [wc.x, pos[1] - state.compensation[1], wc.z]; }),   // HT1: HandheldTorchesSaveData, in natives
     });
   }
   /** A scene never cached answers null and the arrival stands as the
@@ -3601,6 +3616,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!arrived) return false;
     droppedLoot.restoreWorld(arrived.lootContainers,
       (nx, nz) => state.localFromWorld(nx, nz), state.compensation[1]);
+    droppedTorches.restore(arrived.droppedTorches, (p) => { const [lx, lz] = state.localFromWorld(p[0], p[2]); return [lx, p[1] + state.compensation[1], lz]; });   // HT1
     return true;
   }
   /** TR4: TransportManager's ship arm (:360-402). The decision is
@@ -4169,7 +4185,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:5317), so exterior mode and a
+    // composer, dungeonContext.js:5332), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -4212,6 +4228,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // NATIVES with the compensation-free height, the player
         // half's exact law.
         piles: droppedLoot.snapshotWorld((pos) => state.worldCoords(pos)).map((sp) => ({ ...sp, y: sp.y - state.compensation[1] })),
+        droppedTorches: droppedTorches.snapshot((pos) => { const wc = state.worldCoords(pos); return [wc.x, pos[1] - state.compensation[1], wc.z]; }),   // HT1: the mod's own save data rides the envelope
         // AUDIT 26 F216/F217: LIVE ENEMIES ride the envelope - DFU's
         // SaveData_v1 carries enemyData wherever the player stands
         // (:865, restored :1006). Saved nowhere, a quickload during a
@@ -4314,6 +4331,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // live pile (the reference's sweep); the envelope re-mints the
         // saved ones at their native spots.
         droppedLoot.restoreWorld(w.piles, (nx, nz) => state.localFromWorld(nx, nz), state.compensation[1]);
+        droppedTorches.restore(w.droppedTorches, (p) => { const [lx, lz] = state.localFromWorld(p[0], p[2]); return [lx, p[1] + state.compensation[1], lz]; });   // HT1
         // F216/F217: the pools re-mint through their one spawn chain,
         // then overlay the saved truth (SerializableEnemy's own
         // rebuild-then-set shape). Async behind the art; the teleport
@@ -5456,7 +5474,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7205-7217 -
+  // worldModes answers it in BOTH modes (worldModes.js:7227-7239 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -7893,6 +7911,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           // at all, so its corpses could not be opened by anyone.
           const corpseTargets = [...cityGuards.lootTargets(), ...exteriorFoes.lootTargets()];
           const _corpsePick = pickActivatableHit(cam.pos, useFwd, corpseTargets, collider), _pilePick = pickActivatableHit(cam.pos, useFwd, droppedLoot.lootTargets(), collider);   // AUDIT 65 MC-2: BOTH picks run now, because DFU fires ONE ray (:314) and the nearest hit is THE hit.
+          const _torchPick = pickActivatableHit(cam.pos, useFwd, droppedTorches.targets(), collider);   // HT1: the mod's RegisterCustomActivation over its six records, the same one ray
           const _pileNearer = !!_pilePick && !(_corpsePick && _corpsePick.distance <= _pilePick.distance), _lootPick = _pileNearer ? null : _corpsePick, _dropPick = _pileNearer ? _pilePick : null;   // AUDIT 65 MC-2: ...so the body and the pile are decided by DISTANCE. The old `_lootPick ? null : pick(piles)` precedence was inert while each pick dropped its own out-of-reach target; now that both reach for the ray so their handlers can speak (:868-873 the container, :936-941 the corpse), a body across the room would have suppressed the pile pick outright and refused a pile at arm's length.
           // Every OTHER thing this ray can strike, at its own distance:
           // the street's townsfolk (townTalk's own cylinder pick), the
@@ -7905,6 +7924,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           const _nonPersonRival = Math.min(
             _lootPick?.distance ?? Infinity,
             _dropPick?.distance ?? Infinity,
+            _torchPick?.distance ?? Infinity,   // HT1
             modes.exteriorActivationDistance(cam.pos, useFwd),
           );
           const _rivalDist = Math.min(_nonPersonRival,
@@ -7921,6 +7941,10 @@ export async function bootWorld(canvas, renderer, params, status) {
           else if (!townTalk.tryActivate(cam.pos, useFwd, _livePersons, _nonPersonRival)) {
             const lootKey = _lootPick?.key ?? null;
             const dropKey = _dropPick?.key ?? null;
+            // HT1: a dropped torch under the ray, nearer than the corpse and the pile: picked up (Grab, Steal) or named (Info, Talk)
+            const _torchNearest = !!_torchPick && _torchPick.distance <= Math.min(_lootPick?.distance ?? Infinity, _dropPick?.distance ?? Infinity);
+            if (_torchNearest) { if (_torchPick.distance > _torchPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT); else droppedTorches.activate(_torchPick.key, getInteractionMode()); }   // the mod's own activation, ahead of DFU's ladder
+            else {
             // AUDIT 65 MC-2: the corpse's own refusal
             // (PlayerActivate.cs:936-941) - the body reaches for the
             // ray now (scenes/corpseMarker.js) so the handler can
@@ -7954,6 +7978,7 @@ export async function bootWorld(canvas, renderer, params, status) {
               }));
             }
             else modes.tryEnter().catch((e) => console.error(e));
+            }   // HT1: the torch arm's else
           }
         }
         latch.use = useHeld;
@@ -7985,6 +8010,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       exteriorFoes.offsetAll(r.offset);   // X-slice
       labGrassField = null;   // AUDIT 49 F2 / GR5: the field is baked in world coordinates - a new world starts empty
       droppedLoot.offsetAll(r.offset);
+      droppedTorches.offsetAll(r.offset);   // HT1: the torches too
       hitEffects.offsetAll(r.offset);   // AUDIT 24 (wave 39): a splash mid-animation follows the origin too
       // AUDIT 18: this line used to be an optional call to a method
       // ArrowFlight has never had, so it was swallowed every time and
@@ -8187,7 +8213,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       }
       renderer.setPointLights(
         withPlayerLights(nearestLights(sceneLights, cam.pos, 16, worldLightAnimator.ranges),
-          magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw)),   // X11 candle; T1 torch
+          magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw), ...droppedTorches.lights()),   // X11 candle; T1 torch; HT1 the dropped lights
         CITY_LIGHT_COLOR_F32
       );
     } else {
@@ -8196,7 +8222,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // this branch used to send the renderer an empty array, so a
       // daylight Light cast would have lit nothing at all.
       renderer.setPointLights(withPlayerLights(new Float32Array(0),
-        magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw)), CITY_LIGHT_COLOR_F32);
+        magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw), ...droppedTorches.lights()), CITY_LIGHT_COLOR_F32);   // HT1
     }
     renderer.setClearColor(SKY_CLEAR);   // INCIDENT 2026-09-04 / REVIEW 2026-09-05: this frame is the EXTERIOR's (the mode frames returned above and clear black in worldModes) - CameraClearManager.cs:51-57
     renderer.setFlashLight(sky.lightningLight());   // DS1: Dynamic Skies' LightningFlash, composed first on the point-light channel just stored
@@ -8467,6 +8493,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // finished splash frees its batch inside tick().
     hitEffects.tick(dt);
     livePersonBatches.push(...hitEffects.batches());
+    // HT1: the dropped torches burn, the thrown one flies, a burning foe's flame follows it; every mode change destroys them (OnTransition*)
+    if (_mode() !== _torchesMode) { droppedTorches.destroyAll(); _torchesMode = _mode(); }
+    if (_mode() === 'exterior') { droppedTorches.tick(dt); livePersonBatches.push(...droppedTorches.batches()); }
     if (livePersonBatches.length) renderer.drawBillboards(livePersonBatches, camRight, UP_Y);
     // WX2: what falls is what the front SHOWS - under the enhanced sky the
     // outgoing rain tapers after the sim has cleared and the incoming
