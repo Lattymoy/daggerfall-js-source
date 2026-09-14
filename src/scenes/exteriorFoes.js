@@ -1501,7 +1501,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
    *  WORLD6b A7). */
   function applyHit(from, data) {
     if (!data || typeof data !== 'object') return false;
-    if (data.k != null && _net?.room && data.k !== _net.room()) return false;
+    if (data.k != null && _net?.room && data.k !== _net.room() && !_net.inRoom?.(data.k)) return false;   // AUDIT WORLD6b-iii(b) C1/B6: keyed to any cell I HOLD - the striker remembers my cell from my last frame, and for a foes interval after a crossing that was the cell I left (still held as a halo); a cell I do not hold is not the world
     const f = foes.find((x) => !x.puppet && x.seq === (data.i | 0));
     const dmg = Number(data.dmg);
     if (!f || f.dead || !Number.isFinite(dmg) || dmg < 0 || dmg > 10000) return false;

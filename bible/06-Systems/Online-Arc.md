@@ -2746,13 +2746,20 @@ empty.
   owner's cell (`k`); the pool accepts one keyed to any cell I hold
   (`inRoom`) and remembers the owner's; my hit on that owner's puppet is
   keyed to the OWNER's cell and sent through that room's socket, where
-  the owner is reported - the relay routes `to` inside one room.
+  the owner is reported - the relay routes `to` inside one room. AUDIT
+  WORLD6b-iii(b) A3: the key is a PREFERENCE - the owner is struck where
+  it is reported (its cell, my own, any halo), since a crossing makes
+  the key stale for a foes interval; and a blow at MY foe keyed to any
+  cell I hold is mine (C1).
 - **The crossing.** A step into a cell already held as a halo PROMOTES
   its socket in place: no close, no reconnect, no roster wiped, and the
   puppets stand (the seam is no room change to them; the prune takes
   back any whose owner the hunt no longer sees); the cell left steps
   down to a halo until it is out of range. A new cell still hears every
-  foe of mine at once (the full frame).
+  foe of mine at once (the full frame). AUDIT WORLD6b-iii(b) B1/B8: the
+  join is at ONCE when the cell is held (the 500 ms hold bought a strip
+  with no socket in the cell stood in), the cell stood in is wanted
+  until the join, and a LIVE halo alone is promoted (A1).
 - **No relay change**: a halo member is a member; the door's budgets,
   the roster cap and the ranged fan apply to it as to anyone. A dropped
   halo socket is retried on the session's clock; a terminal close ends
@@ -2767,6 +2774,141 @@ elsewhere, the promotion, the halo left, leave closing all, the retry,
 no halo outside a cell); the pool (a frame keyed to a held cell stands
 its puppet, one to an unheld cell does not, my blow keyed to the
 owner's cell); the world host by source.
+
+## AUDIT WORLD6b-iii(b) (2026-09-14)
+
+**Mac: "Audit".** Three opus lenses over the cell seam - A the session's
+halo, B the geometry, the relay and the world host, C the pool, the
+hits and the hunt across the seam. Every finding verified against the
+code; paid at the root; pinned by execution in
+`test/auditworld6biiib.test.js` - the session driven in the world
+host's OWN frame order, which the slice's pin never was. No relay
+change.
+
+### The critical
+
+- **B1 (critical, paid): the world host closed the halo of the cell it
+  was entering on the crossing frame, so the promotion never fired.**
+  The wanted list is the new pixel's: `cellHaloFor` names neither the
+  pixel's own cell (the one stepped into) nor, after `setHalo`'s own
+  filter, the cell left (my own) - so on the crossing frame, inside the
+  500 ms hold, the halo the promotion was for was closed, and the join
+  after the hold found no halo and took the old leave-and-reconnect:
+  both sockets closed, two opened, the roster wiped, `status` off
+  'open' and so every puppet pruned. The record's crossing was
+  reachable from the pin alone. Paid: the cell stood in is wanted
+  until the join (`wantHalo.push(key)`), and a cell already HELD is
+  joined at once - the hold (AUDIT WORLD2 C8's, against a world room's
+  churn) bought a cell crossing nothing but a strip with no socket in
+  the cell stood in (B8). Executed in the host's own frame order:
+  two sockets across the crossing, neither closed, nobody wiped.
+
+### A - the session
+
+- **A1/B7/C2 (high, paid): a promotion onto a dropped halo demoted the
+  live socket.** The guard tested the entry, not its socket: a halo
+  pending its retry (ws null) handed a dead socket to the primary, and
+  the next `setHalo` (keyed on `this._ws`) closed the good one - the
+  player offline in both cells for a backoff. A LIVE, OPEN halo alone
+  is promoted; a stale entry is dropped and the ordinary join stands
+  the cell's socket at once.
+- **A3/C1/B6 (high, paid): a blow keyed to a cell the owner had just
+  crossed out of was refused for a foes interval, silently.** The hit's
+  `k` was a veto (the owner had to be reported in that room) and the
+  owner's `applyHit` demanded its own cell exactly; the pool discards
+  the divert's verdict. The key is a preference: the owner is struck
+  where it is REPORTED (its cell, my own, any halo; refused only when
+  no held room reports it), and a blow at my foe keyed to any cell I
+  hold is mine.
+- **A2 (high, paid): a halo's terminal close was re-opened every
+  frame.** The entry was deleted, `setHalo`'s only idempotence was the
+  entry's presence, and a refused hello became connect-hello-refuse at
+  the wire's rate against a shared hello gate. The verdict is
+  remembered (`status: 'terminal'`, no socket, no retry) until the room
+  leaves the wanted set.
+- **A4 (medium, paid): the primary's terminal close left the halos
+  posing my ghost** and standing puppets I could not strike back; the
+  record claimed the opposite direction only. One door (`_endHalo`)
+  for `leave` and both terminal closes.
+- **A5 (medium, paid): the halo's life hung on the primary's socket.**
+  A one-second blip closed every halo, wiped the seam's roster, lost
+  the hysteresis and re-hello'd the neighbours on the way back - the
+  churn the slack was written against, by the back door; and the pose
+  fan sat behind the primary's send. The want-set is the ROOM's
+  (`isCellRoom(this.room) && !this.terminal`), and the pose goes
+  through every open socket.
+- **A6 (medium, paid): a demoted primary kept a stale status** ('error'
+  after a relay error frame, its close on its way) - a zombie halo,
+  never posed into, never retried, never closed. The demoted entry's
+  status is the socket's: open, or connecting.
+- **A7 (medium, paid): a halo stuck connecting was immortal**, and a
+  socket that could not be made was nothing (re-tried every frame).
+  Stamped `since`; past the longest backoff it is dropped and retried;
+  a failed constructor is an entry with a retry.
+- **A8 (declined): the merged roster past ROSTER_MAX.** Bounded at four
+  rooms' worth; the per-frame cost is a lerp per entry and the fans are
+  ranged by the relay, so a far entry is static. Recorded, with AUDIT
+  WORLD6b's ROSTER_MAX residual.
+- **A9 (note, paid): dead code** - `_holder`, `_heldElsewhere`'s unused
+  parameter, `_bind`'s ignored argument. Gone.
+- **A11 (note, recorded): a promotion consumed the new cell's welcome
+  as a halo** - no host, no clock offset from it. A cell reads neither;
+  the relay does seat a host in a cell room, inert at both ends.
+
+### B - the geometry, the relay, the world host
+
+- **B2/B3 (verified): the halo's lattice IS the fan's.** Map pixel x is
+  floor(worldX / PIXEL_UNITS) and y its 499-flip, over 200 000 poses; a
+  cell's sixteen map rows are sixteen consecutive world rows; Chebyshev
+  is flip-invariant; `cellHaloFor` matches a brute-force nearest-pixel
+  law over a four-cell window; the symmetry law (everyone within range
+  holds my cell) held over 200 000 pairs. Off the map `trunc` and
+  `floor` differ by one pixel - unreachable in the placed world.
+- **B4 (note, recorded): no relay change**, verified by diff; but the
+  seam's population now shares a cell's ROOM budgets (the foes fan's
+  bytes per second, the roster and socket caps) with its neighbours'
+  seam members, and a halo member can be elected the host of a cell it
+  only borders (inert). The client sends one pose to up to four
+  sockets at a corner.
+- **B5/C3 (high, paid): an unanswerable roster pruned every owner.**
+  `peersNear()` answers null while the socket is not open, and `?? []`
+  read that as nobody: every owner and every puppet swept every frame
+  while the halos - independent now - kept feeding frames, a
+  spawn-and-discard loop per foe per frame (six builds for six frames
+  in the probe). No answer is no prune; the stale sweep still reaps a
+  quiet owner.
+- **B9 (low, paid): the geometry pin never told max from min** - the
+  diagonals were all (1, 1). Pinned at (3, 4) and (3, 3), and the y
+  reach.
+
+### C - the pool, the hits, the hunt
+
+- **C5 (medium, paid in part): a promotion sends no hello, so the look
+  composed for the crossing was dropped** - peers in the new cell saw
+  the gear worn when the halo opened. The look is composed before a
+  halo opens (the host's frame); the residual (gear changed within the
+  last pixels before the edge) is recorded - a look travels in a hello
+  alone.
+- **C6 (low, paid): the same pose through two rooms restarted the
+  ease** (and a halo's welcome walked a peer back once). A pose within
+  a hair of the last is seen, not re-eased.
+- **C7 (verified): the frame's `k` is unvalidated on the wire but
+  unstorable** - `inRoom` admits only a key I hold.
+- **C8 (note, recorded): the halo is silent on the HUD** - a halo that
+  refuses to connect is never said; `statusLine` is the primary's.
+
+Pinned in `test/auditworld6biiib.test.js` (6), EXECUTED: the crossing
+in the world host's own frame order (the halo kept on the crossing
+frame, the join at once, nothing closed, nobody wiped, the old cell
+held on and then let go); a dropped halo not promoted and the ordinary
+join at once, a demoted primary stepping down as connecting; a halo's
+terminal close remembered and cleared once out of range, a primary
+blip ridden out with the pose through the halo, a stuck halo dropped
+and retried, the primary's terminal close ending every halo; the blow
+struck where its owner is reported and refused only when nowhere, the
+pool taking a blow keyed to a held cell, the duplicated pose seen not
+re-eased; the diagonal and the y reach; by source the host's join, the
+wanted cell, the look, the prune, the session's doors, the records.
 
 ### 6b-iii (recorded, next)
 
