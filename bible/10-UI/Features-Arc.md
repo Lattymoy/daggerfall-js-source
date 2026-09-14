@@ -92,9 +92,9 @@ Video/GUI keys that are features rather than settings.
 | Key | Row today | Default | Tier | Status / notes |
 |---|---|---|---|---|
 | `Experimental/SmallerDungeons` | Smaller Dungeons | False | live | **MOVED (FT1, 2026-09-14)** - DFU Classic. Two seam faults fixed first (below). Building on it is the open door: the day the port adds its own arm, the row wears Enhanced too |
-| `Enhancements/EnemyInfighting` | Enemies Fight Each Other | True | live | open |
-| `Enhancements/AlternateRandomEnemySelection` | Varied Dungeon Monsters | False | live | open |
-| `Enhancements/PlayerTorchFromItems` | Torches Light Your Way | False | live | open |
+| `Enhancements/EnemyInfighting` | Enemies Fight Each Other | True | live | **MOVED (FT10, 2026-09-14)** - at once |
+| `Enhancements/AlternateRandomEnemySelection` | Varied Dungeon Monsters | False | live | **MOVED (FT10)** - the next dungeon |
+| `Enhancements/PlayerTorchFromItems` | Torches Light Your Way | False | live | **MOVED (FT10)** - at once; new gear and the next stocking follow |
 | `Enhancements/LoiterLimitInHours` | Maximum Wait Time | 3 | live | open |
 | `Enhancements/CombatVoices` | - | True | live | open |
 | `Enhancements/NearDeathWarning` | - | True | live | open |
@@ -122,6 +122,7 @@ Video/GUI keys that are features rather than settings.
 - **FT7** - SHIPPED 2026-09-14. Grass density and cloud quality. Below.
 - **FT8** - SHIPPED 2026-09-14. Combat visuals, and the emptied category as a pointer. Below.
 - **FT9** - SHIPPED 2026-09-14. The five packs with a switch. Below.
+- **FT10** - SHIPPED 2026-09-14. Three of DFU's dungeon enhancements. Below.
 - One slice per open row after that, in the order Mac picks.
 
 ## FT0 - THE HOME (2026-09-14)
@@ -398,3 +399,21 @@ vendored tomorrow fails the pin rather than sitting off the home.
 
 Left on the inventory: DFU's own Enhancements (DFU Classic), one by
 one, and the mods' knobs if Mac wants them on the home too.
+
+## FT10 - THREE OF DFU'S DUNGEON ENHANCEMENTS (2026-09-14)
+
+Enemies Fight Each Other, Varied Dungeon Monsters, Torches Light Your
+Way - the three switches of DFU's Enhancements section that change
+what happens in a dungeon. **The audit.** Each read against its port
+site: infighting is read at the point of use (`enemyTargets.js`, the
+CombatVoices idiom); alternate selection as the dungeon's enemies are
+collected (`dungeonEnemies.js`, the 1:1 pick by the player's power
+with the variance band); the torch inside the tick as
+EnablePlayerTorch.Update reads it, and again for the starting gear and
+the shop shelf. All 1:1, all live. **The rows.** DFU Classic, over the
+DFU keys, titled as the settings pane titles them so the pointer there
+and the row here say one name. Each note ends with what DFU ships it
+as, PINNED against the baked default, so a re-bake cannot make the
+note lie. The effects are the port's word: at once; the next dungeon;
+at once with new gear and the next stocking following.
+`test/ft10_dfu_dungeon.test.js`.

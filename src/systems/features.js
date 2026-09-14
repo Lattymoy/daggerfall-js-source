@@ -215,6 +215,43 @@ export const FEATURES = Object.freeze([
   modFeature('meanerMonsters', 'Takes effect on monsters spawned after the switch.'),
   modFeature('pcaao', 'Takes effect at once.'),
   modFeature('unleveledLoot', 'Takes effect on the next roll.'),
+  // FT10 (2026-09-14): DFU'S OWN DUNGEON ENHANCEMENTS - three of the
+  // Enhancements section's switches, each read by the port at the point
+  // of use as DFU reads it. DFU Classic: Daggerfall Unity's departures
+  // from classic Daggerfall, ported 1:1, shipping at DFU's own defaults.
+  // The titles are the settings pane's (settingsCopy.js LABELS), so the
+  // pointer rows there and the rows here say one name.
+  Object.freeze({
+    id: 'enemy-infighting',
+    title: 'Enemies Fight Each Other',
+    note: 'Daggerfall Unity\u2019s enemy infighting: a monster attacks whatever it is not allied with - a bear a spider, '
+      + 'a Daedra a knight - by the teams Daggerfall gives its creatures, not only you. Off, every enemy fights you alone, '
+      + 'as in classic Daggerfall. Daggerfall Unity ships it on.',
+    effect: 'Takes effect at once.',
+    kinds: Object.freeze(['classic']),
+    control: Object.freeze({ store: 'settings', key: 'Enhancements/EnemyInfighting' }),
+  }),
+  Object.freeze({
+    id: 'varied-dungeon-monsters',
+    title: 'Varied Dungeon Monsters',
+    note: 'Daggerfall Unity\u2019s alternate random enemy selection. Classic Daggerfall fills one list of monsters for the whole '
+      + 'dungeon from its type\u2019s table, so a dungeon repeats the same few; on, each random monster is picked by your level '
+      + 'from the dungeon\u2019s table with a spread either side, so a dungeon mixes its monsters. Main-story and fixed monsters '
+      + 'are untouched either way. Daggerfall Unity ships it off.',
+    effect: 'Takes effect on the next dungeon you enter.',
+    kinds: Object.freeze(['classic']),
+    control: Object.freeze({ store: 'settings', key: 'Enhancements/AlternateRandomEnemySelection' }),
+  }),
+  Object.freeze({
+    id: 'torches-from-items',
+    title: 'Torches Light Your Way',
+    note: 'Daggerfall Unity\u2019s item-based torch: your light in a dungeon comes from a torch, lantern or candle you carry '
+      + 'and use, which burns down and gutters out, instead of a light you always have. It also puts a torch in a new '
+      + 'character\u2019s pack and on the shelves of the shops that stock them. Daggerfall Unity ships it off.',
+    effect: 'Takes effect at once; a new character\u2019s starting gear and a shop\u2019s next stocking follow it.',
+    kinds: Object.freeze(['classic']),
+    control: Object.freeze({ store: 'settings', key: 'Enhancements/PlayerTorchFromItems' }),
+  }),
 ]);
 
 /** The row whose control is this store's key, or null. The settings

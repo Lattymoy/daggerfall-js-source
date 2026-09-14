@@ -35,7 +35,7 @@ test('FT0: three kinds in label order, three stores, and the registry is empty a
   assert.deepEqual(KIND_ORDER, ['enhanced', 'mod', 'classic']);
   assert.deepEqual(KIND_ORDER.map((k) => KINDS[k].label), ['Enhanced', 'Mod Authored', 'DFU Classic'], "Mac's three labels");
   assert.deepEqual(STORES, ['prefs', 'settings', 'mods']);
-  assert.deepEqual(FEATURES.map((f) => f.id), ['smaller-dungeons', 'land-view-distance', 'enhanced-environments', 'enhanced-ai', 'enhanced-water', 'grass-density', 'cloud-quality', 'enhanced-combat-visuals', 'mod-seasons-iliac-bay', 'mod-roads-hazelnut', 'mod-meanermonsters', 'mod-pcaao', 'mod-unleveledloot'], 'FT0 shipped the home empty; FT1, FT2, FT4-FT9 moved rows in (one slice at a time)');
+  assert.deepEqual(FEATURES.map((f) => f.id), ['smaller-dungeons', 'land-view-distance', 'enhanced-environments', 'enhanced-ai', 'enhanced-water', 'grass-density', 'cloud-quality', 'enhanced-combat-visuals', 'mod-seasons-iliac-bay', 'mod-roads-hazelnut', 'mod-meanermonsters', 'mod-pcaao', 'mod-unleveledloot', 'enemy-infighting', 'varied-dungeon-monsters', 'torches-from-items'], 'FT0 shipped the home empty; FT1, FT2, FT4-FT10 moved rows in (one slice at a time)');
   assert.deepEqual(checkFeatures(FEATURES), []);
 });
 
