@@ -149,7 +149,7 @@ await run('phone', { ...devices['Pixel 5'] });
   await page.goto(`${BASE}/play/?skin=classic`, { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('.px-menu button', { timeout: 20000 });
   const st = await page.evaluate(() => JSON.parse(window.__menu()));
-  check('classic: the enhanced door mounts with the classic rail', JSON.stringify(st.sections) === JSON.stringify(['begin', 'settings', 'controls', 'mods', 'about']), JSON.stringify(st.sections));
+  check('classic: the enhanced door mounts with the classic rail', JSON.stringify(st.sections) === JSON.stringify(['begin', 'settings', 'controls', 'features', 'mods', 'about']), JSON.stringify(st.sections));
   await page.locator('.px-menu .door-begin').click();
   const picked = await page.waitForSelector('#pick', { timeout: 15000 }).then(() => true, () => false);
   check('classic: Begin gates the data before its own start sequence', picked);

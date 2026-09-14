@@ -139,6 +139,8 @@ import { CREDITS } from './credits.js';   // CR1: who made what the port carries
 // document-level capture listener and a staged copy of both binding
 // dicts, neither of which belongs in a screen that repaints itself.
 import { paneControls, discardControlsStaging, captureArmed } from './enhancedControls.js';
+// FT0: the features home - one list over the three stores, filtered by kind
+import { FEATURES, KINDS, KIND_ORDER, filterFeatures, featureCounts } from '../systems/features.js';
 
 // ── THE RAIL ─────────────────────────────────────────────────────
 // Six destinations. Mac's call: the menus get set up now even where
@@ -156,7 +158,13 @@ import { paneControls, discardControlsStaging, captureArmed } from './enhancedCo
 // packed armory, for trying gear on the rigs without playing there.
 // Boot-only for the same reason Continue and New Game are: it answers
 // "which game", which is settled once one is running.
-const SECTIONS_BOOT = ['Continue', 'New Game', 'Load Game', 'Online', 'Test Room', 'Settings', 'Controls', 'Mods', 'About'];   // ONLINE1: the shared world's door
+// FT0 (Mac, 2026-09-13): FEATURES on every rail - ONE home for every
+// enhanceable feature, a list where each row wears its kind (Enhanced,
+// Mod Authored, DFU Classic) as a coloured label and a chip row filters
+// by it. Empty at FT0; the Enhanced category of Settings and the Mods
+// section keep their rows until each one's slice moves it here
+// (bible/10-UI/Features-Arc.md).
+const SECTIONS_BOOT = ['Continue', 'New Game', 'Load Game', 'Online', 'Test Room', 'Settings', 'Controls', 'Features', 'Mods', 'About'];   // ONLINE1: the shared world's door
 // FD1 (Mac, 2026-09-11): the CLASSIC skin opens on this same door. Its
 // three game doors collapse into BEGIN, which leads into the classic
 // start sequence - the title, the film, Daggerfall's own start window -
@@ -165,7 +173,7 @@ const SECTIONS_BOOT = ['Continue', 'New Game', 'Load Game', 'Online', 'Test Room
 // SO1: ENHANCED left the rail for a category of Settings (settingsMap).
 // ONLINE1: ONLINE joins it - Mac: "if using classic, you'd see the
 // other user's paperdoll" - the same pane, the same save brought in.
-const SECTIONS_CLASSIC = ['Begin', 'Online', 'Settings', 'Controls', 'Mods', 'About'];
+const SECTIONS_CLASSIC = ['Begin', 'Online', 'Settings', 'Controls', 'Features', 'Mods', 'About'];
 
 // U51: the same rail with the boot-only questions swapped for the
 // in-game ones. Continue and New Game answer "which game", which is
@@ -178,7 +186,7 @@ const SECTIONS_CLASSIC = ['Begin', 'Online', 'Settings', 'Controls', 'Mods', 'Ab
 // mode's doors), and the pane says so in words. A rail that drops the
 // row instead teaches the player the door was never there - the same
 // argument the Mods section is built on.
-const SECTIONS_PAUSE = ['Resume', 'Save Game', 'Load Game', 'Settings', 'Controls', 'Mods', 'About', 'Exit'];
+const SECTIONS_PAUSE = ['Resume', 'Save Game', 'Load Game', 'Settings', 'Controls', 'Features', 'Mods', 'About', 'Exit'];
 
 const idOf = (label) => label.toLowerCase().split(' ')[0];
 
@@ -191,6 +199,7 @@ const RAIL_ACTS = Object.freeze({ resume: 'resume' });
 // could only be opened once; the game mounts and unmounts it, so a
 // second visit must not inherit the first one's open sheet.
 let section = 'continue';
+let featureKind = null;   // FT0: the chip - null is All, else a KINDS id; per mount like the rest
 let category = CATEGORIES[0].id;
 let pickedKey = null;
 let sheetOpen = false;   // the help pane is a sheet on a phone
@@ -1428,45 +1437,7 @@ function paneMods(body) {
   for (const [vendor, mod] of Object.entries(MOD_SETTINGS)) {
     const mc = el('div', 'card');
     mc.append(el('h3', null, `${mod.title} by ${mod.author}`));   // the creator's name in the title (Mac, 2026-09-08)
-    for (const [key, def] of Object.entries(mod.keys)) {
-      const row = el('div', 'row');
-      const main = el('div', 'row-main');
-      main.append(el('div', 'row-name', key.replace(/([a-z])([A-Z])/g, '$1 $2')));
-      main.append(el('div', 'meta', def.description));
-      row.append(main);
-      const ctl = el('div', 'ctl');
-      if (isChoiceKey(def)) {
-        // UL1: a MultipleChoiceKey (Unleveled Loot's ten materials) -
-        // the same stepper, over the option NAMES, wrapping at the ends
-        // as a dropdown would.
-        const val = el('span', 'val', def.options[modSetting(vendor, key)]);
-        const step = (delta, label) => {
-          const b = el('button', 'step', label);
-          b.onclick = () => { const n = def.options.length; val.textContent = def.options[setModSetting(vendor, key, (modSetting(vendor, key) + delta + n) % n)]; };
-          return b;
-        };
-        ctl.append(step(-1, '\u2039'), val, step(1, '\u203a'));
-      } else if (isIntKey(def)) {
-        // DS1: a SliderIntKey (Dynamic Skies' fog density and snow
-        // sizes) - the HUD-scale stepper's shape, over the key's own
-        // range, the value beside it.
-        const val = el('span', 'val', String(modSetting(vendor, key)));
-        const step = (delta, label) => {
-          const b = el('button', 'step', label);
-          b.onclick = () => { val.textContent = String(setModSetting(vendor, key, modSetting(vendor, key) + delta)); };
-          return b;
-        };
-        ctl.append(step(-1, '\u2039'), val, step(1, '\u203a'));
-      } else {
-        const on = modSetting(vendor, key);
-        const b = el('button', 'act rowact', on ? 'On' : 'Off');
-        if (on) b.classList.add('primary');
-        b.onclick = () => { setModSetting(vendor, key, !modSetting(vendor, key)); render(); };
-        ctl.append(b);
-      }
-      row.append(ctl);
-      mc.append(row);
-    }
+    for (const [key, def] of Object.entries(mod.keys)) mc.append(modRow(vendor, key, def));
     mc.append(el('p', 'meta', 'Takes effect when the world next loads.'));
     body.append(mc);
   }
@@ -1479,6 +1450,117 @@ function paneMods(body) {
     c.append(settingRow(key));
   }
   body.append(c);
+}
+
+/** One row over a vendored mod's own switch (ROADS 24), writing through
+ *  modSettings.js. FT0 lifted it out of paneMods so the features home
+ *  draws the same row; `name`/`note` override the mod's own key name and
+ *  description when the registry has better words. */
+function modRow(vendor, key, def, { name = null, note = null } = {}) {
+  const row = el('div', 'row');
+  const main = el('div', 'row-main');
+  main.append(el('div', 'row-name', name ?? key.replace(/([a-z])([A-Z])/g, '$1 $2')));
+  main.append(el('div', 'meta', note ?? def.description));
+  row.append(main);
+  const ctl = el('div', 'ctl');
+  if (isChoiceKey(def)) {
+    // UL1: a MultipleChoiceKey (Unleveled Loot's ten materials) -
+    // the same stepper, over the option NAMES, wrapping at the ends
+    // as a dropdown would.
+    const val = el('span', 'val', def.options[modSetting(vendor, key)]);
+    const step = (delta, label) => {
+      const b = el('button', 'step', label);
+      b.onclick = () => { const n = def.options.length; val.textContent = def.options[setModSetting(vendor, key, (modSetting(vendor, key) + delta + n) % n)]; };
+      return b;
+    };
+    ctl.append(step(-1, '\u2039'), val, step(1, '\u203a'));
+  } else if (isIntKey(def)) {
+    // DS1: a SliderIntKey (Dynamic Skies' fog density and snow
+    // sizes) - the HUD-scale stepper's shape, over the key's own
+    // range, the value beside it.
+    const val = el('span', 'val', String(modSetting(vendor, key)));
+    const step = (delta, label) => {
+      const b = el('button', 'step', label);
+      b.onclick = () => { val.textContent = String(setModSetting(vendor, key, modSetting(vendor, key) + delta)); };
+      return b;
+    };
+    ctl.append(step(-1, '\u2039'), val, step(1, '\u203a'));
+  } else {
+    const on = modSetting(vendor, key);
+    const b = el('button', 'act rowact', on ? 'On' : 'Off');
+    if (on) b.classList.add('primary');
+    b.onclick = () => { setModSetting(vendor, key, !modSetting(vendor, key)); render(); };
+    ctl.append(b);
+  }
+  row.append(ctl);
+  return row;
+}
+
+// ── FT0: FEATURES ───────────────────────────────────────────────
+// ONE LIST over the three stores. A row is drawn by the builder its
+// store already has - prefRow/choiceRow over uiPrefs, settingRow over
+// DFU's keys, modRow over a mod's - so every law those rows carry
+// (write-through, the default-drop, the coarse step) is untouched; the
+// home adds the kind labels, the registry's words, and the chip row.
+// The registry (systems/features.js) is empty at FT0 and fills one
+// audited slice at a time; an empty list says so rather than hiding
+// the section (the rail-hole law, SECTIONS_BOOT).
+function paneFeatures(body) {
+  const counts = featureCounts(FEATURES);
+  const chips = el('div', 'chips');
+  const chip = (kind, label, n) => {
+    const b = el('button', `chip${kind ? ` ${kind}` : ''}${featureKind === kind ? ' on' : ''}`);
+    b.type = 'button';
+    b.setAttribute('aria-pressed', String(featureKind === kind));
+    b.append(document.createTextNode(label), el('span', 'n', String(n)));
+    b.onclick = () => { featureKind = kind; render(); };
+    return b;
+  };
+  chips.append(chip(null, 'All', counts.all));
+  for (const k of KIND_ORDER) chips.append(chip(k, KINDS[k].label, counts[k]));
+  body.append(chips);
+  if (!FEATURES.length) {
+    body.append(empty('Nothing here yet',
+      'Every enhanceable feature is moving here, one at a time, each audited before it moves. '
+      + 'Until then the port\u2019s own switches are under Settings \u203a Enhanced and the mods\u2019 under Mods.'));
+    return;
+  }
+  const rows = filterFeatures(FEATURES, featureKind);
+  if (!rows.length) {
+    body.append(empty(`No ${KINDS[featureKind].label} rows yet`, KINDS[featureKind].blurb));
+    return;
+  }
+  const c = el('div', 'card');
+  for (const f of rows) c.append(featureRow(f));
+  body.append(c);
+}
+
+/** The kind labels a row wears, in KIND_ORDER whatever order the row lists them. */
+function kindTags(kinds) {
+  const w = el('div', 'kinds');
+  for (const k of KIND_ORDER) if (kinds.includes(k)) w.append(el('span', `kind ${k}`, KINDS[k].label));
+  return w;
+}
+
+/** One registry row, drawn by its store's own builder and dressed. */
+function featureRow(f) {
+  const c = f.control;
+  let row;
+  if (c.store === 'prefs') {
+    row = c.tiers ? choiceRow(c.key, f.title, f.note, c.tiers) : prefRow(c.key, f.title, f.note);
+  } else if (c.store === 'settings') {
+    row = settingRow(c.key, { compact: true });
+    const main = row.querySelector('.row-main');
+    main.querySelector('.row-name').textContent = f.title;
+    if (f.note) main.append(el('div', 'row-note', f.note));
+  } else {
+    row = modRow(c.vendor, c.key, MOD_SETTINGS[c.vendor].keys[c.key], { name: f.title, note: f.note });
+  }
+  row.classList.add('feature');
+  const main = row.querySelector('.row-main');
+  main.prepend(kindTags(f.kinds));
+  if (f.effect) main.append(el('div', 'row-sub', f.effect));
+  return row;
 }
 
 // ── ABOUT ────────────────────────────────────────────────────────
@@ -1698,6 +1780,7 @@ function pauseWindow() {
 export const SYSTEM_PANES = Object.freeze([
   ['resume', 'Resume'], ['save', 'Save Game'], ['load', 'Load Game'],
   ['settings', 'Settings'], ['controls', 'Controls'],
+  ['features', 'Features'],   // FT0
   ['mods', 'Mods'], ['about', 'About'], ['exit', 'Exit'],
 ]);
 
@@ -1734,6 +1817,7 @@ function pauseSystem(body) {
   } else {
     ({
       save: paneSave, load: paneLoad, controls: paneControlsPane,
+      features: paneFeatures,   // FT0
       mods: paneMods, about: paneAbout, exit: paneExit,
     })[sysSec](detail);
   }
@@ -2178,6 +2262,7 @@ function renderInto() {
         continue: paneContinue, new: paneNew, load: paneLoad, online: paneOnline,   // ONLINE1
         test: paneTest,
         save: paneSave, exit: paneExit,
+        features: paneFeatures,   // FT0
         mods: paneMods, about: paneAbout, begin: paneBegin,   // FD1: the classic rail's door; SO1: Enhanced is a Settings category now
         controls: paneControlsPane,
       })[section](body);

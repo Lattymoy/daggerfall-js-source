@@ -112,6 +112,40 @@ Video/GUI keys that are features rather than settings.
 
 ## Slices
 
-- **FT0** - the home: the rail section, the one list with its three labels and the filter row, the registry and its pins. An empty list is allowed (the rail-hole law: a section with no engine still has a home). Not started.
+- **FT0** - SHIPPED 2026-09-14. The home, empty. Below.
 - **FT1** - Smaller Dungeons. Not started.
 - One slice per open row after that, in the order Mac picks.
+
+## FT0 - THE HOME (2026-09-14)
+
+**What shipped.** `Features` on all three rails (boot, classic, pause)
+and the pause system rail, beside Mods. `src/systems/features.js` is
+the registry: `FEATURES` (empty), the three `KINDS` in `KIND_ORDER`
+(Enhanced, Mod Authored, DFU Classic), and its law - `checkFeature`
+refuses a row without an id, a title or a kind, with an unknown kind
+or store, or whose control names a key its store does not hold (a
+typo cannot ship a switch wired to nothing); `checkFeatures` adds a
+repeated id and two rows over one switch. `filterFeatures` shows a
+two-kind row under both kinds; `featureCounts` counts it under both.
+
+The pane (`enhancedMenu.js` `paneFeatures`): a chip row - All, then
+the three kinds, each with its count - over one card of rows. A row
+is drawn by the builder its store already has (`prefRow`/`choiceRow`,
+`settingRow` compact, `modRow`) and dressed with its kind labels, the
+registry's title and note, and its "takes effect" line. `modRow` was
+lifted out of `paneMods`, which draws through it still - one row, two
+homes, until the row moves. An empty registry says "Nothing here yet"
+and where the switches are meanwhile (the rail-hole law).
+
+**Colours.** Three kinds, three of the skin's own tokens: brass
+(Enhanced), verdigris (Mod Authored - the live tier's colour already),
+bone (DFU Classic). No fourth colour was born.
+
+**What did not move.** Nothing. Settings > Enhanced and Mods keep every
+row. The five exact-rail pins (enhancedMenu, settingsUI, uiSkin tests;
+the menu probe) were widened by the one word.
+
+**Known at FT0, for FT1+.** A `settings`-store row's main button opens
+the settings help sheet (`pickedKey`), which only the Settings pane
+draws; the first settings row to move (Smaller Dungeons) decides what
+that click does on the home. `test/features.test.js`.
