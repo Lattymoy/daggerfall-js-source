@@ -3095,10 +3095,41 @@ record.
 - ~~**The cell seam**: two players a pixel apart astride an edge are in
   two rooms (D9); the 3x3 neighbourhood.~~ Paid by 6b-iii(b).
 - **One economy**: the region's prices and powers as a world's.
-- **Buildings' foes** and the interior pools: a building streams no
-  foes still (AUDIT WORLD6a B8).
+- ~~**Buildings' foes** and the interior pools: a building streams no
+  foes still (AUDIT WORLD6a B8).~~ Closed by 6b-iii(d): none, by the
+  lockbook - not an omission.
 - The striker's poison and disease riders on the hit; the roster's
   `ROSTER_MAX` bound (AUDIT WORLD6b).
+
+### 6b-iii(d): buildings' foes - none, by the lockbook
+
+**Mac: "Continue"** (after AUDIT WORLD6b-iii(c)). The plan carried "a
+building streams no foes still" as the last 6b-iii item that stood on
+its own. Read against the code and the locks, it is not a gap:
+
+- **A building interior carries no static enemies in DFU** (the IF
+  record, Characters-Arc: DaggerfallInterior's marker vocabulary is
+  `Rest, Enter, Treasure, LadderBottom, LadderTop`; the layout chain
+  mints none). The interior pool is a HOME, not a spawner, for exactly
+  three things: a quest's CreateFoe, the Daedra summoning's punishment,
+  and the watch called into it.
+- **Each of the three is the player's own by a lock already written.**
+  A quest's foe is the quest owner's alone and never rides
+  (Multiplayer.md's first lock, "quests stay separate" - the dungeon's
+  stream skips its quest foes for the same reason); the summoning's
+  punishment is the summoner's own trial; the watch is a crime's, and
+  the crime is not shared (the guards item, above).
+- So a building's room streams nothing and lands nothing - the world
+  host streams a world room's frame from the dungeon alone and lands
+  one on the dungeon alone (AUDIT WORLD6a B8 already keeps a building's
+  frame off the dungeon's heartbeat) - and no net is installed on the
+  interior pool. The day the crime or a quest is shared, the pool is
+  ready: it is the exterior pool's own factory, puppet arm and all.
+
+Pinned in `test/world6biiid.test.js` (1), by source: the interior
+pool's spawn sites are the summon's, the quest's and the enchant
+replace alone; no net on it; the world host's frame out and in are the
+dungeon's; the fact and the lock in their records.
 
 Pinned in `test/world6b.test.js` (8), EXECUTED: the wire at both ends;
 the real Room fanning a non-host's frame in a cell and routing a hit
