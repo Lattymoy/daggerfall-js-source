@@ -4220,7 +4220,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         // for the swing.
         onAttackFromPlayer: (f) => (cityGuards.guards.includes(f)
           ? cityGuards.handleAttackFromPlayer(f, player.pos)
-          : exteriorFoes.handleAttackFromPlayer(f, player.pos)),
+          : exteriorFoes.attackFromPlayer(f, player.pos, 'arrow')),   // AUDIT WORLD6b-iii(e) A2: the pool's one door, the shaft's kind on it
       }),
     });
     arrows.draw(renderer, texRemap);

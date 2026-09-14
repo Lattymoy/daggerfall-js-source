@@ -936,7 +936,7 @@ export function createWorldModes(host) {
    *  This host owned two pools and ran NO fan-out at all - no
    *  runMagicRoundsFor, so no tickActiveEffects and no updatePoisons
    *  (worldTick.js:232-233), and no killIfAnyLiveStatZero. Both pools
-   *  READ the effect list every frame (exteriorFoes.js:806-807 and
+   *  READ the effect list every frame (exteriorFoes.js:810-811 and
    *  cityGuards.js:770-771 each take `entityIsParalyzed` +
    *  `applyEnemyMotorEffectFlags`), and nothing ever ended one: a
    *  Continuous Damage bundle on a foe in a shop never took a round,
@@ -5084,7 +5084,7 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:5284), so the OUTER host's one rides in.
+          // (dungeonContext.js:5299), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:524 -> the
@@ -6032,7 +6032,7 @@ export function createWorldModes(host) {
         // non-encounter half - the zero-damage SWING already reaches
         // that door (cityGuards.js:1009) and the shaft owes the same.
         onAttackFromPlayer: (f) => (f._encounter
-          ? interiorFoes?.handleAttackFromPlayer(f, player.pos)
+          ? interiorFoes?.attackFromPlayer(f, player.pos, 'arrow')   // AUDIT WORLD6b-iii(e) A2: the pool's one door, the shaft's kind on it
           : interiorGuards?.handleAttackFromPlayer(f, player.pos)),
       }),
     });
@@ -8163,7 +8163,7 @@ export function createWorldModes(host) {
      *  has one manager, so the same bit belongs in every rig.
      *
      *  FLAG ONLY, presence-gated, exactly as world.js:4370/:4372 and
-     *  dungeonContext.js:5357/:5357 are: the C# restore sets the
+     *  dungeonContext.js:5372/:5372 are: the C# restore sets the
      *  property and calls no ApplyWeapon, because UpdateHands ends in
      *  ApplyWeapon on the next frame (WeaponManager.cs:699) - the
      *  port's twin is the rig's per-frame syncWorn. */

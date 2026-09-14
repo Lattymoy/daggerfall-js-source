@@ -105,11 +105,11 @@
 // WORLD5 (2026-09-13): THE SHARED CLOCK is a function of wall time (relay.js
 // sharedClassicMinutes) and needs no frame; the welcome carries the relay's
 // own `now` so a client corrects for its machine's clock. Nothing else here.
-import { roomOf, parseClient, inRange, poseGate, chatGate, tokenGate, rosterFor, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf } from './relay.js';
+import { roomOf, parseClient, inRange, poseGate, chatGate, tokenGate, rosterFor, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX } from './relay.js';
 
 /** AUDIT WORLD34 D4: the relay names itself in /health - the deploy is by hand (`npx wrangler deploy`), nothing in
  *  CI does it, and until now nothing said which relay was live. Bump it with every relay-changing slice. */
-export const RELAY_VERSION = 'world65';   // WORLD6b-iii(e): a member beyond the welcome's roster is asked for by name (who) and answered with its join
+export const RELAY_VERSION = 'world66';   // AUDIT WORLD6b-iii(e): the ask carries the room's budget, keeps the looks, answers a pose within range alone, strikes nothing that left
 
 const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*' } });
 
@@ -140,6 +140,8 @@ export class Room {
     // AUDIT WORLD6b A1/A2: the hit funnel (AUDIT WORLD2 A6) is the DESTINATION socket's own bucket (`hbucket` on its attachment), not the room's
     this._roomActs = null;   // WORLD3: the room's action-frame budget (a door, a lever, a platform moved)
     this._roomHits = null;   // AUDIT WORLD6b-iii(c) C3: the room's hit BYTES budget (a grant is a frame's worth of items)
+    this._roomWho = null;    // AUDIT WORLD6b-iii(e) B1: the room's ask budget (WHO_ROOM_HZ_MAX) - the one arm past the hello that reads storage
+    this._looks = new Map(); // AUDIT WORLD6b-iii(e) B1: the looks said hello with, kept on the instance while it is awake - a repeat ask reads no storage; after a hibernation the storage's copy is read once and kept again
     this._roomActBytes = null;   // AUDIT WORLD3 A1: and its BYTE budget - the frame times its listeners, as the foes fan has
     this._dead = new Set();      // AUDIT WORLD34 D1: the sockets this object closed itself, whose leave the runtime will not deliver - reaped on the way out of every door
     this._gone = new WeakSet();  // AUDIT WORLD34 D1: and the ones whose leave has been said, so a runtime that does deliver a close says it once
@@ -237,6 +239,7 @@ export class Room {
   }
   /** The room forgets its looks and secrets (and its hello bucket) - never its world (WORLD1). */
   async _sweep() {
+    this._looks.clear();
     const dead = ['hellos'];
     for (const prefix of ['look:', 'secret:']) { const m = await this.state.storage.list({ prefix }); for (const k of m.keys()) dead.push(k); }
     for (let i = 0; i < dead.length; i += 128) await this.state.storage.delete(dead.slice(i, i + 128));
@@ -358,7 +361,7 @@ export class Room {
       for (const [other, b] of this._all()) if (other !== ws && b.id) others.push(b);
       if (!others.length) { await this._sweep(); await this.state.storage.put('hellos', gate.bucket); }   // an empty room forgets every look and secret an unclean close left behind - not its hello gate
       await this.state.storage.put(secretKey(m.id), m.secret);
-      if (!chat) await this.state.storage.put(lookKey(m.id), m.look);   // a channel keeps no look: nobody is drawn from it
+      if (!chat) { await this.state.storage.put(lookKey(m.id), m.look); this._looks.set(m.id, m.look); }   // a channel keeps no look: nobody is drawn from it
       if (!this._setAttach(ws, { ...a, id: m.id, name: m.name, pose: chat ? null : m.pose, since: replaced?.since ?? now })) { this._refuse(ws, 'hello too large'); return; }
       if (chat) { this._send(ws, JSON.stringify({ t: 'welcome', id: m.id, peers: [] })); return; }   // told no one, announced to no one: a channel has no roster
       const looks = others.length ? await this.state.storage.get(others.map((b) => lookKey(b.id))) : new Map();
@@ -508,11 +511,25 @@ export class Room {
       a = this._meterWho(ws, a, now); if (!a) return;
       if (isChatRoom(a.key)) return;   // a channel has no roster and no doll
       const id = whoIdOf(m);
-      const target = id && id !== a.id ? [...this._all()].find(([other, b]) => other !== ws && b.id === id) ?? null : null;
-      if (!target) { this._junk(ws, a); return; }
-      const b = target[1];
-      const look = await this.state.storage.get(lookKey(b.id));
-      this._send(ws, JSON.stringify({ t: 'join', id: b.id, name: b.name, look: look ?? null, pose: b.pose ?? null }));
+      // AUDIT WORLD6b-iii(e) B3: junk is what a CORRECT client never sends - one's own name (the parser refused a bad
+      // one); a name that left between the frame that asked and the ask is the honest race, and answers nothing
+      if (!id || id === a.id) { this._junk(ws, a); return; }
+      const target = [...this._all()].find(([other, b]) => other !== ws && b.id === id) ?? null;
+      if (!target) return;
+      // B1: the room's own budget, every asker together - the answer reads storage when the instance has not seen the
+      // look since it woke (a repeat ask reads nothing), and a room-wide bound is what every other arm carries
+      const budget = tokenGate(this._roomWho, now, WHO_ROOM_HZ_MAX);
+      this._roomWho = budget.bucket;
+      if (!budget.pass) return;
+      const [tws, b] = target;
+      let look = this._looks.get(b.id) ?? null;
+      if (!look) { look = (await this.state.storage.get(lookKey(b.id))) ?? null; if (look) this._looks.set(b.id, look); }
+      // B9: the socket asked for is read again after the await - a member gone meanwhile is not said to have joined
+      if (this._attach(tws)?.id !== b.id) return;
+      // B2: the pose rides only WITHIN RANGE - the pose fan's own law (a stranger heard through that fan is in range by
+      // construction; a room without the law, a dungeon's, says it); past the range the answer named a member's
+      // position the fan had refused to say, a radar over the whole cell
+      this._send(ws, JSON.stringify({ t: 'join', id: b.id, name: b.name, look, pose: inRange(a.key ?? '', a.pose, b.pose) ? (b.pose ?? null) : null }));
       return;
     }
     if (m.t === 'pose' || m.t === 'ping') {
@@ -567,6 +584,7 @@ export class Room {
     const last = this.state.getWebSockets().filter((w) => w !== ws).length === 0;
     if (last) { try { await this._sweep(); if (isWorldRoom(a.key)) await this.state.storage.setAlarm(Date.now() + WORLD_TTL_MS); } catch { /* the next drain, or the next empty hello */ } }
     if (!a.id) return;   // never said hello, or replaced - the id lives on in another socket
+    this._looks.delete(a.id);
     if (!last) { try { await this.state.storage.delete([lookKey(a.id), secretKey(a.id)]); } catch { /* the room forgets it on the next empty hello */ } }
     if (isChatRoom(a.key)) return;   // a channel announced no join, so it says no leave
     const out = JSON.stringify({ t: 'leave', id: a.id });

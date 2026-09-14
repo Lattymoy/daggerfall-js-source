@@ -226,7 +226,7 @@ export function playerArrowHitFoe(m, foe, {
   }
   // :627/:630's unconditional pair, whatever the fork above did - and
   // BEFORE the arrow is added back (BowDamage's own order).
-  onAttackFromPlayer?.(foe);
+  onAttackFromPlayer?.(foe, dmg);   // AUDIT WORLD6b-iii(e) C2: with what landed - a pool that diverts a zero blow to a puppet's owner sends none when the damage already went
   if (foe.entity?.items) {
     addItem(foe.entity.items, { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });
   }

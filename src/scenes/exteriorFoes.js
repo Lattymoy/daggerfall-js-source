@@ -44,7 +44,7 @@ import { setEnemyAlert } from '../systems/encounters.js';
 import { inflictPoison } from '../systems/poisons.js';
 import { onMonsterHit, SPIDER_TOUCH_SPELL_INDEX } from '../systems/diseases.js';   // AUDIT 24 (wave 30): the monster special-attack rider, above ground
 import { MINUTES_PER_DAY } from '../systems/worldTick.js';
-import { validFoeRecord, CELL_PUPPETS_MAX, CELL_FRAME_RECORDS_MAX, POSE_BOUND, POSE_Y_BOUND, tokenGate, FOE_HEALTH_MAX, hitPoisonOf } from '../net/wire.js';
+import { validFoeRecord, CELL_PUPPETS_MAX, CELL_FRAME_RECORDS_MAX, POSE_BOUND, POSE_Y_BOUND, tokenGate, FOE_HEALTH_MAX, hitPoisonOf, HIT_ARROWS_MAX } from '../net/wire.js';
 import { CORPSE_ACTIVATION_DISTANCE } from '../player/activate.js';   // AUDIT WORLD6b-iii(c) A1/C7: the owner reads the taker's reach
 import { createWeapon } from '../combat/enemyEquipment.js';   // AUDIT WORLD6b-ii B2: a puppet's weapon is its owner's word, rebuilt from the descriptor   // AUDIT WORLD6b B3/C2: a cell's record projected and its puppets capped, the wire's law
 import { mintCorpseMarker, playBodyFall, playRareDrop, corpseLootTargets, takeCorpseLoot, sayEnemyDied, raiseEnemyDeath } from './corpseMarker.js';
@@ -486,9 +486,9 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   /** AUDIT WORLD6b-ii B4: THE ONE DOOR for a connecting swing or shaft of mine that landed no damage (WeaponManager.cs
    *  :630 runs for every connect) - a foe of mine wakes (handleAttackFromPlayer); a PUPPET's owner hears a zero blow
    *  (AUDIT WORLD2 B13) unless a damaging one already went this frame, and no area of mine wakes for it. */
-  function attackFromPlayer(f, playerFeet = null) {
+  function attackFromPlayer(f, playerFeet = null, kind = 'melee') {   // AUDIT WORLD6b-iii(e) A2: the zero blow's KIND rides - a shaft that connected and landed nothing is still a shaft (BowDamage recovers its Arrow outside the damage fork), and the owner heard it as a swing
     if (!f) return;
-    if (f.puppet) { if (f._divertFrame !== _peerFrame) damageFoe(f, 0, playerFeet, null); return; }
+    if (f.puppet) { if (f._divertFrame !== _peerFrame) damageFoe(f, 0, playerFeet, null, { kind }); else f._divertPt = null; return; }   // A3: a dose set aside for a blow that already went this frame is spent here, never carried to a later blow
     handleAttackFromPlayer(f, playerFeet);
   }
   function handleAttackFromPlayer(f, playerFeet = null, peer = false, peerId = null) {
@@ -529,13 +529,17 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // WORLD6b-ii: the striker's feet (p, in the world frame) and the blow's direction (d) ride the hit - the owner's foe
       // turns on ME and the shove goes the way the blow went (WORLD3's spelling for the dungeon's hit)
       const _pAt = playerFeet && _net?.toWire ? _net.toWire(playerFeet) : null;
-      const _pt = f._divertPt ?? null; f._divertPt = null;   // WORLD6b-iii(e): the blade's or the shaft's dose (poisonFoe, inside this blow's calc) - spent by this door, once
-      if (fromPlayer && !peer) f._divertFrame = _peerFrame;
-      if (fromPlayer && !peer) _net?.onPeerHit?.({ to: f.puppet, k: _owners.get(f.puppet)?.k ?? _net.room?.() ?? null, i: f.seq, dmg: Math.max(0, Math.round(Number(damage) || 0)), kind,   // WORLD6b-iii(b): keyed to the OWNER's cell (its frame's k) - across the seam that is not mine
-        ...(_pAt ? { p: [q2(_pAt[0]), q2(_pAt[1]), q2(_pAt[2])] } : {}),
-        ...(knockDir ? { d: [q3(knockDir[0]), q3(knockDir[1]), q3(knockDir[2])] } : {}),
-        ...(_pt != null && damage > 0 ? { pt: _pt } : {}),   // WORLD6b-iii(e): the striker's poison rides to the owner's foe (FormulaHelper doses on a damaging hit alone)
-        ...(kind === 'arrow' ? { ar: 1 } : {}) });   // WORLD6b-iii(e): the shaft lands in the owner's copy, where BowDamage puts it (WORLD3's spelling for the dungeon's hit)
+      if (fromPlayer && !peer) {
+        // WORLD6b-iii(e): the blade's or the shaft's dose (poisonFoe, inside this blow's calc) - spent by this door, once.
+        // AUDIT WORLD6b-iii(e) A5: read inside the provenance gate - a fall's or a foe's door on this puppet leaves it
+        const _pt = f._divertPt ?? null; f._divertPt = null;
+        f._divertFrame = _peerFrame;
+        _net?.onPeerHit?.({ to: f.puppet, k: _owners.get(f.puppet)?.k ?? _net.room?.() ?? null, i: f.seq, dmg: Math.max(0, Math.round(Number(damage) || 0)), kind,   // WORLD6b-iii(b): keyed to the OWNER's cell (its frame's k) - across the seam that is not mine
+          ...(_pAt ? { p: [q2(_pAt[0]), q2(_pAt[1]), q2(_pAt[2])] } : {}),
+          ...(knockDir ? { d: [q3(knockDir[0]), q3(knockDir[1]), q3(knockDir[2])] } : {}),
+          ...(_pt != null ? { pt: _pt } : {}),   // WORLD6b-iii(e): the striker's poison rides to the owner's foe. AUDIT WORLD6b-iii(e) A3: the dose is the CALC's word - FormulaHelper doses on the calc's damage and the Strikes payload can zero the number after it (LowDamageVs), so the number gates nothing here
+          ...(kind === 'arrow' ? { ar: 1 } : {}) });   // WORLD6b-iii(e): the shaft lands in the owner's copy, where BowDamage puts it (WORLD3's spelling for the dungeon's hit)
+      }
       return;
     }
     if (fromPlayer && f.ai) {
@@ -1567,6 +1571,8 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   /** A peer's blow on MY foe, through the one damage door with the peer's number and kind (the striker's feet
    *  unknown to it: the aggro turns toward me, its owner - recorded); keyed to the cell as the frame is (AUDIT
    *  WORLD6b A7). */
+  /** AUDIT WORLD6b-iii(e) A1: the Arrows a body holds (the shaft's item, BowDamage's) - the bound the hit's `ar` lands under. */
+  function arrowsIn(items) { let n = 0; for (const it of items) if (it && it.templateIndex === 131 && it.name === 'Arrow') n += it.stackCount ?? 1; return n; }
   function applyHit(from, data) {
     if (!data || typeof data !== 'object') return false;
     if (data.k != null && _net?.room && data.k !== _net.room() && !_net.inRoom?.(data.k)) return false;   // AUDIT WORLD6b-iii(b) C1/B6: keyed to any cell I HOLD - the striker remembers my cell from my last frame, and for a foes interval after a crossing that was the cell I left (still held as a halo); a cell I do not hold is not the world
@@ -1627,11 +1633,16 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       const pain = enemyPainVoice(f, dmg);
       if (pain && pain.clip >= 0) audio?.play3d?.(pain.clip, [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], 1, { maxDistance: 16, pitch: 1 + pain.pitchLift });
     }
-    // WORLD6b-iii(e): the dose lands on MY foe as FormulaHelper lands it - inside a damaging blow, before the health
-    // moves, the target's own saving throw (inflictPoison's) rolled here where the foe is real
-    if (pt != null && dmg > 0) inflictPoison(f.entity, pt, false, { rolls, currentMinute: Math.floor(currentMinute()) });   // ENGINE-PRNG RULE: the pool's uniform seam
+    // WORLD6b-iii(e): the dose lands on MY foe as FormulaHelper lands it - inside the blow, before the health moves, the
+    // target's own saving throw (inflictPoison's) rolled here where the foe is real. AUDIT WORLD6b-iii(e) A3: on the
+    // striker's word alone, whatever the number - the calc dosed before the Strikes payload could zero it (bounded:
+    // twelve poisons, a live one refused again, startPoison's own law)
+    if (pt != null) inflictPoison(f.entity, pt, false, { rolls, currentMinute: Math.floor(currentMinute()) });   // ENGINE-PRNG RULE: the pool's uniform seam
     damageFoe(f, dmg, at, dir, { fromPlayer: true, kind, peer: true, peerId: from });
-    if (data.ar === 1 && kind === 'arrow') addItem(f.entity.items ??= [], { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });   // WORLD6b-iii(e): the shaft, where BowDamage puts it (:145-147) - the body's pile says so (o) and the grant carries it
+    // WORLD6b-iii(e): the shaft, where BowDamage puts it (:145-147) - the body's pile says so (o) and the grant carries it.
+    // AUDIT WORLD6b-iii(e) A1: BOUNDED - HIT_ARROWS_MAX Arrows a body from peers' shafts, past it the blow lands and no
+    // Arrow (a crafted stream minted a stack the projection refused whole, and the grant dropped the pile with it)
+    if (data.ar === 1 && kind === 'arrow' && arrowsIn(f.entity.items ??= []) < HIT_ARROWS_MAX) addItem(f.entity.items, { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });
     return true;
   }
   /** The owners gone from the cell (the session's peer map no longer holds them) or gone quiet (no frame in staleMs,

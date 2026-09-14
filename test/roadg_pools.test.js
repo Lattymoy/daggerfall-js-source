@@ -225,16 +225,16 @@ test('ROAD-G G1(a): a ZERO-DAMAGE player ARROW reaches the watch\'s door too', (
 
 test('ROAD-G G1(a): all three arrow hosts ROUTE the hostility seam by pool', () => {
   // The door is PUBLIC now, as the encounter pool's has always been
-  // (exteriorFoes.js:1559), so every host can reach it.
+  // (exteriorFoes.js:1664), so every host can reach it.
   const cg = read('src/scenes/cityGuards.js');
   assert.match(cg, /restoreWorld, removeGuard, handleAttackFromPlayer,/,
     'the watch exports its hostility pair on the returned surface');
   const router = (pool) => new RegExp(`onAttackFromPlayer: \\(f\\) => \\(${pool}`);
-  assert.match(read('src/scenes/world.js'), router('cityGuards\\.guards\\.includes\\(f\\)\\n\\s+\\? cityGuards\\.handleAttackFromPlayer\\(f, player\\.pos\\)\\n\\s+: exteriorFoes\\.attackFromPlayer\\(f, player\\.pos\\)\\),'),   // AUDIT WORLD6b-ii B4: the online host routes the encounter pool through its one door (a puppet's is its owner's)
+  assert.match(read('src/scenes/world.js'), router('cityGuards\\.guards\\.includes\\(f\\)\\n\\s+\\? cityGuards\\.handleAttackFromPlayer\\(f, player\\.pos\\)\\n\\s+: exteriorFoes\\.attackFromPlayer\\(f, player\\.pos, \'arrow\'\\)\\),'),   // AUDIT WORLD6b-ii B4: the online host routes the encounter pool through its one door (a puppet's is its owner's)
     'the street routes by pool membership, as its dealDamage does');
-  assert.match(read('src/scenes/exterior.js'), router('cityGuards\\.guards\\.includes\\(f\\)\\n\\s+\\? cityGuards\\.handleAttackFromPlayer\\(f, player\\.pos\\)\\n\\s+: exteriorFoes\\.handleAttackFromPlayer\\(f, player\\.pos\\)\\),'),
+  assert.match(read('src/scenes/exterior.js'), router('cityGuards\\.guards\\.includes\\(f\\)\\n\\s+\\? cityGuards\\.handleAttackFromPlayer\\(f, player\\.pos\\)\\n\\s+: exteriorFoes\\.attackFromPlayer\\(f, player\\.pos, \'arrow\'\\)\\),'),
     'the exterior host too - it mounts both pools');
-  assert.match(read('src/scenes/worldModes.js'), router('f\\._encounter\\n\\s+\\? interiorFoes\\?\\.handleAttackFromPlayer\\(f, player\\.pos\\)\\n\\s+: interiorGuards\\?\\.handleAttackFromPlayer\\(f, player\\.pos\\)\\),'),
+  assert.match(read('src/scenes/worldModes.js'), router('f\\._encounter\\n\\s+\\? interiorFoes\\?\\.attackFromPlayer\\(f, player\\.pos, \'arrow\'\\)[^\\n]*\\n\\s+: interiorGuards\\?\\.handleAttackFromPlayer\\(f, player\\.pos\\)\\),'),
     'and the interior watch, which the encounter half used to drop');
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/worldModes.js']) {
     assert.equal(/carries no hostility pair/.test(read(f)), false,
