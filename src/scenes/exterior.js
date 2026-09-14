@@ -3603,6 +3603,16 @@ export async function bootExterior(canvas, renderer, params, status) {
       },
     });
 
+    // AUDIT 66 F11: the torch sweep runs HERE, above the modal
+    // return, because that is where the transition is. It used to sit
+    // with the tick at the foot of the exterior frame - which this
+    // branch never reaches - so walking into a shop left the street's
+    // dropped torches standing: their billboard batches held and,
+    // worse, their 3D burning loops playing in the player's ear for
+    // the whole indoor visit, swept only on the first frame back
+    // outside. DestroyLightSources_OnTransition is an EVENT in the mod
+    // (0x7d1), not a frame-tail chore.
+    if (_mode() !== _torchesMode) { droppedTorches.destroyAll(); _torchesMode = _mode(); }   // HT1
     if (modes.frame(dt, now)) {
       if (!skyInside) { skyInside = true; sky.setInside(true); }   // DS1: InteriorTransitionEvent
       // WM4c: inside a building or a dungeon the exterior parent is
@@ -3878,8 +3888,9 @@ export async function bootExterior(canvas, renderer, params, status) {
         // the street's townsfolk (townTalk's own cylinder pick) and the
         // door/NPC/board set the interior transition picks from.
         // AUDIT 65 MC-2 split it: townTalk.tryActivate needs a rival with the persons left OUT of it.
+        const _doorDist = modes.exteriorActivationDistance(cam.pos, useFwd);   // AUDIT 66 F7: read once, and read by every arm that has to lose to a door
         const _nonPersonRival = Math.min(_lootPick?.distance ?? Infinity,
-          _dropPick?.distance ?? Infinity, _torchPick?.distance ?? Infinity, modes.exteriorActivationDistance(cam.pos, useFwd));   // HT1
+          _dropPick?.distance ?? Infinity, _torchPick?.distance ?? Infinity, _doorDist);   // HT1
         const _rivalDist = Math.min(_nonPersonRival,
           ..._livePersons.map((p) => rayPersonDistance(cam.pos, useFwd, p.pos)));
         if (_lockFoe) lockOn.toggle(_lockFoe);
@@ -3888,7 +3899,13 @@ export async function bootExterior(canvas, renderer, params, status) {
         else if (!townTalk.tryActivate(cam.pos, useFwd, _livePersons, _nonPersonRival)) {
           const lootKey = _lootPick?.key ?? null;
           const dropKey = _dropPick?.key ?? null;
-          const _torchNearest = !!_torchPick && _torchPick.distance <= Math.min(_lootPick?.distance ?? Infinity, _dropPick?.distance ?? Infinity);   // HT1
+          // AUDIT 66 F7: the torch must lose to the DOOR too - the arm
+          // compared against the corpse and the pile alone and stands
+          // above `modes.tryEnter()`, so a torch anywhere under the ray
+          // (76.8, reach 3.2) ate the click a shop door, a bulletin
+          // board or a static NPC was owed. AUDIT 65 MC-2's law is that
+          // the nearest thing under the one ray takes it.
+          const _torchNearest = !!_torchPick && _torchPick.distance <= Math.min(_lootPick?.distance ?? Infinity, _dropPick?.distance ?? Infinity, _doorDist);   // HT1
           if (_torchNearest) { if (_torchPick.distance > _torchPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT); else droppedTorches.activate(_torchPick.key, getInteractionMode()); }   // the mod's own activation, ahead of DFU's ladder
           else {
           if (lootKey && _lootPick.distance > _lootPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT);   // MC-2: the corpse's own refusal (:936-941)
@@ -4205,7 +4222,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // ROAD-G G2: THE ENEMY ARM EXISTS NOW - the note here said "this
     // host mounts no bow-armed pool", which stopped being true with the
     // encounter mount above, and an archer's shaft would have flown
-    // through the player for ever. world.js:8311-8431 is the shape.
+    // through the player for ever. world.js:8333-8453 is the shape.
     arrows.update(dt, {
       // enemy arrows hunt only a WALKING player - the fly camera has no
       // capsule to hit
@@ -4343,7 +4360,6 @@ export async function bootExterior(canvas, renderer, params, status) {
       // AUDIT 24 (wave 39): blood splashes ride the person axis too.
       hitEffects.tick(dt);
       personBatches.push(...hitEffects.batches());
-      if (_mode() !== _torchesMode) { droppedTorches.destroyAll(); _torchesMode = _mode(); }   // HT1: OnTransition*
       droppedTorches.tick(dt); personBatches.push(...droppedTorches.batches());   // HT1
       if (personBatches.length) renderer.drawBillboards(personBatches, camRight, UP_Y);
     }
@@ -4431,7 +4447,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         // removed elsewhere.
         if (!cityGuards.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound)) {
           // ROAD-G G2: encounter foes resolve AFTER the watch and
-          // BEFORE civilians - world.js:8500's order, and the order
+          // BEFORE civilians - world.js:8522's order, and the order
           // matters because a watchman standing over a quest foe must
           // still be the one the swing finds.
           if (exteriorFoes.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound)) {
