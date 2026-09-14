@@ -107,7 +107,7 @@ test('WORLD6b-ii: MY foe hunts a peer - the peers ride the target machine as can
   assert.deepEqual(pool.foesFrame(true).f.map((r) => r.g), ['.'], 'Bob gone, the rat turns to the one player left - me - and the record says so');
 });
 
-test('WORLD6b-ii: a PUPPET\'s blow at ME lands here - its streamed target is me, so the mobile\'s damage frame is mine to resolve with my own reach and stats (Dodging tallied, the hurt door), the hostility the owner\'s word; at another peer or at its owner the frame is dropped; its shaft flies at me (a real one) or at the peer\'s body (one that pays nothing)', async () => {
+test('WORLD6b-ii: a PUPPET\'s blow at ME lands here - its streamed target is me, so the mobile\'s damage frame is mine to resolve with my own reach and stats (Dodging tallied, the hurt door), the hostility the owner\'s word; at another peer or at its owner the frame is dropped; its shaft flies at me (a real one) or at the peer\'s body (one that pays nothing). AUDIT WORLD6b-iii(a) A3: whom a swing is at rides its EDGE (b, or g for an older record), not the hunt\'s live word', async () => {
   const hits = [], hurt = [], shots = [];
   const peers = { list: [{ id: 'bob-0002', feet: [30, 0, 30], height: 1.8 }, { id: 'eve-0003', feet: [20, 0, 20], height: 1.8 }] };   // AUDIT WORLD6b-ii C2: the owner must be a peer the hunt sees for its puppet's blow to land
   const pe = playerEntity();
@@ -120,42 +120,41 @@ test('WORLD6b-ii: a PUPPET\'s blow at ME lands here - its streamed target is me,
   pool.update(0.05, me, [10, 1.6, 10], senses(pe));
   assert.equal(pup._pupTarget, 'mac-0001'); assert.equal(pup._pupMine, true, 'the streamed target is me');
   assert.equal(pup.ai.isHostile, true, 'the owner\'s word that it is fighting somebody (AUDIT WORLD3 D2)');
+  let fn = 1, a = 0;
+  const swing = (over = {}) => { pool.applyFoes('bob-0002', frame(++fn, [{ i: 5, a: (a += 2), ...over }], 0)); pup.mobile.doMeleeDamage = true; pool.update(0.05, me, [10, 1.6, 10], senses(pe)); };
+  const shoot = (over = {}) => { pool.applyFoes('bob-0002', frame(++fn, [{ i: 5, a: (a += 2) | 1, ...over }], 0)); pool.update(0.05, me, [10, 1.6, 10], senses(pe)); pup.mobile.shootArrow = true; pool.update(0.05, me, [10, 1.6, 10], senses(pe)); };
   pup.mobile.doMeleeDamage = true;
   pool.update(0.05, me, [10, 1.6, 10], senses(pe));
+  assert.equal(pup.mobile.doMeleeDamage, false, 'dropped'); assert.equal(pe.skillUses[SKILLS.Dodging], 0, 'A3: a damage frame with no swing behind it lands nothing - whom a blow is at is the SWING\'s word');
+  swing({ b: 'mac-0001' });
   assert.equal(pup.mobile.doMeleeDamage, false, 'consumed'); assert.equal(pe.skillUses[SKILLS.Dodging], 1, 'the blow resolved against me: Dodging tallied (the reach and the yaw cone read off the streamed pose)');
   assert.deepEqual(hits, [], 'and nothing went back to Bob - his foe struck, I decided the hit');
-  // at another
-  pool.applyFoes('bob-0002', frame(2, [{ i: 5, g: 'eve-0003' }], 0));
-  pool.update(0.05, me, [10, 1.6, 10], senses(pe));
+  swing();
+  assert.equal(pe.skillUses[SKILLS.Dodging], 2, 'an older record without b: the hunt\'s word (g) is the swing\'s');
+  // at another - the hunt's word AND the swing's
+  swing({ g: 'eve-0003', b: 'eve-0003' });
   assert.equal(pup._pupMine, false); assert.equal(pup._pupTarget, 'eve-0003');
-  pup.mobile.doMeleeDamage = true;
-  pool.update(0.05, me, [10, 1.6, 10], senses(pe));
-  assert.equal(pup.mobile.doMeleeDamage, false, 'dropped unconsumed'); assert.equal(pe.skillUses[SKILLS.Dodging], 1, 'a blow at Eve is Eve\'s');
+  assert.equal(pup.mobile.doMeleeDamage, false, 'dropped unconsumed'); assert.equal(pe.skillUses[SKILLS.Dodging], 2, 'a blow at Eve is Eve\'s');
+  // A3: the hunt turned to me inside the frame but the swing was Eve's - nothing; the swing at me while the hunt says Eve - mine
+  swing({ g: 'mac-0001', b: 'eve-0003' });
+  assert.equal(pe.skillUses[SKILLS.Dodging], 2, 'a swing at Eve with the hunt on me lands nothing on me');
+  swing({ g: 'eve-0003', b: 'mac-0001' });
+  assert.equal(pe.skillUses[SKILLS.Dodging], 3, 'a swing at me with the hunt on Eve lands on me');
   // at its owner
-  pool.applyFoes('bob-0002', frame(3, [{ i: 5, g: '.' }], 0));
+  pool.applyFoes('bob-0002', frame(++fn, [{ i: 5, g: '.' }], 0));
   pool.update(0.05, me, [10, 1.6, 10], senses(pe));
   assert.equal(pup._pupTarget, 'bob-0002', '\'.\' is the owner'); assert.equal(pup._pupMine, false);
+  swing({ b: '.' });
+  assert.equal(pe.skillUses[SKILLS.Dodging], 3, 'a swing at its owner is the owner\'s');
   // the shaft: at me a real one, at Eve one that pays nothing, at nobody none
-  pool.applyFoes('bob-0002', frame(4, [{ i: 5, g: 'mac-0001' }], 0));
-  pool.update(0.05, me, [10, 1.6, 10], senses(pe));
-  pup.mobile.shootArrow = true;
-  pool.update(0.05, me, [10, 1.6, 10], senses(pe));
+  shoot({ g: 'mac-0001', b: 'mac-0001' });
   assert.deepEqual(shots, [null], 'at me: the player\'s arm (no foe named)'); assert.equal(pup.mobile.shootArrow, false);
-  pool.applyFoes('bob-0002', frame(5, [{ i: 5, g: 'eve-0003' }], 0));
-  pool.update(0.05, me, [10, 1.6, 10], senses(pe));
-  pup.mobile.shootArrow = true;
-  pool.update(0.05, me, [10, 1.6, 10], senses(pe));
+  shoot({ g: 'eve-0003', b: 'eve-0003' });
   assert.equal(shots.length, 2); assert.equal(shots[1]?.isPeer, true, 'at Eve: the shaft names her candidate, and the flight lands only on the foe it names - nothing'); assert.equal(shots[1].id, 'eve-0003');
-  pool.applyFoes('bob-0002', frame(6, [{ i: 5, g: '' }], 0));
-  pool.update(0.05, me, [10, 1.6, 10], senses(pe));
-  pup.mobile.shootArrow = true;
-  pool.update(0.05, me, [10, 1.6, 10], senses(pe));
+  shoot({ g: '', b: '' });
   assert.equal(shots.length, 2, 'at nobody: no shaft'); assert.equal(pup.mobile.shootArrow, false, 'dropped');
   peers.list = [];
-  pool.applyFoes('bob-0002', frame(7, [{ i: 5, g: 'eve-0003' }], 0));
-  pool.update(0.05, me, [10, 1.6, 10], senses(pe));
-  pup.mobile.shootArrow = true;
-  pool.update(0.05, me, [10, 1.6, 10], senses(pe));
+  shoot({ g: 'eve-0003', b: 'eve-0003' });
   assert.equal(shots.length, 2, 'at a peer I cannot see: no shaft');
 });
 
@@ -184,7 +183,7 @@ test('WORLD6b-ii: a peer\'s blow on MY foe carries the striker\'s feet and the b
   assert.deepEqual(hits, [{ to: 'eve-0003', k: 'world:3,12', i: 1, dmg: 3, kind: 'arrow', p: [18, 0, 20], d: [0.6, 0, 0.8] }], 'my blow on Eve\'s foe carries my feet and its direction');
 });
 
-test('WORLD6b-ii: by source - the world host hands the pool my id and the peers seam (one closure, the dungeon host\'s and the cell\'s), the pool reads the local player from a peer at every site that meant me, no cast at a peer, the pane says the hunt', () => {
+test('WORLD6b-ii: by source - the world host hands the pool my id and the peers seam (one closure, the dungeon host\'s and the cell\'s), the pool reads the local player from a peer at every site that meant me, the cast at a peer rides the stream (WORLD6b-iii), the pane says the hunt', () => {
   const w = rd('src/scenes/world.js');
   assert.equal((w.match(/peers: peersNear,/g) ?? []).length, 2, 'one closure, two readers');
   assert.match(w, /const peersNear = \(\) => \{\s*if \(!online \|\| !online\.room \|\| online\.status !== 'open'\) return null;/);
@@ -194,10 +193,10 @@ test('WORLD6b-ii: by source - the world host hands the pool my id and the peers 
   assert.match(x, /return isLocalPlayerTarget\(t\) \? playerFeet : \(isPeerTarget\(t\) \? t\.feet : t\.ai\.feet\);/, 'the attack aims at a peer\'s own feet');
   assert.match(x, /if \(isLocalPlayerTarget\(f\.ai\.target\) && f\.ai\.inSight && f\.ai\.detected\) setEnemyAlert\(playerEntity, true, currentMinute\(\)\);/, 'the alert is mine alone');
   assert.match(x, /if \(isLocalPlayerTarget\(f\.ai\?\.target\) && f\.ai\?\.detected\) setEnemyAlert\(playerEntity, false\);/);
-  assert.match(x, /const dec = f\.caster\.update\(dt, f\.ai, f\.attack, _tgt, _castTargetEntity\);\s*if \(dec\) \{\s*f\._castN = \(\(f\._castN \| 0\) \+ 1\) & 0xffff; f\._castIdx = dec\.spell\.index \| 0;\s*castSpellFrom\(f, dec\.spell, _tgt, false, \{ atPeer: isPeerTarget\(f\.ai\.target\) \? f\.ai\.target : null \}\);/, 'the cast at a peer (WORLD6b-iii): the tick runs as at me, the cast rides the stream');
+  assert.match(x, /const dec = f\.caster\.update\(dt, f\.ai, f\.attack, _tgt, _castTargetEntity\);\s*if \(dec\) castSpellFrom\(f, dec\.spell, playerFeet, false, \{ aimAt: castAimAt\(f, playerFeet\) \}\);/, 'the cast at a peer (WORLD6b-iii): the tick runs as at me, the cast rides the stream (AUDIT WORLD6b-iii(a) A2/A3: aimed at the SELECTED target, the count and its recipient latched at the release)');
   assert.match(x, /const _at = f\.ai\.target \?\? PLAYER_TARGET, _atPlayer = isLocalPlayerTarget\(_at\);/, 'my foe\'s shaft at a peer pays nothing here');
   assert.match(x, /if \(isPeerTarget\(f\.ai\.target\)\) \{\s*const pv = enemyAttackVoice\(f\);/, 'the swing\'s voice alone at a peer');
-  assert.match(x, /if \(f\._pupMine && !_pupParalyzed && f\.mobile\.doMeleeDamage\) \{[^\n]*\n\s*f\.mobile\.doMeleeDamage = false;[\s\S]{0,400}if \(blowAllowed\(f\)\) resolveFoeMeleeVsPlayer\(f, playerFeet\);/, 'the puppet\'s blow at me through the one player arm, bounded (AUDIT WORLD6b-ii B1; WORLD6b-iii: one budget for the blow and the cast)');
+  assert.match(x, /if \(_blowMine && !_pupParalyzed && f\.mobile\.doMeleeDamage\) \{[^\n]*\n\s*f\.mobile\.doMeleeDamage = false;[\s\S]{0,400}if \(blowAllowed\(f\)\) resolveFoeMeleeVsPlayer\(f, playerFeet\);/, 'the puppet\'s blow at me through the one player arm, bounded (AUDIT WORLD6b-ii B1; WORLD6b-iii: one budget for the blow and the cast)');
   assert.match(x, /const _t = f\.ai\.target, g = _t\?\.isPeer \? _t\.id : \(_t == null \? '' : \(_t\.isPlayer \? '\.' : ''\)\);/, 'the target on the wire, WORLD3\'s spelling (AUDIT WORLD6b-ii A8: none is none)');
   assert.match(rd('bible/06-Systems/Online-Arc.md'), /### 6b-ii: the foe hunts every player in the cell/, 'the record');
 });

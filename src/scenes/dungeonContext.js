@@ -700,7 +700,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // caught in review, hoisted).
     const [shared, engineRig, { buildRaceCharacter },
       { EnemyAI, withinYaw, isBackFacing, openDoorsStep }, { EnemyAttack }, { makeEnemyEntity, loadMonsterCareer }, { EnemyCaster, castEnemySpell: castShared, hasMagickaToCast },
-      { runTargetMachine, isPlayerTarget, isLocalPlayerTarget, PLAYER_TARGET, resetAllyTeamOnPlayerAttack, targetAimPoint, enemyArrowOrigin, enemyTransformPoint, arrowAimDirection },
+      { runTargetMachine, isPlayerTarget, isLocalPlayerTarget, PLAYER_TARGET, PEER_CAST_TARGET, resetAllyTeamOnPlayerAttack, targetAimPoint, enemyArrowOrigin, enemyTransformPoint, arrowAimDirection },
       { EnhancedEnemyAI, makeNavWorld }] = await Promise.all([
       import('./shared.js'), import('../characters/engineRig.js'),
       import('../characters/raceCharacter.js'),
@@ -743,7 +743,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // MT-iv: the target machine. Every consumer below the lazy block
       // reads foeDeps.* and must guard on foeDeps first, as
       // resolvePlayerHit already does.
-      runTargetMachine, isPlayerTarget, isLocalPlayerTarget, PLAYER_TARGET, resetAllyTeamOnPlayerAttack,   // AUDIT WORLD3 C3: the local player, told from any player
+      runTargetMachine, isPlayerTarget, isLocalPlayerTarget, PLAYER_TARGET, PEER_CAST_TARGET, resetAllyTeamOnPlayerAttack,   // AUDIT WORLD3 C3: the local player, told from any player; AUDIT WORLD6b-iii(a) A10: the peer's cast stand-in
       targetAimPoint, enemyArrowOrigin, enemyTransformPoint, arrowAimDirection,   // AUDIT 62 F21 (review): the ONE aim-point law, shared with the exterior pool   // ROAD-H H1/H1b: and the ONE arrow loose point + the crouch dip beside it
     };
     // ENHANCED AI 4: the routes' world - the per-frame findPath budget
@@ -1411,7 +1411,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:6561 / exterior.js:2920), set
+  // host's own townTalk sink (world.js:6559 / exterior.js:2919), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -1888,7 +1888,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // copied mount would have diverged the first time an arm grew.
   /** DR1: THE TWO SPELL WINDOWS THIS HOST MOUNTS NOW, and the one door
    *  they go through. `mountSpellWindow` is worldModes'
-   *  mountSpellWindow DUNGEON ARM (worldModes.js:1034,
+   *  mountSpellWindow DUNGEON ARM (worldModes.js:1033,
    *  `dungeonCtx?.showOverlay(win)`) resolved to what it actually
    *  calls here - this file's own pushDungeonWindow, which IS
    *  UserInterfaceManager.PushWindow. So a spell window raised over an
@@ -2342,9 +2342,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // all live in the shared member now.
   function castEnemySpell(f, spell, noSpellPointCost = false) {
     if (!foeDeps?.castEnemySpell) return;   // the foe subsystem degraded (its loud boot warning already fired)
-    const _pt = f.ai?.target?.isPeer ? f.ai.target : null;   // WORLD3: a peer target - the missile leaves toward the peer's capsule, not mine
+    // AUDIT WORLD6b-iii(a) C2: MY capsule in the blast's sphere whoever the target is - `playerFeet` is the sphere's probe
+    // for the LOCAL player, and WORLD3 handed it a PEER's feet, so a blast beside the peer landed on ME wherever I stood;
+    // the missile at a peer aims itself in flight (the aimFoe arm below), no aim point is handed here
     foeDeps.castEnemySpell(f, spell, {
-      noSpellPointCost, playerEntity, playerFeet: _pt?.feet ?? lastPlayerFeet, playerHeight: _pt?.height ?? lastPlayerHeight,   // ROAD-H H2: the AreaAroundCaster blast is an OverlapSphere against the player's CAPSULE
+      noSpellPointCost, playerEntity, playerFeet: lastPlayerFeet, playerHeight: lastPlayerHeight,   // ROAD-H H2: the AreaAroundCaster blast is an OverlapSphere against the player's CAPSULE
       applySpell, foeSinks, calculateCastCost, silenceBlocksCast,
       // AUDIT 58: play3dId - SPELL_CAST_SOUND is ID space (EntityEffectManager.cs:44-48)
       playCastSound: (element, from) => audio.play3dId(SPELL_CAST_SOUND[element] ?? SPELL_CAST_SOUND[4], from, 1, { maxDistance: 16 }),
@@ -2363,7 +2365,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:898 against :929; worldModes.js:5890 against :5898).
+    // (dungeon.js:898 against :929; worldModes.js:5889 against :5898).
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -2836,8 +2838,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:8607,
-              // exterior.js:4203 and worldModes.js:6017 already ran;
+              // playerArrowHitFoe is the one copy world.js:8605,
+              // exterior.js:4202 and worldModes.js:6016 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -3542,7 +3544,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // InstantiatePrefab's a fresh GameObject per saved record, so
     // EnemyEntity's `PickpocketByPlayerAttempted` default is the loaded
     // truth for every enemy. The re-minting pools match that by
-    // construction (exteriorFoes.js:1290's restoreWorld goes through
+    // construction (exteriorFoes.js:1231's restoreWorld goes through
     // spawnFoe), but this host patches the LIVE foes in place, so a
     // same-dungeon reload kept a raised latch and a failed pickpocket
     // could never be retried - falsifying the law
@@ -4508,8 +4510,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // that target's own entity, so a foe duelling another foe
         // neither picks its school off the player's effects nor
         // releases at them.
-        const _castEnt = (!foeDeps || !f.ai._armedTargeting || foeDeps.isPlayerTarget(f.ai.target))
-          ? playerEntity : (f.ai.target?.entity ?? playerEntity);
+        const _castEnt = (!foeDeps || !f.ai._armedTargeting || foeDeps.isLocalPlayerTarget(f.ai.target))
+          ? playerEntity : (f.ai.target?.entity ?? foeDeps.PEER_CAST_TARGET ?? playerEntity);   // AUDIT WORLD6b-iii(a) A10: a PEER's effects are none to the pick (AUDIT WORLD6b-ii A9's law, unpaid here - isPlayerTarget admitted a peer and the veto read MINE)
         const dec = f.caster.update(dt, f.ai, f.attack, _tgt, _castEnt);
         if (dec) { f._castN = ((f._castN | 0) + 1) & 0xffff; f._castIdx = dec.spell.index | 0; castEnemySpell(f, dec.spell); }   // WORLD3: the cast rides the stream (c, s)
       }

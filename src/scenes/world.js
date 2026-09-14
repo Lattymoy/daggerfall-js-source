@@ -38,6 +38,7 @@ import { farFlatVisible } from '../world/flatDistance.js';   // MAC1: the far ri
 import { isBulletinBoard, isCityGate, CITY_GATE_OPEN_MODEL_ID, CITY_GATE_CLOSED_MODEL_ID } from '../world/rmbLayout.js';   // RMBLayout.cs:1013-1017 - the one model id a town sign wears; :1007-1011 - the two a city gate wears
 import { makeCityGate, updateCityGate } from '../world/cityGate.js';   // AUDIT 64 F14: DaggerfallCityGate
 import { staticBuildingBox, staticBuildingWorldAabb } from '../world/staticBuildings.js';   // AUDIT 64 F11: RMBLayout's StaticBuilding array
+import { targetAimPoint, missileAimDirection } from '../characters/enemyTargets.js';   // AUDIT WORLD6b-iii(a) C3: the ONE aim law for an enemy missile (the peer's transform, mine otherwise)
 import { collectExteriorNpcs, exteriorNpcRecord, setupExteriorQuestStaticNpcs } from '../characters/exteriorNpcs.js';   // C2 / AUDIT 26: RMBLayout's street StaticNPCs; E3: their quest pass
 import { installConsoleProbe } from '../systems/consoleCommands.js';   // E3: the console's door
 import { registerTravelMapConsoleCommands } from '../ui/travelMapWindow.js';   // E3: TravelMapConsoleCommands
@@ -2273,12 +2274,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     spellsByIndex: () => spellsByIndex,
     magicHooks: {
       explodeAt: (...a) => magic.explodeAt(...a),
-      fireMissile: (from, spell, casterLevel, foe, aimAt = null) => {   // WORLD6b-iii: aimed at a peer's transform when the caster hunts a peer
+      fireMissile: (from, spell, casterLevel, foe, aimAt = null) => {   // WORLD6b-iii: aimed where the executor says (a peer's or a foe's transform), at my LIVE transform otherwise (AUDIT 62 F21) - AUDIT WORLD6b-iii(a) C3: through the ONE law, the three hosts alike
         if (!(walkMode && playerSpawned)) return;
-        const at = aimAt ?? [player.pos[0], player.pos[1] + player.height / 2, player.pos[2]];
-        const d = [at[0] - from[0], at[1] - from[1], at[2] - from[2]];   // AUDIT 62 F21 (review): the player's TRANSFORM at its LIVE height (DaggerfallMissile.cs:571-581 -> EnemySenses.cs:453; PlayerHeightChanger.cs:477-478), not the standing half-capsule
-        const l = Math.hypot(...d) || 1;
-        magic.fireEnemyMissile(from, [d[0] / l, d[1] / l, d[2] / l], spell, casterLevel, foe);
+        magic.fireEnemyMissile(from, missileAimDirection(from, aimAt ?? targetAimPoint(null, player.pos, player.height)), spell, casterLevel, foe);
       },
     },
   });
@@ -2502,8 +2500,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** The per-foe doors, hoisted (AUDIT 24 wave 32): the cast engine takes
    *  them, and so does the broker fan-out below - one set of doors per
    *  entity, exactly as one EntityEffectManager per entity. */
-  const foeSinks = (g) => ({
-    hurt: (n) => { if (n > 0) (g._encounter ? exteriorFoes.damageFoe(g, n, player.pos) : cityGuards.hurtGuard(g, n, player.pos)); },   // X-slice: route by pool
+  const foeSinks = (g, fromPlayer = true) => ({   // AUDIT WORLD6b-iii(a) B2: the provenance the engine hands (AUDIT WORLD2 B7: a foe's spell is not the player's blow) - this host ignored it, so an enemy blast over a puppet went to its owner as MY hit
+    hurt: (n) => { if (n > 0) (g._encounter ? exteriorFoes.damageFoe(g, n, player.pos, null, { fromPlayer, kind: 'spell' }) : cityGuards.hurtGuard(g, n, player.pos, null, { fromPlayer })); },   // X-slice: route by pool
     heal: (n) => { if (n > 0) g.entity.health = Math.min(g.entity.maxHealth ?? Infinity, g.entity.health + n); },
     drainMagicka: (n) => { if (n > 0) g.entity.magicka = Math.max(0, (g.entity.magicka ?? 0) - n); },
     restoreMagicka: (n) => { if (n > 0) g.entity.magicka = Math.min(g.entity.maxMagicka ?? Infinity, (g.entity.magicka ?? 0) + n); },
@@ -2646,7 +2644,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // and dungeonContext.js:2126 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:4593
+  // that context through modes.dungeonCtx - so worldModes.js:4592
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -2731,7 +2729,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // through the one that owns the billboard - `exteriorFoePool` is
     // the watch AND the encounter foes, and this arm reached the
     // encounter pool's remover for both. That was not a leak: removeFoe
-    // (exteriorFoes.js:353-358) never looks the record up in `foes`, and
+    // (exteriorFoes.js:344-349) never looks the record up in `foes`, and
     // both pools share this host's one renderer, so a struck WATCHMAN
     // got exactly what removeGuard (cityGuards.js:1215-1219) gives it -
     // batch freed, `dead = true`, no corpse, skipped by the next AI pass
@@ -4167,7 +4165,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:5242), so exterior mode and a
+    // composer, dungeonContext.js:5244), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -5454,7 +5452,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7203-7215 -
+  // worldModes answers it in BOTH modes (worldModes.js:7202-7214 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a

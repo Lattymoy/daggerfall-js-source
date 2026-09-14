@@ -2661,9 +2661,11 @@ peer's copy of it hunts the peer.
   CANDIDATE at those feet (`handleAttackFromPlayer`'s peer arm names
   the peer, the dungeon's spelling) and the shove goes the way the
   blow went. The divert out spells both.
-- **No cast at a peer** (6b-iii): a foe whose target is a peer does not
+- ~~**No cast at a peer** (6b-iii): a foe whose target is a peer does not
   cast - the cast at a peer is the puppet's to cast at the peer (the
-  dungeon's `c`/`s`), and the pool's caster is the owner's own still.
+  dungeon's `c`/`s`), and the pool's caster is the owner's own still.~~
+  Superseded by 6b-iii(a): the foe casts at the peer it hunts (AUDIT
+  WORLD6b-iii(a) C7 struck this line - two live laws contradicted).
 
 Pinned in `test/world6bii.test.js` (5), EXECUTED: the wire's target
 law; my foe picking the peer off the machine (the identity, the live
@@ -2687,19 +2689,28 @@ dungeon host's foes, per owner, with the audit's bounds.
   none to the pick); the missile leaves toward the peer's transform
   (the executor takes `aimAt`, the world host's hook aims where it is
   told and at me otherwise); an area cast blasts the foes around the
-  caster and puts nothing of mine in its sphere (I am not its target).
-  The cast rides the record - `c` the count, `s` the spell (WORLD3's
-  spelling) - in the wire's law.
+  caster ~~and puts nothing of mine in its sphere (I am not its
+  target)~~ - AUDIT WORLD6b-iii(a) A1/C4 struck that: my capsule is a
+  collider in every sphere, whoever the caster hunts (the null guarded
+  an arm the pick never reaches and bought a free safe stand). The
+  cast rides the record - `c` the count, `s` the spell (WORLD3's
+  spelling), and since the audit `u` whom it was at - in the wire's
+  law.
 - **The puppet at me casts the spell itself**: a count up by one is
   one cast (a joiner latches the count it arrives with and replays
   nothing); the missile flies at me, the blast is measured against my
-  capsule, a self-cast lands on the puppet's own entity; UNDER the
-  owner's blow budget and the leap gate (AUDIT WORLD6b-ii B1/C1: a
-  cast is a blow - the same bucket); at another peer or at nobody its
-  Spell one-shot alone.
-- The dungeon's own cast at a peer (`castEnemySpell` there) still
+  capsule, ~~a self-cast lands on the puppet's own entity~~ (AUDIT
+  WORLD6b-iii(a) B2: a puppet takes no damage in this pool - its
+  owner's word is its health - and its self-cast is nobody's blow);
+  UNDER the owner's blow budget and the leap gate (AUDIT WORLD6b-ii
+  B1/C1: a cast is a blow - the same bucket); at another peer or at
+  nobody its Spell one-shot alone.
+- ~~The dungeon's own cast at a peer (`castEnemySpell` there) still
   aims its missile at the host and hands the peer's feet to the blast
-  - recorded for the dungeon's next audit.
+  - recorded for the dungeon's next audit.~~ The dungeon's missile
+  aimed itself at the peer in flight all along (WORLD3's `aimFoe`
+  arm); what it handed was the PEER's feet as the blast's probe for
+  the LOCAL player - paid by AUDIT WORLD6b-iii(a) C2.
 
 Pinned in `test/world6biii.test.js` (4), EXECUTED: the wire's c/s law;
 the owner's cast at a peer (the decision run against the stand-in,
@@ -3067,6 +3078,200 @@ attacker's level and weapon on the record and on the puppet; the one
 attack door for a puppet and a foe of mine; the alert from a puppet
 at me, the senses for a puppet at me alone, the owner's liveness; the
 hosts by source.
+
+## AUDIT WORLD6b-iii(a) (2026-09-14)
+
+**Mac: "Continue"** (after WORLD6b-iii(a)). The slice let a foe cast at
+a peer and a puppet cast at me on its owner's word, and the two audits
+before it each found criticals in the fresh boundary, so the audit
+came before the cell seam. Three opus lenses - A the owner's side (the
+decision, the executor, the hosts' hooks), B the puppet's side (the
+streamed cast, the sinks, the budget), C the wire, the relay, the
+dungeon twin, the merge with main and the records. Every finding
+verified against the code; paid at the root; pinned by execution in
+`test/auditworld6biii.test.js`. No relay change: the relay never
+projects a foes record (C1 - the live `world63` fans `c`/`s` as it
+fans any key), and the wire's new keys are bounded at both ends.
+
+### The criticals
+
+- **B1 (critical, paid): a puppet cast ANY spell in SPELLS.STD on its
+  owner's word.** The streamed `s` was resolved out of the whole
+  classic table (`spellsByIndex`), and a puppet carried no list of its
+  own (AUDIT WORLD6b B14 kept the dice out of it - but SetEnemySpells
+  is a table read, not a roll). A rat's puppet cast a lich's spell, at
+  no magicka and past the silence gate (`noSpellPointCost`), scaled by
+  a class puppet's owner-said level. The blow budget bounded the RATE
+  and nothing else: six free picks a second from the whole book. Paid
+  at the stand: `assignEnemySpells` runs for a puppet too (its species'
+  list, or its class level's - both already authoritative, the reader
+  rebuilds the puppet on either changing) and the streamed cast is
+  resolved out of `f.entity.spells` and nowhere else; a spell not of
+  its list is its Spell one-shot alone, no token spent.
+- **B2 (critical, paid): a puppet's own self or area cast went to its
+  owner as MY hit.** The pool's `foeSinks.hurt` called `damageFoe` on
+  the default `fromPlayer: true`, so a puppet's CasterOnly damage or
+  AreaAroundCaster blast - and, through the host's `foeSinks`, which
+  ignored the engine's provenance argument, any foe's blast over a
+  puppet - was diverted to the owner as my blow (a 200-damage phantom
+  in the probe), where the owner's foe turned on me. Paid at the three
+  doors: the pool's sink says `fromPlayer: false, kind: 'spell'`, the
+  world host's `foeSinks(g, fromPlayer)` reads the engine's second
+  argument (AUDIT WORLD2 B7's law, which the dungeon's sink had and the
+  exterior's did not) and the guard door forwards the options bag.
+  And the engine's blast sweep skips a puppet when the caster is a foe
+  (C15): its owner's world resolves that foe; my own blast on a puppet
+  still goes to its owner as my hit.
+
+### A - the owner's side
+
+- **A1 (high, paid): "nothing of mine in the blast at a peer" guarded
+  an arm the pick never reaches, and the reachable blast hit me anyway
+  - credited to ME at MY level.** `castSpellFrom` nulled `playerFeet`
+  for a peer target, and `playerFeet` inside the executor is the
+  AreaAroundCaster probe (rangeType 3) alone - which the decision
+  never picks (`pickRangedSpell` filters 2/4, the touch arm 0/1). The
+  area cast a foe CAN pick (4, AreaAtRange) leaves as a missile and
+  explodes in the engine against my capsule either way; and the
+  engine's WALL arm spent `playerEntity.level` and `playerCaster()` on
+  every enemy blast. Worse, in review: the decision handed the
+  TARGET's feet as the probe (`_tgt`), masked by the null - the
+  dungeon's C2 in this pool. Paid: my feet are the probe whoever the
+  target is (DFU's OverlapSphere is over colliders, not a target test;
+  the null bought a strictly-safe stand beside a Daedra hunting a
+  peer), and the wall arm spends the missile's own caster and level
+  through one `missileCaster(m)` the flight arm shares.
+- **A2 (high, paid): the missile was aimed for a PEER target alone; a
+  foe duelling another FOE still fireballed me.** The comment above
+  the decision stated the law and the line below it aimed at peers
+  only. Paid: `castAimAt` - the SELECTED target's transform through
+  `targetAimPoint` (the one law, its peer arm and its foe arm), null
+  for me; the hand-inlined peer copy (A6) is gone with it.
+- **A3 (medium, paid): the cast's recipient was read 200 ms after the
+  cast.** `c`/`s` latched at the release, `g` read off the LIVE hunt
+  when the frame went out - a foe that cast at me and turned to a peer
+  inside the frame's window sent that peer a cast it never made (and
+  the mirror dropped one). The blow count `a` had the same defect from
+  6b-ii. Paid on the wire: `u` whom the last cast was at and `b` whom
+  the last blow was at, in `g`'s spelling, latched with their counts;
+  the reader latches each with its strike or cast and resolves it by
+  ITS recipient (an older record without them falls back on `g`); `g`
+  stays the live hunt for hostility, the senses and the alert. A
+  damage frame with no swing behind it lands nothing.
+- **A4/B5 (medium, paid): a puppet I paralysed kept casting.** The
+  swing was gated on `entityIsParalyzed`, the cast ran above the gate.
+  Hoisted; both arms read it (DFU's CanAct gates both).
+- **A5 (medium, paid): the slice's owner pin never ran the decision.**
+  It replaced `EnemyCaster` wholesale, so the retired-suppression law,
+  the band in the peer's frame and the veto were unexercised, and its
+  blast case used the unreachable arm. The audit's pin runs the REAL
+  caster: an imp hunting Bob picks its ranged spell off its own list,
+  reads the stand-in, releases at Bob's transform, spends its magicka
+  and, out of it, closes to melee - DFU's arc.
+- **A9 (note, paid): free casts never rode the record.** The spider's
+  paralyze rider called the executor without touching the count. The
+  count, the spell and the recipient are latched at the ONE release
+  now (`castSpellFrom`), so every cast is a count by construction; a
+  refused release (silenced, no magicka) counts nothing.
+- **A11/B8/C3 (note, paid): two of the three hosts' `fireMissile`
+  hooks dropped the aim point** (exterior.js, worldModes.js), latent
+  because only world.js installs the net. One law now:
+  `missileAimDirection(from, aimAt ?? targetAimPoint(null, player.pos,
+  player.height))` in all three, the subtraction in one home.
+- **A7 (note, recorded): the veto is structurally false at a peer.**
+  `PEER_CAST_TARGET` carries no effects, so EffectsAlreadyOnTarget
+  never vetoes a re-pick of Paralysis on an already-paralysed peer;
+  the real fix wants the peer's active effect kinds on the wire.
+- **A8 (note, recorded): a Touch spell at a peer leaves as a missile
+  from melee range, and its cadence is my level's** - DFU's own
+  reading (`attack.playerLevel`), unchanged.
+- **A12 (note, recorded): a peer that leaves is cast at for one classic
+  target tick** - the candidate's health goes 0 and the machine's next
+  pass drops it; a wasted cast, no throw.
+
+### B - the puppet's side
+
+- **B3/C9 (medium, paid): a record with `c` up and no `s` cast spell
+  0.** No spell, no cast: the reader latches the count and casts
+  nothing.
+- **B4 (medium, paid): the puppet's cast had no range or sight gate,
+  and a puppet is never distance-culled** - one across the map cast at
+  me. Paid: `puppetCastInBand` reads the owner's own bands off the
+  streamed pose (DoRangedAttack's 6..51.2 in sight for a missile or a
+  blast at range, DoTouchSpell's melee reach for a touch, a self-cast
+  or a blast around the caster) with the leap's slack; outside them
+  the one-shot alone. The senses run BEFORE the cast now.
+- **B6 (low, paid): a self-heal here made every record after it a
+  hurt** - the drop was measured against the live entity the heal had
+  raised. Measured against the last STREAMED health (`p.h`).
+- **B7 (low, paid): a cast or blow refused by the leap gate still
+  spent a token** and starved the owner's other puppets. The leap is
+  read before the bucket.
+- **B9 (note, recorded): a rebuild swallows exactly one cast** - the
+  new puppet latches the count it arrives with, as the strike latch
+  and the joiner do. Consistent, not paid.
+- **B10 (note, recorded): a cast on the same frame as a strike edge
+  loses its Spell one-shot** - the mobile's priority (DFU's), the cast
+  still fires.
+
+### C - the wire, the dungeon twin, the merge, the records
+
+- **C1 (verified): the deployed relay strips nothing** - see above.
+- **C2 (high, paid): the dungeon's cast at a peer handed the PEER's
+  feet to the blast's probe for the LOCAL player**, so a rangeType-3
+  blast beside the peer landed on ME wherever I stood (WORLD3-era,
+  live). My feet and height are the probe; the missile aimed itself at
+  the peer in flight all along.
+- **A10 (note, paid): the dungeon read MY effects for a peer's pick**
+  (`isPlayerTarget` admits a peer; AUDIT WORLD6b-ii A9 unpaid there).
+  `PEER_CAST_TARGET` moved to `enemyTargets.js`, one home for both
+  pools, and the dungeon reads it through its deps.
+- **C8 (low, paid): `s` was bounded 256 times wider than the u8 it
+  carries.** Bounded at 255, `c` at 0xffff (the minter's own mask).
+- **C5/C6/C7 (paid): the records stated the retired law** - two
+  Testing.md rows ("the caster's suppressed tick", "no cast at a
+  peer"), a test title, and the 6b-ii bullet standing unstruck beside
+  6b-iii(a). Restamped and struck.
+- **C10/C11 (low, paid): two loose pins** - the decision's substring
+  anchored at the call's end (a sixth argument would read as
+  `playerEntity`), the executor's option pinned inside its
+  destructure.
+- **C12 (low, paid in part): the cite re-aim is a line shifter, not a
+  resolver.** Seven cites that were wrong BEFORE the shift were
+  re-aimed by hand (`exterior.js` x5, `world.js`, `dungeonContext.js`);
+  the pass itself stays mechanical (citedrift's CD4 is the content
+  gate, over its named set).
+- **C13 (declined): `buildTag.js`'s eight characters** are
+  `scripts/buildTag.mjs`'s own output (`git rev-parse --short`, run at
+  every build) - not a hand-set value.
+- **C14 (note, recorded): `c`/`s`/`u`/`b` ride every record**, casters
+  or not - a worst-case 64-record frame is well inside the frame cap;
+  the egress fan lost a tenth of its headroom (the first-drop point
+  from about nine to eight worst-case senders in range). A conditional
+  emission would make an absent field mean zero, which muddles the
+  partial-record reading the pins use; left as is.
+- **The merge (verified): `git diff` against the merge base carries
+  the slice's hunks and cite re-aims alone**; the suite line matched
+  the count.
+
+Pinned in `test/auditworld6biii.test.js` (6), EXECUTED: the real
+decision at a peer (the imp's own list, the stand-in, Bob's transform,
+the record's c/s/u, the magicka spent); the engine's wall arm at the
+caster's level and a foe's blast skipping a puppet while mine reaches
+it; a puppet's self-cast sending nothing to its owner and landing
+nothing here; the owner's bands off the streamed pose (a missile inside
+six or beyond the band none, a touch beyond reach none), paralysis, the
+hurt against the streamed health; the direction law, the frozen
+stand-in, the u8; by source the three sinks, the leap before the
+bucket, the one counted release, the wall arm, the dungeon's probe and
+stand-in, the records. `test/world6biii.test.js` rewritten under the
+law (the wire's u/b and the u8; the blast measured against me at a
+peer, the owner's `u`; the puppet's own list, the cast's recipient, no
+spell no cast, the bands, the leap spending nothing); `world6bii`'s
+puppet-blow pin and `auditworld6bii`'s budget pin drive the swing's
+edge (a damage frame with no swing lands nothing); `x3casting`,
+`audit62_foes`, `audit39_worldmodes`, `world3` restamped where the law
+moved.
 
 ## What it does not do (yet)
 

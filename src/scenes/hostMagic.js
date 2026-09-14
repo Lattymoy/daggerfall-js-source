@@ -288,9 +288,13 @@ export function createPlayerMagic({
   // excludeFoe carries the enemy AreaAroundCaster's ignoreCaster -
   // DFU's caster-position AoE skips the caster itself
   // (DoAreaOfEffect(position, true), DaggerfallMissile.cs:477-495).
+  /** The caster wrapper a missile carries: the player's for the player's, the foe's (its entity and sinks) for an
+   *  enemy's, none for an enemy missile whose caster is gone. */
+  const missileCaster = (m) => (m.fromPlayer === false ? (m.casterFoe ? { entity: m.casterFoe.entity, sinks: foeSinks(m.casterFoe) } : null) : playerCaster());
   function explodeAt(pos, spell, casterLevel, playerFeet, caster = null, { excludeFoe = null, playerHeight = CAPSULE_HEIGHT } = {}) {
     for (const t of sweepFoes(pos, EXPLOSION_RADIUS, foes())) {
       if (excludeFoe && t === excludeFoe) continue;
+      if (t.puppet && caster?.entity && caster.entity !== playerEntity) continue;   // AUDIT WORLD6b-iii(a) C15: a FOE's blast lands nothing on a PUPPET here - its owner's world resolves that foe (my own blast on a puppet still goes to its owner as my hit)
       applySpellToFoe(spell, casterLevel, t, caster);
     }
     // ROAD-H H2: the player is a COLLIDER in DFU's OverlapSphere like every foe (DaggerfallMissile.cs:481) - its CharacterController capsule, at the LIVE height PlayerHeightChanger keeps (:54-57/:475-478). This measured ONE POINT at the STANDING half-capsule, feet + 0.9: a metre and a half wrong on a mount, half a metre wrong crouched, and short of DFU's catch by a whole body radius in every stance. AUDIT 65 CV-2: and that body is the PLAYER's 0.35 (PlayerAdvanced.prefab:82), not the foe's 0.45 - the rim is 4.35.
@@ -572,7 +576,10 @@ export function createPlayerMagic({
       if (Number.isFinite(hitWall) && hitWall <= reach) {
         const impact = [m.pos[0] + _unit[0] * hitWall, m.pos[1] + _unit[1] * hitWall, m.pos[2] + _unit[2] * hitWall];   // ROAD-H tail (review): the collider answers in the RAY's own units, and the ray is `_unit` - `m.dir` would scale the impact point by |dir| (`colliderPosition += direction.normalized * hitInfo.distance`, DaggerfallMissile.cs:347)
         if (m.spell.rangeType === 4) {
-          explodeAt(impact, m.spell, playerEntity.level, playerFeet, playerCaster(), { playerHeight });   // ROAD-H H2: the blast's OverlapSphere meets the player's LIVE capsule
+          // AUDIT WORLD6b-iii(a) A1: an ENEMY missile's blast on a wall is the ENEMY's - its caster's level and sinks
+          // (the flight's own arm below had them); this arm credited every enemy blast to ME at MY level, with the
+          // reflect chain and the skill tallies mine to pay
+          explodeAt(impact, m.spell, m.fromPlayer === false ? (m.casterLevel ?? 1) : playerEntity.level, playerFeet, missileCaster(m), { playerHeight });   // ROAD-H H2: the blast's OverlapSphere meets the player's LIVE capsule
         }
         showImpactFlash(m, impact);   // F033: DFU flashes on ANY wall hit, AoE or not
         retireMissile(m);
@@ -591,7 +598,7 @@ export function createPlayerMagic({
           // .cs:339's SphereCast into its CharacterController, at the LIVE
           // height - the shared engine's copy of the dungeon's arm.
           if (missileHitsCapsule(m.pos, playerFeet, playerHeight, PLAYER_BODY_RADIUS)) {
-            const mCaster = m.casterFoe ? { entity: m.casterFoe.entity, sinks: foeSinks(m.casterFoe) } : null;
+            const mCaster = missileCaster(m);
             if (m.spell.rangeType === 4) explodeAt(m.pos, m.spell, m.casterLevel ?? 1, playerFeet, mCaster, { playerHeight });   // ROAD-H H2
             else applySpellToPlayer(m.spell, m.casterLevel ?? 1, mCaster);
             showImpactFlash(m, [m.pos[0], m.pos[1], m.pos[2]]);   // F033

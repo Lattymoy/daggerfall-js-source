@@ -148,7 +148,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
   // with no Y test. The default keeps the two street pools as they were.
   playerInside = false,
   // ROAD-G G1: GameManager.MakeEnemiesHostile over the HOST's whole
-  // area, the encounter pool's dep to the line (exteriorFoes.js:99).
+  // area, the encounter pool's dep to the line (exteriorFoes.js:98).
   // DaggerfallEntityBehaviour.cs:255-258 fires it when a NON-hostile
   // enemy is struck by the player, and Knight_CityWatch is an
   // EnemyClass - one of the two EntityTypes that walk (:250). This
@@ -574,7 +574,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
    *  which arrowFlight.js calls unconditionally (arrowFlight.js:229)
    *  because `dealDamage` is inside its own `dmg > 0` fork - so the
    *  door is PUBLIC (the returned surface below), exactly as the
-   *  encounter pool's is (exteriorFoes.js:1498). */
+   *  encounter pool's is (exteriorFoes.js:1539). */
   function handleAttackFromPlayer(g, playerFeet = null) {
     if (!g?.ai) return;
     if (!g.ai.isHostile) makeAreaHostile?.();
@@ -1231,7 +1231,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     // DaggerfallMissile.cs:681-687 hands the arrow's forward in as that
     // direction - Knight_CityWatch is EnemyClass, so the first arm
     // fires. A caller with no direction (a spell) still passes none.
-    hurtGuard: (g, dmg, playerFeet, knockDir = null) => damageGuard(g, dmg, playerFeet, knockDir),
+    hurtGuard: (g, dmg, playerFeet, knockDir = null, opts = undefined) => damageGuard(g, dmg, playerFeet, knockDir, opts),   // AUDIT WORLD6b-iii(a) B2: and the provenance (a foe's blast on a guard is not my blow)
     // ROAD-G G1 (review): the seam forwards the OPTIONS bag too, so the
     // `fromPlayer` gate (F035's law, DaggerfallEntityBehaviour.cs:203)
     // has a negative arm a test can drive. `hurtGuard` above forwards
