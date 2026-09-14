@@ -96,6 +96,16 @@ export const CREDITS = Object.freeze({
       link: 'https://www.nexusmods.com/daggerfallunity/mods/860',
     }),
     Object.freeze({
+      title: 'Handheld Torches',
+      version: '1.4.1',
+      author: 'RedRoryOTheGlen',
+      what: 'A lit light needs a free hand (HT1): drawing a weapon that takes both stows or drops the torch, and a hand freed lights it again; keys to ignite or douse, to drop, and to throw a torch that can set a foe alight; a first-person hand holding the light with the widget\u2019s bob, inertia and steps; dropped torches burn on the ground, light the room and can be picked up - and survive a save.',
+      terms: 'Ported 1:1 from the shipped bundle, read off its compiled script method by method; the mod\u2019s own textures vendored - see vendor/handheld-torches/README.md for the permission record.',
+      contact: 'RedRoryOTheGlen, through the Nexus page (daggerfallunity mod 780)',
+      vendor: Object.freeze(['handheld-torches']),
+      link: 'https://www.nexusmods.com/daggerfallunity/mods/780',
+    }),
+    Object.freeze({
       title: 'Windmills of Daggerfall',
       version: '2.0',
       author: 'Kamer',
