@@ -176,10 +176,20 @@ export function playerTorchLight(entity, feet, yaw = 0) {
   const sy = Math.sin(yaw), cy = Math.cos(yaw);
   const f = [sy, 0, cy];              // forward
   const r = [cy, 0, -sy];             // right; DFU's -0.3 x is the player's LEFT
+  const o = _offsetOverride ?? TORCH_OFFSET;
   return {
-    x: feet[0] - r[0] * TORCH_OFFSET.left + f[0] * TORCH_OFFSET.forward,
-    y: feet[1] + TORCH_OFFSET.up,
-    z: feet[2] - r[2] * TORCH_OFFSET.left + f[2] * TORCH_OFFSET.forward,
+    x: feet[0] - r[0] * o.left + f[0] * o.forward,
+    y: feet[1] + o.up,
+    z: feet[2] - r[2] * o.left + f[2] * o.forward,
     range: st.range,
   };
 }
+
+/** HT1: Handheld Torches writes PlayerTorch's localPosition itself
+ *  (HandheldTorches.UpdateFreeHand, IL 0x2f1c / 0x2f50) - the light
+ *  to the hand the sprite is in, a lantern lower. The transform keeps
+ *  what was last written, so the override stands until cleared;
+ *  `null` is DFU's own offset above. */
+let _offsetOverride = null;
+export function setPlayerTorchOffsetOverride(o) { _offsetOverride = o ? { left: +o.left || 0, up: +o.up || 0, forward: +o.forward || 0 } : null; }
+export const playerTorchOffsetOverride = () => _offsetOverride;

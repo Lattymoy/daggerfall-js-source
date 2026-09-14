@@ -47,7 +47,9 @@ import { objectAabb, rayAabb } from '../player/activate.js';   // AUDIT 63 F37: 
 import { SOUND } from '../systems/soundClips.js';
 import { equipSoundFor } from '../characters/weapons.js';   // F023: GetEquipSound
 import { setMidScreenText } from '../ui/midScreenText.js';   // AUDIT 64 F34: FPSWeapon.cs:365's mid-screen line
-import { createWeaponWidget } from './weaponWidget.js';   // WW1: Weapon Widget's FPSWeaponClone, beside the machine
+import { createWeaponWidget } from './weaponWidget.js';
+import { createHandheldTorches } from '../systems/handheldTorches.js';   // HT1: Handheld Torches' component, one per rig beside the widget
+import { isTransformedLycanthrope } from '../systems/lycanthropy.js';   // WW1: Weapon Widget's FPSWeaponClone, beside the machine
 import { modSetting } from '../systems/modSettings.js';   // WW1: its Enabled
 import { takeFrameLook } from '../player/lookFilter.js';   // WW1: the frame's look for the widget's inertia
 import { cursorActive } from '../player/pointerLock.js';   // WW1: PlayerMouseLook.cursorActive
@@ -122,9 +124,9 @@ export async function autoBuildArms(entity, { wanted = () => getPref('mwArms'), 
  *                     The note that hosts without a HUD text layer
  *                     pass console is retired: every call site hands
  *                     over a real one - hudText.add
- *                     (dungeonContext.js:2152), townTalk.say
- *                     (exterior.js:1320, world.js:2495) and
- *                     worldModes' own interior sink (worldModes.js:371,
+ *                     (dungeonContext.js:2153), townTalk.say
+ *                     (exterior.js:1330, world.js:2509) and
+ *                     worldModes' own interior sink (worldModes.js:372,
  *                     which warns to console only where a host mounts
  *                     no townTalk at all), so the empty default below
  *                     is unreached,
@@ -132,7 +134,7 @@ export async function autoBuildArms(entity, { wanted = () => getPref('mwArms'), 
  *                     (hosts without casting omit it),
  * }
  */
-export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, entity, camera = null, say = () => {}, spellArmed = () => false, bindWorn = true, activateHeld = () => false, envHit = null, missEffect = null, collider = null }) {   // AUDIT 28 W12: HasAction(ActivateCenterObject) - the drawn bow's un-draw; WW1: the widget's recoil doors
+export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, entity, camera = null, say = () => {}, spellArmed = () => false, bindWorn = true, activateHeld = () => false, envHit = null, missEffect = null, collider = null, keyDown = null, torches = () => null }) {   // HT1: the hosts' raw key set and their dropped-torch pool   // AUDIT 28 W12: HasAction(ActivateCenterObject) - the drawn bow's un-draw; WW1: the widget's recoil doors
   const playerWeapon = new PlayerWeapon({});
   // WW1: WEAPON WIDGET. One clone per rig, as DFU has one FPSWeaponClone
   // beside its one FPSWeapon; it reads the machine every frame and draws
@@ -155,6 +157,16 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   });
   const widget = createWeaponWidget({ audio, envHit: envCast, missEffect });
   const widgetOn = () => modSetting('weapon-widget', 'Enabled');
+  // HT1: HANDHELD TORCHES. The mod's HandheldTorches runs beside DFU's
+  // WeaponManager reading it every frame (Sheathed, UsingRightHand,
+  // ScreenWeapon.IsAttacking, the spell anim); here it reads the same
+  // machine, and its Update / LateUpdate run where the widget's do. The
+  // pool it drops into is the host's (scenes/droppedTorches.js), which
+  // hands a picked-up light back through receivePickedUp.
+  const handheld = createHandheldTorches({ audio, say, torches });
+  const handheldOn = () => modSetting('handheld-torches', 'Enabled');
+  let _handheldBound = null;
+  const bindTorches = () => { const pool = torches?.(); if (pool && pool !== _handheldBound) { pool.setOnPickedUp?.((item) => handheld.receivePickedUp(item)); _handheldBound = pool; } };
   playerWeapon.onAttackResult = ({ foe, damage }) => widget.onAttackDamageCalculated({ damage, parrySounds: !!foe?.basics?.parrySounds, pos: foe?.pos ?? foe?.ai?.pos ?? null, isEnemy: true });
   let _activatePrev = false, _activateStarted = false;
   let _lastEye = null;   // WW1: PlayerMotor.MoveDirection, read off the eye's motion between frames, in the body's own frame
@@ -537,7 +549,8 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       const evs = playerWeapon.update(dt);
       // WW1: the clone's LateUpdate, after the original's frame advance -
       // the same order DFU's LateUpdate has against FPSWeapon's Update.
-      if (widgetOn()) {
+      const _torchesOn = handheldOn();
+      if (widgetOn() || _torchesOn) {
         const cam = camera?.() ?? null;
         const mv = cam?.move ?? {};
         const held = activateHeld();
@@ -552,7 +565,23 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
           localVel = [v[0] * cy - v[2] * sy, v[1], v[0] * sy + v[2] * cy];   // InverseTransformVector: right, up, forward
         }
         _lastEye = cam?.pos ? [cam.pos[0], cam.pos[1], cam.pos[2]] : null;
-        widget.lateUpdate(dt, {
+        const look = takeFrameLook();   // WW1/HT1: the frame's look, read once, shared by both
+        const camThunk = () => (cam ? { ...cam, forward: [Math.sin(cam.yaw || 0) * Math.cos(cam.pitch || 0), Math.sin(cam.pitch || 0), Math.cos(cam.yaw || 0) * Math.cos(cam.pitch || 0)],
+          right: [Math.cos(cam.yaw || 0), 0, -Math.sin(cam.yaw || 0)], up: [0, 1, 0] } : null);
+        if (_torchesOn) {
+          bindTorches();
+          const tctx = {
+            renderer, canvas: c, entity, machine: playerWeapon.machine, sheathed: playerWeapon.sheathed, usingRightHand: playerWeapon.usingRightHand,
+            castPlaying: fpsSpellCasting.isPlayingAnim, spellArmed: spellArmed(), thirdPerson: fpArm.thirdActive(),
+            climbing: !!cam?.climbing, swimming: !!mv.swimming, transformedLycanthrope: !!entity && isTransformedLycanthrope(entity),
+            motion: { grounded: mv.grounded !== false, crouching: !!mv.crouching, riding: !!mv.riding, standing: !!mv.standing, speedRatio: ratio, baseSpeed: base, localVel },
+            look, swingHeld: _held, cursorActive: cursorActive(), camera: camThunk, collider: () => collider?.() ?? null,
+            keyDown: (code) => !!keyDown?.(code), sheathWeapons: () => { if (!playerWeapon.sheathed) playerWeapon.toggleSheath(); },
+          };
+          handheld.update(dt, tctx);
+          handheld.lateUpdate(dt, tctx);
+        }
+        if (widgetOn()) widget.lateUpdate(dt, {
           renderer, canvas: c, entity, art: c ? artFor(playerWeapon.weapon) : null, weapon: playerWeapon.weapon,
           weaponType: weaponTypeForItem(playerWeapon.weapon), material: playerWeapon.weapon?.material ?? -1,
           machine: playerWeapon.machine, sheathed: playerWeapon.sheathed, usingRightHand: playerWeapon.usingRightHand,
@@ -560,7 +589,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
           thirdPerson: fpArm.thirdActive(), reach: WEAPON_REACH,
           motion: { grounded: mv.grounded !== false, crouching: !!mv.crouching, riding: !!mv.riding, standing: !!mv.standing,
             speedRatio: ratio, baseSpeed: base, localVel },
-          look: takeFrameLook(), swingHeld: _held, cursorActive: cursorActive(), camera: () => (cam ? { ...cam, forward: [Math.sin(cam.yaw || 0) * Math.cos(cam.pitch || 0), Math.sin(cam.pitch || 0), Math.cos(cam.yaw || 0) * Math.cos(cam.pitch || 0)] } : null),
+          look, swingHeld: _held, cursorActive: cursorActive(), camera: camThunk,
           activateStarted: () => _activateStarted,
         });
       }
@@ -622,6 +651,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       try { return drawInner({ paralyzed }); } finally { widget.endOfFrame(); }   // WW1: WaitForEndOfFrame resumes after the frame's draw
     },
     widget,   // WW1: the clone, for the pins
+    handheld,   // HT1: Handheld Torches' component, for the pins and the pool
   };
   function drawInner({ paralyzed = false } = {}) {
     {
@@ -666,6 +696,11 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // draw seam picks the clone while its switch is on - after the arm
       // (which returns), before the sprite (which the clone stands in for).
       if (fpArm.active()) { fpArm.draw(c); return; }
+      // HT1: the torch hand draws FIRST, the weapon over it - two OnGUIs
+      // with no order between them in DFU; the port picks the one that
+      // keeps the weapon whole. Under the Morrowind arms it is not drawn
+      // (a classic hand beside a modelled arm is neither mod nor lane).
+      if (handheldOn() && c) handheld.draw(renderer, c);
       if (widgetOn() && c && widget.draw(renderer, c)) return;
       const art = c && artFor(playerWeapon.weapon);
       if (art) drawFpsWeapon(renderer, c, art, playerWeapon.machine.state, playerWeapon.machine.frame);

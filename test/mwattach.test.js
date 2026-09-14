@@ -172,7 +172,7 @@ test('MWFIX: the classic sprite path is the ONLY path, and fpsWeapon never hears
   // place while its switch is on and returns; off, the sprite draws as
   // it always has. The arm still returns first, so the two never both draw.
   assert.match(rig,
-    /if \(fpArm\.active\(\)\) \{ fpArm\.draw\(c\); return; \}\s*if \(widgetOn\(\) && c && widget\.draw\(renderer, c\)\) return;\s*const art = c && artFor\(playerWeapon\.weapon\);/,
+    /if \(fpArm\.active\(\)\) \{ fpArm\.draw\(c\); return; \}\s*(?:\/\/[^\n]*\n\s*)*if \(handheldOn\(\) && c\) handheld\.draw\(renderer, c\);\s*if \(widgetOn\(\) && c && widget\.draw\(renderer, c\)\) return;\s*const art = c && artFor\(playerWeapon\.weapon\);/,
     'an inactive arm falls STRAIGHT THROUGH to the clone-or-sprite, and an active one returns so the two never both draw');
   // and the branch must name a module the file actually imports, or it is
   // a literal that satisfies a regex and does nothing.

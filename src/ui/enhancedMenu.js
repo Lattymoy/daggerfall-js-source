@@ -129,7 +129,8 @@ import { playerEntity } from '../characters/playerEntity.js';
 // PX6: the Stats page's skill labels - the one home (systems/skills.js).
 import { SKILLS, SKILL_NAMES } from '../systems/skills.js';
 import { overlayAction } from './input.js';   // U51: Escape, through the shared table
-import { MOD_SETTINGS, modSetting, setModSetting, isIntKey, isFloatKey, isChoiceKey } from '../systems/modSettings.js';
+import { MOD_SETTINGS, modSetting, setModSetting, isIntKey, isFloatKey, isChoiceKey, isTextKey, isTupleKey } from '../systems/modSettings.js';
+import { keyCodeForDomCode } from '../systems/keyCodes.js';   // HT1: a TextKey's capture spells the key as Unity would
 import { isOnlinePage, onlineForcedPref, onlineForcedModSetting } from '../systems/onlineLane.js';   // OL1: online is the enhanced lane, whole - a forced switch is shown locked   // ROADS 24; DS1: the integer keys; UL1: the choice keys
 import { CREDITS } from './credits.js';   // CR1: who made what the port carries
 // FIX-F (Mac: "changing keybinds in classic/enhanced do not work"): the
@@ -1481,6 +1482,36 @@ function modRow(vendor, key, def, { name = null, note = null, home = false } = {
       return b;
     };
     ctl.append(step(-1, '\u2039'), val, step(1, '\u203a'));
+  } else if (isTextKey(def)) {
+    // HT1: a TextKey (Handheld Torches' three bindings) - the value is
+    // a Unity KeyCode NAME; the button captures the next key and
+    // stores its name, refusing a key Unity has no member for. Escape
+    // cancels the capture.
+    const b = el('button', 'act rowact', modSetting(vendor, key));
+    b.onclick = () => {
+      b.textContent = 'press a key';
+      const onKey = (e) => {
+        e.preventDefault(); e.stopPropagation();
+        removeEventListener('keydown', onKey, true);
+        const name = e.code === 'Escape' ? null : keyCodeForDomCode(e.code);
+        b.textContent = name ? setModSetting(vendor, key, name) : modSetting(vendor, key);
+      };
+      addEventListener('keydown', onKey, true);
+    };
+    ctl.append(b);
+  } else if (isTupleKey(def)) {
+    // HT1: a TupleIntKey / TupleFloatKey - two steppers, one a half
+    const pair = () => modSetting(vendor, key);
+    const stepOf = def.tuple === 'int' ? 1 : (def.step ?? 0.1);
+    for (const i of [0, 1]) {
+      const val = el('span', 'val', String(pair()[i]));
+      const step = (delta, label) => {
+        const b = el('button', 'step', label);
+        b.onclick = () => { const cur = [...pair()]; cur[i] += delta * stepOf; val.textContent = String(setModSetting(vendor, key, cur)[i]); };
+        return b;
+      };
+      ctl.append(step(-1, '\u2039'), val, step(1, '\u203a'));
+    }
   } else if (isFloatKey(def)) {
     // WW1: a SliderFloatKey - the same stepper over the key's own step
     const val = el('span', 'val', String(modSetting(vendor, key)));
