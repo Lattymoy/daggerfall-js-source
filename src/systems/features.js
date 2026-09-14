@@ -147,6 +147,29 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'enhancedWater' }),
   }),
+  // FT7 (2026-09-14): THE TWO QUALITY TIERS OF THE ENHANCED OUTDOORS
+  // (PERF1) - the grass field's fraction and the clouds' march. Both
+  // are inert unless the outdoors row above is on (world.js gates the
+  // grass on enhancedEnvironments; the clouds ride the enhanced lane),
+  // which each note now says. Enhanced, the port's own dials.
+  Object.freeze({
+    id: 'grass-density',
+    title: 'Grass density',
+    note: 'How much of the meadow grows under the enhanced outdoors: the full field, half, a quarter, or none. '
+      + 'The single heaviest thing outdoors - try half first if the FPS counter says the frame is the GPU\u2019s.',
+    effect: 'Takes effect when the world next loads.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'grassDensity', tiers: Object.freeze([[1, 'Full'], [0.5, 'Half'], [0.25, 'Quarter'], [0, 'Off']]) }),
+  }),
+  Object.freeze({
+    id: 'cloud-quality',
+    title: 'Cloud quality',
+    note: 'How finely the volumetric clouds over the enhanced outdoors are marched. Low is a coarser sky map with fewer steps; '
+      + 'High is for a machine with room to spare.',
+    effect: 'Takes effect when the world next loads.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'cloudQuality', tiers: Object.freeze([['default', 'Default'], ['lo', 'Low'], ['hi', 'High']]) }),
+  }),
 ]);
 
 /** The row whose control is this store's key, or null. The settings

@@ -64,8 +64,8 @@ finding and the move.
 | `enhancedEnvironments` | Enhanced environments | on | **MOVED (FT4, 2026-09-14)** - condensed with Dynamic Skies' `Enabled` into one three-way row wearing both labels |
 | `pixelatedSky` | Pixelated sky | on | **REMOVED (FT3, 2026-09-14, Mac: "Remove our version of pixelated sky")** - the pass, the pref, the row, the doors |
 | `landViewDistance` | Land view distance | 5 | **MOVED (FT2, 2026-09-14)** - condensed with `Experimental/TerrainDistance` into one row wearing both labels |
-| `grassDensity` | Grass density | 1 | open |
-| `cloudQuality` | Cloud quality | default | open |
+| `grassDensity` | Grass density | 1 | **MOVED (FT7, 2026-09-14)** - Enhanced; the note says it is under the outdoors row |
+| `cloudQuality` | Cloud quality | default | **MOVED (FT7, 2026-09-14)** - Enhanced; its tiers pinned as the march table's own keys |
 | `enhancedWater` | Enhanced water | on | **MOVED (FT6, 2026-09-14)** - Enhanced; the switch's composition given one home first |
 | `enhancedCombatVisuals` | Enhanced combat visuals | on | open |
 | `mwArms` | (no switch - a load/unload button under Morrowind data) | off | open. Needs a real switch on the list |
@@ -119,6 +119,7 @@ Video/GUI keys that are features rather than settings.
 - **FT4** - SHIPPED 2026-09-14. The outdoors, one row. Below.
 - **FT5** - SHIPPED 2026-09-14. Enhanced AI. Below.
 - **FT6** - SHIPPED 2026-09-14. Enhanced water. Below.
+- **FT7** - SHIPPED 2026-09-14. Grass density and cloud quality. Below.
 - One slice per open row after that, in the order Mac picks.
 
 ## FT0 - THE HOME (2026-09-14)
@@ -334,3 +335,18 @@ pinned as knowing nothing of it.
 
 **The row.** Enhanced, over the pref, on by default; the words are
 WATER1's. `test/ft6_water.test.js`.
+
+## FT7 - GRASS DENSITY AND CLOUD QUALITY (2026-09-14)
+
+The two quality tiers of the enhanced outdoors (PERF1), taken together
+because they are the same shape. **The audit.** Both the port's own
+dials; both INERT unless the outdoors row is on - the world host gates
+the grass on `enhancedEnvironments`, the clouds ride the enhanced lane
+- which neither note said. Both say it now. The cloud tiers are pinned
+as the march table's own keys, both ways, so a QUALITY the clouds can be
+built at is always a tier and a tier is always a QUALITY. **The rows.**
+Enhanced, over their prefs, PERF1's tiers and defaults.
+`test/ft7_quality.test.js`.
+
+What is left in the Enhanced category of Settings: the combat visuals,
+and the outdoors test door (a test door, not a switch).

@@ -1146,14 +1146,7 @@ function portRowsEnhanced({ pause = false } = {}) {
   // FT5: the enemy-motor switch moved to the Features home (systems/features.js).
   // FT4: Enhanced environments moved to the Features home (systems/features.js) - one three-way row with Dynamic Skies.
   // FT2: Land view distance moved to the Features home (systems/features.js) - one row for both lanes.
-  out.push(choiceRow('grassDensity', 'Grass density',
-    'How much of the meadow grows: the full field, half, a quarter, or none. The single heaviest thing outdoors - '
-    + 'try half first if the FPS counter says the frame is the GPU\u2019s. Takes effect when the world next loads.',
-    [[1, 'Full'], [0.5, 'Half'], [0.25, 'Quarter'], [0, 'Off']]));
-  out.push(choiceRow('cloudQuality', 'Cloud quality',
-    'How finely the volumetric clouds are marched. Low is a coarser sky map with fewer steps; High is for a machine with room to spare. '
-    + 'Takes effect when the world next loads.',
-    [['default', 'Default'], ['lo', 'Low'], ['hi', 'High']]));
+  // FT7: Grass density and Cloud quality moved to the Features home (systems/features.js).
   // FT6: Enhanced water moved to the Features home (systems/features.js).
   }
   out.push(prefRow('enhancedCombatVisuals', 'Enhanced combat visuals',
