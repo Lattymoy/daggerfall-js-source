@@ -132,6 +132,21 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'enhancedAI' }),
   }),
+  // FT6 (2026-09-14): ENHANCED WATER (WATER1) - the surface pass over the
+  // terrain's water tiles on the enhanced skin; off, or the classic
+  // skin, draws DFU's flat tile. The switch's composition has one home
+  // now (render/waterSurface.js waterSwitchOn); `?water=off` is the kill door.
+  Object.freeze({
+    id: 'enhanced-water',
+    title: 'Enhanced water',
+    note: 'The oceans, rivers and ponds drawn as water: waves that rise with the wind, the sky and the '
+      + 'sun reflected off the surface, the moon\u2019s glint at night, rain pocking it, the clouds\u2019 '
+      + 'shadows crossing it, and the shore feathered along its own edge. Off returns Daggerfall\u2019s '
+      + 'flat water tile.',
+    effect: 'Takes effect when the world next loads.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'enhancedWater' }),
+  }),
 ]);
 
 /** The row whose control is this store's key, or null. The settings

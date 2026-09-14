@@ -1154,11 +1154,7 @@ function portRowsEnhanced({ pause = false } = {}) {
     'How finely the volumetric clouds are marched. Low is a coarser sky map with fewer steps; High is for a machine with room to spare. '
     + 'Takes effect when the world next loads.',
     [['default', 'Default'], ['lo', 'Low'], ['hi', 'High']]));
-  out.push(prefRow('enhancedWater', 'Enhanced water',
-    'The oceans, rivers and ponds drawn as water: waves that rise with the wind, the sky and the '
-    + 'sun reflected off the surface, the moon\u2019s glint at night, rain pocking it, the clouds\u2019 '
-    + 'shadows crossing it, and the shore feathered along its own edge. Off returns Daggerfall\u2019s '
-    + 'flat water tile. Takes effect when the world next loads.'));
+  // FT6: Enhanced water moved to the Features home (systems/features.js).
   }
   out.push(prefRow('enhancedCombatVisuals', 'Enhanced combat visuals',
     'How a magically concealed enemy is drawn. Classic Daggerfall and Daggerfall Unity hide it '

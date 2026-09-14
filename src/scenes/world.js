@@ -19,7 +19,7 @@ import { settlementsOf, loadModRoads } from '../world/roadsProducer.js';   // RO
 import { modSetting } from '../systems/modSettings.js';   // ROADS 24
 import { WoodsFile, MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
 import { buildTerrainGrid, buildTerrainIndices, isOutdoorWaterTile, TERRAIN_TILE_DIM, TERRAIN_SKIRT_DEPTH } from '../world/terrainSurface.js';
-import { waterUniforms, buildWaterIndices } from '../render/waterSurface.js';   // WATER1: the enhanced water surface over the pixel's own grid; WATER-AUDIT: its own index set
+import { waterUniforms, buildWaterIndices, waterSwitchOn } from '../render/waterSurface.js';   // WATER1: the enhanced water surface over the pixel's own grid; WATER-AUDIT: its own index set
 import { windowEmissionRGB } from '../render/windowEmission.js';
 import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights } from '../world/cityLights.js';
 import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the PLAYER carries
@@ -583,7 +583,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   let labGrassField = null;   // GR5: the world-anchored field, filled a cell or two a frame
   // WATER1: the water surface - enhanced skin, its own switch, `?water=off`
   // the kill door. A draw only: nothing here tells the game where water is.
-  const waterOn = isEnhanced() && getPref('enhancedWater') && new URLSearchParams(globalThis.location?.search ?? '').get('water') !== 'off';
+  const waterOn = waterSwitchOn();   // FT6: the one composition (render/waterSurface.js)
   let lightning = weather === 'thunder'
     ? new LightningPlayer(Number(params.get('wseed')) || 1) : null;
   // WX2: THE FRONT REACHES THE GROUND (systems/weatherFront.js). The sim's

@@ -66,7 +66,7 @@ finding and the move.
 | `landViewDistance` | Land view distance | 5 | **MOVED (FT2, 2026-09-14)** - condensed with `Experimental/TerrainDistance` into one row wearing both labels |
 | `grassDensity` | Grass density | 1 | open |
 | `cloudQuality` | Cloud quality | default | open |
-| `enhancedWater` | Enhanced water | on | open |
+| `enhancedWater` | Enhanced water | on | **MOVED (FT6, 2026-09-14)** - Enhanced; the switch's composition given one home first |
 | `enhancedCombatVisuals` | Enhanced combat visuals | on | open |
 | `mwArms` | (no switch - a load/unload button under Morrowind data) | off | open. Needs a real switch on the list |
 | `hudScale`, `showFps`, `textScale`, `skin`, `touch*`, `online*` | scattered | - | NOT features. Settings, and they stay in Settings |
@@ -118,6 +118,7 @@ Video/GUI keys that are features rather than settings.
 - **FT3** - SHIPPED 2026-09-14. The pixelated sky removed. Below.
 - **FT4** - SHIPPED 2026-09-14. The outdoors, one row. Below.
 - **FT5** - SHIPPED 2026-09-14. Enhanced AI. Below.
+- **FT6** - SHIPPED 2026-09-14. Enhanced water. Below.
 - One slice per open row after that, in the order Mac picks.
 
 ## FT0 - THE HOME (2026-09-14)
@@ -317,3 +318,19 @@ two things, one dead. The DFU key stays in Settings as the unavailable
 row it is - a row for it on the home would be a lie with a switch. The
 readers pin (AUDIT 55) moved its menu reader to the registry.
 `test/ft5_enhancedai.test.js`.
+
+## FT6 - ENHANCED WATER (2026-09-14)
+
+**The audit.** WATER1's switch - the enhanced skin, the pref, the
+`?water=off` kill door - was composed inline in BOTH exterior hosts,
+word for word (`world.js`, `exterior.js`): two copies of one law, the
+shape ONE DFU MEMBER, ONE EXPORT exists to stop, on a law of the port's
+own. It is `render/waterSurface.js` `waterSwitchOn` now, and both hosts
+read it; the town still asks `tilemapRectHasWater` beside it, which is
+the town's question, not the switch's. THE FOUR HOSTS, named: the two
+exterior hosts read the switch; `worldModes.js` (interiors) and
+`dungeonContext.js` have no terrain grid to shade and draw no water,
+pinned as knowing nothing of it.
+
+**The row.** Enhanced, over the pref, on by default; the words are
+WATER1's. `test/ft6_water.test.js`.
