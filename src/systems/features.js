@@ -26,6 +26,7 @@ import { PREF_DEFAULTS } from './uiPrefs.js';
 import { ALL_KEYS } from './settings.js';
 import { MOD_SETTINGS } from './modSettings.js';
 import { LAND_VIEW_TIERS, landViewRead, landViewWrite } from '../world/landView.js';   // FT2: the one row for both lanes
+import { OUTDOORS_TIERS, OUTDOORS_DEFAULT, outdoorsRead, outdoorsWrite } from '../world/outdoors.js';   // FT4: the outdoors as one three-way row
 
 /** The three kinds, in label order. `label` is what the row wears and
  *  the chip says; the colour is the skin's (ui/enhancedStyle.js .kind). */
@@ -41,14 +42,16 @@ export const STORES = Object.freeze(['prefs', 'settings', 'mods']);
 
 /** The rows. Shape:
  *    { id, title, note, effect?, kinds: [kind, ...],
- *      control: { store: 'prefs',    key, tiers?: [[value, label], ...], read?: () => value, write?: (value) => void }
+ *      control: { store: 'prefs',    key, tiers?: [[value, label], ...], default?: value, read?: () => value, write?: (value) => void }
  *             | { store: 'settings', key: 'Section/Key' }
  *             | { store: 'mods',     vendor, key } }
  *  `effect` is the "takes effect when" line, if the switch has one.
  *  `read`/`write` (FT2) let a row that CONDENSES two stores show the
  *  live one and write both; absent, the row is getPref/setPref over its key.
  *  `also` (FT2) names the OTHER controls the row's write covers, so their
- *  own panes draw a pointer to this row instead of a second switch. */
+ *  own panes draw a pointer to this row instead of a second switch.
+ *  `default` (FT4) is the tier a condensed row reads at the stores' own
+ *  defaults, when its tiers are not the pref's values. */
 export const FEATURES = Object.freeze([
   // FT1 (2026-09-14): SMALLER DUNGEONS - DFU's Experimental/SmallerDungeons,
   // ported 1:1 at AUDIT 28 W4 (world/smallerDungeons.js). Mac's first
@@ -83,6 +86,29 @@ export const FEATURES = Object.freeze([
     control: Object.freeze({
       store: 'prefs', key: 'landViewDistance', tiers: LAND_VIEW_TIERS, read: landViewRead, write: landViewWrite,
       also: Object.freeze([Object.freeze({ store: 'settings', key: 'Experimental/TerrainDistance' })]),   // written by landViewWrite, capped at 4
+    }),
+  }),
+  // FT4 (2026-09-14): THE OUTDOORS - Mac's own condensing example. EE1's
+  // Enhanced environments (the port's) and Dynamic Skies' Enabled (the
+  // mod's) decided the sky between them from two panes. One three-way
+  // row: Daggerfall's outdoors, the enhanced outdoors under the port's
+  // dome, or under Dynamic Skies' skybox (world/outdoors.js).
+  Object.freeze({
+    id: 'enhanced-environments',
+    title: 'Enhanced environments',
+    note: 'The enhanced outdoors: a procedural sky with the sun, both moons on their real phases and a star field, '
+      + 'a finely stepped sunrise and sunset, volumetric clouds that build with the weather, drift on the wind and cast '
+      + 'their shadows on the land, rain and snow that fall through the world around you, a sky that turns through the day '
+      + 'rather than only at midnight, and a million blades of grass in the meadows bending in the same wind. '
+      + 'Off returns Daggerfall\u2019s SKY*.DAT panorama and its own weather. On, the sky is either the port\u2019s own dome '
+      + 'or Dynamic Skies\u2019 skybox (BadLuckBurt and carademono, carried with permission): its sun and scattering, '
+      + 'textured cloud layers per weather, twinkling stars, both moons on their orbits, its fog, its longer sunrise and sunset, '
+      + 'and a lightning flash under thunder. The mod\u2019s fog density and pixel-snow knobs stay on the Mods page.',
+    effect: 'Takes effect when the world next loads.',
+    kinds: Object.freeze(['enhanced', 'mod']),
+    control: Object.freeze({
+      store: 'prefs', key: 'enhancedEnvironments', tiers: OUTDOORS_TIERS, default: OUTDOORS_DEFAULT, read: outdoorsRead, write: outdoorsWrite,
+      also: Object.freeze([Object.freeze({ store: 'mods', vendor: 'dynamic-skies', key: 'Enabled' })]),   // written by outdoorsWrite while the outdoors are on
     }),
   }),
 ]);
@@ -124,7 +150,11 @@ export function checkFeature(f) {
   else if (!storeHas(c)) out.push(`${c.store} has no key '${c.store === 'mods' ? `${c.vendor}/` : ''}${c.key}'`);
   else if (c.store === 'prefs' && c.tiers !== undefined) {
     if (!Array.isArray(c.tiers) || !c.tiers.length) out.push('tiers is not a list');
-    else if (!c.tiers.some(([v]) => String(v) === String(PREF_DEFAULTS[c.key]))) out.push(`tiers do not include the default ${PREF_DEFAULTS[c.key]}`);
+    else {
+      // FT4: a condensed row's tiers are its own vocabulary, so it names its default itself
+      const def = c.default ?? PREF_DEFAULTS[c.key];
+      if (!c.tiers.some(([v]) => String(v) === String(def))) out.push(`tiers do not include the default ${def}`);
+    }
   }
   if (c && typeof c === 'object' && c.also !== undefined) {
     // FT2: every control the row ALSO covers is a real key of its store

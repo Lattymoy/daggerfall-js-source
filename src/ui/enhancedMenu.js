@@ -1149,17 +1149,7 @@ function portRowsEnhanced({ pause = false } = {}) {
     + 'attacks stay classic; only the way an enemy moves changes. Dungeons for now - towns, interiors and '
     + 'doors are still to come, and enemies bunch up until the crowd slice lands. Takes effect on the '
     + 'next dungeon you enter. Off keeps the 1:1 classic motor.'));
-  out.push(prefRow('enhancedEnvironments', 'Enhanced environments',
-    'The enhanced outdoors: a procedural sky with the sun, both moons on their real phases, a star '
-    + 'field, a finely stepped sunrise and sunset, volumetric clouds that build with the weather and drift on the wind, '
-    + 'cast their shadows on the land; and rain and snow that fall through the world around you, '
-    + 'driven by the wind, rather than across the screen, arriving and clearing with the front - and the sky '
-    + 'turns through the day rather than only at midnight, a clear morning clouding over by noon and raining by dusk - '
-    + 'instead of switching on and off; and the prototype\u2019s grass, a million '
-    + 'blades in the meadows, bending in the same wind. Off returns Daggerfall\u2019s SKY*.DAT '
-    + 'panorama and its own weather. Takes effect when the world next loads. The sky is the port\u2019s own dome; '
-    + 'Dynamic Skies\u2019 skybox (BadLuckBurt and carademono, carried with permission - see the Mods pane and About) '
-    + 'replaces it while its own switch there is on.'));   // DS1; VC1: the dome is the default
+  // FT4: Enhanced environments moved to the Features home (systems/features.js) - one three-way row with Dynamic Skies.
   // FT2: Land view distance moved to the Features home (systems/features.js) - one row for both lanes.
   out.push(choiceRow('grassDensity', 'Grass density',
     'How much of the meadow grows: the full field, half, a quarter, or none. The single heaviest thing outdoors - '

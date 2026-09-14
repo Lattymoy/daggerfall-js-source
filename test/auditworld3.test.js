@@ -63,7 +63,10 @@ test('AUDIT WORLD3 A: the relay - the act fan spends a BYTE budget (the frame ti
   const out = JSON.stringify({ t: 'act', id: 'join-0002', data: act });
   const spent = ACT_ROOM_BYTES_PER_S - r.room._roomActBytes.bytes;
   assert.equal(spent, out.length * 2, `A1: the fan cost the budget the frame times its TWO listeners (${spent} for ${out.length} x 2)`);
-  r.room._roomActBytes = { bytes: 10, at: Date.now() };   // the budget spent
+  // the budget spent - stamped a minute AHEAD, because byteGate refills at a MiB a second and a
+  // millisecond of scheduling delay under a full-suite run refilled the frame's 300 bytes (the
+  // pin flaked green-then-red on the clock, not the law; `Math.max(0, ...)` makes a future stamp refill nothing)
+  r.room._roomActBytes = { bytes: 10, at: Date.now() + 60_000 };
   await r.raw(j1, frame);
   assert.equal(ofType(h, 'act').length, 1, 'A1: over the byte budget - dropped'); assert.equal(j1.closed, null, 'and no strike');
   r.room._roomActBytes = { bytes: 10, at: Date.now() - 1000 };   // a second on: refilled

@@ -171,7 +171,7 @@ test('R7/SO1: the Enhanced CATEGORY carries the port\'s own switches, every one 
   for (const m of pane.matchAll(/(?:prefRow|choiceRow)\('(\w+)'/g)) {
     assert.match(prefs, new RegExp(`\\n\\s*${m[1]}:`), `the category toggles '${m[1]}', which is not a uiPrefs key`);
   }
-  assert.match(pane, /prefRow\('enhancedEnvironments'/, 'the ES1 sky must be a real switch');
+  assert.ok(!/prefRow\('enhancedEnvironments'/.test(pane), 'FT4: the ES1 sky\'s switch is the Features home\'s three-way row now (systems/features.js), not a category row');
   for (const gone of ['music', 'mwfp', 'roads']) assert.ok(!new RegExp(`prefRow\\('${gone}`).test(pane), `${gone} has no engine in this tree and must not be a switch`);
   assert.ok(!/not built/.test(pane), 'no row labels a shipped thing a hole');
   const ui = src.slice(src.indexOf('function portRowsInterface('), src.indexOf('function portRows('));
@@ -384,9 +384,9 @@ test('EE1: one switch for the whole outdoors, migrated once from the old sky ans
   assert.match(prefs, /if \(p\.enhancedEnvironments === undefined && p\.proceduralSky !== undefined\) \{\s*\n\s*_prefs\.enhancedEnvironments = !!p\.proceduralSky;/,
     'a player who switched the sky off must not be surprised by a lit world');
   const menu = read('src/ui/enhancedMenu.js');
-  assert.match(menu, /prefRow\('enhancedEnvironments', 'Enhanced environments',/);
+  assert.ok(!/prefRow\('enhancedEnvironments'/.test(menu), 'FT4: Enhanced environments left the Enhanced category for the Features home (systems/features.js)');
   assert.ok(!/prefRow\('proceduralSky'/.test(menu), 'the old row must be gone, not doubled');
-  assert.match(menu, /a procedural sky with the sun, both moons/, 'the row claims what the tree has: the sky and the weather');
+  assert.match(read('src/systems/features.js'), /a procedural sky with the sun, both moons/, 'the row claims what the tree has: the sky and the weather (FT4: the words are the registry\'s now)');
   const shared = read('src/scenes/shared.js');
   assert.match(shared, /params\.get\('sky'\) !== 'classic' && getPref\('enhancedEnvironments'\)/);
   // nothing outside uiPrefs reads the retired key at runtime - src AND tools

@@ -165,7 +165,7 @@ test('SO1: the settings pane is organised - the port\'s rows sit in the categori
   const from = menu.indexOf('function portRowsEnhanced('); const pane = menu.slice(from, menu.indexOf('\n}', from));
   const prefs = src('systems/uiPrefs.js');
   for (const m of pane.matchAll(/(?:prefRow|choiceRow)\('(\w+)'/g)) assert.match(prefs, new RegExp(`\\n\\s*${m[1]}:`), `'${m[1]}' is a uiPrefs key`);
-  for (const k of ['enhancedAI', 'enhancedEnvironments', 'grassDensity', 'cloudQuality', 'enhancedWater', 'enhancedCombatVisuals']) assert.match(pane, new RegExp(`(?:prefRow|choiceRow)\\('${k}'`), k);
+  for (const k of ['enhancedAI', 'grassDensity', 'cloudQuality', 'enhancedWater', 'enhancedCombatVisuals']) assert.match(pane, new RegExp(`(?:prefRow|choiceRow)\\('${k}'`), k);   // FT2/FT4: landViewDistance and enhancedEnvironments moved to the Features home
   assert.match(pane, /if \(!pause\) out\.push\(outdoorsTestRow\(\)\);/, 'the outdoors test door, boot only');
   // the touch knobs under Controls, where a finger's device looks; the skin, the HUD size and the FPS counter under Interface
   const ctl = menu.slice(menu.indexOf('function portRowsControls('), menu.indexOf('function portRowsInterface('));

@@ -29,7 +29,7 @@ the one switch drives the two keys. Candidates already visible:
 
 | Row | Labels | Today's switches | Note |
 |---|---|---|---|
-| The outdoors sky | Enhanced + Mod Authored | `enhancedEnvironments`, Dynamic Skies `Enabled` | Mac's example. One sky, two switches in two panes (`pixelatedSky` was the third until FT3 removed it) |
+| The outdoors sky | Enhanced + Mod Authored | `enhancedEnvironments`, Dynamic Skies `Enabled` | **CONDENSED (FT4, 2026-09-14)** - one three-way row: off, the port's sky, Dynamic Skies' sky (`pixelatedSky` was a third switch until FT3 removed it) |
 | Land view distance | Enhanced + DFU Classic | `landViewDistance`, `Experimental/TerrainDistance` | **CONDENSED (FT2, 2026-09-14)** - one row, shows the lane's radius, writes both stores |
 | Enemy movement | Enhanced + DFU Classic | `enhancedAI`, `Enhancements/EnhancedCombatAI` | NOT a merge - different things, one dead. The slice decides what the row says |
 | Monster stats | Mod Authored x2 | Meaner Monsters `Enabled`, PCAAO `Enabled` | the meaner numbers change under the overhaul; one row may explain both |
@@ -61,7 +61,7 @@ finding and the move.
 | Key | Row today | Default | Status / notes |
 |---|---|---|---|
 | `enhancedAI` | Enhanced AI | off | open. NAME COLLIDES with DFU's `Enhancements/EnhancedCombatAI` (below), which is a different thing and unavailable |
-| `enhancedEnvironments` | Enhanced environments | on | open. One switch over sky, ground, clouds, grass, weather; overlaps Dynamic Skies' `Enabled` and its pixel snow |
+| `enhancedEnvironments` | Enhanced environments | on | **MOVED (FT4, 2026-09-14)** - condensed with Dynamic Skies' `Enabled` into one three-way row wearing both labels |
 | `pixelatedSky` | Pixelated sky | on | **REMOVED (FT3, 2026-09-14, Mac: "Remove our version of pixelated sky")** - the pass, the pref, the row, the doors |
 | `landViewDistance` | Land view distance | 5 | **MOVED (FT2, 2026-09-14)** - condensed with `Experimental/TerrainDistance` into one row wearing both labels |
 | `grassDensity` | Grass density | 1 | open |
@@ -75,7 +75,7 @@ finding and the move.
 
 | Vendor | Mod | Author | Switches | Status / notes |
 |---|---|---|---|---|
-| `dynamic-skies` | Dynamic Skies 2.3.4 | BadLuckBurt and carademono | Enabled + 5 | open. `MaxParticles` is read and never applied (AUDIT 61, carried as it ships) |
+| `dynamic-skies` | Dynamic Skies 2.3.4 | BadLuckBurt and carademono | Enabled + 5 | `Enabled` **COVERED (FT4)** by the outdoors row - the Mods pane's row is a pointer; the five knobs open. `MaxParticles` is read and never applied (AUDIT 61, carried as it ships) |
 | `seasons-iliac-bay` | Seasons of the Iliac Bay | RosyTheRascal | Enabled | open |
 | `roads-hazelnut` | Basic Roads 1.3.1 | Hazelnut | Enabled + 2 | open. BR3 (today) found it had no switch at all until this morning |
 | `meanerMonsters` | Meaner Monsters 1.5.2 | Ralzar | Enabled | open. Its text says "with the combat overhaul on, Kirk.O's edit takes over" - check that gate against PCAAO's own switch |
@@ -116,6 +116,7 @@ Video/GUI keys that are features rather than settings.
 - **FT1** - SHIPPED 2026-09-14. Smaller Dungeons. Below.
 - **FT2** - SHIPPED 2026-09-14. Land view distance, the first condensed row. Below.
 - **FT3** - SHIPPED 2026-09-14. The pixelated sky removed. Below.
+- **FT4** - SHIPPED 2026-09-14. The outdoors, one row. Below.
 - One slice per open row after that, in the order Mac picks.
 
 ## FT0 - THE HOME (2026-09-14)
@@ -261,3 +262,32 @@ Records: Ledger rows PS1, PS2, ES1g struck; the ENHANCED SKY row and
 the Rendering-Arc ES1e/ES1f headings say REMOVED; the Enhanced-Visuals
 arc's three paragraphs carry the note at their heads. AUDIT 39 F53's
 star-layer pin keeps its 1/26 visibility bar as the bar it was.
+
+## FT4 - THE OUTDOORS, ONE ROW (2026-09-14)
+
+Mac's own condensing example: "our enhanced environments + dynamic
+skies". Two switches in two panes decided what the sky is - the
+Enhanced category's Enhanced environments (EE1, the whole enhanced
+outdoors as one switch) and the Mods pane's Dynamic Skies `Enabled`
+(the mod's skybox in place of the port's dome while the outdoors are
+enhanced) - and a player reading either could not see the other's hand
+in what they were looking at.
+
+**The row.** ONE row wearing Enhanced and Mod Authored, a THREE-WAY
+CHOICE (`world/outdoors.js`): Daggerfall's outdoors; the enhanced
+outdoors under the port's own sky; under Dynamic Skies' sky. It reads
+the two stores the way the host composes them (environments off is off
+whatever the mod says; on, the mod's switch picks the sky) and writes
+both - OFF leaves the mod's switch as it was, so off-and-on-again gets
+the sky the player had. The host's composition (`shared.js` enhancedLane,
+dynamicOn) is untouched: the row writes the stores that line reads.
+The mod's other knobs - fog density, the pixel snow - are the mod's own
+and stay on the Mods page; its `Enabled` row there is a pointer.
+
+**The registry grew** `control.default`: a condensed row's tiers are
+its own vocabulary, so it names its default itself, and the law checks
+it is a tier (the pref's own value, `true`, is no tier here).
+
+**Not done, by name.** The Enhanced category still holds the AI, the
+water, the grass, the clouds and the combat visuals - each its own
+slice. `test/ft4_outdoors.test.js`.
