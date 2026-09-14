@@ -553,3 +553,36 @@ SmallerDungeons and TerrainDistance, Video/RandomDungeonTextures, the
 seven Enhancements rows the home carries, and every vendored mod's
 `Enabled` on its card. `test/ft13_movedrows.test.js`; FT1's pointer
 pin re-aimed.
+
+## WIND3 - THE WIND'S THREE ROWS (2026-09-14)
+
+Mac: "World space wisps that indicate the direction of wind and wind
+audio without being too loud or overbearing; tree and flora sprite
+movement with wind." Three rows built in house for the home, each over
+its own pref, on by default like the other enhanced visuals, and each
+the PLAYER'S OWN online (`online: 'player'`) - a look and a sound the
+room has no stake in. All three are read every frame by the two
+exterior hosts, so a press takes effect at once, and each has a kill
+door: `wind-wisps` (`windWisps`, `?wisps=off`) - the wisps that show
+the wind; `wind-sound` (`windSound`, `?windaudio=off`) - the quiet loop
+on Daggerfall's own wind clips, silent indoors; `flora-sway`
+(`floraSway`, `?sway=off`) - the trees and plants leaning with the
+wind, the crown moving and the root still. The three drive off ONE
+mapping of the wind into working units (`systems/windDrive.js`), which
+the rain and the grass now read too - the record is
+`bible/07-Rendering/Rendering.md` WIND3. The home holds 26 rows now: 11
+Enhanced, 7 Mod Authored, 10 DFU Classic. Pins re-aimed: FT0's id list,
+FT2's and FT8's counts. `test/wind3_windworld.test.js`.
+
+## WEATHER2b - WEATHER AS PLACES, THE ROW (2026-09-14)
+
+Mac: "a dynamic world space event system where weather can be traveled
+out of and into." One row built in house for the home, `weather-events`
+over the pref `weatherEvents`, on by default and FORCED ON online
+(`online: true`): the field is the day's shared words as places, and
+two players under one sky must stand under one field. Read every
+exterior frame by the sim (`weatherSim.js` weatherFieldOn), so a press
+takes effect at once; `?wxfield=off` the kill door. The record is
+`bible/07-Rendering/Weather-Arc.md` B. The home holds 27 rows now: 12
+Enhanced, 7 Mod Authored, 10 DFU Classic. Pins re-aimed: FT0's id
+list, FT2's and FT8's counts. `test/weather2b_weatherfield.test.js`.

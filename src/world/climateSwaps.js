@@ -282,9 +282,15 @@ export function getNatureArchive(baseNatureArchive, season) {
  *  Morning Star, WINTER - put snow under every desert and the wrong
  *  archive family under MountainWoods. */
 export function getTerrainGroundArchive(climateSettings, season) {
-  let archive = climateSettings.groundArchive;
-  if (climateSettings.climateType !== BASE.Desert && season === SEASON.Winter) archive += 1;
-  return archive;
+  return climateSettings.groundArchive + (groundIsSnowy(climateSettings, season) ? 1 : 0);
+}
+
+/** WEATHER2a: THE GROUND WEARS SNOW - the one law getTerrainGroundArchive
+ *  keys its winter +1 on (every climate but a Desert base, in Winter),
+ *  named so the weather sim can ask the same question the terrain does:
+ *  rain on a ground that answers true here is the fault Mac saw. */
+export function groundIsSnowy(climateSettings, season) {
+  return climateSettings.climateType !== BASE.Desert && season === SEASON.Winter;
 }
 
 export function getGroundArchive(climateBase, season) {

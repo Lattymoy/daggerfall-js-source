@@ -190,6 +190,55 @@ const PUBLIC_ALLOWLIST = new Map([
   ['vendor/dynamic-skies/Textures/CdMThunder.png', "THIRD-PARTY - Dynamic Skies 2.3.4 (BadLuckBurt, carademono), carried on the authors' permission; PROVENANCE OPEN, Mac's ruling pending - see vendor/dynamic-skies/README.md"],
   ['vendor/dynamic-skies/Textures/VanillaStars.png', "THIRD-PARTY - Dynamic Skies 2.3.4 (BadLuckBurt, carademono), carried on the authors' permission; PROVENANCE OPEN, Mac's ruling pending - see vendor/dynamic-skies/README.md"],
   ['vendor/dynamic-skies/Textures/VanillaStarsTwinkleMask.png', "THIRD-PARTY - Dynamic Skies 2.3.4 (BadLuckBurt, carademono), carried on the authors' permission; PROVENANCE OPEN, Mac's ruling pending - see vendor/dynamic-skies/README.md"],
+  // HANDHELD TORCHES (HT1, vendor/handheld-torches/Textures/). Thirty-nine
+  // textures of a third-party mod, vendored whole with the author's
+  // permission (the line in vendor/handheld-torches/README.md) and
+  // published the same way. The pixels are the author's own: no ARENA2
+  // file shows a hand holding a torch or a torch lying on a floor - the
+  // 112359 sheets are a first-person hand holding a lit torch (90x205)
+  // or a lantern (110x138), the 112358 sheets are dropped lights with
+  // their emission twins and three doused frames, all drawn in
+  // Daggerfall's idiom rather than cut from it (the account:
+  // bible/06-Systems/Handheld-Torches.md, 'The textures, and the doctrine').
+  ['vendor/handheld-torches/Textures/112359_0-0.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the first-person hand holding a lit torch, frame 0"],
+  ['vendor/handheld-torches/Textures/112359_0-1.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the first-person hand holding a lit torch, frame 1"],
+  ['vendor/handheld-torches/Textures/112359_0-2.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the first-person hand holding a lit torch, frame 2"],
+  ['vendor/handheld-torches/Textures/112359_0-3.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the first-person hand holding a lit torch, frame 3"],
+  ['vendor/handheld-torches/Textures/112359_1-0.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the first-person hand holding a lit lantern, frame 0"],
+  ['vendor/handheld-torches/Textures/112359_1-1.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the first-person hand holding a lit lantern, frame 1"],
+  ['vendor/handheld-torches/Textures/112359_1-2.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the first-person hand holding a lit lantern, frame 2"],
+  ['vendor/handheld-torches/Textures/112359_1-3.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the first-person hand holding a lit lantern, frame 3"],
+  ['vendor/handheld-torches/Textures/112358_0-0.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - a dropped torch, frame 0"],
+  ['vendor/handheld-torches/Textures/112358_0-0_Emission.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the dropped torch's emission mask, frame 0"],
+  ['vendor/handheld-torches/Textures/112358_0-1.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - a dropped torch, frame 1"],
+  ['vendor/handheld-torches/Textures/112358_0-1_Emission.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the dropped torch's emission mask, frame 1"],
+  ['vendor/handheld-torches/Textures/112358_0-2.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - a dropped torch, frame 2"],
+  ['vendor/handheld-torches/Textures/112358_0-2_Emission.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the dropped torch's emission mask, frame 2"],
+  ['vendor/handheld-torches/Textures/112358_0-3.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - a dropped torch, frame 3"],
+  ['vendor/handheld-torches/Textures/112358_0-3_Emission.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the dropped torch's emission mask, frame 3"],
+  ['vendor/handheld-torches/Textures/112358_1-0.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - a dropped candle, frame 0"],
+  ['vendor/handheld-torches/Textures/112358_1-0_Emission.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the dropped candle's emission mask, frame 0"],
+  ['vendor/handheld-torches/Textures/112358_1-1.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - a dropped candle, frame 1"],
+  ['vendor/handheld-torches/Textures/112358_1-1_Emission.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the dropped candle's emission mask, frame 1"],
+  ['vendor/handheld-torches/Textures/112358_1-2.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - a dropped candle, frame 2"],
+  ['vendor/handheld-torches/Textures/112358_1-2_Emission.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the dropped candle's emission mask, frame 2"],
+  ['vendor/handheld-torches/Textures/112358_1-3.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - a dropped candle, frame 3"],
+  ['vendor/handheld-torches/Textures/112358_1-3_Emission.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the dropped candle's emission mask, frame 3"],
+  ['vendor/handheld-torches/Textures/112358_1-4.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - a dropped candle, frame 4"],
+  ['vendor/handheld-torches/Textures/112358_1-4_Emission.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the dropped candle's emission mask, frame 4"],
+  ['vendor/handheld-torches/Textures/112358_2-0.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - a dropped holy candle, frame 0"],
+  ['vendor/handheld-torches/Textures/112358_2-0_Emission.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the dropped holy candle's emission mask, frame 0"],
+  ['vendor/handheld-torches/Textures/112358_2-1.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - a dropped holy candle, frame 1"],
+  ['vendor/handheld-torches/Textures/112358_2-1_Emission.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the dropped holy candle's emission mask, frame 1"],
+  ['vendor/handheld-torches/Textures/112358_2-2.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - a dropped holy candle, frame 2"],
+  ['vendor/handheld-torches/Textures/112358_2-2_Emission.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the dropped holy candle's emission mask, frame 2"],
+  ['vendor/handheld-torches/Textures/112358_2-3.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - a dropped holy candle, frame 3"],
+  ['vendor/handheld-torches/Textures/112358_2-3_Emission.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the dropped holy candle's emission mask, frame 3"],
+  ['vendor/handheld-torches/Textures/112358_2-4.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - a dropped holy candle, frame 4"],
+  ['vendor/handheld-torches/Textures/112358_2-4_Emission.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the dropped holy candle's emission mask, frame 4"],
+  ['vendor/handheld-torches/Textures/112358_10-0.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - a doused torch, one frame, no emission"],
+  ['vendor/handheld-torches/Textures/112358_11-0.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - a doused candle, one frame, no emission"],
+  ['vendor/handheld-torches/Textures/112358_12-0.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - a doused holy candle, one frame, no emission"],
 ]);
 
 test('doctrine: nothing ships out of public/ that is not provably ours', () => {

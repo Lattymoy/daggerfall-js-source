@@ -2253,8 +2253,13 @@ export class CreateFoe extends ActionTemplate {
     // placement below is not a timer. OL3 stood the interval down with the Clock instead, and no wave ever came.
     const step = this.parentQuest.questClockStepMax?.() ?? Infinity;
     if (this.lastSpawnTime === 0) { this.lastSpawnTime = gameSeconds - this._range(this.spawnInterval); this._lastTick = gameSeconds; }
-    else if (this._lastTick == null) { if (!this.spawnInProgress && gameSeconds - this.lastSpawnTime > step) this.lastSpawnTime = gameSeconds; this._lastTick = gameSeconds; }   // a resume past a step: the time away is forgiven whole and the first wave waits a full interval from here (OL3's standing-up arm)
-    else { const forgiven = Math.max(0, gameSeconds - this._lastTick - step); if (forgiven > 0 && !this.spawnInProgress) this.lastSpawnTime += forgiven; this._lastTick = gameSeconds; }
+    // AUDIT WORLD7/8 A3: a marker AHEAD of the world (an offline save loaded online is game-weeks past the shared
+    // calendar; the relay's welcome can correct the clock backwards) spawned nothing for the whole offset - a
+    // backward gap online is a resume too: the marker stands here. A6: the marker moves on the in-flight path as well
+    // (the placement is not a timer, and an away mid-flight counted whole once the wave landed)
+    else if (this._lastTick == null) { if (Number.isFinite(step) && (gameSeconds - this.lastSpawnTime > step || gameSeconds < this.lastSpawnTime)) this.lastSpawnTime = gameSeconds; this._lastTick = gameSeconds; }   // a resume past a step: the time away is forgiven whole and the first wave waits a full interval from here (OL3's standing-up arm)
+    else if (Number.isFinite(step) && gameSeconds < this._lastTick) { this.lastSpawnTime = gameSeconds; this._lastTick = gameSeconds; }
+    else { const forgiven = Math.max(0, gameSeconds - this._lastTick - step); if (forgiven > 0) this.lastSpawnTime += forgiven; this._lastTick = gameSeconds; }
 
     // Max spawns reached - cleared only by a set/rearm
     if (this.spawnCounter >= this.spawnMaxTimes && this.spawnMaxTimes !== -1) return;

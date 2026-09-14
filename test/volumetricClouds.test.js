@@ -69,9 +69,9 @@ test('VC3: the light - the sun while it is up, else the brighter visible moon, d
 test('VC3: the map, the sweep, the drift - the numbers the rest of the outdoors already keeps', () => {
   // AUDIT 65 PN-2: the tiers by their literals. The inequalities below survived
   // halving every field of QUALITY.default at once; these do not.
-  assert.deepEqual(QUALITY.lo, { width: 512, height: 128, steps: 32, light: 4, shadow: 256, shadowSteps: 8 });
-  assert.deepEqual(QUALITY.default, { width: 1024, height: 256, steps: 56, light: 5, shadow: 512, shadowSteps: 12 });
-  assert.deepEqual(QUALITY.hi, { width: 2048, height: 512, steps: 80, light: 6, shadow: 1024, shadowSteps: 16 });
+  assert.deepEqual(QUALITY.lo, { width: 512, height: 128, steps: 32, light: 4, shadow: 256, shadowSteps: 8, cells: 3 });   // WEATHER2c: the tier's cell cap
+  assert.deepEqual(QUALITY.default, { width: 1024, height: 256, steps: 56, light: 5, shadow: 512, shadowSteps: 12, cells: 8 });
+  assert.deepEqual(QUALITY.hi, { width: 2048, height: 512, steps: 80, light: 6, shadow: 1024, shadowSteps: 16, cells: 8 });
   assert.equal(SWEEP_FRAMES, 8, 'a full re-march every eight frames');
   assert.ok(QUALITY.lo.width < QUALITY.default.width && QUALITY.default.width < QUALITY.hi.width, 'three tiers, rising');
   assert.ok(QUALITY.lo.steps < QUALITY.default.steps && QUALITY.default.steps < QUALITY.hi.steps);
@@ -117,7 +117,7 @@ test('VC3: the seam - the clouds ride the dome only, behind the one switch, on t
   const vc = read('src/render/volumetricClouds.js');
   assert.match(vc, /jump\(\) \{ this\.profile = null; this\.stripe = 0; this\.shadowFull = true; \}/);
   // VC4 review: the floating origin - the field is sampled at the ABSOLUTE position
-  assert.match(vc, /vec3 q = vec3\(p\.x \+ uShift\.x \+ uDrift\.x \+ uShear \* \(p\.y - uBase\), p\.y, p\.z \+ uShift\.y \+ uDrift\.y\);/, 'every sample carries the accumulated recenters');
+  assert.match(vc, /vec3 q = vec3\(p\.x \+ uShift\.x \+ uDrift\.x \+ fShear \* \(p\.y - fBase\), p\.y, p\.z \+ uShift\.y \+ uDrift\.y\);/, 'every sample carries the accumulated recenters (WEATHER2c: the shear and the base are the place\'s, resolved from the zone and its cells)');
   assert.match(vc, /offsetOrigin\(offset\) \{\s*\n\s*this\.shift\[0\] -= offset\[0\]; this\.shift\[1\] -= offset\[2\];\s*\n\s*this\.cam\[0\] \+= offset\[0\]; this\.cam\[1\] \+= offset\[2\];\s*\n\s*if \(this\.origin\) \{ this\.origin\[0\] \+= offset\[0\]; this\.origin\[1\] \+= offset\[2\]; \}/, 'a recenter moves the camera and the square with the world and keeps the map');
   assert.match(read('src/scenes/world.js'), /player\.offsetOrigin\(r\.offset\);[^\n]*\n\s*sky\.offsetOrigin\(r\.offset\);/, 'the host hands the recenter to the sky');
   assert.match(shared, /offsetOrigin\(offset\) \{ clouds\?\.offsetOrigin\(offset\); \},/);
@@ -170,7 +170,7 @@ test('VC3: the seam - the clouds ride the dome only, behind the one switch, on t
   assert.match(rr, /finally \{\s*\n\s*gl\.bindFramebuffer\(gl\.FRAMEBUFFER, null\);\s*\n(?:\s*\/\/[^\n]*\n)*\s*this\._restoreWorldViewport\(\);\s*\n\s*const cc = this\._clearColor;\s*\n\s*gl\.clearColor\(cc\[0\], cc\[1\], cc\[2\], cc\[3\]\);\s*\n\s*this\._proj = sp; this\._view = sv; this\._fogMode = sf;\s*\n\s*if \(sd\) \{ this\._cloudShadow = sd; this\._csStamp\+\+; \}\s*\n\s*\}/, 'and returned with the stamp bumped, whatever the draw did');
   assert.match(read('src/combat/fpArm.js'), /renderer\.renderCharacterSprite\(mesh, NIF_TO_PASS, proj, view, pw, ph, \{ lensLocal: true \}\)/, 'the arm says so');
   assert.doesNotMatch(read('src/render/characterSprite.js'), /lensLocal/, 'the rig sprite box is in the world: it keeps the deck');
-  assert.match(shared, /clouds\?\.setState\(enhancedSky\.state, weatherRowNow, weatherName, easeDt, driftXZ, extra\?\.flash \?\? 0, extra\?\.pos \?\? null\);/, 'the eased row, the front-stretched dt, the one drift integral, the host\'s flash and position');
+  assert.match(shared, /clouds\?\.setState\(enhancedSky\.state, weatherRowNow, weatherName, easeDt, driftXZ, extra\?\.flash \?\? 0, extra\?\.pos \?\? null, extra\?\.cells \?\? null\);/, 'the eased row, the front-stretched dt, the one drift integral, the host\'s flash and position (WEATHER2c: and the field\'s cells)');
   assert.match(shared, /draw\(yaw, pitch, fovY, aspect, viewport = \[0, 0, gl\.drawingBufferWidth, gl\.drawingBufferHeight\]\) \{\s*\n\s*\(enhancedSky \?\? dynamicSky \?\? sky\)\.draw\(yaw, pitch, fovY, aspect\);\s*\n\s*if \(clouds\) \{ clouds\.update\(viewport\); clouds\.draw\(yaw, pitch, fovY, aspect\); \}/, 'marched then composited after the dome, inside the host\'s marked span');
   const dome = read('src/render/enhancedSky.js');
   assert.match(dome, /gl\.uniform1f\(u\.uCloudCover, this\.cloudsExternal \? 0 : s\.cloudCover\);/, 'cover 0 to the dome\'s shader under the clouds; the state keeps the row\'s');

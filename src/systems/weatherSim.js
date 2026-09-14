@@ -43,6 +43,8 @@ import { WEATHER_TYPES } from '../world/weather.js';
 import { seededRng } from './wind.js';   // CLK2: the evolution's own generator - never the classic lane's sequence
 import { isEnhanced } from './uiSkin.js';   // CLK2: the evolution is the enhanced lane's
 import { getPref } from './uiPrefs.js';
+import { groundIsSnowy, climateSeasonFromMinutes } from '../world/climateSwaps.js';   // WEATHER2a: the terrain's own snow law
+import { fieldAt } from './weatherField.js';   // WEATHER2b: the day's words as places
 
 export { WEATHER_TYPES };
 
@@ -167,6 +169,7 @@ const stampRoll = (nowMinutes) => {
 
 let _climateWeathers = new Uint8Array(6);   // [Desert, Mountain, Rainforest, Swamp, Subtropical, Woodlands] (WeatherManager.cs:421-426)
 let _current = WEATHER_ENUM.sunny;          // PlayerWeather.WeatherType - the one persisted value
+let _raw = WEATHER_ENUM.sunny;              // WEATHER2a: the table's own word before the ground law (the wind's violence reads it - a storm turned to snow is a blizzard)
 let _climateWeathersRolled = false;         // StartGameBehaviour.cs:435-436's one-shot "Randomize weathers"
 let _climateWeathersValid = false;          // CLK2 review: the six values came from a real roll or an import - a loaded save stamps ROLLED without rolling (the array is all Sunny), and the evolution must not move off that
 let _updateFromClimateArray = false;        // WeatherManager.updateWeatherFromClimateArray (:105)
@@ -180,6 +183,9 @@ let _lastClimateBase = CLIMATE_BASE_TYPES.None;   // lastRespawnClimate (Weather
 // this stamp; the hosts read it once a frame and snap instead of
 // building. The classic path, which snaps on every change, reads nothing.
 let _jumps = 0;
+let _crossings = 0;   // WEATHER2b: the count of weather changes that were the player crossing a cell's edge (or a cell drifting over them) - a short front, not the day's three-hour lead
+let _fieldCells = [];   // WEATHER2b: the cells near the player at the last sample, in field metres (the clouds' cells)
+let _fieldInside = null;
 let _rolledAtMinutes = null;                 // when the day's array was rolled, to tell a stale drain from a live one
 let _zoneChangedAtMinutes = new Array(6).fill(null);   // CLK2 review: per zone, when the EVOLUTION last moved that slot (null: the day roll's stamp stands) - a zone the player cannot see never moves the stale clock
 /** A drain more than this many game minutes after its roll was a day the
@@ -188,6 +194,103 @@ export const STALE_DRAIN_MINUTES = 30;
 
 export const currentWeather = () => WEATHER_TYPES[_current];
 export const currentWeatherEnum = () => _current;
+/** WEATHER2a: the sim's word BEFORE the ground law - the wind model's
+ *  violence word, so a storm that fell as snow still blows like one. */
+export const currentWeatherRaw = () => WEATHER_TYPES[_raw];
+
+// ---- WEATHER2b (2026-09-14): THE WEATHER FIELD -------------------------
+// Mac: "a dynamic world space event system where weather can be
+// traveled out of and into instead of just starting and stopping in
+// your location." systems/weatherField.js is the law (the day's words as
+// cells over the land, drifting on the day's wind); this is its seam
+// into the sim. On the enhanced lane the player's word is what the
+// field says AT THE PLAYER - sampled every exterior frame after the
+// drain, at every travel and respawn arrival - and it goes through the
+// same `_set` (the ground law included). A change the sample makes on a
+// LIVE frame is a CROSSING: the player walked into the cell, or the cell
+// drifted over them. It is stamped apart from the jumps so the sky
+// builds a SHORT front for it (wind.js `arrive`, the sky eased on the
+// same short lead) rather than the day roll's three hours - the storm
+// was already in view. Behind Enhanced Environments and its own row on
+// the Features home (`weather-events`, the pref `weatherEvents`, forced
+// on online so one sky is shared); `?wxfield=off` the door.
+let _fieldOverride = null;   // tests: true/false; null reads the lane
+let _fieldUrlDoor = null;    // ?wxfield=off, read once (lazily)
+export function setWeatherFieldLaw(on) { _fieldOverride = on == null ? null : !!on; }
+export function weatherFieldOn() {
+  if (_fieldOverride !== null) return _fieldOverride;
+  _fieldUrlDoor ??= new URLSearchParams(globalThis.location?.search ?? '').get('wxfield') !== 'off';
+  return _fieldUrlDoor && isEnhanced() && !!getPref('enhancedEnvironments') && !!getPref('weatherEvents');
+}
+/** WEATHER2b: the count of crossings. A host keeps the last value it saw;
+ *  a new one means the change on this frame is a crossing - a short front. */
+export const weatherCrossingStamp = () => _crossings;
+/** WEATHER2b: the cells near the player at the last sample - { x, z, r, word, d }
+ *  in field metres, nearest first - for the clouds; and the one the player stands in. */
+export const currentFieldCells = () => _fieldCells;
+export const currentFieldCell = () => _fieldInside;
+/**
+ * The field sampled at the player. `at` is [mx, mz] in field metres,
+ * `climateAt(px, py)` the map's climate lookup, `how` what a change
+ * would be: 'live' (a crossing), 'drain' (the day's roll changed the
+ * words this frame - the drain's own front stands), 'jump' (an arrival).
+ * Answers true when the worn word changed. Nothing off the lane.
+ */
+export function sampleWeatherField(nowMinutes, climateIndex, at, climateAt, how = 'live') {
+  if (!weatherFieldOn() || !at || !climateAt) return false;
+  if (!_climateWeathersValid && !_climateWeathersRolled) return false;   // no words yet: the drain rolls them first
+  const f = fieldAt({ day: Math.floor(nowMinutes / 1440), minuteOfDay: nowMinutes % 1440, at, climateAt, wordOfClimate: (c) => WEATHER_TYPES[weatherForClimate(c)] });
+  _fieldCells = f.cells; _fieldInside = f.inside;
+  const changed = _set(WEATHER_ENUM[f.word], climateIndex, nowMinutes);
+  if (changed && how === 'live') _crossings++;
+  else if (changed && how === 'jump') _jumps++;
+  return changed;
+}
+
+// ---- WEATHER2a (2026-09-14): NO RAIN OVER SNOW -----------------------
+// Mac: "it can rain when there's snow on the ground." The table is the
+// Chronicles' and DFU's, digit for digit, and its winter rows carry rain
+// and thunder for every climate but the mountains - woodlands 10% rain,
+// the jungle 25% rain and 12% thunder, the swamp's spring... - while the
+// TERRAIN wears its snow archive for the whole of Winter in every
+// climate but a Desert base (climateSwaps.js getTerrainGroundArchive,
+// the 2026-09-01 incident's law). DFU draws exactly that: rain streaks
+// over snow ground, a storm over a white field. The classic lane keeps
+// it, 1:1. The ENHANCED lane funnels every write of the sim's word
+// through the ground: rain or thunder over a ground that wears snow
+// falls as SNOW (`overGround`), and the word the table rolled is kept
+// beside it (`_raw`) so the wind's violence is the storm's - a thunder
+// word on a winter ground is a blizzard, not a flurry. Behind Enhanced
+// Environments like the evolution (CLK2); `?snowground=off` the door.
+// The three writers - the day's drain, the travel arrival, the respawn
+// roll - go through ONE `_set`; the save's restore and the ?weather pin
+// take a word whole (a saved word was funnelled when it was set; a pin
+// is a probe's).
+let _snowGroundOverride = null;   // tests: true/false; null reads the lane
+let _snowGroundUrlDoor = null;    // ?snowground=off, read once (lazily)
+/** Tests and the lab: force the ground law on or off (null: the lane decides). */
+export function setSnowGroundLaw(on) { _snowGroundOverride = on == null ? null : !!on; }
+export function snowGroundLawOn() {
+  if (_snowGroundOverride !== null) return _snowGroundOverride;
+  _snowGroundUrlDoor ??= new URLSearchParams(globalThis.location?.search ?? '').get('snowground') !== 'off';
+  return _snowGroundUrlDoor && isEnhanced() && !!getPref('enhancedEnvironments');
+}
+/** The word the sky may wear over THIS ground now: rain or a storm on a
+ *  ground that wears snow is snow. Pure over the lane's answer. */
+export function overGround(word, climateIndex, nowMinutes) {
+  if (!snowGroundLawOn() || (word !== WEATHER_ENUM.rain && word !== WEATHER_ENUM.thunder)) return word;
+  if (nowMinutes == null || !Number.isFinite(nowMinutes)) return word;
+  return groundIsSnowy(getWorldClimateSettings(climateIndex), climateSeasonFromMinutes(nowMinutes)) ? WEATHER_ENUM.snow : word;   // an unknown climate takes the default's ground, as the terrain does
+}
+/** The ONE write of the sim's word from a roll or the array: the raw word
+ *  kept, the ground law applied. Answers true when the worn word changed. */
+function _set(next, climateIndex, nowMinutes) {
+  _raw = next;
+  const word = overGround(next, climateIndex, nowMinutes);
+  if (word === _current) return false;
+  _current = word;
+  return true;
+}
 
 /** SetWeather's state half - the presentation halves (fog, sky
  *  offset, sun scale...) derive from the NAME through world/weather.js
@@ -196,6 +299,7 @@ export function setWeather(type) {
   const w = typeof type === 'string' ? WEATHER_ENUM[type] : type;
   if (w == null) return false;
   _current = w;
+  _raw = w;   // WEATHER2a: a word taken whole is its own violence
   return true;
 }
 
@@ -236,19 +340,17 @@ export function weatherForClimate(climateIndex) {
  *  ON EVERY ARRIVAL, NOT FROZEN AFTER THE FIRST LOAD (AUDIT 58,
  *  seams lane), cited by name because a line number rots. Answers
  *  true when the weather changed. */
-export function applyClimateWeather(climateIndex) {
-  const changed = applyFromArray(climateIndex);
+export function applyClimateWeather(climateIndex, nowMinutes = null, at = null, climateAt = null) {
+  let changed = applyFromArray(climateIndex, nowMinutes);   // WEATHER2a: the arrival's minute, for the ground the sky lands over
   if (changed) _jumps++;   // WX2a: a world re-init is the PLAYER arriving, not the weather
+  if (at && climateAt && sampleWeatherField(nowMinutes, climateIndex, at, climateAt, changed ? 'drain' : 'jump')) changed = true;   // WEATHER2b: the field at the destination, one jump
   return changed;
 }
 
 /** The array slot applied, and nothing said about how it got there: the
  *  drain's half (a front, when live) and the travel arrival's (a jump). */
-function applyFromArray(climateIndex) {
-  const next = weatherForClimate(climateIndex);
-  if (next === _current) return false;
-  _current = next;
-  return true;
+function applyFromArray(climateIndex, nowMinutes) {
+  return _set(weatherForClimate(climateIndex), climateIndex, nowMinutes);   // WEATHER2a: through the ground
 }
 
 /** WX2a: the count of weather changes that were jumps. A host keeps the
@@ -309,7 +411,7 @@ export function tickWeather(nowMinutes, climateIndex, rolls = Math.random) {
   }
   if (!_updateFromClimateArray) return false;
   _updateFromClimateArray = false;
-  const changed = applyFromArray(climateIndex);
+  const changed = applyFromArray(climateIndex, nowMinutes);
   // WX2a: a LIVE drain - the day turned while the player stood under the
   // sky - is a front. A STALE one - the roll happened while they were
   // inside, and lands on the first frame back out - is a jump: the
@@ -327,13 +429,16 @@ export function tickWeather(nowMinutes, climateIndex, rolls = Math.random) {
  *  differs from the last one rolls DIRECTLY for the current climate
  *  and season - the immediate "different sky at the destination".
  *  Answers true when the weather changed. */
-export function weatherRespawn(nowMinutes, climateIndex, rolls = Math.random) {
+export function weatherRespawn(nowMinutes, climateIndex, rolls = Math.random, at = null, climateAt = null) {
   const base = getWorldClimateSettings(climateIndex).climateType;
   if (base === _lastClimateBase) return false;
   _lastClimateBase = base;
+  // WEATHER2b: under the field the destination's sky is the FIELD's word there - DFU's fresh roll for the
+  // climate stands down on the lane (the field is the day's words as places; a roll beside it would be a
+  // second sky), and the arrival is a jump either way
+  if (at && climateAt && weatherFieldOn()) return sampleWeatherField(nowMinutes, climateIndex, at, climateAt, 'jump');
   const next = rollWeather(climateIndex, seasonValue(dateFromClassicMinutes(nowMinutes)), rollsFor(nowMinutes, rolls, 1 + climateIndex));   // WORLD5: the day's and the climate's roll online
-  if (next === _current) return false;
-  _current = next;
+  if (!_set(next, climateIndex, nowMinutes)) return false;   // WEATHER2a: through the ground
   _jumps++;   // WX2a: the respawn's "different sky at the destination" is the player arriving under it
   return true;
 }
@@ -447,10 +552,13 @@ export function resetWeatherSim() {
   _sharedWeather = false;   // WORLD5
   _climateWeathers = new Uint8Array(6);
   _current = WEATHER_ENUM.sunny;
+  _raw = WEATHER_ENUM.sunny;   // WEATHER2a
+  _snowGroundOverride = null; _snowGroundUrlDoor = null;
   _climateWeathersRolled = false;
   _updateFromClimateArray = false;
   _lastClimateBase = CLIMATE_BASE_TYPES.None;
   _jumps = 0;
+  _crossings = 0; _fieldCells = []; _fieldInside = null; _fieldOverride = null; _fieldUrlDoor = null;   // WEATHER2b
   _rolledAtMinutes = null;
   _zoneChangedAtMinutes = new Array(6).fill(null);
   _climateWeathersValid = false;

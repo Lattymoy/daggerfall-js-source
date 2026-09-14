@@ -12,7 +12,7 @@ import { SkyFile } from '../formats/skyFile.js';
 import { SkyRenderer, buildDaySkyPanorama, buildNightSkyPanorama, buildFallbackSkyPanorama, nightSkyImageName } from '../render/skyRenderer.js';
 import { SEASON } from '../world/climateSwaps.js';
 import { skyFrameForTime, isNight, setLightCurve, daylightScale } from '../world/worldClock.js';   // DS1: isNight for the mod's moonlight, setLightCurve for the mod's own curve; CLK3 review: daylightScale for its moonlight's ramp
-import { createWindModel, FRONT_LEAD_MIN } from '../systems/wind.js';   // WIND1
+import { createWindModel } from '../systems/wind.js';   // WIND1; WEATHER2b: the lead is the front's own (leadMinutes)
 import { EnhancedSkyRenderer, skyState, easeWeather, weatherRow, CLOUD_SHADOW, moonlightTerm, WEATHER_EASE_MINUTES, WIND_SECONDS_PER_MINUTE } from '../render/enhancedSky.js';   // ES1: the enhanced sky, behind the skin; EV5: its moons light the world
 import { VolumetricClouds, QUALITY as CLOUD_QUALITY } from '../render/volumetricClouds.js';   // VC3: the clouds over the dome
 import { cloudsStateUnderMod, dynamicMoonState, dynamicMoonlight } from '../render/dynamicSkiesBridge.js';   // DS1/DS2: the mod's state in the port's shapes - the moons, the clouds, and the moons' own term (AUDIT 65 MC-3: the bridge's third export had no caller and this file carried its body inline)
@@ -209,6 +209,7 @@ export function createSkyController(gl, params) {
   const clouds = enhancedLane && cloudsDoor !== 'off'
     ? new VolumetricClouds(gl, Object.hasOwn(CLOUD_QUALITY, cloudsDoor) ? cloudsDoor : (Object.hasOwn(CLOUD_QUALITY, getPref('cloudQuality')) ? getPref('cloudQuality') : 'default'), [0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight]) : null;
   if (clouds && enhancedSky) enhancedSky.cloudsExternal = true;
+  if (clouds) clouds.testCellSpec = params.get('cloudcell');   // WEATHER2c: `?cloudcell=<weather>[,<ahead>[,<radius>]]` - one static cell, for the eye and the probe
   const dynamicSky = dynamicOn ? new DynamicSkiesRenderer(gl) : null;
   if (clouds && dynamicSky) dynamicSky.cloudsExternal = true;
   // PS3 (Mac: "there's these progressing circles in the sky when I want it
@@ -425,6 +426,10 @@ export function createSkyController(gl, params) {
       dynamic?.weatherJump();   // DS1: SaveLoadManager_OnLoad's forced re-apply
       clouds?.jump();   // VC3: the profile takes the new weather whole, both maps re-marched whole
     },
+    /** WEATHER2b: the sim's word changed by a CROSSING - the player walked
+     *  into a cell of the field, or it drifted over them. The wind builds
+     *  its front on the short lead and the sky eases on the same. */
+    weatherArrive() { windModel.arrive(); },
     /** ES1d: how much the world's KEY light is taken by the cloud that
      *  is in front of the sun this frame - the number the shader uses to
      *  hide the disc, handed to the light so the two agree. 1 under a
@@ -494,7 +499,7 @@ export function createSkyController(gl, params) {
         // gets up first and the sky darkens behind it - the storm
         // rolling in. `dt` is stretched or shrunk to make the ease's
         // own walk land on the front's clock.
-        windModel.tick(extra?.classicMinutes ?? 0, weatherName);
+        windModel.tick(extra?.classicMinutes ?? 0, weatherName, extra?.violence ?? weatherName);   // WEATHER2a: the violence word rides beside the worn one
         // WIND2 (AUDIT 56): the ease stretches for the WHOLE lead, from
         // the change itself. WIND1 stretched it only while the front's
         // factor was strictly between 0 and 1 - and at the change the
@@ -505,7 +510,7 @@ export function createSkyController(gl, params) {
         // from the change until the front's arrival. CLK1: both sides in
         // game minutes now - the ease's span over the lead's length, no
         // time scale hard-coded between them.
-        const easeDt = windModel.inLead() ? dt * (WEATHER_EASE_MINUTES / FRONT_LEAD_MIN) : dt;
+        const easeDt = windModel.inLead() ? dt * (WEATHER_EASE_MINUTES / windModel.leadMinutes()) : dt;   // WEATHER2b: the front's own lead - a crossing's few minutes, the day roll's three hours
         weatherRowNow = easeWeather(weatherRowNow, want, easeDt);
         weatherRowNow.wind = windModel.vector();
         // WIND2: the cloud DRIFT is integrated here, once - the one place
@@ -541,7 +546,7 @@ export function createSkyController(gl, params) {
           // the MOD's horizon; and the ground's deck takes their shadow.
           if (clouds) {
             clouds.setState(cloudsStateUnderMod(st, dynamicMoons, { minuteOfDay, weather: weatherName, classicMinutes: nowMinutes, seconds, drift: driftXZ, row: weatherRowNow }),
-              weatherRowNow, weatherName, easeDt, driftXZ, extra?.flash ?? 0, extra?.pos ?? null);
+              weatherRowNow, weatherName, easeDt, driftXZ, extra?.flash ?? 0, extra?.pos ?? null, extra?.cells ?? null);   // WEATHER2c: the field's cells
             if (clouds.shadow) Object.assign(dynamicDeck, clouds.shadow);
           }
           return;
@@ -557,7 +562,7 @@ export function createSkyController(gl, params) {
         // VC3: the clouds take the dome's state, the SAME eased row and
         // the SAME front-stretched ease dt (their profile eases on it),
         // the one drift integral, and the host's lightning flash.
-        clouds?.setState(enhancedSky.state, weatherRowNow, weatherName, easeDt, driftXZ, extra?.flash ?? 0, extra?.pos ?? null);
+        clouds?.setState(enhancedSky.state, weatherRowNow, weatherName, easeDt, driftXZ, extra?.flash ?? 0, extra?.pos ?? null, extra?.cells ?? null);   // WEATHER2c: the field's cells
         // VC4: the ground's deck carries the slab's own shadow map and its square
         if (clouds?.shadow) Object.assign(enhancedSky.cloudShadow, clouds.shadow);
         return;

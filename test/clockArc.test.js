@@ -46,7 +46,7 @@ test('CLK1: the controller - the presentation differences the host\'s classicMin
   assert.match(use, /const dtReal = weatherAt === null \? 0 : Math\.min\(MAX_DELTA_SECONDS, Math\.max\(0, seconds - weatherAt\)\);/, 'the wall\'s delta survives for one reader, clamped as Time.deltaTime is (MODS AUDIT)');
   assert.match(use, /dynamic\.tick\(\{\s*\n\s*minuteOfDay, classicMinutes: nowMinutes, weather: weatherName, seconds, dt: dtReal,/, 'the mod (1:1) takes it - BLBSkybox reads Time.deltaTime');
   assert.equal((use.match(/dtReal/g) || []).length, 2, 'and nothing else does');
-  assert.match(use, /const easeDt = windModel\.inLead\(\) \? dt \* \(WEATHER_EASE_MINUTES \/ FRONT_LEAD_MIN\) : dt;/, 'minutes over minutes');
+  assert.match(use, /const easeDt = windModel\.inLead\(\) \? dt \* \(WEATHER_EASE_MINUTES \/ windModel\.leadMinutes\(\)\) : dt;/, 'minutes over minutes');
   assert.doesNotMatch(use, /60 \/ 12|\* 12\b/, 'no time scale hard-coded in the presentation');
   assert.match(use, /weatherRowNow = easeWeather\(weatherRowNow, want, easeDt\);/);
   assert.match(use, /driftXZ\[0\] \+= weatherRowNow\.wind\[0\] \* dt \* WIND_SECONDS_PER_MINUTE;\s*\n\s*driftXZ\[1\] \+= weatherRowNow\.wind\[1\] \* dt \* WIND_SECONDS_PER_MINUTE;/);

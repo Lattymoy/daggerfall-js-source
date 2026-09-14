@@ -368,7 +368,8 @@ test('AUDIT 57 F3 (front): a jumped change lands whole - no crossing, no taper, 
 test('AUDIT 57 F1 + F2 + F3 (hosts): the flash waits for the storm, ?front=off is the kill switch, and the jump reaches the sky before the front', () => {
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const h = read(host);
-    assert.match(h, /const jump = weatherJumpStamp\(\) !== seenJump;\s*\n\s*seenJump = weatherJumpStamp\(\);\s*\n\s*if \(jump\) sky\.weatherJump\(\);\s*\n\s*const fx = weatherFront\.tick\(/, `${host}: the stamp is read once, the sky told first, the front told on the same tick`);
+    // WEATHER2b: the crossing stamp is read the same way, after the jump's and before the front's tick
+    assert.match(h, /const jump = weatherJumpStamp\(\) !== seenJump;\s*\n\s*seenJump = weatherJumpStamp\(\);\s*\n\s*if \(jump\) sky\.weatherJump\(\);\s*\n(?:\s*\/\/[^\n]*\n)*\s*const crossing = weatherCrossingStamp\(\) !== seenCrossing;\s*\n\s*seenCrossing = weatherCrossingStamp\(\);\s*\n\s*if \(crossing && !jump\) sky\.weatherArrive\(\);\s*\n\s*const fx = weatherFront\.tick\(/, `${host}: the stamp is read once, the sky told first, the front told on the same tick`);
     assert.match(h, /let seenJump = weatherJumpStamp\(\);/, `${host}: the boot's stamp is the baseline - a boot is never a jump`);
     assert.match(h, /const lightningShown = !enhancedFront \|\| fx\.shown === 'storm' \? lightning : null;/, `${host}: the flash follows the shown storm under the front and the player on classic`);
     assert.match(h, /const strobeNow = lightning \? lightning\.tick\(dt\) : 1;/, `${host}: the player ticks every frame regardless`);

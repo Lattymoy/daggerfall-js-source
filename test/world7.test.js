@@ -82,7 +82,7 @@ test('WORLD7: the chain by source - the hosts hand the played step under the sha
   assert.equal((rd('src/systems/quest/machine.js').match(/questClockStepMax: \(\) => this\.deps\.questClockStepMax\?\.\(\) \?\? Infinity/g) ?? []).length, 3);
   assert.match(rd('src/systems/quest/parser.js'), /const quest = new Quest\(\{ rolls, actionFactory, nowSeconds, hooks, questClockStepMax \}\);/);
   assert.match(rd('src/systems/quest/quest.js'), /this\.questClockStepMax = questClockStepMax;/);
-  assert.match(rd('src/systems/quest/clock.js'), /const step = caller\.questClockStepMax\?\.\(\) \?\? Infinity;\s*\n\s*const difference = Math\.min\(now - this\._lastWorldTimeSample, step\);/);
+  assert.match(rd('src/systems/quest/clock.js'), /const step = caller\.questClockStepMax\?\.\(\) \?\? Infinity;\s*\n\s*const raw = now - this\._lastWorldTimeSample;\s*\n\s*const difference = Number\.isFinite\(step\) \? Math\.min\(Math\.max\(raw, 0\), step\) : raw;/);
   assert.match(rd('src/systems/quest/actions.js'), /const step = this\.parentQuest\.questClockStepMax\?\.\(\) \?\? Infinity;/);
   for (const p of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/questBridge.js', 'src/systems/quest/machine.js', 'src/systems/quest/parser.js', 'src/systems/quest/quest.js', 'src/systems/quest/clock.js', 'src/systems/quest/actions.js']) assert.equal(rd(p).includes('questClocksStoodDown'), false, `${p}: the stand-down word is gone`);
 });

@@ -739,7 +739,7 @@ test('HT1: the rig runs the component beside the widget - one per rig, the pool 
   assert.match(rd('src/systems/lycanthropy.js'), /export const isTransformedLycanthrope = \(entity\) => isTransformedNow\(entity\);/);
   assert.match(rd('src/systems/playerTorch.js'), /const o = _offsetOverride \?\? TORCH_OFFSET;/);
   assert.match(rd('src/systems/features.js'), /modFeature\('handheld-torches', 'Takes effect at once\.'\)/);
-  assert.match(rd('bible/06-Systems/Systems.md'), /157 modules/);
+  assert.match(rd('bible/06-Systems/Systems.md'), /160 modules/);
 });
 
 test('HT1: the five hosts - each owns a pool, feeds the rig its raw keys and the pool, composes the dropped lights into the point lights, draws the batches on the billboard pass, ticks the burn, puts the targets on the activation ray with a droppedTorch: arm, destroys all on a transition, and the streaming host stamps, sweeps and recenters them; the save envelope carries HandheldTorchesSaveData', () => {

@@ -168,3 +168,9 @@ tree took (VC4b-VC4e):
    already keep.
 5. **No new toggle.** It rides Enhanced Environments, as the law says;
    `?clouds=off` is the kill switch.
+6. **Cells (WEATHER2c).** The one field takes cells - a place, a
+   radius, a rim and a profile of their own, blended over the zone's
+   terms at every sample both marches take under a union slab - so a
+   thunderhead stands over the hills under a sunny zone and its shadow
+   falls where it stands. The Weather arc's C
+   (`07-Rendering/Weather-Arc.md`); `?cloudcell=` the door.

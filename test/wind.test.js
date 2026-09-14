@@ -71,13 +71,15 @@ test('WIND1: one seam - the row takes the model\'s vector, and the sky eases on 
   // change the factor is exactly 0, so the sky crossed in fourteen
   // seconds and the wind rose after it: the storm arrived and the wind
   // followed. The reverse of what was asked.
-  assert.match(shared, /const easeDt = windModel\.inLead\(\) \? dt \* \(WEATHER_EASE_MINUTES \/ FRONT_LEAD_MIN\) : dt;/, 'CLK1: both in game minutes, no time scale between them');
-  assert.match(shared, /windModel\.tick\(extra\?\.classicMinutes \?\? 0, weatherName\);/, 'ticked on the GAME clock');
+  assert.match(shared, /const easeDt = windModel\.inLead\(\) \? dt \* \(WEATHER_EASE_MINUTES \/ windModel\.leadMinutes\(\)\) : dt;/, 'CLK1: both in game minutes, no time scale between them');
+  assert.match(shared, /windModel\.tick\(extra\?\.classicMinutes \?\? 0, weatherName, extra\?\.violence \?\? weatherName\);/, 'ticked on the GAME clock (WEATHER2a: the violence word beside the worn one)');
   // The rows' fixed vectors stay as the classic-sky fallback and are no
   // longer what a consumer sees under the enhanced one.
   assert.match(read('src/render/enhancedSky.js'), /sunny:.*wind: \[0\.010, 0\.004\]/);
   // The grass gusts on the wind's temper, through the controller.
-  assert.match(read('src/scenes/world.js'), /const gustG = sky\.gustAt\?\.\(tsec\) \?\?/);
+  // WIND3: through the one mapping (systems/windDrive.js), whose gust the host hands the grass as `wd.gust`
+  assert.match(read('src/systems/windDrive.js'), /const gust = sky\?\.gustAt\?\.\(tsec\) \?\? legacyGust\(tsec\);/);
+  assert.match(read('src/scenes/world.js'), /speed: wd\.slider \* wd\.gust/);
   assert.match(shared, /gustAt\(tsec\) \{ return windModel\.gust\(tsec\); \}/);
   // ENHANCED ONLY: the model lives inside the controller and the classic
   // sky never reaches the row.
@@ -110,7 +112,7 @@ test('WIND2: the clouds move by an INTEGRATED drift, and the wind leads the sky 
   // VC4: the ground's shadow is the slab's own map now - the drift reaches
   // it through the field both marches read, handed by the controller
   const clouds = read('src/render/volumetricClouds.js');
-  assert.match(clouds, /vec3 q = vec3\(p\.x \+ uShift\.x \+ uDrift\.x \+ uShear \* \(p\.y - uBase\), p\.y, p\.z \+ uShift\.y \+ uDrift\.y\);/, 'the field moves by the drift, integrated (and sits on the absolute position - VC4c)');
+  assert.match(clouds, /vec3 q = vec3\(p\.x \+ uShift\.x \+ uDrift\.x \+ fShear \* \(p\.y - fBase\), p\.y, p\.z \+ uShift\.y \+ uDrift\.y\);/, 'the field moves by the drift, integrated (and sits on the absolute position - VC4c; WEATHER2c: the shear and the base are the place\'s)');
   assert.match(shared, /clouds\?\.setState\([^;]*driftXZ,/, 'the one integral, handed to the clouds');
   assert.doesNotMatch(read('src/render/renderer.js'), /uCloudWind \* uCloudTime|uCloudDrift/, 'no deck multiplies wind by time, and the noise shadow is gone');
 });

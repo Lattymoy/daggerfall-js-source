@@ -1452,7 +1452,7 @@ spamming the same questor does not re-pulse the task. DFU makes you go
 click someone else and come back.
 
 The port carries `lastNPCClicked` as an NPCData-shaped OBJECT LITERAL,
-and both hosts mint a fresh one at every click - worldModes.js:1068's
+and both hosts mint a fresh one at every click - worldModes.js:1066's
 quest-flat arm builds `{ hash, flags, factionID, nameSeed, gender,
 buildingKey, mapID }` inline, and questBridge.clickNpc runs
 `staticNpcData(pn, sceneCtx)`. So `lastClicked === this.clickMemory`
@@ -5466,7 +5466,7 @@ lesson one host over.
 **What did NOT ship:** PlayerEntity.Update's per-minute *intermittent
 spawn* roll (:486-492) still has no caller on this route. It is not
 this pool's dependency — it is a loop that carries the passive-guard
-spawns and the NPC-guard conversion with it (world.js:2233-2315) — and
+spawns and the NPC-guard conversion with it (world.js:2247-2329) — and
 it is named at the mount so the absence reads as a fact.
 
 **(c) The find-place seam's absence, narrowed to one sentence.**
@@ -5490,12 +5490,12 @@ ready-spell events (`hostMagic.js:76-77`), and those two doors are the
 (`machine.js:799`/`:782`; C# subscribes them in the action's
 constructor). Every `cast X spell do` and `cast X effect do` on this
 whole route could therefore never latch and never fire. The pair the
-other two engine-owning hosts wire (`world.js:2481-2482`,
-`dungeonContext.js:1983-1984`) is wired here now, and with it
+other two engine-owning hosts wire (`world.js:2495-2496`,
+`dungeonContext.js:1984-1985`) is wired here now, and with it
 `CastSpellDo`'s two world reads — `getClassicSpellEffects` and the
-byte-folded `spellHasMatchForClassicEffect` (`world.js:5555-5558`),
+byte-folded `spellHasMatchForClassicEffect` (`world.js:5567-5570`),
 absent which the action self-completes at *parse*
-(`actions.js:2751`/`:2758`) and the task can never arm at all.
+(`actions.js:2756`/`:2763`) and the task can never arm at all.
 
 Pins: 5 in `test/qx1_exterior_host.test.js` (the placement law RUN over
 the real `placeFoeFreely` with a stubbed world — the FOV cone bounded on

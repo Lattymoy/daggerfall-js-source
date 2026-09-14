@@ -43,6 +43,10 @@ export const VIOLENCE = Object.freeze({
 /** A front's shape, in GAME MINUTES: the wind rises over the lead,
  *  holds, and decays over the tail. Three hours in, two out. */
 export const FRONT_LEAD_MIN = 180;
+/** WEATHER2b: a CROSSING's lead - the player walked into the cell (or it
+ *  drifted over them) with the storm already in view; the wind and the
+ *  sky arrive over a few minutes, not three hours. */
+export const CROSS_LEAD_MIN = 6;
 export const FRONT_HOLD_MIN = 60;
 export const FRONT_TAIL_MIN = 120;
 /** How long a new day's calm takes to arrive, from yesterday's. */
@@ -90,10 +94,10 @@ export function seededRng(seed) {
  * lead, rising to 1 at arrival, 1 through the hold, back to 0 over the
  * tail. Pure. `sinceArrival` is negative before the front arrives.
  */
-export function frontFactor(sinceArrival) {
-  if (sinceArrival < -FRONT_LEAD_MIN) return 0;
+export function frontFactor(sinceArrival, lead = FRONT_LEAD_MIN) {
+  if (sinceArrival < -lead) return 0;
   if (sinceArrival < 0) {
-    const u = (sinceArrival + FRONT_LEAD_MIN) / FRONT_LEAD_MIN;
+    const u = (sinceArrival + lead) / lead;
     return u * u * (3 - 2 * u);   // ease-in: a front builds
   }
   if (sinceArrival < FRONT_HOLD_MIN) return 1;
@@ -130,6 +134,7 @@ export function createWindModel({ seed = 7 } = {}) {
   let front = null;       // { at, strength, turn } or null
   let nowMin = 0;
   let jumpPending = false;   // WX2a: the next change of word is a jump, not a front
+  let arrivePending = false; // WEATHER2b: the next change of word is a crossing - a front on the short lead
 
   const rollDay = (d) => {
     const r = seededRng(seed * 1000003 + d);
@@ -140,7 +145,7 @@ export function createWindModel({ seed = 7 } = {}) {
   };
 
   return {
-    tick(nowMinutes, weather) {
+    tick(nowMinutes, weather, violenceWord = weather) {
       nowMin = nowMinutes;
       const d = Math.floor(nowMinutes / 1440);
       if (d !== day) rollDay(d);
@@ -156,9 +161,14 @@ export function createWindModel({ seed = 7 } = {}) {
           // stir. It leads by FRONT_LEAD_MIN, which from the ground reads
           // as the wind rising before the sky turns.
           const r = seededRng(seed * 7919 + Math.floor(nowMinutes));
-          const violence = VIOLENCE[weather] ?? 0.2;
+          // WEATHER2a: the front's strength is the VIOLENCE word's - the
+          // table's own word before the ground law turned it (a storm
+          // that falls as snow over a winter ground is a blizzard).
+          const violence = VIOLENCE[violenceWord] ?? VIOLENCE[weather] ?? 0.2;
+          const lead = arrivePending ? CROSS_LEAD_MIN : FRONT_LEAD_MIN;   // WEATHER2b: a crossing arrives on the short lead
           front = {
-            at: nowMinutes + FRONT_LEAD_MIN,   // the sky finishes turning here; the wind is already up
+            at: nowMinutes + lead,   // the sky finishes turning here; the wind is already up
+            lead,
             strength: violence * (0.6 + r() * 0.8),
             turn: (r() - 0.5) * Math.PI * 0.8,  // a front turns the wind, up to ~72 degrees
           };
@@ -166,8 +176,18 @@ export function createWindModel({ seed = 7 } = {}) {
         last = weather;
       }
       jumpPending = false;
+      arrivePending = false;
       if (front && nowMinutes - front.at > FRONT_HOLD_MIN + FRONT_TAIL_MIN) front = null;
     },
+
+    /** WEATHER2b: the host saw the sim's crossing stamp move this frame -
+     *  the change the next tick sees builds its front on CROSS_LEAD_MIN. */
+    arrive() { arrivePending = true; },
+
+    /** WEATHER2b: the lead the front up was built on (the day roll's
+     *  three hours, a crossing's few minutes) - what the sky's ease
+     *  stretches to. FRONT_LEAD_MIN with none up. */
+    leadMinutes() { return front?.lead ?? FRONT_LEAD_MIN; },
 
     /** WX2a: the host saw the sim's jump stamp move this frame. Any
      *  front up is dropped now - the world it belonged to is gone - and
@@ -186,13 +206,13 @@ export function createWindModel({ seed = 7 } = {}) {
       const into = nowMin - Math.floor(nowMin / 1440) * 1440;
       const u = Math.min(1, into / CALM_BLEND_MIN);
       const c = prevCalm + (calm - prevCalm) * u * u * (3 - 2 * u);
-      const f = front ? frontFactor(nowMin - front.at) * front.strength : 0;
+      const f = front ? frontFactor(nowMin - front.at, front.lead) * front.strength : 0;
       return Math.min(1, c * drift + f);
     },
 
     /** Where the front is: 0 before and after, 1 at its height. */
     frontProgress() {
-      return front ? frontFactor(nowMin - front.at) : 0;
+      return front ? frontFactor(nowMin - front.at, front.lead) : 0;
     },
 
     /** WX2: how far the INCOMING weather has arrived, 0..1 - the front's
@@ -202,7 +222,7 @@ export function createWindModel({ seed = 7 } = {}) {
      *  rain. The ground's terms and the drops cross on this
      *  (systems/weatherFront.js), as the sky's ease already does. */
     arrival() {
-      return front && nowMin < front.at ? frontFactor(nowMin - front.at) : 1;
+      return front && nowMin < front.at ? frontFactor(nowMin - front.at, front.lead) : 1;
     },
 
     /** WIND2: true from the weather change until the front ARRIVES - the
@@ -215,7 +235,7 @@ export function createWindModel({ seed = 7 } = {}) {
 
     /** The wind's direction in radians: the day's, turned by the front. */
     heading() {
-      const f = front ? frontFactor(nowMin - front.at) : 0;
+      const f = front ? frontFactor(nowMin - front.at, front.lead) : 0;
       return heading + (front ? front.turn * f : 0);
     },
 
@@ -233,6 +253,6 @@ export function createWindModel({ seed = 7 } = {}) {
     },
 
     /** For the record and the tests. */
-    state() { return { day, calm, prevCalm, heading, front: front ? { ...front } : null, last, jumpPending }; },
+    state() { return { day, calm, prevCalm, heading, front: front ? { ...front } : null, last, jumpPending, arrivePending }; },
   };
 }

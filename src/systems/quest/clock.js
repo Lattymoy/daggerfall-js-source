@@ -84,9 +84,9 @@ export function matchTimeValue(text) {
 }
 
 /** WORLD7 (Mac: "quests dont seem to work in online"): the most world seconds ONE played frame charges a quest clock
- *  online - thirty world minutes, two and a half real minutes under the shared clock's twelve-to-one; a hidden tab the
- *  browser throttles still ticks within that, a frame never spans it. A gap past it is time AWAY (the tab closed, the
- *  character off the world) and is forgiven. Offline there is no bound: a rest or a trip charges its whole span, DFU's own. */
+ *  online - thirty world minutes, two and a half real minutes under the shared clock's twelve-to-one; a frame never
+ *  spans it. A gap past it is time AWAY (the tab closed or hidden - a hidden tab runs no frames and charges one step
+ *  when it comes back - the character off the world, a window held) and is forgiven. Offline there is no bound: a rest or a trip charges its whole span, DFU's own. */
 export const PLAYED_STEP_MAX_SECONDS = 30 * 60;
 
 export class Clock extends QuestResource {
@@ -176,8 +176,14 @@ export class Clock extends QuestResource {
     // limits on quest ... naturally disabled while online"), and a Daggerfall clock is a DELAY as often as a limit:
     // Brisienna's letter (7-14 days), the tutorial's pages, every "come back in three days" never came, and the main
     // quest never began online. A limit still stands, in hours played; none expires while away.
+    // AUDIT WORLD7/8 A1-A2: online the sample can sit AHEAD of the world - an offline save is game-weeks past the shared
+    // calendar, the relay's welcome can correct this machine's clock backwards - and a negative gap ADDED its whole span
+    // to every running clock (Brisienna's fourteen days became forty-four played, for exactly the character Mac
+    // brought over). Online a backward sample is a resume: nothing charged, the sample moved. Offline the raw gap
+    // stands, DFU's own arithmetic (a backward jump there is a load, whose sample is the save's).
     const step = caller.questClockStepMax?.() ?? Infinity;
-    const difference = Math.min(now - this._lastWorldTimeSample, step);
+    const raw = now - this._lastWorldTimeSample;
+    const difference = Number.isFinite(step) ? Math.min(Math.max(raw, 0), step) : raw;
     this.remainingTimeInSeconds -= Math.trunc(difference);
     if (this.remainingTimeInSeconds <= 0) {
       this._triggerTask(caller);
@@ -252,7 +258,7 @@ export class Clock extends QuestResource {
    *  clears. */
   restoreSaveData(dataIn) {
     if (dataIn == null) return;
-    this._lastWorldTimeSample = dataIn.lastWorldTimeSample;
+    this._lastWorldTimeSample = Number.isFinite(dataIn.lastWorldTimeSample) ? dataIn.lastWorldTimeSample : (this.parentQuest?.nowSeconds?.() ?? 0);   // AUDIT WORLD7/8 A11: a save from before the field stamped NaN into the remainder
     this.startingTimeInSeconds = dataIn.startingTimeInSeconds;
     this.remainingTimeInSeconds = dataIn.remainingTimeInSeconds;
     this.flag = dataIn.flag;
