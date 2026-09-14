@@ -76,12 +76,12 @@ finding and the move.
 | Vendor | Mod | Author | Switches | Status / notes |
 |---|---|---|---|---|
 | `dynamic-skies` | Dynamic Skies 2.3.4 | BadLuckBurt and carademono | Enabled + 5 | `Enabled` **COVERED (FT4)** by the outdoors row - the Mods pane's row is a pointer; the five knobs open. `MaxParticles` is read and never applied (AUDIT 61, carried as it ships) |
-| `seasons-iliac-bay` | Seasons of the Iliac Bay | RosyTheRascal | Enabled | open |
-| `roads-hazelnut` | Basic Roads 1.3.1 | Hazelnut | Enabled + 2 | open. BR3 (today) found it had no switch at all until this morning |
-| `meanerMonsters` | Meaner Monsters 1.5.2 | Ralzar | Enabled | open. Its text says "with the combat overhaul on, Kirk.O's edit takes over" - check that gate against PCAAO's own switch |
-| `pcaao` | Physical Combat And Armor Overhaul 1.44 | Kirk.O | Enabled + 7 | open |
-| `unleveledLoot` | Unleveled Loot 1.1.2 | Ralzar | Enabled + 10 | open |
-| `windmills-kamer` | Windmills | Kamer | none | open. Vendored with permission, no switch - decide whether it gets one |
+| `seasons-iliac-bay` | Seasons of the Iliac Bay | RosyTheRascal | Enabled | **MOVED (FT9, 2026-09-14)** |
+| `roads-hazelnut` | Basic Roads 1.3.1 | Hazelnut | Enabled + 2 | `Enabled` **MOVED (FT9)**; the two knobs stay under its card. BR3 (2026-09-13) had found it had no switch at all |
+| `meanerMonsters` | Meaner Monsters 1.5.2 | Ralzar | Enabled | **MOVED (FT9)**. The gate checked: `pcaaoMeanerMonsters.js meanerMonstersOn` reads BOTH switches, as DFU's "is loaded" does |
+| `pcaao` | Physical Combat And Armor Overhaul 1.44 | Kirk.O | Enabled + 7 | `Enabled` **MOVED (FT9)**, at once - the registered arms read the switches live; the seven modules stay under its card |
+| `unleveledLoot` | Unleveled Loot 1.1.2 | Ralzar | Enabled + 10 | `Enabled` **MOVED (FT9)**; the ten materials stay under its card |
+| `windmills-kamer` | Windmills | Kamer | none | **DECIDED (FT9)** - no switch, no row: a row needs a control. Stays vendored, unconditional, credited |
 | `raum-book`, `silkscreen-five` | a book, a font | - | none | not features; data. Stay off the list |
 
 ### DFU Classic (DFU settings, `settings.js`) - today under Settings > Game
@@ -121,6 +121,7 @@ Video/GUI keys that are features rather than settings.
 - **FT6** - SHIPPED 2026-09-14. Enhanced water. Below.
 - **FT7** - SHIPPED 2026-09-14. Grass density and cloud quality. Below.
 - **FT8** - SHIPPED 2026-09-14. Combat visuals, and the emptied category as a pointer. Below.
+- **FT9** - SHIPPED 2026-09-14. The five packs with a switch. Below.
 - One slice per open row after that, in the order Mac picks.
 
 ## FT0 - THE HOME (2026-09-14)
@@ -371,3 +372,29 @@ the clouds, the combat visuals - and land view distance beside them.
 Left on the inventory: the Mods pane's packs and Dynamic Skies' five
 knobs (Mod Authored), and DFU's own Enhancements (DFU Classic), one
 by one. `test/ft8_combatvisuals.test.js`.
+
+## FT9 - THE FIVE PACKS WITH A SWITCH (2026-09-14)
+
+Seasons of the Iliac Bay, Basic Roads, Meaner Monsters, Physical
+Combat And Armor Overhaul, Unleveled Loot - one row each, Mod Authored,
+over the mod's own `Enabled`. **One source.** A mod's row is built from
+`modSettings.js` (`modFeature`): its title with the creator's name in
+it (Mac, 2026-09-08), its own modsettings description as the note. The
+port adds the one thing the mod cannot say - WHEN the switch lands:
+the world's next load (Seasons, Basic Roads), monsters spawned after
+(Meaner Monsters; the sentence left its description for the effect
+line), at once (the overhaul: its registered arms read the switches
+live), the next roll (Unleveled Loot). **The audit.** Meaner Monsters'
+"with the overhaul on, Kirk.O's edit takes over" checked against the
+gate: `meanerMonstersOn` reads both switches, as DFU's "is loaded"
+does. **What stays on the Mods page.** Each mod's other knobs - Basic
+Roads' two, the overhaul's seven modules, Unleveled Loot's ten
+materials, Dynamic Skies' five - under the mod's card, whose `Enabled`
+row is a pointer to the home. **Windmills** has no switch and so no
+row: a row needs a control. Pinned both ways: every vendored mod with a
+switch has a row, and every mod row names a real switch, so a mod
+vendored tomorrow fails the pin rather than sitting off the home.
+`test/ft9_mods.test.js`.
+
+Left on the inventory: DFU's own Enhancements (DFU Classic), one by
+one, and the mods' knobs if Mac wants them on the home too.

@@ -40,6 +40,24 @@ export const KIND_ORDER = Object.freeze(['enhanced', 'mod', 'classic']);
 /** Where a control's value lives. */
 export const STORES = Object.freeze(['prefs', 'settings', 'mods']);
 
+/** FT9 (2026-09-14): A VENDORED MOD'S ROW - its own switch, its own
+ *  title with the creator's name in it (Mac, 2026-09-08), its own
+ *  description as the note. One source: modSettings.js, where the mod's
+ *  modsettings ship. The mod's OTHER knobs stay under its card on the
+ *  Mods page, whose Enabled row is a pointer here. `effect` is the
+ *  port's word on when the switch lands, per mod. */
+const modFeature = (vendor, effect) => {
+  const mod = MOD_SETTINGS[vendor];
+  return Object.freeze({
+    id: `mod-${vendor.toLowerCase()}`,
+    title: `${mod.title} by ${mod.author}`,
+    note: mod.keys.Enabled.description,
+    effect,
+    kinds: Object.freeze(['mod']),
+    control: Object.freeze({ store: 'mods', vendor, key: 'Enabled' }),
+  });
+};
+
 /** The rows. Shape:
  *    { id, title, note, effect?, kinds: [kind, ...],
  *      control: { store: 'prefs',    key, tiers?: [[value, label], ...], default?: value, read?: () => value, write?: (value) => void }
@@ -189,6 +207,14 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'enhancedCombatVisuals' }),
   }),
+  // FT9 (2026-09-14): THE FIVE PACKS WITH A SWITCH (Dynamic Skies' is
+  // the outdoors row's, FT4). Windmills (Kamer) has no switch and so no
+  // row - a row needs a control. The order is the Mods pane's.
+  modFeature('seasons-iliac-bay', 'Takes effect when the world next loads.'),
+  modFeature('roads-hazelnut', 'Takes effect when the world next loads.'),
+  modFeature('meanerMonsters', 'Takes effect on monsters spawned after the switch.'),
+  modFeature('pcaao', 'Takes effect at once.'),
+  modFeature('unleveledLoot', 'Takes effect on the next roll.'),
 ]);
 
 /** The row whose control is this store's key, or null. The settings

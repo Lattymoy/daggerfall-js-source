@@ -78,7 +78,7 @@ test('FT4: the registry row - both labels, a condensed choice with its own defau
   assert.deepEqual(checkFeature(f), []);
   assert.equal(featureForControl('mods', 'Enabled', 'dynamic-skies'), f, 'the Mods pane\'s Enabled row is a pointer to this row');
   assert.equal(featureForControl('mods', 'densitySetting', 'dynamic-skies'), null, 'the fog knob is still the mod\'s own row');
-  assert.equal(featureForControl('mods', 'Enabled', 'seasons-iliac-bay'), null, 'the vendor is part of the address');
+  assert.notEqual(featureForControl('mods', 'Enabled', 'seasons-iliac-bay'), f, 'the vendor is part of the address (FT9: Seasons has its own row)');
   assert.ok(filterFeatures(FEATURES, 'enhanced').includes(f) && filterFeatures(FEATURES, 'mod').includes(f) && !filterFeatures(FEATURES, 'classic').includes(f));
 });
 

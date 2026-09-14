@@ -82,7 +82,7 @@ test('FT2: the registry row - both labels, over the pref, showing and writing th
   assert.equal(featureForControl('settings', 'Experimental/TerrainDistance'), f, 'the covered key resolves to the row that writes it');
   // ...and the filter shows the row under either label
   assert.ok(filterFeatures(FEATURES, 'enhanced').includes(f) && filterFeatures(FEATURES, 'classic').includes(f));
-  assert.deepEqual(featureCounts(FEATURES), { all: 8, enhanced: 7, mod: 1, classic: 2 });   // FT4 added the outdoors row (enhanced + mod); FT5 the AI; FT6 the water; FT7 the two quality tiers; FT8 the combat visuals
+  assert.deepEqual(featureCounts(FEATURES), { all: 13, enhanced: 7, mod: 6, classic: 2 });   // FT4 the outdoors (enhanced + mod); FT5-FT8 the port's own; FT9 the five packs
 });
 
 test('FT2: a condensed row\'s read and write are functions and come together - the registry law', () => {

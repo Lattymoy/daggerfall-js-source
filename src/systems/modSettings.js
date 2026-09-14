@@ -84,7 +84,7 @@ export const MOD_SETTINGS = Object.freeze({
     title: 'Meaner Monsters',
     author: 'Ralzar',
     keys: Object.freeze({
-      Enabled: Object.freeze({ default: true, description: 'Ralzar\u2019s Meaner Monsters 1.5.2, 1:1: "Buffs many monsters. Debuffs rats, bats and zombies." - twenty monsters\u2019 damage, health, level and armour rewritten, werewolves and wereboars drawn a fifth larger, the dragonling two and a half times its size. Takes effect on monsters spawned after the switch. With Physical Combat And Armor Overhaul also on, its own edit of these numbers takes over, as in Daggerfall Unity.' }),
+      Enabled: Object.freeze({ default: true, description: 'Ralzar\u2019s Meaner Monsters 1.5.2, 1:1: "Buffs many monsters. Debuffs rats, bats and zombies." - twenty monsters\u2019 damage, health, level and armour rewritten, werewolves and wereboars drawn a fifth larger, the dragonling two and a half times its size. With Physical Combat And Armor Overhaul also on, its own edit of these numbers takes over, as in Daggerfall Unity.' }),
     }),
   }),
   // PCO1: PHYSICAL COMBAT AND ARMOR OVERHAUL 1.44 (Kirk.O). Its seven
