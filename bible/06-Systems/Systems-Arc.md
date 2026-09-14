@@ -5523,6 +5523,18 @@ door with one of everything. The enhanced pack names through
 ResolveItemName now, which it never did (an unidentified magic item
 read its name raw there). `test/lr1_lootrarity.test.js` (15).
 
+LR4 (the same day, Mac: "Lets do an audit on this system"): an
+adversarial second read found the corpse roll running over the foe's
+WORN kit (equipEnemy writes no equipSlot - a boss could swing a
+Legendary), a forged affix off the wire throwing in a tooltip or the
+magic round, and the armour affix entity-wide (seven pieces to the 3%
+floor). `rollCorpseLoot` rolls only what is not on the table,
+`validAffix` guards the wire and every reader, armour lands per part
+on the parts the piece covers (equip.armorBodyParts) and on the doll;
+a Magic never rolls twice; FeatherWeight off the pool; the enhanced
+row hides an unidentified item's material. The page carries the ten
+findings. (16.)
+
 ### TR4 CLOSED: the ship, and THE ARC WITH IT
 
 It was smaller than scoped: the OWNERSHIP half needed nothing, because

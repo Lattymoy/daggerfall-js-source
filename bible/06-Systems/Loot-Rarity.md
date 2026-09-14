@@ -13,7 +13,7 @@ with every other enhancement (OL1). Off, not one field is written and
 not one read moves.
 
 One module: `src/systems/lootRarity.js`. One pin file:
-`test/lr1_lootrarity.test.js` (15). One tuning table: `RARITY_WEIGHTS`
+`test/lr1_lootrarity.test.js` (16). One tuning table: `RARITY_WEIGHTS`
 and `SOURCE_MULT`, per mille.
 
 ## The ladder
@@ -38,8 +38,14 @@ magic item is not eligible to roll a second tier.
 
 Eligible: a weapon that is not an arrow, a piece of armour, a piece of
 jewellery. Never a quest item, an artifact, an item already enchanted,
-or an item WORN (a foe's kit sits in its own list after `equipEnemy`,
-and stays DFU's).
+an item that already rolled (one roll per item, ever - LR4), or a worn
+one. A FOE's list carries its worn kit too (`hostCombat.equipEnemy`
+pushes every equipped piece into `entity.items` and onto the equip
+table, writing no `equipSlot`), so the hosts go through
+`rollCorpseLoot`, which rolls the items NOT on the foe's table: the
+loot it carries, never the sword it swings (LR4 - the audit found the
+first cut rolling the kit, and a Daedra Lord would have struck with a
+Legendary).
 
 ## The source sets the odds, never the player
 
@@ -85,7 +91,7 @@ word takes in the name, and a banded range per tier (`AFFIX_RANGES`):
 | kind | on | slot | Magic | Rare | Legendary | read at |
 | --- | --- | --- | --- | --- | --- | --- |
 | damage (%) | weapons | prefix | 5-12 | 10-25 | 20-40 | the weapon's own roll in `calculateAttackDamage`, before the swing's mods |
-| armor | armour | prefix | 3-6 | 6-12 | 12-20 | points OFF a blow's chance to land - the hit formula's armour term (FormulaHelper.cs:1158's slot), PCAAO's own read too, and the paperdoll's numbers |
+| armor | armour | prefix | 3-6 | 6-12 | 12-20 | points OFF a blow's chance to land ON THE PARTS THE PIECE COVERS (`equip.armorBodyParts`: a shield its SHIELD_PARTS, a piece its slot's part - as the material's armour value lands) - the hit formula's armour term (FormulaHelper.cs:1158's slot), PCAAO's own read too, and the paperdoll's per-part numbers. LR4: the first cut was entity-wide, and seven Rare pieces made the player unhittable |
 | weight (%) | armour, jewellery | prefix | 10-20 | 20-35 | 35-50 | `entityMaxEncumbrance`, the same multiplier IncreasedWeightAllowance rides |
 | stat | all | suffix | 2-5 | 5-10 | 10-15 | `liveStat` - an attribute, by name |
 | resist (%) | armour, jewellery | suffix | 10-20 | 20-35 | 35-50 | `savingThrow`, per element the spell carries, in the biography's slot |
@@ -107,7 +113,11 @@ where a switch press is felt on a worn set. The readers are field
 reads at DFU's own read sites, so `statMods.js` stays import-free;
 with the switch off the fold is empty and every reader answers 0. A
 weapon's damage affix is not folded - it is the weapon's own and read
-off the item in hand.
+off the item in hand. A malformed record (LR4: `validAffix` - a known
+kind, the kind's param or none, an integer value from 1 to the kind's
+Legendary ceiling) folds nothing and prints nothing; the wire's
+validator refuses a list carrying one, as it refuses a string
+`enchantments`.
 
 NOT ENTRIES IN `item.enchantments` (decided). That list is FallExe's
 closed enum; a foreign type in it would make every DFU reader of the
@@ -198,6 +208,49 @@ Rare of ten bases and every Legendary in the pack, the switch turned on
 for the session - the colours, the lines, the unidentified names and
 the folds on the paperdoll, without a dungeon.
 
+## LR4 - THE AUDIT (2026-09-14, Mac: "Lets do an audit on this system")
+
+An adversarial read of the module and every seam, by a second agent,
+with node probes. Findings and what changed:
+
+1. **BUG - foes fought with rolled gear.** The eligibility guard read
+   `equipSlot`, which `equipEnemy` never writes; every corpse roll ran
+   over the foe's worn kit, so a boss could swing a Legendary at the
+   player (its damage affix on its blow, its Strikes enchantment on
+   every hit) and wear a Rare's armour. Fixed: `rollCorpseLoot` rolls
+   the items not on the foe's equip table; the four host sites go
+   through it; the pin exercises the real mechanism (a table with no
+   `equipSlot`).
+2. **GAP - a forged affix crashed a tooltip or the magic round.** The
+   wire typed `affixes` as an array and no more; a `{id:'stat'}` with
+   no attribute threw in `affixLabel`, a `null` threw in the fold, a
+   `+1e9` armour made the wearer unhittable. Fixed: `validAffix`, the
+   validator refusing, every reader skipping.
+3. **GAP - armour was entity-wide** (finding 14 of the report): a flat
+   subtraction on every part, so seven pieces stacked to the 3% floor.
+   Fixed: per part, on the parts the piece covers, on the doll too.
+4. **GAP - a Magic could roll again** (no `rarity` in the guard); latent
+   since every door is one-shot. Fixed.
+5. **GAP - FeatherWeight was a dead line on a drop** (its payload fires
+   at the item maker alone). Off the armour pool; the pin refuses any
+   Enchanted-only payload in every pool and record.
+6. **NIT - the enhanced row named an unidentified item's material.**
+   Hidden until identified now, as `%mat` is.
+7. **NIT - `rarityOf` read a MAGIC.DEF row with every effect filtered
+   out as Common** while eligibility refused it. It is Magic.
+8. **NIT - the test LCG could answer exactly 1.** `/0x800000`.
+9. Watch item, not changed: a Rare's CastWhenHeld flavour bills its
+   classic casting cost in condition on first equip (DFU's own law,
+   `assignHeldSpell`); the held spells in the jewellery pool cost
+   ~120-160 classic points against an amulet's 800 or a ring's 1200
+   hit points, and the armour pool's are cheaper still, so no drop
+   breaks on the spot - but the port mints pairings MAGIC.DEF never
+   did, so the bill is worth a look in play.
+10. Verified sound: every flavour and record param against the
+    registry rows; the identify flow; stacking (never for these
+    groups); the save and the wire; the fold's every writer; the
+    sign of PCAAO's read; the names on bows and shields.
+
 ## Recorded, not built
 
 - Shops and quest rewards stay DFU's (above).
@@ -205,5 +258,8 @@ the folds on the paperdoll, without a dungeon.
   no per-instance colour; the plaque and the chime are the cues.
 - No "smart loot" for the character's class, by design: the source
   decides, not the player.
-- Enemies wear DFU's own kit, not rolled gear: a worn item is not
-  eligible, and `equipEnemy` has dressed the foe before its list rolls.
+- Enemies wear DFU's own kit, not rolled gear: `rollCorpseLoot` skips
+  everything on the foe's equip table.
+- On a dungeon reload the saved list overwrites `f.entity.items` while
+  the equip slots keep the load-time re-roll (a pre-existing split the
+  audit noticed; the roll never touches the slots, so it is inert here).

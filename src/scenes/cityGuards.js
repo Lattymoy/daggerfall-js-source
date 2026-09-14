@@ -86,7 +86,7 @@ import { tallySkill, SKILLS } from '../systems/skills.js';
 import { WEAPON_REACH } from '../combat/playerWeapon.js';
 import { rayPersonDistance } from './townTalk.js';
 import { mintCorpseMarker, playBodyFall, playRareDrop, corpseLootTargets, takeCorpseLoot, sayEnemyDied, raiseEnemyDeath } from './corpseMarker.js';
-import { rollLootRarity, corpseSource } from '../systems/lootRarity.js';   // LR1: the item ladder over the watch's list
+import { rollCorpseLoot } from '../systems/lootRarity.js';   // LR1: the item ladder over the watch's list
 import { bloodCentre } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
 import { EnemySoundSource, acuteHearingMultiplier } from '../characters/enemySounds.js';   // AUDIT 24 (wave 41): EnemySounds.cs, one home
 import { placeFoeEnv, entityOccupancy } from './questFoeHost.js';   // D9: FoeSpawner.PlaceFoeFreely's env, over THIS pool's collider
@@ -239,7 +239,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       // the dungeon host's two spawn branches (hostCombat.equipEnemy).
       equipEnemy(entity, GUARD_MOBILE_TYPE, playerEntity.level);
       addEnemyLootExtras(entity.items, basics, rand);   // AUDIT 24 (wave 43): EnemyEntity.cs:388-397
-      rollLootRarity(entity.items, corpseSource(basics, entity.level), { luck: liveStat(playerEntity, 'luck') });   // LR1: a guard is a class enemy - its entity level is its tier
+      rollCorpseLoot(entity, basics, { luck: liveStat(playerEntity, 'luck') });   // LR1: a guard is a class enemy - its entity level is its tier; LR4: its kit stays DFU's
       const archive = basics.maleTexture;
       const tex = await getTexture(archive);
       // AUDIT-39r: a sweep crossed this spawn - the town it was posted

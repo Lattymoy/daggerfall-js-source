@@ -499,4 +499,5 @@ id list, FT2's and FT8's counts.
 
 The Test Room gains a door beside the ride: "The loot ladder", one of
 everything the ladder can mint in the pack, the switch turned on for
-the session. `test/lr1_lootrarity.test.js` (15).
+the session. `test/lr1_lootrarity.test.js` (16, after the LR4 audit -
+`bible/06-Systems/Loot-Rarity.md`).

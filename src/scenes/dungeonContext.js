@@ -172,7 +172,7 @@ import { UnderwaterFog } from '../render/underwaterFog.js';   // ROAD-B (b3): Un
 import { NavClient } from '../ai/navClient.js';   // ENHANCED AI 3b
 import { getPref } from '../systems/uiPrefs.js';   // ENHANCED AI 3b: the Enhanced tab's switch
 import { raiseEnemyDeath, playRareDrop } from './corpseMarker.js';   // UL1: OnEnemyDeath; LR3: the drop chime
-import { rollLootRarity, corpseSource, pileSource, dungeonRarityTier } from '../systems/lootRarity.js';   // LR1: the item ladder over every list this host mints
+import { rollLootRarity, rollCorpseLoot, pileSource, dungeonRarityTier } from '../systems/lootRarity.js';   // LR1: the item ladder over every list this host mints
 
 
 
@@ -918,7 +918,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // branch and the city watch run the same chain.
       equipEnemy(entity, e.mobileType, D.playerEntity.level);
       addEnemyLootExtras(entity.items, basics, Math.random);   // AUDIT 24 (wave 43): EnemyEntity.cs:388-397
-      rollLootRarity(entity.items, corpseSource(basics, entity.level), { luck: liveStat(D.playerEntity, 'luck') });   // LR1: the ladder over the corpse's list, at the SOURCE's tier
+      rollCorpseLoot(entity, basics, { luck: liveStat(D.playerEntity, 'luck') });   // LR1: the ladder over the corpse's list, at the SOURCE's tier; LR4: the worn kit stays DFU's
       const ai = new (getPref('enhancedAI') ? D.EnhancedEnemyAI : D.EnemyAI)(collider, pos, yawDeg * Math.PI / 180, {   // ENHANCED AI 4: the switch chooses the motor; the bake is read per step
         nav: () => enhancedNav.chf, navWorld: enhancedNav.world, navSeed: (yawDeg * 1000) | 0,
         // AUDIT 39: a THUNK, not a snapshot - TakeAction re-reads
@@ -1000,7 +1000,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // weapon, no armorValues, no equipment on the corpse.
       equipEnemy(entity, e.mobileType, D.playerEntity.level);
       addEnemyLootExtras(entity.items, basics, Math.random);   // AUDIT 24 (wave 43): EnemyEntity.cs:388-397
-      rollLootRarity(entity.items, corpseSource(basics, entity.level), { luck: liveStat(D.playerEntity, 'luck') });   // LR1
+      rollCorpseLoot(entity, basics, { luck: liveStat(D.playerEntity, 'luck') });   // LR1/LR4
       // C12: the behaviour motors - flying/spectral pursue in 3D at
       // the face with no gravity, aquatic ride WaterMove against the
       // block water surface (beached = frozen, verbatim).

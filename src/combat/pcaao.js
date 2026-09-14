@@ -317,7 +317,7 @@ export function pcaaoArmorToHit(target, struckBodyPart) {
   let result = 0;
   const values = target.armorValues ?? [];
   if (struckBodyPart <= values.length) result = values[struckBodyPart] ?? 0;
-  if (isPlayer(target)) result = 100 - enchantArmorMod(target) - affixArmor(target);   // LR2: the affix fold beside the channels PCAAO reads
+  if (isPlayer(target)) result = 100 - enchantArmorMod(target) - affixArmor(target, struckBodyPart);   // LR2: the affix fold beside the channels PCAAO reads, the struck part's (LR4)
   else if (isClassEnemy(target)) result = 60;
   return result;
 }

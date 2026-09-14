@@ -63,7 +63,8 @@ test('AUDIT WORLD4 B1: an item field the readers walk as an ARRAY must BE an arr
     assert.equal(validLootItem({ templateIndex: 133, [f]: 'abc' }), null, `${f} as a string is not an item`);
     assert.equal(validLootItem({ templateIndex: 133, [f]: 7 }), null, `${f} as a number is not an item`);
     assert.equal(validLootItem({ templateIndex: 133, [f]: { 0: { type: 1 } } }), null, `${f} as an object is not an item`);
-    assert.deepEqual(validLootItem({ templateIndex: 133, [f]: [{ type: 1, param: 2 }] })[f], [{ type: 1, param: 2 }], `${f} as an array is kept whole`);
+    const sample = f === 'affixes' ? [{ id: 'damage', value: 5 }] : [{ type: 1, param: 2 }];   // LR4: an affix list is CHECKED, not only typed - a sound record
+    assert.deepEqual(validLootItem({ templateIndex: 133, [f]: sample })[f], sample, `${f} as an array is kept whole`);
     assert.deepEqual(validLootItem({ templateIndex: 133, [f]: [] })[f], [], 'an empty one too');
     assert.equal(validLootList([{ templateIndex: 133, [f]: 'abc' }]), null, 'and one such entry refuses the whole list');
   }

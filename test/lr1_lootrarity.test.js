@@ -35,7 +35,8 @@ import { itemLongName, resolveItemName } from '../src/systems/itemInfo.js';
 import { itemIsIdentified } from '../src/systems/tradeModes.js';
 import { enchantmentCost } from '../src/systems/enchantmentCatalogue.js';
 import { ENCHANTMENT_TYPES } from '../src/formats/magicDef.js';
-import { equipItem, unequipItem, addEquipChangeListener } from '../src/systems/equip.js';
+import { equipItem, unequipItem, addEquipChangeListener, equipTableOf, armorBodyParts } from '../src/systems/equip.js';
+import { BODY_PARTS } from '../src/systems/armorMaterials.js';
 import { liveStat } from '../src/systems/statMods.js';
 import { skillValue, SKILLS } from '../src/systems/skills.js';
 import { entityMaxEncumbrance, maxEncumbrance } from '../src/combat/formulas.js';
@@ -51,7 +52,7 @@ const read = (p) => readFileSync(join(root, p), 'utf8');
 
 const on = () => { _resetForTests(); setPref('lootRarity', true); };
 const off = () => { _resetForTests(); };
-const lcg = (seed) => () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return (seed >>> 8) / 0x7fffff; };
+const lcg = (seed) => () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return (seed >>> 8) / 0x800000; };   // [0, 1) - LR4: /0x7fffff could answer exactly 1
 const sword = () => createWeapon(120, 1);   // a steel longsword
 const cuirass = () => mintCondition({ group: 'Armor', templateIndex: 102, material: 0x0200 + 1, name: 'Cuirass', flags: 0 });
 const ring = () => mintCondition({ group: 'Jewellery', templateIndex: 135, name: 'Ring', flags: 0 });
@@ -83,6 +84,7 @@ test('LR1: one ladder - a rolled tier is the item\'s own, an enchanted item deri
   assert.equal(LR.rarityOf({ ...sword(), customEnchantments: [{ type: 10, param: 1 }] }), 'magic', 'a made item is Magic');
   assert.equal(LR.rarityOf({ ...sword(), rarity: 'rare' }), 'rare');
   assert.equal(LR.rarityOf({ ...sword(), rarity: 'artifact' }), 'common', 'the field cannot forge an artifact');
+  assert.equal(LR.rarityOf({ ...sword(), magic: true, enchantments: [] }), 'magic', 'LR4: a MAGIC.DEF row whose effects all filtered out is still DFU\'s magic item');
   assert.equal(LR.rarityOf({ ...sword(), rarity: 'rare', artifact: true }), 'artifact', 'an artifact outranks any field');
   assert.equal(LR.rarityOf(null), 'common');
   // eligibility: weapons but arrows, armour, jewellery; never a quest item, an artifact, or an enchanted item
@@ -92,7 +94,8 @@ test('LR1: one ladder - a rolled tier is the item\'s own, an enchanted item deri
   assert.ok(!LR.rarityEligible({ ...sword(), artifact: true }));
   assert.ok(!LR.rarityEligible({ ...sword(), magic: true, enchantments: [{ type: 0, param: 5 }] }), 'DFU\'s magic item keeps DFU\'s name');
   assert.ok(!LR.rarityEligible({ group: 'MensClothing', templateIndex: 163 }));
-  assert.ok(!LR.rarityEligible({ ...sword(), equipSlot: 5 }), 'a foe\'s WORN kit (equipEnemy pushes it into the list the corpse carries) stays DFU\'s');
+  assert.ok(!LR.rarityEligible({ ...sword(), equipSlot: 5 }), 'a worn item');
+  assert.ok(!LR.rarityEligible({ ...sword(), rarity: 'magic', affixes: [{ id: 'damage', value: 5 }] }), 'LR4: one roll per item, ever - a Magic never rolls again');
 });
 
 test('LR1: the odds follow the SOURCE - monotone in tier, luck and boss, capped, per mille, and every dungeon kind graded', () => {
@@ -150,8 +153,9 @@ test('LR2: the affix kinds - six, each banded per tier, each with a word for the
   assert.equal(LR.affixLabel({ id: 'skill', param: SKILLS.Stealth, value: 10 }), '+10 Stealth');
   assert.equal(LR.affixLabel({ id: 'weight', value: 25 }), '+25% carrying capacity');
   assert.equal(LR.affixLabel({ id: 'armor', value: 6 }), '+6 armor');
-  assert.equal(LR.affixWord({ id: 'stat', param: 'strength' }, 'magic'), 'of the Ox');
-  assert.equal(LR.affixWord({ id: 'stat', param: 'strength' }, 'legendary'), 'of the Titan');
+  assert.equal(LR.affixWord({ id: 'stat', param: 'strength', value: 3 }, 'magic'), 'of the Ox');
+  assert.equal(LR.affixWord({ id: 'stat', param: 'strength', value: 12 }, 'legendary'), 'of the Titan');
+  assert.equal(LR.affixWord({ id: 'stat', param: 'strength' }, 'magic'), '', 'LR4: a record with no value is malformed and names nothing');
 });
 
 test('LR2: rollAffixes - the count per tier, no kind or param repeated, only the group\'s kinds, a Rare with both name parts', () => {
@@ -297,7 +301,11 @@ test('LR2: the fold - worn affixes land on liveStat, skillValue, the armour term
   equipItem(e, c);
   assert.equal(liveStat(e, 'strength'), base.str + 8);
   assert.equal(skillValue(e, SKILLS.Stealth), base.stealth + 15);
-  assert.equal(LR.affixArmor(e), 6);
+  assert.equal(LR.affixArmor(e, BODY_PARTS.Chest), 6, 'LR4: on the cuirass\'s own part');
+  for (const p of [BODY_PARTS.Head, BODY_PARTS.Legs, BODY_PARTS.Feet, BODY_PARTS.Hands]) assert.equal(LR.affixArmor(e, p), 0, 'and no other');
+  assert.deepEqual(armorBodyParts(c), [BODY_PARTS.Chest]);
+  assert.deepEqual(armorBodyParts({ group: 'Armor', templateIndex: 112 }), [BODY_PARTS.Head, BODY_PARTS.LeftArm, BODY_PARTS.Hands, BODY_PARTS.Legs], 'a tower shield covers its SHIELD_PARTS');
+  assert.deepEqual(armorBodyParts(r), [], 'a ring covers nothing');
   assert.equal(LR.affixResist(e, ['fire']), 40, 'two pieces sum');
   assert.equal(LR.affixResist(e, ['frost']), 0);
   assert.equal(LR.affixResist(e, ['fire', 'frost']), 40);
@@ -312,7 +320,7 @@ test('LR2: the fold - worn affixes land on liveStat, skillValue, the armour term
   assert.notEqual(save, bare, 'the resistance affix moved the saving throw');
   // unequip: the listener refolds
   unequipItem(e, c);
-  assert.equal(LR.affixArmor(e), 0);
+  assert.equal(LR.affixArmor(e, BODY_PARTS.Chest), 0);
   assert.equal(LR.affixResist(e, ['fire']), 30);
   // off: the fold empties on the next refold and every read is 0
   off();
@@ -359,18 +367,18 @@ test('LR1: rollLootRarity - off or sourceless returns the DFU list untouched; on
 
 test('LR1: four hosts - every list a host mints rolls at its source, and the pile\'s tier is the dungeon\'s', () => {
   const dc = read('src/scenes/dungeonContext.js');
-  assert.equal((dc.match(/rollLootRarity\(entity\.items, corpseSource\(basics, entity\.level\), \{ luck: liveStat\(D\.playerEntity, 'luck'\) \}\)/g) ?? []).length, 2, 'both dungeon spawn arms');
+  assert.equal((dc.match(/rollCorpseLoot\(entity, basics, \{ luck: liveStat\(D\.playerEntity, 'luck'\) \}\)/g) ?? []).length, 2, 'both dungeon spawn arms, through the corpse door (LR4)');
   assert.match(dc, /rollLootRarity\(items, pileSource\(dungeonRarityTier\(dfLocation\.mapTableData\.dungeonType\)\), \{ luck: liveStat\(playerEntity, 'luck'\) \}\)/, 'the treasure piles at the dungeon\'s tier');
-  assert.match(read('src/scenes/exteriorFoes.js'), /rollLootRarity\(entity\.items, corpseSource\(basics, entity\.level\), \{ rolls, luck: liveStat\(playerEntity, 'luck'\) \}\)/, 'the exterior foes, off the same stream');
-  assert.match(read('src/scenes/cityGuards.js'), /rollLootRarity\(entity\.items, corpseSource\(basics, entity\.level\), \{ luck: liveStat\(playerEntity, 'luck'\) \}\)/, 'the watch');
+  assert.match(read('src/scenes/exteriorFoes.js'), /rollCorpseLoot\(entity, basics, \{ rolls, luck: liveStat\(playerEntity, 'luck'\) \}\)/, 'the exterior foes, off the same stream');
+  assert.match(read('src/scenes/cityGuards.js'), /rollCorpseLoot\(entity, basics, \{ luck: liveStat\(playerEntity, 'luck'\) \}\)/, 'the watch');
   assert.match(read('src/scenes/interiorContext.js'), /rollLootRarity\(addPileLootExtras\(generateLootItems\(lootKey, \{ level, gender \}\), lootKey\), pileSource\(INTERIOR_RARITY_TIER\), \{ luck \}\)/, 'a tavern\'s pile');
   assert.match(read('src/scenes/worldModes.js'), /luck: liveStat\(playerEntity, 'luck'\),   \/\/ LR1/, 'the interior host hands its luck in');
   // the reads, at DFU's own read sites
   const f = read('src/combat/formulas.js');
-  assert.match(f, /\+ enchantArmorMod\(target\) - affixArmor\(target\)/, 'the hit formula\'s armour term');
+  assert.match(f, /\+ enchantArmorMod\(target\) - affixArmor\(target, struckBodyPart\)/, 'the hit formula\'s armour term, the struck part\'s');
   assert.match(f, /affixWeaponDamage\(weapon, wMin \+ Math\.floor\(rolls\(\) \* \(wMax \+ 1 - wMin\)\)\) \+ damageMod/, 'the weapon roll, before the swing\'s mods');
   assert.match(f, /enchantWeightAllowanceMult\(entity\) \+ affixWeightMult\(entity\)/, 'the carrying capacity');
-  assert.match(read('src/combat/pcaao.js'), /100 - enchantArmorMod\(target\) - affixArmor\(target\)/, 'PCAAO reads the same fold');
+  assert.match(read('src/combat/pcaao.js'), /100 - enchantArmorMod\(target\) - affixArmor\(target, struckBodyPart\)/, 'PCAAO reads the same fold');
   assert.match(read('src/systems/statMods.js'), /mod \+= entity\._affixMods\?\.stats\?\.\[statName\] \?\? 0;/, 'liveStat, import-free');
   assert.match(read('src/systems/skills.js'), /mod \+= entity\._affixMods\?\.skills\?\.\[skillId\] \?\? 0;/, 'skillValue');
   assert.match(read('src/systems/spellcast.js'), /saving \+= affixResist\(target, RESIST_NAMES/, 'the saving throw');
@@ -429,7 +437,8 @@ test('LR1: the skins - the native cell tints and the tooltip lists, the enhanced
   assert.match(inv, /const r = rarityAttr\(item\); if \(r\) row\.dataset\.rarity = r;/, 'a row wears its tier');
   assert.match(inv, /const lines = rarityLines\(picked\); if \(lines\.length\)/, 'the card lists the lines');
   assert.match(read('src/ui/lootHover.js'), /if \(r\.rarity\) row\.dataset\.rarity = r\.rarity;/);
-  assert.match(read('src/ui/nativeInventory.js'), /enchantArmorDisplayMod\(this\.hooks\.entity\) \+ affixArmorDisplay\(this\.hooks\.entity\)/, 'the doll\'s numbers');
+  assert.match(read('src/ui/nativeInventory.js'), /armorLabelValue\(av\[i\] \?\? 100, armorMod \+ affixArmorDisplay\(this\.hooks\.entity, i\)\)/, 'the doll\'s numbers, per part');
+  assert.match(read('src/ui/enhancedInventory.js'), /&& itemIsIdentified\(item\) \? materialName\(item\) : null/, 'LR4: the enhanced row names no material until identified');
 });
 
 test('LR3: the drop chime rings at the body for a Rare or better, never for Magic, never off; the three corpse sites ring it', () => {
@@ -467,5 +476,46 @@ test('LR3: the Test Room\'s loot ladder - one door, thirty items (a Magic and a 
   assert.equal(e.items.length, added.length);
   assert.match(read('src/ui/enhancedMenu.js'), /TEST_LOOT\.label[\s\S]*?onAction\(`test:\$\{TEST_LOOT\.id\}`\)/, 'the pane\'s card');
   assert.match(read('src/scenes/world.js'), /if \(testEntry\.loot\) console\.log\(`\[testroom\] loot ladder: \$\{seedTestLoot\(playerEntity\)\.length\} rolled items in the pack`\);/, 'the boot seeds it');
+  _resetForTests();
+});
+
+test('LR4: the audit - the corpse door rolls the loot and never the worn kit, a forged affix is refused, no flavour is an item-maker-only payload', () => {
+  on();
+  // (1) THE CORPSE DOOR. equipEnemy pushes the worn kit into the list AND onto the table, writing no equipSlot;
+  // the roll runs over what is NOT on the table.
+  const foe = { items: [], level: 21, equip: undefined };
+  const wornSword = sword(); const wornCuirass = cuirass();
+  foe.items.push(wornSword, wornCuirass);
+  equipTableOf(foe)[5] = wornSword; equipTableOf(foe)[9] = wornCuirass;   // as equipEnemy's EquipItem lands them
+  delete wornSword.equipSlot; delete wornCuirass.equipSlot;
+  const loot = [sword(), cuirass(), ring()];
+  foe.items.push(...loot);
+  const out = LR.rollCorpseLoot(foe, { level: 21, affinity: 'Daedra' }, { rolls: () => 0.0001, luck: 100 });
+  assert.equal(out, foe.items);
+  assert.ok(!wornSword.rarity && !wornSword.affixes && !wornCuirass.rarity, 'the sword it swings stays DFU\'s');
+  assert.ok(loot.every((it) => it.rarity === 'legendary' || it.rarity === 'rare'), 'the loot it carries rolled at the boss\'s tier');
+  off();
+  const foe2 = { items: [sword()], level: 3 };
+  assert.equal(LR.rollCorpseLoot(foe2, { level: 3 }, { rolls: () => 0 }), foe2.items);
+  assert.ok(!foe2.items[0].rarity, 'off: nothing');
+  on();
+  // (2) THE WIRE. A forged affix is not an item; a malformed record folds and prints nothing.
+  const good = LR.applyRarity(sword(), 'magic', lcg(12));
+  assert.ok(validLootItem(JSON.parse(JSON.stringify(good))));
+  for (const bad of [[{ id: 'armor', value: 1e9 }], [{ id: 'stat', value: 3 }], [{ id: 'stat', param: 'strength' }], [null], [{ id: 'nope', value: 1 }], [{ id: 'damage', param: 'x', value: 5 }], [{ id: 'resist', param: 'fire', value: 0 }], [{ id: 'skill', param: 99, value: 5 }], [{ id: 'weight', value: 2.5 }]]) {
+    assert.equal(validLootItem({ ...JSON.parse(JSON.stringify(good)), affixes: bad }), null, `refused: ${JSON.stringify(bad)}`);
+    assert.equal(LR.validAffixList(bad), false);
+    assert.equal(LR.affixLabel(bad[0]), '');
+    assert.equal(LR.affixWord(bad[0], 'rare'), '');
+  }
+  assert.ok(LR.validAffixList(good.affixes));
+  const e = entityOf();
+  const forged = { ...ring(), affixes: [{ id: 'armor', value: 1e9 }, { id: 'stat', value: 3 }, null, { id: 'stat', param: 'luck', value: 5 }] };
+  e.items.push(forged); equipItem(e, forged);
+  assert.equal(liveStat(e, 'luck'), 55, 'the one sound record folds; the three malformed fold nothing and throw nothing');
+  assert.deepEqual(LR.rarityLines({ ...forged, rarity: 'magic' }).filter(Boolean), ['Magic', '+5 Luck']);
+  // (3) THE FLAVOURS: every one fires on a worn or wielded drop - never an Enchanted-only payload (FeatherWeight, ExtraWeight fire at the item maker alone).
+  for (const list of Object.values(LR.RARE_FLAVOURS)) for (const f of list) assert.ok(![ENCHANTMENT_TYPES.FeatherWeight, ENCHANTMENT_TYPES.ExtraWeight].includes(f.type), `${typeKey(f.type)} is a dead line on a drop`);
+  for (const rec of LR.LEGENDARIES) assert.ok(![ENCHANTMENT_TYPES.FeatherWeight, ENCHANTMENT_TYPES.ExtraWeight].includes(rec.enchantment.type));
   _resetForTests();
 });

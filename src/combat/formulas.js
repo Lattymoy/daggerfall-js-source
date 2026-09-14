@@ -400,7 +400,7 @@ export function calculateSuccessfulHit(attacker, target, chanceToHitMod, struckB
   // IncreasedArmorValueModifier + DecreasedArmorValueModifier. The
   // channels are the enchantment fold's (Strengthens/WeakensArmor,
   // BadReactionsFrom) - the audit-F5 zeros, live at last.
-  chance += (target.armorValues?.[struckBodyPart] ?? 0) + enchantArmorMod(target) - affixArmor(target);   // LR2: an armour affix is points OFF the blow's chance
+  chance += (target.armorValues?.[struckBodyPart] ?? 0) + enchantArmorMod(target) - affixArmor(target, struckBodyPart);   // LR2: an armour affix is points OFF the blow's chance, on the struck part (LR4)
   // AUDIT 21 F2: the adrenaline rush is APPLIED now, in DFU's own slot
   // (FormulaHelper.cs:811, between the armour term and the stats term).
   chance += adrenalineRushToHit(attacker, target);

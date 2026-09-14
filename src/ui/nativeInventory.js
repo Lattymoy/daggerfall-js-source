@@ -1319,9 +1319,9 @@ export class NativeInventoryWindow {
     const av = this.hooks.entity?.armorValues;
     // F122: the same armorMod for every body part - RefreshArmourValues
     // recomputes it inside the loop but off entity-wide channels.
-    const armorMod = enchantArmorDisplayMod(this.hooks.entity) + affixArmorDisplay(this.hooks.entity);   // LR2
+    const armorMod = enchantArmorDisplayMod(this.hooks.entity);
     if (av) ARMOR_LABEL_POS.forEach(([lx, ly], i) =>
-      shadowText(renderer, font, String(armorLabelValue(av[i] ?? 100, armorMod)), m, 49 + lx, 13 + ly));
+      shadowText(renderer, font, String(armorLabelValue(av[i] ?? 100, armorMod + affixArmorDisplay(this.hooks.entity, i))), m, 49 + lx, 13 + ly));   // LR2/LR4: an armour affix on the part it covers
     // UpdateAccessoryItemsDisplay (:963-996): the twelve worn slots in
     // equip-slot order. An EMPTY slot draws nothing - the button's own
     // frame is already in INVE00I0.

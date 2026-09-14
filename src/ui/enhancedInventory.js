@@ -92,6 +92,7 @@ import {
 import { entityMaxEncumbrance } from '../combat/formulas.js';   // AUDIT 26: PlayerEntity.MaxEncumbrance, enchantment allowance and all
 import { liveStat } from '../systems/statMods.js';
 import { conditionWord, conditionPercentage, materialName, resolveItemName } from '../systems/itemInfo.js';
+import { itemIsIdentified } from '../systems/tradeModes.js';   // LR4: an unidentified item names no material (ItemHelper's %mat)
 import { rarityAttr, rarityLines } from '../systems/lootRarity.js';   // LR1: the row's tier attribute and the card's lines
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { closeOnOutsideTap } from './enhancedOverlays.js';   // OT1
@@ -299,7 +300,7 @@ export function itemLine(item, identity = undefined) {
     weight: itemWeight(item),
     condition: (item.maxCondition ?? 0) > 0 ? conditionPercentage(item) : null,
     word: (item.maxCondition ?? 0) > 0 ? conditionWord(item) : null,
-    material: item.group === 'Armor' || item.group === 'Weapons' ? materialName(item) : null,
+    material: (item.group === 'Armor' || item.group === 'Weapons') && itemIsIdentified(item) ? materialName(item) : null,   // LR4: hidden until identified, as %mat is
     stack: (item.stackCount ?? 1) > 1 ? item.stackCount : null,
     equipped: isEquipped(item),
     broken: isBrokenItem(item),

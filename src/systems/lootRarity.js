@@ -58,7 +58,7 @@
 // below, per mille, so the feel can be tuned without touching a roll.
 
 import { getPref } from './uiPrefs.js';
-import { addEquipChangeListener } from './equip.js';   // LR2: the fold follows the worn set
+import { addEquipChangeListener, armorBodyParts, equipTableOf } from './equip.js';   // LR2: the fold follows the worn set; LR4: the parts a piece covers, the foe's worn table
 import { templateByIndex, itemBaseValue } from './itemTemplates.js';
 import { STAT_KEYS_ORDER } from './statMods.js';
 import { SKILL_NAMES, SKILL_COUNT } from './skills.js';
@@ -94,16 +94,17 @@ export function rarityOf(item) {
   if (!item) return 'common';
   if (item.artifact) return 'artifact';
   if (typeof item.rarity === 'string' && RARITIES[item.rarity] && item.rarity !== 'artifact') return item.rarity;
-  return enchanted(item) ? 'magic' : 'common';
+  return item.magic || enchanted(item) ? 'magic' : 'common';   // LR4: a MAGIC.DEF row whose effects all filtered out is still DFU's magic item
 }
 export const rarityRank = (item) => RARITIES[rarityOf(item)].rank;
 
 const ARROW_TEMPLATE = 131;
 /** What may roll a tier: a weapon that is not an arrow, a piece of
- *  armour, a piece of jewellery. Never a quest item, an artifact, or a
- *  DFU magic item (it is already Magic and keeps DFU's name). */
+ *  armour, a piece of jewellery. Never a quest item, an artifact, a
+ *  DFU magic item (it is already Magic and keeps DFU's name), an item
+ *  that already rolled (LR4: one roll per item, ever), or a worn one. */
 export function rarityEligible(item) {
-  if (!item || item.questItem || item.artifact || item.magic || enchanted(item) || item.equipSlot != null) return false;   // a foe's WORN kit (equipEnemy pushes it into its list) stays DFU's
+  if (!item || item.questItem || item.artifact || item.magic || item.rarity || enchanted(item) || item.equipSlot != null) return false;
   if (item.group === 'Weapons') return item.templateIndex !== ARROW_TEMPLATE;
   return item.group === 'Armor' || item.group === 'Jewellery';
 }
@@ -253,10 +254,25 @@ export const AFFIX_WORTH = Object.freeze({ damage: 40, armor: 60, weight: 15, st
 const rangeInt = (min, max, rolls) => min + Math.floor(rolls() * (max + 1 - min));
 const pick = (list, rolls) => list[Math.floor(rolls() * list.length)];
 
-/** One affix's label - the tooltip line. */
-export const affixLabel = (a) => AFFIX_KINDS[a?.id]?.label(a) ?? '';
+/** LR4 (the audit): ONE AFFIX RECORD, VALID - a known kind, a param the
+ *  kind names (and none for a kind without), an integer value from 1 to
+ *  the kind's Legendary ceiling. The wire's validator refuses a list
+ *  that fails this (a forged +1e9 armour, a stat with no attribute), and
+ *  every reader below skips a malformed record rather than throwing out
+ *  of a tooltip or the magic round. */
+export function validAffix(a) {
+  if (!a || typeof a !== 'object') return false;
+  const k = AFFIX_KINDS[a.id];
+  if (!k) return false;
+  if (k.params ? !k.params.includes(a.param) : a.param !== undefined) return false;
+  const max = AFFIX_RANGES[a.id].legendary[1];
+  return Number.isInteger(a.value) && a.value >= 1 && a.value <= max;
+}
+export const validAffixList = (list) => Array.isArray(list) && list.every(validAffix);
+/** One affix's label - the tooltip line; '' for a malformed record. */
+export const affixLabel = (a) => (validAffix(a) ? AFFIX_KINDS[a.id].label(a) : '');
 /** The name-word an affix contributes, by the tier's band. */
-export const affixWord = (a, tier) => AFFIX_KINDS[a?.id]?.word(BAND[tier] ?? 0, a.param) ?? '';
+export const affixWord = (a, tier) => (validAffix(a) ? AFFIX_KINDS[a.id].word(BAND[tier] ?? 0, a.param) : '');
 
 /** Roll a tier's affixes for an item: the count from AFFIX_COUNTS, no
  *  kind repeated (no param repeated for a kind with params), the first
@@ -325,8 +341,7 @@ export const RARE_FLAVOURS = Object.freeze({
     { type: T.RegensHealth, param: 1 },       // in sunlight
     { type: T.IncreasedWeightAllowance, param: 0 },
     { type: T.RepairsObjects, param: -1 },
-    { type: T.FeatherWeight, param: -1 },
-    { type: T.ImprovesTalents, param: 1 },    // Athleticism
+    { type: T.ImprovesTalents, param: 1 },    // Athleticism (LR4: FeatherWeight left - its payload fires at the item maker alone, so on a drop it would be a dead line)
   ]),
   Jewellery: Object.freeze([
     { type: T.CastWhenHeld, param: 44 },      // Chameleon
@@ -454,6 +469,19 @@ export function rollLootRarity(items, source, { rolls = Math.random, luck = 50 }
   }
   return items;
 }
+/** LR4 (the audit): THE CORPSE DOOR. A foe's list carries its WORN kit
+ *  too (hostCombat.equipEnemy pushes every equipped piece into
+ *  entity.items and onto the equip table, writing no equipSlot), so the
+ *  roll runs over the items NOT on its table: the loot it carries, not
+ *  the sword it swings - a Legendary in a Daedra Lord's hand would have
+ *  struck the player with it. The source is corpseSource's. */
+export function rollCorpseLoot(entity, basics, { rolls = Math.random, luck = 50 } = {}) {
+  if (!lootRarityOn() || !entity) return entity?.items ?? [];
+  const worn = new Set(entity.equip ? equipTableOf(entity).filter(Boolean) : []);
+  const loot = (entity.items ?? []).filter((it) => it && !worn.has(it));
+  rollLootRarity(loot, corpseSource(basics, entity.level), { rolls, luck });
+  return entity.items;
+}
 /** The best tier in a list (a corpse's, a pile's), for the drop sound
  *  and the plaque; null for an empty or off list. */
 export function bestRarity(items) {
@@ -466,7 +494,7 @@ export function bestRarity(items) {
 }
 
 // ── the fold and its readers ───────────────────────────────────────
-const EMPTY_MODS = Object.freeze({ armor: 0, weightMult: 0, stats: Object.freeze({}), skills: Object.freeze({}), resist: Object.freeze({}) });
+const EMPTY_MODS = Object.freeze({ armorParts: Object.freeze([0, 0, 0, 0, 0, 0, 0]), weightMult: 0, stats: Object.freeze({}), skills: Object.freeze({}), resist: Object.freeze({}) });
 
 function wornItems(entity) {
   const slots = entity?.equip?.slots;
@@ -483,12 +511,16 @@ function wornItems(entity) {
 export function computeAffixMods(entity) {
   if (!entity) return EMPTY_MODS;
   if (!lootRarityOn()) { entity._affixMods = EMPTY_MODS; return EMPTY_MODS; }
-  const mods = { armor: 0, weightMult: 0, stats: {}, skills: {}, resist: {} };
+  const mods = { armorParts: [0, 0, 0, 0, 0, 0, 0], weightMult: 0, stats: {}, skills: {}, resist: {} };
   for (const it of wornItems(entity)) {
     for (const a of it.affixes) {
+      if (!validAffix(a)) continue;   // LR4: a malformed record off the wire folds nothing
       const v = a.value | 0;
       switch (a.id) {
-        case 'armor': mods.armor += v; break;
+        // LR4 (the audit): ON THE PIECE'S OWN PARTS, as the material's
+        // armour value is - entity-wide it stacked seven pieces into an
+        // unhittable player. A shield covers its SHIELD_PARTS.
+        case 'armor': for (const part of armorBodyParts(it)) mods.armorParts[part] += v; break;
         case 'weight': mods.weightMult += v / 100; break;
         case 'stat': mods.stats[a.param] = (mods.stats[a.param] ?? 0) + v; break;
         case 'skill': mods.skills[a.param] = (mods.skills[a.param] ?? 0) + v; break;
@@ -503,11 +535,12 @@ export function computeAffixMods(entity) {
 export const affixModsOf = (entity) => entity?._affixMods ?? EMPTY_MODS;
 addEquipChangeListener(computeAffixMods);   // every equipItem/unequipItem, and the save's rebuildEquipState
 
-/** The armour term: points OFF a blow's chance to land (the hit
- *  formula adds the wearer's armour value; this subtracts). */
-export const affixArmor = (entity) => affixModsOf(entity).armor;
-/** The paperdoll's number runs the other way - a bonus reads positive. */
-export const affixArmorDisplay = (entity) => affixModsOf(entity).armor;
+/** The armour term for ONE struck body part: points OFF a blow's
+ *  chance to land there (the hit formula adds that part's armour
+ *  value; this subtracts). */
+export const affixArmor = (entity, bodyPart) => affixModsOf(entity).armorParts?.[bodyPart] ?? 0;
+/** The paperdoll's number for a part runs the other way - a bonus reads positive. */
+export const affixArmorDisplay = (entity, bodyPart) => affixArmor(entity, bodyPart);
 export const affixStat = (entity, stat) => affixModsOf(entity).stats?.[stat] ?? 0;
 export const affixSkill = (entity, skillId) => affixModsOf(entity).skills?.[skillId] ?? 0;
 export const affixWeightMult = (entity) => affixModsOf(entity).weightMult;

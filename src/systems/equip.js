@@ -348,6 +348,20 @@ const SLOT_BODY_PART = new Map([
 
 export const armorValuesOf = (entity) => (entity.armorValues ??= new Array(NUMBER_BODY_PARTS).fill(100));
 
+/** LR4 (the loot-rarity audit): THE BODY PARTS A PIECE OF ARMOUR
+ *  COVERS - a shield its SHIELD_PARTS, any other piece the one part
+ *  its template's slot maps to, anything else none. The armour affix
+ *  fold lands its points on these parts exactly as
+ *  updateEquippedArmorValues lands the material's, so a Rare cuirass
+ *  hardens the chest and not the feet. */
+export function armorBodyParts(item) {
+  if (!item || item.group !== 'Armor') return [];
+  if (isShieldTemplate(item.templateIndex)) return SHIELD_PARTS.get(item.templateIndex) ?? [];
+  const rule = SLOT_RULES.Armor[item.templateIndex];
+  const part = rule ? SLOT_BODY_PART.get(EQUIP_SLOTS[rule.slot]) : null;
+  return part == null ? [] : [part];
+}
+
 export function updateEquippedArmorValues(entity, item, equipping) {
   // AUDIT 17e F10 - UpdateEquippedArmorValues verbatim
   // (DaggerfallEntity.cs:591-594): the branch admits Armor AND the
