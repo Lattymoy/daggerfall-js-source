@@ -128,8 +128,11 @@ test('c2combat combat-9/10/11: the host wiring sweep', () => {
     'resolveHit threads the hook');
   for (const f of ['src/scenes/dungeonContext.js', 'src/scenes/cityGuards.js', 'src/scenes/exteriorFoes.js']) {
     const t = src(f);
-    assert.ok(/resolveHit\([^)]*[\s\S]{0,400}?inflictPoison\((?:f|g)\.entity, pt, false/.test(t),
+    // WORLD6b-iii(e): the two foe pools dose through their ONE poison door (`poisonFoe` - a puppet's dose rides the hit to
+    // its owner); the watch, the player's own, doses at the chain
+    assert.ok(/resolveHit\([^)]*[\s\S]{0,400}?(?:inflictPoison\(g\.entity, pt, false|poisonFoe\(f, pt\))/.test(t),
       `${f}: the player's poisoned blade doses its victim`);
+    if (f !== 'src/scenes/cityGuards.js') assert.ok(/function poisonFoe\(f, pt\) \{[\s\S]{0,400}?inflictPoison\(f\.entity, pt, false/.test(t), `${f}: the door doses a foe of mine`);
   }
   assert.ok(dc.includes('inflictPoison(f.entity, pt, false'), 'the player ARROW doses its mark too');
   // combat-17: the grunt + pain voice ride all three player-hit paths

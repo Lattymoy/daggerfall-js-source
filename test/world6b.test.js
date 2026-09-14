@@ -36,7 +36,7 @@ test('WORLD6b: the wire - a cell is world:<x>,<y> alone (no dungeon, no building
   assert.equal(hitOwnerOf({ to: 'bbbb-0002' }), 'bbbb-0002'); assert.equal(hitOwnerOf({ to: 'x'.repeat(40) }), 'x'.repeat(40), 'the wire\'s own id law (AUDIT WORLD6b A5: ID_RE, 4 to 40 of [A-Za-z0-9_-])');
   for (const d of [{ to: '' }, { to: 'a' }, { to: 'x'.repeat(41) }, { to: 'bbbb 0002' }, { to: 7 }, { to: null }, {}, null, undefined, 'bbbb-0002', ['bbbb-0002']]) assert.equal(hitOwnerOf(d), null, JSON.stringify(d));
   assert.equal(relay.isCellRoom, isCellRoom, 'one home at both ends'); assert.equal(relay.hitOwnerOf, hitOwnerOf); assert.equal(relay.streamsFoes, streamsFoes);
-  assert.equal(RELAY_VERSION, 'world64', 'the relay says which one it is');
+  assert.equal(RELAY_VERSION, 'world65', 'the relay says which one it is');
 });
 
 test('WORLD6b: the Room - in a cell ANYONE hello\'d streams foes (prefixed or not, no host asked, no strike counted) and everyone else hears it with the sender\'s id; a hit goes to the socket `to` names alone - never to the striker, nowhere without a `to` or to one not in the room; a cell keeps no memory (a world frame is refused as too large); the dungeon\'s law is untouched', async () => {
@@ -241,7 +241,7 @@ test('WORLD6b: the pool stands a peer\'s foes as PUPPETS - through the one spawn
   assert.equal(pup.mobile.doMeleeDamage, false, 'no blow of its own'); assert.equal(pup.mobile.shootArrow, false);
   // a blow on a puppet goes to its owner, not into its health
   pool.damageFoe(pup, 4, [0, 0, 0], null, { kind: 'arrow' });
-  assert.deepEqual(hits, [{ to: 'bob-0002', k: 'world:3,12', i: 5, dmg: 4, kind: 'arrow', p: [0, 0, 0] }], 'to Bob, with Bob\'s number and the kind, keyed to the cell (AUDIT WORLD6b A7), the striker\'s feet on it (WORLD6b-ii)'); assert.equal(pup.entity.health, 5, 'my blow lands nothing here');
+  assert.deepEqual(hits, [{ to: 'bob-0002', k: 'world:3,12', i: 5, dmg: 4, kind: 'arrow', p: [0, 0, 0], ar: 1 }], 'to Bob, with Bob\'s number and the kind, keyed to the cell (AUDIT WORLD6b A7), the striker\'s feet on it (WORLD6b-ii), the shaft (WORLD6b-iii(e))'); assert.equal(pup.entity.health, 5, 'my blow lands nothing here');
   // death by the stream, the body where it fell
   pool.applyFoes('bob-0002', { n: 9, k: 'world:3,12', full: 0, f: [{ i: 5, f: [41, 0, 41], d: 1 }] });
   assert.equal(pup.dead, true); assert.equal(pup.corpse, true); assert.deepEqual(pup.ai.feet, [41, 0, 41], 'where the stream let it fall');

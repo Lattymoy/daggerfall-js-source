@@ -180,7 +180,7 @@ test('WORLD6b-ii: a peer\'s blow on MY foe carries the striker\'s feet and the b
   pool.applyFoes('eve-0003', frame(1, [rec(1, { f: [20, 0, 20] })])); await settle();
   const pup = puppets(pool)[0];
   pool.damageFoe(pup, 3, [18, 0, 20], [0.6, 0, 0.8], { kind: 'arrow' });
-  assert.deepEqual(hits, [{ to: 'eve-0003', k: 'world:3,12', i: 1, dmg: 3, kind: 'arrow', p: [18, 0, 20], d: [0.6, 0, 0.8] }], 'my blow on Eve\'s foe carries my feet and its direction');
+  assert.deepEqual(hits, [{ to: 'eve-0003', k: 'world:3,12', i: 1, dmg: 3, kind: 'arrow', p: [18, 0, 20], d: [0.6, 0, 0.8], ar: 1 }], 'my blow on Eve\'s foe carries my feet and its direction (and the shaft, WORLD6b-iii(e))');
 });
 
 test('WORLD6b-ii: by source - the world host hands the pool my id and the peers seam (one closure, the dungeon host\'s and the cell\'s), the pool reads the local player from a peer at every site that meant me, the cast at a peer rides the stream (WORLD6b-iii), the pane says the hunt', () => {

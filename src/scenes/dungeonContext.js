@@ -96,7 +96,7 @@ import { tallySkill, skillValue, SKILLS, SKILL_NAMES } from '../systems/skills.j
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT, startRestGroundedCheck } from '../player/motor.js';   // the rest gate's grounded input, one home
 import { applyLevelUp } from '../systems/advancement.js';
 import { tickPlayerMinutes, claimMagicRounds, runMagicRoundsFor } from '../systems/worldTick.js';   // AUDIT 18: the player tick every host shares
-import { mintSharedStamp } from '../net/wire.js';   // AUDIT WORLD6a B7: the memory's stamp, from the wire's one mint
+import { mintSharedStamp, hitPoisonOf } from '../net/wire.js';   // AUDIT WORLD6a B7: the memory's stamp, from the wire's one mint
 import { spendPoolLowest } from '../systems/chargen.js';
 import { ClassFile } from '../formats/classFile.js';
 import { fetchBytes, ensureAudio, loadMagicRegistries, wireInfectionVideos, raisePlayerSkills, endRunToTitleMenu, exitToTitleMenu, sensesContext, wireDoorSpells, createDetectFeed, foeNearbyRecord, lootNearbyRecord, nearbyLootRecords, restVitals, restFullyHealed, createRestDeps, fatigueLossMultiplierFor} from './shared.js';
@@ -2660,7 +2660,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (grunt && grunt.clip >= 0) audio.playOneShot(grunt.clip, 1, 1 + grunt.pitchLift);   // AUDIT 58: FPSWeapon.cs:316-319's lift
     { const v = lycanthropeAttackVoice(playerEntity, Math.random); if (v != null) audio.playOneShot(v, 1); }   // V4: OnWeaponHitEntity's transformed voice (10% attack / 20% bark)
     for (const { foe, damage } of playerWeapon.resolveHit(live, playerEntity, canSee, Math.random, (f) => backstabChanceOf(playerEntity, !!f._backFacing), (l) => hudText.add(l),
-      (f, pt) => inflictPoison(f.entity, pt, false, { currentMinute: Math.floor(classicMinutesRef.value) }))) {   // C2-slice (combat-11): the player's poisoned blade infects its victim
+      (f, pt) => poisonFoe(f, pt))) {   // C2-slice (combat-11): the player's poisoned blade infects its victim; WORLD6b-iii(e): through the one poison door (a puppet's rides the hit)
       // WeaponDamage returns true for a CONNECTING swing even at zero
       // damage (WeaponManager.cs:617-637 falls through to
       // DecreaseHealth/HandleAttackFromSource and returns true), so
@@ -2868,7 +2868,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
                 audio,
                 hitEffects,
                 say: (l) => hudText.add(l),   // C-slice: equipment breaks speak
-                onInflictPoison: (att, tgt, pt) => inflictPoison(f.entity, pt, false, { currentMinute: Math.floor(classicMinutesRef.value) }),   // C2-slice (combat-11): a poisoned arrow doses ITS mark
+                onInflictPoison: (att, tgt, pt) => poisonFoe(f, pt),   // C2-slice (combat-11): a poisoned arrow doses ITS mark; WORLD6b-iii(e): through the one poison door (a puppet's rides the hit)
                 // AUDIT 58: WeaponManager.cs:630 runs for every shaft that
                 // CONNECTED, damage or none.
                 onAttackFromPlayer: (t) => handleAttackFromPlayer(t, lastPlayerFeet),
@@ -3142,6 +3142,17 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   /** WORLD2: a peer's blow on my foe, while I host - through the one damage door with the peer's number and kind
    *  (the player arm: aggro, the shield pool, death and its corpse), the striker's feet unknown to it (the aggro turns
    *  toward me - a known drift until the pose rides the hit). */
+  /** WORLD6b-iii(e): THE ONE DOOR for this player's poison at a layout foe - the blade's (the melee chain) or the
+   *  shaft's (playerArrowHitFoe's hook), which FormulaHelper inflicts INSIDE the damage calc and clears from the
+   *  weapon either way. The host's: dosed here. A PUPPET's (a layout foe while another hosts): the dose rides the
+   *  blow's divert to the host (`pt` on the hit, spent by damageFoe's puppet arm, which the same calc's damage
+   *  reaches next); the host's foe rolls its own saving throw there. */
+  function poisonFoe(f, pt) {
+    if (!f) return null;
+    const pi = foes.indexOf(f);
+    if (!_authority && pi >= 0 && pi < _layoutFoes) { f._divertPt = pt; return null; }
+    return inflictPoison(f.entity, pt, false, { currentMinute: Math.floor(classicMinutesRef.value) });
+  }
   function applyHit(id, data) {
     if (!_authority || !data || typeof data !== 'object') return false;
     const i = data.i | 0, dmg = Number(data.dmg);
@@ -3157,6 +3168,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const unit = (v) => { const u = v3(v); if (!u) return null; const L = Math.hypot(u[0], u[1], u[2]); return L > 1e-6 && L < 1e6 ? [u[0] / L, u[1] / L, u[2] / L] : null; };
     const inReach = (v) => { const q = v3(v); return q && q.every((c) => Math.abs(c) <= HIT_POS_MAX) ? q : null; };
     const at = inReach(data.p), dir = kind === 'spell' ? null : unit(data.d);
+    const pt = hitPoisonOf(data);   // WORLD6b-iii(e): the striker's poison (the wire's bound)
     // AUDIT WORLD2 B8/C4: the blow is seen and heard on the host too - the hit's ring, the blood, the pain (the
     // striker's callers play these before their own door; here the door is all there is)
     if (dmg > 0) {
@@ -3165,6 +3177,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const pain = enemyPainVoice(f, dmg);
       if (pain && pain.clip >= 0) audio.play3d(pain.clip, [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], 1, { maxDistance: 16, pitch: 1 + pain.pitchLift });
     }
+    if (pt != null && dmg > 0) inflictPoison(f.entity, pt, false, { currentMinute: Math.floor(classicMinutesRef.value) });   // WORLD6b-iii(e): the dose lands on the host's foe as FormulaHelper lands it - inside a damaging blow, before the health moves, the foe's own saving throw rolled here
     damageFoe(f, dmg, at, dir, { fromPlayer: true, peer: true, kind, peerId: id });
     if (data.ar === 1 && kind === 'arrow') addItem(f.entity.items ??= [], { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });   // WORLD3: the shaft, where BowDamage puts it (:145-147) - the corpse's items are the record's
     return true;
@@ -3549,7 +3562,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // InstantiatePrefab's a fresh GameObject per saved record, so
     // EnemyEntity's `PickpocketByPlayerAttempted` default is the loaded
     // truth for every enemy. The re-minting pools match that by
-    // construction (exteriorFoes.js:1278's restoreWorld goes through
+    // construction (exteriorFoes.js:1292's restoreWorld goes through
     // spawnFoe), but this host patches the LIVE foes in place, so a
     // same-dungeon reload kept a raised latch and a failed pickpocket
     // could never be retried - falsifying the law
@@ -3693,9 +3706,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // sink hands playerFeet null (a spell knocks nothing, verbatim), so a joiner's spell turned the host's foe
         // toward the HOST, at the host's feet, while naming the joiner as its attacker.
         const _pAt = playerFeet ?? lastPlayerFeet;
+        const _pt = foe._divertPt ?? null; foe._divertPt = null;   // WORLD6b-iii(e): the blade's or the shaft's dose (poisonFoe, inside this blow's calc) - spent by this door, once
         if (fromPlayer && damage >= 0 && !foe._pupMismatch) opts.onFoeHit?.({ i: pi, dmg: damage, kind,
           ...(_pAt ? { p: [q2(_pAt[0]), q2(_pAt[1]), q2(_pAt[2])] } : {}),
           ...(knockDir ? { d: [q3(knockDir[0]), q3(knockDir[1]), q3(knockDir[2])] } : {}),
+          ...(_pt != null && damage > 0 ? { pt: _pt } : {}),   // WORLD6b-iii(e): the striker's poison rides to the host's foe (FormulaHelper doses on a damaging hit alone)
           ...(kind === 'arrow' ? { ar: 1 } : {}) });
         return;
       }

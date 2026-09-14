@@ -33,7 +33,7 @@ test('AUDIT WORLD6b A5/B3/C2: the wire - an owner is an id by the wire\'s own la
     { i: 1, y: Infinity }, { i: 1, h: -1 }, { i: 1, h: FOE_HEALTH_MAX + 1 }, { i: 1, h: 'x' }, { i: 1, a: -1 }, { i: 1, a: 2 ** 31 }, { i: 1, a: 1.5 }]) assert.equal(validFoeRecord(r), null, `C2: refused whole: ${JSON.stringify(r)}`);
   assert.equal(CELL_PUPPETS_MAX, MAX_ACTIVE_ENCOUNTER_FOES, 'B3: an owner\'s live cap is the pool\'s own'); assert.equal(CELL_FRAME_RECORDS_MAX, 64);
   assert.equal(relay.validFoeRecord, validFoeRecord); assert.equal(relay.CELL_FRAME_RECORDS_MAX, CELL_FRAME_RECORDS_MAX); assert.equal(relay.hitOwnerOf, hitOwnerOf);
-  assert.equal(RELAY_VERSION, 'world64', 'the relay bumped');   // AUDIT WORLD6b-iii(c) C3: the hit arm's byte budget
+  assert.equal(RELAY_VERSION, 'world65', 'the relay bumped');   // AUDIT WORLD6b-iii(c) C3: the hit arm's byte budget
 });
 
 test('AUDIT WORLD6b A1/A2: the Room - a cell\'s blow to a `to` nobody carries delivers nothing, spends nothing and is counted as junk (struck out at DROP_STRIKES_MAX); the funnel is the DESTINATION\'s own bucket - one owner\'s spent bucket stops no blow to another, and the dungeon host\'s is its own', async () => {
@@ -201,7 +201,7 @@ test('AUDIT WORLD6b B1/B2/B10: the pool - a fall\'s, another foe\'s and a relaye
   const x = rd('src/scenes/exteriorFoes.js');
   assert.match(x, /const trap = peer \? \{ allowDeath: true \} : attemptSoulTrap\(f\.entity, f\.mobileType, playerEntity\.items, Math\.random\(\)\);/, 'B2: the trap, by source');
   assert.match(x, /if \(!peer && f\.mobileType < 128 && isAzurasStarEquipped\(playerEntity\)/, 'B2: the Star, by source');
-  assert.match(x, /if \(fromPlayer && !peer\) _net\?\.onPeerHit\?\.\(\{ to: f\.puppet, k: _owners\.get\(f\.puppet\)\?\.k \?\? _net\.room\?\.\(\) \?\? null, i: f\.seq, dmg: Math\.max\(0, Math\.round\(Number\(damage\) \|\| 0\)\), kind,[^\n]*\n\s*\.\.\.\(_pAt \? \{ p: [^\n]*\n\s*\.\.\.\(knockDir \? \{ d: [^\n]*\}\);\s*return;/, 'B1: the divert\'s gate, by source (WORLD6b-ii: the striker\'s feet and the blow\'s direction ride)');
+  assert.match(x, /if \(fromPlayer && !peer\) _net\?\.onPeerHit\?\.\(\{ to: f\.puppet, k: _owners\.get\(f\.puppet\)\?\.k \?\? _net\.room\?\.\(\) \?\? null, i: f\.seq, dmg: Math\.max\(0, Math\.round\(Number\(damage\) \|\| 0\)\), kind,[^\n]*\n\s*\.\.\.\(_pAt \? \{ p: [^\n]*\n\s*\.\.\.\(knockDir \? \{ d: [^\n]*\n\s*\.\.\.\(_pt != null && damage > 0 \? \{ pt: _pt \} : \{\}\),[^\n]*\n\s*\.\.\.\(kind === 'arrow' \? \{ ar: 1 \} : \{\}\) \}\);[^\n]*\n\s*return;/, 'B1: the divert\'s gate, by source (WORLD6b-ii: the striker\'s feet and the blow\'s direction ride; WORLD6b-iii(e): the poison and the shaft)');
   assert.match(rd('src/scenes/shared.js'), /if \(!f \|\| f\.dead \|\| !f\.entity \|\| f\.puppet\) continue;/, 'B1: the magic-round broker skips a puppet');
 });
 
