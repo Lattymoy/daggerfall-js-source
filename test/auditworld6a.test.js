@@ -114,7 +114,7 @@ test('AUDIT WORLD6a B3/B4/B5: the law admits exactly what the game names (no zer
   quiet(() => sockets[0].receive({ t: 'welcome', id: 'aaaa-0001', peers: [], host: 'aaaa-0001', world: null, now: Date.now() }));
   assert.equal(s.sendWorld(big), false, 'the client keeps the building\'s cap too');
   assert.equal(s.sendWorld({ locationKey: 'interior:m187853213.4', world: {} }), true);
-  assert.equal(RELAY_VERSION, 'world65');   // WORLD6b bumped it
+  assert.equal(RELAY_VERSION, 'world66');   // WORLD6b bumped it
   assert.match(rd('server/src/index.js'), /if \(message\.length > worldFrameMaxFor\(a\.key\)\) return;/);
 });
 

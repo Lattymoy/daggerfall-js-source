@@ -540,9 +540,10 @@ export function parseClient(text, { hasHello = false } = {}) {
     const text = typeof m.text === 'string' ? sanitizeChat(m.text) : '';
     return text ? { t: 'chat', text } : { error: 'bad chat' };   // the client sanitizes before it sends, so an empty line here is not the port's client
   }
-  if (m.t === 'who') {   // WORLD6b-iii(e): a member beyond the welcome's roster asked for by name, from a hello'd socket; the name's law the Room reads (whoIdOf), a bad one junk there
+  if (m.t === 'who') {   // WORLD6b-iii(e): a member beyond the welcome's roster asked for by name, from a hello'd socket
     if (!hasHello) return { error: 'who before hello' };
-    return { t: 'who', id: m.id };
+    const id = whoIdOf(m);   // AUDIT WORLD6b-iii(e) B6: the name's law checked HERE as every scalar is (what the relay refuses the client never sends) - a bad one is an error, not a frame
+    return id ? { t: 'who', id } : { error: 'bad who' };
   }
   return { error: 'unknown message' };
 }
@@ -566,9 +567,17 @@ export const hitGate = (bucket, nowMs) => tokenGate(bucket, nowMs, HIT_HZ_MAX);
 /** WORLD6b-iii(e): the asks (`who`) a socket may make a second, at the relay and at home. ROSTER_MAX bounds the WELCOME
  *  (the nearest, AUDIT ONLINE A5), not the room: a member beyond it whose pose, foes or blow reaches me is asked for
  *  by name and answered with its join to the asker alone - a stranger is learned from the relay's own traffic. */
-export const WHO_HZ_MAX = 2;
+export const WHO_HZ_MAX = 5;   // AUDIT WORLD6b-iii(e) B5: a mass roster loss (a halo let go) re-learns its peers at this rate - at two a second twenty peers took ten seconds
+/** AUDIT WORLD6b-iii(e) B1: the asks a ROOM answers a second, every socket together - the one arm past the hello that
+ *  reads storage (a look), so it carries the room budget every other arm carries; over it the ask is dropped, nobody
+ *  struck. A full room of sockets asking at their own rate was 1280 storage reads a second out of one object, for free. */
+export const WHO_ROOM_HZ_MAX = 60;
 /** WORLD6b-iii(e): how long a stranger asked for stays asked at home before the next of its frames asks again. */
 export const WHO_RETRY_MS = 10_000;
+/** AUDIT WORLD6b-iii(e) A1: the most Arrows a foe's body takes from peers' shafts (`ar` on the hit) - a shaft is one
+ *  Arrow in DFU (BowDamage), and no fight puts this many into one body; past it the hit lands its blow and no Arrow (a
+ *  crafted stream of `ar` frames minted a stack the projection then refused whole, and the pile with it). */
+export const HIT_ARROWS_MAX = 255;
 /** The who rate gate: WHO_HZ_MAX a second (WORLD6b-iii(e)). */
 export const whoGate = (bucket, nowMs) => tokenGate(bucket, nowMs, WHO_HZ_MAX);
 /** The action rate gate at home: ACT_HZ_MAX a second (WORLD3). */

@@ -212,7 +212,7 @@ test('AUDIT WORLD6b-ii B4: one attack door - a connecting swing or shaft of mine
   pool.update(0.05, [11, 0, 10], [11, 1.6, 10], senses(playerEntity()));
   pool.attackFromPlayer(pup, [11, 0, 10]);
   assert.deepEqual(hits.map((h) => [h.i, h.dmg]), [[5, 0], [5, 4], [5, 0]], 'the next frame\'s zero blow goes');
-  assert.match(rd('src/scenes/world.js'), /: exteriorFoes\.attackFromPlayer\(f, player\.pos\)\),/, 'the arrow seam reads the one door');
+  assert.match(rd('src/scenes/world.js'), /: exteriorFoes\.attackFromPlayer\(f, player\.pos, 'arrow'\)\),/, 'the arrow seam reads the one door (AUDIT WORLD6b-iii(e) A2: with the shaft\'s kind)');
   assert.match(rd('src/scenes/exteriorFoes.js'), /attackFromPlayer\(foe, playerFeet\);\n/, 'and so does the melee arm');
 });
 

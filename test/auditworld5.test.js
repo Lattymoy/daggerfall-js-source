@@ -263,7 +263,7 @@ test('AUDIT WORLD5 by source: the sentence refills nothing online (C9), exterior
   assert.ok((af.match(/^\s*fillVitalSigns\(playerEntity\);/gm) ?? []).length >= 2, 'the rescue\'s and the acquittal\'s refills stand - neither costs a day offline either');
   assert.match(rd('src/scenes/exterior.js'), /questClocksStoodDown: \(\) => sharedClockOn\(\),/, 'C10');
   assert.match(rd('server/src/index.js'), /"now":\$\{Date\.now\(\)\}\}`;/, 'C11: not the hello\'s start, four awaits earlier');
-  assert.equal(RELAY_VERSION, 'world65', 'C11: the relay bumped (WORLD6a and its audit bumped it again; WORLD6b for the cell)');
+  assert.equal(RELAY_VERSION, 'world66', 'C11: the relay bumped (WORLD6a and its audit bumped it again; WORLD6b for the cell)');
   assert.match(rd('src/ui/enhancedMenu.js'), /The clock and the sky are the world\\'s and run on real time: a rest, a trip, a sentence or a lesson takes none of it, and the quest clocks stand still\./, 'C12');
   const w = rd('src/scenes/world.js');
   const install = w.indexOf("if (params.has('online')) { setSharedClock(() => sharedClassicMinutes(Date.now() + _sharedOffsetMs), (m) => wallMsForClassicMinutes(m) - _sharedOffsetMs); setSharedWeather(true); }");
