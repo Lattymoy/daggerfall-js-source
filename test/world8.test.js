@@ -37,7 +37,7 @@ test('WORLD8: the wire - the hour, and what is due: a stamp an hour or more befo
 
 test('WORLD8: the dungeon by source - the stamp at the corpse door and in the record, kept from the room\'s record; the memory\'s dead-past-the-hour skipped whole and a live dead one rebuilt; respawnFoe through the one build chain with the corpse freed and the body\'s loot forgotten; the sweep once a second (the host\'s foes, everyone\'s loot); the loot stamps on the claim, the record and the apply; the pile roll one home', () => {
   const d = rd('src/scenes/dungeonContext.js');
-  assert.match(d, /import \{ mintSharedStamp, hitPoisonOf, HIT_ARROWS_MAX, respawnDue, wallMsForClassicMinutes \} from '\.\.\/net\/wire\.js';/);
+  assert.match(d, /import \{ mintSharedStamp, hitPoisonOf, HIT_ARROWS_MAX, respawnDue, wallMsForClassicMinutes, validFoeRecord, validSharedFoe, FOE_HEALTH_MAX \} from '\.\.\/net\/wire\.js';/);
   assert.match(d, /import \{ worldMinutes, setWorldMinutes, sharedClockOn \} from '\.\.\/systems\/worldTick\.js';/);
   assert.match(d, /const _wallNow = \(\) => \(sharedClockOn\(\) \? wallMsForClassicMinutes\(worldMinutes\(\)\) : null\);/, 'the RELAY\'s clock (the wire\'s inverse, no offset - AUDIT WORLD7/8 B1), null offline');
   assert.match(d, /async function spawnCorpse\(f\) \{\s*\n\s*if \(f\._diedAt == null\) f\._diedAt = _wallNow\(\);/, 'the death\'s stamp at the one corpse door');

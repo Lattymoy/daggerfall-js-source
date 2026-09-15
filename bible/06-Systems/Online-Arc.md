@@ -4913,7 +4913,161 @@ The seam is the likelier explanation for a crash overlay, and it is the
 one that makes the NEXT report diagnosable: the crash text names its
 frame now.
 
-**Pinned** in `test/oncrash1.test.js` (6), driven over a real session on
-the fake socket - handlers that really throw, a peer pose that really
-carries 1e300. **15 mutations, 15 dead.** NOT SEEN RUNNING against a
-live relay; the container has no GL and no player in a room.
+**Pinned** in `test/oncrash1.test.js`, and then AUDITED - see below,
+because the pins were weaker than their own titles said.
+
+
+## AUDIT ONCRASH1 - THE FIX THAT MADE ONE BUG WORSE (2026-09-15, Mac)
+
+*"Audit this."*
+
+Three lenses. The seam, the wrap and the wire, the pins and the record.
+Two of the three found something that ONCRASH1 itself had caused.
+
+### The containment made a crash into a silent duplication
+
+`restoreSharedWorld` sets a latch and then applies the room's memory:
+
+```js
+if (shared.stamp === _sharedStamp || _sharedApplied) return false;
+_sharedApplied = true;        // FIRST
+applyWorld({ ... });          // can throw half way
+applyLoot(shared.world.loot); // never runs if it did
+```
+
+Before ONCRASH1 a throw in `applyWorld` was a crash: bad, but the player
+knew and the run ended. Contained, the throw is eaten and the latch stays
+UP, so `restoreSharedWorld` refuses every later publish for the life of
+the dungeon - and because `applyLoot` never ran, **every container the
+room has already emptied is still full for this player.** They loot it,
+the items enter their entity, and the next save write keeps them. A loud
+failure became a quiet one that mints items.
+
+That is the honest cost of containment, and the answer is not to stop
+containing - it is that a handler must not commit before it can fail.
+The latch is the LAST thing now; a failed restore leaves it DOWN and the
+host's next `WORLD_PUBLISH_MS` publish retries. The interior twin
+(`worldModes.js`) already had the order right; the dungeon arm was the
+odd one out.
+
+### The containment had a hole of exactly the shape it was closing
+
+`_deliver` returned the moment its `fn` did. Three sites reached from
+inside `onWorld` and `onFoes` start a promise whose `.then` body is deep
+game code with **no `.catch`** - `retypeFoe(...).then((ok) => patchFoe(...))`.
+The throw arrived a microtask later as an UNHANDLED REJECTION, and
+`main.js` listens for those too. Same wire input, same handler, same red
+overlay. `_deliver` follows a thenable to its end now, and each of those
+three sites carries its own `.catch`, because the port's law is that a
+throw is contained where it is RAISED.
+
+### And the door was not where the fix was
+
+`_deliver` wrapped the handler CALLS. The frame's own body - the roster
+prune, `_member`, `_askWho`, the projections - sat outside every `try`,
+so a throw there still reached the window. A lens proved it by driving
+the real session in headless Chromium and watching `pageerror` fire. The
+door is `onmessage`; the whole frame is one contained act now.
+
+### Three doors, and the commit's claim covered one
+
+ONCRASH1 said *"the wire's door bounds a streamed foe record"*. True of
+the exterior cell, false of the dungeon - which is the path the reports
+were about. `dungeonContext.js` never imported `validFoeRecord`; it
+checked by hand, `Number.isFinite(r.y)` with no bound, the feet with no
+`POSE_BOUND`, the health with no `FOE_HEALTH_MAX`. And the third door,
+the room's MEMORY, had no projection at all: `patchFoe` writes
+`f.ai.feet[0] = sf.feet[0]` and `f.ai.yaw = sf.yaw` raw, which is the
+incident written down in that function's own comment - fixed there for
+the ITEMS and left for everything else. The relay serves a memory back
+unparsed for thirty days, so one bad record poisons every joiner for a
+month.
+
+All three doors are the wire's now: the stream through `validFoeRecord`,
+the memory through a new `validSharedFoe` beside it, the pose through
+`validPose`. A field outside the law is dropped; a record outside it is
+refused whole.
+
+### A heartbeat that a throw could keep alive
+
+`_foesInAt` was stamped when a foes frame ARRIVED, not when it applied.
+Contained, a stream that throws on this client every frame still read as
+a live host, so `FOES_STALE_MS` could never fire and the seat never came
+back: a dungeon of frozen puppets, indefinitely. The heartbeat is the
+apply's word now.
+
+### "Neither is reachable offline" was wrong
+
+The commit said that. `world.js` `applyPose` did `cam.yaw = pose.yaw ??
+cam.yaw` with no check, so a quickload or a classic import with a
+corrupted yaw hung `fpArm`'s wrap with no socket in sight. Bounded now,
+like the wire's.
+
+And the loop that the wrap fix was about has a sibling the port had
+already been burned by: `collider.move()`'s substep count. AUDIT WORLD3
+F2 hit it - *"2.4e8 substeps and froze the tab for every player in the
+room"* - and fixed it by normalising the vector at the ONE call site
+that had caused it. Every bound lived in a caller. It has a ceiling of
+its own now; past it the remainder is one step, which is what a teleport
+is.
+
+### The pins could not fail, again
+
+The third lens mutated the source under them: **10 of 21 mutants came
+back green.** A CLAMP passed for a wrap, because no input between PI and
+2PI was ever tested. The "at the door or downstream" test pinned the
+DOOR alone - every peer pose reaches `lerpAngle` through `validPose`,
+which now wraps, so restoring the hanging loop downstream passed in
+0.2 s. "Any ONE call site left bare" was false: there are two `world`
+call sites and only the frame's was driven. And the generative sweep was
+a regex for `while (... Math.PI ...)`, which a hoisted `TAU`, a
+`for (;;)`, a recursive wrap and even `while (Math.abs(dy) > Math.PI)`
+all walked straight past - the last because its own parenthesis broke
+the character class.
+
+Rebuilt: every wrap site is driven with the door BYPASSED, the wrap's
+contract is pinned by exact value across `(PI, 2PI)` and at both ends,
+the sweep looks for the SHAPE (a value stepped by a whole turn, inside a
+loop or a self-call, with each file's own name for a turn resolved
+first), and `{ timeout }` turns a hang into a red - `node --test` has no
+default timeout, so "a hung pin is a failed pin" had been a hope, not a
+mechanism.
+
+**28 mutations, 28 dead**, including all ten the lens proved survived.
+
+### What was and was not observed
+
+ONCRASH1's record said *"NOT SEEN RUNNING ... the container has no GL and
+no player in a room."* Both clauses are true and neither is a REASON:
+nothing in this arc touches GL or needs a room, and a lens drove the
+whole thing in headless Chromium here in under a minute, confirming that
+a handler throw reaches `window.onerror` before the fix and does not
+after. That is the same shape as the ARENA2 excuse this project was
+burned by a day earlier. Said plainly instead: **the laws are driven in
+node against a real session; the browser probe was run once by hand and
+is not yet a pin; no live relay and no second player were involved.**
+
+### Recorded, not paid
+
+- **The corpse grant can duplicate loot.** `grantCorpse` empties the
+  owner's body when `onPeerHit` returns true, but that is
+  `hitPend.sendOrHold`, which answers for the QUEUE and not for the
+  frame it was handed: queued-then-delivered returns false, so the taker
+  receives the items and the corpse keeps them, and the next peer is
+  granted the same loot again. Pre-existing, online only, and a real
+  duplication. Fixing it properly means the pend reporting a frame's own
+  fate, or an escrow keyed on the foe's seq - a slice, not a patch.
+- `lerpPose` can overflow a peer's PITCH to Infinity; inert only because
+  `peerCamera` writes `c.pitch = 0`.
+- `getMeleeWeaponAnimTime` returns 0 at speed 115 and the loop that
+  reads it never terminates; unreachable only because `liveStat` clamps
+  to 100 in another module.
+- Six accumulator loops (`acc += dt; while (acc >= step)`) with no
+  `MAX_FRAME_DT` clamp, where `player/motor.js` and
+  `characters/enemyMotor.js` have one.
+- `_peerHeights`, `remotePlayers._dolls`' failure entries and
+  `peerBodies._failed` are never pruned.
+- `wrapAngle(-PI)` is `+PI` where the four loops answered `-PI`, and the
+  two differ by ~1e-6 at 1e6 rad because a loop accumulates rounding.
+  The one-step answer is the correct one; the commit's "the same answer
+  for a small angle" is true to about 1e-14.

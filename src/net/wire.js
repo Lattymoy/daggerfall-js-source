@@ -363,6 +363,8 @@ export const CELL_FRAME_RECORDS_MAX = 64;
 export const CELL_PUPPETS_MAX = 8;
 export const FOE_SEQ_MAX = 1e9;
 export const FOE_HEALTH_MAX = 1e5;
+/** AUDIT ONCRASH1 A3: the most effect bundles a stored foe record may carry - the one list in a memory's foe with no other bound. */
+export const SHARED_EFFECTS_MAX = 64;
 export const FOE_LEVEL_MAX = 100;
 /** One streamed foe record projected: `i` a whole number in [0, FOE_SEQ_MAX]; `t` a whole number in [0, 255] or
  *  absent; `x`, `d`, `m` 0 or 1 or absent; `f` three finite numbers inside the pose's bounds or absent; `y` finite
@@ -403,6 +405,53 @@ export function validFoeRecord(r) {
     if (r.w === null) out.w = null;
     else if (Array.isArray(r.w) && r.w.length === 2 && Number.isInteger(r.w[0]) && r.w[0] >= 0 && r.w[0] <= 1023 && Number.isInteger(r.w[1]) && r.w[1] >= 0 && r.w[1] <= 255) out.w = [r.w[0], r.w[1]];
     else return null;
+  }
+  return out;
+}
+
+/** AUDIT ONCRASH1 A3/B4b: ONE STORED FOE RECORD, PROJECTED - the memory's door, which had none.
+ *
+ *  `restoreSharedWorld` (scenes/dungeonContext.js) already projects the memory's ACTIONS through
+ *  `validActionRecord` and drops its piles, for a reason it writes down: the relay serves a room's stored bytes back
+ *  UNPARSED for WORLD_TTL_MS, so one bad record in a memory poisons every joiner for thirty days. Its FOES went
+ *  through raw, and `patchFoe` writes `f.entity.health = sf.health`, `f.ai.feet[0] = sf.feet[0]` and
+ *  `f.ai.yaw = sf.yaw` with no check at all - an absent `feet` THREW out of the socket handler (the incident is in
+ *  that function's own comment, which fixed the ITEMS and left the rest) and a string `yaw` made the foe's facing
+ *  NaN for the life of the dungeon.
+ *
+ *  The vocabulary is exactly what `sharedWorld` writes - `items` is deleted there, so it is not admitted here
+ *  ("what this client will not say, it will not hear", AUDIT WORLD4 D3). A field outside its law is DROPPED, not
+ *  clamped onto a neighbour; a record with a bad field is refused WHOLE, never half landed. Presence-gated
+ *  throughout, because `patchFoe` reads every optional field with `!= null` and a record from an older build carries
+ *  fewer.
+ *  @param {*} sf
+ */
+export function validSharedFoe(sf) {
+  if (!sf || typeof sf !== 'object' || Array.isArray(sf)) return null;
+  const out = {};
+  // the feet: the pose's own bounds, the same three numbers a pose carries
+  if (sf.feet !== undefined) {
+    if (!Array.isArray(sf.feet) || sf.feet.length !== 3 || !sf.feet.every(finite)) return null;
+    if (Math.abs(sf.feet[0]) > POSE_BOUND || Math.abs(sf.feet[2]) > POSE_BOUND || Math.abs(sf.feet[1]) > POSE_Y_BOUND) return null;
+    out.feet = [sf.feet[0], sf.feet[1], sf.feet[2]];
+  }
+  if (sf.yaw !== undefined) { if (!finite(sf.yaw)) return null; out.yaw = wrapAngle(sf.yaw); }   // ONCRASH1: bounded here too, not at validPose alone
+  for (const k of ['health', 'maxHealth', 'magicka', 'fatigue']) {
+    if (sf[k] === undefined) continue;
+    if (!finite(sf[k]) || sf[k] < -FOE_HEALTH_MAX || sf[k] > FOE_HEALTH_MAX) return null;
+    out[k] = sf[k];
+  }
+  if (sf.died !== undefined && sf.died !== null) { if (!finite(sf.died)) return null; out.died = sf.died; }
+  if (sf.mobileType !== undefined) { if (!Number.isInteger(sf.mobileType) || sf.mobileType < 0 || sf.mobileType > 255) return null; out.mobileType = sf.mobileType; }
+  if (sf.gender !== undefined && sf.gender !== null) { if (typeof sf.gender !== 'string' || sf.gender.length > 16) return null; out.gender = sf.gender; }
+  for (const k of ['team', 'mobileTeam']) { if (sf[k] === undefined) continue; if (!Number.isInteger(sf[k]) || sf[k] < -1 || sf[k] > 255) return null; out[k] = sf[k]; }
+  for (const k of ['dead', 'hostile', 'encountered', 'wabbajackActive', 'specialTransformationCompleted']) if (sf[k] !== undefined) out[k] = !!sf[k];
+  if (sf.anchor !== undefined) out.anchor = sf.anchor;   // REVIEW 2026-09-05's stamp: read for its presence alone
+  // The effect bundles ride as they are - `patchFoe` copies them shallowly and the effect spine reads them by name -
+  // but the LIST is bounded, because it is the one field a memory's foe can grow without bound.
+  if (sf.activeEffects !== undefined) {
+    if (!Array.isArray(sf.activeEffects)) return null;
+    out.activeEffects = sf.activeEffects.filter((a) => a && typeof a === 'object' && !Array.isArray(a)).slice(0, SHARED_EFFECTS_MAX);
   }
   return out;
 }

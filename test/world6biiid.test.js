@@ -22,7 +22,7 @@ test('WORLD6b-iii(d): a building streams no foes BY THE LOCK - the interior pool
   assert.doesNotMatch(wm, /interiorFoes\.setNet\(/, 'no net is ever installed on the interior pool: nothing of it rides');
   const w = rd('src/scenes/world.js');
   assert.match(w, /const frame = cell \? \(\(modes\?\.mode \?\? 'exterior'\) === 'exterior' \? exteriorFoes\.foesFrame\(full\) : null\) : modes\?\.dungeonFoesFrame\?\.\(full\);/, 'a world room\'s frame is the dungeon\'s alone - a building\'s host streams nothing');
-  assert.match(w, /if \(isCellRoom\(online\.room\)\) \{ if \(\(modes\?\.mode \?\? 'exterior'\) === 'exterior'\) exteriorFoes\.applyFoes\(id, data\); return; \}[^\n]*\n[^\n]*\n\s*modes\?\.applyDungeonFoes\?\.\(id, data\);/, 'a world room\'s frame lands on the dungeon alone - in a building it lands nothing');
+  assert.match(w, /if \(isCellRoom\(online\.room\)\) \{ if \(\(modes\?\.mode \?\? 'exterior'\) === 'exterior'\) exteriorFoes\.applyFoes\(id, data\); return; \}[\s\S]*?if \(modes\?\.applyDungeonFoes\?\.\(id, data\) && modes\?\.mode === 'dungeon'\) _foesInAt = performance\.now\(\);/, 'a world room\'s frame lands on the dungeon alone - in a building it lands nothing');
   assert.match(wm, /dungeonFoesFrame\(full = false\) \{ return mode === 'dungeon' && dungeonCtx \? \(dungeonCtx\.foesFrame\?\.\(full\) \?\? null\) : null; \},/);
   assert.match(wm, /applyDungeonFoes\(id, data\) \{ return mode === 'dungeon' && dungeonCtx \? !!dungeonCtx\.applyFoes\?\.\(data, id\) : false; \},/);
   assert.match(rd('bible/04-Characters/Characters-Arc.md'), /\*\*A building interior carries NO STATIC ENEMIES in DFU\.\*\*/, 'the fact the interior pool is built on');

@@ -199,6 +199,11 @@ export const CLOCK_WARNING = 'this machine\'s clock is more than a year from the
 /** ONCRASH1: how long a contained handler throw is said on the HUD line. Long enough for a player to read and report it,
  *  short enough that one transient frame does not brand the session; `stats.threw` and the console keep the rest. */
 export const THREW_SAY_MS = 30000;
+/** AUDIT ONCRASH1 A5: distinct throws remembered before the said-once set is emptied - a bound, so a crafted stream of
+ *  unique messages cannot grow it without end. */
+export const THREW_KINDS_MAX = 32;
+/** AUDIT ONCRASH1 A6: a MONOTONIC reading for the HUD's window - never the wall clock, which steps. */
+const monoNow = () => (typeof performance !== 'undefined' && typeof performance.now === 'function' ? performance.now() : Date.now());
 
 export class OnlineSession {
   constructor({ url = DEFAULT_SERVER, name = 'Traveller', look = null, id = null, secret = null, presence = true, WebSocketImpl = globalThis.WebSocket, now = () => Date.now() } = {}) {
@@ -252,6 +257,7 @@ export class OnlineSession {
    *  they stood in was shared or merely peopled. */
   join(room, pose = null) {
     if (room === this.room && this._ws) return;
+    this._threwKinds.clear();   // AUDIT ONCRASH1 A5: a new room says its own throws out loud - the first `world` throw of a session silenced the console for every later dungeon's
     this._who.clear();   // AUDIT WORLD6b-iii(e) B4: a crossing forgets who was asked - an answer lost in the last cell (its socket died, the peer's leave raced the ask) held the stranger unseen for WHO_RETRY_MS in this one
     const h = this._halo.get(room);
     // AUDIT WORLD6b-iii(b) A1/B7/C2: a LIVE, OPEN halo alone is promoted - one dropped and pending its retry (ws null)
@@ -500,7 +506,10 @@ export class OnlineSession {
         try { ws.send(hello); this.stats.sent++; } catch { /* the close will say */ }
       }
     };
-    ws.onmessage = (ev) => { const room = this._roomOf(ws); if (room != null) this._receive(ev.data, room); };
+    // AUDIT ONCRASH1 C3: THE DOOR IS HERE, and the first cut left it open. `_deliver` wrapped the handler CALLS, so a
+    // throw in `_receive`'s own body - the roster prune, `_member`, `_askWho`, a projection - still reached the window
+    // and painted the overlay. Driven in a real browser to prove it. The frame is one contained act from the outside in.
+    ws.onmessage = (ev) => this._deliver('frame', () => { const room = this._roomOf(ws); if (room != null) this._receive(ev.data, room); });
     ws.onclose = (ev) => {
       const room = this._roomOf(ws);
       if (room == null) return;
@@ -610,16 +619,40 @@ export class OnlineSession {
    *  throws at FOES_HZ_MAX and a console flood is its own outage. What
    *  threw is still a bug; this stops it being everyone's crash while it
    *  is found. */
+  /** AUDIT ONCRASH1 A1: AND THE ASYNC TAIL, which the first cut let through.
+   *  `_deliver` returned the moment `fn` did, and three sites reached from
+   *  inside `onWorld`/`onFoes` start a promise whose `.then` body is deep
+   *  game code with no `.catch` (dungeonContext.js retypeFoe's arms). The
+   *  throw landed one microtask later as an UNHANDLED REJECTION - main.js
+   *  listens for those too, so it was the same red overlay on the same
+   *  wire input, out of the same handler. A handler that hands back a
+   *  thenable is followed to its end. */
   _deliver(kind, fn) {
-    try { fn(); } catch (e) {
-      this.stats.threw++;
-      const text = `${e?.name ?? 'Error'}: ${e?.message ?? e}`;
-      this.threw = { kind, text, at: this._now() };
-      if (!this._threwKinds.has(kind)) {
-        this._threwKinds.add(kind);
-        console.error(`[online] a '${kind}' frame threw - the frame is dropped, the session stands: ${text}`, e);
-      }
-    }
+    try {
+      const r = fn();
+      if (r && typeof r.then === 'function') r.then(null, (e) => this._contain(kind, e));
+    } catch (e) { this._contain(kind, e); }
+  }
+  /** AUDIT ONCRASH1 A5: SAID ONCE PER THROW, not once per KIND. The first
+   *  cut gated the console on the kind alone, so the second, usually more
+   *  informative `foes` throw was never printed - while `threw` (the HUD's
+   *  text) was overwritten by it. The player read error B off the screen
+   *  and the console held the stack for error A, which is precisely the
+   *  pairing this was built to prevent. The gate is the kind AND the text,
+   *  bounded (a crafted message stream is its own flood) and emptied with
+   *  the room. */
+  _contain(kind, e) {
+    this.stats.threw++;
+    const text = `${e?.name ?? 'Error'}: ${e?.message ?? e}`;
+    // AUDIT ONCRASH1 A6: the HUD's window is measured on a MONOTONIC reading. `_now` is wall time, and a backwards
+    // clock step - which is what a player does right after OL3's CLOCK_WARNING tells them to fix their clock - made
+    // `now - at` negative, so the line never went away.
+    this.threw = { kind, text, at: this._now(), mono: monoNow() };
+    const key = `${kind}:${text}`;
+    if (this._threwKinds.has(key)) return;
+    if (this._threwKinds.size >= THREW_KINDS_MAX) this._threwKinds.clear();
+    this._threwKinds.add(key);
+    console.error(`[online] a '${kind}' frame threw - the frame is dropped, the session stands: ${text}`, e);
   }
 
   _receive(data, room = this.room) {
@@ -742,7 +775,7 @@ export class OnlineSession {
       if (this.clockWarning) return `${label}: ${this.clockWarning}`;   // OL3: an open session with a clock a year off says so
       // ONCRASH1: a frame the port could not handle is SAID, not only swallowed - the player reporting "it crashed"
       // now has the line that names which frame, and the console has the stack behind it.
-      if (this.threw && this._now() - this.threw.at < THREW_SAY_MS) return `${label}: a '${this.threw.kind}' frame from another player was dropped - ${this.threw.text}`;
+      if (this.threw && monoNow() - this.threw.mono < THREW_SAY_MS) return `${label}: a '${this.threw.kind}' frame from another player was dropped - ${this.threw.text}`;
       return null;
     }
     if (this.terminal || this.status === 'error') return `${label}: ${this.error ?? 'error'}`;

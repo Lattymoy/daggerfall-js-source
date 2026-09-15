@@ -183,7 +183,7 @@ test('AUDIT WORLD6b-iii(c) C3: the Room - the hit arm counts BYTES (HIT_ROOM_BYT
 });
 
 test('AUDIT WORLD6b-iii(c) by source: the dungeon\'s record clamps the overshoot too (C8); the rare-drop chime rings over a peer\'s body (B10); a live foe with no number streams no health (C9); the records', () => {
-  assert.match(rd('src/scenes/dungeonContext.js'), /h: Number\.isFinite\(f\.entity\.health\) \? Math\.max\(0, f\.entity\.health\) : 0, d: f\.dead \? 1 : 0,/, 'C8');
+  assert.match(rd('src/scenes/dungeonContext.js'), /h: Number\.isFinite\(f\.entity\.health\) \? Math\.max\(0, Math\.min\(FOE_HEALTH_MAX, f\.entity\.health\)\) : 0, d: f\.dead \? 1 : 0,/, 'C8');
   const x = rd('src/scenes/exteriorFoes.js');
   assert.match(x, /if \(n > 0\) playRareDrop\(audio, f\.corpseMarker\?\.pos \?\? f\.ai\?\.feet \?\? null, grant\);/, 'B10');
   assert.match(x, /\.\.\.\(Number\.isFinite\(f\.entity\.health\) \? \{ h: Math\.max\(0, Math\.min\(FOE_HEALTH_MAX, f\.entity\.health\)\) \} : \{\}\)/, 'C9');
