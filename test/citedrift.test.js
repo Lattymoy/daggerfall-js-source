@@ -859,7 +859,7 @@ test('CD6: every `src/` line Port-Status cites is the line it describes', () => 
 //
 // The G1 lane re-resolved ~180 `:NNN` cites after moving code in four
 // hosts, and the pass advanced only the LEADING number of every
-// multi-number citation: `cityGuards.js:743-693`, `world.js:5608-5582`,
+// multi-number citation: `cityGuards.js:743-693`, `world.js:5636-5610`,
 // `worldModes.js:1160 against :1056`. Forty of them came out as ranges
 // that cannot exist, and every pin in this file was green throughout,
 // because each one resolves a single number a human chose to list.

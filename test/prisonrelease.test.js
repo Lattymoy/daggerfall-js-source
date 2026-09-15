@@ -438,6 +438,30 @@ test('host: ReleaseFromPrison\'s last two lines are wired to the world', () => {
     'no location on the pixel means no teleport at all');
   assert.match(world, /_teleportToPixel\(px\.x, px\.y, null, \{ reposition: REPOSITION\.RandomStartMarker \}\)/,
     'TeleportToCoordinates to the SAME map pixel, with RandomStartMarker');
+  // JAIL1 (2026-09-15, a player through Mac: "twice once I served my sentence the game loaded me outside of a room
+  // and falling into the void!"). YOU CAN BE ARRESTED INDOORS - the indoor watch has no court flow of its own and
+  // asks the WORLD host for one through `onGuardHit` (worldModes' onPlayerHurt says so), which is the shape the
+  // crime that gets you jailed takes anyway, because stealing is done inside a shop. So the whole sentence can be
+  // served with the mode still 'interior', and the release used to teleport to the town's start marker with the
+  // building still standing: the player landed at exterior coordinates inside an interior scene, outside its
+  // geometry, and fell. The exit comes FIRST now, as it does at every other teleport reachable from indoors.
+  assert.match(world, /modes\?\.forceExitToExterior\(\);\s*\n\s*_teleportToPixel\(px\.x, px\.y, null, \{ reposition: REPOSITION\.RandomStartMarker \}\)/,
+    'JAIL1: the interior is left BEFORE the release teleports - a jailed player never lands in a room they no longer occupy');
+  // and the guard stays where DFU's is: no location, no teleport AND no exit (a wilderness arrest moves nothing)
+  assert.match(world, /if \(!dfLoc\?\.exterior\?\.exteriorData\) return;[\s\S]{0,2200}?modes\?\.forceExitToExterior\(\);/,
+    'JAIL1: the HasLocation guard still runs first - it is the teleport that is guarded, and the exit rides with it');
+  // THE CLASS, not the instance: every `_teleportToPixel` call that can be reached from inside a building leaves
+  // first. This walks them rather than trusting the one line above.
+  {
+    const body = world.slice(world.indexOf('async function _teleportToPixel'));
+    for (const [fn, why] of [['function positionPlayerAtLocationEntrance', 'the court release (JAIL1)'],
+      ['async function teleportTo', 'the guild teleport (G5)']]) {
+      const i = body.indexOf(fn);
+      assert.ok(i >= 0, `${fn} is still here`);
+      const chunk = body.slice(i, body.indexOf('_teleportToPixel(', i));
+      assert.match(chunk, /forceExitToExterior\(/, `${why} leaves the interior before it teleports`);
+    }
+  }
   // ...and the core runs the arm once the destination pixel is built,
   // exactly where StreamingWorld.Update runs it (:266-295).
   assert.match(world, /const wantsLanding = reposition === REPOSITION\.RandomStartMarker\s*\n\s*\|\| reposition === REPOSITION\.DirectionFromStartMarker;/,
