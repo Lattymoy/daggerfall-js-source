@@ -167,3 +167,59 @@ test('WORLD6b-iii(b): the world host by source - the halo held from the map pixe
   assert.match(o, /for \(const r of \[k, this\.room, \.\.\.this\._halo\.keys\(\)\]\) if \(has\(r\) && sock\(r\)\) \{ via = sock\(r\); break; \}/, 'a hit through the owner\'s cell - the frame\'s first, then wherever it is reported (AUDIT WORLD6b-iii(b) A3)');
   assert.match(rd('bible/06-Systems/Online-Arc.md'), /### 6b-iii\(b\): the cell seam/, 'the record');
 });
+
+// ── AUDIT FOES FOE3: THE PRIMARY SOCKET IS NOT THE ONLY WAY OUT ──
+// (2026-09-15, Mac relaying players: "during online play, certain
+// enemies cant be damaged".)
+//
+// `sendHit` asked `!this._ws || this.status !== 'open'` BEFORE the
+// routing loop that picks the owner's socket - so while my own cell's
+// socket was down (reconnecting, a room at SOCKETS_MAX, the RTT of any
+// crossing that is not a halo promotion) every foe owned by every peer
+// went bullet-proof, while its stream kept arriving through the halo
+// and it kept walking and swinging at me. sendPose learned this exact
+// lesson at A5 above ("through every OPEN socket, my own cell's down or
+// not"); sendHit never did. In a cell the ROUTING LOOP is the check.
+test('AUDIT FOES FOE3: my own cell\'s socket is down and a peer\'s foe is still strikable through the halo', () => {
+  const { FakeWS, sockets } = fakeSocketClass();
+  let now = 1000;
+  const s = new OnlineSession({ url: 'wss://relay.test', name: 'Mac', id: 'mac-0001', secret: 'secret-of-mac-0001', WebSocketImpl: FakeWS, now: () => now });
+  const pose = { x: 1, y: 2, z: 3, yaw: 0, pitch: 0, mv: 0 };
+  const look = { race: 'Nord', gender: 'male', faceIndex: 0, items: [] };
+  const info = console.info; console.info = () => {};
+  try {
+    s.join('world:3,12', pose);
+    const ws = sockets[0]; ws.open();
+    ws.receive({ t: 'welcome', id: 'mac-0001', peers: [], host: null, world: null });
+    s.setHalo(['world:2,12']);
+    const hw = sockets[1]; hw.open();
+    hw.receive({ t: 'welcome', id: 'mac-0001', peers: [{ id: 'eve-0003', name: 'Eve', look, pose }], host: null, world: null });
+    const blow = { to: 'eve-0003', k: 'world:2,12', i: 1, dmg: 3, kind: 'arrow' };
+
+    now += 1000;
+    assert.equal(s.sendHit(blow), true, 'baseline: Eve is across the seam and strikable');
+
+    // my own cell's socket dies; the halo is untouched and Eve is still a peer there
+    ws.drop?.(1006) ?? ws.close?.(1006);
+    assert.notEqual(s.status, 'open', 'my own cell\'s socket is down');
+    assert.equal(s.inRoom('world:2,12'), true, 'the halo still holds me');
+    assert.equal(s.peers.has('eve-0003'), true, 'and Eve is still a peer through it');
+    for (let n = 0; n < 5; n++) {
+      now += 1000;
+      assert.equal(s.sendHit(blow), true,
+        'her foe is struck through the halo - the routing loop below chooses the socket, this is not the primary\'s to veto');
+    }
+    assert.equal(JSON.parse(hw.sent.at(-1)).data.to, 'eve-0003', 'and it really went out of the halo\'s socket');
+
+    // a WORLD ROOM still needs its one socket - there is no other way out there
+    const s2 = new OnlineSession({ url: 'wss://relay.test', name: 'Mac', id: 'mac-0001', secret: 'secret-of-mac-0001', WebSocketImpl: FakeWS, now: () => now });
+    s2.join('dungeon:m187', pose);
+    const dw = sockets.at(-1); dw.open();
+    dw.receive({ t: 'welcome', id: 'mac-0001', peers: [], host: 'bob-0002', world: null });
+    now += 1000;
+    assert.equal(s2.sendHit({ i: 1, dmg: 3, kind: 'melee' }), true, 'the host\'s foe, out of the one socket');
+    dw.drop?.(1006) ?? dw.close?.(1006);
+    now += 1000;
+    assert.equal(s2.sendHit({ i: 1, dmg: 3, kind: 'melee' }), false, 'and with that socket gone there is nowhere for it to go');
+  } finally { console.info = info; }
+});

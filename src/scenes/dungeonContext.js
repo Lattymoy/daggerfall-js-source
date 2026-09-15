@@ -201,6 +201,11 @@ const q3 = (v) => Math.round(v * 1000) / 1000; const GENDER_BIT = ['male', 'fema
  *  A dungeon block is 4096 classic units and a location is at most 8 of them a side, so this is orders past any
  *  honest position and still far inside the range where the collider's substep arithmetic is bounded. */
 const HIT_POS_MAX = 1e6;
+// AUDIT FOES FOE5: the most damage one peer's blow may claim. The host TRUSTS the number (it never recomputes - the
+// striker's own calc is the game's), so without a bound any joiner could one-shot every foe in the room and empty it
+// through the kill door. The exterior twin has carried this bound since WORLD6b (exteriorFoes.js:1636); the dungeon
+// had none. Past anything a legal swing, shaft or blast can roll.
+const HIT_DMG_MAX = 10000;
 /** AUDIT WORLD3 E3: can the ONE build chain actually stand this species? Both of buildFoeAt's branches need a truthy
  *  maleTexture (ENEMY_BASICS[39] has 0), and without this the rebuild fell to the build-time flat fallback, never
  *  stood, and was retried on every frame of the stream. ONE HOME for the two readings. */
@@ -1399,7 +1404,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:6622 / exterior.js:2947), set
+  // host's own townTalk sink (world.js:6623 / exterior.js:2947), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -2353,7 +2358,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:930 against :961; worldModes.js:5923 against :5932).
+    // (dungeon.js:930 against :961; worldModes.js:5939 against :5948).
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -2843,8 +2848,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:8774,
-              // exterior.js:4294 and worldModes.js:6050 already ran;
+              // playerArrowHitFoe is the one copy world.js:8788,
+              // exterior.js:4294 and worldModes.js:6066 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -3107,13 +3112,28 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const i = r.i | 0;
       const f = foes[i];
       if (!f || i >= _layoutFoes) continue;
-      if (r.t != null && r.t !== f.mobileType) {   // B5: another species at this index - left alone and its blows kept home; WORLD3: and REBUILT as the room's
+      if (r.t != null && r.t !== f.mobileType) {   // another species at this index - REBUILT as the room's (WORLD3); the blow goes meanwhile (AUDIT FOES FOE4)
         f._pupMismatch = true;
         // AUDIT WORLD3 E2: the record that triggered the rebuild lands ON the rebuilt foe. The build stands a FRESH
         // record - alive, at full health, at its marker - and the host re-sends this index only on its next full
         // frame (and, once I take the seat, never), so a foe the room knows is dead stood up, and after a handover
         // became my simulation's live foe and went back out to the whole room that way.
-        retypeFoe(i, r.t, GENDER_BIT[r.x === 1 ? 1 : 0]).then((ok) => { if (ok && !_authority && foes[i]) applyFoeRecord(foes[i], r); });
+        // AUDIT FOES FOE4: and the rebuild is BOUNDED. A refusal (a texture or a career
+        // read that fails on this machine alone, a species no art can stand) left the
+        // flag set and the host kept re-offering the index - the full frame carries
+        // every layout foe every FOES_FULL_MS - so a failing index asked for a fresh
+        // build for ever, several times a second, for the life of the dungeon. Past
+        // RETYPE_TRIES it stands as it is, said once: the body is wrong and the blows
+        // still land, which is the right way round.
+        const tries = (_retypeFails.get(i) ?? 0);
+        if (tries < RETYPE_TRIES) {
+          retypeFoe(i, r.t, GENDER_BIT[r.x === 1 ? 1 : 0]).then((ok) => {
+            if (ok) { _retypeFails.delete(i); if (!_authority && foes[i]) applyFoeRecord(foes[i], r); return; }
+            const n = (_retypeFails.get(i) ?? 0) + 1;
+            _retypeFails.set(i, n);
+            if (n === RETYPE_TRIES) console.warn(`[online] the foe at ${i} cannot be rebuilt as species ${r.t} on this client - it keeps the body it has; blows still go to the host`);
+          });
+        }
         continue;
       }
       f._pupMismatch = false;
@@ -3173,7 +3193,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (!_authority || !data || typeof data !== 'object') return false;
     const i = data.i | 0, dmg = Number(data.dmg);
     const f = foes[i];
-    if (!f || i >= _layoutFoes || f.dead || !Number.isFinite(dmg) || dmg < 0) return false;
+    // AUDIT FOES FOE5: BOUNDED, as the exterior twin's applyHit is (exteriorFoes.js:1636). The number is a peer's
+    // word and the host trusts it without recomputing, so an unbounded one let any joiner one-shot every foe in the
+    // room - and, through the kill door, empty it. 10000 is past anything a legal swing, shaft or blast can roll.
+    if (!f || i >= _layoutFoes || f.dead || !Number.isFinite(dmg) || dmg < 0 || dmg > HIT_DMG_MAX) return false;
     const kind = data.kind === 'arrow' || data.kind === 'spell' ? data.kind : 'melee';
     // WORLD3: the striker's feet and the blow's direction (a spell knocks nothing, verbatim), the shaft.
     // AUDIT WORLD3 F2: BOUNDED. The direction is multiplied by the knockback SPEED and handed to collider.move, whose
@@ -3484,6 +3507,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  whose own save had killed the foe at `i` refused the rebuild for the life of the context, and the room's live
    *  foe there stood mismatched: frozen, and invulnerable to that joiner (damageFoe keeps a mismatched puppet's blow
    *  home). The record that follows the rebuild lands it dead or alive as the room has it. */
+  /** AUDIT FOES FOE4: how many times each index's rebuild has REFUSED - the host re-offers a mismatched index for
+   *  ever, so a build that cannot succeed on this machine must stop being asked. Cleared by a rebuild that lands. */
+  const _retypeFails = new Map();
+  const RETYPE_TRIES = 3;
   async function retypeFoe(i, mobileType, gender = null) {
     const f = foes[i];
     // AUDIT WORLD3 E3: the same guard buildFoeAt uses. ENEMY_BASICS[39] exists with maleTexture 0, so both build
@@ -3642,7 +3669,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // InstantiatePrefab's a fresh GameObject per saved record, so
     // EnemyEntity's `PickpocketByPlayerAttempted` default is the loaded
     // truth for every enemy. The re-minting pools match that by
-    // construction (exteriorFoes.js:1292's restoreWorld goes through
+    // construction (exteriorFoes.js:1303's restoreWorld goes through
     // spawnFoe), but this host patches the LIVE foes in place, so a
     // same-dungeon reload kept a raised latch and a failed pickpocket
     // could never be retried - falsifying the law
@@ -3788,7 +3815,18 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // sends nothing (B5: its index is another foe's on the host).
     if (!_authority) {
       const pi = foes.indexOf(foe);
-      if (pi >= 0 && pi < _layoutFoes) {
+      // AUDIT FOES FOE9: a record the pool NO LONGER HOLDS takes no blow. retypeFoe
+      // swaps foes[i] for a fresh record and marks the old one dead, but anything that
+      // closed over the old one - an arrow already in flight (its dealDamage holds the
+      // record), a lock-on, a melee pick resolved a frame earlier - still points at it.
+      // indexOf then answers -1, the divert below was skipped, and the blow fell
+      // through to the LOCAL damage path and landed on a ghost nothing draws and
+      // nothing streams. With a joiner's roster retyping at nearly every index on
+      // arrival (the species bands on the striker's own level) and again on every
+      // un-death, that is not rare. The blow is dropped instead of being spent on a
+      // body that is not there.
+      if (pi < 0) return;
+      if (pi < _layoutFoes) {
         // WORLD3: the striker's feet (p) and the blow's direction (d) ride the hit - the aggro turns toward the striker
         // and the shove goes the way the blow went; an arrow's shaft lands in the host's copy (ar)
         // AUDIT WORLD3 F1: the striker's feet ride EVERY kind, not only the ones that carry a knock ray - the spell
@@ -3798,7 +3836,23 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // WORLD6b-iii(e): the blade's or the shaft's dose (poisonFoe, inside this blow's calc) - spent by this door, once;
         // AUDIT WORLD6b-iii(e) A5: by this player's own blow (a fall's or a foe's door leaves it)
         const _pt = fromPlayer ? (foe._divertPt ?? null) : null; if (fromPlayer) foe._divertPt = null;
-        if (fromPlayer && damage >= 0 && !foe._pupMismatch) opts.onFoeHit?.({ i: pi, dmg: damage, kind,
+        // AUDIT FOES FOE4 (2026-09-15, Mac relaying players: "certain enemies cant be
+        // damaged"): THE BLOW GOES WHILE MY BODY IS WRONG. This was gated on
+        // `!foe._pupMismatch` under B5's reading - "its index is another foe's on the
+        // host" - and WORLD3 retired that premise: the roster is the ROOM'S, and the
+        // index names the same marker on every client (driven: the layout's foe COUNT
+        // never varies with level; only the SPECIES the level bands does). What stands
+        // at `i` here is the host's foe at `i`, posed by its stream and carrying its
+        // health - wearing the wrong body until the rebuild lands. A blow at it is a
+        // blow at that foe, and the host applies it to its own.
+        //
+        // Held home, it was not a late blow, it was no blow: this arm applies nothing
+        // locally. And the mismatch is the NORM on join, not an edge - two players'
+        // random flats band on their own level, so a level-3 and a level-14 character
+        // disagree at 758 of 760 markers - so every index depended on an async,
+        // fallible rebuild clearing the flag, and any rebuild that refused left that
+        // foe invulnerable to that client for the life of the context.
+        if (fromPlayer && damage >= 0) opts.onFoeHit?.({ i: pi, dmg: damage, kind,
           ...(_pAt ? { p: [q2(_pAt[0]), q2(_pAt[1]), q2(_pAt[2])] } : {}),
           ...(knockDir ? { d: [q3(knockDir[0]), q3(knockDir[1]), q3(knockDir[2])] } : {}),
           ...(_pt != null ? { pt: _pt } : {}),   // WORLD6b-iii(e): the striker's poison rides to the host's foe; AUDIT WORLD6b-iii(e) A3: the calc's word, whatever the number (the Strikes payload can zero it after the dose)

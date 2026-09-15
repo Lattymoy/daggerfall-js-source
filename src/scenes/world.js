@@ -220,6 +220,7 @@ import { POSE_STRIKES, isWorldRoom, isCellRoom, cellHaloFor, actFrameFits, share
 import { hasDaggerfallArrows } from '../combat/fpArm.js';   // MAC7 #2: the arrow bit on the wire - weaponRig's own read
 import { drawText } from '../ui/text.js';   // ONLINE1: the session's status line
 import { RemotePlayers, composeLook } from '../net/remotePlayers.js';   // ONLINE1: the others, drawn
+import { makeHitPend } from '../net/hitPend.js';   // AUDIT FOES FOE2: a blow the wire refused waits and goes
 import { PeerBodies } from '../net/peerBodies.js';   // MWBODY1: the others in the Morrowind body
 import { ChatLog, CHAT_REJOIN_MS } from '../net/chat.js';   // CHAT1: the tabs and their lines
 import { createChatPanel } from '../ui/chatPanel.js';   // CHAT1: the enhanced skin's chat over the world
@@ -2679,7 +2680,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2114 mounts the same one, gated on
+  // and dungeonContext.js:2119 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
   // that context through modes.dungeonCtx - so worldModes.js:4623
@@ -2767,7 +2768,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // through the one that owns the billboard - `exteriorFoePool` is
     // the watch AND the encounter foes, and this arm reached the
     // encounter pool's remover for both. That was not a leak: removeFoe
-    // (exteriorFoes.js:354-359) never looks the record up in `foes`, and
+    // (exteriorFoes.js:365-370) never looks the record up in `foes`, and
     // both pools share this host's one renderer, so a struck WATCHMAN
     // got exactly what removeGuard (cityGuards.js:1238-1242) gives it -
     // batch freed, `dead = true`, no corpse, skipped by the next AI pass
@@ -4233,7 +4234,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:5359), so exterior mode and a
+    // composer, dungeonContext.js:5413), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -5515,7 +5516,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7242-7254 -
+  // worldModes answers it in BOTH modes (worldModes.js:7258-7270 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -6743,6 +6744,18 @@ export async function bootWorld(canvas, renderer, params, status) {
     _actPend.clear();
     return true;
   };
+  // AUDIT FOES FOE2: a blow the wire refused must not be LOST - AUDIT WORLD3 A3's
+  // law for the acts, applied to the blow, which needed it more (a joiner applies
+  // NO local damage, so a refused frame is a blow that never happened). The queue's
+  // laws, its bounds and why they are what they are live in net/hitPend.js, which
+  // is where they are driven.
+  const _hits = makeHitPend({
+    send: (hit) => online?.sendHit(hit) ?? false,
+    room: () => online?.room ?? null,
+    now: () => performance.now(),
+  });
+  const hitSend = (hit) => _hits.send(hit);
+  const hitFlush = (now) => _hits.flush(now);
   const actFlush = () => {
     if (!_actPend.size) return false;
     if (!_actRoom()) { _actPend.clear(); return false; }
@@ -6787,7 +6800,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       peers: peersNear,   // WORLD6b-ii: the peers as MY foes' target candidates (WORLD3's law for the dungeon host's foes, per owner)
       now: () => performance.now(),
       staleMs: FOES_STALE_MS,   // AUDIT WORLD6b C3: an owner whose stream has died is swept as the seat is (WORLD2's own window)
-      onPeerHit: (hit) => online?.sendHit(hit) ?? false,
+      onPeerHit: (hit) => hitSend(hit),   // AUDIT FOES FOE2: through the pending set, so a refused blow heals
       toWire: (feet) => { const wc = state.worldCoords(feet); return [wc.x, feet[1] - state.compensation[1], wc.z]; },
       toScene: (p) => { const l = state.localFromWorld(p[0], p[2]); return [l[0], p[1] + state.compensation[1], l[1]]; },
     });
@@ -6931,6 +6944,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     worldPublish(now);   // WORLD1: the room's memory, every WORLD_PUBLISH_MS while this player hosts a dungeon
     foesStream(now);   // WORLD2: the host's changed foes, every FOES_MS; WORLD6b: mine, in a cell
     actFlush();        // AUDIT WORLD3 A3: an act the wire refused, re-read and re-sent
+    hitFlush(now);     // AUDIT FOES FOE2: and a BLOW the wire refused - a joiner applies none locally, so a lost frame is a lost blow
     modes?.setDungeonAuthority?.(dungeonAuthority(now));   // AUDIT WORLD2 C2: the seat re-read every frame - a dead socket, a terminal close or a silent host hands the foes back
     const drawable = online.drawable();
     peerBodies.sync(drawable, onlineToScene, dt, player.pos);   // the nearest first, the far ones asleep
@@ -6958,7 +6972,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     drawPeerBodies: ({ proj, view, eye }) => drawPeerBodies(proj, view, eye),   // MWBODY1: the others' bodies, after the player's own
     onDungeonLeave: () => worldPublish(performance.now(), true),   // WORLD1: the room's memory goes out while the dungeon still stands
     onInteriorLeave: () => worldPublish(performance.now(), true),   // WORLD6a: and a building's while the building still stands
-    onFoeHit: (hit) => online?.sendHit(hit) ?? false,   // WORLD2: a blow on a puppet goes to the host
+    onFoeHit: (hit) => hitSend(hit),   // WORLD2: a blow on a puppet goes to the host; AUDIT FOES FOE2: through the pending set, so a refused blow heals
     // WORLD3: a door moved goes to the room (the session refuses it outside a world room); the peers in my room at
     // their scene feet, for the foes to see and a puppet's shaft to fly at; whose blow a puppet's is
     onActions: actSend,   // AUDIT WORLD3 A3: through the pending set, so a refused door heals
