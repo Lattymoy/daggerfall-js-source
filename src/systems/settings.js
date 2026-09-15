@@ -302,6 +302,35 @@ export function tierOf(key) {
   return 'stored';
 }
 
+// ---- MODS-ON: THE PORT'S OWN DEFAULT, OVER THE VENDORED INI ----
+//
+// Mac, 2026-09-14, after the HT2 audit found that lighting a torch was
+// invisible on stock settings: "all mods should be on by default".
+//
+// `DEFAULTS` is GENERATED from DFU's shipped defaults.ini and is pinned
+// against it (test/settings.test.js), so a departure cannot be spelled
+// there - editing the generated table would make the port lie about
+// what DFU ships. It is laid OVER it instead, here, where the list of
+// departures is short enough to read and each one carries its reason.
+//
+// A player's own override still wins over both, and a value set back to
+// THIS default drops the override, so the two layers behave as one.
+//
+// PlayerTorchFromItems: DFU ships it False, which means a lit torch
+// casts no light at all. With Handheld Torches vendored and on, that
+// default makes the mod's whole subject invisible - you light a torch
+// and nothing happens. Ledger A row MODS-ON.
+export const PORT_DEFAULTS = Object.freeze({
+  Enhancements: Object.freeze({ PlayerTorchFromItems: 'True' }),
+});
+
+/** The default in effect: the port's, else the vendored ini's. Every
+ *  site that reads a default reads it through here - getData, the
+ *  drop-the-override arm, the merged view and Reset's publish - because
+ *  a second layer honoured in three places out of four is the bug that
+ *  layer would be famous for. */
+const defaultOf = (section, key) => PORT_DEFAULTS[section]?.[key] ?? DEFAULTS[section]?.[key];
+
 // ---- the store ----
 let _values = null;   // Section -> key -> raw string (overrides only)
 
@@ -347,7 +376,7 @@ export function saveSettings() {
  *  and let the typed getter's own fallback speak). */
 function getData(section, key) {
   if (_values === null) loadSettings();
-  return _values?.[section]?.[key] ?? DEFAULTS[section]?.[key];
+  return _values?.[section]?.[key] ?? defaultOf(section, key);
 }
 
 const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
@@ -401,7 +430,7 @@ export function getString(section, key) {
 export function setValue(section, key, value) {
   if (_values === null) loadSettings();
   const str = typeof value === 'boolean' ? (value ? 'True' : 'False') : String(value);
-  const def = DEFAULTS[section]?.[key];
+  const def = defaultOf(section, key);
   if (def !== undefined && str === String(def)) {
     // back to the default: drop the override rather than pinning today's value
     if (_values[section]) { delete _values[section][key]; if (!Object.keys(_values[section]).length) delete _values[section]; }
@@ -438,7 +467,7 @@ export function effectiveSettings() {
   if (_values === null) loadSettings();
   const out = {};
   for (const [s, keys] of Object.entries(DEFAULTS)) {
-    out[s] = { ...keys, ...(_values[s] ?? {}) };
+    out[s] = { ...keys, ...(PORT_DEFAULTS[s] ?? {}), ...(_values[s] ?? {}) };
   }
   return out;
 }
@@ -456,7 +485,7 @@ export function resetToDefaults() {
   // default's string, which is the same value setValue's
   // drop-the-override arm publishes.
   for (const [section, keys] of Object.entries(dropped)) {
-    for (const key of Object.keys(keys)) _publish(section, key, String(DEFAULTS[section]?.[key] ?? ''));
+    for (const key of Object.keys(keys)) _publish(section, key, String(defaultOf(section, key) ?? ''));
   }
 }
 

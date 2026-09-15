@@ -109,6 +109,32 @@ test('HT2 the view performs the act it was handed, and the card no longer calls 
   assert.match(read('src/ui/nativeInventory.js'), /if \(isLightSource\(it\)\) \{ this\._use\(it, null\); return; \}/);
 });
 
+test('MODS-ON, executed: the two switches a lit torch was invisible without are ON by the port\'s decision - and the sources they depart from still say otherwise', async () => {
+  // Mac, after the HT2 audit: "Yes all mods should be on by default".
+  // The departure is TWO defaults and no more, and it is pinned from
+  // both ends: what the port now answers, and what the vendored
+  // sources still ship - because a departure nobody can see the far
+  // side of is just a port that got it wrong.
+  const { MOD_SETTINGS } = await import('../src/systems/modSettings.js');
+  const { SETTINGS_DEFAULTS } = await import('../src/systems/settingsDefaults.js');
+  const { PORT_DEFAULTS, getBool, effectiveSettings } = await import('../src/systems/settings.js');
+  // the port's answer
+  assert.equal(MOD_SETTINGS['handheld-torches'].keys['Modules.Sprite'].default, true, 'the hand is on');
+  assert.equal(getBool('Enhancements', 'PlayerTorchFromItems'), true, 'and the torch lights the room');
+  assert.equal(effectiveSettings().Enhancements.PlayerTorchFromItems, 'True', 'the merged view agrees with the getter');
+  // the sources, unedited
+  assert.match(read('vendor/handheld-torches/modsettings.json'), /"Value": false,\s*\n\s*"Name": "Sprite",/,
+    'the shipped bundle still says Sprite = False - the vendored file is never edited to make a departure look like parity');
+  assert.equal(SETTINGS_DEFAULTS.Enhancements.PlayerTorchFromItems, 'False',
+    "and the generated table still carries DFU's own default");
+  // the layer is ONE key wide, and everything else still reads the ini
+  assert.deepEqual(Object.keys(PORT_DEFAULTS), ['Enhancements']);
+  assert.deepEqual(Object.keys(PORT_DEFAULTS.Enhancements), ['PlayerTorchFromItems']);
+  assert.equal(getBool('Enhancements', 'AlternateRandomEnemySelection'), false, 'a neighbouring key still answers the ini');
+  assert.match(read('bible/06-Systems/Handheld-Torches.md'), /^## HT2-AUDIT - A LIT TORCH IS INVISIBLE BY DEFAULT/m);
+  assert.match(read('bible/01-Overview/Port-Ledger.md'), /MODS AND THEIR MODULES ARE ON \(MODS-ON, 2026-09-14\)/);
+});
+
 test('HT2 records: the pack page, the ledger row and the testing row', () => {
   assert.match(read('bible/10-UI/UI-Arc.md'), /^## HT2 THE ACT ON A LIGHT SOURCE \(2026-09-14/m);
   assert.match(read('bible/06-Systems/Handheld-Torches.md'), /^## HT2 - LIGHTING ONE FROM THE PACK \(2026-09-14\)/m);
