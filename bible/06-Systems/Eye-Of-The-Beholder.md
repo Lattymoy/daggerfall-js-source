@@ -117,12 +117,69 @@ declares the kind (`axis: true`), and HT4's spent-key gate reads the
 declaration instead of guessing from the value - it had been resolving
 the string as a binding, which it is not and never could be.
 
+## The camera (EOTB2), as the IL has it
+
+`src/player/eotbCamera.js`, and the derivation worth keeping:
+
+    posOffset  = boat, then mount, then weapon, then base - the FIRST
+                 arm that matches returns, so a mounted player with a
+                 weapon readied takes the MOUNT offsets. X mirrors on
+                 the shoulder flag; Z has the scroll subtracted. Only
+                 the BASE arm scales by RidingOffset.
+    CheckBounds= one raycast per axis along the EYE's basis, SKIPPED
+                 when that axis's offset is zero, cast |offset*2| +
+                 eyeRadius and recorded as hit - eyeRadius*2. The
+                 auto-switch flips the shoulder BETWEEN the x cast and
+                 the y cast, so the casts that follow see the mirror.
+    posTarget  = head + eye.TransformVector(clamp(posOffset))
+    posCurrent = MoveTowards(posCurrent, posTarget, dt * s), where
+                 s = dampen ? speed * |current - target| / dampen
+                            : speed
+    then the floor: minZ = posOffset.z * MinimumDistance - a FRACTION
+                 of the live offset - applied only while the measured
+                 wall is farther than the floor.
+
+`eyeRadius` is 0.25, a field initialiser in the mod's own constructor
+rather than a setting. `LoadSettings` multiplies `LongitudinalDistance`
+by -1, so a positive setting means that many metres BEHIND, and the
+three override sections flip the same way while every other value
+carries over unflipped.
+
+**The units carry over unconverted**, which is worth saying because the
+sibling's do not: mwCamera works in MW units and divides by
+`MW_UNITS_PER_METER` at the seam, while this mod's numbers are Unity
+metres and the port's world is metres. A scale factor introduced here
+later would be a bug, not a refinement.
+
+## One ladder, and it is the mod's own
+
+The mod's `CameraScrolling` arm, driven:
+
+| | |
+|---|---|
+| first person, scroll out | third person, at the BASE distance |
+| third person, scroll | one increment nearer or further |
+| third person, past -10 | pinned; the wheel does nothing |
+| third person, past -MinimumDistance | back into the head |
+
+That is Morrowind's ladder, arrived at from the mod's own arithmetic
+rather than imposed on it - which is what lets the two cameras share
+one wheel honestly instead of by assertion.
+
+One departure inside the ladder, and it is about feel rather than
+shape: the mod reads `Input.GetAxis` once per Update and branches on
+its SIGN, never scaling by the reading's magnitude, so three notches
+inside one frame move the camera exactly as far as one. The port
+queues DOM wheel events (MW-D30's lesson, for the same reason) and
+spends them the same way.
+
 ## Where the slices stand
 
 EOTB0 (vendoring, provenance, the art payload, the doctrine gate, the
-settings surface, the Features row, credits and the registry) is done.
-EOTB1-EOTB7 - the IL read, the camera, the billboard, the wheel seam,
-the four hosts and the pins - are in flight.
+settings surface, the Features row, credits and the registry) and
+EOTB1-EOTB2 (the IL read and the camera) are done. EOTB3-EOTB7 - the
+billboard, the wheel seam, the four hosts and the rest of the pins -
+are in flight.
 
 **NOT SEEN ON A GPU.** There is no GL and no ARENA2 in the container
 this was written in. Mac's eye is the gate.
