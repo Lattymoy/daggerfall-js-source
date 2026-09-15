@@ -202,14 +202,54 @@ person had ever read it. **A contract nothing checks drifts from its code
 at the speed the code changes**, which is the same sentence as HARD1's,
 pointed at documentation instead of at teardown.
 
-### HARD4 - the mod-port registry.
+### HARD4 - the vendored-work registry. SHIPPED 2026-09-15.
 
-One row per vendored mod: upstream mod and version, the source commit or
-bundle it was read from, permission and licence, the port's own version,
-the date of the last parity check, and the known deviations. Today that
-lives in a README sentence per mod, which is why Handheld Torches'
-permission line is still an unfilled placeholder and an upstream enum it
-depends on could not be verified. A registry makes both visible.
+`01-Overview/Mod-Registry.md`, and `test/hard4_registry.test.js` behind
+it. One row per directory under `vendor/`: what the port takes, the
+upstream author and version, the bundle or commit it was read from, the
+licence or permission, the port slice, the parity date and the bible
+page - plus the known deviations, per row.
+
+Derived like the rest. The row list comes off the FILESYSTEM, so a
+fifteenth vendored work cannot arrive without one and a row cannot
+outlive its directory. Every version and author cell is cross-checked
+against the vendored `.dfmod.json` where one ships (seven of the fourteen
+do), so a bundle refreshed to a new upstream version cannot drift from
+its row while the port keeps working. Every row's bible page must exist,
+and every vendor key the player can switch on in `systems/modSettings.js`
+must be registered - a mod cannot become player-visible without its
+provenance written down.
+
+**What reading the fourteen together found.** The plan above guessed at
+one unfilled permission line. There are **six**: `dynamic-skies`,
+`handheld-torches`, `seasons-iliac-bay`, `pcaao`, `roads-hazelnut` and
+`weapon-widget` each carry a literal `[Mac: paste the text of the
+permission, or the link to it, here.]`, and each sits directly under a
+sentence saying permission WAS granted, by a named author, on a dated
+day.
+
+That is a RECORD problem and not a licence one, and the registry says so
+in as many words. Mac's word settles whether the port may carry the
+files. What is missing is the evidence - the author's own message, or a
+link to it - and one README at a time, nobody would ever see that the
+same prompt had gone unanswered six times.
+
+So those rows read `RECORD OPEN`, and the gate holds the mark and the
+placeholder in step **in both directions**: drop the mark while the
+README still prompts and it is red; fill a README in and leave the mark
+and it is red too. All five of its failure modes were verified by
+breaking the tree and restoring it.
+
+One more surfaced as a row rather than a defect: PCAAO's port is built
+from the shipped 1.44 bundle, decompiled, while the last single-file
+source in its repository is 1.40. The README always said so. The registry
+is where a maintainer would look.
+
+**The generalisation, which is the point of the slice.** Everything this
+program had found until now was a rule about CODE enforced by memory.
+This one is a rule about the RECORD - write the permission down - and it
+failed in exactly the same way, at a higher rate than any code rule
+measured so far: six of the six times it applied.
 
 ### HARD5 - shrink Home.md into an index.
 
