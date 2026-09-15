@@ -80,11 +80,20 @@ void main(){
 /** The box that follows the eye, metres a side (the rain's is 42; the
  *  wisps read from further, so the wind is legible over a field). */
 export const WISP_BOX = 90;
-/** The most wisps the field draws, at a gale. */
-export const WISP_MAX = 2400;
+/** The most wisps the field draws, at a gale.
+ *
+ *  WIND4 (2026-09-15, Mac: "the wind wisps are far too many and the
+ *  amount should be reduced"). This was 2400 in a 90 m box - about one
+ *  wisp per three cubic metres of the air in front of you at a gale,
+ *  which reads as a fog of streaks rather than as wind. The field's
+ *  job is to make the DIRECTION legible, and that is carried by a few
+ *  streaks moving together, not by filling the box: 650 at a gale,
+ *  and a calm that is nearly clear. */
+export const WISP_MAX = 650;
 /** The share of WISP_MAX drawn in a dead calm - the floor that keeps
- *  the direction readable. */
-export const WISP_FLOOR = 0.12;
+ *  the direction readable. WIND4: 0.08 of the new maximum is ~52
+ *  wisps, where 0.12 of the old was 288 - a still day should be still. */
+export const WISP_FLOOR = 0.08;
 
 /** WEATHER2d: A LOOK - the program in a dress. The wisps' own, and the
  *  sandstorm's: tan, dense, short streaks in a lower box, no floor (no

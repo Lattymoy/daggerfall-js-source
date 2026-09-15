@@ -17,7 +17,7 @@ import { CELL_WORDS, SAND_FROM, sandCountry, cellSeats, cellCandidate, fieldAt, 
 import {
   resetWeatherSim, setWeatherFieldLaw, setSnowGroundLaw, sampleWeatherField, importClimateWeathers, currentWeather, currentWeatherRaw, WEATHER_ENUM, overGround,
 } from '../src/systems/weatherSim.js';
-import { WindWispsRenderer, wispCount, SAND_LOOK, WISP_LOOK, WISP_MAX, WISP_FS, WISP_VS } from '../src/render/windWisps.js';
+import { WindWispsRenderer, wispCount, SAND_LOOK, WISP_LOOK, WISP_MAX, WISP_FLOOR, WISP_FS, WISP_VS } from '../src/render/windWisps.js';
 import { CLIMATES } from '../src/formats/mapsFile.js';
 
 const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
@@ -132,10 +132,10 @@ test('WEATHER2d the field: a sandstorm seats on the desert tables\' land under a
 
 test('WEATHER2d the sand: the wisps\' program in the sand\'s look - tan, dense, short, a lower box, no floor - the front\'s intensity its strength; the look is a uniform set, the wisps\' own unchanged', () => {
   assert.deepEqual(SAND_LOOK, { color: [0.80, 0.64, 0.40], alpha: [0.28, 0.30], len: [0.8, 1.2], count: 7000, floor: 0, box: 70 });
-  assert.deepEqual(WISP_LOOK, { color: [0.86, 0.89, 0.94], alpha: [0.10, 0.12], len: [1.6, 2.4], count: WISP_MAX, floor: 0.12, box: 90 });
+  assert.deepEqual(WISP_LOOK, { color: [0.86, 0.89, 0.94], alpha: [0.10, 0.12], len: [1.6, 2.4], count: WISP_MAX, floor: WISP_FLOOR, box: 90 });   // WIND4: the count and the floor are the look's own constants, cut there
   assert.equal(wispCount(0, SAND_LOOK), 0, 'no sand without a storm'); assert.equal(wispCount(1, SAND_LOOK), 7000);
   assert.ok(wispCount(0.5, SAND_LOOK) > 0 && wispCount(0.5, SAND_LOOK) < 7000);
-  assert.equal(wispCount(0), Math.round(WISP_MAX * 0.12), 'the wisps keep their floor');
+  assert.equal(wispCount(0), Math.round(WISP_MAX * WISP_FLOOR), 'the wisps keep their floor');
   assert.match(WISP_VS, /uniform vec2 uWindV, uWindOff, uLen;/); assert.match(WISP_FS, /uniform vec3 uColor;/); assert.match(WISP_FS, /uniform vec2 uAlpha;/);
   assert.match(WISP_VS, /float len = \(uLen\.x \+ fract\(seed\*13\.1\)\*uLen\.y\) \* \(0\.5 \+ uStrength\);/);
   const { gl, calls } = stubGl();

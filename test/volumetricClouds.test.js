@@ -117,7 +117,12 @@ test('VC3: the seam - the clouds ride the dome only, behind the one switch, on t
   const vc = read('src/render/volumetricClouds.js');
   assert.match(vc, /jump\(\) \{ this\.profile = null; this\.stripe = 0; this\.shadowFull = true; \}/);
   // VC4 review: the floating origin - the field is sampled at the ABSOLUTE position
-  assert.match(vc, /vec3 q = vec3\(p\.x \+ uShift\.x \+ uDrift\.x \+ fShear \* \(p\.y - fBase\), p\.y, p\.z \+ uShift\.y \+ uDrift\.y\);/, 'every sample carries the accumulated recenters (WEATHER2c: the shear and the base are the place\'s, resolved from the zone and its cells)');
+  // WIND4: ...and the drift is SUBTRACTED from it. The recenter is a
+  // position (added, so q is absolute); the drift is how far the AIR
+  // has moved, and a field sampled at p + d shows the cloud that was at
+  // p + d standing at p - the sky crept UPWIND. The two signs on one
+  // line are the whole fix, so the pin holds both.
+  assert.match(vc, /vec3 q = vec3\(p\.x \+ uShift\.x - uDrift\.x \+ fShear \* \(p\.y - fBase\), p\.y, p\.z \+ uShift\.y - uDrift\.y\);/, 'every sample carries the accumulated recenters (WEATHER2c: the shear and the base are the place\'s, resolved from the zone and its cells)');
   assert.match(vc, /offsetOrigin\(offset\) \{\s*\n\s*this\.shift\[0\] -= offset\[0\]; this\.shift\[1\] -= offset\[2\];\s*\n\s*this\.cam\[0\] \+= offset\[0\]; this\.cam\[1\] \+= offset\[2\];\s*\n\s*if \(this\.origin\) \{ this\.origin\[0\] \+= offset\[0\]; this\.origin\[1\] \+= offset\[2\]; \}/, 'a recenter moves the camera and the square with the world and keeps the map');
   assert.match(read('src/scenes/world.js'), /player\.offsetOrigin\(r\.offset\);[^\n]*\n\s*sky\.offsetOrigin\(r\.offset\);/, 'the host hands the recenter to the sky');
   assert.match(shared, /offsetOrigin\(offset\) \{ clouds\?\.offsetOrigin\(offset\); \},/);

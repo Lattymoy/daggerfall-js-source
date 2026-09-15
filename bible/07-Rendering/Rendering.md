@@ -356,3 +356,71 @@ See `Dynamic-Skies.md` for DS1: BadLuckBurt and carademono's Dynamic Skies mod, 
 See `Seasons-Iliac-Bay.md` for SIB1: RosyTheRascal's Seasons of the Iliac Bay mod, ported 1:1 with permission - the woodland's autumn, spring and winter on the nature flats, its textures read from the player's own copy of the mod (2026-09-05).
 
 `EE9-Surface-Field-Design.md` is the surface field's design - snow that builds, deforms and melts, on the chunker's own grid - written before its code, per the arc's law.
+
+## WIND4 - THE WISPS' COUNT, THE SKY'S DIRECTION, THE GRASS AT NIGHT (2026-09-15)
+
+Mac, three in one message, on the wind and weather work: *"1. The wind
+wisps are far too many and the amount should be reduced. 2. Clouds dont
+follow on the world timer with the direction of the wind. 3. Grass
+doesnt get darker at night"*. Three different shapes of fault.
+
+**(1) A NUMBER.** `WISP_MAX` was 2400 in a 90 m box - about one wisp
+per three cubic metres of the air in front of you at a gale, which
+reads as a fog of streaks rather than as wind. The field's job is to
+make the DIRECTION legible, and a few streaks moving together do that.
+650 at a gale now, and the calm floor 0.08 rather than 0.12, so a still
+day is nearly clear (52 wisps, where it used to draw 288). Under one
+wisp per 1000 m3 at the top, pinned as that measure rather than as a
+bare constant. The SANDSTORM keeps its own 7000: a wall of sand is
+meant to be a wall.
+
+**(2) A SIGN** - and the one sign that cannot be seen from inside the
+shader. The cloud field is sampled at an ABSOLUTE position: the
+floating origin's recenter is added, because `setState` does
+`shift -= offset` precisely so that `p + shift` is where the point
+really is. The drift is not a position - it is how far the AIR has
+travelled - and it was added on the same line. A field sampled at
+`p + d` shows the cloud that was at `p + d` standing at `p`, so the
+whole sky crept UPWIND at exactly the wind's own speed. It is
+subtracted now, in both places the field is read (the density march and
+the ambient mottle).
+
+The clock half of Mac's sentence was already right and is pinned so it
+stays that way: `dt` at the drift seam is GAME MINUTES off the world
+clock, so an hour's rest moves the sky an hour, and the wind it
+integrates is the live model's vector rather than the weather row's
+table value. The wisps had the direction right all along - they advance
+the wisp's POSITION by the same offset - which is why the sky and the
+ground disagreed in the open.
+
+**(3) TWO MISSING TERMS.** Every other surface in the world lights as
+ambient, plus the sun's colour times its SCALE times the lambert, plus
+the moon's the same way - one formula in four programs
+(`render/renderer.js`, `farRing`, `waterSurface`). The sward used the
+sun's COLOUR and dropped its SCALE, which is the term that goes to zero
+when the sun sets, and had no moon term at all. At midnight the ground
+went dark and the grass stayed lit by a sun that was not there. The
+scale rides the sun now (the tip's rim included - it goes out with the
+sun), the moon lights the blades as it lights the tile they stand in,
+and the host hands all five terms instead of three. A host that hands
+neither new field gets the old look rather than a black field: a
+missing light must not read as night.
+
+GR1's law holds: the grass shaders are byte-identical to
+`grass-proto.html`, so the lab carries the same text and sets the new
+uniforms its own way (no night in the lab - scale one, moon off). The
+new varying is appended to both declaration lists rather than inserted,
+so the lab's own locator still finds the line it slices on.
+
+One comment had to be reworded on the way in: the tree's shader audit
+reads a GLSL comment as code, so naming the renderer's uniforms while
+explaining the formula counted them as used by this shader.
+
+Ledger row WIND4. Pinned: `test/wind4_windweather.test.js` (4) - the
+wisp curve and its density measure, the drift's two subtractions and
+the arithmetic that says a cloud is drawn downwind by exactly the
+drift, the grass's scaled sun and moon with the host's hand-off and the
+lab's copy. Compiled and linked in a browser:
+`tools/wind4ShaderProbe.mjs` (10 checks) - both programs link, every
+new grass uniform survives the link, both cloud marches compile, and
+every use of the drift in the shared field is a subtraction.
