@@ -127,6 +127,8 @@
 // through the offset, not its own. Nothing local moves it: no rest, no
 // fast travel, no sentence, no ?tod, no ?timescale.
 
+import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the port's one angle wrap. The relay re-exports this module (server/src/relay.js), so this reaches the worker too - mat4.js imports nothing itself.
+
 /** WORLD5: the instant the online world stood at the classic game start - 2026-09-14T00:00:00Z. */
 export const ONLINE_EPOCH_MS = Date.UTC(2026, 8, 14, 0, 0, 0);
 /** WORLD5: DaggerfallDateTime.classicGameStartTime in classic minutes (gameDate.js CLASSIC_GAME_START_TIME - pinned equal). */
@@ -377,7 +379,7 @@ export function validFoeRecord(r) {
     if (Math.abs(r.f[0]) > POSE_BOUND || Math.abs(r.f[2]) > POSE_BOUND || Math.abs(r.f[1]) > POSE_Y_BOUND) return null;
     out.f = [r.f[0], r.f[1], r.f[2]];
   }
-  if (r.y !== undefined) { if (!Number.isFinite(r.y)) return null; out.y = r.y; }
+  if (r.y !== undefined) { if (!Number.isFinite(r.y)) return null; out.y = wrapAngle(r.y); }   // ONCRASH1: the puppet's yaw is bounded as the pose's is - it reaches the same wraps through characters/enemyMotor.js
   if (r.h !== undefined) { if (!Number.isFinite(r.h) || r.h < 0 || r.h > FOE_HEALTH_MAX) return null; out.h = r.h; }
   if (r.a !== undefined) { if (!Number.isInteger(r.a) || r.a < 0 || r.a >= 2 ** 31) return null; out.a = r.a; }
   // WORLD6b-ii: `g` the foe's target - '.' its owner, a peer id, '' none (WORLD3's spelling for the dungeon's stream)
@@ -411,9 +413,27 @@ export function validPose(p) {
   const { x, y, z, yaw, pitch, mv, wd, an, as, am, sr, cn, cr } = p;
   if (![x, y, z, yaw, pitch].every(finite)) return null;
   if (Math.abs(x) > POSE_BOUND || Math.abs(z) > POSE_BOUND || Math.abs(y) > POSE_Y_BOUND) return null;
+  // ONCRASH1 (2026-09-15, Mac: "reports of player browser crashing when
+  // online"): AN ANGLE IS BOUNDED LIKE EVERY OTHER FIELD. `finite` alone
+  // admitted 1e300, and the sender's own yaw is not wrapped either -
+  // player/lookFilter.js ACCUMULATES it, turn after turn, for the life of
+  // the session. Downstream, four sites wrapped it with `while (d >
+  // Math.PI) d -= 2 * Math.PI`, which at a large angle subtracts nothing
+  // and never falls: the READER's tab hangs, not the sender's. The loops
+  // are one step now (world/mat4.js wrapAngle) and the door wraps besides,
+  // because the wire's law is that it admits what the game can NAME, and
+  // no player faces 1e300 radians. Wrapped, not refused: a turn is a turn
+  // whatever its winding, and a legitimate accumulated yaw must still
+  // arrive. Idempotent - what is already inside (-PI, PI] is untouched.
+  //
+  // THE YAW ALONE. Pitch reaches no wrap - the peer bodies read a level
+  // pitch (net/peerBodies.js peerCamera sets 0) and the dolls read none -
+  // so wrapping it would move a field with no defect behind it, and
+  // ONLINE1's own bound pin says what it says on purpose. An absurd pitch
+  // is recorded, not paid.
   // MAC7: the arm's seven, clamped - a pose from before them reads sheathed, unswung, unarrowed and uncast
   return {
-    x, y, z, yaw, pitch, mv: mv === 2 ? 2 : mv ? 1 : 0,
+    x, y, z, yaw: wrapAngle(yaw), pitch, mv: mv === 2 ? 2 : mv ? 1 : 0,
     wd: wd === 2 ? 2 : wd ? 1 : 0, an: uint(an, 65535) ?? 0, as: uint(as, POSE_STRIKES.length - 1) ?? 0,
     am: am ? 1 : 0, sr: sr ? 1 : 0, cn: uint(cn, 65535) ?? 0, cr: uint(cr, POSE_CAST_RANGES - 1) ?? 0,
   };

@@ -43,6 +43,7 @@ import { CAPSULE_HEIGHT, CAPSULE_RADIUS, DF_WALK_BASE } from '../player/motor.js
 export { CLASSIC_UPDATE_INTERVAL };
 export const GIVE_UP_TICKS = 200;   // EnemyMotor.GiveUpTimer refill (classic ticks; ~12.5s)
 import { GRAVITY, FIXED_DT, MAX_FRAME_DT, CLASSIC_TO_UNITY_RATIO, FALL_DAMAGE_THRESHOLD } from '../player/motor.js';   // the shared fall rule + the P16 fixed-timestep law; CH3: the fall threshold single-sources with the player's
+import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the port's one angle wrap, which cannot loop
 
 // C15 knockback (EnemyMotor.KnockbackMovement): classic units through
 // the speed ratio. Stored speed clamps at 40; motion caps at 25; the
@@ -197,7 +198,7 @@ export function canHearTarget(collider, feet, height, targetFeet, dist, centreOf
 }
 
 const DEG = Math.PI / 180;
-const norm = (a) => { while (a > Math.PI) a -= 2 * Math.PI; while (a < -Math.PI) a += 2 * Math.PI; return a; };
+const norm = wrapAngle;   // ONCRASH1: the port's one wrap. This was two `while` loops, and a PUPPET's yaw reaches them off the wire - at a large one the loop never falls and the tab hangs.
 
 /** Yaw of a horizontal direction in the engine convention fwd = (sin, 0, cos). */
 export const yawOf = (dx, dz) => Math.atan2(dx, dz);

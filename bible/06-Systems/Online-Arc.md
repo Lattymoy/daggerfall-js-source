@@ -4819,3 +4819,101 @@ the name pass ever grows a per-glyph cost again.
 
 **Pinned** in `test/perfon_text_run.test.js` (7). NOT SEEN ON A GPU -
 there is no GL in the container; Mac's eye is the next gate.
+
+## ONCRASH1 - ONE FRAME ENDED EVERYBODY'S RUN (2026-09-15, Mac)
+
+*"Receiving reports of player browser crashing when online."*
+
+Two defects, both of them the same shape: **something arrives off the
+wire and is handed straight to code that was never told it came from a
+stranger.** Neither is reachable offline, which is why the reports all
+say "when online".
+
+### 1. THE SEAM - the handler's throw went to the window
+
+`OnlineSession._receive` runs inside the WebSocket's `onmessage`. The
+handlers it calls are not small:
+
+| frame | what it reaches |
+|---|---|
+| `foes` | stands, retypes and steps every puppet in the room |
+| `world` | applies a whole room's memory - dead foes, taken loot, doors |
+| `hit` | lands damage, kills, mints a corpse's pile |
+| `act` | moves doors, levers and platforms |
+| `host` | swaps who STEPS the room's foes |
+
+There was nothing between a throw in any of that and
+`main.js`'s `addEventListener('error')`. So a throw did not lose the
+frame - it put the red CRASH overlay over the run, and the next stream
+tick put it back. Worse, the frame that caused it is another player's,
+so the crash lands on the READER: the tab that dies is not the tab that
+is wrong. A room of four with one client sending something unexpected
+is three crashes and one player who saw nothing.
+
+The port already knew the answer and had written it one layer up -
+AUDIT MWBODY A1: *"a throw from one peer's rig is that peer's doll,
+never the frame's end."* `_deliver` is that law at the wire's own door.
+
+**It is not a catch-and-forget**, which would be the same outage with
+the evidence deleted. The frame is dropped, the session stands, and the
+throw is counted in `stats.threw`, printed in FULL the first time each
+kind throws - once a kind, because a stream that throws throws at
+`FOES_HZ_MAX` and a console flood is its own outage - and SAID on the
+HUD status line for `THREW_SAY_MS`. A player who reports "it crashed"
+now has the line naming which frame did it.
+
+**This contains the crash. It does not fix the thrower.** What throws is
+still a bug and still has to be found; what has changed is that finding
+it no longer costs a room of players their session, and the port now
+tells us which handler to look in instead of a stack in an overlay
+nobody screenshots.
+
+### 2. THE WRAP - a loop that could not terminate
+
+```js
+while (d >  Math.PI) d -= 2 * Math.PI;
+while (d < -Math.PI) d += 2 * Math.PI;
+```
+
+Four copies of that, in `net/online.js` (easing a peer's yaw),
+`net/peerBodies.js` (turning a peer's rig), `characters/enemyMotor.js`
+(a puppet's facing) and `combat/fpArm.js` (the turn clip's rate) - all
+four of them **beside a correct, one-step `wrapAngle` in
+`player/lockOn.js` that none of them knew about.**
+
+At a large angle the loop body is a no-op: `1e300 - 2 * Math.PI ===
+1e300` in IEEE doubles, so the condition never falls and the loop runs
+for ever. The tab stops answering and the browser kills it. And the
+angle those two `net/` sites wrap is a **peer's yaw**, which the wire
+checked for being finite and nothing else - `finite` admits 1e300. One
+player's pose was enough to hang every other player in the room.
+
+The loops are one step now (`world/mat4.js` `wrapAngle`, the port's one
+math home, where the callers can actually reach it), and the wire's door
+wraps the yaw besides - on the pose and on a streamed foe record - which
+is what the wire's own law asks for: *it admits exactly what the game
+can name*, and nobody faces 1e300 radians. **Wrapped, not refused**: a
+turn is a turn whatever its winding, and `player/lookFilter.js`
+ACCUMULATES the local yaw for the life of the session without ever
+wrapping it, so a legitimate large-ish yaw must still arrive.
+
+The yaw ALONE. Pitch reaches no wrap - the peer bodies stand level and
+the dolls read no pitch - so wrapping it would move a field with no
+defect behind it. An absurd pitch is recorded, not paid.
+
+### What is honest about the two
+
+The wrap is a **root cause**: that loop cannot hang any more, at the
+door or downstream, and a fifth hand-rolled copy is refused by a
+generative sweep of all of `src/`. Whether it is THE cause of Mac's
+reports is unproven - it needs a yaw far larger than turning produces,
+so it is a hardening fix until a report names it.
+
+The seam is the likelier explanation for a crash overlay, and it is the
+one that makes the NEXT report diagnosable: the crash text names its
+frame now.
+
+**Pinned** in `test/oncrash1.test.js` (6), driven over a real session on
+the fake socket - handlers that really throw, a peer pose that really
+carries 1e300. **15 mutations, 15 dead.** NOT SEEN RUNNING against a
+live relay; the container has no GL and no player in a room.

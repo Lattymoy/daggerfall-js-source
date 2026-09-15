@@ -39,7 +39,7 @@
 // looks level because ITS pitch is an animation channel, where this one
 // takes the player's pitch through the neck the reference rotates.
 
-import { lookAt, multiply, ortho, perspective, transformPoint, trs } from '../world/mat4.js';
+import { lookAt, multiply, ortho, perspective, transformPoint, trs, wrapAngle } from '../world/mat4.js';
 import { MW_ARM_PIXEL, CHAR_SPRITE_RT_SIZE } from '../render/renderer.js';
 import {
   sampleTrack, resetClip, advanceClip, getTextKeyTime,
@@ -2337,9 +2337,9 @@ export function createFpArm() {
     const yaw = cam ? (cam.yaw || 0) : 0;
     let yawRate = 0;
     if (lastYaw != null && dt > 0) {
-      let d = yaw - lastYaw;
-      while (d > Math.PI) d -= 2 * Math.PI;
-      while (d < -Math.PI) d += 2 * Math.PI;
+      // ONCRASH1: one step, not a loop. A PEER's rig reads this camera
+      // (net/peerBodies.js peerCamera), so `yaw` is the wire's there.
+      const d = wrapAngle(yaw - lastYaw);
       yawRate = d / dt;
       if (d !== 0) { turnDir = Math.sign(d); turnHold = 0.05; }
       else { turnHold -= dt; if (turnHold <= 0) turnDir = 0; }
