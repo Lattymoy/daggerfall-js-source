@@ -140,6 +140,12 @@ test('RF3: a test\'s escaped literal follows the row it pins - held while the do
 
 test('RF3: the tools\' own fixtures are not docs', () => {
   assert.deepEqual([...SELF_DOCS], ['tools/citeShift.mjs', 'tools/citeMerge.mjs', 'test/citeshift.test.js', 'test/citemerge.test.js']);
-  assert.match(readFileSync(join(root, 'tools/citeShift.mjs'), 'utf8'), /&& !SELF_DOCS\.includes\(f\)\);   \/\/ RF3/, 'citeShift skips them');
-  assert.match(readFileSync(join(root, 'tools/citeMerge.mjs'), 'utf8'), /&& !SELF_DOCS\.includes\(f\)\)\) \{   \/\/ RF3/, 'citeMerge skips them');
+  // the LAW is that each tool filters its doc list by SELF_DOCS - not the
+  // punctuation that happened to follow it. The old pin quoted citeMerge's
+  // `))) {` and went red when the struck law (2026-09-15) lifted that list
+  // into a `const docs`, which changed nothing about the rule.
+  for (const tool of ['tools/citeShift.mjs', 'tools/citeMerge.mjs']) {
+    assert.match(readFileSync(join(root, tool), 'utf8'), /\.filter\([^\n]*!SELF_DOCS\.includes\(f\)\)[^\n]*\/\/ RF3/,
+      `${tool} filters its doc list by SELF_DOCS`);
+  }
 });

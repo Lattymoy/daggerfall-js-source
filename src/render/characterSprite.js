@@ -1,3 +1,4 @@
+// @ts-check
 // THE CHARACTER PIXELIZE PASS - shared (C8 E1). Extracted VERBATIM
 // from exterior.js slice 4 so every scene that draws a rig (player in
 // the exterior, enemies in dungeons) renders through ONE

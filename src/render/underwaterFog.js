@@ -1,3 +1,4 @@
+// @ts-check
 // ROAD-B (b3-exterior-water): UNDERWATER FOG.
 //
 // Game/UnderwaterFog.cs (MIT, Daggerfall Workshop) 1:1 - the green

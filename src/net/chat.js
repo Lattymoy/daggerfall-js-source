@@ -1,3 +1,4 @@
+// @ts-check
 // CHAT1 (2026-09-12, Mac: "I want to add a new UI element. The live chat
 // in enhanced format. Players will be able to type and chat live with
 // other players. Currently I just want one world tab with the ability

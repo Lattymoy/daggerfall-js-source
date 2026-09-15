@@ -1,3 +1,4 @@
+// @ts-check
 // Character mesh packing (Characters C4b).
 // Rewrite-rig faces ({p: flat verts 3f/vtx, n: normal, c: [r,g,b]
 // 0-255}) into the renderer's interleaved character vertex stream:

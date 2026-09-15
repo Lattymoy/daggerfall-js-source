@@ -1398,7 +1398,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:6594 / exterior.js:2943), set
+  // host's own townTalk sink (world.js:6595 / exterior.js:2944), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -2842,8 +2842,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:8701,
-              // exterior.js:4257 and worldModes.js:6042 already ran;
+              // playerArrowHitFoe is the one copy world.js:8708,
+              // exterior.js:4264 and worldModes.js:6042 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -6090,11 +6090,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // context's `chf`, which nothing reads - harmless by NT1's latch.
       enhancedNav.client?.dispose();
       enhancedNav.client = null;
+      // billboardBatches is the static layout art AND every batch a
+      // hand-off pool pushed into it (hitEffects' splashes since HE1,
+      // :2418) - which is why nothing below may end those pools again.
       for (const b of billboardBatches) renderer.destroyBatch(b);
       if (staticBatch) { renderer.destroyMesh(staticBatch); staticBatch = null; }   // PERF5
       // AUDIT 17e F29 / EVERY ALLOCATION HAS AN OWNER: foes and
       // corpses each own a live billboard batch that is NOT in
-      // billboardBatches (that list is the static layout art), so
+      // billboardBatches, so
       // every dungeon enter/exit cycle leaked one VAO + buffers per
       // sprite. Missiles in flight own one too.
       for (const f of foes) if (f.batch) renderer.destroyBillboardBatch(f.batch);
@@ -6113,6 +6116,23 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // position override (AUDIT 66 F8).
       droppedTorches.destroyAll();
       weaponRig.dispose?.();
+      // HARD1 (the generative lifetime gate's first catch): the blood
+      // splashes own a billboard batch each while they animate
+      // (hitEffects.js mints one per spawn and frees it on retire) -
+      // and THIS POOL HANDS EVERY BATCH AWAY AS IT IS BORN. It is built
+      // with `onSpawn: (b) => billboardBatches.push(b)` (:2418), so the
+      // owner is that list, and the list is freed above. Nothing to do
+      // here, and doing something is worse than nothing: HARD1's first
+      // pass added `hitEffects.clear()` on this line and that was a
+      // DOUBLE FREE of every live splash - :6093 frees the batch, then
+      // retire() frees it again. Benign in WebGL (deleting a deleted
+      // object is a no-op) and wrong all the same.
+      //
+      // The interior host's `interiorHitEffects.clear()` is NOT the same
+      // line and was never a precedent for one: that pool is built with
+      // no `onSpawn` (worldModes.js:503), so it owns its batches and
+      // clear() is the only thing that frees them - and it runs on a
+      // between-buildings RESET, not a teardown.
       // AUDIT 64 F41: the scene ambience leaves with the scene too -
       // it holds the dungeon loop handles AND a row in the module's
       // live-instance registry (the port's stand-in for DFU's static

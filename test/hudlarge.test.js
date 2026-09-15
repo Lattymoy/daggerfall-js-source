@@ -496,16 +496,21 @@ test('D10: the narrowed flag\'s citation resolves to the activation ray it rests
     // - or, since TI1, the touch tap's ray in its place: a pixel
     // unprojected, but through the SAME reduced-viewport rect the world
     // pass draws into, so a docked bar moves no pick on either device.
-    // AUDIT 63 F33 grew the activation ladder between useFwd and the
-    // tryActivate call (the pickpocket arm's nearest-hit dispatch) and
-    // AUDIT 65 MC-2 grew it again (the ONE enemy arm at the ray's reach,
-    // the two loot picks decided by distance, and the rival split the
-    // person arm needs), so the window is 80 lines now; the law is
-    // unchanged - useFwd is built once, above the ladder, from the
-    // angles or the tap.
-    assert.match(src(rel).split('\n').slice(Math.max(0, n - 80), n).join('\n'),
-      /const useFwd = _tapDir \?\? \[Math\.sin\(cam\.yaw\) \* Math\.cos\(cam\.pitch\)/,
+    // The LAW is that useFwd is built ONCE, above the ladder, from the
+    // angles or the tap - so that is what is read, rather than a window
+    // of lines above the call. That window was 60 lines, then 80, and
+    // every audit that grew the ladder between the two (AUDIT 63 F33's
+    // pickpocket dispatch, AUDIT 65 MC-2's enemy arm and rival split,
+    // HARD2's race) had to widen it again or go red for a reason that
+    // was never the law. It also let a SECOND useFwd exist further
+    // down, which the law forbids and this does not.
+    const decls = [...src(rel).split('\n').entries()]
+      .filter(([, l]) => /const useFwd =/.test(l));
+    assert.equal(decls.length, 1, `${rel}: useFwd is built ONCE - ${decls.length} declarations`);
+    const [declLine, declText] = decls[0];
+    assert.match(declText, /const useFwd = _tapDir \?\? \[Math\.sin\(cam\.yaw\) \* Math\.cos\(cam\.pitch\)/,
       `${rel}'s useFwd is the camera angles, or the tap's ray`);
+    assert.ok(declLine + 1 < n, `${rel}: useFwd is built ABOVE the ladder it feeds (:${declLine + 1} vs :${n})`);
     assert.match(src(rel), /rayDirFromScreen\([^\n]*largeHudViewportRect\(canvas\.clientHeight\)\)/,
       `${rel}'s tap ray unprojects through the world-pass rect, not the canvas`);
   }

@@ -56,3 +56,48 @@ test('citeMerge: provenance is theirs first, then ours, else the merge\'s own (m
   assert.equal(provenance('written by the merge', theirs, ours), null);
   assert.equal(provenance('only ours', null, ours), 'ours', 'a file new on our side');
 });
+
+// ── THE STRUCK LAW, 2026-09-15 ────────────────────────────────────────
+//
+// citeShift has held struck lines since RF3 and citeMerge never took the
+// rule over - the same law in one tool and not its sibling, which is this
+// codebase's measured failure mode wearing a different hat. It cost two
+// hand repairs inside one hour during the HARD-branch merges: each run
+// moved citedrift.test.js's `world\.js:4117-4120`, the escaped literal
+// that has to MATCH a struck Ledger row naming a seam FX1 deleted, away
+// from the row it matches. A number whose subject is gone is a record of
+// where the thing used to be, and moving it makes the record say
+// something that was never true.
+test('citeMerge: a STRUCK line holds its cites, and --struck moves them anyway (mutant: the strike ignored)', () => {
+  const struck = '| ~~**GONE** (F207)~~ FIXED - `world.js:3` and its twin, both DELETED |';
+  const r = mapLine(struck, T, shifted);
+  assert.equal(r.out, struck, 'a struck row keeps the numbers its subject had');
+  assert.equal(r.moved, 0);
+  assert.deepEqual(r.held.map((h) => h.status), ['struck']);
+  assert.equal(mapLine(struck, T, { ...shifted, moveStruck: true }).out,
+    '| ~~**GONE** (F207)~~ FIXED - `world.js:4` and its twin, both DELETED |',
+    'and --struck moves them, as citeShift\'s does');
+});
+
+test('citeMerge: an escaped literal quoting a struck-only number is PINNED to it (mutant: the pin quotes a row that no longer exists)', () => {
+  // the shape that bit twice: a pin in citedrift.test.js whose whole job
+  // is to match a struck Ledger row verbatim.
+  const pin = "  [/`world\\.js:3` and its `exterior\\.js` twin, both DELETED by FX1/, 'no loot'],";
+  assert.equal(mapLine(pin, T, shifted).out.includes('world\\.js:4'), true,
+    'with no holdEscaped it moves - which is the bug this rule fixes');
+  const r = mapLine(pin, T, { ...shifted, holdEscaped: new Set([3]) });
+  assert.equal(r.out, pin, 'held: the literal is a quote of the struck row, not a reference to a live line');
+  assert.deepEqual(r.held.map((h) => h.status), ['pinned-struck']);
+  // a number the docs DO carry live is not pinned, whatever else quotes it
+  assert.equal(mapLine(pin, T, { ...shifted, holdEscaped: new Set([9]) }).out.includes('world\\.js:4'), true);
+});
+
+test('citeMerge: mapLine REPORTS what it saw, which is how the caller learns the struck-only numbers (mutant: pass one blind)', () => {
+  // pass one reads `seen` over every doc to find the numbers that appear
+  // on struck lines and nowhere live; escaped spellings are excluded from
+  // that census, because a quote is not evidence of where a line is.
+  const seen = mapLine('| ~~x~~ `world.js:3` (world\\.js:3) |', T, shifted).seen;
+  assert.deepEqual(seen, [{ a: 3, status: 'struck', escaped: false }, { a: 3, status: 'struck', escaped: true }]);
+  const live = mapLine('// world.js:3 and world\\.js:5', T, shifted).seen;
+  assert.deepEqual(live.map((s) => [s.a, s.status, s.escaped]), [[3, 'move', false], [5, 'move', true]]);
+});

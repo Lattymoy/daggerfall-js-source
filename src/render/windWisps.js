@@ -1,3 +1,4 @@
+// @ts-check
 // WIND3 (2026-09-14, Mac: "World space wisps that indicate the direction
 // of wind") - THE WISPS: the wind, seen.
 //

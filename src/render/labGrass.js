@@ -1,3 +1,4 @@
+// @ts-check
 // ═══════════════════════════════════════════════════════════════════
 // GR1 (Mac: integrate the grass BYTE-EXACT with the proto's max range and
 // max blades, no exceptions; height 54; none on roads, pathways, water,

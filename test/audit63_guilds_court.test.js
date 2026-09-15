@@ -10,6 +10,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { raceActivation } from '../src/player/activationRace.js';   // HARD2: the activation race's one home
 
 import { pleaNotGuilty, CRIMES, changeLegalRep } from '../src/systems/court.js';
 import { SKILLS } from '../src/systems/skills.js';
@@ -361,8 +362,15 @@ test('AUDIT 63 F33: all five activation ladders carry the arm - the four hosts a
         `${file}: the rival is the ladder's pick, Infinity only when the ladder picked nothing`);
     } else {
       assert.equal((src.match(/_enemyArm\(RAY_DISTANCE, _rivalDist\)/g) ?? []).length, n, `${file}: the rival is _rivalDist`);
-      assert.match(src, /const _rivalDist = Math\.min\(_nonPersonRival,\s*\n?\s*\.\.\._livePersons\.map\(/,
-        `${file}: _rivalDist is the nearest non-person rival AND the townsfolk`);
+      // HARD2: the rival's COMPOSITION left the host - it was written
+      // out by hand here and in the other exterior host, character for
+      // character, and is now `player/activationRace.js`. The claim is
+      // unchanged and is tested against the law itself below, which is
+      // stronger than the regex this line used to be: a race whose
+      // `rival` forgot the townsfolk passed that regex the moment the
+      // expression was reformatted.
+      assert.match(src, /const _rivalDist = _race\.rival;/, `${file}: the rival comes off the one race`);
+      assert.match(src, /const _nonPersonRival = _race\.nonPersonRival;/, `${file}: and so does the person arm's`);
     }
     assert.doesNotMatch(src, /_enemyArm\(RAY_DISTANCE\)/,
       `${file}: an un-gated far call dispatches the foe over a nearer door`);
@@ -638,10 +646,16 @@ test('AUDIT 65 MC-2: a target past its handler\'s reach is HANDED OVER and refus
     // each pick dropped its own out-of-reach target; once both reach for
     // the ray, a body across the room suppressed the pile pick outright
     // and refused a pile at arm's length.
-    const oAt = lines.findIndex((l) => l.trim().startsWith('const _pileNearer ='));
-    assert.ok(oAt > 0, `${file}: the body and the pile are not decided by distance`);
-    const decide = new Function('_corpsePick', '_pilePick',
-      `${lines[oAt].trim()}\nreturn { lootKey: _lootPick?.key ?? null, dropKey: _dropPick?.key ?? null };`);
+    // HARD2: this pin used to LIFT the decision out of the host with
+    // `new Function`, because the law lived inline in two hosts and
+    // there was nothing to import. There is now: the four cases below
+    // are unchanged, and they run against the law itself.
+    assert.match(src, /const _lootPick = _race\.loot, _dropPick = _race\.drop;/,
+      `${file}: the body and the pile are decided by the one race`);
+    const decide = (_corpsePick, _pilePick) => {
+      const r = raceActivation({ corpse: _corpsePick, pile: _pilePick });
+      return { lootKey: r.loot?.key ?? null, dropKey: r.drop?.key ?? null };
+    };
     assert.deepEqual(decide({ key: 'foeCorpse:1', distance: 8 }, { key: 'droppedLoot:2', distance: 1 }),
       { lootKey: null, dropKey: 'droppedLoot:2' }, `${file}: a pile at arm's length beats a body across the room`);
     assert.deepEqual(decide({ key: 'foeCorpse:1', distance: 1 }, { key: 'droppedLoot:2', distance: 8 }),

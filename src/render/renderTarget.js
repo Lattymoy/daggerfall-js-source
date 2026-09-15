@@ -1,3 +1,4 @@
+// @ts-check
 // VC2 (2026-09-07): THE RENDER TARGET. The first offscreen machinery in
 // the tree - the world has always drawn straight to the default
 // framebuffer, and the character-sprite target inside renderer.js is a

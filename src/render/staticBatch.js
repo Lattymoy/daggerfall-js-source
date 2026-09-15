@@ -1,3 +1,4 @@
+// @ts-check
 // PERF4 - STATIC BATCHES PER PIXEL (2026-09-11, Mac: "look for
 // opportunities"). A streamed pixel draws every one of its RMB models
 // with its own drawMesh - one draw call per sub-mesh, a city block's

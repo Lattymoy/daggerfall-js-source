@@ -1,3 +1,4 @@
+// @ts-check
 // WebGL2 renderer for world geometry. Presentation layer - ours, not DFU's
 // (Port-Doctrine). Semantics it must honor from the data side:
 //   - UVs can be negative or > 1 (DFU relies on REPEAT wrapping).
@@ -673,7 +674,7 @@ export const INTERIOR_CLEAR = Object.freeze([0, 0, 0, 1.0]);
 /** AUDIT 65 RS-3: the texture unit the cloud-shadow map is RESERVED on
  *  (_uploadCloudShadow). It used to be 7, which is also where the
  *  Dynamic Skies pass lands `_MoonTex`: that mod binds its nine
- *  TEXTURE_SLOTS as `TEXTURE0 + i` (dynamicSkiesRenderer.js:864-871,
+ *  TEXTURE_SLOTS as `TEXTURE0 + i` (dynamicSkiesRenderer.js:865-872,
  *  over systems/dynamicSkies.js:432-435's nine names),
  *  so unit 7 was written by a foreign pass while the renderer's
  *  per-program stamp still said the shadow map was there. 15 sits
@@ -801,6 +802,17 @@ export function buildWireIndices(triIndices, subMeshes) {
 }
 
 export class Renderer {
+  // HARD3: two fields this class mints LAZILY, with `??=` at their point
+  // of use, and so never declares anywhere a reader or a checker can see
+  // them. Both are scratch the draw path reuses rather than reallocates;
+  // declaring them costs nothing at runtime (the `??=` still does the
+  // minting) and means a typo at either use site is an error instead of a
+  // second, permanently-empty field.
+  /** the billboard pass's reused opaque list, sorted per frame and emptied after (never a frame's allocation) */
+  /** @type {Array<any>|null} */ _bbOpaque = null;
+  /** _warnMissingMesh's one-warning-per-shape memory */
+  /** @type {Set<string>|null} */ _missingMeshes = null;
+
   constructor(canvas) {
     this.canvas = canvas;
     const gl = canvas.getContext('webgl2', { antialias: false });
@@ -2498,6 +2510,12 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
    * One batch = all billboards of one (archive, record): 4 verts per flat
    * (center xyz + corner offsets in -0.5..0.5), indexed quads. Positions are
    * the billboard BASE; the shader lifts by half height (AlignToBase).
+   *
+   * @param {number} archive
+   * @param {number} record
+   * @param {{w: number, h: number}} size
+   * @param {number[][]} centers   one [x, y, z] per flat, the BASE
+   * @returns {import('./contract.js').BillboardBatch}
    */
   createBillboardBatch(archive, record, size, centers) {
     const gl = this.gl;

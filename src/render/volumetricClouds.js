@@ -1,3 +1,4 @@
+// @ts-check
 // VC3 (2026-09-07): THE VOLUMETRIC CLOUDS. VC4: AND THEIR SHADOW.
 //
 // Mac: "true volumetric clouds that move across the sky, build during

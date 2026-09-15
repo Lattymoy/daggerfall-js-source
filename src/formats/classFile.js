@@ -19,7 +19,45 @@
 //       order, indices 0..7)
 // All values little-endian (classic x86 data).
 
+/**
+ * HARD3 - ONE CAREER, as a CLASS*.CFG record carries it. DFCareer's
+ * StructureData, field for field, and the shape the character import
+ * hands the live entity (`systems/classicSave.js`).
+ *
+ * @typedef {object} ClassCareer
+ * @property {string} name              16 bytes, NUL-terminated
+ * @property {number} resistanceFlags
+ * @property {number} immunityFlags
+ * @property {number} lowToleranceFlags
+ * @property {number} criticalWeaknessFlags
+ * @property {number} abilityFlagsAndSpellPointsBitfield
+ * @property {number} rapidHealing
+ * @property {number} regeneration
+ * @property {number} unknown1
+ * @property {number} spellAbsorptionFlags
+ * @property {number} attackModifierFlags
+ * @property {number} forbiddenMaterialsFlags
+ * @property {number} weaponArmorShieldsBitfield
+ * @property {number[]} primarySkills   3
+ * @property {number[]} majorSkills     3
+ * @property {number[]} minorSkills     6
+ * @property {number} hitPointsPerLevel
+ * @property {number} advancementMultiplierRaw  the 16.16 fixed-point as stored
+ * @property {number} advancementMultiplier     the same, rounded to two decimals as DFU formats it
+ * @property {number} strength
+ * @property {number} intelligence
+ * @property {number} willpower
+ * @property {number} agility
+ * @property {number} endurance
+ * @property {number} personality
+ * @property {number} speed
+ * @property {number} luck
+ */
+
 export class ClassFile {
+  /** @type {ClassCareer|null} */
+  career = null;
+
   /** @param {Uint8Array} bytes - a CLASS*.CFG record */
   load(bytes) {
     const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
@@ -27,7 +65,7 @@ export class ClassFile {
     const u8 = () => v.getUint8(o++);
     const u16 = () => { const x = v.getUint16(o, true); o += 2; return x; };
     const u32 = () => { const x = v.getUint32(o, true); o += 4; return x; };
-    const c = {};
+    const c = /** @type {ClassCareer} */ ({});
     c.resistanceFlags = u8();
     c.immunityFlags = u8();
     c.lowToleranceFlags = u8();

@@ -305,6 +305,32 @@ export const isWagonRecord = (record) => record.recordRoot?.spriteIndex === 4;
  * typed parse SaveTree.ReadRecords' switch would run. Returns the
  * record and the offset after its data.
  */
+/**
+ * HARD3 - ONE SAVETREE RECORD. The tree's nodes cross into
+ * `systems/classicSave.js` as `{object}` before this, which is how a
+ * reader of that file cannot tell `recordData` (the bytes after the
+ * root) from `parsedData` (the typed parse) without opening this one.
+ *
+ * `parsedData` is a UNION keyed by `recordType` - the ReadRecords switch
+ * below decides which member it is - and JSDoc cannot express that
+ * dependency, so it is `any` here and each consumer states which member
+ * it asked for. That is honest: the claim lives at the call site, which
+ * is where the RECORD_TYPES argument that justifies it lives too.
+ *
+ * @typedef {object} SaveTreeRecord
+ * @property {number} streamPosition
+ * @property {number} streamLength
+ * @property {Uint8Array|null} streamData
+ * @property {number} recordType       one of RECORD_TYPES
+ * @property {object|null} recordRoot  the fixed header every record carries
+ * @property {Uint8Array|null} recordData  the bytes after the root
+ * @property {any} parsedData          the typed parse, keyed by recordType; null for a type with no ReadNative*
+ * @property {SaveTreeRecord|null} parent
+ * @property {SaveTreeRecord[]} children
+ * @property {boolean} failedRecord
+ */
+
+/** @returns {{record: SaveTreeRecord, nextOffset: number}} */
 export function readSaveTreeRecord(bytes, offset, length) {
   const record = {
     streamPosition: offset,

@@ -1,3 +1,4 @@
+// @ts-check
 // THE ENHANCED SKY (ES1, 2026-08-27, Mac's call: "for the enhanced
 // version of the game, I want us to develop our own take on the
 // procedural sky system mod from DFU").
