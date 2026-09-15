@@ -15,6 +15,7 @@
 // and vice versa. That is the same contract manifest.test.js already
 // holds over Testing.md's suite count.
 import { test } from 'node:test';
+import { indexText } from './bibleIndex.mjs';   // HARD5: a doesNotMatch aimed at one page goes vacuous when its subject moves
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -365,8 +366,8 @@ test('AUDIT 58 F5 ledger: the RE-INTEGRATED road system has its own section A ro
   const status = rootFile('bible/01-Overview/Port-Status-2026-09-02.md');
   assert.ok(!/\*\*Removed whole:\*\* the road system/.test(status), 'the status page still says removed whole');
   assert.match(status, /Removed, then re-integrated/, 'and says what actually happened');
-  assert.ok(!/Basic Roads' design credited, none of its data/.test(rootFile('bible/Home.md')),
-    'Home.md still says none of his data ships');
+  assert.ok(!/Basic Roads' design credited, none of its data/.test(indexText()),
+    'the index still says none of his data ships');   // HARD5: the whole index, not one page of it
 
   // AUDIT 58 (records): F5 swept the BIBLE and stopped there, so two
   // `src/` headers went on reasoning from the retired premise - and

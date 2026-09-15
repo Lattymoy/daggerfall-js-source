@@ -207,12 +207,12 @@ departure that had no Ledger row is retired rather than given one.
 `SPELL_MAKER_EFFECTS` is **91 rows across 39 groups, 0 inert**
 (`node -e` over `src/systems/spellEffects.js`; the same two numbers are
 gated against `Port-Ledger.md`'s derived-figures block by
-`test/ledger.test.js:43`). The inert count was already 0 at the
+`test/ledger.test.js:44`). The inert count was already 0 at the
 superseded page and stays 0: nothing the spell maker offers cannot fire.
 
 `SERVICE_DESTINATION` is **20 guild services, 0 with a null
 destination** (`systems/guildServiceFlow.js`, gated by
-`test/ledger.test.js:54`).
+`test/ledger.test.js:55`).
 
 The superseded page's two magic gaps are closed and verified here:
 `minimumCastingCost` is live at `systems/spellcost.js:181` and is

@@ -382,13 +382,67 @@ This one is a rule about the RECORD - write the permission down - and it
 failed in exactly the same way, at a higher rate than any code rule
 measured so far: six of the six times it applied.
 
-### HARD5 - shrink Home.md into an index.
+### HARD5 - Home.md back to an index. SHIPPED 2026-09-15.
 
-It is 288 KB and carries the architecture, the postmortems, the policy,
-the changelog and the project index at once. The split is right, but note
-what is attached before starting: a tool rewrites a section of it
-(`regenOpenFlags.mjs`), and tests pin line numbers inside it. It is not a
-pure documentation move.
+It was 291 KB and carried the architecture, the postmortems, the policy,
+the changelog and the project index at once. **It is 30 KB now.** Two
+sections were 254 KB of it and each has its own page:
+
+| section | was | now |
+| --- | --- | --- |
+| `## Active arcs` | 172 KB in **89 lines** - an index whose entries had grown into essays | `01-Overview/Active-Arcs.md` |
+| `## Audits` | 82 KB in 1,386 lines | `01-Overview/Audit-Log.md` |
+
+**Both moves are byte for byte, and nothing was re-worded in them.** A
+rewrite and a relocation in one commit is a diff nobody can read.
+Shortening Active-Arcs' essay-length entries into real index lines is its
+own later pass, and it needs each linked page read first to be sure the
+summary is not the only place something is written down; each delegate
+page says so in its own header, and a gate checks that it does.
+
+**THE WARNING ON THIS PAGE WAS HALF WRONG, AND THAT IS THE FINDING.** It
+said two things were attached: *"a tool rewrites a section of it
+(`regenOpenFlags.mjs`), and tests pin line numbers inside it."*
+
+- The tool is real. Its section, `## Open flags`, **stayed in Home.md**
+  for exactly that reason - `regenOpenFlags.mjs` finds it by heading in
+  that file, and `citedrift.test.js` and `flagsites.test.js` read the
+  list there too.
+- **The line-number pins do not exist.** Not one test indexes Home.md by
+  line. The line numbers those tests handle are the ones INSIDE each
+  open-flag entry, pointing at `src/` - a different thing entirely.
+
+That is the second stale claim found on this page in one day; the first
+was "the five-host save envelope assembly", which is two hosts. So:
+**a warning is a claim, and an unchecked warning rots exactly like an
+unchecked citation.** Both are now checked rather than believed - if a
+line-number pin into Home.md is ever added, `hard5_index.test.js` goes
+red and the warning becomes true and earns its place back.
+
+**The real attachment was the one the record did not name.** Four gates
+ask *"does Home.md name every record under `01-Overview/`, every arc plan
+under `bible/`"* - and a split breaks all four while the index stays
+complete. They were asking about THE INDEX, not about a file.
+
+And behind those sits the hazard worth carrying forward:
+
+> A `doesNotMatch(read('bible/Home.md'), ...)` pin says *"this stale
+> claim is gone"*. Move the section it guards to another page and the pin
+> goes **vacuously true** - it passes for ever, for the wrong reason, and
+> nothing goes red. Three such pins were live when this split landed.
+
+`test/bibleIndex.mjs` is the answer: the index is **derived** - Home.md,
+plus every page Home.md's own stubs hand off to. A delegate cannot join
+in silence (it has to be written into Home.md to count) and a stub naming
+a page that is not there throws rather than quietly shrinking what the
+gates read. The four index gates and the three negative pins read it now.
+
+`test/hard5_index.test.js` holds the rest: a ceiling on Home.md's size so
+it cannot grow back into an everything-page, a check that no section
+exists twice across the index (a relocation that leaves the original
+behind is worse than none - two texts, one edited and one read), the
+ban on negative pins aimed at one page, the reason `## Open flags` stayed,
+and the pin on the warning above. Mutation-verified three ways.
 
 ## AUDIT-HARD, 2026-09-15 - the program audited against itself
 
