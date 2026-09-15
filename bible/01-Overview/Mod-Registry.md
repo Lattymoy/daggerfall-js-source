@@ -11,7 +11,7 @@ registry links to it rather than replacing it. What a README cannot do
 is be **read together with the other thirteen**. Two facts about this
 tree were invisible until these rows were put side by side:
 
-1. **Six of the fourteen carry an unfilled permission line.** Each is a
+1. **Seven of the fifteen carry an unfilled permission line.** Each is a
    literal `[Mac: paste the text of the permission, or the link to it,
    here.]` sitting under a sentence that says permission was granted -
    so the README reads as settled, and only the placeholder says it is
@@ -40,7 +40,7 @@ question of whether the port may carry the files.
 It means the EVIDENCE was never pasted in. The line exists to hold the
 author's own words or a link to them, and it is still a prompt. Anyone
 who has to answer a licence question later - or anyone who takes this
-repository over - would find a promise and no receipt. Filling the six
+repository over - would find a promise and no receipt. Filling the seven
 lines is a five-minute job for the person who holds the messages, and it
 is nobody else's job, which is why the rows say who.
 
@@ -51,6 +51,7 @@ not the date the slice shipped, where those differ.
 
 | vendor | what the port takes | upstream | version | read from | licence / permission | port slice | parity | bible |
 |---|---|---|---|---|---|---|---|---|
+| `ambient-text` | manifest, settings, the 918-line text table | Regnier | 1.8 | shipped `.7z` `Ambient_Text-303-1-8-1774575578`; behaviour off the DLL's IL | granted (Mac handed the archive over 2026-09-15) - **RECORD OPEN** | AT0-AT3 | 2026-09-15 | `06-Systems/Ambient-Text.md` |
 | `dfu-books` | data | Daggerfall Unity (Interkarma and contributors) | - | `Assets/Resources/books.txt` @ `81e89e90` | MIT | route (a) | 2026-08-20 | `10-UI/UI-Arc.md` |
 | `dfu-quests` | data | Daggerfall Unity (Interkarma and contributors) | - | `Assets/StreamingAssets/{Quests,Tables}` @ `81e89e90` | MIT | route (a) | 2026-08-20 | `06-Systems/Quest-Arc.md` |
 | `dfu-settings` | data | Daggerfall Unity (Interkarma and contributors) | - | `defaults.ini.txt` + `Text/GameSettings.txt` @ `81e89e90` | MIT | route (a) | 2026-08-20 | `10-UI/Settings-Screen-Spec.md` |
@@ -75,7 +76,7 @@ full account; this is the index to it.
   are NOT carried, because they are not in the shipped manifest and the
   mod therefore never loads them.
 - **`handheld-torches`**, **`weapon-widget`**, **`seasons-iliac-bay`**,
-  **`pcaao`**, **`meanerMonsters`** - the mods' compiled DLLs are not
+  **`pcaao`**, **`meanerMonsters`**, **`ambient-text`** - the mods' compiled DLLs are not
   vendored and never were. Behaviour was read method by method (IL, or
   the upstream source where one exists) and rewritten; the port's own
   files are the law, each citing the C# member it restates.
@@ -85,6 +86,13 @@ full account; this is the index to it.
 - **`seasons-iliac-bay`** - the port reads the PLAYER's own `.dfmod`
   bundle at runtime rather than carrying 372 textures. Only the manifest
   is vendored.
+- **`ambient-text`** - `ambientTexts.json` is NOT in the manifest's
+  `Files` list, and it is carried anyway: the mod's runtime reads its
+  table from a static `Hashtable` baked into the DLL, and the JSON
+  beside it in the bundle is the same 918 pairs - checked key by key
+  against the IL, no key missing on either side and no value differing.
+  So the vendored file is the table, not a stale export of it, and the
+  port reads it directly rather than transcribing 918 lines into JS.
 - **`roads-hazelnut`** - data only. The road RENDERING is the port's own
   work, deliberately (the Ledger: "instead of taking their mod, I want us
   to develop our own and better").

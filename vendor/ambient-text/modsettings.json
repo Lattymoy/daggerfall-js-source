@@ -1,0 +1,49 @@
+{
+    "Version": "",
+    "Sections": [
+        {
+            "Name": "AmbientText",
+            "Description": "Ambient text message settings",
+            "IsAdvanced": false,
+            "Keys": [
+                {
+                    "Min": 0,
+                    "Max": 100,
+                    "Value": 33,
+                    "Name": "textChance",
+                    "Description": "Chance % of selecting any ambient text each interval",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderIntKey"
+                },
+                {
+                    "Min": 60,
+                    "Max": 600,
+                    "Value": 200,
+                    "Name": "interval",
+                    "Description": "Interval length between checking ambient text in real time seconds",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderIntKey"
+                },
+                {
+                    "Min": 60,
+                    "Max": 600,
+                    "Value": 500,
+                    "Name": "postTextInterval",
+                    "Description": "Interval length after displaying a message in real time seconds",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderIntKey"
+                },
+                {
+                    "Min": 1,
+                    "Max": 10,
+                    "Value": 3,
+                    "Name": "textDisplayTime",
+                    "Description": "Length of time text messages are displayed in seconds",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderIntKey"
+                }
+            ],
+            "$version": "v1"
+        }
+    ]
+}
