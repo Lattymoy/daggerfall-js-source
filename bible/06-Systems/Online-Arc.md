@@ -4790,3 +4790,32 @@ FOE1 merged to main today; Pages publishes from main on push, so a client
 loaded before that deploy is still running the broken bundle. The build
 stamp in the door's foot names the commit it was built from - `90dc0160`
 or later carries the fix.
+
+## PERF-ON (2026-09-15): the more people, the worse the frame
+
+Mac: *"Next thing I want to tackle is improving online performance. I
+notice the more people that are online, the worse fps becomes."*
+
+The cost was MEASURED before anything was touched, and only one thing
+in the online frame turned out to scale without a bound: the NAME over
+each peer's head. Everything else already had one - `peerBodies` caps
+the Morrowind rigs at `BODIES_MAX` 8 and culls past `BODY_RANGE` 120,
+and a peer's doll is a single billboard batch created once, with only
+its `origin` written per frame.
+
+`RemotePlayers.drawNames` calls `drawText` a peer, and `drawText`
+issued one `drawScreenQuad` a GLYPH - a full GL state setup each, about
+seventeen calls a letter. A nine-letter name was 153 GL calls a frame a
+peer; thirty peers was most of a frame spent on lettering. The fix is
+in the renderer, not in `net/`, and is recorded in full at
+`07-Rendering/Rendering-Arc.md` PERF-ON: the glyphs of a string are a
+RUN, drawn by one instanced `drawScreenQuadRun`, so a name is 14 GL
+calls and one draw whatever its length. Nothing in `net/` changed.
+
+The pin that matters for this arc is the per-peer MEASUREMENT: 1, 4 and
+16 peers must be 1, 4 and 16 draws, with no loose glyphs. That is the
+symptom's own shape - what does one more peer cost - and it reddens if
+the name pass ever grows a per-glyph cost again.
+
+**Pinned** in `test/perfon_text_run.test.js` (7). NOT SEEN ON A GPU -
+there is no GL in the container; Mac's eye is the next gate.

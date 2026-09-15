@@ -1805,6 +1805,97 @@ void main() {
     this._bindVao(null);
   }
 
+  drawScreenQuadRun(tex, quads, color = [1, 1, 1, 1]) {
+    const gl = this.gl;
+    const n = quads?.length ?? 0;
+    if (!tex || !n) return;
+    // The same law drawScreenQuad opens with (ROAD-E E5): the first 2D
+    // primitive after a shrunk world pass is where the canvas returns.
+    if (this._worldViewportPx) this.endWorldPass();
+    if (!this.screenQuadRunProgram) {
+      const vs = `#version 300 es
+layout(location=0) in vec2 aPos;
+layout(location=1) in vec4 aDst;   // x, y, w, h in pixels (top-left origin), per INSTANCE
+layout(location=2) in vec4 aSrc;   // u0, v0, u1, v1, per INSTANCE
+uniform vec2 uCanvas;
+out vec2 vUV;
+void main() {
+  vec2 p = aPos * 0.5 + 0.5;                     // 0..1
+  vUV = mix(aSrc.xy, aSrc.zw, vec2(p.x, p.y));
+  vec2 px = aDst.xy + p * aDst.zw;
+  vec2 ndc = vec2(px.x / uCanvas.x * 2.0 - 1.0, 1.0 - px.y / uCanvas.y * 2.0);
+  gl_Position = vec4(ndc, 0.0, 1.0);
+}`;
+      // The 1-BIT CUTOUT law, verbatim from the fragment stage above -
+      // a run is always the default (non-blend) arm, because the only
+      // caller is text and text is classic art.
+      const fs = `#version 300 es
+precision highp float;
+in vec2 vUV;
+uniform sampler2D uTex;
+uniform vec4 uColor;
+out vec4 outColor;
+void main() {
+  vec4 t = texture(uTex, vUV);
+  if (t.a < 0.5) discard;
+  outColor = vec4(t.rgb, 1.0) * uColor;
+}`;
+      this.screenQuadRunProgram = this._buildProgram(vs, fs);
+      this._screenQuadRun = {
+        canvas: gl.getUniformLocation(this.screenQuadRunProgram, 'uCanvas'),
+        tex: gl.getUniformLocation(this.screenQuadRunProgram, 'uTex'),
+        color: gl.getUniformLocation(this.screenQuadRunProgram, 'uColor'),
+      };
+      const vao = gl.createVertexArray();
+      this._bindVao(vao);
+      const vbo = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, -1, 1, 1, 1, 1, -1]), gl.STATIC_DRAW);
+      gl.enableVertexAttribArray(0);
+      gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+      const ibo = gl.createBuffer();
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
+      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array([0, 1, 2, 0, 2, 3]), gl.STATIC_DRAW);
+      // the per-instance stream: eight floats a quad, grown in place
+      this._screenQuadRunVbo = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, this._screenQuadRunVbo);
+      gl.enableVertexAttribArray(1);
+      gl.vertexAttribPointer(1, 4, gl.FLOAT, false, 32, 0);
+      gl.vertexAttribDivisor(1, 1);
+      gl.enableVertexAttribArray(2);
+      gl.vertexAttribPointer(2, 4, gl.FLOAT, false, 32, 16);
+      gl.vertexAttribDivisor(2, 1);
+      this._bindVao(null);
+      this._screenQuadRunVao = vao;
+      this._screenQuadRunData = new Float32Array(0);
+      this._screenQuadRunCap = 0;
+    }
+    if (this._screenQuadRunData.length < n * 8) this._screenQuadRunData = new Float32Array(n * 8);
+    const a = this._screenQuadRunData;
+    const ox = this._screenOffset?.[0] ?? 0, oy = this._screenOffset?.[1] ?? 0;
+    for (let i = 0; i < n; i++) {
+      const { dst, src } = quads[i], o = i * 8;
+      a[o] = dst.x + ox; a[o + 1] = dst.y + oy; a[o + 2] = dst.w; a[o + 3] = dst.h;
+      a[o + 4] = src.u0; a[o + 5] = src.v0; a[o + 6] = src.u1; a[o + 7] = src.v1;
+    }
+    this._use(this.screenQuadRunProgram);
+    this._bindVao(this._screenQuadRunVao);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this._screenQuadRunVbo);
+    if (this._screenQuadRunCap < n) { gl.bufferData(gl.ARRAY_BUFFER, a.byteLength, gl.STREAM_DRAW); this._screenQuadRunCap = a.length / 8; }
+    gl.bufferSubData(gl.ARRAY_BUFFER, 0, a, 0, n * 8);
+    gl.disable(gl.DEPTH_TEST);
+    gl.disable(gl.CULL_FACE);   // the same handedness bracket drawScreenQuad keeps
+    gl.uniform2f(this._screenQuadRun.canvas, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    gl.uniform4f(this._screenQuadRun.color, color[0], color[1], color[2], color[3]);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex); gl.uniform1i(this._screenQuadRun.tex, 0);
+    this.stats.texBinds++;
+    gl.drawElementsInstanced(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0, n);
+    this.stats.draws++;
+    gl.enable(gl.CULL_FACE);
+    gl.enable(gl.DEPTH_TEST);
+    this._bindVao(null);
+  }
+
     drawScreenOverlayQuad(tex, u1, v1) {
     const gl = this.gl;
     if (!this.overlayProgram) {
