@@ -657,12 +657,24 @@ the scrolling list format."*
 
 ### The number that shaped it
 
-The panel was never the problem. The eight vendored mods carry **360
-settings keys** between them - Handheld Torches 84, the Weapon Widget
-70, PCAAO 48 - and that is what made the Mods pane a scroll. No layout
-fixes a list of 360 things, so the first decision was not visual:
-**curate or expose.** Curate kills the pane; expose only moves it. Mac
-took curate, after seeing both in a clickable mock.
+The panel was never the problem. The eight vendored mods carry **125
+settings keys** between them, and two of them carry two thirds of that:
+Handheld Torches 53 and the Weapon Widget 42. That is what made the
+Mods pane a scroll, and no layout fixes a list that long - so the first
+decision was not visual: **curate or expose.** Curate kills the pane;
+expose only moves it. Mac took curate, after seeing both in a clickable
+mock.
+
+*(The brief and the mock both said 360. That was a miscount - reading
+`Object.keys` over each mod's `title` and `author` STRINGS as well as
+its `keys`, which counts a title's characters. The shape of the
+argument holds at 125 and the decision does not change, but the number
+is corrected here and in the code.)*
+
+**After curation: 46 of the 125 are on a tile, 79 keep the mod's own
+values.** The hiding is concentrated exactly where the problem was -
+Handheld Torches 45 hidden, the Weapon Widget 29 - and six of the eight
+mods hide nothing at all.
 
 ### What a mod actually is
 

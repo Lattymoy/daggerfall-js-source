@@ -16,6 +16,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   FEATURES, KINDS, KIND_ORDER, STORES, checkFeature, checkFeatures, filterFeatures, featureCounts, resolveControl,
+  MOD_CURATED, modModules, modDials,   // AUDIT FT14: the curation, walked
 } from '../src/systems/features.js';
 import '../src/world/landView.js';   // RF4: the lanes register themselves; the checks read them
 import '../src/world/outdoors.js';
@@ -166,8 +167,12 @@ test('FT14: the panel is tiles grouped by what they change, the control is alway
   assert.match(menu, /function paintRail\(rail = document\.getElementById\('ft-rail'\)\) \{/);
   assert.match(menu, /paintRail\(rail\);/, 'the first paint is handed the rail it just built');
 
-  // (6) the drawer's shape: modules derived, dials curated
-  assert.match(menu, /const mods = modModules\(c\.vendor\);\s*\n\s*const dials = modDials\(c\.vendor\);/);
+  // (6) the drawer's shape: modules derived, dials curated - and the vendor is the row's OWN
+  // or the one it COVERS. AUDIT FT14: reading `c.vendor` alone left Dynamic Skies' five particle
+  // keys with no tile to open, because Enhanced environments IS its switch (FT4's three-way, via
+  // `also`) and does not live in the mods store. `also` already declared the cover.
+  assert.match(menu, /const vendor = c\.store === 'mods' \? c\.vendor\s*\n\s*: \(Array\.isArray\(c\.also\) \? c\.also\.find\(\(a\) => a\.store === 'mods'\)\?\.vendor : null\) \?\? null;/);
+  assert.match(menu, /const mods = modModules\(vendor\);\s*\n\s*const dials = modDials\(vendor\);/);
 
   // (7) the classes are NAMESPACED. `.tile` and `.seg` were already the inventory icon and a
   // progress strip; the first cut collided with both and the grid collapsed into a column.
@@ -176,6 +181,37 @@ test('FT14: the panel is tiles grouped by what they change, the control is alway
     assert.ok(css.includes(`.${c} `) || css.includes(`.${c}[`) || css.includes(`.${c}{`) || css.includes(`.${c} {`), `.${c} is styled`);
   }
   assert.match(css, /\.pack-shell \.itemrow \.tile \{/, 'and the inventory tile it must not collide with is still its own thing');
+});
+
+// AUDIT FT14 (2026-09-15): EVERY VENDORED MOD IS STILL REACHABLE.
+//
+// Curating is hiding keys on purpose; losing a MOD is not. The audit found one: Dynamic Skies
+// has no row of its own - Enhanced environments is its switch through FT4's three-way - so once
+// the Mods pane was gone its five particle keys had nowhere to live. This walks the vendors
+// rather than trusting the table, so the next mod folded into a condensed row cannot go quiet.
+test('AUDIT FT14: every vendored mod reaches a tile, and the curation hides keys rather than mods', () => {
+  const vendors = Object.keys(MOD_SETTINGS);
+  const covered = new Map();   // vendor -> the row that carries it
+  for (const f of FEATURES) {
+    const c = resolveControl(f);
+    for (const k of [c, ...(Array.isArray(c.also) ? c.also : [])]) {
+      if (k.store === 'mods' && k.key === 'Enabled') covered.set(k.vendor, f.id);
+    }
+  }
+  for (const v of vendors) assert.ok(covered.has(v), `${v} has a row that carries its switch`);
+
+  // and every mod with keys beyond Enabled shows at least one of them somewhere
+  for (const v of vendors) {
+    const extra = Object.keys(MOD_SETTINGS[v].keys).filter((k) => k !== 'Enabled');
+    if (!extra.length) continue;
+    const shown = modModules(v).length + modDials(v).length;
+    assert.ok(shown > 0, `${v} carries ${extra.length} keys past Enabled and shows none - curation must hide keys, not mods`);
+  }
+
+  // the curated names are real keys, always - a typo is a silent missing row otherwise
+  for (const [v, list] of Object.entries(MOD_CURATED)) {
+    for (const k of list) assert.ok(MOD_SETTINGS[v]?.keys?.[k] !== undefined, `${v}/${k} is a key the mod ships`);
+  }
 });
 
 test('FT0: the three kinds have three colours, all the skin\'s own tokens', () => {

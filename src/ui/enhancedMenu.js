@@ -1673,10 +1673,20 @@ function featureTile(f) {
   if (st) t.append(segBar(st, f.title));
   else t.append(featureRow(f));
 
-  // the drawer's door: a mod's modules and dials
-  if (c.store === 'mods') {
-    const mods = modModules(c.vendor);
-    const dials = modDials(c.vendor);
+  // the drawer's door: a mod's modules and dials.
+  //
+  // AUDIT FT14: the vendor is the row's OWN when it has one, and
+  // otherwise the one it COVERS. A condensed row (FT2's `also`) drives
+  // a mod's switch without living in the mods store - Enhanced
+  // environments is Dynamic Skies' Enabled, through its three-way -
+  // and reading `c.vendor` alone left that mod's five particle keys
+  // with no tile to open once the Mods pane was gone. `also` already
+  // declared the cover; the drawer follows it.
+  const vendor = c.store === 'mods' ? c.vendor
+    : (Array.isArray(c.also) ? c.also.find((a) => a.store === 'mods')?.vendor : null) ?? null;
+  if (vendor) {
+    const mods = modModules(vendor);
+    const dials = modDials(vendor);
     if (mods.length || dials.length) {
       const open = featureOpen === f.id;
       const b = el('button', 'ft-tile-more');
@@ -1687,7 +1697,7 @@ function featureTile(f) {
           .filter(Boolean).join(' \u00b7 ')));
       b.onclick = (e) => { e.stopPropagation(); featureOpen = open ? null : f.id; render(); };
       t.append(b);
-      if (open) t.append(featureDrawer(f.control.vendor, mods, dials));
+      if (open) t.append(featureDrawer(vendor, mods, dials));
     }
   }
   return t;
@@ -1739,9 +1749,11 @@ function paintRail(rail = document.getElementById('ft-rail')) {
   pair('Stored', c.store === 'prefs' ? 'Port preferences'
     : c.store === 'mods' ? `${MOD_SETTINGS[c.vendor].title}\u2019s own modsettings`
       : 'Daggerfall Unity settings.ini');
-  if (c.store === 'mods') {
-    const n = Object.keys(MOD_SETTINGS[c.vendor].keys).length;
-    const shown = 1 + modModules(c.vendor).length + modDials(c.vendor).length;
+  const rv = c.store === 'mods' ? c.vendor
+    : (Array.isArray(c.also) ? c.also.find((a) => a.store === 'mods')?.vendor : null) ?? null;
+  if (rv) {
+    const n = Object.keys(MOD_SETTINGS[rv].keys).length;
+    const shown = 1 + modModules(rv).length + modDials(rv).length;
     pair('Settings', `${shown} of ${n} shown \u2013 the rest keep the mod\u2019s own values`);
   }
   rail.append(kv);

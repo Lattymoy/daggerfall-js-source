@@ -45,7 +45,7 @@ test('ROADS 24: the switches reach the kernel on both paths, and the Mods pane s
   // FT14: the Mods pane is gone - every vendored mod reaches the player as a TILE on the features
   // home (features.js modFeature walks MOD_SETTINGS), and its own keys open inside that tile.
   assert.match(readFileSync('src/systems/features.js', 'utf8'), /modFeature\(/, 'every vendored mod has a row');
-  assert.match(menu, /const mods = modModules\(c\.vendor\);/, 'and the tile opens the mod\u2019s own modules');
+  assert.match(menu, /const mods = modModules\(vendor\);/, 'and the tile opens the mod\u2019s own modules');
   assert.match(menu, /setModSetting\(vendor, key, !modSetting\(vendor, key\)\)/, 'a click flips one');
 });
 

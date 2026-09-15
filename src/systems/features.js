@@ -95,11 +95,12 @@ const modFeature = (vendor, effect, group) => {
 
 /** FT14 (2026-09-15) - WHAT A MOD'S TILE SHOWS, AND WHAT IT DOES NOT.
  *
- *  The eight vendored mods carry 360 settings keys between them -
- *  Handheld Torches alone has 84, the Weapon Widget 70. That is the
- *  real reason the Mods pane was a scroll, and no amount of layout
- *  fixes a list of 360 things. So the tile shows the few a player
- *  would actually move, and the rest keep the values the mod ships.
+ *  The eight vendored mods carry 125 settings keys between them -
+ *  Handheld Torches alone has 53 and the Weapon Widget 42, which is
+ *  two thirds of the total in two mods. That is the real reason the
+ *  Mods pane was a scroll, and no amount of layout fixes a list that
+ *  long. So the tile shows the few a player would actually move (46 of
+ *  the 125), and the other 79 keep the values the mod ships.
  *
  *  TWO SHAPES, because the mods have two. A key under `Modules.` is a
  *  SUB-FEATURE the mod can turn off whole (the Widget's nine: its
@@ -118,6 +119,10 @@ const modFeature = (vendor, effect, group) => {
  *  line here. The rows are rendered by the same `modRow` the Mods pane
  *  used, so a curated key is not a second copy of anything. */
 export const MOD_CURATED = Object.freeze({
+  // AUDIT FT14: Dynamic Skies has no row of its own - Enhanced environments IS its switch,
+  // through FT4's three-way - so without these five its particle settings had no tile to open.
+  'dynamic-skies': Object.freeze(['ActivatePixelSnow', 'densitySetting', 'MinParticleSize',
+    'MaxParticleSize', 'MaxParticles']),
   'weapon-widget': Object.freeze(['Swings.Speed', 'Bob.Length', 'Inertia.Scale']),
   'handheld-torches': Object.freeze(['Handling.RememberLastLightSource', 'Handling.StowWhenSpellcasting', 'Bob.Length']),
   pcaao: Object.freeze(['equipmentDamageEnhanced', 'fadingEnchantedItems', 'armorHitFormulaRedone',
