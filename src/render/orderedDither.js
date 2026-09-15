@@ -1,3 +1,4 @@
+// @ts-check
 // THE ORDERED DITHER'S WORLD-FIXED CELL - what remains of the retro
 // pass after FT3.
 //

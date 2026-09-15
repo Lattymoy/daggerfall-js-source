@@ -1,3 +1,4 @@
+// @ts-check
 // Window emission styles. Verbatim constants from Daggerfall Unity's
 // MaterialReader (MIT, Daggerfall Workshop): per-style Color32 and intensity;
 // the applied emission is color * intensity, exactly

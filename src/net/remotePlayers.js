@@ -1,3 +1,4 @@
+// @ts-check
 // ONLINE1 (2026-09-12): THE OTHERS, DRAWN. Mac: "if using classic, you'd
 // see the other user's paperdoll; if using enhanced, you would see the
 // other person's Morrowind sprite" - and, of a client without the
@@ -124,8 +125,8 @@ let _dollSeq = 0;   // the record keys, monotonic (AUDIT ONLINE C10: a size-and-
 export class RemotePlayers {
   /**
    * @param {object} p
-   * @param {object} p.renderer
-   * @param {object} p.deps     {fetchBytes, palette, getTexture} - the compositor's
+   * @param {import('../render/contract.js').RendererLike} p.renderer
+   * @param {{fetchBytes: Function, palette: object, getTexture?: Function}|null} p.deps  the compositor's
    * @param {Function} [p.compose] the compositor's door (composePaperDollPixels); a test hands in its own
    * @param {Function} [p.now]
    */
@@ -197,6 +198,15 @@ export class RemotePlayers {
    * the peer's feet in the SCENE frame (`toScene` maps a room pose to
    * it); a peer whose look changed gets a new batch (AUDIT ONLINE
    * C12); the batches of peers gone are released.
+   */
+  /**
+   * HARD3: `bodyHeight` is called with a peer id, and its default took
+   * none - so the DEFAULT was the documented signature and the real one
+   * went unwritten. The annotation is the contract; the default still
+   * answers 0 for every peer.
+   * @param {Iterable<any>} peers
+   * @param {(p: any) => number[]} [toScene]
+   * @param {{bodyHeight?: (id: any) => number}} [opts]
    */
   sync(peers, toScene = (p) => [p.x, p.y, p.z], { bodyHeight = () => 0 } = {}) {
     const live = new Set();

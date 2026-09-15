@@ -28,6 +28,79 @@ const SKILL_COUNT = 35;
 /** CharacterRecord.ReadCharacterData.
  *  @param {Uint8Array} recordData - the record data AFTER the record
  *  root (SaveTreeBaseRecord.RecordData). */
+/**
+ * HARD3 - THE CLASSIC CHARACTER RECORD, written down as a type.
+ *
+ * This is the save envelope's far bank: every field `systems/
+ * classicSave.js` reads off a SaveTree Character record's `parsedData`
+ * comes from here, and until this typedef existed that whole import path
+ * read properties off `{object}` - forty-odd of them, none checked, in
+ * the one code path that runs against a file the port did not write.
+ *
+ * The layout itself is CharacterRecord.cs verbatim (offsets above); this
+ * only names what the reader produces.
+ *
+ * @typedef {object} CharacterRecordData
+ * @property {string} characterName
+ * @property {number[]} currentStats   8, EntityEnums.Stats order
+ * @property {number[]} baseStats      8, the permanent values
+ * @property {number[]} armorValues    7 body parts, i8 each
+ * @property {number[]} skills         SKILL_COUNT values
+ * @property {number[]} skillUses      SKILL_COUNT use counters
+ * @property {number[]} equippedItems  EQUIPPED_ITEM_COUNT RecordIDs, 0 for an empty slot
+ * @property {import('./classFile.js').ClassCareer} career  the CLASS*.CFG record at 0x230, through ClassFile
+ * @property {number} gender
+ * @property {number} transportationFlags
+ * @property {number} minMetalToHit
+ * @property {number} race
+ * @property {number} skillsRaisedThisLevel1
+ * @property {number} skillsRaisedThisLevel2
+ * @property {number} startingLevelUpSkillSum
+ * @property {number} baseHealth
+ * @property {number} lastTimeUrgeToHuntInnocentSatisfied
+ * @property {number} timeAfterWhichShieldEffectWillEnd
+ * @property {number} unknownLycanthropy
+ * @property {number} incubatingLycanthropy
+ * @property {number} playerHouse
+ * @property {number} playerShip
+ * @property {number} currentHealth
+ * @property {number} maxHealth
+ * @property {number} faceIndex
+ * @property {number} level
+ * @property {number} reflexes
+ * @property {number} physicalGold
+ * @property {number} magicEffects1
+ * @property {number} magicEffects2
+ * @property {number} magicEffects3
+ * @property {number} magicEffects4
+ * @property {number} currentSpellPoints
+ * @property {number} maxSpellPoints
+ * @property {number} reputationCommoners
+ * @property {number} reputationMerchants
+ * @property {number} reputationScholars
+ * @property {number} reputationNobility
+ * @property {number} reputationUnderworld
+ * @property {number} currentFatigue
+ * @property {number} race2
+ * @property {number} timeToBecomeVampireOrWerebeast
+ * @property {number} hasStartedInitialVampireQuest
+ * @property {number} lastTimeVampireNeedToKillSatiated
+ * @property {number} lastTimePlayerAteOrDrankAtTavern
+ * @property {number} lastTimePlayerBoughtTraining
+ * @property {number} timeForThievesGuildLetter
+ * @property {number} timeForDarkBrotherhoodLetter
+ * @property {number} shieldEffectAmount
+ * @property {number} vampireClan
+ * @property {number} darkBrotherhoodRequirementTally
+ * @property {number} thievesGuildRequirementTally
+ * @property {number} biographyReactionMod
+ * @property {number} resistanceToFire
+ * @property {number} resistanceToFrost
+ * @property {number} resistanceToDiseaseAndPoison
+ * @property {number} resistanceToShock
+ * @property {number} resistanceToMagicka
+ */
+/** @returns {CharacterRecordData} */
 export function parseCharacterRecordData(recordData) {
   const v = new DataView(recordData.buffer, recordData.byteOffset, recordData.byteLength);
   const d = {};

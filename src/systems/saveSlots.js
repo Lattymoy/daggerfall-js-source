@@ -1,3 +1,4 @@
+// @ts-check
 // SAV4: MULTI-SLOT SAVE MANAGEMENT - SaveLoadManager's slot half, 1:1
 // from DFU Game/Serialization/SaveLoadManager.cs (MIT, Daggerfall
 // Workshop). The laws, kept verbatim:
@@ -53,12 +54,41 @@ export const AUTO_SAVE_NAME = 'AutoSave';
 
 const store = () => appStorage();
 
-const parse = (raw) => { try { return JSON.parse(raw); } catch { return null; } };
+/**
+ * HARD3 - THE SLOT CARD, written down. Every slot in this file
+ * enumerates through one of these and nothing else (the
+ * SaveInfo.txt-must-exist law), so this is the shape the load door, the
+ * online door and the most-recent question all read. It was `{object}`
+ * on the way out of `parse`, which is how three call sites read
+ * `.dateAndTime` off a value nothing promised had one.
+ *
+ * It comes back from `JSON.parse`, so it is UNTRUSTED: a slot written by
+ * an older build, or edited by hand, can be missing any field. That is
+ * why every read here is optional-chained and defaulted, and why the type
+ * marks the fields optional rather than pretending the parse checked them.
+ *
+ * @typedef {object} SaveInfo
+ * @property {number} [saveVersion]  the envelope version (systems/save.js SAVE_VERSION)
+ * @property {string} [saveName]     the slot's name; with characterName it is the slot's identity
+ * @property {string} [characterName]
+ * @property {{gameTime?: number, realTime?: number}} [dateAndTime]  gameTime in CLASSIC MINUTES, realTime in Date.now() ms - both compare-and-display, never arithmetic
+ * @property {string} [dfuVersion]   the port's BUILD_TAG
+ */
+
+// HARD3: ONE reader, TWO shapes. `parse` was handed both the slot CARD
+// and the save ENVELOPE, and returned `object` for each, so neither had a
+// type and a card could be read where an envelope was meant without a
+// word from anything. Same body, two names, two contracts - and the names
+// say at the call site which of the three storage keys is being opened.
+/** @returns {SaveInfo|null} */
+const parseInfo = (raw) => { try { return JSON.parse(raw); } catch { return null; } };
+/** The save ENVELOPE (systems/save.js snapshotPlayer), untrusted the same way. @returns {any} */
+const parseSnap = (raw) => { try { return JSON.parse(raw); } catch { return null; } };
 
 /** EnumerateSaveFolders + EnumerateSaveInfo + EnumerateCharacterSaves:
  *  one sweep over storage. A slot enumerates ONLY through a parseable
  *  SaveInfo (the SaveInfo.txt-must-exist law).
- *  @returns {{ info: Map<number, object>, characterSaves: Map<string, number[]> }} */
+ *  @returns {{ info: Map<number, SaveInfo>, characterSaves: Map<string, number[]> }} */
 export function enumerateSaves(storage = store()) {
   const info = new Map();
   const characterSaves = new Map();
@@ -69,7 +99,7 @@ export function enumerateSaves(storage = store()) {
     if (!k?.startsWith(SAVE_INFO_PREFIX)) continue;
     const key = Number(k.slice(SAVE_INFO_PREFIX.length));
     if (!Number.isInteger(key) || key < 0) continue;   // int.TryParse's gate
-    const saveInfo = parse(storage.getItem(k));
+    const saveInfo = parseInfo(storage.getItem(k));
     if (!saveInfo) continue;
     info.set(key, saveInfo);
     const name = saveInfo.characterName ?? '';
@@ -86,7 +116,7 @@ export function migrateLegacyQuicksave(storage = store()) {
   if (!storage) return false;
   const raw = storage.getItem(QUICKSAVE_KEY);
   if (!raw) return false;
-  const snap = parse(raw);
+  const snap = parseSnap(raw);
   if (!snap) { storage.removeItem(QUICKSAVE_KEY); return false; }   // corrupt legacy blob: nothing to keep
   const key = firstFreeKey(storage);
   const saveInfo = {
@@ -131,7 +161,7 @@ export function firstFreeKey(storage = store()) {
 
 /** GetSaveInfo: populated info or null (DFU's empty struct). */
 export function saveInfoOf(key, storage = store()) {
-  return parse(storage?.getItem(SAVE_INFO_PREFIX + key) ?? null);
+  return parseInfo(storage?.getItem(SAVE_INFO_PREFIX + key) ?? null);
 }
 
 /** GetCharacterSaveKeys. */
@@ -200,7 +230,7 @@ export function saveSlot(characterName, saveName, snap, { screenshot = null, sto
 /** Load-side read of a slot's envelope (the LoadGame path parses the
  *  blob; restorePlayer's own version gate stays the restorer's). */
 export function loadSlot(key, storage = store()) {
-  return parse(storage?.getItem(SAVE_DATA_PREFIX + key) ?? null);
+  return parseSnap(storage?.getItem(SAVE_DATA_PREFIX + key) ?? null);
 }
 
 /** The F2 law extended to slots: "is there a game THIS BUILD can

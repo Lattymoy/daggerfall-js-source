@@ -1,3 +1,4 @@
+// @ts-check
 // Classic-save conversion. SAV1 shipped the character half: a 1:1
 // translation of DFU API/Save/CharacterRecord.cs's ToCharacterDocument
 // + StripTransformedRace (MIT, Daggerfall Workshop). SAV2 adds the
@@ -89,7 +90,7 @@ const STAT = Object.freeze({
  * bonuses - DFU re-applies them through the effect system instead.
  * MUTATES parsedData.currentStats and parsedData.skills, exactly as
  * the C# writes through its class references.
- * @param {object} parsedData - parseCharacterRecordData output.
+ * @param {import('../formats/characterRecord.js').CharacterRecordData} parsedData - parseCharacterRecordData output.
  * @param {number} [stripLycanthropyType] - LYCANTHROPY_TYPES value to
  *   strip when the infection was read separately (a were-character
  *   whose racial transform is not active).
@@ -98,6 +99,12 @@ const STAT = Object.freeze({
 export function stripTransformedRace(parsedData, stripLycanthropyType = LYCANTHROPY_TYPES.None) {
   // "If player is not transformed then this will simply return race + 1"
   let liveRace = parsedData.race + 1;
+  // HARD3: these accumulate an enum VALUE, so they are numbers. Without
+  // the annotation the initialiser's literal (-1) becomes the variable's
+  // whole type, and every later assignment and comparison reads as a
+  // mistake - the checker's most common false note in this codebase, and
+  // the one place where writing the type down is also the plain truth.
+  /** @type {number} */
   let classicTransformedRace = TRANSFORMED_RACES.None;
   if (liveRace === TRANSFORMED_RACES.Vampire ||
       liveRace === TRANSFORMED_RACES.Werewolf ||
@@ -159,7 +166,7 @@ export function stripTransformedRace(parsedData, stripLycanthropyType = LYCANTHR
  * doc.maxHealth comes from parsedData.BASEhealth (the transformed
  * pseudo-race may have altered maxHealth), and the strip above runs
  * FIRST, so the stats and skills below are the restored ones.
- * @param {object} parsedData - parseCharacterRecordData output.
+ * @param {import('../formats/characterRecord.js').CharacterRecordData} parsedData - parseCharacterRecordData output.
  * @param {number} [stripLycanthropyType]
  */
 export function toCharacterDocument(parsedData, stripLycanthropyType = LYCANTHROPY_TYPES.None) {
@@ -249,7 +256,7 @@ export function classicGlobalVars(saveVars) {
  *  `position + 13 < RecordLength`, so the LAST 13-byte row - the one
  *  that ends exactly at the record's end - is never read; and an
  *  over-long record stops at the region count with DFU's error arm.
- *  @param {object|null} bankRecord - the SaveTree BankAccount record.
+ *  @param {import('../formats/saveTreeFile.js').SaveTreeRecord|null} bankRecord - the SaveTree BankAccount record.
  *  @param {number} regionCount */
 export function classicBankAccounts(bankRecord, regionCount = 62) {
   const accounts = Array.from({ length: regionCount }, (_, regionIndex) => ({
@@ -280,6 +287,7 @@ export function classicBankAccounts(bankRecord, regionCount = 62) {
  *  NOTHING - DFU's own arm is commented out - while 101/102 mark the
  *  lycanthropy strain. */
 export function classicLycanthropyType(saveTree) {
+  /** @type {number} */
   let lycanthropyType = LYCANTHROPY_TYPES.None;
   const character = saveTree.findRecord(RECORD_TYPES.Character);
   if (!character) return lycanthropyType;
@@ -411,13 +419,30 @@ export function classicSpellsFromContainer(containerRecord, spellsByIndex = null
  *  wagon and bag apart, equips what the character record's 27 equip
  *  slots name, imports the spellbook's spells, and mints the physical
  *  gold as the port's one Currency stack.
- *  @returns {{items, wagonItems, spells, goldPieces, scratch}} */
+ *  The SCRATCH is deliberately a bag and typed as one: it exists so the
+ *  ONE equip law can place `equipSlot`, its table and armor writes are
+ *  discarded with it, and the importer goes on to hang `stats`, `skills`,
+ *  `spells` and `activeEffects` on it before the curses read it as an
+ *  entity. Naming a closed shape for it would be a lie about what the
+ *  next twenty lines do to it.
+ *  @returns {{items: object[], wagonItems: object[], spells: any[], goldPieces: number, scratch: Record<string, any>}} */
 export function classicItemsAndSpells(saveTree, { spellsByIndex = null } = {}) {
   // The scratch entity exists so the ONE equip law places equipSlot -
   // its table and armor writes are discarded with it.
+  /** @type {Record<string, any>} */
   const scratch = { items: [], wagonItems: [], spells: [] };
   const character = saveTree.findRecord(RECORD_TYPES.Character);
-  if (!character) return { items: [], wagonItems: [], spells: [], scratch };
+  // HARD3's one real find at this seam: this arm returned FOUR of the
+  // five fields the contract above promises, and `goldPieces` came back
+  // undefined - which travels straight into the save envelope's purse
+  // (:790, StartGameBehaviour.cs:603) as `goldPieces: undefined`. The one
+  // production caller throws on a tree without exactly one Character
+  // record before it ever gets here, so the path is unreachable THERE;
+  // it is reachable from any direct caller, and a pin already is one
+  // (test/audit63_items_loot.test.js). A returned shape that one arm does
+  // not honour is the measured failure mode of this codebase - a correct
+  // law with a broken seam - whichever arm happens to be cold today.
+  if (!character) return { items: [], wagonItems: [], spells: [], goldPieces: 0, scratch };
 
   const itemRecords = saveTree.findRecords(RECORD_TYPES.Item, character);
   const filtered = saveTree.filterRecordsByParentType(itemRecords, RECORD_TYPES.Container);
@@ -624,7 +649,7 @@ export function restoreOldClassSpecials(saveTree, career, classicTransformedRace
  * @param {import('../formats/saveGames.js').SaveGames} saveGames - with openSave() done.
  * @param {object} [deps]
  * @param {Map} [deps.spellsByIndex] - the SPELLS.STD index (stock-spell dedup).
- * @param {object} [deps.factionStore] - the live FACTION.TXT store ({dict}).
+ * @param {{dict?: object}|null} [deps.factionStore] - the live FACTION.TXT store ({dict}).
  * @param {Function} [deps.resolveLocation] - (regionIndex, locationIndex) ->
  *   {mapId, regionName, locationName}|null, MAPS.BSA's side of the
  *   MAPSAVE discovery walk. Absent = no discovery imports (recorded).

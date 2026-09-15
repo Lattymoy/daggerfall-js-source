@@ -1,3 +1,4 @@
+// @ts-check
 // ═══════════════════════════════════════════════════════════════════
 // GR1 (Mac: integrate the grass BYTE-EXACT with the proto's max range and
 // max blades, no exceptions; height 54; none on roads, pathways, water,
@@ -360,13 +361,14 @@ export function createGrassField(renderer, { keep, ground = null, span = LAB_GRA
       }
       // fill what came into range, nearest first, a few a frame
       let budget = perFrame;
-      const want = [];
+      /** @type {{ d:number, cx:number, cz:number, key:string }[]} */
+      const want = [];   // HARD3: a NAMED shape, because a mixed [number, number, number, string] literal widens to (number|string)[] and `a[0] - b[0]` stops type-checking
       for (let cz = c0z; cz <= c1z; cz++) for (let cx = c0x; cx <= c1x; cx++) {
         const key = `${cx},${cz}`;
-        if (!live.has(key)) want.push([Math.hypot((cx + 0.5) * cell - ex, (cz + 0.5) * cell - ez), cx, cz, key]);
+        if (!live.has(key)) want.push({ d: Math.hypot((cx + 0.5) * cell - ex, (cz + 0.5) * cell - ez), cx, cz, key });
       }
-      want.sort((a, b) => a[0] - b[0]);
-      for (const [, cx, cz, key] of want) {
+      want.sort((a, b) => a.d - b.d);
+      for (const { cx, cz, key } of want) {
         if (budget-- <= 0 || !free.length) break;
         const slot = free.pop();
         renderer.writeSlot(slot, placeLabGrassCell(cx, cz, { keep: keepNow, ground: groundNow, perCell, height, seed, cell }));

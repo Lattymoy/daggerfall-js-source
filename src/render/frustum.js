@@ -1,3 +1,4 @@
+// @ts-check
 // EV3: FRUSTUM CULLING - the pure half. The exploration lane found
 // ZERO frustum tests in the render path: ~1045 drawMesh calls in a
 // city and 49 terrain pixels (~1.6M triangles) drawn every frame,

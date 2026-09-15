@@ -1,3 +1,4 @@
+// @ts-check
 // Sky backdrop renderer. The data logic follows DaggerfallSky.cs (MIT,
 // Daggerfall Workshop): record 0 is the east half, record 1 the west half;
 // frames 0-31 sweep sunrise to noon; afternoon frames 32-63 reuse frame
@@ -52,7 +53,7 @@ export function nightSkyImageName(skyIndex) {
  * plus our azimuth-convention reflection (see the header).
  * Returns clearColor (verbatim west element 0 = the horizon, DFU's
  * cameraClearColor/fogColor) and fillColor (our above-strip zenith fill).
- * @param {SkyFile} skyFile
+ * @param {import('../formats/skyFile.js').SkyFile} skyFile
  * @param {number} frame 0-63
  */
 export function buildDaySkyPanorama(skyFile, frame) {

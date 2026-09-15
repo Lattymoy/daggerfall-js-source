@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "test": "node --test",
     "lint": "eslint src/ server/src/",
-    "check": "npm run lint && npm test && npm run build",
+    "types": "tsc -p tsconfig.json",
+    "check": "npm run lint && npm run types && npm test && npm run build",
     "cites": "node tools/citeShift.mjs",
     "prebuild": "node scripts/buildTag.mjs",
     "shot": "node tools/screenshot.mjs",
@@ -30,6 +31,7 @@
     "playwright": "^1.56.0",
     "pngjs": "^7.0.0",
     "rollup": "^4.62.2",
+    "typescript": "^7.0.2",
     "vite": "^5.4.0"
   }
 }

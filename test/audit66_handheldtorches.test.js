@@ -48,6 +48,7 @@ import {
   createDroppedTorches, LIGHT_ABOVE_BILLBOARD, PROJECTILE, PROJECTILE_FIXED_DT, PUFF, ENEMY_FIRE_KIND, ENEMY_LIGHT_LOCAL,
 } from '../src/scenes/droppedTorches.js';
 import { MOD_SETTINGS } from '../src/systems/modSettings.js';
+import { raceActivation } from '../src/player/activationRace.js';   // HARD2: F7's law, where it lives now
 import { TEMPLATES } from '../src/systems/useItem.js';
 import { WEAPONS } from '../src/characters/weapons.js';
 import { EQUIP_SLOTS } from '../src/systems/equip.js';
@@ -213,12 +214,19 @@ test('AUDIT 66 F4/F6/F5/F11: the four host lifetimes - the interior sweep runs w
 test('AUDIT 66 F7: a dropped torch loses the click to a door, a board and a static NPC as it loses it to a pile - the ray\'s nearest hit takes it, in both exterior hosts', () => {
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const src = rd(host);
-    assert.match(src, /const _doorDist = modes\.exteriorActivationDistance\(cam\.pos, useFwd\);/, `${host}: the door's distance, read once`);
-    assert.match(src, /const _torchNearest = !!_torchPick && _torchPick\.distance <= Math\.min\(_lootPick\?\.distance \?\? Infinity, _dropPick\?\.distance \?\? Infinity, _doorDist\);/, `${host}: and the torch arm reads it`);
-    // the rival the enemy arm and townTalk already take is built from the same value - one read, four consumers
-    assert.match(src, /_doorDist,?\n?\s*\);|_doorDist\);/, `${host}: the rival reads the hoisted value, not a second call`);
+    // HARD2: the fix moved from two hand-written copies into one law.
+    // The host now feeds the door's distance to the race and reads the
+    // answer; the LAW itself is tested below, against the module.
+    assert.match(src, /doorDistance: modes\.exteriorActivationDistance\(cam\.pos, useFwd\),/, `${host}: the door's distance goes into the race`);
+    assert.match(src, /const _torchNearest = _race\.torchWins;/, `${host}: and the torch arm reads the race's answer`);
     assert.equal((src.match(/modes\.exteriorActivationDistance\(cam\.pos, useFwd\)/g) ?? []).length, 1, `${host}: exactly one call a frame`);
   }
+  // F7 itself, against the law: a torch far down the crosshair must not
+  // take the click a door at arm's length is owed.
+  const far = { key: 'droppedTorch:1', distance: 60, reach: 3.2 };
+  assert.equal(raceActivation({ torch: far, doorDistance: 2 }).torchWins, false, 'a door at 2 beats a torch at 60');
+  assert.equal(raceActivation({ torch: far, doorDistance: Infinity }).torchWins, true, 'with no door, the torch is the hit');
+  assert.equal(raceActivation({ torch: { ...far, distance: 1 }, doorDistance: 2 }).torchWins, true, 'and a torch nearer than the door takes it back');
 });
 
 test('AUDIT 66 F8: the component\'s teardown has owners - the switch\'s falling edge and the rig\'s own dispose - and it stops the burning loop and gives PlayerTorch its offset back', () => {

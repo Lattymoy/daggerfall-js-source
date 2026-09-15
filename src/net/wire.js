@@ -1,3 +1,4 @@
+// @ts-check
 // ONLINE1 (2026-09-12, Mac: "the basic bones of multiplayer ... being
 // able to see and traverse with other players"): THE WIRE'S LAW, pure,
 // ONE HOME (AUDIT ONLINE B7/B8). The relay (server/src/relay.js) re-exports

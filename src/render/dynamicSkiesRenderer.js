@@ -1,3 +1,4 @@
+// @ts-check
 // DYNAMIC SKIES - THE PASS (DS1). BLB/SkyBox/BLBProceduralSkybox
 // (vendor/dynamic-skies/Shaders/BLBProceduralSkybox.shader, with
 // Includes/Scattering.cginc and Includes/MoonFunctions.cginc) as one

@@ -55,14 +55,14 @@ does the pack's USE arm.
                         worldModes.js:1849 (the factory) and :1904 (a
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
-                        dungeonContext.js:947, world.js:1691,
-                        exterior.js:2002. It is the only window TWO
+                        dungeonContext.js:947, world.js:1692,
+                        exterior.js:2003. It is the only window TWO
                         enhanced screens already push - the sheet's
                         button and the pack's USE hand-off, whose
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:4871, dungeonContext.js:5866. A seam
+    / NOTEBOOK          world.js:4872, dungeonContext.js:5866. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -3942,7 +3942,7 @@ literal with no duplicates; all 71 display labels match DFU's recovered
 FALL.EXE text exactly; every secondary list matches its DFU array in
 order; the builder is reconstructed on re-entry on both sides, so the
 pick lists reset; a career's flags survive the save round trip (the
-career is spread as plain CFG data, save.js:62,88 - worth checking
+career is spread as plain CFG data, save.js:63,88 - worth checking
 because AUDIT 17h caught exactly this shape dropping player
 reputation); and parseCareerData leaves every numeric field finite and
 unsigned under the maximal fourteen-pick set.
@@ -6143,7 +6143,7 @@ still speaking to devtools, both of them one line of plumbing rather
 than an arc:
 
 - `townTalk.frame` ticks and draws the HUD TEXT LAYER as well as the
-  overlay (`townTalk.js:605, :586`), and both exterior hosts called it
+  overlay (`townTalk.js:617, :598`), and both exterior hosts called it
   in their modal branch only WHEN A WINDOW WAS UP. AUDIT F2-I1 added
   that line to tick a window and gated it on the window existing. So
   inside a building a broken weapon, a fatigue warning and a level-up
@@ -7858,7 +7858,7 @@ mutations, 4 dead.
 
 PX24 (Mac: "with the logbook and history, I want them as one detailed
 UI"): THE CHRONICLE. Two classic windows built at four sites -
-questJournal.js from charSheetNav:53, world.js:1993 and
+questJournal.js from charSheetNav:53, world.js:1994 and
 dungeonContext.js, playerHistory.js from charSheetNav:61 - become ONE
 seam (ui/chronicleDoor.js, the U52/U53/PX23 shape a sixth time) and,
 on the enhanced skin, ONE WINDOW.
@@ -9729,9 +9729,9 @@ re-resolved the `exterior.js` half of a three-file sentence and left the
 `ExteriorAutomapWindow` construction, `:4101` on a `locationName:`
 field). Both halves are now read by `test/citedrift.test.js` - the
 existing entries only ever captured the exterior number, which is how
-the other half went stale unnoticed. (The rest cite named `world.js:5123`,
+the other half went stale unnoticed. (The rest cite named `world.js:5124`,
 the first of the host's TWO identical `act === 'Rest'` arms; ROAD-H H5
-deleted the second and the cite is `world.js:5129` now.)
+deleted the second and the cite is `world.js:5130` now.)
 
 ## AUDIT 62 F24/F25 - THE SENTINEL SWEEP WAS TWO WINDOWS SHORT (2026-09-07)
 
@@ -10148,7 +10148,7 @@ the interior half:
 
 - The callback was handed to `openTalkWindow`'s FIRST mount and lost by
   every later one. `showOverlay` writes `_onOverlayClosed` on each call
-  (`townTalk.js:550-576`), so in the art-less greeting chain a tone
+  (`townTalk.js:562-588`), so in the art-less greeting chain a tone
   press (`toneOption`'s reshow) or a Where-is page (`openCategories` ->
   `pagedList`) re-mounted with `onClosed` null and threw the restore
   away - the player escaped the conversation and the popup DFU keeps

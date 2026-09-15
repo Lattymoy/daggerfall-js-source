@@ -8,7 +8,7 @@
 //
 //   ui/charSheetNav.js:53   the sheet's LOGBOOK button
 //   ui/charSheetNav.js:61   the sheet's HISTORY button
-//   scenes/world.js:1993    the world host's own logbook
+//   scenes/world.js:1994    the world host's own logbook
 //   scenes/dungeonContext.js the dungeon's
 //
 // The seam is the U52/U53/PX23 shape a sixth time. What is new is the
@@ -104,11 +104,39 @@ function enhancedChronicleOverlay(deps, section) {
     close();
   });
   return {
+    // THE HOST CONTRACT, in the hosts' own words - `input`, not
+    // `onKey`. The hosts dereference these unguarded (townTalk.js's
+    // `overlay.input(a, e)`, dungeonContext's `activeOverlay.input`,
+    // worldModes') and the DOM view only claims the keys it uses, so
+    // every other key arrives here; a missing arm is a TypeError thrown
+    // inside the host's keydown handler. Same arms as ui/pauseDoor.js,
+    // ui/inventoryDoor.js, ui/charSheetDoor.js and ui/spellbookDoor.js.
+    //
+    // CRASH1 (2026-09-15, reported from live play: "opening the logbook
+    // and pressing L reliably causes the errors ... as well as sometimes
+    // randomly when trying to access the pause menu with escape"). This
+    // window had `onKey`/`onPointer` - a contract NOTHING in the tree
+    // reads - and no `input`. So every key `overlayAction` maps threw:
+    // any letter, digit or space (it returns 'char:<k>' for those, which
+    // is what L is) and Escape ('back'), which is the pause key. The
+    // three sibling doors carry this comment BECAUSE they hit it first;
+    // the rule was enforced by memory in three files and missed in the
+    // fourth. test/crash1_overlay_contract.test.js derives it now.
+    isChoiceWindow: true,
     get done() { return done; },
-    draw() {},
-    onKey() { return false; },
-    onPointer() { return false; },
+    input() { /* the view's own capture keydown owns the keyboard */ },
+    click() { /* the view is a fixed div over the canvas; pointers never get here */ },
+    wheel() { /* the view scrolls itself */ },
+    hover() { /* the view has its own :hover, and no canvas to hit-test */ },
+    tick() { /* nothing on this screen moves on a clock */ },
+    draw() { /* DOM, not canvas */ },
+    // `close`, `dispose` and `destroy` are the hosts' three words for
+    // the same act - townTalk's showOverlay frees the OUTGOING window
+    // with `dispose?.()`, and without it the div outlived the object:
+    // a second logbook press left the first one's node in the body and
+    // its Tab registration live.
     close,
+    dispose: close,
     destroy: close,
   };
 }

@@ -1,3 +1,4 @@
+// @ts-check
 // Precipitation: rain streaks and drifting snow as a shader-animated
 // particle volume that wraps around the camera - zero per-frame CPU.
 // Presentation is ours (Port-Doctrine); DFU uses Unity particle prefabs
@@ -284,6 +285,26 @@ function compileShader(gl, type, src) {
 }
 
 export class PrecipitationRenderer {
+  // HARD3: the classic lane's twelve uniform locations. They are
+  // ASSIGNED through a string list in the constructor (`this[u] =
+  // getUniformLocation(prog, u)`), which is the honest way to say "these
+  // twelve" and also the way a reader, a renamer and a type checker all
+  // lose sight of them. Declared here so every READ is checked against
+  // the list: rename a uniform in the shader and forget the read, or
+  // read one the list never sets, and `npm run types` says so.
+  /** @type {WebGLUniformLocation|null} */ uProj = null;
+  /** @type {WebGLUniformLocation|null} */ uView = null;
+  /** @type {WebGLUniformLocation|null} */ uCamPos = null;
+  /** @type {WebGLUniformLocation|null} */ uCamRight = null;
+  /** @type {WebGLUniformLocation|null} */ uTime = null;
+  /** @type {WebGLUniformLocation|null} */ uBox = null;
+  /** @type {WebGLUniformLocation|null} */ uFall = null;
+  /** @type {WebGLUniformLocation|null} */ uDrift = null;
+  /** @type {WebGLUniformLocation|null} */ uSlant = null;
+  /** @type {WebGLUniformLocation|null} */ uSize = null;
+  /** @type {WebGLUniformLocation|null} */ uSnow = null;
+  /** @type {WebGLUniformLocation|null} */ uColor = null;
+
   /** AUDIT 58 (f3/render): `opts.enhanced` is the LANE, not the frame -
    *  the host passes `sky.enhanced` (scenes/shared.js's createSkyController
    *  return), which is fixed for a scene, while the per-frame

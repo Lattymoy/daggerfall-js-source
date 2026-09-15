@@ -1,3 +1,4 @@
+// @ts-check
 // ANIMATED FLATS (FA1) - DaggerfallBillboard.cs's AnimateBillboard
 // (:115-166) and the AnimatedMaterial decision at :282-285, ported
 // whole. Every fire, brazier, candle flame, tavern hearth and magic
@@ -123,7 +124,7 @@ export class FlatAnim {
 export class FlatAnimator {
   constructor() { this.entries = []; }
 
-  /** @param {object} batch a renderer billboard batch (its `frame` is written each tick) */
+  /** @param {import('./contract.js').BillboardBatch} batch a renderer billboard batch (its `frame` is written each tick) */
   add(batch, archive, frameCount, oneShot = false, framesPerSecond = GENERAL_FPS) {
     if (!isAnimatedFlat(frameCount)) return null;
     const anim = new FlatAnim(archive, frameCount, oneShot, framesPerSecond);
@@ -155,12 +156,19 @@ export class FlatAnimator {
  * copies of three lines. THE FOUR HOSTS RULE, applied before the fact
  * for once rather than after an audit finds the fourth.
  *
- * @param {object} batch      the renderer billboard batch
- * @param {object} textureFile the archive's TextureFile (frame counts)
+ * HARD3: the two shapes crossing this seam are written down now. They
+ * were `{object}` each, which is how a seam called from four hosts can
+ * be handed the wrong thing by one of them and say nothing. `textureFile`
+ * is STRUCTURAL on purpose - the seam calls exactly one method on it, and
+ * naming a concrete class here would couple the four hosts to whichever
+ * archive reader happened to be passed first.
+ *
+ * @param {import('./contract.js').BillboardBatch} batch      the renderer billboard batch
+ * @param {{ getFrameCount?: (record: number) => number }|null|undefined} textureFile the archive's TextureFile (frame counts)
  * @param {number} archive
  * @param {number} record
- * @param {FlatAnimator} animator
- * @param {function(number,number,number):void} uploadRecordFrame
+ * @param {FlatAnimator|null} animator
+ * @param {((archive: number, record: number, frame: number) => void)|null} uploadRecordFrame
  * @returns {boolean} true if the flat animates
  */
 export function armFlatAnim(batch, textureFile, archive, record, animator, uploadRecordFrame, opts = {}) {

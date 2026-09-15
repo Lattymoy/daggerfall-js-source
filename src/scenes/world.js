@@ -129,6 +129,7 @@ import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { mwViewFrame, mwViewWheel, mwViewDrawBody } from '../player/mwView.js';   // MW-D25: the Morrowind camera
 import { mwCamera, PITCH_LIMIT } from '../player/mwCamera.js';   // MW-D30: persistence + the reference pitch clamp
 import { pickActivatableHit, pickQuestFoe, pickFoe } from '../player/activate.js';   // G3: corpse loot; QG1: the foe-click door; TI1: the lock-on pick
+import { raceActivation } from '../player/activationRace.js';   // HARD2: one home for "the nearest thing under the one ray takes the click"
 import { RAY_DISTANCE, TOO_FAR_AWAY_TEXT } from '../player/activate.js';   // AUDIT 63 F33: ActivateMobileEnemy (PlayerActivate.cs:800-841); AUDIT 65 MC-2: the loot handlers' refusal
 import { setMidScreenText } from '../ui/midScreenText.js';   // AUDIT 64 F34: DaggerfallHUD's centred label, where PlayerActivate's refusals go
 import { tryMobileEnemyActivate } from '../player/mobileEnemyActivate.js';
@@ -7597,7 +7598,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // window held in the townTalk slot while the player was inside a
       // building or a dungeon, and gated it on the window existing -
       // but townTalk.frame ticks and draws the HUD TEXT LAYER too
-      // (townTalk.js:605, :586). So every HUD line raised in a modal
+      // (townTalk.js:617, :598). So every HUD line raised in a modal
       // mode had nowhere to land, which is why the interior weapon
       // rig's `say` was a console.warn and the interior ticker's was a
       // console.log. Drawn ABOVE the modal render, which is where
@@ -7936,7 +7937,20 @@ export async function bootWorld(canvas, renderer, params, status) {
           const corpseTargets = [...cityGuards.lootTargets(), ...exteriorFoes.lootTargets()];
           const _corpsePick = pickActivatableHit(cam.pos, useFwd, corpseTargets, collider), _pilePick = pickActivatableHit(cam.pos, useFwd, droppedLoot.lootTargets(), collider);   // AUDIT 65 MC-2: BOTH picks run now, because DFU fires ONE ray (:314) and the nearest hit is THE hit.
           const _torchPick = pickActivatableHit(cam.pos, useFwd, droppedTorches.targets(), collider);   // HT1: the mod's RegisterCustomActivation over its six records, the same one ray
-          const _pileNearer = !!_pilePick && !(_corpsePick && _corpsePick.distance <= _pilePick.distance), _lootPick = _pileNearer ? null : _corpsePick, _dropPick = _pileNearer ? _pilePick : null;   // AUDIT 65 MC-2: ...so the body and the pile are decided by DISTANCE. The old `_lootPick ? null : pick(piles)` precedence was inert while each pick dropped its own out-of-reach target; now that both reach for the ray so their handlers can speak (:868-873 the container, :936-941 the corpse), a body across the room would have suppressed the pile pick outright and refused a pile at arm's length.
+          // HARD2: the race is ONE law now (player/activationRace.js) - the
+          // body against the pile, the torch against both and the door,
+          // and the two rivals MC-2 split. It was written out by hand in
+          // this host and in exterior.js, character for character, which
+          // is how AUDIT 66 F7 shipped a torch that had to beat the pile
+          // but not the door. The ARMS below are still this host's own.
+          const _race = raceActivation({
+            corpse: _corpsePick,
+            pile: _pilePick,
+            torch: _torchPick,
+            doorDistance: modes.exteriorActivationDistance(cam.pos, useFwd),
+            personDistances: _livePersons.map((p) => rayPersonDistance(cam.pos, useFwd, p.pos)),
+          });
+          const _lootPick = _race.loot, _dropPick = _race.drop;
           // Every OTHER thing this ray can strike, at its own distance:
           // the street's townsfolk (townTalk's own cylinder pick), the
           // corpse and pile picks above, and the door/NPC/board set the
@@ -7945,15 +7959,8 @@ export async function bootWorld(canvas, renderer, params, status) {
           // rival that does not include the persons themselves - see
           // townTalk.tryActivate. The foe arm still measures against
           // everything, the townsfolk included.
-          const _doorDist = modes.exteriorActivationDistance(cam.pos, useFwd);   // AUDIT 66 F7: read once, and read by every arm that has to lose to a door
-          const _nonPersonRival = Math.min(
-            _lootPick?.distance ?? Infinity,
-            _dropPick?.distance ?? Infinity,
-            _torchPick?.distance ?? Infinity,   // HT1
-            _doorDist,
-          );
-          const _rivalDist = Math.min(_nonPersonRival,
-            ..._livePersons.map((p) => rayPersonDistance(cam.pos, useFwd, p.pos)));
+          const _nonPersonRival = _race.nonPersonRival;
+          const _rivalDist = _race.rival;
           if (_lockFoe) lockOn.toggle(_lockFoe);
           else if (_tapLockOnly) { /* TS1: the stick-half tap found no foe - it opens nothing */ }
           // AUDIT 65 MC-2: ONE enemy arm, at the RAY's reach, still
@@ -7978,7 +7985,7 @@ export async function bootWorld(canvas, renderer, params, status) {
             // AUDIT 65 MC-2's law is that the NEAREST thing under the
             // one ray takes the click, and this arm was the one that
             // did not read it.
-            const _torchNearest = !!_torchPick && _torchPick.distance <= Math.min(_lootPick?.distance ?? Infinity, _dropPick?.distance ?? Infinity, _doorDist);
+            const _torchNearest = _race.torchWins;
             if (_torchNearest) { if (_torchPick.distance > _torchPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT); else droppedTorches.activate(_torchPick.key, getInteractionMode()); }   // the mod's own activation, ahead of DFU's ladder
             else {
             // AUDIT 65 MC-2: the corpse's own refusal

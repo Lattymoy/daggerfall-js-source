@@ -197,9 +197,9 @@ export const CURE_BASE_COST_PER_DISEASE = 250;
  *  after infection" stamp, and becomingVampireOrWerebeast below reads
  *  it off the ENTITY exactly as DFU reads it off playerEntity (:57-59)
  *  rather than taking it from a host. The field arrives from the
- *  classic import (formats/characterRecord.js:110, offset 0x1f3 ->
- *  classicSave.js:194/:771) and round-trips through the save envelope
- *  (save.js:370 out, :436 back). It
+ *  classic import (formats/characterRecord.js:183, offset 0x1f3 ->
+ *  classicSave.js:201/:796) and round-trips through the save envelope
+ *  (save.js:371 out, :437 back). It
  *  reaches a character only through AssignCharacter (PlayerEntity.cs
  *  :856), i.e. a classic import - the port's own infections are
  *  disease effects and diseaseCount already counts those - so a

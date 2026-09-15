@@ -125,7 +125,7 @@ Recorded so it is not re-audited:
   chain ENDS are pinned, so a spur's drawn end stops in open country
   beside a trunk that has swung away.
 - **5,658 draw calls in the map's resting view** against 6 for the rest
-  of the frame (`src/render/overworldRenderer.js:393`), plus 5,653 VAOs
+  of the frame (`src/render/overworldRenderer.js:399`), plus 5,653 VAOs
   and buffers allocated in one synchronous loop. The verifier validated
   the batching patch end to end: 5,658 -> 7 draw calls, picture
   byte-identical.
@@ -143,7 +143,7 @@ Recorded so it is not re-audited:
   (`src/systems/roadTravel.js:187`): ~200 ms of blocked main thread per (RETIRED)
   click, ~0.9 s and 33 MB per card visit.
 - **Nothing is drawn for the whole 26-second bake**
-  (`src/scenes/world.js:309`) - the world host has no frame loop yet and
+  (`src/scenes/world.js:310`) - the world host has no frame loop yet and
   `status()` writes only `document.title`.
 - **A landmass with fewer than two hubs gets no road at all**
   (`src/systems/roads.js:728`). Take the verifier's PRIMARY proposal; its (RETIRED)

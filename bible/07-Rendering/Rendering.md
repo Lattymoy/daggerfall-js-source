@@ -17,6 +17,14 @@ directory by `test/audit18_bible_docs.test.js`:
   NEAREST, uploaded bottom-up exactly as getColor32 emits (matches GL texel
   order; DFU's negative-V UVs rely on REPEAT). ALL ground - exterior blocks
   and terrain alike - runs through this file's `drawTerrain` tilemap pass.
+- `contract.js` - HARD3 THE RENDERER'S CONTRACT, types only and no code:
+  `BillboardBatch`, `MeshBundle`, `Color32` and `RendererLike`, the shapes
+  that cross the boundary between a host and this folder. It exists
+  because this is the one boundary in the port where a wrong SHAPE throws
+  rather than misbehaves (the Weapon Widget crash), and because the batch
+  in particular is written by eight files outside `render/` - its
+  `origin`, `sway`, `conceal` and `frame` are the CALLER'S fields and
+  until now nothing said so. Exports `{}`, so the bundle never carries it.
 - `characterMesh.js` - the voxel character mesh path.
 - `characterSprite.js` - the classic-visuals sprite pass (one fixed
   CHAR_SPRITE_RT_SIZE target).
