@@ -26,6 +26,7 @@
 
 import { SOCIAL_GROUP_COUNT, FACTION_TYPES, SOCIAL_GROUPS, GUILD_GROUPS } from '../formats/factionFile.js';
 import { racialSuppressCrime } from './lycanthropy.js';   // V4: SuppressCrime's inline gate (court.js imports this module)
+import { CRIMES } from './crimes.js';   // GUARD1: the enum's leaf home - reachable from BOTH sides of the court/talk cycle
 import { tallyCrimeGuildRequirements } from './crimeGuilds.js';   // CG2: a leaf, so this module can reach it
 import { calculatePickpocketingChance, dice100 } from '../combat/formulas.js';
 import { skillValue, tallySkill, SKILLS } from './skills.js';
@@ -344,7 +345,13 @@ export function pickpocket(player, { target = null, rolls = Math.random, nothing
   // rides inline here - court.js imports THIS module, so the one
   // setter cannot be (a transformed werewolf cannot reach this window
   // anyway; the talk door refuses first).
-  if (!target && !racialSuppressCrime(player)) player.crimeCommitted = 'Pickpocketing';
+  // GUARD1: the VALUE is the enum's, not a string. The cycle that put
+  // the setter out of reach also put the enum out of reach, and this
+  // line answered it by inventing a second representation of
+  // `crimeCommitted` (systems/crimes.js's header has the cost). The
+  // enum is a leaf module now and this is the id every other writer
+  // uses. The suppress gate still rides inline - that part was right.
+  if (!target && !racialSuppressCrime(player)) player.crimeCommitted = CRIMES.Pickpocketing;
   return { success: false, gold: 0, modal: false, message: 'You are not successful.' };
 }
 

@@ -278,8 +278,13 @@ test('AUDIT 63 F33: the Steal arm - the level difference reaches the chance, and
   const mugged = thief();
   const twin = pickpocket(mugged, { rolls: seq(0.74, 0.5, 0.5) });   // no target: the :1655 arm
   assert.equal(twin.success, false);
-  assert.equal(mugged.crimeCommitted, 'Pickpocketing',
+  // GUARD1 (2026-09-15): the VALUE, not just the arm. This pin read
+  // back the string the law used to write, so it locked in the one
+  // place in the port where `crimeCommitted` was not the enum id every
+  // other writer and every reader uses (systems/crimes.js's header).
+  assert.equal(mugged.crimeCommitted, CRIMES.Pickpocketing,
     ':1657 - PlayerEntity.Crimes.Pickpocketing on the townsperson arm alone');
+  assert.equal(typeof mugged.crimeCommitted, 'number', 'GUARD1: one representation, not two');
   // :1667-1671: the room turns, and the struck foe learns where you are
   assert.equal(hostile2, 1, 'MakeEnemiesHostile runs because the foe was NOT hostile');
   assert.equal(foe2.ai.attacked, true);

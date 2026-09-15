@@ -209,7 +209,7 @@ export function allocateHouseToPlayer(houses, regionIndex, { buildingKey, mapId,
  * whatever the purse could not cover.
  *
  * The mechanism is DeductGoldAmount's return value, which is the
- * SHORTFALL rather than nothing (court.js:200 ports it, letters of
+ * SHORTFALL rather than nothing (court.js:198 ports it, letters of
  * credit and all) - so `accountGold -= deductGold(...)` subtracts
  * exactly the remainder, and subtracts ZERO when the purse covered it.
  * Written any other way this either double-charges or lets the account
