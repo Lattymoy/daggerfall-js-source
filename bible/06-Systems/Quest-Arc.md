@@ -5773,3 +5773,90 @@ building NPC. With the link now filled, a handed-in questor's behaviour
 is destroyed at tombstone and stops swallowing the player's next click,
 where before it would have answered `doClick()` true — no talk window, no
 new offer, no guild service — until the player left and re-entered.
+
+## AUDIT-QUEST, 2026-09-15 - the system read against itself
+
+Mac: "I want you to audit the quest system." This is the first pass - the
+MAP - and the three findings it produced, all paid in the same commit.
+
+### What came back clean, and is worth saying
+
+- **The 82-action registry is complete.** DFU ships 82 action classes;
+  the port implements 81 and *declares and guards* the 82nd
+  (`WorldUpdate`, blocked on WorldDataVariants), with
+  `test/questguards.test.js` pinning that exactly one guard stands and
+  that it names its own blocker. An 82-item enumeration that has not
+  lost a member is unusual, and it is pinned rather than remembered.
+- **All 265 vendored quests parse and start.** No throws, no nulls.
+- **The shipping host wires 64 of the bridge's 65 seams**, the one
+  exception being `onQuestStarted`, documented as an extra listener a
+  host may decline.
+
+### F1 - "LOUDLY" was written over an operation that is silent
+
+`machine.js:52` stated the headless charter: *"absent = headless, every
+Place pends its site **LOUDLY** and the corpus gate stands."* The same
+word sat in `place.js` three times, in `person.js`, and twice in
+`foe.js`, and the bridge's header compressed it to *"absent members idle
+LOUDLY."*
+
+What actually happens is `this.sitePending = true`. **Setting a boolean
+is the definition of quiet.**
+
+Measured, against the real corpus rather than by reading: all 265
+vendored quests start with no `deps.world` at all, and **262 of them emit
+nothing whatsoever**. Across the quest system, **215 of 229**
+optional-chained seam calls are silent on absence.
+
+The mechanism was never wrong - the flags are real and tests pin them.
+The *claim about it* was, and a reader who trusted the header would
+assume a missing seam announces itself.
+
+### F2 - the dev scene wires 30 of 65, and nothing said so
+
+`world.js` wires 64 members; `scenes/exterior.js` wires 30. The 35 it
+does not include `giveItemToPlayer`, `removeItemFromPlayer`,
+`playerHasItem`, `offerReward`, `cureDisease`, `makePcDiseased`,
+`endVampirism`, `endLycanthropy`, `playVideo`, `playSong` and every talk
+and rumor seam.
+
+`?exterior` is the scene a developer reaches for to test a quest. A third
+of the quest verbs idle there - which is F1's consequence, measured.
+
+### F3 - the gate that exists to catch F2 read one host
+
+`test/audit24_questseams.test.js` carries a test called *"every bridge
+ctx seam is SUPPLIED or declared PENDING"*. Its helper opens
+`src/scenes/world.js` **by name** and never looks at another host. The
+gate for "is every seam wired" enumerated a single file - the shape
+AUDIT-HARD found four times and CRASH2 found in a gate one commit old.
+
+### What was done
+
+All three have one root cause - **the bridge never stated what it was
+given** - so they take one fix. `createQuestBridge` reports once, at
+construction: one line naming the absent seams, and an `error` for the
+single REQUIRED member. The contract is written down once and
+`test/auditquest_seams.test.js` **re-derives it from the bridge's own
+source on every run**, failing if the two disagree in either direction -
+because a hand-kept contract list would have been F3 again in a new
+place. The same file reads **every** host that builds a bridge, derived,
+and requires the SHIPPING host to wire every member not declared optional
+by design.
+
+The five stale claims are corrected, and the word is now gated: no line
+in the quest system may say LOUD over an assignment whose whole effect is
+to set a flag.
+
+**A limit, stated rather than left to be found:** the report lives at the
+BRIDGE. A caller that builds a `QuestMachine` directly - tests, tools -
+still gets silence. Every real host goes through the bridge, and
+`machine.js` now says that instead of claiming loudness itself.
+
+### Still to come
+
+The member-by-member read against DFU's C# (10,385 lines of
+`Game/Questing/` are in the container) and the mutation campaign, whose
+file list will be **derived** - AUDIT-TALK's harness used a hand-written
+twelve-file list, reported thirteen survivors, and deriving the list gave
+eighty-seven files and caught eleven of them as harness artefacts.

@@ -14,8 +14,9 @@
 //   world                       - the machine's deps.world, composed by
 //                                 the host per machine.js's contract
 //                                 (maps/getBlock/player state/...);
-//                                 absent members idle LOUDLY, the
-//                                 headless charter
+//                                 absent members idle, and the bridge
+//                                 NAMES them once at construction -
+//                                 the headless charter (AUDIT-QUEST F1)
 //   classicSeconds()            - the classic game clock in seconds
 //                                 (the ticker's minutes * 60)
 //   playerEntity                - { name, level, gender, ... }
@@ -130,7 +131,93 @@ export function tokensToRows(tokens) {
  *  always starts, in this order. _BRISIEN is the main quest's first. */
 export const GAME_START_QUESTS = Object.freeze(['_TUTOR__', '_BRISIEN']);
 
-export function createQuestBridge(ctx) {
+/**
+ * THE CONTRACT, AND THE ONE LINE THAT SAYS WHAT A HOST DID NOT WIRE.
+ *
+ * AUDIT-QUEST F1/F2/F3, 2026-09-15. Three findings, one root cause: this
+ * bridge never stated what it was given.
+ *
+ *   F1 - THE WORD "LOUDLY" WAS WRITTEN OVER AN OPERATION THAT IS
+ *   SILENT. The header above said "absent members idle LOUDLY, the
+ *   headless charter", and `machine.js` says the same of every Place
+ *   pending its site. What actually happened was `sitePending = true` -
+ *   a boolean. MEASURED: all 265 vendored quests start with no world
+ *   seam at all, and 262 of them emit nothing whatsoever. Across the
+ *   quest system 215 of 229 optional-chained seam calls are silent on
+ *   absence.
+ *
+ *   F2 - `scenes/exterior.js` wires 30 of these 65 members. The 35 it
+ *   does not include the whole item family, the reward, the disease and
+ *   curse cures, video, song, and every talk and rumor seam - and
+ *   `?exterior` is the scene a developer would reach for to test a
+ *   quest. Nothing said so.
+ *
+ *   F3 - the gate that exists to catch exactly that,
+ *   `test/audit24_questseams.test.js`'s "every bridge ctx seam is
+ *   SUPPLIED or declared PENDING", opened `src/scenes/world.js` BY NAME
+ *   and never looked at any other host.
+ *
+ * So the bridge reports, once, at construction. One line, naming what is
+ * absent - which is what "loudly" was always supposed to mean.
+ *
+ * THE LIST IS GATED AGAINST THE BRIDGE'S OWN USAGE, both ways
+ * (`test/auditquest_seams.test.js`), because a hand-kept contract list
+ * would be F3 again in a new place.
+ */
+/** Every ctx member this bridge reads. DERIVED once and written down,
+ *  and `test/auditquest_seams.test.js` re-derives it from this file's
+ *  own source on every run and fails if the two disagree in EITHER
+ *  direction - a member added to the code and not to this list, or a
+ *  name here the bridge stopped reading. */
+export const QUEST_CTX_CONTRACT = Object.freeze([
+  'addDialog', 'addFace', 'addGold', 'addHUDText', 'addProgressRumor',
+  'addQuestRumor', 'addQuestTopics', 'addQuestorPostMessage',
+  'carriesQuestItem', 'changeLegalRep', 'changeReputation', 'cityName',
+  'classicSeconds', 'clearEnemies', 'cureDisease', 'data',
+  'dateTimeString', 'deductGold', 'deductGoldPieces', 'dialogLink',
+  'dropFace', 'endLycanthropy', 'endVampirism', 'forceTopicListsUpdate',
+  'getGold', 'getGoldPieces', 'getGuild', 'getGuildFactionId',
+  'getReputation', 'getTotalGold', 'giveItemToPlayer', 'isHouseOwned',
+  'isPlayerInTown', 'isPlayerInsideCastle', 'makeEnemiesHostile',
+  'makeHeldQuestItemsPermanent', 'makePcDiseased', 'midDateTimeString',
+  'offerReward', 'onQuestEnded', 'onQuestStarted', 'playSong',
+  'playSound', 'playVideo', 'playerEntity', 'playerHasItem',
+  'playerRaceName', 'questClockStepMax', 'questFoeInstances',
+  'raiseTime', 'regionPriceAdjustment', 'releaseQuestItem',
+  'removeItemFromPlayer', 'removeNpcQuestor', 'removeProgressRumors',
+  'removeQuestInfoTopics', 'removeQuestRumors',
+  'removeQuestorPostMessage', 'setPlayerCrime', 'showPopup',
+  'showPrompt', 'showPromptMulti', 'spawnCityGuards',
+  'undiscoverBuilding', 'world',
+]);
+
+export const QUEST_CTX_REQUIRED = Object.freeze(['data']);
+
+/** Members a host may decline on purpose. `onQuestStarted` is an EXTRA
+ *  listener beside the bridge's own one-time recording, and the shipping
+ *  host declines it - so its absence is not worth a word. */
+export const QUEST_CTX_OPTIONAL_BY_DESIGN = Object.freeze(['onQuestStarted']);
+
+/**
+ * What this host did not wire. Returned as well as logged, so a caller
+ * (or a test) can read it rather than scrape the console.
+ */
+export function reportUnwiredSeams(ctx, contract, label = 'host') {
+  const absent = contract.filter((k) => ctx?.[k] == null && !QUEST_CTX_OPTIONAL_BY_DESIGN.includes(k));
+  const missingRequired = QUEST_CTX_REQUIRED.filter((k) => ctx?.[k] == null);
+  if (missingRequired.length) {
+    console.error(`[quest] ${label} wired NO ${missingRequired.join(', ')} - the bridge cannot read quest source without it`);
+  }
+  if (absent.length) {
+    console.warn(`[quest] ${label} wired ${contract.length - absent.length}/${contract.length} seams; `
+      + `absent (these quest verbs will idle): ${absent.join(', ')}`);
+  }
+  return absent;
+}
+
+export function createQuestBridge(ctx, { label = 'host' } = {}) {
+  // F1: the charter's "loudly", made true - one line, at construction.
+  reportUnwiredSeams(ctx, QUEST_CTX_CONTRACT, label);
   const notebook = new PlayerNotebook({
     dateTimeString: () => ctx.dateTimeString?.() ?? '',
     midDateTimeString: () => ctx.midDateTimeString?.() ?? '',

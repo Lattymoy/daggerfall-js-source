@@ -12,7 +12,8 @@
 // HUDFace / DisplayName / HomeTown run in C#'s order. World facts
 // ride quest.hooks.world (the persistent faction store accessors and
 // the region-faction lookups documented at machine.js); a HEADLESS
-// parse leaves `npcPending` true LOUDLY, the sitePending precedent.
+// parse leaves `npcPending` true - a FLAG, the sitePending precedent;
+// the bridge's construction report is what actually speaks (AUDIT-QUEST F1).
 // Random draws ride the quest's injectable roll (THE ENGINE-PRNG RULE,
 // Ledger A), including
 // the DateTime.Now.Millisecond name seed, and the display name's
@@ -83,7 +84,7 @@ export class Person extends QuestResource {
     this.isIndividualNPC = false;
     this.isIndividualAtHome = false;
     this.assignedPlaceSymbol = null;   // C# lastAssignedPlaceSymbol - the Place this person stands at
-    this.npcPending = true;   // no world seam -> the Setup*NPC chain pends LOUDLY
+    this.npcPending = true;   // no world seam -> the Setup*NPC chain PENDS (a flag; AUDIT-QUEST F1)
     // Q2b lifecycle flags (Person.cs:42,86,143,149).
     this.isMuted = false;
     this.isDestroyed = false;
