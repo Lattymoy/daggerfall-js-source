@@ -21,11 +21,17 @@
 // relief build and the GL programs - is already lazy behind the first
 // draw() frame, which the ascent's cloud veil covers. A dynamic
 // import here would buy nothing and cost the one-shot contract.
+//
+// CM8: the classic arm uses the thin modal-parity subclass so FIND is
+// a pushed DaggerfallInputMessageBox rather than an inline field owned
+// by the map. All map law and all shared exports remain in
+// travelMapWindow.js.
 // ═══════════════════════════════════════════════════════════════════
 
 import { isEnhanced } from '../systems/uiSkin.js';
+import { TravelMapWindow } from './classicTravelMapWindow.js';
 import {
-  TravelMapWindow, preloadTravelMapArt, travelMapArtLoaded, canFindPlace,
+  preloadTravelMapArt, travelMapArtLoaded, canFindPlace,
 } from './travelMapWindow.js';
 import { OverworldMapWindow } from './overworldMap.js';
 
