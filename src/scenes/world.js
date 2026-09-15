@@ -7,6 +7,7 @@
 // recenters the world (streamingWorld.js).
 
 import { FlatAnimator, armFlatAnim } from '../render/flatAnimation.js';   // FA1: the flats that move
+import { windmillsOn } from '../world/windmills.js';   // WM3: the Windmills pack's switch
 import { SKY_CLEAR } from '../render/renderer.js'; import { centreFromFeet } from '../characters/enemyAnchor.js';   // REVIEW 2026-09-05: one line, so the cites below it hold
 import { Arch3dFile } from '../formats/arch3dFile.js';
 import { requestLook, releaseLook, makeLookGate, bindCursorToggle, setCursorActive } from '../player/pointerLock.js';   // U45: bindCursorToggle is PlayerMouseLook.cursorActive; releaseLook: the chat's open (AUDIT CHAT C2)
@@ -952,7 +953,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // AUDIT 39 (#18): the skin reaches the layout, because the mill's
       // subrecord widens the block's building count and must not exist
       // on the classic one.
-      const loc = layoutLocation(dfLocation, maps, blocks, { enhanced: isEnhanced() });
+      const loc = layoutLocation(dfLocation, maps, blocks, { enhanced: isEnhanced(), windmills: windmillsOn() });   // WM3: the pack's own switch
       locBlocks = loc.blocks;
       const tilePos = getLocationTerrainTileOrigin(dfLocation);
       const locLocal = [tilePos.x * tileSide, avg * worldHeight + 2.0 * 0.025, tilePos.y * tileSide];
