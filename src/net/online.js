@@ -401,7 +401,19 @@ export class OnlineSession {
     const cell = isCellRoom(this.room);
     // AUDIT WORLD6b A6: the owner must be a peer I KNOW (the roster's) - a blow to an owner already gone bought the relay's funnel for nothing
     if (cell ? (!hitOwnerOf(data) || hitOwnerOf(data) === this.id || !this.peers.has(hitOwnerOf(data))) : (this.isHost() || !this.host || !isWorldRoom(this.room))) return false;
-    if (!this._ws || this.status !== 'open') return false;
+    // AUDIT FOES FOE3 (2026-09-15, Mac relaying players: "certain enemies cant be
+    // damaged"): THE PRIMARY SOCKET IS NOT THE ONLY WAY OUT, AND THIS ASKED FOR IT
+    // FIRST. A cell's blow is routed below, over the owner's own cell, mine, or any
+    // HALO - and this line vetoed the frame before that loop could pick one. So while
+    // my own cell's socket was down (reconnecting, a room at SOCKETS_MAX, the RTT of
+    // any crossing that is not a halo promotion) every foe owned by every peer went
+    // bullet-proof, while its stream kept arriving through the halo and it kept
+    // walking and swinging. sendPose learned this exact lesson at AUDIT
+    // WORLD6b-iii(b) A5 ("through every OPEN socket, my own cell's down or not");
+    // sendHit never did. In a cell the ROUTING LOOP is the check - it tests each
+    // socket's own status and refuses when none is open. A world room still goes out
+    // of the one socket it has.
+    if (!cell && (!this._ws || this.status !== 'open')) return false;
     // WORLD6b-iii(b): in a cell the blow goes through the OWNER's cell - the room its frame was keyed to (`k`), where its
     // socket is; a halo's when that is not my own. The owner must be reported there (the relay routes `to` inside the
     // one room); an owner in no room I hold is not mine to strike

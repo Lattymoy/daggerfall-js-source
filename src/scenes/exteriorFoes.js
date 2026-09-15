@@ -215,7 +215,8 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       const career = isClass
         ? (() => { const cf = new ClassFile(); return fetchBytes(`CLASS${String(mobileType - 128).padStart(2, '0')}.CFG`).then((b) => { cf.load(b); return cf.career; }); })()
         : loadMonsterCareer(mobileType, fetchBytes);
-      const entity = makeEnemyEntity(mobileType, basics, await career, level ?? playerEntity.level);   // AUDIT WORLD6b-ii B2: a puppet at its OWNER's foe's level, not mine
+      const builtLevel = level ?? playerEntity.level;
+      const entity = makeEnemyEntity(mobileType, basics, await career, builtLevel);   // AUDIT WORLD6b-ii B2: a puppet at its OWNER's foe's level, not mine
       // MT-ii: an ALLIED summon (Sanguine Rose / Skull of Corruption).
       // SetupDemoEnemy.cs:85-86 overwrites the MobileEnemy STRUCT COPY
       // before SetEnemy, and EnemyEntity.cs:316 seeds Entity.Team from
@@ -328,6 +329,16 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       f.seq = seq ?? _nextSeq++;   // WORLD6b: mine numbered from one, a puppet's its owner's number
       f.puppet = puppet ?? null;
       f.uid = _nextUid++;   // AUDIT WORLD6b B15: the corpse loot's stable key (an index names another body once anything ahead is spliced)
+      // AUDIT FOES FOE8: the level this body was BUILT at, which is not always the
+      // level it ended up with - makeEnemyEntity adds Range(3,7) to a Knight_CityWatch
+      // inside the constructor (enemyEntity.js:87, DFU's own). The stream's `l` is the
+      // owner's BUILD level, so comparing it against entity.level found a mismatch on
+      // every record and tore the puppet down and rebuilt it five times a second, for
+      // ever. The record's own word is what the record's word is compared to.
+      f.builtLevel = builtLevel;
+      // AUDIT FOES FOE6: the LAST build to land holds the key, and removePuppet
+      // deletes only when the key still names it - so a stale build cannot evict
+      // the record that is actually standing.
       if (f.puppet) _pupIndex.set(`${f.puppet}:${f.seq}`, f);
       foes.push(f);
       // B1: the quest resource behaviour couples at the stand - the
@@ -1433,7 +1444,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       const key = pupKey(from, r.i);
       const f = _pupIndex.get(key) ?? null;
       if (f) {
-        if ((r.t !== undefined && r.t !== f.mobileType) || (r.d === 0 && f.dead) || (r.l !== undefined && f.mobileType >= 128 && r.l !== (f.entity.level | 0))) removePuppet(f);   // AUDIT WORLD6b-ii B2: a CLASS foe's level is its owner's word (its skills and health are built from it) - a monster's is its species' (makeEnemyEntity), whatever the record says
+        if ((r.t !== undefined && r.t !== f.mobileType) || (r.d === 0 && f.dead) || (r.l !== undefined && f.mobileType >= 128 && r.l !== (f.builtLevel | 0))) removePuppet(f);   // AUDIT WORLD6b-ii B2: a CLASS foe's level is its owner's word (its skills and health are built from it) - a monster's is its species' (makeEnemyEntity), whatever the record says; AUDIT FOES FOE8: against the level it was BUILT at, which a City Watch's constructor re-rolls
         else { applyPuppetRecord(f, r); continue; }
       }
       if (_pupPending.has(key)) { _pupPending.set(key, r); continue; }
@@ -1561,7 +1572,18 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     releaseFoeBatch(f);
     if (f.corpseMarker) { const i = corpseBatches.indexOf(f.corpseMarker); if (i >= 0) { renderer.destroyBillboardBatch(corpseBatches[i].batch); corpseBatches.splice(i, 1); } }
     f.dead = true; f.corpse = false; f.corpseMarker = null;
-    _pupIndex.delete(pupKey(f.puppet, f.seq));
+    // AUDIT FOES FOE6 (2026-09-15, Mac relaying players: "certain enemies cant be
+    // damaged"): REMOVED BY IDENTITY, NEVER BY KEY. The index is written
+    // unconditionally at the stand, so two builds for one `owner:seq` - which
+    // clearPuppets opens, by emptying _pupPending while a build is still out - end
+    // with the LATE one holding the key. When that late one then finds its owner's
+    // gen bumped and removes ITSELF, a delete by key evicted the OTHER record: a
+    // puppet still in `foes`, reachable by nothing. Not the stream, not the full
+    // frame's sweep, not pruneOwners, not clearPuppets - all three walk _pupIndex -
+    // so it stood frozen at its spawn pose and spawn health for the session and
+    // swallowed every blow. Deleting only when the key still names THIS record
+    // leaves the live one indexed.
+    if (_pupIndex.get(pupKey(f.puppet, f.seq)) === f) _pupIndex.delete(pupKey(f.puppet, f.seq));
     const i = foes.indexOf(f); if (i >= 0) foes.splice(i, 1);
   }
   /** A peer's blow on MY foe, through the one damage door with the peer's number and kind (the striker's feet
