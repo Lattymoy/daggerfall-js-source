@@ -78,7 +78,7 @@ test('RF4: the registry sits under the stores - it imports neither, the lanes re
   assert.ok(featureLane('landView') && featureLane('outdoors'));
   assert.equal(featureLane('nope'), null);
   registerFeatureLane('rf4-lane', { tiers: [[1, 'One'], [2, 'Two']], read: () => 2, write: () => {} });
-  const row = { id: 'r', title: 'R', note: 'n', kinds: ['enhanced'], control: { store: 'prefs', key: 'rf4key', initial: 1, online: 'player', lane: 'rf4-lane' } };
+  const row = { id: 'r', title: 'R', note: 'n', group: 'sight', kinds: ['enhanced'], control: { store: 'prefs', key: 'rf4key', initial: 1, online: 'player', lane: 'rf4-lane' } };
   assert.deepEqual(checkFeature(row), []);
   assert.equal(resolveControl(row).read(), 2, 'the lane\'s read, at use');
   assert.equal(resolveControl(row).tiers.length, 2);
