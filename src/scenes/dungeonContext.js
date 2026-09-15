@@ -6090,11 +6090,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // context's `chf`, which nothing reads - harmless by NT1's latch.
       enhancedNav.client?.dispose();
       enhancedNav.client = null;
+      // billboardBatches is the static layout art AND every batch a
+      // hand-off pool pushed into it (hitEffects' splashes since HE1,
+      // :2418) - which is why nothing below may end those pools again.
       for (const b of billboardBatches) renderer.destroyBatch(b);
       if (staticBatch) { renderer.destroyMesh(staticBatch); staticBatch = null; }   // PERF5
       // AUDIT 17e F29 / EVERY ALLOCATION HAS AN OWNER: foes and
       // corpses each own a live billboard batch that is NOT in
-      // billboardBatches (that list is the static layout art), so
+      // billboardBatches, so
       // every dungeon enter/exit cycle leaked one VAO + buffers per
       // sprite. Missiles in flight own one too.
       for (const f of foes) if (f.batch) renderer.destroyBillboardBatch(f.batch);
@@ -6115,13 +6118,21 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       weaponRig.dispose?.();
       // HARD1 (the generative lifetime gate's first catch): the blood
       // splashes own a billboard batch each while they animate
-      // (hitEffects.js mints one per spawn and frees it on retire), and
-      // this teardown never retired them - so a dungeon left with a
-      // splash in the air leaked one batch per live effect. The
-      // INTERIOR host has called `interiorHitEffects.clear()` in both
-      // its teardown paths since HE1; the dungeon's copy of the same
-      // pool was simply never given the same line.
-      hitEffects.clear();
+      // (hitEffects.js mints one per spawn and frees it on retire) -
+      // and THIS POOL HANDS EVERY BATCH AWAY AS IT IS BORN. It is built
+      // with `onSpawn: (b) => billboardBatches.push(b)` (:2418), so the
+      // owner is that list, and the list is freed above. Nothing to do
+      // here, and doing something is worse than nothing: HARD1's first
+      // pass added `hitEffects.clear()` on this line and that was a
+      // DOUBLE FREE of every live splash - :6093 frees the batch, then
+      // retire() frees it again. Benign in WebGL (deleting a deleted
+      // object is a no-op) and wrong all the same.
+      //
+      // The interior host's `interiorHitEffects.clear()` is NOT the same
+      // line and was never a precedent for one: that pool is built with
+      // no `onSpawn` (worldModes.js:503), so it owns its batches and
+      // clear() is the only thing that frees them - and it runs on a
+      // between-buildings RESET, not a teardown.
       // AUDIT 64 F41: the scene ambience leaves with the scene too -
       // it holds the dungeon loop handles AND a row in the module's
       // live-instance registry (the port's stand-in for DFU's static

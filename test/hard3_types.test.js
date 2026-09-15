@@ -51,6 +51,24 @@ const read = (p) => readFileSync(join(ROOT, p), 'utf8');
 const jsIn = (dir) => readdirSync(join(ROOT, dir)).filter((f) => f.endsWith('.js')).map((f) => `${dir}/${f}`);
 
 /**
+ * EVERY .js under a directory, at any depth.
+ *
+ * AUDIT-HARD: the escape-hatch scan below used to walk a hand-written
+ * list of `src/`'s subdirectories, one level deep - an ENUMERATION, in
+ * the gate whose own header argues against them, and it already had four
+ * blind spots (`characters/pieces`, `characters/rewrite`, `systems/quest`,
+ * `tools/paperdoll`). A `@ts-nocheck` in any of them was invisible.
+ */
+function jsUnder(dir) {
+  const out = [];
+  for (const e of readdirSync(join(ROOT, dir), { withFileTypes: true })) {
+    if (e.isDirectory()) out.push(...jsUnder(`${dir}/${e.name}`));
+    else if (e.name.endsWith('.js')) out.push(`${dir}/${e.name}`);
+  }
+  return out;
+}
+
+/**
  * THE THREE SEAMS, each DERIVED from the tree rather than listed.
  *
  * A directory is the right derivation for the first two because the
@@ -63,7 +81,12 @@ const jsIn = (dir) => readdirSync(join(ROOT, dir)).filter((f) => f.endsWith('.js
 function seamFiles() {
   const render = jsIn('src/render');
   const net = jsIn('src/net');
-  const save = jsIn('src/systems').filter((f) => /\bSAVE_VERSION\b/.test(read(f)));
+  // AUDIT-HARD: the RULE is "a module that knows the envelope's VERSION
+  // reads or writes the envelope", and that rule says nothing about a
+  // directory - so neither does the search. It used to read
+  // `src/systems` only, and a save-seam module born anywhere else would
+  // have joined nothing while the gate stayed green.
+  const save = jsUnder('src').filter((f) => /\bSAVE_VERSION\b/.test(read(f)));
   return { render, net, save, all: [...render, ...net, ...save] };
 }
 
@@ -76,8 +99,11 @@ test('HARD3: the type run is part of the gate, and the config stays opt-in', () 
   // The config's three load-bearing settings. `checkJs: false` is what
   // makes `@ts-check` mean something: flip it true and every file in the
   // tree reports at once, the seam sets stop being a decision, and the
-  // 382 errors that produces get silenced with a blanket rather than
-  // read. `noEmit` keeps the checker out of the build. And `include` has
+  // 2,451 errors that produces get silenced with a blanket rather than
+  // read (AUDIT-HARD measured it; this comment used to say 382, which was
+  // a count of a two-file import closure taken early in the slice and
+  // then written down as if it were the tree's). `noEmit` keeps the
+  // checker out of the build. And `include` has
   // to cover the whole of src/ - the seams need their imports PARSED to
   // infer anything, even though those imports are never reported.
   const ts = JSON.parse(read('tsconfig.json').replace(/^\s*\/\/.*$/gm, ''));
@@ -113,13 +139,11 @@ test('HARD3: no file buys its greenness with an escape hatch', () => {
   // for it belongs in a commit message and in this file, not in a
   // comment nobody reviews.
   const hatched = [];
-  for (const dir of ['src', 'src/systems', 'src/scenes', 'src/render', 'src/net', 'src/ui', 'src/world',
-    'src/player', 'src/combat', 'src/characters', 'src/formats', 'src/ai', 'src/tools']) {
-    for (const f of jsIn(dir)) {
-      const m = read(f).match(/@ts-(ignore|expect-error|nocheck)/);
-      if (m) hatched.push(`${f}: ${m[0]}`);
-    }
+  for (const f of jsUnder('src')) {
+    const m = read(f).match(/@ts-(ignore|expect-error|nocheck)/);
+    if (m) hatched.push(`${f}: ${m[0]}`);
   }
+  assert.ok(jsUnder('src').length > 300, 'the walk found suspiciously few files to check');
   assert.deepEqual(hatched, [],
     'an escape hatch was used instead of a type. Write the shape, or widen the one that is wrong -\n'
     + 'HARD3 found two of its own typedefs too narrow that way (Color32 carries a Uint32Array view,\n'
@@ -147,8 +171,24 @@ test('HARD3: the renderer\'s contract is types only, and the shapes it names are
   // the NAME of a @property is what follows its type, and a type can
   // carry braces of its own ({w, h}) - so read the name off the line's
   // tail rather than trying to match the braces.
-  const declared = new Set([...c.matchAll(/@property \{.*\} \[?(\w+)\]?/g)].map((m) => m[1]));
-  for (const field of [...returned.matchAll(/(?:^|[{,]\s*)(\w+)(?::|,|\s*})/g)].map((m) => m[1])) {
+  // ...and the properties must be BillboardBatch's OWN. Read across the
+  // whole file this set pooled all four typedefs, so `MeshBundle`'s
+  // `buffers` answered for the batch's - drop the batch's and the pin
+  // stayed green on its neighbour's field of the same name (AUDIT-HARD
+  // found this while mutation-testing the fix for the walk above).
+  const block = c.slice(c.indexOf('@typedef {object} BillboardBatch'));
+  const own = block.slice(0, block.indexOf('*/'));
+  const declared = new Set([...own.matchAll(/@property \{.*\} \[?(\w+)\]?/g)].map((m) => m[1]));
+  // AUDIT-HARD: the field walk used to be
+  // `/(?:^|[{,]\s*)(\w+)(?::|,|\s*})/g`, whose match CONSUMES the comma
+  // that the next field needs, so it read every OTHER field - 5 of the 8
+  // this factory mints, silently. `indexCount`, `record` and `buffers`
+  // could have been dropped from the contract with this pin green. Split
+  // at the top level instead of pattern-matching around the separators.
+  const minted = returned.slice(returned.indexOf('{') + 1, returned.lastIndexOf('}'))
+    .split(/,(?![^[\]]*\])/).map((part) => /^\s*(\w+)/.exec(part)?.[1]).filter(Boolean);
+  assert.equal(minted.length, 8, `the factory mints ${minted.length} fields and the walk should see every one: ${minted}`);
+  for (const field of minted) {
     assert.ok(declared.has(field), `the batch is minted with \`${field}\` and contract.js does not declare it`);
   }
 

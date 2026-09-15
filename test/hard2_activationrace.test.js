@@ -83,6 +83,54 @@ test('HARD2: the torch takes the click only when nothing on the ground AND no do
   assert.equal(raceActivation({ torch: at('droppedTorch:1', 60) }).torchWins, true, 'a winner out of reach is still the winner, and its arm refuses out loud');
 });
 
+test('HARD2: the extraction is EQUIVALENT - the law the hosts used to write out, over every input, agrees', () => {
+  // AUDIT-HARD put this in the tree. The extraction's proof was a
+  // differential run in a scratchpad and quoted in a commit message,
+  // which is a proof nobody can re-run - and this port's whole doctrine
+  // is that the evidence is checkable. So the OLD arithmetic lives here,
+  // lifted character for character out of world.js at d784ecd~1, and the
+  // two are made to agree on every combination of the inputs that can
+  // reach them. Change `activationRace.js` and this says whether the law
+  // moved or only the code did.
+  const old = (corpse, pile, torch, doorDist, persons) => {
+    const _pileNearer = !!pile && !(corpse && corpse.distance <= pile.distance);
+    const _lootPick = _pileNearer ? null : corpse, _dropPick = _pileNearer ? pile : null;
+    const _nonPersonRival = Math.min(
+      _lootPick?.distance ?? Infinity,
+      _dropPick?.distance ?? Infinity,
+      torch?.distance ?? Infinity,
+      doorDist,
+    );
+    return {
+      loot: _lootPick, drop: _dropPick,
+      torchWins: !!torch && torch.distance <= Math.min(_lootPick?.distance ?? Infinity, _dropPick?.distance ?? Infinity, doorDist),
+      nonPersonRival: _nonPersonRival,
+      rival: Math.min(_nonPersonRival, ...persons),
+    };
+  };
+  // 0 and Infinity for the edges; 3.2 and 3.3 straddle the reach, which
+  // is where MC-2's "a winner out of reach still answers" lives; the
+  // person lists cover none, one, a tie, and one that never wins.
+  const D = [null, 0, 0.5, 1, 3.2, 3.3, 8, 76.8, Infinity];
+  const PERSONS = [[], [3], [0.5, 40], [Infinity], [3.2, 3.2]];
+  let n = 0;
+  const differ = [];
+  for (const c of D) for (const pl of D) for (const t of D) for (const dd of D) for (const ps of PERSONS) {
+    const corpse = c === null ? null : at('foeCorpse:1', c);
+    const pile = pl === null ? null : at('droppedLoot:2', pl);
+    const torch = t === null ? null : at('droppedTorch:3', t);
+    const door = dd === null ? Infinity : dd;
+    const a = old(corpse, pile, torch, door, ps);
+    const b = raceActivation({ corpse, pile, torch, doorDistance: door, personDistances: ps });
+    n += 1;
+    const same = (a.loot?.key ?? null) === (b.loot?.key ?? null) && (a.drop?.key ?? null) === (b.drop?.key ?? null)
+      && a.torchWins === b.torchWins && Object.is(a.nonPersonRival, b.nonPersonRival) && Object.is(a.rival, b.rival);
+    if (!same && differ.length < 5) differ.push({ in: [c, pl, t, dd, ps], old: a, now: b });
+  }
+  assert.equal(n, 32805, 'the whole input domain, so a narrowed one cannot make this pass by covering less');
+  assert.deepEqual(differ, [], 'the extracted law disagrees with the one the hosts used to write out');
+});
+
 test('HARD2: both exterior hosts ask the ONE race and hand-roll none of it, and no other host grew a second copy', () => {
   const HOSTS = ['src/scenes/world.js', 'src/scenes/exterior.js'];
   for (const host of HOSTS) {

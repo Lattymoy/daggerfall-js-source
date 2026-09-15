@@ -22,11 +22,25 @@
 // resource-free with a reason. It fails closed: a new pool added to a
 // context fails this file until someone makes a decision about its end.
 //
-// The first thing it caught was not ours. `dungeonContext`'s hit-effects
-// pool mints a billboard batch per blood splash and its teardown never
-// retired them, while the interior host has called `clear()` on its own
-// copy of that pool since HE1. One line, in code that predates the
-// torches by months.
+// THE FIRST THING IT CAUGHT, AND WHAT THAT COST. It named
+// `dungeonContext`'s hit-effects pool, and the first pass read that as a
+// LEAK and gave destroy() a `hitEffects.clear()`. AUDIT-HARD proved it
+// was neither: the pool HANDS every batch away as it is born
+// (`onSpawn: (b) => billboardBatches.push(b)`), the list is freed at
+// :6093, and the added line freed each live splash a SECOND time.
+//
+// Three lessons are wired into this file because of it:
+//   - the gate offers three answers and they are EXCLUSIVE, so there is
+//     now a pin that says a hand-off must not also be ended by hand;
+//   - the ownership check used to read COMMENTS, which is how the wrong
+//     fix stayed green while explaining itself - it reads code now;
+//   - and the thing that misled the fix was a stale comment in the host
+//     ("that list is the static layout art"), true until HE1 wired the
+//     onSpawn and never corrected. A gate cannot read intent, so the
+//     comment was corrected too.
+//
+// The genuine leaks this file is built on are still AUDIT 66's F5, F6
+// and F8 - and it names all three without being told they exist.
 //
 // SCOPE. A "session-lifetime" context is one built and destroyed while
 // the page lives. The four top-level hosts are NOT that: scenes switch
@@ -75,6 +89,34 @@ function teardownBody(src, name) {
   return bodyFrom(src, i);
 }
 
+/**
+ * The CODE of a body, with its comments taken out.
+ *
+ * AUDIT-HARD found this gate passing on PROSE. The ownership check below
+ * asks two questions of every line that names a binding - does it name
+ * it, and does it end it - and a COMMENT answers both. A teardown with
+ * zero code lines mentioning a pool stayed green because a sentence in it
+ * said the words `hitEffects.clear()` while explaining why that line was
+ * wrong. A gate a comment can switch off is worse than an enumeration:
+ * an enumeration only fails to grow, this one actively lies.
+ */
+function codeOf(body) {
+  let out = '', i = 0, quote = null;
+  while (i < body.length) {
+    const c = body[i], d = body[i + 1];
+    if (quote) {
+      if (c === '\\') { out += body.slice(i, i + 2); i += 2; continue; }
+      if (c === quote) quote = null;
+      out += c; i += 1; continue;
+    }
+    if (c === '"' || c === "'" || c === '`') { quote = c; out += c; i += 1; continue; }
+    if (c === '/' && d === '/') { while (i < body.length && body[i] !== '\n') i += 1; continue; }
+    if (c === '/' && d === '*') { const e = body.indexOf('*/', i + 2); i = e < 0 ? body.length : e + 2; continue; }
+    out += c; i += 1;
+  }
+  return out;
+}
+
 /** Anything that reads as "and this is how it ends". */
 const ENDS_IT = /\.(destroy|dispose|destroyAll|teardown|shutdown|release|clear|clearLive|stop|reset|restorePiles)\b|=\s*null|\.length = 0/;
 
@@ -88,6 +130,25 @@ const CONTEXTS = [
   {
     file: 'src/scenes/dungeonContext.js',
     teardowns: ['destroy'],
+    // AUDIT-HARD's correction. HARD1's first pass read this pool as a
+    // LEAK and had destroy() call `hitEffects.clear()`. It is not a leak
+    // and that was a DOUBLE FREE: the pool is built with `onSpawn: (b) =>
+    // billboardBatches.push(b)`, so every splash it mints joins the list
+    // destroy() already frees, and clear() retired each one into a second
+    // `destroyBillboardBatch` of the same GL handles. Proven by driving
+    // the real pool with a counting renderer: two live splashes, two
+    // frees each.
+    //
+    // The wrong answer was reachable because the gate OFFERS three and I
+    // took the first without asking which was true - and because the
+    // host's own comment at :6097 still said `billboardBatches` was "the
+    // static layout art", which stopped being so when HE1 wired the
+    // onSpawn. The same shape as `hostMagic`'s `impacts`, four lines
+    // down this very list.
+    handedOff: {
+      hitEffects: ['the pool is built with `onSpawn: (b) => billboardBatches.push(b)`, so every splash it mints joins the list destroy() frees',
+        /onSpawn: \(b\) => billboardBatches\.push\(b\)/, /for \(const b of billboardBatches\) renderer\.destroyBatch\(b\)/],
+    },
     declared: {
       animalAmbience: 'createAnimalAmbience returns { update } alone - it plays one-shots off the world clock and holds no handle',
       detectFeed: 'createDetectFeed returns { tick } over a plain marker list - no GPU batch, no loop',
@@ -131,7 +192,7 @@ test('HARD1: every thing a session-lifetime context BUILDS is ended on EVERY one
     const src = read(file);
     const built = [...src.matchAll(/(?:const|let)\s+(\w+)\s*=\s*(create[A-Z]\w*)\s*\(/g)];
     for (const path of teardowns) {
-      const body = teardownBody(src, path);
+      const body = codeOf(teardownBody(src, path));   // AUDIT-HARD: prose does not own anything
       for (const [, binding, factory] of built) {
         if (declared[binding] || handedOff[binding] || (only && !only.test(binding))) continue;
         const lines = body.split('\n').filter((l) => new RegExp(`\\b${binding}\\b`).test(l));
@@ -154,11 +215,15 @@ test('HARD1: a declaration stays honest - the thing it speaks for still exists, 
   // rather than the memory of whoever wrote the line.
   const MINTS = /\.createBillboardBatch\(|\.createBatch\(|\.createMesh\(|\bloop3d\(|\baudio\.loop\(/;
   const homes = new Map();
-  for (const dir of ['src/systems', 'src/scenes', 'src/combat', 'src/ui', 'src/world', 'src/characters', 'src/net', 'src/render', 'src/player']) {
-    for (const f of readdirSafe(dir)) {
-      const src = read(`${dir}/${f}`);
-      for (const m of src.matchAll(/export function (create[A-Z]\w*)\s*\(/g)) homes.set(m[1], { path: `${dir}/${f}`, src });
-    }
+  // AUDIT-HARD: this walked nine named directories, one level deep. A
+  // declared binding whose factory lived anywhere else - `src/formats`,
+  // `src/ai`, or any of the four nested directories the list never knew
+  // about - got `homes.get()` undefined, and the MINTS check below is
+  // guarded by `if (home && ...)`, so it was SILENTLY SKIPPED. A check
+  // that quietly does nothing is the worst kind. The whole of src/ now.
+  for (const f of jsUnder('src')) {
+    const src = read(f);
+    for (const m of src.matchAll(/export function (create[A-Z]\w*)\s*\(/g)) homes.set(m[1], { path: f, src });
   }
   const grown = [];
   for (const { file, declared } of CONTEXTS) {
@@ -188,6 +253,37 @@ test('HARD1: a declaration stays honest - the thing it speaks for still exists, 
   }
 });
 
+test('HARD1: a HAND-OFF is not also ended by hand - that is a double free, not a belt and braces', () => {
+  // THE GATE AUDIT-HARD ASKED FOR, and the one that would have caught its
+  // own finding. When a pool gives each batch away as it is born, the
+  // list it gave them to is the owner. A teardown that frees the list AND
+  // ends the pool frees every live batch TWICE.
+  //
+  // It is benign today only by luck of the platform: deleting a deleted
+  // WebGL object is specified as a no-op, not an error, so the mistake
+  // makes no noise at all. Pool the handles, or move to a backend that
+  // checks, and it becomes a crash on every dungeon exit.
+  //
+  // Read as a rule rather than as an incident: END IT WHERE IT IS OWNED,
+  // ONCE. The three answers HARD1 offers - ends it, holds nothing, hands
+  // it off - are EXCLUSIVE, and this is the pin that says so.
+  const doubled = [];
+  for (const { file, teardowns, handedOff = {} } of CONTEXTS) {
+    const src = read(file);
+    for (const binding of Object.keys(handedOff)) {
+      for (const path of teardowns) {
+        const body = codeOf(teardownBody(src, path));
+        const ends = body.split('\n').filter((l) => new RegExp(`\\b${binding}\\b`).test(l) && ENDS_IT.test(l));
+        for (const l of ends) doubled.push(`${file}: ${binding} is declared a hand-off AND ended in ${path}() - "${l.trim()}"`);
+      }
+    }
+  }
+  assert.deepEqual(doubled, [],
+    'a hand-off pool is ALSO being ended by hand. Its batches are freed by the list it hands them to;\n'
+    + 'ending the pool here frees each of them a second time. Delete the line - or, if the pool really\n'
+    + 'does own something the list does not, it is not a hand-off and the declaration is what is wrong.');
+});
+
 test('HARD1: a context that frees a GPU batch is a context this gate knows about', () => {
   // The gate above is only as wide as CONTEXTS, so CONTEXTS itself is
   // derived: any teardown in scenes/ that frees a batch is a
@@ -208,4 +304,14 @@ test('HARD1: a context that frees a GPU batch is a context this gate knows about
 
 function readdirSafe(dir) {
   return readdirSync(join(ROOT, dir)).filter((f) => f.endsWith('.js'));
+}
+
+/** Every .js under a directory, at any depth (AUDIT-HARD - see `homes`). */
+function jsUnder(dir) {
+  const out = [];
+  for (const e of readdirSync(join(ROOT, dir), { withFileTypes: true })) {
+    if (e.isDirectory()) out.push(...jsUnder(`${dir}/${e.name}`));
+    else if (e.name.endsWith('.js')) out.push(`${dir}/${e.name}`);
+  }
+  return out;
 }

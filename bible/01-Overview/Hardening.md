@@ -78,14 +78,33 @@ Three properties make it fail closed:
 - **Declarations expire.** A binding that is no longer built, or a
   hand-off whose other half was deleted, fails the gate.
 
-Put the three known leaks back and it names all three without being told
-they exist (AUDIT 66 F5, F6, and the one below).
+It named one on its first run, and **the first answer to it was wrong** -
+which turned out to be the most useful thing in the program so far.
 
-It found one on its first run, in code that predates the torches by
-months: `dungeonContext`'s hit-effects pool mints a billboard batch per
-blood splash, and that context's teardown never retired them, while the
-interior host has called `clear()` on its own copy of the same pool since
-HE1. One line.
+`dungeonContext`'s hit-effects pool was read as a leak and given a
+`hitEffects.clear()` in `destroy()`. AUDIT-HARD (2026-09-15) proved it
+was not a leak and that the line was a DOUBLE FREE: the pool hands every
+batch away as it is born (`onSpawn: (b) => billboardBatches.push(b)`),
+that list is freed higher up the same teardown, and `clear()` retired
+each live splash into a second `destroyBillboardBatch` of the same GL
+handles. Benign only because deleting a deleted WebGL object is specified
+as a no-op.
+
+Three things came out of it, and all three are in the gate now:
+
+1. **The three answers are EXCLUSIVE**, so a hand-off that is *also*
+   ended by hand is its own failure - `hard1_ownership.test.js` says so.
+2. **The ownership check was reading comments.** It asked "does a line in
+   this teardown name the binding, and does it end it" - and a *sentence*
+   answers both. The wrong fix stayed green while a comment explained why
+   it was wrong. A gate a comment can switch off is worse than an
+   enumeration: an enumeration only fails to grow. It reads code now.
+3. **What misled the fix was a stale comment** in the host - "that list
+   is the static layout art", true until HE1 wired the `onSpawn` and
+   never corrected since.
+
+The genuine leaks this slice is built on are AUDIT 66's F5, F6 and F8,
+and the gate names all three without being told they exist.
 
 ### HARD2 - the host contract. FIRST SEAM SHIPPED 2026-09-14.
 
@@ -119,8 +138,15 @@ Both rules held, and both were checked rather than asserted:
 
 - A differential over 20,000 input combinations against the old inline
   arithmetic: **0 differ**.
-- **No behavioural pin moved.** The only pins touched quoted the
-  relocated text, and `audit63_guilds_court.test.js`'s got strictly
+- **The pins that moved all quoted the relocated text**, and one of them
+  is behavioural, so the original "no behavioural pin moved" was too
+  strong: `ht1_handheldtorches.test.js` pinned AUDIT 66 F7 with two
+  assertions - the torch arm's comparison, and `_doorDist` being read
+  ONCE - and the second had no line left to name once the door's distance
+  became an argument to the race. The law is not lost: the race takes
+  `doorDistance` once, and `hard2_activationrace.test.js` pins both the
+  feeding and the losing-to-a-door. But the claim needed correcting, and
+  AUDIT-HARD corrected it. `audit63_guilds_court.test.js`'s got strictly
   STRONGER: it used to lift the line out of a host with `new Function`,
   because the law lived inline in two places and there was nothing to
   import. It now calls the law. A pin getting simpler at an extraction is
@@ -258,6 +284,38 @@ the changelog and the project index at once. The split is right, but note
 what is attached before starting: a tool rewrites a section of it
 (`regenOpenFlags.mjs`), and tests pin line numbers inside it. It is not a
 pure documentation move.
+
+## AUDIT-HARD, 2026-09-15 - the program audited against itself
+
+Mac, before merging: "Lets audit this before merging." Nine findings over
+HARD1-4, of which one was a defect in shipped code and three were holes in
+the gates themselves. **Every gate hole is the same shape as the defects
+the program was written to catch**, which is the finding that matters:
+
+| # | where | what |
+|---|---|---|
+| B2 | `dungeonContext.destroy()` | **HARD1's first fix was a DOUBLE FREE.** The pool it named is a hand-off, not a leak. Proven by driving the real pool with a counting renderer: two live splashes, two frees each |
+| A6 | `hard1_ownership` | the ownership check read **comments** - a sentence naming the binding and any ending verb satisfied it, which is how B2's wrong fix stayed green while explaining itself |
+| A1 | `hard3_types` | the escape-hatch scan walked a hand-written list of `src/` subdirectories, one level deep, and had four blind spots (`characters/pieces`, `characters/rewrite`, `systems/quest`, `tools/paperdoll`) |
+| A2 | `hard1_ownership` | the factory-homes map walked nine named directories; a miss made the declaration-expiry check **silently skip**, guarded by `if (home && ...)` |
+| A4 | `hard3_types` | the save seam searched `src/systems` only, though the rule it states ("a module that knows the envelope's VERSION") names no directory |
+| A5 | `hard3_types` | the contract-vs-factory walk read **5 of 8** fields (a regex that consumed the comma the next field needed), and pooled `@property` lines across all four typedefs, so `MeshBundle`'s `buffers` answered for the batch's |
+| A3 | `hard2_activationrace` | the extraction's differential lived in a scratchpad and a commit message - a proof nobody could re-run |
+| C1 | the records | "no behavioural pin moved" was too strong (see HARD2 above) |
+| C2 | `hard3_types` | a comment said flipping `checkJs` produces 382 errors. It produces **2,451**; 382 was a two-file import closure measured early and written down as if it were the tree |
+
+All nine are paid. The three enumerations are derived walks now, the
+ownership check reads code, the differential is a pin that carries the old
+arithmetic and runs it over all 32,805 inputs, and the contract walk sees
+every field (mutation-verified: dropping any one of the eight turns it
+red). B2's own lesson became a gate - **a hand-off must not also be ended
+by hand** - which fails on the exact line that was wrong.
+
+What to take from it: **a gate is code, and it rots the way code rots.**
+This program's premise is that a derived rule beats a remembered one, and
+that still holds - but "derived" is a claim about an implementation, and
+four of these gates claimed it while quietly enumerating. The gates need
+auditing on the same cycle as the port.
 
 ## The standing rule this program adds
 
