@@ -51,6 +51,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { isEnhanced } from '../systems/uiSkin.js';
+import { mountEnhancedChunk } from './enhancedChunk.js';   // MENU1: the one lazy-chunk door
 import {
   openClassicPauseFlow,
   pauseArtLoaded,
@@ -187,15 +188,15 @@ function enhancedPauseOverlay(show, base) {
   // menu, so it says so loudly and takes the empty div with it rather
   // than leaving the host holding an overlay that draws nothing and
   // never reports done - which would be a frozen game.
-  import('./enhancedMenu.js').then((mod) => {
-    const { mountEnhancedMenu } = mod;
-    seams = mod;
-    if (fired) { host.remove(); return; }   // disposed before the module landed
-    view = mountEnhancedMenu(host, { mode: 'pause', hooks, onAction: act, at: hooks.at ?? null });
-  }).catch((e) => {
-    console.warn('[pause] the enhanced pause screen would not mount', e);
-    host.remove();
-    fired = true;
+  // MENU1: the ONE lazy-chunk door (ui/enhancedChunk.js).
+  mountEnhancedChunk({
+    load: () => import('./enhancedMenu.js'),
+    mount: (mod) => {
+      const { mountEnhancedMenu } = mod;
+      seams = mod;
+      view = mountEnhancedMenu(host, { mode: 'pause', hooks, onAction: act, at: hooks.at ?? null });
+    },
+    alive: () => !fired, host, onDismiss: () => { host.remove(); fired = true; }, label: 'pause',
   });
 
   return overlay;

@@ -36,6 +36,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { isEnhanced } from '../systems/uiSkin.js';
+import { mountEnhancedChunk } from './enhancedChunk.js';   // MENU1: the one lazy-chunk door
 import { registerOverlay } from './enhancedOverlays.js';   // PX28: Tab puts it away
 import { requestLook } from '../player/pointerLock.js';   // MAC1: the relock rides the closing gesture
 import { BookReaderWindow } from './bookReader.js';
@@ -116,12 +117,11 @@ function enhancedBookOverlay(model) {
     el.style.cssText = 'position:fixed;inset:0;width:100vw;height:100dvh;z-index:14;image-rendering:pixelated;touch-action:none';
     document.body.append(el);
     unregister = registerOverlay(exit);
-    import('./enhancedBook.js').then(({ mountEnhancedBook }) => {
-      if (torn) return;
-      view = mountEnhancedBook(el, { model, onExit: teardown, relock });
-    }).catch((e) => {
-      console.warn('[book] the enhanced book could not mount:', e?.message ?? e);
-      exit();
+    // MENU1: the ONE lazy-chunk door (ui/enhancedChunk.js).
+    mountEnhancedChunk({
+      load: () => import('./enhancedBook.js'),
+      mount: ({ mountEnhancedBook }) => { view = mountEnhancedBook(el, { model, onExit: teardown, relock }); },
+      alive: () => !torn, host: el, onDismiss: exit, label: 'book',
     });
   };
   return {

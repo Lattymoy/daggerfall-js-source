@@ -37,6 +37,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { isEnhanced } from '../systems/uiSkin.js';
+import { mountEnhancedChunk } from './enhancedChunk.js';   // MENU1: the one lazy-chunk door
 import { registerOverlay } from './enhancedOverlays.js';   // PX28: Tab puts it away
 import { CharSheet, LevelUpScreen, charSheetArtLoaded } from './charsheet.js';
 import { charSheetHooks } from './charSheetNav.js';
@@ -125,8 +126,13 @@ function enhancedSheetPageOverlay(hooks) {
   // PX28: AFTER `close` exists - a const is not hoisted, and the
   // first placement of this line read it before its initialiser.
   unregister = registerOverlay(close);
-  import('./enhancedMenu.js').then(({ mountEnhancedMenu }) => {
-    if (fired) return;
+  // MENU1: the ONE lazy-chunk door (ui/enhancedChunk.js). This door
+  // had NO catch at all - a deploy that moved `enhancedMenu` left an
+  // unhandled rejection and a dial arm that did nothing.
+  mountEnhancedChunk({
+    load: () => import('./enhancedMenu.js'),
+    alive: () => !fired, host, onDismiss: close, label: 'charsheet',
+    mount: ({ mountEnhancedMenu }) => {
     view = mountEnhancedMenu(host, {
       mode: 'pause',
       at: 'stats',
@@ -140,9 +146,7 @@ function enhancedSheetPageOverlay(hooks) {
         openChronicle: hooks.logbook ? () => { close(); hooks.logbook(); } : undefined,
       },
     });
-  }).catch((e) => {
-    console.warn('[charsheet] the sheet page would not mount:', e?.message ?? e);
-    close();
+    },
   });
   return {
     // THE HOST CONTRACT, in the hosts' own words - `input`, not

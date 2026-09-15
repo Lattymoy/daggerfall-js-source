@@ -25,6 +25,7 @@
 // resolve), so the chronicle takes the two modes that have NO home -
 // the notebook and the messages - and the history beside them.
 import { isEnhanced } from '../systems/uiSkin.js';
+import { mountEnhancedChunk } from './enhancedChunk.js';   // MENU1: the one lazy-chunk door
 import { registerOverlay } from './enhancedOverlays.js';   // PX28: Tab puts it away
 import { QuestJournalWindow, questJournalArtLoaded } from './questJournal.js';
 import { PlayerHistoryWindow, playerHistoryArtLoaded } from './playerHistory.js';
@@ -96,12 +97,11 @@ function enhancedChronicleOverlay(deps, section) {
   host.style.cssText = 'position:fixed;inset:0;z-index:11';
   document.body.append(host);
   unregister = registerOverlay(close);
-  import('./enhancedChronicle.js').then(({ mountEnhancedChronicle }) => {
-    if (done) return;
-    view = mountEnhancedChronicle(host, { ...deps, section, onExit: close });
-  }).catch((e) => {
-    console.warn('[chronicle] the enhanced window could not mount:', e?.message ?? e);
-    close();
+  // MENU1: the ONE lazy-chunk door (ui/enhancedChunk.js).
+  mountEnhancedChunk({
+    load: () => import('./enhancedChronicle.js'),
+    mount: ({ mountEnhancedChronicle }) => { view = mountEnhancedChronicle(host, { ...deps, section, onExit: close }); },
+    alive: () => !done, host, onDismiss: close, label: 'chronicle',
   });
   return {
     // THE HOST CONTRACT, in the hosts' own words - `input`, not
