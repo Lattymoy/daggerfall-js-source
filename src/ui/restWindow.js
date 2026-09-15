@@ -725,6 +725,12 @@ export class RestWindow {
     // rides the status while the session is paced by it (the same
     // deps.sharedMinutes the session reads - null offline, and then
     // nothing is added and the page is what it was).
+    //
+    // AUDIT RESTX: this is LOITER's decoration now. RESTX1 took the REST
+    // modes off the shared clock - online a rest resolves in one frame
+    // and this page is never drawn for one - and left loiter riding it,
+    // because passing time is what loiter is for. The read below is
+    // unchanged and still right; only what it is FOR narrowed.
     const shared = this.deps.sharedMinutes?.();
     if (Number.isFinite(shared)) st.worldMinutes = shared;
     return st;
