@@ -602,6 +602,61 @@ gate, not the game - which is the point: CRASH1's repair was sound and
 its *guarantee* was not, and only reading the guarantee the way we read
 the code could tell the difference.
 
+## AUDIT-176, 2026-09-15 - HARD2c, the seam audit and HARD5, read before merging
+
+Mac, again: "Audit and merge." Three findings over the branch's three
+commits, and **two of them are in my own new gates** - which is the
+result AUDIT-HARD predicted when it said a gate is code and rots like
+code.
+
+| # | where | what |
+|---|---|---|
+| A176-1 | `weaponPoseOf` | **the extraction changed one error path, and a comment claimed a reliance that does not exist.** The inline arithmetic dereferenced the rig unguarded, so a null rig THREW at the save; the extracted version returns null and the bag silently omits the pair, which a presence-gated restore reads as "leave the live hand". Quieter, and quieter is worse. The comment said callers use the null arm to mean "this mode has no rig"; no caller does - worldModes answers that with its own ternary |
+| A176-2 | `hard2c_weaponpose` | **the no-fourth-copy gate named three hosts BY HAND.** A copy in a fourth host - `exterior.js`, say - would not have been seen. It walks `src/` now, and the mutation proves it: a copy planted in `exterior.js` reddens it |
+| A176-3 | `hard5_index` | the negative-pin scan read ONE line, so the same pin formatted across two - `assert.doesNotMatch(` on one, the path on the next - walked straight past it. Two-line window now, and what it still cannot see (a pin reaching Home.md through a variable) is stated rather than papered over |
+
+All three are paid. A176-1 keeps the tolerant arm - it is genuinely the
+right shape for a future caller - but the comment now says plainly that
+nothing relies on it, and the differential **pins the difference** rather
+than leaving it to be discovered: the old arithmetic throws on a null rig,
+the new one does not, and that is written down as the one behaviour this
+extraction changed.
+
+### What the split was checked for, and passed
+
+- **Nothing was lost.** Every one of the 1,751 lines of the old
+  `Home.md` appears somewhere in the three files that replaced it: 0
+  missing.
+- **Nothing was duplicated.** 0 substantial lines appear in both
+  `Home.md` and a delegate - a relocation that leaves the original
+  behind is two texts, one of which gets edited and one of which gets
+  read.
+- **Key order survived.** The save envelope is JSON and insertion order
+  survives `JSON.stringify`, so a reordered pose bag is a different
+  string. Both hosts compose byte-identical bags, and the rig still
+  overrides a host-supplied pair, which is what the spread order decides.
+
+### One thing left standing, deliberately
+
+`citeShift` reports two citations "for a person" in a STRUCK row of
+`Port-Ledger.md` - `combat/playerWeapon.js:118-160` and its `:808`
+continuation. Read at the commit before this branch, **that span was
+already stale**: it claims to name the port's own gesture path and
+actually pointed at the sheath-and-hand region. HARD2c's insertion moved
+it further along. It is left alone on purpose - the struck law freezes
+citations in fixed rows precisely so historical text does not churn - but
+being frozen is not the same as being right, and it is written down here
+rather than left inside a "2 for a person" line nobody reads.
+
+### The shape worth keeping
+
+Two of three findings were **in the gates, not the code**, and the third
+was a comment. The code this branch changed came through clean; the
+things that claimed to check it did not. That is now the second audit in
+a row to land there (AUDIT-HARD found four such), and it is the argument
+for auditing gates on the same cycle as the port rather than trusting a
+green suite.
+
 ## The standing rule this program adds
 
 When an audit finds a defect, the fix is not finished when the defect is

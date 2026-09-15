@@ -146,9 +146,27 @@ export const usingRightHandFromSaveVars = (saveVars) => !saveVars?.usingLeftHand
  * @typedef {{ weaponDrawn: boolean, usingRightHand: boolean }} WeaponPose
  */
 
-/** SerializablePlayer.cs:175-176, off whichever rig is in the player's
- *  hands. Null in, null out - the callers use that to mean "this mode
- *  has no rig of its own to answer for". */
+/**
+ * SerializablePlayer.cs:175-176, off whichever rig is in the player's
+ * hands.
+ *
+ * NULL IN, NULL OUT - AND NO CALLER RELIES ON THAT TODAY. The first
+ * draft of this comment said the callers use it to mean "this mode has
+ * no rig of its own to answer for"; AUDIT-176 found that false. All
+ * three call sites pass a rig their host guarantees, and worldModes'
+ * own "no rig here" answer is its `mode === 'interior' ? ... : null`
+ * ternary, not this arm.
+ *
+ * It is kept, and the reason is worth stating because it is the one
+ * BEHAVIOUR CHANGE this extraction made: the inline arithmetic it
+ * replaced dereferenced the rig unguarded (`!rig.sheathed`), so a null
+ * rig THREW - loudly, at the save. This returns null, and the composed
+ * bag then simply omits the pair, which a presence-gated restore reads
+ * as "leave the live hand". That is quieter, and quieter is worse.
+ * `test/hard2c_weaponpose.test.js` pins the difference rather than
+ * leaving it to be discovered: if a caller ever does pass null, the
+ * pin says what changed and when.
+ */
 export const weaponPoseOf = (w) => (w ? { weaponDrawn: !w.sheathed, usingRightHand: w.usingRightHand } : null);
 
 /**

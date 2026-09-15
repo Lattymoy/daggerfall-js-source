@@ -483,7 +483,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       const c = cv();
       // MW-D12: THE RETURN VALUE WAS BEING THROWN AWAY, and it is the
       // only signal that a blow has started. gesture() answers with the
-      // strike the drag resolved to (playerWeapon.js:207-210) and
+      // strike the drag resolved to (playerWeapon.js:225-228) and
       // clickAttack() with the one the click rolled - the Morrowind arm
       // needs exactly that to pick rule 11's attack type.
       const strike = !paralyzed && c

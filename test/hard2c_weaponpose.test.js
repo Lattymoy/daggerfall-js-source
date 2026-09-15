@@ -30,10 +30,22 @@
 //   differential below is how that is checked rather than asserted.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { weaponPoseOf, applyWeaponPose, mergeWeaponPose } from '../src/combat/playerWeapon.js';
 
-const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
+const ROOT = new URL('../', import.meta.url);
+const read = (p) => readFileSync(new URL(p, ROOT), 'utf8');
+
+/** Every .js under a directory, recursively - derived, so a new host
+ *  (or a new directory of them) is covered by existing. */
+function jsUnder(dir, out = []) {
+  for (const name of readdirSync(new URL(`${dir}/`, ROOT))) {
+    const rel = `${dir}/${name}`;
+    if (statSync(new URL(rel, ROOT)).isDirectory()) jsUnder(rel, out);
+    else if (name.endsWith('.js')) out.push(rel);
+  }
+  return out;
+}
 
 /** Every shape a pose FIELD has ever arrived in: set either way, an
  *  additive field a pre-field envelope never wrote (absent), and the
@@ -117,6 +129,19 @@ test('HARD2c: the law itself, against SerializablePlayer.cs', () => {
   const spy = { sheathed: true, usingRightHand: true, applyWeapon() { throw new Error('applyWeaponPose must not re-bind the weapon'); } };
   applyWeaponPose(spy, { weaponDrawn: true, usingRightHand: true });
 
+  // AUDIT-176: THE ONE BEHAVIOUR THIS EXTRACTION CHANGED, pinned rather
+  // than left to be found. The inline arithmetic dereferenced the rig
+  // unguarded (`!rig.sheathed`), so a null rig THREW at the save; this
+  // returns null and the composed bag omits the pair, which a
+  // presence-gated restore reads as "leave the live hand". Quieter, and
+  // quieter is worse - so the difference is recorded here. No caller
+  // passes null today; the day one does, this says what it costs.
+  assert.throws(() => ({ weaponDrawn: !(/** @type {any} */ (null)).sheathed }), TypeError,
+    'the arithmetic this replaced threw on a null rig');
+  assert.equal(weaponPoseOf(null), null, '...and this does not');
+  assert.deepEqual({ yaw: 1, ...weaponPoseOf(null) }, { yaw: 1 },
+    'so the bag silently omits the pair instead of failing the save - the change, stated');
+
   // SL-2's merge is PER FIELD and uses `??`, so a legitimately FALSE
   // flag from the live rig survives instead of falling through.
   assert.deepEqual(mergeWeaponPose({ weaponDrawn: false, usingRightHand: false }, { weaponDrawn: true, usingRightHand: true }),
@@ -128,8 +153,12 @@ test('HARD2c: the law itself, against SerializablePlayer.cs', () => {
 test('HARD2c: no host spells the pair out again - a fourth copy fails here', () => {
   // The gate HARD2a uses, aimed at this law. The hosts may hold any rig
   // they like; what they may not do is restate the arithmetic.
+  // AUDIT-176: THIS LIST USED TO NAME THREE HOSTS BY HAND, which is the
+  // enumeration this whole program exists to remove - a FOURTH host
+  // spelling the pair out would not have been seen. It walks `src/`
+  // now, so a copy anywhere fails here.
   const inline = [];
-  for (const host of ['src/scenes/world.js', 'src/scenes/dungeonContext.js', 'src/scenes/worldModes.js']) {
+  for (const host of jsUnder('src').filter((p) => p !== 'src/combat/playerWeapon.js')) {
     const src = read(host);
     src.split('\n').forEach((line, i) => {
       if (/^\s*(\/\/|\*)/.test(line)) return;            // a citation is not a copy

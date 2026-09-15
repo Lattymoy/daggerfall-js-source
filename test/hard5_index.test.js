@@ -76,17 +76,30 @@ test('HARD5: no bible pin reads Home.md ALONE for a claim that could move', () =
   //
   // A POSITIVE match on Home.md is fine and stays allowed: it asserts
   // something IS there, so it fails honestly if the text moves.
+  //
+  // AUDIT-176: read over a TWO-LINE window, not one. The first draft
+  // matched a single line, so the same pin broken across two lines -
+  // `assert.doesNotMatch(` on one and the path on the next, which is
+  // how a long one gets formatted - would have walked straight past it.
+  // What it still cannot see is a pin that reaches Home.md through a
+  // variable assigned earlier; that is stated rather than papered over,
+  // and the honest guard for it is `bibleIndex.mjs` being the obvious
+  // thing to reach for in the first place.
   const bad = [];
   for (const f of readdirSync(join(root, 'test')).filter((n) => n.endsWith('.test.js'))) {
     if (f === 'hard5_index.test.js') continue;
-    read(`test/${f}`).split('\n').forEach((line, i) => {
+    const lines = read(`test/${f}`).split('\n');
+    lines.forEach((line, i) => {
       if (/^\s*(\/\/|\*)/.test(line)) return;
-      if (!/bible\/Home\.md/.test(line)) return;
-      if (/doesNotMatch\s*\(/.test(line) || /!\s*\/[^/]+\/[a-z]*\.test\s*\(/.test(line)) {
+      const win = `${line}\n${lines[i + 1] ?? ''}`;
+      if (!/bible\/Home\.md/.test(win)) return;
+      if (/doesNotMatch\s*\(/.test(win) || /!\s*\/[^/]+\/[a-z]*\.test\s*\(/.test(win)) {
         bad.push(`test/${f}:${i + 1} - a negative pin reading Home.md alone`);
       }
     });
   }
+  // the window can report the same pin from both its lines
+  bad.splice(0, bad.length, ...new Set(bad.map((b) => b.replace(/:(\d+) -/, (m, n) => `:${n} -`))));
   assert.deepEqual(bad, [],
     'a "this claim is gone" pin aimed at ONE page stops meaning anything the day the claim moves to another.\n'
     + "Read the whole index instead: `import { indexText } from './bibleIndex.mjs'`.");
