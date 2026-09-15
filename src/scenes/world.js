@@ -214,6 +214,7 @@ import { getStaticDoors } from '../world/staticDoors.js';
 import { Collider } from '../player/collider.js';
 import { createDataPipeline } from './dataPipeline.js';
 import { createWorldModes } from './worldModes.js';
+import { setAmbientTextHost, tickAmbientText } from '../systems/ambientText.js';   // AT2: Ambient Text's one component - this host claims it and feeds it the frame
 import { OnlineSession, roomKeyFor, DEFAULT_SERVER, WORLD_PUBLISH_MS, FOES_MS, FOES_FULL_MS, FOES_STALE_MS } from '../net/online.js';   // ONLINE1: the session; WORLD1: the room's memory
 import { POSE_STRIKES, isWorldRoom, isCellRoom, cellHaloFor, actFrameFits, sharedClassicMinutes, wallMsForClassicMinutes } from '../net/wire.js';   // WORLD6b-iii(b): the cell seam's halo   // MAC7 #1: the swing's kind on the wire; AUDIT WORLD4 A1: whether an act frame can be said at all
 import { hasDaggerfallArrows } from '../combat/fpArm.js';   // MAC7 #2: the arrow bit on the wire - weaponRig's own read
@@ -5292,7 +5293,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     lookFilter.add(e.movementX * lookScale(), -e.movementY * lookScale() * lookInvert());
   });
   // U41: `!townTalk.overlayActive` is the dungeon host's own gate
-  // (dungeon.js:215, "a right-click on a window is the window's...
+  // (dungeon.js:216, "a right-click on a window is the window's...
   // never a swing"), which these two hosts never got. It matters now
   // that the travel map makes RMB a ROUTINE gesture - its zoom - and
   // an ungated one fires a readied spell or looses an arrow at the
@@ -7303,6 +7304,29 @@ export async function bootWorld(canvas, renderer, params, status) {
       return { ...d, regionIndex: dfLoc.regionIndex, name: townTalk.directory.find((e) => e.buildingKey === d.buildingKey)?.name ?? '' };
     },
   });
+  // AT2: AMBIENT TEXT CLAIMS ITS HOST. The mod is one GameObject made
+  // at load and never destroyed (systems/ambientText.js), so the slot
+  // holds STATE - the pace and the no-repeat index - across every door
+  // this host walks through. Everything below is a live read: the
+  // closures are called at the tick, not now.
+  setAmbientTextHost({
+    paused: () => gamePaused(),
+    say: (text, seconds) => townTalk.say(text, seconds),   // DaggerfallUI.AddHUDText(text, delay)
+    where: () => {
+      const inside = modes?.insideContext?.() ?? { insideBuilding: false, insideDungeon: false, dungeonType: 255 };
+      const px = playerTravelPixel();
+      return {
+        insideBuilding: inside.insideBuilding,
+        insideDungeon: inside.insideDungeon,
+        dungeonType: inside.dungeonType,
+        inLocationRect: _musicInLocationRect(),
+        locationType: _musicLocationType(),
+        isDay: !isNight(minuteNow()),                      // WorldTime.Now.IsDay
+        climateIndex: maps.getClimateIndex(px.x, px.y),    // PlayerGPS.CurrentClimateIndex
+        weather: currentWeather(),
+      };
+    },
+  });
   // U31 / StartGameBehaviour :392-401. The streamer is already at the
   // start pixel; put the player INSIDE that location's dungeon, which
   // is where a new Daggerfall character opens their eyes. DFU gates
@@ -7316,7 +7340,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // main.js sets ?load when the menu resolves it, and its comment says
   // "Load Game rides the dungeon host's OWN quickLoad" - true when the
   // classic start booted scenes/dungeon.js, and U31 moved it HERE. The
-  // only reader of `load` in the whole tree is dungeon.js:98, so the
+  // only reader of `load` in the whole tree is dungeon.js:99, so the
   // flag arrived in this host and was discarded: the player got a
   // brand-new character in Privateer's Hold and the only way to reach
   // their save was to start a new game and press F11. A load is not a
@@ -7597,6 +7621,18 @@ export async function bootWorld(canvas, renderer, params, status) {
       },
     });
 
+    // AT2: AmbientTextMod.Update. ABOVE THE MODAL GATE, for the same
+    // reason the holiday text is: it is a MonoBehaviour Update and DFU
+    // does not suspend those when you walk through a door. One tick
+    // here covers all three of this host's modes - the mod's own
+    // IsPlayerInsideBuilding arm is what silences it indoors, not a
+    // missing call - which is why worldModes.js, the interior host, is
+    // deliberately NOT wired: its frame is consumed BELOW this line.
+    // It sits above the torch sweep's own note rather than below it
+    // because AUDIT 66 F11 pins that sweep ADJACENT to the modal
+    // return, and a line between them reads to that pin as a sweep
+    // that has drifted back down the frame.
+    tickAmbientText();
     // AUDIT 66 F11: the torch sweep runs HERE, above the modal
     // return, because that is where the transition is. It used to sit
     // with the tick at the foot of the exterior frame - which this

@@ -421,9 +421,10 @@ export const FEATURES = Object.freeze([
   modFeature('handheld-torches', 'Takes effect at once.', 'loot'),   // HT1: the component reads its switches every frame
   // AT0 (2026-09-15): AMBIENT TEXT - `world`, because what it talks
   // about is where you are. Its effect line is the mod's own pacing:
-  // the switch is read at the tick, so turning it on does not speak now,
-  // it speaks at the next interval.
-  modFeature('ambient-text', 'Takes effect at the next interval - the mod speaks on its own clock.', 'world'),
+  // off falls silent at once, and on hands the mod back a clock that
+  // has been running the whole time (AT1 - the interval keeps running
+  // while the mod is quiet, exactly as it does while you are indoors).
+  modFeature('ambient-text', 'Takes effect at once. The mod then speaks on its own clock.', 'world'),
   // FT10 (2026-09-14): DFU'S OWN DUNGEON ENHANCEMENTS - three of the
   // Enhancements section's switches, each read by the port at the point
   // of use as DFU reads it. DFU Classic: Daggerfall Unity's departures

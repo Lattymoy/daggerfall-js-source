@@ -354,7 +354,7 @@ export async function bootInterior(canvas, renderer, params, status) {
     // scan, for the reason DFU states on the gate (SetActive(false) on
     // the geometry would mess with the open map's rendering). Update's
     // own call at :1001 is the one-shot lazy init, not a per-frame
-    // driver. dungeon.js:645 and worldModes.js:5179/:5203 gate the same
+    // driver. dungeon.js:677 and worldModes.js:5179/:5203 gate the same
     // way; this is that gate for this host.
     if (!gamePaused()) ctx.automapTick?.(dt, cam.pos, fwd);
     if (overlay) {
