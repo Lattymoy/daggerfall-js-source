@@ -37,7 +37,8 @@
 
 import { isEnhanced } from '../systems/uiSkin.js';
 import { registerOverlay } from './enhancedOverlays.js';   // PX28: Tab puts it away
-import { NativeInventoryWindow, inventoryArtLoaded } from './nativeInventory.js';
+import { inventoryArtLoaded } from './nativeInventory.js';
+import { NativeInventoryWindow } from './classicInventory.js';   // CM5: DFU partial-stack input popup
 import { closeSession } from '../systems/inventorySession.js';
 
 export { inventoryArtLoaded };
