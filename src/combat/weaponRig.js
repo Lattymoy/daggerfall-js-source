@@ -24,6 +24,7 @@
 // objects; open exteriors have nothing in reach).
 
 import { PlayerWeapon, WEAPON_REACH } from './playerWeapon.js';
+import { eotbBody } from '../player/eotbBody.js';   // EOTB5: the sprite body, for a player with no Morrowind data
 import { racialFpsWeapon } from '../systems/lycanthropy.js';   // V4: the transformed rig's claws
 import { EQUIP_SLOTS, equipTableOf } from '../systems/equip.js';   // AUDIT 17e F17; MW-D32 the worn read
 import { dfWornEquipment } from '../formats/mwItemMap.js';   // MW-D32
@@ -202,6 +203,14 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   // writes, so the rig that is stepping the arm re-claims it first.
   const bindArm = () => fpArm.attach(renderer, camera);
   bindArm();
+  // EOTB5: THE OTHER BODY, attached in the same breath as the arm it
+  // stands in for. THE FOUR HOSTS named: exterior.js, world.js,
+  // worldModes.js and dungeonContext.js - none of them carries a call,
+  // because all four build a weapon rig and this is the one place
+  // `fpArm.attach` is called. Four call sites would be four chances to
+  // forget one, which is the failure MW-D15 recorded for the camera
+  // dep before it had one home.
+  eotbBody.attach(renderer);
   // MWFIX 3, RESTORED. The reverted rig read hasStoredMorrowind() ONCE at
   // construction, so attaching data to a running game changed nothing
   // until a reload - which is what "after uploading does not work at

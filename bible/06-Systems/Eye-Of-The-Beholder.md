@@ -284,14 +284,69 @@ but a departure nobody wrote down does not exist, so the head says it
 and a pin keeps the sentence there. **A housekeeping slice should
 rename it** to something that means "the player's view".
 
+## The body on screen (EOTB5)
+
+`eotbSprite.js` holds the art and the clock; `eotbBody.js` holds the
+one instance and hands `mwView` the two doors EOTB4 left open.
+
+**The four hosts, and why none of them is touched.** Named:
+`scenes/exterior.js`, `scenes/world.js`, `scenes/worldModes.js`,
+`scenes/dungeonContext.js`. None carries a call, and that *is* the
+wiring - all four build a weapon rig, which is the one place
+`fpArm.attach` is called, so the body attaches there beside the arm it
+stands in for. Four call sites would be four chances to forget one,
+which is the failure MW-D15 recorded for the camera dep before it had
+one home. The pin checks it as a **population** - every host that
+builds a rig gets the body, and none carries its own call - so a fifth
+host is covered without an edit.
+
+### A twelve-megabyte JavaScript chunk, and a silent build
+
+Vite inlines any asset under `assetsInlineLimit` (4 KB) as a base64
+data URI. These sprites average **2.8 KB**, so all 3035 qualified:
+
+    dist/assets/weaponRig-CltnXuFm.js   12,112,043 bytes
+
+Twelve megabytes of base64 JavaScript, parsed before the game starts,
+for art most players never look at. The build exited 0 and warned
+about nothing.
+
+The mod's art is excluded from inlining by path now - the same chunk is
+**499 KB**. The rule is narrow, and it **falls through** for everything
+else: a callback returning `true` for other assets would force-inline
+them all regardless of size, which is the opposite mistake and just as
+quiet. That second bug was written and caught here before it shipped,
+which is why the pin *drives* the callback on four paths instead of
+reading it.
+
+Worth recording alongside: an earlier measurement of the same build was
+**meaningless** - the module was not yet in the graph, so "the build is
+unaffected" described a build that never included the file. And 3035
+sprite files hold only **1852 distinct images**, so Vite's content
+hashing collapses the duplicates for free.
+
+### What the body does
+
+Metres per pixel from `get_sizeMod` (0.019 on foot, 0.029 riding *or*
+transformed - one arm covers both). The frame clock catches up over a
+stall without eating frames and without hanging. The footfall follows
+the picture, on frames 2 and 4 and no others. And a **mirrored sprite
+is its own texture cache key**, because the renderer's billboard batch
+has no flip - a shared key would make the second upload a silent no-op
+with half the wheel facing the wrong way.
+
+Under node the glob is empty by construction, so the whole lane stays
+shut in the suite. That is asserted rather than assumed, because
+otherwise "the tests pass" is partly an accident of the environment.
+
 ## Where the slices stand
 
 EOTB0 (vendoring, provenance, the art payload, the doctrine gate, the
 settings surface, the Features row, credits and the registry), EOTB1-
 EOTB2 (the IL read and the camera), EOTB3 (the billboard's logic) and
-EOTB4 (the view seam) are done. EOTB5-EOTB7 - the four hosts, the
-drawing that turns the lane on, and the rest of the pins - are in
-flight.
+EOTB4 (the view seam) and EOTB5 (the body, the art and the four hosts)
+are done. EOTB6-EOTB7 - the remaining settings surface, the probe on a
+real GPU, and the arc's records - are in flight.
 
 **NOT SEEN ON A GPU.** There is no GL and no ARENA2 in the container
 this was written in. Mac's eye is the gate.
