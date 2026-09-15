@@ -19,6 +19,10 @@ export const HOW_MANY_ITEMS = (max) => `Pick how many items (max ${max})?`;
 export const SPLIT_INPUT_MAX = 8;
 
 const amountOf = (item) => item?.stackCount ?? 1;
+const isControlCode = (code, e = null) =>
+  code === 'ControlLeft' || code === 'ControlRight'
+  || e?.code === 'ControlLeft' || e?.code === 'ControlRight'
+  || e?.key === 'Control';
 const parsedAmount = (text, max) => {
   const count = Number.parseInt(String(text), 10);
   return Number.isInteger(count) && count >= 1 && count <= max ? count : null;
@@ -32,12 +36,17 @@ class NativeInventoryWindow extends BaseInventoryWindow {
   constructor(hooks) {
     super(hooks);
     this.splitBox = null;
+    // TransferItem polls LeftControl/RightControl at the moment the
+    // item is clicked. The hosts already deliver both keyboard edges
+    // to their overlay slot, so this wrapper can hold the same state
+    // without widening every host's pointer signature.
+    this._controlDown = false;
   }
 
-  _openSplit(max, perform) {
+  _openSplit(max, perform, value = String(max)) {
     this.splitBox = new InputMessageBoxWindow({
       label: HOW_MANY_ITEMS(max),
-      value: String(max),
+      value,
       maxCharacters: SPLIT_INPUT_MAX,
       numeric: true,
       onSubmit: (text) => {
@@ -56,16 +65,19 @@ class NativeInventoryWindow extends BaseInventoryWindow {
     const it = this._filtered()[this.scroll + slot];
     if (!it) return;
 
-    // Ask without side effects first. If no split is needed, let the
-    // base run the one real plan. If a split IS needed, run the real
-    // plan now: DFU's quest-item rung executes before the popup opens.
+    // Ask without side effects first. A capacity-limited move opens
+    // the popup automatically; holding Control forces the SAME popup
+    // for an otherwise-whole stack (TransferItem :1515-1539).
     const remote = this._remote();
     const dry = planStore(it, {
       remote, usingWagon: this.usingWagon, chooseOne: this.chooseOne,
       getQuest: this.hooks.getQuest ?? null, dryRun: true,
     });
-    if (!dry.ok || dry.map || dry.amount >= amountOf(it)) return super._pick(slot, mode);
+    const forceSplit = this._controlDown && amountOf(it) > 1;
+    if (!dry.ok || dry.map || (!forceSplit && dry.amount >= amountOf(it))) return super._pick(slot, mode);
 
+    // Run the real plan before opening the field: DFU's quest-item rung
+    // executes above the split decision, even when the popup follows.
     const plan = planStore(it, {
       remote, usingWagon: this.usingWagon, chooseOne: this.chooseOne,
       getQuest: this.hooks.getQuest ?? null,
@@ -75,7 +87,7 @@ class NativeInventoryWindow extends BaseInventoryWindow {
       audio.playOneShot(SOUND.ButtonClick, 1);   // DoTransferItem (:1583)
       applyTransfer(it, { ...plan, amount: count }, this.hooks.items(), remote,
         { entity: this.hooks.entity, fromLocal: true });
-    });
+    }, forceSplit ? '0' : String(plan.amount));
   }
 
   /** Remote Remove/Equip -> TransferItem. Same popup, plus the tail
@@ -95,11 +107,12 @@ class NativeInventoryWindow extends BaseInventoryWindow {
       getQuest: this.hooks.getQuest ?? null,
     };
     const dry = planTake(it, { ...args, dryRun: true });
-    if (!dry.ok || dry.map || dry.amount >= amountOf(it)) return super._pickRemote(slot, mode);
+    const forceSplit = this._controlDown && amountOf(it) > 1;
+    if (!dry.ok || dry.map || (!forceSplit && dry.amount >= amountOf(it))) return super._pickRemote(slot, mode);
 
     // RemoteItemListScroller marks a quest item clicked before
     // TransferItem. Preserve that edge here because the base arm will
-    // not run once we own the partial move.
+    // not run once we own the split move.
     if (it.questItem) this.hooks.getQuest?.(it.questUID)?.getItem?.(it.questSymbol)?.setPlayerClicked();
     const plan = planTake(it, args);
     if (!plan.ok) { this._refuse(plan.refusal); return; }
@@ -120,16 +133,24 @@ class NativeInventoryWindow extends BaseInventoryWindow {
         this._closeSilently();
         cb?.(taken);
       }
-    });
+    }, forceSplit ? '0' : String(plan.amount));
   }
 
   input(code, e = null) {
+    // Input.GetKey(Control) is state, not an event modifier. Record the
+    // down edge here and the matching up edge below so a later mouse
+    // click sees exactly the state TransferItem polls.
+    if (isControlCode(code, e)) this._controlDown = true;
     if (this.splitBox) {
       this.splitBox.input(code, e);
       if (this.splitBox.done) this.splitBox = null;
       return;
     }
     super.input(code, e);
+  }
+
+  keyup(code, e = null) {
+    if (isControlCode(code, e)) this._controlDown = false;
   }
 
   click(vx, vy, right = false, middle = false) {
