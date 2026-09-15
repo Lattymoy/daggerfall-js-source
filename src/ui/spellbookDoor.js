@@ -19,12 +19,15 @@
 // too and looks like a duplicate from a distance; it is the spell
 // merchant's shop - buyMode, with `offered`, the building's quality,
 // the shop name, the haggling skills and the classic clock. Different
-// question, different deps, and it stays where it is.
+// question, different deps, and it stays where it is. The board called
+// it "a hand-rolled second one"; it is a second WINDOW, and this door
+// does not take it.
 //
 // The skin fork is charSheetDoor's, for the reason that door gives:
 // the classic window survives a failed art load and the enhanced one
 // reads no ARENA2 at all, so the readiness gate differs by skin.
 import { isEnhanced } from '../systems/uiSkin.js';
+import { mountEnhancedChunk } from './enhancedChunk.js';   // MENU1: the one lazy-chunk door
 import { registerOverlay } from './enhancedOverlays.js';   // PX28: Tab puts it away
 import { spellbookArtLoaded } from './spellbookWindow.js';
 import { SpellbookWindow } from './classicSpellbook.js';   // CM6: classic rename pushes DaggerfallInputMessageBox
@@ -102,13 +105,13 @@ function enhancedSpellbookOverlay(shared, onClose) {
     host.id = 'enhanced-spellbook';
     host.style.cssText = 'position:fixed;inset:0;z-index:11';
     document.body.append(host);
-    unregister = registerOverlay(close);
-    import('./enhancedSpellbook.js').then(({ mountEnhancedSpellbook }) => {
-      if (done) return;
-      view = mountEnhancedSpellbook(host, { ...shared, onExit: close });
-    }).catch((e) => {
-      console.warn('[spellbook] the enhanced book could not mount:', e?.message ?? e);
-      close();
+  unregister = registerOverlay(close);
+    // MENU1: the ONE lazy-chunk door (ui/enhancedChunk.js) - retried
+    // once, then SPOKEN rather than closed in silence.
+    mountEnhancedChunk({
+      load: () => import('./enhancedSpellbook.js'),
+      mount: ({ mountEnhancedSpellbook }) => { view = mountEnhancedSpellbook(host, { ...shared, onExit: close }); },
+      alive: () => !done, host, onDismiss: close, label: 'spellbook',
     });
   };
   mount();
