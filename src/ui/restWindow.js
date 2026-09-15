@@ -16,12 +16,11 @@
 // So this file makes the same native pass ui/tavernWindow.js made on
 // TVRN00I0: the two PAGES that are the rest window itself - DFU's
 // mainPanel and its counterPanel - are real ARENA2 art on the 320x200
-// native screen, with the button rects driving the pointer. The other
-// five states this file carries are DaggerfallMessageBox and
-// DaggerfallInputMessageBox pushed OVER the window (the citations are
-// in `input` below), so they keep the shared text idiom that every
-// box in this port still uses - that is a different window class and
-// a different slice.
+// native screen, with the button rects driving the pointer. CM2 takes
+// the other five states through the shared classic parchment renderer:
+// DaggerfallMessageBox and DaggerfallInputMessageBox are now SPOP.RCI
+// nine-slice modals with BUTTONS.RCI buttons and fixed-width fields,
+// rather than the old interim flat text panel.
 //
 // Art-less (no ARENA2 reachable) keeps the whole text chain, the
 // townTalk preload idiom: the pages fall back to the clean panel and
@@ -62,6 +61,7 @@ import { bindings } from './input.js';               // B5: the live InputManage
 import { getBinding } from '../systems/inputActions.js';   // B5: InputManager.GetBinding(Actions.Rest)
 import { loadImg, nativeMetrics, drawImg, shadowText, NATIVE_W } from './nativePanel.js';   // D3: the native-window idiom
 import { drawMenuBackdrop } from './chargenArt.js';   // D3: Setup :137-138, ParentPanel.BackgroundColor = Color.black
+import { layoutMessageBox, drawMessageBox, messageBoxHit, messageBoxArtLoaded, MB_BUTTONS } from './messageBox.js';   // CM2: the five pushed modal states
 import { isEnhanced } from '../systems/uiSkin.js';   // CLK4: the enhanced skin's rest is a veil, not a wall
 import { dateFromClassicMinutes } from '../systems/gameDate.js';   // OL2: the world's clock, read for the counter page
 import { ONLINE_MINUTES_PER_MS } from '../net/wire.js';   // OL2: the pace, derived from the one rate rather than spelled
@@ -199,6 +199,7 @@ export class RestWindow {
     this.isRestWindow = true;   // the scene's tick tag
     this.ignoreAllocatedBed = ignoreAllocatedBed;
     this._pending = null;       // the button waiting behind the confirm
+    this._box = null;           // CM2: current parchment modal layout for pointer hits
     this._allocatedBed = null;  // CanRest's out-parameters, both of
     this._remainingHoursRented = -1;   // them, carried to the session
     this._pendingEnemySpawn = false;   // a latch raised before a mode is picked
@@ -669,7 +670,14 @@ export class RestWindow {
    *  exactly that; the two outdoor ones could not, because the seam
    *  they refuse through is the presence of this method. */
   click(vx, vy) {
-    if (this.state === 'ended' || this.state === 'refused') this.input(this.state === 'ended' ? 'confirm' : 'back');
+    if (this.state === 'confirm') {
+      const hit = this._box ? messageBoxHit(this._box, vx, vy) : null;
+      if (hit === MB_BUTTONS.Yes) this.input('confirm');
+      else if (hit === MB_BUTTONS.No) this.input('back');
+    } else if (this.state === 'hours') {
+      // DaggerfallInputMessageBox owns the pointer while its TextBox is
+      // topmost. There is no click-anywhere close and no button.
+    } else if (this.state === 'ended' || this.state === 'refused') this.input(this.state === 'ended' ? 'confirm' : 'back');
     else if (this.state === 'hoursRefused') this.input('confirm');   // F144: click-anywhere
     else if (this.state === 'resting') {
       // StopButton_OnMouseClick (:708-712). D3: once the counter panel
@@ -796,6 +804,38 @@ export class RestWindow {
 
   draw(renderer, canvas, font, s) {
     if (this._drawNative(renderer, canvas, font)) return;
+
+    // CM2: these are not pages of DaggerfallRestWindow. They are
+    // separate DaggerfallMessageBox / DaggerfallInputMessageBox
+    // windows PUSHED over it. The port already owns their native
+    // parchment renderer in messageBox.js, so use it rather than
+    // drawing the old interim flat card. The hours field sizes against
+    // MaxCharacters, not its current value, exactly like ActionInputBox.
+    if (messageBoxArtLoaded() && font
+      && ['confirm', 'hours', 'hoursRefused', 'refused', 'ended'].includes(this.state)) {
+      const m = nativeMetrics(canvas);
+      let rows = [];
+      let buttons = [];
+      let opts = {};
+      if (this.state === 'confirm') {
+        rows = [ILLEGAL_REST_WARNING];
+        buttons = [MB_BUTTONS.Yes, MB_BUTTONS.No];
+      } else if (this.state === 'hours') {
+        const prompt = this.mode === 'loiter' ? LOITER_PROMPT : REST_PROMPT;
+        rows = [prompt, ` > ${this.value}_`];
+        opts = { sizingRows: [prompt, ` > ${'0'.repeat(PROMPT_MAX_CHARS)}_`] };
+      } else if (this.state === 'hoursRefused') {
+        rows = [...(this.notice ?? [''])];
+      } else if (this.state === 'refused') {
+        rows = this.refusalLines ?? [''];
+      } else {
+        rows = this.endLines ?? [''];
+      }
+      this._box = layoutMessageBox(font, rows, buttons, opts);
+      if (drawMessageBox(renderer, m, font, this._box)) return;
+    }
+    this._box = null;
+
     let lines;
     if (this.state === 'selection') {
       lines = ['How would you like to rest?', '', '1. Rest for a while', '2. Rest until healed', '3. Loiter', '', 'Esc - never mind'];
