@@ -2,9 +2,12 @@
 // transform things into a diablo style system with rarity ... Make
 // this the most detailed and best that it can be"): LOOT RARITY - the
 // port's own item ladder over Daggerfall's loot. ENHANCED, the port's
-// departure from DFU's rules, off by default like the enhanced AI and
-// on for everyone online (OL1). Off, not one field is written and not
-// one read moves: DFU's loot, exactly.
+// departure from DFU's rules, ON by default (LR5, 2026-09-15, Mac: "I
+// want to mod on by default" - it shipped off beside the enhanced AI,
+// and Mac's call is that the ladder is the port's own game rather than
+// something a player has to go and ask for) and on for everyone online
+// (OL1). Off, not one field is written and not one read moves: DFU's
+// loot, exactly - so the 1:1 lane is one press away, not lost.
 //
 // THE LADDER. Five tiers, and Daggerfall already had three of them:
 //   common     - a plain item, DFU's own mint, untouched

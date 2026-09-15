@@ -586,3 +586,65 @@ takes effect at once; `?wxfield=off` the kill door. The record is
 `bible/07-Rendering/Weather-Arc.md` B. The home holds 27 rows now: 12
 Enhanced, 7 Mod Authored, 10 DFU Classic. Pins re-aimed: FT0's id
 list, FT2's and FT8's counts. `test/weather2b_weatherfield.test.js`.
+
+## LR5 + PREF1 - A DEFAULT THAT CAN ACTUALLY CHANGE (2026-09-15)
+
+Mac: *"I want to mod on by default"*, on the loot ladder. The row's
+flip is one character - `initial: false` becomes `initial: true` on
+`loot-rarity`, and RF4's one declaration carries it to the shelf, the
+home's control and the online lane with no second edit. The lane
+already forced it on, so online is unchanged; offline, a new player now
+meets the ladder instead of having to find it.
+
+**Auditing that flip found the reason it would not have worked.**
+
+`savePrefs` wrote `_prefs` whole, and `_prefs` is
+`{ ...PREF_DEFAULTS, ...stored }`. So the FIRST `setPref` of ANY key -
+the volume, the skin, a touch dial - materialised EVERY default into
+the player's storage. From that moment the shelf could not tell a
+deliberate answer from a default it had written itself, and **a default
+the port later changed could never reach a player who had once touched
+any setting at all.** The defect is latent by nature: it costs nothing
+until a default moves, and then it costs the whole change, silently.
+LR5 is where it would have bitten - Mac's own shelf carries
+`lootRarity: false`, so the flip would have done nothing for him and
+the switch would have looked broken.
+
+**The root cause is that the shelf stored defaults as if they were
+choices**, so the fix is that it stops:
+
+- `savePrefs` drops any key whose value equals the default
+  (`overridesOf`, the pure half). Reading is untouched - `getPref`
+  already answers `_prefs[k] ?? PREF_DEFAULTS[k]`, and `??` falls
+  through on null/undefined alone, so a stored `false` still beats a
+  `true` default. No behaviour moves today; what changes is that every
+  FUTURE default change lands.
+- The shelves already written carry their own day's defaults with
+  nothing saying which were answers - that information was destroyed at
+  save time and cannot be recovered. An UNSTAMPED shelf therefore
+  adopts the new default ONCE, for named keys only, and the save stamps
+  it (`_rev`) so it never runs again. One key is named, `lootRarity`,
+  and the reasoning is bounded rather than hopeful: the row shipped OFF
+  on 2026-09-14 and LR5 turned it ON one day later, so a stored `false`
+  was the shelf's and not a player's. Pressing it off after that load
+  differs from the default, is persisted as the choice it is, and
+  survives every reload.
+
+**The knock-on worth knowing:** a player who deliberately sets a value
+that happens to equal today's default is not distinguishable from one
+who left it alone, and will move with that default if it ever changes.
+That is inherent - "the same as the default" is not a separable intent -
+and it is the right trade against a shelf that freezes every default
+for ever.
+
+**The trap this class of change sets for the suite**, met twice:
+`test/lr1_lootrarity.test.js` and `test/rf2_spawnloot.test.js` both
+drove their OFF half through a bare `_resetForTests()`. With the row
+shipping ON that stops meaning "off" - those pins would have gone on
+testing the ON path, in silence, and passing. Both press the switch off
+explicitly now.
+
+Pins: `test/pref1_shelf.test.js` (6, two mutants killed - `savePrefs`
+writing the whole shelf again, and the adoption ignoring the stamp so a
+real "off" is overwritten on every load), plus the re-aimed LR5 switch
+pin and `test/rf4_featuredecl.test.js`.

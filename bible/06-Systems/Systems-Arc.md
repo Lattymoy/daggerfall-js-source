@@ -5614,8 +5614,14 @@ the LR pins read through the channels; AUDIT 24 wave 28's and AUDIT
 
 ### LR1-LR3 - LOOT RARITY, THE PORT'S OWN ITEM LADDER (2026-09-14, Mac: "transform things into a diablo style system with rarity ... the most detailed and best that it can be")
 
-ENHANCED, built in house, one row on the Features home, off by
-default and on online. Its own page carries the design whole:
+ENHANCED, built in house, one row on the Features home, ON by default
+(LR5, 2026-09-15, Mac: "I want to mod on by default" - it shipped off
+beside the enhanced AI, and Mac's call is that the ladder is the port's
+own game rather than an opt-in; off is still DFU's loot exactly, one
+press away) and on online. AUDIT-LR (2026-09-15) read the whole mod by
+execution in both lanes and found the laws sound and the ONLINE half
+unpinned; the two doors a rolled item crosses are pinned now. Its own
+page carries the design whole:
 `bible/06-Systems/Loot-Rarity.md`. In one paragraph: five tiers
 (Common, Magic, Rare, Legendary, DFU's artifacts as the ceiling) over
 DFU's loot - one ladder, DFU's own magic items reading as Magic, never
