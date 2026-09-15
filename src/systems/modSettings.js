@@ -221,7 +221,14 @@ export const MOD_SETTINGS = Object.freeze({
       'Throwing.Magnitude': Object.freeze({ default: Object.freeze([1, 2]), tuple: 'int', description: 'Fire damage a round, least and most.' }),
       'Throwing.Emission': Object.freeze({ default: true, description: 'A burning foe carries a light.' }),
       'Throwing.EmissionShadows': Object.freeze({ default: false, description: 'A burning foe\u2019s light casts shadows (DFU only; no twin here).' }),
-      'Modules.Sprite': Object.freeze({ default: false, description: 'Sprite: a first-person hand holding the lit torch or lantern.' }),
+      // MODS-ON (2026-09-14, Mac: "all mods should be on by default"): the
+      // shipped modsettings.json carries `Sprite = False`, so the mod itself
+      // ships its first-person hand switched off - and the hand is the mod's
+      // whole subject. The HT2 audit measured what that costs: everything
+      // works (all eight sprites decode and upload, the hand is free, the
+      // torch is lit) and `draw()` still answers false, so a player lights a
+      // torch and sees nothing. This ONE default departs; Ledger A row MODS-ON.
+      'Modules.Sprite': Object.freeze({ default: true, description: 'Sprite: a first-person hand holding the lit torch or lantern.' }),
       'Modules.Bob': Object.freeze({ default: false, description: 'Bob: the sprite sways as you walk.' }),
       'Modules.Inertia': Object.freeze({ default: false, description: 'Inertia: the sprite lags the look and your movement.' }),
       'Modules.Step': Object.freeze({ default: false, description: 'Step: the sprite\u2019s position is rounded so it moves in steps.' }),

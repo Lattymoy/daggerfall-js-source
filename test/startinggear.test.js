@@ -46,9 +46,17 @@ test('startingGear: a male Warrior begins dressed, armed and funded', () => {
   assert.ok(weapon, 'Warrior: Broadsword');
   assert.equal(weapon.material, 0, 'iron');
   assert.equal(goldAmount(e), STARTING_GOLD);
-  // no torches by default - PlayerTorchFromItems is a DFU setting
-  assert.equal(byTemplate(e, 247), undefined);
-  assert.equal(byTemplate(e, 253), undefined);
+  // MODS-ON (2026-09-14, Mac: "all mods should be on by default"):
+  // PlayerTorchFromItems is the port's default now, so the kit carries
+  // DFU's five torches and two candles - which is the point, since a
+  // player who cannot find a torch cannot light one. The setting is
+  // still the switch: the explicit-false arm below proves it.
+  assert.equal(e.items.filter((i) => i.templateIndex === 247).length, 5, '5 torches');
+  assert.equal(e.items.filter((i) => i.templateIndex === 253).length, 2, '2 candles');
+  const dark = ent('male');
+  assignStartingGear(dark, { classIndex: 16, rolls: () => 0.5, torchesFromItems: false });
+  assert.equal(byTemplate(dark, 247), undefined, 'the setting off is still the setting off');
+  assert.equal(byTemplate(dark, 253), undefined);
 });
 
 test('startingGear: women get their own clothing templates', () => {
@@ -87,8 +95,8 @@ test('startingGear: a custom class gets an iron longsword, and torches ride the 
   assert.ok(sword, 'custom classes get a Longsword');
   assert.equal(sword.material, 0, 'iron');
   assert.equal(byTemplate(custom, 118), undefined, 'not the class table weapon');
-  // PlayerTorchFromItems is a DFU enhancement, not classic - ported
-  // but defaulted off
+  // PlayerTorchFromItems: DFU ships it off, the port turns it on
+  // (MODS-ON); either way the flag is what decides
   const lit = ent('male');
   assignStartingGear(lit, { classIndex: 16, rolls: () => 0.5, torchesFromItems: true });
   assert.equal(lit.items.filter((i) => i.templateIndex === 247).length, 5, '5 torches');

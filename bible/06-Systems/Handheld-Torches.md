@@ -457,3 +457,60 @@ hand law takes it, the sprite draws, `PlayerTorch` follows the hand.
 fill IS dropped on the ground - a shield in the left and a weapon in
 the right leaves no free hand, and the mod drops rather than stows.
 That is the mod's law, 1:1, not a bug.
+
+## HT2-AUDIT - A LIT TORCH IS INVISIBLE BY DEFAULT, AND BOTH DEFAULTS ARE FAITHFUL (2026-09-14)
+
+Mac, after HT2 shipped: *"Audit this to ensure youre not just guessing
+and this actually works"*. The pack's act was proved in a browser
+(`tools/ht2TorchProbe.mjs`); this is the OTHER half of the same
+question, and it found something the pack fix does not answer.
+
+`tools/ht1HandProbe.mjs` lights a torch through the pack's card and
+then mounts this component on a REAL `Renderer` over a real WebGL2
+context, letting it fetch and decode its own vendored PNGs. What it
+measures, settled:
+
+- all EIGHT sprites load, decode and upload - four torch frames and
+  four lantern frames, a 90x205 GL texture, and NOT ONE console line
+  (so TEX1's door holds against the real files, not a stub);
+- `hasFreeHand` is true with empty hands, the lit torch is the
+  entity's `lightSource`;
+- `draw()` returns **false**, and the torch is nowhere on screen.
+
+**Why.** `Modules.Sprite` is `false`. That is not a port slip - the
+shipped `modsettings.json` carries `Sprite = False`, so the mod itself
+ships its first-person hand switched off, and the port is 1:1. With
+the module on, the same probe draws: `draw()` true, the rect settling
+at x 88, y 186, 144x328 on a 640x400 canvas - bottom left, on screen,
+where SetGuard puts it. (A rect read before the rest smoothing settles
+is part off-screen, which is `moveTowards` mid-flight and not a
+layout fault; the probe runs 240 frames for that reason.)
+
+**And the light is a second switch.** `tickPlayerTorch` is gated on
+`Enhancements/PlayerTorchFromItems`, which DFU's own `defaults.ini`
+ships `False` - so a stock player who lights a torch gets no hand AND
+no light. Nothing is broken; two faithful defaults simply add up to an
+invisible act.
+
+Both are reachable in the port: `Modules.Sprite` on the Mods pane
+under Handheld Torches, `PlayerTorchFromItems` in Settings as "Torches
+Light Your Way". Whether the port should DEPART from either default -
+this mod's whole point is a torch you can see in your hand - is a
+decision for Mac and a Ledger A row if taken, not something an audit
+takes on its own.
+
+## MODS-ON - THE HAND AND THE LIGHT ARE ON NOW (2026-09-14)
+
+Mac, on the audit above: *"Yes all mods should be on by default"*.
+
+Both switches the audit named are the port's own default now, and only
+those two: `Modules.Sprite` true on the Mods pane, and
+`Enhancements/PlayerTorchFromItems` 'True' through
+`settings.js`'s `PORT_DEFAULTS` - a layer laid OVER the generated
+defaults table, never edited into it, because that table is generated
+from DFU's shipped ini and pinned against it. A player's own override
+still wins over both, and setting a value back to the port's default
+drops the override exactly as before.
+
+`Bob`, `Inertia` and `Step` stay off as the bundle ships them: they are
+presentation, and the sprite is the subject. Ledger row MODS-ON.
