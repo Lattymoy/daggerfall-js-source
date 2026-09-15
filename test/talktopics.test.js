@@ -80,6 +80,24 @@ test('talkTopics: the tone tiers (T3f) - mods, skill roll, session cache, first-
   assert.deepEqual([...STREETWISE_REACTION_MODS], [10, 5, -10, -15, 15]);
   // Neutral wrapper: identical to the T3c shape (p 50 -> reaction 15)
   assert.equal(reactionTier(50, 42), reactionTier012({ personality: 50, npcSeed: 42 }));
+  // AUDIT-TALK: THE DIVISOR, absolutely. `LivePersonality / 5`
+  // (TalkManager.cs:665) is the first term of the whole reaction and
+  // NOTHING pinned it - `/ 4` passed all 7,629 tests in the tree. Every
+  // other assertion in this test is RELATIVE (pass > fail, cached ==
+  // fresh, merchants folds to 1) and a divisor cancels out of all of
+  // them; the only absolute figure was in a comment.
+  //
+  // Seed 4's rollToBeat is exactly 11, which sits BETWEEN the two:
+  // trunc(50/5) = 10 is under it and bands to tier 0, trunc(50/4) = 12
+  // is over it and bands to tier 1. Neutral tone so no skill roll, and
+  // question index 1 so the question mod is 0 - the reaction IS the
+  // divided personality and nothing else.
+  srand(4 >>> 0);
+  assert.equal(randomRangeInclusive(0, 20), 11, 'seed 4 rolls the 11 this pin is built on');
+  assert.equal(reactionTier012({ personality: 50, npcSeed: 4, toneIndex: 1, questionIndex: 1, socialGroup: 0 }), 0,
+    'personality 50 / 5 = 10, under a rollToBeat of 11, is tier 0 - a divisor of 4 would give 12 and tier 1');
+  assert.equal(reactionTier012({ personality: 55, npcSeed: 4, toneIndex: 1, questionIndex: 1, socialGroup: 0 }), 1,
+    '...and 55 / 5 = 11 reaches it, which fixes the divisor from both sides');
   // Polite for a Commoner (sg 0): reaction = 10 + 5 + (-10) + skillRoll;
   // a PASSED skill roll (+5) lands 10, a FAILED one (-10) lands -5 -
   // find a seed whose rollToBeat separates the two into different bands

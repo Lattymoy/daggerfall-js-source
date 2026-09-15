@@ -316,7 +316,7 @@ reference surface absent · **Departure** = deliberate, ledgered.
 | **sys-quests** | Verbatim | **Verbatim** | 82/82 action templates, 265 quests. `playSound`'s busy-skip was the one recorded delta and the E-group closed it (`systems/audio.js`'s `QuestAudioSource`). |
 | **sys-guilds** | Law exact / two structural holes | **Verbatim** | ROAD-D D9 shipped `KnightlyOrder.RestoreGuildData`'s flag migration through the one load door. `SERVICE_DESTINATION` 20/20. |
 | **sys-items** | Law exact / live money bugs | **Verbatim** | ROAD-A A2 took the daily `stockedDate` restock, book prices off `BookFile`, condition-0 shelf arrows and `SplitStack`'s fresh mint; ROAD-D D7 took the live pack, native Repair, the recipe panel and item tooltips. |
-| **sys-talk** | Engines verbatim / six host seams unfilled | **Verbatim** | `getQuestorName()` is the seeded name bank (`systems/npcSession.js:588-595`) - the last of the superseded page's empty reads. ROAD-A A9 also mounted bulletin boards and the `GrammarManager.ProcessGrammar` pass. |
+| **sys-talk** | Engines verbatim / six host seams unfilled | **Verbatim** | `getQuestorName()` is the seeded name bank (`systems/npcSession.js:596-603`) - the last of the superseded page's empty reads. ROAD-A A9 also mounted bulletin boards and the `GrammarManager.ProcessGrammar` pass. |
 | **sys-sim** | Law line-for-line / clock seam broken | **Near-1:1** | `preventEnemySpawns` is live on the fast-travel path (`world.js:1950`, `:1729`). Ledger row `:589`'s residue list is spent - see list 2. |
 | **sys-audio** | Data verbatim / engine risk | **Verbatim** | 133 songs, 39 playlists, 76 named clips. |
 | **sys-save** | Broad / three features silently dropped | **Verbatim** | ROAD-A A4 took the envelope stragglers (resistances, `skillsRecentlyRaised`, `minMetalToHit`, `previousVampireClan`, `timeToBecomeVampireOrWerebeast`, `playerTeleportedIntoDungeon`); ROAD-C C1 built the multi-slot window over the store. |
@@ -353,7 +353,7 @@ superseded page's own closing list of what remained open:
 |---|---|
 | the multi-slot save/load window | **built** - `ui/saveWindow.js`, 782 lines (ROAD-C C1) |
 | the native automap windows (3D view, render modes, note markers, teleporter portals) | **built** - 4,742 lines across seven modules (ROAD-C C2) |
-| `GetQuestorName`'s name bank | **built** - `systems/npcSession.js:588` (ROAD-A A9) |
+| `GetQuestorName`'s name bank | **built** - `systems/npcSession.js:596` (ROAD-A A9) |
 | the pause architecture | **narrowed** - a real window stack with a `PauseWhileOpen` latch; no host reads `paused()` |
 | the voxel rig is editor-only | **unchanged** - a departure, not on the road |
 | the 151 FLAGGED/INTERIM sites | **19** |

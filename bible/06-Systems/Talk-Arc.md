@@ -1581,3 +1581,91 @@ never spends.
 :327-333) — and the mobile-click handler now checks AHEAD of both
 branches, because the pre-engine fallback returns at its directory-less
 arm before `openTalkWindow` is ever reached.
+
+## AUDIT-TALK, 2026-09-15 - the arc read against TalkManager.cs
+
+Mac: "Can you do a comprehensive audit on the npc talk system". Done
+against DFU's real source (a sparse clone of `Assets/Scripts`, so
+`TalkManager.cs`, `TalkManagerMCP.cs`, `DFRandom.cs` and `PlayerEntity.cs`
+were read, not remembered).
+
+### What the parity pass found: very little, and that is the finding
+
+- **Coverage.** `TalkManager.cs` declares 120 methods and 110 are named
+  somewhere in the port. Of the ten that are not, three are Unity
+  singleton plumbing, `NPCsAlwaysFriendly` is a console-command debug
+  override, and **`GetFactionNPCAlly` / `GetFactionNPCEnemy` /
+  `GetFactionNPC` / `GetFactionPC` are dead code in DFU itself** - no
+  caller anywhere in `Assets/Scripts`. The last two, `GetQuestorGender`
+  and `GetQuestorLocation`, are live and the port carries both through
+  the macro layer (`%pqn`, `%pqp`).
+- **Citations.** Every header citation spot-checked in
+  `answerPipeline.js` lands on exactly the member it names.
+- **The laws.** `GetNPCKnowledgeAboutItem` (every arm, including the
+  recursive building-dependency arm and the seed composition),
+  `GetAnswerText` (including `SetRandomQuestor()` running on tiers 1-2
+  only), `GetNPCGreetingRecord` (including the `rep >= 30 && index != 8`
+  / `rep <= 5 || index != 8` pair and the fall-through when neither
+  matches), `GetNewsOrRumors` (including `TokensToString(tokens, false)`
+  on the common arm and the DEFAULT separator on the quest arm),
+  `RefreshRumorMill` (one caller in DFU, same position in the port),
+  `_resolveRegionID`'s four-step chain: all faithful.
+- **`DFRandom`.** C#'s state is a `ulong`; the port's is a BigInt masked
+  to 64 bits, and `Seed`/`srand` really are the same assignment in DFU,
+  so the port's accessor pair and its `bumpSeed` wrap are exact.
+
+### The mutation campaign: 20 mutations, 18 caught, 2 survivors
+
+Both survivors are the same shape, and it is worth naming.
+
+| law | mutation | why nothing saw it |
+|---|---|---|
+| `LivePersonality / 5` (`TalkManager.cs:665`) | `/ 4` | survives all 7,629 tests in the tree |
+| `rand <= rollToBeat` (`:625`) | `rand < rollToBeat` | survives all 87 files that touch this system |
+
+**The talk pins measure relationships, not boundaries.** `talktopics`'s
+tier test asserts the three tone tables verbatim and then checks
+`pass > fail`, `cached == fresh`, `merchants folds to 1` - every one of
+them RELATIVE, and a divisor cancels out of all of them. The only
+absolute figure was in a comment. `answerpipeline`'s knowledge test is
+distributional in exactly the same way: dropping the equal case shifts
+every rate by one in twenty and preserves the ordering the assertion
+reads.
+
+Both are pinned absolutely now, each on a seed chosen so the two
+candidate values fall on OPPOSITE sides of a band edge, and each
+mutation-verified.
+
+### Three record findings
+
+1. **A dead seam that looked wired.** `npcSession` declared
+   `portraitForBillboard(npcData)`, read it, and **nothing in the tree
+   supplied it** - feeding an `onTargetChanged` callback that the only
+   host defines as `() => {}`. The portrait was never broken: it rides a
+   different road entirely (ROAD-D D10, `worldModes.js` ->
+   `portraitIndexFromStaticNPCBillboard` -> nativeTalk's own
+   `SetNPCPortrait`). Removed, with the reason: a seam that looks wired
+   and is not is worse than no seam, because the next person to add
+   portrait behaviour wires it and finds nothing calls them.
+2. **Two seams read and never documented** - `clearRumorMill` and
+   `resetQuestionSession` (36 named in the header, 37 read in the code).
+   Added.
+3. **The host split was never written down.** `scenes/exterior.js`
+   mounts `createTownTalk` with five seams and **no `talkEngine`**, so
+   that host runs on townTalk's pre-engine locals and none of TK-i..v.
+   That is a scope decision, not a gap - `main.js` routes every real
+   start through `bootWorld` and says "Dev scenes stay one param away" -
+   but a law with two homes and no record of which host uses which is
+   the shape this codebase keeps being bitten by. Recorded at the
+   locals.
+
+### The methodological finding, which is against the audit itself
+
+The first mutation harness ran a hand-written list of twelve "talk test
+files". It produced **thirteen survivors**. Deriving the list instead -
+every test file that imports a talk module - gives **eighty-seven**, and
+eleven of those thirteen were immediately caught. An enumeration of the
+test files nearly turned eleven false findings into a report, an hour
+after AUDIT-HARD shipped a gate arguing against exactly that. The
+confirmed survivors above are the ones that survived the DERIVED set.
+

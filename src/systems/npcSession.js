@@ -34,7 +34,6 @@
 //   isLastNPCClickedAnActiveQuestor()
 //   expandQuestMessage(quest, tokens, reveal)
 //   fullName(nameBank, gender, nameSeed)
-//   portraitForBillboard(npcData)
 //   messageBox(textOrTokens)    - the UI face
 //   pushTalkWindow()            - the UI face
 //   onTargetChanged(npcData)    - portrait/name refresh
@@ -47,6 +46,10 @@
 //   clearQuestInfo() / clearRumorMill() - OnStartGame's two
 //   clearTopicListRebuild()     - and its reset
 //   resetNPCKnowledge()         - TK-ii's tree
+//   resetQuestionSession()      - TK-iii's pipeline (the question half of
+//                                 StartNewConversation; the tone half is
+//                                 resetToneSession)
+//   clearRumorMill()            - TK-i's mill, for a load
 //   resetToneSession()          - TK-iii's pipeline
 import { srand } from '../formats/dfRandom.js';
 import { randomRangeInclusive } from '../formats/dfRandom.js';
@@ -403,10 +406,15 @@ export class NPCSession {
       race: targetNPC?.data?.race ?? '',
       isSpyMaster: false,
     });
-    this.deps.onTargetChanged?.({
-      kind: NPC_TYPE.Static, nameNPC: this.nameNPC,
-      portrait: this.deps.portraitForBillboard?.(targetNPC) ?? null,
-    });
+    // AUDIT-TALK: the portrait does NOT ride this callback. It used to
+    // read a `portraitForBillboard` seam that NOTHING in the tree ever
+    // supplied, handing the result to a host callback that is an empty
+    // stub - while the real portrait went by a different road entirely
+    // (ROAD-D D10: worldModes.js calls portraitIndexFromStaticNPCBillboard
+    // below and nativeTalk's own SetNPCPortrait seam draws it). A seam
+    // that LOOKS wired and is not is worse than no seam: the next person
+    // to add portrait behaviour wires it and finds nothing calls them.
+    this.deps.onTargetChanged?.({ kind: NPC_TYPE.Static, nameNPC: this.nameNPC });
     this.deps.assembleTopicListPerson?.();
   }
 
