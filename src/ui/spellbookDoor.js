@@ -19,16 +19,15 @@
 // too and looks like a duplicate from a distance; it is the spell
 // merchant's shop - buyMode, with `offered`, the building's quality,
 // the shop name, the haggling skills and the classic clock. Different
-// question, different deps, and it stays where it is. The board called
-// it "a hand-rolled second one"; it is a second WINDOW, and this door
-// does not take it.
+// question, different deps, and it stays where it is.
 //
 // The skin fork is charSheetDoor's, for the reason that door gives:
 // the classic window survives a failed art load and the enhanced one
 // reads no ARENA2 at all, so the readiness gate differs by skin.
 import { isEnhanced } from '../systems/uiSkin.js';
 import { registerOverlay } from './enhancedOverlays.js';   // PX28: Tab puts it away
-import { SpellbookWindow, spellbookArtLoaded } from './spellbookWindow.js';
+import { spellbookArtLoaded } from './spellbookWindow.js';
+import { SpellbookWindow } from './classicSpellbook.js';   // CM6: classic rename pushes DaggerfallInputMessageBox
 
 export { spellbookArtLoaded };
 
@@ -103,7 +102,7 @@ function enhancedSpellbookOverlay(shared, onClose) {
     host.id = 'enhanced-spellbook';
     host.style.cssText = 'position:fixed;inset:0;z-index:11';
     document.body.append(host);
-  unregister = registerOverlay(close);
+    unregister = registerOverlay(close);
     import('./enhancedSpellbook.js').then(({ mountEnhancedSpellbook }) => {
       if (done) return;
       view = mountEnhancedSpellbook(host, { ...shared, onExit: close });
