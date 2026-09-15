@@ -16,16 +16,18 @@
 //     `draw()` returns false and nothing is in your hand.
 //   - `Enhancements/PlayerTorchFromItems` (DFU's own defaults.ini
 //     ships False) gates the LIGHT the torch casts.
-// So out of the box, lighting a torch is invisible: no hand, no light.
-// Both are reachable - the first on the Mods pane under Handheld
-// Torches, the second in Settings as "Torches Light Your Way".
+// So as those two ship, lighting a torch is invisible: no hand, no
+// light. Both are reachable - the first on the Mods pane under
+// Handheld Torches, the second in Settings as "Torches Light Your
+// Way".
 //
-// SPRITE_ON=1 turns the sprite module on, which is the configuration
-// the drawing checks below are about; without it the `drew` check is
-// expected to fail and says so.
+// MODS-ON (2026-09-14) answered that: Mac's call was "all mods should
+// be on by default", so BOTH now default on in the port and this probe
+// passes on stock settings - `SPRITE_ON=1` is kept only to force the
+// module on if the pane's default is ever turned back.
 //
 //     npx vite --port 5199 &
-//     SPRITE_ON=1 node tools/ht1HandProbe.mjs
+//     node tools/ht1HandProbe.mjs
 import { chromium } from 'playwright';
 const BASE = 'http://127.0.0.1:5199';
 const out = [];

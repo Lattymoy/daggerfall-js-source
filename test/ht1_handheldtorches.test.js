@@ -109,6 +109,12 @@ test('HT1: the Mods pane entry is the shipped modsettings.json - every key, its 
   for (let f = 0; f < 4; f++) assert.ok(rd(`vendor/handheld-torches/Textures/${DROPPED_ARCHIVE}_0-${f}_Emission.png`).length > 0, `the dropped torch's emission twin ${f}`);
   assert.ok(rd(`vendor/handheld-torches/Textures/${DROPPED_ARCHIVE}_10-0.png`).length > 0, 'the doused torch');
   const shipped = JSON.parse(rd('vendor/handheld-torches/modsettings.json'));
+  // MODS-ON (2026-09-14, Mac: "all mods should be on by default"): the
+  // ONE key whose default the port sets against the bundle's, listed
+  // here rather than by loosening the compare - so this pin still holds
+  // every OTHER key to the shipped value, and a second departure that
+  // arrives without a decision behind it fails right here.
+  const PORT_DEFAULT = Object.freeze({ 'Modules.Sprite': true });
   let n = 0;
   const kinds = new Set();
   for (const section of shipped.Sections) {
@@ -119,7 +125,7 @@ test('HT1: the Mods pane entry is the shipped modsettings.json - every key, its 
       assert.ok(def, `${name} is on the pane`);
       const kind = k.$type.slice(k.$type.lastIndexOf('.') + 1);
       kinds.add(kind);
-      if (kind === 'ToggleKey') { assert.equal(typeof def.default, 'boolean', name); assert.equal(def.default, k.Value, `${name} defaults as shipped`); assert.ok(!isIntKey(def) && !isFloatKey(def) && !isChoiceKey(def) && !isTextKey(def) && !isTupleKey(def), name); }
+      if (kind === 'ToggleKey') { assert.equal(typeof def.default, 'boolean', name); assert.equal(def.default, PORT_DEFAULT[name] ?? k.Value, `${name} defaults as shipped`); assert.ok(!isIntKey(def) && !isFloatKey(def) && !isChoiceKey(def) && !isTextKey(def) && !isTupleKey(def), name); }
       else if (kind === 'SliderIntKey') { assert.ok(isIntKey(def), `${name} is an int slider`); assert.deepEqual([def.default, def.min, def.max], [k.Value, k.Min, k.Max], name); }
       else if (kind === 'SliderFloatKey') { assert.ok(isFloatKey(def), `${name} is a float slider`); assert.deepEqual([def.default, def.min, def.max], [k.Value, k.Min, k.Max], name); assert.ok(def.step > 0 && def.step <= (k.Max - k.Min), `${name} has a stepper`); }
       else if (kind === 'MultipleChoiceKey') { assert.ok(isChoiceKey(def), `${name} is a choice`); assert.deepEqual([...def.options], k.Options, name); assert.equal(def.default, k.Value, name); }
@@ -199,7 +205,10 @@ test('HT1: LoadSettings - the fields carry the mod\'s own multipliers (Speed x20
   assert.deepEqual([s.stowOnSpellcasting, s.stowOnClimbing, s.stowOnSwimming, s.twoHandedRelaxed, s.lanternRelaxed], [true, true, true, true, false]);
   assert.deepEqual([s.throwStrength, s.throwAngle, s.throwSpread, s.throwGravity, s.throwBounce, s.throwScale, s.throwDrawTrajectory], [1, 15, 1, 1, 0.5, 1, true]);
   assert.deepEqual([s.fire, s.fireAccuracy, s.fireDuration, s.fireChance, s.fireDamageRange, s.fireLight, s.fireLightShadows], [true, 50, 3, 50, [1, 2], true, false]);
-  assert.deepEqual([s.showSprite, s.bob, s.inertia, s.stepTransforms], [false, false, false, false], 'the four modules ship OFF');
+  // MODS-ON: the SPRITE is the port's own default now (the mod's whole
+  // subject, invisible without it - see the HT2 audit); the other three
+  // are presentation and stay as the bundle ships them.
+  assert.deepEqual([s.showSprite, s.bob, s.inertia, s.stepTransforms], [true, false, false, false], 'the sprite is ON by the port\'s decision, the other three ship OFF');
   assert.deepEqual([s.mirrorSprite, s.tintSprite, s.playAudio, s.sfxVolume, s.offsetX, s.offsetY, s.scale, s.offsetSpeed, s.lockAspectRatio], [false, true, true, 0.5, 0.5, 0.5, 0.8, 2000, true]);
   assert.deepEqual([s.bobLength, s.bobOffset, s.bobSizeXMod, s.bobSizeYMod, s.moveSmoothSpeed, s.bobSmoothSpeed, s.bobShape, s.bobWhileIdle], [1, 0, 2, 2, 4, 500, 0, true]);
   assert.equal(s.inertiaScale, 500); assert.equal(s.inertiaSpeed, 500); near(s.inertiaForwardScale, 0.2); near(s.inertiaForwardSpeed, 0.2);

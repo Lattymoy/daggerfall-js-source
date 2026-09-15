@@ -109,19 +109,30 @@ test('HT2 the view performs the act it was handed, and the card no longer calls 
   assert.match(read('src/ui/nativeInventory.js'), /if \(isLightSource\(it\)\) \{ this\._use\(it, null\); return; \}/);
 });
 
-test('HT2-AUDIT: the two switches a lit torch is invisible without are the MOD\'s and DFU\'s own, unchanged, and both are recorded', async () => {
-  // The audit's finding, held as the two facts it rests on: the port
-  // must not quietly flip either default, and if it ever does, this is
-  // the pin that says the record went stale.
+test('MODS-ON, executed: the two switches a lit torch was invisible without are ON by the port\'s decision - and the sources they depart from still say otherwise', async () => {
+  // Mac, after the HT2 audit: "Yes all mods should be on by default".
+  // The departure is TWO defaults and no more, and it is pinned from
+  // both ends: what the port now answers, and what the vendored
+  // sources still ship - because a departure nobody can see the far
+  // side of is just a port that got it wrong.
   const { MOD_SETTINGS } = await import('../src/systems/modSettings.js');
   const { SETTINGS_DEFAULTS } = await import('../src/systems/settingsDefaults.js');
-  assert.equal(MOD_SETTINGS['handheld-torches'].keys['Modules.Sprite'].default, false,
-    'the mod ships Sprite = False (vendor/handheld-torches/modsettings.json) - 1:1');
+  const { PORT_DEFAULTS, getBool, effectiveSettings } = await import('../src/systems/settings.js');
+  // the port's answer
+  assert.equal(MOD_SETTINGS['handheld-torches'].keys['Modules.Sprite'].default, true, 'the hand is on');
+  assert.equal(getBool('Enhancements', 'PlayerTorchFromItems'), true, 'and the torch lights the room');
+  assert.equal(effectiveSettings().Enhancements.PlayerTorchFromItems, 'True', 'the merged view agrees with the getter');
+  // the sources, unedited
   assert.match(read('vendor/handheld-torches/modsettings.json'), /"Value": false,\s*\n\s*"Name": "Sprite",/,
-    'and that is what the shipped bundle says');
+    'the shipped bundle still says Sprite = False - the vendored file is never edited to make a departure look like parity');
   assert.equal(SETTINGS_DEFAULTS.Enhancements.PlayerTorchFromItems, 'False',
-    "DFU's own defaults.ini gates the torch's LIGHT off too");
+    "and the generated table still carries DFU's own default");
+  // the layer is ONE key wide, and everything else still reads the ini
+  assert.deepEqual(Object.keys(PORT_DEFAULTS), ['Enhancements']);
+  assert.deepEqual(Object.keys(PORT_DEFAULTS.Enhancements), ['PlayerTorchFromItems']);
+  assert.equal(getBool('Enhancements', 'AlternateRandomEnemySelection'), false, 'a neighbouring key still answers the ini');
   assert.match(read('bible/06-Systems/Handheld-Torches.md'), /^## HT2-AUDIT - A LIT TORCH IS INVISIBLE BY DEFAULT/m);
+  assert.match(read('bible/01-Overview/Port-Ledger.md'), /MODS AND THEIR MODULES ARE ON \(MODS-ON, 2026-09-14\)/);
 });
 
 test('HT2 records: the pack page, the ledger row and the testing row', () => {

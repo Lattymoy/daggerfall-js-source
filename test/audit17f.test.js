@@ -99,7 +99,7 @@ test('17f F12: item names come from the TEMPLATE, not a hand copy', () => {
   // DaggerfallUnityItem.ItemName is ItemTemplate.name - the port's
   // hand-written "Short shirt"/"Casual pants" were lower-cased.
   const e = { gender: 'female', race: 'Khajiit' };
-  assignStartingGear(e, { classIndex: 13, rolls: () => 0.1 });
+  assignStartingGear(e, { classIndex: 13, rolls: () => 0.1, torchesFromItems: false });   // MODS-ON turned the setting on; this pin is about the class kit's NAMES, so it names the flag rather than reading the store
   // E4: the kit's last row used to be a 'Gold Pieces' stack. Gold is
   // PlayerEntity.GoldPieces now (ItemHelper.cs:1354's `+= 100`), so
   // the bag ends at the arrows and the purse is a number.

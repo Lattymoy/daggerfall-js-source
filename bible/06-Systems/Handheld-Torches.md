@@ -498,3 +498,19 @@ Light Your Way". Whether the port should DEPART from either default -
 this mod's whole point is a torch you can see in your hand - is a
 decision for Mac and a Ledger A row if taken, not something an audit
 takes on its own.
+
+## MODS-ON - THE HAND AND THE LIGHT ARE ON NOW (2026-09-14)
+
+Mac, on the audit above: *"Yes all mods should be on by default"*.
+
+Both switches the audit named are the port's own default now, and only
+those two: `Modules.Sprite` true on the Mods pane, and
+`Enhancements/PlayerTorchFromItems` 'True' through
+`settings.js`'s `PORT_DEFAULTS` - a layer laid OVER the generated
+defaults table, never edited into it, because that table is generated
+from DFU's shipped ini and pinned against it. A player's own override
+still wins over both, and setting a value back to the port's default
+drops the override exactly as before.
+
+`Bob`, `Inertia` and `Step` stay off as the bundle ships them: they are
+presentation, and the sprite is the subject. Ledger row MODS-ON.
