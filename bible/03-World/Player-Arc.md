@@ -1988,3 +1988,50 @@ and 0.25/0.4, walk and run: 0 airborne frames, 0 flips, the eye only
 descends, worst eye drop 0.073 at a walk and 0.097 at a run (from
 0.141 / 0.213). MAC3's terrain pins and the eleven P14/P16 stair
 traces hold. Pinned: `test/ph1_physics.test.js` PH2 (two).
+
+## COL1 - THE BODY HAD A HOLE IN IT (2026-09-15)
+
+Mac: *"3d Geometry has no collison. For example, in the first dungeon
+the table legs do have collison but the table top doesnt"*.
+
+A capsule is a sphere **swept along a segment**. `_resolveCapsule`
+resolved two spheres at the segment's *ends*, which is the same shape
+only for as long as those two cover the segment - and standing, they do
+not. Radius 0.35 with centres at feet+0.35 and feet+1.45: the lower
+reaches feet+0.70, the upper begins at feet+1.10, and **the 0.40 of body
+between them was sampled by neither**. That band is waist height. A
+table top lives in it; the legs cross the lower sphere, which is why
+they stopped you and the top did not, and why the report reads as
+"some geometry has no collision".
+
+The triangles were never missing. `sphereOverlaps([0, 0.90, 2.75], 0.35)`
+returns true against the same collider that walks the body straight
+through - the spatial index was right and the QUERY was wrong, which is
+why no amount of looking at the mesh loader would have found it.
+
+The standing stance was the report; the ride stance was worse and unread
+- axis 1.9 leaves a hole three times bigger.
+
+**The sphere count is derived from the axis now**, so that consecutive
+centres are never more than one diameter apart, which is the condition
+for a chain of spheres to cover the segment. Standing takes one middle
+sphere (centres 0.35 / 0.90 / 1.45, coverage continuous from 0 to 1.80);
+riding takes two; the swim stance's zero axis still collapses to the one
+lower sphere, as A6 requires.
+
+**Every existing law keeps its exact meaning**, which is what made this
+safe to change in a motor with four audits on it: the lower sphere keeps
+PH1's one-way floor, the head keeps the plain push the CanStand sweep
+stands on, and the middles take the plain push - a contact at mid-body
+is something you walked into, never a floor you stand on. All 102 motor
+and physics pins passed unchanged.
+
+It costs one more sphere resolve per iteration at standing height, three
+instead of two. That is the price of the body having no hole in it, and
+CELL=2's twentyfold win left the headroom.
+
+One thing the pin says out loud rather than asserting: a slab low enough
+to step on is **climbed onto**, not stopped - PH1's one-way floor sets
+the body on a near-horizontal surface it is under, and STEP_OFFSET 0.5
+does the rest. That predates COL1 and is not what was reported, so the
+pin holds "not through", which is the claim that was actually made.

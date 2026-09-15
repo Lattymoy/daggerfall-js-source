@@ -27,7 +27,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { PlayerMotor, STEP_OFFSET } from '../src/player/motor.js';
+import { PlayerMotor, STEP_OFFSET, CAPSULE_RADIUS, CAPSULE_HEIGHT } from '../src/player/motor.js';   // COL1
 import { Collider } from '../src/player/collider.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -148,4 +148,73 @@ test('PH2: the snap descends a quantum at a time from the feet, accepts a hair o
   for (let i = 0; i < 240; i++) { m.update(1 / 60, ahead(false), 0); if (m.falling) fell = true; }
   assert.ok(fell, 'a drop past STEP_OFFSET is a fall, not a snap');
   assert.ok(Math.abs(m.pos[1] + (STEP_OFFSET + 0.3)) < 1e-3, `and it lands on the lower floor (${m.pos[1].toFixed(3)})`);
+});
+
+// COL1 (2026-09-15, Mac: "3d Geometry has no collison. For example, in the
+// first dungeon the table legs do have collison but the table top doesnt").
+//
+// A capsule is a sphere SWEPT along a segment. _resolveCapsule resolved two
+// spheres at the segment's ENDS, which is the same shape only while those two
+// cover the segment - and standing they do not. Radius 0.35, centres at
+// feet+0.35 and feet+1.45: the lower reaches feet+0.70, the upper starts at
+// feet+1.10, and the 0.40-tall band between them was sampled by NEITHER. That
+// band is waist height, which is where a table top is. The legs cross the
+// lower sphere and stopped you; the top lived in the hole.
+//
+// The triangles were never missing - sphereOverlaps finds them at y=0.90, so
+// the index was right and the QUERY was wrong. The sphere count is derived
+// from the axis now: consecutive centres never more than one diameter apart.
+test('COL1: the capsule has no hole - a thin slab at any height along the body is solid', () => {
+  const axis = CAPSULE_HEIGHT - 2 * CAPSULE_RADIUS;
+  // the arithmetic that WAS the bug, stated so the shape cannot regress quietly
+  assert.ok(axis > 2 * CAPSULE_RADIUS,
+    'the stance is taller than one diameter, so two end spheres cannot cover it - this is why the chain exists');
+
+  for (const slabY of [0.75, 0.90, 1.05, 1.20, 1.40]) {
+    const col = dungeonFloor();
+    // a boxed table TOP with no legs: the walker must be stopped by the top alone
+    const y1 = slabY + 0.1;
+    for (const [i, q] of [
+      quad(-3, y1, 3, 3, y1, 3, 3, y1, 6, -3, y1, 6),
+      quad(-3, slabY, 3, 3, slabY, 3, 3, slabY, 6, -3, slabY, 6),
+      quad(-3, slabY, 3, 3, slabY, 3, 3, y1, 3, -3, y1, 3),
+    ].entries()) col.addMesh(`slab${i}`, q.positions, q.indices, I);
+
+    const feet = [0, 0, 0];
+    for (let n = 0; n < 200; n++) col.move(feet, 0, 0, 0.05, CAPSULE_HEIGHT, true);
+    // THROUGH is the defect: past the slab's near edge and still at floor
+    // level. Stopped at the edge is the fix; ON TOP is also solid, and is
+    // what a low slab gives - the lower sphere's one-way floor (PH1) sets
+    // the body on a near-horizontal surface it is under, and STEP_OFFSET
+    // climbs the rest. That climb predates COL1 and is not what was
+    // reported; the pin holds "not through", which is the claim.
+    const through = feet[2] > 3 && feet[1] < slabY - 0.2;
+    assert.ok(!through,
+      `a slab at y=${slabY} let the body walk through it - z=${feet[2].toFixed(2)} at y=${feet[1].toFixed(2)}`);
+  }
+});
+
+// COL1: and the chain covers EVERY stance, not just the standing one - the
+// ride stance (2.6) had a 1.2-tall hole, four times the reported one. The
+// condition is the one that makes a chain of spheres a capsule: no two
+// consecutive centres further apart than a diameter.
+test('COL1: every stance is covered - no two consecutive sphere centres are more than a diameter apart', () => {
+  const src = read('src/player/collider.js');
+  assert.match(src, /const middles = Math\.max\(0, Math\.ceil\(axis \/ span\) - 1\);/,
+    'the count is derived from the axis, never fixed');
+  assert.match(src, /this\._resolveSphere\(m2, CAPSULE_RADIUS, out, standCeil, false\)/,
+    'a mid-body contact takes the plain push - it is a thing you walked into, not a floor');
+
+  // the derivation itself, over every stance the PlayerHeightChanger has
+  for (const height of [0.30, 0.9, 1.8, 2.6]) {
+    const axis = Math.max(0, height - 2 * CAPSULE_RADIUS);
+    const middles = Math.max(0, Math.ceil(axis / (2 * CAPSULE_RADIUS)) - 1);
+    const centres = [0];
+    for (let i = 0; i < middles; i++) centres.push((axis * (i + 1)) / (middles + 1));
+    centres.push(axis);
+    for (let i = 1; i < centres.length; i++) {
+      assert.ok(centres[i] - centres[i - 1] <= 2 * CAPSULE_RADIUS + 1e-9,
+        `stance ${height}: centres ${centres[i - 1].toFixed(2)} and ${centres[i].toFixed(2)} leave a hole`);
+    }
+  }
 });

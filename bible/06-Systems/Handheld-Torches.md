@@ -551,3 +551,31 @@ the only door where it was visible had never drawn a frame, because
 Pinned: `test/ht3_sprite_upright.test.js` (3) - the two orders executed
 against a five-row raster, which door takes which, and the screen-quad
 convention read at its own source.
+
+## HT4 - TAB BELONGED TO THE PORT ALREADY (2026-09-15)
+
+Mac: *"Pressing tab drops torches, tab is reserved for the menu"*.
+
+Handheld Torches ships `Handling.ManualDropInput = "Tab"`, and in
+Daggerfall Unity that is a free key, so the mod was right. It is not
+free here. PX15 gave Tab to the port's own **pixel dial** - the radial
+menu, which DFU has not got and which the mod therefore could not have
+known about - so the mod's shipped default landed on a key this port had
+already spent, and one press both opened the dial and dropped the light.
+
+The default is **G** now: unbound in DFU's own `DEFAULT_BINDINGS`, and
+not one of the mod's other two keys (F to ignite, X to throw). It stays
+the player's to rebind, and the departure is declared in
+`test/ht1_handheldtorches.test.js`'s own `PORT_DEFAULT` table beside
+MODS-ON's, so every other key of the bundle is still held to the shipped
+value and a third departure that arrives without a decision behind it
+fails right there.
+
+**The pin is the class, not the key.** It walks every `TextKey` default
+of every vendored mod against DFU's bindings AND the keys the port
+spends on top of them, and it reads the dial's arm out of `ui/input.js`
+rather than restating it, so renaming that arm fails here instead of
+drifting. The next mod folded in cannot repeat this quietly - which
+matters, because the collision was invisible from either side alone: the
+mod's default is correct against DFU, and the port's dial is correct
+against the mod.

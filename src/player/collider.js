@@ -497,8 +497,49 @@ export class Collider {
     const axis = Math.max(0, height - 2 * CAPSULE_RADIUS);
     const low = [feet[0], feet[1] + CAPSULE_RADIUS, feet[2]];
     const high = [feet[0], feet[1] + CAPSULE_RADIUS + axis, feet[2]];
+    // COL1 (2026-09-15, Mac: "3d Geometry has no collison. For example,
+    // in the first dungeon the table legs do have collison but the table
+    // top doesnt"): THE BODY WAS SAMPLED AT TWO POINTS AND HAD A HOLE.
+    //
+    // A capsule is a sphere SWEPT along a segment; this resolves it as
+    // two spheres at the segment's ends, which is only the same shape
+    // while those two cover the segment. Standing, they do not: centres
+    // sit at feet+0.35 and feet+1.45 with radius 0.35, so the lower
+    // reaches feet+0.70 and the upper starts at feet+1.10 and the band
+    // BETWEEN THEM IS SAMPLED BY NEITHER. That band is 0.40 tall and it
+    // is at exactly waist height, which is where a table top is - hence
+    // the report, and hence the legs stopping you while the top did not.
+    // The triangles were always in the index (sphereOverlaps finds them
+    // at y=0.90); nothing ever asked there. The ride stance is worse:
+    // axis 1.9 leaves a 1.2-tall hole.
+    //
+    // So the sphere COUNT is derived from the axis rather than fixed at
+    // two: consecutive centres are never more than one diameter apart,
+    // which is the condition for the chain to cover the segment. The
+    // ends keep their existing laws exactly - the lower sphere's
+    // one-way floor (PH1), the head's plain push - and the middles take
+    // the plain push, because a contact at mid-body is something you
+    // walked into, never a floor you stand on.
+    //
+    // It costs one more sphere resolve per iteration at standing height
+    // (three instead of two). That is the price of the body having no
+    // hole in it, and CELL=2 left the headroom for it.
+    const span = 2 * CAPSULE_RADIUS;
+    const middles = Math.max(0, Math.ceil(axis / span) - 1);
+    const mid = [];
+    for (let i = 0; i < middles; i++) mid.push([0, 0, 0]);
     for (let iter = 0; iter < 3; iter++) {
       this._resolveSphere(low, CAPSULE_RADIUS, out, standCeil, true);   // PH1: the lower sphere's floor is one-way
+      for (let i = 0; i < middles; i++) {
+        const m2 = mid[i];
+        m2[0] = low[0];
+        m2[2] = low[2];
+        m2[1] = low[1] + (axis * (i + 1)) / (middles + 1);
+        this._resolveSphere(m2, CAPSULE_RADIUS, out, standCeil, false);   // COL1: a mid-body contact is a wall, never a floor
+        low[0] = m2[0];
+        low[2] = m2[2];
+        low[1] = m2[1] - (axis * (i + 1)) / (middles + 1);
+      }
       high[0] = low[0];
       high[2] = low[2];
       high[1] = low[1] + axis;

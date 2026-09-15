@@ -36,6 +36,7 @@ import { domCodeForKeyCode, keyCodeForDomCode, isBindableKeyCode, KEYCODE_NONE }
 import { MOD_SETTINGS, isIntKey, isFloatKey, isChoiceKey, isTextKey, isTupleKey, modSettingsOf, setModSetting, _resetModSettings } from '../src/systems/modSettings.js';
 import { BOB_SHAPE as WW_BOB_SHAPE, STEP_CONDITION as WW_STEP_CONDITION } from '../src/combat/weaponWidget.js';
 import { FEATURES } from '../src/systems/features.js';
+import { DEFAULT_BINDINGS } from '../src/systems/inputActions.js';   // HT4: the keys DFU already answers
 import { CREDITS } from '../src/ui/credits.js';
 import { TEMPLATES } from '../src/systems/useItem.js';
 import { WEAPONS } from '../src/characters/weapons.js';
@@ -110,11 +111,20 @@ test('HT1: the Mods pane entry is the shipped modsettings.json - every key, its 
   assert.ok(rd(`vendor/handheld-torches/Textures/${DROPPED_ARCHIVE}_10-0.png`).length > 0, 'the doused torch');
   const shipped = JSON.parse(rd('vendor/handheld-torches/modsettings.json'));
   // MODS-ON (2026-09-14, Mac: "all mods should be on by default"): the
-  // ONE key whose default the port sets against the bundle's, listed
-  // here rather than by loosening the compare - so this pin still holds
-  // every OTHER key to the shipped value, and a second departure that
-  // arrives without a decision behind it fails right here.
-  const PORT_DEFAULT = Object.freeze({ 'Modules.Sprite': true });
+  // keys whose default the port sets against the bundle's, listed here
+  // rather than by loosening the compare - so this pin still holds
+  // every OTHER key to the shipped value, and a departure that arrives
+  // without a decision behind it fails right here.
+  //
+  // HT4 (2026-09-15, Mac: "Pressing tab drops torches, tab is reserved
+  // for the menu"): the second one. The mod ships Tab for the manual
+  // drop and in Daggerfall Unity that is free; PX15 spent Tab on the
+  // port's own pixel dial, so the shipped default landed on a key this
+  // port had already answered and one press did both things. G is free
+  // in DFU's defaults and in the mod's other two keys. The class is
+  // pinned below ("no vendored mod ships a key the port has already
+  // spent") so the next mod folded in cannot repeat it quietly.
+  const PORT_DEFAULT = Object.freeze({ 'Modules.Sprite': true, 'Handling.ManualDropInput': 'G' });
   let n = 0;
   const kinds = new Set();
   for (const section of shipped.Sections) {
@@ -129,7 +139,7 @@ test('HT1: the Mods pane entry is the shipped modsettings.json - every key, its 
       else if (kind === 'SliderIntKey') { assert.ok(isIntKey(def), `${name} is an int slider`); assert.deepEqual([def.default, def.min, def.max], [k.Value, k.Min, k.Max], name); }
       else if (kind === 'SliderFloatKey') { assert.ok(isFloatKey(def), `${name} is a float slider`); assert.deepEqual([def.default, def.min, def.max], [k.Value, k.Min, k.Max], name); assert.ok(def.step > 0 && def.step <= (k.Max - k.Min), `${name} has a stepper`); }
       else if (kind === 'MultipleChoiceKey') { assert.ok(isChoiceKey(def), `${name} is a choice`); assert.deepEqual([...def.options], k.Options, name); assert.equal(def.default, k.Value, name); }
-      else if (kind === 'TextKey') { assert.ok(isTextKey(def), `${name} is a text key`); assert.equal(def.default, k.Value, `${name} defaults to the shipped KeyCode name`); assert.ok(isBindableKeyCode(def.default), `${name}'s default parses`); }
+      else if (kind === 'TextKey') { assert.ok(isTextKey(def), `${name} is a text key`); assert.equal(def.default, PORT_DEFAULT[name] ?? k.Value, `${name} defaults to the shipped KeyCode name`); assert.ok(isBindableKeyCode(def.default), `${name}'s default parses`); }
       else if (kind === 'TupleIntKey' || kind === 'TupleFloatKey') {
         assert.ok(isTupleKey(def), `${name} is a tuple`); assert.equal(def.tuple, kind === 'TupleIntKey' ? 'int' : 'float', name);
         const v = Array.isArray(k.Value) ? k.Value : [k.Value.First, k.Value.Second];
@@ -200,7 +210,7 @@ test('HT1: LoadSettings - the fields carry the mod\'s own multipliers (Speed x20
   _resetModSettings();
   const s = readTorchSettings();
   assert.equal(s.enabled, true);
-  assert.deepEqual([s.toggleKey, s.dropKey, s.throwKey], ['KeyF', 'Tab', 'KeyX'], 'the three bindings, parsed');
+  assert.deepEqual([s.toggleKey, s.dropKey, s.throwKey], ['KeyF', 'KeyG', 'KeyX'], 'the three bindings, parsed (HT4: the drop key is G - the mod ships Tab, which the port spends on the pixel dial)');
   assert.equal(s.onStow, ON_STOW.Drop); assert.equal(s.onPick, ON_PICK.Equip); assert.equal(s.lastLight, true);
   assert.deepEqual([s.stowOnSpellcasting, s.stowOnClimbing, s.stowOnSwimming, s.twoHandedRelaxed, s.lanternRelaxed], [true, true, true, true, false]);
   assert.deepEqual([s.throwStrength, s.throwAngle, s.throwSpread, s.throwGravity, s.throwBounce, s.throwScale, s.throwDrawTrajectory], [1, 15, 1, 1, 0.5, 1, true]);
@@ -366,15 +376,15 @@ test('HT1: the ignite / douse key - the ladder lantern, torch, candle, holy cand
 test('HT1: the drop key - the lit light unless a lantern, else a torch, a candle, a holy candle; lanterns are never dropped; nothing to drop says so; no free hand refuses', () => {
   const r = rig();
   const t = torch(); r.entity.items = [candle(), t]; r.entity.lightSource = t;
-  r.tap('Tab'); assert.deepEqual(r.pool.spawned.map((s) => s.t), [T.Torch], 'the lit torch'); assert.equal(r.entity.lightSource, null); assert.deepEqual(r.entity.items.map((i) => i.templateIndex), [T.Candle]);
+  r.tap('KeyG'); assert.deepEqual(r.pool.spawned.map((s) => s.t), [T.Torch], 'the lit torch'); assert.equal(r.entity.lightSource, null); assert.deepEqual(r.entity.items.map((i) => i.templateIndex), [T.Candle]);
   assert.equal(r.said[0], 'You drop the new torch');
-  r.tap('Tab'); assert.deepEqual(r.pool.spawned.map((s) => s.t), [T.Torch, T.Candle], 'then the candle from the pack');
+  r.tap('KeyG'); assert.deepEqual(r.pool.spawned.map((s) => s.t), [T.Torch, T.Candle], 'then the candle from the pack');
   r.entity.items = [holy(), lantern()]; r.entity.lightSource = r.entity.items[1];
-  r.tap('Tab'); assert.deepEqual(r.pool.spawned.map((s) => s.t), [T.Torch, T.Candle, T.Holy_candle], 'a lit lantern is skipped for the holy candle');
+  r.tap('KeyG'); assert.deepEqual(r.pool.spawned.map((s) => s.t), [T.Torch, T.Candle, T.Holy_candle], 'a lit lantern is skipped for the holy candle');
   assert.equal(r.entity.lightSource?.templateIndex, T.Lantern, 'the lantern stays lit');
-  r.tap('Tab'); assert.equal(r.said.at(-1), MESSAGES.dropTorchless); assert.equal(r.pool.spawned.length, 3);
+  r.tap('KeyG'); assert.equal(r.said.at(-1), MESSAGES.dropTorchless); assert.equal(r.pool.spawned.length, 3);
   r.entity.equip.slots[EQUIP_SLOTS.LeftHand] = weapon(WEAPONS.Long_Bow); r.entity.items = [torch()]; r.entity.lightSource = null;
-  r.tap('Tab'); assert.equal(r.said.at(-1), MESSAGES.noFreeHand); assert.equal(r.pool.spawned.length, 3);
+  r.tap('KeyG'); assert.equal(r.said.at(-1), MESSAGES.noFreeHand); assert.equal(r.pool.spawned.length, 3);
   assert.equal(r.h._w.hasDroppedOrThrownLight, false, 'the sheathe jump flag is consumed by the next LateUpdate');
 });
 
@@ -818,4 +828,44 @@ test('HT1: the five hosts - each owns a pool, feeds the rig its raw keys and the
   assert.match(dc, /droppedTorches\.destroyAll\(\);\s*weaponRig\.dispose\?\.\(\);/, 'AUDIT 66 F5/F8: the pool and the rig\'s component leave with the dungeon, beside the foes\' batches and the wall torches\' loops');
   assert.match(dj, /\.\.\.ctx\.torchLights\(\)\)/); assert.match(dj, /\.\.\.ctx\.torchBatches\(\)\]/); assert.match(dj, /key\.startsWith\('droppedTorch:'\)\)\) \{/);
   assert.match(dj, /keyDown: \(code\) => keys\.has\(code\)/);
+});
+
+// HT4 (2026-09-15, Mac: "Pressing tab drops torches, tab is reserved for the menu"):
+// A VENDORED MOD'S KEY MAY NOT LAND ON A KEY THE PORT HAS ALREADY SPENT.
+//
+// Handheld Torches ships Handling.ManualDropInput = "Tab". In Daggerfall Unity
+// that is free, so the mod was right; here it is not, because PX15 gave Tab to
+// the port's own pixel dial - a radial menu DFU has not got - and one press
+// both opened the dial and dropped the light.
+//
+// The fix is the default (now G). THE PIN IS THE CLASS: it walks every text key
+// a vendored mod declares against DFU's own bindings AND the keys the port
+// spends on top of them, so the next mod folded in cannot repeat this quietly.
+// A player may still bind whatever they like; this is about what SHIPS.
+test('HT4: no vendored mod ships a key the port has already spent', () => {
+  const dfuBound = new Set(Object.keys(DEFAULT_BINDINGS));
+  // The keys the PORT spends that DFU does not - each read straight from the
+  // source that spends it, so a rename there fails here rather than drifting.
+  const input = rd('src/ui/input.js');
+  assert.match(input, /if \(e\.code === 'Tab'\) \{ return ctx\.toggleDial/, 'PX15: Tab is the pixel dial');
+  const portSpent = new Set(['Tab']);   // the dial; Escape is already DFU's
+
+  const offenders = [];
+  for (const [vendor, mod] of Object.entries(MOD_SETTINGS)) {
+    for (const [key, def] of Object.entries(mod.keys)) {
+      if (!def.text || typeof def.default !== 'string') continue;   // only the KeyCode fields
+      const code = domCodeForKeyCode(def.default);
+      assert.ok(code, `${vendor}/${key} ships "${def.default}", which is not a KeyCode the port can bind`);
+      if (portSpent.has(def.default) || dfuBound.has(code)) offenders.push(`${vendor}/${key} = ${def.default} (${code})`);
+    }
+  }
+  assert.deepEqual(offenders, [],
+    'these ship on a key the port or DFU already answers - one press would do two things');
+
+  // and the three this mod ships are the three it ships, named, so a silent
+  // repoint of one of them is a failure rather than a diff nobody reads
+  const k = MOD_SETTINGS['handheld-torches'].keys;
+  assert.equal(k['Handling.ToggleLightInput'].default, 'F');
+  assert.equal(k['Handling.ManualDropInput'].default, 'G', 'HT4: repointed off the dial\'s Tab');
+  assert.equal(k['Throwing.ThrowTorchInput'].default, 'X');
 });
