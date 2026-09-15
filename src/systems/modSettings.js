@@ -292,6 +292,31 @@ export const MOD_SETTINGS = Object.freeze({
       'Compatibility.TextureScaleFactor': Object.freeze({ default: 1, min: 0, max: 8, description: 'A custom texture\u2019s pixels per screen pixel of the 320x200 surface.' }),
     }),
   }),
+  // AT0: AMBIENT TEXT 1.8 (Regnier). Its one section, `AmbientText`,
+  // and its four SliderIntKeys, names, bounds and defaults exactly as
+  // modsettings.json ships them, plus the port's own `Enabled`.
+  // `interval` keeps the mod's own name and not the field's
+  // (`stdInterval`) - the pane shows the player what the author called
+  // it. All four are REAL-TIME SECONDS, not game time: the mod ticks on
+  // Unity's `Time.unscaledTime`, so its pace is the same whether you
+  // are standing still or riding a horse at 14x.
+  'ambient-text': Object.freeze({
+    title: 'Ambient Text',
+    author: 'Regnier',
+    keys: Object.freeze({
+      Enabled: Object.freeze({
+        default: true,
+        description: 'Regnier\u2019s Ambient Text 1.8, 1:1: an unobtrusive line about where you are, now and then, in the '
+          + 'corner of the screen - what a crypt smells of, what a village sounds like at night, what the desert does '
+          + 'to the light. It reads where you stand, the hour and the weather, and says nothing at all indoors. Off is '
+          + 'silence.',
+      }),
+      textChance: Object.freeze({ default: 33, min: 0, max: 100, description: 'Chance % of selecting any ambient text each interval' }),
+      interval: Object.freeze({ default: 200, min: 60, max: 600, description: 'Interval length between checking ambient text in real time seconds' }),
+      postTextInterval: Object.freeze({ default: 500, min: 60, max: 600, description: 'Interval length after displaying a message in real time seconds' }),
+      textDisplayTime: Object.freeze({ default: 3, min: 1, max: 10, description: 'Length of time text messages are displayed in seconds' }),
+    }),
+  }),
 });
 
 let memory = null;

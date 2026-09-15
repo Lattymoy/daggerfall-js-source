@@ -139,6 +139,7 @@ export const MOD_CURATED = Object.freeze({
   unleveledLoot: Object.freeze(['Iron', 'Steel', 'Silver', 'Elven', 'Dwarven', 'Mithril',
     'Adamantium', 'Ebony', 'Orcish', 'Daedric']),
   'roads-hazelnut': Object.freeze(['SmoothRoads', 'RiversAndStreams']),
+  'ambient-text': Object.freeze(['textChance', 'interval', 'postTextInterval', 'textDisplayTime']),   // AT0: all four it ships - the mod is small enough that curation would only hide something
 });
 
 /** The `Modules.` keys a vendor ships, in the mod's own order - the
@@ -418,6 +419,11 @@ export const FEATURES = Object.freeze([
   modFeature('unleveledLoot', 'Takes effect on the next roll.', 'loot'),
   modFeature('weapon-widget', 'Takes effect at once.', 'combat'),   // WW1: the widget reads its switches every frame
   modFeature('handheld-torches', 'Takes effect at once.', 'loot'),   // HT1: the component reads its switches every frame
+  // AT0 (2026-09-15): AMBIENT TEXT - `world`, because what it talks
+  // about is where you are. Its effect line is the mod's own pacing:
+  // the switch is read at the tick, so turning it on does not speak now,
+  // it speaks at the next interval.
+  modFeature('ambient-text', 'Takes effect at the next interval - the mod speaks on its own clock.', 'world'),
   // FT10 (2026-09-14): DFU'S OWN DUNGEON ENHANCEMENTS - three of the
   // Enhancements section's switches, each read by the port at the point
   // of use as DFU reads it. DFU Classic: Daggerfall Unity's departures
