@@ -183,6 +183,18 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   // the host - this arc's first standing law, learned by breaking it
   // three times. The locals below are the pre-engine fallbacks, used
   // only when no talkEngine is mounted (no game data, no window).
+  //
+  // AUDIT-TALK (2026-09-15) named the one host that actually runs on
+  // them, because the arc never had: `scenes/exterior.js` mounts
+  // createTownTalk with FIVE seams and no `talkEngine` at all, so in
+  // that host there is no npcSession, no answerPipeline, no topic tree
+  // and no rumour mill - the whole TK series is absent and these locals
+  // ARE the conversation. That is a SCOPE decision and not a gap:
+  // `main.js` routes every real start through bootWorld and says so in
+  // as many words ("Dev scenes stay one param away (?exterior/?world)"),
+  // so ?exterior is a dev host. It is written here because a law with
+  // two homes and no record of which host uses which is the shape this
+  // codebase keeps being bitten by.
   let tone = 1;                      // 0 Polite / 1 Normal / 2 Blunt
   let toneSession = [0, 0, 0];
   let lastToneIndex = -1;

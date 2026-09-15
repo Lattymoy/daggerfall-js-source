@@ -34,6 +34,7 @@ import {
   DIRECTION_TEXT_ID, MAP_REVEAL_TEXT_ID, KNOWLEDGE_MODIFIERS,
 } from '../src/systems/talkTopics.js';
 import { BUILDING_TYPES } from '../src/world/buildingNames.js';
+import { srand, randomRangeInclusive } from '../src/formats/dfRandom.js';   // AUDIT-TALK: the knowledge roll's boundary, pinned absolutely
 
 const EN_TEXT = {
   AnswerTextWhereAmI: 'You are in {0} in {1}.',
@@ -599,6 +600,27 @@ test('the knowledge roll is SEEDED and stable per (NPC, topic), and reads its ow
   // socialGroup 2 reads +5 (15 of 20) where group 0 reads 0 (10 of
   // 20), so the nobles-side group must know MORE often
   assert.ok(rate(2) > rate(0), 'the +5 modifier group knows more often than the 0 group');
+  // AUDIT-TALK: THE BOUNDARY, absolutely. C# is `rand <= rollToBeat`
+  // (TalkManager.cs:625), and `<` passed every one of the 87 files that
+  // touch this system - because the two rate checks above are
+  // DISTRIBUTIONAL: dropping the equal case shifts every rate by one in
+  // twenty and preserves the ordering, so a relative assertion cannot
+  // see it. Pin the equal case itself.
+  //
+  // A QuestLocation (classic index 4) for a Commoner (group 0) reads
+  // row 20 = 0, so rollToBeat is 10; buildingKey 0 leaves the seed as
+  // the NPC's own, and seed 16's first 1..20 roll is exactly 10.
+  srand(16 >>> 0);
+  assert.equal(randomRangeInclusive(1, 20), 10, 'seed 16 rolls the 10 this pin is built on');
+  const onTheLine = (() => {
+    const { pipe: p2, tree: t2, session: s2 } = makePipe();
+    t2.checkNPCcanKnowAboutTellMeAboutTopic = () => true;
+    t2.checkNPCisInSameBuildingAsTopic = () => false;
+    s2.socialGroup = 0;
+    return p2.getNPCKnowledgeAboutItem(newListItem({ questionType: QUESTION_TYPE.QuestLocation, buildingKey: 0 }), 16);
+  })();
+  assert.equal(onTheLine, NPC_KNOWLEDGE.KnowsAboutItem,
+    'a roll EQUAL to rollToBeat knows - `rand <= rollToBeat`, not `<`');
   // and a question type with a NEGATIVE modifier for the same group
   // knows less than its own positive one (row 4*5+2=22 is +5, row
   // 5*5+2=27 is -6)
