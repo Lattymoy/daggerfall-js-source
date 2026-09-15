@@ -5067,7 +5067,23 @@ export function createWorldModes(host) {
     try {
       const ctx = await buildDungeonContext(
         { renderer, arch, getGpuMesh, cpuModels, getTexture, uploadRecord, uploadRecordFrame, palette },
-        dfLocation, blocks, dfLocation.climate.climateType, { activateHeld: () => held(keys, 'ActivateCenterObject') || !!host.activateDown?.(), keyDown: (code) => keys.has(code), useMagicItem: (item) => host.useMagicItem?.(item),   // HT1: the torch keys onFoeHit: (hit) => host.onFoeHit?.(hit),   // WORLD2: a puppet's blow goes to the host
+        dfLocation, blocks, dfLocation.climate.climateType, {
+          activateHeld: () => held(keys, 'ActivateCenterObject') || !!host.activateDown?.(),
+          keyDown: (code) => keys.has(code),   // HT1: the torch keys
+          useMagicItem: (item) => host.useMagicItem?.(item),
+          // FOE1 (2026-09-15, Mac, relaying players: "during online play,
+          // certain enemies cant be damaged"): THIS LINE WAS INSIDE A
+          // COMMENT. HT1 appended `// HT1: the torch keys` to the end of
+          // the physical line that already carried onFoeHit, so the
+          // property went with it - and `opts.onFoeHit?.()` is the ONLY
+          // way a joiner's blow on a layout foe reaches the host
+          // (dungeonContext damageFoe returns without applying anything
+          // locally). Every layout foe in every online dungeon absorbed
+          // every blow from everyone but the room's authority, silently,
+          // for eight slices. The opts are one-per-line now, and the pin
+          // reads this object with the COMMENTS STRIPPED, because a text
+          // match over the raw line is exactly what failed to catch it.
+          onFoeHit: (hit) => host.onFoeHit?.(hit),   // WORLD2: a puppet's blow goes to the host
           onActions: (data) => host.onActions?.(data), peers: () => host.peers?.() ?? null, selfId: () => host.selfId?.() ?? null,   // WORLD3: a door moved goes out; the peers the foes see; whose blow a puppet's is
           onLootClaimed: () => host.onLootClaimed?.(),   // AUDIT WORLD4 C2/D5: a claimed container makes the room's memory due this frame
           // A10: the Recall prompt (Teleport.cs:81-98). The outer host

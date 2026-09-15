@@ -414,3 +414,60 @@ test('AUDIT39r R16: a player arrow bleeds its TARGET, not its own tip', () => {
     'the mis-citation no longer stands as this module\'s law');
   assert.match(af, /hitTransform\.position/, 'and the real fifth argument is named');
 });
+
+// ── FOE1: THE OPTS A CALL REALLY PASSES ──────────────────────────
+// (2026-09-15, Mac relaying players: "during online play, certain
+// enemies cant be damaged".)
+//
+// THE BUG WAS A COMMENT. HT1 appended `// HT1: the torch keys` to the
+// end of the physical line that already carried
+// `onFoeHit: (hit) => host.onFoeHit?.(hit),` in the
+// buildDungeonContext opts - so the property went into the comment and
+// out of the object. `opts.onFoeHit?.()` is the ONLY way a joiner's
+// blow on a layout foe reaches the room's host: `damageFoe`'s
+// non-authority arm sends and RETURNS, applying nothing locally. So
+// every layout foe in every online dungeon absorbed every blow from
+// everyone but the authority, in silence, for eight slices - which is
+// exactly the report, because the foes at indices past the layout
+// (quest foes, summons, rest encounters) take the local path and died
+// normally beside them.
+//
+// WHY THIS PIN IS SHAPED LIKE THIS: a text match over the file would
+// have passed throughout - the characters `onFoeHit: (hit) => ...`
+// were right there on the line. The comments are STRIPPED first, so a
+// property that has been commented out is a property that is gone. It
+// reads the whole opts object rather than the one line, so the next
+// swallowed property is caught by the same pin.
+/** The source of `name(...)`'s call, comments removed. */
+function callSourceStripped(text, name) {
+  const at = text.indexOf(`${name}(`);
+  assert.ok(at >= 0, `${name} is called`);
+  let depth = 0;
+  let end = at;
+  for (let i = text.indexOf('(', at); i < text.length; i++) {
+    if (text[i] === '(') depth++;
+    else if (text[i] === ')') { depth--; if (depth === 0) { end = i; break; } }
+  }
+  return text.slice(at, end + 1)
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .replace(/\/\/[^\n]*/g, ' ');
+}
+
+test('FOE1: the dungeon host really PASSES the opts it means to - a property inside a comment is not a property', () => {
+  const call = callSourceStripped(src('src/scenes/worldModes.js'), 'buildDungeonContext');
+  // the online seams, each the only route its half of the room has
+  for (const [key, why] of [
+    ['onFoeHit', 'a joiner\'s blow on a layout foe reaches the host by THIS and nothing else (WORLD2)'],
+    ['onActions', 'a door the player moved goes out to the room (WORLD3)'],
+    ['peers', 'the peers the host\'s foes hunt (WORLD3)'],
+    ['selfId', 'whose blow a puppet\'s is (WORLD3)'],
+    ['onLootClaimed', 'a claimed container makes the room\'s memory due (WORLD4)'],
+    ['foes', 'the pool the stream poses'],
+  ]) {
+    assert.match(call, new RegExp(`(^|[{,\\s])${key}\\s*:`), `${key} is passed - ${why}`);
+  }
+  // and the wiring it reaches for exists on the host object
+  assert.match(src('src/scenes/worldModes.js'), /host\.onFoeHit\?\.\(hit\)/, 'the host seam is called, not merely named');
+  assert.match(src('src/scenes/world.js'), /onFoeHit: \(hit\) => online\?\.sendHit\(hit\)/,
+    'and the world host hands it the wire (WORLD2)');
+});

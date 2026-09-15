@@ -4386,3 +4386,42 @@ in reverse; `_composeDoll` asks for it. The classic composite and the
 inventory's own upload are untouched. Ledger row OD1. Pinned:
 `test/online.test.js` OD1 (the reversed crop, and the doll's upload
 with a marked top-left pixel on its last row).
+
+## FOE1 - A COMMENT ATE THE HIT (2026-09-15, Mac relaying players)
+
+*"During online play, certain enemies cant be damaged."*
+
+`src/scenes/worldModes.js:5070` read, on one physical line:
+
+```js
+useMagicItem: (item) => host.useMagicItem?.(item),   // HT1: the torch keys onFoeHit: (hit) => host.onFoeHit?.(hit),   // WORLD2: a puppet's blow goes to the host
+```
+
+Everything from `// HT1:` on is a comment. **`onFoeHit` was not a
+property of the opts object.** `a0570bca` (the Handheld Torches port)
+appended its own note to the end of the line that already carried
+`onFoeHit`, and took the property with it. Parsing the call confirms it:
+22 keys passed, and that was not one of them.
+
+**Why that is an invulnerable enemy.** Online, a joiner applies no local
+damage to a layout foe - `damageFoe`'s non-authority arm hands the blow
+to the room's host through `opts.onFoeHit?.(...)` and RETURNS
+(`dungeonContext.js:3801`). With the property missing that call is a
+no-op on `undefined`: no damage, no frame, no warning, nothing on the
+console. Every layout foe in every online dungeon absorbed every blow
+from everyone but the room's authority, for eight slices, in silence.
+The zero-damage connecting blow went with it, so a joiner's swing did
+not even wake what it hit.
+
+**And that is why the report says *certain*.** Foes at indices past the
+layout - a quest's foe, a summon, a rest encounter - take the LOCAL
+damage path and died normally beside the ones that could not be hurt.
+The host saw nothing wrong at all.
+
+**The pin is shaped by how this escaped.** A text match over that file
+would have passed throughout: the characters `onFoeHit: (hit) => ...`
+were on the line. The pin strips the comments from the whole
+`buildDungeonContext` call and then asserts the six online seams survive
+- a property inside a comment is a property that is gone - so the next
+swallowed one is caught by the same assertion rather than needing its
+own.
