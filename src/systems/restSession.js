@@ -689,7 +689,26 @@ export class RestSession {
       // EXPIRED line - _finish is where that precedence lives.
       let done = null;
       if (this.mode === 'timed') {
-        this.deps.tickVitals();
+        // AUDIT RESTX F1: IN THE FREE LANE, AN HOUR THAT HEALS NOTHING
+        // PAYS NOTHING.
+        //
+        // `restVitals` tallies Medical every hour, and in DFU that tally
+        // is rate-limited by the hour COSTING TIME. RESTX1 removed the
+        // cost and the rate limit went with it: a timed rest at full
+        // health called this unconditionally, so "rest 99 hours" was 99
+        // Medical tallies in one frame, on one click, repeatable for
+        // ever. Measured, not argued - offline the same 99 hours costs
+        // 74 real seconds of watching a counter, which is the limit
+        // DFU was relying on.
+        //
+        // So the free lane restores the limit with the only thing it
+        // has left: an hour is paid for when it does something. This is
+        // also what the switch says it is - Mac's "rest just becomes the
+        // way to regain" - and resting when there is nothing to regain
+        // is not resting. The PACED lanes (offline, and a loiter) are
+        // untouched and keep DFU's unconditional tally, because there
+        // the hour really was spent.
+        if (!this._free() || !this.deps.fullyHealed?.()) this.deps.tickVitals();
         if (--this.hoursRemaining < 1) done = REST_TEXT.wakeUp;
       } else if (this.mode === 'full') {
         if (this.deps.tickVitals()) done = REST_TEXT.healed;

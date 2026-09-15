@@ -136,6 +136,43 @@ test('RESTX1: a free rest yields the frame at the cap, and picks the rest up on 
   assert.equal(d.minutes, 0, 'and still not one minute, over both frames');
 });
 
+test('AUDIT RESTX F1: in the free lane an hour that heals nothing pays nothing - the rate limit time used to provide', () => {
+  // `restVitals` tallies Medical every hour, and in DFU that tally is
+  // rate-limited by the hour COSTING TIME. RESTX1 removed the cost and
+  // the rate limit went with it: a timed rest at full health called
+  // tickVitals unconditionally, so "rest 99 hours" was 99 Medical
+  // tallies in one frame, on one click, repeatable for ever. Offline
+  // the same 99 hours costs 74 real seconds of watching a counter,
+  // which is the limit DFU was relying on.
+  //
+  // Pinned by COUNT, from three sides: nothing is paid for an hour that
+  // heals nothing, every healing hour still is, and the PACED lanes
+  // keep DFU's unconditional tally because there the hour was spent.
+  const run = (mode, hours, { free, healed }) => {
+    let paid = 0;
+    const d = deps({
+      sharedMinutes: free ? ONLINE : OFFLINE,
+      tickVitals() { paid++; return false; },
+      fullyHealed: () => healed,
+    });
+    const s = new RestSession(mode, hours, d);
+    let r = null;
+    for (let f = 0; f < 400 && !r; f++) r = s.tick(free ? 1 / 60 : 1);
+    return { paid, hours: s.totalHours };
+  };
+  assert.equal(run('timed', 99, { free: true, healed: true }).paid, 0,
+    'FREE and already whole: ninety-nine hours asked for, nothing paid - the farm is closed');
+  assert.equal(run('timed', 99, { free: true, healed: false }).paid, 99,
+    'FREE and hurt: every hour that heals still pays, so the mechanic is unchanged for the player it is for');
+  assert.equal(run('timed', 9, { free: false, healed: true }).paid, 9,
+    'PACED (offline): DFU\u2019s unconditional tally stands - there the hour really was spent');
+  // ...and the mode that already had the guard is untouched: `full`
+  // returns at the top of tick() when whole, so it never reaches here.
+  const dFull = deps({ sharedMinutes: ONLINE, fullyHealed: () => true });
+  assert.equal(new RestSession('full', 0, dFull).tick(1 / 60)?.textId, REST_TEXT.healed);
+  assert.equal(dFull.hours, 0, 'a `full` rest by a whole body pays nothing and never did');
+});
+
 test('RESTX1: the law is read off the SHARED CLOCK, in one place, and the hosts are not asked', () => {
   // OL1's shape: a lane is not forced at a mount site, because a port
   // that forces at forty-seven sites is a port where the forty-eighth

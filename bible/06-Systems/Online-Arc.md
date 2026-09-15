@@ -4143,6 +4143,103 @@ were made to keep it small, each easy to change:
 
 `test/restx1_online_rest.test.js` - 7 pins, 8 mutants, 8 dead.
 
+## AUDIT RESTX + AUDIT OQ (2026-09-15)
+
+**Mac: "Do an audit on this. While youre at it. Please audit the online
+quest system."** The rest change read back against the tree with the
+whole path DRIVEN, and the online quest system mapped and
+mutation-sized beside it. **One finding, paid; three records narrowed;
+the quest system clean.**
+
+### RESTX F1 - the rate limit time was providing
+
+`restVitals` tallies Medical every hour, and in DFU **that tally is
+rate-limited by the hour costing time.** RESTX1 removed the cost, and
+the rate limit went with it. Measured, not argued:
+
+| | tallies | cost |
+|---|---|---|
+| `rest 99 hours` at full health, online, before | **99** | one click, one frame, repeatable for ever |
+| the same 99 hours offline | 99 | **74 real seconds** of watching a counter |
+
+The `timed` arm called `tickVitals` unconditionally - DFU's own law, and
+correct while an hour was a real 0.75 seconds. So the free lane restores
+the limit with the only thing it has left: **an hour is paid for when it
+does something.** That is also what the switch says it is - "rest just
+becomes the way to regain" - and resting when there is nothing to regain
+is not resting. The paced lanes (offline, and any loiter) are untouched
+and keep the unconditional tally, because there the hour really was
+spent. Now: 0 tallies at full health, 99 for ninety-nine healing hours,
+9 for a paced offline rest. 3 mutants, 3 dead.
+
+### Three records narrowed, because RESTX1 moved what they describe
+
+None of these is a defect; each is a sentence that was true of rests and
+is now true only of loiter or of the ordinary clock.
+
+- **OL2's rest counter.** "Under the shared clock the counter moves once
+  per five real minutes and a bare hour count reads as a hang" was the
+  reason `status()` carries the world's minutes. A rest no longer shows
+  that page at all - it resolves in one frame - so the decoration is
+  **loiter's** now. The code is unchanged and still right; only its
+  subject narrowed.
+- **The enchantment reroll.** The rest page records that "S40's
+  advanceMinutes runs the magic rounds THROUGH the sleep, so a rested
+  night rerolls as it passes". Online it no longer does, because no
+  minutes pass. **Nothing is lost**: the world's clock runs on wall time
+  regardless, so an item six hours stale still rerolls on its own hour
+  clock through the ordinary per-frame tick - half an hour later, while
+  the player walks around, rather than inside the rest.
+- **Quest delays.** Before RESTX1 an online rest paced off the shared
+  clock and ticked the machine through it, so resting DID push a quest
+  delay forward - at forty real minutes a night. It no longer does.
+  The delay still advances, because WORLD7's clocks charge played time
+  and the world's time is wall time; **the player simply cannot
+  accelerate it by sleeping.** Worth stating plainly, because it is the
+  one thing about RESTX1 that will surprise someone: online, sleeping is
+  no longer a way to skip to tomorrow.
+
+### AUDIT OQ - the online quest system
+
+Mapped end to end, and **no defect found.** What it is, stated once so
+the next reader does not have to re-derive it:
+
+**Quests are entirely per-player.** Each client runs its own
+`QuestMachine`, its own journal, its own resources. The quest system's
+ONLY online awareness is two things, both WORLD7's: `questClockStepMax`
+(a clock charges played time, never more than one step) and `CreateFoe`'s
+spawn interval on the same law. Nothing else in `systems/quest/` knows a
+room exists.
+
+**The boundary that makes that safe is `_layoutFoes`** - the dungeon
+host's index of where the layout's own run ends. Every foe past it "is
+this player's own" (`dungeonContext.js:1042`, AUDIT WORLD B2): a quest
+foe is minted above it, never streamed, never puppet-ised by the room's
+authority switch, and never touched by a joiner's stream. So a joiner's
+quest foe really does spawn and really can be killed by the player whose
+quest it is, which is the thing that would have been quietly broken if
+the boundary were not there.
+
+**Quest items ride site links, not shared containers.** `PlaceItem`
+assigns the resource to a PLACE with a marker; it never puts anything in
+a dungeon loot pile, so WORLD4's "a container anyone opens is the room's"
+cannot reach a quest item.
+
+**Sized by mutation rather than read:** erasing the per-player boundary
+(`_layoutFoes = 1e9`) reddens WORLD1's host pin; stopping the world host
+handing the played step reddens four suites. WORLD7's own machine pin is
+EXECUTED over the real quest tables, the real `QuestMachine` and the real
+`Clock` - a scheduled quest's hour, five days away charged as one step,
+then finished on played time with its task started - which is the pin
+that actually proves quests run online at all.
+
+**The open question, and it is Mac's:** a quest foe being the player's
+own means **two players in one dungeon do not see each other's quest
+targets.** That is the correct reading of a per-player quest system and
+it is what the code has always done; whether co-op *should* share a
+quest - one party, one target, shared credit - is a design decision
+nobody has made yet, and it is a much larger slice than this one.
+
 ## WORLD8 (2026-09-14): the hour's respawn
 
 **Mac: "I would like dungeons and the world to repsawn every hour not
