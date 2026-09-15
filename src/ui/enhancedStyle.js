@@ -909,12 +909,23 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    until it is spent - so it is stated, and the primary says how many
    are left rather than refusing in silence. */
 .poolbar {
-  display: flex; justify-content: space-between; align-items: baseline;
+  display: flex; justify-content: space-between; align-items: baseline; gap: 28px;
   padding: 12px 18px; border-bottom: 1px solid #20262e;
   position: sticky; top: 0; background: var(--slate); z-index: 2;
 }
+/* CHAR1: the bar carries one figure or two, so each key/value pair is a
+   CELL. A cell spreads its own key and value to its ends and grows to
+   fill what it is given - one cell is the row, and is the bar exactly as
+   it was before the total joined it; two share the row in halves. */
+.poolcell { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex: 1 1 auto; }
 .poolk { color: var(--dim); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; }
 .poolv { color: var(--brass); font-size: 19px; font-variant-numeric: tabular-nums; }
+@media (max-width: 520px) {
+  /* two figures do not fit a phone's width side by side - they stack,
+     rather than squeezing the total's now-arrow-final onto two lines */
+  .poolbar { flex-wrap: wrap; row-gap: 6px; }
+  .poolcell { flex-basis: 100%; }
+}
 
 .skillpane { padding: 24px 30px 34px; overflow: auto; max-width: 760px; margin: 0 auto; width: 100%; }
 .skillgroup { margin-bottom: 22px; }

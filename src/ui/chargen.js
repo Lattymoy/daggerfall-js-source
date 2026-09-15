@@ -14,7 +14,7 @@
 // art-less fallback now, not the plan - the note this file carried
 // about unverified art names shipped out with them.
 
-import { rollStats, rollSkills, STAT_KEYS_ORDER, spellPoints, spellPointMultiplier } from '../systems/chargen.js';
+import { rollStats, rollSkills, STAT_KEYS_ORDER, statTotal, spellPoints, spellPointMultiplier } from '../systems/chargen.js';   // CHAR1: the roll's own total
 import { QUESTION_COUNT, NO_CLASS_INDEX, displayQuestion, pickQuestionIndices, answerWeightIndex, resolveClassIndex } from '../systems/classQuestions.js';   // U18
 
 // F2 / THE NEVER-UNFINISHABLE GATE. An answer locks the questions
@@ -1331,6 +1331,19 @@ export class ChargenFlow {
     this.stats[key] = r.working;
     this._setStatPool(r.pool);
   }
+
+  /** CHAR1 - WHAT THIS ROLL IS WORTH, and it does not move while you
+   *  spend. statUp and statDown are strictly zero-sum (:51-58): a step
+   *  moves one point between a stat and the pool, and a refused step -
+   *  MAX_STAT_VALUE above, the rolled floor below - moves neither. So
+   *  the working stats plus the pool is INVARIANT for a given roll and
+   *  is exactly what the character will walk out with; it changes only
+   *  on Reroll, Load Roll, and the class's own re-entry. That is the
+   *  figure to judge a roll by, and it is the figure the screens show.
+   *  It reads whichever pool is on screen, the way every other stat
+   *  accessor here does (AUDIT 64 F33 - the summary has its own). */
+  get statTotalNow() { return statTotal(this.stats); }
+  get statTotalFinal() { return statTotal(this.stats) + this._statPool(); }
 
   /** The bonus pool of the screen that is showing: the SUMMARY's own
    *  (AUDIT 64 F33) or the bonus-stats window's. */

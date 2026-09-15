@@ -479,3 +479,98 @@ test('only a scrolled element is restored, and a changed tree starts fresh', asy
   repaintKeepingScroll(null, () => { ran++; });
   assert.equal(ran, 1, 'the rebuild runs even when there is nothing to restore');
 });
+
+// ── CHAR1: THE ROLL'S TOTAL ──────────────────────────────────────
+// (2026-09-15, a player through Mac: "show the total dice rolls in the
+// enhanced character creator".) Eight attributes are rolled - a career
+// floor plus 0..10 each - and a bonus pool of 6..14 is rolled beside
+// them, and NEITHER screen ever added them up. "Is this a good roll?"
+// was eight numbers of mental arithmetic before every Reroll.
+//
+// What makes the figure worth showing is that it does not move: statUp
+// and statDown are strictly zero-sum, and a REFUSED step (at
+// MAX_STAT_VALUE above, at the rolled value below) moves neither side.
+// So working-stats + pool is invariant for a given roll, and is what
+// the character walks out with. The screens show `now -> final` while
+// the pool is unspent, and one number once it is.
+const CHAR1_CAREER = {
+  name: 'Mage', hitPointsPerLevel: 8,
+  strength: 40, intelligence: 60, willpower: 72, agility: 48,
+  endurance: 52, personality: 55, speed: 48, luck: 57,
+  primarySkills: [0, 1, 2], majorSkills: [3, 4, 5], minorSkills: [6, 7, 8, 9, 10, 11],
+};
+/** The wizard walked to the attributes screen, the way a player walks it. */
+function char1ToStats(rolls = () => 0.5) {
+  const f = new ChargenFlow([{ name: 'Mage', career: CHAR1_CAREER }], rolls);
+  f.input('confirm'); f.input('char:m'); f.input('confirm'); f.input('confirm');
+  for (const ch of 'Ayla') f.input(`char:${ch}`);
+  f.input('confirm'); f.input('confirm'); f.input('confirm');
+  assert.equal(f.state, 'stats', 'the walk reaches the attributes screen');
+  return f;
+}
+const char1Sum = (f) => STAT_KEYS_ORDER.reduce((n, k) => n + f.stats[k], 0);
+
+test('CHAR1: the attribute total is the eight values, and the roll total does not move while you spend it', () => {
+  const f = char1ToStats();
+  assert.equal(f.statTotalNow, char1Sum(f), 'the total is the eight stats, added');
+  assert.ok(f.statPool >= 6 && f.statPool <= 14, `a rolled pool (${f.statPool})`);
+  const worth = f.statTotalFinal;
+  assert.equal(worth, char1Sum(f) + f.statPool, 'and the roll is worth the stats plus what is still in hand');
+
+  // every legal spend, and then some refused ones - the figure holds
+  for (let i = 0; i < STAT_KEYS_ORDER.length; i++) {
+    f.applyHit({ setStatCursor: i });
+    for (let n = 0; n < 4; n++) {
+      f.applyHit({ statStep: 1 });
+      assert.equal(f.statTotalFinal, worth, `raising ${STAT_KEYS_ORDER[i]} changed the roll's worth`);
+      assert.equal(f.statTotalNow, char1Sum(f), 'and the running total still is the eight values');
+    }
+  }
+  assert.equal(f.statPool, 0, 'the pool is spent');
+  assert.equal(f.statTotalNow, worth, 'so the running total has arrived at it');
+  // refused steps: the pool is empty (up) and a stat is at its rolled
+  // floor (down). Neither side may move, so neither may the total.
+  f.applyHit({ setStatCursor: 0 });
+  f.applyHit({ statStep: 1 });
+  assert.equal(f.statTotalFinal, worth, 'an up-step with an empty pool is not a free point');
+  for (let n = 0; n < 40; n++) f.applyHit({ statStep: -1 });
+  assert.equal(f.stats[STAT_KEYS_ORDER[0]], f.rolledStats[STAT_KEYS_ORDER[0]], 'down stops at the rolled value');
+  assert.equal(f.statTotalFinal, worth, 'and refusing to go below it is not a lost point');
+});
+
+test('CHAR1: a reroll is a NEW total, and the summary reads its OWN pool (AUDIT 64 F33)', () => {
+  // the floor roll, then the ceiling one - two totals that cannot
+  // coincide, because a walking rolls() can land on the same SUM from
+  // different values and would make this pin lie about what it caught
+  let draw = 0;
+  const f = char1ToStats(() => draw);
+  const floor = f.statTotalFinal;
+  assert.equal(floor, char1Sum(f) + f.statPool);
+  assert.equal(f.statPool, 6, 'rolls() 0 is the minimum pool');
+  draw = 0.999;
+  f.reroll();
+  assert.equal(f.statTotalFinal, char1Sum(f) + f.statPool, 'the total follows the new roll');
+  assert.equal(f.statPool, 14, 'rolls() 0.999 is the maximum pool');
+  assert.equal(f.statTotalFinal - floor, 8 * 10 + (14 - 6),
+    'the ceiling roll is +10 on each of eight stats and +8 of pool above the floor one');
+
+  // THE TRAP. The summary edits the same eight values against a SECOND
+  // pool of its own; a total that read `this.statPool` would report the
+  // stats screen's spent-out zero and be one point light per step taken
+  // here - which is exactly the shape AUDIT 64 F33 found in the pool
+  // display itself.
+  while (f.statPool > 0) f.applyHit({ statStep: 1 });
+  f.input('confirm'); f.input('confirm');
+  for (const g of ['primary', 'major', 'minor']) {
+    for (let n = 0; n < 30 && (f.pools?.[g] ?? 0) > 0; n++) f.applyHit({ skillStep: 1, group: g });
+  }
+  for (let i = 0; i < 6 && f.state !== 'summary'; i++) f.input('confirm');
+  assert.equal(f.state, 'summary', 'the walk reaches the review');
+  const worth = f.statTotalFinal;
+  assert.equal(f.statPool, 0, 'the stats screen\'s pool is spent out');
+  f.applyHit({ setStatCursor: 0 });
+  f.applyHit({ statStep: -1 });
+  assert.equal(f.sumStatPool, 1, 'the point went into the SUMMARY\'s pool');
+  assert.equal(f.statPool, 0, 'not the stats screen\'s');
+  assert.equal(f.statTotalFinal, worth, 'and the total is whole - it read the pool the screen is showing');
+});
