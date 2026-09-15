@@ -44,7 +44,7 @@ export function hasCustomLocationPosition(dfLocation) {
  *   blocks:Array<{x:number,y:number,blockName:string,dfBlock:object,
  *   layout:object,originX:number,originZ:number}>}}
  */
-export function layoutLocation(dfLocation, mapsFile, blocksFile, { enhanced = false } = {}) {
+export function layoutLocation(dfLocation, mapsFile, blocksFile, { enhanced = false, windmills = true } = {}) {
   const width = dfLocation.exterior.exteriorData.width;
   const height = dfLocation.exterior.exteriorData.height;
   const blocks = [];
@@ -59,7 +59,7 @@ export function layoutLocation(dfLocation, mapsFile, blocksFile, { enhanced = fa
         y,
         blockName,
         dfBlock,
-        layout: layoutRmbBlock(dfBlock, { enhanced }),
+        layout: layoutRmbBlock(dfBlock, { enhanced, windmills }),   // WM3: the pack's switch rides beside the skin
         originX: x * RMB_SIDE,
         originZ: y * RMB_SIDE,
       });

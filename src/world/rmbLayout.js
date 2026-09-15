@@ -54,13 +54,15 @@ export const isBulletinBoard = (modelID) => modelID === BULLETIN_BOARD_MODEL_ID;
 /**
  * Assemble an RMB block into world placements.
  * @param {object} dfBlock - output of BlocksFile.getBlock() (type Rmb).
- * @param {{enhanced?:boolean}} [opts] - `enhanced` is the caller's skin.
- *   The mills are an enhanced-skin departure and so is the SUBRECORD
- *   they need, which mutates the parsed block - see attachWindmillRecord.
+ * @param {{enhanced?:boolean, windmills?:boolean}} [opts] - `enhanced` is
+ *   the caller's skin. The mills are an enhanced-skin departure and so is
+ *   the SUBRECORD they need, which mutates the parsed block - see
+ *   attachWindmillRecord. WM3: `windmills` is the PACK's own switch
+ *   (features.js WINDMILLS_KEY), and both must be true for a mill to stand.
  * @returns {{models:Array<{modelId:string,modelIdNum:number,matrix:Float32Array}>,
  *   groundTiles:Array<Array<{record:number,rotated:boolean,flipped:boolean}>>}}
  */
-export function layoutRmbBlock(dfBlock, { enhanced = false } = {}) {
+export function layoutRmbBlock(dfBlock, { enhanced = false, windmills = true } = {}) {
   const rmb = dfBlock.rmbBlock;
   const models = [];
 
@@ -135,7 +137,10 @@ export function layoutRmbBlock(dfBlock, { enhanced = false } = {}) {
   // no recordIndex, which is WM2f's state - and it is not drawn on this
   // skin anyway (`enhancedOnly`, honoured by the hosts).
   const mills = windmillsFor(dfBlock.name);
-  if (mills.length && enhanced) {
+  // WM3: the skin AND the pack's own switch. `windmills` defaults TRUE
+  // so `enhanced` keeps meaning exactly what it meant to every caller
+  // that does not know there is a switch; the hosts pass the switch.
+  if (mills.length && enhanced && windmills) {
     const recordIndex = attachWindmillRecord(dfBlock);
     for (const w of mills) {
       if (!w.building) continue;

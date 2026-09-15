@@ -77,7 +77,7 @@ export const TEST_RIDE = Object.freeze({
  *  the lines and the folds show; the Nord Warrior carries it. */
 export const TEST_LOOT = Object.freeze({
   id: 'loot', label: 'The loot ladder', preset: 'nord-warrior',
-  blurb: 'The Nord Warrior with a Magic and a Rare of ten base items and every Legendary in the pack - the tier colours, the affix lines, the unidentified names, and the folds on the paperdoll. Turns Loot rarity on.',
+  blurb: 'The Nord Warrior with a Magic and a Rare of ten base items and every Legendary in the pack, IDENTIFIED so their names and affix lines read - plus one unidentified Rare and one unidentified Legendary, which is what the two top tiers look like on the floor. The tier colours, the affix lines and the folds on the paperdoll. Turns Loot rarity on.',
 });
 
 /** The one door for a `test=` id: a preset (ride false), the ride
@@ -213,24 +213,60 @@ export const TEST_LOOT_BASES = Object.freeze([
 /** LR3: the loot ladder's pack - a Magic and a Rare of every base, then
  *  every Legendary on the first base its record fits (a record with no
  *  fitting base here mints on its own group's first template). Pure
- *  over `rolls`; turns the switch on. Returns what it added. */
+ *  over `rolls`; turns the switch on. Returns what it added.
+ *
+ *  LR6 (2026-09-15, Mac: "when I open the loot test character, nothing
+ *  on the character has rarity in the inventory"): THE SHOWCASE WAS
+ *  HIDING WHAT IT SHOWCASES, and it was DFU's own law doing it. A Rare
+ *  and a Legendary carry a real DFU enchantment, so `itemIsIdentified`
+ *  reads them as UNIDENTIFIED - and an unidentified item gives up its
+ *  name to the bare template (ItemHelper.cs:265-292, through
+ *  `itemInfo.itemNameParts`) and its affix lines with it. So twenty of
+ *  the thirty items this door minted read as `Longsword`, `Dagger`,
+ *  `Battle Axe` - indistinguishable from the forty-nine plain armory
+ *  pieces `seedTestGear` puts in the pack AHEAD of them, with nothing
+ *  but a name COLOUR between them. Wyrmbane, Nightwhisper and
+ *  Graveward were all in there, all called "Longsword".
+ *
+ *  That law is right for a real drop and this page does not touch it.
+ *  It is wrong for the ROOM, whose whole job is to show the ladder,
+ *  and whose own blurb had been promising the affix lines it hid. So
+ *  the ladder mints IDENTIFIED here - and then mints ONE unidentified
+ *  Rare and ONE unidentified Legendary beside it, because the
+ *  unidentified reading is half of what the room exists to show and
+ *  dropping it would trade one missing half for the other. */
 export function seedTestLoot(entity, rolls = Math.random) {
   setPref('lootRarity', true);
   const added = [];
   const base = (row) => (row.kind === 'jewellery'
     ? mintCondition({ group: 'Jewellery', templateIndex: row.templateIndex, name: templateByIndex(row.templateIndex)?.name ?? row.label, flags: 0 })
     : testItemOf(row));
-  for (const tier of ROLLED_TIERS.filter((t) => t !== 'legendary')) {
-    for (const row of TEST_LOOT_BASES) { const it = applyRarity(base(row), tier, rolls); addItem(entity.items, it); added.push(it); }
-  }
-  for (const rec of LEGENDARIES) {
+  /** Into the pack. `identified` is LR6's arm: the flag DFU's own
+   *  `itemIsIdentified` reads, set so the room can be READ. It is
+   *  inert on a Magic - an unenchanted item is always identified - so
+   *  it may be set uniformly rather than by tier. */
+  const put = (it, { identified = true } = {}) => {
+    if (identified) it.isIdentified = true;
+    addItem(entity.items, it);
+    added.push(it);
+    return it;
+  };
+  /** One Legendary record, on the base its own `templates` allow. */
+  const legendaryItem = (rec) => {
     const row = TEST_LOOT_BASES.find((r) => (r.group ?? (r.kind === 'weapon' ? 'Weapons' : 'Armor')) === rec.group && (!rec.templates || rec.templates.includes(r.templateIndex)))
       ?? TEST_LOOT_BASES.find((r) => (r.group ?? (r.kind === 'weapon' ? 'Weapons' : 'Armor')) === rec.group);
     const it = base(rec.templates && !rec.templates.includes(row.templateIndex) ? { ...row, templateIndex: rec.templates[0], label: templateByIndex(rec.templates[0])?.name ?? row.label } : row);
     // the record is CHOSEN, not rolled: a one-record pool through the same door
-    applyRarity(it, 'legendary', () => 0, [rec]);
-    addItem(entity.items, it); added.push(it);
+    return applyRarity(it, 'legendary', () => 0, [rec]);
+  };
+  for (const tier of ROLLED_TIERS.filter((t) => t !== 'legendary')) {
+    for (const row of TEST_LOOT_BASES) put(applyRarity(base(row), tier, rolls));
   }
+  for (const rec of LEGENDARIES) put(legendaryItem(rec));
+  // ...and the law itself, once each: what a Rare and a Legendary look
+  // like on the floor, before the Mages Guild has been paid.
+  put(applyRarity(base(TEST_LOOT_BASES[0]), 'rare', rolls), { identified: false });
+  if (LEGENDARIES.length) put(legendaryItem(LEGENDARIES[0]), { identified: false });
   return added;
 }
 

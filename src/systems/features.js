@@ -71,6 +71,13 @@ export const GROUPS = Object.freeze({
 });
 export const GROUP_ORDER = Object.freeze(['sight', 'world', 'loot', 'combat']);
 
+/** WM3: the Windmills pack's switch key. It is declared HERE with its
+ *  row (RF4's law) rather than in `world/windmills.js`, because that
+ *  module reads it through `uiPrefs` and `uiPrefs` reads this page's
+ *  defaults - the other direction closes a cycle and the shelf loads
+ *  before the row exists. */
+export const WINDMILLS_KEY = 'windmills';
+
 /** Where a control's value lives. */
 export const STORES = Object.freeze(['prefs', 'settings', 'mods']);
 
@@ -375,9 +382,35 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'weatherEvents', initial: true, online: true }),   // WEATHER2b: weatherSim.js weatherFieldOn; forced on online - one sky
   }),
-  // FT9 (2026-09-14): THE FIVE PACKS WITH A SWITCH (Dynamic Skies' is
-  // the outdoors row's, FT4). Windmills (Kamer) has no switch and so no
-  // row - a row needs a control. The order is the old Mods pane's.
+  // FT9 (2026-09-14): THE PACKS WITH A SWITCH (Dynamic Skies' is the
+  // outdoors row's, FT4). The order is the old Mods pane's.
+  //
+  // WM3 (2026-09-15, Mac: "the windmills of daggerfall is missing from
+  // credits and the feature menu"): AND WINDMILLS, WHICH HAD NO ROW
+  // BECAUSE IT HAD NO SWITCH. This note used to say exactly that - "a
+  // row needs a control" - which described the machinery correctly and
+  // answered the wrong question. It only became visible at FT14, which
+  // retired the Mods pane: that pane had listed every vendored pack
+  // whether or not it had a knob, and it was the only place Kamer's
+  // name appeared outside the About page's credits. A mod with no
+  // switch is a mod a player cannot turn off OR find; the switch is
+  // the fix for both.
+  //
+  // It is a PREF and not a `modFeature`, because `modFeature` builds a
+  // row out of a vendor's own `Enabled` setting key and this pack has
+  // no shipped settings file to carry one - the port bakes its meshes
+  // from the author's source. The row is the declaration (RF4), and
+  // `world/windmills.js` reads it beside the turn it gates.
+  Object.freeze({
+    id: 'mod-windmills-kamer',
+    group: 'world',
+    title: 'Windmills of Daggerfall by Kamer',
+    note: 'The windmill towers and their turning sails on the seven farms Kamer chose to stand them on, with the '
+      + 'machinery inside and a skin for every climate and season. Off is Daggerfall\u2019s own farms.',
+    effect: 'Takes effect when the world next loads.',
+    kinds: Object.freeze(['mod']),
+    control: Object.freeze({ store: 'prefs', key: WINDMILLS_KEY, initial: true, online: 'player' }),
+  }),
   modFeature('seasons-iliac-bay', 'Takes effect when the world next loads.', 'world'),
   modFeature('roads-hazelnut', 'Takes effect when the world next loads.', 'world'),
   modFeature('meanerMonsters', 'Takes effect on monsters spawned after the switch.', 'combat'),

@@ -60,6 +60,8 @@ import { itemBackgroundColour, scrollerToolTipText } from '../src/ui/itemScrolle
 import { hoverLines } from '../src/ui/lootHover.js';
 import { playRareDrop, takeCorpseLoot } from '../src/scenes/corpseMarker.js';   // AUDIT-LR: the peer's take is the one take law
 import { TEST_LOOT, testEntryById, seedTestLoot, TEST_LOOT_BASES } from '../src/systems/testRoom.js';
+import { itemNameParts } from '../src/systems/itemInfo.js';   // LR6: what the pack ROW actually prints
+import { templateByIndex } from '../src/systems/itemTemplates.js';   // LR6: the bare-template reading an unidentified item falls back to
 import { snapshotPlayer, restorePlayer } from '../src/systems/save.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -482,15 +484,74 @@ test('LR3: the Test Room\'s loot ladder - one door, thirty items (a Magic and a 
   const e = { items: [] };
   const added = seedTestLoot(e, lcg(1));
   assert.equal(LR.lootRarityOn(), true, 'the door turns the ladder on');
-  assert.equal(added.length, 20 + LR.LEGENDARIES.length);
+  // LR6: the ladder, plus the unidentified pair - one Rare and one
+  // Legendary left on the floor's own reading.
+  assert.equal(added.length, 20 + LR.LEGENDARIES.length + 2);
   assert.equal(added.filter((i) => i.rarity === 'magic').length, 10);
-  assert.equal(added.filter((i) => i.rarity === 'rare').length, 10);
-  const legs = added.filter((i) => i.rarity === 'legendary');
+  assert.equal(added.filter((i) => i.rarity === 'rare').length, 11);
+  const legs = added.filter((i) => i.rarity === 'legendary' && i.isIdentified);
   assert.deepEqual(legs.map((i) => i.legendary).sort(), LR.LEGENDARIES.map((l) => l.id).sort(), 'every record once');
   for (const it of legs) { const rec = LR.legendaryById(it.legendary); assert.ok(!rec.templates || rec.templates.includes(it.templateIndex), `${rec.id} on a fitting base`); }
   assert.equal(e.items.length, added.length);
   assert.match(read('src/ui/enhancedMenu.js'), /TEST_LOOT\.label[\s\S]*?onAction\(`test:\$\{TEST_LOOT\.id\}`\)/, 'the pane\'s card');
   assert.match(read('src/scenes/world.js'), /if \(testEntry\.loot\) console\.log\(`\[testroom\] loot ladder: \$\{seedTestLoot\(playerEntity\)\.length\} rolled items in the pack`\);/, 'the boot seeds it');
+  _resetForTests();
+});
+
+// ═══ LR6: THE SHOWCASE SHOWS ══════════════════════════════════════
+//
+// (2026-09-15, Mac: "when I open the loot test character, nothing on
+// the character has rarity in the inventory.")
+//
+// It was all there - and two thirds of it was INVISIBLE, by DFU's own
+// law working exactly as ported. A Rare and a Legendary carry a real
+// enchantment, so `itemIsIdentified` reads them as unidentified, and an
+// unidentified item gives up its NAME to the bare template and its
+// affix lines with it (ItemHelper.cs:265-292). Twenty of the thirty
+// items read `Longsword`, `Dagger`, `Battle Axe` - the same words as
+// the forty-nine plain armory pieces sitting in the pack ahead of them,
+// separated by a name colour and nothing else. Wyrmbane, Nightwhisper
+// and Graveward were in the pack, all called "Longsword".
+//
+// The law is right for a real drop and is untouched. The ROOM mints
+// identified, and keeps ONE of each top tier unidentified so the other
+// half of the law is still on show.
+test('LR6: the loot ladder READS - identified names and affix lines, and one unidentified of each top tier', () => {
+  off();
+  const e = { items: [] };
+  const added = seedTestLoot(e, lcg(7));
+
+  const named = (it) => itemNameParts(it, {}).name;
+  const templateName = (it) => templateByIndex(it.templateIndex)?.name;
+
+  // (a) EVERY Legendary the room shows is CALLED something. This is the
+  // assertion the old pack would have failed on all ten.
+  for (const it of added.filter((i) => i.rarity === 'legendary' && i.isIdentified)) {
+    const rec = LR.legendaryById(it.legendary);
+    assert.equal(named(it), rec.name, 'a Legendary on show wears its own name, not its template\'s');
+    assert.ok(LR.rarityLines(it).length > 2, `${rec.name} shows its affix lines`);
+  }
+  // (b) ...and every Rare on show reads as its rolled name with its affixes.
+  for (const it of added.filter((i) => i.rarity === 'rare' && i.isIdentified)) {
+    assert.notEqual(named(it), templateName(it), 'a Rare on show is not called by its bare template');
+    assert.equal(LR.rarityLines(it).includes('Unidentified'), false);
+  }
+  // (c) THE OTHER HALF IS STILL THERE, once each: what the floor shows.
+  const dark = added.filter((i) => !i.isIdentified);
+  assert.deepEqual(dark.map((i) => i.rarity).sort(), ['legendary', 'rare'], 'one of each top tier, and no more');
+  for (const it of dark) {
+    assert.equal(named(it), templateName(it), 'an unidentified drop is its bare template');
+    assert.deepEqual(LR.rarityLines(it), [LR.RARITIES[it.rarity].label, 'Unidentified']);
+  }
+  // (d) A MAGIC NEEDED NOTHING: it carries no enchantment, so DFU's own
+  // law already reads it. The flag is inert there, which is why it may
+  // be set uniformly.
+  for (const it of added.filter((i) => i.rarity === 'magic')) {
+    assert.notEqual(named(it), templateName(it));
+    assert.equal(LR.rarityLines(it).includes('Unidentified'), false);
+  }
+  // (e) and the door's blurb no longer promises what it hides
+  assert.match(read('src/systems/testRoom.js'), /IDENTIFIED so their names and affix lines read/, 'the blurb says what the pack does');
   _resetForTests();
 });
 
