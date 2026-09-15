@@ -160,9 +160,62 @@ ladder" as a fixed window of source lines, already widened from 60 to 80 by
 two earlier audits. It reads the law now. **A pin that needs widening every
 time the file grows is measuring the file, not the rule.**
 
-Seams still open here: the two exterior hosts' draw ladders, the five-host
-save envelope assembly, and the mode-transition teardown order. Each is
-bigger than the race and each wants its own differential before it moves.
+**The weapon pose pair, shipped (HARD2c, 2026-09-15).** The second seam,
+and the smallest of the three that were open. DFU writes the sheath and
+the hand as ONE pair and restores them as ONE pair -
+`SerializablePlayer.cs:175-176` and `:420-421` - and the port had that
+pair written out by hand in three hosts and read back in three more.
+**AUDIT 63 F25 is what four copies of a two-line law cost**: the port
+carried only the first of the two lines, so a player fighting with the
+left-hand weapon loaded back holding the right hand's item, or bare
+fists. By the time it was found, the two restore lines had drifted six
+and thirteen lines apart inside their own hosts, and the comment in
+`worldModes.js` that pointed between them cited `world.js:4407` and
+`dungeonContext.js:5451` - lines that had moved to `:4418` and `:5457`.
+*Three copies of a rule, and the signpost between them stale as well.*
+
+The pair lives in `src/combat/playerWeapon.js` now - `weaponPoseOf`,
+`applyWeaponPose`, `mergeWeaponPose` - beside `usingRightHandFromSaveVars`,
+the CLASSIC-save half of the very same law, which was already kept there
+"so the law and its citation live with the hand". The hosts keep their
+rigs, because which rig is in the player's hands genuinely differs per
+host; only the arithmetic moved.
+
+Both HARD2 rules held, and both were checked rather than asserted:
+
+- **Two exhaustive differentials** carrying the old inline arithmetic
+  verbatim - 76 compose cases and 84 restore cases over every shape a
+  pose field has arrived in (set either way, absent, and both spellings
+  of "nothing here"): **0 differ**. The compose differential includes
+  `world.js`'s deliberate PER-FIELD `??` merge, which is defensive
+  against a mode host answering a partial bag and is not the same thing
+  as picking the bag whole.
+- **Two behavioural pins moved, and both got stronger.** `audit26
+  F222` and `audit63 F25` quoted the two lines character for character
+  in each host - which is exactly the shape that let F25 lose one of
+  them, and *a pin that quotes four copies cannot tell you they agree*.
+  They run the law now and match only the WIRING: which rig each host
+  offers, and that `world.js` lands the pair in the interior rig as well
+  because DFU has one manager. `audit63`'s `new Function` mount of
+  `worldModes`' two seams survives intact and is now handed the real law
+  instead of a re-typed copy - the same "a pin getting simpler at an
+  extraction is the sign the extraction was real" that HARD2a recorded.
+
+`test/hard2c_weaponpose.test.js` pins the law directly and gates against
+a fourth inline copy appearing.
+
+**A correction to this page.** The line that used to sit here called the
+next seam "the five-host save envelope assembly". That was wrong: only
+`world.js` and `dungeonContext.js` call `snapshotPlayer`, and
+`composeSessionState` had already extracted the quest+talk half at B4.
+Counting hosts that *touch* saving is not the same as counting hosts that
+*assemble the envelope*, and the record should not have overstated a seam
+it was ranking.
+
+Seams still open here: the two exterior hosts' draw ladders and the
+mode-transition teardown order. Both are bigger than either shipped slice
+and neither has a found defect in hand, so each wants its own
+differential - and, before that, a reason - before it moves.
 
 ### HARD3 - types at the seams that crash. SHIPPED 2026-09-14.
 

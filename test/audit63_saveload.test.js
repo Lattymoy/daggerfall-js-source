@@ -25,7 +25,7 @@ import { dfuFile } from './dfuRoot.mjs';
 import { snapshotPlayer, restorePlayer, restoreSessionState, removeOrphanedItems, removeAllOrphanedItems } from '../src/systems/save.js';
 import { MobileUnit, MOBILE_DAEDRA_SEDUCER } from '../src/characters/mobileUnit.js';
 import { ENEMY_BASICS } from '../src/characters/enemyBasics.js';
-import { usingRightHandFromSaveVars } from '../src/combat/playerWeapon.js';
+import { usingRightHandFromSaveVars, weaponPoseOf, applyWeaponPose, mergeWeaponPose } from '../src/combat/playerWeapon.js';   // HARD2c: the port-save half of the pair, beside the classic-save half
 import { equipItem } from '../src/systems/equip.js';
 import { createRandomPotion, randomlyAddMap, randomlyAddPotionRecipe } from '../src/systems/loot.js';   // AUDIT 63r F28: the three NAMELESS production mints
 import { templateByIndex } from '../src/systems/itemTemplates.js';
@@ -184,11 +184,23 @@ test('AUDIT 63 F25: both save hosts write the hand and land it, and neither re-r
   // them back into the street's rig. The composer asks the mode host
   // for the rig that is actually in the player's hands, per field, and
   // falls back to its own when there is none.
+  //
+  // HARD2c: THE ARITHMETIC LEFT THIS PIN. It used to quote the two
+  // lines character for character in each host - which is exactly the
+  // shape that let F25 lose one of them, and a pin that quotes four
+  // copies cannot tell you they agree. The law is one function now, so
+  // the law is RUN here and what stays matched is the WIRING: which rig
+  // each host offers, and that world.js lands the pair in the interior
+  // rig as well because DFU sets ONE manager.
   assert.match(WORLD, /const wp = modes\?\.weaponPose\?\.\(\) \?\? null;/, 'the world host asks the mode seam for the live rig');
-  assert.match(WORLD, /weaponDrawn: wp\?\.weaponDrawn \?\? !weaponRig\.playerWeapon\.sheathed, usingRightHand: wp\?\.usingRightHand \?\? weaponRig\.playerWeapon\.usingRightHand,/,
+  assert.match(WORLD, /\.\.\.mergeWeaponPose\(wp, weaponPoseOf\(weaponRig\.playerWeapon\)\),/,
     'per field: the mode seam, else this host\'s own rig');
-  assert.match(WORLD, /if \(pose\.usingRightHand != null\) weaponRig\.playerWeapon\.usingRightHand = !!pose\.usingRightHand;/,
-    ':421 sets the property, presence-gated');
+  assert.deepEqual(mergeWeaponPose({ usingRightHand: false }, { weaponDrawn: true, usingRightHand: true }),
+    { weaponDrawn: true, usingRightHand: false }, 'and PER FIELD is the law, not a whole-bag pick');
+  const landed = { sheathed: true, usingRightHand: true };
+  applyWeaponPose(landed, { usingRightHand: false });
+  assert.deepEqual(landed, { sheathed: true, usingRightHand: false }, ':421 sets the property, presence-gated');
+  assert.match(WORLD, /applyWeaponPose\(weaponRig\.playerWeapon, pose\);/, 'the world host lands it through that law');
   assert.match(WORLD, /modes\?\.applyWeaponPose\?\.\(pose\);/, 'and the pair lands in the interior rig too - DFU sets ONE manager');
 
   // ...and the fourth host's two seams, MOUNTED, not matched: the
@@ -207,9 +219,13 @@ test('AUDIT 63 F25: both save hosts write the hand and land it, and neither re-r
     assert.fail(`unbalanced ${sig}`);
     return '';
   };
+  // HARD2c: the lifted bodies call the shared law now, so the harness
+  // hands them the same two functions the host imports - which is the
+  // point of the mount: these are worldModes' OWN expressions, running,
+  // over the real law rather than a re-typed copy of it.
   // eslint-disable-next-line no-new-func
-  const seam = (mode, interiorWeapon) => new Function('mode', 'interiorWeapon',
-    `return ({ ${lift(WM, '    weaponPose() {')}, ${lift(WM, '    applyWeaponPose(pose) {')} });`)(mode, interiorWeapon);
+  const seam = (mode, interiorWeapon) => new Function('mode', 'interiorWeapon', 'weaponPoseOf', 'setWeaponPose',
+    `return ({ ${lift(WM, '    weaponPose() {')}, ${lift(WM, '    applyWeaponPose(pose) {')} });`)(mode, interiorWeapon, weaponPoseOf, applyWeaponPose);
   const rig = (sheathed, usingRightHand) => ({ playerWeapon: { sheathed, usingRightHand } });
 
   const drawnLeft = rig(false, false);
@@ -235,9 +251,13 @@ test('AUDIT 63 F25: both save hosts write the hand and land it, and neither re-r
   assert.deepEqual(untouched.playerWeapon, { sheathed: true, usingRightHand: true }, 'presence-gated, like every additive pose member');
   seam('interior', untouched).applyWeaponPose(null);
   assert.deepEqual(untouched.playerWeapon, { sheathed: true, usingRightHand: true }, 'and a poseless envelope leaves the live rig');
-  assert.ok(!/applyWeapon\(/.test(lift(WM, '    applyWeaponPose(pose) {')), 'flag only - the rig re-derives the screen weapon per frame');
-  assert.match(DC, /usingRightHand: playerWeapon\.usingRightHand \}/, 'the dungeon/interior host writes it');
-  assert.match(DC, /if \(extras\.pose\.usingRightHand != null\) playerWeapon\.usingRightHand = !!extras\.pose\.usingRightHand;/);
+  // flag only - the rig re-derives the screen weapon per frame. The
+  // claim is now about the LAW, so it is made where the law lives, and
+  // a throwing spy proves it rather than the absence of a substring.
+  const spy = { sheathed: true, usingRightHand: true, applyWeapon() { throw new Error('the restore must not re-bind the weapon'); } };
+  applyWeaponPose(spy, { weaponDrawn: true, usingRightHand: true });
+  assert.match(DC, /\.\.\.weaponPoseOf\(playerWeapon\) \}/, 'the dungeon/interior host writes it');
+  assert.match(DC, /applyWeaponPose\(playerWeapon, extras\.pose\);/, 'and lands it, both halves, in one call');
   // THE RESTORE SETS THE FLAG AND NOTHING ELSE. SerializablePlayer's
   // restore calls no ApplyWeapon; WeaponManager.Update's UpdateHands
   // ends in one (:699) on the next frame, and the port's twin is
