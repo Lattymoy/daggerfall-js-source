@@ -205,8 +205,8 @@
     </a>
     <h1 class="wordmark">Daggerfall<small>Enhanced</small></h1>
     <div class="rule"><i class="gem"></i></div>
-    <p class="dek">An open-source reimplementation of The Elder Scrolls II: Daggerfall. The rules intact, the renderer built from scratch, on desktop or phone with nothing to install.</p>
-    <p class="gate">You need <b>your own copy</b> of Daggerfall, free since 2009. It stays on your device: nothing is uploaded, and there is no account.</p>
+    <p class="dek">An open-source rebuild of The Elder Scrolls II: Daggerfall that runs in a browser. Same rules, new renderer, nothing to install.</p>
+    <p class="gate">You need <b>your own copy</b> of Daggerfall, free since 2009. It stays on your device. Nothing is uploaded and there is no account.</p>
     <div class="doorplaques">
       <a class="plaque" href="./play/">Play</a>
       <a class="plaque" href="https://github.com/Lattymoy/daggerfall-js-source/releases/latest">Install</a>
@@ -234,15 +234,15 @@
       <div class="cols">
         <div>
           <h3>Reimplemented 1:1</h3>
-          <p>The file formats, the world, combat math, quests, magic, guilds, the calendar and the courts, translated line by line from Daggerfall Unity's C#. The quirks were kept on purpose.</p>
+          <p>Translated line by line from Daggerfall Unity's C#. Bugs included, on purpose.</p>
         </div>
         <div>
           <h3>Rebuilt</h3>
-          <p>The presentation is new: a hand-rolled WebGL2 renderer with no engine underneath, and a procedural sky.</p>
+          <p>A hand-rolled WebGL2 renderer with no engine underneath, and a procedural sky.</p>
         </div>
         <div>
           <h3>In progress</h3>
-          <p>Daggerfall Unity took a decade to build, and Daggerfall Enhanced is catching up. Still missing: importing classic or Daggerfall Unity saves, and mods. <a href="https://github.com/Lattymoy/daggerfall-js-source/blob/main/bible/01-Overview/Port-Ledger.md">Read the ledger</a> before you expect a finished game.</p>
+          <p>Not finished. You cannot import classic or Daggerfall Unity saves yet, and there is no mod support. The <a href="https://github.com/Lattymoy/daggerfall-js-source/blob/main/bible/01-Overview/Port-Ledger.md">ledger</a> tracks the rest.</p>
         </div>
       </div>
     </section>
@@ -254,7 +254,7 @@
       <ol class="steps">
         <li class="step"><div>
           <h3>Get Daggerfall.</h3>
-          <p>Any of these gives you the files.</p>
+          <p>Free from any of these.</p>
           <ul class="sources">
             <li><a href="https://store.steampowered.com/app/1812390/">Steam</a></li>
             <li><a href="https://www.gog.com/game/the_elder_scrolls_chapter_ii_daggerfall">GOG</a></li>
@@ -263,16 +263,16 @@
         </div></li>
         <li class="step"><div>
           <h3>Press Play and pick your ARENA2 folder.</h3>
-          <p>It sits inside the game install, under DF/DAGGER/ARENA2 on Steam. Choose it or drop it on the page; on a phone, hand over the whole zip. You won't be asked again.</p>
+          <p>On Steam it is under DF/DAGGER/ARENA2. Pick it or drop it on the page; on a phone, hand over the zip. You will not be asked again.</p>
         </div></li>
         <li class="step"><div>
           <h3>Then play.</h3>
-          <p>You wake in Privateer's Hold, as everyone does. On a phone the touch controls appear on their own.</p>
+          <p>You wake in Privateer's Hold, as everyone does. Touch controls appear on their own.</p>
         </div></li>
       </ol>
       <dl class="qa">
         <dt>Controls</dt>
-        <dd>Daggerfall Unity's defaults. WASD and mouse, F6 opens the pack, F9 and F11 quick save and load, Esc for everything else. Every key can be rebound in Settings.</dd>
+        <dd>Daggerfall Unity's defaults. WASD and mouse, F6 for the pack, F9 and F11 to quick save and load, Esc for the rest. Rebind anything in Settings.</dd>
 
         <dt>Browsers</dt>
         <dd>Any current one with WebGL2: Chrome, Edge, Firefox or Safari.</dd>
@@ -281,10 +281,10 @@
         <dd>In your browser's storage. The desktop app keeps them as real files instead.</dd>
 
         <dt>The desktop app</dt>
-        <dd>Optional. It keeps every save as a folder of real files you can copy and back up, reads your ARENA2 folder straight from disk, and works offline. <a href="https://github.com/Lattymoy/daggerfall-js-source/releases/latest">Download for Windows, macOS or Linux</a>, or <a href="https://github.com/Lattymoy/daggerfall-js-source/blob/main/bible/01-Overview/Desktop-App.md">build it from source</a>.</dd>
+        <dd>Optional. Saves become real files you can back up, it reads ARENA2 straight from disk, and it works offline. <a href="https://github.com/Lattymoy/daggerfall-js-source/releases/latest">Download for Windows, macOS or Linux</a>, or <a href="https://github.com/Lattymoy/daggerfall-js-source/blob/main/bible/01-Overview/Desktop-App.md">build it from source</a>.</dd>
 
-        <dt>Something's wrong.</dt>
-        <dd>Reload first. If it's a real bug, file it on the <a href="https://github.com/Lattymoy/daggerfall-js-source/issues">issue tracker</a> with what you did and what happened.</dd>
+        <dt>If it breaks</dt>
+        <dd>Reload first. If it is still broken, file it on the <a href="https://github.com/Lattymoy/daggerfall-js-source/issues">issue tracker</a> and say what you did.</dd>
       </dl>
     </section>
 
@@ -293,15 +293,15 @@
       <div class="rule"><i class="gem"></i></div>
       <p class="lede">All of this is in the game now.</p>
       <dl class="grid">
-        <div><dt>The world</dt><dd>The whole Iliac Bay, streamed as you walk it, with weather and seasons on the game's own calendar.</dd></div>
-        <div><dt>Towns and people</dt><dd>Shops, taverns, banks, temples and guild halls. People who answer questions, trade rumours and take offence, a watch that arrests you and a court that tries you.</dd></div>
-        <div><dt>Dungeons</dt><dd>The classic dungeons with their locks, teleporters and traps, an automap that fills in as you go, and every monster from the rat to the ancient lich.</dd></div>
-        <div><dt>Combat</dt><dd>Daggerfall's own hit and damage formulas, armour that wears, poisons and diseases, and enemies that cast, flee and give up.</dd></div>
-        <div><dt>Magic</dt><dd>The spellbook, the spell, potion and item makers, magic items and the Daedric artifacts.</dd></div>
-        <div><dt>Your character</dt><dd>Creation with the class questions, custom classes and the biography, then levelling, skills and faction reputation.</dd></div>
-        <div><dt>Quests</dt><dd>265 of them on the game's own scripts: offered, argued over in the talk window, tracked in the journal, kept across saves.</dd></div>
-        <div><dt>The screens</dt><dd>Every classic window laid out from the original art, with a modern set beside it. The switch is one press at the foot of the menu.</dd></div>
-        <div><dt>Sound and music</dt><dd>The game's sounds, footsteps that know what floor you're on, and its MIDI played by a synth written for this project. Your own tracks work too.</dd></div>
+        <div><dt>The world</dt><dd>The whole Iliac Bay, streamed as you walk it. Weather and seasons run on the game's calendar.</dd></div>
+        <div><dt>Towns and people</dt><dd>Shops, taverns, banks and guild halls. People who talk and take offence, a watch that arrests you, a court that tries you.</dd></div>
+        <div><dt>Dungeons</dt><dd>The classic dungeons with their locks, teleporters and traps, and an automap that fills in as you go.</dd></div>
+        <div><dt>Combat</dt><dd>Daggerfall's own hit and damage formulas. Armour wears out, and enemies run when they are losing.</dd></div>
+        <div><dt>Magic</dt><dd>The spellbook, the spell and item makers, and the Daedric artifacts.</dd></div>
+        <div><dt>Your character</dt><dd>The class questions, custom classes and the biography. Then levelling and reputation.</dd></div>
+        <div><dt>Quests</dt><dd>265 of them, running on the game's own scripts and tracked in the journal.</dd></div>
+        <div><dt>The screens</dt><dd>Every classic window laid out from the original art, with a modern set beside it. One press switches.</dd></div>
+        <div><dt>Sound and music</dt><dd>The game's sounds, and its MIDI through a synth written for this project. Your own tracks work too.</dd></div>
       </dl>
     </section>
 
@@ -310,7 +310,7 @@
       <div class="rule"><i class="gem"></i></div>
       <dl class="qa">
         <dt><a href="https://github.com/Interkarma/daggerfall-unity">Daggerfall Unity</a></dt>
-        <dd>Interkarma and contributors, MIT licence. Daggerfall Enhanced is a separate project translated from its C#; Daggerfall Unity is the reference, with years more polish and a mod scene. Without it there would be nothing to build on.</dd>
+        <dd>Interkarma and contributors, MIT licence. Daggerfall Enhanced is a separate project translated from its C#. Without it there would be nothing to build on.</dd>
 
         <dt>The Elder Scrolls II: Daggerfall</dt>
         <dd>Bethesda Softworks, 1996. A fan project, not affiliated with or endorsed by Bethesda or ZeniMax.</dd>
@@ -319,7 +319,7 @@
         <dd>The format documentation the readers were checked against.</dd>
 
         <dt><a href="https://github.com/Lattymoy">Lattymoy</a></dt>
-        <dd>Built Daggerfall Enhanced. Source, docs and the ledger are on <a href="https://github.com/Lattymoy/daggerfall-js-source">GitHub</a>.<span class="meta">Set in Jacquard 12 and Pixelify Sans from Google Fonts, the one request this site makes to anyone else.</span></dd>
+        <dd>Built Daggerfall Enhanced. Source, docs and the ledger are on <a href="https://github.com/Lattymoy/daggerfall-js-source">GitHub</a>.<span class="meta">Set in Jacquard 12 and Pixelify Sans from Google Fonts.</span></dd>
       </dl>
     </section>
 

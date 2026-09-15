@@ -12982,3 +12982,47 @@ credits line still names both faces truthfully.
 One layout consequence, accepted rather than patched around: the pixel
 face is wider, so step 2's head ("Press Play and pick your ARENA2
 folder.") now wraps to two lines where the display face fitted one.
+
+## SITE2 - THE COPY STOPS EXPLAINING (2026-09-15)
+
+Mac, on the same page: *"Also reduce the amount of wall of text. Too
+much overexplaining and looks like AI"*.
+
+The page carried **4,033 characters** of body prose. It carries **3,258**
+now, a fifth of it gone - but the length was the symptom, not the
+complaint. The complaint was the VOICE, and the tell was rhythm: almost
+every block was a comma-chained list of three or four parallel items
+with an appositive fragment, and the nine "What's in it" cards were nine
+of them in a row. Read one and it is tight writing; read nine and it
+reads as generated, because nothing varies and nothing is ever just
+said.
+
+So the pass was not a uniform trim. The worst offenders were rewritten
+to a different shape rather than a shorter one:
+
+- "The file formats, the world, combat math, quests, magic, guilds, the
+  calendar and the courts, translated line by line from Daggerfall
+  Unity's C#. The quirks were kept on purpose." became "Translated line
+  by line from Daggerfall Unity's C#. Bugs included, on purpose." The
+  eight-item list was the tic; naming the C# is the claim.
+- "Daggerfall Unity took a decade to build, and Daggerfall Enhanced is
+  catching up. Still missing: ... Read the ledger before you expect a
+  finished game." became "Not finished. You cannot import classic or
+  Daggerfall Unity saves yet, and there is no mod support. The ledger
+  tracks the rest." Two sentences of apology went; the honesty stayed.
+- "265 of them on the game's own scripts: offered, argued over in the
+  talk window, tracked in the journal, kept across saves" lost its
+  four-beat tail. The number is the claim.
+- The fonts line lost "the one request this site makes to anyone else",
+  and the Daggerfall Unity credit lost "with years more polish and a mod
+  scene" - the sentence after it already said that, better.
+
+**What did not move**, because none of it is padding: the ARENA2
+ownership sentence, the Bethesda disclaimer, the MIT licence and the
+Interkarma credit (both pinned), the browser list, and every link.
+"Without it there would be nothing to build on" stays in full - that one
+is owed.
+
+One heading changed with the copy: "Something's wrong." became "If it
+breaks", which fits the pixel face on one line where the old one wrapped
+after SITE1 widened it.
