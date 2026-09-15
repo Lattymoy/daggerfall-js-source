@@ -133,9 +133,13 @@ test('TEX1 every door converts at the door: no module under src/ imports toColor
   const importers = walk('src').filter((f) => f !== 'src/formats/color32Order.js' && /import[^;]*\btoColor32Order\b[^;]*from/.test(rd(f)));
   assert.deepEqual(importers, [], 'the flip-only conversion has ONE home and no importers - every door takes toColor32');
   // ...and each door is there, converting, by name
-  assert.match(rd('src/systems/handheldTorches.js'), /return toColor32\(await decodePng\(bytes\)\);/, 'handheld torches (the crash)');
+  // HT3: the two SCREEN sprites keep their rows (toScreenOrder); their
+  // world neighbours still flip. Both are the same SHAPE, which is what
+  // TEX1 is about - what changed is which way up, not what it answers.
+  assert.match(rd('src/systems/handheldTorches.js'), /return toScreenOrder\(await decodePng\(bytes\)\);/, 'handheld torches (the crash), rows kept');
   assert.match(rd('src/scenes/droppedTorches.js'), /return toColor32\(await decodePng\(new Uint8Array\(await res\.arrayBuffer\(\)\)\)\);/, 'dropped torches');
-  assert.match(rd('src/combat/weaponWidgetAssets.js'), /return toColor32\(await decodePng\(bytes\)\);/, 'the weapon widget (WW3)');
+  assert.match(rd('src/combat/weaponWidgetAssets.js'), /return toScreenOrder\(await decodePng\(bytes\)\);/, 'the weapon widget (WW3), rows kept');
+  assert.match(rd('src/combat/weaponWidgetAssets.js'), /try \{ return toColor32\(tex\.rgba\(\)\); \}/, '...and its BUNDLE arm still flips, because Unity stores bottom-up');
   assert.match(rd('src/systems/seasonsIliacBayAssets.js'), /const image = toColor32\(await decode\(bytes\)\);/, 'seasons');
   assert.match(rd('src/systems/textureReplacement.js'), /toColor32\(await decode\(bytes\)\)/, 'M-TEX, which had it right all along');
   // the seasons re-wrap at the two upload sites is gone - H4's own law

@@ -54,7 +54,7 @@ import { SOUND } from './soundClips.js';
 import { domCodeForKeyCode } from './keyCodes.js';
 import { moveTowards, moveTowards2, snap, BOB_SHAPE, STEP_CONDITION } from '../combat/weaponWidget.js';   // WW1: Unity's pieces and the two choice tables, one home
 import { setPlayerTorchOffsetOverride } from './playerTorch.js';
-import { toColor32 } from '../formats/color32Order.js';   // TEX1: the SHAPE the upload path reads - `{ colors }`, never a decoded PNG's `{ data }`
+import { toScreenOrder } from '../formats/color32Order.js';   // HT3: a SCREEN sprite keeps its rows - see the note there   // TEX1: the SHAPE the upload path reads - `{ colors }`, never a decoded PNG's `{ data }`
 import { decodePng } from './textureReplacement.js';
 
 export const HANDHELD_TORCHES_VENDOR = 'handheld-torches';
@@ -641,7 +641,7 @@ async function defaultLoadSprite(record, frame) {
   const res = await fetch(spriteUrl(record, frame));
   if (!res.ok) return null;
   const bytes = new Uint8Array(await res.arrayBuffer());
-  return toColor32(await decodePng(bytes));   // TEX1: `{ width, height, colors }` - the shape uploadTexture reads
+  return toScreenOrder(await decodePng(bytes));   // TEX1: `{ width, height, colors }` - the shape uploadTexture reads; HT3: and the rows as the PNG has them, because this one is drawn on a SCREEN quad (toColor32's flip put the flame under the hand)
 }
 
 /**

@@ -55,3 +55,37 @@ export function toColor32(image) {
   const { width, height, data } = toColor32Order(image);
   return { width, height, colors: new Uint8ClampedArray(data.buffer, data.byteOffset, data.byteLength) };
 }
+
+/**
+ * HT3 (2026-09-15, Mac: "the player held torch mod shows the sprite
+ * upside down when held") - THE SHAPE, WITH THE ROWS LEFT ALONE.
+ *
+ * `toColor32` above is a FLIP, and a flip is right for a Unity texture
+ * because Unity stores its rows bottom-up: flipped, row 0 becomes the
+ * picture's top. It is wrong for a decoded PNG, whose row 0 already IS
+ * the picture's top - flipping that hands the upload an upside-down
+ * picture.
+ *
+ * WHICH IS RIGHT DEPENDS ON WHERE IT IS DRAWN, and the two answers are
+ * opposite:
+ *   - a WORLD BILLBOARD samples v with 0 at the bottom, so it wants the
+ *     port's bottom-up color32 order - `toColor32` of a decoded PNG;
+ *   - a SCREEN QUAD does not. `drawScreenQuad` places its rect in
+ *     top-left pixels and hands p.y = 0 (the rect's TOP) the u/v pair
+ *     `v0`, and nothing flips at upload (UNPACK_FLIP_Y_WEBGL is false),
+ *     so row 0 of `colors` is what lands at the top of the sprite. A
+ *     screen sprite from a PNG wants its rows exactly as they came.
+ *
+ * So: the same shape `toColor32` answers, without the flip. The held
+ * torch and the weapon widget's loose-PNG arm take this; their world
+ * neighbours keep `toColor32`.
+ *
+ * @param {{width:number,height:number,data:Uint8Array}} image
+ * @returns {{width:number,height:number,colors:Uint8ClampedArray}}
+ */
+export function toScreenOrder(image) {
+  const { width, height, data } = image;
+  const row = width * 4;
+  if (data.length !== row * height) throw new Error(`${width}x${height} carries ${data.length} bytes`);
+  return { width, height, colors: new Uint8ClampedArray(data.buffer, data.byteOffset, data.byteLength) };
+}

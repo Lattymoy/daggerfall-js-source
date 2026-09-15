@@ -514,3 +514,40 @@ drops the override exactly as before.
 
 `Bob`, `Inertia` and `Step` stay off as the bundle ships them: they are
 presentation, and the sprite is the subject. Ledger row MODS-ON.
+
+## HT3 - THE SPRITE WAS UPSIDE DOWN (2026-09-15)
+
+Mac: *"The player held torch mod shows the sprite upside down when
+held"*. It was: the flame under the hand.
+
+**The port has TWO right answers and the door took the wrong one.**
+`toColor32` is a FLIP. It is right for a Unity texture, because Unity
+stores its rows bottom-up - flipped, row 0 becomes the picture's top.
+It is wrong for a decoded PNG, whose row 0 already IS the top.
+
+Which one a sprite wants depends on WHERE IT IS DRAWN. A world
+billboard samples v with 0 at the bottom, so it wants the port's
+bottom-up color32 order. A SCREEN QUAD does not: `drawScreenQuad`
+places its rect in top-left pixels and gives p.y = 0 - the rect's top -
+the source rect's `v0`, and `UNPACK_FLIP_Y_WEBGL` is false at every
+upload, so row 0 of `colors` lands at the TOP of the sprite.
+
+The held torch is a screen quad fed from a vendored PNG, so the flip
+turned it over. `toScreenOrder` is the same shape without the flip, and
+the torch takes it.
+
+**The weapon widget's loose-PNG arm had the identical fault** and had
+never been seen, because in play the widget takes its BUNDLE arm - a
+Unity texture, where the flip is right. Both screen doors take
+`toScreenOrder` now; the world doors (dropped torches, seasons, M-TEX)
+are untouched and still flip.
+
+Why TEX1 did not catch it: TEX1 was about the SHAPE - that a door hands
+back `colors` and not a decoded PNG's `data` - and it closed that
+class properly. Which way up the rows go is a different question, and
+the only door where it was visible had never drawn a frame, because
+`Modules.Sprite` shipped off until MODS-ON turned it on.
+
+Pinned: `test/ht3_sprite_upright.test.js` (3) - the two orders executed
+against a five-row raster, which door takes which, and the screen-quad
+convention read at its own source.
