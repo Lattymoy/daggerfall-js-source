@@ -433,6 +433,37 @@ export const TEXTURE_SLOTS = Object.freeze([
   '_CloudTopDiffuse', '_CloudTopNormal', '_CloudDiffuse', '_CloudNormal',
   '_StarTex', '_StarTwinkleTex', '_TwinkleTex', '_MoonTex', '_SecundaTex',
 ]);
+// DS3 (2026-09-15, Mac: "the nighttime sky has these dark spots in the
+// skybox") - THE STAR FIELD IS FILTERED, AND THAT IS A DEPARTURE.
+//
+// The mod imports every one of these Point, and the port matched it.
+// At night that costs the sky: `night * horizonValue` reaches 1.0, so
+// the sky IS `_StarTex` (the atmosphere is mixed out entirely), and
+// `_MoonNightColor` is (0, 0, 39) - it floors the BLUE channel alone,
+// leaving red and green with nothing under them. `VanillaStars`'
+// background is not flat: it is an authored per-texel dither ramping
+// (0,0,40) to (16,16,40). Measured, not guessed - the dither has no
+// 4x4 alignment (within-block variance 1.853 against 1.858 for a grid
+// offset by two), so it is the author's stipple and not a compression
+// artefact of the bundle decode.
+//
+// A stipple reads as smooth only while it sits at or under the screen's
+// own pixel. With StarsTiling 0.25 over a 2048 texture the field is
+// MAGNIFIED - about 3.5 screen pixels per texel at 900px, and more the
+// larger the display - so Point turns each dark texel into a visible
+// dark block. That is Mac's dark spots: ~1,971 pixels a frame measurably
+// below their own neighbourhood.
+//
+// Ruled out by experiment, each reverted: the twinkle subtraction (off,
+// 1971 -> 1805), the PS3 band dither (off, 1971 -> 2274 - it was
+// helping), and the tiling (0.25 is the preset's own).
+//
+// So the star FIELD takes bilinear and its dither blends back under the
+// pixel: 1971 -> 567 dark pixels, the stars kept (more of them read, not
+// fewer) and the sky's mean untouched. The cost is honest and is Mac's
+// call, given: a star is a slightly softer dot than the mod draws.
+// The twinkle MASKS and the noise stay Point - they are sampled for a
+// scalar, not looked at.
 export const TEXTURE_IMPORTS = Object.freeze({
   CdMSunny: { filter: 'point', mips: true, srgb: true },
   CdMSunny2: { filter: 'point', mips: true, srgb: true },
@@ -442,13 +473,13 @@ export const TEXTURE_IMPORTS = Object.freeze({
   CdMOvercast2: { filter: 'point', mips: true, srgb: true },
   CdMThunder: { filter: 'point', mips: true, srgb: true },
   CdMSnow: { filter: 'point', mips: true, srgb: true },
-  VanillaStars: { filter: 'point', mips: true, srgb: true },
+  VanillaStars: { filter: 'bilinear', mips: true, srgb: true },   // DS3: the star FIELD is filtered - see the note above
   VanillaStarsTwinkleMask: { filter: 'point', mips: true, srgb: true },
   NLstarsHighlight: { filter: 'point', mips: true, srgb: true },
-  DefaultStars: { filter: 'point', mips: false, srgb: true },
+  DefaultStars: { filter: 'bilinear', mips: false, srgb: true },   // DS3
   DefaultStarsTwinkleMask: { filter: 'point', mips: false, srgb: false },
   DefaultStarsTwinkleNoise: { filter: 'point', mips: true, srgb: true },
-  NLStarsBlack: { filter: 'point', mips: true, srgb: true },
+  NLStarsBlack: { filter: 'bilinear', mips: true, srgb: true },   // DS3 (uniformly black - no visible change, but the field's rule is one rule)
   NLStarsThiefTwinkleMask: { filter: 'point', mips: true, srgb: true },
   PixelMars: { filter: 'point', mips: false, srgb: true },
   PixelEnceladus: { filter: 'point', mips: true, srgb: true },
