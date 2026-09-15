@@ -1164,8 +1164,11 @@ export async function bootWorld(canvas, renderer, params, status) {
         const nav = new CityNavigation(loc.width, loc.height);
         for (const b of loc.blocks) {
           const srcTiles = b.dfBlock.rmbBlock.fldHeader.groundData.groundTiles;
+          // WATER-NPC: the enhanced lane's wider water family, off the
+          // ONE switch the water surface reads - so wherever the pass
+          // draws water, a wandering NPC will not walk into it.
           nav.setBlockData(b.x, b.y, b.dfBlock.rmbBlock.fldHeader.autoMapData,
-            (tx, ty) => srcTiles[tx][ty].textureRecord);
+            (tx, ty) => srcTiles[tx][ty].textureRecord, { enhancedWater: waterSwitchOn() });
         }
         personBatches = new Map();   // person -> batch (destroyed with the pixel)
         const personCollider = {
