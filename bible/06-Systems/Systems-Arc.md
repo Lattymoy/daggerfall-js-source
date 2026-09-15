@@ -5550,7 +5550,7 @@ to that cite and moves under the same content check; citeMerge had
 done this since CS2 and citeShift only reported them, so the two
 regexes are one law now, exported from citeShift (`ANY_CITE`,
 `CONTINUATION`) and imported by citeMerge. (2) A TEST'S ESCAPED
-LITERAL FOLLOWS THE ROW IT PINS: `world\.js:3828` in citedrift.test.js
+LITERAL FOLLOWS THE ROW IT PINS: `world\.js:3856` in citedrift.test.js
 is a quote of a Ledger row's text; the row is STRUCK and its number
 held, and the literal used to move anyway, parting the pin from its
 row at every shift. The CLI plans every doc first, learns which
@@ -7711,3 +7711,55 @@ and read by nothing (DFU 1.1.1 has no such hook), the dungeon exit does
 not clear the mod's dungeon, the armour drop's condition comes from the
 random piece's max. Off by default. Pins: 8 in
 `test/unleveledLoot.test.js`. The page: `06-Systems/Unleveled-Loot.md`.
+
+### JAIL1 (2026-09-15) - RELEASED FROM JAIL INDOORS, INTO THE VOID
+
+A player, through Mac: *"I was trying to steal stuff to get a horse and
+a few weapons and twice once I served my sentence the game loaded me
+outside of a room and falling into the void!"*
+
+**You can be arrested indoors, and the port had nowhere to put you.**
+
+The indoor watch carries no court flow of its own. It asks the WORLD
+host for one through the `onGuardHit` seam - deliberately, and
+`worldModes`' `onPlayerHurt` says why: *"the arrest interception is the
+WORLD host's (it owns the court flow and the overlay it opens), so the
+indoor watch asks for it through the host seam rather than growing a
+second copy."* That is the right design, and it means the entire
+sentence can be served with `modes.mode` still `'interior'`.
+
+Which is the common case rather than the corner one: the crime that
+gets you jailed is usually theft, and theft happens inside a shop. The
+player hit it twice in one morning.
+
+`ReleaseFromPrison`'s reposition then ran
+`positionPlayerAtLocationEntrance`, which teleports to the town's
+random start marker - and it was the ONE `_teleportToPixel` caller
+reachable from indoors that never left the interior first. The player
+landed at the exterior's coordinates while the building's scene still
+stood: outside its geometry, and falling.
+
+`teleportTo` had the same hazard and already names the cure in as many
+words - G5's note on `TeleportAway`, *"TransitionExterior FIRST when
+the player is inside (:140-141) - you cannot teleport out of a
+building"*. The release takes the same line now, before the teleport.
+
+**This is not a departure.** DFU's
+`DaggerfallCourtWindow.PositionPlayerAtLocationEntrance` (`:452-463`)
+is three lines with no transition in them, because DFU does not need
+one: `PlayerEnterExit` re-parents the player off the transition its own
+teleport raises. The port's mode machine is a seam DFU has not got, and
+a seam has to be told. `forceExitToExterior` no-ops when already
+outside (its own `wasInside` guard), so the wilderness and open-street
+arrests are untouched, and the `HasLocation` guard still runs first -
+it is the teleport that is guarded, and the exit rides with it.
+
+**Not reproduced in a live game**, and that is stated rather than
+glossed: this container has no ARENA2, so the play session that would
+show the fall cannot be run here. The diagnosis rests on the code path
+instead - the seam that routes an indoor arrest to the world host, and
+a walk of every `_teleportToPixel` caller showing this one alone
+skipped the exit. The pin walks that same class by execution rather
+than trusting one line, and two mutants were run and killed: the exit
+removed, and the exit moved to AFTER the teleport where it is too late
+to help.

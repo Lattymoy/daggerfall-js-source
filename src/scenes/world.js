@@ -3579,6 +3579,34 @@ export async function bootWorld(canvas, renderer, params, status) {
     const px = playerTravelPixel();
     const dfLoc = locationIndex.get(`${px.x},${px.y}`);
     if (!dfLoc?.exterior?.exteriorData) return;   // HasLocation false - DFU teleports nowhere
+    // JAIL1 (2026-09-15, a player through Mac: "twice once I served my
+    // sentence the game loaded me outside of a room and falling into the
+    // void!"). YOU CAN BE ARRESTED INDOORS, and this is where that ended.
+    //
+    // The indoor watch does not carry its own court flow: it asks the
+    // WORLD host for one through the `onGuardHit` seam, on purpose
+    // (worldModes.js, onPlayerHurt - "the arrest interception is the
+    // WORLD host's ... rather than growing a second copy"). So the whole
+    // sentence can be served with `modes.mode` still 'interior' - which
+    // is exactly what happens when the crime was stealing, because
+    // stealing is something you do inside a shop.
+    //
+    // The release then teleported to the town's start marker with the
+    // INTERIOR still standing: the player landed at the exterior's
+    // coordinates inside a building's scene, outside its geometry, and
+    // fell. Every other `_teleportToPixel` caller that can be reached
+    // from indoors leaves first - teleportTo says so in as many words
+    // ("you cannot teleport out of a building", G5's own note on
+    // TransitionExterior) - and this one alone did not.
+    //
+    // It is not a departure to add it: DFU cannot be inside here at all.
+    // PlayerEnterExit re-parents the player on the transition its own
+    // teleport raises, so the C# has no separate line to port; the port's
+    // mode machine is a seam DFU does not have, and a seam has to be
+    // told. `forceExitToExterior` no-ops when already outside (its own
+    // `wasInside` guard), so the wilderness and open-street arrests are
+    // untouched.
+    modes?.forceExitToExterior();
     _teleportToPixel(px.x, px.y, null, { reposition: REPOSITION.RandomStartMarker })
       .catch((e) => console.error('[court] reposition failed:', e));
   }
