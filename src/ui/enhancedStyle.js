@@ -1847,6 +1847,15 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 @media (pointer: coarse) {
   .step { width: 44px; height: 44px; }
   .rowact, .ctl .act { min-height: 44px; }
+  /* FT16: THE TILE'S CONTROLS JOIN THE LAW. FT14 replaced the list's
+     one cycling .ctl .act - which this block already sized - with a
+     segmented bar, chips and a drawer door, and none of them inherited
+     it: the outdoors switch measured 20px on a phone, less than half
+     the target, which is the AUDIT 24 shape the law exists to stop.
+     tools/enhancedMenuProbe.mjs had been red since FT14 and so nobody
+     saw it. Sized here rather than in the FT block below, because this
+     is where the law lives and the next control added must find it. */
+  .ft-segb, .ft-mchip, .ft-tile-more { min-height: 44px; }
 }
 .shell .step { border: 2px solid rgba(125,116,96,0.55); border-radius: 0; background: none;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
@@ -2920,6 +2929,38 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   .ft-panes { grid-template-columns: minmax(0, 1fr); }
   .ft-rail { position: static; order: -1; }
 }
+
+/* -- FT16 (2026-09-15, Mac: "make the new feature UI elements have the
+   same transparent design as the list we used to have") -----------
+   THE PASS FT14 NEVER WROTE. Every component family on this screen has
+   two paints: the base tokens above, and a .shell override for PX11,
+   where the boot door stands on the live sky and every painted panel
+   colour comes off (.shell .pane, .shell .list, .shell .row -
+   transparent grounds, low-alpha scrims, and 2px rules in the brass
+   line rather than 1px iron). FT14 wrote the first paint and stopped,
+   so the feature tiles drew SOLID --slate boxes with hairline borders
+   while the list they replaced had been see-through over the stars -
+   which is the whole of Mac's report. Not a new design: the old one,
+   applied to the new elements.
+
+   The pause window is NOT in this scope and must not be: .px-win
+   panels are opaque on purpose, there being a game behind them, so the
+   base paint above is already right there. That is why this is scoped
+   to .shell rather than written into the tokens.
+
+   The left edge keeps its state stripe (verdigris on, brass forced,
+   iron off) and moves out over the 2px border so it still reads flush. */
+.shell .ft-tile { background: none; border: 2px solid rgba(125,116,96,0.3); }
+.shell .ft-tile:hover, .shell .ft-tile.sel { background: rgba(0,0,0,0.25); border-color: rgba(125,116,96,0.55); }
+.shell .ft-tile::before { left: -2px; top: -2px; bottom: -2px; }
+.shell .ft-gline { height: 2px; background: rgba(125,116,96,0.3); }
+.shell .ft-seg { background: rgba(0,0,0,0.3); border: 2px solid rgba(125,116,96,0.35); }
+.shell .ft-segb[aria-pressed="true"] { background: rgba(0,0,0,0.45); }
+.shell .ft-mchip { background: rgba(0,0,0,0.3); border: 2px solid rgba(125,116,96,0.35); }
+.shell .ft-mchip[aria-pressed="true"] { border-color: var(--verdigris); }
+.shell .ft-tile-drawer { border-top: 2px solid rgba(125,116,96,0.3); }
+.shell .ft-rail { background: rgba(10,12,17,0.55); border: 2px solid rgba(125,116,96,0.35); }
+.shell .ft-rail-kv { border-top: 2px solid rgba(125,116,96,0.3); }
 `;
 
 const STYLE_ID = 'dagger-enhanced-style';

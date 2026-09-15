@@ -34,7 +34,7 @@ export const CATEGORIES = Object.freeze([
   { id: "video", title: "Video", blurb: "How the game looks, how bright it is, and how hard your machine has to work." },
   { id: "interface", title: "Interface", blurb: "Everything drawn on top of the world: bars, icons, tooltips, prompts and maps." },
   { id: "accessibility", title: "Accessibility", blurb: "Comfort and readability, for anyone bothered by motion, flashing or small text." },
-  { id: "mods", title: "Data & Mods", blurb: "Where the game's files live and DFU's mod switches. The packs you can attach are on the Mods page." },
+  { id: "mods", title: "Data & Mods", blurb: "Where the game's files live and DFU's mod switches. The packs you can attach are on the Features page." },
 ]);
 
 export const CATEGORY_IDS = Object.freeze(CATEGORIES.map((c) => c.id));

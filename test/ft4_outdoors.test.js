@@ -77,7 +77,10 @@ test('FT4: the registry row - both labels, a condensed choice with its own defau
   assert.equal(c.initial, true); assert.equal(c.online, true, 'the lane forces the outdoors on');
   assert.deepEqual(f.control.also, [{ store: 'mods', vendor: 'dynamic-skies', key: 'Enabled' }]);
   assert.match(f.note, /Off returns Daggerfall’s SKY\*\.DAT panorama/); assert.match(f.note, /BadLuckBurt and carademono/);
-  assert.match(f.note, /fog density and pixel-snow knobs stay on the Mods page/, 'the mod\'s other knobs are the mod\'s');
+  // FT15 (2026-09-15): the note used to send a player to the Mods page for the mod's fog and
+  // pixel-snow knobs. FT14 deleted that page - those knobs open in this row's own tile drawer
+  // (MOD_CURATED['dynamic-skies']) - so the sentence was a pointer at nothing until the trim.
+  assert.match(f.note, /whose own knobs open on this tile/, 'the mod\'s other knobs are the mod\'s, and the note says where they are NOW');
   assert.deepEqual(checkFeature(f), []);
   assert.equal(featureForControl('mods', 'Enabled', 'dynamic-skies'), f, 'the Mods pane\'s Enabled row is a pointer to this row');
   assert.equal(featureForControl('mods', 'densitySetting', 'dynamic-skies'), null, 'the fog knob is still the mod\'s own row');

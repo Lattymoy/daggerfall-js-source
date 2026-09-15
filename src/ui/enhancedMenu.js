@@ -167,7 +167,7 @@ import '../world/outdoors.js';   // RF4: the outdoors lane too
 // by it. Empty at FT0; the Enhanced category of Settings and the Mods
 // section keep their rows until each one's slice moves it here
 // (bible/10-UI/Features-Arc.md).
-const SECTIONS_BOOT = ['Continue', 'New Game', 'Load Game', 'Online', 'Test Room', 'Settings', 'Controls', 'Features', 'About'];   // FT14: Mods is gone - every mod is a tile on Features, and what the pane carried besides stands under them   // ONLINE1: the shared world's door
+const SECTIONS_BOOT = ['Continue', 'New Game', 'Load Game', 'Online', 'Test Room', 'Settings', 'Features', 'About'];   // FT16: Controls is a Settings CATEGORY, not a rail door   // FT14: Mods is gone - every mod is a tile on Features, and what the pane carried besides stands under them   // ONLINE1: the shared world's door
 // FD1 (Mac, 2026-09-11): the CLASSIC skin opens on this same door. Its
 // three game doors collapse into BEGIN, which leads into the classic
 // start sequence - the title, the film, Daggerfall's own start window -
@@ -176,7 +176,7 @@ const SECTIONS_BOOT = ['Continue', 'New Game', 'Load Game', 'Online', 'Test Room
 // SO1: ENHANCED left the rail for a category of Settings (settingsMap).
 // ONLINE1: ONLINE joins it - Mac: "if using classic, you'd see the
 // other user's paperdoll" - the same pane, the same save brought in.
-const SECTIONS_CLASSIC = ['Begin', 'Online', 'Settings', 'Controls', 'Features', 'About'];   // FT14
+const SECTIONS_CLASSIC = ['Begin', 'Online', 'Settings', 'Features', 'About'];   // FT14; FT16: Controls is a Settings category
 
 // U51: the same rail with the boot-only questions swapped for the
 // in-game ones. Continue and New Game answer "which game", which is
@@ -189,7 +189,7 @@ const SECTIONS_CLASSIC = ['Begin', 'Online', 'Settings', 'Controls', 'Features',
 // mode's doors), and the pane says so in words. A rail that drops the
 // row instead teaches the player the door was never there - the same
 // argument the Mods section is built on.
-const SECTIONS_PAUSE = ['Resume', 'Save Game', 'Load Game', 'Settings', 'Controls', 'Features', 'About', 'Exit'];   // FT14
+const SECTIONS_PAUSE = ['Resume', 'Save Game', 'Load Game', 'Settings', 'Features', 'About', 'Exit'];   // FT14; FT16: Controls is a Settings category
 
 const idOf = (label) => label.toLowerCase().split(' ')[0];
 
@@ -694,7 +694,9 @@ function paneSettings(pane) {
     // tab is the affordance, because a gesture nobody can see is a
     // gesture nobody uses.
     b.onclick = () => {
-      if (on) { pickedKey = null; sheetOpen = true; } else { category = cat.id; pickedKey = null; }
+      // FT16: a category change is a walk away from the bindings, and
+      // their copy says a walk away drops them.
+      if (on) { pickedKey = null; sheetOpen = true; } else { discardControlsStaging(); category = cat.id; pickedKey = null; }
       render();
     };
     if (on) b.append(el('span', 'more-dot'));
@@ -706,8 +708,19 @@ function paneSettings(pane) {
   // what it is - see systems/uiSkin.js), the live store keys flat, and
   // the two folded tiers with their counts (categoryRows).
   const rows = categoryRows(category);
-  if (!rows.length) list.append(empty('Nothing here yet', 'This category has no keys.'));
+  if (!rows.length && category !== 'controls') list.append(empty('Nothing here yet', 'This category has no keys.'));
   for (const r of rows) list.append(r);
+  // FT16 (Mac: "the control menu option needs to be within settings"):
+  // THE KEY BINDINGS ARE THE CONTROLS CATEGORY. They were a rail door
+  // beside Settings (FIX-F) while Settings already carried a Controls
+  // category holding DFU's Controls/* keys - two doors for one subject,
+  // and a player looking for "how do I rebind jump" had to guess which.
+  // The store keys come first because they are few and the ones a hand
+  // reaches for mid-session; the grid follows under its own head.
+  if (category === 'controls') {
+    list.append(pxDivider('Key bindings'));
+    paneControls(list, { render });
+  }
 
   const detail = el('div', 'detail');
   const close = el('button', 'sheet-close', 'Close');
@@ -753,6 +766,12 @@ function paneQuickSettings(pane) {
     for (const r of port) list.append(r);
   }
   if (!any) list.append(empty('Nothing live here yet', 'No setting has an in-game consumer in this build.'));
+  // FT16: the condensed pause settings has no category rail, so the
+  // bindings ride the end of the one scroll. Dropping them here would
+  // be FIX-F's bug again - "the row whose absence was the bug" - just
+  // one level down.
+  list.append(pxDivider('Key bindings'));
+  paneControls(list, { render });
   list.append(el('p', 'px-note', 'Every setting lives on the main menu\u2019s Settings.'));
   panes.append(list);
 
@@ -1898,7 +1917,11 @@ function creditsCard() {
 
 // ── SHELL ────────────────────────────────────────────────────────
 function go(id) {
-  if (id !== 'controls') discardControlsStaging();   // FIX-F: the staged dicts do not survive the walk away
+  // FIX-F: the staged dicts do not survive the walk away. FT16: every
+  // section change is now a walk away from the bindings - they live in
+  // a Settings CATEGORY, and arriving at Settings arrives at whichever
+  // category was last open, which must not inherit a stale staging.
+  discardControlsStaging();
   section = id; pickedKey = null; sheetOpen = false; confirming = null; render();
 }
 
@@ -2062,15 +2085,10 @@ function pauseWindow() {
 // the row whose absence was the bug.
 export const SYSTEM_PANES = Object.freeze([
   ['resume', 'Resume'], ['save', 'Save Game'], ['load', 'Load Game'],
-  ['settings', 'Settings'], ['controls', 'Controls'],
+  ['settings', 'Settings'],   // FT16: Controls is a category INSIDE it
   ['features', 'Features'],   // FT0
   ['about', 'About'], ['exit', 'Exit'],   // FT14: no Mods pane
 ]);
-
-/** FIX-F: the pane, closed over the shell's own repaint - the shape
- *  every other pane already has, handed in because the pane module
- *  must not import the shell that imports it. */
-const paneControlsPane = (body) => paneControls(body, { render });
 
 function pauseSystem(body) {
   const wrap = el('div', 'px-journal');
@@ -2081,8 +2099,9 @@ function pauseSystem(body) {
     b.onclick = RAIL_ACTS[id] ? () => onAction(RAIL_ACTS[id])
       : () => {
         // FIX-F: leaving the Controls pane without CONTINUE DISCARDS -
-        // that is what a staged copy is for.
-        if (id !== 'controls') discardControlsStaging();
+        // that is what a staged copy is for. FT16: the bindings sit
+        // inside Settings now, so every OTHER system pane is a walk away.
+        if (id !== 'settings') discardControlsStaging();
         sysSec = id; confirming = null; sheetOpen = false; pickedKey = null; render();
       };
     rail.append(b);
@@ -2099,7 +2118,7 @@ function pauseSystem(body) {
     detail.append(confirmCard());
   } else {
     ({
-      save: paneSave, load: paneLoad, controls: paneControlsPane,
+      save: paneSave, load: paneLoad,
       features: paneFeatures,   // FT0
       about: paneAbout, exit: paneExit,
     })[sysSec](detail);
@@ -2547,7 +2566,6 @@ function renderInto() {
         save: paneSave, exit: paneExit,
         features: paneFeatures,   // FT0
         about: paneAbout, begin: paneBegin,   // FD1: the classic rail's door; SO1: Enhanced is a Settings category now
-        controls: paneControlsPane,
       })[section](body);
     }
     pane.append(body);
