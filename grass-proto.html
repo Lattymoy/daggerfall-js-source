@@ -702,12 +702,13 @@ layout(location=0) in vec2 aCorner;      // one blade quad, 0..1
 layout(location=1) in vec4 aInst;        // xz, height, phase
 layout(location=2) in vec4 aInst2;       // lean.xz, tint, width
 layout(location=4) in vec3 aGround;      // GR4: the ground's own colour under this blade, baked by the placer
-uniform mat4 uVP; uniform float uTime, uWind, uRange; uniform vec3 uEye, uSunDir;
+uniform mat4 uVP; uniform float uTime, uWind, uRange; uniform vec3 uEye, uSunDir, uMoonDir;   // WIND4: the moon lights the field at night, as it lights the ground under it
 uniform vec2 uWindDir;
 uniform float uSnowFull;           // PROTO-22: the SAME line the ground draws
 uniform sampler2D uGField; uniform vec2 uGFieldOrigin; uniform float uGFieldM, uSnowGlobal; uniform vec2 uWindV;
 out float vT; out float vTint; out float vFade; out float vLam; out float vSnow; out float vWet;
 out vec3 vGround;                       // GR4
+out float vMoonLam;                     // WIND4: the moon's lambert, beside the sun's
 void main(){
   vec2 root = aInst.xy;
   float d = distance(root, uEye.xz);
@@ -797,10 +798,11 @@ void main(){
   // makes a dawn field glow along one edge.
   vec3 nrm = normalize(vec3(-lean.y, 0.35, lean.x) + vec3(0.0, 0.25, 0.0));
   vLam = max(dot(nrm, normalize(uSunDir)), 0.0);
+  vMoonLam = max(dot(nrm, normalize(uMoonDir)), 0.0);   // WIND4
   gl_Position = uVP * vec4(p,1.0);
 }`, HEAD + `
-in float vT; in float vTint; in float vFade; in float vLam; in float vSnow; in float vWet; in vec3 vGround;
-uniform vec3 uAmb, uSunCol; uniform float uDim;
+in float vT; in float vTint; in float vFade; in float vLam; in float vSnow; in float vWet; in vec3 vGround; in float vMoonLam;   // WIND4: appended, so the lab's own locator still finds this line
+uniform vec3 uAmb, uSunCol, uMoonCol; uniform float uDim, uSunScale, uMoonScale;   // WIND4: the sun's SCALE and the moon, the two terms the ground has and the grass did not
 out vec4 o;
 void main(){
   // PROTO-2: the blade is LIT along its length - dark at the root
@@ -827,11 +829,25 @@ void main(){
   c *= mix(1.0, 0.72, clamp(vWet, 0.0, 1.0));
   c = mix(c, vec3(0.74,0.78,0.86), vSnow * 0.75);
   // lit by the same sky and sun the ground is, so a blade at dusk is
-  // the colour of dusk and not a green cut-out on an orange field
-  c *= (uAmb * 1.25 * (0.42 + 0.58*vT) + uSunCol * 1.15 * vLam);
+  // the colour of dusk and not a green cut-out on an orange field.
+  //
+  // WIND4 (2026-09-15, Mac: "grass doesnt get darker at night"). That
+  // sentence was the INTENT and not the code: every other surface in
+  // the world lights as ambient, plus the sun's colour times its SCALE
+  // times the lambert, plus the moon's the same way (render/renderer.js,
+  // farRing, waterSurface - one formula, four programs; the uniforms are
+  // not named here because the tree's own shader audit reads a comment
+  // as code and would count them as used), and this one dropped
+  // BOTH the sun's scale and the moon. uSunScale is the term that goes
+  // to zero when the sun sets, so at midnight the ground went dark and
+  // the sward stayed lit by a sun that was not there - a glowing field
+  // under a black sky. The scale rides the sun here now, and the moon
+  // lights the blades as it lights the tile they stand in.
+  c *= (uAmb * 1.25 * (0.42 + 0.58*vT) + uSunCol * (uSunScale * 1.15 * vLam) + uMoonCol * (uMoonScale * 1.15 * vMoonLam));
   c *= uDim;
-  // the rim is the SUN's colour, and only where the sun can reach
-  c += uSunCol * 0.20 * smoothstep(0.86,1.0,vT) * vLam;
+  // the rim is the SUN's colour, and only where the sun can reach - so
+  // it goes out with the sun (WIND4: the scale, again)
+  c += uSunCol * (uSunScale * 0.20) * smoothstep(0.86,1.0,vT) * vLam;
   // GR4: ...and the base fades IN, so what reads as a blade is its upper
   // part - the tips through a gradient - rather than a planted line.
   o = vec4(c, vFade * smoothstep(0.0, 0.30, vT));
@@ -2244,6 +2260,15 @@ function frame(now) {
     gl.uniform3fv(gl.getUniformLocation(grassProg, 'uAmb'), safe3(skyAmb));
     gl.uniform3fv(gl.getUniformLocation(grassProg, 'uSunCol'), safe3(sunCol));
     gl.uniform1f(gl.getUniformLocation(grassProg, 'uDim'), wx.dim + flash * 0.5);
+    // WIND4: the sun's SCALE and the moon - the two terms the game's
+    // ground has always had and the sward did not, which is why it
+    // never went dark at night. The lab has no night, so the scale is
+    // one and the moon is off; the fields exist here so the two
+    // shaders stay one text.
+    gl.uniform1f(gl.getUniformLocation(grassProg, 'uSunScale'), 1);
+    gl.uniform3fv(gl.getUniformLocation(grassProg, 'uMoonDir'), new Float32Array([0, 1, 0]));
+    gl.uniform1f(gl.getUniformLocation(grassProg, 'uMoonScale'), 0);
+    gl.uniform3fv(gl.getUniformLocation(grassProg, 'uMoonCol'), new Float32Array([1, 1, 1]));
     gl.bindVertexArray(gr.vao);
     gl.drawArraysInstanced(gl.TRIANGLES, 0, gr.verts, gr.count);
     gl.disable(gl.BLEND);
