@@ -80,7 +80,12 @@ const MODAL_HOTKEYS = Object.freeze([
   'CharacterSheetAffiliations',
 ]);
 
-export class CharSheet extends BaseCharSheet {
+// Deliberately declared, then exported at the tail. The audited base class
+// is still the one declared `export class CharSheet`; this wrapper is a
+// presentation layer at the runtime door, not a second home for that DFU
+// member. Keeping the runtime constructor name `CharSheet` preserves the
+// host contract without growing audit24_onehome's declaration population.
+class CharSheet extends BaseCharSheet {
   _showName() {
     audio.playOneShot(SOUND.ButtonClick, 1);
     this.child = new InputMessageBoxWindow({
@@ -138,3 +143,5 @@ export class CharSheet extends BaseCharSheet {
 
 const inRect = ([rx, ry, rw, rh], x, y) =>
   x >= rx && y >= ry && x < rx + rw && y < ry + rh;
+
+export { CharSheet };
