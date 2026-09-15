@@ -1317,3 +1317,77 @@ fps fails the run: a probe that prints a dash and exits 0 is the
 disease probehygiene's T3 names.
 
 **Pinned** in `test/perf9.test.js` (2). Not a departure.
+
+## PERF-ON - ONE DRAW A STRING (2026-09-15)
+
+Mac: *"Next thing I want to tackle is improving online performance. I
+notice the more people that are online, the worse fps becomes."*
+
+**Measured before anything was changed.** Every per-peer cost in `net/`
+turned out to be bounded already: `peerBodies` caps the Morrowind rigs
+at `BODIES_MAX` 8 and culls past `BODY_RANGE` 120, and a peer's doll is
+one billboard batch created once, with only its `origin` written
+afterwards. One cost had no cap at all - the NAME over each peer's
+head. `drawText` issued one `drawScreenQuad` a glyph, and a
+`drawScreenQuad` is a whole GL state setup: program, VAO, eight
+uniforms, a texture bind, a draw. Driven against a real `Renderer` over
+a logging GL stub, a nine-letter name is **153 GL calls, every frame,
+every peer**, and nothing else in the online frame scales that way.
+
+So the names were the slope, and the fix is the shape of the data. The
+glyphs of one string share a texture and a colour, and cannot overlap
+each other: they are a RUN. `renderer.drawScreenQuadRun(tex, quads,
+color)` takes the whole string as instanced data - eight floats a quad,
+dst x/y/w/h then src u0/v0/u1/v1, stride 32, both attributes at divisor
+1 - and draws it with one `drawElementsInstanced`. The same name is now
+**14 GL calls and one draw**, about eleven times fewer, at every peer
+count.
+
+Nothing about the frame moves around it. The run is issued at exactly
+the point in `drawText` the per-glyph calls were, so draw ORDER is
+unchanged. It is the NARROW case on purpose: no rotate arm, no blend
+opt-in, no solid-fill arm - those stay `drawScreenQuad`'s and no art
+path changes. It keeps the two brackets its sibling keeps, ROAD-E E5's
+`endWorldPass` and the CULL_FACE handedness bracket, and it spends the
+letterbox `_screenOffset` on its geometry as every other 2D primitive
+does. And the per-glyph path stays: the run is a FEATURE-DETECTED,
+optional renderer member, because the suite's stub renderers and the
+glyph-recording font harness that reconstructs painted strings carry
+`drawScreenQuad` alone and must read exactly what they always did.
+
+**The campaign's own lesson, because two mutants survived on it.** The
+headline pin compares the batched path against the per-glyph path quad
+for quad - the right pin for a renderer change nobody here can SEE (no
+GPU in the container, no ARENA2). But drifting `h: fnt.fixedHeight *
+scale` by a pixel moved BOTH paths, because the mutation lands in the
+`dst` they share, and they stayed equal. *An equality pin proves the
+two paths agree; it cannot prove either is right.* The second survivor
+was the F-SING lesson again: the pin on the letterbox offset matched
+the source line that DECLARES `ox`, not the arithmetic that spends it -
+*a source-text pin cannot tell a wired seam from a spelled one.* Both
+are closed the only way they could be: the geometry is pinned
+ABSOLUTELY (exact pixels, exact UVs, for a known string), and the
+packing is pinned by RUNNING it - a real `Renderer` over the
+glstate/audit26 Proxy-GL harness, with the instance floats read back
+out of `bufferSubData` and the VAO's stride, offsets and divisors read
+off the real calls.
+
+**A side finding, closed with them.** Deleting `gl.enable(gl.CULL_FACE)`
+from `drawScreenQuad` - the run's older sibling, five lines up the same
+file - passed the ENTIRE suite. Nothing pinned that a 2D primitive
+leaves GL as it found it, and a screen quad that leaves culling off
+makes every back face in the world pass that follows draw, for the rest
+of the session. It is a law now, and a generative one: replay both
+functions' real enables and disables and require the net to be zero,
+non-vacuously, so the blend arm's own toggle and any capability either
+function learns to touch later are covered without being named.
+`audit39` F50's draw-site sweep was made generative for the same reason
+- it enumerated `Elements|Arrays|ArraysInstanced` and could not see
+`drawElementsInstanced` at all.
+
+**NOT SEEN ON A GPU.** There is no GL and no ARENA2 in this container,
+so the geometry is argued from absolute expectations and from the
+bytes that would reach the driver. Mac's eye is the next gate.
+
+**Pinned** in `test/perfon_text_run.test.js` (7). Campaign: 13 mutants,
+13 killed, plus the fourteenth against the sibling. Not a departure.

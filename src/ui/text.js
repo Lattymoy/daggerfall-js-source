@@ -98,6 +98,26 @@ export function makeFont(renderer, fnt, name) {
 export function drawText(renderer, font, text, x, y, scale = 1, color = [1, 1, 1, 1]) {
   let cx = x;
   const { fnt } = font;
+  // PERF-ON (2026-09-15, Mac: "the more people that are online, the
+  // worse fps becomes"): ONE DRAW A STRING, not one a glyph.
+  //
+  // `drawScreenQuad` is a full GL state setup - eight uniforms, a
+  // texture bind and a draw - so this loop cost about ten GL calls a
+  // LETTER. Fine for a HUD drawn once; not fine for the online name
+  // pass, which draws a name over every peer with no cap on peers,
+  // measured at about nine quads a peer a frame. The glyphs of one
+  // string share a texture and a colour and cannot overlap each other,
+  // so they are exactly a RUN: collected here and handed to the
+  // renderer in one `drawScreenQuadRun`, issued at the same point in
+  // the frame the per-glyph calls were, so nothing about draw ORDER
+  // moves. See render/renderer.js drawScreenQuadRun.
+  //
+  // THE FALLBACK IS NOT DEAD CODE. A run is an OPTIONAL renderer
+  // member: the suite's stub renderers, and the glyph-recording font
+  // harness that reconstructs painted strings (nativetrade), carry
+  // `drawScreenQuad` alone. They take the per-glyph path below and
+  // read exactly what they always did.
+  const run = typeof renderer?.drawScreenQuadRun === 'function' ? [] : null;
   for (const ch of text) {
     // The fold, then DrawText's own substitution: a code the font has
     // no glyph for is CAST TO A SPACE (:313-314) - never dropped, and
@@ -118,12 +138,13 @@ export function drawText(renderer, font, text, x, y, scale = 1, color = [1, 1, 1
       // the cell is 16 wide; the glyph occupies its left gw columns
       const src = glyphSrc(gi);
       const cellU = src.u1 - src.u0;
-      renderer.drawScreenQuad(font.tex,
-        { x: cx, y, w: gw * scale, h: fnt.fixedHeight * scale },
-        { u0: src.u0, v0: src.v0, u1: src.u0 + cellU * (gw / FNT_GLYPH_DIM), v1: src.v0 + (src.v1 - src.v0) * (fnt.fixedHeight / FNT_GLYPH_DIM) },
-        color);
+      const dst = { x: cx, y, w: gw * scale, h: fnt.fixedHeight * scale };
+      const uv = { u0: src.u0, v0: src.v0, u1: src.u0 + cellU * (gw / FNT_GLYPH_DIM), v1: src.v0 + (src.v1 - src.v0) * (fnt.fixedHeight / FNT_GLYPH_DIM) };
+      if (run) run.push({ dst, src: uv });
+      else renderer.drawScreenQuad(font.tex, dst, uv, color);
     }
     cx += (gw + FNT_GLYPH_SPACING) * scale;
   }
+  if (run && run.length) renderer.drawScreenQuadRun(font.tex, run, color);
   return cx - x;
 }
