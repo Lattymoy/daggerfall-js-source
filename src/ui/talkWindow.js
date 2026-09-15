@@ -6,6 +6,8 @@
 // Enter) says goodbye.
 
 import { drawText, measureText } from './text.js';
+import { nativeMetrics } from './nativePanel.js';
+import { layoutMessageBox, drawMessageBox, messageBoxArtLoaded } from './messageBox.js';
 
 const PANEL = [0.05, 0.05, 0.09, 0.92];
 const TEXT = [0.86, 0.82, 0.68, 1];
@@ -27,7 +29,15 @@ export function wrapText(fnt, text, maxWidth, measure = measureText) {
 
 /** G2: a text panel with keyed choices (the surrender prompt and the
  *  court sequence ride it). options = [{ code, label, action }];
- *  input(code) runs the matching action and closes; done after. */
+ *  input(code) runs the matching action and closes; done after.
+ *
+ * CM1: the NO-OPTIONS shape is not a menu at all. Every production
+ * caller of that shape is a DaggerfallMessageBox-style notice: house
+ * greetings, shop-quality popups, court outcomes, holiday/quest text,
+ * and other one-shot messages. Draw those through the one native
+ * SPOP.RCI parchment implementation instead of the old interim flat
+ * panel. Keyed menus keep the old panel until their own native window
+ * replaces them. */
 export class ChoiceWindow {
   constructor({ lines, options = [] }) {
     this.lines = lines;
@@ -45,7 +55,22 @@ export class ChoiceWindow {
     if (opt) { this.done = true; opt.action?.(); }
   }
 
+  /** DaggerfallMessageBox.ClickAnywhereToClose. The old ChoiceWindow
+   * had no click seam, so a house greeting drawn over the world could
+   * only be dismissed from the keyboard and the host could reacquire
+   * pointer lock underneath it. Keyed menus are not click-anywhere. */
+  click() {
+    if (!this.options.length) { this.done = true; return true; }
+    return false;
+  }
+
   draw(renderer, canvas, font, s) {
+    if (!this.options.length && messageBoxArtLoaded() && font) {
+      const m = nativeMetrics(canvas);
+      const box = layoutMessageBox(font, this.lines);
+      if (drawMessageBox(renderer, m, font, box)) return;
+    }
+
     const wrapped = this.lines.flatMap((l) => (l === '' ? [''] : wrapText(font.fnt, l, 280)));
     const lines = [...wrapped, '', ...this.options.filter((o) => o.label).map((o) => o.label)];
     if (!this.options.length) lines.push('(continue)');

@@ -39,7 +39,8 @@
 import { isEnhanced } from '../systems/uiSkin.js';
 import { mountEnhancedChunk } from './enhancedChunk.js';   // MENU1: the one lazy-chunk door
 import { registerOverlay } from './enhancedOverlays.js';   // PX28: Tab puts it away
-import { CharSheet, LevelUpScreen, charSheetArtLoaded } from './charsheet.js';
+import { LevelUpScreen, charSheetArtLoaded } from './charsheet.js';
+import { CharSheet } from './classicCharSheet.js';   // CM4: the four residual DFU modal buttons
 import { charSheetHooks } from './charSheetNav.js';
 
 export { charSheetArtLoaded };
@@ -184,4 +185,3 @@ function enhancedSheetPageOverlay(hooks) {
  * sheets always read, and it is now read by the one that remains.
  * What went is the ~200 lines of view that drew the second one.
  */
-
