@@ -394,13 +394,27 @@ test('U63: the page is the pixel face\'s own idioms, not the shell it replaced',
   assert.equal(boxes, 2, 'the plaque shape and the Ko-fi mark - no third box rule');
   assert.match(css, /\.plaque \{/);
   assert.match(css, /\.kofi \{/);
-  // The door's pair, exactly: Play into the browser, Install onto the
-  // desk, in that order, both wearing the one plaque shape.
-  const doorPlaques = [...landing.matchAll(/<a class="plaque" href="([^"]+)">([^<]+)<\/a>/g)].map((m) => [m[2], m[1]]);
+  // The door's three, exactly: Play into the browser, Install onto the
+  // desk, Discord for the people, in that order, all wearing the one
+  // plaque shape (DISC1, 2026-09-15, Mac: "Can you add our discord ...
+  // Front and center").
+  //
+  // THE REGEX USED TO DEMAND `href="..."` FOLLOWED IMMEDIATELY BY `>`,
+  // AND THAT WAS A HOLE THE VERY NEXT PLAQUE WALKED THROUGH. The
+  // Discord anchor carries `rel="noopener"` between the two, so the
+  // pin could not see it at all: three anchors wore the plaque, the
+  // pin read two, and the assertion that "nothing else wears the
+  // plaque" passed while something else wore it. A pin that matches an
+  // ATTRIBUTE ORDER is not a pin on the thing; it is a pin on how the
+  // thing happened to be typed. It reads the class and the whole tag
+  // now, so an attribute added anywhere cannot hide a plaque from it.
+  const doorPlaques = [...landing.matchAll(/<a\b[^>]*\bclass="plaque"[^>]*>([^<]*)<\/a>/g)]
+    .map((m) => [m[1], /\bhref="([^"]*)"/.exec(m[0])?.[1] ?? null]);
   assert.deepEqual(doorPlaques, [
     ['Play', './play/'],
     ['Install', 'https://github.com/Lattymoy/daggerfall-js-source/releases/latest'],
-  ], 'the door carries Play and Install, and nothing else wears the plaque');
+    ['Discord', 'https://discord.gg/kbctcC6GU3'],
+  ], 'the door carries Play, Install and Discord, and nothing else wears the plaque');
   assert.match(skin, /\.px-about \{[\s\S]{0,400}border: 2px solid #7d7460/, '...which is the About plaque\'s own shape');
   // The foot is the home face's three zones.
   assert.match(css, /grid-template-columns: 1fr auto 1fr/, 'build left, a figure centre, Source right');
@@ -453,6 +467,34 @@ test('U64: the Ko-fi mark is a plaque with a drawn cup, near the top, and it is 
     assert.equal(y % 2, 0, `${p}: on the grid`);
   }
   assert.ok(cup.includes('#7d7460'), 'the steam is dim, not brass');
+});
+
+test('DISC1: the Discord is front and centre - a plaque in the door\u2019s own row, one home, no new shape', () => {
+  // Mac, 2026-09-15: "Can you add our discord ... To our website. Front
+  // and center." The page has exactly TWO box shapes and that is the
+  // whole of its discipline - the plaque is what you PRESS, the corner
+  // mark is the one ASK - so the invite joins the plaque row rather
+  // than inventing a third shape or a second corner.
+  const css = landing.match(/<style>([\s\S]*?)<\/style>/)?.[1] ?? '';
+  const invites = [...landing.matchAll(/href="(https:\/\/discord\.gg\/[\w-]+)"/g)].map((m) => m[1]);
+  assert.deepEqual(invites, ['https://discord.gg/kbctcC6GU3'],
+    'ONE home for the invite - HK1\u2019s own law, and a link repeated in four places is how this page got to 973 words once');
+  // It is IN the door - above the fold, in the row with Play - and not
+  // in a section, the nav or the foot.
+  const door = landing.slice(landing.indexOf('<header class="door">'), landing.indexOf('<main id="main">'));
+  assert.ok(door.includes('https://discord.gg/kbctcC6GU3'), 'the invite is not in the door at all');
+  const row = door.slice(door.indexOf('<div class="doorplaques">'), door.indexOf('</div>', door.indexOf('<div class="doorplaques">')));
+  assert.ok(row.includes('https://discord.gg/kbctcC6GU3'), 'the invite is in the door but not in the plaque row');
+  assert.ok(row.indexOf('./play/') < row.indexOf('discord.gg'), 'Play is still first and still leftmost');
+  // NO NEW SHAPE, NO NEW COLOUR, NO RASTER. The U63 pin above counts
+  // the page's box rules and this is why the count did not move: the
+  // invite wears the plaque that was already there.
+  assert.equal((css.match(/border: 2px solid #7d7460/g) ?? []).length, 2,
+    'a third box rule arrived with the Discord - the page has two shapes');
+  assert.doesNotMatch(css, /\.discord \{|\.dsc \{/, 'the invite grew its own rule');
+  assert.doesNotMatch(landing, /<img[^>]*discord/i, 'no badge image - this page carries no raster');
+  // An external link opened from a page that is not ours to trust.
+  assert.match(landing, /href="https:\/\/discord\.gg\/kbctcC6GU3" rel="noopener"/, 'the invite carries rel=noopener, as the Ko-fi mark does');
 });
 
 test('U64: the live site is the custom domain, and the build does not care which', () => {
