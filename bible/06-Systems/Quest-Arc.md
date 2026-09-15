@@ -5893,9 +5893,57 @@ Mutation-verified three ways: dropping an alternative from a pattern,
 loosening a character class, and removing the one declared guard each
 redden it.
 
-### Still to come
+### Third pass - the mutation campaign
 
-The mutation campaign against the quest pins, whose file list will be
-**derived** - AUDIT-TALK's harness used a hand-written twelve-file list,
-reported thirteen survivors, and deriving the list gave eighty-seven
-files and caught eleven of them as harness artefacts.
+77 mutants over the 21 modules of `src/systems/quest`, the file list
+**derived**. 66 died against a 65-file quest subset (6.7 seconds a run);
+eleven survived it.
+
+Of those eleven: seven are guards over states the tests cannot reach,
+base-class defaults, or genuinely equivalent, and one - `isResidence`'s
+`House1..House4` bounds - was killed by a test **outside** the subset,
+which is exactly why a subset is a filter and the whole suite is the
+arbiter.
+
+**Three survived the entire suite.** Each is a law with a DFU citation
+that no assertion in 7,671 tests was reading:
+
+| | law | what the mutant did |
+| --- | --- | --- |
+| M1 | `EndQuest.Update` - `if (textId != 0)` | a bare `end quest` would have shown message 0, and every `end quest saying N` would have shown none |
+| M2 | `Foe.ExpandMacro` (Foe.cs:153-177) - the unmatched arm | a Foe would claim to have expanded a macro it never carries |
+| M3 | `Parser._parseQRC` - the id bracket **pair** | `[1004` or `1004]` would read as a table lookup and its number be thrown away |
+
+All three are pinned in `test/auditquest_mutants.test.js`, and each pin
+was proven by re-planting its mutant.
+
+### The harness lied twice before it told the truth
+
+Both are recorded because both were caught the same way - by asking
+whether the number was believable, not by reading the code.
+
+1. It piped `node --test` through `tail` and read the PIPELINE's exit
+   status, which is `tail`'s and always 0. Verdict: **77 of 84 mutants
+   survived**. That is not a result about a port, it is a result about a
+   harness.
+2. Reading the counters instead, it called `execSync('npm test')` and
+   read the returned stdout. The full suite prints tens of megabytes;
+   execSync's default `maxBuffer` is 1 MB, so it threw ENOBUFS and handed
+   back **truncated** output with no `# fail` line - which the harness
+   scored as a kill. All four candidates came back "killed", and **four
+   real findings would have been retired**.
+
+AUDIT-TALK recorded a finding against its own harness for the same class
+of thing. This is that lesson arriving on schedule, twice, and the
+defence both times was a rate that could not be true.
+
+### What the three passes found, together
+
+The port itself came through clean: the 82-action registry is complete,
+the 82 patterns are exact against DFU's C#, the parser's directives are
+6 for 6, all 265 vendored quests parse and start, and 66 of 77 mutants
+die where they should.
+
+**What was wrong was the system describing itself** - a charter claiming
+loudness over a boolean, a dev scene missing 35 seams in silence, a gate
+reading one host by name - and three laws nothing was reading.
