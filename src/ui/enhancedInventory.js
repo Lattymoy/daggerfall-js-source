@@ -109,6 +109,11 @@ import { overlayAction } from './input.js';
  *  have no place on a body, so they sit in a row underneath rather
  *  than being hidden: a slot the player cannot see is a slot they
  *  cannot empty. */
+/** HT5: the held light's row id. NOT an EQUIP_SLOTS value - DFU has no
+ *  light slot, and inventing one would put a fake column in the equip
+ *  table every law here reads. Negative so it can never collide. */
+export const LIGHT_SLOT = -1;
+
 export const SLOT_MAP = Object.freeze({
   [EQUIP_SLOTS.Head]: { x: 110, y: 32, label: 'Head' },
   [EQUIP_SLOTS.Amulet0]: { x: 94, y: 60, label: 'Amulet' },
@@ -218,8 +223,28 @@ export function equippedModel(entity = {}) {
     x: at.x,
     y: at.y,
   })).sort((a, b) => a.y - b.y || a.x - b.x);
+  // HT5 (2026-09-15, Mac: "the torch doesnt appear slotted in
+  // inventory"): THE HELD LIGHT IS A ROW, and it is the only row here
+  // that is not one of DFU's slots.
+  //
+  // A light source HAS no equip slot - getEquipSlot answers None for
+  // all four, which is why HT2 had to make the act a USE - so the lit
+  // torch lived only in `entity.lightSource` and the worn side of this
+  // window had nothing to show. The list marked it gold (HT2) and that
+  // is all: a player holding a torch saw an empty pair of hands.
+  //
+  // Handheld Torches' own fiction is that it OCCUPIES A HAND (its
+  // UpdateFreeHand stows a weapon that wants both), so a hand is where
+  // it belongs on the body. It carries a sentinel slot rather than a
+  // made-up EQUIP_SLOTS value, and the counts below still walk the
+  // REAL table, so "27 slots" stays DFU's 27 and nothing that counts
+  // slots learns about this one.
+  const light = entity?.lightSource ?? null;
+  const visible = rows.filter((r) => r.item || !r.hidden);
   return {
-    rows: rows.filter((r) => r.item || !r.hidden),
+    rows: light
+      ? [...visible, { slot: LIGHT_SLOT, label: 'Light', item: light, hidden: true, x: 110, y: 190 }]
+      : visible,
     filled: rows.filter((r) => r.item).length,
     total: rows.length,
   };
@@ -535,6 +560,45 @@ function refreshFigure() {
 /** Wearing something, through the ONE chain. A refusal is REPORTED -
  *  the classic window pops TEXT.RSC for the same two cases, and a
  *  press that silently does nothing is what the anti-lie law forbids. */
+/** INV1 (2026-09-15, Mac: "Add the ability to click and drag items to
+ *  equip or reorganize in inventory").
+ *
+ *  THE DRAG PERFORMS THE ACT THE CARD ALREADY OFFERS. It does not grow
+ *  a second rule for what a drop means: `localPrimaryAct` decides, the
+ *  same function the act button reads, so dragging a torch onto the
+ *  body LIGHTS it and dragging a cuirass WEARS it - and a refusal
+ *  (broken, class-forbidden) says the same sentence either way.
+ *
+ *  Reordering is the pack's own list and nothing else's: it moves the
+ *  item inside `entity.items`, which is what every page filter reads,
+ *  so the order a player arranges is the order every tab shows and the
+ *  save carries. It never crosses a side - a drag out of a loot pile is
+ *  a TAKE, which is a click, and mixing the two would make a slip a
+ *  transfer. */
+let dragging = null;
+
+function dropOnBody(item) {
+  const act = localPrimaryAct(item, deps.entity);
+  if (!act) return;
+  if (act.kind === 'wear') { wear(item); return; }
+  if (act.kind === 'takeOff') { takeOff(item.equipSlot); return; }
+  // AUDIT 22 F6: the light arm takes NO collection, as DFU's equip click does
+  use(item, null);
+}
+
+/** Move `item` to `before`'s place in the player's own list. */
+function reorderPack(item, before) {
+  const list = deps.entity?.items;
+  if (!Array.isArray(list) || item === before) return;
+  const from = list.indexOf(item);
+  const to = list.indexOf(before);
+  if (from < 0 || to < 0) return;
+  list.splice(from, 1);
+  list.splice(to, 0, item);
+  refresh();
+  render();
+}
+
 function wear(item) {
   notice = null;
   const named = itemLongName(item, { getQuest: deps.getQuest ?? null });   // RF6: the resolver's name, never the record's raw one (an unidentified magic item's)
@@ -925,7 +989,11 @@ const WORN_FAMILIES = Object.freeze([
   { id: 'rings', label: 'Rings', area: '1 / 3', slots: ['Ring'] },
   { id: 'tokens', label: 'Tokens', area: '2 / 3', slots: ['Mark', 'Crystal', 'Unnamed'] },
   { id: 'rhand', label: 'R\u00b7Weapon', area: '3 / 3', slots: ['Right hand'] },
-  { id: 'lhand', label: 'L\u00b7Weapon', area: '4 / 3', slots: ['Left hand'] },
+  // HT5: the held light shares the off hand's panel and is listed
+  // FIRST, because the mod frees a hand to hold one - so when both are
+  // filled the torch is the thing you just did, and the weapon is one
+  // tap away on the family's own cycle.
+  { id: 'lhand', label: 'L\u00b7Hand', area: '4 / 3', slots: ['Light', 'Left hand'] },
   { id: 'legs', label: 'Legs', area: '5 / 3', slots: ['Legs, armour', 'Legs, clothes'] },
   { id: 'feet', label: 'Feet', area: '6 / 3', slots: ['Feet'] },
 ]);
@@ -942,6 +1010,17 @@ function equippedList() {
   // area is the map's.
   const wrap = el('section', 'equipped');
   const map = el('div', 'wornmap');
+  // INV1: the body is the equip target. Dropping a pack row here does
+  // whatever its card's own button would do.
+  map.ondragover = (e) => { if (dragging) { e.preventDefault(); map.classList.add('dragover'); } };
+  map.ondragleave = () => map.classList.remove('dragover');
+  map.ondrop = (e) => {
+    e.preventDefault();
+    map.classList.remove('dragover');
+    const held = dragging;
+    dragging = null;
+    if (held) dropOnBody(held);
+  };
   // PX19g: the doll's FRAME is part of the composition and is always
   // there - art inside it when the paperdoll can draw, a quiet
   // Avatar plaque when it cannot. Slapped-behind is over.
@@ -1146,6 +1225,27 @@ function itemRow(item, from = 'local') {
   if (sub) mid.append(el('small', null, sub));
   row.append(mid);
   row.append(el('span', 'itemwt', `${line.weight.toFixed(2)} kg`));
+  // INV1: a LOCAL row drags. A loot row does not - taking from a pile
+  // is a click, and a drag that could also transfer would make a slip
+  // a theft.
+  if (from === 'local') {
+    row.draggable = true;
+    row.ondragstart = (e) => {
+      dragging = item;
+      row.classList.add('dragging');
+      if (e.dataTransfer) { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', line.name); }
+    };
+    row.ondragend = () => { dragging = null; row.classList.remove('dragging'); render(); };
+    row.ondragover = (e) => { if (dragging && dragging !== item) { e.preventDefault(); row.classList.add('dragover'); } };
+    row.ondragleave = () => row.classList.remove('dragover');
+    row.ondrop = (e) => {
+      e.preventDefault();
+      row.classList.remove('dragover');
+      const held = dragging;
+      dragging = null;
+      if (held) reorderPack(held, item);
+    };
+  }
   row.onclick = () => {
     // AUDIT 26: "Send click to quest system" (:2027-2037) - the FIRST
     // act of RemoteItemListScroller_OnItemClick, ahead of the

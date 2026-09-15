@@ -670,6 +670,12 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 }
 .itemrow:hover { background: #12161b; }
 .itemrow.on { background: #12161b; box-shadow: inset 2px 0 0 var(--brass); }
+/* INV1: the drag's three states. The row being carried goes quiet, the
+   row it would land before takes a line above it, and the body lights
+   its whole frame - a drop on the map is one target, not twelve. */
+.itemrow.dragging { opacity: 0.4; }
+.itemrow.dragover { box-shadow: inset 0 2px 0 var(--brass); }
+.wornmap.dragover { outline: 2px solid var(--brass); outline-offset: -2px; }
 .tile {
   flex: 0 0 auto; width: 30px; height: 30px; display: grid; place-items: center;
   border: 1px solid var(--iron); color: var(--dim); font-size: 11px; letter-spacing: 0.06em;

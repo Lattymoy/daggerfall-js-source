@@ -14,7 +14,7 @@ import { readFileSync } from 'node:fs';
 
 import {
   packModel, itemLine, SLOT_MAP, useResultAction, remoteModel, REMOTE_TITLE, STOW_LABEL, plural,
-  equippedModel,
+  equippedModel, LIGHT_SLOT, localPrimaryAct,   // HT5
 } from '../src/ui/enhancedInventory.js';
 import { WAGON_KG_LIMIT } from '../src/systems/itemTransfer.js';
 import { USE_PENDING } from '../src/ui/nativeInventory.js';
@@ -1306,4 +1306,77 @@ test('AUDIT 38 F1: the kind and its noun may be joined, spaced or hyphenated - t
   // the classic journal is untouched: it strips nothing, ever
   const classic = readFileSync('src/ui/questJournal.js', 'utf8');
   assert.ok(!/questTitleOf|QUEST_KIND_LABEL/.test(classic), 'the classic journal must not strip');
+});
+
+// HT5 (2026-09-15, Mac: "the torch doesnt appear slotted in inventory").
+//
+// A light source has NO equip slot - getEquipSlot answers None for all four,
+// which is why HT2 had to make the act a USE rather than a wear - so the lit
+// torch lived only in entity.lightSource and the worn side had nothing to
+// show. The list marked it gold and that was all: a player holding a torch
+// saw an empty pair of hands.
+//
+// It is a row now, under the off hand, because Handheld Torches' own fiction
+// is that a light OCCUPIES a hand. The sentinel slot is the point: DFU's 27
+// stay 27, and nothing that counts slots learns about this one.
+test('HT5: the held light is a row on the body, and DFU\'s twenty-seven are untouched', () => {
+  const bare = { equipTable: [] };
+  const before = equippedModel(bare);
+  assert.ok(!before.rows.some((r) => r.label === 'Light'), 'no light, no row');
+
+  const torch = { group: 'UselessItems2', templateIndex: 247, stackCount: 1 };   // IsLightSource wants the group too
+  const lit = equippedModel({ equipTable: [], lightSource: torch });
+  const row = lit.rows.find((r) => r.label === 'Light');
+  assert.ok(row, 'a lit torch is on the body');
+  assert.equal(row.item, torch, 'by reference, as every lit-compare in this arc is');
+  assert.equal(row.slot, LIGHT_SLOT);
+  assert.ok(LIGHT_SLOT < 0, 'a sentinel, so it can never collide with an EQUIP_SLOTS value');
+
+  // THE COUNTS ARE THE EQUIP TABLE'S. A fake slot in them would make the
+  // window say 1 of 28 for a torch DFU does not think is worn at all.
+  assert.equal(lit.total, before.total, 'the light adds no slot to the total');
+  assert.equal(lit.filled, before.filled, 'and fills none');
+  assert.ok(!Object.values(SLOT_MAP).some((at) => at.label === 'Light'), 'SLOT_MAP stays DFU\'s own');
+});
+
+// HT5: and the act on it is still HT2's - a light is doused, never taken off,
+// because nothing in the equip table will ever hold one. The worn row only
+// PICKS (the mis-click law), so the act button is what resolves it.
+test('HT5: picking the light row offers Douse, not Take off', () => {
+  const torch = { group: 'UselessItems2', templateIndex: 247, stackCount: 1 };   // IsLightSource wants the group too
+  const entity = { equipTable: [], lightSource: torch };
+  assert.deepEqual(localPrimaryAct(torch, entity), { kind: 'douse', label: 'Douse' });
+  const src = readFileSync(new URL('../src/ui/enhancedInventory.js', import.meta.url), 'utf8');
+  // the off hand's panel carries it, and lists it first
+  assert.match(src, /\{ id: 'lhand', label: 'L\\u00b7Hand', area: '4 \/ 3', slots: \['Light', 'Left hand'\] \}/,
+    'the light shares the off hand and is the first row of that family');
+  // takeOff is reached only for a real equipped item, never for this row
+  assert.match(src, /b\.onclick = act\.kind === 'takeOff' \? \(\) => takeOff\(picked\.equipSlot\)/,
+    'take-off is gated on the act kind, which a light source never answers');
+});
+
+// INV1 (2026-09-15, Mac: "Add the ability to click and drag items to equip or
+// reorganize in inventory").
+//
+// The drag performs the act the CARD ALREADY OFFERS - localPrimaryAct decides,
+// the same function the act button reads - so a dragged torch lights and a
+// dragged cuirass is worn, and a refusal says the same sentence either way.
+// A second rule for what a drop means is how the two paths drift apart.
+test('INV1: a drag equips through the one act, and never crosses a side', () => {
+  const src = read('src/ui/enhancedInventory.js');
+  assert.match(src, /function dropOnBody\(item\) \{\s*\n\s*const act = localPrimaryAct\(item, deps\.entity\);/,
+    'the drop reads the card\'s own act, not a second table');
+  assert.match(src, /if \(act\.kind === 'wear'\) \{ wear\(item\); return; \}/);
+  assert.match(src, /use\(item, null\)/, 'AUDIT 22 F6: the light arm still takes no collection');
+  // A LOOT ROW DOES NOT DRAG. Taking from a pile is a click (IG7); a drag
+  // that could also transfer would turn a slip into a theft.
+  assert.match(src, /if \(from === 'local'\) \{\s*\n\s*row\.draggable = true;/,
+    'only the local side is a drag source');
+  // and the reorder is the player's own list, which every page filter reads
+  assert.match(src, /const list = deps\.entity\?\.items;/);
+  assert.match(src, /list\.splice\(from, 1\);\s*\n\s*list\.splice\(to, 0, item\);/, 'a move, not a copy');
+  const css = read('src/ui/enhancedStyle.js');
+  for (const rule of ['.itemrow.dragging', '.itemrow.dragover', '.wornmap.dragover']) {
+    assert.ok(css.includes(rule), `${rule} has an affordance - a drag with no feedback is a guess`);
+  }
 });

@@ -579,3 +579,59 @@ drifting. The next mod folded in cannot repeat this quietly - which
 matters, because the collision was invisible from either side alone: the
 mod's default is correct against DFU, and the port's dial is correct
 against the mod.
+
+## HT5 + INV1 - THE LIGHT IS ON THE BODY, AND THE PACK DRAGS (2026-09-15)
+
+Mac: *"Morrowind model doesnt hold a torch and the torch doesnt appear
+slotted in inventory. Additionally. Add the ability to click and drag
+items to equip or reorganize in inventory"*.
+
+### The held light is a row
+
+A light source has **no equip slot**. `getEquipSlot` answers None for
+all four (they are UselessItems2 and ReligiousItems, not Weapons or
+Armor), which is why HT2 had to make the act a USE rather than a wear.
+So the lit torch lived only in `entity.lightSource`, and the worn side
+of the pack had nothing to show: the list painted it gold and that was
+all, so a player holding a torch saw an empty pair of hands.
+
+It is a row on the body now, under the off hand and listed first there,
+because Handheld Torches' own fiction is that a light **occupies a
+hand** - its `UpdateFreeHand` stows a weapon that wants both.
+
+It carries a **sentinel slot** (`LIGHT_SLOT`, negative) rather than an
+invented `EQUIP_SLOTS` value, and `filled`/`total` still walk the real
+equip table. DFU's twenty-seven stay twenty-seven; nothing that counts
+slots learns about this one. The act is unchanged - picking the row
+offers Douse, because `localPrimaryAct` already answers that and
+`takeOff` is gated on a kind a light source never returns.
+
+### The drag performs the act the card already offers
+
+`dropOnBody` reads `localPrimaryAct` - the same function the act button
+reads - so a dragged torch **lights** and a dragged cuirass is **worn**,
+and a refusal (broken, class-forbidden) says the same sentence either
+way. A second rule for what a drop means is how two paths drift apart.
+
+**A loot row does not drag.** Taking from a pile is a click (IG7), and a
+drag that could also transfer would turn a slip into a theft. Only the
+local side is a source.
+
+Reordering moves the item inside `entity.items`, which is what every
+page filter reads - so the order a player arranges is the order every
+tab shows and the save carries.
+
+Three affordances, because a drag with no feedback is a guess: the
+carried row goes quiet, the row it would land before takes a line above
+it, and the body outlines its whole frame - the map is one target, not
+twelve.
+
+### Still open: the Morrowind arms
+
+The modelled arms do **not** hold the torch, and that is unchanged here.
+`weaponRig.js` draws the arms and returns before the torch hand on
+purpose - "a classic hand beside a modelled arm is neither mod nor
+lane". Giving them a real one means attaching a torch mesh to a hand
+bone, and the port reads WEAP, ARMO and CLOT records but not **LIGH**:
+lights are a record kind it has never needed. That is a slice of its
+own, the size of the original weapon work, and it is not started.
