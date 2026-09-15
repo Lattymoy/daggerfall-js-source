@@ -223,3 +223,36 @@ test('FT0: the three kinds have three colours, all the skin\'s own tokens', () =
   assert.match(css, /\.chips \{ display: flex; flex-wrap: wrap;/, 'the chip row wraps on a phone');
   assert.match(css, /\.kinds \{ display: flex; flex-wrap: wrap;/, 'so do the labels');
 });
+
+// FT15 (2026-09-15, Mac: "Can we please reduce the overexplanation wall of text within
+// featured categories"): A NOTE IS A SENTENCE OR TWO, AND STAYS THAT WAY.
+//
+// The 28 notes carried 10,292 characters when Mac complained - a median of 317 and a
+// worst case of 917, which the FT14 reading rail drew as 619px of prose for one tile.
+// The trim took them to 6,353 / 218 / 429. The ceiling below is what keeps it there:
+// a note that grows past it is the wall growing back, and the place to put the long
+// version is the system's own bible page, not the panel.
+//
+// The bounds are deliberately loose - this is a guard against DRIFT, not a style rule,
+// and a row that legitimately needs 400 characters (Enhanced AI names three unshipped
+// slices AND a name collision) must not have to fight it.
+test('FT15: every note is one or two sentences, and the panel stays under its budget', () => {
+  const MAX_ROW = 450;
+  const MAX_TOTAL = 7500;
+  let total = 0;
+  for (const f of FEATURES) {
+    assert.ok(typeof f.note === 'string' && f.note.length > 0, `${f.id} has a note`);
+    assert.ok(f.note.length <= MAX_ROW,
+      `${f.id}'s note is ${f.note.length} chars (max ${MAX_ROW}) - say it shorter, or say the rest in the bible`);
+    // no note repeats its own title back at the reader: the tile already says it
+    assert.ok(!f.note.startsWith(f.title), `${f.id}'s note opens by restating its title`);
+    total += f.note.length;
+  }
+  assert.ok(total <= MAX_TOTAL, `the 28 notes are ${total} chars (max ${MAX_TOTAL})`);
+
+  // and the eight mod rows are STILL the mod's own description - FT15 trimmed the
+  // description itself rather than adding a short-note override, so there is no
+  // second copy to drift (test/ft9_mods.test.js holds the equality; this holds the why)
+  const src = readFileSync('src/systems/features.js', 'utf8');
+  assert.match(src, /note: mod\.keys\.Enabled\.description,/, 'modFeature takes no note of its own');
+});

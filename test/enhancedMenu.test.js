@@ -390,7 +390,7 @@ test('EE1: one switch for the whole outdoors, migrated once from the old sky ans
   const menu = read('src/ui/enhancedMenu.js');
   assert.ok(!/prefRow\('enhancedEnvironments'/.test(menu), 'FT4: Enhanced environments left the Enhanced category for the Features home (systems/features.js)');
   assert.ok(!/prefRow\('proceduralSky'/.test(menu), 'the old row must be gone, not doubled');
-  assert.match(read('src/systems/features.js'), /a procedural sky with the sun, both moons/, 'the row claims what the tree has: the sky and the weather (FT4: the words are the registry\'s now)');
+  assert.match(read('src/systems/features.js'), /a live sky with the sun, both moons and a star field/, 'the row claims what the tree has: the sky and the weather (FT4: the words are the registry\'s now; FT15 shortened them)');
   const shared = read('src/scenes/shared.js');
   assert.match(shared, /params\.get\('sky'\) !== 'classic' && getPref\('enhancedEnvironments'\)/);
   // nothing outside uiPrefs reads the retired key at runtime - src AND tools

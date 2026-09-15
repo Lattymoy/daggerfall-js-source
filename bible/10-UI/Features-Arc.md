@@ -741,3 +741,78 @@ settings and needed a home rather than a deletion: the Morrowind assets
 card, the texture packs' door, and DFU's four switches for ITS mod
 system. They stand under the tiles as `modsFooter`, drawn where a
 player who came looking for "mods" now arrives.
+
+## FT15 - THE NOTES CUT IN HALF (2026-09-15)
+
+Mac, on the panel FT14 had just shipped: *"Can we please reduce the
+overexplanation wall of text within featured categories"*.
+
+The measurement first, because "too long" is not a defect until it has
+a number. The 28 rows carried **10,292 characters** of note between
+them - a median of 317 and a worst case of 917 (Loot rarity), with
+Enhanced environments at 862 and Enhanced combat visuals at 563. The
+reading rail FT14 built shows one note at a time, which made the length
+visible in a way the old scrolling list never had: a tile you point at
+answers with four or five sentences when you asked one question.
+
+They are now **6,353 characters**, a median of 218 and a worst case of
+429. Thirty-eight percent of the words gone, and the two longest rows
+cut by sixty and by fifty-two percent.
+
+Characters are the wrong unit for a complaint about a wall of text, so
+`tools/featureRailProbe.mjs` points at all 28 tiles in a real browser
+and reports what the rail actually renders. The tallest note was
+**619px** of prose (Loot rarity) with five rows over 350px; it is
+**300px** now and nothing is over 300. The rail grows to fit its note,
+so nothing was ever clipped - the defect was height, not overflow, and
+saying so is the difference between a measurement and a guess.
+
+### What the trim kept
+
+A note answers three questions and stops: what the switch does, what
+turning it off gives you back, and the one caveat a player would
+otherwise be surprised by. What left was the elaboration - the second
+example, the mechanism behind the mechanism, the sentence that repeated
+the title. Loot rarity's affix vocabulary (damage, armour, an
+attribute, a resistance, a skill, carrying capacity) is the kind of
+thing that went: true, and the item itself says it.
+
+Nothing that a pin guards was dropped. `test/ft1_smallerdungeons.test.js`
+still finds "Main-story dungeons never shrink" and "online every dungeon
+is full size", `test/ft5_enhancedai.test.js` still finds the three
+slices the arc lists as ahead and the "Smarter Enemies" name collision,
+`test/ft10_dfu_dungeon.test.js` and `test/ft11_dfu_rest.test.js` still
+find each DFU row's default as the note's last sentence, and the five
+words of the Dungeon Wall Style enum are all still named. That was the
+constraint the shortening worked inside, and it is why the rewrite is
+per-row rather than a sweep.
+
+### The mods' notes are the mods' descriptions - still
+
+FT9's law is that a vendored mod's row shows the mod's own
+`Enabled.description` from `modSettings.js`, one source, no copy. The
+eight mod rows were among the longest on the panel, so the obvious move
+was a short-note override on `modFeature`. That would have been the
+band-aid: two strings for one sentence, and a second place to forget.
+
+The descriptions themselves are port-authored prose about each mod's
+switch, not text vendored from the mod. So the trim went **to the
+description**, in `modSettings.js`, and `modFeature` is untouched -
+`test/ft9_mods.test.js`'s `f.note === mod.keys.Enabled.description`
+still passes, unchanged, which is the check that this stayed one
+source.
+
+### A pointer at a page that no longer existed
+
+The Enhanced environments note ended: *"The mod's fog density and
+pixel-snow knobs stay on the Mods page."* FT14 deleted the Mods page
+the day before - those knobs open in the row's own tile drawer now
+(AUDIT FT14's `MOD_CURATED['dynamic-skies']`). The sentence had been
+directing players to nothing for a day, and `test/ft4_outdoors.test.js`
+was pinning it there.
+
+Reading every note closely enough to shorten it is what found it. Three
+more of the same were in player-facing copy and went with it: the Data
+& Mods blurb in `settingsMap.js` ("The packs you can attach are on the
+Mods page") and three mod credits in `credits.js` ("under its own
+switch in the Mods pane"). All four now name the Features page.
