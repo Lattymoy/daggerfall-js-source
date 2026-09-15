@@ -212,10 +212,62 @@ Counting hosts that *touch* saving is not the same as counting hosts that
 *assemble the envelope*, and the record should not have overstated a seam
 it was ranking.
 
-Seams still open here: the two exterior hosts' draw ladders and the
-mode-transition teardown order. Both are bigger than either shipped slice
-and neither has a found defect in hand, so each wants its own
-differential - and, before that, a reason - before it moves.
+**The last two seams, audited (HARD2-S1/S2, 2026-09-15) - and NEITHER
+justifies an extraction.** A reason before a differential. Both were read
+for the drift this program's thesis predicts, and both came back clean;
+the honest result of an audit is sometimes that the work is not owed.
+
+**S1 - the two exterior hosts' draw ladders. THE HOSTS ARE NOT PEERS,
+and the record never said so.** `main.js:76` routes `?exterior`,
+`?region` and `?loc` to `bootExterior`; the front door (`main.js:158`)
+boots `bootWorld`. main.js says it in its own words: *"Dev scenes stay
+one param away (?exterior/?world/etc)."* So this is a shipping ladder
+against a dev scene's ladder, not two live copies of one law - which is
+what made AUDIT 66 F7 worth paying, because both of ITS copies were
+reachable in play.
+
+Read anyway, derived: 352 distinct calls in `world.js`'s frame against
+285 in `exterior.js`'s, 225 method names shared. Everything `world.js`
+has and `exterior.js` lacks is the streaming host's own (terrain pixels,
+riding, online peers). Everything `exterior.js` has and `world.js` lacks
+is a `?rig`/`?rigNear`/`?shot` probe rig, its own `refreshSeason` - whose
+streaming twin `tickSeason` is documented AND cites `refreshSeason` by
+name at `world.js:355` - and two math helpers in the shot path. **No
+drift.**
+
+**S2 - the mode-transition teardown order. Three candidate findings, all
+three collapsed on verification.**
+
+1. *"`forceExitToExterior` is missing six of `tryExit`'s terms."* It is
+   not. I had read a 25-line window of it; `unleveledLootPreTransition`,
+   `cacheInteriorScene`, `host.onInteriorLeave`, `_intShared = null` and
+   `questBridge.onExteriorTransition` are all there, above and below that
+   window. **The function is the unit, not a window of lines** - the same
+   error the HARD2c guard pass made an hour earlier, and the same one
+   HARD2a's D10 pin was re-aimed for. Three times now; it is written
+   down here so the fourth time is cheaper.
+2. *"`npcSession.onWorldChanged()` is on both door exits and not on the
+   teleport/load path."* True, and correct: every caller of
+   `forceExitToExterior` follows it with `_teleportToPixel`, and THAT
+   function owns the call (`world.js:3551`, DFU's `OnMapPixelChanged` /
+   `OnLoadEvent`). The quickload caller goes through
+   `restoreSessionState` instead. Calling it in both places would be the
+   redundancy, not the fix.
+3. *"`worldModes.js:7959` disposes the dungeon overlay that
+   `dungeonCtx.destroy()` disposes again - HARD1's double free."* Already
+   known, already written down, at `dungeonContext.js:6076-6077`:
+   *"dispose() is idempotent (A2), which is what makes the outer host's
+   call harmless."* The tree had the answer before the audit asked.
+
+The one measured drift this seam ever had - AUDIT 66 F6,
+`interiorTorches.destroyAll()` being *"the one that never joined this
+list"* - was paid when it was found.
+
+**So HARD2 rests here for now.** Two seams shipped (the activation race,
+the weapon pose pair), both with a defect behind them. The two that
+remain have no defect behind them, one is not even between peers, and
+extracting on principle is how a 1:1 port loses behaviour it is pinned to
+keep. They come back the day something is found in them.
 
 ### HARD3 - types at the seams that crash. SHIPPED 2026-09-14.
 
