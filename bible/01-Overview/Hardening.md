@@ -648,6 +648,34 @@ citations in fixed rows precisely so historical text does not churn - but
 being frozen is not the same as being right, and it is written down here
 rather than left inside a "2 for a person" line nobody reads.
 
+### The merge, and a conflict rule this program did not have
+
+`origin/main` moved under the branch (PR #175) and the merge conflicted
+in five files. Two were ordinary; the other three were **conflicts
+between two sets of CITATIONS**, and the first resolution got half of
+them wrong by taking one side wholesale:
+
+> A citation conflict has no side. The `src/` line numbers were THIS
+> branch's - it moved `world.js` and `dungeonContext.js` by one line
+> each - and the `Port-Ledger.md` ROW numbers were MAIN's, which had
+> inserted a Ledger row. Taking ours gave the right src lines and the
+> wrong rows; taking theirs would have done the reverse. **Resolve a
+> citation conflict number by number, by asking what each one names.**
+
+Two further mechanics, both learned the expensive way here:
+
+- **`citeShift` must not run mid-merge.** Run before the merge commit it
+  reads a base that predates the incoming files (it said so itself:
+  *"fatal: path 'test/ht3_sprite_upright.test.js' exists on disk, but
+  not in 'HEAD'"*) and shifted seventeen citations off by one. Commit the
+  merge first, then let the tool re-resolve against the new base - the
+  same order PR #168's merge established.
+- `src/buildTag.js` conflicts on every merge and is build output; take
+  either side and let `prebuild` stamp it.
+
+Post-merge the gate is green on 7,654 tests with `citeShift` reporting
+nothing to move.
+
 ### The shape worth keeping
 
 Two of three findings were **in the gates, not the code**, and the third
