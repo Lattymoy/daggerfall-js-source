@@ -56,7 +56,7 @@ test('RF2: the port\'s arm rides the seam - loot rarity rolls the carried loot a
   }
   const carried = e.items.filter((it) => !worn.has(it) && ['Weapons', 'Armor', 'Jewellery'].includes(it.group) && it.templateIndex !== 131);
   for (const it of carried) assert.notEqual(rarityOf(it), 'common', 'the loot it carries rolled at the boss\'s tier');
-  _resetForTests();
+  _resetForTests(); setPref('lootRarity', false);   // LR5: the row ships ON, so OFF is a press - a bare reset would leave this half testing the ON path
   const f = foe();
   spawnEnemyLoot(f, 7, ENEMY_BASICS[7], player, { rolls: () => 0.0001 });
   assert.ok(f.items.every((it) => !it.rarity), 'off: nothing rolled');

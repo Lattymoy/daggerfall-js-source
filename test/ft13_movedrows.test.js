@@ -43,7 +43,10 @@ test('FT13: a moved key draws nothing - the seam answers null, every caller appe
   assert.match(menu, /const liveCount = \(catId\) => portRows\(catId\)\.length \+ paneKeys\(catId\)\.filter\(\(k\) => tierOf\(k\) === 'live'\)\.length;/, 'the rail count is what the pane shows');
   assert.match(menu, /const liveKeys = paneKeys\(cat\.id\)\.filter\(\(key\) => tierOf\(key\) === 'live'\);[\s\S]*?for \(const key of liveKeys\) put\(list, settingRow\(key\)\);/, 'the pause door\'s live list');
   assert.match(menu, /for \(const key of keys\) put\(body, settingRow\(key\)\);/, 'the folded tiers');
-  assert.match(menu, /for \(const \[key, def\] of Object\.entries\(mod\.keys\)\) put\(mc, modRow\(vendor, key, def\)\);/, 'a mod\'s card');
+  // FT14: a mod's CARD is gone with the Mods pane. The seam it proved - `put` appends only what it is
+  // handed, so a moved key draws nothing - is now proved by the tile's drawer, which calls modRow the
+  // same way for a mod's curated dials.
+  assert.match(menu, /for \(const key of dials\) d\.append\(modRow\(vendor, key, MOD_SETTINGS\[vendor\]\.keys\[key\], \{ home: true \}\)\);/, 'a mod\'s drawer');
   assert.match(menu, /put\(opts, settingRow\(key, \{ compact: true \}\)\);/, 'the new-game card');
   assert.match(menu, /put\(c, settingRow\(key\)\);/, 'DFU\'s mod switches card');
   assert.equal((menu.match(/return out\.filter\(Boolean\);/g) ?? []).length, 2, 'both port-row lists drop a null');

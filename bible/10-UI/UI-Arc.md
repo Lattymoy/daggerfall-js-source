@@ -55,14 +55,14 @@ does the pack's USE arm.
                         worldModes.js:1849 (the factory) and :1904 (a
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
-                        dungeonContext.js:947, world.js:1692,
-                        exterior.js:2003. It is the only window TWO
+                        dungeonContext.js:948, world.js:1697,
+                        exterior.js:2005. It is the only window TWO
                         enhanced screens already push - the sheet's
                         button and the pack's USE hand-off, whose
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:4872, dungeonContext.js:5866. A seam
+    / NOTEBOOK          world.js:4898, dungeonContext.js:5863. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -3969,7 +3969,7 @@ actually use. DFU has one call taking the target entity
 that apart and only carried the group down one of the two forks.
 
 The target half of the player's swing was PARTLY correct -
-playerWeapon.js:159 passed `enemyGroupOf(foe.entity.affinity)` - which
+playerWeapon.js:256 passed `enemyGroupOf(foe.entity.affinity)` - which
 is precisely why this looked wired. AUDIT 18 corrected the rest: DFU
 uses TWO discriminants, not one. The Humanoid arm keys on
 `MobileEnemy.Affinity == MobileAffinity.Human`, as the port did, but
@@ -7858,7 +7858,7 @@ mutations, 4 dead.
 
 PX24 (Mac: "with the logbook and history, I want them as one detailed
 UI"): THE CHRONICLE. Two classic windows built at four sites -
-questJournal.js from charSheetNav:53, world.js:1994 and
+questJournal.js from charSheetNav:53, world.js:1999 and
 dungeonContext.js, playerHistory.js from charSheetNav:61 - become ONE
 seam (ui/chronicleDoor.js, the U52/U53/PX23 shape a sixth time) and,
 on the enhanced skin, ONE WINDOW.
@@ -8485,7 +8485,7 @@ and firing THAT twice is a second PopToHUD.
 
 ### Why only two of the four hosts crashed
 
-`worldModes.js:5461` and `dungeonContext.js:1387` answer the same
+`worldModes.js:5461` and `dungeonContext.js:1388` answer the same
 `onClose` by nulling their slot and never disposing - nothing to
 re-enter. Only the two hosts that come through `townTalk.closeOverlay`
 dispose. **The four-hosts rule caught this one by accident**: the two
@@ -9729,9 +9729,9 @@ re-resolved the `exterior.js` half of a three-file sentence and left the
 `ExteriorAutomapWindow` construction, `:4101` on a `locationName:`
 field). Both halves are now read by `test/citedrift.test.js` - the
 existing entries only ever captured the exterior number, which is how
-the other half went stale unnoticed. (The rest cite named `world.js:5124`,
+the other half went stale unnoticed. (The rest cite named `world.js:5150`,
 the first of the host's TWO identical `act === 'Rest'` arms; ROAD-H H5
-deleted the second and the cite is `world.js:5130` now.)
+deleted the second and the cite is `world.js:5156` now.)
 
 ## AUDIT 62 F24/F25 - THE SENTINEL SWEEP WAS TWO WINDOWS SHORT (2026-09-07)
 
@@ -12947,3 +12947,82 @@ Ledger row HT2. Pinned by execution: `test/ht2_packlight.test.js` (5)
 a worn sword, the reference compare against a second identical torch,
 the view's wiring, and that the classic window's arm still stands
 beside it.
+
+## SITE1 - ONE TEXT FACE, AND A WORDMARK (2026-09-15)
+
+Mac: *"On the website I want to remove the fancy font from the site for
+capital letters (keep the daggerfall Enhanced title unchanged)"*.
+
+U63 set the site in the game's two pixel faces: Jacquard 12, the
+blackletter the menu wears as its wordmark, and Pixelify Sans for
+everything else. The trouble is where the first one landed. It was on
+`h1, h2, h3`, on the step numerals and on the Q&A terms - so a section
+title at 52px, twelve card headings and five step and answer heads were
+all set in a display face whose capitals are its whole character. An
+ornate H on "How to play" is the wordmark's job being done twice, at a
+size where it competes with the title rather than leading a section.
+
+**Jacquard 12 is the wordmark's face and nothing else's now.** Every
+heading, the three brass step numerals and every Q&A term take the
+page's own pixel face - which the body text, the ENHANCED sub-line and
+every tracked-caps rule were already set in, so this removes a face
+rather than introducing one. The site has one text face plus a wordmark.
+
+The title is untouched, which is the one thing Mac named: `.wordmark`
+carries the family now, with `--brand` behind it exactly as before.
+
+**The pin is a COUNT, not a presence.** `test/landing.test.js` asserts
+that the page names Jacquard 12 exactly once and that the rule naming it
+is `.wordmark` - because a pin that only checked the wordmark still has
+it would pass a page that had quietly put the display face back on a
+new heading. The fonts request is unchanged: the skin's own URL, all
+four families, one cache entry for both pages (U63's law), and the
+credits line still names both faces truthfully.
+
+One layout consequence, accepted rather than patched around: the pixel
+face is wider, so step 2's head ("Press Play and pick your ARENA2
+folder.") now wraps to two lines where the display face fitted one.
+
+## SITE2 - THE COPY STOPS EXPLAINING (2026-09-15)
+
+Mac, on the same page: *"Also reduce the amount of wall of text. Too
+much overexplaining and looks like AI"*.
+
+The page carried **4,033 characters** of body prose. It carries **3,258**
+now, a fifth of it gone - but the length was the symptom, not the
+complaint. The complaint was the VOICE, and the tell was rhythm: almost
+every block was a comma-chained list of three or four parallel items
+with an appositive fragment, and the nine "What's in it" cards were nine
+of them in a row. Read one and it is tight writing; read nine and it
+reads as generated, because nothing varies and nothing is ever just
+said.
+
+So the pass was not a uniform trim. The worst offenders were rewritten
+to a different shape rather than a shorter one:
+
+- "The file formats, the world, combat math, quests, magic, guilds, the
+  calendar and the courts, translated line by line from Daggerfall
+  Unity's C#. The quirks were kept on purpose." became "Translated line
+  by line from Daggerfall Unity's C#. Bugs included, on purpose." The
+  eight-item list was the tic; naming the C# is the claim.
+- "Daggerfall Unity took a decade to build, and Daggerfall Enhanced is
+  catching up. Still missing: ... Read the ledger before you expect a
+  finished game." became "Not finished. You cannot import classic or
+  Daggerfall Unity saves yet, and there is no mod support. The ledger
+  tracks the rest." Two sentences of apology went; the honesty stayed.
+- "265 of them on the game's own scripts: offered, argued over in the
+  talk window, tracked in the journal, kept across saves" lost its
+  four-beat tail. The number is the claim.
+- The fonts line lost "the one request this site makes to anyone else",
+  and the Daggerfall Unity credit lost "with years more polish and a mod
+  scene" - the sentence after it already said that, better.
+
+**What did not move**, because none of it is padding: the ARENA2
+ownership sentence, the Bethesda disclaimer, the MIT licence and the
+Interkarma credit (both pinned), the browser list, and every link.
+"Without it there would be nothing to build on" stays in full - that one
+is owed.
+
+One heading changed with the copy: "Something's wrong." became "If it
+breaks", which fits the pixel face on one line where the old one wrapped
+after SITE1 widened it.

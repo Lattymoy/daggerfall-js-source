@@ -586,3 +586,321 @@ takes effect at once; `?wxfield=off` the kill door. The record is
 `bible/07-Rendering/Weather-Arc.md` B. The home holds 27 rows now: 12
 Enhanced, 7 Mod Authored, 10 DFU Classic. Pins re-aimed: FT0's id
 list, FT2's and FT8's counts. `test/weather2b_weatherfield.test.js`.
+
+## LR5 + PREF1 - A DEFAULT THAT CAN ACTUALLY CHANGE (2026-09-15)
+
+Mac: *"I want to mod on by default"*, on the loot ladder. The row's
+flip is one character - `initial: false` becomes `initial: true` on
+`loot-rarity`, and RF4's one declaration carries it to the shelf, the
+home's control and the online lane with no second edit. The lane
+already forced it on, so online is unchanged; offline, a new player now
+meets the ladder instead of having to find it.
+
+**Auditing that flip found the reason it would not have worked.**
+
+`savePrefs` wrote `_prefs` whole, and `_prefs` is
+`{ ...PREF_DEFAULTS, ...stored }`. So the FIRST `setPref` of ANY key -
+the volume, the skin, a touch dial - materialised EVERY default into
+the player's storage. From that moment the shelf could not tell a
+deliberate answer from a default it had written itself, and **a default
+the port later changed could never reach a player who had once touched
+any setting at all.** The defect is latent by nature: it costs nothing
+until a default moves, and then it costs the whole change, silently.
+LR5 is where it would have bitten - Mac's own shelf carries
+`lootRarity: false`, so the flip would have done nothing for him and
+the switch would have looked broken.
+
+**The root cause is that the shelf stored defaults as if they were
+choices**, so the fix is that it stops:
+
+- `savePrefs` drops any key whose value equals the default
+  (`overridesOf`, the pure half). Reading is untouched - `getPref`
+  already answers `_prefs[k] ?? PREF_DEFAULTS[k]`, and `??` falls
+  through on null/undefined alone, so a stored `false` still beats a
+  `true` default. No behaviour moves today; what changes is that every
+  FUTURE default change lands.
+- The shelves already written carry their own day's defaults with
+  nothing saying which were answers - that information was destroyed at
+  save time and cannot be recovered. An UNSTAMPED shelf therefore
+  adopts the new default ONCE, for named keys only, and the save stamps
+  it (`_rev`) so it never runs again. One key is named, `lootRarity`,
+  and the reasoning is bounded rather than hopeful: the row shipped OFF
+  on 2026-09-14 and LR5 turned it ON one day later, so a stored `false`
+  was the shelf's and not a player's. Pressing it off after that load
+  differs from the default, is persisted as the choice it is, and
+  survives every reload.
+
+**The knock-on worth knowing:** a player who deliberately sets a value
+that happens to equal today's default is not distinguishable from one
+who left it alone, and will move with that default if it ever changes.
+That is inherent - "the same as the default" is not a separable intent -
+and it is the right trade against a shelf that freezes every default
+for ever.
+
+**The trap this class of change sets for the suite**, met twice:
+`test/lr1_lootrarity.test.js` and `test/rf2_spawnloot.test.js` both
+drove their OFF half through a bare `_resetForTests()`. With the row
+shipping ON that stops meaning "off" - those pins would have gone on
+testing the ON path, in silence, and passing. Both press the switch off
+explicitly now.
+
+Pins: `test/pref1_shelf.test.js` (6, two mutants killed - `savePrefs`
+writing the whole shelf again, and the adoption ignoring the stamp so a
+real "off" is overwritten on every load), plus the re-aimed LR5 switch
+pin and `test/rf4_featuredecl.test.js`.
+
+## FT14 - ONE ROOF (2026-09-15)
+
+Mac: *"I want to get rid of the mod panel and integrate certain
+feature/mod adjustments into the toggle themselves and move away from
+the scrolling list format."*
+
+### The number that shaped it
+
+The panel was never the problem. The eight vendored mods carry **125
+settings keys** between them, and two of them carry two thirds of that:
+Handheld Torches 53 and the Weapon Widget 42. That is what made the
+Mods pane a scroll, and no layout fixes a list that long - so the first
+decision was not visual: **curate or expose.** Curate kills the pane;
+expose only moves it. Mac took curate, after seeing both in a clickable
+mock.
+
+*(The brief and the mock both said 360. That was a miscount - reading
+`Object.keys` over each mod's `title` and `author` STRINGS as well as
+its `keys`, which counts a title's characters. The shape of the
+argument holds at 125 and the decision does not change, but the number
+is corrected here and in the code.)*
+
+**After curation: 46 of the 125 are on a tile, 79 keep the mod's own
+values.** The hiding is concentrated exactly where the problem was -
+Handheld Torches 45 hidden, the Weapon Widget 29 - and six of the eight
+mods hide nothing at all.
+
+### What a mod actually is
+
+Reading the eight, they decompose the same way twice over: a key under
+`Modules.` is a SUB-FEATURE the mod can switch off whole (the Widget's
+nine - its swings, its bob, its recoil), and everything else is a DIAL.
+So the tile shows the modules as chips, DERIVED so a new module needs
+no edit, and a named handful of dials (`features.js` `MOD_CURATED`).
+`Swings.Speed` earns its place; `Swings.VanillaAlignmentOverride` does
+not. Nothing is lost, only unlisted - the rest keep the values the mod
+ships, and a key that earns a place is one line.
+
+### The thesis: there are no switches
+
+Every control is a BAR, and Off is simply its first segment. A
+two-state row and a five-state row become the same object at two
+widths, so the eye learns one control instead of alternating between a
+toggle and a stepper depending on which store a row happens to sit in.
+
+That is also what makes the tile possible. A row had to be a row
+because the switch sat at the right margin and the words ran to meet
+it; a bar sits UNDER its name, so the whole thing fits a card, and
+cards tile. One `tileStates(f)` adapter answers the states for every
+store - a pref, a tiered pref, a DFU enum - and where a store cannot
+answer in segments it returns null and the row's own builder draws it,
+so a control the bar has not learned is not silently dropped.
+
+### Grouped by what they change
+
+A row's KIND says who wrote it; a row's GROUP says what it changes.
+Twelve rows wearing "Enhanced" is not a section; nine rows about what
+you can SEE is. So the registry gained `group` (Sight 9, The world 7,
+Loot & items 4, Combat 8), the groups are the headings, and Enhanced /
+Mod / DFU Classic became the filter chips they always were.
+
+The notes that made each row tall moved to a reading rail on the right,
+which reads out whichever tile is pointed at - and the left edge of
+each tile carries its state in the skin's own colours (verdigris on,
+brass forced-on-online, iron off), so the grid can be read for state
+without reading a word of it.
+
+### Two things the build taught
+
+**The classes collided.** `.tile` was already the inventory's 34x34
+item icon and `.seg` a progress strip - the first cut inherited both
+and the grid collapsed into a narrow column of overlapping boxes. Every
+FT14 class is `ft-` namespaced now, and the pin walks them, because a
+source sweep would never have caught it and the browser probe did.
+
+**The rail was empty.** `paintRail` looked its element up by id, and
+`paneFeatures` builds the pane DETACHED - so the first paint found
+nothing and the rail stayed blank until the first hover. It is handed
+its element now.
+
+Both were found by `tools/enhancedMenuProbe.mjs`'s route - the real
+menu in a real browser with no ARENA2 - which is the only thing that
+could have found them.
+
+### The pane's estate
+
+`paneMods` is gone from the file and from both dispatch tables, and
+`Mods` from all three rails. Three things it carried were never mod
+settings and needed a home rather than a deletion: the Morrowind assets
+card, the texture packs' door, and DFU's four switches for ITS mod
+system. They stand under the tiles as `modsFooter`, drawn where a
+player who came looking for "mods" now arrives.
+
+## FT15 - THE NOTES CUT IN HALF (2026-09-15)
+
+Mac, on the panel FT14 had just shipped: *"Can we please reduce the
+overexplanation wall of text within featured categories"*.
+
+The measurement first, because "too long" is not a defect until it has
+a number. The 28 rows carried **10,292 characters** of note between
+them - a median of 317 and a worst case of 917 (Loot rarity), with
+Enhanced environments at 862 and Enhanced combat visuals at 563. The
+reading rail FT14 built shows one note at a time, which made the length
+visible in a way the old scrolling list never had: a tile you point at
+answers with four or five sentences when you asked one question.
+
+They are now **6,353 characters**, a median of 218 and a worst case of
+429. Thirty-eight percent of the words gone, and the two longest rows
+cut by sixty and by fifty-two percent.
+
+Characters are the wrong unit for a complaint about a wall of text, so
+`tools/featureRailProbe.mjs` points at all 28 tiles in a real browser
+and reports what the rail actually renders. The tallest note was
+**619px** of prose (Loot rarity) with five rows over 350px; it is
+**300px** now and nothing is over 300. The rail grows to fit its note,
+so nothing was ever clipped - the defect was height, not overflow, and
+saying so is the difference between a measurement and a guess.
+
+### What the trim kept
+
+A note answers three questions and stops: what the switch does, what
+turning it off gives you back, and the one caveat a player would
+otherwise be surprised by. What left was the elaboration - the second
+example, the mechanism behind the mechanism, the sentence that repeated
+the title. Loot rarity's affix vocabulary (damage, armour, an
+attribute, a resistance, a skill, carrying capacity) is the kind of
+thing that went: true, and the item itself says it.
+
+Nothing that a pin guards was dropped. `test/ft1_smallerdungeons.test.js`
+still finds "Main-story dungeons never shrink" and "online every dungeon
+is full size", `test/ft5_enhancedai.test.js` still finds the three
+slices the arc lists as ahead and the "Smarter Enemies" name collision,
+`test/ft10_dfu_dungeon.test.js` and `test/ft11_dfu_rest.test.js` still
+find each DFU row's default as the note's last sentence, and the five
+words of the Dungeon Wall Style enum are all still named. That was the
+constraint the shortening worked inside, and it is why the rewrite is
+per-row rather than a sweep.
+
+### The mods' notes are the mods' descriptions - still
+
+FT9's law is that a vendored mod's row shows the mod's own
+`Enabled.description` from `modSettings.js`, one source, no copy. The
+eight mod rows were among the longest on the panel, so the obvious move
+was a short-note override on `modFeature`. That would have been the
+band-aid: two strings for one sentence, and a second place to forget.
+
+The descriptions themselves are port-authored prose about each mod's
+switch, not text vendored from the mod. So the trim went **to the
+description**, in `modSettings.js`, and `modFeature` is untouched -
+`test/ft9_mods.test.js`'s `f.note === mod.keys.Enabled.description`
+still passes, unchanged, which is the check that this stayed one
+source.
+
+### A pointer at a page that no longer existed
+
+The Enhanced environments note ended: *"The mod's fog density and
+pixel-snow knobs stay on the Mods page."* FT14 deleted the Mods page
+the day before - those knobs open in the row's own tile drawer now
+(AUDIT FT14's `MOD_CURATED['dynamic-skies']`). The sentence had been
+directing players to nothing for a day, and `test/ft4_outdoors.test.js`
+was pinning it there.
+
+Reading every note closely enough to shorten it is what found it. Three
+more of the same were in player-facing copy and went with it: the Data
+& Mods blurb in `settingsMap.js` ("The packs you can attach are on the
+Mods page") and three mod credits in `credits.js` ("under its own
+switch in the Mods pane"). All four now name the Features page.
+
+## FT16 - THE PAINT, AND THE SECOND DOOR (2026-09-15)
+
+Mac, two reports in one message: *"Can you make the new feature UI
+elements have the same transparent design as the list we used to have.
+Also the control menu option needs to be within settings"*.
+
+### The pass FT14 never wrote
+
+Every component family on this screen has TWO paints. The base tokens
+(`--slate` grounds, 1px `--iron` rules) are the pause window's, where a
+panel is opaque because there is a game behind it. Then PX11's `.shell`
+override is the boot door's, where the screen stands on the live sky and
+every painted panel colour comes off: `.shell .pane`, `.shell .panes`,
+`.shell .head` and `.shell .foot` go transparent, `.shell .list` and
+`.shell .detail` take low-alpha scrims, `.shell .row` loses its ground
+entirely, and every hairline becomes a 2px rule in the brass line.
+
+FT14 wrote the first paint and stopped. There was no `.shell .ft-*` rule
+in the sheet at all - not one - so the tiles drew solid `--slate` boxes
+with 1px borders on a screen that was see-through everywhere around
+them. That is the whole of Mac's first report, and it is not a taste
+call: the list those tiles replaced had been transparent, because
+`.shell .row` had a rule and `.ft-tile` never did.
+
+Twelve rules, all scoped to `.shell`. **The scope is the design
+decision**, and the pin holds it as firmly as the rules: repainting the
+tokens instead would have taken the pause window with it, where the
+opaque paint is correct. So the pin asserts both that the shell rules
+exist and that the base `.ft-tile` still carries `background:
+var(--slate)` - a rules-only pin would have passed the wrong fix.
+
+### A control that was half a thumb
+
+The probe found what the paint pass could not. `tools/enhancedMenuProbe.mjs`
+measures the outdoors switch against the 44px coarse-pointer law, and
+it came back **20px**.
+
+FT14's fault, not this slice's: the old list's control was one cycling
+`.ctl .act` button, and `@media (pointer: coarse)` already sized it. The
+tile's segmented bar, its module chips and its drawer door are new
+elements that inherited nothing. A control drawn, present, and too small
+to press on the device that needs it most is the AUDIT 24 shape this
+project keeps rediscovering, and the law has a home precisely so the
+next control finds it - so the fix went in that block, not in the FT
+block.
+
+### The probe had been red since FT14, and nobody ran it
+
+Three separate things in `enhancedMenuProbe.mjs` were stale:
+
+1. It counted the rail's doors and compared against a hardcoded **9**.
+   Its own comment records this going stale once before - *"this read 6
+   from R7 on and nobody ran it"*. A door census is not this probe's
+   subject; it asks for the doors it goes on to drive, by name.
+2. It drove the Features home through `.row.feature`, which FT14
+   deleted. The pane read zero rows and the switch click timed out.
+3. Its classic-rail check still expected `mods`, which FT14 removed.
+
+Thirty-three checks pass now. The lesson is the one the file already
+knew and wrote down: a probe nobody runs is a probe that is wrong.
+
+### The second door to one subject
+
+FIX-F put **Controls** on both rails because it was reachable from
+neither - the right fix for that bug. But Settings already carried a
+**Controls category** (DFU's `Controls/*` keys: the mouse sensitivity,
+the swing mode, the controller, plus the port's touch rows), so a player
+asking "how do I rebind jump" had two plausible doors and one of them
+was wrong.
+
+The bindings are that category's contents now. The store keys come
+first - they are few, and they are what a hand reaches for mid-session -
+then a divider, then the grid. The rail entry is gone from all three
+rails, from `SYSTEM_PANES`, and from both dispatch tables, and
+`paneControlsPane` went with them.
+
+FIX-F's law is not weakened, and the pin says why: *the bindings must be
+reachable from the front door and from Escape*, which they are, because
+Settings is on both rails. What changed is the address. The condensed
+pause Settings has no category rail, so the bindings ride the end of its
+one scroll - dropping them there would have been FIX-F's bug again, one
+level down.
+
+**The staging moved with it.** The Controls page says "leave this page
+and your changes are dropped", and the section rail enforced that. The
+category rail has to enforce it now, or a staged bind survives a hop to
+Audio and back and lands on a Continue the player never meant.

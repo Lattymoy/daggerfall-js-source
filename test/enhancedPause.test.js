@@ -210,9 +210,25 @@ test('U51: the enhanced screen is a DYNAMIC import - classic pays nothing', () =
   const src = read('src/ui/pauseDoor.js');
   assert.doesNotMatch(src, /^import .*enhancedMenu\.js/m,
     'a static import would load the whole enhanced design for a player who chose classic');
-  assert.match(src, /\.catch\(\(e\) => \{[^]*?host\.remove\(\)/,
-    'a failed load must take its empty div with it, or the host holds an overlay '
-    + 'that never reports done - a frozen game');
+  // MENU1 (2026-09-15): THE LAW STANDS, THE SHAPE MOVED. This read
+  // back one door's `.catch((e) => { ... host.remove() }` - the
+  // implementation, not the rule - and the rule is the sentence below
+  // it: a failed load must not leave the host holding an overlay that
+  // never reports done. Six doors carried that catch by hand and a
+  // seventh (charSheetDoor) carried none at all, which is how a deploy
+  // that moved a chunk made the enhanced menus silently refuse to
+  // open. The handling is `ui/enhancedChunk.js` now, and it satisfies
+  // the rule with a way OUT rather than a disappearance: the notice it
+  // paints carries the door's own close, and where the notice cannot
+  // paint it falls back to exactly the old answer. Asked of the ONE
+  // home, so every door is covered instead of this one.
+  assert.match(src, /mountEnhancedChunk\(\{/, 'the door mounts through the one home');
+  assert.match(src, /onDismiss: \(\) => \{ host\.remove\(\); fired = true; \}/,
+    'and hands it the teardown that takes the empty div with it');
+  const home = read('src/ui/enhancedChunk.js');
+  assert.match(home, /if \(!notice\(host, \{ err, onDismiss \}\)\) onDismiss\?\.\(\);/,
+    'a failed load must take its empty div with it when it cannot show a way out, or the host '
+    + 'holds an overlay that never reports done - a frozen game');
 });
 
 // ── THE OVERLAY CONTRACT ─────────────────────────────────────────

@@ -42,7 +42,10 @@ test('ROADS 24: the switches reach the kernel on both paths, and the Mods pane s
   const worker = readFileSync('src/world/terrainGenWorker.js', 'utf8');
   assert.match(worker, /\.\.\.\(m\.switches \?\? \{\}\)/, 'the worker attaches them to the built network');
   const menu = readFileSync('src/ui/enhancedMenu.js', 'utf8');
-  assert.match(menu, /for \(const \[vendor, mod\] of Object\.entries\(MOD_SETTINGS\)\)/, 'the Mods pane lists every vendored mod\u2019s switches');
+  // FT14: the Mods pane is gone - every vendored mod reaches the player as a TILE on the features
+  // home (features.js modFeature walks MOD_SETTINGS), and its own keys open inside that tile.
+  assert.match(readFileSync('src/systems/features.js', 'utf8'), /modFeature\(/, 'every vendored mod has a row');
+  assert.match(menu, /const mods = modModules\(vendor\);/, 'and the tile opens the mod\u2019s own modules');
   assert.match(menu, /setModSetting\(vendor, key, !modSetting\(vendor, key\)\)/, 'a click flips one');
 });
 
@@ -197,5 +200,8 @@ test('the Mods pane puts each creator\'s name in the mod title (Mac, 2026-09-08)
   assert.equal(MOD_SETTINGS['roads-hazelnut'].author, 'Hazelnut');
   assert.match(readFileSync('vendor/roads-hazelnut/README.md', 'utf8'), /by Hazelnut/);
   for (const [vendor, mod] of Object.entries(MOD_SETTINGS)) assert.ok(typeof mod.author === 'string' && mod.author.length > 0, `${vendor}: an author`);
-  assert.match(readFileSync('src/ui/enhancedMenu.js', 'utf8'), /mc\.append\(el\('h3', null, `\$\{mod\.title\} by \$\{mod\.author\}`\)\);/, 'the title carries the name');
+  // FT14: the pane's h3 is gone with the pane - the creator's name rides the TILE's title now,
+  // which is the same string built once in features.js modFeature and shown wherever the row is.
+  assert.match(readFileSync('src/systems/features.js', 'utf8'), /title: `\$\{mod\.title\} by \$\{mod\.author\}`,/,
+    'the title carries the name');
 });

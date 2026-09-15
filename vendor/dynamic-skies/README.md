@@ -41,7 +41,12 @@ Exactly what the mod's runtime reads, as the shipped bundle carries it:
   heightScale 0.15, x in alpha) where the repository holds the
   grayscale source; `NLStarsBlack` is scaled to 1024 where the source
   is 876. The import settings (Point filter, Repeat, mipmaps, sRGB) are
-  restated in `src/systems/dynamicSkies.js` TEXTURE_IMPORTS.
+  restated in `src/systems/dynamicSkies.js` TEXTURE_IMPORTS - with ONE
+  departure, recorded there and pinned: DS3 gives the three star FIELDS
+  (VanillaStars, DefaultStars, NLStarsBlack) bilinear, because at night
+  the sky IS the star texture and Point magnifies its authored per-texel
+  dither into visible dark blocks. Every other file, the twinkle masks
+  and the noise included, keeps the mod's Point.
 - `Shaders/BLBProceduralSkybox.shader` and `Shaders/Includes/*.cginc` -
   the shader sources, for reading beside the port. They are not
   compiled; `src/render/dynamicSkiesRenderer.js` is their GLSL

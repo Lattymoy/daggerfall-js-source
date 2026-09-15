@@ -516,3 +516,74 @@ ART'S are struck.
 in the loop. Every one of the four slices was seen only in the lab,
 on synthetic art, and each was judged after it merged. A look change
 wants a shot from the real game before it lands, not a probe number.
+
+## WATER-NPC - THE TOWNSFOLK WALK AROUND IT (2026-09-15)
+
+**Mac, from live play: "NPCs arent water aware and will walk into
+it."** They were not, and the reason is that the port is *correct*.
+
+`world/cityNavigation.js` is DFU's `CityNavigation.cs` character for
+character, and its `GetTileWeight` gives weight 0 - never walk - to
+seven ground records, read straight off DFU's `TileTypes` enum:
+
+    Water, WaterDirtEdge1/2, WaterGrassEdge1/2, WaterStoneEdge1/2
+    = 0, 5, 6, 20, 21, 30, 31
+
+The enum knows **two** edges per shore family. Each family actually
+has **four** members - the edge and the corner are in the enum, the
+three-corner and the saddle are not - and the shallow-whole records
+(the docks, moats and puddles MAC2 put in the corner table) belong to
+no family at all. Twelve records were water to the draw and dry land
+to the pathing:
+
+    7, 8, 22, 23, 32, 33, 34, 35, 36, 48, 49, 50
+
+**DFU contradicts itself about this**, which is what settles the
+question of whether the seven are a deliberate design or an
+oversight. `PlayerMotor.OnShallowWaterTile` (:551-563) wades the
+PLAYER through records 8, 23, 33-36 and 49 - and `GetTileWeight`
+walks the TOWNSFOLK over the very same records dry-shod. The same
+codebase calls them water in one file and ground in the other.
+
+**The departure, enhanced lane only**, under WATER1's one switch
+(`waterSwitchOn()`, `enhancedWater`, `?water=off`): the enhanced arm
+of `tileWeight` asks the port's **own** water table -
+`WATER_MASK_TABLE` in `world/waterCorners.js`, the same table
+`render/waterSurface.js` draws from and `player/exteriorSurface.js`
+swims the player by. `WATER_RECORDS_ENHANCED` is **derived** from it
+at module load (every record with any water corner under any of its
+four transforms), never listed; a hand-written roster is exactly how
+DFU's seven came to be wrong, and a second enumeration of the water
+family is the one thing this arc must not grow.
+
+So MAC2's principle now covers the third consumer: **the picture, the
+physics and the pathing cannot disagree by construction.** Wherever
+the enhanced pass draws water, a wandering NPC will not walk into it.
+
+**What is untouched.** The classic lane keeps DFU's seven exactly -
+the departure is a single `if` ahead of the verbatim switch, so the
+switch is still readable as the verbatim thing it is. Both exterior
+hosts (`scenes/world.js`, `scenes/exterior.js`) pass the same switch
+through `setBlockData`; the dungeon and interior navgrids have no
+tile law and take nothing.
+
+**Pinned** in `test/waternpc.test.js` (4): the classic lane against
+DFU's seven and against the twelve staying weight 7 there; the
+enhanced family recomputed from the corner table rather than listed;
+DFU's own `OnShallowWaterTile` contradiction as the reason; and both
+hosts swept for the same switch, because a departure gated in one
+host and not the other is the four-hosts trap wearing a new coat.
+Ledger A row: WATER1, extended.
+
+**Still open: WATER-A.** Mac's other half of the same report - "in
+towns some textures are still the old square panels instead of our
+new animated water" - is *not* this. The terrain-water chain was read
+end to end and is sound: the 0xFF location-zero sentinel converts back
+to record 0 (`world/terrainSurface.js`, `convertTile`), the conversion
+happens before the stamp and not after, and the enhanced pass's record
+set is a strict superset of DFU's. The remaining hypothesis is that
+the panels are not terrain at all but RMB **model or flat** geometry -
+a block's own water prop, drawn by the model pass, which the water
+surface never sees because it draws over the terrain grid alone.
+Confirming it needs either ARENA2 data (not in this container) or the
+name of a town where Mac sees it.

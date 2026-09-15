@@ -7,6 +7,7 @@
 // recenters the world (streamingWorld.js).
 
 import { FlatAnimator, armFlatAnim } from '../render/flatAnimation.js';   // FA1: the flats that move
+import { windmillsOn } from '../world/windmills.js';   // WM3: the Windmills pack's switch
 import { SKY_CLEAR } from '../render/renderer.js'; import { centreFromFeet } from '../characters/enemyAnchor.js';   // REVIEW 2026-09-05: one line, so the cites below it hold
 import { Arch3dFile } from '../formats/arch3dFile.js';
 import { requestLook, releaseLook, makeLookGate, bindCursorToggle, setCursorActive } from '../player/pointerLock.js';   // U45: bindCursorToggle is PlayerMouseLook.cursorActive; releaseLook: the chat's open (AUDIT CHAT C2)
@@ -203,6 +204,7 @@ import { jumpSpeedMultiplier, isEnhancedJumping, tallySkill, SKILLS } from '../s
 import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter, setAvoidDeathHook } from '../characters/playerEntity.js';
 import { SOUND } from '../systems/soundClips.js';
 import { createWeaponRig, autoBuildArms } from '../combat/weaponRig.js';   // MWA1: the arms at boot
+import { weaponPoseOf, applyWeaponPose, mergeWeaponPose } from '../combat/playerWeapon.js';   // HARD2c: the sheath+hand pair as ONE law, and SL-2's per-field merge with the mode host's live rig
 import { ArrowFlight, playerArrowHitFoe } from '../combat/arrowFlight.js';   // C13: visible exterior arrows; AUDIT 39 (#64): and the shaft that LANDS
 import { addItem, spendArrow, carriedWeight } from '../systems/inventory.js';   // E4: PlayerEntity.CarriedWeight carries the gold counter's own term
 import { calculateAttackDamage } from '../combat/formulas.js';   // X2-slice: enemy-arrow impacts
@@ -951,7 +953,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // AUDIT 39 (#18): the skin reaches the layout, because the mill's
       // subrecord widens the block's building count and must not exist
       // on the classic one.
-      const loc = layoutLocation(dfLocation, maps, blocks, { enhanced: isEnhanced() });
+      const loc = layoutLocation(dfLocation, maps, blocks, { enhanced: isEnhanced(), windmills: windmillsOn() });   // WM3: the pack's own switch
       locBlocks = loc.blocks;
       const tilePos = getLocationTerrainTileOrigin(dfLocation);
       const locLocal = [tilePos.x * tileSide, avg * worldHeight + 2.0 * 0.025, tilePos.y * tileSide];
@@ -1163,8 +1165,11 @@ export async function bootWorld(canvas, renderer, params, status) {
         const nav = new CityNavigation(loc.width, loc.height);
         for (const b of loc.blocks) {
           const srcTiles = b.dfBlock.rmbBlock.fldHeader.groundData.groundTiles;
+          // WATER-NPC: the enhanced lane's wider water family, off the
+          // ONE switch the water surface reads - so wherever the pass
+          // draws water, a wandering NPC will not walk into it.
           nav.setBlockData(b.x, b.y, b.dfBlock.rmbBlock.fldHeader.autoMapData,
-            (tx, ty) => srcTiles[tx][ty].textureRecord);
+            (tx, ty) => srcTiles[tx][ty].textureRecord, { enhancedWater: waterSwitchOn() });
         }
         personBatches = new Map();   // person -> batch (destroyed with the pixel)
         const personCollider = {
@@ -2673,7 +2678,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2113 mounts the same one, gated on
+  // and dungeonContext.js:2114 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
   // that context through modes.dungeonCtx - so worldModes.js:4615
@@ -2763,9 +2768,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // encounter pool's remover for both. That was not a leak: removeFoe
     // (exteriorFoes.js:354-359) never looks the record up in `foes`, and
     // both pools share this host's one renderer, so a struck WATCHMAN
-    // got exactly what removeGuard (cityGuards.js:1213-1217) gives it -
+    // got exactly what removeGuard (cityGuards.js:1238-1242) gives it -
     // batch freed, `dead = true`, no corpse, skipped by the next AI pass
-    // (cityGuards.js:757) and spliced out at the end of it (:939).
+    // (cityGuards.js:782) and spliced out at the end of it (:964).
     // Routing by POOL MEMBERSHIP is an OWNERSHIP fix: each pool owns the
     // teardown of its own records so the two can diverge safely, and
     // removeFoe's `questBehaviour?.notifyDestroyed()` (exteriorFoes.js
@@ -3578,6 +3583,34 @@ export async function bootWorld(canvas, renderer, params, status) {
     const px = playerTravelPixel();
     const dfLoc = locationIndex.get(`${px.x},${px.y}`);
     if (!dfLoc?.exterior?.exteriorData) return;   // HasLocation false - DFU teleports nowhere
+    // JAIL1 (2026-09-15, a player through Mac: "twice once I served my
+    // sentence the game loaded me outside of a room and falling into the
+    // void!"). YOU CAN BE ARRESTED INDOORS, and this is where that ended.
+    //
+    // The indoor watch does not carry its own court flow: it asks the
+    // WORLD host for one through the `onGuardHit` seam, on purpose
+    // (worldModes.js, onPlayerHurt - "the arrest interception is the
+    // WORLD host's ... rather than growing a second copy"). So the whole
+    // sentence can be served with `modes.mode` still 'interior' - which
+    // is exactly what happens when the crime was stealing, because
+    // stealing is something you do inside a shop.
+    //
+    // The release then teleported to the town's start marker with the
+    // INTERIOR still standing: the player landed at the exterior's
+    // coordinates inside a building's scene, outside its geometry, and
+    // fell. Every other `_teleportToPixel` caller that can be reached
+    // from indoors leaves first - teleportTo says so in as many words
+    // ("you cannot teleport out of a building", G5's own note on
+    // TransitionExterior) - and this one alone did not.
+    //
+    // It is not a departure to add it: DFU cannot be inside here at all.
+    // PlayerEnterExit re-parents the player on the transition its own
+    // teleport raises, so the C# has no separate line to port; the port's
+    // mode machine is a seam DFU does not have, and a seam has to be
+    // told. `forceExitToExterior` no-ops when already outside (its own
+    // `wasInside` guard), so the wilderness and open-street arrests are
+    // untouched.
+    modes?.forceExitToExterior();
     _teleportToPixel(px.x, px.y, null, { reposition: REPOSITION.RandomStartMarker })
       .catch((e) => console.error('[court] reposition failed:', e));
   }
@@ -4234,7 +4267,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // loaded back on the right hand's item (or bare fists). The
       // port stores the POSITIVE sense because PlayerWeapon holds
       // `usingRightHand`; it is the same bit.
-      pose: { yaw: cam.yaw, pitch: cam.pitch, crouching: !!player.crouching, weaponDrawn: wp?.weaponDrawn ?? !weaponRig.playerWeapon.sheathed, usingRightHand: wp?.usingRightHand ?? weaponRig.playerWeapon.usingRightHand, camera: mwCamera.state(), transport: player.transportMode },   // SL-2: the pair off the LIVE rig (the mode seam above), else this host's own
+      pose: { yaw: cam.yaw, pitch: cam.pitch, crouching: !!player.crouching, ...mergeWeaponPose(wp, weaponPoseOf(weaponRig.playerWeapon)), camera: mwCamera.state(), transport: player.transportMode },   // SL-2: the pair off the LIVE rig (the mode seam above), else this host's own - PER FIELD, which is mergeWeaponPose's whole job
       locationKey: 'world',
       world: {
         pixel: playerTravelPixel(), nativeX: wc.x, nativeZ: wc.z, y: pf[1] - state.compensation[1],
@@ -4402,20 +4435,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     cam.yaw = pose.yaw ?? cam.yaw;
     cam.pitch = pose.pitch ?? cam.pitch;
     if (pose.crouching != null) player.crouching = !!pose.crouching;
-    if (pose.weaponDrawn != null) weaponRig.playerWeapon.sheathed = !pose.weaponDrawn;
-    // AUDIT 63 F25/F31: the hand, SerializablePlayer.cs:421's
-    // `weaponManager.UsingRightHand = !data.usingLeftHand;`. The
-    // FLAG ONLY - the C# restore sets the property and calls no
-    // ApplyWeapon, because WeaponManager.Update's UpdateHands ends in
-    // ApplyWeapon (:699) on the very next frame; the port's twin is
-    // weaponRig.syncWorn (updateHands + applyWeapon(claws), every
-    // frame), which re-binds the screen weapon to the restored hand
-    // AND re-runs the shield override that forces the right hand
-    // (WeaponManager.cs:656). A bare applyWeapon() here would drop the
-    // racial claws for a frame and would null a bindWorn:false rig's
-    // scripted weapon. Presence-gated: a pre-field envelope (and the
-    // classic import before its own arm below) leaves the live hand.
-    if (pose.usingRightHand != null) weaponRig.playerWeapon.usingRightHand = !!pose.usingRightHand;
+    // AUDIT 63 F25/F31: the sheath AND the hand, SerializablePlayer
+    // .cs:420-421's two lines, as the one pair they are there. HARD2c:
+    // they used to sit thirteen lines apart here - F25 is what that
+    // cost - and the flag-only and presence-gated laws they each
+    // restated now live once, with their citations, in
+    // combat/playerWeapon.js's applyWeaponPose.
+    applyWeaponPose(weaponRig.playerWeapon, pose);
     // SL-2 (AUDIT 65): ...and the SAME pair into the interior rig, the
     // one the player's hands actually hold inside a building. DFU has
     // ONE WeaponManager for every WorldContext (SerializablePlayer
@@ -6579,7 +6605,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     dateTimeString: () => dateTimeString(dateFromClassicMinutes(playerTicker.classicMinutes)),
     midDateTimeString: () => midDateTimeString(dateFromClassicMinutes(playerTicker.classicMinutes)),
     cityName: () => _questLoc()?.name ?? questWorld.currentRegionName(),
-  });
+  }, { label: 'world.js' });
   // E3: the pixels this host laid BEFORE the bridge existed - the start
   // pixel is built during init, above - get RMBLayout's third act now.
   // QuestMachine is a scene singleton in DFU, so its layout never has
@@ -8720,7 +8746,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // as `dealDamage` above it does, instead of excluding the
         // guards - a zero-damage shaft into a pacified watchman has to
         // reach the same door the zero-damage SWING already reaches
-        // (cityGuards.js:1004). DFU makes no pool distinction:
+        // (cityGuards.js:1029). DFU makes no pool distinction:
         // AssignBowDamageToTarget's player arm (DaggerfallMissile.cs
         // :660-688) calls WeaponDamage, so :630 runs for the shaft as
         // for the swing.

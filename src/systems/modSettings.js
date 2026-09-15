@@ -54,7 +54,12 @@ export const MOD_SETTINGS = Object.freeze({
     title: 'Seasons of the Iliac Bay',
     author: 'RosyTheRascal',
     keys: Object.freeze({
-      Enabled: Object.freeze({ default: true, description: 'RosyTheRascal\u2019s seasonal nature flats: autumn, spring and winter repaints of the woodland, hills, haunted and mountain trees, rocks and plants, drawn at the mod\u2019s 3.1x size. The textures come from your own copy of the mod (its .dfmod, or its Textures folders) through the Your own textures pick; without them the classic flats draw. Off leaves the classic flats in every season.' }),
+      Enabled: Object.freeze({
+        default: true,
+        description: 'RosyTheRascal\u2019s seasonal repaints of the woodland, hills, haunted and mountain trees, rocks and plants '
+          + '- autumn, spring and winter, at the mod\u2019s 3.1x size. The textures come from your own copy of the mod '
+          + 'through the Your own textures pick; without them the classic flats draw.',
+      }),
     }),
   }),
   // AUDIT BASIC ROADS (BR3, 2026-09-13, Mac: "can you do an audit on
@@ -72,7 +77,12 @@ export const MOD_SETTINGS = Object.freeze({
     title: 'Basic Roads',
     author: 'Hazelnut',
     keys: Object.freeze({
-      Enabled: Object.freeze({ default: true, description: 'Hazelnut\u2019s Basic Roads, 1:1: his own road, track, river and stream network for the whole Iliac Bay, painted onto the terrain as the mod paints it. Off draws the port\u2019s own network instead - generated from the settlements on your map - so the world keeps its roads either way.' }),
+      Enabled: Object.freeze({
+        default: true,
+        description: 'Hazelnut\u2019s Basic Roads, 1:1: his own road, track, river and stream network for the whole Iliac Bay, '
+          + 'painted onto the terrain as the mod paints it. Off draws the port\u2019s own network instead - generated '
+          + 'from the settlements on your map - so the world keeps its roads either way.',
+      }),
       SmoothRoads: Object.freeze({ default: true, description: 'Enables light smoothing of road surfaces, disable for minor extra performance.' }),
       RiversAndStreams: Object.freeze({ default: false, description: 'Enables rendering of rivers and streams on terrain' }),
     }),
@@ -85,7 +95,12 @@ export const MOD_SETTINGS = Object.freeze({
     title: 'Meaner Monsters',
     author: 'Ralzar',
     keys: Object.freeze({
-      Enabled: Object.freeze({ default: true, description: 'Ralzar\u2019s Meaner Monsters 1.5.2, 1:1: "Buffs many monsters. Debuffs rats, bats and zombies." - twenty monsters\u2019 damage, health, level and armour rewritten, werewolves and wereboars drawn a fifth larger, the dragonling two and a half times its size. With Physical Combat And Armor Overhaul also on, its own edit of these numbers takes over, as in Daggerfall Unity.' }),
+      Enabled: Object.freeze({
+        default: true,
+        description: 'Ralzar\u2019s Meaner Monsters 1.5.2, 1:1: \"Buffs many monsters. Debuffs rats, bats and zombies.\" Twenty '
+          + 'monsters\u2019 damage, health, level and armour rewritten, the werebeasts and the dragonling drawn larger. '
+          + 'With Physical Combat And Armor Overhaul also on, its own edit of these numbers takes over.',
+      }),
     }),
   }),
   // PCO1: PHYSICAL COMBAT AND ARMOR OVERHAUL 1.44 (Kirk.O). Its seven
@@ -100,7 +115,12 @@ export const MOD_SETTINGS = Object.freeze({
     title: 'Physical Combat And Armor Overhaul',
     author: 'Kirk.O',
     keys: Object.freeze({
-      Enabled: Object.freeze({ default: true, description: 'Kirk.O\u2019s Physical Combat And Armor Overhaul 1.44, 1:1: armour reduces the damage you take instead of your chance to be hit, skills decide the hit, weapons wear by their kind and material, shields block by their material and your stats, critical strikes multiply damage. Off returns Daggerfall Unity\u2019s own combat formulas.' }),
+      Enabled: Object.freeze({
+        default: true,
+        description: 'Kirk.O\u2019s Physical Combat And Armor Overhaul 1.44, 1:1: armour reduces the damage you take instead of '
+          + 'your chance to be hit, skills decide the hit, weapons and shields wear and block by their material, and '
+          + 'critical strikes multiply damage. Off returns Daggerfall Unity\u2019s own combat formulas.',
+      }),
       equipmentDamageEnhanced: Object.freeze({ default: true, description: 'Equipment condition damage is increased significantly, the amount of wear your equipment takes is based on many different factors; Material, Damage Source, Etc' }),
       fadingEnchantedItems: Object.freeze({ default: true, description: 'Enchanted Weapons and Armor will be destroyed upon breaking from physical combat. !!!! This Module Is Dependent On Equipment Damage Enhanced' }),
       fixedStrengthDamageModifier: Object.freeze({ default: true, description: 'Fixes a bug in DFU 0.10.21, the strength modifier for damage is double what classic had. This module fixes that, so 10 points = +1, instead of 10 points = +2' }),
@@ -119,7 +139,12 @@ export const MOD_SETTINGS = Object.freeze({
     title: 'Unleveled Loot',
     author: 'Ralzar',
     keys: Object.freeze({
-      Enabled: Object.freeze({ default: true, description: 'Ralzar\u2019s Unleveled Loot 1.1.2, 1:1: "Makes loot and shop stock materials not scale to your level." Weapon and armour materials roll by your luck, the shop\u2019s quality and the dungeon\u2019s kind instead of your level; a corpse\u2019s gold is divided by your level and multiplied by your luck; Daedra and Orcs may drop their own metal. Off returns Daggerfall Unity\u2019s own rolls.' }),
+      Enabled: Object.freeze({
+        default: true,
+        description: 'Ralzar\u2019s Unleveled Loot 1.1.2, 1:1: \"Makes loot and shop stock materials not scale to your level.\" '
+          + 'Materials roll by your luck, the shop\u2019s quality and the dungeon\u2019s kind; a corpse\u2019s gold '
+          + 'follows your luck rather than your level. Off returns Daggerfall Unity\u2019s own rolls.',
+      }),
       ...Object.fromEntries(['Iron', 'Steel', 'Silver', 'Elven', 'Dwarven', 'Mithril', 'Adamantium', 'Ebony', 'Orcish', 'Daedric'].map((name, i) => [name, Object.freeze({
         default: i,
         options: Object.freeze(['Iron', 'Steel', 'Silver', 'Elven', 'Dwarven', 'Mithril', 'Adamantium', 'Ebony', 'Orcish', 'Daedric']),
@@ -140,7 +165,12 @@ export const MOD_SETTINGS = Object.freeze({
     title: 'Weapon Widget',
     author: 'RedRoryOTheGlen',
     keys: Object.freeze({
-      Enabled: Object.freeze({ default: true, description: 'RedRoryOTheGlen\u2019s Weapon Widget 1.6, 1:1: the first-person weapon sprite handled anew - swings that wind up from the idle pose and recover, the sprite in the hand you swing with, a sheathe that slides it off the screen, a walking bob, look inertia, stepped movement, double-size idle textures, a recoil on a hit or a parry. The same channels move the Morrowind arms.' }),
+      Enabled: Object.freeze({
+        default: true,
+        description: 'RedRoryOTheGlen\u2019s Weapon Widget 1.6, 1:1: the first-person weapon sprite handled anew - swings that '
+          + 'wind up and recover, the sprite in the hand you swing with, a sheathe, a walking bob, look inertia and a '
+          + 'recoil on a hit or a parry. The same channels move the Morrowind arms.',
+      }),
       'Modules.Swings': Object.freeze({ default: true, description: 'Swings: the strike winds up from the idle pose, plays at its own speed, and recovers - in reverse after a hit.' }),
       'Modules.Ambidexterity': Object.freeze({ default: true, description: 'Ambidexterity: the sprite is drawn in the hand you are swinging with (H), mirrored for the left.' }),
       'Modules.Offset': Object.freeze({ default: true, description: 'Offset: sheathing slides the sprite off the screen and drawing slides it back; a swing returns from below.' }),
@@ -195,7 +225,12 @@ export const MOD_SETTINGS = Object.freeze({
     title: 'Handheld Torches',
     author: 'RedRoryOTheGlen',
     keys: Object.freeze({
-      Enabled: Object.freeze({ default: true, description: 'RedRoryOTheGlen\u2019s Handheld Torches 1.4.1, 1:1: a lit torch, candle or lantern needs a free hand - drawing a weapon that takes both stows or drops it, and a hand freed lights it again; a key to ignite or douse, a key to drop, a key to throw a torch (which can set a foe alight); a first-person hand holding the light; dropped torches burn on the ground, light the room, and can be picked up.' }),
+      Enabled: Object.freeze({
+        default: true,
+        description: 'RedRoryOTheGlen\u2019s Handheld Torches 1.4.1, 1:1: a lit torch, candle or lantern needs a free hand, with '
+          + 'keys to ignite, drop or throw one (a thrown torch can set a foe alight). A first-person hand holds the '
+          + 'light, and a dropped torch burns on the ground, lights the room and can be picked up.',
+      }),
       'Handling.ToggleLightInput': Object.freeze({ default: "F", text: true, description: 'Button used to quickly ignite or douse your light source' }),
       'Handling.RememberLastLightSource': Object.freeze({ default: true, description: 'Igniting with the key re-lights the light you last doused, if you still carry one.' }),
       'Handling.ManualDropInput': Object.freeze({ default: "Tab", text: true, description: 'Button used to manually drop a light source' }),

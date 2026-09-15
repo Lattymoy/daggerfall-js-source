@@ -22,6 +22,7 @@
 // C1; the sheathed cast - C2) and the record's struck sentences (D2,
 // D6, D7, D8).
 import { test } from 'node:test';
+import { indexText } from './bibleIndex.mjs';   // HARD5: a doesNotMatch aimed at one page goes vacuous when its subject moves
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { parseClient, isWorldRoom, WORLD_PREFIX, WORLD_TTL_MS, MAX_FRAME_BYTES, PIXEL_UNITS, CLOSE_REPLACED } from '../src/net/wire.js';
@@ -246,7 +247,7 @@ test('AUDIT WORLD: the hosts by source - the dungeon host stamps its memory and 
   const mp = rd('bible/11-Multiplayer/Multiplayer.md');
   assert.doesNotMatch(mp, /It holds no game\s+state beyond the roster/, 'D6'); assert.doesNotMatch(mp, /Host migration is a\s+later slice/, 'D6');
   assert.doesNotMatch(mp, /Host migration \(a client becomes host when the host drops\)\. Later\./, 'D6'); assert.doesNotMatch(mp, /Sessions are ephemeral;/, 'D6');
-  assert.doesNotMatch(rd('bible/Home.md'), /shipped presence alone/, 'D2'); assert.doesNotMatch(rd('bible/Home.md'), /nothing stored/, 'D2');
+  assert.doesNotMatch(indexText(), /shipped presence alone/, 'D2'); assert.doesNotMatch(indexText(), /nothing stored/, 'D2');   // HARD5: the whole index, so the claim cannot come back on a delegate page
   assert.doesNotMatch(rd('bible/01-Overview/Port-Ledger.md'), /only PRESENCE is shared/, 'D2');
   assert.doesNotMatch(rd('server/wrangler.toml'), /It stores nothing past\n# the connection/, 'the worker\'s own head');
 });

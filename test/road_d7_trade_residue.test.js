@@ -270,7 +270,12 @@ test('D7: the Books arm is `Books && !IsArtifact`, and the artifact keeps its ow
   const tip = scrollerToolTipText(book);
   assert.equal(tip, "Ark'ay The God", 'GetBookTitle, not the short name');
   const artifactBook = { ...book, artifact: true, name: 'Mysterious Tome' };
-  assert.equal(scrollerToolTipText(artifactBook), 'Mysterious Tome', 'an artifact tome reads as the artifact (:464)');
+  // LR5 (2026-09-15): the loot-rarity ladder ships ON, and DFU's artifacts are its CEILING, so the tier line now rides
+  // under the name on every tooltip (lootRarity.rarityLines, joined by the scroller's own '\r'). D7's law is the NAME
+  // arm - `Books && !IsArtifact` - so it is pinned on the first line, and the ladder's line is pinned beside it rather
+  // than switched off, because this is what a player sees by default now.
+  assert.equal(scrollerToolTipText(artifactBook).split('\r')[0], 'Mysterious Tome', 'an artifact tome reads as the artifact (:464)');
+  assert.equal(scrollerToolTipText(artifactBook), 'Mysterious Tome\rArtifact', 'LR5: and the ladder names its ceiling under the name');
 });
 
 test('D7: ResolveItemName gives up the short name when the item is UNIDENTIFIED', () => {

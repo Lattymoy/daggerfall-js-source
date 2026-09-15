@@ -186,6 +186,7 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    heading above it. */
 .body { padding: 24px 30px 40px; max-width: 720px; }
 .body.flush { padding: 0; max-width: none; }
+.body.wide { max-width: 1180px; }   /* FT14: the features grid is scanned, not read - the 720px reading measure is the wrong bound for it */
 
 /* ── CARDS + ACTIONS ───────────────────────────────────────── */
 .card { border: 1px solid var(--iron); padding: 20px; margin-bottom: 16px; background: #12161b; }
@@ -1846,6 +1847,15 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 @media (pointer: coarse) {
   .step { width: 44px; height: 44px; }
   .rowact, .ctl .act { min-height: 44px; }
+  /* FT16: THE TILE'S CONTROLS JOIN THE LAW. FT14 replaced the list's
+     one cycling .ctl .act - which this block already sized - with a
+     segmented bar, chips and a drawer door, and none of them inherited
+     it: the outdoors switch measured 20px on a phone, less than half
+     the target, which is the AUDIT 24 shape the law exists to stop.
+     tools/enhancedMenuProbe.mjs had been red since FT14 and so nobody
+     saw it. Sized here rather than in the FT block below, because this
+     is where the law lives and the next control added must find it. */
+  .ft-segb, .ft-mchip, .ft-tile-more { min-height: 44px; }
 }
 .shell .step { border: 2px solid rgba(125,116,96,0.55); border-radius: 0; background: none;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
@@ -2832,6 +2842,125 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   border-color: var(--brass); background: rgba(0,0,0,0.35); text-shadow: 2px 2px 0 rgb(93,77,12); }
 .ovskip, .ovhint { color: #7d7460; font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+
+/* ── FT14: ONE ROOF (2026-09-15) ───────────────────────────────
+   The features home stops being a list. Twenty-eight tiles in a
+   grid, grouped by what they change, with a rail that reads out
+   the one you point at.
+
+   THE CONTROL IS A BAR AND THERE ARE NO SWITCHES. Off is its
+   first segment, so a two-state row and a five-state row are the
+   same object at two widths - which is the whole reason a tile
+   works at all: the bar sits UNDER the name instead of out at the
+   right margin, so the control stops setting the row's width and
+   the thing fits a card.
+
+   The colours are the skin's own: brass for what the online lane
+   forces, verdigris for what is on, iron for what is not. The
+   left edge carries that, so the grid can be read for state
+   without reading a word of it. */
+.ft-panes { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 22px; align-items: start; }
+.ft-main { min-width: 0; }
+.ft-grouphead { display: flex; align-items: baseline; gap: 10px; margin: 18px 0 8px; }
+.ft-grouphead:first-child { margin-top: 0; }
+.ft-grouphead h2 { font-family: var(--data); font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--bone); margin: 0; font-weight: 600; }
+.ft-gn { font-family: var(--data); font-size: 11px; color: var(--dim); font-variant-numeric: tabular-nums; }
+.ft-gline { flex: 1; height: 1px; background: var(--iron); }
+
+.ft-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(212px, 1fr)); gap: 8px; }
+
+.ft-tile { position: relative; background: var(--slate); border: 1px solid var(--iron);
+  padding: 9px 10px 9px 13px; display: flex; flex-direction: column; gap: 7px; cursor: pointer; }
+.ft-tile::before { content: ''; position: absolute; left: 0; top: -1px; bottom: -1px; width: 3px;
+  background: var(--iron); }
+.ft-tile[data-on="1"]::before { background: var(--verdigris); }
+.ft-tile[data-locked="1"]::before { background: var(--brass); }
+.ft-tile:hover, .ft-tile.sel { border-color: var(--dim); }
+.ft-tile.sel { background: var(--iron); }
+.ft-tile:focus-visible { outline: 2px solid var(--brass); outline-offset: 1px; }
+.ft-tile-name { font-family: var(--data); font-size: 14.5px; color: var(--bone); line-height: 1.2; }
+.ft-tile-meta { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+.ft-tile-lock { font-family: var(--data); font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--brass); }
+
+/* the bar */
+.ft-seg { display: flex; flex-wrap: wrap; background: var(--ink); border: 1px solid var(--iron); padding: 2px; gap: 2px; }
+.ft-segb { font-family: var(--data); font-size: 11.5px; letter-spacing: 0.03em; color: var(--dim);
+  background: none; border: 0; padding: 3px 8px; cursor: pointer; flex: 1 1 auto; white-space: nowrap; }
+.ft-segb:hover:not(:disabled) { color: var(--bone); }
+.ft-segb[aria-pressed="true"] { background: var(--iron); color: var(--bone); }
+.ft-seg.is-on .ft-segb[aria-pressed="true"] { color: var(--verdigris); }
+.ft-segb.off[aria-pressed="true"] { color: var(--dim); }
+.ft-seg.locked .ft-segb[aria-pressed="true"] { color: var(--brass); }
+.ft-segb:disabled { cursor: default; }
+.ft-segb:focus-visible { outline: 2px solid var(--brass); outline-offset: -2px; }
+
+/* the drawer's door, and the drawer */
+.ft-tile-more { font-family: var(--data); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--dim); background: none; border: 0; padding: 2px 0; cursor: pointer; text-align: left; }
+.ft-tile-more:hover { color: var(--bone); }
+.ft-tile-car { display: inline-block; }
+.ft-tile-car.open { transform: rotate(90deg); }
+.ft-tile-drawer { border-top: 1px solid var(--iron); padding-top: 7px; display: flex; flex-direction: column; gap: 6px; }
+.ft-drawer-label { font-family: var(--data); font-size: 9.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--dim); }
+.ft-chipset { display: flex; flex-wrap: wrap; gap: 4px; }
+.ft-mchip { font-family: var(--data); font-size: 11px; background: var(--ink); color: var(--dim);
+  border: 1px solid var(--iron); padding: 2px 6px; cursor: pointer; }
+.ft-mchip[aria-pressed="true"] { color: var(--verdigris); border-color: var(--verdigris); }
+.ft-mchip:hover { color: var(--bone); }
+.ft-tile-drawer .row { padding: 4px 0; border: 0; }
+.ft-tile-drawer .row-note, .ft-tile-drawer .row-sub { display: none; }   /* the rail carries the words */
+
+/* the reading rail */
+.ft-rail { position: sticky; top: 8px; background: var(--slate); border: 1px solid var(--iron);
+  padding: 12px 13px; display: flex; flex-direction: column; gap: 9px; }
+.ft-rail-k { font-family: var(--data); font-size: 9.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--dim); }
+.ft-rail h3 { font-family: var(--display); font-size: 19px; color: var(--bone); margin: 0; line-height: 1.15; }
+.ft-rail-note { font-size: 12.5px; line-height: 1.5; color: var(--bone); margin: 0; opacity: 0.85; }
+.ft-rail-effect { font-size: 12px; line-height: 1.45; color: var(--dim); margin: 0;
+  border-left: 2px solid var(--brass); padding-left: 8px; }
+.ft-rail-kv { display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; margin: 0;
+  border-top: 1px solid var(--iron); padding-top: 8px; }
+.ft-rail-kv dt { font-family: var(--data); font-size: 9.5px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--dim); padding-top: 2px; }
+.ft-rail-kv dd { margin: 0; font-size: 12px; color: var(--bone); opacity: 0.85; }
+
+@media (max-width: 860px) {
+  .ft-panes { grid-template-columns: minmax(0, 1fr); }
+  .ft-rail { position: static; order: -1; }
+}
+
+/* -- FT16 (2026-09-15, Mac: "make the new feature UI elements have the
+   same transparent design as the list we used to have") -----------
+   THE PASS FT14 NEVER WROTE. Every component family on this screen has
+   two paints: the base tokens above, and a .shell override for PX11,
+   where the boot door stands on the live sky and every painted panel
+   colour comes off (.shell .pane, .shell .list, .shell .row -
+   transparent grounds, low-alpha scrims, and 2px rules in the brass
+   line rather than 1px iron). FT14 wrote the first paint and stopped,
+   so the feature tiles drew SOLID --slate boxes with hairline borders
+   while the list they replaced had been see-through over the stars -
+   which is the whole of Mac's report. Not a new design: the old one,
+   applied to the new elements.
+
+   The pause window is NOT in this scope and must not be: .px-win
+   panels are opaque on purpose, there being a game behind them, so the
+   base paint above is already right there. That is why this is scoped
+   to .shell rather than written into the tokens.
+
+   The left edge keeps its state stripe (verdigris on, brass forced,
+   iron off) and moves out over the 2px border so it still reads flush. */
+.shell .ft-tile { background: none; border: 2px solid rgba(125,116,96,0.3); }
+.shell .ft-tile:hover, .shell .ft-tile.sel { background: rgba(0,0,0,0.25); border-color: rgba(125,116,96,0.55); }
+.shell .ft-tile::before { left: -2px; top: -2px; bottom: -2px; }
+.shell .ft-gline { height: 2px; background: rgba(125,116,96,0.3); }
+.shell .ft-seg { background: rgba(0,0,0,0.3); border: 2px solid rgba(125,116,96,0.35); }
+.shell .ft-segb[aria-pressed="true"] { background: rgba(0,0,0,0.45); }
+.shell .ft-mchip { background: rgba(0,0,0,0.3); border: 2px solid rgba(125,116,96,0.35); }
+.shell .ft-mchip[aria-pressed="true"] { border-color: var(--verdigris); }
+.shell .ft-tile-drawer { border-top: 2px solid rgba(125,116,96,0.3); }
+.shell .ft-rail { background: rgba(10,12,17,0.55); border: 2px solid rgba(125,116,96,0.35); }
+.shell .ft-rail-kv { border-top: 2px solid rgba(125,116,96,0.3); }
 `;
 
 const STYLE_ID = 'dagger-enhanced-style';

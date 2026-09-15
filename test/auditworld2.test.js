@@ -12,6 +12,7 @@
 // at home - A6; my own id as the host is not the world in - D11); the
 // record's struck sentences (D1, D6-D10).
 import { test } from 'node:test';
+import { indexText } from './bibleIndex.mjs';   // HARD5: a doesNotMatch aimed at one page goes vacuous when its subject moves
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { PIXEL_UNITS, MAX_FRAME_BYTES, FOES_PREFIX, WORLD_PREFIX, FOES_HZ_MAX, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, HIT_HZ_MAX, POSE_HZ_MAX, DROP_STRIKES_MAX, byteGate, hitGate } from '../src/net/wire.js';
@@ -139,7 +140,7 @@ test('AUDIT WORLD2: the session - a dead socket and a leave clear the seat throu
 });
 
 test('AUDIT WORLD2: the record - the sentences WORLD2 falsified are struck or amended (D1, D6-D10)', () => {
-  const home = rd('bible/Home.md');
+  const home = indexText();   // HARD5: Home.md AND its delegates - a stale claim must not be able to move house
   assert.doesNotMatch(home, /The live moment - one simulation per room - is the next iteration/, 'D1: Home.md');
   assert.match(home, /then the room's simulation \(WORLD2\)/, 'D1: the arc list');
   const arc = rd('bible/06-Systems/Online-Arc.md');

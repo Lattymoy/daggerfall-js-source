@@ -39,7 +39,7 @@
 // written at scenes/arrestFlow.js:439-442 (severePunishment, off
 // OnPop) and read every catch-up minute by encounters.js:220
 // passiveGuardSpawns - PlayerEntity.cs:507's 10% banished-player
-// guard roll - fed at scenes/world.js:1980-1982. (The guild rescues -
+// guard roll - fed at scenes/world.js:1985-1987. (The guild rescues -
 // Thieves/Dark Brotherhood - landed at CR1, guildRescue below.)
 
 import { rand } from '../formats/dfRandom.js';
@@ -58,13 +58,11 @@ export function setCrimeCommitted(entity, crime) {
   return entity.crimeCommitted;
 }
 
-export const CRIMES = Object.freeze({
-  None: 0, Attempted_Breaking_And_Entering: 1, Trespassing: 2,
-  Breaking_And_Entering: 3, Assault: 4, Murder: 5, Tax_Evasion: 6,
-  Criminal_Conspiracy: 7, Vagrancy: 8, Smuggling: 9, Piracy: 10,
-  High_Treason: 11, Pickpocketing: 12, Theft: 13, Treason: 14,
-  LoanDefault: 15,
-});
+// GUARD1: the enum's one home is the LEAF module - this page imports
+// `talk.js`, so `talk.js` could never import this one back, and the
+// pickpocket law wrote a string rather than reach it. Re-exported here
+// so every existing `CRIMES` caller stays where it is.
+export { CRIMES } from './crimes.js';
 export const CRIME_IDS = Object.freeze({ Pickpocketing: 12 });
 
 // The %cri crime names (MacroHelper.Crime, verbatim strings).

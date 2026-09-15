@@ -1,4 +1,5 @@
 import { test } from 'node:test';
+import { indexText } from './bibleIndex.mjs';   // HARD5: the index is Home.md AND the pages it hands off to
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
@@ -25,6 +26,7 @@ import { flagLines } from '../tools/flagSites.mjs';   // IN1: the ONE definition
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => readFileSync(join(root, p), 'utf8');
 const lines = (p) => read(p).split('\n');
+
 
 function walk(dir, ext, out = []) {
   for (const entry of readdirSync(join(root, dir))) {
@@ -355,8 +357,8 @@ test('AUDIT 18: Home.md does not list MAP.PAL as verified-fetched while nothing 
   // the one loader of that file must ask for the palette by name.
   const fetchesByPaletteName = /paletteName/.test(read('src/ui/chargenArt.js'));
   if (!fetchesByPaletteName) {
-    assert.match(read('bible/Home.md'), /MAP\.PAL is NOT/,
-      "Home.md still counts MAP.PAL in the diet's verified live fetch surface; no code path fetches it");
+    assert.match(indexText(), /MAP\.PAL is NOT/,
+      "the index still counts MAP.PAL in the diet's verified live fetch surface; no code path fetches it");
   }
 });
 
@@ -503,8 +505,8 @@ const UNINDEXED_ARCS = [
   'bible/11-Multiplayer/Multiplayer-Arc.md',
 ];
 
-test('AUDIT 39: Home.md names every record under bible/01-Overview/', () => {
-  const home = read('bible/Home.md');
+test('AUDIT 39: the index names every record under bible/01-Overview/', () => {
+  const home = indexText();   // HARD5: Home.md AND the pages it hands off to
   const records = readdirSync(join(root, 'bible/01-Overview'))
     .filter((f) => f.endsWith('.md') && !UNINDEXED_RECORDS.includes(f)).sort();
   const missing = records.filter((f) => !home.includes(f));
@@ -534,8 +536,8 @@ test('AUDIT 39: Home.md names every record under bible/01-Overview/', () => {
     `the index carries more than one entry for one record:\n${twice.join('\n')}`);
 });
 
-test('AUDIT 58: Home.md names every arc plan under bible/, wherever it lives', () => {
-  const home = read('bible/Home.md');
+test('AUDIT 58: the index names every arc plan under bible/, wherever it lives', () => {
+  const home = indexText();   // HARD5: Home.md AND the pages it hands off to
   const arcs = BIBLE_FILES.filter((f) => f.endsWith('-Arc.md'));
   assert.ok(arcs.length >= 12, `only ${arcs.length} arc plans found - the walk missed some`);
   const missing = arcs
@@ -741,8 +743,8 @@ test('AUDIT 58: the campaign record is cited to the file that holds it, and the 
   // the number 49 means ONE thing, and it is not the campaign
   assert.match(read('bible/01-Overview/Audit-49.md').split('\n')[0],
     /THE LAB'S GRASS AND WEATHER IN THE GAME/);
-  assert.match(read('bible/Home.md'), /`01-Overview\/Audit-49\.md` - CLOSED [0-9-]+: THE LAB'S GRASS AND WEATHER/,
-    "Home.md's row for Audit-49.md is not that record's own subject");
+  assert.match(indexText(), /`01-Overview\/Audit-49\.md` - CLOSED [0-9-]+: THE LAB'S GRASS AND WEATHER/,
+    "the index's row for Audit-49.md is not that record's own subject");
 
   // 2. TESTING.MD IS PINNED, NOT STALE. Both halves: the page may not
   //    call it stale, and the pin it now names must still be the pin.

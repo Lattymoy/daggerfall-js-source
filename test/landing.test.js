@@ -112,7 +112,17 @@ test('U63: the landing page owns no colour - every one is the SKIN\'s, token or 
   assert.doesNotMatch(css, /^\s*--[\w-]+:/m, 'the landing declares no custom property - the skin does');
   // U63: and it is set in the PIXEL faces, which is what the menu wears.
   assert.match(css, /font-family: 'Pixelify Five', 'Pixelify Sans', monospace/, 'the body face is the menu\'s list face (the five first - FIX-D)');
-  assert.match(css, /font-family: 'Jacquard 12', var\(--brand\)/, 'and the headings are the menu\'s wordmark face');
+  // SITE1 (2026-09-15, Mac: "remove the fancy font from the site for capital
+  // letters (keep the daggerfall Enhanced title unchanged)"): JACQUARD 12 IS
+  // THE WORDMARK'S FACE AND NOTHING ELSE'S. It had been set on every heading,
+  // every step numeral and every Q&A term; those take the page's own pixel
+  // face now, which the body, the sub-line and every tracked-caps rule were
+  // already set in. The count is the pin, not the presence: one Jacquard rule
+  // means the next heading added cannot quietly pick the display face back up.
+  assert.match(css, /\.wordmark \{ font-family: 'Jacquard 12', var\(--brand\)/,
+    'the title keeps the wordmark face - the one thing Mac asked to leave alone');
+  assert.equal((css.match(/Jacquard 12/g) || []).length, 1, 'and it is the ONLY rule that names it');
+  assert.match(css, /h1, h2, h3 \{ font-family: 'Pixelify Five'/, 'every heading is the page\'s own pixel face');
 });
 
 // ── THE SEAM ──────────────────────────────────────────────────────
@@ -152,7 +162,10 @@ test('U60: the injected block IS the skin\'s token block, and the skin still wea
   assert.match(FONT_PIXEL_BRAND, /^Jacquard\+12/);
   assert.match(FONT_PIXEL_DATA, /^Pixelify\+Sans/);
   assert.match(ENHANCED_TOKENS, /--brand: 'Grenze Gotisch'/, 'the --brand token stays as the wordmark face\'s fallback');
-  assert.match(landing, /h1, h2, h3 \{ font-family: 'Jacquard 12', var\(--brand\)/, 'the headings are the menu\'s wordmark face, with --brand behind it');
+  // SITE1: the --brand fallback rides the WORDMARK now, not the headings -
+  // the token is still the wordmark face's fallback, which is what line 154
+  // holds, and this holds where the site actually spends it.
+  assert.match(landing, /\.wordmark \{ font-family: 'Jacquard 12', var\(--brand\)/, 'the wordmark is the menu\'s wordmark face, with --brand behind it');
   const ink = ENHANCED_TOKENS.match(/--ink:\s*(#[0-9a-f]{6})/)?.[1];
   const theme = out.tags.find((t) => t.tag === 'meta' && t.attrs.name === 'theme-color');
   assert.equal(theme?.attrs.content, ink, 'the phone\'s address bar reads the ink token');

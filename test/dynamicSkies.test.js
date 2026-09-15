@@ -84,6 +84,23 @@ test('DS1 vendor: every texture a shipped preset names is vendored, with an impo
   for (const f of files) assert.ok(TEXTURE_IMPORTS[f], `${f} has its Unity import settings restated`);
   // the one normal map is the converted one (bilinear, no mips, not sRGB)
   assert.deepEqual(TEXTURE_IMPORTS.CdMCloudsNormal, { filter: 'bilinear', mips: false, srgb: false, normal: true });
+  // DS3 (2026-09-15, Mac: "the nighttime sky has these dark spots in the skybox") - THE ONE DEPARTURE FROM THE
+  // MOD'S IMPORTS, AND ITS BOUNDS. At night `night * horizonValue` reaches 1.0, so the sky IS `_StarTex` and
+  // `_MoonNightColor` (0, 0, 39) floors the BLUE channel alone - the star field's own per-texel dither in red and
+  // green has nothing under it, and Point magnified ~3.5x by StarsTiling 0.25 turns each dark texel into a visible
+  // block. The three star FIELDS take bilinear so the dither blends back under the pixel; every other file keeps
+  // the mod's Point, and the twinkle MASKS and noise keep it too - they are sampled for a scalar, not looked at.
+  const STAR_FIELDS = ['VanillaStars', 'DefaultStars', 'NLStarsBlack'];
+  for (const f of STAR_FIELDS) assert.equal(TEXTURE_IMPORTS[f].filter, 'bilinear', `${f} is the star field: filtered (DS3)`);
+  for (const f of ['VanillaStarsTwinkleMask', 'DefaultStarsTwinkleMask', 'NLStarsThiefTwinkleMask', 'NLstarsHighlight', 'DefaultStarsTwinkleNoise']) {
+    assert.equal(TEXTURE_IMPORTS[f].filter, 'point', `${f} is a mask or the noise: the mod's own Point stands`);
+  }
+  for (const [f, imp] of Object.entries(TEXTURE_IMPORTS)) {
+    if (STAR_FIELDS.includes(f) || f === 'CdMCloudsNormal') continue;
+    assert.equal(imp.filter, 'point', `${f} keeps the mod's Point - DS3 moved the star fields and nothing else`);
+  }
+  // and the departure is written down where the table is, not only in the Ledger
+  assert.match(read('src/systems/dynamicSkies.js'), /DS3 \(2026-09-15, Mac: "the nighttime sky has these dark spots/, 'the table says why it departs');
   // the shader sources are beside the port for reading
   assert.match(read(`${V}/Shaders/BLBProceduralSkybox.shader`), /^﻿?Shader "BLB\/SkyBox\/BLBProceduralSkybox"/);
   assert.ok(existsSync(join(root, V, 'Shaders/Includes/MoonFunctions.cginc')));

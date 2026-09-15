@@ -50,19 +50,49 @@ export const KINDS = Object.freeze({
 });
 export const KIND_ORDER = Object.freeze(['enhanced', 'mod', 'classic']);
 
+/** FT14 (2026-09-15, Mac: "get rid of the mod panel and integrate
+ *  certain feature/mod adjustments into the toggle themselves and move
+ *  away from the scrolling list format") - THE GROUPS.
+ *
+ *  A row's KIND says who wrote it; a row's GROUP says what it changes.
+ *  The panel groups by the second and filters by the first, because
+ *  which of them a player is looking for depends on the question they
+ *  came with - "why does the grass look like that" is a group, "what
+ *  is this port doing that Daggerfall Unity is not" is a kind - and
+ *  only the group makes a useful heading. Twelve rows wearing
+ *  "Enhanced" is not a section; nine rows about what you can SEE is.
+ *
+ *  In display order. Every row declares one. */
+export const GROUPS = Object.freeze({
+  sight: Object.freeze({ label: 'Sight' }),
+  world: Object.freeze({ label: 'The world' }),
+  loot: Object.freeze({ label: 'Loot & items' }),
+  combat: Object.freeze({ label: 'Combat' }),
+});
+export const GROUP_ORDER = Object.freeze(['sight', 'world', 'loot', 'combat']);
+
+/** WM3: the Windmills pack's switch key. It is declared HERE with its
+ *  row (RF4's law) rather than in `world/windmills.js`, because that
+ *  module reads it through `uiPrefs` and `uiPrefs` reads this page's
+ *  defaults - the other direction closes a cycle and the shelf loads
+ *  before the row exists. */
+export const WINDMILLS_KEY = 'windmills';
+
 /** Where a control's value lives. */
 export const STORES = Object.freeze(['prefs', 'settings', 'mods']);
 
 /** FT9 (2026-09-14): A VENDORED MOD'S ROW - its own switch, its own
  *  title with the creator's name in it (Mac, 2026-09-08), its own
  *  description as the note. One source: modSettings.js, where the mod's
- *  modsettings ship. The mod's OTHER knobs stay under its card on the
- *  Mods page, whose Enabled row is a pointer here. `effect` is the
- *  port's word on when the switch lands, per mod. */
-const modFeature = (vendor, effect) => {
+ *  modsettings ship - so FT15's trim of a mod's note is a trim of the
+ *  description itself, and there is still no second copy. The mod's
+ *  OTHER knobs open in this row's own tile drawer (MOD_CURATED, below).
+ *  `effect` is the port's word on when the switch lands, per mod. */
+const modFeature = (vendor, effect, group) => {
   const mod = MOD_SETTINGS[vendor];
   return Object.freeze({
     id: `mod-${vendor.toLowerCase()}`,
+    group,
     title: `${mod.title} by ${mod.author}`,
     note: mod.keys.Enabled.description,
     effect,
@@ -70,6 +100,56 @@ const modFeature = (vendor, effect) => {
     control: Object.freeze({ store: 'mods', vendor, key: 'Enabled' }),
   });
 };
+
+/** FT14 (2026-09-15) - WHAT A MOD'S TILE SHOWS, AND WHAT IT DOES NOT.
+ *
+ *  The eight vendored mods carry 125 settings keys between them -
+ *  Handheld Torches alone has 53 and the Weapon Widget 42, which is
+ *  two thirds of the total in two mods. That is the real reason the
+ *  Mods pane was a scroll, and no amount of layout fixes a list that
+ *  long. So the tile shows the few a player would actually move (46 of
+ *  the 125), and the other 79 keep the values the mod ships.
+ *
+ *  TWO SHAPES, because the mods have two. A key under `Modules.` is a
+ *  SUB-FEATURE the mod can turn off whole (the Widget's nine: its
+ *  swings, its bob, its recoil) - those are chips, and they are DERIVED
+ *  rather than listed here, so a mod that gains a module gains a chip
+ *  without an edit. Everything else is a DIAL, and dials are named,
+ *  because that is the curation: `Swings.Speed` earns its place on the
+ *  tile and `Swings.VanillaAlignmentOverride` does not.
+ *
+ *  A vendor absent from this table, or an empty list, shows its switch
+ *  and nothing else - which is right for the mods that are one idea
+ *  (Seasons of the Iliac Bay is on or it is off).
+ *
+ *  NOTHING IS LOST, only unlisted: the values stand as the mod's own
+ *  modsettings ship them, and a key that needs to reach a player is one
+ *  line here. The rows are rendered by the same `modRow` the Mods pane
+ *  used, so a curated key is not a second copy of anything. */
+export const MOD_CURATED = Object.freeze({
+  // AUDIT FT14: Dynamic Skies has no row of its own - Enhanced environments IS its switch,
+  // through FT4's three-way - so without these five its particle settings had no tile to open.
+  'dynamic-skies': Object.freeze(['ActivatePixelSnow', 'densitySetting', 'MinParticleSize',
+    'MaxParticleSize', 'MaxParticles']),
+  'weapon-widget': Object.freeze(['Swings.Speed', 'Bob.Length', 'Inertia.Scale']),
+  'handheld-torches': Object.freeze(['Handling.RememberLastLightSource', 'Handling.StowWhenSpellcasting', 'Bob.Length']),
+  pcaao: Object.freeze(['equipmentDamageEnhanced', 'fadingEnchantedItems', 'armorHitFormulaRedone',
+    'criticalStrikesIncreaseDamage', 'conditionBasedEffectiveness', 'softMaterialRequirements',
+    'fixedStrengthDamageModifier']),
+  unleveledLoot: Object.freeze(['Iron', 'Steel', 'Silver', 'Elven', 'Dwarven', 'Mithril',
+    'Adamantium', 'Ebony', 'Orcish', 'Daedric']),
+  'roads-hazelnut': Object.freeze(['SmoothRoads', 'RiversAndStreams']),
+});
+
+/** The `Modules.` keys a vendor ships, in the mod's own order - the
+ *  tile's chips. Derived, so a new module needs no edit here. */
+export const modModules = (vendor) =>
+  Object.keys(MOD_SETTINGS[vendor]?.keys ?? {}).filter((k) => k.startsWith('Modules.'));
+
+/** The dials a vendor's tile shows, refused to keys the mod does not
+ *  ship - a typo in the table above is a missing row, not a crash. */
+export const modDials = (vendor) =>
+  (MOD_CURATED[vendor] ?? []).filter((k) => MOD_SETTINGS[vendor]?.keys?.[k] !== undefined);
 
 /** The rows. Shape:
  *    { id, title, note, effect?, kinds: [kind, ...],
@@ -95,11 +175,11 @@ export const FEATURES = Object.freeze([
   // Classic today; it wears Enhanced too the day the port builds on it.
   Object.freeze({
     id: 'smaller-dungeons',
+    group: 'world',
     title: 'Smaller dungeons',
-    note: 'Daggerfall\u2019s dungeons are enormous. On, any dungeon over five blocks is rebuilt as a plus of five - '
-      + 'a random central block with four border blocks around it, drawn from its own block list, the same five every visit. '
-      + 'Main-story dungeons never shrink, a dungeon a quest sent you to keeps the size it had when the quest began, '
-      + 'and online every dungeon is full size.',
+    note: 'Any dungeon over five blocks is rebuilt as a fixed cross of five - a central block with four around it, the same '
+      + 'five every visit. Main-story dungeons never shrink, a dungeon a quest sent you to keeps the size it had, and '
+      + 'online every dungeon is full size.',
     effect: 'Takes effect on the next dungeon you enter. A save made at the other size puts you at the dungeon\u2019s start.',
     kinds: Object.freeze(['classic']),
     control: Object.freeze({ store: 'settings', key: 'Experimental/SmallerDungeons' }),
@@ -111,11 +191,11 @@ export const FEATURES = Object.freeze([
   // writes both stores (world/landView.js landViewRead/landViewWrite).
   Object.freeze({
     id: 'land-view-distance',
+    group: 'sight',
     title: 'Land view distance',
-    note: 'How far the land streams around you, in map pixels each way. Daggerfall Unity\u2019s own is 3 and its furthest is 4; '
-      + 'the enhanced outdoors go to 6, drawing the far rings coarse - only their trees and fires - with the haze reaching as far, '
-      + 'and a walk across the map building more land. One choice for both lanes: the classic skin, and the enhanced skin with '
-      + 'enhanced environments off, read it capped at Daggerfall Unity\u2019s 4.',
+    note: 'How far the land streams around you, in map pixels each way. Daggerfall Unity stops at 4; the enhanced outdoors '
+      + 'reach 6, drawing the far rings coarse with the haze as far. The classic skin, and the enhanced skin with the '
+      + 'outdoors off, read it capped at Daggerfall Unity\u2019s 4.',
     effect: 'Takes effect when the world next loads.',
     kinds: Object.freeze(['enhanced', 'classic']),
     // LV1 (2026-09-12, Mac: "push the draw distance as far as we can push
@@ -134,15 +214,12 @@ export const FEATURES = Object.freeze([
   // dome, or under Dynamic Skies' skybox (world/outdoors.js).
   Object.freeze({
     id: 'enhanced-environments',
+    group: 'sight',
     title: 'Enhanced environments',
-    note: 'The enhanced outdoors: a procedural sky with the sun, both moons on their real phases and a star field, '
-      + 'a finely stepped sunrise and sunset, volumetric clouds that build with the weather, drift on the wind and cast '
-      + 'their shadows on the land, rain and snow that fall through the world around you, a sky that turns through the day '
-      + 'rather than only at midnight, and a million blades of grass in the meadows bending in the same wind. '
-      + 'Off returns Daggerfall\u2019s SKY*.DAT panorama and its own weather. On, the sky is either the port\u2019s own dome '
-      + 'or Dynamic Skies\u2019 skybox (BadLuckBurt and carademono, carried with permission): its sun and scattering, '
-      + 'textured cloud layers per weather, twinkling stars, both moons on their orbits, its fog, its longer sunrise and sunset, '
-      + 'and a lightning flash under thunder. The mod\u2019s fog density and pixel-snow knobs stay on the Mods page.',
+    note: 'The enhanced outdoors: a live sky with the sun, both moons and a star field, volumetric clouds that build with '
+      + 'the weather and shadow the land, rain and snow falling around you, and grass bending in the wind. Off returns '
+      + 'Daggerfall\u2019s SKY*.DAT panorama and its own weather. The third choice hands the sky to Dynamic Skies '
+      + '(BadLuckBurt and carademono, carried with permission), whose own knobs open on this tile.',
     effect: 'Takes effect when the world next loads.',
     kinds: Object.freeze(['enhanced', 'mod']),
     // EE1: the outdoors as ONE switch (the sky, the ground's surfaces, the
@@ -165,13 +242,12 @@ export const FEATURES = Object.freeze([
   // which the note says outright so the two cannot be read as one.
   Object.freeze({
     id: 'enhanced-ai',
+    group: 'combat',
     title: 'Enhanced AI',
-    note: 'Enemies find their way: a navmesh baked from each dungeon, so they path around pillars and down '
-      + 'corridors instead of walking into walls the way classic Daggerfall\u2019s do. Senses, decisions and '
-      + 'attacks stay classic; only the way an enemy moves changes. Dungeons for now - towns, interiors and '
-      + 'doors are still to come, and enemies bunch up until the crowd slice lands. Off keeps the 1:1 classic motor. '
-      + 'This is the port\u2019s own, not Daggerfall Unity\u2019s \u201cSmarter Enemies\u201d setting (EnhancedCombatAI), '
-      + 'which the port does not run.',
+    note: 'Enemies find their way on a navmesh baked from each dungeon, pathing around pillars and down corridors instead '
+      + 'of walking into walls. Senses, decisions and attacks stay classic. Dungeons for now - towns, interiors and doors '
+      + 'are still to come, and enemies bunch up until the crowd slice lands. Off keeps the 1:1 classic motor. It is not '
+      + 'Daggerfall Unity\u2019s \u201cSmarter Enemies\u201d setting (EnhancedCombatAI), which the port does not run.',
     effect: 'Takes effect on the next dungeon you enter.',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'enhancedAI', initial: false, online: true }),   // OFF by default and it stays off: DFU's classic motor is the 1:1 law, this the port's departure (as EnhancedCombatAI is DFU's own opt-in)
@@ -182,11 +258,11 @@ export const FEATURES = Object.freeze([
   // now (render/waterSurface.js waterSwitchOn); `?water=off` is the kill door.
   Object.freeze({
     id: 'enhanced-water',
+    group: 'sight',
     title: 'Enhanced water',
-    note: 'The oceans, rivers and ponds drawn as water: waves that rise with the wind, the sky and the '
-      + 'sun reflected off the surface, the moon\u2019s glint at night, rain pocking it, the clouds\u2019 '
-      + 'shadows crossing it, and the shore feathered along its own edge. Off returns Daggerfall\u2019s '
-      + 'flat water tile.',
+    note: 'Oceans, rivers and ponds drawn as water: waves that rise with the wind, the sky and sun reflected, the '
+      + 'moon\u2019s glint at night, rain pocking the surface, a feathered shore. Off returns Daggerfall\u2019s flat '
+      + 'water tile.',
     effect: 'Takes effect when the world next loads.',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'enhancedWater', initial: true, online: true }),   // WATER1: on by default like the other enhanced visuals; `?water=off` the kill door
@@ -198,17 +274,19 @@ export const FEATURES = Object.freeze([
   // which each note now says. Enhanced, the port's own dials.
   Object.freeze({
     id: 'grass-density',
+    group: 'sight',
     title: 'Grass density',
-    note: 'How much of the meadow grows under the enhanced outdoors: the full field, half, a quarter, or none. '
-      + 'The single heaviest thing outdoors - try half first if the FPS counter says the frame is the GPU\u2019s.',
+    note: 'How much of the meadow grows under the enhanced outdoors. The heaviest thing outdoors - try Half first if the '
+      + 'FPS counter says the frame is the GPU\u2019s.',
     effect: 'Takes effect when the world next loads.',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'grassDensity', initial: 1, online: 'player', tiers: Object.freeze([[1, 'Full'], [0.5, 'Half'], [0.25, 'Quarter'], [0, 'Off']]) }),   // PERF1: a fraction of the lab's 1.2 million blades; a dial, the player's online
   }),
   Object.freeze({
     id: 'cloud-quality',
+    group: 'sight',
     title: 'Cloud quality',
-    note: 'How finely the volumetric clouds over the enhanced outdoors are marched. Low is a coarser sky map with fewer steps; '
+    note: 'How finely the volumetric clouds over the enhanced outdoors are marched. Low is a coarser sky with fewer steps; '
       + 'High is for a machine with room to spare.',
     effect: 'Takes effect when the world next loads.',
     kinds: Object.freeze(['enhanced']),
@@ -222,34 +300,34 @@ export const FEATURES = Object.freeze([
   // kill door), so a press takes effect at once.
   Object.freeze({
     id: 'enhanced-combat-visuals',
+    group: 'sight',
     title: 'Enhanced combat visuals',
-    note: 'How a magically concealed enemy is drawn. Classic Daggerfall and Daggerfall Unity hide it '
-      + 'completely - an imp that casts Chameleon on itself vanishes, and still takes your hits. On, a '
-      + 'chameleoned enemy shimmers at low opacity, a shadow-spell enemy is a dark silhouette, and a hit '
-      + 'on an unseen enemy flashes it for a moment - an invisible one included, the one thing this shows that the classic draw never does. '
-      + 'Otherwise invisibility still hides it. Nothing about the rules changes: what the enemy can do, and what can hit it, are classic. '
-      + 'Off keeps the 1:1 draw.',
+    note: 'A concealed enemy is drawn rather than hidden: a chameleon shimmers, a shadow spell is a silhouette, and a hit '
+      + 'flashes an unseen enemy - an invisible one included. Nothing about the rules changes. Off keeps the 1:1 draw.',
     effect: 'Takes effect at once.',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'enhancedCombatVisuals', initial: true, online: true }),   // ECV1: on by default like the other enhanced visuals; the rules are untouched either way
   }),
   // LR1 (2026-09-14): LOOT RARITY - the port's own item ladder
   // (systems/lootRarity.js): Common, Magic, Rare, Legendary, with
-  // DFU's artifacts as the ceiling. Enhanced, off by default: it
-  // changes what drops, and DFU's loot is the 1:1 law.
+  // DFU's artifacts as the ceiling. Enhanced, and ON (LR5, 2026-09-15,
+  // Mac: "I want to mod on by default"). It shipped off beside
+  // enhancedAI on the reasoning that a row changing the RULES waits to
+  // be asked for; Mac's call is that this one is the port's own game
+  // and should be what a player meets. The 1:1 lane is not lost - the
+  // row is one press away, and off is DFU's loot exactly, field for
+  // field.
   Object.freeze({
     id: 'loot-rarity',
+    group: 'loot',
     title: 'Loot rarity',
-    note: 'A Diablo-style ladder over Daggerfall\u2019s loot. A weapon, a piece of armour or a piece of jewellery that drops from a '
-      + 'corpse or a treasure pile may roll Magic (one or two affixes), Rare (three or four, a two-part name, and one of Daggerfall\u2019s own '
-      + 'enchantments) or Legendary (a named item with a set signature); Daggerfall\u2019s own magic items read as Magic and its artifacts sit at the top. '
-      + 'Affixes are numbers you can read - damage, armour, an attribute, a resistance, a skill, carrying capacity - shown on the item and coloured by tier. '
-      + 'The odds follow the SOURCE, never your level: the dead thing\u2019s own level or the dungeon\u2019s kind, a Daedra or a deep dungeon paying best, and your luck. '
-      + 'A Rare or Legendary drops unidentified, as any enchanted item does, until the Identify spell or the Mages Guild reads it. '
-      + 'Off is Daggerfall\u2019s loot exactly; items already rolled keep their tier and their names but their affixes rest.',
+    note: 'A Diablo-style ladder over Daggerfall\u2019s loot: a weapon, a piece of armour or a piece of jewellery may roll '
+      + 'Magic, Rare or Legendary, with affixes you can read and compare. The odds follow the source - the dead '
+      + 'thing\u2019s level, the dungeon\u2019s kind, your luck - never your level. A Rare or Legendary drops '
+      + 'unidentified until it is read. Off is Daggerfall\u2019s loot exactly.',
     effect: 'Takes effect on the next roll; worn affixes follow within a magic round.',
     kinds: Object.freeze(['enhanced']),
-    control: Object.freeze({ store: 'prefs', key: 'lootRarity', initial: false, online: true }),   // LR1: off by default as enhancedAI is - it changes what drops; the lane forces it on
+    control: Object.freeze({ store: 'prefs', key: 'lootRarity', initial: true, online: true }),   // LR5: ON by default (Mac) - the ladder is the port's own game, not an opt-in; the lane forces it on online as it always did
   }),
   // WIND3 (2026-09-14, Mac: wisps that show the wind, a quiet wind, the
   // trees moving with it): THE WIND SEEN AND HEARD - three rows over the
@@ -259,30 +337,30 @@ export const FEATURES = Object.freeze([
   // `?sway=off`.
   Object.freeze({
     id: 'wind-wisps',
+    group: 'sight',
     title: 'Wind wisps',
-    note: 'Faint streaks of air riding the wind across the land under the enhanced outdoors, so you can see which way it blows '
-      + 'and how hard: a few in a breeze, the air full of them in a gale. They travel with the same wind the clouds, the rain and '
-      + 'the grass take. Off draws none.',
+    note: 'Faint streaks of air riding the wind across the land under the enhanced outdoors, so you can see which way it '
+      + 'blows and how hard.',
     effect: 'Takes effect at once.',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'windWisps', initial: true, online: 'player' }),   // WIND3: render/windWisps.js wispsOn
   }),
   Object.freeze({
     id: 'wind-sound',
+    group: 'world',
     title: 'Wind sound',
-    note: 'A quiet wind under the enhanced outdoors, from Daggerfall\u2019s own wind clips, rising and falling with the wind\u2019s strength '
-      + 'and breathing with its gusts - never more than a murmur under the rain and the birds, and silent indoors. '
-      + 'Off is Daggerfall\u2019s own soundscape, which has no wind.',
+    note: 'A quiet wind under the enhanced outdoors, from Daggerfall\u2019s own clips, rising and falling with its '
+      + 'strength. Never more than a murmur, and silent indoors.',
     effect: 'Takes effect at once.',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'windSound', initial: true, online: 'player' }),   // WIND3: systems/windAudio.js windSoundOn
   }),
   Object.freeze({
     id: 'flora-sway',
+    group: 'sight',
     title: 'Trees sway',
-    note: 'Trees and plants lean with the wind under the enhanced outdoors - the crown moves, the root stands - and a gust runs '
-      + 'across a wood as one thing, the same wave the grass takes. Only the trees and plants: people, signs and lights stand still. '
-      + 'Off keeps the classic still flats.',
+    note: 'Trees and plants lean with the wind under the enhanced outdoors, and a gust crosses a wood as one wave. Only the '
+      + 'flora: people, signs and lights stand still.',
     effect: 'Takes effect at once.',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'floraSway', initial: true, online: 'player' }),   // WIND3: systems/windDrive.js floraSwayOn; render/renderer.js BB_VS uSway
@@ -295,25 +373,51 @@ export const FEATURES = Object.freeze([
   // `?wxfield=off` the kill door.
   Object.freeze({
     id: 'weather-events',
+    group: 'world',
     title: 'Weather as places',
-    note: 'Under the enhanced outdoors a day\u2019s rain, storm or snow is not everywhere in its climate at once: it stands in cells over the land - '
-      + 'a few thunderheads across the hills, broad rain decks over the plain - drifting on the day\u2019s wind, with an overcast or a cloudy sky between them. '
-      + 'You see a storm on the horizon, walk into it and out the other side, or wait for it to roll over you. Sunny, cloudy, overcast and fog days stay the whole sky\u2019s, as Daggerfall has them. '
-      + 'Off is Daggerfall\u2019s own: the climate\u2019s word to the horizon.',
+    note: 'Rain, storm and snow stand in cells over the land and drift on the day\u2019s wind, so you can see a storm on '
+      + 'the horizon and walk into it and out the other side. Off is Daggerfall\u2019s own: the climate\u2019s word to '
+      + 'the horizon.',
     effect: 'Takes effect at once.',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'weatherEvents', initial: true, online: true }),   // WEATHER2b: weatherSim.js weatherFieldOn; forced on online - one sky
   }),
-  // FT9 (2026-09-14): THE FIVE PACKS WITH A SWITCH (Dynamic Skies' is
-  // the outdoors row's, FT4). Windmills (Kamer) has no switch and so no
-  // row - a row needs a control. The order is the Mods pane's.
-  modFeature('seasons-iliac-bay', 'Takes effect when the world next loads.'),
-  modFeature('roads-hazelnut', 'Takes effect when the world next loads.'),
-  modFeature('meanerMonsters', 'Takes effect on monsters spawned after the switch.'),
-  modFeature('pcaao', 'Takes effect at once.'),
-  modFeature('unleveledLoot', 'Takes effect on the next roll.'),
-  modFeature('weapon-widget', 'Takes effect at once.'),   // WW1: the widget reads its switches every frame
-  modFeature('handheld-torches', 'Takes effect at once.'),   // HT1: the component reads its switches every frame
+  // FT9 (2026-09-14): THE PACKS WITH A SWITCH (Dynamic Skies' is the
+  // outdoors row's, FT4). The order is the old Mods pane's.
+  //
+  // WM3 (2026-09-15, Mac: "the windmills of daggerfall is missing from
+  // credits and the feature menu"): AND WINDMILLS, WHICH HAD NO ROW
+  // BECAUSE IT HAD NO SWITCH. This note used to say exactly that - "a
+  // row needs a control" - which described the machinery correctly and
+  // answered the wrong question. It only became visible at FT14, which
+  // retired the Mods pane: that pane had listed every vendored pack
+  // whether or not it had a knob, and it was the only place Kamer's
+  // name appeared outside the About page's credits. A mod with no
+  // switch is a mod a player cannot turn off OR find; the switch is
+  // the fix for both.
+  //
+  // It is a PREF and not a `modFeature`, because `modFeature` builds a
+  // row out of a vendor's own `Enabled` setting key and this pack has
+  // no shipped settings file to carry one - the port bakes its meshes
+  // from the author's source. The row is the declaration (RF4), and
+  // `world/windmills.js` reads it beside the turn it gates.
+  Object.freeze({
+    id: 'mod-windmills-kamer',
+    group: 'world',
+    title: 'Windmills of Daggerfall by Kamer',
+    note: 'The windmill towers and their turning sails on the seven farms Kamer chose to stand them on, with the '
+      + 'machinery inside and a skin for every climate and season. Off is Daggerfall\u2019s own farms.',
+    effect: 'Takes effect when the world next loads.',
+    kinds: Object.freeze(['mod']),
+    control: Object.freeze({ store: 'prefs', key: WINDMILLS_KEY, initial: true, online: 'player' }),
+  }),
+  modFeature('seasons-iliac-bay', 'Takes effect when the world next loads.', 'world'),
+  modFeature('roads-hazelnut', 'Takes effect when the world next loads.', 'world'),
+  modFeature('meanerMonsters', 'Takes effect on monsters spawned after the switch.', 'combat'),
+  modFeature('pcaao', 'Takes effect at once.', 'combat'),
+  modFeature('unleveledLoot', 'Takes effect on the next roll.', 'loot'),
+  modFeature('weapon-widget', 'Takes effect at once.', 'combat'),   // WW1: the widget reads its switches every frame
+  modFeature('handheld-torches', 'Takes effect at once.', 'loot'),   // HT1: the component reads its switches every frame
   // FT10 (2026-09-14): DFU'S OWN DUNGEON ENHANCEMENTS - three of the
   // Enhancements section's switches, each read by the port at the point
   // of use as DFU reads it. DFU Classic: Daggerfall Unity's departures
@@ -322,31 +426,30 @@ export const FEATURES = Object.freeze([
   // pointer rows there and the rows here say one name.
   Object.freeze({
     id: 'enemy-infighting',
+    group: 'combat',
     title: 'Enemies Fight Each Other',
-    note: 'Daggerfall Unity\u2019s enemy infighting: a monster attacks whatever it is not allied with - a bear a spider, '
-      + 'a Daedra a knight - by the teams Daggerfall gives its creatures, not only you. Off, every enemy fights you alone, '
-      + 'as in classic Daggerfall. Daggerfall Unity ships it on.',
+    note: 'A monster attacks whatever it is not allied with - a bear a spider, a Daedra a knight - and not only you. '
+      + 'Daggerfall Unity ships it on.',
     effect: 'Takes effect at once.',
     kinds: Object.freeze(['classic']),
     control: Object.freeze({ store: 'settings', key: 'Enhancements/EnemyInfighting' }),
   }),
   Object.freeze({
     id: 'varied-dungeon-monsters',
+    group: 'world',
     title: 'Varied Dungeon Monsters',
-    note: 'Daggerfall Unity\u2019s alternate random enemy selection. Classic Daggerfall fills one list of monsters for the whole '
-      + 'dungeon from its type\u2019s table, so a dungeon repeats the same few; on, each random monster is picked by your level '
-      + 'from the dungeon\u2019s table with a spread either side, so a dungeon mixes its monsters. Main-story and fixed monsters '
-      + 'are untouched either way. Daggerfall Unity ships it off.',
+    note: 'Each random monster is drawn from the dungeon\u2019s table around your level, so a dungeon mixes its monsters '
+      + 'instead of repeating the same few. Daggerfall Unity ships it off.',
     effect: 'Takes effect on the next dungeon you enter.',
     kinds: Object.freeze(['classic']),
     control: Object.freeze({ store: 'settings', key: 'Enhancements/AlternateRandomEnemySelection' }),
   }),
   Object.freeze({
     id: 'torches-from-items',
+    group: 'loot',
     title: 'Torches Light Your Way',
-    note: 'Daggerfall Unity\u2019s item-based torch: your light in a dungeon comes from a torch, lantern or candle you carry '
-      + 'and use, which burns down and gutters out, instead of a light you always have. It also puts a torch in a new '
-      + 'character\u2019s pack and on the shelves of the shops that stock them. Daggerfall Unity ships it off.',
+    note: 'Your light in a dungeon comes from a torch, lantern or candle you carry and use, which burns down, instead of a '
+      + 'light you always have. Daggerfall Unity ships it off.',
     effect: 'Takes effect at once; a new character\u2019s starting gear and a shop\u2019s next stocking follow it.',
     kinds: Object.freeze(['classic']),
     control: Object.freeze({ store: 'settings', key: 'Enhancements/PlayerTorchFromItems' }),
@@ -358,9 +461,9 @@ export const FEATURES = Object.freeze([
   // are settings, not features, and stay in Settings.
   Object.freeze({
     id: 'combat-voices',
+    group: 'combat',
     title: 'Combat Voices',
-    note: 'Daggerfall Unity\u2019s combat vocalisations: you and the people you fight grunt on a swing and cry out when hit - '
-      + 'sounds classic Daggerfall carries but never plays in a fight. Off, a fight is silent but for the blows. '
+    note: 'You and the people you fight grunt on a swing and cry out when hit - sounds Daggerfall carries but never plays. '
       + 'Daggerfall Unity ships it on.',
     effect: 'Takes effect at once.',
     kinds: Object.freeze(['classic']),
@@ -368,18 +471,19 @@ export const FEATURES = Object.freeze([
   }),
   Object.freeze({
     id: 'near-death-warning',
+    group: 'combat',
     title: 'Near Death Warning',
-    note: 'Daggerfall Unity\u2019s screen flicker as your health falls: a slow throb under two fifths, a fast burst when you are hurt '
-      + 'under a fifth. Off, nothing warns you but the bar. Daggerfall Unity ships it on.',
+    note: 'The screen throbs as your health falls - slow under two fifths, a fast burst under a fifth. Daggerfall Unity '
+      + 'ships it on.',
     effect: 'Takes effect at once.',
     kinds: Object.freeze(['classic']),
     control: Object.freeze({ store: 'settings', key: 'Enhancements/NearDeathWarning' }),
   }),
   Object.freeze({
     id: 'bows-left-hand',
+    group: 'combat',
     title: 'Bows In Left Hand',
-    note: 'Daggerfall Unity\u2019s option: a bow equips in the left hand only, so a one-handed weapon can stay in the right and '
-      + 'you switch between them with a short delay, instead of a bow taking both hands. Off is classic Daggerfall\u2019s hands. '
+    note: 'A bow equips in the left hand only, so a one-handed weapon can stay in the right and you switch between them. '
       + 'Daggerfall Unity ships it off.',
     effect: 'Takes effect on the next weapon you equip.',
     kinds: Object.freeze(['classic']),
@@ -387,19 +491,21 @@ export const FEATURES = Object.freeze([
   }),
   Object.freeze({
     id: 'choose-guild-jobs',
+    group: 'world',
     title: 'Choose Guild Jobs',
-    note: 'Daggerfall Unity\u2019s guild quest list: a guild\u2019s quest-giver offers the jobs you are eligible for as a list to pick '
-      + 'from, instead of classic Daggerfall\u2019s one job drawn at random. Daggerfall Unity ships it off.',
+    note: 'A guild\u2019s quest-giver offers the jobs you are eligible for as a list, instead of one drawn at random. '
+      + 'Daggerfall Unity ships it off.',
     effect: 'Takes effect the next time a guild offers you work.',
     kinds: Object.freeze(['classic']),
     control: Object.freeze({ store: 'settings', key: 'Enhancements/GuildQuestListBox' }),
   }),
   Object.freeze({
     id: 'dungeon-wall-style',
+    group: 'sight',
     title: 'Dungeon Wall Style',
-    note: 'Which textures a dungeon\u2019s walls wear. Classic is Daggerfall\u2019s own table for each dungeon; Climate picks the set '
-      + 'by the region\u2019s climate; Random draws a table from the dungeon\u2019s own seed. Climate and Random leave the main-story '
-      + 'dungeons classic; Climate Only and Random Only do not. Daggerfall Unity ships it Classic.',
+    note: 'Which textures a dungeon\u2019s walls wear: Daggerfall\u2019s own table (Classic), the region\u2019s Climate, or '
+      + 'the dungeon\u2019s seed (Random). Climate and Random leave the main-story dungeons classic; Climate Only and '
+      + 'Random Only do not. Daggerfall Unity ships it Classic.',
     effect: 'Takes effect on the next dungeon you enter.',
     kinds: Object.freeze(['classic']),
     control: Object.freeze({ store: 'settings', key: 'Video/RandomDungeonTextures' }),
@@ -455,6 +561,7 @@ export function checkFeature(f) {
   if (!f || typeof f !== 'object') return ['not an object'];
   if (typeof f.id !== 'string' || !f.id) out.push('no id');
   if (typeof f.title !== 'string' || !f.title) out.push('no title');
+  if (!GROUPS[f?.group]) out.push(`unknown group '${f?.group}'`);   // FT14: every row says what it changes, not only who wrote it
   if (!Array.isArray(f.kinds) || !f.kinds.length) out.push('no kinds');
   else {
     for (const k of f.kinds) if (!KINDS[k]) out.push(`unknown kind '${k}'`);

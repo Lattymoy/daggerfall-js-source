@@ -4,8 +4,9 @@
 //
 // The port's own item ladder over Daggerfall's loot
 // (src/systems/lootRarity.js): Common, Magic, Rare, Legendary, with
-// DFU's artifacts as the ceiling. An ENHANCED row, off by default and
-// forced on online. The laws pinned here:
+// DFU's artifacts as the ceiling. An ENHANCED row, ON by default
+// (LR5, 2026-09-15, Mac: "I want to mod on by default") and forced on
+// online. The laws pinned here:
 //   - OFF IS DFU EXACTLY: no field written, no read moved, no tint.
 //   - ONE LADDER: every enchanted item derives Magic, an artifact is
 //     the top, a rolled item wears its own tier.
@@ -17,6 +18,17 @@
 //     enchantment and so drops unidentified under tradeModes'
 //     itemIsIdentified; a Magic with numbers only reads at once.
 //   - FOUR HOSTS: every list the hosts mint rolls at its source.
+//   - AUDIT-LR (2026-09-15, Mac: "audit the loot rarity mod and
+//     ensure its working properly for both offline and online"):
+//     THE LADDER SURVIVES THE WIRE. Online is the lane that forces
+//     the switch on for everyone, so a rolled item crosses it twice
+//     - as a room's word about a container (WORLD4/WORLD6a: the
+//     first reader's list, adopted by every other) and as an
+//     owner's grant off a puppet's body (WORLD6b-iii(c)). Both go
+//     through `validLootList`, and the audit found the laws sound
+//     but UNPINNED: nothing would have caught a tier, an affix list,
+//     a Legendary's record or an affix-inflated price lost on the
+//     way. Pinned by execution below, over the real doors.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -29,7 +41,7 @@ import { FEATURES, checkFeatures } from '../src/systems/features.js';
 import '../src/world/landView.js';   // RF4: the condensed rows' lanes register themselves; checkFeatures reads them
 import '../src/world/outdoors.js';
 import * as LR from '../src/systems/lootRarity.js';
-import { createRandomWeapon, createRandomArmor, LOOT_ARRAY_FIELDS, validLootItem } from '../src/systems/loot.js';
+import { createRandomWeapon, createRandomArmor, LOOT_ARRAY_FIELDS, validLootItem, validLootList } from '../src/systems/loot.js';   // AUDIT-LR: a container's whole list, the shape both online doors send
 import { createWeapon } from '../src/combat/enemyEquipment.js';
 import { mintCondition, itemBaseValue } from '../src/systems/itemTemplates.js';
 import { GROUP_TEMPLATE_INDICES } from '../src/systems/itemTemplatesData.js';
@@ -46,15 +58,17 @@ import { entityMaxEncumbrance, maxEncumbrance } from '../src/combat/formulas.js'
 import { savingThrow, EFFECT_FLAGS } from '../src/systems/spellcast.js';
 import { itemBackgroundColour, scrollerToolTipText } from '../src/ui/itemScroller.js';
 import { hoverLines } from '../src/ui/lootHover.js';
-import { playRareDrop } from '../src/scenes/corpseMarker.js';
+import { playRareDrop, takeCorpseLoot } from '../src/scenes/corpseMarker.js';   // AUDIT-LR: the peer's take is the one take law
 import { TEST_LOOT, testEntryById, seedTestLoot, TEST_LOOT_BASES } from '../src/systems/testRoom.js';
+import { itemNameParts } from '../src/systems/itemInfo.js';   // LR6: what the pack ROW actually prints
+import { templateByIndex } from '../src/systems/itemTemplates.js';   // LR6: the bare-template reading an unidentified item falls back to
 import { snapshotPlayer, restorePlayer } from '../src/systems/save.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => readFileSync(join(root, p), 'utf8');
 
 const on = () => { _resetForTests(); setPref('lootRarity', true); };
-const off = () => { _resetForTests(); };
+const off = () => { _resetForTests(); setPref('lootRarity', false); };   // LR5: the row ships ON, so OFF is now a press - a bare reset would have left every 'off' pin below testing the ON path in silence
 const lcg = (seed) => () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return (seed >>> 8) / 0x800000; };   // [0, 1) - LR4: /0x7fffff could answer exactly 1
 const sword = () => createWeapon(120, 1);   // a steel longsword
 const cuirass = () => mintCondition({ group: 'Armor', templateIndex: 102, material: 0x0200 + 1, name: 'Cuirass', flags: 0 });
@@ -62,14 +76,14 @@ const ring = () => mintCondition({ group: 'Jewellery', templateIndex: 135, name:
 const typeKey = (t) => Object.keys(ENCHANTMENT_TYPES).find((k) => ENCHANTMENT_TYPES[k] === t);
 const entityOf = () => ({ isPlayer: true, items: [], stats: { strength: 50, intelligence: 50, willpower: 50, agility: 50, endurance: 50, personality: 50, speed: 50, luck: 50 }, skills: new Array(35).fill(30), level: 5, career: {} });
 
-test('LR1: the switch - off by default (DFU\'s loot is the 1:1 law), forced on online, one Enhanced row on the home', () => {
-  assert.equal(PREF_DEFAULTS.lootRarity, false, 'off by default, as enhancedAI is: it changes the rules of what drops');
+test('LR5: the switch - ON by default (the ladder is the port\'s own game), forced on online, one Enhanced row on the home, and OFF is still DFU exactly', () => {
+  assert.equal(PREF_DEFAULTS.lootRarity, true, 'LR5: ON by default - Mac\'s call, the ladder is what a player meets');
   assert.equal(ONLINE_FORCED_PREFS.lootRarity, true, 'the enhanced lane, whole (OL1)');
   const row = FEATURES.find((f) => f.id === 'loot-rarity');
   assert.ok(row, 'the row is on the home');
   assert.deepEqual(row.kinds, ['enhanced']);
-  assert.deepEqual(row.control, { store: 'prefs', key: 'lootRarity', initial: false, online: true }, 'RF4: the row declares its default and the lane\'s answer');
-  assert.match(row.note, /Magic .*Rare .*Legendary/s, 'the note names the ladder');
+  assert.deepEqual(row.control, { store: 'prefs', key: 'lootRarity', initial: true, online: true }, 'RF4: the row declares its default and the lane\'s answer');
+  assert.match(row.note, /Magic, Rare or Legendary/, 'the note names the ladder');
   assert.match(row.note, /never your level/, 'and the source law');
   assert.match(row.note, /unidentified/, 'and the identify loop');
   assert.deepEqual(checkFeatures(FEATURES), []);
@@ -466,15 +480,74 @@ test('LR3: the Test Room\'s loot ladder - one door, thirty items (a Magic and a 
   const e = { items: [] };
   const added = seedTestLoot(e, lcg(1));
   assert.equal(LR.lootRarityOn(), true, 'the door turns the ladder on');
-  assert.equal(added.length, 20 + LR.LEGENDARIES.length);
+  // LR6: the ladder, plus the unidentified pair - one Rare and one
+  // Legendary left on the floor's own reading.
+  assert.equal(added.length, 20 + LR.LEGENDARIES.length + 2);
   assert.equal(added.filter((i) => i.rarity === 'magic').length, 10);
-  assert.equal(added.filter((i) => i.rarity === 'rare').length, 10);
-  const legs = added.filter((i) => i.rarity === 'legendary');
+  assert.equal(added.filter((i) => i.rarity === 'rare').length, 11);
+  const legs = added.filter((i) => i.rarity === 'legendary' && i.isIdentified);
   assert.deepEqual(legs.map((i) => i.legendary).sort(), LR.LEGENDARIES.map((l) => l.id).sort(), 'every record once');
   for (const it of legs) { const rec = LR.legendaryById(it.legendary); assert.ok(!rec.templates || rec.templates.includes(it.templateIndex), `${rec.id} on a fitting base`); }
   assert.equal(e.items.length, added.length);
   assert.match(read('src/ui/enhancedMenu.js'), /TEST_LOOT\.label[\s\S]*?onAction\(`test:\$\{TEST_LOOT\.id\}`\)/, 'the pane\'s card');
   assert.match(read('src/scenes/world.js'), /if \(testEntry\.loot\) console\.log\(`\[testroom\] loot ladder: \$\{seedTestLoot\(playerEntity\)\.length\} rolled items in the pack`\);/, 'the boot seeds it');
+  _resetForTests();
+});
+
+// ═══ LR6: THE SHOWCASE SHOWS ══════════════════════════════════════
+//
+// (2026-09-15, Mac: "when I open the loot test character, nothing on
+// the character has rarity in the inventory.")
+//
+// It was all there - and two thirds of it was INVISIBLE, by DFU's own
+// law working exactly as ported. A Rare and a Legendary carry a real
+// enchantment, so `itemIsIdentified` reads them as unidentified, and an
+// unidentified item gives up its NAME to the bare template and its
+// affix lines with it (ItemHelper.cs:265-292). Twenty of the thirty
+// items read `Longsword`, `Dagger`, `Battle Axe` - the same words as
+// the forty-nine plain armory pieces sitting in the pack ahead of them,
+// separated by a name colour and nothing else. Wyrmbane, Nightwhisper
+// and Graveward were in the pack, all called "Longsword".
+//
+// The law is right for a real drop and is untouched. The ROOM mints
+// identified, and keeps ONE of each top tier unidentified so the other
+// half of the law is still on show.
+test('LR6: the loot ladder READS - identified names and affix lines, and one unidentified of each top tier', () => {
+  off();
+  const e = { items: [] };
+  const added = seedTestLoot(e, lcg(7));
+
+  const named = (it) => itemNameParts(it, {}).name;
+  const templateName = (it) => templateByIndex(it.templateIndex)?.name;
+
+  // (a) EVERY Legendary the room shows is CALLED something. This is the
+  // assertion the old pack would have failed on all ten.
+  for (const it of added.filter((i) => i.rarity === 'legendary' && i.isIdentified)) {
+    const rec = LR.legendaryById(it.legendary);
+    assert.equal(named(it), rec.name, 'a Legendary on show wears its own name, not its template\'s');
+    assert.ok(LR.rarityLines(it).length > 2, `${rec.name} shows its affix lines`);
+  }
+  // (b) ...and every Rare on show reads as its rolled name with its affixes.
+  for (const it of added.filter((i) => i.rarity === 'rare' && i.isIdentified)) {
+    assert.notEqual(named(it), templateName(it), 'a Rare on show is not called by its bare template');
+    assert.equal(LR.rarityLines(it).includes('Unidentified'), false);
+  }
+  // (c) THE OTHER HALF IS STILL THERE, once each: what the floor shows.
+  const dark = added.filter((i) => !i.isIdentified);
+  assert.deepEqual(dark.map((i) => i.rarity).sort(), ['legendary', 'rare'], 'one of each top tier, and no more');
+  for (const it of dark) {
+    assert.equal(named(it), templateName(it), 'an unidentified drop is its bare template');
+    assert.deepEqual(LR.rarityLines(it), [LR.RARITIES[it.rarity].label, 'Unidentified']);
+  }
+  // (d) A MAGIC NEEDED NOTHING: it carries no enchantment, so DFU's own
+  // law already reads it. The flag is inert there, which is why it may
+  // be set uniformly.
+  for (const it of added.filter((i) => i.rarity === 'magic')) {
+    assert.notEqual(named(it), templateName(it));
+    assert.equal(LR.rarityLines(it).includes('Unidentified'), false);
+  }
+  // (e) and the door's blurb no longer promises what it hides
+  assert.match(read('src/systems/testRoom.js'), /IDENTIFIED so their names and affix lines read/, 'the blurb says what the pack does');
   _resetForTests();
 });
 
@@ -516,5 +589,131 @@ test('LR4: the audit - the corpse door rolls the loot and never the worn kit, a 
   // (3) THE FLAVOURS: every one fires on a worn or wielded drop - never an Enchanted-only payload (FeatherWeight, ExtraWeight fire at the item maker alone).
   for (const list of Object.values(LR.RARE_FLAVOURS)) for (const f of list) assert.ok(![ENCHANTMENT_TYPES.FeatherWeight, ENCHANTMENT_TYPES.ExtraWeight].includes(f.type), `${typeKey(f.type)} is a dead line on a drop`);
   for (const rec of LR.LEGENDARIES) assert.ok(![ENCHANTMENT_TYPES.FeatherWeight, ENCHANTMENT_TYPES.ExtraWeight].includes(rec.enchantment.type));
+  _resetForTests();
+});
+
+// ═══ AUDIT-LR: THE LADDER OVER THE WIRE, both online doors ═══════════
+//
+// The audit's one finding was a PIN gap, not a defect: the switch is
+// forced on for everyone online (OL1), so every rolled item a room
+// shares crosses `validLootList` - and nothing pinned that it comes out
+// the other side whole. The two doors, and the law each owes:
+//
+//   THE ROOM'S WORD (WORLD4 lootRecords -> the frame -> applyLoot):
+//   a dungeon's corpse or chest, a building's shelf. The first reader's
+//   list is the room's, so a Rare one player rolled is the Rare every
+//   other player sees - tier, affixes, two-part name, DFU enchantment,
+//   and the affix-inflated price, which the wire's own value FLOOR
+//   (AUDIT WORLD6a B1: `max(value, itemBaseValue)`) must not strip.
+//
+//   THE OWNER'S GRANT (WORLD6b-iii(c) grantCorpse -> applyHit ->
+//   takeCorpseLoot): a puppet's body is its owner's pile, and the take
+//   lands straight in the taker's pack. What the owner rolled is what
+//   the taker wears, and the fold must read it there.
+//
+// Both are pinned by EXECUTION over the real doors - the projection
+// each site mints, a JSON round trip (the wire is text), and the
+// port's own validator - not by reading the source.
+test('AUDIT-LR: the room\'s word carries the ladder whole - tier, affixes, name, record and the affix price', () => {
+  on();
+  const minted = [];
+  for (const [tier, mk] of [['magic', createRandomWeapon], ['rare', createRandomArmor], ['legendary', createRandomWeapon]]) {
+    minted.push(LR.applyRarity(mk(10, lcg(7)), tier, lcg(tier.length * 13)));
+  }
+  assert.deepEqual(minted.map((it) => it.rarity), ['magic', 'rare', 'legendary']);
+  assert.ok(minted[2].legendary && LR.legendaryById(minted[2].legendary), 'the Legendary wears its record\'s id');
+
+  // WORLD4 lootRecords mints `r: held.map((it) => ({ ...it }))`, the frame is text, applyLoot runs validLootList
+  const landed = validLootList(JSON.parse(JSON.stringify(minted.map((it) => ({ ...it })))));
+  assert.ok(landed, 'the room can say a list of rolled items at all');
+  assert.equal(landed.length, minted.length);
+  for (let i = 0; i < minted.length; i++) {
+    const was = minted[i], got = landed[i];
+    assert.equal(got.rarity, was.rarity, 'the tier');
+    assert.deepEqual(got.affixes, was.affixes, 'every affix, its param and its value');
+    assert.equal(got.name, was.name, 'the rolled name');
+    assert.deepEqual(got.enchantments ?? null, was.enchantments ?? null, 'the DFU flavour');
+    assert.equal(got.legendary ?? null, was.legendary ?? null, 'the Legendary\'s record');
+    // AUDIT WORLD6a B1's floor is a FLOOR: an affix-inflated price is honest and stands
+    assert.equal(got.value, was.value, 'the price the affixes bought');
+    assert.ok(got.value >= itemBaseValue(got), 'and it is never under the port\'s own mint');
+    assert.equal(LR.rarityOf(got), was.rarity, 'and the landed record reads at its tier');
+  }
+  // the landed records still FOLD on whoever wears them
+  const e = entityOf();
+  for (const it of landed) { e.items.push(it); equipItem(e, it); }
+  const mods = entityModsOf(e);
+  assert.ok(Object.values(mods.stats).some((v) => v > 0) || Object.values(mods.skills).some((v) => v > 0) || mods.weightMult > 0,
+    'the room\'s word is worn, not just read');
+  _resetForTests();
+});
+
+test('AUDIT-LR: the owner\'s grant off a puppet\'s body lands whole in the taker\'s pack, and rings at its tier', () => {
+  on();
+  const owner = LR.applyRarity(createRandomWeapon(10, lcg(3)), 'legendary', lcg(29));
+  assert.equal(owner.rarity, 'legendary');
+  const wasName = owner.name, wasValue = owner.value, wasAffixes = JSON.parse(JSON.stringify(owner.affixes));
+
+  // WORLD6b-iii(c) grantCorpse projects the body's pile through validLootList; the frame is text
+  const grant = validLootList(JSON.parse(JSON.stringify([owner])));
+  assert.ok(grant && grant.length === 1, 'the owner can grant a Legendary at all');
+  const rang = grant.map((it) => ({ ...it }));   // the take EMPTIES the granted list (it is the body's pile) - the chime reads what went
+
+  // applyHit's grant arm hands it to the ONE take law
+  const taker = entityOf();
+  const said = [];
+  const n = takeCorpseLoot({ entity: { items: grant } }, taker, (s) => said.push(s));
+  assert.equal(n, 1, 'the take counts it');
+  const got = taker.items[0];
+  assert.equal(got.rarity, 'legendary');
+  assert.equal(got.legendary, owner.legendary);
+  assert.equal(got.name, wasName);
+  assert.equal(got.value, wasValue, 'the price crossed with it');
+  assert.deepEqual(got.affixes, wasAffixes);
+  // and it WORKS on the taker - the fold and the weapon's own damage
+  equipItem(taker, got);
+  const dmgAffix = got.affixes.find((a) => a.id === 'damage');
+  if (dmgAffix) assert.equal(LR.affixWeaponDamage(got, 100), Math.trunc(100 * (1 + dmgAffix.value / 100)), 'the damage affix rides the taker\'s swing');
+  for (const a of got.affixes) {
+    if (a.id === 'stat') assert.equal(liveStat(taker, a.param), 50 + a.value, `the ${a.param} affix folds on the taker`);
+    if (a.id === 'skill') assert.equal(skillValue(taker, a.param), 30 + a.value, 'the skill affix folds on the taker');
+  }
+  // the chime reads the granted list, which is how a peer hears a body it did not own (exteriorFoes B10)
+  const audio = { calls: 0, play3d() { this.calls++; } };
+  assert.equal(playRareDrop(audio, [0, 0, 0], rang), 'legendary');
+  assert.equal(audio.calls, 1);
+  _resetForTests();
+});
+
+test('AUDIT-LR: a forged grant is refused at the door - the peer\'s pack never takes a +1e9 affix', () => {
+  on();
+  const sound = LR.applyRarity(sword(), 'rare', lcg(41));
+  for (const forged of [[{ id: 'armor', value: 1e9 }], [{ id: 'stat', value: 7 }], [{ id: 'skill', param: 999, value: 5 }]]) {
+    const list = [{ ...JSON.parse(JSON.stringify(sound)), affixes: forged }];
+    assert.equal(validLootList(list), null, `a list carrying ${JSON.stringify(forged)} is not a list this port could have minted`);
+  }
+  // and the sound one still crosses, so the refusal is the ITEM's and not the ladder's
+  assert.ok(validLootList([JSON.parse(JSON.stringify(sound))]), 'a sound Rare still crosses');
+  _resetForTests();
+});
+
+test('AUDIT-LR: OFF is still DFU exactly on both sides of the wire - the fields ride, the affixes rest', () => {
+  // A player who rolled online and plays offline with the switch off keeps the item and its name
+  // (the feature's own copy says so) - and folds NOTHING from it.
+  on();
+  const online = LR.applyRarity(cuirass(), 'rare', lcg(17));
+  const crossed = validLootList(JSON.parse(JSON.stringify([online])))[0];
+  off();
+  assert.equal(crossed.rarity, 'rare', 'the field is the item\'s, not the switch\'s');
+  assert.deepEqual(crossed.affixes, online.affixes);
+  const e = entityOf();
+  e.items.push(crossed); equipItem(e, crossed);
+  assert.equal(entityArmorMod(e, BODY_PARTS.Chest), 0, 'off: the armour affix rests');
+  assert.equal(liveStat(e, 'strength'), 50, 'off: no attribute moves');
+  assert.equal(entityWeightMult(e), 0, 'off: no carrying-capacity bonus (the channel is the FRACTION added, so none is 0)');
+  assert.equal(entityMaxEncumbrance(e), maxEncumbrance(liveStat(e, 'strength')), 'off: the encumbrance is DFU\'s own');
+  assert.deepEqual(LR.rarityLines(crossed), [], 'off: no lines');
+  assert.equal(LR.rarityTint(crossed), null);
+  assert.equal(LR.rarityColour(crossed), null);
   _resetForTests();
 });

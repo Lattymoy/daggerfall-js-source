@@ -124,8 +124,8 @@ export async function autoBuildArms(entity, { wanted = () => getPref('mwArms'), 
  *                     The note that hosts without a HUD text layer
  *                     pass console is retired: every call site hands
  *                     over a real one - hudText.add
- *                     (dungeonContext.js:2153), townTalk.say
- *                     (exterior.js:1331, world.js:2510) and
+ *                     (dungeonContext.js:2154), townTalk.say
+ *                     (exterior.js:1333, world.js:2515) and
  *                     worldModes' own interior sink (worldModes.js:372,
  *                     which warns to console only where a host mounts
  *                     no townTalk at all), so the empty default below
@@ -483,7 +483,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       const c = cv();
       // MW-D12: THE RETURN VALUE WAS BEING THROWN AWAY, and it is the
       // only signal that a blow has started. gesture() answers with the
-      // strike the drag resolved to (playerWeapon.js:128-131) and
+      // strike the drag resolved to (playerWeapon.js:225-228) and
       // clickAttack() with the one the click rolled - the Morrowind arm
       // needs exactly that to pick rule 11's attack type.
       const strike = !paralyzed && c

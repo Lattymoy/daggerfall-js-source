@@ -35,6 +35,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { isEnhanced } from '../systems/uiSkin.js';
+import { mountEnhancedChunk } from './enhancedChunk.js';   // MENU1: the one lazy-chunk door
 import { registerOverlay } from './enhancedOverlays.js';   // PX28: Tab puts it away
 import { NativeTalkWindow, talkArtLoaded } from './nativeTalk.js';
 
@@ -91,12 +92,11 @@ function enhancedTalkOverlay(model, hooks) {
   host.style.cssText = 'position:fixed;inset:0;z-index:11';
   document.body.append(host);
   unregister = registerOverlay(goodbye);
-  import('./enhancedTalk.js').then(({ mountEnhancedTalk }) => {
-    if (torn) return;
-    view = mountEnhancedTalk(host, { model, onExit: teardown, relock: () => hooks.relock?.() });
-  }).catch((e) => {
-    console.warn('[talk] the enhanced panel could not mount:', e?.message ?? e);
-    goodbye();
+  // MENU1: the ONE lazy-chunk door (ui/enhancedChunk.js).
+  mountEnhancedChunk({
+    load: () => import('./enhancedTalk.js'),
+    mount: ({ mountEnhancedTalk }) => { view = mountEnhancedTalk(host, { model, onExit: teardown, relock: () => hooks.relock?.() }); },
+    alive: () => !torn, host, onDismiss: goodbye, label: 'talk',
   });
   return {
     // THE HOST CONTRACT, in the hosts' own words - the arms townTalk's

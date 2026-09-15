@@ -41,7 +41,7 @@ import { fakeRoom } from './fakeRoom.mjs';
 import worker from '../server/src/index.js';
 import { OnlineSession, HEARTBEAT_MS, BACKOFF_MIN_MS } from '../src/net/online.js';
 import { ChatLog, CHAT_TABS, CHAT_KEEP, CHAT_FADE_MS, CHAT_PEEK, CHAT_REJOIN_MS, tagOf } from '../src/net/chat.js';
-import { createChatPanel, isOpenKey, CHAT_STYLE_ID, CHAT_OPEN_ACTION, clockOf } from '../src/ui/chatPanel.js';
+import { createChatPanel, isOpenKey, CHAT_STYLE_ID, CHAT_OPEN_ACTION, clockOf, CHAT_CSS } from '../src/ui/chatPanel.js';
 import { registerOverlay, overlayOpen } from '../src/ui/enhancedOverlays.js';
 
 const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
@@ -642,4 +642,71 @@ test('CHAT1 / AUDIT CHAT: the host by source - world.js starts the chat with the
   const dial = rd('src/ui/pixelDial.js');
   assert.match(dial, /unregister = registerOverlay\(close\);/, 'AUDIT CHAT C1: the dial is on the overlay stack');
   assert.match(dial, /function unmount\(\) \{[\s\S]*?unregister\?\.\(\); unregister = null;/, 'and leaves it when it goes');
+});
+
+// ═══ CHAT2: THE LIST HOLDS ITS ROWS ══════════════════════════════════
+//
+// (2026-09-15, Mac relaying a player: "The chat UI when accumulating
+// messages scrunched together and makes history unreadable and after
+// some time, chat history disappears altogether.")
+//
+// Both halves were one bug, and it is the reason the pins above could
+// not see it: node HAS NO LAYOUT ENGINE, so this file's fake document
+// reports whatever box it is told to. `.dfchat-list` is a fixed-height
+// flex COLUMN and `.dfchat-line` carried `overflow: hidden`. Per CSS
+// Flexbox 4.5 a flex item's automatic minimum size applies only while
+// its overflow is `visible`; with `overflow: hidden` its
+// `min-height: auto` resolves to ZERO, so the default `flex-shrink: 1`
+// squeezed every row toward nothing rather than overflowing into the
+// scroll. Measured in Chromium: 18.30px a row at 10 lines, 9.09 at 20,
+// 3.55 at 40, 0.78 at 80, 0.00 at 200 - with scrollHeight equal to
+// clientHeight the whole way, so there was never anything to scroll.
+// The rows were in the DOM and the lines were in the log; they were
+// drawn zero pixels tall.
+//
+// `tools/chatLayoutProbe.mjs` MEASURES that, because a pin that reads
+// a rule back is not proof of a layout. What node can hold is the LAW,
+// and it is stated over the sheet rather than over `.dfchat-line`: the
+// panel's sheet contains a fixed-height flex-column scroller, so ANY
+// item in it that zeroes its own automatic minimum size must also
+// refuse to shrink. A future row class dropped into the list inherits
+// the pin instead of the bug.
+const CSS_RULES = (css) => [...css.matchAll(/([^{}]+)\{([^}]*)\}/g)]
+  .map((m) => ({ sel: m[1].trim(), body: m[2] }));
+const DECLS = (body) => Object.fromEntries([...body.matchAll(/([-a-z]+)\s*:\s*([^;]+)/g)]
+  .map((m) => [m[1], m[2].trim()]));
+
+test('CHAT2: the panel\'s sheet still HAS a fixed-height flex-column scroller (the hazard is live)', () => {
+  const scrollers = CSS_RULES(CHAT_CSS).filter(({ body }) => {
+    const d = DECLS(body);
+    return d.display === 'flex' && d['flex-direction'] === 'column'
+      && (d.height || d['max-height']) && /auto|scroll/.test(d['overflow-y'] ?? d.overflow ?? '');
+  });
+  assert.ok(scrollers.length >= 1,
+    'no fixed-height flex-column scroller in CHAT_CSS - the rule below would be vacuous, so it moved or the shape changed');
+  assert.ok(scrollers.some((r) => r.sel.includes('dfchat-list')), `the chat list is one of them: ${scrollers.map((r) => r.sel).join(', ')}`);
+});
+
+test('CHAT2: nothing in the panel hides its overflow without also refusing to shrink', () => {
+  // `overflow: hidden` on a flex item is what zeroes its automatic
+  // minimum size; inside the scroller above, that is the whole defect.
+  // So the two always travel together in this sheet.
+  const bad = [];
+  for (const { sel, body } of CSS_RULES(CHAT_CSS)) {
+    const d = DECLS(body);
+    const hides = /hidden/.test(d.overflow ?? '') || /hidden/.test(d['overflow-y'] ?? '');
+    if (!hides) continue;
+    const holds = d.flex === 'none' || d['flex-shrink'] === '0' || /^(0|none)\b/.test(d.flex ?? '');
+    if (!holds) bad.push(sel);
+  }
+  assert.deepEqual(bad, [], 'these rules hide their overflow - which zeroes a flex item\'s automatic minimum\n'
+    + 'size - without `flex: none`, so inside the chat list they would be squeezed to nothing\n'
+    + 'exactly as `.dfchat-line` was (CHAT2). Measured by tools/chatLayoutProbe.mjs:\n' + bad.join('\n'));
+});
+
+test('CHAT2: a chat row states that it does not shrink', () => {
+  const row = CSS_RULES(CHAT_CSS).find((r) => r.sel === '.dfchat-line');
+  assert.ok(row, 'the row rule is still called .dfchat-line');
+  assert.equal(DECLS(row.body).flex, 'none',
+    'the row never shrinks - the list scrolls instead (CHAT2; tools/chatLayoutProbe.mjs measures it)');
 });
