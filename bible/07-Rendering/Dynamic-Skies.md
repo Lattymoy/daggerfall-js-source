@@ -606,3 +606,71 @@ step formula, the dither's form and its zero mean, the uniform fetched
 and uploaded, the default, the door reachable in both hosts, no
 `gl_FragCoord` in the block, and the plateau count raw against
 dithered.
+
+## DS3 (2026-09-15) - THE NIGHT SKY'S DARK SPOTS
+
+Mac: *"the nighttime sky has these dark spots in the skybox"*.
+
+Real and measurable: about **1,971 pixels a frame** sat more than 4/255
+below the median of their own 5x5 neighbourhood - dark specks scattered
+among the stars.
+
+### The cause, proven
+
+Three facts compose it, each read out of the running shader rather than
+guessed:
+
+1. **At night the sky IS the star texture.** `night * horizonValue`
+   measures **1.0** over the upper sky, and the star lerp is
+   `mix(col.rgb, stars, night * horizonValue)` - so the atmosphere is
+   mixed out entirely and what remains is `_StarTex`, sampled.
+2. **Only blue has a floor.** `_MoonNightColor` reads **(0, 0, 39)**, and
+   the floor is `max(finalStarsColor.rgb, _MoonNightColor.rgb)` -
+   per channel. Red and green are floored at zero, which is no floor at
+   all, so the texture's own variation in those channels is the sky's.
+3. **The field's background is an authored dither, magnified.**
+   `VanillaStars` is not flat: its commonest colours ramp `(0,0,40)`,
+   `(2,2,39)`, `(8,8,40)`, `(16,16,40)` - a per-texel stipple. With
+   `StarsTiling 0.25` over a 2048 texture the field is MAGNIFIED, about
+   3.5 screen pixels per texel at 900px and more the larger the display,
+   and Point filtering draws each texel as a hard block. A stipple reads
+   as smooth only while it sits at or under the screen's own pixel.
+
+The dither is the author's and not an artefact of our bundle decode:
+within-block variance is **1.853** against **1.858** for the same grid
+offset by two, so there is no 4x4 alignment and therefore no block
+compression behind it.
+
+### What it was not
+
+Each was tested by disabling it and re-measuring, and each reverted:
+
+| Suspect | Result |
+| --- | --- |
+| The twinkle subtraction (`stars.rgb -= twinkle`) | 1971 -> 1805. Not it. |
+| The PS3 band dither (`?bands=raw`) | 1971 -> **2274**. It was helping. |
+| The star tiling | 0.25 is the preset's own value, applied once. |
+| Block compression in the extracted PNG | No 4x4 alignment (above). |
+
+### The fix, and the departure it costs
+
+The three star FIELDS take **bilinear**, so the dither blends back under
+the pixel. Measured on the same frame: dark pixels **1971 -> 567**, the
+stars kept (5,638 bright pixels against 4,056 - more of them read, not
+fewer), the sky's mean untouched at 21.6. Noon is byte-identical on both
+sides of the change, as it must be: by day `night` is 0 and the star
+term vanishes.
+
+Per weather: sunny/cloudy/overcast take `VanillaStars` and are the case
+Mac saw; fog takes `DefaultStars` (70 dark pixels after); rain, snow and
+thunder take `NLStarsBlack`, which is uniformly black - no stars and no
+spots there either way.
+
+**This is a departure from DS1's 1:1 law**, taken on Mac's word ("Do
+it") after the cost was put to him: the mod imports every texture Point,
+and a star is now a slightly softer dot than the mod draws. The
+departure's BOUNDS are pinned, not just its existence - the three fields
+move and nothing else does; the twinkle masks and the noise keep Point,
+because they are sampled for a scalar rather than looked at. Two mutants
+run and killed: a field put back to Point, and a mask filtered with
+them.
