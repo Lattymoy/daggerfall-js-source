@@ -13,7 +13,8 @@
 // seam a running host wires from its MapsFile/BlocksFile instances
 // and player state (the contract is documented at machine.js's dep
 // block). A HEADLESS parse (no world seam - the corpus gate's
-// charter) leaves `sitePending` true, loudly, exactly the
+// charter) leaves `sitePending` true - a FLAG, not a noise (AUDIT-QUEST
+// F1); the bridge's construction report is what speaks. Exactly the
 // travelTimePending precedent; with a world present the resolution
 // runs AT PARSE and throws exactly where DFU throws. Selection draws
 // ride the quest's injectable roll (Ledger A; DFU uses
@@ -124,7 +125,11 @@ export class Place extends QuestResource {
     this.name = '';
     this.p1 = 0; this.p2 = 0; this.p3 = 0;
     this.siteDetails = null;
-    this.sitePending = true;   // no world seam -> the binding pends LOUDLY (travelTimePending precedent)
+    this.sitePending = true;   // no world seam -> the binding PENDS. AUDIT-QUEST F1: this line used to say
+                               // it pended "LOUDLY"; setting a boolean is the definition of quiet, and 262
+                               // of the 265 vendored quests started headless with nothing in the log at all.
+                               // The flag is the record; scenes/questBridge.js's construction report is the
+                               // noise, and it names the seam that was never wired.
     if (line !== null) this.setResource(line);
   }
 
@@ -168,7 +173,7 @@ export class Place extends QuestResource {
     if (!valid) throw new Error('Invalid placeType in line: ' + line);
 
     const world = this.parentQuest?.hooks?.world;
-    if (!world) return;   // sitePending stays true - the headless charter
+    if (!world) return;   // sitePending stays true - the headless charter (the BRIDGE reports the absent seam)
     if (this.scope === Scopes.Local) this._setupLocalSite(world, line);
     else if (this.scope === Scopes.Remote) this._setupRemoteSite(world, line);
     else this._setupFixedLocation(world);

@@ -50,7 +50,10 @@
 //
 // Q3-i, THE WORLD SEAM (deps.world - a running host wires it from its
 // MapsFile/BlocksFile instances and player state; absent = headless,
-// every Place pends its site LOUDLY and the corpus gate stands):
+// every Place PENDS its site (a flag - AUDIT-QUEST F1 measured that as
+// silence: 262 of 265 vendored quests start headless saying nothing) and
+// the corpus gate stands. scenes/questBridge.js reports the absent seam
+// at construction, which is what "loudly" was always meant to be):
 //   maps                       - the MapsFile instance (getRegion /
 //                                getLocation / getRmbBlockName /
 //                                readLocationIdFast / regionCount)

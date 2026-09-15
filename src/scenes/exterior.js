@@ -2924,7 +2924,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     getReputation: (fid) => { const st = _questStore(); return st ? getReputation(st, fid) : 0; },
     changeReputation: (fid, amount, propagate) => { const st = _questStore(); if (st) changeReputation(st, fid, amount, propagate); },
     changeLegalRep: (amount) => questWorld.changeLegalRep(amount),
-  });
+  }, { label: 'exterior.js (dev scene)' });
   // AUDIT 24 (wave 22) / AUDIT 64 F34: PopupText.AddText's last line
   // files the popup in the notebook ring (PopupText.cs:123) and
   // SetMidScreenText carries the SAME Notebook.AddMessage tail
