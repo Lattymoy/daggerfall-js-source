@@ -133,6 +133,43 @@ export function weatherSunlightScale(weather, isWinter) {
   return scale;
 }
 
+/** AT1: WeatherManager's FOUR PUBLIC FLAGS for a weather word.
+ *
+ *  IsRaining, IsStorming, IsSnowing and IsOvercast are what a mod asks
+ *  the sky (Ambient Text's WeatherKey is the first here to), and they
+ *  are not a fifth enum - they are whatever SetWeather's switch
+ *  (WeatherManager.cs:442-473) has left set, over ClearAllWeather's
+ *  floor (:141-156). So the table is DERIVED from the calls each case
+ *  makes and not invented:
+ *
+ *    sunny     ClearAllWeather only                  - nothing set
+ *    cloudy    SetFog(SunnyFogSettings)              - nothing set. NOT a
+ *              bug here: DFU's Cloudy case is a literal `// TODO make
+ *              skybox cloudy` and sets no flag, so a mod reading the sky
+ *              in cloudy weather is told "clear". Ported as it stands.
+ *    overcast  SetOvercast                           - overcast
+ *    fog       SetRainOvercast + SetFog(Heavy)       - overcast, and NOT
+ *              raining: SetRainOvercast picks a rain SKY and sets
+ *              IsOvercast, while IsRaining is StartRaining's alone.
+ *    rain      StartRaining -> SetRainOvercast       - raining, overcast
+ *    thunder   StartStorming -> StartRaining         - raining, storming, overcast
+ *    snow      StartSnowing -> SetSnowOvercast       - snowing, overcast
+ *
+ *  WEATHER2d's sandstorm is the port's own eighth word and DFU's switch
+ *  has no case for it, so there is nothing to port: it is answered here,
+ *  once, as OVERCAST - the sky in a sandstorm is not clear, and every
+ *  reader of these flags should be told so. It is neither rain nor snow.
+ */
+export function weatherFlags(weather) {
+  return Object.freeze({
+    raining: weather === 'rain' || weather === 'thunder',
+    storming: weather === 'thunder',
+    snowing: weather === 'snow',
+    overcast: weather === 'overcast' || weather === 'fog' || weather === 'rain'
+      || weather === 'thunder' || weather === 'snow' || weather === 'sandstorm',
+  });
+}
+
 /** Precipitation flags for the particles milestone. */
 export function precipitationForWeather(weather) {
   if (weather === 'rain') return 'rain';

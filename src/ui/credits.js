@@ -143,5 +143,14 @@ export const CREDITS = Object.freeze({
       contact: "Lysandus' Tomb Discord server",
       vendor: Object.freeze(['seasons-iliac-bay']),
     }),
+    Object.freeze({
+      title: 'Ambient Text',
+      version: '1.8',
+      author: 'Regnier',
+      what: 'An unobtrusive line about where you are, now and then (AT1): 918 of the author\u2019s own, keyed to the kind of place you stand in, the kind of dungeon you are under, the hour and the weather. It reads the location rect, the climate and the sky, says nothing indoors, and goes quiet for longer after it has spoken.',
+      terms: 'Ported 1:1 from the shipped bundle, read off its compiled script method by method; the mod\u2019s own text table vendored - see vendor/ambient-text/README.md for the permission record.',
+      contact: 'forums.dfworkshop.net',
+      vendor: Object.freeze(['ambient-text']),
+    }),
   ]),
 });

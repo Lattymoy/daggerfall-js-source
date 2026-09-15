@@ -54,6 +54,7 @@ import { rayDirFromScreen, projectToScreen, ndcFromScreen } from '../player/tapR
 import { trackHudPointer } from '../ui/hudActiveSpells.js';   // U46: the spell-icon rows' pointer
 import { createDataPipeline } from './dataPipeline.js';
 import { buildDungeonContext } from './dungeonContext.js';
+import { setAmbientTextHost, tickAmbientText } from '../systems/ambientText.js';   // AT2: the standalone dungeon scene is the outermost motor here, so it claims the mod
 import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';   // U14: the overlay pointer seam
 import { lookScale, lookInvert, keyboardLookRate } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
 import { LookFilter } from '../player/lookFilter.js';   // AUDIT 28 W7: MouseLookSmoothingFactor
@@ -586,6 +587,36 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // very pass that was closing it. The pin below now sweeps ALL FOUR.
   const musicDirector = createMusicDirector();
   const lookGate = makeLookGate(canvas);
+  // AT2: AMBIENT TEXT CLAIMS ITS HOST. THE FOUR HOSTS, and the reason
+  // this scene is here while two of the four are not:
+  //
+  //   scenes/world.js       WIRED - claims and ticks above the modal gate
+  //   scenes/exterior.js    WIRED - the same, in the probe town
+  //   scenes/worldModes.js  NOT WIRED, and must not be. It is the
+  //                         INTERIOR host, and its frame is CONSUMED by
+  //                         one of the two above, whose tick runs first
+  //                         on the very same frame. The mod's own
+  //                         IsPlayerInsideBuilding arm is what silences
+  //                         it in a building; a second call would be
+  //                         either a no-op (the interval gate) or a
+  //                         second Update, which the mod does not have.
+  //   scenes/dungeonContext.js  NOT WIRED, for the same reason: it is
+  //                         mounted by worldModes (shipping) or by THIS
+  //                         file (the ?dungeon probe), never on its own,
+  //                         so it never owns the outermost motor.
+  //
+  // This scene DOES own it - nothing ticks above it - so it claims the
+  // slot and feeds the frame itself. It is always inside a dungeon, so
+  // the location half of the key is never reached.
+  setAmbientTextHost({
+    paused: () => ctx.uiOverlayActive,
+    say: (text, seconds) => ctx.hudSay?.(text, seconds),   // DaggerfallUI.AddHUDText(text, delay)
+    insideBuilding: () => false,   // AUDIT AT F5: this probe is never in a building
+    where: () => ({
+      insideDungeon: true,
+      dungeonType: dfLocation?.mapTableData?.dungeonType ?? 255,   // PlayerEnterExit.Dungeon.Summary.DungeonType
+    }),
+  });
   const _frameToken = claimFrame();   // P0: this session owns the loop until someone claims after it
   function frame(now) {
     if (!frameAlive(_frameToken)) return;   // P0: a later boot or an unwind killed this loop
@@ -616,6 +647,17 @@ export async function bootDungeon(canvas, renderer, params, status) {
       if (kb.x || kb.y) lookFilter.add(kb.x * keyboardLookRate() * dt, kb.y * keyboardLookRate() * dt * lookInvert());
       _lockChest = lockOn.tick(dt, cam, walkMode ? player.eye : cam.pos, lookFilter);   // TI1: the lock pays its facing into the same filter, owed to the NEXT tick like a look
     }
+    // AT2: AmbientTextMod.Update - a MonoBehaviour Update, so it runs
+    // whatever a window is doing and its own `paused` arm decides. It
+    // needs no frame delta (its clock is Time.unscaledTime, a wall
+    // timestamp), and Unity gives two Updates no order, so it sits
+    // BELOW the look rather than anywhere above it: three pins hold
+    // this frame's head tight - AUDIT 39 #160 wants the video hold
+    // immediately followed by `const dt`, and GP1 and AUDIT 28 W7 want
+    // the pad's tick and the look filter adjacent to that line - and a
+    // statement dropped among them is indistinguishable, to those pins,
+    // from a host that lost one.
+    tickAmbientText();
     // TI1: the tap's one-frame press. Armed 2 on the tap: this frame
     // counts to 1 and the gate sees the press (AUDIT 62 F8: `_tapArmed
     // > 0` IS the press - the arm no longer stuffs a literal 'Mouse0'
