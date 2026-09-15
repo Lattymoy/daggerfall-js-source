@@ -12895,3 +12895,55 @@ Not proved in a browser here (no ARENA2); the pins run every loot
 table and every arm through the line and the plaque against the long
 name. `test/rf6_itemnames.test.js` (3); LR1's and U53's source pins
 re-aimed at the parts.
+
+## HT2 THE ACT ON A LIGHT SOURCE (2026-09-14, Mac: "So you cant equip the torch in your offhand, you can only drop it on the ground")
+
+THE FAULT. The enhanced pack's detail card offered `Wear` on
+everything unworn, and `wear` goes to `equipItem` -> `getEquipSlot`,
+which answers `None` for all four light sources: Torch, Lantern and
+Candle are UselessItems2, the Holy candle is ReligiousItems, and the
+equip table has a slot for none of them. So the card answered "torch
+cannot be worn." and the only act beside it that named the torch
+honestly was Drop. (The card's generic `Use` button, which this pane
+offers on EVERYTHING, did light it - but nothing on the card said so,
+and a player told a torch cannot be worn has been told the game has no
+place for it. That is what Mac reported, and it had nothing to do with
+the Handheld Torches mod: the light never got lit, so the mod never
+had one to put in a hand.)
+
+The refusal was TRUE about the equip table and WRONG about the game.
+DFU's own equip click on a light source does not equip it, it USES it
+- `DaggerfallInventoryWindow.LocalItemListScroller_OnItemClick`
+(:1976-1985) sends the item to `UseItem(item)` with NO collection
+(AUDIT 22 F6, so an equip click can consume nothing), and UseItem's
+light arm is what lights a torch in play. The port's CLASSIC window
+carries that arm (`ui/nativeInventory.js`, citing those lines). The
+ENHANCED pack never grew it - and the enhanced skin is the DEFAULT
+(`systems/uiSkin.js`) and the only skin online (OL1), so in practice
+the port shipped with no way to light a torch from the pack at all.
+
+THE SHAPE. `localPrimaryAct(item, entity)` decides the card's primary
+act once and the view performs it: `takeOff` for a worn item, `light`
+/ `douse` for a light source (both performing `use(item, null)` - the
+same act, since UseItem toggles the one LightSource slot), `wear` for
+everything else. THE LABEL IS PART OF THE LAW, because "Wear" over a
+torch is the lie that hid this: a button names what pressing it does.
+
+And the pack SAYS which light burns. The classic list paints that row
+gold (`ItemBackgroundColourHandler`'s lightSourceBackgroundColor, in
+`ui/itemScroller.js`); this skin had no way to tell three torches
+apart, so `itemLine.lit` carries the same reference compare, the row's
+sub-line says `lit`, and the card's stat line reads `Lit: yes/no`
+where a wearable's reads `Worn`.
+
+Probed in a browser (`tools/ht2TorchProbe.mjs`, 11 checks): the card
+on a torch reads `Light | Drop | Use` with no Wear, the press lights
+THAT torch, one row says `lit`, the card comes back offering `Douse`
+over `Lit: yes`, dousing puts it out, and a sword still reads Wear.
+
+Ledger row HT2. Pinned by execution: `test/ht2_packlight.test.js` (5)
+- the root cause (every light source answers `EQUIP_SLOTS.None` and
+`equipItem` null), the act and its label through a light, a douse and
+a worn sword, the reference compare against a second identical torch,
+the view's wiring, and that the classic window's arm still stands
+beside it.

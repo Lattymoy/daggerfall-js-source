@@ -58,7 +58,7 @@
 
 import { USE_PENDING } from './nativeInventory.js';
 import { PACK_PAGES, PAGE_IDS, pageOf, filterByPage } from './packPages.js';   // PX31: the pack's nine pages (the classic keeps DFU's four)
-import { useItem } from '../systems/useItem.js';
+import { useItem, isLightSource } from '../systems/useItem.js';   // HT2: the light source's own act
 import { EQUIP_SLOTS } from '../characters/paperdoll.js';
 import { dfWornEquipment } from '../formats/mwItemMap.js';   // PX25
 import { hasDaggerfallArrows } from '../combat/fpArm.js';   // PX26
@@ -304,11 +304,60 @@ export function itemLine(item, identity = undefined) {
     material: parts.material || null,
     stack: (item.stackCount ?? 1) > 1 ? item.stackCount : null,
     equipped: isEquipped(item),
+    // HT2: the LIT light source, by REFERENCE, exactly as
+    // ItemBackgroundColourHandler compares it (:401-411, and
+    // ui/itemScroller.js's port of it). The classic list paints that
+    // row gold; this skin had no way to say it at all, so a player who
+    // lit a torch could not tell which of three torches was burning.
+    lit: !!item && identity?.lightSource === item,
     broken: isBrokenItem(item),
     // The address only. Fetching is the view's business, because a
     // model has no repaint to schedule.
     image: img,
   };
+}
+
+/**
+ * HT2 (Mac: "so you cant equip the torch in your offhand, you can only
+ * drop it on the ground") - THE PRIMARY ACT ON A LOCAL ITEM, decided
+ * once, performed by the view.
+ *
+ * A LIGHT SOURCE HAS NO EQUIP SLOT. `getEquipSlot` answers None for
+ * every one of the four (Torch, Lantern, Candle, Holy candle - they
+ * are UselessItems2 and ReligiousItems, not Weapons or Armor), so
+ * `equipItem` returns null and this pane's `wear` said "torch cannot
+ * be worn." and stopped. That refusal was TRUE about the equip table
+ * and WRONG about the game: DFU's own equip click on a light source
+ * does not equip it, it USES it -
+ * `DaggerfallInventoryWindow.LocalItemListScroller_OnItemClick`
+ * (:1976-1985) sends the item to `UseItem(item)` with NO collection
+ * (AUDIT 22 F6 - so an equip click can consume nothing), and UseItem's
+ * light arm is what lights a torch in play. The classic window here
+ * carries that arm (ui/nativeInventory.js's equip branch); this pane
+ * never grew it, so the enhanced skin - the DEFAULT skin, and the only
+ * one online - had no way to light a torch at all. The one act left on
+ * the card was Drop, which is exactly what Mac found.
+ *
+ * The LABEL is decided here too rather than at the button, because
+ * "Wear" over a torch is the lie that hid this: the act a player is
+ * offered must name what pressing it does. Lighting and dousing are
+ * the SAME act (UseItem toggles the single LightSource slot), so both
+ * kinds perform `use(item, null)` and only the word changes.
+ *
+ * @param item     the picked item, or null
+ * @param entity   the player, for the lit-by-reference compare
+ * @returns {{kind: 'takeOff'|'wear'|'light'|'douse', label: string}|null}
+ */
+export function localPrimaryAct(item, entity = null) {
+  if (!item) return null;
+  // Worn first: the way out of a slot is Take off, whatever the item is.
+  if (isEquipped(item)) return { kind: 'takeOff', label: 'Take off' };
+  if (isLightSource(item)) {
+    return entity?.lightSource === item
+      ? { kind: 'douse', label: 'Douse' }
+      : { kind: 'light', label: 'Light' };
+  }
+  return { kind: 'wear', label: 'Wear' };
 }
 
 /**
@@ -1093,7 +1142,7 @@ function itemRow(item, from = 'local') {
   row.append(itemTile(line));
   const mid = el('span', 'itemname');
   mid.append(el('span', null, line.name + (line.stack ? ` ×${line.stack}` : '')));
-  const sub = [line.material, line.word].filter(Boolean).join(' · ');
+  const sub = [line.material, line.word, line.lit ? 'lit' : null].filter(Boolean).join(' · ');   // HT2: the classic list paints the lit row gold; this one says the word
   if (sub) mid.append(el('small', null, sub));
   row.append(mid);
   row.append(el('span', 'itemwt', `${line.weight.toFixed(2)} kg`));
@@ -1303,7 +1352,13 @@ function detailCol() {
   const pair = (k, v) => { if (v != null) dl.append(el('dt', null, k), el('dd', null, String(v))); };
   pair('Weight', `${line.weight.toFixed(2)} kg`);
   pair('Condition', line.condition != null ? `${line.word} · ${line.condition}%` : null);
-  if (side === 'local') pair('Worn', line.equipped ? 'yes' : 'no');
+  // HT2: a light source is never WORN - the honest line for one is
+  // whether it is the lit one, which is the same fact the classic
+  // list's gold row carries.
+  if (side === 'local') {
+    if (isLightSource(picked)) pair('Lit', line.lit ? 'yes' : 'no');
+    else pair('Worn', line.equipped ? 'yes' : 'no');
+  }
   else pair('Where', remote.title);
   c.append(dl);
   const acts = el('div', 'acts');
@@ -1312,15 +1367,18 @@ function detailCol() {
     // press, so the item you just wore is still here and can come
     // straight back off. Every OTHER way to take something off is the
     // slot map.
-    if (line.equipped) {
-      const b = el('button', 'act primary', 'Take off');
-      b.onclick = () => takeOff(picked.equipSlot);
-      acts.append(b);
-    } else {
-      const b = el('button', 'act primary', 'Wear');
-      b.onclick = () => wear(picked);
-      acts.append(b);
-    }
+    // HT2: the act is `localPrimaryAct`'s, label and all - a torch is
+    // LIT here, not worn, because DFU's equip click on a light source
+    // is a use (:1976-1985) and nothing in the equip table will ever
+    // take one. The button says which it is doing.
+    const act = localPrimaryAct(picked, deps.entity);
+    const b = el('button', 'act primary', act.label);
+    b.onclick = act.kind === 'takeOff' ? () => takeOff(picked.equipSlot)
+      : act.kind === 'wear' ? () => wear(picked)
+      // AUDIT 22 F6: DFU's equip click hands UseItem NO collection
+      // (:1980), so the act that lights a torch can consume nothing.
+      : () => use(picked, null);
+    acts.append(b);
     // The verb names the DESTINATION, and the destination is whichever
     // list is showing. Drawn only when the law would either move
     // something or say something (`canStow`).

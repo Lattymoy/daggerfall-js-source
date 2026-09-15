@@ -60,7 +60,7 @@ import { calculateSuccessfulHit, calculateStruckBodyPart } from '../combat/formu
 import { liveStat } from '../systems/statMods.js';
 import { worldMinutes } from '../systems/worldTick.js';
 import { FlatAnim } from '../render/flatAnimation.js';
-import { toColor32Order } from '../formats/color32Order.js';
+import { toColor32 } from '../formats/color32Order.js';   // TEX1: the SHAPE the upload path reads
 import { decodePng } from '../systems/textureReplacement.js';
 import { torchRange } from '../systems/playerTorch.js';
 import {
@@ -125,13 +125,23 @@ export function createDroppedTorches({
     if (!framesLoading.has(record)) {
       framesLoading.set(record, (async () => {
         let count = 0, size = null;
-        for (let f = 0; f < 16; f++) {
-          const img = await loadTexture(record, f).catch(() => null);
-          if (!img) break;
-          renderer?.uploadTexture?.(DROPPED_ARCHIVE, `${record}#${f}`, img);
-          if (record < DROPPED_RECORD.DousedOffset) renderer?.uploadEmissionTexture?.(DROPPED_ARCHIVE, `${record}#${f}`, img, { white: true });
-          size ??= { w: img.width * GLOBAL_SCALE, h: img.height * GLOBAL_SCALE };
-          count++;
+        // TEX1: the UPLOAD can throw (an image in the wrong shape), and this
+        // promise is only ever `.then`ed by a mount that may not have happened
+        // yet - so a throw escaped as an unhandled rejection and took the page
+        // down. It fails to a console line and an EMPTY record now: `build`
+        // already no-ops on `!entry?.count`, which is the mod running without
+        // its sprites, exactly as it runs when the files are missing.
+        try {
+          for (let f = 0; f < 16; f++) {
+            const img = await loadTexture(record, f).catch(() => null);
+            if (!img) break;
+            renderer?.uploadTexture?.(DROPPED_ARCHIVE, `${record}#${f}`, img);
+            if (record < DROPPED_RECORD.DousedOffset) renderer?.uploadEmissionTexture?.(DROPPED_ARCHIVE, `${record}#${f}`, img, { white: true });
+            size ??= { w: img.width * GLOBAL_SCALE, h: img.height * GLOBAL_SCALE };
+            count++;
+          }
+        } catch (e) {
+          console.warn('[dropped torches] the sprites would not load', e);
         }
         const entry = { count, size };
         frames.set(record, entry);
@@ -485,9 +495,10 @@ export function createDroppedTorches({
   };
 }
 
-/** The default texture loader: the vendored PNG in the port's color32 order. */
+/** The default texture loader: the vendored PNG in the port's color32 order,
+ *  in the shape `uploadTexture` reads - `{ width, height, colors }` (TEX1). */
 async function defaultLoadTexture(record, frame) {
   const res = await fetch(droppedTextureUrl(record, frame));
   if (!res.ok) return null;
-  return toColor32Order(await decodePng(new Uint8Array(await res.arrayBuffer())));
+  return toColor32(await decodePng(new Uint8Array(await res.arrayBuffer())));
 }

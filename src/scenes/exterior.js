@@ -803,7 +803,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     if (sib) {
       const rkey = `${record}#season${seasons.installedSeason}`;
       const img = sib.texture.image;
-      renderer.uploadTexture(archive, rkey, { width: img.width, height: img.height, colors: img.data }, { mips: false, variant: '' });   // AUDIT 61: the mod's atlas has NO mip chain (mipChain:false, Apply(false), Point) - one NEAREST level at every distance, unlike the classic flats
+      renderer.uploadTexture(archive, rkey, img, { mips: false, variant: '' });   // TEX1: the door already answers the upload path's shape - no re-wrap at the site (H4's own law)   // AUDIT 61: the mod's atlas has NO mip chain (mipChain:false, Apply(false), Point) - one NEAREST level at every distance, unlike the classic flats
       const batch = renderer.createBillboardBatch(archive, rkey, sib.size, centers);
       batch._box = flatBatchAabb(centers, sib.size);   // EV3
       batch.sway = floraSwayOf(archive, natureArchive, sib.size.h);   // WIND3: the season's trees lean too

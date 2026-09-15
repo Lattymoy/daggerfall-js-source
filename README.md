@@ -20,6 +20,19 @@ Docs live in `bible/` - start at `bible/Home.md`.
 Original game data (ARENA2) is required and never committed. Point tests at it
 with `ARENA2_PATH`.
 
+## Support development
+
+Daggerfall Enhanced is free and open source. Active development currently
+costs about **$600 per month** to sustain across development tooling,
+multiplayer infrastructure, testing, builds, releases, and mod compatibility
+work.
+
+Support on Ko-fi: https://ko-fi.com/dfjs
+
+The monthly goal, suggested support levels, and funding breakdown are in
+[`SUPPORT.md`](SUPPORT.md). Sponsorship does not lock gameplay, source code,
+or normal releases behind a paywall.
+
 ## Scripts
 
 - `npm run dev` - Vite dev server
