@@ -288,7 +288,18 @@ float heightGradient(float h) {
 }
 float density(vec3 p, float mip) {
   float h = clamp((p.y - fBase) / max(fTop - fBase, 1.0), 0.0, 1.0);
-  vec3 q = vec3(p.x + uShift.x + uDrift.x + fShear * (p.y - fBase), p.y, p.z + uShift.y + uDrift.y);
+  // WIND4 (2026-09-15, Mac: "clouds dont follow on the world timer with
+  // the direction of the wind"): the drift is SUBTRACTED. uShift is the
+  // floating origin's recenter and is ADDED, because q must be the
+  // point's ABSOLUTE position in the field (setState does
+  // shift -= offset for exactly that). The drift is not a position - it
+  // is how far the AIR has travelled - and a field sampled at p + d
+  // shows the cloud that was at p + d standing at p, so the whole sky
+  // crept UPWIND at the wind's own speed. It is the one sign that
+  // cannot be seen from inside the shader and is plain from the ground:
+  // the wisps carry the wind one way (windWisps.js advances the wisp's
+  // POSITION by the offset) and the sky went the other.
+  vec3 q = vec3(p.x + uShift.x - uDrift.x + fShear * (p.y - fBase), p.y, p.z + uShift.y - uDrift.y);
   vec4 s = textureLod(uShape, q / SHAPE_M, mip);
   float lowFbm = s.g * 0.625 + s.b * 0.25 + s.a * 0.125;
   float base = remap(s.r, -(1.0 - lowFbm), 1.0, 0.0, 1.0) * heightGradient(h);
@@ -367,7 +378,7 @@ void main() {
       float light = lightMarch(p);
       // the ambient carries the field's own low-frequency structure, so a
       // lid is mottled and an underside is not one flat grey
-      float mottle = textureLod(uShape, vec3(p.x + uShift.x + uDrift.x, p.y, p.z + uShift.y + uDrift.y) / MOTTLE_M, 1.0).g;
+      float mottle = textureLod(uShape, vec3(p.x + uShift.x - uDrift.x, p.y, p.z + uShift.y - uDrift.y) / MOTTLE_M, 1.0).g;   // WIND4: the same sign as the density above - the mottle rides the same air
       // WEATHER2c: a cell's grey pulls the lit colour toward the shade's, so a storm under a sunny zone is a storm's colour
       vec3 ambient = mix(uCloudShade, uCloudLit, h * (1.0 - fGrey)) * (0.75 + 0.5 * mottle) * (1.0 - 0.5 * fDark * (1.0 - h)) * fTint;   // WEATHER2d: the cell's tint
       vec3 S = uLightColor * light * phase * 0.7 * (1.0 - 0.8 * fDark) * (1.0 - 0.5 * fGrey) * fTint + ambient;

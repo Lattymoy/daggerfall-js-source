@@ -8641,7 +8641,13 @@ export async function bootWorld(canvas, renderer, params, status) {
       // windDrive.js) - the grass, the rain, the wisps and the flats read
       // the same numbers by construction.
       labGrass.draw(proj, view, new Float32Array(cam.pos), now / 1000,
-        { sunDir: renderer._lightDir, amb: renderer._ambient, sunCol: renderer._sunColor, dim: wxNow.dim },   // WX2: the dim crosses on the front
+        // WIND4 (Mac: "grass doesnt get darker at night"): the WHOLE of
+        // the scene's light, not three of its five terms - the sun's
+        // SCALE is what sets with the sun, and the moon is what is left
+        // when it has. The same fields render/renderer.js hands its own
+        // programs.
+        { sunDir: renderer._lightDir, amb: renderer._ambient, sunCol: renderer._sunColor, dim: wxNow.dim,
+          sunScale: renderer._sunScale, moonDir: renderer._moonDir, moonScale: renderer._moonScale, moonCol: renderer._moonColor },   // WX2: the dim crosses on the front
         { dir: wd.dir, speed: wd.slider * wd.gust, windV: wd.windV });
       renderer.markForeignPass();   // EV6: the grass changed programs behind the shadows' back
     }
