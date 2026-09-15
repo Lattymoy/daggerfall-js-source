@@ -8,7 +8,7 @@
 // MapTableData.MapId is a 32-bit integer - Privateer's Hold is 187853213 -
 // so every real dungeon failed the law at BOTH ends, was joined all the
 // same, relayed poses and nothing else, and every player kept stepping
-// their own foes with no word said; test/auditworld.test.js:49 had PINNED
+// their own foes with no word said; test/auditworld.test.js:50 had PINNED
 // the nine-digit key as no world room, which is why four slices shipped
 // green over a feature no real dungeon could reach. THE FIXES EXECUTE: the
 // law on the port's own real ids and two real sessions through the real
