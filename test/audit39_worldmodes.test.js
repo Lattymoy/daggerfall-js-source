@@ -319,7 +319,7 @@ test('AUDIT39 #65: the interior arrow update takes the four impact options it ne
   assert.match(call, /onFoeHit: \(m, t\) => interiorFoes\?\.arrowHitFoe\(m, t\),/);
   // ...and the PLAYER's shaft damages through the pool that owns the
   // billboard, the same `_encounter` split this host's sinks take -
-  // world.js:8380's own law, so a killed watchman still runs the crime
+  // world.js:8394's own law, so a killed watchman still runs the crime
   // and the corpse.
   assert.match(call, /dealDamage: \(f, d\) => \(f\._encounter\n\s+\? interiorFoes\?\.damageFoe\(f, d, player\.pos, m\.dir, \{ kind: 'arrow' \}\)[^\n]*\n\s+: interiorGuards\?\.hurtGuard\(f, d, player\.pos, m\.dir\)\),/);
   // the player-side arm of the same call
@@ -468,6 +468,6 @@ test('FOE1: the dungeon host really PASSES the opts it means to - a property ins
   }
   // and the wiring it reaches for exists on the host object
   assert.match(src('src/scenes/worldModes.js'), /host\.onFoeHit\?\.\(hit\)/, 'the host seam is called, not merely named');
-  assert.match(src('src/scenes/world.js'), /onFoeHit: \(hit\) => online\?\.sendHit\(hit\)/,
-    'and the world host hands it the wire (WORLD2)');
+  assert.match(src('src/scenes/world.js'), /onFoeHit: \(hit\) => hitSend\(hit\)/,
+    'and the world host hands it the wire (WORLD2), through the pending set (AUDIT FOES FOE2)');
 });

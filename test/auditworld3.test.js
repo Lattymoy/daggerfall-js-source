@@ -200,7 +200,7 @@ test('AUDIT WORLD3 D/E/F: the hosts and the record by source - the peers ride on
   // E1/E2/E3/E4
   assert.match(d, /retypeFoe\(i, sf\.mobileType, sf\.gender \?\? null\)\.then\(\(ok\) => \{ if \(ok && foes\[i\]\) patchFoe\(foes\[i\], sf, wire\); \}\);/, 'E1: the save\'s mismatch rebuilds too');
   assert.doesNotMatch(d, /if \(!truncate\) retypeFoe/, 'E1: and never silently discards the slot');
-  assert.match(d, /retypeFoe\(i, r\.t, GENDER_BIT\[r\.x === 1 \? 1 : 0\]\)\.then\(\(ok\) => \{ if \(ok && !_authority && foes\[i\]\) applyFoeRecord\(foes\[i\], r\); \}\);/, 'E2: the record that triggered the rebuild lands on it');
+  assert.match(d, /retypeFoe\(i, r\.t, GENDER_BIT\[r\.x === 1 \? 1 : 0\]\)\.then\(\(ok\) => \{\s*if \(ok\) \{ _retypeFails\.delete\(i\); if \(!_authority && foes\[i\]\) applyFoeRecord\(foes\[i\], r\); return; \}/, 'E2: the record that triggered the rebuild lands on it - and a rebuild that LANDS clears the refusal count (AUDIT FOES FOE4)');
   assert.match(d, /function applyFoeRecord\(f, r\) \{/, 'E2: one body, both callers');
   assert.match(d, /const canStandFoe = \(mobileType\) => !!ENEMY_BASICS\[mobileType\]\?\.maleTexture;/, 'E3: the build chain\'s own guard, one home');
   assert.match(d, /_retyping\.has\(i\) \|\| !canStandFoe\(mobileType\)\) return false;/, 'E3: on the rebuild');

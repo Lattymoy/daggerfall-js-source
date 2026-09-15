@@ -4425,3 +4425,134 @@ were on the line. The pin strips the comments from the whole
 - a property inside a comment is a property that is gone - so the next
 swallowed one is caught by the same assertion rather than needing its
 own.
+
+## AUDIT FOES (2026-09-15) - three lenses over the foe damage path
+
+Mac, relaying players: *"during online play, certain enemies cant be
+damaged."* FOE1 above is the answer to the report. These are what the
+same three lenses found around it.
+
+**FOE2 (critical) - a blow the wire refused was LOST.** AUDIT WORLD3 A3
+gave the acts a pending set because "an act the wire refused must not be
+lost"; the blow never got one, and needed it more. An act is a STATE, so
+a lost one reads wrong until someone touches the door again; a hit is a
+DELTA and the striker applies nothing locally. `sendHit` refuses on five
+conditions and **both sinks discarded the answer** (`?? false`, never
+read), and the relay drops over its own budgets without a word.
+
+The commonest refusal is not a network fault at all, it is the rate
+gate, and it is **not random**: one swing emits ONE FRAME PER FOE IN
+REACH, in pool order, against `HIT_HZ_MAX` (10/s). Measured over the
+real swing timing, a Speed-100 character among six foes offers 26 blows
+a second and lands 44 on the first two while the last three take **two
+apiece**. The same physical enemies starve every swing. That is the
+player's report, in a fight with no network trouble in it.
+
+A refused blow waits and goes on a later frame (`net/hitPend.js`, its
+own home so it can be driven). Two bounds, because a held blow that can
+never be sent is the live-lock AUDIT WORLD4 A1 paid for: at most 64
+held, nothing older than 2 s, and a room change empties the queue. Order
+is kept - a new blow goes behind what is already waiting.
+
+**FOE3 (critical) - the primary socket vetoed a blow the halo could
+carry.** `sendHit` asked `!this._ws || this.status !== 'open'` BEFORE
+the routing loop that picks the owner's socket. So while my own cell's
+socket was down - reconnecting, a room at `SOCKETS_MAX`, the RTT of any
+crossing that is not a halo promotion - **every foe owned by every peer
+went bullet-proof**, while its stream kept arriving through the halo and
+it kept walking and swinging at me. `sendPose` learned this exact lesson
+at AUDIT WORLD6b-iii(b) A5; `sendHit` never did. In a cell the routing
+loop is the check.
+
+**FOE4 (high) - the blow goes while the BODY is wrong.** The divert was
+gated on `!foe._pupMismatch` under B5's reading, "its index is another
+foe's on the host" - and WORLD3 retired that premise: the roster is the
+room's, and the index names the same marker on every client (driven: the
+layout's foe COUNT never varies with player level; only the SPECIES the
+level bands does). Held home it was not a late blow, it was **no** blow.
+And the mismatch is the NORM on a join - a level-3 and a level-14
+character disagree at **758 of 760** markers - so every index depended
+on an async, fallible rebuild clearing the flag, and any rebuild that
+refused left that foe invulnerable to that client for the life of the
+context. The rebuild is bounded now too: a build that cannot succeed on
+this machine stops being asked after three tries and says so once,
+instead of asking again several times a second for ever.
+
+**FOE5 (medium) - the dungeon host trusted an unbounded number.** It
+never recomputes the damage (the striker's own calc is the game's), and
+had no ceiling, so any joiner could one-shot every foe in the room and
+empty it through the kill door. The exterior twin has carried this bound
+since WORLD6b; both now name the same one.
+
+**FOE6 (high) - an orphaned puppet, permanent and bullet-proof.**
+`_pupIndex` is written unconditionally at the stand and `removePuppet`
+deleted **by key**, so when two builds for one `owner:seq` were in
+flight - which `clearPuppets` opens, by emptying `_pupPending` while a
+build is still out - the late one's self-removal evicted the record that
+was actually standing. Every sweep walks `_pupIndex`, so that puppet was
+reachable by nothing: not the stream, not the full frame, not
+`pruneOwners`, not `clearPuppets`. It stood frozen at its spawn pose and
+spawn health for the session and swallowed every blow. Deleted by
+identity now.
+
+**FOE8 (medium) - a City Watch puppet rebuilt five times a second.**
+`makeEnemyEntity` adds `Range(3,7)` to a Knight_CityWatch inside the
+constructor (DFU's own), so `entity.level` is never the level it was
+built at - and the stream's `l` was compared against it, found a
+mismatch on every record, and tore the puppet down and rebuilt it.
+Compared against the build level now, which is what the record carries.
+
+**FOE9 (medium) - a blow spent on a ghost.** `retypeFoe` swaps `foes[i]`
+and marks the old record dead, but an arrow already in flight, a lock-on
+or a melee pick from the previous frame still points at the old one.
+`indexOf` answers -1, the divert was skipped, and the blow fell through
+to the LOCAL path and landed on a body nothing draws and nothing
+streams. With a joiner's roster retyping at nearly every index on
+arrival, that is not rare. The blow is dropped instead.
+
+### Found, measured, and NOT paid
+
+- **The owner's 120 m cull deletes a foe a peer is fighting.** The peer
+  keeps a live, attackable, un-damageable puppet until the next full
+  frame (up to 2 s), then it vanishes mid-swing; the owner's `applyHit`
+  finds nothing and returns false. The cull is **deliberate** - AUDIT
+  WORLD6b-ii A2 chose my own relevance on purpose, because eight foes
+  that walked off with peers held the pool full for the session. The
+  proper fix is a removal record on the foes frame (the stream carries
+  deltas and has no way to say "gone" but the next full frame's
+  absence), which is a slice, not a patch, and it re-opens a budget a
+  previous audit tuned. Not re-decided here.
+- **The relay's three silent drops.** A hit rides the socket's POSE
+  bucket, then a per-destination funnel (`HIT_ROOM_HZ_MAX` 60 - measured
+  to bite at 7+ joiners in one room, 11.5% lost at eight), then a
+  **room-wide** byte budget one looter at its ingress cap can exhaust
+  for everybody. FOE2's queue cannot heal these: `sendHit` returned
+  true, the frame left. An ack would be a protocol change.
+- **A summon or ally cannot kill a peer's foe.** `fromPlayer === false`
+  takes neither branch - no local damage, no divert - so a fall, another
+  foe's maul, and your own Daedroth all do literally nothing to a
+  puppet. The first two are WORLD2's law on purpose; the third is a gap
+  in it.
+- **A foe's blast on a puppet is credited to ME.** `world.js:2620` and
+  `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
+  provenance argument `applySpellToFoe` hands them (`hostMagic.js:187`)
+  - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
+  Threading it touches four hosts.
+- **A building interior streams no foes at all.** `makeInteriorFoes`
+  never calls `setNet`, and the world host routes foes only for cells
+  and dungeons - so every player rolls their own and sees different
+  enemies in the same shop, while `test/world6b.test.js` asserts
+  `streamsFoes('interior:…') === true`. WORLD6b-iii(d) closed buildings'
+  foes as "none by the lockbook"; the quest foe, the summoning's
+  punishment and the watch are each the player's own by a lock already
+  written, so this may be correct and the test's claim merely wider than
+  the shipped design. Named here so the next reader checks rather than
+  assumes.
+- **Authority blackout windows** of up to `FOES_STALE_MS` (6 s) where a
+  joiner's hits go to a host that will not apply them - the host walked
+  out of the dungeon, or `online.onHost` stamped `_foesInAt` for a host
+  nowhere near it. Bounded, and it affects every foe at once, so it is
+  not "certain enemies".
+- **A peer's killing blow bypasses the Soul Trap tether** (WORLD2 B9, on
+  purpose). Offline a trap with no empty gem holds a foe at 1 health and
+  reads as "cannot kill this one"; online a peer's blow always kills.
