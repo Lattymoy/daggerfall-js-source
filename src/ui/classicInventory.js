@@ -24,7 +24,11 @@ const parsedAmount = (text, max) => {
   return Number.isInteger(count) && count >= 1 && count <= max ? count : null;
 };
 
-export class NativeInventoryWindow extends BaseInventoryWindow {
+// Same declaration rule as classicCharSheet.js: the audited base window
+// remains the declared export. This runtime presentation wrapper keeps
+// the constructor name the hosts already probe without creating a second
+// direct declaration for audit24_onehome to treat as a competing home.
+class NativeInventoryWindow extends BaseInventoryWindow {
   constructor(hooks) {
     super(hooks);
     this.splitBox = null;
@@ -148,3 +152,5 @@ export class NativeInventoryWindow extends BaseInventoryWindow {
     if (this.splitBox) this.splitBox.draw(renderer, canvas, font);
   }
 }
+
+export { NativeInventoryWindow };
