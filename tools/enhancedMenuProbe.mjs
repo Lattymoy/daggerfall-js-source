@@ -37,8 +37,18 @@ async function run(label, opts) {
 
   // 1. THE DOOR OPENED WITHOUT DATA. ensureArena2's picker is a fixed
   //    overlay with a #pick input; if it is up, the claim is false.
-  check(`${label}: the menu draws with no ARENA2`,
-    (await page.locator('.px-menu button').count()) === 9)   // one door per SECTIONS_BOOT entry but About - nine since FT0 added Features (this read 6 from R7 on and nobody ran it)
+  //
+  // FT16: this counted the doors and hardcoded the number - 6 from R7
+  // on, then 9 from FT0, each one stale the moment a door moved, and
+  // its own comment says so ("nobody ran it"). A census is not this
+  // probe's subject; the claim is that the home DREW, with the doors
+  // this file goes on to drive. So it asks for those by name, and a
+  // door added or moved is not a failure here.
+  const doors = (await page.locator('.px-menu button').allInnerTexts()).map((t) => t.trim().toUpperCase());
+  check(`${label}: the menu draws with no ARENA2`, doors.length > 0, `${doors.length} doors`);
+  for (const want of ['SETTINGS', 'FEATURES']) {
+    check(`${label}: the ${want.toLowerCase()} door is on the rail`, doors.includes(want), doors.join(' / '));
+  }
 
   const sw = await page.evaluate(() => {
     const on = document.querySelector('.skinswitch .skinopt.on'), off = document.querySelector('.skinswitch .skinopt:not(.on)');
@@ -104,33 +114,43 @@ async function run(label, opts) {
   //     and the home is where every enhanceable feature lives now. The
   //     checks are about the HOME and its switch machinery
   //     (tools/featuresProbe.mjs walks the rest of it).
+  //
+  //     FT16: THIS HAD BEEN RED SINCE FT14 AND NOBODY RAN IT - the
+  //     second time this file has failed that way (see the door census
+  //     above). FT14 replaced the scrolling list with a grid of tiles,
+  //     so `.row.feature` matched nothing, the pane read zero rows, and
+  //     the switch click timed out. Re-aimed at the tiles: the control
+  //     is a SEGMENTED BAR now, not one cycling button, so a tier is
+  //     pressed by name rather than stepped into.
   await page.goto(`${BASE}/play/`, { waitUntil: 'networkidle' });
   await page.locator('.px-menu button').filter({ hasText: /Features/ }).first().click();
-  await page.waitForSelector('#enhanced-menu .chips', { timeout: 10000 });
+  await page.waitForSelector('#enhanced-menu .ft-tile', { timeout: 10000 });
+  const skyTile = page.locator('#enhanced-menu .ft-tile')
+    .filter({ has: page.locator('.ft-tile-name', { hasText: /^Enhanced environments$/ }) });
   const pane = await page.evaluate(() => {
-    const rows = [...document.querySelectorAll('#enhanced-menu .row.feature')];
-    const find = (n) => rows.find((r) => r.querySelector('.row-name')?.textContent === n);
-    const sky = find('Enhanced environments');   // EE1, condensed at FT4
+    const tiles = [...document.querySelectorAll('#enhanced-menu .ft-tile')];
+    const sky = tiles.find((t) => t.querySelector('.ft-tile-name')?.textContent === 'Enhanced environments');
+    const pressed = sky?.querySelector('.ft-segb[aria-pressed="true"]');
     return {
-      rows: rows.length,
-      sky: sky ? sky.querySelector('.ctl .act')?.textContent : null,
-      skyTarget: sky ? Math.round(sky.querySelector('.ctl .act').getBoundingClientRect().height) : 0,
+      rows: tiles.length,
+      sky: pressed ? pressed.textContent : null,
+      skyTarget: pressed ? Math.round(pressed.getBoundingClientRect().height) : 0,
       labels: sky ? [...sky.querySelectorAll('.kind')].map((k) => k.textContent) : [],
     };
   });
-  check(`${label}: the Features home opens with its rows`, pane.rows >= 21 && pane.sky !== null, JSON.stringify(pane));
+  check(`${label}: the Features home opens with its tiles`, pane.rows >= 21 && pane.sky !== null, JSON.stringify(pane));
   check(`${label}: the outdoors read Dynamic Skies by default, wearing both labels`,
     pane.sky === 'On, with Dynamic Skies' && pane.labels.join('+') === 'Enhanced+Mod Authored', JSON.stringify(pane));
   if (label === 'phone') check("phone: the outdoors switch is a thumb's target", pane.skyTarget >= 38, `${pane.skyTarget}px`);
-  // one press steps the three-way row past its last tier to OFF, which is the pref off
-  await page.locator('#enhanced-menu .row.feature').filter({ has: page.locator('.row-name', { hasText: /^Enhanced environments$/ }) }).locator('.ctl .act').click();
+  // the bar's OFF segment is the pref off - pressed by name, where the old list stepped a cycling button
+  await skyTile.locator('.ft-segb', { hasText: /^Off/ }).first().click();
   const skyOff = await page.evaluate(async () => {
     const m = await import('/src/systems/uiPrefs.js');
     m._resetForTests();
     return m.getPref('enhancedEnvironments');   // EE1
   });
   check(`${label}: the outdoors switch PERSISTS`, skyOff === false, String(skyOff));
-  for (let i = 0; i < 2; i++) await page.locator('#enhanced-menu .row.feature').filter({ has: page.locator('.row-name', { hasText: /^Enhanced environments$/ }) }).locator('.ctl .act').click();   // back to Dynamic Skies
+  await skyTile.locator('.ft-segb', { hasText: /Dynamic Skies/ }).first().click();   // back to where it was
 
   // 3. THE PICK APPEARS WHEN A GAME STARTS, and not one moment before.
   await page.goto(`${BASE}/play/`, { waitUntil: 'networkidle' });
@@ -159,7 +179,10 @@ await run('phone', { ...devices['Pixel 5'] });
   await page.goto(`${BASE}/play/?skin=classic`, { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('.px-menu button', { timeout: 20000 });
   const st = await page.evaluate(() => JSON.parse(window.__menu()));
-  check('classic: the enhanced door mounts with the classic rail', JSON.stringify(st.sections) === JSON.stringify(['begin', 'online', 'settings', 'controls', 'features', 'mods', 'about']), JSON.stringify(st.sections));
+  // FT14 took Mods off this rail and FT16 took Controls into Settings;
+  // this line still expected both, which is the third thing in this
+  // file that had gone stale unnoticed.
+  check('classic: the enhanced door mounts with the classic rail', JSON.stringify(st.sections) === JSON.stringify(['begin', 'online', 'settings', 'features', 'about']), JSON.stringify(st.sections));
   await page.locator('.px-menu .door-begin').click();
   await page.locator('#enhanced-menu .act.primary', { hasText: 'Begin' }).click();   // FD1: the door opens the Begin pane; its button starts
   const picked = await page.waitForSelector('#pick', { timeout: 15000 }).then(() => true, () => false);

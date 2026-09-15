@@ -816,3 +816,91 @@ more of the same were in player-facing copy and went with it: the Data
 & Mods blurb in `settingsMap.js` ("The packs you can attach are on the
 Mods page") and three mod credits in `credits.js` ("under its own
 switch in the Mods pane"). All four now name the Features page.
+
+## FT16 - THE PAINT, AND THE SECOND DOOR (2026-09-15)
+
+Mac, two reports in one message: *"Can you make the new feature UI
+elements have the same transparent design as the list we used to have.
+Also the control menu option needs to be within settings"*.
+
+### The pass FT14 never wrote
+
+Every component family on this screen has TWO paints. The base tokens
+(`--slate` grounds, 1px `--iron` rules) are the pause window's, where a
+panel is opaque because there is a game behind it. Then PX11's `.shell`
+override is the boot door's, where the screen stands on the live sky and
+every painted panel colour comes off: `.shell .pane`, `.shell .panes`,
+`.shell .head` and `.shell .foot` go transparent, `.shell .list` and
+`.shell .detail` take low-alpha scrims, `.shell .row` loses its ground
+entirely, and every hairline becomes a 2px rule in the brass line.
+
+FT14 wrote the first paint and stopped. There was no `.shell .ft-*` rule
+in the sheet at all - not one - so the tiles drew solid `--slate` boxes
+with 1px borders on a screen that was see-through everywhere around
+them. That is the whole of Mac's first report, and it is not a taste
+call: the list those tiles replaced had been transparent, because
+`.shell .row` had a rule and `.ft-tile` never did.
+
+Twelve rules, all scoped to `.shell`. **The scope is the design
+decision**, and the pin holds it as firmly as the rules: repainting the
+tokens instead would have taken the pause window with it, where the
+opaque paint is correct. So the pin asserts both that the shell rules
+exist and that the base `.ft-tile` still carries `background:
+var(--slate)` - a rules-only pin would have passed the wrong fix.
+
+### A control that was half a thumb
+
+The probe found what the paint pass could not. `tools/enhancedMenuProbe.mjs`
+measures the outdoors switch against the 44px coarse-pointer law, and
+it came back **20px**.
+
+FT14's fault, not this slice's: the old list's control was one cycling
+`.ctl .act` button, and `@media (pointer: coarse)` already sized it. The
+tile's segmented bar, its module chips and its drawer door are new
+elements that inherited nothing. A control drawn, present, and too small
+to press on the device that needs it most is the AUDIT 24 shape this
+project keeps rediscovering, and the law has a home precisely so the
+next control finds it - so the fix went in that block, not in the FT
+block.
+
+### The probe had been red since FT14, and nobody ran it
+
+Three separate things in `enhancedMenuProbe.mjs` were stale:
+
+1. It counted the rail's doors and compared against a hardcoded **9**.
+   Its own comment records this going stale once before - *"this read 6
+   from R7 on and nobody ran it"*. A door census is not this probe's
+   subject; it asks for the doors it goes on to drive, by name.
+2. It drove the Features home through `.row.feature`, which FT14
+   deleted. The pane read zero rows and the switch click timed out.
+3. Its classic-rail check still expected `mods`, which FT14 removed.
+
+Thirty-three checks pass now. The lesson is the one the file already
+knew and wrote down: a probe nobody runs is a probe that is wrong.
+
+### The second door to one subject
+
+FIX-F put **Controls** on both rails because it was reachable from
+neither - the right fix for that bug. But Settings already carried a
+**Controls category** (DFU's `Controls/*` keys: the mouse sensitivity,
+the swing mode, the controller, plus the port's touch rows), so a player
+asking "how do I rebind jump" had two plausible doors and one of them
+was wrong.
+
+The bindings are that category's contents now. The store keys come
+first - they are few, and they are what a hand reaches for mid-session -
+then a divider, then the grid. The rail entry is gone from all three
+rails, from `SYSTEM_PANES`, and from both dispatch tables, and
+`paneControlsPane` went with them.
+
+FIX-F's law is not weakened, and the pin says why: *the bindings must be
+reachable from the front door and from Escape*, which they are, because
+Settings is on both rails. What changed is the address. The condensed
+pause Settings has no category rail, so the bindings ride the end of its
+one scroll - dropping them there would have been FIX-F's bug again, one
+level down.
+
+**The staging moved with it.** The Controls page says "leave this page
+and your changes are dropped", and the section rail enforced that. The
+category rail has to enforce it now, or a staged bind survives a hop to
+Audio and back and lands on a Continue the player never meant.

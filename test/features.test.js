@@ -256,3 +256,51 @@ test('FT15: every note is one or two sentences, and the panel stays under its bu
   const src = readFileSync('src/systems/features.js', 'utf8');
   assert.match(src, /note: mod\.keys\.Enabled\.description,/, 'modFeature takes no note of its own');
 });
+
+// FT16 (2026-09-15, Mac: "make the new feature UI elements have the same transparent
+// design as the list we used to have"): THE SHELL PASS FT14 NEVER WROTE.
+//
+// Every component family on this screen has TWO paints: the base tokens, and a
+// `.shell` override for PX11, where the boot door stands on the live sky and every
+// painted panel colour comes off (`.shell .pane`, `.shell .list`, `.shell .row` are
+// transparent grounds, low-alpha scrims and 2px rules in the brass line). FT14 wrote
+// the first and stopped, so the tiles drew solid --slate boxes with hairline borders
+// over a screen that was see-through everywhere else - which is the whole report.
+//
+// The pause window is deliberately OUT of scope: `.px-win` panels are opaque because
+// there is a game behind them, so the base paint is already right there. A fix written
+// into the tokens instead of under `.shell` would have taken that with it, which is
+// why this pin holds the SCOPE as well as the rules.
+test('FT16: the feature tiles take the shell\'s transparent paint, and only under the shell', () => {
+  const css = readFileSync('src/ui/enhancedStyle.js', 'utf8');
+  // the tile and the rail lose their painted grounds where the sky is behind them
+  assert.match(css, /\.shell \.ft-tile \{ background: none;/, 'the tile is see-through on the shell');
+  assert.match(css, /\.shell \.ft-rail \{ background: rgba\(10,12,17,0\.55\)/, 'the rail takes a scrim, as .shell .detail does');
+  // and every 1px iron rule becomes the shell's own 2px brass line
+  for (const sel of ['.shell .ft-tile ', '.shell .ft-seg ', '.shell .ft-mchip ', '.shell .ft-rail ']) {
+    const at = css.indexOf(sel);
+    assert.ok(at > 0, `${sel} has a shell rule`);
+    assert.match(css.slice(at, at + 200), /border: 2px solid rgba\(125,116,96/, `${sel} takes the 2px brass line`);
+  }
+  // THE SCOPE: the base paint stays --slate, so the pause window is untouched
+  assert.match(css, /\n\.ft-tile \{ position: relative; background: var\(--slate\)/,
+    'the base tile keeps its opaque ground - .px-win has a game behind it');
+  assert.equal(/\n\.ft-tile \{[^}]*background: none/.test(css), false,
+    'the transparency must be scoped to .shell, not written into the base');
+});
+
+// FT16: and the tile's controls join the 44px law. FT14 replaced the list's one
+// cycling `.ctl .act` - which the coarse-pointer block already sized - with a
+// segmented bar, chips and a drawer door, and none of them inherited it. The
+// outdoors switch measured 20px on a phone. tools/enhancedMenuProbe.mjs, which
+// measures it in a real browser, had been red since FT14 and so nobody saw it.
+test('FT16: every control on a tile is a thumb\'s target where there is a thumb', () => {
+  const css = readFileSync('src/ui/enhancedStyle.js', 'utf8');
+  const at = css.indexOf('@media (pointer: coarse) {\n  .step { width: 44px; height: 44px; }');
+  assert.ok(at > 0, 'the coarse-pointer law is where it was');
+  const law = css.slice(at, css.indexOf('\n}', at));
+  for (const sel of ['.ft-segb', '.ft-mchip', '.ft-tile-more']) {
+    assert.ok(law.includes(sel), `${sel} is sized by the law, not by its own component block`);
+  }
+  assert.match(law, /\.ft-segb, \.ft-mchip, \.ft-tile-more \{ min-height: 44px; \}/);
+});
