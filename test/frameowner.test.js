@@ -50,6 +50,12 @@ test('P0: both unwinds claim BEFORE they act - the old loop dies even if navigat
   // FIX-E: the death seam HOLDS rather than claims - the host waits idle
   // and lives to be navigated away from; the claim is exitToTitleMenu's,
   // reached in a finally on every path out (fixe_deathMenu.test.js).
-  assert.match(s, /export async function endRunToTitleMenu\(renderer, \{[^\n]*\} = \{\}\) \{\n\s+const releaseFrame = holdFrame\(\);/,
-    'the death video owns the canvas - the host loop holds while it plays');
+  // DEATH1: and the hold is taken when the video is READY rather than at
+  // the top, so the load is drawn rather than black - the declaration is
+  // the `let`, the hold itself the `ready` signal two lines below it.
+  // AUDIT DEATH1 F7: with a `closed` latch between them, because the
+  // watchdog is a RACE and a load that settles after it must not take a
+  // hold nobody is left to release (fixe_deathMenu.test.js drives it).
+  assert.match(s, /export async function endRunToTitleMenu\(renderer, \{[^\n]*\} = \{\}\) \{\n\s+let releaseFrame = null;\n\s+let closed = false;\n\s+const ready = \(\) => \{ if \(!closed\) releaseFrame \?\?= holdFrame\(\); \};/,
+    'the death video owns the canvas - the host loop holds while it plays, from the frame it has something to play, and only while the seam is open');
 });

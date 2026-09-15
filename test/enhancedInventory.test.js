@@ -14,7 +14,7 @@ import { readFileSync } from 'node:fs';
 
 import {
   packModel, itemLine, SLOT_MAP, useResultAction, remoteModel, REMOTE_TITLE, STOW_LABEL, plural,
-  equippedModel,
+  equippedModel, LIGHT_SLOT, localPrimaryAct,   // HT5
 } from '../src/ui/enhancedInventory.js';
 import { WAGON_KG_LIMIT } from '../src/systems/itemTransfer.js';
 import { USE_PENDING } from '../src/ui/nativeInventory.js';
@@ -1307,3 +1307,128 @@ test('AUDIT 38 F1: the kind and its noun may be joined, spaced or hyphenated - t
   const classic = readFileSync('src/ui/questJournal.js', 'utf8');
   assert.ok(!/questTitleOf|QUEST_KIND_LABEL/.test(classic), 'the classic journal must not strip');
 });
+
+// HT5 (2026-09-15, Mac: "the torch doesnt appear slotted in inventory").
+//
+// A light source has NO equip slot - getEquipSlot answers None for all four,
+// which is why HT2 had to make the act a USE rather than a wear - so the lit
+// torch lived only in entity.lightSource and the worn side had nothing to
+// show. The list marked it gold and that was all: a player holding a torch
+// saw an empty pair of hands.
+//
+// It is a row now, under the off hand, because Handheld Torches' own fiction
+// is that a light OCCUPIES a hand. The sentinel slot is the point: DFU's 27
+// stay 27, and nothing that counts slots learns about this one.
+test('HT5: the held light is a row on the body, and DFU\'s twenty-seven are untouched', () => {
+  const bare = { equipTable: [] };
+  const before = equippedModel(bare);
+  assert.ok(!before.rows.some((r) => r.label === 'Light'), 'no light, no row');
+
+  const torch = { group: 'UselessItems2', templateIndex: 247, stackCount: 1 };   // IsLightSource wants the group too
+  const lit = equippedModel({ equipTable: [], lightSource: torch });
+  const row = lit.rows.find((r) => r.label === 'Light');
+  assert.ok(row, 'a lit torch is on the body');
+  assert.equal(row.item, torch, 'by reference, as every lit-compare in this arc is');
+  assert.equal(row.slot, LIGHT_SLOT);
+  // AUDIT HT5 F3: this asserted `LIGHT_SLOT < 0` as proof it "can never
+  // collide with an EQUIP_SLOTS value" - and -1 IS EQUIP_SLOTS.None. The
+  // real safety is that nothing indexes the equip table with this id, so
+  // that is what is held: the map has no node for it, and the table read
+  // for the counts never sees it.
+  assert.equal(LIGHT_SLOT, EQUIP_SLOTS.None, 'it IS None - no new member was minted, and none was needed');
+  assert.equal(SLOT_MAP[LIGHT_SLOT], undefined, 'and the body map has no node at that id');
+
+  // THE COUNTS ARE THE EQUIP TABLE'S. A fake slot in them would make the
+  // window say 1 of 28 for a torch DFU does not think is worn at all.
+  assert.equal(lit.total, before.total, 'the light adds no slot to the total');
+  assert.equal(lit.filled, before.filled, 'and fills none');
+  assert.ok(!Object.values(SLOT_MAP).some((at) => at.label === 'Light'), 'SLOT_MAP stays DFU\'s own');
+});
+
+// HT5: and the act on it is still HT2's - a light is doused, never taken off,
+// because nothing in the equip table will ever hold one. The worn row only
+// PICKS (the mis-click law), so the act button is what resolves it.
+test('HT5: picking the light row offers Douse, not Take off', () => {
+  const torch = { group: 'UselessItems2', templateIndex: 247, stackCount: 1 };   // IsLightSource wants the group too
+  const entity = { equipTable: [], lightSource: torch };
+  assert.deepEqual(localPrimaryAct(torch, entity), { kind: 'douse', label: 'Douse' });
+  const src = readFileSync(new URL('../src/ui/enhancedInventory.js', import.meta.url), 'utf8');
+  // the off hand's panel carries it, and lists it first
+  assert.match(src, /\{ id: 'lhand', label: 'L\\u00b7Hand', area: '4 \/ 3', slots: \['Light', 'Left hand'\] \}/,
+    'the light shares the off hand and is the first row of that family');
+  // takeOff is reached only for a real equipped item, never for this row
+  assert.match(src, /b\.onclick = act\.kind === 'takeOff' \? \(\) => takeOff\(picked\.equipSlot\)/,
+    'take-off is gated on the act kind, which a light source never answers');
+});
+
+// INV1 (2026-09-15, Mac: "Add the ability to click and drag items to equip or
+// reorganize in inventory").
+//
+// The drag performs the act the CARD ALREADY OFFERS - localPrimaryAct decides,
+// the same function the act button reads - so a dragged torch lights and a
+// dragged cuirass is worn, and a refusal says the same sentence either way.
+// A second rule for what a drop means is how the two paths drift apart.
+test('INV1: a drag equips through the one act, and never crosses a side', () => {
+  const src = read('src/ui/enhancedInventory.js');
+  assert.match(src, /function dropOnBody\(item\) \{\s*\n\s*const act = localPrimaryAct\(item, deps\.entity\);/,
+    'the drop reads the card\'s own act, not a second table');
+  assert.match(src, /if \(act\.kind === 'wear'\) \{ wear\(item\); return; \}/);
+  assert.match(src, /use\(item, null\)/, 'AUDIT 22 F6: the light arm still takes no collection');
+
+  // AUDIT INV1 F3: this pin matched `dropOnBody`'s DEFINITION and never
+  // its call site, so swapping the one call for `wear(held)` left
+  // dropOnBody as dead code, sent a dragged torch down the wear path
+  // (which refuses it - a light source has no equip slot) and passed
+  // the whole suite. Driven and confirmed. The RELEASE is read now, and
+  // it is read as a closed set: every act a drop can perform must be
+  // one of the two the law allows, so a third cannot be added quietly.
+  const release = src.slice(src.indexOf('row.onpointerup ='), src.indexOf('row.onpointercancel ='));
+  assert.ok(release.length > 100, 'the release handler is where a drop lands');
+  const acts = [...release.matchAll(/\b(dropOnBody|reorderPack|wear|use|takeOff|take|stow)\(/g)].map((m) => m[1]);
+  assert.deepEqual([...new Set(acts)].sort(), ['dropOnBody', 'reorderPack'],
+    'a drop performs the body act or the reorder and NOTHING else - a third act here is the drift this exists to stop');
+  assert.match(release, /if \(over\?\.closest\?\.\('\.wornmap'\)\) \{ dropOnBody\(held\); return; \}/,
+    'the body is the equip target');
+
+  // AUDIT INV1 Fb: THE DRAG IS POINTER EVENTS. The first cut used the
+  // HTML5 drag API, which does not fire from a touch - a feature drawn
+  // and unreachable on a device this port ships to, the same shape
+  // AUDIT 24 named. The repo's own precedent is ui/overworldMap.js's
+  // pan, and this follows it.
+  const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');   // the CODE, not the prose about it
+  assert.doesNotMatch(code, /\bdraggable\b|ondragstart|ondragover|ondrop\b/,
+    'no HTML5 drag survives - it is mouse-only and this port ships to phones');
+  for (const h of ['row.onpointerdown', 'row.onpointermove', 'row.onpointerup', 'row.onpointercancel']) {
+    assert.ok(src.includes(h), `${h} is the seam`);
+  }
+  assert.match(src, /row\.setPointerCapture\?\.\(e\.pointerId\)/, 'captured, as the map pan captures');
+  assert.match(src, /if \(at \|\| e\.button > 0\) return;/, 'one pointer, and never a right button');
+  assert.match(src, /Math\.abs\(e\.clientX - at\.x\) \+ Math\.abs\(e\.clientY - at\.y\) <= 4/,
+    'a 4px threshold, so a tap is still a pick');
+  assert.match(read('src/ui/enhancedStyle.js'), /\.itemrow \{ touch-action: none; \}/,
+    'and the browser must not pan the list out from under the drag');
+
+  // A LOOT ROW DOES NOT DRAG (IG7: taking from a pile is a click).
+  assert.match(src, /if \(from === 'local'\) dragFrom\(row, item\);/, 'only the local side is a drag source');
+
+  // AUDIT INV1 Fa: the drop line is drawn ABOVE the target, so the item
+  // must LAND above it. `to` is computed before the splice that shifts
+  // everything after `from` down one, so dragging DOWNWARD used to land
+  // the item below the row the line was drawn on - the affordance lied
+  // in one of its two directions. Driven here rather than grepped.
+  const move = (list, item, before) => {
+    const from = list.indexOf(item); const to = list.indexOf(before);
+    list.splice(from, 1); list.splice(from < to ? to - 1 : to, 0, item);
+    return list;
+  };
+  assert.deepEqual(move(['A', 'B', 'C'], 'A', 'B'), ['A', 'B', 'C'], 'dragging down onto B lands A above B');
+  assert.deepEqual(move(['A', 'B', 'C'], 'C', 'B'), ['A', 'C', 'B'], 'dragging up onto B lands C above B');
+  assert.deepEqual(move(['A', 'B', 'C'], 'A', 'C'), ['B', 'A', 'C'], 'and above C from either side');
+  assert.match(src, /list\.splice\(from < to \? to - 1 : to, 0, item\);/, 'the source does the same arithmetic');
+
+  const css = read('src/ui/enhancedStyle.js');
+  for (const rule of ['.itemrow.dragging', '.itemrow.dragover', '.wornmap.dragover']) {
+    assert.ok(css.includes(rule), `${rule} has an affordance - a drag with no feedback is a guess`);
+  }
+});
+

@@ -200,5 +200,10 @@ test('SH1: a box taller than stepOffset is a wall - the player slides along it a
   const src = read('src/player/collider.js');
   assert.match(src, /if \(retry\[1\] > standCeil \+ 1e-4\) continue;/);
   assert.match(src, /const standCeil = entryY \+ STEP_OFFSET;/);
-  assert.match(src, /const wallAbove = dy > 0 && center\[1\] - dy > standCeil;/);
+  // AUDIT COL1 F8: SH1's half of this is unchanged - a contact above the
+  // stand ceiling with an upward normal is a wall. COL1's middle spheres
+  // join it through the same branch (an upward-leaning face met at
+  // mid-body is a wall too), so the condition gained a second clause.
+  assert.match(src, /const wallAbove = \(dy > 0 && center\[1\] - dy > standCeil\)/,
+    "SH1's clause is the first one, and still reads the stand ceiling");
 });

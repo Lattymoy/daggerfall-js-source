@@ -1921,7 +1921,14 @@ function go(id) {
   // section change is now a walk away from the bindings - they live in
   // a Settings CATEGORY, and arriving at Settings arrives at whichever
   // category was last open, which must not inherit a stale staging.
-  discardControlsStaging();
+  // AUDIT FT16 F10: a WALK AWAY, not any click. FIX-F's guard was
+  // `id !== 'controls'`, which FT16 dropped along with the section; the
+  // unconditional discard then threw away staged binds when the rail row
+  // you clicked was the section you were already standing in - Settings,
+  // while rebinding, with the Settings row right there. The category
+  // switch does its own discard (see the CATEGORIES tabs), so this
+  // fires only where it means to: the section actually changing.
+  if (id !== section) discardControlsStaging();
   section = id; pickedKey = null; sheetOpen = false; confirming = null; render();
 }
 

@@ -250,7 +250,7 @@ test('FT15: every note is one or two sentences, and the panel stays under its bu
   }
   assert.ok(total <= MAX_TOTAL, `the 28 notes are ${total} chars (max ${MAX_TOTAL})`);
 
-  // and the eight mod rows are STILL the mod's own description - FT15 trimmed the
+  // and the seven mod rows are STILL the mod's own description - FT15 trimmed the
   // description itself rather than adding a short-note override, so there is no
   // second copy to drift (test/ft9_mods.test.js holds the equality; this holds the why)
   const src = readFileSync('src/systems/features.js', 'utf8');
@@ -276,17 +276,38 @@ test('FT16: the feature tiles take the shell\'s transparent paint, and only unde
   // the tile and the rail lose their painted grounds where the sky is behind them
   assert.match(css, /\.shell \.ft-tile \{ background: none;/, 'the tile is see-through on the shell');
   assert.match(css, /\.shell \.ft-rail \{ background: rgba\(10,12,17,0\.55\)/, 'the rail takes a scrim, as .shell .detail does');
-  // and every 1px iron rule becomes the shell's own 2px brass line
+  // and every 1px iron rule becomes the shell's own 2px brass line.
+  //
+  // AUDIT FT16 F5: this sliced a fixed 200 characters from the
+  // selector, and a CSS rule is not 200 characters long - so deleting
+  // one rule's border just slid the window onto the NEXT rule's, and
+  // `.shell .ft-seg` losing its border passed because `.shell .ft-mchip`
+  // still had one. That is this repo's own documented failure (a pin
+  // matching an identical line in the wrong branch), committed again.
+  // The slice ends at the rule's own closing brace now.
   for (const sel of ['.shell .ft-tile ', '.shell .ft-seg ', '.shell .ft-mchip ', '.shell .ft-rail ']) {
     const at = css.indexOf(sel);
     assert.ok(at > 0, `${sel} has a shell rule`);
-    assert.match(css.slice(at, at + 200), /border: 2px solid rgba\(125,116,96/, `${sel} takes the 2px brass line`);
+    const end = css.indexOf('}', at);
+    assert.ok(end > at, `${sel}'s rule is closed`);
+    assert.match(css.slice(at, end), /border: 2px solid rgba\(125,116,96/, `${sel} takes the 2px brass line`);
   }
   // THE SCOPE: the base paint stays --slate, so the pause window is untouched
   assert.match(css, /\n\.ft-tile \{ position: relative; background: var\(--slate\)/,
     'the base tile keeps its opaque ground - .px-win has a game behind it');
   assert.equal(/\n\.ft-tile \{[^}]*background: none/.test(css), false,
     'the transparency must be scoped to .shell, not written into the base');
+  // AUDIT FT16 F4: and the TOKEN ROUTE, which the comment above claimed
+  // this pin held and it did not. `.ft-tile` takes its ground from
+  // var(--slate); emptying that token makes the tiles see-through
+  // INSIDE .px-win too - and takes nine other surfaces with it - while
+  // both assertions above still pass, because they only read the
+  // literal text `background: var(--slate)`. Driven and confirmed
+  // survived before this line existed. So the token's VALUE is read.
+  const slate = /--slate:\s*([^;]+);/.exec(css)?.[1]?.trim();
+  assert.ok(slate, 'the skin declares --slate');
+  assert.match(slate, /^#[0-9a-f]{6}$/i,
+    '--slate is an OPAQUE colour: the base tile leans on it, and a transparent token would strip the pause window too');
 });
 
 // FT16: and the tile's controls join the 44px law. FT14 replaced the list's one

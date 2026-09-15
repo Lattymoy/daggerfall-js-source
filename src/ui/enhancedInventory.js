@@ -109,6 +109,17 @@ import { overlayAction } from './input.js';
  *  have no place on a body, so they sit in a row underneath rather
  *  than being hidden: a slot the player cannot see is a slot they
  *  cannot empty. */
+/** HT5: the held light's row id. No EQUIP_SLOTS member is minted for it -
+ *  DFU has no light slot, and inventing one would put a fake column in
+ *  the equip table every law here reads.
+ *
+ *  AUDIT HT5 F3: -1 is EXACTLY `EQUIP_SLOTS.None`, so the old comment's
+ *  "negative so it can never collide" was the opposite of true - None is
+ *  the one negative the equip vocabulary already uses. Nothing here
+ *  indexes the table with this id (SLOT_MAP has no -1 entry and no
+ *  reader compares row.slot against None), and THAT is the safety. */
+export const LIGHT_SLOT = -1;
+
 export const SLOT_MAP = Object.freeze({
   [EQUIP_SLOTS.Head]: { x: 110, y: 32, label: 'Head' },
   [EQUIP_SLOTS.Amulet0]: { x: 94, y: 60, label: 'Amulet' },
@@ -218,8 +229,28 @@ export function equippedModel(entity = {}) {
     x: at.x,
     y: at.y,
   })).sort((a, b) => a.y - b.y || a.x - b.x);
+  // HT5 (2026-09-15, Mac: "the torch doesnt appear slotted in
+  // inventory"): THE HELD LIGHT IS A ROW, and it is the only row here
+  // that is not one of DFU's slots.
+  //
+  // A light source HAS no equip slot - getEquipSlot answers None for
+  // all four, which is why HT2 had to make the act a USE - so the lit
+  // torch lived only in `entity.lightSource` and the worn side of this
+  // window had nothing to show. The list marked it gold (HT2) and that
+  // is all: a player holding a torch saw an empty pair of hands.
+  //
+  // Handheld Torches' own fiction is that it OCCUPIES A HAND (its
+  // with no free hand the mod stows the LIGHT, not the weapon), so a hand is where
+  // it belongs on the body. It carries a sentinel slot rather than a
+  // made-up EQUIP_SLOTS value, and the counts below still walk the
+  // REAL table, so "27 slots" stays DFU's 27 and nothing that counts
+  // slots learns about this one.
+  const light = entity?.lightSource ?? null;
+  const visible = rows.filter((r) => r.item || !r.hidden);
   return {
-    rows: rows.filter((r) => r.item || !r.hidden),
+    rows: light
+      ? [...visible, { slot: LIGHT_SLOT, label: 'Light', item: light, hidden: true, x: 110, y: 190 }]
+      : visible,
     filled: rows.filter((r) => r.item).length,
     total: rows.length,
   };
@@ -535,6 +566,116 @@ function refreshFigure() {
 /** Wearing something, through the ONE chain. A refusal is REPORTED -
  *  the classic window pops TEXT.RSC for the same two cases, and a
  *  press that silently does nothing is what the anti-lie law forbids. */
+/** INV1 (2026-09-15, Mac: "Add the ability to click and drag items to
+ *  equip or reorganize in inventory").
+ *
+ *  THE DRAG PERFORMS THE ACT THE CARD ALREADY OFFERS. It does not grow
+ *  a second rule for what a drop means: `localPrimaryAct` decides, the
+ *  same function the act button reads, so dragging a torch onto the
+ *  body LIGHTS it and dragging a cuirass WEARS it - and a refusal
+ *  (broken, class-forbidden) says the same sentence either way.
+ *
+ *  Reordering is the pack's own list and nothing else's: it moves the
+ *  item inside `entity.items`, which is what every page filter reads,
+ *  so the order a player arranges is the order every tab shows and the
+ *  save carries. It never crosses a side - a drag out of a loot pile is
+ *  a TAKE, which is a click, and mixing the two would make a slip a
+ *  transfer. */
+let dragging = null;
+
+/** AUDIT INV1 Fb: THE DRAG IS POINTER EVENTS, NOT THE HTML5 DRAG API.
+ *
+ *  The first cut used `draggable` + dragstart/drop. Those do not fire
+ *  from a touch, so the whole feature was mouse-only - on a screen the
+ *  port ships to and whose 44px target law this arc has now enforced
+ *  twice. It is the same "drawn, present, unreachable on the device
+ *  that needs it most" shape AUDIT 24 named and FT16 found again a day
+ *  ago, and the repo had already answered the question: every other
+ *  drag here is pointerdown/move/up with setPointerCapture
+ *  (ui/overworldMap.js's pan). This follows it.
+ *
+ *  ONE POINTER, and a 4px threshold, so a tap is still a pick - the
+ *  row's own click law (select, never undress) is untouched below that
+ *  distance, and suppressed above it so a drag cannot also select.
+ *
+ *  THE TARGET IS HIT-TESTED at the release rather than tracked by
+ *  dragover, which is what lets the body and the rows share one seam:
+ *  the worn map wants `dropOnBody`, another row wants `reorderPack`,
+ *  and anywhere else wants nothing. */
+function dragFrom(row, item) {
+  let at = null;
+  const clear = () => {
+    row.classList.remove('dragging');
+    for (const n of document.querySelectorAll('.dragover')) n.classList.remove('dragover');
+  };
+  row.onpointerdown = (e) => {
+    if (at || e.button > 0) return;   // one pointer; a second is ignored, never adopted
+    at = { id: e.pointerId, x: e.clientX, y: e.clientY, moved: false };
+    row.setPointerCapture?.(e.pointerId);
+  };
+  row.onpointermove = (e) => {
+    if (!at || e.pointerId !== at.id) return;
+    if (!at.moved && Math.abs(e.clientX - at.x) + Math.abs(e.clientY - at.y) <= 4) return;
+    if (!at.moved) { at.moved = true; dragging = item; row.classList.add('dragging'); }
+    clear();
+    row.classList.add('dragging');
+    const over = document.elementFromPoint?.(e.clientX, e.clientY);
+    const onBody = over?.closest?.('.wornmap');
+    const onRow = over?.closest?.('.itemrow');
+    if (onBody) onBody.classList.add('dragover');
+    else if (onRow && onRow !== row) onRow.classList.add('dragover');
+  };
+  row.onpointerup = (e) => {
+    if (!at || e.pointerId !== at.id) return;
+    const moved = at.moved;
+    at = null;
+    row.releasePointerCapture?.(e.pointerId);
+    if (!moved) return;   // under the threshold this was a tap: the click law has it
+    clear();
+    const held = dragging;
+    dragging = null;
+    const over = document.elementFromPoint?.(e.clientX, e.clientY);
+    if (!held) return;
+    if (over?.closest?.('.wornmap')) { dropOnBody(held); return; }
+    const onRow = over?.closest?.('.itemrow');
+    const target = onRow && onRow !== row ? rowItems.get(onRow) : null;
+    if (target) reorderPack(held, target);
+  };
+  row.onpointercancel = () => { at = null; dragging = null; clear(); };
+  rowItems.set(row, item);
+}
+/** Which item a rendered row stands for - the hit test answers an
+ *  ELEMENT, and the reorder needs the thing it represents. */
+const rowItems = new WeakMap();
+
+function dropOnBody(item) {
+  const act = localPrimaryAct(item, deps.entity);
+  if (!act) return;
+  if (act.kind === 'wear') { wear(item); return; }
+  if (act.kind === 'takeOff') { takeOff(item.equipSlot); return; }
+  // AUDIT 22 F6: the light arm takes NO collection, as DFU's equip click does
+  use(item, null);
+}
+
+/** Move `item` to `before`'s place in the player's own list. */
+function reorderPack(item, before) {
+  const list = deps.entity?.items;
+  if (!Array.isArray(list) || item === before) return;
+  const from = list.indexOf(item);
+  const to = list.indexOf(before);
+  if (from < 0 || to < 0) return;
+  // AUDIT INV1 Fa: the drop line is drawn ABOVE the target row, so the
+  // item must LAND above it - and `to` was computed before the splice
+  // that shifts everything after `from` down one. Dragging downward
+  // therefore landed the item BELOW the row the line was drawn on
+  // ([A,B,C] dragging A onto B gave BAC), so the affordance lied in one
+  // of the two directions. Take the shift off when moving down.
+  list.splice(from, 1);
+  list.splice(from < to ? to - 1 : to, 0, item);
+  refresh();
+  render();
+}
+
 function wear(item) {
   notice = null;
   const named = itemLongName(item, { getQuest: deps.getQuest ?? null });   // RF6: the resolver's name, never the record's raw one (an unidentified magic item's)
@@ -925,7 +1066,11 @@ const WORN_FAMILIES = Object.freeze([
   { id: 'rings', label: 'Rings', area: '1 / 3', slots: ['Ring'] },
   { id: 'tokens', label: 'Tokens', area: '2 / 3', slots: ['Mark', 'Crystal', 'Unnamed'] },
   { id: 'rhand', label: 'R\u00b7Weapon', area: '3 / 3', slots: ['Right hand'] },
-  { id: 'lhand', label: 'L\u00b7Weapon', area: '4 / 3', slots: ['Left hand'] },
+  // HT5: the held light shares the off hand's panel and is listed
+  // FIRST, because the mod frees a hand to hold one - so when both are
+  // filled the torch is the thing you just did, and the weapon is one
+  // tap away on the family's own cycle.
+  { id: 'lhand', label: 'L\u00b7Hand', area: '4 / 3', slots: ['Light', 'Left hand'] },
   { id: 'legs', label: 'Legs', area: '5 / 3', slots: ['Legs, armour', 'Legs, clothes'] },
   { id: 'feet', label: 'Feet', area: '6 / 3', slots: ['Feet'] },
 ]);
@@ -942,6 +1087,8 @@ function equippedList() {
   // area is the map's.
   const wrap = el('section', 'equipped');
   const map = el('div', 'wornmap');
+  // INV1: the body is the equip target - `dragFrom`'s pointerup finds
+  // it by hit test, so the map needs no handler of its own.
   // PX19g: the doll's FRAME is part of the composition and is always
   // there - art inside it when the paperdoll can draw, a quiet
   // Avatar plaque when it cannot. Slapped-behind is over.
@@ -1146,7 +1293,15 @@ function itemRow(item, from = 'local') {
   if (sub) mid.append(el('small', null, sub));
   row.append(mid);
   row.append(el('span', 'itemwt', `${line.weight.toFixed(2)} kg`));
+  // INV1: a LOCAL row drags. A loot row does not - taking from a pile
+  // is a click, and a drag that could also transfer would make a slip
+  // a theft.
+  if (from === 'local') dragFrom(row, item);
   row.onclick = () => {
+    // AUDIT INV1 Fb: a release that DRAGGED is not a pick. The click
+    // fires after pointerup, so without this a reorder would also
+    // select the row it left.
+    if (row.classList.contains('dragging')) { row.classList.remove('dragging'); return; }
     // AUDIT 26: "Send click to quest system" (:2027-2037) - the FIRST
     // act of RemoteItemListScroller_OnItemClick, ahead of the
     // action-mode branch, so LOOKING at a quest item in a pile counts

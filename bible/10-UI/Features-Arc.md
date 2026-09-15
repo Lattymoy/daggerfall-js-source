@@ -749,13 +749,13 @@ overexplanation wall of text within featured categories"*.
 
 The measurement first, because "too long" is not a defect until it has
 a number. The 28 rows carried **10,292 characters** of note between
-them - a median of 317 and a worst case of 917 (Loot rarity), with
+them - a median of 317 (the lower of the middle pair) and a worst case of 917 (Loot rarity), with
 Enhanced environments at 862 and Enhanced combat visuals at 563. The
 reading rail FT14 built shows one note at a time, which made the length
 visible in a way the old scrolling list never had: a tile you point at
 answers with four or five sentences when you asked one question.
 
-They are now **6,353 characters**, a median of 218 and a worst case of
+They are now **6,353 characters**, a median of 218 (the middle pair's mean; 217 by the lower-of-pair reading used above) and a worst case of
 429. Thirty-eight percent of the words gone, and the two longest rows
 cut by sixty and by fifty-two percent.
 
@@ -791,7 +791,7 @@ per-row rather than a sweep.
 
 FT9's law is that a vendored mod's row shows the mod's own
 `Enabled.description` from `modSettings.js`, one source, no copy. The
-eight mod rows were among the longest on the panel, so the obvious move
+seven mod rows (Dynamic Skies has none - the outdoors row is its switch) were among the longest on the panel, so the obvious move
 was a short-note override on `modFeature`. That would have been the
 band-aid: two strings for one sentence, and a second place to forget.
 
@@ -841,7 +841,7 @@ them. That is the whole of Mac's first report, and it is not a taste
 call: the list those tiles replaced had been transparent, because
 `.shell .row` had a rule and `.ft-tile` never did.
 
-Twelve rules, all scoped to `.shell`. **The scope is the design
+Eleven rule blocks (twelve selectors), all scoped to `.shell`. **The scope is the design
 decision**, and the pin holds it as firmly as the rules: repainting the
 tokens instead would have taken the pause window with it, where the
 opaque paint is correct. So the pin asserts both that the shell rules
