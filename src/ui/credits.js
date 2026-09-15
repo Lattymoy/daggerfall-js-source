@@ -152,5 +152,14 @@ export const CREDITS = Object.freeze({
       contact: 'forums.dfworkshop.net',
       vendor: Object.freeze(['ambient-text']),
     }),
+    Object.freeze({
+      title: 'Eye Of The Beholder',
+      version: '2.1',
+      author: 'RedRoryOTheGlen',
+      what: 'Third person for a player with no Morrowind data (EOTB): the camera swings out behind your shoulder on the wheel, clears walls on its own, and you are drawn as the mod\u2019s own sprite - eight ways round, with its idle, walk, attack and spell states on foot and in the saddle.',
+      terms: 'The camera and the player sprite ported from the shipped bundle, read off its compiled script method by method - its attack and death animations, footsteps and cart are NOT ported; the mod\u2019s own 3035 sprites vendored, re-encoded as indexed PNG and lossless for every drawn pixel - see vendor/eye-of-the-beholder/README.md for the permission record and the measurement.',
+      contact: 'rmufrancisco@gmail.com',
+      vendor: Object.freeze(['eye-of-the-beholder']),
+    }),
   ]),
 });

@@ -140,6 +140,13 @@ export const MOD_CURATED = Object.freeze({
     'Adamantium', 'Ebony', 'Orcish', 'Daedric']),
   'roads-hazelnut': Object.freeze(['SmoothRoads', 'RiversAndStreams']),
   'ambient-text': Object.freeze(['textChance', 'interval', 'postTextInterval', 'textDisplayTime']),   // AT0: all four it ships - the mod is small enough that curation would only hide something
+  // EOTB0: the mod ships FIFTY-FOUR keys across nine sections, so this
+  // one IS curated, and the four are the ones a player reaches for
+  // first: how far back the camera sits, which shoulder it sits over,
+  // how fast it follows, and how big you are drawn. Everything else
+  // stays in the mod's own pane.
+  'eye-of-the-beholder': Object.freeze(['Camera.LongitudinalDistance', 'Camera.FrontalPlaneOffset',
+    'Camera.Speed', 'Animation.BillboardScale']),
 });
 
 /** The `Modules.` keys a vendor ships, in the mod's own order - the
@@ -425,6 +432,15 @@ export const FEATURES = Object.freeze([
   // has been running the whole time (AT1 - the interval keeps running
   // while the mod is quiet, exactly as it does while you are indoors).
   modFeature('ambient-text', 'Takes effect at once. The mod then speaks on its own clock.', 'world'),
+  // EOTB0 (2026-09-15): EYE OF THE BEHOLDER - third person for a
+  // player with no Morrowind data (Mac: "This is moreso for those who
+  // opt out of using morrowind"). Filed under `world` rather than
+  // `combat`: it changes where you see the whole game from, not how a
+  // blow lands. The effect line is honest about the one thing that is
+  // not immediate - the view itself is the WHEEL's now (EOTB4), so
+  // turning the row on does not move the camera until the player
+  // scrolls.
+  modFeature('eye-of-the-beholder', 'Takes effect at once. Scroll out to leave first person.', 'world'),
   // FT10 (2026-09-14): DFU'S OWN DUNGEON ENHANCEMENTS - three of the
   // Enhancements section's switches, each read by the port at the point
   // of use as DFU reads it. DFU Classic: Daggerfall Unity's departures

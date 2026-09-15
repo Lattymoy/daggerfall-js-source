@@ -97,6 +97,24 @@ export default defineConfig({
   base: './',
   build: {
     target: 'es2022',
+    // EOTB5: EYE OF THE BEHOLDER'S SPRITES ARE FILES, NOT JAVASCRIPT.
+    //
+    // Vite inlines any asset under `assetsInlineLimit` (4 KB by
+    // default) as a base64 data URI. The mod ships 3035 sprites
+    // averaging 2.8 KB, so every one of them qualified - and the build
+    // quietly produced a TWELVE MEGABYTE JavaScript chunk, exited 0 and
+    // said nothing. A player would have parsed 12 MB of base64 before
+    // the game started, to get art most of them never look at.
+    //
+    // So this mod's art is excluded from inlining BY PATH. The rule is
+    // narrow on purpose: every other vendored texture keeps the default,
+    // because inlining a handful of small files is a win and the
+    // problem here is only ever the COUNT.
+    // Returning `undefined` falls back to the default limit, which is
+    // what every other asset must keep - a callback that returned
+    // `true` for them would force-inline them all REGARDLESS of size,
+    // which is the opposite mistake and just as quiet.
+    assetsInlineLimit: (filePath) => (/[\\/]vendor[\\/]eye-of-the-beholder[\\/]/.test(filePath) ? false : undefined),
     // TWO PAGES. The game, and the voxel editor — which is a real route
     // now rather than a standalone file you have to build yourself.
     // Neither carries game data: the editor asks for the user's ARENA2

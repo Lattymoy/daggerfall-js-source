@@ -5516,7 +5516,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7258-7270 -
+  // worldModes answers it in BOTH modes (worldModes.js:7259-7271 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -8200,6 +8200,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // collider standing in for the sphere cast.
     const mwv = mwViewFrame({
       fpEye: cam.pos, feet: player.feetAt(), yaw: cam.yaw, pitch: cam.pitch,
+      dt, riding: !!player.riding,   // AUDIT-EOTB F3/F4: the host's own clock, and the one state only it has
       raycast: (o, d, m) => collider.raycast(o, d, m),
     });
     const view = lookAt(mwv.eye, [mwv.eye[0] + fwd[0], mwv.eye[1] + fwd[1], mwv.eye[2] + fwd[2]], [0, 1, 0]);
