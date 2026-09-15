@@ -46,7 +46,17 @@
 
     a { color: #d8cfae; text-decoration: none; border-bottom: 2px solid #7d7460; }
     a:hover, a:focus-visible { outline: none; color: rgb(243,239,44); border-color: var(--brass); text-shadow: 2px 2px 0 rgb(93,77,12); }
-    h1, h2, h3 { font-family: 'Jacquard 12', var(--brand); font-weight: 400; margin: 0; text-shadow: 4px 4px 0 rgba(0,0,0,0.7); }
+    /* SITE1 (2026-09-15, Mac: "remove the fancy font from the site for
+       capital letters (keep the daggerfall Enhanced title unchanged)"):
+       JACQUARD 12 IS THE WORDMARK'S FACE, AND NOTHING ELSE'S. It was set
+       on every heading, every step numeral and every Q&A term, and its
+       capitals are the ornate part - an H, a G, a P at 52px carry more
+       flourish than a section title is asking for. The page keeps its
+       own pixel face for those, which is what the body, the sub-line and
+       every tracked caps rule were already set in, so the site now has
+       ONE text face plus a wordmark rather than two competing for the
+       same words. The title itself is untouched. */
+    h1, h2, h3 { font-family: 'Pixelify Five', 'Pixelify Sans', monospace; font-weight: 400; margin: 0; text-shadow: 4px 4px 0 rgba(0,0,0,0.7); }
     p { margin: 0 0 14px; }
     .skip { position: absolute; left: 12px; top: -60px; padding: 10px 14px; background: var(--brass); color: #0a0c11; z-index: 10; border: 0; }
     .skip:focus { top: 12px; }
@@ -85,7 +95,7 @@
     /* BR3 (Mac, 2026-09-14: "revert the logo to the original Daggerfall
        Enhanced text"): the wordmark is TYPE again - one word over a tracked
        sub-line, over the page's own rule - and the page carries no image. */
-    .wordmark { font-size: clamp(64px, 12vw, 112px); line-height: 1; }
+    .wordmark { font-family: 'Jacquard 12', var(--brand); font-size: clamp(64px, 12vw, 112px); line-height: 1; }
     .wordmark small { display: block; font-family: 'Pixelify Five', 'Pixelify Sans', monospace; font-size: 16px; letter-spacing: 0.5em; text-indent: 0.5em; text-transform: uppercase; color: #7d7460; margin-top: 10px; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
     .dek { max-width: 46ch; margin: 0 auto 24px; }
     .gate { max-width: 54ch; margin: 0 auto 26px; color: #a89f88; font-size: 15px; }
@@ -158,13 +168,13 @@
     .steps { list-style: none; margin: 0 auto; padding: 0; counter-reset: step; text-align: left; max-width: 64ch; }
     .step { display: grid; grid-template-columns: 54px 1fr; gap: 0 16px; padding: 18px 0; border-top: 2px solid #232a33; }
     .step:first-child { border-top: 0; }
-    .step::before { counter-increment: step; content: counter(step); font-family: 'Jacquard 12', var(--brand); font-size: 40px; line-height: 1; color: var(--brass); text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+    .step::before { counter-increment: step; content: counter(step); font-size: 40px; line-height: 1; color: var(--brass); text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
     .step h3 { font-size: 24px; margin-bottom: 6px; }
     .step p { color: #a89f88; font-size: 15px; }
     .sources { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 20px; font-size: 15px; }
 
     .qa { display: grid; grid-template-columns: 240px 1fr; gap: 20px 26px; text-align: left; margin: 0; }
-    .qa dt { font-family: 'Jacquard 12', var(--brand); font-size: 24px; line-height: 1.1; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+    .qa dt { font-size: 24px; line-height: 1.1; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
     .qa dd { margin: 0; color: #a89f88; font-size: 15px; }
     .qa dd .meta { display: block; color: #7d7460; font-size: 14px; margin-top: 6px; }
 

@@ -12947,3 +12947,38 @@ Ledger row HT2. Pinned by execution: `test/ht2_packlight.test.js` (5)
 a worn sword, the reference compare against a second identical torch,
 the view's wiring, and that the classic window's arm still stands
 beside it.
+
+## SITE1 - ONE TEXT FACE, AND A WORDMARK (2026-09-15)
+
+Mac: *"On the website I want to remove the fancy font from the site for
+capital letters (keep the daggerfall Enhanced title unchanged)"*.
+
+U63 set the site in the game's two pixel faces: Jacquard 12, the
+blackletter the menu wears as its wordmark, and Pixelify Sans for
+everything else. The trouble is where the first one landed. It was on
+`h1, h2, h3`, on the step numerals and on the Q&A terms - so a section
+title at 52px, twelve card headings and five step and answer heads were
+all set in a display face whose capitals are its whole character. An
+ornate H on "How to play" is the wordmark's job being done twice, at a
+size where it competes with the title rather than leading a section.
+
+**Jacquard 12 is the wordmark's face and nothing else's now.** Every
+heading, the three brass step numerals and every Q&A term take the
+page's own pixel face - which the body text, the ENHANCED sub-line and
+every tracked-caps rule were already set in, so this removes a face
+rather than introducing one. The site has one text face plus a wordmark.
+
+The title is untouched, which is the one thing Mac named: `.wordmark`
+carries the family now, with `--brand` behind it exactly as before.
+
+**The pin is a COUNT, not a presence.** `test/landing.test.js` asserts
+that the page names Jacquard 12 exactly once and that the rule naming it
+is `.wordmark` - because a pin that only checked the wordmark still has
+it would pass a page that had quietly put the display face back on a
+new heading. The fonts request is unchanged: the skin's own URL, all
+four families, one cache entry for both pages (U63's law), and the
+credits line still names both faces truthfully.
+
+One layout consequence, accepted rather than patched around: the pixel
+face is wider, so step 2's head ("Press Play and pick your ARENA2
+folder.") now wraps to two lines where the display face fitted one.
