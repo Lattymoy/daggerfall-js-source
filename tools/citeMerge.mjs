@@ -40,9 +40,29 @@ export function provenance(line, theirs, ours) {
 /**
  * Move one line's cites into `t` (the primary spellings and the bare
  * continuations after them) by `map`, each under the content check.
- * @returns {{ out: string, moved: number, held: {status, text, to}[] }}
+ *
+ * THE STRUCK LAW, which this tool was missing (2026-09-15). citeShift has
+ * carried it since RF3 and citeMerge - written later, for the AUDIT 65
+ * integration - never took it over: the same rule in one tool and not its
+ * sibling, which is this codebase's own measured failure mode wearing a
+ * different hat. Two things follow from it:
+ *
+ *   - A STRUCK line (`~~...~~`) holds its cites. Its subject was fixed or
+ *     deleted, so its numbers are a record of where the thing USED to be,
+ *     and moving them makes the record say something that was never true.
+ *   - An ESCAPED test literal (`world\.js:N`) whose number the docs carry
+ *     ONLY on struck lines holds too, because the literal exists to MATCH
+ *     that struck row and the two must stay in step. That is `holdEscaped`,
+ *     and it is what bit twice in one hour: `world.js:4117-4120` names a
+ *     seam FX1 deleted, citedrift.test.js quotes it in NO_LINE_LEFT, and
+ *     each merge moved the quote away from the row it has to match.
+ *
+ * @param moveStruck   move them anyway (citeShift's --struck)
+ * @param holdEscaped  numbers whose escaped literal must stay (see main)
+ * @returns {{ out: string, moved: number, held: {status, text, to}[],
+ *   seen: {a: number, status: string, escaped: boolean}[] }}
  */
-export function mapLine(l, t, { map, oldLines, newLines, res = citeSpellings(t) }) {
+export function mapLine(l, t, { map, oldLines, newLines, res = citeSpellings(t), moveStruck = false, holdEscaped = null }) {
   const same1 = (x, y) => x != null && y != null && x.trim() === y.trim();
   const verdict = (a, b) => {
     const ma = map(a), mb = b != null ? map(b) : null;
@@ -51,13 +71,18 @@ export function mapLine(l, t, { map, oldLines, newLines, res = citeSpellings(t) 
     if (!same1(oldLines[a - 1], newLines[ma - 1]) || (b != null && !same1(oldLines[b - 1], newLines[mb - 1]))) return { status: 'mismatch', ma, mb };
     return { status: 'move', ma, mb };
   };
-  const spans = [], edits = [], held = [];
+  const spans = [], edits = [], held = [], seen = [];
   for (const re of res) for (const m of l.matchAll(re)) {
     // a path before the basename must be the target's own
     const pre = m[0].slice(0, m[0].lastIndexOf(':')).replace('\\.', '.').replace(/^(\.\.?\/)+/, '');
     if (pre.includes('/') && !t.endsWith(pre)) continue;
-    const a = +m[1], b = m[2] ? +m[2] : null, v = verdict(a, b);
+    const a = +m[1], b = m[2] ? +m[2] : null;
+    const escaped = m[0].includes('\\.');
+    const v = /~~/.test(l) && !moveStruck ? { status: 'struck' }
+      : escaped && holdEscaped?.has(a) ? { status: 'pinned-struck' }
+        : verdict(a, b);
     spans.push([m.index, m.index + m[0].length]);
+    seen.push({ a, status: v.status, escaped });
     if (v.status === 'same') continue;
     if (v.status !== 'move') { held.push({ status: v.status, text: m[0], to: v.ma ?? null }); continue; }
     edits.push([m.index, m.index + m[0].length, m[0].replace(/(\d+)(-(\d+))?(`?)$/, (s, x, d, y, tick) => `${v.ma}${y != null ? '-' + v.mb : ''}${tick}`)]);
@@ -78,7 +103,7 @@ export function mapLine(l, t, { map, oldLines, newLines, res = citeSpellings(t) 
   }
   let out = l;
   for (const [s, e, text] of edits.sort((x, y) => y[0] - x[0])) out = out.slice(0, s) + text + out.slice(e);
-  return { out, moved: edits.length, held };
+  return { out, moved: edits.length, held, seen };
 }
 
 // ---- the CLI --------------------------------------------------------------
@@ -100,10 +125,45 @@ function main(argv) {
     }
   }
   const linesOf = (base, doc) => { try { return new Set(git('show', `${base}:${doc}`).split('\n')); } catch { return null; } };
+  const docs = git('ls-files', 'bible', 'test', 'src', 'tools').split('\n').filter((f) => /\.(js|mjs|md|sh)$/.test(f) && !SELF_DOCS.includes(f));   // RF3
+  const linesCache = new Map(), provCache = new Map();
+
+  // PASS ONE (citeShift's, in this tool's shape): learn, per target, which
+  // numbers the docs carry on STRUCK lines ONLY. A test's escaped literal
+  // of one of those is a QUOTE of the struck row, not a reference to a
+  // live line, and must stay with it. Nothing is written in this pass.
+  const holdOf = new Map();
+  {
+    const struckNums = new Map(), movedNums = new Map();
+    const add = (m, t, n) => (m.get(t) ?? m.set(t, new Set()).get(t)).add(n);
+    for (const doc of docs) {
+      const lines = readFileSync(join(ROOT, doc), 'utf8').split('\n');
+      linesCache.set(doc, lines);
+      const theirs = linesOf(THEIRS, doc), ours = linesOf(OURS, doc);
+      provCache.set(doc, [theirs, ours]);
+      for (const l of lines) {
+        if (!/:\d/.test(l)) continue;
+        const prov = provenance(l, theirs, ours);
+        if (!prov) continue;
+        for (const [t, cfg] of targetsOf[prov]) {
+          if (t === doc) continue;
+          for (const { a, status, escaped } of mapLine(l, t, cfg).seen) {
+            if (escaped) continue;
+            if (status === 'struck') add(struckNums, t, a);
+            else if (status === 'move') add(movedNums, t, a);
+          }
+        }
+      }
+    }
+    for (const [t, nums] of struckNums) {
+      holdOf.set(t, new Set([...nums].filter((n) => !(movedNums.get(t)?.has(n)))));
+    }
+  }
+
   let moved = 0, held = 0, news = 0;
-  for (const doc of git('ls-files', 'bible', 'test', 'src', 'tools').split('\n').filter((f) => /\.(js|mjs|md|sh)$/.test(f) && !SELF_DOCS.includes(f))) {   // RF3
-    const lines = readFileSync(join(ROOT, doc), 'utf8').split('\n');
-    const theirs = linesOf(THEIRS, doc), ours = linesOf(OURS, doc);
+  for (const doc of docs) {
+    const lines = linesCache.get(doc);
+    const [theirs, ours] = provCache.get(doc);
     let changed = false;
     lines.forEach((l, i) => {
       if (!/:\d/.test(l)) return;
@@ -114,7 +174,7 @@ function main(argv) {
       let out = l;
       for (const name of names) for (const t of byBase[prov].get(name) ?? []) {
         if (t === doc) continue;
-        const r = mapLine(out, t, targetsOf[prov].get(t));
+        const r = mapLine(out, t, { ...targetsOf[prov].get(t), holdEscaped: holdOf.get(t) ?? null });
         for (const h of r.held) { held++; console.log(`  ${h.status.toUpperCase().padEnd(8)} ${doc}:${i + 1}  ${h.text}${h.continuation ? ' (continuation)' : ''}${h.to ? ' -> ' + h.to : ''}  [${t}]`); }
         if (r.out !== out) { moved += r.moved; console.log(`  ${apply ? 'moved  ' : 'MOVE   '} ${doc}:${i + 1}  ${out.trim().slice(0, 100)}\n        -> ${r.out.trim().slice(0, 100)}`); out = r.out; }
       }

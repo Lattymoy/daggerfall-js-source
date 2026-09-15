@@ -1,1 +1,1 @@
-export const BUILD_TAG = '8a64580';
+export const BUILD_TAG = '2fa0b87';
