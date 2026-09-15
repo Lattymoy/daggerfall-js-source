@@ -1,6 +1,24 @@
 // ═══════════════════════════════════════════════════════════════════
 // WM1 — THE WINDMILL'S TURN: what makes the blades go round.
 //
+// WM3 (2026-09-15, Mac: "the windmills of daggerfall is missing from
+// credits and the feature menu"): THE SWITCH. Every other vendored mod
+// carries one, and `features.js` builds a mod's tile FROM its switch
+// (`modFeature` reads the vendor's own `Enabled` key), so a pack
+// without one could not have a row at all - the features page said so
+// in as many words: "Windmills (Kamer) has no switch and so no row - a
+// row needs a control." That was a fair description of the machinery
+// and the wrong answer to the question, and FT14 made it visible: it
+// retired the Mods pane, which had been the one surface that listed a
+// vendored pack whether or not it had a knob. Kamer's name left the
+// screen with it.
+//
+// This mod is the port's own bake rather than a shipped bundle, so it
+// has no mod-settings file to carry an `Enabled` key. The switch is a
+// PREF instead, declared on its Features row (RF4's law: the row IS
+// the declaration), and read here - beside the turn it gates, where a
+// reader looking for "can the mills be turned off" will be looking.
+//
 // Classic Daggerfall's farm blocks stand a windmill on the ground and
 // it never moves. Turning it is an ENHANCED-ONLY DEPARTURE (Ledger A),
 // the 1:1 lane sees Daggerfall's own farms, and with the enhanced skin
@@ -76,6 +94,15 @@
 // laws below are therefore held by node pins with synthetic wind,
 // with synthetic wind, no ARENA2 and no GL.
 // ═══════════════════════════════════════════════════════════════════
+
+import { getPref } from '../systems/uiPrefs.js';   // WM3: the pack's own switch
+import { WINDMILLS_KEY } from '../systems/features.js';   // WM3: declared with its row - see the note there for which way the import may point
+
+/** WM3: whether the mills are drawn at all. The ENHANCED SKIN is the
+ *  other half of the gate and stays the caller's
+ *  (world/rmbLayout.js) - a switch cannot put a departure on the
+ *  classic lane. */
+export const windmillsOn = () => !!getPref(WINDMILLS_KEY);
 
 import { BODY, CLIMATE_SKINS, SKIN_SLOTS } from './windmillMesh.js';
 import { WIND_ROW_CALM, WIND_ROW_FAIR } from '../systems/wind.js';
