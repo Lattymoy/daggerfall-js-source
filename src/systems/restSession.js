@@ -31,10 +31,57 @@
 // pend towns" - by porting CanRest (:542-599) whole, and the merge
 // below is the union of what each of them got right.
 
+// RESTX1 (2026-09-15, Mac: "for online I want to change the rest
+// mechanic to not use any time. Basically rest just becomes the way to
+// regain"): ONLINE, A REST WAITS FOR NOTHING.
+//
+// WHAT WAS ACTUALLY WRONG, and it is not what it looks like. Online a
+// rest has never been able to move the clock: the world's time is a
+// function of wall time and `worldTick.setWorldMinutes` REFUSES every
+// local write while the shared clock stands (:834-838). WORLD5's answer
+// was to make the rest honest about that by PACING it off the shared
+// clock - "a rest fabricates no minutes, so an hour of rest is an hour
+// of the shared world's time". Correct, and the price is the whole of
+// Mac's complaint: at DFU's TimeScale an hour is five real minutes, so
+// resting eight hours is forty real minutes of sitting in a window
+// watching a counter. Nobody does that; they close the window and stay
+// hurt.
+//
+// So the waiting goes. Online a REST resolves at once - the same hourly
+// ladder, the same per-hour vitals, the same enemy checks - and passes
+// no minutes at all, because none were ever available to pass. Nothing
+// is fabricated and nothing is stolen from the other players' sky.
+//
+// LOITER IS NOT REST AND KEEPS WAITING. Loiter recovers nothing by
+// design; passing time IS its entire purpose (wait for a shop to open,
+// wait for dark). A loiter that resolved at once would do literally
+// nothing, so online it still rides the shared clock exactly as WORLD5
+// left it. One verb regains, the other waits.
+//
+// WHAT A FREE REST DOES NOT DO, and it follows from "no time passes":
+// no world minutes, so no quest ticks, no magic rounds, no disease or
+// poison progress, no encounter catch-up - the host's `advanceMinutes`
+// is simply never called. You healed; nothing else happened. That is
+// the deliberate shape, not an omission.
+
 import { getInt, getBool } from './settings.js';   // SETT: LoiterLimitInHours, S40: IllegalRestWarning
 import { roomRemainingHours } from './tavern.js';   // S40: GetRemainingHours, CanRest's room arm
 import { interiorSceneName } from './sceneCache.js';   // S40: DaggerfallInterior.GetSceneName
 import { BUILDING_TYPES } from '../world/buildingNames.js';   // S40: the Ship and Tavern arms
+
+/** RESTX1: how many hours a FREE rest takes in ONE FRAME before
+ *  yielding. It is a chunk, not a stop - the next frame picks the rest
+ *  up where it left off - and it exists so no single frame can spin.
+ *
+ *  `full` is the mode that needs it: it ends only when `fullyHealed`
+ *  answers true and has no counter of its own. It always converges,
+ *  because a free rest passes no minutes for a disease or a poison to
+ *  drain through and all three recovery rates clamp above zero
+ *  (`healthRecoveryRate` and `fatigueRecoveryRate` at 1;
+ *  `spellPointRecoveryRate` at 1 except for the NoRegenSpellPoints
+ *  careers, which `restFullyHealed` exempts from the magicka test) - so
+ *  the cap is insurance, not a rule. 99 is DFU's own prompt cap. */
+export const FREE_REST_HOUR_CAP = 99;
 
 export const MINUTES_PER_TICK = 10;          // classic minutes per sub-tick
 export const REST_WAIT_PER_HOUR = 0.75;      // real seconds per rested hour
@@ -399,6 +446,15 @@ export class RestSession {
     // waitTimePerHour / minutesPerTick, verbatim (NOT per-hour /
     // ticks-per-hour - see the header quirk note).
     this._subTickEvery = (mode === 'loiter' ? LOITER_WAIT_PER_HOUR : REST_WAIT_PER_HOUR) / MINUTES_PER_TICK;
+    this._freeHours = 0;   // RESTX1: hours taken in this frame's free run, against FREE_REST_HOUR_CAP
+  }
+
+  /** RESTX1: this rest waits for nothing - the shared clock is standing
+   *  (online) and this is a REST, not a loiter. See the header: online
+   *  no minutes were ever available to pass, so pacing off the world's
+   *  clock bought honesty at the price of forty real minutes a night. */
+  _free() {
+    return this.mode !== 'loiter' && Number.isFinite(this.deps.sharedMinutes?.());
   }
 
   /** End the session early (the toggle key / Escape): the mode's own
@@ -461,6 +517,7 @@ export class RestSession {
    *  offline). */
   _accrue(dt) {
     this._sharedTaken = false;   // AUDIT WORLD5 C7: the frame's one shared sub-tick, not yet taken
+    this._freeHours = 0;         // RESTX1: this frame's free run starts here
     if (Number.isFinite(this.deps.sharedMinutes?.())) return;
     this._timer += dt;
   }
@@ -482,6 +539,11 @@ export class RestSession {
    *  an hour of the shared world's time - five real minutes at DFU's TimeScale - and the window counts the clock's
    *  own MINUTES_PER_TICK boundaries as they pass. */
   _takeSubTick() {
+    // RESTX1: a free rest is paced by nothing at all - every sub-tick
+    // is owed the moment it is asked for, so the whole rest resolves
+    // inside this one frame's loop. The hourly ladder below is
+    // unchanged; it simply is not made to wait between its rungs.
+    if (this._free()) return this._freeHours < FREE_REST_HOUR_CAP;
     const shared = this.deps.sharedMinutes?.();
     if (Number.isFinite(shared)) {
       if (this._sharedAt == null) this._sharedAt = shared;
@@ -567,9 +629,16 @@ export class RestSession {
 
     this._accrue(dt);
     while (this._takeSubTick()) {
-      // AUDIT WORLD5 C8: the sub-tick's own span rides along under the shared clock (its END - the reading just
-      // counted; null offline), because a host that is refused the clock write cannot read the span off the clock
-      this.deps.advanceMinutes(MINUTES_PER_TICK, this._sharedAt);
+      // RESTX1: THE ONE PLACE TIME IS SPENT, and a free rest skips it
+      // whole - the host's clock jump AND the quest tick that rides the
+      // same sub-tick. No minutes pass, so there are no minutes for a
+      // quest clock, a magic round, a disease or an encounter to read.
+      // Everything below this branch - the hours, the enemy checks, the
+      // vitals, the rent - is the ladder DFU runs, untouched.
+      if (!this._free()) {
+        // AUDIT WORLD5 C8: the sub-tick's own span rides along under the shared clock (its END - the reading just
+        // counted; null offline), because a host that is refused the clock write cannot read the span off the clock
+        this.deps.advanceMinutes(MINUTES_PER_TICK, this._sharedAt);
       // TickRest :376-379, `RaiseTime` then `QuestMachine.Instance.
       // Tick()`, in that order and inside the SAME sub-tick. DFU's own
       // comment two lines above says the ten-minute granularity exists
@@ -584,7 +653,8 @@ export class RestSession {
       // It is the SESSION's law and not a host's: DFU calls the
       // machine directly here, bypassing QuestMachine.Update's
       // real-time pacing, so the port must call the unpaced door too.
-      this.deps.tickQuests?.();
+        this.deps.tickQuests?.();
+      }
       this._minutesOfHour += MINUTES_PER_TICK;
       if (this._minutesOfHour < 60) {
         // :381-385 returns false here, so DFU's frame is over either
@@ -596,6 +666,7 @@ export class RestSession {
       }
       this._minutesOfHour = 0;
       this.totalHours++;
+      this._freeHours++;   // RESTX1: against the cap, so `full` cannot spin a frame forever
       // TickRest :396-399 - the SECOND top-window test, and DFU's own
       // comment says why it exists: "Checking for second time as quest
       // tick above can perfectly align with rest ending". This is the

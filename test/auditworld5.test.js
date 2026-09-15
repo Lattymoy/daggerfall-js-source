@@ -202,11 +202,21 @@ test('AUDIT WORLD5 C6: online the collapse\'s hour cannot be charged, so it is n
   assert.deepEqual(exhaustionOutcome({ entity: P(), enemiesNearby: true }).kind, 'death', 'the fatal arms untouched');
 });
 
-test('AUDIT WORLD5 C7: a rest COVERED under the shared clock loses the world\'s time it covers, keeping less than one sub-tick, as the timer loses it offline; a leap of the clock (a hidden tab) is taken one sub-tick a FRAME, so every hourly check reads a frame of its own', () => {
+test('AUDIT WORLD5 C7 (RESTX1: on LOITER): a session COVERED under the shared clock loses the world\'s time it covers, keeping less than one sub-tick, as the timer loses it offline; a leap of the clock (a hidden tab) is taken one sub-tick a FRAME, so every hourly check reads a frame of its own', () => {
+  // RESTX1 (2026-09-15) RE-AIMED THIS PIN, and the law it holds is
+  // unchanged - only its subject narrowed. C7 was written on a TIMED
+  // rest, because when it landed every mode rode the shared clock.
+  // Mac's call ("for online I want to change the rest mechanic to not
+  // use any time") took the REST modes off that clock entirely: online
+  // a rest now resolves at once and passes no minutes. LOITER still
+  // rides it - passing time is loiter's whole purpose - so the covered
+  // frame, the lost hour, the kept remainder and the one-sub-tick-a-
+  // frame leap are all still exactly this, and still worth holding.
+  // The rest half's new law is test/restx1_online_rest.test.js.
   let clock = 8000;
   let covered = false;
   const d = restDeps({ sharedMinutes: () => clock });
-  const s = new RestSession('timed', 9, d, -1, () => !covered);
+  const s = new RestSession('loiter', 9, d, -1, () => !covered);
   s.tick(0.016);   // the anchor
   clock += 10; s.tick(0.016);
   assert.equal(d.minutes, 10, 'one sub-tick');
@@ -221,7 +231,7 @@ test('AUDIT WORLD5 C7: a rest COVERED under the shared clock loses the world\'s 
   // the leap: one sub-tick a frame, and the hourly enemy check on its own frame
   let foes = false;
   const d2 = restDeps({ sharedMinutes: () => clock, enemiesNearby: () => foes });
-  const s2 = new RestSession('timed', 9, d2);
+  const s2 = new RestSession('loiter', 9, d2);
   s2.tick(0.016);
   clock += 180;   // three hours the tab was hidden
   const frames = [];
@@ -233,10 +243,13 @@ test('AUDIT WORLD5 C7: a rest COVERED under the shared clock loses the world\'s 
   assert.equal(result?.enemyBroke, true, 'the first hour\'s check, on its own frame, saw the foe and broke the rest - before C7 all three hours resolved in one frame against one snapshot of the foes');
 });
 
-test('AUDIT WORLD5 C8: the sub-tick\'s own span rides to the host - its end, the reading just counted, under the shared clock; null offline - and the dungeon\'s rest arm reads its spawn window and its broker window off it, not off a clock it is refused', () => {
+test('AUDIT WORLD5 C8 (RESTX1: on LOITER): the sub-tick\'s own span rides to the host - its end, the reading just counted, under the shared clock; null offline - and the dungeon\'s rest arm reads its spawn window and its broker window off it, not off a clock it is refused', () => {
+  // RESTX1 re-aimed the shared-clock half onto LOITER - see C7 above.
+  // The OFFLINE half below is still a timed rest, because offline every
+  // mode rides the window's own timer exactly as it always did.
   let clock = 5000.4;
   const d = restDeps({ sharedMinutes: () => clock });
-  const s = new RestSession('timed', 2, d);
+  const s = new RestSession('loiter', 2, d);
   s.tick(0.016);
   clock += 10; s.tick(0.016);
   clock += 10; s.tick(0.016);
