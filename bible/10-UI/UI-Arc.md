@@ -13205,6 +13205,168 @@ every overlay in `src/`. It rides above this screen's own layers and
 under the picker's 40, and the pin holds the range rather than the
 number.
 
-**Not seen running.** No ARENA2 in this container, so the pane cannot be
-driven in a browser; the icon source, the hit-test rule, the lifecycle
-and the act set are pinned, the drawn motion is not.
+**Seen running, after the audit below.** The claim shipped with INV2 -
+*"no ARENA2 in this container, so the pane cannot be driven in a
+browser"* - was **false**, and the pins it excused were the price.
+Chromium is installed here and `mountEnhancedInventory` needs no game
+data; the pane mounts on an empty page. See AUDIT INV2.
+
+## AUDIT INV2 - THE GESTURE THAT COULD NOT END (2026-09-15, Mac)
+
+*"Do an audit on this. I want it to be perfect."*
+
+Three lenses, and the third one is the finding that matters.
+
+### The pins could not fail
+
+Lens C did not read the feature. It read the pins, and mutated the
+source under them. **Deleting `ghostStart`'s body left 71/71 green.**
+So did stopping the ghost following the pointer. So did renaming
+`.dragghost` to something the stylesheet has never heard of. Every INV2
+pin was a `grep` over the module's TEXT, so they proved the code had
+been WRITTEN and nothing about what it did.
+
+That is downstream of one sentence in the commit: *"not seen running -
+no ARENA2 here, so the pane cannot be driven in a browser."* It is not
+true. Chromium is at `/opt/pw-browsers`, playwright is installed, and
+this pane takes an `items()` closure and an entity - no BSA, no ARENA2,
+nothing to load. The excuse was never checked, and a feature whose whole
+substance is MOTION was pinned by looking for the word "ghost".
+
+`test/invdrag.mjs` is the answer: a DOM just real enough to carry this
+gesture - `classList`, `append`, `closest`, `querySelectorAll`,
+`elementFromPoint`, a viewport, and a `fire()` that dispatches at the
+window the way a browser does. The pins now MOUNT the pane, put a
+pointer down on a row, move it, and read what came out. The mutants
+above all die.
+
+### What the lenses found, and what it cost the player
+
+The shape is one mistake made in three places: **the gesture belonged to
+the ROW**. Its `at` closure, its pointer capture, its up and cancel
+handlers all lived on a node that the pane deletes and re-creates freely.
+
+- **Two fingers, two rows.** `at` was per row and the carried item was
+  one module global, so a second finger passed the "one pointer" guard -
+  that row's `at` was null - overwrote the global, and the FIRST
+  finger's release stowed the SECOND finger's item. Silent item loss, on
+  the touch device INV1 exists for.
+- **The row stops existing.** `render()` empties the host when an
+  archive icon lands, when the paperdoll settles, when the arm rig
+  rebuilds - all asynchronous, all reachable with a pointer down. The
+  capturing row is detached, its handlers never fire again, and the drag
+  never ends: the ghost freezes on screen and the pane will not start
+  another.
+- **The pointer is taken back.** A right-click, and Android's own
+  long-press, raise `lostpointercapture` with no `pointercancel` behind
+  it. Nothing listened, so the drag stayed live and that row was
+  un-draggable for the rest of its life.
+
+The drag is now ONE session owned by the pane, its listeners are the
+WINDOW's (no repaint can detach those), the source is identified by ITEM
+rather than by row node (A-F3), and every way it can end - release,
+cancel, capture loss, Escape (A-F7), unmount (A-F4) - goes through
+`dragStop`, the one door.
+
+Three more that only a driven pin could see:
+
+- **A-F5**: a wheel moves the DOM under a STATIONARY cursor, so the
+  highlight and the verb went on naming a row the pointer had left while
+  the release hit-tested the one really under it. Shown one row, given
+  another ten away.
+- **A-F6**: the "a drag is not a pick" guard was **dead code**. It
+  tested for the `.dragging` class, and the release strips that class
+  before it acts, so it never once fired - every released drag also
+  SELECTED the row it left. A latch the click consumes replaces it.
+- **A-F8**: the carried item is a reference held across time, and a
+  peer, a quest or a script can empty the pack under a live drag. A
+  stale one minted a ground pile for an item the player no longer owned.
+  The release re-checks membership.
+
+### A finger that meant to scroll must not drop the item
+
+The worst of it, and it is INV2's own doing. Under `.pack-shell` every
+row is a 56px TILE in a wrapping grid inside a scrolling column, and
+every tile carried `touch-action: none` - so the only surface that could
+start a scroll was the 6px gap between them. Every finger-down was a
+drag at a 4px threshold. INV2 then made a release off the panel a DROP,
+and on a phone "off the panel" is a thin band down each side and across
+the top: **exactly where a flick ends.** A failed scroll threw the item
+on the floor, with no confirmation and no undo.
+
+So a touch drag begins on a HOLD, the way every other touch surface
+does: the rows pan by default (`touch-action: pan-y`), a flick scrolls
+and is never a drag, and only a finger that stays still picks anything
+up. `.draglock` takes the pan back for the rest of the gesture. A mouse
+keeps the 4px threshold - a mouse has no scroll to steal.
+
+And the ghost is a 44px tile over a verb chip, drawn centred on the
+reported point, so on a touch screen the contact patch covered the verb
+- the only thing saying what a release would do. It rides a thumb's
+height above the finger now (A3), and it is clamped to the viewport
+(A4), because unclamped it drew half off at the edges, which is
+precisely where the off-panel region is.
+
+### The word has to be the act
+
+`dropIntent` decides what a release here would do; the move writes its
+label and the release performs its act, so the ghost cannot promise one
+thing and do another. INV2 said that and then broke it by asking the
+wrong function.
+
+**B-F3/B-F4.** `canStow` answers "should this BUTTON exist" - a refusal
+that SPEAKS earns a button - which is not "what will this release do".
+A quest item and a full wagon both refuse with text, so `canStow` said
+yes and the ghost read "Drop" in white before refusing on release; a
+cart refuses in SILENCE, so `canStow` said no, the ghost reddened, and
+the release then called `stow` on the one path where `stow` is
+guaranteed mute - a dead gesture that also wiped whatever the screen was
+saying. The plan's own `ok` is the honest answer to both.
+
+**B-F7.** The open chest is a drop target in its own right. Dragging
+onto it is the first gesture a player tries for "store this", and
+reading it as panel chrome meant the only way to store something was to
+drop it in the VOID BESIDE the window that was asking for it.
+
+### And off the panel is `stow`, so it inherits `stow`'s bugs
+
+Which the audit then had to pay, because INV2 turned a button nobody
+presses often into a gesture:
+
+- **B-F1**: `applyTransfer` was called without the entity and the
+  provenance the classic window passes, so
+  `clearLightSourceOnLeave` was a no-op and a **lit torch dropped on the
+  ground went on lighting the player from where it lay**.
+- **B-F2**: `planStore` answers `{ ok: true, map: true }` for a
+  treasure map - an INTERCEPTION, not a transfer. Unrouted, dragging one
+  out dropped the paper on the floor and revealed nothing. It is an
+  interception in EITHER direction, and `take` did not route it either.
+- **B-F9**: `stow` was written for the button, whose argument is always
+  `picked`. A drag hands it any row, and it closed the tooltip the
+  player had open on some OTHER item and moved `side` to a remote list
+  with nothing picked on it.
+
+### Pinned
+
+77 tests in `test/enhancedInventory.test.js`, of which the drag's are
+DRIVEN: the icon is carried and follows and the stylesheet reaches it;
+the word shown is the act performed on every arm; a dragged release is
+never a pick; every way out ends it (release, cancel, lost capture,
+Escape, unmount); the drag is the pane's and not the row's; a drag holds
+an ITEM and not a promise. The INV1 act-set pin now derives the closed
+set from `dragStop`'s BODY rather than from a word list, so a fourth act
+is still the drift it was written to stop. **15 mutations, 15 dead**,
+including all three lens C proved survived.
+
+### Recorded, not paid
+
+- **A12**: the off-panel drop silently depends on `play/index.html`'s
+  `overflow: hidden; overscroll-behavior: none`. True today, unpinned.
+- **A14**: the tooltip is `position: fixed` at 640px and under while
+  remaining a DOM child of `.pack-win`.
+- **A15**: "off the panel" means "Put back" while a container is open,
+  so ground-drop is unreachable then. The Drop button has the same
+  limit; it is INV1's law working exactly as written, and changing it is
+  a decision, not a fix.
+- **B-F8**: a Map escapes into a reward tray - a `planStore` rung-order
+  defect above the `chooseOne` rung, older than this arc.

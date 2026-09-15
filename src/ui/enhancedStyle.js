@@ -675,8 +675,16 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    its whole frame - a drop on the map is one target, not twelve. */
 .itemrow.dragging { opacity: 0.4; }
 /* AUDIT INV1 Fb: the drag is pointer-driven, so the browser must not
-   also pan or long-press-select the row out from under it on a touch. */
-.itemrow { touch-action: none; }
+   also long-press-select the row out from under it on a touch.
+   AUDIT INV2 A1: BUT THE LIST MUST STILL SCROLL. Under .pack-shell every
+   row is a 56px tile in a wrapping grid, so a blanket none here left the 6px gap
+   between tiles as the only surface a finger could scroll from - every
+   finger-down was a drag at a 4px threshold, and INV2 had just made a
+   release off the panel a DROP. A flick pans the list now; a touch drag
+   begins on a HOLD (enhancedInventory's TOUCH_HOLD_MS), and only then
+   does .draglock take the pan back for the rest of the gesture. */
+.itemrow { touch-action: pan-y; -webkit-user-select: none; user-select: none; }
+body.draglock .itemrow, body.draglock .packlists { touch-action: none; }
 .itemrow.dragover { box-shadow: inset 0 2px 0 var(--brass); }
 .wornmap.dragover { outline: 2px solid var(--brass); outline-offset: -2px; }
 /* INV2 (Mac: "a detailed click and drag that literally drags the icon"):
@@ -686,21 +694,38 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    pointer-events: none is not decoration - the drag hit-tests with
    elementFromPoint under the cursor, and a node sitting there would
    answer ITSELF on every move and the drag would never find a target.
-   It sits on the BODY, above the pause door's own layer, so the item
-   can be carried off the panel and over the world, which is where a
-   drop lands it. */
+   It sits on the BODY, above the pause door's own layer, so the item can
+   be carried off the panel and over the world, which is where a drop
+   lands it.
+
+   AUDIT INV2 A7: THE LADDER, walked rather than eyeballed. Every
+   z-index literal in src/ and index.html: the doors' hosts are 11-14,
+   the boot error and three bottom sheets are 20, enhancedChunk's "the
+   game was updated" scrim is 30, the asset picker is 40 (and
+   test/mwattach.test.js holds that it outranks everything). The first
+   cut put the ghost at 30 - a straight COLLISION with the update scrim,
+   which won only by an accident of which host it happened to be mounted
+   inside. 16 clears every door host and loses to every notice that
+   deserves to interrupt a drag. */
 .dragghost {
-  /* ABOVE this screen's own layers (the shell's 12, the tip's 20) and
-     still UNDER the asset picker's 40 - test/mwattach.test.js holds that
-     ladder, and an eyeballed 9000 is exactly what it exists to stop. */
-  position: fixed; z-index: 30; pointer-events: none;
+  position: fixed; z-index: 16; pointer-events: none;
   transform: translate(-50%, -60%);
   display: grid; justify-items: center; gap: 4px;
   filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.55));
+  /* AUDIT INV2 A6: the pack's own skin is scoped to .pack-shell and the
+     ghost is the BODY's child, so none of it reaches here - the chip
+     would have come out in the page's modern sans beside a pixel-skinned
+     grid. The carried tile is deliberately BIGGER than the one in the
+     list (it is lifted), but it is the same face. */
+  font-family: ${PIXEL_STACK};
 }
-.dragghost .tile {
+/* The border has to beat the has-icon rule, which clears it - same
+   specificity, later in the file, so the first cut's brass frame was
+   simply cancelled on every ghost carrying a real sprite, which is every
+   ghost in a shipped install (AUDIT INV2 A5). */
+.dragghost .tile.has-icon, .dragghost .tile {
   width: 44px; height: 44px; background: rgba(23, 27, 33, 0.92);
-  border-color: var(--brass);
+  border: 1px solid var(--brass);
 }
 .dragghost .tile img { max-width: 40px; max-height: 40px; }
 .ghostact {
@@ -709,10 +734,15 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   white-space: nowrap; opacity: 0;
 }
 .ghostact.on { opacity: 1; }
-/* A release that the law would refuse says so before it happens - the
-   tile goes red and carries no verb, so nobody lets go expecting it to
-   land. */
-.dragghost.refused .tile { border-color: #a4402f; }
+/* A release the law would refuse says so BEFORE it happens. AUDIT INV2
+   A8/A9: through the sheet's own token for a forbidden state (--blood,
+   which is what .tier.unavailable, .px-stat .v.bad and .ctl-notice.bad
+   all use) rather than a fifth hard-coded red - and never by COLOUR
+   ALONE. The chip carries the word, so a reader who cannot tell the two
+   borders apart still reads which of the two "nothing lands here" states
+   this is: one that will say why, and one that is simply not a target. */
+.dragghost.refused .tile.has-icon, .dragghost.refused .tile { border-color: var(--blood); }
+.dragghost.refused .ghostact { background: var(--blood); color: var(--bone); opacity: 1; }
 .tile {
   flex: 0 0 auto; width: 30px; height: 30px; display: grid; place-items: center;
   border: 1px solid var(--iron); color: var(--dim); font-size: 11px; letter-spacing: 0.06em;

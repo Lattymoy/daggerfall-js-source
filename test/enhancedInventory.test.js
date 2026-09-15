@@ -15,12 +15,14 @@ import { readFileSync } from 'node:fs';
 import {
   packModel, itemLine, SLOT_MAP, useResultAction, remoteModel, REMOTE_TITLE, STOW_LABEL, plural,
   equippedModel, LIGHT_SLOT, localPrimaryAct,   // HT5
+  mountEnhancedInventory,   // AUDIT INV2: the pane is MOUNTED and the gesture DRIVEN
 } from '../src/ui/enhancedInventory.js';
 import { WAGON_KG_LIMIT } from '../src/systems/itemTransfer.js';
 import { USE_PENDING } from '../src/ui/nativeInventory.js';
 import {
   createInventoryWindow, inventoryDoorReady,
 } from '../src/ui/inventoryDoor.js';
+import { withDom } from './invdrag.mjs';   // AUDIT INV2: a document just real enough to DRIVE the gesture
 import { PACK_PAGES, filterByPage } from '../src/ui/packPages.js';   // PX31: the pack's nine pages
 import { EQUIP_SLOTS, ITEM_TEMPLATES, getTemplate } from '../src/characters/paperdoll.js';
 import { inventoryItemImage } from '../src/systems/itemTemplates.js';
@@ -396,8 +398,15 @@ test('U53: Escape and F6 close it, and F6 is claimed', () => {
   const onKey = src.slice(src.indexOf('function onKey(e)'), src.indexOf('function releaseLock()'));
   assert.match(onKey, /overlayAction\(e\) !== 'back' && e\.key !== 'F6'/);
   const testAt = onKey.indexOf("e.key !== 'F6'");
-  const claimAt = onKey.indexOf('e.preventDefault()');
+  const claimAt = onKey.lastIndexOf('e.preventDefault()');
   assert.ok(testAt > 0 && claimAt > testAt, 'decide it used the key before claiming it');
+  // AUDIT INV2 A-F7: and ABOVE that decision sits the drag's abort - Escape
+  // ends a drag in flight and KEEPS the window, because closing the pack
+  // mid-drag left the ghost welded over the world. A second Escape closes, as
+  // it always did.
+  assert.match(onKey, /if \(overlayAction\(e\) === 'back' && drag\) \{ e\.preventDefault\(\); e\.stopPropagation\(\); dragStop\(false\); return; \}/,
+    'a drag in flight takes the Escape, and the window stays');
+  assert.ok(onKey.indexOf('dragStop(false)') < testAt, 'the abort is asked BEFORE the close');
   assert.match(onKey, /e\.stopPropagation\(\)/);
 });
 
@@ -1231,7 +1240,13 @@ test('PX24: wear, take off, use and stow all clear the pick on success; refusals
   const use = fn('use', 'takeOff');
   assert.match(use, /if \(act\.closesWindow\) \{ onExit\(\); return; \}\n  picked = null;/, 'use must clear the pick before its final render');
   const stow = fn('stow', 'take');
-  assert.match(stow, /applyTransfer\(item, plan, deps\.items\?\.\(\) \?\? \[\], to\);\n  picked = null;/, 'stow must clear the pick after the transfer');
+  // AUDIT INV2 B-F9: stow was written for the BUTTON, whose argument is always
+  // `picked`; INV2's drag hands it any row. It clears the pick after the
+  // transfer as it always did - but only when the thing it moved IS the pick,
+  // so dragging one item out no longer closes the tooltip a player opened on
+  // another and sends `side` to a remote list with nothing picked on it.
+  assert.match(stow, /applyTransfer\(item, plan, deps\.items\?\.\(\) \?\? \[\], to, \{ entity: deps\.entity, fromLocal: true \}\);[\s\S]{0,600}?if \(picked === item\) \{ picked = null; side = 'remote'; \}/,
+    'stow must clear the pick after the transfer, and only its own');
   assert.ok(!/picked = applyTransfer/.test(stow), 'the arriving item must no longer stay picked');
 });
 
@@ -1370,146 +1385,285 @@ test('HT5: picking the light row offers Douse, not Take off', () => {
 // A second rule for what a drop means is how the two paths drift apart.
 test('INV1: a drag equips through the one act, and never crosses a side', () => {
   const src = read('src/ui/enhancedInventory.js');
-  assert.match(src, /function dropOnBody\(item\) \{\s*\n\s*const act = localPrimaryAct\(item, deps\.entity\);/,
+  const code = src.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, ' ');   // the CODE, not the prose about it
+  assert.match(code, /function dropOnBody\(item\) \{\s*const act = localPrimaryAct\(item, deps\.entity\);/,
     'the drop reads the card\'s own act, not a second table');
-  assert.match(src, /if \(act\.kind === 'wear'\) \{ wear\(item\); return; \}/);
-  assert.match(src, /use\(item, null\)/, 'AUDIT 22 F6: the light arm still takes no collection');
+  assert.match(code, /if \(act\.kind === 'wear'\) \{ wear\(item\); return; \}/);
+  assert.match(code, /use\(item, null\)/, 'AUDIT 22 F6: the light arm still takes no collection');
 
-  // AUDIT INV1 F3: this pin matched `dropOnBody`'s DEFINITION and never
-  // its call site, so swapping the one call for `wear(held)` left
-  // dropOnBody as dead code, sent a dragged torch down the wear path
-  // (which refuses it - a light source has no equip slot) and passed
-  // the whole suite. Driven and confirmed. The RELEASE is read now, and
-  // it is read as a closed set: every act a drop can perform must be
-  // one of the two the law allows, so a third cannot be added quietly.
-  const release = src.slice(src.indexOf('row.onpointerup ='), src.indexOf('row.onpointercancel ='));
-  assert.ok(release.length > 100, 'the release handler is where a drop lands');
-  const acts = [...release.matchAll(/\b(dropOnBody|reorderPack|wear|use|takeOff|take|stow)\(/g)].map((m) => m[1]);
-  // INV2 (2026-09-15, Mac: "allowing you to store or easily drop items
-  // if outside the UI") OPENS THE SET BY EXACTLY ONE, and closes it
-  // again. A release off the panel is the TRANSFER THE SCREEN ALREADY
-  // OFFERS - `stow` is the function behind the STOW_LABEL button beside
-  // the item, so carrying something out Drops it, Stows it in the wagon
-  // or Puts it back exactly as pressing that button would, and refuses
-  // with the same sentence. That is the same law the body act follows,
-  // not a new one; a FOURTH act here would still be the drift.
-  assert.deepEqual([...new Set(acts)].sort(), ['dropOnBody', 'reorderPack', 'stow'],
-    'a drop performs the body act, the reorder or the screen\'s own transfer and NOTHING else');
-  // INV2: the release no longer hit-tests inline - `dropIntent` answers
-  // for the body, another row and the world beyond the panel, and it is
-  // read TWICE: once to write the verb on the ghost while the pointer
-  // moves, and again at the release. One answer, so the word the player
-  // was shown is the act they get.
-  assert.match(release, /const want = dropIntent\(held, document\.elementFromPoint\?\.\(e\.clientX, e\.clientY\), row\);/,
-    'the release asks the one intent');
-  assert.match(release, /if \(want\?\.kind === 'body'\) dropOnBody\(held\);/, 'the body is the equip target');
-  const intent = src.slice(src.indexOf('function dropIntent('), src.indexOf('/** AUDIT INV1 Fb:'));
-  assert.match(intent, /if \(over\?\.closest\?\.\('\.wornmap'\)\) \{\s*\n\s*const act = localPrimaryAct\(item, deps\.entity\);/,
-    'and the body\'s verb is the CARD\'s act, so the ghost cannot promise one thing and do another');
-  assert.match(intent, /return \{ kind: 'stow', label: canStow\(item\) \? STOW_LABEL\[remote\.kind\] : null \};/,
-    'off the panel is the screen\'s own transfer, under its own verb - and a refusal still RUNS it, because stow is what says why (INV2)');
-  assert.match(intent, /if \(over\?\.closest\?\.\('\.pack-win, \.loot-win'\)\) return \{ kind: 'none', label: '' \};/,
-    'and a release on the panel\'s own chrome is NOT a drop out - the windows are the boundary');
+  // AUDIT INV1 F3: this pin matched `dropOnBody`'s DEFINITION and never its
+  // call site, so swapping the one call for `wear(held)` left dropOnBody as
+  // dead code and passed the whole suite. The RELEASE is read as a CLOSED
+  // SET: every act a drop can perform must be one the law allows.
+  //
+  // AUDIT INV2 B4: and the set is read off the release rather than matched
+  // against a hard-coded word list. The old pin alternated seven specific
+  // names, so ADDING an eighth act slipped through untouched - it caught
+  // substitution and never addition, which is the direction drift goes.
+  const decl = code.indexOf('function dragStop(commit)');
+  const release = code.slice(code.indexOf('{', decl), code.indexOf('const TOUCH_HOLD_MS'));   // the BODY, so the function's own name is not one of its calls
+  assert.ok(release.length > 100, 'the release is where a drop lands');
+  const calls = [...release.matchAll(/(?:^|[^\w.])([a-z][A-Za-z0-9_]*)\(/g)].map((m) => m[1]);
+  const acts = [...new Set(calls)].filter((n) => !['if', 'for', 'while', 'return', 'typeof', 'clearTimeout',
+    'dragLock', 'ghostEnd', 'dragHighlight', 'dropIntent', 'includes'].includes(n)).sort();
+  // INV2 opened the set by exactly ONE - a release off the panel is the
+  // TRANSFER THE SCREEN ALREADY OFFERS (`stow` is the function behind the
+  // STOW_LABEL button beside the item) - and closed it again.
+  assert.deepEqual(acts, ['dropOnBody', 'reorderPack', 'stow'],
+    `a drop performs the body act, the reorder or the screen's own transfer and NOTHING else (read: ${acts.join(', ')})`);
+  assert.match(release, /if \(want\?\.kind === 'body'\) dropOnBody\(d\.item\);/, 'the body is the equip target');
 
-  // AUDIT INV1 Fb: THE DRAG IS POINTER EVENTS. The first cut used the
-  // HTML5 drag API, which does not fire from a touch - a feature drawn
-  // and unreachable on a device this port ships to, the same shape
-  // AUDIT 24 named. The repo's own precedent is ui/overworldMap.js's
-  // pan, and this follows it.
-  const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');   // the CODE, not the prose about it
-  assert.doesNotMatch(code, /\bdraggable\b|ondragstart|ondragover|ondrop\b/,
-    'no HTML5 drag survives - it is mouse-only and this port ships to phones');
-  for (const h of ['row.onpointerdown', 'row.onpointermove', 'row.onpointerup', 'row.onpointercancel']) {
-    assert.ok(src.includes(h), `${h} is the seam`);
-  }
-  assert.match(src, /row\.setPointerCapture\?\.\(e\.pointerId\)/, 'captured, as the map pan captures');
-  assert.match(src, /if \(at \|\| e\.button > 0\) return;/, 'one pointer, and never a right button');
-  assert.match(src, /Math\.abs\(e\.clientX - at\.x\) \+ Math\.abs\(e\.clientY - at\.y\) <= 4/,
-    'a 4px threshold, so a tap is still a pick');
-  assert.match(read('src/ui/enhancedStyle.js'), /\.itemrow \{ touch-action: none; \}/,
-    'and the browser must not pan the list out from under the drag');
+  // INV2: the release and the ghost's verb ask ONE function, so the word the
+  // player was shown is the act they get.
+  const intent = code.slice(code.indexOf('function dropIntent('), code.indexOf('const dragHighlight'));
+  assert.ok(intent.length > 200 && intent.length < 1200, `the intent is its own function, and this slice really is it (${intent.length} chars)`);
+  assert.match(intent, /const act = localPrimaryAct\(item, deps\.entity\);/,
+    'the body\'s verb is the CARD\'s act, so the ghost cannot promise one thing and do another');
+  assert.match(intent, /if \(over\?\.closest\?\.\('\.loot-win'\)\) return stowIntent\(item\);/,
+    'AUDIT INV2 B-F7: the open container is a drop target in its own right - dragging ONTO the chest is the first gesture a player tries for "store this"');
+  assert.match(intent, /if \(over\?\.closest\?\.\('\.pack-win'\)\) return \{ kind: 'none', label: '' \};/,
+    'and the pack\'s own chrome is "never mind"');
+  // AUDIT INV2 B-F3/B-F4: the verb is the PLAN's answer, never canStow's.
+  // canStow asks "should this BUTTON exist" - a refusal that SPEAKS earns a
+  // control - which is a different question from "will this release work".
+  const stowIntent = code.slice(code.indexOf('function stowIntent('), code.indexOf('function dropIntent('));
+  assert.match(stowIntent, /if \(plan\.ok\) return \{ kind: 'stow', label: STOW_LABEL\[remote\.kind\] \};/,
+    'a verb is shown only when the plan really says yes');
+  assert.doesNotMatch(stowIntent, /canStow\(/, 'and never through canStow, which answers a different question');
 
-  // A LOOT ROW DOES NOT DRAG (IG7: taking from a pile is a click).
-  assert.match(src, /if \(from === 'local'\) dragFrom\(row, item\);/, 'only the local side is a drag source');
-
-  // AUDIT INV1 Fa: the drop line is drawn ABOVE the target, so the item
-  // must LAND above it. `to` is computed before the splice that shifts
-  // everything after `from` down one, so dragging DOWNWARD used to land
-  // the item below the row the line was drawn on - the affordance lied
-  // in one of its two directions. Driven here rather than grepped.
-  const move = (list, item, before) => {
-    const from = list.indexOf(item); const to = list.indexOf(before);
-    list.splice(from, 1); list.splice(from < to ? to - 1 : to, 0, item);
-    return list;
-  };
-  assert.deepEqual(move(['A', 'B', 'C'], 'A', 'B'), ['A', 'B', 'C'], 'dragging down onto B lands A above B');
-  assert.deepEqual(move(['A', 'B', 'C'], 'C', 'B'), ['A', 'C', 'B'], 'dragging up onto B lands C above B');
-  assert.deepEqual(move(['A', 'B', 'C'], 'A', 'C'), ['B', 'A', 'C'], 'and above C from either side');
-  assert.match(src, /list\.splice\(from < to \? to - 1 : to, 0, item\);/, 'the source does the same arithmetic');
-
-  const css = read('src/ui/enhancedStyle.js');
-  for (const rule of ['.itemrow.dragging', '.itemrow.dragover', '.wornmap.dragover']) {
-    assert.ok(css.includes(rule), `${rule} has an affordance - a drag with no feedback is a guess`);
-  }
+  // AUDIT INV2 B-F1/B-F2: and the drag's third act is the classic window's
+  // call, arms and all - the lit torch goes out when it leaves the pack
+  // (AUDIT 26 F157) and a map is an INTERCEPTION, not a transfer (F156).
+  const stow = code.slice(code.indexOf('function stow(item)'), code.indexOf('function take(item)'));
+  assert.match(stow, /if \(plan\.map\) \{ use\(item, deps\.items\?\.\(\) \?\? \[\]\); return; \}/, 'the map reveals rather than landing on the floor');
+  assert.match(stow, /applyTransfer\(item, plan, deps\.items\?\.\(\) \?\? \[\], to, \{ entity: deps\.entity, fromLocal: true \}\);/,
+    'the entity and the provenance ride, or clearLightSourceOnLeave is a no-op and a dropped torch keeps lighting the player');
+  const take = code.slice(code.indexOf('function take(item)'), code.indexOf('function take(item)') + 1400);
+  assert.match(take, /if \(plan\.map\) \{ use\(item, remoteTarget\(deps, sessionState\(\)\)\); return; \}/, 'F156: either direction');
 });
 
-// INV2 (2026-09-15, Mac: "we recently implemented a click to drag feature but
-// its kinda half assed. I imagined a detailed click and drag that literally
-// drags the icon. Allowing you to store or easily drop items if outside the
-// UI") - THE GHOST.
+// ── AUDIT INV2 (2026-09-15, Mac: "I want it to be perfect") ──────
 //
-// INV1 moved items and said so with two class flips: the row dimmed, the
-// target lit, and nothing travelled with the cursor. What a player reads as
-// "dragging" is the THING moving.
-test('INV2: the ghost is the ITEM\'S OWN TILE, it never eats the hit test, and every way out removes it', () => {
+// THE PINS THIS REPLACES WERE SIXTY LINES OF GREPS OVER THE MODULE'S OWN
+// SOURCE TEXT, and a lens proved what that is worth: DELETING THE
+// `ghostStart` CALL left the whole suite green. So did stopping the
+// ghost following the pointer. So did renaming the class so that not one
+// CSS rule reached it - including the `pointer-events: none` the pins
+// themselves called "THE ONE RULE THAT WOULD BREAK THE DRAG IN SILENCE".
+// Every assertion matched a DECLARATION that still existed. A pin over a
+// definition is not a pin over a feature, and this file knew that
+// already - it is the lesson AUDIT INV1 F3 wrote down two days ago and
+// this slice did not read.
+//
+// The gesture is DRIVEN now, through a document just real enough
+// (test/invdrag.mjs): press a row, move a pointer, read the ghost off
+// document.body, release, and see what actually moved.
+const DRAG = { id: 7 };
+/** The pane, mounted, with a live pack. Returns the levers a drag needs. */
+function withPack(fn, { items: makeItems = null, deps: extra = {} } = {}) {
+  return withDom((dom) => {
+    const host = dom.mk('div');
+    dom.body.append(host);
+    const e = hero();
+    e.items = makeItems ? makeItems() : [mk('Longsword'), mk('Dagger'), mk('Broadsword')];
+    const dropped = [];
+    const view = mountEnhancedInventory(host, {
+      entity: e, items: () => e.items, onExit: () => {}, dropItem: (it) => dropped.push(it), ...extra,
+    });
+    const rows = () => dom.doc.querySelectorAll('.itemrow');
+    const ghost = () => dom.doc.querySelectorAll('.dragghost')[0] ?? null;
+    const label = () => ghost()?.querySelector('.ghostact')?.textContent ?? null;
+    const at = (node) => { dom.doc.elementFromPoint = () => node; };
+    const down = (row, x = 100, y = 100) => row.onpointerdown?.({ pointerId: DRAG.id, button: 0, pointerType: 'mouse', clientX: x, clientY: y });
+    const move = (x, y) => dom.win.fire('pointermove', { pointerId: DRAG.id, clientX: x, clientY: y });
+    const up = (x, y) => dom.win.fire('pointerup', { pointerId: DRAG.id, clientX: x, clientY: y });
+    return fn({ dom, host, e, view, dropped, rows, ghost, label, at, down, move, up });
+  });
+}
+
+test('AUDIT INV2: the drag really carries the icon - it exists, it follows the pointer, and the CSS reaches it', () => {
+  withPack(({ dom, rows, ghost, label, at, down, move, up }) => {
+    const row = rows()[0];
+    assert.ok(row, 'a pack row to grab');
+    assert.equal(ghost(), null, 'nothing is carried before a drag');
+
+    at(dom.body);            // out over the world
+    down(row, 100, 100);
+    assert.equal(ghost(), null, 'a press alone carries nothing - a tap is still a pick');
+    move(140, 160);
+
+    // B1: the feature EXISTS. Deleting the ghostStart call used to pass.
+    const g = ghost();
+    assert.ok(g, 'the ghost is up the moment the threshold is crossed');
+    assert.equal(g.parent, dom.body, 'and it is the BODY\'s child, so it can leave the panel');
+    assert.equal(g.className, 'dragghost', 'it wears the class the stylesheet names - the JS and the CSS are one rope');
+    assert.ok(g.querySelector('.tile'), 'carrying a tile');
+
+    // B2: it FOLLOWS. Deleting the two style writes used to pass.
+    const was = { x: g.style.left, y: g.style.top };
+    assert.ok(was.x && was.y, 'positioned at all');
+    move(400, 420);
+    assert.notEqual(g.style.left, was.x, 'the icon travels with the pointer');
+    assert.notEqual(g.style.top, was.y);
+    assert.equal(label(), 'Drop', 'and says what a release out here would do');
+
+    up(400, 420);
+    assert.equal(ghost(), null, 'the release puts it down');
+  });
+});
+
+test('AUDIT INV2: the word on the ghost is the act that happens - on every arm', () => {
+  withPack(({ dom, e, rows, label, at, down, move, up }) => {
+    const long = e.items[0];
+    // OFF THE PANEL -> the screen's own transfer
+    at(dom.body); down(rows()[0], 10, 10); move(60, 60);
+    assert.equal(label(), 'Drop', 'off the panel: the remote side\'s own verb');
+    up(60, 60);
+    assert.equal(e.items.includes(long), false, 'and the release really moved it');
+
+    // ANOTHER ROW -> the reorder
+    const r = rows();
+    at(r[1]); down(r[0], 10, 10); move(60, 60);
+    assert.equal(label(), 'Move here');
+    up(60, 60);
+
+    // THE PANEL'S OWN CHROME -> nothing, and it says nothing
+    const win = dom.doc.querySelectorAll('.pack-win')[0];
+    assert.ok(win, 'the pack window');
+    at(win); down(rows()[0], 10, 10); move(60, 60);
+    assert.equal(label(), '', 'inside the window is not a drop, and does not pretend to be');
+    up(60, 60);
+  });
+});
+
+test('AUDIT INV2: a release that DRAGGED is never also a pick', () => {
+  withPack(({ dom, rows, at, down, move, up }) => {
+    const win = dom.doc.querySelectorAll('.pack-win')[0];
+    const row = rows()[0];
+    at(win); down(row, 10, 10); move(60, 60); up(60, 60);
+    // the row survives (nothing re-rendered), and its click must not select
+    row.onclick?.({});
+    assert.equal(dom.doc.querySelectorAll('.packtip').length, 0,
+      'a drag released on the chrome is "never mind", not a selection - the class guard it used to trust was stripped before the click ever ran');
+  });
+});
+
+test('AUDIT INV2: every way a drag can END ends it - release, cancel, Escape, and the pane going away', () => {
+  // ESCAPE aborts the drag and KEEPS the window; the pack closing takes
+  // the ghost with it. Both were leaks: the ghost is the body's child, so
+  // emptying the host cannot reach it, and a pack closed mid-drag left an
+  // item icon welded over the world for the session.
+  withPack(({ dom, view, rows, ghost, at, down, move }) => {
+    at(dom.body); down(rows()[0], 10, 10); move(60, 60);
+    assert.ok(ghost(), 'carrying');
+    view.unmount();
+    assert.equal(ghost(), null, 'the pane going away ends the drag');
+    assert.equal(dom.win.count('pointermove'), 0, 'and takes its listeners with it');
+  });
+  withPack(({ dom, rows, ghost, at, down, move }) => {
+    at(dom.body); down(rows()[0], 10, 10); move(60, 60);
+    dom.win.fire('pointercancel', { pointerId: DRAG.id });
+    assert.equal(ghost(), null, 'a cancel ends it');
+  });
+  withPack(({ dom, rows, ghost, at, down, move }) => {
+    at(dom.body); down(rows()[0], 10, 10); move(60, 60);
+    // A RIGHT-CLICK, and Android's long-press, raise this with no cancel
+    // behind it. Nothing listened, so the drag stayed live for ever and
+    // the row was un-draggable until something repainted it.
+    dom.win.fire('lostpointercapture', { pointerId: DRAG.id });
+    assert.equal(ghost(), null, 'a lost capture ends it');
+  });
+  withPack(({ dom, e, rows, ghost, at, down, move }) => {
+    const before = e.items.length;
+    at(dom.body); down(rows()[0], 10, 10); move(60, 60);
+    assert.ok(ghost(), 'carrying');
+    // ESCAPE IS THE ABORT. There was none - the only release that changed
+    // nothing was one inside the windows, so a player who had picked up the
+    // wrong thing had nowhere safe to let go, and Escape (the obvious try)
+    // closed the pack and welded the ghost over the world.
+    dom.win.fire('keydown', { key: 'Escape', code: 'Escape', preventDefault() {}, stopPropagation() {} });
+    assert.equal(ghost(), null, 'Escape ends the drag');
+    assert.equal(e.items.length, before, 'and nothing moved - an abort is not a drop');
+    assert.ok(dom.doc.querySelectorAll('.itemrow').length > 0, 'and the window is still open: the FIRST Escape is the drag\'s');
+  });
+});
+
+test('AUDIT INV2: the drag is the PANE\'S, not the row\'s - a second finger cannot make one drag drop another\'s item', () => {
+  withPack(({ dom, e, rows, label, at, down, move, up }) => {
+    const before = [...e.items];
+    const r = rows();
+    at(dom.body);
+    down(r[0], 10, 10); move(60, 60);              // finger one picks something up
+    const carried = label();
+    // A SECOND FINGER ON A SECOND ROW. `at` used to be the ROW's, so this
+    // press passed the "one pointer" guard (that row's own `at` was null),
+    // overwrote the carried item, and the FIRST finger's release dropped the
+    // SECOND finger's - silent item loss, on the device the drag exists for.
+    r[1].onpointerdown?.({ pointerId: 99, button: 0, pointerType: 'touch', clientX: 20, clientY: 20 });
+    dom.win.fire('pointermove', { pointerId: 99, clientX: 300, clientY: 300 });
+    assert.equal(label(), carried, 'the pane is still carrying what the FIRST finger picked up');
+    up(60, 60);
+    const gone = before.filter((it) => !e.items.includes(it));
+    assert.equal(gone.length, 1, 'exactly one item left the pack');
+    assert.equal(gone[0], before[0], 'and it is the one the first finger was carrying, never the second\'s');
+  });
+});
+
+test('AUDIT INV2: a drag holds an item, not a promise - what left the pack under it is not dropped twice', () => {
+  withPack(({ dom, e, view, rows, at, down, move, up }) => {
+    // the SAME gesture with the item still in the pack really does drop it,
+    // so the assertion below is about the guard and not about a dead path
+    at(dom.body); down(rows()[0], 10, 10); move(60, 60); up(60, 60);
+    assert.equal(view.dropped().length, 1, 'a live item drops');
+
+    const long = e.items[0];
+    at(dom.body); down(rows()[0], 10, 10); move(60, 60);
+    e.items.splice(e.items.indexOf(long), 1);   // a peer, a quest, a script, under the drag
+    up(60, 60);
+    assert.equal(view.dropped().length, 1, 'and one the pack no longer holds mints NO second pile - a drag holds a reference across time');
+    assert.equal(view.dropped().includes(long), false, 'the vanished item is not on the ground');
+  });
+});
+
+// ── AND THE RULES THE SOURCE STILL OWNS ──────────────────────────
+test('AUDIT INV2: the ghost is the item\'s own tile, and the ladder it rides is walked, not eyeballed', () => {
   const src = read('src/ui/enhancedInventory.js');
   const css = read('src/ui/enhancedStyle.js');
+  const code = src.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, ' ');
 
-  // ONE ICON PIPELINE. This file's own header names the trap - "a second
-  // icon pipeline in this file is how the port ends up with two" - and the
-  // Morrowind mesh, the classic sprite and the initials fallback are already
-  // one function's answer. The ghost asks that function.
-  assert.match(src, /ghost\.append\(itemTile\(itemLine\(item, deps\.entity\)\)\);/,
-    'the ghost carries itemTile\'s tile, not a second icon path');
-  const ghostFns = src.slice(src.indexOf('function ghostStart('), src.indexOf('/** WHAT A RELEASE HERE WOULD DO'));
-  assert.doesNotMatch(ghostFns, /modelIconUrl\(|requestIcon\(/,
-    'and reaches for no icon source of its own - that is how a screen ends up with two');
+  // ONE ICON PIPELINE - this file's header names the trap in its own
+  // words, and the ghost asks the same function the row does.
+  assert.match(code, /ghost\.append\(itemTile\(itemLine\(item, deps\.entity\)\)\);/);
+  const ghostFns = code.slice(code.indexOf('function ghostStart('), code.indexOf('function ghostAt('));
+  assert.doesNotMatch(ghostFns, /modelIconUrl\(|requestIcon\(/, 'and reaches for no icon source of its own');
 
-  // THE ONE RULE THAT WOULD BREAK THE DRAG IN SILENCE. The hit test is
-  // elementFromPoint UNDER THE CURSOR, and the ghost sits exactly there:
-  // without pointer-events:none it answers ITSELF on every move, so the body,
-  // the rows and the world outside would all stop being findable and every
-  // drop would do nothing. It is a functional rule that happens to live in a
-  // stylesheet.
-  const rule = css.slice(css.indexOf('.dragghost {'), css.indexOf('.dragghost .tile'));
-  assert.match(rule, /pointer-events: none;/,
-    'the ghost is transparent to the hit test - with it opaque, elementFromPoint answers the ghost and NO drop ever lands');
-  assert.match(rule, /position: fixed;/, 'and it is positioned against the viewport, so it can leave the panel');
-  // AND IT KEEPS ITS PLACE IN THE LADDER. The first cut reached for 9000,
-  // which is the eyeballed number test/mwattach.test.js exists to stop -
-  // the asset picker must outrank every overlay in src/. Above this
-  // screen's own layers, below the picker.
-  const z = Number(/z-index: (\d+);/.exec(rule)?.[1]);
-  assert.ok(z > 20 && z < 40, `the ghost rides above this screen and under the picker (read ${z})`);
+  // THE HIT TEST MUST SEE THROUGH IT. The ghost sits under the cursor;
+  // opaque, elementFromPoint answers the ghost and no drop ever lands.
+  const rule = css.slice(css.indexOf('.dragghost {'), css.indexOf('.dragghost .tile.has-icon'));
+  assert.match(rule, /pointer-events: none;/);
+  assert.match(rule, /position: fixed;/);
 
-  // IT LIVES ON THE BODY, not in the window: a ghost clipped to the panel
-  // could not be carried off it, which is the other half of what was asked
-  // for.
-  assert.match(src, /document\.body\?\.appendChild\(ghost\);/, 'the ghost is the body\'s, so it can cross the panel\'s edge');
+  // THE LADDER. Every z-index literal in src/ is read, and the ghost's
+  // must be ABOVE every door host and BELOW every notice that deserves to
+  // interrupt a drag - and shared with NOTHING. The first cut took 30,
+  // which is enhancedChunk's "the game was updated" scrim.
+  const z = Number(/\.dragghost \{[\s\S]*?z-index: (\d+);/.exec(css)?.[1]);
+  const others = [];
+  for (const f of ['enhancedStyle.js', 'enhancedChunk.js', 'enhancedMenu.js', 'touch.js', 'chatPanel.js'])
+    for (const m of read(`src/ui/${f}`).matchAll(/z-index:\s*(\d+)/g)) if (Number(m[1]) !== z || f !== 'enhancedStyle.js') others.push(Number(m[1]));
+  assert.ok(z > 14, `the ghost clears every door host (read ${z})`);
+  assert.ok(!others.includes(z), `and shares its rung with nothing else in src/ (read ${z}; found ${[...new Set(others)].sort((a, b) => a - b).join(', ')})`);
 
-  // EVERY WAY OUT REMOVES IT. A leaked ghost is an icon stuck to the cursor
-  // for the rest of the session, and there are three exits.
-  assert.match(src, /const ghostEnd = \(\) => \{ ghost\?\.remove\(\); ghost = null; \};/, 'one removal');
-  assert.match(src, /function ghostStart\(item, x, y\) \{\s*\n\s*ghostEnd\(\);/, 'a new drag clears the last one first');
-  const up = src.slice(src.indexOf('row.onpointerup ='), src.indexOf('row.onpointercancel ='));
-  assert.match(up, /ghostEnd\(\);/, 'the release removes it');
-  const cancel = src.slice(src.indexOf('row.onpointercancel ='), src.indexOf('row.onpointercancel =') + 200);
-  assert.match(cancel, /ghostEnd\(\);/, 'and so does a cancel - a pointer the browser takes back must not leave the icon behind');
+  // THE REFUSAL IS NOT COLOUR ALONE, and it is the sheet's own token for
+  // a forbidden state rather than a fifth hard-coded red.
+  assert.match(css, /\.dragghost\.refused \.tile\.has-icon, \.dragghost\.refused \.tile \{ border-color: var\(--blood\); \}/);
+  assert.match(css, /\.dragghost\.refused \.ghostact \{[^}]*opacity: 1;/, 'the word is SHOWN on a refusal - a 1px hue is not a signal');
 
-  // THE LABEL IS THE ACT. The verb under the icon is dropIntent's, the same
-  // answer the release performs, so the ghost cannot promise one thing and
-  // do another.
-  assert.match(src, /ghostMove\(e\.clientX, e\.clientY, want\?\.label \?\? null\);/,
-    'the verb on the ghost is the intent\'s own label');
-  assert.match(css, /\.dragghost\.refused \.tile \{/, 'and a release the law would refuse is shown as refused BEFORE it happens');
+  // AND THE PACK STILL SCROLLS ON A PHONE. Every row is a tile in a
+  // wrapping grid; `touch-action: none` on all of them left a 6px gap as
+  // the only place a finger could scroll from, so every flick was a drag
+  // - and INV2 had just made a release off the panel a DROP.
+  assert.match(css, /\.itemrow \{ touch-action: pan-y;/);
+  assert.match(css, /body\.draglock \.itemrow, body\.draglock \.packlists \{ touch-action: none; \}/);
+  assert.match(code, /if \(touch\) drag\.hold = setTimeout\(dragArm, TOUCH_HOLD_MS\);/, 'a touch drag begins on a HOLD, so a flick is a scroll');
 });
