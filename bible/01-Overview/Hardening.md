@@ -363,6 +363,86 @@ registration live. And a sweep of every overlay-slot window in `ui/` and
 `scenes/` confirms the chronicle was the only one missing the contract,
 so "a lot of javascript issues" was one door, hit many ways.
 
+## CRASH2, 2026-09-15 - the gate CRASH1 shipped, audited
+
+CRASH1 ended with a gate, and the standing rule below says the gate *is*
+the fix. So the gate was read the way any other claim gets read. It was
+wrong three ways, and every one of them is the failure it existed to
+prevent.
+
+**F1 - it read five doors of eight, in silence.** Its block finder
+matched `return {` alone. `ui/pauseDoor.js` and `ui/inventoryDoor.js`
+name the object (`const overlay = { ... }`) before handing it over, and
+`ui/travelMapDoor.js` returns classes - so all three were skipped and the
+suite went green over a claim that covered five of eight doors. One of
+the two skipped doors is the pause menu, which is half of what the player
+reported. **A gate that skips in silence is worse than no gate**: it
+spends the credibility of a green suite on a check it never ran.
+
+**F2 - its arm list was typed by hand, and wrong in both directions.**
+The door list derived; the four arm names did not. It demanded `close`,
+which no host has ever called on a slot - the hosts free a window with
+`dispose?.()` - so that requirement was invented, and it passed only
+because the one door lacking `close` was also the one being skipped. And
+it omitted `tick`, which `interior.js:361` calls unguarded **every
+frame**.
+
+**F3 - it assumed the population was `ui/*Door.js`.** It is not. Twelve
+window classes are constructed straight into a host slot, and
+`townTalk.js:1110` paints every *covered* window as well
+(`eachCoveredWindow((w) => w.draw(...))`), so depth is in the contract
+too, not just the top of the stack.
+
+### What the contract actually is
+
+Read off the four hosts that own a window stack, scoped to the enclosing
+function rather than a fixed lookback (the first pass used four lines and
+mis-read `townTalk.js:1197` as unguarded; its guard sits eight lines up -
+HARD2's D10 pin was re-aimed for the same reason):
+
+| arm | required by | note |
+| --- | --- | --- |
+| `input` | townTalk, interior, dungeonContext | unguarded at 6 sites |
+| `draw` | all four, plus every covered window | unguarded at 5 sites |
+| `tick` | interior alone | `:361`, every frame |
+| `hover`, `pointer`, `keyup`, `click`, `clickNative` | - | the host tests before calling: optional by design |
+
+**The arms are not uniform, and pretending otherwise would have been a
+false red six times over.** `ActionTextBox`, `ChoiceWindow`,
+`ListPickerWindow`, `TalkWindow`, `TransportWindow` and
+`MerchantServiceWindow` answer no `tick` at all. What makes `interior.js`
+safe is not that its window happens to have one: it is that its slot can
+hold exactly one class, written as a literal at the push site. So the
+gate pins **that** - the closedness - and the day a second window is
+wired into that host, the pin names the arms it now owes.
+
+### The gates now
+
+`test/windowContract.mjs` is the single derivation - hosts, slots, arms,
+populations - and both gates ask it rather than each other. A second copy
+of a rule is a second thing to keep in step, which is the whole failure
+mode.
+
+- `test/crash2_window_contract.test.js` derives the arms from the hosts,
+  pins F2 in both directions so it cannot come back, checks every DOM
+  door against the open hosts' arms, pins `interior.js`'s closed
+  population, and **asserts its own coverage**: a door it cannot parse is
+  a failure, never a skip.
+- `test/crash1_overlay_contract.test.js` keeps what is genuinely this
+  crash's - the named chronicle regression, the dead-contract ban, and
+  the key map that made the report read the way it did.
+
+Mutation-verified three ways: restoring CRASH1's narrow finder reddens
+the coverage test; removing `input` from `pauseDoor` (the door CRASH1
+skipped) reddens the arm test; guarding `interior.js`'s `tick` call
+reddens the derivation test.
+
+**No second live crash was found.** Every window that can reach a host
+slot answers the arms that host calls. The finding here is about the
+gate, not the game - which is the point: CRASH1's repair was sound and
+its *guarantee* was not, and only reading the guarantee the way we read
+the code could tell the difference.
+
 ## The standing rule this program adds
 
 When an audit finds a defect, the fix is not finished when the defect is

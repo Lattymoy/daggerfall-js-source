@@ -21,7 +21,7 @@
 // is why that one looked "random": it depended on the logbook being the
 // window that happened to be up.
 //
-// THE SHAPE, AND WHY A GATE. Three sibling doors - pauseDoor,
+// THE SHAPE, AND WHY A GATE. Four sibling doors - pauseDoor,
 // inventoryDoor, charSheetDoor, spellbookDoor - carry a comment that
 // describes this exact failure, word for word, because each of them hit
 // it first and wrote down what it cost. The rule was enforced in four
@@ -29,65 +29,39 @@
 // missed it. That is the program's measured failure mode (see
 // `01-Overview/Hardening.md`) landing on a player rather than on a test.
 //
-// So the door list is DERIVED - every `ui/*Door.js` that can hand a host
-// a window - and every window it can return must answer the contract the
-// hosts actually call. A sixth door fails this file until it does.
+// So the door list was DERIVED - every `ui/*Door.js` that can hand a
+// host a window - and every window it returns had to answer the contract
+// the hosts actually call.
+//
+// CORRECTED BY CRASH2 (test/crash2_window_contract.test.js), one commit
+// later. This file's door list derived; its ARM list did not, and its
+// block finder read `return {` only - so `ui/pauseDoor.js` and
+// `ui/inventoryDoor.js`, which name the object before handing it over,
+// were never inspected at all and the "every DOM-overlay door" claim
+// covered five of eight. The arm check and the coverage claim now live
+// in CRASH2, derived from the hosts; what stays here is the part that is
+// genuinely this crash's: the DEAD contract, and the key map that made
+// the report read the way it did. Both files share one derivation
+// (./windowContract.mjs) rather than keeping a copy each - a second copy
+// of a rule is a second thing to keep in step, which is the whole
+// failure mode.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync } from 'node:fs';
-import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { doors, read, isDomDoor, inlineWindows, blockHas } from './windowContract.mjs';
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const read = (p) => readFileSync(join(ROOT, p), 'utf8');
-
-/** Every door in ui/ - the list the hosts open windows through. */
-const doors = () => readdirSync(join(ROOT, 'src/ui'))
-  .filter((f) => /Door\.js$/.test(f)).map((f) => `src/ui/${f}`).sort();
-
-/**
- * THE ARMS THE HOSTS CALL UNGUARDED, and where each call lives. A door
- * whose window omits one throws inside the host's own event handler,
- * which is a crash the player sees and no test does.
- */
-const CONTRACT = ['input', 'draw', 'close', 'dispose'];
-
-/** A door that builds its window INLINE (an object literal returned from
- *  a mount function) has to spell the arms itself; one that returns a
- *  CLASS carries them on the prototype and is checked at its class. */
-function inlineOverlayBlocks(src) {
-  // the `return {` ... `};` of a function that also appends to the body -
-  // i.e. a DOM overlay handed to a host, which is the shape at issue
-  const out = [];
-  for (const m of src.matchAll(/return \{\n([\s\S]*?)\n {2}\};/g)) out.push(m[1]);
-  return out;
-}
-
-test('CRASH1: every DOM-overlay door answers the arms the hosts call unguarded', () => {
-  const missing = [];
-  for (const door of doors()) {
-    const src = read(door);
-    // only the enhanced DOM overlays build a window inline; a door that
-    // returns `new SomeWindow(...)` is a class and carries its own arms
-    if (!/document\.createElement|document\.body\.append/.test(src)) continue;
-    for (const block of inlineOverlayBlocks(src)) {
-      if (!/\bclose\b/.test(block)) continue;   // not a window object
-      for (const arm of CONTRACT) {
-        // an arm may be a method (`input() {}`), a property
-        // (`dispose: close`), a getter (`get done()`) or SHORTHAND
-        // (`close,`) - the first draft of this matcher missed the
-        // shorthand and reported three doors that were fine, which is
-        // the kind of false red that gets a gate deleted.
-        const has = new RegExp(`(^|\\n)\\s*(${arm}\\s*[(:,]|get ${arm}\\b|${arm}\\s*$)`, 'm').test(block);
-        if (!has) missing.push(`${door}: its overlay object has no \`${arm}\``);
-      }
-    }
+test('CRASH1: the chronicle door still answers the arms its host calls', () => {
+  // THE NAMED REGRESSION. The general sweep is CRASH2's - this one pins
+  // the door the player actually hit, by name, so the story stays
+  // readable at the place it happened.
+  const src = read('src/ui/chronicleDoor.js');
+  const windows = inlineWindows(src).filter((b) => blockHas(b, 'draw') && blockHas(b, 'done'));
+  assert.equal(windows.length, 1, 'ui/chronicleDoor.js no longer builds exactly one inline window - re-aim this pin');
+  for (const arm of ['input', 'draw', 'dispose']) {
+    assert.ok(blockHas(windows[0], arm),
+      `the logbook's enhanced window has no \`${arm}\`. townTalk.js calls \`overlay.input(a, e)\` UNGUARDED and\n`
+      + 'ui/input.js maps EVERY letter, digit and space to an action, so this is a TypeError on an ordinary keypress -\n'
+      + 'which is what was reported from live play. Copy the contract block from ui/pauseDoor.js.');
   }
-  assert.deepEqual(missing, [],
-    'a host calls these UNGUARDED on the window a door hands it - `overlay.input(a, e)` in\n'
-    + 'scenes/townTalk.js, `activeOverlay.input(action, e)` in scenes/dungeonContext.js - and\n'
-    + 'ui/input.js maps EVERY letter, digit and space to an action, so a missing arm is a\n'
-    + 'TypeError on an ordinary keypress. Copy the contract block from ui/pauseDoor.js.');
 });
 
 test('CRASH1: no door answers the DEAD contract instead of the live one', () => {
@@ -98,7 +72,8 @@ test('CRASH1: no door answers the DEAD contract instead of the live one', () => 
   const dead = [];
   for (const door of doors()) {
     const src = read(door);
-    for (const block of inlineOverlayBlocks(src)) {
+    if (!isDomDoor(src)) continue;
+    for (const block of inlineWindows(src)) {
       for (const arm of ['onKey', 'onPointer']) {
         if (new RegExp(`(^|\\n)\\s*${arm}\\s*\\(`).test(block)) dead.push(`${door}: \`${arm}\` is not a contract any host reads`);
       }
