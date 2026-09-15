@@ -160,9 +160,114 @@ ladder" as a fixed window of source lines, already widened from 60 to 80 by
 two earlier audits. It reads the law now. **A pin that needs widening every
 time the file grows is measuring the file, not the rule.**
 
-Seams still open here: the two exterior hosts' draw ladders, the five-host
-save envelope assembly, and the mode-transition teardown order. Each is
-bigger than the race and each wants its own differential before it moves.
+**The weapon pose pair, shipped (HARD2c, 2026-09-15).** The second seam,
+and the smallest of the three that were open. DFU writes the sheath and
+the hand as ONE pair and restores them as ONE pair -
+`SerializablePlayer.cs:175-176` and `:420-421` - and the port had that
+pair written out by hand in three hosts and read back in three more.
+**AUDIT 63 F25 is what four copies of a two-line law cost**: the port
+carried only the first of the two lines, so a player fighting with the
+left-hand weapon loaded back holding the right hand's item, or bare
+fists. By the time it was found, the two restore lines had drifted six
+and thirteen lines apart inside their own hosts, and the comment in
+`worldModes.js` that pointed between them cited `world.js:4407` and
+`dungeonContext.js:5451` - lines that had moved to `:4418` and `:5457`.
+*Three copies of a rule, and the signpost between them stale as well.*
+
+The pair lives in `src/combat/playerWeapon.js` now - `weaponPoseOf`,
+`applyWeaponPose`, `mergeWeaponPose` - beside `usingRightHandFromSaveVars`,
+the CLASSIC-save half of the very same law, which was already kept there
+"so the law and its citation live with the hand". The hosts keep their
+rigs, because which rig is in the player's hands genuinely differs per
+host; only the arithmetic moved.
+
+Both HARD2 rules held, and both were checked rather than asserted:
+
+- **Two exhaustive differentials** carrying the old inline arithmetic
+  verbatim - 76 compose cases and 84 restore cases over every shape a
+  pose field has arrived in (set either way, absent, and both spellings
+  of "nothing here"): **0 differ**. The compose differential includes
+  `world.js`'s deliberate PER-FIELD `??` merge, which is defensive
+  against a mode host answering a partial bag and is not the same thing
+  as picking the bag whole.
+- **Two behavioural pins moved, and both got stronger.** `audit26
+  F222` and `audit63 F25` quoted the two lines character for character
+  in each host - which is exactly the shape that let F25 lose one of
+  them, and *a pin that quotes four copies cannot tell you they agree*.
+  They run the law now and match only the WIRING: which rig each host
+  offers, and that `world.js` lands the pair in the interior rig as well
+  because DFU has one manager. `audit63`'s `new Function` mount of
+  `worldModes`' two seams survives intact and is now handed the real law
+  instead of a re-typed copy - the same "a pin getting simpler at an
+  extraction is the sign the extraction was real" that HARD2a recorded.
+
+`test/hard2c_weaponpose.test.js` pins the law directly and gates against
+a fourth inline copy appearing.
+
+**A correction to this page.** The line that used to sit here called the
+next seam "the five-host save envelope assembly". That was wrong: only
+`world.js` and `dungeonContext.js` call `snapshotPlayer`, and
+`composeSessionState` had already extracted the quest+talk half at B4.
+Counting hosts that *touch* saving is not the same as counting hosts that
+*assemble the envelope*, and the record should not have overstated a seam
+it was ranking.
+
+**The last two seams, audited (HARD2-S1/S2, 2026-09-15) - and NEITHER
+justifies an extraction.** A reason before a differential. Both were read
+for the drift this program's thesis predicts, and both came back clean;
+the honest result of an audit is sometimes that the work is not owed.
+
+**S1 - the two exterior hosts' draw ladders. THE HOSTS ARE NOT PEERS,
+and the record never said so.** `main.js:76` routes `?exterior`,
+`?region` and `?loc` to `bootExterior`; the front door (`main.js:158`)
+boots `bootWorld`. main.js says it in its own words: *"Dev scenes stay
+one param away (?exterior/?world/etc)."* So this is a shipping ladder
+against a dev scene's ladder, not two live copies of one law - which is
+what made AUDIT 66 F7 worth paying, because both of ITS copies were
+reachable in play.
+
+Read anyway, derived: 352 distinct calls in `world.js`'s frame against
+285 in `exterior.js`'s, 225 method names shared. Everything `world.js`
+has and `exterior.js` lacks is the streaming host's own (terrain pixels,
+riding, online peers). Everything `exterior.js` has and `world.js` lacks
+is a `?rig`/`?rigNear`/`?shot` probe rig, its own `refreshSeason` - whose
+streaming twin `tickSeason` is documented AND cites `refreshSeason` by
+name at `world.js:355` - and two math helpers in the shot path. **No
+drift.**
+
+**S2 - the mode-transition teardown order. Three candidate findings, all
+three collapsed on verification.**
+
+1. *"`forceExitToExterior` is missing six of `tryExit`'s terms."* It is
+   not. I had read a 25-line window of it; `unleveledLootPreTransition`,
+   `cacheInteriorScene`, `host.onInteriorLeave`, `_intShared = null` and
+   `questBridge.onExteriorTransition` are all there, above and below that
+   window. **The function is the unit, not a window of lines** - the same
+   error the HARD2c guard pass made an hour earlier, and the same one
+   HARD2a's D10 pin was re-aimed for. Three times now; it is written
+   down here so the fourth time is cheaper.
+2. *"`npcSession.onWorldChanged()` is on both door exits and not on the
+   teleport/load path."* True, and correct: every caller of
+   `forceExitToExterior` follows it with `_teleportToPixel`, and THAT
+   function owns the call (`world.js:3551`, DFU's `OnMapPixelChanged` /
+   `OnLoadEvent`). The quickload caller goes through
+   `restoreSessionState` instead. Calling it in both places would be the
+   redundancy, not the fix.
+3. *"`worldModes.js:7959` disposes the dungeon overlay that
+   `dungeonCtx.destroy()` disposes again - HARD1's double free."* Already
+   known, already written down, at `dungeonContext.js:6076-6077`:
+   *"dispose() is idempotent (A2), which is what makes the outer host's
+   call harmless."* The tree had the answer before the audit asked.
+
+The one measured drift this seam ever had - AUDIT 66 F6,
+`interiorTorches.destroyAll()` being *"the one that never joined this
+list"* - was paid when it was found.
+
+**So HARD2 rests here for now.** Two seams shipped (the activation race,
+the weapon pose pair), both with a defect behind them. The two that
+remain have no defect behind them, one is not even between peers, and
+extracting on principle is how a 1:1 port loses behaviour it is pinned to
+keep. They come back the day something is found in them.
 
 ### HARD3 - types at the seams that crash. SHIPPED 2026-09-14.
 
@@ -277,13 +382,67 @@ This one is a rule about the RECORD - write the permission down - and it
 failed in exactly the same way, at a higher rate than any code rule
 measured so far: six of the six times it applied.
 
-### HARD5 - shrink Home.md into an index.
+### HARD5 - Home.md back to an index. SHIPPED 2026-09-15.
 
-It is 288 KB and carries the architecture, the postmortems, the policy,
-the changelog and the project index at once. The split is right, but note
-what is attached before starting: a tool rewrites a section of it
-(`regenOpenFlags.mjs`), and tests pin line numbers inside it. It is not a
-pure documentation move.
+It was 291 KB and carried the architecture, the postmortems, the policy,
+the changelog and the project index at once. **It is 30 KB now.** Two
+sections were 254 KB of it and each has its own page:
+
+| section | was | now |
+| --- | --- | --- |
+| `## Active arcs` | 172 KB in **89 lines** - an index whose entries had grown into essays | `01-Overview/Active-Arcs.md` |
+| `## Audits` | 82 KB in 1,386 lines | `01-Overview/Audit-Log.md` |
+
+**Both moves are byte for byte, and nothing was re-worded in them.** A
+rewrite and a relocation in one commit is a diff nobody can read.
+Shortening Active-Arcs' essay-length entries into real index lines is its
+own later pass, and it needs each linked page read first to be sure the
+summary is not the only place something is written down; each delegate
+page says so in its own header, and a gate checks that it does.
+
+**THE WARNING ON THIS PAGE WAS HALF WRONG, AND THAT IS THE FINDING.** It
+said two things were attached: *"a tool rewrites a section of it
+(`regenOpenFlags.mjs`), and tests pin line numbers inside it."*
+
+- The tool is real. Its section, `## Open flags`, **stayed in Home.md**
+  for exactly that reason - `regenOpenFlags.mjs` finds it by heading in
+  that file, and `citedrift.test.js` and `flagsites.test.js` read the
+  list there too.
+- **The line-number pins do not exist.** Not one test indexes Home.md by
+  line. The line numbers those tests handle are the ones INSIDE each
+  open-flag entry, pointing at `src/` - a different thing entirely.
+
+That is the second stale claim found on this page in one day; the first
+was "the five-host save envelope assembly", which is two hosts. So:
+**a warning is a claim, and an unchecked warning rots exactly like an
+unchecked citation.** Both are now checked rather than believed - if a
+line-number pin into Home.md is ever added, `hard5_index.test.js` goes
+red and the warning becomes true and earns its place back.
+
+**The real attachment was the one the record did not name.** Four gates
+ask *"does Home.md name every record under `01-Overview/`, every arc plan
+under `bible/`"* - and a split breaks all four while the index stays
+complete. They were asking about THE INDEX, not about a file.
+
+And behind those sits the hazard worth carrying forward:
+
+> A `doesNotMatch(read('bible/Home.md'), ...)` pin says *"this stale
+> claim is gone"*. Move the section it guards to another page and the pin
+> goes **vacuously true** - it passes for ever, for the wrong reason, and
+> nothing goes red. Three such pins were live when this split landed.
+
+`test/bibleIndex.mjs` is the answer: the index is **derived** - Home.md,
+plus every page Home.md's own stubs hand off to. A delegate cannot join
+in silence (it has to be written into Home.md to count) and a stub naming
+a page that is not there throws rather than quietly shrinking what the
+gates read. The four index gates and the three negative pins read it now.
+
+`test/hard5_index.test.js` holds the rest: a ceiling on Home.md's size so
+it cannot grow back into an everything-page, a check that no section
+exists twice across the index (a relocation that leaves the original
+behind is worse than none - two texts, one edited and one read), the
+ban on negative pins aimed at one page, the reason `## Open flags` stayed,
+and the pin on the warning above. Mutation-verified three ways.
 
 ## AUDIT-HARD, 2026-09-15 - the program audited against itself
 
@@ -442,6 +601,89 @@ slot answers the arms that host calls. The finding here is about the
 gate, not the game - which is the point: CRASH1's repair was sound and
 its *guarantee* was not, and only reading the guarantee the way we read
 the code could tell the difference.
+
+## AUDIT-176, 2026-09-15 - HARD2c, the seam audit and HARD5, read before merging
+
+Mac, again: "Audit and merge." Three findings over the branch's three
+commits, and **two of them are in my own new gates** - which is the
+result AUDIT-HARD predicted when it said a gate is code and rots like
+code.
+
+| # | where | what |
+|---|---|---|
+| A176-1 | `weaponPoseOf` | **the extraction changed one error path, and a comment claimed a reliance that does not exist.** The inline arithmetic dereferenced the rig unguarded, so a null rig THREW at the save; the extracted version returns null and the bag silently omits the pair, which a presence-gated restore reads as "leave the live hand". Quieter, and quieter is worse. The comment said callers use the null arm to mean "this mode has no rig"; no caller does - worldModes answers that with its own ternary |
+| A176-2 | `hard2c_weaponpose` | **the no-fourth-copy gate named three hosts BY HAND.** A copy in a fourth host - `exterior.js`, say - would not have been seen. It walks `src/` now, and the mutation proves it: a copy planted in `exterior.js` reddens it |
+| A176-3 | `hard5_index` | the negative-pin scan read ONE line, so the same pin formatted across two - `assert.doesNotMatch(` on one, the path on the next - walked straight past it. Two-line window now, and what it still cannot see (a pin reaching Home.md through a variable) is stated rather than papered over |
+
+All three are paid. A176-1 keeps the tolerant arm - it is genuinely the
+right shape for a future caller - but the comment now says plainly that
+nothing relies on it, and the differential **pins the difference** rather
+than leaving it to be discovered: the old arithmetic throws on a null rig,
+the new one does not, and that is written down as the one behaviour this
+extraction changed.
+
+### What the split was checked for, and passed
+
+- **Nothing was lost.** Every one of the 1,751 lines of the old
+  `Home.md` appears somewhere in the three files that replaced it: 0
+  missing.
+- **Nothing was duplicated.** 0 substantial lines appear in both
+  `Home.md` and a delegate - a relocation that leaves the original
+  behind is two texts, one of which gets edited and one of which gets
+  read.
+- **Key order survived.** The save envelope is JSON and insertion order
+  survives `JSON.stringify`, so a reordered pose bag is a different
+  string. Both hosts compose byte-identical bags, and the rig still
+  overrides a host-supplied pair, which is what the spread order decides.
+
+### One thing left standing, deliberately
+
+`citeShift` reports two citations "for a person" in a STRUCK row of
+`Port-Ledger.md` - `combat/playerWeapon.js:118-160` and its `:808`
+continuation. Read at the commit before this branch, **that span was
+already stale**: it claims to name the port's own gesture path and
+actually pointed at the sheath-and-hand region. HARD2c's insertion moved
+it further along. It is left alone on purpose - the struck law freezes
+citations in fixed rows precisely so historical text does not churn - but
+being frozen is not the same as being right, and it is written down here
+rather than left inside a "2 for a person" line nobody reads.
+
+### The merge, and a conflict rule this program did not have
+
+`origin/main` moved under the branch (PR #175) and the merge conflicted
+in five files. Two were ordinary; the other three were **conflicts
+between two sets of CITATIONS**, and the first resolution got half of
+them wrong by taking one side wholesale:
+
+> A citation conflict has no side. The `src/` line numbers were THIS
+> branch's - it moved `world.js` and `dungeonContext.js` by one line
+> each - and the `Port-Ledger.md` ROW numbers were MAIN's, which had
+> inserted a Ledger row. Taking ours gave the right src lines and the
+> wrong rows; taking theirs would have done the reverse. **Resolve a
+> citation conflict number by number, by asking what each one names.**
+
+Two further mechanics, both learned the expensive way here:
+
+- **`citeShift` must not run mid-merge.** Run before the merge commit it
+  reads a base that predates the incoming files (it said so itself:
+  *"fatal: path 'test/ht3_sprite_upright.test.js' exists on disk, but
+  not in 'HEAD'"*) and shifted seventeen citations off by one. Commit the
+  merge first, then let the tool re-resolve against the new base - the
+  same order PR #168's merge established.
+- `src/buildTag.js` conflicts on every merge and is build output; take
+  either side and let `prebuild` stamp it.
+
+Post-merge the gate is green on 7,654 tests with `citeShift` reporting
+nothing to move.
+
+### The shape worth keeping
+
+Two of three findings were **in the gates, not the code**, and the third
+was a comment. The code this branch changed came through clean; the
+things that claimed to check it did not. That is now the second audit in
+a row to land there (AUDIT-HARD found four such), and it is the argument
+for auditing gates on the same cycle as the port rather than trusting a
+green suite.
 
 ## The standing rule this program adds
 

@@ -41,6 +41,7 @@ import { playerEntity, surfacePlayer, hurtPlayer as hurtEntity, damageShieldPool
 import { addItem, spendArrow } from '../systems/inventory.js';
 import { worldAabb, objectAabb } from '../player/activate.js';   // AUDIT 63 F37/F38: objectAabb is the LIVE box a ray or a collision meets
 import { createWeaponRig, envAttack } from '../combat/weaponRig.js';   // C10: the shared FP-weapon surface
+import { weaponPoseOf, applyWeaponPose } from '../combat/playerWeapon.js';   // HARD2c: the sheath+hand pair as ONE law (SerializablePlayer.cs:175-176 / :420-421)
 import { racialRestBlock } from '../systems/vampirism.js';   // V2b: the vampire's rest gate
 import { setPassiveSpecialsHost } from '../systems/passiveSpecials.js';   // V2c: the sunlight/holy-place seam
 import { setInfectionHost } from '../systems/infection.js';   // AUDIT 39 (#37): the borrowed seam goes back on teardown
@@ -1398,7 +1399,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:6595 / exterior.js:2944), set
+  // host's own townTalk sink (world.js:6589 / exterior.js:2944), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -2842,7 +2843,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:8708,
+              // playerArrowHitFoe is the one copy world.js:8702,
               // exterior.js:4264 and worldModes.js:6042 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
@@ -5356,7 +5357,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // .cs:175-176 writes weaponDrawn and usingLeftHand as one pair
         // and :420-421 restores them as one pair; this host owns the
         // weapon, so both halves land here.
-        pose: { ...(opts.pose?.read?.() ?? {}), weaponDrawn: !playerWeapon.sheathed, usingRightHand: playerWeapon.usingRightHand },
+        pose: { ...(opts.pose?.read?.() ?? {}), ...weaponPoseOf(playerWeapon) },
         locationKey: _locationKey,
         // MAC6 #1 (Mac, 2026-09-12: "it doesnt place you where you last
         // saved"): WHERE the dungeon stands - DFU's worldPosX/worldPosZ
@@ -5445,16 +5446,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           hudText.add('Dungeon size setting changed - moved to dungeon start.');
         }
       }
-      // F222/F101: Sheathed = !weaponDrawn (:420-421); the host takes
-      // the yaw/pitch/crouch half through its own seam.
+      // F222/F101 + AUDIT 63 F25: Sheathed and UsingRightHand as ONE
+      // pair (:420-421); the host takes the yaw/pitch/crouch half
+      // through its own seam. HARD2c: the two lines used to sit six
+      // apart here, which is how F25 lost one of them.
       if (extras.pose) {
-        if (extras.pose.weaponDrawn != null) playerWeapon.sheathed = !extras.pose.weaponDrawn;
-        // AUDIT 63 F25: UsingRightHand = !usingLeftHand (:421). The
-        // flag only - the rig's per-frame syncWorn is DFU's
-        // UpdateHands+ApplyWeapon and re-binds the screen weapon (and
-        // re-forces the right hand under a shield, WeaponManager
-        // .cs:656). Presence-gated like every additive pose member.
-        if (extras.pose.usingRightHand != null) playerWeapon.usingRightHand = !!extras.pose.usingRightHand;
+        applyWeaponPose(playerWeapon, extras.pose);
         opts.pose?.apply?.(extras.pose);
       }
       surfacePlayer();

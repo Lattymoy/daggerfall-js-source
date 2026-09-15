@@ -118,6 +118,103 @@ export const USING_LEFT_HAND_TEXT = 'Using weapon in left hand.';
 export const usingRightHandFromSaveVars = (saveVars) => !saveVars?.usingLeftHandWeapon;
 
 /**
+ * HARD2c - THE PORT-SAVE HALF OF THE SAME PAIR.
+ *
+ * DFU writes the sheath and the hand as ONE pair and restores them as
+ * ONE pair:
+ *
+ *   SerializablePlayer.cs:175-176   data.weaponDrawn   = !weaponManager.Sheathed;
+ *                                   data.usingLeftHand = !weaponManager.UsingRightHand;
+ *   SerializablePlayer.cs:420-421   weaponManager.Sheathed      = !data.weaponDrawn;
+ *                                   weaponManager.UsingRightHand = !data.usingLeftHand;
+ *
+ * The port had that pair written out BY HAND in three hosts and read
+ * back in three more - world.js, scenes/dungeonContext.js and
+ * worldModes.js - and **AUDIT 63 F25 is what four copies of a two-line
+ * law costs**: the port carried only the first of the two lines, so a
+ * player fighting with the left-hand weapon loaded back holding the
+ * right hand's item, or bare fists. By the time it was found the two
+ * restore lines had drifted six and thirteen lines apart inside their
+ * own hosts, and the comment that pointed between them cited line
+ * numbers that no longer existed.
+ *
+ * So the pair lives here, beside `usingRightHandFromSaveVars` - the
+ * CLASSIC-save half of the very same law - for the reason that one
+ * already gives: the law and its citation live with the hand. The hosts
+ * keep their rigs; they ask for the pair.
+ *
+ * @typedef {{ weaponDrawn: boolean, usingRightHand: boolean }} WeaponPose
+ */
+
+/**
+ * SerializablePlayer.cs:175-176, off whichever rig is in the player's
+ * hands.
+ *
+ * NULL IN, NULL OUT - AND NO CALLER RELIES ON THAT TODAY. The first
+ * draft of this comment said the callers use it to mean "this mode has
+ * no rig of its own to answer for"; AUDIT-176 found that false. All
+ * three call sites pass a rig their host guarantees, and worldModes'
+ * own "no rig here" answer is its `mode === 'interior' ? ... : null`
+ * ternary, not this arm.
+ *
+ * It is kept, and the reason is worth stating because it is the one
+ * BEHAVIOUR CHANGE this extraction made: the inline arithmetic it
+ * replaced dereferenced the rig unguarded (`!rig.sheathed`), so a null
+ * rig THREW - loudly, at the save. This returns null, and the composed
+ * bag then simply omits the pair, which a presence-gated restore reads
+ * as "leave the live hand". That is quieter, and quieter is worse.
+ * `test/hard2c_weaponpose.test.js` pins the difference rather than
+ * leaving it to be discovered: if a caller ever does pass null, the
+ * pin says what changed and when.
+ */
+export const weaponPoseOf = (w) => (w ? { weaponDrawn: !w.sheathed, usingRightHand: w.usingRightHand } : null);
+
+/**
+ * SerializablePlayer.cs:420-421, into whichever rig is handed over.
+ *
+ * THE FLAG ONLY, and PRESENCE-GATED, which are two separate laws that
+ * every copy of this used to restate:
+ *
+ *  - Flag only. The C# restore sets the property and calls no
+ *    ApplyWeapon, because WeaponManager.Update's UpdateHands ends in
+ *    ApplyWeapon on the very next frame (:699). The port's twin is the
+ *    rig's per-frame `syncWorn` (updateHands + applyWeapon(claws)),
+ *    which re-binds the screen weapon to the restored hand AND re-runs
+ *    the shield override that forces the right hand (:656). A bare
+ *    `applyWeapon()` here would drop the racial claws for a frame and
+ *    would null a `bindWorn: false` rig's scripted weapon.
+ *  - Presence-gated. A pre-field envelope - and the classic import
+ *    before its own arm - leaves the LIVE hand alone rather than
+ *    reading `undefined` as "sheathed, right hand".
+ */
+export function applyWeaponPose(w, pose) {
+  if (!w || !pose) return false;
+  if (pose.weaponDrawn != null) w.sheathed = !pose.weaponDrawn;
+  if (pose.usingRightHand != null) w.usingRightHand = !!pose.usingRightHand;
+  return true;
+}
+
+/**
+ * SL-2 (AUDIT 65): the rig in the player's hands beats the host's own.
+ *
+ * DFU has ONE WeaponManager for every WorldContext and :175-176 reads
+ * it wherever the save is taken; the world host has four rigs and read
+ * its own EXTERIOR one unconditionally, so an F9 pressed inside a shop
+ * recorded the street's sheath and hand. The mode host answers for the
+ * rig actually drawn, and null outside interior mode.
+ *
+ * PER FIELD, not whole-bag, and that is deliberate: a mode host that
+ * answers a PARTIAL pose - one built before a field existed - must
+ * still compose exactly as it did before that field, member by member,
+ * rather than blanking the host's own value. `??` and not `||`, so a
+ * legitimately `false` flag survives.
+ */
+export const mergeWeaponPose = (live, own) => ({
+  weaponDrawn: live?.weaponDrawn ?? own?.weaponDrawn,
+  usingRightHand: live?.usingRightHand ?? own?.usingRightHand,
+});
+
+/**
  * AUDIT 28 W2b: MeleeDamage's FRIENDLY PROTECTION (WeaponManager.cs
  * :930-944). Under Settings.MeleeAttackFriendlyProtection (ships True)
  * the bounding-box pass skips three kinds of entity: a PlayerAlly

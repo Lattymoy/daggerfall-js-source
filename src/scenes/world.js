@@ -203,6 +203,7 @@ import { jumpSpeedMultiplier, isEnhancedJumping, tallySkill, SKILLS } from '../s
 import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter, setAvoidDeathHook } from '../characters/playerEntity.js';
 import { SOUND } from '../systems/soundClips.js';
 import { createWeaponRig, autoBuildArms } from '../combat/weaponRig.js';   // MWA1: the arms at boot
+import { weaponPoseOf, applyWeaponPose, mergeWeaponPose } from '../combat/playerWeapon.js';   // HARD2c: the sheath+hand pair as ONE law, and SL-2's per-field merge with the mode host's live rig
 import { ArrowFlight, playerArrowHitFoe } from '../combat/arrowFlight.js';   // C13: visible exterior arrows; AUDIT 39 (#64): and the shaft that LANDS
 import { addItem, spendArrow, carriedWeight } from '../systems/inventory.js';   // E4: PlayerEntity.CarriedWeight carries the gold counter's own term
 import { calculateAttackDamage } from '../combat/formulas.js';   // X2-slice: enemy-arrow impacts
@@ -2673,7 +2674,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2113 mounts the same one, gated on
+  // and dungeonContext.js:2114 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
   // that context through modes.dungeonCtx - so worldModes.js:4615
@@ -4234,7 +4235,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // loaded back on the right hand's item (or bare fists). The
       // port stores the POSITIVE sense because PlayerWeapon holds
       // `usingRightHand`; it is the same bit.
-      pose: { yaw: cam.yaw, pitch: cam.pitch, crouching: !!player.crouching, weaponDrawn: wp?.weaponDrawn ?? !weaponRig.playerWeapon.sheathed, usingRightHand: wp?.usingRightHand ?? weaponRig.playerWeapon.usingRightHand, camera: mwCamera.state(), transport: player.transportMode },   // SL-2: the pair off the LIVE rig (the mode seam above), else this host's own
+      pose: { yaw: cam.yaw, pitch: cam.pitch, crouching: !!player.crouching, ...mergeWeaponPose(wp, weaponPoseOf(weaponRig.playerWeapon)), camera: mwCamera.state(), transport: player.transportMode },   // SL-2: the pair off the LIVE rig (the mode seam above), else this host's own - PER FIELD, which is mergeWeaponPose's whole job
       locationKey: 'world',
       world: {
         pixel: playerTravelPixel(), nativeX: wc.x, nativeZ: wc.z, y: pf[1] - state.compensation[1],
@@ -4402,20 +4403,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     cam.yaw = pose.yaw ?? cam.yaw;
     cam.pitch = pose.pitch ?? cam.pitch;
     if (pose.crouching != null) player.crouching = !!pose.crouching;
-    if (pose.weaponDrawn != null) weaponRig.playerWeapon.sheathed = !pose.weaponDrawn;
-    // AUDIT 63 F25/F31: the hand, SerializablePlayer.cs:421's
-    // `weaponManager.UsingRightHand = !data.usingLeftHand;`. The
-    // FLAG ONLY - the C# restore sets the property and calls no
-    // ApplyWeapon, because WeaponManager.Update's UpdateHands ends in
-    // ApplyWeapon (:699) on the very next frame; the port's twin is
-    // weaponRig.syncWorn (updateHands + applyWeapon(claws), every
-    // frame), which re-binds the screen weapon to the restored hand
-    // AND re-runs the shield override that forces the right hand
-    // (WeaponManager.cs:656). A bare applyWeapon() here would drop the
-    // racial claws for a frame and would null a bindWorn:false rig's
-    // scripted weapon. Presence-gated: a pre-field envelope (and the
-    // classic import before its own arm below) leaves the live hand.
-    if (pose.usingRightHand != null) weaponRig.playerWeapon.usingRightHand = !!pose.usingRightHand;
+    // AUDIT 63 F25/F31: the sheath AND the hand, SerializablePlayer
+    // .cs:420-421's two lines, as the one pair they are there. HARD2c:
+    // they used to sit thirteen lines apart here - F25 is what that
+    // cost - and the flag-only and presence-gated laws they each
+    // restated now live once, with their citations, in
+    // combat/playerWeapon.js's applyWeaponPose.
+    applyWeaponPose(weaponRig.playerWeapon, pose);
     // SL-2 (AUDIT 65): ...and the SAME pair into the interior rig, the
     // one the player's hands actually hold inside a building. DFU has
     // ONE WeaponManager for every WorldContext (SerializablePlayer

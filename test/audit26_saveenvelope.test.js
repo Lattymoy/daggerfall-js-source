@@ -7,6 +7,7 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { snapshotPlayer, restorePlayer, copyEffectEntry } from '../src/systems/save.js';
+import { applyWeaponPose } from '../src/combat/playerWeapon.js';   // HARD2c: the :420-421 inversion, called rather than quoted
 import { ActionSystem } from '../src/world/actionSystem.js';
 import { Collider } from '../src/player/collider.js';
 
@@ -66,16 +67,24 @@ test('audit26 F222: both hosts write the pose and land it on load', () => {
   // rigs - so the pair is composed from the mode host's LIVE rig when
   // there is one (inside a building it is `interiorWeapon`, a rig this
   // envelope never carried) and from this host's own when there is not.
-  assert.match(w, /pose: \{ yaw: cam\.yaw, pitch: cam\.pitch, crouching: !!player\.crouching, weaponDrawn: wp\?\.weaponDrawn \?\? !weaponRig\.playerWeapon\.sheathed, usingRightHand: wp\?\.usingRightHand \?\? weaponRig\.playerWeapon\.usingRightHand, camera: mwCamera\.state\(\), transport: player\.transportMode \}/);
+  // HARD2c moved the ARITHMETIC out from under this pin and left the
+  // bag: the sheath and the hand are one law now
+  // (combat/playerWeapon.js), so what is matched here is the host's
+  // WIRING - which rig it offers and where the pair sits in the bag -
+  // and the law itself is CALLED below rather than quoted.
+  assert.match(w, /pose: \{ yaw: cam\.yaw, pitch: cam\.pitch, crouching: !!player\.crouching, \.\.\.mergeWeaponPose\(wp, weaponPoseOf\(weaponRig\.playerWeapon\)\), camera: mwCamera\.state\(\), transport: player\.transportMode \}/);
   assert.match(w, /const wp = modes\?\.weaponPose\?\.\(\) \?\? null;/, 'and `wp` is the mode host\'s answer, null outside interior mode');
   // SAV3 moved the landing into the ONE pose-apply (quickload + the
-  // classic import share it) - the inversion law lives there now.
-  assert.match(w, /if \(pose\.weaponDrawn != null\) weaponRig\.playerWeapon\.sheathed = !pose\.weaponDrawn;/,
-    'Sheathed = !weaponDrawn, the :420-421 inversion');
+  // classic import share it); HARD2c moved the inversion one step
+  // further, into the law both hosts now call - so run it.
+  const landed = { sheathed: true, usingRightHand: true };
+  applyWeaponPose(landed, { weaponDrawn: true });
+  assert.equal(landed.sheathed, false, 'Sheathed = !weaponDrawn, the :420-421 inversion');
+  assert.match(w, /applyWeaponPose\(weaponRig\.playerWeapon, pose\);/, 'and this host lands it through that law');
   assert.match(w, /applyPose\(extras\.pose\);/, 'the quickload lands through it');
   assert.match(w, /applyPose\(bundle\.snap\.pose\);/, 'and the classic import too');
   const d = rd('src/scenes/dungeonContext.js');
-  assert.match(d, /pose: \{ \.\.\.\(opts\.pose\?\.read\?\.\(\) \?\? \{\}\), weaponDrawn: !playerWeapon\.sheathed, usingRightHand: playerWeapon\.usingRightHand \}/,
+  assert.match(d, /pose: \{ \.\.\.\(opts\.pose\?\.read\?\.\(\) \?\? \{\}\), \.\.\.weaponPoseOf\(playerWeapon\) \}/,
     'the dungeon context folds its own weapon AND the hand in, and takes yaw/pitch/crouch from the host seam');
   assert.match(d, /opts\.pose\?\.apply\?\.\(extras\.pose\);/);
   const m = rd('src/scenes/worldModes.js');
