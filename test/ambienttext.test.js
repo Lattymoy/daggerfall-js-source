@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -8,6 +8,7 @@ import {
   AMBIENT_TEXTS, AMBIENT_TEXT_SECTION, AMBIENT_TEXT_VENDOR, CLIMATE_KEYS,
   ambientTextKey, climateKey, createAmbientText, hasAmbientText,
   readAmbientTextSettings, weatherKey, weatherKeyForWeather,
+  setAmbientTextHost, tickAmbientText,
 } from '../src/systems/ambientText.js';
 import { MOD_SETTINGS } from '../src/systems/modSettings.js';
 import { LOCATION_TYPES, DUNGEON_TYPES } from '../src/formats/mapsFile.js';
@@ -196,6 +197,26 @@ test('AT1: underground the key is the DUNGEON’s type and nothing else', () => 
   assert.equal(ambientTextKey({ insideDungeon: true, dungeonType: 99, index: 1 }), '991');
 });
 
+test('AUDIT AT F1: underground the TAIL ROLL IS NEVER SPENT - the dungeon arm skips it', () => {
+  // The dungeon arm (IL_002e..IL_005d) formats its key and jumps
+  // straight to Contains at IL_013b; `Random.Range(0, 3)` is at
+  // IL_00ad, inside the ELSE branch. The port rolled it either way -
+  // invisible under Math.random, and still a different number of draws
+  // from the same stream, which is the thing a seeded replay counts.
+  //
+  // Pinned by the QUEUE, which throws when something rolls more than it
+  // planned: underground the mod gets exactly ONE roll (the index), and
+  // above ground exactly two (the index and the tail).
+  const under = mod({ rolls: queue(pick(3, 10)), where: () => ({ insideDungeon: true, dungeonType: DUNGEON_TYPES.Crypt }) });
+  assert.equal(under.selectAmbientText(), AMBIENT_TEXTS.Crypt3, 'one roll underground, and it is the index');
+  const over = mod({ rolls: queue(pick(3, 10), pick(0, 3)), where: () => ({ inLocationRect: false, climateIndex: 224 }) });
+  assert.equal(over.selectAmbientText(), AMBIENT_TEXTS.NoneDesert3, 'two above ground - the index and the tail');
+  // ...and the miss path spends the same rolls as the hit path, because
+  // the roll sits above the Contains test in both.
+  const missUnder = mod({ rolls: queue(pick(3, 10)), where: () => ({ insideDungeon: true, dungeonType: 99 }) });
+  assert.equal(missUnder.selectAmbientText(), null, 'a dungeon type the enum does not declare still spends one roll and no more');
+});
+
 test('AT1: above ground the family is the location rect’s type, and the tail roll picks the register', () => {
   const where = { inLocationRect: true, locationType: LOCATION_TYPES.TownVillage, climateIndex: 231, isDay: false, weather: 'rain' };
   assert.equal(ambientTextKey({ ...where, tail: 0, index: 2 }), 'TownVillageWoods2');
@@ -296,12 +317,52 @@ test('AT2: inside a building the mod returns BEFORE the clock, so the interval k
   // first frame - that is the mod's, and it is why the port's `enabled`
   // gate returns the same way rather than resetting the clock.
   let inside = true;
-  const m = mod({ rolls: queue(0, pick(1, 10), pick(0, 3)), where: () => ({ ...outside(), insideBuilding: inside }) });
+  const m = mod({ rolls: queue(0, pick(1, 10), pick(0, 3)), where: outside, insideBuilding: () => inside });
   m.update(0);
   assert.equal(m.update(3600), null, 'an hour indoors says nothing');
   assert.equal(m.state.lastTickTime, 0, 'and banks the whole hour');
   inside = false;
   assert.equal(m.update(3600.001), AMBIENT_TEXTS.NoneDesert1, 'the first frame outside speaks');
+});
+
+test('AUDIT AT F5: a quiet frame reads ONE flag - the world is not rebuilt to learn a boolean', () => {
+  // DFU's Update reads `pee.IsPlayerInsideBuilding` (IL_0028) and asks
+  // PlayerGPS nothing until SelectAmbientText. The port had that flag
+  // as a field of `where()`, so every quiet frame of the shipping host
+  // paid for a location-rect test, a CLIMATE.PAK lookup, the weather
+  // word and the hour to learn it - measured at 100 builds per 100
+  // frames. Pinned by COUNT, from both sides: the cheap reader runs
+  // every frame, and the context is built only when a key is.
+  let flags = 0, worlds = 0;
+  const m = mod({
+    rolls: queue(0, pick(1, 10), pick(0, 3)),
+    insideBuilding: () => { flags++; return false; },
+    where: () => { worlds++; return outside(); },
+  });
+  m.update(0);
+  for (let i = 1; i <= 100; i++) m.update(i / 60);   // 100 quiet frames - no interval crossed
+  assert.equal(worlds, 0, 'a quiet frame must not build the world');
+  assert.equal(flags, 100, 'and must read the one flag, every frame, as DFU does');
+  assert.ok(m.update(201), 'the tick that speaks');
+  assert.equal(worlds, 1, 'the world is built ONCE, where the key is');
+});
+
+test('AUDIT AT F6: Start is a lifecycle call - the port\u2019s own switch must not gate it', () => {
+  // A game booted with the mod OFF armed no clock, so turning it on
+  // started one from that moment and the first line came a whole
+  // interval later - while a game booted with it ON, toggled off and
+  // back, spoke at once. One switch, two behaviours, decided by
+  // history. DFU has no such switch: a mod that is off was never
+  // loaded, and `Start` runs the moment the component exists.
+  let on = false;
+  const m = mod({ rolls: queue(0, pick(1, 10), pick(0, 3)), where: outside, enabled: () => on });
+  m.update(0);
+  assert.equal(m.state.started, true, 'the clock is armed by the HOST claiming it, not by the switch');
+  assert.equal(m.state.lastTickTime, 0);
+  assert.equal(m.update(3600), null, 'off says nothing');
+  on = true;
+  assert.equal(m.update(3600.001), AMBIENT_TEXTS.NoneDesert1,
+    'and the clock that ran while it was off is the clock it comes back to - "takes effect at once", both ways round');
 });
 
 test('AT2: a paused game and an unclaimed host both say nothing, and neither spends a roll', () => {
@@ -331,6 +392,95 @@ test('AT2: a blank line is treated as no line - IsNullOrWhiteSpace, and the post
   assert.equal(blank.state.lastIndex, 1, 'though the roll HIT the table, so lastIndex moved - the guard is downstream of Contains');
 });
 
+test('AUDIT AT F3: WeatherManager\u2019s four flags have ONE derivation, and it has more than one reader', () => {
+  // ONE DFU MEMBER, ONE EXPORT. AT1 wrote `weatherFlags` for this mod's
+  // WeatherKey and its record said the Daedra-summoning arm's inline
+  // pair had been folded into it. IT HAD NOT - the arm kept spelling
+  // `{ raining: sky === rain, storming: sky === thunder }` off the
+  // weather enum, so the tree carried two readings of the same DFU
+  // member and the Ledger said it carried one. The audit paid it.
+  //
+  // Derived, not listed: any module that builds an object with these
+  // key names is deriving the flags a second time, wherever it lives.
+  const files = [];
+  const walk = (dir) => {
+    for (const e of readdirSync(join(root, dir), { withFileTypes: true })) {
+      if (e.isDirectory()) walk(`${dir}/${e.name}`);
+      else if (e.name.endsWith('.js')) files.push(`${dir}/${e.name}`);
+    }
+  };
+  walk('src');
+  const second = files.filter((f) => f !== 'src/world/weather.js')
+    .filter((f) => /\b(raining|storming|snowing)\s*:\s*[^,}\n]*(WEATHER_ENUM|'rain'|'thunder'|'snow'|=== *rain|=== *thunder)/.test(read(f)));
+  assert.deepEqual(second, [], 'these derive WeatherManager\u2019s flags a second time - read world/weather.js weatherFlags instead:');
+  // ...and the one home is not a home with nobody in it.
+  const readers = files.filter((f) => f !== 'src/world/weather.js' && /weatherFlags\(/.test(read(f)));
+  assert.ok(readers.length >= 2, `weatherFlags has ${readers.length} reader(s) - the extraction only pays once something else reads it`);
+  assert.ok(readers.includes('src/scenes/worldModes.js'), 'the summoning arm is not reading the one home');
+  assert.ok(readers.includes('src/systems/ambientText.js'), 'WeatherKey is not reading the one home');
+});
+
+// ── THE SHIPPED SINGLETON ──────────────────────────────────────────
+
+test('AUDIT AT F-SING: the SHIPPED mod runs - the slot, the tick and the HUD, driven', () => {
+  // THE HOLE THIS PIN EXISTS FOR. Every pin above builds its own
+  // component with `createAmbientText`; the thing a player actually
+  // gets is the module-level singleton behind `setAmbientTextHost` and
+  // `tickAmbientText`, and NOTHING drove it. Two mutations proved the
+  // cost: `tickAmbientText = () => null` and the singleton's `say`
+  // rewritten to a no-op both left all 21 pins green - the mod could
+  // be completely dead in the shipping build and the gate would say so
+  // was fine. The hosts were pinned by their SOURCE TEXT, which cannot
+  // tell a wired seam from a spelled one.
+  //
+  // So this drives the real one, end to end: a host claims the slot,
+  // the tick runs on the wall clock the shipped path uses, and a line
+  // the author wrote comes back out of the host's own `say`.
+  const said = [];
+  let inside = false;
+  setAmbientTextHost({
+    paused: () => false,
+    insideBuilding: () => inside,
+    say: (text, seconds) => said.push([text, seconds]),
+    where: () => ({ insideDungeon: true, dungeonType: DUNGEON_TYPES.Crypt }),
+  });
+  try {
+    // The first tick is Start; nothing is said and the clock is armed
+    // AT that timestamp, whatever the wall clock happens to read.
+    assert.equal(tickAmbientText(0), null, 'Start says nothing');
+    // The mod ships textChance 33, interval 200. Drive enough intervals
+    // that the chance roll cannot plausibly miss every one: 400 ticks at
+    // 33% is a miss run of 400, which is ~1 in 10^70.
+    let t = 0;
+    for (let i = 0; i < 400; i++) { t += 201; tickAmbientText(t); }
+    assert.ok(said.length > 0, 'the SHIPPED tick never reached the SHIPPED HUD seam');
+    for (const [text, seconds] of said) {
+      assert.equal(typeof text, 'string');
+      assert.ok(text.trim().length, 'a blank line reached the HUD');
+      assert.ok(Object.values(AMBIENT_TEXTS).includes(text), 'the line is one the author wrote');
+      assert.match(text, /^\w/, 'and it is prose, not a key');
+      assert.equal(seconds, MOD_SETTINGS[AMBIENT_TEXT_VENDOR].keys.textDisplayTime.default,
+        'AddHUDText carries the mod\u2019s own textDisplayTime');
+    }
+    // Underground the family is the dungeon's, so every line said above
+    // must be a Crypt line - the singleton really is reading the host's
+    // `where`, not a default.
+    for (const [text] of said) {
+      const keys = Object.keys(AMBIENT_TEXTS).filter((k) => AMBIENT_TEXTS[k] === text);
+      assert.ok(keys.some((k) => /^Crypt\d$/.test(k)), `"${text}" is not a Crypt line - the host's where() is not being read`);
+    }
+    // ...and the building flag really silences the shipped path.
+    const before = said.length;
+    inside = true;
+    for (let i = 0; i < 200; i++) { t += 201; tickAmbientText(t); }
+    assert.equal(said.length, before, 'the shipped tick speaks inside a building');
+  } finally {
+    setAmbientTextHost(null);
+  }
+  // An unclaimed slot is silent and costs nothing.
+  assert.equal(tickAmbientText(1e9), null, 'a released slot still speaks');
+});
+
 // ── THE FOUR HOSTS ─────────────────────────────────────────────────
 
 test('AT2: the mod is ONE component, ticked by whoever owns the outermost motor - and all four hosts are named', () => {
@@ -348,6 +498,10 @@ test('AT2: the mod is ONE component, ticked by whoever owns the outermost motor 
     assert.ok(tick > 0 && modal > 0, `${host}: the tick or the modal gate moved`);
     assert.ok(tick < modal, `${host}: the tick fell BELOW the modal gate - interiors and dungeons would stop it`);
     assert.match(src, /dungeonType: inside\.dungeonType/, `${host}: the dungeon half of the key is not fed`);
+    // AUDIT AT F5: the flag is its own reader off the mode, not a field
+    // of the context - a quiet frame must not build the world.
+    assert.match(src, /insideBuilding: \(\) => _mode\(\) === 'interior',/, `${host}: the one-flag reader is gone`);
+    assert.doesNotMatch(src, /insideBuilding: inside\.insideBuilding/, `${host}: insideBuilding is back inside the context build`);
   }
   // The interior host and the dungeon host are NOT wired, by derivation:
   // neither owns the outermost motor.
@@ -364,7 +518,7 @@ test('AT2: the mod is ONE component, ticked by whoever owns the outermost motor 
   const claim = dungeon.slice(dungeon.indexOf('setAmbientTextHost({'), dungeon.indexOf('const _frameToken'));
   assert.ok(claim.length > 20 && claim.length < 2000, 'the claim block moved');
   assert.match(claim, /insideDungeon: true/, 'the probe scene is always underground');
-  assert.match(claim, /insideBuilding: false/);
+  assert.match(claim, /insideBuilding: \(\) => false/, 'AUDIT AT F5: the flag is its own reader, not a field of the context');
   assert.match(claim, /dungeonType: dfLocation\?\.mapTableData\?\.dungeonType \?\? 255/);
   // The interior host is the ONE seam both exterior hosts read the
   // dungeon type through (PlayerEnterExit.Dungeon.Summary.DungeonType).

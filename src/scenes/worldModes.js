@@ -188,7 +188,8 @@ import { getReputation, getFlag, setFlag, FACTION_FLAGS } from '../systems/facti
 // G7: the last unbuilt guild service - the summoning calendar, the
 // cost, Sheogorath's hijack and the roll.
 import { daedraForSummoner, attemptSummoning, SUMMON_TEXT, DAEDRIC_FOES } from '../systems/daedraSummoning.js';   // IF: the punishment table
-import { currentWeatherEnum, WEATHER_ENUM } from '../systems/weatherSim.js';
+import { currentWeather } from '../systems/weatherSim.js';   // AUDIT AT F3: the WORD; its flags come from weather.js's one derivation
+import { weatherFlags } from '../world/weather.js';   // AUDIT AT F3: WeatherManager's four public flags, derived once from SetWeather's switch
 import { ServiceFlowWindow } from '../ui/guildServiceWindows.js';
 import { hasCart } from '../systems/inventorySession.js';   // AUDIT 28 W2c: the exit-door wagon prompt's cart test
 import { dungeonLocationFor } from '../world/smallerDungeons.js';   // AUDIT 28 W4: the size the dungeon is built at
@@ -3471,8 +3472,15 @@ export function createWorldModes(host) {
       // WeatherManager.IsRaining / IsStorming - thunder is a STORM
       // and not rain, which is what makes Sheogorath's day distinct
       // from Sanguine's four.
-      const sky = currentWeatherEnum();
-      const weather = { raining: sky === WEATHER_ENUM.rain, storming: sky === WEATHER_ENUM.thunder };
+      //
+      // AUDIT AT F3: through `world/weather.js` weatherFlags, which is
+      // the ONE derivation of WeatherManager's four public flags from
+      // SetWeather's own switch. This arm used to spell two of them
+      // inline off the weather enum - correct, and a second reading of
+      // a DFU member (ONE DFU MEMBER, ONE EXPORT). AT1 wrote the shared
+      // one for Ambient Text's WeatherKey and its record said this copy
+      // had been folded into it; it had not. It is now.
+      const weather = weatherFlags(currentWeather());
       return {
         rows: rows?.(SUMMON_TEXT.areYouSure) ?? [{ text: 'Are you sure you wish to attempt this?', center: true }],
         buttons: 'YesNo',

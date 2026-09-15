@@ -611,8 +611,8 @@ export async function bootDungeon(canvas, renderer, params, status) {
   setAmbientTextHost({
     paused: () => ctx.uiOverlayActive,
     say: (text, seconds) => ctx.hudSay?.(text, seconds),   // DaggerfallUI.AddHUDText(text, delay)
+    insideBuilding: () => false,   // AUDIT AT F5: this probe is never in a building
     where: () => ({
-      insideBuilding: false,
       insideDungeon: true,
       dungeonType: dfLocation?.mapTableData?.dungeonType ?? 255,   // PlayerEnterExit.Dungeon.Summary.DungeonType
     }),

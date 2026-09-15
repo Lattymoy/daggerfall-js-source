@@ -3172,10 +3172,10 @@ export async function bootExterior(canvas, renderer, params, status) {
   setAmbientTextHost({
     paused: () => gamePaused(),
     say: (text, seconds) => townTalk.say(text, seconds),   // DaggerfallUI.AddHUDText(text, delay)
+    insideBuilding: () => _mode() === 'interior',   // AUDIT AT F5: the one flag Update reads every frame - see the note in world.js
     where: () => {
-      const inside = modes?.insideContext?.() ?? { insideBuilding: false, insideDungeon: false, dungeonType: 255 };
+      const inside = modes?.insideContext?.() ?? { insideDungeon: false, dungeonType: 255 };
       return {
-        insideBuilding: inside.insideBuilding,
         insideDungeon: inside.insideDungeon,
         dungeonType: inside.dungeonType,
         inLocationRect: _musicInLocationRect(),
@@ -4259,7 +4259,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // ROAD-G G2: THE ENEMY ARM EXISTS NOW - the note here said "this
     // host mounts no bow-armed pool", which stopped being true with the
     // encounter mount above, and an archer's shaft would have flown
-    // through the player for ever. world.js:8398-8518 is the shape.
+    // through the player for ever. world.js:8402-8522 is the shape.
     arrows.update(dt, {
       // enemy arrows hunt only a WALKING player - the fly camera has no
       // capsule to hit
@@ -4484,7 +4484,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         // removed elsewhere.
         if (!cityGuards.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound)) {
           // ROAD-G G2: encounter foes resolve AFTER the watch and
-          // BEFORE civilians - world.js:8587's order, and the order
+          // BEFORE civilians - world.js:8591's order, and the order
           // matters because a watchman standing over a quest foe must
           // still be the one the swing finds.
           if (exteriorFoes.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound)) {

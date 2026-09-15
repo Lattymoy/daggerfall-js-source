@@ -22,7 +22,7 @@ goes quiet for longer.
 | Settings | `MOD_SETTINGS['ambient-text']` (`src/systems/modSettings.js`) |
 | Row | `mod-ambient-text`, group "The world" (`src/systems/features.js`) |
 | Credit | `CREDITS.mods` (`src/ui/credits.js`), About pane |
-| Pins | `test/ambienttext.test.js` (21) |
+| Pins | `test/ambienttext.test.js` (26) |
 | Registry | `01-Overview/Mod-Registry.md` |
 
 ## AT1 - what the mod actually is
@@ -161,10 +161,11 @@ started - and it is unaffected by `Time.timeScale`, which is how DFU
 pauses. So the mod's pace is wall-clock: it does not speed up when you
 rest, and it does not slow down when you ride.
 
-`Update`, in order:
+`Update`, in order (the port's own `Enabled` switch is step 1½ - see
+AUDIT AT F6 below for why it sits *after* `Start` and not before):
 
 1. `!DaggerfallUnity.IsReady || !PlayerEnterExit || IsGamePaused` → return.
-2. `IsPlayerInsideBuilding` → return. **Before the clock is touched.**
+2. `IsPlayerInsideBuilding` → return. **Before the clock is written.**
 3. `unscaledTime > lastTickTime + tickTimeInterval`, strictly → else return.
 4. `lastTickTime = unscaledTime; tickTimeInterval = stdInterval;`
 5. `Dice100.SuccessRoll(textChance)` → else return.
@@ -229,6 +230,7 @@ time is read back off the wall.
 
 | DFU | here |
 |---|---|
+| `PlayerEnterExit.IsPlayerInsideBuilding` | the host slot's own `insideBuilding()` - see AUDIT AT F5 |
 | `DaggerfallUI.AddHUDText(text, delay)` | `townTalk.say(line, delay)` / `ctx.hudSay(line, delay)` → `ui/hudText.js` `add` |
 | `Dice100.SuccessRoll(chance)` | `combat/formulas.js` `dice100` |
 | `PlayerGPS.IsPlayerInLocationRect` / `CurrentLocationType` | the hosts' `_musicInLocationRect` / `_musicLocationType` |
@@ -293,6 +295,126 @@ enough that curating any of them out would only hide something.
 The row's effect line is "Takes effect at once. The mod then speaks on
 its own clock." - accurate in both directions, per the clock note
 above.
+
+## AUDIT AT (2026-09-15, Mac: "Lets do a comprehensive audit on this")
+
+The IL re-read against the port method by method, the host wiring
+driven rather than grepped, a second mutation wave aimed at what the
+first pass did not pin, and every claim in these records checked
+against the tree. **Five findings, all paid.** Two of them were the
+audit's own first pass being wrong, and those are recorded too.
+
+### F-SING - the shipped mod was never driven, only spelled
+
+**The one that mattered.** Every pin built its own component with
+`createAmbientText`; what a player gets is the module-level singleton
+behind `setAmbientTextHost` and `tickAmbientText`, and *nothing drove
+it*. Two mutations proved the cost: `tickAmbientText = () => null` and
+the singleton's `say` rewritten to a no-op **both left all 21 pins
+green**. The mod could have been completely dead in the shipping build
+and the gate would have called that fine.
+
+The hosts were pinned by their SOURCE TEXT, which cannot tell a wired
+seam from a spelled one. There is a pin now that claims the slot, ticks
+the real singleton on the wall clock the shipped path uses, and asserts
+a line the author wrote comes back out of the host's own `say` with the
+mod's own `textDisplayTime` on it - and that the lines are `Crypt*`
+when the host says it is in a crypt, so the singleton really is reading
+the host's `where` and not a default. Five mutants against the shipped
+path, five dead.
+
+### F1 - the tail roll was spent underground, where the IL never rolls it
+
+The dungeon arm (IL_002e..IL_005d) formats its key and jumps straight
+to the `Contains` test at IL_013b. `Random.Range(0, 3)` is at IL_00ad,
+**inside the ELSE branch**. The port rolled it either way.
+
+Invisible under `Math.random`, and still the wrong number of draws from
+the same stream - which is exactly what a seeded replay counts, and
+this repo seeds things. Pinned by the roll QUEUE, which throws when
+something rolls more than it planned: one roll underground, two above.
+
+### F5 - a quiet frame rebuilt the world to learn a boolean
+
+`IsPlayerInsideBuilding` was a field of `where()`, so every quiet frame
+of the shipping host paid for a location-rect test, a `CLIMATE.PAK`
+lookup, the weather word, the hour and six object allocations **to read
+one bool**. Measured: 100 quiet frames were 100 context builds.
+
+DFU reads `pee.IsPlayerInsideBuilding` (IL_0028) and asks `PlayerGPS`
+nothing until `SelectAmbientText`. The seam is split to match - the
+host slot carries `insideBuilding()` as its own cheap reader off the
+mode, and `where()` is called only where a key is built. Pinned by
+COUNT from both sides: 100 flag reads and 0 context builds over 100
+quiet frames, and exactly one build on the tick that speaks.
+
+### F6 - the port's own switch was gating `Start`
+
+`Start` is a lifecycle call. DFU has no `Enabled` switch at all - a mod
+that is off was never loaded - so `Start` runs the moment the component
+exists, and the port's analogue of "the component exists" is "a host
+has claimed it".
+
+With the switch above that line, a game booted with the mod **off**
+armed no clock, so turning it on started one from that moment and the
+first line came a whole interval later; a game booted with it **on**,
+toggled off and back, spoke at once. One switch, two behaviours,
+decided by history - and the Features row's "Takes effect at once" was
+true in only one of them. The switch now sits below `Start`, and the
+row's promise is true both ways round.
+
+### F3 - `weatherFlags` had one reader, and the record said it had two
+
+AT1 wrote `weatherFlags` (`world/weather.js`) as the ONE derivation of
+`WeatherManager`'s four public booleans from `SetWeather`'s switch, and
+the Ledger row and the PR said the Daedra-summoning arm's inline pair
+had been folded into it.
+
+**It had not.** `worldModes.js` kept spelling
+`{ raining: sky === rain, storming: sky === thunder }` off the weather
+enum, so the tree carried two readings of one DFU member (ONE DFU
+MEMBER, ONE EXPORT) while the record claimed it carried one. The arm
+reads `weatherFlags(currentWeather())` now, and the pin is generative:
+any module outside `world/weather.js` that builds an object with those
+key names off a weather word is deriving them a second time, wherever
+it lives - and the one home must have at least two readers, because an
+extraction only pays once something else reads it.
+
+### Two the audit got wrong, recorded so nobody re-hunts them
+
+- **The Testing.md suite count was NOT drifted.** The audit read the
+  runner's `# tests 7726` against the doc's 7712 and called it wrong.
+  The doc's number is the `^test\(` count, which `test/manifest.test.js`
+  already gates exactly - 7712 was right, and the gate had been holding
+  it all along. The runner's larger number counts something else.
+- **The first "banking gone" mutant was equivalent.** Swapping the
+  `insideBuilding` guard with the interval guard changes nothing,
+  because the clock WRITE is below both. The real mutation moves the
+  guard below the write, and that one dies.
+
+### Equivalent mutants, recorded rather than re-chased
+
+- `hasAmbientText` by `texts[key] !== undefined` instead of
+  `hasOwnProperty`. No key law produces an inherited property name -
+  every key ends in its index digit - so the two cannot disagree on any
+  reachable key. `hasOwnProperty` stays as the defensive spelling.
+- Swapping `say(...)` with the `postTextInterval` arm. Neither reads
+  the other.
+
+### Clean, checked
+
+- **`Dice100.SuccessRoll`** is `Random.Range(0, 100) < chanceSuccess`
+  (`Dice100.cs:17`); the port's `dice100` is
+  `Math.floor(roll01 * 100) < chance`. Exact.
+- **The 918-line table reaches the built bundle** - `dist/` carries
+  `NoneDesert0` and its line.
+- **`!isNight(minuteNow())`** is `hour >= DawnHour && hour < DuskHour`,
+  which is `gameDate.js`'s `isDayFromMinutes` to the letter. Two ports
+  of `DaggerfallDateTime.IsDay` exist in the tree, both correct; this
+  one is the spelling all three exterior hosts already use for the same
+  question, so it is what AT reads. Not a defect of this arc.
+- **The registry's "seven of the fifteen"** counts right: seven vendor
+  READMEs carry the placeholder, fifteen folders exist.
 
 ## What is NOT carried, recorded
 

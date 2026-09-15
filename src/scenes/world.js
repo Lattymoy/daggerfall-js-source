@@ -2682,7 +2682,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // and dungeonContext.js:2114 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:4615
+  // that context through modes.dungeonCtx - so worldModes.js:4623
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -5515,7 +5515,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7234-7246 -
+  // worldModes answers it in BOTH modes (worldModes.js:7242-7254 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -7312,11 +7312,15 @@ export async function bootWorld(canvas, renderer, params, status) {
   setAmbientTextHost({
     paused: () => gamePaused(),
     say: (text, seconds) => townTalk.say(text, seconds),   // DaggerfallUI.AddHUDText(text, delay)
+    // AUDIT AT F5: PlayerEnterExit.IsPlayerInsideBuilding ALONE, off the
+    // mode - the one thing Update reads every frame. It used to be a
+    // field of `where()` below, so a quiet frame paid for the rect test
+    // and the CLIMATE.PAK lookup to learn a boolean.
+    insideBuilding: () => _mode() === 'interior',
     where: () => {
-      const inside = modes?.insideContext?.() ?? { insideBuilding: false, insideDungeon: false, dungeonType: 255 };
+      const inside = modes?.insideContext?.() ?? { insideDungeon: false, dungeonType: 255 };
       const px = playerTravelPixel();
       return {
-        insideBuilding: inside.insideBuilding,
         insideDungeon: inside.insideDungeon,
         dungeonType: inside.dungeonType,
         inLocationRect: _musicInLocationRect(),

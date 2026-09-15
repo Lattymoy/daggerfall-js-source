@@ -118,10 +118,21 @@ export const hasAmbientText = (key, texts = AMBIENT_TEXTS) => Object.prototype.h
 /**
  * The component. `deps`:
  *   settings()     the four fields (readAmbientTextSettings), re-read per tick
- *   where()        the world, as ambientTextKey's argument object wants it
- *                  minus `index`/`tail`: { insideBuilding, insideDungeon,
+ *   insideBuilding()  PlayerEnterExit.IsPlayerInsideBuilding, and NOTHING
+ *                  else. AUDIT AT F5: this used to be a field of `where()`,
+ *                  which meant every quiet frame of the shipping host built
+ *                  the whole context - a location-rect test, a CLIMATE.PAK
+ *                  lookup, the weather word, the hour, and six objects -
+ *                  to read one boolean. DFU reads one bool field there
+ *                  (Update, IL_0028) and asks PlayerGPS nothing until
+ *                  SelectAmbientText. Measured: 100 quiet frames were 100
+ *                  context builds. The seam is split so the frame path
+ *                  costs what DFU's costs.
+ *   where()        the rest of the world, as ambientTextKey's argument
+ *                  object wants it minus `index`/`tail`: { insideDungeon,
  *                  dungeonType, inLocationRect, locationType, isDay,
- *                  climateIndex, weather }
+ *                  climateIndex, weather }. Called ONLY when a key is
+ *                  actually being built, which is where DFU calls it.
  *   ready()        DaggerfallUnity.Instance.IsReady && PlayerEnterExit exists
  *   paused()       GameManager.IsGamePaused
  *   say(text, s)   DaggerfallUI.AddHUDText(text, seconds)
@@ -132,7 +143,8 @@ export const hasAmbientText = (key, texts = AMBIENT_TEXTS) => Object.prototype.h
  *                  test; the game always gets the author's own table.
  */
 export function createAmbientText({
-  settings, where = () => ({}), ready = () => true, paused = () => false,
+  settings, where = () => ({}), insideBuilding = () => false,
+  ready = () => true, paused = () => false,
   say = () => {}, rolls = Math.random, enabled = () => true, texts = AMBIENT_TEXTS,
 } = {}) {
   // .ctor (IL 0x5de4): lastIndex starts at -1. It is the one field that
@@ -165,7 +177,15 @@ export function createAmbientText({
   const selectAmbientText = () => {
     let index = w.lastIndex;
     do { index = Math.floor(rolls() * 10); } while (index === w.lastIndex);
-    const key = ambientTextKey({ ...where(), index, tail: Math.floor(rolls() * 3) });
+    const at = where();
+    // AUDIT AT F1: THE TAIL ROLL IS NOT SPENT UNDERGROUND. The dungeon
+    // arm (IL_002e..IL_005d) formats its key and jumps straight to the
+    // Contains test at IL_013b; `Random.Range(0, 3)` is at IL_00ad,
+    // inside the ELSE branch. The port rolled it either way, which is
+    // invisible under Math.random and is still a different number of
+    // draws from the same stream - the thing a seeded replay counts.
+    const tail = at.insideDungeon ? 0 : Math.floor(rolls() * 3);
+    const key = ambientTextKey({ ...at, index, tail });
     if (!hasAmbientText(key, texts)) return null;
     w.lastIndex = index;
     return texts[key];
@@ -175,17 +195,25 @@ export function createAmbientText({
    *  REAL seconds since the game started, not game time, so the mod's
    *  pace does not change when you rest or ride. */
   const update = (unscaledTime) => {
-    if (!enabled()) return null;
     if (!ready() || paused()) return null;
+    // AUDIT AT F6: START IS A LIFECYCLE CALL AND `enabled` MUST NOT GATE
+    // IT. DFU has no such switch - a mod that is off was never loaded,
+    // and `Start` runs the moment the component exists. The port's
+    // analogue of "the component exists" is "a host has claimed it",
+    // which is `ready`. With the switch above this line, a game booted
+    // with the mod OFF armed no clock, so turning it on started one
+    // from that moment and the first line came a whole interval later -
+    // while a game booted with it ON and toggled off and back spoke at
+    // once. Same switch, two behaviours, decided by history. The row's
+    // "Takes effect at once" is true in both cases now.
     if (!w.started) { start(unscaledTime); return null; }
-    // IsPlayerInsideBuilding returns EARLY, and it returns BEFORE the
-    // clock is touched, so the interval keeps running while you are
-    // inside: step out of a shop after an hour and the world greets you
-    // on the first frame. That is the mod's, and it is why the port's
-    // own `enabled` gate above returns the same way - a switch that
-    // reset the clock would be a behaviour DFU never had, since there
-    // a mod that is off is a mod that was never loaded.
-    if (where().insideBuilding) return null;
+    if (!enabled()) return null;
+    // IsPlayerInsideBuilding returns EARLY, and it returns before the
+    // clock is WRITTEN (that write is below the interval gate), so the
+    // interval keeps running while you are inside: step out of a shop
+    // after an hour and the world greets you on the first frame. The
+    // port's own switch returns the same way, for the same reason.
+    if (insideBuilding()) return null;
     if (!(unscaledTime > w.lastTickTime + w.tickTimeInterval)) return null;
     const s = settings();
     w.lastTickTime = unscaledTime;
@@ -234,7 +262,7 @@ export const AMBIENT_TEXT_VENDOR = 'ambient-text';
 let _host = null;
 
 /** The host that owns the motor claims the mod. `null` releases it.
- *  `{ where(), say(text, seconds), paused() }`. */
+ *  `{ insideBuilding(), where(), say(text, seconds), paused() }`. */
 export function setAmbientTextHost(host) { _host = host; }
 
 const _mod = createAmbientText({
@@ -242,7 +270,8 @@ const _mod = createAmbientText({
   enabled: () => !!modSettingsOf(AMBIENT_TEXT_VENDOR).Enabled,
   ready: () => !!_host,
   paused: () => !!_host?.paused?.(),
-  where: () => _host?.where?.() ?? { insideBuilding: true },
+  insideBuilding: () => _host?.insideBuilding?.() ?? true,   // no host is not a place to speak from
+  where: () => _host?.where?.() ?? {},
   say: (text, seconds) => _host?.say?.(text, seconds),
 });
 
