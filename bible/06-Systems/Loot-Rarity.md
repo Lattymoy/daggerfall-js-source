@@ -392,6 +392,17 @@ law is the NAME arm (`Books && !IsArtifact`), so that pin now reads the
 first line for the name and pins the ladder's line beside it, rather
 than switching the ladder off to keep an old answer.
 
+**AND THE REASON IT WOULD NOT HAVE WORKED.** Auditing the flip found a
+latent defect in the prefs shelf itself: `savePrefs` wrote `_prefs`
+whole, and `_prefs` is `{ ...PREF_DEFAULTS, ...stored }`, so the first
+`setPref` of ANY key materialised EVERY default into a player's
+storage. Mac's own shelf therefore carries `lootRarity: false`, and the
+flip alone would have done nothing for him - or for any existing
+player - and the switch would have looked broken. Fixed at the root
+(the shelf persists overrides, not defaults) with a one-time stamped
+adoption for the shelves already written: PREF1, recorded in
+`10-UI/Features-Arc.md` and pinned in `test/pref1_shelf.test.js`.
+
 **The trap this had to avoid.** `test/lr1_lootrarity.test.js` drives
 its OFF half through a helper that was a bare `_resetForTests()`. With
 the row shipping ON, that helper stops meaning "off" - every "off is

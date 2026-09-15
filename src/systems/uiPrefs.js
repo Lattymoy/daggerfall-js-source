@@ -9,6 +9,16 @@
 // 171) and would put a port-invented preference into a file whose
 // whole point is that it is DFU's. Separate shelf, separate key.
 const STORAGE_KEY = 'dagger.ui.v1';
+/** PREF1: the shelf's own revision, so a shelf written before the fix
+ *  can be told from one written after it. Bumping it does NOT re-run
+ *  the adoption below - that reads the stamp's ABSENCE. */
+const SHELF_STAMP = '_rev';
+const SHELF_REV = 1;
+/** PREF1: the keys whose default the port changed after shelves had
+ *  already materialised the old one, adopted once on an unstamped
+ *  shelf. A key joins this list only when the old stored value cannot
+ *  honestly be read as the player's answer - see loadPrefs. */
+const PREF1_ADOPT_NEW_DEFAULT = Object.freeze(['lootRarity']);
 
 import { appStorage } from './appStorage.js';   // DA1: the storage seam
 import { onlineForcedPref } from './onlineLane.js';   // OL1: the online lane's forcing, read before the shelf
@@ -87,6 +97,25 @@ export function loadPrefs() {
       const p = JSON.parse(raw);
       if (p && typeof p === 'object') {
         _prefs = { ...PREF_DEFAULTS, ...p, open: { ...(p.open ?? {}) } };
+        // PREF1: A SHELF WRITTEN BEFORE THE FIX carries the defaults of
+        // its own day as if they were answers, and nothing in it says
+        // which were which - the information was destroyed at save
+        // time. It is dropped ONCE, for the keys where the port has
+        // since changed its mind, and the shelf is stamped so this
+        // runs exactly once per player.
+        //
+        // Only `lootRarity` is on that list, and the reasoning is
+        // bounded rather than hopeful: the row shipped OFF on
+        // 2026-09-14 and LR5 turned it ON one day later, so a stored
+        // `false` in an unstamped shelf was written by the shelf and
+        // not by a player. After this load the player's own answer -
+        // including pressing it back off - differs from the default
+        // and is persisted as the choice it is.
+        if (p[SHELF_STAMP] === undefined) {
+          for (const k of PREF1_ADOPT_NEW_DEFAULT) {
+            if (p[k] !== undefined && p[k] !== PREF_DEFAULTS[k]) _prefs[k] = PREF_DEFAULTS[k];
+          }
+        }
         // EE1: a shelf written before Enhanced Environments existed
         // carries only the old sky answer. It becomes the new key's,
         // ONCE - only when the new key is absent - so a player who has
@@ -101,9 +130,42 @@ export function loadPrefs() {
   }
   return _prefs;
 }
+/** PREF1 (2026-09-15, found auditing LR5): THE SHELF CARRIES THE PLAYER'S
+ *  CHOICES, NOT A SNAPSHOT OF THE DEFAULTS.
+ *
+ *  It used to write `_prefs` whole - and `_prefs` is
+ *  `{ ...PREF_DEFAULTS, ...stored }`, so the FIRST `setPref` of any key
+ *  materialised EVERY default into storage. From that moment a stored
+ *  value was indistinguishable from a deliberate answer, and a default
+ *  the port later changed could never reach a player who had once
+ *  touched any setting at all. LR5 is where that bit: the loot ladder's
+ *  default went true, and every existing player - Mac included - would
+ *  have gone on reading the `lootRarity: false` their shelf had written
+ *  FOR them, and reported the switch as not working.
+ *
+ *  So a key whose value equals the default is DROPPED rather than
+ *  written. Reading is unchanged (`getPref` already answers
+ *  `_prefs[k] ?? PREF_DEFAULTS[k]`, and a stored `false` still beats a
+ *  `true` default - `??` falls through on null/undefined alone), so
+ *  this moves no behaviour today; it stops the shelf lying about what
+ *  the player asked for, which is what makes every FUTURE default
+ *  change land. `open` is the player's own map and is always written. */
 export function savePrefs() {
-  try { storage()?.setItem(STORAGE_KEY, JSON.stringify(_prefs ?? PREF_DEFAULTS)); return true; }
+  try { storage()?.setItem(STORAGE_KEY, JSON.stringify(overridesOf(_prefs ?? PREF_DEFAULTS))); return true; }
   catch (e) { console.warn('[uiPrefs] screen preferences could not be saved', e); return false; }
+}
+/** The shelf's real overrides: every key whose value differs from the
+ *  default, plus `open` and the stamp. Pure; pinned in test/pref1_shelf.test.js. */
+export function overridesOf(prefs) {
+  const out = {};
+  for (const [k, v] of Object.entries(prefs ?? {})) {
+    if (k === 'open') continue;
+    if (Object.hasOwn(PREF_DEFAULTS, k) && v === PREF_DEFAULTS[k]) continue;   // the default is not a choice
+    out[k] = v;
+  }
+  out.open = { ...(prefs?.open ?? {}) };
+  out[SHELF_STAMP] = SHELF_REV;
+  return out;
 }
 export function getPref(k) {
   const forced = onlineForcedPref(k);   // OL1: online is the enhanced lane, whole - a forced switch reads forced and the shelf is not written
