@@ -5773,3 +5773,177 @@ building NPC. With the link now filled, a handed-in questor's behaviour
 is destroyed at tombstone and stops swallowing the player's next click,
 where before it would have answered `doClick()` true — no talk window, no
 new offer, no guild service — until the player left and re-entered.
+
+## AUDIT-QUEST, 2026-09-15 - the system read against itself
+
+Mac: "I want you to audit the quest system." This is the first pass - the
+MAP - and the three findings it produced, all paid in the same commit.
+
+### What came back clean, and is worth saying
+
+- **The 82-action registry is complete.** DFU ships 82 action classes;
+  the port implements 81 and *declares and guards* the 82nd
+  (`WorldUpdate`, blocked on WorldDataVariants), with
+  `test/questguards.test.js` pinning that exactly one guard stands and
+  that it names its own blocker. An 82-item enumeration that has not
+  lost a member is unusual, and it is pinned rather than remembered.
+- **All 265 vendored quests parse and start.** No throws, no nulls.
+- **The shipping host wires 64 of the bridge's 65 seams**, the one
+  exception being `onQuestStarted`, documented as an extra listener a
+  host may decline.
+
+### F1 - "LOUDLY" was written over an operation that is silent
+
+`machine.js:52` stated the headless charter: *"absent = headless, every
+Place pends its site **LOUDLY** and the corpus gate stands."* The same
+word sat in `place.js` three times, in `person.js`, and twice in
+`foe.js`, and the bridge's header compressed it to *"absent members idle
+LOUDLY."*
+
+What actually happens is `this.sitePending = true`. **Setting a boolean
+is the definition of quiet.**
+
+Measured, against the real corpus rather than by reading: all 265
+vendored quests start with no `deps.world` at all, and **262 of them emit
+nothing whatsoever**. Across the quest system, **215 of 229**
+optional-chained seam calls are silent on absence.
+
+The mechanism was never wrong - the flags are real and tests pin them.
+The *claim about it* was, and a reader who trusted the header would
+assume a missing seam announces itself.
+
+### F2 - the dev scene wires 30 of 65, and nothing said so
+
+`world.js` wires 64 members; `scenes/exterior.js` wires 30. The 35 it
+does not include `giveItemToPlayer`, `removeItemFromPlayer`,
+`playerHasItem`, `offerReward`, `cureDisease`, `makePcDiseased`,
+`endVampirism`, `endLycanthropy`, `playVideo`, `playSong` and every talk
+and rumor seam.
+
+`?exterior` is the scene a developer reaches for to test a quest. A third
+of the quest verbs idle there - which is F1's consequence, measured.
+
+### F3 - the gate that exists to catch F2 read one host
+
+`test/audit24_questseams.test.js` carries a test called *"every bridge
+ctx seam is SUPPLIED or declared PENDING"*. Its helper opens
+`src/scenes/world.js` **by name** and never looks at another host. The
+gate for "is every seam wired" enumerated a single file - the shape
+AUDIT-HARD found four times and CRASH2 found in a gate one commit old.
+
+### What was done
+
+All three have one root cause - **the bridge never stated what it was
+given** - so they take one fix. `createQuestBridge` reports once, at
+construction: one line naming the absent seams, and an `error` for the
+single REQUIRED member. The contract is written down once and
+`test/auditquest_seams.test.js` **re-derives it from the bridge's own
+source on every run**, failing if the two disagree in either direction -
+because a hand-kept contract list would have been F3 again in a new
+place. The same file reads **every** host that builds a bridge, derived,
+and requires the SHIPPING host to wire every member not declared optional
+by design.
+
+The five stale claims are corrected, and the word is now gated: no line
+in the quest system may say LOUD over an assignment whose whole effect is
+to set a flag.
+
+**A limit, stated rather than left to be found:** the report lives at the
+BRIDGE. A caller that builds a `QuestMachine` directly - tests, tools -
+still gets silence. Every real host goes through the bridge, and
+`machine.js` now says that instead of claiming loudness itself.
+
+### Second pass - the read against DFU's C#, and what it produced
+
+The port-to-original line ratios pointed the way: most modules sit near
+0.5 (ordinary C#-to-JS), and two sat lower - `parser.js` at 0.38 and
+`actions.js` at 0.36. A thin port of a thick original is where a missing
+term hides, so that is where the read started.
+
+**Both came back clean, and the way they were checked is the deliverable.**
+
+- **The parser's directive set is 6 for 6** with `Parser.cs`
+  (`quest:`, `displayname:`, `qrc:`, `qbn:`, `task:`, `performed:`). The
+  low line ratio is delegation - `parseUtils.js`, `message.js`,
+  `table.js` carry what C# keeps inline - not omission.
+- **All 82 action patterns match, skeleton for skeleton.**
+
+That second one is the finding worth having. **A quest script is a text
+file**, and every line of every one of the 265 vendored quests reaches
+the machine through exactly one action's `Pattern` regex. Those 82
+patterns ARE the quest system's surface: a missing alternative is a quest
+line the reference accepts and this port silently refuses, and nothing in
+the suite was comparing them.
+
+The repo already has a family of pins that **regenerate a port table from
+DFU's own C# and compare** - ENEMY_BASICS off `EnemyBasics.cs`,
+LOOT_MATRICES off `LootTables.cs`, the ingredient ITEM_GROUPS off
+`ItemEnums.cs` (PY1, `test/dfuRoot.mjs`). The quest system had no member
+of it. `test/auditquest_patterns.test.js` is that member.
+
+**The one language difference that is not drift.** C# permits the same
+named group in different alternates of one regex; JavaScript does not, so
+the port renames the repeats (`symbol2`, `sym`, `setvarName`, `notName`).
+Seven patterns differ in exactly that way and in no other way. The
+comparison therefore erases group naming and compares pure structure -
+the alternatives, the literal words, the character classes, the
+quantifiers, the order - and on that footing it is **82 for 82, exact**.
+
+Mutation-verified three ways: dropping an alternative from a pattern,
+loosening a character class, and removing the one declared guard each
+redden it.
+
+### Third pass - the mutation campaign
+
+77 mutants over the 21 modules of `src/systems/quest`, the file list
+**derived**. 66 died against a 65-file quest subset (6.7 seconds a run);
+eleven survived it.
+
+Of those eleven: seven are guards over states the tests cannot reach,
+base-class defaults, or genuinely equivalent, and one - `isResidence`'s
+`House1..House4` bounds - was killed by a test **outside** the subset,
+which is exactly why a subset is a filter and the whole suite is the
+arbiter.
+
+**Three survived the entire suite.** Each is a law with a DFU citation
+that no assertion in 7,671 tests was reading:
+
+| | law | what the mutant did |
+| --- | --- | --- |
+| M1 | `EndQuest.Update` - `if (textId != 0)` | a bare `end quest` would have shown message 0, and every `end quest saying N` would have shown none |
+| M2 | `Foe.ExpandMacro` (Foe.cs:153-177) - the unmatched arm | a Foe would claim to have expanded a macro it never carries |
+| M3 | `Parser._parseQRC` - the id bracket **pair** | `[1004` or `1004]` would read as a table lookup and its number be thrown away |
+
+All three are pinned in `test/auditquest_mutants.test.js`, and each pin
+was proven by re-planting its mutant.
+
+### The harness lied twice before it told the truth
+
+Both are recorded because both were caught the same way - by asking
+whether the number was believable, not by reading the code.
+
+1. It piped `node --test` through `tail` and read the PIPELINE's exit
+   status, which is `tail`'s and always 0. Verdict: **77 of 84 mutants
+   survived**. That is not a result about a port, it is a result about a
+   harness.
+2. Reading the counters instead, it called `execSync('npm test')` and
+   read the returned stdout. The full suite prints tens of megabytes;
+   execSync's default `maxBuffer` is 1 MB, so it threw ENOBUFS and handed
+   back **truncated** output with no `# fail` line - which the harness
+   scored as a kill. All four candidates came back "killed", and **four
+   real findings would have been retired**.
+
+AUDIT-TALK recorded a finding against its own harness for the same class
+of thing. This is that lesson arriving on schedule, twice, and the
+defence both times was a rate that could not be true.
+
+### What the three passes found, together
+
+The port itself came through clean: the 82-action registry is complete,
+the 82 patterns are exact against DFU's C#, the parser's directives are
+6 for 6, all 265 vendored quests parse and start, and 66 of 77 mutants
+die where they should.
+
+**What was wrong was the system describing itself** - a charter claiming
+loudness over a boolean, a dev scene missing 35 seams in silence, a gate
+reading one host by name - and three laws nothing was reading.

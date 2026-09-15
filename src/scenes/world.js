@@ -6573,7 +6573,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     dateTimeString: () => dateTimeString(dateFromClassicMinutes(playerTicker.classicMinutes)),
     midDateTimeString: () => midDateTimeString(dateFromClassicMinutes(playerTicker.classicMinutes)),
     cityName: () => _questLoc()?.name ?? questWorld.currentRegionName(),
-  });
+  }, { label: 'world.js' });
   // E3: the pixels this host laid BEFORE the bridge existed - the start
   // pixel is built during init, above - get RMBLayout's third act now.
   // QuestMachine is a scene singleton in DFU, so its layout never has

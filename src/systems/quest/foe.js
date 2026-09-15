@@ -9,7 +9,7 @@
 // IsRestrained (EnemyMotor) rides Q4's behaviour mount; until then
 // tests drive the setters directly, as QuestResourceBehaviour does
 // in DFU. Q3-iii: SetFoeName (the world half - a HEADLESS parse
-// leaves `namePending` true LOUDLY, the npcPending precedent),
+// leaves `namePending` true - a FLAG, the npcPending precedent),
 // deathTrigger/kill, the spell queue (CastSpellOnFoe's consumer) and
 // the cloned item queue. The scene halves that DRAIN the queues
 // (QuestResourceBehaviour.CastSpellQueue/AddItemQueue per instance)
@@ -65,7 +65,7 @@ export class Foe extends QuestResource {
     this.humanoidGender = GENDERS.Male;
     this.displayName = '';
     this.typeName = '';
-    this.namePending = true;   // no world seam -> SetFoeName pends LOUDLY
+    this.namePending = true;   // no world seam -> SetFoeName PENDS (a flag; AUDIT-QUEST F1)
     if (line !== null) this.setResource(line);
   }
 
@@ -157,7 +157,7 @@ export class Foe extends QuestResource {
     this.spawnCount = Math.min(Math.max(count, 1), MAX_SPAWN_COUNT);   // Mathf.Clamp(count, 1, 8)
 
     const world = this.parentQuest?.hooks?.world;
-    if (!world) return;   // namePending stays true - the headless charter
+    if (!world) return;   // namePending stays true - the headless charter (the BRIDGE reports the absent seam)
     this._setFoeName(world);
     this.namePending = false;
   }
