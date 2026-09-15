@@ -173,13 +173,71 @@ inside one frame move the camera exactly as far as one. The port
 queues DOM wheel events (MW-D30's lesson, for the same reason) and
 spends them the same way.
 
+## The player sprite (EOTB3)
+
+`src/player/eotbBillboard.js`. **The state table is one law, not 168
+rows.** `InitializeStates` writes out 21 arrays of 8 - idle, move and
+death across melee, ranged and spell, plus the horse and both
+lycanthrope forms - and every one of the 168 follows the same wheel:
+
+    index   0  1  2  3  4  5  6  7
+    record +0 +1 +2 +3 +4 +3 +2 +1
+    mirror  .  M  M  M  .  .  .  .
+
+which is classic Daggerfall's own 8-orientation layout - five drawn
+records front to back, the left half drawn flipped. The port already
+speaks it: `characters/mobilePerson.js` calls it "the MoveAnims wheel
+(records 0-4 mirrored - the monster layout)".
+
+That 0 of 168 deviate was checked mechanically against the IL, and the
+check is permanent rather than a sentence: the mod's whole table is
+vendored to `vendor/eye-of-the-beholder/states.json` and the port's
+generated table is compared against it state for state in CI. The
+sprite sweep is the other half and is fully generative - every table
+times every orientation resolves to a filename and the vendored art is
+asked for it, 168 asks with nothing listed, which is what catches a
+base record off by one the moment it is typed.
+
+Archives: `112364 + Graphics.OnFoot` (0..15), `112382 + OnHorse`
+(0..4), and `112380 + (LycanthropyType === 2)` - so the WEREBOAR takes
+the second and the werewolf shares the first with "none". A `>= 1`
+reading would look just as sensible and be wrong.
+
+The frame clock is 0.25s on foot - four frames a second, classic's own
+mobile rate, which is what the port already runs townspeople at - and
+0.0625s mounted, each scaled by `(2 - WalkCycleSpeed)`, so a higher
+setting is a shorter frame and the dial reads forwards even though the
+number it scales is a duration. Footsteps land on frames 2 and 4 of
+the five-frame cycle.
+
+`ReadyStance` is worth knowing about before it is reported as a bug: at
+"When Idle" a player who draws a sword and walks is drawn walking
+UNARMED, which is the setting doing exactly what it says.
+
+## Mathf.RoundToInt has ONE HOME now
+
+The orientation snap divides the angle by 45 and rounds, so a player
+standing exactly side-on to the camera lands on a tie - and Unity
+rounds a half to the nearest EVEN integer while JavaScript rounds it
+toward +infinity. Get it wrong and the sprite flips one orientation
+early on one side and not the other, which nobody would ever find by
+looking.
+
+The port had already ported that rule once, for DFU's horizontal
+slider, and this slice was about to port it a second time.
+`audit24`'s duplicate-declaration ratchet caught it - the "ONE DFU
+MEMBER, ONE EXPORT" rule doing its job - so it moved to
+`src/systems/mathf.js` and both callers import it. Two copies of a
+rounding rule is two chances to get the tie wrong, and `player/` has no
+business importing a UI slider to round a number.
+
 ## Where the slices stand
 
 EOTB0 (vendoring, provenance, the art payload, the doctrine gate, the
-settings surface, the Features row, credits and the registry) and
-EOTB1-EOTB2 (the IL read and the camera) are done. EOTB3-EOTB7 - the
-billboard, the wheel seam, the four hosts and the rest of the pins -
-are in flight.
+settings surface, the Features row, credits and the registry), EOTB1-
+EOTB2 (the IL read and the camera) and EOTB3 (the billboard's logic)
+are done. EOTB4-EOTB7 - the wheel seam, the four hosts, the drawing
+and the rest of the pins - are in flight.
 
 **NOT SEEN ON A GPU.** There is no GL and no ARENA2 in the container
 this was written in. Mac's eye is the gate.
