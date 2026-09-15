@@ -4049,6 +4049,197 @@ played time (executed: the backdate, the wave, the hour's gap forgiven
 to one step, the resume's full interval, offline whole);
 `test/auditworld5.test.js` C10 restamped. Suite 7483 across 758.
 
+## RESTX1 (2026-09-15): online, a rest waits for nothing
+
+**Mac: "So now for online I want to change the rest mechanic to not use
+any time. Basically rest just becomes the way to regain. We can dive
+deeper in how we want to handle it at a later time but for now this is
+the solution."**
+
+### What was actually wrong, and it is not what it looks like
+
+Online a rest has never been able to MOVE the clock. The world's time
+is a function of wall time and `worldTick.setWorldMinutes` refuses every
+local write while the shared clock stands (`:834-838`) - WORLD5's own
+law, and the right one.
+
+What WORLD5 did about it was make the rest honest: if a rest cannot
+fabricate minutes, it should PACE itself off the world's own clock, so
+an hour of rest is an hour of the shared world's time. That is exactly
+right and it is where the cost hid. At DFU's TimeScale an hour is five
+real minutes, so **resting eight hours meant forty real minutes of
+sitting in a window watching a counter.** Nobody does that. They close
+the window and stay hurt, and the rest mechanic quietly stops existing
+online.
+
+So the waiting goes, and nothing else does.
+
+### The law
+
+Online, a **rest** (`full` or `timed`) resolves AT ONCE - inside the one
+frame that asks - and passes **no minutes at all**, because none were
+ever available to pass. The hourly ladder is untouched: the same hours
+counted, the same per-hour `restVitals`, the same enemy check every
+hour, the same prevented-rest poll, the same `CheckRent`. Only the
+waiting between the rungs is gone. Nothing is fabricated, and nothing is
+taken out of the other players' sky.
+
+**Loiter is not rest, and loiter keeps waiting.** Loiter recovers
+nothing by design; passing time IS its entire purpose - waiting for a
+shop to open, waiting for dark. A loiter that resolved at once would do
+literally nothing, so online it still rides the shared clock exactly as
+WORLD5 left it. One verb regains; the other waits. `AUDIT WORLD5 C7`
+and `C8` were written on a timed rest because at the time every mode
+rode the clock; they are re-aimed onto LOITER, where their law still
+holds unchanged.
+
+### What a free rest does not do
+
+It follows from "no time passes", and it is the deliberate shape rather
+than an omission: **no world minutes, so no quest ticks, no magic
+rounds, no disease or poison progress, no encounter catch-up.** The
+host's `advanceMinutes` is simply never called - the one place a rest
+spends time, and the free path skips it whole, together with the quest
+tick that rides the same sub-tick. You healed; nothing else happened.
+
+### Where it lives
+
+`systems/restSession.js`, and nowhere else. The session asks
+`sharedMinutes` - the dep it already had from WORLD5 - so the predicate
+is "the shared clock is standing AND this is not a loiter". **THE FOUR
+HOSTS are untouched by this slice**, which is OL1's own shape: a lane is
+not forced at a mount site, because a port that forces at forty-seven
+sites is a port where the forty-eighth is missed. The pin holds that
+too - none of the four may name the predicate.
+
+`FREE_REST_HOUR_CAP` (99, DFU's own prompt cap) is a per-frame CHUNK,
+not a stop: `full` ends only when `fullyHealed` answers true and has no
+counter of its own, so nothing else would keep one frame from spinning.
+It always converges anyway - a free rest passes no minutes for a disease
+to drain through, and all three recovery rates clamp above zero
+(`healthRecoveryRate` and `fatigueRecoveryRate` at 1;
+`spellPointRecoveryRate` at 1 except for the NoRegenSpellPoints careers,
+which `restFullyHealed` exempts from the magicka test) - so the cap is
+insurance. It is driven in the pins, because an untested guard is a
+guess.
+
+### Open, and deliberately so
+
+Mac: *"We can dive deeper in how we want to handle it at a later time."*
+This is the simple version and it is reversible. Three judgment calls
+were made to keep it small, each easy to change:
+
+1. **The hours dial still means hours of regain.** A timed rest pays
+   exactly the per-hour vitals it always did, just without the wait.
+   The alternative - rest always fills you up - is a smaller change to
+   the player and a bigger one to the code, and it makes the dial a
+   decoration. Note that a free 99-hour rest reaches the same place, so
+   in practice "Rest until healed" is the path.
+2. **Skills still tally.** `restVitals` tallies Medical per hour and
+   `onRestFinished` still raises skills, as offline. Free instant rests
+   make that cheaper than it was; whether that matters is a balance
+   question, not a correctness one.
+3. **Loiter was left alone.** See above.
+
+`test/restx1_online_rest.test.js` - 7 pins, 8 mutants, 8 dead.
+
+## AUDIT RESTX + AUDIT OQ (2026-09-15)
+
+**Mac: "Do an audit on this. While youre at it. Please audit the online
+quest system."** The rest change read back against the tree with the
+whole path DRIVEN, and the online quest system mapped and
+mutation-sized beside it. **One finding, paid; three records narrowed;
+the quest system clean.**
+
+### RESTX F1 - the rate limit time was providing
+
+`restVitals` tallies Medical every hour, and in DFU **that tally is
+rate-limited by the hour costing time.** RESTX1 removed the cost, and
+the rate limit went with it. Measured, not argued:
+
+| | tallies | cost |
+|---|---|---|
+| `rest 99 hours` at full health, online, before | **99** | one click, one frame, repeatable for ever |
+| the same 99 hours offline | 99 | **74 real seconds** of watching a counter |
+
+The `timed` arm called `tickVitals` unconditionally - DFU's own law, and
+correct while an hour was a real 0.75 seconds. So the free lane restores
+the limit with the only thing it has left: **an hour is paid for when it
+does something.** That is also what the switch says it is - "rest just
+becomes the way to regain" - and resting when there is nothing to regain
+is not resting. The paced lanes (offline, and any loiter) are untouched
+and keep the unconditional tally, because there the hour really was
+spent. Now: 0 tallies at full health, 99 for ninety-nine healing hours,
+9 for a paced offline rest. 3 mutants, 3 dead.
+
+### Three records narrowed, because RESTX1 moved what they describe
+
+None of these is a defect; each is a sentence that was true of rests and
+is now true only of loiter or of the ordinary clock.
+
+- **OL2's rest counter.** "Under the shared clock the counter moves once
+  per five real minutes and a bare hour count reads as a hang" was the
+  reason `status()` carries the world's minutes. A rest no longer shows
+  that page at all - it resolves in one frame - so the decoration is
+  **loiter's** now. The code is unchanged and still right; only its
+  subject narrowed.
+- **The enchantment reroll.** The rest page records that "S40's
+  advanceMinutes runs the magic rounds THROUGH the sleep, so a rested
+  night rerolls as it passes". Online it no longer does, because no
+  minutes pass. **Nothing is lost**: the world's clock runs on wall time
+  regardless, so an item six hours stale still rerolls on its own hour
+  clock through the ordinary per-frame tick - half an hour later, while
+  the player walks around, rather than inside the rest.
+- **Quest delays.** Before RESTX1 an online rest paced off the shared
+  clock and ticked the machine through it, so resting DID push a quest
+  delay forward - at forty real minutes a night. It no longer does.
+  The delay still advances, because WORLD7's clocks charge played time
+  and the world's time is wall time; **the player simply cannot
+  accelerate it by sleeping.** Worth stating plainly, because it is the
+  one thing about RESTX1 that will surprise someone: online, sleeping is
+  no longer a way to skip to tomorrow.
+
+### AUDIT OQ - the online quest system
+
+Mapped end to end, and **no defect found.** What it is, stated once so
+the next reader does not have to re-derive it:
+
+**Quests are entirely per-player.** Each client runs its own
+`QuestMachine`, its own journal, its own resources. The quest system's
+ONLY online awareness is two things, both WORLD7's: `questClockStepMax`
+(a clock charges played time, never more than one step) and `CreateFoe`'s
+spawn interval on the same law. Nothing else in `systems/quest/` knows a
+room exists.
+
+**The boundary that makes that safe is `_layoutFoes`** - the dungeon
+host's index of where the layout's own run ends. Every foe past it "is
+this player's own" (`dungeonContext.js:1042`, AUDIT WORLD B2): a quest
+foe is minted above it, never streamed, never puppet-ised by the room's
+authority switch, and never touched by a joiner's stream. So a joiner's
+quest foe really does spawn and really can be killed by the player whose
+quest it is, which is the thing that would have been quietly broken if
+the boundary were not there.
+
+**Quest items ride site links, not shared containers.** `PlaceItem`
+assigns the resource to a PLACE with a marker; it never puts anything in
+a dungeon loot pile, so WORLD4's "a container anyone opens is the room's"
+cannot reach a quest item.
+
+**Sized by mutation rather than read:** erasing the per-player boundary
+(`_layoutFoes = 1e9`) reddens WORLD1's host pin; stopping the world host
+handing the played step reddens four suites. WORLD7's own machine pin is
+EXECUTED over the real quest tables, the real `QuestMachine` and the real
+`Clock` - a scheduled quest's hour, five days away charged as one step,
+then finished on played time with its task started - which is the pin
+that actually proves quests run online at all.
+
+**The open question, and it is Mac's:** a quest foe being the player's
+own means **two players in one dungeon do not see each other's quest
+targets.** That is the correct reading of a per-player quest system and
+it is what the code has always done; whether co-op *should* share a
+quest - one party, one target, shared credit - is a design decision
+nobody has made yet, and it is a much larger slice than this one.
+
 ## WORLD8 (2026-09-14): the hour's respawn
 
 **Mac: "I would like dungeons and the world to repsawn every hour not

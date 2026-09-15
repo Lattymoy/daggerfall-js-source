@@ -152,11 +152,21 @@ test('WORLD5: the shared weather - two clients under one date roll one sky (the 
   resetWeatherSim();
 });
 
-test('WORLD5: a rest online is paced by the world\'s clock - no sub-tick until the clock has moved MINUTES_PER_TICK, an hour of rest is sixty of the world\'s minutes, and the window\'s own timer is not consulted; offline the timer law is what it was', () => {
+test('WORLD5 (RESTX1: on LOITER): a session online is paced by the world\'s clock - no sub-tick until the clock has moved MINUTES_PER_TICK, an hour is sixty of the world\'s minutes, and the window\'s own timer is not consulted; offline the timer law is what it was', () => {
+  // RESTX1 (2026-09-15) NARROWED THIS PIN'S SUBJECT, not its law. It was
+  // written on a TIMED rest, because when WORLD5 landed every mode rode
+  // the shared clock. Mac's call ("for online I want to change the rest
+  // mechanic to not use any time") took the REST modes off it: online a
+  // rest resolves at once and passes no minutes, since none were ever
+  // available to pass. LOITER still rides the clock - passing time is
+  // the whole of what loiter is for - so every reading below is still
+  // exactly the world's own pacing. The rest half's new law is
+  // test/restx1_online_rest.test.js; the OFFLINE half at the foot is
+  // still a timed rest, because offline nothing changed at all.
   const deps = (over = {}) => { const d = { minutes: 0, vitals: 0, advanceMinutes(n) { d.minutes += n; }, tickVitals() { d.vitals++; return false; }, enemiesNearby: () => false, fullyHealed: () => false, dead: () => false, ...over }; return d; };
   let clock = 5000;
   const d = deps({ sharedMinutes: () => clock });
-  const s = new RestSession('timed', 3, d);
+  const s = new RestSession('loiter', 3, d);
   assert.equal(s.tick(100), null, 'a hundred real seconds with the clock still: nothing');
   assert.deepEqual([d.minutes, d.vitals, s.totalHours], [0, 0, 0]);
   clock += MINUTES_PER_TICK - 1;
@@ -165,7 +175,7 @@ test('WORLD5: a rest online is paced by the world\'s clock - no sub-tick until t
   s.tick(0.016); assert.equal(d.minutes, MINUTES_PER_TICK, 'ten: one sub-tick, the owed rounds asked of the host');
   clock += 50;
   for (let f = 0; f < 5; f++) s.tick(0.016);   // AUDIT WORLD5 C7: one sub-tick a frame, as the timer's clamped dt gives offline
-  assert.deepEqual([d.minutes, d.vitals, s.totalHours], [60, 1, 1], 'sixty of the world\'s minutes: one rested hour, one vitals tick');
+  assert.deepEqual([d.minutes, d.vitals, s.totalHours], [60, 0, 1], 'sixty of the world\'s minutes: one hour counted (a loiter recovers nothing, which is its own law)');
   clock += 120;
   for (let f = 0; f < 12; f++) s.tick(0.016);
   assert.equal(s.totalHours, 3, 'the clock leapt two hours (the tab was hidden): both counted, a sub-tick a frame');
