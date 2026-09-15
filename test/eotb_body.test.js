@@ -56,9 +56,16 @@ test('EOTB5: the frame clock advances by the mod\u2019s own step, and a stall ca
   // is why the catch-up is bounded by the cycle rather than open.
   a = advanceFrame({ frame: 0, timer: 0 }, step * 3.5, { frames: 5 });
   assert.equal(a.frame, 3, 'three whole steps, three frames');
-  const huge = advanceFrame({ frame: 0, timer: 0 }, step * 10000, { frames: 5 });
+  // A HALF-STEP ON PURPOSE. `step * 10000` divides evenly, so the
+  // timer lands on 0 whether the catch-up is bounded or not, and a
+  // mutant removing the bound survived the pin. With a remainder the
+  // two answers differ: the BOUNDED path gives up and zeroes the
+  // timer, while an unbounded loop grinds all the way down and leaves
+  // the half step behind.
+  const huge = advanceFrame({ frame: 0, timer: 0 }, step * 10000.5, { frames: 5 });
   assert.ok(Number.isInteger(huge.frame) && huge.frame >= 0 && huge.frame < 5, 'a huge dt lands on a real frame');
-  assert.equal(huge.timer, 0, '...and does not carry a mountain of debt forward');
+  assert.equal(huge.timer, 0,
+    'the catch-up is BOUNDED - it gives up and zeroes the debt rather than looping a billion times on a bad dt');
 
   // riding runs four times faster, so the same dt walks further
   const onFoot = advanceFrame({ frame: 0, timer: 0 }, step, { frames: 5 });
