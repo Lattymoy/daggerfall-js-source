@@ -8,6 +8,70 @@
 
 Newest first.
 
+**2026-09-15 - GUARD1: THE WATCH THAT VANISHED (a player report, relayed
+by Mac).** *"After a while of chasing me around the villages they
+disappeared. And then i was free to go on a killing spree."*
+
+THE DEFECT WAS A DROPPED CLAUSE, AND ITS DAMAGE CAME FROM A LAW THE
+PORT GOT RIGHT. `EnemyEntity.Update` (:184-191) despawns the city watch
+on FOUR terms - EnemyClass, Knight_CityWatch, `CrimeCommitted == None`,
+and `!PlayerEffectManager.IsTransformedLycanthrope()` -
+and `scenes/cityGuards.js` carried three. On its own a missing fourth
+clause looks harmless. It is not, because this port also carries
+`LycanthropyEffect.SuppressCrime` (:121-124): `court.js`'s one setter
+resolves EVERY crime write to None while the player is transformed. The
+two compose into a trap. A transformed lycanthrope can never hold a
+crime, so the three-clause test was true on every frame, so the entire
+watch was deleted the moment the player shapechanged - and no later
+crime could summon another, because the pool a crime would fill is the
+one being emptied. A werewolf in this port was simply immune to the
+city watch: the guards evaporated and a whole village could be murdered
+unopposed. DFU's fourth clause exists to hold the watch standing
+through exactly that window, and it is back.
+
+THE LESSON IS ABOUT COMPOSITION, not about werewolves. Both halves were
+ported carefully and separately, each with its own citation, and the
+bug lives only in the gap between them. `SuppressCrime` was read as "a
+transformed player commits no crime"; the despawn was read as "no
+crime, no watch". Neither reader had cause to look at the other, and
+the reference's own answer to the composition - the fourth clause - was
+the one line that carried no behaviour of its own to test.
+
+FOUND ON THE WAY, at the same seam: `crimeCommitted` had TWO
+representations. Every writer in the port sets the numeric `CRIMES` id
+except `systems/talk.js`'s pickpocket law, which wrote the STRING
+`'Pickpocketing'` - because `court.js` imports `talk.js`, so `talk.js`
+could reach neither the one setter nor the enum. `arrestFlow.crimeId()`
+had grown a `typeof c === 'string'` arm to translate it back;
+`systems/classicSave.js` had no such arm and wrote the string into a
+save byte that classic keeps as an integer. A cycle is not a reason to
+change a value's type: the enum is a leaf module now
+(`systems/crimes.js`, no imports, no behaviour), `court.js` re-exports
+it so no other caller moved, and both sides of the cycle can have it.
+Two existing pins had read the string back and so held the defect in
+place; both were re-aimed.
+
+WHY NOTHING CAUGHT EITHER. `test/cityguards.test.js` - the watch's own
+suite - is ARENA2-gated end to end, so CI has never executed a line of
+the pool's behaviour. It does not need to be: the pool's records are
+its public `guards` array and the despawn arm runs long before anything
+wants art. `test/guard1_watch_despawn.test.js` (7) takes no ARENA2 and
+runs everywhere: the three clauses that were there, the fourth that was
+not (and that the term is the TRANSFORMATION, not the lycanthropy), the
+mortal's untouched path, the spawn chain still answering after a
+walk-away, the cap on both sides of `<= maxActiveGuardSpawns`, and the
+crime id as a number from one enum. Three mutants, three killed.
+
+STILL OPEN: whether this is the defect the player hit. The symptom
+matches it exactly, but it needs the player to have been a transformed
+lycanthrope. The port has three other ways for the watch to vanish and
+all three are verbatim DFU - the location-rect exit
+(`PlayerGPS_OnExitLocationRect`, :2449-2453, which clears the crime
+about 100 m past a village's edge), the post-fast-travel clear
+(:2455-2459), and the court release. Nothing records WHICH fired, which
+is why a report like this cannot be answered from the text alone.
+
+
 **2026-08-25 - THE ENHANCED-MENU AUDIT (U49 and everything under it).**
 Mac's call the day the front door shipped. Scope: `ui/enhancedMenu.js`,
 `ui/enhancedStyle.js`, `systems/uiSkin.js`, the `main.js` routing and

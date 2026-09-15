@@ -272,7 +272,7 @@ test('H1 DEFECT: a house on the market must carry its KEY - on REAL data', { ski
 
 test('H2: PurchaseHouse spends the purse FIRST and the account for the rest', () => {
   // :408-427, and the mechanism is DeductGoldAmount's return value:
-  // it answers the SHORTFALL, not nothing (court.js:200 ports it,
+  // it answers the SHORTFALL, not nothing (court.js:198 ports it,
   // letters of credit and all). So `accountGold -= deductGold(amount)`
   // subtracts exactly the remainder, and subtracts ZERO when the purse
   // covered it. Written any other way this double-charges, or lets the
