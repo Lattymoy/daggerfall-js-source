@@ -21,7 +21,7 @@ import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 
 export const NO_AFFILIATIONS_TEXT_ID = 19;
-export const ENTER_NEW_NAME = 'Enter new name : ';
+const ENTER_NEW_NAME = 'Enter new name : ';
 export const LEVEL_PROGRESS_PREFIX = 'Progress made to the next level: ';
 
 /** LevelButton_OnMouseClick, verbatim arithmetic. */
