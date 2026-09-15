@@ -326,9 +326,9 @@ test('AUDIT 66 pins: the ignite ladder and the drop ladder are ORDERED - lantern
   assert.equal(ig.entity.lightSource?.templateIndex, T.Holy_candle, 'and the holy candle last');
   const dr = rig();
   dr.entity.items = [holy(), candle(), torch(), lantern()];
-  dr.tap('Tab');
-  dr.tap('Tab');
-  dr.tap('Tab');
+  dr.tap('KeyG');   // HT4: the drop key is G - Tab is the port's pixel dial
+  dr.tap('KeyG');   // HT4: the drop key is G - Tab is the port's pixel dial
+  dr.tap('KeyG');   // HT4: the drop key is G - Tab is the port's pixel dial
   assert.deepEqual(dr.spawned.map((a) => a[0]), [T.Torch, T.Candle, T.Holy_candle], 'the drop ladder in its own order, and the lantern still in the pack');
   assert.deepEqual(dr.entity.items.map((i) => i.templateIndex), [T.Lantern]);
 });

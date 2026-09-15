@@ -121,7 +121,13 @@ test('U63: the landing page owns no colour - every one is the SKIN\'s, token or 
   // means the next heading added cannot quietly pick the display face back up.
   assert.match(css, /\.wordmark \{ font-family: 'Jacquard 12', var\(--brand\)/,
     'the title keeps the wordmark face - the one thing Mac asked to leave alone');
-  assert.equal((css.match(/Jacquard 12/g) || []).length, 1, 'and it is the ONLY rule that names it');
+  // AUDIT SITE1 F10: this counted the whole <style> block, COMMENTS INCLUDED -
+  // so recasing the comment above turned it red with no CSS change at all. It
+  // passes today only because that comment happens to shout. The rules, not the
+  // prose about them. (The count is of the STYLESHEET; index.html names the face
+  // once more in the credits line, deliberately - see SITE2.)
+  const cssCode = css.replace(/\/\*[\s\S]*?\*\//g, '');
+  assert.equal((cssCode.match(/Jacquard 12/g) || []).length, 1, 'and it is the ONLY rule that names it');
   assert.match(css, /h1, h2, h3 \{ font-family: 'Pixelify Five'/, 'every heading is the page\'s own pixel face');
 });
 

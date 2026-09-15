@@ -1988,3 +1988,130 @@ and 0.25/0.4, walk and run: 0 airborne frames, 0 flips, the eye only
 descends, worst eye drop 0.073 at a walk and 0.097 at a run (from
 0.141 / 0.213). MAC3's terrain pins and the eleven P14/P16 stair
 traces hold. Pinned: `test/ph1_physics.test.js` PH2 (two).
+
+## COL1 - THE BODY HAD A HOLE IN IT (2026-09-15)
+
+Mac: *"3d Geometry has no collison. For example, in the first dungeon
+the table legs do have collison but the table top doesnt"*.
+
+A capsule is a sphere **swept along a segment**. `_resolveCapsule`
+resolved two spheres at the segment's *ends*, which is the same shape
+only for as long as those two cover the segment - and standing, they do
+not. Radius 0.35 with centres at feet+0.35 and feet+1.45: the lower
+reaches feet+0.70, the upper begins at feet+1.10, and **the 0.40 of body
+between them was sampled by neither**. That band is waist height. A
+table top lives in it; the legs cross the lower sphere, which is why
+they stopped you and the top did not, and why the report reads as
+"some geometry has no collision".
+
+The triangles were never missing. `sphereOverlaps([0, 0.90, 2.75], 0.35)`
+returns true against the same collider that walks the body straight
+through - the spatial index was right and the QUERY was wrong, which is
+why no amount of looking at the mesh loader would have found it.
+
+The standing stance was the report; the ride stance was worse and unread
+- axis 1.9 leaves a hole three times bigger.
+
+**The sphere count is derived from the axis now**, so that consecutive
+centres are never more than one diameter apart, which is the condition
+for a chain of spheres to cover the segment. (AUDIT COL1 F12 below
+corrects that condition: a whole diameter is *tangency*, and the step is
+a diameter less a 5% overlap.) Standing takes one middle
+sphere (centres 0.35 / 0.90 / 1.45, coverage continuous from 0 to 1.80);
+riding takes two; the swim stance's zero axis still collapses to the one
+lower sphere, as A6 requires.
+
+**Every existing law keeps its exact meaning**, which is what made this
+safe to change in a motor with four audits on it: the lower sphere keeps
+PH1's one-way floor, the head keeps the plain push the CanStand sweep
+stands on, and the middles take the plain push - a contact at mid-body
+is something you walked into, never a floor you stand on. (AUDIT COL1 F8
+below turns that last sentence from a claim into a branch; as shipped it
+was a comment the code did not honour.) All 102 motor
+and physics pins passed unchanged.
+
+It costs one more sphere resolve per iteration at standing height, three
+instead of two. That is the price of the body having no hole in it, and
+CELL=2's twentyfold win left the headroom. (AUDIT COL1 F9 below measures
+that price properly - the standing figure is right and is not the whole
+of it.)
+
+One thing the pin says out loud rather than asserting: a slab low enough
+to step on is **climbed onto**, not stopped - PH1's one-way floor sets
+the body on a near-horizontal surface it is under, and STEP_OFFSET 0.5
+does the rest. That predates COL1 and is not what was reported, so the
+pin holds "not through", which is the claim that was actually made.
+
+## AUDIT COL1 (2026-09-15) - three lenses over the chain
+
+Three adversarial readings of the seven slices shipped this day; the
+COL1 findings, each paid and each pinned by **driving the mutation that
+used to survive**.
+
+**F8 - a middle sphere's "plain push" is a LIFT, and the body rode it.**
+The slice's own words were *"the middles take the plain push, because a
+contact at mid-body is something you walked into, never a floor you
+stand on"* - a claim the code did not make. The plain push is along
+centre-minus-closest, and out of a **table top** that direction is
+straight up; `_resolveCapsule` then copies the middle's y back into the
+whole capsule. Measured on the ride stance, which has the most middles:
+before COL1 a 0.70-1.30 top was walked clean through and nothing above
+0.69 could be mounted; with the middles added, tops to **0.85** were
+mounted by a **0.65 m single-frame rise** - past `STEP_OFFSET`, with
+`grounded` true the whole way. SH1's bug wearing COL1's clothes. The
+law is enforced where the push is chosen now: an upward-leaning face met
+by a *middle* sphere pushes **sideways** by its whole penetration and
+never grounds, which is the same branch SH1 wrote for the ladder's
+tabletop edges. Legal ground is out of the middles' reach by
+construction - past the lower sphere's own resolve, a slope at the slope
+limit clears a middle centre by 0.59 against a 0.35 radius - so it fires
+only on geometry the body is truly inside. Side effect, and the right
+one: the standing mount band now ends at `STEP_OFFSET` exactly (0.50)
+instead of 0.70, which is Mac's SH1 report closed at its root.
+
+**F9 - the price, measured.** *"One more sphere resolve per iteration at
+standing height"* is true and reads as the whole cost, which it is not.
+Benchmarked over a cluttered dungeon room, `_resolveCapsule` itself:
+standing **20.2 -> 30.7 us** (1.5x, the three-for-two), ride stance
+**20.4 -> 41.0 us** (2.0x - *four* spheres for two, which the note never
+mentioned). On top of that a body that is now blocked runs the step
+ladder's retries where it used to walk through, so calls per `move()`
+rise as well; the walked-through path was cheap because it was wrong.
+The middles' scratch is reused rather than rebuilt per call - this runs
+several times a frame per body, and that was pure garbage at frame rate.
+
+**F12 - the beads must overlap, not touch.** `span` was exactly a
+diameter, which is **tangency**: at the join between two beads the
+chain's reach falls to zero, and short of that it is thin - 43% of the
+radius on the ride stance, 26% on a 3.4 m body. Driven: a 3.4 m foe
+(`SetupDemoEnemy` takes its height off the idle sprite, so bodies that
+tall are ordinary) walked clean through a slab anywhere in **2.70-2.93**,
+the last through-band left after COL1 and F8. `BEAD_OVERLAP = 0.95`
+gives every join a real bite, closes that band, and costs one extra
+sphere only past ~3.2 m of body: the player's four stances keep the
+counts they had, to the bead. The coverage pin is now a **sweep** - a
+thin slab at every height along every stance - which is how the hole was
+found; the arithmetic pin that preceded it asserted the tangent case was
+fine.
+
+**F13 - the ceiling clamp asked one bead.** *"A body cannot be
+depenetrated UP into a ceiling"* was enforced by re-probing the **head**
+sphere, which was every sphere above the feet while the body was two
+beads. With middles it is one of several, so a body whose *waist* was
+wedged under a slab answered "the head is clear" and kept a rise it
+could not hold - measured, a slab at 1.10-1.45 lifted the feet by up to
+0.35 straight into it. The clamp re-probes the whole chain, from the
+first middle to the head.
+
+Considered and left: `hitCeiling` and `pushedDown` can now be raised by
+a mid-body contact with a *downward*-facing surface. That is a wider
+surface than before and it is the correct one - a slab pressing your
+waist from above is a ceiling by any reading, and the movement gates it
+feeds (the step-up retry, the ground snap) should refuse there. After
+F8 the *grounded* half can no longer be raised by a middle at all.
+
+Not a COL1 finding, recorded here because it shares the file: the
+standing mount band below `STEP_OFFSET` is still PH1's one-way floor
+setting the body on a surface it is under, by design and since before
+COL1. The F8 pin's band deliberately starts **above** the lower sphere's
+own reach (feet + 2R = 0.70) so it holds the middles' law and not PH1's.

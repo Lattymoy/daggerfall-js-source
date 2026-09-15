@@ -13,6 +13,7 @@
     "check": "npm run lint && npm run types && npm test && npm run build",
     "cites": "node tools/citeShift.mjs",
     "prebuild": "node scripts/buildTag.mjs",
+    "probes": "node tools/enhancedMenuProbe.mjs && node tools/featureRailProbe.mjs",
     "shot": "node tools/screenshot.mjs",
     "firsthour": "node tools/firstHourProbe.mjs",
     "x11": "node tools/x11Probe.mjs",

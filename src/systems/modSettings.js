@@ -233,7 +233,17 @@ export const MOD_SETTINGS = Object.freeze({
       }),
       'Handling.ToggleLightInput': Object.freeze({ default: "F", text: true, description: 'Button used to quickly ignite or douse your light source' }),
       'Handling.RememberLastLightSource': Object.freeze({ default: true, description: 'Igniting with the key re-lights the light you last doused, if you still carry one.' }),
-      'Handling.ManualDropInput': Object.freeze({ default: "Tab", text: true, description: 'Button used to manually drop a light source' }),
+      // HT4 (2026-09-15, Mac: "Pressing tab drops torches, tab is reserved
+      // for the menu"): THE ONE DEPARTURE FROM THE MOD'S SHIPPED KEYS.
+      // Handheld Torches ships Tab, and in Daggerfall Unity that is free.
+      // It is not free here: PX15 gave Tab to the port's own pixel dial
+      // (ui/input.js, the radial menu DFU has not got), so the mod's
+      // default landed on a key the port had already spent and one press
+      // both opened the dial and dropped the light. The mod could not
+      // have known; the port has to answer for it. G is unbound in DFU's
+      // own defaults (inputActions.js DEFAULT_BINDINGS) and unused by the
+      // mod's other two keys, and it stays the player's to rebind.
+      'Handling.ManualDropInput': Object.freeze({ default: "G", text: true, description: 'Button used to manually drop a light source' }),
       'Handling.OnStow': Object.freeze({ default: 1, options: Object.freeze(["Unequip", "Drop"]), description: 'Behavior when forced to stow a light source' }),
       'Handling.OnPick': Object.freeze({ default: 1, options: Object.freeze(["Store", "Equip", "Force Equip"]), description: 'Behavior when picking up a light source' }),
       'Handling.StowWhenSpellcasting': Object.freeze({ default: true, description: 'Casting, or holding a readied spell, stows the light: no free hand.' }),

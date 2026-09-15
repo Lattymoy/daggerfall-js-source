@@ -12957,7 +12957,7 @@ U63 set the site in the game's two pixel faces: Jacquard 12, the
 blackletter the menu wears as its wordmark, and Pixelify Sans for
 everything else. The trouble is where the first one landed. It was on
 `h1, h2, h3`, on the step numerals and on the Q&A terms - so a section
-title at 52px, twelve card headings and five step and answer heads were
+title at 52px, twelve card headings and eight step and answer heads were
 all set in a display face whose capitals are its whole character. An
 ornate H on "How to play" is the wordmark's job being done twice, at a
 size where it competes with the title rather than leading a section.
@@ -12972,7 +12972,8 @@ The title is untouched, which is the one thing Mac named: `.wordmark`
 carries the family now, with `--brand` behind it exactly as before.
 
 **The pin is a COUNT, not a presence.** `test/landing.test.js` asserts
-that the page names Jacquard 12 exactly once and that the rule naming it
+that the STYLESHEET names Jacquard 12 exactly once - the credits line
+names the face again, deliberately - and that the rule naming it
 is `.wordmark` - because a pin that only checked the wordmark still has
 it would pass a page that had quietly put the display face back on a
 new heading. The fonts request is unchanged: the skin's own URL, all
@@ -13026,3 +13027,81 @@ is owed.
 One heading changed with the copy: "Something's wrong." became "If it
 breaks", which fits the pixel face on one line where the old one wrapped
 after SITE1 widened it.
+
+## DEATH1 - THE LOAD WAS THE BLACK SCREEN (2026-09-15, Mac's report)
+
+Mac: *"Black screen after death and pressing enter"*.
+
+FIX-E already fixed the freeze on this path - the claim became a hold,
+the return moved into a `finally`, and an unbounded wait became a
+watchdog. What it left is smaller and is what a player sees.
+
+**`holdFrame()` was taken before there was anything to draw.** The hold
+stops the host drawing; it was the first line of `endRunToTitleMenu`,
+and only then did `playDeathVideo` run two dynamic imports
+(`ui/videoPlayer.js`, `scenes/dataSource.js`) and an archive read of
+ANIM0012.VID before the video painted its first frame. Every frame of
+that load is **black**: the host is held, the death screen it had been
+drawing has stopped, and the video has not begun. The last thing on the
+canvas is the death fade, which is already black - so there is nothing
+to distinguish the load from a hang.
+
+The hold is taken when the video is **ready** now. `playDeathVideo`
+receives a signal and raises it once the bytes are in hand; until then
+the host keeps drawing the death screen, which is the correct thing to
+be looking at while a video loads. FIX-E's laws are untouched: the hold
+rather than the claim, released on every path out, and the watchdog
+still races the whole thing, so a read that never settles is still a
+return to the menu rather than a trap.
+
+`exitToTitleMenu` also says one line on the console before it navigates.
+The loop is dead by that line, so if the navigation ever fails to take,
+the canvas keeps its last frame and the screen is black with nothing to
+tell anyone how far it got. One line names the last step.
+
+**WHAT THIS DOES NOT CLAIM.** This container has no ARENA2, so the full
+game cannot boot here and the report could not be reproduced. What is
+fixed is a black window on that exact path, proven by pin and
+unambiguous from the source. Whether it is the whole of what Mac saw is
+unknown. If the screen is still black after this ships, the console line
+is the question to answer: if `[menu] returning to the title menu` is
+printed and the screen stays black, the navigation is the fault and the
+video is innocent; if it never prints, the wait is still inside the
+race and the watchdog's 30 s is the next thing to look at.
+
+## AUDIT DEATH1/FT16 (2026-09-15) - three lenses over the day's slices
+
+**DEATH1 F7 - the hold could be taken AFTER the release, and then
+nothing could ever let it go. A regression the slice introduced.**
+The watchdog wins a **race**; it does not cancel anything. When it
+fired, the `finally` read `releaseFrame` as `null` (nothing held -
+correct) and navigated. The load was still in flight; when it settled it
+called `ready()`, which took a hold **whose only release closure had
+already been read as null**. `frameHeld()` true forever, `world.js` and
+`exterior.js` skipping every frame - Mac's black screen, re-made by its
+own fix, on the exact path (a slow or stalled ANIM0012 read) the slice
+exists to handle. Verified by execution before the fix: held after
+watchdog `false` -> held after late `ready()` **`true`** -> held at end
+`true`. Nothing pinned it: every DEATH1 assertion was either an injected
+`play` that settles or a regex over the new shape, and none drove
+watchdog-then-late-`ready`. The seam **closes** in the `finally` now, so
+a late load cannot stop a host that has already been navigated away
+from, and that order is driven.
+
+**DEATH1 F11 - the console line wore the wrong tag.** `exitToTitleMenu`
+is also all four hosts' `exitToMenu`, so quitting from the **pause**
+screen printed `[death] returning to the title menu` and a bug report
+reading the console would have been sent looking for a death that never
+happened. The tag names the door: `[menu]`.
+
+**FT16 F10 - `go()` discarded staged key binds on a click that was not a
+walk away.** FIX-F guarded the discard with `id !== 'controls'` because
+Controls was its own section; FT16 folded Controls into a Settings
+*category* and dropped the guard along with the section. The discard
+then fired on **any** rail click - including the Settings row, which is
+the section you are standing in while rebinding, and which is right
+there on the rail. Half-finished binds vanished for pressing the row you
+were already on. The guard is the section actually changing; the
+category tabs keep their own unconditional discard, because leaving the
+controls category *is* a walk away even though the section does not
+change.
