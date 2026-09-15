@@ -19,7 +19,7 @@ import { fileURLToPath } from 'node:url';
 import {
   LAND_VIEW_TIERS, LAND_VIEW_DFU_MAX, LAND_VIEW_MAX, LAND_VIEW_DEFAULT, landViewRead, landViewWrite,
 } from '../src/world/landView.js';
-import { FEATURES, checkFeature, resolveControl, featureForControl, featureCounts, filterFeatures } from '../src/systems/features.js';
+import { FEATURES, KIND_ORDER, checkFeature, resolveControl, featureForControl, featureCounts, filterFeatures } from '../src/systems/features.js';
 import { getPref, setPref, PREF_DEFAULTS } from '../src/systems/uiPrefs.js';
 import { getInt, setValue, resetToDefaults } from '../src/systems/settings.js';
 
@@ -85,7 +85,25 @@ test('FT2: the registry row - both labels, over the pref, showing and writing th
   assert.equal(featureForControl('settings', 'Experimental/TerrainDistance'), f, 'the covered key resolves to the row that writes it');
   // ...and the filter shows the row under either label
   assert.ok(filterFeatures(FEATURES, 'enhanced').includes(f) && filterFeatures(FEATURES, 'classic').includes(f));
-  assert.deepEqual(featureCounts(FEATURES), { all: 30, enhanced: 12, mod: 10, classic: 10 });   // AT0 Ambient Text the tenth Mod Authored row; WM3 Windmills the ninth Mod Authored row (a PREF row - the pack ships no settings file to carry an Enabled key); HT1 Handheld Torches the eighth pack; WEATHER2b the weather field; WIND3 the wind's three rows; WW1 Weapon Widget the seventh pack; FT4 the outdoors (enhanced + mod); FT5-FT8 the port's own; LR1 loot rarity; FT9 the five packs; FT10/FT11 DFU's own
+  // EOTB0: this was a typed tally with a comment naming every slice
+  // that had ever moved it - and FT0 already pins the exact row ids,
+  // in order, which is the ONE place an accidental row should be
+  // caught. A second enumeration of the same fact is not a second
+  // check; it is the copy that drifts, and every mod since has had to
+  // edit both. So the COUNTS are derived from the rows here, and what
+  // is asserted is the identity that has to hold: the total is the
+  // rows, each kind's count is the rows wearing it, and a row wearing
+  // two kinds is counted under both (which is why the kinds sum HIGH -
+  // the outdoors row and the land-view row each wear two).
+  const counts = featureCounts(FEATURES);
+  assert.equal(counts.all, FEATURES.length, 'the total is the rows');
+  for (const k of KIND_ORDER) {
+    assert.equal(counts[k], filterFeatures(FEATURES, k).length, `${k} counts the rows wearing ${k}`);
+  }
+  assert.ok(counts.all > 25 && KIND_ORDER.every((k) => counts[k] > 5),
+    `the home is still populated: ${JSON.stringify(counts)}`);
+  assert.ok(counts.enhanced + counts.mod + counts.classic > counts.all,
+    'at least one row wears two labels - this row is one of them');
 });
 
 test('FT2: a condensed row\'s read and write are functions and come together - the registry law', () => {

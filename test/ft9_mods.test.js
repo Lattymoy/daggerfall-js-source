@@ -29,12 +29,25 @@ test('FT9: every vendored mod with a switch has exactly one row over it, and eve
   }
   for (const f of rows) assert.ok(MOD_SETTINGS[f.control.vendor]?.keys?.[f.control.key], `${f.id} names a real switch`);
   assert.deepEqual(checkFeatures(FEATURES), []);
-  assert.equal(rows.length, 8, 'eight direct rows (Dynamic Skies rides the outdoors row through `also`; WW1 added Weapon Widget, HT1 Handheld Torches, AT0 Ambient Text)');
-  // WM3: NINE wear the Mod Authored tag - the seven direct rows, the
-  // outdoors row (Dynamic Skies rides it), and Windmills, whose row is
-  // a PREF because the pack ships no settings file to carry an Enabled
-  // key. `rows` above is the mods-STORE rows and stays seven.
-  assert.equal(filterFeatures(FEATURES, 'mod').length, 10);
+  assert.equal(rows.length, 9, 'nine direct rows (Dynamic Skies rides the outdoors row through `also`; WW1 added Weapon Widget, HT1 Handheld Torches, AT0 Ambient Text, EOTB0 Eye Of The Beholder)');
+  // WM3: the Mod Authored tag is worn by the mods-store rows PLUS
+  // exactly two that are not mods-store rows - the outdoors row, which
+  // Dynamic Skies rides through `also`, and Windmills, whose row is a
+  // PREF because the pack ships no settings file to carry an Enabled
+  // key.
+  //
+  // EOTB0: this was a TYPED number beside a sentence that counted
+  // differently ("NINE wear the tag - the seven direct rows..." over
+  // an assertion of 10, with `rows` at eight). Three numbers in one
+  // paragraph, none of them checkable, and every new mod moved all
+  // three. It is DERIVED now: the two exceptions are named and
+  // asserted BY NAME, and the total follows from them, so the next mod
+  // needs no edit here and cannot quietly pass with the tag missing.
+  const tagged = filterFeatures(FEATURES, 'mod');
+  const notMods = tagged.filter((f) => !rows.includes(f)).map((f) => f.id).sort();
+  assert.deepEqual(notMods, ['enhanced-environments', 'mod-windmills-kamer'],
+    'the only Mod Authored rows that are not mods-store rows: Dynamic Skies rides the outdoors row, Windmills is a pref');
+  assert.equal(tagged.length, rows.length + notMods.length);
 });
 
 test('FT9: a mod row is the mod\'s own - the creator in the title, the modsettings description as the note, one source', () => {
@@ -47,7 +60,7 @@ test('FT9: a mod row is the mod\'s own - the creator in the title, the modsettin
     assert.equal(mod.keys.Enabled.default, true, `${f.id} ships on (MO1)`);
     assert.match(f.effect, /^Takes effect /, `${f.id} says when`);
   }
-  assert.deepEqual(rows.map((f) => f.id), ['mod-seasons-iliac-bay', 'mod-roads-hazelnut', 'mod-meanermonsters', 'mod-pcaao', 'mod-unleveledloot', 'mod-weapon-widget', 'mod-handheld-torches', 'mod-ambient-text'], 'the Mods pane\'s order');
+  assert.deepEqual(rows.map((f) => f.id), ['mod-seasons-iliac-bay', 'mod-roads-hazelnut', 'mod-meanermonsters', 'mod-pcaao', 'mod-unleveledloot', 'mod-weapon-widget', 'mod-handheld-torches', 'mod-ambient-text', 'mod-eye-of-the-beholder'], 'the Mods pane\'s order');
 });
 
 test('FT9: when each switch lands, as the port knows it', () => {

@@ -277,9 +277,91 @@ test('doctrine: no raster of game data is tracked anywhere in the repo', () => {
   const RASTER = /\.(png|jpg|jpeg|gif|bmp|webp|tga|ico)$/i;
   const rasters = tracked('.').filter((f) => RASTER.test(f));
   const allowed = new Set([...PUBLIC_ALLOWLIST.keys()]);
-  const unexplained = rasters.filter((f) => !allowed.has(f));
+  const unexplained = rasters.filter((f) => !allowed.has(f) && !bundleArt(f));
   assert.deepEqual(unexplained, [],
     `tracked raster images outside the doctrine allow-list:\n${unexplained.join('\n')}`);
+});
+
+// ── EOTB0: A BUNDLE'S OWN ART ANSWERS TO THE BUNDLE'S OWN MANIFEST ──
+//
+// Eye Of The Beholder ships 3035 sprites. Three thousand rows typed
+// into the list above would be a rule enforced by memory - the exact
+// thing this file exists to stop - and the list's value is that a
+// human wrote a REASON beside each picture, which does not survive
+// being written three thousand times.
+//
+// So a vendored mod's art carries ONE row, on its directory, and the
+// membership question is DERIVED: a file under that directory is the
+// mod's iff the mod's own shipped manifest names it. The manifest is
+// vendored verbatim for exactly this reason - it is the authority on
+// what the bundle contained, and it is not something the port can
+// quietly widen.
+//
+// Checked BOTH WAYS (AUDIT 27 F302's lesson: a row is a CLAIM, and a
+// claim about a file that is not there is not one) - see the pins
+// below.
+const BUNDLE_ART = new Map([
+  ['vendor/eye-of-the-beholder/Textures/',
+    { manifest: 'vendor/eye-of-the-beholder/eyeofthebeholder.dfmod.json',
+      why: "THIRD-PARTY - Eye Of The Beholder 2.1 (RedRoryOTheGlen); the mod's own player sprites, re-encoded as indexed PNG (lossless for every drawn pixel - see the vendor README)" }],
+]);
+/** The basenames each bundle manifest names, lowercased. Memoised: the
+ *  membership test runs once per tracked raster and the manifest is
+ *  386 KB, so re-parsing it per file turned a 1-second file into an
+ *  8-second one. */
+const _bundleNames = new Map();
+const bundleNames = (dir) => {
+  if (!_bundleNames.has(dir)) {
+    const files = JSON.parse(readFileSync(join(root, BUNDLE_ART.get(dir).manifest), 'utf8')).Files ?? [];
+    _bundleNames.set(dir, new Set(files.map((f) => f.split('/').pop().toLowerCase())));
+  }
+  return _bundleNames.get(dir);
+};
+/** Is this tracked raster a vendored bundle's own art? */
+function bundleArt(f) {
+  for (const dir of BUNDLE_ART.keys()) {
+    if (f.startsWith(dir)) return bundleNames(dir).has(f.split('/').pop().toLowerCase());
+  }
+  return false;
+}
+
+test('doctrine EOTB0: a vendored bundle\u2019s art is the art its own manifest names - derived, not listed', () => {
+  for (const [dir, rec] of BUNDLE_ART) {
+    const names = bundleNames(dir);
+    const here = tracked('.').filter((f) => f.startsWith(dir));
+    assert.ok(here.length > 0, `${dir} has a row and no files - a claim about art that is not there`);
+    assert.ok(rec.why.startsWith('THIRD-PARTY'), `${dir} must say whose art it is`);
+
+    // Nothing under the directory that the bundle did not ship. This is
+    // the arm that makes the directory row safe: it is not "anything
+    // here is fine", it is "anything here came out of that bundle".
+    const strangers = here.filter((f) => !names.has(f.split('/').pop().toLowerCase()));
+    assert.deepEqual(strangers, [],
+      `files under ${dir} that the bundle's own manifest does not name:\n${strangers.join('\n')}`);
+
+    // ...AND THE OTHER WAY. A raster the manifest names and the tree
+    // does not carry means the vendoring dropped art on the floor,
+    // which a one-way check would never say.
+    const carried = new Set(here.map((f) => f.split('/').pop().toLowerCase()));
+    const dropped = [...names].filter((n) => /\.(png|jpg|jpeg|gif|bmp|webp|tga)$/i.test(n) && !carried.has(n));
+    assert.deepEqual(dropped, [],
+      `${dir}: the manifest names ${dropped.length} pictures the tree does not carry`);
+  }
+});
+
+test('doctrine EOTB0: the derivation is not vacuous - a stranger and a loss both redden', () => {
+  // A PIN MUST FAIL. Both arms are driven against the real manifest
+  // with one name moved, because a membership test that cannot reject
+  // is a rule that is not enforced.
+  const dir = 'vendor/eye-of-the-beholder/Textures/';
+  const names = bundleNames(dir);
+  assert.ok(names.size > 3000, `the manifest resolved to ${names.size} names - the gate is reading nothing`);
+  assert.equal(names.has('112364_0-0.png'), true, 'a sprite the bundle really ships');
+  assert.equal(names.has('112364_0-0.png.png'), false, 'and a name it does not');
+  // the stranger arm, in the shape it would really arrive: our own
+  // artwork dropped into the mod's folder
+  assert.equal(bundleArt(`${dir}112364/logo.png`), false, 'a file the manifest never named must not pass as the mod\u2019s');
+  assert.equal(bundleArt(`${dir}112364/112364_0-0.png`), true, 'and one it did must pass');
 });
 
 test('doctrine: no DERIVED raster is tracked either, whatever it is wearing', () => {
