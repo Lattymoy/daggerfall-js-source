@@ -127,7 +127,15 @@ test('the two rails differ only where the question does', () => {
   // FT0: Features joins the shared set - one home for every enhanceable
   // feature, and a switch a player can reach from only one door is half
   // shipped.
-  const shared = ['Load Game', 'Settings', 'Controls', 'Features', 'About'];   // FT14: no Mods door
+  // FT16 (Mac: "the control menu option needs to be within settings"):
+  // CONTROLS LEFT THE RAIL for a category of Settings, which is SO1's
+  // move exactly (Enhanced did the same). FIX-F's law is not weakened -
+  // "reachable from both doors" still holds, through the Settings row
+  // that is itself on both rails - and test/enhancedControls.test.js
+  // holds the category and its two renderers.
+  const shared = ['Load Game', 'Settings', 'Features', 'About'];   // FT14: no Mods door; FT16: no Controls door
+  assert.ok(!boot.includes('Controls') && !pause.includes('Controls'),
+    'Controls is a Settings category now - a second door to one subject is the thing FT16 closed');
   for (const s2 of shared) {
     assert.ok(boot.includes(s2), `${s2} must stay on the front door`);
     assert.ok(pause.includes(s2), `${s2} must reach the pause door too`);
@@ -150,7 +158,7 @@ test('the two rails differ only where the question does', () => {
   assert.ok(!boot.includes('Enhanced') && !pause.includes('Enhanced'), 'Enhanced is a settings category, not a rail entry (SO1)');
   // FD1: the classic rail is the shared set behind one door
   const classic = list('SECTIONS_CLASSIC');
-  assert.deepEqual(classic, ['Begin', 'Online', 'Settings', 'Controls', 'Features', 'About'], 'ONLINE1: the classic player goes online too; FT0: and reaches the features home; FT14: which is where the mods are now');
+  assert.deepEqual(classic, ['Begin', 'Online', 'Settings', 'Features', 'About'], 'ONLINE1: the classic player goes online too; FT0: and reaches the features home; FT14: which is where the mods are now; FT16: and Controls is inside Settings');
   assert.deepEqual(pause.filter((x) => !shared.includes(x)), ['Resume', 'Save Game', 'Exit']);
   // SETTINGS IS THE POINT. U49's own record says settings were
   // reachable only at boot; a pause rail without them would have left
@@ -390,7 +398,7 @@ test('EE1: one switch for the whole outdoors, migrated once from the old sky ans
   const menu = read('src/ui/enhancedMenu.js');
   assert.ok(!/prefRow\('enhancedEnvironments'/.test(menu), 'FT4: Enhanced environments left the Enhanced category for the Features home (systems/features.js)');
   assert.ok(!/prefRow\('proceduralSky'/.test(menu), 'the old row must be gone, not doubled');
-  assert.match(read('src/systems/features.js'), /a procedural sky with the sun, both moons/, 'the row claims what the tree has: the sky and the weather (FT4: the words are the registry\'s now)');
+  assert.match(read('src/systems/features.js'), /a live sky with the sun, both moons and a star field/, 'the row claims what the tree has: the sky and the weather (FT4: the words are the registry\'s now; FT15 shortened them)');
   const shared = read('src/scenes/shared.js');
   assert.match(shared, /params\.get\('sky'\) !== 'classic' && getPref\('enhancedEnvironments'\)/);
   // nothing outside uiPrefs reads the retired key at runtime - src AND tools

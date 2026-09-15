@@ -126,26 +126,60 @@ const clearBtn = (view, action) => {
 
 // ── THE PANE EXISTS WHERE A PLAYER CAN REACH IT ──────────────────
 
-test('FIX-F: Controls is on both rails and in the system-pane dispatch', () => {
+// FT16 (2026-09-15, Mac: "the control menu option needs to be within
+// settings"): THE BINDINGS ARE THE CONTROLS CATEGORY OF SETTINGS.
+//
+// FIX-F put Controls on both rails because it was reachable from
+// neither - the right fix for that bug, and one door too many for the
+// subject: Settings ALREADY had a Controls category holding DFU's
+// Controls/* keys (the mouse sensitivity, the swing mode, the
+// controller), so a player asking "how do I rebind jump" had two
+// plausible doors and one of them was wrong. One door now.
+//
+// FIX-F's law survives the move and this pin holds it: the bindings
+// must be reachable from the FRONT door and from ESCAPE, which they
+// are, because Settings is on both rails. What changed is the address,
+// not the reachability - so the pin walks the two places that render
+// them rather than the two rails that used to carry them.
+test('FT16: the key bindings live inside Settings, and both doors still reach them', () => {
   const src = read('src/ui/enhancedMenu.js');
-  // The registration itself - the same shape mods and about have.
-  assert.deepEqual(SYSTEM_PANES.find(([id]) => id === 'controls'), ['controls', 'Controls'],
-    'the pause window’s System page must carry a Controls row');
   const list = (name) => {
     const m = new RegExp(`const ${name} = \\[([^\\]]*)\\]`).exec(src);
     assert.ok(m, `${name} is gone`);
     return m[1].split(',').map((s2) => s2.trim().replace(/^'|'$/g, '')).filter(Boolean);
   };
-  assert.ok(list('SECTIONS_PAUSE').includes('Controls'),
-    'Escape must reach the key bindings - the whole of the bug');
-  assert.ok(list('SECTIONS_BOOT').includes('Controls'),
-    'and so must the front door, exactly as Settings/Mods/About do');
-  // ...and a rail entry with no pane throws on the click: the dispatch
-  // is a lookup, so a missing key is `undefined(body)`.
-  assert.equal(src.match(/controls: paneControlsPane/g)?.length, 2,
-    'both dispatches - the pause System page and the boot shell - must know the pane');
-  assert.match(src, /const paneControlsPane = \(body\) => paneControls\(body, \{ render \}\)/,
-    'the pane is handed the shell’s own repaint');
+  // the door that carries them is on BOTH rails - that IS FIX-F's law
+  assert.ok(list('SECTIONS_PAUSE').includes('Settings'),
+    'Escape must reach the key bindings - the whole of FIX-F\'s bug');
+  assert.ok(list('SECTIONS_BOOT').includes('Settings'), 'and so must the front door');
+  // and Controls is no longer a door of its own, on any rail or in the
+  // pause window's System page
+  for (const r of ['SECTIONS_BOOT', 'SECTIONS_CLASSIC', 'SECTIONS_PAUSE']) {
+    assert.ok(!list(r).includes('Controls'), `${r} must not carry a second door to one subject`);
+  }
+  assert.equal(SYSTEM_PANES.find(([id]) => id === 'controls'), undefined,
+    'the pause System page reaches the bindings through its Settings row');
+  // a dispatch is a LOOKUP, so a dead key is `undefined(body)` - the
+  // wrapper and both table entries must be gone together
+  assert.equal(src.match(/controls: paneControlsPane/g), null, 'no dispatch entry survives the move');
+  assert.doesNotMatch(src, /paneControlsPane/, 'and neither does the wrapper it pointed at');
+
+  // THE TWO RENDERERS. The full pane draws them under the Controls
+  // category; the condensed pause pane has no category rail, so they
+  // ride the end of its one scroll. Dropping either is FIX-F's bug.
+  const full = src.slice(src.indexOf('function paneSettings('), src.indexOf('function paneQuickSettings('));
+  assert.match(full, /if \(category === 'controls'\) \{[\s\S]{0,120}paneControls\(list, \{ render \}\)/,
+    'the full Settings pane draws the bindings in the Controls category');
+  const quick = src.slice(src.indexOf('function paneQuickSettings('));
+  assert.match(quick.slice(0, 2600), /paneControls\(list, \{ render \}\)/,
+    'and the condensed pause Settings draws them too');
+
+  // AND THE STAGING FOLLOWS THE ADDRESS. "Leave this page and your
+  // changes are dropped" was enforced by the section rail; the category
+  // rail has to enforce it now, or a staged bind survives a hop to
+  // Audio and back and lands on a Continue the player never meant.
+  assert.match(full, /else \{ discardControlsStaging\(\);/,
+    'a category change drops the staged dicts');
 });
 
 test('FIX-F: the pane offers the classic grid’s 38 actions and the ADVANCED six', () => {

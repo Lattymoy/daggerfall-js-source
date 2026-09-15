@@ -81,7 +81,7 @@ test('LR5: the switch - ON by default (the ladder is the port\'s own game), forc
   assert.ok(row, 'the row is on the home');
   assert.deepEqual(row.kinds, ['enhanced']);
   assert.deepEqual(row.control, { store: 'prefs', key: 'lootRarity', initial: true, online: true }, 'RF4: the row declares its default and the lane\'s answer');
-  assert.match(row.note, /Magic .*Rare .*Legendary/s, 'the note names the ladder');
+  assert.match(row.note, /Magic, Rare or Legendary/, 'the note names the ladder');
   assert.match(row.note, /never your level/, 'and the source law');
   assert.match(row.note, /unidentified/, 'and the identify loop');
   assert.deepEqual(checkFeatures(FEATURES), []);
