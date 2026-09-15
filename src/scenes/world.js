@@ -6759,7 +6759,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     room: () => online?.room ?? null,
     now: () => performance.now(),
   });
-  const hitSend = (hit) => _hits.send(hit);
+  const hitSend = (hit, fate = null) => _hits.send(hit, fate);   // LOOT-DUP: a caller holding something irreversible learns ITS OWN frame's fate, not the queue's
   const hitFlush = (now) => _hits.flush(now);
   const actFlush = () => {
     if (!_actPend.size) return false;
@@ -6810,7 +6810,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       peers: peersNear,   // WORLD6b-ii: the peers as MY foes' target candidates (WORLD3's law for the dungeon host's foes, per owner)
       now: () => performance.now(),
       staleMs: FOES_STALE_MS,   // AUDIT WORLD6b C3: an owner whose stream has died is swept as the seat is (WORLD2's own window)
-      onPeerHit: (hit) => hitSend(hit),   // AUDIT FOES FOE2: through the pending set, so a refused blow heals
+      onPeerHit: (hit, fate) => hitSend(hit, fate),   // AUDIT FOES FOE2: through the pending set, so a refused blow heals; LOOT-DUP: with the frame's own fate
       toWire: (feet) => { const wc = state.worldCoords(feet); return [wc.x, feet[1] - state.compensation[1], wc.z]; },
       toScene: (p) => { const l = state.localFromWorld(p[0], p[2]); return [l[0], p[1] + state.compensation[1], l[1]]; },
     });
@@ -6995,7 +6995,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     drawPeerBodies: ({ proj, view, eye }) => drawPeerBodies(proj, view, eye),   // MWBODY1: the others' bodies, after the player's own
     onDungeonLeave: () => worldPublish(performance.now(), true),   // WORLD1: the room's memory goes out while the dungeon still stands
     onInteriorLeave: () => worldPublish(performance.now(), true),   // WORLD6a: and a building's while the building still stands
-    onFoeHit: (hit) => hitSend(hit),   // WORLD2: a blow on a puppet goes to the host; AUDIT FOES FOE2: through the pending set, so a refused blow heals
+    onFoeHit: (hit, fate) => hitSend(hit, fate),   // WORLD2: a blow on a puppet goes to the host; AUDIT FOES FOE2: through the pending set, so a refused blow heals; LOOT-DUP: with the frame's own fate
     // WORLD3: a door moved goes to the room (the session refuses it outside a world room); the peers in my room at
     // their scene feet, for the foes to see and a puppet's shaft to fly at; whose blow a puppet's is
     onActions: actSend,   // AUDIT WORLD3 A3: through the pending set, so a refused door heals

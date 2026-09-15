@@ -5049,14 +5049,7 @@ is not yet a pin; no live relay and no second player were involved.**
 
 ### Recorded, not paid
 
-- **The corpse grant can duplicate loot.** `grantCorpse` empties the
-  owner's body when `onPeerHit` returns true, but that is
-  `hitPend.sendOrHold`, which answers for the QUEUE and not for the
-  frame it was handed: queued-then-delivered returns false, so the taker
-  receives the items and the corpse keeps them, and the next peer is
-  granted the same loot again. Pre-existing, online only, and a real
-  duplication. Fixing it properly means the pend reporting a frame's own
-  fate, or an escrow keyed on the foe's seq - a slice, not a patch.
+- ~~The corpse grant can duplicate loot.~~ **PAID** - LOOT-DUP, below.
 - `lerpPose` can overflow a peer's PITCH to Infinity; inert only because
   `peerCamera` writes `c.pitch = 0`.
 - `getMeleeWeaponAnimTime` returns 0 at speed 115 and the loop that

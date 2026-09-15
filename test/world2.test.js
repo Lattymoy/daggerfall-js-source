@@ -194,7 +194,7 @@ test('WORLD2: the hosts by source - the dungeon host\'s hit door (the striker\'s
   assert.match(w, /online\.onHit = \(id, data\) => \{ if \(isCellRoom\(online\.room\)\) exteriorFoes\.applyHit\(id, data\); else modes\?\.applyDungeonHit\?\.\(id, data\); \};/, 'the hits routed (WORLD6b: a cell\'s to the pool)');
   assert.match(w, /foesStream\(now\);[^\n]*\n\s*actFlush\(\);[^\n]*\n\s*hitFlush\(now\);[^\n]*\n\s*modes\?\.setDungeonAuthority\?\.\(dungeonAuthority\(now\)\);/, 'the seat re-read every frame (C2), the refused act flushed beside it (AUDIT WORLD3 A3) and the refused BLOW beside that (AUDIT FOES FOE2 - a joiner applies none locally, so a lost frame is a lost blow)');
   assert.match(w, /if \(!online\.room \|\| isWorldRoom\(key\) \|\| isWorldRoom\(online\.room\) \|\| \(isCellRoom\(key\) && online\.inRoom\(key\)\) \|\| now - _onlineKeySince >= ROOM_HOLD_MS\)/, 'a world room\'s edge is never held (C8); AUDIT WORLD6b-iii(b) B1/B8: nor a cell already held');
-  assert.match(w, /onFoeHit: \(hit\) => hitSend\(hit\),/, 'a puppet\'s blow out - through the pending set, so a refused one heals (AUDIT FOES FOE2)');
+  assert.match(w, /onFoeHit: \(hit, fate\) => hitSend\(hit, fate\),/, 'a puppet\'s blow out - through the pending set, so a refused one heals (AUDIT FOES FOE2)');
   // the motor's resume, executed: a puppet's pose stands, everything decided is forgotten - the resume reads no collider (D15)
   for (const AI of [EnemyAI, EnhancedEnemyAI]) {
     const ai = new AI(null, [1, 2, 3], 0.5, {});

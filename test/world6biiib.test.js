@@ -145,7 +145,7 @@ test('WORLD6b-iii(b): the pool - a frame keyed to a cell I hold across the seam 
     fetchBytes: async (n) => { if (n === 'MONSTER.BSA') return bsa; throw new Error(`no ${n}`); }, getTexture: async () => stubTex, uploadRecordFrame: () => {},
     currentMinute: () => 0, currentPixelKey: () => '3,12', playerEntity: pe, audio: null, onPlayerHurt: () => {}, rolls: () => 0.01, rand: () => 0.01, spellsByIndex: () => null,
   });
-  pool.setNet({ room: () => 'world:3,12', inRoom: (k) => k === 'world:2,12', selfId: () => 'mac-0001', peers: () => [{ id: 'eve-0003', feet: [30, 0, 30], height: 1.8 }], now: () => 0, staleMs: 0, onPeerHit: (h) => { hits.push(h); return true; }, toWire: (f) => [f[0], f[1], f[2]], toScene: (p) => [p[0], p[1], p[2]] });
+  pool.setNet({ room: () => 'world:3,12', inRoom: (k) => k === 'world:2,12', selfId: () => 'mac-0001', peers: () => [{ id: 'eve-0003', feet: [30, 0, 30], height: 1.8 }], now: () => 0, staleMs: 0, onPeerHit: (h, fate) => { hits.push(h); fate?.sent?.(); return true; }, toWire: (f) => [f[0], f[1], f[2]], toScene: (p) => [p[0], p[1], p[2]] });
   const rec = { i: 5, t: 0, x: 0, f: [12, 0, 10], y: 0, h: 9, d: 0, a: 0, m: 0, g: '', l: 1, w: null, c: 0, s: 0 };
   assert.equal(pool.applyFoes('eve-0003', { n: 1, k: 'world:9,9', full: 1, f: [rec] }), false, 'a cell I do not hold is not the world');
   assert.equal(pool.applyFoes('eve-0003', { n: 1, k: 'world:2,12', full: 1, f: [rec] }), true, 'Eve\'s own cell, held across the seam: the world');
