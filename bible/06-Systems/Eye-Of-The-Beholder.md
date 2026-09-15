@@ -231,13 +231,67 @@ MEMBER, ONE EXPORT" rule doing its job - so it moved to
 rounding rule is two chances to get the tie wrong, and `player/` has no
 business importing a UI slider to round a number.
 
+## The view seam (EOTB4): one wheel, one ladder
+
+`src/player/mwView.js` was already the one seam the four hosts call for
+the Morrowind camera (MW-D25). It now asks a single question - **which
+body can answer** - and routes the wheel, the frame and the body draw
+to it:
+
+| | |
+|---|---|
+| `fpArm` has built a Morrowind rig | the Morrowind body |
+| it has not, and this mod is on | Eye Of The Beholder's sprite |
+| neither | the wheel does nothing, exactly as before |
+
+There is no setting to choose between them, because there is nothing
+to choose. A player with Morrowind data has the Morrowind body; a
+player without it never had a third person at all until now. The order
+is the law and it is driven, not assumed: the Morrowind rig wins
+wherever it exists, whatever this mod's switch says.
+
+**The lane is wired and inert today**, and that is a fact rather than a
+comment - it is gated on the mod's body being drawable, which EOTB5
+turns on in one line. Until then a player sees exactly what they saw
+yesterday, rather than a camera swinging out behind an invisible body,
+which is the failure `mwView`'s own head has always refused for the
+Morrowind rig.
+
+### Two findings from the campaign
+
+**The mod's own switch was unpinned.** Every fixture has it enabled -
+it is on by default, as every vendored mod is - so deleting the check
+changed nothing and the mutant lived. A default that happens to agree
+with the code is not a test of the code.
+
+**A stranded notch.** A click queued while the lane was shut is never
+drained once the lane opens, because the lane's branch returns before
+Morrowind's drain. It would sit there and fire whenever the lane next
+closed - spending an old notch on a camera the player was no longer
+looking through. It is dropped now. It was found by a test helper that
+span *forever* waiting for the queue to empty, which also earned the
+helper a bound: a test helper that can hang is a test suite that can
+hang. The mutation runner was hardened in the same breath - it restored
+the file only after the run, so being killed mid-flight left a mutant
+in the tree; it restores in a `finally` now and counts a hang as a kill.
+
+### The naming debt, stated
+
+The file is still called `mwView.js` while serving a body that has
+nothing to do with Morrowind. The name is written into four hosts and
+ten test files, so renaming buys no behaviour and risks a great deal -
+but a departure nobody wrote down does not exist, so the head says it
+and a pin keeps the sentence there. **A housekeeping slice should
+rename it** to something that means "the player's view".
+
 ## Where the slices stand
 
 EOTB0 (vendoring, provenance, the art payload, the doctrine gate, the
 settings surface, the Features row, credits and the registry), EOTB1-
-EOTB2 (the IL read and the camera) and EOTB3 (the billboard's logic)
-are done. EOTB4-EOTB7 - the wheel seam, the four hosts, the drawing
-and the rest of the pins - are in flight.
+EOTB2 (the IL read and the camera), EOTB3 (the billboard's logic) and
+EOTB4 (the view seam) are done. EOTB5-EOTB7 - the four hosts, the
+drawing that turns the lane on, and the rest of the pins - are in
+flight.
 
 **NOT SEEN ON A GPU.** There is no GL and no ARENA2 in the container
 this was written in. Mac's eye is the gate.

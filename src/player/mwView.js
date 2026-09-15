@@ -1,8 +1,27 @@
-// MW-D25: THE VIEW SYNC - the one seam between the Morrowind camera
-// machine (mwCamera.js) and the player's two rigs (fpArm.js), so the
-// four hosts wire three calls instead of re-deriving the lockstep four
-// times (MW-D15's lesson: the camera dep drifted per host until it had
-// one home).
+// MW-D25: THE VIEW SYNC - the one seam between the camera machine and
+// the player's rigs, so the four hosts wire three calls instead of
+// re-deriving the lockstep four times (MW-D15's lesson: the camera dep
+// drifted per host until it had one home).
+//
+// EOTB4 (2026-09-15): THIS SEAM NOW SERVES TWO BODIES. Mac, on why the
+// port carries a second third-person system: "This is moreso for those
+// who opt out of using morrowind." So the wheel is ONE LADDER and the
+// question it asks is "which body can answer" -
+//
+//     the Morrowind rig, when fpArm has built one;
+//     Eye Of The Beholder's sprite, when it has not.
+//
+// and when neither can, the wheel does nothing, exactly as it has
+// always done. There is no setting to choose between them, because
+// there is nothing to choose: a player with Morrowind data has the
+// Morrowind body, and a player without it never had a third person at
+// all until now.
+//
+// THE FILE IS STILL CALLED mwView, AND THAT IS A DEBT, not an
+// oversight. The name is written into four hosts and ten test files;
+// renaming it buys no behaviour and risks a great deal, so it is
+// recorded here and on the mod's bible page as a housekeeping item
+// rather than left to be discovered as a quiet lie.
 //
 // The reference couples these through Camera::processViewChange
 // (camera.cpp:346-369): the mode decides which rig the NpcAnimation
@@ -15,6 +34,34 @@
 
 import { mwCamera } from './mwCamera.js';
 import { fpArm } from '../combat/fpArm.js';
+import { eotbCamera } from './eotbCamera.js';
+import { modSetting } from '../systems/modSettings.js';
+
+/**
+ * EOTB4: is Eye Of The Beholder the lane this frame?
+ *
+ * Three things have to hold, and the THIRD is the one that matters
+ * today: the mod is enabled, the Morrowind rig cannot serve, and the
+ * mod's own body can actually be DRAWN. Until the drawing lands
+ * (EOTB5) `eotbBodyReady` answers false, so this lane is wired, pinned
+ * and inert - a player sees exactly what they see now rather than a
+ * camera swinging out behind an invisible body, which is the failure
+ * mwView's own head has always refused for the Morrowind rig.
+ *
+ * It is a predicate rather than a comment so that turning the lane on
+ * is one line, and so that "the lane is off" is a thing the pins can
+ * state and the next slice can flip.
+ */
+let eotbBodyReady = () => false;
+/** EOTB5's door: the host tells the seam its body can draw. */
+export function setEotbBodyReady(fn) { eotbBodyReady = typeof fn === 'function' ? fn : () => false; }
+export function eotbLane() {
+  if (fpArm.canThirdPerson()) return false;          // the Morrowind body wins where it exists
+  try {
+    if (!modSetting('eye-of-the-beholder', 'Enabled')) return false;
+  } catch { return false; }                          // not vendored: no lane
+  return !!eotbBodyReady();
+}
 
 // MW-D30: the reference accumulates the frame's zoom presses and calls
 // zoom() ONCE per frame with their sum (actionbindings.lua:98-115 -
@@ -33,7 +80,23 @@ let pendingClicks = 0;
  *
  * @returns {{eye:number[], thirdPerson:boolean, distance:number}}
  */
-export function mwViewFrame({ fpEye, feet, yaw, pitch, heightScale = null, raycast = null }) {
+export function mwViewFrame({ fpEye, feet, yaw, pitch, heightScale = null, raycast = null, ...state }) {
+  // EOTB4: the other lane, resolved first and returned whole - its
+  // camera keeps its own ladder, its own smoothing and its own
+  // obstacle casts (EOTB2), and nothing of Morrowind's runs.
+  if (eotbLane()) {
+    // ...and A STRANDED NOTCH IS DROPPED rather than left to fire
+    // later. A click can only be queued above while the lane is SHUT,
+    // so a count surviving into this branch means the lane opened
+    // underneath it - the Morrowind body finished building, or the mod
+    // was switched mid-scroll. Carrying it would spend an old notch on
+    // a camera the player was not looking through when they turned the
+    // wheel, and leaving it uncleared means this frame never drains it
+    // at all. Found by a test helper that span forever waiting for it.
+    pendingClicks = 0;
+    eotbCamera.tick(state);
+    return eotbCamera.eye({ fpEye, feet, yaw, pitch, raycast, ...state });
+  }
   if (pendingClicks) {
     mwCamera.wheel(pendingClicks, { ready: fpArm.upperBodyReady() });
     pendingClicks = 0;
@@ -67,6 +130,10 @@ export function mwViewFrame({ fpEye, feet, yaw, pitch, heightScale = null, rayca
 export function mwViewWheel(deltaY) {
   const clicks = deltaY < 0 ? 1 : deltaY > 0 ? -1 : 0;
   if (!clicks) return false;
+  // EOTB4: the SAME notch, handed to whichever body answers. Both
+  // ladders read a click the same way round - negative is out of the
+  // head - so nothing about the sign moves at the seam.
+  if (eotbLane()) return eotbCamera.wheel(clicks);
   if (mwCamera.mode() === 'first' && clicks < 0 && !fpArm.canThirdPerson()) return false;
   pendingClicks += clicks;   // flushed once per frame (actionbindings.lua:113-114)
   return true;
@@ -79,6 +146,17 @@ export function mwViewPendingClicks() { return pendingClicks; }
 /** The third-person body composite, after the host's world draw. A
  *  no-op in first person or when the body cannot draw. */
 export function mwViewDrawBody(canvas, { proj, view, eye, feet, yaw }) {
+  // EOTB4: the sprite lane draws its own body. `eotbLane()` already
+  // requires `eotbBodyReady()`, so this arm cannot be reached with
+  // nothing to draw - the gate and the draw are the same question
+  // asked once.
+  if (eotbLane()) return eotbCamera.thirdPerson() && drawEotbBody(canvas, { proj, view, eye, feet, yaw });
   if (!mwCamera.thirdPerson()) return false;
   return fpArm.drawThird(canvas, { proj, view, eye, feet, yaw });
 }
+
+/** EOTB5's door, matching `setEotbBodyReady`: the host hands the seam
+ *  the one call that paints the mod's sprite. Null until then, which
+ *  is why `eotbBodyReady` answers false. */
+let drawEotbBody = () => false;
+export function setEotbDrawBody(fn) { drawEotbBody = typeof fn === 'function' ? fn : () => false; }
