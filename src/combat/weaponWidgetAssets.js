@@ -21,7 +21,7 @@
 // (the classic frame at double size).
 
 import { readUnityBundle } from '../formats/unityBundle.js';
-import { toColor32 } from '../formats/color32Order.js';   // WW3: the ORDER *and* the shape the upload path reads - `{ colors }`, never a decoded PNG's `{ data }`
+import { toColor32, toScreenOrder } from '../formats/color32Order.js';   // WW3: the ORDER *and* the shape the upload path reads - `{ colors }`, never a decoded PNG's `{ data }`
 import { decodePng } from '../systems/textureReplacement.js';
 import { MATERIAL_NAMES } from '../systems/itemInfo.js';   // MetalTypes' names, Iron..Daedric
 import { WEAPON_MATERIALS } from '../characters/weapons.js';
@@ -135,7 +135,11 @@ export function weaponWidgetImage(name) {
       try {
         const bytes = await _load(loose);
         if (!bytes || !bytes.byteLength) return null;
-        return toColor32(await decodePng(bytes));
+        // HT3: the loose PNG keeps its rows. The bundle arm above is a
+        // FLIP because Unity stores bottom-up; a decoded PNG is already
+        // top-first, and this is a SCREEN quad, so flipping it here was
+        // the same upside-down sprite the held torch showed.
+        return toScreenOrder(await decodePng(bytes));
       } catch (e) {
         console.warn(`[weapon widget] ${loose} would not decode:`, e?.message ?? e);
         return null;

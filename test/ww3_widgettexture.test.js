@@ -71,7 +71,8 @@ function withPngDecoder(raster, body) {
 // one 1x2 picture, TOP row first as every PNG-shaped door hands it over:
 // the top row red, the bottom row blue - so the flip is visible in the bytes
 const TOP_FIRST = { width: 1, height: 2, data: new Uint8Array([255, 0, 0, 255, 0, 0, 255, 255]) };
-const BOTTOM_UP = [0, 0, 255, 255, 255, 0, 0, 255];   // what the GL must receive
+const BOTTOM_UP = [0, 0, 255, 255, 255, 0, 0, 255];   // what a WORLD billboard must receive
+const TOP_FIRST_BYTES = [255, 0, 0, 255, 0, 0, 255, 255];   // HT3: ...and what a SCREEN quad must
 
 test('WW3 the crash, executed: the door\'s answer goes into the real uploadTexture and the picture reaches the GL bottom-up - the path that threw on Mac\'s machine, from the loose PNG through decodePng to texImage2D', async () => {
   const name = widgetTextureName('WEAPON04.CIF', 0, 0, WEAPON_MATERIALS.Elven);
@@ -91,7 +92,11 @@ test('WW3 the crash, executed: the door\'s answer goes into the real uploadTextu
     assert.ok(tex, 'uploaded, no throw');
     assert.equal(since().length, 1, 'one upload, the widget\'s');
     assert.equal(last().width, 1); assert.equal(last().height, 2);
-    assert.deepEqual([...last().pixels], BOTTOM_UP, 'row 0 of the buffer is the picture\'s BOTTOM row (the port\'s texel convention)');
+    // HT3: row 0 of the buffer is the picture's TOP row now. drawScreenQuad
+  // hands the rect's TOP the v0 of its source rect and nothing flips at
+  // upload, so a screen sprite whose row 0 was its bottom drew upside
+  // down - which is exactly what the held torch was doing.
+  assert.deepEqual([...last().pixels], TOP_FIRST_BYTES, 'row 0 of the buffer is the picture\'s TOP row - this is a SCREEN quad');
     assert.equal(r.uploadTexture('img', `ww:${name}`, img), tex, 'memoized by key, as the widget leans on');
   } finally { clearWeaponWidgetSources(); }
 });
@@ -123,11 +128,12 @@ test('WW3 the regression, executed: the shape the door used to answer still thro
 
 test('WW3 the door and the site: the widget converts with toColor32 in both arms and holds no toColor32Order; the load failure is said out loud, as the rig\'s neighbours say theirs', () => {
   const door = rd('src/combat/weaponWidgetAssets.js');
-  assert.match(door, /import \{ toColor32 \} from '\.\.\/formats\/color32Order\.js';/);
+  assert.match(door, /import \{ toColor32, toScreenOrder \} from '\.\.\/formats\/color32Order\.js';/);   // HT3: one arm flips, one does not
   assert.ok(!/toColor32Order/.test(door.replace(/^\s*\*.*$/gm, '')), 'not in the code - the trap is named in the comment only');
-  assert.equal((door.match(/toColor32\(/g) ?? []).length, 2, 'both arms: the bundle\'s texture and the loose PNG');
+  assert.equal((door.match(/toColor32\(/g) ?? []).length, 1, 'the BUNDLE arm flips (Unity stores bottom-up)');
+  assert.equal((door.match(/toScreenOrder\(/g) ?? []).length, 1, 'and the loose PNG keeps its rows (HT3)');
   assert.match(door, /try \{ return toColor32\(tex\.rgba\(\)\); \}/, 'the bundle arm');
-  assert.match(door, /return toColor32\(await decodePng\(bytes\)\);/, 'the loose arm');
+  assert.match(door, /return toScreenOrder\(await decodePng\(bytes\)\);/, 'the loose arm');
   assert.match(door, /`\{ width, height, colors \}` RGBA in the port's\n \*  color32 \(bottom-up\) order, the SHAPE renderer\.uploadTexture reads/, 'the door says which shape it answers');
   const site = rd('src/combat/weaponWidget.js');
   assert.match(site, /\}\)\.catch\(\(e\) => console\.warn\('\[weapon widget\] texture load failed', name, e\)\);/, 'no bare swallow');
