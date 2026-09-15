@@ -1,9 +1,85 @@
 # Eye Of The Beholder (EOTB) - third person without Morrowind
 
-**Eye Of The Beholder 2.1**, RedRoryOTheGlen. Ported 1:1 off the
-shipped bundle; the mod's own 3035 sprites vendored. Vendor record and
+**Eye Of The Beholder 2.1**, RedRoryOTheGlen. **PARTIAL PORT** - the
+camera and the sprite's SELECTION, read off the shipped bundle's IL;
+the mod's own 3035 sprites vendored. See "What is and is not ported"
+below: this was called 1:1 until AUDIT-EOTB counted the methods. Vendor record and
 the permission line: `vendor/eye-of-the-beholder/README.md`. Registry
 row: `01-Overview/Mod-Registry.md`.
+
+## What is and is not ported
+
+The arc called itself **1:1** in six places. AUDIT-EOTB counted the
+methods and it is not.
+
+The assembly carries **62 authored methods** - 28 on
+`EyeOfTheBeholder` (the camera), 33 on `PlayerBillboard` (the sprite),
+one on `PlayerBillboardState` - once constructors, the four
+compiler-built coroutine state machines and the event accessors are
+struck. The port implements the arithmetic of **thirteen**:
+
+| IL method | here |
+|---|---|
+| `get_posOffset`, `get_offsetRidingMod` | `posOffset` (eotbCamera.js) |
+| `CheckBounds` | `checkBounds` - per-axis cast, the auto-switch |
+| `SetVectorBounds` | `setVectorBounds` |
+| `Update` | `tick` - the scroll ladder, the mirror revert, the smoothing, the minimum-distance floor |
+| `ToggleOffset` | `toggleOffset` - the scroll reset and the smoothing seed only |
+| `LoadSettings` | `readCameraSettings` - the settings-to-fields mapping |
+| `InitializeStates` | `STATE_TABLES`, as a generated law |
+| `LoopIdleBillboard` | `chooseTable` - which table, not the loop |
+| `UpdateOrientation` | `orientationFor` - the angle and the snap only |
+| `get_frameTime`, `get_sizeMod`, `get_scaleOffset` | the three constants-with-arms |
+
+**Not ported at all** - and this is the list that was missing:
+
+- every animation the mod PLAYS: `PlayMeleeAttackAnimation`,
+  `PlayRangedAttackAnimation` (+`PlayRangedAttackAnimationHold`),
+  `PlaySpellAttackAnimation`, `PlayLycanAttackAnimation`,
+  `PlayDeathAnimation`, their three coroutines and
+  `GetMeleeAnimTickTime`. Nothing in the port ever enters an attack or
+  death state; `attackTable` exists and has no caller.
+- `PlayFootstep` and the vanilla-footstep enable/disable
+  (`EnableVanillaFootsteps`, `DisableVanillaFootsteps`). The frame
+  clock reports a footfall and nobody listens.
+- the whole `AutoTogglePerspective` table - nine settings, all inert -
+  which is what `EyeOfTheBeholder::LateUpdate` is.
+- `UpdateWagon` / `SpawnWagon` / `CheckWagon` (`ShowCart`), and
+  `OnUpdateSailing` with the boat override.
+- `UpdateBillboard` (+`UpdateBillboardDelayed` and its coroutine),
+  `AssignMeshAndMaterial`, `UpdateMaterial`, `MakeBillboardMaterial`,
+  `Initialize`, `InitializeTextures` - the mod's own mesh and material
+  handling, which the port replaces with its billboard batch.
+- `OnNewGame` / `OnLoad` / `MessageReceiver` /
+  `ModCompatibilityChecking` / `OnTransitionInterior` /
+  `OnTransitionExterior` / `MeleeDamage` / `FreeRein_GetMoveVector` /
+  `SetKeyFromText` / `OnPositionUpdate` / `SpawnBillboard`.
+- `ToggleBillboard`'s side effects: hiding the FPV weapon and the
+  horse, and the `spellCasting` component's enable. And
+  `PlayerBillboard::LateUpdate`'s first-person visibility mode, which
+  is how the mod keeps your shadow while you look out of your own eyes.
+
+Some of that has no twin here (Come Sail Away, Free Rein, Unity
+materials) and some is simply not done yet. The distinction matters, so
+**`test/eotb_scope.test.js` holds all 62 rows** - each with a verdict
+and, where there is no port, which of the two kinds of gap it is. The
+pins there check that a row claiming a port names a symbol that exists,
+that a not-ported row has not quietly grown one, that this page's own
+numbers are that table's arithmetic, and that no record has gone back
+to saying 1:1. The next slice either ports one and moves its row, or
+leaves it and says so.
+
+### The dead exports
+
+Four exports of the arc are called by nothing - not even their own
+module. That is the audit's shape in miniature, so they are listed in
+`test/eotb_scope.test.js` with a reason each, and the set is DERIVED
+rather than typed: `attackTable` (the attack lane is not ported),
+`scaleOffset` (`spriteInfo.json`'s per-sprite offsets are not applied),
+`tableKeys` (nothing pre-loads a whole table) and `OVERRIDE_ORDER` (the
+three override sections' precedence, spelled once to read `posOffset`
+against). Each is a debt: wired or deleted by the slice that next
+touches its lane.
 
 ## Why a port that already has third person carries a second one
 

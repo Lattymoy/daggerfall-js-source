@@ -1,4 +1,4 @@
-// EOTB2: THE EYE OF THE BEHOLDER CAMERA, 1:1.
+// EOTB2: THE EYE OF THE BEHOLDER CAMERA.
 //
 // RedRoryOTheGlen's `EyeOfTheBeholder` MonoBehaviour, read out of the
 // shipped assembly's IL (`Eye Of The Beholder.dll`, 2.1) - method by
@@ -113,10 +113,19 @@ export function eyeBasis(yaw, pitch) {
   const cp = Math.cos(pitch), sp = Math.sin(pitch);
   const forward = [Math.sin(yaw) * cp, sp, Math.cos(yaw) * cp];
   const right = [Math.cos(yaw), 0, -Math.sin(yaw)];
+  // AUDIT-EOTB F5: `forward x right`, NOT `right x forward`. The other
+  // way round gives up = [0,-1,0] at rest, so FrontalPlaneOffset's Y -
+  // shipped at 0.5, described by the mod as "Moves the camera position
+  // on the X and Y axes" - pushed the camera DOWN instead of up.
+  //
+  // It survived the campaign because the only pin that drove the basis
+  // under pitch reasoned about the FORWARD term ("pitched up, the
+  // camera swings down behind the player", which is true) and never
+  // isolated a pure +Y offset, where the sign is the whole answer.
   const up = [
-    right[1] * forward[2] - right[2] * forward[1],
-    right[2] * forward[0] - right[0] * forward[2],
-    right[0] * forward[1] - right[1] * forward[0],
+    forward[1] * right[2] - forward[2] * right[1],
+    forward[2] * right[0] - forward[0] * right[2],
+    forward[0] * right[1] - forward[1] * right[0],
   ];
   return { right, up, forward };
 }

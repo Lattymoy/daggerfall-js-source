@@ -5,7 +5,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
-  createEotbCamera, readCameraSettings, eyeVector, bodyVector, EYE_RADIUS, MAX_Z,
+  createEotbCamera, readCameraSettings, eyeVector, eyeBasis, bodyVector, EYE_RADIUS, MAX_Z,
 } from '../src/player/eotbCamera.js';
 import { MOD_SETTINGS } from '../src/systems/modSettings.js';
 
@@ -377,4 +377,70 @@ test('EOTB2: ToggleOffset itself zeroes the scroll - on the path that does not g
   assert.equal(c.scroll(), c.settings().increment * 3, 'leaving third person does NOT reset it (the mod does not)');
   c.toggleOffset(true);
   assert.equal(c.scroll(), 0, 'and entering third person does');
+});
+
+// ═══ AUDIT-EOTB: WHAT THE CAMPAIGN NEVER ASKED ════════════════════
+//
+// The first campaign killed 17 of 18 and the arc shipped. The audit
+// then drove the camera through the path a HOST actually takes and
+// found five faults, none of which any pin could see - because every
+// pin drove `eotbCamera.eye()` directly, with arguments the pin chose.
+//
+// A pin on the unit is not a pin on the wiring. That is the F-SING
+// lesson again, and this is the third arc it has cost.
+
+test('AUDIT-EOTB F5: UP IS UP - a pure +Y offset RAISES the camera', () => {
+  // `FrontalPlaneOffset`'s second value is shipped at 0.5 and the mod
+  // describes it as "Moves the camera position on the X and Y axes".
+  // The basis had `right x forward`, which is up = [0,-1,0] at rest,
+  // so that setting pushed the camera DOWN - into the floor at the
+  // shipped default.
+  //
+  // It survived 18 mutants because the ONE pin that drove the basis
+  // under pitch reasoned about the FORWARD term ("pitched up, the
+  // camera swings down behind the player" - true, and true either
+  // way) and never isolated a pure +Y offset, where the sign IS the
+  // answer.
+  const b = eyeBasis(0, 0);
+  assert.deepEqual(b.up.map(r6), [0, 1, 0], 'at rest the eye frame’s up is world up');
+  assert.deepEqual(eyeVector([0, 0.5, 0], 0, 0).map(r6), [0, 0.5, 0], 'a +Y offset is a +Y move');
+  assert.deepEqual(eyeVector([0, -0.5, 0], 0, 0).map(r6), [0, -0.5, 0], '...and a -Y offset a -Y move');
+
+  // the basis is RIGHT-HANDED and orthonormal at any look, which is
+  // the general statement of the same law - a sign flip anywhere in it
+  // breaks one of these
+  for (const [yaw, pitch] of [[0, 0], [1, 0.3], [-2.2, -0.7], [Math.PI, 1.2]]) {
+    const { right, up, forward } = eyeBasis(yaw, pitch);
+    const dot = (a, c) => a[0] * c[0] + a[1] * c[1] + a[2] * c[2];
+    const len = (a) => Math.hypot(...a);
+    assert.ok(Math.abs(len(right) - 1) < 1e-9 && Math.abs(len(up) - 1) < 1e-9 && Math.abs(len(forward) - 1) < 1e-9,
+      `yaw ${yaw} pitch ${pitch}: the basis is unit`);
+    assert.ok(Math.abs(dot(right, up)) < 1e-9 && Math.abs(dot(right, forward)) < 1e-9 && Math.abs(dot(up, forward)) < 1e-9,
+      `yaw ${yaw} pitch ${pitch}: the basis is orthogonal`);
+    // right x up = forward for a right-handed frame
+    const cross = [
+      right[1] * up[2] - right[2] * up[1],
+      right[2] * up[0] - right[0] * up[2],
+      right[0] * up[1] - right[1] * up[0],
+    ];
+    assert.ok(cross.every((v, i) => Math.abs(v - forward[i]) < 1e-9),
+      `yaw ${yaw} pitch ${pitch}: right x up = forward - the frame is right-handed`);
+    // and up always points into the upper half: a camera offset "up"
+    // must never go underground, at any look
+    assert.ok(up[1] > 0, `yaw ${yaw} pitch ${pitch}: up has a positive Y`);
+  }
+});
+
+test('AUDIT-EOTB F5b: the SHIPPED offset puts the camera above the feet, not below', () => {
+  // The symptom a player would have seen, stated as the player would
+  // state it: standing still, scrolled out, at the mod's own defaults.
+  const c = createEotbCamera();
+  c.loadSettings(null);
+  c.toggleOffset(true);
+  let r;
+  for (let i = 0; i < 400; i++) {
+    r = c.eye({ fpEye: [0, 1.6, 0], feet: [0, 0, 0], yaw: 0, pitch: 0, dt: 1 / 60, raycast: () => null });
+  }
+  assert.ok(r.eye[1] > 1.6, `the camera sits ABOVE the head at the shipped +0.5 Y offset, not at ${r.eye[1].toFixed(2)}`);
+  assert.equal(r4(r.eye[2]), -2, '...and at the base distance behind');
 });

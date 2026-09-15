@@ -343,7 +343,7 @@ export const MOD_SETTINGS = Object.freeze({
     keys: Object.freeze({
       Enabled: Object.freeze({
         default: true,
-        description: 'RedRoryOTheGlen\u2019s Eye Of The Beholder 2.1, 1:1: third person without Morrowind data. Scroll out '
+        description: 'RedRoryOTheGlen\u2019s Eye Of The Beholder 2.1 (the camera and the sprite; its attack and death animations are not ported): third person without Morrowind data. Scroll out '
           + 'and the camera swings behind your shoulder, clearing walls on its own; you are drawn as the mod\u2019s own '
           + 'sprite, eight ways round, with idle, walk, attack and spell states on foot and in the saddle. Off keeps '
           + 'you in first person unless you have the Morrowind body.',

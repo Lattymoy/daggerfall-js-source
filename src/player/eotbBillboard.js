@@ -1,4 +1,4 @@
-// EOTB3: THE PLAYER BILLBOARD, 1:1 - the body you see in third person
+// EOTB3: THE PLAYER BILLBOARD - the body you see in third person
 // when you have no Morrowind data.
 //
 // RedRoryOTheGlen's `PlayerBillboard`, read off the shipped assembly's

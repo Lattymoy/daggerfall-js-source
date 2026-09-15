@@ -35,6 +35,7 @@
 import { mwCamera } from './mwCamera.js';
 import { fpArm } from '../combat/fpArm.js';
 import { eotbCamera } from './eotbCamera.js';
+import { eotbBody } from './eotbBody.js';
 import { modSetting } from '../systems/modSettings.js';
 
 /**
@@ -53,6 +54,15 @@ import { modSetting } from '../systems/modSettings.js';
  * state and the next slice can flip.
  */
 let eotbBodyReady = () => false;
+/**
+ * AUDIT-EOTB F4: the player state the CAMERA needs and the host does
+ * not own. `weaponReady` is the weapon rig's to answer (it holds the
+ * machine); `sailing` is Come Sail Away's, which the port has not got.
+ * Registered once by `combat/weaponRig.js`, so no host re-derives it -
+ * MW-D25's law, the reason this seam exists at all.
+ */
+let eotbPlayerState = () => ({});
+export function setEotbPlayerState(fn) { eotbPlayerState = typeof fn === 'function' ? fn : () => ({}); }
 /** EOTB5's door: the host tells the seam its body can draw. */
 export function setEotbBodyReady(fn) { eotbBodyReady = typeof fn === 'function' ? fn : () => false; }
 export function eotbLane() {
@@ -85,6 +95,15 @@ export function mwViewFrame({ fpEye, feet, yaw, pitch, heightScale = null, rayca
   // camera keeps its own ladder, its own smoothing and its own
   // obstacle casts (EOTB2), and nothing of Morrowind's runs.
   if (eotbLane()) {
+    // AUDIT-EOTB F1/F3/F4: the frame's REAL state. `dt` is the host's
+    // own clock and nothing else has it; the rest comes from the rigs
+    // through the door above. Before this, every host passed neither -
+    // so `dt` defaulted to 0, MoveTowards stepped nothing, and the
+    // camera parked at whatever the minimum-distance floor clamped the
+    // initial zero vector to (the player's FEET). Every pin passed,
+    // because every pin drove `eotbCamera.eye()` directly with a dt of
+    // its own choosing.
+    const frame = { ...eotbPlayerState(), ...state };
     // ...and A STRANDED NOTCH IS DROPPED rather than left to fire
     // later. A click can only be queued above while the lane is SHUT,
     // so a count surviving into this branch means the lane opened
@@ -94,8 +113,9 @@ export function mwViewFrame({ fpEye, feet, yaw, pitch, heightScale = null, rayca
     // wheel, and leaving it uncleared means this frame never drains it
     // at all. Found by a test helper that span forever waiting for it.
     pendingClicks = 0;
-    eotbCamera.tick(state);
-    return eotbCamera.eye({ fpEye, feet, yaw, pitch, raycast, ...state });
+    eotbCamera.tick(frame);
+    eotbBody.tick(frame.dt ?? 0, frame);   // F1: the sprite's clock, which had no caller at all
+    return eotbCamera.eye({ fpEye, feet, yaw, pitch, raycast, ...frame });
   }
   if (pendingClicks) {
     mwCamera.wheel(pendingClicks, { ready: fpArm.upperBodyReady() });

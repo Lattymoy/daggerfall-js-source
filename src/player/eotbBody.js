@@ -19,7 +19,7 @@
 // than the four names, so a fifth host gets the body without an edit.
 
 import { eotbCamera } from './eotbCamera.js';
-import { setEotbBodyReady, setEotbDrawBody } from './mwView.js';
+import { setEotbBodyReady, setEotbDrawBody, setEotbPlayerState } from './mwView.js';
 import { modSettingIfDeclared, modSettingsOf } from '../systems/modSettings.js';
 import { chooseTable, ORIENTATIONS, orientationFor } from './eotbBillboard.js';
 import { spriteFor, eotbSpriteUrl, spriteCount, spriteSize, advanceFrame, flipRows } from './eotbSprite.js';
@@ -40,7 +40,35 @@ function look() {
   };
 }
 
-export function createEotbBody() {
+/**
+ * THE BROWSER DECODE, lifted out so it can be replaced.
+ *
+ * AUDIT-EOTB, the one mutant the arc's pins did not kill: dropping
+ * `firstUp` from `ready()` changed nothing any test could see, because
+ * under node `spriteCount()` is 0 and the lane is shut whatever the
+ * second clause says. The clause the file's own docstring calls "the
+ * one that matters" was unpinned - the F-SING lesson again, in the
+ * environment rather than in the code.
+ *
+ * So the three things that need a browser are one injectable dep each,
+ * and the pins drive a body with art present and a decode they hold
+ * open. This is also the only place an `Image` and an
+ * `OffscreenCanvas` are named, which is worth having by itself.
+ */
+export async function decodeSprite(url) {
+  const img = await new Promise((res, rej) => {
+    const i = new Image();
+    i.onload = () => res(i); i.onerror = () => rej(new Error(url));
+    i.src = url;
+  });
+  const c = new OffscreenCanvas(img.width, img.height);
+  const g = c.getContext('2d');
+  g.drawImage(img, 0, 0);
+  const d = g.getImageData(0, 0, img.width, img.height);
+  return { width: img.width, height: img.height, colors: new Uint32Array(d.data.buffer.slice(0)) };
+}
+
+export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, decode = decodeSprite } = {}) {
   let renderer = null;
   let cfg = look();
   let clock = { frame: 0, timer: 0 };
@@ -61,22 +89,16 @@ export function createEotbBody() {
     const have = tex.get(s.rec);
     if (have && !(have instanceof Promise)) return have;
     if (have) return null;                      // in flight
-    const url = eotbSpriteUrl(s.key);
+    const url = urlFor(s.key);
     if (!url) { tex.set(s.rec, null); return null; }
     const p = (async () => {
-      const img = await new Promise((res, rej) => {
-        const i = new Image();
-        i.onload = () => res(i); i.onerror = () => rej(new Error(s.key));
-        i.src = url;
-      });
-      const c = new OffscreenCanvas(img.width, img.height);
-      const g = c.getContext('2d');
-      g.drawImage(img, 0, 0);
-      const d = g.getImageData(0, 0, img.width, img.height);
-      let colors = new Uint32Array(d.data.buffer.slice(0));
-      if (s.mirror) colors = flipRows(colors, img.width, img.height);
-      renderer.uploadTexture(s.archive, s.rec, { width: img.width, height: img.height, colors });
-      return { w: img.width, h: img.height };
+      const { width, height, colors } = await decode(url);
+      // the MIRROR is applied here, on the way to the upload, because
+      // the renderer's billboard batch has no flip - a mirrored sprite
+      // is its own pixels under its own key (`s.rec`, EOTB5)
+      const px = s.mirror ? flipRows(colors, width, height) : colors;
+      renderer.uploadTexture(s.archive, s.rec, { width, height, colors: px });
+      return { w: width, h: height };
     })();
     tex.set(s.rec, p);
     p.then((r) => { tex.set(s.rec, r); firstUp = true; },
@@ -85,8 +107,20 @@ export function createEotbBody() {
   }
 
   return {
-    /** Called by `combat/weaponRig.js` beside `fpArm.attach`. */
-    attach(r) {
+    /**
+     * Called by `combat/weaponRig.js` beside `fpArm.attach`.
+     *
+     * `playerState` is the per-frame answer only the rig can give -
+     * `{ weaponReady, sailing }` - and it is handed HERE rather than
+     * registered by the rig itself. That is the direction the rest of
+     * this module already runs: the body owns its three `mwView` seams
+     * and the rig owns the arm. MWFIX's pin (`test/mwattach.test.js`)
+     * states the same law from the other side - `weaponRig.js` must not
+     * mention the view layer, because the classic sprite path is the
+     * only path it knows - and the first cut of AUDIT-EOTB F2 broke it
+     * by calling `setEotbPlayerState` from the rig.
+     */
+    attach(r, playerState) {
       renderer = r || null;
       cfg = look();
       if (renderer) {
@@ -95,6 +129,7 @@ export function createEotbBody() {
         ensure(spriteFor('Idle', 0, 0, cfg));
         setEotbBodyReady(() => this.ready());
         setEotbDrawBody((canvas, f) => this.draw(canvas, f));
+        setEotbPlayerState(playerState);
       }
       return this;
     },
@@ -113,7 +148,7 @@ export function createEotbBody() {
     ready() {
       if (!renderer || !cfg.enabled) return false;
       if (modSettingIfDeclared('eye-of-the-beholder', 'Enabled') === false) return false;
-      return spriteCount() > 0 && firstUp;
+      return count() > 0 && firstUp;
     },
 
     /** The frame's state, from the host's own view of the player. */

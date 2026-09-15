@@ -6,11 +6,12 @@ import { fileURLToPath } from 'node:url';
 
 import {
   mwViewWheel, mwViewFrame, mwViewDrawBody, mwViewPendingClicks,
-  eotbLane, setEotbBodyReady, setEotbDrawBody,
+  eotbLane, setEotbBodyReady, setEotbDrawBody, setEotbPlayerState,
 } from '../src/player/mwView.js';
 import { mwCamera } from '../src/player/mwCamera.js';
 import { fpArm } from '../src/combat/fpArm.js';
-import { eotbCamera } from '../src/player/eotbCamera.js';
+import { eotbCamera, createEotbCamera } from '../src/player/eotbCamera.js';
+import { eotbBody } from '../src/player/eotbBody.js';
 import { setModSetting, modSetting } from '../src/systems/modSettings.js';
 
 // ═══ EOTB4: ONE WHEEL, ONE LADDER ═════════════════════════════════
@@ -232,5 +233,167 @@ test('EOTB4: a notch queued before the lane opened is DROPPED, not left to fire 
 
   // ...and it really was DROPPED rather than spent on the sprite camera
   assert.equal(eotbCamera.mode(), 'first', 'the sprite camera did not act on a notch meant for the other lane');
+  reset();
+});
+
+// ═══ AUDIT-EOTB: PINNING THE WIRING, NOT THE UNIT ═════════════════
+//
+// The arc shipped with 44 pins and 58 dead mutants, and the audit then
+// found FIVE faults by driving the camera the way a HOST drives it.
+// Every pin above drove `eotbCamera.eye()` directly, with a `dt` and a
+// state the pin chose - so none of them could see that no host passed
+// either. The lane being gated off meant nothing exercised it, and
+// "wired and pinned" was reported on that basis.
+//
+// These pins take the host's path and nothing else.
+
+test('AUDIT-EOTB F3: the camera MOVES on the host path, and lands where the settings say', () => {
+  // Before the fix: no host passed `dt`, so it defaulted to 0,
+  // MoveTowards stepped nothing, and the camera parked at whatever the
+  // minimum-distance floor clamped the initial zero vector to - the
+  // player's FEET, [0, 0, -1.6], forever.
+  reset();
+  setEotbBodyReady(() => true);
+  mwViewWheel(+120);
+  const head = [0, 1.6, 0];
+  let r;
+  const seen = [];
+  for (let i = 0; i < 400; i++) {
+    r = mwViewFrame({ fpEye: head, feet: [0, 0, 0], yaw: 0, pitch: 0, dt: 1 / 60, raycast: () => null });
+    if (i < 3) seen.push(Number(r.eye[2].toFixed(4)));
+  }
+  assert.ok(seen[0] !== seen[1] && seen[1] !== seen[2], `the camera is SMOOTHING, not frozen: ${seen}`);
+  assert.equal(Number(r.eye[2].toFixed(4)), -2, 'it settles at the base distance');
+  assert.ok(r.eye[1] > head[1], `and ABOVE the head (${r.eye[1].toFixed(2)}), not at the feet`);
+
+  // ...and with no dt it does NOT arrive, which is the fault this pin
+  // exists for - stated as a contrast so the pin cannot pass vacuously
+  reset();
+  setEotbBodyReady(() => true);
+  mwViewWheel(+120);
+  let z;
+  for (let i = 0; i < 400; i++) {
+    z = mwViewFrame({ fpEye: head, feet: [0, 0, 0], yaw: 0, pitch: 0, raycast: () => null }).eye;
+  }
+  assert.notEqual(Number(z[2].toFixed(4)), -2, 'a frame with no dt cannot reach the target - which is why every host must pass one');
+  reset();
+});
+
+test('AUDIT-EOTB F3b: EVERY host passes dt to the seam - derived from the call sites', () => {
+  // GENERATIVE, so a fifth host cannot starve the lane silently. The
+  // population is the files that call `mwViewFrame` at all; each must
+  // hand it a `dt`.
+  const hosts = ['exterior', 'world', 'worldModes', 'dungeon'];
+  const callers = [];
+  for (const h of hosts) {
+    const s = readFileSync(join(root, `src/scenes/${h}.js`), 'utf8');
+    if (!/mwViewFrame\(/.test(s)) continue;
+    callers.push(h);
+    const call = /mwViewFrame\(\{[\s\S]{0,400}?\}\)/.exec(s);
+    assert.ok(call, `${h}.js: could not read its mwViewFrame call`);
+    assert.match(call[0], /\bdt\b/, `${h}.js calls mwViewFrame without a dt - the camera would freeze there`);
+    assert.match(call[0], /riding:/, `${h}.js calls mwViewFrame without riding - the riding offset would never apply`);
+  }
+  assert.equal(callers.length, 4, `all four hosts call the seam: ${callers.join(', ')}`);
+});
+
+test('AUDIT-EOTB F1: the seam ticks the BODY - its clock had no caller at all', () => {
+  // `eotbBody.tick()` was written, exported and never called, so the
+  // animation clock never advanced and the table never left Idle: the
+  // player would have been a single frozen frame.
+  reset();
+  setEotbBodyReady(() => true);
+  mwViewWheel(+120);
+  const before = eotbBody.state().frame;
+  const step = 0.25;                       // one frame of the walk cycle on foot
+  for (let i = 0; i < 4; i++) {
+    mwViewFrame({ fpEye: [0, 1.6, 0], feet: [0, 0, 0], yaw: 0, pitch: 0, dt: step, raycast: () => null });
+  }
+  assert.notEqual(eotbBody.state().frame, before, 'four frame-times of dt must advance the sprite’s clock');
+  reset();
+});
+
+test('AUDIT-EOTB F2/F4: the camera reads the PLAYER’s settings, and the override arms are reachable', () => {
+  // F2: `loadSettings` had no caller, so the camera ran on the vendored
+  // defaults and every dial on the pane was inert.
+  const c = createEotbCamera();
+  c.loadSettings((v, k) => (k === 'Camera.LongitudinalDistance' ? 7 : undefined));
+  assert.equal(c.settings().z, -7, 'a player’s own distance reaches the camera');
+
+  // F4: no host passed `weaponReady`, so all three CameraOverride arms
+  // were unreachable code. Driven through the state the seam assembles.
+  const o = createEotbCamera();
+  o.loadSettings((v, k) => ({
+    'Camera.LongitudinalDistance': 2, 'Camera.FrontalPlaneOffset': [0, 0],
+    'Camera.MinimumDistance': 0, 'Camera.RidingOffset': 1,
+    'CameraOverrideWeapon.Enable': true, 'CameraOverrideWeapon.LongitudinalDistance': 5,
+    'CameraOverrideWeapon.FrontalPlaneOffset': [0, 0],
+  })[k]);
+  o.toggleOffset(true);
+  const at = (state) => Number(o.eye({
+    fpEye: [0, 1.6, 0], feet: [0, 0, 0], yaw: 0, pitch: 0, dt: 1000, raycast: null, ...state,
+  }).eye[2].toFixed(4));
+  assert.equal(at({}), -2, 'nothing readied: the base arm');
+  assert.equal(at({ weaponReady: true }), -5, 'a readied weapon reaches the override arm');
+  assert.equal(at({ riding: true }), -4, 'and riding reaches the riding scale');
+});
+
+test('AUDIT-EOTB F2b: the weapon rig loads the settings and hands the body the state - WITHOUT reaching the view', () => {
+  // The two calls that had no caller, pinned at the ONE site that makes
+  // them - beside `fpArm.attach`, where the body already attaches.
+  const rig = readFileSync(join(root, 'src/combat/weaponRig.js'), 'utf8');
+  assert.match(rig, /eotbCamera\.loadSettings\(modSetting\)/, 'the camera is given the player’s settings reader');
+  assert.match(rig, /eotbBody\.attach\(renderer, \(\) => \(\{/, 'and the state only this rig can answer goes in through the body');
+  assert.match(rig, /weaponReady: !playerWeapon\.sheathed \|\| spellArmed\(\)/,
+    'weaponReady is the IL’s own test: not sheathed, or a spell readied');
+
+  // AND THE DIRECTION IS THE POINT. F2's first cut called
+  // `setEotbPlayerState` from the rig, which imports `mwView.js` into
+  // `weaponRig.js` - the one thing MWFIX's pin in `test/mwattach.test.js`
+  // forbids, because the classic sprite path is the only path the rig
+  // knows. The gate caught it. Asserted from BOTH sides so neither pin
+  // can be satisfied by moving the breakage to the other file: the rig
+  // never names the view, and the body is the module that does.
+  assert.ok(!rig.includes('mwView'), 'the rig never names the view layer');
+  const body = readFileSync(join(root, 'src/player/eotbBody.js'), 'utf8');
+  assert.match(body, /setEotbPlayerState\(playerState\);/,
+    'the body owns the seam, as it already owns setEotbBodyReady and setEotbDrawBody');
+  assert.match(body, /setEotbBodyReady|setEotbDrawBody/, 'alongside the two it already owned');
+});
+
+test('AUDIT-EOTB F4b: the registered state reaches the camera THROUGH THE SEAM', () => {
+  // The first F4 pin drove `createEotbCamera().eye()` with a
+  // `weaponReady` of its own - so dropping `eotbPlayerState()` from the
+  // seam's frame changed nothing it could see, and the mutant lived.
+  //
+  // The SAME mistake the whole audit is about, made once more while
+  // fixing it. This one goes through `mwViewFrame`, which is the only
+  // path a player has.
+  reset();
+  setEotbBodyReady(() => true);
+  eotbCamera.loadSettings((v, k) => ({
+    'Camera.LongitudinalDistance': 2, 'Camera.FrontalPlaneOffset': [0, 0],
+    'Camera.MinimumDistance': 0,
+    'CameraOverrideWeapon.Enable': true, 'CameraOverrideWeapon.LongitudinalDistance': 6,
+    'CameraOverrideWeapon.FrontalPlaneOffset': [0, 0],
+  })[k]);
+  eotbCamera.toggleOffset(true);
+
+  const settle = () => {
+    let r;
+    for (let i = 0; i < 400; i++) {
+      r = mwViewFrame({ fpEye: [0, 1.6, 0], feet: [0, 0, 0], yaw: 0, pitch: 0, dt: 1 / 60, raycast: () => null });
+    }
+    return Number(r.eye[2].toFixed(4));
+  };
+
+  setEotbPlayerState(() => ({ weaponReady: false }));
+  assert.equal(settle(), -2, 'nothing readied: the base arm, through the seam');
+
+  setEotbPlayerState(() => ({ weaponReady: true }));
+  assert.equal(settle(), -6, 'a readied weapon reaches the override arm THROUGH THE SEAM');
+
+  setEotbPlayerState(null);
+  eotbCamera.loadSettings(null);
   reset();
 });

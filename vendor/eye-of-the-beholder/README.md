@@ -1,4 +1,4 @@
-# Eye Of The Beholder 2.1 - RedRoryOTheGlen (ported 1:1, its sprites vendored)
+# Eye Of The Beholder 2.1 - RedRoryOTheGlen (camera + sprite ported, its sprites vendored)
 
 **Eye Of The Beholder 2.1** for Daggerfall Unity 1.1.1, by
 **RedRoryOTheGlen** (GUID `2942ea8c-dbd4-42af-bdf9-8199d2f4a0aa`;
@@ -20,6 +20,17 @@ Mac (Lattymoy) handed the shipped archive
 
 **Permission: [Mac: record the author's permission, or the link to it,
 here - the earlier mod records carry theirs in this line.]**
+
+## How much of it is ported
+
+Not all of it, and the arc said otherwise for a day. The assembly
+carries **62 authored methods**; the port implements the arithmetic of
+**thirteen** - the camera's offsets, bounds and smoothing, and the
+sprite's SELECTION. Every attack and death animation, the footsteps,
+the nine-row auto-toggle table, the cart and the boat override are not
+ported. `test/eotb_scope.test.js` holds all 62 rows with a verdict
+each, and `bible/06-Systems/Eye-Of-The-Beholder.md` explains which
+gaps have no twin here and which are simply not done yet.
 
 ## Why this mod is in a port that already has third person
 

@@ -9,6 +9,10 @@ import {
   spriteCount, eotbSpriteUrl, SIZE_ON_FOOT, SIZE_RIDING_OR_TRANSFORMED,
 } from '../src/player/eotbSprite.js';
 import { createEotbBody } from '../src/player/eotbBody.js';
+import { eotbCamera } from '../src/player/eotbCamera.js';
+import {
+  mwViewWheel, mwViewFrame, mwViewPendingClicks, setEotbBodyReady, setEotbDrawBody,
+} from '../src/player/mwView.js';
 import { ARCHIVE_FOOT, ARCHIVE_HORSE, FOOTSTEP_FRAMES, frameTime } from '../src/player/eotbBillboard.js';
 
 // ═══ EOTB5: THE BODY ON SCREEN ════════════════════════════════════
@@ -131,6 +135,125 @@ test('EOTB5: in node there is no art, so the body can never claim to be ready', 
   assert.equal(b.draw(null, {}), false, 'nor does asking it to draw');
 });
 
+test('AUDIT-EOTB F7: the lane stays SHUT until the first sprite is really up, and never flaps back', async () => {
+  // THE ONE MUTANT THE ARC’S PINS DID NOT KILL. Dropping `firstUp`
+  // from `ready()` left every test green: under node `spriteCount()`
+  // is 0, so the lane is shut whatever the second clause says, and the
+  // clause the body’s own docstring calls "the one that matters" was
+  // unpinned. Not a weak assertion - an ENVIRONMENT in which the thing
+  // asserted could not vary. The F-SING lesson wearing a new coat.
+  //
+  // So the body now takes its three browser-shaped deps (the art
+  // count, the URL, the decode) and this drives a body with art
+  // present and a decode held open.
+  const uploads = [];
+  const renderer = {
+    uploadTexture: (archive, rec, img) => uploads.push({ archive, rec, img }),
+    createBillboardBatch: () => ({ origin: [0, 0, 0] }),
+    drawBillboards: () => {},
+  };
+  let release;
+  const held = new Promise((res) => { release = res; });
+  const b = createEotbBody({
+    count: () => 3035,
+    urlFor: (key) => `/art/${key}.png`,
+    decode: () => held,
+  });
+  b.attach(renderer, () => ({}));
+
+  // THE ART EXISTS AND THE LANE IS STILL SHUT. A lane that opened here
+  // would swing the camera out behind nothing for as long as the first
+  // fetch took.
+  assert.equal(b.ready(), false, 'art present, first sprite still decoding: SHUT');
+
+  release({ width: 3, height: 2, colors: new Uint32Array([1, 2, 3, 4, 5, 6]) });
+  await held;
+  await Promise.resolve();          // let the .then that sets firstUp run
+  assert.equal(b.ready(), true, 'the first sprite is up: OPEN');
+
+  // AND IT MUST NOT FLAP. Once a sprite is up the lane stays open, so
+  // a later sprite still decoding - or failing outright - cannot drop
+  // the player back into first person mid-scroll.
+  const b2 = createEotbBody({
+    count: () => 3035,
+    urlFor: () => '/art/x.png',
+    decode: () => Promise.reject(new Error('404')),
+  });
+  b2.attach(renderer, () => ({}));
+  await Promise.resolve(); await Promise.resolve();
+  assert.equal(b2.ready(), false, 'a first sprite that FAILS does not open the lane');
+
+  // and the count really is consulted: no art, no lane, however many
+  // sprites have decoded
+  const b3 = createEotbBody({ count: () => 0, urlFor: () => '/a.png', decode: () => Promise.resolve({ width: 1, height: 1, colors: new Uint32Array([7]) }) });
+  b3.attach(renderer, () => ({}));
+  await Promise.resolve(); await Promise.resolve();
+  assert.equal(b3.ready(), false, 'a decoded sprite the build does not carry is not art');
+});
+
+test('AUDIT-EOTB F7b: the MIRROR reaches the UPLOAD, driven through the only path a player has', async () => {
+  // `flipRows` was pinned as a FUNCTION and never as wiring - the same
+  // gap F1 through F5 were, and the reason this audit exists. So this
+  // opens the lane the way a wheel does and asserts the pixels the
+  // renderer is actually handed.
+  setEotbBodyReady(() => true);
+  setEotbDrawBody(null);
+  eotbCamera.loadSettings((v, k) => ({
+    'Camera.LongitudinalDistance': 2, 'Camera.FrontalPlaneOffset': [0, 0],
+    'Camera.MinimumDistance': 0,
+  })[k]);
+  try {
+    eotbCamera.toggleOffset(true);           // out of the head, as the wheel does
+    for (let i = 0; i < 40; i++) {
+      mwViewFrame({ fpEye: [0, 1.6, 0], feet: [0, 0, 0], yaw: 0, pitch: 0, dt: 1 / 60, raycast: () => null });
+    }
+    assert.equal(eotbCamera.thirdPerson(), true, 'the wheel really opened the lane');
+
+    const pixels = new Uint32Array([1, 2, 3, 4, 5, 6]);   // 3 wide, 2 high
+    const uploads = [];
+    const renderer = {
+      uploadTexture: (archive, rec, img) => uploads.push({ archive, rec, img }),
+      createBillboardBatch: () => ({ origin: [0, 0, 0] }),
+      destroyBillboardBatch: () => {},
+      drawBillboards: () => {},
+    };
+    const b = createEotbBody({
+      count: () => 3035,
+      urlFor: (key) => `/art/${key}.png`,
+      decode: async () => ({ width: 3, height: 2, colors: pixels }),
+    });
+    b.attach(renderer, () => ({}));
+    await Promise.resolve(); await Promise.resolve();
+
+    // FACING THE CAMERA: orientation 0, not mirrored.
+    b.face([0, 0, 1], [0, 0, 1]);
+    b.draw(null, { eye: [0, 2, -2], feet: [0, 0, 0], yaw: 0 });
+    await Promise.resolve(); await Promise.resolve();
+    const plain = uploads.find((u) => !String(u.rec).endsWith('m'));
+    assert.ok(plain, 'an unmirrored orientation uploads');
+    assert.deepEqual([...plain.img.colors], [...pixels], 'and is uploaded exactly as decoded');
+
+    // A CAMERA OFF TO THE SIDE: a mirrored orientation, its own key,
+    // its own PIXELS. If the flip lived only in the helper this is the
+    // assertion that would fail.
+    b.face([0, 0, 1], [-1, 0, 0]);           // orientation 2, which the table mirrors
+    b.draw(null, { eye: [-2, 2, 0], feet: [0, 0, 0], yaw: 0 });
+    await Promise.resolve(); await Promise.resolve();
+    b.draw(null, { eye: [-2, 2, 0], feet: [0, 0, 0], yaw: 0 });
+    const flipped = uploads.find((u) => String(u.rec).endsWith('m'));
+    assert.ok(flipped, 'a mirrored orientation uploads under its OWN key - the batch has no flip');
+    assert.deepEqual([...flipped.img.colors], [3, 2, 1, 6, 5, 4],
+      'and the pixels the renderer gets are really flipped, row by row');
+  } finally {
+    setEotbBodyReady(null);
+    eotbCamera.loadSettings(null);
+    eotbCamera.toggleOffset(false);
+    for (let i = 0; i < 4 && mwViewPendingClicks(); i++) {
+      mwViewFrame({ fpEye: [0, 1.6, 0], feet: [0, 0, 0], yaw: 0, pitch: 0 });
+    }
+  }
+});
+
 test('EOTB5: THE FOUR HOSTS are named, and the wiring is ONE site because all four reach it', () => {
   // the FOUR HOSTS rule in bible/Home.md - a slice wiring a seam into a
   // host must name all four. Named: exterior.js, world.js, worldModes.js,
@@ -141,7 +264,7 @@ test('EOTB5: THE FOUR HOSTS are named, and the wiring is ONE site because all fo
   // Checked as a POPULATION rather than as four names, so a fifth host
   // gets the body without an edit here - and so this pin cannot pass
   // by someone deleting a host from a list.
-  assert.match(weaponRig, /eotbBody\.attach\(renderer\);/, 'the body attaches in the weapon rig');
+  assert.match(weaponRig, /eotbBody\.attach\(renderer, \(\) => \(\{/, 'the body attaches in the weapon rig, with the state only the rig can answer');
   assert.match(weaponRig, /fpArm\.attach\(renderer, camera\)/, '...beside the arm');
 
   const hosts = ['exterior', 'world', 'worldModes', 'dungeonContext'];
