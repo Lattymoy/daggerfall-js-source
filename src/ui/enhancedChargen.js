@@ -870,7 +870,20 @@ function statsStage() {
   const pane = el('div', 'stagebody');
 
   const list = el('div', 'list');
-  list.append(poolBar('points to spend', flow.statPool));
+  // CHAR1 (2026-09-15, a player through Mac: "show the total dice rolls
+  // in the enhanced character creator"): the roll said out loud. The
+  // eight values and the bonus pool are both rolled, and nothing on
+  // either screen ever added them up - so "is this a good roll?" was
+  // eight numbers of mental arithmetic before every press of Roll
+  // again. The pair is `now -> final` while the pool is unspent,
+  // because the final figure is the one that does not move (the steps
+  // are zero-sum, ChargenFlow.statTotalFinal) and is what the
+  // character walks out with; once the pool is spent they are the same
+  // number and only one is shown.
+  list.append(poolBar('points to spend', flow.statPool, {
+    label: 'attribute total',
+    value: flow.statPool > 0 ? `${flow.statTotalNow} \u2192 ${flow.statTotalFinal}` : flow.statTotalNow,
+  }));
   STAT_KEYS_ORDER.forEach((key, i) => {
     const row = el('div', `row${i === flow.statCursor ? ' on' : ''}`);
     const main = el('button', 'row-main');
@@ -954,10 +967,19 @@ function skillsStage() {
   return pane;
 }
 
-function poolBar(label, n) {
+// CHAR1: the bar carries one figure or two. It is STICKY, so a second
+// bar would have sat on top of the first one the moment the list
+// scrolled - the total joins the pool in the one row instead.
+function poolBar(label, n, right = null) {
   const row = el('div', 'poolbar');
-  row.append(el('span', 'poolk', label));
-  row.append(el('span', 'poolv', String(n ?? 0)));
+  const cell = (k, v) => {
+    const c = el('span', 'poolcell');
+    c.append(el('span', 'poolk', k));
+    c.append(el('span', 'poolv', String(v)));
+    return c;
+  };
+  row.append(cell(label, n ?? 0));
+  if (right) row.append(cell(right.label, right.value));
   return row;
 }
 
@@ -1070,7 +1092,10 @@ function summaryStage() {
   who.append(idcol);
   list.append(who);
 
-  list.append(sectionHead('Attributes', flow.sumStatPool ?? 0));   // AUDIT 64 F33: the SUMMARY's own rollout pool
+  // AUDIT 64 F33: the SUMMARY's own rollout pool. CHAR1: and its own
+  // total, because this screen edits the same eight values and asks the
+  // same question - statTotalFinal reads whichever pool is on screen.
+  list.append(sectionHead('Attributes', flow.sumStatPool ?? 0, flow.statTotalFinal));
   STAT_KEYS_ORDER.forEach((key, i) => {
     list.append(reviewRow(key[0].toUpperCase() + key.slice(1), flow.stats?.[key] ?? 0, (dir) => {
       flow.applyHit({ setStatCursor: i });
@@ -1128,10 +1153,11 @@ function summaryStage() {
   return pane;
 }
 
-function sectionHead(label, pool) {
+function sectionHead(label, pool, total = null) {
   const h = el('div', 'skillhead review');
   h.append(el('span', 'skillk', label));
-  h.append(el('span', 'skillpool', pool > 0 ? `${pool} to spend` : ''));
+  const note = [total == null ? null : `total ${total}`, pool > 0 ? `${pool} to spend` : null].filter(Boolean);
+  h.append(el('span', 'skillpool', note.join('  \u00b7  ')));
   return h;
 }
 
