@@ -4747,3 +4747,46 @@ arrival, that is not rare. The blow is dropped instead.
 - **A peer's killing blow bypasses the Soul Trap tether** (WORLD2 B9, on
   purpose). Offline a trap with no empty gem holds a foe at 1 health and
   reads as "cannot kill this one"; online a peer's blow always kills.
+
+## FOE10 - THE BLOW CROSSES, END TO END (2026-09-15)
+
+Mac: *"Can you audit the online enemies. I think another session broke
+other players being able to attack enemies."*
+
+**He is right, and it is FOE1 above.** The archaeology is unambiguous:
+`git log -S "host.onFoeHit" -- src/scenes/worldModes.js` names exactly
+one commit that ever wrote that line (WORLD2, 2026-09-12) and exactly one
+that removed it - `a0570bca`, *"HT1: Handheld Torches 1.4.1 ported 1:1"*,
+2026-09-14, which appended `// HT1: the torch keys` to the end of the
+line the property was sharing. A different slice, a different session,
+and the whole of "other players cannot attack enemies".
+
+**Nothing since has touched that path.** Every commit to
+`src/net/online.js`, `src/net/wire.js`, `src/scenes/exteriorFoes.js` and
+`server/src/` since WORLD6b is this arc's own; the Ambient Text wave, the
+online-rest slice and the Discord door touched none of them. The receive
+wiring (`world.js`'s `online.onHit`) has not changed since WORLD6b-i.
+Verified on the merged tree by parsing rather than grepping: the
+`buildDungeonContext` opts really carry `onFoeHit`, `world.js` really
+hands it the wire through the pending set, `sendHit`'s halo route is
+live, and the relay still routes a hit to the host alone.
+
+**What this pass adds is the pin that was missing.** AUDIT WORLD34 A1
+drove two real sessions through the real relay `Room` and held that the
+host's FOES fan to the joiner and the joiner's ACT fans back - and never
+drove the one frame this report is about. A blow is the only thing a
+joiner cannot do for itself (it applies no local damage at all), so the
+hit frame is the single point of failure for "other players can attack
+enemies", and it was the one frame with no end-to-end pin over it. It has
+one now: a joiner's blow leaves its socket, the relay routes it to the
+HOST alone, and it arrives at the host's `onHit` with the striker named
+and the payload whole - while a bystander in the same room hears nothing
+and the host's own blows stay its own door's. Four mutations - the send
+refused, the relay routing to the wrong socket, the relay dropping a
+world room's hit, the host's receive gate closed - four dead.
+
+**If it still looks broken in play, the fix is newer than the build.**
+FOE1 merged to main today; Pages publishes from main on push, so a client
+loaded before that deploy is still running the broken bundle. The build
+stamp in the door's foot names the commit it was built from - `90dc0160`
+or later carries the fix.

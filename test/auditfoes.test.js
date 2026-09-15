@@ -10,6 +10,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { PIXEL_UNITS } from '../src/net/wire.js';
+import { OnlineSession } from '../src/net/online.js';
+import { fakeRoom } from './fakeRoom.mjs';
+import { fakeSocketClass } from './fakeSocket.mjs';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 /** The file's CODE - a law inside a comment is not a law (FOE1). */
@@ -103,4 +107,53 @@ test('AUDIT FOES FOE9: a blow on a record the pool no longer holds is dropped, n
   const d = code('src/scenes/dungeonContext.js');
   assert.match(d, /const pi = foes\.indexOf\(foe\);\s*if \(pi < 0\) return;\s*if \(pi < _layoutFoes\) \{/,
     'an orphan takes no blow, and the layout test no longer has to re-check the sign');
+});
+
+// AUDIT FOES FOE10 (2026-09-15, Mac: "I think another session broke other
+// players being able to attack enemies") - THE BLOW CROSSES, END TO END.
+//
+// AUDIT WORLD34 A1 drove two real sessions through the real relay Room and
+// held that the host's FOES fan to the joiner and the joiner's ACT fans back.
+// It never drove the one frame this report is about. A blow is the only thing
+// a joiner cannot do for itself - it applies no local damage at all - so the
+// hit frame is the single point of failure for "other players can attack
+// enemies", and it was the one frame with no end-to-end pin over it.
+//
+// This drives it: a joiner's blow leaves its socket, is routed by the relay to
+// the HOST alone, and arrives at the host's onHit with the striker named and
+// the payload whole - and no one else hears it.
+const at = (px, pz) => ({ x: px * PIXEL_UNITS + 10, y: 0, z: pz * PIXEL_UNITS + 10, yaw: 0, pitch: 0, mv: 0 });
+const quiet = (fn) => { const i = console.info, w = console.warn; console.info = () => {}; console.warn = () => {}; try { return fn(); } finally { console.info = i; console.warn = w; } };
+
+test('AUDIT FOES FOE10: a joiner\'s blow crosses the real relay to the host, and to the host alone', async () => {
+  const key = 'dungeon:m187853213';   // Privateer's Hold, the id AUDIT WORLD34 A1 drives the same rig on
+  const r = fakeRoom(key);
+  const link = (id) => {
+    const { FakeWS, sockets } = fakeSocketClass();
+    const s = new OnlineSession({ url: 'wss://relay.test', name: id, id, secret: `secret-of-${id}`, WebSocketImpl: FakeWS, now: () => Date.now() });
+    const hits = [];
+    s.onHit = (from, data) => hits.push([from, data]);
+    quiet(() => s.join(key, at(1, 1)));
+    const ws = sockets[0]; const server = r.connect();
+    ws.send = (str) => r.raw(server, str); server.send = (str) => ws.receive(str);
+    ws.open();
+    return { s, hits };
+  };
+  const host = link('aaaa-0001'); await new Promise((f) => setTimeout(f, 5));
+  const joiner = link('bbbb-0002'); await new Promise((f) => setTimeout(f, 5));
+  const bystander = link('cccc-0003'); await new Promise((f) => setTimeout(f, 5));
+  assert.equal(host.s.isHost(), true, 'the first socket holds the seat');
+  assert.equal(joiner.s.host, 'aaaa-0001', 'and the joiner is told who to strike through');
+
+  const blow = { i: 7, dmg: 12, kind: 'melee', p: [1, 2, 3], d: [0, 0, 1] };
+  assert.equal(joiner.s.sendHit(blow), true, 'the blow leaves the joiner');
+  await new Promise((f) => setTimeout(f, 5));
+
+  assert.equal(host.hits.length, 1, 'THE WHOLE REPORT: the host hears the blow');
+  assert.deepEqual(host.hits[0], ['bbbb-0002', blow], 'with the striker named and the payload whole');
+  assert.equal(bystander.hits.length, 0, 'and nobody else does - a hit is routed, never fanned');
+  assert.equal(joiner.hits.length, 0, 'least of all its striker');
+
+  // ...and the host's own blows are its own door's, never the wire's
+  assert.equal(host.s.sendHit(blow), false, 'the host applies its own');
 });
