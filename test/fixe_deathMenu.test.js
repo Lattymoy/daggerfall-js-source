@@ -16,15 +16,44 @@ const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 test('FIX-E: the death seam HOLDS the frame (the host waits, and lives), and releases it on every path out', async () => {
   assert.equal(frameHeld(), false);
   let release;
+  let ready;
   const gate = new Promise((r) => { release = r; });
-  const p = endRunToTitleMenu({ canvas: null }, { play: () => gate, watchdogMs: 60000, setTimer: () => 0 });
+  // DEATH1: the hold is taken when the video says it is READY, not when the
+  // death begins - so the play seam is handed the signal and calls it.
+  const p = endRunToTitleMenu({ canvas: null }, { play: (_r, r) => { ready = r; return gate; }, watchdogMs: 60000, setTimer: () => 0 });
+  assert.equal(frameHeld(), false, 'DEATH1: NOT held while the video is still loading - the host keeps drawing the death screen');
+  ready();
   assert.equal(frameHeld(), true, 'held while the video plays - not claimed: the loop is alive and idle, as under the infection videos');
   release(true);
   await p;
   assert.equal(frameHeld(), false, 'released before the navigation');
-  // a video that REJECTS costs the video, not the return
+  // a video that REJECTS costs the video, not the return - and one that
+  // rejects BEFORE it was ready never held the frame at all
   await endRunToTitleMenu({ canvas: null }, { play: () => Promise.reject(new Error('no VID')), setTimer: () => 0 });
   assert.equal(frameHeld(), false);
+});
+
+// DEATH1 (2026-09-15, Mac: "Black screen after death and pressing enter").
+// holdFrame stops the host drawing, and it was taken FIRST - then two
+// dynamic imports and an archive read of ANIM0012.VID ran before the video
+// painted anything. Every frame of that load was black: the host held, the
+// death screen it had been drawing stopped, the video not yet begun. On a
+// cold cache that is seconds of nothing, and the last thing drawn was the
+// death fade, so it reads as a hang.
+test('DEATH1: nothing is held until the video is loaded - the load is not a black screen', () => {
+  const src = read('src/scenes/shared.js');
+  const fn = src.slice(src.indexOf('async function playDeathVideo('), src.indexOf('export async function endRunToTitleMenu('));
+  // the ready signal fires AFTER the bytes are in hand, never before
+  assert.match(fn, /const bytes = await getBytes\('ANIM0012\.VID'\);\s*\n\s*ready\(\);/,
+    'the signal is raised once the bytes are read, not at the top of the load');
+  assert.ok(fn.indexOf('ready()') > fn.indexOf('await import'), 'and after the dynamic imports');
+  const body = src.slice(src.indexOf('export async function endRunToTitleMenu('), src.indexOf('export async function endRunToTitleMenu(') + 1200);
+  assert.match(body, /const ready = \(\) => \{ releaseFrame \?\?= holdFrame\(\); \};/, 'the hold is the signal, taken once');
+  assert.match(body, /play\(renderer, ready\)/, 'and the player is handed it');
+  // the watchdog still covers the LOAD as well as the play - a read that
+  // never settles is a return to the menu, not a trap on the death screen
+  assert.match(body, /Promise\.race\(\[\s*\n\s*play\(renderer, ready\),\s*\n\s*new Promise/,
+    'the load and the play are inside the one bounded race');
 });
 
 test('FIX-E: a video that never settles is a BOUNDED wait - the watchdog navigates', async () => {
@@ -36,9 +65,9 @@ test('FIX-E: a video that never settles is a BOUNDED wait - the watchdog navigat
   assert.ok(DEATH_VIDEO_WATCHDOG_MS >= 15000 && DEATH_VIDEO_WATCHDOG_MS <= 60000, `a real death video ends well inside it (${DEATH_VIDEO_WATCHDOG_MS} ms)`);
   const src = read('src/scenes/shared.js');
   const body = src.slice(src.indexOf('export async function endRunToTitleMenu('), src.indexOf('export async function endRunToTitleMenu(') + 900);
-  assert.match(body, /const releaseFrame = holdFrame\(\);/, 'the hold, not the claim');
+  assert.match(body, /releaseFrame \?\?= holdFrame\(\);/, 'the hold, not the claim (DEATH1: taken when the video is ready)');
   assert.doesNotMatch(body, /claimFrame\(\)/, 'no claim before the awaits');
-  assert.match(body, /\} finally \{\s*\n\s*releaseFrame\(\);\s*\n\s*exitToTitleMenu\(\);\s*\n\s*\}/, 'the return is in a finally');
+  assert.match(body, /\} finally \{\s*\n\s*releaseFrame\?\.\(\);\s*\n\s*exitToTitleMenu\(\);\s*\n\s*\}/, 'the return is in a finally (DEATH1: and a hold never taken is nothing to release)');
 });
 
 test('FIX-E: F11 reaches the world host’s quickload from UNDER the death screen, above the rung that eats every key', () => {

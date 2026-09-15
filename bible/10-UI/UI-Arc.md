@@ -13026,3 +13026,44 @@ is owed.
 One heading changed with the copy: "Something's wrong." became "If it
 breaks", which fits the pixel face on one line where the old one wrapped
 after SITE1 widened it.
+
+## DEATH1 - THE LOAD WAS THE BLACK SCREEN (2026-09-15, Mac's report)
+
+Mac: *"Black screen after death and pressing enter"*.
+
+FIX-E already fixed the freeze on this path - the claim became a hold,
+the return moved into a `finally`, and an unbounded wait became a
+watchdog. What it left is smaller and is what a player sees.
+
+**`holdFrame()` was taken before there was anything to draw.** The hold
+stops the host drawing; it was the first line of `endRunToTitleMenu`,
+and only then did `playDeathVideo` run two dynamic imports
+(`ui/videoPlayer.js`, `scenes/dataSource.js`) and an archive read of
+ANIM0012.VID before the video painted its first frame. Every frame of
+that load is **black**: the host is held, the death screen it had been
+drawing has stopped, and the video has not begun. The last thing on the
+canvas is the death fade, which is already black - so there is nothing
+to distinguish the load from a hang.
+
+The hold is taken when the video is **ready** now. `playDeathVideo`
+receives a signal and raises it once the bytes are in hand; until then
+the host keeps drawing the death screen, which is the correct thing to
+be looking at while a video loads. FIX-E's laws are untouched: the hold
+rather than the claim, released on every path out, and the watchdog
+still races the whole thing, so a read that never settles is still a
+return to the menu rather than a trap.
+
+`exitToTitleMenu` also says one line on the console before it navigates.
+The loop is dead by that line, so if the navigation ever fails to take,
+the canvas keeps its last frame and the screen is black with nothing to
+tell anyone how far it got. One line names the last step.
+
+**WHAT THIS DOES NOT CLAIM.** This container has no ARENA2, so the full
+game cannot boot here and the report could not be reproduced. What is
+fixed is a black window on that exact path, proven by pin and
+unambiguous from the source. Whether it is the whole of what Mac saw is
+unknown. If the screen is still black after this ships, the console line
+is the question to answer: if `[death] returning to the title menu` is
+printed and the screen stays black, the navigation is the fault and the
+video is innocent; if it never prints, the wait is still inside the
+race and the watchdog's 30 s is the next thing to look at.
