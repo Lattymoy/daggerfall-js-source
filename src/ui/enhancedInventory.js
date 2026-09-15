@@ -581,69 +581,273 @@ function refreshFigure() {
  *  save carries. It never crosses a side - a drag out of a loot pile is
  *  a TAKE, which is a click, and mixing the two would make a slip a
  *  transfer. */
-let dragging = null;
+/** AUDIT INV2 (2026-09-15, Mac: "I want it to be perfect") - THE DRAG IS
+ *  THE PANE'S, NOT THE ROW'S, AND IT ENDS WHATEVER HAPPENS.
+ *
+ *  INV1 and INV2 hung the whole gesture off the originating row: its own
+ *  `at` closure, its own pointer capture, its own up/cancel handlers.
+ *  Three lenses found the same omission from three sides, and each one
+ *  was confirmed by driving a real browser:
+ *
+ *  - TWO FINGERS, TWO ROWS. `at` was per row and the carried item was
+ *    one module global, so a second finger on a second row passed the
+ *    "one pointer" guard (that row's `at` was null), overwrote the
+ *    global, and the FIRST finger's release dropped the SECOND finger's
+ *    item. Silent item loss, on the touch device INV1 exists for.
+ *  - THE ROW STOPS EXISTING. `render()` empties the host on an archive
+ *    icon landing, on the paperdoll settling, on the arm rig rebuilding
+ *    - all asynchronous, all reachable while a pointer is down. The
+ *    capturing row is detached, its handlers never fire again, the drag
+ *    never ends and the ghost freezes on screen.
+ *  - THE POINTER IS TAKEN BACK. A right-click (and Android's long-press)
+ *    raises `lostpointercapture` with no `pointercancel` behind it.
+ *    Nothing listened for it, so the drag stayed live with `moved` true
+ *    and the row was un-draggable for the rest of its life.
+ *  - ESCAPE. `unmount` empties the host, and the ghost is the BODY's
+ *    child, so closing the pack mid-drag left an item icon glued over
+ *    the world until some later drag happened to clear it.
+ *
+ *  So the drag is ONE session owned by the pane, its listeners are on
+ *  the WINDOW (which no repaint can detach), and every way it can end -
+ *  release, cancel, capture loss, Escape, unmount - ends it through one
+ *  door. The source is identified by ITEM rather than by row node, so a
+ *  repaint mid-drag cannot make the item's own new row look like someone
+ *  else's. */
+let drag = null;
+
+/** INV2: the ghost - the item's own tile under the pointer, carrying the
+ *  act a release would perform.
+ *
+ *  IT IS `itemTile`'S TILE, not a second one. This file's header names
+ *  the trap directly ("a second icon pipeline in this file is how the
+ *  port ends up with two") - the Morrowind ground mesh, the classic
+ *  sprite and the initials fallback are one function's answer already,
+ *  and the ghost asks the same function.
+ *
+ *  It is `pointer-events: none` and lives on the BODY rather than inside
+ *  the window: the hit test under it must answer the thing the cursor is
+ *  over, and a node under the cursor would answer itself every time -
+ *  and a ghost clipped to the panel could not be carried off it, which
+ *  is the other half of what was asked for. */
+let ghost = null;
+const ghostEnd = () => { ghost?.remove(); ghost = null; };
+function ghostStart(item) {
+  ghostEnd();
+  ghost = el('div', 'dragghost');
+  ghost.append(itemTile(itemLine(item, deps.entity)));
+  ghost.append(el('span', 'ghostact', ''));
+  document.body?.appendChild(ghost);
+}
+/** AUDIT INV2 A3/A4: CLEAR OF THE FINGER, AND ON THE SCREEN.
+ *  The ghost is a 44px tile over a verb chip, about 64px tall, and it
+ *  was drawn centred on the reported point - so on a touch screen the
+ *  contact patch covered the bottom of the icon and ALL of the verb,
+ *  which is the only thing saying what a release would do. A touch
+ *  carries it a thumb's height above the finger. And nothing clamped it,
+ *  so at the screen edges it drew half off - precisely where the
+ *  off-panel drop region is. */
+const GHOST_LIFT_TOUCH = 52;
+function ghostAt(x, y, verb) {
+  if (!ghost) return;
+  const w = globalThis.innerWidth ?? 0;
+  const h = globalThis.innerHeight ?? 0;
+  const lift = drag?.touch ? GHOST_LIFT_TOUCH : 0;
+  ghost.style.left = `${w ? Math.min(Math.max(x, 40), w - 40) : x}px`;
+  ghost.style.top = `${h ? Math.min(Math.max(y - lift, 40), h - 16) : y - lift}px`;
+  const act = ghost.querySelector('.ghostact');
+  if (act) { act.textContent = verb ?? ''; act.classList.toggle('on', !!verb); }
+  ghost.classList.toggle('refused', verb === null);
+}
+
+/** WHAT A RELEASE HERE WOULD DO - one answer, read by the ghost's label
+ *  while the pointer moves and by the release itself when it lands, so
+ *  the word the player was shown is the act they get.
+ *
+ *  OUTSIDE THE WINDOWS IS THE TRANSFER THE SCREEN ALREADY OFFERS. It
+ *  does not invent a drop: `stow` is the function behind the button
+ *  beside the item, so carrying something off the panel Drops it on the
+ *  ground, Stows it in the wagon or Puts it back in the chest exactly as
+ *  pressing that button would.
+ *
+ *  AUDIT INV2 B-F3/B-F4: AND THE VERB IS THE REAL ANSWER, not `canStow`.
+ *  `canStow` asks "should this BUTTON exist" - a refusal that SPEAKS
+ *  earns a button - and INV2 reused it for "what will this release do",
+ *  which are different questions. A quest item and a full wagon both
+ *  refuse with text, so `canStow` said yes and the ghost read "Drop" in
+ *  white before refusing on release; a cart refuses in SILENCE, so
+ *  `canStow` said no, the ghost reddened, and the release then called
+ *  `stow` on the one path where `stow` is guaranteed mute - a dead
+ *  gesture that also wiped whatever the screen was saying. The plan's
+ *  own `ok` is the honest answer to both, so the label is the plan's. */
+function stowIntent(item) {
+  const plan = planStore(item, {
+    remote: remote.items, usingWagon: session.usingWagon, chooseOne: session.chooseOne,
+    dryRun: true,   // as canStow's own note says: the quest rung WRITES, and a label must not
+  });
+  // A refusal that speaks is still worth releasing on - the player gets
+  // the sentence. One that cannot speak is shown as refused and does
+  // nothing, because a silent no-op is the drawn door PX14 forbids.
+  if (plan.ok) return { kind: 'stow', label: STOW_LABEL[remote.kind] };
+  return plan.refusal?.text ? { kind: 'stow', label: null, speaks: true } : { kind: 'nope', label: null };
+}
+function dropIntent(item, over, fromItem) {
+  if (over?.closest?.('.wornmap')) {
+    const act = localPrimaryAct(item, deps.entity);
+    return act ? { kind: 'body', label: act.label } : { kind: 'nope', label: null };
+  }
+  const onRow = over?.closest?.('.itemrow');
+  const target = onRow ? rowItems.get(onRow) : null;
+  // AUDIT INV2 A-F3: the source is the ITEM, never the row NODE - a
+  // repaint mid-drag stands a NEW row for the same item, and an identity
+  // test then read the item's own row as someone else's and offered to
+  // move it above itself.
+  if (target && target !== fromItem) return { kind: 'reorder', label: 'Move here', item: target };
+  // AUDIT INV2 B-F7: the remote WINDOW is a drop target in its own
+  // right. Dragging onto the open chest is the first gesture a player
+  // tries for "store this", and reading it as panel chrome meant the
+  // only way to store something was to drop it in the void beside the
+  // window that was asking for it.
+  if (over?.closest?.('.loot-win')) return stowIntent(item);
+  if (over?.closest?.('.pack-win')) return { kind: 'none', label: '' };
+  return stowIntent(item);
+}
 
 /** AUDIT INV1 Fb: THE DRAG IS POINTER EVENTS, NOT THE HTML5 DRAG API.
  *
  *  The first cut used `draggable` + dragstart/drop. Those do not fire
  *  from a touch, so the whole feature was mouse-only - on a screen the
  *  port ships to and whose 44px target law this arc has now enforced
- *  twice. It is the same "drawn, present, unreachable on the device
- *  that needs it most" shape AUDIT 24 named and FT16 found again a day
- *  ago, and the repo had already answered the question: every other
- *  drag here is pointerdown/move/up with setPointerCapture
- *  (ui/overworldMap.js's pan). This follows it.
+ *  twice. Every other drag here is pointerdown/move/up
+ *  (ui/overworldMap.js's pan); this follows it.
  *
- *  ONE POINTER, and a 4px threshold, so a tap is still a pick - the
- *  row's own click law (select, never undress) is untouched below that
- *  distance, and suppressed above it so a drag cannot also select.
+ *  ONE POINTER FOR THE PANE, and a 4px threshold, so a tap is still a
+ *  pick - the row's own click law is untouched below that distance and
+ *  suppressed above it. */
+const dragHighlight = () => {
+  for (const n of document.querySelectorAll('.dragover, .itemrow.dragging')) n.classList.remove('dragover', 'dragging');
+};
+/** Move the carried item to a point, and say what a release there does. */
+function dragTo(x, y) {
+  if (!drag) return;
+  drag.x = x; drag.y = y;
+  if (!drag.moved) return;
+  dragHighlight();
+  drag.row?.classList.add('dragging');
+  const want = dropIntent(drag.item, document.elementFromPoint?.(x, y), drag.item);
+  drag.want = want;
+  ghostAt(x, y, want?.label ?? null);
+  if (want?.kind === 'body') document.elementFromPoint?.(x, y)?.closest?.('.wornmap')?.classList.add('dragover');
+  else if (want?.kind === 'reorder') { for (const n of document.querySelectorAll('.itemrow')) if (rowItems.get(n) === want.item) n.classList.add('dragover'); }
+}
+/** THE ONE DOOR OUT. `commit` false is an abort - a cancel, a lost
+ *  capture, Escape, the pane going away; nothing moves and nothing is
+ *  said. */
+function dragStop(commit) {
+  const d = drag;
+  drag = null;
+  if (d?.hold) clearTimeout(d.hold);
+  dragLock(false);
+  ghostEnd();
+  dragHighlight();
+  if (typeof globalThis !== 'undefined') {
+    globalThis.removeEventListener?.('pointermove', onDragMove, true);
+    globalThis.removeEventListener?.('pointerup', onDragUp, true);
+    globalThis.removeEventListener?.('pointercancel', onDragAbort, true);
+    globalThis.removeEventListener?.('lostpointercapture', onDragAbort, true);
+    globalThis.removeEventListener?.('scroll', onDragScroll, true);
+  }
+  if (!d?.moved) return;
+  _dragged = true;   // the click that follows a real drag is not a pick
+  if (!commit) return;
+  // AUDIT INV2 A-F8: the item is a reference held across time. Something
+  // else can empty the pack under a live drag - a peer, a quest, a
+  // script - and a stale one minted a ground pile for an item the player
+  // no longer owned.
+  if (!(deps.items?.() ?? []).includes(d.item)) return;
+  const want = dropIntent(d.item, document.elementFromPoint?.(d.x, d.y), d.item);
+  if (want?.kind === 'body') dropOnBody(d.item);
+  else if (want?.kind === 'reorder') reorderPack(d.item, want.item);
+  else if (want?.kind === 'stow') stow(d.item);
+}
+/** AUDIT INV2 A1: A FINGER THAT MEANT TO SCROLL MUST NOT DROP THE ITEM.
+ *  The shipped pack is not a list of rows - under `.pack-shell` every row
+ *  is a 56px TILE in a wrapping grid inside a scrolling column - and
+ *  every tile carried `touch-action: none`, so the only surface that
+ *  could start a scroll was the 6px gap between them. Every finger-down
+ *  was therefore a drag at a 4px threshold, and INV2 had just made a
+ *  release off the panel a DROP: on a phone the off-panel region is a
+ *  thin band down each side and across the top and bottom, which is
+ *  exactly where a flick ends. A failed scroll threw the item on the
+ *  floor, with no confirmation and no undo.
  *
- *  THE TARGET IS HIT-TESTED at the release rather than tracked by
- *  dragover, which is what lets the body and the rows share one seam:
- *  the worn map wants `dropOnBody`, another row wants `reorderPack`,
- *  and anywhere else wants nothing. */
+ *  So a touch drag begins on a HOLD, the way every other touch surface
+ *  in the world begins one: the rows pan by default (`touch-action:
+ *  pan-y`), a flick scrolls and is never a drag, and only a finger that
+ *  stays still picks anything up. Once it has, `.draglock` takes the
+ *  pan back for the rest of the gesture. A MOUSE keeps the 4px
+ *  threshold - a mouse has no scroll to steal. */
+const TOUCH_HOLD_MS = 320;
+const TOUCH_HOLD_SLOP = 8;
+const dragLock = (on) => document.body?.classList?.toggle('draglock', !!on);
+function dragArm() {
+  if (!drag || drag.moved) return;
+  drag.held = true;
+  drag.moved = true;
+  dragLock(true);
+  ghostStart(drag.item);
+  dragTo(drag.x, drag.y);
+}
+const onDragMove = (e) => {
+  if (!drag || e.pointerId !== drag.id) return;
+  const far = Math.abs(e.clientX - drag.x) + Math.abs(e.clientY - drag.y);
+  if (!drag.moved) {
+    // a finger that moves before the hold was scrolling: let it go
+    if (drag.touch) { if (far > TOUCH_HOLD_SLOP) dragStop(false); return; }
+    if (far <= 4) return;
+    drag.moved = true;
+    ghostStart(drag.item);
+  }
+  dragTo(e.clientX, e.clientY);
+};
+const onDragUp = (e) => { if (drag && e.pointerId === drag.id) dragStop(true); };
+const onDragAbort = (e) => { if (drag && (e.pointerId === undefined || e.pointerId === drag.id)) dragStop(false); };
+// AUDIT INV2 A-F5: a wheel moves the DOM under a STATIONARY cursor, so
+// the highlight and the verb went on naming a row the pointer had left
+// while the release hit-tested the one really under it - the player was
+// shown one row and given another ten away. The intent is recomputed at
+// the unchanged point.
+const onDragScroll = () => { if (drag?.moved) dragTo(drag.x, drag.y); };
+
 function dragFrom(row, item) {
-  let at = null;
-  const clear = () => {
-    row.classList.remove('dragging');
-    for (const n of document.querySelectorAll('.dragover')) n.classList.remove('dragover');
-  };
   row.onpointerdown = (e) => {
-    if (at || e.button > 0) return;   // one pointer; a second is ignored, never adopted
-    at = { id: e.pointerId, x: e.clientX, y: e.clientY, moved: false };
-    row.setPointerCapture?.(e.pointerId);
+    if (drag || e.button > 0) return;   // ONE pointer for the PANE: a second finger on a second row was how one drag dropped another's item
+    const touch = e.pointerType === 'touch' || e.pointerType === 'pen';
+    drag = { id: e.pointerId, item, row, x: e.clientX, y: e.clientY, moved: false, want: null, touch, hold: null };
+    if (touch) drag.hold = setTimeout(dragArm, TOUCH_HOLD_MS);
+    // The listeners are the WINDOW's: a repaint detaches this row, and a
+    // drag that lived on it died there with the ghost still on screen.
+    globalThis.addEventListener?.('pointermove', onDragMove, true);
+    globalThis.addEventListener?.('pointerup', onDragUp, true);
+    globalThis.addEventListener?.('pointercancel', onDragAbort, true);
+    globalThis.addEventListener?.('lostpointercapture', onDragAbort, true);
+    globalThis.addEventListener?.('scroll', onDragScroll, true);
   };
-  row.onpointermove = (e) => {
-    if (!at || e.pointerId !== at.id) return;
-    if (!at.moved && Math.abs(e.clientX - at.x) + Math.abs(e.clientY - at.y) <= 4) return;
-    if (!at.moved) { at.moved = true; dragging = item; row.classList.add('dragging'); }
-    clear();
-    row.classList.add('dragging');
-    const over = document.elementFromPoint?.(e.clientX, e.clientY);
-    const onBody = over?.closest?.('.wornmap');
-    const onRow = over?.closest?.('.itemrow');
-    if (onBody) onBody.classList.add('dragover');
-    else if (onRow && onRow !== row) onRow.classList.add('dragover');
-  };
-  row.onpointerup = (e) => {
-    if (!at || e.pointerId !== at.id) return;
-    const moved = at.moved;
-    at = null;
-    row.releasePointerCapture?.(e.pointerId);
-    if (!moved) return;   // under the threshold this was a tap: the click law has it
-    clear();
-    const held = dragging;
-    dragging = null;
-    const over = document.elementFromPoint?.(e.clientX, e.clientY);
-    if (!held) return;
-    if (over?.closest?.('.wornmap')) { dropOnBody(held); return; }
-    const onRow = over?.closest?.('.itemrow');
-    const target = onRow && onRow !== row ? rowItems.get(onRow) : null;
-    if (target) reorderPack(held, target);
-  };
-  row.onpointercancel = () => { at = null; dragging = null; clear(); };
   rowItems.set(row, item);
 }
+/** Whether a drag is carrying something right now - the click law and
+ *  the key law both have to know. */
+export const dragLive = () => !!drag?.moved;
+/** AUDIT INV2 A-F6/B-F6: THE CLICK GUARD WAS DEAD CODE. The row's own
+ *  `onclick` tested for the `.dragging` class, and the release strips
+ *  that class before it acts, so the test never fired - a drag released
+ *  on the panel's own chrome ("never mind") went on to SELECT the row it
+ *  had left, tooltip and all. The release leaves a latch instead, which
+ *  the click that follows it consumes. */
+let _dragged = false;
+export const takeDragClick = () => { const was = _dragged; _dragged = false; return was; };
+/** AUDIT INV2 A-F4: the pane going away ends the drag. The ghost is the
+ *  body's child, so emptying the host cannot reach it. */
+export const dragAbort = () => { if (drag) dragStop(false); };
 /** Which item a rendered row stands for - the hit test answers an
  *  ELEMENT, and the reorder needs the thing it represents. */
 const rowItems = new WeakMap();
@@ -790,14 +994,32 @@ function stow(item) {
     getQuest: deps.getQuest ?? null,
   });
   if (!plan.ok) return refuse(plan.refusal);
+  // AUDIT INV2 B-F2: THE MAP IS AN INTERCEPTION, not a transfer. AUDIT
+  // 26 F156: planStore answers `{ ok: true, map: true }` for a
+  // MiscItems.Map - the reveal runs, the paper is consumed, nothing
+  // lands in the destination. The classic window routes it
+  // (nativeInventory.js:755) and this one did not, so dragging a
+  // treasure map out of the pack dropped the paper on the floor and
+  // revealed nothing.
+  if (plan.map) { use(item, deps.items?.() ?? []); return; }
   // PX24 (Mac: an action taken closes the tooltip): the transfer
   // happens and the tip goes. The earlier law kept the ARRIVING item
   // picked so it could be put straight back; the player can pick it
   // again on the other side, and a tip that stays open after every
   // press is the quirk being fixed.
-  applyTransfer(item, plan, deps.items?.() ?? [], to);
-  picked = null;
-  side = 'remote';
+  // AUDIT INV2 B-F1: THE ENTITY AND THE PROVENANCE RIDE, as they do at
+  // the classic window's own call (nativeInventory.js:757). Without them
+  // `clearLightSourceOnLeave` - AUDIT 26 F157's first statement inside
+  // applyTransfer - is a no-op, so a LIT TORCH dropped on the ground
+  // went on lighting the player from where it lay. INV2 made that a
+  // gesture; it was already the button's.
+  applyTransfer(item, plan, deps.items?.() ?? [], to, { entity: deps.entity, fromLocal: true });
+  // AUDIT INV2 B-F9: `stow` was written for the BUTTON, whose argument
+  // is always `picked`; a drag hands it any row. Closing a tooltip the
+  // player opened on some OTHER item, and moving `side` to a remote list
+  // with nothing picked on it, is the button's business and not this
+  // item's.
+  if (picked === item) { picked = null; side = 'remote'; }
   refresh();
   render();
 }
@@ -813,6 +1035,11 @@ function take(item) {
     getQuest: deps.getQuest ?? null,
   });
   if (!plan.ok) return refuse(plan.refusal);
+  // AUDIT INV2 B-F2: the map is an interception in EITHER direction
+  // (itemTransfer.js:242, "F156: either direction") - taking one off a
+  // pile reveals and consumes it, exactly as stowing one does. The
+  // classic window routes both; this one routed neither.
+  if (plan.map) { use(item, remoteTarget(deps, sessionState())); return; }
   // E4: the pack IS the destination here, so DoTransferItem's gold
   // interception (:1562-1571) fires and answers null - its `return`
   // skips the choose-one close below, and there is no arriving record
@@ -1301,7 +1528,7 @@ function itemRow(item, from = 'local') {
     // AUDIT INV1 Fb: a release that DRAGGED is not a pick. The click
     // fires after pointerup, so without this a reorder would also
     // select the row it left.
-    if (row.classList.contains('dragging')) { row.classList.remove('dragging'); return; }
+    if (takeDragClick()) return;   // AUDIT INV2 A-F6: a release that DRAGGED is not a pick
     // AUDIT 26: "Send click to quest system" (:2027-2037) - the FIRST
     // act of RemoteItemListScroller_OnItemClick, ahead of the
     // action-mode branch, so LOOKING at a quest item in a pile counts
@@ -1770,6 +1997,14 @@ function onKey(e) {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
   const t = e.target;
   if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+  // AUDIT INV2 A-F7: A DRAG HAS AN ABORT, and it is the key every other
+  // gesture aborts with. There was none: the only release that changed
+  // nothing was one inside the windows, so a player who had picked up
+  // the wrong thing had nowhere safe to let go, and Escape - the obvious
+  // try - CLOSED THE PACK mid-drag and left the ghost stuck over the
+  // world (A-F4). Escape ends the drag and keeps the window; a second
+  // one closes it, as it always did.
+  if (overlayAction(e) === 'back' && drag) { e.preventDefault(); e.stopPropagation(); dragStop(false); return; }
   if (overlayAction(e) !== 'back' && e.key !== 'F6') return;
   e.preventDefault();
   e.stopPropagation();
@@ -1857,6 +2092,11 @@ export function mountEnhancedInventory(hostEl, d = {}) {
       lockHandler = null;
       // MW-D36: the figure's subscription has an owner too.
       _unsubscribeFigure?.(); _unsubscribeFigure = null;
+      // AUDIT INV2 A-F4: and so does a drag in flight. The ghost is the
+      // BODY's child, so emptying the host below cannot reach it - the
+      // pack closed mid-drag and left an item icon glued over the world,
+      // which re-opening the pack did not clear either.
+      dragAbort();
       hostEl.innerHTML = '';
       host = null;
       deps = {};
