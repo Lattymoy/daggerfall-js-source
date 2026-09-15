@@ -61,6 +61,18 @@ export function rollStats(career, rolls = Math.random) {
   return { stats, bonusPool };
 }
 
+// CHAR1 (2026-09-15, a player through Mac: "show the total dice rolls
+// in the enhanced character creator"): WHAT THE DICE ACTUALLY GAVE.
+// Neither screen ever said it. Eight values are rolled - a career
+// floor plus 0..10 each - and a bonus pool of 6..14 is rolled beside
+// them, and the only way to know whether a roll was a good one was to
+// add eight numbers by eye before deciding whether to press Reroll.
+export function statTotal(stats) {
+  let n = 0;
+  for (const k of STAT_KEYS) n += stats?.[k] ?? 0;
+  return n;
+}
+
 // ---- SkillsRollout constants + Reroll, verbatim ----
 export const SKILL_DEFAULT_MIN = 3;
 export const SKILL_DEFAULT_MAX = 6;

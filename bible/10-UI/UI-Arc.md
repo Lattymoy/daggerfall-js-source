@@ -13105,3 +13105,49 @@ were already on. The guard is the section actually changing; the
 category tabs keep their own unconditional discard, because leaving the
 controls category *is* a walk away even though the section does not
 change.
+
+## CHAR1 - THE ROLL'S TOTAL (2026-09-15, a player through Mac)
+
+*"Show the total dice rolls in the enhanced character creator."*
+
+Character creation rolls **nine** numbers and showed none of them added
+up. Eight attributes - the career's floor plus 0..10 each - and a bonus
+pool of 6..14 beside them. Deciding whether to keep a roll or press
+Reroll meant summing eight figures by eye, every time, on a screen whose
+whole purpose is that decision. Classic does not show it either; that is
+not a reason, because classic also has Save Roll and Load Roll for
+exactly this, and the enhanced wizard is where the port is allowed to be
+kinder.
+
+**The figure shown is the one that does not move.** `statUp` and
+`statDown` are strictly zero-sum (`ui/chargen.js:51-58`): a step moves
+one point between a stat and the pool, and a *refused* step - at
+`MAX_STAT_VALUE` above, at the rolled value below - moves neither side.
+So **working stats + pool is invariant for a given roll**, and it is
+exactly what the character walks out with. It changes only on Reroll,
+Load Roll, and the class's own re-entry.
+
+So the attributes screen shows `now -> final` while the pool is unspent,
+and one number once it is. No arithmetic, and nothing to misread: the
+left figure is what the eight rows currently add to, the right is where
+they land when the pool is gone.
+
+**It reads whichever pool is on screen.** The summary edits the same
+eight values against a *second* pool of its own - AUDIT 64 F33's
+finding, and the same trap one layer up. A total that read
+`this.statPool` would report the attributes screen's spent-out zero and
+run one point light for every step taken on the review. `statTotalFinal`
+goes through `_statPool()`, the accessor every other stat read here
+already uses, and the pin walks to the review and takes a step to prove
+it.
+
+**The bar is sticky**, so a second one would have sat on top of the
+first the moment the list scrolled. The total joins the pool in the one
+row instead, as a second `.poolcell`; a cell spreads its own key and
+value to its ends, so a bar with one cell is the bar exactly as it was.
+Two figures do not fit a phone's width side by side, so under 520px they
+stack.
+
+**Not seen running.** This container has no ARENA2, so the wizard cannot
+boot and `tools/enhancedTapProbe.mjs` cannot walk it. The arithmetic is
+driven end to end over a real `ChargenFlow` walk; the drawn row is not.
