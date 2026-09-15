@@ -98,7 +98,7 @@ import { dfWornEquipment } from '../formats/mwItemMap.js';
 import { ARMOR_ENUM } from '../combat/enemyEquipment.js';
 import { morrowindDataCount, morrowindDataCounted, countMorrowindArchives, assetPickerOpen } from '../scenes/dataSource.js';   // MAC1: the boot door counts the store itself; AUDIT 65 XL-6: by NAME - it never reads a stored file   // MW-IMPORT: the attach door; MWFIX: and the modal it opens owns the keyboard
 import { CATEGORIES, keysOf } from '../ui/settingsMap.js';
-import { widgetFor, blockedReason, formatValue, stepValue, COLOUR_KEYS } from '../ui/settingsLaw.js';
+import { widgetFor, blockedReason, formatValue, stepValue, COLOUR_KEYS, ENUM_LAW } from '../ui/settingsLaw.js';   // FT14: the enum's own values are the bar's segments
 import { labelOf, helpOf, INSTEAD, TIER_TEXT } from '../ui/settingsCopy.js';
 import {
   effectiveSettings, setValue, saveSettings, resetToDefaults, tierOf, DEFAULTS,
@@ -141,7 +141,7 @@ import { CREDITS } from './credits.js';   // CR1: who made what the port carries
 // dicts, neither of which belongs in a screen that repaints itself.
 import { paneControls, discardControlsStaging, captureArmed } from './enhancedControls.js';
 // FT0: the features home - one list over the three stores, filtered by kind
-import { FEATURES, KINDS, KIND_ORDER, filterFeatures, featureCounts, featureForControl, resolveControl } from '../systems/features.js';
+import { FEATURES, KINDS, KIND_ORDER, GROUPS, GROUP_ORDER, filterFeatures, featureCounts, featureForControl, resolveControl, modModules, modDials } from '../systems/features.js';   // FT14: the groups and each mod's curated keys
 import '../world/landView.js';   // RF4: the land-view lane registers itself with the registry
 import '../world/outdoors.js';   // RF4: the outdoors lane too
 
@@ -167,7 +167,7 @@ import '../world/outdoors.js';   // RF4: the outdoors lane too
 // by it. Empty at FT0; the Enhanced category of Settings and the Mods
 // section keep their rows until each one's slice moves it here
 // (bible/10-UI/Features-Arc.md).
-const SECTIONS_BOOT = ['Continue', 'New Game', 'Load Game', 'Online', 'Test Room', 'Settings', 'Controls', 'Features', 'Mods', 'About'];   // ONLINE1: the shared world's door
+const SECTIONS_BOOT = ['Continue', 'New Game', 'Load Game', 'Online', 'Test Room', 'Settings', 'Controls', 'Features', 'About'];   // FT14: Mods is gone - every mod is a tile on Features, and what the pane carried besides stands under them   // ONLINE1: the shared world's door
 // FD1 (Mac, 2026-09-11): the CLASSIC skin opens on this same door. Its
 // three game doors collapse into BEGIN, which leads into the classic
 // start sequence - the title, the film, Daggerfall's own start window -
@@ -176,7 +176,7 @@ const SECTIONS_BOOT = ['Continue', 'New Game', 'Load Game', 'Online', 'Test Room
 // SO1: ENHANCED left the rail for a category of Settings (settingsMap).
 // ONLINE1: ONLINE joins it - Mac: "if using classic, you'd see the
 // other user's paperdoll" - the same pane, the same save brought in.
-const SECTIONS_CLASSIC = ['Begin', 'Online', 'Settings', 'Controls', 'Features', 'Mods', 'About'];
+const SECTIONS_CLASSIC = ['Begin', 'Online', 'Settings', 'Controls', 'Features', 'About'];   // FT14
 
 // U51: the same rail with the boot-only questions swapped for the
 // in-game ones. Continue and New Game answer "which game", which is
@@ -189,7 +189,7 @@ const SECTIONS_CLASSIC = ['Begin', 'Online', 'Settings', 'Controls', 'Features',
 // mode's doors), and the pane says so in words. A rail that drops the
 // row instead teaches the player the door was never there - the same
 // argument the Mods section is built on.
-const SECTIONS_PAUSE = ['Resume', 'Save Game', 'Load Game', 'Settings', 'Controls', 'Features', 'Mods', 'About', 'Exit'];
+const SECTIONS_PAUSE = ['Resume', 'Save Game', 'Load Game', 'Settings', 'Controls', 'Features', 'About', 'Exit'];   // FT14
 
 const idOf = (label) => label.toLowerCase().split(' ')[0];
 
@@ -1436,22 +1436,26 @@ function packsCard() {
   return c;
 }
 
-function paneMods(body) {
-  // ROADS 24: a vendored mod's OWN switches, under the mod's own name,
-  // with the mod's own descriptions - where DFU's modsettings puts them.
-  // The row is a switch like DFU's, writing through modSettings.js.
-  if (isOnlinePage()) body.append(el('p', 'meta', ONLINE_LOCK_NOTE));   // OL1: said once at the top, and on every Enabled row
-  for (const [vendor, mod] of Object.entries(MOD_SETTINGS)) {
-    const mc = el('div', 'card');
-    mc.append(el('h3', null, `${mod.title} by ${mod.author}`));   // the creator's name in the title (Mac, 2026-09-08)
-    for (const [key, def] of Object.entries(mod.keys)) put(mc, modRow(vendor, key, def));   // FT13: a mod's Enabled that lives on the home is not drawn here
-    mc.append(el('p', 'meta', 'Takes effect when the world next loads.'));
-    body.append(mc);
-  }
+// FT14 (2026-09-15): THE MODS PANE IS GONE. Every vendored mod's
+// switch was already a tile on the features home (FT9), and its
+// modules and curated dials open inside that tile now, so the pane's
+// own reason - "the mod's other knobs live somewhere" - is spent.
+//
+// Three things it also carried were never mod settings and needed a
+// home rather than a deletion: the Morrowind assets card, the texture
+// packs' door, and DFU's four switches for ITS mod system. They stand
+// under the tiles on the same screen, where a player who came looking
+// for "mods" now arrives.
+//
+// What is NOT drawn any more is the full key list per vendor - that is
+// the 360-key scroll the tiles replace, and features.js MOD_CURATED
+// carries the reasoning and the door back for a key that earns one.
+function modsFooter(body) {
+  if (isOnlinePage()) body.append(el('p', 'meta', ONLINE_LOCK_NOTE));   // OL1: said once, under the tiles
   body.append(morrowindCard());   // SO1: the assets card, off the Enhanced pane
   body.append(packsCard());       // SO1/M-EXT: the packs' door, off the launcher
   const c = el('div', 'card');
-  c.append(el('h3', null, "DFU's mod switches"));
+  c.append(el('h3', null, "Daggerfall Unity\u2019s own mod system"));
   for (const key of ['Enhancements/LypyL_ModSystem', 'Enhancements/AssetInjection',
     'Enhancements/CompressModdedTextures', 'Experimental/CustomBooksImport']) {
     put(c, settingRow(key));
@@ -1553,6 +1557,208 @@ function modRow(vendor, key, def, { name = null, note = null, home = false } = {
 // The registry (systems/features.js) is empty at FT0 and fills one
 // audited slice at a time; an empty list says so rather than hiding
 // the section (the rail-hole law, SECTIONS_BOOT).
+// ── FT14: ONE ROOF (2026-09-15, Mac: "get rid of the mod panel and
+// integrate certain feature/mod adjustments into the toggle themselves
+// and move away from the scrolling list format") ──────────────────
+//
+// THE THESIS: there are no switches. Every control is a BAR, and Off
+// is simply its first segment. A two-state row and a four-state row
+// are then the same object at two widths, so the eye learns one
+// control and the panel stops alternating between a toggle and a
+// stepper depending on which store a row happens to sit in.
+//
+// What that buys is the tile. A row had to be a row because the switch
+// sat at the right margin and the words ran to meet it; a bar sits
+// UNDER its name, so the whole thing fits a card, and cards tile.
+// Twenty-eight of them stand in a grid on one screen where the list
+// scrolled, and the note that made each row tall moves to the reading
+// rail, which shows the one tile you are pointed at.
+//
+// And the Mods pane is gone. A mod's modules and its curated dials
+// (systems/features.js MOD_CURATED) open INSIDE its tile, drawn by the
+// same `modRow` the pane used - no second copy of anything, and the
+// player never leaves this screen.
+
+/** FT14: the STATES of a row, whatever store it lives in - the one
+ *  adapter the bar reads. `labels` are the segments in order, `at` is
+ *  the live one, `set(i)` writes through that store's own door, and
+ *  `locked` is OL1's forced answer (the lane decides, the bar shows it
+ *  and refuses the press). A store that cannot answer in segments -
+ *  a colour, a free number - is not given a bar; `null` sends the row
+ *  back to its own builder, which is how the panel stays honest about
+ *  the controls it has not learned yet. */
+function tileStates(f) {
+  const c = resolveControl(f);
+  if (c.store === 'prefs') {
+    const locked = onlineForcedPref(c.key) !== undefined;
+    if (c.tiers) {
+      const cur = String(c.read ? c.read() : getPref(c.key));
+      const at = Math.max(0, c.tiers.findIndex(([v]) => String(v) === cur));
+      return { labels: c.tiers.map(([, l]) => l), at, locked,
+        set: (i) => (c.write ?? ((v) => setPref(c.key, v)))(c.tiers[i][0]) };
+    }
+    return { labels: ['Off', 'On'], at: getPref(c.key) ? 1 : 0, locked,
+      set: (i) => setPref(c.key, i === 1) };
+  }
+  if (c.store === 'settings') {
+    const [sec, k] = c.key.split('/');
+    const raw = effective()[sec]?.[k];
+    const w = widgetFor(c.key);
+    if (w === 'switch') {
+      return { labels: ['Off', 'On'], at: raw === 'True' ? 1 : 0, locked: false,
+        set: (i) => write(c.key, i === 1 ? 'True' : 'False') };
+    }
+    if (w === 'enum' && ENUM_LAW[c.key]?.encode === 'index') {
+      const vals = ENUM_LAW[c.key].values;
+      const i = parseInt(raw, 10);
+      return { labels: vals, at: Number.isInteger(i) && i >= 0 && i < vals.length ? i : 0, locked: false,
+        set: (n) => write(c.key, String(n)) };
+    }
+    return null;
+  }
+  // a vendored mod's Enabled - OL1 forces every mod on in a shared world
+  const on = modSetting(c.vendor, c.key) === true || modSetting(c.vendor, c.key) === 'True';
+  return { labels: ['Off', 'On'], at: on ? 1 : 0,
+    locked: onlineForcedModSetting(c.vendor, c.key) !== undefined,
+    set: (i) => setModSetting(c.vendor, c.key, i === 1) };
+}
+
+/** FT14: the bar. One object for two states or five. */
+function segBar(st, label) {
+  const seg = el('div', `ft-seg${st.at > 0 ? ' is-on' : ''}${st.locked ? ' locked' : ''}`);
+  seg.setAttribute('role', 'group');
+  seg.setAttribute('aria-label', label);
+  st.labels.forEach((L, i) => {
+    const b = el('button', `ft-segb${i === 0 ? ' off' : ''}`, L);
+    b.type = 'button';
+    b.setAttribute('aria-pressed', String(i === st.at));
+    if (st.locked) {
+      b.disabled = true;
+      b.setAttribute('aria-disabled', 'true');
+      b.title = ONLINE_LOCK_NOTE;
+    } else {
+      b.onclick = (e) => { e.stopPropagation(); st.set(i); render(); };
+    }
+    seg.append(b);
+  });
+  return seg;
+}
+
+/** FT14: which tile the reading rail is showing, and which tile has its
+ *  drawer open. Both survive a `render()`, so pressing a segment does
+ *  not close the drawer you pressed it in. */
+let featureSel = null;
+let featureOpen = null;
+
+/** FT14: one feature, as a tile. */
+function featureTile(f) {
+  const c = resolveControl(f);
+  const st = tileStates(f);
+  const t = el('div', `ft-tile${featureSel === f.id ? ' sel' : ''}`);
+  t.dataset.on = st && st.at > 0 ? '1' : '0';
+  if (st?.locked) t.dataset.locked = '1';
+  t.tabIndex = 0;
+  const show = () => { featureSel = f.id; paintRail(); for (const n of document.querySelectorAll('.ft-tile')) n.classList.toggle('sel', n === t); };
+  t.onmouseenter = show;
+  t.onfocus = show;
+  t.onclick = show;
+
+  t.append(el('div', 'ft-tile-name', f.title));
+  const meta = el('div', 'ft-tile-meta');
+  for (const k of KIND_ORDER) if (f.kinds.includes(k)) meta.append(el('span', `kind ${k}`, KINDS[k].label));
+  if (st?.locked) meta.append(el('span', 'ft-tile-lock', 'online'));
+  t.append(meta);
+
+  // the control, or the row's own builder when it is not a bar
+  if (st) t.append(segBar(st, f.title));
+  else t.append(featureRow(f));
+
+  // the drawer's door: a mod's modules and dials.
+  //
+  // AUDIT FT14: the vendor is the row's OWN when it has one, and
+  // otherwise the one it COVERS. A condensed row (FT2's `also`) drives
+  // a mod's switch without living in the mods store - Enhanced
+  // environments is Dynamic Skies' Enabled, through its three-way -
+  // and reading `c.vendor` alone left that mod's five particle keys
+  // with no tile to open once the Mods pane was gone. `also` already
+  // declared the cover; the drawer follows it.
+  const vendor = c.store === 'mods' ? c.vendor
+    : (Array.isArray(c.also) ? c.also.find((a) => a.store === 'mods')?.vendor : null) ?? null;
+  if (vendor) {
+    const mods = modModules(vendor);
+    const dials = modDials(vendor);
+    if (mods.length || dials.length) {
+      const open = featureOpen === f.id;
+      const b = el('button', 'ft-tile-more');
+      b.type = 'button';
+      b.setAttribute('aria-expanded', String(open));
+      b.append(el('span', `ft-tile-car${open ? ' open' : ''}`, '\u203a'), document.createTextNode(' '
+        + [mods.length ? `${mods.length} modules` : '', dials.length ? `${dials.length} dials` : '']
+          .filter(Boolean).join(' \u00b7 ')));
+      b.onclick = (e) => { e.stopPropagation(); featureOpen = open ? null : f.id; render(); };
+      t.append(b);
+      if (open) t.append(featureDrawer(vendor, mods, dials));
+    }
+  }
+  return t;
+}
+
+/** FT14: what a mod's tile opens - its modules as chips, its curated
+ *  dials as the same `modRow` the Mods pane drew. The keys NOT here
+ *  keep the values the mod ships (features.js MOD_CURATED says why). */
+function featureDrawer(vendor, mods, dials) {
+  const d = el('div', 'ft-tile-drawer');
+  d.onclick = (e) => e.stopPropagation();
+  if (mods.length) {
+    d.append(el('div', 'ft-drawer-label', 'Modules'));
+    const box = el('div', 'ft-chipset');
+    for (const key of mods) {
+      const on = modSetting(vendor, key) === true;
+      const b = el('button', 'ft-mchip', key.slice('Modules.'.length).replace(/([a-z])([A-Z])/g, '$1 $2'));
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(on));
+      b.onclick = () => { setModSetting(vendor, key, !on); render(); };
+      box.append(b);
+    }
+    d.append(box);
+  }
+  if (dials.length) {
+    d.append(el('div', 'ft-drawer-label', 'Dials'));
+    for (const key of dials) d.append(modRow(vendor, key, MOD_SETTINGS[vendor].keys[key], { home: true }));
+  }
+  return d;
+}
+
+/** FT14: the reading rail - the note and the effect line the tiles no
+ *  longer carry, for whichever tile is pointed at. */
+function paintRail(rail = document.getElementById('ft-rail')) {
+  // the pane is still DETACHED while paneFeatures builds it, so the
+  // first paint is handed its rail rather than looking one up - by id
+  // it found nothing and the rail stood empty until the first hover.
+  if (!rail) return;
+  const f = FEATURES.find((x) => x.id === featureSel) ?? null;
+  rail.textContent = '';
+  if (!f) { rail.append(el('p', 'meta', 'Point at a tile to read what it does.')); return; }
+  const c = resolveControl(f);
+  rail.append(el('div', 'ft-rail-k', 'Selected'));
+  rail.append(el('h3', null, f.title));
+  if (f.note) rail.append(el('p', 'ft-rail-note', f.note));
+  if (f.effect) rail.append(el('p', 'ft-rail-effect', f.effect));
+  const kv = el('dl', 'ft-rail-kv');
+  const pair = (k, v) => { kv.append(el('dt', null, k), el('dd', null, v)); };
+  pair('Stored', c.store === 'prefs' ? 'Port preferences'
+    : c.store === 'mods' ? `${MOD_SETTINGS[c.vendor].title}\u2019s own modsettings`
+      : 'Daggerfall Unity settings.ini');
+  const rv = c.store === 'mods' ? c.vendor
+    : (Array.isArray(c.also) ? c.also.find((a) => a.store === 'mods')?.vendor : null) ?? null;
+  if (rv) {
+    const n = Object.keys(MOD_SETTINGS[rv].keys).length;
+    const shown = 1 + modModules(rv).length + modDials(rv).length;
+    pair('Settings', `${shown} of ${n} shown \u2013 the rest keep the mod\u2019s own values`);
+  }
+  rail.append(kv);
+}
+
 function paneFeatures(body) {
   const counts = featureCounts(FEATURES);
   const chips = el('div', 'chips');
@@ -1578,9 +1784,32 @@ function paneFeatures(body) {
     body.append(empty(`No ${KINDS[featureKind].label} rows yet`, KINDS[featureKind].blurb));
     return;
   }
-  const c = el('div', 'card');
-  for (const f of rows) c.append(featureRow(f));
-  body.append(c);
+  // FT14: two panes - the tiles, grouped by what they change, and the
+  // rail that reads out whichever one is pointed at. The kind is a
+  // FILTER (the chips above) and no longer a heading, because "who
+  // wrote it" does not group anything a player is looking for.
+  if (featureSel && !rows.some((f) => f.id === featureSel)) featureSel = null;   // the filter took the selected tile away
+  body.classList.add('wide');   // FT14: .body is capped at 720px for READING; a tile grid is scanned, not read
+  const panes = el('div', 'ft-panes');
+  const main = el('div', 'ft-main');
+  for (const g of GROUP_ORDER) {
+    const items = rows.filter((f) => f.group === g);
+    if (!items.length) continue;
+    const head = el('div', 'ft-grouphead');
+    head.append(el('h2', null, GROUPS[g].label), el('span', 'ft-gn', String(items.length)), el('span', 'ft-gline'));
+    main.append(head);
+    const grid = el('div', 'ft-grid');
+    for (const f of items) grid.append(featureTile(f));
+    main.append(grid);
+  }
+  const rail = el('aside', 'ft-rail');
+  rail.id = 'ft-rail';
+  rail.setAttribute('aria-live', 'polite');
+  panes.append(main, rail);
+  body.append(panes);
+  if (!featureSel) featureSel = rows[0].id;
+  paintRail(rail);
+  if (featureKind == null || featureKind === 'mod') modsFooter(body);   // FT14: what the Mods pane carried that was never a mod setting
 }
 
 /** The kind labels a row wears, in KIND_ORDER whatever order the row lists them. */
@@ -1835,7 +2064,7 @@ export const SYSTEM_PANES = Object.freeze([
   ['resume', 'Resume'], ['save', 'Save Game'], ['load', 'Load Game'],
   ['settings', 'Settings'], ['controls', 'Controls'],
   ['features', 'Features'],   // FT0
-  ['mods', 'Mods'], ['about', 'About'], ['exit', 'Exit'],
+  ['about', 'About'], ['exit', 'Exit'],   // FT14: no Mods pane
 ]);
 
 /** FIX-F: the pane, closed over the shell's own repaint - the shape
@@ -1872,7 +2101,7 @@ function pauseSystem(body) {
     ({
       save: paneSave, load: paneLoad, controls: paneControlsPane,
       features: paneFeatures,   // FT0
-      mods: paneMods, about: paneAbout, exit: paneExit,
+      about: paneAbout, exit: paneExit,
     })[sysSec](detail);
   }
   wrap.append(detail);
@@ -2317,7 +2546,7 @@ function renderInto() {
         test: paneTest,
         save: paneSave, exit: paneExit,
         features: paneFeatures,   // FT0
-        mods: paneMods, about: paneAbout, begin: paneBegin,   // FD1: the classic rail's door; SO1: Enhanced is a Settings category now
+        about: paneAbout, begin: paneBegin,   // FD1: the classic rail's door; SO1: Enhanced is a Settings category now
         controls: paneControlsPane,
       })[section](body);
     }
