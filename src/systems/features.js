@@ -235,8 +235,13 @@ export const FEATURES = Object.freeze([
   }),
   // LR1 (2026-09-14): LOOT RARITY - the port's own item ladder
   // (systems/lootRarity.js): Common, Magic, Rare, Legendary, with
-  // DFU's artifacts as the ceiling. Enhanced, off by default: it
-  // changes what drops, and DFU's loot is the 1:1 law.
+  // DFU's artifacts as the ceiling. Enhanced, and ON (LR5, 2026-09-15,
+  // Mac: "I want to mod on by default"). It shipped off beside
+  // enhancedAI on the reasoning that a row changing the RULES waits to
+  // be asked for; Mac's call is that this one is the port's own game
+  // and should be what a player meets. The 1:1 lane is not lost - the
+  // row is one press away, and off is DFU's loot exactly, field for
+  // field.
   Object.freeze({
     id: 'loot-rarity',
     title: 'Loot rarity',
@@ -249,7 +254,7 @@ export const FEATURES = Object.freeze([
       + 'Off is Daggerfall\u2019s loot exactly; items already rolled keep their tier and their names but their affixes rest.',
     effect: 'Takes effect on the next roll; worn affixes follow within a magic round.',
     kinds: Object.freeze(['enhanced']),
-    control: Object.freeze({ store: 'prefs', key: 'lootRarity', initial: false, online: true }),   // LR1: off by default as enhancedAI is - it changes what drops; the lane forces it on
+    control: Object.freeze({ store: 'prefs', key: 'lootRarity', initial: true, online: true }),   // LR5: ON by default (Mac) - the ladder is the port's own game, not an opt-in; the lane forces it on online as it always did
   }),
   // WIND3 (2026-09-14, Mac: wisps that show the wind, a quiet wind, the
   // trees moving with it): THE WIND SEEN AND HEARD - three rows over the

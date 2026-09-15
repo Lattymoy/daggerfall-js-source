@@ -112,7 +112,7 @@ test('RF1: DFU\'s enchantment channel is INSIDE the accessor, verbatim - Strengt
 
 test('RF1: the weapon-damage modifiers run in registration order over the roll, and none is DFU\'s roll alone', () => {
   const w = { group: 'Weapons', templateIndex: 120, material: 1 };
-  assert.equal(weaponDamageMods(w, 10), 10, 'the loot-rarity modifier is registered but the switch is off: the roll stands');
+  assert.equal(weaponDamageMods(w, 10), 10, 'the loot-rarity modifier is registered and (LR5) the switch is ON, but this weapon carries no affixes: the roll stands');
   registerWeaponDamageMod('rf1-x', (weapon, d) => d + 3);
   registerWeaponDamageMod('rf1-y', (weapon, d) => d * 2);
   try {
