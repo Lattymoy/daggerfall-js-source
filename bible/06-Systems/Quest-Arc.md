@@ -5853,10 +5853,49 @@ BRIDGE. A caller that builds a `QuestMachine` directly - tests, tools -
 still gets silence. Every real host goes through the bridge, and
 `machine.js` now says that instead of claiming loudness itself.
 
+### Second pass - the read against DFU's C#, and what it produced
+
+The port-to-original line ratios pointed the way: most modules sit near
+0.5 (ordinary C#-to-JS), and two sat lower - `parser.js` at 0.38 and
+`actions.js` at 0.36. A thin port of a thick original is where a missing
+term hides, so that is where the read started.
+
+**Both came back clean, and the way they were checked is the deliverable.**
+
+- **The parser's directive set is 6 for 6** with `Parser.cs`
+  (`quest:`, `displayname:`, `qrc:`, `qbn:`, `task:`, `performed:`). The
+  low line ratio is delegation - `parseUtils.js`, `message.js`,
+  `table.js` carry what C# keeps inline - not omission.
+- **All 82 action patterns match, skeleton for skeleton.**
+
+That second one is the finding worth having. **A quest script is a text
+file**, and every line of every one of the 265 vendored quests reaches
+the machine through exactly one action's `Pattern` regex. Those 82
+patterns ARE the quest system's surface: a missing alternative is a quest
+line the reference accepts and this port silently refuses, and nothing in
+the suite was comparing them.
+
+The repo already has a family of pins that **regenerate a port table from
+DFU's own C# and compare** - ENEMY_BASICS off `EnemyBasics.cs`,
+LOOT_MATRICES off `LootTables.cs`, the ingredient ITEM_GROUPS off
+`ItemEnums.cs` (PY1, `test/dfuRoot.mjs`). The quest system had no member
+of it. `test/auditquest_patterns.test.js` is that member.
+
+**The one language difference that is not drift.** C# permits the same
+named group in different alternates of one regex; JavaScript does not, so
+the port renames the repeats (`symbol2`, `sym`, `setvarName`, `notName`).
+Seven patterns differ in exactly that way and in no other way. The
+comparison therefore erases group naming and compares pure structure -
+the alternatives, the literal words, the character classes, the
+quantifiers, the order - and on that footing it is **82 for 82, exact**.
+
+Mutation-verified three ways: dropping an alternative from a pattern,
+loosening a character class, and removing the one declared guard each
+redden it.
+
 ### Still to come
 
-The member-by-member read against DFU's C# (10,385 lines of
-`Game/Questing/` are in the container) and the mutation campaign, whose
-file list will be **derived** - AUDIT-TALK's harness used a hand-written
-twelve-file list, reported thirteen survivors, and deriving the list gave
-eighty-seven files and caught eleven of them as harness artefacts.
+The mutation campaign against the quest pins, whose file list will be
+**derived** - AUDIT-TALK's harness used a hand-written twelve-file list,
+reported thirteen survivors, and deriving the list gave eighty-seven
+files and caught eleven of them as harness artefacts.
