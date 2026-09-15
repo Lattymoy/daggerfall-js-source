@@ -317,6 +317,52 @@ that still holds - but "derived" is a claim about an implementation, and
 four of these gates claimed it while quietly enumerating. The gates need
 auditing on the same cycle as the port.
 
+## CRASH1, 2026-09-15 - the first one a player found
+
+Someone tried the deployed build and reported it plainly: *"had a lot of
+javascript issues with regards to menu accessibility. Opening the logbook
+and pressing L reliably causes the errors, as well as sometimes randomly
+when trying to access the pause menu with escape. It looks like a
+potentially cool project, but it certainly needs a lot of time to cook."*
+
+**Both symptoms were one defect, and it is this program's own shape.**
+
+`ui/chronicleDoor.js`'s enhanced window - the logbook, on the DEFAULT
+skin - answered `onKey`/`onPointer`, a contract **nothing in this tree
+reads**, and had no `input`. The hosts dereference `input` unguarded on
+every key that maps to an action, and `ui/input.js`'s `overlayAction`
+maps `'char:<k>'` for every letter, digit and space and `'back'` for
+Escape. So with the logbook open, L threw - and so did the whole
+alphabet, which is why it was "reliable" - and Escape threw, which is the
+pause key, and is why that one looked "random": it needed the logbook to
+be the window that happened to be up.
+
+**Four sibling doors carry a comment describing this exact failure, word
+for word.** `pauseDoor`, `inventoryDoor`, `charSheetDoor` and
+`spellbookDoor` each hit it first and each wrote down what it cost - "a
+missing arm is a TypeError thrown inside the host's keydown handler".
+The rule was enforced in four files by whoever remembered to copy the
+block, and the fifth door never got it.
+
+That is the enumeration problem exactly, and it is worth being blunt
+about what it means: **the program's own thesis was demonstrated on a
+player.** HARD1-4 and two audits found and paid a dozen defects, and the
+one that reached a human was a rule written in four comments and held by
+none of them.
+
+`test/crash1_overlay_contract.test.js` derives it: the door list comes
+off `ui/`, every DOM-overlay window must answer `input`/`draw`/`close`/
+`dispose`, the dead `onKey`/`onPointer` contract is banned outright, and
+the ban re-checks that no host has started reading it. Mutation-verified
+by restoring the original defect.
+
+Two smaller things came with it. The window also had no `dispose`, so
+`showOverlay`'s `outgoing?.dispose?.()` never removed its DOM node - a
+second logbook press left the first one's div in the body with its Tab
+registration live. And a sweep of every overlay-slot window in `ui/` and
+`scenes/` confirms the chronicle was the only one missing the contract,
+so "a lot of javascript issues" was one door, hit many ways.
+
 ## The standing rule this program adds
 
 When an audit finds a defect, the fix is not finished when the defect is
