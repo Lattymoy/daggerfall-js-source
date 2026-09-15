@@ -36,6 +36,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { isEnhanced } from '../systems/uiSkin.js';
+import { mountEnhancedChunk } from './enhancedChunk.js';   // MENU1: the one lazy-chunk door
 import { registerOverlay } from './enhancedOverlays.js';   // PX28: Tab puts it away
 import { inventoryArtLoaded } from './nativeInventory.js';
 import { NativeInventoryWindow } from './classicInventory.js';   // CM5: DFU partial-stack input popup
@@ -128,14 +129,15 @@ function enhancedInventoryOverlay(deps) {
   // beside its own - the model figure reads fpArm.figure() when a body
   // stands and never touches it otherwise. Enhanced only: this door is
   // the enhanced skin's.
-  Promise.all([import('./enhancedInventory.js'), import('../combat/fpArm.js').catch(() => null)])
-    .then(([{ mountEnhancedInventory }, armMod]) => {
-      if (fired) { host.remove(); return; }   // disposed before the module landed
+  // MENU1: the ONE lazy-chunk door (ui/enhancedChunk.js). The arms
+  // module keeps its own optional catch - a missing fpArm is a feature
+  // that is off, not a screen that failed.
+  mountEnhancedChunk({
+    load: () => Promise.all([import('./enhancedInventory.js'), import('../combat/fpArm.js').catch(() => null)]),
+    mount: ([{ mountEnhancedInventory }, armMod]) => {
       view = mountEnhancedInventory(host, { ...deps, onExit: close, fpArm: armMod?.fpArm ?? null });
-    }).catch((e) => {
-    console.warn('[inventory] the enhanced pack would not mount', e);
-    host.remove();
-    fired = true;
+    },
+    alive: () => !fired, host, onDismiss: () => { host.remove(); fired = true; }, label: 'inventory',
   });
 
   return overlay;
