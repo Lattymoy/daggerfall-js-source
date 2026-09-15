@@ -33,6 +33,7 @@ import {
   paneControls, discardControlsStaging, captureArmed, controlsStaging,
   controlsDuplicates, GRID_ACTIONS, ADVANCED_ROWS, MULTIPLE_ASSIGNMENTS, DEFAULTS_PROMPT,
 } from '../src/ui/enhancedControls.js';
+import { CATEGORY_IDS } from '../src/ui/settingsMap.js';   // AUDIT FT16 CTRL-a: the door the bindings live behind
 import { SYSTEM_PANES } from '../src/ui/enhancedMenu.js';
 import { KEYBIND_ROWS } from '../src/ui/mouseControlsWindow.js';
 import { bindings, setBindings, isTextEntryTarget } from '../src/ui/input.js';
@@ -152,6 +153,15 @@ test('FT16: the key bindings live inside Settings, and both doors still reach th
   assert.ok(list('SECTIONS_PAUSE').includes('Settings'),
     'Escape must reach the key bindings - the whole of FIX-F\'s bug');
   assert.ok(list('SECTIONS_BOOT').includes('Settings'), 'and so must the front door');
+  // AUDIT FT16 CTRL-a: the bindings are reachable only through a
+  // Settings CATEGORY now, and nothing held that the category EXISTS -
+  // deleting `controls` from CATEGORIES makes them unreachable from the
+  // front door, which is FIX-F's original bug restored, and this pin
+  // (which inherited FIX-F's law) sailed past it. The door and the
+  // renderer are both held now.
+  assert.ok(CATEGORY_IDS.includes('controls'),
+    'FIX-F: there is a category to reach the bindings THROUGH - a renderer with no door is the bug this law is about');
+
   // and Controls is no longer a door of its own, on any rail or in the
   // pause window's System page
   for (const r of ['SECTIONS_BOOT', 'SECTIONS_CLASSIC', 'SECTIONS_PAUSE']) {
@@ -428,6 +438,25 @@ test('FIX-F: leaving without CONTINUE discards', () => {
   const unmount = src.slice(src.indexOf('    unmount() {'));
   assert.match(unmount, /discardControlsStaging\(\);/,
     'a document listener that outlives its screen is the bug the unmount note names');
+
+  // AUDIT FT16 F10: ...on every way OUT, and nowhere else. FIX-F guarded
+  // this with `id !== 'controls'` - Controls was its own section, so a
+  // click on the section you stood in kept your staging. FT16 folded
+  // Controls into a Settings category and dropped the guard with the
+  // section, so clicking the Settings rail row WHILE REBINDING (the row
+  // is right there, and it is the section you are in) threw the staged
+  // binds away. The discard belongs to a section CHANGE.
+  const goBody = src.slice(src.indexOf('function go(id) {'), src.indexOf('// ── PX1'));
+  const goCode = goBody.replace(/\/\/[^\n]*/g, '');
+  assert.match(goCode, /if \(id !== section\) discardControlsStaging\(\);/,
+    'go() drops the staging when the section actually changes - not when the rail row is the section you are in');
+  assert.doesNotMatch(goCode, /^\s*discardControlsStaging\(\);/m,
+    'and never unconditionally (AUDIT FT16 F10)');
+  // the category tabs keep their own unconditional drop - THAT switch is
+  // a walk away from the bindings even though the section does not change
+  const tabs = src.slice(src.indexOf('if (on) { pickedKey = null; sheetOpen = true; }'));
+  assert.match(tabs.slice(0, 200), /discardControlsStaging\(\); category = cat\.id;/,
+    'leaving the controls CATEGORY still discards');
 });
 
 test('FIX-F: the ✕ prompts to remove, refuses an unbound slot, and Yes stages null', () => {

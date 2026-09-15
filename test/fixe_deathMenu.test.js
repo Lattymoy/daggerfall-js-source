@@ -9,7 +9,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { endRunToTitleMenu, frameHeld, DEATH_VIDEO_WATCHDOG_MS } from '../src/scenes/shared.js';
+import { endRunToTitleMenu, frameHeld, DEATH_VIDEO_WATCHDOG_MS, playDeathVideo } from '../src/scenes/shared.js';   // AUDIT DEATH1 F2: the real function is driven now
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 
@@ -40,15 +40,39 @@ test('FIX-E: the death seam HOLDS the frame (the host waits, and lives), and rel
 // death screen it had been drawing stopped, the video not yet begun. On a
 // cold cache that is seconds of nothing, and the last thing drawn was the
 // death fade, so it reads as a hang.
-test('DEATH1: nothing is held until the video is loaded - the load is not a black screen', () => {
+test('DEATH1: nothing is held until the video is loaded - the load is not a black screen', async () => {
+  // AUDIT DEATH1 F2: this pin was GREP-ONLY. playDeathVideo was never
+  // executed by anything - every behavioural test injects its own `play`
+  // seam - so the law lived in two regexes, and a regex cannot see an
+  // await. Driven proof of the gap: one more `await import(...)` placed
+  // AFTER ready() restored Mac's black screen and passed the whole
+  // suite. The real function is DRIVEN here now.
+  const order = [];
+  let loadDone = null;
+  const load = () => new Promise((r) => {
+    loadDone = () => { order.push('loaded'); r({ playVideo: (...a) => { order.push(`play:${a[2]}`); return 'played'; }, bytes: 'BYTES' }); };
+  });
+  const ready = () => order.push('ready');
+  const p = playDeathVideo({ canvas: null }, ready, load);
+  await Promise.resolve();
+  assert.deepEqual(order, [], 'nothing is signalled while the load is still out');
+  loadDone();
+  assert.equal(await p, 'played');
+  // THE LAW: loaded, THEN the hold, THEN the video - and the bytes the
+  // load returned are the bytes played.
+  assert.deepEqual(order, ['loaded', 'ready', 'play:BYTES'],
+    'the hold is raised after everything is loaded and before anything is drawn');
+
   const src = read('src/scenes/shared.js');
-  const fn = src.slice(src.indexOf('async function playDeathVideo('), src.indexOf('export async function endRunToTitleMenu('));
-  // the ready signal fires AFTER the bytes are in hand, never before
-  assert.match(fn, /const bytes = await getBytes\('ANIM0012\.VID'\);\s*\n\s*ready\(\);/,
-    'the signal is raised once the bytes are read, not at the top of the load');
-  assert.ok(fn.indexOf('ready()') > fn.indexOf('await import'), 'and after the dynamic imports');
+  const fn = src.slice(src.indexOf('export async function playDeathVideo('), src.indexOf('export async function endRunToTitleMenu('));
+  // AND NOTHING AWAITS AFTER THE SIGNAL. This is the half the drive
+  // above cannot see: an added load after ready() is still "loaded,
+  // ready, play" in order, just with black frames in between.
+  const afterReady = fn.slice(fn.indexOf('ready();')).replace(/\/\/[^\n]*/g, '');   // the CODE, not the prose about it
+  assert.equal(/\bawait\b/.test(afterReady), false,
+    'no load may follow the hold - every await after ready() is a black frame (AUDIT DEATH1 F2)');
   const body = src.slice(src.indexOf('export async function endRunToTitleMenu('), src.indexOf('export async function endRunToTitleMenu(') + 1200);
-  assert.match(body, /const ready = \(\) => \{ releaseFrame \?\?= holdFrame\(\); \};/, 'the hold is the signal, taken once');
+  assert.match(body, /const ready = \(\) => \{ if \(!closed\) releaseFrame \?\?= holdFrame\(\); \};/, 'the hold is the signal, taken once - and only while the seam is open (AUDIT DEATH1 F7)');
   assert.match(body, /play\(renderer, ready\)/, 'and the player is handed it');
   // the watchdog still covers the LOAD as well as the play - a read that
   // never settles is a return to the menu, not a trap on the death screen
@@ -67,7 +91,32 @@ test('FIX-E: a video that never settles is a BOUNDED wait - the watchdog navigat
   const body = src.slice(src.indexOf('export async function endRunToTitleMenu('), src.indexOf('export async function endRunToTitleMenu(') + 900);
   assert.match(body, /releaseFrame \?\?= holdFrame\(\);/, 'the hold, not the claim (DEATH1: taken when the video is ready)');
   assert.doesNotMatch(body, /claimFrame\(\)/, 'no claim before the awaits');
-  assert.match(body, /\} finally \{\s*\n\s*releaseFrame\?\.\(\);\s*\n\s*exitToTitleMenu\(\);\s*\n\s*\}/, 'the return is in a finally (DEATH1: and a hold never taken is nothing to release)');
+  assert.match(body, /\} finally \{\s*\n\s*closed = true;[^\n]*\n\s*releaseFrame\?\.\(\);\s*\n\s*exitToTitleMenu\(\);\s*\n\s*\}/, 'the return is in a finally (DEATH1: and a hold never taken is nothing to release)');
+});
+
+// AUDIT DEATH1 F7 (2026-09-15): THE WATCHDOG IS A RACE, NOT A CANCEL.
+// Every DEATH1 assertion above either injects a `play` that settles or
+// reads the source as text; none drove the one order that matters -
+// the watchdog fires, the seam returns, and THEN the load settles and
+// calls ready(). Before the `closed` latch that took a hold whose only
+// release closure had already been read as null: frameHeld() true with
+// nothing left to release it, world.js and exterior.js skipping every
+// frame forever. Mac's black screen, re-made by its own fix. Driven:
+test('AUDIT DEATH1 F7: a load that settles AFTER the watchdog cannot take a hold nobody can release', async () => {
+  assert.equal(frameHeld(), false, 'clean start');
+  let ready = null;
+  // the play never settles, and hands out its ready() the way the real
+  // playDeathVideo does - the load is still out when the race is lost
+  const p = endRunToTitleMenu({ canvas: null }, {
+    play: (_r, r) => { ready = r; return new Promise(() => {}); },
+    watchdogMs: 5, setTimer: (fn) => { fn(); return 0; },
+  });
+  await p;
+  assert.equal(frameHeld(), false, 'the watchdog navigated and nothing is held');
+  // ...and NOW the archive read finally lands:
+  ready();
+  assert.equal(frameHeld(), false,
+    'a late ready() past the closed seam takes NO hold - a hold taken here has no release and the host never draws again');
 });
 
 test('FIX-E: F11 reaches the world host’s quickload from UNDER the death screen, above the rung that eats every key', () => {

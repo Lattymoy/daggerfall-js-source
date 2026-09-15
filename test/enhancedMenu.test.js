@@ -387,7 +387,7 @@ test('AUDIT UI: the 44px law follows the POINTER, not the viewport width', () =>
 });
 
 // ═══ EE1: Enhanced Environments replaces the procedural sky switch ═══
-test('EE1: one switch for the whole outdoors, migrated once from the old sky answer', () => {
+test('EE1: one switch for the whole outdoors, migrated once from the old sky answer', async () => {
   const prefs = read('src/systems/uiPrefs.js');
   assert.equal(PREF_DEFAULTS.enhancedEnvironments, true, 'the new key defaults ON');
   assert.match(read('src/systems/features.js'), /key: 'enhancedEnvironments', initial: true, online: true/, 'RF4: declared on its row, the shelf deriving it');
@@ -398,7 +398,14 @@ test('EE1: one switch for the whole outdoors, migrated once from the old sky ans
   const menu = read('src/ui/enhancedMenu.js');
   assert.ok(!/prefRow\('enhancedEnvironments'/.test(menu), 'FT4: Enhanced environments left the Enhanced category for the Features home (systems/features.js)');
   assert.ok(!/prefRow\('proceduralSky'/.test(menu), 'the old row must be gone, not doubled');
-  assert.match(read('src/systems/features.js'), /a live sky with the sun, both moons and a star field/, 'the row claims what the tree has: the sky and the weather (FT4: the words are the registry\'s now; FT15 shortened them)');
+  // AUDIT FT15 (drift): the claim is that the row names the sky the tree
+  // actually has - the sun, the moons, the stars - not one wording of it.
+  // "both moons" -> "the two moons" is a harmless edit and used to be red.
+  const { FEATURES: FEAT } = await import('../src/systems/features.js');
+  const eeNote = FEAT.find((x) => x.id === 'enhanced-environments').note;
+  for (const w of [/\bsun\b/, /\bmoons\b/, /\bstar/]) {
+    assert.match(eeNote, w, `the row claims what the tree has: ${w} (FT4: the words are the registry's now; FT15 shortened them)`);
+  }
   const shared = read('src/scenes/shared.js');
   assert.match(shared, /params\.get\('sky'\) !== 'classic' && getPref\('enhancedEnvironments'\)/);
   // nothing outside uiPrefs reads the retired key at runtime - src AND tools

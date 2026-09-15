@@ -1,5 +1,6 @@
 // Static-world capsule collider: triangle soup in a uniform grid, the
-// capsule approximated as two spheres (feet + head). Engine-side (ours,
+// capsule resolved as a CHAIN of spheres along its axis (COL1 - two, at
+// the ends alone, left the waist unsampled). Engine-side (ours,
 // like the renderer) - DFU delegates this to Unity's CharacterController;
 // the CONTRACT it must honor is verbatim (motor.js constants): radius
 // 0.35, height 1.8, stepOffset 0.5, slopeLimit 70 (ground = contact
@@ -340,7 +341,7 @@ export class Collider {
     return this.capsuleCast(origin, origin, radius, dir, maxDist, 1);
   }
 
-  _resolveSphere(center, radius, out, standCeil = Infinity, oneWayFloor = false) {
+  _resolveSphere(center, radius, out, standCeil = Infinity, oneWayFloor = false, midBody = false) {
     // Push a sphere out of every nearby triangle; returns strongest
     // ground-ness and whether any ceiling-ish contact happened.
     // SH1 (2026-09-12, Mac: "you can immediately walk over things (like
@@ -395,7 +396,29 @@ export class Collider {
             // SH1: the contact point's world y is center - dy (dy is
             // center minus closest); above the stand ceiling with an
             // upward-leaning normal it is a wall, not a tread.
-            const wallAbove = dy > 0 && center[1] - dy > standCeil;
+            // AUDIT COL1 F8: A MID-BODY CONTACT IS A WALL - IN THE CODE,
+            // NOT ONLY IN THE COMMENT. COL1 gave the middle spheres "the
+            // plain push, because a contact at mid-body is something you
+            // walked into, never a floor you stand on" - but the plain
+            // push is along centre-minus-closest, and out of a TABLE TOP
+            // that direction is straight UP. _resolveCapsule copies the
+            // middle's y back into the whole capsule, so the body was
+            // LIFTED onto the thing it walked into. Measured on the ride
+            // stance (h 2.6, the widest band of middles): before COL1 a
+            // 0.70-1.30 top was walked through and only <=0.69 could be
+            // mounted; with the middles added, tops to 0.85 were mounted
+            // by a 0.65 m single-frame rise - past STEP_OFFSET, with
+            // `grounded` true the whole way. That is SH1's bug wearing
+            // COL1's clothes. The law is enforced where the push is
+            // chosen: an upward-leaning face met by a MIDDLE sphere
+            // pushes SIDEWAYS by its whole penetration and never grounds
+            // - the same branch SH1 wrote for the step ladder's tabletop
+            // edges. Legal ground is out of the middles' reach by
+            // construction: past the lower sphere's own resolve a slope
+            // at the slope limit clears a middle centre by 0.59 > radius,
+            // so this fires only on geometry the body is truly inside.
+            const wallAbove = (dy > 0 && center[1] - dy > standCeil)
+              || (midBody && dy > 0 && dy / d >= GROUND_NY);
             // PH1 (2026-09-14, Mac: "it's possible to randomly walk into
             // the floor in dungeons and get stuck in the ground"): A FLOOR
             // IS ONE-WAY FOR THE LOWER SPHERE. The push-out is along
@@ -517,17 +540,37 @@ export class Collider {
     // two: consecutive centres are never more than one diameter apart,
     // which is the condition for the chain to cover the segment. The
     // ends keep their existing laws exactly - the lower sphere's
-    // one-way floor (PH1), the head's plain push - and the middles take
-    // the plain push, because a contact at mid-body is something you
-    // walked into, never a floor you stand on.
+    // one-way floor (PH1), the head's plain push - and a contact at
+    // mid-body is something you walked into, never a floor you stand
+    // on, which AUDIT COL1 F8 below turns from a comment into a branch.
     //
-    // It costs one more sphere resolve per iteration at standing height
-    // (three instead of two). That is the price of the body having no
-    // hole in it, and CELL=2 left the headroom for it.
-    const span = 2 * CAPSULE_RADIUS;
+    // AUDIT COL1 F9: THE PRICE, MEASURED. The original note said "one
+    // more sphere resolve per iteration at standing height (three
+    // instead of two)" and stopped there, which reads as the whole
+    // cost and is not. Benchmarked over a cluttered dungeon room,
+    // _resolveCapsule itself: standing 20.2 -> 30.7 us (1.5x, the
+    // three-for-two), and the RIDE stance 20.4 -> 41.0 us (2.0x -
+    // FOUR spheres for two, which the note never mentioned). On top of
+    // that a blocked body runs the step ladder's retries where it used
+    // to walk through, so calls per move() rise as well - the walked-
+    // through path was cheap because it was wrong. CELL=2 leaves the
+    // headroom, and the spheres' scratch is reused rather than rebuilt
+    // per call (this runs several times a frame per body).
+    // AUDIT COL1 F12: THE BEADS MUST OVERLAP, NOT TOUCH. COL1's span was
+    // exactly a diameter, which is TANGENCY: at the join between two
+    // beads the chain's reach falls to zero, and short of that it is
+    // thin - measured 43% of the radius on the ride stance and 26% on a
+    // 3.4 m body. Driven: a 3.4 m foe (sprite heights that tall are
+    // ordinary - SetupDemoEnemy's height comes off the idle frame) walked
+    // clean through a slab anywhere in 2.70-2.93, the last through-band
+    // left after COL1 and F8. A 5% overlap gives every join a real bite,
+    // closes that band, and costs ONE extra sphere only past ~3.2 m of
+    // body: the player's four stances (0.30/0.9/1.8/2.6) keep the sphere
+    // counts they had to the bead.
+    const span = 2 * CAPSULE_RADIUS * BEAD_OVERLAP;
     const middles = Math.max(0, Math.ceil(axis / span) - 1);
-    const mid = [];
-    for (let i = 0; i < middles; i++) mid.push([0, 0, 0]);
+    while (MID_SCRATCH.length < middles) MID_SCRATCH.push([0, 0, 0]);
+    const mid = MID_SCRATCH;
     for (let iter = 0; iter < 3; iter++) {
       this._resolveSphere(low, CAPSULE_RADIUS, out, standCeil, true);   // PH1: the lower sphere's floor is one-way
       for (let i = 0; i < middles; i++) {
@@ -535,7 +578,7 @@ export class Collider {
         m2[0] = low[0];
         m2[2] = low[2];
         m2[1] = low[1] + (axis * (i + 1)) / (middles + 1);
-        this._resolveSphere(m2, CAPSULE_RADIUS, out, standCeil, false);   // COL1: a mid-body contact is a wall, never a floor
+        this._resolveSphere(m2, CAPSULE_RADIUS, out, standCeil, false, true);   // COL1: a mid-body contact is a wall, never a floor (AUDIT COL1 F8: enforced, not narrated)
         low[0] = m2[0];
         low[2] = m2[2];
         low[1] = m2[1] - (axis * (i + 1)) / (middles + 1);
@@ -565,12 +608,23 @@ export class Collider {
     // EMBEDDED the capsule in stair treads under low-but-legal
     // stairwell ceilings (and killed every jump from the squeezed
     // stand at one frame).
+    // AUDIT COL1 F13: the probe walks the WHOLE chain. It asked the head
+    // sphere only, which was every sphere above the feet when the body
+    // was two beads; with middles it is one of several, and a body
+    // wedged UNDER a low slab at waist height answered "the head is
+    // clear" and kept a rise it could not hold. The beads are re-probed
+    // at the same centres the loop used, and any one of them still being
+    // driven down is the too-tight answer the clamp exists for.
     if (out.hitCeiling && feet[1] > entryY) {
-      const headY = feet[1] + CAPSULE_RADIUS + axis;   // A6: the clamped axis, same sphere the loop above used
-      const probe = [feet[0], headY, feet[2]];
       const probeOut = { grounded: false, hitCeiling: false, pushedDown: false };
-      this._resolveSphere(probe, CAPSULE_RADIUS, probeOut);
-      if (probe[1] < headY - 1e-4) feet[1] = entryY;   // still being pushed DOWN out of a ceiling -> too tight, revert
+      // from the first MIDDLE up to the head - the lower sphere owns the
+      // floor, and a floor pushing it up is not what a ceiling clamps
+      for (let i = 1; i <= middles + 1; i++) {
+        const y = feet[1] + CAPSULE_RADIUS + (axis * i) / (middles + 1);   // A6: the clamped axis, the same centres the loop used
+        const probe = [feet[0], y, feet[2]];
+        this._resolveSphere(probe, CAPSULE_RADIUS, probeOut);
+        if (probe[1] < y - 1e-4) { feet[1] = entryY; break; }   // still being pushed DOWN out of a ceiling -> too tight, revert
+      }
     }
   }
 
@@ -823,6 +877,13 @@ export class Collider {
 
 const ZERO3 = [0, 0, 0];
 const TMP = [0, 0, 0];
+// AUDIT COL1 F9: the middle spheres' centres, reused. _resolveCapsule
+// runs several times per move() per body and is never re-entered, so
+// rebuilding this array per call was pure garbage at frame rate.
+const MID_SCRATCH = [];
+// AUDIT COL1 F12: the fraction of a DIAMETER that consecutive bead
+// centres may be apart. 1 is tangency - a join with no bite at all.
+const BEAD_OVERLAP = 0.95;
 
 /** Moller-Trumbore, both faces; distance along unit dir or null. */
 function rayTriangle(ox, oy, oz, d, a, b, c) {

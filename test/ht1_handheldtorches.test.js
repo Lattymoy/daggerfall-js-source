@@ -843,12 +843,23 @@ test('HT1: the five hosts - each owns a pool, feeds the rig its raw keys and the
 // spends on top of them, so the next mod folded in cannot repeat this quietly.
 // A player may still bind whatever they like; this is about what SHIPS.
 test('HT4: no vendored mod ships a key the port has already spent', () => {
-  const dfuBound = new Set(Object.keys(DEFAULT_BINDINGS));
+  // AUDIT HT4 F1: this read `Object.keys(DEFAULT_BINDINGS)`, and
+  // DEFAULT_BINDINGS is an ARRAY of [code, action] pairs - so the set
+  // held '0'..'43' and `dfuBound.has('KeyR')` was permanently false.
+  // The DFU half of this pin could not fire, while four records called
+  // that half the whole point of it. Proven by driving it: a vendored
+  // mod shipping "R" (DFU's Rest) passed. The codes, not the indices.
+  const dfuBound = new Set(DEFAULT_BINDINGS.map(([code]) => code));
   // The keys the PORT spends that DFU does not - each read straight from the
   // source that spends it, so a rename there fails here rather than drifting.
   const input = rd('src/ui/input.js');
   assert.match(input, /if \(e\.code === 'Tab'\) \{ return ctx\.toggleDial/, 'PX15: Tab is the pixel dial');
-  const portSpent = new Set(['Tab']);   // the dial; Escape is already DFU's
+  // AUDIT HT4 F1b: Escape was left out of this set BECAUSE the dead
+  // half above was trusted to catch it. It is named here now, and the
+  // assertion below proves the DFU half is live rather than assuming it.
+  const portSpent = new Set(['Tab', 'Escape']);   // the dial, and the door out of every pane
+  assert.ok(dfuBound.has('KeyR') && dfuBound.has('Escape'),
+    'the DFU half is LIVE - this set holds key CODES, not array indices (AUDIT HT4 F1)');
 
   const offenders = [];
   for (const [vendor, mod] of Object.entries(MOD_SETTINGS)) {

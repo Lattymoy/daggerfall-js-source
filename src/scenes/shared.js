@@ -1572,16 +1572,38 @@ export const DEATH_VIDEO_WATCHDOG_MS = 30000;   // ANIM0012 runs well under this
 // rather than the claim, released on every path out, a bounded wait -
 // and the watchdog still covers the load, so a read that never settles
 // is still a return to the menu rather than a trap.
-async function playDeathVideo(renderer, ready = () => {}) {
-  const { playVideo } = await import('../ui/videoPlayer.js');
-  const { getBytes } = await import('./dataSource.js');
-  const bytes = await getBytes('ANIM0012.VID');
-  ready();   // loaded: the next frame is the video's, so the host may stop now
-  return playVideo(renderer.canvas, renderer, bytes);
+// AUDIT DEATH1 F2: this was unreachable from a pin. Every behavioural
+// test injects its own `play` seam, so the real function was only ever
+// READ AS TEXT - and a grep cannot see an await. Driven proof: adding
+// one more `await import(...)` AFTER ready() restored Mac's black
+// screen exactly and passed the whole suite. The load is one injectable
+// step now, so a pin can drive this function itself and hold the law
+// that matters: EVERYTHING is loaded before the hold, and nothing after.
+export async function loadDeathVideo() {
+  const [{ playVideo }, { getBytes }] = await Promise.all([
+    import('../ui/videoPlayer.js'),
+    import('./dataSource.js'),
+  ]);
+  return { playVideo, bytes: await getBytes('ANIM0012.VID') };
 }
+export async function playDeathVideo(renderer, ready = () => {}, load = loadDeathVideo) {
+  const { playVideo, bytes } = await load();
+  ready();   // loaded: the next frame is the video's, so the host may stop now
+  return playVideo(renderer.canvas, renderer, bytes);   // NOTHING may await between ready() and here
+}
+// AUDIT DEATH1 F7: THE SEAM CLOSES. The watchdog wins a RACE, not a
+// cancellation - the load is still in flight when the `finally` runs.
+// Without the latch below, the settling load then called ready(), which
+// took a hold AFTER the only closure that could release it had already
+// been read as null: an unreleasable hold, frameHeld() true forever,
+// and the host never draws again. That is Mac's black screen a second
+// time, self-inflicted by the very fix for it. Past the finally the
+// seam is CLOSED and ready() is a no-op, so a late load cannot stop a
+// host that has already been navigated away from.
 export async function endRunToTitleMenu(renderer, { play = playDeathVideo, watchdogMs = DEATH_VIDEO_WATCHDOG_MS, setTimer = (fn, ms) => setTimeout(fn, ms) } = {}) {
   let releaseFrame = null;
-  const ready = () => { releaseFrame ??= holdFrame(); };   // the death video owns the canvas; the host waits and lives to be navigated away from
+  let closed = false;
+  const ready = () => { if (!closed) releaseFrame ??= holdFrame(); };   // the death video owns the canvas; the host waits and lives to be navigated away from
   try {
     await Promise.race([
       play(renderer, ready),
@@ -1590,6 +1612,7 @@ export async function endRunToTitleMenu(renderer, { play = playDeathVideo, watch
   } catch (e) {
     console.warn('[death] ANIM0012.VID unavailable - skipping the death video:', e?.message ?? e);
   } finally {
+    closed = true;   // before the release: nothing may take a hold past this line
     releaseFrame?.();
     exitToTitleMenu();
   }
@@ -1750,7 +1773,11 @@ export function exitToTitleMenu() {
   // navigation does not take, the canvas keeps its last frame and the screen
   // is black with nothing to tell a player - or a bug report - how far it
   // got. One line costs nothing and names the last step before the reload.
-  console.log('[death] returning to the title menu ->', typeof location !== 'undefined' ? location.pathname : '(no location)');
+  // AUDIT DEATH1 F11: the tag is the DOOR, not the death. This function is
+  // every host's exitToMenu too, so a quit from the pause screen printed
+  // "[death]" and a bug report reading the console would have been sent
+  // looking for a death that never happened.
+  console.log('[menu] returning to the title menu ->', typeof location !== 'undefined' ? location.pathname : '(no location)');
   if (typeof location !== 'undefined') location.href = location.pathname;
 }
 

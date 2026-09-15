@@ -674,6 +674,9 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    row it would land before takes a line above it, and the body lights
    its whole frame - a drop on the map is one target, not twelve. */
 .itemrow.dragging { opacity: 0.4; }
+/* AUDIT INV1 Fb: the drag is pointer-driven, so the browser must not
+   also pan or long-press-select the row out from under it on a touch. */
+.itemrow { touch-action: none; }
 .itemrow.dragover { box-shadow: inset 0 2px 0 var(--brass); }
 .wornmap.dragover { outline: 2px solid var(--brass); outline-offset: -2px; }
 .tile {

@@ -109,9 +109,15 @@ import { overlayAction } from './input.js';
  *  have no place on a body, so they sit in a row underneath rather
  *  than being hidden: a slot the player cannot see is a slot they
  *  cannot empty. */
-/** HT5: the held light's row id. NOT an EQUIP_SLOTS value - DFU has no
- *  light slot, and inventing one would put a fake column in the equip
- *  table every law here reads. Negative so it can never collide. */
+/** HT5: the held light's row id. No EQUIP_SLOTS member is minted for it -
+ *  DFU has no light slot, and inventing one would put a fake column in
+ *  the equip table every law here reads.
+ *
+ *  AUDIT HT5 F3: -1 is EXACTLY `EQUIP_SLOTS.None`, so the old comment's
+ *  "negative so it can never collide" was the opposite of true - None is
+ *  the one negative the equip vocabulary already uses. Nothing here
+ *  indexes the table with this id (SLOT_MAP has no -1 entry and no
+ *  reader compares row.slot against None), and THAT is the safety. */
 export const LIGHT_SLOT = -1;
 
 export const SLOT_MAP = Object.freeze({
@@ -234,7 +240,7 @@ export function equippedModel(entity = {}) {
   // is all: a player holding a torch saw an empty pair of hands.
   //
   // Handheld Torches' own fiction is that it OCCUPIES A HAND (its
-  // UpdateFreeHand stows a weapon that wants both), so a hand is where
+  // with no free hand the mod stows the LIGHT, not the weapon), so a hand is where
   // it belongs on the body. It carries a sentinel slot rather than a
   // made-up EQUIP_SLOTS value, and the counts below still walk the
   // REAL table, so "27 slots" stays DFU's 27 and nothing that counts
@@ -577,6 +583,71 @@ function refreshFigure() {
  *  transfer. */
 let dragging = null;
 
+/** AUDIT INV1 Fb: THE DRAG IS POINTER EVENTS, NOT THE HTML5 DRAG API.
+ *
+ *  The first cut used `draggable` + dragstart/drop. Those do not fire
+ *  from a touch, so the whole feature was mouse-only - on a screen the
+ *  port ships to and whose 44px target law this arc has now enforced
+ *  twice. It is the same "drawn, present, unreachable on the device
+ *  that needs it most" shape AUDIT 24 named and FT16 found again a day
+ *  ago, and the repo had already answered the question: every other
+ *  drag here is pointerdown/move/up with setPointerCapture
+ *  (ui/overworldMap.js's pan). This follows it.
+ *
+ *  ONE POINTER, and a 4px threshold, so a tap is still a pick - the
+ *  row's own click law (select, never undress) is untouched below that
+ *  distance, and suppressed above it so a drag cannot also select.
+ *
+ *  THE TARGET IS HIT-TESTED at the release rather than tracked by
+ *  dragover, which is what lets the body and the rows share one seam:
+ *  the worn map wants `dropOnBody`, another row wants `reorderPack`,
+ *  and anywhere else wants nothing. */
+function dragFrom(row, item) {
+  let at = null;
+  const clear = () => {
+    row.classList.remove('dragging');
+    for (const n of document.querySelectorAll('.dragover')) n.classList.remove('dragover');
+  };
+  row.onpointerdown = (e) => {
+    if (at || e.button > 0) return;   // one pointer; a second is ignored, never adopted
+    at = { id: e.pointerId, x: e.clientX, y: e.clientY, moved: false };
+    row.setPointerCapture?.(e.pointerId);
+  };
+  row.onpointermove = (e) => {
+    if (!at || e.pointerId !== at.id) return;
+    if (!at.moved && Math.abs(e.clientX - at.x) + Math.abs(e.clientY - at.y) <= 4) return;
+    if (!at.moved) { at.moved = true; dragging = item; row.classList.add('dragging'); }
+    clear();
+    row.classList.add('dragging');
+    const over = document.elementFromPoint?.(e.clientX, e.clientY);
+    const onBody = over?.closest?.('.wornmap');
+    const onRow = over?.closest?.('.itemrow');
+    if (onBody) onBody.classList.add('dragover');
+    else if (onRow && onRow !== row) onRow.classList.add('dragover');
+  };
+  row.onpointerup = (e) => {
+    if (!at || e.pointerId !== at.id) return;
+    const moved = at.moved;
+    at = null;
+    row.releasePointerCapture?.(e.pointerId);
+    if (!moved) return;   // under the threshold this was a tap: the click law has it
+    clear();
+    const held = dragging;
+    dragging = null;
+    const over = document.elementFromPoint?.(e.clientX, e.clientY);
+    if (!held) return;
+    if (over?.closest?.('.wornmap')) { dropOnBody(held); return; }
+    const onRow = over?.closest?.('.itemrow');
+    const target = onRow && onRow !== row ? rowItems.get(onRow) : null;
+    if (target) reorderPack(held, target);
+  };
+  row.onpointercancel = () => { at = null; dragging = null; clear(); };
+  rowItems.set(row, item);
+}
+/** Which item a rendered row stands for - the hit test answers an
+ *  ELEMENT, and the reorder needs the thing it represents. */
+const rowItems = new WeakMap();
+
 function dropOnBody(item) {
   const act = localPrimaryAct(item, deps.entity);
   if (!act) return;
@@ -593,8 +664,14 @@ function reorderPack(item, before) {
   const from = list.indexOf(item);
   const to = list.indexOf(before);
   if (from < 0 || to < 0) return;
+  // AUDIT INV1 Fa: the drop line is drawn ABOVE the target row, so the
+  // item must LAND above it - and `to` was computed before the splice
+  // that shifts everything after `from` down one. Dragging downward
+  // therefore landed the item BELOW the row the line was drawn on
+  // ([A,B,C] dragging A onto B gave BAC), so the affordance lied in one
+  // of the two directions. Take the shift off when moving down.
   list.splice(from, 1);
-  list.splice(to, 0, item);
+  list.splice(from < to ? to - 1 : to, 0, item);
   refresh();
   render();
 }
@@ -1010,17 +1087,8 @@ function equippedList() {
   // area is the map's.
   const wrap = el('section', 'equipped');
   const map = el('div', 'wornmap');
-  // INV1: the body is the equip target. Dropping a pack row here does
-  // whatever its card's own button would do.
-  map.ondragover = (e) => { if (dragging) { e.preventDefault(); map.classList.add('dragover'); } };
-  map.ondragleave = () => map.classList.remove('dragover');
-  map.ondrop = (e) => {
-    e.preventDefault();
-    map.classList.remove('dragover');
-    const held = dragging;
-    dragging = null;
-    if (held) dropOnBody(held);
-  };
+  // INV1: the body is the equip target - `dragFrom`'s pointerup finds
+  // it by hit test, so the map needs no handler of its own.
   // PX19g: the doll's FRAME is part of the composition and is always
   // there - art inside it when the paperdoll can draw, a quiet
   // Avatar plaque when it cannot. Slapped-behind is over.
@@ -1228,25 +1296,12 @@ function itemRow(item, from = 'local') {
   // INV1: a LOCAL row drags. A loot row does not - taking from a pile
   // is a click, and a drag that could also transfer would make a slip
   // a theft.
-  if (from === 'local') {
-    row.draggable = true;
-    row.ondragstart = (e) => {
-      dragging = item;
-      row.classList.add('dragging');
-      if (e.dataTransfer) { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', line.name); }
-    };
-    row.ondragend = () => { dragging = null; row.classList.remove('dragging'); render(); };
-    row.ondragover = (e) => { if (dragging && dragging !== item) { e.preventDefault(); row.classList.add('dragover'); } };
-    row.ondragleave = () => row.classList.remove('dragover');
-    row.ondrop = (e) => {
-      e.preventDefault();
-      row.classList.remove('dragover');
-      const held = dragging;
-      dragging = null;
-      if (held) reorderPack(held, item);
-    };
-  }
+  if (from === 'local') dragFrom(row, item);
   row.onclick = () => {
+    // AUDIT INV1 Fb: a release that DRAGGED is not a pick. The click
+    // fires after pointerup, so without this a reorder would also
+    // select the row it left.
+    if (row.classList.contains('dragging')) { row.classList.remove('dragging'); return; }
     // AUDIT 26: "Send click to quest system" (:2027-2037) - the FIRST
     // act of RemoteItemListScroller_OnItemClick, ahead of the
     // action-mode branch, so LOOKING at a quest item in a pile counts

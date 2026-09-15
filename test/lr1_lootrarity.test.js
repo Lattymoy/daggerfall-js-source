@@ -81,7 +81,11 @@ test('LR5: the switch - ON by default (the ladder is the port\'s own game), forc
   assert.ok(row, 'the row is on the home');
   assert.deepEqual(row.kinds, ['enhanced']);
   assert.deepEqual(row.control, { store: 'prefs', key: 'lootRarity', initial: true, online: true }, 'RF4: the row declares its default and the lane\'s answer');
-  assert.match(row.note, /Magic, Rare or Legendary/, 'the note names the ladder');
+  // AUDIT FT15 (drift): this was tightened from /Magic .*Rare .*Legendary/s to the
+  // exact phrase during the trim - a move TOWARD drift, where one comma reworded
+  // turns it red for nothing. The claim is that the note names the three tiers in
+  // order, not that it punctuates them a particular way.
+  assert.match(row.note, /Magic\b[\s\S]*Rare\b[\s\S]*Legendary\b/, 'the note names the ladder, in order');
   assert.match(row.note, /never your level/, 'and the source law');
   assert.match(row.note, /unidentified/, 'and the identify loop');
   assert.deepEqual(checkFeatures(FEATURES), []);

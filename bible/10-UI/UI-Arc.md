@@ -12957,7 +12957,7 @@ U63 set the site in the game's two pixel faces: Jacquard 12, the
 blackletter the menu wears as its wordmark, and Pixelify Sans for
 everything else. The trouble is where the first one landed. It was on
 `h1, h2, h3`, on the step numerals and on the Q&A terms - so a section
-title at 52px, twelve card headings and five step and answer heads were
+title at 52px, twelve card headings and eight step and answer heads were
 all set in a display face whose capitals are its whole character. An
 ornate H on "How to play" is the wordmark's job being done twice, at a
 size where it competes with the title rather than leading a section.
@@ -12972,7 +12972,8 @@ The title is untouched, which is the one thing Mac named: `.wordmark`
 carries the family now, with `--brand` behind it exactly as before.
 
 **The pin is a COUNT, not a presence.** `test/landing.test.js` asserts
-that the page names Jacquard 12 exactly once and that the rule naming it
+that the STYLESHEET names Jacquard 12 exactly once - the credits line
+names the face again, deliberately - and that the rule naming it
 is `.wordmark` - because a pin that only checked the wordmark still has
 it would pass a page that had quietly put the display face back on a
 new heading. The fonts request is unchanged: the skin's own URL, all
@@ -13063,7 +13064,44 @@ game cannot boot here and the report could not be reproduced. What is
 fixed is a black window on that exact path, proven by pin and
 unambiguous from the source. Whether it is the whole of what Mac saw is
 unknown. If the screen is still black after this ships, the console line
-is the question to answer: if `[death] returning to the title menu` is
+is the question to answer: if `[menu] returning to the title menu` is
 printed and the screen stays black, the navigation is the fault and the
 video is innocent; if it never prints, the wait is still inside the
 race and the watchdog's 30 s is the next thing to look at.
+
+## AUDIT DEATH1/FT16 (2026-09-15) - three lenses over the day's slices
+
+**DEATH1 F7 - the hold could be taken AFTER the release, and then
+nothing could ever let it go. A regression the slice introduced.**
+The watchdog wins a **race**; it does not cancel anything. When it
+fired, the `finally` read `releaseFrame` as `null` (nothing held -
+correct) and navigated. The load was still in flight; when it settled it
+called `ready()`, which took a hold **whose only release closure had
+already been read as null**. `frameHeld()` true forever, `world.js` and
+`exterior.js` skipping every frame - Mac's black screen, re-made by its
+own fix, on the exact path (a slow or stalled ANIM0012 read) the slice
+exists to handle. Verified by execution before the fix: held after
+watchdog `false` -> held after late `ready()` **`true`** -> held at end
+`true`. Nothing pinned it: every DEATH1 assertion was either an injected
+`play` that settles or a regex over the new shape, and none drove
+watchdog-then-late-`ready`. The seam **closes** in the `finally` now, so
+a late load cannot stop a host that has already been navigated away
+from, and that order is driven.
+
+**DEATH1 F11 - the console line wore the wrong tag.** `exitToTitleMenu`
+is also all four hosts' `exitToMenu`, so quitting from the **pause**
+screen printed `[death] returning to the title menu` and a bug report
+reading the console would have been sent looking for a death that never
+happened. The tag names the door: `[menu]`.
+
+**FT16 F10 - `go()` discarded staged key binds on a click that was not a
+walk away.** FIX-F guarded the discard with `id !== 'controls'` because
+Controls was its own section; FT16 folded Controls into a Settings
+*category* and dropped the guard along with the section. The discard
+then fired on **any** rail click - including the Settings row, which is
+the section you are standing in while rebinding, and which is right
+there on the rail. Half-finished binds vanished for pressing the row you
+were already on. The guard is the section actually changing; the
+category tabs keep their own unconditional discard, because leaving the
+controls category *is* a walk away even though the section does not
+change.

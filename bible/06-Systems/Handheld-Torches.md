@@ -597,10 +597,12 @@ all, so a player holding a torch saw an empty pair of hands.
 
 It is a row on the body now, under the off hand and listed first there,
 because Handheld Torches' own fiction is that a light **occupies a
-hand** - its `UpdateFreeHand` stows a weapon that wants both.
+hand** - with no free hand the mod stows the LIGHT (`updateFreeHand` reports the hands; the hand law unequips or drops the torch).
 
-It carries a **sentinel slot** (`LIGHT_SLOT`, negative) rather than an
-invented `EQUIP_SLOTS` value, and `filled`/`total` still walk the real
+It carries a **sentinel slot** (`LIGHT_SLOT`) rather than an invented
+`EQUIP_SLOTS` member. It is `-1`, which is *exactly* `EQUIP_SLOTS.None` -
+so "negative, therefore safe" was wrong, and the safety comes from
+nothing here indexing the equip table with it, not from the number, and `filled`/`total` still walk the real
 equip table. DFU's twenty-seven stay twenty-seven; nothing that counts
 slots learns about this one. The act is unchanged - picking the row
 offers Douse, because `localPrimaryAct` already answers that and

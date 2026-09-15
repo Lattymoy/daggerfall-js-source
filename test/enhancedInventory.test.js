@@ -1330,7 +1330,13 @@ test('HT5: the held light is a row on the body, and DFU\'s twenty-seven are unto
   assert.ok(row, 'a lit torch is on the body');
   assert.equal(row.item, torch, 'by reference, as every lit-compare in this arc is');
   assert.equal(row.slot, LIGHT_SLOT);
-  assert.ok(LIGHT_SLOT < 0, 'a sentinel, so it can never collide with an EQUIP_SLOTS value');
+  // AUDIT HT5 F3: this asserted `LIGHT_SLOT < 0` as proof it "can never
+  // collide with an EQUIP_SLOTS value" - and -1 IS EQUIP_SLOTS.None. The
+  // real safety is that nothing indexes the equip table with this id, so
+  // that is what is held: the map has no node for it, and the table read
+  // for the counts never sees it.
+  assert.equal(LIGHT_SLOT, EQUIP_SLOTS.None, 'it IS None - no new member was minted, and none was needed');
+  assert.equal(SLOT_MAP[LIGHT_SLOT], undefined, 'and the body map has no node at that id');
 
   // THE COUNTS ARE THE EQUIP TABLE'S. A fake slot in them would make the
   // window say 1 of 28 for a torch DFU does not think is worn at all.
@@ -1368,15 +1374,61 @@ test('INV1: a drag equips through the one act, and never crosses a side', () => 
     'the drop reads the card\'s own act, not a second table');
   assert.match(src, /if \(act\.kind === 'wear'\) \{ wear\(item\); return; \}/);
   assert.match(src, /use\(item, null\)/, 'AUDIT 22 F6: the light arm still takes no collection');
-  // A LOOT ROW DOES NOT DRAG. Taking from a pile is a click (IG7); a drag
-  // that could also transfer would turn a slip into a theft.
-  assert.match(src, /if \(from === 'local'\) \{\s*\n\s*row\.draggable = true;/,
-    'only the local side is a drag source');
-  // and the reorder is the player's own list, which every page filter reads
-  assert.match(src, /const list = deps\.entity\?\.items;/);
-  assert.match(src, /list\.splice\(from, 1\);\s*\n\s*list\.splice\(to, 0, item\);/, 'a move, not a copy');
+
+  // AUDIT INV1 F3: this pin matched `dropOnBody`'s DEFINITION and never
+  // its call site, so swapping the one call for `wear(held)` left
+  // dropOnBody as dead code, sent a dragged torch down the wear path
+  // (which refuses it - a light source has no equip slot) and passed
+  // the whole suite. Driven and confirmed. The RELEASE is read now, and
+  // it is read as a closed set: every act a drop can perform must be
+  // one of the two the law allows, so a third cannot be added quietly.
+  const release = src.slice(src.indexOf('row.onpointerup ='), src.indexOf('row.onpointercancel ='));
+  assert.ok(release.length > 100, 'the release handler is where a drop lands');
+  const acts = [...release.matchAll(/\b(dropOnBody|reorderPack|wear|use|takeOff|take|stow)\(/g)].map((m) => m[1]);
+  assert.deepEqual([...new Set(acts)].sort(), ['dropOnBody', 'reorderPack'],
+    'a drop performs the body act or the reorder and NOTHING else - a third act here is the drift this exists to stop');
+  assert.match(release, /if \(over\?\.closest\?\.\('\.wornmap'\)\) \{ dropOnBody\(held\); return; \}/,
+    'the body is the equip target');
+
+  // AUDIT INV1 Fb: THE DRAG IS POINTER EVENTS. The first cut used the
+  // HTML5 drag API, which does not fire from a touch - a feature drawn
+  // and unreachable on a device this port ships to, the same shape
+  // AUDIT 24 named. The repo's own precedent is ui/overworldMap.js's
+  // pan, and this follows it.
+  const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');   // the CODE, not the prose about it
+  assert.doesNotMatch(code, /\bdraggable\b|ondragstart|ondragover|ondrop\b/,
+    'no HTML5 drag survives - it is mouse-only and this port ships to phones');
+  for (const h of ['row.onpointerdown', 'row.onpointermove', 'row.onpointerup', 'row.onpointercancel']) {
+    assert.ok(src.includes(h), `${h} is the seam`);
+  }
+  assert.match(src, /row\.setPointerCapture\?\.\(e\.pointerId\)/, 'captured, as the map pan captures');
+  assert.match(src, /if \(at \|\| e\.button > 0\) return;/, 'one pointer, and never a right button');
+  assert.match(src, /Math\.abs\(e\.clientX - at\.x\) \+ Math\.abs\(e\.clientY - at\.y\) <= 4/,
+    'a 4px threshold, so a tap is still a pick');
+  assert.match(read('src/ui/enhancedStyle.js'), /\.itemrow \{ touch-action: none; \}/,
+    'and the browser must not pan the list out from under the drag');
+
+  // A LOOT ROW DOES NOT DRAG (IG7: taking from a pile is a click).
+  assert.match(src, /if \(from === 'local'\) dragFrom\(row, item\);/, 'only the local side is a drag source');
+
+  // AUDIT INV1 Fa: the drop line is drawn ABOVE the target, so the item
+  // must LAND above it. `to` is computed before the splice that shifts
+  // everything after `from` down one, so dragging DOWNWARD used to land
+  // the item below the row the line was drawn on - the affordance lied
+  // in one of its two directions. Driven here rather than grepped.
+  const move = (list, item, before) => {
+    const from = list.indexOf(item); const to = list.indexOf(before);
+    list.splice(from, 1); list.splice(from < to ? to - 1 : to, 0, item);
+    return list;
+  };
+  assert.deepEqual(move(['A', 'B', 'C'], 'A', 'B'), ['A', 'B', 'C'], 'dragging down onto B lands A above B');
+  assert.deepEqual(move(['A', 'B', 'C'], 'C', 'B'), ['A', 'C', 'B'], 'dragging up onto B lands C above B');
+  assert.deepEqual(move(['A', 'B', 'C'], 'A', 'C'), ['B', 'A', 'C'], 'and above C from either side');
+  assert.match(src, /list\.splice\(from < to \? to - 1 : to, 0, item\);/, 'the source does the same arithmetic');
+
   const css = read('src/ui/enhancedStyle.js');
   for (const rule of ['.itemrow.dragging', '.itemrow.dragover', '.wornmap.dragover']) {
     assert.ok(css.includes(rule), `${rule} has an affordance - a drag with no feedback is a guess`);
   }
 });
+
