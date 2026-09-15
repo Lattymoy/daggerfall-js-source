@@ -583,6 +583,71 @@ function refreshFigure() {
  *  transfer. */
 let dragging = null;
 
+/** INV2 (2026-09-15, Mac: "I imagined a detailed click and drag that
+ *  literally drags the icon. Allowing you to store or easily drop items
+ *  if outside the UI"): THE GHOST.
+ *
+ *  INV1's drag moved items and said so with two class flips - the row
+ *  dimmed, the target lit - and nothing travelled with the cursor. What
+ *  a player reads as "dragging" is the THING moving, so this carries
+ *  one: the item's own tile, lifted out of the row, under the pointer,
+ *  with the act it would perform written under it.
+ *
+ *  IT IS `itemTile`'S TILE, not a second one. This file's header names
+ *  the trap directly ("a second icon pipeline in this file is how the
+ *  port ends up with two") - the Morrowind ground mesh, the classic
+ *  sprite and the initials fallback are one function's answer already,
+ *  and the ghost asks the same function.
+ *
+ *  The ghost is `pointer-events: none` and lives on the BODY rather
+ *  than inside the window: the hit test under it must answer the thing
+ *  the cursor is over, and a node under the cursor would answer itself
+ *  every time - and a ghost clipped to the panel could not be carried
+ *  off it, which is the other half of what was asked for. */
+let ghost = null;
+const ghostEnd = () => { ghost?.remove(); ghost = null; };
+function ghostStart(item, x, y) {
+  ghostEnd();
+  ghost = el('div', 'dragghost');
+  ghost.append(itemTile(itemLine(item, deps.entity)));
+  ghost.append(el('span', 'ghostact', ''));
+  document.body?.appendChild(ghost);
+  ghostMove(x, y, null);
+}
+function ghostMove(x, y, verb) {
+  if (!ghost) return;
+  ghost.style.left = `${x}px`;
+  ghost.style.top = `${y}px`;
+  const act = ghost.querySelector('.ghostact');
+  if (act) { act.textContent = verb ?? ''; act.classList.toggle('on', !!verb); }
+  ghost.classList.toggle('refused', verb === null);
+}
+
+/** WHAT A RELEASE HERE WOULD DO - one answer, read by the ghost's label
+ *  while the pointer moves and by the release itself when it lands, so
+ *  the word the player was shown is the act they get.
+ *
+ *  OUTSIDE THE WINDOWS IS THE TRANSFER THE SCREEN ALREADY OFFERS. It
+ *  does not invent a drop: `STOW_LABEL[remote.kind]` is the verb on the
+ *  button beside the item, so carrying something off the panel Drops it
+ *  on the ground, Stows it in the wagon or Puts it back in the chest
+ *  exactly as pressing that button would - and refuses with the same
+ *  sentence when the law refuses. */
+function dropIntent(item, over, fromRow) {
+  if (over?.closest?.('.wornmap')) {
+    const act = localPrimaryAct(item, deps.entity);
+    return act ? { kind: 'body', label: act.label } : null;
+  }
+  const onRow = over?.closest?.('.itemrow');
+  if (onRow && onRow !== fromRow && rowItems.has(onRow)) return { kind: 'reorder', label: 'Move here', row: onRow };
+  if (over?.closest?.('.pack-win, .loot-win')) return { kind: 'none', label: '' };
+  // Off the panel: the remote side's own verb - and when the law would
+  // REFUSE, the act still runs, because `stow` is what says why. A null
+  // label is what reddens the ghost, so the refusal is seen before the
+  // release rather than read afterwards.
+  return { kind: 'stow', label: canStow(item) ? STOW_LABEL[remote.kind] : null };
+}
+
 /** AUDIT INV1 Fb: THE DRAG IS POINTER EVENTS, NOT THE HTML5 DRAG API.
  *
  *  The first cut used `draggable` + dragstart/drop. Those do not fire
@@ -599,9 +664,9 @@ let dragging = null;
  *  distance, and suppressed above it so a drag cannot also select.
  *
  *  THE TARGET IS HIT-TESTED at the release rather than tracked by
- *  dragover, which is what lets the body and the rows share one seam:
- *  the worn map wants `dropOnBody`, another row wants `reorderPack`,
- *  and anywhere else wants nothing. */
+ *  dragover, which is what lets the body, the rows and the world beyond
+ *  the panel share one seam: `dropIntent` answers for all of them, and
+ *  answers the same way for the label and for the act. */
 function dragFrom(row, item) {
   let at = null;
   const clear = () => {
@@ -616,32 +681,32 @@ function dragFrom(row, item) {
   row.onpointermove = (e) => {
     if (!at || e.pointerId !== at.id) return;
     if (!at.moved && Math.abs(e.clientX - at.x) + Math.abs(e.clientY - at.y) <= 4) return;
-    if (!at.moved) { at.moved = true; dragging = item; row.classList.add('dragging'); }
+    if (!at.moved) { at.moved = true; dragging = item; row.classList.add('dragging'); ghostStart(item, e.clientX, e.clientY); }
     clear();
     row.classList.add('dragging');
     const over = document.elementFromPoint?.(e.clientX, e.clientY);
-    const onBody = over?.closest?.('.wornmap');
-    const onRow = over?.closest?.('.itemrow');
-    if (onBody) onBody.classList.add('dragover');
-    else if (onRow && onRow !== row) onRow.classList.add('dragover');
+    const want = dropIntent(item, over, row);
+    ghostMove(e.clientX, e.clientY, want?.label ?? null);
+    if (want?.kind === 'body') over?.closest?.('.wornmap')?.classList.add('dragover');
+    else if (want?.kind === 'reorder') want.row.classList.add('dragover');
   };
   row.onpointerup = (e) => {
     if (!at || e.pointerId !== at.id) return;
     const moved = at.moved;
     at = null;
     row.releasePointerCapture?.(e.pointerId);
+    ghostEnd();
     if (!moved) return;   // under the threshold this was a tap: the click law has it
     clear();
     const held = dragging;
     dragging = null;
-    const over = document.elementFromPoint?.(e.clientX, e.clientY);
     if (!held) return;
-    if (over?.closest?.('.wornmap')) { dropOnBody(held); return; }
-    const onRow = over?.closest?.('.itemrow');
-    const target = onRow && onRow !== row ? rowItems.get(onRow) : null;
-    if (target) reorderPack(held, target);
+    const want = dropIntent(held, document.elementFromPoint?.(e.clientX, e.clientY), row);
+    if (want?.kind === 'body') dropOnBody(held);
+    else if (want?.kind === 'reorder') reorderPack(held, rowItems.get(want.row));
+    else if (want?.kind === 'stow') stow(held);   // including the refusal: stow is what SAYS why
   };
-  row.onpointercancel = () => { at = null; dragging = null; clear(); };
+  row.onpointercancel = () => { at = null; dragging = null; clear(); ghostEnd(); };
   rowItems.set(row, item);
 }
 /** Which item a rendered row stands for - the hit test answers an

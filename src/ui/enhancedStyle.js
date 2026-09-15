@@ -679,6 +679,40 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .itemrow { touch-action: none; }
 .itemrow.dragover { box-shadow: inset 0 2px 0 var(--brass); }
 .wornmap.dragover { outline: 2px solid var(--brass); outline-offset: -2px; }
+/* INV2 (Mac: "a detailed click and drag that literally drags the icon"):
+   THE GHOST. The item's own tile under the pointer, with the act a
+   release would perform written beneath it.
+
+   pointer-events: none is not decoration - the drag hit-tests with
+   elementFromPoint under the cursor, and a node sitting there would
+   answer ITSELF on every move and the drag would never find a target.
+   It sits on the BODY, above the pause door's own layer, so the item
+   can be carried off the panel and over the world, which is where a
+   drop lands it. */
+.dragghost {
+  /* ABOVE this screen's own layers (the shell's 12, the tip's 20) and
+     still UNDER the asset picker's 40 - test/mwattach.test.js holds that
+     ladder, and an eyeballed 9000 is exactly what it exists to stop. */
+  position: fixed; z-index: 30; pointer-events: none;
+  transform: translate(-50%, -60%);
+  display: grid; justify-items: center; gap: 4px;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.55));
+}
+.dragghost .tile {
+  width: 44px; height: 44px; background: rgba(23, 27, 33, 0.92);
+  border-color: var(--brass);
+}
+.dragghost .tile img { max-width: 40px; max-height: 40px; }
+.ghostact {
+  font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--slate); background: var(--brass); padding: 2px 6px;
+  white-space: nowrap; opacity: 0;
+}
+.ghostact.on { opacity: 1; }
+/* A release that the law would refuse says so before it happens - the
+   tile goes red and carries no verb, so nobody lets go expecting it to
+   land. */
+.dragghost.refused .tile { border-color: #a4402f; }
 .tile {
   flex: 0 0 auto; width: 30px; height: 30px; display: grid; place-items: center;
   border: 1px solid var(--iron); color: var(--dim); font-size: 11px; letter-spacing: 0.06em;

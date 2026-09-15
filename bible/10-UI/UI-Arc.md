@@ -13151,3 +13151,60 @@ stack.
 **Not seen running.** This container has no ARENA2, so the wizard cannot
 boot and `tools/enhancedTapProbe.mjs` cannot walk it. The arithmetic is
 driven end to end over a real `ChargenFlow` walk; the drawn row is not.
+
+## INV2 - THE GHOST (2026-09-15, Mac)
+
+*"We recently implemented a click to drag feature but its kinda half
+assed. I imagined a detailed click and drag that literally drags the
+icon. Allowing you to store or easily drop items if outside the UI."*
+
+He is right about what was missing. INV1 moved items correctly and said
+so with two class flips - the row it left went quiet, the row it would
+land on took a line - and **nothing travelled with the cursor**. What a
+player reads as dragging is the THING moving; without that it is a
+gesture you have to be told about.
+
+**The item's own tile now rides under the pointer**, with the act a
+release would perform written beneath it. It is `itemTile`'s tile, not a
+second one: this file's header names that trap in its own words - *"a
+second icon pipeline in this file is how the port ends up with two"* -
+and the Morrowind ground mesh, the classic sprite and the initials
+fallback are one function's answer already. The ghost asks that function.
+
+**Off the panel is the transfer the screen already offers.** It invents
+no drop: `stow` is the function behind the button beside the item, so
+carrying something out of the windows Drops it on the ground, Stows it in
+the wagon or Puts it back in the chest exactly as pressing that button
+would - and refuses with the same sentence. That is INV1's own law ("the
+drag performs the act the card already offers") extended to a third
+target, not a new rule beside it. The closed-set pin opens by exactly one
+and closes again: `dropOnBody`, `reorderPack`, `stow`, and a fourth would
+still be the drift it was written to stop.
+
+**One answer, read twice.** `dropIntent` decides what a release here
+would do; the pointer-move writes its label on the ghost and the release
+performs its act. The ghost therefore cannot promise one thing and do
+another, and a release the law would refuse reddens *before* it happens
+rather than being explained afterwards.
+
+### Two rules that look cosmetic and are not
+
+- **`pointer-events: none`.** The drag hit-tests with `elementFromPoint`
+  *under the cursor*, and the ghost sits exactly there. Opaque, it
+  answers itself on every move, the body and the rows and the world stop
+  being findable, and **no drop ever lands**. A functional rule that
+  happens to live in a stylesheet, pinned as one.
+- **It is the BODY's child.** A ghost parented to the window is clipped
+  to the window, and carrying the item off the panel is half of what was
+  asked for.
+
+**And it keeps its place in the ladder.** The first cut reached for
+`z-index: 9000`, which is precisely the eyeballed number
+`test/mwattach.test.js` exists to stop - the asset picker must outrank
+every overlay in `src/`. It rides above this screen's own layers and
+under the picker's 40, and the pin holds the range rather than the
+number.
+
+**Not seen running.** No ARENA2 in this container, so the pane cannot be
+driven in a browser; the icon source, the hit-test rule, the lifecycle
+and the act set are pinned, the drawn motion is not.
