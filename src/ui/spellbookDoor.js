@@ -27,6 +27,7 @@
 // the classic window survives a failed art load and the enhanced one
 // reads no ARENA2 at all, so the readiness gate differs by skin.
 import { isEnhanced } from '../systems/uiSkin.js';
+import { mountEnhancedChunk } from './enhancedChunk.js';   // MENU1: the one lazy-chunk door
 import { registerOverlay } from './enhancedOverlays.js';   // PX28: Tab puts it away
 import { SpellbookWindow, spellbookArtLoaded } from './spellbookWindow.js';
 
@@ -104,12 +105,12 @@ function enhancedSpellbookOverlay(shared, onClose) {
     host.style.cssText = 'position:fixed;inset:0;z-index:11';
     document.body.append(host);
   unregister = registerOverlay(close);
-    import('./enhancedSpellbook.js').then(({ mountEnhancedSpellbook }) => {
-      if (done) return;
-      view = mountEnhancedSpellbook(host, { ...shared, onExit: close });
-    }).catch((e) => {
-      console.warn('[spellbook] the enhanced book could not mount:', e?.message ?? e);
-      close();
+    // MENU1: the ONE lazy-chunk door (ui/enhancedChunk.js) - retried
+    // once, then SPOKEN rather than closed in silence.
+    mountEnhancedChunk({
+      load: () => import('./enhancedSpellbook.js'),
+      mount: ({ mountEnhancedSpellbook }) => { view = mountEnhancedSpellbook(host, { ...shared, onExit: close }); },
+      alive: () => !done, host, onDismiss: close, label: 'spellbook',
     });
   };
   mount();

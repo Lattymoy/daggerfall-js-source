@@ -8,6 +8,76 @@
 
 Newest first.
 
+**2026-09-15 - MENU1: THE ENHANCED MENUS THAT SOMETIMES DO NOT OPEN.**
+Mac, relaying a player: *"sometimes you're unable to open the enhanced
+menus. For example a player might open the radial and select the
+spellbook, but it will fail to open."*
+
+THE ROOT CAUSE IS THE DEPLOY, AND IT IS NOT IN THE GAME CODE AT ALL.
+Every enhanced menu builds to its own content-hashed LAZY CHUNK -
+`enhancedSpellbook`, `enhancedMenu`, `enhancedInventory`,
+`enhancedChronicle`, `enhancedTalk`, `enhancedBook` - reached by a
+dynamic `import()` the first time a player opens that door. The site
+publishes through GitHub Pages, which REPLACES the whole tree, so the
+files a build replaces are gone. Measured against the live site rather
+than assumed: the previous build's `assets/main-EDqp0hIk.js` answered
+404 within the hour, while `assets/enhancedSpellbook-B4Vx_SNE.js` -
+whose content had not changed between the two builds and so kept its
+hash - answered 200.
+
+That last detail is the whole "random". A tab left open across a deploy
+keeps running the entry bundle it already has and asks for old chunk
+URLs; the ones that 404 are exactly the menus THAT deploy touched. The
+dial itself is in the main bundle, so the rose still opens - and the
+door behind it does not. Hence a report that reads like caprice:
+sometimes, some menus, no pattern a player could see.
+
+WHAT MADE IT UNREPORTABLE was the doors' answer, and that IS ours. Six
+of the seven caught the rejection, wrote `console.warn` and called
+`close()`; `charSheetDoor.js` had no catch at all and left an unhandled
+rejection. Either way the player got nothing - no box, no line, no
+sound - from a failure they did not cause and could not diagnose, in a
+game where every other refusal speaks ("(the spellbook art is
+unavailable)", "(the travel map art is unavailable)"). A door that
+declines in silence is indistinguishable from a press that never
+landed, which is precisely how this arrived: "it will fail to open".
+
+THE FIX IS ONE HOME, `ui/enhancedChunk.js`, and all seven doors go
+through it: retry once (a transient fetch costs one round trip to rule
+out), then SPEAK in the door's own host element with inline style only
+- the error path must not depend on anything that could be the thing
+that broke - and STAY OPEN behind the notice, so the game does not hand
+the keys back to a player who thinks they missed. The Reload button is
+offered for a chunk that would not fetch and withheld for a module that
+threw, because a reload fixes the first and reproduces the second; and
+it is offered, never taken, because unsaved progress is the player's to
+spend.
+
+U51'S LAW SURVIVED THE REWRITE AND SHARPENED IT. Its pin read back one
+door's `.catch((e) => { ... host.remove() }` - the implementation - but
+its own message stated the rule: "a failed load must take its empty div
+with it, or the host holds an overlay that never reports done - a
+frozen game." Staying open satisfies that only while there IS a way
+out, so the one home falls back to exactly the old answer when the
+notice cannot paint. Without that fallback this fix would have traded a
+silent refusal for a wedged game, which is the worse of the two. The
+pin is re-aimed at the one home and so covers all seven doors instead
+of one.
+
+STILL OPEN, and it is Mac's call because it is infrastructure rather
+than code: this can be ELIMINATED instead of reported, by letting a
+deploy keep the previous build's `assets/` alongside the new one. The
+workflow assembles `site/` from `dist/` and Pages replaces the tree, so
+layering the new build over the live one would leave stale tabs able to
+fetch the chunks they still believe in. The port cannot decide that
+from here.
+
+`test/menu1_enhanced_chunk.test.js` (9), driven against the one home
+with an injected failing loader - no browser and no game data needed.
+Three mutants, three killed: close silently again, drop the retry, let
+one door fetch its own chunk.
+
+
 **2026-09-15 - GUARD1: THE WATCH THAT VANISHED (a player report, relayed
 by Mac).** *"After a while of chasing me around the villages they
 disappeared. And then i was free to go on a killing spree."*
