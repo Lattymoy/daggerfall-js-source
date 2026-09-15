@@ -46,7 +46,7 @@
 
 import { liveStat } from '../systems/statMods.js';   // AUDIT 23 (characters-11)
 import { damageShieldPool } from '../characters/playerEntity.js';   // AUDIT 58: DecreaseHealth's shield hook is the BASE class's (DaggerfallEntity.cs:313-328)
-import { lycanthropeAttackVoice } from '../systems/lycanthropy.js';   // V4: the beast's attack voice
+import { lycanthropeAttackVoice, isTransformedLycanthrope } from '../systems/lycanthropy.js';   // V4: the beast's attack voice   // GUARD1: EnemyEntity.cs:188's FOURTH despawn term
 import { setCrimeCommitted } from '../systems/court.js';   // V4: the one crime setter (SuppressCrime)
 import { tallyCrimeGuildRequirements } from '../systems/crimeGuilds.js';   // CG2: the TG/DB tally
 import { entityIsParalyzed, applyEnemyMotorEffectFlags, concealmentFlags } from '../systems/effects.js';   // AUDIT 24 (wave 32): the watch is paralysable too   // A5: the enemy Levitate arm, the foe-target concealment closure + EntityConcealmentBehaviour's visual
@@ -719,9 +719,34 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
   function update(dt, playerFeet, eye, senses = {}) {
     _ecvT += dt;
     const ecvOn = combatVisualsOn();   // ECV1: once per frame
-    // EnemyEntity verbatim: the city watch DESPAWNS when the active
-    // crime returns to None (court release, death, region exit).
-    if (!playerEntity.crimeCommitted) {
+    // EnemyEntity.Update (:184-191): the city watch DESPAWNS when the
+    // active crime returns to None (court release, fast travel, the
+    // location-rect exit).
+    //
+    // GUARD1 (2026-09-15, relayed by Mac: "after a while of chasing me
+    // around the villages they disappeared. And then i was free to go
+    // on a killing spree"). THE FOURTH TERM WAS MISSING. DFU's
+    // condition is FOUR clauses, and this carried three:
+    //
+    //     entityType == EnemyClass && careerIndex == Knight_CityWatch
+    //       && CrimeCommitted == None
+    //       && !PlayerEffectManager.IsTransformedLycanthrope()
+    //
+    // That last clause is not decoration - it is the whole reason the
+    // watch can hunt a werewolf at all, because DFU ALSO ports
+    // LycanthropyEffect.SuppressCrime (:121-124), which this port
+    // carries too (court.js's one setter, systems/lycanthropy.js's
+    // racialSuppressCrime): while transformed, EVERY crime write
+    // resolves to Crimes.None. So the two laws compose into a trap.
+    // A transformed lycanthrope can never hold a crime, therefore the
+    // three-clause test is true on EVERY frame, therefore the entire
+    // watch was deleted the instant the player shapechanged - and
+    // never spawned again while the change lasted, since the pool the
+    // crime would have summoned is the one being emptied. A
+    // transformed player was simply immune to the city watch, free to
+    // murder a whole village unopposed. DFU's fourth clause is what
+    // holds the watch standing through exactly that window.
+    if (!playerEntity.crimeCommitted && !isTransformedLycanthrope(playerEntity)) {
       for (const g of guards) if (!g.dead) { g.dead = true; releaseGuardBatch(g); }   // no corpse - they walk away
     }
     // AUDIT 17e F7 - PlayerEntity.cs:533-537 verbatim: the surrender

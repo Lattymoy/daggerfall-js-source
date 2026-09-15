@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { FactionFile, FACTION_TYPES, SOCIAL_GROUPS, GUILD_GROUPS, flatArchive, flatRecord, isAlly } from '../src/formats/factionFile.js';
+import { CRIMES } from '../src/systems/crimes.js';   // GUARD1: the enum's leaf home
 import {
   findFactions, getPeopleOfCurrentRegion, getReactionToPlayer, ensureReactionState,
   pickpocket, MOBILE_NPC_ACTIVATION_DISTANCE, PICKPOCKET_DISTANCE,
@@ -100,7 +101,11 @@ test('pickpocket: the verbatim chance clamp and the three outcomes', () => {
   const r3 = pickpocket(p3, { rolls: seq(0.99) });
   assert.equal(r3.success, false);
   assert.equal(r3.modal, false, 'the failure is a HUD PopupMessage - the guards spawn behind it');
-  assert.equal(p3.crimeCommitted, 'Pickpocketing');
+  // GUARD1: the enum id, not a string - the one representation of
+  // `crimeCommitted` that the court, the save byte and the watch's
+  // despawn law all read (systems/crimes.js).
+  assert.equal(p3.crimeCommitted, CRIMES.Pickpocketing);
+  assert.equal(typeof p3.crimeCommitted, 'number');
   // The skill tallies on every attempt
   assert.ok(p1.skillUses?.[15] >= 1 || p1.tallies?.[15] >= 1 || true);
 });
