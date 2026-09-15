@@ -4,8 +4,9 @@
 //
 // The port's own item ladder over Daggerfall's loot
 // (src/systems/lootRarity.js): Common, Magic, Rare, Legendary, with
-// DFU's artifacts as the ceiling. An ENHANCED row, off by default and
-// forced on online. The laws pinned here:
+// DFU's artifacts as the ceiling. An ENHANCED row, ON by default
+// (LR5, 2026-09-15, Mac: "I want to mod on by default") and forced on
+// online. The laws pinned here:
 //   - OFF IS DFU EXACTLY: no field written, no read moved, no tint.
 //   - ONE LADDER: every enchanted item derives Magic, an artifact is
 //     the top, a rolled item wears its own tier.
@@ -65,7 +66,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => readFileSync(join(root, p), 'utf8');
 
 const on = () => { _resetForTests(); setPref('lootRarity', true); };
-const off = () => { _resetForTests(); };
+const off = () => { _resetForTests(); setPref('lootRarity', false); };   // LR5: the row ships ON, so OFF is now a press - a bare reset would have left every 'off' pin below testing the ON path in silence
 const lcg = (seed) => () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return (seed >>> 8) / 0x800000; };   // [0, 1) - LR4: /0x7fffff could answer exactly 1
 const sword = () => createWeapon(120, 1);   // a steel longsword
 const cuirass = () => mintCondition({ group: 'Armor', templateIndex: 102, material: 0x0200 + 1, name: 'Cuirass', flags: 0 });
@@ -73,13 +74,13 @@ const ring = () => mintCondition({ group: 'Jewellery', templateIndex: 135, name:
 const typeKey = (t) => Object.keys(ENCHANTMENT_TYPES).find((k) => ENCHANTMENT_TYPES[k] === t);
 const entityOf = () => ({ isPlayer: true, items: [], stats: { strength: 50, intelligence: 50, willpower: 50, agility: 50, endurance: 50, personality: 50, speed: 50, luck: 50 }, skills: new Array(35).fill(30), level: 5, career: {} });
 
-test('LR1: the switch - off by default (DFU\'s loot is the 1:1 law), forced on online, one Enhanced row on the home', () => {
-  assert.equal(PREF_DEFAULTS.lootRarity, false, 'off by default, as enhancedAI is: it changes the rules of what drops');
+test('LR5: the switch - ON by default (the ladder is the port\'s own game), forced on online, one Enhanced row on the home, and OFF is still DFU exactly', () => {
+  assert.equal(PREF_DEFAULTS.lootRarity, true, 'LR5: ON by default - Mac\'s call, the ladder is what a player meets');
   assert.equal(ONLINE_FORCED_PREFS.lootRarity, true, 'the enhanced lane, whole (OL1)');
   const row = FEATURES.find((f) => f.id === 'loot-rarity');
   assert.ok(row, 'the row is on the home');
   assert.deepEqual(row.kinds, ['enhanced']);
-  assert.deepEqual(row.control, { store: 'prefs', key: 'lootRarity', initial: false, online: true }, 'RF4: the row declares its default and the lane\'s answer');
+  assert.deepEqual(row.control, { store: 'prefs', key: 'lootRarity', initial: true, online: true }, 'RF4: the row declares its default and the lane\'s answer');
   assert.match(row.note, /Magic .*Rare .*Legendary/s, 'the note names the ladder');
   assert.match(row.note, /never your level/, 'and the source law');
   assert.match(row.note, /unidentified/, 'and the identify loop');

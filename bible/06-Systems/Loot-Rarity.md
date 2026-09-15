@@ -7,13 +7,16 @@ detailed and best that it can be."
 
 ENHANCED - the port's departure from Daggerfall's rules, built in
 house, one row on the Features home (`loot-rarity`, over the pref
-`lootRarity`). OFF by default, as the enhanced AI is: it changes what
-drops, and DFU's loot is the 1:1 law. The online lane forces it on
-with every other enhancement (OL1). Off, not one field is written and
-not one read moves.
+`lootRarity`). **ON by default** (LR5, 2026-09-15, Mac: *"I want to
+mod on by default"*). It shipped OFF beside the enhanced AI on the
+reasoning that a row changing the RULES waits to be asked for; Mac's
+call is that the ladder is the port's own game and should be what a
+player meets. The online lane forces it on with every other
+enhancement (OL1), as it always did. Off, not one field is written and
+not one read moves - so the 1:1 lane is one press away, not lost.
 
 One module: `src/systems/lootRarity.js`. One pin file:
-`test/lr1_lootrarity.test.js` (16). One tuning table: `RARITY_WEIGHTS`
+`test/lr1_lootrarity.test.js` (20). One tuning table: `RARITY_WEIGHTS`
 and `SOURCE_MULT`, per mille.
 
 ## The ladder
@@ -281,8 +284,9 @@ missing:
 
 ### Offline, sound
 
-- **The switch.** `lootRarity` is a prefs row, `initial: false`, and
-  the load order that makes the online forcing possible is guaranteed
+- **The switch.** `lootRarity` is a prefs row (`initial: false` at the
+  time of the audit; LR5 has since flipped it to `true`), and the load
+  order that makes the online forcing possible is guaranteed
   by the import graph, not by luck: `uiPrefs.js` itself imports
   `features.js`, whose load runs `declareOnlinePrefs`, and
   `lootRarity.js` reaches the pref only through `getPref`. There is no
@@ -351,11 +355,45 @@ affix list's check removed.
 ### Two notes for Mac, not defects
 
 - **Offline the mod is invisible until the player finds the switch.**
-  `initial: false` is deliberate and consistent - the rows that change
+  `initial: false` was deliberate and consistent - the rows that change
   RULES (this, enhanced AI) ship off, the rows that change LOOK
-  (enhanced water, combat visuals) ship on - so this is a design
-  decision to revisit, not a bug.
+  (enhanced water, combat visuals) ship on. Raised as a decision to
+  revisit rather than a bug, and **Mac took it: LR5 below.**
 - **A skill affix may name any of the 35 skills**, so a warhammer can
   roll `+20 Impish`. It is within the design and it works; it reads
   oddly beside `+35% damage`. A weighting toward the group's own
   combat skills would be a tuning slice, not a fix.
+
+## LR5 (2026-09-15) - THE LADDER IS ON
+
+Mac, on the audit's first note: *"I want to mod on by default"*.
+
+`initial: false` becomes `initial: true` on the `loot-rarity` row, and
+that is the whole change - RF4's one declaration means the shelf
+(`PREF_DEFAULTS`), the Features home's control and the online lane's
+answer all follow from the row without a second edit. The lane already
+forced it on, so **online is unchanged**; what changes is the offline
+lane, where every new player now meets the ladder instead of having to
+go and find it.
+
+It is a departure from the departure's own reasoning, recorded as such:
+the rule was that a row changing the RULES ships off (the enhanced AI
+still does) and a row changing the LOOK ships on. Mac's call is that
+this row is not an accessory to Daggerfall's loot but the port's own
+game, and that a player should meet it. The 1:1 lane is not lost - one
+press and not one field is written, not one read moves.
+
+**What the flip actually moved.** The suite found exactly one live
+consequence beyond the default itself, and it is correct rather than a
+regression: an ARTIFACT's scroller tooltip now carries a tier line
+under its name (`Mysterious Tome` / `Artifact`), because DFU's
+artifacts are the ladder's ceiling and `rarityLines` names it. D7's own
+law is the NAME arm (`Books && !IsArtifact`), so that pin now reads the
+first line for the name and pins the ladder's line beside it, rather
+than switching the ladder off to keep an old answer.
+
+**The trap this had to avoid.** `test/lr1_lootrarity.test.js` drives
+its OFF half through a helper that was a bare `_resetForTests()`. With
+the row shipping ON, that helper stops meaning "off" - every "off is
+DFU exactly" pin in the file would have gone on testing the ON path, in
+silence, and passing. The helper presses the switch off explicitly now.
