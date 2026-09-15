@@ -591,7 +591,7 @@ test('WW1: the rig runs the clone beside the machine - the late update after the
   // the bundle door registered from the textures pick, beside the seasons'
   assert.match(rd('src/scenes/shared.js'), /setWeaponWidgetSources\(names, loadTextureFile\);/);
   assert.match(rd('src/scenes/dataSource.js'), /setWeaponWidgetSources\(names, loadTextureFile\);/);
-  assert.match(rd('src/systems/features.js'), /modFeature\('weapon-widget', 'Takes effect at once\.'\)/);
+  assert.match(rd('src/systems/features.js'), /modFeature\('weapon-widget', 'Takes effect at once\.', '\w+'\)/);
 });
 
 test('WW1: the bundle door - TryImportCifRci\'s spelling with the w_ prefix and the metal\'s name (none for bare hands), the pick\'s names filtered to the mod\'s bundle and its loose PNGs, nothing attached answering null without throwing, the DFMOD prefix with one home', async () => {

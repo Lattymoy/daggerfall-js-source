@@ -137,8 +137,8 @@ test('FD1: the launcher and the keyed settings window are gone, nothing imports 
 
 test('FD1: both skins open on the enhanced door; classic collapses its game doors into BEGIN, which resolves into the classic sequence with the data gated first (mutant: Begin on the enhanced rail, or the classic rail keeping New Game)', () => {
   const menu = src('ui/enhancedMenu.js');
-  assert.match(menu, /const SECTIONS_CLASSIC = \['Begin', 'Online', 'Settings', 'Controls', 'Features', 'Mods', 'About'\];/);
-  assert.match(menu, /const SECTIONS_BOOT = \['Continue', 'New Game', 'Load Game', 'Online', 'Test Room', 'Settings', 'Controls', 'Features', 'Mods', 'About'\];/, 'the enhanced rail keeps its three doors and loses the Enhanced entry (SO1)');
+  assert.match(menu, /const SECTIONS_CLASSIC = \['Begin', 'Online', 'Settings', 'Controls', 'Features', 'About'\];/);
+  assert.match(menu, /const SECTIONS_BOOT = \['Continue', 'New Game', 'Load Game', 'Online', 'Test Room', 'Settings', 'Controls', 'Features', 'About'\];/, 'the enhanced rail keeps its three doors and loses the Enhanced entry (SO1)');
   assert.match(menu, /sections = mode === 'pause' \? SECTIONS_PAUSE : isEnhanced\(\) \? SECTIONS_BOOT : SECTIONS_CLASSIC;/);
   assert.match(menu, /function paneBegin\(body\) \{[\s\S]*?onClick: \(\) => onAction\('begin'\)/);
   assert.match(menu, /begin: paneBegin,/, 'the dispatch knows it');
@@ -171,8 +171,8 @@ test('SO1: the settings pane is organised - the port\'s rows sit in the categori
   for (const k of ['touchLookSensitivity', 'touchAnalogStick', 'touchGyroLook', 'touchHaptics', 'touchFullscreen']) assert.match(ctl, new RegExp(`'${k}'`), k);
   const ui = menu.slice(menu.indexOf('function portRowsInterface('), menu.indexOf('function portRows('));
   assert.match(ui, /if \(!pause\) out\.push\(skinRow\(\)\);/); assert.match(ui, /out\.push\(hudScaleRow\(\)\);/); assert.match(ui, /prefRow\('showFps'/);
-  // the Mods page takes the assets and the packs
-  const mods = menu.slice(menu.indexOf('function paneMods('), menu.indexOf('\n}', menu.indexOf('function paneMods(')));
+  // FT14: the Mods page is gone; the assets and the packs stand under the feature tiles instead
+  const mods = menu.slice(menu.indexOf('function modsFooter('), menu.indexOf('\n}', menu.indexOf('function modsFooter(')));
   assert.match(mods, /body\.append\(morrowindCard\(\)\);[^\n]*\n\s*body\.append\(packsCard\(\)\);/);
   assert.match(menu, /await ds\.pickMusicFolder\(\); render\(\);/, 'the music pack is reachable without the launcher');
   assert.match(menu, /await ds\.pickTextureFolder\(\); render\(\);/);

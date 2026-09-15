@@ -186,6 +186,7 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    heading above it. */
 .body { padding: 24px 30px 40px; max-width: 720px; }
 .body.flush { padding: 0; max-width: none; }
+.body.wide { max-width: 1180px; }   /* FT14: the features grid is scanned, not read - the 720px reading measure is the wrong bound for it */
 
 /* ── CARDS + ACTIONS ───────────────────────────────────────── */
 .card { border: 1px solid var(--iron); padding: 20px; margin-bottom: 16px; background: #12161b; }
@@ -2832,6 +2833,93 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   border-color: var(--brass); background: rgba(0,0,0,0.35); text-shadow: 2px 2px 0 rgb(93,77,12); }
 .ovskip, .ovhint { color: #7d7460; font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+
+/* ── FT14: ONE ROOF (2026-09-15) ───────────────────────────────
+   The features home stops being a list. Twenty-eight tiles in a
+   grid, grouped by what they change, with a rail that reads out
+   the one you point at.
+
+   THE CONTROL IS A BAR AND THERE ARE NO SWITCHES. Off is its
+   first segment, so a two-state row and a five-state row are the
+   same object at two widths - which is the whole reason a tile
+   works at all: the bar sits UNDER the name instead of out at the
+   right margin, so the control stops setting the row's width and
+   the thing fits a card.
+
+   The colours are the skin's own: brass for what the online lane
+   forces, verdigris for what is on, iron for what is not. The
+   left edge carries that, so the grid can be read for state
+   without reading a word of it. */
+.ft-panes { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 22px; align-items: start; }
+.ft-main { min-width: 0; }
+.ft-grouphead { display: flex; align-items: baseline; gap: 10px; margin: 18px 0 8px; }
+.ft-grouphead:first-child { margin-top: 0; }
+.ft-grouphead h2 { font-family: var(--data); font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--bone); margin: 0; font-weight: 600; }
+.ft-gn { font-family: var(--data); font-size: 11px; color: var(--dim); font-variant-numeric: tabular-nums; }
+.ft-gline { flex: 1; height: 1px; background: var(--iron); }
+
+.ft-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(212px, 1fr)); gap: 8px; }
+
+.ft-tile { position: relative; background: var(--slate); border: 1px solid var(--iron);
+  padding: 9px 10px 9px 13px; display: flex; flex-direction: column; gap: 7px; cursor: pointer; }
+.ft-tile::before { content: ''; position: absolute; left: 0; top: -1px; bottom: -1px; width: 3px;
+  background: var(--iron); }
+.ft-tile[data-on="1"]::before { background: var(--verdigris); }
+.ft-tile[data-locked="1"]::before { background: var(--brass); }
+.ft-tile:hover, .ft-tile.sel { border-color: var(--dim); }
+.ft-tile.sel { background: var(--iron); }
+.ft-tile:focus-visible { outline: 2px solid var(--brass); outline-offset: 1px; }
+.ft-tile-name { font-family: var(--data); font-size: 14.5px; color: var(--bone); line-height: 1.2; }
+.ft-tile-meta { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+.ft-tile-lock { font-family: var(--data); font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--brass); }
+
+/* the bar */
+.ft-seg { display: flex; flex-wrap: wrap; background: var(--ink); border: 1px solid var(--iron); padding: 2px; gap: 2px; }
+.ft-segb { font-family: var(--data); font-size: 11.5px; letter-spacing: 0.03em; color: var(--dim);
+  background: none; border: 0; padding: 3px 8px; cursor: pointer; flex: 1 1 auto; white-space: nowrap; }
+.ft-segb:hover:not(:disabled) { color: var(--bone); }
+.ft-segb[aria-pressed="true"] { background: var(--iron); color: var(--bone); }
+.ft-seg.is-on .ft-segb[aria-pressed="true"] { color: var(--verdigris); }
+.ft-segb.off[aria-pressed="true"] { color: var(--dim); }
+.ft-seg.locked .ft-segb[aria-pressed="true"] { color: var(--brass); }
+.ft-segb:disabled { cursor: default; }
+.ft-segb:focus-visible { outline: 2px solid var(--brass); outline-offset: -2px; }
+
+/* the drawer's door, and the drawer */
+.ft-tile-more { font-family: var(--data); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--dim); background: none; border: 0; padding: 2px 0; cursor: pointer; text-align: left; }
+.ft-tile-more:hover { color: var(--bone); }
+.ft-tile-car { display: inline-block; }
+.ft-tile-car.open { transform: rotate(90deg); }
+.ft-tile-drawer { border-top: 1px solid var(--iron); padding-top: 7px; display: flex; flex-direction: column; gap: 6px; }
+.ft-drawer-label { font-family: var(--data); font-size: 9.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--dim); }
+.ft-chipset { display: flex; flex-wrap: wrap; gap: 4px; }
+.ft-mchip { font-family: var(--data); font-size: 11px; background: var(--ink); color: var(--dim);
+  border: 1px solid var(--iron); padding: 2px 6px; cursor: pointer; }
+.ft-mchip[aria-pressed="true"] { color: var(--verdigris); border-color: var(--verdigris); }
+.ft-mchip:hover { color: var(--bone); }
+.ft-tile-drawer .row { padding: 4px 0; border: 0; }
+.ft-tile-drawer .row-note, .ft-tile-drawer .row-sub { display: none; }   /* the rail carries the words */
+
+/* the reading rail */
+.ft-rail { position: sticky; top: 8px; background: var(--slate); border: 1px solid var(--iron);
+  padding: 12px 13px; display: flex; flex-direction: column; gap: 9px; }
+.ft-rail-k { font-family: var(--data); font-size: 9.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--dim); }
+.ft-rail h3 { font-family: var(--display); font-size: 19px; color: var(--bone); margin: 0; line-height: 1.15; }
+.ft-rail-note { font-size: 12.5px; line-height: 1.5; color: var(--bone); margin: 0; opacity: 0.85; }
+.ft-rail-effect { font-size: 12px; line-height: 1.45; color: var(--dim); margin: 0;
+  border-left: 2px solid var(--brass); padding-left: 8px; }
+.ft-rail-kv { display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; margin: 0;
+  border-top: 1px solid var(--iron); padding-top: 8px; }
+.ft-rail-kv dt { font-family: var(--data); font-size: 9.5px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--dim); padding-top: 2px; }
+.ft-rail-kv dd { margin: 0; font-size: 12px; color: var(--bone); opacity: 0.85; }
+
+@media (max-width: 860px) {
+  .ft-panes { grid-template-columns: minmax(0, 1fr); }
+  .ft-rail { position: static; order: -1; }
+}
 `;
 
 const STYLE_ID = 'dagger-enhanced-style';

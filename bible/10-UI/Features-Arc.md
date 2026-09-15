@@ -648,3 +648,84 @@ Pins: `test/pref1_shelf.test.js` (6, two mutants killed - `savePrefs`
 writing the whole shelf again, and the adoption ignoring the stamp so a
 real "off" is overwritten on every load), plus the re-aimed LR5 switch
 pin and `test/rf4_featuredecl.test.js`.
+
+## FT14 - ONE ROOF (2026-09-15)
+
+Mac: *"I want to get rid of the mod panel and integrate certain
+feature/mod adjustments into the toggle themselves and move away from
+the scrolling list format."*
+
+### The number that shaped it
+
+The panel was never the problem. The eight vendored mods carry **360
+settings keys** between them - Handheld Torches 84, the Weapon Widget
+70, PCAAO 48 - and that is what made the Mods pane a scroll. No layout
+fixes a list of 360 things, so the first decision was not visual:
+**curate or expose.** Curate kills the pane; expose only moves it. Mac
+took curate, after seeing both in a clickable mock.
+
+### What a mod actually is
+
+Reading the eight, they decompose the same way twice over: a key under
+`Modules.` is a SUB-FEATURE the mod can switch off whole (the Widget's
+nine - its swings, its bob, its recoil), and everything else is a DIAL.
+So the tile shows the modules as chips, DERIVED so a new module needs
+no edit, and a named handful of dials (`features.js` `MOD_CURATED`).
+`Swings.Speed` earns its place; `Swings.VanillaAlignmentOverride` does
+not. Nothing is lost, only unlisted - the rest keep the values the mod
+ships, and a key that earns a place is one line.
+
+### The thesis: there are no switches
+
+Every control is a BAR, and Off is simply its first segment. A
+two-state row and a five-state row become the same object at two
+widths, so the eye learns one control instead of alternating between a
+toggle and a stepper depending on which store a row happens to sit in.
+
+That is also what makes the tile possible. A row had to be a row
+because the switch sat at the right margin and the words ran to meet
+it; a bar sits UNDER its name, so the whole thing fits a card, and
+cards tile. One `tileStates(f)` adapter answers the states for every
+store - a pref, a tiered pref, a DFU enum - and where a store cannot
+answer in segments it returns null and the row's own builder draws it,
+so a control the bar has not learned is not silently dropped.
+
+### Grouped by what they change
+
+A row's KIND says who wrote it; a row's GROUP says what it changes.
+Twelve rows wearing "Enhanced" is not a section; nine rows about what
+you can SEE is. So the registry gained `group` (Sight 9, The world 7,
+Loot & items 4, Combat 8), the groups are the headings, and Enhanced /
+Mod / DFU Classic became the filter chips they always were.
+
+The notes that made each row tall moved to a reading rail on the right,
+which reads out whichever tile is pointed at - and the left edge of
+each tile carries its state in the skin's own colours (verdigris on,
+brass forced-on-online, iron off), so the grid can be read for state
+without reading a word of it.
+
+### Two things the build taught
+
+**The classes collided.** `.tile` was already the inventory's 34x34
+item icon and `.seg` a progress strip - the first cut inherited both
+and the grid collapsed into a narrow column of overlapping boxes. Every
+FT14 class is `ft-` namespaced now, and the pin walks them, because a
+source sweep would never have caught it and the browser probe did.
+
+**The rail was empty.** `paintRail` looked its element up by id, and
+`paneFeatures` builds the pane DETACHED - so the first paint found
+nothing and the rail stayed blank until the first hover. It is handed
+its element now.
+
+Both were found by `tools/enhancedMenuProbe.mjs`'s route - the real
+menu in a real browser with no ARENA2 - which is the only thing that
+could have found them.
+
+### The pane's estate
+
+`paneMods` is gone from the file and from both dispatch tables, and
+`Mods` from all three rails. Three things it carried were never mod
+settings and needed a home rather than a deletion: the Morrowind assets
+card, the texture packs' door, and DFU's four switches for ITS mod
+system. They stand under the tiles as `modsFooter`, drawn where a
+player who came looking for "mods" now arrives.

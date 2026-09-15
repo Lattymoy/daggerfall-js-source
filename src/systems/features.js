@@ -50,6 +50,27 @@ export const KINDS = Object.freeze({
 });
 export const KIND_ORDER = Object.freeze(['enhanced', 'mod', 'classic']);
 
+/** FT14 (2026-09-15, Mac: "get rid of the mod panel and integrate
+ *  certain feature/mod adjustments into the toggle themselves and move
+ *  away from the scrolling list format") - THE GROUPS.
+ *
+ *  A row's KIND says who wrote it; a row's GROUP says what it changes.
+ *  The panel groups by the second and filters by the first, because
+ *  which of them a player is looking for depends on the question they
+ *  came with - "why does the grass look like that" is a group, "what
+ *  is this port doing that Daggerfall Unity is not" is a kind - and
+ *  only the group makes a useful heading. Twelve rows wearing
+ *  "Enhanced" is not a section; nine rows about what you can SEE is.
+ *
+ *  In display order. Every row declares one. */
+export const GROUPS = Object.freeze({
+  sight: Object.freeze({ label: 'Sight' }),
+  world: Object.freeze({ label: 'The world' }),
+  loot: Object.freeze({ label: 'Loot & items' }),
+  combat: Object.freeze({ label: 'Combat' }),
+});
+export const GROUP_ORDER = Object.freeze(['sight', 'world', 'loot', 'combat']);
+
 /** Where a control's value lives. */
 export const STORES = Object.freeze(['prefs', 'settings', 'mods']);
 
@@ -59,10 +80,11 @@ export const STORES = Object.freeze(['prefs', 'settings', 'mods']);
  *  modsettings ship. The mod's OTHER knobs stay under its card on the
  *  Mods page, whose Enabled row is a pointer here. `effect` is the
  *  port's word on when the switch lands, per mod. */
-const modFeature = (vendor, effect) => {
+const modFeature = (vendor, effect, group) => {
   const mod = MOD_SETTINGS[vendor];
   return Object.freeze({
     id: `mod-${vendor.toLowerCase()}`,
+    group,
     title: `${mod.title} by ${mod.author}`,
     note: mod.keys.Enabled.description,
     effect,
@@ -70,6 +92,51 @@ const modFeature = (vendor, effect) => {
     control: Object.freeze({ store: 'mods', vendor, key: 'Enabled' }),
   });
 };
+
+/** FT14 (2026-09-15) - WHAT A MOD'S TILE SHOWS, AND WHAT IT DOES NOT.
+ *
+ *  The eight vendored mods carry 360 settings keys between them -
+ *  Handheld Torches alone has 84, the Weapon Widget 70. That is the
+ *  real reason the Mods pane was a scroll, and no amount of layout
+ *  fixes a list of 360 things. So the tile shows the few a player
+ *  would actually move, and the rest keep the values the mod ships.
+ *
+ *  TWO SHAPES, because the mods have two. A key under `Modules.` is a
+ *  SUB-FEATURE the mod can turn off whole (the Widget's nine: its
+ *  swings, its bob, its recoil) - those are chips, and they are DERIVED
+ *  rather than listed here, so a mod that gains a module gains a chip
+ *  without an edit. Everything else is a DIAL, and dials are named,
+ *  because that is the curation: `Swings.Speed` earns its place on the
+ *  tile and `Swings.VanillaAlignmentOverride` does not.
+ *
+ *  A vendor absent from this table, or an empty list, shows its switch
+ *  and nothing else - which is right for the mods that are one idea
+ *  (Seasons of the Iliac Bay is on or it is off).
+ *
+ *  NOTHING IS LOST, only unlisted: the values stand as the mod's own
+ *  modsettings ship them, and a key that needs to reach a player is one
+ *  line here. The rows are rendered by the same `modRow` the Mods pane
+ *  used, so a curated key is not a second copy of anything. */
+export const MOD_CURATED = Object.freeze({
+  'weapon-widget': Object.freeze(['Swings.Speed', 'Bob.Length', 'Inertia.Scale']),
+  'handheld-torches': Object.freeze(['Handling.RememberLastLightSource', 'Handling.StowWhenSpellcasting', 'Bob.Length']),
+  pcaao: Object.freeze(['equipmentDamageEnhanced', 'fadingEnchantedItems', 'armorHitFormulaRedone',
+    'criticalStrikesIncreaseDamage', 'conditionBasedEffectiveness', 'softMaterialRequirements',
+    'fixedStrengthDamageModifier']),
+  unleveledLoot: Object.freeze(['Iron', 'Steel', 'Silver', 'Elven', 'Dwarven', 'Mithril',
+    'Adamantium', 'Ebony', 'Orcish', 'Daedric']),
+  'roads-hazelnut': Object.freeze(['SmoothRoads', 'RiversAndStreams']),
+});
+
+/** The `Modules.` keys a vendor ships, in the mod's own order - the
+ *  tile's chips. Derived, so a new module needs no edit here. */
+export const modModules = (vendor) =>
+  Object.keys(MOD_SETTINGS[vendor]?.keys ?? {}).filter((k) => k.startsWith('Modules.'));
+
+/** The dials a vendor's tile shows, refused to keys the mod does not
+ *  ship - a typo in the table above is a missing row, not a crash. */
+export const modDials = (vendor) =>
+  (MOD_CURATED[vendor] ?? []).filter((k) => MOD_SETTINGS[vendor]?.keys?.[k] !== undefined);
 
 /** The rows. Shape:
  *    { id, title, note, effect?, kinds: [kind, ...],
@@ -95,6 +162,7 @@ export const FEATURES = Object.freeze([
   // Classic today; it wears Enhanced too the day the port builds on it.
   Object.freeze({
     id: 'smaller-dungeons',
+    group: 'world',
     title: 'Smaller dungeons',
     note: 'Daggerfall\u2019s dungeons are enormous. On, any dungeon over five blocks is rebuilt as a plus of five - '
       + 'a random central block with four border blocks around it, drawn from its own block list, the same five every visit. '
@@ -111,6 +179,7 @@ export const FEATURES = Object.freeze([
   // writes both stores (world/landView.js landViewRead/landViewWrite).
   Object.freeze({
     id: 'land-view-distance',
+    group: 'sight',
     title: 'Land view distance',
     note: 'How far the land streams around you, in map pixels each way. Daggerfall Unity\u2019s own is 3 and its furthest is 4; '
       + 'the enhanced outdoors go to 6, drawing the far rings coarse - only their trees and fires - with the haze reaching as far, '
@@ -134,6 +203,7 @@ export const FEATURES = Object.freeze([
   // dome, or under Dynamic Skies' skybox (world/outdoors.js).
   Object.freeze({
     id: 'enhanced-environments',
+    group: 'sight',
     title: 'Enhanced environments',
     note: 'The enhanced outdoors: a procedural sky with the sun, both moons on their real phases and a star field, '
       + 'a finely stepped sunrise and sunset, volumetric clouds that build with the weather, drift on the wind and cast '
@@ -165,6 +235,7 @@ export const FEATURES = Object.freeze([
   // which the note says outright so the two cannot be read as one.
   Object.freeze({
     id: 'enhanced-ai',
+    group: 'combat',
     title: 'Enhanced AI',
     note: 'Enemies find their way: a navmesh baked from each dungeon, so they path around pillars and down '
       + 'corridors instead of walking into walls the way classic Daggerfall\u2019s do. Senses, decisions and '
@@ -182,6 +253,7 @@ export const FEATURES = Object.freeze([
   // now (render/waterSurface.js waterSwitchOn); `?water=off` is the kill door.
   Object.freeze({
     id: 'enhanced-water',
+    group: 'sight',
     title: 'Enhanced water',
     note: 'The oceans, rivers and ponds drawn as water: waves that rise with the wind, the sky and the '
       + 'sun reflected off the surface, the moon\u2019s glint at night, rain pocking it, the clouds\u2019 '
@@ -198,6 +270,7 @@ export const FEATURES = Object.freeze([
   // which each note now says. Enhanced, the port's own dials.
   Object.freeze({
     id: 'grass-density',
+    group: 'sight',
     title: 'Grass density',
     note: 'How much of the meadow grows under the enhanced outdoors: the full field, half, a quarter, or none. '
       + 'The single heaviest thing outdoors - try half first if the FPS counter says the frame is the GPU\u2019s.',
@@ -207,6 +280,7 @@ export const FEATURES = Object.freeze([
   }),
   Object.freeze({
     id: 'cloud-quality',
+    group: 'sight',
     title: 'Cloud quality',
     note: 'How finely the volumetric clouds over the enhanced outdoors are marched. Low is a coarser sky map with fewer steps; '
       + 'High is for a machine with room to spare.',
@@ -222,6 +296,7 @@ export const FEATURES = Object.freeze([
   // kill door), so a press takes effect at once.
   Object.freeze({
     id: 'enhanced-combat-visuals',
+    group: 'sight',
     title: 'Enhanced combat visuals',
     note: 'How a magically concealed enemy is drawn. Classic Daggerfall and Daggerfall Unity hide it '
       + 'completely - an imp that casts Chameleon on itself vanishes, and still takes your hits. On, a '
@@ -244,6 +319,7 @@ export const FEATURES = Object.freeze([
   // field.
   Object.freeze({
     id: 'loot-rarity',
+    group: 'loot',
     title: 'Loot rarity',
     note: 'A Diablo-style ladder over Daggerfall\u2019s loot. A weapon, a piece of armour or a piece of jewellery that drops from a '
       + 'corpse or a treasure pile may roll Magic (one or two affixes), Rare (three or four, a two-part name, and one of Daggerfall\u2019s own '
@@ -264,6 +340,7 @@ export const FEATURES = Object.freeze([
   // `?sway=off`.
   Object.freeze({
     id: 'wind-wisps',
+    group: 'sight',
     title: 'Wind wisps',
     note: 'Faint streaks of air riding the wind across the land under the enhanced outdoors, so you can see which way it blows '
       + 'and how hard: a few in a breeze, the air full of them in a gale. They travel with the same wind the clouds, the rain and '
@@ -274,6 +351,7 @@ export const FEATURES = Object.freeze([
   }),
   Object.freeze({
     id: 'wind-sound',
+    group: 'world',
     title: 'Wind sound',
     note: 'A quiet wind under the enhanced outdoors, from Daggerfall\u2019s own wind clips, rising and falling with the wind\u2019s strength '
       + 'and breathing with its gusts - never more than a murmur under the rain and the birds, and silent indoors. '
@@ -284,6 +362,7 @@ export const FEATURES = Object.freeze([
   }),
   Object.freeze({
     id: 'flora-sway',
+    group: 'sight',
     title: 'Trees sway',
     note: 'Trees and plants lean with the wind under the enhanced outdoors - the crown moves, the root stands - and a gust runs '
       + 'across a wood as one thing, the same wave the grass takes. Only the trees and plants: people, signs and lights stand still. '
@@ -300,6 +379,7 @@ export const FEATURES = Object.freeze([
   // `?wxfield=off` the kill door.
   Object.freeze({
     id: 'weather-events',
+    group: 'world',
     title: 'Weather as places',
     note: 'Under the enhanced outdoors a day\u2019s rain, storm or snow is not everywhere in its climate at once: it stands in cells over the land - '
       + 'a few thunderheads across the hills, broad rain decks over the plain - drifting on the day\u2019s wind, with an overcast or a cloudy sky between them. '
@@ -312,13 +392,13 @@ export const FEATURES = Object.freeze([
   // FT9 (2026-09-14): THE FIVE PACKS WITH A SWITCH (Dynamic Skies' is
   // the outdoors row's, FT4). Windmills (Kamer) has no switch and so no
   // row - a row needs a control. The order is the Mods pane's.
-  modFeature('seasons-iliac-bay', 'Takes effect when the world next loads.'),
-  modFeature('roads-hazelnut', 'Takes effect when the world next loads.'),
-  modFeature('meanerMonsters', 'Takes effect on monsters spawned after the switch.'),
-  modFeature('pcaao', 'Takes effect at once.'),
-  modFeature('unleveledLoot', 'Takes effect on the next roll.'),
-  modFeature('weapon-widget', 'Takes effect at once.'),   // WW1: the widget reads its switches every frame
-  modFeature('handheld-torches', 'Takes effect at once.'),   // HT1: the component reads its switches every frame
+  modFeature('seasons-iliac-bay', 'Takes effect when the world next loads.', 'world'),
+  modFeature('roads-hazelnut', 'Takes effect when the world next loads.', 'world'),
+  modFeature('meanerMonsters', 'Takes effect on monsters spawned after the switch.', 'combat'),
+  modFeature('pcaao', 'Takes effect at once.', 'combat'),
+  modFeature('unleveledLoot', 'Takes effect on the next roll.', 'loot'),
+  modFeature('weapon-widget', 'Takes effect at once.', 'combat'),   // WW1: the widget reads its switches every frame
+  modFeature('handheld-torches', 'Takes effect at once.', 'loot'),   // HT1: the component reads its switches every frame
   // FT10 (2026-09-14): DFU'S OWN DUNGEON ENHANCEMENTS - three of the
   // Enhancements section's switches, each read by the port at the point
   // of use as DFU reads it. DFU Classic: Daggerfall Unity's departures
@@ -327,6 +407,7 @@ export const FEATURES = Object.freeze([
   // pointer rows there and the rows here say one name.
   Object.freeze({
     id: 'enemy-infighting',
+    group: 'combat',
     title: 'Enemies Fight Each Other',
     note: 'Daggerfall Unity\u2019s enemy infighting: a monster attacks whatever it is not allied with - a bear a spider, '
       + 'a Daedra a knight - by the teams Daggerfall gives its creatures, not only you. Off, every enemy fights you alone, '
@@ -337,6 +418,7 @@ export const FEATURES = Object.freeze([
   }),
   Object.freeze({
     id: 'varied-dungeon-monsters',
+    group: 'world',
     title: 'Varied Dungeon Monsters',
     note: 'Daggerfall Unity\u2019s alternate random enemy selection. Classic Daggerfall fills one list of monsters for the whole '
       + 'dungeon from its type\u2019s table, so a dungeon repeats the same few; on, each random monster is picked by your level '
@@ -348,6 +430,7 @@ export const FEATURES = Object.freeze([
   }),
   Object.freeze({
     id: 'torches-from-items',
+    group: 'loot',
     title: 'Torches Light Your Way',
     note: 'Daggerfall Unity\u2019s item-based torch: your light in a dungeon comes from a torch, lantern or candle you carry '
       + 'and use, which burns down and gutters out, instead of a light you always have. It also puts a torch in a new '
@@ -363,6 +446,7 @@ export const FEATURES = Object.freeze([
   // are settings, not features, and stay in Settings.
   Object.freeze({
     id: 'combat-voices',
+    group: 'combat',
     title: 'Combat Voices',
     note: 'Daggerfall Unity\u2019s combat vocalisations: you and the people you fight grunt on a swing and cry out when hit - '
       + 'sounds classic Daggerfall carries but never plays in a fight. Off, a fight is silent but for the blows. '
@@ -373,6 +457,7 @@ export const FEATURES = Object.freeze([
   }),
   Object.freeze({
     id: 'near-death-warning',
+    group: 'combat',
     title: 'Near Death Warning',
     note: 'Daggerfall Unity\u2019s screen flicker as your health falls: a slow throb under two fifths, a fast burst when you are hurt '
       + 'under a fifth. Off, nothing warns you but the bar. Daggerfall Unity ships it on.',
@@ -382,6 +467,7 @@ export const FEATURES = Object.freeze([
   }),
   Object.freeze({
     id: 'bows-left-hand',
+    group: 'combat',
     title: 'Bows In Left Hand',
     note: 'Daggerfall Unity\u2019s option: a bow equips in the left hand only, so a one-handed weapon can stay in the right and '
       + 'you switch between them with a short delay, instead of a bow taking both hands. Off is classic Daggerfall\u2019s hands. '
@@ -392,6 +478,7 @@ export const FEATURES = Object.freeze([
   }),
   Object.freeze({
     id: 'choose-guild-jobs',
+    group: 'world',
     title: 'Choose Guild Jobs',
     note: 'Daggerfall Unity\u2019s guild quest list: a guild\u2019s quest-giver offers the jobs you are eligible for as a list to pick '
       + 'from, instead of classic Daggerfall\u2019s one job drawn at random. Daggerfall Unity ships it off.',
@@ -401,6 +488,7 @@ export const FEATURES = Object.freeze([
   }),
   Object.freeze({
     id: 'dungeon-wall-style',
+    group: 'sight',
     title: 'Dungeon Wall Style',
     note: 'Which textures a dungeon\u2019s walls wear. Classic is Daggerfall\u2019s own table for each dungeon; Climate picks the set '
       + 'by the region\u2019s climate; Random draws a table from the dungeon\u2019s own seed. Climate and Random leave the main-story '
@@ -460,6 +548,7 @@ export function checkFeature(f) {
   if (!f || typeof f !== 'object') return ['not an object'];
   if (typeof f.id !== 'string' || !f.id) out.push('no id');
   if (typeof f.title !== 'string' || !f.title) out.push('no title');
+  if (!GROUPS[f?.group]) out.push(`unknown group '${f?.group}'`);   // FT14: every row says what it changes, not only who wrote it
   if (!Array.isArray(f.kinds) || !f.kinds.length) out.push('no kinds');
   else {
     for (const k of f.kinds) if (!KINDS[k]) out.push(`unknown kind '${k}'`);

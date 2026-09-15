@@ -127,7 +127,7 @@ test('the two rails differ only where the question does', () => {
   // FT0: Features joins the shared set - one home for every enhanceable
   // feature, and a switch a player can reach from only one door is half
   // shipped.
-  const shared = ['Load Game', 'Settings', 'Controls', 'Features', 'Mods', 'About'];
+  const shared = ['Load Game', 'Settings', 'Controls', 'Features', 'About'];   // FT14: no Mods door
   for (const s2 of shared) {
     assert.ok(boot.includes(s2), `${s2} must stay on the front door`);
     assert.ok(pause.includes(s2), `${s2} must reach the pause door too`);
@@ -150,7 +150,7 @@ test('the two rails differ only where the question does', () => {
   assert.ok(!boot.includes('Enhanced') && !pause.includes('Enhanced'), 'Enhanced is a settings category, not a rail entry (SO1)');
   // FD1: the classic rail is the shared set behind one door
   const classic = list('SECTIONS_CLASSIC');
-  assert.deepEqual(classic, ['Begin', 'Online', 'Settings', 'Controls', 'Features', 'Mods', 'About'], 'ONLINE1: the classic player goes online too; FT0: and reaches the features home');
+  assert.deepEqual(classic, ['Begin', 'Online', 'Settings', 'Controls', 'Features', 'About'], 'ONLINE1: the classic player goes online too; FT0: and reaches the features home; FT14: which is where the mods are now');
   assert.deepEqual(pause.filter((x) => !shared.includes(x)), ['Resume', 'Save Game', 'Exit']);
   // SETTINGS IS THE POINT. U49's own record says settings were
   // reachable only at boot; a pause rail without them would have left
