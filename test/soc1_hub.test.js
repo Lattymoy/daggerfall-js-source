@@ -495,6 +495,27 @@ test('SOC1 hub: the sweep - a drain forgets the parties and never an account or 
   doorHolds(a2, 'a2');
 }));
 
+test('AUDIT SOC: the widest picture an account can hold - FRIENDS_MAX friends, PENDING_MAX requests each way, a party and an invite - is more than 128 records in ONE state frame, and the hub reads them in the runtime\'s batches (the fake enforces the 128-key wall now; mutants: the chunking dropped, which is SLAM5\'s 130th-player wall on the hub\'s own hello; a friend list read one key at a time)', () => withHub(async ({ r, act, join, tick, now }) => {
+  const b = await join('b');
+  const ids = (prefix, n) => Array.from({ length: n }, (_, i) => `acct-${prefix}${String(i).padStart(3, '0')}`);
+  const friends = ids('f', FRIENDS_MAX), inbox = ids('i', PENDING_MAX), outbox = ids('o', PENDING_MAX);
+  for (const id of [...friends, ...inbox, ...outbox]) r.store.set(`acct:${id}`, { name: 'N' + id.slice(-4), seen: 1e12 - 1000, friends: [], in: [], out: [], invites: [], party: null });
+  r.store.set('acct:acct-a', { name: 'a', seen: 1e12, friends, in: inbox.map((acct) => ({ acct, at: 1e12 })), out: outbox.map((acct) => ({ acct, at: 1e12 })), invites: [], party: null });
+  r.store.set('asecret:acct-a', 'secret-of-acct-a');
+  const a = await join('a');
+  const st = lastOf(a, 'state');
+  assert.ok(st, 'the picture landed - a read over the wall would have thrown out of the hello');
+  assert.equal(st.friends.length, FRIENDS_MAX); assert.equal(st.in.length, PENDING_MAX); assert.equal(st.out.length, PENDING_MAX);
+  assert.equal(st.friends[3].name, 'Nf003', 'every row carries its record\'s name - the batches were read, not skipped');
+  assert.ok(validSocialFrame(st), 'and it passes the client\'s door whole');
+  // and with a party and an invite on top, still one frame
+  await act(b, { k: 'party.invite', acct: 'acct-a' }); tick();
+  assert.ok(lastOf(a, 'invite'), 'the invite lands on a picture this wide');
+  await act(a, { k: 'party.accept', party: lastOf(a, 'invite').party }); tick();
+  assert.equal(lastOf(a, 'state').party.members.length, 2);
+  doorHolds(a, 'a'); doorHolds(b, 'b');
+}));
+
 test('SOC1 hub: the source - the account is handled after the channel\'s welcome and join, the leave stamps the account, the sweep spares acct: and asecret:, and the presence rooms are untouched (mutants: the picture before the welcome; the leave silent; a cell reading the account)', () => {
   const s = rd('server/src/index.js');
   assert.match(s, /for \(const \[other, b\] of \[\.\.\.this\._all\(\)\]\) if \(other !== ws && b\.id\) this\._send\(other, said\);\n\s*\/\/ SOC1[^\n]*\n[^\n]*\n\s*if \(isSocialRoom\(a\.key\) && m\.acct\) await this\._helloAccount\(ws, m, now\);/, 'the account after the join fan');

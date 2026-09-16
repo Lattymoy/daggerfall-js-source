@@ -13,9 +13,12 @@ export function fakeRoom(key, { now = () => Date.now() } = {}) {
     getWebSockets: () => sockets.slice(),
     acceptWebSocket: (ws) => sockets.push(ws),
     storage: {
-      async get(k) { return Array.isArray(k) ? new Map(k.filter((x) => store.has(x)).map((x) => [x, store.get(x)])) : store.get(k); },
-      async put(k, v) { if (k && typeof k === 'object') { for (const [kk, vv] of Object.entries(k)) store.set(kk, vv); } else store.set(k, v); },
-      async delete(k) { for (const x of Array.isArray(k) ? k : [k]) store.delete(x); },
+      // AUDIT SOC (2026-09-16): THE RUNTIME'S BATCH LIMIT IS A LAW HERE TOO. A Durable Object's batched get takes 128 keys
+      // and its batched put 128 pairs; SLAM5 found the 130th player's hello throwing on exactly this wall, and the fake
+      // let it pass - a fake that lies makes a pin pass that production would fail (this file's own header).
+      async get(k) { if (Array.isArray(k) && k.length > 128) throw new Error(`storage.get(): ${k.length} keys, the runtime takes 128 at most`); return Array.isArray(k) ? new Map(k.filter((x) => store.has(x)).map((x) => [x, store.get(x)])) : store.get(k); },
+      async put(k, v) { if (k && typeof k === 'object') { const e = Object.entries(k); if (e.length > 128) throw new Error(`storage.put(): ${e.length} pairs, the runtime takes 128 at most`); for (const [kk, vv] of e) store.set(kk, vv); } else store.set(k, v); },
+      async delete(k) { if (Array.isArray(k) && k.length > 128) throw new Error(`storage.delete(): ${k.length} keys, the runtime takes 128 at most`); for (const x of Array.isArray(k) ? k : [k]) store.delete(x); },
       async deleteAll() { store.clear(); },
       async list({ prefix = '' } = {}) { return new Map([...store].filter(([k]) => k.startsWith(prefix))); },
       async setAlarm(at) { alarm.at = at; },
