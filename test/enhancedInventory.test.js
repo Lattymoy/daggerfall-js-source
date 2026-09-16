@@ -1904,4 +1904,111 @@ test('MAC-M2: itemLine carries the hands and the card draws the row', () => {
   // and NO second table: the word is itemInfo's, off equipTable's law.
   assert.doesNotMatch(src, /Two-handed/,
     'the skin names no weapon-hands words of its own - itemHandsLine owns them');
+// ═══ MAC-M2 A: THE BODY DRAGS TOO ════════════════════════════════
+//
+// 2026-09-16, Mac: "Hold to drag enhanced functionality doesn't work
+// when trying to take items off your character."
+//
+// It did not, and the reason is one line: INV1 attached `dragFrom` to
+// the LIST's rows alone (`if (from === 'local') dragFrom(row, item)`)
+// and made the body a drop TARGET, so the gesture only ever ran one
+// way. A press on a filled slot panel started no drag session at all -
+// no ghost, no window listeners, nothing to release - which is not a
+// refusal the player can read, it is a dead hold.
+//
+// DRIVEN, for AUDIT INV2's reason: a pin over a declaration is not a
+// pin over a feature. These press a real worn panel, move a real
+// pointer and read what actually came off.
+
+/** The pane with something WORN, which the map cannot draw without. */
+function withWorn(fn) {
+  return withPack((k) => {
+    const cuirass = k.e.items.find((it) => it.name === 'Cuirass');
+    assert.ok(equipItem(k.e, cuirass), 'the hero is wearing the cuirass');
+    assert.ok(isEquipped(cuirass), 'and the table says so');
+    k.view.repaint();
+    const panels = k.dom.doc.querySelectorAll('.wornrow').filter((n) => !n.classList.contains('wornempty'));
+    assert.equal(panels.length, 1, 'exactly one filled family on the map');
+    const dock = k.dom.doc.querySelectorAll('.pack-dock')[0];
+    assert.ok(dock, 'and the pack dock, which is where a piece comes off to');
+    return fn({ ...k, cuirass, panel: panels[0], dock });
+  }, { items: () => [mk('Longsword'), mk('Dagger'), mk('Cuirass', 'Armor')] });
+}
+
+test('MAC-M2: a HOLD on a worn slot really picks the piece up, and the pack is where it comes off', () => {
+  withWorn(({ e, view, cuirass, panel, dock, ghost, label, at, down, move, up }) => {
+    at(dock);
+    down(panel, 100, 100);
+    assert.equal(ghost(), null, 'a press alone carries nothing - a tap is still a pick');
+
+    // THE BUG: this used to produce nothing at all, because the panel
+    // had no pointerdown handler on it.
+    move(140, 160);
+    const g = ghost();
+    assert.ok(g, 'the drag really carries the worn piece');
+    assert.ok(g.querySelector('.tile'), 'and it is the item\'s own tile');
+    assert.equal(label(), 'Take off',
+      'the word on the ghost is the slot card\'s own act - one function for both directions');
+    assert.equal(dock.classList.contains('dragover'), true,
+      'and the pack lights as ONE target, the way the map does for the other direction');
+    assert.equal(panel.classList.contains('dragging'), true, 'the panel it left goes quiet');
+
+    up(140, 160);
+    assert.equal(ghost(), null, 'the release puts it down');
+    assert.equal(isEquipped(cuirass), false, 'released over the pack, the piece came OFF');
+    assert.equal(e.items.includes(cuirass), true, 'and it is in the bag, not on the floor');
+    assert.equal(view.dropped().length, 0, 'nothing was dropped on the ground');
+  });
+});
+
+test('MAC-M2: and it comes off NOWHERE else - the ground and the map are both "never mind"', () => {
+  // DFU's local list IS FilterLocalItems, which never shows an equipped
+  // item, so no transfer law can reach one: a worn cuirass released
+  // over the world would lie on the ground AND stay in the equip table.
+  // The card beside the item says the same thing in its own words
+  // ("WORN ITEMS HAVE NO STOW"), and the drag must not invent one.
+  withWorn(({ dom, e, view, cuirass, panel, label, at, down, move, up }) => {
+    at(dom.body);                       // out over the world
+    down(panel, 10, 10); move(60, 60);
+    assert.equal(label(), '', 'off the panel a worn piece promises nothing');
+    up(60, 60);
+    assert.equal(isEquipped(cuirass), true, 'and still wears it');
+    assert.equal(view.dropped().length, 0, 'with nothing on the ground');
+    assert.equal(e.items.includes(cuirass), true);
+  });
+  withWorn(({ dom, cuirass, panel, label, at, down, move, up }) => {
+    const map = dom.doc.querySelectorAll('.wornmap')[0];
+    at(map);                            // released back on the body
+    down(panel, 10, 10); move(60, 60);
+    assert.equal(label(), '', 'a release back on the map is the cancel gesture');
+    up(60, 60);
+    assert.equal(isEquipped(cuirass), true, 'so nothing happened');
+  });
+});
+
+test('MAC-M2: the plain click on a slot is untouched - it picks, and the card still takes the piece off', () => {
+  // The mis-click law: a worn panel SELECTS, never undresses. What a
+  // drag must not do is break that, and it nearly did - the release
+  // leaves a latch, and without consuming it every unequip-by-drag also
+  // cycled the family it had just emptied.
+  withWorn(({ dom, cuirass, panel }) => {
+    panel.onclick?.({});
+    const tip = dom.doc.querySelectorAll('.packtip')[0];
+    assert.ok(tip, 'a plain click raises the card');
+    assert.equal(isEquipped(cuirass), true, 'and takes nothing off by itself');
+    const act = tip.querySelectorAll('button').find((b) => b.textContent === 'Take off');
+    assert.ok(act, 'whose primary act is Take off');
+    act.onclick?.({});
+    assert.equal(isEquipped(cuirass), false, 'click-to-unequip still works');
+  });
+  withWorn(({ dom, cuirass, panel, dock, at, down, move, up }) => {
+    at(dock);
+    down(panel, 10, 10); move(60, 60); up(60, 60);
+    assert.equal(isEquipped(cuirass), false, 'the drag took it off');
+    // the panel is detached by the repaint; its click must still be a
+    // no-op, because the release consumed the latch on the way out
+    panel.onclick?.({});
+    assert.equal(dom.doc.querySelectorAll('.packtip').length, 0,
+      'a release that DRAGGED is never also a pick - here as in the list');
+  });
 });

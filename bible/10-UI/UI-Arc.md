@@ -13373,3 +13373,85 @@ including all three lens C proved survived.
   a decision, not a fix.
 - **B-F8**: a Map escapes into a reward tray - a `planStore` rung-order
   defect above the `chooseOne` rung, older than this arc.
+
+## MAC-M2 A - THE BODY DRAGS TOO (2026-09-16, Mac)
+
+*"Hold to drag enhanced functionality doesn't work when trying to take
+items off your character."*
+
+It did not, and the whole of the reason is one line. INV1 hung the
+gesture on the pack's rows - `itemRow`'s `if (from === 'local')
+dragFrom(row, item)` (`ui/enhancedInventory.js:1611`) - and made the
+body a drop TARGET, with `equippedList` saying so in its own comment:
+*"the body is the equip target - `dragFrom`'s pointerup finds it by hit
+test, so the map needs no handler of its own"*. True for the direction
+INV1 shipped, and it made the other direction unreachable: a filled
+slot panel carried an `onclick` and nothing else, so a press on the doll
+started **no drag session at all**. No ghost, no window listeners,
+nothing to release. That is not a refusal a player can read; it is a
+dead hold, which reads as a broken feature rather than a forbidden one.
+
+**A filled panel is a drag source now**, on the same hold and the same
+4px threshold a pack row takes, carrying the piece the panel SHOWS (a
+family cycles on the click, so what is on top is what the hand gets).
+
+### And it comes off into the pack, and nowhere else
+
+The second half was a law, not a handler. `dropIntent`'s ladder answers
+for a pack row, and every rung of it is wrong for a worn one: the
+`.pack-win` rung says "never mind", and everything past the windows is
+`stow`. **DFU's local list IS `FilterLocalItems`, which never shows an
+equipped item**, so there is no transfer law in the port that can reach
+one - the card beside the item already says this in its own words
+(*"WORN ITEMS HAVE NO STOW ... the way out is Take off"*). A worn
+cuirass released over the world would have landed on the ground AND
+stayed in the equip table.
+
+So the intent learns which SIDE the gesture started on - a WORD on the
+drag session, not a node, so AUDIT INV2 A-F3 stands and the carried
+thing is still identified by item - and a `'worn'` source has exactly
+one target: `.pack-dock`, which lights as ONE target the way the map
+does for the other direction. Everywhere else is the same "never mind"
+the pack's chrome gives.
+
+**It could not be `isEquipped`.** The held light (HT5) is a row on the
+body with no `equipSlot` at all, so the item cannot answer "did this
+come off the map"; the drag session can.
+
+### The same door, both ways
+
+The release calls `dropOnBody`, which is INV1's own function reading
+`localPrimaryAct` - Take off for a worn piece, Douse for the light. One
+function for both directions, so they cannot answer differently, and
+**INV1's closed act set is still three**: `dropOnBody`, `reorderPack`,
+`stow`.
+
+### Two rules that came with the gesture
+
+- **The click still consumes the latch.** AUDIT INV2 A-F6's latch is
+  taken by the list's rows and was not taken here, so every
+  unequip-by-drag also CYCLED the family it had just emptied.
+- **The latch does not outlive the pane.** A session that ended on a
+  release no click ever followed (one off the panel lands on the body,
+  not on a row) handed the next pane a latch that ate its first pick.
+  `mountEnhancedInventory` clears it.
+
+And the stylesheet takes the body's panels into the two rules the list's
+rows already had: `touch-action: pan-y` plus no long-press selection, and
+`body.draglock` taking the pan back once the hold has armed.
+
+### Pinned
+
+Three DRIVEN tests in `test/enhancedInventory.test.js`, through
+`test/invdrag.mjs`: a hold on a real worn panel really picks the piece
+up, the ghost says *Take off*, the dock lights, and the release takes it
+off into the bag with nothing on the ground; the world and the map are
+both "never mind" and the piece stays worn; and the plain click is
+untouched - it raises the card, the card's Take off still works, and a
+release that dragged is never also a pick. **5 mutations, 5 dead**,
+including the shipped bug itself (the panel not being a source) and the
+one that would let a worn piece reach the floor.
+
+**Not seen running.** This container has no ARENA2 and the pane needs
+none, but `tools/enhancedPackProbe.mjs` was not re-run here; the gesture
+is driven in node, not in a browser.

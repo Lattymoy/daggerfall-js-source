@@ -708,7 +708,28 @@ function stowIntent(item) {
   if (plan.ok) return { kind: 'stow', label: STOW_LABEL[remote.kind] };
   return plan.refusal?.text ? { kind: 'stow', label: null, speaks: true } : { kind: 'nope', label: null };
 }
-function dropIntent(item, over, fromItem) {
+function dropIntent(item, over, fromItem, source = 'local') {
+  // MAC-M2 (2026-09-16, Mac: "Hold to drag enhanced functionality
+  // doesn't work when trying to take items off your character"): A DRAG
+  // THAT STARTED ON THE BODY HAS ONE DESTINATION, AND IT IS THE PACK.
+  //
+  // It is INV1's own law read in the other direction: the drop performs
+  // the act the card already offers, so `dropOnBody` asks
+  // `localPrimaryAct` and that answers Take off for a worn piece (and
+  // Douse for the held light, the one body row that is not an equip
+  // slot). One function for both directions, because two would drift.
+  //
+  // AND NOWHERE ELSE IS A TARGET. DFU's local list is FilterLocalItems,
+  // which never shows an equipped item, so there is no transfer law
+  // that can reach one: a worn cuirass released over the ground or over
+  // an open chest would lie there AND stay in the equip table. Off the
+  // dock the answer is the same "never mind" the pack's chrome gives.
+  if (source === 'worn') {
+    const act = localPrimaryAct(item, deps.entity);
+    return over?.closest?.('.pack-dock') && act
+      ? { kind: 'offbody', label: act.label }
+      : { kind: 'none', label: '' };
+  }
   if (over?.closest?.('.wornmap')) {
     const act = localPrimaryAct(item, deps.entity);
     return act ? { kind: 'body', label: act.label } : { kind: 'nope', label: null };
@@ -742,7 +763,7 @@ function dropIntent(item, over, fromItem) {
  *  pick - the row's own click law is untouched below that distance and
  *  suppressed above it. */
 const dragHighlight = () => {
-  for (const n of document.querySelectorAll('.dragover, .itemrow.dragging')) n.classList.remove('dragover', 'dragging');
+  for (const n of document.querySelectorAll('.dragover, .itemrow.dragging, .wornrow.dragging')) n.classList.remove('dragover', 'dragging');
 };
 /** Move the carried item to a point, and say what a release there does. */
 function dragTo(x, y) {
@@ -751,10 +772,13 @@ function dragTo(x, y) {
   if (!drag.moved) return;
   dragHighlight();
   drag.row?.classList.add('dragging');
-  const want = dropIntent(drag.item, document.elementFromPoint?.(x, y), drag.item);
+  const want = dropIntent(drag.item, document.elementFromPoint?.(x, y), drag.item, drag.source);
   drag.want = want;
   ghostAt(x, y, want?.label ?? null);
   if (want?.kind === 'body') document.elementFromPoint?.(x, y)?.closest?.('.wornmap')?.classList.add('dragover');
+  // MAC-M2: the other direction lights the DOCK - the pack is one
+  // target the way the map is one, not a grid of twelve tiles.
+  else if (want?.kind === 'offbody') document.elementFromPoint?.(x, y)?.closest?.('.pack-dock')?.classList.add('dragover');
   else if (want?.kind === 'reorder') { for (const n of document.querySelectorAll('.itemrow')) if (rowItems.get(n) === want.item) n.classList.add('dragover'); }
 }
 /** THE ONE DOOR OUT. `commit` false is an abort - a cancel, a lost
@@ -782,8 +806,13 @@ function dragStop(commit) {
   // script - and a stale one minted a ground pile for an item the player
   // no longer owned.
   if (!(deps.items?.() ?? []).includes(d.item)) return;
-  const want = dropIntent(d.item, document.elementFromPoint?.(d.x, d.y), d.item);
+  const want = dropIntent(d.item, document.elementFromPoint?.(d.x, d.y), d.item, d.source);
   if (want?.kind === 'body') dropOnBody(d.item);
+  // MAC-M2: THE SAME DOOR. A piece carried OFF the body performs the
+  // act its own card offers, exactly as one carried onto it does, so
+  // the two directions cannot answer differently - and the closed act
+  // set INV1 wrote is still three.
+  else if (want?.kind === 'offbody') dropOnBody(d.item);
   else if (want?.kind === 'reorder') reorderPack(d.item, want.item);
   else if (want?.kind === 'stow') stow(d.item);
 }
@@ -836,11 +865,16 @@ const onDragAbort = (e) => { if (drag && (e.pointerId === undefined || e.pointer
 // the unchanged point.
 const onDragScroll = () => { if (drag?.moved) dragTo(drag.x, drag.y); };
 
-function dragFrom(row, item) {
+/** MAC-M2: `source` is 'local' for a pack row and 'worn' for a panel on
+ *  the body. It is a WORD, not a node - AUDIT INV2 A-F3's law stands and
+ *  the carried thing is still identified by ITEM - and the intent needs
+ *  it, because the held light sits on the body with no `equipSlot` at
+ *  all, so `isEquipped` cannot answer "did this come off the map". */
+function dragFrom(row, item, source = 'local') {
   row.onpointerdown = (e) => {
     if (drag || e.button > 0) return;   // ONE pointer for the PANE: a second finger on a second row was how one drag dropped another's item
     const touch = e.pointerType === 'touch' || e.pointerType === 'pen';
-    drag = { id: e.pointerId, item, row, x: e.clientX, y: e.clientY, moved: false, want: null, touch, hold: null };
+    drag = { id: e.pointerId, item, row, x: e.clientX, y: e.clientY, moved: false, want: null, touch, hold: null, source };
     if (touch) drag.hold = setTimeout(dragArm, TOUCH_HOLD_MS);
     // The listeners are the WINDOW's: a repaint detaches this row, and a
     // drag that lived on it died there with the ghost still on screen.
@@ -1333,7 +1367,11 @@ function equippedList() {
   const wrap = el('section', 'equipped');
   const map = el('div', 'wornmap');
   // INV1: the body is the equip target - `dragFrom`'s pointerup finds
-  // it by hit test, so the map needs no handler of its own.
+  // the MAP by hit test, so the map itself needs no handler.
+  // MAC-M2: the panels ON it do. INV1's sentence here used to read "so
+  // the map needs no handler of its own", which was true of the
+  // direction it shipped and is why the other one was unreachable - a
+  // press on a filled slot started no drag session at all.
   // PX19g: the doll's FRAME is part of the composition and is always
   // there - art inside it when the paperdoll can draw, a quiet
   // Avatar plaque when it cannot. Slapped-behind is over.
@@ -1414,11 +1452,24 @@ function equippedList() {
     txt.append(el('span', 'wornslot', fam.label), el('span', 'wornname', line.name));
     b.append(txt);
     if (filled.length > 1) b.append(el('span', 'worncount', String(filled.length)));
+    // MAC-M2 (Mac: "hold to drag ... doesn't work when trying to take
+    // items off your character"): A FILLED PANEL DRAGS, on the same hold
+    // and the same threshold a pack row takes. INV1 attached `dragFrom`
+    // to the LIST's rows alone and made the body a drop TARGET, so the
+    // gesture only ever ran one way: a press on the doll started no
+    // session at all, which is not a refusal a player can read - it is a
+    // dead hold. The piece carried is the one the panel SHOWS (a family
+    // cycles on the click, and the drag takes what is on top).
+    dragFrom(b, top.item, 'worn');
     // SELECTS, never undresses (the mis-click law) - and a click on an
     // already-picked family CYCLES to its next piece and wraps, so a
     // family of four is four taps and all 27 slots stay reachable
     // from eleven panels.
     b.onclick = () => {
+      // MAC-M2: and a release that DRAGGED is not a pick here either -
+      // the same latch the list's rows consume (AUDIT INV2 A-F6).
+      // Without it every unequip-by-drag also cycled the family it left.
+      if (takeDragClick()) return;
       // PX19i: cycle through the family, and when the cycle would
       // land back where it started the tooltip goes AWAY instead -
       // a single-piece family is a plain toggle.
@@ -2092,6 +2143,12 @@ export function mountEnhancedInventory(hostEl, d = {}) {
   // (F6, the world's inventory door) opens the pack as it always did.
   packOpen = !d.loot;
   side = d.loot ? 'remote' : 'local';
+  // MAC-M2: the "that release was a drag" latch belongs to a GESTURE,
+  // so it must not outlive the pane that held it - a session that ended
+  // on a release no click ever followed (one off the panel lands on the
+  // body, not on a row) would otherwise hand the next pane a latch that
+  // eats its first pick.
+  _dragged = false;
   notice = null;
   goldEntry = null;
   repaints = 0;
