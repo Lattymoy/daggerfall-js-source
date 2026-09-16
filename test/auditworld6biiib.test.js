@@ -156,7 +156,7 @@ test('AUDIT WORLD6b-iii(b) A3/C1/B6, C6: a blow is struck where its owner is REP
     fetchBytes: async (n) => { if (n === 'MONSTER.BSA') return bsa; throw new Error(`no ${n}`); }, getTexture: async () => ({ getSize: () => ({ width: 64, height: 100 }), getScale: () => ({ width: 0, height: 0 }), recordCount: 8, getFrameCount: () => 1 }), uploadRecordFrame: () => {},
     currentMinute: () => 0, currentPixelKey: () => '3,12', playerEntity: pe, audio: null, onPlayerHurt: () => {}, rolls: () => 0.01, rand: () => 0.01, spellsByIndex: () => null,
   });
-  pool.setNet({ room: () => 'world:3,12', inRoom: (k) => k === 'world:2,12', selfId: () => 'mac-0001', peers: () => [{ id: 'eve-0003', feet: [30, 0, 30], height: 1.8 }], now: () => 0, staleMs: 0, onPeerHit: () => true, toWire: (f) => [f[0], f[1], f[2]], toScene: (p) => [p[0], p[1], p[2]] });
+  pool.setNet({ room: () => 'world:3,12', inRoom: (k) => k === 'world:2,12', selfId: () => 'mac-0001', peers: () => [{ id: 'eve-0003', feet: [30, 0, 30], height: 1.8 }], now: () => 0, staleMs: 0, onPeerHit: (h, fate) => { fate?.sent?.(); return true; }, toWire: (f) => [f[0], f[1], f[2]], toScene: (p) => [p[0], p[1], p[2]] });
   const rat = await pool.spawnFoe(0, [10, 0, 10], { feetGiven: true });
   const h0 = rat.entity.health;
   assert.equal(pool.applyHit('eve-0003', { to: 'mac-0001', k: 'world:2,12', i: rat.seq, dmg: 1, kind: 'melee' }), true, 'C1/B6: keyed to the cell I just left (held as a halo): mine');

@@ -57,7 +57,7 @@ const poolRig = (extra = {}) => ({
 /** The net with an id and peers - the scene frame IS the world frame. */
 const netFor = (hits, peers) => ({
   room: () => 'world:3,12', selfId: () => 'mac-0001', peers: () => peers.list, now: () => 0, staleMs: 0,
-  onPeerHit: (h) => { hits.push(h); return true; },
+  onPeerHit: (h, fate) => { hits.push(h); fate?.sent?.(); return true; },
   toWire: (feet) => [feet[0], feet[1], feet[2]], toScene: (p) => [p[0], p[1], p[2]],
 });
 const senses = (pe) => ({ candidates: () => [], playerEntity: pe, playerHeight: 1.8, playerCrouching: false, playerInvisible: false, movingLessThanHalfSpeed: true });

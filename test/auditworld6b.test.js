@@ -160,7 +160,7 @@ const poolRig = (extra = {}) => ({
  *  origin's compensation) and a clock of its own. */
 const netFor = (hits, { room = 'world:3,12', off = { v: 0 }, clock = { t: 0 }, staleMs = FOES_STALE_MS } = {}) => ({
   room: () => room, now: () => clock.t, staleMs,
-  onPeerHit: (h) => { hits.push(h); return true; },
+  onPeerHit: (h, fate) => { hits.push(h); fate?.sent?.(); return true; },
   toWire: (feet) => [feet[0] - off.v, feet[1], feet[2] - off.v],
   toScene: (p) => [p[0] + off.v, p[1], p[2] + off.v],
 });

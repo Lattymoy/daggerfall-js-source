@@ -468,6 +468,6 @@ test('FOE1: the dungeon host really PASSES the opts it means to - a property ins
   }
   // and the wiring it reaches for exists on the host object
   assert.match(src('src/scenes/worldModes.js'), /host\.onFoeHit\?\.\(hit\)/, 'the host seam is called, not merely named');
-  assert.match(src('src/scenes/world.js'), /onFoeHit: \(hit\) => hitSend\(hit\)/,
+  assert.match(src('src/scenes/world.js'), /onFoeHit: \(hit, fate\) => hitSend\(hit, fate\)/,
     'and the world host hands it the wire (WORLD2), through the pending set (AUDIT FOES FOE2)');
 });

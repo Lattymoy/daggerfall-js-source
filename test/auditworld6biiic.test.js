@@ -31,7 +31,7 @@ const poolFor = (pe, said) => createExteriorFoes({
   fetchBytes: async (n) => { if (n === 'MONSTER.BSA') return bsa; throw new Error(`no ${n}`); }, getTexture: async () => stubTex, uploadRecordFrame: () => {},
   currentMinute: () => 0, currentPixelKey: () => '3,12', playerEntity: pe, audio: null, onPlayerHurt: () => {}, rolls: () => 0.5, rand: () => 0.5, spellsByIndex: () => null, say: (l) => said.push(l),
 });
-const netFor = (me, hits, peers, clock = { t: 0 }) => ({ room: () => 'world:3,12', inRoom: () => false, selfId: () => me, peers: () => peers, now: () => clock.t, staleMs: 0, onPeerHit: (h) => { hits.push(h); return true; }, toWire: (f) => [f[0], f[1], f[2]], toScene: (p) => [p[0], p[1], p[2]] });
+const netFor = (me, hits, peers, clock = { t: 0 }) => ({ room: () => 'world:3,12', inRoom: () => false, selfId: () => me, peers: () => peers, now: () => clock.t, staleMs: 0, onPeerHit: (h, fate) => { hits.push(h); fate?.sent?.(); return true; }, toWire: (f) => [f[0], f[1], f[2]], toScene: (p) => [p[0], p[1], p[2]] });
 const senses = (pe) => ({ candidates: () => [], playerEntity: pe, playerHeight: 1.8, playerCrouching: false, playerInvisible: false, movingLessThanHalfSpeed: true });
 const one = () => ({ ...generateItems('M', { level: 10, gender: 'male' }, () => 0.99)[0] });
 const take = (i, from = 'mac-0001') => ({ to: 'bob-0002', k: 'world:3,12', i, take: 1 });
@@ -183,7 +183,7 @@ test('AUDIT WORLD6b-iii(c) C3: the Room - the hit arm counts BYTES (HIT_ROOM_BYT
 });
 
 test('AUDIT WORLD6b-iii(c) by source: the dungeon\'s record clamps the overshoot too (C8); the rare-drop chime rings over a peer\'s body (B10); a live foe with no number streams no health (C9); the records', () => {
-  assert.match(rd('src/scenes/dungeonContext.js'), /h: Number\.isFinite\(f\.entity\.health\) \? Math\.max\(0, f\.entity\.health\) : 0, d: f\.dead \? 1 : 0,/, 'C8');
+  assert.match(rd('src/scenes/dungeonContext.js'), /h: Number\.isFinite\(f\.entity\.health\) \? Math\.max\(0, Math\.min\(FOE_HEALTH_MAX, f\.entity\.health\)\) : 0, d: f\.dead \? 1 : 0,/, 'C8');
   const x = rd('src/scenes/exteriorFoes.js');
   assert.match(x, /if \(n > 0\) playRareDrop\(audio, f\.corpseMarker\?\.pos \?\? f\.ai\?\.feet \?\? null, grant\);/, 'B10');
   assert.match(x, /\.\.\.\(Number\.isFinite\(f\.entity\.health\) \? \{ h: Math\.max\(0, Math\.min\(FOE_HEALTH_MAX, f\.entity\.health\)\) \} : \{\}\)/, 'C9');
