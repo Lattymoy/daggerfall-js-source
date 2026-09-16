@@ -62,8 +62,20 @@ export function composeLook(entity) {
   return { race: entity?.race ?? 'Breton', gender: entity?.gender ?? 'male', faceIndex: entity?.faceIndex ?? 0, items };
 }
 
-/** One string per distinct look: the doll cache's key. */
-export const lookKey = (look) => `${look?.race ?? 'Breton'}|${look?.gender ?? 'male'}|${look?.faceIndex ?? 0}|${JSON.stringify((look?.items ?? []).map((it) => LOOK_ITEM_FIELDS.map((k) => it[k] ?? null)))}`;
+/** One string per distinct look: the doll cache's key.
+ *  SLAM12 (AUDIT SLAM): MEMOISED ON THE LOOK OBJECT. This was recomputed for every peer every frame - `RemotePlayers.sync`
+ *  once per doll peer and `PeerBodies.sync` once per peer - and at 199 dressed peers the `JSON.stringify` inside it
+ *  was ~64% of the client's whole per-frame peer work (1.19 ms of 1.85 ms, measured). A look object is replaced,
+ *  never mutated (`_peer`, `_refresh`), so its identity is exactly the key's lifetime: a WeakMap holds the string for
+ *  as long as the look lives and no longer. A null look has no identity and computes as before. */
+const _keyOf = new WeakMap();
+const _computeLookKey = (look) => `${look?.race ?? 'Breton'}|${look?.gender ?? 'male'}|${look?.faceIndex ?? 0}|${JSON.stringify((look?.items ?? []).map((it) => LOOK_ITEM_FIELDS.map((k) => it[k] ?? null)))}`;
+export const lookKey = (look) => {
+  if (!look || typeof look !== 'object') return _computeLookKey(look);
+  let k = _keyOf.get(look);
+  if (k === undefined) { k = _computeLookKey(look); _keyOf.set(look, k); }
+  return k;
+};
 
 const uint = (v, max = 1e6) => (Number.isFinite(v) && v >= 0 ? Math.min(max, Math.floor(v)) : null);
 
@@ -159,7 +171,10 @@ export class RemotePlayers {
     const p = (this._queue = this._queue.then(() => this._composeDoll(look)).catch(() => null));
     this._dolls.set(key, p);
     p.then((doll) => {
-      if (this._dolls.get(key) !== p) return;   // released meanwhile
+      // SLAM12 (AUDIT SLAM): a doll that lands after its key was released - by `_evict`, or by `destroy()` at the
+      // page's hide - has a texture on the GPU that nothing references. It used to be orphaned here. Measured: sync
+      // fifty peers, destroy, fifty textures uploaded, none released.
+      if (this._dolls.get(key) !== p) { if (doll && typeof doll.rec === 'string') this.renderer.releaseTexture?.(PEER_ARCHIVE, doll.rec); return; }
       if (doll) { this._dolls.set(key, doll); } else this._dolls.set(key, { failedUntil: this._now() + DOLL_RETRY_MS });
       this._evict();   // SLAM4: a FAILURE sweeps too - it was the one outcome that never reached the eviction
     });

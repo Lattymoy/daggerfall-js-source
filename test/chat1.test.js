@@ -293,7 +293,7 @@ test('CHAT1 / AUDIT CHAT: the session as a CHANNEL (presence: false) - the hello
   assert.equal(s.statusLine(), 'online: reconnecting', 'the default label is the presence session\'s');
   assert.equal(s.sendChat('anyone?'), false, 'no socket: refused, so the field keeps it (B2)');
   assert.equal(s.rejoin(CHAT_WORLD_ROOM, CHAT_REJOIN_MS), false, 'a session on its way back needs no rejoin');
-  clock += BACKOFF_MIN_MS; s.tick();
+  clock += 2 * BACKOFF_MIN_MS; s.tick();   // SLAM12: the first retry is jittered inside [BACKOFF_MIN_MS, 2 x BACKOFF_MIN_MS] - the far edge is when it has certainly fired
   assert.equal(sockets.length, 2, 'the retry opened a second socket');
   sockets[1].open();
   // the goodbye and the way back (B4)

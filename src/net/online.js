@@ -451,7 +451,7 @@ export class OnlineSession {
     if (!this.url || !this._WS) return;
     let ws;
     // AUDIT WORLD6b-iii(b) A7: a socket that cannot be made is an entry with a retry, not nothing (nothing was re-tried every frame)
-    try { ws = new this._WS(`${this.url}/room/${room}`); } catch { this._halo.set(room, { ws: null, status: 'closed', retryAt: this._now() + BACKOFF_MIN_MS + this._rand() * Math.max(0, backoff - BACKOFF_MIN_MS), backoff: Math.min(BACKOFF_MAX_MS, backoff * 2), since: this._now() }); return; }   // SLAM5 (AUDIT SLAM): jittered like the other two halo paths - SLAM2 claimed all three and treated only two
+    try { ws = new this._WS(`${this.url}/room/${room}`); } catch { this._halo.set(room, { ws: null, status: 'closed', retryAt: this._now() + BACKOFF_MIN_MS + this._rand() * Math.max(BACKOFF_MIN_MS, backoff - BACKOFF_MIN_MS), backoff: Math.min(BACKOFF_MAX_MS, backoff * 2), since: this._now() }); return; }   // SLAM5 (AUDIT SLAM): jittered like the other two halo paths - SLAM2 claimed all three and treated only two
     this._halo.set(room, { ws, status: 'connecting', retryAt: null, backoff, since: this._now() });
     this._bind(ws);
   }
@@ -575,13 +575,13 @@ export class OnlineSession {
       if (room == null) return;
       const hello = JSON.stringify({ t: 'hello', id: this.id, secret: this.secret, name: this.name, look: this.look, pose: this.presence ? this._pose : null });
       if (room === this.room) {
-        this.status = 'open'; this.error = null; this._backoff = BACKOFF_MIN_MS;
+        this.status = 'open'; this.error = null;   // SLAM12: `_backoff` is reset by the WELCOME (`_receive`), not here - see there
         this._lastSent = null; this._lastSentAt = -Infinity;
         this._send({ t: 'hello', id: this.id, secret: this.secret, name: this.name, look: this.look, pose: this.presence ? this._pose : null });
         if (!this.presence) this._lastSentAt = this._now();   // the heartbeat clock starts at the hello
       } else {
         const h = this._halo.get(room);
-        h.status = 'open'; h.backoff = BACKOFF_MIN_MS; h.retryAt = null;
+        h.status = 'open'; h.retryAt = null;   // SLAM12: a halo's backoff is reset by its welcome too
         try { ws.send(hello); this.stats.sent++; } catch { /* the close will say */ }
       }
     };
@@ -604,13 +604,17 @@ export class OnlineSession {
         if (code === CLOSE_REPLACED || code === CLOSE_POLICY) { h.ws = null; h.status = 'terminal'; h.retryAt = null; return; }
         h.ws = null; h.status = 'closed';
         if (code === CLOSE_BUSY) h.backoff = Math.max(h.backoff, BACKOFF_MAX_MS / 2);
-        h.retryAt = this._now() + BACKOFF_MIN_MS + this._rand() * Math.max(0, h.backoff - BACKOFF_MIN_MS); h.backoff = Math.min(BACKOFF_MAX_MS, h.backoff * 2);   // SLAM2: jittered
+        h.retryAt = this._now() + BACKOFF_MIN_MS + this._rand() * Math.max(BACKOFF_MIN_MS, h.backoff - BACKOFF_MIN_MS); h.backoff = Math.min(BACKOFF_MAX_MS, h.backoff * 2);   // SLAM2: jittered
         return;
       }
       this._ws = null;
       this._setHost(null);   // AUDIT WORLD2 A2/C2: a dead socket holds no seat - the host is unknown until the next welcome, and the world host hears it (onHost)
-      if (code === CLOSE_REPLACED) { this.terminal = true; this.terminalAt = this._now(); this.status = 'error'; this.error = 'this character is online in another window'; this._endHalo(); return; }   // AUDIT WORLD6b-iii(b) A4
-      if (code === CLOSE_POLICY) { this.terminal = true; this.terminalAt = this._now(); this.status = 'error'; this.error = this.error ?? 'the relay refused a frame'; this._endHalo(); return; }
+      // SLAM12 (AUDIT SLAM): a TERMINAL close forgets the room's peers - no reconnect is coming, and 199 stale records
+      // would otherwise be eased by every tick and counted by poseHzFor for the life of the page. A plain drop keeps
+      // them ON PURPOSE: through a one-second blip the crowd stays drawn where it was rather than vanishing and
+      // re-standing, and the reconnect's welcome merges over it (AUDIT ONLINE B13).
+      if (code === CLOSE_REPLACED) { this.terminal = true; this.terminalAt = this._now(); this.status = 'error'; this.error = 'this character is online in another window'; this._endHalo(); this._forgetRoom(this.room); return; }   // AUDIT WORLD6b-iii(b) A4
+      if (code === CLOSE_POLICY) { this.terminal = true; this.terminalAt = this._now(); this.status = 'error'; this.error = this.error ?? 'the relay refused a frame'; this._endHalo(); this._forgetRoom(this.room); return; }
       if (code === CLOSE_BUSY) { this.status = 'closed'; this.error = 'the room is busy'; this._backoff = Math.max(this._backoff, BACKOFF_MAX_MS / 2); this._scheduleRetry(); return; }   // full or gated: back off hard, then try again
       this.status = 'closed';
       if (!this._closedByUs) this._scheduleRetry();
@@ -646,7 +650,13 @@ export class OnlineSession {
    *  that path alone raises `_backoff` before scheduling. Recorded, not yet paid (AUDIT SLAM item 5). */
   _scheduleRetry() {
     if (this._closedByUs || this.terminal || !this.room) return;
-    const span = Math.max(0, this._backoff - BACKOFF_MIN_MS);
+    // SLAM12 (AUDIT SLAM): THE FIRST RETRY HAS A SPAN. `_backoff` starts at BACKOFF_MIN_MS, so `_backoff - BACKOFF_MIN_MS`
+    // was exactly zero on the first retry and `rand()` was multiplied by nothing: measured over 200 sessions dropped in
+    // the same instant, ONE distinct return instant. SLAM2's jitter began on the second retry, and a wave collides on
+    // the first - a relay restart, a Durable Object eviction, the `room full` 503 (which never opens the socket, so
+    // `_backoff` is never raised). The floor of the span is now BACKOFF_MIN_MS: round one is uniform over [1 s, 2 s],
+    // every later round is what it was.
+    const span = Math.max(BACKOFF_MIN_MS, this._backoff - BACKOFF_MIN_MS);
     this._retryAt = this._now() + BACKOFF_MIN_MS + this._rand() * span;
     this._backoff = Math.min(BACKOFF_MAX_MS, this._backoff * 2);
   }
@@ -770,6 +780,12 @@ export class OnlineSession {
     const now = this._now();
     const primary = room === this.room;   // WORLD6b-iii(b): a halo room's frames place its peers and carry a peer's foes and blows; the host, the clock and the memory are my own room's alone
     if (m.t === 'welcome') {
+      // SLAM12 (AUDIT SLAM): THE BACKOFF IS RESET HERE, BY THE WELCOME, AND NOT BY THE SOCKET OPENING. A full room's
+      // CLOSE_BUSY arrives AFTER the socket opens (the relay's hello gate), so a reset at `onopen` undid the hard
+      // back-off CLOSE_BUSY had just set: a client against a busy room retried at a fixed 2500 ms for ever, and the
+      // doubling SLAM2 was written for never happened in the one case it was written for. A welcome is the relay
+      // saying yes; that is when the retry ladder starts over.
+      if (primary) this._backoff = BACKOFF_MIN_MS; else { const h = this._halo.get(room); if (h) h.backoff = BACKOFF_MIN_MS; }
       // merged, not wiped: a peer already known keeps where it is drawn
       const keep = new Set();
       for (const p of Array.isArray(m.peers) ? m.peers : []) {
@@ -888,7 +904,7 @@ export class OnlineSession {
     for (const [room, h] of [...this._halo]) {   // WORLD6b-iii(b): the halo's retries
       if (!h.ws && h.retryAt != null && now >= h.retryAt && !this._closedByUs && !this.terminal) { this._halo.delete(room); this.stats.reconnects++; this._openHalo(room, h.backoff); continue; }
       // AUDIT WORLD6b-iii(b) A7: a halo that never opens and never closes is not immortal - past the longest backoff it is dropped and retried
-      if (h.ws && h.status === 'connecting' && now - (h.since ?? now) > BACKOFF_MAX_MS) { const ws = h.ws; h.ws = null; h.status = 'closed'; h.retryAt = now + BACKOFF_MIN_MS + this._rand() * Math.max(0, h.backoff - BACKOFF_MIN_MS); h.backoff = Math.min(BACKOFF_MAX_MS, h.backoff * 2); try { ws.close(1000, 'timeout'); } catch { /* already closed */ } }   // SLAM2: a halo's retry is jittered like the primary's - eight rooms a client, all refused together otherwise
+      if (h.ws && h.status === 'connecting' && now - (h.since ?? now) > BACKOFF_MAX_MS) { const ws = h.ws; h.ws = null; h.status = 'closed'; h.retryAt = now + BACKOFF_MIN_MS + this._rand() * Math.max(BACKOFF_MIN_MS, h.backoff - BACKOFF_MIN_MS); h.backoff = Math.min(BACKOFF_MAX_MS, h.backoff * 2); try { ws.close(1000, 'timeout'); } catch { /* already closed */ } }   // SLAM2: a halo's retry is jittered like the primary's - eight rooms a client, all refused together otherwise
     }
     if (!this.presence && this.status === 'open' && now - this._lastSentAt >= HEARTBEAT_MS && this._send({ t: 'ping' })) this._lastSentAt = now;   // CHAT1: a channel's keepalive, answered without waking the room
     if (this.presence && this.status === 'open') this._askRound(now);   // SLAM9: the fair ask over every peer not yet introduced

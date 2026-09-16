@@ -5900,3 +5900,59 @@ is dropped whole on every publish - not one frame, *all* of them, so "the
 next full frame heals it" is false for a host whose pool is that large.
 The relay cannot fix an oversized stream; the sender must chunk it, or its
 cap must be a function of the room's size. A client change, its own slice.
+
+## SLAM12 - THE CLIENT'S HYGIENE (2026-09-16, AUDIT SLAM)
+
+Audit ledger items 5 and 7 and three of Lens B's smaller findings, each
+small, each real, paid together because they share no law with anything
+else on the ledger.
+
+**SLAM2's first retry had a jitter span of exactly zero.** `_backoff`
+starts at `BACKOFF_MIN_MS`, so `_backoff - BACKOFF_MIN_MS` was 0 on the
+first retry and `rand()` was multiplied by nothing. Measured over 200
+sessions dropped in one instant: **one distinct return instant.** The
+jitter began on the *second* retry, and a wave collides on the first - a
+relay restart, a Durable Object eviction, the `room full` 503 that never
+opens the socket. The span's floor is now `BACKOFF_MIN_MS` at all four
+sites (the primary's, and the halo's three), so round one is uniform over
+[1 s, 2 s]; rounds one and two share a window and the doubling shows from
+the third. **Three of the four sites had no pin at all** - the mutation
+batch found each in turn (the halo's close path, its tick path, its
+constructor-catch), and each is driven now with 200 sessions and 200
+distinct instants.
+
+**`_backoff` was reset when the socket opened**, and a full room's
+`CLOSE_BUSY` arrives *after* it opens (the hello gate), so the reset undid
+the hard back-off `CLOSE_BUSY` had just set: a client against a busy room
+retried at a fixed 2500 ms for ever, and SLAM2's doubling never happened
+in the one case it was written for. It is reset by the **welcome** now -
+the relay saying yes - for the primary and for each halo. Pinned on the
+retry *delay*, not on `_backoff`, because the latter reads the ceiling
+under both the fix and the mutant: 2500 → 4500 → 4500 → 4500 against the
+mutant's 2500 for ever.
+
+**A terminal close never forgot its room.** 199 stale peers were eased by
+every tick and counted by `poseHzFor` for the life of the page. A
+`CLOSE_REPLACED` or `CLOSE_POLICY` forgets the room now. A plain drop
+still keeps its peers **on purpose**: through a one-second blip the crowd
+stays drawn where it was rather than vanishing and re-standing, and the
+reconnect's welcome merges over it (AUDIT ONLINE B13). Both halves pinned.
+
+**`lookKey` re-stringified every peer's look every frame** - once per doll
+peer in `RemotePlayers.sync`, once per peer in `PeerBodies.sync` - and at
+199 dressed peers that `JSON.stringify` was ~64% of the client's whole
+per-frame peer work (1.19 ms of 1.85 ms, measured). A look object is
+replaced, never mutated, so a `WeakMap` on it is exactly the key's
+lifetime. Pinned: a thousand reads of one object, zero stringifies.
+
+**A doll that landed after its key was released kept its GPU texture** -
+after `_evict`, or after `destroy()` at the page's hide - with nothing
+referencing it. Measured: sync fifty peers, destroy, fifty uploaded, none
+released. The late arrival frees its texture now.
+
+**Pinned** in `test/slam12.test.js` (8). Two lifecycle pins re-aimed to
+the jittered window (`online`: deterministic `rand`, the window's edges,
+"a good open resets it" → "the welcome resets it"; `chat1`: the retry read
+at the window's far edge). **10 mutations, 10 dead** - three of them
+survivors of the first cut, one per unpinned halo site, each closed with a
+driven pin before the count was written down.

@@ -183,27 +183,37 @@ test('ONLINE1: the socket\'s lifecycle - a room change closes and reopens, a sta
   sockets[0].receive({ t: 'join', id: 'eve-0001', name: 'Eve', look: {}, pose: pose(1) }); assert.equal(s.peers.size, 0, 'a frame on the STALE socket: ignored');
   sockets[0].drop(); assert.equal(s.status, 'connecting', 'the stale socket\'s close: ignored'); assert.equal(s._retryAt, null);
   s.join('dungeon:m77'); assert.equal(sockets.length, 2, 'the same room again: no new socket');
-  // a drop reconnects with a backoff that doubles
+  // a drop reconnects with a backoff that doubles.
+  // SLAM2/SLAM12 re-aimed this block: the retry is JITTERED inside [BACKOFF_MIN_MS, BACKOFF_MIN_MS + span], so an exact
+  // instant is no longer the law - the WINDOW is. This session takes rand = 1 and reads the window's far edge. The
+  // span floors at BACKOFF_MIN_MS (SLAM12: round one used to have a span of exactly zero), so the first two windows
+  // are equal and the doubling shows from the third.
+  s._rand = () => 1;
   sockets[1].open(); sockets[1].drop(); assert.equal(s.status, 'closed'); assert.equal(s.statusLine(), 'online: reconnecting');
-  now += BACKOFF_MIN_MS - 1; s.tick(); assert.equal(sockets.length, 2, 'not before the backoff');
+  assert.equal(s._retryAt - now, 2 * BACKOFF_MIN_MS, 'round one: the far edge of [MIN, 2 x MIN]');
+  now += 2 * BACKOFF_MIN_MS - 1; s.tick(); assert.equal(sockets.length, 2, 'not before the backoff');
   now += 2; s.tick(); assert.equal(sockets.length, 3, 'then a new socket'); assert.equal(s.stats.reconnects, 1);
   sockets[2].drop();
-  now += BACKOFF_MIN_MS + 1; s.tick(); assert.equal(sockets.length, 3, 'the second wait is longer than the first');
-  now += BACKOFF_MIN_MS; s.tick(); assert.equal(sockets.length, 4, 'twice the first: the backoff doubled');
+  assert.equal(s._retryAt - now, 2 * BACKOFF_MIN_MS, 'round two: the same window - the span floors at BACKOFF_MIN_MS until the backoff clears 2x');
+  now = s._retryAt + 1; s.tick(); assert.equal(sockets.length, 4);
+  sockets[3].drop();
+  assert.equal(s._retryAt - now, 4 * BACKOFF_MIN_MS, 'round three: the window has DOUBLED');
+  now = s._retryAt + 1; s.tick(); assert.equal(sockets.length, 5);
   assert.ok(BACKOFF_MAX_MS >= BACKOFF_MIN_MS * 4);
-  sockets[3].open(); assert.equal(s._backoff, BACKOFF_MIN_MS, 'a good open resets it');
+  sockets[4].open(); assert.notEqual(s._backoff, BACKOFF_MIN_MS, 'SLAM12: an open alone resets nothing - CLOSE_BUSY arrives after it');
+  sockets[4].receive({ t: 'welcome', id: 'mac-0001', peers: [] }); assert.equal(s._backoff, BACKOFF_MIN_MS, 'the WELCOME resets it - the relay said yes');
   // the relay's error frame, then its policy close: terminal - no storm
-  sockets[3].receive({ t: 'error', m: 'bad pose' }); assert.equal(s.status, 'error'); assert.equal(s.error, 'bad pose');
-  sockets[3].drop(CLOSE_POLICY); assert.equal(s.terminal, true); assert.equal(s.statusLine(), 'online: bad pose');
-  now += BACKOFF_MAX_MS * 4; s.tick(); assert.equal(sockets.length, 4, 'refused: not retried');
+  sockets[4].receive({ t: 'error', m: 'bad pose' }); assert.equal(s.status, 'error'); assert.equal(s.error, 'bad pose');
+  sockets[4].drop(CLOSE_POLICY); assert.equal(s.terminal, true); assert.equal(s.statusLine(), 'online: bad pose');
+  now += BACKOFF_MAX_MS * 4; s.tick(); assert.equal(sockets.length, 5, 'refused: not retried');
   // replaced by another window: terminal too
-  s.join('town:m5', pose(0)); assert.equal(sockets.length, 5); assert.equal(s.terminal, false, 'a new room starts clean');
-  sockets[4].open(); sockets[4].drop(CLOSE_REPLACED);
+  s.join('town:m5', pose(0)); assert.equal(sockets.length, 6); assert.equal(s.terminal, false, 'a new room starts clean');
+  sockets[5].open(); sockets[5].drop(CLOSE_REPLACED);
   assert.equal(s.terminal, true); assert.match(s.error, /another window/);
-  now += BACKOFF_MAX_MS * 4; s.tick(); assert.equal(sockets.length, 5, 'replaced: not retried, or two tabs would evict each other forever');
+  now += BACKOFF_MAX_MS * 4; s.tick(); assert.equal(sockets.length, 6, 'replaced: not retried, or two tabs would evict each other forever');
   // busy (1013): not terminal, but a hard backoff
-  s.join('town:m6', pose(0)); sockets[5].open(); sockets[5].drop(CLOSE_BUSY);
-  assert.equal(s.terminal, false); assert.ok(s._backoff >= BACKOFF_MAX_MS / 2, 'a full room is waited out, not hammered'); now += BACKOFF_MAX_MS + 1; s.tick(); assert.equal(sockets.length, 7, 'then tried again');
+  s.join('town:m6', pose(0)); sockets[6].open(); sockets[6].drop(CLOSE_BUSY);
+  assert.equal(s.terminal, false); assert.ok(s._backoff >= BACKOFF_MAX_MS / 2, 'a full room is waited out, not hammered'); now += BACKOFF_MAX_MS + 1; s.tick(); assert.equal(sockets.length, 8, 'then tried again');
   s.leave(); const n = sockets.length; now += 60000; s.tick(); assert.equal(sockets.length, n, 'left: no reconnect');
   // a relay that is not wss:// is no relay at all
   const bad = new OnlineSession({ url: 'http://relay.test', id: 'mac-0002', secret: 'shh-shh-shh-0002', WebSocketImpl: FakeWS, now: () => now });
