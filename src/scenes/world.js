@@ -203,7 +203,7 @@ import { floorLanding } from '../player/enterExit.js';   // FixStanding for the 
 import { jumpSpeedMultiplier, isEnhancedJumping, tallySkill, SKILLS } from '../systems/skills.js';   // AUDIT 64 F2: CheckAirControl's IsEnhancedJumping disjunct
 import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter, setAvoidDeathHook } from '../characters/playerEntity.js';
 import { SOUND } from '../systems/soundClips.js';
-import { createWeaponRig, autoBuildArms } from '../combat/weaponRig.js';   // MWA1: the arms at boot
+import { createWeaponRig, autoBuildArms, armIdentityOf, armBuiltFor, armsReady } from '../combat/weaponRig.js';   // MWA1: the arms at boot; MWA3: the identity the arm should stand for, beside the one it does
 import { weaponPoseOf, applyWeaponPose, mergeWeaponPose } from '../combat/playerWeapon.js';   // HARD2c: the sheath+hand pair as ONE law, and SL-2's per-field merge with the mode host's live rig
 import { ArrowFlight, playerArrowHitFoe } from '../combat/arrowFlight.js';   // C13: visible exterior arrows; AUDIT 39 (#64): and the shaft that LANDS
 import { addItem, spendArrow, carriedWeight } from '../systems/inventory.js';   // E4: PlayerEntity.CarriedWeight carries the gold counter's own term
@@ -2593,6 +2593,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     equipCountdown: playerEntity?.equipCountdown ?? 0,
     widgetOn: modSetting('weapon-widget', 'Enabled'),
     toggleSheathCalls: weaponRig.toggleSheathCalls,
+    // MWA3: the arm's identity beside the entity's - "an Argonian on a
+    // human body" is these two disagreeing, and autoBuildArms's gate
+    // now rebuilds on exactly that disagreement.
+    armBuiltFor: armBuiltFor(),
+    armWantedFor: armIdentityOf(playerEntity),
+    armState: armsReady() ? 'standing' : 'down',
   });
   // M2: SPELLCASTING ABOVE GROUND - exterior.js's twin note applies.
   /** The per-foe doors, hoisted (AUDIT 24 wave 32): the cast engine takes
