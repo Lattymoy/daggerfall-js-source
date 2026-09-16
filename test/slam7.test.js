@@ -85,7 +85,7 @@ test('SLAM7: the cache is still BOUNDED, and it is a real LRU - the least recent
   const IN_VIEW = 20;
   for (let f = 0; f < 120; f++) await frame(peers(IN_VIEW, f * IN_VIEW));
   assert.equal(rp._dolls.size, DOLLS_MAX + IN_VIEW, 'the map holds the cap of spares plus exactly what is on screen');
-  assert.ok(c.released.length > 120 * IN_VIEW - rp._dolls.size - 5, 'and every look that fell out was really released, not leaked');
+  assert.equal(c.released.length, 120 * IN_VIEW - rp._dolls.size, 'and EXACTLY every look that fell out was released - not one leaked, not one released twice (AUDIT SLAM: this was a `> total - 5` bound, near-vacuous)');
   // the order: draw an old look again and it stops being the next to go
   const { rp: rp2, frame: frame2 } = host();
   const a = peers(1, 0), b = peers(1, 1000);
@@ -120,4 +120,15 @@ test('SLAM7: under the cap nothing changed at all - ordinary play in the Bay is 
   for (let f = 0; f < 8; f++) await frame(few);
   assert.equal(c.composes, 3); assert.equal(c.destroyed, 0); assert.equal(c.released.length, 0);
   assert.equal(rp._dolls.size, 3, 'three looks, three dolls, nothing swept');
+});
+
+test('PINS (AUDIT SLAM S11/S13): DOLLS_MAX is 64 - the spares the GPU keeps for looks that left the screen, sized for a crowd, not five - and destroy() empties the wanted set with the batches (mutants: 64 -> 5, which survived the whole suite; the clear removed)', async () => {
+  assert.equal(DOLLS_MAX, 64, 'a screen full of peers who stepped out of view and may step back: sixty-four looks, ~5 MB at the panel bound');
+  assert.ok(DOLLS_MAX >= 32, 'no fewer than the near tier: everyone heard at full rate has room to leave and return without a recompose');
+  const { rp, frame } = host();
+  await frame(peers(12));
+  assert.equal(rp._wanted.size, 12);
+  rp.destroy();
+  assert.equal(rp._wanted.size, 0, 'a host that is gone needs nothing');
+  assert.equal(rp._batches.size, 0); assert.equal(rp._dolls.size, 0);
 });

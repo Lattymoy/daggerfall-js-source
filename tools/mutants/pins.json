@@ -1,0 +1,232 @@
+[
+  {
+    "name": "S1-fan-max-8",
+    "file": "src/net/wire.js",
+    "old": "export const POSE_FAN_MAX = 32;",
+    "new": "export const POSE_FAN_MAX = 8;",
+    "tests": [
+      "test/slam1.test.js",
+      "test/slam2.test.js",
+      "test/slam3.test.js",
+      "test/slam4.test.js",
+      "test/slam5.test.js",
+      "test/slam6.test.js",
+      "test/slam7.test.js",
+      "test/slam8.test.js",
+      "test/slam12.test.js",
+      "test/mwbody1.test.js",
+      "test/world3.test.js"
+    ]
+  },
+  {
+    "name": "S2-halo-jitters-reverted",
+    "file": "src/net/online.js",
+    "old": "h.retryAt = this._now() + BACKOFF_MIN_MS + this._rand() * Math.max(BACKOFF_MIN_MS, h.backoff - BACKOFF_MIN_MS);",
+    "new": "h.retryAt = this._now() + h.backoff;",
+    "tests": [
+      "test/slam1.test.js",
+      "test/slam2.test.js",
+      "test/slam3.test.js",
+      "test/slam4.test.js",
+      "test/slam5.test.js",
+      "test/slam6.test.js",
+      "test/slam7.test.js",
+      "test/slam8.test.js",
+      "test/slam12.test.js",
+      "test/mwbody1.test.js",
+      "test/world3.test.js"
+    ]
+  },
+  {
+    "name": "S3-backoff-uncapped",
+    "file": "src/net/online.js",
+    "old": "    this._backoff = Math.min(BACKOFF_MAX_MS, this._backoff * 2);",
+    "new": "    this._backoff = this._backoff * 2;",
+    "tests": [
+      "test/slam1.test.js",
+      "test/slam2.test.js",
+      "test/slam3.test.js",
+      "test/slam4.test.js",
+      "test/slam5.test.js",
+      "test/slam6.test.js",
+      "test/slam7.test.js",
+      "test/slam8.test.js",
+      "test/slam12.test.js",
+      "test/mwbody1.test.js",
+      "test/world3.test.js"
+    ]
+  },
+  {
+    "name": "S4-hz-floor-not-round",
+    "file": "src/net/online.js",
+    "old": "Math.max(POSE_HZ_MIN, Math.round((POSE_HZ * POSE_CROWD) / peers))",
+    "new": "Math.max(POSE_HZ_MIN, Math.floor((POSE_HZ * POSE_CROWD) / peers))",
+    "tests": [
+      "test/slam1.test.js",
+      "test/slam2.test.js",
+      "test/slam3.test.js",
+      "test/slam4.test.js",
+      "test/slam5.test.js",
+      "test/slam6.test.js",
+      "test/slam7.test.js",
+      "test/slam8.test.js",
+      "test/slam12.test.js",
+      "test/mwbody1.test.js",
+      "test/world3.test.js"
+    ]
+  },
+  {
+    "name": "S5-gap-min-1",
+    "file": "src/net/online.js",
+    "old": "export const GAP_MIN_MS = 50;",
+    "new": "export const GAP_MIN_MS = 1;",
+    "tests": [
+      "test/slam1.test.js",
+      "test/slam2.test.js",
+      "test/slam3.test.js",
+      "test/slam4.test.js",
+      "test/slam5.test.js",
+      "test/slam6.test.js",
+      "test/slam7.test.js",
+      "test/slam8.test.js",
+      "test/slam12.test.js",
+      "test/mwbody1.test.js",
+      "test/world3.test.js"
+    ]
+  },
+  {
+    "name": "S6-doll-retry-50",
+    "file": "src/net/remotePlayers.js",
+    "old": "export const DOLL_RETRY_MS = 5000;",
+    "new": "export const DOLL_RETRY_MS = 50;",
+    "tests": [
+      "test/slam1.test.js",
+      "test/slam2.test.js",
+      "test/slam3.test.js",
+      "test/slam4.test.js",
+      "test/slam5.test.js",
+      "test/slam6.test.js",
+      "test/slam7.test.js",
+      "test/slam8.test.js",
+      "test/slam12.test.js",
+      "test/mwbody1.test.js",
+      "test/world3.test.js"
+    ]
+  },
+  {
+    "name": "S7-roster-loses-pose",
+    "file": "server/src/index.js",
+    "old": "      return { ...b, look };",
+    "new": "      return { id: b.id, name: b.name, look };",
+    "tests": [
+      "test/slam1.test.js",
+      "test/slam2.test.js",
+      "test/slam3.test.js",
+      "test/slam4.test.js",
+      "test/slam5.test.js",
+      "test/slam6.test.js",
+      "test/slam7.test.js",
+      "test/slam8.test.js",
+      "test/slam12.test.js",
+      "test/mwbody1.test.js",
+      "test/world3.test.js"
+    ]
+  },
+  {
+    "name": "S8-heartbeat-9000",
+    "file": "src/net/online.js",
+    "old": "export const HEARTBEAT_MS = 5000;",
+    "new": "export const HEARTBEAT_MS = 9000;",
+    "tests": [
+      "test/slam1.test.js",
+      "test/slam2.test.js",
+      "test/slam3.test.js",
+      "test/slam4.test.js",
+      "test/slam5.test.js",
+      "test/slam6.test.js",
+      "test/slam7.test.js",
+      "test/slam8.test.js",
+      "test/slam12.test.js",
+      "test/mwbody1.test.js",
+      "test/world3.test.js"
+    ]
+  },
+  {
+    "name": "S9-timeout-5000",
+    "file": "src/net/online.js",
+    "old": "export const PEER_TIMEOUT_MS = 20000;",
+    "new": "export const PEER_TIMEOUT_MS = 5000;",
+    "tests": [
+      "test/slam1.test.js",
+      "test/slam2.test.js",
+      "test/slam3.test.js",
+      "test/slam4.test.js",
+      "test/slam5.test.js",
+      "test/slam6.test.js",
+      "test/slam7.test.js",
+      "test/slam8.test.js",
+      "test/slam12.test.js",
+      "test/mwbody1.test.js",
+      "test/world3.test.js"
+    ]
+  },
+  {
+    "name": "S11-dolls-max-5",
+    "file": "src/net/remotePlayers.js",
+    "old": "export const DOLLS_MAX = 64;",
+    "new": "export const DOLLS_MAX = 5;",
+    "tests": [
+      "test/slam1.test.js",
+      "test/slam2.test.js",
+      "test/slam3.test.js",
+      "test/slam4.test.js",
+      "test/slam5.test.js",
+      "test/slam6.test.js",
+      "test/slam7.test.js",
+      "test/slam8.test.js",
+      "test/slam12.test.js",
+      "test/mwbody1.test.js",
+      "test/world3.test.js"
+    ]
+  },
+  {
+    "name": "S12-needed-worn-half-deleted",
+    "file": "src/net/remotePlayers.js",
+    "old": "    for (const e of this._batches.values()) out.add(e.key);\n    return out;",
+    "new": "    return out;",
+    "tests": [
+      "test/slam1.test.js",
+      "test/slam2.test.js",
+      "test/slam3.test.js",
+      "test/slam4.test.js",
+      "test/slam5.test.js",
+      "test/slam6.test.js",
+      "test/slam7.test.js",
+      "test/slam8.test.js",
+      "test/slam12.test.js",
+      "test/mwbody1.test.js",
+      "test/world3.test.js"
+    ],
+    "equivalent": true,
+    "why": "every batch is minted inside the same sync() that fills _wanted, so the worn half of _needed() is a subset of the wanted half; SLAM7's record overstated it as independently necessary (corrected) and the code is kept as belt-and-braces against a future caller minting a batch outside sync()"
+  },
+  {
+    "name": "S13-destroy-keeps-wanted",
+    "file": "src/net/remotePlayers.js",
+    "old": "    this._wanted.clear();   // SLAM7: nothing is needed by a host that is gone",
+    "new": "    void 0;",
+    "tests": [
+      "test/slam1.test.js",
+      "test/slam2.test.js",
+      "test/slam3.test.js",
+      "test/slam4.test.js",
+      "test/slam5.test.js",
+      "test/slam6.test.js",
+      "test/slam7.test.js",
+      "test/slam8.test.js",
+      "test/slam12.test.js",
+      "test/mwbody1.test.js",
+      "test/world3.test.js"
+    ]
+  }
+]

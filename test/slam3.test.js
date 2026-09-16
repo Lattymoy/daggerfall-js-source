@@ -16,6 +16,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { OnlineSession, POSE_HZ, POSE_HZ_MIN, POSE_CROWD, GAP_MIN_MS, GAP_MAX_MS, poseHzFor } from '../src/net/online.js';
+import { POSE_HZ_MAX } from '../src/net/wire.js';
 import { POSE_FAN_MAX } from '../src/net/wire.js';
 import { fakeSocketClass } from './fakeSocket.mjs';
 
@@ -41,7 +42,8 @@ test('SLAM3: past the crowd the rate comes DOWN and the product stays roughly fl
   assert.ok(poseHzFor(POSE_CROWD + 1) <= POSE_HZ);
   assert.equal(poseHzFor(POSE_CROWD * 2), POSE_HZ / 2, 'twice the crowd, half the rate');
   // never below the floor, however big it gets
-  for (const n of [96, 200, 256, 4096]) assert.equal(poseHzFor(n), Math.max(POSE_HZ_MIN, poseHzFor(n)), `${n} respects the floor`);
+  // (AUDIT SLAM struck a line here that asserted `poseHzFor(n) === Math.max(POSE_HZ_MIN, poseHzFor(n))` - a restatement
+  // of the source's own Math.max that could not fail. The floor is held by the 100000 case below.)
   assert.equal(poseHzFor(100000), POSE_HZ_MIN, 'and it lands ON the floor rather than at zero');
   assert.ok(POSE_HZ_MIN >= 3, 'a walk below this reads as a series of hops however well it is eased');
   // monotonic: a bigger crowd is never spoken to MORE often
@@ -106,4 +108,12 @@ test('SLAM3: the measured interval is bounded both ways, and a peer with no inte
   now += 60000;
   ws.receive({ t: 'pose', id: 'bob-0001', p: pose(3) });
   assert.equal(p.gap, GAP_MAX_MS, 'a silence ceilings at the bound, not a minute');
+});
+
+test('PINS (AUDIT SLAM S4/S5): the crowded rate ROUNDS, it does not floor - and the ease interval floors at 50 ms, because a burst of two poses a millisecond apart must not make the ease a snap (mutants: Math.floor, which survived the whole suite; GAP_MIN_MS 50 -> 1)', () => {
+  assert.equal(poseHzFor(32), 8, '240/32 = 7.5 rounds UP to 8 - floor would say 7 and speak to a room of 32 an eighth slower than the law');
+  assert.equal(poseHzFor(48), 5, '240/48 = 5 exactly');
+  assert.equal(poseHzFor(30), 8, '240/30 = 8 exactly');
+  assert.equal(GAP_MIN_MS, 50, 'the floor on a measured ease interval: two poses in one instant ease over 50 ms, not 0 - a snap is what the ease exists to prevent');
+  assert.equal(GAP_MIN_MS, 1000 / POSE_HZ_MAX, 'and the floor IS the shortest interval a correct client can keep (POSE_HZ_MAX) - it never bites a real cadence, and nothing faster is a real cadence');
 });

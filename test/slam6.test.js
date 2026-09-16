@@ -23,7 +23,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { poseFan, nearestFan, hashKey, POSE_FAN_MAX, POSE_FAR_SHARE, ROSTER_MAX } from '../src/net/wire.js';
-import { POSE_HZ_MIN, GAP_MAX_MS, PEER_TIMEOUT_MS, poseHzFor, OnlineSession } from '../src/net/online.js';
+import { POSE_HZ_MIN, POSE_CROWD, GAP_MAX_MS, PEER_TIMEOUT_MS, poseHzFor, OnlineSession } from '../src/net/online.js';
 import * as relay from '../server/src/relay.js';
 import { fakeSocketClass } from './fakeSocket.mjs';
 
@@ -159,4 +159,10 @@ test('SLAM6: at home a stranger\'s pose STANDS the peer at once and asks after -
     ws.receive({ t: 'pose', id: 'mac-0001', p: at(3, 3) });
     assert.equal(s.peers.has('mac-0001'), false);
   } finally { console.info = info; }
+});
+
+test('PINS (AUDIT SLAM S1): POSE_FAN_MAX is 32, and it is ABOVE POSE_CROWD - which the far-tier derivation silently depends on (mutant: 32 -> 8, which survived the whole suite because every other pin is written in terms of the constant)', () => {
+  assert.equal(POSE_FAN_MAX, 32, 'the nearest listeners who hear every pose: enough for everyone inside NAME_RANGE and every BODIES_MAX rig, and then some');
+  assert.ok(POSE_FAN_MAX > POSE_CROWD, `the bound (${POSE_FAN_MAX}) sits above the crowd threshold (${POSE_CROWD}): a room under POSE_CROWD peers is never over the bound, so the far tier never applies at the full POSE_HZ - the share was derived at POSE_HZ_MIN and only has to hold there`);
+  assert.ok(POSE_FAN_MAX >= 2 * 8, 'and at least twice BODIES_MAX, so every peer that could stand in a rig is heard at full rate with room to spare');
 });

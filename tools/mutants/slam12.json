@@ -1,0 +1,162 @@
+[
+  {
+    "name": "V1-primary-span-zero",
+    "file": "src/net/online.js",
+    "old": "    const span = Math.max(BACKOFF_MIN_MS, this._backoff - BACKOFF_MIN_MS);",
+    "new": "    const span = Math.max(0, this._backoff - BACKOFF_MIN_MS);",
+    "tests": [
+      "test/slam12.test.js",
+      "test/slam2.test.js",
+      "test/slam4.test.js",
+      "test/slam7.test.js",
+      "test/online.test.js",
+      "test/chat1.test.js",
+      "test/mwbody1.test.js",
+      "test/auditworld6biiib.test.js"
+    ]
+  },
+  {
+    "name": "V2-halo-close-span-zero",
+    "file": "src/net/online.js",
+    "old": "h.retryAt = this._now() + BACKOFF_MIN_MS + this._rand() * Math.max(BACKOFF_MIN_MS, h.backoff - BACKOFF_MIN_MS);",
+    "new": "h.retryAt = this._now() + BACKOFF_MIN_MS + this._rand() * Math.max(0, h.backoff - BACKOFF_MIN_MS);",
+    "tests": [
+      "test/slam12.test.js",
+      "test/slam2.test.js",
+      "test/slam4.test.js",
+      "test/slam7.test.js",
+      "test/online.test.js",
+      "test/chat1.test.js",
+      "test/mwbody1.test.js",
+      "test/auditworld6biiib.test.js"
+    ]
+  },
+  {
+    "name": "V3-reset-at-open-restored",
+    "file": "src/net/online.js",
+    "old": "        this.status = 'open'; this.error = null;   // SLAM12",
+    "new": "        this.status = 'open'; this.error = null; this._backoff = BACKOFF_MIN_MS;   // SLAM12",
+    "tests": [
+      "test/slam12.test.js",
+      "test/slam2.test.js",
+      "test/slam4.test.js",
+      "test/slam7.test.js",
+      "test/online.test.js",
+      "test/chat1.test.js",
+      "test/mwbody1.test.js",
+      "test/auditworld6biiib.test.js"
+    ]
+  },
+  {
+    "name": "V4-welcome-does-not-reset",
+    "file": "src/net/online.js",
+    "old": "      if (primary) this._backoff = BACKOFF_MIN_MS; else { const h = this._halo.get(room); if (h) h.backoff = BACKOFF_MIN_MS; }",
+    "new": "      void primary;",
+    "tests": [
+      "test/slam12.test.js",
+      "test/slam2.test.js",
+      "test/slam4.test.js",
+      "test/slam7.test.js",
+      "test/online.test.js",
+      "test/chat1.test.js",
+      "test/mwbody1.test.js",
+      "test/auditworld6biiib.test.js"
+    ]
+  },
+  {
+    "name": "V5-terminal-keeps-ghosts",
+    "file": "src/net/online.js",
+    "old": "this.error = 'this character is online in another window'; this._endHalo(); this._forgetRoom(this.room); return; }",
+    "new": "this.error = 'this character is online in another window'; this._endHalo(); return; }",
+    "tests": [
+      "test/slam12.test.js",
+      "test/slam2.test.js",
+      "test/slam4.test.js",
+      "test/slam7.test.js",
+      "test/online.test.js",
+      "test/chat1.test.js",
+      "test/mwbody1.test.js",
+      "test/auditworld6biiib.test.js"
+    ]
+  },
+  {
+    "name": "V6-every-close-forgets",
+    "file": "src/net/online.js",
+    "old": "      this._ws = null;\n      this._setHost(null);",
+    "new": "      this._ws = null; this._forgetRoom(this.room);\n      this._setHost(null);",
+    "tests": [
+      "test/slam12.test.js",
+      "test/slam2.test.js",
+      "test/slam4.test.js",
+      "test/slam7.test.js",
+      "test/online.test.js",
+      "test/chat1.test.js",
+      "test/mwbody1.test.js",
+      "test/auditworld6biiib.test.js"
+    ]
+  },
+  {
+    "name": "V7-memo-removed",
+    "file": "src/net/remotePlayers.js",
+    "old": "  let k = _keyOf.get(look);\n  if (k === undefined) { k = _computeLookKey(look); _keyOf.set(look, k); }\n  return k;",
+    "new": "  return _computeLookKey(look);",
+    "tests": [
+      "test/slam12.test.js",
+      "test/slam2.test.js",
+      "test/slam4.test.js",
+      "test/slam7.test.js",
+      "test/online.test.js",
+      "test/chat1.test.js",
+      "test/mwbody1.test.js",
+      "test/auditworld6biiib.test.js"
+    ]
+  },
+  {
+    "name": "V8-orphan-not-released",
+    "file": "src/net/remotePlayers.js",
+    "old": "      if (this._dolls.get(key) !== p) { if (doll && typeof doll.rec === 'string') this.renderer.releaseTexture?.(PEER_ARCHIVE, doll.rec); return; }",
+    "new": "      if (this._dolls.get(key) !== p) return;",
+    "tests": [
+      "test/slam12.test.js",
+      "test/slam2.test.js",
+      "test/slam4.test.js",
+      "test/slam7.test.js",
+      "test/online.test.js",
+      "test/chat1.test.js",
+      "test/mwbody1.test.js",
+      "test/auditworld6biiib.test.js"
+    ]
+  },
+  {
+    "name": "V9-halo-tick-span-zero",
+    "file": "src/net/online.js",
+    "old": "h.retryAt = now + BACKOFF_MIN_MS + this._rand() * Math.max(BACKOFF_MIN_MS, h.backoff - BACKOFF_MIN_MS);",
+    "new": "h.retryAt = now + BACKOFF_MIN_MS + this._rand() * Math.max(0, h.backoff - BACKOFF_MIN_MS);",
+    "tests": [
+      "test/slam12.test.js",
+      "test/slam2.test.js",
+      "test/slam4.test.js",
+      "test/slam7.test.js",
+      "test/online.test.js",
+      "test/chat1.test.js",
+      "test/mwbody1.test.js",
+      "test/auditworld6biiib.test.js"
+    ]
+  },
+  {
+    "name": "V10-openHalo-catch-span-zero",
+    "file": "src/net/online.js",
+    "old": "retryAt: this._now() + BACKOFF_MIN_MS + this._rand() * Math.max(BACKOFF_MIN_MS, backoff - BACKOFF_MIN_MS)",
+    "new": "retryAt: this._now() + BACKOFF_MIN_MS + this._rand() * Math.max(0, backoff - BACKOFF_MIN_MS)",
+    "tests": [
+      "test/slam12.test.js",
+      "test/slam2.test.js",
+      "test/slam4.test.js",
+      "test/slam7.test.js",
+      "test/online.test.js",
+      "test/chat1.test.js",
+      "test/mwbody1.test.js",
+      "test/auditworld6biiib.test.js"
+    ]
+  }
+]

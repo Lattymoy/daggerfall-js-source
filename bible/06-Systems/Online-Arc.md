@@ -5479,10 +5479,18 @@ flickered, and the client paid 27x the compose work to make it do so.
 
 **THE FIX.** A cache may evict what nothing is using; evicting what is on
 screen is not eviction, it is a guaranteed recompose. The cap now counts
-only the dolls **the scene does not need** - and "needed" is both the
-looks a live billboard is wearing *and* the looks the last `sync` asked
-for and has not been handed yet, because a doll composes **between** two
-frames and is worn by nothing for exactly that gap. That gap alone cost
+only the dolls **the scene does not need** - and "needed" is the looks the
+last `sync` asked for and has not been handed yet, because a doll composes
+**between** two frames and is worn by nothing for exactly that gap. (AUDIT
+SLAM CORRECTION: this section first said "needed" was *two* things, the
+worn looks *and* the asked-for looks, presented as independently
+necessary. They are not independent: every batch is created inside the
+same `sync` loop that fills `_wanted`, and a departed peer's batch is
+dropped in the same `sync`, so the batch keys are always a subset of the
+wanted keys and the "worn" half of `_needed()` does no work on its own.
+Deleting it passed the whole suite. It stays as belt-and-braces against a
+future caller that mints a batch outside `sync`, and this record now says
+so rather than claiming a load-bearing role it does not have.) That gap alone cost
 213 of the 412 composes the first cut of this fix still paid at 199
 looks. Among the spares the map is now a real LRU: a key drawn this frame
 is moved to the back, so the sweep takes the one nobody has looked at
@@ -5956,3 +5964,74 @@ the jittered window (`online`: deterministic `rand`, the window's edges,
 at the window's far edge). **10 mutations, 10 dead** - three of them
 survivors of the first cut, one per unpinned halo site, each closed with a
 driven pin before the count was written down.
+
+## PINS - THE AUDIT'S THIRTEEN SURVIVORS, AND THE LISTS THAT PROVE THEY ARE DEAD (2026-09-16, AUDIT SLAM)
+
+AUDIT SLAM's second section found **thirteen mutants that survived the
+full suite**, at least one per slam file, and observed that every "N
+mutations, N dead" in this record described a set nobody could re-run.
+This slice closes both.
+
+**The thirteen.** Two were closed by SLAM8 (`HEARTBEAT_MS` 9000,
+`PEER_TIMEOUT_MS` 5000 - the standing-crowd margin), one by SLAM12 (the
+halo jitters reverted). The rest are closed here, each by a pin that can
+fail:
+
+- **S1** `POSE_FAN_MAX` 32 → 8: every pin was written in terms of the
+  constant. It is 32 now by assertion, with its reason, and it is pinned
+  *above* `POSE_CROWD` - which the far-tier derivation silently depended
+  on and nothing stated: a room under the crowd threshold is never over
+  the bound, so the share only had to hold at `POSE_HZ_MIN`.
+- **S3** the backoff cap removed: driven to eight drops, the wait sits on
+  `BACKOFF_MAX_MS` and stays.
+- **S4** `poseHzFor` `round` → `floor`: `poseHzFor(32)` is 8, not 7.
+- **S5** `GAP_MIN_MS` 50 → 1: pinned equal to `1000 / POSE_HZ_MAX` - the
+  floor *is* the fastest cadence a correct client can keep.
+- **S6** `DOLL_RETRY_MS` 5000 → 50, **S11** `DOLLS_MAX` 64 → 5: the
+  constants once and literally, with why.
+- **S7** the welcome roster losing its poses: driven - a joiner's welcome
+  places each peer where it said it stood.
+- **S13** `destroy()` not clearing `_wanted`: driven.
+- **S12** the worn half of `_needed()` deleted: **kept alive by
+  decision.** Every batch is minted inside the same `sync` that fills
+  `_wanted`, so the worn half is a subset of the wanted half and does no
+  work on its own; SLAM7's record claimed both halves were independently
+  necessary and is corrected above. The code stays as belt-and-braces and
+  the mutant is recorded as *equivalent*, not as a gap.
+- **S10** the `turn` mask: cosmetic - the value is only ever read modulo
+  `POSE_FAR_SHARE` - and recorded, not pinned.
+
+**The pins the audit called weak.** `slam5`'s literal
+`assert.equal(last, last)` is deleted, and its `maxKeys <= 128` bound,
+subsumed two lines later by `maxKeys === 0`. `slam3`'s restatement of the
+source's own `Math.max` is deleted. `slam7`'s `> total - 5` release bound
+is exact equality now. `slam2`'s 400-character source slice - 2.5x the
+function it meant to read, spilling into two neighbours - runs to the
+matching brace. `slam4`'s `_peerHeights` pin, which stayed green when the
+prune was moved after `return out;` as dead code, now reads the order:
+push, prune, return.
+
+**The stripper that ate a line.** Three pins shared
+`.replace(/\/\/[^\n]*/g, ' ')` to strip comments, and `wss://` contains
+`//`: everything after it on that line of `online.js` was invisible to
+every pin reading the stripped source - including `slam2`'s sweep for a
+stray `Math.random`. The two remaining uses strip only a `//` that begins
+a comment.
+
+**THE LISTS ARE COMMITTED.** `tools/mutate.mjs` runs a JSON list of
+mutants - apply, test, restore byte-for-byte, report - and
+`tools/mutants/` holds the exact sets for SLAM8 through SLAM12 and this
+slice. Run over all fifty-seven: **55 dead, 2 survived** on the first
+pass. One was S12, by decision, now flagged `equivalent` with its reason
+so the harness reports it as recorded rather than as a gap. **The other
+was a real gap the committed list found on its own**: SLAM11's "`worldSeen`
+latched on a refused push" had died in a by-hand run and survived the
+committed one - nothing drove the *refused* push. It does now (`slam11`:
+a bucket in debt hands the memory to nobody and latches nobody; repaid,
+the next publish hands it to everyone), and the re-run is 19 dead, 0
+survived, 1 equivalent as recorded. That is the whole argument for
+committing the lists, made by the lists.
+
+SLAM1-SLAM7's mutation sets predate the harness and are not recoverable
+verbatim; their counts stand in this record as they were run, and the
+thirteen survivors the audit found among them are the ones closed above.

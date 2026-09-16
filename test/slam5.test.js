@@ -14,7 +14,7 @@
 // floors to 0 and "the nearest 64" was the first 64 in socket order.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { rosterFor, ROSTER_MAX, SOCKETS_MAX, POSE_FAN_MAX, nearestFan } from '../src/net/wire.js';
+import { rosterFor, ROSTER_MAX, SOCKETS_MAX, POSE_FAN_MAX, nearestFan, validPose } from '../src/net/wire.js';
 import { Room } from '../server/src/index.js';
 import { readFileSync } from 'node:fs';
 
@@ -74,13 +74,10 @@ test('SLAM5: A FULL ROOM FILLS - two hundred players join a town and every one g
   } finally { Date.now = real; }
   assert.equal(threw, null, `the hello path threw at player ${threw?.at}: ${threw?.msg}`);
   assert.equal(welcomed, 200, 'every player was welcomed');
-  assert.ok(r.maxKeys <= STORAGE_GET_MAX, `the largest batched get was ${r.maxKeys} keys, over the ${STORAGE_GET_MAX} limit`);
   // and the awake object serves the whole hello path from its own `_looks`, so it asks storage for nothing at all
   assert.equal(r.maxKeys, 0, 'an awake room reads no looks on the hello path - it already heard them');
   // THE ROSTER CARRIES THE LOOKS. Reading nothing is only a win if the answer is still right: a roster of nulls
   // reads as "asked for nothing" too, and draws nobody at all.
-  const last = r.room.state ?? null;   // (unused - the welcome below is the evidence)
-  assert.equal(last, last);
 });
 
 test('SLAM5: the welcome\'s roster CARRIES each peer\'s look - reading nothing from storage is only a win if the answer is still right (mutant: the cache never consulted, which asks for nothing and answers null for everyone, and draws no peer at all)', async () => {
@@ -143,4 +140,19 @@ test('SLAM5: a roster asked for with no pose to measure from still answers, boun
   const mixed = [{ id: 'quiet', name: 'x', look: null, pose: null }, ...Array.from({ length: 80 }, (_, i) => ({ id: `p${i}`, name: 'x', look: null, pose: at(i + 1, 0) }))];
   const got = rosterFor(mixed, 'me', at(0, 0));
   assert.ok(!got.some((p) => p.id === 'quiet'), 'a peer that has never said where it is cannot be near');
+});
+
+test('PINS (AUDIT SLAM S7): the welcome\'s roster CARRIES EACH PEER\'S POSE - the joiner stands the room where it is, not at the origin (mutant: `{ id, name, look }` built from the ranked entry, which drops the pose and survived the whole suite)', async () => {
+  const r = strictRoom('town:m9');
+  const real = Date.now; let t = 1e12; Date.now = () => t;
+  const hello = async (id, pose) => { const ws = r.connect(); await r.room.webSocketMessage(ws, JSON.stringify({ t: 'hello', id, secret: `secret-of-${id}`, name: `n-${id}`, look: { race: 'Nord', gender: 'male', faceIndex: 0, items: [] }, pose })); t += 200; return ws; };
+  try {
+    await hello('aaaa-0001', at(3, 4)); await hello('bbbb-0002', at(5, 6));
+    const c = await hello('cccc-0003', at(7, 8));
+    const welcome = c.sent.find((m) => m.t === 'welcome');
+    const byId = Object.fromEntries(welcome.peers.map((p) => [p.id, p]));
+    assert.deepEqual(byId['aaaa-0001'].pose, validPose(at(3, 4)), 'the first peer where it said it stood');
+    assert.deepEqual(byId['bbbb-0002'].pose, validPose(at(5, 6)), 'and the second');
+    assert.ok(welcome.peers.every((p) => p.look !== undefined && p.name), 'beside the look and the name the roster always carried');
+  } finally { Date.now = real; }
 });

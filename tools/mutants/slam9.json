@@ -1,0 +1,132 @@
+[
+  {
+    "name": "Q1-reactive-ask-back",
+    "file": "src/net/online.js",
+    "old": "    if (this.presence && this.status === 'open') this._askRound(now);   // SLAM9: the fair ask over every peer not yet introduced",
+    "new": "    if (this.presence && this.status === 'open') for (const [id, p] of this.peers) if (!p.told) this._askWho(p.heardIn ?? this.room, id, now);",
+    "tests": [
+      "test/slam9.test.js",
+      "test/slam6.test.js",
+      "test/world6biiie.test.js",
+      "test/auditworld6biiie.test.js",
+      "test/online.test.js"
+    ]
+  },
+  {
+    "name": "Q2-round-from-front",
+    "file": "src/net/online.js",
+    "old": "    const from = this._askCursor ? ids.indexOf(this._askCursor) + 1 : 0;",
+    "new": "    const from = 0;",
+    "tests": [
+      "test/slam9.test.js",
+      "test/slam6.test.js",
+      "test/world6biiie.test.js",
+      "test/auditworld6biiie.test.js",
+      "test/online.test.js"
+    ]
+  },
+  {
+    "name": "Q3-cursor-never-set",
+    "file": "src/net/online.js",
+    "old": "{ this._askCursor = id; continue; }",
+    "new": "{ continue; }",
+    "tests": [
+      "test/slam9.test.js",
+      "test/slam6.test.js",
+      "test/world6biiie.test.js",
+      "test/auditworld6biiie.test.js",
+      "test/online.test.js"
+    ]
+  },
+  {
+    "name": "Q4-known-not-consulted",
+    "file": "src/net/online.js",
+    "old": "    const knew = told ? null : this._known.get(id);",
+    "new": "    const knew = null;",
+    "tests": [
+      "test/slam9.test.js",
+      "test/slam6.test.js",
+      "test/world6biiie.test.js",
+      "test/auditworld6biiie.test.js",
+      "test/online.test.js"
+    ]
+  },
+  {
+    "name": "Q5-never-remember",
+    "file": "src/net/online.js",
+    "old": "    if (told) this._remember(id, made);",
+    "new": "    void made;",
+    "tests": [
+      "test/slam9.test.js",
+      "test/slam6.test.js",
+      "test/world6biiie.test.js",
+      "test/auditworld6biiie.test.js",
+      "test/online.test.js"
+    ]
+  },
+  {
+    "name": "Q6-known-unbounded",
+    "file": "src/net/online.js",
+    "old": "    if (this._known.size > KNOWN_MAX) this._known.delete(this._known.keys().next().value);",
+    "new": "    void KNOWN_MAX;",
+    "tests": [
+      "test/slam9.test.js",
+      "test/slam6.test.js",
+      "test/world6biiie.test.js",
+      "test/auditworld6biiie.test.js",
+      "test/online.test.js"
+    ]
+  },
+  {
+    "name": "Q7-remember-no-reinsert",
+    "file": "src/net/online.js",
+    "old": "    this._known.delete(id);\n    this._known.set(id, { name: p.name, look: p.look });",
+    "new": "    if (!this._known.has(id)) this._known.set(id, { name: p.name, look: p.look });",
+    "tests": [
+      "test/slam9.test.js",
+      "test/slam6.test.js",
+      "test/world6biiie.test.js",
+      "test/auditworld6biiie.test.js",
+      "test/online.test.js"
+    ]
+  },
+  {
+    "name": "Q8-no-membership-from-pose",
+    "file": "src/net/online.js",
+    "old": "      this._roomSet(room).add(m.id);\n      const p = this.peers.get(m.id);",
+    "new": "      const p = this.peers.get(m.id);",
+    "tests": [
+      "test/slam9.test.js",
+      "test/slam6.test.js",
+      "test/world6biiie.test.js",
+      "test/auditworld6biiie.test.js",
+      "test/online.test.js"
+    ]
+  },
+  {
+    "name": "Q9-budget-60",
+    "file": "src/net/wire.js",
+    "old": "export const WHO_ROOM_HZ_MAX = SOCKETS_MAX * WHO_HZ_MAX;",
+    "new": "export const WHO_ROOM_HZ_MAX = 60;",
+    "tests": [
+      "test/slam9.test.js",
+      "test/slam6.test.js",
+      "test/world6biiie.test.js",
+      "test/auditworld6biiie.test.js",
+      "test/online.test.js"
+    ]
+  },
+  {
+    "name": "Q10-budget-after-scan",
+    "file": "server/src/index.js",
+    "old": "      const budget = tokenGate(this._roomWho, now, WHO_ROOM_HZ_MAX);\n      this._roomWho = budget.bucket;\n      if (!budget.pass) return;\n      const target = [...this._all()].find(([other, b]) => other !== ws && b.id === id) ?? null;\n      if (!target) return;",
+    "new": "      const target = [...this._all()].find(([other, b]) => other !== ws && b.id === id) ?? null;\n      if (!target) return;\n      const budget = tokenGate(this._roomWho, now, WHO_ROOM_HZ_MAX);\n      this._roomWho = budget.bucket;\n      if (!budget.pass) return;",
+    "tests": [
+      "test/slam9.test.js",
+      "test/slam6.test.js",
+      "test/world6biiie.test.js",
+      "test/auditworld6biiie.test.js",
+      "test/online.test.js"
+    ]
+  }
+]

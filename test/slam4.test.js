@@ -16,7 +16,9 @@ import { readFileSync } from 'node:fs';
 import { RemotePlayers, DOLL_RETRY_MS } from '../src/net/remotePlayers.js';
 import { PeerBodies, BODY_RETRY_MS } from '../src/net/peerBodies.js';
 
-const code = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8').replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, ' ');
+// PINS (AUDIT SLAM): the stripper only strips a `//` that BEGINS a comment - the naive `\/\/[^\n]*` ate everything after
+// the `//` inside `wss://`, so a whole line of online.js was invisible to every pin that read the stripped source
+const code = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8').replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|[ \t])\/\/[^\n]*/gm, '$1');
 const look = (i) => ({ race: 'Nord', gender: 'male', faceIndex: 0, items: [{ templateIndex: i, group: 'Armor', equipSlot: 1 }] });
 
 test('SLAM4: a doll that would not compose is FORGOTTEN once its retry has passed - a crowd of looks seen once does not accumulate for the session (mutant: the failure entries left, which is the leak; mutant: swept while still fresh, which re-composes a broken look every frame)', async () => {
@@ -59,10 +61,21 @@ test('SLAM4: a Morrowind body that would not build is forgotten once its retry h
 
 test('SLAM4: the remembered peer heights go with the peers - the session\'s roster is the truth about who exists (mutant: the map never pruned, which is the leak; mutant: pruned against the DRAWABLE set, which forgets a peer that is merely out of range and makes its aim point flicker)', () => {
   const w = code('src/scenes/world.js');
+  // PINS (AUDIT SLAM): the prune must be LIVE - moving this exact line after `return out;` (dead code, text unchanged)
+  // kept the text pin green, so the pin now reads the order: the push into `out`, then the prune, then the return
+  const push = w.indexOf('out.push({ id: p.id, feet: onlineToScene(p.shown)');
+  const prune = w.indexOf('if (_peerHeights.size > online.peers.size)');
+  const ret = w.indexOf('return out;', push);
+  assert.ok(push > 0 && prune > push && ret > prune, `the prune runs between the push and the return (${push} < ${prune} < ${ret}), not after the function has already returned`);
   assert.match(w, /if \(_peerHeights\.size > online\.peers\.size\) for \(const id of \[\.\.\._peerHeights\.keys\(\)\]\) if \(!online\.peers\.has\(id\)\) _peerHeights\.delete\(id\);/,
     'pruned against online.peers - the ROSTER, not the drawable set');
   // the guard reads the roster and not `visible`/`drawable`: a peer out of range is still a peer, and AUDIT
   // WORLD6b-ii C5 put this map here precisely so a height survives a peer not standing for a moment
   const i = w.indexOf('_peerHeights.size > online.peers.size');
   assert.doesNotMatch(w.slice(i, i + 200), /visible|drawable/, 'never pruned by what is DRAWN');
+});
+
+test('PINS (AUDIT SLAM S6): a doll that would not compose waits DOLL_RETRY_MS before another try, and that is five seconds - not fifty milliseconds, which is a compose storm (mutant: 5000 -> 50, which survived the whole suite)', () => {
+  assert.equal(DOLL_RETRY_MS, 5000);
+  assert.ok(DOLL_RETRY_MS >= 1000, 'at least a second: a look that will not compose is asked about no oftener than once a second per look');
 });

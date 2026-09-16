@@ -90,6 +90,27 @@ test('SLAM11: THE MEMORY LANDS - a room past the old cliff is handed the dungeon
   } finally { Date.now = realNow; }
 });
 
+test('SLAM11/PINS: a REFUSED push latches NOBODY - a socket the memory did not reach is still unseen, and the next publish hands it over once the debt is repaid (mutant: `worldSeen` set on every unseen socket whether or not the frame went, which the committed mutant list found surviving: it makes a refusal permanent)', async () => {
+  const r = fakeRoom('dungeon:m187853213');
+  const realNow = Date.now; let clock = realNow(); Date.now = () => clock;
+  try {
+    const ws = [];
+    for (let i = 0; i < 6; i++) { const s = r.connect(); await r.hello(s, `p${String(i).padStart(4, '0')}`, at(1, 1)); ws.push(s); }
+    const host = ws[0];
+    for (const s of ws) s.sent.length = 0;
+    const raw = JSON.stringify({ t: 'world', data: { 'door:0': { state: 'open', t: 1, lock: 0 } } });
+    clock += 20_000;
+    r.room._roomWorld = { bytes: -1, at: clock };   // IN DEBT: the push must be refused
+    await r.raw(host, raw);
+    assert.equal(ws.slice(1).filter((s) => ofType(s, 'world').length > 0).length, 0, 'refused: nobody handed it');
+    for (const s of ws.slice(1)) assert.notEqual(s.att.worldSeen, true, `${s.att.id} is NOT latched as seen - it saw nothing`);
+    clock += 20_000;   // the debt repaid by the rate, WORLD_MIN_MS passed
+    await r.raw(host, raw);
+    assert.equal(ws.slice(1).filter((s) => ofType(s, 'world').length === 1).length, 5, 'the next publish hands it to every one of them');
+    for (const s of ws.slice(1)) assert.equal(s.att.worldSeen, true, 'and now they are seen');
+  } finally { Date.now = realNow; }
+});
+
 test('SLAM11: THE ACT LANDS - an act whose fan costs more than a second of ACT_ROOM_BYTES_PER_S reaches every listener and leaves the bucket in debt; the next act waits for the rate (mutant: the indivisible charge, which dropped it whole and told nobody)', async () => {
   const r = fakeRoom('dungeon:m187853213');
   const realNow = Date.now; let clock = realNow(); Date.now = () => clock;
