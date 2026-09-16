@@ -1240,8 +1240,15 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
 }
 .ovpname { display: block; font-size: 13px; letter-spacing: 0.04em; }
 .ovpwhere { display: block; font-size: 11px; opacity: 0.75; }
+/* AUDIT SOC C10/D5: THE LEGEND IS A CHIP, NOT A FLOATING BOX. At
+   left 18px / bottom 70px it was a fixed guess about how tall the
+   filter row happened to be, and under 860px that row WRAPS: measured
+   at 430x860 the chips took two 44px rows from bottom 12 up to 848 and
+   the legend landed inside them. It lives IN the chips row now, so it
+   wraps with them and can never be under or over one - the row's own
+   own bottom edge is the only number either of them needs. */
 .ovlegend {
-  position: absolute; left: 18px; bottom: 70px; display: none;
+  position: static; flex: none; display: none;
   align-items: center; gap: 8px; padding: 6px 10px; font-size: 12px;
   color: var(--bone); background: rgba(10, 13, 17, 0.82);
   border: 1px solid var(--iron); pointer-events: none;

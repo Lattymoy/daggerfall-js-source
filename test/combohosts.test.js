@@ -14,7 +14,7 @@
 // CharacterSheet, LogBook, NoteBook, AutoMap, TravelMap, Rest,
 // CastSpell, Status, Transport, UseMagicItem, QuickSave, QuickLoad,
 // Escape - was dead. A player who bound Inventory to Shift+I in the
-// controls window (systems/controlsConfig.js:248-253 mints exactly that
+// controls window (systems/controlsConfig.js:280-285 mints exactly that
 // code) got the Status box instead and could never open the inventory
 // from the keyboard. A8's pins drove the parameter no host passed.
 import { test } from 'node:test';
@@ -31,7 +31,7 @@ const body = (f) => readFileSync(join(SCENES, f), 'utf8');
 
 function store() {
   const b = createBindings(); resetDefaults(b);
-  setBinding(b, comboCode('ShiftLeft', 'KeyI'), 'Inventory', true);   // what controlsWindow.js:243 stages
+  setBinding(b, comboCode('ShiftLeft', 'KeyI'), 'Inventory', true);   // what controlsWindow.js:252 stages
   setBindings(b);
   return b;
 }

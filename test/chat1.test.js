@@ -420,7 +420,11 @@ function fakeDocument() {
   return doc;
 }
 /** A window with BOTH phases (AUDIT CHAT D2): the capture pass, then - unless propagation was stopped - the bubble pass,
- *  where the host's own listener (world.js's, `keys.add(e.code)`) lives. */
+ *  where the host's own listener (world.js's, `keys.add(e.code)`) lives.
+ *
+ *  AUDIT SOC C14: and `stopImmediatePropagation`, which the real one has and this one did not. It stops the rest of
+ *  the SAME phase as well as the next, which is the whole of that finding: three social surfaces all listen in
+ *  capture on the window, so stopping the bubble alone still let a sibling close on the same press. */
 function fakeWindow() {
   const listeners = [];
   return {
@@ -428,8 +432,10 @@ function fakeWindow() {
     addEventListener(t, fn, capture) { listeners.push({ t, fn, capture: capture === true || capture?.capture === true }); },
     removeEventListener(t, fn) { const i = listeners.findIndex((l) => l.t === t && l.fn === fn); if (i >= 0) listeners.splice(i, 1); },
     key(code, e = {}) {
-      const ev = { type: 'keydown', code, target: null, isTrusted: true, prevented: false, stopped: false, preventDefault() { ev.prevented = true; }, stopPropagation() { ev.stopped = true; }, ...e };
-      for (const l of listeners) if (l.t === 'keydown' && l.capture) l.fn(ev);
+      const ev = { type: 'keydown', code, target: null, isTrusted: true, prevented: false, stopped: false, immediate: false,
+        preventDefault() { ev.prevented = true; }, stopPropagation() { ev.stopped = true; },
+        stopImmediatePropagation() { ev.stopped = true; ev.immediate = true; }, ...e };
+      for (const l of listeners) { if (ev.immediate) break; if (l.t === 'keydown' && l.capture) l.fn(ev); }
       if (!ev.stopped) for (const l of listeners) if (l.t === 'keydown' && !l.capture) l.fn(ev);
       return ev;
     },

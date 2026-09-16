@@ -420,5 +420,87 @@
     "tests": [
       "test/soc3_socialpanel.test.js"
     ]
+  },
+  {
+    "name": "C1-menu-sheet-in-the-panel-namespace",
+    "file": "src/ui/socialMenu.js",
+    "old": ".dfpeer-card { pointer-events: auto;",
+    "new": ".dfsocial-card { pointer-events: auto;",
+    "tests": [
+      "test/soc5_interact.test.js"
+    ]
+  },
+  {
+    "name": "C9-touch-button-ungated",
+    "file": "src/ui/touch.js",
+    "old": "if (hooks.socialInteract) button('\u263a',",
+    "new": "button('\u263a',",
+    "tests": [
+      "test/soc5_interact.test.js",
+      "test/audit39_uicore.test.js"
+    ]
+  },
+  {
+    "name": "D2-members-on-one-pixel-not-stacked",
+    "file": "src/ui/overworldMap.js",
+    "old": "(m.stack ?? 0) * PARTY_LABEL_STACK",
+    "new": "0 * PARTY_LABEL_STACK",
+    "tests": [
+      "test/soc6_partymap.test.js"
+    ]
+  },
+  {
+    "name": "D3-port-action-never-yields",
+    "file": "src/systems/controlsConfig.js",
+    "old": "if (yielded.length) yieldDuplicates(u, yielded);",
+    "new": "if (false) yieldDuplicates(u, yielded);",
+    "tests": [
+      "test/soc5_interact.test.js"
+    ]
+  },
+  {
+    "name": "D4-saved-F-not-migrated",
+    "file": "src/systems/modSettings.js",
+    "old": "key: 'Handling.ToggleLightInput', was: 'F' });",
+    "new": "key: 'Handling.ToggleLightInput', was: 'G' });",
+    "tests": [
+      "test/soc5_interact.test.js"
+    ]
+  },
+  {
+    "name": "B8-hud-clock-never-ticks",
+    "file": "src/ui/partyPanel.js",
+    "old": "if (social.version === painted) { paintLive(); return; }",
+    "new": "if (social.version === painted) { return; }",
+    "tests": [
+      "test/soc4_partyhud.test.js"
+    ]
+  },
+  {
+    "name": "B8-panel-clock-never-ticks",
+    "file": "src/ui/socialPanel.js",
+    "old": "if (n.subNode) liveSubs.push(",
+    "new": "if (false) liveSubs.push(",
+    "tests": [
+      "test/soc3_socialpanel.test.js"
+    ]
+  },
+  {
+    "name": "C6-hud-on-the-fps-counter",
+    "file": "src/ui/partyPanel.js",
+    "old": "top: calc(92px + env(safe-area-inset-top, 0px));",
+    "new": "top: calc(40px + env(safe-area-inset-top, 0px));",
+    "tests": [
+      "test/soc4_partyhud.test.js"
+    ]
+  },
+  {
+    "name": "C8-tabs-under-44",
+    "file": "src/ui/socialPanel.js",
+    "old": ".dfsocial.touch .dfsocial-tab { min-height: 44px; padding: 10px 12px; }",
+    "new": ".dfsocial.touch .dfsocial-tab { min-height: 29px; padding: 4px 12px; }",
+    "tests": [
+      "test/soc3_socialpanel.test.js"
+    ]
   }
 ]

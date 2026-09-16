@@ -59,8 +59,10 @@ function fakeWindow() {
     addEventListener(t, fn, capture) { listeners.push({ t, fn, capture: capture === true || capture?.capture === true }); },
     removeEventListener(t, fn) { const i = listeners.findIndex((l) => l.t === t && l.fn === fn); if (i >= 0) listeners.splice(i, 1); },
     key(code, e = {}) {
-      const ev = { type: 'keydown', code, target: null, isTrusted: true, prevented: false, stopped: false, preventDefault() { ev.prevented = true; }, stopPropagation() { ev.stopped = true; }, ...e };
-      for (const l of listeners) if (l.t === 'keydown' && l.capture) l.fn(ev);
+      const ev = { type: 'keydown', code, target: null, isTrusted: true, prevented: false, stopped: false, immediate: false,
+        preventDefault() { ev.prevented = true; }, stopPropagation() { ev.stopped = true; },
+        stopImmediatePropagation() { ev.stopped = true; ev.immediate = true; }, ...e };
+      for (const l of listeners) { if (ev.immediate) break; if (l.t === 'keydown' && l.capture) l.fn(ev); }
       if (!ev.stopped) for (const l of listeners) if (l.t === 'keydown' && !l.capture) l.fn(ev);
       return ev;
     },
@@ -117,7 +119,10 @@ test('SOC3: the Social button stands in BOTH chat states with one badge law, is 
   assert.equal(find(root, 'dfchat-social-out').length, 1);
   assert.equal(one(one(root, 'dfchat-box'), 'dfchat-social-tab')?.parent?.className, 'dfchat-tabs', 'the open state\'s sits IN the tab bar');
   assert.equal(find(root, 'dfchat-tab').length, 1, 'and it is not a tab: the World tab is still the only row of the log');
-  assert.equal(both[0].attrs['aria-label'], 'Friends and party');
+  // AUDIT SOC C21: NO aria-label on the button. One overrode the whole of its content, so the badge - the only part
+  // that ever changes - was never read out. The words are a title for the mouse, and the badge labels ITSELF.
+  assert.equal(both[0].attrs['aria-label'], undefined, 'no label that swallows the badge');
+  assert.equal(both[0].attrs.title, 'Friends and party');
 
   // the badge: what is WAITING on the player, which is not what the chat's own badge counts
   assert.deepEqual(both.map((b) => one(b, 'dfchat-badge').textContent), ['', ''], 'nothing waiting: no badge (the sheet hides an empty one)');
@@ -126,8 +131,11 @@ test('SOC3: the Social button stands in BOTH chat states with one badge law, is 
   assert.deepEqual(find(root, 'dfchat-social').map((b) => one(b, 'dfchat-badge').textContent), ['', ''], 'an unread LINE is not a pending request');
   pending = 3; panel.render();
   assert.deepEqual(find(root, 'dfchat-social').map((b) => one(b, 'dfchat-badge').textContent), ['3', '3'], 'both badges say the same number');
+  assert.deepEqual(find(root, 'dfchat-social').map((b) => one(b, 'dfchat-badge').attrs['aria-label']), ['3 waiting', '3 waiting'],
+    'AUDIT SOC C21: and the badge says what its number MEANS, rather than being read out as a bare digit');
   pending = 0; panel.render();
   assert.deepEqual(find(root, 'dfchat-social').map((b) => one(b, 'dfchat-badge').textContent), ['', '']);
+  assert.deepEqual(find(root, 'dfchat-social').map((b) => one(b, 'dfchat-badge').attrs['aria-label']), ['', ''], 'and says nothing when there is nothing');
 
   both[0].fire('click'); assert.equal(toggles, 1, 'the closed state\'s button toggles the panel');
   both[1].fire('click'); assert.equal(toggles, 2, 'and so does the tab bar\'s');
@@ -138,6 +146,11 @@ test('SOC3: the Social button stands in BOTH chat states with one badge law, is 
   assert.match(CHAT_CSS, /\.dfchat-social-out \{ display: inline-flex;/, 'the closed state\'s button is drawn on every device - Enter opens the chat and nothing yet opens this');
   assert.match(CHAT_CSS, /\.dfchat\[data-state="open"\] \.dfchat-social-out \{ display: none; \}/);
   assert.match(CHAT_CSS, /\.dfchat\[data-hidden="1"\] \.dfchat-social-out,/, 'CHAT-R2: Hide takes it with everything else that draws over the world');
+  // AUDIT SOC C24: the closed state's two buttons share a line, so they share a size and do not touch. Measured in
+  // Chromium at 430x860 with the touch skin: Social was 84x23 beside a 34-tall Chat button and flush against it.
+  assert.match(CHAT_CSS, /\.dfchat-social \{[^}]*font-size: 14px; padding: 6px 10px;/, 'the Chat button\'s own type and padding (the shared .dfchat-send/.dfchat-open rule)');
+  assert.match(CHAT_CSS, /\.dfchat-send, \.dfchat-close, \.dfchat-open, \.dfchat-hide, \.dfchat-show \{[^}]*font-size: 14px; padding: 6px 10px;/, '...which is that rule, unchanged');
+  assert.match(CHAT_CSS, /\.dfchat\.touch \.dfchat-open \{ margin-right: 6px; \}/, 'and a 6px gap where both are drawn');
 
   // ...and a host that passes no `social` option builds no button at all
   const plain = fakeDocument();
@@ -286,7 +299,11 @@ test('SOC3: an empty friends list SAYS SO and says where to go (mutants: a blank
   const { panel, root, social } = build();
   panel.open();
   assert.equal(one(root, 'dfsocial-empty').textContent, NO_FRIENDS_TEXT);
-  assert.equal(NO_FRIENDS_TEXT, 'No friends yet - press F on a player, or click a name in the chat roster.');
+  // AUDIT SOC D10: the ROSTER leads and the key is named by what it does. "press F" was a lie on two machines out
+  // of three - F is rebindable (and unbound outright for a player who had already spent it), and a phone has none.
+  assert.equal(NO_FRIENDS_TEXT, 'No friends yet - click a name in the chat roster, or press the interact key on a player.');
+  assert.doesNotMatch(NO_FRIENDS_TEXT, /\bF\b/, 'no literal key on a line about a rebindable action');
+  assert.ok(NO_FRIENDS_TEXT.indexOf('roster') < NO_FRIENDS_TEXT.indexOf('interact key'), 'the door that is always there is named first');
   social.apply(stateFrame({ friends: [row('Ann')] }));
   panel.render();
   assert.equal(find(one(root, 'dfsocial-body'), 'dfsocial-empty').length, 0, 'a list with a row in it says nothing about being empty');
@@ -657,4 +674,235 @@ test('SOC3: the host by source - world.js makes the panel in socialStart over th
   const frame = w.slice(w.indexOf('const chatFrame = () => {'), w.indexOf('/** WORLD3: the peers in my room'));
   assert.ok(frame.includes('socialPanel?.render('), 'and inside chatFrame, which is the one frame the chat\'s surfaces ride');
   assert.equal((w.match(/socialPanel\?\.render\(/g) ?? []).length, 1, 'once a frame, from one place');
+});
+
+
+// ═══ THE AUDIT'S OWN PINS ════════════════════════════════════════════
+
+test('AUDIT SOC C2/C14: ONE Escape closes ONE surface - the panel stops the key immediately (no sibling capture listener and no pause door sees it) and, with something ABOVE it, leaves the key entirely alone (mutants: stopPropagation alone, so the chat behind closes on the same press; above() ignored, so two surfaces close at once; the panel closing but the key reaching the host)', () => {
+  let above = false;
+  const clock = { t: T0 };
+  const social = new SocialState({ now: () => clock.t });
+  social.apply(stateFrame());
+  const doc = fakeDocument(), win = fakeWindow();
+  const panel = createSocialPanel({ social, send: () => true, overlay: off, doc, win, above: () => above });
+  const sibling = [], host = [];
+  win.addEventListener('keydown', (e) => sibling.push(e.code), true);   // the chat's own capture listener, in the same phase
+  win.addEventListener('keydown', (e) => host.push(e.code));            // the host's pause door, on the bubble
+  panel.open();
+  const e = win.key('Escape');
+  assert.equal(panel.isOpen(), false, 'the panel closes');
+  assert.deepEqual(sibling, [], 'and the SIBLING never runs - which stopPropagation alone would not have prevented');
+  assert.deepEqual(host, []);
+  assert.equal(e.prevented, true); assert.equal(e.immediate, true);
+  // with the F-menu over it, the key is not the panel's at all
+  above = true;
+  panel.open();
+  sibling.length = 0; host.length = 0;
+  const e2 = win.key('Escape');
+  assert.equal(panel.isOpen(), true, 'the topmost surface answers, and it is not this one');
+  assert.equal(e2.prevented, false); assert.equal(e2.stopped, false);
+  assert.deepEqual(sibling, ['Escape']); assert.deepEqual(host, ['Escape']);
+  panel.destroy();
+});
+
+test('AUDIT SOC C2/C14: the CHAT yields Escape to a social surface over it, and keeps the line in the field while it does (mutants: the chat closing under an open panel; the chat eating the key it did not use; the field cleared on a key that was not its own)', () => {
+  const log = new ChatLog({ now: () => T0 });
+  const doc = fakeDocument(), win = fakeWindow();
+  let above = false;
+  const chat = createChatPanel({ log, onSend: () => true, action: defaultAction, doc, win, touch: false, above: () => above });
+  const host = [];
+  win.addEventListener('keydown', (e) => host.push(e.code));
+  const root = doc.body.children[0];
+  const input = one(root, 'dfchat-input');
+  chat.open();
+  input.value = 'half a sentence';
+  above = true;
+  const e = win.key('Escape', { target: input });
+  assert.equal(log.open, true, 'a surface over the chat owns Escape: the box stays up');
+  assert.equal(input.value, 'half a sentence', 'and the half-typed line is still there');
+  assert.equal(e.prevented, false, 'the key is not consumed here');
+  assert.deepEqual(host, [], 'the FIELD still stops it from reaching the host - a keystroke in a text box is never the game\'s');
+  above = false;
+  const e2 = win.key('Escape', { target: input });
+  assert.equal(log.open, false, 'nothing above it: the chat closes');
+  assert.equal(e2.prevented, true); assert.equal(e2.immediate, true, 'and no sibling surface sees the press either');
+  assert.deepEqual(host, []);
+});
+
+test('AUDIT SOC C3: the invite TOAST has its own strip and takes no pointer but its two buttons - so the chat\'s tab bar and the panel\'s Close stay pressable under a toast (mutants: the toast back on the chat\'s corner; the strip taking the pointer across its whole box; the buttons made pointer-transparent with it)', () => {
+  // The strip: centred at the top of the screen, not left 14 / top 44, which is the open chat's tab bar to the pixel
+  // and, under 840px, the panel's own header. Measured in Chromium before the fix: elementFromPoint over the World
+  // tab answered `.dfsocial-name` (the toast) at 1280x800, and over the panel's Close answered `.dfsocial-btn` at
+  // 800x900. After: the toast sits at 8..51 centred, and both answer their own control.
+  assert.match(SOCIAL_CSS, /\.dfsocial-toast \{ position: fixed; left: 50%; transform: translateX\(-50%\); top: calc\(8px \+ env\(safe-area-inset-top, 0px\)\);/);
+  assert.doesNotMatch(SOCIAL_CSS, /\.dfsocial-toast \{[^}]*left: calc\(14px/, 'never the chat\'s own corner again');
+  assert.match(SOCIAL_CSS, /\.dfsocial-toast \{[^}]*pointer-events: none;/, 'the strip is a READ-OUT: it swallows nothing');
+  assert.match(SOCIAL_CSS, /\.dfsocial-toast \.dfsocial-btn \{ pointer-events: auto; \}/, 'only the two answers take the finger');
+  // and the buttons still work, and still stop their own press (AUDIT CHAT C5: the release is never stopped)
+  const { social, panel, sent, clock, toast } = build();
+  social.apply(inviteFrame('q-3', { acct: 'acct-Cid', name: 'Cid' }, [{ acct: 'acct-Cid', name: 'Cid' }], clock.t));
+  assert.equal(toast.dataset.up, '1');
+  assert.equal(toast.fire('mousedown').stopped, true);
+  assert.equal(toast.fire('mouseup').stopped, false);
+  btnBy(toast, 'Accept').fire('click');
+  assert.deepEqual(sent, [{ k: 'party.accept', party: 'q-3' }]);
+  panel.destroy();
+});
+
+test('AUDIT SOC C4: the "try again" note on a toast EXPIRES with the panel shut - the toast\'s own pass clears it, not only the open panel\'s (mutants: the note left to the open pass alone, so it stands for the whole two minutes of an invitation; the note cleared before it can be read)', () => {
+  const { social, panel, clock, toast } = build({ accept: false });
+  social.apply(inviteFrame('q-7', { acct: 'acct-Cid', name: 'Cid' }, [{ acct: 'acct-Cid', name: 'Cid' }], clock.t));
+  assert.equal(panel.isOpen(), false, 'the panel is SHUT - which is the whole of this finding');
+  btnBy(toast, 'Accept').fire('click');
+  assert.equal(one(toast, 'dfsocial-sub').textContent, TRY_AGAIN_TEXT, 'the gate refused: the toast says so and stays up');
+  // just before the note's own life is out, it still stands
+  clock.t += SOCIAL_NOTE_MS - 1; panel.render();
+  assert.equal(one(toast, 'dfsocial-sub').textContent, TRY_AGAIN_TEXT);
+  clock.t += 2; panel.render();
+  assert.match(one(toast, 'dfsocial-sub').textContent, /Cid.*left$/, 'and past it the toast is back to the invitation and its countdown');
+  panel.destroy();
+});
+
+test('AUDIT SOC C5: the Party badge sheds a LAPSED invitation while the Friends tab is up - the badges are read back from the picture every frame rather than remembered from the last repaint (mutants: the badges written only in repaint, so a badge counts an invitation that is already nothing; the badge read from a cached number)', () => {
+  const { social, panel, root, clock } = build();
+  panel.open();
+  social.apply(inviteFrame('q-9', { acct: 'acct-Cid', name: 'Cid' }, [{ acct: 'acct-Cid', name: 'Cid' }], clock.t));
+  panel.render();
+  const badges = () => find(root, 'dfsocial-tab').map((t) => one(t, 'dfsocial-badge').textContent);
+  assert.equal(panel.tab(), 'friends', 'the body being drawn is the FRIENDS body: nothing on screen names the invitation');
+  assert.deepEqual(badges(), ['', '1'], 'only the badge does');
+  // time passes and the invitation lapses. NOTHING in the picture changed - `liveInvites` sheds it as it is READ
+  // and raises no version - so a badge painted on the version alone would still say 1.
+  clock.t += INVITE_TTL_MS + 1;
+  panel.render();
+  assert.equal(social.liveInvites().length, 0);
+  assert.deepEqual(badges(), ['', ''], 'the badge goes with it, on the tab that is not even drawn');
+  // and it comes back the same way
+  social.apply(inviteFrame('q-10', { acct: 'acct-Dax', name: 'Dax' }, [{ acct: 'acct-Dax', name: 'Dax' }], clock.t));
+  panel.render();
+  assert.deepEqual(badges(), ['', '1']);
+  panel.destroy();
+});
+
+test('AUDIT SOC B8: "Last online N min ago" TICKS - the friend rows\' sub-text is re-read on the live pass, and written only where the words changed (mutants: the sentence computed once inside the version-gated repaint, so it says "just now" for the rest of the session; the row rewritten every frame)', () => {
+  const friends = [row('Bob', { online: false, seen: T0 - 30_000 })];
+  const { panel, root, clock } = build({ frame: stateFrame({ friends }) });
+  panel.open();
+  const sub = () => one(bodyRows(root)[0], 'dfsocial-sub');
+  assert.equal(sub().textContent, lastOnlineText(false, T0 - 30_000, T0));
+  const node = sub();
+  // five minutes pass with NOTHING arriving from the hub: no frame, no version, no repaint
+  clock.t += 5 * 60_000;
+  panel.render();
+  assert.equal(sub(), node, 'the same node - this is a write, not a rebuild');
+  assert.equal(sub().textContent, 'Last online 5 min ago', 'and it says what the clock says');
+  // a frame where the words did NOT change writes nothing to the node
+  let writes = 0;
+  const before = sub().textContent;
+  Object.defineProperty(node, 'textContent', { get: () => before, set: () => { writes++; }, configurable: true });
+  for (let i = 0; i < 30; i++) panel.render();
+  assert.equal(writes, 0, 'thirty quiet frames, no writes: the pins that count them still hold');
+  panel.destroy();
+});
+
+test('AUDIT SOC C8/C13: the touch skin\'s 44px targets, and the panel BELOW the chat box under 840px (mutants: the tabs, Close, Invite and Remove left at the mouse\'s sizes; the panel left on the chat\'s own corner, where it took the whole box)', () => {
+  // C8, measured in Chromium at 430x860 with the touch skin BEFORE: the Social button 84x23, the panel's tabs 107x29,
+  // Close 27x19, Invite 57x22, a roster row's menu buttons 73x21. Every one of them under the 44 the platforms ask.
+  assert.match(SOCIAL_CSS, /\.dfsocial\.touch \.dfsocial-tab \{ min-height: 44px;/);
+  assert.match(SOCIAL_CSS, /\.dfsocial\.touch \.dfsocial-close \{ min-height: 44px; min-width: 44px;/);
+  assert.match(SOCIAL_CSS, /\.dfsocial\.touch \.dfsocial-btn, \.dfsocial-toast\.touch \.dfsocial-btn \{ min-height: 44px;/, 'the toast\'s two answers too');
+  assert.match(CHAT_CSS, /\.dfchat\.touch \.dfchat-social \{ min-height: 44px; \}/);
+  assert.match(CHAT_CSS, /\.dfchat\.touch \.dfchat-who-row\.act \{ min-height: 44px;/, 'a roster row is a door, so it is a 44px door');
+  assert.match(CHAT_CSS, /\.dfchat\.touch \.dfchat-rowbtn \{ min-height: 44px;/);
+  // ...and none of it on a desktop: the mouse's sizes are the mouse's
+  assert.doesNotMatch(SOCIAL_CSS, /\n\.dfsocial-tab \{[^}]*min-height: 44px/);
+  assert.doesNotMatch(CHAT_CSS, /\n\.dfchat-rowbtn \{[^}]*min-height: 44px/);
+  // C13, measured at 800x900 with both open BEFORE: the panel and the chat box both at left 14 / top 44, and
+  // elementFromPoint at the box's centre answered the panel. The panel goes below the box instead.
+  assert.match(SOCIAL_CSS, /@media \(max-width: 839px\) \{\s*\.dfsocial, \.dfsocial\.touch \{ top: calc\(390px \+ env\(safe-area-inset-top, 0px\)\); max-height: min\(460px, calc\(100vh - 398px\)\); \}/);
+  assert.match(SOCIAL_CSS, /@media \(min-width: 840px\) \{ \.dfsocial \{ left: calc\(466px \+ env\(safe-area-inset-left, 0px\)\); \} \}/, 'and beside it where there is room, as before');
+  // the two numbers are a pair with the chat's own box: top 44 + tabs + list min(220px, 34vh) + form
+  assert.match(CHAT_CSS, /\.dfchat \{[^}]*top: calc\(44px \+ env\(safe-area-inset-top, 0px\)\);/);
+  assert.match(CHAT_CSS, /\.dfchat-list \{ height: min\(220px, 34vh\);/);
+});
+
+test('AUDIT SOC C11: a disabled control DRAWS its reason as well as titling it - on the panel\'s buttons and on a roster row\'s menu (mutants: the reason left on `title` alone, where a finger can never read it; the reason drawn on a live control too; the title dropped, which the mouse still wants)', () => {
+  const friends = [row('Bob', { online: false, seen: T0, peers: [] })];
+  const { panel, root } = build({ frame: stateFrame({ friends }) });
+  panel.open();
+  const invite = btnBy(bodyRows(root)[0], 'Invite');
+  assert.equal(invite.disabled, true);
+  assert.equal(invite.attrs.title, 'offline', 'the mouse still gets its hover');
+  assert.equal(one(invite, 'dfsocial-why').textContent, 'offline', 'and the finger gets it drawn');
+  const remove = btnBy(bodyRows(root)[0], 'Remove');
+  assert.equal(remove.disabled, undefined);
+  assert.equal(one(remove, 'dfsocial-why'), undefined, 'a live control carries no reason - there is none');
+  panel.destroy();
+
+  // the chat's roster menu, the same law
+  const clock = { t: T0 };
+  const social = new SocialState({ now: () => clock.t });
+  social.apply(stateFrame({ friends: [row('Bob')] }));
+  const log = new ChatLog({ now: () => clock.t });
+  const doc = fakeDocument(), win = fakeWindow();
+  const peers = new Map([['peer-Bob', { id: 'peer-Bob', name: 'Bob' }]]);
+  const chat = createChatPanel({
+    log, onSend: () => true, roster: () => ({ id: 'peer-me', name: 'Mac', peers }), action: defaultAction, doc, win, touch: false,
+    rowActions: (peerId) => { const a = social.actionsFor(peerId); return [{ label: 'Add friend', enabled: a.canFriend, why: a.whyNotFriend, run: () => {} }]; },
+  });
+  const chatRoot = doc.body.children[0];
+  chat.open();
+  find(chatRoot, 'dfchat-who-row').find((r) => one(r, 'dfchat-who-name').textContent === 'Bob').fire('click');
+  const btn = one(chatRoot, 'dfchat-rowbtn');
+  assert.equal(btn.disabled, true);
+  assert.equal(btn.attrs.title, 'already friends');
+  assert.equal(one(btn, 'dfchat-rowwhy').textContent, 'already friends');
+});
+
+test('AUDIT SOC C19/C21: ONE wording for the rate gate, and the panel says what it IS - a dialog with a label, tabs that say they are tabs and which is selected (mutants: the panel\'s own "Too quick" wording back, so one refusal has two sentences; the role dropped; aria-selected frozen on the first tab)', () => {
+  // C19: the host writes this same sentence on the world tab (scenes/world.js), so there is one constant and the
+  // host imports it rather than keeping a second copy of the words.
+  assert.equal(TRY_AGAIN_TEXT, 'Try again in a moment');
+  assert.doesNotMatch(TRY_AGAIN_TEXT, /Too quick/);
+  const { panel, root } = build();
+  assert.equal(root.attrs.role, 'dialog');
+  assert.equal(root.attrs['aria-label'], 'Friends and party');
+  panel.open();
+  const tabs = find(root, 'dfsocial-tab');
+  assert.deepEqual(tabs.map((t) => t.attrs.role), ['tab', 'tab']);
+  assert.deepEqual(tabs.map((t) => t.attrs['aria-selected']), ['true', 'false']);
+  tabs[1].fire('click');
+  assert.deepEqual(find(root, 'dfsocial-tab').map((t) => t.attrs['aria-selected']), ['false', 'true'], 'and it follows the tab that is up');
+  panel.destroy();
+});
+
+test('AUDIT ONLINE A6: a PENDING request draws no presence dot, and the panel reads neither `seen` nor `peers` off one - the hub sends none either way, because a stranger who asked to be your friend must not learn when you are at your desk (mutants: the dot drawn from a row that carries no presence, so every request reads as offline; a last-seen line on a request row)', () => {
+  const { panel, root } = build({ frame: stateFrame({ in: [{ ...row('Bob'), online: false, seen: null, peers: [], at: T0 }], out: [{ ...row('Cid'), online: false, seen: null, peers: [], at: T0 }] }) });
+  panel.open();
+  const rows = bodyRows(root);
+  assert.deepEqual(textsOf(rows, 'dfsocial-name'), ['Bob', 'Cid']);
+  assert.deepEqual(rows.map((r) => find(r, 'dfsocial-dot').length), [0, 0], 'no dot on either request row');
+  assert.deepEqual(textsOf(rows, 'dfsocial-sub'), ['wants to be your friend', 'request sent'], 'and the sub-text is the request, never a last-seen');
+  panel.destroy();
+});
+
+test('AUDIT SOC C20: a roster row with NOTHING behind it is not a door - which is what makes my own other tab (one the host answers no actions for) inert without the chat knowing anything about accounts (mutants: every row made a door; an empty menu opened on a row that offers nothing)', () => {
+  const log = new ChatLog({ now: () => T0 });
+  const doc = fakeDocument(), win = fakeWindow();
+  const peers = new Map([['peer-mine', { id: 'peer-mine', name: 'Mac' }], ['peer-Zed', { id: 'peer-Zed', name: 'Zed' }]]);
+  // the host's own answer: no rows for my own account's other tab, rows for a stranger
+  const chat = createChatPanel({
+    log, onSend: () => true, roster: () => ({ id: 'peer-me', name: 'Mac', peers }), action: defaultAction, doc, win, touch: false,
+    rowActions: (peerId) => (peerId === 'peer-mine' ? [] : [{ label: 'Add friend', enabled: true, why: null, run: () => {} }]),
+  });
+  const root = doc.body.children[0];
+  chat.open();
+  const rowFor = (who) => find(root, 'dfchat-who-row').find((r) => one(r, 'dfchat-who-name').textContent === who);
+  const mine = find(root, 'dfchat-who-row').find((r) => !String(r.className).includes('me') && one(r, 'dfchat-who-name').textContent === 'Mac');
+  assert.ok(mine, 'my own other tab is in the roster like anyone else');
+  assert.doesNotMatch(mine.className, /\bact\b/, 'and it is not a door');
+  mine.fire('click');
+  assert.equal(find(root, 'dfchat-rowmenu').length, 0, 'clicking it opens nothing');
+  assert.match(rowFor('Zed').className, /\bact\b/, 'a stranger still is one');
 });

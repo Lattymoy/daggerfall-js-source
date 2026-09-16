@@ -28,9 +28,13 @@ import { KEY_GROUPS, gridButtons } from '../src/ui/controlsWindow.js';
 import { pickPeerInFront, SOCIAL_REACH } from '../src/player/socialPick.js';
 import { rayPersonDistance, PERSON_HIT_RADIUS, PERSON_HIT_HEIGHT } from '../src/scenes/townTalk.js';
 import { MOBILE_NPC_ACTIVATION_DISTANCE } from '../src/player/activate.js';
-import { createSocialMenu, socialMenuRows, SOCIAL_MENU_STYLE_ID } from '../src/ui/socialMenu.js';
+import { createSocialMenu, socialMenuRows, SOCIAL_MENU_STYLE_ID, SOCIAL_MENU_CSS } from '../src/ui/socialMenu.js';
+import { SOCIAL_CSS } from '../src/ui/socialPanel.js';   // AUDIT SOC C1: the two sheets must share no selector
 import { SocialState } from '../src/net/social.js';
 import { SOCIAL_ACTS } from '../src/net/wire.js';
+import { PORT_ACTIONS } from '../src/systems/inputActions.js';   // AUDIT SOC D3
+import { createUnsavedKeybinds, setUnsavedBinding, checkDuplicates, applyUnsavedKeybinds, currentDict } from '../src/systems/controlsConfig.js';
+import { modSetting, _resetModSettings } from '../src/systems/modSettings.js';   // AUDIT SOC D4
 
 const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
 
@@ -171,13 +175,14 @@ test('SOC5: the reach law with plain vectors and the port\'s own cylinder - the 
 function fakeNode(tag, doc) {
   const n = {
     tagName: tag.toUpperCase(), children: [], parent: null, className: '', textContent: '', id: '', value: '', title: '',
-    disabled: false, style: {}, dataset: {}, attrs: {}, listeners: new Map(),
+    disabled: false, focused: false, style: {}, dataset: {}, attrs: {}, listeners: new Map(),
     append(...cs) { for (const c of cs) { c.parent = n; n.children.push(c); } },
     replaceChildren(...cs) { n.children = []; n.append(...cs); },
     setAttribute(k, v) { n.attrs[k] = v; },
     addEventListener(t, fn) { if (!n.listeners.has(t)) n.listeners.set(t, []); n.listeners.get(t).push(fn); },
     removeEventListener(t, fn) { const l = n.listeners.get(t) ?? []; const i = l.indexOf(fn); if (i >= 0) l.splice(i, 1); },
     fire(t, e = {}) { const ev = { type: t, target: n, prevented: false, stopped: false, preventDefault() { ev.prevented = true; }, stopPropagation() { ev.stopped = true; }, ...e }; for (const fn of n.listeners.get(t) ?? []) fn(ev); return ev; },
+    focus() { n.focused = true; doc.activeElement = n; },   // AUDIT SOC C21: the card takes focus when it is shown
     remove() { if (n.parent) { n.parent.children.splice(n.parent.children.indexOf(n), 1); n.parent = null; } n.removed = true; },
   };
   return n;
@@ -186,7 +191,9 @@ function fakeDocument() {
   const doc = { activeElement: null };
   doc.createElement = (tag) => fakeNode(tag, doc);
   doc.head = fakeNode('head', doc); doc.body = fakeNode('body', doc);
-  const byId = (n, id) => { if (n.id === id) return n; for (const c of n.children) { const f = byId(c, id); if (f) return f; } return null; };
+  // AUDIT SOC C25: a document with NO head is a shape this fake must survive, because that is the case the sheets'
+  // `(doc.head ?? doc.body)` fallback exists for.
+  const byId = (n, id) => { if (!n) return null; if (n.id === id) return n; for (const c of n.children) { const f = byId(c, id); if (f) return f; } return null; };
   doc.getElementById = (id) => byId(doc.head, id) ?? byId(doc.body, id);
   return doc;
 }
@@ -199,8 +206,10 @@ function fakeWindow() {
     addEventListener(t, fn, capture) { listeners.push({ t, fn, capture: capture === true || capture?.capture === true }); },
     removeEventListener(t, fn) { const i = listeners.findIndex((l) => l.t === t && l.fn === fn); if (i >= 0) listeners.splice(i, 1); },
     key(code, e = {}) {
-      const ev = { type: 'keydown', code, target: null, isTrusted: true, prevented: false, stopped: false, preventDefault() { ev.prevented = true; }, stopPropagation() { ev.stopped = true; }, ...e };
-      for (const l of listeners) if (l.t === 'keydown' && l.capture) l.fn(ev);
+      const ev = { type: 'keydown', code, target: null, isTrusted: true, prevented: false, stopped: false, immediate: false,
+        preventDefault() { ev.prevented = true; }, stopPropagation() { ev.stopped = true; },
+        stopImmediatePropagation() { ev.stopped = true; ev.immediate = true; }, ...e };
+      for (const l of listeners) { if (ev.immediate) break; if (l.t === 'keydown' && l.capture) l.fn(ev); }
       if (!ev.stopped) for (const l of listeners) if (l.t === 'keydown' && !l.capture) l.fn(ev);
       return ev;
     },
@@ -208,22 +217,31 @@ function fakeWindow() {
 }
 const find = (n, cls, out = []) => { if (String(n.className).split(/\s+/).includes(cls)) out.push(n); for (const c of n.children) find(c, cls, out); return out; };
 const one = (n, cls) => find(n, cls)[0];
-const rowBtn = (root, key) => find(root, 'dfsocial-btn').find((b) => b.dataset.row === key);
-const labelOf = (b) => one(b, 'dfsocial-label')?.textContent;
+const rowBtn = (root, key) => find(root, 'dfpeer-btn').find((b) => b.dataset.row === key);
+const labelOf = (b) => one(b, 'dfpeer-label')?.textContent;
+/** Every class selector a CSS string DECLARES - comments stripped first, because a comment that names a class is
+ *  prose and not a rule. For the pin that the two social sheets share none (AUDIT SOC C1). */
+const classSelectors = (css) => new Set(
+  [...String(css).replace(/\/\*[\s\S]*?\*\//g, ' ').matchAll(/\.([A-Za-z][\w-]*)/g)].map((m) => m[1]));
 
-test('SOC5: the rows the card offers - two acts always, Remove friend only for a friend, Cancel last; each act is exactly what net/wire.js SOCIAL_ACTS names, a peer for the two and an ACCOUNT for the removal (mutants: friend.remove sent with a peer the hub cannot resolve; a disabled row hidden instead of explained; Remove friend offered to a stranger)', () => {
+test('SOC5 / AUDIT SOC C15: the rows the card offers - the two acts and Cancel, and NO Remove friend on any of them, whoever the peer is; each act is exactly what net/wire.js SOCIAL_ACTS names, by PEER (mutants: friend.remove back on the card, one press and unconfirmed; friend.remove sent with a peer the hub cannot resolve; a disabled row hidden instead of explained; a fourth row for a friend)', () => {
   const stranger = socialMenuRows({ peerId: 'peer-b', acct: null, relation: 'none', canFriend: true, canInvite: true });
   assert.deepEqual(stranger.map((r) => r.key), ['friend', 'invite', 'cancel']);
   assert.deepEqual(stranger.map((r) => r.label), ['Add friend', 'Invite to party', 'Cancel']);
   assert.deepEqual(stranger[0].act, { k: 'friend.request', peer: 'peer-b' });
   assert.deepEqual(stranger[1].act, { k: 'party.invite', peer: 'peer-b' });
   assert.equal(stranger.at(-1).act, null, 'Cancel sends nothing');
+  // AUDIT SOC C15: A FRIEND GETS THE SAME THREE ROWS. Unfriending was a single unconfirmed press on a card that
+  // opens under the crosshair from one key, while the very same act on ui/socialPanel.js arms on the first click
+  // and only sends on the second. One deliberate act, one place to do it - and the panel is that place.
   const friend = socialMenuRows({ peerId: 'peer-b', acct: 'acct-b', relation: 'friend', canFriend: false, canInvite: true, whyNotFriend: 'already friends' });
-  assert.deepEqual(friend.map((r) => r.key), ['friend', 'invite', 'remove', 'cancel']);
-  assert.deepEqual(friend[2].act, { k: 'friend.remove', acct: 'acct-b' }, 'a person is unfriended, not a tab');
+  assert.deepEqual(friend.map((r) => r.key), ['friend', 'invite', 'cancel'], 'no removal row, account or no account');
+  assert.equal(friend.some((r) => r.act?.k === 'friend.remove'), false, 'and no act of that kind leaves this card at all');
   assert.equal(friend[0].enabled, false); assert.equal(friend[0].why, 'already friends', 'the row still stands, and says why');
-  // a friend the picture holds no account for gets no removal row: the button would be one the hub cannot honour
-  assert.equal(socialMenuRows({ peerId: 'peer-b', acct: null, relation: 'friend' }).some((r) => r.key === 'remove'), false);
+  // the picture's whole `actionsFor` answer is still accepted without being stripped by the caller
+  assert.deepEqual(socialMenuRows({ peerId: 'peer-b', acct: null, relation: 'friend' }).map((r) => r.key), ['friend', 'invite', 'cancel']);
+  assert.doesNotMatch(rd('src/ui/socialMenu.js').replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, ' '), /friend\.remove/,
+    'the kind is not spelled anywhere in the module, comments aside');
   // every act this menu can send is one the wire admits, with the field that kind requires
   for (const r of [...stranger, ...friend]) {
     if (!r.act) continue;
@@ -245,11 +263,12 @@ test('SOC5: the card over a document - the name, the buttons, a disabled reason 
   // card still standing would take the next press as a second act on a peer who may have walked away
   menu = createSocialMenu({ doc, win, canOpen: () => willing, onOpen: () => pointer.push('free'), onClose: () => pointer.push('lock'), onAct: (a) => { openWhenSent.push(menu.isOpen()); acts.push(a); } });
   const root = doc.body.children[0];
-  assert.equal(root.className, 'dfsocial'); assert.equal(root.dataset.state, 'closed');
+  assert.equal(root.className, 'dfpeer', 'AUDIT SOC C1: the menu\'s own prefix - it shared every class with the panel'); assert.equal(root.dataset.state, 'closed');
   assert.equal(doc.getElementById(SOCIAL_MENU_STYLE_ID)?.tagName, 'STYLE', 'the sheet, injected');
   createSocialMenu({ doc, win }).destroy();
   assert.equal(find(doc.head, '').filter((n) => n.id === SOCIAL_MENU_STYLE_ID).length, 1, 'injected once');
-  assert.equal(one(root, 'dfsocial-card').attrs.role, 'menu');
+  assert.equal(one(root, 'dfpeer-card').attrs.role, 'menu');
+  assert.equal(one(root, 'dfpeer-card').attrs.tabindex, '-1', 'AUDIT SOC C21: focusable, and out of the tab order while the card is down');
   assert.equal(menu.isOpen(), false); assert.deepEqual(pointer, []);
   // the host will not have it: nothing opens, and nothing touches the pointer
   willing = false;
@@ -264,16 +283,19 @@ test('SOC5: the card over a document - the name, the buttons, a disabled reason 
   assert.equal(menu.show({ name: 'Bee', peerId: 'peer-b', actions: st.actionsFor('peer-b') }), true);
   assert.equal(root.dataset.state, 'open'); assert.equal(menu.isOpen(), true); assert.equal(menu.peerId(), 'peer-b');
   assert.deepEqual(pointer, ['free'], 'the card is a pointer surface - freed inside the gesture that opened it');
-  assert.equal(one(root, 'dfsocial-name').textContent, 'Bee');
-  assert.deepEqual(find(root, 'dfsocial-btn').map((b) => b.dataset.row), ['friend', 'invite', 'remove', 'cancel']);
+  assert.equal(one(root, 'dfpeer-name').textContent, 'Bee');
+  assert.equal(one(root, 'dfpeer-card').focused, true, 'AUDIT SOC C21: the keyboard goes where the menu is');
+  // AUDIT SOC C15: three rows for a friend too - 'Remove friend' belongs on the panel, where it is confirmed
+  assert.deepEqual(find(root, 'dfpeer-btn').map((b) => b.dataset.row), ['friend', 'invite', 'cancel']);
+  assert.deepEqual(find(root, 'dfpeer-btn').map((b) => b.attrs.role), ['menuitem', 'menuitem', 'menuitem'], 'AUDIT SOC C21: a menu of menu items');
   const add = rowBtn(root, 'friend');
   assert.equal(labelOf(add), 'Add friend');
   assert.equal(add.disabled, true, 'a friend cannot be friended again');
   assert.equal(add.attrs.disabled, '', 'and the attribute, for a real button');
   assert.equal(add.title, 'already friends', 'the reason, as a title');
-  assert.equal(one(add, 'dfsocial-why').textContent, 'already friends', 'and on the row, where a mouse is not needed to read it');
+  assert.equal(one(add, 'dfpeer-why').textContent, 'already friends', 'and on the row, where a mouse is not needed to read it');
   assert.equal(rowBtn(root, 'invite').disabled, false);
-  assert.equal(one(rowBtn(root, 'invite'), 'dfsocial-why'), undefined, 'a lit row carries no reason');
+  assert.equal(one(rowBtn(root, 'invite'), 'dfpeer-why'), undefined, 'a lit row carries no reason');
   // a disabled button's click is nothing, however it arrived
   add.fire('click');
   assert.deepEqual(acts, []); assert.equal(menu.isOpen(), true);
@@ -289,7 +311,7 @@ test('SOC5: the card over a document - the name, the buttons, a disabled reason 
   assert.equal(menu.isOpen(), false); assert.deepEqual(acts.length, 1);
   // Escape closes, is stopped, and never reaches the host's pause door
   menu.show({ name: 'Zed', peerId: 'peer-z', actions: st.actionsFor('peer-z') });
-  assert.deepEqual(find(root, 'dfsocial-btn').map((b) => b.dataset.row), ['friend', 'invite', 'cancel'], 'a stranger has no Remove friend row');
+  assert.deepEqual(find(root, 'dfpeer-btn').map((b) => b.dataset.row), ['friend', 'invite', 'cancel']);
   assert.equal(rowBtn(root, 'friend').disabled, false, 'and can be friended');
   hostSaw.length = 0;
   const esc = win.key('Escape', { target: doc.body });
@@ -305,13 +327,13 @@ test('SOC5: the card over a document - the name, the buttons, a disabled reason 
   pointer.length = 0;
   menu.show({ name: 'Zed', peerId: 'peer-z', actions: st.actionsFor('peer-z') });
   assert.deepEqual(pointer, [], 'already open: the lock is not asked for twice');
-  assert.equal(menu.peerId(), 'peer-z'); assert.equal(one(root, 'dfsocial-name').textContent, 'Zed');
-  assert.equal(find(root, 'dfsocial-btn').length, 3, 'and the rows are rebuilt, not appended to');
+  assert.equal(menu.peerId(), 'peer-z'); assert.equal(one(root, 'dfpeer-name').textContent, 'Zed');
+  assert.equal(find(root, 'dfpeer-btn').length, 3, 'and the rows are rebuilt, not appended to');
   // the host's frame takes it away with a window
   menu.render({ covered: false }); assert.equal(menu.isOpen(), true);
   menu.render({ covered: true }); assert.equal(menu.isOpen(), false, 'a window over the HUD takes the card with it');
   // a press inside the card is the card's; a release is never stopped
-  const card = one(root, 'dfsocial-card');
+  const card = one(root, 'dfpeer-card');
   assert.equal(card.fire('mousedown').stopped, true, 'the host must not swing a weapon at its own menu');
   assert.equal(card.fire('contextmenu').stopped, true);
   assert.equal(card.listeners.has('mouseup'), false, 'AUDIT CHAT C5: a release is never stopped');
@@ -328,7 +350,7 @@ test('SOC5: a name the room has not said yet still makes a sentence, and the car
   const menu = createSocialMenu({ doc, win });
   const root = doc.body.children[0];
   menu.show({ name: null, peerId: 'peer-x', actions: { canFriend: true, canInvite: true } });
-  assert.equal(one(root, 'dfsocial-name').textContent, 'Someone', 'a peer whose name is still in flight is not nameless');
+  assert.equal(one(root, 'dfpeer-name').textContent, 'Someone', 'a peer whose name is still in flight is not nameless');
   const st = new SocialState({ now: () => 1e12 });
   const seat = (n) => ({ acct: `acct-${n}`, name: n, online: true, seen: 1e12, peers: [`peer-${n}`], p: null });
   st.apply({ t: 'social', k: 'state', acct: 'acct-me', name: 'Me', friends: [], in: [], out: [], party: null, invites: [] });
@@ -376,4 +398,175 @@ test('SOC5: scenes/world.js - the door on hudCtx, the ray read as the activation
   assert.match(w, /onClose: \(\) => surfaceClose\('menu'\),   \/\/ and taken back inside the one that closed/);
   assert.match(w, /const socialMenuCanOpen = \(\) => !gamePaused\(\) && !\(townTalk\.hudCovered \|\| \(modes\?\.hudCovered \?\? false\)\);/, 'the chat\'s own gate: a window\'s keys are the window\'s');
   assert.match(w, /socialMenu\?\.render\(\{ covered: townTalk\.hudCovered \|\| \(modes\?\.hudCovered \?\? false\) \|\| gamePaused\(\) \}\);/, 'and a window that opens later takes the card with it');
+});
+
+
+// ── THE AUDIT'S OWN PINS ─────────────────────────────────────────────
+
+test('AUDIT SOC C1: the menu\'s sheet and the panel\'s sheet share NO class selector, and no style id either - two surfaces that stand at once cannot both be .dfsocial (mutants: the menu\'s prefix put back; one class left behind in the rename; the two style ids made one)', () => {
+  const mine = classSelectors(SOCIAL_MENU_CSS), theirs = classSelectors(SOCIAL_CSS);
+  const shared = [...mine].filter((c) => theirs.has(c));
+  assert.deepEqual(shared, [], `the two sheets share ${shared.join(', ')} - whichever is injected LAST wins them`);
+  // ...and the menu's are all one prefix, so a new rule cannot quietly rejoin the panel's namespace
+  assert.deepEqual([...mine].filter((c) => !/^dfpeer(-|$)/.test(c) && c !== 'cancel'), []);
+  // the ids too: two that differ only in spelling are the next thing to collide
+  assert.equal(SOCIAL_MENU_STYLE_ID, 'dagger-peermenu-style');
+  assert.notEqual(SOCIAL_MENU_STYLE_ID, 'dagger-social-style');
+  // the concrete breakage that was: the menu's root rule kills the pointer and moves to the screen centre, and the
+  // panel's root carried the same class name - so an OPEN panel got both
+  assert.match(SOCIAL_MENU_CSS, /\.dfpeer \{[^}]*pointer-events: none;/);
+  assert.match(SOCIAL_MENU_CSS, /\.dfpeer \{[^}]*left: 50%;/);
+});
+
+test('AUDIT SOC C2/C14: the F-menu is the TOPMOST surface - it answers Escape with stopImmediatePropagation so no sibling listener and no pause door sees the press, and with above() true it leaves the key entirely alone (mutants: stopPropagation alone, so the panel behind closes on the same press; above ignored, so the top two both close; the key stopped but the card left open)', () => {
+  const doc = fakeDocument(), win = fakeWindow();
+  let above = false;
+  const sibling = [], host = [];
+  const menu = createSocialMenu({ doc, win, above: () => above });
+  // a SIBLING in the same phase (the friends panel's own capture listener) and the host's bubble door
+  win.addEventListener('keydown', (e) => sibling.push(e.code), true);
+  win.addEventListener('keydown', (e) => host.push(e.code));
+  menu.show({ name: 'Bee', peerId: 'peer-b', actions: { canFriend: true } });
+  const e = win.key('Escape', { target: doc.body });
+  assert.equal(menu.isOpen(), false, 'the topmost surface closes');
+  assert.deepEqual(sibling, [], 'and the sibling capture listener never runs - stopPropagation alone would have let it');
+  assert.deepEqual(host, []);
+  assert.equal(e.prevented, true); assert.equal(e.immediate, true);
+  // now something stands ABOVE the card: the key is not ours at all
+  above = true;
+  menu.show({ name: 'Bee', peerId: 'peer-b', actions: { canFriend: true } });
+  sibling.length = 0; host.length = 0;
+  const e2 = win.key('Escape', { target: doc.body });
+  assert.equal(menu.isOpen(), true, 'a surface over this one owns the key - this card does not close');
+  assert.equal(e2.prevented, false); assert.equal(e2.stopped, false, '...and does not stop it, so the one above can have it');
+  assert.deepEqual(sibling, ['Escape']); assert.deepEqual(host, ['Escape']);
+  menu.destroy();
+});
+
+test('AUDIT SOC C12/C25: a refused row is READABLE - the disabled opacity is .75 and the reason is its own lighter colour, 4.5:1 or better over the card whether the relief under it is black or bright; and the sheet lands even in a document with no head (mutants: opacity back to .5; the reason left on the dim token; the sheet dropped on a headless document)', () => {
+  assert.match(SOCIAL_MENU_CSS, /\.dfpeer-btn\[disabled\] \{ opacity: \.75;/);
+  assert.match(SOCIAL_MENU_CSS, /\.dfpeer-why \{ font-size: 11px; color: #c8c2b4;/);
+  // the arithmetic, done here rather than read off a screenshot: the button composites at its own opacity over the
+  // card (rgba(14,16,19,.9) over whatever the world draws), and the reason is measured against that same ground.
+  const lin = (c) => { const v = c / 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
+  const lum = ([r, g, b]) => 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+  const ratio = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+  const mix = (a, b, alpha) => a.map((v, i) => alpha * v + (1 - alpha) * b[i]);
+  const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  for (const world of [[0, 0, 0], [64, 70, 78]]) {
+    const card = mix([14, 16, 19], world, 0.9);
+    const bg = mix(hex('#2b323b'), card, 0.75);           // --iron at the disabled opacity
+    const fg = mix(hex('#c8c2b4'), card, 0.75);           // the reason, at the same opacity
+    assert.ok(ratio(fg, bg) >= 4.5, `the reason reads at ${ratio(fg, bg).toFixed(2)}:1 over ${JSON.stringify(world)}`);
+    const was = mix(hex('#8b8578'), card, 0.5);           // what it WAS: the dim token at opacity .5
+    const wasBg = mix(hex('#2b323b'), card, 0.5);
+    assert.ok(ratio(was, wasBg) < 2, `and was ${ratio(was, wasBg).toFixed(2)}:1, which is what this pin exists for`);
+  }
+  // C25: `(doc.head ?? doc.body)`, the other three sheets' own fallback
+  const noHead = fakeDocument(); noHead.head = null;
+  createSocialMenu({ doc: noHead, win: fakeWindow() });
+  assert.equal(noHead.body.children.some((n) => n.id === SOCIAL_MENU_STYLE_ID), true, 'no head, and the skin still lands');
+});
+
+test('AUDIT SOC C9: the touch layer has a control for SocialInteract - one 48px button beside the mode cycle, drawn only where a host hands the hook in, calling the HOST door rather than synthesizing a key (mutants: the button always drawn, so an offline page offers a dead door; a synthesized KeyF that a rebind would break; the hook undocumented)', () => {
+  const touch = rd('src/ui/touch.js');
+  assert.match(touch, /if \(hooks\.socialInteract\) button\('[^']+', edge\('right', hooks\.cycleMode \? 232 : 160\), edge\('bottom', 16\), 48, \(\) => \{ hooks\.socialInteract\(\); \}\);/,
+    'gated by the hook, 48 like its neighbours, and the host answers for itself');
+  assert.doesNotMatch(touch, /tapAction\('SocialInteract'\)/, 'never the key: F is rebindable and may be unbound outright');
+  assert.match(touch, /socialInteract\?\(\)/, 'and the header documents the hook it calls');
+});
+
+test('AUDIT SOC D3: the port own action YIELDS in the classic windows - a grid action staged onto F leaves SocialInteract unbound rather than raising a clash no classic pane can show or clear, and the apply then writes a duplicate-free store (mutants: the yield dropped, so the window cannot be closed; the yield applied to the enhanced pane, which CAN show the row; the yield taking a key nothing else wants; the yield reaching across the two dicts)', () => {
+  assert.deepEqual([...PORT_ACTIONS], ['SocialInteract']);
+  const store = createBindings();
+  resetDefaults(store);
+  assert.equal(getBinding(store, 'SocialInteract'), 'KeyF');
+  assert.ok(checkDuplicates(createUnsavedKeybinds(store)).ok, 'the untouched defaults clash with nothing');
+  // the ENHANCED pane sees the clash, because it draws the row that can resolve it
+  const enhanced = createUnsavedKeybinds(store);
+  setUnsavedBinding(enhanced, 'Rest', 'KeyF');
+  assert.equal(checkDuplicates(enhanced).ok, false, 'the enhanced window still reports it: its Online group can clear it');
+  assert.equal(enhanced.primary.get('SocialInteract'), 'KeyF', '...and never unbinds the row behind the player back');
+  // the CLASSIC windows yield it: a classic player puts Rest - one of the 38 rows the art draws - on F
+  const u = createUnsavedKeybinds(store);
+  setUnsavedBinding(u, 'Rest', 'KeyF');
+  const d = checkDuplicates(u, { yield: PORT_ACTIONS });
+  assert.equal(u.primary.get('SocialInteract'), null, 'the port row gives the key up rather than arguing for it');
+  assert.equal(u.primary.get('Rest'), 'KeyF');
+  assert.equal(d.ok, true, 'so the window closes');
+  assert.equal(d.internal.size, 0); assert.equal(d.cross.size, 0);
+  // ...and the apply leaves a duplicate-free store with the action unbound and rebindable in the pane that draws it
+  applyUnsavedKeybinds(store, u);
+  assert.equal(getBinding(store, 'Rest'), 'KeyF');
+  assert.equal(getBinding(store, 'SocialInteract'), null);
+  assert.equal(actionForCode(store, 'KeyF'), 'Rest');
+  assert.equal(checkDuplicates(createUnsavedKeybinds(store)).ok, true, 'no clash survives the apply, on either window');
+  // a yielded action nobody else wants keeps its key: the pass unbinds a CLASH, not a row
+  const clean = createBindings();
+  resetDefaults(clean);
+  const quiet = createUnsavedKeybinds(clean);
+  checkDuplicates(quiet, { yield: PORT_ACTIONS });
+  assert.equal(quiet.primary.get('SocialInteract'), 'KeyF', 'nothing clashed, so nothing was given up');
+  assert.equal(currentDict(quiet).size, ACTIONS.length);
+  // and the yield is per dict: a code the SECONDARY holds is not a clash inside the primary
+  const two = createUnsavedKeybinds(clean);
+  two.secondary.set('Rest', 'KeyF');
+  two.secondary.set('SocialInteract', 'KeyF');
+  checkDuplicates(two, { yield: PORT_ACTIONS });
+  assert.equal(two.primary.get('SocialInteract'), 'KeyF', 'the primary is untouched by the other dict spelling');
+  assert.equal(two.secondary.get('SocialInteract'), null, 'and the secondary yields its own');
+  // the two classic windows pass it; the enhanced pane passes nothing
+  assert.match(rd('src/ui/controlsWindow.js'), /checkDuplicates\(this\.unsaved, \{ yield: PORT_ACTIONS \}\)/);
+  assert.match(rd('src/ui/mouseControlsWindow.js'), /checkDuplicates\(this\.unsaved, \{ yield: PORT_ACTIONS \}\)/);
+  assert.match(rd('src/ui/enhancedControls.js'), /checkDuplicates\(unsaved\)/, 'the pane that SHOWS the row argues for it');
+  assert.equal((rd('src/ui/controlsWindow.js').match(/checkDuplicates\(this\.unsaved\)/g) ?? []).length, 0);
+  assert.equal((rd('src/ui/mouseControlsWindow.js').match(/checkDuplicates\(this\.unsaved\)/g) ?? []).length, 0);
+});
+
+test('AUDIT SOC D4: a mod-settings file written BEFORE this slice loses Handheld Torches saved "F" once, on load, so the shipped O applies - and any other saved key is left exactly as the player set it (mutants: the migration skipped, so a torch lights on the social key; every saved key cleared; a value the player chose later taken too; the file not written back)', () => {
+  const prevLs = globalThis.localStorage;
+  const K = 'dfjs-mod-settings';
+  try {
+    let store = new Map();
+    globalThis.localStorage = {
+      getItem: (k) => (store.has(k) ? store.get(k) : null),
+      setItem: (k, v) => store.set(k, String(v)),
+      removeItem: (k) => store.delete(k),
+    };
+    // the old file: the mod shipped key of the day, written into the store by the Mods pane. (`_resetModSettings`
+    // clears the key through this very fake, so the file is laid down AFTER it, not before.)
+    _resetModSettings();
+    store.set(K, JSON.stringify({ 'handheld-torches': { 'Handling.ToggleLightInput': 'F', 'Handling.ManualDropInput': 'G' } }));
+    assert.equal(modSetting('handheld-torches', 'Handling.ToggleLightInput'), 'O', 'the shipped default applies again');
+    assert.equal(modSetting('handheld-torches', 'Handling.ManualDropInput'), 'G', 'and the player other keys are theirs');
+    const written = JSON.parse(store.get(K));
+    assert.equal('Handling.ToggleLightInput' in written['handheld-torches'], false, 'the file was written back without it');
+    assert.equal(written['handheld-torches']['Handling.ManualDropInput'], 'G');
+    // a player who chose some OTHER key keeps it, and nothing is written for them
+    _resetModSettings();
+    store = new Map([[K, JSON.stringify({ 'handheld-torches': { 'Handling.ToggleLightInput': 'L' } })]]);
+    assert.equal(modSetting('handheld-torches', 'Handling.ToggleLightInput'), 'L');
+    assert.equal(JSON.parse(store.get(K))['handheld-torches']['Handling.ToggleLightInput'], 'L', 'untouched');
+    // and a file that never mentioned the mod is not grown one
+    _resetModSettings();
+    store = new Map([[K, JSON.stringify({ pcaao: { Enabled: false } })]]);
+    assert.equal(modSetting('handheld-torches', 'Handling.ToggleLightInput'), 'O');
+    assert.deepEqual(Object.keys(JSON.parse(store.get(K))), ['pcaao']);
+  } finally {
+    _resetModSettings();
+    if (prevLs === undefined) delete globalThis.localStorage; else globalThis.localStorage = prevLs;
+  }
+});
+
+test('AUDIT SOC D14: the pick header says the two things it does NOT do - the cylinder is unoccluded on purpose (the street own person pick takes no collider either) and t <= 0 covers a peer at my feet as well as one behind me (mutants: the sentences dropped, so the next reader adds an occlusion test the talk arm does not have)', () => {
+  const src = rd('src/player/socialPick.js');
+  assert.match(src, /UNOCCLUDED/, 'the word, so a reader cannot mistake it for an oversight');
+  assert.match(src, /raceActivation/, 'and the site it is consistent with - world.js hands the same distances in with no collider');
+  assert.match(src, /AT MY FEET/, 'and the other half of t <= 0');
+  // and it is true: a peer standing exactly where I am is out of the race, not at distance zero winning every tie
+  const cam = [0, 1.6, 0], fwd = [0, 0, 1];
+  assert.equal(rayPersonDistance(cam, fwd, [0, 0, 0]), Infinity, 'a body at my own feet has no along-ray distance');
+  assert.equal(pickPeerInFront(cam, fwd, [peer('feet', [0, 0, 0]), peer('ahead', [0, 0, 3])], SOCIAL_REACH, rayPersonDistance).peer.id, 'ahead');
+  // the street own arm measures a person with the very same call and no collider of its own
+  assert.match(rd('src/scenes/world.js'), /personDistances: _livePersons\.map\(\(p\) => rayPersonDistance\(/, 'one cylinder, both arms');
 });

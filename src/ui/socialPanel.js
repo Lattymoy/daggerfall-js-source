@@ -8,6 +8,8 @@
 // seen) and PARTY (the four seats, who leads, where each member stands and how they fare, and the invitations
 // standing). Plus one TOAST, which is the only part that draws while the panel is CLOSED: an invitation is good for
 // INVITE_TTL_MS and a player who never opened the panel would otherwise watch it lapse without ever being asked.
+// The toast has its OWN strip, centred at the top of the screen, and it takes no pointer but its two buttons
+// (AUDIT SOC C3: it used to sit on the chat's corner at z 7 and swallow the open chat's tab bar).
 //
 // IT KNOWS NOTHING AND DECIDES NOTHING. Every question it asks is net/social.js's - `actionsFor` for what may be
 // done with a peer and why not, `seatsFree`/`inMyParty`/`leads` for the party's own rules, `lastOnlineText` for the
@@ -17,9 +19,10 @@
 // panel was open, an invite that expired mid-countdown, a friend with no tab in the world, an act the rate gate
 // refused.
 //
-// A REFUSAL IS A SENTENCE, NOT A MISSING BUTTON. A button that cannot go is DISABLED and carries the reason as its
-// `title` ("already friends", "the party is full", "offline"), because a control that quietly vanishes teaches a
-// player nothing about the rule they just met. And the one refusal that is not about the player - the rate gate,
+// A REFUSAL IS A SENTENCE, NOT A MISSING BUTTON. A button that cannot go is DISABLED and carries the reason BESIDE
+// ITS LABEL and on its `title` ("already friends", "the party is full", "offline") - AUDIT SOC C11: the title alone
+// is a mouse hover, and half the machines this runs on have no mouse - because a control that quietly vanishes
+// teaches a player nothing about the rule they just met. And the one refusal that is not about the player - the rate gate,
 // where `send` answers false - leaves the button ENABLED and says "try again", since the act was right and only the
 // moment was wrong.
 //
@@ -30,7 +33,10 @@
 // REPAINTED ON A CHANGE, NOT A FRAME. `render` runs once a frame from the host's chat frame, and the body is
 // rebuilt only when `social.version` moved or the panel's own state did (a tab, a confirm, an act just sent). What
 // IS redrawn every frame is the handful of things that move on their own: the invite countdowns, the hub's last
-// refusal, and the toast. That is ChatLog's law (ui/chatPanel.js paintWho) applied before it can be missed.
+// refusal, the toast, the tab badges (AUDIT SOC C5: an invitation lapses on the CLOCK, and `liveInvites` sheds it
+// as it is read without moving the version) and the friend rows' "last online" (AUDIT SOC B8, the same reason).
+// Every one of those is WRITTEN only where the words actually changed, so a quiet frame still costs nothing. That
+// is ChatLog's law (ui/chatPanel.js paintWho) applied before it can be missed.
 //
 // Not a DFU member: Daggerfall Unity has no friends and no parties. Ledger A row (ONLINE).
 import { overlayOpen } from './enhancedOverlays.js';
@@ -45,12 +51,22 @@ export const SOCIAL_NOTE_MS = 2500;
 /** How long Remove stays armed before it disarms itself, ms. A confirm that waits forever is a confirm a player
  *  walks into by accident on their next visit to the row. */
 export const SOCIAL_CONFIRM_MS = 4000;
-/** The words a friends list with nobody in it says - and where to go to change that. */
-export const NO_FRIENDS_TEXT = 'No friends yet - press F on a player, or click a name in the chat roster.';
+/** The words a friends list with nobody in it says - and where to go to change that.
+ *
+ *  AUDIT SOC D10/C19: THE ROSTER LEADS, AND THE KEY IS NOT SPELLED. It used to open with "press F", which is a lie
+ *  on two machines out of three: F is a rebindable action (systems/inputActions.js SocialInteract, and a player who
+ *  had already spent F keeps it and gets the action UNBOUND), and a phone has no F at all. The roster row is the one
+ *  door that is always there, so it is named first and the key is named by what it does. */
+export const NO_FRIENDS_TEXT = 'No friends yet - click a name in the chat roster, or press the interact key on a player.';
 /** The words for no party. */
 export const NO_PARTY_TEXT = 'You are not in a party.';
-/** The note a rate-gated act leaves (net/online.js sendSocial answered false: the act never left this machine). */
-export const TRY_AGAIN_TEXT = 'Too quick - try again';
+/** The note a rate-gated act leaves (net/online.js sendSocial answered false: the act never left this machine).
+ *
+ *  AUDIT SOC C19: ONE SENTENCE FOR ONE REFUSAL. This panel said "Too quick - try again" and scenes/world.js said
+ *  "Try again in a moment" on the world tab for the very same gate, so a player who pressed a button and read both
+ *  had two different answers for one event. The world tab's wording wins (it is the one a player reads without
+ *  opening anything) and the host imports THIS constant rather than keeping a second copy of the words. */
+export const TRY_AGAIN_TEXT = 'Try again in a moment';
 
 /** The panel's sheet: the enhanced tokens (enhancedStyle.js) where they exist, a fallback where the skin's sheet is
  *  not loaded - the same bargain ui/chatPanel.js strikes.
@@ -66,8 +82,17 @@ export const SOCIAL_CSS = `
   font-family: var(--data, 'Barlow Semi Condensed', system-ui, sans-serif); color: var(--bone, #e9e4d9); }
 .dfsocial[data-open="1"] { display: flex; }
 .dfsocial.touch { top: calc(72px + env(safe-area-inset-top, 0px)); }
-/* beside the chat where there is room for both (14 + 440 + 12), over it where there is not */
+/* beside the chat where there is room for both (14 + 440 + 12) */
 @media (min-width: 840px) { .dfsocial { left: calc(466px + env(safe-area-inset-left, 0px)); } }
+/* AUDIT SOC C13: ...and BELOW it where there is not. Under 840px the panel and the open chat box shared the same
+   corner to the pixel (both left 14, top 44), and the panel - z 6 over the chat's 5 - took the whole box: the lines,
+   the field, the tab bar. Measured at 800x900 with both open, elementFromPoint at the box's centre answered
+   the panel's own section heading. 390 clears the box's own ceiling (top 44 + tabs 34 + list min(220px, 34vh) + form ~45 = 343) on a
+   desktop and the touch skin's 72 + 299 = 371, with room to spare; the max-height follows so the panel still ends
+   on the screen it started on. */
+@media (max-width: 839px) {
+  .dfsocial, .dfsocial.touch { top: calc(390px + env(safe-area-inset-top, 0px)); max-height: min(460px, calc(100vh - 398px)); }
+}
 .dfsocial-head { flex: none; display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-bottom: 1px solid var(--iron, #2b323b); }
 .dfsocial-title { flex: 1; min-width: 0; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; }
 .dfsocial-close { flex: none; background: var(--iron, #2b323b); color: var(--bone, #e9e4d9); border: 0; border-radius: 3px; font: inherit; font-size: 13px; padding: 2px 8px; cursor: pointer; }
@@ -94,18 +119,34 @@ export const SOCIAL_CSS = `
 .dfsocial-btn { flex: none; background: var(--iron, #2b323b); color: var(--bone, #e9e4d9); border: 0; border-radius: 3px; font: inherit; font-size: 12px; padding: 4px 8px; cursor: pointer; }
 .dfsocial-btn[disabled] { opacity: .45; cursor: default; }
 .dfsocial-btn.warn { background: #6b2f28; }
+/* AUDIT SOC C11: the reason a button is dead, BESIDE the label and not only on its title - a title needs a mouse to
+   hover, and half the machines this panel runs on have none. The F-menu's own shape (ui/socialMenu.js .dfpeer-why). */
+.dfsocial-why { flex: none; font-size: 10px; font-style: italic; color: var(--dim, #8b8578); margin-left: 4px; }
 .dfsocial-empty { flex: none; font-size: 13px; color: var(--dim, #8b8578); padding: 6px 0; overflow-wrap: anywhere; }
 
-/* THE TOAST takes the chat's own strip and stands OVER the peek lines (z-index above the chat's 5 and the panel's
-   6), because an invitation that lapses in two minutes is the one thing on that corner of the screen worth reading
-   first - and because it must work with the panel closed, which is where a player who has not found the button yet
-   will be. */
-.dfsocial-toast { position: fixed; left: calc(14px + env(safe-area-inset-left, 0px)); top: calc(44px + env(safe-area-inset-top, 0px));
+/* AUDIT SOC C8: THE FINGER'S OWN SIZES. Every control this panel draws was built at the mouse's scale - the tabs 29
+   tall, Close 27x19, Invite and Remove 22 - and online forces the enhanced lane on a phone as readily as on a
+   desktop. Under the touch skin each one is at least the 44px the platforms ask for (ui/touch.js draws its own
+   buttons at 48), and nothing moves on a desktop. */
+.dfsocial.touch .dfsocial-tab { min-height: 44px; padding: 10px 12px; }
+.dfsocial.touch .dfsocial-close { min-height: 44px; min-width: 44px; padding: 4px 12px; }
+.dfsocial.touch .dfsocial-btn, .dfsocial-toast.touch .dfsocial-btn { min-height: 44px; padding: 8px 12px; font-size: 13px; }
+
+/* THE TOAST stands in ITS OWN STRIP, centred at the top of the screen, because an invitation that lapses in two
+   minutes is worth reading first - and because it must work with the panel closed, which is where a player who has
+   not found the button yet will be.
+   AUDIT SOC C3: it used to take the chat's own corner (left 14, top 44) at z 7, which is the chat's open TAB BAR to
+   the pixel and, under 840px, the panel's own header: elementFromPoint over the World tab and over the panel's
+   Close both answered the toast. Two things changed. It has its own strip now, and the STRIP TAKES NO POINTER at
+   all - only its two buttons do, which is ui/chatPanel.js's own split (.dfchat none, .dfchat-box auto) and is what
+   keeps a phone's top-left touch buttons pressable underneath a toast that is merely being read. */
+.dfsocial-toast { position: fixed; left: 50%; transform: translateX(-50%); top: calc(8px + env(safe-area-inset-top, 0px));
   width: min(440px, calc(100vw - 28px)); z-index: 7; display: none; align-items: center; gap: 8px; box-sizing: border-box;
+  pointer-events: none;
   background: rgba(14, 16, 19, .92); border: 1px solid var(--brass, #c08a3e); border-radius: 6px; padding: 6px 8px;
   font-family: var(--data, 'Barlow Semi Condensed', system-ui, sans-serif); color: var(--bone, #e9e4d9); }
 .dfsocial-toast[data-up="1"] { display: flex; }
-.dfsocial-toast.touch { top: calc(72px + env(safe-area-inset-top, 0px)); }
+.dfsocial-toast .dfsocial-btn { pointer-events: auto; }
 `;
 
 /** The sheet, once. */
@@ -163,13 +204,21 @@ export function friendOrder(friends) {
  * a pointer surface right now; `onOpen`/`onClose` are its pointer-lock door (free the cursor on open, take it back
  * on close, inside the gesture) - the same three ui/chatPanel.js is handed, because this panel is the same kind of
  * thing. Handed the document and the window so the tests drive it headless.
+ *
+ * AUDIT SOC C2/C14: `above()` is the host's word on whether a surface stands OVER this one (the F-menu). All three
+ * social surfaces listen for Escape on the window in capture, so one press closed two of them. The topmost answers:
+ * a panel with something above it IGNORES the key (does not close, does not stop it), and the one that handles it
+ * calls `stopImmediatePropagation` so no other window listener - the host's pause door included - sees that press.
  */
-export function createSocialPanel({ social, send = null, canOpen = () => true, onOpen = null, onClose = null, overlay = overlayOpen, doc = document, win = globalThis, touch = isTouchDevice() } = {}) {
+export function createSocialPanel({ social, send = null, canOpen = () => true, onOpen = null, onClose = null, above = () => false, overlay = overlayOpen, doc = document, win = globalThis, touch = isTouchDevice() } = {}) {
   injectSocialStyle(doc);
   const el = (tag, cls, text) => { const n = doc.createElement(tag); n.className = cls; if (text != null) n.textContent = text; return n; };
 
   const root = el('div', `dfsocial${touch ? ' touch' : ''}`);
   root.dataset.open = '0';
+  // AUDIT SOC C21: a labelled DIALOG, not an unnamed div with a stray aria-label - this panel takes the pointer and
+  // the keyboard off the world while it stands, which is the one thing `role="dialog"` says.
+  root.setAttribute('role', 'dialog');
   root.setAttribute('aria-label', 'Friends and party');
   const head = el('div', 'dfsocial-head');
   const closeBtn = el('button', 'dfsocial-close', '✕');
@@ -182,9 +231,12 @@ export function createSocialPanel({ social, send = null, canOpen = () => true, o
   const tabs = el('div', 'dfsocial-tabs');
   const body = el('div', 'dfsocial-body');
   const tabBtns = new Map();
+  tabs.setAttribute('role', 'tablist');
   for (const [id, label] of [['friends', 'Friends'], ['party', 'Party']]) {
     const b = el('button', 'dfsocial-tab', label);
     b.type = 'button'; b.dataset.tab = id;
+    b.setAttribute('role', 'tab');                    // AUDIT SOC C21: a tab that says it is one...
+    b.setAttribute('aria-selected', id === 'friends' ? 'true' : 'false');   // ...and which one is up (Friends opens)
     const badge = el('span', 'dfsocial-badge');
     b.append(badge);
     b.addEventListener('click', () => { if (tab === id) return; tab = id; confirm = null; ui++; if (open) repaint(); });
@@ -213,6 +265,7 @@ export function createSocialPanel({ social, send = null, canOpen = () => true, o
   let ui = 0;                                  // the panel's OWN version - a tab, a confirm, an act just sent
   let painted = -1, paintedUi = -1;
   let ticking = [];                            // [{ el, expires }] - the countdowns drawn right now
+  let liveSubs = [];                           // [{ el, of() }] - the sub-texts that go stale on the CLOCK alone (B8)
   let toasted = null;                          // the invitation the toast is showing, or null
 
   /** One act out. A refusal that is the RATE GATE's (`send` answered false) is not the player's fault and not the
@@ -229,12 +282,19 @@ export function createSocialPanel({ social, send = null, canOpen = () => true, o
   const btn = (label, { enabled = true, why = null, warn = false, run = null } = {}) => {
     const b = el('button', `dfsocial-btn${warn ? ' warn' : ''}`, label);
     b.type = 'button';
-    if (!enabled) { b.disabled = true; if (why) b.setAttribute('title', String(why)); }
-    else b.addEventListener('click', () => run?.());
+    if (!enabled) {
+      b.disabled = true;
+      // AUDIT SOC C11: the reason is DRAWN as well as titled. A `title` is a desktop hover and nothing at all on a
+      // phone, so "offline" and "the party is full" were invisible on exactly the machines where a player cannot
+      // hover to find out. The title stays for the mouse; the span is for everyone else (the F-menu's own shape).
+      if (why) { b.setAttribute('title', String(why)); b.append(el('span', 'dfsocial-why', String(why))); }
+    } else b.addEventListener('click', () => run?.());
     return b;
   };
 
-  /** A person's row: the presence dot, the name (in the colour their standing earns), what they are doing under it. */
+  /** A person's row: the presence dot, the name (in the colour their standing earns), what they are doing under it.
+   *  The sub-text node is left ON the row (`subNode`) because some of those sentences go stale where nothing in the
+   *  picture changed - see `liveSubs` and AUDIT SOC B8. */
   const personRow = ({ name, sub = '', online = null, colour = null, lead = false }) => {
     const r = el('div', 'dfsocial-row');
     if (online !== null) r.append(el('div', `dfsocial-dot${online ? ' on' : ''}`));
@@ -242,7 +302,7 @@ export function createSocialPanel({ social, send = null, canOpen = () => true, o
     const nameEl = el('div', 'dfsocial-name', String(name ?? ''));
     if (colour) nameEl.style.color = colour;
     who.append(nameEl);
-    if (sub) who.append(el('div', 'dfsocial-sub', String(sub)));
+    if (sub) { const s = el('div', 'dfsocial-sub', String(sub)); who.append(s); r.subNode = s; }
     r.append(who);
     if (lead) r.append(el('span', 'dfsocial-lead', 'Leader'));
     return r;
@@ -264,14 +324,18 @@ export function createSocialPanel({ social, send = null, canOpen = () => true, o
     const ins = social.in ?? [], outs = social.out ?? [];
     if (ins.length || outs.length) {
       out.push(el('div', 'dfsocial-sec', 'Requests'));
+      // AUDIT ONLINE A6: A PENDING REQUEST CARRIES NO PRESENCE. The hub sends `online: false`, `seen: null` and no
+      // peers on an `in`/`out` row either way - a stranger who asked to be your friend must not learn when you are
+      // at your desk from the asking. So the row draws NO DOT (`online: null`) and this panel reads neither `seen`
+      // nor `peers` off one: the only presence it draws is a friend's, which is a friendship both sides agreed to.
       for (const r of ins) {
-        const n = personRow({ name: r.name, sub: 'wants to be your friend', online: r.online });
+        const n = personRow({ name: r.name, sub: 'wants to be your friend', online: null });
         n.append(btn('Accept', { run: () => act({ k: 'friend.accept', acct: r.acct }) }),
           btn('Decline', { run: () => act({ k: 'friend.decline', acct: r.acct }) }));
         out.push(n);
       }
       for (const r of outs) {
-        const n = personRow({ name: r.name, sub: 'request sent', online: r.online });
+        const n = personRow({ name: r.name, sub: 'request sent', online: null });
         n.append(btn('Cancel', { run: () => act({ k: 'friend.cancel', acct: r.acct }) }));
         out.push(n);
       }
@@ -287,6 +351,9 @@ export function createSocialPanel({ social, send = null, canOpen = () => true, o
         online: r.online,
         colour: seated ? PARTY_GREEN_CSS : FRIEND_CSS,
       });
+      // AUDIT SOC B8: "Last online 5 min ago" is a sentence about the CLOCK, and the clock moves with nothing in the
+      // picture changing - so it is re-read on the live pass, written only where the words actually differ.
+      if (n.subNode) liveSubs.push({ el: n.subNode, of: () => lastOnlineText(r.online, r.seen, social.now()) });
       const inv = inviteState(r);
       // a friend is invited by ACCOUNT - the person, not whichever tab they happen to have open (net/wire.js
       // SOCIAL_ACTS: party.invite takes either, and the hub resolves a peer to the account behind it anyway)
@@ -349,14 +416,21 @@ export function createSocialPanel({ social, send = null, canOpen = () => true, o
     return out;
   };
 
+  /** What a tab's badge should say right now: requests waiting on Friends, invitations standing on Party. ONE
+   *  reading, because the live pass and the repaint must never disagree about the number (AUDIT SOC C5). */
+  const badgeText = (id) => {
+    const n = id === 'friends' ? (social.in?.length ?? 0) : social.liveInvites().length;
+    return n > 0 ? String(n) : '';
+  };
+
   /** The whole body, and the tab badges over it. */
   const repaint = () => {
     painted = social.version; paintedUi = ui;
-    ticking = [];
+    ticking = []; liveSubs = [];
     for (const [id, t] of tabBtns) {
       t.b.className = `dfsocial-tab${id === tab ? ' active' : ''}`;
-      const n = id === 'friends' ? (social.in?.length ?? 0) : social.liveInvites().length;
-      t.badge.textContent = n > 0 ? String(n) : '';
+      t.b.setAttribute('aria-selected', id === tab ? 'true' : 'false');   // C21
+      t.badge.textContent = badgeText(id);
     }
     body.replaceChildren(...(tab === 'party' ? partyBody() : friendsBody()));
     paintLive();
@@ -378,6 +452,14 @@ export function createSocialPanel({ social, send = null, canOpen = () => true, o
     const e = social.lastError ? String(social.lastError) : '';
     if (err.textContent !== e) err.textContent = e;
     if (note.textContent !== noteMsg) note.textContent = noteMsg;
+    // AUDIT SOC C5: THE BADGES ARE READ BACK, NOT REMEMBERED. `liveInvites()` sheds a lapsed invitation as it is
+    // READ and moves no version (time merely passed), so an invitation that expired while the FRIENDS tab was up
+    // left the Party badge standing at a number that was no longer true - the body it belonged to was not even
+    // drawn. Comparing the live count against what is on the badge costs two integers a frame and cannot go stale.
+    for (const [id, t] of tabBtns) { const want = badgeText(id); if (t.badge.textContent !== want) t.badge.textContent = want; }
+    // AUDIT SOC B8: the sentences that go stale on the clock alone ("Last online 5 min ago"), written only when the
+    // words changed - so the pins that count writes still hold and a quiet minute costs a string compare a row.
+    for (const s of liveSubs) { const t = s.of(); if (s.el.textContent !== t) s.el.textContent = t; }
     let lapsed = false;
     for (const c of ticking) {
       const t = inviteLeftText(c.expires - now);
@@ -392,6 +474,10 @@ export function createSocialPanel({ social, send = null, canOpen = () => true, o
    *  the asker left) - so it can never stand for something that is no longer true. */
   const paintToast = () => {
     const now = social.now();
+    // AUDIT SOC C4: the note expires HERE too. `paintLive` clears it, and `paintLive` runs only while the panel is
+    // open - so a "try again" raised by a toast button with the panel shut stood under the invitation until the
+    // invitation itself lapsed, long past the two and a half seconds it is meant to live.
+    if (noteMsg && now - noteAt > SOCIAL_NOTE_MS) noteMsg = '';
     if (toasted && (now >= toasted.expires || !social.invites.has(toasted.party))) toasted = null;
     const up = !!toasted;
     if (toast.dataset.up !== (up ? '1' : '0')) toast.dataset.up = up ? '1' : '0';
@@ -432,10 +518,13 @@ export function createSocialPanel({ social, send = null, canOpen = () => true, o
   closeBtn.addEventListener('click', () => closePanel());
 
   // Escape closes, and closes NOTHING ELSE: the key is stopped here, so it never reaches the host's pause door
-  // behind an open panel (the chat's own Escape rule, ui/chatPanel.js onKey).
+  // behind an open panel (the chat's own Escape rule, ui/chatPanel.js onKey) - nor any SIBLING surface's listener,
+  // which is what `stopImmediatePropagation` adds over `stopPropagation` and what AUDIT SOC C14 was.
   const onKey = (e) => {
     if (!open || e.code !== 'Escape') return;
-    e.preventDefault(); e.stopPropagation();
+    if (above()) return;   // the F-menu is over this panel: its Escape, untouched and unstopped
+    e.preventDefault();
+    e.stopImmediatePropagation();
     closePanel();
   };
   win.addEventListener('keydown', onKey, true);

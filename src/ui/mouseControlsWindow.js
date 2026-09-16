@@ -110,7 +110,7 @@ import { nativeMetrics, drawRect } from './nativePanel.js';
 import { drawMenuBackdrop } from './chargenArt.js';
 import { drawText, measureText } from './text.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';
-import { onSavedKeyBinds } from '../systems/inputActions.js';
+import { onSavedKeyBinds, PORT_ACTIONS } from '../systems/inputActions.js';   // AUDIT SOC D3: the port's own rows YIELD here too - the ADVANCED popup is DFU's six and no more
 import {
   currentDict, setUnsavedBinding, checkDuplicates, buttonText, ELONGATED_TEXT,
   INTERNAL_DUPE_COLOR, CROSS_DUPE_COLOR, removeKeybindPromptRows, comboFromEvent,
@@ -255,7 +255,7 @@ export class MouseControlsWindow {
     this.top = null;          // 'remove'
     this._removeAction = null;
     this._box = null;
-    this.dupes = checkDuplicates(this.unsaved);
+    this.dupes = checkDuplicates(this.unsaved, { yield: PORT_ACTIONS });
     this.tip = new ToolTip();
     this._drag = null;
     // The LAST hovered point is what the wheel acts on
@@ -306,7 +306,7 @@ export class MouseControlsWindow {
 
   _click() { audio.playOneShot(SOUND.ButtonClick, 1); }
 
-  _refresh() { this.dupes = checkDuplicates(this.unsaved); }
+  _refresh() { this.dupes = checkDuplicates(this.unsaved, { yield: PORT_ACTIONS }); }
 
   /** OnPush -> OnReturn (:146-155): UpdateKeybindButtons +
    *  CheckDuplicates. DaggerfallUI keeps ONE instance and PushWindow

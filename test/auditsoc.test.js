@@ -340,4 +340,9 @@ test('AUDIT SOC B5/B18/B10: the party pose says fatigue in the sheet\'s digits (
   assert.match(start, /if \(!link\.acct\) \{[^\n]*\n\s*if \(!_noAccountSaid\) \{ _noAccountSaid = true; chatLog\.push\(tab\.id, \{ text: NO_ACCOUNT_TEXT, system: true \}\); \}\n\s*return;\n\s*\}/, 'no account: the line, once, and out');
   assert.match(start, /social = new SocialState\(\{ acct: link\.acct \}\);/, 'AUDIT SOC B19: the picture expects the account this session sent');
   assert.match(w, /const NO_ACCOUNT_TEXT = 'Friends and parties are off: this browser keeps no storage, so there is no account to be anyone by';/);
+  // AUDIT SOC C2/C14/C9: the host's word on which surface is TOPMOST (ui/chatPanel.js, ui/socialPanel.js, ui/socialMenu.js
+  // take `above`), and the phone's F handed to the touch layer as the host's own door
+  assert.match(w, /above: \(\) => !!\(socialPanel\?\.isOpen\?\.\(\) \|\| socialMenu\?\.isOpen\?\.\(\)\),/, 'the chat yields to the panel and the menu');
+  assert.match(start, /above: \(\) => !!socialMenu\?\.isOpen\?\.\(\),/, 'the panel yields to the menu');
+  assert.match(w, /socialInteract: \(\) => socialInteract\(\),/, 'the touch layer\'s hook is the host\'s door (AUDIT SOC C9)');
 });

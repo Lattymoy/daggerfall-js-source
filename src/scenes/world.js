@@ -5485,6 +5485,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // location.replace), so this boot-time read is exact.
     dial: isEnhanced(),
     cycleMode: () => townTalk.nextMode(),   // T3-touch: the phone's F1-F4
+    socialInteract: () => socialInteract(),   // AUDIT SOC C9: the phone's F - the host's own door (a card over the body in front, else the friends panel; false with no account, and the layer's button then does nothing)
     overlayActive: () => townTalk.overlayActive,
     // AUDIT 62 F7: the finger's pause gate - the same predicate the
     // mouse arms carry (the mousemove look needs the pointer lock a
@@ -7065,6 +7066,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       canOpen: () => !gamePaused() && !(townTalk.hudCovered || (modes?.hudCovered ?? false)),   // no chat under a window: the window's keys are the window's
       onOpen: () => surfaceOpen('chat'),   // AUDIT CHAT C2: the panel is a pointer surface - the mouse is freed on open (AUDIT SOC B6: by the first surface up - the friends panel and the F-menu are surfaces too)   // PL3: the Enter that opened the chat is the CHAT'S - the toggle (the same key, a capture listener bound earlier) had already flipped cursorActive on it, and the close's relock was refused by the precedence line for the rest of the session
       onClose: () => surfaceClose('chat'),   // and taken back inside the closing gesture (MAC1's rule, ui/pauseDoor.js) - by the last surface down
+      above: () => !!(socialPanel?.isOpen?.() || socialMenu?.isOpen?.()),   // AUDIT SOC C2/C14: ONE ESCAPE, ONE SURFACE - the chat yields the key while the friends panel or the F-menu stands over it (each of the three closes on its own Escape and stops it; the topmost answers)
       // SOC3: the three social seams of the chat, all read LAZILY - `social` and `socialPanel` are made by
       // socialStart below, which runs after this call (the panel has to exist before the picture lands beside it),
       // so every one of these is a closure that asks at the moment of the click or the frame, never a value.
@@ -7105,6 +7107,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       canOpen: () => !gamePaused() && !(townTalk.hudCovered || (modes?.hudCovered ?? false)),
       onOpen: () => surfaceOpen('social'),   // AUDIT SOC B6: counted with the chat's and the F-menu's - the first up frees the mouse, the last down takes it back
       onClose: () => surfaceClose('social'),
+      above: () => !!socialMenu?.isOpen?.(),   // AUDIT SOC C2/C14: the F-menu stands over the panel - its Escape is the menu's
     });
     // AUDIT SOC B14/D11: `hudCtx.openSocial` stood here as a second door to the panel; nothing dispatched through it
     // (SOC5's key reaches the panel through socialInteract's nobody-in-front arm), and a door nothing opens is a

@@ -55,7 +55,7 @@ import { loadImg, nativeMetrics, drawImg } from './nativePanel.js';
 import { drawMenuBackdrop } from './chargenArt.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';
 import { drawText, measureText } from './text.js';
-import { ACTIONS, saveKeyBinds } from '../systems/inputActions.js';
+import { ACTIONS, PORT_ACTIONS, saveKeyBinds } from '../systems/inputActions.js';   // AUDIT SOC D3: the port's own rows YIELD here - this window's art cannot draw them
 import { bindings, mouseCode } from './input.js';   // MAC-K1: the ONE crossed-name table, so this grid does not spell it a second time
 import {
   createUnsavedKeybinds, currentDict, setUnsavedBinding, checkDuplicates,
@@ -92,7 +92,16 @@ import { SOUND } from '../systems/soundClips.js';
  *  lane whole (systems/onlineLane.js), so the one player who can use the action
  *  is the one player already looking at the window that offers it.
  *  test/soc5_interact.test.js pins both halves: this table still ends at 40, and
- *  the enhanced pane still lists the action. */
+ *  the enhanced pane still lists the action.
+ *
+ *  AUDIT SOC D3: ...AND SO IT YIELDS HERE. Staging is ALL of ACTIONS (the dicts
+ *  are the registry's whole), so the duplicate check saw 'SocialInteract' on F
+ *  even though no button on this art does - a classic player who put a grid
+ *  action on F was shown a clash against a row that is not on the screen, could
+ *  not clear it, and could not close the window (the exit gate is
+ *  `checkDuplicates().ok`). Both classic windows now hand the check
+ *  `{ yield: PORT_ACTIONS }`: the port's row gives the key up rather than
+ *  arguing for it, and comes back rebindable in the pane that draws it. */
 export const KEY_GROUPS = Object.freeze([
   { start: 2, end: 8, x: 57, y: 13 },     // moveKeysOne
   { start: 8, end: 14, x: 164, y: 13 },   // moveKeysTwo
@@ -170,7 +179,7 @@ export class ControlsWindow {
     this._noteRows = null;
     this._removeAction = null;
     this._box = null;
-    this.dupes = checkDuplicates(this.unsaved);
+    this.dupes = checkDuplicates(this.unsaved, { yield: PORT_ACTIONS });
     // U37: DFU points every key button at the shared tooltip and
     // SUPPRESSES it unless the label elongated (:214-216) - the tip
     // exists to show the full text a '...' is standing in for.
@@ -212,7 +221,7 @@ export class ControlsWindow {
     this.hooks.onBack?.();
   }
 
-  _refresh() { this.dupes = checkDuplicates(this.unsaved); }
+  _refresh() { this.dupes = checkDuplicates(this.unsaved, { yield: PORT_ACTIONS }); }
 
   input(code, e = null) {
     if (this._popup) {
