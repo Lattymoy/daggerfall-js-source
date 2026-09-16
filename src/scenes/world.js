@@ -6964,9 +6964,14 @@ export async function bootWorld(canvas, renderer, params, status) {
   // landed on. Today that is the World tab alone; a later row in
   // CHAT_TABS gets it for free, which is the point of iterating.
   const chatNotice = (text) => {
-    if (!chatLog) return false;
+    // Not a dead guard, and the distinction is one this port paid for two
+    // days ago (AUDIT-MACL, `pauseOpts`): nothing nulls `chatLog` today,
+    // but the build poll's arm fires from a `.then` MINUTES later, and a
+    // throw there is an unhandled rejection - which main.js turns into
+    // the red crash overlay. The relay's arm is contained by
+    // `_deliver`; this one is not, so it carries its own door.
+    if (!chatLog) return;
     for (const tab of chatLog.tabs) chatLog.push(tab.id, { text, system: true });
-    return true;
   };
   const onRelayVersion = (v) => { if (relayVersionSeen(v) === 'changed') chatNotice(RELAY_RESTART_TEXT); };
   // SRV-N: THE BUILD POLL. The relay moves by hand and rarely; the client

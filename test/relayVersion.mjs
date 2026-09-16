@@ -1,16 +1,21 @@
 // SRV-N (2026-09-17): THE RELAY'S VERSION, ASKED IN A WAY THAT STAYS TRUE.
 //
-// Five separate pins asserted `RELAY_VERSION === 'world66'` by hand.
+// NINE separate pins asserted `RELAY_VERSION === 'world66'` by hand -
+// and the count is the point: the first five were found by bumping the
+// relay and reading the red, and the other four only turned up on the
+// NEXT full run, because five of the nine live in suites the first run
+// had already passed. Nobody knew there were nine.
+//
 // Each was written by a slice that had just bumped the relay, and each
 // meant "MY slice bumped it" - a statement that stops being true the
 // moment the next slice bumps it again. So every relay-changing slice
-// since has had to walk five files and retype one number, and the drift
+// since has had to walk nine files and retype one number, and the drift
 // this guarantees is already in the tree: `auditworld6biiic.test.js`'s
-// test NAME still says "the relay says world64" over an assertion that
+// test NAME still said "the relay says world64" over an assertion that
 // had been retyped to 'world66' twice.
 //
 // That is "a rule enforced by an enumeration is a rule enforced by
-// memory", and the enumeration was five copies of a moving target.
+// memory", and the enumeration was nine copies of a moving target.
 //
 // What those pins actually want is MONOTONIC: the relay is at or past
 // the deploy my slice shipped. That is permanently true once it is true,

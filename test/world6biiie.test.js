@@ -24,6 +24,7 @@ import { readFileSync } from 'node:fs';
 import { hitPoisonOf, HIT_POISON_MIN, HIT_POISON_MAX, whoIdOf, WHO_HZ_MAX, WHO_RETRY_MS, whoGate, ROSTER_MAX, SOCKETS_MAX, PIXEL_UNITS, validPose } from '../src/net/wire.js';
 import * as relay from '../server/src/relay.js';
 import { RELAY_VERSION } from '../server/src/index.js';
+import { relayVersionAtLeast } from './relayVersion.mjs';
 import { POISON_START_VALUE, TOTAL_POISON_VARIANTS, POISONS } from '../src/systems/poisons.js';
 import { OnlineSession } from '../src/net/online.js';
 import { fakeRoom } from './fakeRoom.mjs';
@@ -62,7 +63,7 @@ test('WORLD6b-iii(e): the wire - pt is a whole number inside ItemEnums.Poisons (
   assert.equal(passed, WHO_HZ_MAX, 'WHO_HZ_MAX asks a second, the rest refused');
   assert.equal(ROSTER_MAX, 64); assert.ok(SOCKETS_MAX > ROSTER_MAX, 'the room holds more than the welcome names - the gap the ask closes');
   assert.equal(relay.hitPoisonOf, hitPoisonOf); assert.equal(relay.whoIdOf, whoIdOf); assert.equal(relay.whoGate, whoGate);
-  assert.equal(RELAY_VERSION, 'world66', 'the relay says which one it is');
+  assert.ok(relayVersionAtLeast(66), 'the relay says which one it is');
 });
 
 test('WORLD6b-iii(e): the pools - the striker\'s dose at a PUPPET does not run on the shadow: it rides the blow (pt, with the arrow\'s kind and shaft) to the owner, who doses its foe once inside a damaging blow and lands the Arrow; a second blow carries no dose (spent); a dose outside the enum, or on a blow of no damage, lands nothing; the owner\'s own dose at its own foe lands directly', async () => {

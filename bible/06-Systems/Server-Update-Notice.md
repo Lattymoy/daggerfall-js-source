@@ -101,6 +101,28 @@ and a new build did not happen to a room; they happened to the game.
 Today that is the World tab alone, and a later row in `CHAT_TABS` gets
 it for free.
 
+## Nine pins that had to be retyped every time
+
+Bumping `world66` to `world67` reddened **nine** separate assertions of
+the form `RELAY_VERSION === 'world66'`, spread across nine suites. Each
+was written by the slice that had just bumped the relay and each meant
+*"my slice bumped it"* — which stops being true the moment the next
+slice bumps it again.
+
+The count is itself the finding. Five showed up on the first run; the
+other four only on the next, because their suites had already passed
+before the first five were fixed. Nobody knew there were nine, and the
+drift was already visible: one test's NAME still said "the relay says
+world64" over an assertion that had been retyped to `world66` twice.
+
+They ask monotonically now — `relayVersionAtLeast(66)`, in
+`test/relayVersion.mjs`. That is permanently true once true, fails on a
+downgrade, on a deleted constant and on a name that stops being a deploy
+name, and needs no retyping ever again. It is deliberately *not*
+`=== RELAY_VERSION`, which would pass under every mutation; a slice that
+needs to prove **it** bumped the relay asserts against the version that
+is LIVE, which is what this one does.
+
 ## What it does not do
 
 It does not reload for the player. A reload mid-dungeon costs whatever
@@ -121,6 +143,15 @@ page load on the CDN twice for an answer we already have.
 Worker is `world66`, its welcomes carry no `v`, and the client reads a
 missing version as `unknown` and stays silent — which is correct, and is
 also why nothing will be seen until someone runs `npx wrangler deploy`.
+
+And the deploy that lands it is **itself silent**, which follows from the
+ladder rather than working around it: a player connected across the
+`world66` → `world67` deploy heard no version at all from `world66`, so
+`world67` is the first version their page has ever heard — a baseline,
+not news. The first notice anybody sees is on the deploy *after* this
+one. That is the correct answer and not a gap: "the version changed" is
+the only thing that can be honestly claimed, and it cannot be claimed
+about a version nothing was known before.
 
 The build half needs no deploy but its own: the first merge *after* this
 one is the first tag a running tab can notice.
