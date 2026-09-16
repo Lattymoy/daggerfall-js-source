@@ -16,6 +16,8 @@
 //                    {t:'foes', data}                   the host's live foes, FOES_HZ_MAX a second at most (WORLD2)
 //                    {t:'hit', data}                    a blow on the host's foe, from anyone but the host (WORLD2)
 //                    {t:'act', data}                    a change to the room's doors, levers, movers and loot, from anyone in it (WORLD3/WORLD4)
+//                    {t:'social', k, acct?, peer?, party?}   a friend or party act, in the HUB alone (SOC1): SOCIAL_HZ_MAX a second
+//                    {t:'party', p}                     my party pose - where I stand and how I fare - to the hub (SOC1): PARTY_HZ_MAX a second
 //   room -> client:  {t:'welcome', id, peers:[{id,name,look,pose}], host, world, now}   now: the relay's clock, ms (WORLD5)
 //                    {t:'join', id, name, look, pose}   {t:'leave', id}
 //                    {t:'pose', id, p}                  {t:'pong'}
@@ -26,6 +28,8 @@
 //                    {t:'hit', id, data}                a blow on the host's foe, to the host alone (WORLD2)
 //                    {t:'act', id, data}                a change to the room's doors, levers, movers and loot, to everyone but its author (WORLD3/WORLD4)
 //                    {t:'error', m}                     then the socket closes
+//                    {t:'social', k:'state'|'presence'|'party'|'invite'|'note'|'error', ...}   the hub's word on my friends and my party (SOC1)
+//                    {t:'party', acct, p}               a party member's pose, to the party alone (SOC1)
 // A pose is {x, y, z, yaw, pitch, mv, wd, an, as, am, sr, cn, cr} in the room's frame -
 // a world cell's in MapsFile world units (the streaming world's
 // map-pixel origin, PIXEL_UNITS a pixel), every other room's in the
@@ -297,6 +301,81 @@ export function byteGate(bucket, nowMs, cost, rate, borrow = false) {
 }
 /** Every channel the relay will open (AUDIT CHAT A1: a whitelist - a later tab is a later entry, and nothing else is a channel). */
 export const CHAT_ROOMS = Object.freeze(new Set([CHAT_WORLD_ROOM]));
+
+// SOC1 (2026-09-16, Mac: "A social button next to the chat UI ... friend other users, see if they are online/last
+// online + be able to invite friends or other individuals to the new 4 person party system"): THE HUB'S LAW.
+//
+// WHERE SOCIAL STATE LIVES. Every player online holds one socket in the world channel (CHAT_WORLD_ROOM - the chat's
+// World tab, ROSTER-G's "the one room every player is in"), so that room's Durable Object is the one place that can
+// see everyone at once, and it is THE HUB: friendships, pending requests, presence and last-seen, and the parties
+// live in its storage and nowhere else. A presence room (a cell, a dungeon, a building) learns nothing new and is
+// changed by nothing here - a party member's name is green because the hub told MY client which peer ids are my
+// party's, not because a presence hello said "I am in a party" (a self-declared claim in a room that cannot check it).
+//
+// TWO IDENTITIES, BOTH GUARDED. A PEER id is a tab's (TABS1: minted per tab, so two tabs are two players), which is
+// exactly wrong for a friend list: a friend is a person, and a person is a browser profile that outlives every tab.
+// So a hello to the hub may carry an ACCOUNT id (`acct`) and its secret (`asecret`) beside the peer's - the same
+// shape and the same law as the peer's pair (ID_RE, SECRET_RE; the first hello mints, a later one must match, AUDIT
+// ONLINE A3) - minted once per browser profile (net/online.js accountId, in the app's own storage). The chat link
+// already carries the tab's peer id and secret, so the hub verifies BOTH ends of the mapping peer -> account, and
+// every frame it sends names peers by the ids the presence rooms already show. A client with no account (a build
+// before this slice) is admitted as before: the chat works, the social arms answer 'no account'.
+//
+// WHAT AN ACT NAMES. A social act names its target as `acct` (an account id, from my own lists) or as `peer` (a peer
+// id, the one thing I can see of a stranger in the world - the hub resolves it to the account behind that socket),
+// or as `party` (a party id, from an invite). The hub composes no English for the CHAT: a note is a CODE
+// (NOTE_CODES) and the client says it in words; an `error` is the hub's refusal of ONE act, in words, and closes
+// nothing - a refused friend request is not a protocol violation.
+//
+// THE BOUNDS. FRIENDS_MAX friends, PENDING_MAX requests each way (and PENDING_MAX party invites held), PARTY_MAX
+// in a party, PARTY_INVITES_MAX invites outstanding from one party, an invite good for INVITE_TTL_MS; a seat kept
+// PARTY_OFFLINE_MS after its member drops (a refresh, a blip - the hello brings them straight back), and a party
+// whose every seat has lapsed is gone. Accounts are never forgotten (a friend list that forgets people is worse than
+// the kilobyte a record costs), parties are forgotten when the hub drains (a channel's sweep - nobody is online to
+// hold one).
+/** The hub: the room whose object keeps the social state. The World channel - the one room everyone online is in. */
+export const SOCIAL_ROOM = CHAT_WORLD_ROOM;
+/** Is this key the hub's. */
+export const isSocialRoom = (key) => String(key ?? '') === SOCIAL_ROOM;
+/** The most social acts a socket may send a second (a friend request, an invite, a leave); the same strikes as the poses. */
+export const SOCIAL_HZ_MAX = 2;
+/** The most social acts the whole HUB answers a second, every socket together - an act is a few storage reads and writes,
+ *  and a room-wide bound is what every other arm carries (AUDIT CHAT A2's law); over it the act is refused with 'busy'. */
+export const SOCIAL_ROOM_HZ_MAX = 64;
+/** The most party poses a socket may send a second; the client sends one a second at most, and only when it changed. */
+export const PARTY_HZ_MAX = 2;
+/** The client's own floor between two party poses, ms (half the relay's rate, so a late one never trips the gate). */
+export const PARTY_SEND_MS = 1000;
+/** The most friends an account keeps. */
+export const FRIENDS_MAX = 64;
+/** The most requests an account holds each way, and the most party invites it holds. */
+export const PENDING_MAX = 32;
+/** A party's size - Mac's "4 person party system". */
+export const PARTY_MAX = 4;
+/** The most invites one party has outstanding at once. */
+export const PARTY_INVITES_MAX = 8;
+/** How long a party invite stands before it is nothing. */
+export const INVITE_TTL_MS = 120_000;
+/** How long a party seat is kept for a member that went offline - a page refresh, a dropped line - before it lapses. */
+export const PARTY_OFFLINE_MS = 5 * 60 * 1000;
+/** The most tabs (peer ids) one account is named with in a row - an account with more is not one person. */
+export const ACCOUNT_TABS_MAX = 8;
+/** A place name's bound on a party pose (UTF-16 units). */
+export const PARTY_LOC_MAX = 32;
+/** A hub error's bound (UTF-16 units) - the hub's refusal of one act, in words. */
+export const SOCIAL_ERROR_MAX = 120;
+/** The map's size in pixels - a party pose's `px`/`py` lie on it (MapsFile: 1000 x 500). */
+export const MAP_PIXELS_X = 1000;
+export const MAP_PIXELS_Y = 500;
+/** Every act a client may send the hub, and what each must name: 'acct' an account, 'peer' a peer, 'target' either one, 'party' a party, '' nothing. */
+export const SOCIAL_ACTS = Object.freeze({
+  'friend.request': 'target', 'friend.accept': 'acct', 'friend.decline': 'acct', 'friend.cancel': 'acct', 'friend.remove': 'acct',
+  'party.invite': 'target', 'party.accept': 'party', 'party.decline': 'party', 'party.leave': '', 'party.kick': 'acct',
+});
+/** Every note the hub says, as a code the CLIENT puts words to (net/social.js noteText) - the relay writes no chat line. */
+export const NOTE_CODES = Object.freeze(['friend.requested', 'friend.accepted', 'party.invited', 'party.declined', 'party.joined', 'party.left', 'party.kicked', 'party.leader', 'party.lapsed']);
+/** Every frame the hub sends under t:'social'. */
+export const SOCIAL_KINDS = Object.freeze(['state', 'presence', 'party', 'invite', 'note', 'error']);
 
 const finite = (v) => typeof v === 'number' && Number.isFinite(v);
 const uint = (v, max) => (finite(v) && v >= 0 ? Math.min(max, Math.floor(v)) : null);
@@ -572,7 +651,7 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  carries it (`v`), and a client whose wire.js was built against another version says so on the console: the client
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
-export const RELAY_VERSION = 'world77';   // ROSTER-G: the channel names its members - the roster beside the chat is everyone online
+export const RELAY_VERSION = 'world78';   // SOC1: the world channel is the social hub - accounts, friends, presence, parties
 
 /** The listeners sorted by distance from `from`, nearest first; one with no pose yet sorts last, because a peer that
  *  has never said where it is cannot be near. The ordering is Euclidean in the POSE'S OWN FRAME, which is a cell's
@@ -800,7 +879,18 @@ export function parseClient(text, { hasHello = false } = {}) {
     const look = validLook(m.look);
     if (!look) return { error: 'bad look' };
     const pose = validPose(m.pose);
-    return { t: 'hello', id, secret, name: sanitizeName(m.name), look, pose };
+    const hello = { t: 'hello', id, secret, name: sanitizeName(m.name), look, pose };
+    // SOC1: the account, optional - and BOTH or neither. A hello that names an account without its secret, or a
+    // malformed either, is not the port's client (accountId/accountSecret mint the shape the law admits), so it is an
+    // error like a bad id, not a hello quietly admitted without an account. A hello naming none is a build before
+    // this slice, admitted as it always was.
+    if (m.acct !== undefined || m.asecret !== undefined) {
+      const acct = typeof m.acct === 'string' && ID_RE.test(m.acct) ? m.acct : null;
+      const asecret = typeof m.asecret === 'string' && SECRET_RE.test(m.asecret) ? m.asecret : null;
+      if (!acct || !asecret) return { error: 'bad account' };
+      hello.acct = acct; hello.asecret = asecret;
+    }
+    return hello;
   }
   if (m.t === 'pose') {
     if (!hasHello) return { error: 'pose before hello' };
@@ -811,6 +901,26 @@ export function parseClient(text, { hasHello = false } = {}) {
     if (!hasHello) return { error: 'chat before hello' };
     const text = typeof m.text === 'string' ? sanitizeChat(m.text) : '';
     return text ? { t: 'chat', text } : { error: 'bad chat' };   // the client sanitizes before it sends, so an empty line here is not the port's client
+  }
+  if (m.t === 'social') {   // SOC1: a friend or party act - a KIND from SOCIAL_ACTS naming what that kind must name, and nothing else
+    if (!hasHello) return { error: 'social before hello' };
+    const needs = typeof m.k === 'string' && Object.prototype.hasOwnProperty.call(SOCIAL_ACTS, m.k) ? SOCIAL_ACTS[m.k] : null;
+    if (needs == null) return { error: 'bad social' };
+    const acct = m.acct === undefined ? undefined : idOf(m.acct), peer = m.peer === undefined ? undefined : idOf(m.peer), party = m.party === undefined ? undefined : idOf(m.party);
+    if (acct === null || peer === null || party === null) return { error: 'bad social' };   // named, and not by the wire's id law
+    const out = { t: 'social', k: m.k };
+    if (needs === 'acct' && !acct) return { error: 'bad social' };
+    if (needs === 'party' && !party) return { error: 'bad social' };
+    if (needs === 'target' && (!!acct === !!peer)) return { error: 'bad social' };   // one of the two, never both and never neither
+    if (acct && (needs === 'acct' || needs === 'target')) out.acct = acct;
+    if (peer && needs === 'target') out.peer = peer;
+    if (party && needs === 'party') out.party = party;
+    return out;
+  }
+  if (m.t === 'party') {   // SOC1: my party pose, to the hub - projected by the pose's own law
+    if (!hasHello) return { error: 'party before hello' };
+    const p = validPartyPose(m.p);
+    return p ? { t: 'party', p } : { error: 'bad party' };
   }
   if (m.t === 'who') {   // WORLD6b-iii(e): a member beyond the welcome's roster asked for by name, from a hello'd socket
     if (!hasHello) return { error: 'who before hello' };
@@ -875,6 +985,10 @@ export const actGate = (bucket, nowMs) => tokenGate(bucket, nowMs, ACT_HZ_MAX);
 export const actFrameFits = (data) => JSON.stringify({ t: 'act', data }).length <= MAX_FRAME_BYTES;
 /** The chat rate gate: CHAT_HZ_MAX a second (CHAT1). */
 export const chatGate = (bucket, nowMs) => tokenGate(bucket, nowMs, CHAT_HZ_MAX);
+/** SOC1: the social acts' gate - SOCIAL_HZ_MAX a second, at the hub and at home (an act the hub would refuse is never sent). */
+export const socialGate = (bucket, nowMs) => tokenGate(bucket, nowMs, SOCIAL_HZ_MAX);
+/** SOC1: the party poses' gate - PARTY_HZ_MAX a second, at the hub and at home. */
+export const partyGate = (bucket, nowMs) => tokenGate(bucket, nowMs, PARTY_HZ_MAX);
 
 /** CHAT-G (2026-09-17): THE THIRD SIDE, which nothing counted.
  *
@@ -939,4 +1053,134 @@ export function rosterFor(peers, meId, near = null) {
   // from. Worse, in a place room the poses are SCENE units, so every pixelDistance floors to 0, the sort is a no-op
   // and "the nearest 64" was the first 64 in socket order. `nearestFan` is the one ranking now, at both doors.
   return near ? nearestFan(out, near, (p) => p.pose, ROSTER_MAX) : out.slice(0, ROSTER_MAX);
+}
+
+/** SOC1: an id off the wire (ID_RE - a peer's, an account's and a party's are one shape), or null. */
+const idOf = (v) => (typeof v === 'string' && ID_RE.test(v) ? v : null);
+/** SOC1: a wall-clock stamp off the wire (ms, finite, not negative), or null. */
+const stampOf = (v) => (finite(v) && v >= 0 ? v : null);
+
+/** SOC1: a short label the hub will keep and repeat - a place name on a party pose, a hub error's words: printable
+ *  ASCII, whitespace collapsed, trimmed, bounded, '' when nothing is left; the name filter over it unless told not to
+ *  (a place name a modified client writes is shown to that player's party, so it goes through the same door a name
+ *  does; the hub's own error text is nobody's to filter). Idempotent, as the rest of this module is. */
+export function sanitizeLabel(text, max = PARTY_LOC_MAX, { filter = true } = {}) {
+  let s = '';
+  for (const ch of String(text ?? '')) { const c = ch.charCodeAt(0); if (c >= 32 && c <= 126) s += ch; }
+  s = s.replace(/\s+/g, ' ').trim().slice(0, max).trim();
+  if (!s) return '';
+  return !filter || nameAllowed(s) ? s : '';
+}
+
+/** SOC1: the party id the hub mints - the wire's id law, a `q` first so a reader can tell it from a peer's `p` and an
+ *  account's `a` at a glance (nothing checks the letter: one id law, ID_RE). */
+export const mintPartyId = (rand = Math.random, nowMs = Date.now()) => 'q' + nowMs.toString(36) + rand().toString(36).slice(2, 10).padEnd(8, '0');
+
+/** SOC1: A PARTY POSE the hub will keep and repeat, or null - where a member stands and how they fare, which is what
+ *  the party HUD and the map draw of a member who may be a continent away: `px`,`py` the map pixel (in a dungeon or a
+ *  building, the pixel of the place - "regardless of their location"); `in` 0 outside, 1 a dungeon, 2 a building;
+ *  `loc` the place's name, a label; the six vitals, each finite in [0, FOE_HEALTH_MAX] (an entity's health,
+ *  fatigue and magicka are all within it), rounded - a bar reads no fraction; and the portrait's recipe, `race`,
+ *  `gender`, `face`, by validLook's own bounds, so the HUD draws the face the doll would. Refused WHOLE when any
+ *  named field is outside its law: a member's card is never half landed. */
+export function validPartyPose(p) {
+  if (!p || typeof p !== 'object' || Array.isArray(p)) return null;
+  const px = uint(p.px, MAP_PIXELS_X - 1), py = uint(p.py, MAP_PIXELS_Y - 1);
+  if (px == null || py == null) return null;
+  const out = { px, py, in: p.in === 1 ? 1 : p.in === 2 ? 2 : 0, loc: sanitizeLabel(p.loc) };
+  for (const k of ['h', 'hm', 'f', 'fm', 'm', 'mm']) {
+    const v = p[k];
+    if (!finite(v) || v < 0 || v > FOE_HEALTH_MAX) return null;
+    out[k] = Math.round(v);
+  }
+  out.race = typeof p.race === 'string' && /^[A-Za-z]{1,16}$/.test(p.race) ? p.race : 'Breton';
+  out.gender = p.gender === 'female' ? 'female' : 'male';
+  out.face = uint(p.face, 9) ?? 0;
+  return out;
+}
+
+/** SOC1: one account as the hub names it to a client - a friend, a request, a party member: the id, the name as the
+ *  wire allows it, whether it is online now, when it was last seen (the hub's clock, ms; null for an account the hub
+ *  has no record of), and the peer ids its tabs are in the world as (ACCOUNT_TABS_MAX at most). Null for no id. */
+export function validSocialRow(r) {
+  if (!r || typeof r !== 'object' || Array.isArray(r)) return null;
+  const acct = idOf(r.acct);
+  if (!acct) return null;
+  const peers = [];
+  if (Array.isArray(r.peers)) for (const v of r.peers) { const id = idOf(v); if (id && !peers.includes(id) && peers.length < ACCOUNT_TABS_MAX) peers.push(id); }
+  return { acct, name: sanitizeName(r.name), online: !!r.online, seen: stampOf(r.seen), peers };
+}
+/** SOC1: a row with the stamp a pending request or invite carries (`at`), or null. */
+function validPendingRow(r) {
+  const row = validSocialRow(r);
+  if (!row) return null;
+  const at = stampOf(r.at);
+  if (at == null) return null;
+  return { ...row, at };
+}
+/** SOC1: a member row - a social row with the member's latest party pose, or null for a member that has sent none. */
+function validMemberRow(r) {
+  const row = validSocialRow(r);
+  if (!row) return null;
+  const p = r.p == null ? null : validPartyPose(r.p);
+  if (r.p != null && !p) return null;
+  return { ...row, p };
+}
+/** SOC1: A PARTY as the hub shows it to its members: the id, the leader's account and the members (PARTY_MAX at most,
+ *  join order - the seat passes to the longest-standing), or null. */
+export function validPartyView(v) {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return null;
+  const id = idOf(v.id), leader = idOf(v.leader);
+  if (!id || !leader || !Array.isArray(v.members) || v.members.length > PARTY_MAX) return null;
+  const members = [];
+  for (const r of v.members) { const row = validMemberRow(r); if (!row) return null; members.push(row); }
+  if (!members.some((m) => m.acct === leader)) return null;   // the leader is a member: a view that says otherwise is no party
+  return { id, leader, members };
+}
+/** SOC1: AN INVITE as the hub hands it to the invited: the party, who asked, who is in it (PARTY_MAX at most, name and
+ *  id alone - the invited is not yet a member and sees no pose), when, and when it lapses. Null for anything else. */
+export function validInvite(v) {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return null;
+  const party = idOf(v.party), from = validSocialRow(v.from), at = stampOf(v.at), expires = stampOf(v.expires);
+  if (!party || !from || at == null || expires == null || !Array.isArray(v.members) || v.members.length > PARTY_MAX) return null;
+  const members = [];
+  for (const r of v.members) { const acct = idOf(r?.acct); if (!acct) return null; members.push({ acct, name: sanitizeName(r.name) }); }
+  return { party, from: { acct: from.acct, name: from.name }, members, at, expires };
+}
+
+/** SOC1: A FRAME FROM THE HUB, projected - the client's door, as CHAT-G's is for a chat line: the relay is the
+ *  player's choice (`?server=`, the menu's Relay field), so nothing arriving over it is the port's own word, and a
+ *  frame a modified relay shapes is dropped whole rather than half applied. One home for the shape, so the hub's
+ *  own pins can assert what it sends passes the door its client reads through. Null for anything else.
+ *    state:    {acct, name, friends:[row], in:[row+at], out:[row+at], party: view|null, invites:[invite]}   my whole picture
+ *    presence: {...row}                        a friend came online or went (the row's `online`, `seen`, `peers`)
+ *    party:    {party: view|null}              my party as it stands, or none
+ *    invite:   {...invite}                     a party asks for me
+ *    note:     {code, acct, name}              something happened, as a code the client puts words to
+ *    error:    {m}                             the hub refused one act, in words */
+export function validSocialFrame(m) {
+  if (!m || typeof m !== 'object' || Array.isArray(m) || m.t !== 'social' || !SOCIAL_KINDS.includes(m.k)) return null;
+  const list = (v, max, one) => { if (v == null) return []; if (!Array.isArray(v)) return null; const out = []; for (const r of v.slice(0, max)) { const row = one(r); if (!row) return null; out.push(row); } return out; };
+  if (m.k === 'state') {
+    const acct = idOf(m.acct);
+    if (!acct) return null;
+    const friends = list(m.friends, FRIENDS_MAX, validSocialRow), inbox = list(m.in, PENDING_MAX, validPendingRow), outbox = list(m.out, PENDING_MAX, validPendingRow), invites = list(m.invites, PENDING_MAX, validInvite);
+    if (!friends || !inbox || !outbox || !invites) return null;
+    const party = m.party == null ? null : validPartyView(m.party);
+    if (m.party != null && !party) return null;
+    return { t: 'social', k: 'state', acct, name: sanitizeName(m.name), friends, in: inbox, out: outbox, party, invites };
+  }
+  if (m.k === 'presence') { const row = validSocialRow(m); return row ? { t: 'social', k: 'presence', ...row } : null; }
+  if (m.k === 'party') { if (m.party == null) return { t: 'social', k: 'party', party: null }; const party = validPartyView(m.party); return party ? { t: 'social', k: 'party', party } : null; }
+  if (m.k === 'invite') { const inv = validInvite(m); return inv ? { t: 'social', k: 'invite', ...inv } : null; }
+  if (m.k === 'note') { if (!NOTE_CODES.includes(m.code)) return null; return { t: 'social', k: 'note', code: m.code, acct: idOf(m.acct), name: m.name == null ? null : sanitizeName(m.name) }; }
+  const text = sanitizeLabel(m.m, SOCIAL_ERROR_MAX, { filter: false });   // 'error'
+  return text ? { t: 'social', k: 'error', m: text } : null;
+}
+
+/** SOC1: a party member's pose from the hub ({t:'party', acct, p}), projected, or null. */
+export function validPartyFrame(m) {
+  if (!m || typeof m !== 'object' || Array.isArray(m) || m.t !== 'party') return null;
+  const acct = idOf(m.acct), p = validPartyPose(m.p);
+  return acct && p ? { t: 'party', acct, p } : null;
 }
