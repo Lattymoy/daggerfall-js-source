@@ -203,6 +203,41 @@ export function armourModString(item) {
   return v > 0 ? `+${v}` : v < 0 ? `-${Math.abs(v)}` : '0';
 }
 
+/**
+ * MAC-M1 (2026-09-17, Mac: "Damage values arent showing on weapon tool
+ * tips. Also, not sure if armor has values either"): THE TWO NUMBERS A
+ * PLAYER PICKS A WEAPON BY, for a surface that has no TEXT.RSC record.
+ *
+ * `weaponDamageString` and `armourModString` above have existed since
+ * U25 and had exactly one reader between them - `expandItemInfo`'s
+ * `%wdm` and `%mod`, which fill the CLASSIC info popup's record. The
+ * enhanced skin's detail card draws no record at all: it builds its own
+ * rows out of `ui/enhancedInventory.js`'s `itemLine`, and that line
+ * carried weight, condition, material and stack. So the classic popup
+ * told a player a longsword hits for 1-15 and the enhanced card, which
+ * is the panel most players actually read, told them nothing.
+ *
+ * ONE PRODUCER, TWO PRESENTERS, and the distinction is the point. The
+ * NUMBERS are shared - these call the same two functions the macro pass
+ * does, so the two surfaces cannot drift apart. The QUESTION is not:
+ * the macro pass asks "what does %wdm expand to" and lets the record
+ * decide whether to print it (an arrow's record 1011 simply has no
+ * damage line), while a card with no record has to ask "should there be
+ * a Damage row at all". That is why the arrow test lives here and not
+ * in the macro.
+ *
+ * @returns {string|null} the line to show, or null if this item has none
+ */
+export const itemDamageLine = (item) => (
+  item?.group === 'Weapons' && item.templateIndex !== TEMPLATES.Arrow
+    ? weaponDamageString(item) : null);
+
+/** The armour rating's other half. DFU shows `%mod` on both armour
+ *  records (1000 and 1014), so there is no template to exclude - every
+ *  piece of armour has one, and a shield's comes off the same
+ *  `itemArmorValue` the paperdoll totals. */
+export const itemArmourLine = (item) => (item?.group === 'Armor' ? armourModString(item) : null);
+
 /** The material NAMES the %mat macro resolves (TextProvider's
  *  GetArmorMaterialName / GetWeaponMaterialName). Armor's enum is
  *  bit-packed (0x0200 | tier) where the weapon's is a plain 0..9, so
