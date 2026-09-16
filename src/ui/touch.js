@@ -83,6 +83,7 @@
 //   field that raises the keyboard instead of window.prompt.
 
 import { createGestureRecognizer, TAP_PX, TAP_MS } from './touchGestures.js';
+import { PIXEL_FONT_CSS } from './pixelifyFive.js';   // FONT1: the enhanced skin's face for the layer's text
 import { overlayOpen } from './enhancedOverlays.js';
 import { bindings } from './input.js';                       // AUDIT 62 F8: the live registry
 import { getBinding, getCombo } from '../systems/inputActions.js';   // GetBinding (:641-671), GetCombo (:1195-1207)
@@ -141,7 +142,7 @@ const codesOf = (code) => (code == null ? [] : (getCombo(code) ?? [code]));
 /**
  * Attach the touch layer.
  * @param canvas the game canvas (drag surface)
- * @param hooks { look(dx,dy), attack?(dx,dy,held), tap?(x,y), locked?(), dial?, cycleMode?(), socialInteract?(), overlayActive?(), paused?() }
+ * @param hooks { look(dx,dy), attack?(dx,dy,held), tap?(x,y), locked?(), dial?, enhanced?, cycleMode?(), socialInteract?(), overlayActive?(), paused?() }
  *   TI2 adds nothing to the hooks: the analog stick is read FROM the
  *   handle (`axes()`), the gyro goes through `look`.
  *   - attack/tap/dial omitted on scenes without them (the fly-cam
@@ -158,7 +159,11 @@ export function attachTouch(canvas, hooks = {}) {
 
   const ui = document.createElement('div');
   ui.id = 'touch-ui';
-  ui.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:5;font:600 15px system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none';
+  // FONT1 (2026-09-16, Mac: "Any enhanced UI or text must be our enhanced version"): under the enhanced skin the layer's
+  // buttons, entry field and nav are in the pixel face (ui/pixelifyFive.js PIXEL_FONT_CSS - one home); the classic skin
+  // keeps the system face it always drew. The skin cannot change without a reload, so the boot-time hook is exact.
+  const face = hooks.enhanced ? `font-weight:500;font-size:15px;${PIXEL_FONT_CSS}` : 'font:600 15px system-ui,-apple-system,"Segoe UI",sans-serif';
+  ui.style.cssText = `position:fixed;inset:0;pointer-events:none;z-index:5;${face};-webkit-user-select:none;user-select:none;-webkit-touch-callout:none`;
   document.body.appendChild(ui);
 
   // TI2: the haptic pulse - navigator.vibrate where the platform has it

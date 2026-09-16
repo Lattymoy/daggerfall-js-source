@@ -90,27 +90,44 @@ import { CHAT_MAX } from '../net/wire.js';
 import { tagOf } from '../net/chat.js';
 import { rosterRows, rosterTitle } from '../net/roster.js';   // CHAT-R1: who is online, in order (the cap is the model's own - AUDIT-CHATR F4: this file imported it and never used it, and lint could not see that: no-unused-vars is on for server/src and not for src)
 import { getPref, setPref } from '../systems/uiPrefs.js';   // CHAT-R2: the hidden state outlives the session
+import { PIXELIFY_FIVE_FACE, PIXEL_FONT_CSS, PIXEL_TEXT_SHADOW } from './pixelifyFive.js';   // FONT1: the enhanced skin's own face, unsmoothed, with Silkscreen's five
 
 /** The action whose key opens the chat: DFU's own cursor key (Enter by default), since opening frees the cursor. */
 export const CHAT_OPEN_ACTION = 'ActivateCursor';
 
 export const CHAT_STYLE_ID = 'dagger-chat-style';
 
-/** The panel's sheet: the enhanced tokens (enhancedStyle.js) where they exist, a fallback where the skin's sheet is not loaded. */
+/** The panel's sheet: the enhanced tokens (enhancedStyle.js) where they exist, a fallback where the skin's sheet is not loaded.
+ *
+ *  FONT1 (2026-09-16, Mac: "Especially the new online interfaces font use our enhanced font"): THE FACE IS THE
+ *  SKIN'S, NOT THE LAUNCHER'S. This sheet set `--data` (Barlow Semi Condensed) - which is the MENU's face, the one
+ *  the boot screens and the settings pages are set in - so the chat stood over an enhanced world in a font nothing
+ *  else in that world uses. In-game the enhanced skin is the pixel stack (ui/pixelifyFive.js PIXEL_STACK, the same
+ *  face ui/enhancedHud.js and every floating window wear), unsmoothed, and text laid over the world takes the HUD's
+ *  hard shadow pair rather than a blur: a blurred drop shadow under a pixel glyph reads as a rendering fault.
+ *  The @font-face for the FIVE rides this sheet too (FIX-D), because this sheet is injected on its own and a
+ *  document that never mounted the skin's stylesheet would otherwise draw Pixelify's 5 - the glyph that reads as 8.
+ *
+ *  AND THE SIZES CAME DOWN A STEP where the line is long. Pixelify Sans measures about 1.29x the width of Barlow
+ *  Semi Condensed at one size (measured in Chromium, tools/font1Probe.mjs), so every size here is really a size and
+ *  a quarter: the chat line is 13px where it was 14, the tag/time/hint/status 10-11 where they were 11-12, the
+ *  roster row 12 where it was 13. Nothing a THUMB presses moved - AUDIT SOC C8's 44px targets and the button type
+ *  (14px / 6px 10px, pinned) are untouched, because a pixel face is not a reason to shrink a target. */
 export const CHAT_CSS = `
+${PIXELIFY_FIVE_FACE}
 .dfchat { position: fixed; left: calc(14px + env(safe-area-inset-left, 0px)); top: calc(44px + env(safe-area-inset-top, 0px));
   width: min(440px, calc(100vw - 28px)); z-index: 5; pointer-events: none;
-  font-family: var(--data, 'Barlow Semi Condensed', system-ui, sans-serif); color: var(--bone, #e9e4d9); }
+  ${PIXEL_FONT_CSS} color: var(--bone, #e9e4d9); }
 .dfchat.touch { top: calc(72px + env(safe-area-inset-top, 0px)); }
 .dfchat-peek { display: flex; flex-direction: column; gap: 3px; }
-.dfchat-line { flex: none; font-size: 14px; line-height: 1.3; overflow-wrap: anywhere; overflow: hidden; text-shadow: 0 1px 2px #000, 0 0 6px rgba(0,0,0,.85); }
+.dfchat-line { flex: none; font-size: 13px; line-height: 1.35; overflow-wrap: anywhere; overflow: hidden; text-shadow: ${PIXEL_TEXT_SHADOW}; }
 .dfchat-name { color: var(--brass, #c08a3e); font-weight: 600; }
-.dfchat-tag { color: var(--dim, #8b8578); font-size: 11px; margin: 0 6px 0 2px; }
+.dfchat-tag { color: var(--dim, #8b8578); font-size: 10px; margin: 0 6px 0 2px; }
 .dfchat-line.mine .dfchat-name { color: #dcc27c; }
 .dfchat-line.system .dfchat-text { color: #8fb8d8; font-style: italic; }
-.dfchat-time { color: var(--dim, #8b8578); font-size: 11px; margin-right: 6px; }
-.dfchat-hint { margin-top: 4px; font-size: 12px; color: var(--dim, #8b8578); opacity: .75; text-shadow: 0 1px 2px #000; }
-.dfchat-status { margin-top: 4px; font-size: 12px; color: #e0b070; text-shadow: 0 1px 2px #000; }
+.dfchat-time { color: var(--dim, #8b8578); font-size: 10px; margin-right: 6px; }
+.dfchat-hint { margin-top: 4px; font-size: 11px; color: var(--dim, #8b8578); opacity: .75; text-shadow: ${PIXEL_TEXT_SHADOW}; }
+.dfchat-status { margin-top: 4px; font-size: 11px; color: #e0b070; text-shadow: ${PIXEL_TEXT_SHADOW}; }
 .dfchat-status:empty { display: none; }
 .dfchat-open { display: none; pointer-events: auto; margin-top: 4px; align-items: center; gap: 6px; }
 .dfchat.touch .dfchat-open { display: inline-flex; }
@@ -140,7 +157,7 @@ export const CHAT_CSS = `
 .dfchat-who { flex: none; width: 132px; border-left: 1px solid var(--iron, #2b323b); display: flex; flex-direction: column; min-height: 0; }
 .dfchat-whohead { flex: none; padding: 6px 8px 4px; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--dim, #8b8578); }
 .dfchat-wholist { flex: 1; min-height: 0; overflow-y: auto; padding: 0 8px 6px; display: flex; flex-direction: column; gap: 1px; }
-.dfchat-who-row { font-size: 13px; line-height: 1.35; overflow-wrap: anywhere; color: var(--bone, #e9e4d9); }
+.dfchat-who-row { font-size: 12px; line-height: 1.35; overflow-wrap: anywhere; color: var(--bone, #e9e4d9); }
 .dfchat-who-row.me .dfchat-who-name { color: #dcc27c; }
 .dfchat-who-name { font-weight: 600; }
 .dfchat-who-tag { color: var(--dim, #8b8578); font-size: 10px; margin-left: 4px; }

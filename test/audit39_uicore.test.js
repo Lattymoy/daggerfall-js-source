@@ -129,9 +129,12 @@ test('AUDIT 39 F127 / TI1: the drag hook is live - the swipe calls it, and no bu
   assert.doesNotMatch(touch, /hooks\.attackTap/, 'the tap-to-attack button is gone (the tap is the activation now)');
   // AUDIT SOC C9 re-pinned: `socialInteract` joined the list - the phone's door to SOC5's action, which had no
   // control at all on a touch device. The law is unchanged: the header documents EXACTLY the hooks the layer calls.
-  assert.match(touch, /@param hooks \{ look\(dx,dy\), attack\?\(dx,dy,held\), tap\?\(x,y\), locked\?\(\), dial\?, cycleMode\?\(\), socialInteract\?\(\), overlayActive\?\(\), paused\?\(\) \}/,
+  // FONT1 re-pinned: `enhanced` joined it - the skin flag that puts the layer's text in the pixel face (the classic skin keeps system-ui)
+  assert.match(touch, /@param hooks \{ look\(dx,dy\), attack\?\(dx,dy,held\), tap\?\(x,y\), locked\?\(\), dial\?, enhanced\?, cycleMode\?\(\), socialInteract\?\(\), overlayActive\?\(\), paused\?\(\) \}/,
     'the header documents exactly the hooks the layer calls (AUDIT 62 F7 added `paused`, the pause predicate the mouse arms always carried)');
   assert.match(touch, /if \(hooks\.socialInteract\) button\(/, '...and the social button is drawn only where a host hands the hook in');
+  assert.match(touch, /const face = hooks\.enhanced \? `font-weight:500;font-size:15px;\$\{PIXEL_FONT_CSS\}` : 'font:600 15px system-ui,-apple-system,"Segoe UI",sans-serif';/, 'FONT1: the enhanced skin\'s layer is in the pixel face, the classic skin\'s in the system face');
+  assert.match(read('src/scenes/world.js'), /\n    enhanced: isEnhanced\(\),/, 'and the host hands the skin in');
   assert.match(touch, /const paused = !!hooks\.paused\?\.\(\);/, '...and the layer calls it');
   // The three combat hosts pass the drag hook; the fly-cam interior
   // passes neither it nor a tap and gets no sword and no dial.

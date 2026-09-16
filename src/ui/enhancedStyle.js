@@ -83,6 +83,15 @@ export const fontsUrl = (families) =>
  *  own claim. */
 export const ENHANCED_FONTS_URL = fontsUrl([FONT_DISPLAY, FONT_DATA, FONT_PIXEL_BRAND, FONT_PIXEL_DATA]);
 
+/* FONT1: THE POPUP COLUMN'S TWO NUMBERS, in one home. The sheet below
+   sets them and ui/enhancedHudText.js reads them - the slide is
+   computed in pixels from the row height, so a row that is 20px in the
+   sheet and 18 in the module would scroll out by the wrong amount
+   every time a line leaves. `TOP` clears the compass strip and a named
+   target's bar (measured in Chromium, tools/font1Probe.mjs). */
+export const HUD_TEXT_TOP_PX = 96;
+export const HUD_TEXT_ROW_PX = 20;
+
 export const ENHANCED_CSS = `
 /* ── FIX-D: the digit five is Silkscreen's - see ui/pixelifyFive.js */
 ${PIXELIFY_FIVE_FACE}
@@ -1896,11 +1905,68 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
   text-shadow: 2px 2px 0 rgb(93,77,12); }
 .hud-effrounds { color: var(--brass); font-variant-numeric: tabular-nums; }
 
+/* ── FONT1: THE POPUP COLUMN ─────────────────────────────────────
+   Every line the game says without opening a window - the Ambient Text
+   mod's street lines, "Your Long Blade skill has improved.", the loot
+   tallies - drew in the classic BITMAP font under this skin until
+   FONT1, because the enhanced HUD replaced the bars and never took the
+   text (ui/enhancedHudText.js, ui/hudText.js). It is PopupText's own
+   column, in this skin's face: centred, growing downward, sliding up
+   by one row as the front line leaves, in the classic shadowed pair
+   the classic popup is drawn in (nativePanel DEFAULT_TEXT_COLOR is
+   rgb(243,239,44) and its shadow rgb(93,77,12) - the same yellow the
+   mode word wears above).
+
+   IT STARTS BELOW THE COMPASS. The classic column starts at the top of
+   the native panel; here the compass strip (top 18, 26 tall) and the
+   target bar stand there, so 96px clears both - measured, not guessed
+   (tools/font1Probe.mjs). The row box is 20px, which is
+   ENHANCED_HUD_TEXT_ROW_H in that module: the slide is computed in
+   pixels from it, so the two numbers are one number. */
+.hudtext { position: fixed; left: 50%; top: ${HUD_TEXT_TOP_PX}px; z-index: 4; pointer-events: none;
+  transform: translateX(-50%) translateY(var(--hudtext-slide, 0px)) scale(var(--hud-scale, 1));
+  transform-origin: top center;
+  display: flex; flex-direction: column; align-items: center;
+  font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none;
+  font-variant-ligatures: none; font-feature-settings: 'liga' 0, 'clig' 0;
+  color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12);
+  max-width: min(680px, 86vw); }
+.hudtext-row { height: ${HUD_TEXT_ROW_PX}px; line-height: ${HUD_TEXT_ROW_PX}px; font-size: 14px;
+  letter-spacing: 0.04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+
+/* FONT1: THE MID-SCREEN LABEL - DaggerfallHUD's OTHER text surface
+   (AUDIT 64 F34, ui/midScreenText.js): one centred line that replaces
+   itself, where the mode word and every "You are too far away" is
+   spoken. DFU puts it at native y=146 of 200, and 73% is that
+   proportion - so the line lands where a player swapping skins expects
+   it, above the bars and below the reticle. */
+.hudmid { position: fixed; left: 50%; top: 73%; transform: translateX(-50%) scale(var(--hud-scale, 1));
+  transform-origin: top center; z-index: 4; pointer-events: none; text-align: center;
+  max-width: min(680px, 86vw); font-size: 15px; letter-spacing: 0.04em;
+  font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none;
+  font-variant-ligatures: none; font-feature-settings: 'liga' 0, 'clig' 0;
+  color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+
+/* FONT1: THE ONLINE STATUS LINE - the socket's own word (connecting,
+   reconnecting, refused), top-left where the classic drew it and clear
+   of the chat panel's corner at 44. The online lane IS the enhanced
+   lane (systems/onlineLane.js), so this line is never seen in any
+   other face. Brass rather than the popup's yellow: it is the machine
+   talking, not the game. */
+.hudstatus { position: fixed; left: calc(8px + env(safe-area-inset-left, 0px));
+  top: calc(8px + env(safe-area-inset-top, 0px)); z-index: 4; pointer-events: none;
+  max-width: min(420px, 60vw); font-size: 13px; letter-spacing: 0.04em;
+  font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none;
+  font-variant-ligatures: none; font-feature-settings: 'liga' 0, 'clig' 0;
+  color: #e0b070; text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+
 @media (max-width: 860px) {
   .hud-top { top: 10px; }
   .hud-bottom { bottom: 12px; gap: 8px; }
   .hud-bars { gap: 10px; }
   .hud-vital .hud-track { width: 26vw; }
+  /* the compass and the bar above it move up with .hud-top, so the column follows them */
+  .hudtext { top: 82px; }
 }
 
 /* PX25: the doors the F5 sheet carried, on the page that is the sheet. */

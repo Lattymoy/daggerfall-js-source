@@ -75,7 +75,7 @@ export function hostSlots() {
 /** The enclosing function body of line `i`, by indentation.
  *
  *  THE SCOPE IS THE LAW, NOT A WINDOW SIZE. The first pass here used a
- *  fixed four-line lookback and so called `townTalk.js:1197`
+ *  fixed four-line lookback and so called `townTalk.js:1203`
  *  `overlay.hover(...)` unguarded - its guard, `if (!overlay?.hover)
  *  return false`, sits eight lines up at the top of the same function.
  *  HARD2's D10 pin was re-aimed off a fixed 80-line window for exactly

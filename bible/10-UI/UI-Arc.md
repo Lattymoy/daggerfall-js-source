@@ -55,14 +55,14 @@ does the pack's USE arm.
                         worldModes.js:1851 (the factory) and :1904 (a
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
-                        dungeonContext.js:954, world.js:1710,
+                        dungeonContext.js:954, world.js:1712,
                         exterior.js:2027. It is the only window TWO
                         enhanced screens already push - the sheet's
                         button and the pack's USE hand-off, whose
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:5003, dungeonContext.js:5935. A seam
+    / NOTEBOOK          world.js:5005, dungeonContext.js:5935. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -1813,8 +1813,11 @@ Windows close on ESC. Backgrounds FLAGGED as U2/U3.
 
 ## U5 (HUD popup text): SHIPPED
 
-ui/hudText.js is the classic bottom-center message queue
-(AddHUDText shape): newest-last, 4-line cap, ~2s per line with a
+ui/hudText.js is the message queue (AddHUDText shape; PopupText's
+column is TOP-centred, y=4 of the native panel - and since FONT1,
+2026-09-16, the classic bitmap draw is the classic skin's while the
+enhanced skin draws the same queue as a DOM column in the pixel face,
+ui/enhancedHudText.js): newest-last, 4-line cap, ~2s per line with a
 0.4s fade, drawn just above the vitals in classic text. SEVEN
 consumers wired in the scene: pickup ('You take N items.'), skill
 raises ('Your X skill has improved.' - the classic phrasing),
@@ -7863,7 +7866,7 @@ mutations, 4 dead.
 
 PX24 (Mac: "with the logbook and history, I want them as one detailed
 UI"): THE CHRONICLE. Two classic windows built at four sites -
-questJournal.js from charSheetNav:53, world.js:2048 and
+questJournal.js from charSheetNav:53, world.js:2050 and
 dungeonContext.js, playerHistory.js from charSheetNav:61 - become ONE
 seam (ui/chronicleDoor.js, the U52/U53/PX23 shape a sixth time) and,
 on the enhanced skin, ONE WINDOW.
@@ -9734,9 +9737,9 @@ re-resolved the `exterior.js` half of a three-file sentence and left the
 `ExteriorAutomapWindow` construction, `:4101` on a `locationName:`
 field). Both halves are now read by `test/citedrift.test.js` - the
 existing entries only ever captured the exterior number, which is how
-the other half went stale unnoticed. (The rest cite named `world.js:5247`,
+the other half went stale unnoticed. (The rest cite named `world.js:5249`,
 the first of the host's TWO identical `act === 'Rest'` arms; ROAD-H H5
-deleted the second and the cite is `world.js:5253` now.)
+deleted the second and the cite is `world.js:5255` now.)
 
 ## AUDIT 62 F24/F25 - THE SENTINEL SWEEP WAS TWO WINDOWS SHORT (2026-09-07)
 
@@ -13716,4 +13719,67 @@ Pins: `test/dglnx_skincarry.test.js` - a refused store answers false
 and null and the page keeps the choice (a throwing localStorage,
 executed); switchSkin's carry by source; the folder arm's guard,
 progress, empty-pick and throw messages by source.
+
+## FONT1 - EVERY ENHANCED SURFACE IN THE ENHANCED FACE (2026-09-16)
+
+Mac: "Enhanced mode UI. Especially the new online interfaces font use our
+enhanced font. Ambient Text mod also doesnt use it. Any enhanced UI or
+text must be our enhanced version." One Opus lane, one commit; the touch
+layer by the integrator.
+
+**What was wrong.** The social arc's four DOM surfaces (`ui/chatPanel.js`,
+`ui/socialPanel.js` and its toast, `ui/partyPanel.js`, `ui/socialMenu.js`)
+were set in `var(--data, 'Barlow Semi Condensed', ...)` - the LAUNCHER's
+face - over an enhanced world whose HUD and windows are the pixel stack
+(`PIXEL_STACK`, Pixelify Sans with Silkscreen's five, FIX-D). And the HUD
+popup text - Ambient Text's lines among every other AddHUDText line
+(skill improved, loot, quest text) - drew in the 1996 bitmap font on BOTH
+skins: `say` -> `townTalk.say` -> `HudText.add` -> PopupText, drawn
+through `ui/text.js`; `ui/enhancedHud.js` never took the text. So did the
+mid-screen label (`ui/midScreenText.js`: the mode word, "You are too far
+away", the lockpick ladder) and the online status line drawn beside the
+names.
+
+**One home.** `PIXEL_FONT_CSS` (`ui/pixelifyFive.js`): the stack, the
+smoothing off, ligatures off - so five sheets cannot hold five copies of
+which the fifth forgets the smoothing; `PIXEL_TEXT_SHADOW` the HUD's hard
+pair for text over the world. Each surface's own sheet carries
+`PIXELIFY_FIVE_FACE`, because each is injected on its own and a document
+without the skin's stylesheet would draw Pixelify's 8-shaped five. Sizes
+retuned by measurement (`tools/font1Probe.mjs`, Chromium 1280x860 with
+the game's own fonts inlined): Pixelify Sans runs x1.294 the width of
+Barlow at one size, so the chat line 14->13, tag/time 11->10, hint/status
+12->11, roster row 13->12, party name 14->13; no spill in either skin, the
+44px touch targets of AUDIT SOC C8 hold, a 24-character name box holds 20
+at 13px. The touch layer (`ui/touch.js`) takes an `enhanced` hook from the
+host and draws its buttons, entry field and nav in the pixel face under
+the enhanced skin, the system face under the classic.
+
+**The popup text.** `HudText.frame()` (`ui/hudText.js`) hands PopupText
+.Draw's own frame - the rows, with DFU's `if (++count > maxCount) break`
+off-by-one (maxRows + 1), and the slide (`timer / popDelay`, only while
+negative) - to `ui/enhancedHudText.js`, a DOM column in the pixel face at
+HUD_TEXT_TOP_PX (96, under the compass block that ends at 82), centred,
+moved not rebuilt, spent rows dropped; `draw` branches on `isEnhanced() &&
+document`, and the classic arm below the branch is byte for byte what it
+was. The queue, the pop delay, the rubber-band and the scroll-out are
+untouched. The mid-screen label goes through the same seam at 73% (DFU's
+native y 146/200), the status line top-left where the classic drew it.
+THE HIDE DOOR (AUDIT 64 F37's law): a DOM column is not repainted, so
+"do not draw" is said - `else hud.hide()` at every gated site, all four
+hosts named (townTalk.frame for world.js and exterior.js, townTalk.hudFrame
+for worldModes.js, dungeonContext.js's own, `ui/hud.js` for the label).
+
+**Pinned** in `test/hudtext.test.js` (+6), chat1, soc3, soc4, soc5 (+1
+each) and audit64's F37 pin strengthened (the hide door counted per host);
+`tools/mutants/font1.json` 45 - 45 dead (each sheet back to `--data`, each
+five-face dropped, the smoothing flipped, the blur shadows back, the
+enhanced arm dropped or taken on both skins, the rows cut, the slide from
+a waiting timer, both hide doors as no-ops, the column rebuilt or never
+sliding, the label off its 73%, the status strip's three, the touch layer
+in the system face under the enhanced skin). Left open, said by the lane:
+the FPS read-out stays `ui-monospace` (a debug figure on both skins); the
+status strip on a phone sits under the touch layer's two top-left buttons
+exactly as the classic did; the enhanced HUD has no arrow counter (AUDIT
+28 W2a's classic-arm feature) - not a font matter.
 

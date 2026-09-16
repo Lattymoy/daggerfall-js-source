@@ -550,7 +550,11 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   // observed because the seven-row column tops out ~70 native px above
   // this label's y=146.
   if (!cursorActive) midScreenText.tick(dt);
-  if (hudDrawn) midScreenText.draw(renderer, canvas, font);
+  // FONT1: ...and the refused frame reaches the hide door, because the
+  // enhanced skin's label is DOM and a DOM line stays painted until it
+  // is told otherwise (this finding's own law, F37). On the classic
+  // skin `hide()` is nothing, which is what the bare `if` meant there.
+  if (hudDrawn) midScreenText.draw(renderer, canvas, font); else midScreenText.hide();
   // Above the `!art` return, like the flash: the enhanced HUD reads no
   // ARENA2, and a player whose HUD art failed to load still has vitals.
   if (isEnhanced() && typeof document !== 'undefined') {

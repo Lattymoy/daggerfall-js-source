@@ -43,6 +43,7 @@ import { overlayOpen } from './enhancedOverlays.js';
 import { isTouchDevice } from './touch.js';
 import { PARTY_MAX } from '../net/wire.js';
 import { lastOnlineText, PARTY_GREEN_CSS, FRIEND_CSS } from '../net/social.js';
+import { PIXELIFY_FIVE_FACE, PIXEL_FONT_CSS } from './pixelifyFive.js';   // FONT1: the enhanced skin's own face, unsmoothed, with Silkscreen's five
 
 export const SOCIAL_STYLE_ID = 'dagger-social-style';
 
@@ -71,15 +72,20 @@ export const TRY_AGAIN_TEXT = 'Try again in a moment';
 /** The panel's sheet: the enhanced tokens (enhancedStyle.js) where they exist, a fallback where the skin's sheet is
  *  not loaded - the same bargain ui/chatPanel.js strikes.
  *
+ *  FONT1 (2026-09-16, Mac: "Especially the new online interfaces font use our enhanced font"): the face is the
+ *  skin's pixel stack, not `--data` - see ui/chatPanel.js's CHAT_CSS header for the whole reading. The five's
+ *  @font-face rides this sheet for the same reason it rides that one: each is injected on its own.
+ *
  *  THE BODY IS A FIXED-HEIGHT FLEX-COLUMN SCROLLER, which is the shape CHAT2 was a bug in: a flex item that hides
  *  its own overflow resolves `min-height: auto` to zero and is squeezed to nothing by the default `flex-shrink: 1`
  *  rather than overflowing into the scroll. So every row, section and empty line in here states `flex: none` from
  *  the first commit. */
 export const SOCIAL_CSS = `
+${PIXELIFY_FIVE_FACE}
 .dfsocial { position: fixed; left: calc(14px + env(safe-area-inset-left, 0px)); top: calc(44px + env(safe-area-inset-top, 0px));
   width: min(360px, calc(100vw - 28px)); max-height: min(460px, 70vh); z-index: 6; display: none; flex-direction: column;
   background: rgba(14, 16, 19, .92); border: 1px solid var(--iron, #2b323b); border-radius: 6px; backdrop-filter: blur(4px);
-  font-family: var(--data, 'Barlow Semi Condensed', system-ui, sans-serif); color: var(--bone, #e9e4d9); }
+  ${PIXEL_FONT_CSS} color: var(--bone, #e9e4d9); }
 .dfsocial[data-open="1"] { display: flex; }
 .dfsocial.touch { top: calc(72px + env(safe-area-inset-top, 0px)); }
 /* beside the chat where there is room for both (14 + 440 + 12) */
@@ -144,7 +150,7 @@ export const SOCIAL_CSS = `
   width: min(440px, calc(100vw - 28px)); z-index: 7; display: none; align-items: center; gap: 8px; box-sizing: border-box;
   pointer-events: none;
   background: rgba(14, 16, 19, .92); border: 1px solid var(--brass, #c08a3e); border-radius: 6px; padding: 6px 8px;
-  font-family: var(--data, 'Barlow Semi Condensed', system-ui, sans-serif); color: var(--bone, #e9e4d9); }
+  ${PIXEL_FONT_CSS} color: var(--bone, #e9e4d9); }
 .dfsocial-toast[data-up="1"] { display: flex; }
 .dfsocial-toast .dfsocial-btn { pointer-events: auto; }
 `;

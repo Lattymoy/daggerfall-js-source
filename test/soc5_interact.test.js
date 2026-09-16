@@ -570,3 +570,23 @@ test('AUDIT SOC D14: the pick header says the two things it does NOT do - the cy
   // the street own arm measures a person with the very same call and no collider of its own
   assert.match(rd('src/scenes/world.js'), /personDistances: _livePersons\.map\(\(p\) => rayPersonDistance\(/, 'one cylinder, both arms');
 });
+
+// ── FONT1 (2026-09-16, Mac: "Any enhanced UI or text must be our
+// enhanced version") ────────────────────────────────────────────────
+
+test('FONT1: the F-menu over a body is the skin\'s face too, and the two online sheets carry the five each on its own', () => {
+  const root = SOCIAL_MENU_CSS.slice(SOCIAL_MENU_CSS.indexOf('\n.dfpeer {'));
+  assert.match(root.slice(0, root.indexOf('}')), /font-family: 'Pixelify Five', 'Pixelify Sans', monospace;/,
+    'mutants: left on var(--data) - the launcher face on a card that opens under the crosshair; the five dropped from the stack (FIX-D)');
+  assert.match(root.slice(0, root.indexOf('}')), /-webkit-font-smoothing: none;/, 'mutant: the smoothing left on, which blurs every pixel glyph');
+  assert.doesNotMatch(SOCIAL_MENU_CSS, /--data/, 'no corner of this sheet is still in the menu\'s face');
+  // AUDIT SOC C1's law is that these two surfaces stand at once and
+  // share no selector - so each carries the five's @font-face itself
+  // rather than relying on the other having been injected.
+  for (const [name, css] of [['the F-menu', SOCIAL_MENU_CSS], ['the friends panel', SOCIAL_CSS]]) {
+    assert.match(css, /@font-face \{ font-family: 'Pixelify Five'; unicode-range: U\+0035;/, `${name} carries the five itself`);
+  }
+  // ...and the finger keeps its 44px: a wider face is no reason to
+  // shrink a target (AUDIT SOC C8).
+  assert.match(SOCIAL_MENU_CSS, /\.dfpeer-btn \{[^}]*min-height: 44px;/, 'mutant: the row shrunk to fit the wider letters');
+});

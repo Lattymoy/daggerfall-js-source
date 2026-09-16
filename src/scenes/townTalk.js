@@ -1097,7 +1097,13 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // (:347-351) hides the popup column with everything else. Only
     // the DRAW half is gated - PopupText.Update retires rows from
     // DaggerfallHUD.Update, which renderHUD does not touch.
-    if (font && hudRenderEnabled()) hud.draw(renderer, canvas, font, s);
+    // FONT1: ...and the ELSE says so out loud. The enhanced skin draws
+    // this column in the DOM (ui/enhancedHudText.js), and a DOM column
+    // stays painted unless it is told to hide - AUDIT 64 F37's own law -
+    // so a frame the gate refuses must reach `hide()` rather than simply
+    // skip the paint. On the classic skin `hide()` does nothing, which
+    // is what skipping the call always did.
+    if (font && hudRenderEnabled()) hud.draw(renderer, canvas, font, s); else hud.hide();
     // ROAD close-P: THE STACK IS PAINTED, NOT JUST ITS TOP.
     // DaggerfallPopupWindow.Draw (:77-86) runs `previousWindow.Draw()`
     // before its own, and every box DaggerfallUI.MessageBox opens
@@ -1292,7 +1298,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
      *  frame after the player walked out. It drives this directly. */
     hudFrame: (dt, font_ = font) => {
       hud.tick(dt);
-      if (font_ && hudRenderEnabled()) hud.draw(renderer, canvas, font_, hudScale(canvas.width, canvas.height));   // AUDIT 64 F37: the same Draw gate as the frame above
+      if (font_ && hudRenderEnabled()) hud.draw(renderer, canvas, font_, hudScale(canvas.width, canvas.height)); else hud.hide();   // AUDIT 64 F37: the same Draw gate as the frame above, with FONT1's hide door on its else (the enhanced column is DOM and persists)
     },
     get overlayActive() { return talkPaused(); },   // ROAD-tail: the STACK's pause latch, not this host's slot arithmetic
     /** EB4: ...and whether the occupant has already said it is DONE -

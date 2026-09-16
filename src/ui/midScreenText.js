@@ -42,8 +42,18 @@
 // of the four hosts speaks to the same surface without a sink threaded
 // through it.
 
+// FONT1 (2026-09-16, Mac: "Any enhanced UI or text must be our
+// enhanced version"): THE LABEL IS THE SKIN'S, THE TIMER IS DFU'S.
+// Everything below - the sentinel, the 1.5 s delay, the large-HUD lift
+// - is DaggerfallHUD and stays it on both skins; only `draw` branches,
+// handing the live line to ui/enhancedHudText.js's DOM label. The
+// classic arm is byte for byte what it was, and `hide()` exists for
+// the same reason HudText's does: a DOM line is not repainted, so a
+// frame that must not show it has to SAY so (AUDIT 64 F37).
 import { drawText, measureText } from './text.js';
 import { nativeMetrics, NATIVE_W, DEFAULT_TEXT_COLOR } from './nativePanel.js';
+import { isEnhanced } from '../systems/uiSkin.js';
+import { drawEnhancedMidText } from './enhancedHudText.js';
 
 /** DaggerfallHUD.cs:25 `const int midScreenTextDefaultY = 146`, the
  *  label's Position.y on the 320x200 NativePanel (:176). */
@@ -130,10 +140,21 @@ export class MidScreenText {
    *  at Position.y (:176) - a NativePanel child, so it rides the
    *  centred native fit exactly as the popup column does. */
   draw(renderer, canvas, font) {
+    if (isEnhanced() && typeof document !== 'undefined') {
+      drawEnhancedMidText({ text: this.text, visible: true });
+      return;
+    }
     if (!font || !this.text) return;
     const m = nativeMetrics(canvas);
     const x = (NATIVE_W - measureText(font.fnt, this.text)) / 2;
     drawText(renderer, font, this.text, m.ox + x * m.s, m.oy + this.y * m.s, m.s, DEFAULT_TEXT_COLOR);
+  }
+
+  /** FONT1: the hide door - the enhanced skin's label is DOM and stays
+   *  painted until it is told otherwise. Nothing at all on the classic
+   *  skin, which is what not calling `draw` always meant there. */
+  hide() {
+    if (isEnhanced() && typeof document !== 'undefined') drawEnhancedMidText({ text: '', visible: false });
   }
 
   /** The tests' reset. */

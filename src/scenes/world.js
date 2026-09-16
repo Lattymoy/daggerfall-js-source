@@ -302,6 +302,7 @@ import { hudShortcutKey } from '../ui/hudShortcuts.js';   // AUDIT 64 F36/F37: D
 import { createActivateGate, activateFrame, setClickDelay } from '../systems/activateGate.js';   // A8: PlayerActivate's ActivateCenterObject frame
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady, pauseOpts } from '../ui/pauseDoor.js';   // I3/I4; U51 picks the skin; MAC-L1: pauseOpts is the ONE reader of the door's options
 import { isEnhanced } from '../systems/uiSkin.js';   // WM2d: the mills are an enhanced-only addition
+import { drawEnhancedStatusLine } from '../ui/enhancedHudText.js';   // FONT1: the online status line in the skin's own face
 
 /** Internal_Strings_en 654 / 655, the two guild map-reveal notes
  *  (ThievesGuild.cs:115, DarkBrotherhood.cs:108). %map is the
@@ -5485,6 +5486,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // skin cannot change without a reload (both switches end in
     // location.replace), so this boot-time read is exact.
     dial: isEnhanced(),
+    enhanced: isEnhanced(),   // FONT1: the layer's text in the pixel face under the enhanced skin
     cycleMode: () => townTalk.nextMode(),   // T3-touch: the phone's F1-F4
     socialInteract: () => socialInteract(),   // AUDIT SOC C9: the phone's F - the host's own door (a card over the body in front, else the friends panel; false with no account, and the layer's button then does nothing)
     overlayActive: () => townTalk.overlayActive,
@@ -7415,9 +7417,22 @@ export async function bootWorld(canvas, renderer, params, status) {
     remotePlayers.sync(drawable, onlineToScene, { bodyHeight: (id) => peerBodies.heightOf(id) });
   };
   const drawPeerBodies = (proj, view, eye) => { if (peerBodies) peerBodies.draw(canvas, { proj, view, eye }); };
+  /** FONT1 (2026-09-16, Mac: "Especially the new online interfaces font use our enhanced font"): THE SOCKET'S OWN
+   *  WORD, IN THE SKIN'S FACE. The online lane is the enhanced lane whole (systems/onlineLane.js), so this line -
+   *  connecting, reconnecting, refused - was the one online surface still drawn in the classic bitmap font while
+   *  the chat, the roster, the party HUD and the friends panel beside it wear the pixel stack. Under the enhanced
+   *  skin it is a DOM strip (ui/enhancedHudText.js); under the classic one it is the same drawText it always was.
+   *  A DOM strip stays painted unless it is told otherwise (AUDIT 64 F37), so EVERY path that draws no name says
+   *  so with a null rather than simply returning. */
+  const sayNetStatus = (line) => {
+    if (isEnhanced() && typeof document !== 'undefined') { drawEnhancedStatusLine(line ?? ''); return; }
+    if (!line || !townTalk.font) return;
+    const scale = hudScale(canvas.width, canvas.height);
+    drawText(renderer, townTalk.font, line, Math.round(8 * scale), Math.round(8 * scale), scale, [1, 0.85, 0.6, 1]);
+  };
   const drawPeerNames = (proj, view, eye) => {
-    if (!remotePlayers) return;
-    const covered = townTalk.hudCovered || (modes?.hudCovered ?? false);   // a window over the HUD covers the names too
+    if (!remotePlayers) { sayNetStatus(null); return; }
+    const covered = townTalk.hudCovered || (modes?.hudCovered ?? false);   // a window over the HUD covers the names too, and the status line with them
     // NAME1 (Mac: "...are able to be seen through walls"): THE SIGHT TEST, over `player.collider` - the LIVE one.
     // worldModes re-points that field at every door (the street's, the building's, the dungeon's), so this is the
     // same triangles the player cannot walk through and the same raycast the activation ladder rejects a target
@@ -7434,11 +7449,10 @@ export async function bootWorld(canvas, renderer, params, status) {
       const points = covered ? [] : remotePlayers.namePoints(proj, view, canvas.clientWidth, canvas.clientHeight, eye, onlineToScene, largeHudViewportRect(canvas.clientHeight), blocked);
       nameLayer.render({ points, log: chatLog, covered, colorOf: (id) => social?.colorOf(id) ?? null });
     }
-    if (covered) return;
+    if (covered) { sayNetStatus(null); return; }
     const scale = hudScale(canvas.width, canvas.height);
     if (!nameLayer) remotePlayers.drawNames(renderer, townTalk.font, proj, view, canvas.width, canvas.height, eye, scale, onlineToScene, largeHudViewportRect(canvas.clientHeight), (id) => social?.colorOf(id) ?? null, blocked);
-    const line = online?.statusLine();   // AUDIT ONLINE D12/E11: connecting, reconnecting, refused, replaced - said, not silent
-    if (line && townTalk.font) drawText(renderer, townTalk.font, line, Math.round(8 * scale), Math.round(8 * scale), scale, [1, 0.85, 0.6, 1]);
+    sayNetStatus(online?.statusLine());   // AUDIT ONLINE D12/E11: connecting, reconnecting, refused, replaced - said, not silent (FONT1: in the enhanced face)
   };
   // VAR, not const: the pointer and wheel listeners far above close over
   // this binding and are live before it is assigned, so it must exist

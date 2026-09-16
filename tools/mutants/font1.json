@@ -1,0 +1,414 @@
+[
+  {
+    "name": "chat-face-back-to-the-launcher's",
+    "file": "src/ui/chatPanel.js",
+    "old": "  ${PIXEL_FONT_CSS} color: var(--bone, #e9e4d9); }",
+    "new": "  font-family: var(--data, 'Barlow Semi Condensed', system-ui, sans-serif); color: var(--bone, #e9e4d9); }",
+    "tests": [
+      "test/chat1.test.js"
+    ]
+  },
+  {
+    "name": "chat-five-face-dropped-from-the-sheet",
+    "file": "src/ui/chatPanel.js",
+    "old": "export const CHAT_CSS = `\n${PIXELIFY_FIVE_FACE}\n",
+    "new": "export const CHAT_CSS = `\n",
+    "tests": [
+      "test/chat1.test.js"
+    ]
+  },
+  {
+    "name": "chat-blurred-shadow-under-a-pixel-face",
+    "file": "src/ui/chatPanel.js",
+    "old": ".dfchat-line { flex: none; font-size: 13px; line-height: 1.35; overflow-wrap: anywhere; overflow: hidden; text-shadow: ${PIXEL_TEXT_SHADOW}; }",
+    "new": ".dfchat-line { flex: none; font-size: 13px; line-height: 1.35; overflow-wrap: anywhere; overflow: hidden; text-shadow: 0 1px 2px #000, 0 0 6px rgba(0,0,0,.85); }",
+    "tests": [
+      "test/chat1.test.js"
+    ]
+  },
+  {
+    "name": "social-panel-face-back-to-the-launcher's",
+    "file": "src/ui/socialPanel.js",
+    "old": "  background: rgba(14, 16, 19, .92); border: 1px solid var(--iron, #2b323b); border-radius: 6px; backdrop-filter: blur(4px);\n  ${PIXEL_FONT_CSS} color: var(--bone, #e9e4d9); }",
+    "new": "  background: rgba(14, 16, 19, .92); border: 1px solid var(--iron, #2b323b); border-radius: 6px; backdrop-filter: blur(4px);\n  font-family: var(--data, 'Barlow Semi Condensed', system-ui, sans-serif); color: var(--bone, #e9e4d9); }",
+    "tests": [
+      "test/soc3_socialpanel.test.js"
+    ]
+  },
+  {
+    "name": "social-toast-face-back-to-the-launcher's",
+    "file": "src/ui/socialPanel.js",
+    "old": "  background: rgba(14, 16, 19, .92); border: 1px solid var(--brass, #c08a3e); border-radius: 6px; padding: 6px 8px;\n  ${PIXEL_FONT_CSS} color: var(--bone, #e9e4d9); }",
+    "new": "  background: rgba(14, 16, 19, .92); border: 1px solid var(--brass, #c08a3e); border-radius: 6px; padding: 6px 8px;\n  font-family: var(--data, 'Barlow Semi Condensed', system-ui, sans-serif); color: var(--bone, #e9e4d9); }",
+    "tests": [
+      "test/soc3_socialpanel.test.js"
+    ]
+  },
+  {
+    "name": "social-panel-five-face-dropped",
+    "file": "src/ui/socialPanel.js",
+    "old": "export const SOCIAL_CSS = `\n${PIXELIFY_FIVE_FACE}\n",
+    "new": "export const SOCIAL_CSS = `\n",
+    "tests": [
+      "test/soc3_socialpanel.test.js",
+      "test/soc5_interact.test.js"
+    ]
+  },
+  {
+    "name": "party-hud-face-back-to-the-launcher's",
+    "file": "src/ui/partyPanel.js",
+    "old": "  ${PIXEL_FONT_CSS} color: var(--bone, #e9e4d9);",
+    "new": "  font-family: var(--data, 'Barlow Semi Condensed', system-ui, sans-serif); color: var(--bone, #e9e4d9);",
+    "tests": [
+      "test/soc4_partyhud.test.js"
+    ]
+  },
+  {
+    "name": "party-hud-five-face-dropped",
+    "file": "src/ui/partyPanel.js",
+    "old": "export const PARTY_CSS = `\n${PIXELIFY_FIVE_FACE}",
+    "new": "export const PARTY_CSS = `",
+    "tests": [
+      "test/soc4_partyhud.test.js"
+    ]
+  },
+  {
+    "name": "party-name-back-to-14px",
+    "file": "src/ui/partyPanel.js",
+    "old": ".dfparty-name { min-width: 0; flex: 0 1 auto; font-weight: 600; font-size: 13px;",
+    "new": ".dfparty-name { min-width: 0; flex: 0 1 auto; font-weight: 600; font-size: 14px;",
+    "tests": [
+      "test/soc4_partyhud.test.js"
+    ]
+  },
+  {
+    "name": "party-title-blurred-shadow",
+    "file": "src/ui/partyPanel.js",
+    "old": "  color: var(--dim, #8b8578); text-shadow: ${PIXEL_TEXT_SHADOW}; }",
+    "new": "  color: var(--dim, #8b8578); text-shadow: 0 1px 2px #000; }",
+    "tests": [
+      "test/soc4_partyhud.test.js"
+    ]
+  },
+  {
+    "name": "peer-menu-face-back-to-the-launcher's",
+    "file": "src/ui/socialMenu.js",
+    "old": "  ${PIXEL_FONT_CSS} color: var(--bone, #e9e4d9); }",
+    "new": "  font-family: var(--data, 'Barlow Semi Condensed', system-ui, sans-serif); color: var(--bone, #e9e4d9); }",
+    "tests": [
+      "test/soc5_interact.test.js"
+    ]
+  },
+  {
+    "name": "peer-menu-five-face-dropped",
+    "file": "src/ui/socialMenu.js",
+    "old": "export const SOCIAL_MENU_CSS = `\n${PIXELIFY_FIVE_FACE}\n",
+    "new": "export const SOCIAL_MENU_CSS = `\n",
+    "tests": [
+      "test/soc5_interact.test.js"
+    ]
+  },
+  {
+    "name": "smoothing-left-on-everywhere",
+    "file": "src/ui/pixelifyFive.js",
+    "old": "export const PIXEL_FONT_CSS = `font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none;",
+    "new": "export const PIXEL_FONT_CSS = `font-family: ${PIXEL_STACK}; -webkit-font-smoothing: antialiased;",
+    "tests": [
+      "test/chat1.test.js",
+      "test/soc3_socialpanel.test.js",
+      "test/soc4_partyhud.test.js",
+      "test/soc5_interact.test.js"
+    ]
+  },
+  {
+    "name": "the-five-dropped-out-of-the-stack",
+    "file": "src/ui/pixelifyFive.js",
+    "old": "export const PIXEL_STACK = `'${PIXELIFY_FIVE_FAMILY}', 'Pixelify Sans', monospace`;",
+    "new": "export const PIXEL_STACK = \"'Pixelify Sans', monospace\";",
+    "tests": [
+      "test/chat1.test.js",
+      "test/soc4_partyhud.test.js",
+      "test/hudtext.test.js",
+      "test/landing.test.js"
+    ]
+  },
+  {
+    "name": "hudtext-enhanced-arm-dropped",
+    "file": "src/ui/hudText.js",
+    "old": "    if (isEnhanced() && typeof document !== 'undefined') {\n      drawEnhancedHudText({ ...this.frame(), visible: true });",
+    "new": "    if (false && typeof document !== 'undefined') {\n      drawEnhancedHudText({ ...this.frame(), visible: true });",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "hudtext-enhanced-arm-taken-on-both-skins",
+    "file": "src/ui/hudText.js",
+    "old": "    if (isEnhanced() && typeof document !== 'undefined') {\n      drawEnhancedHudText({ ...this.frame(), visible: true });",
+    "new": "    if (typeof document !== 'undefined') {\n      drawEnhancedHudText({ ...this.frame(), visible: true });",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "hudtext-rows-cut-to-maxRows",
+    "file": "src/ui/hudText.js",
+    "old": "      rows: this.lines.slice(0, maxCount + 1).map((l) => l.text),",
+    "new": "      rows: this.lines.slice(0, maxCount).map((l) => l.text),",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "hudtext-slide-taken-from-a-waiting-timer",
+    "file": "src/ui/hudText.js",
+    "old": "      slide: this.timer < 0 ? this.timer / HUD_TEXT_POP_DELAY : 0,",
+    "new": "      slide: this.timer / HUD_TEXT_POP_DELAY,",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "hudtext-hide-door-a-no-op",
+    "file": "src/ui/hudText.js",
+    "old": "    if (isEnhanced() && typeof document !== 'undefined') drawEnhancedHudText({ rows: [], slide: 0, visible: false });",
+    "new": "    if (false) drawEnhancedHudText({ rows: [], slide: 0, visible: false });",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "column-never-slides",
+    "file": "src/ui/enhancedHudText.js",
+    "old": "  const y = `${(slide * ENHANCED_HUD_TEXT_ROW_H).toFixed(2)}px`;",
+    "new": "  const y = '0.00px';",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "column-slides-the-wrong-way",
+    "file": "src/ui/enhancedHudText.js",
+    "old": "  const y = `${(slide * ENHANCED_HUD_TEXT_ROW_H).toFixed(2)}px`;",
+    "new": "  const y = `${(-slide * ENHANCED_HUD_TEXT_ROW_H).toFixed(2)}px`;",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "column-rebuilt-every-frame",
+    "file": "src/ui/enhancedHudText.js",
+    "old": "  if (!host) { host = build(doc); rows = []; }",
+    "new": "  { host = build(doc); rows = []; }",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "column-keeps-its-spent-rows",
+    "file": "src/ui/enhancedHudText.js",
+    "old": "    if (i >= lines.length) {\n      if (n.style.display !== 'none') n.style.display = 'none';\n      continue;\n    }",
+    "new": "    if (i >= lines.length) {\n      continue;\n    }",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "column-keeps-a-row-height-of-its-own",
+    "file": "src/ui/enhancedHudText.js",
+    "old": "export const ENHANCED_HUD_TEXT_ROW_H = HUD_TEXT_ROW_PX;",
+    "new": "export const ENHANCED_HUD_TEXT_ROW_H = 18;",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "column-back-through-the-compass",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "export const HUD_TEXT_TOP_PX = 96;",
+    "new": "export const HUD_TEXT_TOP_PX = 4;",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "column-in-the-launcher-face",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none;\n  font-variant-ligatures: none; font-feature-settings: 'liga' 0, 'clig' 0;\n  color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12);",
+    "new": "  font-family: var(--data); -webkit-font-smoothing: antialiased;\n  font-variant-ligatures: none; font-feature-settings: 'liga' 0, 'clig' 0;\n  color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12);",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "townTalk-drops-the-hide-door",
+    "file": "src/scenes/townTalk.js",
+    "old": "    if (font && hudRenderEnabled()) hud.draw(renderer, canvas, font, s); else hud.hide();",
+    "new": "    if (font && hudRenderEnabled()) hud.draw(renderer, canvas, font, s);",
+    "tests": [
+      "test/audit64_hud.test.js"
+    ]
+  },
+  {
+    "name": "townTalk-interior-frame-drops-the-hide-door",
+    "file": "src/scenes/townTalk.js",
+    "old": "      if (font_ && hudRenderEnabled()) hud.draw(renderer, canvas, font_, hudScale(canvas.width, canvas.height)); else hud.hide();",
+    "new": "      if (font_ && hudRenderEnabled()) hud.draw(renderer, canvas, font_, hudScale(canvas.width, canvas.height));",
+    "tests": [
+      "test/audit64_hud.test.js"
+    ]
+  },
+  {
+    "name": "dungeon-drops-the-hide-door",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (hudFont && hudRenderEnabled()) hudText.draw(renderer, canvas, hudFont, hudScaleFor(canvas.width, canvas.height)); else hudText.hide();",
+    "new": "    if (hudFont && hudRenderEnabled()) hudText.draw(renderer, canvas, hudFont, hudScaleFor(canvas.width, canvas.height));",
+    "tests": [
+      "test/audit64_hud.test.js"
+    ]
+  },
+  {
+    "name": "dungeon-stops-gating-the-popup-draw",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (hudFont && hudRenderEnabled()) hudText.draw(renderer, canvas, hudFont, hudScaleFor(canvas.width, canvas.height)); else hudText.hide();",
+    "new": "    hudText.draw(renderer, canvas, hudFont, hudScaleFor(canvas.width, canvas.height));",
+    "tests": [
+      "test/audit64_hud.test.js"
+    ]
+  },
+  {
+    "name": "midscreen-enhanced-arm-dropped",
+    "file": "src/ui/midScreenText.js",
+    "old": "    if (isEnhanced() && typeof document !== 'undefined') {\n      drawEnhancedMidText({ text: this.text, visible: true });",
+    "new": "    if (false && typeof document !== 'undefined') {\n      drawEnhancedMidText({ text: this.text, visible: true });",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "midscreen-enhanced-arm-taken-on-both-skins",
+    "file": "src/ui/midScreenText.js",
+    "old": "    if (isEnhanced() && typeof document !== 'undefined') {\n      drawEnhancedMidText({ text: this.text, visible: true });",
+    "new": "    if (typeof document !== 'undefined') {\n      drawEnhancedMidText({ text: this.text, visible: true });",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "midscreen-hide-door-a-no-op",
+    "file": "src/ui/midScreenText.js",
+    "old": "    if (isEnhanced() && typeof document !== 'undefined') drawEnhancedMidText({ text: '', visible: false });",
+    "new": "    if (false) drawEnhancedMidText({ text: '', visible: false });",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "midscreen-label-off-its-classic-height",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".hudmid { position: fixed; left: 50%; top: 73%;",
+    "new": ".hudmid { position: fixed; left: 50%; top: 40%;",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "midscreen-label-in-the-launcher-face",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  max-width: min(680px, 86vw); font-size: 15px; letter-spacing: 0.04em;\n  font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none;",
+    "new": "  max-width: min(680px, 86vw); font-size: 15px; letter-spacing: 0.04em;\n  font-family: var(--data); -webkit-font-smoothing: antialiased;",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "midscreen-label-never-blanks",
+    "file": "src/ui/enhancedHudText.js",
+    "old": "  if (lastMid.on !== shown) { lastMid.on = shown; midHost.style.display = shown ? '' : 'none'; }",
+    "new": "  if (lastMid.on !== shown) { lastMid.on = shown; midHost.style.display = ''; }",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "midscreen-a-node-per-message",
+    "file": "src/ui/enhancedHudText.js",
+    "old": "  if (!midHost) {\n    injectEnhancedStyle(doc);",
+    "new": "  {\n    injectEnhancedStyle(doc);",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "hud-drops-the-midscreen-hide-door",
+    "file": "src/ui/hud.js",
+    "old": "  if (hudDrawn) midScreenText.draw(renderer, canvas, font); else midScreenText.hide();",
+    "new": "  if (hudDrawn) midScreenText.draw(renderer, canvas, font);",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "status-line-enhanced-arm-dropped",
+    "file": "src/scenes/world.js",
+    "old": "    if (isEnhanced() && typeof document !== 'undefined') { drawEnhancedStatusLine(line ?? ''); return; }",
+    "new": "    if (false && typeof document !== 'undefined') { drawEnhancedStatusLine(line ?? ''); return; }",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "status-line-silent-return-leaves-the-strip-painted",
+    "file": "src/scenes/world.js",
+    "old": "    if (!remotePlayers) { sayNetStatus(null); return; }",
+    "new": "    if (!remotePlayers) { return; }",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "status-line-covered-return-leaves-the-strip-painted",
+    "file": "src/scenes/world.js",
+    "old": "if (covered) { sayNetStatus(null); return; }",
+    "new": "if (covered) return;",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "status-strip-in-the-launcher-face",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  max-width: min(420px, 60vw); font-size: 13px; letter-spacing: 0.04em;\n  font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none;",
+    "new": "  max-width: min(420px, 60vw); font-size: 13px; letter-spacing: 0.04em;\n  font-family: var(--data); -webkit-font-smoothing: antialiased;",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "status-strip-never-clears",
+    "file": "src/ui/enhancedHudText.js",
+    "old": "  if (lastStatus.on !== shown) { lastStatus.on = shown; statusHost.style.display = shown ? '' : 'none'; }",
+    "new": "  if (lastStatus.on !== shown) { lastStatus.on = shown; statusHost.style.display = ''; }",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "status-strip-a-node-per-message",
+    "file": "src/ui/enhancedHudText.js",
+    "old": "  if (!statusHost) {\n    injectEnhancedStyle(doc);",
+    "new": "  {\n    injectEnhancedStyle(doc);",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "FONT1-touch-layer-in-the-system-face-under-the-enhanced-skin",
+    "file": "src/ui/touch.js",
+    "old": "const face = hooks.enhanced ? `font-weight:500;font-size:15px;${PIXEL_FONT_CSS}` : 'font:600 15px system-ui,-apple-system,\"Segoe UI\",sans-serif';",
+    "new": "const face = 'font:600 15px system-ui,-apple-system,\"Segoe UI\",sans-serif';",
+    "tests": [
+      "test/audit39_uicore.test.js"
+    ]
+  }
+]

@@ -111,7 +111,11 @@ test('SOC4: the panel - one card per OTHER member in SEAT ORDER and never my own
   assert.equal(one(cards[1], 'dfparty-lead').attrs['aria-label'], 'Party leader', 'and says so in words, not in a glyph alone');
   assert.equal(root.style.display, '', 'a party with somebody else in it: drawn');
   // the green is the picture's, in one home
-  assert.ok(PARTY_CSS.includes(`.dfparty-name { min-width: 0; flex: 0 1 auto; font-weight: 600; font-size: 14px; line-height: 1.2;\n  color: ${PARTY_GREEN_CSS};`), 'the name carries PARTY_GREEN_CSS from net/social.js, never a second green');
+  // FONT1 (2026-09-16, Mac: "Any enhanced UI or text must be our enhanced version"): 13px, not 14. The card is set
+  // in the skin's pixel face now, which measures about 1.29x the width of the launcher face it wore before
+  // (tools/font1Probe.mjs), and at 14px only 18 of a 24-character name fitted the 138px name box. At 13 it is 20,
+  // which is what the size is doing here - the GREEN is the half of this line the pin is about, and it is unchanged.
+  assert.ok(PARTY_CSS.includes(`.dfparty-name { min-width: 0; flex: 0 1 auto; font-weight: 600; font-size: 13px; line-height: 1.2;\n  color: ${PARTY_GREEN_CSS};`), 'the name carries PARTY_GREEN_CSS from net/social.js, never a second green');
   assert.equal(PARTY_GREEN_CSS, '#73ff73');
   // alone in a party, and out of one
   social.apply(stateFrame({ party: party([member('me', { acct: 'acct-me', name: 'Mac' })]) }));
@@ -472,4 +476,29 @@ test('AUDIT SOC C21: the HUD\'s bar rows carry a ROLE with their label - a bare 
   assert.ok(card.vitals.every((v) => v.row.attrs.role !== 'img'), 'never img: the digits are the other half of the answer');
   assert.equal(panel.root.attrs.role, 'group');
   assert.equal(panel.root.attrs['aria-label'], 'Party');
+});
+
+// ── FONT1 (2026-09-16, Mac: "Any enhanced UI or text must be our
+// enhanced version") ────────────────────────────────────────────────
+
+test('FONT1: the party HUD is set in the enhanced face beside the HUD it stands next to, and the name keeps its room', () => {
+  // This HUD draws over the world a few pixels from the enhanced HUD's
+  // own bars, and it was set in `--data` - the MENU's face. Two HUDs in
+  // two fonts is not a skin.
+  const root = PARTY_CSS.slice(PARTY_CSS.indexOf('\n.dfparty {'));
+  assert.match(root.slice(0, root.indexOf('}')), /font-family: 'Pixelify Five', 'Pixelify Sans', monospace;/,
+    'mutants: left on var(--data); the five dropped from the stack, so "50 / 60 HP" reads with an 8-shaped 5 (FIX-D)');
+  assert.match(root.slice(0, root.indexOf('}')), /-webkit-font-smoothing: none;/, 'mutant: the smoothing left on, which blurs every pixel glyph');
+  assert.doesNotMatch(PARTY_CSS, /--data/, 'no corner of this sheet is still in the menu\'s face');
+  assert.match(PARTY_CSS, /@font-face \{ font-family: 'Pixelify Five'; unicode-range: U\+0035;/,
+    'mutant: the face dropped from this sheet, which is injected on its own');
+  // The one line with no plate behind it takes the HUD's hard shadow,
+  // never a blur under a pixel face.
+  assert.match(PARTY_CSS, /\.dfparty-title \{[^}]*text-shadow: 2px 2px 0 rgba\(0,0,0,0\.85\); \}/,
+    'mutant: the old `0 1px 2px #000` blur kept');
+  // MEASURED, not guessed: the pixel face runs about 1.29x wider, so at
+  // the old 14px only 18 characters of a 24-character name (NAME_MAX)
+  // fitted the card's 138px name box; at 13px it is 20
+  // (tools/font1Probe.mjs). The size is doing that work and nothing else.
+  assert.match(PARTY_CSS, /\.dfparty-name \{[^}]*font-size: 13px;/, 'mutant: back to 14px, which eats two more characters of every long name');
 });

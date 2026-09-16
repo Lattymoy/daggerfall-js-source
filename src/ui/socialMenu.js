@@ -27,11 +27,16 @@
 //
 // Not a DFU member: Daggerfall Unity has no other players, no friends and no parties. Ledger A row (ONLINE).
 import { isTextEntryTarget } from './input.js';
+import { PIXELIFY_FIVE_FACE, PIXEL_FONT_CSS } from './pixelifyFive.js';   // FONT1: the enhanced skin's own face, unsmoothed, with Silkscreen's five
 
 export const SOCIAL_MENU_STYLE_ID = 'dagger-peermenu-style';
 
 /** The card's sheet: the enhanced tokens (ui/enhancedStyle.js) where the skin's sheet is loaded, a fallback where it
  *  is not - the same pairing ui/chatPanel.js uses, so the two surfaces are one skin.
+ *
+ *  FONT1 (2026-09-16, Mac: "Any enhanced UI or text must be our enhanced version"): the face is the skin's pixel
+ *  stack rather than `--data`, the menu's; ui/chatPanel.js's CHAT_CSS header carries the whole reading. The five's
+ *  @font-face (FIX-D) rides this sheet as it rides the other three.
  *
  *  AUDIT SOC C1: THE PREFIX IS `dfpeer`, NOT `dfsocial`. This card and ui/socialPanel.js are two surfaces that stand
  *  at once (F opens this over a body while the friends panel is up), and they shared `.dfsocial`, `.dfsocial-name`,
@@ -40,9 +45,10 @@ export const SOCIAL_MENU_STYLE_ID = 'dagger-peermenu-style';
  *  One surface, one prefix - and test/soc5_interact.test.js parses both CSS strings and pins the intersection empty.
  *  The style id moved with it, because two ids that differ only in spelling are the next thing to collide. */
 export const SOCIAL_MENU_CSS = `
+${PIXELIFY_FIVE_FACE}
 .dfpeer { position: fixed; left: 50%; top: 52%; transform: translate(-50%, 0); z-index: 6; display: none;
   min-width: 208px; max-width: min(320px, calc(100vw - 28px)); pointer-events: none;
-  font-family: var(--data, 'Barlow Semi Condensed', system-ui, sans-serif); color: var(--bone, #e9e4d9); }
+  ${PIXEL_FONT_CSS} color: var(--bone, #e9e4d9); }
 .dfpeer[data-state="open"] { display: block; }
 /* the CARD takes the pointer, not the root - ui/chatPanel.js's own split, so a gap around the box is still the world's */
 .dfpeer-card { pointer-events: auto; background: rgba(14, 16, 19, .9); border: 1px solid var(--iron, #2b323b); border-radius: 6px;

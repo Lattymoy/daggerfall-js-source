@@ -40,6 +40,7 @@ import { raceArt, FACES_PER_RACE } from '../systems/races.js';
 import { bitmapToColor32 } from './hud.js';   // the same indexed-to-RGBA door every classic screen reads
 import { isTouchDevice } from './touch.js';
 import { PARTY_GREEN_CSS, lastOnlineText } from '../net/social.js';   // one home for the green - "should turn green"
+import { PIXELIFY_FIVE_FACE, PIXEL_FONT_CSS, PIXEL_TEXT_SHADOW } from './pixelifyFive.js';   // FONT1: the enhanced skin's own face, unsmoothed, with Silkscreen's five
 
 export const PARTY_STYLE_ID = 'dagger-party-style';
 
@@ -56,8 +57,14 @@ export const FACE_BOX_W = 72;
 export const FACE_BOX_H = 80;
 
 /** The panel's sheet: the enhanced skin's tokens (ui/enhancedStyle.js) where they exist, a fallback where the
- *  skin's sheet is not loaded - the same shape ui/chatPanel.js uses, so the two surfaces agree over the world. */
+ *  skin's sheet is not loaded - the same shape ui/chatPanel.js uses, so the two surfaces agree over the world.
+ *
+ *  FONT1 (2026-09-16, Mac: "Any enhanced UI or text must be our enhanced version"): this HUD stands over the world
+ *  beside the enhanced HUD's own bars, and it was set in `--data` - the MENU's face. It wears the skin's pixel
+ *  stack now, unsmoothed, with the HUD's hard shadow under the one line that has no plate behind it. The five's
+ *  @font-face rides this sheet too (FIX-D): it is injected on its own, like the other three online sheets. */
 export const PARTY_CSS = `
+${PIXELIFY_FIVE_FACE}
 /* AUDIT SOC C6: 92, NOT 40. The FPS read-out is the other thing in this corner (ui/fpsCounter.js: top 8, z 9) and
    it is FOUR LINES tall with the renderer's counts on - measured at 76px in Chromium, bottom edge 84 - so a HUD at
    40 put its first card's portrait straight through the middle of it. 92 clears the read-out with eight pixels to
@@ -65,7 +72,7 @@ export const PARTY_CSS = `
 .dfparty { position: fixed; right: calc(8px + env(safe-area-inset-right, 0px)); top: calc(92px + env(safe-area-inset-top, 0px));
   width: 244px; max-width: calc(100vw - 16px); z-index: 5; pointer-events: none;
   display: flex; flex-direction: column; gap: 4px;
-  font-family: var(--data, 'Barlow Semi Condensed', system-ui, sans-serif); color: var(--bone, #e9e4d9);
+  ${PIXEL_FONT_CSS} color: var(--bone, #e9e4d9);
   -webkit-user-select: none; user-select: none; }
 /* below the touch layer's own top-right row of buttons (ui/touch.js: top 16, 44 tall) */
 .dfparty.touch { top: calc(76px + env(safe-area-inset-top, 0px)); }
@@ -78,7 +85,7 @@ export const PARTY_CSS = `
   .dfparty, .dfparty.touch { width: 180px; top: auto; bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
 }
 .dfparty-title { font-size: 11px; letter-spacing: .18em; text-transform: uppercase; text-align: right;
-  color: var(--dim, #8b8578); text-shadow: 0 1px 2px #000; }
+  color: var(--dim, #8b8578); text-shadow: ${PIXEL_TEXT_SHADOW}; }
 .dfparty-list { display: flex; flex-direction: column; gap: 4px; }
 .dfparty-card { display: flex; gap: 8px; padding: 6px; border-radius: 6px;
   background: rgba(14, 16, 19, .78); border: 1px solid var(--iron, #2b323b); backdrop-filter: blur(4px); }
@@ -93,7 +100,7 @@ export const PARTY_CSS = `
 .dfparty-facemark { font-size: 24px; font-weight: 600; color: var(--dim, #8b8578); opacity: .45; }
 .dfparty-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .dfparty-head { display: flex; align-items: baseline; gap: 5px; min-width: 0; }
-.dfparty-name { min-width: 0; flex: 0 1 auto; font-weight: 600; font-size: 14px; line-height: 1.2;
+.dfparty-name { min-width: 0; flex: 0 1 auto; font-weight: 600; font-size: 13px; line-height: 1.2;
   color: ${PARTY_GREEN_CSS}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dfparty-lead { flex: none; font-size: 11px; line-height: 1; color: var(--brass, #c08a3e); }
 .dfparty-lead.off { display: none; }
