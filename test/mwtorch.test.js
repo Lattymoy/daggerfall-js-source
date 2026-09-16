@@ -28,8 +28,9 @@ import {
 } from '../src/formats/mwFirstPerson.js';
 import {
   resolveTorchPart, torchPartPaths, TORCH_BONE, TORCH_GROUP, idleBaseFor, FP_IDLE_SNEAK, FP_IDLE_BASE,
-  createFpArm, fpSkeletonPath, FP_CLIP_PATH,
+  carriedLeftVisible, createFpArm, fpSkeletonPath, FP_CLIP_PATH,
 } from '../src/combat/fpArm.js';
+import { MW_WEAPON_TYPE, weaponFlags, MW_TWO_HANDED } from '../src/formats/mwFirstPerson.js';
 import { armBuildOptsOf, isLitTorch } from '../src/combat/weaponRig.js';
 import { TEMPLATES } from '../src/systems/useItem.js';
 
@@ -132,18 +133,31 @@ test('MW-D52 idleBaseFor: "idlesneak" while sneaking on the ground where a sourc
 // ---------------------------------------------------------------
 // The machine, on the fixture rig
 // ---------------------------------------------------------------
-test('MW-D51 setTorch on a built arm: the fast path flips the light and the card; no LIGH record means no archive reopens; the sneak stance reaches refreshIdle (mutant: the flag not stored, or the doused torch still "shown")', async () => {
+// A hand-built LIGH record appended to the fixture master - walkEsm
+// reads records in sequence to the end of the bytes, so the fixture's
+// own records stand and the torch joins them.
+const enc = (str) => Array.from(str, (c) => c.charCodeAt(0));
+const u32 = (n) => [n & 255, (n >> 8) & 255, (n >> 16) & 255, (n >>> 24) & 255];
+const sub = (name, payload) => [...enc(name), ...u32(payload.length), ...payload];
+const rec = (type, subs) => { const body = subs.flat(); return [...enc(type), ...u32(body.length), 0, 0, 0, 0, 0, 0, 0, 0, ...body]; };
+const z = (s2) => [...enc(s2), 0];
+const lhdt = (flags) => { const b = new Uint8Array(24); new DataView(b.buffer).setInt32(20, flags, true); return Array.from(b); };
+const TORCH_LIGH = rec('LIGH', [sub('NAME', z('torch')), sub('MODL', [...enc('l'), 0x5c, ...z('torch.nif')]), sub('FNAM', z('Torch')), sub('LHDT', lhdt(1 | 2 | 16))]);
+const withTorch = (esm) => { const out = new Uint8Array(esm.length + TORCH_LIGH.length); out.set(esm, 0); out.set(TORCH_LIGH, esm.length); return out; };
+
+const liveRig = ({ torchRecord = false } = {}) => {
   const files = new Map([
     [fpSkeletonPath({}), f('armfp.nif')],
     [FP_CLIP_PATH, f('armfpidle.kf')],
     ['meshes/fixture/armfphand.nif', f('armfphand.nif')],
     ['meshes/fixture/armfparm.nif', f('armfparm.nif')],
+    ['meshes/l/torch.nif', f('weapon.nif')],   // any rigid mesh stands in for the torch's
   ]);
-  let opened = 0;
+  const counters = { opened: 0 };
   const deps = {
-    loadMorrowindArchives: async () => { opened++; return [{ has: (p) => files.has(p), get: (p) => files.get(p) }]; },
+    loadMorrowindArchives: async () => { counters.opened++; return [{ has: (p) => files.has(p), get: (p) => files.get(p) }]; },
     storedMorrowindNames: async () => ['armfp.esm'],
-    loadMorrowindFile: async () => f('armfp.esm'),
+    loadMorrowindFile: async () => (torchRecord ? withTorch(f('armfp.esm')) : f('armfp.esm')),
   };
   const renderer = {
     gl: null,
@@ -153,6 +167,22 @@ test('MW-D51 setTorch on a built arm: the fast path flips the light and the card
     drawScreenOverlayQuad: () => {},
     createCharacterTexture: (mips) => ({ mips }),
   };
+  return { files, deps, renderer, counters };
+};
+const settle = async (until, tries = 200) => { for (let i = 0; i < tries && !until(); i++) await new Promise((r) => setTimeout(r, 5)); };
+
+test('AUDIT MW-TORCH F1 carriedLeftVisible: the reference’s one line - hidden for every drawn type carrying the TwoHanded bit, a spell and fists included (mutant: the class paired back in)', () => {
+  for (const [name, type] of Object.entries(MW_WEAPON_TYPE)) {
+    assert.equal(carriedLeftVisible(type), !(weaponFlags(type) & MW_TWO_HANDED), `${name}: the bit alone decides`);
+  }
+  assert.equal(carriedLeftVisible(MW_WEAPON_TYPE.Spell), false, 'a readied spell hides the torch, as it hides the shield');
+  assert.equal(carriedLeftVisible(MW_WEAPON_TYPE.HandToHand), false, 'drawn fists too');
+  assert.equal(carriedLeftVisible(MW_WEAPON_TYPE.LongBladeOneHand), true);
+  assert.equal(carriedLeftVisible(MW_WEAPON_TYPE.None), true, 'sheathed: the torch is up');
+});
+
+test('MW-D51 setTorch on a built arm with NO light record: the flag flips and the card says so, nothing is shown, no archive reopens; the sneak stance reaches refreshIdle (mutant: the flag not stored, or a torch "shown" with nothing resolved)', async () => {
+  const { deps, renderer, counters } = liveRig();
   const arm = createFpArm();
   assert.equal(arm.setTorch(true), false, 'nothing built: nothing to light, nothing thrown');
   let sneak = false;
@@ -165,16 +195,14 @@ test('MW-D51 setTorch on a built arm: the fast path flips the light and the card
   assert.equal(built.leftArm.size, 0, 'the fixture rig is cut down to an arm: no clavicle, no LeftArm mask, no overlay');
   let s = arm.status();
   assert.equal(s.torchLit, true, 'the build was asked for a lit torch');
-  assert.equal(s.torchShown, true, 'sheathed: the carried-left is visible');
-  assert.equal(s.torchGroup, null, 'the fixture .kf has no "torch" group');
-  assert.ok(s.clipNotes.some((n) => /^torch: no source gives "torch"/.test(n)), 'asked once, said once');
-  const before = opened;
+  assert.equal(s.torchShown, false, 'AUDIT MW-TORCH F2: no light in the carried-left slot of this rig - nothing shown, nothing raised');
+  assert.equal(s.torchGroup, null, 'and no "torch" state is picked for a light that is not there');
+  const before = counters.opened;
   assert.equal(arm.setTorch(true), false, 'same state: the fast path answers false');
   assert.equal(arm.setTorch(false), true, 'doused');
   assert.equal(arm.status().torchLit, false);
-  assert.equal(arm.status().torchShown, false);
   assert.equal(arm.setTorch(true), true, 'lit again - no LIGH record to bind, so no slow path');
-  assert.equal(opened, before, 'the archives were not reopened for a light that has no record');
+  assert.equal(counters.opened, before, 'the archives were not reopened for a light that has no record');
   for (let i = 0; i < 3; i++) if (arm.ready()) arm.update(1 / 60);
   assert.equal(arm.frames, 3, 'the frame runs with the torch slot empty');
   assert.ok(arm.mesh().ranges.every((r) => r.slot !== 'torch'), 'no torch range on this rig');
@@ -187,6 +215,56 @@ test('MW-D51 setTorch on a built arm: the fast path flips the light and the card
   assert.equal(s.idleGroup, 'idle', 'no "idlesneak" in the fixture: the plain idle, as hasAnimation’s miss');
   arm.unload();
   assert.equal(arm.status().torchLit, false, 'unload drops the light with the rig');
+});
+
+test('AUDIT MW-TORCH F3/F5: with a LIGH record and its mesh but no Shield Bone, the slow path runs ONCE per rig - the refusal is remembered, the equip-follow opts carry the light (mutant: torchTried dropped, or lastBuildOpts.torch never written)', async () => {
+  const { deps, renderer, counters } = liveRig({ torchRecord: true });
+  const arm = createFpArm();
+  arm.attach(renderer, () => ({ pos: [0, 1.6, 0], yaw: 0 }));
+  const built = await arm.build({ race: 'fprace', deps, torch: false });
+  assert.equal(built.ok, true, built.ok ? '' : `${built.stage}: ${built.error}`);
+  assert.deepEqual(built.allLights.map((l) => [l.id, l.model, l.carry]), [['torch', 'l/torch.nif', true]], 'the appended LIGH record rides the walk');
+  assert.equal(built.torch, null, 'built doused: no torch part');
+  assert.equal(built.torchTried, undefined);
+  const opened = counters.opened;
+  const p = arm.setTorch(true);
+  assert.ok(p && typeof p.then === 'function', 'a record to bind: the slow path');
+  assert.equal(await p, true);
+  assert.equal(counters.opened, opened + 1, 'the archives reopened once for the bind');
+  assert.equal(arm.built().torch, null, 'the fixture rig has no Shield Bone: nothing bound');
+  assert.ok(arm.built().notes.some((n) => /^torch: this skeleton has no "Shield Bone"/.test(n)), 'and the rig says why');
+  assert.equal(arm.built().torchTried, true, 'the refusal is remembered on the rig');
+  assert.equal(arm.status().torchShown, false, 'F2: nothing in the slot, nothing shown');
+  assert.equal(arm.setTorch(false), true);
+  assert.equal(arm.setTorch(true), true, 're-lit: the fast path');
+  assert.equal(counters.opened, opened + 1, 'F3: no second reopen for a bind that already failed here');
+  // F5: the light rides the opts an equip-follow rebuild spreads
+  assert.equal(arm.setTorch(false), true);
+  await arm.setWorn([{ kind: 'armor', templateIndex: 102, material: 0 }]);
+  assert.equal(arm.status().torchLit, false, 'the rebuild took the doused flag, not the build’s original');
+  arm.unload();
+});
+
+test('AUDIT MW-TORCH F6/F7: a build arriving mid-build is queued and runs (the newer identity wins); an unload mid-build discards the landing build (mutant: the refusal kept, or the dead build installed)', async () => {
+  const { deps, renderer } = liveRig();
+  const arm = createFpArm();
+  arm.attach(renderer, () => ({ pos: [0, 1.6, 0], yaw: 0 }));
+  const first = arm.build({ race: 'fprace', faceIndex: 0, deps });
+  const second = await arm.build({ race: 'fprace', faceIndex: 2, deps });
+  assert.equal(second.ok, false);
+  assert.equal(second.queued, true, 'the second is queued behind the first, not refused');
+  assert.equal((await first).ok, true);
+  await settle(() => arm.builtFor() && arm.builtFor().faceIndex === 2);
+  assert.deepEqual(arm.builtFor(), { race: 'fprace', female: false, faceIndex: 2 }, 'the queued build ran and its identity stands');
+  assert.equal(arm.ready(), true);
+  // F7
+  const inFlight = arm.build({ race: 'fprace', faceIndex: 5, deps });
+  arm.unload();
+  const landed = await inFlight;
+  assert.equal(landed.ok, false);
+  assert.match(landed.error, /unloaded while building/);
+  assert.equal(arm.ready(), false, 'the dead build was not installed over the unload');
+  assert.equal(arm.builtFor(), null);
 });
 
 // ---------------------------------------------------------------
@@ -202,11 +280,13 @@ test('MW-D51/52 pins: the rig hands the lit light over per frame and at the buil
   const opts = armBuildOptsOf({ race: 'Argonian', gender: 'male', faceIndex: 0, items: [], lightSource: { templateIndex: TEMPLATES.Torch } });
   assert.equal(opts.torch, true);
   const arm = rd('src/combat/fpArm.js');
-  assert.match(arm, /function torchVisible\(\) \{\n\s+if \(!torchLit \|\| !built \|\| !built\.ok\) return false;\n\s+const drawn = animWeaponType\(built\.mwType, sheathed, spellReady\);\n\s+return !\(isRealWeapon\(drawn\) && \(weaponFlags\(drawn\) & MW_TWO_HANDED\)\);/, 'updateCarriedLeftVisible: a REAL two-handed weapon drawn hides it; a spell and fists keep it');
+  assert.match(arm, /function torchVisible\(\) \{\n\s+if \(!torchLit \|\| !built \|\| !built\.ok\) return false;[\s\S]*?const r = rig\(\);\n\s+if \(!r \|\| !r\.torch\) return false;\n\s+return carriedLeftVisible\(animWeaponType\(built\.mwType, sheathed, spellReady\)\);/, 'F1+F2: the reference’s one-line rule, on a light that is actually in this rig’s slot');
   assert.equal((arm.match(/else if \(r\.slot === 'torch'\) r\.hidden = !torchVisible\(\);/g) ?? []).length, 2, 'both world meshes hide on the rule');
   assert.match(arm, /else if \(r\.slot === 'torch'\) r\.hidden = !torchLit;/, 'the portrait shows the lit light whatever the hand holds');
-  assert.equal((arm.match(/overlayTracks\((?:tBase|fBase), torchSource\.trackMap, (?:t|built)\.leftArm\)/g) ?? []).length, 2, 'the overlay on both rigs’ own LeftArm sets');
-  assert.equal((arm.match(/overlaySampler\(sampleTrack, torchState\.time\)/g) ?? []).length, 2, 'sampled at the torch’s own clock, both rigs');
+  assert.equal((arm.match(/overlayFor\((?:tBase|fBase), (?:t|built)\.leftArm\)/g) ?? []).length, 2, 'the overlay on both rigs’ own LeftArm sets, through the memo');
+  assert.equal((arm.match(/if \((?:t|f)Overlay\) overlayClock = torchState\.time;/g) ?? []).length, 2, 'F4: the torch’s clock through a variable, both rigs - no sampler allocated per frame');
+  assert.match(arm, /const overlaySample = overlaySampler\(sampleTrack, \(\) => overlayClock\);/, 'F4: one sampler for the life of the rig');
+  assert.match(arm, /if \(pendingBuild\) \{[\s\S]*?api\.build\(o\);\n\s+return;\n\s+\}/, 'F6: a queued build drains first and supersedes the rest');
   assert.match(arm, /resetIdle\(\);\n\s+refreshTorch\(true\);\s+\/\/ MW-D51/, 'setViewMode re-picks the torch on the new rig’s sources');
   assert.match(arm, /refreshTorch\(\);\n\s+if \(torchState\) advanceClip\(torchState, \(torchSource \|\| rig\(\)\)\.keys, dt, null\);/, 'the torch’s own clock, on its own keys');
   assert.match(arm, /pickAnimSource\(r\.sources, TORCH_GROUP, resetClip, \{ loopFallback: true \}\)/, '"torch", start to stop, looping');

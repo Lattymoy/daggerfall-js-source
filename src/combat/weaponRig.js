@@ -158,7 +158,7 @@ export async function autoBuildArms(entity, { wanted = () => getPref('mwArms'), 
   // and not a dozen mesh parses on every launch.
   if (measured() == null) await measure().catch(() => 0);
   const res = await buildArmsFor(entity);
-  if (!res?.ok) console.warn(`[arms] boot build refused - ${res?.stage}: ${res?.error}`);
+  if (!res?.ok && !res?.queued) console.warn(`[arms] boot build refused - ${res?.stage}: ${res?.error}`);   // AUDIT MW-TORCH F6: a build queued behind one in flight is not a refusal
   return res;
 }
 

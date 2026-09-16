@@ -210,6 +210,15 @@ export const FP_IDLE_BASE = 'idle';
  *  .kf has no sneak idle - the arms sink by rule 32(a) instead - so the
  *  base changes nothing there; the THIRD-PERSON body, which shares the
  *  machine, is what stood upright while sneaking. */
+/** MW-D51 / AUDIT MW-TORCH F1: NpcAnimation::updateCarriedLeftVisible,
+ *  verbatim - `return !(getWeaponType(weaptype)->mFlags & TwoHanded)`.
+ *  The first cut paired the bit with the class ("a real weapon"), so a
+ *  readied spell and drawn fists kept the torch up; the reference
+ *  hides the shield and the torch for BOTH (vanilla: ready magic and
+ *  the shield vanishes), and the port's own flag table gives them the
+ *  bit for exactly that reason. The rule is one line and it is the
+ *  reference's line. */
+export const carriedLeftVisible = (type) => !(weaponFlags(type) & MW_TWO_HANDED);
 export const FP_IDLE_SNEAK = 'idlesneak';
 /** MW-D51: the carried light's group - base_anim.kf's "Torch", played on the left arm. */
 export const TORCH_GROUP = 'torch';
@@ -1882,6 +1891,8 @@ export function createFpArm() {
   let pendingWorn = null;        // PX25: the worn table that arrived mid-build
   let pendingWeapon = null;      // PX26: the hand that arrived mid-build
   let pendingTorch = null;       // MW-D51: the light that arrived mid-build
+  let pendingBuild = null;       // AUDIT MW-TORCH F6: the BUILD that arrived mid-build - an identity (a load over a load) is not dropped
+  let buildGen = 0;              // AUDIT MW-TORCH F7: bumped by unload(); a build that lands after it is discarded, never installed over the unload
   let mesh = null;
   let packed = null;
   let reason = 'not built';
@@ -1962,6 +1973,21 @@ export function createFpArm() {
   let torchSource = null;
   let torchGroup = null;
   let torchMissRig = null;       // the rig whose sources carry no "torch" group - asked once, not per frame
+  // AUDIT MW-TORCH F4: THE OVERLAY ALLOCATES ONCE PER CHANGE, NOT PER
+  // FRAME. update()'s contract is "no allocation after the first pack";
+  // the merged track map is rebuilt only when the base tracks, the torch
+  // source or the mask change (a slot switch, a view switch), and the
+  // one sampler reads the torch's clock through a variable.
+  let overlayMemo = null;        // { base, overlay, mask, tracks }
+  let overlayClock = 0;
+  const overlaySample = overlaySampler(sampleTrack, () => overlayClock);
+  const overlayFor = (base, mask) => {
+    const overlay = torchSource.trackMap;
+    if (!overlayMemo || overlayMemo.base !== base || overlayMemo.overlay !== overlay || overlayMemo.mask !== mask) {
+      overlayMemo = { base, overlay, mask, tracks: overlayTracks(base, overlay, mask) };
+    }
+    return overlayMemo.tracks;
+  };
   let attackType = null;
   // MS1: THE BACKHAND. A strike that runs the other way from Morrowind's
   // one slash (StrikeRight - mwFirstPerson.js's REVERSED_STRIKES) plays
@@ -2318,14 +2344,19 @@ export function createFpArm() {
 
   /** MW-D51: updateCarriedLeftVisible - "Shields/torches shouldn't be
    *  visible during any operation involving two hands": the carried
-   *  light hides while a REAL two-handed weapon is drawn (the
-   *  TwoHanded bit paired with the class, as every reference use pairs
-   *  it - a spell and bare fists carry the bit and keep the torch).
-   *  Sheathed, the drawn type is None and the torch is up. */
+   *  light hides while the drawn type carries the TwoHanded bit -
+   *  carriedLeftVisible below. Sheathed, the drawn type is None and the
+   *  torch is up. */
   function torchVisible() {
     if (!torchLit || !built || !built.ok) return false;
-    const drawn = animWeaponType(built.mwType, sheathed, spellReady);
-    return !(isRealWeapon(drawn) && (weaponFlags(drawn) & MW_TWO_HANDED));
+    // AUDIT MW-TORCH F2: a light that resolved to NOTHING on this rig
+    // (no LIGH record, its mesh not attached, no Shield Bone) is not in
+    // the carried-left slot - the reference conditions "torch" on a
+    // Light actually instanced there. Per rig: the arm and the body
+    // resolve independently.
+    const r = rig();
+    if (!r || !r.torch) return false;
+    return carriedLeftVisible(animWeaponType(built.mwType, sheathed, spellReady));
   }
   /** MW-D51: the "torch" slot's refresh, the reference's own lines
    *  (character.cpp, update(): a Light in Slot_CarriedLeft and the
@@ -2744,6 +2775,11 @@ export function createFpArm() {
    * paperdoll is being looked at. Hence "sometimes".
    */
   function flushPending() {
+    if (pendingBuild) {   // AUDIT MW-TORCH F6: a queued build supersedes what was queued for the rig it replaces
+      const o = pendingBuild; pendingBuild = null; pendingWorn = null; pendingWeapon = null; pendingTorch = null;
+      api.build(o);
+      return;
+    }
     if (pendingWorn) { const p = pendingWorn; pendingWorn = null; api.setWorn(p); }
     if (pendingWeapon) { const w = pendingWeapon; pendingWeapon = null; api.setWeapon(w.item, { hasAmmo: w.hasAmmo }); }
     if (pendingTorch !== null) { const l = pendingTorch; pendingTorch = null; api.setTorch(l); }   // MW-D51
@@ -2760,14 +2796,27 @@ export function createFpArm() {
      *  and `ready()` alone says only that SOME arm stands - an
      *  Argonian save loaded over a human's standing arm kept the
      *  human's body until the pack was toggled off and on. */
-    builtFor() { return lastBuildOpts ? { race: lastBuildOpts.race ?? null, female: !!lastBuildOpts.female, faceIndex: lastBuildOpts.faceIndex | 0 } : null; },
+    builtFor() { return built && built.ok && lastBuildOpts ? { race: lastBuildOpts.race ?? null, female: !!lastBuildOpts.female, faceIndex: lastBuildOpts.faceIndex | 0 } : null; },   // AUDIT MW-TORCH: null when nothing stands - an unloaded or refused rig was built for no one
     get frames() { return frames; },
 
     async build(opts) {
-      if (busy) return { ok: false, stage: 'build', error: 'already building' };
+      // AUDIT MW-TORCH F6: A BUILD THAT ARRIVES MID-BUILD IS QUEUED, the
+      // law PX25/PX26 gave the worn table and the hand. autoBuildArms's
+      // door is reached by a load landing while the last load's build
+      // still runs (seconds long), and a refusal there left the NEW
+      // character on the OLD one's body until the next door - MWA3's
+      // report by another road. The latest opts wait and run the moment
+      // the in-flight build settles; the worn/hand/light queued for the
+      // rig being replaced go with it (the build's opts carry theirs).
+      if (busy) { pendingBuild = opts; return { ok: false, stage: 'build', error: 'already building - queued behind it', queued: true }; }
       busy = true;
+      const gen = buildGen;
       try {
         const res = await buildFpArm(opts);
+        // AUDIT MW-TORCH F7: unloaded while the archives were open (the
+        // pack's Off, Remove data): the result is dead on arrival, not
+        // installed over the unload.
+        if (gen !== buildGen) return { ok: false, stage: 'build', error: 'unloaded while building' };
         releaseMesh();
         releaseThirdMesh();
         built = res;
@@ -2827,6 +2876,8 @@ export function createFpArm() {
     subscribe(fn) { listeners.add(fn); return () => listeners.delete(fn); },
 
     unload() {
+      buildGen += 1;   // AUDIT MW-TORCH F7: a build in flight lands dead
+      pendingBuild = null; lastBuildOpts = null;
       releaseMesh(); built = null; packed = null;
       releaseThirdMesh(); thirdBuilt = null; thirdPacked = null; viewMode = 'first';
       movementState = null; movementGroup = null; movementSource = null; movementBase = null;
@@ -3044,6 +3095,7 @@ export function createFpArm() {
           // The old action clip belonged to the old weapon's group.
           actionState = null; actionSource = null; attackType = null; holdWindUp = false;
           wornKey = key;
+          if (lastBuildOpts) { lastBuildOpts.weapon = item; lastBuildOpts.hasAmmo = hasAmmo; }   // AUDIT MW-TORCH F5: setWorn's rebuild carries the hand that is IN it
           const wasDrawn = !sheathed;
           // MW-D28: isStillWeapon (character.cpp:1364) - a DRAWN hand
           // swapping one real weapon for another plays NO unequip and NO
@@ -3194,7 +3246,12 @@ export function createFpArm() {
       if (torchLit === want) return false;
       if (busy) { pendingTorch = want; return false; }
       torchLit = want;
-      if (!want || built.torch || !pickTorchRecord(built.allLights)) {
+      if (lastBuildOpts) lastBuildOpts.torch = want;   // AUDIT MW-TORCH F5: the equip-follow rebuild carries the light, not the build's stale flag
+      // AUDIT MW-TORCH F3: a bind that failed once on this rig (the mesh
+      // not attached, no Shield Bone) is remembered on it - or every
+      // light-up reopened the archives and repacked both meshes for the
+      // same refusal.
+      if (!want || built.torch || built.torchTried || !pickTorchRecord(built.allLights)) {
         // Doused, the mesh already hanging there, or no LIGH record to
         // hang (the build's own note says so): the state and the hide
         // flag do the rest on the next frame - no archive reopens.
@@ -3221,6 +3278,7 @@ export function createFpArm() {
               if (!rigBuilt.textures.has(file)) rigBuilt.textures.set(file, tex);
             }
             rigBuilt.torch = resolved.torchInfo;
+            rigBuilt.torchTried = true;   // AUDIT MW-TORCH F3: asked once per rig, whatever the answer
             rigBuilt.notes = [...(rigBuilt.notes || []).filter((n) => !/^torch[ :]/.test(n)), ...resolved.notes];
             rigBuilt.pieces = armPieceRows(rigBuilt.arm.pieces).length;
           };
@@ -3403,9 +3461,10 @@ export function createFpArm() {
         // MW-D51: the torch overlay on the body's own LeftArm mask.
         const tBase = poseSource ? poseSource.trackMap : t.tracks;
         const tOverlay = torchState && torchSource && t.leftArm && t.leftArm.size;
+        if (tOverlay) overlayClock = torchState.time;
         poseAssembly(t.arm, {
-          tracks: tOverlay ? overlayTracks(tBase, torchSource.trackMap, t.leftArm) : tBase,
-          sampleTrack: tOverlay ? overlaySampler(sampleTrack, torchState.time) : sampleTrack,
+          tracks: tOverlay ? overlayFor(tBase, t.leftArm) : tBase,
+          sampleTrack: tOverlay ? overlaySample : sampleTrack,
           time: poseTime(state),   // MS1: a backhand's window runs backwards
           accumRoot: t.accumRoot,
         });
@@ -3428,9 +3487,10 @@ export function createFpArm() {
       // skeleton; a rig without "Bip01 L Clavicle" overlays nothing.
       const fBase = poseSource ? poseSource.trackMap : built.tracks;
       const fOverlay = torchState && torchSource && built.leftArm && built.leftArm.size;
+      if (fOverlay) overlayClock = torchState.time;
       poseAssembly(built.arm, {
-        tracks: fOverlay ? overlayTracks(fBase, torchSource.trackMap, built.leftArm) : fBase,
-        sampleTrack: fOverlay ? overlaySampler(sampleTrack, torchState.time) : sampleTrack,
+        tracks: fOverlay ? overlayFor(fBase, built.leftArm) : fBase,
+        sampleTrack: fOverlay ? overlaySample : sampleTrack,
         time: poseTime(state),   // MS1: a backhand's window runs backwards
         // Rule 56's accum root is STICKY and rig-wide, so it does not
         // follow the source the way the tracks do.

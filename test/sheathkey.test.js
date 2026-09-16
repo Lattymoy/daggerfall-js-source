@@ -133,5 +133,8 @@ test('SHEATH: the two outdoor fall-through tails decline POLLED_ACTIONS too - AU
     const src = read(f);
     assert.match(src, /if \(POLLED_ACTIONS\.has\(act\)\) \{[^}]*\}\s*else if \(routeAction\(act, hudCtx\)\) \{ e\.preventDefault\(\); return; \}/,
       `${f}: the fall-through tail declines a polled action before it ever reaches routeAction, exactly as routeKey does`);
+    // AUDIT MW-TORCH: the poll is now the ONLY door for Z in these two
+    // hosts - so its presence is pinned beside the decline.
+    assert.match(src, /const zNowW = held\(keys, 'ReadyWeapon'\);\n\s+if \(zNowW && !zPrevW\) weaponRig\.readyWeapon\(\);/, `${f}: the frame's edge poll stands`);
   }
 });

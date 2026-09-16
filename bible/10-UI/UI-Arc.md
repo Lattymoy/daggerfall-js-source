@@ -13571,6 +13571,18 @@ Pin: `test/mwarms_fps.test.js` (one added): the row on the card behind
 the data gate, the two arms of the toggle, the buttons gone, and the
 three consumers still reading the one pref.
 
+**Follow-up (2026-09-16):** online forces `mwArms` on at every boot,
+so the row could never stick there while the archives stayed
+attached; the card gained a confirm-before-destroy "Remove data"
+action routed through `clearStoredMorrowind`. AUDIT MW-TORCH F8: that
+clear emptied the stores and left the COUNT standing - the card said
+"N archives attached" until the next boot and autoBuildArms's data
+gate still passed - so `clearStoredMorrowind` now zeroes the count,
+drops the print and the counted names, and bumps the generation. F7:
+`fpArm.unload()` mid-build (the row's Off, Remove data, pressed while
+the seconds-long build runs) used to be overtaken by the build landing
+after it; a build that lands after an unload is discarded now.
+
 ## MWA3 - THE ARM STANDS FOR THE ENTITY (2026-09-16)
 
 Mac: "my character who is an argonian uses a human morrowind model."
@@ -13601,6 +13613,16 @@ through `setWorn`/`setWeapon`; this is the third that did not.
 `window.__weaponDebug()` (WEAPON-VIS1) now prints `armBuiltFor`
 beside `armWantedFor` and whether an arm stands at all - "an Argonian
 on a human body" is those two disagreeing, readable in one call.
+
+**AUDIT MW-TORCH F6:** a load landing while the last load's build is
+still running (seconds long) reached the door with `ready()` false,
+went on to `build()`, and was REFUSED ("already building") with no
+queue - the new character wore the old one's body until the next door,
+the report by another road. `build()` queues a build that arrives
+mid-build (PX25/PX26's law for the worn table and the hand) and runs
+it the moment the in-flight one settles, superseding whatever was
+queued for the rig it replaces; autoBuildArms does not warn on a
+queued build. `builtFor()` answers null when nothing stands.
 
 Pins: `test/mwarms_fps.test.js` (two added): `armsStandFor` on each
 of the three identity terms and on `ready()`; `autoBuildArms` going on

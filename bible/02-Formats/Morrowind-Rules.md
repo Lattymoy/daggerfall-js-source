@@ -6508,15 +6508,27 @@ frame by weaponRig beside the weapon - a boolean fast path, and a slow
 path that binds the mesh on both rigs the first time a torch is lit on
 a rig built without one (rule 57 hides a doused torch, never removes
 it, so re-lighting is the fast path from then on). A rig whose master
-carries no LIGH record never reopens the archives.
+carries no LIGH record never reopens the archives, and (AUDIT MW-TORCH
+F3) neither does one whose bind failed once - `torchTried` on the rig
+- or every light-up reopened them and repacked both meshes for the
+same refusal. F5: `setTorch` writes the light into `lastBuildOpts`
+(and `setWeapon` its hand), so the equip-follow rebuild `setWorn`
+spreads carries what is in hand now, not the build's stale flag.
 
 **The visibility.** updateCarriedLeftVisible: "Shields/torches
 shouldn't be visible during any operation involving two hands" - the
-torch hides while a REAL two-handed weapon is drawn (the TwoHanded bit
-paired with the class, as every reference use pairs it; a spell and
-bare fists carry the bit and keep the torch), and shows sheathed. The
-figure portrait shows the lit light whatever the hand holds (PX26 F1's
-own law for the weapon).
+reference's one line, `return !(getWeaponType(weaptype)->mFlags &
+TwoHanded)`, is `carriedLeftVisible`: the torch hides while the drawn
+type carries the TwoHanded bit - a two-hander, a bow, a crossbow, AND
+a readied spell or drawn fists (vanilla: ready magic and the shield
+vanishes; the flag table gives both the bit for exactly that) - and
+shows sheathed. AUDIT MW-TORCH F1 corrected the first cut, which paired
+the bit with the class and kept the torch up over a spellcast. F2: the
+rule is asked of a light that is actually IN this rig's slot -
+`rig().torch` - so a light that resolved to nothing (no record, its
+mesh not attached, no Shield Bone) neither shows nor raises the arm,
+per rig. The figure portrait shows the lit light whatever the hand
+holds (PX26 F1's own law for the weapon).
 
 **The animation - rules 25+26, for ONE mask.** The reference plays
 "torch" at Priority_Torch on BlendMask_LeftArm (character.cpp's update,
@@ -6538,7 +6550,10 @@ own source's keys, re-picked on a view switch (the other rig's
 sources), asked once per rig that lacks the group (the first-person
 .kf may; the light then hangs where the idle leaves the left hand, and
 the card says so). A mask bone the overlay does not key falls to the
-base's track.
+base's track. AUDIT MW-TORCH F4: the merged map is built ONCE per
+(base tracks, torch source, mask) and memoised, and one sampler reads
+the torch's clock through a variable - update()'s "no allocation
+after the first pack" holds with the torch lit.
 
 **Recorded, not faked.** A peer's look carries no light on the wire
 (MWBODY1's `lk`), so the peers' bodies hold none; a lantern or candle
@@ -6577,6 +6592,14 @@ idle - the arms sink by rule 32(a)'s i1stPersonSneakDelta instead - so
 first person is unchanged; the THIRD-PERSON body shares the machine and
 its base_anim.kf carries "IdleSneak", which is the crouch that was
 missing. The swim family stays deferred with the port's swimming.
+
+**Recorded, not parity (AUDIT MW-TORCH F9).** The reference plays the
+sneak idle at Priority_SneakIdleLowerBody on the LOWER body, so the
+legs stay crouched under a weapon-priority upper-body clip; this
+port's four-slot winner takes every bone, so a sneaking body in third
+person stands up for the length of an attack or an equip and crouches
+again after. Rule 26 whole is still the recorded gap; MW-D51's one
+mask is the first step toward it, not the last.
 
 **Pinned (test/mwtorch.test.js).** The four terms of idleBaseFor; the
 fixture rig's stance reaching refreshIdle (no sneak idle in the

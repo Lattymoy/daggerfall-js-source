@@ -1038,18 +1038,18 @@ export function blendMaskBones(skeleton, rootName = 'bip01 l clavicle') {
  *  reference attaches no controller for it and the node keeps its last
  *  transform; the base's is the safer reading of "last"). */
 export function overlayTracks(base, overlay, bones) {
-  return {
-    get(name) {
-      if (bones && bones.has(name)) {
-        const t = overlay ? overlay.get(name) : null;
-        if (t) return { __overlay: t };
-      }
-      return base ? base.get(name) : undefined;
-    },
-  };
+  // AUDIT MW-TORCH F4: ONE merged Map per (base, overlay, mask) - built
+  // eagerly so the frame's lookups allocate nothing. The caller memoises
+  // it on those three identities.
+  const out = new Map(base ?? []);
+  if (overlay && bones) {
+    for (const [name, t] of overlay) if (bones.has(name) && t) out.set(name, { __overlay: t });
+  }
+  return out;
 }
-export function overlaySampler(sampleTrack, overlayTime) {
-  return (track, time) => (track && track.__overlay ? sampleTrack(track.__overlay, overlayTime) : sampleTrack(track, time));
+export function overlaySampler(sampleTrack, clock) {
+  const at = typeof clock === 'function' ? clock : () => clock;
+  return (track, time) => (track && track.__overlay ? sampleTrack(track.__overlay, at()) : sampleTrack(track, time));
 }
 
 /** MW-D30: the CLOT records - the ARMO reader's twin, plus CTDT's
