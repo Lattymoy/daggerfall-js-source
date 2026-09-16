@@ -772,6 +772,19 @@ The list is long because the arc had guessed at most of it:
   standing - and the XML x-offset is NEGATED for a mirrored record.
   The 288 per-sprite offsets are APPLIED now (their sign was the one
   thing AUDIT-EOTB2 would not guess).
+  **EOTB-FEET (2026-09-16, Mac: "the sprite not connected to the
+  floor. Like you walk hovering").** The three arms place the quad's
+  CENTRE - Unity's billboard mesh is centred on its transform - and
+  `place()` handed that centre to a renderer whose billboard is
+  BOTTOM-ANCHORED (`BB_VS`: "centre sits half a height above the
+  placement base"; the world's flats and the peers' dolls all hand it
+  the base). The body stood half its own height - a metre, for a
+  2.09 m sprite - in the air on every arm alike, and the pin that
+  should have caught it asserted the centre at `size/2` and called it
+  "the bottom at the feet". The arms stay the mod's; the number
+  handed over is now the base (the centre less `size/2`), the pin
+  asserts the base AT the feet, and the two conventions are pinned
+  where they meet (the shader line and the conversion).
 - **The camera's auto-toggle** is three independent "just changed"
   blocks and one fan-out (IL_1847-IL_1c6e), so several rows can fire in
   one frame; `autoPOVSwitch` is DERIVED from the nine rows
