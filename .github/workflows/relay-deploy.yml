@@ -1,55 +1,74 @@
-# SRV-N/CI (2026-09-17): THE RELAY'S DEPLOY, IN CI AT LAST.
+# SRV-N/CI (2026-09-17): THE RELAY'S DEPLOY.
 #
 # `server/wrangler.toml` has said "npx wrangler deploy (CLOUDFLARE_API_TOKEN
 # in the environment)" since ONLINE1, and the bible has repeated "the deploy
 # is by hand, nothing in CI does it" through every online slice since. That
 # was true, and it had two costs: a relay-changing slice could merge green
 # with the live Worker still on the old deploy (SRV-N shipped exactly that
-# way), and the only way to push one was for somebody to hold the API token
-# in their hands.
+# way, and within the hour SLAM13's merge left main SEVEN versions ahead of
+# live), and the only way to push one was for somebody to hold the API token.
 #
 # ═══ THIS DROPS EVERY CONNECTED PLAYER ════════════════════════════
 #
 # A relay deploy restarts every Durable Object and drops every open socket
-# at once - peers vanish, chat goes quiet, and everyone reconnects. Do it
-# at a chosen moment.
+# at once - peers vanish, chat goes quiet, everyone reconnects. So the
+# trigger has to fire on a real relay change and on nothing else.
 #
-# MANUAL, NOT ON PUSH, and that is the whole of the protection. Running
-# this means somebody went to Actions, picked it out of four workflows and
-# pressed Run; a comment changing in `server/` cannot reach it.
+# ═══ WHY NOT `on: push` WITH A PATH FILTER ════════════════════════
 #
-# There WAS a confirm box here that wanted the word 'deploy' typed into it.
-# It was dispatched twice and refused both times - once on an empty field,
-# once on 'Run', because the operator typed the name of the button into the
-# field beside it. It never stopped an accident; it only ever stopped the
-# deploy. A warning belongs in a name and a header, not in a form field
-# that can only be wrong.
+# The obvious automation is `paths: [server/**]`, and it would be WRONG.
+# The relay's law lives in `src/net/wire.js` - one home, both ends,
+# re-exported whole by `server/src/relay.js` - and that file changes
+# constantly for reasons the running Worker does not care about. A path
+# filter would drop every player in the game several times a day over
+# comments and client-side constants.
+#
+# ═══ THE TRIGGER IS THE VERSION ═══════════════════════════════════
+#
+# Because the version already means exactly this. `RELAY_VERSION` is
+# bumped by a relay-changing slice and by nothing else - that is the
+# standing rule, written into the constant since AUDIT WORLD34 D4. So
+# every push asks ONE cheap question: does the live relay serve the
+# version main says it should? It deploys only when the answer is no.
+#
+# A push that changed no relay behaviour bumped no version, answers yes,
+# and stops at a curl. That makes this job IDEMPOTENT - safe to re-run,
+# and a merge whose deploy failed is retried by the next push instead of
+# silently staying stale, which is the whole failure this exists to end.
+#
+# `workflow_dispatch` stays, for forcing a redeploy at an unchanged
+# version (a rolled-back Worker, a wrangler config change).
 name: Deploy relay (drops every connected player)
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
   contents: read
 
+# One at a time, and never cancelled halfway. A run interrupted between
+# `wrangler` and the verify step is the one state this must not leave
+# behind: the next run would compare against a live version nothing had
+# confirmed, and call the drift gone.
+concurrency:
+  group: relay-deploy
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Say what this run is about to do
-        run: |
-          echo "Deploying the relay. Every connected player's socket will drop"
-          echo "and reconnect. Triggered by ${{ github.actor }} on ${{ github.ref_name }}."
-
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
 
-      # THE VERSION THIS RUN INTENDS, read from the source rather than typed
-      # into the workflow: one home, and a deploy cannot claim a name the
-      # Worker does not carry. The home is src/net/wire.js since SLAM13
+      # THE VERSION THIS RUN WOULD DEPLOY, read from the source rather than
+      # typed into the workflow: one home, and a deploy cannot claim a name
+      # the Worker does not carry. The home is src/net/wire.js since SLAM13
       # (the welcome carries it and the client compares against it;
       # server/src/index.js re-exports it for /health) - a grep of index.js
       # would have found the re-export and refused every run.
@@ -57,22 +76,52 @@ jobs:
         id: ver
         run: |
           v=$(grep -oP "^export const RELAY_VERSION = '\\K[^']+" src/net/wire.js)
-          test -n "$v" || { echo "::error::could not read RELAY_VERSION"; exit 1; }
+          test -n "$v" || { echo "::error::could not read RELAY_VERSION from src/net/wire.js"; exit 1; }
           echo "version=$v" >> "$GITHUB_OUTPUT"
-          echo "deploying relay $v"
+          echo "main says the relay should be $v"
+
+      # ...AND WHAT IS ACTUALLY LIVE. The push got us here; the DRIFT
+      # decides. This is the trigger proper.
+      - name: Ask the live relay what it is serving
+        id: live
+        run: |
+          url='https://daggerfall-online.mackcothran.workers.dev/health'
+          got=$(curl -fsS --max-time 15 "$url" | sed -n 's/.*"version":"\([^"]*\)".*/\1/p' || true)
+          echo "version=$got" >> "$GITHUB_OUTPUT"
+          echo "live is serving '${got:-unreachable}'"
+
+      - name: Nothing to do - the relay is already current
+        if: steps.live.outputs.version == steps.ver.outputs.version
+        run: echo "the relay already serves ${{ steps.ver.outputs.version }} - no deploy, no dropped players"
+
+      # AN UNREADABLE RELAY IS NOT "NO DRIFT", and it is not a reason to
+      # deploy either. Deploying blind over a relay we could not read turns
+      # an outage into a redeploy nobody asked for, and drops every player
+      # who was still connected to a Worker that was merely slow to answer.
+      # A human dispatch can force it; a push may not.
+      - name: Refuse to deploy over a relay that could not be read
+        if: steps.live.outputs.version == '' && github.event_name == 'push'
+        run: |
+          echo "::error::/health did not answer - not deploying blind on a push. Dispatch by hand once it is reachable."
+          exit 1
 
       - name: Deploy
+        if: steps.live.outputs.version != steps.ver.outputs.version
         working-directory: server
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: npx --yes wrangler@4 deploy
+        run: |
+          echo "deploying ${{ steps.ver.outputs.version }} over ${{ steps.live.outputs.version }}"
+          echo "every connected player's socket is about to drop and reconnect"
+          npx --yes wrangler@4 deploy
 
       # AND PROVE IT LANDED. The client's own deploy has been verified BY
       # CONTENT since U60 (`tools/verify-deploy.mjs`, whose header says HTTP
-      # 200 proves nothing); the relay never was. `/health` names the deploy,
-      # so ask it until it says the version this run built - a wrangler exit
-      # code of 0 over an unchanged Worker is the failure this catches.
+      # 200 proves nothing); the relay never was. A wrangler exit code of 0
+      # over an unchanged Worker is a green deploy that did not happen, and
+      # is indistinguishable from success without this.
       - name: Verify /health names this deploy
+        if: steps.live.outputs.version != steps.ver.outputs.version
         run: |
           want='${{ steps.ver.outputs.version }}'
           url='https://daggerfall-online.mackcothran.workers.dev/health'
