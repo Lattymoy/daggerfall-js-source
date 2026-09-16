@@ -91,7 +91,7 @@ import {
 } from '../systems/inventorySession.js';
 import { entityMaxEncumbrance } from '../combat/formulas.js';   // AUDIT 26: PlayerEntity.MaxEncumbrance, enchantment allowance and all
 import { liveStat } from '../systems/statMods.js';
-import { conditionWord, conditionPercentage, itemNameParts, itemLongName, itemDamageLine, itemArmourLine } from '../systems/itemInfo.js';   // RF6: the long name's two parts, ResolveItemLongName's arms once
+import { conditionWord, conditionPercentage, itemNameParts, itemLongName, itemDamageLine, itemArmourLine, itemHandsLine } from '../systems/itemInfo.js';   // RF6: the long name's two parts, ResolveItemLongName's arms once
 import { rarityAttr, rarityLines } from '../systems/lootRarity.js';   // LR1: the row's tier attribute and the card's lines
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { closeOnOutsideTap } from './enhancedOverlays.js';   // OT1
@@ -345,6 +345,12 @@ export function itemLine(item, identity = undefined) {
     // show a row at all is this skin's (systems/itemInfo.js).
     damage: itemDamageLine(item),
     armour: itemArmourLine(item),
+    // MAC-M2 (Mac: "The Tooltip of weapons should also show if the
+    // weapon is 1h or 2h"): the same shape as the two above - the
+    // ANSWER is systems/itemInfo's, off the port's one GetItemHands, so
+    // the card cannot tell a player a claymore is one-handed while the
+    // equip table is emptying both their hands for it.
+    hands: itemHandsLine(item),
     stack: (item.stackCount ?? 1) > 1 ? item.stackCount : null,
     equipped: isEquipped(item),
     // HT2: the LIT light source, by REFERENCE, exactly as
@@ -1536,9 +1542,16 @@ function itemTile(line) {
  *  Three surfaces show it (the grid tile, the tile's no-icon fallback,
  *  the worn map's slot) and they share this rather than each spelling
  *  the `??` themselves: three copies of a rule is three chances to
- *  disagree, which is the shape half of this month's findings had. */
+ *  disagree, which is the shape half of this month's findings had.
+ *
+ *  MAC-M2 put the HANDS beside it on the same three hovers. Mac said
+ *  "the Tooltip of weapons should ALSO show" it, and the surface MAC-M1
+ *  read that word onto is this one - the row is on the card either way,
+ *  but a player scanning a list of blades is hovering, not clicking.
+ *  Joined with the card's own ' · ', and the word is itemInfo's
+ *  verbatim, so the two surfaces cannot say it differently. */
 export const itemStatSuffix = (line) => {
-  const stat = line?.damage ?? line?.armour;
+  const stat = [line?.damage ?? line?.armour, line?.hands].filter(Boolean).join(' · ');
   return stat ? ` (${stat})` : '';
 };
 
@@ -1772,6 +1785,10 @@ function detailCol() {
   // is armour, and `pair` skips a null.
   pair('Damage', line.damage);
   pair('Armour', line.armour);
+  // MAC-M2: under the damage, because it is the same question - how the
+  // thing is swung - and above the weight, which is not. Null for
+  // everything that is not a weapon, so no book grows an empty row.
+  pair('Hands', line.hands);
   pair('Weight', `${line.weight.toFixed(2)} kg`);
   pair('Condition', line.condition != null ? `${line.word} · ${line.condition}%` : null);
   // HT2: a light source is never WORN - the honest line for one is

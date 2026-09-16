@@ -1754,8 +1754,11 @@ test('MAC-M1: ONE suffix, shared by the three hovers that show it', () => {
   // and they share ONE builder: three copies of a rule is three chances
   // to disagree, which is the shape half of this month's findings had.
   const W = (templateIndex, material = 0) => ({ group: 'Weapons', templateIndex, material, stackCount: 1 });
-  assert.equal(itemStatSuffix(itemLine(W(113))), ' (0 - 5)');
-  assert.equal(itemStatSuffix(itemLine({ group: 'Armor', templateIndex: 103, material: 0x0200, stackCount: 1 })), ' (+7)');
+  // MAC-M2 joined the hands to it - one suffix still, two facts.
+  assert.equal(itemStatSuffix(itemLine(W(113))), ' (0 - 5 · One-handed)');
+  assert.equal(itemStatSuffix(itemLine(W(122, 9))), ' (8 - 24 · Two-handed)');
+  assert.equal(itemStatSuffix(itemLine({ group: 'Armor', templateIndex: 103, material: 0x0200, stackCount: 1 })), ' (+7)',
+    'armour keeps its rating alone - hands is a weapon’s question');
   assert.equal(itemStatSuffix(itemLine({ group: 'Books', templateIndex: 0, stackCount: 1 })), '',
     'a book gets no brackets, not empty ones');
   assert.equal(itemStatSuffix(null), '', 'and a missing line is not a crash');
@@ -1794,4 +1797,111 @@ test('MAC-M1: the card draws the stat FIRST, and the worn map’s hover carries 
     'the worn slot’s hover reads the same line');
   assert.match(src, /tile\.title = line\.name \+ itemStatSuffix\(line\);/,
     'and so does the grid tile - the most literal "tooltip" in the report');
+});
+
+// ═══ MAC-M2: ONE HAND OR TWO ═════════════════════════════════════════
+//
+// 2026-09-16, Mac: "The Tooltip of weapons should also show if the
+// weapon is 1h or 2h."
+//
+// The fact was already in the tree and had never been shown to the
+// player: `getItemHands` (characters/equipTable.js) is the port's
+// verbatim ItemEquipTable.GetItemHands, and it is what the equip table,
+// the paperdoll's record pick, Weapon Widget's mirror rows and Handheld
+// Torches' hand law all ask. The card learnt to ask it too - through
+// ONE new presenter in systems/itemInfo.js, beside MAC-M1's two - so
+// there is still exactly one list of which weapons take both hands.
+
+test('MAC-M2: every weapon template’s hands, against GetItemHands’ own table', async () => {
+  const { itemHandsLine } = await import('../src/systems/itemInfo.js');
+  const W = (templateIndex, material = 0) => ({ group: 'Weapons', templateIndex, material, stackCount: 1 });
+
+  // DFU's WEAPON_HANDS row by row (equipRules.js, extraction-generated
+  // from ItemEquipTable.GetItemHands), as WORDS. deepEqual against the
+  // whole space rather than a spot check: promoting ANY one weapon to
+  // two-handed - or demoting one - reddens this, which is the property
+  // an `assert.ok(bows >= 8)` never had.
+  const hands = Object.fromEntries(
+    Array.from({ length: 18 }, (_, i) => 113 + i).map((t) => [t, itemHandsLine(W(t))]));
+  assert.deepEqual(hands, {
+    113: 'One-handed',    // Dagger
+    114: 'One-handed',    // Tanto
+    115: 'Two-handed',    // Staff
+    116: 'One-handed',    // Shortsword
+    117: 'One-handed',    // Wakizashi
+    118: 'One-handed',    // Broadsword
+    119: 'One-handed',    // Saber
+    120: 'One-handed',    // Longsword
+    121: 'One-handed',    // Katana
+    122: 'Two-handed',    // Claymore
+    123: 'Two-handed',    // Dai-katana
+    124: 'One-handed',    // Mace
+    125: 'Two-handed',    // Flail
+    126: 'Two-handed',    // Warhammer
+    127: 'One-handed',    // Battle Axe - EITHER in DFU, and the axe most
+    128: 'Two-handed',    // War Axe    - often got backwards
+    129: 'Two-handed',    // Short Bow - with the switching setting off
+    130: 'Two-handed',    // Long Bow
+  });
+
+  // An ARROW is a weapon by group and is not swung: MAC-M1's own
+  // presenter question, and the same answer.
+  const { TEMPLATES } = await import('../src/systems/useItem.js');
+  assert.equal(itemHandsLine({ group: 'Weapons', templateIndex: TEMPLATES.Arrow, material: 0, stackCount: 5 }), null);
+  // ...and nothing that is not a weapon grows a row.
+  for (const g of ['Armor', 'Books', 'MiscItems', 'UselessItems2', 'Jewellery']) {
+    assert.equal(itemHandsLine({ group: g, templateIndex: 111, stackCount: 1 }), null, `${g} shows no hands`);
+  }
+  assert.equal(itemHandsLine(null), null, 'and a missing item is not a crash');
+});
+
+test('MAC-M2: the card reads GetItemHands, not a list of its own', async () => {
+  const { itemHandsLine } = await import('../src/systems/itemInfo.js');
+  const { getItemHands, ITEM_HANDS } = await import('../src/characters/equipTable.js');
+  const { setValue } = await import('../src/systems/settings.js');
+  const W = (templateIndex) => ({ group: 'Weapons', templateIndex, material: 0, stackCount: 1 });
+
+  // ONE HOME. The word the card prints IS the verdict the equip table
+  // routes by, for every template - so the card can never say
+  // "One-handed" about a weapon that empties both hands.
+  for (let t = 113; t <= 130; t++) {
+    const expect = getItemHands(W(t)) === ITEM_HANDS.Both ? 'Two-handed' : 'One-handed';
+    assert.equal(itemHandsLine(W(t)), expect, `template ${t}`);
+  }
+
+  // THE BOW IS THE PROOF, because its row is not a constant:
+  // `BowLeftHandWithSwitching` (ItemEquipTable.cs:633-635) makes a bow
+  // LeftOnly, and the table then puts it in the off hand beside a
+  // sword. A card holding its own table would still be calling it
+  // two-handed.
+  try {
+    setValue('Enhancements', 'BowLeftHandWithSwitching', true);
+    assert.equal(itemHandsLine(W(130)), 'One-handed', 'with switching on the bow takes one hand, and the card says so');
+    assert.equal(itemHandsLine(W(122)), 'Two-handed', 'and the setting moves nothing else');
+  } finally {
+    setValue('Enhancements', 'BowLeftHandWithSwitching', false);
+  }
+  assert.equal(itemHandsLine(W(130)), 'Two-handed', 'switched back off, the classic answer returns');
+});
+
+test('MAC-M2: itemLine carries the hands and the card draws the row', () => {
+  const W = (templateIndex, material = 0) => ({ group: 'Weapons', templateIndex, material, stackCount: 1 });
+  assert.equal(itemLine(W(122, 9)).hands, 'Two-handed', 'the line the card reads carries it');
+  assert.equal(itemLine(W(120)).hands, 'One-handed');
+  assert.equal(itemLine({ group: 'Books', templateIndex: 0, stackCount: 1 }).hands, null);
+
+  // The DOM half is a source sweep, as this file's header says.
+  const src = readFileSync(new URL('../src/ui/enhancedInventory.js', import.meta.url), 'utf8')
+    .replace(/^\s*\/\/.*$/gm, '');
+  const stats = src.slice(src.indexOf("const dl = el('dl', 'stats');"));
+  const body = stats.slice(0, stats.indexOf('c.append(dl);'));
+  const dmg = body.indexOf("pair('Damage', line.damage);");
+  const hnd = body.indexOf("pair('Hands', line.hands);");
+  const wgt = body.indexOf("pair('Weight'");
+  assert.ok(hnd > 0, 'the card builds a Hands row');
+  assert.ok(dmg < hnd && hnd < wgt,
+    'it sits under the damage - the same question, how the thing is swung - and above the weight');
+  // and NO second table: the word is itemInfo's, off equipTable's law.
+  assert.doesNotMatch(src, /Two-handed/,
+    'the skin names no weapon-hands words of its own - itemHandsLine owns them');
 });
