@@ -6415,4 +6415,10 @@ object is THE HUB (`world78`): accounts (an id and a secret beside the
 peer's, minted per browser profile), friends, requests, presence and
 last-seen, four-seat parties and the party pose fan; the client's picture
 in `net/social.js`; the panel, the party HUD, the F key and the map on
-top. Written up on its own page.
+top. Written up on its own page. Audited the same day (AUDIT SOC, four
+lenses over the merged arc, `world79`): the hub's directed acts cooled
+per target, accounts nobody's list names swept on an alarm a page at a
+time, pending rows without presence, by-account acts for relations alone,
+one tab speaking for a seat; the link's inbound gates and frame bound;
+the host's counted pointer surfaces and F inside - the arc page's AUDIT
+SOC section.

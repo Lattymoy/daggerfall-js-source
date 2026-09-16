@@ -40,10 +40,11 @@
 //     PlayerMouseLook.cs:238-244); only the RELEASE is ungated.
 //   - Lock-on dot: the host projects the locked foe's chest and calls
 //     setLockDot(x, y) (or null); the layer only places a mark.
-//   - Buttons, the five that have no gesture: the DIAL (Tab, the door
+//   - Buttons, the six that have no gesture: the DIAL (Tab, the door
 //     the ENHANCED skin routes to the compass rose - PX15), JUMP
 //     (held), the weapon SHEATHE (ReadyWeapon, held), the interaction
-//     MODE cycle (T3-touch, hosts with one), and the MENU (Escape).
+//     MODE cycle (T3-touch, hosts with one), the SOCIAL door (SOC5's
+//     own action, hosts with one - AUDIT SOC C9), and the MENU (Escape).
 //     Synthetic keydown/keyup with BOTH e.key and e.code set (the input
 //     map routes on either), on the ACTION's live code - an unbound
 //     action presses nothing at all. The nav row for the CLASSIC windows (arrows,
@@ -122,7 +123,7 @@ function synth(type, code) {
 // InputManager.GetKey's dual-dict fallthrough :1084). Move Jump off
 // Space in the controls window and the JUMP button fired whatever now
 // owned Space; move Run off ShiftLeft and the stick's 80% throw did
-// nothing. The reverse lookup is GetBinding (inputActions.js:391,
+// nothing. The reverse lookup is GetBinding (inputActions.js:401,
 // InputManager.cs:641-671) and it is exactly what the automap, rest
 // and exterior-automap windows already ask. Resolved at PRESS time, so
 // a rebind takes effect on the next touch with no re-attach.
@@ -140,7 +141,7 @@ const codesOf = (code) => (code == null ? [] : (getCombo(code) ?? [code]));
 /**
  * Attach the touch layer.
  * @param canvas the game canvas (drag surface)
- * @param hooks { look(dx,dy), attack?(dx,dy,held), tap?(x,y), locked?(), dial?, cycleMode?(), overlayActive?(), paused?() }
+ * @param hooks { look(dx,dy), attack?(dx,dy,held), tap?(x,y), locked?(), dial?, cycleMode?(), socialInteract?(), overlayActive?(), paused?() }
  *   TI2 adds nothing to the hooks: the analog stick is read FROM the
  *   handle (`axes()`), the gyro goes through `look`.
  *   - attack/tap/dial omitted on scenes without them (the fly-cam
@@ -316,6 +317,18 @@ export function attachTouch(canvas, hooks = {}) {
     const modeBtn = button('grab', edge('right', 160), edge('bottom', 16), 64,
       () => { modeBtn.textContent = hooks.cycleMode(); });
   }
+  // AUDIT SOC C9: THE PHONE'S OWN F. SOC5 gave the port an action of its
+  // own - SocialInteract, KeyF - and the whole of the social arc behind
+  // it: the menu on another player's body, and the friends and party
+  // panel when nobody is in reach. A phone has no F, and this layer had
+  // no control for it, so online on a phone could open neither. One more
+  // button beside the mode cycle, drawn only where a host hands the hook
+  // in (the same gate-by-hook rule the dial and the mode button carry -
+  // a drawn door that opens nothing is the lie this repo names), and it
+  // calls the HOST'S OWN DOOR rather than synthesizing the key: the door
+  // answers true or false on its own terms (scenes/world.js
+  // socialInteract) and an offline page is a host that passes no hook.
+  if (hooks.socialInteract) button('☺', edge('right', hooks.cycleMode ? 232 : 160), edge('bottom', 16), 48, () => { hooks.socialInteract(); });
 
   // Overlay-nav row (classic windows navigate on arrows/Enter/Esc) -
   // shown by itself while a classic overlay holds the game.

@@ -124,6 +124,15 @@ const PARTY_POLL_S = 0.25;
 const PARTY_RING_SIZE = 15, PARTY_RING_PULSE = 3, PARTY_RING_THICK = 0.55;
 // The label sits this many screen pixels under the ring's centre.
 const PARTY_LABEL_DROP = 17;
+// AUDIT SOC D2: ...and the SECOND member standing on that same map
+// pixel sits this much further down again. Two members in one town -
+// which is the ordinary case for a party, since a party travels
+// together - marked the same pixel and their labels were drawn exactly
+// on top of each other: one name, unreadably doubled, and no way to
+// tell whether the other seat was even on the map. A label is two lines
+// at ~13px and ~11px, so 30 clears one whole label and keeps the stack
+// under the ring it belongs to.
+const PARTY_LABEL_STACK = 30;
 
 const easeInOut = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
@@ -563,9 +572,17 @@ export class OverworldMapWindow {
     // The pixel's CENTRE, and the height under it - the player ring's
     // own reading (_rings above), so a member standing where the player
     // stands draws concentric with them rather than a metre off.
+    // AUDIT SOC D2: `stack` is how many members were already standing on
+    // this member's map pixel - the i-th drops i labels further down, in
+    // the hub's own seat order, so a party sharing a town reads as a
+    // list rather than as one smeared name.
+    const onPixel = new Map();
     this._party = marks.map((m) => {
       const x = m.px + 0.5, z = -(m.py + 0.5);
-      return { ...m, x, z, y: this._heightAt(x, z) + 0.3 };
+      const key = `${m.px},${m.py}`;
+      const stack = onPixel.get(key) ?? 0;
+      onPixel.set(key, stack + 1);
+      return { ...m, x, z, y: this._heightAt(x, z) + 0.3, stack };
     });
     this._renderPartyLabels();
     return true;
@@ -588,7 +605,9 @@ export class OverworldMapWindow {
       // rest of the slice draws a member's name in, offline is that
       // green with the life out of it
       lab.style.color = m.online ? PARTY_MARK_CSS : PARTY_OFFLINE_CSS;
-      lab.title = partyHoverText(m);   // the pointer passes through the layer, so this is the touch-and-hold line
+      // AUDIT SOC C16: no `title` here. `.ovparty` is `pointer-events: none` (ui/enhancedStyle.js), so the browser
+      // never resolves a hover on a label and the tooltip could not appear on any device. The sentence it carried
+      // is the window's own hover line, which `_partyAt` -> `_hoverLabel` draws from the SAME text.
       layer.append(lab);
       this._partyLabels.set(m.acct ?? m.name, lab);
     }
@@ -612,8 +631,14 @@ export class OverworldMapWindow {
       const on = !!p && p[0] >= -80 && p[1] >= -40 && p[0] <= (this._vw ?? 0) + 80 && p[1] <= (this._vh ?? 0) + 40;
       lab.style.display = on ? 'block' : 'none';
       if (!on) continue;
-      lab.style.left = `${Math.round(p[0])}px`;
-      lab.style.top = `${Math.round(p[1] + PARTY_LABEL_DROP)}px`;
+      // AUDIT SOC C17: the layer's parent is `.ovroot { overflow: hidden }` and the label is centred on its mark
+      // (`transform: translate(-50%, 0)`), so a member within half a label of either edge was CUT rather than
+      // nudged. Clamped to the half-width the browser measured; a headless run measures 0 and is left alone,
+      // because a made-up width would move a label that is not being rendered anyway.
+      const half = (lab.offsetWidth || 0) / 2;
+      const left = half > 0 ? clamp(p[0], 8 + half, Math.max(8 + half, (this._vw ?? 0) - 8 - half)) : p[0];
+      lab.style.left = `${Math.round(left)}px`;
+      lab.style.top = `${Math.round(p[1] + PARTY_LABEL_DROP + (m.stack ?? 0) * PARTY_LABEL_STACK)}px`;
     }
   }
 
@@ -631,8 +656,13 @@ export class OverworldMapWindow {
     leg.style.display = 'flex';
   }
 
-  /** The member under the cursor, by the same screen-space radius the
-   *  location markers are picked with. */
+  /** The member under the cursor, by a screen-space radius of 18 - two
+   *  pixels WIDER than the location markers' own 16 (`_markerAt`), and
+   *  deliberately so: a member's ring is drawn smaller than a marker
+   *  (PARTY_RING_SIZE 15 against the player's 22) but it is the answer
+   *  the player is reaching for when they point at one, so it is the
+   *  easier of the two to hit rather than the harder. AUDIT SOC D9: the
+   *  comment used to claim it was the markers' own number. */
   _partyAt(sx, sy) {
     let best = null, bestD = 18 * 18;
     for (const m of this._party) {
@@ -1027,9 +1057,13 @@ export class OverworldMapWindow {
     // it had, which is why a marker can sit anywhere on the bay
     // without becoming a hole in the controls.
     const party = el('div', 'ovparty');
+    // AUDIT SOC C10/D5: the legend is the LAST CHIP in the filter row
+    // rather than a box floating at a guessed height above it - the
+    // chips wrap under 860px and the guess landed inside them.
     const legend = el('div', 'ovlegend');
+    chips.append(legend);
 
-    root.append(top, chips, card, skip, hint, party, legend);
+    root.append(top, chips, card, skip, hint, party);
     document.body.append(root);
     this._chrome = { root, label, search, searchInput, results, card, skip, close, party, legend };
     this._renderChips();
@@ -1156,7 +1190,12 @@ export class OverworldMapWindow {
     // their location.
     const pm = this._partyAt(sx, sy);
     if (pm) {
-      this._chrome.label.textContent = partyHoverText(pm);
+      // AUDIT SOC D2: every member ON THAT PIXEL, not the nearest of them. One ring can stand for a whole party in
+      // one town, and a line that named one of four was a line that hid three. `pm` is one of them, so the filter
+      // is never empty and a lone member still reads as the one sentence it always did.
+      this._chrome.label.textContent = this._party
+        .filter((m) => m.px === pm.px && m.py === pm.py)
+        .map(partyHoverText).join(' / ');
       this._chrome.root.style.cursor = 'pointer';
       return;
     }

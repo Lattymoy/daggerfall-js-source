@@ -1,0 +1,506 @@
+[
+  {
+    "name": "A1-request-cooldown-off",
+    "file": "server/src/index.js",
+    "old": "if (this._repeated(me, 'friend.request', them, now)) return 'already asked';",
+    "new": "if (false && this._repeated(me, 'friend.request', them, now)) return 'already asked';",
+    "tests": [
+      "test/auditsoc.test.js",
+      "test/soc1_hub.test.js"
+    ]
+  },
+  {
+    "name": "A8-invite-cooldown-off",
+    "file": "server/src/index.js",
+    "old": "if (this._repeated(me, 'party.invite', them, now)) return 'already asked';",
+    "new": "if (false && this._repeated(me, 'party.invite', them, now)) return 'already asked';",
+    "tests": [
+      "test/auditsoc.test.js",
+      "test/soc1_hub.test.js"
+    ]
+  },
+  {
+    "name": "A1-cooldown-forgotten-every-act",
+    "file": "server/src/index.js",
+    "old": "if (this._cool.size >= COOL_MAX) this._cool.clear();",
+    "new": "this._cool.clear();",
+    "tests": [
+      "test/auditsoc.test.js"
+    ]
+  },
+  {
+    "name": "A2-social-arm-uncontained",
+    "file": "server/src/index.js",
+    "old": "try { err = await this._social(ws, a, m, now); } catch (e) { console.warn('[hub] social act failed', m.k, e?.message ?? e); err = 'the hub stumbled - try again'; }",
+    "new": "err = await this._social(ws, a, m, now);",
+    "tests": [
+      "test/auditsoc.test.js"
+    ]
+  },
+  {
+    "name": "A2-account-hello-uncontained",
+    "file": "server/src/index.js",
+    "old": "try { await this._helloAccount(ws, m, now); } catch (e) { console.warn('[hub] account hello failed', e?.message ?? e); }",
+    "new": "await this._helloAccount(ws, m, now);",
+    "tests": [
+      "test/auditsoc.test.js"
+    ]
+  },
+  {
+    "name": "A3-alarm-never-armed",
+    "file": "server/src/index.js",
+    "old": "    if (!this._alarmArmed) {   // AUDIT SOC A3: the room is marked a hub (its alarm is the sweep's, whoever is in it) and the sweep armed - once per instance life, and never over an alarm already set",
+    "new": "    if (false) {",
+    "tests": [
+      "test/auditsoc.test.js"
+    ]
+  },
+  {
+    "name": "A3-a-listed-account-swept",
+    "file": "server/src/index.js",
+    "old": "if (unlisted(r, now) && now - (r.seen ?? 0) >= ACCOUNT_IDLE_MS && !this._socketsOf(id).length)",
+    "new": "if (now - (r.seen ?? 0) >= ACCOUNT_IDLE_MS && !this._socketsOf(id).length)",
+    "tests": [
+      "test/auditsoc.test.js"
+    ]
+  },
+  {
+    "name": "A3-the-page-unbounded",
+    "file": "server/src/index.js",
+    "old": "const accts = await this.state.storage.list({ prefix: 'acct:', limit: SWEEP_PAGE, ...(acur ? { startAfter: acur } : {}) });",
+    "new": "const accts = await this.state.storage.list({ prefix: 'acct:', ...(acur ? { startAfter: acur } : {}) });",
+    "tests": [
+      "test/auditsoc.test.js"
+    ]
+  },
+  {
+    "name": "A4-solo-party-kept-until-the-sweep",
+    "file": "server/src/index.js",
+    "old": "if (gone && party && party.members.length === 1 && !(party.invites ?? []).some((i) => now - i.at < INVITE_TTL_MS))",
+    "new": "if (false)",
+    "tests": [
+      "test/auditsoc.test.js"
+    ]
+  },
+  {
+    "name": "A4-solo-party-deleted-under-a-live-invite",
+    "file": "server/src/index.js",
+    "old": "party.members.length === 1 && !(party.invites ?? []).some((i) => now - i.at < INVITE_TTL_MS)) {",
+    "new": "party.members.length === 1) {",
+    "tests": [
+      "test/auditsoc.test.js"
+    ]
+  },
+  {
+    "name": "A4-sweep-takes-a-party-with-a-member-online",
+    "file": "server/src/index.js",
+    "old": "p.members.every((id) => !this._socketsOf(id).length && (p.away?.[id] == null || now - p.away[id] >= PARTY_OFFLINE_MS));",
+    "new": "p.members.every((id) => (p.away?.[id] == null || now - p.away[id] >= PARTY_OFFLINE_MS));",
+    "tests": [
+      "test/auditsoc.test.js"
+    ]
+  },
+  {
+    "name": "A5-picture-composed-for-the-offline",
+    "file": "server/src/index.js",
+    "old": "    if (!only && !socks.length) return;   // AUDIT SOC A5: nobody to hand it to - a frame for an account with no socket read every friend's record and reached no one",
+    "new": "    if (false) return;",
+    "tests": [
+      "test/auditsoc.test.js"
+    ]
+  },
+  {
+    "name": "A5-record-cache-dropped",
+    "file": "server/src/index.js",
+    "old": "if (this._recs.has(id)) return this._recs.get(id);",
+    "new": "if (false) return this._recs.get(id);",
+    "tests": [
+      "test/auditsoc.test.js"
+    ]
+  },
+  {
+    "name": "A9-party-miss-not-kept-by-the-picture",
+    "file": "server/src/index.js",
+    "old": "if (this._parties.has(pid)) { const p = this._parties.get(pid); if (p) out.set(pid, p); } else missing.push(pid);",
+    "new": "if (this._parties.get(pid)) { const p = this._parties.get(pid); if (p) out.set(pid, p); } else missing.push(pid);",
+    "tests": [
+      "test/auditsoc.test.js"
+    ]
+  },
+  {
+    "name": "A9-party-miss-not-kept-by-the-single-read",
+    "file": "server/src/index.js",
+    "old": "if (this._parties.has(pid)) return this._parties.get(pid);",
+    "new": "if (this._parties.get(pid)) return this._parties.get(pid);",
+    "tests": [
+      "test/auditsoc.test.js"
+    ],
+    "equivalent": true,
+    "why": "every caller of _party that finds a miss clears what named it in the same act (a stale pointer, a shed invite), so nothing asks it twice; the picture's batch (_partiesOf, the mutant above) is where an invite naming a swept party was read on every frame"
+  },
+  {
+    "name": "A6-pending-row-with-presence",
+    "file": "server/src/index.js",
+    "old": "_blankRow(acct, rec) { return { acct, name: rec?.name ?? null, online: false, seen: null, peers: [] }; }",
+    "new": "_blankRow(acct, rec) { return this._rowOf(acct, rec, Date.now()); }",
+    "tests": [
+      "test/soc1_hub.test.js"
+    ]
+  },
+  {
+    "name": "A6-request-by-account-to-a-stranger",
+    "file": "server/src/index.js",
+    "old": "if (m.acct) return 'meet them first';",
+    "new": "if (false) return 'meet them first';",
+    "tests": [
+      "test/soc1_hub.test.js"
+    ]
+  },
+  {
+    "name": "A6-invite-by-account-to-a-stranger",
+    "file": "server/src/index.js",
+    "old": "if (m.acct && !rec.friends.includes(them)) return 'meet them first';",
+    "new": "if (false) return 'meet them first';",
+    "tests": [
+      "test/soc1_hub.test.js"
+    ]
+  },
+  {
+    "name": "A7-replaced-socket-never-leaves",
+    "file": "server/src/index.js",
+    "old": "if (isSocialRoom(a.key) && b.acct && b.acct !== m.acct) {",
+    "new": "if (false) {",
+    "tests": [
+      "test/auditsoc.test.js"
+    ]
+  },
+  {
+    "name": "A10-bound-keeps-the-stalest-tabs",
+    "file": "server/src/index.js",
+    "old": "s.sort((x, y) => (idx.get(y)?.since ?? 0) - (idx.get(x)?.since ?? 0)); m.set(acct, s.slice(0, ACCOUNT_TABS_MAX));",
+    "new": "m.set(acct, s.slice(0, ACCOUNT_TABS_MAX));",
+    "tests": [
+      "test/auditsoc.test.js"
+    ]
+  },
+  {
+    "name": "A10-bound-off",
+    "file": "server/src/index.js",
+    "old": "for (const [acct, s] of m) if (s.length > ACCOUNT_TABS_MAX) {",
+    "new": "for (const [acct, s] of m) if (false) {",
+    "tests": [
+      "test/auditsoc.test.js"
+    ]
+  },
+  {
+    "name": "B9-any-tab-speaks-for-the-seat",
+    "file": "server/src/index.js",
+    "old": "if (this._speaker(a.acct) !== ws) return;",
+    "new": "if (false) return;",
+    "tests": [
+      "test/auditsoc.test.js"
+    ]
+  },
+  {
+    "name": "A11-no-account-answered-before-the-budget",
+    "file": "server/src/index.js",
+    "old": "      const budget = tokenGate(this._roomSocial, now, SOCIAL_ROOM_HZ_MAX);\n      this._roomSocial = budget.bucket;\n      if (!budget.pass) { this._sayError(ws, 'busy'); return; }\n      if (!a.acct) { this._sayError(ws, 'no account'); return; }",
+    "new": "      if (!a.acct) { this._sayError(ws, 'no account'); return; }\n      const budget = tokenGate(this._roomSocial, now, SOCIAL_ROOM_HZ_MAX);\n      this._roomSocial = budget.bucket;\n      if (!budget.pass) { this._sayError(ws, 'busy'); return; }",
+    "tests": [
+      "test/auditsoc.test.js"
+    ]
+  },
+  {
+    "name": "C20-hub-names-no-own-tabs",
+    "file": "server/src/index.js",
+    "old": "      peers: socks.map((ws) => this._attach(ws).id),   // AUDIT SOC C20: the ids MY OWN tabs stand as - a second tab of mine is no stranger to friend",
+    "new": "      peers: [],",
+    "tests": [
+      "test/soc1_hub.test.js"
+    ]
+  },
+  {
+    "name": "B7-channel-welcome-without-the-clock",
+    "file": "server/src/index.js",
+    "old": "n: others.length + 1, v: RELAY_VERSION, now: Date.now() }",
+    "new": "n: others.length + 1, v: RELAY_VERSION }",
+    "tests": [
+      "test/chat1.test.js",
+      "test/world5.test.js"
+    ]
+  },
+  {
+    "name": "C20-door-drops-my-tabs",
+    "file": "src/net/wire.js",
+    "old": "peers: validSocialRow(m).peers,",
+    "new": "peers: [],",
+    "tests": [
+      "test/soc1_hub.test.js"
+    ]
+  },
+  {
+    "name": "B11-door-admits-both-targets",
+    "file": "src/net/wire.js",
+    "old": "if (needs === 'target' && (!!acct === !!peer)) return null;",
+    "new": "if (needs === 'target' && (!acct && !peer)) return null;",
+    "tests": [
+      "test/auditsoc.test.js",
+      "test/soc1_hub.test.js"
+    ]
+  },
+  {
+    "name": "B20-bound-under-the-widest-welcome",
+    "file": "src/net/wire.js",
+    "old": "export const INBOUND_FRAME_MAX = WORLD_FRAME_MAX + ROSTER_MAX * MAX_FRAME_BYTES;",
+    "new": "export const INBOUND_FRAME_MAX = WORLD_FRAME_MAX;",
+    "tests": [
+      "test/auditsoc.test.js"
+    ]
+  },
+  {
+    "name": "B3-picture-gate-off",
+    "file": "src/net/online.js",
+    "old": "const g = line ? noteInGate(this._inNote.get(room), now) : socialInGate(this._inSocial.get(room), now);",
+    "new": "const g = { pass: true, bucket: null };",
+    "tests": [
+      "test/auditsoc.test.js"
+    ]
+  },
+  {
+    "name": "B3-pose-gate-off",
+    "file": "src/net/online.js",
+    "old": "if (!g.pass) { this.stats.partiesDropped++; return; }",
+    "new": "if (false) { this.stats.partiesDropped++; return; }",
+    "tests": [
+      "test/auditsoc.test.js"
+    ]
+  },
+  {
+    "name": "B3-lines-on-the-picture-bucket",
+    "file": "src/net/online.js",
+    "old": "const line = m.k === 'note' || m.k === 'error';",
+    "new": "const line = false;",
+    "tests": [
+      "test/auditsoc.test.js"
+    ]
+  },
+  {
+    "name": "B20-cap-off",
+    "file": "src/net/online.js",
+    "old": "if (typeof data === 'string' && data.length > INBOUND_FRAME_MAX) { this.stats.oversize++; return; }",
+    "new": "if (false) { this.stats.oversize++; return; }",
+    "tests": [
+      "test/auditsoc.test.js"
+    ]
+  },
+  {
+    "name": "B11-shape-checked-by-hand",
+    "file": "src/net/online.js",
+    "old": "const shaped = validSocialAct(act);",
+    "new": "const shaped = act && typeof act === 'object' && typeof act.k === 'string' ? { ...act } : null;",
+    "tests": [
+      "test/auditsoc.test.js",
+      "test/soc2_session.test.js"
+    ]
+  },
+  {
+    "name": "B7-clockRead-never-set",
+    "file": "src/net/online.js",
+    "old": "this.clockOffsetMs = m.now - Date.now(); this.clockRead = true;",
+    "new": "this.clockOffsetMs = m.now - Date.now();",
+    "tests": [
+      "test/auditsoc.test.js"
+    ]
+  },
+  {
+    "name": "C20-own-tab-a-stranger",
+    "file": "src/net/social.js",
+    "old": "if (this.acct && this.peers.includes(id)) return this.acct;",
+    "new": "if (false) return this.acct;",
+    "tests": [
+      "test/auditsoc.test.js"
+    ]
+  },
+  {
+    "name": "C23-memo-never-dropped",
+    "file": "src/net/social.js",
+    "old": "_changed(kind) { this.version++; this._colors = null; this.onChange?.(kind); }",
+    "new": "_changed(kind) { this.version++; this.onChange?.(kind); }",
+    "tests": [
+      "test/auditsoc.test.js"
+    ]
+  },
+  {
+    "name": "B10-an-unkept-account-minted",
+    "file": "src/net/social.js",
+    "old": "return back === v ? v : null;",
+    "new": "return v;",
+    "tests": [
+      "test/soc2_session.test.js"
+    ]
+  },
+  {
+    "name": "B5-fatigue-x64",
+    "file": "src/scenes/world.js",
+    "old": "f: Math.trunc((playerEntity.fatigue ?? 0) / FATIGUE_MULTIPLIER), fm: Math.trunc(maxFatigue(playerEntity) / FATIGUE_MULTIPLIER)",
+    "new": "f: playerEntity.fatigue ?? 0, fm: maxFatigue(playerEntity)",
+    "tests": [
+      "test/auditsoc.test.js"
+    ]
+  },
+  {
+    "name": "B6-relock-under-an-open-surface",
+    "file": "src/scenes/world.js",
+    "old": "if (!gamePaused() && !pointerSurfaces.size && document.pointerLockElement !== canvas) requestLook(canvas);",
+    "new": "if (!gamePaused() && document.pointerLockElement !== canvas) requestLook(canvas);",
+    "tests": [
+      "test/soc3_socialpanel.test.js"
+    ]
+  },
+  {
+    "name": "B6-every-surface-relocks",
+    "file": "src/scenes/world.js",
+    "old": "const surfaceClose = (name) => { pointerSurfaces.delete(name); if (!pointerSurfaces.size && !gamePaused()) requestLook(canvas); };",
+    "new": "const surfaceClose = (name) => { pointerSurfaces.delete(name); if (!gamePaused()) requestLook(canvas); };",
+    "tests": [
+      "test/soc3_socialpanel.test.js",
+      "test/chat1.test.js"
+    ]
+  },
+  {
+    "name": "B4-F-under-the-mode-gate",
+    "file": "src/scenes/world.js",
+    "old": "if (!townTalk.overlayActive && act === 'SocialInteract' && socialMenuCanOpen() && socialInteract()) { e.preventDefault(); return; }",
+    "new": "if (false && act === 'SocialInteract' && socialMenuCanOpen() && socialInteract()) { e.preventDefault(); return; }",
+    "tests": [
+      "test/soc5_interact.test.js"
+    ]
+  },
+  {
+    "name": "B17-try-again-when-not-connected",
+    "file": "src/scenes/world.js",
+    "old": "(hub?.status === 'open' ? TRY_AGAIN_TEXT : NOT_CONNECTED_TEXT)",
+    "new": "TRY_AGAIN_TEXT",
+    "tests": [
+      "test/soc5_interact.test.js"
+    ]
+  },
+  {
+    "name": "C15-remove-on-a-roster-row",
+    "file": "src/scenes/world.js",
+    "old": "{ label: 'Invite to party', enabled: a.canInvite, why: a.whyNotInvite, run: () => socialLink()?.sendSocial({ k: 'party.invite', peer: peerId }) ?? false },\n    ];\n  };",
+    "new": "{ label: 'Invite to party', enabled: a.canInvite, why: a.whyNotInvite, run: () => socialLink()?.sendSocial({ k: 'party.invite', peer: peerId }) ?? false },\n      { label: 'Remove friend', enabled: true, why: null, run: () => false },\n    ];\n  };",
+    "tests": [
+      "test/soc3_socialpanel.test.js"
+    ]
+  },
+  {
+    "name": "B10-the-accountless-page-silent",
+    "file": "src/scenes/world.js",
+    "old": "if (!_noAccountSaid) { _noAccountSaid = true; chatLog.push(tab.id, { text: NO_ACCOUNT_TEXT, system: true }); }",
+    "new": "_noAccountSaid = true;",
+    "tests": [
+      "test/auditsoc.test.js"
+    ]
+  },
+  {
+    "name": "B7-host-reads-the-presence-clock",
+    "file": "src/scenes/world.js",
+    "old": "social.setClockOffset(hub?.clockRead ? hub.clockOffsetMs : (online?.clockOffsetMs ?? 0));",
+    "new": "social.setClockOffset(online?.clockOffsetMs ?? 0);",
+    "tests": [
+      "test/auditsoc.test.js"
+    ]
+  },
+  {
+    "name": "B14-a-second-door-to-the-panel",
+    "file": "src/scenes/world.js",
+    "old": "    // second truth to keep - so it is gone.",
+    "new": "    // second truth to keep - so it is gone.\n    hudCtx.openSocial = () => socialPanel?.toggle();",
+    "tests": [
+      "test/soc3_socialpanel.test.js"
+    ]
+  },
+  {
+    "name": "C1-menu-sheet-in-the-panel-namespace",
+    "file": "src/ui/socialMenu.js",
+    "old": ".dfpeer-card { pointer-events: auto;",
+    "new": ".dfsocial-card { pointer-events: auto;",
+    "tests": [
+      "test/soc5_interact.test.js"
+    ]
+  },
+  {
+    "name": "C9-touch-button-ungated",
+    "file": "src/ui/touch.js",
+    "old": "if (hooks.socialInteract) button('\u263a',",
+    "new": "button('\u263a',",
+    "tests": [
+      "test/soc5_interact.test.js",
+      "test/audit39_uicore.test.js"
+    ]
+  },
+  {
+    "name": "D2-members-on-one-pixel-not-stacked",
+    "file": "src/ui/overworldMap.js",
+    "old": "(m.stack ?? 0) * PARTY_LABEL_STACK",
+    "new": "0 * PARTY_LABEL_STACK",
+    "tests": [
+      "test/soc6_partymap.test.js"
+    ]
+  },
+  {
+    "name": "D3-port-action-never-yields",
+    "file": "src/systems/controlsConfig.js",
+    "old": "if (yielded.length) yieldDuplicates(u, yielded);",
+    "new": "if (false) yieldDuplicates(u, yielded);",
+    "tests": [
+      "test/soc5_interact.test.js"
+    ]
+  },
+  {
+    "name": "D4-saved-F-not-migrated",
+    "file": "src/systems/modSettings.js",
+    "old": "key: 'Handling.ToggleLightInput', was: 'F' });",
+    "new": "key: 'Handling.ToggleLightInput', was: 'G' });",
+    "tests": [
+      "test/soc5_interact.test.js"
+    ]
+  },
+  {
+    "name": "B8-hud-clock-never-ticks",
+    "file": "src/ui/partyPanel.js",
+    "old": "if (social.version === painted) { paintLive(); return; }",
+    "new": "if (social.version === painted) { return; }",
+    "tests": [
+      "test/soc4_partyhud.test.js"
+    ]
+  },
+  {
+    "name": "B8-panel-clock-never-ticks",
+    "file": "src/ui/socialPanel.js",
+    "old": "if (n.subNode) liveSubs.push(",
+    "new": "if (false) liveSubs.push(",
+    "tests": [
+      "test/soc3_socialpanel.test.js"
+    ]
+  },
+  {
+    "name": "C6-hud-on-the-fps-counter",
+    "file": "src/ui/partyPanel.js",
+    "old": "top: calc(92px + env(safe-area-inset-top, 0px));",
+    "new": "top: calc(40px + env(safe-area-inset-top, 0px));",
+    "tests": [
+      "test/soc4_partyhud.test.js"
+    ]
+  },
+  {
+    "name": "C8-tabs-under-44",
+    "file": "src/ui/socialPanel.js",
+    "old": ".dfsocial.touch .dfsocial-tab { min-height: 44px; padding: 10px 12px; }",
+    "new": ".dfsocial.touch .dfsocial-tab { min-height: 29px; padding: 4px 12px; }",
+    "tests": [
+      "test/soc3_socialpanel.test.js"
+    ]
+  }
+]

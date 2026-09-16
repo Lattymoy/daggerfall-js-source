@@ -127,8 +127,11 @@ test('AUDIT 39 F127 / TI1: the drag hook is live - the swipe calls it, and no bu
   const touch = read('src/ui/touch.js');
   assert.match(touch, /hooks\.attack\?\.\(ev\.dx, ev\.dy, ev\.held\)/, 'the swipe reaches the drag seam');
   assert.doesNotMatch(touch, /hooks\.attackTap/, 'the tap-to-attack button is gone (the tap is the activation now)');
-  assert.match(touch, /@param hooks \{ look\(dx,dy\), attack\?\(dx,dy,held\), tap\?\(x,y\), locked\?\(\), dial\?, cycleMode\?\(\), overlayActive\?\(\), paused\?\(\) \}/,
+  // AUDIT SOC C9 re-pinned: `socialInteract` joined the list - the phone's door to SOC5's action, which had no
+  // control at all on a touch device. The law is unchanged: the header documents EXACTLY the hooks the layer calls.
+  assert.match(touch, /@param hooks \{ look\(dx,dy\), attack\?\(dx,dy,held\), tap\?\(x,y\), locked\?\(\), dial\?, cycleMode\?\(\), socialInteract\?\(\), overlayActive\?\(\), paused\?\(\) \}/,
     'the header documents exactly the hooks the layer calls (AUDIT 62 F7 added `paused`, the pause predicate the mouse arms always carried)');
+  assert.match(touch, /if \(hooks\.socialInteract\) button\(/, '...and the social button is drawn only where a host hands the hook in');
   assert.match(touch, /const paused = !!hooks\.paused\?\.\(\);/, '...and the layer calls it');
   // The three combat hosts pass the drag hook; the fly-cam interior
   // passes neither it nor a tap and gets no sword and no dial.

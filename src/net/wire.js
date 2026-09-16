@@ -377,6 +377,44 @@ export const NOTE_CODES = Object.freeze(['friend.requested', 'friend.accepted', 
 /** Every frame the hub sends under t:'social'. */
 export const SOCIAL_KINDS = Object.freeze(['state', 'presence', 'party', 'invite', 'note', 'error']);
 
+// AUDIT SOC (2026-09-16, Mac: "Can we do an audit of everything just merged. Just want it to be perfection"): the
+// hub's four lenses found the bounds SOC1 had not written, and they live here beside the ones it had.
+/** AUDIT SOC A1/A8: the least time between two acts of one KIND at the SAME target from one account - a friend
+ *  request or a party invite re-sent inside it is 'already asked': nothing written, nothing fanned. The room-wide
+ *  chat law bounds what everyone hears; a DIRECTED act costs its target a state frame and a chat line, and a
+ *  request/cancel pair measured as a 40x amplifier aimed at one player. */
+export const SOCIAL_REPEAT_MS = 60_000;
+/** AUDIT SOC A3: an account NOBODY'S LIST NAMES - no friends, no request either way, no live invite, no party - is
+ *  forgotten this long after it was last seen. "A friend list that forgets people is worse than a kilobyte" stands
+ *  for every account a list names; a record no list names dangles nothing when it goes, and without this one script
+ *  at the hello gate's rate minted 4.3 million permanent records a day. */
+export const ACCOUNT_IDLE_MS = 30 * 24 * 3600 * 1000;
+/** AUDIT SOC A3/A4: the hub sweeps on an alarm this often, one bounded page of records and of parties per firing
+ *  (SWEEP_PAGE, the runtime's batch size), and a page that was full is followed SWEEP_STEP_MS later. */
+export const ACCOUNT_SWEEP_MS = 6 * 3600 * 1000;
+export const SWEEP_STEP_MS = 60_000;
+export const SWEEP_PAGE = 128;
+/** AUDIT SOC B3: the client's gate on social frames COMING IN, per room - CHAT-G's law, again: the relay is the
+ *  player's choice, and a frame it pushes faster than an honest hub could is not the port's. An honest hub spends at
+ *  most its room budget in derived frames (SOCIAL_ROOM_HZ_MAX), and the hello gate's rate in presence, so this admits
+ *  an honest hub at full tilt. */
+export const SOCIAL_IN_HZ_MAX = SOCIAL_ROOM_HZ_MAX;
+export const socialInGate = (bucket, nowMs) => tokenGate(bucket, nowMs, SOCIAL_IN_HZ_MAX);
+/** AUDIT SOC B3: a note or an error becomes a CHAT LINE (a line nobody sent), and net/chat.js keeps CHAT_KEEP of them -
+ *  so those two kinds carry a rate of their own, well under the chat's, because an honest hub's notes are bounded by
+ *  the reader's own lists (PENDING_MAX requests, PENDING_MAX invites, a party of four). */
+export const NOTE_IN_HZ_MAX = 10;
+export const noteInGate = (bucket, nowMs) => tokenGate(bucket, nowMs, NOTE_IN_HZ_MAX);
+/** AUDIT SOC B3: the poses of a party's other members, at PARTY_HZ_MAX each. */
+export const PARTY_IN_HZ_MAX = PARTY_HZ_MAX * (PARTY_MAX - 1);
+export const partyInGate = (bucket, nowMs) => tokenGate(bucket, nowMs, PARTY_IN_HZ_MAX);
+
+/** AUDIT SOC B20: the widest frame an honest relay sends a client - a welcome carrying a room's memory (WORLD_FRAME_MAX)
+ *  and a full roster of hellos (ROSTER_MAX looks, each under the hello's own MAX_FRAME_BYTES). Past it a frame is
+ *  dropped UNPARSED: JSON.parse of a relay's megabytes was the one cost no door bounded, and the relay is the
+ *  player's choice. */
+export const INBOUND_FRAME_MAX = WORLD_FRAME_MAX + ROSTER_MAX * MAX_FRAME_BYTES;
+
 const finite = (v) => typeof v === 'number' && Number.isFinite(v);
 const uint = (v, max) => (finite(v) && v >= 0 ? Math.min(max, Math.floor(v)) : null);
 const ID_RE = /^[A-Za-z0-9_-]{4,40}$/;
@@ -651,7 +689,7 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  carries it (`v`), and a client whose wire.js was built against another version says so on the console: the client
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
-export const RELAY_VERSION = 'world78';   // SOC1: the world channel is the social hub - accounts, friends, presence, parties
+export const RELAY_VERSION = 'world79';   // SOC1: the world channel is the social hub - accounts, friends, presence, parties
 
 /** The listeners sorted by distance from `from`, nearest first; one with no pose yet sorts last, because a peer that
  *  has never said where it is cannot be near. The ordering is Euclidean in the POSE'S OWN FRAME, which is a cell's
@@ -904,18 +942,8 @@ export function parseClient(text, { hasHello = false } = {}) {
   }
   if (m.t === 'social') {   // SOC1: a friend or party act - a KIND from SOCIAL_ACTS naming what that kind must name, and nothing else
     if (!hasHello) return { error: 'social before hello' };
-    const needs = typeof m.k === 'string' && Object.prototype.hasOwnProperty.call(SOCIAL_ACTS, m.k) ? SOCIAL_ACTS[m.k] : null;
-    if (needs == null) return { error: 'bad social' };
-    const acct = m.acct === undefined ? undefined : idOf(m.acct), peer = m.peer === undefined ? undefined : idOf(m.peer), party = m.party === undefined ? undefined : idOf(m.party);
-    if (acct === null || peer === null || party === null) return { error: 'bad social' };   // named, and not by the wire's id law
-    const out = { t: 'social', k: m.k };
-    if (needs === 'acct' && !acct) return { error: 'bad social' };
-    if (needs === 'party' && !party) return { error: 'bad social' };
-    if (needs === 'target' && (!!acct === !!peer)) return { error: 'bad social' };   // one of the two, never both and never neither
-    if (acct && (needs === 'acct' || needs === 'target')) out.acct = acct;
-    if (peer && needs === 'target') out.peer = peer;
-    if (party && needs === 'party') out.party = party;
-    return out;
+    const act = validSocialAct(m);
+    return act ? { t: 'social', ...act } : { error: 'bad social' };
   }
   if (m.t === 'party') {   // SOC1: my party pose, to the hub - projected by the pose's own law
     if (!hasHello) return { error: 'party before hello' };
@@ -1057,6 +1085,27 @@ export function rosterFor(peers, meId, near = null) {
 
 /** SOC1: an id off the wire (ID_RE - a peer's, an account's and a party's are one shape), or null. */
 const idOf = (v) => (typeof v === 'string' && ID_RE.test(v) ? v : null);
+
+/** SOC1 / AUDIT SOC B11: ONE ACT, PROJECTED - `{k, acct?, peer?, party?}` with exactly what its kind needs (SOCIAL_ACTS:
+ *  an account, a peer, either one of the two but never both, a party, nothing) and nothing else, or null. ONE HOME:
+ *  the relay's parser runs it (a bad act is a refusal that CLOSES the socket) and the client's sendSocial runs it
+ *  first, so an act the relay would close on is never sent - the audit found the client checking the kind and the
+ *  rate at home and not the shape, which the record claimed it did. */
+export function validSocialAct(m) {
+  if (!m || typeof m !== 'object' || Array.isArray(m)) return null;
+  const needs = typeof m.k === 'string' && Object.prototype.hasOwnProperty.call(SOCIAL_ACTS, m.k) ? SOCIAL_ACTS[m.k] : null;
+  if (needs == null) return null;
+  const acct = m.acct === undefined ? undefined : idOf(m.acct), peer = m.peer === undefined ? undefined : idOf(m.peer), party = m.party === undefined ? undefined : idOf(m.party);
+  if (acct === null || peer === null || party === null) return null;   // named, and not by the wire's id law
+  const out = { k: m.k };
+  if (needs === 'acct' && !acct) return null;
+  if (needs === 'party' && !party) return null;
+  if (needs === 'target' && (!!acct === !!peer)) return null;   // one of the two, never both and never neither
+  if (acct && (needs === 'acct' || needs === 'target')) out.acct = acct;
+  if (peer && needs === 'target') out.peer = peer;
+  if (party && needs === 'party') out.party = party;
+  return out;
+}
 /** SOC1: a wall-clock stamp off the wire (ms, finite, not negative), or null. */
 const stampOf = (v) => (finite(v) && v >= 0 ? v : null);
 
@@ -1152,7 +1201,8 @@ export function validInvite(v) {
  *  player's choice (`?server=`, the menu's Relay field), so nothing arriving over it is the port's own word, and a
  *  frame a modified relay shapes is dropped whole rather than half applied. One home for the shape, so the hub's
  *  own pins can assert what it sends passes the door its client reads through. Null for anything else.
- *    state:    {acct, name, friends:[row], in:[row+at], out:[row+at], party: view|null, invites:[invite]}   my whole picture
+ *    state:    {acct, name, peers, friends:[row], in:[row+at], out:[row+at], party: view|null, invites:[invite]}   my whole picture
+ *              (AUDIT SOC C20: `peers` the ids MY OWN tabs stand as; AUDIT SOC A6: a pending row carries a name and nothing else)
  *    presence: {...row}                        a friend came online or went (the row's `online`, `seen`, `peers`)
  *    party:    {party: view|null}              my party as it stands, or none
  *    invite:   {...invite}                     a party asks for me
@@ -1168,7 +1218,7 @@ export function validSocialFrame(m) {
     if (!friends || !inbox || !outbox || !invites) return null;
     const party = m.party == null ? null : validPartyView(m.party);
     if (m.party != null && !party) return null;
-    return { t: 'social', k: 'state', acct, name: sanitizeName(m.name), friends, in: inbox, out: outbox, party, invites };
+    return { t: 'social', k: 'state', acct, name: sanitizeName(m.name), peers: validSocialRow(m).peers, friends, in: inbox, out: outbox, party, invites };
   }
   if (m.k === 'presence') { const row = validSocialRow(m); return row ? { t: 'social', k: 'presence', ...row } : null; }
   if (m.k === 'party') { if (m.party == null) return { t: 'social', k: 'party', party: null }; const party = validPartyView(m.party); return party ? { t: 'social', k: 'party', party } : null; }

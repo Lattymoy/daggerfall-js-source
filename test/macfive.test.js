@@ -151,7 +151,8 @@ test('PL3: the look gate holds a lock a door just won inside its gesture, and re
     assert.ok(RELOCK_GRACE_MS < 250, 'a grace, not a hold: a window that really opens releases on the next frame past it');
     assert.match(read('src/player/pointerLock.js'), /if \(held\) \{ if \(nowMs\(\) - _lastRequestAt > RELOCK_GRACE_MS\) releaseLook\(\); \}/);
     // the seams by source
-    assert.match(read('src/scenes/world.js'), /onOpen: \(\) => \{ setCursorActive\(false\); releaseLook\(\); \},/, 'the Enter that opens the chat is the chat\'s');
+    assert.match(read('src/scenes/world.js'), /onOpen: \(\) => surfaceOpen\('chat'\),/, 'the Enter that opens the chat is the chat\'s (AUDIT SOC B6: the chat is the first of the counted pointer surfaces)');
+    assert.match(read('src/scenes/world.js'), /const surfaceOpen = \(name\) => \{ pointerSurfaces\.add\(name\); setCursorActive\(false\); releaseLook\(\); \};/, 'and the surface\'s open still flips cursorActive off inside the gesture');
     assert.match(read('src/ui/pixelDial.js'), /onClose: \(\) => \{ _open = null; if \(lockEl\) requestLook\(lockEl\); \},/, 'the dial gives the pointer back');
     assert.match(read('src/main.js'), /z-index:20;white-space:pre-wrap;pointer-events:none'/, 'the crash report is not a wall over the canvas');
   } finally { setCursorActive(false); dom.restore(); }

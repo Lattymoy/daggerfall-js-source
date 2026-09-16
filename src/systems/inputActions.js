@@ -52,6 +52,16 @@ export const ACTIONS = Object.freeze([
   'SocialInteract',
 ]);
 
+/** AUDIT SOC D3: THE PORT'S OWN ROWS, NAMED SO THE CLASSIC WINDOWS CAN YIELD THEM.
+ *  The classic controls window stages ALL of ACTIONS and runs the duplicate check over the whole staged dict - but
+ *  its grid is DFU's Actions[2..40) on fixed art and its ADVANCED popup is DFU's six, so 'SocialInteract' is in the
+ *  check and on NEITHER window's face. A classic player who bound a grid action to F was told of a clash against a
+ *  row they could not see, could not clear, and could not close the window past. So the port's own actions YIELD
+ *  there: systems/controlsConfig.js checkDuplicates takes `{ yield: PORT_ACTIONS }` from the two classic windows
+ *  and unbinds the port's row rather than colouring a clash nobody can resolve. The ENHANCED window passes nothing,
+ *  because it draws the row (ui/enhancedControls.js PORT_ROWS, the 'Online' group) and can rebind it. */
+export const PORT_ACTIONS = Object.freeze(['SocialInteract']);
+
 const ACTION_SET = new Set(ACTIONS);
 
 /** ActionNameToEnum: an unrecognized name parses to Unknown, never

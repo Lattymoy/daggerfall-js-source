@@ -52,7 +52,7 @@ test('WORLD5: the wire\'s clock law - the epoch is the classic game start on 202
   assert.ok(relayVersionAtLeast(66), 'the relay says which one it is, and a later one says it just as well (SRV-N: NINE pins retyped one moving number)');
 });
 
-test('WORLD5: the relay\'s welcome carries its clock (`now`, ms) in every place room and no channel; the session reads its offset from it, says so, and refuses a clock a year off', async () => {
+test('WORLD5: the relay\'s welcome carries its clock (`now`, ms) in every place room - and since AUDIT SOC B7 in a channel\'s too, the hub link reads last-seen on it; the session reads its offset from it, says so, and refuses a clock a year off', async () => {
   const r = fakeRoom('dungeon:m187853213');
   const a = r.connect();
   const before = Date.now();
@@ -62,7 +62,8 @@ test('WORLD5: the relay\'s welcome carries its clock (`now`, ms) in every place 
   const town = fakeRoom('world:3,12'); const t = town.connect(); await town.hello(t, 'tttt-0001', at(1, 1));
   assert.ok(Number.isFinite(town.sockets[0].sent[0].now), 'a cell too - the clock is the world\'s, not a dungeon\'s');
   const chat = fakeRoom('chat:world'); const c = chat.connect(); await chat.hello(c, 'cccc-0001');
-  assert.deepEqual(c.sent[0], { t: 'welcome', id: 'cccc-0001', peers: [], n: 1, v: RELAY_VERSION }, 'a channel\'s welcome: SRV-N\'s deploy name and ROSTER-G\'s roster and count - still no clock');
+  assert.deepEqual(c.sent[0], { t: 'welcome', id: 'cccc-0001', peers: [], n: 1, v: RELAY_VERSION, now: c.sent[0].now }, 'a channel\'s welcome: SRV-N\'s deploy name and ROSTER-G\'s roster and count - and the clock (AUDIT SOC B7)');
+  assert.ok(Math.abs(c.sent[0].now - Date.now()) < 5000, 'the clock is the relay\'s now');
   // the session
   const { FakeWS, sockets } = fakeSocketClass();
   const s = new OnlineSession({ url: 'wss://relay.test', name: 'a', id: 'aaaa-0001', secret: 'secret-of-aaaa-0001', WebSocketImpl: FakeWS, now: () => 1000 });

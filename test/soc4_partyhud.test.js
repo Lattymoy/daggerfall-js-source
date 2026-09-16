@@ -379,9 +379,18 @@ test('SOC4: the wiring in scenes/world.js - the panel is made in socialStart ove
 });
 
 test('SOC4: the panel is a HUD, not a window - fixed at the top-right below the FPS counter, no pointer events, one injected sheet, no markup and no storage key of its own (mutants: the panel over the FPS read-out; the panel eating clicks; a uiPrefs key added without a lane)', () => {
-  assert.match(PARTY_CSS, /\.dfparty \{ position: fixed; right: calc\(8px \+ env\(safe-area-inset-right, 0px\)\); top: calc\(40px \+ env\(safe-area-inset-top, 0px\)\);/, 'the FPS read-out sits at top 8 and is about 21 tall (ui/fpsCounter.js): 40 clears it');
+  // AUDIT SOC C6: 92, not 40. The FPS read-out is FOUR LINES with the renderer's counts on - measured at 165x76 in
+  // Chromium (top 8, bottom edge 84), not the ~21 this pin used to assume - so the HUD's first portrait was drawn
+  // straight through it. 92 clears the read-out by 8; the touch value is untouched, because 76 is the number that
+  // clears the touch layer's own top-right buttons and the touch skin never draws the four-line read-out beside it.
+  assert.match(PARTY_CSS, /\.dfparty \{ position: fixed; right: calc\(8px \+ env\(safe-area-inset-right, 0px\)\); top: calc\(92px \+ env\(safe-area-inset-top, 0px\)\);/, 'the FPS read-out sits at top 8 and runs to 84 with four lines (ui/fpsCounter.js): 92 clears it');
   assert.match(PARTY_CSS, /pointer-events: none;/, 'the world takes every click that lands on it');
   assert.match(PARTY_CSS, /\.dfparty\.touch \{ top: calc\(76px \+ env\(safe-area-inset-top, 0px\)\); \}/, 'and on touch it clears the layer\'s own top-right buttons (ui/touch.js: top 16, 44 tall)');
+  // AUDIT SOC C7: ...and on a PHONE it leaves that corner entirely. At 430x860 with the touch skin the 244px HUD
+  // covered 238 of the 402 pixels of every chat peek line - 59% of the conversation - and overlapped the open
+  // friends panel besides. 180 wide at the bottom right, above the touch layer's jump column (bottom 16, 48 tall).
+  assert.match(PARTY_CSS, /@media \(max-width: 560px\) \{\s*\.dfparty, \.dfparty\.touch \{ width: 180px; top: auto; bottom: calc\(76px \+ env\(safe-area-inset-bottom, 0px\)\); \}/,
+    'the phone drops the HUD out of the chat\'s corner rather than merely narrowing it');
   const src = rd('src/ui/partyPanel.js');
   assert.doesNotMatch(src, /getPref|setPref|uiPrefs/, 'the party HUD keeps no setting: it is there when there is a party and gone when there is not');
   assert.doesNotMatch(src, /localStorage|appStorage/);
@@ -392,4 +401,66 @@ test('SOC4: the panel is a HUD, not a window - fixed at the top-right below the 
   injectPartyStyle(doc);
   const { panel } = stand({ members: [member('me', { acct: 'acct-me', name: 'Mac' }), member('Bran')], doc, touch: true });
   assert.equal(panel.root.className, 'dfparty touch');
+});
+
+
+// ── THE AUDIT'S OWN PINS ──────────────────────────────────────────────────────────────────────────
+
+test('AUDIT SOC B8/C22: an away seat\'s "last online" TICKS on the live pass, written only where the words changed, and the card\'s name carries its full text as a title (mutants: the sentence computed once inside the version-gated repaint, so a seat that dropped an hour ago still says "just now"; the whole card repainted per frame; an ellipsized name with nowhere to read it whole)', () => {
+  const { social, panel, doc, clock } = stand({ members: [member('me', { acct: 'acct-me', name: 'Mac' }), member('Bran'), member('Cyl')] });
+  panel.render({});
+  const bran = panel.cardFor('acct-Bran'), cyl = panel.cardFor('acct-Cyl');
+  // C22: the name node says the whole name, whatever the card's width does to it
+  assert.equal(bran.name.attrs.title, 'Bran');
+  // a party where EVERYONE is present costs nothing a frame - the live pass has no away seat to re-read
+  doc.zero();
+  for (let i = 0; i < 60; i++) panel.render({});
+  assert.equal(doc.writes, 0, 'sixty quiet frames with nobody away: still not one write');
+  // now a seat drops
+  social.apply({ t: 'social', k: 'party', party: party([member('me', { acct: 'acct-me', name: 'Mac' }), member('Bran', { online: false, seen: clock.t - 30_000, peers: [] }), member('Cyl')]) });
+  panel.render({});
+  assert.equal(bran.where.textContent, 'Last online just now');
+  const node = bran.where, before = cyl.where.textContent;
+  // ...and time passes with NOTHING arriving from the hub: no frame, no version, no repaint
+  doc.zero();
+  clock.t += 5 * 60_000;
+  panel.render({});
+  assert.equal(panel.cardFor('acct-Bran').where, node, 'the same node - a write, not a rebuild');
+  assert.equal(node.textContent, 'Last online 5 min ago', 'and it says what the clock says');
+  assert.equal(doc.built, 0); assert.equal(doc.structure, 0);
+  assert.equal(cyl.where.textContent, before, 'the seat that is present was not touched');
+  assert.equal(doc.writes, 1, 'exactly the one part whose words moved');
+  // and the frames in between write nothing at all
+  doc.zero();
+  for (let i = 0; i < 30; i++) panel.render({});
+  assert.equal(doc.writes, 0, 'thirty frames inside the same minute: the words did not change, so nothing was written');
+  // a seat that comes BACK stops being re-read
+  social.apply({ t: 'social', k: 'party', party: party([member('me', { acct: 'acct-me', name: 'Mac' }), member('Bran'), member('Cyl')]) });
+  panel.render({});
+  doc.zero();
+  clock.t += 60 * 60_000;
+  for (let i = 0; i < 10; i++) panel.render({});
+  assert.equal(doc.writes, 0, 'an hour later, and a present member still says where they are');
+  // a covered frame re-reads nothing either
+  social.apply({ t: 'social', k: 'party', party: party([member('me', { acct: 'acct-me', name: 'Mac' }), member('Bran', { online: false, seen: clock.t, peers: [] }), member('Cyl')]) });
+  panel.render({});
+  doc.zero();
+  panel.render({ covered: true });
+  clock.t += 10 * 60_000;
+  const under = node.textContent;
+  panel.render({ covered: true });
+  assert.equal(node.textContent, under, 'nothing is painted under a window');
+  panel.render({ covered: false });
+  assert.equal(node.textContent, 'Last online 10 min ago', 'and the frame the cover lifts says the truth');
+});
+
+test('AUDIT SOC C21: the HUD\'s bar rows carry a ROLE with their label - a bare aria-label on a plain div is dropped, and the digits beside the bar must stay readable (mutants: the role dropped again; role="img", which hides the numbers it labels)', () => {
+  const { panel } = stand({ members: [member('me', { acct: 'acct-me', name: 'Mac' }), member('Bran')] });
+  panel.render({});
+  const card = panel.cardFor('acct-Bran');
+  assert.deepEqual(card.vitals.map((v) => v.row.attrs.role), ['group', 'group', 'group']);
+  assert.deepEqual(card.vitals.map((v) => v.row.attrs['aria-label']), ['Health', 'Stamina', 'Magicka']);
+  assert.ok(card.vitals.every((v) => v.row.attrs.role !== 'img'), 'never img: the digits are the other half of the answer');
+  assert.equal(panel.root.attrs.role, 'group');
+  assert.equal(panel.root.attrs['aria-label'], 'Party');
 });
