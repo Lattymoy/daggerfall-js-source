@@ -226,6 +226,7 @@ import { ChatLog, CHAT_REJOIN_MS } from '../net/chat.js';   // CHAT1: the tabs a
 import { SocialState, accountId, accountSecret } from '../net/social.js';   // SOC2: the friends and the party, as the hub says them; the account the hub's hello carries
 import { SOCIAL_ROOM, PARTY_SEND_MS } from '../net/wire.js';   // SOC2: the hub's room and the party pose's floor (a second wire import: AUDIT WORLD4 A1 pins the first as it stands)
 import { createChatPanel } from '../ui/chatPanel.js';   // CHAT1: the enhanced skin's chat over the world
+import { createPartyPanel } from '../ui/partyPanel.js';   // SOC4: the party HUD - my party's portraits and their health / stamina / magicka
 import { relayVersionSeen, buildUpdateSeen, fetchLiveBuildTag, RELAY_RESTART_TEXT, BUILD_UPDATE_TEXT, BUILD_POLL_MS } from '../net/updateNotice.js';   // SRV-N: the relay moved, or the build did
 import { BUILD_TAG } from '../buildTag.js';   // SRV-N: which build this tab is actually running
 import { morrowindDataCount, morrowindDataGeneration } from './dataSource.js';   // MWBODY1: the bodies' gate - Morrowind data attached - and its generation
@@ -6774,6 +6775,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // an act goes out through `socialLink()` (sendSocial). `partyFrame` sends my own party pose once a second while I
   // sit in a party. Nothing here draws: the seams are the state and the link.
   let social = null, _partyComposedAt = -Infinity;
+  // SOC4 (Mac: "Theyre character portrait + health/stamins/magicia stats displayed on a new party UI element"): the
+  // party HUD, made in socialStart beside `social` and driven from chatFrame. Null until there is a hub link to be
+  // anyone on, and it hides itself whenever the party is empty of anyone but me.
+  let partyPanel = null;
   const socialLink = () => { const tab = chatLog?.tabs.find((t) => t.room === SOCIAL_ROOM); return tab ? (chatLinks?.get(tab.id) ?? null) : null; };
   let _worldPublishedAt = -Infinity;   // WORLD1: when this host last published the room's memory (the frame clock)
   // WORLD1 (Mac: "The world is the server ... True persistence"): the room's memory out - this player's, when the
@@ -7000,6 +7005,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     social.onError = (text) => { chatLog.push(tab.id, { text: `Social: ${text}`, system: true }); };
     // SOC3: the social button and the friends + party panel are made here, over `social`, `link` and `chatPanel`
     // SOC4: the party HUD (portraits, health / stamina / magicka) is made here, over `social`
+    // The art pair is the ESCORT FACES' own (initEscortFaces above): one fetch door and one palette for every
+    // classic record this host reads, so a portrait is the same CIF the paper doll draws and nothing is loaded twice.
+    partyPanel = createPartyPanel({ social, art: { fetchBytes, palette } });
   };
   /** SOC2: my party pose - where I stand (the travel pixel: the place's own inside a dungeon), what the place is
    *  called, the six vitals, the portrait's recipe - as net/wire.js validPartyPose admits it. */
@@ -7110,6 +7118,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       status: link?.statusLine('chat') ?? null,   // connecting, reconnecting, refused - the session's own line (D12; AUDIT CHAT B5)
     });
     partyFrame(performance.now());   // SOC2: my party pose rides the chat frame - before the dead return with it, so a dead member's card says so as their vitals read zero
+    // SOC4: and the party HUD is drawn from the same frame, under the SAME `covered` word the chat panel takes - a
+    // window over the HUD covers both. The panel itself costs one version compare on a frame where nothing moved.
+    partyPanel?.render({ covered: townTalk.hudCovered || (modes?.hudCovered ?? false) || gamePaused() });
   };
   /** WORLD3: the peers in my room as target candidates - each with its feet in THIS scene and its body's height; null
    *  when there is no room. The dungeon host's foes read it (peerCandidates) and, since WORLD6b-ii, the cell's own. */
@@ -7213,7 +7224,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (townTalk.hudCovered || (modes?.hudCovered ?? false)) return;   // a window over the HUD covers the names too
     const scale = hudScale(canvas.width, canvas.height);
     // the docked HUD's viewport rect (E5), so the name lands over the head the world pass drew (AUDIT ONLINE C6/D3)
-    remotePlayers.drawNames(renderer, townTalk.font, proj, view, canvas.width, canvas.height, eye, scale, onlineToScene, largeHudViewportRect(canvas.clientHeight));
+    // SOC4 (Mac: "the players name who are in a party together should turn green"): the last argument is the party's
+    // colour for a peer - net/social.js colorOf answers PARTY_GREEN for my party's other tabs and null for everyone
+    // else, so a stranger's name is the white it always was.
+    remotePlayers.drawNames(renderer, townTalk.font, proj, view, canvas.width, canvas.height, eye, scale, onlineToScene, largeHudViewportRect(canvas.clientHeight), (id) => social?.colorOf(id) ?? null);
     const line = online?.statusLine();   // AUDIT ONLINE D12/E11: connecting, reconnecting, refused, replaced - said, not silent
     if (line && townTalk.font) drawText(renderer, townTalk.font, line, Math.round(8 * scale), Math.round(8 * scale), scale, [1, 0.85, 0.6, 1]);
   };
