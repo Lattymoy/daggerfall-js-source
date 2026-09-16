@@ -184,8 +184,8 @@ test('MAC7 #2: the bow\'s hold - a swing that arrives with wd 2 is the draw, hel
 
 test('MAC7: the hosts by source - weaponRig counts every strike it starts before the Morrowind arm\'s gate and every cast at castSpellAnim, and exposes both; world.js reads the sheath, the bow\'s hold off the machine, the swing, the arrow, the spell stance and the cast into every pose it sends; peerBodies drives the rig\'s doors inside the update guard and withholds release while the sender holds', () => {
   const rig = rd('src/combat/weaponRig.js');
-  assert.match(rig, /const swing = \{ n: 0, strike: 'StrikeDown' \};(?:\s*\/\*\*[\s\S]*?\*\/)?\s*const cast = \{ n: 0, rangeType: 2 \};\s*function fpAttack\(strike\) \{\s*swing\.n = \(swing\.n \+ 1\) & 0xffff; swing\.strike = strike;\s*if \(!fpArm\.ready\(\)\) return;/, 'the strike counted before the arm\'s own gate: a classic-skin player swings too');
-  assert.match(rig, /castSpellAnim: \(rangeType, element, onRelease = null\) => \{\s*cast\.n = \(cast\.n \+ 1\) & 0xffff; cast\.rangeType = rangeType \| 0;[^\n]*\n\s*fpArm\.castSpell\(rangeType\);/, 'the cast counted at the one door both lanes come through');
+  assert.match(rig, /const swing = \{ n: 0, strike: 'StrikeDown' \};(?:\s*\/\*\*[\s\S]*?\*\/)?\s*const cast = \{ n: 0, rangeType: 2 \};\s*function fpAttack\(strike\) \{\s*swing\.n = \(swing\.n \+ 1\) & 0xffff; swing\.strike = strike;\s*(?:\/\/[^\n]*\n\s*)*(?:eotbBody\.attack\([^\n]*\n\s*)?if \(!fpArm\.ready\(\)\) return;/, 'the strike counted before the arm\'s own gate: a classic-skin player swings too');
+  assert.match(rig, /castSpellAnim: \(rangeType, element, onRelease = null\) => \{\s*cast\.n = \(cast\.n \+ 1\) & 0xffff; cast\.rangeType = rangeType \| 0;[^\n]*\n\s*(?:eotbBody\.cast\(\);[^\n]*\n\s*)?fpArm\.castSpell\(rangeType\);/, 'the cast counted at the one door both lanes come through');
   assert.match(rig, /\n    swing,   \/\/ MAC7 #1/); assert.match(rig, /\n    cast,    \/\/ MAC7 #2/);
   assert.equal((rig.match(/fpAttack\(strike\)/g) ?? []).length, 3, 'the one counter sits under both strike doors (the click and the gesture)');
   const w = rd('src/scenes/world.js');

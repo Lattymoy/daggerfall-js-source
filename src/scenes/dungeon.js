@@ -32,7 +32,7 @@ import { playerTorchLight } from '../systems/playerTorch.js';   // T1
 import { lookAt, perspective, mirrorProjectionX, identity, UP_Y } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
 const BATCH_IDENTITY = identity();   // PERF5: the merged level is in world space already
 import { PlayerMotor, TELEPORT_FREEZE_S, motionBagOf } from '../player/motor.js';   // A6: DaggerfallAction.Teleport's physics settle; WW2: the one motion bag
-import { mwViewFrame, mwViewWheel, mwViewDrawBody } from '../player/mwView.js';   // MW-D25: the Morrowind camera
+import { mwViewFrame, mwViewWheel, mwViewDrawBody, mwViewFootstep } from '../player/mwView.js';   // MW-D25: the Morrowind camera; AUDIT-EOTB2: the sprite's stride
 import { PITCH_LIMIT } from '../player/mwCamera.js';   // MW-D30: camera.cpp:323-331's own clamp
 import { jumpSpeedMultiplier, isEnhancedJumping } from '../systems/skills.js';   // AUDIT 64 F2: CheckAirControl's IsEnhancedJumping disjunct
 import { pickFoe,   // TI1: the lock-on pick
@@ -820,6 +820,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       {
         const _step = _footsteps.update(player.pos, {
           grounded: player.grounded, swimming: player.swimming, levitating: player.levitating,
+          spriteStep: mwViewFootstep(),   // AUDIT-EOTB2: SyncFootsteps - the sprite's stride while it is on screen
           // AUDIT 64 F3 (review): PlayerFootsteps gates on
           // `playerMotor.IsStandingStill` (PlayerFootsteps.cs:264-265), which
           // is `Vector2(moveDirection.x, moveDirection.z).magnitude == 0`

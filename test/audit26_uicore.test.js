@@ -259,6 +259,7 @@ test('audit26 F155: Sell staging inherits TransferItem\'s summoned and quest gua
   const quest = questItemFor(res);
   const pack2 = [quest];
   const win2 = new NativeTradeWindow(shopHooks(pack2, { getQuest: questHook(res) }));
+  win2.input('F2');   // MAC-N2: template 132 rides the Magic Items page (AddLocalItem's spellbook arm) - the window opens on Weapons & Armor
   sellClick(win2);
   assert.deepEqual(win2.staged, [], 'the quest item did not stage');
   assert.equal(win2.box.rows[0].text, CANNOT_REMOVE_ITEM_TEXT);

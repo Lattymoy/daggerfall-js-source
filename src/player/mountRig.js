@@ -35,6 +35,7 @@ import { RidingAnimator, loadRidingArt, ridingRect, RIDING_VOLUME_SCALE } from '
 import { TransportWindow, transportArtLoaded } from '../ui/transportWindow.js';
 import { ownsShip } from '../systems/banking.js';
 import { horseOffsetHeight } from '../ui/hudLarge.js';   // ROAD-D D10: LargeHUDOffsetHorse
+import { mwViewHides } from './mwView.js';   // AUDIT-EOTB2: the sprite body on screen hides the FPV horse (Eye Of The Beholder's ToggleBillboard)
 import { SOUND } from '../systems/soundClips.js';
 
 /**
@@ -125,7 +126,10 @@ export function createMountRig({
       // game is paused - `!GameManager.IsGamePaused` sits in the same
       // condition as the Repaint test. Under an open window DFU shows
       // no mount; the first cut froze the frame and kept drawing it.
-      if (art && isRiding(player.transportMode) && !ridePaused) {
+      // AUDIT-EOTB2 [SETTINGS]: and not while the Eye Of The Beholder body
+      // is the one on screen - the horse archives draw the rider WITH the
+      // horse, so the FPV horse hides (Compatibility.Don'tHideHorse keeps it)
+      if (art && isRiding(player.transportMode) && !ridePaused && !mwViewHides().horse) {
         // ROAD-D D10: horseOffsetHeight (TransportManager.cs :304-309)
         // - the bar the LAST drawHud drew, lifted out from under the
         // mount. Docking is not asked here; DFU's horse arm never asks.

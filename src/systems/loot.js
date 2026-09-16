@@ -18,7 +18,7 @@
 // (setMagicItemTemplates), and EVERY host that can generate loot now
 // loads it: scenes/shared.js:106-109 (loadMagicRegistries) feeds the
 // module table this file reads, called from dungeonContext.js:1057,
-// world.js:1988 and exterior.js:1113 - interiors run inside those hosts
+// world.js:1987 and exterior.js:1114 - interiors run inside those hosts
 // and read the same table. What is left is the data-absent boot, and
 // that is DFU's own answer rather than a stand-in: shared.js:109
 // records it, the category simply stays empty.
@@ -27,7 +27,7 @@ import { randomMaterial, randomArmorMaterial, createWeapon, WEAPONS_ENUM, ARMOR_
 import { ARROW_TEMPLATE } from './inventory.js';   // X11b: CreateWeapon's arrow arm keys on it
 import { dice100 } from '../combat/formulas.js';
 import { goldStack } from './inventory.js';
-import { ITEM_TEMPLATES, mintCondition, GROUP_TEMPLATE_INDICES, templateByIndex, itemBaseValue } from './itemTemplates.js';   // F103: SetItem writes the value with the name
+import { ITEM_TEMPLATES, mintCondition, GROUP_TEMPLATE_INDICES, templateByIndex, itemBaseValue, setItemFields } from './itemTemplates.js';   // F103: SetItem writes the value with the name; MAC-N1: through the one export
 import { CLOTHING_DYES } from '../characters/dyes.js';
 import { legacyEnchantmentValue } from './enchantments.js';   // G4: ItemBuilder's closing value sum
 import { validItemField, validItemFields, itemFieldsOfKind, ITEM_STR_MAX } from './itemFields.js';   // RF5: the one declaration of every item field's kind (LR4's affix check rides it)
@@ -141,12 +141,12 @@ const pick = (list, rolls) => list[Math.floor(rolls() * list.length)];
  *  `item.value` raw: an undefined one summed to NaN, and
  *  CalculateTradePrice's `>>8` collapsed that to 0 - looted gear sold
  *  for nothing and was taken. Anything minted with its own value
- *  (a magic item's enchantment sum) keeps it. */
-const named = (item) => ({
-  ...item,
-  name: item.name ?? ITEM_TEMPLATES[item.templateIndex]?.name,
-  value: item.value ?? itemBaseValue(item),
-});
+ *  (a magic item's enchantment sum) keeps it.
+ *
+ *  MAC-N1: the helper that stood here was one of FIVE copies of that
+ *  law, and the corpse's armor was minted by none of them. It is
+ *  itemTemplates.setItemFields now - one export, every minter. */
+const named = setItemFields;
 
 /** ItemBuilder.CreateRandomClothing verbatim (:184-208): a uniform
  *  template over the gender's group, then RandomClothingDye, THEN

@@ -27,7 +27,7 @@ import { RACES } from './races.js';
 import { applyHeadlessChargen } from './chargenSession.js';
 import { addItem } from './inventory.js';
 import { equipItem } from './equip.js';
-import { mintCondition, templateByIndex, itemBaseValue } from './itemTemplates.js';
+import { mintCondition, templateByIndex, itemBaseValue, setItemFields } from './itemTemplates.js';   // MAC-N1: SetItem's name + value, the one export
 import { WEAPONS_ENUM, ARMOR_ENUM, createWeapon, ARROW_TEMPLATE } from '../combat/enemyEquipment.js';
 import { ARMOR_MATERIAL } from './armorMaterials.js';
 import { TRANSPORT_HORSE_TEMPLATE, hasHorse } from './inventorySession.js';   // TSR4: the mount is the pack's own question
@@ -170,10 +170,12 @@ export function testItemOf(row) {
   if (row.kind === 'book') return createBook(row.message);   // EB3: ItemBuilder.CreateBook, the named path
   if (row.kind === 'arrows') return { ...createWeapon(ARROW_TEMPLATE, 0), stackCount: row.stackCount };
   if (row.kind === 'armor') {
-    return mintCondition({
+    // MAC-N1: through SetItem's value write - this armor was minted
+    // with a name and NO value, the corpse's shape exactly.
+    return mintCondition(setItemFields({
       group: 'Armor', templateIndex: row.templateIndex, material: row.material,
       name: row.label, flags: 0,
-    });
+    }));
   }
   return mintCondition({
     group: row.group, templateIndex: row.templateIndex, dye: 0, variant: 0,

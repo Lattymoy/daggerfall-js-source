@@ -119,8 +119,11 @@ test('AR1: exteriorFoes lands the hit on BowDamage\'s own payload', () => {
     ':303 with bowAttack=true - the melee arm passes false by omission');
   assert.match(body, /dealDamage: \(t, d\) => \(t\.hurtFromFoe \? t\.hurtFromFoe\(d, dir\) : damageFoe\(t, d, null, dir\)\)/,
     'the target\'s own pool owns its death chain - the melee arm\'s exact split');
-  assert.match(body, /addItem\(target\.entity\.items, \{ group: 'Weapons', name: 'Arrow', templateIndex: 131/,
-    ':146-148 - the arrow recoverable from the TARGET, damage or not');
+  // MAC-N1: the shaft is CreateWeapon's arrow (EnemyAttack.cs:145-147),
+  // minted by the one export - the bare literal this pin used to match
+  // carried no value, and a quiver begun from it sold for NaN.
+  assert.match(body, /addItem\(target\.entity\.items, bowDamageArrow\(\)\)/,
+    ':146-148 - the arrow recoverable from the TARGET, damage or not, minted like every other');
   assert.ok(!/FLAGGED: the arrow's IMPACT still only knows the player/.test(src),
     'retiring a flag deletes the sentence');
 });

@@ -2208,6 +2208,22 @@ title - so a press teaches rather than changes nothing; the Mods pane
 says it once at the top; the Online pane's copy says the lane at the
 door.
 
+**MAC-N3 (2026-09-16): the fact was never on the URL.** "main.js sets
+it for Play Online" above was true of an in-memory `URLSearchParams`
+the front door edits and hands to `bootWorld` - and nothing wrote that
+copy back to `location.search`, which is the one read `isOnlinePage`
+makes. So for every Play Online session the lane answered *offline*:
+the skin stayed the stored choice, no enhancement and no mod was
+forced, and a Classic player had no chat (Mac: "Chat UI not visable
+with classic in online mode"). The relay was fine, because the world
+host reads the copy. `onlineLane.publishBootParams` writes the decided
+params to the URL through `history.replaceState` before the world
+boots, and the six keys the menu decides (`BOOT_DOOR_KEYS`) are cleared
+off both copies before the menu runs, so a reload after an online
+session does not show the Mods pane locked for a player who has not
+chosen yet. One home, not a second read path. The record is
+`01-Overview/Mac-Bugs-N.md`.
+
 ## OL2 (2026-09-14): the rest window says the clock, the trip says it arrives now
 
 **Mac: "Now tackle #s 5/6."** AUDIT WORLD5's fifth and sixth recorded
@@ -4582,7 +4598,7 @@ with a marked top-left pixel on its last row).
 
 *"During online play, certain enemies cant be damaged."*
 
-`src/scenes/worldModes.js:5070` read, on one physical line:
+`src/scenes/worldModes.js:5073` read, on one physical line:
 
 ```js
 useMagicItem: (item) => host.useMagicItem?.(item),   // HT1: the torch keys onFoeHit: (hit) => host.onFoeHit?.(hit),   // WORLD2: a puppet's blow goes to the host
@@ -4724,7 +4740,7 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:2661` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:2660` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
   provenance argument `applySpellToFoe` hands them (`hostMagic.js:187`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
