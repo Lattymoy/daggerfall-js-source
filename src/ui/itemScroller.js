@@ -16,7 +16,7 @@ import { drawText, measureText } from './text.js';
 import { loadImg, drawImgCrop, drawRect } from './nativePanel.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
-import { thumbSpan, drawScrollThumb, VerticalScrollBar } from './verticalScrollBar.js';
+import { thumbSpan, drawScrollThumb, VerticalScrollBar, dragScrollIndex } from './verticalScrollBar.js';   // MAC-N2: and Update's drag arm, for the thumb
 import { itemLongName } from '../systems/itemInfo.js';
 import { rarityTint, rarityLines } from '../systems/lootRarity.js';   // LR1: the cell's tier tint and the tooltip's tier lines   // D7: ResolveItemLongName, the tooltip's text
 import { bookTitle } from '../systems/books.js';         // D7: GetBookTitle, the Books arm
@@ -111,6 +111,32 @@ export function applyScroll(current, kind, len) {
   const d = kind === 'up' ? -1 : kind === 'down' ? 1
     : kind === 'page-up' ? -LIST_SLOTS : kind === 'page-down' ? LIST_SLOTS : 0;
   return Math.max(0, Math.min(max, current + d));
+}
+
+// ── MAC-N2: THE THUMB DRAG ────────────────────────────────────────
+//
+// A click ON the thumb moves nothing (above) because in DFU the thumb
+// is not clicked, it is DRAGGED: VerticalScrollBar.Update (:101-130)
+// latches a press inside thumbRect while button 0 is held and moves
+// ScrollIndex by the cursor's travel every frame after, until the
+// button comes up. ROAD-A7 put that law in ui/verticalScrollBar.js and
+// gave it to the list picker; the two ITEM scrollers - the pack's and
+// the shop's - kept a thumb nobody could drag (Mac, 2026-09-16:
+// "scrollbar not working correctly"). These two are that arm over the
+// scroller's own bar, in the shape a window with two lists can hold:
+// one latch per list, begun on the 'thumb' hit and read on every
+// mousemove while the host says the button is down.
+
+/** The latch, from the 'thumb' hit: the bar-local press point and the
+ *  index it began at (Update :110-113). */
+export function beginScrollerDrag(rect, vy, scroll) {
+  return { rect, startY: vy - (rect[1] + SCROLLBAR_Y), startIndex: scroll };
+}
+
+/** Update's drag arm (:115-121) over a live pointer y, with the
+ *  scroller's bar height and DisplayUnits baked in. */
+export function dragScrollerIndex(latch, vy, len) {
+  return dragScrollIndex(vy - (latch.rect[1] + SCROLLBAR_Y), latch.startY, latch.startIndex, SCROLLBAR_H, len, LIST_SLOTS);
 }
 
 // ── ROAD-A7: THE ARROWS' RED/GREEN STATES AND THEIR CLICK ─────────

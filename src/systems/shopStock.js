@@ -40,7 +40,7 @@
 import { dice100 } from '../combat/formulas.js';
 import { rand } from '../formats/dfRandom.js';   // F209: StockHouseContainer's one classic-stream draw
 import { randomMaterial, randomArmorMaterial, createWeapon } from '../combat/enemyEquipment.js';
-import { groupTemplates, GROUP_TEMPLATE_INDICES, itemBaseValue, ITEM_TEMPLATES, mintCondition, rollPaintingMessage } from './itemTemplates.js';
+import { groupTemplates, GROUP_TEMPLATE_INDICES, itemBaseValue, ITEM_TEMPLATES, mintCondition, rollPaintingMessage, setItemFields } from './itemTemplates.js';   // MAC-N1: SetItem's name + value, the one export
 import { createRandomBook } from './books.js';   // B1; A2: CreateRandomBook whole, priced off the book FILE
 import { isLeather, isPlate } from './armorMaterials.js';
 import { CLOTHING_DYES } from '../characters/dyes.js';
@@ -198,7 +198,7 @@ export function stockShopShelf({ buildingType, quality }, playerEntity = {}, { r
   // plain item; AUDIT 18: the shelf minted rows with none, so the
   // dungeon-style item list labelled a bought Oil "UselessItems2".
   const add = (item) => {
-    const it = mintCondition({ ...item, name: item.name ?? ITEM_TEMPLATES[item.templateIndex]?.name, value: item.value ?? itemBaseValue(item) });   // AUDIT 23 (items-5)
+    const it = mintCondition(setItemFields(item));   // AUDIT 23 (items-5); MAC-N1: SetItem's name + value through the one export
     // SetItem's other draw (DaggerfallUnityItem.cs:571) - a Paintings
     // item is born with its message, and a pawn shop is where the
     // player meets one (group 13 rides the PawnShop pair table). The
@@ -425,7 +425,7 @@ export function stockHouseContainer({ buildingType, record }, playerEntity = {},
   // the shelf's add() shape: name/value/condition off the template,
   // a Paintings mint born with its message (SetItem's other draw).
   const add = (item) => {
-    const it = mintCondition({ ...item, name: item.name ?? ITEM_TEMPLATES[item.templateIndex]?.name, value: item.value ?? itemBaseValue(item) });
+    const it = mintCondition(setItemFields(item));   // MAC-N1: SetItem's name + value through the one export
     if (it.group === 'Paintings' && it.message == null) it.message = rollPaintingMessage(rolls);
     items.push(it);
   };

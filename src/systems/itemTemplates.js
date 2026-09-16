@@ -68,6 +68,33 @@ export function itemBaseValue(item) {
   return t.basePrice;
 }
 
+/** DaggerfallUnityItem.SetItem's two READABLE writes (DaggerfallUnity
+ *  Item.cs:555 `shortName = itemTemplate.name`, :563 `value =
+ *  itemTemplate.basePrice`, the latter through SetItemPropertiesBy
+ *  Material's multiplier - ItemBuilder.cs:649 - which is what
+ *  itemBaseValue answers). NO DFU item exists without either, and the
+ *  trade window reads `item.value` raw: an undefined one sums to NaN
+ *  and CalculateTradePrice's `>> 8` collapses that to 0.
+ *
+ *  MAC-N1 (2026-09-16, Mac: "Weapon and Armorsmiths dont want to pay
+ *  for loot"): this law lived as FIVE private copies - loot.js,
+ *  unleveledLoot.js, startingGear.js and two in shopStock.js - and the
+ *  corpse's armor (combat/enemyEquipment.js equipmentItems) was minted
+ *  by none of them. A cuirass off a dead knight had no value, so the
+ *  whole staged lot it sat in priced at NaN, the strip printed NaN and
+ *  the smith offered 0 - at exactly the two shops that BUY armor. ONE
+ *  DFU MEMBER, ONE EXPORT: this is that member, and every minter
+ *  reads it. Fills only what is absent - an item minted with its own
+ *  value (an enchantment's sum, a book's price, a recipe's) keeps it -
+ *  and answers a COPY, as the copies it replaces did. */
+export function setItemFields(item) {
+  return {
+    ...item,
+    name: item.name ?? templateByIndex(item.templateIndex)?.name,
+    value: item.value ?? itemBaseValue(item),
+  };
+}
+
 // ---- AUDIT 17e F9: GetItemImage's INVENTORY branch, verbatim ----
 // (ItemHelper.cs:399-430 + DaggerfallUnityItem.GetInventoryTexture*
 // :1728-1764 + UseWorldTexture :1830-1855.) The item lists draw the

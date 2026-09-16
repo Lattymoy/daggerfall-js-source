@@ -2,7 +2,7 @@
 // (ItemHelper.cs:1277-1364, MIT Daggerfall Workshop). This retires
 // the iron-dagger stand-in seedStartingEquipment used to hand out
 // (equip.js:305), which survives only as the PRE-CHARGEN fallback its
-// two hosts gate it to - world.js:1973 and exterior.js:1099 seed it
+// two hosts gate it to - world.js:1974 and exterior.js:1100 seed it
 // solely for an entity that never ran chargen. A new character now
 // begins dressed, with a spellbook, their CLASS's weapon, and 100
 // gold, exactly as classic does.
@@ -29,7 +29,7 @@
 
 import { addItem, addGoldPieces } from './inventory.js';   // E4: gold is the counter, not a bag stack
 import { equipItem } from './equip.js';
-import { itemBaseValue, templateByIndex, mintCondition } from './itemTemplates.js';
+import { templateByIndex, mintCondition, setItemFields } from './itemTemplates.js';   // MAC-N1: SetItem's name + value, the one export
 import { CLOTHING_DYES } from '../characters/dyes.js';
 import { createWeapon } from '../combat/enemyEquipment.js';   // ItemBuilder.CreateWeapon's one home (the arrow arm)
 import { getBool } from './settings.js';   // SETT: PlayerTorchFromItems
@@ -62,11 +62,7 @@ export const STARTING_GOLD = 100;
  *  TEMPLATE name (AUDIT 17f: the hand-written names here were
  *  lower-cased copies - DFU's ItemName is ItemTemplate.name, so the
  *  bag read "Short shirt" where classic reads "Short Shirt"). */
-const mint = (item) => mintCondition({
-  ...item,
-  name: item.name ?? templateByIndex(item.templateIndex)?.name,
-  value: item.value ?? itemBaseValue(item),
-});   // AUDIT 23 (items-5): condition mints with the item
+const mint = (item) => mintCondition(setItemFields(item));   // AUDIT 23 (items-5): condition mints with the item; MAC-N1: the name + value half is the one export
 
 /** AssignStartingGear verbatim. `rolls` is the RNG seam;
  *  torchesFromItems ports DFU's setting (ships OFF - not classic);
