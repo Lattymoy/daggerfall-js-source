@@ -169,12 +169,13 @@ test('EOTB4: the body draw routes, and cannot be reached with nothing to draw', 
 
   setEotbBodyReady(() => true);
   eotbCamera.toggleOffset(false);
-  assert.equal(mwViewDrawBody(null, {}), false, 'in first person the sprite is not painted');
-  assert.deepEqual(painted, []);
-
+  // EOTB-IL: the seam no longer gates on the view - the BODY decides,
+  // because the first-person billboard (Graphics.FirstPersonBillboard,
+  // shipped at Shadows Only) is the same object drawn behind the eye
+  assert.equal(mwViewDrawBody(null, {}), true, 'the lane open, the draw door is reached in first person too');
   eotbCamera.toggleOffset(true);
-  assert.equal(mwViewDrawBody(null, {}), true, 'in third person it is');
-  assert.deepEqual(painted, ['eotb']);
+  assert.equal(mwViewDrawBody(null, {}), true, 'and in third');
+  assert.deepEqual(painted, ['eotb', 'eotb']);
   reset();
 });
 
@@ -303,13 +304,21 @@ test('AUDIT-EOTB F1: the seam ticks the BODY - its clock had no caller at all', 
   // player would have been a single frozen frame.
   reset();
   setEotbBodyReady(() => true);
-  mwViewWheel(+120);
-  const before = eotbBody.state().frame;
-  const step = 0.25;                       // one frame of the walk cycle on foot
-  for (let i = 0; i < 4; i++) {
-    mwViewFrame({ fpEye: [0, 1.6, 0], feet: [0, 0, 0], yaw: 0, pitch: 0, dt: step, raycast: () => null });
+  // EOTB-IL: the body is the camera's billboard (ToggleOffset drives it)
+  // and an idle is ONE frame, so the seam is driven WALKING - the
+  // four-frame Move table - and the frame must move within a second
+  const renderer = { uploadTexture() {}, createBillboardBatch: () => ({ origin: [0, 0, 0] }), drawBillboards() {}, destroyBillboardBatch() {} };
+  eotbBody.attach(renderer, () => ({ motion: { forward: 1, standing: false, speed: 3, grounded: true } }));
+  setEotbBodyReady(() => true);   // attach re-arms the gate on the body's own decode
+  eotbCamera.toggleOffset(true);  // ToggleOffset is what shows the billboard (IL_1a3c)
+  const seen = new Set();
+  for (let i = 0; i < 70; i++) {
+    mwViewFrame({ fpEye: [0, 1.6, 0], feet: [0, 0, 0], yaw: 0, pitch: 0, dt: 1 / 60, raycast: () => null });
+    seen.add(eotbBody.state().frame);
   }
-  assert.notEqual(eotbBody.state().frame, before, 'four frame-times of dt must advance the sprite’s clock');
+  assert.ok(seen.size >= 3, `a second of walking through the seam must advance the sprite’s clock (${[...seen]})`);
+  assert.equal(eotbBody.state().table, 'Move', 'in the walk table');
+  eotbBody.attach(null, null);
   reset();
 });
 

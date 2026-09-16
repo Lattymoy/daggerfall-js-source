@@ -444,3 +444,122 @@ test('AUDIT-EOTB F5b: the SHIPPED offset puts the camera above the feet, not bel
   assert.ok(r.eye[1] > 1.6, `the camera sits ABOVE the head at the shipped +0.5 Y offset, not at ${r.eye[1].toFixed(2)}`);
   assert.equal(r4(r.eye[2]), -2, '...and at the base distance behind');
 });
+
+// ═══ EOTB-IL (2026-09-16): THE CAMERA, AGAINST THE ASSEMBLY ═════════
+//
+// The shipped `.dfmod` is open (vendor/eye-of-the-beholder/il/). These
+// pin the places where EOTB2's reading of the camera was wrong or
+// short, each at its IL offset.
+
+const cfgGet = (over = {}) => (vendor, key) => (key in over ? over[key] : undefined);
+
+test('EOTB-IL camera: the bounds seed at 2.0, not zero (the .ctor’s field initialisers)', () => {
+  const c = createEotbCamera();
+  assert.deepEqual(c.bounds(), [2, 2, 2], 'a fresh camera measures nothing yet and clamps to two metres');
+  c.start();
+  assert.deepEqual(c.bounds(), [2, 2, 2], 'and Start puts them back');
+});
+
+test('EOTB-IL camera: autoPOVSwitch is DERIVED from the nine rows (IL_10e1-IL_112d) - the bundle ships it disarmed', () => {
+  assert.equal(readCameraSettings(null).autoPOVSwitch, false, 'every row at Don’tChange: nothing armed');
+  assert.equal(readCameraSettings(cfgGet({ 'AutoTogglePerspective.OnHorse': 2 })).autoPOVSwitch, true, 'one row set: armed');
+  const c = createEotbCamera();
+  c.loadSettings(cfgGet({ 'AutoTogglePerspective.OnFoot': 1 }));
+  assert.equal(c.autoArmed(), true, 'and LoadSettings re-derives it');
+  c.loadSettings(null);
+  assert.equal(c.autoArmed(), false);
+});
+
+test('EOTB-IL camera: the ladder tests the Z captured BEFORE the notch (IL_1253-IL_125d, IL_12ef, IL_1317)', () => {
+  const c = createEotbCamera();
+  // z = -1, near end at -0.5, one notch = 0.2
+  c.loadSettings(cfgGet({ 'Camera.LongitudinalDistance': 1, 'Camera.MinimumDistance': 0.5, 'CameraScrolling.ScrollIncrement': 0.2, 'CameraScrolling.ScrollableZOffset': true }));
+  c.toggleOffset(true);
+  // notch 1: z before -1.0 -> scroll 0.2 (z -0.8). notch 2: z before -0.8 -> scroll 0.4 (z -0.6).
+  // notch 3: z before -0.6 -> scroll 0.6 (z -0.4). notch 4: z before -0.4 > -0.5 -> first person.
+  // A FRESH reading would have left on notch 3 (z after -0.4).
+  for (let i = 1; i <= 3; i++) { c.wheel(1); c.tick({}); assert.equal(c.thirdPerson(), true, `still third after notch ${i}`); }
+  c.wheel(1); c.tick({});
+  assert.equal(c.thirdPerson(), false, 'the notch AFTER crossing the near end leaves');
+  // the far end: z = -9.9, scrolling out - the pin at -10 lands on the notch after the crossing
+  const d = createEotbCamera();
+  d.loadSettings(cfgGet({ 'Camera.LongitudinalDistance': 9.9, 'Camera.MinimumDistance': 0.1, 'CameraScrolling.ScrollIncrement': 0.2, 'CameraScrolling.ScrollableZOffset': true }));
+  d.toggleOffset(true);
+  d.wheel(-1); d.tick({});
+  assert.equal(r6(d.scroll()), 0.2, 'notch 1: z before -9.9 is not past -10, so it scrolls out to -10.1');
+  d.wheel(-1); d.tick({});
+  assert.equal(r6(d.scroll()), 0.1, 'notch 2: z before -10.1 IS past -10 - corrected so that z reads exactly -10 (IL_12fe)');
+  // and because the test reads the STALE value, a notch from exactly -10
+  // steps out to -10.3 and the one after pulls it back: the mod's own
+  // two-notch hover at the far end, kept rather than smoothed over
+  d.wheel(-1); d.tick({});
+  assert.equal(r6(d.scroll()), 0.3, 'notch 3: z before -10 is not past -10, so it steps out once more');
+  d.wheel(-1); d.tick({});
+  assert.equal(r6(d.scroll()), 0.1, 'notch 4: corrected again');
+});
+
+test('EOTB-IL camera: the MIRRORED base arm scales Z alone by the riding offset (IL_032f-IL_035b vs IL_040d-IL_0446)', () => {
+  const settle = (c, state) => {
+    let out = null;
+    for (let i = 0; i < 200; i++) out = c.eye({ fpEye: [0, 1.6, 0], feet: [0, 0, 0], yaw: 0, pitch: 0, dt: 0.1, ...state });
+    return out.eye;
+  };
+  const mk = () => {
+    const c = createEotbCamera();
+    c.loadSettings(cfgGet({ 'Camera.FrontalPlaneOffset': [0.5, 0.4], 'Camera.LongitudinalDistance': 2, 'Camera.RidingOffset': 1, 'Camera.MinimumDistance': 0, 'Camera.Speed': 20, 'Camera.Dampen': 0 }));
+    c.toggleOffset(true);
+    return c;
+  };
+  const plain = mk();
+  const foot = settle(plain, { riding: false });
+  assert.deepEqual(foot.map(r3), [0.5, 1.6 + 0.4, -2].map(r3));
+  const ride = settle(plain, { riding: true });
+  assert.deepEqual(ride.map(r3), [0.5, 1.6 + 0.8, -4].map(r3), 'unmirrored: Y and Z both scale');
+  const mirrored = mk();
+  mirrored.tick({ riding: true });   // lastState, for the shoulder gate
+  assert.equal(mirrored.switchShoulder(), true, 'X is non-zero, so the shoulder may switch');
+  const rideM = settle(mirrored, { riding: true });
+  assert.deepEqual(rideM.map(r3), [-0.5, 1.6 + 0.4, -4].map(r3), 'mirrored: X negated, Z scaled, Y NOT scaled - the mod’s own asymmetry');
+});
+
+test('EOTB-IL camera: SwitchShoulder is gated on a non-zero X (IL_148f) and touches no clock (IL_14ac-IL_14c2)', () => {
+  const c = createEotbCamera();
+  c.loadSettings(cfgGet({ 'Camera.FrontalPlaneOffset': [0, 0.5] }));
+  c.tick({});
+  assert.equal(c.switchShoulder(), false, 'no X offset: the whole shoulder block is skipped');
+  assert.equal(c.mirrored(), false);
+  c.loadSettings(cfgGet({ 'Camera.FrontalPlaneOffset': [0.5, 0.5] }));
+  c.tick({});
+  assert.equal(c.switchShoulder(), true);
+  assert.equal(c.switchShoulder(), false, 'and back');
+});
+
+test('EOTB-IL camera: OnNewGame / OnLoad - armed, ONLY the transition row for where the player stands; disarmed, StartInThirdPerson (IL_0930-IL_0ad0)', () => {
+  const c = createEotbCamera();
+  c.loadSettings(cfgGet({ 'Camera.StartInThirdPerson': true }));
+  c.toggleOffset(false);
+  assert.equal(c.onNewGame(false), true, 'disarmed: StartInThirdPerson through ToggleOffset');
+  assert.equal(c.onLoad(true), true, 'the same at the load door, inside or out');
+  // armed by a row that is not the transition row: NOTHING happens, even with StartInThirdPerson on
+  c.loadSettings(cfgGet({ 'Camera.StartInThirdPerson': true, 'AutoTogglePerspective.OnHorse': 2 }));
+  c.toggleOffset(false);
+  assert.equal(c.onNewGame(false), false, 'armed: the OnTransitionExterior row is Don’tChange, so the view stays first');
+  assert.equal(c.onLoad(true), false, 'and inside, OnTransitionInterior');
+  // armed with the transition row set
+  c.loadSettings(cfgGet({ 'Camera.StartInThirdPerson': false, 'AutoTogglePerspective.OnTransitionInterior': 2 }));
+  c.toggleOffset(false);
+  assert.equal(c.onLoad(true), true, 'inside: the interior row takes third person');
+  assert.equal(c.onLoad(false), true, 'outside: the exterior row is Don’tChange, the view stays where it is');
+});
+
+test('EOTB-IL camera: OnPositionUpdate carries the smoothing across the floating origin (IL_1cb7-IL_1ccd)', () => {
+  const c = createEotbCamera();
+  c.loadSettings(cfgGet({ 'Camera.Speed': 20, 'Camera.Dampen': 0, 'Camera.MinimumDistance': 0 }));
+  c.toggleOffset(true);
+  let out = null;
+  for (let i = 0; i < 100; i++) out = c.eye({ fpEye: [0, 1.6, 0], feet: [0, 0, 0], yaw: 0, pitch: 0, dt: 0.1 });
+  const before = out.eye;
+  c.onPositionUpdate([819.2, 0, 0]);
+  const after = c.eye({ fpEye: [819.2, 1.6, 0], feet: [819.2, 0, 0], yaw: 0, pitch: 0, dt: 0 });
+  assert.deepEqual(after.eye.map(r3), [r3(before[0] + 819.2), r3(before[1]), r3(before[2])], 'the eye moved with the world, no swing');
+});

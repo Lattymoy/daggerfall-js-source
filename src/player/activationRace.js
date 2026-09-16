@@ -62,6 +62,7 @@
  * @property {RayPick|null} loot
  * @property {RayPick|null} drop
  * @property {boolean} torchWins
+ * @property {boolean} wagonWins      the cart beat the body, the pile, the torch AND the door (EOTB-IL)
  * @property {number} nonPersonRival
  * @property {number} rival
  */
@@ -79,12 +80,13 @@
  * @param {RayPick|null} [opts.corpse]  the nearest body (both pools, one pick)
  * @param {RayPick|null} [opts.pile]    the nearest dropped pile
  * @param {RayPick|null} [opts.torch]   the nearest dropped light
+ * @param {RayPick|null} [opts.wagon]   Eye Of The Beholder's cart (EOTB-IL: RegisterCustomActivation(41239, 3.2)), when the lane has one
  * @param {number} [opts.doorDistance]  the door / board / static-NPC set's nearest, or Infinity
  * @param {number[]} [opts.personDistances]  the street's townsfolk, by the host's own cylinder pick
  * @returns {RaceResult}
  */
 export function raceActivation({
-  corpse = null, pile = null, torch = null, doorDistance = Infinity, personDistances = [],
+  corpse = null, pile = null, torch = null, wagon = null, doorDistance = Infinity, personDistances = [],
 } = {}) {
   // the body and the pile, by distance, the tie to the body
   const pileNearer = !!pile && !(corpse && corpse.distance <= pile.distance);
@@ -94,16 +96,21 @@ export function raceActivation({
   const lootD = loot?.distance ?? Infinity;
   const dropD = drop?.distance ?? Infinity;
   const torchD = torch?.distance ?? Infinity;
+  const wagonD = wagon?.distance ?? Infinity;
 
   // what the ground must beat: everything that is not a person
-  const nonPersonRival = Math.min(lootD, dropD, torchD, doorDistance);
+  const nonPersonRival = Math.min(lootD, dropD, torchD, wagonD, doorDistance);
   const rival = Math.min(nonPersonRival, ...personDistances);
 
   // the torch takes the click when nothing on the ground, and no door,
   // is nearer. Its own reach is the ARM's business, not the race's: a
   // winner out of reach still answers, which is how every handler
   // family in this port refuses (AUDIT 65 MC-2).
-  const torchWins = !!torch && torchD <= Math.min(lootD, dropD, doorDistance);
+  const torchWins = !!torch && torchD <= Math.min(lootD, dropD, wagonD, doorDistance);
+  // EOTB-IL: the cart is one more custom activation under the same ray
+  // (PlayerActivate's registered model 41239). Absent, nothing above
+  // changes - `wagonD` is Infinity and every term reads as it did.
+  const wagonWins = !!wagon && wagonD <= Math.min(lootD, dropD, torchD, doorDistance);
 
-  return { loot, drop, torchWins, nonPersonRival, rival };
+  return { loot, drop, torchWins, wagonWins, nonPersonRival, rival };
 }

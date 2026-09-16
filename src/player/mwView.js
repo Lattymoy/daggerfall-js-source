@@ -36,6 +36,7 @@ import { mwCamera } from './mwCamera.js';
 import { fpArm } from '../combat/fpArm.js';
 import { eotbCamera } from './eotbCamera.js';
 import { eotbBody } from './eotbBody.js';
+import { eotbWagon } from './eotbWagon.js';
 import { modSetting } from '../systems/modSettings.js';
 
 /**
@@ -114,8 +115,19 @@ export function mwViewFrame({ fpEye, feet, yaw, pitch, heightScale = null, rayca
     // at all. Found by a test helper that span forever waiting for it.
     pendingClicks = 0;
     eotbCamera.tick(frame);
-    eotbBody.tick(frame.dt ?? 0, frame);   // F1: the sprite's clock, which had no caller at all
-    return eotbCamera.eye({ fpEye, feet, yaw, pitch, raycast, ...frame });
+    const out = eotbCamera.eye({ fpEye, feet, yaw, pitch, raycast, ...frame });
+    // EOTB-IL: the billboard's three Unity phases, handed the frame's
+    // camera - `PlayerBillboard` reads mainCamera's position and forward
+    // in LateUpdate (IL_3d86-IL_3dbf, IL_455d), and its FEET are the
+    // parent's origin. It ticks in first person too: the first-person
+    // billboard (`Graphics.FirstPersonBillboard`) is the same object.
+    eotbBody.tick(frame.dt ?? 0, { ...frame, feet, yaw, cameraPos: out.eye });
+    // EOTB-IL: the cart. `EyeOfTheBeholder.LateUpdate` runs UpdateWagon
+    // every frame before its own `offset` gate (IL_1c74-IL_1c7f), so
+    // it follows in first person too. `cart` and `onExteriorPath` are
+    // the host's (TransportMode == Cart, PlayerMotor.OnExteriorPath).
+    eotbWagon.tick(frame.dt ?? 0, { feet, yaw, height: frame.motion?.height, cart: !!frame.cart, onExteriorPath: !!frame.onExteriorPath, raycast });
+    return out;
   }
   if (pendingClicks) {
     mwCamera.wheel(pendingClicks, { ready: fpArm.upperBodyReady() });
@@ -168,18 +180,20 @@ export function mwViewPendingClicks() { return pendingClicks; }
 // Each is the seam's answer to a question ONE consumer asks, routed by
 // the lane so a Morrowind player never hears the sprite's word.
 
-/** [SETTINGS] SyncFootsteps: the sprite's word on the stride, for the
- *  hosts' FootstepMachine - `owns` while the picture carries the
- *  stride, `fell` on the tick a foot landed. Off the lane it owns
- *  nothing and DFU's own stride plays. */
+/** [IL] SyncFootsteps: the sprite's word on the stride, for the hosts'
+ *  FootstepMachine - `owns` once the mod's Initialize has silenced the
+ *  vanilla stride, `fell` on the tick a foot landed, `volumeScale` the
+ *  billboard's own (2 in third person, 1 in first). Off the lane it
+ *  owns nothing and DFU's own stride plays. */
 export function mwViewFootstep() {
-  if (!eotbLane()) return { owns: false, fell: false };
+  if (!eotbLane()) return { owns: false, fell: false, volumeScale: 1 };
   return eotbBody.footstep();
 }
 
-/** [SETTINGS] AutoTogglePerspective's two transition rows, on the
- *  building's door: `'Interior'` stepping in, `'Exterior'` stepping
- *  out. The mode machine calls it; a Morrowind player is untouched. */
+/** [IL] AutoTogglePerspective's two transition rows, on the building's
+ *  door AND the dungeon's: `'Interior'` stepping in, `'Exterior'`
+ *  stepping out. The mode machine calls it; a Morrowind player is
+ *  untouched. */
 export function mwViewTransition(kind) {
   if (!eotbLane()) return false;
   eotbCamera.transition(kind);
@@ -191,17 +205,60 @@ export function mwViewTransition(kind) {
  *  decides the POV a loaded game takes (its description's own words:
  *  "Determines the POV when starting or loading a game"), so the sprite
  *  camera is re-seeded from the setting, not from the save. */
-export function mwViewLoadPose(pose) {
+export function mwViewLoadPose(pose, inside = false) {
   if (pose) mwCamera.restore(pose);
-  eotbCamera.start();
+  eotbCamera.onLoad(inside);   // EOTB-IL: the mod's OnLoad (IL_0a08) - a transition row when the table is armed, StartInThirdPerson otherwise
 }
 
-/** [SETTINGS] ToggleBillboard's two hides, for the surfaces that draw
- *  first-person graphics: the FPV weapon and the FPV horse are hidden
- *  while the sprite body is the one on screen, unless the mod's own
- *  Compatibility keys say to leave them. Off the lane: nothing hides. */
+/** [IL] StartGameBehaviour.OnNewGame (IL_0930), the new game's own
+ *  door - the same shape as the load's. `inside` is
+ *  PlayerEnterExit.IsPlayerInside. */
+export function mwViewNewGame(inside = false) {
+  eotbCamera.onNewGame(inside);
+}
+
+/** [IL] FloatingOrigin.OnPositionUpdate (IL_1cb7): the world moved under
+ *  the camera; the sprite camera's smoothing re-seeds. The Morrowind
+ *  camera works in the eye's own frame and needs nothing. */
+export function mwViewRebase(delta) {
+  eotbCamera.onPositionUpdate(delta);
+  eotbWagon.rebase(delta);
+}
+
+// ═══ EOTB-IL: THE CART's three doors ═════════════════════════════════
+//
+// SpawnWagon / UpdateWagon / CheckWagon (player/eotbWagon.js). The two
+// EXTERIOR hosts carry all three - DFU's TransportManager puts the
+// player on foot at every interior and dungeon door, so the cart
+// (TransportMode == Cart, IL_1f58) never exists inside.
+
+/** The host's mesh pipeline, for CreateDaggerfallMeshGameObject's model 41239. */
+export function mwViewAttachWagon(pipeline) { eotbWagon.attach(pipeline); }
+
+/** The cart in the host's world pass, after its models. Off the lane there is no cart. */
+export function mwViewDrawWagon(renderer, texRemap = null) {
+  if (!eotbLane()) return false;
+  return eotbWagon.draw(renderer, texRemap);
+}
+
+/** RegisterCustomActivation(41239, CheckWagon, 3.2): the pick's target, for the hosts' one ray. */
+export function mwViewWagonTargets(rayDistance) {
+  if (!eotbLane()) return [];
+  return eotbWagon.targets(rayDistance);
+}
+
+/** CheckWagon: Info names it, any other mode opens the inventory with the wagon. */
+export function mwViewWagonActivate(mode, doors) {
+  if (!eotbLane()) return null;
+  return eotbWagon.activate(mode, doors);
+}
+
+/** [IL] The camera's hides for the surfaces that draw first-person
+ *  graphics: the FPV weapon, the FPV horse and the spell hands go while
+ *  the sprite body is the one on screen, the first two unless the mod's
+ *  own Compatibility keys say to leave them. Off the lane: nothing hides. */
 export function mwViewHides() {
-  if (!eotbLane()) return { weapon: false, horse: false };
+  if (!eotbLane()) return { weapon: false, horse: false, spellHands: false };
   return eotbBody.hides();
 }
 
@@ -212,7 +269,10 @@ export function mwViewDrawBody(canvas, { proj, view, eye, feet, yaw }) {
   // requires `eotbBodyReady()`, so this arm cannot be reached with
   // nothing to draw - the gate and the draw are the same question
   // asked once.
-  if (eotbLane()) return eotbCamera.thirdPerson() && drawEotbBody(canvas, { proj, view, eye, feet, yaw });
+  // EOTB-IL: the BODY decides - it is active in third person, and in
+  // first person while `Graphics.FirstPersonBillboard` is not None
+  // (ToggleOffset, IL_2307-IL_2353), where it draws behind the eye
+  if (eotbLane()) return drawEotbBody(canvas, { proj, view, eye, feet, yaw });
   if (!mwCamera.thirdPerson()) return false;
   return fpArm.drawThird(canvas, { proj, view, eye, feet, yaw });
 }
