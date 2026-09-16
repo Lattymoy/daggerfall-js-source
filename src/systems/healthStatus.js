@@ -39,9 +39,19 @@ export const STATUS_INFO_ID = 22;   // SetTextTokens(22) (DaggerfallUI.cs:1620)
  *  leaves each macro as its bracketed placeholder, which is exactly
  *  MacroHelper's own null-MCP posture, never a throw. */
 export function statusInfoRows(rows, questLike = null) {
-  const tokens = (rows(STATUS_INFO_ID) ?? []).map((text) => ({ text }));
+  // MAC-C1 (2026-09-16, the live crash "r.text.split is not a function"
+  // at showStatus): the hosts' `rows(id)` answer TWO shapes. The dungeon's
+  // `rscLines` hands back plain strings; the three others hand back
+  // `townTalk.lines`' formatted rows - `{ text, center }` from
+  // TextRsc.linesById - and this wrapped each row WHOLE as a token's
+  // text, so ExpandQuestMessage's `text.split(' ')` met an object. The
+  // health box beside it (healthStatusRows) passes the rows straight to
+  // ActionTextBox, which reads both shapes - so does this now, and the
+  // expanded rows go back out in the shape they came in, `center` kept.
+  const src = rows(STATUS_INFO_ID) ?? [];
+  const tokens = src.map((r) => ({ text: typeof r === 'string' ? r : String(r?.text ?? '') }));
   expandQuestMessage(questLike, tokens);
-  return tokens.map((t) => t.text);
+  return src.map((r, i) => (typeof r === 'string' ? tokens[i].text : { ...r, text: tokens[i].text }));
 }
 
 export const YOU_ARE_HEALTHY_ID = 18;        // youAreHealthyID (:1632)

@@ -101,3 +101,22 @@ test('ST1: all four hosts open the CHAIN - record 22 first, the health box next'
   assert.equal(/statusInfoRows\(rows, null\)/.test(src('scenes/exterior.js')), false,
     'no host is left passing the null context');
 });
+
+test('MAC-C1: the live crash - record 22 arrives as FORMATTED rows ({ text, center }) from townTalk.lines in three hosts of four, and the status box must take both shapes', () => {
+  // "TypeError: r.text.split is not a function at showStatus" - the rows
+  // were wrapped whole as a token's text. The dungeon's rscLines hands
+  // back strings, so the dungeon never crashed and the pins above, built
+  // on strings, never saw it.
+  const formatted = () => [{ text: 'You are %pcn, a %ra.', center: true }, { text: 'Second line.', center: false }];
+  const out = statusInfoRows(formatted, null);
+  assert.equal(out.length, 2);
+  assert.equal(typeof out[0], 'object', 'the shape that came in goes back out');
+  assert.equal(out[0].center, true, 'with its centring kept');
+  assert.equal(out[1].text, 'Second line.');
+  assert.ok(!/%pcn/.test(out[0].text) || /\[/.test(out[0].text), 'the macros went through the table (a null context leaves bracketed placeholders)');
+  // strings still answer strings (the dungeon's shape)
+  const plain = statusInfoRows(() => ['You are fine.'], null);
+  assert.deepEqual(plain, ['You are fine.']);
+  // and the whole chain the hosts build renders without a throw
+  assert.doesNotThrow(() => new ActionTextBox(statusInfoRows(formatted, null)));
+});
