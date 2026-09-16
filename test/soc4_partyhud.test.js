@@ -371,7 +371,7 @@ test('SOC4: the wiring in scenes/world.js - the panel is made in socialStart ove
   assert.match(bare, /partyPanel = createPartyPanel\(\{ social, art: \{ fetchBytes, palette \} \}\);/, 'made ONCE, in socialStart, over the picture');
   assert.match(w, /initEscortFaces\(\{\s*fetchBytes, palette, renderer,/, 'and the pair is the escort faces\' own - one fetch door, one palette');
   assert.equal((w.match(/createPartyPanel\(/g) ?? []).length, 1, 'made in exactly one place - never per frame');
-  assert.match(bare, /partyFrame\(performance\.now\(\)\);(?:\s*socialPanel\?\.render\([^\n]*\);)?\s*partyPanel\?\.render\(\{ covered: townTalk\.hudCovered \|\| \(modes\?\.hudCovered \?\? false\) \|\| gamePaused\(\) \}\);\s*\};/,   // SOC7 integration: SOC3's panel renders on the same line-run, between the pose and this - the tail of the frame is still ours
+  assert.match(bare, /partyFrame\(performance\.now\(\)\);(?:\s*\w+\?\.render\([^\n]*\);)*\s*partyPanel\?\.render\(\{ covered: townTalk\.hudCovered \|\| \(modes\?\.hudCovered \?\? false\) \|\| gamePaused\(\) \}\);\s*\};/,   // SOC7 integration: SOC3's panel renders on the same line-run, between the pose and this - the tail of the frame is still ours
     'drawn from the chat frame, AFTER the pose goes out, under the same covered word the chat panel takes (CHAT1 pins the lines above it as they stand)');
   assert.match(w, /remotePlayers\.drawNames\(renderer, townTalk\.font, proj, view, canvas\.width, canvas\.height, eye, scale, onlineToScene, largeHudViewportRect\(canvas\.clientHeight\), \(id\) => social\?\.colorOf\(id\) \?\? null\);/,
     'the name pass asks net/social.js for the colour - the host never decides what green means');

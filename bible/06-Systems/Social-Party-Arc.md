@@ -20,7 +20,10 @@ and its chat (`06-Systems/Chat-Roster-And-Names.md`). Ledger A row
 (SOCIAL). Seven slices: SOC1 the wire and the hub, SOC2 the client's
 picture, SOC3 the social button and the friends + party panel, SOC4 the
 party HUD and the green names, SOC5 the F key on a body, SOC6 the party on
-the map, SOC7 the records and the campaign.
+the map, SOC7 the records and the campaign. Every slice landed on 2026-09-16; the
+four surfaces were built by four lanes in parallel worktrees over the
+SOC1/SOC2 seams and integrated by hand (the chat frame's tail, the
+colour's one home, the one SOCIAL Ledger row).
 
 "Classic/enhanced": online forces the enhanced lane (OL1, `systems/
 onlineLane.js` - the skin enhanced, every enhancement on), so every surface
@@ -202,30 +205,194 @@ over a fake socket and plain frames.
 
 ## SOC3 - the social button and the friends + party panel
 
-The Social button beside the chat's controls (both states of the chat), a
-badge counting requests to me and invites standing; the panel with its
-Friends and Party tabs; the roster rows' actions; the chat's names in
-PARTY_GREEN_CSS for my party's peers. See the SOC3 section of
-`bible/09-Testing/Testing.md` for its pins. (Filled in at integration.)
+**The button is the chat's** (`ui/chatPanel.js`, three new optional
+options - a host that passes none gets the chat it had byte for byte).
+`dfchat-social` stands in BOTH chat states: beside the Chat button when
+the chat is closed, at the far end of the tab bar when it is open, each
+with a badge that counts requests to me plus invitations standing (one
+law, `social.pendingCount()` - an unread LINE is not one of them) in its
+own colour. Drawn on a desktop too, because Enter opens the chat and until
+SOC5 nothing else opens this; Hide takes it away with everything else.
+
+**`nameColor`** recolours the author of a chat line (the peek and the open
+list) and the roster rows on every frame rather than at build time - a
+seat changes with no line said - and it ASKS the picture rather than
+deciding: `social.cssColorOf(id)` is PARTY_GREEN_CSS for my party's tabs,
+FRIEND_CSS for a friend who is not in my party, null for a stranger, so
+the world (`colorOf`, SOC4) and the chat can never disagree about what a
+colour means. **`rowActions`** turns a roster row into a door: a click
+opens a small menu built from `social.actionsFor(peerId)` - Add friend /
+Invite to party / Remove friend - with a disabled action carrying its
+reason as the title; my own row is never a door, nor is any row while
+there is no picture yet.
+
+**The panel** (`ui/socialPanel.js`, `createSocialPanel({ social, send,
+canOpen, onOpen, onClose, overlay, doc, win, touch })`) is a pointer
+surface with the chat's own three doors: the host refuses it under a
+window, the cursor is freed inside the opening gesture and taken back
+inside the closing one, Escape closes it and never reaches the host's
+pause door, an enhanced overlay hides it as it hides the chat. Friends
+tab: Requests first (Accept / Decline / Cancel, by ACCOUNT - a friend is
+a person, not a tab), then the friends ONLINE FIRST then by name, each
+row a dot, the name in party green or friend blue, and `lastOnlineText`
+on the relay's clock; Invite is live only while the friend has a tab in
+the world and a seat is free (the refusal - "offline", "in your party",
+"the party is full" - is the button's title, because a control that
+quietly vanishes teaches nothing); Remove ARMS on one click and sends on
+the second, with no `window.confirm` anywhere. Party tab: "Your party
+(n/4)", the leader marked, each member's last pose as "Daggerfall - 50/60
+HP" (nothing for a member who has sent none), Leave for everyone, Kick
+for the leader alone; invitations with a countdown that runs on the same
+node, answered by PARTY id - and a lapsed one is gone even though time
+passing moves no version, because the panel raises its own. The invite
+TOAST works with the panel shut (over the chat's peek strip), counts down,
+and goes away on the answer, on the seat being taken and at expiry; a
+rate-gated answer leaves it up with a "try again" note. A send the link
+refuses (SOCIAL_HZ_MAX at home) keeps its button exactly as it was; the
+hub's own refusal stands under the header until a fresh picture clears
+it. No uiPrefs key: the panel does not remember its state across
+sessions. `test/soc3_socialpanel.test.js` - 16 pins over a fake document
+and window with a REAL SocialState fed real hub frames; 7 mutants walked,
+7 killed.
 
 ## SOC4 - the party HUD and the green names
 
-One card per OTHER member of my party - the portrait from the game's own
-face art (the same CIF the paper doll and the escort faces read), the name
-green, the three bars - and the names over bodies drawn in PARTY_GREEN
-through `remotePlayers.drawNames`'s `colorOf`. (Filled in at integration.)
+**The HUD** (`ui/partyPanel.js`, `createPartyPanel({ social, doc, art: {
+fetchBytes, palette }, faceLoader, touch })`): fixed at the top right
+below the FPS counter (lower on touch, clear of the top-right button
+row), pointer-transparent, one card per OTHER member of my party in the
+hub's seat order and never my own (my bars are the HUD's, my face is on
+my paper doll). A card: a 72x80 plate holding a canvas PORTRAIT - the
+game's own face art, `raceArt(race, gender).heads` -> `CifRciFile` ->
+`getDFBitmap(face)` -> `bitmapToColor32` -> `putImageData` at a whole
+nearest scale, the same CIF the paper doll and the escort faces read,
+cached per race / gender / face, one CIF load per file, loaded off the
+frame with the plate standing until it lands and a failure remembered
+(warned once, never retried per frame); the name in PARTY_GREEN_CSS
+(imported from `net/social.js` - one home, the host names no colour) with
+a leader mark; the place line (`p.loc`, "- dungeon" / "- inside" from
+`p.in`, "the wilderness" for a nameless exterior); three bars with their
+digits, health red, stamina green, magicka blue, from `p.h/hm`, `p.f/fm`,
+`p.m/mm`. No pose yet: "- / -" and empty bars, never "0 / 0", which reads
+as dying. An away seat is greyed whole with the last-online words. Hidden
+out of a party, alone in one, and under a window. **The repaint is a
+write, not a rebuild**: `render({ covered })` runs every frame and paints
+only when `social.version` moved; a member's pose moves one card through
+the same nodes; the cards are re-parented only when the seat order really
+changed - and the pins COUNT the writes (sixty quiet frames write
+nothing).
+
+**The green names**: `net/remotePlayers.js drawNames` gains a trailing
+optional `colorOf` ((id) => rgba or null; the default path - every caller
+written before the party existed - is white byte for byte), and
+`world.js` hands it `(id) => social?.colorOf(id) ?? null`: my party's
+tabs in PARTY_GREEN, a friend who is not in my party white (a friend is a
+list, a party is a formation). `test/soc4_partyhud.test.js` - 8 pins,
+the portrait proved twice (an injected loader seam, and `createFaceLoader`
+over a CIF synthesized byte by byte through the real `CifRciFile` walk and
+the real `bitmapToColor32`).
 
 ## SOC5 - F on a body
 
-A port-only action on KeyF: the peer in front within reach, the small menu
-(Add friend / Invite to party), else the social panel. (Filled in at
-integration.)
+**The action.** `SocialInteract` is APPENDED past DFU's forty-four in
+`systems/inputActions.js` - the port's own (Daggerfall Unity has no other
+players to stand in front of), appended and never inserted because the
+classic controls window indexes ACTIONS by number against fixed pixel
+anchors on CNFG00I0.IMG. Defaulted to KeyF (the key Mac named, and one
+SetupDefaults leaves free) and autofilled into a bindings file written
+before the slice through `loadOrCreateBindings`' own defaults pass - no
+reset, nothing else disturbed, and a key the player had already spent on
+F left alone (the action waits, unbound and rebindable). The enhanced
+controls window shows it in a third group, "Online" (`PORT_ROWS`), because
+GRID_ACTIONS is still DFU's Actions[2..40) and ADVANCED_ROWS is still the
+mouse window's six, and the coverage rule - every bindable action exactly
+one row - is what makes the group compulsory; the classic window cannot
+place it (its lowest rows sit at y=181, a button is 7 tall and the tabs
+start at y=190), and says so in a comment. `ui/input.js routeAction`
+hands it to `ctx.socialInteract` and passes the door's own answer back,
+so an offline page's false falls through the host's ladder.
+
+**The reach.** `player/socialPick.js pickPeerInFront(camPos, fwd, peers,
+reach, distanceOf)` - pure: the nearest in front wins, behind is not in
+the race (the cylinder answers Infinity for t <= 0), past the reach is
+nobody rather than the nearest of the far ones; the cylinder is
+`scenes/townTalk.js rayPersonDistance`, HANDED IN rather than imported
+(no `player/ -> scenes/` import, and no second copy of the radius and
+height - HARD2's own defect); SOCIAL_REACH is the game's own
+MobileNpcActivationDistance (6.4), so "close enough to talk to" and
+"close enough to friend" cannot disagree on one street corner. In
+`world.js`, `socialInteract()` sits below the `peersNear` it measures,
+composes the camera's forward exactly as the activation site does, and
+answers three ways: the menu open - hide it (a second F closes); a peer
+under the ray - `socialMenu.show(...)`; nobody - `socialPanel?.toggle?.()`
+(F with nobody in front opens the list, the same gesture one step out);
+no picture (offline) - false.
+
+**The menu** (`ui/socialMenu.js`, `createSocialMenu({ onAct, canOpen,
+onOpen, onClose, doc, win })`): a card near the screen centre with the
+peer's name and the rows Add friend / Invite to party (Remove friend for a
+friend, and only when the picture holds their account - `friend.remove`
+is an account act), each enabled or disabled with `actionsFor`'s reason
+on the row and the title; a disabled click sends nothing; the card goes
+DOWN before the host is handed the act (the send can answer false, and a
+card left standing takes the next press as a second act); the pointer
+freed on open and taken back on close (the chat's own doors); Escape
+closes it and is stopped before the host's pause door; a covering window
+takes it away. Its acts leave through the LIVE `socialLink()` (a
+reconnect replaces the session object), and a word lands on the world tab
+either way - "Friend request sent to X" / "Party invite sent to X" when it
+went, "Try again in a moment" when the gate refused.
+
+**The key it had to move.** Handheld Torches shipped its light toggle on
+F, and HT4's gate holds that no vendored mod ships a key the port has
+already spent - online forces every vendored mod on, so every online
+player would have lit a torch on the press that opened the F-menu. The
+toggle's shipped default is **O** now (free in DFU's defaults, unused by
+the mod's other two keys and by every other vendored mod), its pins say
+so, and a player who rebound it keeps their own. Mac named F for the
+social key, so the port's action keeps it. `test/soc5_interact.test.js` -
+9 pins; 16 mutants driven, 16 dead.
 
 ## SOC6 - the party on the map
 
-A green marker per member at their map pixel on the overworld map, the
-name beside it, a dungeon or a building marked; the classic travel map's
-region page gets the dots. (Filled in at integration.)
+**One seam, two drawings.** The travel map's one dep bag (`world.js`
+buildTravelMapWindow -> `ui/travelMapDoor.js`) carries `party: () =>
+[{acct, name, px, py, in, loc, online, leader}]` - a FUNCTION, read on
+each window's own refresh and never snapshot at open, because members
+travel, step into a dungeon, drop and join while a map is up.
+`world.js partyMarkers()` composes it from `social.others()`, omitting a
+seat whose first pose has not landed (`p` is null until then, and a mark
+at 0,0 would put a friend in the Iliac Sea off Northmoor).
+`ui/partyMapMarks.js` is the ONE reading of that shape for both maps:
+validate, drop what cannot be drawn (a row off the bay's edge, a
+non-finite pixel, a poseless seat, a non-list answer), never clamp; the
+colours derived from `net/social.js`'s PARTY_GREEN / PARTY_GREEN_CSS with
+a grey pair for offline; a repaint signature that moves for a pixel, a
+floor, a name or a presence and not for a pose that said the same thing.
+
+**The enhanced overworld map** (the one online forces): a green ring per
+member pushed into the PLAYER'S OWN ring pass at the pixel's centre, told
+from the player's white ring by colour and size, so it rides every pan,
+zoom and flight with no code about any of those; the name under it,
+placed through `_project` each frame; "Name - place (dungeon)" /
+"(inside)" in the window's own hover line, which beats the location under
+the same cursor; a legend that opens with the first member and closes
+with the last; offline greys and STAYS (where a friend logged out is worth
+knowing). The marks never dirty the location-marker buffer; a 0.25 s poll
+re-reads the seam. **The classic region page** gets its dots too: a
+member is a green dot in the page's own dots buffer, written LAST so it
+wins the pixel over the town they stand in, under the page's two
+containment laws (the OFFSET_LOOKUP origin rect, and "a pixel belongs to
+one province's sheet" through getPoliticIndex), rebuilt only when the
+signature changed on a 0.5 s poll placed above the popup returns so a box
+on top does not freeze a walking friend. No legend there: TRAV0I00's
+bottom bar is baked art with no room for a fifth meaning, so the classic
+sheet says the one thing it can (a dot) and the enhanced map, which owns
+its chrome, carries the legend and the names. A marker is hover-only;
+clicking still picks the nearest location. `test/soc6_partymap.test.js` -
+14 pins; 29 mutants driven, 29 dead (the first pass left one survivor -
+the classic bounds removed - closed by the two members whose offsets wrap
+onto the wrong row).
 
 ## What was refused, and why
 

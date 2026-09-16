@@ -69,7 +69,30 @@ import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 
 /** SetupKeybindButtons' nine calls (:146-152): [startIndex, endIndex)
- *  into the Actions enum, and the group's anchor. */
+ *  into the Actions enum, and the group's anchor.
+ *
+ *  SOC5 (2026-09-16, Mac: "by pressing F on their body"): THIS WINDOW CANNOT
+ *  PLACE THE PORT'S OWN ACTION, and that is a layout fact, not a decision
+ *  deferred. Every number above is a pixel on CNFG00I0.IMG - nine groups of
+ *  47x7 buttons at a +11 stride, anchored where DFU's SetupKeybindButtons puts
+ *  them - and the art has no free rect. Both lower columns already run to the
+ *  floor: the last row of the x=102 stack and of the x=270 stack both sit at
+ *  y=181, a button is 7 tall, and the tab row starts at y=190 - two pixels of
+ *  clearance, where a tenth row needs eleven. Widening a group pushes its own
+ *  last row onto the tabs; a tenth group has nowhere to stand. DFU itself leaves six
+ *  of its own forty-four off this grid for the same reason and rebinds them in
+ *  the ADVANCED popup (ui/mouseControlsWindow.js KEYBIND_ROWS) - a SECOND fixed
+ *  layout, six rows, equally full.
+ *
+ *  So 'SocialInteract' is rebound in the ENHANCED controls window alone
+ *  (ui/enhancedControls.js PORT_ROWS, the 'Online' group) - a DOM pane that
+ *  grows a row without moving a pixel of anyone's art. Nothing is broken by the
+ *  absence: the action ships bound to KeyF by default
+ *  (systems/inputActions.js DEFAULT_BINDINGS), and online forces the enhanced
+ *  lane whole (systems/onlineLane.js), so the one player who can use the action
+ *  is the one player already looking at the window that offers it.
+ *  test/soc5_interact.test.js pins both halves: this table still ends at 40, and
+ *  the enhanced pane still lists the action. */
 export const KEY_GROUPS = Object.freeze([
   { start: 2, end: 8, x: 57, y: 13 },     // moveKeysOne
   { start: 8, end: 14, x: 164, y: 13 },   // moveKeysTwo

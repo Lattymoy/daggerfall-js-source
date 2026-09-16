@@ -102,6 +102,29 @@ export const ADVANCED_ROWS = Object.freeze([
   Object.freeze({ action: 'QuickLoad', label: 'QuickLoad' }),
 ]);
 
+/** SOC5 (2026-09-16, Mac: "Players should be able to interact with others in
+ *  the world upon encountering them by pressing F on their body"): A THIRD
+ *  GROUP, because the first two are both SOMEONE ELSE'S LIST and this row
+ *  belongs to neither.
+ *
+ *  GRID_ACTIONS is `Actions[2..40)` - DFU's SetupKeybindButtons, the classic
+ *  window's thirty-eight fixed buttons - and widening that slice would claim
+ *  the classic grid draws a thirty-ninth, which its art cannot (see
+ *  ui/controlsWindow.js KEY_GROUPS). ADVANCED_ROWS is
+ *  ui/mouseControlsWindow.js's KEYBIND_ROWS restated, and
+ *  test/enhancedControls.test.js pins the two against each other row for row,
+ *  so a seventh entry here would be a claim the classic ADVANCED popup edits
+ *  something it has never heard of.
+ *
+ *  So the port's own actions get their own heading. Today it is one row. The
+ *  pane's coverage rule - every bindable action has a row, none twice - is what
+ *  makes this a requirement rather than a preference. */
+export const PORT_ROWS = Object.freeze([
+  Object.freeze({ action: 'SocialInteract', label: 'Interact with player' }),
+]);
+/** The heading the third group wears. Its own constant so the pin names it. */
+export const PORT_GROUP_TITLE = 'Online';
+
 /** ShowMultipleAssignmentsMessage's line, the string the classic grid
  *  draws (ui/controlsWindow.js's `top === 'dupes'` row). The same
  *  words, because it is the same refusal. */
@@ -224,7 +247,7 @@ function arm(action) {
  *  keybind button itself (:361) and the right-click remove (:372,
  *  where it is ANDed with the unbound-slot refusal). The pending
  *  capture is the only live gesture on the screen. The classic grid
- *  carries the law in one line (ui/controlsWindow.js:323); this face
+ *  carries the law in one line (ui/controlsWindow.js:346); this face
  *  carries it as ONE predicate wrapped round every click surface, so
  *  a control cannot be added without it. arm()'s own leading disarm()
  *  is then unreachable-by-click — which is DFU's shape, not a loss. */
@@ -402,4 +425,8 @@ export function paneControls(body, { render = () => {} } = {}) {
 
   group(body, 'Actions', GRID_ACTIONS.map((a) => [a, splitCamel(a)]));
   group(body, 'Advanced', ADVANCED_ROWS.map((r) => [r.action, r.label]));
+  // SOC5: the port's own row. It is drawn LAST because it is the newest law,
+  // and because the classic window - which this pane is the skin of - has no
+  // place for it at all: the enhanced window is the one door to rebinding F.
+  group(body, PORT_GROUP_TITLE, PORT_ROWS.map((r) => [r.action, r.label]));
 }

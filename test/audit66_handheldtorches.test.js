@@ -318,11 +318,11 @@ test('AUDIT 66 pins: the burning loop is the TORCH\'s alone - a candle and a hol
 test('AUDIT 66 pins: the ignite ladder and the drop ladder are ORDERED - lantern, torch, candle, holy candle to light; torch, candle, holy candle to drop, a lantern never', () => {
   const ig = rig();
   ig.entity.items = [holy(), candle()];
-  ig.tap('KeyF');
+  ig.tap('KeyO');   // SOC5: the ignite key is O - the mod ships F, which the port now spends on SocialInteract
   assert.equal(ig.entity.lightSource?.templateIndex, T.Candle, 'the candle before the holy candle');
   ig.entity.lightSource = null; ig.store['Handling.RememberLastLightSource'] = false;
   ig.entity.items = [holy()];
-  ig.tap('KeyF');
+  ig.tap('KeyO');
   assert.equal(ig.entity.lightSource?.templateIndex, T.Holy_candle, 'and the holy candle last');
   const dr = rig();
   dr.entity.items = [holy(), candle(), torch(), lantern()];

@@ -228,6 +228,8 @@ import { SOCIAL_ROOM, PARTY_SEND_MS } from '../net/wire.js';   // SOC2: the hub'
 import { createChatPanel } from '../ui/chatPanel.js';   // CHAT1: the enhanced skin's chat over the world
 import { createPartyPanel } from '../ui/partyPanel.js';   // SOC4: the party HUD - my party's portraits and their health / stamina / magicka
 import { createSocialPanel } from '../ui/socialPanel.js';   // SOC3: the friends + party panel the Social button opens
+import { pickPeerInFront, SOCIAL_REACH } from '../player/socialPick.js';   // SOC5: which body the ray struck, and how far "on their body" reaches
+import { createSocialMenu } from '../ui/socialMenu.js';   // SOC5: the F-menu over that body - Add friend, Invite to party
 import { relayVersionSeen, buildUpdateSeen, fetchLiveBuildTag, RELAY_RESTART_TEXT, BUILD_UPDATE_TEXT, BUILD_POLL_MS } from '../net/updateNotice.js';   // SRV-N: the relay moved, or the build did
 import { BUILD_TAG } from '../buildTag.js';   // SRV-N: which build this tab is actually running
 import { morrowindDataCount, morrowindDataGeneration } from './dataSource.js';   // MWBODY1: the bodies' gate - Morrowind data attached - and its generation
@@ -6800,6 +6802,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (a.relation === 'friend') out.push({ label: 'Remove friend', enabled: true, why: null, run: () => socialLink()?.sendSocial({ k: 'friend.remove', acct: a.acct }) ?? false });
     return out;
   };
+  // SOC5 (Mac: "Players should be able to interact with others in the world upon encountering them by pressing F on
+  // their body, which should show options to add as a friend or invite to a party"): the card over that body. Made in
+  // socialStart beside the picture it reads, so it exists exactly when `social` does - the menu has nothing to say
+  // about a page with no account. `socialPanel` is SOC3's friends-and-party panel, declared above beside `social`; SOC5's
+  // no-peer arm reaches it through optional calls - F with nobody in front of you
+  // opens the list, which is the same gesture one step out.
+  let socialMenu = null;
   let _worldPublishedAt = -Infinity;   // WORLD1: when this host last published the room's memory (the frame clock)
   // WORLD1 (Mac: "The world is the server ... True persistence"): the room's memory out - this player's, when the
   // relay says they are the room's host and a dungeon stands: every WORLD_PUBLISH_MS, and at once on the way out
@@ -7051,7 +7060,38 @@ export async function bootWorld(canvas, renderer, params, status) {
     // The art pair is the ESCORT FACES' own (initEscortFaces above): one fetch door and one palette for every
     // classic record this host reads, so a portrait is the same CIF the paper doll draws and nothing is loaded twice.
     partyPanel = createPartyPanel({ social, art: { fetchBytes, palette } });
+    // SOC5 (Mac: "which should show options to add as a friend or invite to a party"): the F-menu, over the same
+    // picture and the same link. Its acts leave through `socialLink()` and not the `link` captured above, because a
+    // reconnect replaces the session object and a captured one would send into a closed socket for the rest of the
+    // session. The line that says so lands on the world tab beside every other social note (SRV-N's flag: a line
+    // nobody spoke), and a refused send says so in the same place rather than silently.
+    socialMenu = createSocialMenu({
+      doc: document, win: globalThis,
+      canOpen: socialMenuCanOpen,
+      onOpen: () => { setCursorActive(false); releaseLook(); },   // AUDIT CHAT C2's law: the card is a pointer surface - the mouse is freed inside the gesture that opened it
+      onClose: () => { if (!gamePaused()) requestLook(canvas); },   // and taken back inside the one that closed (MAC1's rule, ui/pauseDoor.js)
+      onAct: (act) => {
+        const who = peerName(act.peer) ?? social?.friends.get(act.acct)?.name ?? 'them';
+        // false is the session's honest answer - no account, no socket, or over SOCIAL_HZ_MAX (net/online.js
+        // sendSocial). A player who pressed a button is owed a word either way.
+        const went = socialLink()?.sendSocial(act) === true;
+        chatLog.push(tab.id, { text: went ? socialActText(act.k, who) : 'Try again in a moment', system: true });
+      },
+    });
   };
+  /** SOC5: the host's word on whether a menu may stand - the chat's own gate (chatStart's `canOpen`), because the two
+   *  are the same kind of surface: a window over the HUD or a pause owns the keys and the mouse, and a card that
+   *  opened under one would take clicks the window is owed. */
+  const socialMenuCanOpen = () => !gamePaused() && !(townTalk.hudCovered || (modes?.hudCovered ?? false));
+  /** SOC5: a peer's name as the room knows it (net/online.js `peers`), or null - the card's heading and the chat
+   *  line's subject. A peer with no name yet (the roster's `who` still in flight) is not nameless in the sentence:
+   *  the caller falls back to the account's name and then to a word. */
+  const peerName = (peerId) => (peerId ? (online?.peers.get(peerId)?.name || null) : null);
+  /** SOC5: the line that goes on the world tab when an act LEFT. The hub writes no chat line (SOC1); the client puts
+   *  words to what it did, exactly as net/social.js noteText does for what it was told. */
+  const socialActText = (k, who) => (k === 'friend.request' ? `Friend request sent to ${who}`
+    : k === 'party.invite' ? `Party invite sent to ${who}`
+      : k === 'friend.remove' ? `${who} is no longer your friend` : 'Sent');
   /** SOC2: my party pose - where I stand (the travel pixel: the place's own inside a dungeon), what the place is
    *  called, the six vitals, the portrait's recipe - as net/wire.js validPartyPose admits it. */
   const composePartyPose = () => {
@@ -7164,6 +7204,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // SOC3: and the friends + party panel repaints on the same frame, under the same covering rule as the chat -
     // its body only when the picture moved, its countdowns and its invite toast every time (ui/socialPanel.js).
     socialPanel?.render({ covered: townTalk.hudCovered || (modes?.hudCovered ?? false) || gamePaused() });
+    socialMenu?.render({ covered: townTalk.hudCovered || (modes?.hudCovered ?? false) || gamePaused() });   // SOC5: a window over the HUD takes the F-menu with it, the same word the chat's own `covered` carries - a card left over a window would take the clicks the window is owed
     // SOC4: and the party HUD is drawn from the same frame, under the SAME `covered` word the chat panel takes - a
     // window over the HUD covers both. The panel itself costs one version compare on a frame where nothing moved.
     partyPanel?.render({ covered: townTalk.hudCovered || (modes?.hudCovered ?? false) || gamePaused() });
@@ -7187,6 +7228,38 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (_peerHeights.size > online.peers.size) for (const id of [..._peerHeights.keys()]) if (!online.peers.has(id)) _peerHeights.delete(id);
     return out;
   };
+  /**
+   * SOC5 (2026-09-16, Mac: "Players should be able to interact with others in the world upon encountering them by
+   * pressing F on their body, which should show options to add as a friend or invite to a party"): THE F DOOR.
+   *
+   * It sits here because the thing it needs is directly above: `peersNear()` is the only list of other players with
+   * their feet in THIS scene's frame, and "on their body" is a ray against those feet. The ray is the ACTIVATION
+   * ray, read exactly as the activation site reads it (`cam.pos` and the camera's own forward), measured with the
+   * port's one ray-vs-person cylinder (`rayPersonDistance` - radius 0.45, height 1.8) and raced by one pure law
+   * (player/socialPick.js): nearest in front wins, behind is not in the race at all, past SOCIAL_REACH is nobody.
+   * SOCIAL_REACH is the game's own person reach (PlayerActivate MobileNpcActivationDistance, 6.4) - the same
+   * distance a conversation refuses past, so "close enough to talk to" and "close enough to friend" never disagree.
+   *
+   * THREE ANSWERS, and the third is the one that matters to the ladder:
+   *   - a peer under the ray: the card, over the picture's word on them (net/social.js actionsFor).
+   *   - nobody under the ray: SOC3's friends-and-party panel toggles. F is "the social key"; with nobody in front of
+   *     you the social thing to do is the list. Optional calls throughout, so this arm is correct before SOC3 lands.
+   *   - no `social` at all (offline, or a page with no account): FALSE, and the ladder falls through. The key is not
+   *     the port's to eat on a page where it can do nothing.
+   * The card open is itself an answer: a second F closes it, which is why this arm runs FIRST - a menu standing over
+   * a peer who has since walked out of reach must still close on the key that opened it.
+   */
+  const socialInteract = () => {
+    if (!social) return false;
+    if (socialMenu?.isOpen()) { socialMenu.hide(); return true; }
+    const near = peersNear();
+    // TI1's reading, minus the tap: the F-menu is a keyboard gesture and has no touch ray of its own.
+    const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
+    const hit = pickPeerInFront(cam.pos, fwd, near, SOCIAL_REACH, rayPersonDistance);
+    if (!hit) { socialPanel?.toggle?.(); return true; }   // SOC3 owns `socialPanel`; until it lands this is a no-op that still consumes the key
+    return socialMenu?.show({ name: peerName(hit.peer.id) ?? 'Someone', peerId: hit.peer.id, actions: social.actionsFor(hit.peer.id) }) === true;
+  };
+  hudCtx.socialInteract = socialInteract;   // SOC5: the door ui/input.js routeAction's 'SocialInteract' arm reaches - assigned here because the function is defined beside the peers it reads, and hudCtx is built with the windows
   const onlineFrame = (now, dt) => {
     chatFrame();   // CHAT1: before the dead return, so the channels keep their heartbeat and their reconnect while the death screen is up (the panel itself is paused away like any HUD - AUDIT CHAT B7)
     // AUDIT ONLINE D12: the dead broadcast nothing and see no one

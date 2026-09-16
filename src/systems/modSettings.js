@@ -231,7 +231,20 @@ export const MOD_SETTINGS = Object.freeze({
           + 'keys to ignite, drop or throw one (a thrown torch can set a foe alight). A first-person hand holds the '
           + 'light, and a dropped torch burns on the ground, lights the room and can be picked up.',
       }),
-      'Handling.ToggleLightInput': Object.freeze({ default: "F", text: true, description: 'Button used to quickly ignite or douse your light source' }),
+      // SOC5 (2026-09-16, Mac: "Players should be able to interact with others
+      // in the world upon encountering them by pressing F on their body"): THE
+      // SECOND DEPARTURE FROM THE MOD'S SHIPPED KEYS, and the same shape as
+      // HT4's below. Handheld Torches ships F, and in Daggerfall Unity that is
+      // free. It is not free here any more: SOC5 spends F on the port's own
+      // SocialInteract action (systems/inputActions.js DEFAULT_BINDINGS), the
+      // key Mac named, and online forces every vendored mod ON
+      // (systems/onlineLane.js) - so one press would both open the F-menu on a
+      // player and light a torch, for every player online, by default. O is
+      // unbound in DFU's own defaults and unused by this mod's other two keys
+      // and by every other vendored mod, and it says what it does: on and off.
+      // The player may still bind it wherever they like; this is about what
+      // SHIPS. test/ht1_handheldtorches.test.js HT4 is the gate that caught it.
+      'Handling.ToggleLightInput': Object.freeze({ default: "O", text: true, description: 'Button used to quickly ignite or douse your light source' }),
       'Handling.RememberLastLightSource': Object.freeze({ default: true, description: 'Igniting with the key re-lights the light you last doused, if you still carry one.' }),
       // HT4 (2026-09-15, Mac: "Pressing tab drops torches, tab is reserved
       // for the menu"): THE ONE DEPARTURE FROM THE MOD'S SHIPPED KEYS.
