@@ -190,8 +190,16 @@ export const CHAT_HZ_MAX = 2;
 export const CHAT_STRIKES_MAX = 20;
 /** The most sockets a CHAT room holds - one room hears the whole world, so it runs deeper than a cell's. */
 export const CHAT_SOCKETS_MAX = 2048;
-/** The most hellos a CHANNEL admits a second (AUDIT CHAT A1: the gate is never off; a channel's hello costs no roster, so it runs deeper). */
+/** The most hellos a CHANNEL admits a second (AUDIT CHAT A1: the gate is never off; a channel's hello costs no look and no storage read, so it runs deeper). */
 export const CHAT_HELLO_HZ_MAX = 50;
+/** ROSTER-G (2026-09-16, Mac: "Players dont show in online"): THE CHANNEL HAS A ROSTER, and this is how many names its
+ *  welcome carries. CHAT-R1 asked for "all currently online players" and the panel was wired to the PRESENCE
+ *  session - the peers in the player's own map cell - so a friend two towns over never showed. The one room every
+ *  player is in is the world channel (CHAT_WORLD_ROOM), so its welcome names who is in it ({id, name}, no look, no
+ *  pose - nothing is drawn from a channel) and its join and leave are said. Nearest-first has no meaning in a channel;
+ *  the list is socket order, cut at this many, and `n` in the welcome is the true count so a cut list still says
+ *  how many are online. Above the panel's own ROSTER_ROWS_MAX (200) and a full event (SOCKETS_MAX, 256). */
+export const CHAT_ROSTER_MAX = 512;
 /** The most chat lines a whole CHANNEL relays a second (AUDIT CHAT A2: the fan is every line to everyone - the room's budget, not the socket's). */
 export const CHAT_ROOM_HZ_MAX = 20;
 /** The World tab's room: the one chat channel there is. */
@@ -564,7 +572,7 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  carries it (`v`), and a client whose wire.js was built against another version says so on the console: the client
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
-export const RELAY_VERSION = 'world76';   // LOCALDEV1: the worker entry exports handlers alone - the version string is no longer re-exported from index.js
+export const RELAY_VERSION = 'world77';   // ROSTER-G: the channel names its members - the roster beside the chat is everyone online
 
 /** The listeners sorted by distance from `from`, nearest first; one with no pose yet sorts last, because a peer that
  *  has never said where it is cannot be near. The ordering is Euclidean in the POSE'S OWN FRAME, which is a cell's

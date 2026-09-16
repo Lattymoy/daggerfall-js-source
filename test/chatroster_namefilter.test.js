@@ -469,7 +469,9 @@ test('CHAT-R2: the roster column FILLS, in the model’s order, and scrolls on i
     'net/roster.js’s order, not the Map’s');
   assert.equal(one(root, 'dfchat-whohead').textContent, rosterTitle(3));
   assert.ok(rows.find((r) => String(r.className).includes('me')), 'my own row is marked');
-  assert.equal(one(rows[0], 'dfchat-who-tag').textContent, `#${tagOf('b')}`, 'and each carries the tag the lines use');
+  // ROSTER-G (Mac: "the roster naming itself seems hardcoded"): the #tag is the tie-breaker for a SHARED name and
+  // is drawn only there - a name nobody else has stands alone
+  assert.equal(find(rows[0], 'dfchat-who-tag').length, 0, 'Alfred is the only Alfred: no tag');
 
   // the column is its own scroller, not the box's - a long roster must
   // not push the conversation off the screen
@@ -587,13 +589,15 @@ test('CHAT-R2: hidden is REMEMBERED, and the CSS hides every drawn part rather t
   assert.match(CHAT_CSS, /\.dfchat\[data-hidden="1"\] \.dfchat-show \{ display: inline-flex; \}/);
 });
 
-test('CHAT-R2: the roster is the PRESENCE session’s, and a host that has none draws no column', async () => {
-  // THE WIRING, and the mistake it avoids. The chat links join with
-  // `presence: false` - they carry lines and hold no peers - so a
-  // roster read off them would always be empty. world.js hands the
-  // panel `online`, the session that actually holds the room.
+test('CHAT-R2/ROSTER-G: the roster is the ACTIVE CHANNEL’s - everyone online, not the player’s own cell - and a host that has none draws no column', async () => {
+  // THE WIRING. CHAT-R1 handed the panel `online`, the presence session,
+  // because a channel held no peers then - and the presence session is
+  // the player's own map CELL, so a friend two towns over never showed
+  // (Mac: "Players dont show in online"). ROSTER-G gives the channel a
+  // roster at the relay, and the panel reads the tab's own link; the
+  // presence session stands in only until that link exists.
   const world = rd('src/scenes/world.js');
-  assert.match(world, /roster: \(\) => online \?\? null,/);
+  assert.match(world, /roster: \(\) => chatLinks\?\.get\(chatLog\?\.active\) \?\? online \?\? null,/);
   assert.match(world, /new OnlineSession\(\{ url: online\.url[^)]*presence: false \}\)/,
     'the chat links really are presence-less, which is why the roster cannot come from them');
 

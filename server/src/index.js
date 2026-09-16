@@ -23,8 +23,10 @@
 // answered by the runtime while the object sleeps.
 //
 // CHAT1 (2026-09-12): a room in CHAT_ROOMS is a channel (relay.js, CHAT
-// ROOMS) - a hello there keeps the secret and nothing else, is told an
-// empty roster and announced to no one, a pose there reaches no one,
+// ROOMS) - a hello there keeps the secret and nothing else (ROSTER-G: and
+// is told who is in the channel by NAME, cut at CHAT_ROSTER_MAX with the
+// true count beside it, and its join and leave are said - the roster
+// beside the chat is everyone online), a pose there reaches no one,
 // and a chat line reaches every socket that said hello, the sender
 // included; in a place room a chat line reaches whoever a pose would
 // and the sender. The chat gate is CHAT_HZ_MAX a second per socket with
@@ -105,7 +107,7 @@
 // WORLD5 (2026-09-13): THE SHARED CLOCK is a function of wall time (relay.js
 // sharedClassicMinutes) and needs no frame; the welcome carries the relay's
 // own `now` so a client corrects for its machine's clock. Nothing else here.
-import { roomOf, parseClient, inRange, poseGate, chatGate, tokenGate, rosterFor, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S } from './relay.js';
+import { roomOf, parseClient, inRange, poseGate, chatGate, tokenGate, rosterFor, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX } from './relay.js';
 
 // AUDIT WORLD34 D4: the relay names itself in /health. SLAM13 (AUDIT SLAM A5): the name lives in net/wire.js, so the
 // welcome can carry it; /health reads it through the import above. LOCALDEV1: it is NOT re-exported from this module -
@@ -373,7 +375,18 @@ export class Room {
       // and one chat socket per tab; whichever reconnects first after a hand deploy is the one that notices, and the
       // client's detector (net/updateNotice.js) is a Set so the rest of them say nothing. SLAM13 (AUDIT SLAM A5): and
       // the SESSION compares it with the law it was built against, and says a skew once.
-      if (chat) { this._send(ws, JSON.stringify({ t: 'welcome', id: m.id, peers: [], v: RELAY_VERSION })); return; }   // told no one, announced to no one: a channel has no roster
+      if (chat) {
+        // ROSTER-G (Mac: "Players dont show in online"): A CHANNEL HAS A ROSTER - names alone. This line used to say
+        // `peers: []` and announce nobody, so the one room every player is in could not say who was online, and the
+        // panel read the player's own cell instead. The names are on the attachments already (no look, no storage
+        // read - the hello path stays as cheap as AUDIT CHAT A1 priced it); socket order, cut at CHAT_ROSTER_MAX, with
+        // `n` the true count. The join below is said here too, with the name and nothing else.
+        const named = others.slice(0, CHAT_ROSTER_MAX).map((b) => ({ id: b.id, name: b.name }));
+        if (!this._send(ws, JSON.stringify({ t: 'welcome', id: m.id, peers: named, n: others.length + 1, v: RELAY_VERSION }))) return;
+        const said = JSON.stringify({ t: 'join', id: m.id, name: m.name });
+        for (const [other, b] of [...this._all()]) if (other !== ws && b.id) this._send(other, said);
+        return;
+      }
       // SLAM5 (2026-09-16, AUDIT SLAM): THE ROSTER IS CHOSEN BEFORE THE LOOKS ARE READ, and this was a hard wall.
       //
       // This used to read a look for EVERY hello'd socket - up to SOCKETS_MAX-1 = 255 keys in one
@@ -702,9 +715,9 @@ export class Room {
     if (!a.id) return;   // never said hello, or replaced - the id lives on in another socket
     this._looks.delete(a.id);
     if (!last) { try { await this.state.storage.delete([lookKey(a.id), secretKey(a.id)]); } catch { /* the room forgets it on the next empty hello */ } }
-    if (isChatRoom(a.key)) return;   // a channel announced no join, so it says no leave
+    // ROSTER-G: a channel says its leaves now, as it says its joins - the roster beside the chat is everyone online
     const out = JSON.stringify({ t: 'leave', id: a.id });
     for (const [other, b] of [...this._all()]) if (other !== ws && b.id) this._send(other, out);
-    if (this._leads(a, ws)) this._sayHost({ skip: ws, except: ws });   // WORLD1: the host left - the next-longest in the room is the host now, said to everyone
+    if (!isChatRoom(a.key) && this._leads(a, ws)) this._sayHost({ skip: ws, except: ws });   // WORLD1: the host left - the next-longest in the room is the host now, said to everyone (ROSTER-G: a channel has no host)
   }
 }

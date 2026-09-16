@@ -258,6 +258,7 @@ export class OnlineSession {
     // shape AUDIT-CHATR deleted `whoRows()` for. The hook is the whole
     // seam; the detector owns the memory.
     this.onRelay = null;          // SRV-N: (version) => void - a welcome named the relay's deploy
+    this.roomCount = null;        // ROSTER-G: the welcome's `n` when its list was CUT - how many the room holds beyond the names it gave (a channel's; a place's welcome carries none)
     this.look = look ?? { race: 'Breton', gender: 'male', faceIndex: 0, items: [] };
     this.id = id ?? peerId();
     this._WS = WebSocketImpl;
@@ -840,6 +841,11 @@ export class OnlineSession {
       // hidden it anyway (`tick`: PEER_TIMEOUT_MS since it was last seen) - so a peer that left while I was away is
       // pruned, and nobody who is here blinks.
       for (const id of [...(this._rooms.get(room) ?? [])]) if (!keep.has(id)) { const p = this.peers.get(id); if (p) (p.unconfirmed ??= {})[room] = now; }
+      // ROSTER-G: a channel's welcome says how many are in it (`n`); the list may be cut at CHAT_ROSTER_MAX, the count
+      // is not. Kept ONLY when the list was cut - a whole list counts itself, and a number that outlives the rows goes
+      // stale on the first leave (the browser run that found this: three rows, one left, the header still said three).
+      // While kept, every join and leave the channel says moves it, so it stays the room's count.
+      this.roomCount = Number.isFinite(m.n) && m.n > keep.size + 1 ? m.n : null;
       if (!primary) return;
       this._setHost(m.host);   // WORLD1: the room's host, and the room's memory when it keeps one
       if (Number.isFinite(m.now)) {   // WORLD5: the relay's clock - a year off is no clock; OL3: and is SAID, on the console and the HUD line, rather than run uncorrected in silence
@@ -878,9 +884,9 @@ export class OnlineSession {
       // WORLD3: a door, a lever or a platform moved by another in my world room - never my own back, never outside one
       if (primary && isWorldRoom(this.room) && typeof m.id === 'string' && m.id !== this.id && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) this._deliver('act', () => this.onAct?.(m.id, m.data));
     } else if (m.t === 'join') {
-      if (typeof m.id === 'string' && m.id !== this.id) this._member(room, m.id, m, now);
+      if (typeof m.id === 'string' && m.id !== this.id) { if (this.roomCount != null && !this.peers.has(m.id)) this.roomCount++; this._member(room, m.id, m, now); }   // ROSTER-G: a cut count follows the joins
     } else if (m.t === 'leave') {
-      if (typeof m.id === 'string') this._unmember(room, m.id);   // WORLD6b-iii(b): gone from THIS room - kept while another holds it
+      if (typeof m.id === 'string') { if (this.roomCount != null && this._rooms.get(room)?.has(m.id)) this.roomCount = Math.max(0, this.roomCount - 1); this._unmember(room, m.id); }   // WORLD6b-iii(b): gone from THIS room - kept while another holds it; ROSTER-G: and a cut count follows the leaves
     } else if (m.t === 'pose') {
       // WORLD6b-iii(e): a stranger's pose - a member beyond the welcome's roster, asked for.
       // SLAM6: AND STOOD WHERE IT SAYS IT IS, THIS FRAME. The pose used to be dropped until the `who` answered, and

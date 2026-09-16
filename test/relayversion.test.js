@@ -57,6 +57,7 @@ const LAW = {
   world74: 'f09ab5bdcc836a30fe540d4558a7d0a6c1c933130d9db4d61d5e86c896b55595',   // MERGE (SLAM13 + SRV-N/CHAT-G onto main): one `v` on every welcome, last; the chat's third gate reaches nameFilter.js
   world75: '4587d8fa5adbfc5df062feb6831c1d191ac0563b7312d4bff7d311aa00093cac',   // SLAM15: a stop is heard whole, under the keepalive's floor
   world76: '6f7d8d11d5c055d02fadc70935d9951b3c99732f8b59c9f9f4b72363b873781f',   // LOCALDEV1: the worker entry no longer exports the version string (workerd refused the bundle locally)
+  world77: 'b8daad37e99a5f42c73910a000a44c3cca5d82c955cfed8bb064c10239e6aa60',   // ROSTER-G: the channel's welcome names its members with the true count; its joins and leaves are said
 };
 
 const rd = (p) => readFileSync(new URL('../' + p, import.meta.url));

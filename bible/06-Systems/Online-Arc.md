@@ -6394,3 +6394,12 @@ client pin is inverted - a foreign `v` reaches `onRelay`, and
 `statusLine` stays null for the presence label and the chat label alike,
 with no console line and no field - and the three mutants that drove the
 warning (X13-X15) are dropped from `tools/mutants/slam13.json`.
+
+## LOCALDEV1 + ROSTER-G (2026-09-16) - see 06-Systems/Chat-Roster-And-Names.md
+
+Mac: "Players dont show in online and the roster naming itself seems
+hardcoded." The roster beside the chat read the player's own map cell;
+it reads the world channel now, which names its members (`world77`).
+Found on the way: the worker entry re-exported `RELAY_VERSION` as a
+string and workerd refused to start it locally (`world76`). Both are
+written up in the chat file.

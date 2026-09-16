@@ -6946,12 +6946,15 @@ export async function bootWorld(canvas, renderer, params, status) {
       log: chatLog,
       onSend: (tabId, text) => chatLinks.get(tabId)?.sendChat(text) ?? false,   // false keeps the line in the field (B2)
       // CHAT-R1 (Mac: "a sidepanel on the chat ui showing all currently
-      // online players in alphabetical order"): the roster is the
-      // PRESENCE session's, not the chat link's. The chat links join
-      // with `presence: false` - they carry lines and hold no peers -
-      // so a roster read off them would always be empty. `online` is
-      // the session that actually holds the room's members.
-      roster: () => online ?? null,
+      // online players in alphabetical order"). ROSTER-G (Mac: "Players
+      // dont show in online"): the roster is the ACTIVE CHANNEL's, not
+      // the presence session's. CHAT-R1 read `online` - the player's own
+      // map cell - because a channel held no peers then; so everyone
+      // outside the cell was missing from a list that promised everyone
+      // online. The channel is the one room every player is in, and the
+      // relay names its members now (ROSTER-G). The presence session
+      // stands in only while the tab's link is not yet made.
+      roster: () => chatLinks?.get(chatLog?.active) ?? online ?? null,
       canOpen: () => !gamePaused() && !(townTalk.hudCovered || (modes?.hudCovered ?? false)),   // no chat under a window: the window's keys are the window's
       onOpen: () => { setCursorActive(false); releaseLook(); },   // AUDIT CHAT C2: the panel is a pointer surface - the mouse is freed on open   // PL3: the Enter that opened the chat is the CHAT'S - the toggle (the same key, a capture listener bound earlier) had already flipped cursorActive on it, and the close's relock was refused by the precedence line for the rest of the session
       onClose: () => { if (!gamePaused()) requestLook(canvas); },   // and taken back inside the closing gesture (MAC1's rule, ui/pauseDoor.js)

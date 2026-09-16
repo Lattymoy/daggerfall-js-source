@@ -117,9 +117,11 @@ test('CHAT1 / AUDIT CHAT: the Room as a CHANNEL - a hello keeps the secret and n
   const r = fakeRoom(CHAT_WORLD_ROOM);
   const a = r.connect(), b = r.connect(), c = r.connect();
   await r.hello(a, 'aaaa-0001'); await r.hello(b, 'bbbb-0002', at(3, 3));
-  assert.deepEqual(a.sent, [{ t: 'welcome', id: 'aaaa-0001', peers: [], v: RELAY_VERSION }]);   // SRV-N: and the deploy's name, on a channel's welcome too - the only welcome a chat link ever gets
-  assert.deepEqual(b.sent, [{ t: 'welcome', id: 'bbbb-0002', peers: [], v: RELAY_VERSION }], 'a channel has no roster: b is told no one though a is there');
-  assert.equal(ofType(a, 'join').length, 0, 'and a hears no join');
+  // ROSTER-G (Mac: "Players dont show in online"): a channel HAS a roster now - names alone, with the true count -
+  // and says its joins, because the roster beside the chat is everyone online and the channel is where everyone is
+  assert.deepEqual(a.sent[0], { t: 'welcome', id: 'aaaa-0001', peers: [], n: 1, v: RELAY_VERSION });   // SRV-N: and the deploy's name, on a channel's welcome too - the only welcome a chat link ever gets
+  assert.deepEqual(b.sent, [{ t: 'welcome', id: 'bbbb-0002', peers: [{ id: 'aaaa-0001', name: 'aaaa-0001' }], n: 2, v: RELAY_VERSION }], 'b is told who is in the channel - a, by name, no look, no pose');
+  assert.deepEqual(ofType(a, 'join'), [{ t: 'join', id: 'bbbb-0002', name: 'bbbb-0002' }], 'and a hears b join - the name and nothing else');
   assert.equal(r.store.has('secret:aaaa-0001'), true, 'the secret is kept');
   assert.equal(r.store.has('look:aaaa-0001'), false, 'the look is not: nobody is drawn from a channel');
   assert.equal(r.store.has('hellos'), true, 'AUDIT CHAT A1: the hello bucket is kept - the gate is never off');
@@ -148,7 +150,8 @@ test('CHAT1 / AUDIT CHAT: the Room as a CHANNEL - a hello keeps the secret and n
   assert.deepEqual(c.sent.at(-1), { t: 'error', m: 'id taken' });
   const d = r.connect(); await r.hello(d, 'dddd-0004');
   await r.drop(b);
-  assert.equal(ofType(d, 'leave').length, 0, 'a channel announced no join, so it says no leave');
+  assert.deepEqual(ofType(d, 'leave'), [{ t: 'leave', id: 'bbbb-0002' }], 'ROSTER-G: a channel says its leaves, as it says its joins');
+  assert.equal(ofType(d, 'host').length, 0, 'and still no host word - a channel has no host');
   assert.equal(r.store.has('secret:bbbb-0002'), false, 'the secret goes with the socket');
   assert.equal(r.store.has('secret:dddd-0004'), true, 'and no one else\'s');
   // the hello gate: deeper than a place's, never off (A1)

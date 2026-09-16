@@ -62,7 +62,7 @@ test('WORLD5: the relay\'s welcome carries its clock (`now`, ms) in every place 
   const town = fakeRoom('world:3,12'); const t = town.connect(); await town.hello(t, 'tttt-0001', at(1, 1));
   assert.ok(Number.isFinite(town.sockets[0].sent[0].now), 'a cell too - the clock is the world\'s, not a dungeon\'s');
   const chat = fakeRoom('chat:world'); const c = chat.connect(); await chat.hello(c, 'cccc-0001');
-  assert.deepEqual(c.sent[0], { t: 'welcome', id: 'cccc-0001', peers: [], v: RELAY_VERSION }, 'a channel\'s welcome is what it was, plus SRV-N\'s deploy name - still no clock, still no roster');
+  assert.deepEqual(c.sent[0], { t: 'welcome', id: 'cccc-0001', peers: [], n: 1, v: RELAY_VERSION }, 'a channel\'s welcome: SRV-N\'s deploy name and ROSTER-G\'s roster and count - still no clock');
   // the session
   const { FakeWS, sockets } = fakeSocketClass();
   const s = new OnlineSession({ url: 'wss://relay.test', name: 'a', id: 'aaaa-0001', secret: 'secret-of-aaaa-0001', WebSocketImpl: FakeWS, now: () => 1000 });
