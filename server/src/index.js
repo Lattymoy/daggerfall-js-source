@@ -364,8 +364,26 @@ export class Room {
       if (!chat) { await this.state.storage.put(lookKey(m.id), m.look); this._looks.set(m.id, m.look); }   // a channel keeps no look: nobody is drawn from it
       if (!this._setAttach(ws, { ...a, id: m.id, name: m.name, pose: chat ? null : m.pose, since: replaced?.since ?? now })) { this._refuse(ws, 'hello too large'); return; }
       if (chat) { this._send(ws, JSON.stringify({ t: 'welcome', id: m.id, peers: [] })); return; }   // told no one, announced to no one: a channel has no roster
-      const looks = others.length ? await this.state.storage.get(others.map((b) => lookKey(b.id))) : new Map();
-      const roster = rosterFor(others.map((b) => ({ ...b, look: looks.get(lookKey(b.id)) ?? null })), m.id, m.pose);
+      // SLAM5 (2026-09-16, AUDIT SLAM): THE ROSTER IS CHOSEN BEFORE THE LOOKS ARE READ, and this was a hard wall.
+      //
+      // This used to read a look for EVERY hello'd socket - up to SOCKETS_MAX-1 = 255 keys in one
+      // `storage.get(keys)` - only for `rosterFor` to throw all but ROSTER_MAX away. A Durable Object's batched get
+      // takes at most 128 keys, which this file already knows: `_sweep` and `alarm` both chunk their deletes at 128.
+      // So the 130th player to join a room made the get throw, AFTER `_setAttach` had already marked them present
+      // and BEFORE the welcome or the join fan - leaving them connected with an empty roster, no host and no clock,
+      // invisible to a room that was never told they arrived. An event does not degrade at 130; it stops.
+      //
+      // Selecting first fixes the breach and the waste together: at most ROSTER_MAX keys are ever asked for, and an
+      // awake object usually asks for none, because `_looks` already holds what every hello said (the `who` path
+      // has read it that way since AUDIT WORLD6b-iii(e) B1 - the hello path just never did).
+      const near = rosterFor(others, m.id, m.pose);
+      const missing = near.filter((b) => !this._looks.has(b.id)).map((b) => lookKey(b.id));
+      const fetched = missing.length ? await this.state.storage.get(missing) : new Map();
+      const roster = near.map((b) => {
+        const look = this._looks.get(b.id) ?? fetched.get(lookKey(b.id)) ?? null;
+        if (look && !this._looks.has(b.id)) this._looks.set(b.id, look);
+        return { ...b, look };
+      });
       // WORLD1: the host and the room's memory ride the welcome - the world raw, never parsed here; a joiner that
       // leads the room (the same-millisecond tie the smaller id wins) is said to the rest - a reconnect that keeps
       // its own seat changed nothing and says nothing (AUDIT WORLD A4)

@@ -150,12 +150,20 @@ test('AUDIT WORLD6b-iii(e) B1/B2/B9: the Room - who carries the room\'s budget (
   const j = ofType(a, 'join').filter((m) => m.id === 'ffff-0003').at(-1);
   assert.equal(j.pose, null, 'out of range: no pose'); assert.deepEqual(j.look, r.look, 'the look rides');
   assert.deepEqual(ofType(a, 'join').filter((m) => m.id === 'bbbb-0002').at(-1).pose, validPose(at(2, 2)), 'in range: the latest pose');
-  // after a wake the instance has no looks: one storage read, then kept
+  // after a wake the instance has no looks: the storage's copy is read ONCE and then kept.
+  // SLAM5: and the reader is now the HELLO, not the first `who` - the hello path fills `_looks` for the roster it
+  // builds (at most ROSTER_MAX keys, never the whole room, which is the 128-key wall SLAM5 closed). So the law is
+  // unchanged - one read, then kept - but the ask that pays for it moved earlier. Both halves are asserted, so
+  // neither the read nor the keeping can quietly go away.
   r.wake(); reads = 0;
   const c = r.connect(); await r.hello(c, 'cccc-0004', at(1, 1));
+  assert.ok(reads >= 1, 'the hello after a wake reads the roster\'s looks from storage');
   reads = 0;
   await who(c, 'bbbb-0002'); await who(c, 'bbbb-0002');
-  assert.equal(reads, 1, 'the storage\'s copy read once after the wake, then kept');
+  assert.equal(reads, 0, 'and they are KEPT: a later ask about a peer the hello already read costs no storage');
+  reads = 0;
+  await who(c, 'ffff-0003'); await who(c, 'ffff-0003');
+  assert.ok(reads <= 1, 'a peer outside that roster is read at most once, then kept too');
   assert.equal(ofType(c, 'join').filter((m) => m.id === 'bbbb-0002').length, 2);
   // B1: the room's budget - sockets asking at their own rate together, WHO_ROOM_HZ_MAX answered, the rest dropped without a strike
   const r2 = fakeRoom('world:5,5');

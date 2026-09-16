@@ -5080,7 +5080,7 @@ Object's cost was N senders times N listeners. MEASURED, over the real
 | 16 | 2,400 | 15 |
 | 48 | 22,560 | 71 |
 | 96 | 91,200 | 223 |
-| 200 | 398,000 (extrapolated) | over budget |
+| 200 | 398,000 (arithmetic) | see the correction below |
 
 Clean quadratic, and somewhere around two hundred one object stops
 keeping up. That is not a number anybody had ever put to this arc - the
@@ -5100,8 +5100,25 @@ So a pose goes to the nearest `POSE_FAN_MAX` listeners and no further -
 the same bound, and the same reason, as `rosterFor`'s
 nearest-`ROSTER_MAX` welcome. The cost stops being N squared.
 
-At 200 in one room, measured after: **64,000 sends a second instead of
-398,000, and 43% of one core instead of over budget.**
+At 200 in one room: **64,000 sends a second instead of 398,000.**
+
+> **CORRECTION (AUDIT SLAM).** The CPU figure first published here - "43%
+> of one core instead of over budget" - was wrong and is withdrawn.
+> About 60% of what it counted was the test harness's own `JSON.parse`,
+> not Durable Object work; the relay's share re-measures at ~12%. "Over
+> budget" asserted an observation nobody made: no budget is defined
+> anywhere in this repo, and the unbounded 200-player room measures at
+> ~9% of one container core of relay work. The SEND counts above are
+> exact - and exact because they are closed-form arithmetic,
+> `N x min(N-1, FAN) x rate`, not measurements. Calling them "measured"
+> overstated how they were obtained.
+>
+> **And the direction of the win is not established.** On relay work
+> alone the bounded path costs MORE at 200 players (~12% against ~9%),
+> because `nearestFan` sorts ~199 entries for every pose. SLAM1 is only
+> a win if `ws.send()` is expensive relative to that sort - plausible in
+> a Workers isolate, unmeasured here, and it should have been stated as
+> an assumption rather than left implicit.
 
 A listener past the bound is told nothing for a while; it is **not
 dropped**. The silence law (AUDIT ONLINE B3/B11/B14) HIDES a quiet peer
@@ -5142,6 +5159,14 @@ The backoff still DOUBLES, so a relay that is genuinely down is not
 hammered: the jitter spreads the window, it does not shrink it. The
 halo's retries are jittered the same way - eight rooms a client, all
 refused together otherwise.
+
+> **CORRECTION (AUDIT SLAM).** That last sentence was FALSE when it was
+> written. The halo has three retry paths and SLAM2 treated two;
+> `_openHalo`'s constructor-catch still read `this._now() + backoff`
+> with no jitter at all. Closed in SLAM5. And none of SLAM2's four pins
+> touched the halo, so all three could have been reverted and stayed
+> green - the eight-rooms-a-client motivation the section leads with had
+> no coverage whatever.
 
 The jitter's source is INJECTED beside the clock, so the wave law is
 pinnable and nothing reaches for `Math.random` behind a test's back.
@@ -5191,11 +5216,18 @@ or three people and must not pay for an event it is not having.
 
 Measured, 200 players in one room on the fake DO:
 
-| | pose sends/s | DO cpu |
-|---|---|---|
-| unbounded fan, 10 Hz | 398,000 | over budget |
-| SLAM1's fan, 10 Hz | 60,952 | 42% of a core |
-| SLAM1's fan + this, 4 Hz | **25,600** | **17% of a core** |
+| | pose sends/s |
+|---|---|
+| unbounded fan, 10 Hz | 398,000 |
+| SLAM1's fan, 10 Hz | 64,000 |
+| SLAM1's fan + this, 4 Hz | **25,600** |
+
+> **CORRECTION (AUDIT SLAM).** This table first read `60,952` for the
+> middle row and carried CPU percentages. `60,952` is **wrong** - it
+> matches no formula in the code and contradicts SLAM1's own section
+> four pages up, which says 64,000 for the identical configuration. The
+> CPU column is withdrawn for the reasons given under SLAM1. Every send
+> count here is arithmetic, not an observation.
 
 ### The ease had to move with it
 
@@ -5258,3 +5290,53 @@ would trade a slow leak for a fast loop.
 
 **Pinned** in `test/slam4.test.js` (4). **7 mutations, 7 dead**,
 including both halves of each: never swept, and swept while still fresh.
+
+
+## SLAM5 - THE HELLO PATH (2026-09-16, AUDIT SLAM)
+
+Two findings from the lenses over SLAM1-4. Neither was SLAM1-4's doing;
+both would have ended the event.
+
+### A hard wall at 130 players
+
+The hello arm read a look for EVERY hello'd socket - up to
+`SOCKETS_MAX - 1` = 255 keys in one `storage.get(keys)` - only for
+`rosterFor` to throw all but `ROSTER_MAX` away. **A Durable Object's
+batched get takes at most 128 keys**, which this very file already
+knows: `_sweep` and `alarm` both chunk their deletes at 128.
+
+So the 130th player to join made the get THROW - after `_setAttach` had
+already marked them present, and before the welcome or the join fan.
+They sat connected, with an empty roster, no host and no clock,
+invisible to a room that was never told they had arrived. Driven against
+storage that enforces the limit: **129 of 200 join, the 130th throws on
+a 199-key get.** `test/fakeRoom.mjs` accepts any array length, which is
+precisely why 7881 green tests never saw it.
+
+Selecting the roster BEFORE reading the looks fixes the breach and the
+waste together: at most `ROSTER_MAX` keys are ever asked for, and an
+awake object asks for **none**, because `_looks` already holds what
+every hello said. The `who` path has read it that way since AUDIT
+WORLD6b-iii(e) B1; the hello path just never did. After: 200 of 200
+join and the largest batched get is **zero keys**.
+
+### One metric
+
+`rosterFor` ranked by `pixelDistance` - Chebyshev on 32768-unit MAP
+PIXELS - while SLAM1's fan ranks by squared Euclidean in the pose's own
+frame. **Two metrics over one set do not nest**, so SLAM1's
+`POSE_FAN_MAX <= ROSTER_MAX` pin asserted a nesting that did not exist:
+measured at an event standing, only 11 of the 32 the fan reached were
+among the 64 the welcome named, and 53 of those 64 were peers the joiner
+would never hear from. And in a place room the poses are SCENE units, so
+every pixel distance floored to 0, the sort was a no-op, and "the
+nearest 64" meant the first 64 in socket order.
+
+`nearestFan` is the one ranking now, at both doors, and the nesting the
+pin claimed is real and pinned.
+
+**Pinned** in `test/slam5.test.js` (5), driven over the real `Room`
+against storage that enforces the 128-key limit. **8 mutations, 8
+dead** - including one that survived the first cut: nothing asserted the
+roster still CARRIED its looks, and reading nothing from storage looks
+identical to answering null for everybody, which draws no peer at all.

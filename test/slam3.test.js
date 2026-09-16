@@ -3,8 +3,10 @@
 // SLAM1 bounded WHO hears a pose. This bounds HOW OFTEN one is said - the last of the three terms in a room's cost
 // (senders x POSE_FAN_MAX x rate) still fixed, and the only one a client can lower without asking anybody.
 //
-// MEASURED, 200 players in one room on the fake DO: 60,952 pose sends a second at 10 Hz and 42% of a core; 25,600
-// at the crowded rate and 17%. Against the 398,000 an unbounded room wanted, that is the two slices together.
+// At 200 players in one room: 64,000 pose sends a second at 10 Hz, 25,600 at the crowded rate, against the 398,000
+// an unbounded room wants. (AUDIT SLAM: this header first said 60,952 and carried CPU percentages. 60,952 was wrong
+// - it matches no formula and contradicted SLAM1's own record - and the percentages counted the harness's parsing
+// as relay work. These counts are arithmetic, N x min(N-1, FAN) x rate; nothing here was observed on a real relay.)
 //
 // THE EASE HAD TO MOVE WITH IT, and this is the half that would have been easy to miss. The receiver eased every
 // peer over an assumed 1/POSE_HZ. That assumption was ALREADY wrong for anyone on a slow line or a throttled tab -

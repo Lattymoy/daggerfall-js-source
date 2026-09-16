@@ -394,7 +394,7 @@ export class OnlineSession {
     if (!this.url || !this._WS) return;
     let ws;
     // AUDIT WORLD6b-iii(b) A7: a socket that cannot be made is an entry with a retry, not nothing (nothing was re-tried every frame)
-    try { ws = new this._WS(`${this.url}/room/${room}`); } catch { this._halo.set(room, { ws: null, status: 'closed', retryAt: this._now() + backoff, backoff: Math.min(BACKOFF_MAX_MS, backoff * 2), since: this._now() }); return; }
+    try { ws = new this._WS(`${this.url}/room/${room}`); } catch { this._halo.set(room, { ws: null, status: 'closed', retryAt: this._now() + BACKOFF_MIN_MS + this._rand() * Math.max(0, backoff - BACKOFF_MIN_MS), backoff: Math.min(BACKOFF_MAX_MS, backoff * 2), since: this._now() }); return; }   // SLAM5 (AUDIT SLAM): jittered like the other two halo paths - SLAM2 claimed all three and treated only two
     this._halo.set(room, { ws, status: 'connecting', retryAt: null, backoff, since: this._now() });
     this._bind(ws);
   }

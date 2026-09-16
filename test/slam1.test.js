@@ -12,7 +12,10 @@
 // What saves it is that nobody can SEE two hundred people: a name stops at NAME_RANGE, at most BODIES_MAX peers
 // stand in a Morrowind body, the rest are billboards in a crowd. So the fan takes the NEAREST POSE_FAN_MAX and no
 // more - the same bound and the same reason as `rosterFor`'s nearest-ROSTER_MAX welcome. At 200 in one room that is
-// 64k sends a second rather than 398k, and 43% of a core rather than over budget.
+// 64k sends a second rather than 398k. (AUDIT SLAM withdrew the CPU figure this line first carried: most of it was
+// the harness's own JSON.parse, and "over budget" named a budget this repo does not define. The send counts are
+// exact BECAUSE they are arithmetic - N x min(N-1, FAN) x rate - not because anybody observed them. On relay work
+// alone the bound may even cost more at 200; it wins only if ws.send() is dear next to a 199-element sort.)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { nearestFan, POSE_FAN_MAX, ROSTER_MAX, PIXEL_UNITS } from '../src/net/wire.js';

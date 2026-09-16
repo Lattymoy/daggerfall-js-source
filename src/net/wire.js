@@ -709,6 +709,11 @@ export const chatGate = (bucket, nowMs) => tokenGate(bucket, nowMs, CHAT_HZ_MAX)
 export function rosterFor(peers, meId, near = null) {
   const out = [];
   for (const p of peers) if (p && p.id && p.id !== meId) out.push({ id: p.id, name: p.name, look: p.look, pose: p.pose ?? null });
-  if (near && out.length > ROSTER_MAX) out.sort((a, b) => (a.pose ? pixelDistance(near, a.pose) : Infinity) - (b.pose ? pixelDistance(near, b.pose) : Infinity));
-  return out.slice(0, ROSTER_MAX);
+  // SLAM5 (2026-09-16, AUDIT SLAM): ONE METRIC. This ranked by `pixelDistance` - Chebyshev on MAP PIXELS, 32768 units
+  // wide - while the pose fan ranks by squared Euclidean in the pose's own frame. Two different metrics over the same
+  // set DO NOT NEST, so `POSE_FAN_MAX <= ROSTER_MAX` bought nothing: measured at an event standing, only 11 of the 32
+  // the fan reaches were among the 64 the welcome names, and 53 of those 64 were peers the joiner would never hear
+  // from. Worse, in a place room the poses are SCENE units, so every pixelDistance floors to 0, the sort is a no-op
+  // and "the nearest 64" was the first 64 in socket order. `nearestFan` is the one ranking now, at both doors.
+  return near ? nearestFan(out, near, (p) => p.pose, ROSTER_MAX) : out.slice(0, ROSTER_MAX);
 }
