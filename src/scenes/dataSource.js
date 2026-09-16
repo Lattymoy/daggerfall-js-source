@@ -520,6 +520,13 @@ export const loadMorrowindFile = async (fileName) => {
 };
 export const clearStoredMorrowind = async () => {
   _mwArchiveCache = null; _mwFileCache = null; _mwRecordsCache = null;
+  // AUDIT MW-TORCH F8 (MWA2's Remove data): the COUNT is the answer every
+  // consumer reads (the card's rows, autoBuildArms's data gate, the peer
+  // bodies' enabled), and it only ever moved in the two counting doors -
+  // so a cleared store still said "N archives attached" until the next
+  // boot. The clear is a count of zero, an unmeasured set, and a new
+  // generation (every cache keyed on the old one stands down).
+  _mwCount = 0; _mwCountedNames = null; _mwFingerprint = null; _mwGeneration += 1;
   await clearDerivedPrefix(ARM_RECORDS_PREFIX);   // MW-LOAD: the record sets are ANSWERS ABOUT the files
   return clearAssets(MW_STORE);
 };
@@ -915,7 +922,7 @@ export const ASSET_PICKER_Z = 40;
 /** MWFIX: is the asset picker on screen? A modal opened FROM another
  *  overlay has to be able to say so, because the opener may own the
  *  keyboard - the enhanced shell takes Escape on `globalThis` in
- *  CAPTURE and stops it (enhancedMenu.js:2085), which is right for a
+ *  CAPTURE and stops it (enhancedMenu.js:2101), which is right for a
  *  screen with nothing above it and wrong the moment something is.
  *  Its own stated law is that a modal overlay owns its input; this is
  *  how the one above it says "that's me". */

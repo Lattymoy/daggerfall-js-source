@@ -378,6 +378,16 @@ Morrowind light mesh in the arms' left hand - the LIGH model on the
 `torch` group - is the lane's own design work, not the mod's, and pends
 Mac's word.
 
+**MW-D51 (2026-09-16) - Mac's word came: "Morrowind model needs a torch
+to hold when a torch is equipped."** The lane now holds it: the LIGH
+record's mesh at the Shield Bone of both rigs, the `torch` group on
+the left arm's blend mask, off the same `PlayerEntity.LightSource` read
+this mod's hand law writes (weaponRig hands it to the arm per frame
+beside the weapon). The record is in Morrowind-Rules.md's MW-D51. This
+mod's own art stays the classic lane's; under the Morrowind view the
+mod's hand law, keys, drops and throws run unchanged and the modelled
+torch is what they light and stow.
+
 ## TEX1 - THE SPRITE DOOR'S SHAPE, AND MAC'S CRASH (2026-09-14)
 
 Mac's page died on daggerfalljs.dev the day HT1 shipped:

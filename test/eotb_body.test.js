@@ -298,16 +298,26 @@ test('EOTB-IL: the placement is UpdateBillboard’s - the feet on the ground, su
   await new Promise((res) => setTimeout(res, 2));
   b.draw(null, { eye: [0, 1.5, -2], feet: [0, 0, 0], yaw: 0 });
   const h = 6 * SIZE_ON_FOOT;
+  // EOTB-FEET: `placed` is what the RENDERER is handed, and the
+  // renderer's billboard is bottom-anchored (BB_VS: the base, the
+  // centre half a height above it) - so the mod's centre arms land
+  // here less size/2. The old pin asserted the CENTRE at h/2 and called
+  // it "the bottom at the feet"; the body hovered by exactly that.
   let p = b.state().placed;
-  assert.equal(Number(p[1].toFixed(6)), Number((h / 2).toFixed(6)), 'standing: the sprite\'s bottom at the feet');
+  assert.equal(Number(p[1].toFixed(6)), 0, 'standing: the sprite\'s bottom at the feet - the base handed over IS the feet');
   // crouching: origin + Y + size/2 - height, the crouched capsule 0.9 - the sprite sinks 0.45
   ticks(b, 2, still({ motion: { forward: 0, standing: true, grounded: true, crouching: true, height: 0.9 } }));
   p = b.state().placed;
-  assert.equal(Number(p[1].toFixed(6)), Number((0.45 + h / 2 - 0.9).toFixed(6)), 'crouched: sunk by half the height difference (IL_4a67-IL_4acc)');
+  assert.equal(Number(p[1].toFixed(6)), Number((0.45 - 0.9).toFixed(6)), 'crouched: the base sunk by half the height difference (IL_4a67-IL_4acc)');
   // on exterior water: origin + Y - size/2 - the top at the capsule's centre
   ticks(b, 2, still({ motion: { forward: 0, standing: true, grounded: true, onExteriorWater: true, height: 1.8 } }));
   p = b.state().placed;
-  assert.equal(Number(p[1].toFixed(6)), Number((0.9 - h / 2).toFixed(6)), 'swimming: the top at the swim line (IL_4a1a-IL_4a62)');
+  assert.equal(Number(p[1].toFixed(6)), Number((0.9 - h).toFixed(6)), 'swimming: the top at the swim line (IL_4a1a-IL_4a62) - the base a whole size below it');
+  // and the two conventions, pinned where they meet: the renderer's
+  // shader anchors at the base, and place() converts the mod's centre.
+  const vs = readFileSync(join(root, 'src/render/renderer.js'), 'utf8');
+  assert.match(vs, /\+ uUp \* \(\(aCorner\.y \+ 0\.5\) \* uSize\.y\);/, 'the billboard shader is bottom-anchored');
+  assert.match(readFileSync(join(root, 'src/player/eotbBody.js'), 'utf8'), /const base = y - size\.h \* 0\.5;\n\s+return \[origin\[0\] \+ right\[0\] \* x \+ fwd\[0\] \* z, origin\[1\] \+ base,/, 'and the body hands it the base');
   // the XML X: record 18 (x -0.2) is index 5 straight and index 3
   // mirrored, and UpdateBillboard negates X for the mirrored state
   // (IL_4ba7-IL_4bd1). A drawn weapon faces the camera's forward (+z);

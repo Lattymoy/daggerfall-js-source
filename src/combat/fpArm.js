@@ -57,6 +57,7 @@ import {
   weaponShortGroup, calculateWindUp, releaseStartPoint, EQUIP_KEYS, UNEQUIP_KEYS, isRealWeapon,
   aimingFactor, fpAnimSources, pickAnimSource, anySourceHasGroup, FP_BASE_MODEL, animSourceName,
   gmstValue, GMST_SNEAK_DELTA, sneakOffset,
+  lightRecords, pickTorchRecord, blendMaskBones, overlayTracks, overlaySampler, weaponFlags, MW_TWO_HANDED,   // MW-D51: the held torch
   tpAnimSources, TP_BASE_MODEL, playerBodyRows, MW_UNITS_PER_METER, resolveBodyParts, ARM_PARTS, raceBeastFlag, raceRecords, armorRecords, clothingRecords,
   facePools, meshBounds,
   movementAnimState, composeMovementGroup, MOVEMENT_FALLBACK_SPEED, MOVEMENT_SPEED_CAP, turnAnimSpeed,
@@ -198,6 +199,32 @@ export const FP_CLIP_PATH = 'meshes/xbase_anim.1st.kf';
  *  constant group is a constant STANCE, and the arm held a bare-handed
  *  idle with a longsword drawn. */
 export const FP_IDLE_BASE = 'idle';
+/** MW-D52: THE SNEAK IDLE. refreshIdleAnims takes the idle STATE, not a
+ *  constant base: CharState_IdleSneak names "idlesneak" (and IdleSwim
+ *  "idleswim", out of scope with the swim family), and only the plain
+ *  CharState_Idle takes the weapon's short suffix and rule 10's 2-5
+ *  loops - "idlesneak" has no "idlesneak1h" in any .kf and loops until
+ *  told to stop. The state is sneaking and NOT in a jump (the jump owns
+ *  the air); a rig whose sources carry no such group idles plain, which
+ *  is what hasAnimation's miss does in the reference. The first-person
+ *  .kf has no sneak idle - the arms sink by rule 32(a) instead - so the
+ *  base changes nothing there; the THIRD-PERSON body, which shares the
+ *  machine, is what stood upright while sneaking. */
+/** MW-D51 / AUDIT MW-TORCH F1: NpcAnimation::updateCarriedLeftVisible,
+ *  verbatim - `return !(getWeaponType(weaptype)->mFlags & TwoHanded)`.
+ *  The first cut paired the bit with the class ("a real weapon"), so a
+ *  readied spell and drawn fists kept the torch up; the reference
+ *  hides the shield and the torch for BOTH (vanilla: ready magic and
+ *  the shield vanishes), and the port's own flag table gives them the
+ *  bit for exactly that reason. The rule is one line and it is the
+ *  reference's line. */
+export const carriedLeftVisible = (type) => !(weaponFlags(type) & MW_TWO_HANDED);
+export const FP_IDLE_SNEAK = 'idlesneak';
+/** MW-D51: the carried light's group - base_anim.kf's "Torch", played on the left arm. */
+export const TORCH_GROUP = 'torch';
+export function idleBaseFor({ sneaking = false, inJump = false, hasGroup = () => false } = {}) {
+  return sneaking && !inJump && hasGroup(FP_IDLE_SNEAK) ? FP_IDLE_SNEAK : FP_IDLE_BASE;
+}
 
 /**
  * MW-D12 / RULE 10, and the arithmetic is worth spelling out because the
@@ -604,6 +631,7 @@ export function armRecordsOf(records, kind) {
     case 'armors': return records.armors;
     case 'clothes': return records.clothes;
     case 'weapons': return records.weapons;
+    case 'lights': return records.lights;   // MW-D51
     case 'gmst-sneak': return { v: Object.hasOwn(records.gmst, GMST_SNEAK_DELTA) ? records.gmst[GMST_SNEAK_DELTA] : null };
     default: throw new Error(`fpArm: no derived answer for walk kind "${kind}" (MW-LOAD)`);
   }
@@ -895,6 +923,43 @@ export function weaponPartPaths({ weapon, hasAmmo = false, allWeapons, has = nul
   return paths;
 }
 
+/** MW-D51: THE HELD TORCH's mesh paths, for the build's one preload
+ *  round - weaponPartPaths' twin. */
+export function torchPartPaths({ torch = false, allLights, has = null }) {
+  if (!torch) return [];
+  const rec = pickTorchRecord(allLights, { has });
+  return rec ? [`meshes/${rec.model}`] : [];
+}
+
+/** MW-D51: THE HELD TORCH, resolveWeaponParts' twin for Slot_CarriedLeft.
+ *  Mac: "Morrowind model needs a torch to hold when a torch is
+ *  equipped." Daggerfall's lit light is PlayerEntity.LightSource (the
+ *  Torch item, lit by use - and Handheld Torches' hand law stows it
+ *  when no hand is free); Morrowind's is the carried-left slot, whose
+ *  LIGH record is instanced under "Shield Bone" exactly as a shield is
+ *  (sPartList's PRT_Shield; npcanimation.cpp's updateParts reads
+ *  Slot_CarriedLeft for a Light the same way). The rig without the
+ *  bone is REPORTED, not silently swapped (`hasBone` is the same
+ *  skeletonHasBone test the weapon's typed bone takes, injectable for
+ *  a fixture without the bone). */
+export const TORCH_BONE = 'Shield Bone';
+export function resolveTorchPart({ torch = false, allLights, find, skeletonBytes, has = null, hasBone = null }) {
+  const notes = [];
+  const parts = [];
+  let torchInfo = null;
+  if (!torch) return { parts, torchInfo, notes };
+  const rec = pickTorchRecord(allLights, { has });
+  if (!rec) { notes.push('torch: your archives carry no carriable Morrowind torch (a LIGH record named torch, with its mesh)'); return { parts, torchInfo, notes }; }
+  const path = `meshes/${rec.model}`;
+  const arc = find(path);
+  if (!arc) { notes.push(`torch: ${path} (${rec.id}) is not in your archives`); return { parts, torchInfo, notes }; }
+  const carries = hasBone ? hasBone(TORCH_BONE) : skeletonHasBone(skeletonBytes, TORCH_BONE);
+  if (!carries) { notes.push(`torch: this skeleton has no "${TORCH_BONE}" - nowhere to hold it`); return { parts, torchInfo, notes }; }
+  parts.push({ slot: 'torch', bones: [TORCH_BONE], bytes: arc.get(path).slice() });
+  torchInfo = { id: rec.id, name: rec.name, model: rec.model, bone: TORCH_BONE, fire: !!rec.fire };
+  return { parts, torchInfo, notes };
+}
+
 /** MW-D50: the archives' DIRECTORY - "is this path in any attached
  *  .bsa" - the one question pickWeaponRecord asks of them. Not
  *  findLoaded: that one throws for a path known but not yet read
@@ -1015,6 +1080,7 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
  */
 async function buildTpBody({
   race, female, beast, faceIndex, faceMatch, weapon, hasAmmo, worn, archives, parts, allWeapons, find, gen = null,
+  torch = false, allLights = [],   // MW-D51
 }) {
   const exists = (p) => archives.some((a) => a.has(p));
   const settingsSkeleton = tpSkeletonPath({ female, beast });
@@ -1047,6 +1113,7 @@ async function buildTpBody({
     await loadFromArchives(archives, [
       ...[...skinRows, ...worn.adds].map((row) => `meshes/${row.model}`),
       ...weaponPartPaths({ weapon, hasAmmo, allWeapons, has: archiveHas(archives) }),   // MW-D50
+      ...torchPartPaths({ torch, allLights, has: archiveHas(archives) }),   // MW-D51
     ]);
     const partBytes = [];
     for (const row of [...skinRows, ...worn.adds]) {
@@ -1065,6 +1132,9 @@ async function buildTpBody({
     // record hangs off the same column with no new law.
     const resolvedWeapon = resolveWeaponParts({ weapon, hasAmmo, allWeapons, find, skeletonBytes, has: archiveHas(archives) });   // MW-D50
     partBytes.push(...resolvedWeapon.parts);
+    // MW-D51: the held torch, at THIS rig's Shield Bone.
+    const resolvedTorch = resolveTorchPart({ torch, allLights, find, skeletonBytes, has: archiveHas(archives) });
+    partBytes.push(...resolvedTorch.parts);
 
     const arm = await assembleFirstPersonArm({ skeletonBytes, parts: partBytes });
     if (!arm.ok) {
@@ -1128,8 +1198,10 @@ async function buildTpBody({
       settingsSkeleton,
       weapon: resolvedWeapon.weaponInfo,
       arrow: resolvedWeapon.arrowInfo,
+      torch: resolvedTorch.torchInfo,   // MW-D51
+      leftArm: blendMaskBones(arm.skeleton),   // MW-D51: rule 25's LeftArm mask on THIS skeleton
       rows,
-      notes: [...missing, ...resolvedWeapon.notes, ...(arm.notes || [])],
+      notes: [...missing, ...resolvedWeapon.notes, ...resolvedTorch.notes, ...(arm.notes || [])],
       pieces: armPieceRows(arm.pieces).length,
       // MW-D24: the live weapon swap re-resolves against THIS skeleton's
       // bones, exactly as the arm's swap does against its own.
@@ -1142,6 +1214,7 @@ async function buildTpBody({
 
 export async function buildFpArm({
   race, female = false, beast = null, faceIndex = 0, weapon = null, hasAmmo = false, armor = null, deps = null,
+  torch = false,   // MW-D51: a lit Daggerfall torch in hand at the build
 } = {}) {
   const d = deps || await import('../scenes/dataSource.js');
   let settingsSkeleton = null;
@@ -1280,6 +1353,9 @@ export async function buildFpArm({
     // weapon and arrow meshes BEFORE resolveWeaponParts reads them -
     // and because one stage of the clock should hold every esm walk.
     const allWeapons = esmBytes.flatMap((e) => walk(e, 'weapons', weaponRecords));
+    // MW-D51: THE LIGHT RECORDS, the same walk - a lit torch's mesh is
+    // named by a LIGH record the way a blade's is by a WEAP.
+    const allLights = esmBytes.flatMap((e) => walk(e, 'lights', lightRecords));
     // RULE 32(a)'s GMST, read from the player's own data. Later masters
     // override earlier ones, so the LAST .esm that carries it wins -
     // which is the load order, not a preference.
@@ -1398,6 +1474,7 @@ export async function buildFpArm({
       ...fpRows.map((w) => w.path),
       ...fpWornAdds(worn.adds).map((add) => `meshes/${add.model}`),
       ...weaponPartPaths({ weapon, hasAmmo, allWeapons, has: archiveHas(archives) }),   // MW-D50
+      ...torchPartPaths({ torch, allLights, has: archiveHas(archives) }),   // MW-D51
       ...sourcePaths,
     ]);
     for (const w of fpRows) {
@@ -1421,7 +1498,12 @@ export async function buildFpArm({
     // through weaponPartPaths.
     const resolvedWeapon = resolveWeaponParts({ weapon, hasAmmo, allWeapons, find, skeletonBytes, has: archiveHas(archives) });   // MW-D50
     partBytes.push(...resolvedWeapon.parts);
-    const weaponNotes = resolvedWeapon.notes;
+    // MW-D51: the held torch, at the first-person rig's Shield Bone -
+    // the fp camera sees a shield (fpWornAdds keeps 'shield bone'), so
+    // it sees the torch in the same hand.
+    const resolvedTorch = resolveTorchPart({ torch, allLights, find, skeletonBytes, has: archiveHas(archives) });
+    partBytes.push(...resolvedTorch.parts);
+    const weaponNotes = [...resolvedWeapon.notes, ...resolvedTorch.notes];
     const weaponInfo = resolvedWeapon.weaponInfo;
     const arrowInfo = resolvedWeapon.arrowInfo;
     const mwType = resolvedWeapon.mwType;
@@ -1462,7 +1544,7 @@ export async function buildFpArm({
     // MW-D24: the THIRD-PERSON BODY, while the same archives are open.
     // Its refusal is a note on the card, never the arm's refusal.
     const third = arm.ok
-      ? await buildTpBody({ race, female, beast, faceIndex, faceMatch, weapon, hasAmmo, worn, archives, parts, allWeapons, find, gen })
+      ? await buildTpBody({ race, female, beast, faceIndex, faceMatch, weapon, hasAmmo, worn, archives, parts, allWeapons, find, gen, torch, allLights })   // MW-D51
       : null;
     stage('meshes');
     // IG2: the mapped archives are NO LONGER truncated here - they are
@@ -1658,6 +1740,12 @@ export async function buildFpArm({
       // branch tests bones against. The archives are NOT retained (they
       // are the memory cost); setWeapon reopens them for one fetch.
       allWeapons,
+      // MW-D51: the torch's record and the LIGH set a live light swap
+      // resolves against, allWeapons' twins; and rule 25's LeftArm mask
+      // on this skeleton, which the "torch" overlay poses.
+      torch: resolvedTorch.torchInfo,
+      allLights,
+      leftArm: blendMaskBones(arm.skeleton),
       skeletonBytes,
       esm: esmDiagnosis(esmNames, parts, race),
       notes: [...missing, ...weaponNotes, ...(arm.notes || [])],
@@ -1802,6 +1890,9 @@ export function createFpArm() {
   const listeners = new Set();   // MW-D36
   let pendingWorn = null;        // PX25: the worn table that arrived mid-build
   let pendingWeapon = null;      // PX26: the hand that arrived mid-build
+  let pendingTorch = null;       // MW-D51: the light that arrived mid-build
+  let pendingBuild = null;       // AUDIT MW-TORCH F6: the BUILD that arrived mid-build - an identity (a load over a load) is not dropped
+  let buildGen = 0;              // AUDIT MW-TORCH F7: bumped by unload(); a build that lands after it is discarded, never installed over the unload
   let mesh = null;
   let packed = null;
   let reason = 'not built';
@@ -1869,6 +1960,34 @@ export function createFpArm() {
   let turnDir = 0;
   let upper = UPPER_BODY.None;
   let spellReady = false;        // MW-D39: a spell is readied (the stance)
+  // MW-D51: THE HELD TORCH. `torchLit` is the game's word (a lit
+  // Daggerfall torch in PlayerEntity.LightSource, handed over per frame
+  // by weaponRig's setTorch); the state/source/group triple is the
+  // "torch" animation, a FIFTH slot beside action/movement/jump/idle -
+  // and the first to win a blend mask of its own rather than
+  // BlendMask_All: Priority_Torch on the LEFT ARM (character.cpp's
+  // `mAnimation->play("torch", Priority_Torch, BlendMask_LeftArm, ...)`),
+  // so the right arm keeps swinging while the left holds the light up.
+  let torchLit = false;
+  let torchState = null;
+  let torchSource = null;
+  let torchGroup = null;
+  let torchMissRig = null;       // the rig whose sources carry no "torch" group - asked once, not per frame
+  // AUDIT MW-TORCH F4: THE OVERLAY ALLOCATES ONCE PER CHANGE, NOT PER
+  // FRAME. update()'s contract is "no allocation after the first pack";
+  // the merged track map is rebuilt only when the base tracks, the torch
+  // source or the mask change (a slot switch, a view switch), and the
+  // one sampler reads the torch's clock through a variable.
+  let overlayMemo = null;        // { base, overlay, mask, tracks }
+  let overlayClock = 0;
+  const overlaySample = overlaySampler(sampleTrack, () => overlayClock);
+  const overlayFor = (base, mask) => {
+    const overlay = torchSource.trackMap;
+    if (!overlayMemo || overlayMemo.base !== base || overlayMemo.overlay !== overlay || overlayMemo.mask !== mask) {
+      overlayMemo = { base, overlay, mask, tracks: overlayTracks(base, overlay, mask) };
+    }
+    return overlayMemo.tracks;
+  };
   let attackType = null;
   // MS1: THE BACKHAND. A strike that runs the other way from Morrowind's
   // one slash (StrikeRight - mwFirstPerson.js's REVERSED_STRIKES) plays
@@ -2187,17 +2306,22 @@ export function createFpArm() {
   function refreshIdle(force = false) {
     if (!built || !built.ok) return;
     const type = animWeaponType(built.mwType, sheathed, spellReady);
+    // MW-D52: the idle STATE picks the base - "idlesneak" while sneaking
+    // on the ground where a source carries it, else the plain idle with
+    // its weapon suffix. The sneak idle takes no suffix and no loop dice.
+    const base = idleBaseFor({ sneaking, inJump: !!jumpState, hasGroup });
+    const compose = () => (base === FP_IDLE_SNEAK ? { group: base } : composeStanceGroup(base, type, hasGroup));
     if (!force && idleState && idleState.playing) {
       // Only the GROUP can have gone stale; a playing idle of the right
       // group is left exactly where it is.
-      const composed = composeStanceGroup(FP_IDLE_BASE, type, hasGroup);
+      const composed = compose();
       if (composed.group === idleGroup) return;
     }
-    const composed = composeStanceGroup(FP_IDLE_BASE, type, hasGroup);
+    const composed = compose();
     if (!composed.group) { idleState = null; idleGroup = null; return; }
     // Rule 10's condition: the dice roll happens only when the stance HAS
     // a short group. Bare hands away idle forever.
-    const short = weaponShortGroup(type);
+    const short = base === FP_IDLE_SNEAK ? null : weaponShortGroup(type);
     const loopCount = short ? FP_IDLE_LOOPS() : Infinity;
     // :822-825 - a restart of the SAME group resumes from where it was.
     const startPoint = idleGroup === composed.group ? clipCompletion(idleState) : 0;
@@ -2217,6 +2341,45 @@ export function createFpArm() {
    *  the idle so the next refresh replays it from its start with a fresh
    *  loop count, rather than resuming mid-swing-shaped. */
   function resetIdle() { idleState = null; idleGroup = null; refreshIdle(true); }
+
+  /** MW-D51: updateCarriedLeftVisible - "Shields/torches shouldn't be
+   *  visible during any operation involving two hands": the carried
+   *  light hides while the drawn type carries the TwoHanded bit -
+   *  carriedLeftVisible below. Sheathed, the drawn type is None and the
+   *  torch is up. */
+  function torchVisible() {
+    if (!torchLit || !built || !built.ok) return false;
+    // AUDIT MW-TORCH F2: a light that resolved to NOTHING on this rig
+    // (no LIGH record, its mesh not attached, no Shield Bone) is not in
+    // the carried-left slot - the reference conditions "torch" on a
+    // Light actually instanced there. Per rig: the arm and the body
+    // resolve independently.
+    const r = rig();
+    if (!r || !r.torch) return false;
+    return carriedLeftVisible(animWeaponType(built.mwType, sheathed, spellReady));
+  }
+  /** MW-D51: the "torch" slot's refresh, the reference's own lines
+   *  (character.cpp, update(): a Light in Slot_CarriedLeft and the
+   *  carried-left visible -> play "torch" at Priority_Torch on
+   *  BlendMask_LeftArm, start to stop, looping; else disable it). The
+   *  group lives in base_anim.kf (mwAnim.js's LOOPING_ANIMATIONS names
+   *  it) - a rig whose sources lack it is asked once and holds the
+   *  torch in the idle's own left hand. */
+  function refreshTorch(force = false) {
+    if (!torchVisible()) { torchState = null; torchSource = null; torchGroup = null; return; }
+    if (!force && torchState && torchState.playing) return;
+    const r = rig();
+    if (!force && torchMissRig === r) return;
+    const pick = r ? pickAnimSource(r.sources, TORCH_GROUP, resetClip, { loopFallback: true }) : null;
+    if (!pick) {
+      torchState = null; torchSource = null; torchGroup = null; torchMissRig = r;
+      const say = `torch: no source gives "${TORCH_GROUP}" a start and a stop key - the light hangs in the idle's left hand`;
+      if (!notes.includes(say)) notes.push(say);
+      return;
+    }
+    torchMissRig = null;
+    torchGroup = TORCH_GROUP; torchState = pick.state; torchSource = pick.source;
+  }
 
   function resetMovement() {
     movementState = null; movementGroup = null; movementSource = null; movementBase = null;
@@ -2612,8 +2775,14 @@ export function createFpArm() {
    * paperdoll is being looked at. Hence "sometimes".
    */
   function flushPending() {
+    if (pendingBuild) {   // AUDIT MW-TORCH F6: a queued build supersedes what was queued for the rig it replaces
+      const o = pendingBuild; pendingBuild = null; pendingWorn = null; pendingWeapon = null; pendingTorch = null;
+      api.build(o);
+      return;
+    }
     if (pendingWorn) { const p = pendingWorn; pendingWorn = null; api.setWorn(p); }
     if (pendingWeapon) { const w = pendingWeapon; pendingWeapon = null; api.setWeapon(w.item, { hasAmmo: w.hasAmmo }); }
+    if (pendingTorch !== null) { const l = pendingTorch; pendingTorch = null; api.setTorch(l); }   // MW-D51
   }
 
   const api = {
@@ -2627,14 +2796,27 @@ export function createFpArm() {
      *  and `ready()` alone says only that SOME arm stands - an
      *  Argonian save loaded over a human's standing arm kept the
      *  human's body until the pack was toggled off and on. */
-    builtFor() { return lastBuildOpts ? { race: lastBuildOpts.race ?? null, female: !!lastBuildOpts.female, faceIndex: lastBuildOpts.faceIndex | 0 } : null; },
+    builtFor() { return built && built.ok && lastBuildOpts ? { race: lastBuildOpts.race ?? null, female: !!lastBuildOpts.female, faceIndex: lastBuildOpts.faceIndex | 0 } : null; },   // AUDIT MW-TORCH: null when nothing stands - an unloaded or refused rig was built for no one
     get frames() { return frames; },
 
     async build(opts) {
-      if (busy) return { ok: false, stage: 'build', error: 'already building' };
+      // AUDIT MW-TORCH F6: A BUILD THAT ARRIVES MID-BUILD IS QUEUED, the
+      // law PX25/PX26 gave the worn table and the hand. autoBuildArms's
+      // door is reached by a load landing while the last load's build
+      // still runs (seconds long), and a refusal there left the NEW
+      // character on the OLD one's body until the next door - MWA3's
+      // report by another road. The latest opts wait and run the moment
+      // the in-flight build settles; the worn/hand/light queued for the
+      // rig being replaced go with it (the build's opts carry theirs).
+      if (busy) { pendingBuild = opts; return { ok: false, stage: 'build', error: 'already building - queued behind it', queued: true }; }
       busy = true;
+      const gen = buildGen;
       try {
         const res = await buildFpArm(opts);
+        // AUDIT MW-TORCH F7: unloaded while the archives were open (the
+        // pack's Off, Remove data): the result is dead on arrival, not
+        // installed over the unload.
+        if (gen !== buildGen) return { ok: false, stage: 'build', error: 'unloaded while building' };
         releaseMesh();
         releaseThirdMesh();
         built = res;
@@ -2662,9 +2844,14 @@ export function createFpArm() {
         // across a rebuild would leave the machine waiting for a clip
         // that no longer exists.
         sheathed = true;
+        // MW-D51: the light the build was asked for is the light in
+        // hand; the torch slot re-picks on the new rig's sources.
+        torchLit = !!(opts && opts.torch);
+        torchState = null; torchSource = null; torchGroup = null; torchMissRig = null;
         if (!res.ok) { reason = `${res.stage}: ${res.error}`; built = res; return res; }
         refreshWeaponGroup();
         refreshIdle(true);
+        refreshTorch(true);
         if (!idleState) {
           built = null;
           reason = 'clip: no idle group this stance can reach';
@@ -2689,6 +2876,8 @@ export function createFpArm() {
     subscribe(fn) { listeners.add(fn); return () => listeners.delete(fn); },
 
     unload() {
+      buildGen += 1;   // AUDIT MW-TORCH F7: a build in flight lands dead
+      pendingBuild = null; lastBuildOpts = null;
       releaseMesh(); built = null; packed = null;
       releaseThirdMesh(); thirdBuilt = null; thirdPacked = null; viewMode = 'first';
       movementState = null; movementGroup = null; movementSource = null; movementBase = null;
@@ -2699,6 +2888,7 @@ export function createFpArm() {
       weaponShown = false; arrowShown = false;
       notes.length = 0; aimFactor = 0; sneaking = false;
       idleSource = null; actionSource = null; poseSource = null;
+      torchLit = false; torchState = null; torchSource = null; torchGroup = null; torchMissRig = null;   // MW-D51
       reason = 'unloaded';
       for (const fn of listeners) { try { fn(); } catch { /* see build() */ } }
     },
@@ -2905,6 +3095,7 @@ export function createFpArm() {
           // The old action clip belonged to the old weapon's group.
           actionState = null; actionSource = null; attackType = null; holdWindUp = false;
           wornKey = key;
+          if (lastBuildOpts) { lastBuildOpts.weapon = item; lastBuildOpts.hasAmmo = hasAmmo; }   // AUDIT MW-TORCH F5: setWorn's rebuild carries the hand that is IN it
           const wasDrawn = !sheathed;
           // MW-D28: isStillWeapon (character.cpp:1364) - a DRAWN hand
           // swapping one real weapon for another plays NO unequip and NO
@@ -3037,6 +3228,76 @@ export function createFpArm() {
      *  spellcast family on the next frame - the same path a drawn
      *  sword takes. Idempotent; false when nothing changed, so a host
      *  may call it every frame. */
+    /**
+     * MW-D51: THE LIGHT FOLLOWS THE HAND, setWeapon's shape. weaponRig
+     * hands over "is a Daggerfall torch lit" every frame; the fast path
+     * is one boolean compare. A torch lit for the first time on a rig
+     * built without one binds the LIGH record's mesh at the Shield
+     * Bone of BOTH rigs (the slow path, archives reopened for the one
+     * fetch, exactly as a weapon swap does); a torch doused keeps the
+     * mesh and hides it (rule 57's hide-not-remove, the weapon's own
+     * law here) and drops the "torch" state, so re-lighting is the fast
+     * path from then on. Returns the slow path's promise, true on the
+     * fast path, false when nothing changed or nothing stands.
+     */
+    setTorch(lit) {
+      const want = !!lit;
+      if (!built || !built.ok) return false;
+      if (torchLit === want) return false;
+      if (busy) { pendingTorch = want; return false; }
+      torchLit = want;
+      if (lastBuildOpts) lastBuildOpts.torch = want;   // AUDIT MW-TORCH F5: the equip-follow rebuild carries the light, not the build's stale flag
+      // AUDIT MW-TORCH F3: a bind that failed once on this rig (the mesh
+      // not attached, no Shield Bone) is remembered on it - or every
+      // light-up reopened the archives and repacked both meshes for the
+      // same refusal.
+      if (!want || built.torch || built.torchTried || !pickTorchRecord(built.allLights)) {
+        // Doused, the mesh already hanging there, or no LIGH record to
+        // hang (the build's own note says so): the state and the hide
+        // flag do the rest on the next frame - no archive reopens.
+        refreshTorch(true);
+        for (const fn of listeners) { try { fn(); } catch { /* see build() */ } }
+        return true;
+      }
+      busy = true;
+      const token = built;
+      return (async () => {
+        try {
+          const d = buildDeps || await import('../scenes/dataSource.js');
+          const archives = await d.loadMorrowindArchives();
+          if (built !== token) return false;
+          const find = (p) => findLoaded(archives, p);
+          await loadFromArchives(archives, torchPartPaths({ torch: true, allLights: token.allLights, has: archiveHas(archives) }));
+          const bindTorch = async (rigBuilt) => {
+            const resolved = resolveTorchPart({ torch: true, allLights: token.allLights, find, skeletonBytes: rigBuilt.skeletonBytes, has: archiveHas(archives) });
+            rigBuilt.arm.pieces = rigBuilt.arm.pieces.filter((p) => p.slot !== 'torch');
+            bindPartsInto(rigBuilt.arm, resolved.parts);
+            const fresh = rigBuilt.arm.pieces.filter((p) => p.slot === 'torch');
+            await preloadArmTextures(fresh, archives);
+            for (const [file, tex] of collectArmTextures(fresh, archives)) {
+              if (!rigBuilt.textures.has(file)) rigBuilt.textures.set(file, tex);
+            }
+            rigBuilt.torch = resolved.torchInfo;
+            rigBuilt.torchTried = true;   // AUDIT MW-TORCH F3: asked once per rig, whatever the answer
+            rigBuilt.notes = [...(rigBuilt.notes || []).filter((n) => !/^torch[ :]/.test(n)), ...resolved.notes];
+            rigBuilt.pieces = armPieceRows(rigBuilt.arm.pieces).length;
+          };
+          await bindTorch(token);
+          if (thirdBuilt && thirdBuilt.ok) await bindTorch(thirdBuilt);
+          // The ranges the textures hang on are the piece list; a new
+          // piece is a new list, so the meshes repack.
+          releaseMesh(); packed = null;
+          releaseThirdMesh(); thirdPacked = null;
+          refreshTorch(true);
+          return true;
+        } finally {
+          busy = false;
+          for (const fn of listeners) { try { fn(); } catch { /* see build() */ } }
+          flushPending();
+        }
+      })();
+    },
+
     readySpell(ready) {
       const want = !!ready;
       if (!built || !built.ok || spellReady === want) return false;
@@ -3162,6 +3423,11 @@ export function createFpArm() {
       if (jumpState) advanceClip(jumpState, (jumpSource || rig()).keys, dt, null);
       if (idleState) advanceClip(idleState, (idleSource || rig()).keys, dt, null);
       refreshIdle();
+      // MW-D51: the torch's own clock, on its own keys - it is not the
+      // frame's winner, it is the LEFT ARM's, and it plays through
+      // whatever the four-slot winner does with the rest of the body.
+      refreshTorch();
+      if (torchState) advanceClip(torchState, (torchSource || rig()).keys, dt, null);
       aimFactor = aimingFactor(aimFactor, accurateAiming(upper), dt);
       if (!actionState && !movementState && !jumpState && !idleState) return;
       // THE WINNER, not a blend. See the two-slot note above: in first
@@ -3192,9 +3458,13 @@ export function createFpArm() {
       if (viewMode === 'third') {
         const t = thirdBuilt;
         if (!t || !t.ok) return;
+        // MW-D51: the torch overlay on the body's own LeftArm mask.
+        const tBase = poseSource ? poseSource.trackMap : t.tracks;
+        const tOverlay = torchState && torchSource && t.leftArm && t.leftArm.size;
+        if (tOverlay) overlayClock = torchState.time;
         poseAssembly(t.arm, {
-          tracks: poseSource ? poseSource.trackMap : t.tracks,
-          sampleTrack,
+          tracks: tOverlay ? overlayFor(tBase, t.leftArm) : tBase,
+          sampleTrack: tOverlay ? overlaySample : sampleTrack,
           time: poseTime(state),   // MS1: a backhand's window runs backwards
           accumRoot: t.accumRoot,
         });
@@ -3204,13 +3474,23 @@ export function createFpArm() {
         for (const r of thirdMesh.ranges) {
           if (r.slot === 'weapon') r.hidden = !weaponShown;
           else if (r.slot === 'arrow') r.hidden = !arrowShown;
+          else if (r.slot === 'torch') r.hidden = !torchVisible();   // MW-D51
         }
         frames++;
         return;
       }
+      // MW-D51: RULES 25+26 FOR ONE MASK - the "torch" state wins the
+      // left arm (Priority_Torch outranks every slot above) and the
+      // frame's winner keeps the rest, through overlayTracks' track map
+      // and the sampler that reads the overlay at the torch's own
+      // clock. The arm's LeftArm set is rule 25's walk on THIS
+      // skeleton; a rig without "Bip01 L Clavicle" overlays nothing.
+      const fBase = poseSource ? poseSource.trackMap : built.tracks;
+      const fOverlay = torchState && torchSource && built.leftArm && built.leftArm.size;
+      if (fOverlay) overlayClock = torchState.time;
       poseAssembly(built.arm, {
-        tracks: poseSource ? poseSource.trackMap : built.tracks,
-        sampleTrack,
+        tracks: fOverlay ? overlayFor(fBase, built.leftArm) : fBase,
+        sampleTrack: fOverlay ? overlaySample : sampleTrack,
         time: poseTime(state),   // MS1: a backhand's window runs backwards
         // Rule 56's accum root is STICKY and rig-wide, so it does not
         // follow the source the way the tracks do.
@@ -3287,6 +3567,7 @@ export function createFpArm() {
       for (const r of mesh.ranges) {
         if (r.slot === 'weapon') r.hidden = !weaponShown;
         else if (r.slot === 'arrow') r.hidden = !arrowShown;
+        else if (r.slot === 'torch') r.hidden = !torchVisible();   // MW-D51: the same hide-not-remove, on the carried-left rule
       }
       frames++;
     },
@@ -3411,6 +3692,7 @@ export function createFpArm() {
       }
       refreshWeaponGroup();
       resetIdle();
+      refreshTorch(true);   // MW-D51: the torch clip came from the OTHER rig's sources too
       return true;
     },
     viewMode: () => viewMode,
@@ -3612,6 +3894,7 @@ export function createFpArm() {
       for (const r of thirdMesh.ranges) {
         if (r.slot === 'weapon') r.hidden = false;
         else if (r.slot === 'arrow') r.hidden = !arrowShown;
+        else if (r.slot === 'torch') r.hidden = !torchLit;   // MW-D51: a portrait shows what you carry - the lit light, whatever the hand holds
       }
       const u = 1 / MW_UNITS_PER_METER;
       const rs = (built && built.raceScale) || { weight: 1, height: 1 };
@@ -3673,6 +3956,12 @@ export function createFpArm() {
         weaponShown,
         arrowShown,
         arrow: built && built.ok ? built.arrow : null,
+        // MW-D51: the carried light, on the card like the weapon.
+        torch: built && built.ok ? built.torch : null,
+        torchLit,
+        torchShown: torchVisible(),
+        torchGroup,
+        torchSource: torchSource && torchSource.name,
         loopsLeft: idleState && Number.isFinite(idleState.loopCount) ? idleState.loopCount : null,
         groups: built && built.ok ? built.groups : null,
         sources: built && built.ok ? built.sourcePaths : null,

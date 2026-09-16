@@ -6472,3 +6472,137 @@ base meshes attached resolves the iron arrow, carries it as a piece
 and leaves no arrow note; and the console line fires once per reason,
 never without ammunition; every preload and resolve passes the one
 directory.
+
+## MW-D51 (2026-09-16): the held torch
+
+Mac: "Morrowind model needs a torch to hold when a torch is equipped."
+
+The lane answered None for a light (Handheld-Torches.md recorded it):
+the hand law, the keys and the player torch's light all ran under the
+Morrowind arms, and the visible torch was the classic lane's sprite,
+which the rig's draw seam does not paint beside a modelled arm. So a
+lit torch under the Morrowind view was a light with no torch.
+
+**The record.** Morrowind's carriable lights are LIGH records with a
+mesh (`Torch` -> `l\light_torch.nif` and its `torch_256`... variants;
+the sconces and candles are LIGH too). `readLight`/`lightRecords`
+(`formats/mwFirstPerson.js`) read NAME, MODL, FNAM and LHDT - 24 bytes,
+the flags int at 20, CARRY 0x2 and FIRE 0x10 - and the one-pass
+extractor carries them as `lights` (ARM_RECORDS_VERSION 2, so a v1
+derived set re-extracts). `pickTorchRecord` chooses as MW-D38 chooses a
+blade: a CARRIABLE light whose id names a torch, the plain `torch`
+first, else the shortest id, and only one whose mesh the archives
+carry (MW-D50's law).
+
+**The slot.** Daggerfall's word for "a torch is equipped" is
+`PlayerEntity.LightSource` holding the Torch item (TEMPLATES.Torch,
+247) - lit by use, and stowed by Handheld Torches' hand law when no
+hand is free. Morrowind's is Slot_CarriedLeft, the SHIELD's slot, whose
+part is instanced under "Shield Bone" (rule 4's table, PRT_Shield).
+`resolveTorchPart` (`combat/fpArm.js`) is resolveWeaponParts' twin for
+that slot: the part at `Shield Bone` on whichever rig is being built,
+the bone's absence REPORTED. Both builds take it (`torch` in the opts,
+`armBuildOptsOf` reads the lit light) and preload its mesh in the one
+round; `fpArm.setTorch(lit)` is the live door, handed the read per
+frame by weaponRig beside the weapon - a boolean fast path, and a slow
+path that binds the mesh on both rigs the first time a torch is lit on
+a rig built without one (rule 57 hides a doused torch, never removes
+it, so re-lighting is the fast path from then on). A rig whose master
+carries no LIGH record never reopens the archives, and (AUDIT MW-TORCH
+F3) neither does one whose bind failed once - `torchTried` on the rig
+- or every light-up reopened them and repacked both meshes for the
+same refusal. F5: `setTorch` writes the light into `lastBuildOpts`
+(and `setWeapon` its hand), so the equip-follow rebuild `setWorn`
+spreads carries what is in hand now, not the build's stale flag.
+
+**The visibility.** updateCarriedLeftVisible: "Shields/torches
+shouldn't be visible during any operation involving two hands" - the
+reference's one line, `return !(getWeaponType(weaptype)->mFlags &
+TwoHanded)`, is `carriedLeftVisible`: the torch hides while the drawn
+type carries the TwoHanded bit - a two-hander, a bow, a crossbow, AND
+a readied spell or drawn fists (vanilla: ready magic and the shield
+vanishes; the flag table gives both the bit for exactly that) - and
+shows sheathed. AUDIT MW-TORCH F1 corrected the first cut, which paired
+the bit with the class and kept the torch up over a spellcast. F2: the
+rule is asked of a light that is actually IN this rig's slot -
+`rig().torch` - so a light that resolved to nothing (no record, its
+mesh not attached, no Shield Bone) neither shows nor raises the arm,
+per rig. The figure portrait shows the lit light whatever the hand
+holds (PX26 F1's own law for the weapon).
+
+**The animation - rules 25+26, for ONE mask.** The reference plays
+"torch" at Priority_Torch on BlendMask_LeftArm (character.cpp's update,
+whenever a Light sits in the carried-left slot and it is visible), so
+the left arm holds the light up while the right arm swings, walks and
+idles. This port had no blend mask ("THE PART WE HAVE NO CONCEPT OF",
+rule 9's note) - every slot won BlendMask_All. It now has one:
+`blendMaskBones(skeleton, 'bip01 l clavicle')` is rule 25's own walk
+(detectBlendMask: a bone belongs to the mask whose root it meets first
+walking up its parents), computed once per built rig and carried as
+`leftArm`; `overlayTracks(base, overlay, mask)` and
+`overlaySampler(sampleTrack, overlayTime)` are rule 26's resolution
+for that one mask - a track map answering the torch's track for a mask
+bone and the frame winner's for every other, read through a sampler
+that samples an overlay track at the TORCH's own clock. poseSkeleton
+asks `tracks.get` and `sampleTrack` and nothing else, so the pass is
+unchanged. The "torch" state is a fifth slot with its own clock on its
+own source's keys, re-picked on a view switch (the other rig's
+sources), asked once per rig that lacks the group (the first-person
+.kf may; the light then hangs where the idle leaves the left hand, and
+the card says so). A mask bone the overlay does not key falls to the
+base's track. AUDIT MW-TORCH F4: the merged map is built ONCE per
+(base tracks, torch source, mask) and memoised, and one sampler reads
+the torch's clock through a variable - update()'s "no allocation
+after the first pack" holds with the torch lit.
+
+**Recorded, not faked.** A peer's look carries no light on the wire
+(MWBODY1's `lk`), so the peers' bodies hold none; a lantern or candle
+is the classic lane's still; the torch's own LIGHT (the LIGH radius
+and colour) is not the rig's - the player torch's light already moves
+with the hand law.
+
+**Pinned (test/mwtorch.test.js, test/mwload_records.test.js).** The
+LIGH reader and its place in the one pass; the pick's four rules; the
+resolve's four refusals and its part; rule 25's walk on a hand-built
+skeleton; the overlay's three answers; the fast path on the fixture
+rig (no LIGH record: no archive reopens; doused hides; unload drops
+it); and the wiring by source - the rig's two hand-overs, the
+carried-left rule, both meshes' hide, both rigs' overlay, the view
+switch's re-pick, the mid-build queue.
+
+## MW-D52 (2026-09-16): the sneak idle
+
+Mac: "Morrowind crouch animation is missing."
+
+The MOVEMENT already sneaked - MW-D26's movestate ladder composes
+`sneakforward`... off the same `sneaking` the camera bag carries - so
+a sneaking player who WALKED crouched, and one who stood still stood
+up. refreshIdle composed `FP_IDLE_BASE` ('idle') whatever the stance;
+the reference's refreshIdleAnims takes the idle STATE
+(CharState_IdleSneak -> "idlesneak", CharState_IdleSwim ->
+"idleswim"), and only the plain CharState_Idle takes the weapon's
+short suffix and rule 10's 2-5 loops.
+
+`idleBaseFor({ sneaking, inJump, hasGroup })` (`combat/fpArm.js`) is
+that law: "idlesneak" while sneaking on the ground where a source
+carries it, else 'idle'. refreshIdle composes the sneak base bare (no
+`idlesneak1h` exists in any .kf) with no loop dice, and the plain base
+through the ladder as before. The first-person .kf carries no sneak
+idle - the arms sink by rule 32(a)'s i1stPersonSneakDelta instead - so
+first person is unchanged; the THIRD-PERSON body shares the machine and
+its base_anim.kf carries "IdleSneak", which is the crouch that was
+missing. The swim family stays deferred with the port's swimming.
+
+**Recorded, not parity (AUDIT MW-TORCH F9).** The reference plays the
+sneak idle at Priority_SneakIdleLowerBody on the LOWER body, so the
+legs stay crouched under a weapon-priority upper-body clip; this
+port's four-slot winner takes every bone, so a sneaking body in third
+person stands up for the length of an attack or an equip and crouches
+again after. Rule 26 whole is still the recorded gap; MW-D51's one
+mask is the first step toward it, not the last.
+
+**Pinned (test/mwtorch.test.js).** The four terms of idleBaseFor; the
+fixture rig's stance reaching refreshIdle (no sneak idle in the
+fixture .kf: the plain idle, as hasAnimation's miss); the refresh
+reading the state and rolling no dice for the sneak base.
+

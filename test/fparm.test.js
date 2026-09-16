@@ -2843,7 +2843,9 @@ test('MAC-S1: ONE flush, called from every exit out of `busy`', () => {
   // two lines it did not copy.
   const takers = (src.match(/^\s*busy = true;$/gm) ?? []).length;
   const flushes = (src.match(/^\s*flushPending\(\);$/gm) ?? []).length;
-  assert.equal(takers, 2, `a door that takes \`busy\` must flush on its way out (${takers} takers)`);
+  // MW-D51: the third arrived - setTorch's slow path binds the light's
+  // mesh on both rigs and takes `busy` for the fetch.
+  assert.equal(takers, 3, `a door that takes \`busy\` must flush on its way out (${takers} takers)`);
   assert.equal(flushes, takers, `every taker flushes (${flushes} flushes for ${takers} takers)`);
   // ...and setWeapon's own `finally` still does all three of its duties.
   // The file's own prose is not its wiring, so it is stripped first.
@@ -2991,8 +2993,8 @@ test('MW-D39: readySpell and castSpell are the two doors, and neither gates the 
   assert.equal(arm.status().spellReady ?? false, false);
   const src = readFileSync('src/combat/fpArm.js', 'utf8');
   // the stance re-composes on ready, and the three group readers take the flag
-  assert.equal((src.match(/animWeaponType\(built\.mwType, sheathed, spellReady\)/g) || []).length, 4,
-    'idle, movement (x2) and the weapon group must all read the spell stance');
+  assert.equal((src.match(/animWeaponType\(built\.mwType, sheathed, spellReady\)/g) || []).length, 5,
+    'idle, movement (x2), the weapon group and the torch\'s carried-left rule (MW-D51) must all read the spell stance');
   assert.match(src, /readySpell\(ready\) \{[\s\S]*?refreshWeaponGroup\(\);\n      resetIdle\(\);\n      resetMovement\(\);/);
   // a cast in flight is abandoned by an un-ready (an aborted spell)
   assert.match(src, /if \(!want && upper === UPPER_BODY\.Casting\)/);
