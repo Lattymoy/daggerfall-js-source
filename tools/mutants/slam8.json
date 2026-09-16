@@ -30,8 +30,8 @@
   {
     "name": "K3-exact-equality-not-epsilon",
     "file": "server/src/index.js",
-    "old": "const still = posed && !!a.pose && !poseChanged(a.pose, m.p);",
-    "new": "const still = posed && !!a.pose && JSON.stringify(a.pose) === JSON.stringify(m.p);",
+    "old": "const still = posed && !!a.pose && !poseChanged(a.pose, m.p) && now - (a.kept ?? 0) >= KEEPALIVE_FAN_MS;",
+    "new": "const still = posed && !!a.pose && JSON.stringify(a.pose) === JSON.stringify(m.p) && now - (a.kept ?? 0) >= KEEPALIVE_FAN_MS;",
     "tests": [
       "test/slam8.test.js",
       "test/slam6.test.js",
@@ -44,8 +44,8 @@
   {
     "name": "K5-turn-in-plain-patch",
     "file": "server/src/index.js",
-    "old": "{ pose: posed ? m.p : a.pose }, posed ? { turn: ((a.turn | 0) + 1) & 0xffff } : {}",
-    "new": "{ pose: posed ? m.p : a.pose, turn: posed ? ((a.turn | 0) + 1) & 0xffff : (a.turn | 0) }",
+    "old": "{ pose: posed ? m.p : a.pose }, posed ? { turn: ((a.turn | 0) + 1) & 0xffff, ...(still ? { kept: now } : {}) } : {}",
+    "new": "{ pose: posed ? m.p : a.pose, turn: posed ? ((a.turn | 0) + 1) & 0xffff : (a.turn | 0) }, posed && still ? { kept: now } : {}",
     "tests": [
       "test/slam8.test.js",
       "test/slam6.test.js",
@@ -71,7 +71,7 @@
   },
   {
     "name": "K7-heartbeat-9000",
-    "file": "src/net/online.js",
+    "file": "src/net/wire.js",
     "old": "export const HEARTBEAT_MS = 5000;",
     "new": "export const HEARTBEAT_MS = 9000;",
     "tests": [

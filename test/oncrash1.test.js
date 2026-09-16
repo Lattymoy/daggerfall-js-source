@@ -19,7 +19,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { OnlineSession, THREW_SAY_MS, lerpPose } from '../src/net/online.js';
 import { PeerBodies, peerCamera } from '../src/net/peerBodies.js';
 import { withinYaw, turnTowards } from '../src/characters/enemyMotor.js';
-import { validPose, validFoeRecord, validSharedFoe, SHARED_EFFECTS_MAX } from '../src/net/wire.js';
+import { validPose, validFoeRecord, validSharedFoe, SHARED_EFFECTS_MAX, RELAY_VERSION } from '../src/net/wire.js';
 import { wrapAngle } from '../src/world/mat4.js';
 import { fakeSocketClass } from './fakeSocket.mjs';
 
@@ -34,7 +34,7 @@ function session({ now = () => 1000 } = {}) {
   const s = new OnlineSession({ url: 'wss://relay.test', name: 'Mac', id: 'mac-0001', secret: 'shh-shh-shh-0001', WebSocketImpl: FakeWS, now });
   s.join('dungeon:m187853213', pose(0));
   sockets[0].open();
-  sockets[0].receive({ t: 'welcome', id: 'mac-0001', host: 'bob-0001', peers: [{ id: 'bob-0001', name: 'Bob', look: {}, pose: pose(1) }] });
+  sockets[0].receive({ t: 'welcome', v: RELAY_VERSION, id: 'mac-0001', host: 'bob-0001', peers: [{ id: 'bob-0001', name: 'Bob', look: {}, pose: pose(1) }] });
   return { s, ws: sockets[0] };
 }
 
@@ -95,7 +95,7 @@ test('ONCRASH1: EVERY handler out of _receive is contained, not just the foes st
     s.onWorld = () => { ran = true; throw new Error('the welcome\'s world threw'); };
     s.join('dungeon:m187853213', pose(0));
     sockets[0].open();
-    assert.doesNotThrow(() => sockets[0].receive({ t: 'welcome', id: 'mac-0001', host: 'bob-0001', peers: [], world: { v: 1 } }));
+    assert.doesNotThrow(() => sockets[0].receive({ t: 'welcome', v: RELAY_VERSION, id: 'mac-0001', host: 'bob-0001', peers: [], world: { v: 1 } }));
     assert.equal(ran, true, 'the welcome\'s world handler really ran');
     assert.equal(s.threw.kind, 'world');
   }
@@ -106,7 +106,7 @@ test('ONCRASH1: EVERY handler out of _receive is contained, not just the foes st
     s.onClock = () => { throw new Error('clock threw'); };
     s.join('dungeon:m187853213', pose(0));
     sockets[0].open();
-    assert.doesNotThrow(() => sockets[0].receive({ t: 'welcome', id: 'mac-0001', host: 'mac-0001', peers: [], now: Date.now() }));
+    assert.doesNotThrow(() => sockets[0].receive({ t: 'welcome', v: RELAY_VERSION, id: 'mac-0001', host: 'mac-0001', peers: [], now: Date.now() }));
     assert.equal(s.threw.kind, 'clock');
   }
 });

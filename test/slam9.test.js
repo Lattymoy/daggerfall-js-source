@@ -104,7 +104,13 @@ test('SLAM9: a peer this session once KNEW is re-stood as itself after a socket 
     assert.equal([...s.peers.values()].filter((p) => p.told).length, 104, 'everyone is introduced');
     // THE BLIP: a re-welcome naming only the nearest few prunes the rest of the roster
     ws.receive({ t: 'welcome', id: 'mac-0001', peers: ids('kn', 10).map((id, i) => ({ id, name: `K${i}`, look, pose: at(i) })), host: null, world: null });
-    assert.equal(s.peers.size, 10, 'the welcome kept what it named');
+    // SLAM14 (AUDIT SLAM FINAL B2): the welcome no longer prunes the 94 it did not name - they stand, UNCONFIRMED, and
+    // their next pose confirms them. So the re-standing this pin drives is forced the way a real one now happens: a
+    // LEAVE for each (the room forgetting them), then their poses
+    assert.equal(s.peers.size, 104, 'the welcome kept everyone: the 94 it did not name are unconfirmed, not gone');
+    assert.equal([...s.peers.values()].filter((p) => p.unconfirmed).length, 94);
+    for (const id of [...rest, ...ids('kn', 64).slice(10)]) ws.receive({ t: 'leave', id });
+    assert.equal(s.peers.size, 10, 'the leaves took them');
     // their next poses: re-stood as THEMSELVES
     for (const id of rest) ws.receive({ t: 'pose', id, p: at(2) });
     for (const id of ids('kn', 64).slice(10)) ws.receive({ t: 'pose', id, p: at(2) });
@@ -113,10 +119,19 @@ test('SLAM9: a peer this session once KNEW is re-stood as itself after a socket 
     assert.equal(back.told, true, 'a peer this session was introduced to is not a stranger');
     assert.equal(back.name, 'R7'); assert.equal(back.look.faceIndex, 7, 'in its own name and its own face');
     assert.equal([...s.peers.values()].filter((p) => !p.told).length, 0, 'nobody came back anonymous');
-    s.tick(); assert.deepEqual(whos(ws), [], 'and nobody is asked for again');
+    // SLAM14 (AUDIT SLAM FINAL B3): a peer wearing a REMEMBERED look is asked for once more (`recall`), so a look that
+    // changed while it was away is refreshed by the relay's answer - the ask is at the who gate, never a Traveller
+    assert.equal(back.recall, true, 'stood from memory: to be asked once, dressed meanwhile');
+    s.tick(); assert.equal(whos(ws).length, WHO_HZ_MAX, 'a gate\'s worth of recall asks this tick, no more');
+    assert.ok(whos(ws).every((id) => s.peers.get(id).told && s.peers.get(id).recall), 'each one a told peer wearing a remembered look');
+    for (const id of whos(ws)) ws.receive({ t: 'join', id, name: 'same', look, pose: at(2) });
+    assert.ok(whos(ws).every((id) => s.peers.get(id).recall === false), 'the answers clear it');
+    for (const p of s.peers.values()) if (p.recall) ws.receive({ t: 'join', id: p.id, name: p.name, look: p.look, pose: at(2) });   // the rest answered too
+    assert.equal([...s.peers.values()].filter((p) => p.recall).length, 0);
     // a peer NEVER introduced is still a stranger, still asked
+    const asked = whos(ws).length; clock.now += 1000;   // the who gate refilled
     ws.receive({ t: 'pose', id: 'new-0099', p: at(3) }); s.tick();
-    assert.equal(s.peers.get('new-0099').told, false); assert.deepEqual(whos(ws), ['new-0099']);
+    assert.equal(s.peers.get('new-0099').told, false); assert.deepEqual(whos(ws).slice(asked), ['new-0099'], 'the one stranger, and nobody told or recalled');
   } finally { console.info = info; }
 });
 

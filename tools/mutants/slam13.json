@@ -1,0 +1,172 @@
+[
+  {
+    "name": "X1-yaw-bare-difference",
+    "file": "src/net/wire.js",
+    "old": "|| Math.abs(wrapAngle(a.yaw - b.yaw)) > eps ||",
+    "new": "|| Math.abs(a.yaw - b.yaw) > eps ||",
+    "tests": [
+      "test/slam13.test.js",
+      "test/slam8.test.js"
+    ]
+  },
+  {
+    "name": "X2-keepalive-floor-6000",
+    "file": "src/net/wire.js",
+    "old": "export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;",
+    "new": "export const KEEPALIVE_FAN_MS = HEARTBEAT_MS * 1.2;",
+    "tests": [
+      "test/slam13.test.js",
+      "test/slam8.test.js"
+    ]
+  },
+  {
+    "name": "X3-heartbeat-9000",
+    "file": "src/net/wire.js",
+    "old": "export const HEARTBEAT_MS = 5000;",
+    "new": "export const HEARTBEAT_MS = 9000;",
+    "tests": [
+      "test/slam13.test.js",
+      "test/slam8.test.js"
+    ]
+  },
+  {
+    "name": "X4-sender-share-is-room-rate",
+    "file": "src/net/wire.js",
+    "old": "export const ACT_SENDER_BYTES_PER_S = ACT_ROOM_BYTES_PER_S / 16;",
+    "new": "export const ACT_SENDER_BYTES_PER_S = ACT_ROOM_BYTES_PER_S;",
+    "tests": [
+      "test/slam13.test.js",
+      "test/slam11.test.js",
+      "test/auditworld3.test.js"
+    ]
+  },
+  {
+    "name": "X5-bytegate-cap-dropped",
+    "file": "src/net/wire.js",
+    "old": "  const bytes = Math.min(rate, b.bytes + Math.max(0, ((nowMs - b.at) / 1000) * rate));",
+    "new": "  const bytes = b.bytes + Math.max(0, ((nowMs - b.at) / 1000) * rate);",
+    "tests": [
+      "test/slam13.test.js",
+      "test/slam11.test.js"
+    ]
+  },
+  {
+    "name": "X6-floor-removed",
+    "file": "server/src/index.js",
+    "old": " && now - (a.kept ?? 0) >= KEEPALIVE_FAN_MS;",
+    "new": ";",
+    "tests": [
+      "test/slam13.test.js"
+    ]
+  },
+  {
+    "name": "X7-kept-in-ordinary-patch",
+    "file": "server/src/index.js",
+    "old": "{ pose: posed ? m.p : a.pose }, posed ? { turn: ((a.turn | 0) + 1) & 0xffff, ...(still ? { kept: now } : {}) } : {}",
+    "new": "{ pose: posed ? m.p : a.pose, ...(still ? { kept: now } : {}) }, posed ? { turn: ((a.turn | 0) + 1) & 0xffff } : {}",
+    "tests": [
+      "test/slam13.test.js"
+    ]
+  },
+  {
+    "name": "X8-sender-bucket-never-refuses",
+    "file": "server/src/index.js",
+    "old": "      if (!mine.pass) { this._setAttach(ws, { ...a, abytes: mine.bucket }); return; }\n",
+    "new": "",
+    "tests": [
+      "test/slam13.test.js",
+      "test/slam11.test.js",
+      "test/auditworld3.test.js"
+    ]
+  },
+  {
+    "name": "X9-room-charged-before-sender-verdict",
+    "file": "server/src/index.js",
+    "old": "      if (!mine.pass) { this._setAttach(ws, { ...a, abytes: mine.bucket }); return; }\n      const bytes = byteGate(this._roomActBytes, now, cost, ACT_ROOM_BYTES_PER_S, true);\n      this._roomActBytes = bytes.bucket;\n",
+    "new": "      const bytes = byteGate(this._roomActBytes, now, cost, ACT_ROOM_BYTES_PER_S, true);\n      this._roomActBytes = bytes.bucket;\n      if (!mine.pass) { this._setAttach(ws, { ...a, abytes: mine.bucket }); return; }\n",
+    "tests": [
+      "test/slam13.test.js",
+      "test/slam11.test.js",
+      "test/auditworld3.test.js"
+    ]
+  },
+  {
+    "name": "X10-sender-charged-for-room-refusal",
+    "file": "server/src/index.js",
+    "old": "if (!bytes.pass) { this._setAttach(ws, { ...a, abytes: { bytes: mine.bucket.bytes + cost, at: now } }); return; }",
+    "new": "if (!bytes.pass) { this._setAttach(ws, { ...a, abytes: mine.bucket }); return; }",
+    "tests": [
+      "test/slam13.test.js",
+      "test/slam11.test.js",
+      "test/auditworld3.test.js"
+    ]
+  },
+  {
+    "name": "X11-world-fan-whole-again",
+    "file": "server/src/index.js",
+    "old": "        let bucket = this._roomWorld;\n        for (const [other, b] of unseen) {\n          const budget = byteGate(bucket, now, out.length, FOES_ROOM_BYTES_PER_S, true);\n          bucket = budget.bucket;\n          if (!budget.pass) break;   // in debt: the ones not yet served wait for the next publish, unseen\n          this._setAttach(other, { ...b, worldSeen: true }); this._send(other, out);\n        }\n        this._roomWorld = bucket;",
+    "new": "        const budget = byteGate(this._roomWorld, now, out.length * unseen.length, FOES_ROOM_BYTES_PER_S, true);\n        this._roomWorld = budget.bucket;\n        if (budget.pass) for (const [other, b] of unseen) { this._setAttach(other, { ...b, worldSeen: true }); this._send(other, out); }",
+    "tests": [
+      "test/slam13.test.js",
+      "test/slam11.test.js"
+    ]
+  },
+  {
+    "name": "X12-welcome-without-v",
+    "file": "server/src/index.js",
+    "old": "\"v\":${JSON.stringify(RELAY_VERSION)},",
+    "new": "",
+    "tests": [
+      "test/slam13.test.js",
+      "test/chat1.test.js",
+      "test/world5.test.js",
+      "test/online_relay.test.js"
+    ]
+  },
+  {
+    "name": "X13-version-check-dropped",
+    "file": "src/net/online.js",
+    "old": "      if (v !== RELAY_VERSION) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/slam13.test.js"
+    ]
+  },
+  {
+    "name": "X14-version-warning-never-cleared",
+    "file": "src/net/online.js",
+    "old": "      else this.versionWarning = null;\n",
+    "new": "",
+    "tests": [
+      "test/slam13.test.js"
+    ]
+  },
+  {
+    "name": "X15-warned-on-every-welcome",
+    "file": "src/net/online.js",
+    "old": "if (this.versionWarning !== `${v}`) {",
+    "new": "{",
+    "tests": [
+      "test/slam13.test.js"
+    ]
+  },
+  {
+    "name": "X16-who-prune-removed",
+    "file": "src/net/online.js",
+    "old": "    if (this._who.size >= 256) for (const [k, t] of [...this._who]) if (now - t >= WHO_RETRY_MS) this._who.delete(k);",
+    "new": "",
+    "tests": [
+      "test/slam13.test.js"
+    ]
+  },
+  {
+    "name": "X17-posehz-floor",
+    "file": "src/net/online.js",
+    "old": "Math.round((POSE_HZ * POSE_CROWD) / peers)",
+    "new": "Math.floor((POSE_HZ * POSE_CROWD) / peers)",
+    "tests": [
+      "test/slam13.test.js",
+      "test/slam3.test.js"
+    ]
+  }
+]

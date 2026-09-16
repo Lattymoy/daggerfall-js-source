@@ -134,7 +134,7 @@
   },
   {
     "name": "S8-heartbeat-9000",
-    "file": "src/net/online.js",
+    "file": "src/net/wire.js",
     "old": "export const HEARTBEAT_MS = 5000;",
     "new": "export const HEARTBEAT_MS = 9000;",
     "tests": [

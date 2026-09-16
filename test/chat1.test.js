@@ -116,8 +116,8 @@ test('CHAT1 / AUDIT CHAT: the Room as a CHANNEL - a hello keeps the secret and n
   const r = fakeRoom(CHAT_WORLD_ROOM);
   const a = r.connect(), b = r.connect(), c = r.connect();
   await r.hello(a, 'aaaa-0001'); await r.hello(b, 'bbbb-0002', at(3, 3));
-  assert.deepEqual(a.sent, [{ t: 'welcome', id: 'aaaa-0001', peers: [] }]);
-  assert.deepEqual(b.sent, [{ t: 'welcome', id: 'bbbb-0002', peers: [] }], 'a channel has no roster: b is told no one though a is there');
+  assert.deepEqual(a.sent, [{ t: 'welcome', id: 'aaaa-0001', v: relay.RELAY_VERSION, peers: [] }]);   // SLAM13: the relay's version rides every welcome, a channel's too
+  assert.deepEqual(b.sent, [{ t: 'welcome', id: 'bbbb-0002', v: relay.RELAY_VERSION, peers: [] }], 'a channel has no roster: b is told no one though a is there');
   assert.equal(ofType(a, 'join').length, 0, 'and a hears no join');
   assert.equal(r.store.has('secret:aaaa-0001'), true, 'the secret is kept');
   assert.equal(r.store.has('look:aaaa-0001'), false, 'the look is not: nobody is drawn from a channel');
@@ -153,7 +153,10 @@ test('CHAT1 / AUDIT CHAT: the Room as a CHANNEL - a hello keeps the secret and n
   // the hello gate: deeper than a place's, never off (A1)
   const burst = fakeRoom(CHAT_WORLD_ROOM);
   const many = Array.from({ length: CHAT_HELLO_HZ_MAX + 10 }, () => burst.connect());
-  for (let i = 0; i < many.length; i++) await burst.hello(many[i], `peer-${String(i).padStart(4, '0')}`);
+  // SLAM13 (AUDIT SLAM C7): ONE INSTANT, on a held clock - the Room reads Date.now() itself, and under a slow runner
+  // this loop could straddle a millisecond and refill a token, admitting one hello more than "one instant" holds
+  const realNow = Date.now; const held = realNow(); Date.now = () => held;
+  try { for (let i = 0; i < many.length; i++) await burst.hello(many[i], `peer-${String(i).padStart(4, '0')}`); } finally { Date.now = realNow; }
   assert.equal(many.filter((ws) => ws.sent[0]?.t === 'welcome' && !ws.closed).length, CHAT_HELLO_HZ_MAX, 'CHAT_HELLO_HZ_MAX hellos in one instant are welcomed');
   assert.equal(many.filter((ws) => ws.closed?.code === 1013).length, 10, 'and the rest are refused busy: the gate is never off');
   assert.ok(CHAT_HELLO_HZ_MAX > HELLO_HZ_MAX, 'deeper than a place\'s: a channel\'s hello costs no roster');
@@ -640,7 +643,7 @@ test('CHAT1 / AUDIT CHAT: the host by source - world.js starts the chat with the
   // The LAW is unchanged and is what the slice asserts - the one meter runs on a channel's pose BEFORE the decline -
   // so the pin still reads the order, over a source with its comments stripped rather than around them.
   const bare = (src) => src.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, ' ');
-  assert.match(bare(room), /if \(m\.t === 'pose' \|\| m\.t === 'ping'\) \{\s*const chat = isChatRoom\(a\.key\);\s*const posed = m\.t === 'pose' && !chat;\s*const still = [^\n]*\s*const met = this\._meter\(ws, a, Date\.now\(\), \{ pose: posed \? m\.p : a\.pose \}[^\n]*\);\s*if \(!met\) return;\s*if \(m\.t === 'ping'\)[^\n]*\s*if \(chat\) return;/, 'AUDIT CHAT A3: a channel\'s pose is gated (the one meter, AUDIT WORLD A1) before it is declined');
+  assert.match(bare(room), /if \(m\.t === 'pose' \|\| m\.t === 'ping'\) \{\s*const chat = isChatRoom\(a\.key\);\s*const posed = m\.t === 'pose' && !chat;\s*const now = Date\.now\(\);\s*const still = [^\n]*\s*const met = this\._meter\(ws, a, now, \{ pose: posed \? m\.p : a\.pose \}[^\n]*\);\s*if \(!met\) return;\s*if \(m\.t === 'ping'\)[^\n]*\s*if \(chat\) return;/, 'AUDIT CHAT A3: a channel\'s pose is gated (the one meter, AUDIT WORLD A1) before it is declined');
   assert.match(room, /if \(other === ws \|\| chat \|\| inRange\(a\.key \?\? '', a\.pose, b\.pose\)\) this\._send\(other, out\);/, 'the fan: the sender, a channel\'s everyone, a place\'s range');
   assert.match(room, /const room = tokenGate\(this\._roomChat, now, CHAT_ROOM_HZ_MAX\);/, 'the room\'s own budget (A2)');
   const dial = rd('src/ui/pixelDial.js');

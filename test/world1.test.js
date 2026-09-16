@@ -136,7 +136,7 @@ test('WORLD1: the Room - the host is the hello\'d socket in the room longest, sa
   // a channel: no host frame business, no world
   const chat = fakeRoom('chat:world');
   const ch = chat.connect(); await chat.hello(ch, 'chat-0001');
-  assert.deepEqual(welcomeOf(ch), { t: 'welcome', id: 'chat-0001', peers: [] }, 'a channel\'s welcome is what it was');
+  assert.deepEqual(welcomeOf(ch), { t: 'welcome', id: 'chat-0001', v: relay.RELAY_VERSION, peers: [] }, 'a channel\'s welcome is what it was, plus the version SLAM13 put on every welcome');
 });
 
 function fakeSocketClass() {

@@ -105,11 +105,12 @@
 // WORLD5 (2026-09-13): THE SHARED CLOCK is a function of wall time (relay.js
 // sharedClassicMinutes) and needs no frame; the welcome carries the relay's
 // own `now` so a client corrects for its machine's clock. Nothing else here.
-import { roomOf, parseClient, inRange, poseGate, chatGate, tokenGate, rosterFor, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged } from './relay.js';
+import { roomOf, parseClient, inRange, poseGate, chatGate, tokenGate, rosterFor, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S } from './relay.js';
 
-/** AUDIT WORLD34 D4: the relay names itself in /health - the deploy is by hand (`npx wrangler deploy`), nothing in
- *  CI does it, and until now nothing said which relay was live. Bump it with every relay-changing slice. */
-export const RELAY_VERSION = 'world72';   // SLAM11: the memory push and the act fan borrow against their budgets and land whole
+/** AUDIT WORLD34 D4: the relay names itself in /health. SLAM13 (AUDIT SLAM A5): the name lives in net/wire.js now, so
+ *  the welcome can carry it and the client can see a skew; re-exported here because /health and the nine version
+ *  pins read it from the relay. */
+export { RELAY_VERSION };
 
 const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*' } });
 
@@ -367,7 +368,7 @@ export class Room {
       await this.state.storage.put(secretKey(m.id), m.secret);
       if (!chat) { await this.state.storage.put(lookKey(m.id), m.look); this._looks.set(m.id, m.look); }   // a channel keeps no look: nobody is drawn from it
       if (!this._setAttach(ws, { ...a, id: m.id, name: m.name, pose: chat ? null : m.pose, since: replaced?.since ?? now })) { this._refuse(ws, 'hello too large'); return; }
-      if (chat) { this._send(ws, JSON.stringify({ t: 'welcome', id: m.id, peers: [] })); return; }   // told no one, announced to no one: a channel has no roster
+      if (chat) { this._send(ws, JSON.stringify({ t: 'welcome', id: m.id, v: RELAY_VERSION, peers: [] })); return; }   // told no one, announced to no one: a channel has no roster
       // SLAM5 (2026-09-16, AUDIT SLAM): THE ROSTER IS CHOSEN BEFORE THE LOOKS ARE READ, and this was a hard wall.
       //
       // This used to read a look for EVERY hello'd socket - up to SOCKETS_MAX-1 = 255 keys in one
@@ -400,7 +401,8 @@ export class Room {
       // WORLD5: the relay's clock rides the welcome, so a client whose machine's clock is off reads the shared world time through the offset
       // AUDIT WORLD5 C11: stamped as the welcome is BUILT, not as the hello began - four storage awaits sit between the
       // two, and every millisecond of them was an offset the client carried as the relay's clock
-      const welcome = `{"t":"welcome","id":${JSON.stringify(m.id)},"peers":${JSON.stringify(roster)},"host":${JSON.stringify(host)},"world":${world ?? 'null'},"now":${Date.now()}}`;
+      // SLAM13 (AUDIT SLAM A5): and the relay's VERSION rides it (`v`), so a client built against another law can say so
+      const welcome = `{"t":"welcome","id":${JSON.stringify(m.id)},"v":${JSON.stringify(RELAY_VERSION)},"peers":${JSON.stringify(roster)},"host":${JSON.stringify(host)},"world":${world ?? 'null'},"now":${Date.now()}}`;
       if (!this._send(ws, welcome)) return;
       const join = JSON.stringify({ t: 'join', id: m.id, name: m.name, look: m.look, pose: m.pose });
       for (const [other, b] of [...this._all()]) if (other !== ws && b.id) this._send(other, join);
@@ -448,9 +450,22 @@ export class Room {
         // it lands whole and leaves its bucket in debt until the rate repays it - which is fine for a frame that is
         // handed to each socket ONCE and comes every WORLD_PUBLISH_MS. And it is its OWN bucket, because a 100 KiB
         // memory's debt would have blocked the foes STREAM it used to share a bucket with for seconds.
-        const budget = byteGate(this._roomWorld, now, out.length * unseen.length, FOES_ROOM_BYTES_PER_S, true);
-        this._roomWorld = budget.bucket;
-        if (budget.pass) for (const [other, b] of unseen) { this._setAttach(other, { ...b, worldSeen: true }); this._send(other, out); }
+        //
+        // SLAM13 (AUDIT SLAM A4): A LISTENER AT A TIME, not the whole fan as one charge. SLAM11 borrowed the fan whole,
+        // and whole is the memory times every unseen socket - the largest memory (WORLD_FRAME_MAX, 512 KiB) into a
+        // full room is 127 MiB queued onto sockets in ONE tick, which is the object's whole memory. Served one
+        // listener at a time, each charged as it goes and the debt bounded by ONE FRAME: the rate's worth of sockets
+        // (a second of FOES_ROOM_BYTES_PER_S, then one more) are handed the memory on this publish, the rest stay
+        // UNSEEN and are handed it on the next (WORLD_PUBLISH_MS, by which time the rate has repaid the debt in full).
+        // A 100 KiB memory reaches forty listeners a publish; a 20 KiB one, the whole room in one.
+        let bucket = this._roomWorld;
+        for (const [other, b] of unseen) {
+          const budget = byteGate(bucket, now, out.length, FOES_ROOM_BYTES_PER_S, true);
+          bucket = budget.bucket;
+          if (!budget.pass) break;   // in debt: the ones not yet served wait for the next publish, unseen
+          this._setAttach(other, { ...b, worldSeen: true }); this._send(other, out);
+        }
+        this._roomWorld = bucket;
       }
       return;
     }
@@ -533,9 +548,19 @@ export class Room {
       // self-healing: nothing re-sends it. It lands whole now and the bucket is in debt until the rate repays it -
       // at most one fan's worth, MAX_FRAME_BYTES x SOCKETS_MAX, four seconds of acts - and the frame gate beside it
       // (ACT_ROOM_HZ_MAX) still bounds how many come.
-      const bytes = byteGate(this._roomActBytes, now, out.length * listeners.length, ACT_ROOM_BYTES_PER_S, true);
+      // SLAM13 (AUDIT SLAM A1): THE SENDER'S OWN SHARE FIRST. A borrowing room bucket is one that ONE sender can hold
+      // in debt on purpose - the largest act into a full room is four seconds of the room's rate per frame, at
+      // ACT_HZ_MAX - and every other door in the room was refused while it did. So the fan is charged to the sender's
+      // own borrowing bucket (`abytes`, ACT_SENDER_BYTES_PER_S, on the attachment) before the room's, and a frame the
+      // sender's bucket refuses charges the room nothing; a frame the room refuses charges the sender nothing either,
+      // so an honest sender behind a flooder is not left paying for a door that never opened.
+      const cost = out.length * listeners.length;
+      const mine = byteGate(a.abytes, now, cost, ACT_SENDER_BYTES_PER_S, true);
+      if (!mine.pass) { this._setAttach(ws, { ...a, abytes: mine.bucket }); return; }
+      const bytes = byteGate(this._roomActBytes, now, cost, ACT_ROOM_BYTES_PER_S, true);
       this._roomActBytes = bytes.bucket;
-      if (!bytes.pass) return;
+      if (!bytes.pass) { this._setAttach(ws, { ...a, abytes: { bytes: mine.bucket.bytes + cost, at: now } }); return; }   // refilled, not charged
+      this._setAttach(ws, { ...a, abytes: mine.bucket });
       for (const [other] of listeners) this._send(other, out);
       return;
     }
@@ -579,7 +604,13 @@ export class Room {
       const posed = m.t === 'pose' && !chat;
       // SLAM8 (AUDIT SLAM): a KEEPALIVE is a pose the sender did not move (net/wire.js poseChanged, the client's own
       // law for not sending one). Read BEFORE the meter, because the meter overwrites `a.pose` with this very frame.
-      const still = posed && !!a.pose && !poseChanged(a.pose, m.p);
+      // SLAM13 (AUDIT SLAM A2): AND THE WHOLE FAN HAS A FLOOR. The port's client sends an unmoved pose every
+      // HEARTBEAT_MS and no sooner; a modified one sends them at the pose gate's ceiling, and each went to the whole
+      // room - 20 x 199 sends a second from one socket, beyond what the tier bounds a MOVER to. A keepalive is heard
+      // whole only when the sender's last whole fan (`kept`, on the PASS patch as `turn` is) is KEEPALIVE_FAN_MS
+      // old; inside the floor it is tiered like a move. An honest heartbeat always clears half its own period.
+      const now = Date.now();
+      const still = posed && !!a.pose && !poseChanged(a.pose, m.p) && now - (a.kept ?? 0) >= KEEPALIVE_FAN_MS;
       // SLAM6: `turn` is the sender's own pose counter, and the only state the far tier needs - which slice of the
       // listeners past POSE_FAN_MAX this pose serves. Masked, so an attachment a socket carries for a day stays small.
       // SLAM8: and it rides the PASS patch. `_meter` writes its ordinary patch back whether or not the gate passed, so
@@ -588,14 +619,15 @@ export class Room {
       // twice the gate the bucket settles into pass/fail alternation, so two of the four slices were never served and
       // half the far tier heard that sender no more. The port's own client cannot reach that rate; a modified one can,
       // and an event is where those turn up.
-      const met = this._meter(ws, a, Date.now(), { pose: posed ? m.p : a.pose }, posed ? { turn: ((a.turn | 0) + 1) & 0xffff } : {});
+      const met = this._meter(ws, a, now, { pose: posed ? m.p : a.pose }, posed ? { turn: ((a.turn | 0) + 1) & 0xffff, ...(still ? { kept: now } : {}) } : {});
       if (!met) return;   // over the rate: kept as the latest, not relayed
       if (m.t === 'ping') { this._send(ws, '{"t":"pong"}'); return; }   // a ping that reached the object (the runtime answers the exact one in its sleep)
       if (chat) return;   // a channel is no place: a pose there is kept by no one and reaches no one
       const out = JSON.stringify({ t: 'pose', id: a.id, p: m.p });
       // SLAM1: the fan is BOUNDED. A room's cost was N senders times N listeners, and the range cull does not help
       // the one case that matters - an event, where everybody stands in one place and every range test passes.
-      // Measured on this object: 91k sends a second at 96 players, and past about two hundred it cannot keep up.
+      // Measured on the fake object: 91k sends a second at 96 players (SLAM13 struck a claim here about where a real
+      // one stops; nothing has measured it - AUDIT SLAM C1).
       // SLAM6: the nearest POSE_FAN_MAX hear every pose and THE REST HEAR ONE IN POSE_FAR_SHARE, by turns. SLAM1
       // sent the rest nothing at all, so the silence law HID every sender from every listener past the bound -
       // measured at 200 in one town block, each player was seen by 32 and erased for 167. The bound is a rank, so

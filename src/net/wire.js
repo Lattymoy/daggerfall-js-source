@@ -248,6 +248,15 @@ export const ACT_ROOM_HZ_MAX = 30;
  *  the foes fan's ceiling. A door's honest traffic is a few kilobytes a second even in a full room, so this sits
  *  well above every real cascade and far below the hole. */
 export const ACT_ROOM_BYTES_PER_S = 1024 * 1024;
+/** SLAM13 (2026-09-16, AUDIT SLAM A1): ONE SENDER'S SHARE OF THE ACT FAN. SLAM11 made the room's act bucket borrow so
+ *  a big door lands whole - and a borrowing bucket is a bucket one sender can drive into debt on purpose: a modified
+ *  client sending the largest act (MAX_FRAME_BYTES) to a full room charged 16 KiB x 255 = 4 MiB against a 1 MiB rate,
+ *  four seconds of debt per frame, at ACT_HZ_MAX. Everyone else's doors, levers and chests were refused for as long as
+ *  it kept it up. So a sender's fan is charged to ITS OWN borrowing bucket first, at a sixteenth of the room's rate,
+ *  and only a frame its own bucket admits is charged to the room's: sixteen honest senders fill the room's rate
+ *  exactly, one flooder can hold at most a sixteenth of it, and an honest door (a few KiB to a room) still lands
+ *  whole and at once. */
+export const ACT_SENDER_BYTES_PER_S = ACT_ROOM_BYTES_PER_S / 16;
 /** AUDIT WORLD6b-iii(c) C3: the room's HIT bytes a second, fanned - the hit frame carries a corpse's GRANT since
  *  WORLD6b-iii(c) (up to a frame's worth of items), so the arm that was a 150-byte control channel is a bulk one and
  *  counts its bytes as the foes and the acts do (AUDIT WORLD3 A1's law); over it a blow is dropped, nobody struck. */
@@ -475,8 +484,9 @@ export function validSharedFoe(sf) {
  *
  *  A pose reaches everyone a room holds within range, so a room's cost is N senders times N listeners - measured over
  *  the real Room on the fake Durable Object, a crowd standing together costs 2.4k sends a second at 16 players,
- *  22.6k at 48 and 91.2k at 96, and one object stops keeping up somewhere around two hundred. RANGE DOES NOT SAVE
- *  IT: the cull is why a cell is cheap when the country is spread out, and an event is precisely everybody
+ *  22.6k at 48 and 91.2k at 96 (SLAM13 struck a clause here that claimed to know where a real object stops keeping
+ *  up; the fake carries no such limit and nothing has measured the deployed one - see AUDIT SLAM C1). RANGE DOES NOT
+ *  SAVE IT: the cull is why a cell is cheap when the country is spread out, and an event is precisely everybody
  *  converging on one spot, where every range test passes.
  *
  *  What saves it is that nobody can SEE two hundred people at once. A name stops at NAME_RANGE (60 scene units), at
@@ -505,9 +515,34 @@ export const POSE_FAN_MAX = 32;
  *  unbounded - and against SLAM1's 25.6k, which bought the saving by hiding 84% of the room from each sender. Run
  *  over this law across a 30-second standing, uniform and packed alike: 59.0k a second, every one of the 199
  *  listeners heard the man in the middle, and the longest any of them went without him was 1000ms, exactly
- *  GAP_MAX_MS. At SOCKETS_MAX (256) the same sum is 89.9k, beside the 91.2k at 96 players SLAM1 observed a real
- *  object carry. */
+ *  GAP_MAX_MS. At SOCKETS_MAX (256) the same sum is 89.9k - a sum over the law, on the fake; what a deployed object
+ *  carries is unmeasured (AUDIT SLAM C1). */
 export const POSE_FAR_SHARE = 4;
+
+/** A pose goes out at least this often, moved or not: the socket's keepalive and the peers' clock. SLAM13 moved it
+ *  here from net/online.js, because the relay's keepalive floor (KEEPALIVE_FAN_MS) is a fraction of it and the two
+ *  must never be tuned apart. */
+export const HEARTBEAT_MS = 5000;
+/** SLAM13 (2026-09-16, AUDIT SLAM A2): A KEEPALIVE IS HEARD BY THE WHOLE CROWD AT MOST THIS OFTEN. SLAM8 fans an
+ *  unmoved pose to everyone in range, untiered, because a standing player's heartbeat is the one frame whose whole job
+ *  is to be heard - and it assumed that frame comes every HEARTBEAT_MS, which is what the port's client does. A
+ *  modified client sends unmoved poses at the pose gate's ceiling (POSE_HZ_MAX, 20 Hz), and every one of them went to
+ *  the whole room: 20 x 199 = 3,980 sends a second from ONE socket, 40x what a standing player costs and beyond what
+ *  the tier bounds a mover to. So the whole fan is served to a keepalive only when the sender's LAST whole fan is at
+ *  least this old; a keepalive inside the floor is tiered like a move. Half the heartbeat, so an honest client's
+ *  every heartbeat still clears it with a late one's jitter to spare, and a flood buys nothing past 2 whole fans a
+ *  second. The standing margin SLAM8 asserted holds: the whole fan still comes at every heartbeat. */
+export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
+
+/** AUDIT WORLD34 D4: the relay names itself in /health - the deploy is by hand (`npx wrangler deploy`), nothing in
+ *  CI does it, and until now nothing said which relay was live. Bump it with every relay-changing slice; since SLAM8
+ *  test/relayversion.test.js binds each version to the bytes of the law and fails until the bump is made.
+ *
+ *  SLAM13 (2026-09-16, AUDIT SLAM A5): moved here from server/src/index.js so BOTH ENDS know the name. The welcome
+ *  carries it (`v`), and a client whose wire.js was built against another version says so on the console: the client
+ *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
+ *  now nothing on either end could see it. */
+export const RELAY_VERSION = 'world73';   // SLAM13: the keepalive floor, the sender's act share, the memory served a listener at a time, the yaw seam, the version in the welcome
 
 /** The listeners sorted by distance from `from`, nearest first; one with no pose yet sorts last, because a peer that
  *  has never said where it is cannot be near. The ordering is Euclidean in the POSE'S OWN FRAME, which is a cell's
@@ -571,11 +606,16 @@ export function poseFan(list, from, poseOf, turn = 0, keyOf = (x) => x?.id, max 
  *  Exact equality would not do. A player standing still with a hand on the mouse drifts by less than `eps`, which this
  *  calls unmoved and `sendPose` therefore does not send - until the heartbeat, which carries those drifted numbers. A
  *  relay comparing fields byte-for-byte would see a MOVE, tier the keepalive, and hand that player straight back the
- *  bug this slice exists to close. The epsilon is the law; the bytes are not. */
+ *  bug this slice exists to close. The epsilon is the law; the bytes are not.
+ *
+ *  SLAM13 (AUDIT SLAM A3): and the yaw is compared as an ANGLE. `validPose` wraps the relay's copy into (-PI, PI], so a
+ *  player facing due south (yaw = PI) who drifts a hair's breadth reads +3.14 one heartbeat and -3.14 the next - a
+ *  difference of 2PI where the eyes see none. The bare difference tiered that player's every keepalive, which is
+ *  SLAM8's bug back for one heading; wrapAngle of the difference is the distance between two headings. */
 export function poseChanged(a, b, eps = 0.01) {
   if (!a || !b) return true;
   return Math.abs(a.x - b.x) > eps || Math.abs(a.y - b.y) > eps || Math.abs(a.z - b.z) > eps
-    || Math.abs(a.yaw - b.yaw) > eps || Math.abs(a.pitch - b.pitch) > eps || (a.mv | 0) !== (b.mv | 0)
+    || Math.abs(wrapAngle(a.yaw - b.yaw)) > eps || Math.abs(a.pitch - b.pitch) > eps || (a.mv | 0) !== (b.mv | 0)   // SLAM13: the yaw difference is WRAPPED - the relay keeps the pose the door wrapped into (-PI, PI], and a player standing at the seam drifts across it by 2PI, which the bare difference called a move
     || (a.wd | 0) !== (b.wd | 0) || (a.an | 0) !== (b.an | 0)   // MAC7 #1: a draw and a swing go out at once, as a step does
     || (a.am | 0) !== (b.am | 0) || (a.sr | 0) !== (b.sr | 0) || (a.cn | 0) !== (b.cn | 0);   // MAC7 #2: and the arrow, the spell stance, the cast
 }

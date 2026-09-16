@@ -44,8 +44,8 @@
   {
     "name": "U4-world-back-on-foes-bucket",
     "file": "server/src/index.js",
-    "old": "        const budget = byteGate(this._roomWorld, now, out.length * unseen.length, FOES_ROOM_BYTES_PER_S, true);\n        this._roomWorld = budget.bucket;",
-    "new": "        const budget = byteGate(this._roomFoes, now, out.length * unseen.length, FOES_ROOM_BYTES_PER_S, true);\n        this._roomFoes = budget.bucket;",
+    "old": "        let bucket = this._roomWorld;\n        for (const [other, b] of unseen) {\n          const budget = byteGate(bucket, now, out.length, FOES_ROOM_BYTES_PER_S, true);\n          bucket = budget.bucket;\n          if (!budget.pass) break;   // in debt: the ones not yet served wait for the next publish, unseen\n          this._setAttach(other, { ...b, worldSeen: true }); this._send(other, out);\n        }\n        this._roomWorld = bucket;",
+    "new": "        let bucket = this._roomFoes;\n        for (const [other, b] of unseen) {\n          const budget = byteGate(bucket, now, out.length, FOES_ROOM_BYTES_PER_S, true);\n          bucket = budget.bucket;\n          if (!budget.pass) break;   // in debt: the ones not yet served wait for the next publish, unseen\n          this._setAttach(other, { ...b, worldSeen: true }); this._send(other, out);\n        }\n        this._roomFoes = bucket;",
     "tests": [
       "test/slam11.test.js",
       "test/auditworld3.test.js",
@@ -58,8 +58,8 @@
   {
     "name": "U5-world-no-borrow",
     "file": "server/src/index.js",
-    "old": "out.length * unseen.length, FOES_ROOM_BYTES_PER_S, true);",
-    "new": "out.length * unseen.length, FOES_ROOM_BYTES_PER_S);",
+    "old": "const budget = byteGate(bucket, now, out.length, FOES_ROOM_BYTES_PER_S, true);",
+    "new": "const budget = byteGate(bucket, now, out.length, FOES_ROOM_BYTES_PER_S);",
     "tests": [
       "test/slam11.test.js",
       "test/auditworld3.test.js",
@@ -72,8 +72,8 @@
   {
     "name": "U6-act-no-borrow",
     "file": "server/src/index.js",
-    "old": "out.length * listeners.length, ACT_ROOM_BYTES_PER_S, true);",
-    "new": "out.length * listeners.length, ACT_ROOM_BYTES_PER_S);",
+    "old": "const bytes = byteGate(this._roomActBytes, now, cost, ACT_ROOM_BYTES_PER_S, true);",
+    "new": "const bytes = byteGate(this._roomActBytes, now, cost, ACT_ROOM_BYTES_PER_S);",
     "tests": [
       "test/slam11.test.js",
       "test/auditworld3.test.js",
@@ -100,8 +100,8 @@
   {
     "name": "U8-latched-though-refused",
     "file": "server/src/index.js",
-    "old": "        if (budget.pass) for (const [other, b] of unseen) { this._setAttach(other, { ...b, worldSeen: true }); this._send(other, out); }",
-    "new": "        for (const [other, b] of unseen) { this._setAttach(other, { ...b, worldSeen: true }); if (budget.pass) this._send(other, out); }",
+    "old": "          if (!budget.pass) break;   // in debt: the ones not yet served wait for the next publish, unseen\n          this._setAttach(other, { ...b, worldSeen: true }); this._send(other, out);",
+    "new": "          this._setAttach(other, { ...b, worldSeen: true }); if (!budget.pass) break;\n          this._send(other, out);",
     "tests": [
       "test/slam11.test.js",
       "test/auditworld3.test.js",

@@ -52,7 +52,10 @@ test('SLAM8: a KEEPALIVE reaches every listener in range, tier or no tier - the 
   const n = POSE_FAN_MAX + 28;
   const { r, ws } = await crowd(n);
   const still = at(0, 0);
-  for (let k = 0; k < POSE_FAR_SHARE; k++) await r.pose(ws[0], still);   // the same pose, as sendPose really repeats it
+  // the same pose, as sendPose really repeats it - and AT THE HEARTBEAT, as sendPose really spaces it (SLAM13 put a
+  // floor of KEEPALIVE_FAN_MS under the whole fan, so a keepalive burst is tiered like motion; see slam13.test.js)
+  const realNow = Date.now; let clock = realNow(); Date.now = () => clock;
+  try { for (let k = 0; k < POSE_FAR_SHARE; k++) { clock += HEARTBEAT_MS; await r.pose(ws[0], still); } } finally { Date.now = realNow; }
   const each = ws.slice(1).map(posesIn);
   assert.equal(each.filter((c) => c > 0).length, n - 1, 'every listener in the room heard the standing sender');
   assert.equal(Math.min(...each), POSE_FAR_SHARE, 'and heard EVERY heartbeat, not one in POSE_FAR_SHARE of them');
@@ -78,8 +81,11 @@ test('SLAM8: and a MOVING sender is still tiered - the saving SLAM6 bought is no
 test('SLAM8: the silence law is what makes this a law, and one lost heartbeat must not hide a peer - the standing margin is real and is asserted on the STANDING rate (mutants: HEARTBEAT_MS 5000 -> 9000, which survived the whole suite before this; PEER_TIMEOUT_MS cut to 5000)', () => {
   assert.equal(relay.poseChanged, poseChanged, 'one home, both ends - the client decides "I did not move" and the relay must agree');
   assert.equal(sessionPoseChanged, poseChanged, 'and the session re-exports that same one');
-  // THE TRAP, written down: tiering a keepalive costs exactly the whole timeout, which is why the law above exists
-  assert.ok(HEARTBEAT_MS * POSE_FAR_SHARE >= PEER_TIMEOUT_MS, 'a tiered keepalive would be heard no sooner than the silence law hides it - so it is never tiered');
+  // THE TRAP, written down (SLAM13 reworded it - the line used to ASSERT the hazard's presence, so a smaller share that
+  // removed the hazard would have failed the pin): a tiered keepalive is heard once in POSE_FAR_SHARE heartbeats,
+  // which at these numbers is PEER_TIMEOUT_MS to the millisecond - the whole reason a keepalive is fanned untiered.
+  // The pin is that the untiered fan comes at least once a heartbeat, so a standing peer is heard at every one.
+  assert.ok(relay.KEEPALIVE_FAN_MS <= HEARTBEAT_MS, `a keepalive is heard whole at least every heartbeat (floor ${relay.KEEPALIVE_FAN_MS} <= ${HEARTBEAT_MS})`);
   // THE MARGIN, on the rate a standing peer really keeps: heard at least three times before it could be hidden, so
   // neither one nor two lost heartbeats can erase somebody from a room they are standing in
   assert.ok(PEER_TIMEOUT_MS / HEARTBEAT_MS >= 3, `a standing peer is heard ${PEER_TIMEOUT_MS / HEARTBEAT_MS}x before the silence law could hide it`);

@@ -26,9 +26,13 @@ for (const listPath of process.argv.slice(2)) {
     const bak = m.file + '.mutbak';
     copyFileSync(m.file, bak);
     try {
-      writeFileSync(m.file, src.replace(m.old, m.new));
-      const r = spawnSync('node', ['--test', ...m.tests], { encoding: 'utf8' });
-      const failing = (r.stdout.match(/^not ok/gm) ?? []).length;
+      writeFileSync(m.file, src.replace(m.old, () => m.new));   // a function replacer: `$&`/`$1` in `new` are text, not patterns
+      // AUDIT (final lens C): the default 1 MiB maxBuffer is smaller than a whole-suite TAP, and a child killed by
+      // ENOBUFS has status null - which this harness once read as "dead (0 failing)". A harness error is neither a
+      // death nor a survival; it is reported as itself and fails the run.
+      const r = spawnSync('node', ['--test', ...m.tests], { encoding: 'utf8', maxBuffer: 1 << 28 });
+      const failing = ((r.stdout ?? '').match(/^not ok/gm) ?? []).length;
+      if (r.error || r.status === null) { console.log(`  ${m.name}: HARNESS ERROR (${r.error?.code ?? 'no exit status'}) - not a verdict`); noapply++; continue; }
       if (m.equivalent) {
         if (r.status === 0) { console.log(`  ${m.name}: equivalent, as recorded - ${m.why ?? ''}`); equivalent++; }
         else { console.log(`  ${m.name}: recorded as equivalent but DIED (${failing} failing) - the record is stale`); stale++; }
@@ -41,4 +45,4 @@ for (const listPath of process.argv.slice(2)) {
   }
 }
 console.log(`\n${dead} dead, ${survived} survived, ${equivalent} equivalent as recorded, ${stale} stale records, ${noapply} did not apply`);
-process.exit(survived || noapply || stale ? 1 : 0);
+process.exit(survived || noapply || stale ? 1 : 0);   // noapply counts harness errors too

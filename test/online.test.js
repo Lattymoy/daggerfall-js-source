@@ -144,9 +144,15 @@ test('ONLINE1: the session over a fake socket, on its own clock - hello on open,
   // the welcome merges: a reconnect keeps where a known peer is drawn
   s.peers.get('bob-0001').shown = pose(22.5);
   sockets[0].receive({ t: 'welcome', id: 'mac-0001', peers: [{ id: 'bob-0001', name: 'Bob', look: {}, pose: pose(30) }] });
-  assert.equal(s.peers.size, 1, 'Zed, not in the roster, is gone'); assert.equal(s.peers.get('bob-0001').from.x, 22.5, 'Bob eases from where he was drawn');
+  // SLAM14 (AUDIT SLAM FINAL B2): Zed, not in the roster, is UNCONFIRMED - the roster names the nearest, not the present
+  assert.equal(s.peers.size, 2, 'Zed, not in the roster, is kept'); assert.deepEqual(Object.keys(s.peers.get('zed-0001').unconfirmed), [s.room], 'stamped unconfirmed for this room');
+  assert.equal(s.peers.get('bob-0001').from.x, 22.5, 'Bob eases from where he was drawn');
+  now = s.peers.get('zed-0001').seenAt + PEER_TIMEOUT_MS + 1; s.tick();
+  assert.equal(s.peers.size, 1, 'and Zed, unconfirmed and silent past the timeout, is gone');
   // the relay's frames are checked by the wire's own law
-  sockets[0].receive({ t: 'welcome', peers: 5 }); assert.equal(s.peers.size, 0, 'a roster that is not a list: no peers, no throw');
+  sockets[0].receive({ t: 'welcome', peers: 5 }); assert.equal(s.peers.size, 1, 'a roster that is not a list: nobody named, no throw - and (SLAM14) nobody dropped for it');
+  assert.ok(s.peers.get('bob-0001').unconfirmed, 'Bob is unconfirmed by it, as by any roster that does not name him');
+  sockets[0].receive({ t: 'leave', id: 'bob-0001' }); assert.equal(s.peers.size, 0, 'a leave takes him at once');
   sockets[0].receive({ t: 'join', id: 'bob-0001', name: '<b>Bob☃</b>', look: null, pose: { x: 'NaN-town' } });
   assert.equal(s.peers.get('bob-0001').name, '<b>Bob</b>', 'the name sanitized as the relay would'); assert.equal(s.peers.get('bob-0001').pose, null, 'a pose that is not one: none');
   sockets[0].receive({ t: 'pose', id: 'bob-0001', p: { x: 1, y: 0, z: 0, yaw: 0, pitch: 0 } }); assert.equal(s.peers.get('bob-0001').pose.mv, 0, 'mv defaulted');

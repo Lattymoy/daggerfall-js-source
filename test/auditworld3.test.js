@@ -73,15 +73,21 @@ test('AUDIT WORLD3 A: the relay - the act fan spends a BYTE budget (the frame ti
   r.room._roomActBytes = { bytes: -10, at: Date.now() + 60_000 };   // in DEBT (stamped ahead so nothing refills it)
   await r.raw(j1, frame);
   assert.equal(ofType(h, 'act').length, 1, 'A1/SLAM11: a bucket in debt - dropped'); assert.equal(j1.closed, null, 'and no strike');
-  r.room._roomActBytes = { bytes: 10, at: Date.now() + 60_000 };   // nearly spent but NOT in debt
-  await r.raw(j1, frame);
-  assert.equal(ofType(h, 'act').length, 2, 'SLAM11: not in debt - the act lands whole...');
-  assert.ok(r.room._roomActBytes.bytes < 0, '...and the bucket is in debt by the overshoot');
-  await r.raw(j1, frame);
-  assert.equal(ofType(h, 'act').length, 2, 'and the next one waits');
-  r.room._roomActBytes = { bytes: 10, at: Date.now() - 1000 };   // a second on: refilled
-  await r.raw(j1, frame);
-  assert.equal(ofType(h, 'act').length, 3, 'refilled: fanned');
+  // SLAM13: ON A HELD CLOCK. A landed frame re-stamps the bucket at the frame's own `now` (byteGate's `at: nowMs`),
+  // so under a real clock the next send, one millisecond on, refilled 1048 bytes - more than the ~500 of debt - and
+  // 'the next one waits' flaked green-then-red about one run in five. The law is in the numbers, not the scheduler.
+  const realNow = Date.now; let clock = realNow(); Date.now = () => clock;
+  try {
+    r.room._roomActBytes = { bytes: 10, at: clock };   // nearly spent but NOT in debt
+    await r.raw(j1, frame);
+    assert.equal(ofType(h, 'act').length, 2, 'SLAM11: not in debt - the act lands whole...');
+    assert.ok(r.room._roomActBytes.bytes < 0, '...and the bucket is in debt by the overshoot');
+    await r.raw(j1, frame);
+    assert.equal(ofType(h, 'act').length, 2, 'and the next one waits');
+    r.room._roomActBytes = { bytes: 10, at: clock - 1000 };   // a second on: refilled
+    await r.raw(j1, frame);
+    assert.equal(ofType(h, 'act').length, 3, 'refilled: fanned');
+  } finally { Date.now = realNow; }
   // the frame budget is still there beside it
   r.room._roomActs = { tokens: 0, at: Date.now() + 60_000 };   // stamped ahead: tokenGate refills on the clock too (see A1 above)
   await r.raw(j1, frame);

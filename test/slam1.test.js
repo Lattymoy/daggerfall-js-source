@@ -3,7 +3,8 @@
 //
 // A pose reached everyone in the room within range, so one Durable Object's cost was N senders times N listeners.
 // MEASURED over the real Room on the fake DO, a crowd standing together: 2.4k sends a second at 16 players, 22.6k
-// at 48, 91.2k at 96 - clean quadratic - and past about two hundred one object cannot keep up.
+// at 48, 91.2k at 96 - clean quadratic. (SLAM13 struck a clause here that claimed to know where a real object stops
+// keeping up: the fake carries no such limit and nothing has measured the deployed one - AUDIT SLAM FINAL C1.)
 //
 // THE RANGE CULL DOES NOT SAVE IT, which is the finding that killed the first fix proposed for this. The cull is why
 // a cell is cheap when the country is spread out; an event is everybody converging on ONE SPOT, where every range

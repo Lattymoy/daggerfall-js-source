@@ -5150,7 +5150,7 @@ mutations, 10 dead.**
 **NOT SEEN ON THE REAL RELAY.** Every number here is this container's
 CPU against the fake Durable Object. A Workers isolate is not this
 machine; treat the SHAPE (quadratic, then linear) as the finding and the
-absolute milliseconds as optimistic. `RELAY_VERSION` is `world72`, and the
+absolute milliseconds as optimistic. `RELAY_VERSION` is `world67` (this line first read `world72`: the later slices' version-bump seds relabelled it - the same in-place rewrite the ledger pin forbids for its rows, caught by the final audit), and the
 relay must be deployed for any of this to be true in production.
 
 
@@ -5425,7 +5425,7 @@ forever). A **foes** frame is still the introduction's: a pose is one
 figure standing where it says it is, a pool is a world, and AUDIT WORLD6b
 A8/C6 holds unchanged.
 
-`RELAY_VERSION` is `world72`. **The relay must be deployed by hand for
+`RELAY_VERSION` is `world68` (this line first read `world72`: the later slices' version-bump seds relabelled it - the same in-place rewrite the ledger pin forbids for its rows, caught by the final audit). **The relay must be deployed by hand for
 any of this to be true in the room** - nothing in CI deploys it.
 
 **Pinned** in `test/slam6.test.js` (6) and in the two re-aimed SLAM1
@@ -5832,7 +5832,7 @@ intervals (1000 → 500 → 250, pinned), growth is unbounded as before so a
 silence still ceilings rather than crawls, and the steady state is
 untouched.
 
-`RELAY_VERSION` is `world72`; the version bump was run with
+`RELAY_VERSION` is `world71` (this line first read `world72`: the later slices' version-bump seds relabelled it - the same in-place rewrite the ledger pin forbids for its rows, caught by the final audit); the version bump was run with
 `test/relayversion.test.js` excluded, as that file now says to.
 
 **Pinned** in `test/slam10.test.js` (5) and in two re-aimed `slam6` pins
@@ -5892,7 +5892,7 @@ this room size - is the sender's to chunk, and is recorded below.
 
 `RELAY_VERSION` is `world72`.
 
-**Pinned** in `test/slam11.test.js` (5): the plain bucket's cliff (so the
+**Pinned** in `test/slam11.test.js` (6, the sixth added by PINS - the refused push): the plain bucket's cliff (so the
 reason for borrowing stays true), the borrowing bucket's four laws, the
 memory landing past the old cliff on its own bucket once each, the act
 landing and waiting, and the foes fan *not* borrowing. `auditworld3`'s act
@@ -5979,9 +5979,12 @@ fail:
 
 - **S1** `POSE_FAN_MAX` 32 → 8: every pin was written in terms of the
   constant. It is 32 now by assertion, with its reason, and it is pinned
-  *above* `POSE_CROWD` - which the far-tier derivation silently depended
-  on and nothing stated: a room under the crowd threshold is never over
-  the bound, so the share only had to hold at `POSE_HZ_MIN`.
+  *above* `POSE_CROWD`. (The final audit corrected the rationale this line
+  first gave: the share's derivation `POSE_HZ_MIN × GAP_MAX_MS / 1000`
+  depends on the floor rate alone, not on the bound's place against the
+  crowd threshold. The pin is kept - a bound under the threshold would tier
+  a room the rate law leaves at full speed - but it is not a premise of the
+  derivation.)
 - **S3** the backoff cap removed: driven to eight drops, the wait sits on
   `BACKOFF_MAX_MS` and stays.
 - **S4** `poseHzFor` `round` → `floor`: `poseHzFor(32)` is 8, not 7.
@@ -6035,3 +6038,228 @@ committing the lists, made by the lists.
 SLAM1-SLAM7's mutation sets predate the harness and are not recoverable
 verbatim; their counts stand in this record as they were run, and the
 thirteen survivors the audit found among them are the ones closed above.
+
+## AUDIT SLAM FINAL (2026-09-16) - three lenses over SLAM8..PINS, the merge gate
+
+Mac: "Do one more audit before we merge. Needs to be perfect." Three
+lenses, the same three as AUDIT SLAM (A the relay and the wire, B the
+client, C the harness, the pins and the record), over everything from
+SLAM8 to PINS. The verdict was NOT READY on lens A, READY WITH ONE CLAUSE
+on lens B, and a list on lens C. What each found, and where it is paid:
+
+**Lens A - the relay (paid in SLAM13).** A1 the act fan's borrow was one
+sender's to hold - a modified client sending the largest act to a full
+room put the room's bucket four seconds in debt per frame, at
+`ACT_HZ_MAX`, and every other door was refused while it did. A2 the
+keepalive's whole fan had no floor - SLAM8 fans an unmoved pose to
+everyone because the port's client sends one every `HEARTBEAT_MS`; a
+modified client sends them at `POSE_HZ_MAX`, 20 x 199 sends a second from
+one socket. A3 `poseChanged` compared the yaw bare across the -PI/PI seam
+`validPose` wraps into, so a player facing due south had every keepalive
+tiered - SLAM8's bug back for one heading. A4 the memory push borrowed the
+whole fan: the largest memory into a full room is 127 MiB queued in one
+tick, the object's whole memory. A5 a version skew was invisible from both
+ends: the client ships by CI and the relay by hand, `main` is `world66`
+(the relay that dies at the 130th hello), and nothing on either end could
+see the disagreement. A6 (recorded, not paid): a mover's STOP pose - the
+first unmoved one - is tiered like a move, so a far listener may ease a
+peer to a place it never went for up to `GAP_MAX_MS`; the next heartbeat
+corrects it. Judged tolerable: one second, once, and only past the bound.
+
+**Lens B - the client (SLAM14).** B1 `heardIn` is set once, on the first
+stranger's pose, and never refreshed for a known untold peer - so an ask
+can go to a room it has left. B2 a reconnect's welcome `_unmember`s the
+135 of 199 the roster does not name, blanking them for a round trip; they
+should be stamped unconfirmed and dropped only if no pose follows. B3 a
+`_known` look is stood as told and never re-asked, so a peer that changed
+its gear between rooms keeps its old look; and the comment "a peer that
+changes its gear re-hellos" is false - nothing re-hellos on a gear change.
+B4/B5 (recorded): `_needed`'s worn half is redundant with `wanted`; the
+`dollFor` orphan-texture release is right but unpinned. B6 `lookKey(null)`
+recomputes each time; a constant.
+
+**Lens C - the harness, the pins, the record.** C1 the one number nobody
+has: what a deployed Durable Object carries. The fake has no limit, every
+"sends a second" in this record is arithmetic over the law, and the lines
+that claimed to know where a real object stops ("past about two hundred it
+cannot keep up", "observed a real object carry") were struck by SLAM13.
+**Mac must load-probe the deployed worker** - 200 walking clients against
+`/health`'s `world73` - before Sunday; nothing in this repo can. C2 the
+version pin goes red at merge because `main`'s `wire.js` differs - mint
+the next version at the merge commit, do not relabel. C3 `main`'s
+`rosterRows` must skip `told === false`. C4 = B2. C6 `tools/mutate.mjs`
+read a child killed by ENOBUFS (status null) as "dead": hardened - a
+function replacer, `maxBuffer` 256 MiB, a null status is HARNESS ERROR and
+fails the run. C7 `chat1`'s hello burst read the real clock - held now.
+Survivors the lens found: the relay hash covered two files while the
+bundle is four (paid: the import graph); the world bucket's rate and
+refill cap unpinned (paid); the halo welcome-reset unpinned (SLAM14); the
+`dollFor` release arguments unpinned (SLAM14); `_who`'s bound unpinned
+(paid); `poseHzFor(33)` (paid). Record errors, corrected: SLAM1/6/10's
+version lines relabelled by the seds; SLAM11's pinned count; PINS S1's
+rationale; `slam8:82` asserted the HAZARD's presence (a smaller share
+would have failed the pin) - reworded to pin the law; the act-debt bound
+`<=` needed slack (the SLAM11 pin asserts `< 0` and the SLAM13 pin `>
+-frame`); the `relayversion` row's "4 mutations" had no committed list
+(it has: `tools/mutants/relayversion.json`, 5 dead).
+
+## SLAM13 - THE FINAL LENS'S RELAY FINDINGS (2026-09-16, AUDIT SLAM FINAL)
+
+Five holes in law the slams before it wrote, each one a modified client or
+a large room could put a full room through. `RELAY_VERSION` is `world73`.
+
+**A1 THE SENDER'S SHARE.** `ACT_SENDER_BYTES_PER_S` = a sixteenth of
+`ACT_ROOM_BYTES_PER_S` (64 KiB/s), a borrowing bucket on the sender's
+attachment (`abytes`), charged BEFORE the room's. A frame the sender's
+bucket refuses charges the room nothing; a frame the room refuses charges
+the sender nothing (its bucket is refilled, not charged) - an honest
+sender behind a flooder does not pay for a door that never opened. Sixteen
+honest senders fill the room's rate exactly; one flooder holds at most a
+sixteenth of it; an honest door - a few KiB to a room - lands whole and at
+once. Driven: a 15 KiB act to 63 listeners (945 KiB a fan, past both
+rates) lands whole and puts its sender in debt; the second is refused by
+the sender's share and the room's bucket is untouched to the byte; an
+honest door from somebody else lands for everyone.
+
+**A2 THE KEEPALIVE FLOOR.** `KEEPALIVE_FAN_MS` = `HEARTBEAT_MS / 2`. A
+keepalive is fanned whole only when the sender's last whole fan (`kept`,
+stamped on the PASS patch as `turn` is, so a gate-refused pose that
+reached nobody does not restart the floor) is that old; inside the floor
+it is tiered like a move. Half the heartbeat so an honest client's every
+heartbeat clears it with jitter to spare; a flood buys at most two whole
+fans a second. `HEARTBEAT_MS` moved to `wire.js` so the floor and the
+period cannot be tuned apart; `online.js` re-exports it. Driven: four
+identical keepalives in one instant - the nearest hear four, the far tier
+hears the first whole and a share of the rest; a heartbeat later, whole
+again for everyone; half a heartbeat later, whole again. And the pass
+patch: a walk drains the gate, a keepalive is refused, the next honest one
+is heard whole by all 59.
+
+**A3 THE YAW SEAM.** `poseChanged` compares
+`Math.abs(wrapAngle(a.yaw - b.yaw))`. Driven at the wire (0.002 rad
+across the seam is unmoved; a half turn is a turn; a full winding is no
+heading) and at the relay (a standing player facing due south, drifting
+across the seam every heartbeat, is heard by the farthest listener at
+every one).
+
+**A4 A LISTENER AT A TIME.** The memory push charges its bucket per
+listener and stops at the first refusal; the ones not served stay UNSEEN
+for the next publish (`WORLD_PUBLISH_MS`, by which time the rate has
+repaid the debt). The debt is never deeper than one frame. A 100 KiB
+memory reaches forty listeners a publish, a 20 KiB one the whole room in
+one; the largest (512 KiB) reaches nine. Driven with a 480 KiB memory into
+19 listeners: 9 served (a second of the rate plus one on the borrow), the
+debt under one frame and exactly `FOES_ROOM_BYTES_PER_S - 9 x frame`, the
+served latched and nobody else; a minute idle refills one second's worth,
+not sixty; the rest on the following publishes, nobody twice. SLAM11's
+"every one of the 63 handed it on one publish" is re-aimed to the rate: 38
+this publish, all 63 by the next.
+
+**A5 THE VERSION IN THE WELCOME.** `RELAY_VERSION` lives in `wire.js`
+(index.js re-exports it for `/health` and the nine pins), and every
+welcome - a place room's and a channel's - carries it as `v`. The session
+compares it with the `RELAY_VERSION` it was built with and says a skew
+ONCE on the console and on `statusLine` while it stands
+(`VERSION_WARNING`: "the relay is running another version than this
+client - reload, or the relay needs deploying"); a matching welcome clears
+it; a welcome with no `v` is a relay older than world73 and is said as
+"unversioned". Nothing is refused: a skew is news, not a fault, and the
+old law still walks.
+
+**THE RELAY'S LAW IS THE BUNDLE.** `test/relayversion.test.js` hashes the
+worker's import graph from `server/src/index.js` (relay.js, wire.js,
+world/mat4.js), pins the graph, and from world73 records that hash. The
+rows before it stay under their day's two-file hash.
+
+**Struck.** The three lines claiming to know where a real object stops
+(`wire.js` x2, `index.js`), and `slam1`'s header and Testing.md row that
+repeated it.
+
+**Pins.** `test/slam13.test.js` (11): one home for the numbers, the seam
+at the wire and the relay, the burst tiered and the heartbeat whole, the
+pass-patch `kept`, the sender's share both ways, the listener-at-a-time
+push with its rate and cap, the version in both welcomes, the session's
+warning said once and cleared, and the final lens's small survivors (the
+`_who` prune, `poseHzFor(33) === 7`, `byteGate`'s cap). Re-aimed:
+`slam8` (keepalives at the heartbeat, on a held clock; the inverted trap
+line), `slam11` (the rate, not the whole room), `chat1`/`world5`/
+`online_relay` (the welcome carries `v`; the hello burst on a held clock),
+`auditworld3` (its act-debt lines on a held clock - the pin re-stamped the
+bucket at `now` and flaked one run in five under a real one). Mutants:
+`tools/mutants/slam13.json` - **17 mutations, 17 dead**;
+`tools/mutants/relayversion.json` - 5, 5 dead.
+
+## SLAM14 - THE FINAL LENS'S CLIENT FINDINGS (2026-09-16, AUDIT SLAM FINAL)
+
+Lens B's "ready with one clause", the clause and its neighbours paid. No
+relay change; `RELAY_VERSION` stays `world73`.
+
+**B2/C4 THE RECONNECT BLINK.** The welcome handler `_unmember`ed every
+peer the roster did not name, and the roster names the nearest
+`ROSTER_MAX` - so every blip dropped 135 of 199 to be re-stood a round
+trip later by their next pose (dressed, since SLAM9, but gone from the
+screen and their bodies torn down meanwhile). A welcome says who is NEAR,
+not who is HERE. The unnamed are kept and stamped `unconfirmed` for that
+room (a per-room map on the peer); a pose or a join in that room confirms
+it (`_confirm`), a leave answers for it, and one that never speaks again
+leaves each such room in `tick()` when the silence law hides it -
+`PEER_TIMEOUT_MS` since it was last seen, the moment it would have
+vanished from the screen in any case. Nobody present blinks; a peer that
+left while I was away is pruned. Driven: 199 stand, the blip's welcome
+names 64, all 199 still stand and draw; a pose confirms one, a join
+another, a leave takes a third; at the timeout nobody is dropped, one
+millisecond past it the 132 that never spoke again are gone and the two
+confirmed stay. And per room: named by my cell's roster and unnamed by a
+halo's, a peer is unconfirmed in the halo alone; a pose in my cell says
+nothing about the halo, a pose through the halo confirms her there.
+
+**B3 THE RECALL.** SLAM9 stands a re-met peer in the look it wore, told,
+and its comment said the join fan keeps that look current because a peer
+re-hellos when its gear changes. Nothing does: a look rides the hello
+alone, so a peer that changed its gear between rooms or during the blip
+wore its old look here for as long as it stayed. A peer stood from memory
+is `recall` now: told (drawn dressed at once, its bodies stood, its foes
+trusted) and walked by `_askRound` as a stranger is; the relay's join
+answers with the look it holds and `_refresh` clears the flag. One ask per
+re-stood peer, at the who gate. The false line is struck and pinned
+struck.
+
+**B1 `heardIn` FOLLOWS THE POSES.** Stamped once on the standing pose, a
+stranger first heard in my cell and since heard only through a halo was
+asked for down the cell's socket, where the relay no longer held it. The
+ask goes down the socket its latest pose came on.
+
+**B6** `lookKey(null)` is one constant (`NULL_LOOK_KEY`).
+
+**Two of lens C's unpinned survivors, pinned.** The HALO's welcome resets
+the halo's backoff (SLAM12 pinned the primary's alone; driven up the
+ladder by three `CLOSE_BUSY`s, opening alone does not reset it, the
+welcome does). The late-landing doll's texture is released to
+`PEER_ARCHIVE` by its record (driven: compose held open, `destroy()`, then
+the doll lands - one release, the archive and a record string).
+
+**Re-aimed.** `online` (Zed unnamed is kept, unconfirmed, and goes past
+the timeout; a roster that is not a list names nobody and drops nobody),
+`slam9` (the welcome keeps the 94 it did not name; the re-standing is
+driven by leaves; the re-stood are recalled at the gate's pace and the
+answers clear it), `world6biiib` (a fresh halo roster keeps Ann,
+unconfirmed there, until she is silent past the timeout).
+
+**Pins.** `test/slam14.test.js` (6). Mutants: `tools/mutants/slam14.json`
+- **15 mutations, 14 dead, 1 equivalent as recorded** (Y13: the constant
+and the recomputation are the same string; the saving is a
+`JSON.stringify` per look-less peer per frame, unobservable from outside;
+the source pin holds the constant's presence).
+
+**Recorded, not paid.** A6 (a mover's stop pose is tiered - one second,
+once, past the bound), B4 (`_needed`'s worn half is redundant with
+`wanted`), B5 (`_wanted`'s pin is by outcome, not by list). C1 stands:
+**the deployed object is unmeasured; Mac must load-probe it.**
+
+**The whole sweep, on the tree as committed.** `node tools/mutate.mjs
+tools/mutants/*.json` over every list from SLAM8 to SLAM14 and the two
+support lists: **94 mutants - 92 dead, 0 survived, 2 equivalent as
+recorded** (S12, Y13). Eight records had moved with SLAM13's source
+(`HEARTBEAT_MS`'s home, the pose arm's `now`, the per-listener push) and
+were re-aimed to the new lines, not dropped - a list that cannot apply is
+a count nobody can re-run, which is what the lists exist to prevent.

@@ -48,7 +48,7 @@ test('WORLD5: the wire\'s clock law - the epoch is the classic game start on 202
   assert.equal(sharedClassicMinutes(ONLINE_EPOCH_MS + 2 * 3600 * 1000), CLASSIC_GAME_START_TIME + MINUTES_PER_DAY, 'a day every two real hours');
   assert.equal(sharedClassicMinutes(ONLINE_EPOCH_MS - 5000), CLASSIC_GAME_START_TIME - 1, 'and a clock before the epoch reads before the start, never wraps');
   for (const k of ['ONLINE_EPOCH_MS', 'ONLINE_EPOCH_MINUTES', 'ONLINE_MINUTES_PER_MS', 'sharedClassicMinutes']) assert.equal(relay[k], { ONLINE_EPOCH_MS, ONLINE_EPOCH_MINUTES, ONLINE_MINUTES_PER_MS, sharedClassicMinutes }[k], `${k} at both ends`);
-  assert.equal(RELAY_VERSION, 'world72', 'the relay says which one it is (AUDIT WORLD5 bumped it for the welcome\'s clock; WORLD6a and its audit for the law; WORLD6b for the cell)');
+  assert.equal(RELAY_VERSION, 'world73', 'the relay says which one it is (AUDIT WORLD5 bumped it for the welcome\'s clock; WORLD6a and its audit for the law; WORLD6b for the cell)');
 });
 
 test('WORLD5: the relay\'s welcome carries its clock (`now`, ms) in every place room and no channel; the session reads its offset from it, says so, and refuses a clock a year off', async () => {
@@ -61,7 +61,7 @@ test('WORLD5: the relay\'s welcome carries its clock (`now`, ms) in every place 
   const town = fakeRoom('world:3,12'); const t = town.connect(); await town.hello(t, 'tttt-0001', at(1, 1));
   assert.ok(Number.isFinite(town.sockets[0].sent[0].now), 'a cell too - the clock is the world\'s, not a dungeon\'s');
   const chat = fakeRoom('chat:world'); const c = chat.connect(); await chat.hello(c, 'cccc-0001');
-  assert.deepEqual(c.sent[0], { t: 'welcome', id: 'cccc-0001', peers: [] }, 'a channel\'s welcome is what it was');
+  assert.deepEqual(c.sent[0], { t: 'welcome', id: 'cccc-0001', v: RELAY_VERSION, peers: [] }, 'a channel\'s welcome is what it was, plus the version SLAM13 put on every welcome');
   // the session
   const { FakeWS, sockets } = fakeSocketClass();
   const s = new OnlineSession({ url: 'wss://relay.test', name: 'a', id: 'aaaa-0001', secret: 'secret-of-aaaa-0001', WebSocketImpl: FakeWS, now: () => 1000 });

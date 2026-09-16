@@ -16,7 +16,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { sharedClassicMinutes, wallMsForClassicMinutes, ONLINE_EPOCH_MS, PIXEL_UNITS } from '../src/net/wire.js';
+import { sharedClassicMinutes, wallMsForClassicMinutes, ONLINE_EPOCH_MS, PIXEL_UNITS, RELAY_VERSION } from '../src/net/wire.js';
 import { setSharedClock, sharedWallMs, realTimeText, sharedRealTimeText, sharedClockOn } from '../src/systems/worldTick.js';
 import { TavernWindow, REAL_TIME_UNTIL, REAL_TIME_NOTE, TAVERN_RECTS, TAVERN_PANEL_X, TAVERN_PANEL_Y } from '../src/ui/tavernWindow.js';
 import { OFFER_PRICE_ID } from '../src/systems/tavern.js';
@@ -132,13 +132,13 @@ test('OL3 (7): a welcome clock more than a year from this machine\'s is said - t
   quiet(() => s.join('dungeon:m187853213', at(1, 1))); sockets[0].open();
   const warn = console.warn; console.warn = (m) => warned.push(String(m)); const info = console.info; console.info = () => {};
   try {
-    sockets[0].receive({ t: 'welcome', id: 'aaaa-0001', peers: [], host: 'aaaa-0001', world: null, now: Date.now() + 400 * 24 * 3600 * 1000 });
+    sockets[0].receive({ t: 'welcome', v: RELAY_VERSION, id: 'aaaa-0001', peers: [], host: 'aaaa-0001', world: null, now: Date.now() + 400 * 24 * 3600 * 1000 });
     assert.equal(s.clockWarning, CLOCK_WARNING);
     assert.equal(s.statusLine(), `online: ${CLOCK_WARNING}`, 'the HUD line, on an OPEN session');
     assert.equal(warned.filter((w) => w.includes(CLOCK_WARNING)).length, 1, 'the console, with both clocks');
-    sockets[0].receive({ t: 'welcome', id: 'aaaa-0001', peers: [], host: 'aaaa-0001', world: null, now: Date.now() + 400 * 24 * 3600 * 1000 });
+    sockets[0].receive({ t: 'welcome', v: RELAY_VERSION, id: 'aaaa-0001', peers: [], host: 'aaaa-0001', world: null, now: Date.now() + 400 * 24 * 3600 * 1000 });
     assert.equal(warned.filter((w) => w.includes(CLOCK_WARNING)).length, 1, 'said once, not per welcome');
-    sockets[0].receive({ t: 'welcome', id: 'aaaa-0001', peers: [], host: 'aaaa-0001', world: null, now: Date.now() + 2000 });
+    sockets[0].receive({ t: 'welcome', v: RELAY_VERSION, id: 'aaaa-0001', peers: [], host: 'aaaa-0001', world: null, now: Date.now() + 2000 });
     assert.equal(s.clockWarning, null, 'a sane clock clears it');
     assert.equal(s.statusLine(), null);
   } finally { console.warn = warn; console.info = info; }

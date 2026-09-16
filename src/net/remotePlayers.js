@@ -67,11 +67,12 @@ export function composeLook(entity) {
  *  once per doll peer and `PeerBodies.sync` once per peer - and at 199 dressed peers the `JSON.stringify` inside it
  *  was ~64% of the client's whole per-frame peer work (1.19 ms of 1.85 ms, measured). A look object is replaced,
  *  never mutated (`_peer`, `_refresh`), so its identity is exactly the key's lifetime: a WeakMap holds the string for
- *  as long as the look lives and no longer. A null look has no identity and computes as before. */
+ *  as long as the look lives and no longer. A null look has no identity and is one constant (SLAM14 B6). */
 const _keyOf = new WeakMap();
 const _computeLookKey = (look) => `${look?.race ?? 'Breton'}|${look?.gender ?? 'male'}|${look?.faceIndex ?? 0}|${JSON.stringify((look?.items ?? []).map((it) => LOOK_ITEM_FIELDS.map((k) => it[k] ?? null)))}`;
+const NULL_LOOK_KEY = _computeLookKey(null);   // SLAM14 (AUDIT SLAM FINAL B6): a look-less peer's key has no object to hang on - computed once, here
 export const lookKey = (look) => {
-  if (!look || typeof look !== 'object') return _computeLookKey(look);
+  if (!look || typeof look !== 'object') return NULL_LOOK_KEY;
   let k = _keyOf.get(look);
   if (k === undefined) { k = _computeLookKey(look); _keyOf.set(look, k); }
   return k;

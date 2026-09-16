@@ -72,7 +72,7 @@
 import { tabStorage } from '../systems/appStorage.js';   // the tab's own storage - the seam, never the browser's own (a PIN)
 import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the port's one angle wrap, which cannot loop
 
-import { poseChanged, SOCKETS_MAX, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, sanitizeChat, chatGate, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS } from './wire.js';
+import { poseChanged, SOCKETS_MAX, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, sanitizeChat, chatGate, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS, HEARTBEAT_MS, RELAY_VERSION } from './wire.js';
 
 export { WORLD_CELL, RANGE_PIXELS, worldRoom };
 
@@ -99,8 +99,9 @@ export const GAP_MAX_MS = 1000;
  *  the person across the square, and a peer eased over its OWN observed interval (see `tick`) still walks rather
  *  than hops. */
 export const poseHzFor = (peers) => (!(peers > POSE_CROWD) ? POSE_HZ : Math.max(POSE_HZ_MIN, Math.round((POSE_HZ * POSE_CROWD) / peers)));
-/** A pose goes out at least this often, moved or not: the socket's keepalive and the peers' clock. */
-export const HEARTBEAT_MS = 5000;
+/** A pose goes out at least this often, moved or not: the socket's keepalive and the peers' clock. SLAM13: its home is
+ *  net/wire.js (the relay's keepalive floor is a fraction of it); re-exported here for the callers that always read it here. */
+export { HEARTBEAT_MS };
 /** SLAM9: the introductions a session remembers (`_known`) - two rooms' worth, the one I am in and the one I just
  *  left, so a blip in either stands its peers as themselves. Past it the stalest is forgotten. */
 export const KNOWN_MAX = SOCKETS_MAX * 2;
@@ -217,6 +218,8 @@ export const peerSecret = (storage = tabStorage()) => keptToken(storage, 'dagger
  */
 /** OL3: the HUD line while the relay's clock and this machine's disagree by more than a year - the world's time is read uncorrected. */
 export const CLOCK_WARNING = 'this machine\'s clock is more than a year from the world\'s - set it, or the shared time is wrong here';
+/** SLAM13: the relay answered with another RELAY_VERSION than this client's law - the client shipped and the relay was not deployed, or the other way about. */
+export const VERSION_WARNING = 'the relay is running another version than this client - reload, or the relay needs deploying';
 /** ONCRASH1: how long a contained handler throw is said on the HUD line. Long enough for a player to read and report it,
  *  short enough that one transient frame does not brand the session; `stats.threw` and the console keep the rest. */
 export const THREW_SAY_MS = 30000;
@@ -248,6 +251,7 @@ export class OnlineSession {
     this.onWorld = null;          // (world) => void: the welcome carried the room's memory, or the host published one after it (AUDIT WORLD34 C1)
     this.clockOffsetMs = 0;       // WORLD5: the relay's clock minus this machine's, from the welcome - the shared world time is read through it
     this.clockWarning = null;     // OL3: the welcome's clock was a year off this machine's - said on the HUD line while it stands
+    this.versionWarning = null;   // SLAM13: the relay's RELAY_VERSION is not this client's - the version it said, or 'null' for a welcome that carried none
     this.onClock = null;          // WORLD5: (offsetMs) => void - the welcome said the relay's clock
     this.look = look ?? { race: 'Breton', gender: 'male', faceIndex: 0, items: [] };
     this.id = id ?? peerId();
@@ -364,17 +368,23 @@ export class OnlineSession {
   _member(room, id, p, now, told = true) {
     this._roomSet(room).add(id);
     const have = this.peers.get(id);
-    if (have) { if (told) this._refresh(have, p, now); return; }
+    if (have) { if (have.unconfirmed) this._confirm(have, room); if (told) this._refresh(have, p, now); return; }   // SLAM14 B2: named or heard here - confirmed here
     // SLAM9: A STRANGER THIS SESSION ONCE KNEW IS STOOD AS ITSELF. The welcome names the nearest ROSTER_MAX and prunes
     // the rest of the room's roster (the merge-not-wipe law is about the peers it DOES name); so one socket blip -
     // a Wi-Fi hiccup, a Durable Object eviction - dropped everyone past the nearest 64, and their next pose re-stood
     // each of them nameless and look-less, to be asked for all over again. Measured: 199 named and dressed before the
     // blip, 64 after the welcome, 135 anonymous "Travellers" a moment later. An introduction is a fact about an ID,
-    // not about a socket, so it is kept (`_known`, bounded) and a re-stood stranger wears it at once, told. The join
-    // fan keeps a remembered look current: a peer that changes its gear re-hellos, and the relay tells the room.
+    // not about a socket, so it is kept (`_known`, bounded) and a re-stood stranger wears it at once, told.
+    // SLAM14 (AUDIT SLAM FINAL B3): AND IS ASKED FOR ONCE MORE. This line used to say the join fan keeps a remembered
+    // look current because a peer re-hellos when its gear changes - and it does not: a look is sent with the hello
+    // alone, so a peer that changed its gear between two rooms, or during the blip, wore its old look here for as
+    // long as it stayed. A peer stood from memory is `told` (drawn dressed at once, its
+    // bodies stood, its foes trusted) and `recall`: `_askRound` walks it as it walks a stranger, the relay's join
+    // answers with the look it holds now, and `_refresh` clears the flag. One ask per re-stood peer, at the who gate.
     const knew = told ? null : this._known.get(id);
     const made = this._peer(knew ? { ...p, name: knew.name, look: knew.look } : p, now);
     made.told = told || !!knew;
+    made.recall = !told && !!knew;
     if (told) this._remember(id, made);
     this.peers.set(id, made);
   }
@@ -403,7 +413,8 @@ export class OnlineSession {
     // SLAM6: asked while the peer has not been INTRODUCED, not while it is absent. A stranger's pose now stands the
     // peer at once (`_receive`), so `peers.has(id)` became true on the very first frame and the ask that would have
     // learned its name and its gear was never made again.
-    if (typeof id !== 'string' || id === this.id || this.peers.get(id)?.told) return false;
+    const held = this.peers.get(id);
+    if (typeof id !== 'string' || id === this.id || (held?.told && !held.recall)) return false;   // SLAM14 B3: a peer stood from memory is told AND asked once more
     const at = this._who.get(id);
     if (at != null && now - at < WHO_RETRY_MS) return false;
     const ws = room === this.room ? (this.status === 'open' ? this._ws : null) : (this._halo.get(room)?.status === 'open' ? this._halo.get(room).ws : null);
@@ -427,7 +438,7 @@ export class OnlineSession {
   _askRound(now) {
     if (!whoGate(this._wbucket, now).pass) return;   // a peek, not a spend: no token this tick, nothing to walk
     const ids = [];
-    for (const [id, p] of this.peers) if (!p.told) ids.push(id);
+    for (const [id, p] of this.peers) if (!p.told || p.recall) ids.push(id);   // SLAM14 B3: and the ones wearing a remembered look
     if (!ids.length) { this._askCursor = null; return; }
     const from = this._askCursor ? ids.indexOf(this._askCursor) + 1 : 0;   // -1 + 1 = 0 when the cursor's peer is gone
     for (let k = 0; k < ids.length; k++) {
@@ -440,7 +451,14 @@ export class OnlineSession {
   }
   _unmember(room, id) {
     this._rooms.get(room)?.delete(id);
+    const p = this.peers.get(id);
+    if (p?.unconfirmed) this._confirm(p, room);   // SLAM14 B2: gone from this room is an answer too
     if (!this._held(id)) this.peers.delete(id);
+  }
+  /** SLAM14 B2: this room has heard from the peer since its welcome left it unnamed - the stamp goes. */
+  _confirm(p, room) {
+    delete p.unconfirmed[room];
+    if (!Object.keys(p.unconfirmed).length) p.unconfirmed = null;
   }
   _forgetRoom(room) {
     const s = this._rooms.get(room);
@@ -793,7 +811,15 @@ export class OnlineSession {
         keep.add(p.id);
         this._member(room, p.id, p, now);
       }
-      for (const id of [...(this._rooms.get(room) ?? [])]) if (!keep.has(id)) this._unmember(room, id);
+      // SLAM14 (AUDIT SLAM FINAL B2/C4): THE ONES THE ROSTER DOES NOT NAME ARE NOT DROPPED - they are UNCONFIRMED. The
+      // roster names the nearest ROSTER_MAX, so on a reconnect this line `_unmember`ed everyone past the nearest 64
+      // - measured, 135 of 199 - and their next pose re-stood each (dressed, since SLAM9) a round trip later: a
+      // room-wide blink on every blip, when a welcome is the relay saying who is NEAR, not who is HERE. A peer the
+      // welcome did not name keeps standing and is stamped `unconfirmed` for this room; its next pose or join in
+      // this room confirms it (`_confirm`), and one that never speaks again goes when the silence law would have
+      // hidden it anyway (`tick`: PEER_TIMEOUT_MS since it was last seen) - so a peer that left while I was away is
+      // pruned, and nobody who is here blinks.
+      for (const id of [...(this._rooms.get(room) ?? [])]) if (!keep.has(id)) { const p = this.peers.get(id); if (p) (p.unconfirmed ??= {})[room] = now; }
       if (!primary) return;
       this._setHost(m.host);   // WORLD1: the room's host, and the room's memory when it keeps one
       if (Number.isFinite(m.now)) {   // WORLD5: the relay's clock - a year off is no clock; OL3: and is SAID, on the console and the HUD line, rather than run uncorrected in silence
@@ -801,6 +827,13 @@ export class OnlineSession {
         else if (!this.clockWarning) { this.clockWarning = CLOCK_WARNING; console.warn(`[online] ${CLOCK_WARNING} (relay ${new Date(m.now).toISOString()}, this machine ${new Date().toISOString()})`); }
       }
       if (m.world && typeof m.world === 'object' && !Array.isArray(m.world)) this._deliver('world', () => this.onWorld?.(m.world));
+      // SLAM13 (AUDIT SLAM A5): THE RELAY'S VERSION, checked against the law this client was built with. The client
+      // ships by CI and the relay by hand, so on a release day the two disagree until somebody deploys - and a client
+      // that knows says so once, on the console and the HUD line, rather than run a law the relay does not. A
+      // welcome without `v` is a relay older than world73, which is the same news.
+      const v = typeof m.v === 'string' ? m.v : null;
+      if (v !== RELAY_VERSION) { if (this.versionWarning !== `${v}`) { this.versionWarning = `${v}`; console.warn(`[online] ${VERSION_WARNING} (relay ${v ?? 'unversioned'}, this client ${RELAY_VERSION})`); } }
+      else this.versionWarning = null;
     } else if (m.t === 'host') {
       if (primary) this._setHost(m.id);
     } else if (m.t === 'world') {
@@ -842,10 +875,19 @@ export class OnlineSession {
       // stranger. Every room a peer speaks in holds it now, and `leave` is per room, as WORLD6b-iii(b) meant.
       this._roomSet(room).add(m.id);
       const p = this.peers.get(m.id);
-      if (p) { this._arrive(p, pose, now); return; }
+      if (p) {
+        // SLAM14 (AUDIT SLAM FINAL B1): `heardIn` FOLLOWS THE POSES. It was stamped once, on the pose that stood the
+        // stranger, so a peer first heard through my own cell and since heard only through a halo - it walked over
+        // the seam - was still asked for down the cell's socket, where the relay no longer holds it and answers
+        // nothing; that stranger stayed nameless for as long as it kept to the next room. The ask goes down the socket
+        // its latest pose came on.
+        if (!p.told || p.recall) p.heardIn = room;
+        if (p.unconfirmed) this._confirm(p, room);   // SLAM14 B2: a pose is proof it is still here
+        this._arrive(p, pose, now); return;
+      }
       this._member(room, m.id, { id: m.id, name: null, look: null, pose: m.p }, now, false);   // sanitizeName's own default stands over its head until the answer lands
       const stood = this.peers.get(m.id);
-      if (stood && !stood.told) stood.heardIn = room;   // the socket the ask goes down (`_askRound`) - the one this stranger is heard through
+      if (stood && (!stood.told || stood.recall)) stood.heardIn = room;   // the socket the ask goes down (`_askRound`) - the one this stranger is heard through
     } else if (m.t === 'chat') {
       // CHAT1: checked by the relay's own law (B7) - the id's shape, the name's, the line's; `mine` is the sender's own line back
       const text = typeof m.text === 'string' ? sanitizeChat(m.text) : '';
@@ -863,7 +905,7 @@ export class OnlineSession {
 
   /** A known peer said hello again: its name and look are the new ones, its pose arrives as any other. */
   _refresh(p, m, now) {
-    p.name = sanitizeName(m.name); p.look = validLook(m.look); p.told = true;   // SLAM6: an introduction, so the asks stop
+    p.name = sanitizeName(m.name); p.look = validLook(m.look); p.told = true; p.recall = false;   // SLAM6: an introduction, so the asks stop (SLAM14: the recall's too)
     this._remember(p.id, p);   // SLAM9: and it is kept, so a blip cannot un-introduce it
     const pose = validPose(m.pose);
     if (pose) this._arrive(p, pose, now); else p.seenAt = now;
@@ -908,7 +950,10 @@ export class OnlineSession {
     }
     if (!this.presence && this.status === 'open' && now - this._lastSentAt >= HEARTBEAT_MS && this._send({ t: 'ping' })) this._lastSentAt = now;   // CHAT1: a channel's keepalive, answered without waking the room
     if (this.presence && this.status === 'open') this._askRound(now);   // SLAM9: the fair ask over every peer not yet introduced
-    for (const p of this.peers.values()) {
+    for (const p of [...this.peers.values()]) {
+      // SLAM14 B2: a peer a welcome left unnamed, and that no pose or join has confirmed since, leaves each such room
+      // when the silence law hides it - the moment it would have vanished from the screen in any case
+      if (p.unconfirmed && now - p.seenAt > PEER_TIMEOUT_MS) for (const room of Object.keys(p.unconfirmed)) this._unmember(room, p.id);
       if (!p.pose) continue;
       // SLAM3: EASED OVER THE INTERVAL THIS PEER IS ACTUALLY KEEPING, not over an assumed 1/POSE_HZ. The assumption
       // was already wrong for anyone on a slow line or a throttled tab - the ease finished early and the peer stood
@@ -939,6 +984,7 @@ export class OnlineSession {
   statusLine(label = 'online') {
     if (this.status === 'open') {
       if (this.clockWarning) return `${label}: ${this.clockWarning}`;   // OL3: an open session with a clock a year off says so
+      if (this.versionWarning) return `${label}: ${VERSION_WARNING}`;   // SLAM13: and one against a relay of another version says so
       // ONCRASH1: a frame the port could not handle is SAID, not only swallowed - the player reporting "it crashed"
       // now has the line that names which frame, and the console has the stack behind it.
       if (this.threw && monoNow() - this.threw.mono < THREW_SAY_MS) return `${label}: a '${this.threw.kind}' frame from another player was dropped - ${this.threw.text}`;

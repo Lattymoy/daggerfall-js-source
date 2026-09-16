@@ -79,13 +79,22 @@ test('SLAM11: THE MEMORY LANDS - a room past the old cliff is handed the dungeon
     assert.ok(raw.length > 100 * 1024, `a real dungeon's memory (${raw.length} bytes)`);
     clock += 20_000;   // WORLD_MIN_MS between publishes
     await r.raw(host, raw);
+    // SLAM13 (AUDIT SLAM A4): served A LISTENER AT A TIME at the rate - a second's worth of FOES_ROOM_BYTES_PER_S fit
+    // whole, then one more on the borrow, and the rest wait UNSEEN for the next publish. SLAM11 handed all 63 on one
+    // publish, which for the largest memory into a full room was 127 MiB queued in one tick - the object's whole memory.
+    const frame = `{"t":"world","id":"p0000","data":${JSON.stringify(memory)}}`.length;
+    const first = Math.floor(FOES_ROOM_BYTES_PER_S / frame) + 1;
+    assert.ok(first < n - 1, `the fixture really is past the rate (${first} of ${n - 1} fit one publish)`);
     const handed = ws.slice(1).filter((s) => ofType(s, 'world').length === 1).length;
-    assert.equal(handed, n - 1, `every one of the ${n - 1} sockets is handed the memory (${handed})`);
+    assert.equal(handed, first, `a second of the rate plus one on the borrow are handed the memory this publish (${handed})`);
     assert.ok(r.room._roomWorld && r.room._roomWorld.bytes < 0, 'on its OWN bucket, now in debt');
+    assert.ok(r.room._roomWorld.bytes > -frame, 'by less than ONE frame - never by the fan');
     assert.ok(!r.room._roomFoes || r.room._roomFoes.bytes >= 0, 'and the foes stream\'s bucket was not touched');
-    // once each: the next publish hands it to nobody who already has it
+    assert.equal(ws.slice(1).filter((s) => s.att.worldSeen === true).length, first, 'exactly the served are latched seen');
+    // the next publish (WORLD_PUBLISH_MS on, the debt repaid) hands it to the rest, and to nobody who already has it
     clock += 20_000;
     await r.raw(host, raw);
+    assert.equal(ws.slice(1).filter((s) => ofType(s, 'world').length === 1).length, n - 1, `every one of the ${n - 1} sockets has the memory after the second publish`);
     assert.equal(ws.slice(1).filter((s) => ofType(s, 'world').length > 1).length, 0, 'nobody is handed it twice');
   } finally { Date.now = realNow; }
 });
