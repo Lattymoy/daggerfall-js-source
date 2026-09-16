@@ -112,7 +112,7 @@ import { PLAYED_STEP_MAX_SECONDS } from '../systems/quest/clock.js';   // WORLD7
 import { mintQuestFoeWave, placeFoeEnv, entityOccupancy, questFoeGender, reviveQuestBehaviour } from './questFoeHost.js';   // B1   // AUDIT 63r F24: SerializableEnemy.cs:206-217's quest-link arm, the one home both hosts use
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';   // MERGE: FinalizeFoe's Flying lift reads the behaviour flag
 import { intermittentEnemySpawn, MIN_WILDERNESS_SPAWN_DISTANCE, setEnemyAlert, areEnemiesNearby, passiveGuardSpawns } from '../systems/encounters.js';   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
-import { snapshotPlayer, restorePlayer, composeSessionState, restoreSessionState, dungeonPixelFor } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
+import { snapshotPlayer, restorePlayer, resolvePendingSpells, composeSessionState, restoreSessionState, dungeonPixelFor } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
 import { saveSlot, loadSlot, quickLoadSlot, mostRecentRestorable, QUICK_SAVE_NAME, requestScreenshot, capturePendingScreenshot } from '../systems/saveSlots.js';   // SAV4: the quicksave is a SLOT named QuickSave (SaveLoadManager.QuickSave/QuickLoad); SS1: the shot arms at save and lands at frame end
 import { frameBegin, frameEnd } from '../systems/frameClock.js';   // PERF1: the frame's script time
 import { arrivalClampMinutes, playerTravelPosition } from '../systems/travel.js';   // F-slice; F114: the ship-aware travel origin
@@ -286,7 +286,7 @@ import { HeadBobber } from '../player/headBobber.js';   // AUDIT 28 W10: HeadBob
 import { lastHealthLost, lastHealthLostPercent } from '../ui/hudVitals.js';   // AUDIT 28 W9: the detector's loss
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { actionOf, held, moveHeld, anyMove, swallowBrowserKey, mouseCode, isSwingButton, keyboardLook, isTextEntryTarget, bindings, routeAction, installContextMenuGuard } from '../ui/input.js';
-import { armUnloadGuard } from '../systems/unloadGuard.js';   // MAC-L3: one door in front of every way out of a running game
+import { armUnloadGuard, releaseUnloadGuard } from '../systems/unloadGuard.js';   // MAC-L3: one door in front of every way out of a running game; AUDIT-MACL F3: ...and down for a door the game opened itself
 import { actionForCode } from '../systems/inputActions.js';   // FIX-E: the overlay's QuickLoad read, off the code alone   // I2: the rebindable registry; AUDIT 39r: the mouse half of the held set
 import { hudShortcutKey } from '../ui/hudShortcuts.js';   // AUDIT 64 F36/F37: DaggerfallHUD.Update's LargeHUDToggle / HUDToggle arms
 import { createActivateGate, activateFrame, setClickDelay } from '../systems/activateGate.js';   // A8: PlayerActivate's ActivateCenterObject frame
@@ -1992,7 +1992,24 @@ export async function bootWorld(canvas, renderer, params, status) {
   // written back out by the next save. "Something causes spells to
   // disappear from the spellbook" (bigdaddywetwet, 2026-09-16) is that
   // race. A load waits for the table it needs to READ the save.
-  const _magicRegistries = loadMagicRegistries(fetchBytes).then((r) => { spellsByIndex = spellsByIndex ?? r.spellsByIndex; return r; });
+  const _magicRegistries = loadMagicRegistries(fetchBytes).then((r) => {
+    spellsByIndex = spellsByIndex ?? r.spellsByIndex;
+    // AUDIT-MACL F1: ...AND THE HELD SPELLS COME BACK HERE. MAC-L4 wrote
+    // `resolvePendingSpells` and then called it from NOWHERE but its own
+    // pin - an export justified by a use that did not exist, which is
+    // the same dead-export class AUDIT-CHATR F5 deleted two days ago,
+    // written by the same hand that had just found it. The record even
+    // claimed the function "picks it up if a table arrives later"; it
+    // could not, because nothing asked it to.
+    //
+    // This IS that later. A restore that ran before the table landed
+    // (the classic-import path, or a host that never awaits) leaves
+    // `spellsPending` on the entity; the table arriving is the one
+    // moment that can clear it, and it is this line.
+    const back = resolvePendingSpells(playerEntity, spellsByIndex);
+    if (back) console.info(`[save] ${back} held spell(s) resolved once SPELLS.STD landed`);
+    return r;
+  });
   // V1: the infection's host seam - the dream/death videos, the
   // fortnight clock raise, the clan's region read and the popup.
   // One call per host (THE FOUR HOSTS RULE); without it the
@@ -2131,7 +2148,10 @@ export async function bootWorld(canvas, renderer, params, status) {
         // ui-chargen-4: the race screen's back cancels the wizard to
         // the front door (DFU unwinds to the start screen); the
         // reload re-runs the boot flow.
-        onCancel: () => location.reload(),
+        // AUDIT-MACL F3: ...and the guard stands down first, because
+        // this is a door the GAME opened - the same law `exitToTitleMenu`
+        // follows. A player who presses Cancel has asked to leave.
+        onCancel: () => { releaseUnloadGuard(); location.reload(); },
         onDone: (r) => {
           finishChargen(playerEntity, r, sbi);
           preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture },
@@ -2699,7 +2719,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2131 mounts the same one, gated on
+  // and dungeonContext.js:2132 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
   // that context through modes.dungeonCtx - so worldModes.js:4623
@@ -4258,7 +4278,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:5427), so exterior mode and a
+    // composer, dungeonContext.js:5431), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -4336,25 +4356,38 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  shape, because the interim entity has no name to key by. */
   async function worldQuickLoad({ mostRecent = false, key = null } = {}) {
     if (_loading) return;
-    const snap = key != null ? loadSlot(key)
-      : mostRecent ? (mostRecentRestorable()?.snap ?? null)
-        : quickLoadSlot(playerEntity.name);
-    if (!snap) { townTalk.say('No saved game.'); return; }
-    // MAC-L4: the table this save is READ WITH, before it is read. The
-    // boot fires `loadMagicRegistries` and does not await it (every
-    // other consumer is a later frame), so a quickload in the first
-    // seconds of a session arrived with `spellsByIndex` still null.
-    // Awaiting here costs nothing once it has resolved and is the
-    // difference between reading a save and destroying one.
-    if (!spellsByIndex) await _magicRegistries.catch(() => null);
-    const extras = restorePlayer(playerEntity, snap, spellsByIndex);
-    if (!extras) { townTalk.say('Save version mismatch.'); return; }
-    autoBuildArms(playerEntity);   // MWA1: the loaded character's arms (a boot into ?load has no chargenDone until here)
+    // AUDIT-MACL F2: THE LATCH GOES UP BEFORE THE FIRST AWAIT, and MAC-L4
+    // is why it has to be said out loud. This guard and the latch below
+    // it used to be separated by straight-line code alone - one
+    // synchronous run, so `if (_loading) return;` and `_loading = true`
+    // were effectively atomic and two F9s in a frame could not both get
+    // through. MAC-L4 put an `await` between them for the spell table,
+    // and an await is a door: both calls read `_loading === false`, both
+    // suspended, and both came back to run a whole load over the same
+    // entity. The fix for a silent data loss must not open a re-entry.
+    //
+    // Everything below is inside the try/finally that clears it, so the
+    // two early returns release the latch on their way out rather than
+    // wedging quickload for the session.
     _loading = true;
-    // CameraRecoiler's SaveLoadManager_OnStartLoad (:185-191): the
-    // incoming character does not inherit the old one's reel.
-    cameraRecoiler.reset();
     try {
+      const snap = key != null ? loadSlot(key)
+        : mostRecent ? (mostRecentRestorable()?.snap ?? null)
+          : quickLoadSlot(playerEntity.name);
+      if (!snap) { townTalk.say('No saved game.'); return; }
+      // MAC-L4: the table this save is READ WITH, before it is read. The
+      // boot fires `loadMagicRegistries` and does not await it (every
+      // other consumer is a later frame), so a quickload in the first
+      // seconds of a session arrived with `spellsByIndex` still null.
+      // Awaiting here costs nothing once it has resolved and is the
+      // difference between reading a save and destroying one.
+      if (!spellsByIndex) await _magicRegistries.catch(() => null);
+      const extras = restorePlayer(playerEntity, snap, spellsByIndex);
+      if (!extras) { townTalk.say('Save version mismatch.'); return; }
+      autoBuildArms(playerEntity);   // MWA1: the loaded character's arms (a boot into ?load has no chargenDone until here)
+      // CameraRecoiler's SaveLoadManager_OnStartLoad (:185-191): the
+      // incoming character does not inherit the old one's reel.
+      cameraRecoiler.reset();
       // IS1: a load never runs UNDER a mounted mode - RespawnPlayer
       // destroys the standing interior first (PlayerEnterExit
       // .cs:453-459). The dying scene is NOT cached on the way out:

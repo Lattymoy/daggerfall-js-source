@@ -429,7 +429,7 @@ export function isTextEntryTarget(t) {
  * (the pause door, the pack, the spellbook, the talk window, the
  * chronicle, the book, the character sheet, the map, the touch knobs,
  * the pad cursor, the hit numbers, the loot hover, the counter), and
- * exactly TWO of them suppressed it. Right-click anywhere else - which
+ * exactly ONE of them - the map - suppressed it. Right-click anywhere else - which
  * on the enhanced skin is most of what a player looks at - and the
  * browser menu opened over the game.
  *

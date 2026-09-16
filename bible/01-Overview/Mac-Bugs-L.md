@@ -91,17 +91,31 @@ by name. That is no longer a measurement, it is a queue.
 
 ## L2 — talking to a banker: **not reproduced**
 
-No stack trace, no repro. What was checked and cleared:
+No stack trace, no repro. First pass closed it on a **reading** of the
+window contract, which is the weakest evidence this port accepts for
+anything; AUDIT-MACL went back and **drove** it instead.
 
-- the window contract (`CRASH2`'s derived gate is green, and every
-  unguarded host call — `draw`, `hover` — is guarded or answered);
-- `MerchantServiceWindow`'s three arms, its draw, and its art gate;
-- the bank window's own tests (63 pins, green).
+The banker's popup is the only NPC surface that opens a two-button panel,
+and the only window mounted with `mountInterior` (a **push**) whose
+buttons then write the slot **directly** — so its stack and its slot can
+disagree. Both arms driven through a real window stack:
 
-**The most likely explanation is that this IS L1.** The banker's panel
-is the only NPC surface that opens a two-button popup, a player leaves it
-with Escape, and the next Escape on the same build is the crash above.
-That is a hypothesis, not a finding, and it is written here as one.
+- **Service** — the popup closes itself, the bank window takes the slot,
+  and `reconcile` replaces the dead popup on the next frame rather than
+  leaving the two disagreeing. No throw.
+- **Talk** — the popup is `done` and still on the stack when the talk
+  window is pushed over it, so a frame after the talk window closes has a
+  **done window in the slot**. The drain takes it. No throw, and it
+  unwinds to an empty slot rather than wedging.
+
+Also cleared: `CRASH2`'s derived contract gate, every unguarded host call
+on the slot (`draw` and `hover` — both guarded), and the bank's own 63
+pins.
+
+**The likeliest explanation remains that this IS L1**, met by pressing
+Escape out of the banker's panel — and AUDIT-MACL F4 makes that stronger,
+because L1 turned out to have a **second route** nobody named. It is
+still a hypothesis, and it is still written here as one.
 
 What is owed: the crash overlay prints a stack — dycaite screenshotted
 one — so **the next report of this should carry it**. Worth noting the
@@ -117,10 +131,13 @@ paste it; a copy affordance would pay for itself.
 The right button is a **weapon** control here — classic Daggerfall swings
 by dragging it — and every streaming host suppressed `contextmenu` **on
 its canvas** for that reason. The canvas is not the play surface.
-**Thirteen** surfaces are appended to `document.body` and exactly **two**
-suppressed it themselves, so right-clicking the pause screen, the pack,
-the spellbook, the talk window or the character sheet opened the
-browser's menu over the game.
+**Thirteen** in-game surfaces are appended to `document.body` and exactly
+**one** — the map — suppressed it itself, so right-clicking the pause
+screen, the pack, the spellbook, the talk window or the character sheet
+opened the browser's menu over the game. *(This page first said "two",
+counting `enhancedBook.js`, which is mounted **by** one of the thirteen
+rather than being one of them. AUDIT-MACL F5 counted them by running the
+sweep instead of remembering it.)*
 
 *A rule enforced by thirteen copies is a rule enforced by memory.* One
 capture-phase listener on the document now, installed by the hosts and
@@ -204,6 +221,115 @@ applies to `server/src` and does not apply to `src`:
 | L1b, the dungeon's shadowed host bag | `no-shadow` |
 | AUDIT-CHATR F1, the shadowed `hidden` | `no-shadow` |
 | AUDIT-CHATR F4, the dead import | `no-unused-vars` |
+
+## AUDIT-MACL — the audit of the fix
+
+**Seven findings against MAC-L itself.** Every one is in the half that
+was *wiring* rather than *law*, and two are classes this port had named
+and written down within the same week — by the same hand that then made
+them again.
+
+### F1 — `resolvePendingSpells` had no caller
+
+L4 wrote the function, **claimed on this page that it "picks it up if a
+table arrives later"**, and called it from nowhere but its own pin. The
+claim was false: nothing asked it to. An export whose only justification
+is a use that does not exist is exactly what AUDIT-CHATR F5 deleted two
+days earlier.
+
+It has a caller now, and there is only one place it could have gone: the
+`loadMagicRegistries` `.then`, after the table is set. **That moment IS
+"later."** The pin asserts the ordering, not just the presence.
+
+### F2 — the fix for a data loss opened a re-entry
+
+L4 put an `await` inside `worldQuickLoad`, **between `if (_loading)
+return;` and `_loading = true`**. Those two lines had been separated by
+straight-line code alone, so the check and the latch were effectively
+atomic and two F9s in a frame could not both pass. An await is a door:
+both calls read `_loading === false`, both suspended, and both came back
+to run a whole load over the same entity.
+
+The latch goes up before the first await now, and every early return is
+inside the try that clears it. *A fix for a silent data loss must not
+open a re-entry.*
+
+### F3 — the guard prompted for doors the game opened
+
+Two hosts armed `() => true` — "this host is booted, so there is
+something to lose" — which is false for the whole of chargen, before a
+character exists. And three `onCancel: () => location.reload()` sites,
+the chargen wizard's own Cancel, navigated without standing the guard
+down.
+
+Both paid, and the gate is a **sweep**: every `location.reload()` or
+`location.href` inside a host must have a `releaseUnloadGuard()` before
+it. Found by searching rather than by remembering where they were.
+
+### F4 — L1 had a SECOND route, and the report only named one
+
+`ui/hudLarge.js` dispatches its clicked panels through the same table,
+and the options panel's action is `Escape`. So on `ff0cb3b` the crash was
+reachable **by mouse, with no key pressed at all**.
+
+It is fixed by the same change, which is luck rather than design. *A bug
+with two routes and one named route is a bug that looks fixed from the
+report and is not* — and this one is the third time in a week that a
+seam turned out to have a second way in.
+
+### F5 — a false count, and the hazard it hid
+
+This page said "exactly **two**" of the thirteen in-game surfaces shut
+the browser menu themselves. It was **one** — the map. The second was
+`enhancedBook.js`, which is mounted *by* one of the thirteen rather than
+being one of them. Counted by running the sweep this time.
+
+The hazard underneath it is the real find: **two surfaces use the right
+button as a genuine control** (a right-click on a talk note opens the
+logbook; on a keybind row it clears the binding). The document guard must
+`preventDefault` and must **never** `stopPropagation`, or both die
+silently the day someone tidies it. Pinned, driven, in both directions.
+
+### F6 — L2 re-opened and driven rather than read
+
+See L2 above. The first pass closed it on a reading of the contract. Both
+arms of the banker's popup are driven through a real window stack now,
+including the frame where a **done** popup surfaces in the slot under a
+closed talk window. Still not reproduced — but the evidence is a
+different kind.
+
+### F7 — the unload guard costs bfcache, and that is now written down
+
+A `beforeunload` listener makes Firefox skip the back-forward cache, and
+Firefox is the browser dycaite's report came from. `world.js` has exactly
+one documented behaviour riding a bfcache restore (the chat panel kept so
+a restored page rejoins, AUDIT CHAT B4); on those browsers that restore
+becomes an ordinary reload.
+
+**The trade is taken deliberately and said out loud in the file.** A
+fresh boot after a player *chose* to leave is a worse convenience and a
+better outcome than an hour of play deleted by a gesture they did not
+choose. The way to pay it back — add and remove the listener as the
+answer changes — costs a per-frame sync in four hosts, and is not worth
+it for a convenience until someone asks for it.
+
+### The third campaign
+
+**8 further mutants against the audit's own fixes, 8 killed**, including
+the sharpest one available: the latch moved back below the await, which
+is F2 itself.
+
+### What this audit says about the last one
+
+MAC-L found three bugs and wrote four: a dead export, a re-entry, a
+blanket predicate, and a false count. None of them was in the *law* — the
+signatures, the filter, the restore — and all of them were in what the
+law was **wired to**.
+
+That is the fourth consecutive slice where the audit's findings sat in
+the wiring rather than the logic, and it is worth naming as a habit
+rather than a run of luck: **this port's code is more reliable than this
+port's connections between code.**
 
 ## Not seen on a GPU
 

@@ -179,8 +179,22 @@ test('AUDIT 39 #61: a HORSE jumps at the flat 1.75 and a CART cannot jump at all
 
 test('AUDIT 39 #62: the hosts wire CameraRecoiler.reset to load, relocation and the court screen', () => {
   const world = src('scenes/world.js');
-  assert.match(world, /_loading = true;\n[\s\S]{0,200}?cameraRecoiler\.reset\(\);/,
-    'world: SaveLoadManager_OnStartLoad (:185-191)');
+  // AUDIT-MACL F2 re-aimed this. It used to hang off `_loading = true;`
+  // within 200 characters, which was only ever a proxy for "on the load
+  // path" - and the latch moved when the re-entry fix put it above the
+  // first await. The LAW is that the incoming character does not inherit
+  // the outgoing one's reel, so the reset belongs AFTER `restorePlayer`
+  // (there is an incoming character by then) and BEFORE the scene is
+  // rebuilt. That is what is asserted now, and it does not care where
+  // the latch sits.
+  const load = world.slice(world.indexOf('async function worldQuickLoad('));
+  const body = load.slice(0, load.indexOf('\n  }\n'));
+  const restored = body.indexOf('restorePlayer(playerEntity, snap');
+  const reset = body.indexOf('cameraRecoiler.reset();');
+  const rebuild = body.indexOf('forceExitToExterior');
+  assert.ok(restored > 0 && reset > restored,
+    'world: SaveLoadManager_OnStartLoad (:185-191) - reset AFTER the incoming character is read');
+  assert.ok(rebuild > reset, '...and BEFORE the scene is torn down and rebuilt');
   assert.match(world, /async function _teleportToPixel\([\s\S]{0,400}?cameraRecoiler\.reset\(\);/,
     'world: StreamingWorld_OnInitWorld (:178-183) - fast travel, teleport, the load\'s landing');
   for (const f of ['scenes/world.js', 'scenes/exterior.js']) {

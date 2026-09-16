@@ -41,6 +41,24 @@
 // they just opened themselves trains them to click through the prompt
 // that matters.
 //
+// ═══ THE COST, SAID PLAINLY (AUDIT-MACL F7) ═══════════════════════
+//
+// A `beforeunload` listener costs the BACK-FORWARD CACHE on some
+// browsers - Firefox skips bfcache for a page that has one, and Firefox
+// is the browser the report that started MAC-L came from. `world.js`
+// has exactly one documented behaviour that rides a bfcache restore
+// (the chat panel is kept so a restored page rejoins through
+// `chatFrame`, AUDIT CHAT B4), and on those browsers that restore now
+// becomes an ordinary reload instead.
+//
+// That is a real trade and it is taken deliberately: a fresh boot after
+// a player CHOSE to leave is a worse convenience and a better outcome
+// than an hour of play deleted by a gesture they did not choose. If it
+// ever needs paying back, the way is to add and remove the listener as
+// the answer changes rather than to keep one that is usually silent -
+// which costs a per-frame sync in four hosts, and is not worth it for a
+// convenience until someone asks.
+//
 // Not a DFU member: Daggerfall Unity is not in a browser tab. Ledger A
 // row (THE BROWSER TAB'S OWN DOORS).
 

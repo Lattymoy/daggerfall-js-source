@@ -36,7 +36,7 @@ test('AUDIT-MACK F2: ONE feeder per held-key Set, and every reader is on a fed o
   // matters: it asserted that every file reading `held(keys, ...)`
   // must itself write the mouse codes into that Set. `worldModes.js`
   // does not OWN a Set - it takes `keys` off the host bag
-  // (`exterior.js:3105`) - and the lender's own mousedown writes the
+  // (`exterior.js:3113`) - and the lender's own mousedown writes the
   // codes UNGATED on a listener that is never removed. The codes were
   // always there.
   //
@@ -672,4 +672,230 @@ test('MAC-L4: the host WAITS for the table it reads a save with', () => {
   const restore = body.indexOf('restorePlayer(playerEntity, snap');
   assert.ok(wait > 0, 'the load arm waits for the table');
   assert.ok(restore > 0 && wait < restore, 'and waits BEFORE it reads the save, or the wait is decoration');
+});
+
+// ═══ AUDIT-MACL: THE AUDIT OF THE FIX ═════════════════════════════
+//
+// Three findings against MAC-L itself, all in the half that was
+// WIRING rather than law. Two of them are classes this port had
+// already named and written down within the week.
+
+test('AUDIT-MACL F1: resolvePendingSpells has a CALLER, and it is the moment the table lands', () => {
+  // MAC-L4 wrote this function, claimed in the record that it "picks
+  // [a held spell] up if a table arrives later", and called it from
+  // NOWHERE but its own pin. An export whose only justification is a
+  // use that does not exist - the exact class AUDIT-CHATR F5 deleted
+  // two days earlier, written by the same hand that had just found it.
+  //
+  // Derived: the caller must be inside the registries' `.then`, because
+  // that IS "later". A call anywhere else would run before the table
+  // exists and resolve nothing.
+  const src = rd('src/scenes/world.js');
+  assert.match(src, /import \{[^}]*resolvePendingSpells[^}]*\} from '\.\.\/systems\/save\.js';/);
+  const then = src.slice(src.indexOf('const _magicRegistries = loadMagicRegistries('));
+  const body = then.slice(0, then.indexOf('\n  });'));
+  assert.match(body, /spellsByIndex = spellsByIndex \?\? r\.spellsByIndex;/, 'the table lands first');
+  assert.match(body, /resolvePendingSpells\(playerEntity, spellsByIndex\)/, '...and the held spells are asked for');
+  assert.ok(body.indexOf('spellsByIndex = spellsByIndex') < body.indexOf('resolvePendingSpells('),
+    'asked AFTER the table is set, or it resolves nothing');
+
+  // and it is not a lone caller in a test: no src file may export this
+  // and go unused again
+  const callers = ['src/scenes/world.js'].filter((f) => /resolvePendingSpells\(/.test(rd(f).replace(/^import .*$/gm, '')));
+  assert.ok(callers.length >= 1, 'at least one host calls it');
+});
+
+test('AUDIT-MACL F2: the quickload latch goes up BEFORE the first await', async () => {
+  // MAC-L4's fix put an `await` between `if (_loading) return;` and
+  // `_loading = true`. Those two lines used to be separated by
+  // straight-line code, so the check and the latch were atomic; an
+  // await is a door, and two F9s in the same frame could both read
+  // `_loading === false`, both suspend, and both run a whole load over
+  // the same entity. A fix for a silent data loss must not open a
+  // re-entry.
+  const src = rd('src/scenes/world.js').replace(/^\s*\/\/.*$/gm, '');
+  const fn = src.slice(src.indexOf('async function worldQuickLoad('));
+  const body = fn.slice(0, fn.indexOf('\n  }\n'));
+  const guard = body.indexOf('if (_loading) return;');
+  const latch = body.indexOf('_loading = true;');
+  const firstAwait = body.indexOf('await ');
+  assert.ok(guard >= 0 && latch > guard, 'the latch follows the guard');
+  assert.ok(firstAwait > latch,
+    'NO await may sit between the guard and the latch - that is the window two callers both walk through');
+  // ...and the early returns are inside the try that clears it, or a
+  // refused load wedges quickload for the session
+  assert.ok(body.indexOf('try {') > latch && body.indexOf('try {') < firstAwait,
+    'the try opens between the latch and the await');
+  for (const ret of ["townTalk.say('No saved game.'); return;", "townTalk.say('Save version mismatch.'); return;"]) {
+    assert.ok(body.indexOf(ret) > body.indexOf('try {'), `"${ret}" returns from INSIDE the try, so the latch is released`);
+  }
+  assert.match(body, /\} finally \{\s*_loading = false;\s*\}/);
+});
+
+test('AUDIT-MACL F3: every door the GAME opens stands the unload guard down first', () => {
+  // The guard exists so a navigation the PLAYER did not ask for is
+  // caught. A navigation the player DID ask for - Exit to menu, the
+  // chargen wizard's Cancel - must not prompt, or the prompt becomes
+  // noise and the player clicks through the one that matters.
+  //
+  // DERIVED, not listed: every in-tree navigation to `location.reload()`
+  // or `location.href` that sits inside a host must release first. The
+  // sweep finds them rather than trusting a memory of where they are.
+  const HOSTS = ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeonContext.js',
+    'src/scenes/worldModes.js', 'src/scenes/dungeon.js', 'src/scenes/shared.js'];
+  const unreleased = [];
+  for (const f of HOSTS) {
+    const src = rd(f).replace(/^\s*\/\/.*$/gm, '');
+    for (const m of src.matchAll(/location\.(reload\(\)|href = )/g)) {
+      const before = src.slice(Math.max(0, m.index - 300), m.index);
+      if (!/releaseUnloadGuard\(\)/.test(before)) unreleased.push(`${f}: ${m[0]}`);
+    }
+  }
+  assert.deepEqual(unreleased, [],
+    'a host navigation with no releaseUnloadGuard before it will prompt the player for a door they opened');
+
+  // and the predicates are the host's HONEST word, never a blanket true
+  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeon.js']) {
+    const src = rd(f).replace(/^\s*\/\/.*$/gm, '');
+    assert.match(src, /armUnloadGuard\(\(\) => (playerSpawned|!!playerEntity\.chargenDone)\)/,
+      `${f} arms with a real question`);
+    assert.doesNotMatch(src, /armUnloadGuard\(\(\) => true\)/,
+      `${f}: a blanket true claims there is something to lose before a character exists, and puts a prompt in front of chargen's own Cancel`);
+  }
+  // the mode machine rides the world host's boot and arms nothing
+  assert.doesNotMatch(rd('src/scenes/worldModes.js').replace(/^\s*\/\/.*$/gm, ''), /armUnloadGuard\(/,
+    'worldModes is not a boot of its own - a second arm here would answer for the world host');
+});
+
+test('AUDIT-MACL F4: the large HUD’s options panel is a SECOND route to the same door', async () => {
+  // MAC-L1 named the keyboard route and stopped there. `ui/hudLarge.js`
+  // dispatches its clicked panels through the SAME table -
+  // `routeAction(hit.action, ctx)` - and the options panel's action is
+  // `Escape`. So on `ff0cb3b` the crash was reachable by MOUSE, with no
+  // key pressed at all: two routes, one door, and only one of them was
+  // in the report.
+  //
+  // That matters beyond bookkeeping. A bug with two routes and one
+  // named route is a bug that looks fixed from the report and is not.
+  const { LARGE_HUD_PANELS } = await import('../src/ui/hudLarge.js').catch(() => ({}));
+  const hud = rd('src/ui/hudLarge.js');
+  assert.match(hud, /\{ key: 'options', rect: LARGE_HUD_RECTS\.options, action: 'Escape' \}/,
+    'the options panel really does route Escape');
+  assert.match(hud.replace(/^\s*\/\/.*$/gm, ''), /routeAction\(hit\.action, ctx\)/,
+    '...through the same table, with no third argument - so the applier is the default');
+  void LARGE_HUD_PANELS;
+
+  // DRIVEN: the click path, on a host shaped like the three that broke.
+  const { routeAction } = await import('../src/ui/input.js');
+  let got;
+  assert.doesNotThrow(() => routeAction('Escape', { togglePause: (doorOpts = {}) => { got = doorOpts; } }),
+    'the mouse route must not throw either');
+  assert.deepEqual(got, { setPlayerPos: null }, 'and it arrives as an OPTIONS BAG, never a bare null');
+});
+
+test('AUDIT-MACL F5: the guard PREVENTS the menu and does not STOP the event', async () => {
+  // A correction and a hazard. The correction: of the THIRTEEN in-game
+  // surfaces appended to `document.body`, exactly ONE (`overworldMap.js`)
+  // shut `contextmenu` itself. MAC-L3's record said "two" - it was
+  // counting `enhancedBook.js`, which is mounted BY one of the thirteen
+  // rather than being one of them. Counted here rather than remembered.
+  const inGame = ['bookDoor', 'charSheetDoor', 'chronicleDoor', 'fpsCounter', 'gamepadInput',
+    'hitNumbers', 'inventoryDoor', 'lootHover', 'overworldMap', 'pauseDoor',
+    'spellbookDoor', 'talkDoor', 'touch'].map((n) => `src/ui/${n}.js`);
+  assert.equal(inGame.length, 13, 'the thirteen, named');
+  for (const f of inGame) assert.ok(rd(f).length > 0, `${f} exists`);
+  const selfShutting = inGame.filter((f) => /contextmenu/.test(rd(f)));
+  assert.deepEqual(selfShutting, [], 'and none of them keeps a copy of the rule now');
+
+  // THE HAZARD. Two surfaces bind `oncontextmenu` as a REAL CONTROL -
+  // a right-click on a talk note opens the logbook, and on a keybind
+  // row it clears the binding. The document guard must `preventDefault`
+  // (kill the browser menu) and must NOT `stopPropagation`, or both
+  // features die silently the day someone "simplifies" it.
+  for (const f of ['src/ui/enhancedTalk.js', 'src/ui/enhancedControls.js']) {
+    assert.match(rd(f), /oncontextmenu = /, `${f} uses the right button as a control`);
+  }
+  const guard = rd('src/ui/input.js');
+  const body = guard.slice(guard.indexOf('export function installContextMenuGuard'));
+  const fn = body.slice(0, body.indexOf('\n}'));
+  assert.match(fn, /e\.preventDefault\(\);/, 'the browser menu is killed');
+  assert.doesNotMatch(fn, /stopPropagation|stopImmediatePropagation/,
+    'but the event still REACHES the elements that use the right button as a control');
+
+  // driven: a listener downstream of the capture guard still runs
+  const ls = [];
+  const doc = { addEventListener: (t, fn2, capture) => ls.push({ t, fn2, capture }) };
+  const { installContextMenuGuard } = await import('../src/ui/input.js');
+  installContextMenuGuard(doc);
+  let prevented = false, reached = false;
+  ls[0].fn2({ target: { tagName: 'DIV' }, preventDefault: () => { prevented = true; }, stopPropagation: () => { reached = 'STOPPED'; } });
+  assert.equal(prevented, true);
+  assert.equal(reached, false, 'nothing downstream was cut off');
+});
+
+test('AUDIT-MACL F6 (MAC-L2): the banker’s popup is DRIVEN through both arms, and neither throws', async () => {
+  // MAC-L2 - "Talking to a banker crashes the game" (Orion) - was closed
+  // on a READING of the window contract, which is the weakest evidence
+  // this port accepts for anything. It is driven here instead: the
+  // banker's popup is the only NPC surface that opens a two-button
+  // panel, and it is the one window mounted with `mountInterior` (a
+  // PUSH) whose buttons then write the slot DIRECTLY, so the stack and
+  // the slot can disagree. That is the mechanism worth a pin whether or
+  // not it is the reported crash.
+  const { makeWindowStack } = await import('../src/ui/windowStack.js');
+  const { MerchantServiceWindow } = await import('../src/ui/merchantServiceWindow.js');
+
+  const host = () => {
+    let slot = null;
+    const stack = makeWindowStack({ onTop: (w) => { slot = w; } });
+    const mount = (w) => {
+      if (!w) return;
+      stack.reconcile(slot);
+      if (stack.containsWindow(w)) return;
+      stack.pushWindow(w);
+    };
+    return { stack, mount, get slot() { return slot; }, set slot(v) { slot = v; } };
+  };
+  const press = (w, rect) => w.click(95 + rect[0] + 1, 79 + rect[1] + 1);
+  const { MERCHANT_RECTS } = await import('../src/ui/merchantServiceWindow.js');
+
+  // ARM ONE - SERVICE. The bank window is assigned to the slot directly
+  // while the stack still holds the popup; `reconcile` must replace the
+  // top rather than leave the two disagreeing for ever.
+  {
+    const h = host();
+    const bank = { done: false, draw() {} };
+    const msw = new MerchantServiceWindow({ service: 'Banking', onTalk: () => {}, onService: () => { h.slot = bank; } });
+    h.mount(msw);
+    assert.equal(h.slot, msw);
+    assert.doesNotThrow(() => press(msw, MERCHANT_RECTS.service), 'the service press must not throw');
+    assert.equal(msw.done, true, 'the popup closes itself first (DFU order)');
+    assert.equal(h.slot, bank, 'and the bank window has the slot');
+    for (let i = 0; i < 3; i++) assert.doesNotThrow(() => h.stack.reconcile(h.slot), `frame ${i} must not throw`);
+    assert.equal(h.stack.topWindow(), bank, 'the stack caught up with the slot rather than holding a dead popup');
+  }
+
+  // ARM TWO - TALK, which is what the report actually names. The popup
+  // is `done` and still on the stack when the talk window is pushed
+  // over it, so a frame after the talk window closes has a DONE window
+  // in the slot. The drain must take it, not choke on it.
+  {
+    const h = host();
+    const talk = { done: false, draw() {}, input() {} };
+    const msw = new MerchantServiceWindow({ service: 'Banking', onTalk: () => h.mount(talk), onService: () => {} });
+    h.mount(msw);
+    assert.doesNotThrow(() => press(msw, MERCHANT_RECTS.talk), 'the talk press must not throw');
+    assert.equal(h.slot, talk);
+    talk.done = true;
+    const seen = [];
+    assert.doesNotThrow(() => {
+      for (let i = 0; i < 4; i++) {
+        if (h.stack.topWindow()?.done) h.stack.popWindow();
+        else h.stack.reconcile(h.slot);
+        seen.push(h.slot);
+      }
+    }, 'the drain must not throw on a done popup left under a closed talk window');
+    assert.equal(h.slot, null, 'and it unwinds to an empty slot rather than wedging');
+    assert.ok(seen.includes(msw), 'the done popup really did surface for a frame - that is the state being pinned');
+  }
 });

@@ -123,7 +123,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // below, after this context; null falls to standing defaults.
       motorState: () => (_motorRef ? { eyeLevel: _motorRef.eye[1] - _motorRef.pos[1], capsule: _motorRef.height } : null),
       // MAC1 J: this host's canvas, for the pause door's relock. The
-      // context owns none of its own (dungeonContext.js:5447), so each
+      // context owns none of its own (dungeonContext.js:5451), so each
       // dungeon host hands its own in and the resume gesture carries
       // the pointer back with it (ui/pauseDoor.js:207-224).
       relock: () => requestLook(canvas) });
@@ -394,7 +394,12 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // it at all. The door is in front of ALL of them rather than chased
   // one gesture at a time. `exitToTitleMenu` stands it down, because a
   // door the game opened is not a door to warn about.
-  armUnloadGuard(() => true);
+  // AUDIT-MACL F3: the predicate is the HOST'S HONEST WORD, not `true`.
+  // The first cut said `() => true` here - "this host is booted, so
+  // there is something to lose" - which is false for the whole of
+  // chargen, before a character exists at all, and would have put a
+  // browser prompt in front of the wizard's own Cancel.
+  armUnloadGuard(() => !!playerEntity.chargenDone);
 
   // AUDIT 39r: the button goes into the held-keys set too. InputManager
   // polls Mouse0/1/2 through the same GetKey dictionary as the keyboard
