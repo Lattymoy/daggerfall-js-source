@@ -2620,6 +2620,14 @@ export function createFpArm() {
     attach(r, cam) { renderer = r || null; camera = cam || null; },
     active,
     ready,
+    /** MWA3: WHO the standing arm was built for - the identity third
+     *  of the last build's opts (race, sex, face), or null before any
+     *  build. autoBuildArms (weaponRig.js) compares it against the
+     *  entity at every door, because this rig is a module singleton
+     *  and `ready()` alone says only that SOME arm stands - an
+     *  Argonian save loaded over a human's standing arm kept the
+     *  human's body until the pack was toggled off and on. */
+    builtFor() { return lastBuildOpts ? { race: lastBuildOpts.race ?? null, female: !!lastBuildOpts.female, faceIndex: lastBuildOpts.faceIndex | 0 } : null; },
     get frames() { return frames; },
 
     async build(opts) {

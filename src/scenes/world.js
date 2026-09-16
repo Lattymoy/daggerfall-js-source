@@ -203,7 +203,7 @@ import { floorLanding } from '../player/enterExit.js';   // FixStanding for the 
 import { jumpSpeedMultiplier, isEnhancedJumping, tallySkill, SKILLS } from '../systems/skills.js';   // AUDIT 64 F2: CheckAirControl's IsEnhancedJumping disjunct
 import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter, setAvoidDeathHook } from '../characters/playerEntity.js';
 import { SOUND } from '../systems/soundClips.js';
-import { createWeaponRig, autoBuildArms } from '../combat/weaponRig.js';   // MWA1: the arms at boot
+import { createWeaponRig, autoBuildArms, armIdentityOf, armBuiltFor, armsReady } from '../combat/weaponRig.js';   // MWA1: the arms at boot; MWA3: the identity the arm should stand for, beside the one it does
 import { weaponPoseOf, applyWeaponPose, mergeWeaponPose } from '../combat/playerWeapon.js';   // HARD2c: the sheath+hand pair as ONE law, and SL-2's per-field merge with the mode host's live rig
 import { ArrowFlight, playerArrowHitFoe } from '../combat/arrowFlight.js';   // C13: visible exterior arrows; AUDIT 39 (#64): and the shaft that LANDS
 import { addItem, spendArrow, carriedWeight } from '../systems/inventory.js';   // E4: PlayerEntity.CarriedWeight carries the gold counter's own term
@@ -288,7 +288,7 @@ import { CameraRecoiler } from '../player/cameraRecoiler.js';   // AUDIT 28 W9: 
 import { HeadBobber } from '../player/headBobber.js';   // AUDIT 28 W10: HeadBobbing
 import { lastHealthLost, lastHealthLostPercent } from '../ui/hudVitals.js';   // AUDIT 28 W9: the detector's loss
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
-import { actionOf, held, moveHeld, anyMove, swallowBrowserKey, mouseCode, isSwingButton, keyboardLook, isTextEntryTarget, bindings, routeAction, installContextMenuGuard } from '../ui/input.js';
+import { actionOf, held, moveHeld, anyMove, swallowBrowserKey, mouseCode, isSwingButton, keyboardLook, isTextEntryTarget, bindings, routeAction, installContextMenuGuard, POLLED_ACTIONS } from '../ui/input.js';
 import { armUnloadGuard, releaseUnloadGuard } from '../systems/unloadGuard.js';   // MAC-L3: one door in front of every way out of a running game; AUDIT-MACL F3: ...and down for a door the game opened itself
 import { actionForCode } from '../systems/inputActions.js';   // FIX-E: the overlay's QuickLoad read, off the code alone   // I2: the rebindable registry; AUDIT 39r: the mouse half of the held set
 import { hudShortcutKey } from '../ui/hudShortcuts.js';   // AUDIT 64 F36/F37: DaggerfallHUD.Update's LargeHUDToggle / HUDToggle arms
@@ -2579,6 +2579,27 @@ export async function bootWorld(canvas, renderer, params, status) {
     spellArmed: () => magic.spellArmed(), abortSpell: () => magic.abortReadySpell(),   // M2; MAC-O1: WeaponManager.Update:251 - the ReadyWeapon key puts a readied spell away and draws
   });
   autoBuildArms(playerEntity);   // MWA1: a continuing session's arms, at boot (a new character's come after the wizard, a load's after the restore)
+  // WEAPON-VIS1: a live read of exactly what shown() gates on, always
+  // installed (not folded into installTownProbes below, which only
+  // registers under ?shot and never runs for a normal /play/ session)
+  // - for a report with nothing else to go on ("equipped, no crash,
+  // still invisible after 10 minutes idle") rules the equip-delay
+  // theory in or out on the spot instead of another round of guesses.
+  // Usage: open DevTools console during play and run window.__weaponDebug().
+  window.__weaponDebug = () => JSON.stringify({
+    sheathed: weaponRig.playerWeapon.sheathed,
+    weaponType: weaponTypeForItem(weaponRig.playerWeapon.weapon),
+    weaponName: weaponRig.playerWeapon.weapon?.name ?? weaponRig.playerWeapon.weapon?.templateIndex ?? null,
+    equipCountdown: playerEntity?.equipCountdown ?? 0,
+    widgetOn: modSetting('weapon-widget', 'Enabled'),
+    toggleSheathCalls: weaponRig.toggleSheathCalls,
+    // MWA3: the arm's identity beside the entity's - "an Argonian on a
+    // human body" is these two disagreeing, and autoBuildArms's gate
+    // now rebuilds on exactly that disagreement.
+    armBuiltFor: armBuiltFor(),
+    armWantedFor: armIdentityOf(playerEntity),
+    armState: armsReady() ? 'standing' : 'down',
+  });
   // M2: SPELLCASTING ABOVE GROUND - exterior.js's twin note applies.
   /** The per-foe doors, hoisted (AUDIT 24 wave 32): the cast engine takes
    *  them, and so does the broker fan-out below - one set of doors per
@@ -5241,7 +5262,21 @@ export async function bootWorld(canvas, renderer, params, status) {
       // route was live. A tail that is not last is not a tail; it is an
       // arm that silently outranks every arm below it. `test/mack_bugs`
       // gates the position now, not just the presence.
-      if (routeAction(act, hudCtx)) { e.preventDefault(); return; }
+      // WEAPON-VIS2: this ladder never calls routeKey (the comment
+      // above the Escape arm says so directly), so routeKey's own
+      // `POLLED_ACTIONS.has(act)` decline (ui/input.js:493) never
+      // touched this door. hudCtx carries toggleSheath (AUDIT 58, for
+      // the large HUD's sheath panel), so 'ReadyWeapon' - Z - reached
+      // routeAction from BOTH here AND the frame's own poll below
+      // (`zNowW && !zPrevW`) on every single press: drawn, then
+      // sheathed straight back, net nothing, every time. A player
+      // could equip a weapon, see it confirmed in the inventory, hear
+      // a sheathe click on every press, and never once see it on
+      // screen - `toggleSheathCalls` climbing by exactly 2 a press
+      // (WEAPON-VIS1) is what actually caught it, not a guess. The
+      // same exclusion routeKey already uses closes this door too.
+      if (POLLED_ACTIONS.has(act)) { /* the frame's poll owns it */ }
+      else if (routeAction(act, hudCtx)) { e.preventDefault(); return; }
     }
     if (act === 'QuickLoad' && (modes?.mode ?? 'exterior') === 'exterior') {
       e.preventDefault();

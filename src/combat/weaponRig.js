@@ -95,6 +95,41 @@ export function buildArmsFor(entity) {
   return fpArm.build(armBuildOptsOf(entity));
 }
 
+/** MWA3: the IDENTITY third of armBuildOptsOf - the three inputs that
+ *  pick the skeleton (sex, and the race's beast bit), the body rows
+ *  (race and sex) and the head (face). The worn set and the hand are
+ *  the other two thirds, and setWorn/setWeapon already follow those
+ *  per frame; nothing followed these. */
+export function armIdentityOf(entity) {
+  return { race: mwRaceId(entity?.race), female: entity?.gender === 'female', faceIndex: entity?.faceIndex | 0 };
+}
+
+/** MWA3 (Mac, 2026-09-16: "my character who is an argonian uses a human
+ *  morrowind model"): DOES THE STANDING ARM BELONG TO THIS ENTITY?
+ *  autoBuildArms's last gate used to be `fpArm.ready()` alone - "a
+ *  second door does not rebuild a built arm" - and fpArm is ONE module
+ *  singleton for the whole session. So the first identity to reach a
+ *  door owned the arm for good: a save loaded in-session over a
+ *  standing arm (the wizard's character, an earlier save, a ?test
+ *  preset) kept that arm's race, sex and face, and every equip-follow
+ *  rebuild after it (fpArm.setWorn spreads lastBuildOpts) carried the
+ *  stale identity forward, so nothing short of the pack's Off/On ever
+ *  asked for the Argonian's beast skeleton, tail and hide. A standing
+ *  arm is "built" only when it stands FOR the entity at the door. */
+/** MWA3: the standing arm's identity, for a host's debug read (world.js's
+ *  window.__weaponDebug) - null before any build. */
+export function armBuiltFor() { return fpArm.builtFor(); }
+/** MWA3: is an arm standing at all - the same read autoBuildArms's old gate made. */
+export function armsReady() { return fpArm.ready(); }
+
+export function armsStandFor(entity, { ready = () => fpArm.ready(), builtFor = () => fpArm.builtFor() } = {}) {
+  if (!ready()) return false;
+  const have = builtFor();
+  if (!have) return false;
+  const want = armIdentityOf(entity);
+  return have.race === want.race && !!have.female === want.female && (have.faceIndex | 0) === want.faceIndex;
+}
+
 /** MWA1: THE ARMS AT BOOT. RookieG (2026-09-11): "morrowind arms did
  *  not work on first launch" - only the test room built them at boot;
  *  a normal game had the arms only after the Enhanced pane's Build
@@ -106,8 +141,8 @@ export function buildArmsFor(entity) {
  *  load. A refusal is logged, never thrown: the arms are a departure
  *  the classic sprite stands in for. Returns the build's result, or
  *  null when nothing was asked for. */
-export async function autoBuildArms(entity, { wanted = () => getPref('mwArms'), dataCount = morrowindDataCount, measure = registerMorrowindData, measured = morrowindDataFingerprint } = {}) {
-  if (!entity?.chargenDone || !wanted() || !(dataCount() > 0) || fpArm.ready()) return null;
+export async function autoBuildArms(entity, { wanted = () => getPref('mwArms'), dataCount = morrowindDataCount, measure = registerMorrowindData, measured = morrowindDataFingerprint, standing = armsStandFor } = {}) {
+  if (!entity?.chargenDone || !wanted() || !(dataCount() > 0) || standing(entity)) return null;
   // AUDIT 65 XL-6: the boot menu only COUNTS the store now (names, no
   // sizes), so this can run before the host bootstrap's fingerprint
   // lands - and fpArm keys its kept face verdict on that print. Measure
@@ -458,12 +493,20 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     fpArm.attack(strike, { hold: m.isBow && m.state === 'StrikeUp' });
   }
 
+  // WEAPON-VIS1: a live call count, not a guess - see window.__weaponDebug
+  // (scenes/world.js). Counts every path that flips the sheath through
+  // rawToggleSheath below - the HUD panel's door and the key's MAC-O1
+  // door both end in it, which is exactly the pair WEAPON-VIS2 caught
+  // double-firing.
+  let _toggleSheathCalls = 0;
+
   /** WeaponManager.ToggleSheath (:1115-1128), the flip both doors below
    *  end in - the panel's raw one and the key's arm. It is ONE function
    *  because DFU has one member: the draw clip is FPSWeapon's, played
    *  only on the UNsheathe of a real weapon. */
   function rawToggleSheath() {
     syncWorn();
+    _toggleSheathCalls += 1;
     // V4: the claws draw silently (DrawWeaponSound = None, :338)
     if (playerWeapon.toggleSheath() && !playerWeapon.weapon?.werecreatureClaws) {
       audio.playOneShot(equipSoundFor(playerWeapon.weapon) ?? SOUND.DrawWeapon);
@@ -538,6 +581,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
      *  default, which no applied weapon ever reaches. A weapon with
      *  no equip clip of its own falls back to 78. */
     toggleSheath() { rawToggleSheath(); },
+    get toggleSheathCalls() { return _toggleSheathCalls; },   // WEAPON-VIS1: for window.__weaponDebug
     /**
      * MAC-O1 - THE READYWEAPON KEY'S OWN DOOR. WeaponManager.Update
      * :229-269, the arm the four hosts' Z poll is a translation of.

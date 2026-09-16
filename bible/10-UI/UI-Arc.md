@@ -62,7 +62,7 @@ does the pack's USE arm.
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:4969, dungeonContext.js:5935. A seam
+    / NOTEBOOK          world.js:4990, dungeonContext.js:5935. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -9734,9 +9734,9 @@ re-resolved the `exterior.js` half of a three-file sentence and left the
 `ExteriorAutomapWindow` construction, `:4101` on a `locationName:`
 field). Both halves are now read by `test/citedrift.test.js` - the
 existing entries only ever captured the exterior number, which is how
-the other half went stale unnoticed. (The rest cite named `world.js:5199`,
+the other half went stale unnoticed. (The rest cite named `world.js:5220`,
 the first of the host's TWO identical `act === 'Rest'` arms; ROAD-H H5
-deleted the second and the cite is `world.js:5205` now.)
+deleted the second and the cite is `world.js:5226` now.)
 
 ## AUDIT 62 F24/F25 - THE SENTINEL SWEEP WAS TWO WINDOWS SHORT (2026-09-07)
 
@@ -13570,3 +13570,40 @@ departure; the row is.
 Pin: `test/mwarms_fps.test.js` (one added): the row on the card behind
 the data gate, the two arms of the toggle, the buttons gone, and the
 three consumers still reading the one pref.
+
+## MWA3 - THE ARM STANDS FOR THE ENTITY (2026-09-16)
+
+Mac: "my character who is an argonian uses a human morrowind model."
+
+The pipeline for an Argonian was whole and had been since AUDIT MW-A
+F1: `armBuildOptsOf` spells the race the ESM's way, the RACE record's
+own RADT bit picks `base_animkna` over the human skeletons, the tail
+row stays, the hide's parts resolve by race. What was wrong was WHO
+the standing arm had been built for. `fpArm` is one module singleton
+for the session, and `autoBuildArms`'s last gate was `fpArm.ready()`
+alone - "a second door does not rebuild a built arm". So the first
+identity to reach a door owned the arm for good: a save loaded
+in-session over a standing arm (the wizard's character, an earlier
+save, a `?test` preset) kept that arm's race, sex and face, and every
+equip-follow rebuild after it (`fpArm.setWorn` spreads
+`lastBuildOpts`) carried the stale identity forward. Nothing short of
+the pack's Off/On ever asked for the beast skeleton.
+
+**The gate reads the identity now.** `fpArm.builtFor()` answers the
+identity third of the last build's opts (race, sex, face);
+`weaponRig.armsStandFor(entity)` is `ready()` AND that identity
+equal to `armIdentityOf(entity)`, and `autoBuildArms` stands down
+only on it. A door reached by a different character rebuilds; a door
+reached by the same one is the no-op MWA1 wanted. The other two thirds
+of the opts (the worn set and the hand) already followed per frame
+through `setWorn`/`setWeapon`; this is the third that did not.
+
+`window.__weaponDebug()` (WEAPON-VIS1) now prints `armBuiltFor`
+beside `armWantedFor` and whether an arm stands at all - "an Argonian
+on a human body" is those two disagreeing, readable in one call.
+
+Pins: `test/mwarms_fps.test.js` (two added): `armsStandFor` on each
+of the three identity terms and on `ready()`; `autoBuildArms` going on
+to the build when the standing arm is another's, and standing down
+when it is the entity's own; the gate line re-pinned on
+`standing(entity)`.
