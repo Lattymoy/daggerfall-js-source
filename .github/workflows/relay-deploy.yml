@@ -19,7 +19,7 @@ on:
   workflow_dispatch:
     inputs:
       confirm:
-        description: "Type the word deploy - a relay deploy drops every connected player"
+        description: "Type deploy to confirm - this drops every connected player"
         required: true
         default: ""
 
@@ -30,11 +30,33 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      # THE CONFIRMATION, and it refused its own first run (run 1, step 2,
+      # every later step skipped). Two faults, and the second is why the
+      # first could not be read off the log:
+      #
+      #   IT WAS BRITTLE - one exact string, one context. A trailing space,
+      #   a capital D, or an `inputs` context that does not populate the way
+      #   `github.event.inputs` does, and a deliberate run is refused. This
+      #   is a speed bump before dropping every player in the game; it is
+      #   meant to catch an ACCIDENT, not a typo.
+      #
+      #   IT WAS UNDIAGNOSABLE - the message said what to type and never
+      #   what it GOT, so an empty box and a broken context read identically.
+      #   The same shape as a gate whose state is never written.
+      #
+      # Kept rather than deleted: it fired correctly on its own terms, and
+      # the terms were what was too narrow.
       - name: Refuse anything but a deliberate run
-        if: inputs.confirm != 'deploy'
+        env:
+          CONFIRM: ${{ inputs.confirm || github.event.inputs.confirm }}
         run: |
-          echo "::error::type 'deploy' to confirm - this drops every connected player's socket"
-          exit 1
+          got=$(printf '%s' "${CONFIRM:-}" | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')
+          echo "confirm box received: '${CONFIRM:-}' (normalised: '$got')"
+          if [ "$got" != "deploy" ]; then
+            echo "::error::confirm must be the word 'deploy' - got '${CONFIRM:-<empty>}'. This drops every connected player's socket, so it asks once."
+            exit 1
+          fi
+          echo "confirmed - proceeding"
 
       - uses: actions/checkout@v4
 
