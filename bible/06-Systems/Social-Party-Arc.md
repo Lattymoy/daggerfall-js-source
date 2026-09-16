@@ -729,8 +729,8 @@ container).
 
 ### The campaign and the record
 
-`tools/mutants/auditsoc.json`: 46 mutants over the hub, the wire, the
-link, the picture and the host (the request cooldown off, the invite
+`tools/mutants/auditsoc.json`: 55 mutants over the hub, the wire, the
+link, the picture, the host and the surfaces (the request cooldown off, the invite
 cooldown off, the stamps forgotten on every act, the social arm and the
 account hello uncontained, the alarm never armed, a listed account swept,
 the page unbounded, the solo party kept until the sweep and deleted under
@@ -747,7 +747,11 @@ never set, my own tab a stranger, the memo never dropped, an unkept
 account minted, fatigue x64, the relock under an open surface and every
 surface relocking, F under the mode gate, "try again" when not connected,
 Remove on a roster row, the accountless page silent, the host reading the
-presence clock, a second door to the panel) - **45 dead, 1 equivalent as
+presence clock, a second door to the panel; and over the surfaces the
+F-menu's sheet in the panel's namespace, the phone's button ungated, the
+members on one pixel unstacked, the port action never yielding, the saved
+F not migrated, the HUD's and the panel's clocks never ticking, the HUD
+on the FPS counter, the tabs under 44px) - **54 dead, 1 equivalent as
 recorded** (the single-read party miss: every caller of `_party` that
 finds a miss clears what named it in the same act, and the picture's batch
 is the path that read a swept party per frame). Pinned in
