@@ -53,7 +53,7 @@
 // already marked it claimed, and the port used to offer it again.
 // The one door is restoreKnightlyOrderFlags below, run by save.js's
 // restoreMembershipBook (save.js:48) from restorePlayer's single load
-// door (save.js:599-600) - RestoreMembershipData's own per-guild
+// door (save.js:630-631) - RestoreMembershipData's own per-guild
 // RestoreGuildData call, GuildManager.cs:332.
 
 import { ARMOR_MATERIAL } from './armorMaterials.js';

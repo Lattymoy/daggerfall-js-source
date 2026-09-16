@@ -13,6 +13,7 @@ import { SkyRenderer, buildDaySkyPanorama, buildNightSkyPanorama, buildFallbackS
 import { SEASON } from '../world/climateSwaps.js';
 import { skyFrameForTime, isNight, setLightCurve, daylightScale } from '../world/worldClock.js';   // DS1: isNight for the mod's moonlight, setLightCurve for the mod's own curve; CLK3 review: daylightScale for its moonlight's ramp
 import { createWindModel } from '../systems/wind.js';   // WIND1; WEATHER2b: the lead is the front's own (leadMinutes)
+import { releaseUnloadGuard } from '../systems/unloadGuard.js';   // MAC-L3: a door the game opened is not a door to warn about
 import { EnhancedSkyRenderer, skyState, easeWeather, weatherRow, CLOUD_SHADOW, moonlightTerm, WEATHER_EASE_MINUTES, WIND_SECONDS_PER_MINUTE } from '../render/enhancedSky.js';   // ES1: the enhanced sky, behind the skin; EV5: its moons light the world
 import { VolumetricClouds, QUALITY as CLOUD_QUALITY } from '../render/volumetricClouds.js';   // VC3: the clouds over the dome
 import { cloudsStateUnderMod, dynamicMoonState, dynamicMoonlight } from '../render/dynamicSkiesBridge.js';   // DS1/DS2: the mod's state in the port's shapes - the moons, the clouds, and the moons' own term (AUDIT 65 MC-3: the bridge's third export had no caller and this file carried its body inline)
@@ -1769,6 +1770,10 @@ export const frameHeld = () => _frameHold > 0;
 
 export function exitToTitleMenu() {
   claimFrame();   // P0: the old loop dies before the navigation
+  // MAC-L3: the guard stands down for a door the GAME opened. Prompting
+  // a player for the exit they just pressed is how you train them to
+  // click through the prompt that matters.
+  releaseUnloadGuard();
   // DEATH1: say it on the console. The loop is dead by this line, so if the
   // navigation does not take, the canvas keeps its last frame and the screen
   // is black with nothing to tell a player - or a bug report - how far it
@@ -1859,7 +1864,7 @@ export function createMusicDirector({ fm = null, play = null, stop = null, playi
  *  through to `cam.yaw += movementX` - so every swing inside a
  *  building or a dungeon turned the camera with it.
  *
- *  `dungeon.js:251`, the standalone host, has always had the right
+ *  `dungeon.js:252`, the standalone host, has always had the right
  *  shape: attack, then return. It has no modal sibling to share the
  *  drag with, which is why it never needed a mode in the test at all.
  *

@@ -546,12 +546,22 @@ test('PX26 / THE FOUR HOSTS: north opens a REAL arm on every host', () => {
     // it. That is exactly how the first attempt slipped through - the
     // arm landed on one host and north on four.
     assert.match(s, /^ {4}openSheetPage(\(\) \{|: \(\) =>)/m, `${host} DEFINES the arm north asks for`);
-    assert.match(s, /at: opts\.at \?\? null,/, `${host}'s pause flow carries the landing`);
-    assert.match(s, /togglePause\(([\w ]*=[^)]*)?\)/, `${host}'s togglePause takes its own options`);
+    // MAC-L1: the landing is read through `pauseOpts`, the ONE reader of
+    // the door's options, rather than off the raw argument. Three hosts
+    // destructure just the landing; the dungeon context also wants the
+    // position applier, which now rides INSIDE the bag instead of
+    // sitting beside it as a second positional parameter.
+    assert.match(s, /const \{ at(: pauseAt|, setPlayerPos) \} = pauseOpts\(doorOpts\);/, `${host} reads its options through pauseOpts`);
+    assert.match(s, /\n\s+at(: pauseAt)?,\s+\/\/ PX26: the page the door was pressed for/, `${host}'s pause flow carries the landing`);
+    assert.doesNotMatch(s, /at: opts\.at \?\? null,/, `${host} must not read the raw argument - that is the null that crashed it`);
+    assert.match(s, /togglePause(?::\s*)?\(doorOpts = \{\}\)/, `${host}'s togglePause takes ONE options bag, spelt the same as every other host`);
   }
   // Each host calls its OWN pause flow - no host reaches into another's.
   assert.match(read('src/scenes/world.js'), /openSheetPage: \(\) => hudCtx\.togglePause\(\{ at: 'stats' \}\),/);
-  assert.match(read('src/scenes/dungeonContext.js'), /openSheetPage\(\) \{ this\.togglePause\(null, \{ at: 'stats' \}\); \},/);
+  // MAC-L1: ...and this host spells it the same way as the other three
+  // now. It used to pass `null` positionally, which is the signature
+  // that made `routeAction` hand the other three a hard null.
+  assert.match(read('src/scenes/dungeonContext.js'), /openSheetPage\(\) \{ this\.togglePause\(\{ at: 'stats' \}\); \},/);
 });
 
 test('PX28b: TAB ITSELF closes an open window - the registry answers the key', () => {

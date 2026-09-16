@@ -274,7 +274,9 @@ test('wave D: the dungeon host holds the chargen WINDOW, not the raw flow', () =
   assert.equal((DC.match(/finishChargenHere\(/g) ?? []).length, 2,
     'the definition and the window\'s onDone - nothing else');
   assert.match(DC, /onDone: \(r\) => finishChargenHere\(r\),/);
-  assert.match(DC, /onCancel: \(\) => location\.reload\(\),/);
+  // AUDIT-MACL F3: the guard stands down before the navigation - the
+  // wizard's Cancel is a door the game opened.
+  assert.match(DC, /onCancel: \(\) => \{ releaseUnloadGuard\(\); location\.reload\(\); \},/);
 });
 
 test('wave D: routing chargen through the window stops the DOUBLE letterbox', () => {

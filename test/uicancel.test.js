@@ -79,6 +79,11 @@ test('ui-chargen-4: every host owns the unwind - the reload arms', () => {
     'the poll is gone - the window owns the cancel');
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeonContext.js']) {
     const s = readFileSync(join(root, host), 'utf8');
-    assert.ok(s.includes('onCancel: () => location.reload()'), `${host} wires the window's onCancel`);
+    // AUDIT-MACL F3: ...and it stands the unload guard down FIRST. The
+    // wizard's Cancel is a door the GAME opened, so prompting the
+    // player for it is how you train them to click through the prompt
+    // that matters (systems/unloadGuard.js).
+    assert.ok(s.includes('onCancel: () => { releaseUnloadGuard(); location.reload(); },'),
+      `${host} wires the window's onCancel, and releases the unload guard before it navigates`);
   }
 });

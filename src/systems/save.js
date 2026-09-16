@@ -263,7 +263,13 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   // shape every pre-S1 save carries); a MADE spell has no file index,
   // so its whole record rides instead. The restore tells them apart
   // by type - number = look it up, object = it IS the spell.
-  snap.spells = (entity.spells ?? []).map((sp) => (sp?.custom ? JSON.parse(JSON.stringify(sp)) : sp.index));
+  // MAC-L4: ...and the entries the last restore could not resolve ride
+  // back out UNCHANGED beside them. Without this the holding in
+  // `restorePlayer` would only postpone the loss by one save.
+  snap.spells = [
+    ...(entity.spells ?? []).map((sp) => (sp?.custom ? JSON.parse(JSON.stringify(sp)) : sp.index)),
+    ...(entity.spellsPending ?? []),
+  ];
   // E2: ITEM-PINNED entries (held enchantments) are NOT serialized -
   // the pin is a live item reference and the snapshot's items are
   // fresh copies, so a saved pin could never re-link. DFU serializes
@@ -446,6 +452,31 @@ export function restoreFactionRep(store, snap) {
 /** Restore a snapshot onto the live entity. Returns the scene
  *  extras { position, classicMinutes, readiedSpellIndex } or null
  *  on a version mismatch (loud). */
+/**
+ * MAC-L4: the held entries, resolved once a table turns up.
+ *
+ * A host that restored before `SPELLS.STD` landed can call this when it
+ * does and the player gets their spellbook back inside the session,
+ * rather than on the next load. Returns how many came back.
+ *
+ * @param {any} entity
+ * @param {Map<number, any>|null} spellsByIndex
+ * @returns {number}
+ */
+export function resolvePendingSpells(entity, spellsByIndex) {
+  const pending = entity?.spellsPending;
+  if (!spellsByIndex || !pending?.length) return 0;
+  const still = [];
+  let got = 0;
+  for (const s of pending) {
+    const found = spellsByIndex.get(s);
+    if (found) { (entity.spells ??= []).push(found); got++; } else still.push(s);
+  }
+  entity.spellsPending = still;
+  if (got) seedCustomSpellIndex(entity.spells);
+  return got;
+}
+
 export function restorePlayer(entity, snap, spellsByIndex = null) {
   if (!snap || snap.v !== SAVE_VERSION) {
     console.warn(`[save] version mismatch (got ${snap?.v}, want ${SAVE_VERSION}); refusing`);
@@ -638,8 +669,46 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // load cannot collide with one the save brought). Stock spells
   // resolve against SPELLS.STD exactly as before; a spellless host
   // (no table loaded) still restores the made ones.
-  entity.spells = (snap.spells ?? []).map((s) => (
-    typeof s === 'object' && s !== null ? s : (spellsByIndex ? spellsByIndex.get(s) : null))).filter(Boolean);
+  //
+  // ═══ MAC-L4: A RESTORE MAY NOT DESTROY WHAT IT CANNOT READ ═════
+  //
+  // Mac, 2026-09-16 (bigdaddywetwet): "something causes spells to
+  // disappear from the spellbook."
+  //
+  // This walk ended in `.filter(Boolean)`, and that is where they went.
+  // A STOCK spell travels as a bare SPELLS.STD INDEX - a number - and
+  // resolving it needs `spellsByIndex`. `scenes/world.js` fires
+  // `loadMagicRegistries` at boot and does NOT await it, so for the
+  // first seconds of a session the table is null: a quickload in that
+  // window resolved every stock spell to `null`, the filter swept them
+  // all, and the next save wrote the emptied list back. Silent, and
+  // permanent.
+  //
+  // The host now waits for its table (that is the race, and it is
+  // fixed there). This is the second lock, because the first one is a
+  // promise and promises are a thing a future host can forget to await:
+  // AN ENTRY THIS FUNCTION CANNOT RESOLVE IS KEPT, NOT DROPPED. It is
+  // set aside in its saved form, `snapshotPlayer` writes it back out
+  // beside the resolved ones, and `resolvePendingSpells` picks it up
+  // if a table arrives later. A save that goes through a host with no
+  // SPELLS.STD comes out the other side whole.
+  //
+  // `.filter(Boolean)` is a fine way to drop a blank. It is a terrible
+  // way to handle a lookup miss, because the two are indistinguishable
+  // by the time the filter runs - and the cost of confusing them here
+  // is a player's spellbook.
+  const _pending = [];
+  entity.spells = (snap.spells ?? []).map((s) => {
+    if (typeof s === 'object' && s !== null) return s;
+    const found = spellsByIndex ? spellsByIndex.get(s) : null;
+    if (!found) { _pending.push(s); return null; }
+    return found;
+  }).filter(Boolean);
+  entity.spellsPending = _pending;
+  if (_pending.length) {
+    console.warn(`[save] ${_pending.length} spell(s) could not be resolved`
+      + `${spellsByIndex ? '' : ' (SPELLS.STD not loaded yet)'} - HELD, not dropped:`, _pending);
+  }
   seedCustomSpellIndex(entity.spells);
   // T4: a load replaces the discovery store; a pre-T4 save carries no
   // field and restores an empty one (nothing was discoverable then).
