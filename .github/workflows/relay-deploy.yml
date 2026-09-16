@@ -1,0 +1,103 @@
+# SRV-N/CI (2026-09-17): THE RELAY'S DEPLOY, IN CI AT LAST.
+#
+# `server/wrangler.toml` has said "npx wrangler deploy (CLOUDFLARE_API_TOKEN
+# in the environment)" since ONLINE1, and the bible has repeated "the deploy
+# is by hand, nothing in CI does it" through every online slice since. That
+# was true, and it had two costs: a relay-changing slice could merge green
+# with the live Worker still on the old deploy (SRV-N shipped exactly that
+# way), and the only way to push one was for somebody to hold the API token
+# in their hands.
+#
+# MANUAL, NOT ON PUSH, and that is deliberate rather than timid. A relay
+# deploy restarts every Durable Object and drops EVERY connected player's
+# socket at once - peers vanish, chat goes quiet. That is a thing to do on
+# purpose at a chosen moment, not a thing to have happen because a comment
+# in `server/` changed. `workflow_dispatch` is the whole trigger.
+name: Deploy relay
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type deploy to confirm - this drops every connected player"
+        required: true
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # THE CONFIRMATION, and it refused its own first run (run 1, step 2,
+      # every later step skipped). Two faults, and the second is why the
+      # first could not be read off the log:
+      #
+      #   IT WAS BRITTLE - one exact string, one context. A trailing space,
+      #   a capital D, or an `inputs` context that does not populate the way
+      #   `github.event.inputs` does, and a deliberate run is refused. This
+      #   is a speed bump before dropping every player in the game; it is
+      #   meant to catch an ACCIDENT, not a typo.
+      #
+      #   IT WAS UNDIAGNOSABLE - the message said what to type and never
+      #   what it GOT, so an empty box and a broken context read identically.
+      #   The same shape as a gate whose state is never written.
+      #
+      # Kept rather than deleted: it fired correctly on its own terms, and
+      # the terms were what was too narrow.
+      - name: Refuse anything but a deliberate run
+        env:
+          CONFIRM: ${{ inputs.confirm || github.event.inputs.confirm }}
+        run: |
+          got=$(printf '%s' "${CONFIRM:-}" | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')
+          echo "confirm box received: '${CONFIRM:-}' (normalised: '$got')"
+          if [ "$got" != "deploy" ]; then
+            echo "::error::confirm must be the word 'deploy' - got '${CONFIRM:-<empty>}'. This drops every connected player's socket, so it asks once."
+            exit 1
+          fi
+          echo "confirmed - proceeding"
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      # THE VERSION THIS RUN INTENDS, read from the source rather than typed
+      # into the workflow: one home, and a deploy cannot claim a name the
+      # Worker does not carry. The home is src/net/wire.js since SLAM13
+      # (the welcome carries it and the client compares against it;
+      # server/src/index.js re-exports it for /health) - a grep of index.js
+      # would have found the re-export and refused every run.
+      - name: Read RELAY_VERSION from source
+        id: ver
+        run: |
+          v=$(grep -oP "^export const RELAY_VERSION = '\\K[^']+" src/net/wire.js)
+          test -n "$v" || { echo "::error::could not read RELAY_VERSION"; exit 1; }
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          echo "deploying relay $v"
+
+      - name: Deploy
+        working-directory: server
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: npx --yes wrangler@4 deploy
+
+      # AND PROVE IT LANDED. The client's own deploy has been verified BY
+      # CONTENT since U60 (`tools/verify-deploy.mjs`, whose header says HTTP
+      # 200 proves nothing); the relay never was. `/health` names the deploy,
+      # so ask it until it says the version this run built - a wrangler exit
+      # code of 0 over an unchanged Worker is the failure this catches.
+      - name: Verify /health names this deploy
+        run: |
+          want='${{ steps.ver.outputs.version }}'
+          url='https://daggerfall-online.mackcothran.workers.dev/health'
+          for i in $(seq 1 30); do
+            got=$(curl -fsS --max-time 10 "$url" | sed -n 's/.*"version":"\([^"]*\)".*/\1/p' || true)
+            echo "attempt $i: live reports '${got:-unreachable}', want '$want'"
+            if [ "$got" = "$want" ]; then echo "VERIFIED: the relay serves $want"; exit 0; fi
+            sleep 10
+          done
+          echo "::error::the relay never reported $want - the deploy did not take"
+          exit 1

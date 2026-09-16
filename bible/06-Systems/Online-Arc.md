@@ -6309,3 +6309,11 @@ gate). What met, and how it was settled:
   counted, wears the fallback name until the `who` answers, and the
   roster's count stays true. Mac's pin over the lens's ask.
 - **Cites** re-mapped with `tools/citeMerge.mjs` (14 moved).
+- **The relay deploy is a workflow now** (main's SRV-N/CI: "Deploy relay",
+  `workflow_dispatch`, the confirm word, then `/health` polled until it
+  names the version the run built). Its version step grepped
+  `server/src/index.js` for the declaration, which SLAM13 had moved to
+  `src/net/wire.js` - it would have refused every run with "could not read
+  RELAY_VERSION". It reads `wire.js` now. So the checklist's "deploy by
+  hand" is "run the workflow": the token lives in the repo's secrets, and
+  the one this session's transcript carried must be rotated THERE.
