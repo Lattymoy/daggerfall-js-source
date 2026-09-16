@@ -3938,7 +3938,7 @@ export async function bootExterior(canvas, renderer, params, status) {
           grounded: player.grounded, standingStill: player.standing, isRunning: player.isRunning, movingLessThanHalfSpeed: player.movingLessThanHalfSpeed,
           transportMode: player.transportMode, swimming: !!player.isPlayerSwimming, pos: player.pos,
           inside: false, inDungeon: false,
-          season, climateIndex: locClimateIndex, tileMapIndex: _surf.tileIndex ?? 0,
+          season, climateIndex: locClimateIndex, tileMapIndex: _surf.tileIndex ?? -1,   // AUDIT-IF F2: StreamingWorld.PlayerTileMapIndex is -1 off terrain, and (byte)-1 sits in no table - never 0, which is water
           waterWalking: _surf.water === ON_EXTERIOR_WATER.WaterWalking,
         });
       }

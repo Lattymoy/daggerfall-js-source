@@ -323,17 +323,19 @@ export function createImmersiveFootsteps({ audio = defaultAudio, settings = read
   async function loadAudio(quality) {
     const gen = ++loadGen;
     const names = clipNames(quality);
-    let success = true;
-    for (const name of names) {
-      if (registered.has(name)) continue;
+    // AUDIT-IF F3: every clip in flight at once (the first draft awaited them one by one - 105 round trips
+    // in series before the mod owned the stride); each failure is its own, the AND across them is LoadAudio's
+    const results = await Promise.all(names.map(async (name) => {
+      if (registered.has(name)) return true;
       let ok = false;
       try {
         const bytes = await fetchClip(name);
         ok = !!bytes && await audio.registerSound(soundKey(name), bytes);
       } catch { ok = false; }
       if (ok) registered.add(name);
-      success &&= ok;
-    }
+      return ok;
+    }));
+    const success = results.every(Boolean);
     if (gen !== loadGen) return false;   // a later load superseded this one
     if (!success) {
       console.warn('[Warning] ImmersiveFootsteps: Missing sound asset');
@@ -607,8 +609,9 @@ export function createImmersiveFootsteps({ audio = defaultAudio, settings = read
      *  are the combined mesh's material names in order (unityMaterialName). */
     onTransitionInterior({ buildingType = null, materials = [] } = {}) {
       lastM = lastM ? { ...lastM, inside: true, inDungeon: false } : { inside: true, inDungeon: false };
-      // buildingType None (-1 / null): the material walk is skipped and the default lands
-      currInteriorFloorType = (buildingType != null && buildingType !== -1) ? interiorFloorType(materials) : FLOOR_TYPE.Tile;
+      // AUDIT-IF F4: only BuildingTypes.None (-1) skips the walk. A building with no discovery record hands DFU
+      // default(DiscoveredBuilding), whose buildingType is 0 - the walk runs; the first draft skipped it on null.
+      currInteriorFloorType = buildingType === -1 ? FLOOR_TYPE.Tile : interiorFloorType(materials);
       updateInteriorArmorFootstepSounds();
     },
     /** UpdateFootsteps_OnTransitionExterior (Main.cs:339-354), for the building and the dungeon exit alike. */

@@ -20,8 +20,9 @@ licence and the permission line), it is credited on the About screen,
 it has a Mod Authored row on the Features home (FT9's shape) and its
 ten keys under its card on the Mods page, and it is ported as
 `src/systems/immersiveFootsteps.js` - one component, driven by the four
-stride hosts. On by default (MO1). Pins: 15 in
-`test/if1_immersivefootsteps.test.js`.
+stride hosts. On by default (MO1). Pins: 18 in
+`test/if1_immersivefootsteps.test.js`; campaign `tools/mutants/if1.json`,
+30 mutants, 28 killed, 2 equivalent as recorded (AUDIT-IF below).
 
 ## The source the port reads
 
@@ -157,3 +158,80 @@ declared so the pane matches the mod's and read by nothing.
 NOT HEARD ON A GPU: the suite runs under node with a recording audio
 engine and clips of one byte; the browser's decode of the 210 MP3s and
 the Vite glob that serves them are untested here.
+
+## AUDIT-IF (2026-09-16, Mac: "Lets now do a comprehensive audit on this before merging")
+
+The port was read again against the two sources, and every seam was
+checked from the OUTSIDE - the build, the hosts, the inventory skins -
+rather than through the pins that had passed. Five findings, all fixed
+and each pinned; then a mutation campaign over the component and its
+wiring.
+
+- **F1 - THE BUILD INLINED THE CLIPS.** EOTB5's class, one vendor over:
+  123 of the 210 MP3s sit under Vite's 4 KB `assetsInlineLimit`, so the
+  production build wrote 250 KB of base64 audio into the main JavaScript
+  chunk - parsed at boot by every player, whichever quality they chose
+  and whether the mod was on. The rule in `vite.config.js` names this
+  vendor beside Eye Of The Beholder's and still falls through for
+  everything else; the pin drives the callback on both vendors' paths
+  and a third that must keep the default, and re-measures the count of
+  small clips so the rule cannot become academic quietly.
+- **F2 - OFF TERRAIN WAS WATER.** `StreamingWorld.PlayerTileMapIndex`
+  answers -1 with no built terrain under the player, and `(byte)-1` sits
+  in no table, so DFU lands the climate's own else arm (grass, sand,
+  mud, snow). The hosts handed the component `_surf.tileIndex ?? 0` -
+  and 0 is the water tile, so a player over a pixel still streaming
+  heard deep water. Both exterior hosts hand -1 now; pinned at the
+  component (four climates, no tile) and at the hosts.
+- **F3 - LOADAUDIO IN SERIES.** The first draft awaited the 105 clips
+  one after another: 105 round trips before the mod owned the stride, on
+  a slow line several seconds of classic footsteps after every quality
+  change. Every clip is in flight at once now; each miss is its own and
+  the AND across them is LoadAudio's `success`. The pin holds every
+  fetch open until all 105 have been asked for, then answers one of them
+  empty and checks the mod stays inert.
+- **F4 - A BUILDING WITH NO DISCOVERY RECORD SKIPPED THE FLOOR WALK.**
+  DFU's `BuildingDiscoveryData` is a struct; with no record it is
+  `default`, whose `buildingType` is 0 (Alchemist), and the handler's
+  `!= None` test is TRUE - the material walk runs. The first draft read a
+  null building as None and dropped to the tile default. Only an
+  explicit None (-1) skips the walk now.
+- **F5 - THE DEFAULT INVENTORY SKIN NEVER REFRESHED.** The
+  inventory-close refresh was hooked on `NativeInventoryWindow
+  ._closeSilently`, which the enhanced pack - the DEFAULT skin - never
+  passes through: it closes through `inventoryDoor.js`'s own `close`
+  into `closeSession`. A player in enhanced mode changed boots and
+  walked five seconds in the old pair. Both skins call the refresh now.
+  It is NOT in `closeSession` itself, which would be the one home:
+  `systems/inventorySession.js` is upstream of `transport.js`, which the
+  component imports for its Horse and Cart gate, and that is a cycle.
+  Pinned both ways - each skin's close carries the call, and
+  inventorySession.js carries no reference.
+
+**Checked and standing.** The outer world host returns before its own
+stride once the modal host has taken the frame, so no frame ticks the
+component twice. The master bus carries `SoundVolume`
+(`systems/audio.js`), so the mod's `SoundVolume` factor is not doubled.
+Every inventory window the three hosts build hands the player entity.
+The building entry on a game LOAD runs the same entry as a door, so the
+transition fires. The `season` the hosts hand is the calendar winter
+DFU's `SeasonValue` names. The standalone `?interior` scene carries no
+stride at all, the mod's or the classic one, which predates this port.
+
+**The campaign.** `tools/mutants/if1.json`: 30 mutants over the
+component's clocks, gates, ladders, tables, rolls, the two verbatim
+slips, the fixed-step bound, the refresh, the load, and the three host
+seams the audit touched; 28 killed, 2 equivalent as recorded (the three
+floor tables are disjoint, so the order of the checks at one material
+cannot be observed; the footstep play's switch guards a play the clock
+zeroing already prevents - the mod's own redundancy, kept). TWO
+SURVIVORS ON THE FIRST RUN, both the same lesson: the refresh pin
+counted ticks with `REFRESH_SLOTS_TICKS` and the landing pin scaled
+with `LANDING_VOLUME_SCALE` - a pin that measures a constant against
+itself is a pin on nothing. Both are literals now and both mutants die.
+
+**Not audited.** The browser's decode of the 210 MP3s and the Vite glob
+that serves them (the suite runs under node with clips of one byte);
+whether Unity clamps `PlayOneShot`'s `volumeScale` above 1 (the mod's
+sliders reach 10, and the port's gain node does not clamp - a player who
+sets 10 hears 10 here and whatever Unity does there).

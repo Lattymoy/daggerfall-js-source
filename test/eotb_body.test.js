@@ -431,6 +431,7 @@ test('EOTB5: the mod\u2019s art is EXCLUDED from Vite\u2019s inlining, and nothi
   const rule = new Function('filePath', `return (${m[1]});`);
   assert.equal(rule('/x/vendor/eye-of-the-beholder/Textures/112364/112364_0-0.png'), false, 'never inline a sprite');
   assert.equal(rule('/x/vendor/dynamic-skies/Textures/CdMSunny.png'), undefined, 'every other vendor asset keeps the default');
+  assert.equal(rule('/x/vendor/immersive-footsteps/Audio/Low_Quality/Climate/LQ_Grass_Footstep_1.mp3'), false, 'AUDIT-IF F1: Immersive Footsteps\' clips are the same class (test/if1_immersivefootsteps.test.js holds the measurement)');
   assert.equal(rule('C:\\x\\vendor\\eye-of-the-beholder\\Textures\\a.png'), false, 'and on a Windows path too');
 });
 

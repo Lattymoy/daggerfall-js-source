@@ -16,6 +16,11 @@
 // three landing sounds, the 250-tick refresh and the inventory close,
 // and the mod's own quirks kept verbatim (altStep never set, the chain
 // and plate re-rolls writing the LEATHER interval). Then the hosts.
+//
+// AUDIT-IF (2026-09-16): five findings pinned below (F1 the build's inlining, F2 the off-terrain tile,
+// F3 the concurrent load, F4 the null discovery record, F5 both inventory skins). Campaign:
+// tools/mutants/if1.json - 30 mutants, 28 killed, 2 equivalent as recorded; the two first-run
+// survivors were pins that measured a constant against itself, made literal.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
@@ -325,6 +330,8 @@ test('IF1: DetermineExteriorClimateFootstep, tile by tile - water, shallow water
   assert.equal(setAt({ tileMapIndex: 46 }), 'UnarmoredFootstepsMain', 'a path tile with no boots');
   assert.equal(setAt({ tileMapIndex: 47, climateIndex: CLIMATES.Desert }), 'UnarmoredFootstepsMain', 'the path before every climate ladder');
   assert.equal(setAt({ tileMapIndex: 2, season: SEASON.Winter }), 'SnowFootstepsMain', 'winter on Woodlands');
+  assert.equal(setAt({ tileMapIndex: 46, season: SEASON.Winter }), 'UnarmoredFootstepsMain', 'AUDIT-IF: the path is read BEFORE the winter arm - a snowed road is still stone');
+  assert.equal(setAt({ tileMapIndex: 4, season: SEASON.Winter, climateIndex: CLIMATES.Subtropical }), 'SandFootstepsMain', 'AUDIT-IF: Subtropical is the fourth snow-free climate');
   assert.equal(setAt({ tileMapIndex: 1, season: SEASON.Winter, climateIndex: CLIMATES.Swamp }), 'MudFootstepsMain', 'winter Swamp, a Swamp_Snow_Alt tile');
   assert.equal(setAt({ tileMapIndex: 2, season: SEASON.Winter, climateIndex: CLIMATES.Swamp }), 'SnowFootstepsMain', 'winter Swamp, any other tile');
   assert.equal(setAt({ tileMapIndex: 2, season: SEASON.Winter, climateIndex: CLIMATES.Desert }), 'GravelFootstepsMain', 'no snow in the desert: the sandy ladder, and 2 is desert gravel');
@@ -366,7 +373,9 @@ test('IF1: the equipment refresh is the 250th tick (5 s) when either sound switc
   r.ticks(30, r.outdoors({ tileMapIndex: 46 }));
   assert.equal(r.c.status().currentSet, 'UnarmoredFootstepsMain');
   r.slots[EQUIP_SLOTS.Feet] = boots(ARMOR_MATERIAL.Iron);
-  r.ticks(REFRESH_SLOTS_TICKS - 31, r.outdoors({ tileMapIndex: 46 }));
+  // AUDIT-IF (campaign survivor `refresh-at-249`): the count was measured against the constant it pins - a literal now
+  assert.equal(REFRESH_SLOTS_TICKS, 250, 'Object.cs:71');
+  r.ticks(250 - 31, r.outdoors({ tileMapIndex: 46 }));
   assert.equal(r.c.status().currentSet, 'UnarmoredFootstepsMain', 'tick 249: not yet');
   assert.equal(r.c.status().worn.boots, null);
   r.ticks(1, r.outdoors({ tileMapIndex: 46 }));
@@ -376,7 +385,7 @@ test('IF1: the equipment refresh is the 250th tick (5 s) when either sound switc
   // both switches off: the refresh is skipped (there is no point)
   r.store['FootstepSettings.AllowFootstepSounds'] = false; r.store['ArmorSwaySettings.AllowArmorSwaySounds'] = false;
   r.slots[EQUIP_SLOTS.Feet] = null;
-  r.ticks(REFRESH_SLOTS_TICKS, r.outdoors({ tileMapIndex: 46 }));
+  r.ticks(250, r.outdoors({ tileMapIndex: 46 }));
   assert.equal(r.c.status().worn.boots !== null, true, 'no refresh with both off');
   r.c.onInventoryClose(r.entity);
   assert.equal(r.c.status().worn.boots !== null, true, 'nor on the inventory close');
@@ -415,7 +424,7 @@ test('IF1: the building floor walk and UpdateInteriorArmorFootstepSounds - wood,
   r.c.onTransitionInterior({ buildingType: -1, materials: [unityMaterialName(66, 3)] });
   assert.equal(r.c.status().floorType, FLOOR_TYPE.Tile, 'BuildingTypes.None: the walk is skipped and the default lands');
   r.c.onTransitionInterior({ materials: [unityMaterialName(66, 3)] });
-  assert.equal(r.c.status().floorType, FLOOR_TYPE.Tile);
+  assert.equal(r.c.status().floorType, FLOOR_TYPE.Wood, 'AUDIT-IF F4: no discovery record is DFU\'s default struct (buildingType 0), and the walk runs');
   r.c.onTransitionDungeonInterior();
   assert.equal(r.c.status().floorType, FLOOR_TYPE.Tile);
   assert.equal(r.c.status().currentSet, 'UnarmoredFootstepsMain');
@@ -516,7 +525,9 @@ test('IF1: the three landing sounds the mod takes over - fall damage is Hard_Lan
   fallback.length = 0;
   sink(SOUND.FallDamage, 0.7); sink(SOUND.FallHard, 0.7); sink(999, 0.3);
   assert.deepEqual(fallback, [[999, 0.3]], 'an id that is not a landing passes through');
-  assert.deepEqual(r.shots, [['if:LQ_Unarmored_Hard_Landing_2', LANDING_VOLUME_SCALE * 0.5], ['if:LQ_Unarmored_Hard_Landing_1', LANDING_VOLUME_SCALE * 0.5]]);
+  // AUDIT-IF (campaign survivor `landing-scale-1`): 4f x FootstepVolumeMulti (Object.cs:504), as a literal
+  assert.equal(LANDING_VOLUME_SCALE, 4);
+  assert.deepEqual(r.shots, [['if:LQ_Unarmored_Hard_Landing_2', 2], ['if:LQ_Unarmored_Hard_Landing_1', 2]]);
   r.shots.length = 0;
   r.slots[EQUIP_SLOTS.Feet] = boots(ARMOR_MATERIAL.Chain); r.c.onInventoryClose(r.entity);
   assert.equal(r.c.applyPlayerFallDamage(), true); assert.equal(r.c.hardFallAlert(), true); assert.equal(r.c.playLargeSplash(), true);
@@ -542,6 +553,54 @@ test('IF1: [verbatim] altStep is declared and never set - over a thousand steps 
   assert.equal(FOOTSTEP_SETS.length, 14);
 });
 
+// ═══ AUDIT-IF (2026-09-16, Mac: "Lets now do a comprehensive audit on this before merging") ═══
+
+test('AUDIT-IF F2: a tile of -1 (off terrain, StreamingWorld.PlayerTileMapIndex\'s answer) is no table\'s and lands the climate\'s own else arm - not tile 0\'s deep water', async () => {
+  const r = rig();
+  await r.boot();
+  r.ticks(30, r.outdoors({ tileMapIndex: -1 }));
+  assert.equal(r.c.status().currentSet, 'GrassFootstepsMain', 'Woodlands, no tile: grass');
+  r.ticks(30, r.outdoors({ tileMapIndex: -1, climateIndex: CLIMATES.Desert }));
+  assert.equal(r.c.status().currentSet, 'SandFootstepsMain');
+  r.ticks(30, r.outdoors({ tileMapIndex: -1, climateIndex: CLIMATES.Swamp }));
+  assert.equal(r.c.status().currentSet, 'MudFootstepsMain');
+  r.ticks(30, r.outdoors({ tileMapIndex: -1, season: SEASON.Winter }));
+  assert.equal(r.c.status().currentSet, 'SnowFootstepsMain');
+  assert.equal(checkClimateTileTables('Shallow_Water', -1), false);
+});
+
+test('AUDIT-IF F1: the build never inlines a clip as base64 - the vite rule names this vendor beside Eye Of The Beholder\'s and falls through for everything else', () => {
+  const viteConfig = rd('vite.config.js');
+  const m = /assetsInlineLimit: \(filePath\) => \((.*?)\),/.exec(viteConfig);
+  assert.ok(m, 'the callback');
+  const rule = new Function('filePath', `return (${m[1]});`);
+  assert.equal(rule('/x/vendor/immersive-footsteps/Audio/Low_Quality/Climate/LQ_Grass_Footstep_1.mp3'), false, 'never inline a clip');
+  assert.equal(rule('C:\\x\\vendor\\immersive-footsteps\\Audio\\High_Quality\\Fall_Landing\\HQ_Water_Landing_1.mp3'), false, 'and on a Windows path');
+  assert.equal(rule('/x/vendor/eye-of-the-beholder/Textures/112364/112364_0-0.png'), false, 'EOTB5\'s rule still holds');
+  assert.equal(rule('/x/vendor/handheld-torches/Textures/112359_0-0.png'), undefined, 'every other vendor asset keeps the default');
+  // the measurement that found it: 123 of the 210 clips are under Vite's 4 KB default and were inlined (250 KB of base64)
+  let small = 0;
+  for (const q of [SOUND_CLIP_QUALITY.Low, SOUND_CLIP_QUALITY.High]) for (const name of clipNames(q)) if (readFileSync(join(root, clipPath(name))).length < 4096) small++;
+  assert.ok(small > 100, `${small} clips sit under the inline limit - the rule is not academic`);
+});
+
+test('AUDIT-IF F3: LoadAudio puts every clip in flight at once, and one missing clip still fails the whole load', async () => {
+  let inFlight = 0, peak = 0;
+  const release = [];
+  const r = rig({}, { fetchOk: () => true });
+  // a fetch that holds every clip until all 105 have been asked for
+  const c = createImmersiveFootsteps({
+    audio: { registerSound: async (k, b) => b.length > 0, playOneShot() {} }, settings: () => readFootstepSettings(() => r.store), random: () => 0,
+    fetchClip: (name) => new Promise((res) => { inFlight++; peak = Math.max(peak, inFlight); release.push(() => { inFlight--; res(name === 'LQ_Snow_Footstep_3' ? new Uint8Array(0) : new Uint8Array([1])); }); }),
+  });
+  c.update(0, r.outdoors());
+  await new Promise((res) => setTimeout(res, 5));
+  assert.equal(peak, 105, 'all 105 asked for before any answered');
+  for (const f of release) f();
+  await c.settle();
+  assert.equal(c.ownsStride(), false, 'one empty clip: Missing sound asset, the mod stays inert');
+});
+
 // ═══ the hosts ═══════════════════════════════════════════════════════════════
 
 test('IF1: the four stride hosts ask ownsStride before the classic play and drive the component each frame; the modal host raises the three transitions and the standalone dungeon its own; the three landing sinks and the dungeon context\'s three gates; the interior context lists the combined mesh\'s materials; the inventory close refreshes; the records', () => {
@@ -554,7 +613,7 @@ test('IF1: the four stride hosts ask ownsStride before the classic play and driv
   }
   // the exterior hosts hand the exterior arm's reads; the inside hosts the water arm's
   for (const src of [world, ext]) {
-    assert.match(src, /inside: false, inDungeon: false,\s*season, climateIndex: [^\n]*, tileMapIndex: _surf\.tileIndex \?\? 0,\s*waterWalking: _surf\.water === ON_EXTERIOR_WATER\.WaterWalking,/);
+    assert.match(src, /inside: false, inDungeon: false,\s*season, climateIndex: [^\n]*, tileMapIndex: _surf\.tileIndex \?\? -1,[^\n]*\n\s*waterWalking: _surf\.water === ON_EXTERIOR_WATER\.WaterWalking,/, 'AUDIT-IF F2: off terrain is -1, never the water tile');
     assert.match(src, /swimming: !!player\.isPlayerSwimming, pos: player\.pos,/, 'PlayerEnterExit.IsPlayerSwimming, not the motor flag');
   }
   assert.match(wm, /inside: true, inDungeon: mode === 'dungeon',\s*centreY: player\.pos\[1\] \+ player\.height \/ 2, waterSurfaceY: mode === 'dungeon' \? \(_surf \?\? null\) : null,/);
@@ -575,6 +634,9 @@ test('IF1: the four stride hosts ask ownsStride before the classic play and driv
   assert.match(ic, /const swapped = texRemap\.get\(base\) \?\? base;/, 'through the climate remap - DFU names the material after the swapped archive');
   assert.match(ic, /^\s+floorMaterials,/m, 'on the context');
   assert.match(rd('src/ui/nativeInventory.js'), /_closeSilently\(\) \{\s*this\.done = true;[\s\S]{0,400}immersiveFootsteps\.onInventoryClose\(this\.hooks\.entity \?\? null\);/);
+  // AUDIT-IF F5: BOTH skins. The enhanced pack (the default) closes through inventoryDoor's own close, not _closeSilently.
+  assert.match(rd('src/ui/inventoryDoor.js'), /closeSession\(deps, \{ dropped \}\);[\s\S]{0,700}immersiveFootsteps\.onInventoryClose\(deps\.entity \?\? null\);/, 'the enhanced skin\'s close refreshes too');
+  assert.equal((rd('src/systems/inventorySession.js').match(/immersiveFootsteps/g) ?? []).length, 0, 'not in closeSession: inventorySession.js is upstream of transport.js, which the component imports');
   // the records
   assert.ok(existsSync(join(root, 'bible/06-Systems/Immersive-Footsteps.md')));
   assert.match(rd('bible/01-Overview/Active-Arcs.md'), /06-Systems\/Immersive-Footsteps\.md/);
