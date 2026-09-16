@@ -155,8 +155,12 @@ export const CHAT_CSS = `
    button that only existed on a touch device would be the feature's
    only door on half the machines. Open it sits at the far end of the
    tab bar, where an MMO puts it. */
+/* AUDIT SOC C24: the closed-state Social button stands on the Chat button's own line, so it wears the Chat button's
+   own font-size and padding (14px / 6px 10px - .dfchat-open, in the shared rule above) instead of a smaller pair
+   that made the two different heights, and the Chat button carries a 6px right margin so they are not flush. */
 .dfchat-social { background: var(--iron, #2b323b); color: var(--bone, #e9e4d9); border: 0; border-radius: 3px; font: inherit;
-  font-size: 13px; padding: 4px 10px; cursor: pointer; align-items: center; }
+  font-size: 14px; padding: 6px 10px; cursor: pointer; align-items: center; }
+.dfchat.touch .dfchat-open { margin-right: 6px; }
 .dfchat-social-out { display: inline-flex; pointer-events: auto; margin-top: 4px; }
 .dfchat[data-state="open"] .dfchat-social-out { display: none; }
 .dfchat-social-tab { display: inline-flex; margin: 2px 4px 4px auto; }
@@ -170,9 +174,16 @@ export const CHAT_CSS = `
    vanishing, because a missing button teaches nothing. */
 .dfchat-who-row.act { cursor: pointer; }
 .dfchat-rowmenu { display: flex; flex-direction: column; gap: 2px; padding: 3px 0 4px; }
-.dfchat-rowbtn { background: var(--iron, #2b323b); color: var(--bone, #e9e4d9); border: 0; border-radius: 3px; font: inherit;
+.dfchat-rowbtn { display: flex; align-items: baseline; gap: 4px; background: var(--iron, #2b323b); color: var(--bone, #e9e4d9); border: 0; border-radius: 3px; font: inherit;
   font-size: 11px; text-align: left; padding: 3px 6px; cursor: pointer; }
 .dfchat-rowbtn[disabled] { opacity: .45; cursor: default; }
+/* AUDIT SOC C11: the reason a row is dead, drawn beside its label - a title is a hover, and a finger cannot hover. */
+.dfchat-rowwhy { font-size: 10px; font-style: italic; color: var(--dim, #8b8578); margin-left: auto; }
+/* AUDIT SOC C8: the finger's own sizes for the two controls SOC3 added to this panel - the Social button (23 tall)
+   and a roster row's menu buttons (18) - on the touch skin alone, where every one of them is pressed by a thumb. */
+.dfchat.touch .dfchat-social { min-height: 44px; }
+.dfchat.touch .dfchat-who-row.act { min-height: 44px; padding: 12px 0 0; }
+.dfchat.touch .dfchat-rowbtn { min-height: 44px; font-size: 13px; padding: 8px 8px; }
 
 /* CHAT-R2: HIDDEN. Not display:none on the root - the panel must
    keep its listeners and its log - but every VISIBLE part away, with
@@ -224,8 +235,16 @@ export function isOpenKey(e, { canOpen = () => true, overlay = overlayOpen, acti
  * a CSS colour or null for an author's name and a roster row;
  * `rowActions(peerId)` is `[{ label, enabled, why, run }]` - the menu a
  * click on a roster row opens.
+ *
+ * AUDIT SOC C2/C14: `above()` is the host's word on whether a social
+ * surface stands OVER the chat (the friends panel, the F-menu). All
+ * three listen for Escape on the window in capture, so ONE press used
+ * to close two of them. The topmost answers: with something above it
+ * the chat IGNORES Escape - it does not close and it does not stop the
+ * key - and when it does handle one it calls stopImmediatePropagation,
+ * so neither a sibling surface nor the host's pause door sees it.
  */
-export function createChatPanel({ log, onSend, roster = null, canOpen = () => true, onOpen = null, onClose = null, action = actionOfKey, overlay = overlayOpen, doc = document, win = globalThis, touch = isTouchDevice(), social = null, nameColor = null, rowActions = null } = {}) {
+export function createChatPanel({ log, onSend, roster = null, canOpen = () => true, onOpen = null, onClose = null, above = () => false, action = actionOfKey, overlay = overlayOpen, doc = document, win = globalThis, touch = isTouchDevice(), social = null, nameColor = null, rowActions = null } = {}) {
   injectChatStyle(doc);
   const el = (tag, cls, text) => { const n = doc.createElement(tag); n.className = cls; if (text != null) n.textContent = text; return n; };
   const root = el('div', `dfchat${touch ? ' touch' : ''}`);
@@ -279,7 +298,12 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
   const socialBadges = [];
   const socialButton = (cls) => {
     const b = el('button', `dfchat-social ${cls}`, 'Social');
-    b.type = 'button'; b.setAttribute('aria-label', 'Friends and party');
+    b.type = 'button';
+    // AUDIT SOC C21: NO aria-label ON THE BUTTON. One overrode the whole of its content, so the badge - the count of
+    // requests and invitations waiting on this player, the only thing on the button that ever changes - was read as
+    // "Friends and party" and nothing else. The word stays a title for the mouse; the badge names ITSELF, and the
+    // button's accessible name becomes "Social 3" the moment there is a 3.
+    b.setAttribute('title', 'Friends and party');
     const badge = el('span', 'dfchat-badge');
     b.append(badge); socialBadges.push(badge);
     b.addEventListener('click', () => social.onToggle?.());
@@ -295,6 +319,7 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
   doc.body.append(root);
 
   let painted = -1;
+  let socialBadgeLabel = null;   // SOC3/C21: the badge's last spoken label, so the attribute is written on a change
   let peekNodes = [];
   let listNodes = [];      // the open list's rows, in order: [{ seq, node }] - grown, not rebuilt (AUDIT CHAT C8)
   let listTab = null;
@@ -359,7 +384,15 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
     if (!social) return;
     const n = Number(social.pending?.() ?? 0);
     const text = Number.isFinite(n) && n > 0 ? String(n) : '';
-    for (const b of socialBadges) if (b.textContent !== text) b.textContent = text;
+    // C21: the badge says what its number MEANS, so "3" is not read out as a bare digit beside "Social". Written on
+    // a CHANGE, like everything else on this frame - `setAttribute` is a write whatever the value.
+    const label = text ? `${text} waiting` : '';
+    const moved = label !== socialBadgeLabel;
+    socialBadgeLabel = label;
+    for (const b of socialBadges) {
+      if (b.textContent !== text) b.textContent = text;
+      if (moved) b.setAttribute('aria-label', label);
+    }
   };
 
   /** The open list: the rows that left the cap dropped from the front, the rows that arrived appended at the
@@ -388,17 +421,22 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
    * (net/social.js actionsFor), so this file decides nothing about who
    * may be friended or invited - it draws an answer and calls back.
    *
-   * A refused act is a TITLE, never a missing button: "already friends"
-   * and "the party is full" are the two things a player most wants to
-   * be told, and a row that silently drops the option teaches neither.
+   * A refused act is a SENTENCE, never a missing button: "already
+   * friends" and "the party is full" are the two things a player most
+   * wants to be told, and a row that silently drops the option teaches
+   * neither. AUDIT SOC C11: the sentence is DRAWN beside the label as
+   * well as titled - a `title` is a mouse hover, and the touch skin
+   * this panel also runs in has no hover at all.
    */
   const rowMenu = (peerId) => {
     const menu = el('div', 'dfchat-rowmenu');
     for (const a of rowActions(peerId) ?? []) {
       const b = el('button', 'dfchat-rowbtn', String(a.label ?? ''));
       b.type = 'button';
-      if (a.enabled === false) { b.disabled = true; if (a.why) b.setAttribute('title', String(a.why)); }
-      else b.addEventListener('click', (e) => { e.stopPropagation?.(); a.run?.(); menuFor = null; paintWho(); });
+      if (a.enabled === false) {
+        b.disabled = true;
+        if (a.why) { b.setAttribute('title', String(a.why)); b.append(el('span', 'dfchat-rowwhy', String(a.why))); }
+      } else b.addEventListener('click', (e) => { e.stopPropagation?.(); a.run?.(); menuFor = null; paintWho(); });
       menu.append(b);
     }
     return menu;
@@ -510,7 +548,8 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
     if (e.target === input) {
       // the field's key (CG2): stopped here, so the host's ring never fills from a chat line
       if (e.isComposing || e.keyCode === 229) { e.stopPropagation(); return; }   // C3: the IME's own Enter commits a candidate, not a line
-      if (e.code === 'Escape') { e.preventDefault(); closePanel(); }
+      // AUDIT SOC C2/C14: a surface OVER the chat owns Escape - the key is left whole for it, and the field keeps its line
+      if (e.code === 'Escape') { if (above()) { e.stopPropagation(); return; } e.preventDefault(); e.stopImmediatePropagation(); closePanel(); return; }
       else if (e.code === 'Enter' && !e.shiftKey && !e.repeat) { e.preventDefault(); submit(); }   // C6: a held Enter opened once; its repeats send nothing
       else if (e.code === 'Tab') e.preventDefault();   // C7: focus stays in the field - Tab walked it onto Send and gave the keyboard back to the game
       else swallowBrowserKey(e);

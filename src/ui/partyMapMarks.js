@@ -61,12 +61,16 @@ export const PARTY_MARK_CSS = PARTY_GREEN_CSS;
 /** ...and OFFLINE: the same mark with the life taken out of it. A member who logged out is still worth seeing -
  *  that is where they will be when they come back - so the mark stays and goes grey rather than vanishing. */
 export const PARTY_OFFLINE_RGBA = Object.freeze([0.55, 0.58, 0.55, 0.85]);
-export const PARTY_OFFLINE_CSS = '#8c928c';
 
 /** The byte triple the classic page's dot buffer wants, derived from the one green rather than spelled twice. */
 const bytes = (rgba) => Object.freeze([Math.round(rgba[0] * 255), Math.round(rgba[1] * 255), Math.round(rgba[2] * 255)]);
+const hex = (rgb) => '#' + rgb.map((v) => v.toString(16).padStart(2, '0')).join('');
 export const PARTY_DOT_RGB = bytes(PARTY_MARK_RGBA);
 export const PARTY_OFFLINE_DOT_RGB = bytes(PARTY_OFFLINE_RGBA);
+/** AUDIT SOC D7: the grey the DOM wears, DERIVED from the grey the maps' buffers wear rather than typed a second
+ *  time - the two had already drifted (#8c948c against the bytes' #8c928c), which is one green channel between the
+ *  enhanced map's label and the classic page's dot for the very same offline seat. One source, one grey. */
+export const PARTY_OFFLINE_CSS = hex(PARTY_OFFLINE_DOT_RGB);
 
 /** What a legend calls the mark, said once so both maps and the tests agree. */
 export const PARTY_LEGEND_TEXT = 'Party member';
@@ -141,5 +145,9 @@ export function partyLabelText(mark) {
  *  not anything moved (net/wire.js PARTY_SEND_MS), so a map that repainted per pose would repaint forever; a map
  *  that compares this repaints when a member actually moves, goes indoors, drops offline, joins or leaves. */
 export function partyMarksKey(marks) {
-  return marks.map((m) => `${m.acct ?? m.name}:${m.px},${m.py},${m.in},${m.online ? 1 : 0},${m.name}`).join('|');
+  // AUDIT SOC D6: `loc` is in the signature because `loc` is DRAWN - the enhanced label's second line
+  // (`.ovpwhere`) and both maps' hover sentence are the place's name, so a member who walked from Daggerfall into
+  // Privateers Hold WITHOUT changing map pixel (the pose carries the place's own pixel, so that happens) left a
+  // label naming the town they had left. `leader` is still absent, and deliberately: no map draws it.
+  return marks.map((m) => `${m.acct ?? m.name}:${m.px},${m.py},${m.in},${m.online ? 1 : 0},${m.name},${m.loc}`).join('|');
 }

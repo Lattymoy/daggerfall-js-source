@@ -59,6 +59,7 @@ const LAW = {
   world76: '6f7d8d11d5c055d02fadc70935d9951b3c99732f8b59c9f9f4b72363b873781f',   // LOCALDEV1: the worker entry no longer exports the version string (workerd refused the bundle locally)
   world77: 'b8daad37e99a5f42c73910a000a44c3cca5d82c955cfed8bb064c10239e6aa60',   // ROSTER-G: the channel's welcome names its members with the true count; its joins and leaves are said
   world78: '059dda8d32a6e836c44d67cb2a81e969f7d9f15468e60262f57798b37c083ec6',   // SOC1: the world channel is the social hub - accounts (id + secret beside the peer's), friends, requests, presence and last-seen, four-seat parties, the party pose fan
+  world79: '1ce0aa5a1a3080a2ce121be6e9bb832cd4f5a0312dd47bb18963aebfacd03a6a',   // AUDIT SOC: the hub's cooldowns, the paged sweep of idle accounts and lapsed parties, pending rows without presence, by-account acts for relations alone, the record cache, the newest tab speaking, the replaced socket's leave, the clock on the channel welcome, `peers` on the picture, the act projected at the door
 };
 
 const rd = (p) => readFileSync(new URL('../' + p, import.meta.url));

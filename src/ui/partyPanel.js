@@ -1,6 +1,7 @@
 // SOC4 (2026-09-16, Mac: "Party system: Upon joining a party, the players name who are in a party together should
 // turn green. Theyre character portrait + health/stamins/magicia stats displayed on a new party UI element"):
-// THE PARTY HUD - one card per person I am travelling with, top-right of the screen.
+// THE PARTY HUD - one card per person I am travelling with, top-right of the screen (bottom right and narrower on
+// a phone, where the top right is the chat's: AUDIT SOC C6/C7).
 //
 // WHY A SECOND SURFACE AND NOT A ROW IN THE FRIENDS PANEL. A friends list is a thing you OPEN; a party is a thing you
 // are IN while you play. The four-seat party is the formation you fight in, so the one question it must answer
@@ -28,7 +29,10 @@
 // REPAINT ON CHANGE, NOT PER FRAME (ChatLog's law, AUDIT CHAT C8's lesson taken before it shipped). The host calls
 // `render` once a frame; this compares `social.version` and does nothing at all when it has not moved. When it has,
 // the CARDS ARE KEPT and their parts are written in place - a pose arriving sixty times a minute must move a bar,
-// not rebuild a node, or the panel would fight the compositor and flicker.
+// not rebuild a node, or the panel would fight the compositor and flicker. The ONE exception is an away seat's
+// "last online", which is a reading of the clock rather than of the picture and so would freeze at "just now" for
+// the rest of the session (AUDIT SOC B8): it is re-read on every frame the panel is up and written only where the
+// words differ, so a party with everyone present still writes nothing at all.
 //
 // Not a DFU member: Daggerfall Unity has no parties. Ledger A row (ONLINE).
 import { CifRciFile } from '../formats/cifRciFile.js';
@@ -54,13 +58,25 @@ export const FACE_BOX_H = 80;
 /** The panel's sheet: the enhanced skin's tokens (ui/enhancedStyle.js) where they exist, a fallback where the
  *  skin's sheet is not loaded - the same shape ui/chatPanel.js uses, so the two surfaces agree over the world. */
 export const PARTY_CSS = `
-.dfparty { position: fixed; right: calc(8px + env(safe-area-inset-right, 0px)); top: calc(40px + env(safe-area-inset-top, 0px));
+/* AUDIT SOC C6: 92, NOT 40. The FPS read-out is the other thing in this corner (ui/fpsCounter.js: top 8, z 9) and
+   it is FOUR LINES tall with the renderer's counts on - measured at 76px in Chromium, bottom edge 84 - so a HUD at
+   40 put its first card's portrait straight through the middle of it. 92 clears the read-out with eight pixels to
+   spare; the touch value stays 76, which is the number that clears the touch layer's own top-right buttons. */
+.dfparty { position: fixed; right: calc(8px + env(safe-area-inset-right, 0px)); top: calc(92px + env(safe-area-inset-top, 0px));
   width: 244px; max-width: calc(100vw - 16px); z-index: 5; pointer-events: none;
   display: flex; flex-direction: column; gap: 4px;
   font-family: var(--data, 'Barlow Semi Condensed', system-ui, sans-serif); color: var(--bone, #e9e4d9);
   -webkit-user-select: none; user-select: none; }
 /* below the touch layer's own top-right row of buttons (ui/touch.js: top 16, 44 tall) */
 .dfparty.touch { top: calc(76px + env(safe-area-inset-top, 0px)); }
+/* AUDIT SOC C7: A PHONE HAS NO TOP-RIGHT CORNER TO SPARE. At 430x860 with the touch skin the 244px HUD covered 238
+   of the 402 pixels of every chat peek line - 59% of the conversation, and the open friends panel under it besides.
+   Narrower AND out of that corner: the HUD drops to the bottom right, above the touch layer's own jump and sheathe
+   column (ui/touch.js: bottom 16, 48 tall, so 76 clears them), where nothing is written and the finger never goes
+   (the HUD takes no pointer). The peek lines come back whole. */
+@media (max-width: 560px) {
+  .dfparty, .dfparty.touch { width: 180px; top: auto; bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+}
 .dfparty-title { font-size: 11px; letter-spacing: .18em; text-transform: uppercase; text-align: right;
   color: var(--dim, #8b8578); text-shadow: 0 1px 2px #000; }
 .dfparty-list { display: flex; flex-direction: column; gap: 4px; }
@@ -277,21 +293,28 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
       const num = el('span', 'dfparty-num', VITALS_BLANK);
       track.append(fill);
       row.append(track, num);
+      // AUDIT SOC C21: a bare `aria-label` on a plain div is dropped by assistive technology - it needs a role to
+      // hang on. `group` names the bar AND leaves its digits readable, which `img` would have hidden.
+      row.setAttribute('role', 'group');
       row.setAttribute('aria-label', v.label);
       return { row, fill, num };
     });
     body.append(head, where, ...vitals.map((v) => v.row));
     node.append(facebox, body);
-    return { node, facebox, pix, name, lead, where, vitals, faceKey: null, drawn: null };
+    return { node, facebox, pix, name, lead, where, vitals, faceKey: null, drawn: null, away: null };
   };
 
   /** One member onto one card - written PART BY PART, and only where the part differs. */
   const paintCard = (card, m, isLeader) => {
     const p = m.p ?? null;
     setCls(card.node, `dfparty-card${m.online ? '' : ' away'}`);
-    setText(card.name, m.name ?? '');
+    const nm = m.name ?? '';
+    // AUDIT SOC C22: the name ellipsizes at the card's width (a 24-character name is cut mid-word and there is no
+    // second place in the HUD that says it), so the full one rides on the node as a title - written with the name.
+    if (card.name.textContent !== nm) { setText(card.name, nm); card.name.setAttribute('title', nm); }
     setCls(card.lead, `dfparty-lead${isLeader ? '' : ' off'}`);
     // Online: where they are. Away: when they were last seen, in the picture's own words (the relay's clock).
+    card.away = m.online ? null : { seen: m.seen };   // AUDIT SOC B8: the live pass re-reads this one sentence
     setText(card.where, m.online ? placeText(p) : lastOnlineText(false, m.seen, social.now()));
     for (let i = 0; i < PARTY_VITALS.length; i++) {
       const v = PARTY_VITALS[i], slot = card.vitals[i];
@@ -309,6 +332,17 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
       // showing a different face. Drawn from the cache, never fetched again, and NEVER re-subscribed to a load in
       // flight: a repaint a frame would otherwise hang a handler a frame off the same promise.
       drawFace(card, key, faces.get(key));
+    }
+  };
+
+  /** AUDIT SOC B8: the one sentence on this panel that goes stale with NOTHING in the picture changing - an away
+   *  seat's "Last online 5 min ago", which is a reading of the clock. Re-read every frame the panel is up and
+   *  WRITTEN only where the words differ, so a party with everyone present still costs nothing at all (the pins
+   *  count the writes) and a seat that dropped does not sit at "just now" for the rest of the session. */
+  const paintLive = () => {
+    for (const card of cards.values()) {
+      if (!card.away) continue;
+      setText(card.where, lastOnlineText(false, card.away.seen, social.now()));
     }
   };
 
@@ -347,7 +381,8 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
       // ui/chatPanel.js render's own door: a panel nobody can see is not painted, and the version it did not paint
       // stays owed - so the frame the window closes draws everything that arrived while it was up.
       if (covered) return;
-      if (!social || social.version === painted) return;
+      if (!social) return;
+      if (social.version === painted) { paintLive(); return; }   // AUDIT SOC B8: the clock moves where the version does not
       painted = social.version;
       paint();
     },

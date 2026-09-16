@@ -484,6 +484,27 @@ export const MOD_SETTINGS = Object.freeze({
 });
 
 let memory = null;
+
+/** AUDIT SOC D4 - THE ONE MIGRATION THIS STORE HAS.
+ *
+ *  Handheld Torches shipped its light toggle on "F" and the port carried that verbatim until SOC5 spent F on the
+ *  port's own SocialInteract action; HT4's gate forbids a vendored mod SHIPPING a key the port has already spent,
+ *  so the declared default moved to "O" (see the key's own comment above). A default only answers for a player who
+ *  never touched the dial - and every player who opened the Mods pane before this slice has a SAVED "F" in this
+ *  file, written by the pane from the old default, which would light a torch on every press of the social key.
+ *
+ *  So a stored value that is EXACTLY "F" is deleted on load, once, and the file written back without it: the
+ *  shipped "O" then applies, like it does for everyone else. A player who deliberately chose some other key keeps
+ *  it, and a player who deliberately chose F... also loses it, which is the trade - there is nothing in the file
+ *  that tells the two apart, and a torch on the social key is the worse of the two wrongs. */
+const HT_LIGHT_KEY = Object.freeze({ vendor: 'handheld-torches', key: 'Handling.ToggleLightInput', was: 'F' });
+function migrate(m) {
+  const held = m?.[HT_LIGHT_KEY.vendor];
+  if (!held || held[HT_LIGHT_KEY.key] !== HT_LIGHT_KEY.was) return false;
+  delete held[HT_LIGHT_KEY.key];
+  return true;
+}
+
 function load() {
   if (memory) return memory;
   memory = {};
@@ -491,6 +512,7 @@ function load() {
     const raw = appStorage()?.getItem(STORE_KEY);
     if (raw) memory = JSON.parse(raw) ?? {};
   } catch { memory = {}; }
+  if (migrate(memory)) save();   // AUDIT SOC D4: once, on the load that found it
   return memory;
 }
 function save() {

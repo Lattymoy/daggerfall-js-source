@@ -78,7 +78,7 @@ Two more test-coverage breaks in the same family:
   verifier's refinement: guard the flood fill so it does not run on the
   common single-component bake.
 - **The flight is planned with ALL-DEFAULT options**
-  (`src/ui/overworldMap.js:876`). `_confirmDiseased` sets
+  (`src/ui/overworldMap.js:906`). `_confirmDiseased` sets
   `this._panelState = null` and THEN calls `_beginFlight()`, whose
   `const st = this._panelState` is therefore always null. Every
   `st?.opts?.speedCautious` and `st?.hasHorse` evaluates to undefined, and
@@ -130,7 +130,7 @@ Recorded so it is not re-audited:
   the batching patch end to end: 5,658 -> 7 draw calls, picture
   byte-identical.
 - **The road-discovery layer has six passing tests and no caller**
-  (`src/ui/overworldModel.js:452`, `src/ui/overworldMap.js:476`). Every
+  (`src/ui/overworldModel.js:452`, `src/ui/overworldMap.js:485`). Every
   road in the Bay is drawn from the first frame, running unbroken to
   towns the same map is deliberately hiding. This is the R3W
   orphaned-layer defect again, in a new module.

@@ -16,7 +16,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
   RELAY_VERSION, CHAT_WORLD_ROOM, SOCIAL_ROOM, isSocialRoom, SOCIAL_ACTS, NOTE_CODES, SOCIAL_KINDS, SOCIAL_HZ_MAX, SOCIAL_ROOM_HZ_MAX, PARTY_HZ_MAX, PARTY_SEND_MS,
-  FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, PARTY_LOC_MAX, SOCIAL_ERROR_MAX, MAP_PIXELS_X, MAP_PIXELS_Y,
+  FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, PARTY_LOC_MAX, SOCIAL_ERROR_MAX, MAP_PIXELS_X, MAP_PIXELS_Y, SOCIAL_REPEAT_MS,
   parseClient, validPartyPose, validSocialRow, validPartyView, validInvite, validSocialFrame, validPartyFrame, sanitizeLabel, mintPartyId, socialGate, partyGate,
   FOE_HEALTH_MAX, DROP_STRIKES_MAX, CLOSE_POLICY, FALLBACK_NAME,
 } from '../src/net/wire.js';
@@ -59,7 +59,7 @@ test('SOC1 wire: the hub is the world channel, the bounds are what Mac asked for
   assert.ok(INVITE_TTL_MS >= 60_000 && INVITE_TTL_MS <= 10 * 60_000, 'an invite stands for minutes, not for ever');
   assert.ok(PARTY_OFFLINE_MS >= 60_000, 'a refresh keeps a seat');
   assert.ok(PARTY_SEND_MS * PARTY_HZ_MAX >= 1000, 'the client\'s floor never trips the relay\'s gate');
-  assert.equal(RELAY_VERSION, 'world78', 'SOC1 changed the relay: bumped');
+  assert.equal(RELAY_VERSION, 'world79', 'SOC1 changed the relay: bumped; AUDIT SOC again');
   assert.deepEqual(Object.keys(SOCIAL_ACTS), ['friend.request', 'friend.accept', 'friend.decline', 'friend.cancel', 'friend.remove', 'party.invite', 'party.accept', 'party.decline', 'party.leave', 'party.kick']);
   assert.deepEqual(SOCIAL_KINDS, ['state', 'presence', 'party', 'invite', 'note', 'error']);
   assert.ok(NOTE_CODES.includes('party.joined') && NOTE_CODES.includes('friend.requested') && NOTE_CODES.includes('party.leader') && NOTE_CODES.includes('party.lapsed'));
@@ -141,9 +141,11 @@ test('SOC1 wire: the client\'s door on a hub frame - every kind projected, a bad
   const invite = { party: 'q1234567', from: { acct: 'acct-0002', name: 'Bravo' }, members: [{ acct: 'acct-0002', name: 'Bravo' }], at: 1e12, expires: 1e12 + INVITE_TTL_MS };
   assert.deepEqual(validInvite(invite), invite);
   assert.equal(validInvite({ ...invite, expires: undefined }), null); assert.equal(validInvite({ ...invite, members: [{ acct: 'x' }] }), null);
-  const state = { t: 'social', k: 'state', acct: 'acct-0001', name: 'Alpha', friends: [row], in: [{ ...row, at: 1e12 }], out: [], party: view, invites: [invite] };
+  const state = { t: 'social', k: 'state', acct: 'acct-0001', name: 'Alpha', peers: ['peer-0001', 'peer-0011'], friends: [row], in: [{ ...row, at: 1e12 }], out: [], party: view, invites: [invite] };
   assert.deepEqual(validSocialFrame(state), state);
-  assert.deepEqual(validSocialFrame({ t: 'social', k: 'state', acct: 'acct-0001' }), { t: 'social', k: 'state', acct: 'acct-0001', name: FALLBACK_NAME, friends: [], in: [], out: [], party: null, invites: [] }, 'lists absent are lists empty');
+  assert.deepEqual(validSocialFrame({ t: 'social', k: 'state', acct: 'acct-0001' }), { t: 'social', k: 'state', acct: 'acct-0001', name: FALLBACK_NAME, peers: [], friends: [], in: [], out: [], party: null, invites: [] }, 'lists absent are lists empty');
+  assert.deepEqual(validSocialFrame({ ...state, peers: ['peer-0001', 'bad id', 'peer-0001', 7] }).peers, ['peer-0001'], 'AUDIT SOC C20: my own tabs\' ids by the row\'s law - bad and repeated dropped');
+  assert.equal(validSocialFrame({ ...state, peers: Array.from({ length: 50 }, (_, i) => `peer-${String(i).padStart(4, '0')}`) }).peers.length, ACCOUNT_TABS_MAX);
   assert.equal(validSocialFrame({ ...state, in: [row] }), null, 'a pending row without its stamp refuses the frame whole');
   assert.equal(validSocialFrame({ ...state, friends: [row, { name: 'nobody' }] }), null);
   assert.equal(validSocialFrame({ ...state, party: { id: 'q1' } }), null, 'a bad party refuses the frame, it does not read as no party');
@@ -173,7 +175,7 @@ test('SOC1 hub: the hello with an account - the secret minted then guarded, the 
   assert.equal(r.store.get('asecret:acct-a'), 'secret-of-acct-a', 'the first hello mints the account\'s secret');
   assert.deepEqual(r.store.get('acct:acct-a'), { name: 'a', seen: 1e12, friends: [], in: [], out: [], invites: [], party: null }, 'the record');
   assert.equal(a.sent[0].t, 'welcome', 'the welcome first, so the session resets before its picture lands');
-  assert.deepEqual(lastOf(a, 'state'), { t: 'social', k: 'state', acct: 'acct-a', name: 'a', friends: [], in: [], out: [], party: null, invites: [] });
+  assert.deepEqual(lastOf(a, 'state'), { t: 'social', k: 'state', acct: 'acct-a', name: 'a', peers: ['peer-a'], friends: [], in: [], out: [], party: null, invites: [] }, 'AUDIT SOC C20: the picture names the ids my own tabs stand as');
   assert.equal(a.att.acct, 'acct-a', 'the account rides the attachment'); assert.equal(a.att.party, null);
   const plain = r.connect(); await r.hello(plain, 'peer-p', null, { name: 'Plain' }); tick();
   assert.deepEqual(plain.sent.map((m) => m.t), ['welcome'], 'no account named: the chat as it was, and not one social frame');
@@ -191,6 +193,7 @@ test('SOC1 hub: the hello with an account - the secret minted then guarded, the 
   // the same account from a second tab: the right secret, its own picture, both peer ids on the row
   const a2 = r.connect(); await r.hello(a2, 'peer-a2', null, { name: 'a-renamed', acct: 'acct-a', asecret: 'secret-of-acct-a' }); tick();
   assert.equal(lastOf(a2, 'state').name, 'a-renamed', 'the record takes the latest hello\'s name');
+  assert.deepEqual(lastOf(a2, 'state').peers, ['peer-a', 'peer-a2'], 'AUDIT SOC C20: the second tab\'s picture names both tabs - a second tab of mine is no stranger to friend');
   assert.equal(r.store.get('acct:acct-a').name, 'a-renamed');
   assert.equal(ofKind(a, 'state').length, 1, 'the first tab\'s picture is not re-sent by the second tab\'s hello');
   doorHolds(a, 'a'); doorHolds(a2, 'a2'); doorHolds(thief, 'thief');
@@ -199,7 +202,8 @@ test('SOC1 hub: the hello with an account - the secret minted then guarded, the 
 test('SOC1 hub: friends - a request by PEER or by ACCOUNT, the inbox and the outbox both told with a note, accept makes friends both ways, decline and cancel are quiet, remove is mutual, and a request back is a yes (mutants: the request to nobody; the note to the sender; a one-sided friendship; the mutual request left pending)', () => withHub(async ({ r, act, join, tick, now }) => {
   const a = await join('a'), b = await join('b'), c = await join('c');
   await act(a, { k: 'friend.request', peer: 'peer-b' }); tick();
-  assert.deepEqual(lastOf(b, 'state').in, [{ acct: 'acct-a', name: 'a', online: true, seen: now() - 600, peers: ['peer-a'], at: now() - 600 }], 'b\'s inbox names a, online, by its peer id');
+  assert.deepEqual(lastOf(b, 'state').in, [{ acct: 'acct-a', name: 'a', online: false, seen: null, peers: [], at: now() - 600 }], 'b\'s inbox names a - the name and nothing else (AUDIT SOC A6: a request is not a friendship; presence and the live peer ids are what a friendship grants)');
+  assert.deepEqual(lastOf(a, 'state').out, [{ acct: 'acct-b', name: 'b', online: false, seen: null, peers: [], at: now() - 600 }], 'and a\'s outbox names b the same way - an unaccepted request tracked its target');
   assert.deepEqual(lastOf(a, 'state').out.map((e) => e.acct), ['acct-b'], 'a\'s outbox');
   assert.deepEqual(codes(b), ['friend.requested']); assert.deepEqual(codes(a), [], 'the note is the receiver\'s');
   assert.deepEqual(lastOf(b, 'note'), { t: 'social', k: 'note', code: 'friend.requested', acct: 'acct-a', name: 'a' });
@@ -213,20 +217,30 @@ test('SOC1 hub: friends - a request by PEER or by ACCOUNT, the inbox and the out
   assert.deepEqual(r.store.get('acct:acct-a').friends, ['acct-b']); assert.deepEqual(r.store.get('acct:acct-b').friends, ['acct-a']);
   await act(a, { k: 'friend.request', acct: 'acct-b' }); tick(); assert.equal(errors(a).at(-1), 'already friends');
   await act(b, { k: 'friend.accept', acct: 'acct-a' }); tick(); assert.equal(errors(b).at(-1), 'no such request');
+  // AUDIT SOC A6: a stranger is asked BY PEER - met in the world; by account alone is 'meet them first', nothing read and nothing told
+  await act(c, { k: 'friend.request', acct: 'acct-a' }); tick(); assert.equal(errors(c).at(-1), 'meet them first');
+  assert.deepEqual(lastOf(a, 'state').in, [], 'a heard nothing of it');
   // decline: c asks a, a declines - both pictures updated, no note
-  await act(c, { k: 'friend.request', acct: 'acct-a' }); tick();
+  await act(c, { k: 'friend.request', peer: 'peer-a' }); tick();
   assert.deepEqual(lastOf(a, 'state').in.map((e) => e.acct), ['acct-c']);
   const notesBefore = codes(c).length;
   await act(a, { k: 'friend.decline', acct: 'acct-c' }); tick();
   assert.deepEqual(lastOf(a, 'state').in, []); assert.deepEqual(lastOf(c, 'state').out, [], 'c\'s outbox emptied'); assert.equal(codes(c).length, notesBefore, 'quietly');
+  // AUDIT SOC A1: asked again inside SOCIAL_REPEAT_MS - 'already asked', and a hears nothing (a request and its cancel were a 40x amplifier aimed at one player)
+  const aHeard = a.sent.length;
+  await act(c, { k: 'friend.request', peer: 'peer-a' }); tick(); assert.equal(errors(c).at(-1), 'already asked');
+  assert.equal(a.sent.length, aHeard, 'nothing reached a'); assert.deepEqual(r.store.get('acct:acct-a').in, [], 'nothing written');
+  tick(SOCIAL_REPEAT_MS);
   // cancel: c asks again and thinks better of it
-  await act(c, { k: 'friend.request', acct: 'acct-a' }); tick();
+  await act(c, { k: 'friend.request', peer: 'peer-a' }); tick();
+  assert.deepEqual(lastOf(a, 'state').in.map((e) => e.acct), ['acct-c'], 'past the window it lands');
   await act(c, { k: 'friend.cancel', acct: 'acct-a' }); tick();
   assert.deepEqual(lastOf(a, 'state').in, []); assert.deepEqual(lastOf(c, 'state').out, []);
   await act(c, { k: 'friend.cancel', acct: 'acct-a' }); tick(); assert.equal(errors(c).at(-1), 'no such request');
-  // mutual: c asks a, then a asks c - that is a yes
-  await act(c, { k: 'friend.request', acct: 'acct-a' }); tick();
-  await act(a, { k: 'friend.request', peer: 'peer-c' }); tick();
+  // mutual: c asks a, then a asks c - that is a yes (a request back BY ACCOUNT is the one by-account request there is)
+  tick(SOCIAL_REPEAT_MS);
+  await act(c, { k: 'friend.request', peer: 'peer-a' }); tick();
+  await act(a, { k: 'friend.request', acct: 'acct-c' }); tick();
   assert.deepEqual(lastOf(a, 'state').friends.map((f) => f.acct).sort(), ['acct-b', 'acct-c']); assert.deepEqual(lastOf(c, 'state').friends.map((f) => f.acct), ['acct-a']);
   assert.equal(codes(c).at(-1), 'friend.accepted');
   // remove: mutual
@@ -237,8 +251,8 @@ test('SOC1 hub: friends - a request by PEER or by ACCOUNT, the inbox and the out
   await act(a, { k: 'friend.request', peer: 'peer-a' }); tick(); assert.equal(errors(a).at(-1), 'that is you');
   await act(a, { k: 'friend.request', acct: 'acct-a' }); tick(); assert.equal(errors(a).at(-1), 'that is you');
   await act(a, { k: 'friend.request', peer: 'peer-zzzz' }); tick(); assert.equal(errors(a).at(-1), 'they are not online');
-  await act(a, { k: 'friend.request', acct: 'acct-never' }); tick(); assert.equal(errors(a).at(-1), 'no such player', 'an account nobody ever said hello with mints no record');
-  assert.equal(r.store.has('acct:acct-never'), false);
+  await act(a, { k: 'friend.request', acct: 'acct-never' }); tick(); assert.equal(errors(a).at(-1), 'meet them first', 'AUDIT SOC A6: an id nobody ever said hello with is answered as any stranger\'s is - the hub is no oracle of which ids exist');
+  assert.equal(r.store.has('acct:acct-never'), false, 'and mints no record');
   const plain = r.connect(); await r.hello(plain, 'peer-p', null, { name: 'Plain' }); tick();
   await act(a, { k: 'friend.request', peer: 'peer-p' }); tick(); assert.equal(errors(a).at(-1), 'they have no account');
   for (const ws of [a, b, c]) assert.equal(ws.closed, null, 'a refusal in words closes nothing');
@@ -248,28 +262,30 @@ test('SOC1 hub: friends - a request by PEER or by ACCOUNT, the inbox and the out
 test('SOC1 hub: the bounds - FRIENDS_MAX either side, PENDING_MAX out and PENDING_MAX in, refused in words (mutants: the cap on one side alone; the inbox unbounded)', () => withHub(async ({ r, act, join, tick, now }) => {
   const a = await join('a'), b = await join('b');
   const filler = (n) => Array.from({ length: n }, (_, i) => `acct-x${i}`);
-  r.store.set('acct:acct-a', { ...r.store.get('acct:acct-a'), friends: filler(FRIENDS_MAX) });
-  await act(a, { k: 'friend.request', acct: 'acct-b' }); tick(); assert.equal(errors(a).at(-1), 'your friend list is full');
-  r.store.set('acct:acct-a', { ...r.store.get('acct:acct-a'), friends: [] });
-  r.store.set('acct:acct-b', { ...r.store.get('acct:acct-b'), friends: filler(FRIENDS_MAX) });
-  await act(a, { k: 'friend.request', acct: 'acct-b' }); tick(); assert.equal(errors(a).at(-1), 'their friend list is full');
-  r.store.set('acct:acct-b', { ...r.store.get('acct:acct-b'), friends: [] });
-  r.store.set('acct:acct-a', { ...r.store.get('acct:acct-a'), out: filler(PENDING_MAX).map((acct) => ({ acct, at: now() })) });
-  await act(a, { k: 'friend.request', acct: 'acct-b' }); tick(); assert.equal(errors(a).at(-1), 'too many requests out');
-  r.store.set('acct:acct-a', { ...r.store.get('acct:acct-a'), out: [] });
-  r.store.set('acct:acct-b', { ...r.store.get('acct:acct-b'), in: filler(PENDING_MAX).map((acct) => ({ acct, at: now() })) });
-  await act(a, { k: 'friend.request', acct: 'acct-b' }); tick(); assert.equal(errors(a).at(-1), 'their inbox is full');
-  r.store.set('acct:acct-b', { ...r.store.get('acct:acct-b'), in: [] });
-  await act(a, { k: 'friend.request', acct: 'acct-b' }); tick(); assert.deepEqual(lastOf(b, 'state').in.map((e) => e.acct), ['acct-a'], 'under the bounds it lands');
+  // AUDIT SOC A5: the awake object keeps the records it has read, so a record written behind its back is read on the next wake
+  const set = (id, patch) => { r.store.set(`acct:${id}`, { ...r.store.get(`acct:${id}`), ...patch }); r.wake(); };
+  set('acct-a', { friends: filler(FRIENDS_MAX) });
+  await act(a, { k: 'friend.request', peer: 'peer-b' }); tick(); assert.equal(errors(a).at(-1), 'your friend list is full');
+  set('acct-a', { friends: [] });
+  set('acct-b', { friends: filler(FRIENDS_MAX) });
+  await act(a, { k: 'friend.request', peer: 'peer-b' }); tick(); assert.equal(errors(a).at(-1), 'their friend list is full');
+  set('acct-b', { friends: [] });
+  set('acct-a', { out: filler(PENDING_MAX).map((acct) => ({ acct, at: now() })) });
+  await act(a, { k: 'friend.request', peer: 'peer-b' }); tick(); assert.equal(errors(a).at(-1), 'too many requests out');
+  set('acct-a', { out: [] });
+  set('acct-b', { in: filler(PENDING_MAX).map((acct) => ({ acct, at: now() })) });
+  await act(a, { k: 'friend.request', peer: 'peer-b' }); tick(); assert.equal(errors(a).at(-1), 'their inbox is full');
+  set('acct-b', { in: [] });
+  await act(a, { k: 'friend.request', peer: 'peer-b' }); tick(); assert.deepEqual(lastOf(b, 'state').in.map((e) => e.acct), ['acct-a'], 'under the bounds it lands - the refusals before it stamped no cooldown (AUDIT SOC A1: a refused act is no act)');
   // accept refused when a list filled meanwhile
-  r.store.set('acct:acct-b', { ...r.store.get('acct:acct-b'), friends: filler(FRIENDS_MAX) });
+  set('acct-b', { friends: filler(FRIENDS_MAX) });
   await act(b, { k: 'friend.accept', acct: 'acct-a' }); tick(); assert.equal(errors(b).at(-1), 'your friend list is full');
   doorHolds(a, 'a'); doorHolds(b, 'b');
 }));
 
 test('SOC1 hub: presence - a friend\'s hello and leave reach its friends alone, with the peer ids its tabs stand as; last-seen is stamped when the LAST tab goes and not before; a stranger hears nothing (mutants: presence to the whole room; seen stamped on the first of two tabs leaving; the peer list stale)', () => withHub(async ({ r, act, join, tick, now }) => {
   const a = await join('a'), b = await join('b'), c = await join('c');
-  await act(a, { k: 'friend.request', acct: 'acct-b' }); tick(); await act(b, { k: 'friend.accept', acct: 'acct-a' }); tick();
+  await act(a, { k: 'friend.request', peer: 'peer-b' }); tick(); await act(b, { k: 'friend.accept', acct: 'acct-a' }); tick();
   const before = ofKind(a, 'presence').length;
   const b2 = r.connect(); await r.hello(b2, 'peer-b2', null, { name: 'b', acct: 'acct-b', asecret: 'secret-of-acct-b' }); tick();
   assert.deepEqual(lastOf(a, 'presence'), { t: 'social', k: 'presence', acct: 'acct-b', name: 'b', online: true, seen: now() - 600, peers: ['peer-b', 'peer-b2'] }, 'the second tab\'s hello says both peer ids - a friend marks me in the world by them');
@@ -305,22 +321,29 @@ test('SOC1 hub: the party - an invite by peer makes the party with me in the sea
   assert.deepEqual(lastOf(b, 'state').invites, [], 'and the invite is spent');
   assert.deepEqual(codes(a), ['party.invited', 'party.joined']); assert.equal(b.att.party, pid);
   await act(b, { k: 'party.accept', party: pid }); tick(); assert.equal(errors(b).at(-1), 'no such invite');
+  // AUDIT SOC A6: a stranger is invited BY PEER - met in the world; by account alone is for a friend (who sees my presence anyway), or 'they are not online' would answer any id
+  await act(b, { k: 'party.invite', acct: 'acct-c' }); tick(); assert.equal(errors(b).at(-1), 'meet them first'); assert.equal(ofKind(c, 'invite').length, 0);
   // any member may invite; the fourth seat fills; the fifth is refused
-  await act(b, { k: 'party.invite', acct: 'acct-c' }); tick(); await act(c, { k: 'party.accept', party: pid }); tick();
-  await act(a, { k: 'party.invite', acct: 'acct-d' }); tick(); await act(d, { k: 'party.accept', party: pid }); tick();
+  await act(b, { k: 'party.invite', peer: 'peer-c' }); tick(); await act(c, { k: 'party.accept', party: pid }); tick();
+  await act(a, { k: 'party.invite', peer: 'peer-d' }); tick(); await act(d, { k: 'party.accept', party: pid }); tick();
   assert.equal(lastOf(a, 'party').party.members.length, PARTY_MAX);
-  await act(a, { k: 'party.invite', acct: 'acct-e' }); tick(); assert.equal(errors(a).at(-1), 'the party is full');
-  await act(a, { k: 'party.invite', acct: 'acct-d' }); tick(); assert.equal(errors(a).at(-1), 'already in your party');
+  await act(a, { k: 'party.invite', peer: 'peer-e' }); tick(); assert.equal(errors(a).at(-1), 'the party is full');
+  await act(a, { k: 'party.invite', peer: 'peer-d' }); tick(); assert.equal(errors(a).at(-1), 'already in your party');
   assert.equal(ofKind(e, 'invite').length, 0);
   // an invite that lapses: d leaves, e is invited, the clock runs past INVITE_TTL_MS, the yes is refused and the picture shed
   await act(d, { k: 'party.leave' }); tick();
-  await act(a, { k: 'party.invite', acct: 'acct-e' }); tick();
+  await act(a, { k: 'party.invite', peer: 'peer-e' }); tick();
   assert.equal(lastOf(e, 'invite').party, pid);
+  // AUDIT SOC A8: invited again inside SOCIAL_REPEAT_MS - 'already asked', no second invite frame, the party's invite list unchanged
+  const invitesAtE = ofKind(e, 'invite').length, partyInvites = JSON.stringify(r.store.get('party:' + pid).invites);
+  await act(a, { k: 'party.invite', peer: 'peer-e' }); tick(); assert.equal(errors(a).at(-1), 'already asked');
+  assert.equal(ofKind(e, 'invite').length, invitesAtE); assert.equal(JSON.stringify(r.store.get('party:' + pid).invites), partyInvites);
   tick(INVITE_TTL_MS);
   await act(e, { k: 'party.accept', party: pid }); tick();
   assert.equal(errors(e).at(-1), 'that invite has lapsed'); assert.deepEqual(lastOf(e, 'state').invites, []); assert.deepEqual(lastOf(e, 'state').party, null);
-  // a no, told to the asker
-  await act(a, { k: 'party.invite', acct: 'acct-e' }); tick();
+  // a no, told to the asker (the lapse ran the cooldown out: INVITE_TTL_MS is past SOCIAL_REPEAT_MS)
+  assert.ok(INVITE_TTL_MS > SOCIAL_REPEAT_MS, 'an invite that lapsed may be sent again');
+  await act(a, { k: 'party.invite', peer: 'peer-e' }); tick();
   await act(e, { k: 'party.decline', party: pid }); tick();
   assert.equal(codes(a).at(-1), 'party.declined'); assert.equal(lastOf(a, 'note').acct, 'acct-e');
   assert.deepEqual(lastOf(e, 'state').invites, []);
@@ -333,8 +356,8 @@ test('SOC1 hub: the party - an invite by peer makes the party with me in the sea
 
 test('SOC1 hub: the party - leave passes the seat to the longest-standing member, the last one out dissolves it; kick is the leader\'s alone and the kicked is told; a yes to another party is a no to the old (mutants: the seat passed to the newest; an empty party kept; anyone kicking; two parties at once)', () => withHub(async ({ r, act, join, tick }) => {
   const a = await join('a'), b = await join('b'), c = await join('c');
-  await act(a, { k: 'party.invite', acct: 'acct-b' }); tick(); await act(b, { k: 'party.accept', party: lastOf(b, 'invite').party }); tick();
-  await act(a, { k: 'party.invite', acct: 'acct-c' }); tick(); await act(c, { k: 'party.accept', party: lastOf(c, 'invite').party }); tick();
+  await act(a, { k: 'party.invite', peer: 'peer-b' }); tick(); await act(b, { k: 'party.accept', party: lastOf(b, 'invite').party }); tick();
+  await act(a, { k: 'party.invite', peer: 'peer-c' }); tick(); await act(c, { k: 'party.accept', party: lastOf(c, 'invite').party }); tick();
   const pid = a.att.party;
   await act(b, { k: 'party.kick', acct: 'acct-c' }); tick(); assert.equal(errors(b).at(-1), 'only the leader can do that');
   await act(a, { k: 'party.kick', acct: 'acct-a' }); tick(); assert.equal(errors(a).at(-1), 'that is you');
@@ -343,8 +366,9 @@ test('SOC1 hub: the party - leave passes the seat to the longest-standing member
   assert.deepEqual(lastOf(c, 'party'), { t: 'social', k: 'party', party: null }); assert.equal(codes(c).at(-1), 'party.kicked'); assert.equal(lastOf(c, 'note').acct, 'acct-c', 'the note\'s subject is the kicked');
   assert.equal(c.att.party, null); assert.equal(r.store.get('acct:acct-c').party, null);
   assert.deepEqual(lastOf(b, 'party').party.members.map((m) => m.acct), ['acct-a', 'acct-b']); assert.equal(codes(b).at(-1), 'party.kicked'); assert.equal(lastOf(b, 'note').acct, 'acct-c');
-  // the leader leaves: b, the longest-standing of the rest, leads
-  await act(a, { k: 'party.invite', acct: 'acct-c' }); tick(); await act(c, { k: 'party.accept', party: lastOf(c, 'invite').party }); tick();
+  // the leader leaves: b, the longest-standing of the rest, leads (a's re-invite of c waits out the cooldown - AUDIT SOC A8)
+  tick(SOCIAL_REPEAT_MS);
+  await act(a, { k: 'party.invite', peer: 'peer-c' }); tick(); await act(c, { k: 'party.accept', party: lastOf(c, 'invite').party }); tick();
   await act(a, { k: 'party.leave' }); tick();
   assert.deepEqual(lastOf(a, 'party'), { t: 'social', k: 'party', party: null }); assert.equal(a.att.party, null);
   assert.equal(lastOf(b, 'party').party.leader, 'acct-b'); assert.deepEqual(lastOf(b, 'party').party.members.map((m) => m.acct), ['acct-b', 'acct-c']);
@@ -352,7 +376,8 @@ test('SOC1 hub: the party - leave passes the seat to the longest-standing member
   assert.equal(r.store.get('party:' + pid).leader, 'acct-b');
   await act(a, { k: 'party.leave' }); tick(); assert.equal(errors(a).at(-1), 'you are not in a party');
   // a yes to another party is a no to the old: a makes a new party and invites c
-  await act(a, { k: 'party.invite', acct: 'acct-c' }); tick();
+  tick(SOCIAL_REPEAT_MS);
+  await act(a, { k: 'party.invite', peer: 'peer-c' }); tick();
   const pid2 = a.att.party; assert.notEqual(pid2, pid);
   await act(c, { k: 'party.accept', party: pid2 }); tick();
   assert.deepEqual(lastOf(c, 'state').party.members.map((m) => m.acct), ['acct-a', 'acct-c']);
@@ -370,7 +395,7 @@ test('SOC1 hub: the party pose - kept on the attachment, fanned to the party\'s 
   await pose(a); tick();
   assert.deepEqual(a.att.pm, { ...validPartyPose(P), at: 1e12 + 30 }, 'kept before any party - the seat I may yet take reads it');
   assert.equal(poses(b).length, 0, 'no party: fanned to no one');
-  await act(a, { k: 'party.invite', acct: 'acct-b' }); tick(); await act(b, { k: 'party.accept', party: lastOf(b, 'invite').party }); tick();
+  await act(a, { k: 'party.invite', peer: 'peer-b' }); tick(); await act(b, { k: 'party.accept', party: lastOf(b, 'invite').party }); tick();
   assert.deepEqual(lastOf(b, 'state').party.members[0].p, validPartyPose(P), 'the joiner\'s view carries a\'s pose from before the party');
   const P2 = { ...P, px: 300, h: 12 };
   await pose(b, P2); tick();
@@ -385,10 +410,10 @@ test('SOC1 hub: the party pose - kept on the attachment, fanned to the party\'s 
   assert.equal(poses(a).at(-1).p.px, 7);
   assert.equal(poses(b).length, 0, 'the account\'s other tab hears nothing of its own');
   assert.equal(lastOf(a, 'party').party.members.find((m) => m.acct === 'acct-b').p.px, 300, 'the view a holds is from before; the next view says 7');
-  await act(c, { k: 'party.invite', acct: 'acct-a' }); tick();   // c's own party, a invited - a stays put, c's fan reaches nobody
+  await act(c, { k: 'party.invite', peer: 'peer-a' }); tick();   // c's own party, a invited - a stays put, c's fan reaches nobody
   await pose(c); tick(); assert.equal(poses(a).filter((m) => m.acct === 'acct-c').length, 0);
   await act(a, { k: 'party.leave' }); tick();
-  await act(a, { k: 'party.invite', acct: 'acct-c' }); tick();
+  await act(a, { k: 'party.invite', peer: 'peer-c' }); tick();
   await act(c, { k: 'party.accept', party: a.att.party }); tick();
   assert.equal(lastOf(a, 'party').party.members.find((m) => m.acct === 'acct-c').p.px, 100, 'c\'s pose from before rides its view');
   await pose(a, { ...P, px: 9 }); tick();
@@ -398,7 +423,7 @@ test('SOC1 hub: the party pose - kept on the attachment, fanned to the party\'s 
 
 test('SOC1 hub: a seat is kept PARTY_OFFLINE_MS for a member that dropped - the view says offline, a hello inside the window takes the seat straight back, past it the seat lapses on the next party event and the rest are told (mutants: the seat lost on the drop; the seat kept for ever; the lapse never applied)', () => withHub(async ({ r, act, pose, join, tick, now }) => {
   const a = await join('a'), b = await join('b');
-  await act(a, { k: 'party.invite', acct: 'acct-b' }); tick(); await act(b, { k: 'party.accept', party: lastOf(b, 'invite').party }); tick();
+  await act(a, { k: 'party.invite', peer: 'peer-b' }); tick(); await act(b, { k: 'party.accept', party: lastOf(b, 'invite').party }); tick();
   const pid = a.att.party;
   await r.drop(b); tick();
   assert.deepEqual(lastOf(a, 'party').party.members.map((m) => [m.acct, m.online, m.peers]), [['acct-a', true, ['peer-a']], ['acct-b', false, []]], 'the view says b is away');
@@ -418,7 +443,7 @@ test('SOC1 hub: a seat is kept PARTY_OFFLINE_MS for a member that dropped - the 
   const b3 = r.connect(); await r.hello(b3, 'peer-b3', null, { name: 'b', acct: 'acct-b', asecret: 'secret-of-acct-b' }); tick();
   assert.equal(lastOf(b3, 'state').party, null, 'the seat is gone'); assert.equal(r.store.get('acct:acct-b').party, null); assert.equal(b3.att.party, null);
   // the leader lapsing: the seat passes
-  await act(a, { k: 'party.invite', acct: 'acct-b' }); tick(); await act(b3, { k: 'party.accept', party: a.att.party }); tick();
+  await act(a, { k: 'party.invite', peer: 'peer-b3' }); tick(); await act(b3, { k: 'party.accept', party: a.att.party }); tick();
   const pid2 = a.att.party;
   await r.drop(a); tick(); tick(PARTY_OFFLINE_MS);
   await pose(b3); tick();
@@ -459,11 +484,11 @@ test('SOC1 hub: the gates - SOCIAL_HZ_MAX a socket (over it dropped, a strike co
 
 test('SOC1 hub: a hibernation between acts loses nothing - the accounts and the party in storage, the seat and the pose on the attachments (mutants: the party on the instance alone; the account index never rebuilt)', () => withHub(async ({ r, act, pose, join, tick, now }) => {
   const a = await join('a'), b = await join('b');
-  await act(a, { k: 'friend.request', acct: 'acct-b' }); tick();
+  await act(a, { k: 'friend.request', peer: 'peer-b' }); tick();
   r.wake();
   await act(b, { k: 'friend.accept', acct: 'acct-a' }); tick();
   assert.deepEqual(lastOf(a, 'state').friends.map((f) => f.acct), ['acct-b']);
-  await act(a, { k: 'party.invite', acct: 'acct-b' }); tick();
+  await act(a, { k: 'party.invite', acct: 'acct-b' }); tick();   // a friend: by account is allowed (AUDIT SOC A6)
   r.wake();
   await act(b, { k: 'party.accept', party: lastOf(b, 'invite').party }); tick();
   await pose(a); tick();
@@ -481,7 +506,7 @@ test('SOC1 hub: a hibernation between acts loses nothing - the accounts and the 
 
 test('SOC1 hub: the sweep - a drain forgets the parties and never an account or its secret; a member back after a drain finds no party and its pointer cleared (mutants: acct: swept with the looks; party: kept for ever)', () => withHub(async ({ r, act, join, tick }) => {
   const a = await join('a'), b = await join('b');
-  await act(a, { k: 'party.invite', acct: 'acct-b' }); tick(); await act(b, { k: 'party.accept', party: lastOf(b, 'invite').party }); tick();
+  await act(a, { k: 'party.invite', peer: 'peer-b' }); tick(); await act(b, { k: 'party.accept', party: lastOf(b, 'invite').party }); tick();
   const pid = a.att.party;
   await r.drop(a); tick(); await r.drop(b); tick();
   const keys = [...r.store.keys()];
@@ -495,15 +520,37 @@ test('SOC1 hub: the sweep - a drain forgets the parties and never an account or 
   doorHolds(a2, 'a2');
 }));
 
+test('AUDIT SOC: the widest picture an account can hold - FRIENDS_MAX friends, PENDING_MAX requests each way, a party and an invite - is more than 128 records in ONE state frame, and the hub reads them in the runtime\'s batches (the fake enforces the 128-key wall now; mutants: the chunking dropped, which is SLAM5\'s 130th-player wall on the hub\'s own hello; a friend list read one key at a time)', () => withHub(async ({ r, act, join, tick, now }) => {
+  const b = await join('b');
+  const ids = (prefix, n) => Array.from({ length: n }, (_, i) => `acct-${prefix}${String(i).padStart(3, '0')}`);
+  const friends = ids('f', FRIENDS_MAX), inbox = ids('i', PENDING_MAX), outbox = ids('o', PENDING_MAX);
+  for (const id of [...friends, ...inbox, ...outbox]) r.store.set(`acct:${id}`, { name: 'N' + id.slice(-4), seen: 1e12 - 1000, friends: [], in: [], out: [], invites: [], party: null });
+  r.store.set('acct:acct-a', { name: 'a', seen: 1e12, friends, in: inbox.map((acct) => ({ acct, at: 1e12 })), out: outbox.map((acct) => ({ acct, at: 1e12 })), invites: [], party: null });
+  r.store.set('asecret:acct-a', 'secret-of-acct-a');
+  const a = await join('a');
+  const st = lastOf(a, 'state');
+  assert.ok(st, 'the picture landed - a read over the wall would have thrown out of the hello');
+  assert.equal(st.friends.length, FRIENDS_MAX); assert.equal(st.in.length, PENDING_MAX); assert.equal(st.out.length, PENDING_MAX);
+  assert.equal(st.friends[3].name, 'Nf003', 'every row carries its record\'s name - the batches were read, not skipped');
+  assert.ok(validSocialFrame(st), 'and it passes the client\'s door whole');
+  // and with a party and an invite on top, still one frame
+  await act(b, { k: 'party.invite', peer: 'peer-a' }); tick();
+  assert.ok(lastOf(a, 'invite'), 'the invite lands on a picture this wide');
+  await act(a, { k: 'party.accept', party: lastOf(a, 'invite').party }); tick();
+  assert.equal(lastOf(a, 'state').party.members.length, 2);
+  doorHolds(a, 'a'); doorHolds(b, 'b');
+}));
+
 test('SOC1 hub: the source - the account is handled after the channel\'s welcome and join, the leave stamps the account, the sweep spares acct: and asecret:, and the presence rooms are untouched (mutants: the picture before the welcome; the leave silent; a cell reading the account)', () => {
   const s = rd('server/src/index.js');
-  assert.match(s, /for \(const \[other, b\] of \[\.\.\.this\._all\(\)\]\) if \(other !== ws && b\.id\) this\._send\(other, said\);\n\s*\/\/ SOC1[^\n]*\n[^\n]*\n\s*if \(isSocialRoom\(a\.key\) && m\.acct\) await this\._helloAccount\(ws, m, now\);/, 'the account after the join fan');
+  assert.match(s, /for \(const \[other, b\] of \[\.\.\.this\._all\(\)\]\) if \(other !== ws && b\.id\) this\._send\(other, said\);\n\s*\/\/ SOC1[^\n]*\n[^\n]*\n\s*if \(isSocialRoom\(a\.key\) && m\.acct\) \{ try \{ await this\._helloAccount\(ws, m, now\); \}/, 'the account after the join fan (AUDIT SOC A2: contained)');
   assert.match(s, /if \(isSocialRoom\(a\.key\) && a\.acct\) \{ try \{ await this\._leaveAccount\(ws, a, Date\.now\(\)\); \}/, 'the leave');
-  assert.match(s, /for \(const prefix of \['look:', 'secret:'\]\)/, 'the sweep\'s prefixes'); assert.doesNotMatch(s, /'acct:'\]|\['acct:'|prefix: 'acct:'/, 'acct: is never swept');
-  assert.match(s, /prefix: 'party:'/, 'party: is');
+  const drain = s.slice(s.indexOf('async _sweep() {'), s.indexOf('async _keysOf('));
+  assert.match(drain, /for \(const prefix of \['look:', 'secret:'\]\)/, 'the drain\'s prefixes'); assert.doesNotMatch(drain, /acctKey|acctSecretKey|'acct:'|'asecret:'/, 'the drain never sweeps an account or its secret (AUDIT SOC A3: the hub\'s alarm does, one page of the idle and unlisted at a time)');
+  assert.match(drain, /_keysOf\('party:'\)/, 'party: goes with the drain, in pages');
   assert.match(s, /if \(!isSocialRoom\(a\.key\)\) \{ this\._junk\(ws, a\); return; \}/, 'a social act outside the hub is junk');
   assert.match(s, /if \(!isSocialRoom\(a\.key\) \|\| !a\.acct\) \{ this\._junk\(ws, a\); return; \}/, 'a party pose outside the hub, or without an account, is junk');
   const w = rd('src/net/wire.js');
   assert.match(w, /export const SOCIAL_ROOM = CHAT_WORLD_ROOM;/);
-  assert.match(w, /export const RELAY_VERSION = 'world78';/);
+  assert.match(w, /export const RELAY_VERSION = 'world79';/, 'AUDIT SOC moved it');
 });

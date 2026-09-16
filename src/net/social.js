@@ -25,7 +25,7 @@
 // this machine sees it: `now()` here is the session's clock plus the offset the host hands in.
 //
 // Not a DFU member: Daggerfall Unity has no friends, no parties and no online. Ledger A row (ONLINE).
-import { NOTE_CODES, INVITE_TTL_MS, PARTY_MAX } from './wire.js';
+import { NOTE_CODES, INVITE_TTL_MS, PARTY_MAX, PENDING_MAX } from './wire.js';
 import { keptToken } from './online.js';
 import { appStorage } from '../systems/appStorage.js';   // the app's own storage - localStorage in a browser, the shell's file store on the desktop
 
@@ -38,12 +38,23 @@ import { appStorage } from '../systems/appStorage.js';   // the app's own storag
  *  link) - never in a presence room's, which keeps no account and is told none (SOC1: the hub is the one place that
  *  can check it). It lives HERE and not beside peerId because TABS1's pin holds net/online.js to the tab's storage
  *  and never the browser-wide one - and that pin is right about the peer. */
-export const accountId = (storage = appStorage()) => keptToken(storage, 'dagger.online.account', /^[A-Za-z0-9_-]{4,40}$/,
+/** AUDIT SOC B10: an account is a DURABLE thing. keptToken mints afresh when a storage will not hold the token, which
+ *  is right for a TAB's id (a tab is ephemeral anyway) and wrong for an account: every load would be a new permanent
+ *  record on the hub - the sweep forgets the unlisted after ACCOUNT_IDLE_MS, but a day's worth of loads stands - and
+ *  a friend made would be lost on the next load. So the pair is NULL when the storage will not keep it (read back
+ *  after the write), the hello carries no account, and the host says so once (scenes/world.js socialStart). */
+const kept = (storage, key, re, mint) => {
+  const v = keptToken(storage, key, re, mint);
+  let back = null;
+  try { back = storage?.getItem?.(key) ?? null; } catch { back = null; }
+  return back === v ? v : null;
+};
+export const accountId = (storage = appStorage()) => kept(storage, 'dagger.online.account', /^[A-Za-z0-9_-]{4,40}$/,
   () => 'a' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4));
 
 /** SOC2: the account's secret, minted beside it (AUDIT ONLINE A3's law for the peer, again): the first hello to the hub
  *  mints it there, a later one must match, and a tab that copies the id without it is admitted with no account. */
-export const accountSecret = (storage = appStorage()) => keptToken(storage, 'dagger.online.accountSecret', /^[A-Za-z0-9_-]{8,64}$/,
+export const accountSecret = (storage = appStorage()) => kept(storage, 'dagger.online.accountSecret', /^[A-Za-z0-9_-]{8,64}$/,
   () => Array.from({ length: 4 }, () => Math.random().toString(36).slice(2, 10)).join(''));
 
 /** The green a party member's name is drawn in over the world (RGBA, the name draw's own units) - "the players name
@@ -63,16 +74,23 @@ export const FRIEND_CSS = '#8fd0ff';
  * @typedef {SocialRow & { p: PartyPose|null }} MemberRow
  * @typedef {{ px: number, py: number, in: number, loc: string, h: number, hm: number, f: number, fm: number, m: number, mm: number, race: string, gender: string, face: number }} PartyPose
  * @typedef {{ id: string, leader: string, members: MemberRow[] }} PartyView
- * @typedef {{ party: string, from: { acct: string, name: string }, members: { acct: string, name: string }[], at: number, expires: number }} Invite
+ * @typedef {{ party: string, from: { acct: string, name: string }, members: { acct: string, name: string }[], at: number, expires: number, got?: number }} Invite   AUDIT SOC B2: `got` is when it ARRIVED here, on this clock
  * @typedef {{ code: string, acct: string|null, name: string|null }} Note
  */
 
 /** How the state changed, for a listener that wants to know what to repaint: 'state' the whole picture, 'presence' a
  *  friend's row, 'party' the party, 'invite' an invite in, 'pose' a member's pose, 'note', 'error'. */
 export class SocialState {
-  constructor({ now = () => Date.now() } = {}) {
+  constructor({ now = () => Date.now(), acct = null } = {}) {
     /** @type {string|null} my account, once the hub has said it */
     this.acct = null;
+    /** @type {string[]} AUDIT SOC C20: the peer ids MY OWN tabs stand as, as the hub's picture names them - so a
+     *  second tab of mine on the roster is me (`accountOfPeer`, `relation` 'me'), not a stranger to friend or invite */
+    this.peers = [];
+    this._colors = null;   // AUDIT SOC C23: the colour answers, kept per version
+    /** AUDIT SOC B19: the account this session SENT - a state frame naming another is a relay's lie and is refused at
+     *  the picture's door (`others()` would otherwise seat me among the others, and `relation` call a stranger me). */
+    this.expect = acct;
     /** @type {string|null} my name as the hub holds it */
     this.name = null;
     /** @type {Map<string, SocialRow>} acct -> row, in the hub's order */
@@ -106,18 +124,20 @@ export class SocialState {
   /** Now, on the relay's clock. */
   now() { return this._now() + this._offset; }
 
-  _changed(kind) { this.version++; this.onChange?.(kind); }
+  _changed(kind) { this.version++; this._colors = null; this.onChange?.(kind); }
 
   /** A hub frame in - one the wire's door already projected (net/online.js hands nothing else in). Returns what changed, or null. */
   apply(f) {
     if (!f || f.t !== 'social') return null;
     switch (f.k) {
       case 'state': {
-        this.acct = f.acct; this.name = f.name;
+        if (this.expect && f.acct !== this.expect) return null;   // AUDIT SOC B19: not my picture
+        const got = this.now();
+        this.acct = f.acct; this.name = f.name; this.peers = Array.isArray(f.peers) ? f.peers.slice() : [];   // a frame from before AUDIT SOC names none
         this.friends = new Map(f.friends.map((r) => [r.acct, r]));
         this.in = f.in.slice(); this.out = f.out.slice();
         this.party = f.party;
-        this.invites = new Map(f.invites.map((i) => [i.party, i]));
+        this.invites = new Map(f.invites.slice(0, PENDING_MAX).map((i) => [i.party, { ...i, got }]));
         this.lastError = null;
         this._changed('state');
         return 'state';
@@ -139,14 +159,27 @@ export class SocialState {
         if (f.party && this.party && f.party.id === this.party.id) {
           for (const m of f.party.members) { const was = this.party.members.find((x) => x.acct === m.acct); if (was?.p && !m.p) m.p = was.p; }
         }
+        // AUDIT SOC B16: a view that says what I already hold moves nothing - the version is the panels' repaint clock
+        const same = JSON.stringify(f.party) === JSON.stringify(this.party);
         this.party = f.party;
-        if (f.party) this.invites.delete(f.party.id);   // seated: that invite is spent
+        const spent = !!f.party && this.invites.delete(f.party.id);   // seated: that invite is spent
+        if (same && !spent) return null;
         this._changed('party');
         return 'party';
       }
       case 'invite': {
         const { t, k, ...invite } = f;
         if (this.party && this.party.id === invite.party) return null;   // an invite to the party I sit in is nothing
+        // AUDIT SOC B1/B2: the door bounds a STATE frame's invites at PENDING_MAX; this arm is one invite at a time, so it
+        // is bounded here - the oldest goes when the map is full - and every invite is stamped on ARRIVAL (`got`), on
+        // this clock, because `at` and `expires` are the relay's word and a relay that stamps the future hands out an
+        // invitation that never lapses
+        invite.got = this.now();
+        if (!this.invites.has(invite.party) && this.invites.size >= PENDING_MAX) {
+          let oldest = null;
+          for (const [id, inv] of this.invites) if (!oldest || inv.got < oldest[1].got) oldest = [id, inv];
+          if (oldest) this.invites.delete(oldest[0]);
+        }
         this.invites.set(invite.party, invite);
         this._changed('invite');
         this.onInvite?.(invite);
@@ -154,8 +187,10 @@ export class SocialState {
       }
       case 'note': {
         const note = { code: f.code, acct: f.acct, name: f.name };
-        if (f.code === 'party.declined' || f.code === 'party.lapsed' || f.code === 'party.left' || f.code === 'party.kicked') this.invites.forEach((inv, id) => { if (inv.from.acct === f.acct && f.code === 'party.lapsed') this.invites.delete(id); });
-        this._changed('note');
+        // a member whose seat lapsed takes their outstanding invites with them; nothing else in a note moves the picture
+        let swept = false;
+        if (f.code === 'party.lapsed') for (const [id, inv] of [...this.invites]) if (inv.from.acct === f.acct) { this.invites.delete(id); swept = true; }
+        if (swept) this._changed('note');   // AUDIT SOC B16: a note that changed nothing repaints nothing - the chat line is the whole of it
         this.onNote?.(note, noteText(note, this.acct));
         return 'note';
       }
@@ -179,10 +214,12 @@ export class SocialState {
     return true;
   }
 
-  /** Invites that still stand - the lapsed ones dropped as they are read (the hub drops them on its side the same way). */
+  /** Invites that still stand - the lapsed ones dropped as they are read (the hub drops them on its side the same way):
+   *  lapsed when the relay's `expires` has passed OR when INVITE_TTL_MS has passed since it ARRIVED here (`got`, this
+   *  clock - AUDIT SOC B2: the relay's stamps alone let a relay hand out an invitation that never lapses). */
   liveInvites() {
     const now = this.now();
-    for (const [id, inv] of this.invites) if (now >= inv.expires || now - inv.at >= INVITE_TTL_MS) this.invites.delete(id);
+    for (const [id, inv] of this.invites) if (now >= inv.expires || now - (inv.got ?? now) >= INVITE_TTL_MS) this.invites.delete(id);
     return [...this.invites.values()];
   }
 
@@ -208,6 +245,7 @@ export class SocialState {
   /** The account behind a peer id, if it is a friend's or a party member's tab; null for a stranger (or my own). */
   accountOfPeer(id) {
     if (!id) return null;
+    if (this.acct && this.peers.includes(id)) return this.acct;   // AUDIT SOC C20: my own other tab - `relation` says 'me'
     if (this.party) for (const m of this.party.members) if (m.peers.includes(id)) return m.acct;   // my own seat's tabs included: `relation` says 'me' for them
     for (const r of this.friends.values()) if (r.peers.includes(id)) return r.acct;
     for (const r of this.in) if (r.peers.includes(id)) return r.acct;
@@ -216,12 +254,23 @@ export class SocialState {
   }
   /** Is this peer a friend's tab. */
   isFriendPeer(id) { const a = this.accountOfPeer(id); return !!a && this.friends.has(a); }
+  /** AUDIT SOC C23: the two colour questions are asked per name per FRAME (the world's name pass) and per row per
+   *  repaint, and each scanned every list for the id; an answer holds until the picture changes, so they are kept per
+   *  version (`_changed` drops them). At most two entries per peer in the room between changes. */
+  _colour(id, css) {
+    const key = (css ? 'c' : 'w') + id;
+    const kept = (this._colors ??= new Map());
+    if (kept.has(key)) return kept.get(key);
+    const v = css ? (this.isPartyPeer(id) ? PARTY_GREEN_CSS : this.isFriendPeer(id) ? FRIEND_CSS : null) : (this.isPartyPeer(id) ? PARTY_GREEN : null);
+    kept.set(key, v);
+    return v;
+  }
   /** The colour a peer's name is drawn in over the world: PARTY_GREEN for my party, null for everyone else. */
-  colorOf(id) { return this.isPartyPeer(id) ? PARTY_GREEN : null; }
+  colorOf(id) { return this._colour(id, false); }
   /** The same question for the DOM (the chat's lines and roster rows): PARTY_GREEN_CSS for my party, FRIEND_CSS for a
    *  friend who is not, null for a stranger - ONE HOME for what a colour means (SOC4's pin holds world.js to asking,
    *  never deciding), so a friend list and a formation can never disagree between the world and the chat. */
-  cssColorOf(id) { return this.isPartyPeer(id) ? PARTY_GREEN_CSS : this.isFriendPeer(id) ? FRIEND_CSS : null; }
+  cssColorOf(id) { return this._colour(id, true); }
   /** How an account stands to me: 'me', 'friend', 'in' (they asked), 'out' (I asked), 'none'. */
   relation(acct) {
     if (!acct) return 'none';
@@ -247,7 +296,7 @@ export class SocialState {
     if (!whyNotInvite) {
       if (seated) whyNotInvite = 'in your party';
       else if (this.party && this.seatsFree() === 0) whyNotInvite = 'the party is full';
-      else if (this.party && !this.leads() && false) whyNotInvite = null;   // any member may invite (the hub's law)
+      // any member may invite - the hub's law, so the leader's seat is no gate here
     }
     return { acct, relation, canFriend: !whyNotFriend, canInvite: !whyNotInvite, whyNotFriend, whyNotInvite };
   }

@@ -245,13 +245,15 @@ HP" (nothing for a member who has sent none), Leave for everyone, Kick
 for the leader alone; invitations with a countdown that runs on the same
 node, answered by PARTY id - and a lapsed one is gone even though time
 passing moves no version, because the panel raises its own. The invite
-TOAST works with the panel shut (over the chat's peek strip), counts down,
+TOAST works with the panel shut (on a strip of its own since AUDIT SOC C3 -
+over the chat's peek, taking no pointer), counts down,
 and goes away on the answer, on the seat being taken and at expiry; a
 rate-gated answer leaves it up with a "try again" note. A send the link
 refuses (SOCIAL_HZ_MAX at home) keeps its button exactly as it was; the
 hub's own refusal stands under the header until a fresh picture clears
 it. No uiPrefs key: the panel does not remember its state across
-sessions. `test/soc3_socialpanel.test.js` - 16 pins over a fake document
+sessions. `test/soc3_socialpanel.test.js` - 16 pins at SOC3, 27 since
+AUDIT SOC (the section below), over a fake document
 and window with a REAL SocialState fed real hub frames; 7 mutants walked,
 7 killed.
 
@@ -259,7 +261,9 @@ and window with a REAL SocialState fed real hub frames; 7 mutants walked,
 
 **The HUD** (`ui/partyPanel.js`, `createPartyPanel({ social, doc, art: {
 fetchBytes, palette }, faceLoader, touch })`): fixed at the top right
-below the FPS counter (lower on touch, clear of the top-right button
+below the FPS counter (92px down since AUDIT SOC C6, clear of the
+counter's band; bottom-right on a phone under 560 wide, C7, clear of the
+peek lines; lower on touch, clear of the top-right button
 row), pointer-transparent, one card per OTHER member of my party in the
 hub's seat order and never my own (my bars are the HUD's, my face is on
 my paper doll). A card: a 72x80 plate holding a canvas PORTRAIT - the
@@ -287,7 +291,7 @@ optional `colorOf` ((id) => rgba or null; the default path - every caller
 written before the party existed - is white byte for byte), and
 `world.js` hands it `(id) => social?.colorOf(id) ?? null`: my party's
 tabs in PARTY_GREEN, a friend who is not in my party white (a friend is a
-list, a party is a formation). `test/soc4_partyhud.test.js` - 8 pins,
+list, a party is a formation). `test/soc4_partyhud.test.js` - 8 pins at SOC4, 10 since AUDIT SOC,
 the portrait proved twice (an injected loader seam, and `createFaceLoader`
 over a CIF synthesized byte by byte through the real `CifRciFile` walk and
 the real `bitmapToColor32`).
@@ -329,10 +333,11 @@ under the ray - `socialMenu.show(...)`; nobody - `socialPanel?.toggle?.()`
 no picture (offline) - false.
 
 **The menu** (`ui/socialMenu.js`, `createSocialMenu({ onAct, canOpen,
-onOpen, onClose, doc, win })`): a card near the screen centre with the
-peer's name and the rows Add friend / Invite to party (Remove friend for a
-friend, and only when the picture holds their account - `friend.remove`
-is an account act), each enabled or disabled with `actionsFor`'s reason
+onOpen, onClose, above, doc, win })`): a card near the screen centre with the
+peer's name and the rows Add friend / Invite to party (Remove friend stood
+here at SOC5 for a friend whose account the picture held, and left at AUDIT
+SOC C15: the one destructive act stays behind the panel's two-click
+confirm), each enabled or disabled with `actionsFor`'s reason
 on the row and the title; a disabled click sends nothing; the card goes
 DOWN before the host is handed the act (the send can answer false, and a
 card left standing takes the next press as a second act); the pointer
@@ -351,7 +356,7 @@ toggle's shipped default is **O** now (free in DFU's defaults, unused by
 the mod's other two keys and by every other vendored mod), its pins say
 so, and a player who rebound it keeps their own. Mac named F for the
 social key, so the port's action keeps it. `test/soc5_interact.test.js` -
-9 pins; 16 mutants driven, 16 dead.
+9 pins at SOC5, 16 since AUDIT SOC; 16 mutants driven, 16 dead.
 
 ## SOC6 - the party on the map
 
@@ -390,7 +395,7 @@ bottom bar is baked art with no room for a fifth meaning, so the classic
 sheet says the one thing it can (a dot) and the enhanced map, which owns
 its chrome, carries the legend and the names. A marker is hover-only;
 clicking still picks the nearest location. `test/soc6_partymap.test.js` -
-14 pins; 29 mutants driven, 29 dead (the first pass left one survivor -
+14 pins at SOC6, 18 since AUDIT SOC; 29 mutants driven, 29 dead (the first pass left one survivor -
 the classic bounds removed - closed by the two members whose offsets wrap
 onto the wrong row).
 
@@ -405,7 +410,9 @@ onto the wrong row).
   formation for a session, not a guild; a persistent group would need a
   roster nobody online can vouch for.
 - **Accounts that expire.** An account is a kilobyte; forgetting one
-  dangles it in every friend list that names it. Never swept.
+  dangles it in every friend list that names it. Never swept while a
+  list names it - AUDIT SOC A3 sweeps the ones NOBODY'S list names after
+  thirty idle days, which dangle nothing.
 - **A relay that composes English.** Notes are codes; the client says
   them. A relay line in the chat would be a relay a modified client could
   make speak.
@@ -441,3 +448,313 @@ first run had one survivor, C2 (one half of the pair set on the session
 after construction still sent), closed by a pin in the same commit.
 Re-runnable with `node tools/mutate.mjs tools/mutants/soc1.json` and
 `... soc2.json`.
+
+## AUDIT SOC - the arc audited (2026-09-16, `world79`)
+
+Mac, the same day the arc merged (PR #217): "Can we do an audit of
+everything just merged. Just want it to be perfection." Four read-only
+lenses over the merged tree - A the hub, B the client's link and picture,
+C the DOM surfaces, D the maps and the input - each writing its findings
+with the file and the line, and every finding either fixed and pinned or
+refused with its reason below. The hub was then driven a second time over
+REAL sockets against workerd (`wrangler dev`, the local relay LOCALDEV1
+made runnable), with the audit's own flows added to the driver, and came
+back clean. Pinned in `test/auditsoc.test.js` (15) and in the slices' own
+files where a pin already stood; mutated by `tools/mutants/auditsoc.json`
+(46: 45 dead, 1 equivalent as recorded).
+
+### A - the hub
+
+- **A1/A8, a directed act was an amplifier.** The chat's law bounds what
+  everyone hears; a friend request or a party invite is DIRECTED - a
+  state frame and a chat line at its target - and a request/cancel pair
+  at the socket's own rate measured 40 frames at one player per second of
+  sending, outside every room-wide bound. One act of a kind at the same
+  target per SOCIAL_REPEAT_MS (60 s) per ACCOUNT now (`_repeated`, on the
+  instance: a flood keeps the object awake, a hibernation is a quiet hub;
+  keyed by account so a reconnect resets nothing; asked LAST, after every
+  other refusal, so a refused act stamps nothing), and the second inside
+  the window is 'already asked' with nothing written and nothing fanned.
+- **A2, throws out of the door.** Three of the five social arms let a
+  storage throw escape `webSocketMessage`, and a failed `list` in the
+  empty-room sweep made every first hello into an empty hub throw before
+  its welcome. All five contain now: an act answers 'the hub stumbled -
+  try again', a hello still welcomes, a leave still leaves, the drain's
+  sweep is caught.
+- **A3, accounts for ever.** One script at the hello gate's rate minted
+  4.3 million permanent records a day, each a kilobyte with its secret.
+  "A friend list that forgets people is worse than a kilobyte" stands for
+  every account a list names; an account NOBODY'S LIST NAMES (no friend,
+  no request either way, no live invite, no party) dangles nothing when it
+  goes. The hub's alarm sweeps them once nobody has seen them for
+  ACCOUNT_IDLE_MS (30 days), ONE PAGE (SWEEP_PAGE = 128, the runtime's
+  batch) per firing with the cursor in storage, a full page followed
+  SWEEP_STEP_MS later and an empty one ACCOUNT_SWEEP_MS (6 h) later; the
+  room marks itself a hub (`hub` in storage) and arms the alarm on the
+  first account hello, once per instance life. The world rooms' alarm is
+  untouched: `alarm()` reads the flag first.
+- **A4, parties for ever, and an unbounded list.** A party of one whose
+  maker never returned was reachable by nothing until the drain; and the
+  drain's sweep listed EVERY party into memory to delete them (a
+  namespace a client can grow). The sweep's second page takes parties
+  whose every seat has lapsed (no socket, `away` past PARTY_OFFLINE_MS or
+  never stamped); a party of ONE with no live invite goes with its maker's
+  last tab (one that has asked someone waits out the invite - a refresh
+  mid-invite keeps it); the drain lists keys alone, a page at a time.
+- **A5, ~500 reads an act.** A friend request read both records, then
+  composed BOTH pictures - each every friend's, request's and member's
+  record, each invite's party one read at a time - for a target that may
+  hold no socket at all. The records an awake object has read are kept on
+  it (`_recs`, RECS_MAX, every write through `_putAcct`/`_putAccts` so the
+  copy IS the storage's - no other object writes this room's keys), a
+  picture for an account with no socket is not composed, the invites'
+  parties are read in one batch, and a missing party is a kept miss (A9:
+  an invite naming a swept party was read on every frame until its TTL).
+- **A6, the presence oracle.** An unaccepted request handed the stranger
+  who sent it my presence, my last-seen and my LIVE PEER IDS (the tabs a
+  friend's client marks me by in the world) for as long as they left it
+  pending; and 'they are not online' answered a party invite BY ACCOUNT
+  for any id at all. A pending row carries a name and nothing else
+  (`_blankRow`); a request by account is for a request back alone and an
+  invite by account for a friend alone - anyone else is 'meet them first'
+  (met in the world, asked by peer), said before any record is read so the
+  hub tells nothing about which ids exist.
+- **A7, the replaced socket.** A socket replaced by a hello naming another
+  account (or none) lost its id BEFORE it closed, so its `_leave` said
+  nothing - right for the room, wrong for its account: no last-seen, no
+  presence, no `away` stamp, a seat that could never lapse. It leaves at
+  the replacement.
+- **A10, the tab bound was the projection's.** The wire cut a row at
+  ACCOUNT_TABS_MAX; the hub fanned to every socket an account held. The
+  bound is the hub's (`_byAcct`), and the NEWEST tabs are the ones kept.
+- **A11, the unbudgeted refusal.** 'no account' was answered before the
+  room's budget, so every accountless socket bought a send per act outside
+  it. Under the budget now, as every refusal is.
+- **The attachment's real wall is 2 KiB**, not the 16 the fake allowed;
+  the widest attachment a hub socket carries (the longest name, a party
+  pose with the longest place, every bucket) is measured under it, and
+  `test/fakeRoom.mjs` enforces 2048 now - with a paged `list()` (a paged
+  sweep over a fake that ignored `limit` never ended) and `getAlarm()`.
+
+### B - the client's link and picture
+
+- **B1/B2/B12/B13/B16/B19 in `net/social.js`.** An invite arriving one at
+  a time was unbounded (the door bounds a STATE frame's list alone) and
+  its lapse read the relay's stamps alone, so a relay stamping the future
+  handed out an invitation that never lapsed - bounded at PENDING_MAX with
+  the oldest dropped, and stamped on ARRIVAL (`got`, this clock) with the
+  lapse on either; a party view that said what I already held bumped the
+  version (the panels' repaint clock) - it moves on a change or a spent
+  invite alone, and a note that swept nothing repaints nothing; a state
+  frame naming another account (a relay's lie) seated me among the others
+  - the picture expects the account this session sent and refuses the
+  rest; a dead `&& false` branch removed.
+- **B3, frames coming in were ungated.** CHAT-G's law, again: the relay is
+  the player's choice, and a frame it pushes faster than an honest hub
+  could is not the port's. The picture at SOCIAL_IN_HZ_MAX (the hub's own
+  room budget), the LINES (a note, an error - each a chat line nobody
+  sent, and `net/chat.js` keeps CHAT_KEEP of them) at NOTE_IN_HZ_MAX on a
+  bucket of their own so a flood of notes cannot stall the picture, the
+  other members' poses at PARTY_IN_HZ_MAX; per room, dropped with the
+  room, the console told once.
+- **B7, the clock.** `setClockOffset` read the presence session's offset,
+  which is null in the chat alone and read from a welcome the hub link
+  never saw; the channel's welcome carries the relay's `now` too (server
+  side), the link says when a welcome has (`clockRead`), and the host
+  reads the HUB link's clock with the presence session's standing in for a
+  relay from before.
+- **B9, two tabs, one seat.** Two tabs of one account in one party each
+  sent a pose a second and the other members' card and mark flipped
+  between two places; the NEWEST tab speaks for the seat (`_speaker`),
+  the older's pose kept on its attachment and fanned to nobody.
+- **B10, the account that could not be kept.** `keptToken` mints afresh
+  when a storage will not hold the token - right for a TAB's id, wrong
+  for an ACCOUNT: every load a new permanent record on the hub, every
+  friend lost on the next load. The pair is null when the storage will
+  not keep it (read back after the write), the hello carries no account,
+  the chat stands, and the world tab says once why the button does
+  nothing.
+- **B11, the act's shape checked by hand.** `sendSocial` checked the kind
+  and copied three fields; the hub's parser refuses a target named twice
+  or not at all, or an id outside the id law, with a CLOSE. The wire's own
+  `validSocialAct` runs at both ends, so what the hub would close on never
+  leaves.
+- **B20, the parse nobody bounded.** `JSON.parse` of whatever a relay
+  sent, at any size. A frame past INBOUND_FRAME_MAX - the widest an honest
+  relay sends, a room's memory (WORLD_FRAME_MAX) plus a full roster of
+  hellos (ROSTER_MAX x MAX_FRAME_BYTES), derived and pinned as such - is
+  dropped unparsed.
+- **B4/D1, F inside.** The social door sat under the exterior gate of the
+  host's key ladder, and the interior and dungeon modes' own contexts
+  carry no `socialInteract`, so in a tavern or a dungeon F did nothing at
+  all. It answers above the mode gate, under the same overlay and window
+  gates the F-menu opens by.
+- **B5, the fatigue digits.** The pose sent the stored pool, which is x64
+  (FATIGUE_MULTIPLIER); a member's card said 3200/6400 where their own
+  sheet said 50/100. In the sheet's digits now.
+- **B6/C2, the pointer surfaces.** The chat, the friends panel and the
+  F-menu each freed the mouse on open and took it back on close, so
+  closing one while another stood - the F-menu over the panel, the panel
+  over the chat - relocked the pointer under a surface still up, its
+  buttons dead until Escape; and the key ladder's resting-state relock
+  ("any gameplay keypress re-engages a dropped lock") fired under an open
+  panel. One counted Set (`pointerSurfaces`): the first up frees the
+  mouse, the last down takes it back, the ladder's tail waits while any
+  stands.
+- **B14/D11, the second door.** `hudCtx.openSocial` stood beside
+  `socialInteract` as a second door to the panel that nothing dispatched
+  through. Gone.
+- **B17, the wrong word.** The F-menu's refused act said 'Try again in a
+  moment' whether the gate had refused it or there was no link open to
+  try again on; the panel's own TRY_AGAIN_TEXT when the gate refused,
+  'You are not connected' when there is no link.
+- **B18, the pose's cost.** Twice a second the pose read the travel pixel
+  three times and composed a whole look (every equipped item) for three
+  fields; the entity's own three fields and the pixel once.
+- **C20, my own other tab.** The picture names the peer ids MY tabs stand
+  as (`peers` on the state frame, through the door), so a second tab of
+  mine on the roster or under the ray is me ('that is you'), never a
+  stranger to friend or invite.
+- **C23, the colour asked per frame.** `colorOf` and `cssColorOf` are
+  asked per name per frame and per row per repaint, and each scanned
+  every list for the id; the answers are kept per version and dropped on
+  every change.
+
+### C - the DOM surfaces (an Opus lane in a worktree, measured in Chromium)
+
+Every layout claim below was measured over a static ESM page of the real
+modules (`createChatPanel`, `createSocialPanel`, `createPartyPanel`,
+`createSocialMenu` over a real `SocialState` fed real hub frames, the FPS
+counter's own sheet and the overworld's chips) with `getBoundingClientRect`
+and `document.elementFromPoint` at 1280x800, 800x900, 600x900 and
+430x860-touch - not on a GPU, and not in the game (ARENA2 is absent in the
+container).
+
+- **C1, one class namespace per surface.** The F-menu's sheet reused the
+  panel's `dfsocial*` classes with its own rules, and with both sheets
+  injected an OPEN PANEL computed `pointer-events: none` and the menu's
+  `left` - the menu's rules won. The menu is `dfpeer*` throughout, its
+  style id its own; pinned by parsing both sheets and asserting the class
+  sets disjoint.
+- **C2/C14, one Escape, one surface.** The chat, the panel and the F-menu
+  each closed on Escape and stopped it, so one press closed two of them
+  when stacked. Each takes `above()` - the host's word on whether a
+  surface stands over it - and with something above it ignores the key
+  whole; the one that answers stops it (`stopImmediatePropagation`, so a
+  sibling window-capture listener never sees it). The host's closures:
+  the chat yields to the panel and the menu, the panel to the menu.
+- **C3, the toast.** The invite toast sat in the panel's strip and took
+  the pointer over the chat's tabs and the panel's Close; it has a strip
+  of its own (top centre, `pointer-events: none`, its two buttons `auto`),
+  and on a phone the dial and menu buttons still answer under it.
+- **C4/C5, the note and the badge.** A rate-gated act's "try again" note
+  never expired (the countdown repainted around it), and the Party tab's
+  badge counted an invite that had lapsed until the next version; both
+  are read each frame and written on a difference.
+- **B8/C22, the clock that did not tick.** "Last online N min ago" on a
+  friend row and an away seat's card were written once per version, so a
+  row read "2 min ago" for an hour; the panel keeps the clock-only sub-
+  texts (`liveSubs`) and the HUD a `paintLive` pass, each re-read per
+  frame and WRITTEN on a change alone - sixty quiet frames write nothing,
+  an away seat writes exactly once a minute. The ellipsized name carries
+  its title.
+- **C6/C7, the HUD's place.** The party HUD sat on the FPS counter (top 40
+  where the counter's band ends at 84) - 92 now, 8 clear; and on a
+  430-wide phone it covered 59% of every peek line - a media query puts
+  it bottom-right at 180 wide, clear of the touch layer's column and of
+  the peek lines whole (a 3-seat party with the panel OPEN still draws the
+  panel over the HUD's left third; the HUD takes no pointer, and the
+  surface the player just opened wins).
+- **C8/C13, the phone.** Nothing on the panel was a 44px target - the
+  Social button 23 tall, the tabs 29, Close 19, a row's buttons 22 - and
+  under 840 wide the panel opened over the chat box. Every control is 44
+  under the touch skin (desktop sizes pinned unchanged, no horizontal
+  overflow at 430), and under 840 the panel stands below the box.
+- **C9, no phone control for F.** `ui/touch.js` draws a button when the
+  host hands it `socialInteract` - the host's own door, never a synthetic
+  key - beside the mode button.
+- **C10/D5, the legend on the chips.** The overworld's party legend was
+  absolutely placed over the map's chips at 430 wide; it is a flex child
+  appended after them and wraps onto its own line.
+- **C11/C12/C25, the reason and the contrast.** A disabled action's reason
+  lived in `title` alone (nothing to hover on a phone) - it is written
+  beside the label too; the F-menu's disabled row measured 1.84:1 against
+  a bright relief and is 4.90:1 (the arithmetic is in the pin); the
+  menu's sheet injects into a head-less document.
+- **C15, Remove off the F-menu** (and off the roster row, above): the one
+  destructive act stays behind the panel's two-click confirm.
+- **C16/C17, the label.** A dead `title` on the party label deleted; a
+  label at the map's edge was cut - clamped to the viewport by its own
+  width.
+- **C21, aria.** The panel a `dialog` with a label, the tabs `tab` with
+  `aria-selected`, the F-menu rows `menuitem` on a focused card, the
+  HUD's bar rows `group`, the badge labelled "N waiting"; the Social
+  button's `aria-label` (which hid its text) is a `title`.
+- **C24, the flush button.** The Social button wore a smaller font and
+  padding than the Chat button beside it and sat flush to it.
+- **C20, my own other tab.** The chat's door law was already "not me and
+  something behind it", so a host answering nothing for its own tab
+  (`accountOfPeer` through the picture's `peers`) leaves the row inert -
+  pinned so the contract cannot rot.
+
+### D - the maps and the input
+
+- **D2, stacked members.** Three members on one map pixel drew three
+  labels on one spot; they stack in seat order (30px apart) and the hover
+  names every member on the pixel.
+- **D3, the clash a classic player could not clear.** SocialInteract
+  shipped on F, and a classic player who had bound Rest to F could not
+  apply the controls window: the port's own actions (`PORT_ACTIONS`)
+  YIELD their key in the classic window and the mouse window (the port
+  action is staged unbound, rebindable in the enhanced pane), while the
+  enhanced pane still reports the clash and never unbinds.
+- **D4, the saved "F".** Handheld Torches' light toggle moved from F to O
+  (SOC5), but a mod-settings file saved before it still carried `"F"`;
+  `modSettings.migrate()` deletes an exactly-`"F"` toggle on load and
+  saves - a player's own different key survives, a file that never named
+  the mod is not grown one.
+- **D6/D7/D9, the map marks.** The repaint signature omitted `loc` (a
+  member walking into a dungeon on the same pixel did not repaint) - in;
+  the classic page's offline grey differed from the overworld's by a
+  channel - one grey; the party ring's radius comment said the wrong
+  number.
+- **D10/C19, the words.** "No friends yet" pointed at a literal F; it
+  points at the roster first and "the interact key".
+- **D12/D13, the pins.** One soc6 assertion passed with the code it named
+  deleted (replaced by the driven `dotAt` pins); two soc5 regexes matched
+  three literal spaces and a sentence of prose.
+- **D14, the two sentences.** `player/socialPick.js` said "behind is not
+  in the race" without saying why; the cylinder answers Infinity for a
+  peer behind, and the pin drives it.
+
+### The campaign and the record
+
+`tools/mutants/auditsoc.json`: 55 mutants over the hub, the wire, the
+link, the picture, the host and the surfaces (the request cooldown off, the invite
+cooldown off, the stamps forgotten on every act, the social arm and the
+account hello uncontained, the alarm never armed, a listed account swept,
+the page unbounded, the solo party kept until the sweep and deleted under
+a live invite, the sweep taking a party with a member online, the picture
+composed for the offline, the record cache dropped, the party miss not
+kept by the picture, a pending row with presence, a request and an invite
+by account to a stranger, the replaced socket never leaving, the tab bound
+keeping the stalest and off, any tab speaking for the seat, 'no account'
+before the budget, the hub naming no own tabs and the door dropping them,
+the door admitting both targets, the inbound bound under the widest
+welcome and the cap off, the picture gate and the pose gate off, the lines
+on the picture's bucket, the act's shape checked by hand, `clockRead`
+never set, my own tab a stranger, the memo never dropped, an unkept
+account minted, fatigue x64, the relock under an open surface and every
+surface relocking, F under the mode gate, "try again" when not connected,
+Remove on a roster row, the accountless page silent, the host reading the
+presence clock, a second door to the panel; and over the surfaces the
+F-menu's sheet in the panel's namespace, the phone's button ungated, the
+members on one pixel unstacked, the port action never yielding, the saved
+F not migrated, the HUD's and the panel's clocks never ticking, the HUD
+on the FPS counter, the tabs under 44px) - **54 dead, 1 equivalent as
+recorded** (the single-read party miss: every caller of `_party` that
+finds a miss clears what named it in the same act, and the picture's batch
+is the path that read a swept party per frame). Pinned in
+`test/auditsoc.test.js` (15) and in the slices' own files (soc1 18, soc3
+27, soc4 10, soc5 16, soc6 18, chat1, rosterg, world1, world5, macfive,
+audit39). The bundle is `world79`.

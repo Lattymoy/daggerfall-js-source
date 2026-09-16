@@ -35,8 +35,9 @@ test('SOC2: the account\'s pair - minted once in the storage handed in, kept, th
   const store = new Map(); const storage = { getItem: (k) => store.get(k) ?? null, setItem: (k, v) => store.set(k, String(v)) };
   const id = accountId(storage); assert.match(id, /^a[A-Za-z0-9_-]{3,39}$/); assert.equal(accountId(storage), id, 'the same next time'); assert.equal(store.get('dagger.online.account'), id);
   const sec = accountSecret(storage); assert.match(sec, /^[A-Za-z0-9_-]{8,64}$/); assert.equal(accountSecret(storage), sec); assert.notEqual(sec, id);
-  assert.match(accountId({ getItem() { throw new Error('no'); }, setItem() { throw new Error('no'); } }), /^a/, 'a storage that throws: a fresh id, never a crash');
-  assert.match(accountId(null), /^a/, 'no storage at all: a fresh id');
+  assert.equal(accountId({ getItem() { throw new Error('no'); }, setItem() { throw new Error('no'); } }), null, 'AUDIT SOC B10: a storage that throws keeps no account - null, never a crash and never a fresh permanent record per load');
+  assert.equal(accountId(null), null, 'no storage at all: no account');
+  assert.equal(accountSecret({ getItem: () => null, setItem() {} }), null, 'a storage that takes the write and forgets it: no account either (read back after the write)');
   const src = rd('src/net/social.js');
   assert.match(src, /export const accountId = \(storage = appStorage\(\)\)/, 'the app\'s own storage - the profile\'s, not the tab\'s');
   assert.match(src, /export const accountSecret = \(storage = appStorage\(\)\)/);
@@ -69,8 +70,8 @@ test('SOC2: sendSocial - an act as SOCIAL_ACTS has it, gated at home at the hub\
   const { s, clock, sent } = hubLink();
   assert.equal(s.sendSocial({ k: 'friend.request', peer: 'peer-b' }), true);
   assert.deepEqual(sent('social').at(-1), { t: 'social', k: 'friend.request', peer: 'peer-b' });
-  assert.equal(s.sendSocial({ k: 'party.accept', party: 'q-1', extra: 'dropped' }), true);
-  assert.deepEqual(sent('social').at(-1), { t: 'social', k: 'party.accept', party: 'q-1' }, 'the three named fields alone ride');
+  assert.equal(s.sendSocial({ k: 'party.accept', party: 'q-1234', extra: 'dropped' }), true);
+  assert.deepEqual(sent('social').at(-1), { t: 'social', k: 'party.accept', party: 'q-1234' }, 'the three named fields alone ride');
   assert.equal(s.sendSocial({ k: 'party.leave' }), false, 'the third in a burst: over SOCIAL_HZ_MAX, refused here, never sent');
   assert.equal(sent('social').length, SOCIAL_HZ_MAX);
   clock.t += 1000; assert.equal(s.sendSocial({ k: 'party.leave' }), true, 'refilled');

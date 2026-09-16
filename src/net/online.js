@@ -72,7 +72,7 @@
 import { tabStorage } from '../systems/appStorage.js';   // the tab's own storage - the seam, never the browser's own (a PIN)
 import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the port's one angle wrap, which cannot loop
 
-import { poseChanged, SOCKETS_MAX, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, sanitizeChat, chatGate, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS, HEARTBEAT_MS, relayVersionOf, chatInGate, CHAT_ROOM_HZ_MAX, socialGate, partyGate, validPartyPose, validSocialFrame, validPartyFrame, PARTY_SEND_MS, SOCIAL_ACTS } from './wire.js';   // SOC2: the hub's law, at home
+import { poseChanged, SOCKETS_MAX, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, sanitizeChat, chatGate, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS, HEARTBEAT_MS, relayVersionOf, chatInGate, CHAT_ROOM_HZ_MAX, socialGate, partyGate, validPartyPose, validSocialFrame, validPartyFrame, PARTY_SEND_MS, validSocialAct, socialInGate, noteInGate, partyInGate, SOCIAL_IN_HZ_MAX, NOTE_IN_HZ_MAX, INBOUND_FRAME_MAX } from './wire.js';   // SOC2: the hub's law, at home; AUDIT SOC B3/B11/B20: the act's projection, the inbound gates, the inbound bound
 
 export { WORLD_CELL, RANGE_PIXELS, worldRoom };
 
@@ -260,6 +260,7 @@ export class OnlineSession {
     this.onHost = null;           // (id, mine) => void: the host changed
     this.onWorld = null;          // (world) => void: the welcome carried the room's memory, or the host published one after it (AUDIT WORLD34 C1)
     this.clockOffsetMs = 0;       // WORLD5: the relay's clock minus this machine's, from the welcome - the shared world time is read through it
+    this.clockRead = false;       // AUDIT SOC B7: whether a welcome has said it - a channel's carries it since AUDIT SOC, and the hub link's is the clock the social picture reads
     this.clockWarning = null;     // OL3: the welcome's clock was a year off this machine's - said on the HUD line while it stands
     this.onClock = null;          // WORLD5: (offsetMs) => void - the welcome said the relay's clock
     // AUDIT-SRVN F4: there WAS a `this.relayVersion` here, written on every
@@ -287,6 +288,11 @@ export class OnlineSession {
     // drops its bucket with the rest of what that room meant (_forgetRoom).
     this._inChat = new Map();
     this._inChatSaid = false;  // the console says it ONCE - a flood must not become its own flood
+    // AUDIT SOC B3: the same law for the hub's frames - the picture's (state, presence, party, invite) on one bucket per
+    // room, the LINES (a note, an error - each a chat line nobody sent) on a tighter one, the other members' poses on a
+    // third; an honest hub at full tilt passes whole (net/wire.js SOCIAL_IN_HZ_MAX, NOTE_IN_HZ_MAX, PARTY_IN_HZ_MAX)
+    this._inSocial = new Map(); this._inNote = new Map(); this._inParty = new Map();
+    this._inSocialSaid = false;
     this.peers = new Map();    // id -> { id, name, look, pose, from, at, shown, seenAt } - MERGED over every room held (WORLD6b-iii(b))
     this._rooms = new Map();   // WORLD6b-iii(b): room -> Set<id> - which rooms report which peers; a peer stays in `peers` while any room holds it
     this._halo = new Map();    // WORLD6b-iii(b): room -> { ws, status, retryAt, backoff } - the neighbouring cells within range (hello'd and posed into, listened to, never streamed to: my own cell's fan reaches everyone in range)
@@ -299,6 +305,7 @@ export class OnlineSession {
     this._closedByUs = false;
     this.stats = { sent: 0, poses: 0, received: 0, reconnects: 0, chats: 0, worlds: 0, foes: 0, hits: 0, acts: 0, threw: 0, chatsDropped: 0 };
     this.stats.socials = 0; this.stats.parties = 0;   // SOC2: the acts that left, the party poses that left (on their own line: AUDIT WORLD D12 pins the line above as it stands)
+    this.stats.socialsDropped = 0; this.stats.partiesDropped = 0; this.stats.oversize = 0;   // AUDIT SOC B3/B20: hub frames and party poses refused at the inbound gates; frames dropped unparsed for their size
     /** ONCRASH1: what the last contained handler threw, for a person - `{ kind, text, at }` or null. */
     this.threw = null;
     this._threwKinds = new Set();   // said in full once a kind; the rest are counted
@@ -488,6 +495,7 @@ export class OnlineSession {
     const s = this._rooms.get(room);
     this._rooms.delete(room);
     this._inChat.delete(room);   // CHAT-G: a room let go takes its bucket with it, or a long session accumulates one per cell it ever walked through
+    this._inSocial.delete(room); this._inNote.delete(room); this._inParty.delete(room);   // AUDIT SOC B3: and the hub's three
     if (s) for (const id of s) if (!this._held(id)) this.peers.delete(id);
   }
   _openHalo(room, backoff = BACKOFF_MIN_MS) {
@@ -755,12 +763,15 @@ export class OnlineSession {
    *  net/wire.js SOCIAL_ACTS has it, gated here as the hub gates it (SOCIAL_HZ_MAX - an act the hub would drop without
    *  a word is refused here with a false, and the panel keeps its button lit); false when nothing went. */
   sendSocial(act) {
-    if (!this.acct || !act || typeof act !== 'object' || !Object.prototype.hasOwnProperty.call(SOCIAL_ACTS, act.k)) return false;
+    if (!this.acct) return false;
+    // AUDIT SOC B11: the wire's OWN projection, run here first (net/wire.js validSocialAct - the hub's parser runs the
+    // same one). An act the hub's parser refuses is a CLOSE ('bad social' is CLOSE_POLICY), so a kind with no law, a
+    // target named twice or not at all, or an id outside the wire's law never leaves this machine.
+    const shaped = validSocialAct(act);
+    if (!shaped) return false;
     const gate = socialGate(this._sbucket, this._now());
     if (!gate.pass) return false;
-    const frame = { t: 'social', k: act.k };
-    for (const f of ['acct', 'peer', 'party']) if (typeof act[f] === 'string') frame[f] = act[f];
-    if (!this._send(frame)) return false;
+    if (!this._send({ t: 'social', ...shaped })) return false;
     this._sbucket = gate.bucket;   // the token is spent only on an act that left
     this.stats.socials++;
     return true;
@@ -861,6 +872,9 @@ export class OnlineSession {
   }
 
   _receive(data, room = this.room) {
+    // AUDIT SOC B20: a frame wider than an honest relay's widest (net/wire.js INBOUND_FRAME_MAX) is dropped UNPARSED -
+    // the parse of a relay's megabytes was the one cost no door below could bound, and the relay is the player's choice
+    if (typeof data === 'string' && data.length > INBOUND_FRAME_MAX) { this.stats.oversize++; return; }
     let m;
     try { m = JSON.parse(data); } catch { return; }
     if (!m || typeof m !== 'object') return;
@@ -907,7 +921,7 @@ export class OnlineSession {
       if (!primary) return;
       this._setHost(m.host);   // WORLD1: the room's host, and the room's memory when it keeps one
       if (Number.isFinite(m.now)) {   // WORLD5: the relay's clock - a year off is no clock; OL3: and is SAID, on the console and the HUD line, rather than run uncorrected in silence
-        if (Math.abs(m.now - Date.now()) < 366 * 24 * 3600 * 1000) { this.clockOffsetMs = m.now - Date.now(); this.clockWarning = null; this._deliver('clock', () => this.onClock?.(this.clockOffsetMs)); }
+        if (Math.abs(m.now - Date.now()) < 366 * 24 * 3600 * 1000) { this.clockOffsetMs = m.now - Date.now(); this.clockRead = true; this.clockWarning = null; this._deliver('clock', () => this.onClock?.(this.clockOffsetMs)); }
         else if (!this.clockWarning) { this.clockWarning = CLOCK_WARNING; console.warn(`[online] ${CLOCK_WARNING} (relay ${new Date(m.now).toISOString()}, this machine ${new Date().toISOString()})`); }
       }
       if (m.world && typeof m.world === 'object' && !Array.isArray(m.world)) this._deliver('world', () => this.onWorld?.(m.world));
@@ -997,11 +1011,26 @@ export class OnlineSession {
       }
       this._deliver('chat', () => this.onChat?.({ id: m.id, name: sanitizeName(m.name), text, at: Number.isFinite(m.at) ? m.at : now, mine: m.id === this.id }));
     } else if (m.t === 'social') {
+      // AUDIT SOC B3: GATED COMING IN, as a chat line is (CHAT-G) - a note or an error becomes a chat line (net/chat.js
+      // keeps CHAT_KEEP of them, so an ungated stream is a player's history deleted) and the rest a repaint; the
+      // rates are the wire's own, an honest hub at full tilt passes whole, and the console says a flood ONCE
+      const line = m.k === 'note' || m.k === 'error';
+      const g = line ? noteInGate(this._inNote.get(room), now) : socialInGate(this._inSocial.get(room), now);
+      (line ? this._inNote : this._inSocial).set(room, g.bucket);
+      if (!g.pass) {
+        this.stats.socialsDropped++;
+        if (!this._inSocialSaid) { this._inSocialSaid = true; console.warn(`[online] hub frames from ${room} are arriving faster than ${line ? NOTE_IN_HZ_MAX : SOCIAL_IN_HZ_MAX}/s - frames are being dropped. An honest hub does not do this.`); }
+        return;
+      }
       // SOC2: the hub's word on my friends and my party - through the wire's door (validSocialFrame: CHAT-G's law, the
       // relay is the player's choice and a frame it shapes is dropped whole), delivered contained like every handler
       const f = validSocialFrame(m);
       if (f) this._deliver('social', () => this.onSocial?.(f));
     } else if (m.t === 'party') {
+      // AUDIT SOC B3: the other members' poses, at PARTY_IN_HZ_MAX (three members at PARTY_HZ_MAX each) - per room
+      const g = partyInGate(this._inParty.get(room), now);
+      this._inParty.set(room, g.bucket);
+      if (!g.pass) { this.stats.partiesDropped++; return; }
       // SOC2: a party member's pose - never my own account's back (a second tab of mine is not a member to draw; the
       // hub fans to the other members' sockets, and this is the belt for a relay that does not)
       const f = validPartyFrame(m);

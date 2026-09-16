@@ -17,6 +17,15 @@
 // import of scenes/ from player/ would be the first upward one in the tree. So it is a parameter, the test hands in
 // the real function, and a source pin holds the host to it.
 //
+// AUDIT SOC D14 - TWO THINGS THIS PICK DOES NOT DO, ON PURPOSE. The cylinder is UNOCCLUDED: a peer behind a wall,
+// a door or a market stall is picked exactly as one standing in the open, because nothing here casts against the
+// world's geometry. That is the STREET'S OWN LAW and not a shortcut - scenes/world.js's raceActivation feeds the
+// same person distances in as one more racer with no collider of its own, so a mobile NPC is talked to through the
+// same un-occluded cylinder, and a social pick that added an occlusion test would be the one thing on that corner
+// measured differently from everything beside it. And `t <= 0` answers Infinity for a peer AT MY FEET as well as
+// for one behind me: a body whose cylinder the camera is standing inside has no along-ray distance to report and
+// no direction to be in front of, so it is out of the race rather than at distance zero and winning every tie.
+//
 // Not a DFU member: Daggerfall Unity has no other players to stand in front of. Ledger A row (ONLINE).
 import { MOBILE_NPC_ACTIVATION_DISTANCE } from './activate.js';
 

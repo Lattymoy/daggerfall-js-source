@@ -28,8 +28,9 @@ test('ROSTER-G: the channel\'s welcome NAMES who is in it - id and name, no look
     const a = r.connect(), b = r.connect(), c = r.connect();
     await r.hello(a, 'aaaa-0001', null, { name: 'Alpha' }); clock += 100;
     await r.hello(b, 'bbbb-0002', null, { name: 'Bravo' }); clock += 100;
-    assert.deepEqual(a.sent[0], { t: 'welcome', id: 'aaaa-0001', peers: [], n: 1, v: RELAY_VERSION }, 'first in: nobody to name, and the count says one');
-    assert.deepEqual(b.sent[0], { t: 'welcome', id: 'bbbb-0002', peers: [{ id: 'aaaa-0001', name: 'Alpha' }], n: 2, v: RELAY_VERSION }, 'second in: told the first, by name alone');
+    assert.deepEqual(a.sent[0], { t: 'welcome', id: 'aaaa-0001', peers: [], n: 1, v: RELAY_VERSION, now: a.sent[0].now }, 'first in: nobody to name, and the count says one');
+    assert.equal(typeof a.sent[0].now, 'number', 'AUDIT SOC B7: the relay\'s clock rides the channel\'s welcome too');
+    assert.deepEqual(b.sent[0], { t: 'welcome', id: 'bbbb-0002', peers: [{ id: 'aaaa-0001', name: 'Alpha' }], n: 2, v: RELAY_VERSION, now: b.sent[0].now }, 'second in: told the first, by name alone');
     assert.deepEqual(ofType(a, 'join'), [{ t: 'join', id: 'bbbb-0002', name: 'Bravo' }], 'the first hears the second join - the name and nothing else');
     await r.hello(c, 'cccc-0003', null, { name: 'Charlie' }); clock += 100;
     assert.deepEqual(c.sent[0].peers.map((p) => p.id).sort(), ['aaaa-0001', 'bbbb-0002']); assert.equal(c.sent[0].n, 3);
