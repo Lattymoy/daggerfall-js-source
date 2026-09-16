@@ -354,9 +354,13 @@ test('SOC4: the names over the bodies - drawNames takes the party colour as its 
   rp.drawNames(none, FONT, PROJ, VIEW, 1280, 800, [0, 0, 0], 1, (p) => [p.x, p.y, p.z], null, () => null);
   assert.deepEqual(none.runs.map((x) => x.color), [[1, 1, 1, 1], [1, 1, 1, 1]]);
   const src = rd('src/net/remotePlayers.js');
-  assert.match(src, /drawNames\(renderer, font, proj, view, w, h, eye, scale = 1, toScene = \(p\) => \[p\.x, p\.y, p\.z\], rect = null, colorOf = null\) \{/, 'appended, so every existing call site keeps its meaning');
-  assert.match(src, /scale, colorOf\?\.\(n\.id\) \?\? \[1, 1, 1, 1\]\);/, 'and the white is the fallback, not a branch that can be inverted');
-  assert.match(src, /out\.push\(\{ id: e\.peer\.id, name: e\.peer\.name \?\? '', x: s\.x, y: s\.y \}\);/, 'the point carries the id');
+  // NAME1 (2026-09-16) MOVED THIS PIN, deliberately and in one direction only: `blocked` is APPENDED BEHIND
+  // `colorOf`, so SOC4's law - the colour is the last thing the caller chose to say, and a caller that says nothing
+  // draws the names it always drew - holds exactly as written. The point grew `scale` and `depth` beside the id for
+  // the same reason: both faces size a label from one number.
+  assert.match(src, /drawNames\(renderer, font, proj, view, w, h, eye, scale = 1, toScene = \(p\) => \[p\.x, p\.y, p\.z\], rect = null, colorOf = null, blocked = null\) \{/, 'appended, so every existing call site keeps its meaning');
+  assert.match(src, /s, colorOf\?\.\(n\.id\) \?\? \[1, 1, 1, 1\]\);/, 'and the white is the fallback, not a branch that can be inverted');
+  assert.match(src, /out\.push\(\{ id: e\.peer\.id, name: e\.peer\.name \?\? '', x: s\.x, y: s\.y, scale: nameScaleFor\(s\.depth\), depth: s\.depth \}\);/, 'the point carries the id');
 });
 
 // ── THE HOST ──────────────────────────────────────────────────────────────────────────────────────
@@ -373,8 +377,13 @@ test('SOC4: the wiring in scenes/world.js - the panel is made in socialStart ove
   assert.equal((w.match(/createPartyPanel\(/g) ?? []).length, 1, 'made in exactly one place - never per frame');
   assert.match(bare, /partyFrame\(performance\.now\(\)\);(?:\s*\w+\?\.render\([^\n]*\);)*\s*partyPanel\?\.render\(\{ covered: townTalk\.hudCovered \|\| \(modes\?\.hudCovered \?\? false\) \|\| gamePaused\(\) \}\);\s*\};/,   // SOC7 integration: SOC3's panel renders on the same line-run, between the pose and this - the tail of the frame is still ours
     'drawn from the chat frame, AFTER the pose goes out, under the same covered word the chat panel takes (CHAT1 pins the lines above it as they stand)');
-  assert.match(w, /remotePlayers\.drawNames\(renderer, townTalk\.font, proj, view, canvas\.width, canvas\.height, eye, scale, onlineToScene, largeHudViewportRect\(canvas\.clientHeight\), \(id\) => social\?\.colorOf\(id\) \?\? null\);/,
-    'the name pass asks net/social.js for the colour - the host never decides what green means');
+  // NAME1 MOVED THIS PIN TOO, and the finding is named: the names are the enhanced skin's DOM now (ui/nameLayer.js),
+  // so the host has TWO faces - the layer where there is a document and the classic bitmap pass where there is not.
+  // Both ask the SAME question of the picture, which is the whole of what SOC4 pinned here.
+  assert.match(w, /nameLayer\.render\(\{ points, log: chatLog, covered, colorOf: \(id\) => social\?\.colorOf\(id\) \?\? null \}\);/,
+    'the DOM face asks net/social.js for the colour - the host never decides what green means');
+  assert.match(w, /if \(!nameLayer\) remotePlayers\.drawNames\(renderer, townTalk\.font, proj, view, canvas\.width, canvas\.height, eye, scale, onlineToScene, largeHudViewportRect\(canvas\.clientHeight\), \(id\) => social\?\.colorOf\(id\) \?\? null, blocked\);/,
+    'and so does the bitmap face, unchanged but for the sight test appended');
   assert.doesNotMatch(bare, /PARTY_GREEN/, 'and the host never carries the colour itself: one home, in the picture');
 });
 

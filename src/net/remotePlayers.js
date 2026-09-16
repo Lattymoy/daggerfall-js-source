@@ -36,6 +36,83 @@ export const PEER_ARCHIVE = 900000;
 export const PEER_HEIGHT = CAPSULE_HEIGHT;
 /** Names farther than this, in scene units, are not drawn. */
 export const NAME_RANGE = 60;
+
+// ── NAME1 (2026-09-16, Mac: "Player names clip and cut off the top of the sprite head and additionally grow in size
+// the further away + are able to be seen through walls") ─────────────────────────────────────────────────────────
+//
+// THREE FAULTS, ONE ROOT: the label was drawn at a CONSTANT pixel size with its TOP-LEFT on the head point and no
+// sight test at all. So it hung DOWN over the skull (the clip), it kept its pixel size while the sprite shrank with
+// depth (which reads as "grows the further away"), and a wall was nothing to it. The three laws below are the
+// answer, and they live HERE rather than in either drawing pass because there are two faces now - the enhanced
+// skin's DOM layer (ui/nameLayer.js) and the classic bitmap pass (drawNames) - and a law kept in one of them would
+// drift from the other by the end of the week.
+
+/** The gap, in screen pixels, between the top of the head and the BOTTOM of the label. Screen-space and fixed: the
+ *  anchor already rides the body (it is the head point, projected), so a second world-space lift would only make the
+ *  clearance swing with depth - which is the thing that went wrong. Small, because the label hangs off the head and
+ *  a large gap reads as a label floating over nobody. */
+export const NAME_GAP_PX = 5;
+/** The depth, in scene units, at which a name is drawn at scale 1. A fixed world height projects to `f * H / depth`
+ *  pixels, so `REF / depth` IS the perspective law - the label shrinks exactly as the body under it does. */
+export const NAME_SCALE_REF = 18;
+/** Below this the name stops being a word. A peer past `NAME_SCALE_REF / NAME_SCALE_MIN` (32.7 units) holds it. */
+export const NAME_SCALE_MIN = 0.55;
+/** And above this a name in your face would be a banner. Held from `NAME_SCALE_REF / NAME_SCALE_MAX` (12) in. */
+export const NAME_SCALE_MAX = 1.5;
+/** The label's height in CSS pixels at scale 1 - the DOM face's font-size, and the number the bitmap face's own
+ *  scale is measured against. */
+export const NAME_BASE_PX = 16;
+/** How far short of the head the sight ray stops, in scene units. A peer's own body is not in the collider (peers
+ *  are billboards and rigs, never triangles), but the floor, a doorframe or the lip of the arch they stand under can
+ *  sit within a hand's breadth of the head point and would otherwise blind every name in a doorway. The same posture
+ *  player/activate.js pickFoeAlong takes with its own 0.05 (`wall < d - 0.05`), at a head's scale. */
+export const NAME_SIGHT_SKIN = 0.2;
+
+/**
+ * THE SIZE LAW, pure. `REF / depth`, clamped both ends - monotone non-increasing in depth, and inside the band a
+ * peer twice as far away wears a name half the size.
+ * @param {number} depth the view-space depth of the head point (player/tapRay.js projectToScreen's `depth`)
+ */
+export function nameScaleFor(depth) {
+  if (!Number.isFinite(depth) || depth <= 0) return NAME_SCALE_MAX;   // a point on the lens is as near as a point can be
+  return Math.min(NAME_SCALE_MAX, Math.max(NAME_SCALE_MIN, NAME_SCALE_REF / depth));
+}
+
+/**
+ * THE SIGHT LAW: is solid world standing between the eye and this head point?
+ *
+ * WHY THE COLLIDER AND NOT A DEPTH TEXTURE. The port's frame is not rendered to a target in the shipping hosts - it
+ * draws to the default framebuffer - so a depth read at the projected point would mean either a new render target
+ * for every frame of every host or a `readPixels` stall in the middle of one, and it would answer for the pixel
+ * rather than for the peer (a flat in front of the head, a raindrop, the player's own weapon). The collider's
+ * `raycast` is the test this engine ALREADY uses for exactly this question - `pickActivatableHit` rejects an
+ * activatable behind a wall with it, `pickFoeAlong` rejects a foe behind one - it is one ray a peer a frame against
+ * a uniform grid, and it is the same triangles the player cannot walk through. So the name obeys the same wall the
+ * body does.
+ *
+ * WHAT IT CANNOT SEE, said out loud: the collider holds TRIANGLE BUCKETS - buildings, models, city gates, windmill
+ * towers, action doors, an interior's or a dungeon's mesh - and the exterior's TERRAIN is not one of them
+ * (player/collider.js keeps the ground as a `heightAt` floor for the capsule, and `raycastHit` walks buckets alone).
+ * So out in the open a HILL between two players hides the body and not the name. That is a known, named limit and
+ * not a silent one: it is the exterior's own shape, the same one player/socialPick.js records for the F-menu's
+ * cylinder, and closing it would mean a terrain ray this engine does not have.
+ *
+ * @param {{raycast?: (o: number[], d: number[], m: number) => number}|null|undefined} collider the LIVE one
+ * @param {number[]} eye
+ * @param {number[]} head
+ * @param {number} [skin]
+ * @returns {boolean} true when the name must not be drawn
+ */
+export function sightBlockedBy(collider, eye, head, skin = NAME_SIGHT_SKIN) {
+  if (typeof collider?.raycast !== 'function' || !eye || !head) return false;   // no collider is no wall: a host without one draws every name, as it always did
+  const dx = head[0] - eye[0], dy = head[1] - eye[1], dz = head[2] - eye[2];
+  const d = Math.hypot(dx, dy, dz);
+  const reach = d - skin;
+  if (!(reach > 0)) return false;   // a head inside the skin is not behind anything
+  const hit = collider.raycast([eye[0], eye[1], eye[2]], [dx / d, dy / d, dz / d], reach);
+  return Number.isFinite(hit) && hit < reach;
+}
+
 /** The most distinct dolls kept on the GPU that NOBODY IS WEARING; past it the least recently drawn is released
  *  (AUDIT ONLINE C7).
  *  SLAM7 (2026-09-16, AUDIT SLAM): "that nobody is wearing" is the whole correction. This counted every ready doll,
@@ -308,33 +385,72 @@ export class RemotePlayers {
    * `rect` is the world viewport when the docked HUD shrinks it (E5,
    * AUDIT ONLINE C6): the projection lands where the peer is drawn.
    */
-  namePoints(proj, view, w, h, eye, toScene = (p) => [p.x, p.y, p.z], rect = null) {
+  /**
+   * NAME1: the point is THE TOP OF THE HEAD - `feet + height`, the body's own capsule height for a Morrowind body
+   * and the doll's `h` for a billboard, both already in `_shown`. It used to carry a `+ 0.25` world lift, which was
+   * the clip's other half: a quarter of a unit is many pixels at arm's length and barely one at forty, so the
+   * clearance it bought swung with depth in the wrong direction. The lift is gone; the gap is NAME_GAP_PX, in
+   * screen pixels, and it belongs to the drawing pass because it is measured in the same units the label is.
+   *
+   * Each point carries `scale` (nameScaleFor of its own depth) and the `depth` it came from, so both faces size the
+   * label from ONE number and a test can read the law off the point.
+   *
+   * THE FOUR CULLS, cheapest first: out of NAME_RANGE, behind the lens, off the strip, and then - last, because it
+   * is the only one that costs a ray - BLOCKED. `blocked(head)` is the host's sight test (sightBlockedBy over the
+   * live collider); nothing is passed on the probe hosts and every name is drawn, as it always was.
+   *
+   * THE ORDER IS THE BUDGET, and PERF-ON is why it is written down. The name pass is the one per-frame cost that
+   * scales with how many people are online (Mac: "the more people that are online, the worse fps becomes"), so the
+   * ray is paid ONLY for a peer who is in range, in front and on the strip - the peers a player can actually read -
+   * and never for the room. One ray each, against a uniform grid, after three comparisons that cost nothing.
+   * @param {((head: number[]) => boolean)|null} [blocked]
+   */
+  namePoints(proj, view, w, h, eye, toScene = (p) => [p.x, p.y, p.z], rect = null, blocked = null) {
     const out = [];
     for (const e of this._shown ?? []) {
       const f = toScene(e.peer.shown);
       if (eye) { const dx = f[0] - eye[0], dz = f[2] - eye[2]; if (dx * dx + dz * dz > NAME_RANGE * NAME_RANGE) continue; }
-      const s = projectToScreen([f[0], f[1] + e.height + 0.25, f[2]], w, h, proj, view, rect);
+      const head = [f[0], f[1] + e.height, f[2]];
+      const s = projectToScreen(head, w, h, proj, view, rect);
       if (!s.front || s.x < -200 || s.x > w + 200 || s.y < -50 || s.y > h + 50) continue;
-      out.push({ id: e.peer.id, name: e.peer.name ?? '', x: s.x, y: s.y });
+      if (blocked && blocked(head)) continue;
+      out.push({ id: e.peer.id, name: e.peer.name ?? '', x: s.x, y: s.y, scale: nameScaleFor(s.depth), depth: s.depth });
     }
     return out;
   }
 
   /**
    * SOC4 (2026-09-16, Mac: "Upon joining a party, the players name who are in a party together should turn green"):
-   * `colorOf` is the LAST parameter and it is optional, because a name's colour is not this module's business to
-   * know. A peer is a tab in a room; whether that tab belongs to somebody in my four-seat party is the social
+   * `colorOf` is an APPENDED optional parameter (it was the last one until NAME1 appended `blocked` behind it - the
+   * rule is the same, nothing ahead of it moved), because a name's colour is not this module's business to know. A peer is a tab in a room; whether that tab belongs to somebody in my four-seat party is the social
    * picture's question (net/social.js colorOf -> PARTY_GREEN or null), and the host asks it. Nothing is passed on
    * the probe hosts and on every caller written before the party existed, so the default path stays exactly what it
    * was: white, byte for byte (test/online.test.js pins it).
    * @param {((id: string) => number[]|null)|null} colorOf peer id -> an RGBA array, or null for the plain name
    */
-  drawNames(renderer, font, proj, view, w, h, eye, scale = 1, toScene = (p) => [p.x, p.y, p.z], rect = null, colorOf = null) {
+  /**
+   * NAME1: THE CLASSIC FACE, KEPT - and it is not dead code. The enhanced skin's DOM layer (ui/nameLayer.js) is what
+   * a player sees, because online forces the enhanced lane (OL1); this pass is what a host with no `document` draws,
+   * which is every Node probe and every suite in test/. It is kept rather than retired because the two faces share
+   * ONE law - `namePoints` answers the anchor, the size and the sight for both - so the fallback cannot drift from
+   * the thing it stands in for, and retiring it would cost the suite its only way to read a name's position without
+   * a browser. `scale` is the HOST's (hudScale); the point's own perspective scale multiplies it.
+   *
+   * THE ANCHOR IS THE LABEL'S BOTTOM. `drawText` takes a TOP-LEFT, and handing it the head point is exactly how the
+   * label came to sit over the skull: the text is placed a full line UP from the gap, so its bottom edge lands
+   * NAME_GAP_PX above the head at every distance.
+   *
+   * @param {((id: string) => number[]|null)|null} colorOf peer id -> an RGBA array, or null for the plain name
+   * @param {((head: number[]) => boolean)|null} [blocked] the sight test: a name behind a wall is not drawn
+   */
+  drawNames(renderer, font, proj, view, w, h, eye, scale = 1, toScene = (p) => [p.x, p.y, p.z], rect = null, colorOf = null, blocked = null) {
     if (!font) return 0;
     let drawn = 0;
-    for (const n of this.namePoints(proj, view, w, h, eye, toScene, rect)) {
-      const tw = measureText(font.fnt, n.name) * scale;
-      drawText(renderer, font, n.name, Math.round(n.x - tw / 2), Math.round(n.y), scale, colorOf?.(n.id) ?? [1, 1, 1, 1]);
+    for (const n of this.namePoints(proj, view, w, h, eye, toScene, rect, blocked)) {
+      const s = scale * n.scale;
+      const tw = measureText(font.fnt, n.name) * s;
+      const top = n.y - NAME_GAP_PX - font.fnt.fixedHeight * s;
+      drawText(renderer, font, n.name, Math.round(n.x - tw / 2), Math.round(top), s, colorOf?.(n.id) ?? [1, 1, 1, 1]);
       drawn++;
     }
     return drawn;

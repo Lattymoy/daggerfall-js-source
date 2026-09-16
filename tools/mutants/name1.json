@@ -1,0 +1,277 @@
+[
+  {
+    "name": "NAME1-anchor-gap-dropped",
+    "file": "src/net/remotePlayers.js",
+    "old": "      const top = n.y - NAME_GAP_PX - font.fnt.fixedHeight * s;",
+    "new": "      const top = n.y - font.fnt.fixedHeight * s;",
+    "tests": ["test/name1_bubbles.test.js"]
+  },
+  {
+    "name": "NAME1-anchor-label-hangs-from-the-head",
+    "file": "src/net/remotePlayers.js",
+    "old": "      const top = n.y - NAME_GAP_PX - font.fnt.fixedHeight * s;",
+    "new": "      const top = n.y;",
+    "tests": ["test/name1_bubbles.test.js"]
+  },
+  {
+    "name": "NAME1-anchor-old-world-lift-back",
+    "file": "src/net/remotePlayers.js",
+    "old": "      const head = [f[0], f[1] + e.height, f[2]];",
+    "new": "      const head = [f[0], f[1] + e.height + 0.25, f[2]];",
+    "tests": ["test/name1_bubbles.test.js", "test/online.test.js"]
+  },
+  {
+    "name": "NAME1-anchor-dom-gap-dropped",
+    "file": "src/ui/nameLayer.js",
+    "old": "        setStyle(tag.node, 'top', `${Math.round(p.y - NAME_GAP_PX)}px`);",
+    "new": "        setStyle(tag.node, 'top', `${Math.round(p.y)}px`);",
+    "tests": ["test/name1_bubbles.test.js"]
+  },
+  {
+    "name": "NAME1-anchor-dom-stack-grows-down",
+    "file": "src/ui/nameLayer.js",
+    "old": "  transform: translate(-50%, -100%); }",
+    "new": "  transform: translate(-50%, 0); }",
+    "tests": ["test/name1_bubbles.test.js"]
+  },
+  {
+    "name": "NAME1-size-inverted",
+    "file": "src/net/remotePlayers.js",
+    "old": "  return Math.min(NAME_SCALE_MAX, Math.max(NAME_SCALE_MIN, NAME_SCALE_REF / depth));",
+    "new": "  return Math.min(NAME_SCALE_MAX, Math.max(NAME_SCALE_MIN, depth / NAME_SCALE_REF));",
+    "tests": ["test/name1_bubbles.test.js"]
+  },
+  {
+    "name": "NAME1-size-constant",
+    "file": "src/net/remotePlayers.js",
+    "old": "  return Math.min(NAME_SCALE_MAX, Math.max(NAME_SCALE_MIN, NAME_SCALE_REF / depth));",
+    "new": "  return 1;",
+    "tests": ["test/name1_bubbles.test.js"]
+  },
+  {
+    "name": "NAME1-size-clamps-dropped",
+    "file": "src/net/remotePlayers.js",
+    "old": "  return Math.min(NAME_SCALE_MAX, Math.max(NAME_SCALE_MIN, NAME_SCALE_REF / depth));",
+    "new": "  return NAME_SCALE_REF / depth;",
+    "tests": ["test/name1_bubbles.test.js"]
+  },
+  {
+    "name": "NAME1-size-clamps-swapped",
+    "file": "src/net/remotePlayers.js",
+    "old": "  return Math.min(NAME_SCALE_MAX, Math.max(NAME_SCALE_MIN, NAME_SCALE_REF / depth));",
+    "new": "  return Math.min(NAME_SCALE_MIN, Math.max(NAME_SCALE_MAX, NAME_SCALE_REF / depth));",
+    "tests": ["test/name1_bubbles.test.js"]
+  },
+  {
+    "name": "NAME1-size-not-taken-at-the-draw",
+    "file": "src/net/remotePlayers.js",
+    "old": "      const s = scale * n.scale;",
+    "new": "      const s = scale;",
+    "tests": ["test/name1_bubbles.test.js"]
+  },
+  {
+    "name": "NAME1-size-not-taken-in-the-dom",
+    "file": "src/ui/nameLayer.js",
+    "old": "        setStyle(tag.node, 'fontSize', `${(NAME_BASE_PX * (p.scale ?? 1)).toFixed(1)}px`);",
+    "new": "        setStyle(tag.node, 'fontSize', `${NAME_BASE_PX.toFixed(1)}px`);",
+    "tests": ["test/name1_bubbles.test.js"]
+  },
+  {
+    "name": "NAME1-depth-not-reported",
+    "file": "src/player/tapRay.js",
+    "old": "  return { x: r.x + ((nx + 1) / 2) * r.w, y: r.y + ((1 - ny) / 2) * r.h, depth: cw, front: true };",
+    "new": "  return { x: r.x + ((nx + 1) / 2) * r.w, y: r.y + ((1 - ny) / 2) * r.h, depth: 1, front: true };",
+    "tests": ["test/name1_bubbles.test.js"]
+  },
+  {
+    "name": "NAME1-sight-hit-read-as-a-miss",
+    "file": "src/net/remotePlayers.js",
+    "old": "  return Number.isFinite(hit) && hit < reach;",
+    "new": "  return Number.isFinite(hit) && hit > reach;",
+    "tests": ["test/name1_bubbles.test.js"]
+  },
+  {
+    "name": "NAME1-sight-never-blocks",
+    "file": "src/net/remotePlayers.js",
+    "old": "  return Number.isFinite(hit) && hit < reach;",
+    "new": "  return false;",
+    "tests": ["test/name1_bubbles.test.js"]
+  },
+  {
+    "name": "NAME1-sight-skin-swallows-the-wall",
+    "file": "src/net/remotePlayers.js",
+    "old": "  const reach = d - skin;",
+    "new": "  const reach = d - 6;",
+    "tests": ["test/name1_bubbles.test.js"]
+  },
+  {
+    "name": "NAME1-sight-no-skin-at-all",
+    "file": "src/net/remotePlayers.js",
+    "old": "export const NAME_SIGHT_SKIN = 0.2;",
+    "new": "export const NAME_SIGHT_SKIN = 0;",
+    "tests": ["test/name1_bubbles.test.js"]
+  },
+  {
+    "name": "NAME1-sight-cull-dropped",
+    "file": "src/net/remotePlayers.js",
+    "old": "      if (blocked && blocked(head)) continue;",
+    "new": "      if (false && blocked && blocked(head)) continue;",
+    "tests": ["test/name1_bubbles.test.js"]
+  },
+  {
+    "name": "NAME1-sight-ray-cast-before-the-range-cull",
+    "file": "src/net/remotePlayers.js",
+    "old": "      if (eye) { const dx = f[0] - eye[0], dz = f[2] - eye[2]; if (dx * dx + dz * dz > NAME_RANGE * NAME_RANGE) continue; }\n      const head = [f[0], f[1] + e.height, f[2]];",
+    "new": "      const head = [f[0], f[1] + e.height, f[2]];\n      if (blocked) blocked(head);\n      if (eye) { const dx = f[0] - eye[0], dz = f[2] - eye[2]; if (dx * dx + dz * dz > NAME_RANGE * NAME_RANGE) continue; }",
+    "tests": ["test/name1_bubbles.test.js"]
+  },
+  {
+    "name": "NAME1-host-sight-test-dropped",
+    "file": "src/scenes/world.js",
+    "old": "    const blocked = (head) => sightBlockedBy(player.collider, eye, head);",
+    "new": "    const blocked = null;",
+    "tests": ["test/name1_bubbles.test.js"]
+  },
+  {
+    "name": "NAME1-host-both-faces-drawn",
+    "file": "src/scenes/world.js",
+    "old": "    if (!nameLayer) remotePlayers.drawNames(",
+    "new": "    remotePlayers.drawNames(",
+    "tests": ["test/name1_bubbles.test.js"]
+  },
+  {
+    "name": "NAME1-host-layer-built-without-a-document",
+    "file": "src/scenes/world.js",
+    "old": "    if (typeof document !== 'undefined') nameLayer = createNameLayer({});",
+    "new": "    nameLayer = createNameLayer({});",
+    "tests": ["test/name1_bubbles.test.js"]
+  },
+  {
+    "name": "NAME1-dom-rebuilt-every-frame",
+    "file": "src/ui/nameLayer.js",
+    "old": "        let tag = tags.get(p.id);",
+    "new": "        let tag = undefined;",
+    "tests": ["test/name1_bubbles.test.js"]
+  },
+  {
+    "name": "NAME1-dom-writes-unguarded",
+    "file": "src/ui/nameLayer.js",
+    "old": "  const setStyle = (n, k, v) => { if (n.style[k] !== v) n.style[k] = v; };",
+    "new": "  const setStyle = (n, k, v) => { n.style[k] = v; };",
+    "tests": ["test/name1_bubbles.test.js"]
+  },
+  {
+    "name": "NAME1-dom-window-ignored",
+    "file": "src/ui/nameLayer.js",
+    "old": "      const want = !covered && points.length > 0;",
+    "new": "      const want = points.length > 0;",
+    "tests": ["test/name1_bubbles.test.js"]
+  },
+  {
+    "name": "NAME1-party-colour-unclamped",
+    "file": "src/ui/nameLayer.js",
+    "old": "  const hex = (v) => Math.max(0, Math.min(255, Math.round(Number(v) * 255))).toString(16).padStart(2, '0');",
+    "new": "  const hex = (v) => Math.round(Number(v) * 255).toString(16).padStart(2, '0');",
+    "tests": ["test/name1_bubbles.test.js"]
+  },
+  {
+    "name": "NAME1-party-colour-dropped",
+    "file": "src/ui/nameLayer.js",
+    "old": "        setStyle(tag.name, 'color', cssRgba(colorOf?.(p.id)) ?? '');",
+    "new": "        setStyle(tag.name, 'color', '');",
+    "tests": ["test/name1_bubbles.test.js"]
+  },
+  {
+    "name": "BUBBLE1-system-lines-speak",
+    "file": "src/ui/nameLayer.js",
+    "old": "  if (line.system || line.mine) return false;",
+    "new": "  if (line.mine) return false;",
+    "tests": ["test/name1_bubbles.test.js"]
+  },
+  {
+    "name": "BUBBLE1-my-own-line-speaks",
+    "file": "src/ui/nameLayer.js",
+    "old": "  if (line.system || line.mine) return false;",
+    "new": "  if (line.system) return false;",
+    "tests": ["test/name1_bubbles.test.js"]
+  },
+  {
+    "name": "BUBBLE1-any-tab-speaks",
+    "file": "src/ui/nameLayer.js",
+    "old": "  if (tabId !== BUBBLE_TAB || !line || typeof line !== 'object') return false;",
+    "new": "  if (!line || typeof line !== 'object') return false;",
+    "tests": ["test/name1_bubbles.test.js"]
+  },
+  {
+    "name": "BUBBLE1-cap-lifted",
+    "file": "src/ui/nameLayer.js",
+    "old": "    while (bubbles.size > BUBBLE_MAX) bubbles.delete(bubbles.keys().next().value);",
+    "new": "    while (false && bubbles.size > BUBBLE_MAX) bubbles.delete(bubbles.keys().next().value);",
+    "tests": ["test/name1_bubbles.test.js"]
+  },
+  {
+    "name": "BUBBLE1-cap-drops-the-newest",
+    "file": "src/ui/nameLayer.js",
+    "old": "    while (bubbles.size > BUBBLE_MAX) bubbles.delete(bubbles.keys().next().value);",
+    "new": "    while (bubbles.size > BUBBLE_MAX) bubbles.delete([...bubbles.keys()].pop());",
+    "tests": ["test/name1_bubbles.test.js"]
+  },
+  {
+    "name": "BUBBLE1-older-line-wins",
+    "file": "src/ui/nameLayer.js",
+    "old": "    bubbles.delete(id);\n    bubbles.set(id, { text: body, at });",
+    "new": "    if (!bubbles.has(id)) bubbles.set(id, { text: body, at });",
+    "tests": ["test/name1_bubbles.test.js"]
+  },
+  {
+    "name": "BUBBLE1-window-unbounded",
+    "file": "src/ui/nameLayer.js",
+    "old": "      for (const [id, b] of [...bubbles]) if (t - b.at >= BUBBLE_MS) bubbles.delete(id);",
+    "new": "      for (const [id, b] of [...bubbles]) if (false && t - b.at >= BUBBLE_MS) bubbles.delete(id);",
+    "tests": ["test/name1_bubbles.test.js"]
+  },
+  {
+    "name": "BUBBLE1-fade-inverted",
+    "file": "src/ui/nameLayer.js",
+    "old": "  return age < hold ? 1 : Math.max(0, 1 - (age - hold) / (life - hold));",
+    "new": "  return age < hold ? 1 : Math.max(0, (age - hold) / (life - hold));",
+    "tests": ["test/name1_bubbles.test.js"]
+  },
+  {
+    "name": "BUBBLE1-no-fade-at-all",
+    "file": "src/ui/nameLayer.js",
+    "old": "  return age < hold ? 1 : Math.max(0, 1 - (age - hold) / (life - hold));",
+    "new": "  return 1;",
+    "tests": ["test/name1_bubbles.test.js"]
+  },
+  {
+    "name": "BUBBLE1-cut-dropped",
+    "file": "src/ui/nameLayer.js",
+    "old": "  if (s.length <= BUBBLE_CHARS) return s;",
+    "new": "  return s;",
+    "tests": ["test/name1_bubbles.test.js"]
+  },
+  {
+    "name": "BUBBLE1-cut-unmarked",
+    "file": "src/ui/nameLayer.js",
+    "old": "  return s.slice(0, BUBBLE_CHARS).trimEnd() + BUBBLE_ELLIPSIS;",
+    "new": "  return s.slice(0, BUBBLE_CHARS).trimEnd();",
+    "tests": ["test/name1_bubbles.test.js"]
+  },
+  {
+    "name": "BUBBLE1-bubble-over-the-wrong-peer",
+    "file": "src/ui/nameLayer.js",
+    "old": "        const b = bubbles.get(p.id);",
+    "new": "        const b = bubbles.get(p.name);",
+    "tests": ["test/name1_bubbles.test.js"]
+  },
+  {
+    "name": "BUBBLE1-watermark-only-advanced-for-a-line-that-earns-a-bubble",
+    "file": "src/ui/nameLayer.js",
+    "old": "      seq = line.seq;\n      if (bubbleLineOk(BUBBLE_TAB, line)) say(line.id, line.text);",
+    "new": "      if (bubbleLineOk(BUBBLE_TAB, line)) { seq = line.seq; say(line.id, line.text); }",
+    "equivalent": true,
+    "why": "A refused line produces nothing either way - the watermark past it buys a walk, not a law. The only difference is that a session with one system notice in the log re-reads that one line every frame for the rest of its life, which is a cost no pin can see and none here pretends to. Kept as written because the cost is real and the shape ('read forward, once') is the one a later channel tab will inherit.",
+    "tests": ["test/name1_bubbles.test.js"]
+  }
+]

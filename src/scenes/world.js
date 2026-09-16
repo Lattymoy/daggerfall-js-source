@@ -219,7 +219,8 @@ import { OnlineSession, roomKeyFor, DEFAULT_SERVER, WORLD_PUBLISH_MS, FOES_MS, F
 import { POSE_STRIKES, isWorldRoom, isCellRoom, cellHaloFor, actFrameFits, sharedClassicMinutes, wallMsForClassicMinutes } from '../net/wire.js';   // WORLD6b-iii(b): the cell seam's halo   // MAC7 #1: the swing's kind on the wire; AUDIT WORLD4 A1: whether an act frame can be said at all
 import { hasDaggerfallArrows } from '../combat/fpArm.js';   // MAC7 #2: the arrow bit on the wire - weaponRig's own read
 import { drawText } from '../ui/text.js';   // ONLINE1: the session's status line
-import { RemotePlayers, composeLook } from '../net/remotePlayers.js';   // ONLINE1: the others, drawn
+import { RemotePlayers, composeLook, sightBlockedBy } from '../net/remotePlayers.js';   // ONLINE1: the others, drawn; NAME1: and the sight test their names take
+import { createNameLayer } from '../ui/nameLayer.js';   // NAME1 + BUBBLE1: the names and the chat bubbles, in the enhanced face
 import { makeHitPend } from '../net/hitPend.js';   // AUDIT FOES FOE2: a blow the wire refused waits and goes
 import { PeerBodies } from '../net/peerBodies.js';   // MWBODY1: the others in the Morrowind body
 import { ChatLog, CHAT_REJOIN_MS } from '../net/chat.js';   // CHAT1: the tabs and their lines
@@ -6820,7 +6821,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // front door never boots, and its interior frame and town room
   // disagreed with this one's (AUDIT ONLINE D6/D8).
   const onlineOn = params.has('online');
-  let online = null, remotePlayers = null, peerBodies = null, _onlineLast = null, _onlineKey = null, _onlineKeySince = 0;
+  let online = null, remotePlayers = null, peerBodies = null, nameLayer = null, _onlineLast = null, _onlineKey = null, _onlineKeySince = 0;
   let chatLog = null, chatPanel = null, chatLinks = null;   // CHAT1: the log, the panel, one channel session per tab (Map tabId -> OnlineSession)
   // SOC2 (Mac: "friend other users ... the new 4 person party system"): THE SOCIAL PICTURE - the hub's word (the
   // world tab's link, whose room is the hub, SOC1), held pure in net/social.js. `social` is read by the panels (the
@@ -7002,12 +7003,19 @@ export async function bootWorld(canvas, renderer, params, status) {
     onlineArrival();
     online.onClock = (offsetMs) => { const was = _sharedOffsetMs; _sharedOffsetMs = offsetMs; if (Math.abs(offsetMs - was) > 1000) onlineArrival(); };   // WORLD5: the relay's clock corrects this machine's
     remotePlayers = new RemotePlayers({ renderer, deps: { fetchBytes, palette, getTexture } });
+    // NAME1 + BUBBLE1: the names are the enhanced skin's DOM now (ui/nameLayer.js) - online forces that skin
+    // (OL1), so this is always the face a player sees. Made ONCE, here, beside the peers it labels; a host
+    // with no document (the Node probes) makes none and takes the classic bitmap pass below instead.
+    if (typeof document !== 'undefined') nameLayer = createNameLayer({});
     // MWBODY1: the enhanced skin with Morrowind data attached puts every peer in a body of its own; otherwise the doll
     const enhanced = isEnhanced();   // the skin cannot change without a reload (switchSkin), so it is read once, not per frame
     peerBodies = new PeerBodies({ renderer, enabled: () => enhanced && !!getPref('mwArms') && morrowindDataCount() > 0, generation: morrowindDataGeneration });
     if (enhanced && typeof document !== 'undefined') chatStart();   // CHAT1: the live chat is the enhanced skin's (a DOM panel); classic has no place for it yet   // the player's own arms switch (MWA1) turns the layer on; new data, new bodies
     // AUDIT ONLINE D12: a clean goodbye - the room's leave, not a silence; the rigs and the dolls released. The panel
     // stays: a page restored from the cache gets its chat back through chatFrame's rejoin (AUDIT CHAT B4).
+    // NAME1: and the NAME LAYER stays with it, for exactly that reason - a layer torn down at the farewell would
+    // leave a restored session with no names over anybody for the rest of its life. The rigs and the dolls go
+    // because they are GPU allocations with an owner (EVERY ALLOCATION HAS AN OWNER); a handful of divs are not.
     // AUDIT ONCRASH1 A7: and the LEAVE is the part the room needs, so it is not behind the publish. `worldPublish`
     // reaches collectWorld - deep game code, in a browser EVENT HANDLER - and a throw there used to skip the leave,
     // both chat links and the rigs, so the room got a silence instead of a farewell and the peers held a ghost until
@@ -7409,13 +7417,26 @@ export async function bootWorld(canvas, renderer, params, status) {
   const drawPeerBodies = (proj, view, eye) => { if (peerBodies) peerBodies.draw(canvas, { proj, view, eye }); };
   const drawPeerNames = (proj, view, eye) => {
     if (!remotePlayers) return;
-    if (townTalk.hudCovered || (modes?.hudCovered ?? false)) return;   // a window over the HUD covers the names too
-    const scale = hudScale(canvas.width, canvas.height);
+    const covered = townTalk.hudCovered || (modes?.hudCovered ?? false);   // a window over the HUD covers the names too
+    // NAME1 (Mac: "...are able to be seen through walls"): THE SIGHT TEST, over `player.collider` - the LIVE one.
+    // worldModes re-points that field at every door (the street's, the building's, the dungeon's), so this is the
+    // same triangles the player cannot walk through and the same raycast the activation ladder rejects a target
+    // behind a wall with (player/activate.js pickActivatableHit). The arithmetic is net/remotePlayers.js
+    // sightBlockedBy's, so a test can drive it with two points and a wall.
+    const blocked = (head) => sightBlockedBy(player.collider, eye, head);
     // the docked HUD's viewport rect (E5), so the name lands over the head the world pass drew (AUDIT ONLINE C6/D3)
-    // SOC4 (Mac: "the players name who are in a party together should turn green"): the last argument is the party's
-    // colour for a peer - net/social.js colorOf answers PARTY_GREEN for my party's other tabs and null for everyone
-    // else, so a stranger's name is the white it always was.
-    remotePlayers.drawNames(renderer, townTalk.font, proj, view, canvas.width, canvas.height, eye, scale, onlineToScene, largeHudViewportRect(canvas.clientHeight), (id) => social?.colorOf(id) ?? null);
+    // SOC4 (Mac: "the players name who are in a party together should turn green"): `colorOf` is the party's colour
+    // for a peer - net/social.js colorOf answers PARTY_GREEN for my party's other tabs and null for everyone else,
+    // so a stranger's name is the white (in the DOM face, the bone) it always was.
+    if (nameLayer) {
+      // NAME1 + BUBBLE1: the DOM face. CSS PIXELS, because that is what a style attribute is measured in - the
+      // bitmap pass below projects into the drawing buffer instead and pays hudScale for the difference.
+      const points = covered ? [] : remotePlayers.namePoints(proj, view, canvas.clientWidth, canvas.clientHeight, eye, onlineToScene, largeHudViewportRect(canvas.clientHeight), blocked);
+      nameLayer.render({ points, log: chatLog, covered, colorOf: (id) => social?.colorOf(id) ?? null });
+    }
+    if (covered) return;
+    const scale = hudScale(canvas.width, canvas.height);
+    if (!nameLayer) remotePlayers.drawNames(renderer, townTalk.font, proj, view, canvas.width, canvas.height, eye, scale, onlineToScene, largeHudViewportRect(canvas.clientHeight), (id) => social?.colorOf(id) ?? null, blocked);
     const line = online?.statusLine();   // AUDIT ONLINE D12/E11: connecting, reconnecting, refused, replaced - said, not silent
     if (line && townTalk.font) drawText(renderer, townTalk.font, line, Math.round(8 * scale), Math.round(8 * scale), scale, [1, 0.85, 0.6, 1]);
   };
