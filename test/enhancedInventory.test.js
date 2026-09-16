@@ -1287,6 +1287,13 @@ test('PX28: a kind label at the front of a quest name is stripped; a name is nev
   // NOT stripped: the word is the name, not a label on it
   assert.equal(questTitleOf('Main Quest Backbone'), 'Main Quest Backbone', 'no separator - the phrase runs into the title');
   assert.equal(questTitleOf("Clavicus Vile's Quest"), "Clavicus Vile's Quest", 'the word is at the END');
+  // AUDIT-MACK: ...and the label must be at the FRONT, which is what
+  // the `^` anchor is for. A mutant dropping it survived the whole
+  // campaign: every case above either has no separator (so an
+  // unanchored match finds nothing) or has its label at the front
+  // anyway. This one has a real label in the MIDDLE of a real name.
+  assert.equal(questTitleOf('Rescue the Main Quest: Courier'), 'Rescue the Main Quest: Courier',
+    'a label-shaped phrase inside a name is part of the name - only a LEADING label is a label');
   assert.equal(questTitleOf('The Postman'), 'The Postman');
   // never emptied: a quest actually called "Main Quest" keeps its name
   assert.equal(questTitleOf('Main Quest'), 'Main Quest');

@@ -77,7 +77,7 @@ test('HC1: the art loads in the ONE place the mode changes, so every path to a s
   // the three paths that used to leave a rider with no horse all go
   // through the one place, still
   const w = read('src/scenes/world.js');
-  assert.match(w, /const setTransportModeHere = \(mode\) => mountRig\?\.setMode\(mode\);/);
+  assert.match(w, /const setTransportModeHere = \(mode\) => mountRig\.setMode\(mode\);/);
   assert.match(w, /if \(pose\.transport != null\) setTransportModeHere\(pose\.transport\);/, 'a loaded save on horseback');
   assert.match(w, /setTransportModeHere\(TRANSPORT_MODES\.Horse\);\s*\n\s*console\.log\(`\[testroom\] ride out/, 'the Test Room\'s ride out');
   assert.match(w, /playerEntity\.boardShipPosition = t\.boardShipPosition;\s*\n\s*setTransportModeHere\(t\.mode\);/, 'the ship\'s landing');
@@ -106,7 +106,7 @@ test('HC1/MAC-K3: the draw - under the HUD, on EVERY outdoor host, hidden while 
     assert.match(src, /loadHud\(\{ fetchBytes, ImgFile, palette, renderer \}\)\.then\(\(a\) => \{ hudArt = a; \}\)/,
       `${h}.js: the HUD art loads on both skins, so the 'if (hudArt)' gate is "art loaded", not "classic skin"`);
     assert.match(src, /createMountRig\(\{/, `${h}.js is outdoors and must have a mount`);
-    assert.match(src, /mountRig[?.]*\.frame\(dt\)/, `${h}.js must run its mount's frame`);
+    assert.match(src, /mountRig\.frame\(dt\)/, `${h}.js must run its mount's frame`);
   }
   for (const f of ['src/scenes/worldModes.js', 'src/scenes/dungeonContext.js']) {
     assert.match(read(f), /CANNOT_CHANGE_INDOORS/, `${f}: the T key refuses indoors`);

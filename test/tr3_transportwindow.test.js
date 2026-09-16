@@ -151,8 +151,8 @@ test('TR3/MAC-K3: the host door - grounded and outdoors only, and EVERY host tha
     const src = read(`src/scenes/${h}.js`);
     if (!src.includes('createMountRig(')) continue;
     mounted.push(h);
-    assert.match(src, /openTransport: \(\) => mountRig[?.]*\.open\(\)/, `${h}.js must route the T key to its rig`);
-    const spriteAt = src.indexOf('mountRig?.frame(dt)') >= 0 ? src.indexOf('mountRig?.frame(dt)') : src.indexOf('mountRig.frame(dt)');
+    assert.match(src, /openTransport: \(\) => mountRig\.open\(\)/, `${h}.js must route the T key to its rig`);
+    const spriteAt = src.indexOf('mountRig.frame(dt)');
     const hudAt = src.indexOf('drawHud(renderer, canvas, hudArt, playerEntity,');
     assert.ok(spriteAt > 0, `${h}.js builds a rig, so it must run its frame`);
     assert.ok(hudAt > spriteAt, `${h}.js must draw the mount UNDER the HUD`);

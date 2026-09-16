@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 import { createMountRig } from '../src/player/mountRig.js';
 import { TRANSPORT_MODES } from '../src/systems/transport.js';
-import { MOUSE_CODES, mouseCode } from '../src/ui/input.js';
+import { MOUSE_CODES, mouseCode, routeAction } from '../src/ui/input.js';
 import { ControlsWindow } from '../src/ui/controlsWindow.js';
 import { currentDict } from '../src/systems/controlsConfig.js';
 
@@ -31,31 +31,57 @@ const HOSTS = ['exterior', 'world', 'worldModes', 'dungeonContext'];
 
 // ── K1: the mouse ────────────────────────────────────────────────
 
-test('MAC-K1: EVERY host that reads a held ACTION also feeds it the mouse', () => {
-  // THE DEFECT. AUDIT 39r found that `keys` was fed by keydown alone,
-  // so `held(keys, 'AutoRun')` - Mouse2 at the shipped bindings -
-  // could never answer true, and it fixed world.js, exterior.js and
-  // dungeon.js. It MISSED worldModes.js, the interior host, which
-  // calls `held(keys, 'AutoRun')` every frame and `held(keys,
-  // 'ActivateCenterObject')` for the drawn bow's un-draw. Both were
-  // dead in every interior in the game for the whole arc.
+test('AUDIT-MACK F2: ONE feeder per held-key Set, and every reader is on a fed one', () => {
+  // THE PIN THIS REPLACES WAS WRONG, and wrong in the direction that
+  // matters: it asserted that every file reading `held(keys, ...)`
+  // must itself write the mouse codes into that Set. `worldModes.js`
+  // does not OWN a Set - it takes `keys` off the host bag
+  // (`exterior.js:3086`) - and the lender's own mousedown writes the
+  // codes UNGATED on a listener that is never removed. The codes were
+  // always there.
   //
-  // Derived, so a fifth host cannot repeat it: a file that resolves a
-  // BINDING out of a held set must also put the three button codes
-  // into that set.
-  const files = [...HOSTS.map((h) => `src/scenes/${h}.js`), 'src/scenes/dungeon.js'];
-  const readers = [];
-  for (const f of files) {
-    const src = rd(f);
-    if (!/held\(keys,/.test(src)) continue;
-    readers.push(f);
+  // So MAC-K1's first cause was a misdiagnosis: it read AUDIT 39r's
+  // "three hosts fixed, this one missed" as a gap, and added a second
+  // writer to a Set that already had one. Idempotent, harmless, and a
+  // second law for one fact.
+  //
+  // The real invariant is ownership: a file that DECLARES a held-key
+  // Set must feed it both edges; a file that BORROWS one must not,
+  // because two writers on one Set is how you get a release that
+  // half-happens. Derived from the declarations, so it cannot be
+  // satisfied by a list.
+  const files = [...HOSTS, 'dungeon'].map((h) => [`src/scenes/${h}.js`, rd(`src/scenes/${h}.js`)]);
+  const owners = [];
+  const borrowers = [];
+  for (const [f, src] of files) {
+    if (!/\bheld\(keys,|\bkeys\.has\(/.test(src)) continue;
+    (/const keys = new Set\(\)/.test(src) ? owners : borrowers).push([f, src]);
+  }
+  assert.ok(owners.length >= 2 && borrowers.length >= 1,
+    `the port has both kinds (${owners.length} owners, ${borrowers.length} borrowers)`);
+
+  for (const [f, src] of owners) {
     assert.match(src, /const mc = mouseCode\(e\.button\);\s*\n?\s*if \(mc\) keys\.add\(mc\);/s,
-      `${f} resolves held bindings, so a mouse press must reach its key set`);
+      `${f} DECLARES the Set, so a mouse press must reach it - Mouse2 is AutoRun and Mouse0 the drawn bow's un-draw at the shipped bindings`);
     assert.match(src, /const mc = mouseCode\(e\.button\);\s*\n?\s*if \(mc\) keys\.delete\(mc\);/s,
       `${f} must also let the button GO - a stuck Mouse2 is a stuck AutoRun`);
+    // ...and the write must be UNGATED, which is what makes a borrower
+    // safe: the lender records the press whatever mode is mounted.
+    const line = src.split('\n').find((l) => l.includes("addEventListener('mousedown'") && l.includes('keys.add(mc)'));
+    assert.ok(line, `${f}: the feed is on the mousedown listener`);
+    const gate = Math.min(...['modeNow()', 'overlayActive', 'walkMode'].map((g) => {
+      const at = line.indexOf(g);
+      return at < 0 ? Infinity : at;
+    }));
+    assert.ok(line.indexOf('keys.add(mc)') < gate,
+      `${f}: the press is recorded BEFORE any gate, or a borrower's interior would be starved`);
   }
-  assert.ok(readers.length >= 4, `at least the four hosts read held bindings (found ${readers.length})`);
-  assert.ok(readers.includes('src/scenes/worldModes.js'), 'the interior host is one of them - it is the one that was missed');
+  for (const [f, src] of borrowers) {
+    assert.ok(!/keys\.add\(mc\)/.test(src),
+      `${f} borrows its Set and must not write to it too - one feeder, or a release half-happens`);
+  }
+  assert.ok(borrowers.some(([f]) => f.endsWith('worldModes.js')),
+    'worldModes.js is the borrower MAC-K1 mistook for a gap');
 });
 
 test('MAC-K1: the crossed middle name is spelled ONCE, and the hosts read that table', () => {
@@ -193,4 +219,129 @@ test('MAC-K3: a frame while dismounted draws nothing, and cannot reach a canvas 
   });
   rig.frame(1 / 60);
   assert.equal(drew, 0, 'on foot, nothing is drawn');
+});
+
+// ═══ AUDIT-MACK F1: THE DOOR IS NOT THE KEY ═══════════════════════
+
+test('AUDIT-MACK F1: every ctx door routeAction dispatches is reachable BY ITS ACTION in every host that has it', () => {
+  // THE FINDING THIS FILE EXISTS FOR, on its second pass.
+  //
+  // MAC-K3 built the fixed-city host's whole mount surface and hung
+  // `openTransport: () => mountRig.open()` on its `hudCtx`. The pin
+  // above checked that the door was there. The door WAS there. The T
+  // key still did nothing - because `exterior.js` and `world.js` route
+  // their OWN keys and never call `routeKey`, which is the only thing
+  // that reaches `routeAction`'s table. Their hand-written ladders had
+  // arms for five of its ten actions.
+  //
+  // Nothing looked broken from the inside: `routeAction` answered, the
+  // large HUD's transport panel opened the picker, and the KEY was
+  // never wired at all. Mac reported the one he uses; `Status` (I),
+  // `UseMagicItem` (U) and the two mode cycles were the same bug
+  // unreported.
+  //
+  // A PIN ON THE DOOR IS NOT A PIN ON THE KEY - the third dress the
+  // F-SING lesson has worn this week. So this is DERIVED from
+  // `routeAction`'s own switch: nothing here is typed, and an action
+  // added to that table is covered the moment it lands.
+  const input = rd('src/ui/input.js');
+  const table = [...input.matchAll(/case '(\w+)': return ctx\.(\w+)/g)].map((m) => [m[1], m[2]]);
+  assert.ok(table.length >= 10, `routeAction dispatches ${table.length} actions - the table is really parsed`);
+  assert.ok(table.some(([a]) => a === 'Transport'), 'including the one Mac reported');
+
+  // THE INVARIANT, and it is the asymmetry the bug WAS: a host that
+  // routes the large HUD's panel clicks into a ctx must route its KEYS
+  // into that same ctx. The panel and the key are two ways to the same
+  // door, and `routeLargeHudClick` reaches `routeAction` directly
+  // (ui/hudLarge.js) while a hand-written key ladder reaches only what
+  // someone wrote down. That is how `openTransport` came to answer a
+  // click and ignore the T key.
+  //
+  // Stated this way it needs no list of hosts and no model of which
+  // file owns which ctx - a host either takes the whole table on both
+  // seams or it does not.
+  const clickers = [];
+  for (const h of [...HOSTS, 'dungeon']) {
+    const src = rd(`src/scenes/${h}.js`);
+    if (!/routeLargeHudClick\(/.test(src)) continue;
+    clickers.push(h);
+    assert.ok(/routeKey\(/.test(src) || /routeAction\(act, \w+\)/.test(src),
+      `${h}.js routes the large HUD's panels through routeAction but not its keys - `
+      + 'every door on that ctx would open by click and ignore its own key');
+  }
+  assert.deepEqual(clickers, ['exterior', 'world', 'worldModes', 'dungeon'],
+    'the four files that route the bar\u2019s panels - dungeonContext BUILDS the ctx that dungeon.js routes, on both seams');
+
+  // ...and the two that hand-write a ladder really end it on the
+  // table, which is what makes the assertion above true for them.
+  for (const h of ['exterior', 'world']) {
+    assert.match(rd(`src/scenes/${h}.js`), /if \(routeAction\(act, hudCtx\)\) \{ e\.preventDefault\(\); return; \}/,
+      `${h}.js: the tail of the ladder is the TABLE, not a list someone maintains`);
+  }
+});
+
+test('AUDIT-MACK F1b: the fall-through is DRIVEN, and it declines what is not there', () => {
+  // The arm itself, run: `routeAction` opens a door that exists,
+  // refuses one that does not, and never invents a third answer. That
+  // refusal is what lets the two outdoor hosts take the whole table
+  // without claiming doors they have not built.
+  const opened = [];
+  const ctx = { openTransport: () => opened.push('transport') };
+  assert.equal(routeAction('Transport', ctx), true, 'a door that exists is opened...');
+  assert.deepEqual(opened, ['transport']);
+  assert.equal(routeAction('UseMagicItem', ctx), false, '...and one that does not is DECLINED, not broken');
+  assert.equal(routeAction('NotAnAction', ctx), false);
+  assert.deepEqual(opened, ['transport'], 'and nothing else fired');
+
+  // ...and both outdoor hosts really end their ladder on it, INSIDE
+  // the overlay/mode gate - a fall-through outside it would open the
+  // picker through an open window.
+  for (const h of ['exterior', 'world']) {
+    const src = rd(`src/scenes/${h}.js`);
+    const at = src.indexOf('if (routeAction(act, hudCtx))');
+    assert.ok(at > 0, `${h}.js ends its ladder on the table`);
+    // INSIDE, checked by BRACE DEPTH rather than by "the gate text
+    // appears earlier in the file" - a mutant that moved the line one
+    // brace out survived exactly that weaker reading, because the gate
+    // is still earlier either way.
+    const gate = src.lastIndexOf("!townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior'", at);
+    assert.ok(gate > 0 && gate < at, `${h}.js: the gate opens before the fall-through`);
+    let depth = 0;
+    for (const ch of src.slice(gate, at)) {
+      if (ch === '{') depth++;
+      else if (ch === '}') depth--;
+    }
+    assert.ok(depth > 0,
+      `${h}.js: the fall-through must sit INSIDE the overlay/mode gate - outside it, the T key would open the picker through an open window`);
+  }
+});
+
+test('AUDIT-MACK F3: a rig a host builds unconditionally is never optional-chained', () => {
+  // MAC-K3 shipped `let mountRig = null` in world.js with
+  // `mountRig?.setMode(mode)`, `mountRig?.open()` and
+  // `mountRig?.frame(dt)` - three silent no-ops dressed as a guard
+  // against the build order. They guarded nothing: the rig is built
+  // unconditionally at the top level of the host function and every
+  // caller sits in a closure that cannot run before that body has.
+  //
+  // What the `?.` DID do was turn a broken build order into a player
+  // quietly staying on foot through a loaded save, the Test Room's
+  // ride and the ship's landing - instead of a throw at the line that
+  // broke. `scenes/exterior.js` already had the loud shape; two
+  // spellings of one seam is how two hosts drift.
+  // COMMENTS STRIPPED FIRST. The note above spells `mountRig?.setMode`
+  // to say what it replaced, and the first cut of this pin reddened on
+  // its own prose - the same trap AUDIT-EOTB's dead-export walk hit.
+  const strip = (t) => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  for (const h of ['exterior', 'world']) {
+    const raw = rd(`src/scenes/${h}.js`);
+    if (!raw.includes('createMountRig(')) continue;
+    const src = strip(raw);
+    assert.match(src, /const mountRig = createMountRig\(\{/,
+      `${h}.js: the rig is a const, bound at its build`);
+    assert.ok(!/mountRig\?\./.test(src),
+      `${h}.js: no call on the rig may be optional-chained - a silent no-op here is a player left on foot`);
+    assert.ok(/mountRig\.setMode\(|mountRig\.open\(|mountRig\.frame\(/.test(src),
+      `${h}.js really calls it, so the assertion above is not vacuous`);
+  }
 });

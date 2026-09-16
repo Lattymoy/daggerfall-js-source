@@ -79,6 +79,6 @@ test('TR5/MAC-K3: ONE place changes the mode - and it is ONE PLACE ACROSS THE PO
     'one motor call, in one module - not a copy per host');
 
   // and every host that changes the mode goes through the rig
-  assert.match(read('src/scenes/world.js'), /const setTransportModeHere = \(mode\) => mountRig\?\.setMode\(mode\);/);
+  assert.match(read('src/scenes/world.js'), /const setTransportModeHere = \(mode\) => mountRig\.setMode\(mode\);/);
   assert.match(read('src/scenes/world.js'), /setTransportMode: \(mode\) => setTransportModeHere\(mode\),/, 'and the interior hosts');
 });

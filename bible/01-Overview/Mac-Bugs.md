@@ -8,27 +8,32 @@ Three lines, verbatim:
 > 2. Logbook not reflecting quests
 > 3. T to mount not working outside interiors
 
-All three are fixed. **Two of them are the same defect wearing different
-clothes**, and it is the one THE FOUR HOSTS rule exists to prevent: a
-seam wired into three hosts and missing from the fourth, with a pin
-aimed at one host's source text standing guard over it. A pin like that
-cannot see the host that is missing.
+All three are fixed. **AUDIT-MACK, the same day, found that the first
+attempt had not fixed one of them and had invented another**: the T key
+was still dead after MAC-K3, and MAC-K1's first cause was a
+misdiagnosis. Both are below, under their own findings, and the whole
+page is written after that audit rather than before it.
 
 ## K1 - the mouse
 
-Two causes, both of them real.
+**One cause, not the two MAC-K claimed.**
 
-**The interior host never fed the buttons into its held-key set.**
-AUDIT 39r found this exact bug and fixed three quarters of it: it put
-`mouseCode(e.button)` into `keys` in `scenes/world.js`,
-`scenes/exterior.js` and `scenes/dungeon.js`, and left
-`scenes/worldModes.js` alone. That host calls `held(keys, 'AutoRun')`
-every frame and `held(keys, 'ActivateCenterObject')` for the drawn
-bow's un-draw, and **Mouse2 and Mouse0 are what those two are bound to
-by default** - so both were dead in every interior in the game for the
-whole arc.
+The first claim was that the interior host never fed the buttons into
+its held-key set - that AUDIT 39r had fixed `world.js`, `exterior.js`
+and `dungeon.js` and left `worldModes.js` starved, so every mouse-bound
+action was dead indoors. **AUDIT-MACK F2 found that false.**
+`worldModes.js` does not OWN a held-key Set: it takes `keys` off the
+host bag (`exterior.js:3086` and world.js's twin), and the lender's own
+mousedown writes `keys.add(mouseCode(e.button))` **before any mode
+gate**, on a listener that is never removed. The codes were always
+there. AUDIT 39r was complete; MAC-K1 read its wording as a gap and
+added a second writer to a Set that already had one - idempotent,
+harmless, and a second law for one fact. It has been removed, and the
+pin that stood for it is the real invariant now: one feeder per Set,
+every reader on a fed one.
 
-**Neither controls skin could capture a mouse button at all.** DFU's
+**What was actually broken: neither controls skin could capture a mouse
+button at all.** DFU's
 `WaitForKeyPress` is `Input.GetKeyDown` walked over every `KeyCode`,
 and `Mouse0`/`Mouse1`/`Mouse2` are KeyCodes like any other - which is
 how three of its own shipped defaults come to be mouse buttons. The
@@ -85,8 +90,24 @@ bag that none of the three had counted.
 `ctx.openTransport`. Three hosts answered: `worldModes.js` and
 `dungeonContext.js` with the indoor refusal line, `world.js` with the
 real picker. `exterior.js` - the **fixed-city host, the one a player
-walking round a town is in** - answered nothing, so the key did
-nothing at all.
+walking round a town is in** - answered nothing.
+
+**AND THAT WAS NOT THE WHOLE BUG.** MAC-K3 hung `openTransport` on that
+host's `hudCtx`, pinned that the door was there, and shipped. The door
+WAS there and the T key still did nothing, because `routeAction` - the
+only thing that dispatches `Transport` onto that door - is reached
+through `routeKey`, and **neither outdoor host calls it.** Both route
+their own keys through hand-written ladders, and those ladders carried
+arms for five of `routeAction`'s ten actions. `Transport`, `Status`,
+`UseMagicItem` and the two mode cycles had none, in either host, ever.
+
+Nothing looked broken from the inside: the door answered when called,
+and the large HUD's transport panel - which reaches `routeAction`
+directly - opened the picker. Only the KEY was missing. AUDIT-MACK F1
+found it, and the tail of each ladder is the TABLE now rather than a
+list someone maintains: any action the arms above did not claim goes to
+`routeAction` with that host's own ctx, exactly as `routeKey` would.
+**A pin on the door is not a pin on the key.**
 
 And it was not a missing one-liner. That host had **no transport
 surface whatever**: it read `player.transportMode` (the activation
@@ -125,3 +146,46 @@ one named a class of weak assertion:
 Both are the same lesson this port keeps relearning under different
 names: **a pin on the unit is not a pin on the wiring**, and a pin on
 one host is not a pin on the rule.
+
+## AUDIT-MACK - the audit of the fix
+
+Mac asked for one the same day. Three findings, all of them against
+MAC-K itself.
+
+**F1 - the reported bug was not fixed.** MAC-K3 built the fixed-city
+host's mount surface and hung `openTransport` on its ctx. The T key
+still did nothing, because neither outdoor host calls `routeKey` and
+their hand-written ladders never carried a `Transport` arm. Four other
+actions were in the same hole. The tail of both ladders is
+`routeAction` now, and the gate is the **click/key asymmetry**: a host
+that routes the large HUD's panels through `routeAction` must route its
+keys through it too. Stated that way it needs no list of hosts and no
+model of which file owns which ctx.
+
+**F2 - one of the two causes claimed for K1 was not real.** Written up
+in the K1 section above. The correction matters more than the code
+change: the fix was a no-op either way, but the record said something
+false about AUDIT 39r and about what a player was experiencing.
+
+**F3 - a silent no-op, introduced by the fix.** MAC-K3 shipped `let
+mountRig = null` in `world.js` with `mountRig?.setMode(mode)`. The
+`?.` read like a guard against the build order and guarded nothing -
+the rig is built unconditionally at the top level of the same function
+and every caller is in a closure that cannot run first. What it did do
+was turn a broken build order into a player quietly staying on foot
+through a loaded save, the Test Room's ride and the ship's landing.
+`exterior.js` already had the loud shape; two hosts with two spellings
+of one seam is how they drift.
+
+**Campaign:** 24 + 30 mutants, all killed. Two of the second batch
+taught the pins something again - a pin can redden on its own prose (a
+comment naming the thing it replaced), and a regex anchor can be
+unpinned because every case in the fixture happens to satisfy it
+anyway.
+
+**And the lesson under F1 is the one worth keeping.** MAC-K was itself
+written to fix a class of bug - a seam wired in three hosts and missing
+from the fourth - and it made a fresh instance of the same class while
+doing so, one layer up. The door is not the key; the key is not the
+route; the route is not the host. Each of those is a place a pin can
+stop short of a player.

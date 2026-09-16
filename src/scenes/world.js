@@ -285,7 +285,7 @@ import { CameraRecoiler } from '../player/cameraRecoiler.js';   // AUDIT 28 W9: 
 import { HeadBobber } from '../player/headBobber.js';   // AUDIT 28 W10: HeadBobbing
 import { lastHealthLost, lastHealthLostPercent } from '../ui/hudVitals.js';   // AUDIT 28 W9: the detector's loss
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
-import { actionOf, held, moveHeld, anyMove, swallowBrowserKey, mouseCode, isSwingButton, keyboardLook, isTextEntryTarget, bindings } from '../ui/input.js';
+import { actionOf, held, moveHeld, anyMove, swallowBrowserKey, mouseCode, isSwingButton, keyboardLook, isTextEntryTarget, bindings, routeAction } from '../ui/input.js';
 import { actionForCode } from '../systems/inputActions.js';   // FIX-E: the overlay's QuickLoad read, off the code alone   // I2: the rebindable registry; AUDIT 39r: the mouse half of the held set
 import { hudShortcutKey } from '../ui/hudShortcuts.js';   // AUDIT 64 F36/F37: DaggerfallHUD.Update's LargeHUDToggle / HUDToggle arms
 import { createActivateGate, activateFrame, setClickDelay } from '../systems/activateGate.js';   // A8: PlayerActivate's ActivateCenterObject frame
@@ -1641,8 +1641,20 @@ export async function bootWorld(canvas, renderer, params, status) {
   // art, the animator, the audio, the picker and the sprite. It moved
   // because `scenes/exterior.js` had NONE of it and the T key there did
   // nothing at all; copying it would have been two laws.
-  let mountRig = null;   // built below, once townTalk exists to hold its window
-  const setTransportModeHere = (mode) => mountRig?.setMode(mode);
+  // AUDIT-MACK F3: `let mountRig = null` with `mountRig?.setMode(...)`
+  // here, which is what MAC-K3 shipped, made a SILENT no-op out of
+  // every mode change the rig could not answer - a loaded save on
+  // horseback, the Test Room's ride, the ship's landing. The `?.` read
+  // like a guard against the build order and guarded nothing: the rig
+  // is built unconditionally at the top level of this same function,
+  // and every caller is inside a closure that cannot run before the
+  // body has. So it is a `const` (declared below, at the build) and
+  // the call is direct - if the order is ever broken it throws where
+  // it broke, instead of quietly leaving the player on foot.
+  //
+  // `scenes/exterior.js` already had this shape; two hosts, two
+  // spellings of one seam is how they drift.
+  const setTransportModeHere = (mode) => mountRig.setMode(mode);
   let rightHeld = false;   // AUDIT 28 F-C2: HasAction(SwingWeapon) - the raw button, ungated
   // TI1: the touch layer's state. swipeHeld is the swipe's SwingWeapon
   // truth beside rightHeld (the settle law reads both); a tap arms a
@@ -1908,7 +1920,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // picker. `onShip` is THIS host's - the ship is a teleport across a
   // streaming world and a fixed city has nowhere to sail to, so that
   // host passes null and the picker's Ship row goes dark.
-  mountRig = createMountRig({
+  const mountRig = createMountRig({
     renderer, canvas, fetchBytes, palette, audio,
     player, playerEntity,
     showOverlay: (w) => townTalk.showOverlay(w),
@@ -4939,7 +4951,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // picker opens.
     // MAC-K3: the picker is the mount rig's - see player/mountRig.js
     // for the grounded/airborne law and the ship row's own gate.
-    openTransport: () => mountRig?.open(),
+    openTransport: () => mountRig.open(),
     openUseMagicItem: () => {
       const win = createUseMagicItemWindow({
         items: playerEntity.items ?? [],
@@ -5140,6 +5152,15 @@ export async function bootWorld(canvas, renderer, params, status) {
       // I2: through the registry, so M is rebindable like every other
       // action rather than a second hardcoded literal.
       if (act === 'AutoMap') { hudCtx.toggleAutomap(); return; }
+      // AUDIT-MACK F1: THE FALL-THROUGH - see the long note at the
+      // same place in `scenes/exterior.js`. `ui/input.js`'s
+      // `routeAction` dispatches ten actions onto ctx doors; this
+      // ladder had arms for five of them, and `Transport`, `Status`,
+      // `UseMagicItem` and the two mode cycles were reachable only by
+      // CLICKING the large HUD panel. Mac reported the one he uses.
+      // The tail is the table now, so a door on `hudCtx` is reachable
+      // by its own action the moment it exists.
+      if (routeAction(act, hudCtx)) { e.preventDefault(); return; }
       // I3: Escape with no overlay opens the pause screen; it closes
       // itself on the same key. U51: WHICH screen is ui/pauseDoor.js's
       // decision - the classic OPTN00I0 panel, or the enhanced menu in
@@ -5490,7 +5511,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7273-7285 -
+  // worldModes answers it in BOTH modes (worldModes.js:7276-7288 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -8887,7 +8908,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // call into `player/mountRig.js` - the same rig the fixed-city
         // host now mounts, so the mount cannot behave differently in a
         // town than it does on the road.
-        mountRig?.frame(dt);
+        mountRig.frame(dt);
       }
       drawPeerNames(proj, view, mwv.eye);   // ONLINE1: the names over the heads
       drawHud(renderer, canvas, hudArt, playerEntity,
