@@ -34,7 +34,7 @@ import { readFileSync } from 'node:fs';
 import {
   CHAT_MAX, CHAT_HZ_MAX, CHAT_STRIKES_MAX, CHAT_SOCKETS_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, CHAT_WORLD_ROOM, CHAT_ROOMS,
   SOCKETS_MAX, HELLO_HZ_MAX, DROP_STRIKES_MAX, PIXEL_UNITS,
-  sanitizeChat, isChatRoom, parseClient, chatGate,
+  sanitizeChat, isChatRoom, parseClient, chatGate, chatInGate,
 } from '../src/net/wire.js';
 import * as relay from '../server/src/relay.js';
 import { fakeRoom } from './fakeRoom.mjs';
@@ -761,4 +761,80 @@ test('SRV-N: the panel draws a notice UNATTRIBUTED - no name and no #tag, its ow
   assert.equal(one(listRows.at(-1), 'dfchat-text').textContent, 'The server was updated and restarted.');
   assert.ok(one(listRows.at(-1), 'dfchat-time'), 'and it is still stamped like any other line');
   panel.destroy?.();
+});
+
+// ── CHAT-G: THE THIRD SIDE ───────────────────────────────────────────
+
+test('CHAT-G: chat lines COMING IN are counted - at the relay\'s own per-room spend, so an honest room at full tilt passes whole and a flood is bounded, per ROOM so a loud neighbour cannot silence the room you stand in, refilling, dropped lines counted, and said on the console ONCE', () => {
+  // THE RATE IS DERIVED. CHAT_ROOM_HZ_MAX is what the relay spends on one
+  // room, so this is not a number somebody chose - it is the honest
+  // ceiling restated at the other end, and the two cannot drift because
+  // they are the same constant through the same function object.
+  assert.equal(relay.chatInGate, chatInGate, 'the same function at both ends');
+  assert.notEqual(chatInGate, chatGate, 'and NOT the sender\'s gate: gating arrivals at CHAT_HZ_MAX would drop real lines the moment two people talked at once - a hardening that is a chat bug');
+
+  const { FakeWS, sockets } = fakeSocketClass();
+  let clock = 1_000_000;
+  const heard = [];
+  const s = new OnlineSession({ url: 'wss://relay.test', id: 'mac-0001', secret: 'secret-of-mac-0001', presence: false, WebSocketImpl: FakeWS, now: () => clock });
+  s.onChat = (line) => heard.push(line.text);
+  s.join(CHAT_WORLD_ROOM);
+  sockets[0].open();
+  const say = (n, room) => {
+    for (let i = 0; i < n; i++) {
+      const frame = JSON.stringify({ t: 'chat', id: 'bob-0001', name: 'Bob', text: 'line ' + i, at: clock });
+      if (room) s._receive(frame, room); else sockets[0].receive(JSON.parse(frame));
+    }
+  };
+
+  // AN HONEST ROOM AT FULL TILT PASSES WHOLE. This half matters as much
+  // as the flood half: the gate must not cost a busy room its chat.
+  say(CHAT_ROOM_HZ_MAX);
+  assert.equal(heard.length, CHAT_ROOM_HZ_MAX, 'every line an honest relay could have sent in that second landed');
+  assert.equal(s.stats.chatsDropped, 0);
+
+  // ...and the first one past it is a line no honest relay would send.
+  say(1);
+  assert.equal(heard.length, CHAT_ROOM_HZ_MAX, 'one more in the same second does not');
+  assert.equal(s.stats.chatsDropped, 1, 'dropped AND counted - a silent drop is a bug report nobody can write');
+
+  // THE FLOOD, driven: net/chat.js keeps CHAT_KEEP lines, so an ungated
+  // stream is a player's history deleted and refilled with the relay's
+  // choice of text. This is the reason the gate exists.
+  say(5000);
+  assert.equal(heard.length, CHAT_ROOM_HZ_MAX, 'five thousand more change nothing');
+  assert.equal(s.stats.chatsDropped, 5001);
+
+  // PER ROOM, because that is the unit the relay spends by. A session
+  // listens to its own room and a halo of cells and is owed
+  // CHAT_ROOM_HZ_MAX from EACH; one bucket across all of them would let a
+  // loud neighbouring cell silence the room the player is standing in.
+  say(CHAT_ROOM_HZ_MAX, 'world:9,9');
+  assert.equal(heard.length, CHAT_ROOM_HZ_MAX * 2, 'the halo room has its own bucket and its own full tilt');
+
+  // IT REFILLS - a drop is a moment, not a sentence.
+  clock += 1000;
+  say(CHAT_ROOM_HZ_MAX);
+  assert.equal(heard.length, CHAT_ROOM_HZ_MAX * 3, 'a second later the room is whole again');
+
+  // and a room LET GO takes its bucket with it, or a session accumulates
+  // one per cell it ever walked through.
+  s._forgetRoom('world:9,9');
+  assert.equal(s._inChat.has('world:9,9'), false);
+});
+
+test('CHAT-G: the console says it ONCE - a flood must not become its own flood', () => {
+  const { FakeWS, sockets } = fakeSocketClass();
+  const said = [];
+  const warn = console.warn;
+  console.warn = (...a) => said.push(String(a[0]));
+  try {
+    const s = new OnlineSession({ url: 'wss://relay.test', id: 'mac-0001', secret: 'secret-of-mac-0001', presence: false, WebSocketImpl: FakeWS, now: () => 1_000_000 });
+    s.onChat = () => {};
+    s.join(CHAT_WORLD_ROOM);
+    sockets[0].open();
+    for (let i = 0; i < 500; i++) sockets[0].receive({ t: 'chat', id: 'bob-0001', name: 'Bob', text: 'x' + i, at: 1_000_000 });
+    assert.equal(said.length, 1, 'one line on the console, however many frames were refused');
+    assert.match(said[0], /faster than 20\/s/);
+  } finally { console.warn = warn; }
 });

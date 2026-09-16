@@ -268,15 +268,46 @@ All 14 killed on the second pass. **The lesson is the third one: a guard
 I added in this very audit was, for an hour, exactly the kind of
 unfalsifiable line the audit existed to find.**
 
-## Flagged, not fixed
+## CHAT-G — the third side, flagged and then asked for
 
-`online.js`'s inbound `chat` arm has **no rate gate**. The relay gates
-what it *accepts* (`chatGate`, `CHAT_HZ_MAX`), and the client gates what
-it *sends*, but a relay can push unlimited `{t:'chat'}` frames at a
-client and nothing counts them. That is older than this slice and wider
-than it, so it is not fixed here — widening a notice PR into a wire
-hardening PR is the author's call, not mine. It is the natural companion
-to F2.
+The audit flagged this rather than fixing it, and Mac said do it.
+
+A chat line passes **three** gates and had only ever had two:
+
+| side | gate |
+|---|---|
+| the client **sends** | `chatGate`, `CHAT_HZ_MAX` = 2/s (AUDIT CHAT A8 — a line the relay would drop is never sent) |
+| the relay **accepts** | the same gate per socket, plus `CHAT_ROOM_HZ_MAX` = 20/s for the whole room |
+| the client **receives** | *nothing* |
+
+`online.js`'s chat arm sanitized the text, checked the id was a string,
+and delivered — however many arrived. "The relay already gated this" is
+a sentence about an **honest** relay, and the relay is the player's
+choice. `net/chat.js` keeps `CHAT_KEEP` = 200 lines, so a few thousand
+frames is a player's chat history deleted and refilled with whatever the
+relay wanted there instead. Driven: 5000 frames on one socket, 5000
+lines in the log, history gone.
+
+**The rate is derived, not invented,** and that is the whole design.
+`CHAT_ROOM_HZ_MAX` is exactly what an honest relay spends on one room,
+so the gate admits an honest room at **full tilt** and the first frame it
+refuses is one no honest relay would have sent. Gating arrivals at the
+*sender's* `CHAT_HZ_MAX` instead would have dropped real lines the moment
+two people talked at once — a hardening that is a chat bug, and the pin
+says so in as many words.
+
+**Per room**, because that is the unit the relay spends by: a session
+listens to its own room and a halo of cells and is owed
+`CHAT_ROOM_HZ_MAX` from each, so one bucket across all of them would let
+a loud neighbouring cell silence the room the player is standing in. A
+room let go drops its bucket with the rest of what that room meant.
+
+A refused line is **counted** (`stats.chatsDropped`) and said on the
+console **once** — a silent drop is a bug report nobody can write, and a
+line per refused frame is the flood wearing a second hat.
+
+After it: 5000 frames, **20 land**, 4980 counted, and the bucket refills
+a second later. **8 mutants, 8 killed.**
 
 ## Not seen on a GPU
 
