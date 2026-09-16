@@ -72,7 +72,7 @@
 import { tabStorage } from '../systems/appStorage.js';   // the tab's own storage - the seam, never the browser's own (a PIN)
 import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the port's one angle wrap, which cannot loop
 
-import { poseChanged, SOCKETS_MAX, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, sanitizeChat, chatGate, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS, HEARTBEAT_MS, relayVersionOf, chatInGate, CHAT_ROOM_HZ_MAX } from './wire.js';
+import { poseChanged, SOCKETS_MAX, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, sanitizeChat, chatGate, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS, HEARTBEAT_MS, relayVersionOf, chatInGate, CHAT_ROOM_HZ_MAX, socialGate, partyGate, validPartyPose, validSocialFrame, validPartyFrame, PARTY_SEND_MS, SOCIAL_ACTS } from './wire.js';   // SOC2: the hub's law, at home
 
 export { WORLD_CELL, RANGE_PIXELS, worldRoom };
 
@@ -189,7 +189,7 @@ export function lerpPose(from, to, t) {
 const groundDist = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
 
 /** A token minted once and kept in storage under `key`, or fresh when storage will not keep it. */
-function keptToken(storage, key, re, mint) {
+export function keptToken(storage, key, re, mint) {   // SOC2: exported for the ACCOUNT's pair (net/social.js accountId) - the same keeping, another storage
   try {
     const have = storage?.getItem?.(key);
     if (have && re.test(have)) return have;
@@ -208,6 +208,7 @@ export const peerId = (storage = tabStorage()) => keptToken(storage, 'dagger.onl
 /** The id's secret (AUDIT ONLINE A3): minted beside it, kept beside it, sent only in the hello. */
 export const peerSecret = (storage = tabStorage()) => keptToken(storage, 'dagger.online.secret', /^[A-Za-z0-9_-]{8,64}$/,
   () => Array.from({ length: 4 }, () => Math.random().toString(36).slice(2, 10)).join(''));
+
 
 /**
  * One player's connection to the relay: one room at a time, the
@@ -228,9 +229,20 @@ export const THREW_KINDS_MAX = 32;
 const monoNow = () => (typeof performance !== 'undefined' && typeof performance.now === 'function' ? performance.now() : Date.now());
 
 export class OnlineSession {
-  constructor({ url = DEFAULT_SERVER, name = 'Traveller', look = null, id = null, secret = null, presence = true, WebSocketImpl = globalThis.WebSocket, now = () => Date.now(), rand = Math.random } = {}) {
+  constructor({ url = DEFAULT_SERVER, name = 'Traveller', look = null, id = null, secret = null, presence = true, acct = null, asecret = null, WebSocketImpl = globalThis.WebSocket, now = () => Date.now(), rand = Math.random } = {}) {
     this.url = relayUrl(url || DEFAULT_SERVER);   // wss:// anywhere, ws:// on localhost alone; anything else is no relay (A16/E11)
     this.secret = secret ?? peerSecret();
+    // SOC2: the ACCOUNT rides the hello only when the caller hands both halves in - the hub link's alone (world.js
+    // chatStart); a presence session names none, and a session made without them is a build before this slice to
+    // the hub. NOT defaulted from storage the way the peer's pair is: a presence room must never be told an account.
+    this.acct = acct && asecret ? acct : null;
+    this.asecret = acct && asecret ? asecret : null;
+    this.onSocial = null;         // SOC2: (frame) => void - a hub frame in, through the wire's door (validSocialFrame): state, presence, party, invite, note, error
+    this.onParty = null;          // SOC2: (acct, p) => void - a party member's pose in (never my own account's back)
+    this._sbucket = null;         // SOC2: the social acts' own gate at home (SOCIAL_HZ_MAX - an act the hub would drop is never sent)
+    this._pbucket = null;         // SOC2: the party poses' own gate at home (PARTY_HZ_MAX)
+    this._lastParty = null;       // SOC2: the last party pose that LEFT, and when - an unchanged one is not re-sent, and a socket that reopens re-sends the first (the hub's attachment is fresh)
+    this._lastPartyAt = -Infinity;
     this.name = name;
     this.presence = !!presence;   // false: a channel's session (CHAT1) - no pose out, a ping for a heartbeat
     this.onChat = null;           // (line) => void: a chat line in - {id, name, text, at, mine}
@@ -286,6 +298,7 @@ export class OnlineSession {
     this._retryAt = null;
     this._closedByUs = false;
     this.stats = { sent: 0, poses: 0, received: 0, reconnects: 0, chats: 0, worlds: 0, foes: 0, hits: 0, acts: 0, threw: 0, chatsDropped: 0 };
+    this.stats.socials = 0; this.stats.parties = 0;   // SOC2: the acts that left, the party poses that left (on their own line: AUDIT WORLD D12 pins the line above as it stands)
     /** ONCRASH1: what the last contained handler threw, for a person - `{ kind, text, at }` or null. */
     this.threw = null;
     this._threwKinds = new Set();   // said in full once a kind; the rest are counted
@@ -598,16 +611,26 @@ export class OnlineSession {
     this._bind(ws);
   }
 
+  /** The hello as the wire has it - the account beside the peer when this session holds one (SOC2: the hub link's;
+   *  a session without it sends the hello every build before SOC1 sent, key for key). */
+  _helloFrame() {
+    const frame = { t: 'hello', id: this.id, secret: this.secret, name: this.name, look: this.look, pose: this.presence ? this._pose : null };
+    if (this.acct && this.asecret) { frame.acct = this.acct; frame.asecret = this.asecret; }
+    return frame;
+  }
+
   /** The one handler set for a socket, the primary's or a halo's - the role is read at event time (_roomOf). */
   _bind(ws) {
     ws.onopen = () => {
       const room = this._roomOf(ws);
       if (room == null) return;
-      const hello = JSON.stringify({ t: 'hello', id: this.id, secret: this.secret, name: this.name, look: this.look, pose: this.presence ? this._pose : null });
+      const frame = this._helloFrame();
+      const hello = JSON.stringify(frame);
       if (room === this.room) {
         this.status = 'open'; this.error = null;   // SLAM12: `_backoff` is reset by the WELCOME (`_receive`), not here - see there
         this._lastSent = null; this._lastSentAt = -Infinity;
-        this._send({ t: 'hello', id: this.id, secret: this.secret, name: this.name, look: this.look, pose: this.presence ? this._pose : null });
+        this._lastParty = null; this._lastPartyAt = -Infinity;   // SOC2: a fresh socket is a fresh attachment at the hub - the next party pose goes whole
+        this._send(frame);
         if (!this.presence) this._lastSentAt = this._now();   // the heartbeat clock starts at the hello
       } else {
         const h = this._halo.get(room);
@@ -725,6 +748,41 @@ export class OnlineSession {
     if (!this._send({ t: 'chat', text: line })) return false;
     this._cbucket = gate.bucket;   // the token is spent only on a line that left
     this.stats.chats++;
+    return true;
+  }
+
+  /** SOC2: a social act out - to the hub, from a session that holds an account: `{k, acct?|peer?|party?}` as
+   *  net/wire.js SOCIAL_ACTS has it, gated here as the hub gates it (SOCIAL_HZ_MAX - an act the hub would drop without
+   *  a word is refused here with a false, and the panel keeps its button lit); false when nothing went. */
+  sendSocial(act) {
+    if (!this.acct || !act || typeof act !== 'object' || !Object.prototype.hasOwnProperty.call(SOCIAL_ACTS, act.k)) return false;
+    const gate = socialGate(this._sbucket, this._now());
+    if (!gate.pass) return false;
+    const frame = { t: 'social', k: act.k };
+    for (const f of ['acct', 'peer', 'party']) if (typeof act[f] === 'string') frame[f] = act[f];
+    if (!this._send(frame)) return false;
+    this._sbucket = gate.bucket;   // the token is spent only on an act that left
+    this.stats.socials++;
+    return true;
+  }
+
+  /** SOC2: my party pose out - projected by the wire's own law first (what the hub would refuse is never sent), no
+   *  sooner than PARTY_SEND_MS after the last, and only when it CHANGED (a member standing still with steady vitals
+   *  costs the hub nothing; the hub keeps the last on the attachment, and a reopened socket sends the first one whole
+   *  because `_helloFrame`'s door forgets the last). `force` sends an unchanged one - the caller's own heartbeat, if it
+   *  wants one. False when nothing went. */
+  sendParty(p, { force = false } = {}) {
+    if (!this.acct) return false;
+    const pose = validPartyPose(p);
+    if (!pose) return false;
+    const now = this._now();
+    if (now - this._lastPartyAt < PARTY_SEND_MS) return false;
+    const s = JSON.stringify(pose);
+    if (!force && this._lastParty === s) return false;
+    const gate = partyGate(this._pbucket, now);
+    if (!gate.pass) return false;
+    if (!this._send({ t: 'party', p: pose })) return false;
+    this._pbucket = gate.bucket; this._lastParty = s; this._lastPartyAt = now; this.stats.parties++;
     return true;
   }
 
@@ -938,6 +996,16 @@ export class OnlineSession {
         return;
       }
       this._deliver('chat', () => this.onChat?.({ id: m.id, name: sanitizeName(m.name), text, at: Number.isFinite(m.at) ? m.at : now, mine: m.id === this.id }));
+    } else if (m.t === 'social') {
+      // SOC2: the hub's word on my friends and my party - through the wire's door (validSocialFrame: CHAT-G's law, the
+      // relay is the player's choice and a frame it shapes is dropped whole), delivered contained like every handler
+      const f = validSocialFrame(m);
+      if (f) this._deliver('social', () => this.onSocial?.(f));
+    } else if (m.t === 'party') {
+      // SOC2: a party member's pose - never my own account's back (a second tab of mine is not a member to draw; the
+      // hub fans to the other members' sockets, and this is the belt for a relay that does not)
+      const f = validPartyFrame(m);
+      if (f && f.acct !== this.acct) this._deliver('party', () => this.onParty?.(f.acct, f.p));
     } else if (m.t === 'error') {
       this.status = 'error'; this.error = String(m.m ?? 'relay error');
     }

@@ -124,7 +124,17 @@ test('HT1: the Mods pane entry is the shipped modsettings.json - every key, its 
   // in DFU's defaults and in the mod's other two keys. The class is
   // pinned below ("no vendored mod ships a key the port has already
   // spent") so the next mod folded in cannot repeat it quietly.
-  const PORT_DEFAULT = Object.freeze({ 'Modules.Sprite': true, 'Handling.ManualDropInput': 'G' });
+  //
+  // SOC5 (2026-09-16, Mac: "Players should be able to interact with others
+  // in the world upon encountering them by pressing F on their body"): the
+  // THIRD one, and the same class as HT4 exactly one key over. The mod ships
+  // F for the ignite/douse toggle and DFU leaves F free; SOC5 spends it on
+  // the port's own SocialInteract, so the shipped default would light a
+  // torch on the same press that opens the F-menu on a player - and online
+  // forces every vendored mod on, so it would do it for everyone by
+  // default. O is free in DFU's defaults, in this mod's other two keys and
+  // in every other vendored mod. The class pin below is what caught it.
+  const PORT_DEFAULT = Object.freeze({ 'Modules.Sprite': true, 'Handling.ManualDropInput': 'G', 'Handling.ToggleLightInput': 'O' });
   let n = 0;
   const kinds = new Set();
   for (const section of shipped.Sections) {
@@ -174,7 +184,7 @@ test('HT1: the Mods pane entry is the shipped modsettings.json - every key, its 
   setModSetting(V, 'Handling.ToggleLightInput', ' Q ');
   assert.equal(modSettingsOf(V)['Handling.ToggleLightInput'], 'Q');
   setModSetting(V, 'Handling.ToggleLightInput', '   ');
-  assert.equal(modSettingsOf(V)['Handling.ToggleLightInput'], 'F', 'an empty name reads as the default');
+  assert.equal(modSettingsOf(V)['Handling.ToggleLightInput'], 'O', 'an empty name reads as the default');   // SOC5: the default is O - the port spends F on SocialInteract now
   setModSetting(V, 'Throwing.Magnitude', [3.7, 9]);
   assert.deepEqual([...modSettingsOf(V)['Throwing.Magnitude']], [3, 9]);
   setModSetting(V, 'Throwing.Magnitude', [1, 2, 3]);
@@ -210,7 +220,7 @@ test('HT1: LoadSettings - the fields carry the mod\'s own multipliers (Speed x20
   _resetModSettings();
   const s = readTorchSettings();
   assert.equal(s.enabled, true);
-  assert.deepEqual([s.toggleKey, s.dropKey, s.throwKey], ['KeyF', 'KeyG', 'KeyX'], 'the three bindings, parsed (HT4: the drop key is G - the mod ships Tab, which the port spends on the pixel dial)');
+  assert.deepEqual([s.toggleKey, s.dropKey, s.throwKey], ['KeyO', 'KeyG', 'KeyX'], 'the three bindings, parsed (HT4: the drop key is G - the mod ships Tab, which the port spends on the pixel dial; SOC5: the toggle is O - the mod ships F, which the port now spends on SocialInteract)');
   assert.equal(s.onStow, ON_STOW.Drop); assert.equal(s.onPick, ON_PICK.Equip); assert.equal(s.lastLight, true);
   assert.deepEqual([s.stowOnSpellcasting, s.stowOnClimbing, s.stowOnSwimming, s.twoHandedRelaxed, s.lanternRelaxed], [true, true, true, true, false]);
   assert.deepEqual([s.throwStrength, s.throwAngle, s.throwSpread, s.throwGravity, s.throwBounce, s.throwScale, s.throwDrawTrajectory], [1, 15, 1, 1, 0.5, 1, true]);
@@ -349,28 +359,28 @@ test('HT1: the hand law each frame - no free hand stows a lit torch (Unequip rem
 test('HT1: the ignite / douse key - the ladder lantern, torch, candle, holy candle; the ignite clip at half volume and the douse clip; RememberLastLightSource re-lights the kind last doused; nothing to light says so; no free hand refuses (a relaxed lantern excepted)', () => {
   const r = rig();
   r.entity.items = [holy(), candle(), torch(), lantern()];
-  r.tap('KeyF');
+  r.tap('KeyO');
   assert.equal(r.entity.lightSource?.templateIndex, T.Lantern, 'a lantern first'); assert.deepEqual(r.said, ['You ignite the new lantern']);
   assert.deepEqual(r.shots, [[CLIPS.ignite, 0.5, 1]], 'PlayOneShot(16, 0, 0.5)');
-  r.tap('KeyF');
+  r.tap('KeyO');
   assert.equal(r.entity.lightSource, null); assert.equal(r.said[1], 'You douse the new lantern'); assert.deepEqual(r.shots[1], [CLIPS.douse, 1, 1]);
-  r.press('KeyF'); r.frame(); r.frame(); assert.equal(r.said.length, 3, 'GetKeyDown: one edge, however long the key is held'); r.release('KeyF');
+  r.press('KeyO'); r.frame(); r.frame(); assert.equal(r.said.length, 3, 'GetKeyDown: one edge, however long the key is held'); r.release('KeyO');
   r.entity.lightSource = null; r.said.length = 0;
   // the memory: the torch lit by the key, doused, and a lantern added - the key picks the torch again
   const m = rig();
-  m.entity.items = [torch()]; m.tap('KeyF'); assert.equal(m.entity.lightSource?.templateIndex, T.Torch);
-  m.tap('KeyF'); assert.equal(m.entity.lightSource, null);
-  m.entity.items.push(lantern()); m.tap('KeyF'); assert.equal(m.entity.lightSource?.templateIndex, T.Torch, 'the kind last doused, over the ladder');
-  m.tap('KeyF'); m.store['Handling.RememberLastLightSource'] = false; m.tap('KeyF'); assert.equal(m.entity.lightSource?.templateIndex, T.Lantern, 'the switch off: the ladder');
+  m.entity.items = [torch()]; m.tap('KeyO'); assert.equal(m.entity.lightSource?.templateIndex, T.Torch);
+  m.tap('KeyO'); assert.equal(m.entity.lightSource, null);
+  m.entity.items.push(lantern()); m.tap('KeyO'); assert.equal(m.entity.lightSource?.templateIndex, T.Torch, 'the kind last doused, over the ladder');
+  m.tap('KeyO'); m.store['Handling.RememberLastLightSource'] = false; m.tap('KeyO'); assert.equal(m.entity.lightSource?.templateIndex, T.Lantern, 'the switch off: the ladder');
   const stowed = rig(); const t = torch(); stowed.entity.items = [t]; stowed.entity.lightSource = t;
   stowed.entity.equip.slots[EQUIP_SLOTS.LeftHand] = weapon(WEAPONS.Long_Bow); stowed.store['Handling.OnStow'] = ON_STOW.Unequip; stowed.frame();
   assert.equal(stowed.h.lastLightSource, t);
   delete stowed.entity.equip.slots[EQUIP_SLOTS.LeftHand]; stowed.entity.equip.slots[EQUIP_SLOTS.RightHand] = weapon(WEAPONS.Dagger);
   stowed.frame(); assert.equal(stowed.entity.lightSource, t, 'the stowed light comes back when a hand frees');
-  const none = rig(); none.tap('KeyF'); assert.deepEqual(none.said, [MESSAGES.igniteTorchless]); assert.deepEqual(none.shots, []);
+  const none = rig(); none.tap('KeyO'); assert.deepEqual(none.said, [MESSAGES.igniteTorchless]); assert.deepEqual(none.shots, []);
   const busy = rig(); busy.entity.items = [lantern()]; busy.entity.equip.slots[EQUIP_SLOTS.LeftHand] = weapon(WEAPONS.Long_Bow);
-  busy.tap('KeyF'); assert.deepEqual(busy.said, [MESSAGES.noFreeHand]); assert.equal(busy.entity.lightSource, null);
-  busy.store['Handling.RelaxedLanterns'] = true; busy.tap('KeyF'); assert.equal(busy.entity.lightSource?.templateIndex, T.Lantern, 'relaxed: a lantern in the pack lights with no hand');
+  busy.tap('KeyO'); assert.deepEqual(busy.said, [MESSAGES.noFreeHand]); assert.equal(busy.entity.lightSource, null);
+  busy.store['Handling.RelaxedLanterns'] = true; busy.tap('KeyO'); assert.equal(busy.entity.lightSource?.templateIndex, T.Lantern, 'relaxed: a lantern in the pack lights with no hand');
 });
 
 test('HT1: the drop key - the lit light unless a lantern, else a torch, a candle, a holy candle; lanterns are never dropped; nothing to drop says so; no free hand refuses', () => {
@@ -898,7 +908,7 @@ test('HT4: no vendored mod ships a key the port has already spent', () => {
   // and the three this mod ships are the three it ships, named, so a silent
   // repoint of one of them is a failure rather than a diff nobody reads
   const k = MOD_SETTINGS['handheld-torches'].keys;
-  assert.equal(k['Handling.ToggleLightInput'].default, 'F');
+  assert.equal(k['Handling.ToggleLightInput'].default, 'O', 'SOC5: repointed off the F-menu\'s F');
   assert.equal(k['Handling.ManualDropInput'].default, 'G', 'HT4: repointed off the dial\'s Tab');
   assert.equal(k['Throwing.ThrowTorchInput'].default, 'X');
 });
