@@ -1,108 +1,102 @@
 # Eye Of The Beholder (EOTB) - third person without Morrowind
 
-**Eye Of The Beholder 2.1**, RedRoryOTheGlen. **PARTIAL PORT** - the
-camera and the sprite's SELECTION, read off the shipped bundle's IL;
-the mod's own 3035 sprites vendored. See "What is and is not ported"
-below: this was called 1:1 until AUDIT-EOTB counted the methods. Vendor record and
-the permission line: `vendor/eye-of-the-beholder/README.md`. Registry
-row: `01-Overview/Mod-Registry.md`.
+**Eye Of The Beholder 2.1**, RedRoryOTheGlen. The camera, the player
+sprite and the cart, read off the shipped assembly's IL - **EOTB-IL
+(2026-09-16)**: the assembly is in the tree now, every law in the arc
+cites its IL offset, and the two things Mac saw (the frame chopping,
+the sprite turning the wrong way) were both in it. See "What is and is
+not ported" below for the count - forty-five of sixty-one authored
+methods, sixteen with no twin here, checkable in
+`test/eotb_scope.test.js` - and the EOTB-IL section at the foot for
+the findings. Vendor record and the permission line:
+`vendor/eye-of-the-beholder/README.md`. Registry row:
+`01-Overview/Mod-Registry.md`.
 
 ## What is and is not ported
 
 The arc called itself **1:1** in six places. AUDIT-EOTB counted the
-methods and it is not; AUDIT-EOTB2 (2026-09-16) ported the half the
-port could reach without the assembly, and says which half that is.
+methods and it was not; AUDIT-EOTB2 (2026-09-16) ported what the port
+could reach without the assembly and marked those readings
+`[SETTINGS]`; EOTB-IL (the same day) read the assembly itself, and
+this section is the count as the IL has it.
 
-The assembly carries **62 authored methods** - 28 on
-`EyeOfTheBeholder` (the camera), 33 on `PlayerBillboard` (the sprite),
-one on `PlayerBillboardState` - once constructors, the four
-compiler-built coroutine state machines and the event accessors are
-struck. The port implements **twenty-nine** of them, in two kinds:
+**THE ASSEMBLY IS IN THE TREE.** `vendor/eye-of-the-beholder/Eye Of
+The Beholder.dll` is the `.dfmod`'s own TextAsset, taken out of the
+archive Mac handed over (`Eye_of_the_Beholder-762-2-1-1775438888.zip`)
+by `tools/eotbIl.mjs` through the port's UnityFS reader, and
+`vendor/eye-of-the-beholder/il/Eye_Of_The_Beholder.il.txt` is every
+method body of it as `tools/ilDump.py` prints it (dnfile + dncil;
+`monodis` segfaults on this one). The `[IL]` offsets cited beside every
+law in `src/player/eotb*.js` are offsets into that dump.
 
-**Thirteen, read off the IL** (EOTB2-EOTB5):
+The assembly carries **61 authored methods** - 28 on `EyeOfTheBeholder`
+(the camera), 32 on `PlayerBillboard` (the sprite), one on
+`PlayerBillboardState` - once constructors, the four compiler-built
+coroutine state machines, the event accessors and the three
+compiler-lifted lambdas are struck. AUDIT-EOTB, writing without the
+assembly, had counted 62 and listed a `PlayerBillboard::InitializeTextures`
+that does not exist; the texture walk is the state's alone. The port
+implements **forty-five** of them, every one read off the IL:
 
 | IL method | here |
 |---|---|
-| `get_posOffset`, `get_offsetRidingMod` | `posOffset` (eotbCamera.js) |
-| `CheckBounds` | `checkBounds` - per-axis cast, the auto-switch |
-| `SetVectorBounds` | `setVectorBounds` |
-| `Update` | `tick` - the scroll ladder, the mirror revert, the smoothing, the minimum-distance floor |
-| `ToggleOffset` | `toggleOffset` - the scroll reset and the smoothing seed only |
-| `LoadSettings` | `readCameraSettings` - the settings-to-fields mapping |
-| `InitializeStates` | `STATE_TABLES`, as a generated law |
-| `LoopIdleBillboard` | `chooseTable` - which table, not the loop |
-| `UpdateOrientation` | `orientationFor` - the angle and the snap only |
-| `get_frameTime`, `get_sizeMod`, `get_scaleOffset` | the three constants-with-arms |
+| `get_posOffset`, `get_offsetRidingMod` | `posOffset` (eotbCamera.js) - the mirrored base arm scales Z alone |
+| `CheckBounds`, `SetVectorBounds` | `checkBounds`, `setVectorBounds` - the bounds seed at 2.0 |
+| `Update` | `tick` (the ladder, on the Z captured BEFORE the notch) and `eye` (the target-and-smooth, the shoulder's revert probe) |
+| `LateUpdate` | `autoToggleRows` (eotbBillboard.js), applied by `tick`; `UpdateWagon` before the offset gate |
+| `ToggleOffset`, `ToggleBillboard` | `toggleOffset` → `toggle` (eotbBody.js): the billboard, the FP flag, the torch, the hands |
+| `LoadSettings` | `readCameraSettings` - `autoPOVSwitch` derived from the nine rows - and `loadSettings`' ToggleOffset re-run |
+| `Start`, `OnNewGame`, `OnLoad` | `start`, `onNewGame`, `onLoad` |
+| `OnPositionUpdate` | `onPositionUpdate` - the floating origin |
+| `OnTransitionInterior`, `OnTransitionExterior` | `transition`, on the building's doors and the dungeon's |
+| `SwitchShoulder` (inside `Update`) | `switchShoulder` - gated on X, no clock touched |
+| `CheckWagon`, `SpawnWagon`, `UpdateWagon` | `checkWagon`, `createEotbWagon`, `updateWagon` (eotbWagon.js) - the cart |
+| `InitializeStates` | `STATE_TABLES` |
+| `LoopIdleBillboard` | `loopIdleBillboard` (eotbBody.js); `chooseTable` is its table arm |
+| `UpdateOrientation` | `updateOrientation` (eotbBody.js); `orientationFor` is its angle - THE TURN |
+| `get_frameTime`, `get_sizeMod` | `frameTime`, `sizeMod` |
+| `PlayFootstep`, `EnableVanillaFootsteps`, `DisableVanillaFootsteps` | `playFootstep`, `initialize` (eotbBody.js) → `systems/footsteps.js`'s `spriteStep` arm |
+| the six `Play*Animation` | `playMeleeAttack`, `playRangedAttack`, `playRangedAttackHold`, `playSpellAttack`, `playLycanAttack`, `playDeath` |
+| the three coroutines | `startClip` / `holdPhase` (eotbBody.js), `pingPongFrames` (eotbBillboard.js), stepped by `advanceClip` |
+| `GetMeleeAnimTickTime` | `meleeAnimTickTime` - `animTime * 5 / frames` |
+| `UpdateBillboard`, `UpdateBillboardDelayed`, `UpdateBillboardDelayedCoroutine` | `updateBillboard`, `updateBillboardDelayed`, `runDelayed` - the three-frame queue |
+| `UpdateMaterial` | `material` - invisible / shade / blending |
+| `Initialize`, `OnLoad` (billboard) | `initialize` |
+| `InitializeTextures` (state) | `preload` |
+| `Update`, `LateUpdate` (billboard) | `update`, `lateUpdate` |
 
-**Sixteen, read off the settings** (AUDIT-EOTB2, marked `[SETTINGS]`
-where each lands - see the evidence banner in `eotbBillboard.js`):
+**Sixteen have no twin**, every one a row in `test/eotb_scope.test.js`
+with its reason: the Unity lifecycle and component methods (`Awake` on
+both types, `Init`, `get_pivotLocal`, `get_IsReady`, `SetKeyFromText`,
+`SpawnBillboard`, the billboard's `FixedUpdate` - the TravelOptions
+hook); the mesh and material handling the port's billboard batch
+replaces (`AssignMeshAndMaterial`, `MakeBillboardMaterial`);
+`OnUpdateSailing` and `FreeRein_GetMoveVector` (Come Sail Away and Free
+Rein, neither in the port); `MeleeDamage` (the attack-from-body ray,
+moot because the port's swing and activation already start at the
+player's own head, which the view never moves); `MessageReceiver` and
+`ModCompatibilityChecking` (DFU's mod bus); and `get_scaleOffset`,
+which is **dead in the assembly** - no caller anywhere in the IL, so
+`Animation.GlobalOffsetScale` is declared INERT on the pane rather than
+invented a meaning.
 
-| IL method | here | read from |
-|---|---|---|
-| `LateUpdate` (camera) | `applyRow` / `tick` / `transition` (eotbCamera.js) | the nine AutoTogglePerspective rows' names and option labels, applied on a situation change |
-| `OnTransitionInterior`, `OnTransitionExterior` | `transition`, on the building's two doors (worldModes) | the two rows' names |
-| `ToggleBillboard` | `hides` (eotbBody.js) - the FPV weapon and horse | `Compatibility.Don'tHideWeapon` / `Don'tHideHorse`, which say exactly what is hidden |
-| `PlayFootstep`, `EnableVanillaFootsteps`, `DisableVanillaFootsteps` | `footstep` (eotbBody.js) → `systems/footsteps.js`'s `spriteStep` arm | `Animation.SyncFootsteps`, and the footfall frames the IL gave `FOOTSTEP_FRAMES` |
-| `PlayMeleeAttackAnimation`, `PlayRangedAttackAnimation`, `PlayRangedAttackAnimationHold`, `PlayLycanAttackAnimation` | `attack` (eotbBody.js), at the rig's own strike door | the attack tables the IL gave, `Graphics.AttackStrings` and its four labels |
-| `PlaySpellAttackAnimation` | `cast` (eotbBody.js), at `castSpellAnim` | the same |
-| `PlayDeathAnimation` | `deathTable` + the held clip in `eotbBody.tick` | the two Death tables the IL gave |
-| `PlayAnimationCoroutine`, `PlayAnimationHoldCoroutine`, `PlayAnimationPingPongCoroutine` | `clipFrames` (eotbBillboard.js), stepped by the body's clip clock | `Graphics.PingPongOffset`'s description; the hold is the drawn bow's |
-
-A `[SETTINGS]` law is the mod's shape **as its author described it to
-the player**, not its body as the compiler saw it. The day the assembly
-is read, each row above either becomes `[IL]` or is corrected, and the
-pins in `test/eotb_audit2.test.js` are where a wrong reading fails.
-
-**THE ASSEMBLY IS NOT IN THE TREE.** `Eye Of The Beholder.dll` lives
-inside the shipped `.dfmod`, which is not vendored (only its manifest,
-settings, presets and art are), and the bundle is behind a Nexus login
-the container cannot pass. AUDIT-EOTB2 could not re-read a single
-method. What it needs to finish is the archive Mac already holds
-(`Eye_of_the_Beholder-762-2-1-1775438888.zip`) dropped where the port
-can read it - the reading recipe (`dnfile`/`dncil`; `monodis`
-segfaults) is in `test/eotb_scope.test.js`'s head and both wheels
-install through the proxy.
-
-**Thirty-three not ported**, in two kinds, every one a row in
-`test/eotb_scope.test.js` with its verdict:
-
-- **needs the assembly** (NOT DONE): `GetMeleeAnimTickTime` - the one
-  number the one-shots want that only the IL holds; the clips run at
-  the walk clock's own step until it is read. `CheckWagon` /
-  `SpawnWagon` / `UpdateWagon` (`Graphics.ShowCart`, the cart that
-  follows the sprite - which model, at what offset). The scale-offset
-  constant is ported but `spriteInfo.json`'s 288 per-sprite offsets are
-  still NOT APPLIED: their sign convention is the assembly's, and applying
-  them the wrong way round would shift the bow and spell sprites by up
-  to 0.76 m - worse than centred. `Graphics.TorchOffset` (Vanilla /
-  Billboard / Selfie - where the handheld torch's light sits) for the
-  same reason.
-- **no twin here**: the Unity lifecycle and component methods (`Awake`,
-  `Start`, `Init`, `FixedUpdate`, the billboard's own per-frame Update, `OnLoad`, `OnNewGame`,
-  `get_IsReady`, `get_pivotLocal`, `OnPositionUpdate`, `SetKeyFromText`,
-  `SpawnBillboard`, `MessageReceiver`, `ModCompatibilityChecking`); the
-  mesh and material handling the port's billboard batch replaces
-  (`UpdateBillboard` and its delayed pair, `AssignMeshAndMaterial`,
-  `UpdateMaterial`, `MakeBillboardMaterial`, `Initialize`, both
-  `InitializeTextures`); `OnUpdateSailing` and `FreeRein_GetMoveVector`
-  (Come Sail Away and Free Rein, neither in the port); `MeleeDamage` -
-  the attack-from-body ray, moot because the port's swing and activation
-  already start at the player's own head (`cam.pos`), which the view
-  never moves; and the billboard's own late update, the first-person
-  visibility mode (`Graphics.FirstPersonBillboard`: Shadows Only), which
-  needs a shadow caster the port's billboards do not have.
+The ledger is checked against the dump itself: every row must be an
+authored method in it and no authored method may be missing, a row
+claiming a port must name a symbol that exists, and a row claiming
+none must not have quietly grown one. "1:1" is a sentence; the table
+is the check.
 
 ### The dead exports
 
-Three exports of the arc are called by nothing - not even their own
-module. That is the audit's shape in miniature, so they are listed in
-`test/eotb_scope.test.js` with a reason each, and the set is DERIVED
-rather than typed: `scaleOffset` (`spriteInfo.json`'s per-sprite
-offsets are not applied - see above), `tableKeys` (nothing pre-loads a
-whole table) and `OVERRIDE_ORDER` (the three override sections'
-precedence, spelled once to read `posOffset` against). `attackTable`
-left the list at AUDIT-EOTB2: the attack lane calls it. Each remaining
-row is a debt: wired or deleted by the slice that next touches its lane.
+Four exports of the arc are called by nothing - not even their own
+module - and each is listed in `test/eotb_scope.test.js` with a reason,
+the set DERIVED rather than typed: `tableKeys` (what a pre-load would
+fetch per table; the body walks `TABLE_FRAMES` itself), `OVERRIDE_ORDER`
+(the override sections' precedence, spelled once to read `posOffset`
+against), and the two label tables `TURN_TO_VIEW` and `ATTACK_STRINGS`
+(the pane's words; the laws read the numbers). `scaleOffset` left the
+list at EOTB-IL: deleted, because its getter has no caller in the
+assembly either.
 
 ## Why a port that already has third person carries a second one
 
@@ -306,8 +300,10 @@ The frame clock is 0.25s on foot - four frames a second, classic's own
 mobile rate, which is what the port already runs townspeople at - and
 0.0625s mounted, each scaled by `(2 - WalkCycleSpeed)`, so a higher
 setting is a shorter frame and the dial reads forwards even though the
-number it scales is a duration. Footsteps land on frames 2 and 4 of
-the five-frame cycle.
+number it scales is a duration. Footsteps land on the EVEN frames of
+the walk (`frame % 2 == 0`; every fourth on the eight-frame horse
+tables) - EOTB-IL corrected the "frames 2 and 4 of the five-frame
+cycle" this page first recorded: no table has five frames.
 
 `ReadyStance` is worth knowing about before it is reported as a bug: at
 "When Idle" a player who draws a sword and walks is drawn walking
@@ -429,7 +425,7 @@ hashing collapses the duplicates for free.
 Metres per pixel from `get_sizeMod` (0.019 on foot, 0.029 riding *or*
 transformed - one arm covers both). The frame clock catches up over a
 stall without eating frames and without hanging. The footfall follows
-the picture, on frames 2 and 4 and no others. And a **mirrored sprite
+the picture, on the even frames and no others (EOTB-IL). And a **mirrored sprite
 is its own texture cache key**, because the renderer's billboard batch
 has no flip - a shared key would make the second upload a silent no-op
 with half the wheel facing the wrong way.
@@ -453,6 +449,10 @@ as the one thing the next slice needs.
 
 EOTB-FLIP (2026-09-16) at the foot: Mac's eye opened, and the first
 thing it saw was the body on its head. The rows, the right way up.
+
+EOTB-IL (2026-09-16), last: the assembly read, every law re-derived
+from its IL, the frame chopping and the backwards turn fixed, the cart
+ported, the ledger corrected to 61 methods.
 
 **NOT SEEN ON A GPU.** There is no GL and no ARENA2 in the container
 this was written in. Mac's eye is the gate.
@@ -565,6 +565,9 @@ the per-sprite offsets (`spriteInfo.json`, 288 rows - sign unknown),
 laws above. Drop the shipped `.zip` where the port can read it and
 `test/eotb_scope.test.js`'s recipe reads it in an hour.
 
+**EOTB-IL, the same day: read. Every item in this list is ported, at
+the foot of the page.**
+
 ### The pins
 
 `test/eotb_audit2.test.js`, 17 tests: the state law and the statue
@@ -671,3 +674,166 @@ which is the right shape for a law that only the picture can see.
 Still NOT SEEN ON A GPU from here. Mac's eye is the gate, and it has
 now caught one thing; the walk, the swing, the horse and the death
 remain the order to check.
+
+## EOTB-IL (2026-09-16): the assembly, read
+
+**Mac: "Next up I want to tackle the Eye of the Beholder mod
+integration. Theres still some issues with the mod and it needs to be
+1:1 with the uploaded file. No exceptions. Notable issues include
+1. Frame chopping between animations 2. Sprite turns in wrong direction
+on input."** And the uploaded file: the shipped
+`Eye_of_the_Beholder-762-2-1-1775438888.zip`.
+
+### The assembly is in the tree
+
+The `.dfmod` is a UnityFS archive and `Eye Of The Beholder.dll` rides
+in it as a TextAsset. The port's own reader (`formats/unityBundle.js`)
+opened it - nothing new was needed - and `tools/eotbIl.mjs` writes the
+54,272-byte assembly out beside the art. `tools/ilDump.py` (dnfile +
+dncil, both installed through the proxy; `monodis` segfaults on this
+assembly) prints every method body, and that dump is vendored at
+`vendor/eye-of-the-beholder/il/`. Two things about the dump worth
+knowing before reading it: the offsets on the left are hex `IL_xxxx`
+and every `[IL]` citation in the arc is one of them; the branch
+targets on the right are DECIMAL and absolute, as dncil gives them,
+so `brfalse.s 8471` means IL_2117.
+
+Every `[SETTINGS]` law AUDIT-EOTB2 wrote is gone. Each is `[IL]` now
+with its offset, and where a reading was wrong the offset that
+corrects it is cited beside the law.
+
+### Mac's two reports, both in the IL
+
+**1. "Frame chopping between animations."** The port ran EVERY table on
+one five-frame clock (`CLIP_FRAMES = 5`). The bundle's tables are not
+five frames: `InitializeStates` builds them from records of ONE frame
+(the idles), TWO (the ranged and spell moves, the deaths), FOUR (the
+walk), SIX (the melee swing) and EIGHT (the horse) - `TABLE_FRAMES`,
+pinned against every archive's vendored art. A four-frame walk driven
+to frame 4 asked for a sprite that does not exist and drew the last
+one that did; a six-frame swing was cut at five. And the one-shots do
+not run on the walk clock at all: `GetMeleeAnimTickTime` is
+`animTime * 5 / frames` (IL_5127-IL_5139), the bow, the spell and the
+claws tick at 0.125 and the death at 0.5, and the frame write goes
+through a THREE-frame delayed coroutine (`UpdateBillboardDelayed`,
+IL_3f6c-IL_3fd3), which is why the mod's transitions land a beat after
+the state changes and the port's landed at once.
+
+**2. "Sprite turns in wrong direction on input."** `UpdateOrientation`
+is `SignedAngle(toCamera, facing, up)` (IL_4779-IL_4786), negated and
+snapped. The port had the two arguments the other way round, which
+negates the angle, which runs the wheel backwards: a player turning
+left was drawn from the right. `orientationFor(facing, toCamera)` is
+the IL's order now, and THE TURN pin holds the camera off the left at
+index 6 and off the right at 2. Worth a note for Mac's eye:
+`characters/mobileUnit.js`'s `mobileOrientation` - DFU's own
+`OrientEnemy` wheel for every foe - uses the OTHER sign, the one the
+old port had. That is DFU's law for foes and this mod's for the
+player, and both are pinned as they are; if a foe ever looks wrong
+from the side, that is where to look.
+
+### Everything else the IL said
+
+The list is long because the arc had guessed at most of it:
+
+- **The table chooser** (`LoopIdleBillboard`, IL_4328-IL_4499) has NO
+  death arm - the death is a one-shot that freezes the loop - and the
+  horse gallops on a SPEED (`MoveDirection.magnitude > 10`), not a run
+  flag. A transformed player stopped is `IdleLycan` sheathed and
+  `IdleMeleeLycan` drawn; moving, `MoveLycan` either way.
+- **The facing** (`TurnToView`'s ladder, IL_45c7-IL_4733): floating
+  overrides everything to the camera; stopped, the LAST move direction
+  is the facing, so a player who stops keeps the side they walked on.
+- **The speed modifier**: running halves the frame time, crouching or
+  sneaking doubles it.
+- **The footsteps** land on `frame % 2 == 0` on foot and `% 4` mounted,
+  at `FootstepVolumeScale * SoundVolume * (FP ? 1 : 2)` - no half-speed
+  halving - and the clip is `PlayerFootsteps`' own choice, copied
+  (IL_55e8-IL_585b).
+- **Mirror** flips only the FRONT and BACK records (orientations 0 and
+  4) of twelve named tables, while the swing count is odd, and reverts
+  after `MirrorTime` - 0.1 s in first person. **PingPong** runs forward
+  while `i < n/2 + offset` then back down to 1; **Mixed** takes the
+  ping-pong every FOURTH swing, not a roll. **The hold** draws down to
+  frame 0 and freezes on the last until the string lets go.
+- **The death** freezes the loop at 0.5 s a frame and `Initialize`
+  clears `died` (the load door).
+- **The orientation** is throttled at 0.1 s (`orientationTime`), forced
+  on a state change, and `TorchOffset`'s three modes move the handheld
+  torch's light with it: Vanilla leaves it, Billboard puts it on the
+  sprite, Selfie mirrors it.
+- **UpdateMaterial** is three modes off the concealment flags -
+  invisible at alpha 0.4, shade BLACK at 0.6 (a fourth conceal mode in
+  the renderer, `uConceal.x == 4`), blending at 0.8.
+- **The first-person billboard** stands ON the camera point, so its
+  orientation reads 0 through the zero vector, and `Visible` is drawn
+  flipped so the player sees their own front.
+- **The placement** has three arms: swimming on exterior water, crouched,
+  standing - and the XML x-offset is NEGATED for a mirrored record.
+  The 288 per-sprite offsets are APPLIED now (their sign was the one
+  thing AUDIT-EOTB2 would not guess).
+- **The camera's auto-toggle** is three independent "just changed"
+  blocks and one fan-out (IL_1847-IL_1c6e), so several rows can fire in
+  one frame; `autoPOVSwitch` is DERIVED from the nine rows
+  (IL_10e1-IL_112d) and the bundle ships every row at Don'tChange, so
+  the table ships DISARMED - the port had armed it.
+- **The bounds seed at 2.0**, not zero; **the ladder tests the Z
+  captured before the notch** (so it leaves third person the notch
+  AFTER crossing the near end, and hovers two notches at -10); **the
+  mirrored base arm scales Z alone** by the riding offset; **the
+  shoulder's revert** re-probes from the camera target's height with
+  the lateral re-centred, and the whole block is skipped while X is
+  zero; **SwitchShoulder** touches no clock.
+- **OnNewGame / OnLoad** with the table armed apply ONLY the transition
+  row for where the player stands, even when it is Don'tChange;
+  disarmed, `StartInThirdPerson`. **OnPositionUpdate** carries the
+  smoothing across the floating origin. **The transitions** are
+  registered on the dungeon's doors as well as the building's.
+- **The two keys** fire on the RELEASE edge (`GetKeyUp`).
+- **`GlobalOffsetScale` is inert** in the mod itself: `get_scaleOffset`
+  has no caller. The pane says so.
+- **The cart** (`ShowCart`): model 41239 through the host's own mesh
+  pipeline, shown ten metres behind the body on the first frame and
+  settling 2.49 m off; it follows past 2.5 m, keeps its LAST offset
+  past 10 (a teleport keeps the cart where it was relative to you), a
+  ground probe from 0.6 m behind its own forward and 2 m up casts 10 m
+  down and lifts it one metre off the hit, `LookAt` every frame, and a
+  `sin(10t) * (3 + sin t)` roll while it moves (gentler on a path). It
+  is registered with the one activation ray at 3.2: Info names it ("You
+  see your wagon"), any other mode opens the pack with the wagon. Both
+  exterior hosts carry the three doors; the interior hosts have none,
+  because DFU puts the player on foot at every interior door, and the
+  seam says so by name. One port-side necessity, recorded: the cart
+  shifts with the floating origin, which Unity's FloatingOrigin does
+  for every world object and the streaming host must do by hand.
+
+### The ledger, corrected
+
+AUDIT-EOTB, writing without the assembly, counted 62 authored methods
+and listed a `PlayerBillboard::InitializeTextures` that does not exist
+- the texture walk is `PlayerBillboardState`'s alone; the 33rd body on
+the sprite is the compiler's `<FixedUpdate>b__96_0`. The count is
+**61**, and `test/eotb_scope.test.js` now reads the vendored dump: a
+row must be an authored method in it and none may be missing. Forty-
+five ported, sixteen with no twin, and no row is NOT DONE.
+
+### The pins
+
+`test/eotb_billboard.test.js` (the laws: `TABLE_FRAMES` over all 23
+archives' art, THE TURN, the facing, the speed modifier, the footstep
+frames, the chooser, the one-shots' arithmetic, Mirror's records, the
+auto-toggle blocks), `test/eotb_body.test.js` (the machine: the chop
+fix, the walk clock, the footfalls and their volume, the preload, the
+mirror upload, the stale batch, the placement arms, the FP billboard,
+UpdateMaterial, the four hosts), `test/eotb_audit2.test.js` (the
+integration, rewritten against the IL), `test/eotb_camera.test.js`
+(seven EOTB-IL pins appended), `test/eotb_wagon.test.js` (14, new) and
+`test/eotb_scope.test.js` (the ledger against the dump).
+
+**Campaign:** see the line below, written after the run.
+
+**NOT SEEN ON A GPU.** There is still no GL and no ARENA2 in the
+container this was written in. Mac's eye is the gate; the order to
+check is a walk (four frames, no repeat), a swing (six, at the swing's
+own pace, a beat late), a turn to the left (drawn from the left), a
+horse, a death, and the cart behind a wagon-borne player.

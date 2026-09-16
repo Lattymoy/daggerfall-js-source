@@ -404,6 +404,7 @@ void main() {
   // AUDIT 65 PN-3: SHADE_DARK itself (keep it a decimal - GLSL will not
   // multiply a vec3 by an int literal).
   if (uConceal.x == 2.0) lit *= ${SHADE_DARK};
+  if (uConceal.x == 4.0) lit = vec3(0.0);   // EOTB-IL: Eye Of The Beholder's shade - Color.black at the batch's alpha (UpdateMaterial, IL_4f69)
   float alpha = uSpectral == 1 ? tex.a : 1.0;
   if (uConceal.x > 0.0) alpha = tex.a * uConceal.y;
   outColor = vec4(mix(uFogColor, lit, fogFactorAt(vBBWorld)), alpha);

@@ -85,6 +85,11 @@ export function motionBagOf(player) {
     forward: player.moveForward || 0, strafe: player.moveStrafe || 0, running: !!player.isRunning, speed: player.moveSpeed || 0,
     grounded: player.grounded !== false, jumping: !!player.jumping, swimming: !!player.swimming, levitating: !!player.levitating,
     crouching: !!player.crouching, riding: !!player.riding, standing: !!player.standing, speedField: player.speed || 0,
+    // EOTB-IL: what Eye Of The Beholder's PlayerBillboard reads off PlayerMotor beside the above - the sneak
+    // (its frame time doubles), FreezeMotor (a frozen motor is "stopped"), OnExteriorWater == Swimming (the sprite's
+    // top at the swim line), and the live capsule height (the billboard's parent is the capsule's centre)
+    sneaking: !!player.isSneaking, freeze: player.freezeMotor || 0, onExteriorWater: !!player.onExteriorWater,
+    height: Number.isFinite(player.height) ? player.height : 0,
   };
 }
 export const CROUCH_JUMP_DELTA = 0.8;

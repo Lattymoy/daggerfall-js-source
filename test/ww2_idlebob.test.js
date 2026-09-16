@@ -15,11 +15,11 @@ const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
 
 test('WW2: the one motion bag - every field the rig reads, from a player at rest and one walking; the real motor at rest says standing with a speed setting that is never zero', () => {
   const rest = motionBagOf({ moveForward: 0, moveStrafe: 0, isRunning: false, moveSpeed: 0, grounded: true, jumping: false, swimming: false, levitating: false, crouching: false, riding: false, standing: true, speed: 4.43 });
-  assert.deepEqual(rest, { forward: 0, strafe: 0, running: false, speed: 0, grounded: true, jumping: false, swimming: false, levitating: false, crouching: false, riding: false, standing: true, speedField: 4.43 });
+  assert.deepEqual(rest, { forward: 0, strafe: 0, running: false, speed: 0, grounded: true, jumping: false, swimming: false, levitating: false, crouching: false, riding: false, standing: true, speedField: 4.43, sneaking: false, freeze: 0, onExteriorWater: false, height: 0 });   // EOTB-IL: the four fields the sprite reads ride the one bag
   const walk = motionBagOf({ moveForward: 1, moveStrafe: 0, isRunning: true, moveSpeed: 6.2, grounded: true, crouching: true, riding: false, standing: false, speed: 8.86 });
   assert.equal(walk.standing, false); assert.equal(walk.running, true); assert.equal(walk.crouching, true); assert.equal(walk.speedField, 8.86);
   const bare = motionBagOf({});
-  assert.deepEqual(bare, { forward: 0, strafe: 0, running: false, speed: 0, grounded: true, jumping: false, swimming: false, levitating: false, crouching: false, riding: false, standing: false, speedField: 0 }, 'a bare player: grounded, not standing (the rig then reads a ratio of 1 - the motor must say)');
+  assert.deepEqual(bare, { forward: 0, strafe: 0, running: false, speed: 0, grounded: true, jumping: false, swimming: false, levitating: false, crouching: false, riding: false, standing: false, speedField: 0, sneaking: false, freeze: 0, onExteriorWater: false, height: 0 }, 'a bare player: grounded, not standing (the rig then reads a ratio of 1 - the motor must say)');
   // the real motor, at rest: standing, no move speed, a speed setting that is the walk's - DFU's PlayerMotor.Speed
   const motor = new PlayerMotor({ raycast: () => Infinity, heightAt: () => 0, move: (feet) => ({ grounded: true, hitCeiling: false, groundKey: 'floor' }), sphereOverlaps: () => false, capsuleCast: () => ({ dist: Infinity, key: null }), raycastHit: () => ({ dist: Infinity, normal: null }) }, [0, 0, 0]);
   const held = { forward: false, back: false, left: false, right: false, jump: false, run: false, crouch: false };
@@ -37,7 +37,7 @@ test('WW2: by source - the five host sites read the one bag and none is written 
     assert.match(s, /import \{[^}]*motionBagOf[^}]*\} from '\.\.\/player\/motor\.js';/, `${host}: from the motor`);
   }
   const m = rd('src/player/motor.js');
-  assert.match(m, /export function motionBagOf\(player\) \{\s*\n\s*return \{\s*\n\s*forward: player\.moveForward \|\| 0, strafe: player\.moveStrafe \|\| 0, running: !!player\.isRunning, speed: player\.moveSpeed \|\| 0,\s*\n\s*grounded: player\.grounded !== false, jumping: !!player\.jumping, swimming: !!player\.swimming, levitating: !!player\.levitating,\s*\n\s*crouching: !!player\.crouching, riding: !!player\.riding, standing: !!player\.standing, speedField: player\.speed \|\| 0,\s*\n\s*\};/, 'the one bag, every field');
+  assert.match(m, /export function motionBagOf\(player\) \{\s*\n\s*return \{\s*\n\s*forward: player\.moveForward \|\| 0, strafe: player\.moveStrafe \|\| 0, running: !!player\.isRunning, speed: player\.moveSpeed \|\| 0,\s*\n\s*grounded: player\.grounded !== false, jumping: !!player\.jumping, swimming: !!player\.swimming, levitating: !!player\.levitating,\s*\n\s*crouching: !!player\.crouching, riding: !!player\.riding, standing: !!player\.standing, speedField: player\.speed \|\| 0,\s*\n(?:\s*\/\/[^\n]*\n)*\s*sneaking: !!player\.isSneaking, freeze: player\.freezeMotor \|\| 0, onExteriorWater: !!player\.onExteriorWater,\s*\n\s*height: Number\.isFinite\(player\.height\) \? player\.height : 0,\s*\n\s*\};/, 'the one bag, every field');
   assert.match(rd('src/combat/weaponWidget.js'), /if \(m\.standing\) s = w\.s\.bobWhileIdle \? 0\.1 : 0;/, 'the mod\'s idle gate, unchanged');
   assert.match(rd('bible/05-Combat/Weapon-Widget.md'), /through the one motion bag \(`motionBagOf`, WW2\)/);
 });

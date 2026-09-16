@@ -5,15 +5,15 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
-  sizeMod, spriteSize, scaleOffset, advanceFrame, spriteFor, tableKeys, flipRows,
+  sizeMod, spriteSize, spriteOffset, spriteFor, tableKeys, flipRows,
   spriteCount, eotbSpriteUrl, SIZE_ON_FOOT, SIZE_RIDING_OR_TRANSFORMED,
 } from '../src/player/eotbSprite.js';
-import { createEotbBody } from '../src/player/eotbBody.js';
-import { eotbCamera } from '../src/player/eotbCamera.js';
-import {
-  mwViewWheel, mwViewFrame, mwViewPendingClicks, setEotbBodyReady, setEotbDrawBody,
-} from '../src/player/mwView.js';
-import { ARCHIVE_FOOT, ARCHIVE_HORSE, FOOTSTEP_FRAMES, frameTime } from '../src/player/eotbBillboard.js';
+import { createEotbBody, bodyState } from '../src/player/eotbBody.js';
+import { createEotbCamera, eotbCamera } from '../src/player/eotbCamera.js';
+import { ARCHIVE_FOOT, ARCHIVE_HORSE, frameTime, TABLE_FRAMES } from '../src/player/eotbBillboard.js';
+import { setModSetting, _resetModSettings } from '../src/systems/modSettings.js';
+
+const MOD = 'eye-of-the-beholder';
 
 // ═══ EOTB5: THE BODY ON SCREEN ════════════════════════════════════
 
@@ -22,81 +22,151 @@ const viteConfig = readFileSync(join(root, 'vite.config.js'), 'utf8');
 const weaponRig = readFileSync(join(root, 'src/combat/weaponRig.js'), 'utf8');
 const bodySrc = readFileSync(join(root, 'src/player/eotbBody.js'), 'utf8');
 
+const renderer = () => ({
+  uploads: [], batches: [], draws: 0,
+  uploadTexture(archive, rec, img) { this.uploads.push({ archive, rec, img }); },
+  createBillboardBatch(archive, rec, size) { const b = { archive, rec, size, origin: [0, 0, 0] }; this.batches.push(b); return b; },
+  destroyBillboardBatch() {},
+  drawBillboards() { this.draws++; },
+});
+/** A body with art present and an instant decode, driven by a camera
+ *  of its own so the module-level one is left alone. */
+async function liveBody(over = {}, { third = true } = {}) {
+  const r = renderer();
+  const b = createEotbBody({
+    count: () => 3035, urlFor: (k) => `/art/${k}.png`,
+    decode: async () => ({ width: 4, height: 6, colors: new Uint32Array(24) }),
+    ...over,
+  });
+  b.attach(r, () => ({}));
+  await new Promise((res) => setTimeout(res, 5));
+  b.toggle(true, !third);
+  return { b, r };
+}
+const walk = (extra = {}) => ({ motion: { forward: 1, standing: false, speed: 3, grounded: true, height: 1.8 }, feet: [0, 0, 0], yaw: 0, cameraPos: [0, 1.5, -2], ...extra });
+const still = (extra = {}) => ({ motion: { forward: 0, standing: true, speed: 0, grounded: true, height: 1.8 }, feet: [0, 0, 0], yaw: 0, cameraPos: [0, 1.5, -2], ...extra });
+const ticks = (b, n, state, dt = 1 / 60) => { for (let i = 0; i < n; i++) b.tick(dt, state); };
+
 test('EOTB5: the sprite is sized in METRES PER PIXEL, and the saddle shares its size with the werewolf', () => {
-  // `get_sizeMod`: 0.019 on foot, 0.029 riding OR transformed. One
-  // constant covers both because a rider and a werewolf are drawn at
-  // the same reach - which is the sort of thing that reads like a slip
-  // until you see the two conditions share an arm in the IL.
   assert.equal(SIZE_ON_FOOT, 0.019);
   assert.equal(SIZE_RIDING_OR_TRANSFORMED, 0.029);
   assert.equal(sizeMod({}), 0.019);
   assert.equal(sizeMod({ riding: true }), 0.029);
   assert.equal(sizeMod({ transformed: true }), 0.029, 'the transformed forms take the RIDING size');
-  assert.equal(sizeMod({ riding: true, transformed: true }), 0.029);
   assert.equal(sizeMod({ scale: 2 }), 0.038, 'BillboardScale multiplies it');
-
-  // a sprite of the bundle's own proportions stands about a person high
   const { w, h } = spriteSize(53, 110, {});
   assert.ok(h > 1.9 && h < 2.2, `a 110px sprite stands ${h.toFixed(2)}m - about a person`);
   assert.equal(Number(w.toFixed(4)), Number((53 * 0.019).toFixed(4)));
-  // ...and mounted it stands taller, which is the whole point of the
-  // second constant
   assert.ok(spriteSize(53, 110, { riding: true }).h > h);
-  assert.equal(scaleOffset({ scale: 2, scaleOffsetMod: 3 }), 6);
+  // [IL] the XML scale divides the pixels before sizeMod (IL_5b3e-IL_5b7c, IL_49dd-IL_49f3)
+  assert.equal(spriteSize(53, 110, {}, 2).h, 110 / 2 * 0.019);
 });
 
-test('EOTB5: the frame clock advances by the mod\u2019s own step, and a stall cannot eat the animation', () => {
-  const step = frameTime(false, 1);
-  let c = { frame: 0, timer: 0 };
-  // less than a step: nothing moves
-  let a = advanceFrame(c, step * 0.9, { frames: 5 });
-  assert.equal(a.frame, 0, 'a short frame does not advance the sprite');
-  c = a;
-  // crossing the step advances exactly one
-  a = advanceFrame(c, step * 0.2, { frames: 5 });
-  assert.equal(a.frame, 1);
-  // A STALL. A tab coming back with a second of dt must not silently
-  // drop the frames it owed - it catches up - and must not hang, which
-  // is why the catch-up is bounded by the cycle rather than open.
-  a = advanceFrame({ frame: 0, timer: 0 }, step * 3.5, { frames: 5 });
-  assert.equal(a.frame, 3, 'three whole steps, three frames');
-  // A HALF-STEP ON PURPOSE. `step * 10000` divides evenly, so the
-  // timer lands on 0 whether the catch-up is bounded or not, and a
-  // mutant removing the bound survived the pin. With a remainder the
-  // two answers differ: the BOUNDED path gives up and zeroes the
-  // timer, while an unbounded loop grinds all the way down and leaves
-  // the half step behind.
-  const huge = advanceFrame({ frame: 0, timer: 0 }, step * 10000.5, { frames: 5 });
-  assert.ok(Number.isInteger(huge.frame) && huge.frame >= 0 && huge.frame < 5, 'a huge dt lands on a real frame');
-  assert.equal(huge.timer, 0,
-    'the catch-up is BOUNDED - it gives up and zeroes the debt rather than looping a billion times on a bad dt');
-
-  // riding runs four times faster, so the same dt walks further
-  const onFoot = advanceFrame({ frame: 0, timer: 0 }, step, { frames: 5 });
-  const mounted = advanceFrame({ frame: 0, timer: 0 }, step, { frames: 5, riding: true });
-  assert.equal(onFoot.frame, 1);
-  assert.equal(mounted.frame, 4, 'sixteen a second against four');
+test('EOTB-IL: the per-sprite offsets are the XML’s, in metres, six triples over 288 records, and GlobalOffsetScale never touches them', () => {
+  const info = JSON.parse(readFileSync(join(root, 'vendor/eye-of-the-beholder/spriteInfo.json'), 'utf8'));
+  assert.deepEqual(spriteOffset(ARCHIVE_FOOT, 0), { scale: 1, x: 0, y: 0 }, 'a record with no XML is the default');
+  assert.deepEqual(spriteOffset(ARCHIVE_FOOT, 18), { scale: 1, x: -0.2, y: 0 }, 'ReadyMeleeBackwardLeft (record 18) sits a fifth of a metre to the left');
+  assert.deepEqual(spriteOffset(ARCHIVE_FOOT, 48), { scale: 1, x: -0.76, y: 0 }, 'the largest');
+  assert.equal(Object.keys(info.offsets).length, 288);
+  const triples = new Set(Object.values(info.offsets).map((o) => `${o.scale},${o.x},${o.y}`));
+  assert.equal(triples.size, 6);
+  // the dial the pane still shows is inert in the assembly: get_scaleOffset has no caller
+  assert.ok(!/(function|const|let)\s+scaleOffset\b/.test(readFileSync(join(root, 'src/player/eotbSprite.js'), 'utf8')), 'no scaleOffset in the port either');
 });
 
-test('EOTB5: the footfall follows the PICTURE, not a timer of its own', () => {
-  // `SyncFootsteps`: the step sound fires on frames 2 and 4 of the
-  // five-frame walk and on no others. Driven a whole cycle so the
-  // silent frames are pinned as firmly as the loud ones.
-  const step = frameTime(false, 1);
-  let c = { frame: 0, timer: 0 };
-  const fired = [];
-  for (let i = 0; i < 5; i++) {
-    c = advanceFrame(c, step, { frames: 5 });
-    if (c.footfall) fired.push(c.frame);
-  }
-  assert.deepEqual(fired.sort(), [...FOOTSTEP_FRAMES], 'two footfalls a cycle, on the mod\u2019s own frames');
+test('EOTB-IL: bodyState reads the motion bag the way LoopIdleBillboard reads PlayerMotor', () => {
+  const s = bodyState({ motion: { forward: 1, strafe: 1, speed: 4, standing: false, freeze: 0, sneaking: true, levitating: false, swimming: true, height: 0.9 } });
+  assert.equal(s.stopped, false);
+  assert.equal(Number(s.moveSpeed.toFixed(6)), Number((4 * Math.SQRT1_2).toFixed(6)), 'a diagonal is limited by .7071');
+  assert.equal(s.floating, true, 'a swimmer floats');
+  assert.equal(s.sneaking, true);
+  assert.equal(s.height, 0.9);
+  assert.equal(bodyState({ motion: { forward: 0, standing: false, freeze: 0.5 } }).stopped, true, 'a frozen motor is stopped');
+  assert.equal(bodyState({ motion: { forward: 1, standing: false } }).moveSpeed, 0, 'no speed field: no speed');
+  assert.equal(bodyState({}).height, 1.8, 'the standing capsule stands in');
+  assert.equal(bodyState({ stopped: false, motion: { standing: true } }).stopped, false, 'a host\'s explicit word wins over the bag');
+});
+
+test('EOTB-IL: THE CHOP, FIXED - a standing player is ONE frame that never changes, and the walk cycles the art’s four', async () => {
+  const { b } = await liveBody();
+  ticks(b, 30, still());
+  assert.equal(b.state().table, 'Idle');
+  assert.equal(b.state().shown.frame, 0);
+  ticks(b, 240, still());   // four seconds, sixteen of the old five-frame cycle
+  assert.equal(b.state().shown.frame, 0, 'an idle has one frame and the clock never advances it (IL_41b7-IL_41cf)');
+  assert.equal(b.state().pending.length, 0, 'no repaint is ever queued for a one-frame table');
+  const seen = new Set();
+  for (let i = 0; i < 120; i++) { b.tick(1 / 60, walk()); seen.add(b.state().shown.frame); }
+  assert.deepEqual([...seen].sort(), [0, 1, 2, 3], 'the walk shows exactly the four frames the art has');
+});
+
+test('EOTB-IL: the walk clock is LoopIdleBillboard’s - frameTimer > frameTime * speedMod, a run at twice the rate, the repaint three frames late', async () => {
+  const { b } = await liveBody();
+  ticks(b, 10, walk());
+  const t0 = b.state().shown.frame;
+  // one frame time on foot is 0.25 s; the tick fires when the timer EXCEEDS it, and the paint lands 3 frames later
+  const changes = [];
+  for (let i = 0; i < 60; i++) { b.tick(1 / 60, walk()); if (b.state().shown.frame !== (changes.at(-1)?.frame ?? t0)) changes.push({ frame: b.state().shown.frame, at: i }); }
+  assert.ok(changes.length >= 3, 'four frames a second');
+  const gaps = changes.slice(1).map((c, i) => c.at - changes[i].at);
+  assert.ok(gaps.every((g) => g >= 15 && g <= 17), `a quarter second between paints (${gaps})`);
+  // a run halves the frame time
+  const { b: runner } = await liveBody();
+  const run = walk({ motion: { forward: 1, standing: false, running: true, speed: 6, grounded: true, height: 1.8 } });
+  ticks(runner, 10, run);
+  const r0 = runner.state().shown.frame;
+  const rc = [];
+  for (let i = 0; i < 60; i++) { runner.tick(1 / 60, run); if (runner.state().shown.frame !== (rc.at(-1)?.frame ?? r0)) rc.push({ frame: runner.state().shown.frame, at: i }); }
+  const rg = rc.slice(1).map((c, i) => c.at - rc[i].at);
+  assert.ok(rg.length >= 5 && rg.every((g) => g >= 7 && g <= 9), `an eighth of a second at a run (${rg})`);
+  // the delayed repaint really waits three frames (IL_5c6a-IL_5ca1)
+  const { b: d } = await liveBody();
+  ticks(d, 10, still());
+  d.tick(1 / 60, walk());   // the table changes: a delayed repaint is queued this frame
+  assert.equal(d.state().pending.length, 1);
+  assert.equal(d.state().shown.table, 'Idle', 'not yet');
+  d.tick(1 / 60, walk()); d.tick(1 / 60, walk());
+  assert.equal(d.state().shown.table, 'Idle', 'two frames on: still not');
+  d.tick(1 / 60, walk());
+  assert.equal(d.state().shown.table, 'Move', 'the third frame paints it');
+});
+
+test('EOTB-IL: the footfall is the picture’s - frames 0 and 2 of the four-frame walk, once each, at twice the volume, and a landing', async () => {
+  const { b } = await liveBody();
+  const fell = [];
+  for (let i = 0; i < 130; i++) { b.tick(1 / 60, walk()); if (b.footstep().fell) fell.push(b.state().frame); }
+  assert.deepEqual([...new Set(fell)].sort(), [0, 2], 'a foot on the even frames and no others');
+  assert.ok(fell.length >= 4 && fell.length <= 5, `one step per frame held, not one per tick (${fell.length})`);
+  assert.equal(b.footstep().owns, true, 'Initialize ran DisableVanillaFootsteps');
+  assert.equal(b.footstep().volumeScale, 2, 'the third-person billboard steps at twice FootstepVolumeScale');
+  // standing: no foot lands
+  ticks(b, 30, still());
+  assert.equal(b.footstep().fell, false);
+  // a landing (IL_3f74-IL_3fa4): grounded after not being grounded plays a step at once
+  b.tick(1 / 60, still({ motion: { forward: 0, standing: false, grounded: false, height: 1.8 } }));
+  b.tick(1 / 60, still());
+  assert.equal(b.footstep().fell, true, 'the landing step');
+  // a swimmer is silent (IL_58c5)
+  const { b: s } = await liveBody();
+  const swim = walk({ motion: { forward: 1, standing: false, speed: 2, grounded: true, swimming: true, height: 1.8 } });
+  let any = false;
+  for (let i = 0; i < 130; i++) { s.tick(1 / 60, swim); any ||= s.footstep().fell; }
+  assert.equal(any, false, 'no step while swimming');
+  // in the saddle the mod's own footsteps still play - every fourth of eight - unless it is not on foot and not in water: they do not
+  const { b: h } = await liveBody();
+  const ride = walk({ riding: true, motion: { forward: 1, standing: false, speed: 12, grounded: true, riding: true, height: 2.6 } });
+  let rode = false;
+  for (let i = 0; i < 60; i++) { h.tick(1 / 60, ride); rode ||= h.footstep().fell; }
+  assert.equal(rode, false, 'a mount is not on foot: PlayFootstep returns (IL_585b-IL_587c)');
+  // the switch off: the next Initialize restores the vanilla stride (EnableVanillaFootsteps, IL_3c7f)
+  setModSetting(MOD, 'Animation.SyncFootsteps', false);
+  try {
+    const { b: off } = await liveBody();
+    assert.equal(off.footstep().owns, false, 'SyncFootsteps off: DFU\'s own stride');
+  } finally { _resetModSettings(); }
 });
 
 test('EOTB5: a MIRRORED sprite is its own upload, and says so', () => {
-  // The renderer's billboard batch has no flip, so a flipped
-  // orientation is different PIXELS under a different cache key. If
-  // the two shared a key the second upload would be a silent no-op and
-  // half the wheel would face the wrong way.
   const left = spriteFor('Idle', 2, 0, {});     // mirrored
   const right = spriteFor('Idle', 6, 0, {});    // its unmirrored twin
   assert.equal(left.mirror, true);
@@ -105,27 +175,33 @@ test('EOTB5: a MIRRORED sprite is its own upload, and says so', () => {
   assert.equal(left.key, right.key, '...and the same file on disk');
   assert.notEqual(left.rec, right.rec, '...but NOT the same texture cache key');
   assert.match(left.rec, /m$/, 'the mirrored copy is marked');
-
-  // and the flip really flips, row by row
-  const px = new Uint32Array([1, 2, 3, 4, 5, 6]);   // 3 wide, 2 high
+  const px = new Uint32Array([1, 2, 3, 4, 5, 6]);
   assert.deepEqual([...flipRows(px, 3, 2)], [3, 2, 1, 6, 5, 4]);
-  // twice is the identity, which is the cheapest proof it is a flip
   assert.deepEqual([...flipRows(flipRows(px, 3, 2), 3, 2)], [...px]);
+  // the second flip cancels the wheel's
+  assert.equal(spriteFor('Idle', 2, 0, {}, { flip: true }).mirror, false);
+  assert.equal(spriteFor('Idle', 0, 0, {}, { flip: true }).rec, '0-0m');
 });
 
-test('EOTB5: one table asks for five files, not eight - the wheel shares its records', () => {
+test('EOTB5: one table asks for five files a frame, not eight - the wheel shares its records', () => {
   const keys = tableKeys('Idle', 0, {});
   assert.equal(keys.length, 5, 'eight orientations, five records');
   assert.deepEqual(keys, [0, 1, 2, 3, 4].map((r) => `${ARCHIVE_FOOT}_${r}-0`));
-  // the horse tables ask their own archive
   assert.ok(tableKeys('GallopHorse', 0, { onHorse: 2 }).every((k) => k.startsWith(String(ARCHIVE_HORSE + 2))));
 });
 
+test('EOTB-IL: the body PRELOADS every frame of every table at attach, as InitializeTextures does', async () => {
+  const { b, r } = await liveBody();
+  await new Promise((res) => setTimeout(res, 5));
+  // eight orientations a table, every frame: the five records and the
+  // three mirrored twins, which are their own uploads in this port
+  const expected = Object.entries(TABLE_FRAMES).reduce((n, [, f]) => n + f * 8, 0);
+  assert.equal(r.uploads.length, expected, `${expected} sprites up - the three archives the settings pick, whole`);
+  assert.equal(new Set(r.uploads.map((u) => `${u.archive}:${u.rec}`)).size, expected, 'each once');
+  assert.equal(b.state().cached, expected);
+});
+
 test('EOTB5: in node there is no art, so the body can never claim to be ready', () => {
-  // `import.meta.glob` is a Vite macro; under node the map is empty by
-  // construction. That is what keeps the whole lane shut in the suite
-  // - and it is asserted rather than assumed, because "the tests pass"
-  // would otherwise be partly an accident of the environment.
   assert.equal(spriteCount(), 0, 'no glob under node');
   assert.equal(eotbSpriteUrl('112364_0-0'), null);
   const b = createEotbBody();
@@ -136,178 +212,219 @@ test('EOTB5: in node there is no art, so the body can never claim to be ready', 
 });
 
 test('AUDIT-EOTB F7: the lane stays SHUT until the first sprite is really up, and never flaps back', async () => {
-  // THE ONE MUTANT THE ARC’S PINS DID NOT KILL. Dropping `firstUp`
-  // from `ready()` left every test green: under node `spriteCount()`
-  // is 0, so the lane is shut whatever the second clause says, and the
-  // clause the body’s own docstring calls "the one that matters" was
-  // unpinned. Not a weak assertion - an ENVIRONMENT in which the thing
-  // asserted could not vary. The F-SING lesson wearing a new coat.
-  //
-  // So the body now takes its three browser-shaped deps (the art
-  // count, the URL, the decode) and this drives a body with art
-  // present and a decode held open.
-  const uploads = [];
-  const renderer = {
-    uploadTexture: (archive, rec, img) => uploads.push({ archive, rec, img }),
-    createBillboardBatch: () => ({ origin: [0, 0, 0] }),
-    drawBillboards: () => {},
-  };
+  const r = renderer();
   let release;
   const held = new Promise((res) => { release = res; });
-  const b = createEotbBody({
-    count: () => 3035,
-    urlFor: (key) => `/art/${key}.png`,
-    decode: () => held,
-  });
-  b.attach(renderer, () => ({}));
-
-  // THE ART EXISTS AND THE LANE IS STILL SHUT. A lane that opened here
-  // would swing the camera out behind nothing for as long as the first
-  // fetch took.
+  const b = createEotbBody({ count: () => 3035, urlFor: (key) => `/art/${key}.png`, decode: () => held });
+  b.attach(r, () => ({}));
   assert.equal(b.ready(), false, 'art present, first sprite still decoding: SHUT');
-
   release({ width: 3, height: 2, colors: new Uint32Array([1, 2, 3, 4, 5, 6]) });
   await held;
-  await Promise.resolve();          // let the .then that sets firstUp run
+  await new Promise((res) => setTimeout(res, 2));
   assert.equal(b.ready(), true, 'the first sprite is up: OPEN');
-
-  // AND IT MUST NOT FLAP. Once a sprite is up the lane stays open, so
-  // a later sprite still decoding - or failing outright - cannot drop
-  // the player back into first person mid-scroll.
-  const b2 = createEotbBody({
-    count: () => 3035,
-    urlFor: () => '/art/x.png',
-    decode: () => Promise.reject(new Error('404')),
-  });
-  b2.attach(renderer, () => ({}));
-  await Promise.resolve(); await Promise.resolve();
+  const b2 = createEotbBody({ count: () => 3035, urlFor: () => '/art/x.png', decode: () => Promise.reject(new Error('404')) });
+  b2.attach(r, () => ({}));
+  await new Promise((res) => setTimeout(res, 2));
   assert.equal(b2.ready(), false, 'a first sprite that FAILS does not open the lane');
-
-  // and the count really is consulted: no art, no lane, however many
-  // sprites have decoded
   const b3 = createEotbBody({ count: () => 0, urlFor: () => '/a.png', decode: () => Promise.resolve({ width: 1, height: 1, colors: new Uint32Array([7]) }) });
-  b3.attach(renderer, () => ({}));
-  await Promise.resolve(); await Promise.resolve();
+  b3.attach(r, () => ({}));
+  await new Promise((res) => setTimeout(res, 2));
   assert.equal(b3.ready(), false, 'a decoded sprite the build does not carry is not art');
 });
 
-test('AUDIT-EOTB F7b: the MIRROR reaches the UPLOAD, driven through the only path a player has', async () => {
-  // `flipRows` was pinned as a FUNCTION and never as wiring - the same
-  // gap F1 through F5 were, and the reason this audit exists. So this
-  // opens the lane the way a wheel does and asserts the pixels the
-  // renderer is actually handed.
-  setEotbBodyReady(() => true);
-  setEotbDrawBody(null);
-  eotbCamera.loadSettings((v, k) => ({
-    'Camera.LongitudinalDistance': 2, 'Camera.FrontalPlaneOffset': [0, 0],
-    'Camera.MinimumDistance': 0,
-  })[k]);
+test('AUDIT-EOTB F7b: the MIRROR reaches the UPLOAD, and the draw keeps the LAST sprite while a new one is on its way', async () => {
+  const pixels = new Uint32Array([1, 2, 3, 4, 5, 6]);   // 3 wide, 2 high
+  const r = renderer();
+  const gate = { open: true };
+  // TurnToView Always, so the facing is the camera's forward (+z) and
+  // the wheel turns with the camera alone
+  setModSetting(MOD, 'Graphics.TurnToView', 3);
+  // a decode held shut spins at most two seconds: a test helper that
+  // can hang is a test suite that can hang (EOTB4's lesson)
+  const wait = async () => { for (let i = 0; i < 2000 && !gate.open; i++) await new Promise((res) => setTimeout(res, 1)); };
+  const b = createEotbBody({
+    count: () => 3035, urlFor: (key) => `/art/${key}.png`,
+    decode: async () => { await wait(); return { width: 3, height: 2, colors: pixels }; },
+  });
+  b.attach(r, () => ({}));
+  await new Promise((res) => setTimeout(res, 5));
+  b.toggle(true, false);
+  _resetModSettings();
+  // FACING THE CAMERA: orientation 0, not mirrored
+  ticks(b, 12, still({ cameraPos: [0, 1.5, 2] }));
+  assert.equal(b.state().shown.orientation, 0);
+  b.draw(null, { eye: [0, 1.5, 2], feet: [0, 0, 0], yaw: 0 });
+  const plain = r.uploads.find((u) => u.rec === '0-0');
+  assert.deepEqual([...plain.img.colors], [...pixels], 'uploaded exactly as decoded');
+  // THE CAMERA OFF TO THE PLAYER'S RIGHT (+x): index 2, the mirrored record, its own pixels
+  ticks(b, 12, still({ cameraPos: [2, 1.5, 0] }));
+  assert.equal(b.state().shown.orientation, 2, 'the camera off the right: index 2 (EOTB-IL: the turn)');
+  b.draw(null, { eye: [2, 1.5, 0], feet: [0, 0, 0], yaw: 0 });
+  const flipped = r.uploads.find((u) => u.rec === '2-0m');
+  assert.ok(flipped, 'a mirrored orientation uploads under its OWN key');
+  assert.deepEqual([...flipped.img.colors], [3, 2, 1, 6, 5, 4], 'and the pixels are really flipped, row by row');
+  // ...and off the LEFT (-x): index 6, the same record straight
+  ticks(b, 12, still({ cameraPos: [-2, 1.5, 0] }));
+  assert.equal(b.state().shown.orientation, 6, 'the camera off the left: index 6');
+  // A SPRITE STILL ON ITS WAY: the last batch is drawn, not nothing
+  gate.open = false;
+  const b2 = createEotbBody({
+    count: () => 3035, urlFor: (key) => `/art/${key}.png`,
+    decode: async (url) => { if (/_5-/.test(url)) await wait(); return { width: 3, height: 2, colors: pixels }; },
+  });
   try {
-    eotbCamera.toggleOffset(true);           // out of the head, as the wheel does
-    for (let i = 0; i < 40; i++) {
-      mwViewFrame({ fpEye: [0, 1.6, 0], feet: [0, 0, 0], yaw: 0, pitch: 0, dt: 1 / 60, raycast: () => null });
-    }
-    assert.equal(eotbCamera.thirdPerson(), true, 'the wheel really opened the lane');
+    const r2 = renderer();
+    b2.attach(r2, () => ({}));
+    await new Promise((res) => setTimeout(res, 5));
+    b2.toggle(true, false);
+    ticks(b2, 12, walk({ cameraPos: [0, 1.5, 2] }));   // the facing set (+z), then a stand facing the camera
+    ticks(b2, 12, still({ cameraPos: [0, 1.5, 2] }));
+    assert.equal(b2.state().shown.table, 'Idle');
+    assert.equal(b2.draw(null, { eye: [0, 1.5, 2], feet: [0, 0, 0], yaw: 0 }), true, 'the idle draws');
+    await new Promise((res) => setTimeout(res, 2));
+    b2.draw(null, { eye: [0, 1.5, 2], feet: [0, 0, 0], yaw: 0 });
+    assert.equal(r2.batches.at(-1).rec, '0-0');
+    ticks(b2, 4, walk({ cameraPos: [0, 1.5, 2] }));
+    assert.equal(b2.state().shown.table, 'Move');
+    assert.equal(b2.draw(null, { eye: [0, 1.5, 2], feet: [0, 0, 0], yaw: 0 }), true, 'the walk\'s record is not up yet: the idle stays on screen rather than nothing');
+    assert.equal(r2.batches.at(-1).rec, '0-0', 'the batch drawn is still the idle\'s');
+  } finally { gate.open = true; }
+});
 
-    const pixels = new Uint32Array([1, 2, 3, 4, 5, 6]);   // 3 wide, 2 high
-    const uploads = [];
-    const renderer = {
-      uploadTexture: (archive, rec, img) => uploads.push({ archive, rec, img }),
-      createBillboardBatch: () => ({ origin: [0, 0, 0] }),
-      destroyBillboardBatch: () => {},
-      drawBillboards: () => {},
-    };
-    const b = createEotbBody({
-      count: () => 3035,
-      urlFor: (key) => `/art/${key}.png`,
-      decode: async () => ({ width: 3, height: 2, colors: pixels }),
-    });
-    b.attach(renderer, () => ({}));
-    await Promise.resolve(); await Promise.resolve();
+test('EOTB-IL: the placement is UpdateBillboard’s - the feet on the ground, sunk by a crouch, the top at the swim line, the XML X along the right', async () => {
+  const { b } = await liveBody();
+  ticks(b, 10, still());
+  b.draw(null, { eye: [0, 1.5, -2], feet: [0, 0, 0], yaw: 0 });
+  await new Promise((res) => setTimeout(res, 2));
+  b.draw(null, { eye: [0, 1.5, -2], feet: [0, 0, 0], yaw: 0 });
+  const h = 6 * SIZE_ON_FOOT;
+  let p = b.state().placed;
+  assert.equal(Number(p[1].toFixed(6)), Number((h / 2).toFixed(6)), 'standing: the sprite\'s bottom at the feet');
+  // crouching: origin + Y + size/2 - height, the crouched capsule 0.9 - the sprite sinks 0.45
+  ticks(b, 2, still({ motion: { forward: 0, standing: true, grounded: true, crouching: true, height: 0.9 } }));
+  p = b.state().placed;
+  assert.equal(Number(p[1].toFixed(6)), Number((0.45 + h / 2 - 0.9).toFixed(6)), 'crouched: sunk by half the height difference (IL_4a67-IL_4acc)');
+  // on exterior water: origin + Y - size/2 - the top at the capsule's centre
+  ticks(b, 2, still({ motion: { forward: 0, standing: true, grounded: true, onExteriorWater: true, height: 1.8 } }));
+  p = b.state().placed;
+  assert.equal(Number(p[1].toFixed(6)), Number((0.9 - h / 2).toFixed(6)), 'swimming: the top at the swim line (IL_4a1a-IL_4a62)');
+  // the XML X: record 18 (x -0.2) is index 5 straight and index 3
+  // mirrored, and UpdateBillboard negates X for the mirrored state
+  // (IL_4ba7-IL_4bd1). A drawn weapon faces the camera's forward (+z);
+  // the camera at the back-left is index 5, at the back-right 3.
+  const { b: armed } = await liveBody();
+  ticks(armed, 12, still({ sheathed: false, cameraPos: [-1.4, 1.5, -1.4] }));
+  assert.equal(armed.state().shown.table, 'IdleMelee');
+  assert.equal(armed.state().shown.orientation, 5, 'the camera at the back-left: index 5, record 18 straight');
+  armed.draw(null, { eye: [-1.4, 1.5, -1.4], feet: [0, 0, 0], yaw: 0 });
+  await new Promise((res) => setTimeout(res, 2));
+  armed.draw(null, { eye: [-1.4, 1.5, -1.4], feet: [0, 0, 0], yaw: 0 });
+  p = armed.state().placed;
+  assert.equal(Number(p[0].toFixed(6)), -0.2, 'the -0.2 XML offset along the right');
+  ticks(armed, 12, still({ sheathed: false, cameraPos: [1.4, 1.5, -1.4] }));
+  assert.equal(armed.state().shown.orientation, 3, 'the back-right: index 3, the same record mirrored');
+  armed.draw(null, { eye: [1.4, 1.5, -1.4], feet: [0, 0, 0], yaw: 0 });
+  await new Promise((res) => setTimeout(res, 2));
+  armed.draw(null, { eye: [1.4, 1.5, -1.4], feet: [0, 0, 0], yaw: 0 });
+  assert.equal(Number(armed.state().placed[0].toFixed(6)), 0.2, 'and the offset negated for the mirrored state');
+});
 
-    // FACING THE CAMERA: orientation 0, not mirrored.
-    b.face([0, 0, 1], [0, 0, 1]);
-    b.draw(null, { eye: [0, 2, -2], feet: [0, 0, 0], yaw: 0 });
-    await Promise.resolve(); await Promise.resolve();
-    const plain = uploads.find((u) => !String(u.rec).endsWith('m'));
-    assert.ok(plain, 'an unmirrored orientation uploads');
-    assert.deepEqual([...plain.img.colors], [...pixels], 'and is uploaded exactly as decoded');
+test('EOTB-IL: the first-person billboard - active while FirstPersonBillboard is not None, a quarter metre behind, the front record, mirrored when Visible', async () => {
+  const { b, r } = await liveBody({}, { third: false });   // toggle(true, fp=true): ToggleOffset(false) with the setting on
+  assert.equal(b.state().FP, true);
+  assert.equal(b.state().active, true);
+  ticks(b, 10, still({ cameraPos: [0, 1.7, 0] }));
+  assert.equal(b.state().shown.orientation, 0, 'the camera point is the head: the zero vector reads the front record');
+  assert.equal(b.draw(null, { eye: [0, 1.7, 0], feet: [0, 0, 0], yaw: 0 }), true, 'drawn in first person');
+  await new Promise((res) => setTimeout(res, 2));
+  b.draw(null, { eye: [0, 1.7, 0], feet: [0, 0, 0], yaw: 0 });
+  const p = b.state().placed;
+  assert.equal(Number(p[2].toFixed(6)), -0.25, 'a quarter metre behind the parent along the forward (IL_4cd7)');
+  assert.equal(r.batches.at(-1).rec, '0-0', 'Shadows Only (1) draws the picture as it is');
+  // Visible (2) faces the quad away from the camera: seen from behind, mirrored
+  setModSetting(MOD, 'Graphics.FirstPersonBillboard', 2);
+  try {
+    b.toggle(true, true);
+    ticks(b, 12, still({ cameraPos: [0, 1.7, 0] }));
+    b.draw(null, { eye: [0, 1.7, 0], feet: [0, 0, 0], yaw: 0 });
+    await new Promise((res) => setTimeout(res, 2));
+    b.draw(null, { eye: [0, 1.7, 0], feet: [0, 0, 0], yaw: 0 });
+    assert.equal(r.batches.at(-1).rec, '0-0m', 'Visible: the mirrored upload');
+  } finally { _resetModSettings(); }
+  // None: inactive in first person, nothing drawn (the camera's toggle passes false)
+  const { b: none } = await liveBody({}, { third: false });
+  none.toggle(false, false);
+  assert.equal(none.state().active, false);
+  assert.equal(none.draw(null, { eye: [0, 1.7, 0], feet: [0, 0, 0], yaw: 0 }), false);
+});
 
-    // A CAMERA OFF TO THE SIDE: a mirrored orientation, its own key,
-    // its own PIXELS. If the flip lived only in the helper this is the
-    // assertion that would fail.
-    b.face([0, 0, 1], [-1, 0, 0]);           // orientation 2, which the table mirrors
-    b.draw(null, { eye: [-2, 2, 0], feet: [0, 0, 0], yaw: 0 });
-    await Promise.resolve(); await Promise.resolve();
-    b.draw(null, { eye: [-2, 2, 0], feet: [0, 0, 0], yaw: 0 });
-    const flipped = uploads.find((u) => String(u.rec).endsWith('m'));
-    assert.ok(flipped, 'a mirrored orientation uploads under its OWN key - the batch has no flip');
-    assert.deepEqual([...flipped.img.colors], [3, 2, 1, 6, 5, 4],
-      'and the pixels the renderer gets are really flipped, row by row');
-  } finally {
-    setEotbBodyReady(null);
-    eotbCamera.loadSettings(null);
-    eotbCamera.toggleOffset(false);
-    for (let i = 0; i < 4 && mwViewPendingClicks(); i++) {
-      mwViewFrame({ fpEye: [0, 1.6, 0], feet: [0, 0, 0], yaw: 0, pitch: 0 });
-    }
-  }
+test('EOTB-IL: the camera drives the billboard through ToggleOffset - shown out, the first-person one back, Initialize each time', async () => {
+  const cam = createEotbCamera();
+  cam.loadSettings((v, k) => (k === 'Camera.StartInThirdPerson' ? false : undefined));
+  const r = renderer();
+  const b = createEotbBody({ count: () => 3035, urlFor: (k) => `/art/${k}.png`, decode: async () => ({ width: 4, height: 6, colors: new Uint32Array(24) }) });
+  b.attach(r, () => ({}));
+  cam.setBillboard(b);
+  cam.toggleOffset(true);
+  assert.deepEqual([b.state().active, b.state().FP], [true, false], 'out of the head: the third-person billboard');
+  cam.toggleOffset(false);
+  assert.deepEqual([b.state().active, b.state().FP], [true, true], 'back in it: the first-person billboard (FirstPersonBillboard ships at 1)');
+  cam.loadSettings((v, k) => (k === 'Graphics.FirstPersonBillboard' ? 0 : undefined));
+  cam.toggleOffset(false);
+  assert.equal(b.state().active, false, 'FirstPersonBillboard None: hidden in first person');
+  cam.loadSettings((v, k) => (k === 'Graphics.Enable' ? false : undefined));
+  cam.toggleOffset(true);
+  assert.equal(b.state().active, false, 'Graphics.Enable off: hidden in third person too');
+  assert.equal(cam.spellHandsEnabled(), false, 'and the spell hands still go');
+});
+
+test('EOTB-IL: UpdateMaterial - invisible white at 0.4, a shade BLACK at 0.6, blending white at 0.8, in that order', async () => {
+  const { b } = await liveBody();
+  ticks(b, 2, still());
+  assert.equal(b.state().material, null);
+  ticks(b, 1, still({ concealment: { invisible: true, blending: true, shade: true } }));
+  assert.deepEqual(b.state().material, { mode: 3, alpha: 0.4 }, 'invisible first');
+  ticks(b, 1, still({ concealment: { blending: true, shade: true } }));
+  assert.deepEqual(b.state().material, { mode: 4, alpha: 0.6 }, 'then the shade - the black mode');
+  ticks(b, 1, still({ concealment: { blending: true } }));
+  assert.deepEqual(b.state().material, { mode: 3, alpha: 0.8 }, 'then blending');
+  // the renderer draws mode 4 as black
+  const rs = readFileSync(join(root, 'src/render/renderer.js'), 'utf8');
+  assert.match(rs, /if \(uConceal\.x == 4\.0\) lit = vec3\(0\.0\);/);
 });
 
 test('EOTB5: THE FOUR HOSTS are named, and the wiring is ONE site because all four reach it', () => {
-  // the FOUR HOSTS rule in bible/Home.md - a slice wiring a seam into a
-  // host must name all four. Named: exterior.js, world.js, worldModes.js,
-  // dungeonContext.js. None carries a call, and that IS the wiring:
-  // all four build a weapon rig, which is the one place fpArm.attach
-  // is called, so the body attaches beside the arm it stands in for.
-  //
-  // Checked as a POPULATION rather than as four names, so a fifth host
-  // gets the body without an edit here - and so this pin cannot pass
-  // by someone deleting a host from a list.
   assert.match(weaponRig, /eotbBody\.attach\(renderer, \(\) => \(\{/, 'the body attaches in the weapon rig, with the state only the rig can answer');
   assert.match(weaponRig, /fpArm\.attach\(renderer, camera\)/, '...beside the arm');
-
   const hosts = ['exterior', 'world', 'worldModes', 'dungeonContext'];
   for (const h of hosts) {
     const src = readFileSync(join(root, `src/scenes/${h}.js`), 'utf8');
     assert.match(src, /createWeaponRig\(/, `${h}.js builds a weapon rig, so it gets the body`);
     assert.doesNotMatch(src, /eotbBody/, `${h}.js must NOT carry its own call - four sites is four chances to forget one`);
   }
-  // ...and the population really is those four: nothing else in scenes/
-  // builds a rig, so the list is complete rather than merely long
-  const all = readFileSync(join(root, 'src/combat/weaponRig.js'), 'utf8');
-  assert.match(all, /export function createWeaponRig/, 'one builder');
+  assert.match(weaponRig, /export function createWeaponRig/, 'one builder');
   assert.match(bodySrc, /scenes\/exterior\.js.*scenes\/world\.js|THE FOUR HOSTS/s, 'the body names them in its head');
+  // and the rig no longer CALLS the body - the doors are polled off the record, as the mod polls DFU
+  assert.doesNotMatch(weaponRig, /eotbBody\.(attack|cast|release)\(/, 'no strike call: PlayerBillboard polls IsAttacking itself');
+  for (const f of ['attacking: playerWeapon.machine.state !== \'Idle\'', 'castPlaying: !!fpsSpellCasting.isPlayingAnim', 'bowDrawback: getBool(\'Controls\', \'BowDrawback\')', 'swingHeld: _held', 'concealment: entity ? concealmentFlags(entity) : null']) {
+    assert.ok(weaponRig.includes(f), `the record carries ${f}`);
+  }
 });
 
 test('EOTB5: the mod\u2019s art is EXCLUDED from Vite\u2019s inlining, and nothing else is', () => {
-  // THE FINDING THIS PIN EXISTS FOR. Vite inlines any asset under
-  // `assetsInlineLimit` (4 KB) as a base64 data URI. These sprites
-  // average 2.8 KB, so all 3035 qualified and the build produced a
-  // TWELVE MEGABYTE JavaScript chunk - exiting 0, with no warning. A
-  // player would have parsed 12 MB of base64 to start the game.
-  //
-  // The rule is narrow by path, and it FALLS THROUGH for everything
-  // else: a callback returning `true` for other assets would
-  // force-inline them regardless of size, which is the opposite
-  // mistake and just as quiet. That second bug was written and caught
-  // here before it shipped.
   assert.match(viteConfig, /assetsInlineLimit:/, 'the rule exists');
   const m = /assetsInlineLimit: \(filePath\) => \((.*?)\),/.exec(viteConfig);
   assert.ok(m, 'and it is a callback, not a number');
   assert.match(m[1], /eye-of-the-beholder/, 'aimed at this mod\u2019s art');
-  assert.match(m[1], /\?\s*false\s*:\s*undefined/,
-    'false for this mod, UNDEFINED for everything else - undefined falls back to the default limit');
-
-  // drive it, so the rule is not merely spelled
+  assert.match(m[1], /\?\s*false\s*:\s*undefined/, 'false for this mod, UNDEFINED for everything else');
   // eslint-disable-next-line no-new-func
   const rule = new Function('filePath', `return (${m[1]});`);
   assert.equal(rule('/x/vendor/eye-of-the-beholder/Textures/112364/112364_0-0.png'), false, 'never inline a sprite');
   assert.equal(rule('/x/vendor/dynamic-skies/Textures/CdMSunny.png'), undefined, 'every other vendor asset keeps the default');
-  assert.equal(rule('/x/src/ui/whatever.png'), undefined);
-  // a Windows separator too. Vite normalises to posix internally, so
-  // this arm is belt and braces - but the character class costs
-  // nothing and a path that arrives with backslashes must not quietly
-  // fall through to "inline it".
   assert.equal(rule('C:\\x\\vendor\\eye-of-the-beholder\\Textures\\a.png'), false, 'and on a Windows path too');
+});
+
+test('EOTB5: the module-level body and camera are one pair', () => {
+  assert.equal(typeof eotbCamera.setBillboard, 'function');
+  assert.equal(frameTime(false, 1), 0.25);
 });

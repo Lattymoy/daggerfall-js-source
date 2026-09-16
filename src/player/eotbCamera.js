@@ -6,6 +6,28 @@
 // is how a "1:1" port quietly stops being one. `monodis` segfaults on
 // this assembly; it was read with dncil/dnfile.
 //
+// EOTB-IL (2026-09-17): READ AGAIN, AGAINST THE VENDORED DUMP, and
+// fourteen readings corrected - each cites its offset where it lands.
+// The ones a player meets: the auto-toggle table was DISARMED by the
+// mod's own LoadSettings whenever every row is Don'tChange (the sum of
+// the nine rows, IL_10e1-IL_112d) and the port had it armed; the
+// scroll ladder tested the offset captured BEFORE the notch
+// (IL_1253-IL_1319), so the port left third person one notch early;
+// the bounds initialise to 2 m (IL_29c6-IL_29e1), not 0, which is what
+// lets the minimum-distance floor bite on an axis no cast has measured;
+// the mirrored offset arm carries NO riding term on Y (IL_032f-IL_035b);
+// the shoulder block is skipped whole while the X offset is zero
+// (IL_148f); a manual switch resets no clock (IL_14ac-IL_14c2); the
+// revert probe starts at the camera TARGET's height and depth
+// (IL_14f9-IL_152b); LateUpdate's table is three independent blocks
+// and a fan-out, not one situation (`autoToggleRows`); OnNewGame and
+// OnLoad apply a TRANSITION row when the table is armed and only
+// otherwise take StartInThirdPerson (IL_0930-IL_0ad0); the dungeon's
+// doors fire the transition rows too (IL_06bf, IL_06e1); a floating
+// origin shift re-seeds the smoothing (IL_1cb7); and ToggleOffset
+// drives the billboard, the torch, the spell hands and the horse
+// (IL_22b4-IL_239f), which the port's toggle had left to edge detection.
+//
 // WHY THE PORT CARRIES A SECOND THIRD-PERSON CAMERA. Mac, 2026-09-15:
 // "This is moreso for those who opt out of using morrowind." The
 // port's own third person (MW-D24/MW-D25) draws a MORROWIND body and
@@ -28,13 +50,28 @@
 //          TransformVector, and it is what the offset rides, which is
 //          why looking up walks the camera along the view rather than
 //          along the ground.
+//
+// THREE DEPARTURES STAND, each Mac's or recorded in the Ledger: the
+// wheel is the only way in and out (`Camera.TogglePerspective`'s key,
+// IL_1230-IL_124d, is inert); `CameraScrolling.ScrollableZOffset` ships
+// off and the port ships it on; `SwitchShoulder` is B, not Tab. And
+// two things the port cannot hold: the attack-from-body ray
+// (`MeleeDamage`, IL_2844) and the missile re-home (IL_137f-IL_1477) -
+// the port's swing and its missiles already start at the player's
+// head, which this camera never moves, so there is nothing to
+// re-origin and `Don'tOffsetAttacks` has nothing to stop.
 
 import { MOD_SETTINGS } from '../systems/modSettings.js';
-import { AUTO_TOGGLE_ROWS, AUTO_TOGGLE, autoToggleSituation } from './eotbBillboard.js';   // AUDIT-EOTB2: LateUpdate's table
+import { AUTO_TOGGLE_ROWS, AUTO_TOGGLE, autoToggleRows } from './eotbBillboard.js';   // [IL] LateUpdate's table
 
 /** `eyeRadius` is a field initialiser in the mod's own .ctor, not a
  *  setting - the clearance the camera keeps off a wall. */
 export const EYE_RADIUS = 0.25;
+/** [IL] `boundsX`, `boundsY`, `boundsZ` initialise to 2.0 (IL_29c6-IL_29e1).
+ *  An axis whose offset is zero is never cast (CheckBounds skips it),
+ *  so its bound stays at this - which is what lets the minimum
+ *  distance floor bite with no wall measured. The port had 0. */
+export const BOUNDS_INITIAL = 2.0;
 
 /** Update's far clamp: the Z offset never passes -10 however long the
  *  wheel is turned (`if (z < -10) offsetScroll = 10 + (posOffset.z +
@@ -46,6 +83,10 @@ export const MAX_Z = -10;
  *  ORDER is load-bearing: a mounted player with a weapon readied takes
  *  the MOUNT offsets, because the mount arm returns first. */
 export const OVERRIDE_ORDER = Object.freeze(['Boat', 'Mount', 'Weapon']);
+
+/** [IL] The two lines `LateUpdate` pops when ToggleInput arms or
+ *  disarms the table (IL_1823, IL_183c), behind `Debug.ShowMessages`. */
+export const AUTO_TOGGLE_MESSAGES = Object.freeze({ armed: 'Auto-toggle POV enabled!', disarmed: 'Auto-toggle POV disabled!' });
 
 const setting = (name) => MOD_SETTINGS['eye-of-the-beholder'].keys[name];
 
@@ -77,6 +118,8 @@ export function readCameraSettings(get) {
     };
   };
   const [x, y] = frontal('Camera');
+  const auto = Object.freeze(Object.fromEntries([...AUTO_TOGGLE_ROWS, 'OnTransitionInterior', 'OnTransitionExterior']
+    .map((row) => [row, g(`AutoTogglePerspective.${row}`) ?? AUTO_TOGGLE.DontChange])));
   return {
     startInThird: !!g('Camera.StartInThirdPerson'),
     x,
@@ -91,13 +134,21 @@ export function readCameraSettings(get) {
     scrollable: !!g('CameraScrolling.ScrollableZOffset'),
     increment: g('CameraScrolling.ScrollIncrement') ?? 0,
     boatTarget: g('CameraOverrideBoat.Target') ?? 0,
-    // AUDIT-EOTB2: the two keys the mod binds beside the wheel, and
-    // LateUpdate's AutoTogglePerspective table - nine rows, read by
-    // their section's own names so a row cannot be mis-keyed by hand.
+    // the two keys the mod binds beside the wheel
     switchShoulderKey: g('Camera.SwitchShoulder') ?? null,
     autoToggleKey: g('AutoTogglePerspective.ToggleInput') ?? null,
-    auto: Object.freeze(Object.fromEntries([...AUTO_TOGGLE_ROWS, 'OnTransitionInterior', 'OnTransitionExterior']
-      .map((row) => [row, g(`AutoTogglePerspective.${row}`) ?? AUTO_TOGGLE.DontChange]))),
+    auto,
+    /** [IL] `autoPOVSwitch` is DERIVED (IL_10e1-IL_112d): the nine rows
+     *  summed, armed when any is not Don'tChange. The bundle ships every
+     *  row at 0, so the table ships DISARMED - the port had armed it. */
+    autoPOVSwitch: Object.values(auto).reduce((a, b) => a + (b | 0), 0) > 0,
+    // [IL] the Graphics and Compatibility fields the camera itself holds
+    billboard: g('Graphics.Enable') !== false,              // ToggleBillboard's argument
+    firstPersonBillboard: g('Graphics.FirstPersonBillboard') ?? 0,
+    hideWeapon: g('Compatibility.Don\'tHideWeapon') === true,
+    hideHorse: g('Compatibility.Don\'tHideHorse') === true,
+    offsetAttacks: g('Compatibility.Don\'tOffsetAttacks') === true,
+    debugMessages: g('Debug.ShowMessages') !== false,
     overrides: Object.freeze({
       Boat: override('CameraOverrideBoat'),
       Mount: override('CameraOverrideMount'),
@@ -125,11 +176,6 @@ export function eyeBasis(yaw, pitch) {
   // way round gives up = [0,-1,0] at rest, so FrontalPlaneOffset's Y -
   // shipped at 0.5, described by the mod as "Moves the camera position
   // on the X and Y axes" - pushed the camera DOWN instead of up.
-  //
-  // It survived the campaign because the only pin that drove the basis
-  // under pitch reasoned about the FORWARD term ("pitched up, the
-  // camera swings down behind the player", which is true) and never
-  // isolated a pure +Y offset, where the sign is the whole answer.
   const up = [
     forward[1] * right[2] - forward[2] * right[1],
     forward[2] * right[0] - forward[0] * right[2],
@@ -166,7 +212,7 @@ export function createEotbCamera() {
   let mirrorTimer = 0;
   let posCurrent = [0, 0, 0];
   let posTarget = [0, 0, 0];
-  let boundsX = 0, boundsY = 0, boundsZ = 0;
+  let boundsX = BOUNDS_INITIAL, boundsY = BOUNDS_INITIAL, boundsZ = BOUNDS_INITIAL;
   let cfg = readCameraSettings(null);
   // MW-D30's lesson, which applies to this mod's wheel for the same
   // reason: the mod reads `Input.GetAxis` ONCE per Update and acts on
@@ -178,28 +224,28 @@ export function createEotbCamera() {
   // the camera SWING out instead of cutting to the target
   let lastEye = [0, 0, 0];
   let lastDt = 0;
-  // AUDIT-EOTB2 [SETTINGS]: LateUpdate's AutoTogglePerspective. The
-  // table is applied when the SITUATION changes (a `FirstPerson` row
-  // re-applied every frame would fight the wheel the mod itself
-  // ships), and `ToggleInput` - "Button that arms or disarms the
-  // automatic view changes" - is the arm.
-  let autoArmed = true;
-  let situation = null;
-
-  /** One row of the table, applied: 1 takes first person, 2 third, 0
-   *  leaves the view where it is. */
-  function applyRow(row) {
-    if (row === AUTO_TOGGLE.FirstPerson && offset) toggleOffset(false);
-    else if (row === AUTO_TOGGLE.ThirdPerson && !offset) toggleOffset(true);
-    return offset;
-  }
+  let lastState = {};
+  /** [IL] LateUpdate's `loc0`: an arming forces the fan-out this frame (IL_1814) */
+  let forcedApply = false;
+  // [IL] the five `is*Previous` fields LateUpdate keeps (IL_1c4f-IL_1c6e)
+  let prev = null;
+  let autoPOVSwitch = cfg.autoPOVSwitch;
+  /** the `PlayerBillboard` this camera drives through ToggleOffset -
+   *  `{ toggle(active, fp), torchDefault() }` */
+  let billboard = null;
+  /** DaggerfallUI.PopupMessage, as the rig hands it in */
+  let popup = null;
+  /** `spellCasting.enabled`, the FPS spell hands - false in third person */
+  let spellHandsEnabled = true;
 
   /**
    * `posOffset`, the mod's own property. Four arms in the order the IL
    * tests them, each mirrored on X when `mirror` is set, each with the
    * scroll subtracted from Z. Only the BASE arm scales by the riding
-   * offset - the override arms do not, which is the mod's own
-   * asymmetry and not a slip in the reading.
+   * offset - the override arms do not - and the MIRRORED base arm
+   * scales Z alone (IL_032f-IL_035b): the Y riding term is the
+   * unmirrored arm's only (IL_040d-IL_0446). The mod's own asymmetry,
+   * kept.
    */
   function posOffset(state) {
     const m = mirror ? -1 : 1;
@@ -208,7 +254,8 @@ export function createEotbCamera() {
     if (o.Mount.enabled && state.riding) return [m * o.Mount.x, o.Mount.y, o.Mount.z - offsetScroll];
     if (o.Weapon.enabled && state.weaponReady) return [m * o.Weapon.x, o.Weapon.y, o.Weapon.z - offsetScroll];
     const r = state.riding ? cfg.riding : 0;      // get_offsetRidingMod
-    return [m * cfg.x, cfg.y + cfg.y * r, cfg.z + cfg.z * r - offsetScroll];
+    if (mirror) return [-cfg.x, cfg.y, cfg.z + cfg.z * r - offsetScroll];
+    return [cfg.x, cfg.y + cfg.y * r, cfg.z + cfg.z * r - offsetScroll];
   }
 
   /**
@@ -222,9 +269,9 @@ export function createEotbCamera() {
    * arithmetic. A miss records the full length.
    */
   function checkBounds(origin, state, yaw, pitch, raycast) {
-    const off = posOffset(state);
     const { right, up, forward } = eyeBasis(yaw, pitch);
     const axis = (i, base) => {
+      const off = posOffset(state);   // re-read per axis, as the IL does - the auto-switch below may have flipped X
       if (off[i] === 0) return null;
       const dir = off[i] < 0 ? [-base[0], -base[1], -base[2]] : base;
       const len = Math.abs(off[i] * 2) + EYE_RADIUS;
@@ -234,11 +281,10 @@ export function createEotbCamera() {
     const bx = axis(0, right);
     if (bx !== null) boundsX = bx;
     // THE AUTO-SWITCH rides inside CheckBounds, between the X cast and
-    // the Y cast, and it flips `mirror` in place - so the Y and Z
-    // casts below already see the mirrored offset. Reordering these is
+    // the Y cast, and it flips `mirror` in place. Reordering these is
     // a behaviour change, not a tidy-up.
     if (bx !== null && cfg.mirrorAuto
-        && Math.abs(boundsX) < Math.abs(off[0]) / 2 + EYE_RADIUS) {
+        && Math.abs(boundsX) < Math.abs(posOffset(state)[0]) / 2 + EYE_RADIUS) {
       mirror = !mirror;
       if (cfg.mirrorTime > 0) mirrorTimer = 0;
     }
@@ -262,28 +308,50 @@ export function createEotbCamera() {
   }
 
   /**
-   * `ToggleOffset`. Entering third person zeroes the scroll and starts
-   * the smoothing FROM THE EYE'S CURRENT POSITION, which is what makes
-   * the camera swing out rather than cut.
+   * [IL] `ToggleOffset(bool)` (IL_22b4-IL_239f), whole. Entering third
+   * person zeroes the scroll, starts the smoothing FROM THE EYE'S
+   * CURRENT POSITION (the swing, not a cut), shows the billboard and
+   * hides the spell hands. Leaving it puts the torch and the eye back,
+   * makes the billboard the first-person one when
+   * `FirstPersonBillboard` is on and hides it otherwise, and shows the
+   * hands. Both ways the horse follows unless Don'tHideHorse (read by
+   * the body's `hides`), `offset` is written LAST, and the
+   * OnToggleOffset event fires.
    */
+  const listeners = new Set();
   function toggleOffset(on) {
+    on = !!on;
     if (on) {
       offsetScroll = 0;
       posCurrent = [...lastEye];
+      billboard?.toggle(cfg.billboard, false);
+      spellHandsEnabled = false;
+    } else {
+      billboard?.torchDefault?.();
+      if (cfg.firstPersonBillboard > 0) billboard?.toggle(cfg.billboard, true);
+      else billboard?.toggle(false, false);
+      spellHandsEnabled = true;
     }
-    offset = !!on;
+    offset = on;
+    for (const fn of listeners) fn(offset);
     return offset;
   }
 
   /**
-   * The auto-switch's revert, Update's own block. Once the timer is up
-   * it re-probes the side the camera would go BACK to, from a point
-   * centred on the body rather than from the camera - so it asks "is
-   * the original shoulder clear now", not "is the camera clear now".
+   * [IL] Update's shoulder block (IL_1484-IL_160c), skipped WHOLE while
+   * the X offset is zero: the auto-switch's revert re-probes the side
+   * the camera would go BACK to from the camera TARGET's height and
+   * depth with the lateral component re-centred on the body
+   * (IL_14f9-IL_152b) - "is the original shoulder clear now", asked at
+   * the camera's own level.
    */
-  function revertMirror(origin, state, yaw, raycast) {
+  function revertMirror(headLocal, feet, state, yaw, raycast) {
+    if (posOffset(state)[0] === 0) return;
     if (mirror === mirrorOriginal || cfg.mirrorTime <= 0) return;
     if (mirrorTimer <= cfg.mirrorTime) { mirrorTimer += lastDt; return; }
+    const local = bodyVector([posTarget[0] - feet[0], posTarget[1] - feet[1], posTarget[2] - feet[2]], -yaw);
+    local[0] = headLocal[0];
+    const origin = add(feet, bodyVector(local, yaw));
     const off = posOffset(state);
     const right = [Math.cos(yaw), 0, -Math.sin(yaw)];
     const dir = off[0] < 0 ? right : [-right[0], -right[1], -right[2]];
@@ -293,6 +361,26 @@ export function createEotbCamera() {
       if (hit < Math.abs(off[0]) / 2 + EYE_RADIUS) mirrorTimer = 0;   // still blocked
       else mirror = mirrorOriginal;
     } else mirror = mirrorOriginal;
+  }
+
+  /** One row of the table, applied: 1 takes first person, 2 third, 0
+   *  leaves the view where it is. */
+  function applyRow(row) {
+    if (row === AUTO_TOGGLE.FirstPerson && offset) toggleOffset(false);
+    else if (row === AUTO_TOGGLE.ThirdPerson && !offset) toggleOffset(true);
+    return offset;
+  }
+
+  /** [IL] OnNewGame / OnLoad (IL_0930-IL_09f8, IL_0a08-IL_0ad0): with the
+   *  table armed, the transition row for where the player stands -
+   *  and NOTHING else, even when the row is Don'tChange; disarmed,
+   *  StartInThirdPerson through ToggleOffset. */
+  function onGameStart(inside) {
+    if (autoPOVSwitch) {
+      applyRow(cfg.auto[inside ? 'OnTransitionInterior' : 'OnTransitionExterior']);
+      return offset;
+    }
+    return toggleOffset(cfg.startInThird);
   }
 
   return {
@@ -305,43 +393,78 @@ export function createEotbCamera() {
     bounds: () => [boundsX, boundsY, boundsZ],
     settings: () => cfg,
     pendingClicks: () => pending,
+    spellHandsEnabled: () => spellHandsEnabled,
 
-    loadSettings(get) { cfg = readCameraSettings(get); return cfg; },
+    /** The billboard this camera drives (eotbBody registers at attach). */
+    setBillboard(b) { billboard = b ?? null; },
+    /** DaggerfallUI.PopupMessage's seam. */
+    setPopup(fn) { popup = typeof fn === 'function' ? fn : null; },
+    /** The mod's OnToggleOffset event - MessageReceiver's subscribers. */
+    onToggleOffset(fn) { listeners.add(fn); return () => listeners.delete(fn); },
 
-    /** `StartInThirdPerson` - the POV a new or loaded game takes. */
+    /** [IL] `LoadSettings` (IL_0ae2-IL_119a): the fields, `autoPOVSwitch`
+     *  derived, and - when the Camera, Graphics, Animation or
+     *  Compatibility section changed - `ToggleOffset(offset)` re-run so
+     *  the billboard, the torch and the hands take the new values.
+     *  `changed` is that flag; the pane's live edit passes it. */
+    loadSettings(get, { changed = true } = {}) {
+      cfg = readCameraSettings(get);
+      autoPOVSwitch = cfg.autoPOVSwitch;
+      if (changed) toggleOffset(offset);
+      return cfg;
+    },
+
+    /** [IL] `Start` (IL_0668-IL_067b): `offset = offsetDefault;
+     *  ToggleOffset(offset)`. The port's camera is one instance across
+     *  host boots where the mod's is a fresh component, so the fields
+     *  the .ctor would initialise are put back here too. */
     start() {
       mirror = false; mirrorOriginal = mirror; mirrorTimer = 0; offsetScroll = 0;
-      offset = false;
-      situation = null;
-      if (cfg.startInThird) toggleOffset(true);
-      return offset;
+      boundsX = BOUNDS_INITIAL; boundsY = BOUNDS_INITIAL; boundsZ = BOUNDS_INITIAL;
+      prev = null;
+      return toggleOffset(cfg.startInThird);
+    },
+    /** [IL] `OnNewGame` - `inside` is PlayerEnterExit.IsPlayerInside. */
+    onNewGame(inside = false) { return onGameStart(inside); },
+    /** [IL] `OnLoad`. */
+    onLoad(inside = false) { return onGameStart(inside); },
+    /** [IL] `OnPositionUpdate` (IL_1cb7-IL_1ccd): the floating origin
+     *  moved the eye; the smoothing re-seeds from where it is now. */
+    onPositionUpdate(delta) {
+      posCurrent = [posCurrent[0] + delta[0], posCurrent[1] + delta[1], posCurrent[2] + delta[2]];
+      posTarget = [posTarget[0] + delta[0], posTarget[1] + delta[1], posTarget[2] + delta[2]];
+      lastEye = [lastEye[0] + delta[0], lastEye[1] + delta[1], lastEye[2] + delta[2]];
     },
 
-    /** [SETTINGS] The two transition rows, on the door: OnTransitionInterior
-     *  stepping into a building, OnTransitionExterior stepping back out.
-     *  Applied whatever the situation row said, since a door is not a
-     *  situation. */
+    /** [IL] The two transition rows (IL_1cdc-IL_1d95), registered on the
+     *  building's doors AND the dungeon's (IL_06a2-IL_06e1): `kind` is
+     *  'Interior' or 'Exterior'. Nothing moves while the table is
+     *  disarmed. */
     transition(kind) {
       const row = cfg.auto[`OnTransition${kind}`];
-      if (row === undefined || !autoArmed) return offset;
+      if (row === undefined || !autoPOVSwitch) return offset;
       return applyRow(row);
     },
-    /** ToggleInput: arm or disarm the table. */
-    toggleAuto() { autoArmed = !autoArmed; return autoArmed; },
-    autoArmed: () => autoArmed,
-    situation: () => situation,
+    /** [IL] ToggleInput (IL_17ea-IL_1841): arm or disarm the table, say
+     *  so, and an arming forces the fan-out this frame. */
+    toggleAuto() {
+      autoPOVSwitch = !autoPOVSwitch;
+      if (autoPOVSwitch) forcedApply = true;
+      if (cfg.debugMessages) popup?.(autoPOVSwitch ? AUTO_TOGGLE_MESSAGES.armed : AUTO_TOGGLE_MESSAGES.disarmed);
+      return autoPOVSwitch;
+    },
+    autoArmed: () => autoPOVSwitch,
+    previous: () => (prev ? { ...prev } : null),
 
     toggleOffset,
 
-    /** `SwitchShoulder`: mirrors X, and re-bases what the auto-switch
-     *  reverts TO - the mod's own `mirrorOriginal` follows a manual
-     *  switch, so an automatic flip still returns to the side the
-     *  player last chose. */
+    /** [IL] `SwitchShoulder` (IL_14ac-IL_14c2): mirrors X and re-bases
+     *  what the auto-switch reverts TO, and nothing else - no clock is
+     *  touched. Inside the block the X offset gates (IL_148f). */
     switchShoulder() {
-      if (cfg.x === 0) return mirror;   // "if it is non-zero", the setting's own words
+      if (posOffset(lastState)[0] === 0) return mirror;
       mirror = !mirror;
       mirrorOriginal = mirror;
-      mirrorTimer = 0;
       return mirror;
     },
 
@@ -357,33 +480,45 @@ export function createEotbCamera() {
     },
 
     /**
-     * Update's ladder, flushed once a frame. This is the whole of Mac's
-     * ask, and it is the MOD'S OWN arm rather than an invention: the
-     * bundle ships `CameraScrolling` with `scrollableOffsetTogglePOV`
-     * in the assembly, and its shape is Morrowind's shape -
+     * Update's ladder (IL_1252-IL_1322), flushed once a frame. This is
+     * the whole of Mac's ask, and it is the MOD'S OWN arm rather than
+     * an invention: the bundle ships `CameraScrolling` with
+     * `scrollableOffsetTogglePOV` in the assembly, and its shape is
+     * Morrowind's shape -
      *
      *   FIRST person + scroll out       -> third, at the base distance
      *   THIRD person + scroll           -> nearer / further by the increment
      *   THIRD person + past the near end-> first
      *   THIRD person + past MAX_Z       -> pinned, the wheel does nothing
      *
-     * which is why the two cameras can share one ladder honestly.
+     * THE TWO END TESTS READ THE OFFSET CAPTURED BEFORE THE NOTCH
+     * (`loc0`, IL_1253-IL_125d; tested at IL_12ef and IL_1317) - only
+     * the clamp's correction re-reads it (IL_12fe). So the camera
+     * leaves third person the notch AFTER it crosses the near end, and
+     * pins the notch after it crosses -10. The port had tested the
+     * fresh value and moved a notch early.
+     *
+     * LateUpdate's auto-toggle (IL_1847-IL_1c6e) rides the same frame.
      */
     tick(state = {}) {
+      lastState = state;
       const clicks = pending;
       pending = 0;
-      // AUDIT-EOTB2: the auto-toggle rides the same frame, BEFORE the
-      // wheel - a notch the player turned this frame wins over a row
-      // the situation change would apply
-      const sit = autoToggleSituation(state);
-      if (sit !== situation) {
-        const first = situation === null;   // the first frame is a seed, not a change
-        situation = sit;
-        if (!first && autoArmed) applyRow(cfg.auto[sit]);
+      // [IL] LateUpdate's table: three "just changed" blocks and one
+      // fan-out, each row through ToggleOffset's pair; the five
+      // previous flags stored after, armed or not
+      const now = {
+        transformed: !!state.transformed, riding: !!state.riding, spellcasting: !!state.spellcasting,
+        sheathed: state.sheathed ?? !state.weaponReady, ranged: !!state.usingBow,
+      };
+      if (autoPOVSwitch) {
+        for (const row of autoToggleRows(now, prev, { forced: forcedApply })) applyRow(cfg.auto[row]);
       }
+      forcedApply = false;
+      prev = now;
       if (!cfg.scrollable) return offset;
-      const z = posOffset(state)[2];
-      const nearEnd = -cfg.minZ;                 // Update's `stloc.1`: NEGATED
+      const z = posOffset(state)[2];              // Update's `loc0`
+      const nearEnd = -cfg.minZ;                 // Update's `loc1`: NEGATED
       if (!offset) {
         if (clicks < 0) { toggleOffset(true); offsetScroll = 0; }
         return offset;
@@ -391,13 +526,11 @@ export function createEotbCamera() {
       // ONE increment a frame, SIGN ONLY. The mod reads `GetAxis` once
       // per Update and branches `> 0` / `< 0`; it never scales by the
       // reading's magnitude, so three notches inside one frame move the
-      // camera exactly as far as one does. Keeping that is what makes
-      // the wheel feel like the mod's rather than like the browser's.
+      // camera exactly as far as one does.
       if (clicks > 0) offsetScroll -= cfg.increment;
       else if (clicks < 0) offsetScroll += cfg.increment;
-      const z2 = posOffset(state)[2];
-      if (z2 < MAX_Z) offsetScroll = -MAX_Z + (z2 + offsetScroll);
-      else if (z2 > nearEnd) toggleOffset(false);
+      if (z < MAX_Z) offsetScroll = -MAX_Z + (posOffset(state)[2] + offsetScroll);
+      else if (z > nearEnd) toggleOffset(false);
       return offset;
     },
 
@@ -420,7 +553,7 @@ export function createEotbCamera() {
 
       // the shoulder's own revert probe runs BEFORE CheckBounds, as in
       // Update - it may hand CheckBounds a different `mirror`
-      revertMirror(origin, state, yaw, raycast);
+      revertMirror(headLocal, feet, state, yaw, raycast);
       checkBounds(origin, state, yaw, pitch, raycast);
 
       posTarget = add(origin, eyeVector(setVectorBounds(posOffset(state), state), yaw, pitch));
@@ -446,7 +579,6 @@ export function createEotbCamera() {
       };
     },
   };
-
 }
 /** One player, one camera - the module-level instance fpArm and
  *  mwCamera both keep. */

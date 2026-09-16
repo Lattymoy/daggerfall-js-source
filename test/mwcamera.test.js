@@ -260,8 +260,10 @@ test('MW-D30: the pose carries the camera and the load FORCES it', () => {
   // AUDIT-EOTB2: the one pose-apply goes through the view seam's load
   // door, which restores the Morrowind camera AND re-seeds the sprite
   // camera (the mod's OnLoad) - the restore itself is unchanged
-  assert.ok(/mwViewLoadPose\(pose\.camera\);/.test(src), 'and the one pose-apply restores it, through the seam');
-  assert.match(readFileSync(new URL('../src/player/mwView.js', import.meta.url), 'utf8'), /export function mwViewLoadPose\(pose\) \{\s*if \(pose\) mwCamera\.restore\(pose\);/, 'the seam restores exactly as the host did');
+  // EOTB-IL: the door also carries WHERE the player stands (the mod's
+  // OnLoad reads PlayerEnterExit.IsPlayerInside); the restore is unchanged
+  assert.ok(/mwViewLoadPose\(pose\.camera, .*\);/.test(src), 'and the one pose-apply restores it, through the seam');
+  assert.match(readFileSync(new URL('../src/player/mwView.js', import.meta.url), 'utf8'), /export function mwViewLoadPose\(pose, inside = false\) \{\s*if \(pose\) mwCamera\.restore\(pose\);/, 'the seam restores exactly as the host did');
   // restore(undefined) is the older-save no-op, behaviorally:
   const cam = createMwCamera();
   cam.wheel(-1);
