@@ -31,7 +31,7 @@ import { RDB_SIDE, MOVE_ACTION_FLAGS, ACTION_FLAGS } from '../world/rdbLayout.js
 import { NPC_CONTEXT } from '../characters/staticNpc.js';   // AUDIT 64 F13: StaticNPC.SetLayoutData(RdbObject) stamps Context.Dungeon
 import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S, isActionDoorObject, hasActionCollision, classifyPlacementAction, lookAtLockText, LOCKPICKING_SUCCESS_TEXT, LOCKPICKING_FAILURE_TEXT, DOOR_TEXT_HUD_DELAY_S, sharedRecord, validActionRecord } from '../world/actionSystem.js';   // AUDIT WORLD3 B1: the shared half of a record - the picker's latch stays home; AUDIT WORLD34 C2: and the memory's records projected like an act's
 import { TextRsc } from '../formats/textRsc.js';
-import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // U51 picks the skin
+import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady, pauseOpts } from '../ui/pauseDoor.js';   // U51 picks the skin; MAC-L1: pauseOpts is the ONE reader of the door's options
 import { longitudeLatitudeToMapPixel } from '../formats/mapsFile.js';   // MAC6 #1: the save names the pixel the dungeon stands on
 import { openPixelDial } from '../ui/pixelDial.js';   // PX15b: the Tab compass rose
 import { ActionTextBox, ActionInputBox } from '../ui/actionText.js';
@@ -1416,7 +1416,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:6618 / exterior.js:2997), set
+  // host's own townTalk sink (world.js:6661 / exterior.js:3016), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -2370,7 +2370,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:931 against :961; worldModes.js:5940 against :5948).
+    // (dungeon.js:943 against :961; worldModes.js:5940 against :5948).
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -2860,8 +2860,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:8802,
-              // exterior.js:4345 and worldModes.js:6067 already ran;
+              // playerArrowHitFoe is the one copy world.js:8845,
+              // exterior.js:4364 and worldModes.js:6067 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -5103,12 +5103,32 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // three columns against the left edge. The pause window's Stats
     // page IS that sheet, off the same sheetModel, and is centred by
     // construction. This host's own pause flow, landed on it.
-    openSheetPage() { this.togglePause(null, { at: 'stats' }); },
-    togglePause(setPlayerPos = null, opts = {}) {
+    openSheetPage() { this.togglePause({ at: 'stats' }); },
+    // MAC-L1: ONE SIGNATURE ACROSS THE FOUR HOSTS. This was the odd one
+    // out - `togglePause(setPlayerPos = null, opts = {})` against the
+    // other three's `togglePause(opts = {})` - and `routeAction` spelt
+    // it this context's way, so Escape threw on the other three. The
+    // position applier rides INSIDE the options now, read by the one
+    // reader (ui/pauseDoor.js's pauseOpts), which also means a caller
+    // that hands over a hard `null` gets an empty door rather than a
+    // TypeError.
+    // ...and the parameter is `doorOpts`, NOT `opts`. MAC-L1 found a
+    // second fault sitting inside the first: this method's parameter was
+    // called `opts` and SHADOWED `buildDungeonContext`'s own `opts` bag
+    // (:214) - the one carrying `questBridge` and `relock`. So the three
+    // arms below that read `opts.questBridge` and `opts.relock` have
+    // been reading THIS METHOD'S ARGUMENT for as long as it has had one:
+    // the dungeon pause screen's Quests tab answered an empty list, and
+    // the resume gesture's relock was a no-op. Both looked wired and
+    // neither was. Exactly the shadow AUDIT-CHATR F1 found in
+    // `ui/chatPanel.js` a day before, in a second file - which is the
+    // whole argument for turning `no-shadow` on.
+    togglePause(doorOpts = {}) {
       if (activeOverlay || !pauseDoorReady()) return;
+      const { at, setPlayerPos } = pauseOpts(doorOpts);
       const ctx = this;   // the sibling save verbs on this same context
       openPauseFlow((w) => { activeOverlay = w; }, {
-        at: opts.at ?? null,   // PX26: the page the door was pressed for
+        at,   // PX26: the page the door was pressed for
         // PX25: THE SHEET'S OWN DOORS, handed to the page that IS the
         // sheet. Each host passes the arms it already has; a host
         // without one passes nothing and the button never draws.
@@ -5129,7 +5149,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         questLog: () => opts.questBridge?.questLog() ?? { active: [], finished: [] },
         quickSave: () => ctx.quickSave?.(),
         // MAC1 J: the pointer comes back INSIDE the resume gesture
-        // (ui/pauseDoor.js:165-182). THIS CONTEXT OWNS NO CANVAS OF ITS
+        // (ui/pauseDoor.js:207-224). THIS CONTEXT OWNS NO CANVAS OF ITS
         // OWN (:4701), so the relock arrives from whichever dungeon host
         // mounted it - the way hudMessageSink is threaded (:1349) - and
         // both of them hand it in: dungeon.js's opts bag and

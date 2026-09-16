@@ -137,7 +137,11 @@ test('I3: the wiring - four hosts, one Escape door each, art preloaded', () => {
   assert.match(code('ui/input.js'), /case 'Escape': return ctx\.togglePause/);
   // PX26: ...and its own options after it. setPlayerPos is still the
   // first argument, which is what this pin is actually about.
-  assert.match(code('scenes/dungeonContext.js'), /togglePause\(setPlayerPos = null, opts = \{\}\)/);
+  // MAC-L1: ONE signature, and the position applier rides INSIDE the
+  // options. This pin used to enshrine the disagreement that crashed the
+  // other three hosts on every Escape.
+  assert.match(code('scenes/dungeonContext.js'), /togglePause\(doorOpts = \{\}\)/);
+  assert.match(code('scenes/dungeonContext.js'), /const \{ at, setPlayerPos \} = pauseOpts\(doorOpts\);/);
   // The exterior hosts hand-route. U43 moved the overlay/mode gate up
   // to cover the whole ladder at once - the same ladder the large HUD's
   // panels now reach through hudCtx - so the Escape ARM is inside that
@@ -156,7 +160,7 @@ test('I3: the wiring - four hosts, one Escape door each, art preloaded', () => {
     // PX26: the door takes its own options now (the dial's north lands
     // on Stats). ONE door is the law and it is unchanged - the count
     // below is what this pin is actually counting.
-    assert.equal((src.match(/togglePause: \(opts = \{\}\) => \{/g) ?? []).length, 1,
+    assert.equal((src.match(/togglePause: \(doorOpts = \{\}\) => \{/g) ?? []).length, 1,
       `${rel} has exactly one pause door`);
     assert.match(src, /preloadPauseFlowArt\(/, `${rel} warms the art`);
   }
@@ -170,7 +174,7 @@ test('I3: the wiring - four hosts, one Escape door each, art preloaded', () => {
   assert.match(modes, /const interiorKeyCtx = \{/, 'the interior arm has a routeKey ctx');
   // PX26: with its own options after it - routeKey still calls it with
   // none, which is what the default is for.
-  assert.match(modes, /togglePause\(opts = \{\}\) \{/, '...whose Escape door is togglePause, as routeKey calls it');
+  assert.match(modes, /togglePause\(doorOpts = \{\}\) \{/, '...whose Escape door is togglePause, as routeKey calls it');
   assert.match(code('ui/input.js'), /case 'Escape': return ctx\.togglePause/, 'and routeKey calls it bare');
   assert.match(modes, /if \(routeKey\(e, interiorKeyCtx, null, keys\)\)/, '...and the table drives it');   // AUDIT 58 (f3/input): + the held-keys Set
   assert.match(modes, /preloadPauseFlowArt\(/);
@@ -185,7 +189,7 @@ test('I3: the wiring - four hosts, one Escape door each, art preloaded', () => {
 // ── MAC1 J ON THE CLASSIC SKIN ───────────────────────────────────
 
 test('AUDIT 65 UI-2: the classic pause window relocks on RESUME, and only on resume', () => {
-  // MAC1 J's mechanism is the enhanced door's (ui/pauseDoor.js:165-182):
+  // MAC1 J's mechanism is the enhanced door's (ui/pauseDoor.js:207-224):
   // the close runs INSIDE the Resume click or the Escape keyup - the
   // transient activation requestPointerLock needs - while the hosts'
   // look gate relocks on the NEXT frame, outside any gesture, which the
@@ -234,7 +238,7 @@ test('AUDIT 65 UI-2: the classic pause window relocks on RESUME, and only on res
     assert.equal(esc.done, true);
     assert.equal(relocked, 1, 'the close on the keyup relocks inside that keyup');
 
-    // NOT the exit. There is no world to relock into - pauseDoor.js:177's
+    // NOT the exit. There is no world to relock into - pauseDoor.js:219's
     // own `action !== 'exit'`.
     relocked = 0;
     const exit = open({ exitToMenu() {}, textLines: () => ['Are you sure?'] });
@@ -246,8 +250,8 @@ test('AUDIT 65 UI-2: the classic pause window relocks on RESUME, and only on res
     // NOT the save or load DOORS - and driven through the bag the
     // PRODUCER mints, which is the whole point of this arm. All three
     // shipping pause hosts hand over saveAs + loadKey + pushWindow
-    // (world.js:5003-5010, worldModes.js:7083-7089,
-    // dungeonContext.js:5134-5140), so `saveLoadPushes` is true and the
+    // (world.js:5026-5033, worldModes.js:7098-7104,
+    // dungeonContext.js:5154-5160), so `saveLoadPushes` is true and the
     // door PUSHES the slot window: the pause window rides UNDER it,
     // `done` stays false and `_closeWith` is never reached at all. A
     // relock here would take away the cursor the slot window is for.
@@ -275,7 +279,7 @@ test('AUDIT 65 UI-2: the classic pause window relocks on RESUME, and only on res
     // ...but the DRAIN when one COMPLETES is a resume. PopToHUD
     // (DaggerfallUI.cs:829-836) empties the whole stack back to the
     // world inside the slot window's own click, and the enhanced twin
-    // relocks on exactly it - pauseDoor.js:177 fires for 'save' and
+    // relocks on exactly it - pauseDoor.js:219 fires for 'save' and
     // 'load', not only for 'resume'. saveWindow.js:343 and :349 are the
     // two callers of this hook.
     assert.equal(typeof pushed[1].hooks.popToHUD, 'function',
@@ -306,7 +310,7 @@ test('AUDIT 65 UI-2: the classic pause window relocks on RESUME, and only on res
     assert.equal(relocked, 0, 'the same on the load side');
 
     // THE QUICK-VERB FALLBACK is the other save/load shape, and it IS a
-    // resume: a host with no saveAs/loadKey seam (exterior.js:2227's bag
+    // resume: a host with no saveAs/loadKey seam (exterior.js:2235's bag
     // carries neither, so its LOAD rect runs this today) closes straight
     // back to the world and opens no window at all.
     relocked = 0;
