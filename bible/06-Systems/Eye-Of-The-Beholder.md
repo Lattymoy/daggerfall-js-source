@@ -830,7 +830,23 @@ integration, rewritten against the IL), `test/eotb_camera.test.js`
 (seven EOTB-IL pins appended), `test/eotb_wagon.test.js` (14, new) and
 `test/eotb_scope.test.js` (the ledger against the dump).
 
-**Campaign:** see the line below, written after the run.
+**Campaign: 30 mutants, 30 killed.** Hand-picked on the new laws, each
+applied in place and run against the EOTB suites, the race, the rig
+seam and the footstep pins: SignedAngle's arguments swapped back (THE
+TURN); the walk table five frames again (the chop); the melee tick at
+`* 4`; Mixed every second swing; Mirror on the even count; the gallop
+on any speed; the horse footstep every second frame; running not
+halving the frame; the auto-toggle fanning out whenever drawn; the
+death tick 0.25; the orientation throttle gone; the delayed write
+landing at once; the third-person footstep volume 1; shade drawn dark
+instead of black; the XML x not negated for a mirrored record; the
+bounds seed at zero; autoPOVSwitch armed at zero rows; the ladder on
+the fresh z; the mirrored arm scaling Y; OnLoad ignoring the armed
+table; SwitchShoulder ungated on X; the cart settling at 2.5, following
+the new delta after a teleport, sitting on the hit, losing its path
+wobble, remembering the offset after the move, following on foot; the
+torch no longer racing the cart; the sprite footstep volume unscaled;
+the mod keys on the press edge. Every one named the pin that caught it.
 
 **NOT SEEN ON A GPU.** There is still no GL and no ARENA2 in the
 container this was written in. Mac's eye is the gate; the order to
