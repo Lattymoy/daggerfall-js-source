@@ -64,7 +64,7 @@ import { unequipSlot, equipTableOf } from './equip.js';
 import { createWeapon } from '../combat/enemyEquipment.js';   // ItemBuilder.CreateWeapon, both arms
 import { randomizeArmorVariant } from './shopStock.js';       // ItemBuilder.RandomizeArmorVariant
 import { ARMOR_MATERIAL } from './armorMaterials.js';
-import { mintCondition, itemBaseValue, templateByIndex } from './itemTemplates.js';
+import { mintCondition, itemBaseValue, templateByIndex, setItemFields } from './itemTemplates.js';   // MAC-N1: SetItem's name + value, the one export
 import { DYE_COLORS } from '../characters/dyes.js';
 
 export { isSummoned };
@@ -169,12 +169,12 @@ export function createTempItem(index, { gender = 'male', nowMinutes = 0, rounds 
   if (!row) return null;
   let item = null;
   if (row.kind === 'armor') {
-    item = mintCondition({
+    // MAC-N1: SetItem's name and value through the one export - this
+    // arm wrote both by hand, a sixth copy of the law.
+    item = mintCondition(setItemFields({
       group: 'Armor', templateIndex: row.templateIndex, material: row.material,
       variant: randomizeArmorVariant(row.templateIndex, row.material, rolls),
-      name: templateByIndex(row.templateIndex)?.name,
-    });
-    item.value = itemBaseValue(item);
+    }));
   } else if (row.kind === 'weapon') {
     item = createWeapon(row.templateIndex, row.material, rolls);
     item.value = itemBaseValue(item);

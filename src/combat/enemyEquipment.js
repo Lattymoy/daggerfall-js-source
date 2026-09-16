@@ -14,7 +14,7 @@
 //   swing, exactly as GetBaseDamageMin/Max do.
 // Unity Random slots stay uniform rolls, as in DFU itself.
 
-import { mintCondition, templateByIndex, itemBaseValue } from '../systems/itemTemplates.js';   // AUDIT 23 (items-5); F103: SetItem's value
+import { mintCondition, templateByIndex, itemBaseValue, setItemFields } from '../systems/itemTemplates.js';   // AUDIT 23 (items-5); F103: SetItem's value; MAC-N1: the one export that writes it
 import { WEAPON_MIN_DAMAGE, WEAPON_MAX_DAMAGE, dice100, formulaOverride } from './formulas.js';   // UL1: RandomMaterial / RandomArmorMaterial consult the registry
 import { materialArmorValue } from '../systems/armorMaterials.js';
 import { KNIGHT_CITY_WATCH } from '../characters/mobileTypes.js';   // AUDIT 24 (wave 41): one home
@@ -239,8 +239,32 @@ export function equipmentItems(eq) {
   // AUDIT 58: ItemBuilder.CreateArmor mints a condition with the piece
   // (items-5); these records had none, so a struck foe's cuirass had
   // nothing to bill even once its equip table existed.
-  for (const a of eq.armorPieces) items.push(mintCondition({ group: 'Armor', templateIndex: a.piece, material: a.material }));
+  // MAC-N1 (Mac: "Weapon and Armorsmiths dont want to pay for loot"):
+  // and CreateArmor runs SetItem FIRST (ItemBuilder.cs:301 ->
+  // DaggerfallUnityItem.cs:555/:563 - the name and the VALUE), which
+  // these records also had none of. A weapon off the same corpse
+  // carries both (createWeapon above); the cuirass beside it carried
+  // neither, so staging it at an armorer summed the lot to NaN and the
+  // smith offered 0 for everything in the deal. Through the one export.
+  for (const a of eq.armorPieces) items.push(mintCondition(setItemFields({ group: 'Armor', templateIndex: a.piece, material: a.material })));
   return items;
+}
+
+/** The arrow a bow hit leaves in its TARGET - EnemyAttack.cs:145-147
+ *  and WeaponManager.cs:555-557 are the same three lines:
+ *  `ItemBuilder.CreateWeapon(Weapons.Arrow, WeaponMaterialTypes.None);
+ *  arrow.stackCount = 1; Items.AddItem(arrow)`. CreateWeapon's arrow
+ *  arm (createWeapon above) is what mints it, so the shaft carries
+ *  SetItem's name and value and the arm's `currentCondition = 0`.
+ *
+ *  MAC-N1: SEVEN hosts spelt this as a bare `{ group, name,
+ *  templateIndex, material, stackCount }` literal - no value, no
+ *  condition - so a quiver begun by a recovered shaft (a bowman with
+ *  no arrows of their own) priced at NaN when sold. One minter now;
+ *  the `stackCount = 1` is DFU's own overwrite of the arm's random
+ *  stack. */
+export function bowDamageArrow() {
+  return { ...createWeapon(ARROW_TEMPLATE, 0), stackCount: 1 };
 }
 
 /** SetEnemyCareer's equipment-variant table, verbatim. */

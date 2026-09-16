@@ -20,8 +20,11 @@ import { goldAmount, totalGoldAmount, deductGold } from '../src/systems/court.js
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 const hooks = (mode = 'Buy') => {
-  const shelf = [{ templateIndex: 277, name: 'Book A', value: 40 }, { templateIndex: 277, name: 'Book B', value: 40 }];
-  const bag = [{ templateIndex: 277, name: 'Mine', value: 40 }];
+  // MAC-N2: the local list is TAB-FILTERED - the window opens on the inherited Weapons & Armor page (:253) - so the
+  // fixture is the shape that page shows. The books this used to hold sit on Clothing & Misc, exactly as in DFU,
+  // and the tab pins in macn_bugs.test.js drive that page.
+  const shelf = [{ group: 'Weapons', templateIndex: 113, name: 'Dagger A', value: 40 }, { group: 'Weapons', templateIndex: 113, name: 'Dagger B', value: 40 }];
+  const bag = [{ group: 'Weapons', templateIndex: 113, name: 'Mine', value: 40 }];
   let gold = 100000;
   const committed = [];
   return {

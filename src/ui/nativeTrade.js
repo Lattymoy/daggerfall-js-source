@@ -26,11 +26,11 @@
 // The laws are systems/tradeModes.js's; this file is the panel, the
 // hit rects, the staging collections and the confirm box.
 
-import { loadImg, nativeMetrics, drawImg, shadowText } from './nativePanel.js';
+import { loadImg, nativeMetrics, drawImg, drawImgSub, shadowText } from './nativePanel.js';   // MAC-N2: drawImgSub, the selected tab's INVE01I0 cutout
 import { drawScreenDimBackdrop } from './chargenArt.js';
 import { LIST_SLOTS, CELL_X, CELL_W, SLOT_H, ARROW_H, DOWN_ARROW_Y, scrollerHit, applyScroll, makeIconDrawer, drawStackLabel,
   preloadScrollerArrowArt, drawScrollerArrows, drawScrollerThumb, playScrollerArrowClick, makeSlotToolTip,
-  itemBackgroundColour, drawCellBackground } from './itemScroller.js';
+  itemBackgroundColour, drawCellBackground, beginScrollerDrag, dragScrollerIndex } from './itemScroller.js';   // MAC-N2: the thumb drag
 import { getBool } from '../systems/settings.js';   // AUDIT 64 F53: InstantRepairs, the repair tint's first arm
 import { FntFile } from '../formats/fntFile.js';
 import { makeFont } from './text.js';
@@ -57,7 +57,7 @@ import {
 } from './targetIconPanel.js';
 import { WAGON_KG_LIMIT } from '../systems/itemTransfer.js';   // ItemHelper.WagonKgLimit (:56)
 import { CANNOT_REMOVE_ITEM_TEXT } from '../systems/createItem.js';   // both TransferItem refusals speak it
-import { questTransferRefused, SMALL_CART_TEMPLATE } from './nativeInventory.js';   // DaggerfallTradeWindow EXTENDS the inventory window
+import { questTransferRefused, SMALL_CART_TEMPLATE, INV_RECTS, TABS, tabAccepts } from './nativeInventory.js';   // DaggerfallTradeWindow EXTENDS the inventory window; MAC-N2: and INHERITS its four tab pages
 import { expandGuildMacros } from '../systems/guildServiceActions.js';
 import { firstHotkey } from '../systems/dialogShortcuts.js';   // A8: the DaggerfallShortcut table
 
@@ -69,6 +69,47 @@ const MODE_ACTION_BUTTON = Object.freeze({
   Sell: 'TradeSell', SellMagic: 'TradeSell',
 });
 
+// ── MAC-N2 (2026-09-16, Mac: "Classic inventory issues in shops. Item
+// inventory is very large, scrollbar not working correctly, submenus
+// are completely unclickable"): THE INHERITED HALF OF THE SCREEN.
+//
+// DaggerfallTradeWindow EXTENDS DaggerfallInventoryWindow, and its
+// Setup (:193-268) calls the parent's SetupTabPageButtons (:228) and
+// then SelectTabPage (:253) - so the four TAB PAGES painted across the
+// top of INVE00I0 (Weapons & Armor / Magic Items / Clothing & Misc /
+// Ingredients) are live buttons on the shop screen, and FilterLocalItems
+// (:672-703) hands EVERY local item - the basket's and the pack's -
+// through the parent's AddLocalItem (:914-944), which is the tab's
+// filter. The port drew the tabs (they are in the art) and answered
+// nothing to a click on them, and its local list was the whole pack in
+// one column: at a weaponsmith in Buy mode, every ingredient, potion,
+// book and shirt the player carried, unfiltered - Mac's "very large".
+// The initial page is WeaponsAndArmor in every mode but Identify,
+// which opens on MagicItems (:253), and a tab change resets the local
+// scroll (:820 ResetScroll).
+//
+// The same inheritance carries the WHEEL (ItemListScroller.cs:314-316,
+// :606-616 - one row per notch over either list, which nativeInventory
+// already ports and this window did not have at all) and the thumb
+// DRAG (VerticalScrollBar.Update :101-130), which neither item window
+// had. Both are here now; the tab hotkeys are the parent's four
+// (InventoryWeapons..InventoryIngredients, :478-490), and they sit
+// FIRST in the hotkey order because SetupTabPageButtons is called
+// before SetupActionButtons and before the exit button (:249).
+
+/** The four tab pages' hotkeys, in SetupTabPageButtons' add order
+ *  (DaggerfallInventoryWindow.cs:474-490). */
+const TAB_BUTTONS = Object.freeze({
+  InventoryWeapons: 'weapons', InventoryMagic: 'magic',
+  InventoryClothing: 'clothing', InventoryIngredients: 'ingredients',
+});
+const TAB_RECT = Object.freeze({
+  weapons: INV_RECTS.tabWeapons, magic: INV_RECTS.tabMagic,
+  clothing: INV_RECTS.tabClothing, ingredients: INV_RECTS.tabIngredients,
+});
+/** SelectTabPage's argument at Setup (:253). */
+export const initialTradeTab = (mode) => (mode === 'Identify' ? 'magic' : 'weapons');
+
 // re-exported so the composed window keeps one import surface
 export { LIST_SLOTS, CELL_X, CELL_W, SLOT_H, ARROW_H, DOWN_ARROW_Y };
 
@@ -79,6 +120,12 @@ export const STEAL_SUCCESS_TEXT = 'You are successful.';
 export const STEAL_FAILURE_TEXT = 'You are not successful...';
 
 export const TRADE_RECTS = Object.freeze({
+  // MAC-N2: the parent's four tab rects (DaggerfallInventoryWindow.cs
+  // :37-40), inherited unchanged - the base art is the same INVE00I0.
+  tabWeapons: INV_RECTS.tabWeapons,
+  tabMagic: INV_RECTS.tabMagic,
+  tabClothing: INV_RECTS.tabClothing,
+  tabIngredients: INV_RECTS.tabIngredients,
   costPanel: [49, 13, 111, 9],           // SHOP00I0 strip
   actionPanel: [222, 10, 39, 190],       // the mode's own panel - INVE08/10/12/14 (:755-764)
   localList: [163, 48, 59, 152],
@@ -118,13 +165,15 @@ export async function preloadTradeArt(deps) {
   if (_art) return;
   try {
     const names = [...new Set([...Object.values(MODE_ACTION_ART), SELL_GOLD_ART])];
-    const [base, cost, fnt4, ...panels] = await Promise.all([
-      loadImg(deps, 'INVE00I0.IMG'), loadImg(deps, 'SHOP00I0.IMG'),
+    const [base, gold, cost, fnt4, ...panels] = await Promise.all([
+      loadImg(deps, 'INVE00I0.IMG'),
+      loadImg(deps, 'INVE01I0.IMG'),   // MAC-N2: goldTexture (:757) - the selected TAB is cut out of it (SetupTabPageButtons' *Selected subtextures)
+      loadImg(deps, 'SHOP00I0.IMG'),
       deps.fetchBytes('FONT0004.FNT'),   // the stack-count font (DFU Font4)
       ...names.map((n) => loadImg(deps, n)),
     ]);
     _art = {
-      base, cost, panels: new Map(names.map((n, i) => [n, panels[i]])),
+      base, gold, cost, panels: new Map(names.map((n, i) => [n, panels[i]])),
       font4: makeFont(deps.renderer, new FntFile().load(fnt4), 'FONT0004'),
     };
     await preloadScrollerArrowArt(deps);   // ROAD-A7: the red/green arrow strips
@@ -187,6 +236,11 @@ export class NativeTradeWindow {
     this.localScroll = 0;
     this.remoteScroll = 0;
     this.lastPrice = null;
+    // MAC-N2: SelectTabPage at Setup (:253) - the inherited tab page
+    // the local list is filtered through.
+    this.tab = initialTradeTab(this.mode);
+    // MAC-N2: the thumb drag's latch (which list, and where it began).
+    this._drag = null;
     // THE TWO STAGING COLLECTIONS. In Buy mode the basket holds what
     // you have picked off the shelf; in every other mode `staged` is
     // the remote list itself, which starts EMPTY and fills as you
@@ -248,9 +302,64 @@ export class NativeTradeWindow {
   /** The pointer over the panel. A box is up = no tip: DFU's message
    *  box is a window of its own pushed OVER this one, and the buttons
    *  underneath stop getting mouse events at all. */
-  hover(vx, vy) {
+  hover(vx, vy, e = null) {
+    // MAC-N2: VerticalScrollBar.Update (:101-130) - the latched thumb
+    // follows the cursor while button 0 is held, wherever the cursor
+    // goes, and the latch drops the frame the button reads up
+    // (:123-129). `e.buttons` is the hosts' GetMouseButton(0); a call
+    // with no event cannot say, and the latch waits for one that can.
+    if (this._drag && e) {
+      if (!(e.buttons & 1)) this._drag = null;
+      else if (vy >= 0) {
+        const len = this._drag.which === 'localScroll' ? this.localList().length : this.remoteList().length;
+        this[this._drag.which] = dragScrollerIndex(this._drag.latch, vy, len);
+      }
+    }
     if (this.box || vx < 0 || vy < 0) { this._tip.hide(); return; }
     this._tip.show(this._itemAt(vx, vy), vx, vy, { getQuest: this.hooks.getQuest ?? null });
+  }
+
+  /** MAC-N2: the release edge the hosts send on mouseup (ROAD-E E1) -
+   *  VerticalScrollBar.Update's else arm (:123-129), for the frame the
+   *  button comes up without a move to carry it. */
+  release() { this._drag = null; }
+
+  /** MAC-N2: ItemsListPanel_OnMouseScrollUp/Down (ItemListScroller.cs
+   *  :314-316, :606-616) and the bar's own MouseScrollUp/Down
+   *  (VerticalScrollBar.cs:152-162): one row per notch over the items
+   *  column or the rail of EITHER list, no sound (the ButtonClick is
+   *  the two arrows' alone, :588-604 - and a notch over an arrow
+   *  scrolls nothing, since a plain Button overrides neither). The
+   *  notch carries its own point (AUDIT 65 UI-5), and the tip is
+   *  re-read under it afterwards (BaseScreenComponent.cs:734-735's
+   *  `hoverTime = 0`, then the button under the cursor names what has
+   *  scrolled under it) - exactly nativeInventory's wheel, minus the
+   *  info panel this screen does not draw. */
+  wheel(dir, vx = -1, vy = -1) {
+    if (!dir || this.box) return;
+    const kind = dir > 0 ? 'down' : 'up';
+    const wheelable = (k) => k === 'slot' || k === 'thumb' || k === 'page-up' || k === 'page-down';
+    for (const [rect, which, items] of [
+      [TRADE_RECTS.remoteList, 'remoteScroll', this.remoteList()],
+      [TRADE_RECTS.localList, 'localScroll', this.localList()],
+    ]) {
+      const hit = scrollerHit(rect, vx, vy, this[which], items.length);
+      if (!hit) continue;
+      if (wheelable(hit.kind)) this[which] = applyScroll(this[which], kind, items.length);
+      break;
+    }
+    this._tip.hide();
+    if (vx >= 0 && vy >= 0) this._tip.show(this._itemAt(vx, vy), vx, vy, { getQuest: this.hooks.getQuest ?? null });
+  }
+
+  /** MAC-N2: SelectTabPage (DaggerfallInventoryWindow.cs:803-822) -
+   *  the page, and the local scroller's ResetScroll (:820). The four
+   *  tab handlers (:1209-1227) click first, as every button on this
+   *  screen does. The info panel it also clears is not drawn here. */
+  _setTab(t) {
+    audio.playOneShot(SOUND.ButtonClick, 1);
+    this.tab = t;
+    this.localScroll = 0;
   }
 
   /** remoteItems (:392). In REPAIR mode DFU points it at
@@ -294,10 +403,14 @@ export class NativeTradeWindow {
     // live PlayerEntity.Items and a click TRANSFERS, as DFU does.
     const equipped = this.hooks.isEquipped ?? (() => false);
     const staged = this.remoteItems;
+    // MAC-N2: and through AddLocalItem (:684, :699) - the TAB PAGE's
+    // filter, applied to the basket and to the pack alike, after the
+    // mode's own gate.
+    const onTab = (it) => tabAccepts(it, this.tab);
     const pack = (this.hooks.packItems?.() ?? []).filter((it) => !equipped(it) && localListAccepts(this.mode, it, {
       accepts: this.hooks.accepts, enchanted: this.hooks.enchanted,
-    }) && !staged.includes(it));
-    return this.mode === 'Buy' ? [...this.basket.filter((it) => !equipped(it)), ...pack] : pack;
+    }) && onTab(it) && !staged.includes(it));
+    return this.mode === 'Buy' ? [...this.basket.filter((it) => !equipped(it) && onTab(it)), ...pack] : pack;
   }
 
   /** FilterRemoteItems (:704-727): the shelf in Buy mode, the in-repair
@@ -667,12 +780,18 @@ export class NativeTradeWindow {
     // to the KeyUp edge (isStealDeferred, :940-952); the port's single
     // input edge collapses that the same way the mode action's does.
     const action = MODE_ACTION_BUTTON[this.mode] ?? null;   // Inventory mode assigns none ("Shouldn't happen")
+    // MAC-N2: in DFU's ADD order, which Panel.ProcessHotkeySequences
+    // walks first-hit-wins: the parent's four tabs (SetupTabPageButtons,
+    // :228), then the action panel's (SetupActionButtons, :229), then
+    // the exit button (:249). The port had exit first.
     const hit = firstHotkey([
-      'TradeExit',
+      ...Object.keys(TAB_BUTTONS),
       ...(this.mode === 'Buy' ? ['TradeSteal'] : []),
       ...(action ? [action] : []),
       'TradeClear',
+      'TradeExit',
     ], code, e);
+    if (TAB_BUTTONS[hit]) { this._setTab(TAB_BUTTONS[hit]); return; }
     if (hit === 'TradeExit') { this._close(); return; }
     if (hit === 'TradeSteal') { audio.playOneShot(SOUND.ButtonClick, 1); this._doSteal(); return; }
     if (hit === 'TradeClear') { this._clear(); return; }
@@ -704,6 +823,8 @@ export class NativeTradeWindow {
     // then DoSteal. The button exists only in Buy mode (:316-322), so
     // in every other mode this rect stays part of the consumed panel.
     if (this.mode === 'Buy' && inRect(R.steal, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._doSteal(); return true; }
+    // MAC-N2: the four inherited tab pages (:1209-1227).
+    for (const t of TABS) if (inRect(TAB_RECT[t], vx, vy)) { this._setTab(t); return true; }
     for (const [rect, which, items, pick] of [
       [R.remoteList, 'remoteScroll', this.remoteList(), (s) => this._pickRemote(s)],
       [R.localList, 'localScroll', this.localList(), (s) => this._pickLocal(s)],
@@ -713,6 +834,9 @@ export class NativeTradeWindow {
       const hit = scrollerHit(rect, vx, vy, this[which], items.length);
       if (!hit) continue;
       if (hit.kind === 'slot') pick(hit.slot);
+      // MAC-N2: a press ON the thumb latches the drag (VerticalScrollBar
+      // .Update :110-113); the rail's own click has no arm for it.
+      else if (hit.kind === 'thumb') this._drag = { which, latch: beginScrollerDrag(rect, vy, this[which]) };
       else { playScrollerArrowClick(hit.kind); this[which] = applyScroll(this[which], hit.kind, items.length); }   // ROAD-A7: the two arrows click
       return true;
     }
@@ -773,6 +897,11 @@ export class NativeTradeWindow {
     drawScreenDimBackdrop(renderer, canvas);
     drawImg(renderer, _art.base, m, 0, 0);
     const R = TRADE_RECTS;
+    // MAC-N2: the selected tab's INVE01I0 cutout back over the base
+    // (SelectTabPage :808-811 swaps in the *Selected subtexture), as
+    // the inventory window draws it. A fake art bag without the gold
+    // sheet draws no highlight rather than throwing.
+    if (_art.gold) { const tr = TAB_RECT[this.tab]; drawImgSub(renderer, _art.gold, m, tr[0], tr[1], tr[2], tr[3]); }
     // The mode's own panel (:213) - Inventory mode has none, and the
     // guard is DFU's, not a defensive extra.
     const panel = modeActionPanel(this.mode);
