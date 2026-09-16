@@ -149,6 +149,8 @@ export const MOD_CURATED = Object.freeze({
     'Camera.Speed', 'Animation.BillboardScale']),
   // IF1: the clip quality and the two volumes are what a player reaches for.
   'immersive-footsteps': Object.freeze(['AudioQualitySettings.SoundClipQuality', 'FootstepSettings.FootstepVolumeMulti', 'ArmorSwaySettings.ArmorSwayVolumeMulti']),
+  // BA1: the footsteps switch (off beside Immersive Footsteps), the echo, the darkness.
+  'better-ambience': Object.freeze(['Better Footsteps.enable', 'Dungeon Reverb.level', 'Dungeon Lighting.dungeonDarkness']),
 });
 
 /** The `Modules.` keys a vendor ships, in the mod's own order - the
@@ -454,6 +456,9 @@ export const FEATURES = Object.freeze([
   // switches every frame; the stride is the mod's the moment its clips are
   // decoded (a fetch here, where the mod's LoadAudio is synchronous).
   modFeature('immersive-footsteps', 'Takes effect at once.', 'world'),
+  // BA1 (2026-09-16): BETTER AMBIENCE - read every frame; the dungeon's fog
+  // and light are rolled at the door, so those two land on the next dungeon.
+  modFeature('better-ambience', 'Takes effect at once. A dungeon\u2019s fog and light are rolled at its door.', 'world'),
   // FT10 (2026-09-14): DFU'S OWN DUNGEON ENHANCEMENTS - three of the
   // Enhancements section's switches, each read by the port at the point
   // of use as DFU reads it. DFU Classic: Daggerfall Unity's departures

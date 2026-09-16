@@ -150,10 +150,13 @@ than retyping fifteen lists twice.
 ## What has no twin
 
 `CheckForTravelOptionsAcceleratedTravel` (Travel Options is not
-vendored: the SendModMessage arm answers false), the Better Ambience and
-Tempered Interiors compatibility warnings, and the once-per-session
-exception log. The three ErrorLoggingAndCompatibilitySettings keys are
-declared so the pane matches the mod's and read by nothing.
+vendored: the SendModMessage arm answers false), the Tempered Interiors
+compatibility warning, and the once-per-session exception log. **BA1
+(2026-09-16): the Better Ambience warning HAS a twin now** - Better
+Ambience is vendored, `modCompatibilityChecking` reads its switch, and
+`reportModCompatibilityIssues` posts the four log lines and the box at
+OnStartGame and OnLoad, gated by AllowModCompatWarnings (the one key of
+the three that is read). See `06-Systems/Better-Ambience.md`.
 
 NOT HEARD ON A GPU: the suite runs under node with a recording audio
 engine and clips of one byte; the browser's decode of the 210 MP3s and

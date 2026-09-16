@@ -80,5 +80,13 @@ export function createDamageFlash() {
 export const playerDamageFlash = createDamageFlash();
 
 /** The `SendMessage("RemoveHealth")` edge - call it where DFU sends
- *  that message, and nowhere else. */
-export function flashPlayerDamage() { playerDamageFlash.flash(); }
+ *  that message, and nowhere else. BA1: the message CARRIES THE AMOUNT
+ *  (`SendMessage("RemoveHealth", damage)`), and Better Ambience's
+ *  DamageShaker is a second receiver on the same object - so the sites
+ *  hand the amount through, and a listener hears it. */
+let _removeHealthListener = null;
+export function setRemoveHealthListener(fn) { _removeHealthListener = fn; }
+export function flashPlayerDamage(amount = 0) {
+  playerDamageFlash.flash();
+  _removeHealthListener?.(amount);
+}

@@ -195,11 +195,11 @@ test('F040: a falling watchman bleeds, like every other falling enemy', () => {
 test('F206: a damaging fall in a dungeon flashes the screen', () => {
   const d = src('scenes/dungeonContext.js');
   const arm = d.slice(d.indexOf('if (fell > FALL_DAMAGE_THRESHOLD) {'));
-  assert.ok(arm.slice(0, 400).includes('flashPlayerDamage();'), 'RemoveHealth opens with the flash');
+  assert.ok(arm.slice(0, 400).includes('flashPlayerDamage(_fallDmg);'), 'RemoveHealth opens with the flash (BA1: carrying its amount)');
   // the stale "pends the HUD arc" note is gone - the file already
   // flashed for arrows and melee, and the shared helper flashes here.
   assert.equal(d.includes('The\n      // ShowPlayerDamage screen flash pends the HUD arc (flagged).'), false);
-  assert.ok(src('scenes/shared.js').includes('flashPlayerDamage();'), 'the other three hosts route through this');
+  assert.ok(src('scenes/shared.js').includes('flashPlayerDamage(dmg);'), 'the other three hosts route through this (BA1: carrying its amount)');
 });
 
 // ── F052 / F053 ───────────────────────────────────────────────────

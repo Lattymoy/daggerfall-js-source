@@ -52,6 +52,9 @@ uniform sampler2D uTex;
 uniform sampler2D uEmissionTex;
 uniform vec3 uLightDir;
 uniform vec3 uAmbient;
+uniform vec3 uAmbientSky;     // BA1: Unity's AmbientMode.Trilight - sky for a normal facing up, ground facing down,
+uniform vec3 uAmbientGround;  //      uAmbient (the equator) sideways, blended by n.y; uTrilight 0 is the flat ambient
+uniform float uTrilight;
 uniform float uSunScale;
 uniform vec3 uSunColor;
 uniform vec3 uMoonDir;    // EV5: the second directional term - the masser
@@ -129,7 +132,8 @@ void main() {
   // and a negative albedo has no honest meaning here.
   vec3 emission = texture(uEmissionTex, vUV).rgb * uEmissionColor;
   vec3 albedo = max(tex.rgb - emission, vec3(0.0));
-  vec3 lit = albedo * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff)
+  vec3 ambient = uTrilight > 0.5 ? (n.y >= 0.0 ? mix(uAmbient, uAmbientSky, n.y) : mix(uAmbient, uAmbientGround, -n.y)) : uAmbient;   // BA1: Trilight
+  vec3 lit = albedo * (ambient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff)
     + uLight3Color * (uLight3Scale * l3diff));
   // Point lights (city lanterns): N.L with a squared linear falloff to the
   // range - documented equivalence to the Unity point light this replaces.
@@ -826,6 +830,10 @@ export class Renderer {
     this.uModel = gl.getUniformLocation(this.program, 'uModel');
     this.uLightDir = gl.getUniformLocation(this.program, 'uLightDir');
     this.uAmbient = gl.getUniformLocation(this.program, 'uAmbient');
+    this.uAmbientSky = gl.getUniformLocation(this.program, 'uAmbientSky');       // BA1
+    this.uAmbientGround = gl.getUniformLocation(this.program, 'uAmbientGround');
+    this.uTrilight = gl.getUniformLocation(this.program, 'uTrilight');
+    this._ambientTri = null;
     this.uSunScale = gl.getUniformLocation(this.program, 'uSunScale');
     this.uSunColor = gl.getUniformLocation(this.program, 'uSunColor');
     this.uMoonDir = gl.getUniformLocation(this.program, 'uMoonDir');
@@ -2147,6 +2155,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this._lightDir = lightDir;
     this._frameStamp++;   // PERF3
     gl.uniform3fv(this.uAmbient, this._ambient);
+    this._uploadTrilight();
     gl.uniform1f(this.uSunScale, this._sunScale);
     gl.uniform3fv(this.uSunColor, this._sunColor);
     gl.uniform3fv(this.uMoonDir, this._moonDir);
@@ -2394,6 +2403,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this._use(this.program);
     gl.uniform3fv(this.uLightDir, this._lightDir);
     gl.uniform3fv(this.uAmbient, this._ambient);
+    this._uploadTrilight();
     gl.uniform1f(this.uSunScale, this._sunScale);
     gl.uniform3fv(this.uSunColor, this._sunColor);
     gl.uniform3fv(this.uMoonDir, this._moonDir);
@@ -2405,11 +2415,25 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   }
 
   /** Time-of-day lighting: ambient color, sun scale, sun color. */
-  setLighting(ambient, sunScale, sunColor) {
+  setLighting(ambient, sunScale, sunColor, trilight = null) {
     this._ambient = ambient;
     this._sunScale = sunScale;
     if (sunColor) this._sunColor = sunColor;
     this._clockLit = true;
+    this.setAmbientTrilight(trilight);   // BA1: every other caller's light is Flat, so a dungeon's trilight cannot outlive the dungeon
+  }
+
+  /** BA1: RenderSettings.ambientMode = Trilight with its three colours (FoggyDungeonsMod.cs:106-112), on
+   *  the mesh program - walls, floors, the dungeon's models; a billboard's normal faces the camera and takes
+   *  the equator, which is `setLighting`'s ambient (the caller hands the equator there). null is Flat again. */
+  setAmbientTrilight(tri) {
+    this._ambientTri = tri ? { sky: new Float32Array(tri.sky), ground: new Float32Array(tri.ground) } : null;
+  }
+  _uploadTrilight() {
+    const gl = this.gl;
+    const tri = this._ambientTri;
+    gl.uniform1f(this.uTrilight, tri ? 1 : 0);
+    if (tri) { gl.uniform3fv(this.uAmbientSky, tri.sky); gl.uniform3fv(this.uAmbientGround, tri.ground); }
   }
 
   /** Distance fog for every world pass. mode 'off'|'linear'|'exp'|'exp2'

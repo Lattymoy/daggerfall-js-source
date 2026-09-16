@@ -43,7 +43,7 @@ import { EQUIP_SLOTS } from '../characters/paperdoll.js';
 import { equipTableOf } from './equip.js';
 import { ARMOR_MATERIAL } from './armorMaterials.js';
 import { TRANSPORT_MODES } from './transport.js';
-import { modSettingsOf } from './modSettings.js';
+import { modSettingsOf, modSettingIfDeclared } from './modSettings.js';   // BA1: ModCompatibilityChecking reads Better Ambience's switch
 import { audio as defaultAudio } from './audio.js';
 import { SOUND } from './soundClips.js';
 
@@ -673,3 +673,45 @@ export function createImmersiveFootsteps({ audio = defaultAudio, settings = read
 /** The one component - the mod adds ONE ImmersiveFootstepsObject to the
  *  player, and every host drives the same instance (HT1's shape). */
 export const immersiveFootsteps = createImmersiveFootsteps();
+
+// --- ModCompatibilityChecking / ReportModCompatibilityIssues (Main.cs:216-236, :400-449) ---
+// BA1: Better Ambience is vendored now, so the arm IF1 recorded as "no twin" has one.
+
+export const BETTER_AMBIENCE_GUID = 'd5655077-ba38-4dbc-a41f-2b358cb1d680';   // Main.cs:219
+/** ModCompatibilityChecking (:216-236): Better Ambience installed, and its "Better Footsteps" module on.
+ *  Tempered Interiors and Travel Options are not vendored: those two checks stay false. */
+export function modCompatibilityChecking(read = modSettingIfDeclared) {
+  const enabled = read('better-ambience', 'Enabled');
+  const betterAmbienceCheck = enabled === true;   // GetModFromGUID answers null for a mod that is not loaded
+  const betterAmbienceFootstepsModuleCheck = betterAmbienceCheck && read('better-ambience', 'Better Footsteps.enable') === true;
+  return { betterAmbienceCheck, betterAmbienceFootstepsModuleCheck, temperedInteriorsCheck: false, travelOptionsCheck: false };
+}
+/** The box's tokens (:430-441), JustifyCenter, ClickAnywhereToClose. */
+export const COMPAT_WARNING_LINES = Object.freeze([
+  '! WARNING !',
+  'Compatibility Issue Detected',
+  'Immersive Footsteps:',
+  '',
+  'Disable the \'Better Footsteps\' setting for the Better Ambience mod.',
+  'Otherwise footstep sounds will be constantly overlapping each other.',
+  '',
+  '(These automatic warnings can be disabled in Immersive Footsteps settings)',
+]);
+export const COMPAT_WARNING_LOG = Object.freeze([
+  '[Warning] Immersive Footsteps: The \'Better Ambience\' mod is currently active, more importantly, the \'Better Footsteps\' module for that mod is also enabled.',
+  'While using the Immersive Footsteps mod, you should always have Better Ambience\'s \'Better Footsteps\' setting disabled, otherwise you will be constantly...',
+  'hearing overlapping footstep sounds, turn this feature off in Better Ambience\'s settings to resolve this issue.',
+  'You can also turn these warnings off in \'Immersive Footsteps\' settings, if you wish.',
+]);
+/** ReportModCompatibilityIssues (:424-449), raised by OnStartGame and OnLoad (:400-422): the four log lines
+ *  and the message box, when the mod is on, AllowModCompatWarnings is on, and Better Ambience's module is on.
+ *  `showText(lines)` is the host's DaggerfallUI.MessageBox; `log` is Debug.Log. Answers whether it fired. */
+export function reportModCompatibilityIssues({ showText, log = (l) => console.log(l), read = modSettingIfDeclared, settings = readFootstepSettings } = {}) {
+  const s = settings();
+  if (!s.Enabled || !s.AllowCompatibilityWarnings) return false;
+  const c = modCompatibilityChecking(read);
+  if (!(c.betterAmbienceCheck && c.betterAmbienceFootstepsModuleCheck)) return false;
+  for (const l of COMPAT_WARNING_LOG) log(l);
+  showText?.([...COMPAT_WARNING_LINES]);
+  return true;
+}

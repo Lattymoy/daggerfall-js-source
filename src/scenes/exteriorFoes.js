@@ -729,7 +729,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // `PlayerObject.SendMessage("RemoveHealth", damage)` - which
       // is ShowPlayerDamage.Flash's trigger. An enemy's BLOW
       // flashes the screen; the poison it carries does not.
-      if (dmg > 0) { onPlayerHurt?.(dmg, wpn); flashPlayerDamage(); }
+      if (dmg > 0) { onPlayerHurt?.(dmg, wpn); flashPlayerDamage(dmg); }
       // C2-slice (combat-9): a connected attack that LOST the
       // roll rings the miss sound (ApplyDamageToPlayer's else)
       else audio?.play3d?.(enemyMissSound(wpn), mid, 1, { maxDistance: 16 });
