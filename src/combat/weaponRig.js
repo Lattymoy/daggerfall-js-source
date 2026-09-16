@@ -458,12 +458,20 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     fpArm.attack(strike, { hold: m.isBow && m.state === 'StrikeUp' });
   }
 
+  // WEAPON-VIS1: a live call count, not a guess - see window.__weaponDebug
+  // (scenes/world.js). Counts every path that flips the sheath through
+  // rawToggleSheath below - the HUD panel's door and the key's MAC-O1
+  // door both end in it, which is exactly the pair WEAPON-VIS2 caught
+  // double-firing.
+  let _toggleSheathCalls = 0;
+
   /** WeaponManager.ToggleSheath (:1115-1128), the flip both doors below
    *  end in - the panel's raw one and the key's arm. It is ONE function
    *  because DFU has one member: the draw clip is FPSWeapon's, played
    *  only on the UNsheathe of a real weapon. */
   function rawToggleSheath() {
     syncWorn();
+    _toggleSheathCalls += 1;
     // V4: the claws draw silently (DrawWeaponSound = None, :338)
     if (playerWeapon.toggleSheath() && !playerWeapon.weapon?.werecreatureClaws) {
       audio.playOneShot(equipSoundFor(playerWeapon.weapon) ?? SOUND.DrawWeapon);
@@ -538,6 +546,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
      *  default, which no applied weapon ever reaches. A weapon with
      *  no equip clip of its own falls back to 78. */
     toggleSheath() { rawToggleSheath(); },
+    get toggleSheathCalls() { return _toggleSheathCalls; },   // WEAPON-VIS1: for window.__weaponDebug
     /**
      * MAC-O1 - THE READYWEAPON KEY'S OWN DOOR. WeaponManager.Update
      * :229-269, the arm the four hosts' Z poll is a translation of.

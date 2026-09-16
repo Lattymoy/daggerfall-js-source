@@ -1472,6 +1472,32 @@ function morrowindCard() {
       render();
     } },
   ];
+  // MWA2 (2026-09-16, follow-up): the toggle above writes `mwArms`, but
+  // online forces that pref to `true` at every boot (onlineLane.js's
+  // ONLINE_FORCED_PREFS) regardless of what the player set it to -
+  // autoBuildArms only refuses when `dataCount() > 0` is ALSO false. So
+  // switching the row off never sticks in an online session as long as
+  // the archives are still attached; the player who wants the arms gone
+  // for good needs a door that removes the data itself, not just the
+  // pref. `clearStoredMorrowind` (dataSource.js) already existed for
+  // this and was unwired. Routed through the same confirm-before-destroy
+  // pattern as Delete Save above.
+  if (count) {
+    armActions.push({ label: 'Remove data', onClick: () => ask(
+      'Remove Morrowind data',
+      'This clears the attached archives from this browser. The arms unload now, and stay off - even in an online '
+      + 'session that forces the switch back on - because there is nothing left to build them from. You can '
+      + 'attach data again later.',
+      'Remove',
+      async () => {
+        fpArm.unload();
+        setPref('mwArms', false);
+        const ds = await import('../scenes/dataSource.js');
+        await ds.clearStoredMorrowind();
+        render();
+      },
+    ) });
+  }
   // IG6b: the one Morrowind-feel knob the owner asked for. The label
   // names the ACTION - the first cut named the mode you were IN, which
   // reads as "click to enable", and one natural click switched the
