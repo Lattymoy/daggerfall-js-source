@@ -614,7 +614,15 @@ export class Room {
       // whole only when the sender's last whole fan (`kept`, on the PASS patch as `turn` is) is KEEPALIVE_FAN_MS
       // old; inside the floor it is tiered like a move. An honest heartbeat always clears half its own period.
       const now = Date.now();
-      const still = posed && !!a.pose && !poseChanged(a.pose, m.p) && now - (a.kept ?? 0) >= KEEPALIVE_FAN_MS;
+      // SLAM15 (AUDIT SLAM FINAL A6): AND A STOP IS HEARD WHOLE TOO. The pose that ends a walk - the first with `mv`
+      // 0 after one that moved - carries the place the player actually stopped, and under the tier three far slices
+      // in four never heard it: they eased to the last pose they were served, up to a second of walking short of
+      // where the player stands, and stood there wrong until the next heartbeat corrected it five seconds on. A
+      // stop is one frame per walk, so it is fanned whole like a keepalive, under the same floor: a client toggling
+      // `mv` at the gate's ceiling buys the same two whole fans a second a keepalive flood does, and no more.
+      const unmoved = posed && !!a.pose && !poseChanged(a.pose, m.p);
+      const stopped = posed && !!a.pose && (a.pose.mv | 0) !== 0 && (m.p.mv | 0) === 0;
+      const still = (unmoved || stopped) && now - (a.kept ?? 0) >= KEEPALIVE_FAN_MS;
       // SLAM6: `turn` is the sender's own pose counter, and the only state the far tier needs - which slice of the
       // listeners past POSE_FAN_MAX this pose serves. Masked, so an attachment a socket carries for a day stays small.
       // SLAM8: and it rides the PASS patch. `_meter` writes its ordinary patch back whether or not the gate passed, so

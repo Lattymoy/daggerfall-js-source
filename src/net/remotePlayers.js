@@ -195,17 +195,17 @@ export class RemotePlayers {
     return { rec, w: PEER_HEIGHT * (r.w / r.h), h: PEER_HEIGHT };
   }
 
-  /** The looks the scene needs right now - the ones a live billboard is standing in, AND the ones the last sync
-   *  asked for and has not been handed yet. Neither is cache.
-   *  SLAM7: the second half is not a nicety. A doll composes between one frame and the next, so for that gap no
+  /** The looks the scene needs right now: the ones the last sync ASKED FOR - drawn, or composing and not yet handed
+   *  over. Neither is cache.
+   *  SLAM7: the composing half is not a nicety. A doll composes between one frame and the next, so for that gap no
    *  batch is wearing it - and a sweep run by another compose finishing in the same gap released it unworn, before
    *  it was ever drawn once. That alone cost 213 of the 412 composes the first cut of this fix still paid at 199
-   *  looks; with it the count is exactly the 199 the room actually has. */
-  _needed() {
-    const out = new Set(this._wanted);
-    for (const e of this._batches.values()) out.add(e.key);
-    return out;
-  }
+   *  looks; with it the count is exactly the 199 the room actually has.
+   *  SLAM15 (AUDIT SLAM FINAL B4): this used to union the WORN keys in as well, and that half was redundant by
+   *  construction - `sync` adds every drawn peer's key to `_wanted` before it touches the peer's batch and destroys
+   *  the batch of every peer it did not draw, and `destroy()` empties both - so after any sync every batch's key is
+   *  already in `_wanted`. The invariant is pinned (slam15); the set is the wanted set. */
+  _needed() { return this._wanted; }
 
   /** SLAM7: this map is its own LRU list - a key used this frame is moved to the END, so `_evict` walking from the
    *  front releases the least recently DRAWN. Before this the order was first-ever-composed and never changed

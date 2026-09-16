@@ -6317,3 +6317,46 @@ gate). What met, and how it was settled:
   RELAY_VERSION". It reads `wire.js` now. So the checklist's "deploy by
   hand" is "run the workflow": the token lives in the repo's secrets, and
   the one this session's transcript carried must be rotated THERE.
+
+## SLAM15 - THE THREE LEFT RECORDED, PAID (2026-09-17, AUDIT SLAM FINAL)
+
+Mac: "Take care of the left recorded." `RELAY_VERSION` is `world75`.
+
+**A6 A STOP IS HEARD WHOLE.** The pose that ends a walk - the first with
+`mv` 0 after one that moved - carries where the player actually stopped,
+and the tier served it to one far slice in four. The other three eased to
+the last pose they were served, up to a second of walking short of the
+truth, and stood there wrong until the heartbeat corrected it five
+seconds on. A stop is one frame per walk, so the relay fans it whole as
+it fans a keepalive, under the keepalive's own floor (`kept`,
+`KEEPALIVE_FAN_MS`): a client toggling `mv` at the gate's ceiling buys the
+same two whole fans a second a keepalive flood does, and no more. Driven:
+eight steps then the stop - every one of 59 listeners holds the stop as
+its latest pose, where before it some far listener held a mid-walk one;
+ten "stops" in one instant - one whole, the rest tiered, `kept` stamped
+once; a heartbeat later, whole again.
+
+**B4** `_needed` unioned the worn keys into `_wanted`, and the union was
+redundant by construction: `sync` adds every drawn peer's key to
+`_wanted` before it touches the peer's batch and destroys the batch of
+every peer it did not draw; `destroy()` empties both. The invariant
+(worn ⊆ wanted after every sync, through a look change and a departure)
+is pinned and `_needed` returns the wanted set. The restored union is in
+the mutant list as `equivalent`, which is the proof of the redundancy.
+
+**B5** `_wanted` was pinned by count; it is pinned by list - exactly the
+drawn dolls' look keys, not a body peer's, not an unshown peer's, rebuilt
+each frame.
+
+**Pins.** `test/slam15.test.js` (4). Mutants: `tools/mutants/slam15.json`
+- **8 mutations, 7 dead, 1 equivalent as recorded**. Re-aimed: `chat1`'s
+pose-arm regex (two more lines before `still`), `slam8` K3 and `slam13`
+X6/X12 records to the merged source.
+
+**S12 retired.** PINS recorded `S12-needed-worn-half-deleted` as an
+equivalent mutant - deleting the worn union changed nothing. SLAM15 made
+that deletion the law, so the record could no longer apply and is
+removed from `tools/mutants/pins.json`; the same claim lives on as
+`slam15.json`'s Z8 (the union RESTORED, equivalent). The whole sweep on
+this tree: **100 mutants - 98 dead, 0 survived, 2 equivalent as
+recorded** (Y13, Z8).

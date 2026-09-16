@@ -190,27 +190,6 @@
     ]
   },
   {
-    "name": "S12-needed-worn-half-deleted",
-    "file": "src/net/remotePlayers.js",
-    "old": "    for (const e of this._batches.values()) out.add(e.key);\n    return out;",
-    "new": "    return out;",
-    "tests": [
-      "test/slam1.test.js",
-      "test/slam2.test.js",
-      "test/slam3.test.js",
-      "test/slam4.test.js",
-      "test/slam5.test.js",
-      "test/slam6.test.js",
-      "test/slam7.test.js",
-      "test/slam8.test.js",
-      "test/slam12.test.js",
-      "test/mwbody1.test.js",
-      "test/world3.test.js"
-    ],
-    "equivalent": true,
-    "why": "every batch is minted inside the same sync() that fills _wanted, so the worn half of _needed() is a subset of the wanted half; SLAM7's record overstated it as independently necessary (corrected) and the code is kept as belt-and-braces against a future caller minting a batch outside sync()"
-  },
-  {
     "name": "S13-destroy-keeps-wanted",
     "file": "src/net/remotePlayers.js",
     "old": "    this._wanted.clear();   // SLAM7: nothing is needed by a host that is gone",

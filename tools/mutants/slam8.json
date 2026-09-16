@@ -30,8 +30,8 @@
   {
     "name": "K3-exact-equality-not-epsilon",
     "file": "server/src/index.js",
-    "old": "const still = posed && !!a.pose && !poseChanged(a.pose, m.p) && now - (a.kept ?? 0) >= KEEPALIVE_FAN_MS;",
-    "new": "const still = posed && !!a.pose && JSON.stringify(a.pose) === JSON.stringify(m.p) && now - (a.kept ?? 0) >= KEEPALIVE_FAN_MS;",
+    "old": "const unmoved = posed && !!a.pose && !poseChanged(a.pose, m.p);",
+    "new": "const unmoved = posed && !!a.pose && JSON.stringify(a.pose) === JSON.stringify(m.p);",
     "tests": [
       "test/slam8.test.js",
       "test/slam6.test.js",

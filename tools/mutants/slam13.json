@@ -53,8 +53,8 @@
   {
     "name": "X6-floor-removed",
     "file": "server/src/index.js",
-    "old": " && now - (a.kept ?? 0) >= KEEPALIVE_FAN_MS;",
-    "new": ";",
+    "old": "const still = (unmoved || stopped) && now - (a.kept ?? 0) >= KEEPALIVE_FAN_MS;",
+    "new": "const still = (unmoved || stopped);",
     "tests": [
       "test/slam13.test.js"
     ]
@@ -114,8 +114,8 @@
   {
     "name": "X12-welcome-without-v",
     "file": "server/src/index.js",
-    "old": "\"v\":${JSON.stringify(RELAY_VERSION)},",
-    "new": "",
+    "old": ",\"v\":${JSON.stringify(RELAY_VERSION)}}`;",
+    "new": "}`;",
     "tests": [
       "test/slam13.test.js",
       "test/chat1.test.js",

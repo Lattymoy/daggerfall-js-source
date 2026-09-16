@@ -55,6 +55,7 @@ const LAW = {
   world72: 'de19e038912ea8e2e0568923bcf398b86ea2c80c173051129c0ece93bf6efa51',   // SLAM11: the memory push and the act fan borrow against their budgets and land whole
   world73: 'c12e8b6497602a53eead0f4b7abb41a0f6b65be217e174e9ed11c0244a9362ba',   // SLAM13: the keepalive floor, the sender's act share, the memory a listener at a time, the yaw seam, the version in the welcome (first row over the import graph)
   world74: 'f09ab5bdcc836a30fe540d4558a7d0a6c1c933130d9db4d61d5e86c896b55595',   // MERGE (SLAM13 + SRV-N/CHAT-G onto main): one `v` on every welcome, last; the chat's third gate reaches nameFilter.js
+  world75: '4587d8fa5adbfc5df062feb6831c1d191ac0563b7312d4bff7d311aa00093cac',   // SLAM15: a stop is heard whole, under the keepalive's floor
 };
 
 const rd = (p) => readFileSync(new URL('../' + p, import.meta.url));
