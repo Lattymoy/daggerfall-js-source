@@ -74,7 +74,7 @@ export const FRIEND_CSS = '#8fd0ff';
  * @typedef {SocialRow & { p: PartyPose|null }} MemberRow
  * @typedef {{ px: number, py: number, in: number, loc: string, h: number, hm: number, f: number, fm: number, m: number, mm: number, race: string, gender: string, face: number }} PartyPose
  * @typedef {{ id: string, leader: string, members: MemberRow[] }} PartyView
- * @typedef {{ party: string, from: { acct: string, name: string }, members: { acct: string, name: string }[], at: number, expires: number }} Invite
+ * @typedef {{ party: string, from: { acct: string, name: string }, members: { acct: string, name: string }[], at: number, expires: number, got?: number }} Invite   AUDIT SOC B2: `got` is when it ARRIVED here, on this clock
  * @typedef {{ code: string, acct: string|null, name: string|null }} Note
  */
 

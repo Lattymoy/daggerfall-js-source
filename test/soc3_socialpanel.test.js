@@ -638,8 +638,8 @@ test('SOC3: the host by source - world.js makes the panel in socialStart over th
 
   // the panel itself, inside socialStart and AFTER the state exists
   const start = w.slice(w.indexOf('const socialStart = () => {'), w.indexOf('const composePartyPose'));
-  assert.ok(start.includes('social = new SocialState();'), 'the picture');
-  assert.ok(start.indexOf('social = new SocialState();') < start.indexOf('socialPanel = createSocialPanel({'), 'and the panel over it, never before it');
+  assert.ok(start.includes('social = new SocialState({ acct: link.acct });'), 'the picture (AUDIT SOC B19: expecting the account this session sent)');
+  assert.ok(start.indexOf('social = new SocialState({ acct: link.acct });') < start.indexOf('socialPanel = createSocialPanel({'), 'and the panel over it, never before it');
   assert.match(start, /socialPanel = createSocialPanel\(\{\s*social,\s*send: \(act\) => socialLink\(\)\?\.sendSocial\(act\) \?\? false,/, 'one arrow out, the hub link\'s - and its false is the rate gate\'s answer');
   assert.match(start, /canOpen: \(\) => !gamePaused\(\) && !\(townTalk\.hudCovered \|\| \(modes\?\.hudCovered \?\? false\)\),/, 'the chat\'s own door: no pointer surface under a window');
   assert.match(start, /onOpen: \(\) => surfaceOpen\('social'\),/, 'AUDIT SOC B6: the panel is a COUNTED pointer surface');
@@ -647,7 +647,7 @@ test('SOC3: the host by source - world.js makes the panel in socialStart over th
   assert.match(bare, /const surfaceOpen = \(name\) => \{ pointerSurfaces\.add\(name\); setCursorActive\(false\); releaseLook\(\); \};/, 'the first surface up frees the mouse');
   assert.match(bare, /const surfaceClose = \(name\) => \{ pointerSurfaces\.delete\(name\); if \(!pointerSurfaces\.size && !gamePaused\(\)\) requestLook\(canvas\); \};/, 'the LAST surface down takes it back');
   assert.match(bare, /if \(!gamePaused\(\) && !pointerSurfaces\.size && document\.pointerLockElement !== canvas\) requestLook\(canvas\);/, 'and the key ladder\'s resting-state relock waits while any stands');
-  assert.doesNotMatch(w, /hudCtx\.openSocial/, 'AUDIT SOC B14/D11: the second door to the panel is gone - SOC5\'s key reaches it through socialInteract\'s nobody-in-front arm');
+  assert.doesNotMatch(bare, /hudCtx\.openSocial/, 'AUDIT SOC B14/D11: the second door to the panel is gone - SOC5\'s key reaches it through socialInteract\'s nobody-in-front arm');
 
   // the frame: after the party pose, under the same covering rule the chat renders with
   // matched around the prose rather than through it: SOC2's pose line carries its own trailing comment, and the
