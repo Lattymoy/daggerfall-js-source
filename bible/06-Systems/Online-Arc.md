@@ -5175,3 +5175,54 @@ relay that accepts the handshake and then closes non-terminally is
 retried at the floor for ever rather than backing off. Lens A raised
 this during AUDIT ONCRASH1 and it is still open; the reset belongs on
 the WELCOME, not on the open.
+
+
+## SLAM3 - HOW OFTEN TO SPEAK IN A CROWD (2026-09-16, Mac)
+
+SLAM1 bounded WHO hears a pose. This bounds HOW OFTEN one is said - the
+last of the three terms in a room's cost (senders x `POSE_FAN_MAX` x
+rate) still fixed, and the only one a client can lower without asking
+anybody.
+
+Past `POSE_CROWD` peers the rate comes down so the product stays roughly
+flat: twice the crowd, half the rate, floored at `POSE_HZ_MIN`. **Under
+the threshold nothing changes at all** - ordinary play in the Bay is two
+or three people and must not pay for an event it is not having.
+
+Measured, 200 players in one room on the fake DO:
+
+| | pose sends/s | DO cpu |
+|---|---|---|
+| unbounded fan, 10 Hz | 398,000 | over budget |
+| SLAM1's fan, 10 Hz | 60,952 | 42% of a core |
+| SLAM1's fan + this, 4 Hz | **25,600** | **17% of a core** |
+
+### The ease had to move with it
+
+This is the half that would have been easy to miss. The receiver eased
+every peer over an assumed `1 / POSE_HZ`. That assumption was **already
+wrong** for anyone on a slow line or a throttled tab - the ease finished
+early and the peer stood still until its next pose, which is exactly the
+stutter AUDIT MWBODY A8 names for the yaw - and slowing a crowded sender
+would have made it wrong for everybody at once, turning a walk into a
+series of hops.
+
+A peer is eased over the interval **it is actually keeping** now,
+measured at arrival and bounded both ways: a burst must not snap it, a
+long silence must not make it crawl back. A peer that has not moved
+twice yet has no interval and falls back to the default.
+
+Measured MOVE TO MOVE, never from the welcome. The first cut took it
+from `at`, which is also stamped when a roster entry first names a peer
+- and the time between hearing OF somebody and seeing them move is not
+an interval anybody is keeping. ONLINE1's own ease pin caught it.
+
+**Pinned** in `test/slam3.test.js` (5), driven over a real session:
+an ordinary room keeps `POSE_HZ` exactly, a crowd of 200 speaks at the
+floor and `sendPose` really refuses the ordinary interval there, a peer
+at 4 Hz is mid-ease at 125 ms rather than parked on its target, and the
+measured interval floors and ceilings. **9 mutations, 9 dead** - the ninth being the welcome-measured gap above.
+
+Note what the three slices together did NOT do: none of them shards a
+room. One Durable Object still holds one town, and at some population it
+will still be the wall - these bought headroom, not infinity.

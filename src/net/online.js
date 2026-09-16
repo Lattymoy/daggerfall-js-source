@@ -78,6 +78,27 @@ export { WORLD_CELL, RANGE_PIXELS, worldRoom };
 
 /** Poses a second, at most, when the pose moved. */
 export const POSE_HZ = 10;
+/** SLAM3 (2026-09-16, Mac: the 30th-anniversary slam): the floor the crowded rate falls to. Below this a walk reads
+ *  as a series of hops however well it is eased. */
+export const POSE_HZ_MIN = 4;
+/** SLAM3: peers past which a room counts as a CROWD and the rate starts coming down. Under it nothing changes at
+ *  all - ordinary play in the Bay is two or three people and must not pay for an event it is not having. */
+export const POSE_CROWD = 24;
+/** SLAM3: the bounds on a measured ease interval - a burst must not snap a peer, a silence must not make it crawl. */
+export const GAP_MIN_MS = 50;
+export const GAP_MAX_MS = 1000;
+/** SLAM3: HOW OFTEN TO SPEAK IN A CROWD.
+ *
+ *  SLAM1 bounded who hears a pose; this bounds how often one is said. The room's cost is senders x POSE_FAN_MAX x
+ *  this, so it is the last of the three terms still fixed - and the one a client can lower without asking anybody.
+ *
+ *  The product is held roughly constant past the threshold: twice the crowd, half the rate. At 200 players that is
+ *  4 Hz rather than 10, which takes a bounded room from 64k pose sends a second to 25.6k.
+ *
+ *  It costs smoothness, and that cost is paid on purpose: in a crowd of two hundred nobody is reading the gait of
+ *  the person across the square, and a peer eased over its OWN observed interval (see `tick`) still walks rather
+ *  than hops. */
+export const poseHzFor = (peers) => (!(peers > POSE_CROWD) ? POSE_HZ : Math.max(POSE_HZ_MIN, Math.round((POSE_HZ * POSE_CROWD) / peers)));
 /** A pose goes out at least this often, moved or not: the socket's keepalive and the peers' clock. */
 export const HEARTBEAT_MS = 5000;
 /** The relay this port hosts (server/wrangler.toml). */
@@ -572,7 +593,8 @@ export class OnlineSession {
     if (!this.presence) return false;
     this._pose = pose;
     const now = this._now();
-    if (now - this._lastSentAt < 1000 / POSE_HZ) return false;
+    if (now - this._lastSentAt < 1000 / poseHzFor(this.peers.size)) return false;   // SLAM3: a crowd is spoken to less often
+
     if (now - this._lastSentAt < HEARTBEAT_MS && !poseChanged(this._lastSent, pose)) return false;
     // WORLD6b-iii(b): the halo rooms hear my pose too - their fans range me by it and their rosters place me. AUDIT
     // WORLD6b-iii(b) A5: through every OPEN socket, my own cell's down or not (the halos rode out nothing while the
@@ -747,6 +769,13 @@ export class OnlineSession {
   /** A pose in: eased from where the peer is drawn, or snapped there when it jumped. */
   _arrive(p, pose, now) {
     if (p.pose && !poseChanged(p.pose, pose)) { p.seenAt = now; return; }   // AUDIT WORLD6b-iii(b) C6: the same pose again (through a second room, or a standing heartbeat) is seen, not re-eased
+    // SLAM3: how long this peer took between the last two poses it really moved on - the interval its own ease runs
+    // over. Bounded both ways: a burst must not make it snap, and a long silence must not make it crawl back.
+    // Measured MOVE to MOVE, never from the welcome: `at` is also stamped when a roster entry first names this peer,
+    // and the time between hearing OF somebody and seeing them move is not an interval they are keeping. A peer's
+    // first real move therefore has no gap yet and eases on the default.
+    if (p.movedAt != null) p.gap = Math.min(GAP_MAX_MS, Math.max(GAP_MIN_MS, now - p.movedAt));
+    p.movedAt = now;
     const snap = String(this.room ?? '').startsWith('world:') ? SNAP_WORLD_UNITS : SNAP_SCENE_UNITS;
     const from = p.shown && groundDist(p.shown, pose) <= snap ? { ...p.shown } : { ...pose };
     p.from = from; p.pose = pose; p.at = now; p.seenAt = now;
@@ -766,7 +795,12 @@ export class OnlineSession {
     if (!this.presence && this.status === 'open' && now - this._lastSentAt >= HEARTBEAT_MS && this._send({ t: 'ping' })) this._lastSentAt = now;   // CHAT1: a channel's keepalive, answered without waking the room
     for (const p of this.peers.values()) {
       if (!p.pose) continue;
-      const t = (now - p.at) / (1000 / POSE_HZ);
+      // SLAM3: EASED OVER THE INTERVAL THIS PEER IS ACTUALLY KEEPING, not over an assumed 1/POSE_HZ. The assumption
+      // was already wrong for anyone on a slow line or a throttled tab - the ease finished early and the peer stood
+      // still until the next pose, which is the stutter AUDIT MWBODY A8 describes for the yaw - and SLAM3 makes it
+      // wrong for EVERYONE in a crowd, because a crowded sender deliberately speaks less often. The gap is measured
+      // at arrival and bounded, so one late frame cannot make a peer crawl.
+      const t = (now - p.at) / (p.gap ?? (1000 / POSE_HZ));
       p.shown = lerpPose(p.from ?? p.pose, p.pose, t);
     }
   }
