@@ -105,7 +105,7 @@ test('exteriorfoes: the world host - the cadence loop, the travel reset, the fac
   assert.ok(impFn.includes('tallySkill(playerEntity, SKILLS.Dodging, 1)'), 'the arrow tallies Dodging (BowDamage :141)');
   assert.ok(impFn.includes('calculateAttackDamage(shooter.entity, playerEntity'), 'the shared damage member');
   assert.ok(impFn.includes('inflictPoison(playerEntity, pt, false'), 'poisoned enemy arrows dose');
-  assert.ok(impFn.includes("templateIndex: 131"), 'the arrow is recoverable from the target');
+  assert.ok(impFn.includes('bowDamageArrow()'), 'the arrow is recoverable from the target (MAC-N1: minted by the one export, not a literal)');
 });
 
 test('exteriorfoes X4: the PLAYER-side rolls are UNIFORM - DFRandom bytes never feed dice100', () => {

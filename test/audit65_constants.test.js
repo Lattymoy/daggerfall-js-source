@@ -90,7 +90,7 @@ function lycanthrope() {
 
 /** The classic pane's drawn text, recovered at the glyph seam -
  *  drawText indexes `fnt.glyphWidth(code - FNT_ASCII_START)` for every
- *  non-space character in order (the idiom nativetrade.test.js:317-327
+ *  non-space character in order (the idiom nativetrade.test.js:320-330
  *  already uses). Spaces take the `fixedWidth` arm and are simply
  *  absent from the stream. */
 function paintedBy(sheet, page) {
@@ -252,8 +252,8 @@ test('AUDIT 65 CV-2: EVERY player-side capsule call carries the player body, at 
   // The seam is five direct calls: hostMagic's AoE arm and its enemy
   // missile contact, dungeonContext's two enemy-missile player arms, and
   // the shared ArrowFlight the three world hosts fly (world.js:208,
-  // exterior.js:31, worldModes.js:70; the dungeon runs its own loop and
-  // takes the shared player-arrow LAW at dungeonContext.js:63) - so
+  // exterior.js:31, worldModes.js:71; the dungeon runs its own loop and
+  // takes the shared player-arrow LAW at dungeonContext.js:64) - so
   // worldModes.js and exterior.js hold no arrow contact of their own.
   // THE FOUR HOSTS RULE: the sweep is the WHOLE of src/, not a list of
   // three files, or a fifth host wiring its own contact escapes it.

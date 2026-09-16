@@ -19,7 +19,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { isWorldRoom, PIXEL_UNITS } from '../src/net/wire.js';
 import * as relay from '../server/src/relay.js';
-import { RELAY_VERSION } from '../server/src/index.js';
+import { relayVersionAtLeast } from './relayVersion.mjs';
 import { roomKeyFor } from '../src/net/online.js';
 import { BUILDING_KEY_0, makeBuildingKey } from '../src/systems/talkTopics.js';
 import { LOOT_LIST_MAX } from '../src/systems/loot.js';
@@ -44,7 +44,7 @@ test('WORLD6a: the wire - a building is a world room at both ends (the room room
   assert.equal(key, 'interior:m187853213.4'); assert.equal(isWorldRoom(key), true, 'the room the session joins IS a world room');
   assert.equal(interiorLocationKey(PRIVATEERS | 0, 4), key, 'and the memory\'s key is the same spelling (a signed id read unsigned, AUDIT WORLD34 A2)');
   assert.equal(interiorLocationKey(0, 4), null); assert.equal(interiorLocationKey(5, 0), null, 'no id, no key: no room');
-  assert.equal(RELAY_VERSION, 'world73');   // WORLD6b bumped it
+  assert.ok(relayVersionAtLeast(66));   // SRV-N: at or past, never equal
 });
 
 test('WORLD6a: the real Room keeps a building\'s memory and hands it to the next joiner; a town\'s frame is still ignored', async () => {

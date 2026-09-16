@@ -415,6 +415,46 @@ export function isTextEntryTarget(t) {
   return !!t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable === true);
 }
 
+/**
+ * MAC-L3: THE BROWSER MENU, SHUT ONCE.
+ *
+ * Mac's report, 2026-09-16 (Orion): "right click in general seems to
+ * cause either a new window to open, or for the page to refresh to the
+ * menu, causing unsaved progress to be lost."
+ *
+ * The right button is a WEAPON control here - classic Daggerfall swings
+ * by dragging it - and every streaming host suppressed `contextmenu` ON
+ * ITS CANVAS for exactly that reason. The canvas is not the play
+ * surface, though. THIRTEEN surfaces are appended to `document.body`
+ * (the pause door, the pack, the spellbook, the talk window, the
+ * chronicle, the book, the character sheet, the map, the touch knobs,
+ * the pad cursor, the hit numbers, the loot hover, the counter), and
+ * exactly ONE of them - the map - suppressed it. Right-click anywhere else - which
+ * on the enhanced skin is most of what a player looks at - and the
+ * browser menu opened over the game.
+ *
+ * A rule enforced by thirteen copies is a rule enforced by memory. So
+ * it is ONE listener, on the document, in the capture phase, and the
+ * hosts install it instead of writing their own.
+ *
+ * THE ONE EXCEPTION IS TEXT ENTRY. The chat field and the online name
+ * field are real inputs and a player must be able to paste into them;
+ * `isTextEntryTarget` is the same test every other key law here asks.
+ *
+ * Idempotent: the four hosts may each install it and a test may install
+ * it again, and there is still one listener.
+ */
+const CONTEXT_GUARD = new WeakSet();
+export function installContextMenuGuard(doc = (typeof document !== 'undefined' ? document : null)) {
+  if (!doc || CONTEXT_GUARD.has(doc)) return false;
+  CONTEXT_GUARD.add(doc);
+  doc.addEventListener('contextmenu', (e) => {
+    if (isTextEntryTarget(e.target)) return;   // a field the player types in keeps its paste menu
+    e.preventDefault();
+  }, true);
+  return true;
+}
+
 export function routeKey(e, ctx, setPlayerPos = null, keys = null) {
   if (ctx.uiOverlayActive) {
     if (isTextEntryTarget(e.target)) return false;   // CG2: the field's key - not routed, not swallowed (the host preventDefaults on true)
@@ -521,7 +561,13 @@ export function routeAction(action, ctx, setPlayerPos = null) {
     // Escape with no overlay up opens the pause options window
     // (GameManager's escape door; the window closes itself on the
     // same key). Optional-chained: hosts grow the seam one at a time.
-    case 'Escape': return ctx.togglePause ? (ctx.togglePause(setPlayerPos), true) : false;
+    // MAC-L1: the door takes an OPTIONS OBJECT, and `setPlayerPos`
+    // rides inside it. This arm used to hand the position applier over
+    // positionally - `ctx.togglePause(setPlayerPos)` - and three of the
+    // four hosts read argument one as the options, so Escape reached
+    // them as a hard `null` and `opts.at` threw the session away. See
+    // `ui/pauseDoor.js`'s `pauseOpts` for the whole of it.
+    case 'Escape': return ctx.togglePause ? (ctx.togglePause({ setPlayerPos }), true) : false;
     case 'CharacterSheet': ctx.toggleCharSheet(); return true;
     case 'Inventory': ctx.toggleInventory(); return true;
     // GameManager.cs:550-553 - the CastSpell ACTION opens the

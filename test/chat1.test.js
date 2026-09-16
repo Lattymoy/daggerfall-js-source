@@ -34,11 +34,11 @@ import { readFileSync } from 'node:fs';
 import {
   CHAT_MAX, CHAT_HZ_MAX, CHAT_STRIKES_MAX, CHAT_SOCKETS_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, CHAT_WORLD_ROOM, CHAT_ROOMS,
   SOCKETS_MAX, HELLO_HZ_MAX, DROP_STRIKES_MAX, PIXEL_UNITS,
-  sanitizeChat, isChatRoom, parseClient, chatGate,
+  sanitizeChat, isChatRoom, parseClient, chatGate, chatInGate,
 } from '../src/net/wire.js';
 import * as relay from '../server/src/relay.js';
 import { fakeRoom } from './fakeRoom.mjs';
-import worker from '../server/src/index.js';
+import worker, { RELAY_VERSION } from '../server/src/index.js';
 import { OnlineSession, HEARTBEAT_MS, BACKOFF_MIN_MS } from '../src/net/online.js';
 import { ChatLog, CHAT_TABS, CHAT_KEEP, CHAT_FADE_MS, CHAT_PEEK, CHAT_REJOIN_MS, tagOf } from '../src/net/chat.js';
 import { createChatPanel, isOpenKey, CHAT_STYLE_ID, CHAT_OPEN_ACTION, clockOf, CHAT_CSS } from '../src/ui/chatPanel.js';
@@ -116,8 +116,8 @@ test('CHAT1 / AUDIT CHAT: the Room as a CHANNEL - a hello keeps the secret and n
   const r = fakeRoom(CHAT_WORLD_ROOM);
   const a = r.connect(), b = r.connect(), c = r.connect();
   await r.hello(a, 'aaaa-0001'); await r.hello(b, 'bbbb-0002', at(3, 3));
-  assert.deepEqual(a.sent, [{ t: 'welcome', id: 'aaaa-0001', v: relay.RELAY_VERSION, peers: [] }]);   // SLAM13: the relay's version rides every welcome, a channel's too
-  assert.deepEqual(b.sent, [{ t: 'welcome', id: 'bbbb-0002', v: relay.RELAY_VERSION, peers: [] }], 'a channel has no roster: b is told no one though a is there');
+  assert.deepEqual(a.sent, [{ t: 'welcome', id: 'aaaa-0001', peers: [], v: RELAY_VERSION }]);   // SRV-N: and the deploy's name, on a channel's welcome too - the only welcome a chat link ever gets
+  assert.deepEqual(b.sent, [{ t: 'welcome', id: 'bbbb-0002', peers: [], v: RELAY_VERSION }], 'a channel has no roster: b is told no one though a is there');
   assert.equal(ofType(a, 'join').length, 0, 'and a hears no join');
   assert.equal(r.store.has('secret:aaaa-0001'), true, 'the secret is kept');
   assert.equal(r.store.has('look:aaaa-0001'), false, 'the look is not: nobody is drawn from a channel');
@@ -345,7 +345,7 @@ test('CHAT1 / AUDIT CHAT: the log - the World tab from CHAT_TABS (one today, eac
   assert.equal(log.push('world', { id: 'a', name: 'A', text: '' }), null, 'nothing to say: nothing kept');
   assert.equal(log.version, v0, 'and nothing to show');
   const l1 = log.push('world', { id: 'a', name: 'A', text: 'one', at: 5 });
-  assert.deepEqual(l1, { seq: 1, id: 'a', name: 'A', text: 'one', at: 5, t: 10_000, mine: false });
+  assert.deepEqual(l1, { seq: 1, id: 'a', name: 'A', text: 'one', at: 5, t: 10_000, mine: false, system: false });   // SRV-N: every line carries the flag, and a player's is false
   assert.equal(log.tab('world').unread, 1, 'closed: unread');
   assert.ok(log.version > v0);
   log.push('world', { id: 'me', name: 'Me', text: 'two', mine: true });
@@ -572,7 +572,7 @@ test('CHAT1 / AUDIT CHAT: the panel - built once over the document with the shee
   assert.equal(rows[0], row2, 'and the row that stayed is the same node'); assert.equal(row1.removed, true);
   cpanel.destroy();
   // a covering window, an open overlay
-  panel.render({ hidden: true, status: 'chat: connecting' });
+  panel.render({ covered: true, status: 'chat: connecting' });   // AUDIT-CHATR F1: the HOST's word, renamed off the player's `hidden`
   assert.equal(log.open, false, 'a window over the HUD closes the chat'); assert.equal(root.style.display, 'none', 'and hides it');
   panel.render({ status: 'chat: connecting' });
   assert.equal(root.style.display, ''); assert.equal(one(root, 'dfchat-status').textContent, 'chat: connecting', 'the session\'s state, said');
@@ -614,13 +614,26 @@ test('CHAT1 / AUDIT CHAT: the host by source - world.js starts the chat with the
   assert.match(w, /import \{ requestLook, releaseLook, makeLookGate, bindCursorToggle, setCursorActive \} from '\.\.\/player\/pointerLock\.js';/);
   assert.match(w, /if \(enhanced && typeof document !== 'undefined'\) chatStart\(\);/, 'the enhanced skin\'s, with a document (node has none)');
   assert.match(w, /const chatStart = \(\) => \{\s*if \(!online\.url\) return;/, 'AUDIT CHAT A9/B1: a relay the law refused is no relay for the chat either');
-  assert.match(w, /for \(const tab of chatLog\.tabs\) \{\s*const link = new OnlineSession\(\{ url: online\.url, name: online\.name, look: online\.look, id: online\.id, secret: online\.secret, presence: false \}\);\s*link\.onChat = \(line\) => chatLog\.push\(tab\.id, line\);\s*link\.join\(tab\.room\);\s*chatLinks\.set\(tab\.id, link\);/, 'a channel session per tab, the presence session\'s identity, a line to its tab');
+  assert.match(w, /for \(const tab of chatLog\.tabs\) \{\s*const link = new OnlineSession\(\{ url: online\.url, name: online\.name, look: online\.look, id: online\.id, secret: online\.secret, presence: false \}\);\s*link\.onChat = \(line\) => chatLog\.push\(tab\.id, line\);\s*link\.onRelay = onRelayVersion;\s*link\.join\(tab\.room\);\s*chatLinks\.set\(tab\.id, link\);/, 'a channel session per tab, the presence session\'s identity, a line to its tab');
   assert.match(w, /onSend: \(tabId, text\) => chatLinks\.get\(tabId\)\?\.sendChat\(text\) \?\? false,/, 'a typed line down its tab\'s session, and the answer back (B2)');
   assert.match(w, /canOpen: \(\) => !gamePaused\(\) && !\(townTalk\.hudCovered \|\| \(modes\?\.hudCovered \?\? false\)\)/, 'no chat under a window');
   assert.match(w, /onOpen: \(\) => \{ setCursorActive\(false\); releaseLook\(\); \},/, 'AUDIT CHAT C2: the pointer freed on open; PL3: the opening Enter reclaimed from the toggle');
   assert.match(w, /onClose: \(\) => \{ if \(!gamePaused\(\)\) requestLook\(canvas\); \},/, 'and taken back inside the closing gesture');
   assert.match(w, /for \(const \[tabId, link\] of chatLinks\) \{\s*link\.rejoin\(chatLog\.tab\(tabId\)\.room, CHAT_REJOIN_MS\);[^\n]*\n\s*link\.tick\(\);/, 'every channel rejoined when it must be, and ticked');
-  assert.match(w, /chatPanel\.render\(\{\s*hidden: townTalk\.hudCovered \|\| \(modes\?\.hudCovered \?\? false\) \|\| gamePaused\(\),/, 'hidden under a window');
+  // AUDIT-CHATR F1: the option is `covered`, not `hidden`. The two words
+  // are different things - the host's window and the player's Hide
+  // button - and while they shared a name the frame wrote one into the
+  // other. This pin sees the CALL SITE only; what the callee does with
+  // the name is pinned by the frame-driven pin in
+  // chatroster_namefilter.test.js, because a source match here could not
+  // have caught the shadow and did not.
+  // ...and matched against the source with its COMMENTS STRIPPED, for
+  // the fourth time in this port: the note explaining why the option is
+  // called `covered` sits between the brace and the key, and a `\s*`
+  // cannot step over prose. A pin that reddens on its own explanation
+  // teaches the next reader to delete the explanation.
+  const wCode = w.replace(/^\s*\/\/.*$/gm, '');
+  assert.match(wCode, /chatPanel\.render\(\{\s*covered: townTalk\.hudCovered \|\| \(modes\?\.hudCovered \?\? false\) \|\| gamePaused\(\),/, 'covered under a window');
   assert.match(w, /status: link\?\.statusLine\('chat'\) \?\? null,/, 'the session\'s own line, labelled (B5)');
   assert.doesNotMatch(w, /chat: \$\{link\.error/, 'and no remake of it');
   assert.match(w, /const onlineFrame = \(now, dt\) => \{\s*chatFrame\(\);(?:[^\n]*\n)(?:\s*\/\/[^\n]*\n)*\s*if \(townTalk\.overlay instanceof DeathScreen \|\| modes\?\.deathUp\?\.\(\)\)/, 'the chat frame runs before the dead return: the channels keep their heartbeat and reconnect while the death screen is up');
@@ -716,4 +729,119 @@ test('CHAT2: a chat row states that it does not shrink', () => {
   assert.ok(row, 'the row rule is still called .dfchat-line');
   assert.equal(DECLS(row.body).flex, 'none',
     'the row never shrinks - the list scrolls instead (CHAT2; tools/chatLayoutProbe.mjs measures it)');
+});
+
+// ── SRV-N: A LINE NOBODY SENT ────────────────────────────────────────
+
+test('SRV-N: the panel draws a notice UNATTRIBUTED - no name and no #tag, its own colour instead - while a player\'s line keeps both, in the peek and in the open list alike', () => {
+  let clock = 50_000;
+  const log = new ChatLog({ now: () => clock });
+  const doc = fakeDocument(), win = fakeWindow();
+  const panel = createChatPanel({ log, onSend: () => true, canOpen: () => true, action: defaultAction, doc, win, touch: false });
+  const root = doc.body.children[0];
+
+  log.push('world', { id: 'bob-0001', name: 'Bob', text: 'anyone else just get dropped' });
+  log.push('world', { text: 'The server was updated and restarted.', system: true });
+  panel.render();
+  const [player, notice] = find(one(root, 'dfchat-peek'), 'dfchat-line');
+
+  assert.equal(one(player, 'dfchat-name').textContent, 'Bob');
+  assert.equal(one(player, 'dfchat-tag').textContent, `#${tagOf('bob-0001')}`);
+
+  // THE TAG IS THE REASON THIS IS NOT A NAME. `tagOf('')` is a perfectly
+  // real-looking four-character hash, identical on every notice - so a
+  // notice drawn the ordinary way would read as a PLAYER called Server
+  // with a stable tag of their own, which is precisely the thing a
+  // player learns to trust.
+  assert.equal(find(notice, 'dfchat-name').length, 0, 'a notice is nobody\'s');
+  assert.equal(find(notice, 'dfchat-tag').length, 0);
+  assert.equal(one(notice, 'dfchat-text').textContent, 'The server was updated and restarted.');
+  assert.ok(String(notice.className).split(/\s+/).includes('system'), 'its own class, so the sheet can give it its own colour');
+  assert.ok(!String(player.className).split(/\s+/).includes('system'));
+  assert.match(CHAT_CSS, /\.dfchat-line\.system \.dfchat-text \{/, 'and the sheet actually carries that rule');
+
+  // the open list is a second builder over the same node maker, and a
+  // notice must not grow a name on the way into it
+  panel.open(); panel.render();
+  const listRows = find(one(root, 'dfchat-list'), 'dfchat-line');
+  assert.equal(find(listRows.at(-1), 'dfchat-name').length, 0, 'still nobody\'s with the panel open');
+  assert.equal(one(listRows.at(-1), 'dfchat-text').textContent, 'The server was updated and restarted.');
+  assert.ok(one(listRows.at(-1), 'dfchat-time'), 'and it is still stamped like any other line');
+  panel.destroy?.();
+});
+
+// ── CHAT-G: THE THIRD SIDE ───────────────────────────────────────────
+
+test('CHAT-G: chat lines COMING IN are counted - at the relay\'s own per-room spend, so an honest room at full tilt passes whole and a flood is bounded, per ROOM so a loud neighbour cannot silence the room you stand in, refilling, dropped lines counted, and said on the console ONCE', () => {
+  // THE RATE IS DERIVED. CHAT_ROOM_HZ_MAX is what the relay spends on one
+  // room, so this is not a number somebody chose - it is the honest
+  // ceiling restated at the other end, and the two cannot drift because
+  // they are the same constant through the same function object.
+  assert.equal(relay.chatInGate, chatInGate, 'the same function at both ends');
+  assert.notEqual(chatInGate, chatGate, 'and NOT the sender\'s gate: gating arrivals at CHAT_HZ_MAX would drop real lines the moment two people talked at once - a hardening that is a chat bug');
+
+  const { FakeWS, sockets } = fakeSocketClass();
+  let clock = 1_000_000;
+  const heard = [];
+  const s = new OnlineSession({ url: 'wss://relay.test', id: 'mac-0001', secret: 'secret-of-mac-0001', presence: false, WebSocketImpl: FakeWS, now: () => clock });
+  s.onChat = (line) => heard.push(line.text);
+  s.join(CHAT_WORLD_ROOM);
+  sockets[0].open();
+  const say = (n, room) => {
+    for (let i = 0; i < n; i++) {
+      const frame = JSON.stringify({ t: 'chat', id: 'bob-0001', name: 'Bob', text: 'line ' + i, at: clock });
+      if (room) s._receive(frame, room); else sockets[0].receive(JSON.parse(frame));
+    }
+  };
+
+  // AN HONEST ROOM AT FULL TILT PASSES WHOLE. This half matters as much
+  // as the flood half: the gate must not cost a busy room its chat.
+  say(CHAT_ROOM_HZ_MAX);
+  assert.equal(heard.length, CHAT_ROOM_HZ_MAX, 'every line an honest relay could have sent in that second landed');
+  assert.equal(s.stats.chatsDropped, 0);
+
+  // ...and the first one past it is a line no honest relay would send.
+  say(1);
+  assert.equal(heard.length, CHAT_ROOM_HZ_MAX, 'one more in the same second does not');
+  assert.equal(s.stats.chatsDropped, 1, 'dropped AND counted - a silent drop is a bug report nobody can write');
+
+  // THE FLOOD, driven: net/chat.js keeps CHAT_KEEP lines, so an ungated
+  // stream is a player's history deleted and refilled with the relay's
+  // choice of text. This is the reason the gate exists.
+  say(5000);
+  assert.equal(heard.length, CHAT_ROOM_HZ_MAX, 'five thousand more change nothing');
+  assert.equal(s.stats.chatsDropped, 5001);
+
+  // PER ROOM, because that is the unit the relay spends by. A session
+  // listens to its own room and a halo of cells and is owed
+  // CHAT_ROOM_HZ_MAX from EACH; one bucket across all of them would let a
+  // loud neighbouring cell silence the room the player is standing in.
+  say(CHAT_ROOM_HZ_MAX, 'world:9,9');
+  assert.equal(heard.length, CHAT_ROOM_HZ_MAX * 2, 'the halo room has its own bucket and its own full tilt');
+
+  // IT REFILLS - a drop is a moment, not a sentence.
+  clock += 1000;
+  say(CHAT_ROOM_HZ_MAX);
+  assert.equal(heard.length, CHAT_ROOM_HZ_MAX * 3, 'a second later the room is whole again');
+
+  // and a room LET GO takes its bucket with it, or a session accumulates
+  // one per cell it ever walked through.
+  s._forgetRoom('world:9,9');
+  assert.equal(s._inChat.has('world:9,9'), false);
+});
+
+test('CHAT-G: the console says it ONCE - a flood must not become its own flood', () => {
+  const { FakeWS, sockets } = fakeSocketClass();
+  const said = [];
+  const warn = console.warn;
+  console.warn = (...a) => said.push(String(a[0]));
+  try {
+    const s = new OnlineSession({ url: 'wss://relay.test', id: 'mac-0001', secret: 'secret-of-mac-0001', presence: false, WebSocketImpl: FakeWS, now: () => 1_000_000 });
+    s.onChat = () => {};
+    s.join(CHAT_WORLD_ROOM);
+    sockets[0].open();
+    for (let i = 0; i < 500; i++) sockets[0].receive({ t: 'chat', id: 'bob-0001', name: 'Bob', text: 'x' + i, at: 1_000_000 });
+    assert.equal(said.length, 1, 'one line on the console, however many frames were refused');
+    assert.match(said[0], /faster than 20\/s/);
+  } finally { console.warn = warn; }
 });

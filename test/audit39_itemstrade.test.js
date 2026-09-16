@@ -21,7 +21,7 @@ const rd = (p) => readFileSync(join(root, p), 'utf8');
 const LOCAL_SLOT0 = [192, 48 + 20];
 const MODE_ACTION = [226 + 15, 134 + 7];
 
-/** THE HOST'S OWN SHAPE (scenes/worldModes.js:1433): packItems hands
+/** THE HOST'S OWN SHAPE (scenes/worldModes.js:1434): packItems hands
  *  back a FRESH filtered array on every call, so the window's staging
  *  is a SELECTION over a pack it cannot splice. */
 const selectionHooks = (mode, pack) => {
@@ -73,6 +73,7 @@ test('AUDIT 39 F102: unstaging returns the item to the local list', () => {
   const book = { group: 'Books', templateIndex: 277, name: 'Book', value: 40, message: 7 };
   const h = selectionHooks('Sell', [book]);
   const w = new NativeTradeWindow(h);
+  w.input('F3');   // MAC-N2: a book sits on the Clothing & Misc page (AddLocalItem) - the window opens on Weapons & Armor
   w.click(...LOCAL_SLOT0);
   assert.equal(w.localList().length, 0);
   w._pickRemote(0);                       // the staged lot clicks back out (:833-860)

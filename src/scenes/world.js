@@ -52,6 +52,7 @@ import { createAnimalAmbience } from '../systems/animalAmbience.js';   // A4
 import { CityNavigation } from '../world/cityNavigation.js';   // T2 towns
 import { TownPopulation } from '../systems/townPopulation.js';
 import { GUARD_TEXTURE, MobilePerson, PERSON_TEXTURES, personWantsToStop } from '../characters/mobilePerson.js';
+import { bowDamageArrow } from '../combat/enemyEquipment.js';   // MAC-N1: the recovered shaft is CreateWeapon's arrow, value and all
 import { createTownTalk, rayPersonDistance } from './townTalk.js';   // AUDIT 63 F33 (review): the townsfolk's own pick distance, the enemy arm's rival
 import { createPlayerMagic } from './hostMagic.js';   // M2: spellcasting above ground
 import { setDefaultEnchantCtx } from '../systems/enchantments.js';   // E2: the host's enchantCtx mount
@@ -112,7 +113,7 @@ import { PLAYED_STEP_MAX_SECONDS } from '../systems/quest/clock.js';   // WORLD7
 import { mintQuestFoeWave, placeFoeEnv, entityOccupancy, questFoeGender, reviveQuestBehaviour } from './questFoeHost.js';   // B1   // AUDIT 63r F24: SerializableEnemy.cs:206-217's quest-link arm, the one home both hosts use
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';   // MERGE: FinalizeFoe's Flying lift reads the behaviour flag
 import { intermittentEnemySpawn, MIN_WILDERNESS_SPAWN_DISTANCE, setEnemyAlert, areEnemiesNearby, passiveGuardSpawns } from '../systems/encounters.js';   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
-import { snapshotPlayer, restorePlayer, composeSessionState, restoreSessionState, dungeonPixelFor } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
+import { snapshotPlayer, restorePlayer, resolvePendingSpells, composeSessionState, restoreSessionState, dungeonPixelFor } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
 import { saveSlot, loadSlot, quickLoadSlot, mostRecentRestorable, QUICK_SAVE_NAME, requestScreenshot, capturePendingScreenshot } from '../systems/saveSlots.js';   // SAV4: the quicksave is a SLOT named QuickSave (SaveLoadManager.QuickSave/QuickLoad); SS1: the shot arms at save and lands at frame end
 import { frameBegin, frameEnd } from '../systems/frameClock.js';   // PERF1: the frame's script time
 import { arrivalClampMinutes, playerTravelPosition } from '../systems/travel.js';   // F-slice; F114: the ship-aware travel origin
@@ -127,7 +128,7 @@ import { createCityGuards } from './cityGuards.js';   // G1
 import { createArrestFlow } from './arrestFlow.js';
 import { clearCrimeOnLocationExit, addGold, goldAmount, deductGold, totalGoldAmount, deductGoldPieces } from '../systems/court.js';   // AUDIT 17e F6   // G2   // F-slice: travel gold; U41: GetGoldAmount + the pieces half of DeductFastTravelGold
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
-import { mwViewFrame, mwViewWheel, mwViewDrawBody } from '../player/mwView.js';   // MW-D25: the Morrowind camera
+import { mwViewFrame, mwViewWheel, mwViewDrawBody, mwViewFootstep, mwViewLoadPose } from '../player/mwView.js';   // MW-D25: the Morrowind camera; AUDIT-EOTB2: the sprite's stride and the load's POV
 import { mwCamera, PITCH_LIMIT } from '../player/mwCamera.js';   // MW-D30: persistence + the reference pitch clamp
 import { pickActivatableHit, pickQuestFoe, pickFoe } from '../player/activate.js';   // G3: corpse loot; QG1: the foe-click door; TI1: the lock-on pick
 import { raceActivation } from '../player/activationRace.js';   // HARD2: one home for "the nearest thing under the one ray takes the click"
@@ -152,11 +153,10 @@ import { ImgFile } from '../formats/imgFile.js';   // AUDIT 21 hosts F7: loadHud
 import { preloadInventoryArt } from '../ui/nativeInventory.js';   // U8d: the native inventory
 import { createInventoryWindow, inventoryDoorReady } from '../ui/inventoryDoor.js';   // U53: the pack's ONE seam, and the skin fork in front of it
 import { createUseMagicItemWindow } from '../ui/useMagicItemWindow.js';   // UI1: the U key's window
-import { TransportWindow, preloadTransportArt, transportArtLoaded } from '../ui/transportWindow.js';   // TR3: the picker
+import { preloadTransportArt } from '../ui/transportWindow.js';   // TR3: the picker's art (the picker itself is the mount rig's)
 import { hasHorse, hasCart, TRANSPORT_MODES } from '../systems/transport.js';   // TR3: what the rows offer
 import { shipTransition, REPOSITION } from '../systems/ship.js';   // TR4: board and disembark
-import { RidingAnimator, loadRidingArt, ridingRect, RIDING_VOLUME_SCALE } from '../systems/riding.js';   // TR2: the sprite and its loop
-import { horseOffsetHeight } from '../ui/hudLarge.js';   // ROAD-D D10: LargeHUDOffsetHorse
+import { createMountRig } from '../player/mountRig.js';   // MAC-K3: the mount surface, one home for this host and the fixed-city one
 import { largeHudViewportRect, largeHudWorldAspect } from '../ui/hudLarge.js';   // ROAD-E E5: ViewportChanger - the docked bar shrinks the world pass
 import { createLockOn, LOCK_PICK_DISTANCE } from '../player/lockOn.js';   // TI1: touch lock-on
 import { rayDirFromScreen, projectToScreen, ndcFromScreen } from '../player/tapRay.js';   // TI1: the finger's ray and the dot
@@ -224,6 +224,8 @@ import { makeHitPend } from '../net/hitPend.js';   // AUDIT FOES FOE2: a blow th
 import { PeerBodies } from '../net/peerBodies.js';   // MWBODY1: the others in the Morrowind body
 import { ChatLog, CHAT_REJOIN_MS } from '../net/chat.js';   // CHAT1: the tabs and their lines
 import { createChatPanel } from '../ui/chatPanel.js';   // CHAT1: the enhanced skin's chat over the world
+import { relayVersionSeen, buildUpdateSeen, fetchLiveBuildTag, RELAY_RESTART_TEXT, BUILD_UPDATE_TEXT, BUILD_POLL_MS } from '../net/updateNotice.js';   // SRV-N: the relay moved, or the build did
+import { BUILD_TAG } from '../buildTag.js';   // SRV-N: which build this tab is actually running
 import { morrowindDataCount, morrowindDataGeneration } from './dataSource.js';   // MWBODY1: the bodies' gate - Morrowind data attached - and its generation
 // Q4-v: THE QUEST BRIDGE - the machine goes live in this host.
 import { createQuestBridge, tokensToRows } from './questBridge.js';
@@ -286,11 +288,12 @@ import { CameraRecoiler } from '../player/cameraRecoiler.js';   // AUDIT 28 W9: 
 import { HeadBobber } from '../player/headBobber.js';   // AUDIT 28 W10: HeadBobbing
 import { lastHealthLost, lastHealthLostPercent } from '../ui/hudVitals.js';   // AUDIT 28 W9: the detector's loss
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
-import { actionOf, held, moveHeld, anyMove, swallowBrowserKey, mouseCode, isSwingButton, keyboardLook, isTextEntryTarget, bindings } from '../ui/input.js';
+import { actionOf, held, moveHeld, anyMove, swallowBrowserKey, mouseCode, isSwingButton, keyboardLook, isTextEntryTarget, bindings, routeAction, installContextMenuGuard } from '../ui/input.js';
+import { armUnloadGuard, releaseUnloadGuard } from '../systems/unloadGuard.js';   // MAC-L3: one door in front of every way out of a running game; AUDIT-MACL F3: ...and down for a door the game opened itself
 import { actionForCode } from '../systems/inputActions.js';   // FIX-E: the overlay's QuickLoad read, off the code alone   // I2: the rebindable registry; AUDIT 39r: the mouse half of the held set
 import { hudShortcutKey } from '../ui/hudShortcuts.js';   // AUDIT 64 F36/F37: DaggerfallHUD.Update's LargeHUDToggle / HUDToggle arms
 import { createActivateGate, activateFrame, setClickDelay } from '../systems/activateGate.js';   // A8: PlayerActivate's ActivateCenterObject frame
-import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // I3/I4; U51 picks the skin
+import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady, pauseOpts } from '../ui/pauseDoor.js';   // I3/I4; U51 picks the skin; MAC-L1: pauseOpts is the ONE reader of the door's options
 import { isEnhanced } from '../systems/uiSkin.js';   // WM2d: the mills are an enhanced-only addition
 
 /** Internal_Strings_en 654 / 655, the two guild map-reveal notes
@@ -1635,27 +1638,27 @@ export async function bootWorld(canvas, renderer, params, status) {
   const moveAxes = new MoveAxes();   // AUDIT 28 W8: MovementAcceleration
   const cameraRecoiler = new CameraRecoiler();   // AUDIT 28 W9: CameraRecoilStrength
   const headBobber = new HeadBobber();   // AUDIT 28 W10: HeadBobbing
-  const ridingAnimator = new RidingAnimator();   // TR2: the mount's frames, loop and neigh
+
   /** U53's one-builder law: ONE place changes the mode, and both the
    *  T-key pick and the interior hosts' dismount take it. TR5. */
-  let ridingArt = null;   // TR2: the four CFA frames of the mount under you
-  const setTransportModeHere = (mode) => {
-    player.setTransportMode(mode);   // F-E3: the height action rides with the mode
-    ridingAnimator.mount(mode);
-    ridingArt = null;
-    // HC1 (2026-09-14, Mac: "audit the horse and cart ... the sprites
-    // actually show"): the mount's art loads HERE, in the ONE place the
-    // mode changes (U53) - not on the T-key pick alone. Three other
-    // paths set the mode and used to leave the art null for good: a
-    // loaded save on horseback (the pose restore), the Test Room's ride
-    // out, and the ship's landing. A rider from any of them had the
-    // speed, the bob and the hoof loop, and no horse under them.
-    if (isRiding(mode)) {
-      loadRidingArt(fetchBytes, palette, renderer, mode)
-        .then((art) => { if (player.transportMode === mode) ridingArt = art; })   // still that mount: a dismount mid-load keeps null
-        .catch((e) => console.warn('[transport] mount art unavailable:', e?.message ?? e));
-    }
-  };
+  // MAC-K3: the mount is `player/mountRig.js`'s now - the mode, the
+  // art, the animator, the audio, the picker and the sprite. It moved
+  // because `scenes/exterior.js` had NONE of it and the T key there did
+  // nothing at all; copying it would have been two laws.
+  // AUDIT-MACK F3: `let mountRig = null` with `mountRig?.setMode(...)`
+  // here, which is what MAC-K3 shipped, made a SILENT no-op out of
+  // every mode change the rig could not answer - a loaded save on
+  // horseback, the Test Room's ride, the ship's landing. The `?.` read
+  // like a guard against the build order and guarded nothing: the rig
+  // is built unconditionally at the top level of this same function,
+  // and every caller is inside a closure that cannot run before the
+  // body has. So it is a `const` (declared below, at the build) and
+  // the call is direct - if the order is ever broken it throws where
+  // it broke, instead of quietly leaving the player on foot.
+  //
+  // `scenes/exterior.js` already had this shape; two hosts, two
+  // spellings of one seam is how they drift.
+  const setTransportModeHere = (mode) => mountRig.setMode(mode);
   let rightHeld = false;   // AUDIT 28 F-C2: HasAction(SwingWeapon) - the raw button, ungated
   // TI1: the touch layer's state. swipeHeld is the swipe's SwingWeapon
   // truth beside rightHeld (the settle law reads both); a tap arms a
@@ -1917,6 +1920,17 @@ export async function bootWorld(canvas, renderer, params, status) {
   preloadCharSheetArt({ renderer, fetchBytes, palette });   // U8a: INFO00I0 warms at boot
   preloadBookArt({ renderer, fetchBytes, palette });   // B1: BOOK00I0 warms at boot
   preloadTransportArt({ renderer, fetchBytes, palette });   // TR3: MOVE00I0 + MOVE01I0
+  // MAC-K3: the mount rig, built once townTalk exists to hold its
+  // picker. `onShip` is THIS host's - the ship is a teleport across a
+  // streaming world and a fixed city has nowhere to sail to, so that
+  // host passes null and the picker's Ship row goes dark.
+  const mountRig = createMountRig({
+    renderer, canvas, fetchBytes, palette, audio,
+    player, playerEntity,
+    showOverlay: (w) => townTalk.showOverlay(w),
+    onShip: () => boardOrDisembark(),
+    paused: () => gamePaused(),
+  });
   preloadPauseFlowArt({ renderer, fetchBytes, palette }).catch((e) => console.warn('[pause] pause/controls art unavailable:', e?.message ?? e));   // I3/I4
   // B1 + AUDIT B-C2: an async open must not clobber a window the
   // player opened while the book was loading.
@@ -1973,7 +1987,32 @@ export async function bootWorld(canvas, renderer, params, status) {
   // shop loot, a city corpse, the guild's Buy Magic Items shelf -
   // found no templates at all. Fired and not awaited: the boot
   // does not block on it and every consumer is a later frame.
-  loadMagicRegistries(fetchBytes).then((r) => { spellsByIndex = spellsByIndex ?? r.spellsByIndex; });
+  // MAC-L4: ...and the PROMISE is kept, not just its result. A load
+  // that lands before this resolves used to hand `restorePlayer` a null
+  // table, and every STOCK spell in the save - which travels as a
+  // SPELLS.STD index, a bare number - resolved to nothing and was
+  // dropped on the floor by a `.filter(Boolean)`. Silently, and then
+  // written back out by the next save. "Something causes spells to
+  // disappear from the spellbook" (bigdaddywetwet, 2026-09-16) is that
+  // race. A load waits for the table it needs to READ the save.
+  const _magicRegistries = loadMagicRegistries(fetchBytes).then((r) => {
+    spellsByIndex = spellsByIndex ?? r.spellsByIndex;
+    // AUDIT-MACL F1: ...AND THE HELD SPELLS COME BACK HERE. MAC-L4 wrote
+    // `resolvePendingSpells` and then called it from NOWHERE but its own
+    // pin - an export justified by a use that did not exist, which is
+    // the same dead-export class AUDIT-CHATR F5 deleted two days ago,
+    // written by the same hand that had just found it. The record even
+    // claimed the function "picks it up if a table arrives later"; it
+    // could not, because nothing asked it to.
+    //
+    // This IS that later. A restore that ran before the table landed
+    // (the classic-import path, or a host that never awaits) leaves
+    // `spellsPending` on the entity; the table arriving is the one
+    // moment that can clear it, and it is this line.
+    const back = resolvePendingSpells(playerEntity, spellsByIndex);
+    if (back) console.info(`[save] ${back} held spell(s) resolved once SPELLS.STD landed`);
+    return r;
+  });
   // V1: the infection's host seam - the dream/death videos, the
   // fortnight clock raise, the clan's region read and the popup.
   // One call per host (THE FOUR HOSTS RULE); without it the
@@ -2112,7 +2151,10 @@ export async function bootWorld(canvas, renderer, params, status) {
         // ui-chargen-4: the race screen's back cancels the wizard to
         // the front door (DFU unwinds to the start screen); the
         // reload re-runs the boot flow.
-        onCancel: () => location.reload(),
+        // AUDIT-MACL F3: ...and the guard stands down first, because
+        // this is a door the GAME opened - the same law `exitToTitleMenu`
+        // follows. A player who presses Cancel has asked to leave.
+        onCancel: () => { releaseUnloadGuard(); location.reload(); },
         onDone: (r) => {
           finishChargen(playerEntity, r, sbi);
           preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture },
@@ -2680,10 +2722,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2119 mounts the same one, gated on
+  // and dungeonContext.js:2132 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:4623
+  // that context through modes.dungeonCtx - so worldModes.js:4624
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -3094,13 +3136,18 @@ export async function bootWorld(canvas, renderer, params, status) {
     // host hands over what only it knows, and the door picks the skin.
     return createChronicleWindow({
       entity: playerEntity,
-      // Which page the ENHANCED window opens on. The classic modes map
-      // onto the two sections the chronicle actually holds: the
-      // notebook is Notes, the message log is Messages. The two quest
-      // modes have no page here on purpose - the pause window has
-      // carried quests since PX4 - so they land on Notes, and the
-      // CLASSIC window still gets the mode itself, below.
-      section: mode === 'messages' ? 'messages' : 'notes',
+      // MAC-K2: the walk the Quests section draws - the bridge's one.
+      questLog: () => questBridge?.questLog() ?? { active: [], finished: [] },
+      // MAC-K2 (Mac: "Logbook not reflecting quests"). This read
+      // `mode === 'messages' ? 'messages' : 'notes'`, with the note
+      // that "the two quest modes land on Notes because the pause
+      // window has carried quests since PX4" - which made the L key,
+      // InputManager's own `LogBook`, open the player's NOTEBOOK. The
+      // chronicle now has a Quests section (ui/enhancedChronicle.js)
+      // fed by the SAME walk the pause tab uses, so each classic mode
+      // lands on the page that holds what it names.
+      section: mode === 'messages' ? 'messages'
+        : (mode === 'notebook' ? 'notes' : 'quests'),
       questMessages: () => questBridge?.machine.getAllQuestLogMessages() ?? [],
       notebook: () => questBridge?.notebook ?? null,
       mode,
@@ -4234,7 +4281,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:5413), so exterior mode and a
+    // composer, dungeonContext.js:5431), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -4312,18 +4359,38 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  shape, because the interim entity has no name to key by. */
   async function worldQuickLoad({ mostRecent = false, key = null } = {}) {
     if (_loading) return;
-    const snap = key != null ? loadSlot(key)
-      : mostRecent ? (mostRecentRestorable()?.snap ?? null)
-        : quickLoadSlot(playerEntity.name);
-    if (!snap) { townTalk.say('No saved game.'); return; }
-    const extras = restorePlayer(playerEntity, snap, spellsByIndex);
-    if (!extras) { townTalk.say('Save version mismatch.'); return; }
-    autoBuildArms(playerEntity);   // MWA1: the loaded character's arms (a boot into ?load has no chargenDone until here)
+    // AUDIT-MACL F2: THE LATCH GOES UP BEFORE THE FIRST AWAIT, and MAC-L4
+    // is why it has to be said out loud. This guard and the latch below
+    // it used to be separated by straight-line code alone - one
+    // synchronous run, so `if (_loading) return;` and `_loading = true`
+    // were effectively atomic and two F9s in a frame could not both get
+    // through. MAC-L4 put an `await` between them for the spell table,
+    // and an await is a door: both calls read `_loading === false`, both
+    // suspended, and both came back to run a whole load over the same
+    // entity. The fix for a silent data loss must not open a re-entry.
+    //
+    // Everything below is inside the try/finally that clears it, so the
+    // two early returns release the latch on their way out rather than
+    // wedging quickload for the session.
     _loading = true;
-    // CameraRecoiler's SaveLoadManager_OnStartLoad (:185-191): the
-    // incoming character does not inherit the old one's reel.
-    cameraRecoiler.reset();
     try {
+      const snap = key != null ? loadSlot(key)
+        : mostRecent ? (mostRecentRestorable()?.snap ?? null)
+          : quickLoadSlot(playerEntity.name);
+      if (!snap) { townTalk.say('No saved game.'); return; }
+      // MAC-L4: the table this save is READ WITH, before it is read. The
+      // boot fires `loadMagicRegistries` and does not await it (every
+      // other consumer is a later frame), so a quickload in the first
+      // seconds of a session arrived with `spellsByIndex` still null.
+      // Awaiting here costs nothing once it has resolved and is the
+      // difference between reading a save and destroying one.
+      if (!spellsByIndex) await _magicRegistries.catch(() => null);
+      const extras = restorePlayer(playerEntity, snap, spellsByIndex);
+      if (!extras) { townTalk.say('Save version mismatch.'); return; }
+      autoBuildArms(playerEntity);   // MWA1: the loaded character's arms (a boot into ?load has no chargenDone until here)
+      // CameraRecoiler's SaveLoadManager_OnStartLoad (:185-191): the
+      // incoming character does not inherit the old one's reel.
+      cameraRecoiler.reset();
       // IS1: a load never runs UNDER a mounted mode - RespawnPlayer
       // destroys the standing interior first (PlayerEnterExit
       // .cs:453-459). The dying scene is NOT cached on the way out:
@@ -4471,7 +4538,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // togglePOV when the live view differs). A pose without one (an
     // older save, the classic import - a Daggerfall .SAV carries no
     // Morrowind camera) leaves the live camera standing.
-    mwCamera.restore(pose.camera);
+    mwViewLoadPose(pose.camera);   // AUDIT-EOTB2: both lanes - the Morrowind restore above, and the sprite camera's StartInThirdPerson (the mod's OnLoad)
   }
   /**
    * SAV3: the classic-save import arm - StartFromClassicSave's game
@@ -4919,7 +4986,7 @@ export async function bootWorld(canvas, renderer, params, status) {
      *  GameManager.Instance.WeaponManager.ToggleSheath() - a SINGLETON
      *  call with no scene gate at all, registered for both buttons at
      *  :211-212, so the panel is live on every screen the bar is drawn
-     *  on. Here routeAction's arm is optional (ui/input.js:480) and
+     *  on. Here routeAction's arm is optional (ui/input.js:520) and
      *  only dungeonContext.js carried the door, so above ground, in
      *  ?exterior and inside a building the click was swallowed by
      *  routeLargeHudClick's unconditional `return true` and nothing
@@ -4939,22 +5006,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // refuses with a HUD line, and AIRBORNE is silently ignored
     // (`if (isGrounded)` with no else). Outdoors and grounded, the
     // picker opens.
-    openTransport: () => {
-      if (!player.grounded || !transportArtLoaded()) return;
-      townTalk.showOverlay(new TransportWindow({
-        hasHorse: hasHorse(playerEntity.items ?? []),
-        hasCart: hasCart(playerEntity.items ?? []),
-        // TR4: the row is live when a ship is owned - the bank arc has
-        // carried that fact since H3, and this is its first reader.
-        shipAvailable: ownsShip(playerEntity),
-        onMode: (mode) => {
-          // TR4: "Ship" is not a mode you travel IN (DFU's own comment
-          // on the enum) - it is a teleport that lands back on Foot.
-          if (mode === TRANSPORT_MODES.Ship) { boardOrDisembark(); return; }
-          setTransportModeHere(mode);   // HC1: the art loads with the mode, in the one place
-        },
-      }));
-    },
+    // MAC-K3: the picker is the mount rig's - see player/mountRig.js
+    // for the grounded/airborne law and the ship row's own gate.
+    openTransport: () => mountRig.open(),
     openUseMagicItem: () => {
       const win = createUseMagicItemWindow({
         items: playerEntity.items ?? [],
@@ -4990,10 +5044,17 @@ export async function bootWorld(canvas, renderer, params, status) {
     // page IS that sheet, off the same sheetModel, and is centred by
     // construction. This host's own pause flow, landed on it.
     openSheetPage: () => hudCtx.togglePause({ at: 'stats' }),
-    togglePause: (opts = {}) => {
+    // MAC-L1: ONE SIGNATURE ACROSS THE FOUR HOSTS, and ONE READER of
+    // its options. `routeAction`'s Escape arm used to hand a position
+    // applier over positionally, and this host reads argument one as
+    // the options - so Escape arrived here as a hard `null` and
+    // `opts.at` threw the session away (dycaite, 2026-09-16). `pauseOpts`
+    // is that reader now, and it survives a null.
+    togglePause: (doorOpts = {}) => {
       if (!pauseDoorReady()) return;
+      const { at: pauseAt } = pauseOpts(doorOpts);   // this host's quickLoad takes no position applier, so `setPlayerPos` is read by the dungeon context alone
       openPauseFlow((w) => townTalk.showOverlay(w), {
-        at: opts.at ?? null,   // PX26: the page the door was pressed for
+        at: pauseAt,   // PX26: the page the door was pressed for
         // PX25: the sheet's own doors, through this host's own arms.
         openPack: () => townTalk.showOverlay(makeInventoryWindow()),
         openSpellbook: () => { const w = makeSpellbookWindow(); if (w) townTalk.showOverlay(w); },
@@ -5020,29 +5081,13 @@ export async function bootWorld(canvas, renderer, params, status) {
         // journal's rail/detail, and the notebook's finished entries
         // for the archive. Raw messages and raw token entries: the
         // menu flattens, one flattener, one home.
-        questLog: () => {
-          const m = questBridge?.machine;
-          const active = [];
-          if (m) {
-            for (const q of m.quests.values()) {
-              const les = q.getLogMessages();
-              if (!les?.length) continue;
-              const messages = les.map((le) => q.getMessage(le.messageID)).filter(Boolean);
-              if (!messages.length) continue;
-              // PX5: the tightest RUNNING clock on the quest - Clock
-              // resources carry remainingTimeInSeconds in game seconds
-              // and clockEnabled/clockFinished (quest/clock.js:98,164).
-              let clockSeconds = null;
-              for (const r of q.resources.values()) {
-                if (r.clockEnabled && !r.clockFinished && Number.isFinite(r.remainingTimeInSeconds)) {
-                  clockSeconds = clockSeconds == null ? r.remainingTimeInSeconds : Math.min(clockSeconds, r.remainingTimeInSeconds);
-                }
-              }
-              active.push({ id: String(q.uid), name: q.displayName || null, questName: q.questName || '', clockSeconds, messages });
-            }
-          }
-          return { active, finished: questBridge?.notebook?.getFinishedQuests() ?? [] };
-        },
+        // MAC-K2: the walk is the BRIDGE's now. This was one of the
+        // three copies of it (dungeonContext.js's and exterior.js's
+        // `pauseQuestLog` were the others, and that one's own comment
+        // already said two copies is two laws) - and the chronicle's
+        // Quests section needed a fourth reader, which is one more
+        // than a copied walk survives.
+        questLog: () => questBridge?.questLog() ?? { active: [], finished: [] },
       });
     },
     cycleMode: (dir) => townTalk.setMode(dir > 0 ? hudLargeNextMode(getInteractionMode()) : hudLargePrevMode(getInteractionMode())),
@@ -5177,6 +5222,24 @@ export async function bootWorld(canvas, renderer, params, status) {
       // pause mode - and pauseDoorReady is that fork's own gate, since
       // only one of the two needs art before it can draw a word.
       if (act === 'Escape' && pauseDoorReady()) { hudCtx.togglePause(); return; }
+      // AUDIT-MACK F1: THE FALL-THROUGH - see the long note at the
+      // same place in `scenes/exterior.js`. `ui/input.js`'s
+      // `routeAction` dispatches ten actions onto ctx doors; this
+      // ladder had arms for five of them, and `Transport`, `Status`,
+      // `UseMagicItem` and the two mode cycles were reachable only by
+      // CLICKING the large HUD panel. Mac reported the one he uses.
+      // The tail is the table now, so a door on `hudCtx` is reachable
+      // by its own action the moment it exists.
+      //
+      // MAC-L1: AND IT IS THE TAIL. AUDIT-MACK wrote it ABOVE the
+      // Escape arm just above, so `routeAction` claimed Escape first
+      // and that arm became unreachable - which is how MAC-L1's crash
+      // reached a player: the table's Escape case hands the door its
+      // options, the arm above hands it none, and only the table's
+      // route was live. A tail that is not last is not a tail; it is an
+      // arm that silently outranks every arm below it. `test/mack_bugs`
+      // gates the position now, not just the presence.
+      if (routeAction(act, hudCtx)) { e.preventDefault(); return; }
     }
     if (act === 'QuickLoad' && (modes?.mode ?? 'exterior') === 'exterior') {
       e.preventDefault();
@@ -5271,7 +5334,18 @@ export async function bootWorld(canvas, renderer, params, status) {
   addEventListener('pointerup', (e) => { townTalk.pointer('up', e); modes?.pointerup?.(e); });
   // C9: RMB is a weapon control (drag-to-swing) exactly as the
   // dungeon host - the drag feeds the rig INSTEAD of the look.
-  canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+  // MAC-L3: the browser menu is shut for the WHOLE page, not just this
+  // canvas - thirteen DOM surfaces sit over it and only two of them shut
+  // it themselves. One listener, one home (ui/input.js).
+  installContextMenuGuard(canvas.ownerDocument ?? undefined);
+  // MAC-L3: ...AND THE OTHER HALF OF THE SAME REPORT. A gesture the
+  // browser reads as Back, a stray Ctrl-W, a closed tab: every way out
+  // of a running game was silent, and the port had no `beforeunload` in
+  // it at all. The door is in front of ALL of them rather than chased
+  // one gesture at a time. `exitToTitleMenu` stands it down, because a
+  // door the game opened is not a door to warn about.
+  armUnloadGuard(() => playerSpawned);
+
   addEventListener('mousemove', (e) => {
     // U37: a window frees the mouse, so an open overlay gets the
     // HOVER before the look gate refuses the unlocked pointer.
@@ -5299,7 +5373,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     lookFilter.add(e.movementX * lookScale(), -e.movementY * lookScale() * lookInvert());
   });
   // U41: `!townTalk.overlayActive` is the dungeon host's own gate
-  // (dungeon.js:216, "a right-click on a window is the window's...
+  // (dungeon.js:217, "a right-click on a window is the window's...
   // never a swing"), which these two hosts never got. It matters now
   // that the travel map makes RMB a ROUTINE gesture - its zoom - and
   // an ungated one fires a readied spell or looses an arrow at the
@@ -5521,7 +5595,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7259-7271 -
+  // worldModes answers it in BOTH modes (worldModes.js:7295-7307 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -6859,26 +6933,91 @@ export async function bootWorld(canvas, renderer, params, status) {
     for (const tab of chatLog.tabs) {
       const link = new OnlineSession({ url: online.url, name: online.name, look: online.look, id: online.id, secret: online.secret, presence: false });
       link.onChat = (line) => chatLog.push(tab.id, line);
+      link.onRelay = onRelayVersion;
       link.join(tab.room);
       chatLinks.set(tab.id, link);
     }
+    // SRV-N: the PRESENCE session hears the relay too, and it is usually
+    // the first back after a deploy. Both arms run the same detector,
+    // which is a Set - so N sockets reconnecting to a new relay produce
+    // ONE notice, not one each.
+    online.onRelay = onRelayVersion;
     chatPanel = createChatPanel({
       log: chatLog,
       onSend: (tabId, text) => chatLinks.get(tabId)?.sendChat(text) ?? false,   // false keeps the line in the field (B2)
+      // CHAT-R1 (Mac: "a sidepanel on the chat ui showing all currently
+      // online players in alphabetical order"): the roster is the
+      // PRESENCE session's, not the chat link's. The chat links join
+      // with `presence: false` - they carry lines and hold no peers -
+      // so a roster read off them would always be empty. `online` is
+      // the session that actually holds the room's members.
+      roster: () => online ?? null,
       canOpen: () => !gamePaused() && !(townTalk.hudCovered || (modes?.hudCovered ?? false)),   // no chat under a window: the window's keys are the window's
       onOpen: () => { setCursorActive(false); releaseLook(); },   // AUDIT CHAT C2: the panel is a pointer surface - the mouse is freed on open   // PL3: the Enter that opened the chat is the CHAT'S - the toggle (the same key, a capture listener bound earlier) had already flipped cursorActive on it, and the close's relock was refused by the precedence line for the rest of the session
       onClose: () => { if (!gamePaused()) requestLook(canvas); },   // and taken back inside the closing gesture (MAC1's rule, ui/pauseDoor.js)
     });
   };
+  // SRV-N (Mac: "a server restart notice whenever we push server
+  // updates. Like a notice that pushes in the chat window"): A NOTICE
+  // GOES ON EVERY TAB. A relay restart and a new build are not a room's
+  // events - they happened to the whole game - so a player reading the
+  // one tab they had open must not have to guess which channel the news
+  // landed on. Today that is the World tab alone; a later row in
+  // CHAT_TABS gets it for free, which is the point of iterating.
+  const chatNotice = (text) => {
+    // Not a dead guard, and the distinction is one this port paid for two
+    // days ago (AUDIT-MACL, `pauseOpts`): nothing nulls `chatLog` today,
+    // but the build poll's arm fires from a `.then` MINUTES later, and a
+    // throw there is an unhandled rejection - which main.js turns into
+    // the red crash overlay. The relay's arm is contained by
+    // `_deliver`; this one is not, so it carries its own door.
+    if (!chatLog) return;
+    for (const tab of chatLog.tabs) chatLog.push(tab.id, { text, system: true });
+  };
+  const onRelayVersion = (v) => { if (relayVersionSeen(v) === 'changed') chatNotice(RELAY_RESTART_TEXT); };
+  // SRV-N: THE BUILD POLL. The relay moves by hand and rarely; the client
+  // moves on every merge, which is what "whenever we push" actually is
+  // for this project. Nothing tells a tab held open across a deploy that
+  // it is now running code we have replaced - it finds out when a lazy
+  // chunk 404s and systems/staleChunk.js reloads it out from under the
+  // player. So ask the site, on the site's own rhythm rather than the
+  // frame's, and let the player choose the moment.
+  let _buildPolledAt = 0;
+  const buildPoll = (now) => {
+    // The FIRST poll waits a full interval too, measured from the PAGE's
+    // load (`performance.now()`'s origin) rather than the chat's start: a
+    // tab that has only just loaded is by definition current, and asking
+    // at boot would put every player's page load on the CDN twice for an
+    // answer we already know.
+    //
+    // AUDIT-SRVN F3: there was a second `_buildPolling` boolean here, and
+    // it was BOTH redundant and a hazard. Redundant because the stamp is
+    // taken when the poll STARTS, so this line already refuses a second
+    // one for a full interval; a hazard because a request that never
+    // settles left the flag raised and the poll dead for the rest of the
+    // session. One gate that heals itself beats two where the spare can
+    // latch - and the fetch is cancelled on a deadline now besides.
+    if (now - _buildPolledAt < BUILD_POLL_MS) return;
+    _buildPolledAt = now;
+    const href = globalThis.location?.href ?? '';
+    fetchLiveBuildTag(href).then((tag) => {
+      if (buildUpdateSeen(tag, BUILD_TAG) === 'changed') chatNotice(BUILD_UPDATE_TEXT);
+    }, () => {});   // `fetchLiveBuildTag` swallows its own throws; this is the belt for a rejection it cannot see
+  };
   const chatFrame = () => {
     if (!chatLinks) return;
+    buildPoll(performance.now());
     for (const [tabId, link] of chatLinks) {
       link.rejoin(chatLog.tab(tabId).room, CHAT_REJOIN_MS);   // AUDIT CHAT A6/B4/B6: the page's goodbye and a terminal close both get a way back
       link.tick();   // the retry and the heartbeat, on the session's own clock
     }
     const link = chatLinks.get(chatLog.active);
     chatPanel.render({
-      hidden: townTalk.hudCovered || (modes?.hudCovered ?? false) || gamePaused(),   // a window over the HUD covers the chat too, and closes it
+      // AUDIT-CHATR F1: `covered` is the HOST's word - a window over the
+      // HUD - and never the player's `hidden` (the Hide button). While
+      // the two shared a name the panel's frame wrote this one into the
+      // player's slot and undid the button on the next tick.
+      covered: townTalk.hudCovered || (modes?.hudCovered ?? false) || gamePaused(),   // a window over the HUD covers the chat too, and closes it
       status: link?.statusLine('chat') ?? null,   // connecting, reconnecting, refused - the session's own line (D12; AUDIT CHAT B5)
     });
   };
@@ -7195,26 +7334,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     // (PX3/PX4/PX5), so a pause inside a tavern shows the same rail,
     // separators and timers as one on the road.
     pauseQuestMessages: () => questBridge?.machine.getAllQuestLogMessages() ?? [],
-    pauseQuestLog: () => {
-      const m = questBridge?.machine;
-      const active = [];
-      if (m) {
-        for (const q of m.quests.values()) {
-          const les = q.getLogMessages();
-          if (!les?.length) continue;
-          const messages = les.map((le) => q.getMessage(le.messageID)).filter(Boolean);
-          if (!messages.length) continue;
-          let clockSeconds = null;
-          for (const r of q.resources.values()) {
-            if (r.clockEnabled && !r.clockFinished && Number.isFinite(r.remainingTimeInSeconds)) {
-              clockSeconds = clockSeconds == null ? r.remainingTimeInSeconds : Math.min(clockSeconds, r.remainingTimeInSeconds);
-            }
-          }
-          active.push({ id: String(q.uid), name: q.displayName || null, questName: q.questName || '', clockSeconds, messages });
-        }
-      }
-      return { active, finished: questBridge?.notebook?.getFinishedQuests() ?? [] };
-    },
+    // MAC-K2: the FOURTH copy of the walk, and the one the derived pin
+    // in test/questbridge.test.js caught - exterior.js's comment had
+    // said "world.js keeps two copies of this walk" and it was right.
+    pauseQuestLog: () => questBridge?.questLog() ?? { active: [], finished: [] },
     revealLocation,
     magic, spellsByIndex: () => spellsByIndex,   // M2: the one cast engine + SPELLS.STD ride into the interior arm
     townTalk,   // U23: the interior host borrows FACTION.TXT/TEXT.RSC + the talk seam
@@ -7386,7 +7509,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // main.js sets ?load when the menu resolves it, and its comment says
   // "Load Game rides the dungeon host's OWN quickLoad" - true when the
   // classic start booted scenes/dungeon.js, and U31 moved it HERE. The
-  // only reader of `load` in the whole tree is dungeon.js:99, so the
+  // only reader of `load` in the whole tree is dungeon.js:100, so the
   // flag arrived in this host and was discarded: the player got a
   // brand-new character in Privateer's Hold and the only way to reach
   // their save was to start a new game and press F11. A load is not a
@@ -7923,6 +8046,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           const _onWater = _surf.water !== ON_EXTERIOR_WATER.None;
           const _step = footsteps.update(player.pos, {
             grounded: player.grounded, swimming: player.swimming, levitating: player.levitating,
+            spriteStep: mwViewFootstep(),   // AUDIT-EOTB2: SyncFootsteps - the sprite's stride while it is on screen
             // AUDIT 64 F3 (review): PlayerFootsteps gates on
             // `playerMotor.IsStandingStill` (PlayerFootsteps.cs:264-265), which
             // is `Vector2(moveDirection.x, moveDirection.z).magnitude == 0`
@@ -8799,7 +8923,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           playPlayerVoice(audio, playerPainVoice(playerEntity, dmg));
           surfacePlayer();
         }
-        addItem(playerEntity.items, { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });   // BowDamage: the arrow is recoverable from the target
+        addItem(playerEntity.items, bowDamageArrow());   // BowDamage: the arrow is recoverable from the target; MAC-N1: minted, not a bare literal
       },
       // AR1: the impact learns the FOES - the shaft an archer looses
       // at another foe (MT-ii's infighting selection) LANDS now, on
@@ -8953,30 +9077,11 @@ export async function bootWorld(canvas, renderer, params, status) {
       // 39 hoisted drawHud out of it: the mount is the classic skin's
       // business and this fix owns the HUD call, nothing else.
       if (hudArt) {
-        const ridePaused = gamePaused();
-        const r = ridingAnimator.update(dt, {
-          mode: player.transportMode,
-          standingStill: player.standing,
-          grounded: player.grounded,
-          paused: ridePaused,
-          movingLessThanHalfSpeed: player.movingLessThanHalfSpeed,
-          running: player.isRunning,
-          soundVolume: 1,
-        });
-        if (r.neigh) audio.playOneShot(SOUND.AnimalHorse, RIDING_VOLUME_SCALE);
-        audio.setLoop('riding', r.playing ? SOUND[r.clip] : null, { volume: r.volume, pitch: r.pitch });
-        // TR-AUDIT F-E1: OnGUI (:293) refuses to draw AT ALL while the
-        // game is paused - `!GameManager.IsGamePaused` sits in the same
-        // condition as the Repaint test. Under an open window DFU shows
-        // no mount; the first cut froze the frame and kept drawing it.
-        if (ridingArt && isRiding(player.transportMode) && !ridePaused) {
-          // ROAD-D D10: horseOffsetHeight (TransportManager.cs
-          // :304-309) - the bar the LAST drawHud drew, lifted out
-          // from under the mount. Docking is not asked here; DFU's
-          // horse arm never asks it.
-          const rect = ridingRect(canvas, ridingArt, horseOffsetHeight());
-          renderer.drawScreenQuad(ridingArt.frames[r.frame], rect);
-        }
+        // MAC-K3: the animator, the audio and the sprite, all one
+        // call into `player/mountRig.js` - the same rig the fixed-city
+        // host now mounts, so the mount cannot behave differently in a
+        // town than it does on the road.
+        mountRig.frame(dt);
       }
       drawPeerNames(proj, view, mwv.eye);   // ONLINE1: the names over the heads
       drawHud(renderer, canvas, hudArt, playerEntity,

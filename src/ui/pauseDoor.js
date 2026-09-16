@@ -72,6 +72,48 @@ export function pauseDoorReady() {
 }
 
 /**
+ * MAC-L1: THE PAUSE DOOR'S OPTIONS, READ IN ONE PLACE.
+ *
+ * Mac's report, 2026-09-16 (dycaite): pressing Escape threw
+ * `TypeError: can't access property "at", w is null` out of
+ * `togglePause`, indoors and then outdoors, and took the session with
+ * it. Two faults met:
+ *
+ *   1. THE FOUR HOSTS DID NOT AGREE ON THE SIGNATURE. Three declared
+ *      `togglePause(opts = {})` and `scenes/dungeonContext.js` declared
+ *      `togglePause(setPlayerPos = null, opts = {})`. `routeAction`'s
+ *      Escape arm called `ctx.togglePause(setPlayerPos)` - so on three
+ *      of the four the FIRST argument, meant to be the options, was
+ *      whatever the key router had for a position applier.
+ *   2. `opts = {}` DOES NOT DEFEND AGAINST `null`. A default parameter
+ *      fires on `undefined` alone, and `routeAction`'s own default for
+ *      `setPlayerPos` is `null`, so the hosts got a hard null and
+ *      `opts.at` threw.
+ *
+ * So there is ONE shape now - an options object, `setPlayerPos` inside
+ * it - and this is the one function that reads it. A positional pair
+ * that three callers spell one way and one spells the other is not a
+ * contract, it is a coin toss; and a door that THROWS is worse than a
+ * door that does nothing, because the pause screen is how a player
+ * saves.
+ *
+ * @param {{ at?: string|null, setPlayerPos?: ((p: any) => void)|null }|null|undefined} opts
+ * @returns {{ at: string|null, setPlayerPos: ((p: any) => void)|null }}
+ */
+export function pauseOpts(opts) {
+  // `?? {}` IS THE WHOLE LAW, and the mutation campaign is why it is the
+  // only line here. A `(opts && typeof opts === 'object')` screen stood
+  // beside it first, written to catch the old positional call handing a
+  // FUNCTION over - and a mutant forcing it away changed no answer at
+  // all, because reading `.at` off a function or a string is `undefined`
+  // just as it is off `{}`. Only `null` and `undefined` throw, and `??`
+  // is exactly the operator for those two. A dead guard reads like a
+  // reason and is one more line the next reader has to disprove.
+  const o = opts ?? {};
+  return { at: o.at ?? null, setPlayerPos: o.setPlayerPos ?? null };
+}
+
+/**
  * Open the pause screen. Same signature the four hosts have always
  * called: `show` puts the returned window in the host's overlay slot
  * (which is what stops the motor and the clock - the overlay-hold law,

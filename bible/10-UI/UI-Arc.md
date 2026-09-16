@@ -52,17 +52,17 @@ still push CLASSIC canvas windows as children under the DOM, and so
 does the pack's USE arm.
 
     THE SPELLBOOK       FIVE construction sites across FOUR hosts:
-                        worldModes.js:1850 (the factory) and :1904 (a
+                        worldModes.js:1851 (the factory) and :1904 (a
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
-                        dungeonContext.js:953, world.js:1699,
-                        exterior.js:2006. It is the only window TWO
+                        dungeonContext.js:954, world.js:1702,
+                        exterior.js:2025. It is the only window TWO
                         enhanced screens already push - the sheet's
                         button and the pack's USE hand-off, whose
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:4900, dungeonContext.js:5917. A seam
+    / NOTEBOOK          world.js:4967, dungeonContext.js:5935. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -7775,7 +7775,7 @@ same answer: `ui/spellbookDoor.js`, with each host handing it only
 what that host knows.
 
 THE "HAND-ROLLED DUPLICATE" WAS NOT ONE. The board recorded
-worldModes.js:2667 as a second book built by hand 342 lines below the
+worldModes.js:2668 as a second book built by hand 342 lines below the
 factory. Read closely it is the SPELL MERCHANT'S SHOP - buyMode, with
 `offered`, the building's quality, the shop name, the haggling skills
 and the classic clock. A different question with different deps, and
@@ -7858,7 +7858,7 @@ mutations, 4 dead.
 
 PX24 (Mac: "with the logbook and history, I want them as one detailed
 UI"): THE CHRONICLE. Two classic windows built at four sites -
-questJournal.js from charSheetNav:53, world.js:2001 and
+questJournal.js from charSheetNav:53, world.js:2040 and
 dungeonContext.js, playerHistory.js from charSheetNav:61 - become ONE
 seam (ui/chronicleDoor.js, the U52/U53/PX23 shape a sixth time) and,
 on the enhanced skin, ONE WINDOW.
@@ -8485,7 +8485,7 @@ and firing THAT twice is a second PopToHUD.
 
 ### Why only two of the four hosts crashed
 
-`worldModes.js:5485` and `dungeonContext.js:1393` answer the same
+`worldModes.js:5488` and `dungeonContext.js:1406` answer the same
 `onClose` by nulling their slot and never disposing - nothing to
 re-enter. Only the two hosts that come through `townTalk.closeOverlay`
 dispose. **The four-hosts rule caught this one by accident**: the two
@@ -8550,7 +8550,7 @@ cited and ported somewhere in `src/`. FOUR were not:
 
 ### UI1 CLOSED: the use-magic-item window
 
-The port had the DOOR and not the room. `input.js:481` routed
+The port had the DOOR and not the room. `input.js:521` routed
 `Actions.UseMagicItem` to `ctx.openUseMagicItem`, `hudLarge.js:151`
 gave the large HUD's button its rect, `inputActions.js` bound KeyU -
 and no host implemented the method, so a live binding silently did
@@ -9729,9 +9729,9 @@ re-resolved the `exterior.js` half of a three-file sentence and left the
 `ExteriorAutomapWindow` construction, `:4101` on a `locationName:`
 field). Both halves are now read by `test/citedrift.test.js` - the
 existing entries only ever captured the exterior number, which is how
-the other half went stale unnoticed. (The rest cite named `world.js:5152`,
+the other half went stale unnoticed. (The rest cite named `world.js:5197`,
 the first of the host's TWO identical `act === 'Rest'` arms; ROAD-H H5
-deleted the second and the cite is `world.js:5158` now.)
+deleted the second and the cite is `world.js:5203` now.)
 
 ## AUDIT 62 F24/F25 - THE SENTINEL SWEEP WAS TWO WINDOWS SHORT (2026-09-07)
 
@@ -11557,10 +11557,13 @@ are plain Buttons and override neither. The port's `scrollerHit`
 already draws that line - `slot` is the items panel, `thumb`/`page-up`
 /`page-down` the rail, `up`/`down` the arrows.
 
-Adjacent and NOT taken here: `ui/nativeTrade.js` has no `wheel`
-either, and `DaggerfallTradeWindow` inherits the same two scrollers
-through `SetupItemListScrollers`. That is the same missing member on
-the same C# class in a second window, and it wants its own finding.
+Adjacent, and TAKEN at MAC-N2 (2026-09-16, `01-Overview/Mac-Bugs-N.md`):
+`ui/nativeTrade.js` had no `wheel` either, and `DaggerfallTradeWindow`
+inherits the same two scrollers through `SetupItemListScrollers`. The
+same missing member on the same C# class in a second window - it
+carries the wheel now, one row a notch over either list or its rail,
+with the tip re-read under it, and the thumb DRAG the two item windows
+had both lacked.
 
 REVIEW ROUND (2026-09-08). A NOTCH IS NOT ONLY A SCROLL. The first
 pass ported the items panel's handler and stopped two lines short of

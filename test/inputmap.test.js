@@ -202,7 +202,9 @@ test('U43: ONE dispatch - the interior host routes the same table as the dungeon
   // PX26 gave togglePause its own options (the dial's north lands on
   // Stats); the law is unchanged - the interior Escape door opens the
   // same pause flow, gated the same way.
-  assert.match(modes, /togglePause\(opts = \{\}\) \{\n      if \(!pauseDoorReady\(\)\) return;\n      \/\/ IS1[^]*?openPauseFlow\(/,
+  // MAC-L1: the parameter is `doorOpts` and the options are read through
+  // `pauseOpts` - one signature across THE FOUR HOSTS, and one reader.
+  assert.match(modes, /togglePause\(doorOpts = \{\}\) \{\n      if \(!pauseDoorReady\(\)\) return;\n      const \{ at: pauseAt \} = pauseOpts\(doorOpts\);[^]*?openPauseFlow\(/,
     'the interior Escape door opens the pause flow');
   assert.match(src('scenes/world.js'), /makeCharSheet: \(\) =>/, 'world.js hands its builder down');
   assert.match(src('scenes/world.js'), /makeJournal: \(mode\) =>/);

@@ -128,6 +128,7 @@
 // fast travel, no sentence, no ?tod, no ?timescale.
 
 import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the port's one angle wrap. The relay re-exports this module (server/src/relay.js), so this reaches the worker too - mat4.js imports nothing itself.
+import { nameAllowed } from './nameFilter.js';   // NAME-F2: the filter runs INSIDE sanitizeName, so the relay carries it - nameFilter.js imports nothing, same as mat4.js above, so the worker's graph stays flat
 
 /** WORLD5: the instant the online world stood at the classic game start - 2026-09-14T00:00:00Z. */
 export const ONLINE_EPOCH_MS = Date.UTC(2026, 8, 14, 0, 0, 0);
@@ -294,12 +295,33 @@ const uint = (v, max) => (finite(v) && v >= 0 ? Math.min(max, Math.floor(v)) : n
 const ID_RE = /^[A-Za-z0-9_-]{4,40}$/;
 const SECRET_RE = /^[A-Za-z0-9_-]{8,64}$/;
 
-/** A name the room will show: printable ASCII, trimmed, bounded, never empty. */
+/** The name a refused one becomes. Not a mask (`C**` is a shape a
+ *  player treats as a puzzle) and not an error the relay could not
+ *  deliver anyway - just the default everyone starts as. */
+export const FALLBACK_NAME = 'Traveller';
+
+/**
+ * A name the room will show: printable ASCII, trimmed, bounded, never
+ * empty - and NAME-F2, never one the filter refuses.
+ *
+ * THE FILTER RUNS HERE BECAUSE HERE IS THE ONLY PLACE IT CANNOT BE
+ * SKIPPED. The pane refuses a bad name at entry with a reason, which
+ * is the half a player sees; this is the half that holds when the
+ * client is not ours. `parse` runs it on every `hello` the relay
+ * takes, and the client runs it again on every peer name it is told -
+ * so a modified client can neither publish a refused name nor be shown
+ * one. A check that only lives in the UI is a check that a devtools
+ * console removes.
+ *
+ * Idempotent, as the rest of this module is: what comes out is a name
+ * the filter allows, so running it twice changes nothing.
+ */
 export function sanitizeName(name) {
   let s = '';
   for (const ch of String(name ?? '')) { const c = ch.charCodeAt(0); if (c >= 32 && c <= 126) s += ch; }
   s = s.trim().slice(0, NAME_MAX);
-  return s || 'Traveller';
+  if (!s) return FALLBACK_NAME;
+  return nameAllowed(s) ? s : FALLBACK_NAME;
 }
 
 /** What a chat line may not carry: every FORMAT character (Unicode Cf -
@@ -542,7 +564,7 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  carries it (`v`), and a client whose wire.js was built against another version says so on the console: the client
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
-export const RELAY_VERSION = 'world73';   // SLAM13: the keepalive floor, the sender's act share, the memory served a listener at a time, the yaw seam, the version in the welcome
+export const RELAY_VERSION = 'world74';   // MERGE (SLAM13 + SRV-N onto main): the keepalive floor, the sender's act share, the memory a listener at a time, the yaw seam, the version in every welcome, the chat's third gate
 
 /** The listeners sorted by distance from `from`, nearest first; one with no pose yet sorts last, because a peer that
  *  has never said where it is cannot be near. The ordering is Euclidean in the POSE'S OWN FRAME, which is a cell's
@@ -845,6 +867,56 @@ export const actGate = (bucket, nowMs) => tokenGate(bucket, nowMs, ACT_HZ_MAX);
 export const actFrameFits = (data) => JSON.stringify({ t: 'act', data }).length <= MAX_FRAME_BYTES;
 /** The chat rate gate: CHAT_HZ_MAX a second (CHAT1). */
 export const chatGate = (bucket, nowMs) => tokenGate(bucket, nowMs, CHAT_HZ_MAX);
+
+/** CHAT-G (2026-09-17): THE THIRD SIDE, which nothing counted.
+ *
+ *  A chat line passes three gates and had only ever had two. The client
+ *  gates what it SENDS (`chatGate`, CHAT_HZ_MAX - AUDIT CHAT A8, so a
+ *  line the relay would drop is never sent); the relay gates what it
+ *  ACCEPTS (the same gate per socket, and CHAT_ROOM_HZ_MAX for the whole
+ *  room). Nothing gated what a client RECEIVES - `online.js`'s chat arm
+ *  sanitized the text, checked the id was a string and delivered, however
+ *  many arrived.
+ *
+ *  That matters because the relay is the PLAYER'S choice: `?server=` and
+ *  the enhanced menu's Relay field point a client at any relay at all,
+ *  which is the whole reason every other field on this wire has a law
+ *  here. A relay could push lines as fast as it liked and take a
+ *  player's chat history with them - `net/chat.js` keeps CHAT_KEEP of
+ *  them, so a few thousand frames is the log emptied and refilled with
+ *  whatever the relay wanted there instead.
+ *
+ *  THE RATE IS DERIVED, NOT INVENTED, and that is the point of putting it
+ *  beside the relay's own constant. CHAT_ROOM_HZ_MAX is exactly what an
+ *  honest relay spends on one room, so this admits an honest room at FULL
+ *  TILT and one frame more is a frame that relay would never have sent.
+ *  Gating at the sender's CHAT_HZ_MAX instead would have dropped real
+ *  lines the moment two people talked at once - a "hardening" that is a
+ *  chat bug.
+ *
+ *  Per ROOM, because that is the unit the relay spends by: a session
+ *  listening to its own room and a halo of cells is owed
+ *  CHAT_ROOM_HZ_MAX from each of them, and one bucket across all of them
+ *  would have made a busy neighbour silence the room you are standing in. */
+export const chatInGate = (bucket, nowMs) => tokenGate(bucket, nowMs, CHAT_ROOM_HZ_MAX);
+
+/** The longest a relay may name its deploy, in UTF-16 units (SRV-N).
+ *
+ *  AUDIT-SRVN F1: `v` shipped as the ONLY field on this wire with no law
+ *  in this file. Every other one has been here since its slice - a pose
+ *  through `validPose`, a look through `validLook`, a name through
+ *  `sanitizeName`, a line through `sanitizeChat`, an owner through
+ *  `hitOwnerOf`'s 64-character id bound - and they are all here for the
+ *  same reason: `?server=` and the enhanced menu's Relay field mean the
+ *  relay a client talks to is the PLAYER'S choice, so nothing arriving
+ *  over it is the port's own word. `v` was gated on `typeof` alone, and
+ *  a 200 KB deploy name was accepted and held (driven, not read). */
+export const RELAY_VERSION_MAX = 32;
+/** A deploy name off the wire, or null for anything that is not one.
+ *  ONE HOME, BOTH ENDS, like every law above it: the relay stamps a name
+ *  this admits (pinned) and the client reads it back through the same
+ *  function, so the two cannot disagree about what a deploy is called. */
+export const relayVersionOf = (v) => (typeof v === 'string' && v.length > 0 && v.length <= RELAY_VERSION_MAX ? v : null);
 
 /** What a joiner is told: everyone else in the room who has said hello
  *  - the nearest ROSTER_MAX to `near` when there is a pose to measure

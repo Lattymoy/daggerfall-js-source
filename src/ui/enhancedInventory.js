@@ -91,7 +91,7 @@ import {
 } from '../systems/inventorySession.js';
 import { entityMaxEncumbrance } from '../combat/formulas.js';   // AUDIT 26: PlayerEntity.MaxEncumbrance, enchantment allowance and all
 import { liveStat } from '../systems/statMods.js';
-import { conditionWord, conditionPercentage, itemNameParts, itemLongName } from '../systems/itemInfo.js';   // RF6: the long name's two parts, ResolveItemLongName's arms once
+import { conditionWord, conditionPercentage, itemNameParts, itemLongName, itemDamageLine, itemArmourLine } from '../systems/itemInfo.js';   // RF6: the long name's two parts, ResolveItemLongName's arms once
 import { rarityAttr, rarityLines } from '../systems/lootRarity.js';   // LR1: the row's tier attribute and the card's lines
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { closeOnOutsideTap } from './enhancedOverlays.js';   // OT1
@@ -333,6 +333,18 @@ export function itemLine(item, identity = undefined) {
     condition: (item.maxCondition ?? 0) > 0 ? conditionPercentage(item) : null,
     word: (item.maxCondition ?? 0) > 0 ? conditionWord(item) : null,
     material: parts.material || null,
+    // MAC-M1 (Mac: "Damage values arent showing on weapon tool tips.
+    // Also, not sure if armor has values either"): THE TWO NUMBERS A
+    // PLAYER PICKS A WEAPON BY. `weaponDamageString` and
+    // `armourModString` have existed since U25 with exactly one reader
+    // between them - the CLASSIC popup's macro pass - and this skin's
+    // card builds its rows from this line rather than from a record, so
+    // it showed weight and condition and never the damage. The
+    // NUMBERS come from the same producers the classic popup uses, so
+    // the two surfaces cannot drift; only the question of whether to
+    // show a row at all is this skin's (systems/itemInfo.js).
+    damage: itemDamageLine(item),
+    armour: itemArmourLine(item),
     stack: (item.stackCount ?? 1) > 1 ? item.stackCount : null,
     equipped: isEquipped(item),
     // HT2: the LIT light source, by REFERENCE, exactly as
@@ -998,7 +1010,7 @@ function stow(item) {
   // 26 F156: planStore answers `{ ok: true, map: true }` for a
   // MiscItems.Map - the reveal runs, the paper is consumed, nothing
   // lands in the destination. The classic window routes it
-  // (nativeInventory.js:755) and this one did not, so dragging a
+  // (nativeInventory.js:768) and this one did not, so dragging a
   // treasure map out of the pack dropped the paper on the floor and
   // revealed nothing.
   if (plan.map) { use(item, deps.items?.() ?? []); return; }
@@ -1008,7 +1020,7 @@ function stow(item) {
   // again on the other side, and a tip that stays open after every
   // press is the quirk being fixed.
   // AUDIT INV2 B-F1: THE ENTITY AND THE PROVENANCE RIDE, as they do at
-  // the classic window's own call (nativeInventory.js:757). Without them
+  // the classic window's own call (nativeInventory.js:770). Without them
   // `clearLightSourceOnLeave` - AUDIT 26 F157's first statement inside
   // applyTransfer - is a no-op, so a LIT TORCH dropped on the ground
   // went on lighting the player from where it lay. INV2 made that a
@@ -1380,7 +1392,16 @@ function equippedList() {
     const top = filled.find((r) => r.item === picked) ?? filled[0];
     const line = itemLine(top.item, deps.entity);
     const b = el('button', `wornrow${filled.some((r) => r.item === picked) ? ' on' : ''}`);
-    b.title = filled.map((r) => `${r.label}: ${itemLine(r.item, deps.entity).name}`).join('\n');
+    // MAC-M1: the WORN map's hover carries the rating too, and this is
+    // the surface Mac's second sentence is about - "not sure if armor
+    // has values either". Armour is the thing you are wearing, so the
+    // place a player asks that question is here, over the slot, not in
+    // the pack. One item per line, its number in brackets when it has
+    // one.
+    b.title = filled.map((r) => {
+      const l = itemLine(r.item, deps.entity);
+      return `${r.label}: ${l.name}${itemStatSuffix(l)}`;
+    }).join('\n');
     b.style.gridArea = fam.area;
     b.append(itemTile(line));
     const txt = el('span', 'worntext');
@@ -1498,15 +1519,28 @@ function itemTile(line) {
     // every one of them. The CSS caps both axes instead, which scales
     // to fit and keeps the shape.
     tile.append(img);
-    tile.title = line.name;
+    // MAC-M1: the GRID's own hover, which is the most literal reading of
+    // "weapon tool tips" - it said the name and nothing else.
+    tile.title = line.name + itemStatSuffix(line);
     return tile;
   }
   const tile = el('span', 'tile', line.name.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase());
-  tile.title = line.image
+  tile.title = (line.image
     ? `${line.name} — TEXTURE.${line.image.archive} record ${line.image.record}`
-    : line.name;
+    : line.name) + itemStatSuffix(line);
   return tile;
 }
+
+/** MAC-M1: the one number an item is FOR, as a hover suffix - `" (0 - 5)"`
+ *  for a weapon, `" (+7)"` for armour, and nothing at all for a book.
+ *  Three surfaces show it (the grid tile, the tile's no-icon fallback,
+ *  the worn map's slot) and they share this rather than each spelling
+ *  the `??` themselves: three copies of a rule is three chances to
+ *  disagree, which is the shape half of this month's findings had. */
+export const itemStatSuffix = (line) => {
+  const stat = line?.damage ?? line?.armour;
+  return stat ? ` (${stat})` : '';
+};
 
 function itemRow(item, from = 'local') {
   const line = itemLine(item, deps.entity);
@@ -1732,6 +1766,12 @@ function detailCol() {
   { const lines = rarityLines(picked); if (lines.length) { const ul = el('ul', 'rarity'); for (const l of lines) ul.append(el('li', null, l)); c.append(ul); } }
   const dl = el('dl', 'stats');
   const pair = (k, v) => { if (v != null) dl.append(el('dt', null, k), el('dd', null, String(v))); };
+  // MAC-M1: the headline stat FIRST - a player reading this card is
+  // deciding whether to swing the thing, and weight is not that
+  // question. Only one of the two ever draws: an item is a weapon or it
+  // is armour, and `pair` skips a null.
+  pair('Damage', line.damage);
+  pair('Armour', line.armour);
   pair('Weight', `${line.weight.toFixed(2)} kg`);
   pair('Condition', line.condition != null ? `${line.word} · ${line.condition}%` : null);
   // HT2: a light source is never WORN - the honest line for one is

@@ -98,7 +98,7 @@ test('MT-iv: BowDamage forks too - an arrow aimed at a foe LANDS on it, and the 
   assert.match(DG, /if \(struckFoe && struckFoe === m\.aimFoe\) \{/, 'and the impact forks on it');
   assert.match(DG, /if \(m\.aimFoe && !m\.aimFoe\.dead\) \{\n\s+const af = m\.aimFoe;/, 'as the enemy spell missile\'s arm still does');
   assert.match(DG, /bowAttack: true/, 'through ApplyDamageToNonPlayer with the bow flag (:143)');
-  assert.match(DG, /addItem\(af\.entity\.items \?\?= \[\], \{ group: 'Weapons', name: 'Arrow'/,
+  assert.match(DG, /addItem\(af\.entity\.items \?\?= \[\], bowDamageArrow\(\)\)/,   // MAC-N1: CreateWeapon's arrow through the one minter, not a bare literal
     ':145-147 - the recovered Arrow goes into the TARGET\'s items, not the player\'s');
   // the enemy SPELL missile takes the same fork
   assert.match(DG, /an enemy SPELL missile aimed at another foe resolves/);

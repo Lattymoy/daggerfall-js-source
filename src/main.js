@@ -23,6 +23,7 @@ import { ensureArena2, getBytes } from './scenes/dataSource.js';
 import { installCursor } from './ui/cursor.js';
 import { mountFpsCounter } from './ui/fpsCounter.js';   // FPS1: the counter, over every host
 import { getPref } from './systems/uiPrefs.js';   // FPS1: its switch
+import { publishBootParams, BOOT_DOOR_KEYS } from './systems/onlineLane.js';   // MAC-N3: the boot's params are the URL, or the online lane reads nothing
 // The deployed site is redeployed several times a day and every deploy
 // renames chunks, so a page held open across one is holding a map of a
 // build that is gone. Recoverable, and the law of that is its own file.
@@ -112,6 +113,13 @@ async function boot() {
   let choice;
   if (params.has('begin')) choice = 'begin';
   else {
+    // MAC-N3: the menu DECIDES these keys, so it must not read a stale
+    // set off the URL a previous session published - the Mods pane
+    // would show the online lock, and uiSkin the online skin, for a
+    // player who has not chosen yet. Cleared off both copies here;
+    // every door below sets or deletes each one again (F12's law).
+    for (const k of BOOT_DOOR_KEYS) params.delete(k);
+    publishBootParams(params);
     const { runEnhancedMenu } = await import('./ui/enhancedMenu.js');
     status('main menu');
     choice = await runEnhancedMenu();
@@ -155,6 +163,13 @@ async function boot() {
     const { TEST_RIDE } = await import('./systems/testRoom.js');
     if (params.get('test') === TEST_RIDE.id) params.delete('classic');
     else params.set('classic', '1');
+    // MAC-N3: THE DECIDED PARAMS ARE THE URL before the world boots.
+    // `online` above was set on this in-memory copy alone, and the
+    // online lane (systems/onlineLane.js isOnlinePage - the read under
+    // uiSkin, getPref and modSetting) reads location.search: it never
+    // saw a Play Online session, so the skin stayed the player's
+    // stored choice and a Classic player had no chat.
+    publishBootParams(params);
     return bootWorld(canvas, renderer, params, status);
   }
   // FD1: BEGIN - the classic start sequence, data first.
@@ -229,6 +244,7 @@ async function boot() {
   // there and ?classic tells it to read StartCellX/StartCellY and
   // StartInDungeon, exactly as StartGameBehaviour does.
   params.set('classic', '1');
+  publishBootParams(params);   // MAC-N3: the same law on the classic door - the URL is what every location.search reader boots from
   return bootWorld(canvas, renderer, params, status);
 }
 

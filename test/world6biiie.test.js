@@ -23,7 +23,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { hitPoisonOf, HIT_POISON_MIN, HIT_POISON_MAX, whoIdOf, WHO_HZ_MAX, WHO_RETRY_MS, whoGate, ROSTER_MAX, SOCKETS_MAX, PIXEL_UNITS, validPose } from '../src/net/wire.js';
 import * as relay from '../server/src/relay.js';
-import { RELAY_VERSION } from '../server/src/index.js';
+import { relayVersionAtLeast } from './relayVersion.mjs';
 import { POISON_START_VALUE, TOTAL_POISON_VARIANTS, POISONS } from '../src/systems/poisons.js';
 import { OnlineSession } from '../src/net/online.js';
 import { fakeRoom } from './fakeRoom.mjs';
@@ -62,7 +62,7 @@ test('WORLD6b-iii(e): the wire - pt is a whole number inside ItemEnums.Poisons (
   assert.equal(passed, WHO_HZ_MAX, 'WHO_HZ_MAX asks a second, the rest refused');
   assert.equal(ROSTER_MAX, 64); assert.ok(SOCKETS_MAX > ROSTER_MAX, 'the room holds more than the welcome names - the gap the ask closes');
   assert.equal(relay.hitPoisonOf, hitPoisonOf); assert.equal(relay.whoIdOf, whoIdOf); assert.equal(relay.whoGate, whoGate);
-  assert.equal(RELAY_VERSION, 'world73', 'the relay says which one it is');
+  assert.ok(relayVersionAtLeast(66), 'the relay says which one it is');
 });
 
 test('WORLD6b-iii(e): the pools - the striker\'s dose at a PUPPET does not run on the shadow: it rides the blow (pt, with the arrow\'s kind and shaft) to the owner, who doses its foe once inside a damaging blow and lands the Arrow; a second blow carries no dose (spent); a dose outside the enum, or on a blow of no damage, lands nothing; the owner\'s own dose at its own foe lands directly', async () => {
@@ -114,7 +114,7 @@ test('WORLD6b-iii(e): the pools - the striker\'s dose at a PUPPET does not run o
   assert.match(e, /\(f, pt\) => poisonFoe\(f, pt\)\)\) \{\s+\/\/ C2-slice \(combat-11\); WORLD6b-iii\(e\)/, 'resolvePlayerHit\'s poison through the one door');
   assert.match(e, /const _pt = f\._divertPt \?\? null; f\._divertPt = null;/, 'spent by the divert, once');
   assert.match(e, /\.\.\.\(_pt != null \? \{ pt: _pt \} : \{\}\),[^\n]*\n\s*\.\.\.\(kind === 'arrow' \? \{ ar: 1 \} : \{\}\) \}\);/, 'the dose on the blow (the calc\'s word), the shaft on an arrow');
-  assert.match(e, /if \(pt != null\) inflictPoison\(f\.entity, pt, false, \{ rolls, currentMinute: Math\.floor\(currentMinute\(\)\) \}\);[^\n]*\n\s*damageFoe\(f, dmg, at, dir, \{ fromPlayer: true, kind, peer: true, peerId: from \}\);\s*\n\s*(?:\/\/[^\n]*\n\s*)*if \(data\.ar === 1 && kind === 'arrow' && arrowsIn\(f\.entity\.items \?\?= \[\]\) < HIT_ARROWS_MAX\) addItem\(f\.entity\.items, \{ group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 \}\);/, 'the owner: the dose before the health moves, the shaft after (BowDamage\'s order), bounded');
+  assert.match(e, /if \(pt != null\) inflictPoison\(f\.entity, pt, false, \{ rolls, currentMinute: Math\.floor\(currentMinute\(\)\) \}\);[^\n]*\n\s*damageFoe\(f, dmg, at, dir, \{ fromPlayer: true, kind, peer: true, peerId: from \}\);\s*\n\s*(?:\/\/[^\n]*\n\s*)*if \(data\.ar === 1 && kind === 'arrow' && arrowsIn\(f\.entity\.items \?\?= \[\]\) < HIT_ARROWS_MAX\) addItem\(f\.entity\.items, bowDamageArrow\(\)\);/, 'the owner: the dose before the health moves, the shaft after (BowDamage\'s order), bounded; MAC-N1: the shaft minted by the one export');
 });
 
 test('WORLD6b-iii(e): the hosts and the dungeon twin, by source - the exterior\'s arrow blow says its kind and routes its poison through the pool\'s door (the watch dosed here); the interior host splits by pool; the dungeon has the same door, the same divert and the same landing; the disease rider is the monster\'s alone', () => {

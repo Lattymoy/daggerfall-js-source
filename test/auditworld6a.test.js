@@ -22,7 +22,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { isWorldRoom, worldFrameMaxFor, WORLD_FRAME_MAX, WORLD_FRAME_MAX_INTERIOR, mintSharedStamp, PIXEL_UNITS } from '../src/net/wire.js';
 import * as relay from '../server/src/relay.js';
-import { RELAY_VERSION } from '../server/src/index.js';
+import { relayVersionAtLeast } from './relayVersion.mjs';
 import { roomKeyFor, OnlineSession } from '../src/net/online.js';
 import { validLootItem, validLootList } from '../src/systems/loot.js';
 import { itemBaseValue, templateByIndex } from '../src/systems/itemTemplates.js';
@@ -114,7 +114,7 @@ test('AUDIT WORLD6a B3/B4/B5: the law admits exactly what the game names (no zer
   quiet(() => sockets[0].receive({ t: 'welcome', id: 'aaaa-0001', peers: [], host: 'aaaa-0001', world: null, now: Date.now() }));
   assert.equal(s.sendWorld(big), false, 'the client keeps the building\'s cap too');
   assert.equal(s.sendWorld({ locationKey: 'interior:m187853213.4', world: {} }), true);
-  assert.equal(RELAY_VERSION, 'world73');   // WORLD6b bumped it
+  assert.ok(relayVersionAtLeast(66));   // SRV-N: at or past, never equal - the next slice's bump is not this pin's business
   assert.match(rd('server/src/index.js'), /if \(message\.length > worldFrameMaxFor\(a\.key\)\) return;/);
 });
 

@@ -163,6 +163,48 @@ export function mwViewWheel(deltaY) {
  *  counter measures the copy. */
 export function mwViewPendingClicks() { return pendingClicks; }
 
+// ═══ AUDIT-EOTB2: THE FOUR DOORS THE BODY'S OTHER HALF NEEDED ════════
+//
+// Each is the seam's answer to a question ONE consumer asks, routed by
+// the lane so a Morrowind player never hears the sprite's word.
+
+/** [SETTINGS] SyncFootsteps: the sprite's word on the stride, for the
+ *  hosts' FootstepMachine - `owns` while the picture carries the
+ *  stride, `fell` on the tick a foot landed. Off the lane it owns
+ *  nothing and DFU's own stride plays. */
+export function mwViewFootstep() {
+  if (!eotbLane()) return { owns: false, fell: false };
+  return eotbBody.footstep();
+}
+
+/** [SETTINGS] AutoTogglePerspective's two transition rows, on the
+ *  building's door: `'Interior'` stepping in, `'Exterior'` stepping
+ *  out. The mode machine calls it; a Morrowind player is untouched. */
+export function mwViewTransition(kind) {
+  if (!eotbLane()) return false;
+  eotbCamera.transition(kind);
+  return true;
+}
+
+/** The saved camera on a LOAD, both lanes: MW-D30's forced restore of
+ *  the Morrowind camera, and the mod's own OnLoad - `StartInThirdPerson`
+ *  decides the POV a loaded game takes (its description's own words:
+ *  "Determines the POV when starting or loading a game"), so the sprite
+ *  camera is re-seeded from the setting, not from the save. */
+export function mwViewLoadPose(pose) {
+  if (pose) mwCamera.restore(pose);
+  eotbCamera.start();
+}
+
+/** [SETTINGS] ToggleBillboard's two hides, for the surfaces that draw
+ *  first-person graphics: the FPV weapon and the FPV horse are hidden
+ *  while the sprite body is the one on screen, unless the mod's own
+ *  Compatibility keys say to leave them. Off the lane: nothing hides. */
+export function mwViewHides() {
+  if (!eotbLane()) return { weapon: false, horse: false };
+  return eotbBody.hides();
+}
+
 /** The third-person body composite, after the host's world draw. A
  *  no-op in first person or when the body cannot draw. */
 export function mwViewDrawBody(canvas, { proj, view, eye, feet, yaw }) {

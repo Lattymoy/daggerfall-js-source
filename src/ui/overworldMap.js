@@ -867,7 +867,14 @@ export class OverworldMapWindow {
 
     // pointer: pan, zoom to cursor, pick - and the flight's hold-to-skip
     let downAt = null, panned = false;
-    root.addEventListener('contextmenu', (e) => e.preventDefault());
+    // MAC-L3: the browser menu is the DOCUMENT's law now (ui/input.js's
+    // installContextMenuGuard), not this window's. This was the ONLY one
+    // of the thirteen in-game surfaces that remembered to shut it -
+    // which is exactly why it is not a rule each window gets to
+    // remember. (AUDIT-MACL F5 corrected the count: MAC-L3 said two,
+    // counting `enhancedBook.js`, which is mounted BY one of the
+    // thirteen rather than being one of them.)
+
     root.addEventListener('pointerdown', (e) => {
       if (e.target !== root) return;   // controls keep their own pointer
       if (this._phase === 'flight') { this._skipHold = 0.0001; return; }

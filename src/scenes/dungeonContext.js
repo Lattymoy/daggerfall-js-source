@@ -31,7 +31,8 @@ import { RDB_SIDE, MOVE_ACTION_FLAGS, ACTION_FLAGS } from '../world/rdbLayout.js
 import { NPC_CONTEXT } from '../characters/staticNpc.js';   // AUDIT 64 F13: StaticNPC.SetLayoutData(RdbObject) stamps Context.Dungeon
 import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S, isActionDoorObject, hasActionCollision, classifyPlacementAction, lookAtLockText, LOCKPICKING_SUCCESS_TEXT, LOCKPICKING_FAILURE_TEXT, DOOR_TEXT_HUD_DELAY_S, sharedRecord, validActionRecord } from '../world/actionSystem.js';   // AUDIT WORLD3 B1: the shared half of a record - the picker's latch stays home; AUDIT WORLD34 C2: and the memory's records projected like an act's
 import { TextRsc } from '../formats/textRsc.js';
-import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // U51 picks the skin
+import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady, pauseOpts } from '../ui/pauseDoor.js';
+import { releaseUnloadGuard } from '../systems/unloadGuard.js';   // AUDIT-MACL F3: the chargen Cancel is a door the game opened   // U51 picks the skin; MAC-L1: pauseOpts is the ONE reader of the door's options
 import { longitudeLatitudeToMapPixel } from '../formats/mapsFile.js';   // MAC6 #1: the save names the pixel the dungeon stands on
 import { openPixelDial } from '../ui/pixelDial.js';   // PX15b: the Tab compass rose
 import { ActionTextBox, ActionInputBox } from '../ui/actionText.js';
@@ -57,7 +58,7 @@ import { setMidScreenText, midScreenText } from '../ui/midScreenText.js';   // A
 import { hudRenderEnabled } from '../ui/hudShortcuts.js';   // AUDIT 64 F37: the Draw override covers popupText too
 import { FntFile } from '../formats/fntFile.js';
 import { ImgFile } from '../formats/imgFile.js';
-import { createWeapon } from '../combat/enemyEquipment.js';
+import { createWeapon, bowDamageArrow } from '../combat/enemyEquipment.js';   // MAC-N1: the recovered shaft is CreateWeapon's arrow, value and all
 import { setDefaultEnchantCtx } from '../systems/enchantments.js';   // FS1 (wave D): this host mounts the enchant ctx too
 import { createEnchantCtx, standLooseFoe } from './hostEnchant.js';   // FS1 (wave D): the ONE ctx body + SD1's loose-foe placement
 import { playerArrowHitFoe } from '../combat/arrowFlight.js';   // AUDIT 39 (#64) wave D: the FOURTH host calls the shared player-arrow law rather than carrying a fourth body of it
@@ -1304,6 +1305,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // dialog unoffered rather than raising one that goes nowhere.
   const questJournalHooks = () => (opts.questBridge ? {
     questMessages: () => opts.questBridge.machine.getAllQuestLogMessages() ?? [],
+    // MAC-K2: the chronicle's Quests section takes the WALK, the same
+    // one the pause tab takes - see questBridge.js.
+    questLog: () => opts.questBridge.questLog(),
     notebook: () => opts.questBridge.notebook ?? null,
   } : {});
 
@@ -1322,7 +1326,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       ...questJournalHooks(),
       mode,
       entity: playerEntity,
-      section: mode === 'messages' ? 'messages' : 'notes',
+      // MAC-K2 (Mac: "Logbook not reflecting quests"). This read
+      // `mode === 'messages' ? 'messages' : 'notes'`, with the note
+      // that "the two quest modes land on Notes because the pause
+      // window has carried quests since PX4" - which made the L key,
+      // InputManager's own `LogBook`, open the player's NOTEBOOK. The
+      // chronicle now has a Quests section (ui/enhancedChronicle.js)
+      // fed by the SAME walk the pause tab uses, so each classic mode
+      // lands on the page that holds what it names.
+      section: mode === 'messages' ? 'messages'
+        : (mode === 'notebook' ? 'notes' : 'quests'),
     });
   }
 
@@ -1404,7 +1417,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:6623 / exterior.js:2947), set
+  // host's own townTalk sink (world.js:6697 / exterior.js:3025), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -1881,7 +1894,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // copied mount would have diverged the first time an arm grew.
   /** DR1: THE TWO SPELL WINDOWS THIS HOST MOUNTS NOW, and the one door
    *  they go through. `mountSpellWindow` is worldModes'
-   *  mountSpellWindow DUNGEON ARM (worldModes.js:1044,
+   *  mountSpellWindow DUNGEON ARM (worldModes.js:1045,
    *  `dungeonCtx?.showOverlay(win)`) resolved to what it actually
    *  calls here - this file's own pushDungeonWindow, which IS
    *  UserInterfaceManager.PushWindow. So a spell window raised over an
@@ -1892,7 +1905,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  makes its dungeon arm a deliberate no-op (:857): both windows
    *  raise `done` from inside their own pick/cancel/close
    *  (ListPickerWindow._pick/_cancel, ui/listPicker.js:203/:212;
-   *  NativeTradeWindow's close, ui/nativeTrade.js:497), and
+   *  NativeTradeWindow's close, ui/nativeTrade.js:610), and
    *  tickOverlay drains the slot and reconciles the stack. A second
    *  clear here would only race that drain. */
   const mountSpellWindow = (win) => pushDungeonWindow(win);
@@ -2232,7 +2245,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // the wizard fresh (SetRaceSelectWindow Resets on re-entry).
         // The window fires this from its own input/click arms, which
         // is why tickOverlay no longer polls `flow.cancelled`.
-        onCancel: () => location.reload(),
+        // AUDIT-MACL F3: ...and the guard stands down first, because
+        // this is a door the GAME opened - the same law `exitToTitleMenu`
+        // follows. A player who presses Cancel has asked to leave.
+        onCancel: () => { releaseUnloadGuard(); location.reload(); },
         onDone: (r) => finishChargenHere(r),
       });
       activeOverlay = chargenWindow;
@@ -2358,7 +2374,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:931 against :961; worldModes.js:5940 against :5948).
+    // (dungeon.js:949 against :961; worldModes.js:5944 against :5948).
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -2848,8 +2864,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:8817,
-              // exterior.js:4295 and worldModes.js:6067 already ran;
+              // playerArrowHitFoe is the one copy world.js:8941,
+              // exterior.js:4374 and worldModes.js:6071 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -2936,7 +2952,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
             // items, not the player's. That line credited the player
             // unconditionally, which only stayed right while the
             // player was the only thing an arrow could reach.
-            addItem(af.entity.items ??= [], { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });
+            addItem(af.entity.items ??= [], bowDamageArrow());   // MAC-N1: minted, not a bare literal
             retireMissile(m);
           } else if (struckPlayer && !m.aimFoe) {
             const shooter = m.shooterFoe;
@@ -2972,7 +2988,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               const sf = m.shooterFoe;
               audio.play3d(enemyMissSound(m.weapon), [sf.ai.feet[0], sf.ai.feet[1] + 0.9, sf.ai.feet[2]], 1, { maxDistance: 16 });
             }
-            addItem(playerEntity.items, { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });
+            addItem(playerEntity.items, bowDamageArrow());   // MAC-N1: minted, not a bare literal
             surfacePlayer();
             retireMissile(m);
           } else if (struckPlayer || struckFoe) {
@@ -3228,7 +3244,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     }
     if (pt != null) inflictPoison(f.entity, pt, false, { currentMinute: Math.floor(classicMinutesRef.value) });   // WORLD6b-iii(e): the dose lands on the host's foe as FormulaHelper lands it - inside the blow, before the health moves, the foe's own saving throw rolled here; AUDIT WORLD6b-iii(e) A3: on the striker's word, whatever the number
     damageFoe(f, dmg, at, dir, { fromPlayer: true, peer: true, kind, peerId: id });
-    if (data.ar === 1 && kind === 'arrow' && arrowsIn(f.entity.items ??= []) < HIT_ARROWS_MAX) addItem(f.entity.items, { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });   // WORLD3: the shaft, where BowDamage puts it (:145-147) - the corpse's items are the record's; AUDIT WORLD6b-iii(e) A1: HIT_ARROWS_MAX a body from peers' shafts
+    if (data.ar === 1 && kind === 'arrow' && arrowsIn(f.entity.items ??= []) < HIT_ARROWS_MAX) addItem(f.entity.items, bowDamageArrow());   // WORLD3: the shaft, where BowDamage puts it (MAC-N1: minted) (:145-147) - the corpse's items are the record's; AUDIT WORLD6b-iii(e) A1: HIT_ARROWS_MAX a body from peers' shafts
     return true;
   }
 
@@ -5091,12 +5107,32 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // three columns against the left edge. The pause window's Stats
     // page IS that sheet, off the same sheetModel, and is centred by
     // construction. This host's own pause flow, landed on it.
-    openSheetPage() { this.togglePause(null, { at: 'stats' }); },
-    togglePause(setPlayerPos = null, opts = {}) {
+    openSheetPage() { this.togglePause({ at: 'stats' }); },
+    // MAC-L1: ONE SIGNATURE ACROSS THE FOUR HOSTS. This was the odd one
+    // out - `togglePause(setPlayerPos = null, opts = {})` against the
+    // other three's `togglePause(opts = {})` - and `routeAction` spelt
+    // it this context's way, so Escape threw on the other three. The
+    // position applier rides INSIDE the options now, read by the one
+    // reader (ui/pauseDoor.js's pauseOpts), which also means a caller
+    // that hands over a hard `null` gets an empty door rather than a
+    // TypeError.
+    // ...and the parameter is `doorOpts`, NOT `opts`. MAC-L1 found a
+    // second fault sitting inside the first: this method's parameter was
+    // called `opts` and SHADOWED `buildDungeonContext`'s own `opts` bag
+    // (:214) - the one carrying `questBridge` and `relock`. So the three
+    // arms below that read `opts.questBridge` and `opts.relock` have
+    // been reading THIS METHOD'S ARGUMENT for as long as it has had one:
+    // the dungeon pause screen's Quests tab answered an empty list, and
+    // the resume gesture's relock was a no-op. Both looked wired and
+    // neither was. Exactly the shadow AUDIT-CHATR F1 found in
+    // `ui/chatPanel.js` a day before, in a second file - which is the
+    // whole argument for turning `no-shadow` on.
+    togglePause(doorOpts = {}) {
       if (activeOverlay || !pauseDoorReady()) return;
+      const { at, setPlayerPos } = pauseOpts(doorOpts);
       const ctx = this;   // the sibling save verbs on this same context
       openPauseFlow((w) => { activeOverlay = w; }, {
-        at: opts.at ?? null,   // PX26: the page the door was pressed for
+        at,   // PX26: the page the door was pressed for
         // PX25: THE SHEET'S OWN DOORS, handed to the page that IS the
         // sheet. Each host passes the arms it already has; a host
         // without one passes nothing and the button never draws.
@@ -5113,29 +5149,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // flag was too conservative, so it is paid with the same walk
         // the world's pause runs, off THIS host's own bridge.
         questMessages: () => opts.questBridge?.machine.getAllQuestLogMessages() ?? [],
-        questLog: () => {
-          const m = opts.questBridge?.machine;
-          const active = [];
-          if (m) {
-            for (const q of m.quests.values()) {
-              const les = q.getLogMessages();
-              if (!les?.length) continue;
-              const messages = les.map((le) => q.getMessage(le.messageID)).filter(Boolean);
-              if (!messages.length) continue;
-              let clockSeconds = null;
-              for (const r of q.resources.values()) {
-                if (r.clockEnabled && !r.clockFinished && Number.isFinite(r.remainingTimeInSeconds)) {
-                  clockSeconds = clockSeconds == null ? r.remainingTimeInSeconds : Math.min(clockSeconds, r.remainingTimeInSeconds);
-                }
-              }
-              active.push({ id: String(q.uid), name: q.displayName || null, questName: q.questName || '', clockSeconds, messages });
-            }
-          }
-          return { active, finished: opts.questBridge?.notebook?.getFinishedQuests() ?? [] };
-        },
+        // MAC-K2: the walk is the BRIDGE's now - see questBridge.js.
+        questLog: () => opts.questBridge?.questLog() ?? { active: [], finished: [] },
         quickSave: () => ctx.quickSave?.(),
         // MAC1 J: the pointer comes back INSIDE the resume gesture
-        // (ui/pauseDoor.js:165-182). THIS CONTEXT OWNS NO CANVAS OF ITS
+        // (ui/pauseDoor.js:207-224). THIS CONTEXT OWNS NO CANVAS OF ITS
         // OWN (:4701), so the relock arrives from whichever dungeon host
         // mounted it - the way hudMessageSink is threaded (:1349) - and
         // both of them hand it in: dungeon.js's opts bag and
@@ -6204,7 +6222,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       //
       // The interior host's `interiorHitEffects.clear()` is NOT the same
       // line and was never a precedent for one: that pool is built with
-      // no `onSpawn` (worldModes.js:504), so it owns its batches and
+      // no `onSpawn` (worldModes.js:505), so it owns its batches and
       // clear() is the only thing that frees them - and it runs on a
       // between-buildings RESET, not a teardown.
       // AUDIT 64 F41: the scene ambience leaves with the scene too -

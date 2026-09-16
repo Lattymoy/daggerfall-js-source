@@ -56,7 +56,7 @@ import { drawMenuBackdrop } from './chargenArt.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';
 import { drawText, measureText } from './text.js';
 import { ACTIONS, saveKeyBinds } from '../systems/inputActions.js';
-import { bindings } from './input.js';
+import { bindings, mouseCode } from './input.js';   // MAC-K1: the ONE crossed-name table, so this grid does not spell it a second time
 import {
   createUnsavedKeybinds, currentDict, setUnsavedBinding, checkDuplicates,
   applyUnsavedKeybinds, resetUnsavedToDefaults, buttonText, ELONGATED_TEXT,
@@ -313,14 +313,41 @@ export class ControlsWindow {
     this._refresh();
   }
 
-  /** vx/vy native; `right` marks the remove gesture (:371). */
-  click(vx, vy, right = false) {
+  /** vx/vy native; `right` marks the remove gesture (:371), `middle`
+   *  is the wheel press - carried because MAC-K1 made it a binding. */
+  click(vx, vy, right = false, middle = false) {
     if (this._popup) {
       this._popup.click(vx, vy, right);
       this._popupDone();
       return true;
     }
-    if (this.capture) return true;   // every tab ignores clicks mid-capture (:283 etc.)
+    if (this.capture) {
+      // MAC-K1 (Mac: "Mouse keybindings not working properly"). This
+      // line read `return true` - "every tab ignores clicks
+      // mid-capture (:283 etc.)" - which is the right law for a click
+      // that means something ELSE, and the wrong one for the capture
+      // itself. DFU's WaitForKeyPress is `Input.GetKeyDown` walked over
+      // every KeyCode, and Mouse0/1/2 ARE KeyCodes - which is how three
+      // of its own defaults come to be mouse buttons. So a press while
+      // armed is the binding, exactly as a keystroke is.
+      //
+      // NO COMBO ARM HERE, and that is a real difference from the key
+      // door: this seam is given a position and three booleans, never
+      // the event, so there are no modifier flags to read. A
+      // modifier+button combo can be made in the enhanced pane and
+      // will display, save and run correctly everywhere; it just
+      // cannot be ENTERED through the classic grid.
+      //
+      // Unity counts Mouse0/1/2 as left/RIGHT/middle where the DOM
+      // counts left/middle/right, so the two middle names cross - and
+      // this reads the one table (ui/input.js MOUSE_CODES) rather than
+      // spelling the crossing a second time.
+      const code = mouseCode(right ? 2 : (middle ? 1 : 0));
+      setUnsavedBinding(this.unsaved, this.capture, code);
+      this.capture = null;
+      this._refresh();
+      return true;
+    }
     if (this.top) {
       if ((this.top === 'defaults' || this.top === 'remove') && this._box) {
         const hit = messageBoxHit(this._box, vx, vy);

@@ -2208,6 +2208,22 @@ title - so a press teaches rather than changes nothing; the Mods pane
 says it once at the top; the Online pane's copy says the lane at the
 door.
 
+**MAC-N3 (2026-09-16): the fact was never on the URL.** "main.js sets
+it for Play Online" above was true of an in-memory `URLSearchParams`
+the front door edits and hands to `bootWorld` - and nothing wrote that
+copy back to `location.search`, which is the one read `isOnlinePage`
+makes. So for every Play Online session the lane answered *offline*:
+the skin stayed the stored choice, no enhancement and no mod was
+forced, and a Classic player had no chat (Mac: "Chat UI not visable
+with classic in online mode"). The relay was fine, because the world
+host reads the copy. `onlineLane.publishBootParams` writes the decided
+params to the URL through `history.replaceState` before the world
+boots, and the six keys the menu decides (`BOOT_DOOR_KEYS`) are cleared
+off both copies before the menu runs, so a reload after an online
+session does not show the Mods pane locked for a player who has not
+chosen yet. One home, not a second read path. The record is
+`01-Overview/Mac-Bugs-N.md`.
+
 ## OL2 (2026-09-14): the rest window says the clock, the trip says it arrives now
 
 **Mac: "Now tackle #s 5/6."** AUDIT WORLD5's fifth and sixth recorded
@@ -4213,7 +4229,7 @@ room exists.
 
 **The boundary that makes that safe is `_layoutFoes`** - the dungeon
 host's index of where the layout's own run ends. Every foe past it "is
-this player's own" (`dungeonContext.js:1042`, AUDIT WORLD B2): a quest
+this player's own" (`dungeonContext.js:1043`, AUDIT WORLD B2): a quest
 foe is minted above it, never streamed, never puppet-ised by the room's
 authority switch, and never touched by a joiner's stream. So a joiner's
 quest foe really does spawn and really can be killed by the player whose
@@ -4582,7 +4598,7 @@ with a marked top-left pixel on its last row).
 
 *"During online play, certain enemies cant be damaged."*
 
-`src/scenes/worldModes.js:5070` read, on one physical line:
+`src/scenes/worldModes.js:5073` read, on one physical line:
 
 ```js
 useMagicItem: (item) => host.useMagicItem?.(item),   // HT1: the torch keys onFoeHit: (hit) => host.onFoeHit?.(hit),   // WORLD2: a puppet's blow goes to the host
@@ -4597,7 +4613,7 @@ appended its own note to the end of the line that already carried
 **Why that is an invulnerable enemy.** Online, a joiner applies no local
 damage to a layout foe - `damageFoe`'s non-authority arm hands the blow
 to the room's host through `opts.onFoeHit?.(...)` and RETURNS
-(`dungeonContext.js:3801`). With the property missing that call is a
+(`dungeonContext.js:3817`). With the property missing that call is a
 no-op on `undefined`: no damage, no frame, no warning, nothing on the
 console. Every layout foe in every online dungeon absorbed every blow
 from everyone but the room's authority, for eight slices, in silence.
@@ -4724,7 +4740,7 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:2620` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:2662` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
   provenance argument `applySpellToFoe` hands them (`hostMagic.js:187`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
@@ -6263,3 +6279,33 @@ recorded** (S12, Y13). Eight records had moved with SLAM13's source
 (`HEARTBEAT_MS`'s home, the pose arm's `now`, the per-listener push) and
 were re-aimed to the new lines, not dropped - a list that cannot apply is
 a count nobody can re-run, which is what the lists exist to prevent.
+
+## MERGE - the slam branch onto main (2026-09-17)
+
+Mac: "Merge." `main` had moved under the branch by SRV-N, AUDIT-SRVN and
+CHAT-G (a server restart notice, its four findings, the chat's third
+gate). What met, and how it was settled:
+
+- **One `v` on every welcome.** SRV-N and SLAM13 A5 both put the relay's
+  version on the welcome, for different readers: SRV-N's `onRelay` →
+  `net/updateNotice.js` tells a player the relay RESTARTED under them
+  (a change of name across reconnects, whatever the name); SLAM13's
+  `versionWarning` tells them this CLIENT was built against another law
+  than the relay is running (a skew against `RELAY_VERSION`, said once on
+  the console and the HUD line). Both stand, on the one field, in SRV-N's
+  place (last, after `now`) and SRV-N's channel shape. `RELAY_VERSION`
+  lives in `wire.js` (SLAM13) and is `world74`.
+- **The nine version pins** take SRV-N's monotone `relayVersionAtLeast`
+  form, which ends the nine-file sed for good; `relayversion.test.js`
+  keeps binding the name to the bytes, and its graph pin caught the
+  worker reaching `net/nameFilter.js` through CHAT-G - the row for
+  `world74` is the first over five files.
+- **The hello path** is SLAM5's (the roster chosen before the looks are
+  read); main's still read every socket's look and would have died at the
+  130th player.
+- **`rosterRows`** is left as main wrote it. The final lens asked for a
+  `told === false` filter; main's CHAT-R1 pin says "a nameless peer is
+  still a row", and a stranger stood by its pose IS in the room - it is
+  counted, wears the fallback name until the `who` answers, and the
+  roster's count stays true. Mac's pin over the lens's ask.
+- **Cites** re-mapped with `tools/citeMerge.mjs` (14 moved).

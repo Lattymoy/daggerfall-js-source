@@ -24,6 +24,7 @@ import { CAPSULE_HEIGHT } from '../player/motor.js';   // ROAD-H tail: the stand
 import { trs } from '../world/mat4.js';
 import { SWING_MODS } from './playerWeapon.js';   // CalculateSwingModifiers, read live at the arrow's impact
 import { calculateAttackDamage } from './formulas.js';
+import { bowDamageArrow } from './enemyEquipment.js';   // MAC-N1: the recovered shaft is CreateWeapon's arrow, value and all
 import { backstabChanceOf, enemyPainVoice } from '../scenes/hostCombat.js';
 import { isBackFacing } from '../characters/enemyMotor.js';
 import { hitSoundFor, ENEMY_HIT_VOLUME } from '../systems/soundClips.js';
@@ -149,7 +150,7 @@ export class ArrowFlight {
  *
  * WAVE D: four bodies became FOUR CALLERS. dungeonContext.js's
  * `m.fromPlayer` block - the arm this function was extracted FROM -
- * now calls it (dungeonContext.js:2470), so the copy that survived
+ * now calls it (dungeonContext.js:2486), so the copy that survived
  * the extraction is gone. It was not a harmless copy: it still
  * splashed at the arrow tip, the exact bug AUDIT 39r/R16 fixed here.
  * DaggerfallMissile.cs:681-687 routes an arrow into
@@ -228,7 +229,7 @@ export function playerArrowHitFoe(m, foe, {
   // BEFORE the arrow is added back (BowDamage's own order).
   onAttackFromPlayer?.(foe, dmg);   // AUDIT WORLD6b-iii(e) C2: with what landed - a pool that diverts a zero blow to a puppet's owner sends none when the damage already went
   if (foe.entity?.items) {
-    addItem(foe.entity.items, { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });
+    addItem(foe.entity.items, bowDamageArrow());   // MAC-N1: one minter, not a bare literal with no value
   }
   return dmg;
 }

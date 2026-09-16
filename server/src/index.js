@@ -368,7 +368,11 @@ export class Room {
       await this.state.storage.put(secretKey(m.id), m.secret);
       if (!chat) { await this.state.storage.put(lookKey(m.id), m.look); this._looks.set(m.id, m.look); }   // a channel keeps no look: nobody is drawn from it
       if (!this._setAttach(ws, { ...a, id: m.id, name: m.name, pose: chat ? null : m.pose, since: replaced?.since ?? now })) { this._refuse(ws, 'hello too large'); return; }
-      if (chat) { this._send(ws, JSON.stringify({ t: 'welcome', id: m.id, v: RELAY_VERSION, peers: [] })); return; }   // told no one, announced to no one: a channel has no roster
+      // SRV-N: `v` rides EVERY welcome, a channel's included. A player in the enhanced skin holds a presence socket
+      // and one chat socket per tab; whichever reconnects first after a hand deploy is the one that notices, and the
+      // client's detector (net/updateNotice.js) is a Set so the rest of them say nothing. SLAM13 (AUDIT SLAM A5): and
+      // the SESSION compares it with the law it was built against, and says a skew once.
+      if (chat) { this._send(ws, JSON.stringify({ t: 'welcome', id: m.id, peers: [], v: RELAY_VERSION })); return; }   // told no one, announced to no one: a channel has no roster
       // SLAM5 (2026-09-16, AUDIT SLAM): THE ROSTER IS CHOSEN BEFORE THE LOOKS ARE READ, and this was a hard wall.
       //
       // This used to read a look for EVERY hello'd socket - up to SOCKETS_MAX-1 = 255 keys in one
@@ -401,8 +405,8 @@ export class Room {
       // WORLD5: the relay's clock rides the welcome, so a client whose machine's clock is off reads the shared world time through the offset
       // AUDIT WORLD5 C11: stamped as the welcome is BUILT, not as the hello began - four storage awaits sit between the
       // two, and every millisecond of them was an offset the client carried as the relay's clock
-      // SLAM13 (AUDIT SLAM A5): and the relay's VERSION rides it (`v`), so a client built against another law can say so
-      const welcome = `{"t":"welcome","id":${JSON.stringify(m.id)},"v":${JSON.stringify(RELAY_VERSION)},"peers":${JSON.stringify(roster)},"host":${JSON.stringify(host)},"world":${world ?? 'null'},"now":${Date.now()}}`;
+      // SRV-N / SLAM13 (AUDIT SLAM A5): the relay's VERSION rides it (`v`, last), so a client can tell a restarted relay from the one it was talking to, and one built against another law can say so
+      const welcome = `{"t":"welcome","id":${JSON.stringify(m.id)},"peers":${JSON.stringify(roster)},"host":${JSON.stringify(host)},"world":${world ?? 'null'},"now":${Date.now()},"v":${JSON.stringify(RELAY_VERSION)}}`;
       if (!this._send(ws, welcome)) return;
       const join = JSON.stringify({ t: 'join', id: m.id, name: m.name, look: m.look, pose: m.pose });
       for (const [other, b] of [...this._all()]) if (other !== ws && b.id) this._send(other, join);

@@ -198,7 +198,7 @@ test('the dungeon arrow never enters the draw list without a matrix', () => {
   // ensureArrowModel is async and its ONE caller does not await it, so
   // the push lands in a microtask - after the frame that called it has
   // returned. The host draws dynamicDraws BEFORE it calls drawFoes
-  // (dungeon.js:469 against :473; worldModes.js:5940 against :5948), so
+  // (dungeon.js:959 against :984; worldModes.js:5944 against :5949), so
   // an entry pushed with `matrix: null` was drawn with that null on
   // the very next frame. Firing a bow killed the frame loop.
   const src = readFileSync(new URL('../src/scenes/dungeonContext.js', import.meta.url), 'utf8');

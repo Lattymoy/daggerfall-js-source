@@ -41,6 +41,11 @@ export const PREF_DEFAULTS = Object.freeze({
   // player's head and the relay to join (net/online.js DEFAULT_SERVER when empty).
   onlineName: '',
   onlineServer: '',
+  // CHAT-R2 (2026-09-16, Mac: "a hide chat button"): the chat put
+  // away, across sessions. A player who hid it wants it hidden next
+  // launch too - the panel is still built and still counting unread,
+  // so bringing it back finds the room where they left it.
+  chatHidden: false,
   // TI2: THE PHONE IN HAND, TUNED (2026-09-11, Mac: "enhance the mobile
   // element... camera movement, character movement and a more phone
   // built feel"). The touch layer's own knobs - DFU has no touch input
