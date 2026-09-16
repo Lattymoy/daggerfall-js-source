@@ -91,6 +91,7 @@
 
 import { fpArm, hasDaggerfallArrows } from '../combat/fpArm.js';
 import { questRail, journalLines, questTitleOf } from './questRail.js';   // MAC-K2: the ONE quest walk, shared with the chronicle
+import { checkName } from '../net/nameFilter.js';   // NAME-F2: the entry-side refusal; net/wire.js's sanitizeName is the half that holds
 import { closeOnOutsideTap } from './enhancedOverlays.js';   // OT1: a tap on the scrim resumes
 import { TEST_PRESETS, TEST_RIDE, TEST_LOOT } from '../systems/testRoom.js';   // TR3: the one home the pane shows; TSR4: the ride; LR3: the loot ladder
 import { mwRaceId } from '../formats/mwNpc.js';
@@ -525,8 +526,40 @@ function paneOnline(body) {
     wrap.append(input);
     return wrap;
   };
-  c.append(field('Name over your head', 'onlineName', saves[0]?.name ?? 'Your name', 24));   // AUDIT ONLINE E14: the relay keeps 24 printable ASCII (NAME_MAX)
+  // ═══ NAME-F2: THE NAME IS REFUSED HERE, WITH A REASON ══════════
+  //
+  // Mac, 2026-09-16: "a proper censoring system for players choosing
+  // their online name. Im seeing a lot of names like 'Cum'".
+  //
+  // This is the half a player SEES. The half that holds is
+  // `net/wire.js`'s `sanitizeName`, which the relay runs on every
+  // hello - a check that lived only here would be a check a devtools
+  // console removes. Both, or neither is worth writing.
+  //
+  // What is checked is the EFFECTIVE name, not the field: an empty
+  // field falls through to the chosen save's own character name
+  // (scenes/world.js's onlineStart ladder), so a character called Cum
+  // who never touches this field must be told here rather than
+  // discovering it as a silent rename in the world.
+  const nameField = field('Name over your head', 'onlineName', saves[0]?.name ?? 'Your name', 24);
+  const nameWhy = el('p', 'meta nameveto');
+  const effectiveName = () => (getPref('onlineName') || saves[0]?.name || '').trim();
+  const nameVerdict = () => checkName(effectiveName());
+  const paintName = () => {
+    const v = nameVerdict();
+    nameWhy.textContent = v.ok ? '' : v.reason;
+    nameWhy.classList.toggle('bad', !v.ok);
+    nameField.classList.toggle('bad', !v.ok);
+  };
+  const nameInput = nameField.querySelector?.('input');
+  if (nameInput) {
+    const already = nameInput.oninput;
+    nameInput.oninput = (e) => { already?.(e); paintName(); };
+  }
+  c.append(nameField);
   c.append(el('p', 'meta', 'Up to 24 plain letters and digits; anything else is dropped, and an empty name shows as Traveller.'));
+  c.append(nameWhy);
+  paintName();
   c.append(field('Relay', 'onlineServer', DEFAULT_SERVER, 200));
   // SLOTS1 (Mac: "the ability to choose which save to use in online"):
   // every restorable slot is a card, and the one pressed is the
@@ -534,7 +567,18 @@ function paneOnline(body) {
   c.append(el('p', 'meta', saves.length ? 'Pick the character to bring in:' : 'Save a game first: Online brings a saved character in.'));
   body.append(c);
   for (const save of saves) {
-    body.append(slotCard(save, { primaryLabel: 'Play online', onPrimary: () => { _pickedSaveKey = save.key; onAction('online'); } }));
+    body.append(slotCard(save, {
+      primaryLabel: 'Play online',
+      // NAME-F2: the refusal is a REFUSAL, not a warning beside a
+      // button that works anyway. A name the filter rejects does not
+      // join - the field is repainted so the reason is under the
+      // player's eye at the moment they pressed.
+      onPrimary: () => {
+        if (!checkName((getPref('onlineName') || save.name || '').trim()).ok) { paintName(); nameInput?.focus?.(); return; }
+        _pickedSaveKey = save.key;
+        onAction('online');
+      },
+    }));
   }
 }
 

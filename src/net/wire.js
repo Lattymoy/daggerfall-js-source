@@ -128,6 +128,7 @@
 // fast travel, no sentence, no ?tod, no ?timescale.
 
 import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the port's one angle wrap. The relay re-exports this module (server/src/relay.js), so this reaches the worker too - mat4.js imports nothing itself.
+import { nameAllowed } from './nameFilter.js';   // NAME-F2: the filter runs INSIDE sanitizeName, so the relay carries it - nameFilter.js imports nothing, same as mat4.js above, so the worker's graph stays flat
 
 /** WORLD5: the instant the online world stood at the classic game start - 2026-09-14T00:00:00Z. */
 export const ONLINE_EPOCH_MS = Date.UTC(2026, 8, 14, 0, 0, 0);
@@ -270,12 +271,33 @@ const uint = (v, max) => (finite(v) && v >= 0 ? Math.min(max, Math.floor(v)) : n
 const ID_RE = /^[A-Za-z0-9_-]{4,40}$/;
 const SECRET_RE = /^[A-Za-z0-9_-]{8,64}$/;
 
-/** A name the room will show: printable ASCII, trimmed, bounded, never empty. */
+/** The name a refused one becomes. Not a mask (`C**` is a shape a
+ *  player treats as a puzzle) and not an error the relay could not
+ *  deliver anyway - just the default everyone starts as. */
+export const FALLBACK_NAME = 'Traveller';
+
+/**
+ * A name the room will show: printable ASCII, trimmed, bounded, never
+ * empty - and NAME-F2, never one the filter refuses.
+ *
+ * THE FILTER RUNS HERE BECAUSE HERE IS THE ONLY PLACE IT CANNOT BE
+ * SKIPPED. The pane refuses a bad name at entry with a reason, which
+ * is the half a player sees; this is the half that holds when the
+ * client is not ours. `parse` runs it on every `hello` the relay
+ * takes, and the client runs it again on every peer name it is told -
+ * so a modified client can neither publish a refused name nor be shown
+ * one. A check that only lives in the UI is a check that a devtools
+ * console removes.
+ *
+ * Idempotent, as the rest of this module is: what comes out is a name
+ * the filter allows, so running it twice changes nothing.
+ */
 export function sanitizeName(name) {
   let s = '';
   for (const ch of String(name ?? '')) { const c = ch.charCodeAt(0); if (c >= 32 && c <= 126) s += ch; }
   s = s.trim().slice(0, NAME_MAX);
-  return s || 'Traveller';
+  if (!s) return FALLBACK_NAME;
+  return nameAllowed(s) ? s : FALLBACK_NAME;
 }
 
 /** What a chat line may not carry: every FORMAT character (Unicode Cf -

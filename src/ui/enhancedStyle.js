@@ -813,6 +813,12 @@ body.draglock .itemrow, body.draglock .packlists { touch-action: none; }
   font: inherit; font-size: 15px;
 }
 .card label.field input:focus-visible { outline: none; border-color: var(--brass); }
+/* NAME-F2: a refused name, and the reason under it. Red on the border
+   rather than a red field - the text the player typed stays readable,
+   which matters when what they have to do is edit it. */
+.card label.field.bad input { border-color: #b4553f; }
+.card p.meta.nameveto:empty { display: none; }
+.card p.meta.nameveto.bad { color: #e0906f; }
 .goldfield .meta { flex: 1 0 100%; color: var(--dim); font-size: 11.5px; margin: 0; }
 
 /* THE LISTS STACK BELOW THE PACK'S OWN BREAKPOINT, not at it: two

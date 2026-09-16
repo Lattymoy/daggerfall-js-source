@@ -60,6 +60,8 @@ import { overlayOpen } from './enhancedOverlays.js';
 import { isTouchDevice } from './touch.js';
 import { CHAT_MAX } from '../net/wire.js';
 import { tagOf } from '../net/chat.js';
+import { rosterRows, rosterTitle, ROSTER_ROWS_MAX } from '../net/roster.js';   // CHAT-R1: who is online, in order
+import { getPref, setPref } from '../systems/uiPrefs.js';   // CHAT-R2: the hidden state outlives the session
 
 /** The action whose key opens the chat: DFU's own cursor key (Enter by default), since opening frees the cursor. */
 export const CHAT_OPEN_ACTION = 'ActivateCursor';
@@ -98,7 +100,36 @@ export const CHAT_CSS = `
 .dfchat-form { display: flex; gap: 4px; padding: 6px; border-top: 1px solid var(--iron, #2b323b); }
 .dfchat-input { flex: 1; min-width: 0; background: var(--ink, #0e1013); color: var(--bone, #e9e4d9); border: 1px solid var(--iron, #2b323b); border-radius: 3px; padding: 6px 8px; font: inherit; font-size: 14px; }
 .dfchat-input:focus { outline: 1px solid var(--brass, #c08a3e); }
-.dfchat-send, .dfchat-close, .dfchat-open { background: var(--iron, #2b323b); color: var(--bone, #e9e4d9); border: 0; border-radius: 3px; font: inherit; font-size: 14px; padding: 6px 10px; cursor: pointer; }
+.dfchat-send, .dfchat-close, .dfchat-open, .dfchat-hide, .dfchat-show { background: var(--iron, #2b323b); color: var(--bone, #e9e4d9); border: 0; border-radius: 3px; font: inherit; font-size: 14px; padding: 6px 10px; cursor: pointer; }
+
+/* CHAT-R2: THE BOX IS TWO COLUMNS - the conversation and who is in it.
+   The roster is a SIBLING of the list rather than a floating panel, so
+   it scrolls on its own and the box keeps one border and one corner
+   radius however long either column gets. */
+.dfchat-cols { display: flex; min-height: 0; }
+.dfchat-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.dfchat-who { flex: none; width: 132px; border-left: 1px solid var(--iron, #2b323b); display: flex; flex-direction: column; min-height: 0; }
+.dfchat-whohead { flex: none; padding: 6px 8px 4px; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--dim, #8b8578); }
+.dfchat-wholist { flex: 1; min-height: 0; overflow-y: auto; padding: 0 8px 6px; display: flex; flex-direction: column; gap: 1px; }
+.dfchat-who-row { font-size: 13px; line-height: 1.35; overflow-wrap: anywhere; color: var(--bone, #e9e4d9); }
+.dfchat-who-row.me .dfchat-who-name { color: #dcc27c; }
+.dfchat-who-name { font-weight: 600; }
+.dfchat-who-tag { color: var(--dim, #8b8578); font-size: 10px; margin-left: 4px; }
+.dfchat-who-more { font-size: 11px; color: var(--dim, #8b8578); padding-top: 4px; }
+/* the roster is the first thing to go when there is no width for it */
+@media (max-width: 560px) { .dfchat-who { display: none; } }
+
+/* CHAT-R2: HIDDEN. Not display:none on the root - the panel must
+   keep its listeners and its log - but every VISIBLE part away, with
+   one small control left to bring it back. */
+.dfchat-hide { padding: 2px 8px; font-size: 12px; }
+.dfchat-show { display: none; pointer-events: auto; align-self: flex-start; font-size: 12px; padding: 4px 10px; }
+.dfchat[data-hidden="1"] .dfchat-peek,
+.dfchat[data-hidden="1"] .dfchat-hint,
+.dfchat[data-hidden="1"] .dfchat-open,
+.dfchat[data-hidden="1"] .dfchat-status,
+.dfchat[data-hidden="1"] .dfchat-box { display: none; }
+.dfchat[data-hidden="1"] .dfchat-show { display: inline-flex; }
 `;
 
 /** The sheet, once. */
@@ -131,7 +162,7 @@ export function isOpenKey(e, { canOpen = () => true, overlay = overlayOpen, acti
  * (release on open, take back on close - inside the gesture). Handed
  * the document and the window so the tests drive it headless.
  */
-export function createChatPanel({ log, onSend, canOpen = () => true, onOpen = null, onClose = null, action = actionOfKey, overlay = overlayOpen, doc = document, win = globalThis, touch = isTouchDevice() } = {}) {
+export function createChatPanel({ log, onSend, roster = null, canOpen = () => true, onOpen = null, onClose = null, action = actionOfKey, overlay = overlayOpen, doc = document, win = globalThis, touch = isTouchDevice() } = {}) {
   injectChatStyle(doc);
   const el = (tag, cls, text) => { const n = doc.createElement(tag); n.className = cls; if (text != null) n.textContent = text; return n; };
   const root = el('div', `dfchat${touch ? ' touch' : ''}`);
@@ -154,7 +185,21 @@ export function createChatPanel({ log, onSend, canOpen = () => true, onOpen = nu
   const send = el('button', 'dfchat-send', 'Send'); send.type = 'submit';
   const close = el('button', 'dfchat-close', '✕'); close.type = 'button';
   close.setAttribute('aria-label', 'Close chat');
-  form.append(input, send, close);
+  const hide = el('button', 'dfchat-hide', 'Hide'); hide.type = 'button';
+  hide.setAttribute('aria-label', 'Hide chat');
+  const show = el('button', 'dfchat-show', 'Chat'); show.type = 'button';
+  show.setAttribute('aria-label', 'Show chat');
+  form.append(input, send, hide, close);
+  // CHAT-R2: the two columns. `main` holds what was there before, so
+  // nothing about the list, the tabs or the form moved; `who` is new
+  // beside it and scrolls on its own.
+  const cols = el('div', 'dfchat-cols');
+  const main = el('div', 'dfchat-main');
+  const who = el('div', 'dfchat-who');
+  const whoHead = el('div', 'dfchat-whohead', rosterTitle(0));
+  const whoList = el('div', 'dfchat-wholist');
+  const whoMore = el('div', 'dfchat-who-more');
+  who.append(whoHead, whoList, whoMore);
   const tabButtons = new Map();
   for (const tab of log.tabs) {
     const b = el('button', 'dfchat-tab', tab.label);
@@ -165,8 +210,10 @@ export function createChatPanel({ log, onSend, canOpen = () => true, onOpen = nu
     tabs.append(b);
     tabButtons.set(tab.id, { b, badge });
   }
-  box.append(tabs, list, form);
-  root.append(peek, hint, status, openBtn, box);
+  main.append(list, form);
+  cols.append(main, who);
+  box.append(tabs, cols);
+  root.append(peek, hint, status, openBtn, show, box);
   doc.body.append(root);
 
   let painted = -1;
@@ -174,6 +221,11 @@ export function createChatPanel({ log, onSend, canOpen = () => true, onOpen = nu
   let listNodes = [];      // the open list's rows, in order: [{ seq, node }] - grown, not rebuilt (AUDIT CHAT C8)
   let listTab = null;
   let alive = true;
+  // CHAT-R2: hidden across sessions - a player who puts the chat away
+  // wants it away next time too, not one reload later.
+  let hidden = getPref('chatHidden') === true;
+  let whoRows = [];        // the drawn rows, keyed so an unchanged roster repaints nothing
+  let whoKey = '';
 
   const lineNode = (line, withTime) => {
     const n = el('div', `dfchat-line${line.mine ? ' mine' : ''}`);
@@ -202,9 +254,37 @@ export function createChatPanel({ log, onSend, canOpen = () => true, onOpen = nu
     if (atBottom) list.scrollTop = list.scrollHeight ?? 0;
   };
 
+  /**
+   * CHAT-R1/R2: WHO IS HERE. The order is net/roster.js's, not this
+   * file's - the panel only draws it.
+   *
+   * REPAINTED ON A CHANGE, NOT EVERY FRAME. `render` runs each frame
+   * and a peer's pose moves constantly, so the rows are keyed by what
+   * is actually DRAWN (id, name, self) and an unchanged key touches no
+   * DOM at all. Without that, a reader's scroll in this column would
+   * be fighting a rebuild sixty times a second.
+   */
+  const paintWho = () => {
+    if (!roster) { who.style.display = 'none'; return; }
+    const { rows, total, shown } = rosterRows(roster());
+    const key = total + '|' + rows.map((r) => r.id + ':' + r.name + ':' + (r.me ? 1 : 0)).join(',');
+    if (key === whoKey) return;
+    whoKey = key;
+    whoHead.textContent = rosterTitle(total);
+    whoRows = rows.map((r) => {
+      const n = el('div', 'dfchat-who-row' + (r.me ? ' me' : ''));
+      n.append(el('span', 'dfchat-who-name', r.name), el('span', 'dfchat-who-tag', '#' + r.tag));
+      return n;
+    });
+    whoList.replaceChildren(...whoRows);
+    // a cut list says so rather than quietly under-reporting the room
+    whoMore.textContent = total > shown ? '+' + (total - shown) + ' more' : '';
+  };
+
   const paint = () => {
     painted = log.version;
     root.dataset.state = log.open ? 'open' : 'closed';
+    root.dataset.hidden = hidden ? '1' : '0';
     for (const tab of log.tabs) {
       const t = tabButtons.get(tab.id);
       t.b.className = `dfchat-tab${tab.id === log.active ? ' active' : ''}`;
@@ -212,7 +292,7 @@ export function createChatPanel({ log, onSend, canOpen = () => true, onOpen = nu
     }
     const unread = log.unreadTotal();
     badgeOut.textContent = unread ? String(unread) : '';
-    if (log.open) paintList();
+    if (log.open) { paintList(); paintWho(); }
     peekNodes = [];
     peek.replaceChildren();
   };
@@ -270,12 +350,41 @@ export function createChatPanel({ log, onSend, canOpen = () => true, onOpen = nu
       if (action(e) === CHAT_OPEN_ACTION && e.isTrusted !== false && !isTextEntryTarget(e.target)) { e.preventDefault(); e.stopPropagation(); input.focus?.(); }
       return;
     }
+    if (hidden) return;   // CHAT-R2: put away means put away - the key does not pull it back
     if (isOpenKey(e, { canOpen, overlay, action })) { e.preventDefault(); e.stopPropagation(); open(); }
   };
   win.addEventListener('keydown', onKey, true);
   form.addEventListener('submit', (e) => { e.preventDefault(); submit({ keep: touch }); });
   close.addEventListener('click', () => closePanel());
   openBtn.addEventListener('click', () => open());
+
+  /**
+   * CHAT-R2: PUT IT AWAY, and bring it back.
+   *
+   * Hidden takes the peek, the hint, the open button, the status line
+   * and the box - everything that draws over the world - and leaves
+   * ONE small control. It does not destroy the panel: the log keeps
+   * filling, the unread counts keep counting, and the key listener
+   * stays on, because a player who hid the chat has not left the room
+   * and the badge should be waiting when they bring it back.
+   *
+   * AND THE OPEN KEY STANDS DOWN WHILE HIDDEN. `isOpenKey` would
+   * otherwise pull the box back up on the next Enter, which is the
+   * opposite of what the button was pressed for - and Enter is
+   * ActivateCursor, a key the game itself wants.
+   */
+  const setHidden = (next) => {
+    const want = !!next;
+    if (want === hidden) return false;
+    hidden = want;
+    if (hidden && log.open) closePanel();
+    setPref('chatHidden', hidden);
+    paint();
+    return true;
+  };
+  hide.addEventListener('click', () => setHidden(true));
+  show.addEventListener('click', () => { setHidden(false); open(); });
+  for (const t of ['pointerdown', 'mousedown', 'click', 'touchstart']) show.addEventListener(t, (e) => e.stopPropagation());
   // a PRESS inside the panel is the panel's; a RELEASE is never stopped (C5: the host's mouseup clears its ring)
   const swallow = (e) => e.stopPropagation();
   for (const t of ['pointerdown', 'mousedown', 'click', 'touchstart', 'wheel', 'contextmenu']) box.addEventListener(t, swallow);
@@ -285,12 +394,22 @@ export function createChatPanel({ log, onSend, canOpen = () => true, onOpen = nu
     root, input,
     open, close: closePanel, toggle: () => (log.open ? closePanel() : open()),
     isOpen: () => log.open,
+    /** CHAT-R2: the hidden state, for the host and for the pins. */
+    isHidden: () => hidden,
+    setHidden,
+    /** The roster's rows as DRAWN, for the pins - the panel's reading of net/roster.js, not a second copy of it. */
+    whoRows: () => whoRows.map((n) => n.textContent),
     /** Once a frame: hidden under a window that covers the HUD or an enhanced overlay (and closed, if open); repainted on the log's new version; the fade stepped. */
     render({ hidden = false, status: line = null } = {}) {
       if (!alive) return;
       if (hidden || overlay()) { if (log.open) closePanel(); if (root.style.display !== 'none') root.style.display = 'none'; return; }
       if (root.style.display !== '') root.style.display = '';
       if (log.version !== painted) paint();
+      // CHAT-R2/R1: the dataset the sheet reads, and the roster - both
+      // every frame, because neither rides the log's version: a peer
+      // can join without a line being said.
+      if (root.dataset.hidden !== (hidden ? '1' : '0')) root.dataset.hidden = hidden ? '1' : '0';
+      if (log.open) paintWho();
       paintPeek();
       const s = line ? String(line) : '';
       if (status.textContent !== s) status.textContent = s;
