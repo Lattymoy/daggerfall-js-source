@@ -456,6 +456,41 @@ export function validSharedFoe(sf) {
   return out;
 }
 
+/** SLAM1 (2026-09-16, Mac: Daggerfall's 30th, a streamer's server slam): THE MOST LISTENERS ONE POSE IS FANNED TO.
+ *
+ *  A pose reaches everyone a room holds within range, so a room's cost is N senders times N listeners - measured over
+ *  the real Room on the fake Durable Object, a crowd standing together costs 2.4k sends a second at 16 players,
+ *  22.6k at 48 and 91.2k at 96, and one object stops keeping up somewhere around two hundred. RANGE DOES NOT SAVE
+ *  IT: the cull is why a cell is cheap when the country is spread out, and an event is precisely everybody
+ *  converging on one spot, where every range test passes.
+ *
+ *  What saves it is that nobody can SEE two hundred people. A name stops at NAME_RANGE (60 scene units), at most
+ *  BODIES_MAX (8) peers ever stand in a Morrowind body, and the rest are billboards in a crowd. So a pose goes to
+ *  the NEAREST listeners and no further - the same bound, and the same reason, as `rosterFor`'s nearest-ROSTER_MAX
+ *  welcome. The cost stops being N squared and becomes N times this.
+ *
+ *  A listener past the bound simply hears nothing from that sender for a while: the silence law (AUDIT ONLINE
+ *  B3/B11/B14) HIDES a silent peer rather than removing it, so nobody is dropped from the room and anyone who walks
+ *  closer resumes at the next pose. */
+export const POSE_FAN_MAX = 32;
+
+/** The listeners one pose really goes to. `list` is whatever the caller holds, `poseOf` reads a listener's last
+ *  pose, and `from` is the sender's. Under the bound the list is returned AS IT IS (no sort, no copy) - the whole
+ *  point is to cost nothing in the rooms that do not need it. Over it, the nearest `max` win; a listener with no
+ *  pose yet sorts last, because a peer that has never said where it is cannot be near.
+ *  The ordering is Euclidean in the POSE'S OWN FRAME, which is a cell's world units or a place's scene units - it
+ *  never leaves one room, so it never has to agree across the two. */
+export function nearestFan(list, from, poseOf, max = POSE_FAN_MAX) {
+  if (!Array.isArray(list) || list.length <= max) return list;
+  const d2 = (x) => {
+    const p = poseOf(x);
+    if (!p || !from || !finite(p.x) || !finite(p.z)) return Infinity;
+    const dx = p.x - from.x, dz = p.z - from.z;
+    return dx * dx + dz * dz;
+  };
+  return list.map((x) => [d2(x), x]).sort((a, b) => a[0] - b[0]).slice(0, max).map(([, x]) => x);
+}
+
 /** A pose the room will relay, or null. */
 export function validPose(p) {
   if (!p || typeof p !== 'object') return null;

@@ -5064,3 +5064,63 @@ is not yet a pin; no live relay and no second player were involved.**
   two differ by ~1e-6 at 1e6 rad because a loop accumulates rounding.
   The one-step answer is the correct one; the commit's "the same answer
   for a small angle" is true to about 1e-14.
+
+
+## SLAM1 - TWO HUNDRED PEOPLE IN ONE SQUARE (2026-09-16, Mac)
+
+*"This Sunday is Daggerfall's 30th anniversary. A streamer is going to
+host a 30th celebration server slam smack dab in DFE."*
+
+A pose reached everyone in the room within range, so one Durable
+Object's cost was N senders times N listeners. MEASURED, over the real
+`Room` on the fake DO, a crowd standing together:
+
+| players in one room | pose sends/s | DO cpu ms per second |
+|---|---|---|
+| 16 | 2,400 | 15 |
+| 48 | 22,560 | 71 |
+| 96 | 91,200 | 223 |
+| 200 | 398,000 (extrapolated) | over budget |
+
+Clean quadratic, and somewhere around two hundred one object stops
+keeping up. That is not a number anybody had ever put to this arc - the
+relay has never been driven past a handful of sockets.
+
+**The range cull does not save it, and finding that out killed the first
+fix proposed for this.** The cull is why a cell is cheap when the
+country is spread out. An event is everybody converging on ONE SPOT,
+where every range test passes - and a cell measured identically to a
+town at every population. Range-culling the place rooms would have cost
+a slice and bought nothing for the one case it was bought for.
+
+What saves it is that **nobody can see two hundred people.** A name
+stops at `NAME_RANGE` (60 scene units), at most `BODIES_MAX` (8) peers
+ever stand in a Morrowind body, and the rest are billboards in a crowd.
+So a pose goes to the nearest `POSE_FAN_MAX` listeners and no further -
+the same bound, and the same reason, as `rosterFor`'s
+nearest-`ROSTER_MAX` welcome. The cost stops being N squared.
+
+At 200 in one room, measured after: **64,000 sends a second instead of
+398,000, and 43% of one core instead of over budget.**
+
+A listener past the bound is told nothing for a while; it is **not
+dropped**. The silence law (AUDIT ONLINE B3/B11/B14) HIDES a quiet peer
+rather than removing it, so nobody leaves the room over standing at the
+back, and anyone who walks closer resumes at the next pose.
+
+`nearestFan` returns its list UNTOUCHED when it is under the bound - no
+sort, no copy - because every ordinary room in the Bay would otherwise
+pay for an event it is not having.
+
+**Pinned** in `test/slam1.test.js` (6), driven over the real relay at the
+room's own admission rate: one pose reaches exactly `POSE_FAN_MAX`
+listeners and they are the contiguous NEAREST run (a first-N answer is
+wrong by construction in the fixture), a cell is bounded like a town,
+and nobody past the bound is closed or said to have left. **10
+mutations, 10 dead.**
+
+**NOT SEEN ON THE REAL RELAY.** Every number here is this container's
+CPU against the fake Durable Object. A Workers isolate is not this
+machine; treat the SHAPE (quadratic, then linear) as the finding and the
+absolute milliseconds as optimistic. `RELAY_VERSION` is `world67`, and the
+relay must be deployed for any of this to be true in production.

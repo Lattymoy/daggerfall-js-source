@@ -105,11 +105,11 @@
 // WORLD5 (2026-09-13): THE SHARED CLOCK is a function of wall time (relay.js
 // sharedClassicMinutes) and needs no frame; the welcome carries the relay's
 // own `now` so a client corrects for its machine's clock. Nothing else here.
-import { roomOf, parseClient, inRange, poseGate, chatGate, tokenGate, rosterFor, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX } from './relay.js';
+import { roomOf, parseClient, inRange, poseGate, chatGate, tokenGate, rosterFor, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, nearestFan } from './relay.js';
 
 /** AUDIT WORLD34 D4: the relay names itself in /health - the deploy is by hand (`npx wrangler deploy`), nothing in
  *  CI does it, and until now nothing said which relay was live. Bump it with every relay-changing slice. */
-export const RELAY_VERSION = 'world66';   // AUDIT WORLD6b-iii(e): the ask carries the room's budget, keeps the looks, answers a pose within range alone, strikes nothing that left
+export const RELAY_VERSION = 'world67';   // SLAM1: the pose fan is bounded to the nearest POSE_FAN_MAX - a room's cost stops being N squared
 
 const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*' } });
 
@@ -540,10 +540,17 @@ export class Room {
       if (m.t === 'ping') { this._send(ws, '{"t":"pong"}'); return; }   // a ping that reached the object (the runtime answers the exact one in its sleep)
       if (chat) return;   // a channel is no place: a pose there is kept by no one and reaches no one
       const out = JSON.stringify({ t: 'pose', id: a.id, p: m.p });
+      // SLAM1: the fan is BOUNDED to the nearest POSE_FAN_MAX. A room's cost was N senders times N listeners, and
+      // the range cull does not help the one case that matters - an event, where everybody stands in one place and
+      // every range test passes. Measured on this object: 91k sends a second at 96 players, and past about two
+      // hundred it cannot keep up. Nobody can see that many anyway (net/remotePlayers.js NAME_RANGE, peerBodies
+      // BODIES_MAX), so the nearest win and the rest hear silence - which HIDES a peer, never drops it.
+      const heard = [];
       for (const [other, b] of [...this._all()]) {
         if (other === ws || !b.id) continue;
-        if (inRange(a.key ?? '', m.p, b.pose)) this._send(other, out);
+        if (inRange(a.key ?? '', m.p, b.pose)) heard.push([other, b]);
       }
+      for (const [other] of nearestFan(heard, m.p, (e) => e[1].pose)) this._send(other, out);
       return;
     }
     if (m.t === 'chat') {
