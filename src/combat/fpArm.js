@@ -2582,6 +2582,40 @@ export function createFpArm() {
     }
   }
 
+  /**
+   * MAC-S1 (Mac: "Shields sometimes do not show up in the morrowind
+   * paperdoll"): THE COALESCED TABLE AND HAND GO THE MOMENT THE RIG IS
+   * FREE, WHICHEVER PATH FREED IT - the one home for the flush, so a
+   * third door that takes `busy` cannot forget half of it.
+   *
+   * PX25 and PX26 F3 each gave their own setter the "a change mid-build
+   * is not dropped" law and each wired the flush into build()'s finally
+   * alone. But build() is not the only thing that holds `busy`:
+   * setWeapon's incremental swap takes it too (it reopens the archives
+   * and fetches the weapon's NIFs), and its finally cleared the flag and
+   * notified the listeners WITHOUT ever looking at what had queued up
+   * behind it. So a worn change that landed while a weapon swap was in
+   * flight was stored in pendingWorn and never applied - Home.md's ASYNC
+   * NEVER DROPS, the same defect refreshPaperDoll's re-entrancy guard
+   * had.
+   *
+   * A SHIELD is what a player notices, because a shield is the worn
+   * piece that travels with a hand: equipping one bumps a held
+   * two-hander (systems/equip.js's `a shield bumps a held 2H`,
+   * ItemEquipTable.EquipItem), and the pack hands the rig the table and
+   * the hand on every action - so "equip a weapon, then equip a shield"
+   * is two actions with an archive fetch running between them, and the
+   * shield's table is the one that lands in the gap. Outside a window
+   * weaponRig's frame tick re-reads the equip table every frame and the
+   * loss heals itself unseen; while the inventory is up the frame does
+   * not reach that tick (PX25's own note), which is exactly where the
+   * paperdoll is being looked at. Hence "sometimes".
+   */
+  function flushPending() {
+    if (pendingWorn) { const p = pendingWorn; pendingWorn = null; api.setWorn(p); }
+    if (pendingWeapon) { const w = pendingWeapon; pendingWeapon = null; api.setWeapon(w.item, { hasAmmo: w.hasAmmo }); }
+  }
+
   const api = {
     attach(r, cam) { renderer = r || null; camera = cam || null; },
     active,
@@ -2638,8 +2672,7 @@ export function createFpArm() {
         // lands would show the old clothes on the new equip table.
         for (const fn of listeners) { try { fn(); } catch { /* a dead panel is not the rig's problem */ } }
         // PX25/PX26: the table and the hand that arrived mid-build go now.
-        if (pendingWorn) { const p = pendingWorn; pendingWorn = null; this.setWorn(p); }
-        if (pendingWeapon) { const w = pendingWeapon; pendingWeapon = null; this.setWeapon(w.item, { hasAmmo: w.hasAmmo }); }
+        flushPending();
       }
     },
 
@@ -2914,6 +2947,12 @@ export function createFpArm() {
           // THREW still repaints - a panel showing a weapon the rig
           // failed to bind is the state most worth redrawing.
           for (const fn of listeners) { try { fn(); } catch { /* see build() */ } }
+          // MAC-S1: and the table that queued behind this swap goes now.
+          // build()'s finally is not the only exit from `busy`, and this
+          // one used to drop what it was holding - a shield equipped
+          // while the last weapon's meshes were still loading never
+          // reached the body.
+          flushPending();
         }
       })();
     },
