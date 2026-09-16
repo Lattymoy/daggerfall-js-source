@@ -147,6 +147,8 @@ export const MOD_CURATED = Object.freeze({
   // stays in the mod's own pane.
   'eye-of-the-beholder': Object.freeze(['Camera.LongitudinalDistance', 'Camera.FrontalPlaneOffset',
     'Camera.Speed', 'Animation.BillboardScale']),
+  // IF1: the clip quality and the two volumes are what a player reaches for.
+  'immersive-footsteps': Object.freeze(['AudioQualitySettings.SoundClipQuality', 'FootstepSettings.FootstepVolumeMulti', 'ArmorSwaySettings.ArmorSwayVolumeMulti']),
 });
 
 /** The `Modules.` keys a vendor ships, in the mod's own order - the
@@ -448,6 +450,10 @@ export const FEATURES = Object.freeze([
   // turning the row on does not move the camera until the player
   // scrolls.
   modFeature('eye-of-the-beholder', 'Takes effect at once. Scroll out to leave first person.', 'world'),
+  // IF1 (2026-09-16): IMMERSIVE FOOTSTEPS - the component reads its
+  // switches every frame; the stride is the mod's the moment its clips are
+  // decoded (a fetch here, where the mod's LoadAudio is synchronous).
+  modFeature('immersive-footsteps', 'Takes effect at once.', 'world'),
   // FT10 (2026-09-14): DFU'S OWN DUNGEON ENHANCEMENTS - three of the
   // Enhancements section's switches, each read by the port at the point
   // of use as DFU reads it. DFU Classic: Daggerfall Unity's departures

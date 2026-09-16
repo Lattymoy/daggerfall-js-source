@@ -40,6 +40,7 @@ import { mountEnhancedChunk } from './enhancedChunk.js';   // MENU1: the one laz
 import { registerOverlay } from './enhancedOverlays.js';   // PX28: Tab puts it away
 import { NativeInventoryWindow, inventoryArtLoaded } from './nativeInventory.js';
 import { closeSession } from '../systems/inventorySession.js';
+import { immersiveFootsteps } from '../systems/immersiveFootsteps.js';   // AUDIT-IF F5: the enhanced skin's close refreshes the mod's armour slots too
 
 export { inventoryArtLoaded };
 
@@ -109,6 +110,11 @@ function enhancedInventoryOverlay(deps) {
     // AUDIT 17e F28's law is the second half of that - a host that
     // handed onClose is owed the call whatever skin drew the window.
     closeSession(deps, { dropped });
+    // AUDIT-IF F5: and Immersive Footsteps' inventory-close refresh is owed the same way. The first draft hooked
+    // NativeInventoryWindow._closeSilently alone, and this skin - the DEFAULT one - never passes through it, so a
+    // player in enhanced mode changed boots and walked five seconds in the old pair. (Not in closeSession itself:
+    // systems/inventorySession.js is upstream of transport.js, which the component imports - a cycle.)
+    immersiveFootsteps.onInventoryClose(deps.entity ?? null);
   };
   unregister = registerOverlay(close);
 
