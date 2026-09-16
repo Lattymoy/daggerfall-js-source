@@ -13538,3 +13538,35 @@ inverted onto the normal pack, and the wagon removed with them.
 session really mounts as the loot frame alone with an empty bar, and a
 pack session that drops something on the ground really draws `Gold` on
 its ground frame and no `Pack`.
+
+## MWA2 - THE MORROWIND ASSETS TOGGLE (2026-09-16)
+
+Mac: "So now I want to add a toggle for the morrowind asset pack."
+
+There was one already, wearing two buttons. MWA1's `mwArms` pref was
+the one gate every consumer of the pack reads: `autoBuildArms` at
+every door a made character arrives through (`combat/weaponRig.js`),
+the peer bodies online (`scenes/world.js`), and - through
+`fpArm.canThirdPerson()`, which `unload()` empties - the view seam,
+which hands third person to Eye Of The Beholder wherever the
+Morrowind body is not there (`player/mwView.js`). What the card had
+was a "Build first-person arms" / "Unload arms" pair that flipped it
+as a side effect, so a player looking for a switch found two actions.
+
+**One On/Off row now** - "Use Morrowind assets" on the Morrowind
+assets card, drawn once archives are attached, over the same pref
+through `prefRow`. ON builds the body off the attached archives (the
+seconds-long build the old button ran, with TR2's one-home opts); OFF
+unloads it and the classic sprites - and the sprite body for third
+person - come straight back. The archives stay attached either way;
+the Attach, mesh viewer and data inspector doors are untouched.
+
+MWA1's law that the pref is on only when the build STOOD is kept:
+`prefRow` writes the pref before it asks, so a refused build turns the
+row back off, with the refusal's reason on the card's stats as before.
+The default stays off - attaching data is not consenting to the
+departure; the row is.
+
+Pin: `test/mwarms_fps.test.js` (one added): the row on the card behind
+the data gate, the two arms of the toggle, the buttons gone, and the
+three consumers still reading the one pref.

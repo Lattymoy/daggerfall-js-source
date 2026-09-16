@@ -1417,6 +1417,54 @@ function morrowindCard() {
         : `refused - ${armState.third.stage}: ${armState.third.error}`)
       : '-'],
   ]));
+  // MWA2 (2026-09-16, Mac: "I want to add a toggle for the morrowind
+  // asset pack"): ONE On/Off ROW over MWA1's own switch, in place of the
+  // Build / Unload pair. The `mwArms` pref was already the one gate every
+  // consumer reads - autoBuildArms at every door (weaponRig.js), the
+  // peer bodies online (world.js), and through fpArm.canThirdPerson()
+  // the view seam, which hands third person to Eye Of The Beholder
+  // where the Morrowind body is not there. So the row is the pack's
+  // toggle, whole: ON builds the body off the attached archives, OFF
+  // unloads it and the classic sprites (and the sprite body) come
+  // straight back; the archives stay attached either way.
+  //
+  // prefRow writes the pref and THEN asks; MWA1's law that the pref is
+  // on only when the build STOOD is kept by the refusal arm below.
+  const toggleMorrowind = async (on) => {
+    if (!on) { fpArm.unload(); setPref('mwArms', false); render(); return; }   // MWA1: and stay unloaded across launches
+    // Seconds long and synchronous - the BSA index, the whole ESM
+    // walk and every mesh parse, on the main thread. It happens with
+    // the game paused, once, and the card says so before you press
+    // rather than after the tab stops responding.
+    //
+    // TR2: THE OPTS COME FROM THE ONE HOME (weaponRig's
+    // armBuildOptsOf) - rule 6 picks the skeleton by SEX, rules
+    // 1-3 the body by RACE, the face by the wizard's own
+    // faceIndex, the worn set off the classic equip table, the
+    // weapon off the right hand, ammo off the quiver. The inline
+    // copy this replaces carried `female: !!playerEntity.gender`,
+    // which is TRUE for the string 'male' - every build asked for
+    // the female skeleton; the one home tests the string.
+    // AUDIT 65 XL-6: the boot door only COUNTED, so the set's print
+    // is still null here - and fpArm keys its kept face verdict on
+    // that print. The surface about to spend seconds measures the
+    // set first (the sizes pass, off plain gets), which is what
+    // makes the verdict a lookup instead of a dozen mesh parses.
+    const ds = await import('../scenes/dataSource.js');
+    await ds.registerMorrowindData();
+    const { buildArmsFor } = await import('../combat/weaponRig.js');
+    const res = await buildArmsFor(playerEntity);
+    if (res?.ok) setPref('mwArms', true);   // MWA1: the arms come back on the next launch by themselves
+    else setPref('mwArms', false);          // a refused build leaves the switch OFF, with its reason on the card
+    render();
+  };
+  if (count) {
+    mw.append(prefRow('mwArms', 'Use Morrowind assets',
+      'The first- and third-person body, and other players\' bodies online, drawn from your attached archives. '
+      + 'Off: the classic weapon sprites, and Eye Of The Beholder for third person. Turning it on builds the body '
+      + '(a few seconds, once); the archives stay attached either way.',
+      { onChange: (on) => { toggleMorrowind(on); }, home: true }));
+  }
   const armActions = [
     { label: 'Attach data', primary: !count, onClick: async () => {
       const ds = await import('../scenes/dataSource.js');
@@ -1424,36 +1472,6 @@ function morrowindCard() {
       render();
     } },
   ];
-  if (count) {
-    armActions.push(armState.active
-      ? { label: 'Unload arms', onClick: () => { fpArm.unload(); setPref('mwArms', false); render(); } }   // MWA1: and stay unloaded across launches
-      : { label: 'Build first-person arms', primary: true, onClick: async () => {
-        // Seconds long and synchronous - the BSA index, the whole ESM
-        // walk and every mesh parse, on the main thread. It happens with
-        // the game paused, once, and the card says so before you press
-        // rather than after the tab stops responding.
-        //
-        // TR2: THE OPTS COME FROM THE ONE HOME (weaponRig's
-        // armBuildOptsOf) - rule 6 picks the skeleton by SEX, rules
-        // 1-3 the body by RACE, the face by the wizard's own
-        // faceIndex, the worn set off the classic equip table, the
-        // weapon off the right hand, ammo off the quiver. The inline
-        // copy this replaces carried `female: !!playerEntity.gender`,
-        // which is TRUE for the string 'male' - every build asked for
-        // the female skeleton; the one home tests the string.
-        // AUDIT 65 XL-6: the boot door only COUNTED, so the set's print
-        // is still null here - and fpArm keys its kept face verdict on
-        // that print. The surface about to spend seconds measures the
-        // set first (the sizes pass, off plain gets), which is what
-        // makes the verdict a lookup instead of a dozen mesh parses.
-        const ds = await import('../scenes/dataSource.js');
-        await ds.registerMorrowindData();
-        const { buildArmsFor } = await import('../combat/weaponRig.js');
-        const res = await buildArmsFor(playerEntity);
-        if (res?.ok) setPref('mwArms', true);   // MWA1: the arms come back on the next launch by themselves
-        render();
-      } });
-  }
   // IG6b: the one Morrowind-feel knob the owner asked for. The label
   // names the ACTION - the first cut named the mode you were IN, which
   // reads as "click to enable", and one natural click switched the
