@@ -6880,7 +6880,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     const link = chatLinks.get(chatLog.active);
     chatPanel.render({
-      hidden: townTalk.hudCovered || (modes?.hudCovered ?? false) || gamePaused(),   // a window over the HUD covers the chat too, and closes it
+      // AUDIT-CHATR F1: `covered` is the HOST's word - a window over the
+      // HUD - and never the player's `hidden` (the Hide button). While
+      // the two shared a name the panel's frame wrote this one into the
+      // player's slot and undid the button on the next tick.
+      covered: townTalk.hudCovered || (modes?.hudCovered ?? false) || gamePaused(),   // a window over the HUD covers the chat too, and closes it
       status: link?.statusLine('chat') ?? null,   // connecting, reconnecting, refused - the session's own line (D12; AUDIT CHAT B5)
     });
   };

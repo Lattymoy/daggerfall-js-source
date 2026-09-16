@@ -77,11 +77,17 @@ const TAILS = Object.freeze(['s', 'es', 'z', 'er', 'ers', 'ed', 'ing', 'y', 'ie'
 
 /**
  * Stage 1. Case folded, accents stripped, leet mapped, non-letters
- * dropped, runs of one letter collapsed to a single.
+ * dropped.
  *
- * The accent strip matters both ways: it stops `Çüm` sliding past, and
- * it is why the ORDERING in roster.js sorts accents with their base
- * letter - the same reading of "what letter is this really".
+ * The accent fold is what stops `Çüm` sliding past the list, and the
+ * ENTRY pane is the only place it can matter: by the time a hello
+ * reaches the relay, `sanitizeName` has already dropped everything
+ * outside printable ASCII. AUDIT-CHATR struck a second clause from here
+ * claiming this is also why roster.js sorts accents with their base
+ * letter - roster.js never sees one, for the same reason.
+ *
+ * (The run collapse is NOT here. It is its own reading - see
+ * `collapseRuns` for the bug that taught that.)
  */
 export function normaliseName(name) {
   // NFKD splits `Ç` into `C` + a combining cedilla and folds the
@@ -193,9 +199,15 @@ export function standsAlone(flat, word) {
  * player with a real name knows the filter is wrong rather than
  * guessing at it.
  *
- * A name is also refused for having no letters at all: `___` and
- * `1234` are not names, and they are how a player gets past a list
- * without getting past a reader.
+ * A name is also refused for having no letters at all: `___` and `---`
+ * come through stage 1 as nothing, and that is how a player gets past a
+ * list without getting past a reader.
+ *
+ * AUDIT-CHATR F8: this used to name `1234` beside them and it is not
+ * true - the leet map reads it as `iea`, a name-shaped thing with
+ * letters in it, so it passes. That is the right BEHAVIOUR (it is a
+ * daft name, not a rude one) and it was the wrong CLAIM, which is worse
+ * than either: the next reader would have taken it for a pin's law.
  */
 export function checkName(name) {
   const raw = String(name ?? '').trim();
@@ -230,3 +242,37 @@ export function checkName(name) {
 
 /** The one-word answer, for callers that only need the gate. */
 export const nameAllowed = (name) => checkName(name).ok;
+
+/**
+ * THE ENTRY PANE'S VERDICT, which is not quite `checkName`'s - and
+ * AUDIT-CHATR F2/F3 are the two bugs that came of not having it.
+ *
+ * ONE SUBJECT. The name a player will wear is the first non-empty rung
+ * of a LADDER the host walks - the field, then the chosen character's
+ * own name (scenes/world.js's onlineStart). The pane had that ladder
+ * written twice: once for the line it paints, with `saves[0]`, and once
+ * inside each save card's press, with THAT card's save. A player whose
+ * second character was called Cum saw a clean pane and then a button
+ * that did nothing at all, because the refusal repainted a verdict
+ * about the FIRST save and found it fine. One function, given the save
+ * it is about, cannot disagree with itself.
+ *
+ * EMPTY IS NOT A REFUSAL. `checkName('')` answers `empty`, which is the
+ * right answer to "is this a name?" and the wrong one here: the field
+ * is optional, the copy beside it promises "an empty name shows as
+ * Traveller", and `sanitizeName` really does hand an empty name the
+ * fallback. A pane that refused it would refuse what the relay allows -
+ * and it did, on a browser with no saves yet, painting a red "A name
+ * needs some letters in it" under a field nobody had touched.
+ *
+ * A name that is TYPED and comes to nothing (`___`, `---`) is still
+ * refused, and deliberately: the player put something there and stage 1
+ * read no letters in it, so saying so beats silently renaming them.
+ *
+ * @param {...(string|null|undefined)} candidates the ladder, in order
+ */
+export function entryVerdict(...candidates) {
+  const name = candidates.map((c) => String(c ?? '').trim()).find((c) => c) ?? '';
+  if (!name) return { ok: true, kind: 'fallback', word: '', reason: '' };
+  return checkName(name);
+}

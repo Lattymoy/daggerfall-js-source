@@ -569,7 +569,7 @@ test('CHAT1 / AUDIT CHAT: the panel - built once over the document with the shee
   assert.equal(rows[0], row2, 'and the row that stayed is the same node'); assert.equal(row1.removed, true);
   cpanel.destroy();
   // a covering window, an open overlay
-  panel.render({ hidden: true, status: 'chat: connecting' });
+  panel.render({ covered: true, status: 'chat: connecting' });   // AUDIT-CHATR F1: the HOST's word, renamed off the player's `hidden`
   assert.equal(log.open, false, 'a window over the HUD closes the chat'); assert.equal(root.style.display, 'none', 'and hides it');
   panel.render({ status: 'chat: connecting' });
   assert.equal(root.style.display, ''); assert.equal(one(root, 'dfchat-status').textContent, 'chat: connecting', 'the session\'s state, said');
@@ -617,7 +617,20 @@ test('CHAT1 / AUDIT CHAT: the host by source - world.js starts the chat with the
   assert.match(w, /onOpen: \(\) => \{ setCursorActive\(false\); releaseLook\(\); \},/, 'AUDIT CHAT C2: the pointer freed on open; PL3: the opening Enter reclaimed from the toggle');
   assert.match(w, /onClose: \(\) => \{ if \(!gamePaused\(\)\) requestLook\(canvas\); \},/, 'and taken back inside the closing gesture');
   assert.match(w, /for \(const \[tabId, link\] of chatLinks\) \{\s*link\.rejoin\(chatLog\.tab\(tabId\)\.room, CHAT_REJOIN_MS\);[^\n]*\n\s*link\.tick\(\);/, 'every channel rejoined when it must be, and ticked');
-  assert.match(w, /chatPanel\.render\(\{\s*hidden: townTalk\.hudCovered \|\| \(modes\?\.hudCovered \?\? false\) \|\| gamePaused\(\),/, 'hidden under a window');
+  // AUDIT-CHATR F1: the option is `covered`, not `hidden`. The two words
+  // are different things - the host's window and the player's Hide
+  // button - and while they shared a name the frame wrote one into the
+  // other. This pin sees the CALL SITE only; what the callee does with
+  // the name is pinned by the frame-driven pin in
+  // chatroster_namefilter.test.js, because a source match here could not
+  // have caught the shadow and did not.
+  // ...and matched against the source with its COMMENTS STRIPPED, for
+  // the fourth time in this port: the note explaining why the option is
+  // called `covered` sits between the brace and the key, and a `\s*`
+  // cannot step over prose. A pin that reddens on its own explanation
+  // teaches the next reader to delete the explanation.
+  const wCode = w.replace(/^\s*\/\/.*$/gm, '');
+  assert.match(wCode, /chatPanel\.render\(\{\s*covered: townTalk\.hudCovered \|\| \(modes\?\.hudCovered \?\? false\) \|\| gamePaused\(\),/, 'covered under a window');
   assert.match(w, /status: link\?\.statusLine\('chat'\) \?\? null,/, 'the session\'s own line, labelled (B5)');
   assert.doesNotMatch(w, /chat: \$\{link\.error/, 'and no remake of it');
   assert.match(w, /const onlineFrame = \(now, dt\) => \{\s*chatFrame\(\);(?:[^\n]*\n)(?:\s*\/\/[^\n]*\n)*\s*if \(townTalk\.overlay instanceof DeathScreen \|\| modes\?\.deathUp\?\.\(\)\)/, 'the chat frame runs before the dead return: the channels keep their heartbeat and reconnect while the death screen is up');

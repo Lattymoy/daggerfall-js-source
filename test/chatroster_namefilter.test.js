@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { rosterRows, rosterTitle, ROSTER_ROWS_MAX } from '../src/net/roster.js';
 import {
   checkName, nameAllowed, normaliseName, collapseRuns, standsAlone,
-  listIsNormalised, CRUDE, SLURS, IMPERSONATION,
+  listIsNormalised, entryVerdict, CRUDE, SLURS, IMPERSONATION,
 } from '../src/net/nameFilter.js';
 import { sanitizeName, FALLBACK_NAME, NAME_MAX } from '../src/net/wire.js';
 import { tagOf } from '../src/net/chat.js';
@@ -312,12 +312,87 @@ test('NAME-F2: the filter is in the RELAY’s graph, and the entry pane is the o
   // and the entry side refuses rather than warning beside a button that
   // works anyway
   const menu = rd('src/ui/enhancedMenu.js');
-  assert.match(menu, /import \{ checkName \} from '\.\.\/net\/nameFilter\.js';/);
-  assert.match(menu, /if \(!checkName\(\(getPref\('onlineName'\) \|\| save\.name \|\| ''\)\.trim\(\)\)\.ok\) \{[^}]*return; \}/,
+  assert.match(menu, /import \{ entryVerdict \} from '\.\.\/net\/nameFilter\.js';/);
+  assert.match(menu, /if \(!nameVerdict\(save\.name\)\.ok\) \{[^}]*return; \}/,
     'Play online must REFUSE, not warn');
-  // ...and it checks the EFFECTIVE name, not the field: an empty field
-  // falls through to the character's own name
-  assert.match(menu, /getPref\('onlineName'\) \|\| saves\[0\]\?\.name/);
+
+  // AUDIT-CHATR F2: ONE SUBJECT. The painted line and the pressed
+  // button must ask about the SAME save, and the only way to be sure of
+  // that is that there is one function and it takes the save. The pane
+  // walked the ladder twice - `saves[0]` for the paint, the card's own
+  // save for the press - so a refused second character got a dead
+  // button and a blank reason.
+  const pane = menu.slice(menu.indexOf('function paneOnline('), menu.indexOf('function paneLoad('));
+  const code = pane.replace(/^\s*\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');   // its own prose is not its wiring
+  assert.equal((code.match(/entryVerdict\(/g) ?? []).length, 1, 'the ladder is walked in ONE place');
+  assert.match(code, /const nameVerdict = \(saveName\) => entryVerdict\(getPref\('onlineName'\), saveName\);/);
+  assert.match(code, /paintName\(save\.name\)/, 'the refusal repaints about the save it refused');
+  assert.doesNotMatch(code, /saves\[0\]\?\.name \|\||\|\| saves\[0\]\?\.name/,
+    'saves[0] is a PLACEHOLDER here and never a verdict\u2019s subject');
+});
+
+test('AUDIT-CHATR F6: the Online pane\u2019s copy says what sanitizeName actually does', () => {
+  // A promise to a player is a claim about the code, and this one was
+  // false: "24 plain letters and digits; anything else is dropped".
+  // DRIVEN, not read - the line is checked against the function it
+  // describes rather than against a reading of it.
+  assert.equal(sanitizeName('Bob Smith'), 'Bob Smith', 'a SPACE survives - the old line said it would not');
+  assert.equal(sanitizeName('Bob!!!'), 'Bob!!!', 'and so does punctuation');
+  assert.equal(sanitizeName('\u00c4sa'), 'sa', 'what really goes is everything outside printable ASCII');
+  assert.equal(sanitizeName('x'.repeat(NAME_MAX + 9)).length, NAME_MAX, 'and the 24 is real');
+
+  const menu = rd('src/ui/enhancedMenu.js');
+  const copy = menu.slice(menu.indexOf("c.append(el('p', 'meta', 'Up to "));
+  const line = copy.slice(0, copy.indexOf('\n'));
+  assert.match(line, /Up to 24 characters; anything outside plain ASCII is dropped, and an empty name shows as Traveller\./);
+  assert.doesNotMatch(line, /letters and digits/, 'the false promise is gone');
+});
+
+test('AUDIT-CHATR F2/F3: one ladder, one subject - and an empty ladder is Traveller, not a refusal', () => {
+  // F2, the bug this function exists to make impossible. Two saves; the
+  // field is empty, so each card's press falls through to ITS OWN
+  // character's name. A verdict about the first save says nothing about
+  // the second.
+  assert.equal(entryVerdict('', 'Alfred').ok, true);
+  assert.equal(entryVerdict('', 'Cum').ok, false, 'the SECOND save is judged on its own name');
+  assert.equal(entryVerdict('', 'Cum').reason.length > 0, true, 'and the refusal carries a reason to paint');
+  // the field WINS the ladder wherever it has something, for every save
+  assert.equal(entryVerdict('Medora', 'Cum').ok, true, 'a clean field covers a rude character name');
+  assert.equal(entryVerdict('Cum', 'Alfred').ok, false, 'and a rude field is not saved by a clean character');
+  assert.equal(entryVerdict('  Alfred  ', 'Cum').ok, true, 'the rung is TRIMMED before it counts as filled');
+  // A FIELD OF SPACES IS NOT A RUNG. This is the trim's real work, and
+  // the first cut of this pin could not see it: without the trim the
+  // spaces count as a filled field, and `checkName` - which trims for
+  // itself - answers `empty`, so the pane refuses a player for what is
+  // still an untouched field. Both readings answer `ok: false` here, so
+  // the pin has to ask WHICH refusal it got.
+  assert.equal(entryVerdict('   ', 'Alfred').ok, true, 'spaces fall through to the character\u2019s own name');
+  assert.equal(entryVerdict('   ', 'Cum').word, 'cum', 'and the refusal that remains is the CHARACTER\u2019s, not the whitespace\u2019s');
+
+  // F3, the false alarm. An EMPTY ladder is not a refusal: the copy
+  // beside the field promises "an empty name shows as Traveller" and
+  // sanitizeName really does hand it the fallback, so a pane that
+  // refused it would refuse what the relay allows - and it did, on a
+  // browser with no saves at all.
+  assert.equal(entryVerdict('', '').ok, true);
+  assert.equal(entryVerdict(undefined, undefined).ok, true, 'no field and no saves: nothing to complain about yet');
+  assert.equal(entryVerdict().reason, '', 'and nothing painted under the field');
+  assert.equal(sanitizeName(''), FALLBACK_NAME, 'which is exactly what the relay would have done with it');
+  assert.equal(checkName('').ok, false, 'checkName still answers `empty` - that is the right answer to ITS question');
+  assert.equal(checkName('').kind, 'empty');
+
+  // ...but a name that was TYPED and came to nothing is still refused,
+  // because silently renaming someone who tried is worse than saying so.
+  assert.equal(entryVerdict('___', 'Alfred').ok, false, 'typed, and no letters in it');
+  assert.equal(entryVerdict('___', 'Alfred').kind, 'empty');
+  // AUDIT-CHATR F8: and `1234` is NOT one of those, though the comment
+  // above checkName said it was for as long as the file existed. The
+  // leet map reads it as `iea` - letters, so it passes. Driven, because
+  // a claim about the filter is worth exactly what running it says.
+  assert.equal(normaliseName('1234'), 'iea');
+  assert.equal(entryVerdict('1234', 'Alfred').ok, true, 'a daft name is not a rude one');
+  assert.equal(normaliseName('---'), '', 'what really comes to nothing is the separators');
+  assert.equal(entryVerdict('---', 'Alfred').kind, 'empty');
 });
 
 // ═══ CHAT-R2: THE PANEL, DRIVEN ═══════════════════════════════════
@@ -453,6 +528,32 @@ test('CHAT-R2: HIDE puts everything away, keeps the log running, and the open ke
   one(root, 'dfchat-show').click();
   assert.equal(panel.isHidden(), false);
   assert.equal(panel.isOpen(), true, 'showing opens it, because that is what the press asked for');
+});
+
+test('AUDIT-CHATR F1: the frame does not UNDO the hide - the host\u2019s covered word is not the player\u2019s', async () => {
+  // THE F-SING LESSON AGAIN, and the sharpest cut of it yet: a pin on
+  // the unit is not a pin on the wiring. Every CHAT-R2 pin above drives
+  // `setHidden` and reads `paint`'s dataset - and `render` is what
+  // actually runs, sixty times a second, with the HOST's word.
+  //
+  // Those two words are DIFFERENT. `covered` is "a window is over the
+  // HUD right now"; `hidden` is "the player pressed Hide". The frame
+  // must not write the first into the second's dataset, or the button
+  // is undone before the player's finger is off it.
+  const { panel, root } = await panelFor(() => ({ id: 'me', name: 'Me', peers: new Map() }));
+  one(root, 'dfchat-hide').click();
+  assert.equal(root.dataset.hidden, '1');
+
+  panel.render({ covered: false, status: null });   // an ordinary frame: no window over the HUD
+  assert.equal(panel.isHidden(), true, 'a frame does not un-hide the panel');
+  assert.equal(root.dataset.hidden, '1', 'and the sheet is still told - this is the line the CSS reads');
+  assert.equal(root.style.display, '', 'the panel is still IN the page: hidden is a sheet state, not a teardown');
+
+  // and the host's own word still works, on its own axis
+  panel.render({ covered: true, status: null });
+  assert.equal(root.style.display, 'none', 'a window over the HUD takes the whole panel away');
+  assert.equal(panel.isHidden(), true, 'without touching what the player asked for');
+  panel.setHidden(false);
 });
 
 test('CHAT-R2: hidden is REMEMBERED, and the CSS hides every drawn part rather than the root', async () => {

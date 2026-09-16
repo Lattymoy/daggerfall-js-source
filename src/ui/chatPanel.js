@@ -60,7 +60,7 @@ import { overlayOpen } from './enhancedOverlays.js';
 import { isTouchDevice } from './touch.js';
 import { CHAT_MAX } from '../net/wire.js';
 import { tagOf } from '../net/chat.js';
-import { rosterRows, rosterTitle, ROSTER_ROWS_MAX } from '../net/roster.js';   // CHAT-R1: who is online, in order
+import { rosterRows, rosterTitle } from '../net/roster.js';   // CHAT-R1: who is online, in order (the cap is the model's own - AUDIT-CHATR F4: this file imported it and never used it, and lint could not see that: no-unused-vars is on for server/src and not for src)
 import { getPref, setPref } from '../systems/uiPrefs.js';   // CHAT-R2: the hidden state outlives the session
 
 /** The action whose key opens the chat: DFU's own cursor key (Enter by default), since opening frees the cursor. */
@@ -397,12 +397,27 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
     /** CHAT-R2: the hidden state, for the host and for the pins. */
     isHidden: () => hidden,
     setHidden,
-    /** The roster's rows as DRAWN, for the pins - the panel's reading of net/roster.js, not a second copy of it. */
-    whoRows: () => whoRows.map((n) => n.textContent),
-    /** Once a frame: hidden under a window that covers the HUD or an enhanced overlay (and closed, if open); repainted on the log's new version; the fade stepped. */
-    render({ hidden = false, status: line = null } = {}) {
+    // AUDIT-CHATR F5: a `whoRows()` accessor stood here, labelled "for
+    // the pins". No pin ever called it - they read the drawn column out
+    // of the fake document, which is the stronger reading anyway - so it
+    // was an export whose only justification was a use that did not
+    // exist. Deleted rather than pinned into life.
+    /**
+     * Once a frame.
+     *
+     * `covered` is THE HOST'S word - a window over the HUD, an enhanced
+     * overlay, the pause door - and it takes the whole panel out of the
+     * page while it holds. It is NOT the player's `hidden`, and the two
+     * must never share a name here: AUDIT-CHATR F1 found this parameter
+     * called `hidden`, shadowing the closure of the same name, so the
+     * dataset line below wrote the host's word into the player's slot
+     * and every frame quietly undid the Hide button. The feature was
+     * inert in the only host that has one, and every CHAT-R2 pin passed,
+     * because they drove `setHidden` and never drove a FRAME.
+     */
+    render({ covered = false, status: line = null } = {}) {
       if (!alive) return;
-      if (hidden || overlay()) { if (log.open) closePanel(); if (root.style.display !== 'none') root.style.display = 'none'; return; }
+      if (covered || overlay()) { if (log.open) closePanel(); if (root.style.display !== 'none') root.style.display = 'none'; return; }
       if (root.style.display !== '') root.style.display = '';
       if (log.version !== painted) paint();
       // CHAT-R2/R1: the dataset the sheet reads, and the roster - both

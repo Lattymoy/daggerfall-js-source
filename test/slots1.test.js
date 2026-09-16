@@ -57,9 +57,15 @@ test('SLOTS1: the pick seams hand a key and a name over once (mutant: a pick tak
   // order is the point: `takePickedSaveKey` is a one-shot, so a pick
   // stored and then refused would leave the key latched for the next
   // Continue - the very mutant this test's title names.
-  const guard = online.indexOf('if (!checkName(');
+  //
+  // AUDIT-CHATR F2: found by the SUBJECT of the guard, not by the name
+  // of the function that answers it. The guard must be about THIS card's
+  // save - the pane once asked about `saves[0]` on one path and the
+  // pressed card on the other, and the two disagreed.
+  const guardAt = online.search(/if \(!\w+\(save\.name\)\.ok\)/);
   const latch = online.indexOf('_pickedSaveKey = save.key;');
-  assert.ok(guard > 0 && guard < latch, 'the refusal returns before the key is latched');
+  assert.ok(guardAt > 0 && guardAt < latch, 'the refusal returns before the key is latched');
+  const guard = guardAt;
   assert.match(online.slice(guard, latch), /return; \}/, 'and it really RETURNS rather than falling through');
   assert.doesNotMatch(online, /disabled: !save/, 'no single most-recent button any more');
   const load = menu.slice(menu.indexOf('function paneLoad(body)'), menu.indexOf('// ── SAVE GAME'));

@@ -20,8 +20,17 @@
 //   - by NAME, case-insensitively and NUMERICALLY, so `bob` sits with
 //     `Bob` and `Player10` sits after `Player9` rather than between
 //     `Player1` and `Player2`. `localeCompare` with `numeric` and
-//     `sensitivity: 'base'` is one call for both, and it puts accented
-//     names where a reader looks for them (Ä with A).
+//     `sensitivity: 'base'` is one call for both. Note what `base` is
+//     really doing here: it makes `bob` and `Bob` compare EQUAL, which
+//     is what hands the decision to the tag clause below and makes the
+//     order the same every time.
+//
+//     AUDIT-CHATR: this comment used to add "and it puts accented names
+//     where a reader looks for them (Ä with A)". It cannot. Every name
+//     in a row has been through `sanitizeName`, which keeps printable
+//     ASCII and nothing else, so an accent never survives to reach the
+//     sort. A true statement about `localeCompare` was a false statement
+//     about THIS call.
 //   - then by TAG, because two players may share a name exactly - the
 //     panel shows `#tag` beside it for that reason - and a sort that
 //     left them in Map order would swap them whenever a pose arrived.
