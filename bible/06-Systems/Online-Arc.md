@@ -6195,7 +6195,8 @@ repeated it.
 at the wire and the relay, the burst tiered and the heartbeat whole, the
 pass-patch `kept`, the sender's share both ways, the listener-at-a-time
 push with its rate and cap, the version in both welcomes, the session's
-warning said once and cleared, and the final lens's small survivors (the
+warning said once and cleared (retired by SKEW1 below - it was the two
+lines Mac saw outside the chat box), and the final lens's small survivors (the
 `_who` prune, `poseHzFor(33) === 7`, `byteGate`'s cap). Re-aimed:
 `slam8` (keepalives at the heartbeat, on a held clock; the inverted trap
 line), `slam11` (the rate, not the whole room), `chat1`/`world5`/
@@ -6360,3 +6361,36 @@ removed from `tools/mutants/pins.json`; the same claim lives on as
 `slam15.json`'s Z8 (the union RESTORED, equivalent). The whole sweep on
 this tree: **100 mutants - 98 dead, 0 survived, 2 equivalent as
 recorded** (Y13, Z8).
+
+## SKEW1 - THE TWO LINES OUTSIDE THE CHAT BOX (2026-09-16)
+
+Mac: "When the relay deploys/server restarts, there are 2 strings of
+messages that happen outside of the chat box."
+
+They were SLAM13 A5's client half. The session compared the welcome's
+`v` with the `RELAY_VERSION` it was built against and, on a mismatch, put
+"the relay is running another version than this client - reload, or the
+relay needs deploying" on `statusLine` - which the HUD draws top-left for
+the presence session AND under the chat box for the chat link. Two
+lines, outside the chat, for every player, until a reload.
+
+And the skew it named is the ORDINARY state of a deploy, not a fault.
+From the run logs of the world75 push: the relay's drift-deploy landed at
+15:00:10, the client build (Pages) at 15:02:37. Every reconnect in those
+two and a half minutes compared a world74 client with a world75 relay,
+and every tab already open stayed on the old build until its player
+reloaded - so the two lines were the deploy's normal aftermath, shown to
+everyone, and said nothing SRV-N's notice ("The server was updated and
+restarted...") and its build poll ("A new version of the game has been
+released...reload") were not already saying inside the chat. The one
+case A5 alone covered - a relay BEHIND its client - is closed by the
+drift-deploy (main's SRV-N/CI): a push whose version drifts deploys.
+
+The comparison, the field (`versionWarning`), the text
+(`VERSION_WARNING`) and the console line are gone from `net/online.js`;
+`v` is read by SRV-N's `onRelay` alone. The relay is untouched (no
+version bump: `index.js` and `wire.js` did not change). `slam13`'s A5
+client pin is inverted - a foreign `v` reaches `onRelay`, and
+`statusLine` stays null for the presence label and the chat label alike,
+with no console line and no field - and the three mutants that drove the
+warning (X13-X15) are dropped from `tools/mutants/slam13.json`.

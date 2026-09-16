@@ -72,7 +72,7 @@
 import { tabStorage } from '../systems/appStorage.js';   // the tab's own storage - the seam, never the browser's own (a PIN)
 import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the port's one angle wrap, which cannot loop
 
-import { poseChanged, SOCKETS_MAX, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, sanitizeChat, chatGate, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS, HEARTBEAT_MS, RELAY_VERSION, relayVersionOf, chatInGate, CHAT_ROOM_HZ_MAX } from './wire.js';
+import { poseChanged, SOCKETS_MAX, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, sanitizeChat, chatGate, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS, HEARTBEAT_MS, relayVersionOf, chatInGate, CHAT_ROOM_HZ_MAX } from './wire.js';
 
 export { WORLD_CELL, RANGE_PIXELS, worldRoom };
 
@@ -218,8 +218,6 @@ export const peerSecret = (storage = tabStorage()) => keptToken(storage, 'dagger
  */
 /** OL3: the HUD line while the relay's clock and this machine's disagree by more than a year - the world's time is read uncorrected. */
 export const CLOCK_WARNING = 'this machine\'s clock is more than a year from the world\'s - set it, or the shared time is wrong here';
-/** SLAM13: the relay answered with another RELAY_VERSION than this client's law - the client shipped and the relay was not deployed, or the other way about. */
-export const VERSION_WARNING = 'the relay is running another version than this client - reload, or the relay needs deploying';
 /** ONCRASH1: how long a contained handler throw is said on the HUD line. Long enough for a player to read and report it,
  *  short enough that one transient frame does not brand the session; `stats.threw` and the console keep the rest. */
 export const THREW_SAY_MS = 30000;
@@ -251,7 +249,6 @@ export class OnlineSession {
     this.onWorld = null;          // (world) => void: the welcome carried the room's memory, or the host published one after it (AUDIT WORLD34 C1)
     this.clockOffsetMs = 0;       // WORLD5: the relay's clock minus this machine's, from the welcome - the shared world time is read through it
     this.clockWarning = null;     // OL3: the welcome's clock was a year off this machine's - said on the HUD line while it stands
-    this.versionWarning = null;   // SLAM13: the relay's RELAY_VERSION is not this client's - the version it said, or 'null' for a welcome that carried none
     this.onClock = null;          // WORLD5: (offsetMs) => void - the welcome said the relay's clock
     // AUDIT-SRVN F4: there WAS a `this.relayVersion` here, written on every
     // welcome and read by nothing but its own test. Which relay this
@@ -850,13 +847,14 @@ export class OnlineSession {
         else if (!this.clockWarning) { this.clockWarning = CLOCK_WARNING; console.warn(`[online] ${CLOCK_WARNING} (relay ${new Date(m.now).toISOString()}, this machine ${new Date().toISOString()})`); }
       }
       if (m.world && typeof m.world === 'object' && !Array.isArray(m.world)) this._deliver('world', () => this.onWorld?.(m.world));
-      // SLAM13 (AUDIT SLAM A5): THE RELAY'S VERSION, checked against the law this client was built with. The client
-      // ships by CI and the relay by hand, so on a release day the two disagree until somebody deploys - and a client
-      // that knows says so once, on the console and the HUD line, rather than run a law the relay does not. A
-      // welcome without `v` is a relay older than world73, which is the same news.
-      const v = typeof m.v === 'string' ? m.v : null;
-      if (v !== RELAY_VERSION) { if (this.versionWarning !== `${v}`) { this.versionWarning = `${v}`; console.warn(`[online] ${VERSION_WARNING} (relay ${v ?? 'unversioned'}, this client ${RELAY_VERSION})`); } }
-      else this.versionWarning = null;
+      // SKEW1 (2026-09-16, Mac: "when the relay deploys/server restarts, there are 2 strings of messages that happen
+      // outside of the chat box"): SLAM13 A5 compared `v` with this client's RELAY_VERSION here and put a warning on
+      // `statusLine` - which the HUD draws top-left for the presence session AND under the chat box for the chat
+      // link: two lines, outside the chat, for every player. And the skew it named is the ORDINARY state of a deploy:
+      // the relay's drift-deploy landed world75 at 15:00:10 and the client build at 15:02:37, so every reconnect in
+      // between saw it, and every tab already open kept it until a reload. SRV-N's notice (above, `onRelay`) already
+      // says the server restarted, its build poll already says when to reload, and the drift-deploy closes the one
+      // case left (a relay behind its client). The comparison is gone; `v` is SRV-N's to read.
     } else if (m.t === 'host') {
       if (primary) this._setHost(m.id);
     } else if (m.t === 'world') {
@@ -1025,7 +1023,6 @@ export class OnlineSession {
   statusLine(label = 'online') {
     if (this.status === 'open') {
       if (this.clockWarning) return `${label}: ${this.clockWarning}`;   // OL3: an open session with a clock a year off says so
-      if (this.versionWarning) return `${label}: ${VERSION_WARNING}`;   // SLAM13: and one against a relay of another version says so
       // ONCRASH1: a frame the port could not handle is SAID, not only swallowed - the player reporting "it crashed"
       // now has the line that names which frame, and the console has the stack behind it.
       if (this.threw && monoNow() - this.threw.mono < THREW_SAY_MS) return `${label}: a '${this.threw.kind}' frame from another player was dropped - ${this.threw.text}`;

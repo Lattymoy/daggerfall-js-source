@@ -124,33 +124,6 @@
     ]
   },
   {
-    "name": "X13-version-check-dropped",
-    "file": "src/net/online.js",
-    "old": "      if (v !== RELAY_VERSION) {",
-    "new": "      if (false) {",
-    "tests": [
-      "test/slam13.test.js"
-    ]
-  },
-  {
-    "name": "X14-version-warning-never-cleared",
-    "file": "src/net/online.js",
-    "old": "      else this.versionWarning = null;\n",
-    "new": "",
-    "tests": [
-      "test/slam13.test.js"
-    ]
-  },
-  {
-    "name": "X15-warned-on-every-welcome",
-    "file": "src/net/online.js",
-    "old": "if (this.versionWarning !== `${v}`) {",
-    "new": "{",
-    "tests": [
-      "test/slam13.test.js"
-    ]
-  },
-  {
     "name": "X16-who-prune-removed",
     "file": "src/net/online.js",
     "old": "    if (this._who.size >= 256) for (const [k, t] of [...this._who]) if (now - t >= WHO_RETRY_MS) this._who.delete(k);",

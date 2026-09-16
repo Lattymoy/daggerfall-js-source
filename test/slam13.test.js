@@ -31,7 +31,7 @@ import { poseChanged, byteGate, HEARTBEAT_MS, KEEPALIVE_FAN_MS, RELAY_VERSION, A
 import * as relay from '../server/src/relay.js';
 import * as index from '../server/src/index.js';
 import * as online from '../src/net/online.js';
-import { OnlineSession, VERSION_WARNING, poseHzFor, PEER_TIMEOUT_MS } from '../src/net/online.js';
+import { OnlineSession, poseHzFor, PEER_TIMEOUT_MS } from '../src/net/online.js';
 import { fakeRoom } from './fakeRoom.mjs';
 import { fakeSocketClass } from './fakeSocket.mjs';
 
@@ -221,27 +221,25 @@ test('SLAM13 A5: every welcome carries the relay\'s version - a place room\'s an
   assert.match(rd('server/src/index.js'), /"v":\$\{JSON\.stringify\(RELAY_VERSION\)\}/, 'built into the welcome string, not a second constant');
 });
 
-test('SLAM13 A5: the session SAYS a skew - once on the console, and on the HUD line while it stands; a matching relay clears it, and a welcome with no version is a relay older than world73 (mutants: the check dropped; the warning never cleared; warned on every welcome)', () => {
+test('SKEW1 (Mac: two strings outside the chat box after a deploy): the session puts NO version-skew line on the HUD - a foreign `v` is SRV-N\'s to read (`onRelay`), and statusLine stays quiet (mutant: SLAM13 A5\'s statusLine warning restored)', () => {
   const { FakeWS, sockets } = fakeSocketClass();
   const s = new OnlineSession({ url: 'wss://relay.test', name: 'M', id: 'mac-0001', secret: 'secret-of-mac-0001', WebSocketImpl: FakeWS, now: () => 1_000_000 });
+  const heard = []; s.onRelay = (v) => heard.push(v);
   const warned = [];
   const realWarn = console.warn; console.warn = (...a) => warned.push(a.join(' '));
   const realInfo = console.info; console.info = () => {};
   try {
     s.join('town:m9', at(0, 0)); const ws = sockets[0]; ws.open();
     ws.receive({ t: 'welcome', id: 'mac-0001', v: 'world1', peers: [], host: null, world: null });
-    assert.equal(s.versionWarning, 'world1', 'the relay\'s version, kept');
-    assert.equal(warned.length, 1, 'said once'); assert.match(warned[0], /world1/); assert.match(warned[0], new RegExp(RELAY_VERSION));
-    assert.equal(s.statusLine('online'), `online: ${VERSION_WARNING}`, 'and on the HUD line');
-    ws.receive({ t: 'welcome', id: 'mac-0001', v: 'world1', peers: [], host: null, world: null });
-    assert.equal(warned.length, 1, 'the same skew again is not said again');
-    ws.receive({ t: 'welcome', id: 'mac-0001', v: RELAY_VERSION, peers: [], host: null, world: null });
-    assert.equal(s.versionWarning, null, 'a matching relay clears it');
-    assert.equal(s.statusLine('online'), null);
+    assert.deepEqual(heard, ['world1'], 'the relay\'s name reaches SRV-N\'s presenter');
+    assert.equal(s.statusLine('online'), null, 'and the HUD line says nothing about it');
+    assert.equal(s.statusLine('chat'), null, 'nor the chat link\'s');
+    assert.equal(warned.length, 0, 'nor the console');
     ws.receive({ t: 'welcome', id: 'mac-0001', peers: [], host: null, world: null });
-    assert.equal(s.versionWarning, 'null', 'no version is a skew too - a relay from before world73');
-    assert.equal(warned.length, 2); assert.match(warned[1], /unversioned/);
+    assert.equal(s.statusLine('online'), null, 'a welcome with no version: the same silence');
+    assert.equal(s.versionWarning, undefined, 'the field is gone, not merely quiet');
   } finally { console.warn = realWarn; console.info = realInfo; }
+  assert.doesNotMatch(rd('src/net/online.js'), /VERSION_WARNING|versionWarning/, 'nothing of it left in the session');
 });
 
 test('SLAM13 (final lens survivors): the asked list prunes by its own retry, poseHzFor rounds (33 peers is 7 Hz), and byteGate\'s cap is the rate (mutants: the prune removed; `round` -> `floor`; the cap dropped)', () => {
