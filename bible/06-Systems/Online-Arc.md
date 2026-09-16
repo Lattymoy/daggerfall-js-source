@@ -5427,3 +5427,67 @@ what this slice was for, but the introduction is now the bottleneck the
 fan used to hide. The fix is a batched ask - one `who` frame naming up to
 N ids, answered with N joins - and it is a wire change, so it is its own
 slice.
+
+## SLAM7 - THE PAPERDOLL CACHE EVICTED THE SCENE (2026-09-16, AUDIT SLAM)
+
+The second AUDIT SLAM finding. SLAM6 is what turned it from a footnote
+into Sunday's problem: until this week the pose fan reached at most 32
+listeners, so a client held at most 32 distinct looks and never came near
+the cache's cap. The fan now reaches the whole room.
+
+**THE ROOT.** `_evict` kept `DOLLS_MAX` (64) ready dolls and released the
+rest - counting **every** ready doll, including the ones billboards were
+standing in at that moment. `_release` destroys the batches wearing a
+released look. So past 64 distinct looks in view, each sweep tore down a
+peer that was *on screen*, which the next frame composed again, which
+swept another. A paperdoll composite is not cheap and they are serialized
+on one queue.
+
+A second, quieter root underneath it: the order was **FIFO by birth, not
+by use**. `_dolls.set(key, doll)` on a key already in the Map does not
+move it, so "the oldest" meant the first look ever composed, however long
+it had been on screen since.
+
+**MEASURED**, 40 frames, one `sync` a frame, the compose queue draining
+between frames as it really does:
+
+| looks in view | composes (ideal) | billboards destroyed | peers drawn |
+|---|---|---|---|
+| 64 | 64 (64) | 0 | 64 |
+| 70 | 304 (70) | 234 | 64 |
+| 128 | 2,624 (128) | 2,496 | 64 |
+| 199 | **5,464** (199) | **2,496** | **64** |
+
+At 199 the 64 drawn were a *different* 64 each frame: the crowd
+flickered, and the client paid 27x the compose work to make it do so.
+
+**THE FIX.** A cache may evict what nothing is using; evicting what is on
+screen is not eviction, it is a guaranteed recompose. The cap now counts
+only the dolls **the scene does not need** - and "needed" is both the
+looks a live billboard is wearing *and* the looks the last `sync` asked
+for and has not been handed yet, because a doll composes **between** two
+frames and is worn by nothing for exactly that gap. That gap alone cost
+213 of the 412 composes the first cut of this fix still paid at 199
+looks. Among the spares the map is now a real LRU: a key drawn this frame
+is moved to the back, so the sweep takes the one nobody has looked at
+longest.
+
+**Measured after:** one compose per distinct look at every size (199 for
+199), not one billboard destroyed, every peer drawn and none flickering.
+
+**THE BOUND IS STRUCTURAL, AND IT IS A TRADE.** `_dolls` now holds
+`DOLLS_MAX` spares plus one doll per look drawn, and the looks drawn are
+bounded by the peers the host hands `sync`, which is bounded by the room
+(`SOCKETS_MAX`). Driven: a brand-new look every frame for 400 frames,
+8,000 distinct looks seen, 20 in view - the map settles at exactly
+`DOLLS_MAX + 20` and releases all 7,916 of the rest. The cost is GPU
+texture memory: a doll is a crop of a `PAPERDOLL_W x PAPERDOLL_H`
+(110x184) RGBA composite, so a full room's worth is single-digit
+megabytes. That is the trade, taken deliberately: memory the machine has,
+against a compose storm and a flickering crowd it does not.
+
+**Pinned** in `test/slam7.test.js` (5), driven over `RemotePlayers` with
+counting fakes. **9 mutations, 9 dead** - one of them a survivor of the
+first cut: nothing asserted *which* spare the sweep takes, so evicting
+the newest spare instead of the oldest passed every pin. The LRU is a
+driven behaviour now, not a Map's incidental ordering.
