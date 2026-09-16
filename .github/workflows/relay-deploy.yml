@@ -1,0 +1,78 @@
+# SRV-N/CI (2026-09-17): THE RELAY'S DEPLOY, IN CI AT LAST.
+#
+# `server/wrangler.toml` has said "npx wrangler deploy (CLOUDFLARE_API_TOKEN
+# in the environment)" since ONLINE1, and the bible has repeated "the deploy
+# is by hand, nothing in CI does it" through every online slice since. That
+# was true, and it had two costs: a relay-changing slice could merge green
+# with the live Worker still on the old deploy (SRV-N shipped exactly that
+# way), and the only way to push one was for somebody to hold the API token
+# in their hands.
+#
+# MANUAL, NOT ON PUSH, and that is deliberate rather than timid. A relay
+# deploy restarts every Durable Object and drops EVERY connected player's
+# socket at once - peers vanish, chat goes quiet. That is a thing to do on
+# purpose at a chosen moment, not a thing to have happen because a comment
+# in `server/` changed. `workflow_dispatch` is the whole trigger.
+name: Deploy relay
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type the word deploy - a relay deploy drops every connected player"
+        required: true
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Refuse anything but a deliberate run
+        if: inputs.confirm != 'deploy'
+        run: |
+          echo "::error::type 'deploy' to confirm - this drops every connected player's socket"
+          exit 1
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      # THE VERSION THIS RUN INTENDS, read from the source rather than typed
+      # into the workflow: one home, and a deploy cannot claim a name the
+      # Worker does not carry.
+      - name: Read RELAY_VERSION from source
+        id: ver
+        run: |
+          v=$(grep -oP "RELAY_VERSION = '\\K[^']+" server/src/index.js)
+          test -n "$v" || { echo "::error::could not read RELAY_VERSION"; exit 1; }
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          echo "deploying relay $v"
+
+      - name: Deploy
+        working-directory: server
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: npx --yes wrangler@4 deploy
+
+      # AND PROVE IT LANDED. The client's own deploy has been verified BY
+      # CONTENT since U60 (`tools/verify-deploy.mjs`, whose header says HTTP
+      # 200 proves nothing); the relay never was. `/health` names the deploy,
+      # so ask it until it says the version this run built - a wrangler exit
+      # code of 0 over an unchanged Worker is the failure this catches.
+      - name: Verify /health names this deploy
+        run: |
+          want='${{ steps.ver.outputs.version }}'
+          url='https://daggerfall-online.mackcothran.workers.dev/health'
+          for i in $(seq 1 30); do
+            got=$(curl -fsS --max-time 10 "$url" | sed -n 's/.*"version":"\([^"]*\)".*/\1/p' || true)
+            echo "attempt $i: live reports '${got:-unreachable}', want '$want'"
+            if [ "$got" = "$want" ]; then echo "VERIFIED: the relay serves $want"; exit 0; fi
+            sleep 10
+          done
+          echo "::error::the relay never reported $want - the deploy did not take"
+          exit 1
