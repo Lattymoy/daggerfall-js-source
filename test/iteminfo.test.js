@@ -322,3 +322,55 @@ test('ROAD-U (was AUDIT 22 F11): artifact IDENTITY is the enchantment record, no
   // ...and the itemInfo branches those flags feed are LIVE now
   assert.equal(armorShouldShowMaterial(armor), false, 'an artifact never shows material');
 });
+
+// ═══ MAC-M1: THE CLASSIC SIDE'S TWO NUMBERS, PINNED AT LAST ═══════
+//
+// Mac, 2026-09-17: "Damage values arent showing on weapon tool tips.
+// Also, not sure if armor has values either."
+//
+// The ENHANCED card was the one at fault and is fixed in
+// `ui/enhancedInventory.js`. But "not sure" is the important half of
+// that sentence: the claim that the CLASSIC popup was always right was,
+// until this pin, unverified. `%wdm` and `%mod` had no test anywhere -
+// the two macros a player picks a weapon by, unpinned since U25 - so
+// "the classic side was fine" was a reading, not a fact.
+
+test('MAC-M1: %wdm and %mod fill the classic popup’s record', () => {
+  const W = (templateIndex, material = 0) => ({ group: 'Weapons', templateIndex, material, condition: 100, maxCondition: 100 });
+  const A = (templateIndex, material = 0x0200) => ({ group: 'Armor', templateIndex, material, condition: 100, maxCondition: 100 });
+
+  // The numbers, and the MATERIAL is in them - that is the whole reason
+  // these are macros rather than a template lookup.
+  assert.equal(expandItemInfo('Damage: %wdm', W(120, 0)), 'Damage: 1 - 15', 'iron longsword');
+  assert.equal(expandItemInfo('Damage: %wdm', W(120, 4)), 'Damage: 4 - 18', 'dwarven moves BOTH ends');
+  assert.equal(expandItemInfo('Armor rating: %mod', A(103)), 'Armor rating: +7');
+
+  // ...and neither leaks onto the other's record. A macro with no
+  // producer for THIS item expands to nothing rather than to a literal
+  // "%wdm" the player would read.
+  assert.equal(expandItemInfo('%wdm', A(103)), '', 'armour has no damage macro');
+  assert.equal(expandItemInfo('%mod', W(120)), '', 'a weapon has no armour macro');
+  for (const g of ['Books', 'MiscItems', 'Paintings']) {
+    assert.equal(expandItemInfo('%wdm%mod', { group: g, templateIndex: 0 }), '', `${g} fills neither`);
+  }
+});
+
+test('MAC-M1: the classic popup and the enhanced card print the SAME number', async () => {
+  // The law that matters most, and the one this port keeps having to
+  // re-establish: two surfaces describing one item may not disagree.
+  // They share the producer, so this drives both and compares.
+  const { itemLine } = await import('../src/ui/enhancedInventory.js');
+  const cases = [
+    { group: 'Weapons', templateIndex: 113, material: 0, condition: 100, maxCondition: 100, stackCount: 1 },
+    { group: 'Weapons', templateIndex: 122, material: 9, condition: 100, maxCondition: 100, stackCount: 1 },
+    { group: 'Armor', templateIndex: 103, material: 0x0200, condition: 100, maxCondition: 100, stackCount: 1 },
+    { group: 'Armor', templateIndex: 102, material: 0x0200 | 9, condition: 100, maxCondition: 100, stackCount: 1 },
+  ];
+  for (const it of cases) {
+    const line = itemLine(it);
+    const classic = expandItemInfo('%wdm%mod', it);
+    const enhanced = line.damage ?? line.armour;
+    assert.equal(enhanced, classic,
+      `${it.group} ${it.templateIndex}: the card says "${enhanced}" and the popup says "${classic}"`);
+  }
+});

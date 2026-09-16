@@ -13,7 +13,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import {
-  packModel, itemLine, SLOT_MAP, useResultAction, remoteModel, REMOTE_TITLE, STOW_LABEL, plural,
+  packModel, itemLine, itemStatSuffix, SLOT_MAP, useResultAction, remoteModel, REMOTE_TITLE, STOW_LABEL, plural,
   equippedModel, LIGHT_SLOT, localPrimaryAct,   // HT5
   mountEnhancedInventory,   // AUDIT INV2: the pane is MOUNTED and the gesture DRIVEN
 } from '../src/ui/enhancedInventory.js';
@@ -1673,4 +1673,125 @@ test('AUDIT INV2: the ghost is the item\'s own tile, and the ladder it rides is 
   assert.match(css, /\.itemrow \{ touch-action: pan-y;/);
   assert.match(css, /body\.draglock \.itemrow, body\.draglock \.packlists \{ touch-action: none; \}/);
   assert.match(code, /if \(touch\) drag\.hold = setTimeout\(dragArm, TOUCH_HOLD_MS\);/, 'a touch drag begins on a HOLD, so a flick is a scroll');
+});
+
+// ═══ MAC-M1: THE TWO NUMBERS A PLAYER PICKS A WEAPON BY ═══════════
+//
+// 2026-09-17, Mac: "Damage values arent showing on weapon tool tips.
+// Also, not sure if armor has values either."
+//
+// Both were true, and the cause is the shape this port keeps finding:
+// the PRODUCERS existed and had one reader. `weaponDamageString` and
+// `armourModString` have been in `systems/itemInfo.js` since U25, read
+// only by `expandItemInfo`'s `%wdm` and `%mod` - the macro pass that
+// fills the CLASSIC popup's TEXT.RSC record. The enhanced card builds
+// its rows from `itemLine` and no record at all, so it showed weight,
+// condition and material and never the one number the item is for.
+
+test('MAC-M1: itemLine carries a weapon’s damage and armour’s rating', async () => {
+  const { itemDamageLine, itemArmourLine, weaponDamageString, armourModString } =
+    await import('../src/systems/itemInfo.js');
+
+  // DRIVEN through itemLine, which is what the card reads.
+  const W = (templateIndex, material = 0) => ({ group: 'Weapons', templateIndex, material, stackCount: 1 });
+  const A = (templateIndex, material = 0x0200) => ({ group: 'Armor', templateIndex, material, stackCount: 1 });
+
+  const dagger = itemLine(W(113));
+  assert.equal(dagger.damage, '0 - 5', 'an iron dagger hits for 0-5 - iron’s -1 modifier is DFU’s, not a bug');
+  assert.equal(dagger.armour, null, 'a weapon has no armour rating');
+
+  const claymore = itemLine(W(122, 9));
+  assert.equal(claymore.damage, '8 - 24', 'and Daedric moves BOTH ends - the material modifier is in the number');
+
+  const cuirass = itemLine(A(103));
+  assert.equal(cuirass.armour, '+7', 'armour carries its rating');
+  assert.equal(cuirass.damage, null, 'and no damage');
+
+  // ONE PRODUCER. The card and the classic popup must never be able to
+  // print different numbers for the same sword, which is the whole
+  // reason these read `itemInfo`'s functions rather than recomputing.
+  for (const it of [W(113), W(120, 4), W(122, 9)]) {
+    assert.equal(itemLine(it).damage, weaponDamageString(it), 'the card’s damage IS the popup’s');
+    assert.equal(itemLine(it).damage, itemDamageLine(it));
+  }
+  for (const it of [A(103), A(102, 0x0200 | 9)]) {
+    assert.equal(itemLine(it).armour, armourModString(it), 'the card’s rating IS the popup’s');
+    assert.equal(itemLine(it).armour, itemArmourLine(it));
+  }
+
+  // ...and an item that is neither carries neither, so the card draws
+  // no empty row for a book or a potion.
+  for (const g of ['Books', 'MiscItems', 'Paintings', 'UselessItems2']) {
+    const l = itemLine({ group: g, templateIndex: 0, stackCount: 1 });
+    assert.equal(l.damage, null, `${g} shows no damage`);
+    assert.equal(l.armour, null, `${g} shows no armour`);
+  }
+});
+
+test('MAC-M1: an ARROW shows no damage, because its own record never did', async () => {
+  const { itemDamageLine, weaponDamageString } = await import('../src/systems/itemInfo.js');
+  const { TEMPLATES } = await import('../src/systems/useItem.js');
+  const arrow = { group: 'Weapons', templateIndex: TEMPLATES.Arrow, material: 0, stackCount: 20 };
+
+  // THE DISTINCTION THIS PINS: one producer, two PRESENTERS. The macro
+  // pass asks "what does %wdm expand to" and lets the record decide
+  // whether to print it - an arrow takes record 1011, which has no
+  // damage line at all. A card has no record, so it has to ask "should
+  // there be a Damage row", and that is why the arrow test lives in
+  // `itemDamageLine` rather than in the macro.
+  assert.equal(itemLine(arrow).damage, null, 'no Damage row on an arrow');
+  assert.notEqual(weaponDamageString(arrow), null,
+    'the PRODUCER still answers - it is the presenter that declines, exactly as DFU’s record does');
+
+  const { itemInfoTextId, INFO_TEXT } = await import('../src/systems/itemInfo.js');
+  assert.equal(itemInfoTextId(arrow), INFO_TEXT.arrow, 'and that is the record the classic side picks');
+});
+
+test('MAC-M1: ONE suffix, shared by the three hovers that show it', () => {
+  // Mac said "tool tips", and the most literal one is the GRID TILE's
+  // `title` - it said the name and nothing else. Three surfaces show
+  // the stat now (the tile, the tile's no-icon fallback, the worn slot)
+  // and they share ONE builder: three copies of a rule is three chances
+  // to disagree, which is the shape half of this month's findings had.
+  const W = (templateIndex, material = 0) => ({ group: 'Weapons', templateIndex, material, stackCount: 1 });
+  assert.equal(itemStatSuffix(itemLine(W(113))), ' (0 - 5)');
+  assert.equal(itemStatSuffix(itemLine({ group: 'Armor', templateIndex: 103, material: 0x0200, stackCount: 1 })), ' (+7)');
+  assert.equal(itemStatSuffix(itemLine({ group: 'Books', templateIndex: 0, stackCount: 1 })), '',
+    'a book gets no brackets, not empty ones');
+  assert.equal(itemStatSuffix(null), '', 'and a missing line is not a crash');
+  assert.equal(itemStatSuffix({}), '');
+
+  const src = readFileSync(new URL('../src/ui/enhancedInventory.js', import.meta.url), 'utf8')
+    .replace(/^\s*\/\/.*$/gm, '');
+  const uses = (src.match(/itemStatSuffix\(/g) ?? []).length;
+  // three CALL SITES - the grid tile, its no-icon fallback, the worn
+  // slot. The `export const` declaration is not one of them, which is
+  // why this counts `itemStatSuffix(` rather than the bare name.
+  assert.equal(uses, 3, `the builder is USED at all three hovers, not just exported (found ${uses})`);
+  assert.doesNotMatch(src, /l\.damage \?\? l\.armour/,
+    'no surface spells the `??` for itself - that is what the builder is for');
+});
+
+test('MAC-M1: the card draws the stat FIRST, and the worn map’s hover carries it', () => {
+  // The DOM half, as this file's header says: a source sweep, and it
+  // says so. What it asserts is ORDER and REACH, neither of which the
+  // driven half above can see.
+  const src = readFileSync(new URL('../src/ui/enhancedInventory.js', import.meta.url), 'utf8')
+    .replace(/^\s*\/\/.*$/gm, '');   // the file's own prose is not its wiring
+
+  const stats = src.slice(src.indexOf("const dl = el('dl', 'stats');"));
+  const body = stats.slice(0, stats.indexOf("c.append(dl);"));
+  const dmg = body.indexOf("pair('Damage', line.damage);");
+  const arm = body.indexOf("pair('Armour', line.armour);");
+  const wgt = body.indexOf("pair('Weight'");
+  assert.ok(dmg > 0 && arm > 0 && wgt > 0, 'all three rows are built');
+  assert.ok(dmg < wgt && arm < wgt,
+    'the headline stat comes BEFORE weight - a player reading this card is deciding whether to swing the thing');
+
+  // the worn map's hover - the surface Mac's second sentence is about,
+  // because armour is the thing you are wearing
+  assert.match(src, /b\.title = filled\.map\(\(r\) => \{[\s\S]{0,300}?itemStatSuffix\(l\)/,
+    'the worn slot’s hover reads the same line');
+  assert.match(src, /tile\.title = line\.name \+ itemStatSuffix\(line\);/,
+    'and so does the grid tile - the most literal "tooltip" in the report');
 });
