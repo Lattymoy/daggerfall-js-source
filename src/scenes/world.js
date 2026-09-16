@@ -223,6 +223,8 @@ import { RemotePlayers, composeLook } from '../net/remotePlayers.js';   // ONLIN
 import { makeHitPend } from '../net/hitPend.js';   // AUDIT FOES FOE2: a blow the wire refused waits and goes
 import { PeerBodies } from '../net/peerBodies.js';   // MWBODY1: the others in the Morrowind body
 import { ChatLog, CHAT_REJOIN_MS } from '../net/chat.js';   // CHAT1: the tabs and their lines
+import { SocialState, accountId, accountSecret } from '../net/social.js';   // SOC2: the friends and the party, as the hub says them; the account the hub's hello carries
+import { SOCIAL_ROOM, PARTY_SEND_MS } from '../net/wire.js';   // SOC2: the hub's room and the party pose's floor (a second wire import: AUDIT WORLD4 A1 pins the first as it stands)
 import { createChatPanel } from '../ui/chatPanel.js';   // CHAT1: the enhanced skin's chat over the world
 import { relayVersionSeen, buildUpdateSeen, fetchLiveBuildTag, RELAY_RESTART_TEXT, BUILD_UPDATE_TEXT, BUILD_POLL_MS } from '../net/updateNotice.js';   // SRV-N: the relay moved, or the build did
 import { BUILD_TAG } from '../buildTag.js';   // SRV-N: which build this tab is actually running
@@ -6759,6 +6761,13 @@ export async function bootWorld(canvas, renderer, params, status) {
   const onlineOn = params.has('online');
   let online = null, remotePlayers = null, peerBodies = null, _onlineLast = null, _onlineKey = null, _onlineKeySince = 0;
   let chatLog = null, chatPanel = null, chatLinks = null;   // CHAT1: the log, the panel, one channel session per tab (Map tabId -> OnlineSession)
+  // SOC2 (Mac: "friend other users ... the new 4 person party system"): THE SOCIAL PICTURE - the hub's word (the
+  // world tab's link, whose room is the hub, SOC1), held pure in net/social.js. `social` is read by the panels (the
+  // friends list and the party HUD), the names over the world (green for my party), the F-menu on a body and the map;
+  // an act goes out through `socialLink()` (sendSocial). `partyFrame` sends my own party pose once a second while I
+  // sit in a party. Nothing here draws: the seams are the state and the link.
+  let social = null, _partyComposedAt = -Infinity;
+  const socialLink = () => { const tab = chatLog?.tabs.find((t) => t.room === SOCIAL_ROOM); return tab ? (chatLinks?.get(tab.id) ?? null) : null; };
   let _worldPublishedAt = -Infinity;   // WORLD1: when this host last published the room's memory (the frame clock)
   // WORLD1 (Mac: "The world is the server ... True persistence"): the room's memory out - this player's, when the
   // relay says they are the room's host and a dungeon stands: every WORLD_PUBLISH_MS, and at once on the way out
@@ -6938,6 +6947,12 @@ export async function bootWorld(canvas, renderer, params, status) {
       link.onRelay = onRelayVersion;
       link.join(tab.room);
       chatLinks.set(tab.id, link);
+      // SOC2: the HUB tab's link carries the account (net/social.js accountId - the profile's, not the tab's); the
+      // presence session never does, and a later channel tab would not either: the hub is the one room that checks
+      // it. Set after the join, which is safe because a socket opens on a later turn and the hello is built when it
+      // does (net/online.js _helloFrame) - and set here rather than in the constructor call because CHAT1's pin
+      // holds the five lines above as they stand.
+      if (tab.room === SOCIAL_ROOM) { link.acct = accountId(); link.asecret = accountSecret(); }
     }
     // SRV-N: the PRESENCE session hears the relay too, and it is usually
     // the first back after a deploy. Both arms run the same detector,
@@ -6961,6 +6976,49 @@ export async function bootWorld(canvas, renderer, params, status) {
       onOpen: () => { setCursorActive(false); releaseLook(); },   // AUDIT CHAT C2: the panel is a pointer surface - the mouse is freed on open   // PL3: the Enter that opened the chat is the CHAT'S - the toggle (the same key, a capture listener bound earlier) had already flipped cursorActive on it, and the close's relock was refused by the precedence line for the rest of the session
       onClose: () => { if (!gamePaused()) requestLook(canvas); },   // and taken back inside the closing gesture (MAC1's rule, ui/pauseDoor.js)
     });
+    socialStart();   // SOC2: the picture over the hub's link, once the panel it lands beside exists
+  };
+  /** SOC2: the social picture over the hub link - the hub's frames into net/social.js, its notes and refusals onto the
+   *  world tab as system lines (SRV-N's flag: a line nobody sent). The panels and the HUD are made here too, over the
+   *  same state - SOC3 the friends and party panel beside the chat, SOC4 the party HUD - so a reload of the picture
+   *  (a reconnect's fresh state frame) is one repaint through `onChange`, never a rebuild. */
+  const socialStart = () => {
+    const link = socialLink();
+    if (!link || !link.acct) return;   // no hub tab, or no account to be anyone by: the chat stands, the social arms do not
+    const tab = chatLog.tabs.find((t) => t.room === SOCIAL_ROOM);
+    social = new SocialState();
+    link.onSocial = (f) => { social.apply(f); };
+    link.onParty = (acct, p) => { social.applyParty(acct, p); };
+    social.onNote = (note, text) => { if (text) chatLog.push(tab.id, { text, system: true }); };
+    social.onError = (text) => { chatLog.push(tab.id, { text: `Social: ${text}`, system: true }); };
+    // SOC3: the social button and the friends + party panel are made here, over `social`, `link` and `chatPanel`
+    // SOC4: the party HUD (portraits, health / stamina / magicka) is made here, over `social`
+  };
+  /** SOC2: my party pose - where I stand (the travel pixel: the place's own inside a dungeon), what the place is
+   *  called, the six vitals, the portrait's recipe - as net/wire.js validPartyPose admits it. */
+  const composePartyPose = () => {
+    const mode = modes?.mode ?? 'exterior';
+    const px = playerTravelPixel();
+    const ident = mode === 'dungeon' ? modes?.roomIdentity?.() : null;
+    const loc = _questLoc();
+    const look = composeLook(playerEntity);
+    return {
+      px: px.x, py: px.y,
+      in: mode === 'dungeon' ? 1 : mode === 'interior' ? 2 : 0,
+      loc: ident?.kind === 'dungeon' ? (ident.name ?? '') : (loc?.name ?? ''),
+      h: playerEntity.health ?? 0, hm: playerEntity.maxHealth ?? 0, f: playerEntity.fatigue ?? 0, fm: maxFatigue(playerEntity), m: playerEntity.magicka ?? 0, mm: playerEntity.maxMagicka ?? 0,
+      race: look.race, gender: look.gender, face: look.faceIndex,
+    };
+  };
+  /** SOC2: once a frame, while online - my party pose out while I sit in a party, composed at most twice a second
+   *  (the link's own floor is PARTY_SEND_MS, and it sends only what changed); the relay's clock offset onto the
+   *  picture, so "last online" reads on the relay's clock. */
+  const partyFrame = (nowMs) => {
+    if (!social) return;
+    social.setClockOffset(online?.clockOffsetMs ?? 0);
+    if (!social.party || nowMs - _partyComposedAt < PARTY_SEND_MS / 2) return;
+    _partyComposedAt = nowMs;
+    socialLink()?.sendParty(composePartyPose());
   };
   // SRV-N (Mac: "a server restart notice whenever we push server
   // updates. Like a notice that pushes in the chat window"): A NOTICE
@@ -7025,6 +7083,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       covered: townTalk.hudCovered || (modes?.hudCovered ?? false) || gamePaused(),   // a window over the HUD covers the chat too, and closes it
       status: link?.statusLine('chat') ?? null,   // connecting, reconnecting, refused - the session's own line (D12; AUDIT CHAT B5)
     });
+    partyFrame(performance.now());   // SOC2: my party pose rides the chat frame - before the dead return with it, so a dead member's card says so as their vitals read zero
   };
   /** WORLD3: the peers in my room as target candidates - each with its feet in THIS scene and its body's height; null
    *  when there is no room. The dungeon host's foes read it (peerCandidates) and, since WORLD6b-ii, the cell's own. */
