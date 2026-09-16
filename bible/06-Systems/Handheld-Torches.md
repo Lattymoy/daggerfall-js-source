@@ -378,6 +378,44 @@ Morrowind light mesh in the arms' left hand - the LIGH model on the
 `torch` group - is the lane's own design work, not the mod's, and pends
 Mac's word.
 
+**MW-D51 (2026-09-16) - Mac's word came: "Morrowind model needs a torch
+to hold when a torch is equipped."** The lane now holds it: the LIGH
+record's mesh at the Shield Bone of both rigs, the `torch` group on
+the left arm's blend mask, off the same `PlayerEntity.LightSource` read
+this mod's hand law writes (weaponRig hands it to the arm per frame
+beside the weapon). The record is in Morrowind-Rules.md's MW-D51. This
+mod's own art stays the classic lane's; under the Morrowind view the
+mod's hand law, keys, drops and throws run unchanged and the modelled
+torch is what they light and stow.
+
+## HT5 - THE TORCH HAND STOOD STILL BESIDE A SWAYING WEAPON (2026-09-16)
+
+Mac: "the torch when being held isn't affected by the weapon bob like
+everything else."
+
+The mod's three motion modules - Bob, Inertia, Step - restate Weapon
+Widget's laws so the torch hand can move WITH the weapon, and the mod
+ships all three OFF: it leaves matching them to whatever the widget
+has on to the player (its Bob.Offset says so: "For use with weapon
+bob"). This port ships Weapon Widget with Bob ON - the widget's own
+shipped default - so the two mods disagreed about one walk: the
+weapon swayed, the hand holding the torch did not. The classic weapon
+and the torch hand are two OnGUIs with two positions (the rig draws
+the hand first, then the weapon over it), so the widget's bob never
+reached the hand by any other road.
+
+`Modules.Bob` ships ON for this mod now - the THIRD departure from
+its shipped keys, after HT4's Tab and SOC5's F, stated in the port's
+table beside the other two. Inertia and Step stay off, as the widget
+ships them; the player may still turn any of the three either way.
+The mod's own file is untouched.
+
+Pin: `test/ht1_handheldtorches.test.js` HT5 - every motion module
+the two mods share ships with the SAME default, Bob's is on, the mod's
+file still says off, and the bench walks with Bob on and the hand
+moves off its rest; the three HT1 pins that encoded "the other three
+ship off" re-pinned.
+
 ## TEX1 - THE SPRITE DOOR'S SHAPE, AND MAC'S CRASH (2026-09-14)
 
 Mac's page died on daggerfalljs.dev the day HT1 shipped:

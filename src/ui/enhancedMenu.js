@@ -857,9 +857,15 @@ function paneQuickSettings(pane) {
  *  override: the two skins are two hosts and there is nothing to hand
  *  over in place. */
 export function switchSkin(to = otherSkin(uiSkin())) {
-  setUiSkin(to);
+  const stored = setUiSkin(to);
   const url = new URL(location.href);
   url.searchParams.delete('skin');
+  // SKIN-CARRY: the shelf refused the write (a browser with storage
+  // blocked) - the URL is the one carrier left, so the choice rides it
+  // for this session rather than reloading into the default. A stored
+  // choice never needs it, and an override that outlives the choice is
+  // exactly what this function otherwise deletes.
+  if (stored === null) url.searchParams.set('skin', to);
   location.replace(url.toString());
 }
 
@@ -1404,6 +1410,14 @@ function morrowindCard() {
         + (armState.weapon.side && armState.weapon.side !== 'unknown'
           ? ` (${armState.weapon.side} side at rest)` : '')
       : armState.active ? 'none - empty hands' : '-'],
+    // MW-D51: the carried light, beside the weapon - the record it
+    // resolved to and whether the rig's own .kf gives the left arm its
+    // "torch" clip (a rig without it holds the light where the idle
+    // leaves the hand).
+    ['Torch', armState.torch
+      ? `${armState.torch.name || armState.torch.id} at ${armState.torch.bone}`
+        + (armState.torchLit ? (armState.torchGroup ? ` - lit, "${armState.torchGroup}" playing` : ' - lit, no torch clip on this rig') : ' - doused')
+      : armState.active ? (armState.torchLit ? 'lit, but no Morrowind torch resolved - see the notes' : 'none - no light lit') : '-'],
     // MW-D24: the BODY's own verdict, beside the arm's - scroll out in
     // game to see it, and when the wheel refuses, this line is why.
     // IG6b: the CURRENT arms mode, stated where a state belongs - on

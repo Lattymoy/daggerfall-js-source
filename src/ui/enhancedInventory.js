@@ -97,6 +97,9 @@ import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { closeOnOutsideTap } from './enhancedOverlays.js';   // OT1
 import { repaintKeepingScroll } from './domRepaint.js';
 import { overlayAction } from './input.js';
+import { audio } from '../systems/audio.js';   // MAC-O6: the pack's own transfer cue - this window carried none at all
+import { enhancedSoundsOn } from '../systems/enhancedSounds.js';   // ES1: both cues ride the Enhanced sounds switch
+import { SOUND } from '../systems/soundClips.js';
 
 /** Slot id -> where it sits on the body, and what to call it.
  *
@@ -1058,6 +1061,11 @@ function stow(item) {
   // treasure map out of the pack dropped the paper on the floor and
   // revealed nothing.
   if (plan.map) { use(item, deps.items?.() ?? []); return; }
+  // MAC-O6: the same cue this window's `take()` gained - storing (selling,
+  // banking, dropping into a wagon or a pile) is a transfer too, and
+  // planStore already hands back the sound (itemTransfer.js:220), unread
+  // until now.
+  if (enhancedSoundsOn()) audio.playOneShot(plan.sound === 'gold' ? SOUND.GoldPieces : SOUND.ButtonClick, 1);   // ES1: the row's switch
   // PX24 (Mac: an action taken closes the tooltip): the transfer
   // happens and the tip goes. The earlier law kept the ARRIVING item
   // picked so it could be put straight back; the player can pick it
@@ -1096,6 +1104,14 @@ function take(item) {
   // pile reveals and consumes it, exactly as stowing one does. The
   // classic window routes both; this one routed neither.
   if (plan.map) { use(item, remoteTarget(deps, sessionState())); return; }
+  // MAC-O6 (report: "looting gold/items makes no sound"): DoTransferItem's
+  // own cue (:1569 gold's clink, :1583 everything else), which the classic
+  // window plays (nativeInventory.js:836) and this one never did - the ONLY
+  // difference between the two windows' calls to planTake/applyTransfer was
+  // that this one dropped `plan.sound` on the floor. Played here, ahead of
+  // the gold interception below, exactly as DFU's own PlayOneShot sits
+  // ahead of that arm's `return` in DoTransferItem.
+  if (enhancedSoundsOn()) audio.playOneShot(plan.sound === 'gold' ? SOUND.GoldPieces : SOUND.ButtonClick, 1);   // ES1: the row's switch
   // E4: the pack IS the destination here, so DoTransferItem's gold
   // interception (:1562-1571) fires and answers null - its `return`
   // skips the choose-one close below, and there is no arriving record

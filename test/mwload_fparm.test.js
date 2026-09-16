@@ -315,6 +315,7 @@ test('MW-LOAD: every synchronous archive read in fpArm.js is covered, in its own
   const EXEMPT = new Map([
     ['resolveWeaponParts', 'its `find` is the caller\'s; all four call sites preload through weaponPartPaths'],
     ['collectArmTextures', 'synchronous by contract; every call site preloads through preloadArmTextures'],
+    ['resolveTorchPart', 'MW-D51: resolveWeaponParts\' twin for the carried light; all three call sites preload through torchPartPaths'],
   ]);
   const nameOf = (line) => (line.match(/(?:function\s+)?([A-Za-z][\w$]*)\s*\(/) || [])[1] ?? '?';
 
@@ -352,6 +353,9 @@ test('MW-LOAD: every synchronous archive read in fpArm.js is covered, in its own
   // resolveWeaponParts: buildTpBody, buildFpArm, and the swap's two
   // rigs (which share one load, the same records for both).
   assert.equal(callsCovered('resolveWeaponParts({', 'loadFromArchives\\([\\s\\S]*weaponPartPaths\\(|weaponPartPaths\\('), 4);
+  // MW-D51 resolveTorchPart: buildTpBody, buildFpArm, and setTorch's
+  // slow path (one load, one resolve per rig inside it).
+  assert.equal(callsCovered('resolveTorchPart({', 'loadFromArchives\\([\\s\\S]*torchPartPaths\\(|torchPartPaths\\('), 3);
   // collectArmTextures: the two builds and the swap's two rigs.
   // renderGroundMesh's own call is the ICON's, and the icon opens its
   // door in preloadIcon before the synchronous getter is ever reached -

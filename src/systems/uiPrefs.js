@@ -178,7 +178,7 @@ export function getPref(k) {
   if (_prefs === null) loadPrefs();
   return _prefs[k] ?? PREF_DEFAULTS[k];
 }
-export function setPref(k, v) { if (_prefs === null) loadPrefs(); _prefs[k] = v; savePrefs(); }
+export function setPref(k, v) { if (_prefs === null) loadPrefs(); _prefs[k] = v; return savePrefs(); }   // SKIN-CARRY: the store's word comes back - a refused write is the caller's to carry another way
 export function isOpen(catId, group) { return !!getPref('open')[`${catId}:${group}`]; }
 export function setOpen(catId, group, open) {
   if (_prefs === null) loadPrefs();

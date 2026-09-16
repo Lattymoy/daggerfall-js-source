@@ -65,7 +65,11 @@ test('FIX-F: the swing button is the registry’s - rebind SwingWeapon and the h
     assert.ok(!/e\.button === 2 && !townTalk\.overlayActive|e\.button === 2 && !ctx\.uiOverlayActive|e\.button === 2 && !modalWindowUp/.test(s), `${h}: no raw right-button swing`);
     assert.ok(!/\(e\.buttons & 2\)/.test(s), `${h}: no raw right-button drag`);
   }
-  assert.match(read('src/scenes/shared.js'), /if \(!walkMode \|\| !swingHeld\(buttons\)\) return 'look';/, 'routeMouseDrag reads the registry');
+  // MAC-O4: routeMouseDrag also gates on WeaponSwingMode now (Click /
+  // Click-or-Hold never claim the drag), so the line grew a clause -
+  // the registry check (swingHeld(buttons), not a raw button) is still
+  // exactly what this test is for.
+  assert.match(read('src/scenes/shared.js'), /if \(!walkMode \|\| swingMode !== 0 \|\| !swingHeld\(buttons\)\) return 'look';/, 'routeMouseDrag reads the registry');
   // the window's own right-click (the remove gesture) is still the right button - a UI gesture, not an action
   assert.match(read('src/scenes/dungeon.js'), /overlayClick\?\.\(v\[0\], v\[1\], e\.button === 2, e\.button === 1\)/);
 });

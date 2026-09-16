@@ -287,7 +287,19 @@ export const MOD_SETTINGS = Object.freeze({
       // torch is lit) and `draw()` still answers false, so a player lights a
       // torch and sees nothing. This ONE default departs; Ledger A row MODS-ON.
       'Modules.Sprite': Object.freeze({ default: true, description: 'Sprite: a first-person hand holding the lit torch or lantern.' }),
-      'Modules.Bob': Object.freeze({ default: false, description: 'Bob: the sprite sways as you walk.' }),
+      // HT5 (2026-09-16, Mac: "the torch when being held isn't affected by
+      // the weapon bob like everything else"): THE THIRD DEPARTURE FROM THE
+      // MOD'S SHIPPED KEYS. The mod ships its three motion modules OFF -
+      // they restate Weapon Widget's Bob, Inertia and Step laws so the hand
+      // can move WITH the weapon, and the mod leaves it to the player to
+      // switch on whichever the widget has on (its Bob.Offset says so: "For
+      // use with weapon bob"). This port ships Weapon Widget with Bob ON
+      // (its own shipped default), so a torch hand that shipped still beside
+      // a weapon that sways is the two mods disagreeing about one walk. Bob
+      // follows the widget's shipped default; Inertia and Step stay off, as
+      // the widget ships them. The player may still turn any of the three
+      // either way; this is about what SHIPS.
+      'Modules.Bob': Object.freeze({ default: true, description: 'Bob: the sprite sways as you walk, in step with Weapon Widget\u2019s bob.' }),
       'Modules.Inertia': Object.freeze({ default: false, description: 'Inertia: the sprite lags the look and your movement.' }),
       'Modules.Step': Object.freeze({ default: false, description: 'Step: the sprite\u2019s position is rounded so it moves in steps.' }),
       'Presentation.Tint': Object.freeze({ default: true, description: 'Matches the weapon sprite\'s tint when using First-Person-Lighting.' }),

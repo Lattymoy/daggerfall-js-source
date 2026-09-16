@@ -59,6 +59,7 @@ import { setAmbientTextHost, tickAmbientText } from '../systems/ambientText.js';
 import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';   // U14: the overlay pointer seam
 import { lookScale, lookInvert, keyboardLookRate } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
 import { LookFilter, swingSuppressesLook } from '../player/lookFilter.js';   // AUDIT 28 W7: MouseLookSmoothingFactor; MAC-O2: PlayerMouseLook.Update's swing suppression (:246-248)
+import { getInt } from '../systems/settings.js';   // MAC-O4: Controls/WeaponSwingMode - only Gesture (0) may claim the mousemove drag
 import { MoveAxes } from '../player/moveAxes.js';   // AUDIT 28 W8: MovementAcceleration
 import { CameraRecoiler } from '../player/cameraRecoiler.js';   // AUDIT 28 W9: CameraRecoilStrength
 import { HeadBobber } from '../player/headBobber.js';   // AUDIT 28 W10: HeadBobbing
@@ -473,7 +474,12 @@ export async function bootDungeon(canvas, renderer, params, status) {
       if (v) ctx.overlayPointer?.('move', v[0], v[1], 0);      // ROAD-C c2/S4
       return;
     }
-    if (document.pointerLockElement === canvas && swingHeld(e.buttons)) { ctx.playerAttackInput(e.movementX, e.movementY, true); return; }   // FIX-F: the registry's button
+    // MAC-O4: only Gesture (0) tracks a drag at all - Click/Click-or-Hold
+    // fire off the held latch alone (mousedown/mouseup, polled every
+    // frame regardless of mousemove), so claiming the drag here in those
+    // two modes fed the rig deltas it never reads and froze the look for
+    // nothing. Same law as routeMouseDrag (scenes/shared.js, MAC-O4).
+    if (document.pointerLockElement === canvas && swingHeld(e.buttons) && getInt('Controls', 'WeaponSwingMode', 0, 2) === 0) { ctx.playerAttackInput(e.movementX, e.movementY, true); return; }   // FIX-F: the registry's button
     if (document.pointerLockElement !== canvas) return;
     // AUDIT 28 W7: the delta goes to the look filter's target, not the
     // camera - PlayerMouseLook.ApplyLook (:126); the frame pays it out

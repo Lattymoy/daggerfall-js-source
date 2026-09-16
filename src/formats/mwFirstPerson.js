@@ -940,6 +940,118 @@ export function weaponRecords(bytes) {
   return out;
 }
 
+/** MW-D51: THE CARRIABLE LIGHTS - Morrowind's torch is a LIGH record
+ *  with a mesh, carried in the left hand at the Shield Bone (the same
+ *  slot a shield takes: PRT_Shield / Slot_CarriedLeft) and animated by
+ *  the "torch" group on the LEFT ARM's blend mask. LHDT is 24 bytes
+ *  (loadligh.hpp): float mWeight (0), int mValue (4), int mTime (8),
+ *  int mRadius (12), uint32 mColor (16), int mFlags (20) - and the
+ *  flags are Dynamic 0x1, CARRY 0x2, Negative 0x4, Flicker 0x8, Fire
+ *  0x10, OffDefault 0x20, FlickerSlow 0x40, Pulse 0x80, PulseSlow
+ *  0x100. Only a light the player can CARRY is a candidate for the
+ *  hand; a wall sconce is a LIGH record too. */
+export const MW_LIGHT_CARRY = 0x2;
+export const MW_LIGHT_FIRE = 0x10;
+function readLight(bytes, rec) {
+  const e = { id: '', model: '', name: '', carry: false, fire: false, flags: 0 };
+  for (const sub of subrecords(bytes, rec)) {
+    if (sub.name === 'NAME') e.id = zstr(bytes, sub.start, sub.len).toLowerCase();
+    else if (sub.name === 'MODL') e.model = zstr(bytes, sub.start, sub.len).replace(/\\/g, '/').toLowerCase();
+    else if (sub.name === 'FNAM') e.name = zstr(bytes, sub.start, sub.len);
+    else if (sub.name === 'LHDT') {
+      if (sub.len < 24) continue;   // refused, not read past
+      const dv = new DataView(bytes.buffer, bytes.byteOffset + sub.start, 24);
+      e.flags = dv.getInt32(20, true);
+      e.carry = (e.flags & MW_LIGHT_CARRY) !== 0;
+      e.fire = (e.flags & MW_LIGHT_FIRE) !== 0;
+    }
+  }
+  return e.id && e.model ? e : null;
+}
+
+export function lightRecords(bytes) {
+  const out = [];
+  for (const rec of walkEsm(bytes)) {
+    if (rec.type !== 'LIGH') continue;
+    const e = readLight(bytes, rec);
+    if (e) out.push(e);
+  }
+  return out;
+}
+
+/** MW-D51: WHICH TORCH. Daggerfall's Torch (TEMPLATES.Torch, 247) is
+ *  one item; Morrowind's are many LIGH records. The reference holds
+ *  whatever record the inventory's Slot_CarriedLeft carries - here the
+ *  slot is DF's lit light, so the record is chosen by the same shape
+ *  MW-D38's pickWeaponRecord uses for a blade: a CARRIABLE light whose
+ *  id names a torch, the plain `torch` first (retail's "Torch"), then
+ *  the shortest id (torch_256 over torch_256_yellow - the base over
+ *  its variants), and - MW-D50's law - only one whose mesh the
+ *  attached archives carry, or a torch resolves to a mesh the build
+ *  cannot read and the card says nothing useful. */
+export function pickTorchRecord(lights, { has = null } = {}) {
+  const cands = (lights ?? []).filter((l) => l && l.carry && l.model && /torch/.test(l.id)
+    && (!has || has(`meshes/${l.model}`)));
+  if (!cands.length) return null;
+  const exact = cands.find((l) => l.id === 'torch');
+  if (exact) return exact;
+  return cands.slice().sort((a, b) => a.id.length - b.id.length || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))[0];
+}
+
+/** MW-D51 / RULE 25: the bones of ONE blend mask, by the reference's
+ *  own walk (Animation::detectBlendMask, animation.cpp): a bone belongs
+ *  to the mask whose root name it meets FIRST walking up its parents -
+ *  "Bip01 L Clavicle" is the left arm, and the arm test wins over the
+ *  spine because the clavicle is met before the spine on the way up.
+ *  Answers the LOWERCASED node names under `rootName` (itself
+ *  included), which is the spelling poseSkeleton looks tracks up by.
+ *  A skeleton without the root (the fixture rigs, a rig cut down to an
+ *  arm) answers the empty set, and the caller overlays nothing. */
+export function blendMaskBones(skeleton, rootName = 'bip01 l clavicle') {
+  const out = new Set();
+  if (!skeleton || !skeleton.nodes) return out;
+  const want = String(rootName).toLowerCase();
+  for (const [ref, node] of skeleton.nodes) {
+    let at = ref;
+    let hops = 0;
+    while (at !== undefined && at !== null && at >= 0 && hops++ < 256) {
+      const n = skeleton.nodes.get(at);
+      if (!n) break;
+      if (String(n.name || '').toLowerCase() === want) { out.add(String(node.name || '').toLowerCase()); break; }
+      at = n.parent;
+    }
+  }
+  return out;
+}
+
+/** MW-D51 / RULES 25+26, THE ONE MASK THIS PORT NOW HAS: a second
+ *  animation state WINNING one blend mask while the frame's winner
+ *  keeps the rest. The reference resolves per bone group at
+ *  resetActiveGroups and installs each winner's clock on its mask; in
+ *  the port's single-winner pose pass (fpArm.js's update) the same
+ *  outcome is a TRACK MAP that answers the overlay's track for a bone
+ *  in the mask and the base's track for every other bone, read through
+ *  a SAMPLER that samples an overlay track at the OVERLAY's own clock.
+ *  poseSkeleton asks `tracks.get(name)` and `sampleTrack(track, time)`
+ *  and nothing else, so the pair drops in with no change to the pass.
+ *  A mask bone the overlay does not key falls to the base's track (the
+ *  reference attaches no controller for it and the node keeps its last
+ *  transform; the base's is the safer reading of "last"). */
+export function overlayTracks(base, overlay, bones) {
+  // AUDIT MW-TORCH F4: ONE merged Map per (base, overlay, mask) - built
+  // eagerly so the frame's lookups allocate nothing. The caller memoises
+  // it on those three identities.
+  const out = new Map(base ?? []);
+  if (overlay && bones) {
+    for (const [name, t] of overlay) if (bones.has(name) && t) out.set(name, { __overlay: t });
+  }
+  return out;
+}
+export function overlaySampler(sampleTrack, clock) {
+  const at = typeof clock === 'function' ? clock : () => clock;
+  return (track, time) => (track && track.__overlay ? sampleTrack(track.__overlay, at()) : sampleTrack(track, time));
+}
+
 /** MW-D30: the CLOT records - the ARMO reader's twin, plus CTDT's
  *  TYPE, which the composer needs twice over: DF garments resolve to
  *  MW clothing BY TYPE (a shirt is any CLOT of type 2, id-sorted),
@@ -1095,7 +1207,7 @@ export const ARM_GMST_IDS = Object.freeze([GMST_SNEAK_DELTA]);
 /** MW-LOAD: the SHAPE of extractArmRecords' answer. Bumped whenever a
  *  reader above changes what it returns, so a derived set written by
  *  an older build is refused and re-extracted rather than read wrong. */
-export const ARM_RECORDS_VERSION = 1;
+export const ARM_RECORDS_VERSION = 2;   // MW-D51: + the LIGH records (a set without them is re-extracted)
 
 /**
  * MW-LOAD: EVERY record the arm build reads, in ONE pass of the master.
@@ -1117,7 +1229,7 @@ export const ARM_RECORDS_VERSION = 1;
  */
 export function extractArmRecords(bytes, { gmst = ARM_GMST_IDS } = {}) {
   const want = new Set(gmst.map((id) => String(id).toLowerCase()));
-  const out = { version: ARM_RECORDS_VERSION, parts: [], races: [], armors: [], clothes: [], weapons: [], gmst: {} };
+  const out = { version: ARM_RECORDS_VERSION, parts: [], races: [], armors: [], clothes: [], weapons: [], lights: [], gmst: {} };
   const races = new Map();
   for (const rec of walkEsm(bytes)) {
     switch (rec.type) {
@@ -1126,6 +1238,7 @@ export function extractArmRecords(bytes, { gmst = ARM_GMST_IDS } = {}) {
       case 'ARMO': { const e = readArmor(bytes, rec); if (e) out.armors.push(e); break; }
       case 'CLOT': { const e = readClothing(bytes, rec); if (e) out.clothes.push(e); break; }
       case 'WEAP': { const e = readWeapon(bytes, rec); if (e) out.weapons.push(e); break; }
+      case 'LIGH': { const e = readLight(bytes, rec); if (e) out.lights.push(e); break; }   // MW-D51
       case 'GMST': {
         const g = readGmst(bytes, rec);
         if (want.has(g.name) && !Object.hasOwn(out.gmst, g.name)) out.gmst[g.name] = g.value;
@@ -1143,7 +1256,7 @@ export function extractArmRecords(bytes, { gmst = ARM_GMST_IDS } = {}) {
  *  a torn one, answers false and is re-extracted. */
 export function isArmRecords(r) {
   return !!r && typeof r === 'object' && r.version === ARM_RECORDS_VERSION
-    && ['parts', 'races', 'armors', 'clothes', 'weapons'].every((k) => Array.isArray(r[k]))
+    && ['parts', 'races', 'armors', 'clothes', 'weapons', 'lights'].every((k) => Array.isArray(r[k]))
     && !!r.gmst && typeof r.gmst === 'object';
 }
 

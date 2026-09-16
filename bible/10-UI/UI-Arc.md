@@ -13386,7 +13386,7 @@ items off your character."*
 
 It did not, and the whole of the reason is one line. INV1 hung the
 gesture on the pack's rows - `itemRow`'s `if (from === 'local')
-dragFrom(row, item)` (`ui/enhancedInventory.js:1679`) - and made the
+dragFrom(row, item)` (`ui/enhancedInventory.js:1711`) - and made the
 body a drop TARGET, with `equippedList` saying so in its own comment:
 *"the body is the equip target - `dragFrom`'s pointerup finds it by hit
 test, so the map needs no handler of its own"*. True for the direction
@@ -13571,6 +13571,18 @@ Pin: `test/mwarms_fps.test.js` (one added): the row on the card behind
 the data gate, the two arms of the toggle, the buttons gone, and the
 three consumers still reading the one pref.
 
+**Follow-up (2026-09-16):** online forces `mwArms` on at every boot,
+so the row could never stick there while the archives stayed
+attached; the card gained a confirm-before-destroy "Remove data"
+action routed through `clearStoredMorrowind`. AUDIT MW-TORCH F8: that
+clear emptied the stores and left the COUNT standing - the card said
+"N archives attached" until the next boot and autoBuildArms's data
+gate still passed - so `clearStoredMorrowind` now zeroes the count,
+drops the print and the counted names, and bumps the generation. F7:
+`fpArm.unload()` mid-build (the row's Off, Remove data, pressed while
+the seconds-long build runs) used to be overtaken by the build landing
+after it; a build that lands after an unload is discarded now.
+
 ## MWA3 - THE ARM STANDS FOR THE ENTITY (2026-09-16)
 
 Mac: "my character who is an argonian uses a human morrowind model."
@@ -13602,8 +13614,106 @@ through `setWorn`/`setWeapon`; this is the third that did not.
 beside `armWantedFor` and whether an arm stands at all - "an Argonian
 on a human body" is those two disagreeing, readable in one call.
 
+**AUDIT MW-TORCH F6:** a load landing while the last load's build is
+still running (seconds long) reached the door with `ready()` false,
+went on to `build()`, and was REFUSED ("already building") with no
+queue - the new character wore the old one's body until the next door,
+the report by another road. `build()` queues a build that arrives
+mid-build (PX25/PX26's law for the worn table and the hand) and runs
+it the moment the in-flight one settles, superseding whatever was
+queued for the rig it replaces; autoBuildArms does not warn on a
+queued build. `builtFor()` answers null when nothing stands.
+
 Pins: `test/mwarms_fps.test.js` (two added): `armsStandFor` on each
 of the three identity terms and on `ready()`; `autoBuildArms` going on
 to the build when the standing arm is another's, and standing down
 when it is the entity's own; the gate line re-pinned on
 `standing(entity)`.
+
+## CC-REP, CC-GRID, CC-STEP - THE CUSTOM CLASS BUILDER, FROM THE DISCORD (2026-09-16)
+
+Ember, on the Discord, relayed by Mac: "Class creation menu seems to
+be missing a reputation setting. By default in DFU when making a
+class you can select how it affects your reputation with various
+factions, but it seems to be missing in DFE." And: "the custom class
+building menu being in a list is a bit clunky ... as a list it means
+having to scroll around to see all the options. Also the + and -
+symbols on the buttons seem a bit small."
+
+**CC-REP.** True, and recorded as such since AUDIT 39: the reputation
+window (CreateCharReputationWindow) was the one classic window the
+enhanced view did not draw, because its only door was `repClick(lx,
+ly)` - a pixel hit on a 168x189 panel - and a thumb wants a control,
+not a coordinate faked from one. The flow has that control now:
+`repStep(reps, group, dir)` (`systems/customClass.js`) is one integer
+step on one group's bar with the same value law as a bar click
+(-10..+10, JS's negative zero normalised as the C# short would), and
+`hit.repStep` (`ui/chargen.js`) updates the ledger exactly as the bar
+click does - `repPointsToDistribute`, the negated sum. The enhanced
+builder gained the ReputationButton's row ("Reputations", with what
+the ledger says now) and `customRepPane`: five rows with steppers, the
+points to distribute in the head, and Done through the window's own
+exit gate (the balance must be zero, TEXT.RSC 303). DFU's quirk
+stands: a reopened window's field is 0 until a bar is touched, so
+classic really does let you leave it unbalanced that way, and so does
+this.
+
+**CC-GRID.** The builder is a two-column grid from 900px up - the
+twelve skills down one column, the attributes and the class itself
+down the other, the name across the top and the acts across the foot
+- so the whole class sits on one page on a monitor. Below that width
+it is the list it always was, which a phone still wants.
+
+**CC-STEP.** The steppers drew single angle quotes (U+2039/203A) at
+the row's text size, which read as specks on a large monitor. They
+draw a minus sign and a plus now at the button's own size - 22px on
+the 34px button, 26px on the 44px thumb one.
+
+Pins: `test/ccrep.test.js` - repStep's clamp, group test and plain
+zero; the flow opening the window, stepping the ledger, holding the
+exit until it balances, the reopened window's stale zero; the view
+drawing the window and pressing the flow's doors alone, the grid and
+the glyphs by source.
+
+## DG-LNX + SKIN-CARRY - TWO MORE FROM THE DISCORD (2026-09-16)
+
+**DG-LNX** (Ember, Linux): "Picking the arena2 folder doesn't work.
+Picking a zip with the game files does though." The data gate
+(`scenes/dataSource.js` ensureArena2) has one folder mechanism - an
+`<input webkitdirectory>` - and its arm was an unguarded async
+listener where the zip arm has always been wrapped and reported. So a
+read that threw left the screen on "reading N files..." for ever and
+the boot dead, and an EMPTY pick said "no usable files" and nothing
+more. That is the Linux shape: a sandboxed browser build (Snap or
+Flatpak Firefox and Chromium) hands a pick through the desktop
+portal, which grants FILES cleanly - the zip works - and a whole
+DIRECTORY often not at all, or not readably. Case, separators and the
+nested-folder question were checked and are not it: both arms funnel
+through `normalizeName`. The folder arm is guarded like the zip arm
+now, reads with progress (`reading x/n...`), and on an empty pick or a
+throw says what happened and names the routes that work on that
+setup - the zip, or the folder dragged onto the screen
+(`FOLDER_PICK_HINT`).
+
+**SKIN-CARRY**: "the classic toggle starts the game in enhanced." Two
+things can be behind this. The one BY DESIGN: Play Online forces the
+enhanced skin for everyone (MAC-N3, `onlineLane.js` ONLINE_FORCED_PREFS
+- the lane is the enhanced lane whole, and the Interface row reads
+"On (online)" there), so a classic player who presses Online boots
+enhanced and returns to classic offline. The one that was a hole: the
+toggle's choice had ONE carrier across its reload, the pref write, and
+its failure was swallowed three layers deep - `savePrefs` warned and
+answered false, `setPref` dropped the answer, `setUiSkin` returned the
+skin as if stored, and `switchSkin` deleted the `?skin` override (the
+one thing that would have survived) and reloaded into the default. A
+browser that refuses localStorage - a private window, a blocked site,
+a sandboxed build - did exactly the report. `setPref` returns the
+store's word, `setUiSkin` answers null on a refusal (the in-memory
+choice still stands for the page), and `switchSkin` carries a refused
+choice on the URL for the session.
+
+Pins: `test/dglnx_skincarry.test.js` - a refused store answers false
+and null and the page keeps the choice (a throwing localStorage,
+executed); switchSkin's carry by source; the folder arm's guard,
+progress, empty-pick and throw messages by source.
+

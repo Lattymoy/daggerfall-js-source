@@ -545,7 +545,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
     updateOrientation(true);
   }
 
-  /** [IL] The sprite's world centre for the frame, `UpdateBillboard`'s
+  /** [IL] The sprite's world placement for the frame, `UpdateBillboard`'s
    *  placement (IL_4a1a-IL_4b2c, IL_4ba7-IL_4bd1, IL_4ca0-IL_4ce1) off the
    *  parent's origin - the capsule's centre, half the live height above
    *  the feet - in the yaw frame: the XML X along the right (negated
@@ -553,7 +553,9 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
    *  first-person billboard, and the height by arm:
    *    on exterior water   Y - size/2            (the top at the swim line)
    *    crouching           Y + size/2 - height   (sunk by the crouch)
-   *    else                Y + size/2 - height/2 (the feet on the ground) */
+   *    else                Y + size/2 - height/2 (the feet on the ground)
+   *  ...which is the quad's CENTRE; the renderer takes its BASE, so
+   *  the answer is that centre less half the size (EOTB-FEET below). */
   function place() {
     if (!shown || !batchSize) return null;
     const sp = spriteFor(shown.table, shown.orientation, shown.frame, cfg);
@@ -570,7 +572,18 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
     else y = yOff + size.h * 0.5 - h * 0.5;
     const z = FP && cfg.visibility > 0 ? FP_DEPTH : 0;
     const origin = [cam.feet[0], cam.feet[1] + h * 0.5, cam.feet[2]];
-    return [origin[0] + right[0] * x + fwd[0] * z, origin[1] + y, origin[2] + right[2] * x + fwd[2] * z];
+    // EOTB-FEET (2026-09-16, Mac: "the sprite not connected to the
+    // floor. Like you walk hovering"): the three arms above are the
+    // mod's, and they place the quad's CENTRE - Unity's billboard mesh
+    // is centred on its transform. This renderer's billboard is
+    // BOTTOM-ANCHORED (BB_VS: "centre sits half a height above the
+    // placement base"), and every other caller hands it the base - the
+    // world's flats, the peers' dolls at their feet (net/remotePlayers
+    // .js). Handing it the centre stood the body half its own height
+    // in the air, on every arm alike. The law stays the mod's; the
+    // number handed over is the base the renderer asks for.
+    const base = y - size.h * 0.5;
+    return [origin[0] + right[0] * x + fwd[0] * z, origin[1] + base, origin[2] + right[2] * x + fwd[2] * z];
   }
 
   return {
