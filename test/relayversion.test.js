@@ -20,10 +20,13 @@ import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { RELAY_VERSION } from '../server/src/index.js';
 
-/** Every relay this repo has shipped a law for, and the sha256 of (server/src/index.js + src/net/wire.js) that IS it.
+/** A version bump is `sed world<N>/world<N+1>` over nine test files - RUN IT WITH THIS FILE EXCLUDED, or it
+ *  rewrites a row's KEY and relabels bytes already deployed (AUDIT SLAM / SLAM9 did exactly that, and this pin caught it).
+ *  Every relay this repo has shipped a law for, and the sha256 of (server/src/index.js + src/net/wire.js) that IS it.
  *  Append; never edit an existing row - an old row is a historical fact about bytes that have already been deployed. */
 const LAW = {
-  world69: '27da57b0787d8e18e93dea8358614d9af2e9c65133774755f39960e0ec8f89de',
+  world69: '27da57b0787d8e18e93dea8358614d9af2e9c65133774755f39960e0ec8f89de',   // SLAM8: a keepalive is never tiered; turn counts what was relayed
+  world70: '06cb8eb45de961f9756a71a3cfba19fd84e3a3e7a5217d5e3798e3b11cf4ebed',   // SLAM9: the who budget derived from the socket gates, spent before the scan
 };
 
 const rd = (p) => readFileSync(new URL('../' + p, import.meta.url));

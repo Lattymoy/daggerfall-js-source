@@ -33,7 +33,7 @@ test('AUDIT WORLD6b A5/B3/C2: the wire - an owner is an id by the wire\'s own la
     { i: 1, y: Infinity }, { i: 1, h: -1 }, { i: 1, h: FOE_HEALTH_MAX + 1 }, { i: 1, h: 'x' }, { i: 1, a: -1 }, { i: 1, a: 2 ** 31 }, { i: 1, a: 1.5 }]) assert.equal(validFoeRecord(r), null, `C2: refused whole: ${JSON.stringify(r)}`);
   assert.equal(CELL_PUPPETS_MAX, MAX_ACTIVE_ENCOUNTER_FOES, 'B3: an owner\'s live cap is the pool\'s own'); assert.equal(CELL_FRAME_RECORDS_MAX, 64);
   assert.equal(relay.validFoeRecord, validFoeRecord); assert.equal(relay.CELL_FRAME_RECORDS_MAX, CELL_FRAME_RECORDS_MAX); assert.equal(relay.hitOwnerOf, hitOwnerOf);
-  assert.equal(RELAY_VERSION, 'world69', 'the relay bumped');   // AUDIT WORLD6b-iii(c) C3: the hit arm's byte budget
+  assert.equal(RELAY_VERSION, 'world70', 'the relay bumped');   // AUDIT WORLD6b-iii(c) C3: the hit arm's byte budget
 });
 
 test('AUDIT WORLD6b A1/A2: the Room - a cell\'s blow to a `to` nobody carries delivers nothing, spends nothing and is counted as junk (struck out at DROP_STRIKES_MAX); the funnel is the DESTINATION\'s own bucket - one owner\'s spent bucket stops no blow to another, and the dungeon host\'s is its own', async () => {

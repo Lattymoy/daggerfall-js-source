@@ -72,7 +72,7 @@
 import { tabStorage } from '../systems/appStorage.js';   // the tab's own storage - the seam, never the browser's own (a PIN)
 import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the port's one angle wrap, which cannot loop
 
-import { poseChanged, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, sanitizeChat, chatGate, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS } from './wire.js';
+import { poseChanged, SOCKETS_MAX, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, sanitizeChat, chatGate, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS } from './wire.js';
 
 export { WORLD_CELL, RANGE_PIXELS, worldRoom };
 
@@ -101,6 +101,9 @@ export const GAP_MAX_MS = 1000;
 export const poseHzFor = (peers) => (!(peers > POSE_CROWD) ? POSE_HZ : Math.max(POSE_HZ_MIN, Math.round((POSE_HZ * POSE_CROWD) / peers)));
 /** A pose goes out at least this often, moved or not: the socket's keepalive and the peers' clock. */
 export const HEARTBEAT_MS = 5000;
+/** SLAM9: the introductions a session remembers (`_known`) - two rooms' worth, the one I am in and the one I just
+ *  left, so a blip in either stands its peers as themselves. Past it the stalest is forgotten. */
+export const KNOWN_MAX = SOCKETS_MAX * 2;
 /** The relay this port hosts (server/wrangler.toml). */
 export const DEFAULT_SERVER = 'wss://daggerfall-online.mackcothran.workers.dev';
 /** A peer silent this long is HIDDEN (out of range, or its socket is
@@ -238,6 +241,8 @@ export class OnlineSession {
     this._hbucket = null;         // AUDIT WORLD2 A6: the hits' own gate at home (HIT_HZ_MAX), so a blow never starves the poses at the relay
     this._wbucket = null;         // WORLD6b-iii(e): the asks' own gate at home (WHO_HZ_MAX)
     this._who = new Map();        // WORLD6b-iii(e): id -> when it was asked for (a stranger beyond the welcome's roster, asked once per WHO_RETRY_MS)
+    this._askCursor = null;       // SLAM9: the last id the fair ask rotation (`_askRound`) reached - the next tick starts after it
+    this._known = new Map();      // SLAM9: id -> { name, look } of every introduction this session has had, bounded at KNOWN_MAX - a stranger this session once knew is stood as itself
     this.host = null;             // WORLD1: the room's host, the relay's word; null until the welcome
     this.onHost = null;           // (id, mine) => void: the host changed
     this.onWorld = null;          // (world) => void: the welcome carried the room's memory, or the host published one after it (AUDIT WORLD34 C1)
@@ -357,18 +362,43 @@ export class OnlineSession {
    *  a look may legitimately be null (a client that hello'd without one), and that peer must not be asked for
    *  forever at WHO_RETRY_MS. */
   _member(room, id, p, now, told = true) {
+    this._roomSet(room).add(id);
+    const have = this.peers.get(id);
+    if (have) { if (told) this._refresh(have, p, now); return; }
+    // SLAM9: A STRANGER THIS SESSION ONCE KNEW IS STOOD AS ITSELF. The welcome names the nearest ROSTER_MAX and prunes
+    // the rest of the room's roster (the merge-not-wipe law is about the peers it DOES name); so one socket blip -
+    // a Wi-Fi hiccup, a Durable Object eviction - dropped everyone past the nearest 64, and their next pose re-stood
+    // each of them nameless and look-less, to be asked for all over again. Measured: 199 named and dressed before the
+    // blip, 64 after the welcome, 135 anonymous "Travellers" a moment later. An introduction is a fact about an ID,
+    // not about a socket, so it is kept (`_known`, bounded) and a re-stood stranger wears it at once, told. The join
+    // fan keeps a remembered look current: a peer that changes its gear re-hellos, and the relay tells the room.
+    const knew = told ? null : this._known.get(id);
+    const made = this._peer(knew ? { ...p, name: knew.name, look: knew.look } : p, now);
+    made.told = told || !!knew;
+    if (told) this._remember(id, made);
+    this.peers.set(id, made);
+  }
+  _roomSet(room) {
     let s = this._rooms.get(room);
     if (!s) this._rooms.set(room, s = new Set());
-    s.add(id);
-    const have = this.peers.get(id);
-    if (have) { if (told) this._refresh(have, p, now); } else { const made = this._peer(p, now); made.told = told; this.peers.set(id, made); }
+    return s;
+  }
+  /** SLAM9: the introductions this session has had, newest last, bounded at KNOWN_MAX (two rooms' worth: the one I am
+   *  in and the one I just left) - past it the oldest is forgotten. Re-inserted on every introduction so the bound
+   *  forgets by staleness, not by first sight. */
+  _remember(id, p) {
+    this._known.delete(id);
+    this._known.set(id, { name: p.name, look: p.look });
+    if (this._known.size > KNOWN_MAX) this._known.delete(this._known.keys().next().value);
   }
   _held(id) { for (const s of this._rooms.values()) if (s.has(id)) return true; return false; }
   /** WORLD6b-iii(e): a frame from an id I hold in NO room - a member beyond the welcome's roster (ROSTER_MAX bounds the
    *  welcome, the nearest; a room holds up to SOCKETS_MAX) whose pose, foes or blow reached me through the relay, which
    *  relays only a hello'd socket's frames. Asked for by name through the socket the frame came on, once per
    *  WHO_RETRY_MS per id and WHO_HZ_MAX a second in all; the relay answers with its join, and the next frame is a
-   *  peer's. An ask that cannot be sent (no open socket, the gate) is not marked, so the next frame asks. */
+   *  peer's. An ask that cannot be sent (no open socket, the gate) is not marked, so the next frame asks.
+   *  SLAM9: a POSE no longer asks from here - `_askRound` does, from tick(), fairly. See it for why. A foes frame or a
+   *  blow from a stranger still asks at once: those are rare and the answer is wanted this frame. */
   _askWho(room, id, now) {
     // SLAM6: asked while the peer has not been INTRODUCED, not while it is absent. A stranger's pose now stands the
     // peer at once (`_receive`), so `peers.has(id)` became true on the very first frame and the ask that would have
@@ -385,6 +415,28 @@ export class OnlineSession {
     if (this._who.size >= 256) for (const [k, t] of [...this._who]) if (now - t >= WHO_RETRY_MS) this._who.delete(k);   // the asked list is bounded by its own retry
     this._who.set(id, now);
     return true;
+  }
+  /** SLAM9: THE ASK IS A FAIR ROTATION, NOT A REACTION. It used to fire from every stranger's pose as it arrived, and
+   *  the far tier delivers those in a STABLE order (a rank), so the same head of that order re-qualified after
+   *  WHO_RETRY_MS and won the WHO_HZ_MAX token every time. Measured over a real session, 199 peers, 135 strangers,
+   *  ten minutes: 3,004 asks sent, 54 distinct ids ever asked, 81 never asked once - flat from the first minute to the
+   *  tenth. Not slow: STUCK. Reshuffling the arrival order made it 135 of 135, which is the proof the order was the
+   *  cause. So the asks come from here instead, once a tick, walking every un-introduced peer in turn from where the
+   *  last tick stopped, skipping any asked inside WHO_RETRY_MS and stopping when the gate is dry. Every stranger is
+   *  reached once per pass, whatever order its poses arrive in; a pass over a full room is ~27 s at WHO_HZ_MAX. */
+  _askRound(now) {
+    if (!whoGate(this._wbucket, now).pass) return;   // a peek, not a spend: no token this tick, nothing to walk
+    const ids = [];
+    for (const [id, p] of this.peers) if (!p.told) ids.push(id);
+    if (!ids.length) { this._askCursor = null; return; }
+    const from = this._askCursor ? ids.indexOf(this._askCursor) + 1 : 0;   // -1 + 1 = 0 when the cursor's peer is gone
+    for (let k = 0; k < ids.length; k++) {
+      const id = ids[(from + k) % ids.length];
+      if (this._askWho(this.peers.get(id)?.heardIn ?? this.room, id, now)) { this._askCursor = id; continue; }
+      if (!whoGate(this._wbucket, now).pass) return;   // the gate is why: done until it refills
+      // otherwise `_askWho` declined for its own reasons - inside WHO_RETRY_MS, or no socket for that room right now -
+      // and the next id may be due, or heard through another room
+    }
   }
   _unmember(room, id) {
     this._rooms.get(room)?.delete(id);
@@ -767,12 +819,17 @@ export class OnlineSession {
       // could yet draw. A peer with no look composes the doll a look-less peer composes (net/remotePlayers.js
       // peerStubEntity), and every stranger shares that ONE doll until its own answer lands.
       const pose = validPose(m.p);
-      let p = this.peers.get(m.id);
-      if (!p && pose && typeof m.id === 'string' && m.id !== this.id) {
-        this._member(room, m.id, { id: m.id, name: null, look: null, pose: m.p }, now, false);   // sanitizeName's own default stands over its head until the answer lands
-        p = this.peers.get(m.id);
-      } else if (p && pose) this._arrive(p, pose, now);
-      this._askWho(room, m.id, now);   // until its look is known - a stood stranger is still a stranger
+      if (!pose || typeof m.id !== 'string' || m.id === this.id) return;
+      // SLAM9: A POSE IS PROOF OF MEMBERSHIP IN THE ROOM IT ARRIVED ON. `_rooms` was written by a welcome or a join
+      // alone, so a peer introduced in my own cell and posing through a halo was never a member of the halo - and the
+      // cell's `leave` deleted her while she stood, alive, in the next room over; her next pose re-stood her as a
+      // stranger. Every room a peer speaks in holds it now, and `leave` is per room, as WORLD6b-iii(b) meant.
+      this._roomSet(room).add(m.id);
+      const p = this.peers.get(m.id);
+      if (p) { this._arrive(p, pose, now); return; }
+      this._member(room, m.id, { id: m.id, name: null, look: null, pose: m.p }, now, false);   // sanitizeName's own default stands over its head until the answer lands
+      const stood = this.peers.get(m.id);
+      if (stood && !stood.told) stood.heardIn = room;   // the socket the ask goes down (`_askRound`) - the one this stranger is heard through
     } else if (m.t === 'chat') {
       // CHAT1: checked by the relay's own law (B7) - the id's shape, the name's, the line's; `mine` is the sender's own line back
       const text = typeof m.text === 'string' ? sanitizeChat(m.text) : '';
@@ -791,6 +848,7 @@ export class OnlineSession {
   /** A known peer said hello again: its name and look are the new ones, its pose arrives as any other. */
   _refresh(p, m, now) {
     p.name = sanitizeName(m.name); p.look = validLook(m.look); p.told = true;   // SLAM6: an introduction, so the asks stop
+    this._remember(p.id, p);   // SLAM9: and it is kept, so a blip cannot un-introduce it
     const pose = validPose(m.pose);
     if (pose) this._arrive(p, pose, now); else p.seenAt = now;
   }
@@ -822,6 +880,7 @@ export class OnlineSession {
       if (h.ws && h.status === 'connecting' && now - (h.since ?? now) > BACKOFF_MAX_MS) { const ws = h.ws; h.ws = null; h.status = 'closed'; h.retryAt = now + BACKOFF_MIN_MS + this._rand() * Math.max(0, h.backoff - BACKOFF_MIN_MS); h.backoff = Math.min(BACKOFF_MAX_MS, h.backoff * 2); try { ws.close(1000, 'timeout'); } catch { /* already closed */ } }   // SLAM2: a halo's retry is jittered like the primary's - eight rooms a client, all refused together otherwise
     }
     if (!this.presence && this.status === 'open' && now - this._lastSentAt >= HEARTBEAT_MS && this._send({ t: 'ping' })) this._lastSentAt = now;   // CHAT1: a channel's keepalive, answered without waking the room
+    if (this.presence && this.status === 'open') this._askRound(now);   // SLAM9: the fair ask over every peer not yet introduced
     for (const p of this.peers.values()) {
       if (!p.pose) continue;
       // SLAM3: EASED OVER THE INTERVAL THIS PEER IS ACTUALLY KEEPING, not over an assumed 1/POSE_HZ. The assumption

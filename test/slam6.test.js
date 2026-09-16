@@ -126,22 +126,23 @@ test('SLAM6: at home a stranger\'s pose STANDS the peer at once and asks after -
     assert.ok(p, 'stood on the first frame - not held back for an answer the room answers WHO_ROOM_HZ_MAX a second');
     assert.equal(p.told, false, 'and known to be a stranger still');
     assert.equal(p.shown.x, 9, 'standing where its pose says'); assert.equal(p.look, null, 'in the look-less doll');
-    assert.deepEqual(whos(), ['eve-0003'], 'and asked for');
+    s.tick();   // SLAM9: the ask is the tick's fair round (`_askRound`), not a reaction to the pose that stood it
+    assert.deepEqual(whos(), ['eve-0003'], 'and asked for on the next tick');
     // the ask keeps coming back until the introduction lands - a peer record is not an answer
     now += 60_000;
-    ws.receive({ t: 'pose', id: 'eve-0003', p: at(10, 9) });
+    ws.receive({ t: 'pose', id: 'eve-0003', p: at(10, 9) }); s.tick();
     assert.deepEqual(whos(), ['eve-0003', 'eve-0003'], 'asked again past the retry - it is still a stranger');
     // the answer: now it is told, and the asks stop for good
     ws.receive({ t: 'join', id: 'eve-0003', name: 'Eve', look: { race: 'Nord', gender: 'female', faceIndex: 1, items: [] }, pose: at(10, 9) });
     assert.equal(s.peers.get('eve-0003').told, true); assert.equal(s.peers.get('eve-0003').name, 'Eve');
     now += 60_000;
-    ws.receive({ t: 'pose', id: 'eve-0003', p: at(11, 9) });
+    ws.receive({ t: 'pose', id: 'eve-0003', p: at(11, 9) }); s.tick();
     assert.equal(whos().length, 2, 'an introduced peer is never asked for again');
     assert.equal(s.peers.get('eve-0003').pose.x, 11, 'and its poses are placed as any peer\'s');
     // a look-less peer the relay DID introduce is not asked for either - the mark is the introduction, not the look
     ws.receive({ t: 'join', id: 'nud-0005', name: 'Nud', look: null, pose: at(1, 1) });
     now += 60_000;
-    ws.receive({ t: 'pose', id: 'nud-0005', p: at(2, 1) });
+    ws.receive({ t: 'pose', id: 'nud-0005', p: at(2, 1) }); s.tick();
     assert.equal(s.peers.get('nud-0005').look, null); assert.equal(whos().length, 2, 'a peer with no look of its own is not asked about forever');
     // my own pose back from the relay stands nobody
     ws.receive({ t: 'pose', id: 'mac-0001', p: at(3, 3) });

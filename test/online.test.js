@@ -161,8 +161,9 @@ test('ONLINE1: the session over a fake socket, on its own clock - hello on open,
   assert.equal(stood.name, 'Traveller', 'the wire\'s own name for a peer that has not said one (sanitizeName)');
   assert.equal(stood.look, null, 'and no look until the answer lands - every stranger wears the look-less doll meanwhile');
   assert.equal(stood.shown.x, 7, 'stood where its pose says, not eased in from nowhere');
+  s.tick();   // SLAM9: the ask is the tick's fair round over every un-introduced peer, not a reaction to the pose
   const asks = sockets[0].sent.map((f) => (typeof f === 'string' ? JSON.parse(f) : f)).filter((f) => f.t === 'who');
-  assert.deepEqual(asks.map((f) => f.id), ['zed-0002'], 'and asked for in the same breath - once');
+  assert.deepEqual(asks.map((f) => f.id), ['zed-0002'], 'and asked for on the next tick - once');
   s.peers.delete('zed-0002');
   sockets[0].receive('not json'); sockets[0].receive({ t: 'pose', id: 'bob-0001', p: { x: 1e12, y: 0, z: 0, yaw: 0, pitch: 0 } });
   assert.equal(s.peers.get('bob-0001').pose.x, 1, 'a pose past the world: ignored');

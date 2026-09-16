@@ -44,7 +44,7 @@ test('WORLD6a: the wire - a building is a world room at both ends (the room room
   assert.equal(key, 'interior:m187853213.4'); assert.equal(isWorldRoom(key), true, 'the room the session joins IS a world room');
   assert.equal(interiorLocationKey(PRIVATEERS | 0, 4), key, 'and the memory\'s key is the same spelling (a signed id read unsigned, AUDIT WORLD34 A2)');
   assert.equal(interiorLocationKey(0, 4), null); assert.equal(interiorLocationKey(5, 0), null, 'no id, no key: no room');
-  assert.equal(RELAY_VERSION, 'world69');   // WORLD6b bumped it
+  assert.equal(RELAY_VERSION, 'world70');   // WORLD6b bumped it
 });
 
 test('WORLD6a: the real Room keeps a building\'s memory and hands it to the next joiner; a town\'s frame is still ignored', async () => {

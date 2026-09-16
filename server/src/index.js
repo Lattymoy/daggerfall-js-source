@@ -109,7 +109,7 @@ import { roomOf, parseClient, inRange, poseGate, chatGate, tokenGate, rosterFor,
 
 /** AUDIT WORLD34 D4: the relay names itself in /health - the deploy is by hand (`npx wrangler deploy`), nothing in
  *  CI does it, and until now nothing said which relay was live. Bump it with every relay-changing slice. */
-export const RELAY_VERSION = 'world69';   // SLAM8: a keepalive is never tiered, and the fan's turn counts what the room relayed
+export const RELAY_VERSION = 'world70';   // SLAM9: the who budget is the sum of the socket gates, spent before the scan
 
 const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*' } });
 
@@ -535,13 +535,15 @@ export class Room {
       // AUDIT WORLD6b-iii(e) B3: junk is what a CORRECT client never sends - one's own name (the parser refused a bad
       // one); a name that left between the frame that asked and the ask is the honest race, and answers nothing
       if (!id || id === a.id) { this._junk(ws, a); return; }
-      const target = [...this._all()].find(([other, b]) => other !== ws && b.id === id) ?? null;
-      if (!target) return;
-      // B1: the room's own budget, every asker together - the answer reads storage when the instance has not seen the
-      // look since it woke (a repeat ask reads nothing), and a room-wide bound is what every other arm carries
+      // B1: the room's own budget, every asker together - a room-wide bound is what every other arm carries.
+      // SLAM9: spent BEFORE the scan for the target, not after it. The scan is a fresh SOCKETS_MAX-entry array and a
+      // linear search, and it ran for every ask the budget was about to refuse - so the "room budget" bounded the
+      // sends and the storage reads and left the object's own work unbounded, which is the wrong half to bound.
       const budget = tokenGate(this._roomWho, now, WHO_ROOM_HZ_MAX);
       this._roomWho = budget.bucket;
       if (!budget.pass) return;
+      const target = [...this._all()].find(([other, b]) => other !== ws && b.id === id) ?? null;
+      if (!target) return;
       const [tws, b] = target;
       let look = this._looks.get(b.id) ?? null;
       if (!look) { look = (await this.state.storage.get(lookKey(b.id))) ?? null; if (look) this._looks.set(b.id, look); }

@@ -734,10 +734,24 @@ export const hitGate = (bucket, nowMs) => tokenGate(bucket, nowMs, HIT_HZ_MAX);
  *  (the nearest, AUDIT ONLINE A5), not the room: a member beyond it whose pose, foes or blow reaches me is asked for
  *  by name and answered with its join to the asker alone - a stranger is learned from the relay's own traffic. */
 export const WHO_HZ_MAX = 5;   // AUDIT WORLD6b-iii(e) B5: a mass roster loss (a halo let go) re-learns its peers at this rate - at two a second twenty peers took ten seconds
-/** AUDIT WORLD6b-iii(e) B1: the asks a ROOM answers a second, every socket together - the one arm past the hello that
- *  reads storage (a look), so it carries the room budget every other arm carries; over it the ask is dropped, nobody
- *  struck. A full room of sockets asking at their own rate was 1280 storage reads a second out of one object, for free. */
-export const WHO_ROOM_HZ_MAX = 60;
+/** AUDIT WORLD6b-iii(e) B1: the asks a ROOM answers a second, every socket together; over it the ask is dropped,
+ *  nobody struck.
+ *
+ *  SLAM9 (2026-09-16, AUDIT SLAM): DERIVED, NOT CHOSEN - and the number it replaces was the single biggest thing wrong
+ *  with the branch. This was 60, justified here as bounding STORAGE READS: "the one arm past the hello that reads
+ *  storage (a look)... 1280 storage reads a second out of one object, for free". SLAM5 deleted that cost - the hello
+ *  now fills `_looks`, so an answer on an awake object is a map hit and one send, and reads nothing. The budget
+ *  outlived the expense it was sized for, and it was binding: at 200 players a joiner's welcome names ROSTER_MAX
+ *  (64) and the other 135 must be asked for one at a time, so 200 clients offered ~1,000 asks a second against 60
+ *  answered. Measured over the real Room: the room took 172 s to finish introducing itself, and the worst client
+ *  waited ~148 s - drawn, meanwhile, as the look-less doll every stranger shares.
+ *
+ *  It is now the sum of every socket's own gate: SOCKETS_MAX x WHO_HZ_MAX. A room full of CORRECT clients asking as
+ *  fast as they are allowed is exactly answered, and the room budget binds only when the per-socket gates are somehow
+ *  not the whole story - which is what a room-wide bound is for. The cost at that ceiling is 1,280 map hits and sends
+ *  a second beside the ~59,000 sends the pose fan already pays; a socket the instance has not seen since it woke
+ *  reads one key once and caches it, bounded by the distinct ids in the room. */
+export const WHO_ROOM_HZ_MAX = SOCKETS_MAX * WHO_HZ_MAX;
 /** WORLD6b-iii(e): how long a stranger asked for stays asked at home before the next of its frames asks again. */
 export const WHO_RETRY_MS = 10_000;
 /** AUDIT WORLD6b-iii(e) A1: the most Arrows a foe's body takes from peers' shafts (`ar` on the hit) - a shaft is one

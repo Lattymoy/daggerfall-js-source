@@ -5150,7 +5150,7 @@ mutations, 10 dead.**
 **NOT SEEN ON THE REAL RELAY.** Every number here is this container's
 CPU against the fake Durable Object. A Workers isolate is not this
 machine; treat the SHAPE (quadratic, then linear) as the finding and the
-absolute milliseconds as optimistic. `RELAY_VERSION` is `world69`, and the
+absolute milliseconds as optimistic. `RELAY_VERSION` is `world70`, and the
 relay must be deployed for any of this to be true in production.
 
 
@@ -5425,7 +5425,7 @@ forever). A **foes** frame is still the introduction's: a pose is one
 figure standing where it says it is, a pool is a world, and AUDIT WORLD6b
 A8/C6 holds unchanged.
 
-`RELAY_VERSION` is `world69`. **The relay must be deployed by hand for
+`RELAY_VERSION` is `world70`. **The relay must be deployed by hand for
 any of this to be true in the room** - nothing in CI deploys it.
 
 **Pinned** in `test/slam6.test.js` (6) and in the two re-aimed SLAM1
@@ -5693,3 +5693,76 @@ Three further pin defects, all real:
 - `test/slam4.test.js`'s `_peerHeights` pin is source text only: moving
   the prune line after `return out;` (dead code, text unchanged) keeps it
   green.
+
+## SLAM9 - THE ROOM COULD NOT INTRODUCE ITSELF (2026-09-16, AUDIT SLAM)
+
+The first of the audit's recorded-not-paid findings, and the biggest thing
+wrong with the branch: all three lenses hit it, from three sides.
+
+**AT HOME THE ASK WAS A REACTION, AND IT STARVED.** `_askWho` fired from
+every stranger's pose as it arrived. A rank-ordered far tier delivers
+those in a *stable* order, so the same head of the order re-qualified
+after `WHO_RETRY_MS` and won the `WHO_HZ_MAX` token every time. Measured
+over a real session - 199 peers, 135 strangers, ten minutes:
+
+| | asks sent | distinct ids asked | never asked |
+|---|---|---|---|
+| stable arrival order (a far tier's) | 3,004 | **54 of 135** | **81** |
+| the same, order reshuffled each second | 3,004 | 135 | 0 |
+
+Flat from the first minute to the tenth. Not slow: **stuck**. The
+reshuffled row is the proof the order was the cause. So the ask is now a
+fair rotation from `tick()` over every un-introduced peer (`_askRound`):
+each is reached once per pass whatever order its poses arrive in, skipping
+any asked inside `WHO_RETRY_MS`, stopping when the gate is dry. **After:
+135 of 135 asked, the last of them by t = 26 s** - one pass at
+`WHO_HZ_MAX`, as the arithmetic says.
+
+**AT THE RELAY THE BUDGET GUARDED A COST THAT NO LONGER EXISTED.**
+`WHO_ROOM_HZ_MAX` was 60, and its own comment justified 60 as bounding
+*storage reads*: "the one arm past the hello that reads storage (a look)…
+1280 storage reads a second". SLAM5 deleted that cost - the hello fills
+`_looks`, so an answer on an awake object is a map hit and one send. The
+budget outlived its reason and it was binding: 200 clients offered ~1,000
+asks a second against 60 answered, and the room took **172 s** to finish
+introducing itself. It is now **derived**: `SOCKETS_MAX × WHO_HZ_MAX`, the
+sum of every socket's own gate, so a room of correct clients asking as
+fast as they are allowed is answered in full and the room-wide bound
+binds only when the per-socket gates are not the whole story. And it is
+spent *before* the scan for the target - a refused ask used to cost the
+object a fresh `SOCKETS_MAX`-entry array and a linear search for nothing.
+
+**TWO THINGS THE FIRST TWO MADE VISIBLE.**
+
+*A socket blip re-anonymised everyone past the nearest 64.* The welcome
+prunes the roster it does not name - the merge-not-wipe law (AUDIT ONLINE
+B13) is about the peers it *does* name - and their next pose re-stood each
+as a nameless, look-less stranger to be asked for all over again.
+Measured: 199 named and dressed before the blip, 64 after the welcome,
+135 "Travellers" a moment later. An introduction is a fact about an *id*,
+not about a socket, so it is kept (`_known`, bounded at `KNOWN_MAX` = two
+rooms' worth) and a re-stood stranger wears it at once, told. The join
+fan keeps a remembered look current: a peer that changes gear re-hellos
+and the relay tells the room.
+
+*A pose is proof of membership in the room it arrived on.* `_rooms` was
+written by a welcome or a join alone, so a peer introduced in my cell and
+posing through a halo was never a member of the halo - and the cell's
+`leave` deleted her while she stood, alive, in the next room over; her
+next pose re-stood her as a stranger. Every room a peer speaks in holds
+it now, and `leave` is per room, as WORLD6b-iii(b) meant.
+
+**A version bump nearly relabelled deployed bytes.** The
+`world69 → world70` sed over the test files rewrote the *key* of the
+`world69` row in `test/relayversion.test.js`, so the row claimed `world70`
+had `world69`'s hash. The pin caught it - which is what it is for - and
+the file now says to exclude itself from that sed. `RELAY_VERSION` is
+`world70`.
+
+**Pinned** in `test/slam9.test.js` (6): the full-room starvation case
+driven for 40 simulated seconds; the round's fairness (the next five, not
+the first five again); the blip re-standing peers as themselves; the bound
+on `_known`; membership from a pose across a halo; and 200 asks in one
+instant all answered where the old budget answered 60. Five re-aimed pins
+(`slam6`, `online`, `world6biiie`, `auditworld6biiie`) drive `tick()` now
+rather than expecting an ask on the pose.
