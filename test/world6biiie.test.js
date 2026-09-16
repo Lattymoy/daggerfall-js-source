@@ -62,7 +62,7 @@ test('WORLD6b-iii(e): the wire - pt is a whole number inside ItemEnums.Poisons (
   assert.equal(passed, WHO_HZ_MAX, 'WHO_HZ_MAX asks a second, the rest refused');
   assert.equal(ROSTER_MAX, 64); assert.ok(SOCKETS_MAX > ROSTER_MAX, 'the room holds more than the welcome names - the gap the ask closes');
   assert.equal(relay.hitPoisonOf, hitPoisonOf); assert.equal(relay.whoIdOf, whoIdOf); assert.equal(relay.whoGate, whoGate);
-  assert.equal(RELAY_VERSION, 'world67', 'the relay says which one it is');
+  assert.equal(RELAY_VERSION, 'world68', 'the relay says which one it is');
 });
 
 test('WORLD6b-iii(e): the pools - the striker\'s dose at a PUPPET does not run on the shadow: it rides the blow (pt, with the arrow\'s kind and shaft) to the owner, who doses its foe once inside a damaging blow and lands the Arrow; a second blow carries no dose (spent); a dose outside the enum, or on a blow of no damage, lands nothing; the owner\'s own dose at its own foe lands directly', async () => {
@@ -152,12 +152,14 @@ test('WORLD6b-iii(e): the session - a stranger\'s pose, foes or blow (an id held
     const ws = sockets[0]; ws.open();
     ws.receive({ t: 'welcome', id: 'mac-0001', peers: [{ id: 'bob-0002', name: 'Bob', look, pose }], host: null, world: null });
     const whos = () => ws.sent.filter((x) => x.startsWith('{"t":"who"')).map((x) => JSON.parse(x).id);
-    // a stranger's pose: not placed, asked for
+    // a stranger's pose: asked for - and, since SLAM6, STOOD where it says it is while the answer is on its way
     ws.receive({ t: 'pose', id: 'eve-0003', p: { ...pose, x: 9 } });
-    assert.equal(s.peers.has('eve-0003'), false); assert.deepEqual(whos(), ['eve-0003'], 'asked once');
+    assert.equal(s.peers.get('eve-0003').told, false, 'stood, and still a stranger'); assert.deepEqual(whos(), ['eve-0003'], 'asked once');
+    assert.equal(s.peers.get('eve-0003').shown.x, 9, 'and stood where its pose says');
     ws.receive({ t: 'pose', id: 'eve-0003', p: { ...pose, x: 10 } });
     ws.receive({ t: 'foes', id: 'eve-0003', data: { n: 1, k: 'world:3,12', full: 1, f: [] } });
-    assert.deepEqual(whos(), ['eve-0003'], 'not asked again inside the retry'); assert.deepEqual(foesIn, [], 'a stranger\'s foes are not the world (AUDIT WORLD6b A8/C6 holds)');
+    assert.deepEqual(whos(), ['eve-0003'], 'not asked again inside the retry');
+    assert.deepEqual(foesIn, [], 'a stranger\'s foes are not the world (AUDIT WORLD6b A8/C6 holds) - SLAM6 stands the FIGURE on a pose, never the POOL on a foes frame, so this door is the introduction\'s still');
     // a peer's frames, my own, ask nothing
     ws.receive({ t: 'pose', id: 'bob-0002', p: pose }); ws.receive({ t: 'pose', id: 'mac-0001', p: pose }); ws.receive({ t: 'foes', id: 'bob-0002', data: [1] });
     assert.deepEqual(whos(), ['eve-0003']);

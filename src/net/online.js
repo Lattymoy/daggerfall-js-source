@@ -354,12 +354,17 @@ export class OnlineSession {
   /** WORLD6b-iii(b): do I hold a socket in this room - my own cell, or a halo's? A foes frame keyed to a halo room is
    *  the world (its owner's cell), one keyed to a room I am not in is not. */
   inRoom(key) { return !!key && ((key === this.room && !!this._ws) || this._halo.get(key)?.status === 'open'); }
-  _member(room, id, p, now) {
+  /** SLAM6: `told` is whether this frame is the relay's own INTRODUCTION - a welcome's roster entry or a `join`,
+   *  which carry the peer's name and look. A pose that stands a stranger is not one, and a peer stood by one is
+   *  asked for (`_askWho`) until an introduction arrives. Keyed on the introduction rather than on the look because
+   *  a look may legitimately be null (a client that hello'd without one), and that peer must not be asked for
+   *  forever at WHO_RETRY_MS. */
+  _member(room, id, p, now, told = true) {
     let s = this._rooms.get(room);
     if (!s) this._rooms.set(room, s = new Set());
     s.add(id);
     const have = this.peers.get(id);
-    if (have) this._refresh(have, p, now); else this.peers.set(id, this._peer(p, now));
+    if (have) { if (told) this._refresh(have, p, now); } else { const made = this._peer(p, now); made.told = told; this.peers.set(id, made); }
   }
   _held(id) { for (const s of this._rooms.values()) if (s.has(id)) return true; return false; }
   /** WORLD6b-iii(e): a frame from an id I hold in NO room - a member beyond the welcome's roster (ROSTER_MAX bounds the
@@ -368,7 +373,10 @@ export class OnlineSession {
    *  WHO_RETRY_MS per id and WHO_HZ_MAX a second in all; the relay answers with its join, and the next frame is a
    *  peer's. An ask that cannot be sent (no open socket, the gate) is not marked, so the next frame asks. */
   _askWho(room, id, now) {
-    if (typeof id !== 'string' || id === this.id || this.peers.has(id)) return false;
+    // SLAM6: asked while the peer has not been INTRODUCED, not while it is absent. A stranger's pose now stands the
+    // peer at once (`_receive`), so `peers.has(id)` became true on the very first frame and the ask that would have
+    // learned its name and its gear was never made again.
+    if (typeof id !== 'string' || id === this.id || this.peers.get(id)?.told) return false;
     const at = this._who.get(id);
     if (at != null && now - at < WHO_RETRY_MS) return false;
     const ws = room === this.room ? (this.status === 'open' ? this._ws : null) : (this._halo.get(room)?.status === 'open' ? this._halo.get(room).ws : null);
@@ -726,7 +734,11 @@ export class OnlineSession {
       // WORLD2: the host's live foes - the room's host's alone (a stale frame from a host that just left is not the world)
       // WORLD6b: in a cell every peer's frame is its own foes; in a world room the host's alone
       // AUDIT WORLD6b A8/C6: in a cell a frame is a PEER's - one the roster holds; past ROSTER_MAX a stranger's frames stood puppets the prune took back every frame
-      if (typeof m.id === 'string' && (isCellRoom(this.room) ? this.peers.has(m.id) : m.id === this.host) && m.id !== this.id && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) this._deliver('foes', () => this.onFoes?.(m.id, m.data));
+      // SLAM6: `told`, not `has`. A stranger's POSE now stands the peer at once, so `has` alone would have let its
+      // FOES through on the same frame and re-opened AUDIT WORLD6b A8/C6 - a stream trusted from an id the relay has
+      // not yet named. A pose is one figure standing where it says it is; a foes frame is a whole pool, and that
+      // still waits for the introduction.
+      if (typeof m.id === 'string' && (isCellRoom(this.room) ? !!this.peers.get(m.id)?.told : m.id === this.host) && m.id !== this.id && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) this._deliver('foes', () => this.onFoes?.(m.id, m.data));
       else if (isCellRoom(this.room)) this._askWho(room, m.id, now);   // WORLD6b-iii(e): a stranger's foes - asked for, its frames a peer's once the join lands
     } else if (m.t === 'hit') {
       // WORLD2: a blow on my foe - mine to apply only while I host
@@ -740,10 +752,19 @@ export class OnlineSession {
     } else if (m.t === 'leave') {
       if (typeof m.id === 'string') this._unmember(room, m.id);   // WORLD6b-iii(b): gone from THIS room - kept while another holds it
     } else if (m.t === 'pose') {
-      const p = this.peers.get(m.id);
-      const pose = p ? validPose(m.p) : null;
-      if (p && pose) this._arrive(p, pose, now);
-      else if (!p) this._askWho(room, m.id, now);   // WORLD6b-iii(e): a stranger's pose - a member beyond the welcome's roster, asked for
+      // WORLD6b-iii(e): a stranger's pose - a member beyond the welcome's roster, asked for.
+      // SLAM6: AND STOOD WHERE IT SAYS IT IS, THIS FRAME. The pose used to be dropped until the `who` answered, and
+      // the who is the room's scarcest arm (WHO_HZ_MAX here, WHO_ROOM_HZ_MAX at the relay) - at a full room it is
+      // minutes before a stranger is drawn at all, which would have left SLAM6's far tier reaching people nothing
+      // could yet draw. A peer with no look composes the doll a look-less peer composes (net/remotePlayers.js
+      // peerStubEntity), and every stranger shares that ONE doll until its own answer lands.
+      const pose = validPose(m.p);
+      let p = this.peers.get(m.id);
+      if (!p && pose && typeof m.id === 'string' && m.id !== this.id) {
+        this._member(room, m.id, { id: m.id, name: null, look: null, pose: m.p }, now, false);   // sanitizeName's own default stands over its head until the answer lands
+        p = this.peers.get(m.id);
+      } else if (p && pose) this._arrive(p, pose, now);
+      this._askWho(room, m.id, now);   // until its look is known - a stood stranger is still a stranger
     } else if (m.t === 'chat') {
       // CHAT1: checked by the relay's own law (B7) - the id's shape, the name's, the line's; `mine` is the sender's own line back
       const text = typeof m.text === 'string' ? sanitizeChat(m.text) : '';
@@ -756,12 +777,12 @@ export class OnlineSession {
 
   _peer(p, now) {
     const pose = validPose(p.pose);
-    return { id: p.id, name: sanitizeName(p.name), look: validLook(p.look), pose, from: pose, at: now, seenAt: now, shown: pose ? { ...pose } : null };
+    return { id: p.id, name: sanitizeName(p.name), look: validLook(p.look), told: true, pose, from: pose, at: now, seenAt: now, shown: pose ? { ...pose } : null };
   }
 
   /** A known peer said hello again: its name and look are the new ones, its pose arrives as any other. */
   _refresh(p, m, now) {
-    p.name = sanitizeName(m.name); p.look = validLook(m.look);
+    p.name = sanitizeName(m.name); p.look = validLook(m.look); p.told = true;   // SLAM6: an introduction, so the asks stop
     const pose = validPose(m.pose);
     if (pose) this._arrive(p, pose, now); else p.seenAt = now;
   }

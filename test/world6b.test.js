@@ -36,7 +36,7 @@ test('WORLD6b: the wire - a cell is world:<x>,<y> alone (no dungeon, no building
   assert.equal(hitOwnerOf({ to: 'bbbb-0002' }), 'bbbb-0002'); assert.equal(hitOwnerOf({ to: 'x'.repeat(40) }), 'x'.repeat(40), 'the wire\'s own id law (AUDIT WORLD6b A5: ID_RE, 4 to 40 of [A-Za-z0-9_-])');
   for (const d of [{ to: '' }, { to: 'a' }, { to: 'x'.repeat(41) }, { to: 'bbbb 0002' }, { to: 7 }, { to: null }, {}, null, undefined, 'bbbb-0002', ['bbbb-0002']]) assert.equal(hitOwnerOf(d), null, JSON.stringify(d));
   assert.equal(relay.isCellRoom, isCellRoom, 'one home at both ends'); assert.equal(relay.hitOwnerOf, hitOwnerOf); assert.equal(relay.streamsFoes, streamsFoes);
-  assert.equal(RELAY_VERSION, 'world67', 'the relay says which one it is');
+  assert.equal(RELAY_VERSION, 'world68', 'the relay says which one it is');
 });
 
 test('WORLD6b: the Room - in a cell ANYONE hello\'d streams foes (prefixed or not, no host asked, no strike counted) and everyone else hears it with the sender\'s id; a hit goes to the socket `to` names alone - never to the striker, nowhere without a `to` or to one not in the room; a cell keeps no memory (a world frame is refused as too large); the dungeon\'s law is untouched', async () => {

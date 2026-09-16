@@ -456,7 +456,7 @@ export function validSharedFoe(sf) {
   return out;
 }
 
-/** SLAM1 (2026-09-16, Mac: Daggerfall's 30th, a streamer's server slam): THE MOST LISTENERS ONE POSE IS FANNED TO.
+/** SLAM1 (2026-09-16, Mac: Daggerfall's 30th, a streamer's server slam): THE LISTENERS ONE POSE REACHES AT ONCE.
  *
  *  A pose reaches everyone a room holds within range, so a room's cost is N senders times N listeners - measured over
  *  the real Room on the fake Durable Object, a crowd standing together costs 2.4k sends a second at 16 players,
@@ -464,31 +464,67 @@ export function validSharedFoe(sf) {
  *  IT: the cull is why a cell is cheap when the country is spread out, and an event is precisely everybody
  *  converging on one spot, where every range test passes.
  *
- *  What saves it is that nobody can SEE two hundred people. A name stops at NAME_RANGE (60 scene units), at most
- *  BODIES_MAX (8) peers ever stand in a Morrowind body, and the rest are billboards in a crowd. So a pose goes to
- *  the NEAREST listeners and no further - the same bound, and the same reason, as `rosterFor`'s nearest-ROSTER_MAX
- *  welcome. The cost stops being N squared and becomes N times this.
+ *  What saves it is that nobody can SEE two hundred people at once. A name stops at NAME_RANGE (60 scene units), at
+ *  most BODIES_MAX (8) peers ever stand in a Morrowind body, and the rest are billboards in a crowd. So this many
+ *  listeners - the nearest - hear every pose the sender says. The cost stops being N squared.
  *
- *  A listener past the bound simply hears nothing from that sender for a while: the silence law (AUDIT ONLINE
- *  B3/B11/B14) HIDES a silent peer rather than removing it, so nobody is dropped from the room and anyone who walks
- *  closer resumes at the next pose. */
+ *  SLAM6 (2026-09-16, AUDIT SLAM): AND THE REST HEAR THE SAME POSES LESS OFTEN, which is the half SLAM1 got wrong.
+ *  SLAM1 stopped here, and a listener past the bound heard NOTHING from that sender - so the silence law (AUDIT
+ *  ONLINE B3/B11/B14) HID it after PEER_TIMEOUT_MS. That is not a peer gone quiet, it is a peer ERASED, and it
+ *  falls hardest on exactly the player an event is held for: the bound is a RANK, so the DENSEST player in the room
+ *  reaches the SMALLEST radius. Measured over this law at 200 players standing in one town block, the man in the
+ *  middle was heard by 32 of 199 and hidden from the other 167, whichever way the crowd was spread. */
 export const POSE_FAN_MAX = 32;
 
-/** The listeners one pose really goes to. `list` is whatever the caller holds, `poseOf` reads a listener's last
- *  pose, and `from` is the sender's. Under the bound the list is returned AS IT IS (no sort, no copy) - the whole
- *  point is to cost nothing in the rooms that do not need it. Over it, the nearest `max` win; a listener with no
- *  pose yet sorts last, because a peer that has never said where it is cannot be near.
- *  The ordering is Euclidean in the POSE'S OWN FRAME, which is a cell's world units or a place's scene units - it
- *  never leaves one room, so it never has to agree across the two. */
-export function nearestFan(list, from, poseOf, max = POSE_FAN_MAX) {
-  if (!Array.isArray(list) || list.length <= max) return list;
+/** SLAM6: one pose in this many is heard by a listener past POSE_FAN_MAX - the FAR TIER's share.
+ *
+ *  NOT A GUESS, and not a budget: it is the largest share the client's own ease can still walk. A peer is eased over
+ *  its OWN observed interval (net/online.js `tick`, `_arrive`), and that interval is clamped at GAP_MAX_MS - past it
+ *  the ease finishes early and the peer STANDS until the next pose. A far listener's interval is `share / hz`, and
+ *  the crowded rate never falls below POSE_HZ_MIN (net/online.js poseHzFor), so the largest share that keeps every
+ *  far peer WALKING is POSE_HZ_MIN * GAP_MAX_MS / 1000 = 4. Above the crowd threshold hz is higher and the interval
+ *  is shorter still; below it no room is over the bound at all and this never applies.
+ *
+ *  The cost is arithmetic, not observation: a pose costs at most `POSE_FAN_MAX + ceil((n - 1 - POSE_FAN_MAX)/share)`
+ *  sends instead of `n - 1`. At 200 players in one room at 4 Hz that is 59.2k sends a second against 159.2k
+ *  unbounded - and against SLAM1's 25.6k, which bought the saving by hiding 84% of the room from each sender. Run
+ *  over this law across a 30-second standing, uniform and packed alike: 59.0k a second, every one of the 199
+ *  listeners heard the man in the middle, and the longest any of them went without him was 1000ms, exactly
+ *  GAP_MAX_MS. At SOCKETS_MAX (256) the same sum is 89.9k, beside the 91.2k at 96 players SLAM1 observed a real
+ *  object carry. */
+export const POSE_FAR_SHARE = 4;
+
+/** The listeners sorted by distance from `from`, nearest first; one with no pose yet sorts last, because a peer that
+ *  has never said where it is cannot be near. The ordering is Euclidean in the POSE'S OWN FRAME, which is a cell's
+ *  world units or a place's scene units - it never leaves one room, so it never has to agree across the two. */
+function ranked(list, from, poseOf) {
   const d2 = (x) => {
     const p = poseOf(x);
     if (!p || !from || !finite(p.x) || !finite(p.z)) return Infinity;
     const dx = p.x - from.x, dz = p.z - from.z;
     return dx * dx + dz * dz;
   };
-  return list.map((x) => [d2(x), x]).sort((a, b) => a[0] - b[0]).slice(0, max).map(([, x]) => x);
+  return list.map((x) => [d2(x), x]).sort((a, b) => a[0] - b[0]).map(([, x]) => x);
+}
+
+/** The nearest `max` of `list` to `from`. Under the bound the list is returned AS IT IS (no sort, no copy) - the
+ *  whole point is to cost nothing in the rooms that do not need it. The WELCOME's door (rosterFor). */
+export function nearestFan(list, from, poseOf, max = POSE_FAN_MAX) {
+  if (!Array.isArray(list) || list.length <= max) return list;
+  return ranked(list, from, poseOf).slice(0, max);
+}
+
+/** SLAM6: the listeners THIS pose goes to - the nearest `max`, every pose, and one turn of the far tier: the rest
+ *  are cut into `share` slices by distance and `turn` (the sender's own pose counter) says which slice is served.
+ *  Every listener in the room is therefore served at least once every `share` poses and NOBODY is ever hidden by
+ *  the bound; the near ones simply hear it `share` times as often.
+ *  Under the bound the list is returned AS IT IS, exactly as `nearestFan`. */
+export function poseFan(list, from, poseOf, turn = 0, max = POSE_FAN_MAX, share = POSE_FAR_SHARE) {
+  if (!Array.isArray(list) || list.length <= max) return list;
+  const sorted = ranked(list, from, poseOf);
+  const slice = Math.ceil((sorted.length - max) / share);
+  const start = max + ((((turn | 0) % share) + share) % share) * slice;
+  return sorted.slice(0, max).concat(sorted.slice(start, start + slice));
 }
 
 /** A pose the room will relay, or null. */

@@ -150,7 +150,20 @@ test('ONLINE1: the session over a fake socket, on its own clock - hello on open,
   sockets[0].receive({ t: 'join', id: 'bob-0001', name: '<b>Bob☃</b>', look: null, pose: { x: 'NaN-town' } });
   assert.equal(s.peers.get('bob-0001').name, '<b>Bob</b>', 'the name sanitized as the relay would'); assert.equal(s.peers.get('bob-0001').pose, null, 'a pose that is not one: none');
   sockets[0].receive({ t: 'pose', id: 'bob-0001', p: { x: 1, y: 0, z: 0, yaw: 0, pitch: 0 } }); assert.equal(s.peers.get('bob-0001').pose.mv, 0, 'mv defaulted');
-  sockets[0].receive({ t: 'pose', id: 'nobody', p: pose(1) }); assert.equal(s.peers.size, 1, 'a pose from an id never introduced: ignored');
+  // SLAM6 re-aimed this line: a pose from an id never introduced used to be IGNORED, and the peer waited on a `who`
+  // the room answers WHO_ROOM_HZ_MAX a second in all - minutes, in a full room. It now stands the peer where it says
+  // it is, unnamed and unlooked, and asks after.
+  sockets[0].sent.length = 0;
+  sockets[0].receive({ t: 'pose', id: 'zed-0002', p: pose(7) });
+  assert.equal(s.peers.size, 2, 'SLAM6: a pose from an id never introduced STANDS that peer at once');
+  const stood = s.peers.get('zed-0002');
+  assert.equal(stood.told, false, 'and it is still a stranger - the relay has not introduced it');
+  assert.equal(stood.name, 'Traveller', 'the wire\'s own name for a peer that has not said one (sanitizeName)');
+  assert.equal(stood.look, null, 'and no look until the answer lands - every stranger wears the look-less doll meanwhile');
+  assert.equal(stood.shown.x, 7, 'stood where its pose says, not eased in from nowhere');
+  const asks = sockets[0].sent.map((f) => (typeof f === 'string' ? JSON.parse(f) : f)).filter((f) => f.t === 'who');
+  assert.deepEqual(asks.map((f) => f.id), ['zed-0002'], 'and asked for in the same breath - once');
+  s.peers.delete('zed-0002');
   sockets[0].receive('not json'); sockets[0].receive({ t: 'pose', id: 'bob-0001', p: { x: 1e12, y: 0, z: 0, yaw: 0, pitch: 0 } });
   assert.equal(s.peers.get('bob-0001').pose.x, 1, 'a pose past the world: ignored');
   s.leave(); assert.equal(s.room, null); assert.equal(s.status, 'closed'); assert.equal(sockets[0].closed.code, 1000);

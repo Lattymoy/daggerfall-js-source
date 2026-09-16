@@ -636,7 +636,11 @@ test('CHAT1 / AUDIT CHAT: the host by source - world.js starts the chat with the
   const online = rd('src/net/online.js');
   assert.match(online, /if \(!this\.presence && this\.status === 'open' && now - this\._lastSentAt >= HEARTBEAT_MS && this\._send\(\{ t: 'ping' \}\)\) this\._lastSentAt = now;/, 'the channel heartbeat is a ping the runtime answers in its sleep');
   const room = rd('server/src/index.js');
-  assert.match(room, /if \(m\.t === 'pose' \|\| m\.t === 'ping'\) \{[\s\S]*?const chat = isChatRoom\(a\.key\);\s*if \(!this\._meter\(ws, a, Date\.now\(\), \{ pose: m\.t === 'pose' && !chat \? m\.p : a\.pose \}\)\) return;[^\n]*\n[^\n]*\n\s*if \(chat\) return;/, 'AUDIT CHAT A3: a channel\'s pose is gated (the one meter, AUDIT WORLD A1) before it is declined');
+  // SLAM6 re-aimed this: the meter's patch grew a `turn` and the call was split over two lines, so the shape moved.
+  // The LAW is unchanged and is what the slice asserts - the one meter runs on a channel's pose BEFORE the decline -
+  // so the pin still reads the order, over a source with its comments stripped rather than around them.
+  const bare = (src) => src.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, ' ');
+  assert.match(bare(room), /if \(m\.t === 'pose' \|\| m\.t === 'ping'\) \{\s*const chat = isChatRoom\(a\.key\);\s*const posed = m\.t === 'pose' && !chat;\s*const met = this\._meter\(ws, a, Date\.now\(\), \{ pose: posed \? m\.p : a\.pose,[^\n]*\}\);\s*if \(!met\) return;\s*if \(m\.t === 'ping'\)[^\n]*\s*if \(chat\) return;/, 'AUDIT CHAT A3: a channel\'s pose is gated (the one meter, AUDIT WORLD A1) before it is declined');
   assert.match(room, /if \(other === ws \|\| chat \|\| inRange\(a\.key \?\? '', a\.pose, b\.pose\)\) this\._send\(other, out\);/, 'the fan: the sender, a channel\'s everyone, a place\'s range');
   assert.match(room, /const room = tokenGate\(this\._roomChat, now, CHAT_ROOM_HZ_MAX\);/, 'the room\'s own budget (A2)');
   const dial = rd('src/ui/pixelDial.js');

@@ -16,9 +16,17 @@
 // the harness's own JSON.parse, and "over budget" named a budget this repo does not define. The send counts are
 // exact BECAUSE they are arithmetic - N x min(N-1, FAN) x rate - not because anybody observed them. On relay work
 // alone the bound may even cost more at 200; it wins only if ws.send() is dear next to a 199-element sort.)
+//
+// SLAM6 (2026-09-16, AUDIT SLAM) CORRECTED THE SECOND HALF OF THIS. "The nearest win and the rest hear silence" was
+// not a bound, it was an ERASURE: the silence law HIDES a peer after PEER_TIMEOUT_MS, so every listener past the
+// bound lost that sender off its screen entirely. And because the bound is a RANK, the loss fell hardest on the
+// densest player in the room - measured at 200 standing in one town block, the man in the middle was heard by 32 and
+// hidden from 167, which at an event is the one person everybody came for. The nearest POSE_FAN_MAX still hear every
+// pose; the rest now hear one in POSE_FAR_SHARE by turns, and nobody is hidden. The saving is smaller and real:
+// 59.2k sends a second at 200 rather than 159.2k unbounded (arithmetic, as above - not an observation).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { nearestFan, POSE_FAN_MAX, ROSTER_MAX, PIXEL_UNITS } from '../src/net/wire.js';
+import { nearestFan, POSE_FAN_MAX, POSE_FAR_SHARE, ROSTER_MAX, PIXEL_UNITS } from '../src/net/wire.js';
 import * as relay from '../server/src/relay.js';
 import { fakeRoom } from './fakeRoom.mjs';
 
@@ -60,7 +68,7 @@ test('SLAM1: a listener that has never said where it is sorts LAST - a peer with
   assert.deepEqual(nearestFan([{ id: 'nan', p: { x: NaN, z: 0 } }, { id: 'ok', p: at(99, 99) }], at(0, 0), (x) => x.p, 1).map((x) => x.id), ['ok']);
 });
 
-test('SLAM1: THE RELAY FANS ONE POSE TO THE NEAREST POSE_FAN_MAX AND NO FURTHER - and the ones past it are still IN the room, told nothing rather than dropped (mutant: the unbounded fan, which is N squared and the whole reason for this)', async () => {
+test('SLAM1/SLAM6: THE RELAY FANS ONE POSE TO THE NEAREST POSE_FAN_MAX AT FULL RATE AND THE REST BY TURNS - and the ones past the bound are still IN the room, heard less often rather than dropped (mutants: the unbounded fan, which is N squared and the whole reason for this; SLAM1\'s own law, which told them nothing at all)', async () => {
   const n = POSE_FAN_MAX + 16;
   const r = fakeRoom('town:m9');
   const ws = [];
@@ -75,12 +83,22 @@ test('SLAM1: THE RELAY FANS ONE POSE TO THE NEAREST POSE_FAN_MAX AND NO FURTHER 
   for (const s of ws) s.sent.length = 0;
   // the LAST player moves: the nearest listeners are the ones just before it
   await r.pose(ws[n - 1], at(0, (n - 1) * 4 + 1));
+  const far = n - 1 - POSE_FAN_MAX;   // the listeners past the bound: 15 of them here
   const heard = ws.map((s, i) => [i, ofType(s, 'pose').length]).filter(([, c]) => c > 0);
-  assert.equal(heard.length, POSE_FAN_MAX, `one pose reached ${heard.length} listeners, not ${POSE_FAN_MAX}`);
+  assert.equal(heard.length, POSE_FAN_MAX + Math.ceil(far / POSE_FAR_SHARE), 'the nearest bound, plus ONE TURN of the rest');
   const ids = heard.map(([i]) => i).sort((a, b) => a - b);
   assert.equal(ids[ids.length - 1], n - 2, 'the nearest neighbour heard it');
-  assert.equal(ids[0], n - 1 - POSE_FAN_MAX, 'and the set is the contiguous nearest run, not the first N in the room');
+  assert.ok(ids.includes(n - 1 - POSE_FAN_MAX), 'the whole nearest run is in, every pose');
   assert.equal(ofType(ws[n - 1], 'pose').length, 0, 'never back to the sender');
+  // SLAM6: AND NOBODY IS LEFT OUT. Over POSE_FAR_SHARE consecutive poses every listener in the room has heard the
+  // sender at least once - which is the whole difference between a peer gone quiet and a peer ERASED, because the
+  // silence law hides one that says nothing for PEER_TIMEOUT_MS.
+  for (let t = 1; t < POSE_FAR_SHARE; t++) await r.pose(ws[n - 1], at(0, (n - 1) * 4 + 1 + t));
+  const ever = ws.map((s, i) => [i, ofType(s, 'pose').length]).filter(([i, c]) => c > 0 && i !== n - 1);
+  assert.equal(ever.length, n - 1, `over ${POSE_FAR_SHARE} poses every one of the ${n - 1} listeners heard the sender`);
+  const nearest = ws.slice(n - 1 - POSE_FAN_MAX, n - 1);
+  assert.ok(nearest.every((s) => ofType(s, 'pose').length === POSE_FAR_SHARE), 'the nearest heard EVERY pose');
+  assert.ok(ws.slice(0, far).every((s) => ofType(s, 'pose').length === 1), 'and each of the rest heard exactly one of them');
   // THE ONES PAST THE BOUND ARE NOT DROPPED: no leave, no close - the silence law hides a quiet peer and keeps it
   assert.equal(ws.filter((s) => s.closed).length, 0, 'nobody was closed for standing too far back');
   assert.equal(ws.reduce((a, s) => a + ofType(s, 'leave').length, 0), 0, 'and nobody was said to have left');
@@ -104,5 +122,5 @@ test('SLAM1: a cell is bounded too - the range cull is not the bound, because an
   for (const s of ws) s.sent.length = 0;
   await r.pose(ws[0], at(base.x + 0.5, base.z));
   const heard = ws.filter((s) => ofType(s, 'pose').length > 0).length;
-  assert.equal(heard, POSE_FAN_MAX, 'a crowd inside one range is bounded like any other crowd');
+  assert.equal(heard, POSE_FAN_MAX + Math.ceil((n - 1 - POSE_FAN_MAX) / POSE_FAR_SHARE), 'a crowd inside one range is bounded like any other crowd - and tiered like any other crowd');
 });

@@ -187,7 +187,7 @@ test('AUDIT WORLD6b-iii(e) B1/B2/B9: the Room - who carries the room\'s budget (
   assert.match(s, /if \(this\._attach\(tws\)\?\.id !== b\.id\) return;/, 'B9: the socket read again after the await');
   assert.match(s, /this\._looks\.set\(m\.id, m\.look\); \}/, 'set at the hello'); assert.match(s, /this\._looks\.delete\(a\.id\);/, 'gone at the leave'); assert.match(s, /this\._looks\.clear\(\);\s*\n\s*const dead = \['hellos'\];/, 'cleared with the sweep');
   assert.match(s, /if \(!id \|\| id === a\.id\) \{ this\._junk\(ws, a\); return; \}\s*\n\s*const target = [^\n]*\n\s*if \(!target\) return;/, 'B3: one\'s own name is junk, a name that left is nothing');
-  assert.equal(RELAY_VERSION, 'world67', 'the relay says which one it is');
+  assert.equal(RELAY_VERSION, 'world68', 'the relay says which one it is');
 });
 
 test('AUDIT WORLD6b-iii(e) B4/B6: the session forgets who it asked with the room (leave, and a join elsewhere); the parser refuses a bad name as an error, and passes a good one', () => {

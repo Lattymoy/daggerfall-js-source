@@ -5139,7 +5139,7 @@ mutations, 10 dead.**
 **NOT SEEN ON THE REAL RELAY.** Every number here is this container's
 CPU against the fake Durable Object. A Workers isolate is not this
 machine; treat the SHAPE (quadratic, then linear) as the finding and the
-absolute milliseconds as optimistic. `RELAY_VERSION` is `world67`, and the
+absolute milliseconds as optimistic. `RELAY_VERSION` is `world68`, and the
 relay must be deployed for any of this to be true in production.
 
 
@@ -5340,3 +5340,90 @@ against storage that enforces the 128-key limit. **8 mutations, 8
 dead** - including one that survived the first cut: nothing asserted the
 roster still CARRIED its looks, and reading nothing from storage looks
 identical to answering null for everybody, which draws no peer at all.
+
+## SLAM6 - THE FAN STOPPED ERASING PEOPLE (2026-09-16, AUDIT SLAM)
+
+The first of the four AUDIT SLAM findings, and the one this branch's own
+SLAM1 introduced: **the pose fan's bound did not quiet a distant peer, it
+deleted one.**
+
+**THE ROOT.** SLAM1 bounded the fan to the nearest `POSE_FAN_MAX` (32)
+listeners and sent everyone else *nothing*. Its own note called that
+"hearing silence", and pointed at the silence law to say nobody was
+dropped. But the silence law is exactly what makes it fatal: a peer that
+says nothing for `PEER_TIMEOUT_MS` is **HIDDEN**. So every listener past
+the bound did not see a still figure - it saw an empty square.
+
+And the bound is a **rank**, not a distance, so the loss is worst for the
+player with the most people around them. The nearest 32 of a crowded
+player fill a tiny radius; the nearest 32 of a lone walker reach the
+whole town. At an event the most crowded player in the room is the person
+everybody came for.
+
+**MEASURED**, over the shipped law across a thirty-second standing, 200
+players in a disc one RMB block wide (102.4 scene units), the streamer
+dead centre; run twice, once with the crowd spread evenly and once packed
+towards the middle, with identical results:
+
+| | sends/s | the streamer was heard by | hidden from | worst gap |
+|---|---|---|---|---|
+| unbounded | 159,200 | 199/199 | 0 | 250 ms |
+| SLAM1 | 25,600 | **32/199** | **167** | 250 ms |
+| SLAM6 | 59,000 | **199/199** | **0** | 1000 ms |
+
+**THE FIX IS A TIER, NOT A WIDER BOUND.** Raising `POSE_FAN_MAX` moves
+the cliff; it does not remove it. `poseFan` (net/wire.js) sends every
+pose to the nearest `POSE_FAN_MAX` and cuts everyone else into
+`POSE_FAR_SHARE` slices by distance, serving one slice per pose by turns.
+Every listener in the room hears the sender at least once per rotation,
+the cost stays `POSE_FAN_MAX + ceil((n-1-POSE_FAN_MAX)/share)` per pose,
+and the only state it needs is a counter on the sender's own attachment
+(`turn`, masked to 16 bits).
+
+**THE SHARE IS DERIVED, NOT CHOSEN.** A peer is eased over its own
+observed interval (SLAM3), and that interval is clamped at `GAP_MAX_MS` -
+past it the ease finishes early and the peer *stands*. A far listener's
+interval is `share / hz`; the crowded rate never falls below
+`POSE_HZ_MIN`. So `POSE_HZ_MIN * GAP_MAX_MS / 1000 = 4` is the largest
+share for which every far peer still **walks**, and the measurement
+agrees exactly: the longest any of the 199 went without the streamer was
+1000 ms, which is `GAP_MAX_MS` to the millisecond.
+
+**THE OTHER HALF IS AT HOME, AND WITHOUT IT THE FIRST HALF DELIVERS
+NOTHING.** A pose from an id the welcome never named was *dropped* while
+a `who` was asked - and the welcome names only the nearest `ROSTER_MAX`
+(64), so at 200 players most of the room is a stranger to most of the
+room. The `who` path is the room's scarcest arm (`WHO_HZ_MAX` 5 a second
+per client, `WHO_ROOM_HZ_MAX` 60 a second for the whole room), so the far
+tier would have reached people the client could not yet draw. A
+stranger's pose now **stands** the peer where it says it is - the wire's
+own default name, no look, and therefore the look-less doll that *every*
+stranger shares, which costs the paperdoll cache one entry rather than
+one per stranger. The ask goes on to learn who it is.
+
+The mark for that ask moved with it: `_askWho` is keyed on whether the
+relay has **introduced** the peer (`told`), not on whether a peer record
+exists (which the stand makes true on the first frame, so the ask would
+never be made again) and not on whether it has a look (which a peer that
+hello'd without one legitimately lacks, so it would be asked about
+forever). A **foes** frame is still the introduction's: a pose is one
+figure standing where it says it is, a pool is a world, and AUDIT WORLD6b
+A8/C6 holds unchanged.
+
+`RELAY_VERSION` is `world68`. **The relay must be deployed by hand for
+any of this to be true in the room** - nothing in CI deploys it.
+
+**Pinned** in `test/slam6.test.js` (6) and in the two re-aimed SLAM1
+relay pins, driven over the real `Room` on the fake Durable Object.
+**14 mutations, 14 dead.** SLAM1's own test header carries a correction
+naming what this withdrew.
+
+**Still open, recorded and not paid** (the `who` path's throughput). At
+200 players a joiner hears ~135 strangers and can ask for 5 a second,
+against a room that answers 60 a second in all; the back of the crowd
+therefore stands as the look-less doll for tens of seconds before it
+wears its own gear. Nobody is invisible and nobody is hidden, which is
+what this slice was for, but the introduction is now the bottleneck the
+fan used to hide. The fix is a batched ask - one `who` frame naming up to
+N ids, answered with N joins - and it is a wire change, so it is its own
+slice.
