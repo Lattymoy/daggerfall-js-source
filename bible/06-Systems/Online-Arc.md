@@ -1719,7 +1719,9 @@ law pinned on a synthetic value is not pinned.
 
 **THE RELAY MUST BE REDEPLOYED** for this fix to reach a player
 (`cd server && npx wrangler deploy`): it refuses by the same regex, and
-the deploy is by hand, not in CI. `/health` now answers with
+the deploy was by hand, not in CI, when this was written (since SRV-N/CI,
+PR #209, the push to main deploys a version drift -
+`.github/workflows/relay-deploy.yml`). `/health` now answers with
 `RELAY_VERSION` (`world34`) so a stale relay can be told from a browser
 tab (D4).
 
@@ -5442,7 +5444,8 @@ figure standing where it says it is, a pool is a world, and AUDIT WORLD6b
 A8/C6 holds unchanged.
 
 `RELAY_VERSION` is `world68` (this line first read `world72`: the later slices' version-bump seds relabelled it - the same in-place rewrite the ledger pin forbids for its rows, caught by the final audit). **The relay must be deployed by hand for
-any of this to be true in the room** - nothing in CI deploys it.
+any of this to be true in the room** - nothing in CI deployed it then; since
+SRV-N/CI (PR #209) the push to main does, on a version drift.
 
 **Pinned** in `test/slam6.test.js` (6) and in the two re-aimed SLAM1
 relay pins, driven over the real `Room` on the fake Durable Object.
