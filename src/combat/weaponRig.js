@@ -44,6 +44,7 @@ import { fpArm, hasDaggerfallArrows } from './fpArm.js';
 import { getPref } from '../systems/uiPrefs.js';   // MWA1: the arms switch
 import { morrowindDataCount, morrowindDataFingerprint, registerMorrowindData } from '../scenes/dataSource.js';   // MWA1: are the archives attached; AUDIT 65 XL-6: and measured
 import { mwRaceId } from '../formats/mwNpc.js';   // TR2: the one race-id spelling
+import { TEMPLATES } from '../systems/useItem.js';   // MW-D51: the Torch template - the lit light the Morrowind hand holds
 import { morrowindDataGeneration } from '../scenes/dataSource.js';
 import { objectAabb, rayAabb } from '../player/activate.js';   // AUDIT 63 F37: one live box for both rays
 import { SOUND } from '../systems/soundClips.js';
@@ -85,8 +86,15 @@ export function armBuildOptsOf(entity) {
     armor: dfWornEquipment(equipTableOf(entity), EQUIP_SLOTS, ARMOR_ENUM),
     weapon: entity.equip?.slots?.[EQUIP_SLOTS.RightHand] ?? null,
     hasAmmo: hasDaggerfallArrows(entity.items),
+    torch: isLitTorch(entity.lightSource),   // MW-D51: the lit light, in the left hand
   };
 }
+
+/** MW-D51: IS A TORCH LIT - PlayerEntity.LightSource holding the Torch
+ *  item (TEMPLATES.Torch, 247). A lantern or a candle is a light too,
+ *  but Morrowind's held-light art is the torch, and the classic lane's
+ *  hand sprite covers the rest as it always has. */
+export const isLitTorch = (item) => !!item && item.templateIndex === TEMPLATES.Torch;
 
 /** The build itself, from the live entity - seconds long and
  *  synchronous (the BSA index, the ESM walk, every mesh parse), so
@@ -739,6 +747,11 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
         // is one key compare - the swap itself runs only when the item
         // in the hand actually changed.
         fpArm.setWeapon(playerWeapon.weapon, { hasAmmo: hasDaggerfallArrows(entity?.items) });
+        // MW-D51: THE LIGHT FOLLOWS THE HAND. The same per-frame read
+        // Handheld Torches' hand law writes (PlayerEntity.LightSource -
+        // lit by use, stowed when no hand is free) hands the Morrowind
+        // arm its torch; setTorch's fast path is one boolean compare.
+        fpArm.setTorch(isLitTorch(entity?.lightSource));
         // MW-D39: THE SPELL IS A STANCE. spellArmed() is already the
         // rig's own per-frame read (WeaponManager's HasReadySpell leg
         // above); the Morrowind arm rides the same one, and its fast

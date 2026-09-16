@@ -106,5 +106,7 @@ test('MW-D50: a bow that resolves without its arrow says why on the console, onc
   assert.equal(said.length, 1, 'once for the reason, and never without ammunition in the pack');
   assert.match(said[0], /^\[mw\] the bow carries no arrow - arrow: your archives carry no unenchanted Morrowind ammunition/);
   const src = rd('src/combat/fpArm.js');
-  assert.equal((src.match(/has: archiveHas\(archives\)/g) || []).length, 7, 'every preload and every resolve - two builds, the tp body, the swap\'s two - pass the one directory');
+  // MW-D51: + the torch's six - both builds' preload and resolve (4), and
+  // setTorch's own preload and its one resolve for both rigs (2).
+  assert.equal((src.match(/has: archiveHas\(archives\)/g) || []).length, 13, 'every preload and every resolve - two builds, the tp body, the swap\'s two, the torch\'s six - pass the one directory');
 });
