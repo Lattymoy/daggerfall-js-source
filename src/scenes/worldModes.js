@@ -60,7 +60,7 @@ import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the
 import { playerTorchLight } from '../systems/playerTorch.js';   // T1
 import { lookAt, perspective, mirrorProjectionX, trs, multiply, identity, UP_Y } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law); H4: the preview's model matrix
 const BATCH_IDENTITY = identity();   // PERF5: the merged level is in world space already
-import { routeKey, routeKeyUp, actionOf, held, moveHeld, anyMove, swallowBrowserKey, isSwingButton, swingHeld } from '../ui/input.js';
+import { routeKey, routeKeyUp, actionOf, held, moveHeld, anyMove, swallowBrowserKey, isSwingButton, swingHeld, mouseCode } from '../ui/input.js';   // MAC-K1: mouseCode - the interior host's half of AUDIT 39r
 import { setMidScreenText } from '../ui/midScreenText.js';   // AUDIT 64 F34: DaggerfallHUD's centred label
 import { makeWindowStack, pauseWhileOpen } from '../ui/windowStack.js';   // ROAD-B B1: UserInterfaceManager's stack, under this host's one slot; ROAD-tail: and its PAUSE
 import { createActivateGate, activateFrame } from '../systems/activateGate.js';   // A8: PlayerActivate's ActivateCenterObject frame
@@ -1275,10 +1275,10 @@ export function createWorldModes(host) {
    *  billboard is CENTRE-anchored, so the base ends up ON the marker
    *  inside a building and half a height BELOW it inside a dungeon.
    *  This port's billboard shader is BOTTOM-anchored (position = base,
-   *  the C11 law dungeonContext.js:1538 states), so the same visual
+   *  the C11 law dungeonContext.js:1550 states), so the same visual
    *  result needs the shift on the DUNGEON side - which is exactly the
    *  shift the dungeon's own RDB flats already take
-   *  (dungeonContext.js:1443, `y - size.h / 2`), and which a building's
+   *  (dungeonContext.js:1455, `y - size.h / 2`), and which a building's
    *  flats correctly do not (interiorContext.js passes its centers
    *  straight through).
    *
@@ -5133,7 +5133,7 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:5433), so the OUTER host's one rides in.
+          // (dungeonContext.js:5427), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:524 -> the
@@ -6042,7 +6042,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:6390's own wave-46 note); the interior
+          // a blow (world.js:6364's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage();
@@ -6825,9 +6825,23 @@ export function createWorldModes(host) {
     }
   });
   addEventListener('mouseup', (e) => {
+    const mc = mouseCode(e.button);
+    if (mc) keys.delete(mc);
     if (isSwingButton(e.button)) modalAttackSink()?.(0, 0, false);   // the RELEASE is never gated - a window opened mid-swing must still let go
   });
   addEventListener('mousedown', (e) => {
+    // MAC-K1 (Mac: "Mouse keybindings not working properly"). AUDIT 39r
+    // fed the three button codes into the held set in world.js,
+    // exterior.js and dungeon.js and MISSED THIS HOST - so indoors
+    // every mouse-bound action read false. `held(keys, 'AutoRun')` is
+    // Mouse2 at the shipped bindings and this host calls it every
+    // frame (:5647); `held(keys, 'ActivateCenterObject')` is Mouse0 and
+    // gates the drawn bow's un-draw (:5832). Both were dead in every
+    // interior in the game, and neither is gated on anything here -
+    // the press is recorded whatever is on screen, exactly as a
+    // keydown is, and the arms below decide what to do with it.
+    const mc = mouseCode(e.button);
+    if (mc) keys.add(mc);
     // I4: a right-click on a window is the WINDOW's (the remove
     // gesture), never a swing - dungeon.js:227 and both exterior slots
     // have always said so, and this host's modal arm had no gate at
@@ -8181,9 +8195,9 @@ export function createWorldModes(host) {
      *  .cs:175-176 writes `weaponDrawn`/`usingLeftHand` off it,
      *  :420-421 restores them onto it. The port has FOUR PlayerWeapons
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
-     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:2613-2635), and IS1 routed the inside-a-building save to
+     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:2637-2659), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
-     *  unconditionally (world.js:4271). So an F9 pressed in a shop
+     *  unconditionally (world.js:4274). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them
      *  back into the street's rig; the rig actually in the player's
      *  hands was in no envelope at all.
@@ -8210,7 +8224,7 @@ export function createWorldModes(host) {
      *  presenter for the whole visit) or the interior's? world.js's gate read townTalk's slot alone. */
     deathUp() { return mode === 'dungeon' ? !!dungeonCtx?.deathUp?.() : interiorOverlay instanceof DeathScreen; },
     /** The restore half - and NOT gated on the mode, deliberately.
-     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:4333)
+     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:4336)
      *  and only re-enters the building at :4217, so the mode at apply
      *  time is whatever the LOAD landed in, not whatever the SAVE was
      *  taken in: an outdoor save loaded while the player was indoors
@@ -8220,8 +8234,8 @@ export function createWorldModes(host) {
      *
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
-     *  HARD2c: this used to spell them out, and named `world.js:4441`
-     *  and `dungeonContext.js:5505` for its two sibling copies - lines
+     *  HARD2c: this used to spell them out, and named `world.js:4444`
+     *  and `dungeonContext.js:5499` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */
     applyWeaponPose(pose) {

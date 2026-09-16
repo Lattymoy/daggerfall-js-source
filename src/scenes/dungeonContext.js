@@ -1304,6 +1304,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // dialog unoffered rather than raising one that goes nowhere.
   const questJournalHooks = () => (opts.questBridge ? {
     questMessages: () => opts.questBridge.machine.getAllQuestLogMessages() ?? [],
+    // MAC-K2: the chronicle's Quests section takes the WALK, the same
+    // one the pause tab takes - see questBridge.js.
+    questLog: () => opts.questBridge.questLog(),
     notebook: () => opts.questBridge.notebook ?? null,
   } : {});
 
@@ -1322,7 +1325,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       ...questJournalHooks(),
       mode,
       entity: playerEntity,
-      section: mode === 'messages' ? 'messages' : 'notes',
+      // MAC-K2 (Mac: "Logbook not reflecting quests"). This read
+      // `mode === 'messages' ? 'messages' : 'notes'`, with the note
+      // that "the two quest modes land on Notes because the pause
+      // window has carried quests since PX4" - which made the L key,
+      // InputManager's own `LogBook`, open the player's NOTEBOOK. The
+      // chronicle now has a Quests section (ui/enhancedChronicle.js)
+      // fed by the SAME walk the pause tab uses, so each classic mode
+      // lands on the page that holds what it names.
+      section: mode === 'messages' ? 'messages'
+        : (mode === 'notebook' ? 'notes' : 'quests'),
     });
   }
 
@@ -1404,7 +1416,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:6623 / exterior.js:2947), set
+  // host's own townTalk sink (world.js:6597 / exterior.js:2971), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -2848,8 +2860,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:8789,
-              // exterior.js:4295 and worldModes.js:6067 already ran;
+              // playerArrowHitFoe is the one copy world.js:8747,
+              // exterior.js:4319 and worldModes.js:6067 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -5103,26 +5115,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // flag was too conservative, so it is paid with the same walk
         // the world's pause runs, off THIS host's own bridge.
         questMessages: () => opts.questBridge?.machine.getAllQuestLogMessages() ?? [],
-        questLog: () => {
-          const m = opts.questBridge?.machine;
-          const active = [];
-          if (m) {
-            for (const q of m.quests.values()) {
-              const les = q.getLogMessages();
-              if (!les?.length) continue;
-              const messages = les.map((le) => q.getMessage(le.messageID)).filter(Boolean);
-              if (!messages.length) continue;
-              let clockSeconds = null;
-              for (const r of q.resources.values()) {
-                if (r.clockEnabled && !r.clockFinished && Number.isFinite(r.remainingTimeInSeconds)) {
-                  clockSeconds = clockSeconds == null ? r.remainingTimeInSeconds : Math.min(clockSeconds, r.remainingTimeInSeconds);
-                }
-              }
-              active.push({ id: String(q.uid), name: q.displayName || null, questName: q.questName || '', clockSeconds, messages });
-            }
-          }
-          return { active, finished: opts.questBridge?.notebook?.getFinishedQuests() ?? [] };
-        },
+        // MAC-K2: the walk is the BRIDGE's now - see questBridge.js.
+        questLog: () => opts.questBridge?.questLog() ?? { active: [], finished: [] },
         quickSave: () => ctx.quickSave?.(),
         // MAC1 J: the pointer comes back INSIDE the resume gesture
         // (ui/pauseDoor.js:165-182). THIS CONTEXT OWNS NO CANVAS OF ITS

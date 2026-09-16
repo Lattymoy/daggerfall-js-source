@@ -25,7 +25,8 @@
 // these functions, which is what test/enhancedControls.test.js holds.
 //
 // THE GESTURES, mirrored from ui/controlsWindow.js:
-//  - LEFT CLICK a binding arms capture; the NEXT keydown binds.
+//  - LEFT CLICK a binding arms capture; the NEXT keydown OR MOUSE
+//    BUTTON binds.
 //    ReservedKeys is empty in DFU (InputManager.cs:73
 //    `new KeyCode[] { }`, exposed :174-177), so the capture gate that
 //    consults it (DaggerfallControlsWindow.cs:410) never refuses a key —
@@ -61,7 +62,7 @@
 // a typing surface.
 
 import { ACTIONS, saveKeyBinds } from '../systems/inputActions.js';
-import { bindings } from './input.js';
+import { bindings, mouseCode } from './input.js';   // MAC-K1: a mouse button is a binding, so the capture must be able to take one
 import {
   createUnsavedKeybinds, currentDict, setUnsavedBinding, checkDuplicates,
   applyUnsavedKeybinds, resetUnsavedToDefaults, buttonText, splitCamel,
@@ -115,7 +116,8 @@ export const DEFAULTS_PROMPT = 'Are you sure you want to set default controls?';
 let unsaved = null;
 let dupes = { internal: new Set(), cross: new Set(), ok: true };
 let armed = null;          // the action awaiting a key (:52 waitingForInput)
-let armedHandler = null;   // the document listener while it waits
+let armedHandler = null;   // the document keydown listener while it waits
+let armedMouse = null;     // MAC-K1: and its mouse half - one arm, two doors
 let prompt = null;         // { kind: 'defaults' } | { kind: 'remove', action }
 let notice = null;         // the multipleAssignments line, or the saved note
 let repaint = () => {};
@@ -145,13 +147,16 @@ export const captureArmed = () => armed;
 function disarm() {
   if (armedHandler && typeof document !== 'undefined') {
     document.removeEventListener('keydown', armedHandler, { capture: true });
+    document.removeEventListener('mousedown', armedMouse, { capture: true });
   }
   armedHandler = null;
+  armedMouse = null;
   armed = null;
 }
 
-/** WaitForKeyPress (:380-424). The next keydown binds, whatever it is. */
-function onCaptureKey(e) {
+/** The half both capture listeners share: take the code, bind it,
+ *  stand down. `e` carries the modifier flags the combo arm reads. */
+function bindCaptured(code, e) {
   // The host's ladder must never see a key that was being BOUND: the
   // four scene hosts listen on the global in the bubble phase, so a
   // capture-phase stop here is the whole of that guard.
@@ -159,14 +164,44 @@ function onCaptureKey(e) {
   e.stopPropagation?.();
   const action = armed;
   disarm();
-  if (!action) return;
+  if (!action || code == null) return;
   // The combo arm: a captured key held under Ctrl/Shift/Alt binds the
   // pair, anything else binds the single code.
-  const combo = comboFromEvent(e.code, e);
-  setUnsavedBinding(stage(), action, combo ?? e.code);
+  const combo = comboFromEvent(code, e);
+  setUnsavedBinding(stage(), action, combo ?? code);
   notice = null;
   refresh();
   repaint();
+}
+
+/** WaitForKeyPress (:380-424). The next keydown binds, whatever it is. */
+function onCaptureKey(e) { bindCaptured(e.code, e); }
+
+/**
+ * MAC-K1 (Mac: "Mouse keybindings not working properly"), and the
+ * half of WaitForKeyPress this pane never had.
+ *
+ * DFU's capture is `Input.GetKeyDown` walked over EVERY KeyCode, and
+ * Mouse0/1/2 are KeyCodes like any other - which is how three of its
+ * own defaults come to be mouse buttons (AutoRun, SwingWeapon,
+ * ActivateCenterObject). The port's capture listened for `keydown`
+ * alone, so no action could ever be MOVED onto a button and one
+ * cleared off a button could never be put back. The registry, the
+ * storage, the duplicate law and every runtime reader had taken mouse
+ * codes since AUDIT 39r; the one door a player uses had not.
+ *
+ * THE ARMING CLICK IS NOT THE BOUND ONE. `arm()` runs from the row
+ * button's `onclick`, which the browser fires after that press has
+ * already come and gone, so the listener added here can only ever see
+ * the NEXT press. And while a capture is armed the pane is inert
+ * (`act()`), exactly as DFU's `waitingForInput` makes it - so a click
+ * meant to cancel binds instead, which is the same thing Escape does
+ * on the keyboard side and for the same reason: ReservedKeys is empty.
+ */
+function onCaptureMouse(e) {
+  const code = mouseCode(e.button);
+  if (code == null) return;      // past the third button: not a binding
+  bindCaptured(code, e);
 }
 
 function arm(action) {
@@ -175,7 +210,9 @@ function arm(action) {
   notice = null;
   if (typeof document !== 'undefined') {
     armedHandler = onCaptureKey;
+    armedMouse = onCaptureMouse;
     document.addEventListener('keydown', armedHandler, { capture: true });
+    document.addEventListener('mousedown', armedMouse, { capture: true });
   }
   repaint();
 }
@@ -277,7 +314,7 @@ function keyRow(action, label) {
     : dupes.cross.has(code) ? ' ctl-cross' : '';
   const armedHere = armed === action;
   const key = el('button', `act rowact ctl-key${dupe}${armedHere ? ' ctl-arm' : ''}`,
-    armedHere ? 'PRESS A KEY' : buttonText(code, true));
+    armedHere ? 'PRESS A KEY OR BUTTON' : buttonText(code, true));
   key.setAttribute('type', 'button');
   key.dataset.action = action;   // the probe's handle, and the test's
   key.onclick = act(() => arm(action));

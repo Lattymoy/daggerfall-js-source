@@ -358,6 +358,42 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
     machine, questLists, offerFlow, notebook,
     tick,
 
+    /**
+     * MAC-K2 - THE QUEST WALK, ONE HOME.
+     *
+     * `{active, finished}`: one row per live quest that has written a
+     * log entry, its messages in the machine's own order, and the
+     * TIGHTEST RUNNING clock on the quest's resources (Clock carries
+     * `remainingTimeInSeconds` in game seconds beside
+     * `clockEnabled`/`clockFinished`, quest/clock.js:98,164). The
+     * archive is the notebook's filed entries.
+     *
+     * IT WAS WRITTEN THREE TIMES - world.js's pause hooks,
+     * dungeonContext.js's, and exterior.js's `pauseQuestLog`, whose own
+     * comment said "world.js keeps two copies of this walk; two copies
+     * is two laws the day one of them moves". MAC-K2 needed a FOURTH
+     * reader (the chronicle's Quests section, which is what the L key
+     * opens), so the walk moved here instead - the bridge is the one
+     * thing every host that has quests already holds.
+     */
+    questLog() {
+      const active = [];
+      for (const q of machine.quests.values()) {
+        const les = q.getLogMessages();
+        if (!les?.length) continue;
+        const messages = les.map((le) => q.getMessage(le.messageID)).filter(Boolean);
+        if (!messages.length) continue;
+        let clockSeconds = null;
+        for (const r of q.resources.values()) {
+          if (r.clockEnabled && !r.clockFinished && Number.isFinite(r.remainingTimeInSeconds)) {
+            clockSeconds = clockSeconds == null ? r.remainingTimeInSeconds : Math.min(clockSeconds, r.remainingTimeInSeconds);
+          }
+        }
+        active.push({ id: String(q.uid), name: q.displayName || null, questName: q.questName || '', clockSeconds, messages });
+      }
+      return { active, finished: notebook?.getFinishedQuests() ?? [] };
+    },
+
     /** SetLayoutData's direct overload for a host that has a quest
      *  Person rather than a block record (worldModes' quest-flat
      *  click). AUDIT 24: it is a bridge method now so the race lookup

@@ -110,30 +110,62 @@ test('TR3: the disabled blit reads its sub-rect from the 122x36 sheet', () => {
   assert.deepEqual(calls[0].dst, { x: 10 + 5 * 2, y: 20 + 23 * 2, w: sw * 2, h: sh * 2 });
 });
 
-test('TR3: the host door - grounded and outdoors only, and the mount is loaded and drawn', () => {
+test('TR3/MAC-K3: the host door - grounded and outdoors only, and EVERY host that has a mount draws it under the HUD', () => {
   const input = read('src/ui/input.js');
   assert.match(input, /case 'Transport': return ctx\.openTransport \? \(ctx\.openTransport\(\), true\) : false;/);
-  const world = read('src/scenes/world.js');
+
+  // MAC-K3 (Mac: "T to mount not working outside interiors"). This pin
+  // used to read `src/scenes/world.js` for every law below - which is
+  // why it stayed green while `scenes/exterior.js`, the FIXED-CITY
+  // host, had no transport surface at all and the T key there did
+  // nothing. A source-text pin on ONE host cannot see the host that is
+  // missing. So the laws are the rig's now, and the WIRING is checked
+  // as a population.
+  const rig = read('src/player/mountRig.js');
   // dfuiOpenTransportWindow (:690-700): airborne is SILENTLY ignored.
-  assert.match(world, /openTransport: \(\) => \{\s*\n\s*if \(!player\.grounded \|\| !transportArtLoaded\(\)\) return;/);
-  assert.match(world, /hasHorse: hasHorse\(playerEntity\.items \?\? \[\]\),/);
+  assert.match(rig, /if \(!player\.grounded \|\| !transportArtLoaded\(\)\) return;/);
+  assert.match(rig, /hasHorse: hasHorse\(playerEntity\.items \?\? \[\]\),/);
   // TR4 made the row live for an owner; tr4_ship.test.js holds that.
-  assert.match(world, /shipAvailable: ownsShip\(playerEntity\),/);
+  // MAC-K3 added the second clause: a host with no ship teleport
+  // darkens the row rather than opening onto nothing.
+  assert.match(rig, /shipAvailable: !!onShip && ownsShip\(playerEntity\),/);
   // The mount's art is loaded on the pick and dropped when you dismount.
-  assert.match(world, /ridingAnimator\.mount\(mode\);/);
-  assert.match(world, /if \(isRiding\(mode\)\) \{\s*\n\s*loadRidingArt\(fetchBytes, palette, renderer, mode\)/);
-  // The sprite goes in BEFORE the HUD (OnGUI depth 2).
+  assert.match(rig, /animator\.mount\(mode\);/);
+  assert.match(rig, /if \(isRiding\(mode\)\) \{\s*\n\s*loadRidingArt\(fetchBytes, palette, renderer, mode\)/);
   // F-E1 (the parity audit): OnGUI :293 refuses to draw while paused -
   // an open window hides the mount, it does not freeze it.
-  assert.match(world, /if \(ridingArt && isRiding\(player\.transportMode\) && !ridePaused\) \{/);
-  const spriteAt = world.indexOf('renderer.drawScreenQuad(ridingArt.frames[r.frame], rect);');
-  const hudAt = world.indexOf('drawHud(renderer, canvas, hudArt, playerEntity,');
-  assert.ok(spriteAt > 0 && hudAt > spriteAt, 'the mount draws under the HUD');
+  assert.match(rig, /if \(art && isRiding\(player\.transportMode\) && !ridePaused\) \{/);
   // The loop is a REAL channel, not an optional-chained no-op, and the
   // clip is the CLASSIC one, literally: the enhanced 3D horse that once
   // swapped mod clips into this expression was removed whole (2026-09-04).
-  assert.match(world, /audio\.setLoop\('riding', r\.playing \? SOUND\[r\.clip\] : null, \{ volume: r\.volume, pitch: r\.pitch \}\);/);
+  assert.match(rig, /audio\.setLoop\('riding', r\.playing \? SOUND\[r\.clip\] : null, \{ volume: r\.volume, pitch: r\.pitch \}\);/);
   assert.match(read('src/systems/audio.js'), /setLoop\(name, clip, \{ volume = 1, pitch = 1 \} = \{\}\) \{/);
+
+  // THE POPULATION, derived: every host that builds a rig must open on
+  // it AND draw it, and the sprite goes in BEFORE the HUD (OnGUI draws
+  // at depth 2, under the HUD's own elements). A fifth host wiring the
+  // key and forgetting the draw reddens this without an edit here.
+  const hosts = ['exterior', 'world', 'worldModes', 'dungeonContext'];
+  const mounted = [];
+  for (const h of hosts) {
+    const src = read(`src/scenes/${h}.js`);
+    if (!src.includes('createMountRig(')) continue;
+    mounted.push(h);
+    assert.match(src, /openTransport: \(\) => mountRig[?.]*\.open\(\)/, `${h}.js must route the T key to its rig`);
+    const spriteAt = src.indexOf('mountRig?.frame(dt)') >= 0 ? src.indexOf('mountRig?.frame(dt)') : src.indexOf('mountRig.frame(dt)');
+    const hudAt = src.indexOf('drawHud(renderer, canvas, hudArt, playerEntity,');
+    assert.ok(spriteAt > 0, `${h}.js builds a rig, so it must run its frame`);
+    assert.ok(hudAt > spriteAt, `${h}.js must draw the mount UNDER the HUD`);
+  }
+  assert.deepEqual(mounted, ['exterior', 'world'],
+    'the two OUTDOOR hosts carry a mount - exterior.js is the one MAC-K3 added, and it is checked by name here only so that losing it is loud');
+
+  // ...and the two indoor hosts refuse, rather than falling silent -
+  // which is what this host did for the whole arc before MAC-K3.
+  for (const h of ['worldModes', 'dungeonContext']) {
+    assert.match(read(`src/scenes/${h}.js`), /openTransport\(\) \{[^}]*CANNOT_CHANGE_INDOORS/,
+      `${h}.js refuses indoors with the line, and does not just do nothing`);
+  }
   assert.equal(typeof CANNOT_CHANGE_INDOORS, 'string');
 });
 

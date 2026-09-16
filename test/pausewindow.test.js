@@ -246,8 +246,8 @@ test('AUDIT 65 UI-2: the classic pause window relocks on RESUME, and only on res
     // NOT the save or load DOORS - and driven through the bag the
     // PRODUCER mints, which is the whole point of this arm. All three
     // shipping pause hosts hand over saveAs + loadKey + pushWindow
-    // (world.js:5001-5008, worldModes.js:7066-7072,
-    // dungeonContext.js:5140-5146), so `saveLoadPushes` is true and the
+    // (world.js:4991-4998, worldModes.js:7080-7086,
+    // dungeonContext.js:5134-5140), so `saveLoadPushes` is true and the
     // door PUSHES the slot window: the pause window rides UNDER it,
     // `done` stays false and `_closeWith` is never reached at all. A
     // relock here would take away the cursor the slot window is for.
@@ -306,7 +306,7 @@ test('AUDIT 65 UI-2: the classic pause window relocks on RESUME, and only on res
     assert.equal(relocked, 0, 'the same on the load side');
 
     // THE QUICK-VERB FALLBACK is the other save/load shape, and it IS a
-    // resume: a host with no saveAs/loadKey seam (exterior.js:2203's bag
+    // resume: a host with no saveAs/loadKey seam (exterior.js:2227's bag
     // carries neither, so its LOAD rect runs this today) closes straight
     // back to the world and opens no window at all.
     relocked = 0;

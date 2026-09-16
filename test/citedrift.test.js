@@ -561,7 +561,7 @@ const SOURCE_CITES = [
   // the line goes red at the citation instead of at a reader.
   ['src/characters/playerEntity.js', /exterior\.js:(\d+) and applyHeadlessChargen/,
     EX, /createChargenFlow\(fetchBytes\)\.then/],
-  ['src/combat/weaponRig.js', /\(exterior\.js:(\d+), world\.js:2517\)/,
+  ['src/combat/weaponRig.js', /\(exterior\.js:(\d+), world\.js:2515\)/,
     EX, /^ {4}say: \(l\) => townTalk\.say\(l\),$/],
   ['src/scenes/dungeonContext.js', /exterior\.js:(\d+) and worldModes\.js:\d+/,
     EX, /onPlayerArrowHitFoe: \(m, t\) => playerArrowHitFoe\(/],
@@ -637,10 +637,10 @@ const SOURCE_CITES = [
     WO, /if \(act === 'Escape' && pauseDoorReady\(\)\) \{ hudCtx\.togglePause\(\); return; \}/],
   ['src/ui/restWindow.js', /world\.js:(\d+), exterior\.js:\d+,/,
     WO, /if \(act === 'Rest'\) \{ e\.preventDefault\(\); hudCtx\.toggleRest\(\); return; \}/],
-  ['test/daychange.test.js', /exterior\.js:(\d+), world\.js:837/, EX, /playerTicker\.advance\(60\);/],
-  ['test/overlayreentry.test.js', /exterior\.js:(\d+) and world\.js:2295/,
+  ['test/daychange.test.js', /exterior\.js:(\d+), world\.js:836/, EX, /playerTicker\.advance\(60\);/],
+  ['test/overlayreentry.test.js', /exterior\.js:(\d+) and world\.js:2293/,
     EX, /if \(townTalk\.overlay\?\.isRestWindow\) townTalk\.closeOverlay\?\.\(\);/],
-  ['test/overlayreentry.test.js', /exterior\.js:(\d+), world\.js:2295/,
+  ['test/overlayreentry.test.js', /exterior\.js:(\d+), world\.js:2293/,
     EX, /if \(townTalk\.overlay\?\.isRestWindow\) townTalk\.closeOverlay\?\.\(\);/],
   ['test/probehygiene.test.js', /keydown ladder, exterior\.js:(\d+)-\d+/,
     EX, /addEventListener\('keydown', \(e\) => \{/],
@@ -651,7 +651,7 @@ const SOURCE_CITES = [
   ['test/roade_up_seam.test.js', /exterior\.js:\d+\/:(\d+)/,
     EX, /if \(act === 'Escape' && pauseDoorReady\(\)\) \{ hudCtx\.togglePause\(\); return; \}/],
   ['bible/01-Overview/Audit-58.md', /`src\/scenes\/exterior\.js:(\d+)` now/, EX, /setDefaultEnchantCtx/],
-  ['bible/06-Systems/Systems-Arc.md', /`exterior\.js:(\d+)`, `world\.js:832`/, EX, /playerTicker\.advance\(60\);/],
+  ['bible/06-Systems/Systems-Arc.md', /`exterior\.js:(\d+)`, `world\.js:831`/, EX, /playerTicker\.advance\(60\);/],
   ['bible/09-Testing/Testing.md', /keydown ladder \(exterior\.js:(\d+)-\d+\)/,
     EX, /addEventListener\('keydown', \(e\) => \{/],
   ['bible/10-UI/UI-Arc.md', /exterior\.js:(\d+)\. It is the only window/, EX, /createSpellbookWindow\(\{/],
@@ -668,20 +668,20 @@ const SOURCE_CITES = [
   // subject the number is gone and the seam is named instead.
   ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)`, `dungeonContext\.js:1305`/,
     EX, /drinkPotion: \(key\) => magic\.drinkPotion\(key\)/],
-  ['bible/01-Overview/Port-Ledger.md', /`world\.js:3831`, `exterior\.js:(\d+)`/,
+  ['bible/01-Overview/Port-Ledger.md', /`world\.js:3834`, `exterior\.js:(\d+)`/,
     EX, /renderer\.setWindowEmission\(windowEmissionRGB\(/],
-  ['bible/01-Overview/Port-Ledger.md', /`world\.js:642`, `exterior\.js:(\d+)` pass `getNameBankOfRegion`/,
+  ['bible/01-Overview/Port-Ledger.md', /`world\.js:641`, `exterior\.js:(\d+)` pass `getNameBankOfRegion`/,
     EX, /nameBank: getNameBankOfRegion\(dfLocation\.regionIndex\),/],
   ['bible/01-Overview/Port-Ledger.md', /rig sprite \(`exterior\.js:(\d+)`/, EX, /drawCharacterSprite\(renderer, canvas, rig/],
   // ROAD-G G1 (review): BOTH ends, because the half-shifted range is
   // exactly the defect this file exists to catch - the leading number
   // was re-resolved and the trailing one left where it was, leaving a
-  // range that cannot exist (`exterior.js:1243-1201`).
+  // range that cannot exist (`exterior.js:1257-1215`).
   ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)-\d+` build `createDetectFeed`/,
     EX, /const detectFeed = createDetectFeed\(playerEntity, \{/],
   ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:\d+-(\d+)` build `createDetectFeed`/,
     EX, /^ {2}\}\);$/],
-  ['bible/01-Overview/Port-Ledger.md', /`world\.js:1091`, `exterior\.js:(\d+)`/,
+  ['bible/01-Overview/Port-Ledger.md', /`world\.js:1090`, `exterior\.js:(\d+)`/,
     EX, /const droppedLoot = createDroppedLoot\(/],
   ['bible/01-Overview/Port-Ledger.md', /createTownTalk passes no engine, `exterior\.js:(\d+)-\d+`/,
     EX, /const townTalk = createTownTalk\(\{/],
@@ -702,7 +702,7 @@ const SOURCE_CITES = [
 // removed says so, rather than carrying a number that lands on a
 // stranger. Pinned as the absence.
 const NO_LINE_LEFT = [
-  [/`world\.js:4122-4125` and its `exterior\.js` twin, both DELETED by FX1/, 'no loot'],
+  [/`world\.js:4125-4128` and its `exterior\.js` twin, both DELETED by FX1/, 'no loot'],
   [/`exterior\.js`'s inline rest-deps twin - DELETED, see the strike/, 'inTownOutside: true'],
 ];
 
@@ -876,7 +876,7 @@ test('CD6: every `src/` line Port-Status cites is the line it describes', () => 
 //
 // The G1 lane re-resolved ~180 `:NNN` cites after moving code in four
 // hosts, and the pass advanced only the LEADING number of every
-// multi-number citation: `cityGuards.js:768-693`, `world.js:5642-5616`,
+// multi-number citation: `cityGuards.js:768-693`, `world.js:5616-5590`,
 // `worldModes.js:1161 against :1056`. Forty of them came out as ranges
 // that cannot exist, and every pin in this file was green throughout,
 // because each one resolves a single number a human chose to list.

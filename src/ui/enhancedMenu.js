@@ -90,6 +90,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { fpArm, hasDaggerfallArrows } from '../combat/fpArm.js';
+import { questRail, journalLines, questTitleOf } from './questRail.js';   // MAC-K2: the ONE quest walk, shared with the chronicle
 import { closeOnOutsideTap } from './enhancedOverlays.js';   // OT1: a tap on the scrim resumes
 import { TEST_PRESETS, TEST_RIDE, TEST_LOOT } from '../systems/testRoom.js';   // TR3: the one home the pane shows; TSR4: the ride; LR3: the loot ladder
 import { mwRaceId } from '../formats/mwNpc.js';
@@ -2049,7 +2050,6 @@ function appendPxFoot(home) {
 const PAUSE_TABS = Object.freeze([['quests', 'Quests'], ['stats', 'Stats'], ['system', 'System']]);
 // The token formattings that carry a journal line - questJournal's own
 // counted set (DaggerfallQuestJournalWindow.cs:658-662 via its :322).
-const JOURNAL_LINE_FORMATTINGS = new Set(['text', 'newline', 'highlight', 'question', 'answer']);
 
 function pauseWindow() {
   const win = el('div', 'px-win');
@@ -2293,7 +2293,6 @@ function statsStanding(detail) {
  *  and _BRISIEN is the main quest's opener (StartGameBehaviour.cs:
  *  445-447 via questBridge.GAME_START_QUESTS). Everything else on the
  *  log is a side quest. */
-const isMainQuest = (questName) => /^S0000/.test(questName ?? '') || questName === '_BRISIEN';
 
 /** PX28 (Mac: remove the titles - Main Quest, Side Quest - from the
  *  quest NAMES in the enhanced journal; they already have sections).
@@ -2320,12 +2319,6 @@ const isMainQuest = (questName) => /^S0000/.test(questName ?? '') || questName =
 // on. The kind and the noun may be joined, spaced or hyphenated; the
 // LABEL still needs its own trailing separator, which is what keeps
 // "Main Quest Backbone" a name.
-const QUEST_KIND_LABEL = /^\s*(?:the\s+)?(?:main|side|guild|daedric|faction|misc(?:ellaneous)?|holiday|class|racial)[\s\-\u2013]*(?:quest|quests|questline|storyline|story)\s*[:\u2013\u2014|\-\u2022]\s*/i;
-export function questTitleOf(name) {
-  const raw = String(name ?? '').trim();
-  const cut = raw.replace(QUEST_KIND_LABEL, '').trim();
-  return cut || raw;
-}
 
 /** PX5: remaining game seconds as words - days+hours above a day,
  *  hours+minutes below it, minutes alone under an hour. */
@@ -2336,29 +2329,11 @@ function remainWords(s) {
   return `${Math.max(1, m2)} min`;
 }
 
-/** One flattener for every journal source: message object or raw
- *  token array in, text lines out, questJournal's own counted set. */
-function journalLines(msgOrTokens) {
-  const tokens = Array.isArray(msgOrTokens) ? msgOrTokens : (msgOrTokens?.getTextTokens?.() ?? []);
-  return tokens.filter((t) => JOURNAL_LINE_FORMATTINGS.has(t?.formatting)).map((t) => String(t?.text ?? ''));
-}
 
 /** The finished-quest header the notebook files:
  *  '<name> completed|ended at <date>:' (notebook.js:151-182). The name
  *  and the verdict come back out of it; a headerless overflow entry
  *  (the notebook's own kept quirk) reads as a continuation. */
-function parseFinished(entry, index) {
-  const head2 = entry?.[0];
-  const header = head2?.formatting === 'highlight' ? String(head2.text ?? '') : null;
-  const m = header ? /^(.*?) (completed|ended) at (.*?):?$/.exec(header) : null;
-  return {
-    key: `f:${index}`,
-    name: m ? m[1] : (header ?? 'Quest record'),
-    success: m ? m[2] === 'completed' : null,
-    when: m ? m[3] : null,
-    lines: journalLines(header ? entry.slice(1) : entry).filter((l, i, a) => l !== '' || a[i - 1] !== ''),
-  };
-}
 
 /** A titled ornamental divider - line, gem, WORD, gem, line - the
  *  reference's OBJECTIVES rule in whole pixels. */
@@ -2382,15 +2357,10 @@ function pauseQuests(body) {
     body.append(el('p', 'px-note', 'The journal is not wired into this place yet.'));
     return;
   }
-  const log = hooks.questLog() ?? { active: [], finished: [] };
-  const active = (log.active ?? []).map((q, i) => ({
-    key: `a:${q.id ?? i}`,
-    name: q.name || `Quest ${i + 1}`,
-    main: isMainQuest(q.questName),
-    clockSeconds: Number.isFinite(q.clockSeconds) ? q.clockSeconds : null,
-    entries: (q.messages ?? []).map(journalLines).filter((ls) => ls.length),
-  })).filter((q) => q.entries.length);
-  const finished = (log.finished ?? []).map(parseFinished).filter((q) => q.lines.length || q.name);
+  // MAC-K2: THE WALK IS ui/questRail.js's now, because the chronicle
+  // needs the same one - the L key's window had no quests in it at all
+  // and a second copy of this here is how the two would drift.
+  const { active, finished } = questRail(hooks.questLog() ?? { active: [], finished: [] });
   if (!active.length && !finished.length) {
     body.append(el('p', 'px-note', 'No active quests.'));
     return;

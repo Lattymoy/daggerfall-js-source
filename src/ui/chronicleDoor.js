@@ -8,7 +8,7 @@
 //
 //   ui/charSheetNav.js:53   the sheet's LOGBOOK button
 //   ui/charSheetNav.js:61   the sheet's HISTORY button
-//   scenes/world.js:2001    the world host's own logbook
+//   scenes/world.js:1999    the world host's own logbook
 //   scenes/dungeonContext.js the dungeon's
 //
 // The seam is the U52/U53/PX23 shape a sixth time. What is new is the
@@ -17,13 +17,25 @@
 // YOU. Your own notes, the messages you were sent, and where you came
 // from.
 //
-// QUESTS ARE NOT IN IT, and that is deliberate. The classic logbook
-// has four modes and two of them are active and finished quests - but
-// the pause window's Quests tab has carried those since PX4, in three
-// named sections since PX22. Putting them here too would be the two
-// character sheets again (the thing the F5 overlay is on the board to
-// resolve), so the chronicle takes the two modes that have NO home -
-// the notebook and the messages - and the history beside them.
+// QUESTS ARE IN IT, and MAC-K2 is why they had to be. This note used
+// to read "QUESTS ARE NOT IN IT, and that is deliberate... the pause
+// window's Quests tab has carried those since PX4... putting them here
+// too would be the two character sheets again". The reasoning is
+// sound about DUPLICATION and wrong about WHICH DOOR: the L key is
+// InputManager's `LogBook`, this is the window it opens, and what it
+// showed a player pressing it was their notebook. Mac, 2026-09-15:
+// "Logbook not reflecting quests."
+//
+// Worse, the hosts had all four been handing `questMessages` in and
+// `chronicleModel` never read it - a dep in, nothing out, which is the
+// exact shape AUDIT-EOTB spent a day on.
+//
+// The duplication the old note feared is answered where it actually
+// lives: the WALK is `scenes/questBridge.js`'s `questLog()` and the
+// rail it builds is `ui/questRail.js`, both shared with the pause tab,
+// so the two faces cannot disagree about which quests are live or what
+// they say. What differs is the drawing, and two faces drawing one
+// model differently is the whole point of having two skins.
 import { isEnhanced } from '../systems/uiSkin.js';
 import { mountEnhancedChunk } from './enhancedChunk.js';   // MENU1: the one lazy-chunk door
 import { registerOverlay } from './enhancedOverlays.js';   // PX28: Tab puts it away
@@ -44,13 +56,19 @@ export const historyDoorReady = () => isEnhanced() || playerHistoryArtLoaded();
  *   entity                the player (the history is their backStory)
  *   notebook              the PlayerNotebook, or null
  *   questMessages         every quest log message, for the classic modes
+ *   questLog              MAC-K2: `{active, finished}` off the host's
+ *                         own quest walk - the ENHANCED window's Quests
+ *                         section. The classic skin keeps its flat
+ *                         `questMessages`, which is the shape its own
+ *                         two windows were written for; a host that
+ *                         hands neither gets a section that says so
  *   mode                  which classic mode to open on ('notebook' etc)
  *   currentLocationName / canFindPlace / gotoPlace
  *                         the world questions only a host with a map
  *                         can answer; a host without one leaves them
  *                         unset, which is the same nothing a
  *                         CanFindPlace miss produces
- *   section               'notes' | 'messages' | 'history' - where the
+ *   section               'quests' | 'notes' | 'messages' | 'history' - where the
  *                         ENHANCED window opens. The classic windows
  *                         are two, so this is also which of them the
  *                         classic skin gets.

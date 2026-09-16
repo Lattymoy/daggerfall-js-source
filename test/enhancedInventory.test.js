@@ -1275,7 +1275,7 @@ test('IG7: a LOOT-SIDE click takes, immediately - the pick-and-confirm card was 
 
 // ═══ PX28: the kind label comes off the quest NAME ══════════════════
 test('PX28: a kind label at the front of a quest name is stripped; a name is never emptied', async () => {
-  const { questTitleOf } = await import('../src/ui/enhancedMenu.js');
+  const { questTitleOf } = await import('../src/ui/questRail.js');   // MAC-K2: its home is the shared rail now - the pause window and the chronicle both title from it
   // Mac: the rail already has sections, so a name that repeats the kind
   // says the same fact twice.
   assert.equal(questTitleOf("Main Quest: Lysandus' Revenge"), "Lysandus' Revenge");
@@ -1301,7 +1301,7 @@ test('PX28: a kind label at the front of a quest name is stripped; a name is nev
 });
 
 test('AUDIT 38 F1: the kind and its noun may be joined, spaced or hyphenated - the LABEL still needs its separator', async () => {
-  const { questTitleOf } = await import('../src/ui/enhancedMenu.js');
+  const { questTitleOf } = await import('../src/ui/questRail.js');
   // a pack writes the label however it likes; PX28's first cut required
   // a space between the kind and the noun, so the joined spellings
   // sailed through with the label still on - which is the whole thing

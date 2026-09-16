@@ -152,11 +152,10 @@ import { ImgFile } from '../formats/imgFile.js';   // AUDIT 21 hosts F7: loadHud
 import { preloadInventoryArt } from '../ui/nativeInventory.js';   // U8d: the native inventory
 import { createInventoryWindow, inventoryDoorReady } from '../ui/inventoryDoor.js';   // U53: the pack's ONE seam, and the skin fork in front of it
 import { createUseMagicItemWindow } from '../ui/useMagicItemWindow.js';   // UI1: the U key's window
-import { TransportWindow, preloadTransportArt, transportArtLoaded } from '../ui/transportWindow.js';   // TR3: the picker
+import { preloadTransportArt } from '../ui/transportWindow.js';   // TR3: the picker's art (the picker itself is the mount rig's)
 import { hasHorse, hasCart, TRANSPORT_MODES } from '../systems/transport.js';   // TR3: what the rows offer
 import { shipTransition, REPOSITION } from '../systems/ship.js';   // TR4: board and disembark
-import { RidingAnimator, loadRidingArt, ridingRect, RIDING_VOLUME_SCALE } from '../systems/riding.js';   // TR2: the sprite and its loop
-import { horseOffsetHeight } from '../ui/hudLarge.js';   // ROAD-D D10: LargeHUDOffsetHorse
+import { createMountRig } from '../player/mountRig.js';   // MAC-K3: the mount surface, one home for this host and the fixed-city one
 import { largeHudViewportRect, largeHudWorldAspect } from '../ui/hudLarge.js';   // ROAD-E E5: ViewportChanger - the docked bar shrinks the world pass
 import { createLockOn, LOCK_PICK_DISTANCE } from '../player/lockOn.js';   // TI1: touch lock-on
 import { rayDirFromScreen, projectToScreen, ndcFromScreen } from '../player/tapRay.js';   // TI1: the finger's ray and the dot
@@ -1635,27 +1634,15 @@ export async function bootWorld(canvas, renderer, params, status) {
   const moveAxes = new MoveAxes();   // AUDIT 28 W8: MovementAcceleration
   const cameraRecoiler = new CameraRecoiler();   // AUDIT 28 W9: CameraRecoilStrength
   const headBobber = new HeadBobber();   // AUDIT 28 W10: HeadBobbing
-  const ridingAnimator = new RidingAnimator();   // TR2: the mount's frames, loop and neigh
+
   /** U53's one-builder law: ONE place changes the mode, and both the
    *  T-key pick and the interior hosts' dismount take it. TR5. */
-  let ridingArt = null;   // TR2: the four CFA frames of the mount under you
-  const setTransportModeHere = (mode) => {
-    player.setTransportMode(mode);   // F-E3: the height action rides with the mode
-    ridingAnimator.mount(mode);
-    ridingArt = null;
-    // HC1 (2026-09-14, Mac: "audit the horse and cart ... the sprites
-    // actually show"): the mount's art loads HERE, in the ONE place the
-    // mode changes (U53) - not on the T-key pick alone. Three other
-    // paths set the mode and used to leave the art null for good: a
-    // loaded save on horseback (the pose restore), the Test Room's ride
-    // out, and the ship's landing. A rider from any of them had the
-    // speed, the bob and the hoof loop, and no horse under them.
-    if (isRiding(mode)) {
-      loadRidingArt(fetchBytes, palette, renderer, mode)
-        .then((art) => { if (player.transportMode === mode) ridingArt = art; })   // still that mount: a dismount mid-load keeps null
-        .catch((e) => console.warn('[transport] mount art unavailable:', e?.message ?? e));
-    }
-  };
+  // MAC-K3: the mount is `player/mountRig.js`'s now - the mode, the
+  // art, the animator, the audio, the picker and the sprite. It moved
+  // because `scenes/exterior.js` had NONE of it and the T key there did
+  // nothing at all; copying it would have been two laws.
+  let mountRig = null;   // built below, once townTalk exists to hold its window
+  const setTransportModeHere = (mode) => mountRig?.setMode(mode);
   let rightHeld = false;   // AUDIT 28 F-C2: HasAction(SwingWeapon) - the raw button, ungated
   // TI1: the touch layer's state. swipeHeld is the swipe's SwingWeapon
   // truth beside rightHeld (the settle law reads both); a tap arms a
@@ -1917,6 +1904,17 @@ export async function bootWorld(canvas, renderer, params, status) {
   preloadCharSheetArt({ renderer, fetchBytes, palette });   // U8a: INFO00I0 warms at boot
   preloadBookArt({ renderer, fetchBytes, palette });   // B1: BOOK00I0 warms at boot
   preloadTransportArt({ renderer, fetchBytes, palette });   // TR3: MOVE00I0 + MOVE01I0
+  // MAC-K3: the mount rig, built once townTalk exists to hold its
+  // picker. `onShip` is THIS host's - the ship is a teleport across a
+  // streaming world and a fixed city has nowhere to sail to, so that
+  // host passes null and the picker's Ship row goes dark.
+  mountRig = createMountRig({
+    renderer, canvas, fetchBytes, palette, audio,
+    player, playerEntity,
+    showOverlay: (w) => townTalk.showOverlay(w),
+    onShip: () => boardOrDisembark(),
+    paused: () => gamePaused(),
+  });
   preloadPauseFlowArt({ renderer, fetchBytes, palette }).catch((e) => console.warn('[pause] pause/controls art unavailable:', e?.message ?? e));   // I3/I4
   // B1 + AUDIT B-C2: an async open must not clobber a window the
   // player opened while the book was loading.
@@ -2680,7 +2678,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2119 mounts the same one, gated on
+  // and dungeonContext.js:2131 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
   // that context through modes.dungeonCtx - so worldModes.js:4623
@@ -3094,13 +3092,18 @@ export async function bootWorld(canvas, renderer, params, status) {
     // host hands over what only it knows, and the door picks the skin.
     return createChronicleWindow({
       entity: playerEntity,
-      // Which page the ENHANCED window opens on. The classic modes map
-      // onto the two sections the chronicle actually holds: the
-      // notebook is Notes, the message log is Messages. The two quest
-      // modes have no page here on purpose - the pause window has
-      // carried quests since PX4 - so they land on Notes, and the
-      // CLASSIC window still gets the mode itself, below.
-      section: mode === 'messages' ? 'messages' : 'notes',
+      // MAC-K2: the walk the Quests section draws - the bridge's one.
+      questLog: () => questBridge?.questLog() ?? { active: [], finished: [] },
+      // MAC-K2 (Mac: "Logbook not reflecting quests"). This read
+      // `mode === 'messages' ? 'messages' : 'notes'`, with the note
+      // that "the two quest modes land on Notes because the pause
+      // window has carried quests since PX4" - which made the L key,
+      // InputManager's own `LogBook`, open the player's NOTEBOOK. The
+      // chronicle now has a Quests section (ui/enhancedChronicle.js)
+      // fed by the SAME walk the pause tab uses, so each classic mode
+      // lands on the page that holds what it names.
+      section: mode === 'messages' ? 'messages'
+        : (mode === 'notebook' ? 'notes' : 'quests'),
       questMessages: () => questBridge?.machine.getAllQuestLogMessages() ?? [],
       notebook: () => questBridge?.notebook ?? null,
       mode,
@@ -4234,7 +4237,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:5413), so exterior mode and a
+    // composer, dungeonContext.js:5407), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -4934,22 +4937,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // refuses with a HUD line, and AIRBORNE is silently ignored
     // (`if (isGrounded)` with no else). Outdoors and grounded, the
     // picker opens.
-    openTransport: () => {
-      if (!player.grounded || !transportArtLoaded()) return;
-      townTalk.showOverlay(new TransportWindow({
-        hasHorse: hasHorse(playerEntity.items ?? []),
-        hasCart: hasCart(playerEntity.items ?? []),
-        // TR4: the row is live when a ship is owned - the bank arc has
-        // carried that fact since H3, and this is its first reader.
-        shipAvailable: ownsShip(playerEntity),
-        onMode: (mode) => {
-          // TR4: "Ship" is not a mode you travel IN (DFU's own comment
-          // on the enum) - it is a teleport that lands back on Foot.
-          if (mode === TRANSPORT_MODES.Ship) { boardOrDisembark(); return; }
-          setTransportModeHere(mode);   // HC1: the art loads with the mode, in the one place
-        },
-      }));
-    },
+    // MAC-K3: the picker is the mount rig's - see player/mountRig.js
+    // for the grounded/airborne law and the ship row's own gate.
+    openTransport: () => mountRig?.open(),
     openUseMagicItem: () => {
       const win = createUseMagicItemWindow({
         items: playerEntity.items ?? [],
@@ -5015,29 +5005,13 @@ export async function bootWorld(canvas, renderer, params, status) {
         // journal's rail/detail, and the notebook's finished entries
         // for the archive. Raw messages and raw token entries: the
         // menu flattens, one flattener, one home.
-        questLog: () => {
-          const m = questBridge?.machine;
-          const active = [];
-          if (m) {
-            for (const q of m.quests.values()) {
-              const les = q.getLogMessages();
-              if (!les?.length) continue;
-              const messages = les.map((le) => q.getMessage(le.messageID)).filter(Boolean);
-              if (!messages.length) continue;
-              // PX5: the tightest RUNNING clock on the quest - Clock
-              // resources carry remainingTimeInSeconds in game seconds
-              // and clockEnabled/clockFinished (quest/clock.js:98,164).
-              let clockSeconds = null;
-              for (const r of q.resources.values()) {
-                if (r.clockEnabled && !r.clockFinished && Number.isFinite(r.remainingTimeInSeconds)) {
-                  clockSeconds = clockSeconds == null ? r.remainingTimeInSeconds : Math.min(clockSeconds, r.remainingTimeInSeconds);
-                }
-              }
-              active.push({ id: String(q.uid), name: q.displayName || null, questName: q.questName || '', clockSeconds, messages });
-            }
-          }
-          return { active, finished: questBridge?.notebook?.getFinishedQuests() ?? [] };
-        },
+        // MAC-K2: the walk is the BRIDGE's now. This was one of the
+        // three copies of it (dungeonContext.js's and exterior.js's
+        // `pauseQuestLog` were the others, and that one's own comment
+        // already said two copies is two laws) - and the chronicle's
+        // Quests section needed a fourth reader, which is one more
+        // than a copied walk survives.
+        questLog: () => questBridge?.questLog() ?? { active: [], finished: [] },
       });
     },
     cycleMode: (dir) => townTalk.setMode(dir > 0 ? hudLargeNextMode(getInteractionMode()) : hudLargePrevMode(getInteractionMode())),
@@ -5516,7 +5490,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7259-7271 -
+  // worldModes answers it in BOTH modes (worldModes.js:7273-7285 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -7167,26 +7141,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     // (PX3/PX4/PX5), so a pause inside a tavern shows the same rail,
     // separators and timers as one on the road.
     pauseQuestMessages: () => questBridge?.machine.getAllQuestLogMessages() ?? [],
-    pauseQuestLog: () => {
-      const m = questBridge?.machine;
-      const active = [];
-      if (m) {
-        for (const q of m.quests.values()) {
-          const les = q.getLogMessages();
-          if (!les?.length) continue;
-          const messages = les.map((le) => q.getMessage(le.messageID)).filter(Boolean);
-          if (!messages.length) continue;
-          let clockSeconds = null;
-          for (const r of q.resources.values()) {
-            if (r.clockEnabled && !r.clockFinished && Number.isFinite(r.remainingTimeInSeconds)) {
-              clockSeconds = clockSeconds == null ? r.remainingTimeInSeconds : Math.min(clockSeconds, r.remainingTimeInSeconds);
-            }
-          }
-          active.push({ id: String(q.uid), name: q.displayName || null, questName: q.questName || '', clockSeconds, messages });
-        }
-      }
-      return { active, finished: questBridge?.notebook?.getFinishedQuests() ?? [] };
-    },
+    // MAC-K2: the FOURTH copy of the walk, and the one the derived pin
+    // in test/questbridge.test.js caught - exterior.js's comment had
+    // said "world.js keeps two copies of this walk" and it was right.
+    pauseQuestLog: () => questBridge?.questLog() ?? { active: [], finished: [] },
     revealLocation,
     magic, spellsByIndex: () => spellsByIndex,   // M2: the one cast engine + SPELLS.STD ride into the interior arm
     townTalk,   // U23: the interior host borrows FACTION.TXT/TEXT.RSC + the talk seam
@@ -8925,30 +8883,11 @@ export async function bootWorld(canvas, renderer, params, status) {
       // 39 hoisted drawHud out of it: the mount is the classic skin's
       // business and this fix owns the HUD call, nothing else.
       if (hudArt) {
-        const ridePaused = gamePaused();
-        const r = ridingAnimator.update(dt, {
-          mode: player.transportMode,
-          standingStill: player.standing,
-          grounded: player.grounded,
-          paused: ridePaused,
-          movingLessThanHalfSpeed: player.movingLessThanHalfSpeed,
-          running: player.isRunning,
-          soundVolume: 1,
-        });
-        if (r.neigh) audio.playOneShot(SOUND.AnimalHorse, RIDING_VOLUME_SCALE);
-        audio.setLoop('riding', r.playing ? SOUND[r.clip] : null, { volume: r.volume, pitch: r.pitch });
-        // TR-AUDIT F-E1: OnGUI (:293) refuses to draw AT ALL while the
-        // game is paused - `!GameManager.IsGamePaused` sits in the same
-        // condition as the Repaint test. Under an open window DFU shows
-        // no mount; the first cut froze the frame and kept drawing it.
-        if (ridingArt && isRiding(player.transportMode) && !ridePaused) {
-          // ROAD-D D10: horseOffsetHeight (TransportManager.cs
-          // :304-309) - the bar the LAST drawHud drew, lifted out
-          // from under the mount. Docking is not asked here; DFU's
-          // horse arm never asks it.
-          const rect = ridingRect(canvas, ridingArt, horseOffsetHeight());
-          renderer.drawScreenQuad(ridingArt.frames[r.frame], rect);
-        }
+        // MAC-K3: the animator, the audio and the sprite, all one
+        // call into `player/mountRig.js` - the same rig the fixed-city
+        // host now mounts, so the mount cannot behave differently in a
+        // town than it does on the road.
+        mountRig?.frame(dt);
       }
       drawPeerNames(proj, view, mwv.eye);   // ONLINE1: the names over the heads
       drawHud(renderer, canvas, hudArt, playerEntity,
