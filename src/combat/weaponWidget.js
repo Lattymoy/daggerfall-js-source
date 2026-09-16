@@ -235,6 +235,17 @@ export function createWeaponWidget({
   function changeWeaponState(state) {
     w.weaponState = state;
     if (ctx?.weaponType === T.Bow && state === S.Idle) w.currentFrame = 0;
+    // WW4b (Mac's curated fix, 2026-09-16): THE PORT'S OWN re-entry. The
+    // IL resets only a bow's Idle; with Recovery = Hide (the default) the
+    // Swings coroutine leaves a melee frame at -1 and finishSwing's
+    // slide-in from below (offsetCurrent = [x, 1]) needs a DRAWABLE frame.
+    // The mod's clone gets its idle frame back from the original it
+    // shadows; this clone shadows a machine that publishes no frame for
+    // Idle, so the idle stayed at -1 - invisible once WW4 stopped the
+    // classic sprite standing in for frame -1. Only the stuck case is
+    // touched: an Idle already holding a real frame (Recovery = LastFrame,
+    // the other changeWeaponState(S.Idle) callers) is left as it was.
+    else if (state === S.Idle && w.currentFrame < 0) w.currentFrame = 0;
     if (state !== S.Idle) { w.offsetCurrent = [0, 0]; w.offsetTarget = [0, 0]; }
     updateWeapon();
   }
@@ -721,8 +732,21 @@ export function createWeaponWidget({
   function draw(renderer, canvas) {
     if (!ctx || !w.art || !renderer || !canvas) return false;
     if (ctx.weaponType === T.None) return false;
-    if (w.currentFrame === -1 || !w.showWeapon || ctx.thirdPerson) return false;
-    if (!w.s.offset && !ctx.shown) return false;
+    // WW4 (Mac's curated fix, 2026-09-16): an applicable clone that
+    // chooses SILENCE still owns the seam. Frame -1 (a Hide wind-up or
+    // recovery - "frame -1 draws nothing", OnGUI 0x10c8), a hideWeapon
+    // message, third person, or the rig not showing the weapon are the
+    // mod drawing nothing - not the mod being absent. `false` here reads
+    // to the rig (`if (widgetOn() && c && widget.draw(renderer, c)) return;`)
+    // as "not mine" and the classic sprite falls in behind it: the
+    // vanilla weapon flashing back mid-swing on every Hide wind-up and
+    // recovery (both default). In DFU the mod hides the original outright
+    // (`ScreenWeapon.ShowWeapon = false` - "the vanilla weapon's own hide",
+    // the page's deliberately-not-carried list) and this return IS that
+    // hide. Only genuine NOT-APPLICABLE - no ctx or art, no anim, record
+    // or texture data - may fall through to the classic sprite.
+    if (w.currentFrame === -1 || !w.showWeapon || ctx.thirdPerson) return true;
+    if (!w.s.offset && !ctx.shown) return true;
     const a = anims();
     if (!a) return false;
     const record = ctx.weaponType === T.Bow ? 0 : a[w.weaponState].Record;

@@ -629,3 +629,43 @@ test('WW1: the bundle door - TryImportCifRci\'s spelling with the w_ prefix and 
   assert.ok(b.widget._w.customCache.has('w_WEAPON04.CIF_0-0_Steel'), 'asked by TryImportCifRci\'s spelling');
   assert.equal(b.widget._w.customCache.get('w_WEAPON04.CIF_0-0_Steel'), null);
 });
+
+test('WW4 (Mac\'s curated fix): a clone that chooses silence OWNS the draw seam - frame -1, hideWeapon and third person answer true and draw nothing, so the classic sprite never falls in behind a Hide wind-up or recovery', () => {
+  const hd = bench({ over: { 'Swings.Windup': WINDUP.Hide } });
+  hd.frame(); machineAttack(hd.machine, 'StrikeLeft'); hd.frame(0.05);
+  assert.equal(hd.widget.frame, -1, 'hidden by the wind-up');
+  const before = hd.draws.length;
+  assert.equal(hd.widget.draw(hd.renderer, hd.ctx.canvas), true, 'frame -1: the seam is the clone\'s (the rig returns and draws no sprite)');
+  assert.equal(hd.draws.length, before, 'and nothing was drawn');
+  const b = bench(); b.frame();
+  b.widget.setShowWeapon(false);
+  assert.equal(b.widget.draw(b.renderer, b.ctx.canvas), true, 'a hideWeapon message: owned, silent');
+  b.widget.setShowWeapon(true);
+  b.ctx.thirdPerson = true;
+  assert.equal(b.widget.draw(b.renderer, b.ctx.canvas), true, 'third person: owned, silent');
+  b.ctx.thirdPerson = false;
+  // genuine NOT-APPLICABLE still falls through to the classic sprite
+  const none = bench({ weaponType: T.None }); none.frame();
+  assert.equal(none.widget.draw(none.renderer, none.ctx.canvas), false, 'no weapon type: not the clone\'s');
+  // and the rig's seam reads the answer exactly that way
+  assert.match(rd('src/combat/weaponRig.js'), /if \(widgetOn\(\) && c && widget\.draw\(renderer, c\)\) return;/);
+});
+
+test('WW4b (Mac\'s curated fix): after a swing under Recovery = Hide the melee idle re-enters on a DRAWABLE frame, so it slides back into view instead of staying at -1 for ever', () => {
+  const b = bench();
+  b.frame();
+  assert.ok(machineAttack(b.machine, 'StrikeDown'));
+  for (let i = 0; i < 40 && b.machine.state !== 'Idle'; i++) b.frame(0.05);
+  assert.equal(b.machine.state, 'Idle'); assert.equal(b.widget.state, S.Idle);
+  assert.equal(b.widget.frame, 0, 'the idle holds frame 0 again, not the recovery\'s -1');
+  const before = b.draws.length;
+  b.frame(0.05);
+  assert.equal(b.draws.length, before + 1, 'and it draws');
+  assert.equal(b.draws.at(-1).tex, 'tex:0:0:0', 'the idle sprite');
+  // Recovery = LastFrame already held a real frame and is left as it was
+  const lf = bench({ over: { 'Swings.Recovery': RECOVERY.LastFrame } });
+  lf.frame(); machineAttack(lf.machine, 'StrikeDown');
+  for (let i = 0; i < 40 && lf.machine.state !== 'Idle'; i++) lf.frame(0.05);
+  assert.equal(lf.widget.state, S.Idle);
+  assert.ok(lf.widget.frame >= 0, 'a real frame, untouched by the re-entry');
+});
