@@ -7518,9 +7518,13 @@ lighter answer possible. A container now opens THAT frame and nothing
 else - and the pack's window is NOT BUILT, not built-and-hidden,
 because a hidden window still runs layout and would have eaten the
 tooltip's anchor. One frame owns the tooltip and the click-away
-listener, whichever is showing. The way back is a PACK button on the
+listener, whichever is showing. The way back was a PACK button on the
 loot frame, present only while the pack is closed (a button that opens
-what is already open is PX14's drawn-door-opening-nothing bug). Every
+what is already open is PX14's drawn-door-opening-nothing bug) -
+**REMOVED BY MAC, 2026-09-16** (MAC-M2 B, at the end of this page): a
+loot session is drawn or not drawn and never switches, and the way to
+the pack is to close the pile and press the key that has always opened
+it. Every
 law behind the glass is untouched - take, stow, the remote model, the
 wagon, the gold popup - because this slice changes which frames are
 DRAWN.
@@ -7548,8 +7552,9 @@ Pins: 4 in enhancedInventory.test.js (the six-a-side map and the auto
 column; the unframed 4x sprite and its aspect-locked cell, with
 110x184 read from paperDoll.js rather than typed; the name in the bar,
 the count gone and the name line back; and the loot frame alone with
-the pack unbuilt, the frame owning the tooltip, the Pack button
-conditional, and the transfer ladder still present). The U59 doll pin
+the pack unbuilt, the frame owning the tooltip, the Pack button -
+INVERTED by MAC-M2 B, which asserts no such button exists anywhere in
+the module - and the transfer ladder still present). The U59 doll pin
 follows the 4x. 8 mutations, 8 dead. Verified in a real browser at
 1440x900 with a synthetic paperdoll (no ARENA2 here) and with four
 pieces worn, both modes shot.
@@ -13455,3 +13460,64 @@ one that would let a worn piece reach the floor.
 **Not seen running.** This container has no ARENA2 and the pane needs
 none, but `tools/enhancedPackProbe.mjs` was not re-run here; the gesture
 is driven in node, not in a browser.
+
+## MAC-M2 B - THE LOOT WINDOW IS FOR TAKING (2026-09-16, Mac)
+
+*"Remove the gold and pack buttons from the looting menu."*
+
+The loot frame's action bar carried three controls: **Wagon** (only
+with a cart in the bag), **Gold**, and **Pack**. The last two are gone
+from a loot session. The wagon stays - it is a real destination for
+what you just took, and its two refusals are `inventorySession`'s law.
+
+### Neither one is DFU's, in this frame
+
+`DaggerfallInventoryWindow` has ONE parchment with both lists on it, so
+its `goldButton` (`:47` rect, `:515-517` wired) sits on the PLAYER's own
+panel - a control of the pack, drawn beside the pack's own list, with
+the remote side of the same window happening to be a corpse. There is no
+"Pack" button anywhere in the reference at all: PX20b minted that one so
+the port's loot-ONLY frame, which DFU does not have, could get back to
+the pack it had replaced.
+
+And the Gold button on a body does the thing its shape promises.
+`dropGold` adds the minted stack to `remoteTarget` (`ui/enhancedInventory.js`'s
+`dropGold`), and in a loot session that is the container - so the field's
+own verb reads "Drop" and the act puts the purse INTO the corpse. Nobody
+opens a body to fund it.
+
+### What it costs, and where both live now
+
+Both are still reachable in the one place they read as themselves: the
+pack. Escape or the inventory key closes the pile, the key opens the
+pack, and the gold field is on it with the ground or the wagon as the
+remote side.
+
+The honest cost is PX20b's convenience: **a loot session can no longer
+open the pack at all.** `packOpen` was seeded `!d.loot` and the Pack
+button was its only other setter, so the flag is now decided on the way
+in and never moves. That is Mac's call, recorded rather than argued
+with, and PX20b's sentence in this page has been retired to match rather
+than left standing beside it.
+
+### The gate is the SESSION, not the frame
+
+`deps.loot` is what opened this window, and it is what the two buttons
+now read. A pack opened on the inventory key keeps its Gold button over
+the ground, over the wagon and over a reward tray exactly as it had it -
+this changes the loot session alone. The Pack button is deleted outright
+rather than gated, because `!packOpen` was only ever true in a loot
+session: gating it would have left a control no path can reach, which is
+the dead decoration U53 deleted a "worn" badge for.
+
+### Pinned
+
+Three DRIVEN tests in `test/enhancedInventory.test.js`: a loot session's
+bar is EMPTY with the gold field unreachable; a loot session with a cart
+draws `['Wagon']` and only that; and a normal pack drops something on
+the ground and its ground frame still carries Gold. PX20b's own pin is
+INVERTED rather than deleted - it now asserts no `'Pack'` button exists
+in the module and that `packOpen` has exactly two assignment sites -
+because a removed pin stops catching the drift back. **4 mutations, 4
+dead**: Gold back on the loot bar, Pack back on the loot bar, the gate
+inverted onto the normal pack, and the wagon removed with them.

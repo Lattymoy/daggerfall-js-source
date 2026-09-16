@@ -498,12 +498,16 @@ let remote = null;
    entire inventory window"). DFU opens the whole parchment because DFU
    has ONE window and both lists live in it; PX19c already split the
    remote into its own smaller frame, which makes a lighter answer
-   possible: opening a CONTAINER shows that frame alone. The pack is a
-   press away and everything behind the glass is unchanged - the
-   transfer ladder, the remote model, the take/stow arms, the wagon,
-   the gold popup - because this is which frames are DRAWN, not what
-   the window does. Opening the pack from a key (F6) or the world opens
-   both, exactly as before. */
+   possible: opening a CONTAINER shows that frame alone. Everything
+   behind the glass is unchanged - the transfer ladder, the remote
+   model, the take/stow arms, the wagon, the gold popup - because this
+   is which frames are DRAWN, not what the window does. Opening the pack
+   from a key (F6) or the world opens both, exactly as before.
+   MAC-M2 B: PX20b's sentence here used to read "the pack is a press
+   away", and that press was the loot bar's Pack button, which Mac has
+   had removed. A loot session therefore never opens the pack: it is
+   drawn or it is not, decided on the way in, and the way to the pack is
+   to close the pile and press the key that has always opened it. */
 let packOpen = true;
 let goldEntry = null;   // the drop-gold field's live text, or null
 let onExit = () => {};
@@ -1692,19 +1696,34 @@ function remoteCol() {
     b.onclick = toggleWagon;
     acts.append(b);
   }
-  // GOLD IS NOT AN ITEM ROW. It is one stack in the pack that the list
-  // shows as a line, and DFU gives it its own button and its own
-  // numeric popup because "drop 40 of 12000" is not a click.
-  const g = el('button', 'act', 'Gold');
-  g.onclick = () => { goldEntry = goldEntry == null ? '0' : null; notice = null; render(); };
-  acts.append(g);
-  // PX20b: the way back to the whole pack, from the loot-only frame.
-  // It appears only when the pack is HIDDEN - a button that opens what
-  // is already open is the drawn-door-opening-nothing bug (PX14's law).
-  if (!packOpen) {
-    const b = el('button', 'act', 'Pack');
-    b.onclick = () => { packOpen = true; picked = null; render(); };
-    acts.append(b);
+  // MAC-M2 B (2026-09-16, Mac: "Remove the gold and pack buttons from
+  // the looting menu"): THE LOOT WINDOW IS FOR TAKING, and its bar
+  // carries the wagon and nothing else.
+  //
+  // Neither button is DFU's in this frame. DFU has ONE parchment, so its
+  // goldButton (DaggerfallInventoryWindow.cs:47/:515-517) sits on the
+  // player's own panel beside BOTH lists, and there is no "Pack" button
+  // anywhere in the reference at all - PX20b minted that one to reopen
+  // the pack its loot-only frame had replaced. Over a corpse the gold
+  // field's own verb is "Drop", and `dropGold` adds the stack to
+  // `remoteTarget` - so the control on a body offers to put the purse
+  // INTO it, which is not what anyone opened it for.
+  //
+  // Both are still reachable, and in the one place they read as
+  // themselves: the pack. Escape or the inventory key closes the pile
+  // and opens it, with the gold field on its own remote side.
+  //
+  // THE GATE IS THE SESSION, not the frame. `deps.loot` is what opened
+  // this window (`packOpen = !d.loot`), so a pack opened on F6 keeps its
+  // Gold button over the ground, the wagon and a reward tray exactly as
+  // it had it - this changes the LOOT session alone.
+  if (!deps.loot) {
+    // GOLD IS NOT AN ITEM ROW. It is one stack in the pack that the list
+    // shows as a line, and DFU gives it its own button and its own
+    // numeric popup because "drop 40 of 12000" is not a click.
+    const g = el('button', 'act', 'Gold');
+    g.onclick = () => { goldEntry = goldEntry == null ? '0' : null; notice = null; render(); };
+    acts.append(g);
   }
   head.append(acts);
   col.append(head);

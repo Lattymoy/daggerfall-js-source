@@ -18,6 +18,7 @@ import {
   mountEnhancedInventory,   // AUDIT INV2: the pane is MOUNTED and the gesture DRIVEN
 } from '../src/ui/enhancedInventory.js';
 import { WAGON_KG_LIMIT } from '../src/systems/itemTransfer.js';
+import { SMALL_CART_TEMPLATE } from '../src/systems/inventorySession.js';   // MAC-M2 B: a cart in the bag, so the loot bar's one surviving button draws
 import { USE_PENDING } from '../src/ui/nativeInventory.js';
 import {
   createInventoryWindow, inventoryDoorReady,
@@ -979,9 +980,16 @@ test('PX20b: a LOOT target opens its own frame alone - the pack is never built',
   assert.match(render, /frame\.append\(tip\);/);
   assert.match(render, /frame\.addEventListener\('click'/);
   assert.doesNotMatch(render, /win\.addEventListener\('click'/, 'the listener follows the frame, not the pack');
-  // The way back, and only when there is somewhere to go.
-  assert.match(src, /if \(!packOpen\) \{\n    const b = el\('button', 'act', 'Pack'\);/);
-  assert.match(src, /b\.onclick = \(\) => \{ packOpen = true; picked = null; render\(\); \};/);
+  // MAC-M2 B (2026-09-16, Mac: "Remove the gold and pack buttons from
+  // the looting menu"): PX20b's way BACK is gone by his call, so a loot
+  // session is drawn or not drawn and never switches. The pin is
+  // INVERTED rather than deleted - a Pack button quietly returning is
+  // exactly the drift a removed pin stops catching.
+  const c = code('src/ui/enhancedInventory.js');
+  assert.doesNotMatch(c, /el\('button', 'act', 'Pack'\)/,
+    'no Pack button: the way to the pack is to close the pile and press the key that has always opened it');
+  assert.equal((c.match(/packOpen = /g) ?? []).length, 2,
+    'packOpen is declared and decided on the way in - nothing else moves it');
   // The transfer ladder is untouched: this slice draws frames.
   for (const law of ['function take(', 'function stow(', 'remoteModel', 'toggleWagon']) {
     assert.ok(src.includes(law), `${law} is still here - PX20b changed what is DRAWN`);
@@ -2010,5 +2018,65 @@ test('MAC-M2: the plain click on a slot is untouched - it picks, and the card st
     panel.onclick?.({});
     assert.equal(dom.doc.querySelectorAll('.packtip').length, 0,
       'a release that DRAGGED is never also a pick - here as in the list');
+  });
+});
+
+// ═══ MAC-M2 B: THE LOOT WINDOW IS FOR TAKING ═════════════════════
+//
+// 2026-09-16, Mac: "Remove the gold and pack buttons from the looting
+// menu."
+//
+// Neither is DFU's in this frame. DFU has ONE parchment, so its
+// goldButton (DaggerfallInventoryWindow.cs:47/:515-517) sits on the
+// player's own panel beside BOTH lists, and there is no "Pack" button
+// anywhere in the reference at all - PX20b minted that one to reopen
+// the pack its loot-only frame had replaced. Over a corpse the gold
+// field's verb is "Drop" and `dropGold` adds the stack to
+// `remoteTarget`, so the control offered to put the purse INTO the
+// body.
+//
+// DRIVEN: the pane is mounted on a real loot target and the bar is READ.
+
+/** The bar the remote side draws, as words. */
+const barOf = (dom) => {
+  const acts = dom.doc.querySelectorAll('.remoteacts');
+  assert.equal(acts.length, 1, 'the remote side draws exactly one action bar');
+  return acts[0].children.map((b) => b.textContent);
+};
+
+test('MAC-M2 B: a loot session’s bar carries no Gold and no Pack', () => {
+  const pile = [mk('Dagger')];
+  withPack(({ dom }) => {
+    assert.ok(dom.doc.querySelectorAll('.loot-win').length, 'the pile has its own frame');
+    assert.equal(dom.doc.querySelectorAll('.pack-win').length, 0, 'and the pack is not built (PX20b)');
+    assert.deepEqual(barOf(dom), [], 'nothing on the bar - the window is for taking');
+    assert.equal(dom.doc.querySelectorAll('.goldfield').length, 0, 'and the gold field is unreachable with it');
+  }, { deps: { loot: { items: () => pile } } });
+});
+
+test('MAC-M2 B: the WAGON button is untouched - it is the one control the loot bar keeps', () => {
+  // The cart is a real destination for what you just took, and its
+  // refusals are inventorySession's law. Only the two Mac named go.
+  const pile = [mk('Dagger')];
+  withPack(({ dom }) => {
+    assert.deepEqual(barOf(dom), ['Wagon'], 'the wagon, and only the wagon');
+  }, {
+    items: () => [mk('Longsword'),
+      { name: 'Small cart', group: 'Transportation', templateIndex: SMALL_CART_TEMPLATE, stackCount: 1 }],
+    deps: { loot: { items: () => pile } },
+  });
+});
+
+test('MAC-M2 B: the NORMAL pack keeps its Gold button - the gate is the session, not the frame', () => {
+  // The pack opened on the inventory key is untouched: it drops
+  // something on the ground, the ground frame arrives, and Gold is on
+  // it exactly as it always was.
+  withPack(({ dom, e, view, rows, at, down, move, up }) => {
+    assert.ok(dom.doc.querySelectorAll('.pack-win').length, 'a pack session, not a loot one');
+    at(dom.body); down(rows()[0], 10, 10); move(60, 60); up(60, 60);
+    assert.equal(view.dropped().length, 1, 'something is on the ground now');
+    assert.ok(e.items.length, 'and the bag still has the rest');
+    assert.ok(barOf(dom).includes('Gold'), 'so the ground frame carries Gold, as it always did');
+    assert.equal(barOf(dom).includes('Pack'), false, 'and never the Pack button, which is gone for good');
   });
 });
