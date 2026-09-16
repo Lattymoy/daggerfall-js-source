@@ -72,7 +72,7 @@
 import { tabStorage } from '../systems/appStorage.js';   // the tab's own storage - the seam, never the browser's own (a PIN)
 import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the port's one angle wrap, which cannot loop
 
-import { WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, sanitizeChat, chatGate, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS } from './wire.js';
+import { WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, sanitizeChat, chatGate, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS, relayVersionOf, chatInGate, CHAT_ROOM_HZ_MAX } from './wire.js';
 
 export { WORLD_CELL, RANGE_PIXELS, worldRoom };
 
@@ -226,6 +226,14 @@ export class OnlineSession {
     this.clockOffsetMs = 0;       // WORLD5: the relay's clock minus this machine's, from the welcome - the shared world time is read through it
     this.clockWarning = null;     // OL3: the welcome's clock was a year off this machine's - said on the HUD line while it stands
     this.onClock = null;          // WORLD5: (offsetMs) => void - the welcome said the relay's clock
+    // AUDIT-SRVN F4: there WAS a `this.relayVersion` here, written on every
+    // welcome and read by nothing but its own test. Which relay this
+    // socket is on is a question one home already answers
+    // (net/updateNotice.js), and a second copy of it on the session is a
+    // second source of truth for a question nobody was asking - the same
+    // shape AUDIT-CHATR deleted `whoRows()` for. The hook is the whole
+    // seam; the detector owns the memory.
+    this.onRelay = null;          // SRV-N: (version) => void - a welcome named the relay's deploy
     this.look = look ?? { race: 'Breton', gender: 'male', faceIndex: 0, items: [] };
     this.id = id ?? peerId();
     this._WS = WebSocketImpl;
@@ -236,6 +244,11 @@ export class OnlineSession {
     this.terminal = false;     // the relay closed with a reason a retry will not change (replaced, refused)
     this.terminalAt = null;    // when it did (the session's clock): rejoin() waits on it
     this._cbucket = null;      // the client's own chat gate (AUDIT CHAT A8): the relay's law, run first
+    // CHAT-G: the gate on lines COMING IN, one bucket per room because
+    // that is the unit the relay spends by. Room -> bucket; a room let go
+    // drops its bucket with the rest of what that room meant (_forgetRoom).
+    this._inChat = new Map();
+    this._inChatSaid = false;  // the console says it ONCE - a flood must not become its own flood
     this.peers = new Map();    // id -> { id, name, look, pose, from, at, shown, seenAt } - MERGED over every room held (WORLD6b-iii(b))
     this._rooms = new Map();   // WORLD6b-iii(b): room -> Set<id> - which rooms report which peers; a peer stays in `peers` while any room holds it
     this._halo = new Map();    // WORLD6b-iii(b): room -> { ws, status, retryAt, backoff } - the neighbouring cells within range (hello'd and posed into, listened to, never streamed to: my own cell's fan reaches everyone in range)
@@ -246,7 +259,7 @@ export class OnlineSession {
     this._backoff = BACKOFF_MIN_MS;
     this._retryAt = null;
     this._closedByUs = false;
-    this.stats = { sent: 0, poses: 0, received: 0, reconnects: 0, chats: 0, worlds: 0, foes: 0, hits: 0, acts: 0, threw: 0 };
+    this.stats = { sent: 0, poses: 0, received: 0, reconnects: 0, chats: 0, worlds: 0, foes: 0, hits: 0, acts: 0, threw: 0, chatsDropped: 0 };
     /** ONCRASH1: what the last contained handler threw, for a person - `{ kind, text, at }` or null. */
     this.threw = null;
     this._threwKinds = new Set();   // said in full once a kind; the rest are counted
@@ -366,6 +379,7 @@ export class OnlineSession {
   _forgetRoom(room) {
     const s = this._rooms.get(room);
     this._rooms.delete(room);
+    this._inChat.delete(room);   // CHAT-G: a room let go takes its bucket with it, or a long session accumulates one per cell it ever walked through
     if (s) for (const id of s) if (!this._held(id)) this.peers.delete(id);
   }
   _openHalo(room, backoff = BACKOFF_MIN_MS) {
@@ -663,6 +677,15 @@ export class OnlineSession {
     const now = this._now();
     const primary = room === this.room;   // WORLD6b-iii(b): a halo room's frames place its peers and carry a peer's foes and blows; the host, the clock and the memory are my own room's alone
     if (m.t === 'welcome') {
+      // SRV-N: WHICH RELAY IS THIS. Read ABOVE the `primary` gate below on purpose - a halo room's welcome comes off
+      // the same Worker as my own room's, and a chat channel's welcome is the only one a chat link ever gets, so
+      // gating this on the primary room would have made the chat's own sessions blind to the restart that just
+      // dropped them. A relay before this slice carries no `v` at all and is left alone (updateNotice.js: 'unknown').
+      // AUDIT-SRVN F1: through the wire's own law, like every other field
+      // a welcome carries - a relay is the PLAYER'S choice (`?server=`,
+      // the menu's Relay field), so its deploy name is not our word.
+      const relayV = relayVersionOf(m.v);
+      if (relayV) this._deliver('relay', () => this.onRelay?.(relayV));
       // merged, not wiped: a peer already known keeps where it is drawn
       const keep = new Set();
       for (const p of Array.isArray(m.peers) ? m.peers : []) {
@@ -709,6 +732,24 @@ export class OnlineSession {
       // CHAT1: checked by the relay's own law (B7) - the id's shape, the name's, the line's; `mine` is the sender's own line back
       const text = typeof m.text === 'string' ? sanitizeChat(m.text) : '';
       if (typeof m.id !== 'string' || !text) return;
+      // CHAT-G: ...and COUNTED, which for a year nothing did. The relay a
+      // client talks to is the player's choice (`?server=`, the menu's
+      // Relay field), so "the relay already gated this" is a sentence
+      // about an honest relay only - and net/chat.js keeps CHAT_KEEP
+      // lines, so an ungated stream is a player's history deleted. The
+      // rate is the relay's OWN per-room spend, so an honest room at full
+      // tilt passes whole and the first frame refused is one no honest
+      // relay would have sent.
+      const g = chatInGate(this._inChat.get(room), now);
+      this._inChat.set(room, g.bucket);
+      if (!g.pass) {
+        this.stats.chatsDropped++;
+        if (!this._inChatSaid) {
+          this._inChatSaid = true;
+          console.warn(`[online] chat from ${room} is arriving faster than ${CHAT_ROOM_HZ_MAX}/s - lines are being dropped. An honest relay does not do this.`);
+        }
+        return;
+      }
       this._deliver('chat', () => this.onChat?.({ id: m.id, name: sanitizeName(m.name), text, at: Number.isFinite(m.at) ? m.at : now, mine: m.id === this.id }));
     } else if (m.t === 'error') {
       this.status = 'error'; this.error = String(m.m ?? 'relay error');

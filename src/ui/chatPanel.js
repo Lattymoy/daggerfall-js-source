@@ -79,6 +79,7 @@ export const CHAT_CSS = `
 .dfchat-name { color: var(--brass, #c08a3e); font-weight: 600; }
 .dfchat-tag { color: var(--dim, #8b8578); font-size: 11px; margin: 0 6px 0 2px; }
 .dfchat-line.mine .dfchat-name { color: #dcc27c; }
+.dfchat-line.system .dfchat-text { color: #8fb8d8; font-style: italic; }
 .dfchat-time { color: var(--dim, #8b8578); font-size: 11px; margin-right: 6px; }
 .dfchat-hint { margin-top: 4px; font-size: 12px; color: var(--dim, #8b8578); opacity: .75; text-shadow: 0 1px 2px #000; }
 .dfchat-status { margin-top: 4px; font-size: 12px; color: #e0b070; text-shadow: 0 1px 2px #000; }
@@ -228,9 +229,17 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
   let whoKey = '';
 
   const lineNode = (line, withTime) => {
-    const n = el('div', `dfchat-line${line.mine ? ' mine' : ''}`);
+    const n = el('div', `dfchat-line${line.mine ? ' mine' : ''}${line.system ? ' system' : ''}`);
     if (withTime) n.append(el('span', 'dfchat-time', clockOf(line.at)));
-    n.append(el('span', 'dfchat-name', line.name || '?'), el('span', 'dfchat-tag', `#${tagOf(line.id)}`), el('span', 'dfchat-text', line.text));
+    // SRV-N: a notice is NOT ATTRIBUTED. No name and no `#tag`, because
+    // both are the marks of a person having spoken - a notice drawn with
+    // them would read as a player called 'Server' with a tag of its own,
+    // and the tag would be `tagOf('')`: a real-looking four-character
+    // hash off an empty id, identical on every notice and therefore
+    // exactly the thing a player could be fooled by. Its own colour
+    // instead, which is a mark no player's line can wear.
+    if (line.system) n.append(el('span', 'dfchat-text', line.text));
+    else n.append(el('span', 'dfchat-name', line.name || '?'), el('span', 'dfchat-tag', `#${tagOf(line.id)}`), el('span', 'dfchat-text', line.text));
     return n;
   };
 

@@ -13,6 +13,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { validFoeRecord, CELL_FRAME_RECORDS_MAX, HIT_ROOM_BYTES_PER_S, PIXEL_UNITS } from '../src/net/wire.js';
 import { RELAY_VERSION } from '../server/src/index.js';
+import { relayVersionAtLeast } from './relayVersion.mjs';
 import { fakeRoom } from './fakeRoom.mjs';
 import { createExteriorFoes } from '../src/scenes/exteriorFoes.js';
 import { generateItems, validLootItem, validLootList, LOOT_STACK_MAX, LOOT_LIST_MAX } from '../src/systems/loot.js';
@@ -163,8 +164,8 @@ test('AUDIT WORLD6b-iii(c) C5: the frame obeys CELL_FRAME_RECORDS_MAX - the live
   assert.ok(f.f.every((r) => validFoeRecord(r)), 'every record the wire\'s');
 });
 
-test('AUDIT WORLD6b-iii(c) C3: the Room - the hit arm counts BYTES (HIT_ROOM_BYTES_PER_S a second, the room\'s) - over the budget a frame is dropped and nobody struck; inside it a grant lands; the relay says world64', async () => {
-  assert.equal(HIT_ROOM_BYTES_PER_S, 256 * 1024); assert.equal(RELAY_VERSION, 'world66');
+test('AUDIT WORLD6b-iii(c) C3: the Room - the hit arm counts BYTES (HIT_ROOM_BYTES_PER_S a second, the room\'s) - over the budget a frame is dropped and nobody struck; inside it a grant lands; the relay is at or past this slice\'s deploy', async () => {
+  assert.equal(HIT_ROOM_BYTES_PER_S, 256 * 1024); assert.ok(relayVersionAtLeast(66));
   const at = (px, pz) => ({ x: px * PIXEL_UNITS + 10, y: 0, z: pz * PIXEL_UNITS + 10, yaw: 0, pitch: 0, mv: 0 });
   const r = fakeRoom('world:3,12');
   const a = r.connect(), c = r.connect();
