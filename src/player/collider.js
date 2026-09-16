@@ -29,6 +29,9 @@ import {
 // faster. Pure spatial-index change: same triangles found, all
 // P14/P16 movement laws untouched.
 const CELL = 2;
+/** AUDIT ONCRASH1 B5a: the most sweep steps one move() may be split into - a motion larger than this is taken
+ *  whole rather than swept, because a loop whose length a caller's arithmetic chooses is a frozen tab waiting. */
+const SUBSTEPS_MAX = 256;
 const GROUND_NY = Math.cos((SLOPE_LIMIT_DEG * Math.PI) / 180);
 const SKIN = 0.02;
 
@@ -640,7 +643,13 @@ export class Collider {
     const maxComp = Math.max(Math.abs(dx), Math.abs(dy), Math.abs(dz));
     const maxStep = CAPSULE_RADIUS * 0.75;
     if (maxComp > maxStep) {
-      const n = Math.ceil(maxComp / maxStep);
+      // AUDIT ONCRASH1 B5a: THE SUBSTEP COUNT HAS A CEILING, and until now every bound on it lived in a caller.
+      // AUDIT WORLD3 F2 hit this exact loop - an unnormalised direction off the wire asked for 2.4e8 substeps and
+      // froze the tab for every player in the room - and fixed it by unit-normalising `d` at the ONE call site that
+      // had caused it. That is a band-aid: the next caller with bad arithmetic freezes the tab again, and nothing
+      // here says no. Past the cap the remainder is taken as a single step, which is what a teleport is: the sweep
+      // stops being exact for a motion no frame can produce anyway, and no number can buy an unbounded loop.
+      const n = Math.min(SUBSTEPS_MAX, Math.ceil(maxComp / maxStep));
       const out = { grounded: false, hitCeiling: false, pushedDown: false, groundKey: null };
       for (let i = 0; i < n; i++) {
         const r = this._moveStep(feet, dx / n, dy / n, dz / n, height, snap);

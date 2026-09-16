@@ -98,7 +98,7 @@ import { tallySkill, skillValue, SKILLS, SKILL_NAMES } from '../systems/skills.j
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT, startRestGroundedCheck } from '../player/motor.js';   // the rest gate's grounded input, one home
 import { applyLevelUp } from '../systems/advancement.js';
 import { tickPlayerMinutes, claimMagicRounds, runMagicRoundsFor } from '../systems/worldTick.js';   // AUDIT 18: the player tick every host shares
-import { mintSharedStamp, hitPoisonOf, HIT_ARROWS_MAX, respawnDue, wallMsForClassicMinutes } from '../net/wire.js';   // WORLD8: the hour's respawn   // AUDIT WORLD6a B7: the memory's stamp, from the wire's one mint
+import { mintSharedStamp, hitPoisonOf, HIT_ARROWS_MAX, respawnDue, wallMsForClassicMinutes, validFoeRecord, validSharedFoe, FOE_HEALTH_MAX } from '../net/wire.js';   // AUDIT ONCRASH1 B4a/A3: the stream's door and the memory's, which this host had neither of   // WORLD8: the hour's respawn   // AUDIT WORLD6a B7: the memory's stamp, from the wire's one mint
 import { spendPoolLowest } from '../systems/chargen.js';
 import { ClassFile } from '../formats/classFile.js';
 import { fetchBytes, ensureAudio, loadMagicRegistries, wireInfectionVideos, raisePlayerSkills, endRunToTitleMenu, exitToTitleMenu, sensesContext, wireDoorSpells, createDetectFeed, foeNearbyRecord, lootNearbyRecord, nearbyLootRecords, restVitals, restFullyHealed, createRestDeps, fatigueLossMultiplierFor} from './shared.js';
@@ -3096,7 +3096,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // WORLD3: g the target ('.' the host, an id a peer, '' none), c the cast count with s its spell, x the gender
       const _t = f.ai.target, g = _t?.isPeer ? _t.id : (_t == null ? (f.ai._armedTargeting ? '' : '.') : (_t.isPlayer ? '.' : ''));
       // AUDIT WORLD6b-iii(c) C8: a killing overshoot streamed a NEGATIVE health (WORLD2's bound) onto every joiner's puppet
-      const r = { i, t: f.mobileType, f: [q2(f.ai.feet[0]), q2(f.ai.feet[1]), q2(f.ai.feet[2])], y: q3(f.ai.yaw), h: Number.isFinite(f.entity.health) ? Math.max(0, f.entity.health) : 0, d: f.dead ? 1 : 0, a: f._atkA | 0, m: f.ai.moving ? 1 : 0, g, c: f._castN | 0, s: f._castIdx | 0, ...(f.gender === 'female' ? { x: 1 } : {}) };   // t: the species (AUDIT WORLD2 B5)
+      // AUDIT ONCRASH1 B4a: and the SENDER obeys the door the reader now applies - `h` is clamped to FOE_HEALTH_MAX as
+      // the exterior twin has clamped it since WORLD6b, because an unclamped one would have its whole record refused.
+      const r = { i, t: f.mobileType, f: [q2(f.ai.feet[0]), q2(f.ai.feet[1]), q2(f.ai.feet[2])], y: q3(f.ai.yaw), h: Number.isFinite(f.entity.health) ? Math.max(0, Math.min(FOE_HEALTH_MAX, f.entity.health)) : 0, d: f.dead ? 1 : 0, a: f._atkA | 0, m: f.ai.moving ? 1 : 0, g, c: f._castN | 0, s: f._castIdx | 0, ...(f.gender === 'female' ? { x: 1 } : {}) };   // t: the species (AUDIT WORLD2 B5)
       const key = `${r.f[0]},${r.f[1]},${r.f[2]},${r.y},${r.h},${r.d},${r.a},${r.m},${r.g},${r.c},${r.s}`;
       if (!full && f._sentKey === key) continue;
       f._sentKey = key;
@@ -3144,7 +3146,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
             const n = (_retypeFails.get(i) ?? 0) + 1;
             _retypeFails.set(i, n);
             if (n === RETYPE_TRIES) console.warn(`[online] the foe at ${i} cannot be rebuilt as species ${r.t} on this client - it keeps the body it has; blows still go to the host`);
-          });
+          }).catch((e) => console.error('[online] the rebuilt foe could not take the record - the foe stands as it is:', e));   // AUDIT ONCRASH1 A1
         }
         continue;
       }
@@ -3157,7 +3159,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   /** WORLD2/WORLD3: ONE streamed record onto its puppet - the target pose, the target it hunts and the cast it made,
    *  the health (a drop is the hurt one-shot), death and un-death through the one kill door. Called from the frame's
    *  loop, and again on a foe that frame REBUILT (AUDIT WORLD3 E2), so the rebuilt body stands as the room has it. */
-  function applyFoeRecord(f, r) {
+  /** AUDIT ONCRASH1 B4a: THE STREAM'S RECORD COMES THROUGH THE WIRE'S DOOR, like the cell's.
+   *  `validFoeRecord` lives in net/wire.js and the exterior pool has always used it; this host never imported it and
+   *  checked its own fields by hand instead - `Number.isFinite(r.y)` with no bound, `r.f.every(Number.isFinite)` with
+   *  no POSE_BOUND, `r.h` with no FOE_HEALTH_MAX. So ONCRASH1's "the wire's door bounds a streamed foe record" was
+   *  true of the exterior cell and false of the dungeon, which is the path the reports were about. One door now: a
+   *  record outside the law is refused WHOLE here as it is there. */
+  function applyFoeRecord(f, raw) {
+    const r = validFoeRecord(raw);
+    if (!r) return;
     const p = f._pup ?? (f._pup = { feet: [f.ai.feet[0], f.ai.feet[1], f.ai.feet[2]], yaw: f.ai.yaw, moving: false, hurt: false, strike: null, a: null, target: null, c: null, cast: null });
     if (typeof r.g === 'string') p.target = r.g;   // WORLD3: whose blow this puppet's is
     if (r.c != null) { const c = r.c | 0; if (p.c != null && c !== p.c) p.cast = r.s | 0; p.c = c; }   // WORLD3: a cast once per count, never the count a joiner arrived with
@@ -3169,7 +3179,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (r.d === 1) { if (!f.dead) { f.ai.feet[0] = p.feet[0]; f.ai.feet[1] = p.feet[1]; f.ai.feet[2] = p.feet[2]; } setFoeDead(f, true); }   // B10: the corpse where the host's foe fell, not where the ease had got to
     else if (r.d === 0 && f.dead) {   // AUDIT WORLD7/8 B3: the stream's un-death is a REBUILD - the host minted a fresh entity (the hour's respawn), and the old body stood up looted, still cursed (a frozen drain killed it again at once and sent the host the blow) and with the dead foe's counts (phantom edges); WORLD3 E2's own arm
       const idx = foes.indexOf(f);
-      if (idx >= 0 && idx < _layoutFoes && !_retyping.has(idx)) retypeFoe(idx, f.mobileType, f.gender ?? null).then((ok) => { if (ok && !_authority && foes[idx]) applyFoeRecord(foes[idx], r); });
+      if (idx >= 0 && idx < _layoutFoes && !_retyping.has(idx)) retypeFoe(idx, f.mobileType, f.gender ?? null).then((ok) => { if (ok && !_authority && foes[idx]) applyFoeRecord(foes[idx], r); }).catch((e) => console.error('[online] the rebuilt foe could not take the record - the foe stands as it is:', e));   // AUDIT ONCRASH1 A1
       else setFoeDead(f, false);
     }
   }
@@ -3706,7 +3716,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // written by another build, and dropping it was the safe read; since WORLD3 the live roster can be the room's,
         // so this player's OWN save routinely disagrees with the fresh level-banded build - and the old `return`
         // silently discarded that slot's death, health, items, effects and team every time.
-        retypeFoe(i, sf.mobileType, sf.gender ?? null).then((ok) => { if (ok && foes[i]) patchFoe(foes[i], sf, wire); });
+        retypeFoe(i, sf.mobileType, sf.gender ?? null).then((ok) => { if (ok && foes[i]) patchFoe(foes[i], sf, wire); }).catch((e) => console.error('[online] the rebuilt foe could not take the record - the foe stands as it is:', e));   // AUDIT ONCRASH1 A1: the async tail has its own catch - `_deliver` cannot see past the promise it is handed
         return;
       }
       patchFoe(f, sf, wire);
@@ -5557,7 +5567,6 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     restoreSharedWorld(shared) {
       if (!shared || shared.locationKey !== _locationKey || !shared.world || typeof shared.world !== 'object') return false;
       if (shared.stamp === _sharedStamp || _sharedApplied) return false;
-      _sharedApplied = true;
       // AUDIT WORLD4 D3: the memory stopped SENDING `piles` and went on APPLYING them - so a snapshot written before
       // WORLD4 (the relay keeps one for WORLD_TTL_MS) still blanket-replaced a joiner's own rolls, the very thing the
       // slice removed, and any host that sent the field could do it deliberately. What this client will not say, it
@@ -5566,8 +5575,22 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // serves the stored bytes back unparsed for WORLD_TTL_MS, so one bad tween in a memory bricked a door for
       // every joiner for thirty days
       const acts = Array.isArray(shared.world.actions) ? shared.world.actions.map(validActionRecord).filter(Boolean) : [];
-      applyWorld({ ...shared.world, piles: undefined, actions: acts, foes: Array.isArray(shared.world.foes) ? shared.world.foes.slice(0, _layoutFoes) : [] }, { truncate: false, wire: true });
+      // AUDIT ONCRASH1 A3/B4b: and the FOES are projected too. The line above has done this for the actions since
+      // AUDIT WORLD34 C2, for the reason written there - the relay serves a memory back unparsed for WORLD_TTL_MS -
+      // and the foes went through raw into `patchFoe`, which writes feet, yaw and health with no check. A record
+      // outside the law is DROPPED (`filter(Boolean)`), exactly as a bad action record is.
+      const sfoes = Array.isArray(shared.world.foes) ? shared.world.foes.slice(0, _layoutFoes).map(validSharedFoe).filter(Boolean) : [];
+      // AUDIT ONCRASH1 A2: THE LATCH IS THE LAST THING, not the first.
+      //
+      // `_sharedApplied = true` used to be set BEFORE this apply. A throw half way through then left the latch up,
+      // so `restoreSharedWorld` refused every later publish for the life of this context - and `applyLoot` never
+      // ran, so every container the room had already emptied was still full for this player, who looted it into
+      // their save. Before ONCRASH1 that throw was a crash and the player at least knew; contained, it was a silent
+      // duplication. The interior twin already had the order right (worldModes.js applyInteriorShared); this arm
+      // was the odd one out. A failed restore leaves the latch DOWN, and the host's next publish retries it.
+      applyWorld({ ...shared.world, piles: undefined, actions: acts, foes: sfoes }, { truncate: false, wire: true });
       applyLoot(shared.world.loot);   // WORLD4: the containers the room has opened, through the live door
+      _sharedApplied = true;
       return true;
     },
     locationKey: () => _locationKey,

@@ -1102,7 +1102,10 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     if (f?.puppet) {
       if (!f._pup?.o || f.corpseDisabled) { f.corpseDisabled = true; say2('The body has no treasure.'); return 0; }
       if (f._takeAsked != null && _now() - f._takeAsked <= TAKE_WINDOW_MS) return 0;   // AUDIT WORLD6b-iii(c) B8: one ask in flight
-      if (_net?.onPeerHit?.({ to: f.puppet, k: _owners.get(f.puppet)?.k ?? _net.room?.() ?? null, i: f.seq, take: 1 })) f._takeAsked = _now();   // B1/C1: the ask latched only when the frame left
+      // B1/C1: the ask is latched only when the frame LEFT. LOOT-DUP: and "left" is now this frame's own word - the
+      // queue's boolean said false for a queued ask, so the pool asked again every frame until one went out clean.
+      _net?.onPeerHit?.({ to: f.puppet, k: _owners.get(f.puppet)?.k ?? _net.room?.() ?? null, i: f.seq, take: 1 },
+        { sent: () => { f._takeAsked = _now(); } });
       return 0;
     }
     return takeCorpseLoot(f, playerEntity, say2);   // AUDIT WORLD6b B15: by the stable key
@@ -1124,7 +1127,21 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         if (n > 1) { n = n >> 1; continue; }
         items.splice(0, 1); n = items.length; continue;   // A4/C10: one item larger than a frame can never be granted - dropped, the rest reachable
       }
-      if (_net?.onPeerHit?.(frame)) items.splice(0, grant.length);   // emptied of what WENT
+      // LOOT-DUP: THE ITEMS ARE RESERVED THE MOMENT THE FRAME IS ACCEPTED, and come back if it never leaves.
+      //
+      // This line used to read `if (onPeerHit(frame)) items.splice(...)` - "emptied of what WENT" - and that boolean
+      // is the hit QUEUE's news, not this frame's. A grant that is merely queued answers FALSE and is usually sent a
+      // frame later, so the taker's pack filled while the corpse kept the same list, and the next peer to ask that
+      // body was granted the same loot again: duplication, silent, online only. Answering true because some OTHER
+      // blow went is the mirror defect - the items leave the corpse and arrive nowhere.
+      //
+      // Reserving (not splicing on send) is what closes the window: while the grant is in flight the body no longer
+      // holds those items, so a second asker cannot be granted them. `dropped` puts them back at the FRONT, in
+      // order, so the body is exactly as it was.
+      const held = items.splice(0, grant.length);
+      const back = () => { items.unshift(...held); };
+      if (!_net?.onPeerHit) { back(); return; }
+      _net.onPeerHit(frame, { dropped: back });
       return;
     }
     _net?.onPeerHit?.({ to, k, i: f.seq, grant: [], n: _foesSeq });   // nothing on it: the body says so

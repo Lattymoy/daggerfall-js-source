@@ -46,6 +46,8 @@ import { mwRaceId } from '../formats/mwNpc.js';
 import { CAPSULE_HEIGHT } from '../player/motor.js';
 import { peerStubEntity, lookKey } from './remotePlayers.js';
 import { POSE_STRIKES } from './wire.js';   // MAC7 #1: the swing's kind, by the wire's index
+import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the port's one angle wrap, which cannot loop
+
 
 /** The most peers in a Morrowind body at once; the rest keep the paperdoll. */
 export const BODIES_MAX = 8;
@@ -217,10 +219,9 @@ export class PeerBodies {
     b.feet = f;
     // the yaw eased toward the pose's (AUDIT MWBODY A8): the rig reads turning off the yaw's change frame to frame,
     // and a pose eased over one send interval stops between arrivals, so the turn clip stuttered
-    let dy = peer.shown.yaw - b.yaw;
-    while (dy > Math.PI) dy -= 2 * Math.PI;
-    while (dy < -Math.PI) dy += 2 * Math.PI;
-    b.yaw += dy * (dt > 0 ? Math.min(1, dt * YAW_EASE) : 1);
+    // ONCRASH1: one step, not a loop - the yaw eased here is the WIRE's
+    // (see online.js lerpAngle), and a loop over a large one never falls.
+    b.yaw += wrapAngle(peer.shown.yaw - b.yaw) * (dt > 0 ? Math.min(1, dt * YAW_EASE) : 1);
     b.d2 = near ? dist2(f, near) : 0;
     b.far = !!near && b.d2 > BODY_RANGE * BODY_RANGE;
     b.cam = peerCamera({ ...peer.shown, yaw: b.yaw }, f, b.speed, b.cam);

@@ -117,3 +117,131 @@ test('FOE2: the door refuses what is not a blow, and holds nothing for it', () =
   for (const bad of [null, undefined, 0, 'hit', [1, 2]]) assert.equal(w.pend.send(bad), false, `${JSON.stringify(bad)} is not a blow`);
   assert.equal(w.pend.held, 0);
 });
+
+// LOOT-DUP (2026-09-15, AUDIT ONCRASH1's own finding): AND EVERY FRAME LEARNS ITS OWN FATE.
+//
+// The boolean this door returns is the QUEUE's news. With anything already waiting it answers `flush` - true when
+// some OTHER blow went - and a frame that is merely queued answers false although it usually leaves a frame later.
+// `grantCorpse` read that as its own frame's answer and emptied a corpse with it, so a queued-then-delivered grant
+// filled the taker's pack while the body kept the same list, and the next peer to ask was granted the same loot
+// again. These pins drive the contract that replaces it: exactly one of `sent`/`dropped`, exactly once, whenever
+// THAT frame's story really ends.
+test('LOOT-DUP: a queued frame reports SENT when it itself leaves - not when the queue drains around it (mutant: the old boolean, which says false for a frame that is about to go)', () => {
+  let open = false, at = 0;
+  const sent = [];
+  const pend = makeHitPend({ send: (h) => { if (!open) return false; sent.push(h); return true; }, room: () => 'r', now: () => at, warn: () => {} });
+  const fates = [];
+  const fate = (n) => ({ sent: () => fates.push(`sent:${n}`), dropped: () => fates.push(`drop:${n}`) });
+  assert.equal(pend.send({ i: 1 }, fate(1)), false, 'the gate is shut: held');
+  assert.deepEqual(fates, [], 'and NOTHING is said yet - the frame\'s story is not over');
+  assert.equal(pend.send({ i: 2 }, fate(2)), false);
+  assert.deepEqual(fates, []);
+  open = true;
+  pend.flush(at);
+  assert.deepEqual(fates, ['sent:1', 'sent:2'], 'each frame says so as IT goes, in order');
+  assert.deepEqual(sent, [{ i: 1 }, { i: 2 }]);
+  // and a frame that goes at once says so at once
+  fates.length = 0;
+  assert.equal(pend.send({ i: 3 }, fate(3)), true);
+  assert.deepEqual(fates, ['sent:3']);
+});
+
+test('LOOT-DUP: every way a frame can die reports DROPPED, exactly once - the eviction, the age, the room change, the bad shape, the pool going away (mutant: any one path settling nothing, which strands a reservation for ever)', () => {
+  const fates = [];
+  const fate = (n) => ({ sent: () => fates.push(`sent:${n}`), dropped: () => fates.push(`drop:${n}`) });
+  // 1. the eviction: max held, the oldest goes
+  {
+    let at = 0;
+    const pend = makeHitPend({ send: () => false, room: () => 'r', now: () => at, max: 2, warn: () => {} });
+    pend.send({ i: 1 }, fate(1)); pend.send({ i: 2 }, fate(2)); pend.send({ i: 3 }, fate(3));
+    assert.deepEqual(fates, ['drop:1'], 'the oldest is told, and only the oldest');
+  }
+  // 2. the age: the fight moved on
+  {
+    fates.length = 0;
+    let at = 0;
+    const pend = makeHitPend({ send: () => false, room: () => 'r', now: () => at, ms: 100, warn: () => {} });
+    pend.send({ i: 1 }, fate(1));
+    at = 500; pend.flush(at);
+    assert.deepEqual(fates, ['drop:1']);
+  }
+  // 3. the room change: a blow minted elsewhere names nothing here
+  {
+    fates.length = 0;
+    let room = 'r', at = 0;
+    const pend = makeHitPend({ send: () => false, room: () => room, now: () => at, warn: () => {} });
+    pend.send({ i: 1 }, fate(1));
+    room = 'other';
+    pend.send({ i: 2 }, fate(2));
+    assert.ok(fates.includes('drop:1'), 'the old room\'s held frame is told');
+  }
+  // 4. no room at all
+  {
+    fates.length = 0;
+    const pend = makeHitPend({ send: () => true, room: () => null, now: () => 0, warn: () => {} });
+    assert.equal(pend.send({ i: 1 }, fate(1)), false);
+    assert.deepEqual(fates, ['drop:1']);
+  }
+  // 5. a frame the door will not take at all
+  {
+    fates.length = 0;
+    const pend = makeHitPend({ send: () => true, room: () => 'r', now: () => 0, warn: () => {} });
+    assert.equal(pend.send(null, fate(1)), false);
+    assert.equal(pend.send([1, 2], fate(2)), false);
+    assert.deepEqual(fates, ['drop:1', 'drop:2'], 'a refusal is an ANSWER - silence is what stranded the corpse');
+  }
+  // 6. the pool going away hands back everything it was holding
+  {
+    fates.length = 0;
+    const pend = makeHitPend({ send: () => false, room: () => 'r', now: () => 0, warn: () => {} });
+    pend.send({ i: 1 }, fate(1)); pend.send({ i: 2 }, fate(2));
+    pend.clear();
+    assert.deepEqual(fates, ['drop:1', 'drop:2']);
+    assert.equal(pend.held, 0);
+  }
+});
+
+test('LOOT-DUP: exactly ONE of the two, exactly once, on every path - and a fate that throws is the caller\'s problem, never the queue\'s (mutant: settle called twice, which would put a corpse\'s items back after they were granted)', () => {
+  let open = false;
+  const counts = new Map();
+  const bump = (k) => counts.set(k, (counts.get(k) ?? 0) + 1);
+  const pend = makeHitPend({ send: () => open, room: () => 'r', now: () => 0, warn: () => {} });
+  for (let i = 0; i < 5; i++) pend.send({ i }, { sent: () => bump(`s${i}`), dropped: () => bump(`d${i}`) });
+  open = true;
+  pend.flush(0);
+  pend.flush(0);
+  pend.clear();
+  for (let i = 0; i < 5; i++) {
+    assert.equal(counts.get(`s${i}`), 1, `frame ${i} said sent once`);
+    assert.equal(counts.get(`d${i}`), undefined, `frame ${i} never also said dropped`);
+  }
+  // a throwing fate does not take the queue with it
+  const warned = [];
+  const p2 = makeHitPend({ send: () => true, room: () => 'r', now: () => 0, warn: (l) => warned.push(l) });
+  assert.doesNotThrow(() => p2.send({ i: 9 }, { sent: () => { throw new Error('the caller threw'); } }));
+  assert.equal(warned.length, 1);
+  assert.match(warned[0], /send handler threw/);
+  assert.equal(p2.send({ i: 10 }), true, 'and the door still works');
+});
+
+test('LOOT-DUP: a fate that sends ANOTHER blow from inside its own handler does not double-settle or reorder the queue - the corpse arms are exactly this shape (a grant whose drop puts items back, which a later ask sends again)', () => {
+  let open = true, at = 0;
+  const wire = [];
+  const fates = [];
+  const pend = makeHitPend({ send: (h) => { if (!open) return false; wire.push(h.i); return true; }, room: () => 'r', now: () => at, warn: () => {} });
+  const counts = new Map();
+  const bump = (k) => counts.set(k, (counts.get(k) ?? 0) + 1);
+  open = false;
+  pend.send({ i: 1 }, { sent: () => { bump('s1'); fates.push('s1'); pend.send({ i: 99 }, { sent: () => bump('s99'), dropped: () => bump('d99') }); }, dropped: () => bump('d1') });
+  pend.send({ i: 2 }, { sent: () => { bump('s2'); fates.push('s2'); }, dropped: () => bump('d2') });
+  open = true;
+  pend.flush(at);
+  pend.flush(at);
+  assert.equal(counts.get('s1'), 1, 'frame 1 settled once, though its handler re-entered the door');
+  assert.equal(counts.get('s2'), 1);
+  assert.equal(counts.get('s99'), 1, 'and the blow it sent from inside went too');
+  assert.equal(counts.get('d1'), undefined); assert.equal(counts.get('d2'), undefined); assert.equal(counts.get('d99'), undefined);
+  assert.deepEqual(fates, ['s1', 's2'], 'order kept: one foe cannot overtake another because another re-entered');
+  assert.equal(pend.held, 0);
+  assert.deepEqual(wire, [1, 2, 99], 'and it goes BEHIND what was already waiting - this module\'s own order law holds through a re-entrant send');
+});

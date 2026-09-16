@@ -127,6 +127,8 @@
 // through the offset, not its own. Nothing local moves it: no rest, no
 // fast travel, no sentence, no ?tod, no ?timescale.
 
+import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the port's one angle wrap. The relay re-exports this module (server/src/relay.js), so this reaches the worker too - mat4.js imports nothing itself.
+
 /** WORLD5: the instant the online world stood at the classic game start - 2026-09-14T00:00:00Z. */
 export const ONLINE_EPOCH_MS = Date.UTC(2026, 8, 14, 0, 0, 0);
 /** WORLD5: DaggerfallDateTime.classicGameStartTime in classic minutes (gameDate.js CLASSIC_GAME_START_TIME - pinned equal). */
@@ -361,6 +363,8 @@ export const CELL_FRAME_RECORDS_MAX = 64;
 export const CELL_PUPPETS_MAX = 8;
 export const FOE_SEQ_MAX = 1e9;
 export const FOE_HEALTH_MAX = 1e5;
+/** AUDIT ONCRASH1 A3: the most effect bundles a stored foe record may carry - the one list in a memory's foe with no other bound. */
+export const SHARED_EFFECTS_MAX = 64;
 export const FOE_LEVEL_MAX = 100;
 /** One streamed foe record projected: `i` a whole number in [0, FOE_SEQ_MAX]; `t` a whole number in [0, 255] or
  *  absent; `x`, `d`, `m` 0 or 1 or absent; `f` three finite numbers inside the pose's bounds or absent; `y` finite
@@ -377,7 +381,7 @@ export function validFoeRecord(r) {
     if (Math.abs(r.f[0]) > POSE_BOUND || Math.abs(r.f[2]) > POSE_BOUND || Math.abs(r.f[1]) > POSE_Y_BOUND) return null;
     out.f = [r.f[0], r.f[1], r.f[2]];
   }
-  if (r.y !== undefined) { if (!Number.isFinite(r.y)) return null; out.y = r.y; }
+  if (r.y !== undefined) { if (!Number.isFinite(r.y)) return null; out.y = wrapAngle(r.y); }   // ONCRASH1: the puppet's yaw is bounded as the pose's is - it reaches the same wraps through characters/enemyMotor.js
   if (r.h !== undefined) { if (!Number.isFinite(r.h) || r.h < 0 || r.h > FOE_HEALTH_MAX) return null; out.h = r.h; }
   if (r.a !== undefined) { if (!Number.isInteger(r.a) || r.a < 0 || r.a >= 2 ** 31) return null; out.a = r.a; }
   // WORLD6b-ii: `g` the foe's target - '.' its owner, a peer id, '' none (WORLD3's spelling for the dungeon's stream)
@@ -405,15 +409,80 @@ export function validFoeRecord(r) {
   return out;
 }
 
+/** AUDIT ONCRASH1 A3/B4b: ONE STORED FOE RECORD, PROJECTED - the memory's door, which had none.
+ *
+ *  `restoreSharedWorld` (scenes/dungeonContext.js) already projects the memory's ACTIONS through
+ *  `validActionRecord` and drops its piles, for a reason it writes down: the relay serves a room's stored bytes back
+ *  UNPARSED for WORLD_TTL_MS, so one bad record in a memory poisons every joiner for thirty days. Its FOES went
+ *  through raw, and `patchFoe` writes `f.entity.health = sf.health`, `f.ai.feet[0] = sf.feet[0]` and
+ *  `f.ai.yaw = sf.yaw` with no check at all - an absent `feet` THREW out of the socket handler (the incident is in
+ *  that function's own comment, which fixed the ITEMS and left the rest) and a string `yaw` made the foe's facing
+ *  NaN for the life of the dungeon.
+ *
+ *  The vocabulary is exactly what `sharedWorld` writes - `items` is deleted there, so it is not admitted here
+ *  ("what this client will not say, it will not hear", AUDIT WORLD4 D3). A field outside its law is DROPPED, not
+ *  clamped onto a neighbour; a record with a bad field is refused WHOLE, never half landed. Presence-gated
+ *  throughout, because `patchFoe` reads every optional field with `!= null` and a record from an older build carries
+ *  fewer.
+ *  @param {*} sf
+ */
+export function validSharedFoe(sf) {
+  if (!sf || typeof sf !== 'object' || Array.isArray(sf)) return null;
+  const out = {};
+  // the feet: the pose's own bounds, the same three numbers a pose carries
+  if (sf.feet !== undefined) {
+    if (!Array.isArray(sf.feet) || sf.feet.length !== 3 || !sf.feet.every(finite)) return null;
+    if (Math.abs(sf.feet[0]) > POSE_BOUND || Math.abs(sf.feet[2]) > POSE_BOUND || Math.abs(sf.feet[1]) > POSE_Y_BOUND) return null;
+    out.feet = [sf.feet[0], sf.feet[1], sf.feet[2]];
+  }
+  if (sf.yaw !== undefined) { if (!finite(sf.yaw)) return null; out.yaw = wrapAngle(sf.yaw); }   // ONCRASH1: bounded here too, not at validPose alone
+  for (const k of ['health', 'maxHealth', 'magicka', 'fatigue']) {
+    if (sf[k] === undefined) continue;
+    if (!finite(sf[k]) || sf[k] < -FOE_HEALTH_MAX || sf[k] > FOE_HEALTH_MAX) return null;
+    out[k] = sf[k];
+  }
+  if (sf.died !== undefined && sf.died !== null) { if (!finite(sf.died)) return null; out.died = sf.died; }
+  if (sf.mobileType !== undefined) { if (!Number.isInteger(sf.mobileType) || sf.mobileType < 0 || sf.mobileType > 255) return null; out.mobileType = sf.mobileType; }
+  if (sf.gender !== undefined && sf.gender !== null) { if (typeof sf.gender !== 'string' || sf.gender.length > 16) return null; out.gender = sf.gender; }
+  for (const k of ['team', 'mobileTeam']) { if (sf[k] === undefined) continue; if (!Number.isInteger(sf[k]) || sf[k] < -1 || sf[k] > 255) return null; out[k] = sf[k]; }
+  for (const k of ['dead', 'hostile', 'encountered', 'wabbajackActive', 'specialTransformationCompleted']) if (sf[k] !== undefined) out[k] = !!sf[k];
+  if (sf.anchor !== undefined) out.anchor = sf.anchor;   // REVIEW 2026-09-05's stamp: read for its presence alone
+  // The effect bundles ride as they are - `patchFoe` copies them shallowly and the effect spine reads them by name -
+  // but the LIST is bounded, because it is the one field a memory's foe can grow without bound.
+  if (sf.activeEffects !== undefined) {
+    if (!Array.isArray(sf.activeEffects)) return null;
+    out.activeEffects = sf.activeEffects.filter((a) => a && typeof a === 'object' && !Array.isArray(a)).slice(0, SHARED_EFFECTS_MAX);
+  }
+  return out;
+}
+
 /** A pose the room will relay, or null. */
 export function validPose(p) {
   if (!p || typeof p !== 'object') return null;
   const { x, y, z, yaw, pitch, mv, wd, an, as, am, sr, cn, cr } = p;
   if (![x, y, z, yaw, pitch].every(finite)) return null;
   if (Math.abs(x) > POSE_BOUND || Math.abs(z) > POSE_BOUND || Math.abs(y) > POSE_Y_BOUND) return null;
+  // ONCRASH1 (2026-09-15, Mac: "reports of player browser crashing when
+  // online"): AN ANGLE IS BOUNDED LIKE EVERY OTHER FIELD. `finite` alone
+  // admitted 1e300, and the sender's own yaw is not wrapped either -
+  // player/lookFilter.js ACCUMULATES it, turn after turn, for the life of
+  // the session. Downstream, four sites wrapped it with `while (d >
+  // Math.PI) d -= 2 * Math.PI`, which at a large angle subtracts nothing
+  // and never falls: the READER's tab hangs, not the sender's. The loops
+  // are one step now (world/mat4.js wrapAngle) and the door wraps besides,
+  // because the wire's law is that it admits what the game can NAME, and
+  // no player faces 1e300 radians. Wrapped, not refused: a turn is a turn
+  // whatever its winding, and a legitimate accumulated yaw must still
+  // arrive. Idempotent - what is already inside (-PI, PI] is untouched.
+  //
+  // THE YAW ALONE. Pitch reaches no wrap - the peer bodies read a level
+  // pitch (net/peerBodies.js peerCamera sets 0) and the dolls read none -
+  // so wrapping it would move a field with no defect behind it, and
+  // ONLINE1's own bound pin says what it says on purpose. An absurd pitch
+  // is recorded, not paid.
   // MAC7: the arm's seven, clamped - a pose from before them reads sheathed, unswung, unarrowed and uncast
   return {
-    x, y, z, yaw, pitch, mv: mv === 2 ? 2 : mv ? 1 : 0,
+    x, y, z, yaw: wrapAngle(yaw), pitch, mv: mv === 2 ? 2 : mv ? 1 : 0,
     wd: wd === 2 ? 2 : wd ? 1 : 0, an: uint(an, 65535) ?? 0, as: uint(as, POSE_STRIKES.length - 1) ?? 0,
     am: am ? 1 : 0, sr: sr ? 1 : 0, cn: uint(cn, 65535) ?? 0, cr: uint(cr, POSE_CAST_RANGES - 1) ?? 0,
   };

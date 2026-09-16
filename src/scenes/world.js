@@ -27,7 +27,7 @@ import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the
 import { playerTorchLight } from '../systems/playerTorch.js';   // T1
 import { applyClimate, getGroundArchive, getTerrainGroundArchive, getNatureArchive, SEASON, climateSeasonFromMinutes, INTERIOR_SEASON } from '../world/climateSwaps.js';   // A1: the season is the calendar's, and an interior's is Summer whatever the date
 import { RMB_SIDE, layoutLocation } from '../world/locationLayout.js';
-import { lookAt, multiply, perspective, mirrorProjectionX, trs, identity, UP_Y } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
+import { lookAt, multiply, perspective, mirrorProjectionX, trs, identity, UP_Y, wrapAngle } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
 import { frustumPlanes, aabbOutside, localAabb, transformedAabb, flatBatchAabb, cullDisabled } from '../render/frustum.js';   // EV3: the frustum
 import { withMoonAmbient } from '../render/enhancedSky.js';   // EV5: secunda rides the ambient
 import { FarRingRenderer, ringDisabled } from '../render/farRing.js';   // EV8: the province's mountains on the horizon
@@ -4449,7 +4449,12 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** The ONE pose-apply (quickload + the classic import share it). */
   function applyPose(pose) {
     if (!pose) return;
-    cam.yaw = pose.yaw ?? cam.yaw;
+    // AUDIT ONCRASH1 B5d: A SAVE IS A DOOR TOO. ONCRASH1's commit said the angle defect was "not reachable offline";
+    // it was, through this line. A quickload or a classic import carrying a non-numeric or absurd `yaw` wrote it
+    // straight into `cam.yaw`, which feeds fpArm's turn wrap and some twenty `Math.sin(cam.yaw)` sites - so a
+    // corrupted save hung the arm's loop with no socket in sight, and a string yaw NaN-poisons the forward vector
+    // to this day. The wrap cannot hang any more; this is the bound the wire has and the save did not.
+    if (Number.isFinite(pose.yaw)) cam.yaw = wrapAngle(pose.yaw);
     cam.pitch = pose.pitch ?? cam.pitch;
     if (pose.crouching != null) player.crouching = !!pose.crouching;
     // AUDIT 63 F25/F31: the sheath AND the hand, SerializablePlayer
@@ -6749,7 +6754,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     room: () => online?.room ?? null,
     now: () => performance.now(),
   });
-  const hitSend = (hit) => _hits.send(hit);
+  const hitSend = (hit, fate = null) => _hits.send(hit, fate);   // LOOT-DUP: a caller holding something irreversible learns ITS OWN frame's fate, not the queue's
   const hitFlush = (now) => _hits.flush(now);
   const actFlush = () => {
     if (!_actPend.size) return false;
@@ -6781,8 +6786,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     online.onHost = (id, mine) => { if (mine) { _worldPublishedAt = -Infinity; _foesFullAt = -Infinity; } else if (id && isWorldRoom(online.room)) _foesInAt = performance.now(); modes?.setDungeonAuthority?.(dungeonAuthority()); };   // AUDIT WORLD6b A9: a cell's seat is no heartbeat   // WORLD2: the seat decides who steps the foes; a new host streams every foe at once; another's word is its first heartbeat
     online.onFoes = (id, data) => {
       if (isCellRoom(online.room)) { if ((modes?.mode ?? 'exterior') === 'exterior') exteriorFoes.applyFoes(id, data); return; }   // WORLD6b: a peer's foes in the cell, onto their puppets
-      if (modes?.mode === 'dungeon') _foesInAt = performance.now();   // AUDIT WORLD2 C5: the stream is the seat's heartbeat; A1: the host's id rides in; AUDIT WORLD6a B8: a building's room streams no foes, and a frame there is no dungeon heartbeat
-      modes?.applyDungeonFoes?.(id, data);
+      // AUDIT WORLD2 C5: the stream is the seat's heartbeat; A1: the host's id rides in; AUDIT WORLD6a B8: a building's
+      // room streams no foes, and a frame there is no dungeon heartbeat.
+      // AUDIT ONCRASH1 A4: and the heartbeat is the APPLY's word, not the frame's ARRIVAL. Stamped first, a stream
+      // that throws on this client every frame (ONCRASH1 drops it) still read as a live host for ever - so
+      // FOES_STALE_MS could never fire, the seat never came back, and the player walked a dungeon of frozen puppets
+      // that received nothing. A crash was bad; a silent soft-lock is worse. `applyDungeonFoes` already answers.
+      if (modes?.applyDungeonFoes?.(id, data) && modes?.mode === 'dungeon') _foesInAt = performance.now();
     };
     online.onHit = (id, data) => { if (isCellRoom(online.room)) exteriorFoes.applyHit(id, data); else modes?.applyDungeonHit?.(id, data); };   // WORLD6b: a peer's blow on my foe in the cell
     // WORLD6b: the cell's net into the encounter pool - who I am, the room the socket is in, a blow on a puppet to its
@@ -6795,7 +6805,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       peers: peersNear,   // WORLD6b-ii: the peers as MY foes' target candidates (WORLD3's law for the dungeon host's foes, per owner)
       now: () => performance.now(),
       staleMs: FOES_STALE_MS,   // AUDIT WORLD6b C3: an owner whose stream has died is swept as the seat is (WORLD2's own window)
-      onPeerHit: (hit) => hitSend(hit),   // AUDIT FOES FOE2: through the pending set, so a refused blow heals
+      onPeerHit: (hit, fate) => hitSend(hit, fate),   // AUDIT FOES FOE2: through the pending set, so a refused blow heals; LOOT-DUP: with the frame's own fate
       toWire: (feet) => { const wc = state.worldCoords(feet); return [wc.x, feet[1] - state.compensation[1], wc.z]; },
       toScene: (p) => { const l = state.localFromWorld(p[0], p[2]); return [l[0], p[1] + state.compensation[1], l[1]]; },
     });
@@ -6815,7 +6825,20 @@ export async function bootWorld(canvas, renderer, params, status) {
     const enhanced = isEnhanced();   // the skin cannot change without a reload (switchSkin), so it is read once, not per frame
     peerBodies = new PeerBodies({ renderer, enabled: () => enhanced && !!getPref('mwArms') && morrowindDataCount() > 0, generation: morrowindDataGeneration });
     if (enhanced && typeof document !== 'undefined') chatStart();   // CHAT1: the live chat is the enhanced skin's (a DOM panel); classic has no place for it yet   // the player's own arms switch (MWA1) turns the layer on; new data, new bodies
-    globalThis.addEventListener?.('pagehide', () => { worldPublish(performance.now(), true); online?.leave(); for (const link of chatLinks?.values() ?? []) link.leave(); peerBodies?.destroy(); remotePlayers?.destroy(); });   // the panel stays: a page restored from the cache gets its chat back through chatFrame's rejoin (AUDIT CHAT B4)   // AUDIT ONLINE D12: a clean goodbye - the room's leave, not a silence; the rigs and the dolls released
+    // AUDIT ONLINE D12: a clean goodbye - the room's leave, not a silence; the rigs and the dolls released. The panel
+    // stays: a page restored from the cache gets its chat back through chatFrame's rejoin (AUDIT CHAT B4).
+    // AUDIT ONCRASH1 A7: and the LEAVE is the part the room needs, so it is not behind the publish. `worldPublish`
+    // reaches collectWorld - deep game code, in a browser EVENT HANDLER - and a throw there used to skip the leave,
+    // both chat links and the rigs, so the room got a silence instead of a farewell and the peers held a ghost until
+    // PEER_TIMEOUT_MS.
+    globalThis.addEventListener?.('pagehide', () => {
+      try { worldPublish(performance.now(), true); }
+      catch (e) { console.error('[online] the farewell memory could not be collected - leaving anyway:', e); }
+      online?.leave();
+      for (const link of chatLinks?.values() ?? []) link.leave();
+      peerBodies?.destroy();
+      remotePlayers?.destroy();
+    });
   };
   // CHAT1 (Mac: "the live chat in enhanced format ... one world tab with
   // the ability to add more tabs at a later time"): one channel session
@@ -6967,7 +6990,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     drawPeerBodies: ({ proj, view, eye }) => drawPeerBodies(proj, view, eye),   // MWBODY1: the others' bodies, after the player's own
     onDungeonLeave: () => worldPublish(performance.now(), true),   // WORLD1: the room's memory goes out while the dungeon still stands
     onInteriorLeave: () => worldPublish(performance.now(), true),   // WORLD6a: and a building's while the building still stands
-    onFoeHit: (hit) => hitSend(hit),   // WORLD2: a blow on a puppet goes to the host; AUDIT FOES FOE2: through the pending set, so a refused blow heals
+    onFoeHit: (hit, fate) => hitSend(hit, fate),   // WORLD2: a blow on a puppet goes to the host; AUDIT FOES FOE2: through the pending set, so a refused blow heals; LOOT-DUP: with the frame's own fate
     // WORLD3: a door moved goes to the room (the session refuses it outside a world room); the peers in my room at
     // their scene feet, for the foes to see and a puppet's shaft to fly at; whose blow a puppet's is
     onActions: actSend,   // AUDIT WORLD3 A3: through the pending set, so a refused door heals

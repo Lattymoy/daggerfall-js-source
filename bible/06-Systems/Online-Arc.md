@@ -4819,3 +4819,248 @@ the name pass ever grows a per-glyph cost again.
 
 **Pinned** in `test/perfon_text_run.test.js` (7). NOT SEEN ON A GPU -
 there is no GL in the container; Mac's eye is the next gate.
+
+## ONCRASH1 - ONE FRAME ENDED EVERYBODY'S RUN (2026-09-15, Mac)
+
+*"Receiving reports of player browser crashing when online."*
+
+Two defects, both of them the same shape: **something arrives off the
+wire and is handed straight to code that was never told it came from a
+stranger.** Neither is reachable offline, which is why the reports all
+say "when online".
+
+### 1. THE SEAM - the handler's throw went to the window
+
+`OnlineSession._receive` runs inside the WebSocket's `onmessage`. The
+handlers it calls are not small:
+
+| frame | what it reaches |
+|---|---|
+| `foes` | stands, retypes and steps every puppet in the room |
+| `world` | applies a whole room's memory - dead foes, taken loot, doors |
+| `hit` | lands damage, kills, mints a corpse's pile |
+| `act` | moves doors, levers and platforms |
+| `host` | swaps who STEPS the room's foes |
+
+There was nothing between a throw in any of that and
+`main.js`'s `addEventListener('error')`. So a throw did not lose the
+frame - it put the red CRASH overlay over the run, and the next stream
+tick put it back. Worse, the frame that caused it is another player's,
+so the crash lands on the READER: the tab that dies is not the tab that
+is wrong. A room of four with one client sending something unexpected
+is three crashes and one player who saw nothing.
+
+The port already knew the answer and had written it one layer up -
+AUDIT MWBODY A1: *"a throw from one peer's rig is that peer's doll,
+never the frame's end."* `_deliver` is that law at the wire's own door.
+
+**It is not a catch-and-forget**, which would be the same outage with
+the evidence deleted. The frame is dropped, the session stands, and the
+throw is counted in `stats.threw`, printed in FULL the first time each
+kind throws - once a kind, because a stream that throws throws at
+`FOES_HZ_MAX` and a console flood is its own outage - and SAID on the
+HUD status line for `THREW_SAY_MS`. A player who reports "it crashed"
+now has the line naming which frame did it.
+
+**This contains the crash. It does not fix the thrower.** What throws is
+still a bug and still has to be found; what has changed is that finding
+it no longer costs a room of players their session, and the port now
+tells us which handler to look in instead of a stack in an overlay
+nobody screenshots.
+
+### 2. THE WRAP - a loop that could not terminate
+
+```js
+while (d >  Math.PI) d -= 2 * Math.PI;
+while (d < -Math.PI) d += 2 * Math.PI;
+```
+
+Four copies of that, in `net/online.js` (easing a peer's yaw),
+`net/peerBodies.js` (turning a peer's rig), `characters/enemyMotor.js`
+(a puppet's facing) and `combat/fpArm.js` (the turn clip's rate) - all
+four of them **beside a correct, one-step `wrapAngle` in
+`player/lockOn.js` that none of them knew about.**
+
+At a large angle the loop body is a no-op: `1e300 - 2 * Math.PI ===
+1e300` in IEEE doubles, so the condition never falls and the loop runs
+for ever. The tab stops answering and the browser kills it. And the
+angle those two `net/` sites wrap is a **peer's yaw**, which the wire
+checked for being finite and nothing else - `finite` admits 1e300. One
+player's pose was enough to hang every other player in the room.
+
+The loops are one step now (`world/mat4.js` `wrapAngle`, the port's one
+math home, where the callers can actually reach it), and the wire's door
+wraps the yaw besides - on the pose and on a streamed foe record - which
+is what the wire's own law asks for: *it admits exactly what the game
+can name*, and nobody faces 1e300 radians. **Wrapped, not refused**: a
+turn is a turn whatever its winding, and `player/lookFilter.js`
+ACCUMULATES the local yaw for the life of the session without ever
+wrapping it, so a legitimate large-ish yaw must still arrive.
+
+The yaw ALONE. Pitch reaches no wrap - the peer bodies stand level and
+the dolls read no pitch - so wrapping it would move a field with no
+defect behind it. An absurd pitch is recorded, not paid.
+
+### What is honest about the two
+
+The wrap is a **root cause**: that loop cannot hang any more, at the
+door or downstream, and a fifth hand-rolled copy is refused by a
+generative sweep of all of `src/`. Whether it is THE cause of Mac's
+reports is unproven - it needs a yaw far larger than turning produces,
+so it is a hardening fix until a report names it.
+
+The seam is the likelier explanation for a crash overlay, and it is the
+one that makes the NEXT report diagnosable: the crash text names its
+frame now.
+
+**Pinned** in `test/oncrash1.test.js`, and then AUDITED - see below,
+because the pins were weaker than their own titles said.
+
+
+## AUDIT ONCRASH1 - THE FIX THAT MADE ONE BUG WORSE (2026-09-15, Mac)
+
+*"Audit this."*
+
+Three lenses. The seam, the wrap and the wire, the pins and the record.
+Two of the three found something that ONCRASH1 itself had caused.
+
+### The containment made a crash into a silent duplication
+
+`restoreSharedWorld` sets a latch and then applies the room's memory:
+
+```js
+if (shared.stamp === _sharedStamp || _sharedApplied) return false;
+_sharedApplied = true;        // FIRST
+applyWorld({ ... });          // can throw half way
+applyLoot(shared.world.loot); // never runs if it did
+```
+
+Before ONCRASH1 a throw in `applyWorld` was a crash: bad, but the player
+knew and the run ended. Contained, the throw is eaten and the latch stays
+UP, so `restoreSharedWorld` refuses every later publish for the life of
+the dungeon - and because `applyLoot` never ran, **every container the
+room has already emptied is still full for this player.** They loot it,
+the items enter their entity, and the next save write keeps them. A loud
+failure became a quiet one that mints items.
+
+That is the honest cost of containment, and the answer is not to stop
+containing - it is that a handler must not commit before it can fail.
+The latch is the LAST thing now; a failed restore leaves it DOWN and the
+host's next `WORLD_PUBLISH_MS` publish retries. The interior twin
+(`worldModes.js`) already had the order right; the dungeon arm was the
+odd one out.
+
+### The containment had a hole of exactly the shape it was closing
+
+`_deliver` returned the moment its `fn` did. Three sites reached from
+inside `onWorld` and `onFoes` start a promise whose `.then` body is deep
+game code with **no `.catch`** - `retypeFoe(...).then((ok) => patchFoe(...))`.
+The throw arrived a microtask later as an UNHANDLED REJECTION, and
+`main.js` listens for those too. Same wire input, same handler, same red
+overlay. `_deliver` follows a thenable to its end now, and each of those
+three sites carries its own `.catch`, because the port's law is that a
+throw is contained where it is RAISED.
+
+### And the door was not where the fix was
+
+`_deliver` wrapped the handler CALLS. The frame's own body - the roster
+prune, `_member`, `_askWho`, the projections - sat outside every `try`,
+so a throw there still reached the window. A lens proved it by driving
+the real session in headless Chromium and watching `pageerror` fire. The
+door is `onmessage`; the whole frame is one contained act now.
+
+### Three doors, and the commit's claim covered one
+
+ONCRASH1 said *"the wire's door bounds a streamed foe record"*. True of
+the exterior cell, false of the dungeon - which is the path the reports
+were about. `dungeonContext.js` never imported `validFoeRecord`; it
+checked by hand, `Number.isFinite(r.y)` with no bound, the feet with no
+`POSE_BOUND`, the health with no `FOE_HEALTH_MAX`. And the third door,
+the room's MEMORY, had no projection at all: `patchFoe` writes
+`f.ai.feet[0] = sf.feet[0]` and `f.ai.yaw = sf.yaw` raw, which is the
+incident written down in that function's own comment - fixed there for
+the ITEMS and left for everything else. The relay serves a memory back
+unparsed for thirty days, so one bad record poisons every joiner for a
+month.
+
+All three doors are the wire's now: the stream through `validFoeRecord`,
+the memory through a new `validSharedFoe` beside it, the pose through
+`validPose`. A field outside the law is dropped; a record outside it is
+refused whole.
+
+### A heartbeat that a throw could keep alive
+
+`_foesInAt` was stamped when a foes frame ARRIVED, not when it applied.
+Contained, a stream that throws on this client every frame still read as
+a live host, so `FOES_STALE_MS` could never fire and the seat never came
+back: a dungeon of frozen puppets, indefinitely. The heartbeat is the
+apply's word now.
+
+### "Neither is reachable offline" was wrong
+
+The commit said that. `world.js` `applyPose` did `cam.yaw = pose.yaw ??
+cam.yaw` with no check, so a quickload or a classic import with a
+corrupted yaw hung `fpArm`'s wrap with no socket in sight. Bounded now,
+like the wire's.
+
+And the loop that the wrap fix was about has a sibling the port had
+already been burned by: `collider.move()`'s substep count. AUDIT WORLD3
+F2 hit it - *"2.4e8 substeps and froze the tab for every player in the
+room"* - and fixed it by normalising the vector at the ONE call site
+that had caused it. Every bound lived in a caller. It has a ceiling of
+its own now; past it the remainder is one step, which is what a teleport
+is.
+
+### The pins could not fail, again
+
+The third lens mutated the source under them: **10 of 21 mutants came
+back green.** A CLAMP passed for a wrap, because no input between PI and
+2PI was ever tested. The "at the door or downstream" test pinned the
+DOOR alone - every peer pose reaches `lerpAngle` through `validPose`,
+which now wraps, so restoring the hanging loop downstream passed in
+0.2 s. "Any ONE call site left bare" was false: there are two `world`
+call sites and only the frame's was driven. And the generative sweep was
+a regex for `while (... Math.PI ...)`, which a hoisted `TAU`, a
+`for (;;)`, a recursive wrap and even `while (Math.abs(dy) > Math.PI)`
+all walked straight past - the last because its own parenthesis broke
+the character class.
+
+Rebuilt: every wrap site is driven with the door BYPASSED, the wrap's
+contract is pinned by exact value across `(PI, 2PI)` and at both ends,
+the sweep looks for the SHAPE (a value stepped by a whole turn, inside a
+loop or a self-call, with each file's own name for a turn resolved
+first), and `{ timeout }` turns a hang into a red - `node --test` has no
+default timeout, so "a hung pin is a failed pin" had been a hope, not a
+mechanism.
+
+**28 mutations, 28 dead**, including all ten the lens proved survived.
+
+### What was and was not observed
+
+ONCRASH1's record said *"NOT SEEN RUNNING ... the container has no GL and
+no player in a room."* Both clauses are true and neither is a REASON:
+nothing in this arc touches GL or needs a room, and a lens drove the
+whole thing in headless Chromium here in under a minute, confirming that
+a handler throw reaches `window.onerror` before the fix and does not
+after. That is the same shape as the ARENA2 excuse this project was
+burned by a day earlier. Said plainly instead: **the laws are driven in
+node against a real session; the browser probe was run once by hand and
+is not yet a pin; no live relay and no second player were involved.**
+
+### Recorded, not paid
+
+- ~~The corpse grant can duplicate loot.~~ **PAID** - LOOT-DUP, below.
+- `lerpPose` can overflow a peer's PITCH to Infinity; inert only because
+  `peerCamera` writes `c.pitch = 0`.
+- `getMeleeWeaponAnimTime` returns 0 at speed 115 and the loop that
+  reads it never terminates; unreachable only because `liveStat` clamps
+  to 100 in another module.
+- Six accumulator loops (`acc += dt; while (acc >= step)`) with no
+  `MAX_FRAME_DT` clamp, where `player/motor.js` and
+  `characters/enemyMotor.js` have one.
+- `_peerHeights`, `remotePlayers._dolls`' failure entries and
+  `peerBodies._failed` are never pruned.
+- `wrapAngle(-PI)` is `+PI` where the four loops answered `-PI`, and the
+  two differ by ~1e-6 at 1e6 rad because a loop accumulates rounding.
+  The one-step answer is the correct one; the commit's "the same answer
+  for a small angle" is true to about 1e-14.

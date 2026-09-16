@@ -70,6 +70,8 @@
 //
 // Not a DFU member: Daggerfall Unity has no multiplayer. Ledger A row.
 import { tabStorage } from '../systems/appStorage.js';   // the tab's own storage - the seam, never the browser's own (a PIN)
+import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the port's one angle wrap, which cannot loop
+
 import { WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, sanitizeChat, chatGate, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS } from './wire.js';
 
 export { WORLD_CELL, RANGE_PIXELS, worldRoom };
@@ -138,12 +140,16 @@ export function poseChanged(a, b, eps = 0.01) {
     || (a.am | 0) !== (b.am | 0) || (a.sr | 0) !== (b.sr | 0) || (a.cn | 0) !== (b.cn | 0);   // MAC7 #2: and the arrow, the spell stance, the cast
 }
 
-const lerpAngle = (a, b, t) => {
-  let d = b - a;
-  while (d > Math.PI) d -= 2 * Math.PI;
-  while (d < -Math.PI) d += 2 * Math.PI;
-  return a + d * t;
-};
+// ONCRASH1 (2026-09-15, Mac: "reports of player browser crashing when
+// online"): the short arc, in ONE STEP. This was two `while` loops, and
+// the angle they wrapped is a PEER'S YAW - a number this session takes
+// from the relay and checked only for being finite. At a large one,
+// `d - 2 * Math.PI === d` in doubles and the loop never falls: the tab
+// stops answering and the browser kills it. Not the sender's tab, every
+// OTHER tab in the room, which is why it read as random. The wrap is
+// world/mat4.js's now (the port's one), and the door bounds the angle
+// besides (net/wire.js validPose).
+const lerpAngle = (a, b, t) => a + wrapAngle(b - a) * t;
 
 /** The pose between two, t in 0..1 (the yaw by the shorter arc). */
 export function lerpPose(from, to, t) {
@@ -190,6 +196,14 @@ export const peerSecret = (storage = tabStorage()) => keptToken(storage, 'dagger
  */
 /** OL3: the HUD line while the relay's clock and this machine's disagree by more than a year - the world's time is read uncorrected. */
 export const CLOCK_WARNING = 'this machine\'s clock is more than a year from the world\'s - set it, or the shared time is wrong here';
+/** ONCRASH1: how long a contained handler throw is said on the HUD line. Long enough for a player to read and report it,
+ *  short enough that one transient frame does not brand the session; `stats.threw` and the console keep the rest. */
+export const THREW_SAY_MS = 30000;
+/** AUDIT ONCRASH1 A5: distinct throws remembered before the said-once set is emptied - a bound, so a crafted stream of
+ *  unique messages cannot grow it without end. */
+export const THREW_KINDS_MAX = 32;
+/** AUDIT ONCRASH1 A6: a MONOTONIC reading for the HUD's window - never the wall clock, which steps. */
+const monoNow = () => (typeof performance !== 'undefined' && typeof performance.now === 'function' ? performance.now() : Date.now());
 
 export class OnlineSession {
   constructor({ url = DEFAULT_SERVER, name = 'Traveller', look = null, id = null, secret = null, presence = true, WebSocketImpl = globalThis.WebSocket, now = () => Date.now() } = {}) {
@@ -232,7 +246,10 @@ export class OnlineSession {
     this._backoff = BACKOFF_MIN_MS;
     this._retryAt = null;
     this._closedByUs = false;
-    this.stats = { sent: 0, poses: 0, received: 0, reconnects: 0, chats: 0, worlds: 0, foes: 0, hits: 0, acts: 0 };
+    this.stats = { sent: 0, poses: 0, received: 0, reconnects: 0, chats: 0, worlds: 0, foes: 0, hits: 0, acts: 0, threw: 0 };
+    /** ONCRASH1: what the last contained handler threw, for a person - `{ kind, text, at }` or null. */
+    this.threw = null;
+    this._threwKinds = new Set();   // said in full once a kind; the rest are counted
   }
 
   /** Enter a room (leaving the last). The pose is the hello's. AUDIT WORLD34 D5: said out loud, with whether the
@@ -240,6 +257,7 @@ export class OnlineSession {
    *  they stood in was shared or merely peopled. */
   join(room, pose = null) {
     if (room === this.room && this._ws) return;
+    this._threwKinds.clear();   // AUDIT ONCRASH1 A5: a new room says its own throws out loud - the first `world` throw of a session silenced the console for every later dungeon's
     this._who.clear();   // AUDIT WORLD6b-iii(e) B4: a crossing forgets who was asked - an answer lost in the last cell (its socket died, the peer's leave raced the ask) held the stranger unseen for WHO_RETRY_MS in this one
     const h = this._halo.get(room);
     // AUDIT WORLD6b-iii(b) A1/B7/C2: a LIVE, OPEN halo alone is promoted - one dropped and pending its retry (ws null)
@@ -458,7 +476,7 @@ export class OnlineSession {
     if (host === this.host) return;
     this.host = host;
     if (host && isWorldRoom(this.room)) console.info(`[online] host ${host}${host === this.id ? ' (me)' : ''}`);   // AUDIT WORLD34 D5
-    this.onHost?.(host, this.isHost());
+    this._deliver('host', () => this.onHost?.(host, this.isHost()));   // ONCRASH1: the host change swaps who steps the room's foes - the biggest handler of the lot
   }
 
   _open() {
@@ -488,7 +506,10 @@ export class OnlineSession {
         try { ws.send(hello); this.stats.sent++; } catch { /* the close will say */ }
       }
     };
-    ws.onmessage = (ev) => { const room = this._roomOf(ws); if (room != null) this._receive(ev.data, room); };
+    // AUDIT ONCRASH1 C3: THE DOOR IS HERE, and the first cut left it open. `_deliver` wrapped the handler CALLS, so a
+    // throw in `_receive`'s own body - the roster prune, `_member`, `_askWho`, a projection - still reached the window
+    // and painted the overlay. Driven in a real browser to prove it. The frame is one contained act from the outside in.
+    ws.onmessage = (ev) => this._deliver('frame', () => { const room = this._roomOf(ws); if (room != null) this._receive(ev.data, room); });
     ws.onclose = (ev) => {
       const room = this._roomOf(ws);
       if (room == null) return;
@@ -571,6 +592,69 @@ export class OnlineSession {
     return true;
   }
 
+  /** ONCRASH1 (2026-09-15, Mac: "reports of player browser crashing when
+   *  online"): THE HANDLER'S THROW IS CONTAINED HERE, AND SAID.
+   *
+   *  `_receive` runs inside the WebSocket's `onmessage`, and the handlers
+   *  it calls are not small: `onFoes` stands and steps puppets, `onWorld`
+   *  applies a whole room's memory, `onAct` moves doors and platforms,
+   *  `onHit` lands damage and mints loot - the port's entire foe, world
+   *  and door machinery, reached from a callback with nothing around it.
+   *  A throw anywhere in there had no catch between it and the event
+   *  loop, so it arrived at main.js's `addEventListener('error')` as an
+   *  UNCAUGHT error and put the red CRASH overlay over the run. Online,
+   *  always: offline, none of this code is reached from a socket.
+   *
+   *  So one player's malformed or unexpected frame ended everybody's
+   *  session, and the same frame repeated on the next stream tick ended
+   *  it again. A relay frame is ANOTHER PLAYER'S WORD, and the port
+   *  already knows what to do with a throw from one - AUDIT MWBODY A1:
+   *  "a throw from one peer's rig is that peer's doll, never the frame's
+   *  end". This is that law at the wire's own door.
+   *
+   *  IT IS NOT A CATCH-AND-FORGET. The frame is dropped, the session
+   *  stands, and the throw is counted in `stats.threw`, kept in `threw`
+   *  for `statusLine` to say on the HUD, and printed in FULL the first
+   *  time each kind throws - once a kind, because a stream that throws
+   *  throws at FOES_HZ_MAX and a console flood is its own outage. What
+   *  threw is still a bug; this stops it being everyone's crash while it
+   *  is found. */
+  /** AUDIT ONCRASH1 A1: AND THE ASYNC TAIL, which the first cut let through.
+   *  `_deliver` returned the moment `fn` did, and three sites reached from
+   *  inside `onWorld`/`onFoes` start a promise whose `.then` body is deep
+   *  game code with no `.catch` (dungeonContext.js retypeFoe's arms). The
+   *  throw landed one microtask later as an UNHANDLED REJECTION - main.js
+   *  listens for those too, so it was the same red overlay on the same
+   *  wire input, out of the same handler. A handler that hands back a
+   *  thenable is followed to its end. */
+  _deliver(kind, fn) {
+    try {
+      const r = fn();
+      if (r && typeof r.then === 'function') r.then(null, (e) => this._contain(kind, e));
+    } catch (e) { this._contain(kind, e); }
+  }
+  /** AUDIT ONCRASH1 A5: SAID ONCE PER THROW, not once per KIND. The first
+   *  cut gated the console on the kind alone, so the second, usually more
+   *  informative `foes` throw was never printed - while `threw` (the HUD's
+   *  text) was overwritten by it. The player read error B off the screen
+   *  and the console held the stack for error A, which is precisely the
+   *  pairing this was built to prevent. The gate is the kind AND the text,
+   *  bounded (a crafted message stream is its own flood) and emptied with
+   *  the room. */
+  _contain(kind, e) {
+    this.stats.threw++;
+    const text = `${e?.name ?? 'Error'}: ${e?.message ?? e}`;
+    // AUDIT ONCRASH1 A6: the HUD's window is measured on a MONOTONIC reading. `_now` is wall time, and a backwards
+    // clock step - which is what a player does right after OL3's CLOCK_WARNING tells them to fix their clock - made
+    // `now - at` negative, so the line never went away.
+    this.threw = { kind, text, at: this._now(), mono: monoNow() };
+    const key = `${kind}:${text}`;
+    if (this._threwKinds.has(key)) return;
+    if (this._threwKinds.size >= THREW_KINDS_MAX) this._threwKinds.clear();
+    this._threwKinds.add(key);
+    console.error(`[online] a '${kind}' frame threw - the frame is dropped, the session stands: ${text}`, e);
+  }
+
   _receive(data, room = this.room) {
     let m;
     try { m = JSON.parse(data); } catch { return; }
@@ -590,28 +674,28 @@ export class OnlineSession {
       if (!primary) return;
       this._setHost(m.host);   // WORLD1: the room's host, and the room's memory when it keeps one
       if (Number.isFinite(m.now)) {   // WORLD5: the relay's clock - a year off is no clock; OL3: and is SAID, on the console and the HUD line, rather than run uncorrected in silence
-        if (Math.abs(m.now - Date.now()) < 366 * 24 * 3600 * 1000) { this.clockOffsetMs = m.now - Date.now(); this.clockWarning = null; this.onClock?.(this.clockOffsetMs); }
+        if (Math.abs(m.now - Date.now()) < 366 * 24 * 3600 * 1000) { this.clockOffsetMs = m.now - Date.now(); this.clockWarning = null; this._deliver('clock', () => this.onClock?.(this.clockOffsetMs)); }
         else if (!this.clockWarning) { this.clockWarning = CLOCK_WARNING; console.warn(`[online] ${CLOCK_WARNING} (relay ${new Date(m.now).toISOString()}, this machine ${new Date().toISOString()})`); }
       }
-      if (m.world && typeof m.world === 'object' && !Array.isArray(m.world)) this.onWorld?.(m.world);
+      if (m.world && typeof m.world === 'object' && !Array.isArray(m.world)) this._deliver('world', () => this.onWorld?.(m.world));
     } else if (m.t === 'host') {
       if (primary) this._setHost(m.id);
     } else if (m.t === 'world') {
       // AUDIT WORLD34 C1: the room's memory pushed after the welcome - the host's alone (the relay says whose), never my own back
-      if (primary && typeof m.id === 'string' && m.id === this.host && m.id !== this.id && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) this.onWorld?.(m.data);
+      if (primary && typeof m.id === 'string' && m.id === this.host && m.id !== this.id && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) this._deliver('world', () => this.onWorld?.(m.data));
     } else if (m.t === 'foes') {
       // WORLD2: the host's live foes - the room's host's alone (a stale frame from a host that just left is not the world)
       // WORLD6b: in a cell every peer's frame is its own foes; in a world room the host's alone
       // AUDIT WORLD6b A8/C6: in a cell a frame is a PEER's - one the roster holds; past ROSTER_MAX a stranger's frames stood puppets the prune took back every frame
-      if (typeof m.id === 'string' && (isCellRoom(this.room) ? this.peers.has(m.id) : m.id === this.host) && m.id !== this.id && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) this.onFoes?.(m.id, m.data);
+      if (typeof m.id === 'string' && (isCellRoom(this.room) ? this.peers.has(m.id) : m.id === this.host) && m.id !== this.id && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) this._deliver('foes', () => this.onFoes?.(m.id, m.data));
       else if (isCellRoom(this.room)) this._askWho(room, m.id, now);   // WORLD6b-iii(e): a stranger's foes - asked for, its frames a peer's once the join lands
     } else if (m.t === 'hit') {
       // WORLD2: a blow on my foe - mine to apply only while I host
       // WORLD6b: in a cell a blow is mine when it names me (the relay routed it, and the frame says so); in a world room while I host
-      if ((isCellRoom(this.room) ? hitOwnerOf(m.data) === this.id : this.isHost()) && typeof m.id === 'string' && m.id !== this.id && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) { this.onHit?.(m.id, m.data); if (isCellRoom(this.room)) this._askWho(room, m.id, now); }   // WORLD6b-iii(e): a stranger's blow lands (the relay routed it to me) and the striker is asked for, so my foe finds its candidate
+      if ((isCellRoom(this.room) ? hitOwnerOf(m.data) === this.id : this.isHost()) && typeof m.id === 'string' && m.id !== this.id && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) { this._deliver('hit', () => this.onHit?.(m.id, m.data)); if (isCellRoom(this.room)) this._askWho(room, m.id, now); }   // WORLD6b-iii(e): a stranger's blow lands (the relay routed it to me) and the striker is asked for, so my foe finds its candidate
     } else if (m.t === 'act') {
       // WORLD3: a door, a lever or a platform moved by another in my world room - never my own back, never outside one
-      if (primary && isWorldRoom(this.room) && typeof m.id === 'string' && m.id !== this.id && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) this.onAct?.(m.id, m.data);
+      if (primary && isWorldRoom(this.room) && typeof m.id === 'string' && m.id !== this.id && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) this._deliver('act', () => this.onAct?.(m.id, m.data));
     } else if (m.t === 'join') {
       if (typeof m.id === 'string' && m.id !== this.id) this._member(room, m.id, m, now);
     } else if (m.t === 'leave') {
@@ -625,7 +709,7 @@ export class OnlineSession {
       // CHAT1: checked by the relay's own law (B7) - the id's shape, the name's, the line's; `mine` is the sender's own line back
       const text = typeof m.text === 'string' ? sanitizeChat(m.text) : '';
       if (typeof m.id !== 'string' || !text) return;
-      this.onChat?.({ id: m.id, name: sanitizeName(m.name), text, at: Number.isFinite(m.at) ? m.at : now, mine: m.id === this.id });
+      this._deliver('chat', () => this.onChat?.({ id: m.id, name: sanitizeName(m.name), text, at: Number.isFinite(m.at) ? m.at : now, mine: m.id === this.id }));
     } else if (m.t === 'error') {
       this.status = 'error'; this.error = String(m.m ?? 'relay error');
     }
@@ -687,7 +771,13 @@ export class OnlineSession {
 
   /** One line for a person, or null when all is well; `label` names the session (AUDIT CHAT B5: the chat's line is this one, not a remake). */
   statusLine(label = 'online') {
-    if (this.status === 'open') return this.clockWarning ? `${label}: ${this.clockWarning}` : null;   // OL3: an open session with a clock a year off says so
+    if (this.status === 'open') {
+      if (this.clockWarning) return `${label}: ${this.clockWarning}`;   // OL3: an open session with a clock a year off says so
+      // ONCRASH1: a frame the port could not handle is SAID, not only swallowed - the player reporting "it crashed"
+      // now has the line that names which frame, and the console has the stack behind it.
+      if (this.threw && monoNow() - this.threw.mono < THREW_SAY_MS) return `${label}: a '${this.threw.kind}' frame from another player was dropped - ${this.threw.text}`;
+      return null;
+    }
     if (this.terminal || this.status === 'error') return `${label}: ${this.error ?? 'error'}`;
     if (this.status === 'connecting') return `${label}: connecting`;
     if (this._retryAt != null) return `${label}: reconnecting`;
