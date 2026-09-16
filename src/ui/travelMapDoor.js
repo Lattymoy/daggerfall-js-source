@@ -45,6 +45,15 @@ export function travelMapDoorReady() {
  * plus `woods`; the classic window ignores the extra key. Answers
  * null where this build cannot draw a map - the classic arm without
  * its art - so the hosts' `if (win)` guards keep meaning.
+ *
+ * SOC6 (Mac: "Party members should be able to be seen on the world
+ * map, regardless of their location"): the bag also takes an optional
+ * `party: () => [{acct, name, px, py, in, loc, online, leader}]`, and
+ * BOTH arms take it - the enhanced map as green rings with names, the
+ * classic one as green dots on the region page. It is a FUNCTION, read
+ * on each window's own refresh, because a party changes while a map is
+ * open; a host with no party (offline, solo, or any host that never
+ * heard of the hub) passes none and both maps draw none.
  */
 export function createTravelMapWindow(deps = {}) {
   // `document` for the reason every fork before this one gives: node

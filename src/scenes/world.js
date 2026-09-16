@@ -4786,6 +4786,13 @@ export async function bootWorld(canvas, renderer, params, status) {
       diseaseCount: () => diseaseCount(playerEntity),
       poisonCount: () => poisonCount(playerEntity),
       noWorldTime: () => sharedClockOn(),   // OL2: online the trip takes no world time (WORLD5), and the popup says so
+      // SOC6 (Mac: "Party members should be able to be seen on the
+      // world map, regardless of their location"): MY PARTY, AS MARKS.
+      // A function and not a list, because the map may stand open for a
+      // minute while members travel, step into a dungeon, drop offline,
+      // join or leave - both skins read it on their own refresh. The
+      // host says WHERE and WHO; neither map is told what a party is.
+      party: () => partyMarkers(),
       ...extra,
     });
   }
@@ -7010,6 +7017,25 @@ export async function bootWorld(canvas, renderer, params, status) {
       race: look.race, gender: look.gender, face: look.faceIndex,
     };
   };
+  /** SOC6 (Mac: "Party members should be able to be seen on the world map, regardless of their location"): THE
+   *  OTHER HALF OF THE POSE - what composePartyPose sends out, coming back in as something a map can draw. The
+   *  members OTHER than me (my own seat is the player's own mark on both maps), each as the flat row the two travel
+   *  maps read through ui/partyMapMarks.js: {acct, name, px, py, in, loc, online, leader}.
+   *
+   *  A SEAT WITH NO POSE IS OMITTED, not drawn at the origin. net/social.js keeps a member's `p` null until their
+   *  first pose frame arrives, which is a second or so after they take the seat; a mark at 0,0 in that second would
+   *  put a friend in the Iliac Sea off Northmoor, and "not yet" is the truth.
+   *
+   *  REGARDLESS OF THEIR LOCATION is carried for free: the pose's pixel is the TRAVEL pixel, which inside a dungeon
+   *  or a building is the place's own, and `in` says which so the map can put the word beside the name.
+   *
+   *  Composed on every read, never cached - the map holds this function, not its answer. */
+  const partyMarkers = () => (social?.others() ?? [])
+    .filter((m) => !!m.p)
+    .map((m) => ({
+      acct: m.acct, name: m.name, px: m.p.px, py: m.p.py, in: m.p.in ?? 0, loc: m.p.loc ?? '',
+      online: !!m.online, leader: social?.party?.leader === m.acct,
+    }));
   /** SOC2: once a frame, while online - my party pose out while I sit in a party, composed at most twice a second
    *  (the link's own floor is PARTY_SEND_MS, and it sends only what changed); the relay's clock offset onto the
    *  picture, so "last online" reads on the relay's clock. */
