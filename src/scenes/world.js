@@ -6860,6 +6860,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     chatPanel = createChatPanel({
       log: chatLog,
       onSend: (tabId, text) => chatLinks.get(tabId)?.sendChat(text) ?? false,   // false keeps the line in the field (B2)
+      // CHAT-R1 (Mac: "a sidepanel on the chat ui showing all currently
+      // online players in alphabetical order"): the roster is the
+      // PRESENCE session's, not the chat link's. The chat links join
+      // with `presence: false` - they carry lines and hold no peers -
+      // so a roster read off them would always be empty. `online` is
+      // the session that actually holds the room's members.
+      roster: () => online ?? null,
       canOpen: () => !gamePaused() && !(townTalk.hudCovered || (modes?.hudCovered ?? false)),   // no chat under a window: the window's keys are the window's
       onOpen: () => { setCursorActive(false); releaseLook(); },   // AUDIT CHAT C2: the panel is a pointer surface - the mouse is freed on open   // PL3: the Enter that opened the chat is the CHAT'S - the toggle (the same key, a capture listener bound earlier) had already flipped cursorActive on it, and the close's relock was refused by the precedence line for the rest of the session
       onClose: () => { if (!gamePaused()) requestLook(canvas); },   // and taken back inside the closing gesture (MAC1's rule, ui/pauseDoor.js)
@@ -6873,7 +6880,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     const link = chatLinks.get(chatLog.active);
     chatPanel.render({
-      hidden: townTalk.hudCovered || (modes?.hudCovered ?? false) || gamePaused(),   // a window over the HUD covers the chat too, and closes it
+      // AUDIT-CHATR F1: `covered` is the HOST's word - a window over the
+      // HUD - and never the player's `hidden` (the Hide button). While
+      // the two shared a name the panel's frame wrote this one into the
+      // player's slot and undid the button on the next tick.
+      covered: townTalk.hudCovered || (modes?.hudCovered ?? false) || gamePaused(),   // a window over the HUD covers the chat too, and closes it
       status: link?.statusLine('chat') ?? null,   // connecting, reconnecting, refused - the session's own line (D12; AUDIT CHAT B5)
     });
   };
