@@ -157,6 +157,10 @@ export class PeerBodies {
     const gen = this._generation();
     if (gen !== this._gen) { this._gen = gen; this._failed.clear(); this.destroy(); }   // AUDIT MWBODY A9: new data, new bodies
     const now = this._now();
+    // SLAM4: the failed looks age out. A look was only ever forgotten when a peer wearing THAT look asked again
+    // (`:180`), so a look nobody wears again stayed for the life of the session - and a crowd is mostly looks seen
+    // once. BODY_RETRY_MS has passed for these; they are nothing but memory.
+    if (this._failed.size) for (const [k, f] of [...this._failed]) if (now >= f.until) this._failed.delete(k);
     const live = new Map();
     for (const peer of peers) if (peer?.shown) live.set(peer.id, peer);
     // the sweep first (the cap counts what stands, not what is leaving)

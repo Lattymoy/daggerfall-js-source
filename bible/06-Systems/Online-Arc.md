@@ -5226,3 +5226,35 @@ measured interval floors and ceilings. **9 mutations, 9 dead** - the ninth being
 Note what the three slices together did NOT do: none of them shards a
 room. One Durable Object still holds one town, and at some population it
 will still be the wall - these bought headroom, not infinity.
+
+
+## SLAM4 - WHAT ONLY EVER GREW (2026-09-16, Mac)
+
+Three maps in the online path had no way of shrinking. None of them
+matters in a twenty-minute test, which is exactly why none was caught:
+each is keyed by a peer id or a LOOK, and the case they were written for
+is a four-hour stream where hundreds of people come and go and almost
+every look is seen once.
+
+- **`_peerHeights`** (`scenes/world.js`) kept every id that had ever
+  stood in the room, for the life of the session. Pruned against
+  `online.peers` - the ROSTER, deliberately not the drawable set, because
+  AUDIT WORLD6b-ii C5 put this map here so a height SURVIVES a peer not
+  standing for a moment. Pruning by what is drawn would bring the aim
+  flicker back.
+- **`remotePlayers._dolls`** kept a `{ failedUntil }` record for every
+  look that would not compose. `_evict` counts only the READY dolls, so
+  those were never counted and never swept - and only re-asking for that
+  exact look cleared one, which nobody does for a look worn once. They
+  age out now, and the FAILURE path reaches the sweep at all: it was the
+  one outcome that never did.
+- **`peerBodies._failed`** kept every look whose Morrowind body would
+  not build, forgotten only when a peer wearing that same look asked
+  again. Swept past `BODY_RETRY_MS`.
+
+All three keep a fresh entry: the retry window is what stops a broken
+look being re-composed or re-built on every frame, and sweeping early
+would trade a slow leak for a fast loop.
+
+**Pinned** in `test/slam4.test.js` (4). **7 mutations, 7 dead**,
+including both halves of each: never swept, and swept while still fresh.

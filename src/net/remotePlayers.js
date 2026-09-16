@@ -153,7 +153,8 @@ export class RemotePlayers {
     this._dolls.set(key, p);
     p.then((doll) => {
       if (this._dolls.get(key) !== p) return;   // released meanwhile
-      if (doll) { this._dolls.set(key, doll); this._evict(); } else this._dolls.set(key, { failedUntil: this._now() + DOLL_RETRY_MS });
+      if (doll) { this._dolls.set(key, doll); } else this._dolls.set(key, { failedUntil: this._now() + DOLL_RETRY_MS });
+      this._evict();   // SLAM4: a FAILURE sweeps too - it was the one outcome that never reached the eviction
     });
     return p;
   }
@@ -172,7 +173,13 @@ export class RemotePlayers {
   }
 
   /** Past DOLLS_MAX ready dolls, the oldest goes: its texture released, the batches wearing it dropped (they recompose). */
+  /** SLAM4: AND THE FAILURES AGE OUT. `_evict` counts only the READY dolls, so the `{ failedUntil }` records left by
+   *  a look that would not compose were never counted and never swept - only re-asking for that exact look cleared
+   *  one, and a look nobody wears again is never asked for. Every distinct broken look a session sees stayed in this
+   *  map for its whole life. Small each; unbounded in a crowd, which is what an event is. */
   _evict() {
+    const now = this._now();
+    for (const [k, v] of [...this._dolls]) if (v && v.failedUntil != null && now >= v.failedUntil) this._dolls.delete(k);
     while (true) {
       let ready = 0, oldest = null;
       for (const [k, v] of this._dolls) if (v && typeof v.rec === 'string') { ready++; if (!oldest) oldest = k; }

@@ -6894,6 +6894,11 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (h > 0) _peerHeights.set(p.id, h);
       out.push({ id: p.id, feet: onlineToScene(p.shown), height: _peerHeights.get(p.id) });
     }
+    // SLAM4 (2026-09-16, the 30th-anniversary slam): AND THE REMEMBERED HEIGHTS GO WITH THE PEERS. This map only
+    // ever grew: every id that has ever stood in the room stayed in it for the life of the session. A twenty-minute
+    // test never notices; a four-hour stream with hundreds of people coming and going is the case it was written
+    // for. The session's own roster is the truth about who exists, so anything not in it is not a peer any more.
+    if (_peerHeights.size > online.peers.size) for (const id of [..._peerHeights.keys()]) if (!online.peers.has(id)) _peerHeights.delete(id);
     return out;
   };
   const onlineFrame = (now, dt) => {
