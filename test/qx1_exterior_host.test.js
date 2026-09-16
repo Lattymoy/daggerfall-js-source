@@ -108,7 +108,7 @@ const QW_PARAMS = [
   'placeFoeEnv', 'placeFoeFreely', 'entityOccupancy', 'questFoeGender', 'ENEMY_BASICS',
   'fieldOfView', 'walkMode', 'player', 'cam', 'collider', 'exteriorFoes', 'exteriorFoePool',
   // ...and the G4 spell registry CastSpellDo reads through this host's
-  // own `getClassicSpellEffects` (world.js:5693's seam).
+  // own `getClassicSpellEffects` (world.js:5688's seam).
   'spellRecordOfIndex',
 ];
 
@@ -304,7 +304,7 @@ test('QX1 review: every faction read is the PERSISTENT store, and the Person cha
   // (4) ...and the family degrades to the charter's refusal when
   // FACTION.TXT has not loaded - never a throw on `store.dict`. The
   // People/Courts pair is left out of this arm deliberately: their
-  // expressions are world.js:5744/5746's verbatim, and talk.js's
+  // expressions are world.js:5739/5741's verbatim, and talk.js's
   // findFactions dereferences the dictionary it is handed, so the two
   // hosts share one shape there and neither invents a private guard.
   const cold = mountQuestWorld({ factionDict: null });
@@ -491,8 +491,8 @@ test('ROAD-G G2 review: the cast engine raises the two ready-spell doors into TH
   // host owns its own cast engine, and worldModes takes THIS instance
   // for the interior mode, so while the mount passed neither key every
   // `cast X spell do` / `cast X effect do` on this route - and in every
-  // shop entered from it - was permanently deaf. world.js:2590-2591 and
-  // dungeonContext.js:1990-1991 wire the identical pair.
+  // shop entered from it - was permanently deaf. world.js:2600-2601 and
+  // dungeonContext.js:2002-2003 wire the identical pair.
   const doorSrc = slice('    onNewReadySpell: (sp) => questBridge',
     '    // ROAD-G G2 (a): THE THREE-ARM SHAPE');
   // ...and they are keys of the ENGINE MOUNT, not of some other bag:
@@ -527,7 +527,7 @@ test('ROAD-G G2 review: questWorld answers CastSpellDo\'s two classic-spell read
   // Without these the action self-completes at PARSE
   // (actions.js:2756/:2763 - no effects, so C#'s template completes and
   // the task can never fire), which would have left `cast X spell do`
-  // dead on this route even with the doors above wired. world.js:5693's
+  // dead on this route even with the doors above wired. world.js:5688's
   // pair, byte-folded on both sides exactly as MakeClassicKey folds.
   const { world } = mountQuestWorld();
   assert.deepEqual(world.getClassicSpellEffects(0x105), [{ type: 5, subType: 1 }],
@@ -566,7 +566,7 @@ test('ROAD-G G2 review: the encounter pool\'s frame seams - the tick, the draw, 
   assert.match(senses, /candidates: \(\) => exteriorFoePool\(\)\.filter\(\(f\) => !f\.dead\),/,
     'the senses walk the UNNARROWED street database, live records only');
 
-  // world.js:8613-8671's arrow shape: an enemy shaft hunts a WALKING
+  // world.js:8592-8650's arrow shape: an enemy shaft hunts a WALKING
   // player (the fly camera has no capsule), and both live pools are
   // impact candidates. `playerFeet: null` is every enemy arrow passing
   // through the player - the whole enemy arm the lane shipped.
@@ -676,6 +676,13 @@ test('QX1: the pause window\'s Quests tab reads the machine, and BOTH pauses rea
   assert.match(SRC, /PX3 SHIPPED \(QX1\)/, 'and its site records what shipped, quoting what it retired');
   assert.match(SRC, /questMessages: pauseQuestMessages,\n\s*questLog: pauseQuestLog,/,
     'the host\'s own pause hands both walks over');
+  // MAC-K2: and the WALK itself is `scenes/questBridge.js`'s now. This
+  // host held one of three copies of it - its own comment said "world.js
+  // keeps two copies of this walk; two copies is two laws the day one of
+  // them moves" - and the chronicle's Quests section made a FOURTH
+  // reader, which is one more than a copied walk survives.
+  assert.match(SRC, /const pauseQuestLog = \(\) => questBridge\?\.questLog\(\) \?\? \{ active: \[\], finished: \[\] \};/);
+  assert.doesNotMatch(SRC, /remainingTimeInSeconds/, 'this host no longer walks the clocks itself');
   // ...and the mode machine's INTERIOR pause reads the SAME two, so a
   // pause in a tavern is not a different journal (worldModes reads
   // host.pauseQuestMessages / host.pauseQuestLog).
@@ -700,24 +707,17 @@ test('QX1: the pause window\'s Quests tab reads the machine, and BOTH pauses rea
   assert.deepEqual(cold.pauseQuestMessages(), []);
   assert.deepEqual(cold.pauseQuestLog(), { active: [], finished: [] });
 
-  const withLog = {
-    uid: 5, displayName: 'A Small Debt', questName: '_BRISIEN',
-    getLogMessages: () => [{ messageID: 1010 }, { messageID: 1020 }],
-    getMessage: (id) => ({ id }),
-    resources: new Map([
-      ['clock_a', { clockEnabled: true, clockFinished: false, remainingTimeInSeconds: 600 }],
-      ['clock_b', { clockEnabled: true, clockFinished: false, remainingTimeInSeconds: 120 }],
-      ['clock_c', { clockEnabled: true, clockFinished: true, remainingTimeInSeconds: 1 }],
-      ['not_a_clock', { clockEnabled: false, remainingTimeInSeconds: 2 }],
-    ]),
-  };
-  const silent = { uid: 6, questName: '_TUTOR__', getLogMessages: () => [], resources: new Map() };
+  // MAC-K2: the walk is the bridge's, so the stub answers it the way
+  // the real bridge does. What THIS pin proves is the host's wiring -
+  // that its two pause seams and its journal hooks all reach that one
+  // walk; the walk's own arithmetic is driven in test/questbridge.test.js.
   const bridge = {
-    machine: {
-      quests: new Map([[5, withLog], [6, silent]]),
-      getAllQuestLogMessages: () => ['entry-a', 'entry-b'],
-    },
+    machine: { getAllQuestLogMessages: () => ['entry-a', 'entry-b'] },
     notebook: { getFinishedQuests: () => ['a finished one'] },
+    questLog: () => ({
+      active: [{ id: '5', name: 'A Small Debt', questName: '_BRISIEN', clockSeconds: 120, messages: [{ id: 1010 }, { id: 1020 }] }],
+      finished: ['a finished one'],
+    }),
   };
   const live = mount(bridge);
 
@@ -726,18 +726,14 @@ test('QX1: the pause window\'s Quests tab reads the machine, and BOTH pauses rea
   // ROAD-G G2 added the third: HandleQuestClicks' current-location
   // question, which this route answers outright.
   assert.deepEqual(Object.keys(live.questJournalHooks()).sort(),
-    ['currentLocationName', 'notebook', 'questMessages']);
+    ['currentLocationName', 'notebook', 'questLog', 'questMessages'],
+    'MAC-K2 added questLog - the chronicle\'s Quests section, which is what the L key opens');
+  assert.deepEqual(live.questJournalHooks().questLog(), live.pauseQuestLog(),
+    'and it is the SAME walk the pause tab takes, not a second one');
   assert.deepEqual(live.questJournalHooks().questMessages(), ['entry-a', 'entry-b']);
 
   const log = live.pauseQuestLog();
-  assert.equal(log.active.length, 1, 'a quest that has written no log entry has no rail row');
-  assert.deepEqual(log.active[0].messages, [{ id: 1010 }, { id: 1020 }]);
-  assert.equal(log.active[0].id, '5');
-  assert.equal(log.active[0].name, 'A Small Debt');
-  assert.equal(log.active[0].questName, '_BRISIEN');
-  assert.equal(log.active[0].clockSeconds, 120,
-    'the SHORTEST live clock - a finished or disabled one is not a timer');
-  assert.deepEqual(log.finished, ['a finished one']);
+  assert.deepEqual(log, bridge.questLog(), 'the host passes the bridge\'s walk through, and adds nothing');
 });
 
 test('QX1: every surface that recorded "no quest bridge" reads the machine now', () => {

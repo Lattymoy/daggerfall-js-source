@@ -497,3 +497,76 @@ test('the questor door stays SHUT for an NPC already questoring an active quest'
     assert.deepEqual(spent, [77, 78], 'but the pool entry is spent FIRST, either way - C#s ctor half');
   }
 });
+
+// ═══ MAC-K2: THE QUEST WALK, WHERE IT NOW LIVES ═══════════════════
+
+test('MAC-K2: the bridge’s questLog is the ONE walk - and it is the arithmetic three hosts each kept a copy of', () => {
+  // Mac, 2026-09-15: "Logbook not reflecting quests."
+  //
+  // The L key opens the chronicle, and the chronicle had no quest
+  // section - it was handed `questMessages` by all four hosts and
+  // never read it. Giving it one made a FOURTH reader of this walk,
+  // and there were already three copies: world.js's pause hooks,
+  // dungeonContext.js's, and exterior.js's `pauseQuestLog`, whose own
+  // comment said "two copies is two laws the day one of them moves".
+  //
+  // So the walk moved to the bridge - the one thing every host with
+  // quests already holds - and this is where its arithmetic is pinned.
+  // The host pins (qx1_exterior_host.test.js) now hold only the
+  // WIRING, which is the split that makes each of them able to fail
+  // for one reason.
+  const withLog = {
+    uid: 5, displayName: 'A Small Debt', questName: '_BRISIEN',
+    getLogMessages: () => [{ messageID: 1010 }, { messageID: 1020 }],
+    getMessage: (id) => ({ id }),
+    resources: new Map([
+      ['clock_a', { clockEnabled: true, clockFinished: false, remainingTimeInSeconds: 600 }],
+      ['clock_b', { clockEnabled: true, clockFinished: false, remainingTimeInSeconds: 120 }],
+      ['clock_c', { clockEnabled: true, clockFinished: true, remainingTimeInSeconds: 1 }],
+      ['not_a_clock', { clockEnabled: false, remainingTimeInSeconds: 2 }],
+    ]),
+  };
+  // a quest that has written NOTHING yet, and one that has COMPLETED
+  // (Quest.getLogMessages answers null once it has) - neither is a row
+  const silent = { uid: 6, questName: '_TUTOR__', getLogMessages: () => [], resources: new Map() };
+  const done = { uid: 7, questName: 'M0B00Y00', getLogMessages: () => null, resources: new Map() };
+  // ...and one whose log entries resolve to no MESSAGE at all
+  const ghost = {
+    uid: 8, questName: 'M0B00Y01', getLogMessages: () => [{ messageID: 999 }],
+    getMessage: () => null, resources: new Map(),
+  };
+
+  // The walk is read off the shipped module and driven, rather than
+  // retyped here - the bridge's own factory needs a world's worth of
+  // deps, and what is under test is these thirty lines.
+  const src = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../src/scenes/questBridge.js'), 'utf8');
+  const body = src.slice(src.indexOf('    questLog() {'), src.indexOf('\n    },', src.indexOf('    questLog() {')) + 6);
+  assert.ok(body.includes('remainingTimeInSeconds'), 'the slice really is the walk');
+  const questLog = new Function('machine', 'notebook',
+    `const o = { ${body} }; return o.questLog();`);
+
+  const machine = { quests: new Map([[5, withLog], [6, silent], [7, done], [8, ghost]]) };
+  const log = questLog(machine, { getFinishedQuests: () => ['a finished one'] });
+
+  assert.equal(log.active.length, 1, 'only the quest that has really written a log entry is a row');
+  assert.equal(log.active[0].id, '5', 'the uid, as a string - the rail keys on it');
+  assert.equal(log.active[0].name, 'A Small Debt');
+  assert.equal(log.active[0].questName, '_BRISIEN');
+  assert.deepEqual(log.active[0].messages, [{ id: 1010 }, { id: 1020 }], 'resolved, in the machine’s own order');
+  assert.equal(log.active[0].clockSeconds, 120,
+    'the SHORTEST live clock - a finished one and a disabled one are not timers');
+  assert.deepEqual(log.finished, ['a finished one']);
+
+  // a host whose notebook has not been built yet is not a crash
+  assert.deepEqual(questLog({ quests: new Map() }, null), { active: [], finished: [] });
+
+  // AND NO HOST WALKS IT ITSELF ANY MORE. Derived: the clock field is
+  // the walk's own vocabulary, so a host that spells it has grown a
+  // second copy back.
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  for (const h of ['exterior', 'world', 'worldModes', 'dungeonContext']) {
+    const hs = readFileSync(join(root, `src/scenes/${h}.js`), 'utf8');
+    assert.ok(!hs.includes('remainingTimeInSeconds'),
+      `${h}.js must take the bridge's walk, not keep its own`);
+  }
+});

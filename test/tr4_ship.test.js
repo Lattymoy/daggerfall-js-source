@@ -83,8 +83,15 @@ test('TR4: the boarding memory SURVIVES a save (SerializablePlayer :180, :425)',
 
 test('TR4: the picker\'s row is live for an owner, and Ship routes to the teleport rather than the mode', () => {
   const world = read('src/scenes/world.js');
-  assert.match(world, /shipAvailable: ownsShip\(playerEntity\),/, 'the row the bank arc has been able to answer since H3');
-  assert.match(world, /if \(mode === TRANSPORT_MODES\.Ship\) \{ boardOrDisembark\(\); return; \}/);
+  // MAC-K3: the picker is `player/mountRig.js`'s now, and the Ship row
+  // takes a SECOND gate - `!!onShip` - because the fixed-city host has
+  // no world to sail across and a live row there would open onto
+  // nothing. world.js is the host that has one, and hands it in.
+  assert.match(read('src/player/mountRig.js'), /shipAvailable: !!onShip && ownsShip\(playerEntity\),/,
+    'the row the bank arc has been able to answer since H3, and the host that can actually sail');
+  assert.match(read('src/player/mountRig.js'), /if \(mode === TRANSPORT_MODES\.Ship\) \{ onShip\?\.\(\); return; \}/);
+  assert.match(world, /onShip: \(\) => boardOrDisembark\(\),/, 'and world.js is the host that hands the teleport in');
+  assert.match(read('src/scenes/exterior.js'), /onShip: null,/, 'the fixed city hands none, so its row is dark');
   // The host half: the decision comes from ship.js, the teleport and
   // the remembered yaw are the host's.
   assert.match(world, /const t = shipTransition\(playerEntity, \{/);

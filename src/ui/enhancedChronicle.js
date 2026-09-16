@@ -23,6 +23,7 @@
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { closeOnOutsideTap } from './enhancedOverlays.js';   // OT1
 import { overlayAction } from './input.js';
+import { questRail, questTitleOf } from './questRail.js';   // MAC-K2: the ONE quest walk, shared with the pause window's Quests tab
 
 const el = (tag, cls, text) => {
   const n = document.createElement(tag);
@@ -37,8 +38,19 @@ let onExit = () => {};
 let section = 'notes';
 let draft = '';   // PX24b: the note being written, kept across renders
 
+// MAC-K2 (Mac: "Logbook not reflecting quests"). QUESTS GOES FIRST,
+// and it is the section this window was missing entirely. The L key
+// (`LogBook`, InputManager's own name for it) opens this window; the
+// three sections it had were Notes, Messages and History, none of
+// which is a quest, and `chronicleDoor.js` was being handed
+// `questMessages` by all four hosts while `chronicleModel` never read
+// it - a dep in, nothing out. A player pressing the key named after
+// the job got their notebook.
+//
+// It leads because it is what the key is FOR. Notes, Messages and
+// History keep their order behind it.
 export const CHRONICLE_SECTIONS = Object.freeze([
-  ['notes', 'Notes'], ['messages', 'Messages'], ['history', 'History'],
+  ['quests', 'Quests'], ['notes', 'Notes'], ['messages', 'Messages'], ['history', 'History'],
 ]);
 
 const LINE_FORMATTINGS = new Set(['text', 'newline', 'highlight', 'question', 'answer']);
@@ -97,17 +109,37 @@ export function chronicleModel(d = {}) {
   const entries = (list) => (list ?? []).map(chronicleEntry).filter((e) => e.head || e.body.length);
   const notes = entries(nb?.getNotes?.());
   const messages = entries(nb?.getMessages?.());
+  // MAC-K2: the quests, through the SAME walk the pause window's
+  // Quests tab uses (ui/questRail.js) - so the two faces cannot
+  // disagree about which quests are live or what they say. Each quest
+  // becomes one entry: its title as the head, its trail as the body,
+  // NEWEST STEP FIRST (`entries` arrives oldest-first from the
+  // machine's log and the last thing you were told is the thing you
+  // opened this for - the same reading the Messages section makes).
+  // The archive follows the live ones, as the rail files it.
+  const log = d.questLog?.() ?? null;
+  const rail = log ? questRail(log) : { active: [], finished: [] };
+  const quests = [
+    ...rail.active.map((q) => ({
+      head: questTitleOf(q.name),
+      body: [...q.entries].reverse().flat(),
+    })),
+    ...rail.finished.map((q) => ({
+      head: `${questTitleOf(q.name)}${q.when ? ` \u2014 ${q.success === false ? 'ended' : 'completed'} ${q.when}` : ''}`,
+      body: [...q.lines],
+    })),
+  ].filter((e) => e.head || e.body.length);
   // The history is already lines - chargen composes backStory as
   // strings, and playerHistory.js reads exactly this.
   const history = (d.entity?.backStory ?? []).map((l) => String(l ?? '')).filter((l) => l.length);
-  return { notes, messages, history };
+  return { quests, notes, messages, history };
 }
 
 function render() {
   if (!host) return;
   host.innerHTML = '';
   const model = chronicleModel(deps);
-  const counts = { notes: model.notes.length, messages: model.messages.length, history: model.history.length };
+  const counts = { quests: model.quests.length, notes: model.notes.length, messages: model.messages.length, history: model.history.length };
 
   const shell = el('div', 'px-home px-over cr-shell');
   const win = el('div', 'px-win');
@@ -197,7 +229,8 @@ function render() {
       detail.append(compose);
     }
     if (!rows.length) {
-      detail.append(el('p', 'px-note', section === 'notes' ? 'Nothing written yet.' : 'No messages yet.'));
+      detail.append(el('p', 'px-note', section === 'notes' ? 'Nothing written yet.'
+        : (section === 'quests' ? 'No active quests.' : 'No messages yet.')));
     } else {
       // NEWEST FIRST for messages (the ring's own order is oldest
       // first and the last thing you were told is the thing you
@@ -265,7 +298,7 @@ export function mountEnhancedChronicle(hostEl, d = {}) {
   host = hostEl;
   deps = d;
   onExit = d.onExit ?? (() => {});
-  section = CHRONICLE_SECTIONS.some(([id]) => id === d.section) ? d.section : 'notes';
+  section = CHRONICLE_SECTIONS.some(([id]) => id === d.section) ? d.section : 'quests';
   draft = '';
   render();
   window.addEventListener('keydown', onKey, true);

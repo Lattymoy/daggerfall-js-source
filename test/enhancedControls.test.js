@@ -225,19 +225,26 @@ test('FIX-F: arming then a keydown binds through the STAGED dict, and the listen
 
     b.onclick();
     assert.equal(captureArmed(), 'MoveForwards');
-    assert.equal(doc.listeners.length, 1, 'exactly one listener while armed');
-    const l = doc.listeners[0];
-    assert.equal(l.type, 'keydown', 'a keydown - not keyup, not keypress');
-    assert.deepEqual(l.opts, { capture: true },
-      'capture, so the host’s bubble-phase ladder never sees the key');
-    assert.equal(keyBtn(view, 'MoveForwards').textContent, 'PRESS A KEY');
+    // MAC-K1: TWO doors, one arm. DFU's WaitForKeyPress walks EVERY
+    // KeyCode and Mouse0/1/2 are KeyCodes - which is how three of its
+    // own defaults are mouse buttons. This pane listened for `keydown`
+    // alone, so no action could be moved onto a button and one cleared
+    // off a button could never be put back.
+    assert.deepEqual(doc.listeners.map((l) => l.type).sort(), ['keydown', 'mousedown'],
+      'the capture has both doors while armed, and nothing else');
+    for (const l of doc.listeners) {
+      assert.deepEqual(l.opts, { capture: true },
+        'capture, so the host’s bubble-phase ladder never sees the key');
+    }
+    const l = doc.listeners.find((x) => x.type === 'keydown');
+    assert.equal(keyBtn(view, 'MoveForwards').textContent, 'PRESS A KEY OR BUTTON');
 
     const e = keyEvent('KeyG');
     l.fn(e);
     assert.equal(e.prevented, true, 'the captured key must not do its browser default');
     assert.equal(e.stopped, true, 'and world.js/exterior.js/worldModes.js must never see it');
     assert.equal(captureArmed(), null, 'one key ends the capture');
-    assert.equal(doc.listeners.length, 0, 'and the listener is removed with it');
+    assert.equal(doc.listeners.length, 0, 'and BOTH listeners leave with it - a half-disarm is a live listener outliving its screen');
 
     // THE STAGED WRITE, and only the staged write.
     assert.equal(currentDict(controlsStaging()).get('MoveForwards'), 'KeyG');
@@ -291,17 +298,64 @@ test('FIX-F: the capture target is a <button>, so isTextEntryTarget stays false 
   });
 });
 
-test('FIX-F: arming from a click cannot itself be the bound key', () => {
-  // The listener is added BY the click handler and only ever answers
-  // `keydown`; a pointer gesture produces none. The pin is that the
-  // arming leaves the staged dict alone until a key actually arrives.
+test('MAC-K1: arming from a click cannot itself be the bound BUTTON, but the next press is', () => {
+  // THE REASON THIS PIN HAD TO CHANGE. It used to read "the listener
+  // only ever answers `keydown`; a pointer gesture produces none" -
+  // true, and the whole defect: a player could not bind a mouse button
+  // at all. The listener now answers `mousedown` too, so the guard has
+  // to be the real one rather than an accident of which event was
+  // listened for.
+  //
+  // And it IS real: `arm()` runs from the row button's `onclick`,
+  // which the browser fires after that press has come and gone, so the
+  // listener added inside it can only ever see the NEXT press.
   withPane(({ doc, view }) => {
     const before = currentDict(controlsStaging()).get('MoveForwards');
     keyBtn(view, 'MoveForwards').onclick();
     assert.equal(currentDict(controlsStaging()).get('MoveForwards'), before,
-      'arming binds nothing');
-    assert.deepEqual(doc.listeners.map((l) => l.type), ['keydown'],
-      'and it listens for keys only - no click, no mousedown');
+      'arming binds nothing - the click that armed is not the click that binds');
+    assert.equal(captureArmed(), 'MoveForwards', 'and the capture is still waiting');
+
+    // the NEXT press binds, and it is the registry's code for that
+    // button - Unity counts Mouse0/1/2 as left/RIGHT/middle where
+    // MouseEvent.button counts left/MIDDLE/right, so button 2 is
+    // 'Mouse1' and a host that spelled 'Mouse' + e.button would hand
+    // the wheel the right button's action
+    const down = doc.listeners.find((l) => l.type === 'mousedown');
+    const e = { button: 2, preventDefault() { this.prevented = true; }, stopPropagation() { this.stopped = true; } };
+    down.fn(e);
+    assert.equal(e.prevented, true, 'the captured press must not do its browser default');
+    assert.equal(e.stopped, true, 'and no host ladder may see it');
+    assert.equal(currentDict(controlsStaging()).get('MoveForwards'), 'Mouse1');
+    assert.equal(captureArmed(), null, 'one press ends the capture');
+    assert.equal(doc.listeners.length, 0, 'and both listeners leave');
+    assert.equal(keyBtn(view, 'MoveForwards').textContent, buttonText('Mouse1', true));
+  });
+});
+
+test('MAC-K1: a FOURTH button is not a binding, and the capture stays armed for one that is', () => {
+  // mouseCode answers null past the third button (ui/input.js's
+  // MOUSE_CODES is three long, as Unity's KeyCode list is). A thumb
+  // button must not silently bind nothing and end the capture - the
+  // row would go blank and the player would never know why.
+  withPane(({ doc, view }) => {
+    keyBtn(view, 'Jump').onclick();
+    const down = doc.listeners.find((l) => l.type === 'mousedown');
+    down.fn({ button: 3, preventDefault() {}, stopPropagation() {} });
+    assert.equal(captureArmed(), 'Jump', 'the fourth button is not a KeyCode: the capture waits on');
+    assert.equal(currentDict(controlsStaging()).get('Jump'), 'Space', 'and nothing was written');
+    down.fn({ button: 0, preventDefault() {}, stopPropagation() {} });
+    assert.equal(currentDict(controlsStaging()).get('Jump'), 'Mouse0', 'the left button still binds');
+  });
+});
+
+test('MAC-K1: a button pressed under a modifier binds the COMBO, as a key does', () => {
+  withPane(({ doc, view }) => {
+    keyBtn(view, 'Inventory').onclick();
+    doc.listeners.find((l) => l.type === 'mousedown')
+      .fn({ button: 1, shiftKey: true, preventDefault() {}, stopPropagation() {} });
+    assert.equal(currentDict(controlsStaging()).get('Inventory'), comboCode('ShiftLeft', 'Mouse2'),
+      'one combo law, whichever door the code came through');
   });
 });
 
@@ -322,13 +376,13 @@ test('FIX-F: while a capture is armed EVERY other control is inert (:281 etc.)',
       keyBtn(view, 'MoveForwards').onclick();
       assert.equal(captureArmed(), 'MoveForwards');
       assert.equal(controlsStaging().usingPrimary, true);
-      const armedListener = doc.listeners[0];
+      const armedListeners = [...doc.listeners];
       const still = (what) => {
         assert.equal(captureArmed(), 'MoveForwards', `${what} must not touch the capture`);
         assert.equal(controlsStaging().usingPrimary, true, `${what} must not flip the dict`);
         assert.equal(saved, 0, `${what} must not reach saveKeyBinds`);
-        assert.equal(doc.listeners.length, 1, `${what} must leave the one capture standing`);
-        assert.equal(doc.listeners[0], armedListener, `${what} must not re-arm`);
+        assert.equal(doc.listeners.length, armedListeners.length, `${what} must leave the capture standing`);
+        assert.deepEqual(doc.listeners, armedListeners, `${what} must not re-arm`);
         assert.equal(one(view.body, 'ctl-prompt'), undefined, `${what} must open no prompt`);
       };
 
@@ -359,7 +413,7 @@ test('FIX-F: while a capture is armed EVERY other control is inert (:281 etc.)',
 
       // ...and the capture the player actually armed is still the one
       // live gesture on the screen, landing where they aimed it.
-      armedListener.fn(keyEvent('KeyG'));
+      armedListeners.find((l) => l.type === 'keydown').fn(keyEvent('KeyG'));
       assert.equal(captureArmed(), null);
       assert.equal(currentDict(controlsStaging()).get('MoveForwards'), 'KeyG');
       assert.equal(controlsStaging().usingPrimary, true);
