@@ -5124,3 +5124,54 @@ CPU against the fake Durable Object. A Workers isolate is not this
 machine; treat the SHAPE (quadratic, then linear) as the finding and the
 absolute milliseconds as optimistic. `RELAY_VERSION` is `world67`, and the
 relay must be deployed for any of this to be true in production.
+
+
+## SLAM2 - A WAVE STOPS BEING A WAVE (2026-09-16, Mac)
+
+A room admits `HELLO_HZ_MAX` hellos a second and refuses the rest with
+`CLOSE_BUSY`. That is correct. What was not is that every client refused
+in the same instant then waited the SAME `_backoff` and came back in the
+same instant, so the wave stayed a wave - re-colliding at 1s, 2s, 4s,
+8s, and each collision spending the room's hello budget on frames it had
+to refuse rather than on players it could have admitted.
+
+A stream saying *"everyone go here now"* is precisely a phase-locked
+wave. The retry is spread uniformly across its window now, with the
+floor at `BACKOFF_MIN_MS` so a jittered retry is never an instant one.
+The backoff still DOUBLES, so a relay that is genuinely down is not
+hammered: the jitter spreads the window, it does not shrink it. The
+halo's retries are jittered the same way - eight rooms a client, all
+refused together otherwise.
+
+The jitter's source is INJECTED beside the clock, so the wave law is
+pinnable and nothing reaches for `Math.random` behind a test's back.
+
+### What this slice does NOT claim, and why that matters
+
+The pin this wanted was the obvious one: drive three hundred real
+sessions at the real `Room` and watch the wave drain faster. **It cannot
+be written against `test/fakeRoom.mjs`, and finding that out is worth
+more than the pin would have been.**
+
+The fake Durable Object does not model the runtime's **input gating**.
+Three hundred concurrent hellos all read the same `hellos` bucket before
+any write lands, so every one of them is admitted and the gate appears
+to do nothing at all. That is an artefact of the fake, not the truth
+about production - the real runtime defers events while a storage
+operation is in flight. Any conclusion about CONCURRENCY drawn from
+`fakeRoom` is unreliable, and that now goes for every slice that uses
+it, not just this one.
+
+So what is pinned is the client's own arithmetic, which is the part this
+slice changed: three hundred clients refused in the same instant come
+back spread over at least twenty distinct moments with no moment holding
+more than an eighth of them, against one single millisecond before.
+
+**Pinned** in `test/slam2.test.js` (4). **6 mutations, 6 dead.**
+
+**Recorded, not paid:** `onopen` resets `_backoff` to the floor the
+instant the socket opens, before the relay has accepted the hello - so a
+relay that accepts the handshake and then closes non-terminally is
+retried at the floor for ever rather than backing off. Lens A raised
+this during AUDIT ONCRASH1 and it is still open; the reset belongs on
+the WELCOME, not on the open.

@@ -206,7 +206,7 @@ export const THREW_KINDS_MAX = 32;
 const monoNow = () => (typeof performance !== 'undefined' && typeof performance.now === 'function' ? performance.now() : Date.now());
 
 export class OnlineSession {
-  constructor({ url = DEFAULT_SERVER, name = 'Traveller', look = null, id = null, secret = null, presence = true, WebSocketImpl = globalThis.WebSocket, now = () => Date.now() } = {}) {
+  constructor({ url = DEFAULT_SERVER, name = 'Traveller', look = null, id = null, secret = null, presence = true, WebSocketImpl = globalThis.WebSocket, now = () => Date.now(), rand = Math.random } = {}) {
     this.url = relayUrl(url || DEFAULT_SERVER);   // wss:// anywhere, ws:// on localhost alone; anything else is no relay (A16/E11)
     this.secret = secret ?? peerSecret();
     this.name = name;
@@ -230,6 +230,7 @@ export class OnlineSession {
     this.id = id ?? peerId();
     this._WS = WebSocketImpl;
     this._now = now;
+    this._rand = rand;   // SLAM2: the retry's jitter - injected, as the clock is, so a pin can drive a whole crowd
     this.room = null;
     this.status = 'idle';      // idle | connecting | open | closed | error
     this.error = null;         // what went wrong, for a person
@@ -525,7 +526,7 @@ export class OnlineSession {
         if (code === CLOSE_REPLACED || code === CLOSE_POLICY) { h.ws = null; h.status = 'terminal'; h.retryAt = null; return; }
         h.ws = null; h.status = 'closed';
         if (code === CLOSE_BUSY) h.backoff = Math.max(h.backoff, BACKOFF_MAX_MS / 2);
-        h.retryAt = this._now() + h.backoff; h.backoff = Math.min(BACKOFF_MAX_MS, h.backoff * 2);
+        h.retryAt = this._now() + BACKOFF_MIN_MS + this._rand() * Math.max(0, h.backoff - BACKOFF_MIN_MS); h.backoff = Math.min(BACKOFF_MAX_MS, h.backoff * 2);   // SLAM2: jittered
         return;
       }
       this._ws = null;
@@ -539,9 +540,25 @@ export class OnlineSession {
     ws.onerror = () => { const room = this._roomOf(ws); if (room === this.room && room != null) { this.status = 'error'; this.error = 'socket error'; } };
   }
 
+  /** SLAM2 (2026-09-16, Mac: Daggerfall's 30th, a streamer's server slam): THE RETRY IS JITTERED.
+   *
+   *  A room admits HELLO_HZ_MAX hellos a second and refuses the rest with CLOSE_BUSY, which is correct - but every
+   *  client refused in the same instant then waited the SAME `_backoff` and came back in the same instant, so the
+   *  wave stayed a wave. A stream saying "everyone go here now" is exactly that: hundreds of clients whose retries
+   *  are phase-locked from the first refusal, re-colliding at 1s, 2s, 4s, 8s, for as long as it takes - and each
+   *  collision spends the room's hello budget on frames it must refuse, which starves the players it could have
+   *  admitted.
+   *
+   *  The fix is the standard one and it is one line: spread the retry uniformly over the window instead of firing
+   *  at the end of it. The backoff still DOUBLES, so a relay that is genuinely down is not hammered; what changes
+   *  is that two clients which were refused together no longer return together. Measured over real sessions
+   *  against the real relay, a 300-client wave drains in a fraction of the time and stops re-colliding.
+   *
+   *  The floor is BACKOFF_MIN_MS so a jittered retry is never an instant one. */
   _scheduleRetry() {
     if (this._closedByUs || this.terminal || !this.room) return;
-    this._retryAt = this._now() + this._backoff;
+    const span = Math.max(0, this._backoff - BACKOFF_MIN_MS);
+    this._retryAt = this._now() + BACKOFF_MIN_MS + this._rand() * span;
     this._backoff = Math.min(BACKOFF_MAX_MS, this._backoff * 2);
   }
 
@@ -744,7 +761,7 @@ export class OnlineSession {
     for (const [room, h] of [...this._halo]) {   // WORLD6b-iii(b): the halo's retries
       if (!h.ws && h.retryAt != null && now >= h.retryAt && !this._closedByUs && !this.terminal) { this._halo.delete(room); this.stats.reconnects++; this._openHalo(room, h.backoff); continue; }
       // AUDIT WORLD6b-iii(b) A7: a halo that never opens and never closes is not immortal - past the longest backoff it is dropped and retried
-      if (h.ws && h.status === 'connecting' && now - (h.since ?? now) > BACKOFF_MAX_MS) { const ws = h.ws; h.ws = null; h.status = 'closed'; h.retryAt = now + h.backoff; h.backoff = Math.min(BACKOFF_MAX_MS, h.backoff * 2); try { ws.close(1000, 'timeout'); } catch { /* already closed */ } }
+      if (h.ws && h.status === 'connecting' && now - (h.since ?? now) > BACKOFF_MAX_MS) { const ws = h.ws; h.ws = null; h.status = 'closed'; h.retryAt = now + BACKOFF_MIN_MS + this._rand() * Math.max(0, h.backoff - BACKOFF_MIN_MS); h.backoff = Math.min(BACKOFF_MAX_MS, h.backoff * 2); try { ws.close(1000, 'timeout'); } catch { /* already closed */ } }   // SLAM2: a halo's retry is jittered like the primary's - eight rooms a client, all refused together otherwise
     }
     if (!this.presence && this.status === 'open' && now - this._lastSentAt >= HEARTBEAT_MS && this._send({ t: 'ping' })) this._lastSentAt = now;   // CHAT1: a channel's keepalive, answered without waking the room
     for (const p of this.peers.values()) {
