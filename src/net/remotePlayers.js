@@ -320,12 +320,21 @@ export class RemotePlayers {
     return out;
   }
 
-  drawNames(renderer, font, proj, view, w, h, eye, scale = 1, toScene = (p) => [p.x, p.y, p.z], rect = null) {
+  /**
+   * SOC4 (2026-09-16, Mac: "Upon joining a party, the players name who are in a party together should turn green"):
+   * `colorOf` is the LAST parameter and it is optional, because a name's colour is not this module's business to
+   * know. A peer is a tab in a room; whether that tab belongs to somebody in my four-seat party is the social
+   * picture's question (net/social.js colorOf -> PARTY_GREEN or null), and the host asks it. Nothing is passed on
+   * the probe hosts and on every caller written before the party existed, so the default path stays exactly what it
+   * was: white, byte for byte (test/online.test.js pins it).
+   * @param {((id: string) => number[]|null)|null} colorOf peer id -> an RGBA array, or null for the plain name
+   */
+  drawNames(renderer, font, proj, view, w, h, eye, scale = 1, toScene = (p) => [p.x, p.y, p.z], rect = null, colorOf = null) {
     if (!font) return 0;
     let drawn = 0;
     for (const n of this.namePoints(proj, view, w, h, eye, toScene, rect)) {
       const tw = measureText(font.fnt, n.name) * scale;
-      drawText(renderer, font, n.name, Math.round(n.x - tw / 2), Math.round(n.y), scale, [1, 1, 1, 1]);
+      drawText(renderer, font, n.name, Math.round(n.x - tw / 2), Math.round(n.y), scale, colorOf?.(n.id) ?? [1, 1, 1, 1]);
       drawn++;
     }
     return drawn;

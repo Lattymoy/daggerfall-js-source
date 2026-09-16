@@ -608,6 +608,19 @@ export function routeAction(action, ctx, setPlayerPos = null) {
     // owns the mode HUD line answers them.
     case 'CycleModeForward': return ctx.cycleMode ? (ctx.cycleMode(1), true) : false;
     case 'CycleModeBackward': return ctx.cycleMode ? (ctx.cycleMode(-1), true) : false;
+    // SOC5 (2026-09-16, Mac: "Players should be able to interact with others
+    // in the world upon encountering them by pressing F on their body, which
+    // should show options to add as a friend or invite to a party"): the port's
+    // own action (systems/inputActions.js appends it past DFU's forty-four),
+    // routed like every other - so F is rebindable and the door is a ctx arm
+    // rather than a key literal in a host's ladder.
+    //
+    // THE DOOR ANSWERS, not this table. `socialInteract()` returns FALSE when
+    // the page is offline or holds no account, and that false is passed
+    // through: there is nothing social to do, the ladder must fall through, and
+    // the key keeps whatever meaning the rest of the host gives it. A host
+    // without the door at all is the same answer one step earlier.
+    case 'SocialInteract': return ctx.socialInteract?.() === true;
     default: return false;
   }
 }

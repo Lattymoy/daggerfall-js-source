@@ -52,6 +52,20 @@
 // exists in DFU - the classic terrain is baked art); notices use
 // literal strings where the classic popups read TEXT.RSC 454/1010;
 // vertical relief is exaggerated by one documented constant.
+//
+// SOC6 (2026-09-16, Mac: "Party members should be able to be seen on
+// the world map, regardless of their location"): THE PARTY IS ON THE
+// BAY. A green ring per member at their map pixel, their name under
+// it, and "Name - place (dungeon)" in the window's own hover line -
+// drawn in the SAME ring pass and through the SAME projection as the
+// player's own mark, which is what makes them ride every pan, zoom and
+// flight without a line of code about any of those. Regardless of
+// their location is literal: a member's pose carries the PLACE's pixel
+// inside a dungeon or a building (scenes/world.js composePartyPose),
+// so they mark the place and the label says which. The marks are
+// POLLED off a `party` dep function, never snapshot at open, and they
+// never dirty the location-marker buffer - a friend walking one pixel
+// east must not cost a rebuild of the whole bay's dots.
 // ═══════════════════════════════════════════════════════════════════
 
 import { perspective, lookAt, mirrorProjectionX } from '../world/mat4.js';
@@ -69,6 +83,13 @@ import {
   traceChains, roadModel,   // ROADS 25
 } from './overworldModel.js';
 import { OverworldRenderer } from '../render/overworldRenderer.js';
+// SOC6 (Mac: "Party members should be able to be seen on the world
+// map, regardless of their location"): the party's marks, read the
+// one way both maps read them.
+import {
+  readPartyMarks, partyMarksKey, partyHoverText, partyLabelText,
+  PARTY_MARK_RGBA, PARTY_MARK_CSS, PARTY_OFFLINE_RGBA, PARTY_OFFLINE_CSS, PARTY_LEGEND_TEXT,
+} from './partyMapMarks.js';
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { bindings } from './input.js';
 import { actionForCode } from '../systems/inputActions.js';
@@ -88,6 +109,21 @@ const DESCEND = 0.8, HOLD_AFTER_COMMIT = 1.6, VEIL_OUT = 1.0;
 const SKIP_HOLD = 0.35;               // hold to skip, Mac's call
 const FLIGHT_MIN = 2.2, FLIGHT_MAX = 6.5;
 const VEIL_RGB = [0.855, 0.878, 0.914];
+// SOC6: how often the window ASKS the host for its party, in seconds.
+// The dep is a function because the party moves while the map is open;
+// this is the rate that read costs. A quarter second is well under the
+// eye's patience and well over the pose rate the hub relays at
+// (net/wire.js PARTY_SEND_MS), so a member's step onto the next pixel
+// shows up in at most one blink and the map never asks twice for the
+// same answer within a frame.
+const PARTY_POLL_S = 0.25;
+// The party ring, beside the player's own (22 + pulse, white) and the
+// selection's (26, gold): SMALLER and THICKER, so the three are told
+// apart by shape as well as by colour - a green that reads as "my
+// party" everywhere else in the game (net/social.js PARTY_GREEN).
+const PARTY_RING_SIZE = 15, PARTY_RING_PULSE = 3, PARTY_RING_THICK = 0.55;
+// The label sits this many screen pixels under the ring's centre.
+const PARTY_LABEL_DROP = 17;
 
 const easeInOut = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
@@ -109,7 +145,12 @@ export class OverworldMapWindow {
    *  `woods` (the loaded WoodsFile; only heightMapBuffer is read) and
    *  optional `mapSize` {width, height} so the probe can stand up a
    *  small synthetic bay. `pick` (the disease-text RNG) is unused
-   *  here - the notice is a literal string, recorded above. */
+   *  here - the notice is a literal string, recorded above.
+   *
+   *  SOC6: and an optional `party: () => [{acct, name, px, py, in,
+   *  loc, online, leader}]` - a FUNCTION, read on this window's own
+   *  poll rather than snapshot at open, because members travel, go
+   *  indoors and drop offline while the map is up. */
   constructor(deps = {}) {
     this.deps = deps;
     this.done = false;
@@ -138,6 +179,15 @@ export class OverworldMapWindow {
     this._grid = null;
     this._markers = [];
     this._markersDirty = true;
+    // SOC6: the party, as marks in SCENE coordinates. A separate list
+    // from `_markers` on purpose: the location markers are a GL buffer
+    // rebuilt from the whole mapDict, and a friend walking one pixel
+    // east must never cost that rebuild. These ride the ring pass and
+    // the DOM chrome, both of which are per-frame anyway.
+    this._party = [];
+    this._partyKey = '';
+    this._partyPoll = 0;
+    this._partyLabels = new Map();   // acct (or name) -> the label element
     this._selected = null;  // { summary, name, x, z, y }
     this._panel = null;     // 'travel' | 'teleport' | null
     this._panelState = null;
@@ -150,6 +200,7 @@ export class OverworldMapWindow {
       phase: this._phase, veil: Math.round(this._veil * 100) / 100,
       cam: { tx: Math.round(this._cam.tx), tz: Math.round(this._cam.tz), dist: Math.round(this._cam.dist) },
       markers: this._markers.length,
+      party: this._party.map((m) => `${m.name}@${m.px},${m.py}${m.in ? `/${m.in}` : ''}${m.online ? '' : '-off'}`),   // SOC6
       selected: this._selected?.name ?? null,
       panel: this._panel,
       armed: this.teleportationTravel,
@@ -229,6 +280,14 @@ export class OverworldMapWindow {
       this._ticked = true;
       if (this._gotoPlace) { this._consumeGotoPlace(); this._gotoPlace = null; }
     }
+    // SOC6: the party is POLLED, on this window's own cadence, from the
+    // first tick to the last - never snapshot at open, because members
+    // travel, go indoors, drop offline, join and leave while the map is
+    // up. `_refreshParty` repaints only when the marks actually changed
+    // and never dirties the location markers.
+    this._partyPoll -= dt;
+    if (this._partyPoll <= 0) { this._partyPoll = PARTY_POLL_S; this._refreshParty(); }
+    this._positionPartyLabels();
     this._t += dt;
     switch (this._phase) {
       case 'veilin': {
@@ -371,6 +430,7 @@ export class OverworldMapWindow {
     this._tornDown = true;
     this._ov?.dispose();
     this._ov = null;
+    this._partyLabels.clear();   // SOC6: the label nodes go out with the chrome they hang in
     this._unmountChrome();
     // ownership-checked: a second window minted after this one owns
     // the surface now, and an unconditional delete would blind it
@@ -454,6 +514,19 @@ export class OverworldMapWindow {
         size: 26 + pulse * 6, color: [1, 0.86, 0.45, 0.95], thickness: 0.42,
       });
     }
+    // SOC6 (Mac: "Party members should be able to be seen on the world
+    // map"): a ring per member, in the SAME pass and the same scene
+    // coordinates as the player's own - which is what makes the mark
+    // survive every pan, zoom and flight for free. Offline goes grey
+    // and stays: where a friend logged out is worth knowing.
+    for (const m of this._party) {
+      rings.push({
+        center: [m.x, m.y, m.z],
+        size: PARTY_RING_SIZE + pulse * PARTY_RING_PULSE,
+        color: m.online ? [...PARTY_MARK_RGBA] : [...PARTY_OFFLINE_RGBA],
+        thickness: PARTY_RING_THICK,
+      });
+    }
     return rings;
   }
 
@@ -469,6 +542,106 @@ export class OverworldMapWindow {
     const cx = pr[0] * vx + pr[4] * vy + pr[8] * vz + pr[12];
     const cy = pr[1] * vx + pr[5] * vy + pr[9] * vz + pr[13];
     return [(cx / cw * 0.5 + 0.5) * this._vw, (1 - (cy / cw * 0.5 + 0.5)) * this._vh];
+  }
+
+  // ── SOC6: THE PARTY ON THE MAP ─────────────────────────────────
+  // Mac: "Party members should be able to be seen on the world map,
+  // regardless of their location." Three pieces, and no fourth: the
+  // scene positions (here), the green rings (_rings, the player's own
+  // pass), and the labels (the chrome, placed through _project so they
+  // ride the same camera the rings do).
+
+  /** The host's party, read and placed. Returns whether anything the
+   *  player can see changed - the caller repaints the chrome on true
+   *  and does nothing at all on false, which is the ordinary answer
+   *  four times a second while nobody moves. */
+  _refreshParty() {
+    const marks = readPartyMarks(this.deps.party, this._size);
+    const key = partyMarksKey(marks);
+    if (key === this._partyKey) return false;   // the ordinary answer, four times a second, while nobody moves
+    this._partyKey = key;
+    // The pixel's CENTRE, and the height under it - the player ring's
+    // own reading (_rings above), so a member standing where the player
+    // stands draws concentric with them rather than a metre off.
+    this._party = marks.map((m) => {
+      const x = m.px + 0.5, z = -(m.py + 0.5);
+      return { ...m, x, z, y: this._heightAt(x, z) + 0.3 };
+    });
+    this._renderPartyLabels();
+    return true;
+  }
+
+  /** One label per member, minted on change and positioned per frame.
+   *  Rebuilt wholesale rather than diffed: a party is at most three
+   *  rows (net/wire.js PARTY_MAX), and this runs only when a member
+   *  actually moved. */
+  _renderPartyLabels() {
+    const layer = this._chrome?.party;
+    if (!layer) return;
+    layer.innerHTML = '';
+    this._partyLabels = new Map();
+    for (const m of this._party) {
+      const lab = el('div', 'ovpmark');
+      lab.append(el('span', 'ovpname', partyLabelText(m)));
+      if (m.loc) lab.append(el('span', 'ovpwhere', m.loc));
+      // the colour is DATA, not a theme: online is the party green the
+      // rest of the slice draws a member's name in, offline is that
+      // green with the life out of it
+      lab.style.color = m.online ? PARTY_MARK_CSS : PARTY_OFFLINE_CSS;
+      lab.title = partyHoverText(m);   // the pointer passes through the layer, so this is the touch-and-hold line
+      layer.append(lab);
+      this._partyLabels.set(m.acct ?? m.name, lab);
+    }
+    this._renderLegend();
+  }
+
+  /** The labels follow the camera, every frame, through the SAME
+   *  projection the rings are drawn with - so a label cannot drift off
+   *  its ring under a pan, a zoom or the flight. A member behind the
+   *  camera (or off the edge of a deep zoom) is hidden rather than
+   *  clamped to the border, where it would name a place it is not. */
+  _positionPartyLabels() {
+    if (!this._chrome?.party) return;
+    const show = this._phase === 'map' && this._party.length > 0;
+    this._chrome.party.style.display = show ? 'block' : 'none';
+    if (!show) return;
+    for (const m of this._party) {
+      const lab = this._partyLabels.get(m.acct ?? m.name);
+      if (!lab) continue;
+      const p = this._project(m.x, m.y, m.z);
+      const on = !!p && p[0] >= -80 && p[1] >= -40 && p[0] <= (this._vw ?? 0) + 80 && p[1] <= (this._vh ?? 0) + 40;
+      lab.style.display = on ? 'block' : 'none';
+      if (!on) continue;
+      lab.style.left = `${Math.round(p[0])}px`;
+      lab.style.top = `${Math.round(p[1] + PARTY_LABEL_DROP)}px`;
+    }
+  }
+
+  /** The legend: the map grew a mark the art never explained, so the
+   *  mark explains itself - and only while there is one to explain. */
+  _renderLegend() {
+    const leg = this._chrome?.legend;
+    if (!leg) return;
+    leg.innerHTML = '';
+    if (!this._party.length) { leg.classList.toggle('open', false); leg.style.display = 'none'; return; }
+    const dot = el('span', 'ovlegdot');
+    dot.style.background = this._party.some((m) => m.online) ? PARTY_MARK_CSS : PARTY_OFFLINE_CSS;
+    leg.append(dot, el('span', 'ovlegtext', PARTY_LEGEND_TEXT));
+    leg.classList.toggle('open', true);
+    leg.style.display = 'flex';
+  }
+
+  /** The member under the cursor, by the same screen-space radius the
+   *  location markers are picked with. */
+  _partyAt(sx, sy) {
+    let best = null, bestD = 18 * 18;
+    for (const m of this._party) {
+      const p = this._project(m.x, m.y, m.z);
+      if (!p) continue;
+      const d = (p[0] - sx) * (p[0] - sx) + (p[1] - sy) * (p[1] - sy);
+      if (d < bestD) { best = m; bestD = d; }
+    }
+    return best;
   }
 
   /** The cursor's map pixel, by ray against the sea plane - close
@@ -849,11 +1022,18 @@ export class OverworldMapWindow {
     const card = el('div', 'ovcard');
     const skip = el('div', 'ovskip', 'hold to skip');
     const hint = el('div', 'ovhint', 'drag to pan · scroll to zoom · Esc to close');
+    // SOC6: the party's own layer and its legend. Both are pointer-
+    // transparent - the map beneath keeps every drag, pick and wheel
+    // it had, which is why a marker can sit anywhere on the bay
+    // without becoming a hole in the controls.
+    const party = el('div', 'ovparty');
+    const legend = el('div', 'ovlegend');
 
-    root.append(top, chips, card, skip, hint);
+    root.append(top, chips, card, skip, hint, party, legend);
     document.body.append(root);
-    this._chrome = { root, label, search, searchInput, results, card, skip, close };
+    this._chrome = { root, label, search, searchInput, results, card, skip, close, party, legend };
     this._renderChips();
+    this._refreshParty();   // SOC6: the marks stand with the window, not a quarter second after it
 
     // the search field owns its keys - the host must never route a
     // typed character into the map's own bindings
@@ -969,6 +1149,17 @@ export class OverworldMapWindow {
   }
 
   _hoverLabel(sx, sy) {
+    // SOC6: a party member wins the label over the place they are
+    // standing in - the player pointed at the green ring, and "who"
+    // is the answer they asked for. "Name - place (dungeon)", which
+    // is the one line that says where a member is REGARDLESS of
+    // their location.
+    const pm = this._partyAt(sx, sy);
+    if (pm) {
+      this._chrome.label.textContent = partyHoverText(pm);
+      this._chrome.root.style.cursor = 'pointer';
+      return;
+    }
     const m = this._markerAt(sx, sy);
     if (m) {
       const name = this._summaryName(m.summary);

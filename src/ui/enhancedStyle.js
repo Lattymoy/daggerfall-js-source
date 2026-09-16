@@ -1225,6 +1225,29 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
   color: var(--dim); font-size: 11px; letter-spacing: 0.08em;
   pointer-events: none; opacity: 0.8;
 }
+/* SOC6 (Mac: "Party members should be able to be seen on the world
+   map, regardless of their location"): the party's layer over the
+   relief. POINTER-TRANSPARENT throughout - a member's mark must never
+   become a hole in the map's own drag, pick and wheel - and positioned
+   by ui/overworldMap.js through the projection the rings are drawn
+   with, so a label cannot drift off its ring. The colour is set INLINE
+   from net/social.js's one party green (grey when that member is
+   offline), because it is data about a person, not a theme. */
+.ovparty { position: absolute; inset: 0; display: none; pointer-events: none; }
+.ovpmark {
+  position: absolute; transform: translate(-50%, 0); white-space: nowrap;
+  text-align: center; text-shadow: 0 1px 4px rgba(0,0,0,0.95), 0 0 2px rgba(0,0,0,0.9);
+}
+.ovpname { display: block; font-size: 13px; letter-spacing: 0.04em; }
+.ovpwhere { display: block; font-size: 11px; opacity: 0.75; }
+.ovlegend {
+  position: absolute; left: 18px; bottom: 70px; display: none;
+  align-items: center; gap: 8px; padding: 6px 10px; font-size: 12px;
+  color: var(--bone); background: rgba(10, 13, 17, 0.82);
+  border: 1px solid var(--iron); pointer-events: none;
+}
+.ovlegend.open { display: flex; }
+.ovlegdot { width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 0 1px rgba(0,0,0,0.8); }
 @media (max-width: 860px) {
   .ovlabel { font-size: 18px; }
   .ovtop { flex-wrap: wrap; }

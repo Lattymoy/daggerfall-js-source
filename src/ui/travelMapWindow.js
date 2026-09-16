@@ -93,6 +93,7 @@
 
 import { loadImg, nativeMetrics, drawImg, drawImgCrop, drawRect, shadowText, NATIVE_W } from './nativePanel.js';
 import { OVERWORLD_ROAD, OVERWORLD_TRACK, OVERWORLD_RIVER, OVERWORLD_STREAM } from './overworldModel.js';   // ROADS 13/24: the relief's colours
+import { readPartyMarks, partyMarksKey, PARTY_DOT_RGB, PARTY_OFFLINE_DOT_RGB } from './partyMapMarks.js';   // SOC6: the party's marks, the one reading both maps share
 import { MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS, messageBoxArtLoaded } from './messageBox.js';
 import { ListPickerWindow, preloadListPickerArt, listPickerArtLoaded } from './listPicker.js';
@@ -132,6 +133,12 @@ export const MAX_MATCHING_RESULTS = 1000;
 /** regionTextureOverlayPanelRect (:121) - the region page. */
 export const REGION_RECT = Object.freeze([0, REGION_PANEL_OFFSET, 320, 160]);
 export const REGION_W = 320, REGION_H = 160;
+/** SOC6: how often this window asks the host for its party, in seconds.
+ *  Not DFU's - DFU has no party. Slower than the enhanced map's poll
+ *  because the answer here costs a whole dots-buffer rebuild, and a
+ *  member's dot is a pixel: half a second of lag on one pixel is
+ *  invisible, and the gate means most of those polls cost a string. */
+export const PARTY_POLL_S = 0.5;
 
 /** The bottom bar (:463-527). */
 export const BUTTON_RECTS = Object.freeze({
@@ -376,7 +383,17 @@ export function canFindPlace(maps, mapDict, regionName, name) {
 export class TravelMapWindow {
   /** deps: { maps, mapDict, getPlayerPixel, getClimateIndex, gold,
    *  goldPieces, hasHorse, hasCart, hasShip, diseaseCount,
-   *  poisonCount, onTravel, onClose, pick }. */
+   *  poisonCount, onTravel, onClose, pick } - plus, SOC6, an optional
+   *  `party: () => [{acct, name, px, py, in, loc, online, leader}]`,
+   *  read on this window's own cadence and never at open alone.
+   *
+   *  NO LEGEND HERE, and that is the art's decision rather than one of
+   *  ours: TRAV0I00's bottom bar is a baked strip of four filter
+   *  buttons, a find button and an exit, with no room and no glyph for
+   *  a fifth meaning - which is exactly why the classic map draws the
+   *  party as a DOT (the one thing this page can say about a position)
+   *  and the enhanced map, which owns its chrome, carries the legend
+   *  and the names. */
   constructor(deps = {}) {
     this.deps = deps;
     this.done = false;
@@ -438,6 +455,15 @@ export class TravelMapWindow {
     this._identifyBuf = new Uint32Array(REGION_W * REGION_H);
     this._dotsDirty = true;
     this._identifyDirty = true;
+    // SOC6 (Mac: "Party members should be able to be seen on the world
+    // map, regardless of their location"): the party's last drawn
+    // signature and the seconds left until this window asks the host
+    // again. The classic page has no per-frame overlay to hang a marker
+    // on, so a member IS a dot in the dots buffer - and a buffer is
+    // rebuilt, never nudged, so the rebuild has to be earned: it runs
+    // only when a member's pixel, floor, name or presence changed.
+    this._partyKey = '';
+    this._partyPoll = 0;
     this._distance = null;
     this._distanceRegionName = null;
     this._regionMapName = null;   // the page whose art is mounted
@@ -563,7 +589,57 @@ export class TravelMapWindow {
         this._dotsBuf[offset] = colors[index] ?? 0;
       }
     }
+    // SOC6 (Mac: "Party members should be able to be seen on the world
+    // map, regardless of their location"): THE PARTY, LAST - over the
+    // roads and over the location dots, because a member standing in a
+    // town is the thing the player opened the map to find, and a town
+    // is on the page whether or not anyone is standing in it.
+    //
+    // The page's own two laws are kept exactly as the dots above keep
+    // them: the texel is `originX + x, originY + y` off OFFSET_LOOKUP,
+    // and a pixel whose politic is another province belongs to that
+    // province's page, not this one - so a member in Wayrest does not
+    // bleed onto Daggerfall's sheet just because the rectangle reaches.
+    // Nothing is clamped to the border: a member off this page is
+    // simply not on this page, and the region map they ARE on draws
+    // them.
+    //
+    // REGARDLESS OF THEIR LOCATION: `in` is not read here at all. A
+    // member in a dungeon or a building carries the PLACE's own pixel
+    // (scenes/world.js composePartyPose), so the dot lands on the place
+    // - which is the whole of what a 320x160 page can say. The word for
+    // which is on the enhanced map's label, where there is room for it.
+    const partyPx = packRGBA(PARTY_DOT_RGB[0], PARTY_DOT_RGB[1], PARTY_DOT_RGB[2], 255);
+    const partyOffPx = packRGBA(PARTY_OFFLINE_DOT_RGB[0], PARTY_OFFLINE_DOT_RGB[1], PARTY_OFFLINE_DOT_RGB[2], 255);
+    const marks = readPartyMarks(this.deps.party, { width: MAP_WIDTH, height: MAP_HEIGHT });
+    this._partyKey = partyMarksKey(marks);
+    for (const m of marks) {
+      const x = m.px - originX, y = m.py - originY;
+      if (x < 0 || y < 0 || x >= width || y >= height) continue;
+      if (maps.getPoliticIndex(m.px, m.py) - 128 !== this.selectedRegion) continue;
+      const offset = Math.trunc((((height - y - 1) * width) + x) * this.scale);
+      if (offset >= width * height) continue;
+      if (outlineOn) this._outlineBuf[offset] = outline;
+      this._dotsBuf[offset] = m.online ? partyPx : partyOffPx;
+    }
     this._dotsDirty = true;
+  }
+
+  /** SOC6: the party moves while the page is up, so the page asks the
+   *  host for it on a timer and repaints only on a CHANGE. The rebuild
+   *  is the whole dots buffer (the buffer's own idiom - the filter
+   *  chips pay the same price), which is why the signature gate is not
+   *  an optimisation but the design: poses arrive on the hub's timer
+   *  whether or not anyone moved, and a page that repainted per pose
+   *  would repaint forever. */
+  _pollParty(dt) {
+    this._partyPoll -= dt;
+    if (this._partyPoll > 0) return false;
+    this._partyPoll = PARTY_POLL_S;
+    if (!this.regionSelected) return false;
+    if (partyMarksKey(readPartyMarks(this.deps.party, { width: MAP_WIDTH, height: MAP_HEIGHT })) === this._partyKey) return false;
+    this._updateMapLocationDotsTexture();
+    return true;
   }
 
   /** ZoomMapTextures (:736-803) - the crop's ORIGIN; the draw applies
@@ -1271,6 +1347,12 @@ export class TravelMapWindow {
       this._openRegionPanel(this.mouseOverRegion);
       this._handleLocationFindEvent(site.locationName ?? '');
     }
+    // SOC6: ABOVE the sub-window returns. A popup, a box or the picker
+    // freezes the map's own animation (DFU's "only the top window
+    // updates"), but the party is not this window's animation - it is
+    // another player walking - and the page behind the box must still
+    // be right when the box comes down.
+    this._pollParty(dt);
     if (this.popUp) {
       this.popUp.tick(dt);
       if (this.popUp?.done) this.popUp = null;

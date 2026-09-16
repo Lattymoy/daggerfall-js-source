@@ -9,6 +9,22 @@
 // exactly as Unity's KeyCode names them (left/right/middle). DFU
 // serializes KeyCode NAMES into KeyBindings.txt, so the port's stored
 // shape is the same idea one alphabet over.
+//
+// SOC5 (2026-09-16, Mac: "Players should be able to interact with others in
+// the world upon encountering them by pressing F on their body, which should
+// show options to add as a friend or invite to a party"): THE ONE ACTION IN
+// THIS LIST DFU DOES NOT HAVE. 'SocialInteract' is appended past DFU's
+// forty-four, on KeyF, which SetupDefaults leaves free. It is the port's own
+// because the thing it does is the port's own - Daggerfall Unity has no other
+// players to stand in front of, no friends and no parties - so it is a
+// Ledger A row (ONLINE), not a parity claim.
+//
+// It is APPENDED and never inserted: the
+// classic controls window indexes this list by NUMBER (ui/controlsWindow.js
+// KEY_GROUPS, DFU's SetupKeybindButtons [2..40) against fixed pixel anchors on
+// CNFG00I0.IMG), so a name spliced into the middle would silently re-label
+// thirty-eight buttons in a window whose art cannot move. Past the end,
+// every existing index still means what it meant.
 
 import { appStorage } from './appStorage.js';   // DA1: the storage seam
 
@@ -31,6 +47,9 @@ export const ACTIONS = Object.freeze([
   'QuickSave', 'QuickLoad',
   'PrintScreen',
   'AutoRun',
+  // SOC5: the port's own, past DFU's last row - see the header. The F-menu on
+  // another player's body, and the friends/party panel when nobody is in reach.
+  'SocialInteract',
 ]);
 
 const ACTION_SET = new Set(ACTIONS);
@@ -87,6 +106,16 @@ export const DEFAULT_BINDINGS = Object.freeze([
   ['F8', 'PrintScreen'],
   ['F9', 'QuickSave'],
   ['F11', 'QuickLoad'],
+  // SOC5 (Mac: "by pressing F on their body"): the port's own row, past DFU's
+  // table. KeyF is the key Mac named and SetupDefaults never spends - the one
+  // free letter next to the movement hand. It rides in DEFAULT_BINDINGS rather
+  // than in any host, so a SAVED file from before this slice gains it without a
+  // reset: loadOrCreateBindings follows every load with resetDefaults(store,
+  // true), whose `testSetBinding` fills an action that is missing and touches
+  // nothing a player has already bound (KeyF included, if they put something
+  // there first). Rebindable like every other row - the enhanced controls
+  // window's ONLINE group.
+  ['KeyF', 'SocialInteract'],
 ]);
 
 // ── key combos ──────────────────────────────────────────────────────
