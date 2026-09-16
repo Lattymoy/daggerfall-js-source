@@ -13457,9 +13457,21 @@ release that dragged is never also a pick. **5 mutations, 5 dead**,
 including the shipped bug itself (the panel not being a source) and the
 one that would let a worn piece reach the floor.
 
-**Not seen running.** This container has no ARENA2 and the pane needs
-none, but `tools/enhancedPackProbe.mjs` was not re-run here; the gesture
-is driven in node, not in a browser.
+**SEEN RUNNING**, which is the standard AUDIT INV2 set for this pane
+and the reason it set it. `tools/macM2Probe.mjs`, 18/18 in Chromium at
+1440x900: a real mouse presses a real slot panel, the ghost appears on
+the body, it reads *nothing* while still over the map (the cancel
+gesture) and *Take off* over the dock, the dock outlines, the release
+takes the piece off, it is in the bag and back on the Armor page, and
+the plain click still raises the card whose Take off still works.
+
+It is its own probe rather than a block inside
+`tools/enhancedPackProbe.mjs`, and that is a finding: **the pack probe
+has been dead since PX19e**. It hunts the 25 `.node` dots the map
+replaced with eleven `.wornrow` family panels, so it fails four checks
+and then times out on `.node.filled`. Older than this slice by two
+weeks and NOT repaired here - recorded so the next reader of a green
+`npm run check` does not think that probe is watching this screen.
 
 ## MAC-M2 B - THE LOOT WINDOW IS FOR TAKING (2026-09-16, Mac)
 
@@ -13521,3 +13533,8 @@ in the module and that `packOpen` has exactly two assignment sites -
 because a removed pin stops catching the drift back. **4 mutations, 4
 dead**: Gold back on the loot bar, Pack back on the loot bar, the gate
 inverted onto the normal pack, and the wagon removed with them.
+
+**Seen running** in the same probe (`tools/macM2Probe.mjs`): a loot
+session really mounts as the loot frame alone with an empty bar, and a
+pack session that drops something on the ground really draws `Gold` on
+its ground frame and no `Pack`.
