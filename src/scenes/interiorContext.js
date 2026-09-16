@@ -23,6 +23,7 @@ import { StaticBatchBuilder, keyResolver } from '../render/staticBatch.js';   //
 import { collectInteriorLights } from '../world/interiorLights.js';
 import { applyClimate } from '../world/climateSwaps.js';
 import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
+import { unityMaterialName } from '../systems/immersiveFootsteps.js';   // IF1: MaterialReader's material name, for the mod's floor walk
 import { billboardSize } from '../world/rmbFlats.js';
 import { Collider } from '../player/collider.js';
 import { isHouseContainerModel, containerTextureRecord } from '../systems/containers.js';
@@ -305,6 +306,17 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   // Library/Guild/Temple bookshelves route at activation (BS1), and
   // the OWNED-house arm lands below (HC1).
   const shelves = [];
+  // IF1: the combined mesh's materials, as Immersive Footsteps reads them
+  // off `CombinedModels` (Main.cs:237-308) - one name per texture in
+  // first-appearance order over the models' submeshes, through the
+  // climate remap above (DFU names the material after the swapped
+  // archive), in MaterialReader's own format. The action doors are a
+  // separate list here as in DFU's combiner; the interactive furniture
+  // DFU keeps out of the combine (shelves, containers, ladders) is in
+  // this walk, which can only reorder a floor archive a shelf model
+  // happens to carry - the floor records themselves are the same.
+  const floorMaterials = [];
+  const seenFloorMaterials = new Set();
   const collider = new Collider(() => -Infinity);
   for (const [pi, p] of interior.placements.entries()) {
     const matrix = parent(p.matrix);
@@ -327,6 +339,14 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     // building exists (Automap.cs duplicates the whole interior into
     // its own GameObject instead - CreateIndoorGeometryForAutomap
     // :1862-1910).
+    for (const sm of cpu.subMeshes ?? []) {
+      const base = `${sm.textureArchive}_${sm.textureRecord}`;
+      const swapped = texRemap.get(base) ?? base;
+      if (seenFloorMaterials.has(swapped)) continue;
+      seenFloorMaterials.add(swapped);
+      const [a, r] = swapped.split('_');
+      floorMaterials.push(unityMaterialName(a, r));
+    }
     const aabb = worldAabb(cpu.positions, matrix);
     const key = `int:${pi}`;
     drawList.push({ mesh: gpu, matrix, key, aabb });
@@ -762,6 +782,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     parentPt,   // Q4-v: the quest mount parents marker positions through the same transform
     lights,
     texRemap,
+    floorMaterials,   // IF1: the combined mesh's material names, for Immersive Footsteps' floor walk
     markers,
     people,
     charDraws,

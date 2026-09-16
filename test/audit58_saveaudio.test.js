@@ -104,7 +104,7 @@ test('AUDIT 58: fall damage, the hard fall and the large splash carry FootstepVo
   // swallowing it, in all four hosts. The dungeon host plays its own
   // three copies directly, the large splash among them.
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/worldModes.js']) {
-    assert.match(rd(f), /sound: \(id, vol\) => audio\.playOneShot\(id, vol\)/, `${f} forwards the scale`);
+    assert.match(rd(f), /sound: immersiveFootsteps\.fallSoundSink\(\(id, vol\) => audio\.playOneShot\(id, vol\)\)/, `${f} forwards the scale (IF1: through Immersive Footsteps' sink, which hands the classic play the same id and scale when the mod owns nothing)`);
   }
   const d = rd('src/scenes/dungeonContext.js');
   for (const clip of ['SOUND.FallDamage', 'SOUND.FallHard', 'SOUND.SplashLarge']) {

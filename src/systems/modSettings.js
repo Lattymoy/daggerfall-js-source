@@ -453,6 +453,34 @@ export const MOD_SETTINGS = Object.freeze({
       'Debug.ShowMessages': Object.freeze({ default: true, description: 'Print the mod\u2019s own status lines when the view or the shoulder changes.' }),
     }),
   }),
+  // IF1 (2026-09-16, Mac: "Next mod we will be adding 1:1"): IMMERSIVE
+  // FOOTSTEPS 1.01 (Kirk.O). The shipped modsettings.json's four sections
+  // and ten keys, section and name joined with a dot, the port's own
+  // `Enabled` in front (MO1: on by default). The mod ships its clips in
+  // two qualities and LoadAudio picks by SoundClipQuality; the two
+  // ErrorLogging keys and the compat-warning key are declared so the pane
+  // matches the mod's, though the port has no log file to spam and no
+  // Better Ambience / Tempered Interiors / Travel Options to warn about.
+  'immersive-footsteps': Object.freeze({
+    title: 'Immersive Footsteps',
+    author: 'Kirk.O',
+    keys: Object.freeze({
+      Enabled: Object.freeze({
+        default: true,
+        description: 'Kirk.O\u2019s Immersive Footsteps 1.01, 1:1: footsteps that sound like the ground you walk on, and armour that sways as you move.',
+      }),
+      'AudioQualitySettings.SoundClipQuality': Object.freeze({ default: 0, options: Object.freeze(['Low-Quality (Retro)', 'High-Quality']), description: 'What Quality Sound-Clips Get Used' }),
+      'FootstepSettings.AllowFootstepSounds': Object.freeze({ default: true, description: 'If Player Footsteps Should Make A Sound || Default = True' }),
+      'FootstepSettings.FootstepVolumeMulti': Object.freeze({ default: 1.0, min: 0.0, max: 10.0, float: true, step: 0.1, description: 'The Volume Level Multiplier For Footstep Sounds' }),
+      'FootstepSettings.FootstepFrequency': Object.freeze({ default: 0.6, min: 0.3, max: 3.0, float: true, step: 0.1, description: 'How Frequent Footstep Sounds Should Be, Lower = More Often, Higher = Less Often' }),
+      'ArmorSwaySettings.AllowArmorSwaySounds': Object.freeze({ default: true, description: 'If Armor Specific Sounds Play When The Player Moves About || Default = True' }),
+      'ArmorSwaySettings.ArmorSwayVolumeMulti': Object.freeze({ default: 1.0, min: 0.0, max: 10.0, float: true, step: 0.1, description: 'The Volume Level Multiplier For Armor Sway Sounds' }),
+      'ArmorSwaySettings.ArmorSwayFrequency': Object.freeze({ default: 0.6, min: 0.3, max: 3.0, float: true, step: 0.1, description: 'How Frequent Armor Sway Sounds Should Be, Lower = More Often, Higher = Less Often' }),
+      'ErrorLoggingAndCompatibilitySettings.AllowModCompatWarnings': Object.freeze({ default: true, description: 'If Mod Should Give Warning Messages About Detected Incompatibility Issues || Default = True' }),
+      'ErrorLoggingAndCompatibilitySettings.AllowVerboseErrorLogging': Object.freeze({ default: false, description: 'If Mod Should Print Full & Verbose Error Logs For Debugging || Default = False' }),
+      'ErrorLoggingAndCompatibilitySettings.DoNotSpamExceptionsLogs': Object.freeze({ default: true, description: 'Only Log Mod Exceptions Once Per Session, To Not Fill Log File || Default = True' }),
+    }),
+  }),
 });
 
 let memory = null;
