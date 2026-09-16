@@ -256,10 +256,25 @@ export const HIT_ROOM_BYTES_PER_S = 256 * 1024;
  *  starves a pose) and refused to the caller at home past it. */
 export const ACT_HZ_MAX = 5;
 /** A byte budget: `rate` bytes a second, a second's worth at most; passes when the cost fits, spending it. */
-export function byteGate(bucket, nowMs, cost, rate) {
+/** A byte bucket of `rate` a second.
+ *
+ *  SLAM11 (2026-09-16, AUDIT SLAM): `borrow`. The bucket is CAPPED at `rate`, so without it a single charge larger than
+ *  `rate` can never pass - not slowly, NEVER, however long the caller waits - and three arms charged a whole fan
+ *  (`frame x listeners`) indivisibly. The dungeon's memory push at 200 players with a 100 KiB memory was 19.5 MiB
+ *  against a 4 MiB cap: 0 of 199 sockets were ever handed the room's memory, it latched nothing and retried the same
+ *  unpayable sum on every publish, and doors, levers and emptied containers silently never synced. The act fan had
+ *  the same cliff at ~5 KiB while `actFrameFits` told its author 16 KiB would land.
+ *
+ *  With `borrow`, a frame passes when the bucket is not IN DEBT (`bytes >= 0`) and takes the bucket negative by
+ *  whatever it costs; nothing else passes until the rate has repaid the debt. The RATE law holds on average, the
+ *  debt is bounded by one fan (nothing passes while negative), and a must-deliver fan lands whole rather than
+ *  never. It is for arms whose frame MUST reach everyone and comes rarely - the memory, a door - and NOT for a
+ *  continuous stream like the foes, where one oversized fan would block the next second of frames and dropping
+ *  the frame whole is the kinder failure (the next full frame heals it). */
+export function byteGate(bucket, nowMs, cost, rate, borrow = false) {
   const b = bucket ?? { bytes: rate, at: nowMs };
   const bytes = Math.min(rate, b.bytes + Math.max(0, ((nowMs - b.at) / 1000) * rate));
-  if (bytes < cost) return { bucket: { bytes, at: nowMs }, pass: false };
+  if (borrow ? bytes < 0 : bytes < cost) return { bucket: { bytes, at: nowMs }, pass: false };
   return { bucket: { bytes: bytes - cost, at: nowMs }, pass: true };
 }
 /** Every channel the relay will open (AUDIT CHAT A1: a whitelist - a later tab is a later entry, and nothing else is a channel). */

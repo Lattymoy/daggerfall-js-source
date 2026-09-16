@@ -109,7 +109,7 @@ import { roomOf, parseClient, inRange, poseGate, chatGate, tokenGate, rosterFor,
 
 /** AUDIT WORLD34 D4: the relay names itself in /health - the deploy is by hand (`npx wrangler deploy`), nothing in
  *  CI does it, and until now nothing said which relay was live. Bump it with every relay-changing slice. */
-export const RELAY_VERSION = 'world71';   // SLAM10: the far tier is bucketed by the listener's id, stable under movement
+export const RELAY_VERSION = 'world72';   // SLAM11: the memory push and the act fan borrow against their budgets and land whole
 
 const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*' } });
 
@@ -143,6 +143,7 @@ export class Room {
     this._roomWho = null;    // AUDIT WORLD6b-iii(e) B1: the room's ask budget (WHO_ROOM_HZ_MAX) - the one arm past the hello that reads storage
     this._looks = new Map(); // AUDIT WORLD6b-iii(e) B1: the looks said hello with, kept on the instance while it is awake - a repeat ask reads no storage; after a hibernation the storage's copy is read once and kept again
     this._roomActBytes = null;   // AUDIT WORLD3 A1: and its BYTE budget - the frame times its listeners, as the foes fan has
+    this._roomWorld = null;      // SLAM11: the memory push's OWN byte budget, borrowing - it used to charge the foes stream's, and a big memory's debt would have stalled live foes
     this._dead = new Set();      // AUDIT WORLD34 D1: the sockets this object closed itself, whose leave the runtime will not deliver - reaped on the way out of every door
     this._gone = new WeakSet();  // AUDIT WORLD34 D1: and the ones whose leave has been said, so a runtime that does deliver a close says it once
     try {
@@ -437,8 +438,18 @@ export class Room {
       const unseen = [...this._all()].filter(([other, b]) => other !== ws && b.id && !b.worldSeen);
       if (unseen.length) {
         const out = `{"t":"world","id":${JSON.stringify(a.id)},"data":${raw}}`;
-        const budget = byteGate(this._roomFoes, now, out.length * unseen.length, FOES_ROOM_BYTES_PER_S);
-        this._roomFoes = budget.bucket;
+        // SLAM11 (AUDIT SLAM): ITS OWN BUCKET, AND IT BORROWS. This charged the FOES bucket one indivisible sum -
+        // the whole memory times every unseen socket - against a cap of FOES_ROOM_BYTES_PER_S, and byteGate caps at
+        // the rate: a sum past the cap never passes however long it waits. At 200 players with a 100 KiB memory that
+        // is 19.5 MiB against 4 MiB, so 0 of 199 were ever handed the room's memory, `worldSeen` latched nothing,
+        // and every publish re-attempted the same unpayable fan for ever - doors, levers and emptied containers
+        // silently never synced, and the memory has to be under ~21 KiB for a full room to receive it at all.
+        // Pre-existing since WORLD34 C1, reachable from ~40 players. The push now borrows (net/wire.js byteGate):
+        // it lands whole and leaves its bucket in debt until the rate repays it - which is fine for a frame that is
+        // handed to each socket ONCE and comes every WORLD_PUBLISH_MS. And it is its OWN bucket, because a 100 KiB
+        // memory's debt would have blocked the foes STREAM it used to share a bucket with for seconds.
+        const budget = byteGate(this._roomWorld, now, out.length * unseen.length, FOES_ROOM_BYTES_PER_S, true);
+        this._roomWorld = budget.bucket;
         if (budget.pass) for (const [other, b] of unseen) { this._setAttach(other, { ...b, worldSeen: true }); this._send(other, out); }
       }
       return;
@@ -515,8 +526,14 @@ export class Room {
       if (!budget.pass) return;
       const out = JSON.stringify({ t: 'act', id: a.id, data: m.data });
       const listeners = [...this._all()].filter(([other, b]) => other !== ws && b.id);
-      // AUDIT WORLD3 A1: the fan is the frame times its listeners, and a frame count is no bound on it
-      const bytes = byteGate(this._roomActBytes, now, out.length * listeners.length, ACT_ROOM_BYTES_PER_S);
+      // AUDIT WORLD3 A1: the fan is the frame times its listeners, and a frame count is no bound on it.
+      // SLAM11 (AUDIT SLAM): AND IT BORROWS. byteGate caps at the rate, so an act whose fan cost more than one
+      // second of ACT_ROOM_BYTES_PER_S could never land - a 6 KiB act to 199 listeners was dropped whole, silently,
+      // for ever, while `actFrameFits` told its author anything up to MAX_FRAME_BYTES would. A door is not
+      // self-healing: nothing re-sends it. It lands whole now and the bucket is in debt until the rate repays it -
+      // at most one fan's worth, MAX_FRAME_BYTES x SOCKETS_MAX, four seconds of acts - and the frame gate beside it
+      // (ACT_ROOM_HZ_MAX) still bounds how many come.
+      const bytes = byteGate(this._roomActBytes, now, out.length * listeners.length, ACT_ROOM_BYTES_PER_S, true);
       this._roomActBytes = bytes.bucket;
       if (!bytes.pass) return;
       for (const [other] of listeners) this._send(other, out);

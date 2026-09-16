@@ -5150,7 +5150,7 @@ mutations, 10 dead.**
 **NOT SEEN ON THE REAL RELAY.** Every number here is this container's
 CPU against the fake Durable Object. A Workers isolate is not this
 machine; treat the SHAPE (quadratic, then linear) as the finding and the
-absolute milliseconds as optimistic. `RELAY_VERSION` is `world71`, and the
+absolute milliseconds as optimistic. `RELAY_VERSION` is `world72`, and the
 relay must be deployed for any of this to be true in production.
 
 
@@ -5425,7 +5425,7 @@ forever). A **foes** frame is still the introduction's: a pose is one
 figure standing where it says it is, a pool is a world, and AUDIT WORLD6b
 A8/C6 holds unchanged.
 
-`RELAY_VERSION` is `world71`. **The relay must be deployed by hand for
+`RELAY_VERSION` is `world72`. **The relay must be deployed by hand for
 any of this to be true in the room** - nothing in CI deploys it.
 
 **Pinned** in `test/slam6.test.js` (6) and in the two re-aimed SLAM1
@@ -5824,7 +5824,7 @@ intervals (1000 → 500 → 250, pinned), growth is unbounded as before so a
 silence still ceilings rather than crawls, and the steady state is
 untouched.
 
-`RELAY_VERSION` is `world71`; the version bump was run with
+`RELAY_VERSION` is `world72`; the version bump was run with
 `test/relayversion.test.js` excluded, as that file now says to.
 
 **Pinned** in `test/slam10.test.js` (5) and in two re-aimed `slam6` pins
@@ -5834,3 +5834,69 @@ the bucket read off the rank index, the hash made constant, the bucket
 ignoring the turn, the relay not passing the id, strangers taking bodies,
 the interval collapsing in one step, shrinking too slowly, and growth
 bounded too.
+
+## SLAM11 - A FAN LARGER THAN ONE SECOND OF ITS BUDGET COULD NEVER LAND (2026-09-16, AUDIT SLAM)
+
+Audit ledger item 2. Pre-existing since WORLD34 C1 / WORLD2 A5, and the
+audit's one relay finding that was not this branch's doing - reachable
+from ~40 players, long before SLAM5's wall at 130.
+
+**THE ROOT.** `byteGate` is a token bucket **capped at `rate`**. Three
+arms charged a whole fan - the frame times its listeners - as one
+indivisible sum against it. A sum past the cap does not pass slowly; it
+*never* passes, however long the caller waits, because waiting accumulates
+nothing beyond the cap. Measured over the real `Room`, a 100 KiB dungeon
+memory published to a room of N:
+
+| players | fan per publish | sockets handed the memory |
+|---|---|---|
+| 8 | 0.7 MiB | 7 of 7 |
+| 32 | 3.0 MiB | 31 of 31 |
+| 64 | 6.2 MiB | **0 of 63** |
+| 200 | 19.5 MiB | **0 of 199** |
+
+`worldSeen` latched only inside `if (budget.pass)`, so nothing was
+remembered and every publish re-attempted the same unpayable sum. Doors,
+levers and emptied containers silently never synced, and the memory had to
+be under ~21 KiB for a full room to receive it at all. The act fan had the
+same cliff at ~5 KiB to 199 listeners, while `actFrameFits` told its
+author anything up to `MAX_FRAME_BYTES` (16 KiB) would land - and a door
+is not self-healing; nothing re-sends it.
+
+**THE FIX IS A BUCKET THAT CAN BORROW** (`byteGate(..., borrow = true)`).
+A must-deliver fan passes when the bucket is not *in debt* and takes it
+negative by what it costs; nothing else passes until the rate has repaid
+the debt. The rate law holds on average, the debt is bounded by one fan
+(nothing passes while negative), and the frame lands whole instead of
+never. Driven: a 110 KiB memory to 63 sockets, **63 of 63 handed it**,
+once each, where the old law handed it to nobody; a 15 KiB act to eleven
+listeners against a bucket one byte short of the fan, **every listener got
+the door**, the bucket in debt by the overshoot, the next act waiting until
+the rate repaid it.
+
+**The memory push gets its own bucket** (`_roomWorld`). It used to charge
+the *foes stream's*, and a 100 KiB memory's debt would have stalled live
+foes for seconds. **The foes fan does not borrow**, deliberately: it is a
+continuous stream where one oversized fan would block the next second of
+frames, and dropping a frame whole is the kinder failure there - the next
+full frame heals it. Its own cliff - a frame the sender cannot make land at
+this room size - is the sender's to chunk, and is recorded below.
+
+`RELAY_VERSION` is `world72`.
+
+**Pinned** in `test/slam11.test.js` (5): the plain bucket's cliff (so the
+reason for borrowing stays true), the borrowing bucket's four laws, the
+memory landing past the old cliff on its own bucket once each, the act
+landing and waiting, and the foes fan *not* borrowing. `auditworld3`'s act
+pin re-aimed from "over the budget: dropped" to "in debt: dropped; not in
+debt: lands and goes into debt". **8 mutations, 8 dead** - borrow ignored,
+the debt not charged, passing while in debt, the memory back on the foes
+bucket, the memory without borrow, the act without borrow, the foes *with*
+borrow, and `worldSeen` latched on a refused push.
+
+**Recorded, not paid:** the foes stream's own cliff. `FOES_FRAME_MAX`
+(64 KiB) is legal by the wire, and at 199 listeners any frame over ~21 KiB
+is dropped whole on every publish - not one frame, *all* of them, so "the
+next full frame heals it" is false for a host whose pool is that large.
+The relay cannot fix an oversized stream; the sender must chunk it, or its
+cap must be a function of the room's size. A client change, its own slice.

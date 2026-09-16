@@ -28,6 +28,7 @@ const LAW = {
   world69: '27da57b0787d8e18e93dea8358614d9af2e9c65133774755f39960e0ec8f89de',   // SLAM8: a keepalive is never tiered; turn counts what was relayed
   world70: '06cb8eb45de961f9756a71a3cfba19fd84e3a3e7a5217d5e3798e3b11cf4ebed',   // SLAM9: the who budget derived from the socket gates, spent before the scan
   world71: '37bfb4d0bc508775233bcbabbe4bbd7b1b4dc4fccd148e9a17c72fba0dd0e877',   // SLAM10: the far tier bucketed by the listener's id, stable under movement
+  world72: 'de19e038912ea8e2e0568923bcf398b86ea2c80c173051129c0ece93bf6efa51',   // SLAM11: the memory push and the act fan borrow against their budgets and land whole
 };
 
 const rd = (p) => readFileSync(new URL('../' + p, import.meta.url));

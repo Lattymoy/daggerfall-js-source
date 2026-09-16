@@ -200,7 +200,7 @@ test('AUDIT WORLD6b-iii(e) B1/B2/B9: the Room - who carries the room\'s budget (
   assert.match(s, /this\._looks\.set\(m\.id, m\.look\); \}/, 'set at the hello'); assert.match(s, /this\._looks\.delete\(a\.id\);/, 'gone at the leave'); assert.match(s, /this\._looks\.clear\(\);\s*\n\s*const dead = \['hellos'\];/, 'cleared with the sweep');
   const bare = s.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|[ \t])\/\/[^\n]*/gm, '$1');   // comments away - and only a `//` that begins a comment, not the one inside `wss://` (AUDIT SLAM found the naive stripper eating a real line)
   assert.match(bare, /if \(!id \|\| id === a\.id\) \{ this\._junk\(ws, a\); return; \}\s*const budget = [^\n]*\s*this\._roomWho = budget\.bucket;\s*if \(!budget\.pass\) return;\s*const target = [^\n]*\s*if \(!target\) return;/, 'B3: one\'s own name is junk, a name that left is nothing - with SLAM9\'s budget between them');
-  assert.equal(RELAY_VERSION, 'world71', 'the relay says which one it is');
+  assert.equal(RELAY_VERSION, 'world72', 'the relay says which one it is');
 });
 
 test('AUDIT WORLD6b-iii(e) B4/B6: the session forgets who it asked with the room (leave, and a join elsewhere); the parser refuses a bad name as an error, and passes a good one', () => {
