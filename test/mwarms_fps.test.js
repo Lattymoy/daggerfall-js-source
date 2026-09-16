@@ -89,3 +89,16 @@ test('MWA1 pins: the switch on the prefs shelf, flipped by Build and Unload; the
   assert.match(menu, /prefRow\('showFps', 'FPS counter',/, 'the counter has its row');
   assert.match(read('src/main.js'), /mountFpsCounter\(\{ enabled: \(\) => params\.has\('fps'\) \|\| !!getPref\('showFps'\), stats: \(\) => renderer\.stats \}\);/, 'the counter mounts over every host, on the pref or ?fps, with the renderer\'s counts (PERF3)');
 });
+
+test('MWA2 (Mac: "a toggle for the morrowind asset pack"): ONE On/Off row over the mwArms switch replaces Build / Unload - ON builds and holds the pref only when the build stood, OFF unloads; every consumer already reads that one pref', () => {
+  const menu = read('src/ui/enhancedMenu.js');
+  assert.match(menu, /mw\.append\(prefRow\('mwArms', 'Use Morrowind assets',/, 'the row, on the Morrowind assets card, only once archives are attached');
+  assert.match(menu, /if \(count\) \{\n\s+mw\.append\(prefRow\('mwArms'/, 'gated on attached data');
+  assert.match(menu, /const toggleMorrowind = async \(on\) => \{\n\s+if \(!on\) \{ fpArm\.unload\(\); setPref\('mwArms', false\); render\(\); return; \}/, 'OFF: unload, and the switch stays off across launches');
+  assert.match(menu, /if \(res\?\.ok\) setPref\('mwArms', true\);[^\n]*\n\s+else setPref\('mwArms', false\);/, 'ON: the pref holds only when the build stood - a refusal turns the row back off');
+  assert.doesNotMatch(menu, /'Unload arms'|'Build first-person arms'/, 'the two buttons are gone: one idea, one control');
+  // the one pref, read by every consumer of the pack
+  assert.match(read('src/combat/weaponRig.js'), /wanted = \(\) => getPref\('mwArms'\)/, 'the boot build');
+  assert.match(read('src/scenes/world.js'), /enabled: \(\) => enhanced && !!getPref\('mwArms'\) && morrowindDataCount\(\) > 0/, 'the peer bodies');
+  assert.match(read('src/player/mwView.js'), /if \(fpArm\.canThirdPerson\(\)\) return false;/, 'and the view seam asks the arm, which unload() empties - so OFF hands third person to the sprite');
+});
