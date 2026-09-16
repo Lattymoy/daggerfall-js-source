@@ -904,6 +904,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // scout keeps its own eye (it has no player body to orbit).
     const mwv = walkMode
       ? mwViewFrame({ fpEye: cam.pos, feet: player.feetAt(), yaw: cam.yaw, pitch: cam.pitch,
+          dt, riding: !!player.riding,   // AUDIT-EOTB F3/F4: the host's own clock, and the one state only it has
           raycast: (o, d, m) => ctx.collider.raycast(o, d, m) })
       : { eye: cam.pos, thirdPerson: false };
     const target = [mwv.eye[0] + fwd[0], mwv.eye[1] + fwd[1], mwv.eye[2] + fwd[2]];

@@ -1,0 +1,386 @@
+[
+    {
+        "Title": "Camera - Classic (Default)",
+        "Author": "RedRoryOTheGlen",
+        "Description": "Centered view, you can't go wrong with the classics!",
+        "SettingsVersion": null,
+        "Values": {
+            "Camera": {
+                "FrontalPlaneOffset": "0,0.5",
+                "LongitudinalDistance": "2",
+                "MinimumDistance": "0.8",
+                "Speed": "10",
+                "Dampen": "1"
+            }
+        },
+        "$version": "v1"
+    },
+    {
+        "Title": "Camera - Modern",
+        "Author": "RedRoryOTheGlen",
+        "Description": "Over-the-shoulder view, a closer shot of the action!",
+        "SettingsVersion": null,
+        "Values": {
+            "Camera": {
+                "FrontalPlaneOffset": "0.5,0",
+                "LongitudinalDistance": "1.5",
+                "MinimumDistance": "1",
+                "Speed": "10",
+                "Dampen": "1"
+            }
+        },
+        "$version": "v1"
+    },
+    {
+        "Title": "Camera - Vanity",
+        "Author": "RedRoryOTheGlen",
+        "Description": "Character-focused view, now everything revolves around you!",
+        "SettingsVersion": null,
+        "Values": {
+            "Camera": {
+                "FrontalPlaneOffset": "0,-0.5",
+                "LongitudinalDistance": "3",
+                "Speed": "10",
+                "Dampen": "1"
+            }
+        },
+        "$version": "v1"
+    },
+    {
+        "Title": "Light Fighters (Default)",
+        "Author": "RedRoryOTheGlen",
+        "Description": null,
+        "SettingsVersion": null,
+        "Values": {
+            "Graphics": {
+                "Enable": "True",
+                "OnFoot": "0",
+                "PingPongOffset": "1",
+                "AttackStrings": "3"
+            },
+            "Animation": {
+                "FootIdleOffset": "0,0.09",
+                "FootMoveOffset": "0,0.09",
+                "FootAttackMeleeOffset": "0.35,0.22",
+                "FootAttackRangedOffset": "0.25,0.28",
+                "FootAttackSpellOffset": "-0.25,0.35",
+                "FootDeathOffset": "0,-0.5"
+            }
+        },
+        "$version": "v1"
+    },
+    {
+        "Title": "Medium Fighters",
+        "Author": "RedRoryOTheGlen",
+        "Description": null,
+        "SettingsVersion": null,
+        "Values": {
+            "Graphics": {
+                "Enable": "True",
+                "OnFoot": "2",
+                "PingPongOffset": "1",
+                "AttackStrings": "3"
+            },
+            "Animation": {
+                "FootIdleOffset": "0,0.09",
+                "FootMoveOffset": "0,0.09",
+                "FootAttackMeleeOffset": "0.1,0.35",
+                "FootAttackRangedOffset": "0.25,0.27",
+                "FootAttackSpellOffset": "-0.25,0.24",
+                "FootDeathOffset": "0,-0.5"
+            }
+        },
+        "$version": "v1"
+    },
+    {
+        "Title": "Heavy Fighter F",
+        "Author": "RedRoryOTheGlen",
+        "Description": null,
+        "SettingsVersion": null,
+        "Values": {
+            "Graphics": {
+                "Enable": "True",
+                "OnFoot": "4",
+                "PingPongOffset": "1",
+                "AttackStrings": "3"
+            },
+            "Animation": {
+                "FootIdleOffset": "0,0.15",
+                "FootMoveOffset": "0,0.15",
+                "FootAttackMeleeOffset": "0.05,0.3",
+                "FootAttackRangedOffset": "0.25,0.27",
+                "FootAttackSpellOffset": "-0.25,0.07",
+                "FootDeathOffset": "0,-0.5"
+            }
+        },
+        "$version": "v1"
+    },
+    {
+        "Title": "Heavy Fighter M",
+        "Author": "RedRoryOTheGlen",
+        "Description": null,
+        "SettingsVersion": null,
+        "Values": {
+            "Graphics": {
+                "Enable": "True",
+                "OnFoot": "5",
+                "PingPongOffset": "1",
+                "AttackStrings": "3"
+            },
+            "Animation": {
+                "FootIdleOffset": "0,0.05",
+                "FootMoveOffset": "0,0.05",
+                "FootAttackMeleeOffset": "0.05,0.3",
+                "FootAttackRangedOffset": "0.25,0.27",
+                "FootAttackSpellOffset": "-0.25,0.6",
+                "FootDeathOffset": "0,-0.5"
+            }
+        },
+        "$version": "v1"
+    },
+    {
+        "Title": "Mage F",
+        "Author": "RedRoryOTheGlen",
+        "Description": null,
+        "SettingsVersion": null,
+        "Values": {
+            "Graphics": {
+                "Enable": "True",
+                "OnFoot": "6",
+                "PingPongOffset": "1",
+                "AttackStrings": "0"
+            },
+            "Animation": {
+                "FootIdleOffset": "0.09,0.19",
+                "FootMoveOffset": "0,0.19",
+                "FootAttackMeleeOffset": "-0.01,0.21",
+                "FootAttackRangedOffset": "0.25,0.28",
+                "FootAttackSpellOffset": "-0.25,0.35",
+                "FootDeathOffset": "0,-0.5"
+            }
+        },
+        "$version": "v1"
+    },
+    {
+        "Title": "Mage M",
+        "Author": "RedRoryOTheGlen",
+        "Description": null,
+        "SettingsVersion": null,
+        "Values": {
+            "Graphics": {
+                "Enable": "True",
+                "OnFoot": "7",
+                "PingPongOffset": "1",
+                "AttackStrings": "0"
+            },
+            "Animation": {
+                "FootIdleOffset": "-0.01,0.19",
+                "FootMoveOffset": "0,0.19",
+                "FootAttackMeleeOffset": "-0.01,0.18",
+                "FootAttackRangedOffset": "0.25,0.28",
+                "FootAttackSpellOffset": "-0.25,0.35",
+                "FootDeathOffset": "0,-0.5"
+            }
+        },
+        "$version": "v1"
+    },
+    {
+        "Title": "Thief Mage F",
+        "Author": "RedRoryOTheGlen",
+        "Description": null,
+        "SettingsVersion": null,
+        "Values": {
+            "Graphics": {
+                "Enable": "True",
+                "OnFoot": "8",
+                "PingPongOffset": "1",
+                "AttackStrings": "3"
+            },
+            "Animation": {
+                "FootIdleOffset": "0,0.09",
+                "FootMoveOffset": "0,0.09",
+                "FootAttackMeleeOffset": "0.15,0.09",
+                "FootAttackRangedOffset": "0.25,0.28",
+                "FootAttackSpellOffset": "-0.25,0.24",
+                "FootDeathOffset": "0,-0.5"
+            }
+        },
+        "$version": "v1"
+    },
+    {
+        "Title": "Thief Mage M",
+        "Author": "RedRoryOTheGlen",
+        "Description": null,
+        "SettingsVersion": null,
+        "Values": {
+            "Graphics": {
+                "Enable": "True",
+                "OnFoot": "9",
+                "PingPongOffset": "1",
+                "AttackStrings": "3"
+            },
+            "Animation": {
+                "FootIdleOffset": "0,0.09",
+                "FootMoveOffset": "0,0.09",
+                "FootAttackMeleeOffset": "0.05,0.09",
+                "FootAttackRangedOffset": "0.25,0.28",
+                "FootAttackSpellOffset": "-0.25,0.34",
+                "FootDeathOffset": "0,-0.5"
+            }
+        },
+        "$version": "v1"
+    },
+    {
+        "Title": "Fighter Mage F",
+        "Author": "RedRoryOTheGlen",
+        "Description": null,
+        "SettingsVersion": null,
+        "Values": {
+            "Graphics": {
+                "Enable": "True",
+                "OnFoot": "10",
+                "PingPongOffset": "1",
+                "AttackStrings": "3"
+            },
+            "Animation": {
+                "FootIdleOffset": "0,0.09",
+                "FootMoveOffset": "0,0.09",
+                "FootAttackMeleeOffset": "0.23,0.39",
+                "FootAttackRangedOffset": "-0.2,0.28",
+                "FootAttackSpellOffset": "-0.3,0.35",
+                "FootDeathOffset": "0,-0.5"
+            }
+        },
+        "$version": "v1"
+    },
+    {
+        "Title": "Fighter Mage M",
+        "Author": "RedRoryOTheGlen",
+        "Description": null,
+        "SettingsVersion": null,
+        "Values": {
+            "Graphics": {
+                "Enable": "True",
+                "OnFoot": "11",
+                "PingPongOffset": "1",
+                "AttackStrings": "0"
+            },
+            "Animation": {
+                "FootIdleOffset": "0.01,0.17",
+                "FootMoveOffset": "0.01,0.17",
+                "FootAttackMeleeOffset": "0,0.18",
+                "FootAttackRangedOffset": "0.25,0.27",
+                "FootAttackSpellOffset": "-0.25,0.6",
+                "FootDeathOffset": "0,-0.5"
+            }
+        },
+        "$version": "v1"
+    },
+    {
+        "Title": "Thief F",
+        "Author": "RedRoryOTheGlen",
+        "Description": null,
+        "SettingsVersion": null,
+        "Values": {
+            "Graphics": {
+                "Enable": "True",
+                "OnFoot": "12",
+                "PingPongOffset": "1",
+                "AttackStrings": "3"
+            },
+            "Animation": {
+                "FootIdleOffset": "0,0.09",
+                "FootMoveOffset": "0,0.09",
+                "FootAttackMeleeOffset": "0.2,0.08",
+                "FootAttackRangedOffset": "0.25,0.15",
+                "FootAttackSpellOffset": "-0.25,0.35",
+                "FootDeathOffset": "0,-0.5"
+            }
+        },
+        "$version": "v1"
+    },
+    {
+        "Title": "Thief M",
+        "Author": "RedRoryOTheGlen",
+        "Description": null,
+        "SettingsVersion": null,
+        "Values": {
+            "Graphics": {
+                "Enable": "True",
+                "OnFoot": "13",
+                "PingPongOffset": "1",
+                "AttackStrings": "3"
+            },
+            "Animation": {
+                "FootIdleOffset": "0,0.09",
+                "FootMoveOffset": "0,0.09",
+                "FootAttackMeleeOffset": "0.05,0.08",
+                "FootAttackRangedOffset": "0.25,0.28",
+                "FootAttackSpellOffset": "-0.25,0.35",
+                "FootDeathOffset": "0,-0.5"
+            }
+        },
+        "$version": "v1"
+    },
+    {
+        "Title": "Fighter Thief F",
+        "Author": "RedRoryOTheGlen",
+        "Description": null,
+        "SettingsVersion": null,
+        "Values": {
+            "Graphics": {
+                "Enable": "True",
+                "OnFoot": "14",
+                "PingPongOffset": "1",
+                "AttackStrings": "3"
+            },
+            "Animation": {
+                "FootIdleOffset": "0,0.09",
+                "FootMoveOffset": "0,0.09",
+                "FootAttackMeleeOffset": "0.2,0.08",
+                "FootAttackRangedOffset": "0.25,0.25",
+                "FootAttackSpellOffset": "-0.25,0.24",
+                "FootDeathOffset": "0,-0.5"
+            }
+        },
+        "$version": "v1"
+    },
+    {
+        "Title": "Fighter Thief M",
+        "Author": "RedRoryOTheGlen",
+        "Description": null,
+        "SettingsVersion": null,
+        "Values": {
+            "Graphics": {
+                "Enable": "True",
+                "OnFoot": "15",
+                "PingPongOffset": "1",
+                "AttackStrings": "3"
+            },
+            "Animation": {
+                "FootIdleOffset": "0,0.09",
+                "FootMoveOffset": "0,0.09",
+                "FootAttackMeleeOffset": "0.08,0.08",
+                "FootAttackRangedOffset": "0.25,0.25",
+                "FootAttackSpellOffset": "-0.25,0.24",
+                "FootDeathOffset": "0,-0.5"
+            }
+        },
+        "$version": "v1"
+    },
+    {
+        "Title": "Werewolf",
+        "Author": "RedRoryOTheGlen",
+        "Description": null,
+        "SettingsVersion": null,
+        "Values": {
+            "Animation": {
+                "LycanIdleOffset": "0,0.1",
+                "LycanMoveOffset": "0,0.1",
+                "LycanAttackOffset": "0.05,0.3",
+                "LycanDeathOffset": "0,-0.5"
+            }
+        },
+        "$version": "v1"
+    }
+]

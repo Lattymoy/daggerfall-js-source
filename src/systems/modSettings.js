@@ -327,6 +327,107 @@ export const MOD_SETTINGS = Object.freeze({
       textDisplayTime: Object.freeze({ default: 3, min: 1, max: 10, description: 'Length of time text messages are displayed in seconds' }),
     }),
   }),
+  // ── EYE OF THE BEHOLDER 2.1 (EOTB) ──────────────────────────────
+  // RedRoryOTheGlen's third-person camera and player sprite, every key
+  // the bundle's modsettings.json ships, under its own section name, as
+  // it ships them - plus the port's own `Enabled`. Mac's ruling on why
+  // a port that already has third person carries a second one
+  // (2026-09-15): "This is moreso for those who opt out of using
+  // morrowind." The Morrowind body needs Morrowind data; this one does
+  // not, and `player/mwView.js` says in its own head that a player
+  // without it "has no third person at all". Three defaults depart from
+  // the bundle, each marked at its key.
+  'eye-of-the-beholder': Object.freeze({
+    title: 'Eye Of The Beholder',
+    author: 'RedRoryOTheGlen',
+    keys: Object.freeze({
+      Enabled: Object.freeze({
+        default: true,
+        description: 'RedRoryOTheGlen\u2019s Eye Of The Beholder 2.1 (the camera and the sprite; its attack and death animations are not ported): third person without Morrowind data. Scroll out '
+          + 'and the camera swings behind your shoulder, clearing walls on its own; you are drawn as the mod\u2019s own '
+          + 'sprite, eight ways round, with idle, walk, attack and spell states on foot and in the saddle. Off keeps '
+          + 'you in first person unless you have the Morrowind body.',
+      }),
+      'Camera.StartInThirdPerson': Object.freeze({ default: true, description: 'Determines the POV when starting or loading a game' }),
+      'Camera.FrontalPlaneOffset': Object.freeze({ default: Object.freeze([0.0, 0.5]), tuple: 'float', description: 'Moves the camera position on the X and Y axes' }),
+      'Camera.LongitudinalDistance': Object.freeze({ default: 2.0, min: 1, max: 10, float: true, description: 'Moves the camera position nearer or further to the player' }),
+      'Camera.MinimumDistance': Object.freeze({ default: 0.8, min: 0, max: 1, float: true, description: 'Prevents the camera from moving too close to the player. Value is a fraction of the Z offset.' }),
+      'Camera.RidingOffset': Object.freeze({ default: 1.0, min: 0, max: 2, float: true, description: 'Additional scaling offset to Y and Z axes when riding.' }),
+      'Camera.Speed': Object.freeze({ default: 10.0, min: 1, max: 20, float: true, description: 'How fast the camera catches up to where it should be.' }),
+      'Camera.Dampen': Object.freeze({ default: 1.0, min: 0, max: 5, float: true, description: 'How much the camera lags behind a sudden move.' }),
+      'Camera.Auto-Switch': Object.freeze({ default: true, description: 'X offset will be automatically mirrored if there is not enough space for the camera' }),
+      'Camera.SwitchResetTime': Object.freeze({ default: 3.0, min: 0, max: 6, float: true, description: 'Time before the auto-switch is reverted. Set to 0 to disable' }),
+      // EOTB4 (2026-09-15, Mac: "instead of numpad being used to change
+      // views, I want it scrollable like how we handle morrowind").
+      // THE MOD'S OWN KEY, KEPT AND SUPERSEDED. The wheel is the only
+      // way in and out now, so this binding does nothing - listed all
+      // the same, because the pane is a record of what the mod ships
+      // and a key quietly deleted is a key nobody can ask about (the
+      // shape HT's `Throwing.ShowTrajectory` is kept in).
+      'Camera.TogglePerspective': Object.freeze({ default: 'KeypadEnter', text: true, description: 'The mod\u2019s own view key. The port takes the WHEEL instead \u2014 scroll out of first person and on out, as the Morrowind camera already does \u2014 so this binding is inert here.' }),
+      // HT4's finding again, same author, same key: the mod ships Tab,
+      // which is free in Daggerfall Unity and SPENT here - PX15 gave it
+      // to the port's own pixel dial (ui/input.js). B is unbound in
+      // DFU's defaults and unused by the port and by this mod's other
+      // keys, and it stays the player's to rebind.
+      'Camera.SwitchShoulder': Object.freeze({ default: 'B', text: true, description: 'Mirrors the camera\u2019s X offset if it is non-zero (the mod ships Tab; the port had already spent it on the pixel dial).' }),
+      'CameraOverrideWeapon.Enable': Object.freeze({ default: false, description: 'Use this section\u2019s offsets while a weapon or spell is readied.' }),
+      'CameraOverrideWeapon.FrontalPlaneOffset': Object.freeze({ default: Object.freeze([0.0, 0.5]), tuple: 'float', description: 'Moves the camera position on the X and Y axes' }),
+      'CameraOverrideWeapon.LongitudinalDistance': Object.freeze({ default: 2.0, min: 1, max: 10, float: true, description: 'Moves the camera position nearer or further to the player' }),
+      'CameraOverrideMount.Enable': Object.freeze({ default: false, description: 'Use this section\u2019s offsets while riding.' }),
+      'CameraOverrideMount.FrontalPlaneOffset': Object.freeze({ default: Object.freeze([0.0, 0.5]), tuple: 'float', description: 'Moves the camera position on the X and Y axes' }),
+      'CameraOverrideMount.LongitudinalDistance': Object.freeze({ default: 2.0, min: 1, max: 10, float: true, description: 'Moves the camera position nearer or further to the player' }),
+      'CameraOverrideBoat.Enable': Object.freeze({ default: false, description: 'Use this section\u2019s offsets while sailing.' }),
+      'CameraOverrideBoat.FrontalPlaneOffset': Object.freeze({ default: Object.freeze([0.0, 0.0]), tuple: 'float', description: 'Moves the camera position on the X and Y axes' }),
+      'CameraOverrideBoat.LongitudinalDistance': Object.freeze({ default: 2.0, min: 0, max: 10, float: true, description: 'Moves the camera position nearer or further to the player' }),
+      'CameraOverrideBoat.Target': Object.freeze({ default: 1, options: Object.freeze(['Hull', 'Masthead']), description: 'What the camera looks at while sailing.' }),
+      // MODS-ON, and Mac's own ask. The mod ships this OFF, and it is
+      // the arm the port's whole view seam is built on - with it off
+      // there is no way into third person at all, because the key
+      // above is inert here. Ledger A row MODS-ON, as HT's
+      // `Modules.Sprite` is.
+      'CameraScrolling.ScrollableZOffset': Object.freeze({ default: true, description: 'Move the camera closer to or further from the player with an axis' }),
+      'CameraScrolling.ScrollIncrement': Object.freeze({ default: 0.2, min: 0.1, max: 1, float: true, description: 'Amount of distance travelled with every scroll' }),
+      // `axis`, not `text`: this names a Unity input AXIS, not a
+      // KeyCode, and the two are different kinds wearing the same
+      // JSON type (TextKey). Declaring it as a key told HT4's
+      // spent-key gate to resolve "Mouse ScrollWheel" as a binding,
+      // which it is not and never could be. The port's wheel is the
+      // DOM's, so this is informational here.
+      'CameraScrolling.ScrollableZOffsetAxis': Object.freeze({ default: 'Mouse ScrollWheel', text: true, axis: true, description: 'The axis the mod reads to move the camera offset. The port takes the browser\u2019s own wheel, so this names the input rather than choosing it.' }),
+      'AutoTogglePerspective.ToggleInput': Object.freeze({ default: 'KeypadPlus', text: true, description: 'Button that arms or disarms the automatic view changes below.' }),
+      'AutoTogglePerspective.OnFoot': Object.freeze({ default: 0, options: Object.freeze(['Don\'tChange', 'FirstPerson', 'ThirdPerson']), description: 'Which view to take on foot, with nothing readied.' }),
+      'AutoTogglePerspective.OnFootMelee': Object.freeze({ default: 0, options: Object.freeze(['Don\'tChange', 'FirstPerson', 'ThirdPerson']), description: 'Which view to take on foot with a weapon readied.' }),
+      'AutoTogglePerspective.OnFootRanged': Object.freeze({ default: 0, options: Object.freeze(['Don\'tChange', 'FirstPerson', 'ThirdPerson']), description: 'Which view to take on foot with a bow readied.' }),
+      'AutoTogglePerspective.OnFootSpell': Object.freeze({ default: 0, options: Object.freeze(['Don\'tChange', 'FirstPerson', 'ThirdPerson']), description: 'Which view to take on foot with a spell readied.' }),
+      'AutoTogglePerspective.OnHorse': Object.freeze({ default: 0, options: Object.freeze(['Don\'tChange', 'FirstPerson', 'ThirdPerson']), description: 'Which view to take in the saddle.' }),
+      'AutoTogglePerspective.OnHorseReady': Object.freeze({ default: 0, options: Object.freeze(['Don\'tChange', 'FirstPerson', 'ThirdPerson']), description: 'Which view to take in the saddle with something readied.' }),
+      'AutoTogglePerspective.OnLycan': Object.freeze({ default: 0, options: Object.freeze(['Don\'tChange', 'FirstPerson', 'ThirdPerson']), description: 'Which view to take transformed.' }),
+      'AutoTogglePerspective.OnTransitionInterior': Object.freeze({ default: 0, options: Object.freeze(['Don\'tChange', 'FirstPerson', 'ThirdPerson']), description: 'Which view to take on stepping indoors.' }),
+      'AutoTogglePerspective.OnTransitionExterior': Object.freeze({ default: 0, options: Object.freeze(['Don\'tChange', 'FirstPerson', 'ThirdPerson']), description: 'Which view to take on stepping back outside.' }),
+      'Graphics.Enable': Object.freeze({ default: true, description: 'Toggle the player graphic' }),
+      'Graphics.OnFoot': Object.freeze({ default: 0, min: 0, max: 15, description: 'Sprite when on foot' }),
+      'Graphics.OnHorse': Object.freeze({ default: 0, min: 0, max: 4, description: 'Sprite when riding a horse' }),
+      'Graphics.ReadyStance': Object.freeze({ default: 2, options: Object.freeze(['Never', 'When Idle', 'When Idle or Moving']), description: 'Whether the sprite will change states when readying a weapon or spell' }),
+      'Graphics.TurnToView': Object.freeze({ default: 2, options: Object.freeze(['Never', 'Only When Animating', 'When Weapon Readied', 'Always']), description: 'Configure when the sprite turns to face the view' }),
+      'Graphics.AttackStrings': Object.freeze({ default: 3, options: Object.freeze(['None', 'Mirror', 'PingPong', 'Mixed']), description: 'Optional attack animations' }),
+      'Graphics.MirrorTime': Object.freeze({ default: 3.0, min: 1, max: 5, float: true, description: 'Time before reverting the mirrored state. Set to 0 to disable.' }),
+      'Graphics.PingPongOffset': Object.freeze({ default: 1, min: -3, max: 3, description: 'Adjusts the point in the animation where it starts playing backwards' }),
+      'Graphics.FirstPersonBillboard': Object.freeze({ default: 1, options: Object.freeze(['None', 'Shadows Only', 'Visible']), description: 'Visibility of the player billboard in first-person' }),
+      'Graphics.ShowCart': Object.freeze({ default: true, description: 'A 3D cart will follow your billboard when using the Cart Transport Mode' }),
+      'Graphics.TorchOffset': Object.freeze({ default: 1, options: Object.freeze(['Vanilla', 'Billboard', 'Selfie']), description: 'Whether the torch follows the orientation of the sprite' }),
+      'Animation.WalkCycleSpeed': Object.freeze({ default: 1.0, min: 0.5, max: 1.5, float: true, description: 'Multiplier on how fast the walk cycle plays.' }),
+      'Animation.SyncFootsteps': Object.freeze({ default: true, description: 'Footstep sounds fire on the sprite\u2019s own footfalls.' }),
+      'Animation.BillboardScale': Object.freeze({ default: 1.0, min: 0, max: 10, float: true, description: 'Size of the player sprite.' }),
+      'Animation.FineBillboardScale': Object.freeze({ default: 0.0, min: 0, max: 1, float: true, description: 'Added to BillboardScale, for a finer adjustment.' }),
+      'Animation.GlobalOffsetScale': Object.freeze({ default: 1.0, min: 0, max: 10, float: true, description: 'Multiplier on every sprite offset.' }),
+      'Animation.FineGlobalOffsetScale': Object.freeze({ default: 0.0, min: 0, max: 1, float: true, description: 'Added to GlobalOffsetScale, for a finer adjustment.' }),
+      'Compatibility.Don\'tHideWeapon': Object.freeze({ default: false, description: 'Stops the FPV Weapon graphic from being hidden or shown' }),
+      'Compatibility.Don\'tHideHorse': Object.freeze({ default: false, description: 'Stops the FPV Horse graphic from being hidden or shown' }),
+      'Compatibility.Don\'tOffsetAttacks': Object.freeze({ default: false, description: 'Stops the attack-from-body code from running for melee and ranged' }),
+      'Debug.ShowMessages': Object.freeze({ default: true, description: 'Print the mod\u2019s own status lines when the view or the shoulder changes.' }),
+    }),
+  }),
 });
 
 let memory = null;

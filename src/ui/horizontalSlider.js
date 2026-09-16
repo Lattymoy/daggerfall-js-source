@@ -24,6 +24,7 @@
 // - two whole points of mouse sensitivity per click, which is DFU's
 // feel and not a rounding of ours.
 //
+import { roundToInt } from '../systems/mathf.js';
 import { clampScrollIndex } from './verticalScrollBar.js';
 
 // TWO PIECES OF DFU ART THE PORT HAS NO BYTES FOR, both recorded the
@@ -70,13 +71,10 @@ export function sliderThumb([tx, ty, tw, th], scrollIndex, totalUnits, displayUn
 
 /** Mathf.RoundToInt - banker's rounding on the .5 tie, which is NOT
  *  Math.round. SetIndicator(float) runs three values through it
- *  (:207-211) and SetValue one more (:246-250). */
-export function roundToInt(v) {
-  const f = Math.floor(v);
-  const d = v - f;
-  if (d !== 0.5) return Math.round(v);
-  return f % 2 === 0 ? f : f + 1;
-}
+ *  (:207-211) and SetValue one more (:246-250). ONE HOME since EOTB3:
+ *  `systems/mathf.js`, re-exported here because this file's own
+ *  callers and its pins have always named it. */
+export { roundToInt };
 
 /**
  * A slider in one of SetIndicator's three modes.

@@ -864,7 +864,14 @@ test('HT4: no vendored mod ships a key the port has already spent', () => {
   const offenders = [];
   for (const [vendor, mod] of Object.entries(MOD_SETTINGS)) {
     for (const [key, def] of Object.entries(mod.keys)) {
-      if (!def.text || typeof def.default !== 'string') continue;   // only the KeyCode fields
+      // EOTB0: `text` alone is not enough. DFU's TextKey carries two
+      // different kinds - a KeyCode binding AND an input AXIS name
+      // ("Mouse ScrollWheel") - and Eye Of The Beholder ships both.
+      // An axis is not a key and cannot collide with one, so the
+      // port declares the kind (`axis: true`) and this gate reads
+      // the DECLARATION rather than guessing from the value. The
+      // assertion below stays strict for everything that IS a key.
+      if (!def.text || def.axis || typeof def.default !== 'string') continue;   // only the KeyCode fields
       const code = domCodeForKeyCode(def.default);
       assert.ok(code, `${vendor}/${key} ships "${def.default}", which is not a KeyCode the port can bind`);
       if (portSpent.has(def.default) || dfuBound.has(code)) offenders.push(`${vendor}/${key} = ${def.default} (${code})`);
@@ -872,6 +879,20 @@ test('HT4: no vendored mod ships a key the port has already spent', () => {
   }
   assert.deepEqual(offenders, [],
     'these ship on a key the port or DFU already answers - one press would do two things');
+
+  // ...AND THE AXIS EXEMPTION IS NOT A HOLE. It is still a `text` key -
+  // the pane shows it as one - so the skip above turns on the declared
+  // KIND and nothing else, and it is driven here rather than trusted:
+  // the value really is one no KeyCode resolver can answer, which is
+  // why it must not reach the assertion, and at least one such key
+  // exists so the clause is not dead.
+  const axes = Object.entries(MOD_SETTINGS).flatMap(([v, m]) =>
+    Object.entries(m.keys).filter(([, d]) => d.axis).map(([k, d]) => [`${v}/${k}`, d]));
+  assert.ok(axes.length >= 1, 'no key declares itself an axis - the exemption above is dead code');
+  for (const [name, d] of axes) {
+    assert.equal(d.text, true, `${name}: an axis is still a text field in the pane`);
+    assert.equal(domCodeForKeyCode(d.default), null, `${name} resolves as a KeyCode - then it is a key, not an axis`);
+  }
 
   // and the three this mod ships are the three it ships, named, so a silent
   // repoint of one of them is a failure rather than a diff nobody reads
