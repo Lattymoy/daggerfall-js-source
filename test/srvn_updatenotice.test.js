@@ -17,7 +17,8 @@ import {
   RELAY_RESTART_TEXT, BUILD_UPDATE_TEXT, BUILD_POLL_MS,
   RELAY_SEEN_MAX, RELAY_NOTICE_MIN_MS, BUILD_FETCH_TIMEOUT_MS,
 } from '../src/net/updateNotice.js';
-import worker, { RELAY_VERSION } from '../server/src/index.js';
+import worker from '../server/src/index.js';
+import { RELAY_VERSION } from '../src/net/wire.js';   // LOCALDEV1: the worker entry exports handlers alone
 import { fakeRoom } from './fakeRoom.mjs';
 import * as relay from '../server/src/relay.js';
 import { OnlineSession } from '../src/net/online.js';

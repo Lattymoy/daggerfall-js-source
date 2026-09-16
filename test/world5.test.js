@@ -22,7 +22,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { ONLINE_EPOCH_MS, ONLINE_EPOCH_MINUTES, ONLINE_MINUTES_PER_MS, sharedClassicMinutes, PIXEL_UNITS } from '../src/net/wire.js';
 import * as relay from '../server/src/relay.js';
-import { RELAY_VERSION } from '../server/src/index.js';
+import { RELAY_VERSION } from '../src/net/wire.js';   // LOCALDEV1: the worker entry exports handlers alone
 import { relayVersionAtLeast } from './relayVersion.mjs';
 import { OnlineSession } from '../src/net/online.js';
 import { CLASSIC_GAME_START_TIME, MINUTES_PER_DAY } from '../src/systems/gameDate.js';

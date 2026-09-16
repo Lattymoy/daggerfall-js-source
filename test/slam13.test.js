@@ -52,7 +52,8 @@ async function held(n, key, poseOf = (i) => at(i * 2, 0)) {
 }
 
 test('SLAM13: ONE HOME for the numbers both ends read - RELAY_VERSION and HEARTBEAT_MS live in wire.js, the relay and the session re-export those very values, and the floor and the share are derived, not typed (mutants: a second RELAY_VERSION in index.js; HEARTBEAT_MS re-declared in online.js; KEEPALIVE_FAN_MS 2500 -> 6000, which tiers every honest heartbeat)', () => {
-  assert.equal(index.RELAY_VERSION, RELAY_VERSION, 'the relay says the wire\'s version');
+  assert.equal(index.RELAY_VERSION, undefined, 'LOCALDEV1: the worker entry exports handlers alone - workerd refused a bundle whose named export was this string, so the relay could not start locally');
+  assert.match(rd('server/src/index.js'), /version: RELAY_VERSION/, 'and /health still says the wire\'s version, through the import');
   assert.equal(relay.RELAY_VERSION, RELAY_VERSION, 'through relay.js too');
   assert.equal(online.HEARTBEAT_MS, HEARTBEAT_MS, 'the session\'s heartbeat is the wire\'s');
   assert.equal(relay.HEARTBEAT_MS, HEARTBEAT_MS, 'and the relay reads the same one');

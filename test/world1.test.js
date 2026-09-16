@@ -32,7 +32,7 @@ import { parseClient, isWorldRoom, isChatRoom, WORLD_FRAME_MAX, WORLD_MIN_MS, WO
 import * as relay from '../server/src/relay.js';
 import { fakeRoom } from './fakeRoom.mjs';
 import { OnlineSession, WORLD_PUBLISH_MS } from '../src/net/online.js';
-import { RELAY_VERSION } from '../server/src/index.js';
+import { RELAY_VERSION } from '../src/net/wire.js';   // LOCALDEV1: the worker entry exports handlers alone
 
 const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
 

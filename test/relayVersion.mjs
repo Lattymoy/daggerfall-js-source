@@ -29,7 +29,7 @@
 // version that is LIVE (`assert.notEqual(RELAY_VERSION, 'world66')` in
 // srvn_updatenotice.test.js), because shipping a client against the
 // deploy already serving players is the actual hazard.
-import { RELAY_VERSION } from '../server/src/index.js';
+import { RELAY_VERSION } from '../src/net/wire.js';   // LOCALDEV1: the worker entry exports handlers alone
 
 /** The deploy's number, or NaN when the name has stopped being one. */
 export const relayVersionNumber = () => Number(/^world(\d+)$/.exec(String(RELAY_VERSION ?? ''))?.[1] ?? NaN);
