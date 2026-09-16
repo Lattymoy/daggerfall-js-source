@@ -57,7 +57,8 @@ import {
   chooseTable, attackTable, deathTable, ORIENTATIONS, orientationFor, frameTime,
   attackString, clipFrames, turnsToView,
 } from './eotbBillboard.js';
-import { spriteFor, eotbSpriteUrl, spriteCount, spriteSize, advanceFrame, flipRows } from './eotbSprite.js';
+import { spriteFor, eotbSpriteUrl, spriteCount, spriteSize, advanceFrame, flipRows, worldOrderColors } from './eotbSprite.js';
+import { decodePng } from '../systems/textureReplacement.js';   // EOTB-FLIP: the one PNG decoder the world's other PNG billboards take
 
 /** The clip length every table in the bundle ships - five records a
  *  state (the sprite sweep in eotb_billboard.test.js asks for each). */
@@ -127,20 +128,18 @@ export function bodyState(s = {}) {
  *
  * So the three things that need a browser are one injectable dep each,
  * and the pins drive a body with art present and a decode they hold
- * open. This is also the only place an `Image` and an
- * `OffscreenCanvas` are named, which is worth having by itself.
+ * open.
+ *
+ * EOTB-FLIP: the decode is the DROPPED TORCH's door - `decodePng`, then
+ * the one row-order converter - and not a canvas of its own. The canvas
+ * handed the raster top row first and the upload took it as it came, so
+ * the body stood on its head (see `worldOrderColors`). A decode that
+ * fails answers a rejection, as the Image's onerror did.
  */
 export async function decodeSprite(url) {
-  const img = await new Promise((res, rej) => {
-    const i = new Image();
-    i.onload = () => res(i); i.onerror = () => rej(new Error(url));
-    i.src = url;
-  });
-  const c = new OffscreenCanvas(img.width, img.height);
-  const g = c.getContext('2d');
-  g.drawImage(img, 0, 0);
-  const d = g.getImageData(0, 0, img.width, img.height);
-  return { width: img.width, height: img.height, colors: new Uint32Array(d.data.buffer.slice(0)) };
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`${url}: ${res.status}`);
+  return worldOrderColors(await decodePng(new Uint8Array(await res.arrayBuffer())));
 }
 
 export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, decode = decodeSprite, rolls = Math.random } = {}) {

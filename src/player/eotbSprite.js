@@ -27,6 +27,7 @@
 import {
   ORIENTATIONS, stateFor, tableArchive, spriteKey, frameTime, FOOTSTEP_FRAMES,
 } from './eotbBillboard.js';
+import { toColor32 } from '../formats/color32Order.js';   // EOTB-FLIP: the ONE row-order door a PNG crosses on its way to a world billboard
 
 const IN_BROWSER = typeof window !== 'undefined';
 const URLS = IN_BROWSER
@@ -138,9 +139,37 @@ export function tableKeys(table, frame, look = {}) {
 }
 
 /**
- * Decode one sprite to the renderer's upload shape, flipping it when
- * the state asks. Browser-only - the pins drive `flipRow` and the
- * sizing directly, because a decode needs a canvas.
+ * EOTB-FLIP (2026-09-16, Mac: "The character is upside down (classic
+ * sprite)"): THE ROWS, THE RIGHT WAY UP.
+ *
+ * A decoded PNG hands back its raster TOP row first; the port's
+ * billboard batch samples a texture in getColor32 order, row 0 the
+ * picture's BOTTOM (formats/color32Order.js, the whole law in one
+ * place). The body decoded the mod's art through a canvas and uploaded
+ * the raster as it came, so every sprite stood on its head - the exact
+ * class color32Order.js records three times over (AUDIT 62 F26's
+ * seasonal flats, ROAD-H H4's texture pack, HT3's held torch) and this
+ * arc walked into a fourth time, because its decode was its own door
+ * rather than the one the dropped torch already takes
+ * (`toColor32(decodePng(bytes))`).
+ *
+ * This is that door, in the pixel shape the mirror below reads: a
+ * Uint32 a pixel over the bytes toColor32 answered. ONE converter; a
+ * second flip anywhere on this path is how a picture ends up flipped
+ * twice.
+ *
+ * @param {{width:number,height:number,data:Uint8Array}} image a decoded PNG, top row first
+ * @returns {{width:number,height:number,colors:Uint32Array}} the world billboard's order, bottom row first
+ */
+export function worldOrderColors(image) {
+  const { width, height, colors } = toColor32(image);
+  return { width, height, colors: new Uint32Array(colors.buffer, colors.byteOffset, colors.byteLength / 4) };
+}
+
+/**
+ * Mirror one sprite's pixels row by row, for a state that draws
+ * flipped. Order-agnostic: a row is a row whichever way up the picture
+ * is stored. Browser-free - the pins drive it directly.
  */
 export function flipRows(colors, w, h) {
   const out = new Uint32Array(colors.length);

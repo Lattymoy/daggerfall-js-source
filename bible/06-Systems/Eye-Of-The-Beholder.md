@@ -451,6 +451,9 @@ AUDIT-EOTB2 (2026-09-16) below: the integration driven and repaired,
 sixteen more members ported from the settings, and the assembly named
 as the one thing the next slice needs.
 
+EOTB-FLIP (2026-09-16) at the foot: Mac's eye opened, and the first
+thing it saw was the body on its head. The rows, the right way up.
+
 **NOT SEEN ON A GPU.** There is no GL and no ARENA2 in the container
 this was written in. Mac's eye is the gate.
 
@@ -597,3 +600,74 @@ first; a first-frame apply is invisible from first person, so the pin
 starts in third. NOT SEEN ON A GPU - there is still no GL and no ARENA2 in
 the container. Mac's eye is the gate, and the first thing it should
 check is a walk, a swing, a horse and a death, in that order.
+
+## EOTB-FLIP (2026-09-16): the body stood on its head
+
+**Mac: "The character is upside down (classic sprite)."** It was. The
+first thing Mac's eye found, on the first walk behind the shoulder
+that AUDIT-EOTB2 made possible, was the whole sprite drawn feet to the
+sky.
+
+### The root cause, and the class it belongs to
+
+`formats/color32Order.js` holds the port's texel law in one place:
+every texture that reaches the GL is in getColor32 order, row 0 the
+picture's BOTTOM, and the billboard batch samples the quad's top at
+v=1 - the LAST row. A decoded PNG is the other way up: its row 0 is
+the raster's TOP. A picture that enters through a PNG-shaped door
+crosses `toColor32` once, on the way in, and nowhere else.
+
+The body's decode was its own door. `decodeSprite` loaded an `Image`,
+drew it on an `OffscreenCanvas`, and handed the upload
+`getImageData`'s bytes as they came - top row first - to a WORLD
+billboard that reads them bottom-up. Nothing in between flipped, so
+every one of the 3035 sprites was uploaded upside down. The mirror for
+a flipped state (`flipRows`) swaps pixels WITHIN a row and never
+touched the row order, which is why a flipped state was on its head
+exactly as an unflipped one was.
+
+This is the class `color32Order.js` records three times over and this
+arc walked into a fourth time: AUDIT 62 F26's seasonal flats drawn
+vertically mirrored beside the classic ones, ROAD-H H4's texture pack
+with the same gap, HT3's held torch flipped the other way for a screen
+quad. Each time the lesson was the same - the door converts, ONCE,
+through the tree's converter - and each time it was learned by a door
+that had been written before the law was, or without reading it. The
+body's decode dates from EOTB5 and named a canvas as the reason it
+could not be pinned; it never named which way up the canvas answers.
+
+### The fix
+
+The decode is the DROPPED TORCH's door now, to the letter:
+`toColor32(await decodePng(bytes))` (scenes/droppedTorches.js), where
+`decodePng` is `systems/textureReplacement.js`'s decoder that the rest
+of the world's PNG billboards already take. `eotbSprite.js` gains
+`worldOrderColors(image)`: `toColor32` once, then the same bytes viewed
+as a `Uint32Array` a pixel, which is the shape `flipRows` and the
+upload path read. No `Image`, no canvas, no `getImageData` - the three
+browser-only names the file used to carry are gone, and a decode that
+fails answers a rejection as the Image's `onerror` did. `flipRows` is
+documented as what it always was: an order-agnostic mirror.
+
+Nothing else moved. The sprite key, the cache, the clock and the hides
+are as AUDIT-EOTB2 left them; a second flip anywhere on this path is
+how a picture ends up flipped twice, and the pin below is what stops
+one being added.
+
+### The pins
+
+Two, appended to `test/eotb_audit2.test.js` (19 in the file now). A
+2x3 raster with a distinct colour per pixel goes through
+`worldOrderColors` and the pin asserts that pixel 0 of the answer is
+the raster's BOTTOM-left, that the answer is byte-equal to
+`toColor32`'s, and that `flipRows` over it swaps x and leaves the row
+order alone. The second reads `decodeSprite`'s source: `decodePng`
+then the converter, the converter imported from `formats/
+color32Order.js`, and none of the three canvas names anywhere in the
+file. **Mutant: the converter dropped from `worldOrderColors` (the
+raster handed on as it came) fails the first pin and nothing else** -
+which is the right shape for a law that only the picture can see.
+
+Still NOT SEEN ON A GPU from here. Mac's eye is the gate, and it has
+now caught one thing; the walk, the swing, the horse and the death
+remain the order to check.

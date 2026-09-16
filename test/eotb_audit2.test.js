@@ -25,7 +25,8 @@ import {
   attackString, clipFrames, turnsToView, autoToggleSituation, deathTable, ATTACK_STRINGS, TURN_TO_VIEW,
   AUTO_TOGGLE_ROWS, AUTO_TOGGLE, frameTime, FOOTSTEP_FRAMES,
 } from '../src/player/eotbBillboard.js';
-import { spriteFor, SIZE_ON_FOOT, SIZE_RIDING_OR_TRANSFORMED } from '../src/player/eotbSprite.js';
+import { spriteFor, SIZE_ON_FOOT, SIZE_RIDING_OR_TRANSFORMED, worldOrderColors, flipRows } from '../src/player/eotbSprite.js';
+import { toColor32 } from '../src/formats/color32Order.js';
 import {
   mwViewFrame, mwViewFootstep, mwViewHides, mwViewTransition, mwViewLoadPose, mwViewPendingClicks,
   setEotbBodyReady, setEotbDrawBody, setEotbPlayerState, eotbLane,
@@ -552,4 +553,38 @@ test('AUDIT-EOTB2: every [SETTINGS] law is marked in the module that carries it,
   assert.match(page, /AUDIT-EOTB2/);
   assert.match(page, /not in the tree/i, 'the page says where the assembly is not');
   assert.match(page, /\[SETTINGS\]/, 'and what the sixteen were read from');
+});
+
+// ─────────────────────────────────────────────────────────────────
+// EOTB-FLIP (2026-09-16, Mac, off a GPU at last: "The character is
+// upside down (classic sprite)")
+// ─────────────────────────────────────────────────────────────────
+
+test('EOTB-FLIP: a decoded PNG is turned into the world billboard\'s row order ONCE, through the tree\'s one converter - the top row lands last', () => {
+  // a 2x3 raster, top row first, as a PNG decodes: each pixel is its (x, y)
+  const w = 2, h = 3;
+  const data = new Uint8Array(w * h * 4);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const i = (y * w + x) * 4; data[i] = x; data[i + 1] = y; data[i + 2] = 0; data[i + 3] = 255; }
+  const out = worldOrderColors({ width: w, height: h, data });
+  assert.equal(out.width, w); assert.equal(out.height, h);
+  assert.ok(out.colors instanceof Uint32Array, 'a Uint32 a pixel - the shape the mirror reads');
+  assert.equal(out.colors.length, w * h);
+  const px = (i) => [out.colors[i] & 0xff, (out.colors[i] >> 8) & 0xff];   // little-endian RGBA: r, g = x, y
+  assert.deepEqual(px(0), [0, 2], 'row 0 of the upload is the picture\'s BOTTOM row (y = 2)');
+  assert.deepEqual(px(1), [1, 2]);
+  assert.deepEqual(px(w * (h - 1)), [0, 0], 'and the raster\'s top row is last');
+  // the mirror still works on the reordered rows, and only across x
+  const m = flipRows(out.colors, w, h);
+  assert.deepEqual([m[0] & 0xff, (m[0] >> 8) & 0xff], [1, 2], 'mirrored: x swapped, y kept');
+  // and it IS the tree's one converter, not a second flip
+  assert.deepEqual([...out.colors], [...new Uint32Array(toColor32({ width: w, height: h, data }).colors.buffer)], 'toColor32, byte for byte');
+});
+
+test('EOTB-FLIP: the body\'s decode is the dropped torch\'s door - decodePng, then the converter - and never a canvas of its own', () => {
+  const body = rd('src/player/eotbBody.js');
+  assert.match(body, /export async function decodeSprite\(url\) \{\s*const res = await fetch\(url\);\s*if \(!res\.ok\) throw new Error\([^)]*\);\s*return worldOrderColors\(await decodePng\(new Uint8Array\(await res\.arrayBuffer\(\)\)\)\);\s*\}/,
+    'fetch, decodePng, worldOrderColors - the same three the dropped torch takes');
+  assert.ok(!/getImageData|new Image\(|OffscreenCanvas/.test(body), 'no canvas door of its own');
+  assert.match(rd('src/player/eotbSprite.js'), /import \{ toColor32 \} from '\.\.\/formats\/color32Order\.js';/, 'the converter is the tree\'s');
+  assert.match(rd('src/scenes/droppedTorches.js'), /return toColor32\(await decodePng\(new Uint8Array\(await res\.arrayBuffer\(\)\)\)\);/, 'and the torch still takes it too');
 });
