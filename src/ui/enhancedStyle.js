@@ -673,7 +673,7 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 /* INV1: the drag's three states. The row being carried goes quiet, the
    row it would land before takes a line above it, and the body lights
    its whole frame - a drop on the map is one target, not twelve. */
-.itemrow.dragging { opacity: 0.4; }
+.itemrow.dragging, .wornrow.dragging { opacity: 0.4; }
 /* AUDIT INV1 Fb: the drag is pointer-driven, so the browser must not
    also long-press-select the row out from under it on a touch.
    AUDIT INV2 A1: BUT THE LIST MUST STILL SCROLL. Under .pack-shell every
@@ -685,8 +685,18 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    does .draglock take the pan back for the rest of the gesture. */
 .itemrow { touch-action: pan-y; -webkit-user-select: none; user-select: none; }
 body.draglock .itemrow, body.draglock .packlists { touch-action: none; }
+/* MAC-M2 (Mac: "hold to drag ... doesn't work when trying to take items
+   off your character"): THE BODY'S PANELS TAKE THE SAME GESTURE, so
+   they take the same two rules - a hold must not also long-press-select
+   the slot name out from under the finger, and once the hold has armed,
+   .draglock takes the pan back here too. */
+.wornrow { touch-action: pan-y; -webkit-user-select: none; user-select: none; }
+body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
 .itemrow.dragover { box-shadow: inset 0 2px 0 var(--brass); }
 .wornmap.dragover { outline: 2px solid var(--brass); outline-offset: -2px; }
+/* MAC-M2: and the other direction lights the DOCK - carrying a worn
+   piece into the pack is one target, the way the map is one. */
+.pack-dock.dragover { outline: 2px solid var(--brass); outline-offset: -2px; }
 /* INV2 (Mac: "a detailed click and drag that literally drags the icon"):
    THE GHOST. The item's own tile under the pointer, with the act a
    release would perform written beneath it.

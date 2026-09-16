@@ -29,6 +29,7 @@ import { isPotion, isPotionRecipe, isParchment, TEMPLATES } from './useItem.js';
 import { expandLetterSignoff } from './quest/questMacros.js';   // ResolveItemLongName's quest-letter arm (ItemHelper.cs:335-348)
 import { itemArmorValue, isShieldTemplate } from './armorMaterials.js';
 import { weaponMaterialModifier, weaponMinDamage, weaponMaxDamage, WEAPON_MATERIALS } from '../characters/weapons.js';
+import { getItemHands, ITEM_HANDS } from '../characters/equipTable.js';   // MAC-M2: GetItemHands, the one home
 import { ARMOR_MATERIAL } from './armorMaterials.js';
 import { getInt } from './settings.js';   // AUDIT 28 W3: HelmAndShieldMaterialDisplay
 import { srand, rand, randomRangeInclusive } from '../formats/dfRandom.js';   // the painting identity's whole PRNG
@@ -231,6 +232,39 @@ export function armourModString(item) {
 export const itemDamageLine = (item) => (
   item?.group === 'Weapons' && item.templateIndex !== TEMPLATES.Arrow
     ? weaponDamageString(item) : null);
+
+/**
+ * MAC-M2 (Mac: "The Tooltip of weapons should also show if the weapon
+ * is 1h or 2h"): THE OTHER THING A PLAYER PICKS A WEAPON BY, for the
+ * same surface MAC-M1 gave the damage to.
+ *
+ * NO NEW TABLE. Which weapons take both hands is `getItemHands`
+ * (characters/equipTable.js), the port's verbatim GetItemHands and its
+ * one home - the equip table routes by it, the paperdoll's record pick
+ * reads it, Weapon Widget's mirror rows and Handheld Torches' hand law
+ * both ask it. A second list here would be a second chance to disagree
+ * with the hand the item actually lands in, which is precisely what the
+ * row is telling the player about.
+ *
+ * So the BOW answers whatever the table will do with it: DFU's
+ * `BowLeftHandWithSwitching` (ItemEquipTable.cs:633-635) makes a bow
+ * LeftOnly when it is on and Both when it is off, and the card says
+ * one-handed or two-handed to match. A card that read a static table
+ * would tell a player their long bow needs both hands while the equip
+ * table was putting it in the off hand beside a sword.
+ *
+ * Weapons only, as Mac asked. A shield is ItemHands.LeftOnly and this
+ * would happily say "One-handed" about one, but the number a shield is
+ * FOR is its armour rating and that row already draws; the classic
+ * popup says nothing about hands for either, and its records are DFU's
+ * (THE NATIVE-WINDOW RULE), so this row is the enhanced card's alone.
+ *
+ * @returns {string|null} the line to show, or null if this item has none
+ */
+export const itemHandsLine = (item) => (
+  item?.group === 'Weapons' && item.templateIndex !== TEMPLATES.Arrow
+    ? (getItemHands(item) === ITEM_HANDS.Both ? 'Two-handed' : 'One-handed')
+    : null);
 
 /** The armour rating's other half. DFU shows `%mod` on both armour
  *  records (1000 and 1014), so there is no template to exclude - every

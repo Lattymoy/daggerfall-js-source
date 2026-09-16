@@ -553,7 +553,7 @@ export function createWorldModes(host) {
   // whichever rig owns the frame draws it - which indoors is this one.
   const interiorWeapon = createWeaponRig({
     activateHeld: () => held(keys, 'ActivateCenterObject') || !!host.activateDown?.(),   // AUDIT 62 F8 (review): the finger's press too - it reaches this host ONLY through activateDown, never through `keys`   // AUDIT 28 W12: the drawn bow's un-draw key
-    spellArmed: () => magic?.spellArmed() ?? false,   // M2
+    spellArmed: () => magic?.spellArmed() ?? false, abortSpell: () => magic?.abortReadySpell(),   // M2; MAC-O1: WeaponManager.Update:251 - the ReadyWeapon key puts a readied spell away and draws
     renderer, canvas, fetchBytes, palette, audio, entity: playerEntity,
     collider: () => player.collider ?? null, missEffect: (k, p, o) => interiorHitEffects.showMissEffect(k, p, o),   // WW1: the weapon widget's environment recoil, and DoClang/DoThud on the interior pool
     keyDown: (code) => keys.has(code), torches: () => interiorTorches,   // HT1
@@ -5850,8 +5850,8 @@ export function createWorldModes(host) {
     // C9: per-mode routing (the old unconditional dungeonCtx read
     // CRASHED on Z inside a building - dungeonCtx is null there).
     if (zNow && !zPrev) {
-      if (mode === 'dungeon') dungeonCtx?.toggleSheath?.();
-      else interiorWeapon.toggleSheath();
+      if (mode === 'dungeon') dungeonCtx?.readyWeapon?.();   // MAC-O1: the KEY takes WeaponManager.Update's arm (:229-269) - the bow's cooldown, `!isAttacking`, and a readied spell put away and the weapon drawn; HUDLarge's panel keeps the raw ToggleSheath
+      else interiorWeapon.readyWeapon();
     }
     zPrev = zNow;
 // a12: SwitchHand (H) - ActionComplete's RELEASE edge

@@ -282,7 +282,7 @@ import { cellOf } from '../render/volumetricClouds.js';   // WEATHER2c: the fiel
 import { classicSaveToSnapshot, takePendingClassicSave, peekPendingClassicSave } from '../systems/classicSave.js';   // SAV3: the classic-save import arm
 import { readTokens as readRscTokens, RSC } from '../formats/textRsc.js';   // SAV3: the classic rumors' token payloads
 import { lookScale, lookInvert, keyboardLookRate } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
-import { LookFilter } from '../player/lookFilter.js';   // AUDIT 28 W7: MouseLookSmoothingFactor
+import { LookFilter, swingSuppressesLook } from '../player/lookFilter.js';   // AUDIT 28 W7: MouseLookSmoothingFactor; MAC-O2: PlayerMouseLook.Update's swing suppression (:246-248)
 import { MoveAxes } from '../player/moveAxes.js';   // AUDIT 28 W8: MovementAcceleration
 import { CameraRecoiler } from '../player/cameraRecoiler.js';   // AUDIT 28 W9: CameraRecoilStrength
 import { HeadBobber } from '../player/headBobber.js';   // AUDIT 28 W10: HeadBobbing
@@ -2576,7 +2576,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // only); bobOffset[1] is the raw vertical, un-rotated.
       bob: [0, player.bobOffset ? player.bobOffset[1] : 0],
       move: motionBagOf(player) }),   // MW-D26: the movement-settings vector, the reference's own selection source; MW-D39 added the jump-state inputs; WW2: the one bag (a partial copy left the bob's idle gate unsent)
-    spellArmed: () => magic.spellArmed(),   // M2
+    spellArmed: () => magic.spellArmed(), abortSpell: () => magic.abortReadySpell(),   // M2; MAC-O1: WeaponManager.Update:251 - the ReadyWeapon key puts a readied spell away and draws
   });
   autoBuildArms(playerEntity);   // MWA1: a continuing session's arms, at boot (a new character's come after the wizard, a load's after the restore)
   // M2: SPELLCASTING ABOVE GROUND - exterior.js's twin note applies.
@@ -7712,7 +7712,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // camera is read.
     gamepad?.tick(dt);   // GP1: the pad's frame - its keys, its stick, its look - before the paused gate, so a window still sees Back and a lifted thumb still releases
     if (!gamePaused()) {
-      if ((rightHeld || swipeHeld) && walkMode && modeNow() === 'exterior' && !weaponRig.playerWeapon.machine?.isBow) lookFilter.settle();
+      if (swingSuppressesLook({ swingHeld: rightHeld || swipeHeld, weaponIsBow: weaponRig.playerWeapon.machine?.isBow }) && walkMode && modeNow() === 'exterior') lookFilter.settle();   // MAC-O2: the law is lookFilter.js's one seam (:246-248, WeaponSwingMode included); `walkMode` and the mode are this host's own - the mode host owns another screen weapon
       else lookFilter.tick(dt, cam);
       // FIX-F: the KEYBOARD look - TurnLeft/TurnRight/LookUp/LookDown
       // (InputManager.cs:1854-1865), one look unit a frame in DFU, paid
@@ -8005,7 +8005,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         latch.crouch = crouchHeld;
         // C9: ReadyWeapon (Z) - the sheathe toggle, host parity.
         const zNowW = held(keys, 'ReadyWeapon');
-        if (zNowW && !zPrevW) weaponRig.toggleSheath();
+        if (zNowW && !zPrevW) weaponRig.readyWeapon();   // MAC-O1: the KEY takes WeaponManager.Update's arm (:229-269), not HUDLarge's raw ToggleSheath
         zPrevW = zNowW;
         // a12: SwitchHand (H) - WeaponManager.cs:272 reads it through
         // ActionComplete, the RELEASE edge, so the latch is inverted

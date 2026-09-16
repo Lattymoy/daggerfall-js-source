@@ -352,7 +352,7 @@ test('AUDIT-EOTB F2b: the weapon rig loads the settings and hands the body the s
   // them - beside `fpArm.attach`, where the body already attaches.
   const rig = readFileSync(join(root, 'src/combat/weaponRig.js'), 'utf8');
   assert.match(rig, /eotbCamera\.loadSettings\(modSetting\)/, 'the camera is given the player’s settings reader');
-  assert.match(rig, /eotbBody\.attach\(renderer, \(\) => \(\{/, 'and the state only this rig can answer goes in through the body');
+  assert.match(rig, /const bindBody = \(\) => eotbBody\.attach\(renderer, eotbState\);/, 'and the state only this rig can answer goes in through the body');
   assert.match(rig, /weaponReady: !playerWeapon\.sheathed \|\| spellArmed\(\)/,
     'weaponReady is the IL’s own test: not sheathed, or a spell readied');
 

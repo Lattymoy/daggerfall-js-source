@@ -58,7 +58,7 @@ import { buildDungeonContext } from './dungeonContext.js';
 import { setAmbientTextHost, tickAmbientText } from '../systems/ambientText.js';   // AT2: the standalone dungeon scene is the outermost motor here, so it claims the mod
 import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';   // U14: the overlay pointer seam
 import { lookScale, lookInvert, keyboardLookRate } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
-import { LookFilter } from '../player/lookFilter.js';   // AUDIT 28 W7: MouseLookSmoothingFactor
+import { LookFilter, swingSuppressesLook } from '../player/lookFilter.js';   // AUDIT 28 W7: MouseLookSmoothingFactor; MAC-O2: PlayerMouseLook.Update's swing suppression (:246-248)
 import { MoveAxes } from '../player/moveAxes.js';   // AUDIT 28 W8: MovementAcceleration
 import { CameraRecoiler } from '../player/cameraRecoiler.js';   // AUDIT 28 W9: CameraRecoilStrength
 import { HeadBobber } from '../player/headBobber.js';   // AUDIT 28 W10: HeadBobbing
@@ -651,7 +651,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // camera is read.
     gamepad?.tick(dt);   // GP1: the pad's frame - its keys, its stick, its look - before the paused gate, so a window still sees Back and a lifted thumb still releases
     if (!(ctx.uiOverlayActive)) {
-      if ((rightHeld || swipeHeld) && walkMode && !ctx.weaponIsBow) lookFilter.settle();
+      if (swingSuppressesLook({ swingHeld: rightHeld || swipeHeld, weaponIsBow: ctx.weaponIsBow }) && walkMode) lookFilter.settle();   // MAC-O2: the law is lookFilter.js's one seam (:246-248, WeaponSwingMode included); `walkMode` is this host's own
       else lookFilter.tick(dt, cam);
       // FIX-F: the KEYBOARD look - TurnLeft/TurnRight/LookUp/LookDown
       // (InputManager.cs:1854-1865), one look unit a frame in DFU, paid
@@ -880,7 +880,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       if (_act.cast) ctx.playerAttackInput(0, 0, true);   // the armed click casts (dungeonContext:1827); firePending sends it down the live look
       const useHeld = keys.has('KeyE');   // I2 departure, kept beside A8's Mouse0: DFU binds E to AbortSpell
       const zNow = held(keys, 'ReadyWeapon');   // sheathe toggle (audit 2026-08-17)
-      if (zNow && !zPrev) ctx.toggleSheath?.();
+      if (zNow && !zPrev) ctx.readyWeapon?.();   // MAC-O1: the KEY takes WeaponManager.Update's arm (:229-269), not HUDLarge's raw ToggleSheath
       zPrev = zNow;
 // a12: SwitchHand (H) - ActionComplete's RELEASE edge
       // (WeaponManager.cs:272), so the latch is inverted against Z's.

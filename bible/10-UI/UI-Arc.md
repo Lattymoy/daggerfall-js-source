@@ -7518,9 +7518,13 @@ lighter answer possible. A container now opens THAT frame and nothing
 else - and the pack's window is NOT BUILT, not built-and-hidden,
 because a hidden window still runs layout and would have eaten the
 tooltip's anchor. One frame owns the tooltip and the click-away
-listener, whichever is showing. The way back is a PACK button on the
+listener, whichever is showing. The way back was a PACK button on the
 loot frame, present only while the pack is closed (a button that opens
-what is already open is PX14's drawn-door-opening-nothing bug). Every
+what is already open is PX14's drawn-door-opening-nothing bug) -
+**REMOVED BY MAC, 2026-09-16** (MAC-M2 B, at the end of this page): a
+loot session is drawn or not drawn and never switches, and the way to
+the pack is to close the pile and press the key that has always opened
+it. Every
 law behind the glass is untouched - take, stow, the remote model, the
 wagon, the gold popup - because this slice changes which frames are
 DRAWN.
@@ -7548,8 +7552,9 @@ Pins: 4 in enhancedInventory.test.js (the six-a-side map and the auto
 column; the unframed 4x sprite and its aspect-locked cell, with
 110x184 read from paperDoll.js rather than typed; the name in the bar,
 the count gone and the name line back; and the loot frame alone with
-the pack unbuilt, the frame owning the tooltip, the Pack button
-conditional, and the transfer ladder still present). The U59 doll pin
+the pack unbuilt, the frame owning the tooltip, the Pack button -
+INVERTED by MAC-M2 B, which asserts no such button exists anywhere in
+the module - and the transfer ladder still present). The U59 doll pin
 follows the 4x. 8 mutations, 8 dead. Verified in a real browser at
 1440x900 with a synthetic paperdoll (no ARENA2 here) and with four
 pieces worn, both modes shot.
@@ -13373,3 +13378,163 @@ including all three lens C proved survived.
   a decision, not a fix.
 - **B-F8**: a Map escapes into a reward tray - a `planStore` rung-order
   defect above the `chooseOne` rung, older than this arc.
+
+## MAC-M2 A - THE BODY DRAGS TOO (2026-09-16, Mac)
+
+*"Hold to drag enhanced functionality doesn't work when trying to take
+items off your character."*
+
+It did not, and the whole of the reason is one line. INV1 hung the
+gesture on the pack's rows - `itemRow`'s `if (from === 'local')
+dragFrom(row, item)` (`ui/enhancedInventory.js:1679`) - and made the
+body a drop TARGET, with `equippedList` saying so in its own comment:
+*"the body is the equip target - `dragFrom`'s pointerup finds it by hit
+test, so the map needs no handler of its own"*. True for the direction
+INV1 shipped, and it made the other direction unreachable: a filled
+slot panel carried an `onclick` and nothing else, so a press on the doll
+started **no drag session at all**. No ghost, no window listeners,
+nothing to release. That is not a refusal a player can read; it is a
+dead hold, which reads as a broken feature rather than a forbidden one.
+
+**A filled panel is a drag source now**, on the same hold and the same
+4px threshold a pack row takes, carrying the piece the panel SHOWS (a
+family cycles on the click, so what is on top is what the hand gets).
+
+### And it comes off into the pack, and nowhere else
+
+The second half was a law, not a handler. `dropIntent`'s ladder answers
+for a pack row, and every rung of it is wrong for a worn one: the
+`.pack-win` rung says "never mind", and everything past the windows is
+`stow`. **DFU's local list IS `FilterLocalItems`, which never shows an
+equipped item**, so there is no transfer law in the port that can reach
+one - the card beside the item already says this in its own words
+(*"WORN ITEMS HAVE NO STOW ... the way out is Take off"*). A worn
+cuirass released over the world would have landed on the ground AND
+stayed in the equip table.
+
+So the intent learns which SIDE the gesture started on - a WORD on the
+drag session, not a node, so AUDIT INV2 A-F3 stands and the carried
+thing is still identified by item - and a `'worn'` source has exactly
+one target: `.pack-dock`, which lights as ONE target the way the map
+does for the other direction. Everywhere else is the same "never mind"
+the pack's chrome gives.
+
+**It could not be `isEquipped`.** The held light (HT5) is a row on the
+body with no `equipSlot` at all, so the item cannot answer "did this
+come off the map"; the drag session can.
+
+### The same door, both ways
+
+The release calls `dropOnBody`, which is INV1's own function reading
+`localPrimaryAct` - Take off for a worn piece, Douse for the light. One
+function for both directions, so they cannot answer differently, and
+**INV1's closed act set is still three**: `dropOnBody`, `reorderPack`,
+`stow`.
+
+### Two rules that came with the gesture
+
+- **The click still consumes the latch.** AUDIT INV2 A-F6's latch is
+  taken by the list's rows and was not taken here, so every
+  unequip-by-drag also CYCLED the family it had just emptied.
+- **The latch does not outlive the pane.** A session that ended on a
+  release no click ever followed (one off the panel lands on the body,
+  not on a row) handed the next pane a latch that ate its first pick.
+  `mountEnhancedInventory` clears it.
+
+And the stylesheet takes the body's panels into the two rules the list's
+rows already had: `touch-action: pan-y` plus no long-press selection, and
+`body.draglock` taking the pan back once the hold has armed.
+
+### Pinned
+
+Three DRIVEN tests in `test/enhancedInventory.test.js`, through
+`test/invdrag.mjs`: a hold on a real worn panel really picks the piece
+up, the ghost says *Take off*, the dock lights, and the release takes it
+off into the bag with nothing on the ground; the world and the map are
+both "never mind" and the piece stays worn; and the plain click is
+untouched - it raises the card, the card's Take off still works, and a
+release that dragged is never also a pick. **5 mutations, 5 dead**,
+including the shipped bug itself (the panel not being a source) and the
+one that would let a worn piece reach the floor.
+
+**SEEN RUNNING**, which is the standard AUDIT INV2 set for this pane
+and the reason it set it. `tools/macM2Probe.mjs`, 18/18 in Chromium at
+1440x900: a real mouse presses a real slot panel, the ghost appears on
+the body, it reads *nothing* while still over the map (the cancel
+gesture) and *Take off* over the dock, the dock outlines, the release
+takes the piece off, it is in the bag and back on the Armor page, and
+the plain click still raises the card whose Take off still works.
+
+It is its own probe rather than a block inside
+`tools/enhancedPackProbe.mjs`, and that is a finding: **the pack probe
+has been dead since PX19e**. It hunts the 25 `.node` dots the map
+replaced with eleven `.wornrow` family panels, so it fails four checks
+and then times out on `.node.filled`. Older than this slice by two
+weeks and NOT repaired here - recorded so the next reader of a green
+`npm run check` does not think that probe is watching this screen.
+
+## MAC-M2 B - THE LOOT WINDOW IS FOR TAKING (2026-09-16, Mac)
+
+*"Remove the gold and pack buttons from the looting menu."*
+
+The loot frame's action bar carried three controls: **Wagon** (only
+with a cart in the bag), **Gold**, and **Pack**. The last two are gone
+from a loot session. The wagon stays - it is a real destination for
+what you just took, and its two refusals are `inventorySession`'s law.
+
+### Neither one is DFU's, in this frame
+
+`DaggerfallInventoryWindow` has ONE parchment with both lists on it, so
+its `goldButton` (`:47` rect, `:515-517` wired) sits on the PLAYER's own
+panel - a control of the pack, drawn beside the pack's own list, with
+the remote side of the same window happening to be a corpse. There is no
+"Pack" button anywhere in the reference at all: PX20b minted that one so
+the port's loot-ONLY frame, which DFU does not have, could get back to
+the pack it had replaced.
+
+And the Gold button on a body does the thing its shape promises.
+`dropGold` adds the minted stack to `remoteTarget` (`ui/enhancedInventory.js`'s
+`dropGold`), and in a loot session that is the container - so the field's
+own verb reads "Drop" and the act puts the purse INTO the corpse. Nobody
+opens a body to fund it.
+
+### What it costs, and where both live now
+
+Both are still reachable in the one place they read as themselves: the
+pack. Escape or the inventory key closes the pile, the key opens the
+pack, and the gold field is on it with the ground or the wagon as the
+remote side.
+
+The honest cost is PX20b's convenience: **a loot session can no longer
+open the pack at all.** `packOpen` was seeded `!d.loot` and the Pack
+button was its only other setter, so the flag is now decided on the way
+in and never moves. That is Mac's call, recorded rather than argued
+with, and PX20b's sentence in this page has been retired to match rather
+than left standing beside it.
+
+### The gate is the SESSION, not the frame
+
+`deps.loot` is what opened this window, and it is what the two buttons
+now read. A pack opened on the inventory key keeps its Gold button over
+the ground, over the wagon and over a reward tray exactly as it had it -
+this changes the loot session alone. The Pack button is deleted outright
+rather than gated, because `!packOpen` was only ever true in a loot
+session: gating it would have left a control no path can reach, which is
+the dead decoration U53 deleted a "worn" badge for.
+
+### Pinned
+
+Three DRIVEN tests in `test/enhancedInventory.test.js`: a loot session's
+bar is EMPTY with the gold field unreachable; a loot session with a cart
+draws `['Wagon']` and only that; and a normal pack drops something on
+the ground and its ground frame still carries Gold. PX20b's own pin is
+INVERTED rather than deleted - it now asserts no `'Pack'` button exists
+in the module and that `packOpen` has exactly two assignment sites -
+because a removed pin stops catching the drift back. **4 mutations, 4
+dead**: Gold back on the loot bar, Pack back on the loot bar, the gate
+inverted onto the normal pack, and the wagon removed with them.
+
+**Seen running** in the same probe (`tools/macM2Probe.mjs`): a loot
+session really mounts as the loot frame alone with an empty bar, and a
+pack session that drops something on the ground really draws `Gold` on
+its ground frame and no `Pack`.
