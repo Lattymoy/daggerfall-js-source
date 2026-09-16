@@ -1652,7 +1652,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     camera: () => ({ pos: player.eyeAt(), yaw: cam.yaw, pitch: cam.pitch, sneaking: !!player.isSneaking, feet: player.pos, climbing: !!player.climb?.isClimbing,   // HT1
       bob: [0, player.bobOffset ? player.bobOffset[1] : 0],   // IG1: the bob's vertical feeds the first-person offset
       move: motionBagOf(player) }),   // MW-D26: the movement-settings vector, the reference's own selection source; MW-D39 added the jump-state inputs; WW2: the one bag (a partial copy left the bob's idle gate unsent)
-    spellArmed: () => magic.spellArmed(),   // M2: HasReadySpell hides the weapon
+    spellArmed: () => magic.spellArmed(), abortSpell: () => magic.abortReadySpell(),   // M2: HasReadySpell hides the weapon; MAC-O1: WeaponManager.Update:251 - the key puts a readied spell away and draws
   });
   autoBuildArms(playerEntity);   // MWA1: the arms at boot, when the switch is on and the archives are attached
   // M2 (the AUDIT 23 hosts-2 priority row): SPELLCASTING ABOVE GROUND.
@@ -3859,7 +3859,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       latch.crouch = crouchHeld;
       // C9: ReadyWeapon (Z) - the sheathe toggle, host parity.
       const zNowW = held(keys, 'ReadyWeapon');
-      if (zNowW && !zPrevW) weaponRig.toggleSheath();
+      if (zNowW && !zPrevW) weaponRig.readyWeapon();   // MAC-O1: the KEY takes WeaponManager.Update's arm (:229-269), not HUDLarge's raw ToggleSheath
       zPrevW = zNowW;
       // a12: SwitchHand (H) - ActionComplete's RELEASE edge
       // (WeaponManager.cs:272), so the latch is inverted against Z's.

@@ -2576,7 +2576,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // only); bobOffset[1] is the raw vertical, un-rotated.
       bob: [0, player.bobOffset ? player.bobOffset[1] : 0],
       move: motionBagOf(player) }),   // MW-D26: the movement-settings vector, the reference's own selection source; MW-D39 added the jump-state inputs; WW2: the one bag (a partial copy left the bob's idle gate unsent)
-    spellArmed: () => magic.spellArmed(),   // M2
+    spellArmed: () => magic.spellArmed(), abortSpell: () => magic.abortReadySpell(),   // M2; MAC-O1: WeaponManager.Update:251 - the ReadyWeapon key puts a readied spell away and draws
   });
   autoBuildArms(playerEntity);   // MWA1: a continuing session's arms, at boot (a new character's come after the wizard, a load's after the restore)
   // M2: SPELLCASTING ABOVE GROUND - exterior.js's twin note applies.
@@ -8005,7 +8005,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         latch.crouch = crouchHeld;
         // C9: ReadyWeapon (Z) - the sheathe toggle, host parity.
         const zNowW = held(keys, 'ReadyWeapon');
-        if (zNowW && !zPrevW) weaponRig.toggleSheath();
+        if (zNowW && !zPrevW) weaponRig.readyWeapon();   // MAC-O1: the KEY takes WeaponManager.Update's arm (:229-269), not HUDLarge's raw ToggleSheath
         zPrevW = zNowW;
         // a12: SwitchHand (H) - WeaponManager.cs:272 reads it through
         // ActionComplete, the RELEASE edge, so the latch is inverted

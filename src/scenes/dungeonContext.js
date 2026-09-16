@@ -2581,7 +2581,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     camera: () => (_fpEye ? { pos: _fpEye, yaw: _fpYaw, pitch: _fpPitch, feet: _fpFeet, climbing: !!_fpMove?.climbing, sneaking: _fpSneaking, move: _fpMove, bob: [0, _fpBobY] } : null),   // HT1: feet and the climb   // MW-D26; IG1: the bob rides too
     bindWorn: opts.playerWeapon !== 'bow',   // AUDIT 17e F17: the ?weapon=bow debug flag keeps its scripted weapon
     say: (l) => hudText.add(l),
-    spellArmed: () => magic.spellArmed(),
+    spellArmed: () => magic.spellArmed(), abortSpell: () => magic.abortReadySpell(),   // MAC-O1: WeaponManager.Update:251 - the ReadyWeapon key puts a readied spell away and draws
   });
   const playerWeapon = weaponRig.playerWeapon;   // the dungeon-side combat consumers read it
   if (opts.playerWeapon === 'bow') {
@@ -5231,7 +5231,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     weaponRig: () => weaponRig,   // AUDIT WORLD C1: the rig the player's hands are in underground, for the pose's arm
     readiedSpell: () => magic.readied(),   // ROAD-Ar: PlayerEffectManager.ReadySpell - the gate needs its TargetType for the ByTouch exception (PlayerActivate.cs:250-258)
     toggleSheath: weaponRig.toggleSheath,
-    switchHand: weaponRig.switchHand,   // a12: SwitchHand (H) - the same one door as the sheathe toggle
+    switchHand: weaponRig.switchHand, readyWeapon: weaponRig.readyWeapon,   // a12: SwitchHand (H) - the same one door as the sheathe toggle; MAC-O1: and the ReadyWeapon KEY's own door (WeaponManager.Update:229-269), beside the panel's raw ToggleSheath above
     // S24 probe seam: drive a real spell record onto the player
     // through the host's own absorption path (the same function the
     // foe-cast and missile-impact sites call).

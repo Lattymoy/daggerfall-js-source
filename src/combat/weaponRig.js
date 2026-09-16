@@ -137,9 +137,15 @@ export async function autoBuildArms(entity, { wanted = () => getPref('mwArms'), 
  *                     is unreached,
  *   spellArmed()    - optional: WeaponManager's HasReadySpell leg
  *                     (hosts without casting omit it),
+ *   abortSpell()    - MAC-O1: EntityEffectManager.AbortReadySpell, the
+ *                     other half of that leg. WeaponManager.Update
+ *                     :251 calls it on the ReadyWeapon key, which is
+ *                     the ONE place in DFU where the weapon key
+ *                     touches the spell; a host that readies spells
+ *                     must hand it over or Z cannot put one away,
  * }
  */
-export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, entity, camera = null, say = () => {}, spellArmed = () => false, bindWorn = true, activateHeld = () => false, envHit = null, missEffect = null, collider = null, keyDown = null, torches = () => null }) {   // HT1: the hosts' raw key set and their dropped-torch pool   // AUDIT 28 W12: HasAction(ActivateCenterObject) - the drawn bow's un-draw; WW1: the widget's recoil doors
+export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, entity, camera = null, say = () => {}, spellArmed = () => false, abortSpell = () => {}, bindWorn = true, activateHeld = () => false, envHit = null, missEffect = null, collider = null, keyDown = null, torches = () => null }) {   // HT1: the hosts' raw key set and their dropped-torch pool   // AUDIT 28 W12: HasAction(ActivateCenterObject) - the drawn bow's un-draw; WW1: the widget's recoil doors
   const playerWeapon = new PlayerWeapon({});
   // WW1: WEAPON WIDGET. One clone per rig, as DFU has one FPSWeaponClone
   // beside its one FPSWeapon; it reads the machine every frame and draws
@@ -443,6 +449,18 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     fpArm.attack(strike, { hold: m.isBow && m.state === 'StrikeUp' });
   }
 
+  /** WeaponManager.ToggleSheath (:1115-1128), the flip both doors below
+   *  end in - the panel's raw one and the key's arm. It is ONE function
+   *  because DFU has one member: the draw clip is FPSWeapon's, played
+   *  only on the UNsheathe of a real weapon. */
+  function rawToggleSheath() {
+    syncWorn();
+    // V4: the claws draw silently (DrawWeaponSound = None, :338)
+    if (playerWeapon.toggleSheath() && !playerWeapon.weapon?.werecreatureClaws) {
+      audio.playOneShot(equipSoundFor(playerWeapon.weapon) ?? SOUND.DrawWeapon);
+    }
+  }
+
   /** FPSWeapon.UpdateWeapon's bow guard: an UNsheathed bow with zero
    *  Arrows auto-sheathes with the classic line. */
   function bowArrowGuard() {
@@ -499,19 +517,67 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       const strike = playerWeapon.clickAttack();
       if (strike) fpAttack(strike);
     },
-    /** ToggleSheath + the draw sound on unsheathing a real weapon.
+    /** WeaponManager.ToggleSheath (:1115-1128) RAW, which is what the
+     *  LARGE HUD's sheath panel calls - HUDLarge.cs:477-483 reaches the
+     *  singleton directly and takes none of Update's refusals, so this
+     *  door must not grow them either (the KEY's door is readyWeapon
+     *  below).
      *  AUDIT 26 F023: the clip is the WEAPON's own GetEquipSound
      *  (WeaponManager.SetWeapon :780 overwrites DrawWeaponSound with
      *  it on every applied weapon, and FPSWeapon.ToggleSheath :295
      *  plays that field) - eight clips by weapon type, not the 78
      *  default, which no applied weapon ever reaches. A weapon with
      *  no equip clip of its own falls back to 78. */
-    toggleSheath() {
-      syncWorn();
-      // V4: the claws draw silently (DrawWeaponSound = None, :338)
-      if (playerWeapon.toggleSheath() && !playerWeapon.weapon?.werecreatureClaws) {
-        audio.playOneShot(equipSoundFor(playerWeapon.weapon) ?? SOUND.DrawWeapon);
+    toggleSheath() { rawToggleSheath(); },
+    /**
+     * MAC-O1 - THE READYWEAPON KEY'S OWN DOOR. WeaponManager.Update
+     * :229-269, the arm the four hosts' Z poll is a translation of.
+     * Every host called `toggleSheath` for it, which is HUDLarge's
+     * door, so three of Update's refusals and its ONE action were
+     * missing from the key entirely:
+     *
+     *   :230-233  `if (Time.time < cooldownTime) return;` - the bow's
+     *             cooldown returns before the sheath block, so Z is
+     *             dead until the shot's recovery is over.
+     *   :245-265  A READIED SPELL OWNS THE KEY. With HasReadySpell or
+     *             PlayerSpellCasting.IsPlayingAnim up, Z does NOT
+     *             toggle: it AbortReadySpell()s, sheathes if drawn,
+     *             and sets doToggleSheath, so :268-269 draws - the
+     *             spell goes away and the weapon comes out, with the
+     *             draw clip, in one press. The port flipped the flag
+     *             instead, while `shown()`'s own HasReadySpell leg
+     *             (:247, above) kept the sprite hidden - so the player
+     *             saw NOTHING happen, pressed again, and the weapon
+     *             ended sheathed or drawn by the parity of their
+     *             presses with no picture either way. That is Mac's
+     *             "does not toggle / toggles twice / gets stuck", and
+     *             it is why Handheld Torches misbehaved with it: the
+     *             mod's UpdateFreeHand reads WeaponManager.Sheathed
+     *             LIVE (handheldTorches.js:287), so a flag flipped to
+     *             "drawn" with no weapon on screen stows the torch.
+     *   :268      `!isAttacking` - the hand already had this gate
+     *             (switchHand below); the sheath did not, so Z
+     *             mid-swing put the weapon away under the blow.
+     *
+     * DFU's paralysis/climbing return (:236-240) is NOT here: this
+     * door is called from the hosts' key poll, which they already run
+     * inside their own motor state, and neither is a thing this rig is
+     * told. Its own `frame(dt, { paralyzed })` is where that word
+     * arrives, one rung down.
+     *
+     * @returns true when the sheath state actually changed.
+     */
+    readyWeapon() {
+      syncWorn();   // UpdateHands (:212-213) runs first, as it does for switchHand
+      const m = playerWeapon.machine;
+      if (m.isBow && m.now < m.cooldownUntil) return false;   // :230-233, the bow's cooldown
+      if (m.state !== 'Idle') return false;                   // :268's `!isAttacking`
+      if (spellArmed() || fpsSpellCasting.isPlayingAnim) {
+        abortSpell();                                          // :251 AbortReadySpell
+        if (!playerWeapon.sheathed) playerWeapon.toggleSheath();   // :254-255, silently - sheathing plays nothing
       }
+      rawToggleSheath();   // :268-269
+      return true;
     },
     /**
      * a12 - SwitchHand (H). WeaponManager.Update's own leg, :271-273:
