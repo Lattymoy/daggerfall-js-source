@@ -37,7 +37,12 @@ test('SLAM6: the far share is DERIVED from the ease the client already runs - th
   assert.equal(Math.min(...[24, 32, 64, 128, 200, 256].map(poseHzFor)), POSE_HZ_MIN, 'poseHzFor never goes below its floor');
   assert.ok((POSE_FAR_SHARE * 1000) / POSE_HZ_MIN <= GAP_MAX_MS, 'a far peer is eased over its whole interval - it never stands');
   assert.ok(((POSE_FAR_SHARE + 1) * 1000) / POSE_HZ_MIN > GAP_MAX_MS, 'and it is the LARGEST share for which that is true');
-  assert.ok((POSE_FAR_SHARE * 1000) / POSE_HZ_MIN < PEER_TIMEOUT_MS, 'so no far peer is ever hidden by the silence law either');
+  // SLAM8 (AUDIT SLAM) CORRECTED THIS LINE. It read `(POSE_FAR_SHARE * 1000) / POSE_HZ_MIN < PEER_TIMEOUT_MS`, i.e.
+  // 1000 < 20000 - an assertion that cannot fail, about the rate of a peer that is MOVING. The peer at risk of the
+  // silence law is the one STANDING STILL, which speaks at HEARTBEAT_MS, and HEARTBEAT_MS * POSE_FAR_SHARE is
+  // PEER_TIMEOUT_MS exactly. A keepalive is therefore never tiered at all (test/slam8.test.js); what this file
+  // pins is the moving case, and it pins it against the rate a moving peer actually keeps.
+  assert.ok((POSE_FAR_SHARE * 1000) / POSE_HZ_MIN <= GAP_MAX_MS, 'a MOVING far peer is served inside one eased interval');
 });
 
 test('SLAM6: under the bound NOTHING happens - the same array back, unsorted and uncopied, exactly as nearestFan (mutant: the tier applied to every room, which is a sort on every pose in the Bay)', () => {

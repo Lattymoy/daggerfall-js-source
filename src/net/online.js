@@ -72,7 +72,7 @@
 import { tabStorage } from '../systems/appStorage.js';   // the tab's own storage - the seam, never the browser's own (a PIN)
 import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the port's one angle wrap, which cannot loop
 
-import { WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, sanitizeChat, chatGate, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS } from './wire.js';
+import { poseChanged, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, sanitizeChat, chatGate, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS } from './wire.js';
 
 export { WORLD_CELL, RANGE_PIXELS, worldRoom };
 
@@ -152,14 +152,11 @@ export function roomKeyFor({ host, mode, mapId = null, regionIndex = -1, locatio
   return worldRoom(mapPixel.x, mapPixel.y);
 }
 
-/** Has a pose moved enough to send? Position by EPS units, angles by EPS radians. */
-export function poseChanged(a, b, eps = 0.01) {
-  if (!a || !b) return true;
-  return Math.abs(a.x - b.x) > eps || Math.abs(a.y - b.y) > eps || Math.abs(a.z - b.z) > eps
-    || Math.abs(a.yaw - b.yaw) > eps || Math.abs(a.pitch - b.pitch) > eps || (a.mv | 0) !== (b.mv | 0)
-    || (a.wd | 0) !== (b.wd | 0) || (a.an | 0) !== (b.an | 0)   // MAC7 #1: a draw and a swing go out at once, as a step does
-    || (a.am | 0) !== (b.am | 0) || (a.sr | 0) !== (b.sr | 0) || (a.cn | 0) !== (b.cn | 0);   // MAC7 #2: and the arrow, the spell stance, the cast
-}
+/** Has a pose moved enough to send? Position by EPS units, angles by EPS radians.
+ *  SLAM8: the body lives in net/wire.js now - the relay asks the same question of the same numbers (a pose this calls
+ *  unmoved is a KEEPALIVE, which the relay must never tier), and a law both ends run has one home. Re-exported here so
+ *  every caller and every pin that knows it as the session's keeps working. */
+export { poseChanged };
 
 // ONCRASH1 (2026-09-15, Mac: "reports of player browser crashing when
 // online"): the short arc, in ONE STEP. This was two `while` loops, and
@@ -579,11 +576,22 @@ export class OnlineSession {
    *  admitted.
    *
    *  The fix is the standard one and it is one line: spread the retry uniformly over the window instead of firing
-   *  at the end of it. The backoff still DOUBLES, so a relay that is genuinely down is not hammered; what changes
-   *  is that two clients which were refused together no longer return together. Measured over real sessions
-   *  against the real relay, a 300-client wave drains in a fraction of the time and stops re-colliding.
+   *  at the end of it. The backoff still DOUBLES, so a relay that is genuinely down is not hammered (driven).
    *
-   *  The floor is BACKOFF_MIN_MS so a jittered retry is never an instant one. */
+   *  The floor is BACKOFF_MIN_MS so a jittered retry is never an instant one.
+   *
+   *  AUDIT SLAM WITHDREW TWO CLAIMS THAT STOOD HERE, and both mattered.
+   *
+   *  "Measured over real sessions against the real relay, a 300-client wave drains in a fraction of the time and
+   *  stops re-colliding" - THERE IS NO SUCH HARNESS, in test/ or in tools/, and this slice's own record says the pin
+   *  cannot be written against test/fakeRoom.mjs at all. It was the fourth invented performance figure this project
+   *  has had to take back. What is pinned here is the client's arithmetic, and nothing about a drain time.
+   *
+   *  "What changes is that two clients which were refused together no longer return together" - true from the SECOND
+   *  retry on, and false for the first, which is the one a wave collides on. `_backoff` starts at BACKOFF_MIN_MS, so
+   *  `_backoff - BACKOFF_MIN_MS` is exactly zero and `rand()` is multiplied by nothing: measured over 200 sessions
+   *  dropped together, one distinct return instant. Only the CLOSE_BUSY path is jittered on its first retry, because
+   *  that path alone raises `_backoff` before scheduling. Recorded, not yet paid (AUDIT SLAM item 5). */
   _scheduleRetry() {
     if (this._closedByUs || this.terminal || !this.room) return;
     const span = Math.max(0, this._backoff - BACKOFF_MIN_MS);

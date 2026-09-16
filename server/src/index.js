@@ -105,11 +105,11 @@
 // WORLD5 (2026-09-13): THE SHARED CLOCK is a function of wall time (relay.js
 // sharedClassicMinutes) and needs no frame; the welcome carries the relay's
 // own `now` so a client corrects for its machine's clock. Nothing else here.
-import { roomOf, parseClient, inRange, poseGate, chatGate, tokenGate, rosterFor, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan } from './relay.js';
+import { roomOf, parseClient, inRange, poseGate, chatGate, tokenGate, rosterFor, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged } from './relay.js';
 
 /** AUDIT WORLD34 D4: the relay names itself in /health - the deploy is by hand (`npx wrangler deploy`), nothing in
  *  CI does it, and until now nothing said which relay was live. Bump it with every relay-changing slice. */
-export const RELAY_VERSION = 'world68';   // SLAM6: the pose fan is TIERED - the nearest POSE_FAN_MAX every pose, the rest one in POSE_FAR_SHARE, so nobody is hidden by the bound
+export const RELAY_VERSION = 'world69';   // SLAM8: a keepalive is never tiered, and the fan's turn counts what the room relayed
 
 const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*' } });
 
@@ -248,10 +248,13 @@ export class Room {
   /** The frame gate (A8): the socket's pose bucket - a pose, a ping and (AUDIT WORLD A1) a world frame spend it; over
    *  the rate the frame is dropped and a strike counted, past DROP_STRIKES_MAX the socket is closed. Returns the
    *  attachment as written back, or null when the frame is not to be taken. */
-  _meter(ws, a, now, patch = {}) {
+  /** SLAM8 (AUDIT SLAM): `patch` is applied whatever the gate says (the latest pose is kept even when it is not
+   *  relayed); `passPatch` ONLY when the frame is really let through. Anything that counts what the room DID - the
+   *  pose fan's `turn` - belongs in the second, or it counts what the room was merely told. */
+  _meter(ws, a, now, patch = {}, passPatch = {}) {
     const gate = poseGate(a.bucket, now);
     const drops = gate.pass ? 0 : (a.drops ?? 0) + 1;
-    const next = { ...a, ...patch, bucket: gate.bucket, drops };
+    const next = { ...a, ...patch, ...(gate.pass ? passPatch : {}), bucket: gate.bucket, drops };
     this._setAttach(ws, next);
     if (!gate.pass) { if (drops > DROP_STRIKES_MAX) this._refuse(ws, 'too many poses'); return null; }
     return next;
@@ -554,10 +557,19 @@ export class Room {
       // the frame gate (A8): a pose and a ping share the socket's bucket, and a channel's pose is gated and counted
       // BEFORE it is declined (AUDIT CHAT A3: the early return sat above the gate, so a channel took frames unmetered)
       const chat = isChatRoom(a.key);
+      const posed = m.t === 'pose' && !chat;
+      // SLAM8 (AUDIT SLAM): a KEEPALIVE is a pose the sender did not move (net/wire.js poseChanged, the client's own
+      // law for not sending one). Read BEFORE the meter, because the meter overwrites `a.pose` with this very frame.
+      const still = posed && !!a.pose && !poseChanged(a.pose, m.p);
       // SLAM6: `turn` is the sender's own pose counter, and the only state the far tier needs - which slice of the
       // listeners past POSE_FAN_MAX this pose serves. Masked, so an attachment a socket carries for a day stays small.
-      const posed = m.t === 'pose' && !chat;
-      const met = this._meter(ws, a, Date.now(), { pose: posed ? m.p : a.pose, turn: posed ? ((a.turn | 0) + 1) & 0xffff : (a.turn | 0) });
+      // SLAM8: and it rides the PASS patch. `_meter` writes its ordinary patch back whether or not the gate passed, so
+      // a counter put there counted poses RECEIVED while the fan below serves poses RELAYED. Any drop pattern sharing
+      // a factor with POSE_FAR_SHARE then pinned the served slice to one parity and starved the rest - at exactly
+      // twice the gate the bucket settles into pass/fail alternation, so two of the four slices were never served and
+      // half the far tier heard that sender no more. The port's own client cannot reach that rate; a modified one can,
+      // and an event is where those turn up.
+      const met = this._meter(ws, a, Date.now(), { pose: posed ? m.p : a.pose }, posed ? { turn: ((a.turn | 0) + 1) & 0xffff } : {});
       if (!met) return;   // over the rate: kept as the latest, not relayed
       if (m.t === 'ping') { this._send(ws, '{"t":"pong"}'); return; }   // a ping that reached the object (the runtime answers the exact one in its sleep)
       if (chat) return;   // a channel is no place: a pose there is kept by no one and reaches no one
@@ -570,12 +582,20 @@ export class Room {
       // measured at 200 in one town block, each player was seen by 32 and erased for 167. The bound is a rank, so
       // the loss fell hardest on the most crowded player in the room, which at an event is the one everybody came
       // to see.
+      // SLAM8: AND A KEEPALIVE IS NEVER TIERED. A standing player sends only on the heartbeat, so a far listener under
+      // SLAM6 heard one in POSE_FAR_SHARE of those - HEARTBEAT_MS * POSE_FAR_SHARE = 20000ms, which is
+      // PEER_TIMEOUT_MS TO THE MILLISECOND. Zero margin: the silence law hid every standing peer past the bound at
+      // the exact moment its next pose was due, so a crowd standing still to listen to somebody - which is what an
+      // event IS - watched itself blink in and out, and one late heartbeat hid a peer for a full twenty seconds.
+      // The tier is a bandwidth saving for MOTION; a keepalive is the one frame whose whole job is to be heard, and
+      // a pose nobody has to ease is the cheapest frame in the room. At 200 standing that is 200 * 199 / 5s = 7,960
+      // sends a second, beside the 59,000 the moving case already pays.
       const heard = [];
       for (const [other, b] of [...this._all()]) {
         if (other === ws || !b.id) continue;
         if (inRange(a.key ?? '', m.p, b.pose)) heard.push([other, b]);
       }
-      for (const [other] of poseFan(heard, m.p, (e) => e[1].pose, met.turn)) this._send(other, out);
+      for (const [other] of (still ? heard : poseFan(heard, m.p, (e) => e[1].pose, met.turn))) this._send(other, out);
       return;
     }
     if (m.t === 'chat') {

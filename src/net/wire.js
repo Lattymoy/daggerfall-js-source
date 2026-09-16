@@ -527,6 +527,23 @@ export function poseFan(list, from, poseOf, turn = 0, max = POSE_FAN_MAX, share 
   return sorted.slice(0, max).concat(sorted.slice(start, start + slice));
 }
 
+/** SLAM8 (2026-09-16, AUDIT SLAM): HAS A POSE MOVED? Moved here from net/online.js, which is the client alone, because
+ *  the RELAY has to ask the same question and must get the same answer (the `nearestFan`/`poseFan` rule: one law, both
+ *  ends). The client sends a pose when this says yes, and every HEARTBEAT_MS regardless; so a pose for which this says
+ *  NO is a KEEPALIVE, and the relay tells the two apart by this and nothing else.
+ *
+ *  Exact equality would not do. A player standing still with a hand on the mouse drifts by less than `eps`, which this
+ *  calls unmoved and `sendPose` therefore does not send - until the heartbeat, which carries those drifted numbers. A
+ *  relay comparing fields byte-for-byte would see a MOVE, tier the keepalive, and hand that player straight back the
+ *  bug this slice exists to close. The epsilon is the law; the bytes are not. */
+export function poseChanged(a, b, eps = 0.01) {
+  if (!a || !b) return true;
+  return Math.abs(a.x - b.x) > eps || Math.abs(a.y - b.y) > eps || Math.abs(a.z - b.z) > eps
+    || Math.abs(a.yaw - b.yaw) > eps || Math.abs(a.pitch - b.pitch) > eps || (a.mv | 0) !== (b.mv | 0)
+    || (a.wd | 0) !== (b.wd | 0) || (a.an | 0) !== (b.an | 0)   // MAC7 #1: a draw and a swing go out at once, as a step does
+    || (a.am | 0) !== (b.am | 0) || (a.sr | 0) !== (b.sr | 0) || (a.cn | 0) !== (b.cn | 0);   // MAC7 #2: and the arrow, the spell stance, the cast
+}
+
 /** A pose the room will relay, or null. */
 export function validPose(p) {
   if (!p || typeof p !== 'object') return null;
