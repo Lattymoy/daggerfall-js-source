@@ -156,9 +156,85 @@ about a version nothing was known before.
 The build half needs no deploy but its own: the first merge *after* this
 one is the first tag a running tab can notice.
 
-## The campaign
+## AUDIT-SRVN (2026-09-17) — four findings, all against this slice
 
-**18 mutants, 18 killed** — including the two that are "notify on the
+Mac: *"Audit this"*. Every one of the four sat in what the slice did
+**not** think about rather than in what it did, and three of the four are
+the same omission: **`v` was written as if the relay were ours.**
+
+### F1 — the only field on this wire with no law
+
+`?server=` and the enhanced menu's **Relay** field both point a client at
+an arbitrary relay. That is why `wire.js` holds a law for every other
+field a welcome carries — `validPose`, `validLook`, `sanitizeName`,
+`sanitizeChat`, `hitOwnerOf`'s 64-character id bound — and every one of
+them is *one home, both ends*, because `server/src/relay.js` re-exports
+the file whole.
+
+`v` was gated on `typeof m.v === 'string' && m.v`, in `online.js`, and
+nowhere else. A **200 KB deploy name was accepted and held** (driven, not
+read). It goes through `relayVersionOf` now, `RELAY_VERSION_MAX = 32`,
+and a pin asserts the relay's own `RELAY_VERSION` passes the law it
+ships — a relay that could mint a name its clients silently refuse is the
+same bug from the other end.
+
+### F2 — the one unbounded accumulator the slice added
+
+A welcome is **not once per connection**: `_receive` takes one whenever
+the relay sends one. Driven on a single open socket, 5000 welcomes
+carrying 5000 fresh names pushed **5000 notices** — `CHAT_KEEP`
+twenty-five times over, so a player's entire chat history was replaced by
+fake restarts — and `_relaySeen` kept every name for ever.
+
+Everything else in this area is bounded: the chat log at `CHAT_KEEP`,
+`online.js`'s `_threwKinds` at `THREW_KINDS_MAX`, with a clear. This was
+the exception. It is bounded the same way now, and the bound **fails
+towards silence**: an emptied set re-baselines, and a re-baseline says
+nothing. Losing a notice is the correct way for this to break; inventing
+one is not.
+
+The other half is a minimum interval, and it is not really a rate limit —
+it is the physical fact. A relay cannot restart twice in thirty seconds,
+so a second "it restarted" inside one is not news about the world,
+whoever sent it. `'flood'` is its own verdict rather than `'same'`
+because they are different facts.
+
+**Honest scope:** a hostile relay already has an *ungated inbound `chat`
+firehose* — `_receive`'s chat arm has no rate gate at all — so this
+finding does not widen the attack surface so much as decline to add to
+it. That pre-existing gap is flagged below, not fixed here.
+
+### F3 — two gates where one heals and the spare latches
+
+`buildPoll` carried both an interval stamp and a `_buildPolling` boolean.
+The boolean was **redundant** — the stamp is taken when the poll *starts*,
+so it already refuses a second one for a full interval — and it was a
+**hazard**: a request that never settled left the flag raised and the
+poll dead for the rest of the session. There was no timeout.
+
+The boolean is gone and the request is cancelled on a deadline
+(`AbortSignal.timeout`, guarded for hosts without it). One gate that
+heals itself beats two where the spare can stick.
+
+### F4 — a field written on every welcome and read by nobody
+
+`session.relayVersion` had exactly one reader: its own test. Which relay
+this socket is on is a question `updateNotice.js` already owns, and a
+second copy of it is a second source of truth — the shape AUDIT-CHATR
+deleted `whoRows()` for. Deleted. The hook is the whole seam.
+
+### What the audit did NOT find
+
+The notice **does** reach a player: `onlineFrame` → `chatFrame` →
+`buildPoll` is a live path, `online.onRelay` is assigned once and never
+clobbered, and this is genuinely **not a FOUR HOSTS seam** — the chat is
+created and framed in `world.js` alone, by CHAT1's design, so there is no
+fourth host to have forgotten. That last one was checked rather than
+assumed, because four consecutive slices found their bug there.
+
+## The campaigns
+
+**18 mutants, 18 killed** on the slice. — including the two that are "notify on the
 first version heard" and "notify once per socket" (a slot in place of
 the Set), the one that reads `v` below the primary gate, which silently
 blinds every chat link, the one that drops `v` from the channel welcome
@@ -168,6 +244,39 @@ tab only, the one that polls every frame, the one that drops
 `cache: 'no-store'` (which would have compared the cached page's tag
 against itself for ever), and the one that ships the client against the
 name of the deploy that is live.
+
+**14 mutants against the audit's own fixes, and the first pass killed
+only 10.** The four survivors were each a real hole:
+
+- `String(v ?? '').length > 0` in place of the `typeof` passed every
+  scalar case I had written, because a number has no `.length` and fails
+  the cap test *by accident*. What it lets through is anything wearing a
+  length — and `JSON.parse` of a hostile frame hands back exactly that.
+  The pin asks about arrays now.
+- The detector's own use of the wire law was unpinned: every case I had
+  written agreed with a local `String(v).trim()`. The cases that part
+  them are the ones only the wire knows.
+- **The bound itself had no assertion.** The flood test passed unbounded,
+  because the rate gate alone explains it. Telling a bounded set from an
+  unbounded one needs a behavioural question — a name from the *start* of
+  a long walk, which an unbounded set would still answer `'same'` to.
+- Deleting the stamp alone left the gate reading a number nothing ever
+  wrote, so after one interval the poll ran every frame. A gate whose
+  state is never written is not a gate.
+
+All 14 killed on the second pass. **The lesson is the third one: a guard
+I added in this very audit was, for an hour, exactly the kind of
+unfalsifiable line the audit existed to find.**
+
+## Flagged, not fixed
+
+`online.js`'s inbound `chat` arm has **no rate gate**. The relay gates
+what it *accepts* (`chatGate`, `CHAT_HZ_MAX`), and the client gates what
+it *sends*, but a relay can push unlimited `{t:'chat'}` frames at a
+client and nothing counts them. That is older than this slice and wider
+than it, so it is not fixed here — widening a notice PR into a wire
+hardening PR is the author's call, not mine. It is the natural companion
+to F2.
 
 ## Not seen on a GPU
 

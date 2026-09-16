@@ -61,6 +61,7 @@
 //
 // Not a DFU member: Daggerfall Unity is not deployed to anybody.
 // Ledger A row (ONLINE).
+import { relayVersionOf } from './wire.js';
 
 /** What a relay restart says. Deliberately about the RELAY and not the
  *  game: nothing the player has is lost, and a notice that sounds like
@@ -71,39 +72,84 @@ export const RELAY_RESTART_TEXT = 'The server was updated and restarted. Players
  *  call to make, not ours. It says what to do first. */
 export const BUILD_UPDATE_TEXT = 'A new version of the game has been released. Save your game, then reload the page to pick it up.';
 
+/** The most deploy names the page remembers, and the least time between
+ *  two restart notices (AUDIT-SRVN F2/F3).
+ *
+ *  A Set that never forgets is an unbounded accumulator fed by the wire,
+ *  and this was the only one SRV-N added: the chat log caps at
+ *  CHAT_KEEP, `online.js`'s `_threwKinds` caps at THREW_KINDS_MAX and
+ *  CLEARS, and this held every name it was ever handed. A relay that
+ *  mints a fresh name per welcome grew it for ever - driven, on ONE open
+ *  socket, because a welcome is not once per connection.
+ *
+ *  The bound is the same shape `_threwKinds` uses and for the same
+ *  reason, and the clear is deliberately how it fails: an emptied set
+ *  re-baselines, and a re-baseline is SILENCE. Losing a notice is the
+ *  correct way for this to break.
+ *
+ *  The interval is the other half, and it is not really a rate limit -
+ *  it is the physical fact. A relay cannot restart twice in half a
+ *  minute, so a second "it restarted" inside one is not news about the
+ *  world, whoever sent it. */
+export const RELAY_SEEN_MAX = 32;
+export const RELAY_NOTICE_MIN_MS = 30_000;
+
 /** How often a running tab asks the site which build it is serving, ms.
  *  Long on purpose: the answer changes a few times a day at most, the
  *  cost of being late is a stale tab and not a broken one, and a shorter
  *  poll would put every open tab on the CDN for nothing. */
 export const BUILD_POLL_MS = 10 * 60 * 1000;
 
+/** How long the build poll waits for the site before giving up, ms. A
+ *  request that never settles used to disable the poll for the whole
+ *  session (AUDIT-SRVN F3, the other half). */
+export const BUILD_FETCH_TIMEOUT_MS = 15_000;
+
 /** @type {Set<string>} every relay version this page has been told. */
 const _relaySeen = new Set();
+/** @type {number} when the last restart notice was earned. */
+let _relayToldAt = -Infinity;
 /** @type {Set<string>} every foreign build tag already announced. */
 const _buildTold = new Set();
 
 /**
  * The relay named a version on a welcome. Answers what to do about it:
  *
- *   'unknown' - the welcome carried no version at all. The live relay
- *               before this slice is exactly that, and it must be
- *               SILENT rather than guessed at.
+ *   'unknown' - the welcome carried no version, or nothing the wire's
+ *               law admits as one. The live relay before this slice is
+ *               exactly the first case, and it must be SILENT rather
+ *               than guessed at.
  *   'first'   - the baseline. Nothing to say; we have simply learned
  *               which relay this page has been talking to all along.
  *   'same'    - a version already known. Another socket's welcome, or a
  *               reconnect: not news.
+ *   'flood'   - news too soon after the last news (AUDIT-SRVN F2). A
+ *               separate word from 'same' because they are different
+ *               facts and a reader of this function should not have to
+ *               guess which one happened; both are silent.
  *   'changed' - a version never seen on this page. The relay moved
  *               under us. SAY SO.
  *
+ * The clock is injected rather than read, so the interval is a pinned
+ * fact and not a sleep in a test.
+ *
  * @param {unknown} v
- * @returns {'unknown'|'first'|'same'|'changed'}
+ * @param {number} [now]
+ * @returns {'unknown'|'first'|'same'|'flood'|'changed'}
  */
-export function relayVersionSeen(v) {
-  const s = String(v ?? '').trim();
+export function relayVersionSeen(v, now = Date.now()) {
+  // The wire's law, not this file's idea of one: `relayVersionOf` is what
+  // `online.js` admits, so the detector cannot be reached with a name the
+  // session would have refused, nor refuse one it accepted.
+  const s = relayVersionOf(typeof v === 'string' ? v.trim() : v);
   if (!s) return 'unknown';
   if (_relaySeen.has(s)) return 'same';
   if (_relaySeen.size === 0) { _relaySeen.add(s); return 'first'; }
+  // Bounded, and it fails towards silence: an emptied set re-baselines.
+  if (_relaySeen.size >= RELAY_SEEN_MAX) _relaySeen.clear();
   _relaySeen.add(s);
+  if (now - _relayToldAt < RELAY_NOTICE_MIN_MS) return 'flood';
+  _relayToldAt = now;
   return 'changed';
 }
 
@@ -164,11 +210,18 @@ export function buildUpdateSeen(liveTag, mine) {
  * @param {((url: string, init?: any) => Promise<any>)|null} [fetchImpl]
  * @returns {Promise<string|null>}
  */
-export async function fetchLiveBuildTag(url, fetchImpl = null) {
+export async function fetchLiveBuildTag(url, fetchImpl = null, timeoutMs = BUILD_FETCH_TIMEOUT_MS) {
   const f = fetchImpl ?? (typeof globalThis !== 'undefined' ? globalThis.fetch : null);
   if (typeof f !== 'function' || !url) return null;
   try {
-    const res = await f(url, { cache: 'no-store' });
+    // AUDIT-SRVN F3: a request that never settles is a promise that never
+    // settles. The caller's own re-entry gate is what makes that
+    // survivable, but leaking one socket per poll is not, so the request
+    // is CANCELLED rather than abandoned. Guarded because a host without
+    // `AbortSignal.timeout` should poll, not throw.
+    const signal = typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function'
+      ? AbortSignal.timeout(timeoutMs) : undefined;
+    const res = await f(url, { cache: 'no-store', signal });
     if (!res?.ok) return null;
     return buildTagOf(await res.text());
   } catch { return null; }
@@ -178,4 +231,5 @@ export async function fetchLiveBuildTag(url, fetchImpl = null) {
 export function resetUpdateNotice() {
   _relaySeen.clear();
   _buildTold.clear();
+  _relayToldAt = -Infinity;
 }

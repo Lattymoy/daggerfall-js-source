@@ -72,7 +72,7 @@
 import { tabStorage } from '../systems/appStorage.js';   // the tab's own storage - the seam, never the browser's own (a PIN)
 import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the port's one angle wrap, which cannot loop
 
-import { WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, sanitizeChat, chatGate, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS } from './wire.js';
+import { WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, sanitizeChat, chatGate, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS, relayVersionOf } from './wire.js';
 
 export { WORLD_CELL, RANGE_PIXELS, worldRoom };
 
@@ -226,7 +226,13 @@ export class OnlineSession {
     this.clockOffsetMs = 0;       // WORLD5: the relay's clock minus this machine's, from the welcome - the shared world time is read through it
     this.clockWarning = null;     // OL3: the welcome's clock was a year off this machine's - said on the HUD line while it stands
     this.onClock = null;          // WORLD5: (offsetMs) => void - the welcome said the relay's clock
-    this.relayVersion = null;     // SRV-N: which deploy of the relay this socket is talking to, off the welcome's `v`
+    // AUDIT-SRVN F4: there WAS a `this.relayVersion` here, written on every
+    // welcome and read by nothing but its own test. Which relay this
+    // socket is on is a question one home already answers
+    // (net/updateNotice.js), and a second copy of it on the session is a
+    // second source of truth for a question nobody was asking - the same
+    // shape AUDIT-CHATR deleted `whoRows()` for. The hook is the whole
+    // seam; the detector owns the memory.
     this.onRelay = null;          // SRV-N: (version) => void - a welcome named the relay's deploy
     this.look = look ?? { race: 'Breton', gender: 'male', faceIndex: 0, items: [] };
     this.id = id ?? peerId();
@@ -669,7 +675,11 @@ export class OnlineSession {
       // the same Worker as my own room's, and a chat channel's welcome is the only one a chat link ever gets, so
       // gating this on the primary room would have made the chat's own sessions blind to the restart that just
       // dropped them. A relay before this slice carries no `v` at all and is left alone (updateNotice.js: 'unknown').
-      if (typeof m.v === 'string' && m.v) { this.relayVersion = m.v; this._deliver('relay', () => this.onRelay?.(m.v)); }
+      // AUDIT-SRVN F1: through the wire's own law, like every other field
+      // a welcome carries - a relay is the PLAYER'S choice (`?server=`,
+      // the menu's Relay field), so its deploy name is not our word.
+      const relayV = relayVersionOf(m.v);
+      if (relayV) this._deliver('relay', () => this.onRelay?.(relayV));
       // merged, not wiped: a peer already known keeps where it is drawn
       const keep = new Set();
       for (const p of Array.isArray(m.peers) ? m.peers : []) {

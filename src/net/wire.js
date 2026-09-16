@@ -690,6 +690,24 @@ export const actFrameFits = (data) => JSON.stringify({ t: 'act', data }).length 
 /** The chat rate gate: CHAT_HZ_MAX a second (CHAT1). */
 export const chatGate = (bucket, nowMs) => tokenGate(bucket, nowMs, CHAT_HZ_MAX);
 
+/** The longest a relay may name its deploy, in UTF-16 units (SRV-N).
+ *
+ *  AUDIT-SRVN F1: `v` shipped as the ONLY field on this wire with no law
+ *  in this file. Every other one has been here since its slice - a pose
+ *  through `validPose`, a look through `validLook`, a name through
+ *  `sanitizeName`, a line through `sanitizeChat`, an owner through
+ *  `hitOwnerOf`'s 64-character id bound - and they are all here for the
+ *  same reason: `?server=` and the enhanced menu's Relay field mean the
+ *  relay a client talks to is the PLAYER'S choice, so nothing arriving
+ *  over it is the port's own word. `v` was gated on `typeof` alone, and
+ *  a 200 KB deploy name was accepted and held (driven, not read). */
+export const RELAY_VERSION_MAX = 32;
+/** A deploy name off the wire, or null for anything that is not one.
+ *  ONE HOME, BOTH ENDS, like every law above it: the relay stamps a name
+ *  this admits (pinned) and the client reads it back through the same
+ *  function, so the two cannot disagree about what a deploy is called. */
+export const relayVersionOf = (v) => (typeof v === 'string' && v.length > 0 && v.length <= RELAY_VERSION_MAX ? v : null);
+
 /** What a joiner is told: everyone else in the room who has said hello
  *  - the nearest ROSTER_MAX to `near` when there is a pose to measure
  *  from (a world cell), the first ROSTER_MAX otherwise. */

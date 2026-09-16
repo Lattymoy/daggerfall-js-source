@@ -15,12 +15,14 @@ import { readFileSync } from 'node:fs';
 import {
   relayVersionSeen, buildUpdateSeen, buildTagOf, fetchLiveBuildTag, resetUpdateNotice,
   RELAY_RESTART_TEXT, BUILD_UPDATE_TEXT, BUILD_POLL_MS,
+  RELAY_SEEN_MAX, RELAY_NOTICE_MIN_MS, BUILD_FETCH_TIMEOUT_MS,
 } from '../src/net/updateNotice.js';
 import worker, { RELAY_VERSION } from '../server/src/index.js';
 import { fakeRoom } from './fakeRoom.mjs';
+import * as relay from '../server/src/relay.js';
 import { OnlineSession } from '../src/net/online.js';
 import { ChatLog } from '../src/net/chat.js';
-import { CHAT_WORLD_ROOM } from '../src/net/wire.js';
+import { CHAT_WORLD_ROOM, RELAY_VERSION_MAX, relayVersionOf } from '../src/net/wire.js';
 
 const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
 
@@ -65,24 +67,21 @@ test('SRV-N: the relay names its deploy on EVERY welcome - a world room\'s and a
 
 // ── THE SESSION HEARS IT ─────────────────────────────────────────────
 
-test('SRV-N: the session reads the welcome\'s `v` ABOVE the primary gate - a halo room and a chat channel both count - remembers it, and says nothing for a relay that carries none', () => {
+test('SRV-N: the session reads the welcome\'s `v` ABOVE the primary gate - a halo room and a chat channel both count - hands it on and KEEPS nothing, and says nothing for a relay that carries none or names one the wire refuses', () => {
   const { FakeWS, sockets } = fakeSocketClass();
   const heard = [];
   const s = new OnlineSession({ url: 'wss://relay.test', name: 'Mac', id: 'mac-0001', secret: 'secret-of-mac-0001', WebSocketImpl: FakeWS, now: () => 1000 });
   s.onRelay = (v) => heard.push(v);
   s.join('world:0:0', { x: 0, y: 0, z: 0, yaw: 0, pitch: 0, mv: 0 });
   sockets[0].open();
-  assert.equal(s.relayVersion, null, 'nothing known before a welcome');
 
   // A RELAY BEFORE THIS SLICE. The live relay is exactly this until it
   // is hand-deployed, and it must be silent rather than guessed at.
   sockets[0].receive({ t: 'welcome', id: 'mac-0001', peers: [], host: 'mac-0001', now: Date.now() });
   assert.deepEqual(heard, [], 'a welcome with no version says nothing at all');
-  assert.equal(s.relayVersion, null);
 
   sockets[0].receive({ t: 'welcome', id: 'mac-0001', peers: [], host: 'mac-0001', now: Date.now(), v: 'world67' });
   assert.deepEqual(heard, ['world67']);
-  assert.equal(s.relayVersion, 'world67', 'and it is kept, so anything else can ask');
 
   // THE HALO ROOM. `_receive`'s `primary` gate returns before the host,
   // the clock and the memory - all of which are my own room's alone. The
@@ -92,38 +91,66 @@ test('SRV-N: the session reads the welcome\'s `v` ABOVE the primary gate - a hal
   s._receive(JSON.stringify({ t: 'welcome', id: 'mac-0001', peers: [], v: 'world68' }), 'world:1:0');
   assert.deepEqual(heard, ['world67', 'world68'], 'a non-primary room\'s welcome names the same relay');
 
-  assert.equal(s.relayVersion, 'world68');
-  // and a non-string is not a version
-  s._receive(JSON.stringify({ t: 'welcome', id: 'mac-0001', peers: [], v: 67 }), 'world:1:0');
-  assert.equal(s.relayVersion, 'world68', 'a number is not a deploy name');
+  // AUDIT-SRVN F1: THE WIRE'S LAW, not a `typeof`. `?server=` and the
+  // enhanced menu's Relay field make the relay the PLAYER'S choice, so a
+  // welcome's fields are not the port's own word - and `v` shipped as the
+  // only field on this wire with no law in wire.js. A 200 KB deploy name
+  // was accepted and held; driven here, not read.
+  for (const bad of [67, '', 'x'.repeat(RELAY_VERSION_MAX + 1)]) {
+    s._receive(JSON.stringify({ t: 'welcome', id: 'mac-0001', peers: [], v: bad }), 'world:1:0');
+  }
+  assert.deepEqual(heard, ['world67', 'world68'], 'a number, an empty name and one past the cap are not deploy names');
+  s._receive(JSON.stringify({ t: 'welcome', id: 'mac-0001', peers: [], v: 'x'.repeat(RELAY_VERSION_MAX) }), 'world:1:0');
+  assert.equal(heard.length, 3, 'and one exactly AT the cap is - inclusive, as every other bound on this wire is');
+  // AUDIT-SRVN F4: nothing is KEPT on the session. The hook is the whole
+  // seam; a `relayVersion` field here was written on every welcome and
+  // read by nobody, a second source of truth for what one home owns.
+  assert.equal('relayVersion' in s, false, 'the session keeps no copy of an answer net/updateNotice.js already holds');
 });
 
 // ── THE DETECTORS ────────────────────────────────────────────────────
 
 test('SRV-N: the relay ladder - the first version heard is a BASELINE and not news; a second, different one is; a version already known never is; and N sockets on one new relay produce ONE notice', () => {
   resetUpdateNotice();
-  assert.equal(relayVersionSeen(''), 'unknown', 'no version: silent');
-  assert.equal(relayVersionSeen(null), 'unknown');
-  assert.equal(relayVersionSeen(undefined), 'unknown');
-  assert.equal(relayVersionSeen('   '), 'unknown', 'and whitespace is no version either');
+  let t = 1_000_000;
+  const seen = (v) => relayVersionSeen(v, t);
+  assert.equal(seen(''), 'unknown', 'no version: silent');
+  assert.equal(seen(null), 'unknown');
+  assert.equal(seen(undefined), 'unknown');
+  assert.equal(seen('   '), 'unknown', 'and whitespace is no version either');
+  // AUDIT-SRVN: and the law it asks is the WIRE'S. A campaign survivor
+  // replaced this with a local `String(v ?? '').trim()`, which every case
+  // above agrees with - the cases that part them are the ones only the
+  // wire knows about, so they are asked here rather than assumed.
+  assert.equal(seen('x'.repeat(RELAY_VERSION_MAX + 1)), 'unknown', 'a deploy name past the wire\'s cap is no deploy name to the detector either');
+  assert.equal(seen(67), 'unknown');
+  assert.equal(seen(['world67']), 'unknown');
 
-  assert.equal(relayVersionSeen('world66'), 'first', 'the first is only what this page has been talking to all along');
-  assert.equal(relayVersionSeen('world66'), 'same', 'the presence socket and the chat socket agree - that is not news');
-  assert.equal(relayVersionSeen('world67'), 'changed', 'the relay moved under us: SAY SO');
+  assert.equal(seen('world66'), 'first', 'the first is only what this page has been talking to all along');
+  assert.equal(seen('world66'), 'same', 'the presence socket and the chat socket agree - that is not news');
+  assert.equal(seen('world67'), 'changed', 'the relay moved under us: SAY SO');
 
   // THE PROPERTY THE WHOLE SHAPE IS FOR. A player in the enhanced skin
   // holds a presence socket plus one chat socket per tab, and a hand
   // deploy drops and re-welcomes ALL of them. A single "last seen" slot
   // would have said 'changed' once per socket.
-  assert.equal(relayVersionSeen('world67'), 'same', 'the second socket back');
-  assert.equal(relayVersionSeen('world67'), 'same', 'and the third');
+  assert.equal(seen('world67'), 'same', 'the second socket back');
+  assert.equal(seen('world67'), 'same', 'and the third');
 
   // A FLIP-FLOP CANNOT DOUBLE-NOTIFY: a rollback, or one edge still on
   // the old Worker while another serves the new, would ping-pong a slot
   // on every reconnect for as long as the disagreement lasted.
-  assert.equal(relayVersionSeen('world66'), 'same', 'the old version is a version this page has already been told about');
-  assert.equal(relayVersionSeen('world67'), 'same');
-  assert.equal(relayVersionSeen('world68'), 'changed', 'a genuinely new one still lands');
+  assert.equal(seen('world66'), 'same', 'the old version is a version this page has already been told about');
+  assert.equal(seen('world67'), 'same');
+  t += RELAY_NOTICE_MIN_MS;
+  assert.equal(seen('world68'), 'changed', 'a genuinely new one still lands');
+
+  // AUDIT-SRVN F2: ...but not inside the window. 'flood' is its OWN word
+  // and not 'same', because they are different facts and a reader should
+  // not have to guess which happened; both are silent to the host, which
+  // tests only for 'changed'.
+  assert.equal(relayVersionSeen('world69', t + 1), 'flood', 'a second restart one millisecond later is not a second restart');
+  assert.equal(relayVersionSeen('world70', t + RELAY_NOTICE_MIN_MS), 'changed', 'and the window does open again');
 });
 
 test('SRV-N: the build compare - this bundle knows its own tag, so there is no baseline to learn; told once per tag, and silent on every way of not knowing', () => {
@@ -155,6 +182,21 @@ test('SRV-N: buildTagOf is ONE HOME - the tool and the running tab ask the same 
   assert.equal(await fetchLiveBuildTag('https://site.test/play/', async () => { throw new Error('offline'); }), null, 'offline is not a new build');
   assert.equal(await fetchLiveBuildTag('', async () => { throw new Error('never'); }), null, 'no url, no call');
   assert.equal(await fetchLiveBuildTag('https://site.test/play/', /** @type {any} */ (null)), null, 'and no fetch at all in node');
+
+  // AUDIT-SRVN F3: the request is CANCELLED on a deadline. A fetch that
+  // never settles is a promise that never settles - the host's own
+  // interval gate is what keeps the poll alive through one, but leaking a
+  // socket every ten minutes for the rest of a session is not survivable.
+  assert.equal(init?.signal?.constructor?.name, 'AbortSignal', 'a deadline rides the request');
+  assert.ok(BUILD_FETCH_TIMEOUT_MS > 0 && BUILD_FETCH_TIMEOUT_MS < BUILD_POLL_MS, 'and it expires well inside one poll interval, or it is no deadline at all');
+  // a host without AbortSignal.timeout still polls rather than throwing
+  const savedAS = globalThis.AbortSignal;
+  try {
+    // @ts-expect-error - driving the old-host case
+    globalThis.AbortSignal = undefined;
+    assert.equal(await fetchLiveBuildTag('https://site.test/play/', ok), 'deadbee', 'a host with no AbortSignal.timeout polls anyway');
+    assert.equal(init?.signal, undefined, 'with no signal rather than a broken one');
+  } finally { globalThis.AbortSignal = savedAS; }
 });
 
 // ── THE LOG, AND WHAT THE WIRE CANNOT SAY ────────────────────────────
@@ -207,8 +249,80 @@ test('SRV-N: the host wires BOTH arms and puts a notice on EVERY tab - the prese
   assert.match(w, /for \(const tab of chatLog\.tabs\) chatLog\.push\(tab\.id, \{ text, system: true \}\)/, 'every tab, and marked as the game\'s');
   assert.match(w, /const chatFrame = \(\) => \{\s*if \(!chatLinks\) return;\s*buildPoll\(/, 'the poll rides the chat frame - there is no notice to give where there is no chat window');
   assert.match(w, /buildUpdateSeen\(tag, BUILD_TAG\)/, 'against THIS bundle\'s tag, which is the only thing that makes the compare need no baseline');
-  assert.match(w, /now - _buildPolledAt < BUILD_POLL_MS/, 'on the site\'s rhythm');
-  assert.match(w, /_buildPolling = true/, 'and one in flight at a time, or a slow answer puts a poll on every frame');
+  // AUDIT-SRVN: the gate AND the stamp, adjacent and in that order. A
+  // campaign survivor deleted the stamp alone: the gate still read, still
+  // compared, and compared against a number nothing ever moved - so after
+  // one interval the poll ran on EVERY frame. A gate whose state is never
+  // written is not a gate.
+  assert.match(w, /if \(now - _buildPolledAt < BUILD_POLL_MS\) return;\s*_buildPolledAt = now;/, 'stamped where the poll STARTS, which is what makes it the re-entry gate as well as the rhythm');
+  // AUDIT-SRVN F3: there is NO second in-flight boolean, and its absence is
+  // the pin. The stamp above is taken when the poll STARTS, so it is
+  // already the re-entry gate; a spare flag added nothing and could latch
+  // raised on a request that never settled, killing the poll for the
+  // session. One gate that heals itself beats two where the spare can stick.
+  assert.doesNotMatch(w, /_buildPolling/, 'no second latch beside the interval gate that already is one');
+});
+
+test('AUDIT-SRVN F1: the deploy name has a LAW in wire.js like every other field a welcome carries, and it is one home at both ends', () => {
+  assert.equal(relayVersionOf('world67'), 'world67');
+  assert.equal(relayVersionOf(''), null);
+  assert.equal(relayVersionOf(null), null);
+  assert.equal(relayVersionOf(67), null, 'a number is not a deploy name');
+  assert.equal(relayVersionOf({ toString: () => 'world67' }), null, 'nor is a thing that could be talked into one');
+  // A campaign survivor: `String(v ?? '').length > 0` in place of the
+  // `typeof` passes every scalar above, because a number has no `.length`
+  // and fails the cap test by accident. What it lets through is anything
+  // that HAS a length - and `JSON.parse` of a hostile frame hands back
+  // exactly that. The guard is about the TYPE, not the printed form.
+  assert.equal(relayVersionOf(['world67']), null, 'an array stringifies to a deploy name and is not one');
+  assert.equal(relayVersionOf({ length: 5 }), null, 'nor is anything else wearing a length');
+  assert.equal(relayVersionOf('x'.repeat(RELAY_VERSION_MAX)), 'x'.repeat(RELAY_VERSION_MAX));
+  assert.equal(relayVersionOf('x'.repeat(RELAY_VERSION_MAX + 1)), null);
+  // BOTH ENDS, the way every other law on this wire is: `server/src/relay.js`
+  // re-exports wire.js WHOLE, so the relay is held to the same sentence the
+  // client reads by - the same function object, not a copy of its text.
+  assert.equal(relay.relayVersionOf, relayVersionOf, 'the same function at both ends');
+  assert.equal(relay.RELAY_VERSION_MAX, RELAY_VERSION_MAX);
+  // ...and the name this relay actually ships has to pass it, or the relay
+  // could mint a deploy name its own clients would silently refuse.
+  assert.equal(relayVersionOf(RELAY_VERSION), RELAY_VERSION, 'the deploy this relay ships is one the client will accept');
+});
+
+test('AUDIT-SRVN F2: a relay that mints a name per welcome cannot flood the chat or grow the page\'s memory - ONE open socket, 5000 welcomes', () => {
+  resetUpdateNotice();
+  // A welcome is NOT once per connection: `_receive` takes one whenever
+  // the relay sends one. Before this, 5000 on a single socket pushed 5000
+  // notices - CHAT_KEEP twenty-five times over, so a player's whole chat
+  // history was replaced by fake restarts. Driven, not read.
+  let told = 0;
+  for (let i = 0; i < 5000; i++) if (relayVersionSeen('v' + i, 1_000_000) === 'changed') told++;
+  assert.equal(told, 1, 'one notice, not five thousand');
+
+  // The SET is bounded the way online.js's `_threwKinds` is and for the
+  // same reason: it was the only unbounded accumulator SRV-N added, and
+  // the wire feeds it.
+  assert.ok(RELAY_SEEN_MAX > 1 && RELAY_SEEN_MAX <= 64, 'a bound small enough to be a bound and large enough to hold a real history');
+  assert.ok(RELAY_NOTICE_MIN_MS >= 10_000, 'a relay cannot restart twice inside the window, so a second notice inside one is not news about the world');
+
+  // IT FAILS TOWARDS SILENCE. An emptied set re-baselines, and a
+  // re-baseline says nothing: losing a notice is the correct way for this
+  // to break, inventing one is not. Walk well past the bound on an honest
+  // clock and count - a set that cleared into 'first' every time would
+  // notify on every single version.
+  resetUpdateNotice();
+  let t = 0, loud = 0;
+  for (let i = 0; i < RELAY_SEEN_MAX * 4; i++) { if (relayVersionSeen('w' + i, t) === 'changed') loud++; t += RELAY_NOTICE_MIN_MS; }
+  assert.ok(loud <= RELAY_SEEN_MAX * 4 - 1, 'the baseline is never news');
+  assert.ok(loud > 0, 'and the detector still works after a clear - silent is not the same as broken');
+
+  // THE BOUND ITSELF, and it needs a behavioural question because the set
+  // is private: a name from the START of that walk is one an UNBOUNDED
+  // set would still be holding, so it would answer 'same'. A bounded one
+  // has forgotten it. This is the only assertion that can tell the two
+  // apart, and without it the clear was a line a mutant could delete.
+  assert.notEqual(relayVersionSeen('w0', t), 'same', 'the set forgot its oldest names, so it is not growing for ever');
+  // and the rate gate is NOT what is being measured here
+  assert.equal(relayVersionSeen('w1', t + RELAY_NOTICE_MIN_MS * 2), 'changed');
 });
 
 test('SRV-N: the relay was BUMPED - a welcome field is a relay change, and the deployed Worker is the only thing that can prove it', () => {

@@ -6982,19 +6982,26 @@ export async function bootWorld(canvas, renderer, params, status) {
   // player. So ask the site, on the site's own rhythm rather than the
   // frame's, and let the player choose the moment.
   let _buildPolledAt = 0;
-  let _buildPolling = false;
   const buildPoll = (now) => {
-    // The FIRST poll waits a full interval too. A tab that has only just
-    // loaded is by definition current, and asking at boot would put every
-    // player's page load on the CDN twice for an answer we already know.
-    if (_buildPolling || now - _buildPolledAt < BUILD_POLL_MS) return;
+    // The FIRST poll waits a full interval too, measured from the PAGE's
+    // load (`performance.now()`'s origin) rather than the chat's start: a
+    // tab that has only just loaded is by definition current, and asking
+    // at boot would put every player's page load on the CDN twice for an
+    // answer we already know.
+    //
+    // AUDIT-SRVN F3: there was a second `_buildPolling` boolean here, and
+    // it was BOTH redundant and a hazard. Redundant because the stamp is
+    // taken when the poll STARTS, so this line already refuses a second
+    // one for a full interval; a hazard because a request that never
+    // settles left the flag raised and the poll dead for the rest of the
+    // session. One gate that heals itself beats two where the spare can
+    // latch - and the fetch is cancelled on a deadline now besides.
+    if (now - _buildPolledAt < BUILD_POLL_MS) return;
     _buildPolledAt = now;
-    _buildPolling = true;
     const href = globalThis.location?.href ?? '';
     fetchLiveBuildTag(href).then((tag) => {
-      _buildPolling = false;
       if (buildUpdateSeen(tag, BUILD_TAG) === 'changed') chatNotice(BUILD_UPDATE_TEXT);
-    }, () => { _buildPolling = false; });   // `fetchLiveBuildTag` swallows its own throws; this is the belt for a rejection it cannot see
+    }, () => {});   // `fetchLiveBuildTag` swallows its own throws; this is the belt for a rejection it cannot see
   };
   const chatFrame = () => {
     if (!chatLinks) return;
