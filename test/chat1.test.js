@@ -119,8 +119,9 @@ test('CHAT1 / AUDIT CHAT: the Room as a CHANNEL - a hello keeps the secret and n
   await r.hello(a, 'aaaa-0001'); await r.hello(b, 'bbbb-0002', at(3, 3));
   // ROSTER-G (Mac: "Players dont show in online"): a channel HAS a roster now - names alone, with the true count -
   // and says its joins, because the roster beside the chat is everyone online and the channel is where everyone is
-  assert.deepEqual(a.sent[0], { t: 'welcome', id: 'aaaa-0001', peers: [], n: 1, v: RELAY_VERSION });   // SRV-N: and the deploy's name, on a channel's welcome too - the only welcome a chat link ever gets
-  assert.deepEqual(b.sent, [{ t: 'welcome', id: 'bbbb-0002', peers: [{ id: 'aaaa-0001', name: 'aaaa-0001' }], n: 2, v: RELAY_VERSION }], 'b is told who is in the channel - a, by name, no look, no pose');
+  assert.deepEqual(a.sent[0], { t: 'welcome', id: 'aaaa-0001', peers: [], n: 1, v: RELAY_VERSION, now: a.sent[0].now });   // SRV-N: and the deploy's name, on a channel's welcome too - the only welcome a chat link ever gets; AUDIT SOC B7: and the relay's clock
+  assert.equal(typeof a.sent[0].now, 'number');
+  assert.deepEqual(b.sent, [{ t: 'welcome', id: 'bbbb-0002', peers: [{ id: 'aaaa-0001', name: 'aaaa-0001' }], n: 2, v: RELAY_VERSION, now: b.sent[0].now }], 'b is told who is in the channel - a, by name, no look, no pose');
   assert.deepEqual(ofType(a, 'join'), [{ t: 'join', id: 'bbbb-0002', name: 'bbbb-0002' }], 'and a hears b join - the name and nothing else');
   assert.equal(r.store.has('secret:aaaa-0001'), true, 'the secret is kept');
   assert.equal(r.store.has('look:aaaa-0001'), false, 'the look is not: nobody is drawn from a channel');
@@ -621,8 +622,10 @@ test('CHAT1 / AUDIT CHAT: the host by source - world.js starts the chat with the
   assert.match(w, /for \(const tab of chatLog\.tabs\) \{\s*const link = new OnlineSession\(\{ url: online\.url, name: online\.name, look: online\.look, id: online\.id, secret: online\.secret, presence: false \}\);\s*link\.onChat = \(line\) => chatLog\.push\(tab\.id, line\);\s*link\.onRelay = onRelayVersion;\s*link\.join\(tab\.room\);\s*chatLinks\.set\(tab\.id, link\);/, 'a channel session per tab, the presence session\'s identity, a line to its tab');
   assert.match(w, /onSend: \(tabId, text\) => chatLinks\.get\(tabId\)\?\.sendChat\(text\) \?\? false,/, 'a typed line down its tab\'s session, and the answer back (B2)');
   assert.match(w, /canOpen: \(\) => !gamePaused\(\) && !\(townTalk\.hudCovered \|\| \(modes\?\.hudCovered \?\? false\)\)/, 'no chat under a window');
-  assert.match(w, /onOpen: \(\) => \{ setCursorActive\(false\); releaseLook\(\); \},/, 'AUDIT CHAT C2: the pointer freed on open; PL3: the opening Enter reclaimed from the toggle');
-  assert.match(w, /onClose: \(\) => \{ if \(!gamePaused\(\)\) requestLook\(canvas\); \},/, 'and taken back inside the closing gesture');
+  assert.match(w, /onOpen: \(\) => surfaceOpen\('chat'\),/, 'AUDIT CHAT C2: the pointer freed on open (AUDIT SOC B6: by the first of the counted surfaces); PL3: the opening Enter reclaimed from the toggle');
+  assert.match(w, /const surfaceOpen = \(name\) => \{ pointerSurfaces\.add\(name\); setCursorActive\(false\); releaseLook\(\); \};/);
+  assert.match(w, /onClose: \(\) => surfaceClose\('chat'\),/, 'and taken back inside the closing gesture (AUDIT SOC B6: by the last of the counted surfaces to close)');
+  assert.match(w, /const surfaceClose = \(name\) => \{ pointerSurfaces\.delete\(name\); if \(!pointerSurfaces\.size && !gamePaused\(\)\) requestLook\(canvas\); \};/);
   assert.match(w, /for \(const \[tabId, link\] of chatLinks\) \{\s*link\.rejoin\(chatLog\.tab\(tabId\)\.room, CHAT_REJOIN_MS\);[^\n]*\n\s*link\.tick\(\);/, 'every channel rejoined when it must be, and ticked');
   // AUDIT-CHATR F1: the option is `covered`, not `hidden`. The two words
   // are different things - the host's window and the player's Hide

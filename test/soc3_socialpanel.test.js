@@ -551,15 +551,13 @@ test('SOC3: a roster row is a DOOR - the menu is the host\'s answers, a refused 
   const doc = fakeDocument(), win = fakeWindow();
   const peers = new Map([['peer-Bob', { id: 'peer-Bob', name: 'Bob' }], ['peer-Zed', { id: 'peer-Zed', name: 'Zed' }]]);
   const sent = [];
-  // world.js's socialRowActions, word for word
+  // world.js's socialRowActions, word for word (AUDIT SOC C15: two doors - Remove is the panel's, behind its confirm)
   const rowActions = (peerId) => {
     const a = social.actionsFor(peerId);
-    const out = [
+    return [
       { label: 'Add friend', enabled: a.canFriend, why: a.whyNotFriend, run: () => sent.push({ k: 'friend.request', peer: peerId }) },
       { label: 'Invite to party', enabled: a.canInvite, why: a.whyNotInvite, run: () => sent.push({ k: 'party.invite', peer: peerId }) },
     ];
-    if (a.relation === 'friend') out.push({ label: 'Remove friend', enabled: true, why: null, run: () => sent.push({ k: 'friend.remove', acct: a.acct }) });
-    return out;
   };
   const panel = createChatPanel({ log, onSend: () => true, roster: () => ({ id: 'peer-me', name: 'Mac', peers }), action: defaultAction, doc, win, touch: false, rowActions });
   const root = doc.body.children[0];
@@ -579,16 +577,16 @@ test('SOC3: a roster row is a DOOR - the menu is the host\'s answers, a refused 
   assert.deepEqual(sent, [{ k: 'friend.request', peer: 'peer-Zed' }], 'by PEER id - a stranger has no account I can name');
   assert.equal(find(root, 'dfchat-rowmenu').length, 0, 'and the menu closes behind the act');
 
-  // a friend: the third row appears, and Add friend is refused WITH ITS REASON
+  // a friend: the same two doors (AUDIT SOC C15: no one-click Remove here), and Add friend is refused WITH ITS REASON
   rowFor('Bob').fire('click');
   menu = one(root, 'dfchat-rowmenu');
-  assert.deepEqual(find(menu, 'dfchat-rowbtn').map((b) => b.textContent), ['Add friend', 'Invite to party', 'Remove friend']);
+  assert.deepEqual(find(menu, 'dfchat-rowbtn').map((b) => b.textContent), ['Add friend', 'Invite to party']);
   assert.equal(find(menu, 'dfchat-rowbtn')[0].disabled, true);
   assert.equal(find(menu, 'dfchat-rowbtn')[0].attrs.title, 'already friends', 'a refused act is a SENTENCE, not a missing button');
   find(menu, 'dfchat-rowbtn')[0].fire('click');
   assert.equal(sent.length, 1, 'and a disabled one sends nothing');
-  find(menu, 'dfchat-rowbtn')[2].fire('click');
-  assert.deepEqual(sent[1], { k: 'friend.remove', acct: 'acct-Bob' }, 'Remove names the ACCOUNT, which by then I hold');
+  find(menu, 'dfchat-rowbtn')[1].fire('click');
+  assert.deepEqual(sent[1], { k: 'party.invite', peer: 'peer-Bob' }, 'a friend is invited from the row by PEER - the row is the tab in front of me');
 
   // the open menu survives the frame (the roster repaints on a CHANGE, and an opened row IS one)
   rowFor('Bob').fire('click');
@@ -622,7 +620,7 @@ test('SOC3: a roster row is a DOOR - the menu is the host\'s answers, a refused 
 test('SOC3: the host by source - world.js makes the panel in socialStart over the picture the hub filled, hands the chat the button, the colours and the roster\'s doors as LAZY closures, puts the panel on hudCtx for SOC5, and renders it on the chat frame under the chat\'s own covering rule (mutants: the panel made before the picture; the closures captured eagerly; the render outside the chat frame; the pointer doors dropped)', () => {
   const w = rd('src/scenes/world.js');
   const bare = w.replace(/^\s*\/\/.*$/gm, '');
-  assert.match(w, /import \{ createSocialPanel \} from '\.\.\/ui\/socialPanel\.js';/);
+  assert.match(w, /import \{ createSocialPanel, TRY_AGAIN_TEXT \} from '\.\.\/ui\/socialPanel\.js';/, 'AUDIT SOC B17: the panel\'s own "try again" is the F-menu\'s too');
   assert.match(w, /import \{ SocialState, accountId, accountSecret \} from '\.\.\/net\/social\.js';/,
     'the host imports no colour at all - the one module that knows what a party is answers cssColorOf (SOC7 integration: SOC4 holds world.js to naming no green)');
   assert.match(w, /\n  let socialPanel = null;/, 'beside `social`, in the host\'s own scope');
@@ -636,7 +634,7 @@ test('SOC3: the host by source - world.js makes the panel in socialStart over th
   // the roster's doors: peer for a stranger, account for the friend I already hold
   assert.match(bare, /\{ label: 'Add friend', enabled: a\.canFriend, why: a\.whyNotFriend, run: \(\) => socialLink\(\)\?\.sendSocial\(\{ k: 'friend\.request', peer: peerId \}\) \?\? false \}/);
   assert.match(bare, /\{ label: 'Invite to party', enabled: a\.canInvite, why: a\.whyNotInvite, run: \(\) => socialLink\(\)\?\.sendSocial\(\{ k: 'party\.invite', peer: peerId \}\) \?\? false \}/);
-  assert.match(bare, /if \(a\.relation === 'friend'\) out\.push\(\{ label: 'Remove friend'[^\n]*k: 'friend\.remove', acct: a\.acct/);
+  assert.doesNotMatch(bare, /label: 'Remove friend'/, 'AUDIT SOC C15: no one-click Remove on a roster row - the panel\'s two-click Remove is the one door out of a friendship');
 
   // the panel itself, inside socialStart and AFTER the state exists
   const start = w.slice(w.indexOf('const socialStart = () => {'), w.indexOf('const composePartyPose'));
@@ -644,9 +642,12 @@ test('SOC3: the host by source - world.js makes the panel in socialStart over th
   assert.ok(start.indexOf('social = new SocialState();') < start.indexOf('socialPanel = createSocialPanel({'), 'and the panel over it, never before it');
   assert.match(start, /socialPanel = createSocialPanel\(\{\s*social,\s*send: \(act\) => socialLink\(\)\?\.sendSocial\(act\) \?\? false,/, 'one arrow out, the hub link\'s - and its false is the rate gate\'s answer');
   assert.match(start, /canOpen: \(\) => !gamePaused\(\) && !\(townTalk\.hudCovered \|\| \(modes\?\.hudCovered \?\? false\)\),/, 'the chat\'s own door: no pointer surface under a window');
-  assert.match(start, /onOpen: \(\) => \{ setCursorActive\(false\); releaseLook\(\); \},/);
-  assert.match(start, /onClose: \(\) => \{ if \(!gamePaused\(\)\) requestLook\(canvas\); \},/);
-  assert.match(start, /hudCtx\.openSocial = \(\) => socialPanel\?\.toggle\(\);/, 'SOC5\'s key reaches it through the host\'s ONE ctx (U45)');
+  assert.match(start, /onOpen: \(\) => surfaceOpen\('social'\),/, 'AUDIT SOC B6: the panel is a COUNTED pointer surface');
+  assert.match(start, /onClose: \(\) => surfaceClose\('social'\),/);
+  assert.match(bare, /const surfaceOpen = \(name\) => \{ pointerSurfaces\.add\(name\); setCursorActive\(false\); releaseLook\(\); \};/, 'the first surface up frees the mouse');
+  assert.match(bare, /const surfaceClose = \(name\) => \{ pointerSurfaces\.delete\(name\); if \(!pointerSurfaces\.size && !gamePaused\(\)\) requestLook\(canvas\); \};/, 'the LAST surface down takes it back');
+  assert.match(bare, /if \(!gamePaused\(\) && !pointerSurfaces\.size && document\.pointerLockElement !== canvas\) requestLook\(canvas\);/, 'and the key ladder\'s resting-state relock waits while any stands');
+  assert.doesNotMatch(w, /hudCtx\.openSocial/, 'AUDIT SOC B14/D11: the second door to the panel is gone - SOC5\'s key reaches it through socialInteract\'s nobody-in-front arm');
 
   // the frame: after the party pose, under the same covering rule the chat renders with
   // matched around the prose rather than through it: SOC2's pose line carries its own trailing comment, and the

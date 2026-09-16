@@ -366,10 +366,13 @@ test('SOC5: scenes/world.js - the door on hudCtx, the ray read as the activation
   assert.match(w, /socialMenu = createSocialMenu\(\{/);
   assert.ok(w.indexOf('const socialStart = () => {') < w.indexOf('socialMenu = createSocialMenu({'), 'built inside socialStart - so it exists exactly when `social` does');
   assert.match(w, /const went = socialLink\(\)\?\.sendSocial\(act\) === true;/, 'the act leaves through the live session, never a captured one');
-  assert.match(w, /chatLog\.push\(tab\.id, \{ text: went \? socialActText\(act\.k, who\) : 'Try again in a moment', system: true \}\);/, 'a word either way, on the world tab, flagged as nobody\'s line');
+  assert.match(w, /chatLog\.push\(tab\.id, \{ text: went \? socialActText\(act\.k, who\) : \(hub\?\.status === 'open' \? TRY_AGAIN_TEXT : NOT_CONNECTED_TEXT\), system: true \}\);/, 'a word either way, on the world tab, flagged as nobody\'s line - AUDIT SOC B17: the panel\'s "try again" when the gate refused, "not connected" when there is no link to try again on');
+  assert.match(w, /const NOT_CONNECTED_TEXT = 'You are not connected';/);
   assert.match(w, /Friend request sent to \$\{who\}/); assert.match(w, /Party invite sent to \$\{who\}/);
   // the pointer door is the chat's, and the open gate is the chat's
-  assert.match(w, /onOpen: \(\) => \{ setCursorActive\(false\); releaseLook\(\); \},   \/\/ AUDIT CHAT C2's law/);
+  assert.match(w, /onOpen: \(\) => surfaceOpen\('menu'\),   \/\/ AUDIT CHAT C2's law/, 'AUDIT SOC B6: the card is a counted pointer surface');
+  assert.match(w, /if \(!townTalk\.overlayActive && act === 'SocialInteract' && socialMenuCanOpen\(\) && socialInteract\(\)\) \{ e\.preventDefault\(\); return; \}/, 'AUDIT SOC B4/D1: the door answers ABOVE the exterior gate - F on a body works in a tavern and a dungeon');
+  assert.ok(w.indexOf("act === 'SocialInteract' && socialMenuCanOpen()") < w.indexOf("if (!townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {"), 'written above the mode gate, not inside it');
   assert.match(w, /onClose: \(\) => \{ if \(!gamePaused\(\)\) requestLook\(canvas\); \},   \/\/ and taken back inside the one that closed/);
   assert.match(w, /const socialMenuCanOpen = \(\) => !gamePaused\(\) && !\(townTalk\.hudCovered \|\| \(modes\?\.hudCovered \?\? false\)\);/, 'the chat\'s own gate: a window\'s keys are the window\'s');
   assert.match(w, /socialMenu\?\.render\(\{ covered: townTalk\.hudCovered \|\| \(modes\?\.hudCovered \?\? false\) \|\| gamePaused\(\) \}\);/, 'and a window that opens later takes the card with it');

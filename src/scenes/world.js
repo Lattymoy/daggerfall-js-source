@@ -72,7 +72,7 @@ import { exhaustionOutcome, EXHAUSTED_IN_WATER } from '../systems/rest.js';   //
 import { RestWindow, preloadRestArt } from '../ui/restWindow.js';   // S40: rest above ground   // D3: REST00I0/01I0/02I0
 import { ActionTextBox } from '../ui/actionText.js';   // AUDIT 23 (C5)
 import { healthStatusRows, statusInfoRows } from '../systems/healthStatus.js';   // BS1/F198: the Status health box
-import { maxFatigue } from '../systems/statMods.js';   // AUDIT 23 (C5)
+import { maxFatigue, FATIGUE_MULTIPLIER } from '../systems/statMods.js';   // AUDIT 23 (C5); AUDIT SOC B5: the party pose's fatigue in the digits a sheet shows
 // V5: resting above ground. RestWindow and RestSession have been
 // finished since U7; what was missing was a host outside the dungeon
 // that opens one, and CanRest's whole town half.
@@ -227,7 +227,7 @@ import { SocialState, accountId, accountSecret } from '../net/social.js';   // S
 import { SOCIAL_ROOM, PARTY_SEND_MS } from '../net/wire.js';   // SOC2: the hub's room and the party pose's floor (a second wire import: AUDIT WORLD4 A1 pins the first as it stands)
 import { createChatPanel } from '../ui/chatPanel.js';   // CHAT1: the enhanced skin's chat over the world
 import { createPartyPanel } from '../ui/partyPanel.js';   // SOC4: the party HUD - my party's portraits and their health / stamina / magicka
-import { createSocialPanel } from '../ui/socialPanel.js';   // SOC3: the friends + party panel the Social button opens
+import { createSocialPanel, TRY_AGAIN_TEXT } from '../ui/socialPanel.js';   // SOC3: the friends + party panel the Social button opens; AUDIT SOC B17: and its word for a refused act, so the F-menu's line and the panel's note agree
 import { pickPeerInFront, SOCIAL_REACH } from '../player/socialPick.js';   // SOC5: which body the ray struck, and how far "on their body" reaches
 import { createSocialMenu } from '../ui/socialMenu.js';   // SOC5: the F-menu over that body - Add friend, Invite to party
 import { relayVersionSeen, buildUpdateSeen, fetchLiveBuildTag, RELAY_RESTART_TEXT, BUILD_UPDATE_TEXT, BUILD_POLL_MS } from '../net/updateNotice.js';   // SRV-N: the relay moved, or the build did
@@ -5135,6 +5135,14 @@ export async function bootWorld(canvas, renderer, params, status) {
   // above the return. Its one consumer is the prison countdown's
   // accelerator (DaggerfallCourtWindow.cs:301-304).
   let backButtonHeld = false;
+  // AUDIT SOC B6/C2 (2026-09-16): THE POINTER SURFACES ARE COUNTED. The chat, the friends panel (SOC3) and the F-menu
+  // (SOC5) each freed the mouse on open and took it back on close, so closing one while another stood - the F-menu
+  // over the panel, the panel over the chat - relocked the pointer under a surface still up, and its buttons were
+  // dead until Escape. One Set of the surfaces standing: the FIRST to open frees the mouse, the LAST to close takes it
+  // back, and the key ladder's resting-state relock (its tail) waits while any stands.
+  const pointerSurfaces = new Set();
+  const surfaceOpen = (name) => { pointerSurfaces.add(name); setCursorActive(false); releaseLook(); };
+  const surfaceClose = (name) => { pointerSurfaces.delete(name); if (!pointerSurfaces.size && !gamePaused()) requestLook(canvas); };
   addEventListener('keydown', (e) => {
     // FIX-E: QUICKLOAD WORKS FROM UNDER ANY OVERLAY - the death screen's
     // own "F11 load" hint, and the one arm ui/input.js's routeKey lets
@@ -5188,6 +5196,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     // LATCH (G3/GR); it carries the suppression half too (:1681-1685,
     // "space is jump, LeftShift+Space opens inventory: ignore it").
     const act = actionOf(e, keys);   // I2: the registry owns the code -> action read
+    // AUDIT SOC B4/D1: F ON A BODY WORKS INSIDE TOO. The social door sat under the exterior gate below, and the
+    // interior and dungeon modes' own contexts (scenes/worldModes.js interiorKeyCtx, dungeonCtx) carry no
+    // `socialInteract`, so in a tavern or a dungeon - where two players meet as often as in a street - F did nothing
+    // at all. It answers here, above the mode gate and under the same overlay and window gates the F-menu opens by
+    // (socialMenuCanOpen): the door itself says false on a page with no account, and the ladder falls through.
+    if (!townTalk.overlayActive && act === 'SocialInteract' && socialMenuCanOpen() && socialInteract()) { e.preventDefault(); return; }
     // U45 - THE ONE DOOR PER DESTINATION: this ladder and the large
     // HUD's eleven panels open the same windows, so they read the same
     // object. It is the same law U43 applied to the interior arm, one
@@ -5299,7 +5313,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (e.code === 'AltLeft') e.preventDefault();
     // DFU parity: mouselook is the resting state - any gameplay
     // keypress re-engages a dropped lock (no click-to-look mode).
-    if (!gamePaused() && document.pointerLockElement !== canvas) requestLook(canvas);
+    if (!gamePaused() && !pointerSurfaces.size && document.pointerLockElement !== canvas) requestLook(canvas);   // AUDIT SOC B6: never under an open chat, friends panel or F-menu - a key there is the surface's, and a relock under it is a dead panel
   });
   // D4: the overlay's KEY-UP edge. This listener has drained the
   // movement Set since the first host and never told the open window
@@ -6826,16 +6840,16 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** SOC3 (Mac: "invite friends or other individuals"): what a click on a chat ROSTER ROW offers for that peer. The
    *  roster is the one place a stranger has a name, so it is the one place "other individuals" can be acted on -
    *  and every answer here is net/social.js's (actionsFor), including the reason a refused one carries. An act by
-   *  PEER id, because a stranger has no account I can name; Remove is by account, which by then I hold. */
+   *  PEER id, because a stranger has no account I can name. AUDIT SOC C15: REMOVE IS NOT HERE - it was the one
+   *  destructive act on a one-click row, while the panel's own Remove arms on one click and fires on the second
+   *  (ui/socialPanel.js); a friend is removed from the list that shows them, behind that confirm. */
   const socialRowActions = (peerId) => {
     if (!social || !peerId) return [];
     const a = social.actionsFor(peerId);
-    const out = [
+    return [
       { label: 'Add friend', enabled: a.canFriend, why: a.whyNotFriend, run: () => socialLink()?.sendSocial({ k: 'friend.request', peer: peerId }) ?? false },
       { label: 'Invite to party', enabled: a.canInvite, why: a.whyNotInvite, run: () => socialLink()?.sendSocial({ k: 'party.invite', peer: peerId }) ?? false },
     ];
-    if (a.relation === 'friend') out.push({ label: 'Remove friend', enabled: true, why: null, run: () => socialLink()?.sendSocial({ k: 'friend.remove', acct: a.acct }) ?? false });
-    return out;
   };
   // SOC5 (Mac: "Players should be able to interact with others in the world upon encountering them by pressing F on
   // their body, which should show options to add as a friend or invite to a party"): the card over that body. Made in
@@ -7049,8 +7063,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       // stands in only while the tab's link is not yet made.
       roster: () => chatLinks?.get(chatLog?.active) ?? online ?? null,
       canOpen: () => !gamePaused() && !(townTalk.hudCovered || (modes?.hudCovered ?? false)),   // no chat under a window: the window's keys are the window's
-      onOpen: () => { setCursorActive(false); releaseLook(); },   // AUDIT CHAT C2: the panel is a pointer surface - the mouse is freed on open   // PL3: the Enter that opened the chat is the CHAT'S - the toggle (the same key, a capture listener bound earlier) had already flipped cursorActive on it, and the close's relock was refused by the precedence line for the rest of the session
-      onClose: () => { if (!gamePaused()) requestLook(canvas); },   // and taken back inside the closing gesture (MAC1's rule, ui/pauseDoor.js)
+      onOpen: () => surfaceOpen('chat'),   // AUDIT CHAT C2: the panel is a pointer surface - the mouse is freed on open (AUDIT SOC B6: by the first surface up - the friends panel and the F-menu are surfaces too)   // PL3: the Enter that opened the chat is the CHAT'S - the toggle (the same key, a capture listener bound earlier) had already flipped cursorActive on it, and the close's relock was refused by the precedence line for the rest of the session
+      onClose: () => surfaceClose('chat'),   // and taken back inside the closing gesture (MAC1's rule, ui/pauseDoor.js) - by the last surface down
       // SOC3: the three social seams of the chat, all read LAZILY - `social` and `socialPanel` are made by
       // socialStart below, which runs after this call (the panel has to exist before the picture lands beside it),
       // so every one of these is a closure that asks at the moment of the click or the frame, never a value.
@@ -7068,9 +7082,13 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  (a reconnect's fresh state frame) is one repaint through `onChange`, never a rebuild. */
   const socialStart = () => {
     const link = socialLink();
-    if (!link || !link.acct) return;   // no hub tab, or no account to be anyone by: the chat stands, the social arms do not
+    if (!link) return;   // no hub tab: the social arms do not exist
     const tab = chatLog.tabs.find((t) => t.room === SOCIAL_ROOM);
-    social = new SocialState();
+    if (!link.acct) {   // AUDIT SOC B10: no account to be anyone by - the browser keeps no storage (net/social.js accountId is null rather than a fresh permanent record per load); the chat stands, the social arms do not, and the player is told once, on the tab whose button would have answered
+      if (!_noAccountSaid) { _noAccountSaid = true; chatLog.push(tab.id, { text: NO_ACCOUNT_TEXT, system: true }); }
+      return;
+    }
+    social = new SocialState({ acct: link.acct });
     link.onSocial = (f) => { social.apply(f); };
     link.onParty = (acct, p) => { social.applyParty(acct, p); };
     social.onNote = (note, text) => { if (text) chatLog.push(tab.id, { text, system: true }); };
@@ -7085,12 +7103,12 @@ export async function bootWorld(canvas, renderer, params, status) {
       social,
       send: (act) => socialLink()?.sendSocial(act) ?? false,   // false is the rate gate's answer: the panel keeps the button and says "try again"
       canOpen: () => !gamePaused() && !(townTalk.hudCovered || (modes?.hudCovered ?? false)),
-      onOpen: () => { setCursorActive(false); releaseLook(); },
-      onClose: () => { if (!gamePaused()) requestLook(canvas); },
+      onOpen: () => surfaceOpen('social'),   // AUDIT SOC B6: counted with the chat's and the F-menu's - the first up frees the mouse, the last down takes it back
+      onClose: () => surfaceClose('social'),
     });
-    // SOC5 will bind a key to this; `hudCtx` is the ONE door this host's ladders dispatch through (U45), so the key
-    // reaches the panel the same way every other window's does and no second reference to it has to be kept.
-    hudCtx.openSocial = () => socialPanel?.toggle();
+    // AUDIT SOC B14/D11: `hudCtx.openSocial` stood here as a second door to the panel; nothing dispatched through it
+    // (SOC5's key reaches the panel through socialInteract's nobody-in-front arm), and a door nothing opens is a
+    // second truth to keep - so it is gone.
     // SOC4: the party HUD (portraits, health / stamina / magicka) is made here, over `social`
     // The art pair is the ESCORT FACES' own (initEscortFaces above): one fetch door and one palette for every
     // classic record this host reads, so a portrait is the same CIF the paper doll draws and nothing is loaded twice.
@@ -7103,17 +7121,21 @@ export async function bootWorld(canvas, renderer, params, status) {
     socialMenu = createSocialMenu({
       doc: document, win: globalThis,
       canOpen: socialMenuCanOpen,
-      onOpen: () => { setCursorActive(false); releaseLook(); },   // AUDIT CHAT C2's law: the card is a pointer surface - the mouse is freed inside the gesture that opened it
-      onClose: () => { if (!gamePaused()) requestLook(canvas); },   // and taken back inside the one that closed (MAC1's rule, ui/pauseDoor.js)
+      onOpen: () => surfaceOpen('menu'),   // AUDIT CHAT C2's law: the card is a pointer surface - the mouse is freed inside the gesture that opened it (AUDIT SOC B6: counted with the chat's and the panel's)
+      onClose: () => surfaceClose('menu'),   // and taken back inside the one that closed (MAC1's rule, ui/pauseDoor.js) - by the last surface down
       onAct: (act) => {
         const who = peerName(act.peer) ?? social?.friends.get(act.acct)?.name ?? 'them';
-        // false is the session's honest answer - no account, no socket, or over SOCIAL_HZ_MAX (net/online.js
-        // sendSocial). A player who pressed a button is owed a word either way.
-        const went = socialLink()?.sendSocial(act) === true;
-        chatLog.push(tab.id, { text: went ? socialActText(act.k, who) : 'Try again in a moment', system: true });
+        // false is the session's honest answer - no socket, or over SOCIAL_HZ_MAX (net/online.js sendSocial). A player
+        // who pressed a button is owed a word either way - AUDIT SOC B17: the RIGHT word: "try again" when the gate
+        // refused (the panel's own sentence, so the two surfaces agree), and "not connected" when there is no link open
+        // to try again on, which "try again" would have lied about
+        const hub = socialLink();
+        const went = hub?.sendSocial(act) === true;
+        chatLog.push(tab.id, { text: went ? socialActText(act.k, who) : (hub?.status === 'open' ? TRY_AGAIN_TEXT : NOT_CONNECTED_TEXT), system: true });
       },
     });
   };
+  let _noAccountSaid = false;   // AUDIT SOC B10: the no-account line goes on the tab once
   /** SOC5: the host's word on whether a menu may stand - the chat's own gate (chatStart's `canOpen`), because the two
    *  are the same kind of surface: a window over the HUD or a pause owns the keys and the mouse, and a card that
    *  opened under one would take clicks the window is owed. */
@@ -7124,6 +7146,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   const peerName = (peerId) => (peerId ? (online?.peers.get(peerId)?.name || null) : null);
   /** SOC5: the line that goes on the world tab when an act LEFT. The hub writes no chat line (SOC1); the client puts
    *  words to what it did, exactly as net/social.js noteText does for what it was told. */
+  /** AUDIT SOC B17: the F-menu's word when no link is open to act on - "try again" would have promised a second try. */
+  const NOT_CONNECTED_TEXT = 'You are not connected';
+  /** AUDIT SOC B10: the line on the world tab when there is no account to be anyone by. */
+  const NO_ACCOUNT_TEXT = 'Friends and parties are off: this browser keeps no storage, so there is no account to be anyone by';
   const socialActText = (k, who) => (k === 'friend.request' ? `Friend request sent to ${who}`
     : k === 'party.invite' ? `Party invite sent to ${who}`
       : k === 'friend.remove' ? `${who} is no longer your friend` : 'Sent');
@@ -7131,16 +7157,17 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  called, the six vitals, the portrait's recipe - as net/wire.js validPartyPose admits it. */
   const composePartyPose = () => {
     const mode = modes?.mode ?? 'exterior';
-    const px = playerTravelPixel();
+    const px = playerTravelPixel();   // AUDIT SOC B18: read ONCE - this ran twice a second, and it used to read the pixel three times and compose a whole look (every equipped item) for three fields
     const ident = mode === 'dungeon' ? modes?.roomIdentity?.() : null;
-    const loc = _questLoc();
-    const look = composeLook(playerEntity);
+    const loc = locationIndex.get(`${px.x},${px.y}`) ?? null;
     return {
       px: px.x, py: px.y,
       in: mode === 'dungeon' ? 1 : mode === 'interior' ? 2 : 0,
       loc: ident?.kind === 'dungeon' ? (ident.name ?? '') : (loc?.name ?? ''),
-      h: playerEntity.health ?? 0, hm: playerEntity.maxHealth ?? 0, f: playerEntity.fatigue ?? 0, fm: maxFatigue(playerEntity), m: playerEntity.magicka ?? 0, mm: playerEntity.maxMagicka ?? 0,
-      race: look.race, gender: look.gender, face: look.faceIndex,
+      // AUDIT SOC B5: fatigue in the DIGITS a sheet shows (ui/charsheet.js: the stored pool is x FATIGUE_MULTIPLIER) - a
+      // member's card said 3200/6400 where their own sheet said 50/100
+      h: playerEntity.health ?? 0, hm: playerEntity.maxHealth ?? 0, f: Math.trunc((playerEntity.fatigue ?? 0) / FATIGUE_MULTIPLIER), fm: Math.trunc(maxFatigue(playerEntity) / FATIGUE_MULTIPLIER), m: playerEntity.magicka ?? 0, mm: playerEntity.maxMagicka ?? 0,
+      race: playerEntity.race ?? 'Breton', gender: playerEntity.gender ?? 'male', face: playerEntity.faceIndex ?? 0,   // the hello's own reading (net/remotePlayers.js composeLook), without the items
     };
   };
   /** SOC6 (Mac: "Party members should be able to be seen on the world map, regardless of their location"): THE
@@ -7167,7 +7194,11 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  picture, so "last online" reads on the relay's clock. */
   const partyFrame = (nowMs) => {
     if (!social) return;
-    social.setClockOffset(online?.clockOffsetMs ?? 0);
+    // AUDIT SOC B7: the HUB LINK's clock - its welcome carries the relay's `now` (AUDIT SOC B7, server side), and it is
+    // the link whose stamps (last seen, an invite's lapse) the picture reads; the presence session's stands in for a
+    // relay from before, and is null when the player is in the chat alone
+    const hub = socialLink();
+    social.setClockOffset(hub?.clockRead ? hub.clockOffsetMs : (online?.clockOffsetMs ?? 0));
     if (!social.party || nowMs - _partyComposedAt < PARTY_SEND_MS / 2) return;
     _partyComposedAt = nowMs;
     socialLink()?.sendParty(composePartyPose());
