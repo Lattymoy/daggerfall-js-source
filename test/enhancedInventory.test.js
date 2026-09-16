@@ -93,7 +93,7 @@ test('U53: encumbrance is the same expression the sheet and the classic window u
     'LIVE strength - a drained player must not be told they can carry the undrained amount');
   // ...and the OTHER half. PlayerEntity.CarriedWeight (:184) is the
   // items PLUS the gold counter's weight, and the pane composes it by
-  // hand (enhancedInventory.js:175-176) because it is handed the list
+  // hand (enhancedInventory.js:181-182) because it is handed the list
   // and not the entity - so it must still land on inventory
   // .carriedWeight's answer.
   assert.equal(m.encumbrance.now, Math.trunc(carriedWeight(e)));

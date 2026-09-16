@@ -353,15 +353,22 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'windWisps', initial: true, online: 'player' }),   // WIND3: render/windWisps.js wispsOn
   }),
+  // ES1 (2026-09-16, Mac: "lump this in as a new enhanced toggle. Enhanced
+  // Sounds, add the wind noise to it"): WIND3's `wind-sound` row IS this
+  // row now - one switch over the port's own sounds (systems/
+  // enhancedSounds.js): the wind loop, and the enhanced inventory's
+  // transfer cues (MAC-O6). The kill door `?windaudio=off` still silences
+  // the wind alone.
   Object.freeze({
-    id: 'wind-sound',
+    id: 'enhanced-sounds',
     group: 'world',
-    title: 'Wind sound',
-    note: 'A quiet wind under the enhanced outdoors, from Daggerfall\u2019s own clips, rising and falling with its '
-      + 'strength. Never more than a murmur, and silent indoors.',
+    title: 'Enhanced sounds',
+    note: 'The sounds the port adds under the enhanced skin: a quiet wind outdoors from Daggerfall\u2019s own clips, '
+      + 'rising and falling with its strength and silent indoors, and the gold clink and click when you take or '
+      + 'store items in the enhanced inventory.',
     effect: 'Takes effect at once.',
     kinds: Object.freeze(['enhanced']),
-    control: Object.freeze({ store: 'prefs', key: 'windSound', initial: true, online: 'player' }),   // WIND3: systems/windAudio.js windSoundOn
+    control: Object.freeze({ store: 'prefs', key: 'soundEnhancements', initial: true, online: 'player' }),   // ES1: systems/enhancedSounds.js enhancedSoundsOn; windAudio.js windSoundOn rides it
   }),
   Object.freeze({
     id: 'flora-sway',

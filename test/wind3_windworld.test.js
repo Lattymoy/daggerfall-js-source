@@ -182,8 +182,9 @@ test('WIND3 clips: the five wind records by name, the indices DFU draws as dunge
 });
 
 test('WIND3 rows and switches: three rows on the Features home, on by default, the player\'s own online; each switch is the enhanced skin, its pref, and its kill door', () => {
-  const rows = ['wind-wisps', 'wind-sound', 'flora-sway'].map((id) => FEATURES.find((f) => f.id === id));
-  assert.deepEqual(rows.map((r) => r?.control.key), ['windWisps', 'windSound', 'floraSway']);
+  // ES1: the wind's own row became the Enhanced sounds row - same place, same shape, the loot cues beside the loop.
+  const rows = ['wind-wisps', 'enhanced-sounds', 'flora-sway'].map((id) => FEATURES.find((f) => f.id === id));
+  assert.deepEqual(rows.map((r) => r?.control.key), ['windWisps', 'soundEnhancements', 'floraSway']);
   for (const r of rows) {
     assert.deepEqual(r.kinds, ['enhanced']); assert.equal(r.control.store, 'prefs'); assert.equal(r.control.initial, true); assert.equal(r.control.online, 'player');
     assert.equal(r.effect, 'Takes effect at once.'); assert.ok(r.note.length > 80);
@@ -192,7 +193,7 @@ test('WIND3 rows and switches: three rows on the Features home, on by default, t
   }
   assert.equal(FEATURES.findIndex((f) => f.id === 'wind-wisps'), FEATURES.findIndex((f) => f.id === 'loot-rarity') + 1, 'after LR1, before the packs');
   const skin = uiSkin();
-  const doors = [[wispsOn, 'windWisps', 'wisps'], [windSoundOn, 'windSound', 'windaudio'], [floraSwayOn, 'floraSway', 'sway']];
+  const doors = [[wispsOn, 'windWisps', 'wisps'], [windSoundOn, 'soundEnhancements', 'windaudio'], [floraSwayOn, 'floraSway', 'sway']];
   try {
     for (const [on, key, door] of doors) {
       setUiSkin('enhanced'); setPref(key, true);

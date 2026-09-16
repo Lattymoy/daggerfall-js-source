@@ -21,12 +21,12 @@
 // every modal frame (inside a building or a dungeon), as they stop the
 // mills' hum - the port's own sounds fall silent indoors. ENHANCED ONLY,
 // behind its own row (`wind-sound` on the Features home, the pref
-// `windSound`, the player's own online); `?windaudio=off` the kill door.
+// `windSound`, the player's own online - ES1 folded it into the
+// `enhanced-sounds` row, pref `soundEnhancements`); `?windaudio=off` the kill door.
 
 import { audio as defaultAudio } from './audio.js';
 import { SOUND } from './soundClips.js';
-import { isEnhanced } from './uiSkin.js';
-import { getPref } from './uiPrefs.js';
+import { enhancedSoundsOn } from './enhancedSounds.js';   // ES1: the wind rides the one Enhanced sounds switch
 
 /** The loudest the wind ever is, as a loop gain (the rain loop plays at
  *  1, the birds at their clips' own level). */
@@ -61,10 +61,12 @@ export function windPitchFor(strength01) {
   return 0.92 + 0.16 * Math.max(0, Math.min(1, strength01));
 }
 
-/** The loop's switch: the enhanced skin, the `windSound` pref, and
- *  `?windaudio=off` the kill door. */
+/** The loop's switch: the enhanced skin and the `soundEnhancements` pref
+ *  (ES1: one Enhanced sounds row over the port's own sounds - the wind
+ *  loop's own `windSound` row folded into it), and `?windaudio=off` the
+ *  kill door. */
 export function windSoundOn(search = globalThis.location?.search ?? '') {
-  return isEnhanced() && !!getPref('windSound') && new URLSearchParams(search).get('windaudio') !== 'off';
+  return enhancedSoundsOn() && new URLSearchParams(search).get('windaudio') !== 'off';
 }
 
 /** The loop's driver: `update(wd, dt, on)` once a frame with

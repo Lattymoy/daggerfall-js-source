@@ -134,7 +134,8 @@ test('HT1: the Mods pane entry is the shipped modsettings.json - every key, its 
   // forces every vendored mod on, so it would do it for everyone by
   // default. O is free in DFU's defaults, in this mod's other two keys and
   // in every other vendored mod. The class pin below is what caught it.
-  const PORT_DEFAULT = Object.freeze({ 'Modules.Sprite': true, 'Handling.ManualDropInput': 'G', 'Handling.ToggleLightInput': 'O' });
+  // HT5: and Bob - the widget ships its Bob on, so the torch hand's follows (the third departure, stated in the table).
+  const PORT_DEFAULT = Object.freeze({ 'Modules.Sprite': true, 'Modules.Bob': true, 'Handling.ManualDropInput': 'G', 'Handling.ToggleLightInput': 'O' });
   let n = 0;
   const kinds = new Set();
   for (const section of shipped.Sections) {
@@ -228,7 +229,7 @@ test('HT1: LoadSettings - the fields carry the mod\'s own multipliers (Speed x20
   // MODS-ON: the SPRITE is the port's own default now (the mod's whole
   // subject, invisible without it - see the HT2 audit); the other three
   // are presentation and stay as the bundle ships them.
-  assert.deepEqual([s.showSprite, s.bob, s.inertia, s.stepTransforms], [true, false, false, false], 'the sprite is ON by the port\'s decision, the other three ship OFF');
+  assert.deepEqual([s.showSprite, s.bob, s.inertia, s.stepTransforms], [true, true, false, false], 'the sprite is ON by the port\'s decision, and Bob with it (HT5: in step with Weapon Widget\'s shipped Bob); Inertia and Step ship OFF as the widget\'s do');
   assert.deepEqual([s.mirrorSprite, s.tintSprite, s.playAudio, s.sfxVolume, s.offsetX, s.offsetY, s.scale, s.offsetSpeed, s.lockAspectRatio], [false, true, true, 0.5, 0.5, 0.5, 0.8, 2000, true]);
   assert.deepEqual([s.bobLength, s.bobOffset, s.bobSizeXMod, s.bobSizeYMod, s.moveSmoothSpeed, s.bobSmoothSpeed, s.bobShape, s.bobWhileIdle], [1, 0, 2, 2, 4, 500, 0, true]);
   assert.equal(s.inertiaScale, 500); assert.equal(s.inertiaSpeed, 500); near(s.inertiaForwardScale, 0.2); near(s.inertiaForwardSpeed, 0.2);
@@ -472,7 +473,7 @@ const fakeRenderer = () => { const r = { uploads: [], quads: [], uploadTexture: 
 
 test('HT1: InitializeTextures, the three placements and GetSpriteRect - the guard by Offset over the screen, the attack at the corner, the sheathe a height below it, the slide at offsetSpeedLive (thrice off), the lantern\'s frames at 4, a candle without a sprite, the frame clock, Scale, the Step snap, third person and the module off drawing nothing', async () => {
   const renderer = fakeRenderer();
-  const r = rig({ 'Modules.Sprite': true }, { renderer, loadSprite });
+  const r = rig({ 'Modules.Sprite': true, 'Modules.Bob': false }, { renderer, loadSprite });   // HT5: Bob ships on now; this pin measures the placements alone
   const t = torch(); r.entity.items = [t]; r.entity.lightSource = t;
   r.frame(); await r.h._w.texturesLoading;
   assert.equal(r.h._w.textures.length, 8); assert.deepEqual([r.h._w.animTorchLength, r.h._w.animLanternLength], [4, 4]);
@@ -912,3 +913,29 @@ test('HT4: no vendored mod ships a key the port has already spent', () => {
   assert.equal(k['Handling.ManualDropInput'].default, 'G', 'HT4: repointed off the dial\'s Tab');
   assert.equal(k['Throwing.ThrowTorchInput'].default, 'X');
 });
+
+// HT5 (2026-09-16, Mac: "the torch when being held isn't affected by the
+// weapon bob like everything else"). The mod ships its motion modules off
+// and leaves matching them to the weapon's to the player; the port ships
+// Weapon Widget's Bob ON, so the torch hand stood still beside a swaying
+// weapon. The three modules the two mods share ship with the SAME answer
+// here - one walk, two hands - and the mod's own file is untouched.
+test('HT5: the torch hand moves as the weapon does - every motion module the two mods share ships with the same default (mutant: one hand\u2019s module flipped alone)', async () => {
+  const { MOD_SETTINGS } = await import('../src/systems/modSettings.js');
+  const torchKeys = MOD_SETTINGS['handheld-torches'].keys;
+  const widget = MOD_SETTINGS['weapon-widget'].keys;
+  for (const m of ['Modules.Bob', 'Modules.Inertia', 'Modules.Step']) {
+    assert.equal(torchKeys[m].default, widget[m].default, `${m}: the torch hand and the weapon ship the same answer`);
+  }
+  assert.equal(torchKeys['Modules.Bob'].default, true, 'and that answer, for Bob, is on - the widget\u2019s own shipped default');
+  assert.match(rd('vendor/handheld-torches/modsettings.json'), /"Value": false,\s*\n\s*"Name": "Bob",/, 'the mod\u2019s own file still ships Bob off - the departure is the port\u2019s, stated in the table');
+  // and the law it turns on is the one the component runs: Bob on, at
+  // rest, walking - the sprite moves off its target
+  const r = rig({ 'Modules.Sprite': true, 'Modules.Bob': true, 'Modules.Inertia': false }, { renderer: fakeRenderer(), loadSprite });
+  r.entity.items = [torch()]; r.entity.lightSource = r.entity.items[0];
+  r.frame(); await r.h._w.texturesLoading; r.frame(1); r.frame(1);
+  r.ctx.motion = { grounded: true, standing: false, speedRatio: 1, baseSpeed: 1.5, localVel: [0, 0, 1] };
+  r.frame(0.1); r.frame(0.1);
+  assert.ok(r.h._w.position[0] !== 0 || r.h._w.position[1] !== 0, 'walking with Bob on: the hand has moved off its rest');
+});
+
