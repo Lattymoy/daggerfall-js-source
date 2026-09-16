@@ -38,7 +38,8 @@ import {
 } from '../src/net/wire.js';
 import * as relay from '../server/src/relay.js';
 import { fakeRoom } from './fakeRoom.mjs';
-import worker, { RELAY_VERSION } from '../server/src/index.js';
+import worker from '../server/src/index.js';
+import { RELAY_VERSION } from '../src/net/wire.js';   // LOCALDEV1: the worker entry exports handlers alone
 import { OnlineSession, HEARTBEAT_MS, BACKOFF_MIN_MS } from '../src/net/online.js';
 import { ChatLog, CHAT_TABS, CHAT_KEEP, CHAT_FADE_MS, CHAT_PEEK, CHAT_REJOIN_MS, tagOf } from '../src/net/chat.js';
 import { createChatPanel, isOpenKey, CHAT_STYLE_ID, CHAT_OPEN_ACTION, clockOf, CHAT_CSS } from '../src/ui/chatPanel.js';
@@ -116,9 +117,11 @@ test('CHAT1 / AUDIT CHAT: the Room as a CHANNEL - a hello keeps the secret and n
   const r = fakeRoom(CHAT_WORLD_ROOM);
   const a = r.connect(), b = r.connect(), c = r.connect();
   await r.hello(a, 'aaaa-0001'); await r.hello(b, 'bbbb-0002', at(3, 3));
-  assert.deepEqual(a.sent, [{ t: 'welcome', id: 'aaaa-0001', peers: [], v: RELAY_VERSION }]);   // SRV-N: and the deploy's name, on a channel's welcome too - the only welcome a chat link ever gets
-  assert.deepEqual(b.sent, [{ t: 'welcome', id: 'bbbb-0002', peers: [], v: RELAY_VERSION }], 'a channel has no roster: b is told no one though a is there');
-  assert.equal(ofType(a, 'join').length, 0, 'and a hears no join');
+  // ROSTER-G (Mac: "Players dont show in online"): a channel HAS a roster now - names alone, with the true count -
+  // and says its joins, because the roster beside the chat is everyone online and the channel is where everyone is
+  assert.deepEqual(a.sent[0], { t: 'welcome', id: 'aaaa-0001', peers: [], n: 1, v: RELAY_VERSION });   // SRV-N: and the deploy's name, on a channel's welcome too - the only welcome a chat link ever gets
+  assert.deepEqual(b.sent, [{ t: 'welcome', id: 'bbbb-0002', peers: [{ id: 'aaaa-0001', name: 'aaaa-0001' }], n: 2, v: RELAY_VERSION }], 'b is told who is in the channel - a, by name, no look, no pose');
+  assert.deepEqual(ofType(a, 'join'), [{ t: 'join', id: 'bbbb-0002', name: 'bbbb-0002' }], 'and a hears b join - the name and nothing else');
   assert.equal(r.store.has('secret:aaaa-0001'), true, 'the secret is kept');
   assert.equal(r.store.has('look:aaaa-0001'), false, 'the look is not: nobody is drawn from a channel');
   assert.equal(r.store.has('hellos'), true, 'AUDIT CHAT A1: the hello bucket is kept - the gate is never off');
@@ -147,13 +150,17 @@ test('CHAT1 / AUDIT CHAT: the Room as a CHANNEL - a hello keeps the secret and n
   assert.deepEqual(c.sent.at(-1), { t: 'error', m: 'id taken' });
   const d = r.connect(); await r.hello(d, 'dddd-0004');
   await r.drop(b);
-  assert.equal(ofType(d, 'leave').length, 0, 'a channel announced no join, so it says no leave');
+  assert.deepEqual(ofType(d, 'leave'), [{ t: 'leave', id: 'bbbb-0002' }], 'ROSTER-G: a channel says its leaves, as it says its joins');
+  assert.equal(ofType(d, 'host').length, 0, 'and still no host word - a channel has no host');
   assert.equal(r.store.has('secret:bbbb-0002'), false, 'the secret goes with the socket');
   assert.equal(r.store.has('secret:dddd-0004'), true, 'and no one else\'s');
   // the hello gate: deeper than a place's, never off (A1)
   const burst = fakeRoom(CHAT_WORLD_ROOM);
   const many = Array.from({ length: CHAT_HELLO_HZ_MAX + 10 }, () => burst.connect());
-  for (let i = 0; i < many.length; i++) await burst.hello(many[i], `peer-${String(i).padStart(4, '0')}`);
+  // SLAM13 (AUDIT SLAM C7): ONE INSTANT, on a held clock - the Room reads Date.now() itself, and under a slow runner
+  // this loop could straddle a millisecond and refill a token, admitting one hello more than "one instant" holds
+  const realNow = Date.now; const held = realNow(); Date.now = () => held;
+  try { for (let i = 0; i < many.length; i++) await burst.hello(many[i], `peer-${String(i).padStart(4, '0')}`); } finally { Date.now = realNow; }
   assert.equal(many.filter((ws) => ws.sent[0]?.t === 'welcome' && !ws.closed).length, CHAT_HELLO_HZ_MAX, 'CHAT_HELLO_HZ_MAX hellos in one instant are welcomed');
   assert.equal(many.filter((ws) => ws.closed?.code === 1013).length, 10, 'and the rest are refused busy: the gate is never off');
   assert.ok(CHAT_HELLO_HZ_MAX > HELLO_HZ_MAX, 'deeper than a place\'s: a channel\'s hello costs no roster');
@@ -293,7 +300,7 @@ test('CHAT1 / AUDIT CHAT: the session as a CHANNEL (presence: false) - the hello
   assert.equal(s.statusLine(), 'online: reconnecting', 'the default label is the presence session\'s');
   assert.equal(s.sendChat('anyone?'), false, 'no socket: refused, so the field keeps it (B2)');
   assert.equal(s.rejoin(CHAT_WORLD_ROOM, CHAT_REJOIN_MS), false, 'a session on its way back needs no rejoin');
-  clock += BACKOFF_MIN_MS; s.tick();
+  clock += 2 * BACKOFF_MIN_MS; s.tick();   // SLAM12: the first retry is jittered inside [BACKOFF_MIN_MS, 2 x BACKOFF_MIN_MS] - the far edge is when it has certainly fired
   assert.equal(sockets.length, 2, 'the retry opened a second socket');
   sockets[1].open();
   // the goodbye and the way back (B4)
@@ -649,7 +656,11 @@ test('CHAT1 / AUDIT CHAT: the host by source - world.js starts the chat with the
   const online = rd('src/net/online.js');
   assert.match(online, /if \(!this\.presence && this\.status === 'open' && now - this\._lastSentAt >= HEARTBEAT_MS && this\._send\(\{ t: 'ping' \}\)\) this\._lastSentAt = now;/, 'the channel heartbeat is a ping the runtime answers in its sleep');
   const room = rd('server/src/index.js');
-  assert.match(room, /if \(m\.t === 'pose' \|\| m\.t === 'ping'\) \{[\s\S]*?const chat = isChatRoom\(a\.key\);\s*if \(!this\._meter\(ws, a, Date\.now\(\), \{ pose: m\.t === 'pose' && !chat \? m\.p : a\.pose \}\)\) return;[^\n]*\n[^\n]*\n\s*if \(chat\) return;/, 'AUDIT CHAT A3: a channel\'s pose is gated (the one meter, AUDIT WORLD A1) before it is declined');
+  // SLAM6 re-aimed this: the meter's patch grew a `turn` and the call was split over two lines, so the shape moved.
+  // The LAW is unchanged and is what the slice asserts - the one meter runs on a channel's pose BEFORE the decline -
+  // so the pin still reads the order, over a source with its comments stripped rather than around them.
+  const bare = (src) => src.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, ' ');
+  assert.match(bare(room), /if \(m\.t === 'pose' \|\| m\.t === 'ping'\) \{\s*const chat = isChatRoom\(a\.key\);\s*const posed = m\.t === 'pose' && !chat;\s*const now = Date\.now\(\);\s*const unmoved = [^\n]*\s*const stopped = [^\n]*\s*const still = [^\n]*\s*const met = this\._meter\(ws, a, now, \{ pose: posed \? m\.p : a\.pose \}[^\n]*\);\s*if \(!met\) return;\s*if \(m\.t === 'ping'\)[^\n]*\s*if \(chat\) return;/, 'AUDIT CHAT A3: a channel\'s pose is gated (the one meter, AUDIT WORLD A1) before it is declined');
   assert.match(room, /if \(other === ws \|\| chat \|\| inRange\(a\.key \?\? '', a\.pose, b\.pose\)\) this\._send\(other, out\);/, 'the fan: the sender, a channel\'s everyone, a place\'s range');
   assert.match(room, /const room = tokenGate\(this\._roomChat, now, CHAT_ROOM_HZ_MAX\);/, 'the room\'s own budget (A2)');
   const dial = rd('src/ui/pixelDial.js');

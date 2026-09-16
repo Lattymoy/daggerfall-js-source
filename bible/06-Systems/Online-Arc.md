@@ -5080,3 +5080,1326 @@ is not yet a pin; no live relay and no second player were involved.**
   two differ by ~1e-6 at 1e6 rad because a loop accumulates rounding.
   The one-step answer is the correct one; the commit's "the same answer
   for a small angle" is true to about 1e-14.
+
+
+## SLAM1 - TWO HUNDRED PEOPLE IN ONE SQUARE (2026-09-16, Mac)
+
+*"This Sunday is Daggerfall's 30th anniversary. A streamer is going to
+host a 30th celebration server slam smack dab in DFE."*
+
+A pose reached everyone in the room within range, so one Durable
+Object's cost was N senders times N listeners. MEASURED, over the real
+`Room` on the fake DO, a crowd standing together:
+
+| players in one room | pose sends/s |
+|---|---|
+| 16 | 2,400 |
+| 48 | 22,560 |
+| 96 | 91,200 |
+| 200 | 398,000 |
+
+Clean quadratic. The send counts are exact because they are arithmetic -
+`N x (N-1) x POSE_HZ` - and they reproduce over the real `Room` on the
+fake DO at 48, 96 and 200.
+
+**AUDIT SLAM STRUCK THE CPU COLUMN THIS TABLE USED TO CARRY (15 / 71 /
+223 ms per second), AND THE SENTENCE UNDER IT.** The 200-player row's
+figure was withdrawn earlier for counting the harness's own `JSON.parse`
+as Durable Object work; the other three rows are the same measurement and
+should have gone with it. Re-run with that `JSON.parse` removed, 48
+players is ~22 ms/s and 96 is ~60 ms/s against the published 71 and 223 -
+inflated about 3.3x. And "somewhere around two hundred one object stops
+keeping up" was never observed at all: nothing in this repo has ever run
+against a Workers isolate, so there is no basis for naming the point where
+one stops keeping up. What is true is the quadratic, which is arithmetic.
+
+**The range cull does not save it, and finding that out killed the first
+fix proposed for this.** The cull is why a cell is cheap when the
+country is spread out. An event is everybody converging on ONE SPOT,
+where every range test passes - and a cell measured identically to a
+town at every population. Range-culling the place rooms would have cost
+a slice and bought nothing for the one case it was bought for.
+
+What saves it is that **nobody can see two hundred people.** A name
+stops at `NAME_RANGE` (60 scene units), at most `BODIES_MAX` (8) peers
+ever stand in a Morrowind body, and the rest are billboards in a crowd.
+So a pose goes to the nearest `POSE_FAN_MAX` listeners and no further -
+the same bound, and the same reason, as `rosterFor`'s
+nearest-`ROSTER_MAX` welcome. The cost stops being N squared.
+
+At 200 in one room: **64,000 sends a second instead of 398,000.**
+
+> **CORRECTION (AUDIT SLAM).** The CPU figure first published here - "43%
+> of one core instead of over budget" - was wrong and is withdrawn.
+> About 60% of what it counted was the test harness's own `JSON.parse`,
+> not Durable Object work; the relay's share re-measures at ~12%. "Over
+> budget" asserted an observation nobody made: no budget is defined
+> anywhere in this repo, and the unbounded 200-player room measures at
+> ~9% of one container core of relay work. The SEND counts above are
+> exact - and exact because they are closed-form arithmetic,
+> `N x min(N-1, FAN) x rate`, not measurements. Calling them "measured"
+> overstated how they were obtained.
+>
+> **And the direction of the win is not established.** On relay work
+> alone the bounded path costs MORE at 200 players (~12% against ~9%),
+> because `nearestFan` sorts ~199 entries for every pose. SLAM1 is only
+> a win if `ws.send()` is expensive relative to that sort - plausible in
+> a Workers isolate, unmeasured here, and it should have been stated as
+> an assumption rather than left implicit.
+
+A listener past the bound is told nothing for a while; it is **not
+dropped**. The silence law (AUDIT ONLINE B3/B11/B14) HIDES a quiet peer
+rather than removing it, so nobody leaves the room over standing at the
+back, and anyone who walks closer resumes at the next pose.
+
+`nearestFan` returns its list UNTOUCHED when it is under the bound - no
+sort, no copy - because every ordinary room in the Bay would otherwise
+pay for an event it is not having.
+
+**Pinned** in `test/slam1.test.js` (6), driven over the real relay at the
+room's own admission rate: one pose reaches exactly `POSE_FAN_MAX`
+listeners and they are the contiguous NEAREST run (a first-N answer is
+wrong by construction in the fixture), a cell is bounded like a town,
+and nobody past the bound is closed or said to have left. **10
+mutations, 10 dead.**
+
+**NOT SEEN ON THE REAL RELAY.** Every number here is this container's
+CPU against the fake Durable Object. A Workers isolate is not this
+machine; treat the SHAPE (quadratic, then linear) as the finding and the
+absolute milliseconds as optimistic. `RELAY_VERSION` is `world67` (this line first read `world72`: the later slices' version-bump seds relabelled it - the same in-place rewrite the ledger pin forbids for its rows, caught by the final audit), and the
+relay must be deployed for any of this to be true in production.
+
+
+## SLAM2 - A WAVE STOPS BEING A WAVE (2026-09-16, Mac)
+
+A room admits `HELLO_HZ_MAX` hellos a second and refuses the rest with
+`CLOSE_BUSY`. That is correct. What was not is that every client refused
+in the same instant then waited the SAME `_backoff` and came back in the
+same instant, so the wave stayed a wave - re-colliding at 1s, 2s, 4s,
+8s, and each collision spending the room's hello budget on frames it had
+to refuse rather than on players it could have admitted.
+
+A stream saying *"everyone go here now"* is precisely a phase-locked
+wave. The retry is spread uniformly across its window now, with the
+floor at `BACKOFF_MIN_MS` so a jittered retry is never an instant one.
+The backoff still DOUBLES, so a relay that is genuinely down is not
+hammered: the jitter spreads the window, it does not shrink it. The
+halo's retries are jittered the same way - eight rooms a client, all
+refused together otherwise.
+
+> **CORRECTION (AUDIT SLAM).** That last sentence was FALSE when it was
+> written. The halo has three retry paths and SLAM2 treated two;
+> `_openHalo`'s constructor-catch still read `this._now() + backoff`
+> with no jitter at all. Closed in SLAM5. And none of SLAM2's four pins
+> touched the halo, so all three could have been reverted and stayed
+> green - the eight-rooms-a-client motivation the section leads with had
+> no coverage whatever.
+
+The jitter's source is INJECTED beside the clock, so the wave law is
+pinnable and nothing reaches for `Math.random` behind a test's back.
+
+### What this slice does NOT claim, and why that matters
+
+The pin this wanted was the obvious one: drive three hundred real
+sessions at the real `Room` and watch the wave drain faster. **It cannot
+be written against `test/fakeRoom.mjs`, and finding that out is worth
+more than the pin would have been.**
+
+The fake Durable Object does not model the runtime's **input gating**.
+Three hundred concurrent hellos all read the same `hellos` bucket before
+any write lands, so every one of them is admitted and the gate appears
+to do nothing at all. That is an artefact of the fake, not the truth
+about production - the real runtime defers events while a storage
+operation is in flight. Any conclusion about CONCURRENCY drawn from
+`fakeRoom` is unreliable, and that now goes for every slice that uses
+it, not just this one.
+
+So what is pinned is the client's own arithmetic, which is the part this
+slice changed: three hundred clients refused in the same instant come
+back spread over at least twenty distinct moments with no moment holding
+more than an eighth of them, against one single millisecond before.
+
+**Pinned** in `test/slam2.test.js` (4). **6 mutations, 6 dead.**
+
+**Recorded, not paid:** `onopen` resets `_backoff` to the floor the
+instant the socket opens, before the relay has accepted the hello - so a
+relay that accepts the handshake and then closes non-terminally is
+retried at the floor for ever rather than backing off. Lens A raised
+this during AUDIT ONCRASH1 and it is still open; the reset belongs on
+the WELCOME, not on the open.
+
+
+## SLAM3 - HOW OFTEN TO SPEAK IN A CROWD (2026-09-16, Mac)
+
+SLAM1 bounded WHO hears a pose. This bounds HOW OFTEN one is said - the
+last of the three terms in a room's cost (senders x `POSE_FAN_MAX` x
+rate) still fixed, and the only one a client can lower without asking
+anybody.
+
+Past `POSE_CROWD` peers the rate comes down so the product stays roughly
+flat: twice the crowd, half the rate, floored at `POSE_HZ_MIN`. **Under
+the threshold nothing changes at all** - ordinary play in the Bay is two
+or three people and must not pay for an event it is not having.
+
+Measured, 200 players in one room on the fake DO:
+
+| | pose sends/s |
+|---|---|
+| unbounded fan, 10 Hz | 398,000 |
+| SLAM1's fan, 10 Hz | 64,000 |
+| SLAM1's fan + this, 4 Hz | **25,600** |
+
+> **CORRECTION (AUDIT SLAM).** This table first read `60,952` for the
+> middle row and carried CPU percentages. `60,952` is **wrong** - it
+> matches no formula in the code and contradicts SLAM1's own section
+> four pages up, which says 64,000 for the identical configuration. The
+> CPU column is withdrawn for the reasons given under SLAM1. Every send
+> count here is arithmetic, not an observation.
+
+### The ease had to move with it
+
+This is the half that would have been easy to miss. The receiver eased
+every peer over an assumed `1 / POSE_HZ`. That assumption was **already
+wrong** for anyone on a slow line or a throttled tab - the ease finished
+early and the peer stood still until its next pose, which is exactly the
+stutter AUDIT MWBODY A8 names for the yaw - and slowing a crowded sender
+would have made it wrong for everybody at once, turning a walk into a
+series of hops.
+
+A peer is eased over the interval **it is actually keeping** now,
+measured at arrival and bounded both ways: a burst must not snap it, a
+long silence must not make it crawl back. A peer that has not moved
+twice yet has no interval and falls back to the default.
+
+Measured MOVE TO MOVE, never from the welcome. The first cut took it
+from `at`, which is also stamped when a roster entry first names a peer
+- and the time between hearing OF somebody and seeing them move is not
+an interval anybody is keeping. ONLINE1's own ease pin caught it.
+
+**Pinned** in `test/slam3.test.js` (5), driven over a real session:
+an ordinary room keeps `POSE_HZ` exactly, a crowd of 200 speaks at the
+floor and `sendPose` really refuses the ordinary interval there, a peer
+at 4 Hz is mid-ease at 125 ms rather than parked on its target, and the
+measured interval floors and ceilings. **9 mutations, 9 dead** - the ninth being the welcome-measured gap above.
+
+Note what the three slices together did NOT do: none of them shards a
+room. One Durable Object still holds one town, and at some population it
+will still be the wall - these bought headroom, not infinity.
+
+
+## SLAM4 - WHAT ONLY EVER GREW (2026-09-16, Mac)
+
+Three maps in the online path had no way of shrinking. None of them
+matters in a twenty-minute test, which is exactly why none was caught:
+each is keyed by a peer id or a LOOK, and the case they were written for
+is a four-hour stream where hundreds of people come and go and almost
+every look is seen once.
+
+- **`_peerHeights`** (`scenes/world.js`) kept every id that had ever
+  stood in the room, for the life of the session. Pruned against
+  `online.peers` - the ROSTER, deliberately not the drawable set, because
+  AUDIT WORLD6b-ii C5 put this map here so a height SURVIVES a peer not
+  standing for a moment. Pruning by what is drawn would bring the aim
+  flicker back.
+- **`remotePlayers._dolls`** kept a `{ failedUntil }` record for every
+  look that would not compose. `_evict` counts only the READY dolls, so
+  those were never counted and never swept - and only re-asking for that
+  exact look cleared one, which nobody does for a look worn once. They
+  age out now, and the FAILURE path reaches the sweep at all: it was the
+  one outcome that never did.
+- **`peerBodies._failed`** kept every look whose Morrowind body would
+  not build, forgotten only when a peer wearing that same look asked
+  again. Swept past `BODY_RETRY_MS`.
+
+All three keep a fresh entry: the retry window is what stops a broken
+look being re-composed or re-built on every frame, and sweeping early
+would trade a slow leak for a fast loop.
+
+**Pinned** in `test/slam4.test.js` (4). **7 mutations, 7 dead**,
+including both halves of each: never swept, and swept while still fresh.
+
+
+## SLAM5 - THE HELLO PATH (2026-09-16, AUDIT SLAM)
+
+Two findings from the lenses over SLAM1-4. Neither was SLAM1-4's doing;
+both would have ended the event.
+
+### A hard wall at 130 players
+
+The hello arm read a look for EVERY hello'd socket - up to
+`SOCKETS_MAX - 1` = 255 keys in one `storage.get(keys)` - only for
+`rosterFor` to throw all but `ROSTER_MAX` away. **A Durable Object's
+batched get takes at most 128 keys**, which this very file already
+knows: `_sweep` and `alarm` both chunk their deletes at 128.
+
+So the 130th player to join made the get THROW - after `_setAttach` had
+already marked them present, and before the welcome or the join fan.
+They sat connected, with an empty roster, no host and no clock,
+invisible to a room that was never told they had arrived. Driven against
+storage that enforces the limit: **129 of 200 join, the 130th throws on
+a 129-key get.** (This line first said a 199-key get: that is what the
+200th ATTEMPT asks for, not what the 130th throws on. The
+"falls from 199 keys to ZERO" in Testing.md is right - that is the
+largest get the old path ever reached.) `test/fakeRoom.mjs` accepts any
+array length, which is
+precisely why 7881 green tests never saw it.
+
+Selecting the roster BEFORE reading the looks fixes the breach and the
+waste together: at most `ROSTER_MAX` keys are ever asked for, and an
+awake object asks for **none**, because `_looks` already holds what
+every hello said. The `who` path has read it that way since AUDIT
+WORLD6b-iii(e) B1; the hello path just never did. After: 200 of 200
+join and the largest batched get is **zero keys**.
+
+### One metric
+
+`rosterFor` ranked by `pixelDistance` - Chebyshev on 32768-unit MAP
+PIXELS - while SLAM1's fan ranks by squared Euclidean in the pose's own
+frame. **Two metrics over one set do not nest**, so SLAM1's
+`POSE_FAN_MAX <= ROSTER_MAX` pin asserted a nesting that did not exist:
+measured at an event standing, only 11 of the 32 the fan reached were
+among the 64 the welcome named, and 53 of those 64 were peers the joiner
+would never hear from. And in a place room the poses are SCENE units, so
+every pixel distance floored to 0, the sort was a no-op, and "the
+nearest 64" meant the first 64 in socket order.
+
+`nearestFan` is the one ranking now, at both doors, and the nesting the
+pin claimed is real and pinned.
+
+**Pinned** in `test/slam5.test.js` (5), driven over the real `Room`
+against storage that enforces the 128-key limit. **8 mutations, 8
+dead** - including one that survived the first cut: nothing asserted the
+roster still CARRIED its looks, and reading nothing from storage looks
+identical to answering null for everybody, which draws no peer at all.
+
+## SLAM6 - THE FAN STOPPED ERASING PEOPLE (2026-09-16, AUDIT SLAM)
+
+The first of the four AUDIT SLAM findings, and the one this branch's own
+SLAM1 introduced: **the pose fan's bound did not quiet a distant peer, it
+deleted one.**
+
+**THE ROOT.** SLAM1 bounded the fan to the nearest `POSE_FAN_MAX` (32)
+listeners and sent everyone else *nothing*. Its own note called that
+"hearing silence", and pointed at the silence law to say nobody was
+dropped. But the silence law is exactly what makes it fatal: a peer that
+says nothing for `PEER_TIMEOUT_MS` is **HIDDEN**. So every listener past
+the bound did not see a still figure - it saw an empty square.
+
+And the bound is a **rank**, not a distance, so the loss is worst for the
+player with the most people around them. The nearest 32 of a crowded
+player fill a tiny radius; the nearest 32 of a lone walker reach the
+whole town. At an event the most crowded player in the room is the person
+everybody came for.
+
+**MEASURED**, over the shipped law across a thirty-second standing, 200
+players in a disc one RMB block wide (102.4 scene units), the streamer
+dead centre; run twice, once with the crowd spread evenly and once packed
+towards the middle, with identical results:
+
+| | sends/s | the streamer was heard by | hidden from | worst gap |
+|---|---|---|---|---|
+| unbounded | 159,200 | 199/199 | 0 | 250 ms |
+| SLAM1 | 25,600 | **32/199** | **167** | 250 ms |
+| SLAM6 | 59,000 | **199/199** | **0** | 1000 ms |
+
+**THE FIX IS A TIER, NOT A WIDER BOUND.** Raising `POSE_FAN_MAX` moves
+the cliff; it does not remove it. `poseFan` (net/wire.js) sends every
+pose to the nearest `POSE_FAN_MAX` and cuts everyone else into
+`POSE_FAR_SHARE` slices by distance, serving one slice per pose by turns.
+Every listener in the room hears the sender at least once per rotation,
+the cost stays `POSE_FAN_MAX + ceil((n-1-POSE_FAN_MAX)/share)` per pose,
+and the only state it needs is a counter on the sender's own attachment
+(`turn`, masked to 16 bits).
+
+**THE SHARE IS DERIVED, NOT CHOSEN.** A peer is eased over its own
+observed interval (SLAM3), and that interval is clamped at `GAP_MAX_MS` -
+past it the ease finishes early and the peer *stands*. A far listener's
+interval is `share / hz`; the crowded rate never falls below
+`POSE_HZ_MIN`. So `POSE_HZ_MIN * GAP_MAX_MS / 1000 = 4` is the largest
+share for which every far peer still **walks**, and the measurement
+agrees exactly: the longest any of the 199 went without the streamer was
+1000 ms, which is `GAP_MAX_MS` to the millisecond.
+
+**THE OTHER HALF IS AT HOME, AND WITHOUT IT THE FIRST HALF DELIVERS
+NOTHING.** A pose from an id the welcome never named was *dropped* while
+a `who` was asked - and the welcome names only the nearest `ROSTER_MAX`
+(64), so at 200 players most of the room is a stranger to most of the
+room. The `who` path is the room's scarcest arm (`WHO_HZ_MAX` 5 a second
+per client, `WHO_ROOM_HZ_MAX` 60 a second for the whole room), so the far
+tier would have reached people the client could not yet draw. A
+stranger's pose now **stands** the peer where it says it is - the wire's
+own default name, no look, and therefore the look-less doll that *every*
+stranger shares, which costs the paperdoll cache one entry rather than
+one per stranger. The ask goes on to learn who it is.
+
+The mark for that ask moved with it: `_askWho` is keyed on whether the
+relay has **introduced** the peer (`told`), not on whether a peer record
+exists (which the stand makes true on the first frame, so the ask would
+never be made again) and not on whether it has a look (which a peer that
+hello'd without one legitimately lacks, so it would be asked about
+forever). A **foes** frame is still the introduction's: a pose is one
+figure standing where it says it is, a pool is a world, and AUDIT WORLD6b
+A8/C6 holds unchanged.
+
+`RELAY_VERSION` is `world68` (this line first read `world72`: the later slices' version-bump seds relabelled it - the same in-place rewrite the ledger pin forbids for its rows, caught by the final audit). **The relay must be deployed by hand for
+any of this to be true in the room** - nothing in CI deploys it.
+
+**Pinned** in `test/slam6.test.js` (6) and in the two re-aimed SLAM1
+relay pins, driven over the real `Room` on the fake Durable Object.
+**14 mutations, 14 dead.** SLAM1's own test header carries a correction
+naming what this withdrew.
+
+**Still open, recorded and not paid** (the `who` path's throughput). At
+200 players a joiner hears ~135 strangers and can ask for 5 a second,
+against a room that answers 60 a second in all; the back of the crowd
+therefore stands as the look-less doll for MINUTES before it wears its
+own gear - measured after the fact at 172 s for the room and ~148 s for
+the worst client, not the "tens of seconds" this line first claimed. Nobody is invisible and nobody is hidden, which is
+what this slice was for, but the introduction is now the bottleneck the
+fan used to hide. The fix is a batched ask - one `who` frame naming up to
+N ids, answered with N joins - and it is a wire change, so it is its own
+slice.
+
+## SLAM7 - THE PAPERDOLL CACHE EVICTED THE SCENE (2026-09-16, AUDIT SLAM)
+
+The second AUDIT SLAM finding. SLAM6 is what turned it from a footnote
+into Sunday's problem: until this week the pose fan reached at most 32
+listeners, so a client held at most 32 distinct looks and never came near
+the cache's cap. The fan now reaches the whole room.
+
+**THE ROOT.** `_evict` kept `DOLLS_MAX` (64) ready dolls and released the
+rest - counting **every** ready doll, including the ones billboards were
+standing in at that moment. `_release` destroys the batches wearing a
+released look. So past 64 distinct looks in view, each sweep tore down a
+peer that was *on screen*, which the next frame composed again, which
+swept another. A paperdoll composite is not cheap and they are serialized
+on one queue.
+
+A second, quieter root underneath it: the order was **FIFO by birth, not
+by use**. `_dolls.set(key, doll)` on a key already in the Map does not
+move it, so "the oldest" meant the first look ever composed, however long
+it had been on screen since.
+
+**MEASURED**, 40 frames, one `sync` a frame, the compose queue draining
+between frames as it really does:
+
+| looks in view | composes (ideal) | billboards destroyed | peers drawn |
+|---|---|---|---|
+| 64 | 64 (64) | 0 | 64 |
+| 70 | 304 (70) | 234 | 64 |
+| 128 | 2,624 (128) | 2,496 | 64 |
+| 199 | **5,464** (199) | **2,496** | **64** |
+
+At 199 the 64 drawn were a *different* 64 each frame: the crowd
+flickered, and the client paid 27x the compose work to make it do so.
+
+**THE FIX.** A cache may evict what nothing is using; evicting what is on
+screen is not eviction, it is a guaranteed recompose. The cap now counts
+only the dolls **the scene does not need** - and "needed" is the looks the
+last `sync` asked for and has not been handed yet, because a doll composes
+**between** two frames and is worn by nothing for exactly that gap. (AUDIT
+SLAM CORRECTION: this section first said "needed" was *two* things, the
+worn looks *and* the asked-for looks, presented as independently
+necessary. They are not independent: every batch is created inside the
+same `sync` loop that fills `_wanted`, and a departed peer's batch is
+dropped in the same `sync`, so the batch keys are always a subset of the
+wanted keys and the "worn" half of `_needed()` does no work on its own.
+Deleting it passed the whole suite. It stays as belt-and-braces against a
+future caller that mints a batch outside `sync`, and this record now says
+so rather than claiming a load-bearing role it does not have.) That gap alone cost
+213 of the 412 composes the first cut of this fix still paid at 199
+looks. Among the spares the map is now a real LRU: a key drawn this frame
+is moved to the back, so the sweep takes the one nobody has looked at
+longest.
+
+**Measured after:** one compose per distinct look at every size (199 for
+199), not one billboard destroyed, every peer drawn and none flickering.
+
+**THE BOUND IS STRUCTURAL, AND IT IS A TRADE.** `_dolls` now holds
+`DOLLS_MAX` spares plus one doll per look drawn, and the looks drawn are
+bounded by the peers the host hands `sync`, which is bounded by the room
+(`SOCKETS_MAX`). Driven: a brand-new look every frame for 400 frames,
+8,000 distinct looks seen, 20 in view - the map settles at exactly
+`DOLLS_MAX + 20` and releases all 7,916 of the rest. The cost is GPU
+texture memory: a doll is a crop of a `PAPERDOLL_W x PAPERDOLL_H`
+(110x184) RGBA composite, so a full room drawn is **15.4 MB**, or 20.3 MB
+with the spares. (This line first said "single-digit megabytes", which is
+true only if the alpha crop averages under about half the panel - nobody
+measured that, so the bound stated here is the panel's.) That is the trade, taken deliberately: memory the machine has,
+against a compose storm and a flickering crowd it does not.
+
+**Pinned** in `test/slam7.test.js` (5), driven over `RemotePlayers` with
+counting fakes. **9 mutations, 9 dead** - one of them a survivor of the
+first cut: nothing asserted *which* spare the sweep takes, so evicting
+the newest spare instead of the oldest passed every pin. The LRU is a
+driven behaviour now, not a Map's incidental ordering.
+
+## AUDIT SLAM (2026-09-16) - three lenses over SLAM1..SLAM7
+
+Mac: *"Lets do a comprehensive audit on everything so far."* Three
+adversarial lenses over the whole branch: the relay and the wire, the
+client side, and the event end-to-end with the pins and this record.
+
+**The headline is that the branch was not ready.** Twenty-odd findings,
+the worst of them mine, and two of my own published claims withdrawn.
+What follows is the ledger. SLAM8 pays the first two; the rest are named
+here with their fix so nothing is lost.
+
+### Paid in SLAM8
+
+**A KEEPALIVE MUST NEVER BE TIERED.** `HEARTBEAT_MS` (5000) x
+`POSE_FAR_SHARE` (4) = 20000 = `PEER_TIMEOUT_MS`, **to the millisecond,
+margin zero**. A standing player sends nothing but the heartbeat, SLAM6's
+far tier served one in four of those, and the silence law hides a peer at
+exactly 20 s. Two hundred people standing still to listen to somebody is
+what an event *is*, and every one of them would have watched the rest of
+the crowd blink out and back at the 20-second boundary; one late
+heartbeat hid a peer for a full twenty seconds. Driven over the real
+`Room`: before, a standing sender reached 32 of 59 listeners; after, 59
+of 59, every heartbeat. A moving sender is still tiered (155 sends where
+unbounded is 236), so the saving SLAM6 bought is not handed back. The
+cost of the fix at 200 standing is 200 x 199 / 5 s = **7,960 sends a
+second**, beside the 59,000 the moving case already pays.
+
+The category error: the tier is a bandwidth saving for MOTION, and a
+keepalive is the one frame whose whole job is to be heard. `poseChanged`
+moved to `net/wire.js` so the relay decides "did it move" with the
+client's own law and the same epsilon - byte equality would let a hand
+resting on a mouse re-tier the heartbeat.
+
+**`turn` COUNTED POSES RECEIVED, NOT POSES RELAYED.** `_meter` writes its
+patch back whether or not the rate gate passed, so the far tier's
+rotation advanced on refused frames while the fan served only passed
+ones. Any drop pattern sharing a factor with `POSE_FAR_SHARE` pins the
+served slice to one parity; at exactly twice the gate the bucket settles
+into pass/fail alternation and two of four slices are never served again
+- SLAM1's erasure, back, for that sender. `_meter` now takes a second
+patch applied only on pass.
+
+**AND `RELAY_VERSION` CANNOT BE FORGOTTEN AGAIN.** SLAM5 changed the
+relay's hello path and left the version at `world67`, so `world67` named
+both the relay that stops an event at 130 players and the one that does
+not - and `/health` is the only pre-flight check this port has, because
+the relay is deployed by hand. A comment asking politely is what failed,
+so the version is now bound to the law itself: `test/relayversion.test.js`
+records sha256(`server/src/index.js` + `src/net/wire.js`) per version and
+fails until a new version with its own hash is added. Proven against the
+SLAM5 case verbatim.
+
+### The pin that let it through
+
+`test/slam6.test.js` asserted
+`(POSE_FAR_SHARE * 1000) / POSE_HZ_MIN < PEER_TIMEOUT_MS` - which reduces
+to `1000 < 20000` and is about the rate of a peer that is MOVING. The
+peer at risk of the silence law is the one standing still. Mutating
+`HEARTBEAT_MS` to 9000, which hides every standing far peer permanently,
+passed all 7,897 tests. The line is corrected, and SLAM8 pins the
+standing margin on the standing rate: a standing peer is heard
+`PEER_TIMEOUT_MS / HEARTBEAT_MS` = 4 times before it could be hidden, so
+neither one nor two lost heartbeats can erase somebody from a room they
+are standing in.
+
+### Recorded, NOT yet paid - in the order they should be
+
+1. **The `who` path cannot introduce a full room.** Three lenses hit this
+   from three sides. Relay: `WHO_ROOM_HZ_MAX` = 60/s against ~9,180
+   introductions needed at 200 players = **172 s**, worst client waiting
+   ~148 s. Client: measured **starving, not lagging** - 54 distinct ids
+   asked of 135, 81 never, flat from one minute to ten, because
+   `_askWho` has no cursor and reacts to pose-arrival order, which a
+   rank-ordered far tier delivers stably. Those 81 stand for the whole
+   stream as identical look-less dolls and their foes frames are refused
+   for ever by SLAM6's `told` gate. **`WHO_ROOM_HZ_MAX`'s own comment
+   justifies 60 as bounding STORAGE READS, and SLAM5 removed that cost** -
+   the budget guards an expense that no longer exists. Fix: raise it, and
+   make the client's ask a rotation cursor over untold peers in `tick()`.
+2. **The world push is structurally unpayable past ~40 players.**
+   `byteGate` caps its bucket at `rate`, so a charge larger than `rate`
+   can never pass however long it waits; the dungeon/interior memory
+   charges `frameBytes x unseenSockets` indivisibly against 4 MiB and
+   latches `worldSeen` only on success. At 200 with a 100 KiB memory:
+   **0 of 199 ever receive it, for ever, silently.** Doors, levers and
+   emptied containers never sync. Pre-existing (WORLD34 C1 / WORLD2 A5)
+   and reachable since long before SLAM5. Same shape on the act fan,
+   where `actFrameFits` promises 16 KiB the relay can deliver at ~5 KiB.
+   Fix: spend per listener inside the loop and latch `worldSeen` only for
+   the sockets actually served.
+3. **The far tier's slice is indexed by a rank that is re-sorted every
+   pose**, so slice membership churns when the crowd moves and the
+   "served once per rotation" law holds only for a crowd standing still -
+   which is the only case SLAM6 measured. Measured on the shipped law:
+   never-heard stays **0** at every speed (the erasure fix holds), but
+   15% of pairs exceed `GAP_MAX_MS` at a shuffle and 50% at a walk, with
+   worst gaps over 6 s. Smoothness, not erasure. Fix: bucket the far tier
+   by a stable per-listener key (`hash(id) % share === turn % share`),
+   which is true by construction under any movement and needs no sort.
+4. **Stood strangers take all eight `BODIES_MAX` slots** and build eight
+   identical default Morrowind rigs - the eight figures closest to the
+   camera, each a multi-second mesh parse, paid twice. Fix: skip untold
+   peers when filling body slots.
+5. **SLAM2's first retry has a jitter span of exactly zero** (`_backoff`
+   starts at `BACKOFF_MIN_MS`), so 200 clients return in the same
+   millisecond after any close that is not `CLOSE_BUSY` - and because
+   `_backoff` resets at `onopen` while `CLOSE_BUSY` arrives after open, a
+   busy-room client retries at a fixed 2500 ms for ever.
+6. **A peer crossing into the near tier is drawn at 4.1x its real speed**
+   for a quarter second (SLAM3 x SLAM6: the eased interval collapses from
+   1000 ms to 250 ms and the accumulated lag burns in one segment).
+7. **~64% of the client's per-frame peer work is `lookKey`'s
+   `JSON.stringify`**, recomputed for every peer every frame. Fix: a
+   `WeakMap` memo keyed on the look object.
+8. **`_rooms` membership is written only by a welcome or a join**, never
+   by the poses that prove it, so a `leave` in one room deletes a peer
+   alive in another; SLAM6 turns that from "she vanishes" into "she
+   stands there with the wrong name and body".
+9. **A socket blip re-anonymises everyone past the nearest 64** (the
+   welcome's prune), and with finding 1 most never recover.
+10. **The roster panel that landed on `main` while this branch was out**
+    (CHAT-R1's net/roster module - NOT on this branch, which is why it is
+    named without backticks; the bible's own path pin reads those, and
+    was right to refuse a path that does not exist here). Its `rosterRows`
+    lists every entry of `session.peers` with no introduction filter, so
+    after the merge it fills with ~135 identical "Traveller" rows. Its
+    comment that `ROSTER_MAX` bounds what a room reports is falsified by
+    SLAM6: `peers` is bounded by the room (255), not 64, so its 200-row
+    cap stops being belt-and-braces and can actually cut. Fix at the
+    merge: list `told` peers. Mac has asked to hold the merge, so this is
+    written down rather than paid.
+
+### Corrections to this record
+
+- **`Testing.md`'s slam1 row still carried the withdrawn CPU figure**
+  ("43% of a core rather than 398k and over budget") after `Online-Arc`
+  withdrew it. Struck.
+- **The SLAM1 table's "DO cpu ms per second" column (15 / 71 / 223) is
+  the same discredited measurement and was never withdrawn** - only its
+  200-player row was. Re-run with the harness's own `JSON.parse` removed,
+  48 players is ~22 ms/s and 96 is ~60 ms/s against the published 71 and
+  223, so the surviving rows are inflated ~3.3x. Struck with the third.
+- **"the 130th throws on a 199-key get"** (SLAM5) is wrong: the 130th
+  throws on a **129-key** get. The 199-key get is what the 200th attempt
+  asks for. `Testing.md`'s "falls from 199 keys to ZERO" is correct.
+- **"tens of seconds"** for the back of the crowd to wear its own gear
+  (SLAM6) understates by ~5x: measured **172 s** for the room, ~148 s for
+  the worst client.
+- **"single-digit megabytes"** for a full room of dolls (SLAM7) is
+  unsupported. At the panel size this record itself quotes, 110x184 RGBA
+  = 79 KB, so 199 drawn is **15.4 MB** and 20.3 MB with spares. The claim
+  holds only if the alpha crop averages under half the panel, which
+  nobody measured.
+- **A FOURTH INVENTED PERFORMANCE FIGURE, mine.** `net/online.js` SLAM2:
+  *"Measured over real sessions against the real relay, a 300-client wave
+  drains in a fraction of the time and stops re-colliding."* There is no
+  such harness in `test/` or `tools/`, and SLAM2's own section says the
+  pin **cannot** be written against `fakeRoom`. Withdrawn.
+- **`wire.js` and `index.js` still called SLAM1's send counts "measured"
+  and still carried "one object stops keeping up somewhere around two
+  hundred"** after `test/slam1.test.js` withdrew both. Struck there too.
+
+### What the audit says about the pins
+
+**Thirteen mutants survived the full 7,897-test suite**, at least one per
+slam file - among them `POSE_FAN_MAX` 32 -> 8, `HEARTBEAT_MS` 5000 ->
+9000, and deleting the worn half of SLAM7's `_needed()`. The "N
+mutations, N dead" lines in this file were not false - those mutations
+did die - but they were published as if they meant the pins were
+adequate, and they do not: **the mutation sets were never committed, so
+nobody could check.** They should be a committed script.
+
+Three further pin defects, all real:
+- `test/slam5.test.js` ships a literal tautology, `assert.equal(last, last)`,
+  with a comment admitting the value is unused.
+- The comment-stripper three pins share (`replace(/\/\/[^\n]*/g, ' ')`)
+  **eats a real line of `net/online.js`**, because `wss://` contains
+  `//`. Everything after it on that line is invisible to every pin that
+  reads the stripped source - including SLAM2's sweep for stray
+  `Math.random`.
+- `test/slam4.test.js`'s `_peerHeights` pin is source text only: moving
+  the prune line after `return out;` (dead code, text unchanged) keeps it
+  green.
+
+## SLAM9 - THE ROOM COULD NOT INTRODUCE ITSELF (2026-09-16, AUDIT SLAM)
+
+The first of the audit's recorded-not-paid findings, and the biggest thing
+wrong with the branch: all three lenses hit it, from three sides.
+
+**AT HOME THE ASK WAS A REACTION, AND IT STARVED.** `_askWho` fired from
+every stranger's pose as it arrived. A rank-ordered far tier delivers
+those in a *stable* order, so the same head of the order re-qualified
+after `WHO_RETRY_MS` and won the `WHO_HZ_MAX` token every time. Measured
+over a real session - 199 peers, 135 strangers, ten minutes:
+
+| | asks sent | distinct ids asked | never asked |
+|---|---|---|---|
+| stable arrival order (a far tier's) | 3,004 | **54 of 135** | **81** |
+| the same, order reshuffled each second | 3,004 | 135 | 0 |
+
+Flat from the first minute to the tenth. Not slow: **stuck**. The
+reshuffled row is the proof the order was the cause. So the ask is now a
+fair rotation from `tick()` over every un-introduced peer (`_askRound`):
+each is reached once per pass whatever order its poses arrive in, skipping
+any asked inside `WHO_RETRY_MS`, stopping when the gate is dry. **After:
+135 of 135 asked, the last of them by t = 26 s** - one pass at
+`WHO_HZ_MAX`, as the arithmetic says.
+
+**AT THE RELAY THE BUDGET GUARDED A COST THAT NO LONGER EXISTED.**
+`WHO_ROOM_HZ_MAX` was 60, and its own comment justified 60 as bounding
+*storage reads*: "the one arm past the hello that reads storage (a look)…
+1280 storage reads a second". SLAM5 deleted that cost - the hello fills
+`_looks`, so an answer on an awake object is a map hit and one send. The
+budget outlived its reason and it was binding: 200 clients offered ~1,000
+asks a second against 60 answered, and the room took **172 s** to finish
+introducing itself. It is now **derived**: `SOCKETS_MAX × WHO_HZ_MAX`, the
+sum of every socket's own gate, so a room of correct clients asking as
+fast as they are allowed is answered in full and the room-wide bound
+binds only when the per-socket gates are not the whole story. And it is
+spent *before* the scan for the target - a refused ask used to cost the
+object a fresh `SOCKETS_MAX`-entry array and a linear search for nothing.
+
+**TWO THINGS THE FIRST TWO MADE VISIBLE.**
+
+*A socket blip re-anonymised everyone past the nearest 64.* The welcome
+prunes the roster it does not name - the merge-not-wipe law (AUDIT ONLINE
+B13) is about the peers it *does* name - and their next pose re-stood each
+as a nameless, look-less stranger to be asked for all over again.
+Measured: 199 named and dressed before the blip, 64 after the welcome,
+135 "Travellers" a moment later. An introduction is a fact about an *id*,
+not about a socket, so it is kept (`_known`, bounded at `KNOWN_MAX` = two
+rooms' worth) and a re-stood stranger wears it at once, told. The join
+fan keeps a remembered look current: a peer that changes gear re-hellos
+and the relay tells the room.
+
+*A pose is proof of membership in the room it arrived on.* `_rooms` was
+written by a welcome or a join alone, so a peer introduced in my cell and
+posing through a halo was never a member of the halo - and the cell's
+`leave` deleted her while she stood, alive, in the next room over; her
+next pose re-stood her as a stranger. Every room a peer speaks in holds
+it now, and `leave` is per room, as WORLD6b-iii(b) meant.
+
+**A version bump nearly relabelled deployed bytes.** The
+`world69 → world70` sed over the test files rewrote the *key* of the
+`world69` row in `test/relayversion.test.js`, so the row claimed `world70`
+had `world69`'s hash. The pin caught it - which is what it is for - and
+the file now says to exclude itself from that sed. `RELAY_VERSION` is
+`world70`.
+
+**Pinned** in `test/slam9.test.js` (6): the full-room starvation case
+driven for 40 simulated seconds; the round's fairness (the next five, not
+the first five again); the blip re-standing peers as themselves; the bound
+on `_known`; membership from a pose across a halo; and 200 asks in one
+instant all answered where the old budget answered 60. Five re-aimed pins
+(`slam6`, `online`, `world6biiie`, `auditworld6biiie`) drive `tick()` now
+rather than expecting an ask on the pose.
+
+## SLAM10 - THREE OF SLAM6'S OWN REGRESSIONS (2026-09-16, AUDIT SLAM)
+
+Audit ledger items 3, 4 and 6, all SLAM6's, paid together because each is
+a consequence of standing strangers and tiering the fan.
+
+**THE FAR TIER WAS INDEXED BY A RANK THAT MOVED.** SLAM6 cut the listeners
+past `POSE_FAN_MAX` into `POSE_FAR_SHARE` slices of a list `ranked()`
+re-sorts on every pose, and served slice `turn % share`. A rank is not a
+stable thing. When the crowd moves, ranks shuffle; a listener crossing a
+slice boundary between two turns is served twice or not at all; and
+"served once every `share` poses" - which SLAM6 published as a guarantee
+and derived `POSE_FAR_SHARE` from - was true only for a crowd standing
+perfectly still, the one case it measured. On the shipped law, 200 in one
+block at 4 Hz:
+
+| crowd | never-heard pairs | pairs whose worst gap > `GAP_MAX_MS` | worst gap |
+|---|---|---|---|
+| standing | 0 | 0.0% | 1000 ms |
+| shuffling, 2 u/s | 0 | 15.4% | 6750 ms |
+| walking, 8 u/s | 0 | 50.1% | 5250 ms |
+
+Never-heard stayed 0, so SLAM6's *erasure* fix held; what failed was the
+smoothness law - a far peer sprinting six seconds of walking in one and
+standing frozen for five, the exact artefact the share was derived to
+prevent. The far tier is now bucketed by **`hashKey(listener id) % share`**
+(`wire.js`, FNV-1a), a function of who the listener is and nothing else,
+so over any `share` consecutive poses every far listener is served exactly
+once *by construction*, whatever the crowd does. Driven both ways: a pure
+200-body random walk at 8 u/s over 48 poses with **0 far pairs ever more
+than `POSE_FAR_SHARE` poses unheard**, and over the real `Room` with the
+far listeners' ranks permuted between every one of the sender's poses,
+**every far listener heard exactly one**. The near set is still the
+nearest `max` by distance - that half of the law is about who can see
+whom, and distance is the right measure for it.
+
+**A STRANGER TOOK A MORROWIND BODY.** SLAM6 stands a peer from its pose
+before the relay has named it, and `PeerBodies` offers its `BODIES_MAX`
+rigs to the *nearest* peers - so at an event the eight figures closest to
+the camera were eight **identical default Bretons**, each a multi-second
+mesh parse, each paid twice (once for the placeholder, again at
+`BODY_REBUILD_MS` when the real look landed). A stranger keeps the shared
+look-less doll - one compose for the whole crowd - until it is introduced;
+the rig is the dearest thing a peer can wear and it waits for the name.
+
+**A PEER CROSSING INTO THE NEAR TIER DASHED.** The ease is a lag
+interpolator: `from` is where the peer is drawn, `to` the newest pose, so
+the drawn figure trails by one interval. When SLAM6 promoted a listener
+into a sender's near tier, that sender's interval fell from 1000 ms to
+250 ms in a single step and the whole accumulated lag burned inside one
+250 ms segment - a peer walking at 5 u/s drawn at **20.6 u/s** for a
+quarter second, under `JUMP_UNITS` so the rig played the walk at 4x rather
+than snapping. The measured interval may now **halve at most per pose**:
+the catch-up is capped at twice the peer's real speed and converges in two
+intervals (1000 → 500 → 250, pinned), growth is unbounded as before so a
+silence still ceilings rather than crawls, and the steady state is
+untouched.
+
+`RELAY_VERSION` is `world71` (this line first read `world72`: the later slices' version-bump seds relabelled it - the same in-place rewrite the ledger pin forbids for its rows, caught by the final audit); the version bump was run with
+`test/relayversion.test.js` excluded, as that file now says to.
+
+**Pinned** in `test/slam10.test.js` (5) and in two re-aimed `slam6` pins
+and one `slam1` count that encoded the rank-sliced far tier. **9
+mutations, 9 dead**: the far tier back to rank slices (SLAM6 verbatim),
+the bucket read off the rank index, the hash made constant, the bucket
+ignoring the turn, the relay not passing the id, strangers taking bodies,
+the interval collapsing in one step, shrinking too slowly, and growth
+bounded too.
+
+## SLAM11 - A FAN LARGER THAN ONE SECOND OF ITS BUDGET COULD NEVER LAND (2026-09-16, AUDIT SLAM)
+
+Audit ledger item 2. Pre-existing since WORLD34 C1 / WORLD2 A5, and the
+audit's one relay finding that was not this branch's doing - reachable
+from ~40 players, long before SLAM5's wall at 130.
+
+**THE ROOT.** `byteGate` is a token bucket **capped at `rate`**. Three
+arms charged a whole fan - the frame times its listeners - as one
+indivisible sum against it. A sum past the cap does not pass slowly; it
+*never* passes, however long the caller waits, because waiting accumulates
+nothing beyond the cap. Measured over the real `Room`, a 100 KiB dungeon
+memory published to a room of N:
+
+| players | fan per publish | sockets handed the memory |
+|---|---|---|
+| 8 | 0.7 MiB | 7 of 7 |
+| 32 | 3.0 MiB | 31 of 31 |
+| 64 | 6.2 MiB | **0 of 63** |
+| 200 | 19.5 MiB | **0 of 199** |
+
+`worldSeen` latched only inside `if (budget.pass)`, so nothing was
+remembered and every publish re-attempted the same unpayable sum. Doors,
+levers and emptied containers silently never synced, and the memory had to
+be under ~21 KiB for a full room to receive it at all. The act fan had the
+same cliff at ~5 KiB to 199 listeners, while `actFrameFits` told its
+author anything up to `MAX_FRAME_BYTES` (16 KiB) would land - and a door
+is not self-healing; nothing re-sends it.
+
+**THE FIX IS A BUCKET THAT CAN BORROW** (`byteGate(..., borrow = true)`).
+A must-deliver fan passes when the bucket is not *in debt* and takes it
+negative by what it costs; nothing else passes until the rate has repaid
+the debt. The rate law holds on average, the debt is bounded by one fan
+(nothing passes while negative), and the frame lands whole instead of
+never. Driven: a 110 KiB memory to 63 sockets, **63 of 63 handed it**,
+once each, where the old law handed it to nobody; a 15 KiB act to eleven
+listeners against a bucket one byte short of the fan, **every listener got
+the door**, the bucket in debt by the overshoot, the next act waiting until
+the rate repaid it.
+
+**The memory push gets its own bucket** (`_roomWorld`). It used to charge
+the *foes stream's*, and a 100 KiB memory's debt would have stalled live
+foes for seconds. **The foes fan does not borrow**, deliberately: it is a
+continuous stream where one oversized fan would block the next second of
+frames, and dropping a frame whole is the kinder failure there - the next
+full frame heals it. Its own cliff - a frame the sender cannot make land at
+this room size - is the sender's to chunk, and is recorded below.
+
+`RELAY_VERSION` is `world72`.
+
+**Pinned** in `test/slam11.test.js` (6, the sixth added by PINS - the refused push): the plain bucket's cliff (so the
+reason for borrowing stays true), the borrowing bucket's four laws, the
+memory landing past the old cliff on its own bucket once each, the act
+landing and waiting, and the foes fan *not* borrowing. `auditworld3`'s act
+pin re-aimed from "over the budget: dropped" to "in debt: dropped; not in
+debt: lands and goes into debt". **8 mutations, 8 dead** - borrow ignored,
+the debt not charged, passing while in debt, the memory back on the foes
+bucket, the memory without borrow, the act without borrow, the foes *with*
+borrow, and `worldSeen` latched on a refused push.
+
+**Recorded, not paid:** the foes stream's own cliff. `FOES_FRAME_MAX`
+(64 KiB) is legal by the wire, and at 199 listeners any frame over ~21 KiB
+is dropped whole on every publish - not one frame, *all* of them, so "the
+next full frame heals it" is false for a host whose pool is that large.
+The relay cannot fix an oversized stream; the sender must chunk it, or its
+cap must be a function of the room's size. A client change, its own slice.
+
+## SLAM12 - THE CLIENT'S HYGIENE (2026-09-16, AUDIT SLAM)
+
+Audit ledger items 5 and 7 and three of Lens B's smaller findings, each
+small, each real, paid together because they share no law with anything
+else on the ledger.
+
+**SLAM2's first retry had a jitter span of exactly zero.** `_backoff`
+starts at `BACKOFF_MIN_MS`, so `_backoff - BACKOFF_MIN_MS` was 0 on the
+first retry and `rand()` was multiplied by nothing. Measured over 200
+sessions dropped in one instant: **one distinct return instant.** The
+jitter began on the *second* retry, and a wave collides on the first - a
+relay restart, a Durable Object eviction, the `room full` 503 that never
+opens the socket. The span's floor is now `BACKOFF_MIN_MS` at all four
+sites (the primary's, and the halo's three), so round one is uniform over
+[1 s, 2 s]; rounds one and two share a window and the doubling shows from
+the third. **Three of the four sites had no pin at all** - the mutation
+batch found each in turn (the halo's close path, its tick path, its
+constructor-catch), and each is driven now with 200 sessions and 200
+distinct instants.
+
+**`_backoff` was reset when the socket opened**, and a full room's
+`CLOSE_BUSY` arrives *after* it opens (the hello gate), so the reset undid
+the hard back-off `CLOSE_BUSY` had just set: a client against a busy room
+retried at a fixed 2500 ms for ever, and SLAM2's doubling never happened
+in the one case it was written for. It is reset by the **welcome** now -
+the relay saying yes - for the primary and for each halo. Pinned on the
+retry *delay*, not on `_backoff`, because the latter reads the ceiling
+under both the fix and the mutant: 2500 → 4500 → 4500 → 4500 against the
+mutant's 2500 for ever.
+
+**A terminal close never forgot its room.** 199 stale peers were eased by
+every tick and counted by `poseHzFor` for the life of the page. A
+`CLOSE_REPLACED` or `CLOSE_POLICY` forgets the room now. A plain drop
+still keeps its peers **on purpose**: through a one-second blip the crowd
+stays drawn where it was rather than vanishing and re-standing, and the
+reconnect's welcome merges over it (AUDIT ONLINE B13). Both halves pinned.
+
+**`lookKey` re-stringified every peer's look every frame** - once per doll
+peer in `RemotePlayers.sync`, once per peer in `PeerBodies.sync` - and at
+199 dressed peers that `JSON.stringify` was ~64% of the client's whole
+per-frame peer work (1.19 ms of 1.85 ms, measured). A look object is
+replaced, never mutated, so a `WeakMap` on it is exactly the key's
+lifetime. Pinned: a thousand reads of one object, zero stringifies.
+
+**A doll that landed after its key was released kept its GPU texture** -
+after `_evict`, or after `destroy()` at the page's hide - with nothing
+referencing it. Measured: sync fifty peers, destroy, fifty uploaded, none
+released. The late arrival frees its texture now.
+
+**Pinned** in `test/slam12.test.js` (8). Two lifecycle pins re-aimed to
+the jittered window (`online`: deterministic `rand`, the window's edges,
+"a good open resets it" → "the welcome resets it"; `chat1`: the retry read
+at the window's far edge). **10 mutations, 10 dead** - three of them
+survivors of the first cut, one per unpinned halo site, each closed with a
+driven pin before the count was written down.
+
+## PINS - THE AUDIT'S THIRTEEN SURVIVORS, AND THE LISTS THAT PROVE THEY ARE DEAD (2026-09-16, AUDIT SLAM)
+
+AUDIT SLAM's second section found **thirteen mutants that survived the
+full suite**, at least one per slam file, and observed that every "N
+mutations, N dead" in this record described a set nobody could re-run.
+This slice closes both.
+
+**The thirteen.** Two were closed by SLAM8 (`HEARTBEAT_MS` 9000,
+`PEER_TIMEOUT_MS` 5000 - the standing-crowd margin), one by SLAM12 (the
+halo jitters reverted). The rest are closed here, each by a pin that can
+fail:
+
+- **S1** `POSE_FAN_MAX` 32 → 8: every pin was written in terms of the
+  constant. It is 32 now by assertion, with its reason, and it is pinned
+  *above* `POSE_CROWD`. (The final audit corrected the rationale this line
+  first gave: the share's derivation `POSE_HZ_MIN × GAP_MAX_MS / 1000`
+  depends on the floor rate alone, not on the bound's place against the
+  crowd threshold. The pin is kept - a bound under the threshold would tier
+  a room the rate law leaves at full speed - but it is not a premise of the
+  derivation.)
+- **S3** the backoff cap removed: driven to eight drops, the wait sits on
+  `BACKOFF_MAX_MS` and stays.
+- **S4** `poseHzFor` `round` → `floor`: `poseHzFor(32)` is 8, not 7.
+- **S5** `GAP_MIN_MS` 50 → 1: pinned equal to `1000 / POSE_HZ_MAX` - the
+  floor *is* the fastest cadence a correct client can keep.
+- **S6** `DOLL_RETRY_MS` 5000 → 50, **S11** `DOLLS_MAX` 64 → 5: the
+  constants once and literally, with why.
+- **S7** the welcome roster losing its poses: driven - a joiner's welcome
+  places each peer where it said it stood.
+- **S13** `destroy()` not clearing `_wanted`: driven.
+- **S12** the worn half of `_needed()` deleted: **kept alive by
+  decision.** Every batch is minted inside the same `sync` that fills
+  `_wanted`, so the worn half is a subset of the wanted half and does no
+  work on its own; SLAM7's record claimed both halves were independently
+  necessary and is corrected above. The code stays as belt-and-braces and
+  the mutant is recorded as *equivalent*, not as a gap.
+- **S10** the `turn` mask: cosmetic - the value is only ever read modulo
+  `POSE_FAR_SHARE` - and recorded, not pinned.
+
+**The pins the audit called weak.** `slam5`'s literal
+`assert.equal(last, last)` is deleted, and its `maxKeys <= 128` bound,
+subsumed two lines later by `maxKeys === 0`. `slam3`'s restatement of the
+source's own `Math.max` is deleted. `slam7`'s `> total - 5` release bound
+is exact equality now. `slam2`'s 400-character source slice - 2.5x the
+function it meant to read, spilling into two neighbours - runs to the
+matching brace. `slam4`'s `_peerHeights` pin, which stayed green when the
+prune was moved after `return out;` as dead code, now reads the order:
+push, prune, return.
+
+**The stripper that ate a line.** Three pins shared
+`.replace(/\/\/[^\n]*/g, ' ')` to strip comments, and `wss://` contains
+`//`: everything after it on that line of `online.js` was invisible to
+every pin reading the stripped source - including `slam2`'s sweep for a
+stray `Math.random`. The two remaining uses strip only a `//` that begins
+a comment.
+
+**THE LISTS ARE COMMITTED.** `tools/mutate.mjs` runs a JSON list of
+mutants - apply, test, restore byte-for-byte, report - and
+`tools/mutants/` holds the exact sets for SLAM8 through SLAM12 and this
+slice. Run over all fifty-seven: **55 dead, 2 survived** on the first
+pass. One was S12, by decision, now flagged `equivalent` with its reason
+so the harness reports it as recorded rather than as a gap. **The other
+was a real gap the committed list found on its own**: SLAM11's "`worldSeen`
+latched on a refused push" had died in a by-hand run and survived the
+committed one - nothing drove the *refused* push. It does now (`slam11`:
+a bucket in debt hands the memory to nobody and latches nobody; repaid,
+the next publish hands it to everyone), and the re-run is 19 dead, 0
+survived, 1 equivalent as recorded. That is the whole argument for
+committing the lists, made by the lists.
+
+SLAM1-SLAM7's mutation sets predate the harness and are not recoverable
+verbatim; their counts stand in this record as they were run, and the
+thirteen survivors the audit found among them are the ones closed above.
+
+## AUDIT SLAM FINAL (2026-09-16) - three lenses over SLAM8..PINS, the merge gate
+
+Mac: "Do one more audit before we merge. Needs to be perfect." Three
+lenses, the same three as AUDIT SLAM (A the relay and the wire, B the
+client, C the harness, the pins and the record), over everything from
+SLAM8 to PINS. The verdict was NOT READY on lens A, READY WITH ONE CLAUSE
+on lens B, and a list on lens C. What each found, and where it is paid:
+
+**Lens A - the relay (paid in SLAM13).** A1 the act fan's borrow was one
+sender's to hold - a modified client sending the largest act to a full
+room put the room's bucket four seconds in debt per frame, at
+`ACT_HZ_MAX`, and every other door was refused while it did. A2 the
+keepalive's whole fan had no floor - SLAM8 fans an unmoved pose to
+everyone because the port's client sends one every `HEARTBEAT_MS`; a
+modified client sends them at `POSE_HZ_MAX`, 20 x 199 sends a second from
+one socket. A3 `poseChanged` compared the yaw bare across the -PI/PI seam
+`validPose` wraps into, so a player facing due south had every keepalive
+tiered - SLAM8's bug back for one heading. A4 the memory push borrowed the
+whole fan: the largest memory into a full room is 127 MiB queued in one
+tick, the object's whole memory. A5 a version skew was invisible from both
+ends: the client ships by CI and the relay by hand, `main` is `world66`
+(the relay that dies at the 130th hello), and nothing on either end could
+see the disagreement. A6 (recorded, not paid): a mover's STOP pose - the
+first unmoved one - is tiered like a move, so a far listener may ease a
+peer to a place it never went for up to `GAP_MAX_MS`; the next heartbeat
+corrects it. Judged tolerable: one second, once, and only past the bound.
+
+**Lens B - the client (SLAM14).** B1 `heardIn` is set once, on the first
+stranger's pose, and never refreshed for a known untold peer - so an ask
+can go to a room it has left. B2 a reconnect's welcome `_unmember`s the
+135 of 199 the roster does not name, blanking them for a round trip; they
+should be stamped unconfirmed and dropped only if no pose follows. B3 a
+`_known` look is stood as told and never re-asked, so a peer that changed
+its gear between rooms keeps its old look; and the comment "a peer that
+changes its gear re-hellos" is false - nothing re-hellos on a gear change.
+B4/B5 (recorded): `_needed`'s worn half is redundant with `wanted`; the
+`dollFor` orphan-texture release is right but unpinned. B6 `lookKey(null)`
+recomputes each time; a constant.
+
+**Lens C - the harness, the pins, the record.** C1 the one number nobody
+has: what a deployed Durable Object carries. The fake has no limit, every
+"sends a second" in this record is arithmetic over the law, and the lines
+that claimed to know where a real object stops ("past about two hundred it
+cannot keep up", "observed a real object carry") were struck by SLAM13.
+**Mac must load-probe the deployed worker** - 200 walking clients against
+`/health`'s `world73` - before Sunday; nothing in this repo can. C2 the
+version pin goes red at merge because `main`'s `wire.js` differs - mint
+the next version at the merge commit, do not relabel. C3 `main`'s
+`rosterRows` must skip `told === false`. C4 = B2. C6 `tools/mutate.mjs`
+read a child killed by ENOBUFS (status null) as "dead": hardened - a
+function replacer, `maxBuffer` 256 MiB, a null status is HARNESS ERROR and
+fails the run. C7 `chat1`'s hello burst read the real clock - held now.
+Survivors the lens found: the relay hash covered two files while the
+bundle is four (paid: the import graph); the world bucket's rate and
+refill cap unpinned (paid); the halo welcome-reset unpinned (SLAM14); the
+`dollFor` release arguments unpinned (SLAM14); `_who`'s bound unpinned
+(paid); `poseHzFor(33)` (paid). Record errors, corrected: SLAM1/6/10's
+version lines relabelled by the seds; SLAM11's pinned count; PINS S1's
+rationale; `slam8:82` asserted the HAZARD's presence (a smaller share
+would have failed the pin) - reworded to pin the law; the act-debt bound
+`<=` needed slack (the SLAM11 pin asserts `< 0` and the SLAM13 pin `>
+-frame`); the `relayversion` row's "4 mutations" had no committed list
+(it has: `tools/mutants/relayversion.json`, 5 dead).
+
+## SLAM13 - THE FINAL LENS'S RELAY FINDINGS (2026-09-16, AUDIT SLAM FINAL)
+
+Five holes in law the slams before it wrote, each one a modified client or
+a large room could put a full room through. `RELAY_VERSION` is `world73`.
+
+**A1 THE SENDER'S SHARE.** `ACT_SENDER_BYTES_PER_S` = a sixteenth of
+`ACT_ROOM_BYTES_PER_S` (64 KiB/s), a borrowing bucket on the sender's
+attachment (`abytes`), charged BEFORE the room's. A frame the sender's
+bucket refuses charges the room nothing; a frame the room refuses charges
+the sender nothing (its bucket is refilled, not charged) - an honest
+sender behind a flooder does not pay for a door that never opened. Sixteen
+honest senders fill the room's rate exactly; one flooder holds at most a
+sixteenth of it; an honest door - a few KiB to a room - lands whole and at
+once. Driven: a 15 KiB act to 63 listeners (945 KiB a fan, past both
+rates) lands whole and puts its sender in debt; the second is refused by
+the sender's share and the room's bucket is untouched to the byte; an
+honest door from somebody else lands for everyone.
+
+**A2 THE KEEPALIVE FLOOR.** `KEEPALIVE_FAN_MS` = `HEARTBEAT_MS / 2`. A
+keepalive is fanned whole only when the sender's last whole fan (`kept`,
+stamped on the PASS patch as `turn` is, so a gate-refused pose that
+reached nobody does not restart the floor) is that old; inside the floor
+it is tiered like a move. Half the heartbeat so an honest client's every
+heartbeat clears it with jitter to spare; a flood buys at most two whole
+fans a second. `HEARTBEAT_MS` moved to `wire.js` so the floor and the
+period cannot be tuned apart; `online.js` re-exports it. Driven: four
+identical keepalives in one instant - the nearest hear four, the far tier
+hears the first whole and a share of the rest; a heartbeat later, whole
+again for everyone; half a heartbeat later, whole again. And the pass
+patch: a walk drains the gate, a keepalive is refused, the next honest one
+is heard whole by all 59.
+
+**A3 THE YAW SEAM.** `poseChanged` compares
+`Math.abs(wrapAngle(a.yaw - b.yaw))`. Driven at the wire (0.002 rad
+across the seam is unmoved; a half turn is a turn; a full winding is no
+heading) and at the relay (a standing player facing due south, drifting
+across the seam every heartbeat, is heard by the farthest listener at
+every one).
+
+**A4 A LISTENER AT A TIME.** The memory push charges its bucket per
+listener and stops at the first refusal; the ones not served stay UNSEEN
+for the next publish (`WORLD_PUBLISH_MS`, by which time the rate has
+repaid the debt). The debt is never deeper than one frame. A 100 KiB
+memory reaches forty listeners a publish, a 20 KiB one the whole room in
+one; the largest (512 KiB) reaches nine. Driven with a 480 KiB memory into
+19 listeners: 9 served (a second of the rate plus one on the borrow), the
+debt under one frame and exactly `FOES_ROOM_BYTES_PER_S - 9 x frame`, the
+served latched and nobody else; a minute idle refills one second's worth,
+not sixty; the rest on the following publishes, nobody twice. SLAM11's
+"every one of the 63 handed it on one publish" is re-aimed to the rate: 38
+this publish, all 63 by the next.
+
+**A5 THE VERSION IN THE WELCOME.** `RELAY_VERSION` lives in `wire.js`
+(index.js re-exports it for `/health` and the nine pins), and every
+welcome - a place room's and a channel's - carries it as `v`. The session
+compares it with the `RELAY_VERSION` it was built with and says a skew
+ONCE on the console and on `statusLine` while it stands
+(`VERSION_WARNING`: "the relay is running another version than this
+client - reload, or the relay needs deploying"); a matching welcome clears
+it; a welcome with no `v` is a relay older than world73 and is said as
+"unversioned". Nothing is refused: a skew is news, not a fault, and the
+old law still walks.
+
+**THE RELAY'S LAW IS THE BUNDLE.** `test/relayversion.test.js` hashes the
+worker's import graph from `server/src/index.js` (relay.js, wire.js,
+world/mat4.js), pins the graph, and from world73 records that hash. The
+rows before it stay under their day's two-file hash.
+
+**Struck.** The three lines claiming to know where a real object stops
+(`wire.js` x2, `index.js`), and `slam1`'s header and Testing.md row that
+repeated it.
+
+**Pins.** `test/slam13.test.js` (11): one home for the numbers, the seam
+at the wire and the relay, the burst tiered and the heartbeat whole, the
+pass-patch `kept`, the sender's share both ways, the listener-at-a-time
+push with its rate and cap, the version in both welcomes, the session's
+warning said once and cleared (retired by SKEW1 below - it was the two
+lines Mac saw outside the chat box), and the final lens's small survivors (the
+`_who` prune, `poseHzFor(33) === 7`, `byteGate`'s cap). Re-aimed:
+`slam8` (keepalives at the heartbeat, on a held clock; the inverted trap
+line), `slam11` (the rate, not the whole room), `chat1`/`world5`/
+`online_relay` (the welcome carries `v`; the hello burst on a held clock),
+`auditworld3` (its act-debt lines on a held clock - the pin re-stamped the
+bucket at `now` and flaked one run in five under a real one). Mutants:
+`tools/mutants/slam13.json` - **17 mutations, 17 dead**;
+`tools/mutants/relayversion.json` - 5, 5 dead.
+
+## SLAM14 - THE FINAL LENS'S CLIENT FINDINGS (2026-09-16, AUDIT SLAM FINAL)
+
+Lens B's "ready with one clause", the clause and its neighbours paid. No
+relay change; `RELAY_VERSION` stays `world73`.
+
+**B2/C4 THE RECONNECT BLINK.** The welcome handler `_unmember`ed every
+peer the roster did not name, and the roster names the nearest
+`ROSTER_MAX` - so every blip dropped 135 of 199 to be re-stood a round
+trip later by their next pose (dressed, since SLAM9, but gone from the
+screen and their bodies torn down meanwhile). A welcome says who is NEAR,
+not who is HERE. The unnamed are kept and stamped `unconfirmed` for that
+room (a per-room map on the peer); a pose or a join in that room confirms
+it (`_confirm`), a leave answers for it, and one that never speaks again
+leaves each such room in `tick()` when the silence law hides it -
+`PEER_TIMEOUT_MS` since it was last seen, the moment it would have
+vanished from the screen in any case. Nobody present blinks; a peer that
+left while I was away is pruned. Driven: 199 stand, the blip's welcome
+names 64, all 199 still stand and draw; a pose confirms one, a join
+another, a leave takes a third; at the timeout nobody is dropped, one
+millisecond past it the 132 that never spoke again are gone and the two
+confirmed stay. And per room: named by my cell's roster and unnamed by a
+halo's, a peer is unconfirmed in the halo alone; a pose in my cell says
+nothing about the halo, a pose through the halo confirms her there.
+
+**B3 THE RECALL.** SLAM9 stands a re-met peer in the look it wore, told,
+and its comment said the join fan keeps that look current because a peer
+re-hellos when its gear changes. Nothing does: a look rides the hello
+alone, so a peer that changed its gear between rooms or during the blip
+wore its old look here for as long as it stayed. A peer stood from memory
+is `recall` now: told (drawn dressed at once, its bodies stood, its foes
+trusted) and walked by `_askRound` as a stranger is; the relay's join
+answers with the look it holds and `_refresh` clears the flag. One ask per
+re-stood peer, at the who gate. The false line is struck and pinned
+struck.
+
+**B1 `heardIn` FOLLOWS THE POSES.** Stamped once on the standing pose, a
+stranger first heard in my cell and since heard only through a halo was
+asked for down the cell's socket, where the relay no longer held it. The
+ask goes down the socket its latest pose came on.
+
+**B6** `lookKey(null)` is one constant (`NULL_LOOK_KEY`).
+
+**Two of lens C's unpinned survivors, pinned.** The HALO's welcome resets
+the halo's backoff (SLAM12 pinned the primary's alone; driven up the
+ladder by three `CLOSE_BUSY`s, opening alone does not reset it, the
+welcome does). The late-landing doll's texture is released to
+`PEER_ARCHIVE` by its record (driven: compose held open, `destroy()`, then
+the doll lands - one release, the archive and a record string).
+
+**Re-aimed.** `online` (Zed unnamed is kept, unconfirmed, and goes past
+the timeout; a roster that is not a list names nobody and drops nobody),
+`slam9` (the welcome keeps the 94 it did not name; the re-standing is
+driven by leaves; the re-stood are recalled at the gate's pace and the
+answers clear it), `world6biiib` (a fresh halo roster keeps Ann,
+unconfirmed there, until she is silent past the timeout).
+
+**Pins.** `test/slam14.test.js` (6). Mutants: `tools/mutants/slam14.json`
+- **15 mutations, 14 dead, 1 equivalent as recorded** (Y13: the constant
+and the recomputation are the same string; the saving is a
+`JSON.stringify` per look-less peer per frame, unobservable from outside;
+the source pin holds the constant's presence).
+
+**Recorded, not paid.** A6 (a mover's stop pose is tiered - one second,
+once, past the bound), B4 (`_needed`'s worn half is redundant with
+`wanted`), B5 (`_wanted`'s pin is by outcome, not by list). C1 stands:
+**the deployed object is unmeasured; Mac must load-probe it.**
+
+**The whole sweep, on the tree as committed.** `node tools/mutate.mjs
+tools/mutants/*.json` over every list from SLAM8 to SLAM14 and the two
+support lists: **94 mutants - 92 dead, 0 survived, 2 equivalent as
+recorded** (S12, Y13). Eight records had moved with SLAM13's source
+(`HEARTBEAT_MS`'s home, the pose arm's `now`, the per-listener push) and
+were re-aimed to the new lines, not dropped - a list that cannot apply is
+a count nobody can re-run, which is what the lists exist to prevent.
+
+## MERGE - the slam branch onto main (2026-09-17)
+
+Mac: "Merge." `main` had moved under the branch by SRV-N, AUDIT-SRVN and
+CHAT-G (a server restart notice, its four findings, the chat's third
+gate). What met, and how it was settled:
+
+- **One `v` on every welcome.** SRV-N and SLAM13 A5 both put the relay's
+  version on the welcome, for different readers: SRV-N's `onRelay` →
+  `net/updateNotice.js` tells a player the relay RESTARTED under them
+  (a change of name across reconnects, whatever the name); SLAM13's
+  `versionWarning` tells them this CLIENT was built against another law
+  than the relay is running (a skew against `RELAY_VERSION`, said once on
+  the console and the HUD line). Both stand, on the one field, in SRV-N's
+  place (last, after `now`) and SRV-N's channel shape. `RELAY_VERSION`
+  lives in `wire.js` (SLAM13) and is `world74`.
+- **The nine version pins** take SRV-N's monotone `relayVersionAtLeast`
+  form, which ends the nine-file sed for good; `relayversion.test.js`
+  keeps binding the name to the bytes, and its graph pin caught the
+  worker reaching `net/nameFilter.js` through CHAT-G - the row for
+  `world74` is the first over five files.
+- **The hello path** is SLAM5's (the roster chosen before the looks are
+  read); main's still read every socket's look and would have died at the
+  130th player.
+- **`rosterRows`** is left as main wrote it. The final lens asked for a
+  `told === false` filter; main's CHAT-R1 pin says "a nameless peer is
+  still a row", and a stranger stood by its pose IS in the room - it is
+  counted, wears the fallback name until the `who` answers, and the
+  roster's count stays true. Mac's pin over the lens's ask.
+- **Cites** re-mapped with `tools/citeMerge.mjs` (14 moved).
+- **The relay deploy is a workflow now** (main's SRV-N/CI: "Deploy relay",
+  `workflow_dispatch`, then `/health` polled until it
+  names the version the run built). Its version step grepped
+  `server/src/index.js` for the declaration, which SLAM13 had moved to
+  `src/net/wire.js` - it would have refused every run with "could not read
+  RELAY_VERSION". It reads `wire.js` now. So the checklist's "deploy by
+  hand" is "run the workflow": the token lives in the repo's secrets, and
+  the one this session's transcript carried must be rotated THERE.
+
+## SLAM15 - THE THREE LEFT RECORDED, PAID (2026-09-17, AUDIT SLAM FINAL)
+
+Mac: "Take care of the left recorded." `RELAY_VERSION` is `world75`.
+
+**A6 A STOP IS HEARD WHOLE.** The pose that ends a walk - the first with
+`mv` 0 after one that moved - carries where the player actually stopped,
+and the tier served it to one far slice in four. The other three eased to
+the last pose they were served, up to a second of walking short of the
+truth, and stood there wrong until the heartbeat corrected it five
+seconds on. A stop is one frame per walk, so the relay fans it whole as
+it fans a keepalive, under the keepalive's own floor (`kept`,
+`KEEPALIVE_FAN_MS`): a client toggling `mv` at the gate's ceiling buys the
+same two whole fans a second a keepalive flood does, and no more. Driven:
+eight steps then the stop - every one of 59 listeners holds the stop as
+its latest pose, where before it some far listener held a mid-walk one;
+ten "stops" in one instant - one whole, the rest tiered, `kept` stamped
+once; a heartbeat later, whole again.
+
+**B4** `_needed` unioned the worn keys into `_wanted`, and the union was
+redundant by construction: `sync` adds every drawn peer's key to
+`_wanted` before it touches the peer's batch and destroys the batch of
+every peer it did not draw; `destroy()` empties both. The invariant
+(worn ⊆ wanted after every sync, through a look change and a departure)
+is pinned and `_needed` returns the wanted set. The restored union is in
+the mutant list as `equivalent`, which is the proof of the redundancy.
+
+**B5** `_wanted` was pinned by count; it is pinned by list - exactly the
+drawn dolls' look keys, not a body peer's, not an unshown peer's, rebuilt
+each frame.
+
+**Pins.** `test/slam15.test.js` (4). Mutants: `tools/mutants/slam15.json`
+- **8 mutations, 7 dead, 1 equivalent as recorded**. Re-aimed: `chat1`'s
+pose-arm regex (two more lines before `still`), `slam8` K3 and `slam13`
+X6/X12 records to the merged source.
+
+**S12 retired.** PINS recorded `S12-needed-worn-half-deleted` as an
+equivalent mutant - deleting the worn union changed nothing. SLAM15 made
+that deletion the law, so the record could no longer apply and is
+removed from `tools/mutants/pins.json`; the same claim lives on as
+`slam15.json`'s Z8 (the union RESTORED, equivalent). The whole sweep on
+this tree: **100 mutants - 98 dead, 0 survived, 2 equivalent as
+recorded** (Y13, Z8).
+
+## SKEW1 - THE TWO LINES OUTSIDE THE CHAT BOX (2026-09-16)
+
+Mac: "When the relay deploys/server restarts, there are 2 strings of
+messages that happen outside of the chat box."
+
+They were SLAM13 A5's client half. The session compared the welcome's
+`v` with the `RELAY_VERSION` it was built against and, on a mismatch, put
+"the relay is running another version than this client - reload, or the
+relay needs deploying" on `statusLine` - which the HUD draws top-left for
+the presence session AND under the chat box for the chat link. Two
+lines, outside the chat, for every player, until a reload.
+
+And the skew it named is the ORDINARY state of a deploy, not a fault.
+From the run logs of the world75 push: the relay's drift-deploy landed at
+15:00:10, the client build (Pages) at 15:02:37. Every reconnect in those
+two and a half minutes compared a world74 client with a world75 relay,
+and every tab already open stayed on the old build until its player
+reloaded - so the two lines were the deploy's normal aftermath, shown to
+everyone, and said nothing SRV-N's notice ("The server was updated and
+restarted...") and its build poll ("A new version of the game has been
+released...reload") were not already saying inside the chat. The one
+case A5 alone covered - a relay BEHIND its client - is closed by the
+drift-deploy (main's SRV-N/CI): a push whose version drifts deploys.
+
+The comparison, the field (`versionWarning`), the text
+(`VERSION_WARNING`) and the console line are gone from `net/online.js`;
+`v` is read by SRV-N's `onRelay` alone. The relay is untouched (no
+version bump: `index.js` and `wire.js` did not change). `slam13`'s A5
+client pin is inverted - a foreign `v` reaches `onRelay`, and
+`statusLine` stays null for the presence label and the chat label alike,
+with no console line and no field - and the three mutants that drove the
+warning (X13-X15) are dropped from `tools/mutants/slam13.json`.
+
+## LOCALDEV1 + ROSTER-G (2026-09-16) - see 06-Systems/Chat-Roster-And-Names.md
+
+Mac: "Players dont show in online and the roster naming itself seems
+hardcoded." The roster beside the chat read the player's own map cell;
+it reads the world channel now, which names its members (`world77`).
+Found on the way: the worker entry re-exported `RELAY_VERSION` as a
+string and workerd refused to start it locally (`world76`). Both are
+written up in the chat file.

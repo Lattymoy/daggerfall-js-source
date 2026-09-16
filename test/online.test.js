@@ -144,13 +144,33 @@ test('ONLINE1: the session over a fake socket, on its own clock - hello on open,
   // the welcome merges: a reconnect keeps where a known peer is drawn
   s.peers.get('bob-0001').shown = pose(22.5);
   sockets[0].receive({ t: 'welcome', id: 'mac-0001', peers: [{ id: 'bob-0001', name: 'Bob', look: {}, pose: pose(30) }] });
-  assert.equal(s.peers.size, 1, 'Zed, not in the roster, is gone'); assert.equal(s.peers.get('bob-0001').from.x, 22.5, 'Bob eases from where he was drawn');
+  // SLAM14 (AUDIT SLAM FINAL B2): Zed, not in the roster, is UNCONFIRMED - the roster names the nearest, not the present
+  assert.equal(s.peers.size, 2, 'Zed, not in the roster, is kept'); assert.deepEqual(Object.keys(s.peers.get('zed-0001').unconfirmed), [s.room], 'stamped unconfirmed for this room');
+  assert.equal(s.peers.get('bob-0001').from.x, 22.5, 'Bob eases from where he was drawn');
+  now = s.peers.get('zed-0001').seenAt + PEER_TIMEOUT_MS + 1; s.tick();
+  assert.equal(s.peers.size, 1, 'and Zed, unconfirmed and silent past the timeout, is gone');
   // the relay's frames are checked by the wire's own law
-  sockets[0].receive({ t: 'welcome', peers: 5 }); assert.equal(s.peers.size, 0, 'a roster that is not a list: no peers, no throw');
+  sockets[0].receive({ t: 'welcome', peers: 5 }); assert.equal(s.peers.size, 1, 'a roster that is not a list: nobody named, no throw - and (SLAM14) nobody dropped for it');
+  assert.ok(s.peers.get('bob-0001').unconfirmed, 'Bob is unconfirmed by it, as by any roster that does not name him');
+  sockets[0].receive({ t: 'leave', id: 'bob-0001' }); assert.equal(s.peers.size, 0, 'a leave takes him at once');
   sockets[0].receive({ t: 'join', id: 'bob-0001', name: '<b>Bob☃</b>', look: null, pose: { x: 'NaN-town' } });
   assert.equal(s.peers.get('bob-0001').name, '<b>Bob</b>', 'the name sanitized as the relay would'); assert.equal(s.peers.get('bob-0001').pose, null, 'a pose that is not one: none');
   sockets[0].receive({ t: 'pose', id: 'bob-0001', p: { x: 1, y: 0, z: 0, yaw: 0, pitch: 0 } }); assert.equal(s.peers.get('bob-0001').pose.mv, 0, 'mv defaulted');
-  sockets[0].receive({ t: 'pose', id: 'nobody', p: pose(1) }); assert.equal(s.peers.size, 1, 'a pose from an id never introduced: ignored');
+  // SLAM6 re-aimed this line: a pose from an id never introduced used to be IGNORED, and the peer waited on a `who`
+  // the room answers WHO_ROOM_HZ_MAX a second in all - minutes, in a full room. It now stands the peer where it says
+  // it is, unnamed and unlooked, and asks after.
+  sockets[0].sent.length = 0;
+  sockets[0].receive({ t: 'pose', id: 'zed-0002', p: pose(7) });
+  assert.equal(s.peers.size, 2, 'SLAM6: a pose from an id never introduced STANDS that peer at once');
+  const stood = s.peers.get('zed-0002');
+  assert.equal(stood.told, false, 'and it is still a stranger - the relay has not introduced it');
+  assert.equal(stood.name, 'Traveller', 'the wire\'s own name for a peer that has not said one (sanitizeName)');
+  assert.equal(stood.look, null, 'and no look until the answer lands - every stranger wears the look-less doll meanwhile');
+  assert.equal(stood.shown.x, 7, 'stood where its pose says, not eased in from nowhere');
+  s.tick();   // SLAM9: the ask is the tick's fair round over every un-introduced peer, not a reaction to the pose
+  const asks = sockets[0].sent.map((f) => (typeof f === 'string' ? JSON.parse(f) : f)).filter((f) => f.t === 'who');
+  assert.deepEqual(asks.map((f) => f.id), ['zed-0002'], 'and asked for on the next tick - once');
+  s.peers.delete('zed-0002');
   sockets[0].receive('not json'); sockets[0].receive({ t: 'pose', id: 'bob-0001', p: { x: 1e12, y: 0, z: 0, yaw: 0, pitch: 0 } });
   assert.equal(s.peers.get('bob-0001').pose.x, 1, 'a pose past the world: ignored');
   s.leave(); assert.equal(s.room, null); assert.equal(s.status, 'closed'); assert.equal(sockets[0].closed.code, 1000);
@@ -169,27 +189,37 @@ test('ONLINE1: the socket\'s lifecycle - a room change closes and reopens, a sta
   sockets[0].receive({ t: 'join', id: 'eve-0001', name: 'Eve', look: {}, pose: pose(1) }); assert.equal(s.peers.size, 0, 'a frame on the STALE socket: ignored');
   sockets[0].drop(); assert.equal(s.status, 'connecting', 'the stale socket\'s close: ignored'); assert.equal(s._retryAt, null);
   s.join('dungeon:m77'); assert.equal(sockets.length, 2, 'the same room again: no new socket');
-  // a drop reconnects with a backoff that doubles
+  // a drop reconnects with a backoff that doubles.
+  // SLAM2/SLAM12 re-aimed this block: the retry is JITTERED inside [BACKOFF_MIN_MS, BACKOFF_MIN_MS + span], so an exact
+  // instant is no longer the law - the WINDOW is. This session takes rand = 1 and reads the window's far edge. The
+  // span floors at BACKOFF_MIN_MS (SLAM12: round one used to have a span of exactly zero), so the first two windows
+  // are equal and the doubling shows from the third.
+  s._rand = () => 1;
   sockets[1].open(); sockets[1].drop(); assert.equal(s.status, 'closed'); assert.equal(s.statusLine(), 'online: reconnecting');
-  now += BACKOFF_MIN_MS - 1; s.tick(); assert.equal(sockets.length, 2, 'not before the backoff');
+  assert.equal(s._retryAt - now, 2 * BACKOFF_MIN_MS, 'round one: the far edge of [MIN, 2 x MIN]');
+  now += 2 * BACKOFF_MIN_MS - 1; s.tick(); assert.equal(sockets.length, 2, 'not before the backoff');
   now += 2; s.tick(); assert.equal(sockets.length, 3, 'then a new socket'); assert.equal(s.stats.reconnects, 1);
   sockets[2].drop();
-  now += BACKOFF_MIN_MS + 1; s.tick(); assert.equal(sockets.length, 3, 'the second wait is longer than the first');
-  now += BACKOFF_MIN_MS; s.tick(); assert.equal(sockets.length, 4, 'twice the first: the backoff doubled');
+  assert.equal(s._retryAt - now, 2 * BACKOFF_MIN_MS, 'round two: the same window - the span floors at BACKOFF_MIN_MS until the backoff clears 2x');
+  now = s._retryAt + 1; s.tick(); assert.equal(sockets.length, 4);
+  sockets[3].drop();
+  assert.equal(s._retryAt - now, 4 * BACKOFF_MIN_MS, 'round three: the window has DOUBLED');
+  now = s._retryAt + 1; s.tick(); assert.equal(sockets.length, 5);
   assert.ok(BACKOFF_MAX_MS >= BACKOFF_MIN_MS * 4);
-  sockets[3].open(); assert.equal(s._backoff, BACKOFF_MIN_MS, 'a good open resets it');
+  sockets[4].open(); assert.notEqual(s._backoff, BACKOFF_MIN_MS, 'SLAM12: an open alone resets nothing - CLOSE_BUSY arrives after it');
+  sockets[4].receive({ t: 'welcome', id: 'mac-0001', peers: [] }); assert.equal(s._backoff, BACKOFF_MIN_MS, 'the WELCOME resets it - the relay said yes');
   // the relay's error frame, then its policy close: terminal - no storm
-  sockets[3].receive({ t: 'error', m: 'bad pose' }); assert.equal(s.status, 'error'); assert.equal(s.error, 'bad pose');
-  sockets[3].drop(CLOSE_POLICY); assert.equal(s.terminal, true); assert.equal(s.statusLine(), 'online: bad pose');
-  now += BACKOFF_MAX_MS * 4; s.tick(); assert.equal(sockets.length, 4, 'refused: not retried');
+  sockets[4].receive({ t: 'error', m: 'bad pose' }); assert.equal(s.status, 'error'); assert.equal(s.error, 'bad pose');
+  sockets[4].drop(CLOSE_POLICY); assert.equal(s.terminal, true); assert.equal(s.statusLine(), 'online: bad pose');
+  now += BACKOFF_MAX_MS * 4; s.tick(); assert.equal(sockets.length, 5, 'refused: not retried');
   // replaced by another window: terminal too
-  s.join('town:m5', pose(0)); assert.equal(sockets.length, 5); assert.equal(s.terminal, false, 'a new room starts clean');
-  sockets[4].open(); sockets[4].drop(CLOSE_REPLACED);
+  s.join('town:m5', pose(0)); assert.equal(sockets.length, 6); assert.equal(s.terminal, false, 'a new room starts clean');
+  sockets[5].open(); sockets[5].drop(CLOSE_REPLACED);
   assert.equal(s.terminal, true); assert.match(s.error, /another window/);
-  now += BACKOFF_MAX_MS * 4; s.tick(); assert.equal(sockets.length, 5, 'replaced: not retried, or two tabs would evict each other forever');
+  now += BACKOFF_MAX_MS * 4; s.tick(); assert.equal(sockets.length, 6, 'replaced: not retried, or two tabs would evict each other forever');
   // busy (1013): not terminal, but a hard backoff
-  s.join('town:m6', pose(0)); sockets[5].open(); sockets[5].drop(CLOSE_BUSY);
-  assert.equal(s.terminal, false); assert.ok(s._backoff >= BACKOFF_MAX_MS / 2, 'a full room is waited out, not hammered'); now += BACKOFF_MAX_MS + 1; s.tick(); assert.equal(sockets.length, 7, 'then tried again');
+  s.join('town:m6', pose(0)); sockets[6].open(); sockets[6].drop(CLOSE_BUSY);
+  assert.equal(s.terminal, false); assert.ok(s._backoff >= BACKOFF_MAX_MS / 2, 'a full room is waited out, not hammered'); now += BACKOFF_MAX_MS + 1; s.tick(); assert.equal(sockets.length, 8, 'then tried again');
   s.leave(); const n = sockets.length; now += 60000; s.tick(); assert.equal(sockets.length, n, 'left: no reconnect');
   // a relay that is not wss:// is no relay at all
   const bad = new OnlineSession({ url: 'http://relay.test', id: 'mac-0002', secret: 'shh-shh-shh-0002', WebSocketImpl: FakeWS, now: () => now });

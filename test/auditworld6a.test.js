@@ -22,7 +22,6 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { isWorldRoom, worldFrameMaxFor, WORLD_FRAME_MAX, WORLD_FRAME_MAX_INTERIOR, mintSharedStamp, PIXEL_UNITS } from '../src/net/wire.js';
 import * as relay from '../server/src/relay.js';
-import { RELAY_VERSION } from '../server/src/index.js';
 import { relayVersionAtLeast } from './relayVersion.mjs';
 import { roomKeyFor, OnlineSession } from '../src/net/online.js';
 import { validLootItem, validLootList } from '../src/systems/loot.js';

@@ -9,7 +9,6 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { hitOwnerOf, validFoeRecord, CELL_FRAME_RECORDS_MAX, CELL_PUPPETS_MAX, FOE_SEQ_MAX, FOE_HEALTH_MAX, POSE_BOUND, POSE_Y_BOUND, PIXEL_UNITS, MAX_FRAME_BYTES, DROP_STRIKES_MAX, HIT_ROOM_HZ_MAX, FOES_ROOM_BYTES_PER_S, RANGE_PIXELS } from '../src/net/wire.js';
 import * as relay from '../server/src/relay.js';
-import { RELAY_VERSION } from '../server/src/index.js';
 import { relayVersionAtLeast } from './relayVersion.mjs';
 import { OnlineSession, FOES_STALE_MS } from '../src/net/online.js';
 import { fakeRoom } from './fakeRoom.mjs';

@@ -15,7 +15,6 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { isCellRoom, streamsFoes, hitOwnerOf, isWorldRoom, PIXEL_UNITS, MAX_FRAME_BYTES, FOES_PREFIX } from '../src/net/wire.js';
 import * as relay from '../server/src/relay.js';
-import { RELAY_VERSION } from '../server/src/index.js';
 import { relayVersionAtLeast } from './relayVersion.mjs';
 import { OnlineSession } from '../src/net/online.js';
 import { fakeRoom } from './fakeRoom.mjs';

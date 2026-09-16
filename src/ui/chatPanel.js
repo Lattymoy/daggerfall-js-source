@@ -280,9 +280,15 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
     if (key === whoKey) return;
     whoKey = key;
     whoHead.textContent = rosterTitle(total);
+    // ROSTER-G (Mac: "the roster naming itself seems hardcoded"): the #tag is the tie-breaker for two players with ONE
+    // name (net/roster.js's second sort clause, the chat line's own suffix), and it read as a fixed code stuck to every
+    // name. It is drawn only where it does that work - beside a name another row shares.
+    const dup = new Set(); const seen = new Set();
+    for (const r of rows) { const k = r.name.toLowerCase(); if (seen.has(k)) dup.add(k); seen.add(k); }
     whoRows = rows.map((r) => {
       const n = el('div', 'dfchat-who-row' + (r.me ? ' me' : ''));
-      n.append(el('span', 'dfchat-who-name', r.name), el('span', 'dfchat-who-tag', '#' + r.tag));
+      n.append(el('span', 'dfchat-who-name', r.name));
+      if (dup.has(r.name.toLowerCase())) n.append(el('span', 'dfchat-who-tag', '#' + r.tag));
       return n;
     });
     whoList.replaceChildren(...whoRows);

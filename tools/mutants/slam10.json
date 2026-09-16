@@ -1,0 +1,137 @@
+[
+  {
+    "name": "T1-far-by-rank-slice-SLAM6",
+    "file": "src/net/wire.js",
+    "old": "  const bucket = (((turn | 0) % share) + share) % share;\n  const out = sorted.slice(0, max);\n  for (let i = max; i < sorted.length; i++) if (hashKey(keyOf(sorted[i])) % share === bucket) out.push(sorted[i]);\n  return out;",
+    "new": "  const slice = Math.ceil((sorted.length - max) / share);\n  const start = max + ((((turn | 0) % share) + share) % share) * slice;\n  return sorted.slice(0, max).concat(sorted.slice(start, start + slice));",
+    "tests": [
+      "test/slam10.test.js",
+      "test/slam6.test.js",
+      "test/slam1.test.js",
+      "test/slam3.test.js",
+      "test/slam8.test.js",
+      "test/mwbody1.test.js",
+      "test/online.test.js"
+    ]
+  },
+  {
+    "name": "T2-bucket-by-rank-index",
+    "file": "src/net/wire.js",
+    "old": "if (hashKey(keyOf(sorted[i])) % share === bucket)",
+    "new": "if (hashKey(i) % share === bucket)",
+    "tests": [
+      "test/slam10.test.js",
+      "test/slam6.test.js",
+      "test/slam1.test.js",
+      "test/slam3.test.js",
+      "test/slam8.test.js",
+      "test/mwbody1.test.js",
+      "test/online.test.js"
+    ]
+  },
+  {
+    "name": "T3-hash-constant",
+    "file": "src/net/wire.js",
+    "old": "  return h >>> 0;\n}",
+    "new": "  return 0 * h;\n}",
+    "tests": [
+      "test/slam10.test.js",
+      "test/slam6.test.js",
+      "test/slam1.test.js",
+      "test/slam3.test.js",
+      "test/slam8.test.js",
+      "test/mwbody1.test.js",
+      "test/online.test.js"
+    ]
+  },
+  {
+    "name": "T4-bucket-ignores-turn",
+    "file": "src/net/wire.js",
+    "old": "  const bucket = (((turn | 0) % share) + share) % share;",
+    "new": "  const bucket = 0;",
+    "tests": [
+      "test/slam10.test.js",
+      "test/slam6.test.js",
+      "test/slam1.test.js",
+      "test/slam3.test.js",
+      "test/slam8.test.js",
+      "test/mwbody1.test.js",
+      "test/online.test.js"
+    ]
+  },
+  {
+    "name": "T5-relay-drops-keyOf",
+    "file": "server/src/index.js",
+    "old": "poseFan(heard, m.p, (e) => e[1].pose, met.turn, (e) => e[1].id)",
+    "new": "poseFan(heard, m.p, (e) => e[1].pose, met.turn)",
+    "tests": [
+      "test/slam10.test.js",
+      "test/slam6.test.js",
+      "test/slam1.test.js",
+      "test/slam3.test.js",
+      "test/slam8.test.js",
+      "test/mwbody1.test.js",
+      "test/online.test.js"
+    ]
+  },
+  {
+    "name": "T6-strangers-take-bodies",
+    "file": "src/net/peerBodies.js",
+    "old": "      if (peer.told === false) continue;",
+    "new": "      void peer.told;",
+    "tests": [
+      "test/slam10.test.js",
+      "test/slam6.test.js",
+      "test/slam1.test.js",
+      "test/slam3.test.js",
+      "test/slam8.test.js",
+      "test/mwbody1.test.js",
+      "test/online.test.js"
+    ]
+  },
+  {
+    "name": "T7-gap-collapses-in-one-step",
+    "file": "src/net/online.js",
+    "old": "      p.gap = p.gap != null ? Math.max(g, p.gap * 0.5) : g;",
+    "new": "      p.gap = g;",
+    "tests": [
+      "test/slam10.test.js",
+      "test/slam6.test.js",
+      "test/slam1.test.js",
+      "test/slam3.test.js",
+      "test/slam8.test.js",
+      "test/mwbody1.test.js",
+      "test/online.test.js"
+    ]
+  },
+  {
+    "name": "T8-gap-shrinks-too-slowly",
+    "file": "src/net/online.js",
+    "old": "      p.gap = p.gap != null ? Math.max(g, p.gap * 0.5) : g;",
+    "new": "      p.gap = p.gap != null ? Math.max(g, p.gap * 0.9) : g;",
+    "tests": [
+      "test/slam10.test.js",
+      "test/slam6.test.js",
+      "test/slam1.test.js",
+      "test/slam3.test.js",
+      "test/slam8.test.js",
+      "test/mwbody1.test.js",
+      "test/online.test.js"
+    ]
+  },
+  {
+    "name": "T9-growth-also-bounded",
+    "file": "src/net/online.js",
+    "old": "      p.gap = p.gap != null ? Math.max(g, p.gap * 0.5) : g;",
+    "new": "      p.gap = p.gap != null ? Math.min(Math.max(g, p.gap * 0.5), p.gap * 2) : g;",
+    "tests": [
+      "test/slam10.test.js",
+      "test/slam6.test.js",
+      "test/slam1.test.js",
+      "test/slam3.test.js",
+      "test/slam8.test.js",
+      "test/mwbody1.test.js",
+      "test/online.test.js"
+    ]
+  }
+]

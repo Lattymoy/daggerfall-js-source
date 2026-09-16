@@ -190,8 +190,16 @@ export const CHAT_HZ_MAX = 2;
 export const CHAT_STRIKES_MAX = 20;
 /** The most sockets a CHAT room holds - one room hears the whole world, so it runs deeper than a cell's. */
 export const CHAT_SOCKETS_MAX = 2048;
-/** The most hellos a CHANNEL admits a second (AUDIT CHAT A1: the gate is never off; a channel's hello costs no roster, so it runs deeper). */
+/** The most hellos a CHANNEL admits a second (AUDIT CHAT A1: the gate is never off; a channel's hello costs no look and no storage read, so it runs deeper). */
 export const CHAT_HELLO_HZ_MAX = 50;
+/** ROSTER-G (2026-09-16, Mac: "Players dont show in online"): THE CHANNEL HAS A ROSTER, and this is how many names its
+ *  welcome carries. CHAT-R1 asked for "all currently online players" and the panel was wired to the PRESENCE
+ *  session - the peers in the player's own map cell - so a friend two towns over never showed. The one room every
+ *  player is in is the world channel (CHAT_WORLD_ROOM), so its welcome names who is in it ({id, name}, no look, no
+ *  pose - nothing is drawn from a channel) and its join and leave are said. Nearest-first has no meaning in a channel;
+ *  the list is socket order, cut at this many, and `n` in the welcome is the true count so a cut list still says
+ *  how many are online. Above the panel's own ROSTER_ROWS_MAX (200) and a full event (SOCKETS_MAX, 256). */
+export const CHAT_ROSTER_MAX = 512;
 /** The most chat lines a whole CHANNEL relays a second (AUDIT CHAT A2: the fan is every line to everyone - the room's budget, not the socket's). */
 export const CHAT_ROOM_HZ_MAX = 20;
 /** The World tab's room: the one chat channel there is. */
@@ -249,6 +257,15 @@ export const ACT_ROOM_HZ_MAX = 30;
  *  the foes fan's ceiling. A door's honest traffic is a few kilobytes a second even in a full room, so this sits
  *  well above every real cascade and far below the hole. */
 export const ACT_ROOM_BYTES_PER_S = 1024 * 1024;
+/** SLAM13 (2026-09-16, AUDIT SLAM A1): ONE SENDER'S SHARE OF THE ACT FAN. SLAM11 made the room's act bucket borrow so
+ *  a big door lands whole - and a borrowing bucket is a bucket one sender can drive into debt on purpose: a modified
+ *  client sending the largest act (MAX_FRAME_BYTES) to a full room charged 16 KiB x 255 = 4 MiB against a 1 MiB rate,
+ *  four seconds of debt per frame, at ACT_HZ_MAX. Everyone else's doors, levers and chests were refused for as long as
+ *  it kept it up. So a sender's fan is charged to ITS OWN borrowing bucket first, at a sixteenth of the room's rate,
+ *  and only a frame its own bucket admits is charged to the room's: sixteen honest senders fill the room's rate
+ *  exactly, one flooder can hold at most a sixteenth of it, and an honest door (a few KiB to a room) still lands
+ *  whole and at once. */
+export const ACT_SENDER_BYTES_PER_S = ACT_ROOM_BYTES_PER_S / 16;
 /** AUDIT WORLD6b-iii(c) C3: the room's HIT bytes a second, fanned - the hit frame carries a corpse's GRANT since
  *  WORLD6b-iii(c) (up to a frame's worth of items), so the arm that was a 150-byte control channel is a bulk one and
  *  counts its bytes as the foes and the acts do (AUDIT WORLD3 A1's law); over it a blow is dropped, nobody struck. */
@@ -257,10 +274,25 @@ export const HIT_ROOM_BYTES_PER_S = 256 * 1024;
  *  starves a pose) and refused to the caller at home past it. */
 export const ACT_HZ_MAX = 5;
 /** A byte budget: `rate` bytes a second, a second's worth at most; passes when the cost fits, spending it. */
-export function byteGate(bucket, nowMs, cost, rate) {
+/** A byte bucket of `rate` a second.
+ *
+ *  SLAM11 (2026-09-16, AUDIT SLAM): `borrow`. The bucket is CAPPED at `rate`, so without it a single charge larger than
+ *  `rate` can never pass - not slowly, NEVER, however long the caller waits - and three arms charged a whole fan
+ *  (`frame x listeners`) indivisibly. The dungeon's memory push at 200 players with a 100 KiB memory was 19.5 MiB
+ *  against a 4 MiB cap: 0 of 199 sockets were ever handed the room's memory, it latched nothing and retried the same
+ *  unpayable sum on every publish, and doors, levers and emptied containers silently never synced. The act fan had
+ *  the same cliff at ~5 KiB while `actFrameFits` told its author 16 KiB would land.
+ *
+ *  With `borrow`, a frame passes when the bucket is not IN DEBT (`bytes >= 0`) and takes the bucket negative by
+ *  whatever it costs; nothing else passes until the rate has repaid the debt. The RATE law holds on average, the
+ *  debt is bounded by one fan (nothing passes while negative), and a must-deliver fan lands whole rather than
+ *  never. It is for arms whose frame MUST reach everyone and comes rarely - the memory, a door - and NOT for a
+ *  continuous stream like the foes, where one oversized fan would block the next second of frames and dropping
+ *  the frame whole is the kinder failure (the next full frame heals it). */
+export function byteGate(bucket, nowMs, cost, rate, borrow = false) {
   const b = bucket ?? { bytes: rate, at: nowMs };
   const bytes = Math.min(rate, b.bytes + Math.max(0, ((nowMs - b.at) / 1000) * rate));
-  if (bytes < cost) return { bucket: { bytes, at: nowMs }, pass: false };
+  if (borrow ? bytes < 0 : bytes < cost) return { bucket: { bytes, at: nowMs }, pass: false };
   return { bucket: { bytes: bytes - cost, at: nowMs }, pass: true };
 }
 /** Every channel the relay will open (AUDIT CHAT A1: a whitelist - a later tab is a later entry, and nothing else is a channel). */
@@ -478,6 +510,146 @@ export function validSharedFoe(sf) {
   return out;
 }
 
+/** SLAM1 (2026-09-16, Mac: Daggerfall's 30th, a streamer's server slam): THE LISTENERS ONE POSE REACHES AT ONCE.
+ *
+ *  A pose reaches everyone a room holds within range, so a room's cost is N senders times N listeners - measured over
+ *  the real Room on the fake Durable Object, a crowd standing together costs 2.4k sends a second at 16 players,
+ *  22.6k at 48 and 91.2k at 96 (SLAM13 struck a clause here that claimed to know where a real object stops keeping
+ *  up; the fake carries no such limit and nothing has measured the deployed one - see AUDIT SLAM C1). RANGE DOES NOT
+ *  SAVE IT: the cull is why a cell is cheap when the country is spread out, and an event is precisely everybody
+ *  converging on one spot, where every range test passes.
+ *
+ *  What saves it is that nobody can SEE two hundred people at once. A name stops at NAME_RANGE (60 scene units), at
+ *  most BODIES_MAX (8) peers ever stand in a Morrowind body, and the rest are billboards in a crowd. So this many
+ *  listeners - the nearest - hear every pose the sender says. The cost stops being N squared.
+ *
+ *  SLAM6 (2026-09-16, AUDIT SLAM): AND THE REST HEAR THE SAME POSES LESS OFTEN, which is the half SLAM1 got wrong.
+ *  SLAM1 stopped here, and a listener past the bound heard NOTHING from that sender - so the silence law (AUDIT
+ *  ONLINE B3/B11/B14) HID it after PEER_TIMEOUT_MS. That is not a peer gone quiet, it is a peer ERASED, and it
+ *  falls hardest on exactly the player an event is held for: the bound is a RANK, so the DENSEST player in the room
+ *  reaches the SMALLEST radius. Measured over this law at 200 players standing in one town block, the man in the
+ *  middle was heard by 32 of 199 and hidden from the other 167, whichever way the crowd was spread. */
+export const POSE_FAN_MAX = 32;
+
+/** SLAM6: one pose in this many is heard by a listener past POSE_FAN_MAX - the FAR TIER's share.
+ *
+ *  NOT A GUESS, and not a budget: it is the largest share the client's own ease can still walk. A peer is eased over
+ *  its OWN observed interval (net/online.js `tick`, `_arrive`), and that interval is clamped at GAP_MAX_MS - past it
+ *  the ease finishes early and the peer STANDS until the next pose. A far listener's interval is `share / hz`, and
+ *  the crowded rate never falls below POSE_HZ_MIN (net/online.js poseHzFor), so the largest share that keeps every
+ *  far peer WALKING is POSE_HZ_MIN * GAP_MAX_MS / 1000 = 4. Above the crowd threshold hz is higher and the interval
+ *  is shorter still; below it no room is over the bound at all and this never applies.
+ *
+ *  The cost is arithmetic, not observation: a pose costs at most `POSE_FAN_MAX + ceil((n - 1 - POSE_FAN_MAX)/share)`
+ *  sends instead of `n - 1`. At 200 players in one room at 4 Hz that is 59.2k sends a second against 159.2k
+ *  unbounded - and against SLAM1's 25.6k, which bought the saving by hiding 84% of the room from each sender. Run
+ *  over this law across a 30-second standing, uniform and packed alike: 59.0k a second, every one of the 199
+ *  listeners heard the man in the middle, and the longest any of them went without him was 1000ms, exactly
+ *  GAP_MAX_MS. At SOCKETS_MAX (256) the same sum is 89.9k - a sum over the law, on the fake; what a deployed object
+ *  carries is unmeasured (AUDIT SLAM C1). */
+export const POSE_FAR_SHARE = 4;
+
+/** A pose goes out at least this often, moved or not: the socket's keepalive and the peers' clock. SLAM13 moved it
+ *  here from net/online.js, because the relay's keepalive floor (KEEPALIVE_FAN_MS) is a fraction of it and the two
+ *  must never be tuned apart. */
+export const HEARTBEAT_MS = 5000;
+/** SLAM13 (2026-09-16, AUDIT SLAM A2): A KEEPALIVE IS HEARD BY THE WHOLE CROWD AT MOST THIS OFTEN. SLAM8 fans an
+ *  unmoved pose to everyone in range, untiered, because a standing player's heartbeat is the one frame whose whole job
+ *  is to be heard - and it assumed that frame comes every HEARTBEAT_MS, which is what the port's client does. A
+ *  modified client sends unmoved poses at the pose gate's ceiling (POSE_HZ_MAX, 20 Hz), and every one of them went to
+ *  the whole room: 20 x 199 = 3,980 sends a second from ONE socket, 40x what a standing player costs and beyond what
+ *  the tier bounds a mover to. So the whole fan is served to a keepalive only when the sender's LAST whole fan is at
+ *  least this old; a keepalive inside the floor is tiered like a move. Half the heartbeat, so an honest client's
+ *  every heartbeat still clears it with a late one's jitter to spare, and a flood buys nothing past 2 whole fans a
+ *  second. The standing margin SLAM8 asserted holds: the whole fan still comes at every heartbeat. */
+export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
+
+/** AUDIT WORLD34 D4: the relay names itself in /health - the deploy is by hand (`npx wrangler deploy`), nothing in
+ *  CI does it, and until now nothing said which relay was live. Bump it with every relay-changing slice; since SLAM8
+ *  test/relayversion.test.js binds each version to the bytes of the law and fails until the bump is made.
+ *
+ *  SLAM13 (2026-09-16, AUDIT SLAM A5): moved here from server/src/index.js so BOTH ENDS know the name. The welcome
+ *  carries it (`v`), and a client whose wire.js was built against another version says so on the console: the client
+ *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
+ *  now nothing on either end could see it. */
+export const RELAY_VERSION = 'world77';   // ROSTER-G: the channel names its members - the roster beside the chat is everyone online
+
+/** The listeners sorted by distance from `from`, nearest first; one with no pose yet sorts last, because a peer that
+ *  has never said where it is cannot be near. The ordering is Euclidean in the POSE'S OWN FRAME, which is a cell's
+ *  world units or a place's scene units - it never leaves one room, so it never has to agree across the two. */
+function ranked(list, from, poseOf) {
+  const d2 = (x) => {
+    const p = poseOf(x);
+    if (!p || !from || !finite(p.x) || !finite(p.z)) return Infinity;
+    const dx = p.x - from.x, dz = p.z - from.z;
+    return dx * dx + dz * dz;
+  };
+  return list.map((x) => [d2(x), x]).sort((a, b) => a[0] - b[0]).map(([, x]) => x);
+}
+
+/** The nearest `max` of `list` to `from`. Under the bound the list is returned AS IT IS (no sort, no copy) - the
+ *  whole point is to cost nothing in the rooms that do not need it. The WELCOME's door (rosterFor). */
+export function nearestFan(list, from, poseOf, max = POSE_FAN_MAX) {
+  if (!Array.isArray(list) || list.length <= max) return list;
+  return ranked(list, from, poseOf).slice(0, max);
+}
+
+/** SLAM10 (2026-09-16, AUDIT SLAM): a 32-bit FNV-1a over a string. Not for secrecy - for a BUCKET that is a function
+ *  of the listener and nothing else, so the far tier's rotation cannot be shuffled by where anybody is standing. */
+export function hashKey(s) {
+  let h = 0x811c9dc5;
+  const str = String(s);
+  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  return h >>> 0;
+}
+
+/** SLAM6: the listeners THIS pose goes to - the nearest `max`, every pose, and one turn of the far tier; the near
+ *  ones simply hear it `share` times as often as the rest. Under the bound the list is returned AS IT IS, exactly as
+ *  `nearestFan`.
+ *
+ *  SLAM10 (AUDIT SLAM): THE FAR TIER IS BUCKETED BY WHO THE LISTENER IS, NOT BY WHERE IT RANKS. SLAM6 cut the far
+ *  listeners into `share` slices of a list `ranked()` re-sorts on every pose, and served slice `turn % share`. A rank
+ *  is not a stable thing: when the crowd moves, ranks shuffle, a listener crosses a slice boundary between two turns
+ *  and is served twice or not at all, and "once every `share` poses" was true only for a crowd standing perfectly
+ *  still - which was the one case SLAM6 measured before publishing it as a guarantee. Measured on the shipped law at
+ *  200 in one block: never-heard stayed 0 at every speed (SLAM6's erasure fix held), but 15% of sender-listener pairs
+ *  went longer than GAP_MAX_MS between poses at a shuffle and 50% at a walk, with worst gaps over 6 s - a far peer
+ *  sprinting six seconds of walking in one and then standing frozen for five, which is the exact artefact
+ *  POSE_FAR_SHARE was derived to prevent. A listener is now served on the turn `hashKey(keyOf(listener)) % share`,
+ *  which depends on its id alone; over any `share` consecutive poses every far listener is served exactly once,
+ *  whatever the crowd does, by construction. The near set is still the nearest `max` by distance: that half of the
+ *  law is about who can see whom, and distance is the right measure for it. */
+export function poseFan(list, from, poseOf, turn = 0, keyOf = (x) => x?.id, max = POSE_FAN_MAX, share = POSE_FAR_SHARE) {
+  if (!Array.isArray(list) || list.length <= max) return list;
+  const sorted = ranked(list, from, poseOf);
+  const bucket = (((turn | 0) % share) + share) % share;
+  const out = sorted.slice(0, max);
+  for (let i = max; i < sorted.length; i++) if (hashKey(keyOf(sorted[i])) % share === bucket) out.push(sorted[i]);
+  return out;
+}
+
+/** SLAM8 (2026-09-16, AUDIT SLAM): HAS A POSE MOVED? Moved here from net/online.js, which is the client alone, because
+ *  the RELAY has to ask the same question and must get the same answer (the `nearestFan`/`poseFan` rule: one law, both
+ *  ends). The client sends a pose when this says yes, and every HEARTBEAT_MS regardless; so a pose for which this says
+ *  NO is a KEEPALIVE, and the relay tells the two apart by this and nothing else.
+ *
+ *  Exact equality would not do. A player standing still with a hand on the mouse drifts by less than `eps`, which this
+ *  calls unmoved and `sendPose` therefore does not send - until the heartbeat, which carries those drifted numbers. A
+ *  relay comparing fields byte-for-byte would see a MOVE, tier the keepalive, and hand that player straight back the
+ *  bug this slice exists to close. The epsilon is the law; the bytes are not.
+ *
+ *  SLAM13 (AUDIT SLAM A3): and the yaw is compared as an ANGLE. `validPose` wraps the relay's copy into (-PI, PI], so a
+ *  player facing due south (yaw = PI) who drifts a hair's breadth reads +3.14 one heartbeat and -3.14 the next - a
+ *  difference of 2PI where the eyes see none. The bare difference tiered that player's every keepalive, which is
+ *  SLAM8's bug back for one heading; wrapAngle of the difference is the distance between two headings. */
+export function poseChanged(a, b, eps = 0.01) {
+  if (!a || !b) return true;
+  return Math.abs(a.x - b.x) > eps || Math.abs(a.y - b.y) > eps || Math.abs(a.z - b.z) > eps
+    || Math.abs(wrapAngle(a.yaw - b.yaw)) > eps || Math.abs(a.pitch - b.pitch) > eps || (a.mv | 0) !== (b.mv | 0)   // SLAM13: the yaw difference is WRAPPED - the relay keeps the pose the door wrapped into (-PI, PI], and a player standing at the seam drifts across it by 2PI, which the bare difference called a move
+    || (a.wd | 0) !== (b.wd | 0) || (a.an | 0) !== (b.an | 0)   // MAC7 #1: a draw and a swing go out at once, as a step does
+    || (a.am | 0) !== (b.am | 0) || (a.sr | 0) !== (b.sr | 0) || (a.cn | 0) !== (b.cn | 0);   // MAC7 #2: and the arrow, the spell stance, the cast
+}
+
 /** A pose the room will relay, or null. */
 export function validPose(p) {
   if (!p || typeof p !== 'object') return null;
@@ -668,10 +840,24 @@ export const hitGate = (bucket, nowMs) => tokenGate(bucket, nowMs, HIT_HZ_MAX);
  *  (the nearest, AUDIT ONLINE A5), not the room: a member beyond it whose pose, foes or blow reaches me is asked for
  *  by name and answered with its join to the asker alone - a stranger is learned from the relay's own traffic. */
 export const WHO_HZ_MAX = 5;   // AUDIT WORLD6b-iii(e) B5: a mass roster loss (a halo let go) re-learns its peers at this rate - at two a second twenty peers took ten seconds
-/** AUDIT WORLD6b-iii(e) B1: the asks a ROOM answers a second, every socket together - the one arm past the hello that
- *  reads storage (a look), so it carries the room budget every other arm carries; over it the ask is dropped, nobody
- *  struck. A full room of sockets asking at their own rate was 1280 storage reads a second out of one object, for free. */
-export const WHO_ROOM_HZ_MAX = 60;
+/** AUDIT WORLD6b-iii(e) B1: the asks a ROOM answers a second, every socket together; over it the ask is dropped,
+ *  nobody struck.
+ *
+ *  SLAM9 (2026-09-16, AUDIT SLAM): DERIVED, NOT CHOSEN - and the number it replaces was the single biggest thing wrong
+ *  with the branch. This was 60, justified here as bounding STORAGE READS: "the one arm past the hello that reads
+ *  storage (a look)... 1280 storage reads a second out of one object, for free". SLAM5 deleted that cost - the hello
+ *  now fills `_looks`, so an answer on an awake object is a map hit and one send, and reads nothing. The budget
+ *  outlived the expense it was sized for, and it was binding: at 200 players a joiner's welcome names ROSTER_MAX
+ *  (64) and the other 135 must be asked for one at a time, so 200 clients offered ~1,000 asks a second against 60
+ *  answered. Measured over the real Room: the room took 172 s to finish introducing itself, and the worst client
+ *  waited ~148 s - drawn, meanwhile, as the look-less doll every stranger shares.
+ *
+ *  It is now the sum of every socket's own gate: SOCKETS_MAX x WHO_HZ_MAX. A room full of CORRECT clients asking as
+ *  fast as they are allowed is exactly answered, and the room budget binds only when the per-socket gates are somehow
+ *  not the whole story - which is what a room-wide bound is for. The cost at that ceiling is 1,280 map hits and sends
+ *  a second beside the ~59,000 sends the pose fan already pays; a socket the instance has not seen since it woke
+ *  reads one key once and caches it, bounded by the distinct ids in the room. */
+export const WHO_ROOM_HZ_MAX = SOCKETS_MAX * WHO_HZ_MAX;
 /** WORLD6b-iii(e): how long a stranger asked for stays asked at home before the next of its frames asks again. */
 export const WHO_RETRY_MS = 10_000;
 /** AUDIT WORLD6b-iii(e) A1: the most Arrows a foe's body takes from peers' shafts (`ar` on the hit) - a shaft is one
@@ -746,6 +932,11 @@ export const relayVersionOf = (v) => (typeof v === 'string' && v.length > 0 && v
 export function rosterFor(peers, meId, near = null) {
   const out = [];
   for (const p of peers) if (p && p.id && p.id !== meId) out.push({ id: p.id, name: p.name, look: p.look, pose: p.pose ?? null });
-  if (near && out.length > ROSTER_MAX) out.sort((a, b) => (a.pose ? pixelDistance(near, a.pose) : Infinity) - (b.pose ? pixelDistance(near, b.pose) : Infinity));
-  return out.slice(0, ROSTER_MAX);
+  // SLAM5 (2026-09-16, AUDIT SLAM): ONE METRIC. This ranked by `pixelDistance` - Chebyshev on MAP PIXELS, 32768 units
+  // wide - while the pose fan ranks by squared Euclidean in the pose's own frame. Two different metrics over the same
+  // set DO NOT NEST, so `POSE_FAN_MAX <= ROSTER_MAX` bought nothing: measured at an event standing, only 11 of the 32
+  // the fan reaches were among the 64 the welcome names, and 53 of those 64 were peers the joiner would never hear
+  // from. Worse, in a place room the poses are SCENE units, so every pixelDistance floors to 0, the sort is a no-op
+  // and "the nearest 64" was the first 64 in socket order. `nearestFan` is the one ranking now, at both doors.
+  return near ? nearestFan(out, near, (p) => p.pose, ROSTER_MAX) : out.slice(0, ROSTER_MAX);
 }

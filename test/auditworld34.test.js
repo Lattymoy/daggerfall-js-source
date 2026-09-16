@@ -25,7 +25,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { isWorldRoom, roomOf, WORLD_MIN_MS, PIXEL_UNITS, CLOSE_POLICY } from '../src/net/wire.js';
 import * as relay from '../server/src/relay.js';
-import { RELAY_VERSION } from '../server/src/index.js';
+import { RELAY_VERSION } from '../src/net/wire.js';   // LOCALDEV1: the worker entry exports handlers alone
 import { roomKeyFor, OnlineSession } from '../src/net/online.js';
 import { MAIN_STORY_DUNGEON_IDS, isMainStoryDungeon } from '../src/world/dungeonTextures.js';
 import { useSmallerDungeon, SMALLER_DUNGEONS_STATE } from '../src/world/smallerDungeons.js';

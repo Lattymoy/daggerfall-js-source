@@ -19,7 +19,6 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { isWorldRoom, PIXEL_UNITS } from '../src/net/wire.js';
 import * as relay from '../server/src/relay.js';
-import { RELAY_VERSION } from '../server/src/index.js';
 import { relayVersionAtLeast } from './relayVersion.mjs';
 import { roomKeyFor } from '../src/net/online.js';
 import { BUILDING_KEY_0, makeBuildingKey } from '../src/systems/talkTopics.js';

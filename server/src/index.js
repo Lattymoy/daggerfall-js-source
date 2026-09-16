@@ -23,8 +23,10 @@
 // answered by the runtime while the object sleeps.
 //
 // CHAT1 (2026-09-12): a room in CHAT_ROOMS is a channel (relay.js, CHAT
-// ROOMS) - a hello there keeps the secret and nothing else, is told an
-// empty roster and announced to no one, a pose there reaches no one,
+// ROOMS) - a hello there keeps the secret and nothing else (ROSTER-G: and
+// is told who is in the channel by NAME, cut at CHAT_ROSTER_MAX with the
+// true count beside it, and its join and leave are said - the roster
+// beside the chat is everyone online), a pose there reaches no one,
 // and a chat line reaches every socket that said hello, the sender
 // included; in a place room a chat line reaches whoever a pose would
 // and the sender. The chat gate is CHAT_HZ_MAX a second per socket with
@@ -105,11 +107,13 @@
 // WORLD5 (2026-09-13): THE SHARED CLOCK is a function of wall time (relay.js
 // sharedClassicMinutes) and needs no frame; the welcome carries the relay's
 // own `now` so a client corrects for its machine's clock. Nothing else here.
-import { roomOf, parseClient, inRange, poseGate, chatGate, tokenGate, rosterFor, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX } from './relay.js';
+import { roomOf, parseClient, inRange, poseGate, chatGate, tokenGate, rosterFor, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX } from './relay.js';
 
-/** AUDIT WORLD34 D4: the relay names itself in /health - the deploy is by hand (`npx wrangler deploy`), nothing in
- *  CI does it, and until now nothing said which relay was live. Bump it with every relay-changing slice. */
-export const RELAY_VERSION = 'world67';   // SRV-N: the welcome names the deploy, so a client can tell a restarted relay from the one it was talking to
+// AUDIT WORLD34 D4: the relay names itself in /health. SLAM13 (AUDIT SLAM A5): the name lives in net/wire.js, so the
+// welcome can carry it; /health reads it through the import above. LOCALDEV1: it is NOT re-exported from this module -
+// workerd (wrangler dev, 1.20260911) refuses a worker entry whose named export is a string ("Incorrect type for map
+// entry 'RELAY_VERSION': the provided value is not of type 'function or ExportedHandler'"), so the local relay would
+// not start at all. The production runtime let it through, which is why nothing caught it; the pins read wire.js.
 
 const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*' } });
 
@@ -143,6 +147,7 @@ export class Room {
     this._roomWho = null;    // AUDIT WORLD6b-iii(e) B1: the room's ask budget (WHO_ROOM_HZ_MAX) - the one arm past the hello that reads storage
     this._looks = new Map(); // AUDIT WORLD6b-iii(e) B1: the looks said hello with, kept on the instance while it is awake - a repeat ask reads no storage; after a hibernation the storage's copy is read once and kept again
     this._roomActBytes = null;   // AUDIT WORLD3 A1: and its BYTE budget - the frame times its listeners, as the foes fan has
+    this._roomWorld = null;      // SLAM11: the memory push's OWN byte budget, borrowing - it used to charge the foes stream's, and a big memory's debt would have stalled live foes
     this._dead = new Set();      // AUDIT WORLD34 D1: the sockets this object closed itself, whose leave the runtime will not deliver - reaped on the way out of every door
     this._gone = new WeakSet();  // AUDIT WORLD34 D1: and the ones whose leave has been said, so a runtime that does deliver a close says it once
     try {
@@ -248,10 +253,13 @@ export class Room {
   /** The frame gate (A8): the socket's pose bucket - a pose, a ping and (AUDIT WORLD A1) a world frame spend it; over
    *  the rate the frame is dropped and a strike counted, past DROP_STRIKES_MAX the socket is closed. Returns the
    *  attachment as written back, or null when the frame is not to be taken. */
-  _meter(ws, a, now, patch = {}) {
+  /** SLAM8 (AUDIT SLAM): `patch` is applied whatever the gate says (the latest pose is kept even when it is not
+   *  relayed); `passPatch` ONLY when the frame is really let through. Anything that counts what the room DID - the
+   *  pose fan's `turn` - belongs in the second, or it counts what the room was merely told. */
+  _meter(ws, a, now, patch = {}, passPatch = {}) {
     const gate = poseGate(a.bucket, now);
     const drops = gate.pass ? 0 : (a.drops ?? 0) + 1;
-    const next = { ...a, ...patch, bucket: gate.bucket, drops };
+    const next = { ...a, ...patch, ...(gate.pass ? passPatch : {}), bucket: gate.bucket, drops };
     this._setAttach(ws, next);
     if (!gate.pass) { if (drops > DROP_STRIKES_MAX) this._refuse(ws, 'too many poses'); return null; }
     return next;
@@ -365,10 +373,40 @@ export class Room {
       if (!this._setAttach(ws, { ...a, id: m.id, name: m.name, pose: chat ? null : m.pose, since: replaced?.since ?? now })) { this._refuse(ws, 'hello too large'); return; }
       // SRV-N: `v` rides EVERY welcome, a channel's included. A player in the enhanced skin holds a presence socket
       // and one chat socket per tab; whichever reconnects first after a hand deploy is the one that notices, and the
-      // client's detector (net/updateNotice.js) is a Set so the rest of them say nothing.
-      if (chat) { this._send(ws, JSON.stringify({ t: 'welcome', id: m.id, peers: [], v: RELAY_VERSION })); return; }   // told no one, announced to no one: a channel has no roster
-      const looks = others.length ? await this.state.storage.get(others.map((b) => lookKey(b.id))) : new Map();
-      const roster = rosterFor(others.map((b) => ({ ...b, look: looks.get(lookKey(b.id)) ?? null })), m.id, m.pose);
+      // client's detector (net/updateNotice.js) is a Set so the rest of them say nothing. SLAM13 (AUDIT SLAM A5): and
+      // the SESSION compares it with the law it was built against, and says a skew once.
+      if (chat) {
+        // ROSTER-G (Mac: "Players dont show in online"): A CHANNEL HAS A ROSTER - names alone. This line used to say
+        // `peers: []` and announce nobody, so the one room every player is in could not say who was online, and the
+        // panel read the player's own cell instead. The names are on the attachments already (no look, no storage
+        // read - the hello path stays as cheap as AUDIT CHAT A1 priced it); socket order, cut at CHAT_ROSTER_MAX, with
+        // `n` the true count. The join below is said here too, with the name and nothing else.
+        const named = others.slice(0, CHAT_ROSTER_MAX).map((b) => ({ id: b.id, name: b.name }));
+        if (!this._send(ws, JSON.stringify({ t: 'welcome', id: m.id, peers: named, n: others.length + 1, v: RELAY_VERSION }))) return;
+        const said = JSON.stringify({ t: 'join', id: m.id, name: m.name });
+        for (const [other, b] of [...this._all()]) if (other !== ws && b.id) this._send(other, said);
+        return;
+      }
+      // SLAM5 (2026-09-16, AUDIT SLAM): THE ROSTER IS CHOSEN BEFORE THE LOOKS ARE READ, and this was a hard wall.
+      //
+      // This used to read a look for EVERY hello'd socket - up to SOCKETS_MAX-1 = 255 keys in one
+      // `storage.get(keys)` - only for `rosterFor` to throw all but ROSTER_MAX away. A Durable Object's batched get
+      // takes at most 128 keys, which this file already knows: `_sweep` and `alarm` both chunk their deletes at 128.
+      // So the 130th player to join a room made the get throw, AFTER `_setAttach` had already marked them present
+      // and BEFORE the welcome or the join fan - leaving them connected with an empty roster, no host and no clock,
+      // invisible to a room that was never told they arrived. An event does not degrade at 130; it stops.
+      //
+      // Selecting first fixes the breach and the waste together: at most ROSTER_MAX keys are ever asked for, and an
+      // awake object usually asks for none, because `_looks` already holds what every hello said (the `who` path
+      // has read it that way since AUDIT WORLD6b-iii(e) B1 - the hello path just never did).
+      const near = rosterFor(others, m.id, m.pose);
+      const missing = near.filter((b) => !this._looks.has(b.id)).map((b) => lookKey(b.id));
+      const fetched = missing.length ? await this.state.storage.get(missing) : new Map();
+      const roster = near.map((b) => {
+        const look = this._looks.get(b.id) ?? fetched.get(lookKey(b.id)) ?? null;
+        if (look && !this._looks.has(b.id)) this._looks.set(b.id, look);
+        return { ...b, look };
+      });
       // WORLD1: the host and the room's memory ride the welcome - the world raw, never parsed here; a joiner that
       // leads the room (the same-millisecond tie the smaller id wins) is said to the rest - a reconnect that keeps
       // its own seat changed nothing and says nothing (AUDIT WORLD A4)
@@ -381,6 +419,7 @@ export class Room {
       // WORLD5: the relay's clock rides the welcome, so a client whose machine's clock is off reads the shared world time through the offset
       // AUDIT WORLD5 C11: stamped as the welcome is BUILT, not as the hello began - four storage awaits sit between the
       // two, and every millisecond of them was an offset the client carried as the relay's clock
+      // SRV-N / SLAM13 (AUDIT SLAM A5): the relay's VERSION rides it (`v`, last), so a client can tell a restarted relay from the one it was talking to, and one built against another law can say so
       const welcome = `{"t":"welcome","id":${JSON.stringify(m.id)},"peers":${JSON.stringify(roster)},"host":${JSON.stringify(host)},"world":${world ?? 'null'},"now":${Date.now()},"v":${JSON.stringify(RELAY_VERSION)}}`;
       if (!this._send(ws, welcome)) return;
       const join = JSON.stringify({ t: 'join', id: m.id, name: m.name, look: m.look, pose: m.pose });
@@ -419,9 +458,32 @@ export class Room {
       const unseen = [...this._all()].filter(([other, b]) => other !== ws && b.id && !b.worldSeen);
       if (unseen.length) {
         const out = `{"t":"world","id":${JSON.stringify(a.id)},"data":${raw}}`;
-        const budget = byteGate(this._roomFoes, now, out.length * unseen.length, FOES_ROOM_BYTES_PER_S);
-        this._roomFoes = budget.bucket;
-        if (budget.pass) for (const [other, b] of unseen) { this._setAttach(other, { ...b, worldSeen: true }); this._send(other, out); }
+        // SLAM11 (AUDIT SLAM): ITS OWN BUCKET, AND IT BORROWS. This charged the FOES bucket one indivisible sum -
+        // the whole memory times every unseen socket - against a cap of FOES_ROOM_BYTES_PER_S, and byteGate caps at
+        // the rate: a sum past the cap never passes however long it waits. At 200 players with a 100 KiB memory that
+        // is 19.5 MiB against 4 MiB, so 0 of 199 were ever handed the room's memory, `worldSeen` latched nothing,
+        // and every publish re-attempted the same unpayable fan for ever - doors, levers and emptied containers
+        // silently never synced, and the memory has to be under ~21 KiB for a full room to receive it at all.
+        // Pre-existing since WORLD34 C1, reachable from ~40 players. The push now borrows (net/wire.js byteGate):
+        // it lands whole and leaves its bucket in debt until the rate repays it - which is fine for a frame that is
+        // handed to each socket ONCE and comes every WORLD_PUBLISH_MS. And it is its OWN bucket, because a 100 KiB
+        // memory's debt would have blocked the foes STREAM it used to share a bucket with for seconds.
+        //
+        // SLAM13 (AUDIT SLAM A4): A LISTENER AT A TIME, not the whole fan as one charge. SLAM11 borrowed the fan whole,
+        // and whole is the memory times every unseen socket - the largest memory (WORLD_FRAME_MAX, 512 KiB) into a
+        // full room is 127 MiB queued onto sockets in ONE tick, which is the object's whole memory. Served one
+        // listener at a time, each charged as it goes and the debt bounded by ONE FRAME: the rate's worth of sockets
+        // (a second of FOES_ROOM_BYTES_PER_S, then one more) are handed the memory on this publish, the rest stay
+        // UNSEEN and are handed it on the next (WORLD_PUBLISH_MS, by which time the rate has repaid the debt in full).
+        // A 100 KiB memory reaches forty listeners a publish; a 20 KiB one, the whole room in one.
+        let bucket = this._roomWorld;
+        for (const [other, b] of unseen) {
+          const budget = byteGate(bucket, now, out.length, FOES_ROOM_BYTES_PER_S, true);
+          bucket = budget.bucket;
+          if (!budget.pass) break;   // in debt: the ones not yet served wait for the next publish, unseen
+          this._setAttach(other, { ...b, worldSeen: true }); this._send(other, out);
+        }
+        this._roomWorld = bucket;
       }
       return;
     }
@@ -497,10 +559,26 @@ export class Room {
       if (!budget.pass) return;
       const out = JSON.stringify({ t: 'act', id: a.id, data: m.data });
       const listeners = [...this._all()].filter(([other, b]) => other !== ws && b.id);
-      // AUDIT WORLD3 A1: the fan is the frame times its listeners, and a frame count is no bound on it
-      const bytes = byteGate(this._roomActBytes, now, out.length * listeners.length, ACT_ROOM_BYTES_PER_S);
+      // AUDIT WORLD3 A1: the fan is the frame times its listeners, and a frame count is no bound on it.
+      // SLAM11 (AUDIT SLAM): AND IT BORROWS. byteGate caps at the rate, so an act whose fan cost more than one
+      // second of ACT_ROOM_BYTES_PER_S could never land - a 6 KiB act to 199 listeners was dropped whole, silently,
+      // for ever, while `actFrameFits` told its author anything up to MAX_FRAME_BYTES would. A door is not
+      // self-healing: nothing re-sends it. It lands whole now and the bucket is in debt until the rate repays it -
+      // at most one fan's worth, MAX_FRAME_BYTES x SOCKETS_MAX, four seconds of acts - and the frame gate beside it
+      // (ACT_ROOM_HZ_MAX) still bounds how many come.
+      // SLAM13 (AUDIT SLAM A1): THE SENDER'S OWN SHARE FIRST. A borrowing room bucket is one that ONE sender can hold
+      // in debt on purpose - the largest act into a full room is four seconds of the room's rate per frame, at
+      // ACT_HZ_MAX - and every other door in the room was refused while it did. So the fan is charged to the sender's
+      // own borrowing bucket (`abytes`, ACT_SENDER_BYTES_PER_S, on the attachment) before the room's, and a frame the
+      // sender's bucket refuses charges the room nothing; a frame the room refuses charges the sender nothing either,
+      // so an honest sender behind a flooder is not left paying for a door that never opened.
+      const cost = out.length * listeners.length;
+      const mine = byteGate(a.abytes, now, cost, ACT_SENDER_BYTES_PER_S, true);
+      if (!mine.pass) { this._setAttach(ws, { ...a, abytes: mine.bucket }); return; }
+      const bytes = byteGate(this._roomActBytes, now, cost, ACT_ROOM_BYTES_PER_S, true);
       this._roomActBytes = bytes.bucket;
-      if (!bytes.pass) return;
+      if (!bytes.pass) { this._setAttach(ws, { ...a, abytes: { bytes: mine.bucket.bytes + cost, at: now } }); return; }   // refilled, not charged
+      this._setAttach(ws, { ...a, abytes: mine.bucket });
       for (const [other] of listeners) this._send(other, out);
       return;
     }
@@ -517,13 +595,15 @@ export class Room {
       // AUDIT WORLD6b-iii(e) B3: junk is what a CORRECT client never sends - one's own name (the parser refused a bad
       // one); a name that left between the frame that asked and the ask is the honest race, and answers nothing
       if (!id || id === a.id) { this._junk(ws, a); return; }
-      const target = [...this._all()].find(([other, b]) => other !== ws && b.id === id) ?? null;
-      if (!target) return;
-      // B1: the room's own budget, every asker together - the answer reads storage when the instance has not seen the
-      // look since it woke (a repeat ask reads nothing), and a room-wide bound is what every other arm carries
+      // B1: the room's own budget, every asker together - a room-wide bound is what every other arm carries.
+      // SLAM9: spent BEFORE the scan for the target, not after it. The scan is a fresh SOCKETS_MAX-entry array and a
+      // linear search, and it ran for every ask the budget was about to refuse - so the "room budget" bounded the
+      // sends and the storage reads and left the object's own work unbounded, which is the wrong half to bound.
       const budget = tokenGate(this._roomWho, now, WHO_ROOM_HZ_MAX);
       this._roomWho = budget.bucket;
       if (!budget.pass) return;
+      const target = [...this._all()].find(([other, b]) => other !== ws && b.id === id) ?? null;
+      if (!target) return;
       const [tws, b] = target;
       let look = this._looks.get(b.id) ?? null;
       if (!look) { look = (await this.state.storage.get(lookKey(b.id))) ?? null; if (look) this._looks.set(b.id, look); }
@@ -539,14 +619,60 @@ export class Room {
       // the frame gate (A8): a pose and a ping share the socket's bucket, and a channel's pose is gated and counted
       // BEFORE it is declined (AUDIT CHAT A3: the early return sat above the gate, so a channel took frames unmetered)
       const chat = isChatRoom(a.key);
-      if (!this._meter(ws, a, Date.now(), { pose: m.t === 'pose' && !chat ? m.p : a.pose })) return;   // over the rate: kept as the latest, not relayed
+      const posed = m.t === 'pose' && !chat;
+      // SLAM8 (AUDIT SLAM): a KEEPALIVE is a pose the sender did not move (net/wire.js poseChanged, the client's own
+      // law for not sending one). Read BEFORE the meter, because the meter overwrites `a.pose` with this very frame.
+      // SLAM13 (AUDIT SLAM A2): AND THE WHOLE FAN HAS A FLOOR. The port's client sends an unmoved pose every
+      // HEARTBEAT_MS and no sooner; a modified one sends them at the pose gate's ceiling, and each went to the whole
+      // room - 20 x 199 sends a second from one socket, beyond what the tier bounds a MOVER to. A keepalive is heard
+      // whole only when the sender's last whole fan (`kept`, on the PASS patch as `turn` is) is KEEPALIVE_FAN_MS
+      // old; inside the floor it is tiered like a move. An honest heartbeat always clears half its own period.
+      const now = Date.now();
+      // SLAM15 (AUDIT SLAM FINAL A6): AND A STOP IS HEARD WHOLE TOO. The pose that ends a walk - the first with `mv`
+      // 0 after one that moved - carries the place the player actually stopped, and under the tier three far slices
+      // in four never heard it: they eased to the last pose they were served, up to a second of walking short of
+      // where the player stands, and stood there wrong until the next heartbeat corrected it five seconds on. A
+      // stop is one frame per walk, so it is fanned whole like a keepalive, under the same floor: a client toggling
+      // `mv` at the gate's ceiling buys the same two whole fans a second a keepalive flood does, and no more.
+      const unmoved = posed && !!a.pose && !poseChanged(a.pose, m.p);
+      const stopped = posed && !!a.pose && (a.pose.mv | 0) !== 0 && (m.p.mv | 0) === 0;
+      const still = (unmoved || stopped) && now - (a.kept ?? 0) >= KEEPALIVE_FAN_MS;
+      // SLAM6: `turn` is the sender's own pose counter, and the only state the far tier needs - which slice of the
+      // listeners past POSE_FAN_MAX this pose serves. Masked, so an attachment a socket carries for a day stays small.
+      // SLAM8: and it rides the PASS patch. `_meter` writes its ordinary patch back whether or not the gate passed, so
+      // a counter put there counted poses RECEIVED while the fan below serves poses RELAYED. Any drop pattern sharing
+      // a factor with POSE_FAR_SHARE then pinned the served slice to one parity and starved the rest - at exactly
+      // twice the gate the bucket settles into pass/fail alternation, so two of the four slices were never served and
+      // half the far tier heard that sender no more. The port's own client cannot reach that rate; a modified one can,
+      // and an event is where those turn up.
+      const met = this._meter(ws, a, now, { pose: posed ? m.p : a.pose }, posed ? { turn: ((a.turn | 0) + 1) & 0xffff, ...(still ? { kept: now } : {}) } : {});
+      if (!met) return;   // over the rate: kept as the latest, not relayed
       if (m.t === 'ping') { this._send(ws, '{"t":"pong"}'); return; }   // a ping that reached the object (the runtime answers the exact one in its sleep)
       if (chat) return;   // a channel is no place: a pose there is kept by no one and reaches no one
       const out = JSON.stringify({ t: 'pose', id: a.id, p: m.p });
+      // SLAM1: the fan is BOUNDED. A room's cost was N senders times N listeners, and the range cull does not help
+      // the one case that matters - an event, where everybody stands in one place and every range test passes.
+      // Measured on the fake object: 91k sends a second at 96 players (SLAM13 struck a claim here about where a real
+      // one stops; nothing has measured it - AUDIT SLAM C1).
+      // SLAM6: the nearest POSE_FAN_MAX hear every pose and THE REST HEAR ONE IN POSE_FAR_SHARE, by turns. SLAM1
+      // sent the rest nothing at all, so the silence law HID every sender from every listener past the bound -
+      // measured at 200 in one town block, each player was seen by 32 and erased for 167. The bound is a rank, so
+      // the loss fell hardest on the most crowded player in the room, which at an event is the one everybody came
+      // to see.
+      // SLAM8: AND A KEEPALIVE IS NEVER TIERED. A standing player sends only on the heartbeat, so a far listener under
+      // SLAM6 heard one in POSE_FAR_SHARE of those - HEARTBEAT_MS * POSE_FAR_SHARE = 20000ms, which is
+      // PEER_TIMEOUT_MS TO THE MILLISECOND. Zero margin: the silence law hid every standing peer past the bound at
+      // the exact moment its next pose was due, so a crowd standing still to listen to somebody - which is what an
+      // event IS - watched itself blink in and out, and one late heartbeat hid a peer for a full twenty seconds.
+      // The tier is a bandwidth saving for MOTION; a keepalive is the one frame whose whole job is to be heard, and
+      // a pose nobody has to ease is the cheapest frame in the room. At 200 standing that is 200 * 199 / 5s = 7,960
+      // sends a second, beside the 59,000 the moving case already pays.
+      const heard = [];
       for (const [other, b] of [...this._all()]) {
         if (other === ws || !b.id) continue;
-        if (inRange(a.key ?? '', m.p, b.pose)) this._send(other, out);
+        if (inRange(a.key ?? '', m.p, b.pose)) heard.push([other, b]);
       }
+      for (const [other] of (still ? heard : poseFan(heard, m.p, (e) => e[1].pose, met.turn, (e) => e[1].id))) this._send(other, out);   // SLAM10: the far tier bucketed by the listener's ID, so a moving crowd cannot shuffle who is served
       return;
     }
     if (m.t === 'chat') {
@@ -589,9 +715,9 @@ export class Room {
     if (!a.id) return;   // never said hello, or replaced - the id lives on in another socket
     this._looks.delete(a.id);
     if (!last) { try { await this.state.storage.delete([lookKey(a.id), secretKey(a.id)]); } catch { /* the room forgets it on the next empty hello */ } }
-    if (isChatRoom(a.key)) return;   // a channel announced no join, so it says no leave
+    // ROSTER-G: a channel says its leaves now, as it says its joins - the roster beside the chat is everyone online
     const out = JSON.stringify({ t: 'leave', id: a.id });
     for (const [other, b] of [...this._all()]) if (other !== ws && b.id) this._send(other, out);
-    if (this._leads(a, ws)) this._sayHost({ skip: ws, except: ws });   // WORLD1: the host left - the next-longest in the room is the host now, said to everyone
+    if (!isChatRoom(a.key) && this._leads(a, ws)) this._sayHost({ skip: ws, except: ws });   // WORLD1: the host left - the next-longest in the room is the host now, said to everyone (ROSTER-G: a channel has no host)
   }
 }

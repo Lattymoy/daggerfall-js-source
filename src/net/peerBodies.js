@@ -157,6 +157,10 @@ export class PeerBodies {
     const gen = this._generation();
     if (gen !== this._gen) { this._gen = gen; this._failed.clear(); this.destroy(); }   // AUDIT MWBODY A9: new data, new bodies
     const now = this._now();
+    // SLAM4: the failed looks age out. A look was only ever forgotten when a peer wearing THAT look asked again
+    // (`:180`), so a look nobody wears again stayed for the life of the session - and a crowd is mostly looks seen
+    // once. BODY_RETRY_MS has passed for these; they are nothing but memory.
+    if (this._failed.size) for (const [k, f] of [...this._failed]) if (now >= f.until) this._failed.delete(k);
     const live = new Map();
     for (const peer of peers) if (peer?.shown) live.set(peer.id, peer);
     // the sweep first (the cap counts what stands, not what is leaving)
@@ -177,6 +181,13 @@ export class PeerBodies {
     const want = [];
     for (const [id, peer] of live) {
       if (this._bodies.has(id)) continue;
+      // SLAM10 (AUDIT SLAM): A STRANGER TAKES NO BODY. SLAM6 stands a peer from its pose before the relay has said who
+      // it is, look-less; the nearest of those are the first to be offered one of BODIES_MAX rigs - so the eight
+      // figures closest to the camera were eight IDENTICAL default Bretons, each a multi-second mesh parse, each paid
+      // twice (once for the placeholder, again at BODY_REBUILD_MS when the real look landed). The shared look-less
+      // doll costs one compose for the whole crowd; a rig is the dearest thing a peer can wear, and it waits for the
+      // introduction.
+      if (peer.told === false) continue;
       const f = this._failed.get(lookKey(peer.look));
       if (f) { if (now < f.until) continue; this._failed.delete(lookKey(peer.look)); }
       const p = toScene(peer.shown);

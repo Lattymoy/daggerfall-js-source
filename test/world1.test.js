@@ -32,7 +32,7 @@ import { parseClient, isWorldRoom, isChatRoom, WORLD_FRAME_MAX, WORLD_MIN_MS, WO
 import * as relay from '../server/src/relay.js';
 import { fakeRoom } from './fakeRoom.mjs';
 import { OnlineSession, WORLD_PUBLISH_MS } from '../src/net/online.js';
-import { RELAY_VERSION } from '../server/src/index.js';
+import { RELAY_VERSION } from '../src/net/wire.js';   // LOCALDEV1: the worker entry exports handlers alone
 
 const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
 
@@ -137,7 +137,7 @@ test('WORLD1: the Room - the host is the hello\'d socket in the room longest, sa
   // a channel: no host frame business, no world
   const chat = fakeRoom('chat:world');
   const ch = chat.connect(); await chat.hello(ch, 'chat-0001');
-  assert.deepEqual(welcomeOf(ch), { t: 'welcome', id: 'chat-0001', peers: [], v: RELAY_VERSION }, 'a channel\'s welcome is what it was, plus SRV-N\'s deploy name - still no host, still no world');
+  assert.deepEqual(welcomeOf(ch), { t: 'welcome', id: 'chat-0001', peers: [], n: 1, v: RELAY_VERSION }, 'a channel\'s welcome: SRV-N\'s deploy name and ROSTER-G\'s roster and count - still no host, still no world');
 });
 
 function fakeSocketClass() {

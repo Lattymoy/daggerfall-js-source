@@ -17,7 +17,8 @@ import {
   RELAY_RESTART_TEXT, BUILD_UPDATE_TEXT, BUILD_POLL_MS,
   RELAY_SEEN_MAX, RELAY_NOTICE_MIN_MS, BUILD_FETCH_TIMEOUT_MS,
 } from '../src/net/updateNotice.js';
-import worker, { RELAY_VERSION } from '../server/src/index.js';
+import worker from '../server/src/index.js';
+import { RELAY_VERSION } from '../src/net/wire.js';   // LOCALDEV1: the worker entry exports handlers alone
 import { fakeRoom } from './fakeRoom.mjs';
 import * as relay from '../server/src/relay.js';
 import { OnlineSession } from '../src/net/online.js';
@@ -328,6 +329,6 @@ test('AUDIT-SRVN F2: a relay that mints a name per welcome cannot flood the chat
 test('SRV-N: the relay was BUMPED - a welcome field is a relay change, and the deployed Worker is the only thing that can prove it', () => {
   const idx = rd('server/src/index.js');
   assert.match(idx, /"v":\$\{JSON\.stringify\(RELAY_VERSION\)\}/, 'the full welcome is built as a string and the field is spliced into it');
-  assert.match(idx, /t: 'welcome', id: m\.id, peers: \[\], v: RELAY_VERSION/, 'the channel\'s is built as an object');
+  assert.match(idx, /t: 'welcome', id: m\.id, peers: named, n: others\.length \+ 1, v: RELAY_VERSION/, 'the channel\'s is built as an object (ROSTER-G: with its roster and count)');
   assert.notEqual(RELAY_VERSION, 'world66', 'world66 is the deploy that is LIVE and carries no `v` at all - shipping the client against that name would have made every first welcome look like a restart');
 });

@@ -1,0 +1,47 @@
+[
+  {
+    "name": "R1-index-edited-under-shipped-version",
+    "file": "server/src/index.js",
+    "old": "export { RELAY_VERSION };",
+    "new": "export { RELAY_VERSION };\n// a comment is a different bundle",
+    "tests": [
+      "test/relayversion.test.js"
+    ]
+  },
+  {
+    "name": "R2-wire-edited",
+    "file": "src/net/wire.js",
+    "old": "export const POSE_FAR_SHARE = 4;",
+    "new": "export const POSE_FAR_SHARE = 4;   // edited",
+    "tests": [
+      "test/relayversion.test.js"
+    ]
+  },
+  {
+    "name": "R3-mat4-edited-the-graph-reaches-it",
+    "file": "src/world/mat4.js",
+    "old": "export function wrapAngle",
+    "new": "// edited\nexport function wrapAngle",
+    "tests": [
+      "test/relayversion.test.js"
+    ]
+  },
+  {
+    "name": "R4-relay-door-edited",
+    "file": "server/src/relay.js",
+    "old": "export * from '../../src/net/wire.js';",
+    "new": "export * from '../../src/net/wire.js';\n// edited",
+    "tests": [
+      "test/relayversion.test.js"
+    ]
+  },
+  {
+    "name": "R5-index-import-line-added",
+    "file": "server/src/index.js",
+    "old": "export { RELAY_VERSION };",
+    "new": "export { RELAY_VERSION };\nimport './relay.js';",
+    "tests": [
+      "test/relayversion.test.js"
+    ]
+  }
+]

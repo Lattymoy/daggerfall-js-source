@@ -21,7 +21,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { RELAY_VERSION } from '../server/src/index.js';
 import { relayVersionAtLeast } from './relayVersion.mjs';
 import { CLASSIC_GAME_START_TIME, MINUTES_PER_DAY } from '../src/systems/gameDate.js';
 import { worldMinutes, setWorldMinutes, setSharedClock, alignEntityClocks, resetMagicRoundMarker, tickPlayerMinutes, claimMagicRounds } from '../src/systems/worldTick.js';

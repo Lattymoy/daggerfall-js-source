@@ -61,7 +61,8 @@ export const ROSTER_ROWS_MAX = 200;
  * not opened yet has none of them, and that is a roster of ONE rather
  * than an error.
  * @typedef {{ id?: string|null, name?: string|null,
- *             peers?: Map<string, { id?: string|null, name?: string|null }>|null }} RosterSource
+ *             peers?: Map<string, { id?: string|null, name?: string|null }>|null,
+ *             roomCount?: number|null }} RosterSource
  */
 
 /**
@@ -95,8 +96,11 @@ export function rosterRows(session) {
     const n = a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
     return n !== 0 ? n : (a.tag < b.tag ? -1 : a.tag > b.tag ? 1 : 0);
   });
-  const total = rows.length;
-  return { rows: rows.slice(0, ROSTER_ROWS_MAX), total, shown: Math.min(total, ROSTER_ROWS_MAX) };
+  // ROSTER-G: the count is the ROOM's when the relay said it (`n` on a channel's welcome) - a welcome list cut at
+  // CHAT_ROSTER_MAX still says how many are online; a place's welcome says no `n`, and the rows are the count
+  const n = Number(session?.roomCount);
+  const total = Number.isFinite(n) && n > rows.length ? n : rows.length;
+  return { rows: rows.slice(0, ROSTER_ROWS_MAX), total, shown: Math.min(rows.length, ROSTER_ROWS_MAX) };
 }
 
 /** The heading the panel shows: "Online - 3". A roster of one is

@@ -36,7 +36,13 @@ export const PEER_ARCHIVE = 900000;
 export const PEER_HEIGHT = CAPSULE_HEIGHT;
 /** Names farther than this, in scene units, are not drawn. */
 export const NAME_RANGE = 60;
-/** The most distinct dolls kept on the GPU; past it the oldest is released (AUDIT ONLINE C7). */
+/** The most distinct dolls kept on the GPU that NOBODY IS WEARING; past it the least recently drawn is released
+ *  (AUDIT ONLINE C7).
+ *  SLAM7 (2026-09-16, AUDIT SLAM): "that nobody is wearing" is the whole correction. This counted every ready doll,
+ *  so once more than this many distinct looks stood in view the sweep released one that was ON SCREEN - whose batch
+ *  it destroyed, which the next frame composed again, which released another. Measured over 40 frames with 199
+ *  looks in view: 5,464 composes where 199 would do, 2,496 billboards destroyed, and only ever 64 peers drawn - a
+ *  DIFFERENT 64 each frame, so the crowd flickered. A doll a billboard is wearing is not cache, it is the scene. */
 export const DOLLS_MAX = 64;
 /** A doll that failed to compose is not retried before this (AUDIT ONLINE C5). */
 export const DOLL_RETRY_MS = 5000;
@@ -56,8 +62,21 @@ export function composeLook(entity) {
   return { race: entity?.race ?? 'Breton', gender: entity?.gender ?? 'male', faceIndex: entity?.faceIndex ?? 0, items };
 }
 
-/** One string per distinct look: the doll cache's key. */
-export const lookKey = (look) => `${look?.race ?? 'Breton'}|${look?.gender ?? 'male'}|${look?.faceIndex ?? 0}|${JSON.stringify((look?.items ?? []).map((it) => LOOK_ITEM_FIELDS.map((k) => it[k] ?? null)))}`;
+/** One string per distinct look: the doll cache's key.
+ *  SLAM12 (AUDIT SLAM): MEMOISED ON THE LOOK OBJECT. This was recomputed for every peer every frame - `RemotePlayers.sync`
+ *  once per doll peer and `PeerBodies.sync` once per peer - and at 199 dressed peers the `JSON.stringify` inside it
+ *  was ~64% of the client's whole per-frame peer work (1.19 ms of 1.85 ms, measured). A look object is replaced,
+ *  never mutated (`_peer`, `_refresh`), so its identity is exactly the key's lifetime: a WeakMap holds the string for
+ *  as long as the look lives and no longer. A null look has no identity and is one constant (SLAM14 B6). */
+const _keyOf = new WeakMap();
+const _computeLookKey = (look) => `${look?.race ?? 'Breton'}|${look?.gender ?? 'male'}|${look?.faceIndex ?? 0}|${JSON.stringify((look?.items ?? []).map((it) => LOOK_ITEM_FIELDS.map((k) => it[k] ?? null)))}`;
+const NULL_LOOK_KEY = _computeLookKey(null);   // SLAM14 (AUDIT SLAM FINAL B6): a look-less peer's key has no object to hang on - computed once, here
+export const lookKey = (look) => {
+  if (!look || typeof look !== 'object') return NULL_LOOK_KEY;
+  let k = _keyOf.get(look);
+  if (k === undefined) { k = _computeLookKey(look); _keyOf.set(look, k); }
+  return k;
+};
 
 const uint = (v, max = 1e6) => (Number.isFinite(v) && v >= 0 ? Math.min(max, Math.floor(v)) : null);
 
@@ -138,6 +157,7 @@ export class RemotePlayers {
     this._dolls = new Map();     // lookKey -> { rec, w, h } ready | Promise composing | { failedUntil } (insertion-ordered: the oldest first)
     this._batches = new Map();   // peer id -> { batch, key, doll, peer }
     this._shown = [];            // the last sync's drawable peers with their head heights - the name pass reads it
+    this._wanted = new Set();    // SLAM7: the look keys the last sync ASKED FOR - composed or composing, drawn or not
     this._queue = Promise.resolve();
   }
 
@@ -152,8 +172,12 @@ export class RemotePlayers {
     const p = (this._queue = this._queue.then(() => this._composeDoll(look)).catch(() => null));
     this._dolls.set(key, p);
     p.then((doll) => {
-      if (this._dolls.get(key) !== p) return;   // released meanwhile
-      if (doll) { this._dolls.set(key, doll); this._evict(); } else this._dolls.set(key, { failedUntil: this._now() + DOLL_RETRY_MS });
+      // SLAM12 (AUDIT SLAM): a doll that lands after its key was released - by `_evict`, or by `destroy()` at the
+      // page's hide - has a texture on the GPU that nothing references. It used to be orphaned here. Measured: sync
+      // fifty peers, destroy, fifty textures uploaded, none released.
+      if (this._dolls.get(key) !== p) { if (doll && typeof doll.rec === 'string') this.renderer.releaseTexture?.(PEER_ARCHIVE, doll.rec); return; }
+      if (doll) { this._dolls.set(key, doll); } else this._dolls.set(key, { failedUntil: this._now() + DOLL_RETRY_MS });
+      this._evict();   // SLAM4: a FAILURE sweeps too - it was the one outcome that never reached the eviction
     });
     return p;
   }
@@ -171,12 +195,42 @@ export class RemotePlayers {
     return { rec, w: PEER_HEIGHT * (r.w / r.h), h: PEER_HEIGHT };
   }
 
-  /** Past DOLLS_MAX ready dolls, the oldest goes: its texture released, the batches wearing it dropped (they recompose). */
+  /** The looks the scene needs right now: the ones the last sync ASKED FOR - drawn, or composing and not yet handed
+   *  over. Neither is cache.
+   *  SLAM7: the composing half is not a nicety. A doll composes between one frame and the next, so for that gap no
+   *  batch is wearing it - and a sweep run by another compose finishing in the same gap released it unworn, before
+   *  it was ever drawn once. That alone cost 213 of the 412 composes the first cut of this fix still paid at 199
+   *  looks; with it the count is exactly the 199 the room actually has.
+   *  SLAM15 (AUDIT SLAM FINAL B4): this used to union the WORN keys in as well, and that half was redundant by
+   *  construction - `sync` adds every drawn peer's key to `_wanted` before it touches the peer's batch and destroys
+   *  the batch of every peer it did not draw, and `destroy()` empties both - so after any sync every batch's key is
+   *  already in `_wanted`. The invariant is pinned (slam15); the set is the wanted set. */
+  _needed() { return this._wanted; }
+
+  /** SLAM7: this map is its own LRU list - a key used this frame is moved to the END, so `_evict` walking from the
+   *  front releases the least recently DRAWN. Before this the order was first-ever-composed and never changed
+   *  again, however long a look had been on screen: not FIFO by use, FIFO by birth. */
+  _touch(key) {
+    const v = this._dolls.get(key);
+    if (v === undefined) return;
+    this._dolls.delete(key);
+    this._dolls.set(key, v);   // the same value, so dollFor's `this._dolls.get(key) !== p` identity check still holds
+  }
+
+  /** Past DOLLS_MAX ready dolls THE SCENE DOES NOT NEED, the least recently drawn goes: its texture released, the
+   *  batches wearing it dropped (SLAM7: there are none, by construction - that is the point). */
+  /** SLAM4: AND THE FAILURES AGE OUT. `_evict` counts only the READY dolls, so the `{ failedUntil }` records left by
+   *  a look that would not compose were never counted and never swept - only re-asking for that exact look cleared
+   *  one, and a look nobody wears again is never asked for. Every distinct broken look a session sees stayed in this
+   *  map for its whole life. Small each; unbounded in a crowd, which is what an event is. */
   _evict() {
+    const now = this._now();
+    for (const [k, v] of [...this._dolls]) if (v && v.failedUntil != null && now >= v.failedUntil) this._dolls.delete(k);
+    const needed = this._needed();
     while (true) {
-      let ready = 0, oldest = null;
-      for (const [k, v] of this._dolls) if (v && typeof v.rec === 'string') { ready++; if (!oldest) oldest = k; }
-      if (ready <= DOLLS_MAX || !oldest) return;
+      let spare = 0, oldest = null;
+      for (const [k, v] of this._dolls) if (v && typeof v.rec === 'string' && !needed.has(k)) { spare++; if (!oldest) oldest = k; }
+      if (spare <= DOLLS_MAX || !oldest) return;
       this._release(oldest);
     }
   }
@@ -211,6 +265,7 @@ export class RemotePlayers {
   sync(peers, toScene = (p) => [p.x, p.y, p.z], { bodyHeight = () => 0 } = {}) {
     const live = new Set();
     this._shown = [];   // every drawable peer, doll or body, for the name pass
+    this._wanted = new Set();   // SLAM7: rebuilt every frame - a look nobody is standing in any more stops being needed at once
     for (const peer of peers) {
       if (!peer?.shown) continue;
       // MWBODY1: a peer standing in a Morrowind body (net/peerBodies.js) draws no doll; its name still rides this pass, at the body's own head
@@ -218,6 +273,7 @@ export class RemotePlayers {
       if (bodyH > 0) { this._shown.push({ peer, height: bodyH }); continue; }
       live.add(peer.id);
       const key = lookKey(peer.look);
+      this._wanted.add(key); this._touch(key);   // SLAM7: asked for this frame, so it is needed and it is the newest thing in the cache
       let entry = this._batches.get(peer.id);
       if (entry && entry.key !== key) { this.renderer.destroyBillboardBatch?.(entry.batch); this._batches.delete(peer.id); entry = null; }
       if (!entry) {
@@ -279,6 +335,7 @@ export class RemotePlayers {
   destroy() {
     for (const e of this._batches.values()) this.renderer.destroyBillboardBatch?.(e.batch);
     this._batches.clear();
+    this._wanted.clear();   // SLAM7: nothing is needed by a host that is gone
     for (const key of [...this._dolls.keys()]) this._release(key);
   }
 }

@@ -12,7 +12,6 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { validFoeRecord, CELL_FRAME_RECORDS_MAX, HIT_ROOM_BYTES_PER_S, PIXEL_UNITS } from '../src/net/wire.js';
-import { RELAY_VERSION } from '../server/src/index.js';
 import { relayVersionAtLeast } from './relayVersion.mjs';
 import { fakeRoom } from './fakeRoom.mjs';
 import { createExteriorFoes } from '../src/scenes/exteriorFoes.js';

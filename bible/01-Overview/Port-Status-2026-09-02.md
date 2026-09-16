@@ -645,11 +645,11 @@ could see the others' closures until the squash, which is how "leaving
   narrowed the header and **E3** built the console host they needed.
 
 Five of the sites that survived Wave E only MOVED, and `Home.md` was
-regenerated onto the new sites: ~~`exterior.js:1312` -> `:1144`~~
+regenerated onto the new sites: ~~`exterior.js:1312` -> `:1146`~~
 (**CLOSED at TP2**: the Recall interim narrowed to the one arm this host
-cannot take, `exterior.js:1647`), ~~`exterior.js:1690` -> `:1396`~~
+cannot take, `exterior.js:1647`), ~~`exterior.js:1690` -> `:1398`~~
 (**CLOSED at QX1**: this host took the quest bridge, so the pause window's
-Quests tab has a machine to read), ~~`world.js:3252` -> `:3055`~~
+Quests tab has a machine to read), ~~`world.js:3252` -> `:3057`~~
 (**CLOSED at the ship landing**), ~~`worldModes.js:1860` -> `:1715`~~
 (**CLOSED at ROAD-F GS1**, below), `pauseWindow.js:58` -> `:65`. The
 entries in the two lists above still quote the line numbers of the
