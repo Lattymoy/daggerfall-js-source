@@ -230,6 +230,13 @@ export function createEotbCamera() {
   // [IL] the five `is*Previous` fields LateUpdate keeps (IL_1c4f-IL_1c6e)
   let prev = null;
   let autoPOVSwitch = cfg.autoPOVSwitch;
+  /** [IL] `Start` has run: the mod's component lives on the player
+   *  object across every door DFU opens, so Unity runs it ONCE per boot
+   *  and OnNewGame / OnLoad / the transitions take every later door.
+   *  The port builds a weapon rig per host, and each build asked for
+   *  Start again - so entering a building or a dungeon re-forced
+   *  `StartInThirdPerson` over whatever the player had scrolled to. */
+  let started = false;
   /** the `PlayerBillboard` this camera drives through ToggleOffset -
    *  `{ toggle(active, fp), torchDefault() }` */
   let billboard = null;
@@ -419,6 +426,8 @@ export function createEotbCamera() {
      *  host boots where the mod's is a fresh component, so the fields
      *  the .ctor would initialise are put back here too. */
     start() {
+      if (started) return offset;   // Unity's Start runs once; a second rig is not a second boot
+      started = true;
       mirror = false; mirrorOriginal = mirror; mirrorTimer = 0; offsetScroll = 0;
       boundsX = BOUNDS_INITIAL; boundsY = BOUNDS_INITIAL; boundsZ = BOUNDS_INITIAL;
       prev = null;
@@ -454,6 +463,7 @@ export function createEotbCamera() {
       return autoPOVSwitch;
     },
     autoArmed: () => autoPOVSwitch,
+    started: () => started,
     previous: () => (prev ? { ...prev } : null),
 
     toggleOffset,

@@ -113,7 +113,7 @@ test('EOTB-IL: THE STATUE WALKS - through the seam, the rig\'s record drives the
 
 test('EOTB-IL: the rig registers the WHOLE record - the motion bag and what LateUpdate polls off DFU - and the bag carries what PlayerMotor is read for', () => {
   const rig = rd('src/combat/weaponRig.js');
-  const reg = /eotbBody\.attach\(renderer, \(\) => \(\{([\s\S]*?)\}\)\);/.exec(rig);
+  const reg = /const eotbState = \(\) => \(\{([\s\S]*?)\}\);\s*\n\s*const bindBody = \(\) => eotbBody\.attach\(renderer, eotbState\);/.exec(rig);   // MAC-O3: the thunk is named so the frame can re-claim it
   assert.ok(reg, 'the one registration');
   for (const f of ['weaponReady:', 'sheathed: playerWeapon.sheathed', 'spellcasting: spellArmed()', 'usingBow: !!playerWeapon.machine.isBow',
     'transformed: !!entity && isTransformedLycanthrope(entity)', 'lycanthropyType:', 'died: !!entity && (entity.health ?? 1) <= 0', 'motion: camera?.()?.move ?? null',

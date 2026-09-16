@@ -563,3 +563,18 @@ test('EOTB-IL camera: OnPositionUpdate carries the smoothing across the floating
   const after = c.eye({ fpEye: [819.2, 1.6, 0], feet: [819.2, 0, 0], yaw: 0, pitch: 0, dt: 0 });
   assert.deepEqual(after.eye.map(r3), [r3(before[0] + 819.2), r3(before[1]), r3(before[2])], 'the eye moved with the world, no swing');
 });
+
+test('MAC-O3: Start runs ONCE per boot - a second rig (a building, a dungeon) does not re-force StartInThirdPerson', () => {
+  // the mod's component lives on the player object across every door,
+  // so Unity runs Start once; the port builds a rig per host and every
+  // build asked for it, re-forcing third person on entering a building
+  const c = createEotbCamera();
+  c.loadSettings(cfgGet({ 'Camera.StartInThirdPerson': true }));
+  assert.equal(c.started(), false);
+  assert.equal(c.start(), true, 'the first Start takes third person');
+  assert.equal(c.started(), true);
+  c.toggleOffset(false);   // the player scrolled back into their head
+  assert.equal(c.start(), false, 'a second Start is not a second boot: the view stays where the player left it');
+  // the doors still work after it
+  assert.equal(c.onLoad(false), true, 'OnLoad, disarmed: StartInThirdPerson');
+});

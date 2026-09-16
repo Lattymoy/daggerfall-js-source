@@ -394,7 +394,7 @@ test('EOTB-IL: UpdateMaterial - invisible white at 0.4, a shade BLACK at 0.6, bl
 });
 
 test('EOTB5: THE FOUR HOSTS are named, and the wiring is ONE site because all four reach it', () => {
-  assert.match(weaponRig, /eotbBody\.attach\(renderer, \(\) => \(\{/, 'the body attaches in the weapon rig, with the state only the rig can answer');
+  assert.match(weaponRig, /const bindBody = \(\) => eotbBody\.attach\(renderer, eotbState\);/, 'the body attaches in the weapon rig, with the state only the rig can answer');
   assert.match(weaponRig, /fpArm\.attach\(renderer, camera\)/, '...beside the arm');
   const hosts = ['exterior', 'world', 'worldModes', 'dungeonContext'];
   for (const h of hosts) {
@@ -427,4 +427,22 @@ test('EOTB5: the mod\u2019s art is EXCLUDED from Vite\u2019s inlining, and nothi
 test('EOTB5: the module-level body and camera are one pair', () => {
   assert.equal(typeof eotbCamera.setBillboard, 'function');
   assert.equal(frameTime(false, 1), 0.25);
+});
+
+test('MAC-O3: attach is RE-CLAIMED by the stepping rig - the same pair is a no-op, another rig takes the body over', async () => {
+  const r = renderer();
+  const b = createEotbBody({ count: () => 3035, urlFor: (k) => `/art/${k}.png`, decode: async () => ({ width: 4, height: 6, colors: new Uint32Array(24) }) });
+  const f = () => ({ sheathed: true });
+  b.attach(r, f);
+  await new Promise((res) => setTimeout(res, 5));
+  const uploads = r.uploads.length;
+  b.attach(r, f);
+  b.attach(r, f);
+  await new Promise((res) => setTimeout(res, 5));
+  assert.equal(r.uploads.length, uploads, 'the same renderer and thunk redo nothing - no second preload');
+  // the rig re-claims it every frame, beside the arm
+  assert.match(weaponRig, /const bindBody = \(\) => eotbBody\.attach\(renderer, eotbState\);/, 'one thunk, one bind');
+  assert.match(weaponRig, /bindArm\(\);[^\n]*\n\s*bindBody\(\);/, 'frame() re-claims the body right after the arm');
+  assert.doesNotMatch(weaponRig, /eotbBody\.attach\(renderer, \(\) => \(\{/, 'and the construction-only attach is gone');
+  b.attach(null, null);
 });

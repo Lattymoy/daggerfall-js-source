@@ -245,7 +245,12 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   // SPD GetMeleeAnimTickTime derives its tick from, and the three
   // concealment flags UpdateMaterial tints by. The doors are POLLED
   // here, as the mod polls them - the rig no longer calls the body.
-  eotbBody.attach(renderer, () => ({
+  // MAC-O3: and RE-CLAIMED every frame beside the arm (`bindBody` in
+  // frame()). This attach ran at construction only, so the LAST rig
+  // built owned the body's state thunk - after a building visit the
+  // sprite read the interior rig's machine and `sheathed` for ever,
+  // AUDIT 39's fpArm failure repeated on the other body.
+  const eotbState = () => ({
     weaponReady: !playerWeapon.sheathed || spellArmed(),   // posOffset's weapon arm, as the IL tests it
     sailing: false,                                        // Come Sail Away: the port has no twin
     sheathed: playerWeapon.sheathed,
@@ -261,14 +266,18 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     swingHeld: _held,
     liveSpeed: entity ? liveStat(entity, 'speed') : 50,
     concealment: entity ? concealmentFlags(entity) : null,
-  }));
+  });
+  const bindBody = () => eotbBody.attach(renderer, eotbState);
+  bindBody();
   eotbCamera.setPopup(say);   // EOTB-IL: DaggerfallUI.PopupMessage, for the two Debug.ShowMessages lines
   eotbCamera.loadSettings(modSetting);
   // [IL] `Start` (IL_0668-IL_067b): the settings, then
   // ToggleOffset(StartInThirdPerson). The mod's OnNewGame and OnLoad
   // follow at the world host's two doors, through the view seam's
   // new-game and load-pose calls. The seam still routes by which body
-  // answers, so a Morrowind player is untouched.
+  // answers, so a Morrowind player is untouched. MAC-O3: the camera
+  // runs it ONCE per boot, as Unity does - a second rig (a building, a
+  // dungeon) is not a second Start, and must not re-force the POV.
   eotbCamera.start();
   // MWFIX 3, RESTORED. The reverted rig read hasStoredMorrowind() ONCE at
   // construction, so attaching data to a running game changed nothing
@@ -618,6 +627,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
      */
     frame(dt, { paralyzed = false } = {}) {
       bindArm();    // AUDIT 39: the stepping rig owns the singleton (see above)
+      bindBody();   // MAC-O3: and the sprite body, the same law
       syncWorn();   // AUDIT 17e F17: the rig owns the worn-weapon bind
       // EOTB-IL: the mod's two keys are polled off the hosts' raw set on
       // their RELEASE edge (GetKeyUp) - SwitchShoulder (the port binds

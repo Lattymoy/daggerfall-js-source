@@ -169,6 +169,8 @@ const norm2 = (v) => { const l = Math.hypot(v[0], v[2]); return l > 0 ? [v[0] / 
 
 export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, decode = decodeSprite } = {}) {
   let renderer = null;
+  /** the per-frame state thunk of the rig that owns the body (see attach) */
+  let attachedState = null;
   let cfg = look();
   /** the frame's state, as bodyState shapes it */
   let last = bodyState();
@@ -585,6 +587,12 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
      * classic sprite path is the only path it knows.
      */
     attach(r, playerState) {
+      // Re-claimed every frame by the rig that is stepping it (the
+      // arm's own AUDIT 39 law, `bindArm`): the same renderer and the
+      // same thunk is the same rig, and nothing is redone; a different
+      // pair is another host's rig taking the body over.
+      if (r && r === renderer && playerState === attachedState) return this;
+      attachedState = playerState ?? null;
       renderer = r || null;
       cfg = look();
       if (renderer) {
