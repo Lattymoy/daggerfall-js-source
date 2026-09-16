@@ -54,6 +54,11 @@ test('SOC2: the hello carries the account when the session holds both halves and
   assert.equal(half.s.acct, null);
   const none = hubLink({ acct: null, asecret: null });
   assert.deepEqual(Object.keys(JSON.parse(none.ws.sent[0])), ['t', 'id', 'secret', 'name', 'look', 'pose'], 'the old hello, key for key');
+  // one half set on the session AFTER construction (world.js sets both; a caller that sets one is not the port's) - the hello's own door
+  const lone = hubLink({ acct: null, asecret: null });
+  lone.s.acct = 'acct-me'; lone.ws.drop(1006); lone.clock.t += 60_000; lone.s.tick();
+  const lws = lone.sockets[1]; lws.open();
+  assert.ok(!('acct' in JSON.parse(lws.sent[0])) && !('asecret' in JSON.parse(lws.sent[0])), 'an account without its secret is not sent - the hub would refuse the hello whole');
   const pres = hubLink({ presence: true });
   assert.equal(JSON.parse(pres.ws.sent[0]).acct, 'acct-me', 'a presence session HANDED the pair sends it - the caller\'s choice; world.js hands it to the hub link alone');
   assert.match(rd('src/scenes/world.js'), /if \(tab\.room === SOCIAL_ROOM\) \{ link\.acct = accountId\(\); link\.asecret = accountSecret\(\); \}/, 'and world.js hands it to the hub tab\'s link - after the join, before the socket can open');

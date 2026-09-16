@@ -6403,3 +6403,16 @@ it reads the world channel now, which names its members (`world77`).
 Found on the way: the worker entry re-exported `RELAY_VERSION` as a
 string and workerd refused to start it locally (`world76`). Both are
 written up in the chat file.
+
+## SOC (2026-09-16) - see 06-Systems/Social-Party-Arc.md
+
+Mac: "A social button next to the chat UI ... friend other users, see if
+they are online/last online + be able to invite friends or other
+individuals to the new 4 person party system ... the players name who are
+in a party together should turn green ... pressing F on their body ...
+seen on the world map, regardless of their location." The world channel's
+object is THE HUB (`world78`): accounts (an id and a secret beside the
+peer's, minted per browser profile), friends, requests, presence and
+last-seen, four-seat parties and the party pose fan; the client's picture
+in `net/social.js`; the panel, the party HUD, the F key and the map on
+top. Written up on its own page.
