@@ -1981,8 +1981,9 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
    there is one. Here rather than in each component, so the LAW has one
    home and the next control added to a row inherits it. */
 @media (pointer: coarse) {
-  .step { width: 44px; height: 44px; font-size: 26px; }
+  .step { width: 44px; height: 44px; }
   .rowact, .ctl .act { min-height: 44px; }
+  .step { font-size: 26px; }   /* CC-STEP: the glyph grows with the thumb-sized button (its own rule, so the 44px law's line above stays the one the pins find) */
   /* FT16: THE TILE'S CONTROLS JOIN THE LAW. FT14 replaced the list's
      one cycling .ctl .act - which this block already sized - with a
      segmented bar, chips and a drawer door, and none of them inherited

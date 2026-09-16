@@ -87,6 +87,6 @@ test('CC-REP/GRID/STEP by source: the view draws the window and presses the flow
   assert.match(css, /\.skillpane\.builder > \.span \{ grid-column: 1 \/ -1; \}/);
   assert.match(view, /for \(const \[dir, glyph\] of \[\[-1, '\\u2212'\], \[1, '\+'\]\]\)/, 'CC-STEP: a minus sign and a plus');
   assert.match(css, /\.step \{[^}]*font-size: 22px; line-height: 1;/, 'at the button\u2019s size');
-  assert.match(css, /\.step \{ width: 44px; height: 44px; font-size: 26px; \}/, 'and larger on the thumb-sized button');
+  assert.match(css, /@media \(pointer: coarse\) \{[\s\S]*?\.step \{ font-size: 26px; \}/, 'and larger on the thumb-sized button');
   assert.match(rd('src/ui/chargen.js'), /if \(hit\.repStep\) \{[\s\S]*?repStep\(this\.custom\.reps, hit\.repStep\.group, hit\.repStep\.dir\)[\s\S]*?repPointsToDistribute\(this\.custom\.reps\)/, 'the flow\u2019s door updates the ledger as a bar click does');
 });

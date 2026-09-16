@@ -62,8 +62,15 @@ export const isEnhanced = (search) => uiSkin(search) === 'enhanced';
  *  URL override is up - the caller that wants to know decides. */
 export function setUiSkin(skin) {
   if (!clean(skin)) return clean(getPref('skin')) ?? DEFAULT_SKIN;
-  setPref('skin', skin);
-  return skin;
+  // SKIN-CARRY (2026-09-16, a report: "the classic toggle starts the
+  // game in enhanced"): the choice's ONLY carrier across the reload
+  // was this write, and its failure was swallowed - savePrefs warned
+  // and answered false, setPref dropped the answer, this returned the
+  // skin as if stored, and switchSkin reloaded with nothing carrying
+  // the choice, so a browser that refuses localStorage (private
+  // windows, a blocked site, a sandboxed build) booted the default.
+  // The store's refusal comes back as null now; switchSkin reads it.
+  return setPref('skin', skin) === false ? null : skin;
 }
 
 /** The other one. Every toggle in the game is this function. */
