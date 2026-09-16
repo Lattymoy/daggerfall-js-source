@@ -51,7 +51,8 @@ import { equipSoundFor } from '../characters/weapons.js';   // F023: GetEquipSou
 import { setMidScreenText } from '../ui/midScreenText.js';   // AUDIT 64 F34: FPSWeapon.cs:365's mid-screen line
 import { createWeaponWidget } from './weaponWidget.js';
 import { createHandheldTorches } from '../systems/handheldTorches.js';   // HT1: Handheld Torches' component, one per rig beside the widget
-import { isTransformedLycanthrope } from '../systems/lycanthropy.js';   // WW1: Weapon Widget's FPSWeaponClone, beside the machine
+import { isTransformedLycanthrope, liveLycanthropy } from '../systems/lycanthropy.js';   // WW1: Weapon Widget's FPSWeaponClone, beside the machine; AUDIT-EOTB2: the sprite's form
+import { domCodeForKeyCode } from '../systems/keyCodes.js';   // AUDIT-EOTB2: the mod's two keys, polled off the hosts' raw set as the torch mod's are
 import { modSetting } from '../systems/modSettings.js';   // WW1: its Enabled
 import { takeFrameLook } from '../player/lookFilter.js';   // WW1: the frame's look for the widget's inertia
 import { cursorActive } from '../player/pointerLock.js';   // WW1: PlayerMouseLook.cursorActive
@@ -223,11 +224,31 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   // the classic sprite path is the only path it knows - and F2's first
   // cut broke it by importing the layer's setter here. The body owns
   // that seam already (see `player/eotbBody.js`, which explains why).
+  // AUDIT-EOTB2: THE WHOLE STATE, ONE HOME. The body's table, facing,
+  // clips and size all read this record (`eotbBody.bodyState`), and it
+  // used to carry the first two fields alone - so the sprite stood in
+  // the Idle table for ever. The motion bag is the hosts' own
+  // (`motionBagOf`), already handed to this rig through the camera
+  // thunk for the widget's sake; nothing here asks a host for more.
   eotbBody.attach(renderer, () => ({
     weaponReady: !playerWeapon.sheathed || spellArmed(),   // posOffset's weapon arm, as the IL tests it
     sailing: false,                                        // Come Sail Away: the port has no twin
+    sheathed: playerWeapon.sheathed,
+    spellcasting: spellArmed(),
+    usingBow: !!playerWeapon.machine.isBow,
+    transformed: !!entity && isTransformedLycanthrope(entity),
+    lycanthropyType: (entity && liveLycanthropy(entity)?.infectionType) || 0,
+    died: !!entity && (entity.health ?? 1) <= 0,
+    motion: camera?.()?.move ?? null,
   }));
   eotbCamera.loadSettings(modSetting);
+  // [SETTINGS] StartInThirdPerson - "Determines the POV when starting
+  // or loading a game" - and the mod ships it ON. OnNewGame/OnLoad are
+  // its readers in the assembly; here the rig's attach is the new
+  // game's door and the view seam's load door (world.js's pose restore)
+  // the load's. The seam still routes by which body answers, so a
+  // Morrowind player is untouched.
+  eotbCamera.start();
   // MWFIX 3, RESTORED. The reverted rig read hasStoredMorrowind() ONCE at
   // construction, so attaching data to a running game changed nothing
   // until a reload - which is what "after uploading does not work at
@@ -365,6 +386,27 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
    * Daggerfall swing is. It becomes live the moment the drawback path
    * does, with nothing here to change.
    */
+  /** AUDIT-EOTB2: the mod's two keys, DOWN-edge, off the same raw set
+   *  the torch mod polls (HT1's `keyDown`). The names are the mod's own
+   *  KeyCode text, resolved through the one converter the pane uses. */
+  const _eotbKeysLast = new Set();
+  function pollEotbKeys() {
+    if (!keyDown) return;
+    const s = eotbCamera.settings();
+    const shoulder = domCodeForKeyCode(s.switchShoulderKey);
+    const arm = domCodeForKeyCode(s.autoToggleKey);
+    for (const [code, act] of [[shoulder, () => eotbCamera.switchShoulder()], [arm, () => eotbCamera.toggleAuto()]]) {
+      if (!code) continue;
+      const down = !!keyDown(code);
+      if (down && !_eotbKeysLast.has(code)) act();
+      if (down) _eotbKeysLast.add(code); else _eotbKeysLast.delete(code);
+    }
+  }
+  /** [SETTINGS] ToggleBillboard's weapon hide, for the surfaces this rig
+   *  draws: the sprite body is on screen and the Morrowind arm is not the
+   *  one answering. */
+  const eotbHidesWeapon = () => !fpArm.canThirdPerson() && eotbBody.hides().weapon;
+
   /** MAC7 #1: the wire's swing - counted at every strike the machine starts, before the Morrowind arm's own gate
    *  (a classic-skin player swings too, and the peers in Morrowind bodies must see it); the host reads it into the pose. */
   const swing = { n: 0, strike: 'StrikeDown' };
@@ -372,6 +414,10 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   const cast = { n: 0, rangeType: 2 };
   function fpAttack(strike) {
     swing.n = (swing.n + 1) & 0xffff; swing.strike = strike;
+    // AUDIT-EOTB2 [SETTINGS]: the sprite's one-shot, at the same door the
+    // Morrowind arm takes and BEFORE its gate - a classic-skin player has
+    // the sprite too, and the drawn bow HOLDS its last frame as the arm does
+    eotbBody.attack(strike, { hold: playerWeapon.machine.isBow && playerWeapon.machine.state === 'StrikeUp' });
     if (!fpArm.ready()) return;
     const m = playerWeapon.machine;
     // MW-D16: no `bow` flag. The arm derives "shoot" from its own
@@ -416,6 +462,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
      *  in which case the engine resolves on the spot. */
     castSpellAnim: (rangeType, element, onRelease = null) => {
       cast.n = (cast.n + 1) & 0xffff; cast.rangeType = rangeType | 0;   // MAC7 #2: the wire's cast, counted before either lane's own gate
+      eotbBody.cast();   // AUDIT-EOTB2: PlaySpellAttackAnimation, at the one door both lanes' hands come through
       fpArm.castSpell(rangeType);
       return fpsSpellCasting.playOneShot(element, onRelease);
     },
@@ -490,6 +537,13 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     frame(dt, { paralyzed = false } = {}) {
       bindArm();    // AUDIT 39: the stepping rig owns the singleton (see above)
       syncWorn();   // AUDIT 17e F17: the rig owns the worn-weapon bind
+      // AUDIT-EOTB2: the sprite's drawn string lets go the frame the
+      // machine leaves StrikeUp (PlayAnimationHoldCoroutine's release),
+      // and the mod's two keys are polled off the hosts' raw set on
+      // their DOWN edge - SwitchShoulder (the port binds B; the mod's
+      // Tab is spent) and AutoTogglePerspective's ToggleInput.
+      if (!(playerWeapon.machine.isBow && playerWeapon.machine.state === 'StrikeUp')) eotbBody.release();
+      pollEotbKeys();
       // FPSSpellCasting's AnimateSpellCast coroutine (:265-286). It is
       // a Start() coroutine, so it runs for the life of the component
       // - before the gesture, before the machine, and NOT under the
@@ -614,7 +668,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
           bindTorches();
           const tctx = {
             renderer, canvas: c, entity, machine: playerWeapon.machine, sheathed: playerWeapon.sheathed, usingRightHand: playerWeapon.usingRightHand,
-            castPlaying: fpsSpellCasting.isPlayingAnim, spellArmed: spellArmed(), thirdPerson: fpArm.thirdActive(),
+            castPlaying: fpsSpellCasting.isPlayingAnim, spellArmed: spellArmed(), thirdPerson: fpArm.thirdActive() || eotbHidesWeapon(),   // AUDIT-EOTB2: either body on screen hides the FPV hand
             climbing: !!cam?.climbing, swimming: !!mv.swimming, transformedLycanthrope: !!entity && isTransformedLycanthrope(entity),
             motion: { grounded: mv.grounded !== false, crouching: !!mv.crouching, riding: !!mv.riding, standing: !!mv.standing, speedRatio: ratio, baseSpeed: base, localVel },
             look, swingHeld: _held, cursorActive: cursorActive(), camera: camThunk, collider: () => collider?.() ?? null,
@@ -628,7 +682,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
           weaponType: weaponTypeForItem(playerWeapon.weapon), material: playerWeapon.weapon?.material ?? -1,
           machine: playerWeapon.machine, sheathed: playerWeapon.sheathed, usingRightHand: playerWeapon.usingRightHand,
           equipCountdown: entity?.equipCountdown ?? 0, shown: shown(), castPlaying: fpsSpellCasting.isPlayingAnim, spellArmed: spellArmed(),
-          thirdPerson: fpArm.thirdActive(), reach: WEAPON_REACH,
+          thirdPerson: fpArm.thirdActive() || eotbHidesWeapon(), reach: WEAPON_REACH,   // AUDIT-EOTB2: the widget's third-person gate asked the Morrowind arm alone
           motion: { grounded: mv.grounded !== false, crouching: !!mv.crouching, riding: !!mv.riding, standing: !!mv.standing,
             speedRatio: ratio, baseSpeed: base, localVel },
           look, swingHeld: _held, cursorActive: cursorActive(), camera: camThunk,
@@ -740,6 +794,11 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // original every frame and draws itself in OnGUI; here the one
       // draw seam picks the clone while its switch is on - after the arm
       // (which returns), before the sprite (which the clone stands in for).
+      // AUDIT-EOTB2 [SETTINGS]: ToggleBillboard hides the FPV weapon while
+      // the sprite body is on screen (Compatibility.Don'tHideWeapon keeps
+      // it) - the classic sprite, the torch hand and the clone alike. The
+      // machine still swings; only the picture goes.
+      if (eotbHidesWeapon()) return;
       if (fpArm.active()) { fpArm.draw(c); return; }
       // HT1: the torch hand draws FIRST, the weapon over it - two OnGUIs
       // with no order between them in DFU; the port picks the one that

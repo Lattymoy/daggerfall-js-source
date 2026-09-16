@@ -30,6 +30,7 @@
 //          along the ground.
 
 import { MOD_SETTINGS } from '../systems/modSettings.js';
+import { AUTO_TOGGLE_ROWS, AUTO_TOGGLE, autoToggleSituation } from './eotbBillboard.js';   // AUDIT-EOTB2: LateUpdate's table
 
 /** `eyeRadius` is a field initialiser in the mod's own .ctor, not a
  *  setting - the clearance the camera keeps off a wall. */
@@ -90,6 +91,13 @@ export function readCameraSettings(get) {
     scrollable: !!g('CameraScrolling.ScrollableZOffset'),
     increment: g('CameraScrolling.ScrollIncrement') ?? 0,
     boatTarget: g('CameraOverrideBoat.Target') ?? 0,
+    // AUDIT-EOTB2: the two keys the mod binds beside the wheel, and
+    // LateUpdate's AutoTogglePerspective table - nine rows, read by
+    // their section's own names so a row cannot be mis-keyed by hand.
+    switchShoulderKey: g('Camera.SwitchShoulder') ?? null,
+    autoToggleKey: g('AutoTogglePerspective.ToggleInput') ?? null,
+    auto: Object.freeze(Object.fromEntries([...AUTO_TOGGLE_ROWS, 'OnTransitionInterior', 'OnTransitionExterior']
+      .map((row) => [row, g(`AutoTogglePerspective.${row}`) ?? AUTO_TOGGLE.DontChange]))),
     overrides: Object.freeze({
       Boat: override('CameraOverrideBoat'),
       Mount: override('CameraOverrideMount'),
@@ -170,6 +178,21 @@ export function createEotbCamera() {
   // the camera SWING out instead of cutting to the target
   let lastEye = [0, 0, 0];
   let lastDt = 0;
+  // AUDIT-EOTB2 [SETTINGS]: LateUpdate's AutoTogglePerspective. The
+  // table is applied when the SITUATION changes (a `FirstPerson` row
+  // re-applied every frame would fight the wheel the mod itself
+  // ships), and `ToggleInput` - "Button that arms or disarms the
+  // automatic view changes" - is the arm.
+  let autoArmed = true;
+  let situation = null;
+
+  /** One row of the table, applied: 1 takes first person, 2 third, 0
+   *  leaves the view where it is. */
+  function applyRow(row) {
+    if (row === AUTO_TOGGLE.FirstPerson && offset) toggleOffset(false);
+    else if (row === AUTO_TOGGLE.ThirdPerson && !offset) toggleOffset(true);
+    return offset;
+  }
 
   /**
    * `posOffset`, the mod's own property. Four arms in the order the IL
@@ -289,9 +312,24 @@ export function createEotbCamera() {
     start() {
       mirror = false; mirrorOriginal = mirror; mirrorTimer = 0; offsetScroll = 0;
       offset = false;
+      situation = null;
       if (cfg.startInThird) toggleOffset(true);
       return offset;
     },
+
+    /** [SETTINGS] The two transition rows, on the door: OnTransitionInterior
+     *  stepping into a building, OnTransitionExterior stepping back out.
+     *  Applied whatever the situation row said, since a door is not a
+     *  situation. */
+    transition(kind) {
+      const row = cfg.auto[`OnTransition${kind}`];
+      if (row === undefined || !autoArmed) return offset;
+      return applyRow(row);
+    },
+    /** ToggleInput: arm or disarm the table. */
+    toggleAuto() { autoArmed = !autoArmed; return autoArmed; },
+    autoArmed: () => autoArmed,
+    situation: () => situation,
 
     toggleOffset,
 
@@ -334,6 +372,15 @@ export function createEotbCamera() {
     tick(state = {}) {
       const clicks = pending;
       pending = 0;
+      // AUDIT-EOTB2: the auto-toggle rides the same frame, BEFORE the
+      // wheel - a notch the player turned this frame wins over a row
+      // the situation change would apply
+      const sit = autoToggleSituation(state);
+      if (sit !== situation) {
+        const first = situation === null;   // the first frame is a seed, not a change
+        situation = sit;
+        if (!first && autoArmed) applyRow(cfg.auto[sit]);
+      }
       if (!cfg.scrollable) return offset;
       const z = posOffset(state)[2];
       const nearEnd = -cfg.minZ;                 // Update's `stloc.1`: NEGATED

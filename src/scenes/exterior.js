@@ -40,7 +40,7 @@ import { targetAimPoint, missileAimDirection } from '../characters/enemyTargets.
 import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter, setAvoidDeathHook } from '../characters/playerEntity.js';
 import { SOUND } from '../systems/soundClips.js';
 import { Collider } from '../player/collider.js';
-import { mwViewFrame, mwViewWheel, mwViewDrawBody } from '../player/mwView.js';   // MW-D25: the Morrowind camera
+import { mwViewFrame, mwViewWheel, mwViewDrawBody, mwViewFootstep } from '../player/mwView.js';   // MW-D25: the Morrowind camera; AUDIT-EOTB2: the sprite's stride
 import { PITCH_LIMIT } from '../player/mwCamera.js';   // MW-D30: camera.cpp:323-331's own clamp
 import { getStaticDoors } from '../world/staticDoors.js';
 import { createDataPipeline } from './dataPipeline.js';
@@ -3895,6 +3895,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         const _onWater = _surf.water !== ON_EXTERIOR_WATER.None;
         const _step = footsteps.update(player.pos, {
           grounded: player.grounded, swimming: player.swimming, levitating: player.levitating,
+          spriteStep: mwViewFootstep(),   // AUDIT-EOTB2: SyncFootsteps - the sprite's stride while it is on screen
           // AUDIT 64 F3 (review): PlayerFootsteps gates on
           // `playerMotor.IsStandingStill` (PlayerFootsteps.cs:264-265), which
           // is `Vector2(moveDirection.x, moveDirection.z).magnitude == 0`
@@ -4338,7 +4339,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // ROAD-G G2: THE ENEMY ARM EXISTS NOW - the note here said "this
     // host mounts no bow-armed pool", which stopped being true with the
     // encounter mount above, and an archer's shaft would have flown
-    // through the player for ever. world.js:8484-8604 is the shape.
+    // through the player for ever. world.js:8485-8605 is the shape.
     arrows.update(dt, {
       // enemy arrows hunt only a WALKING player - the fly camera has no
       // capsule to hit
@@ -4563,7 +4564,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         // removed elsewhere.
         if (!cityGuards.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound)) {
           // ROAD-G G2: encounter foes resolve AFTER the watch and
-          // BEFORE civilians - world.js:8673's order, and the order
+          // BEFORE civilians - world.js:8674's order, and the order
           // matters because a watchman standing over a quest foe must
           // still be the one the swing finds.
           if (exteriorFoes.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound)) {

@@ -58,23 +58,23 @@ const IL = {
   'EyeOfTheBeholder::Awake': { port: null, why: 'no twin: Unity lifecycle and the mod-message receiver.' },
   'EyeOfTheBeholder::Start': { port: null, why: 'no twin: it caches Unity component handles.' },
   'EyeOfTheBeholder::Init': { port: null, why: 'no twin: the DFU mod loader’s entry point.' },
-  'EyeOfTheBeholder::LateUpdate': { port: null, why: 'NOT DONE: the whole AutoTogglePerspective table - nine settings, all inert here.' },
+  'EyeOfTheBeholder::LateUpdate': { port: 'applyRow', mod: 'eotbCamera.js', evidence: 'SETTINGS' },   // AUDIT-EOTB2: the AutoTogglePerspective table, applied on a situation change (tick) and on the two doors (transition)
   'EyeOfTheBeholder::OnPositionUpdate': { port: null, why: 'no twin: it re-seeds posCurrent from a Unity transform.' },
   'EyeOfTheBeholder::SetKeyFromText': { port: null, why: 'no twin: KeyCode parsing. modSettings.js declares kinds instead of guessing.' },
-  'EyeOfTheBeholder::ToggleBillboard': { port: null, why: 'NOT DONE: hiding the FPV weapon and the horse, and enabling the spellCasting component.' },
+  'EyeOfTheBeholder::ToggleBillboard': { port: 'hides', mod: 'eotbBody.js', evidence: 'SETTINGS' },   // AUDIT-EOTB2: the FPV weapon and horse hides behind the two Compatibility keys; the spellCasting enable has no twin (the port's cast overlay is its own component)
   'EyeOfTheBeholder::SpawnBillboard': { port: null, why: 'no twin: it instantiates a Unity GameObject.' },
   'EyeOfTheBeholder::CheckWagon': { port: null, why: 'NOT DONE: ShowCart, the wagon that follows.' },
   'EyeOfTheBeholder::SpawnWagon': { port: null, why: 'NOT DONE: ShowCart.' },
   'EyeOfTheBeholder::UpdateWagon': { port: null, why: 'NOT DONE: ShowCart.' },
   'EyeOfTheBeholder::OnUpdateSailing': { port: null, why: 'no twin: Come Sail Away. `sailing` is wired false and the boat arm is unreachable.' },
   'EyeOfTheBeholder::FreeRein_GetMoveVector': { port: null, why: 'no twin: the Free Rein mod.' },
-  'EyeOfTheBeholder::MeleeDamage': { port: null, why: 'NOT DONE: it belongs to the attack lane, which is not ported.' },
+  'EyeOfTheBeholder::MeleeDamage': { port: null, why: 'no twin: the attack-from-body ray. The port’s swing and activation already start at the player’s own head (cam.pos), which the view never moves - only the drawn eye moves - so there is nothing to re-origin and Don’tOffsetAttacks has nothing to stop.' },
   'EyeOfTheBeholder::MessageReceiver': { port: null, why: 'no twin: DFU’s inter-mod message bus.' },
   'EyeOfTheBeholder::ModCompatibilityChecking': { port: null, why: 'no twin: it looks for other DFU mods at runtime.' },
   'EyeOfTheBeholder::OnLoad': { port: null, why: 'no twin: DFU’s save hook.' },
   'EyeOfTheBeholder::OnNewGame': { port: null, why: 'no twin: DFU’s new-game hook.' },
-  'EyeOfTheBeholder::OnTransitionInterior': { port: null, why: 'NOT DONE: the mod re-seeds the camera across a transition.' },
-  'EyeOfTheBeholder::OnTransitionExterior': { port: null, why: 'NOT DONE: as above.' },
+  'EyeOfTheBeholder::OnTransitionInterior': { port: 'transition', mod: 'eotbCamera.js', evidence: 'SETTINGS' },   // AUDIT-EOTB2: the OnTransitionInterior row, on the building's door (worldModes)
+  'EyeOfTheBeholder::OnTransitionExterior': { port: 'transition', mod: 'eotbCamera.js', evidence: 'SETTINGS' },   // AUDIT-EOTB2: the OnTransitionExterior row, stepping back out
 
   // ── PlayerBillboard: the sprite (33) ────────────────────────────
   'PlayerBillboard::InitializeStates': { port: 'STATE_TABLES', mod: 'eotbBillboard.js' },
@@ -83,19 +83,19 @@ const IL = {
   'PlayerBillboard::get_frameTime': { port: 'frameTime', mod: 'eotbBillboard.js' },
   'PlayerBillboard::get_sizeMod': { port: 'sizeMod', mod: 'eotbSprite.js' },
   'PlayerBillboard::get_scaleOffset': { port: 'scaleOffset', mod: 'eotbSprite.js' },
-  'PlayerBillboard::PlayFootstep': { port: null, why: 'NOT DONE: the frame clock reports a footfall (advanceFrame) and nobody listens.' },
-  'PlayerBillboard::EnableVanillaFootsteps': { port: null, why: 'NOT DONE: the other half of PlayFootstep.' },
-  'PlayerBillboard::DisableVanillaFootsteps': { port: null, why: 'NOT DONE: the other half of PlayFootstep.' },
-  'PlayerBillboard::PlayMeleeAttackAnimation': { port: null, why: 'NOT DONE: nothing enters an attack state. attackTable() is the chooser these four share, and it has no caller.' },
-  'PlayerBillboard::PlayRangedAttackAnimation': { port: null, why: 'NOT DONE: see PlayMeleeAttackAnimation.' },
-  'PlayerBillboard::PlayRangedAttackAnimationHold': { port: null, why: 'NOT DONE: see PlayMeleeAttackAnimation.' },
-  'PlayerBillboard::PlaySpellAttackAnimation': { port: null, why: 'NOT DONE: see PlayMeleeAttackAnimation.' },
-  'PlayerBillboard::PlayLycanAttackAnimation': { port: null, why: 'NOT DONE: see PlayMeleeAttackAnimation.' },
-  'PlayerBillboard::PlayDeathAnimation': { port: null, why: 'NOT DONE: the Death and DeathLycan tables are generated and unreachable.' },
-  'PlayerBillboard::PlayAnimationCoroutine': { port: null, why: 'NOT DONE: the one-shot player the five Play* methods drive.' },
-  'PlayerBillboard::PlayAnimationHoldCoroutine': { port: null, why: 'NOT DONE: the bow’s hold-on-last-frame variant.' },
-  'PlayerBillboard::PlayAnimationPingPongCoroutine': { port: null, why: 'NOT DONE: the ping-pong variant with its own offset.' },
-  'PlayerBillboard::GetMeleeAnimTickTime': { port: null, why: 'NOT DONE: it times an attack clip, and there is no attack lane to time.' },
+  'PlayerBillboard::PlayFootstep': { port: 'footstep', mod: 'eotbBody.js', evidence: 'SETTINGS' },   // AUDIT-EOTB2: SyncFootsteps - the footfall the clock reported reaches the hosts' stride machine (systems/footsteps.js spriteStep)
+  'PlayerBillboard::EnableVanillaFootsteps': { port: 'footstep', mod: 'eotbBody.js', evidence: 'SETTINGS' },   // the `owns` half: off the lane the vanilla stride plays
+  'PlayerBillboard::DisableVanillaFootsteps': { port: 'footstep', mod: 'eotbBody.js', evidence: 'SETTINGS' },   // and on it, the distance machine is silenced
+  'PlayerBillboard::PlayMeleeAttackAnimation': { port: 'attack', mod: 'eotbBody.js', evidence: 'SETTINGS' },   // AUDIT-EOTB2: at the rig's own strike door (fpAttack)
+  'PlayerBillboard::PlayRangedAttackAnimation': { port: 'attack', mod: 'eotbBody.js', evidence: 'SETTINGS' },
+  'PlayerBillboard::PlayRangedAttackAnimationHold': { port: 'attack', mod: 'eotbBody.js', evidence: 'SETTINGS' },   // `hold` while the machine sits in StrikeUp, released when it leaves
+  'PlayerBillboard::PlaySpellAttackAnimation': { port: 'cast', mod: 'eotbBody.js', evidence: 'SETTINGS' },   // at castSpellAnim, the one door both lanes' hands come through
+  'PlayerBillboard::PlayLycanAttackAnimation': { port: 'attack', mod: 'eotbBody.js', evidence: 'SETTINGS' },   // attackTable's transformed arm
+  'PlayerBillboard::PlayDeathAnimation': { port: 'deathTable', mod: 'eotbBillboard.js', evidence: 'SETTINGS' },   // AUDIT-EOTB2: played once and held while the entity is dead (eotbBody.tick)
+  'PlayerBillboard::PlayAnimationCoroutine': { port: 'clipFrames', mod: 'eotbBillboard.js', evidence: 'SETTINGS' },   // the one-shot's frame order, stepped by eotbBody's clip clock
+  'PlayerBillboard::PlayAnimationHoldCoroutine': { port: 'clipFrames', mod: 'eotbBillboard.js', evidence: 'SETTINGS' },   // the same order, its last frame held until release()
+  'PlayerBillboard::PlayAnimationPingPongCoroutine': { port: 'clipFrames', mod: 'eotbBillboard.js', evidence: 'SETTINGS' },   // the turn at n-1-PingPongOffset
+  'PlayerBillboard::GetMeleeAnimTickTime': { port: null, why: 'NOT DONE: the one number the one-shots need that only the assembly holds. The clips run at get_frameTime’s own step until it is read.' },
   'PlayerBillboard::UpdateBillboard': { port: null, why: 'no twin: it rewrites a Unity mesh. The port draws a billboard batch (eotbBody.draw).' },
   'PlayerBillboard::UpdateBillboardDelayed': { port: null, why: 'no twin: see UpdateBillboard.' },
   'PlayerBillboard::UpdateBillboardDelayedCoroutine': { port: null, why: 'no twin: see UpdateBillboard.' },
@@ -107,7 +107,7 @@ const IL = {
   'PlayerBillboard::get_IsReady': { port: null, why: 'no twin: "my transform has a parent". The port’s ready() is its own law - the first sprite has decoded.' },
   'PlayerBillboard::Awake': { port: null, why: 'no twin: Unity lifecycle.' },
   'PlayerBillboard::Update': { port: null, why: 'no twin: it polls Unity input and component state per frame.' },
-  'PlayerBillboard::LateUpdate': { port: null, why: 'NOT DONE: the first-person visibility mode, so the sprite still casts a shadow from inside its own eyes.' },
+  'PlayerBillboard::LateUpdate': { port: null, why: 'no twin: the first-person visibility mode (Graphics.FirstPersonBillboard - Shadows Only) needs a shadow caster, and the port’s billboards cast none; the Visible arm would draw your own sprite from inside its eyes.' },
   'PlayerBillboard::FixedUpdate': { port: null, why: 'no twin: Unity’s fixed step.' },
   'PlayerBillboard::OnLoad': { port: null, why: 'no twin: DFU’s save hook.' },
 
@@ -131,7 +131,14 @@ test('AUDIT-EOTB scope: the inventory is whole, and every row has a verdict', ()
     else assert.match(v.why ?? '', /^(no twin|NOT DONE)/,
       `${k} claims no port, so it must say which kind of gap it is`);
   }
-  assert.equal(PORTED.length, 13, 'thirteen of sixty-two');
+  // AUDIT-EOTB2: thirteen read off the IL, and the fourteen the audit
+  // ported from the settings' own words - each row says which
+  for (const [k, v] of PORTED) {
+    if (v.evidence) assert.equal(v.evidence, 'SETTINGS', `${k}: a port not read off the IL says what it was read from`);
+  }
+  assert.equal(PORTED.filter(([, v]) => !v.evidence).length, 13, 'thirteen off the IL');
+  assert.equal(PORTED.filter(([, v]) => v.evidence === 'SETTINGS').length, 16, 'sixteen off the settings');
+  assert.equal(PORTED.length, 29, 'twenty-nine of sixty-two');
 });
 
 test('AUDIT-EOTB scope: every row claiming a PORT names a symbol that is really there', () => {
@@ -208,7 +215,6 @@ test('AUDIT-EOTB scope: THE DEAD EXPORTS - what is ported, exported, and called 
   // DEBT, not a decoration: it is either wired or deleted by the slice
   // that next touches its lane.
   const ALLOWED = {
-    'eotbBillboard.js:attackTable': 'the attack lane is not ported (five Play* methods above). Ported knowledge kept, not invented.',
     'eotbSprite.js:scaleOffset': 'get_scaleOffset is ported; spriteInfo.json’s per-sprite offsets are not applied yet, so nothing multiplies by it.',
     'eotbSprite.js:tableKeys': 'what a pre-load would fetch. eotbBody warms ONE sprite, so nothing asks for a whole table.',
     'eotbCamera.js:OVERRIDE_ORDER': 'the three override sections’ precedence, spelled once so posOffset’s arm order can be read against it.',
@@ -223,12 +229,14 @@ test('AUDIT-EOTB scope: THE DEAD EXPORTS - what is ported, exported, and called 
 test('AUDIT-EOTB scope: the bible page states THIS table, and no record says 1:1 any more', () => {
   const page = rd('bible/06-Systems/Eye-Of-The-Beholder.md');
   assert.match(page, /\*\*62 (?:real|authored) methods\*\*/, 'the page states the inventory this table holds');
-  assert.match(page, /\*\*thirteen\*\*/, 'and how many of them are ported');
+  assert.match(page, /\*\*thirteen\b/i, 'and how many of them were read off the IL');
+  assert.match(page, /\*\*sixteen\b/i, 'and how many AUDIT-EOTB2 ported from the settings');
+  assert.match(page, /\*\*twenty-nine\b/i, 'and the total');
   assert.match(page, /test\/eotb_scope\.test\.js/, 'and points at this file');
 
   // Every IL name the page's not-ported list mentions must be a row
   // here with no port - so the prose cannot drift from the table.
-  const section = page.split('**Not ported at all**')[1]?.split('\n## ')[0] ?? '';
+  const section = page.split(/\*\*(?:Not ported at all|Thirty-three not ported)\*\*/)[1]?.split('\n## ')[0] ?? '';
   assert.ok(section.length > 200, 'the page carries the list');
   const named = [...section.matchAll(/`([A-Za-z_][\w]*)`/g)].map((m) => m[1]);
   assert.ok(named.length >= 10, 'and names methods in it');
