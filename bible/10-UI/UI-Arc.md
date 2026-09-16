@@ -13629,3 +13629,49 @@ of the three identity terms and on `ready()`; `autoBuildArms` going on
 to the build when the standing arm is another's, and standing down
 when it is the entity's own; the gate line re-pinned on
 `standing(entity)`.
+
+## CC-REP, CC-GRID, CC-STEP - THE CUSTOM CLASS BUILDER, FROM THE DISCORD (2026-09-16)
+
+Ember, on the Discord, relayed by Mac: "Class creation menu seems to
+be missing a reputation setting. By default in DFU when making a
+class you can select how it affects your reputation with various
+factions, but it seems to be missing in DFE." And: "the custom class
+building menu being in a list is a bit clunky ... as a list it means
+having to scroll around to see all the options. Also the + and -
+symbols on the buttons seem a bit small."
+
+**CC-REP.** True, and recorded as such since AUDIT 39: the reputation
+window (CreateCharReputationWindow) was the one classic window the
+enhanced view did not draw, because its only door was `repClick(lx,
+ly)` - a pixel hit on a 168x189 panel - and a thumb wants a control,
+not a coordinate faked from one. The flow has that control now:
+`repStep(reps, group, dir)` (`systems/customClass.js`) is one integer
+step on one group's bar with the same value law as a bar click
+(-10..+10, JS's negative zero normalised as the C# short would), and
+`hit.repStep` (`ui/chargen.js`) updates the ledger exactly as the bar
+click does - `repPointsToDistribute`, the negated sum. The enhanced
+builder gained the ReputationButton's row ("Reputations", with what
+the ledger says now) and `customRepPane`: five rows with steppers, the
+points to distribute in the head, and Done through the window's own
+exit gate (the balance must be zero, TEXT.RSC 303). DFU's quirk
+stands: a reopened window's field is 0 until a bar is touched, so
+classic really does let you leave it unbalanced that way, and so does
+this.
+
+**CC-GRID.** The builder is a two-column grid from 900px up - the
+twelve skills down one column, the attributes and the class itself
+down the other, the name across the top and the acts across the foot
+- so the whole class sits on one page on a monitor. Below that width
+it is the list it always was, which a phone still wants.
+
+**CC-STEP.** The steppers drew single angle quotes (U+2039/203A) at
+the row's text size, which read as specks on a large monitor. They
+draw a minus sign and a plus now at the button's own size - 22px on
+the 34px button, 26px on the 44px thumb one.
+
+Pins: `test/ccrep.test.js` - repStep's clamp, group test and plain
+zero; the flow opening the window, stepping the ledger, holding the
+exit until it balances, the reopened window's stale zero; the view
+drawing the window and pressing the flow's doors alone, the grid and
+the glyphs by source.
+
