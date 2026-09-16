@@ -218,6 +218,10 @@ export class SocialState {
   isFriendPeer(id) { const a = this.accountOfPeer(id); return !!a && this.friends.has(a); }
   /** The colour a peer's name is drawn in over the world: PARTY_GREEN for my party, null for everyone else. */
   colorOf(id) { return this.isPartyPeer(id) ? PARTY_GREEN : null; }
+  /** The same question for the DOM (the chat's lines and roster rows): PARTY_GREEN_CSS for my party, FRIEND_CSS for a
+   *  friend who is not, null for a stranger - ONE HOME for what a colour means (SOC4's pin holds world.js to asking,
+   *  never deciding), so a friend list and a formation can never disagree between the world and the chat. */
+  cssColorOf(id) { return this.isPartyPeer(id) ? PARTY_GREEN_CSS : this.isFriendPeer(id) ? FRIEND_CSS : null; }
   /** How an account stands to me: 'me', 'friend', 'in' (they asked), 'out' (I asked), 'none'. */
   relation(acct) {
     if (!acct) return 'none';

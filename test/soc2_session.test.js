@@ -150,6 +150,7 @@ test('SOC2: SocialState - the picture: a state replaces everything, presence kee
   assert.equal(st.leads(), true); assert.deepEqual(st.others().map((m) => m.acct), ['acct-b']); assert.equal(st.seatsFree(), PARTY_MAX - 2);
   assert.deepEqual([...st.partyPeers()], ['peer-b']); assert.equal(st.isPartyPeer('peer-b'), true); assert.equal(st.isPartyPeer('peer-me'), false, 'never my own tab'); assert.equal(st.isPartyPeer('peer-c'), false, 'a friend is not a party');
   assert.deepEqual(st.colorOf('peer-b'), PARTY_GREEN); assert.equal(st.colorOf('peer-c'), null); assert.equal(st.colorOf('peer-zz'), null);
+  assert.equal(st.cssColorOf('peer-b'), PARTY_GREEN_CSS, 'the DOM\'s green for my party'); assert.equal(st.cssColorOf('peer-c'), FRIEND_CSS, 'a friend not in my party is blue in the chat'); assert.equal(st.cssColorOf('peer-zz'), null, 'a stranger is nobody\'s colour');
   assert.equal(st.applyParty('acct-b', validPartyPose(P)), true); assert.equal(st.party.members[1].p.px, 100); assert.equal(changes.at(-1), 'pose');
   assert.equal(st.applyParty('acct-zz', validPartyPose(P)), false, 'not a member');
   st.apply({ t: 'social', k: 'party', party: view(members) });

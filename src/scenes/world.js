@@ -223,10 +223,11 @@ import { RemotePlayers, composeLook } from '../net/remotePlayers.js';   // ONLIN
 import { makeHitPend } from '../net/hitPend.js';   // AUDIT FOES FOE2: a blow the wire refused waits and goes
 import { PeerBodies } from '../net/peerBodies.js';   // MWBODY1: the others in the Morrowind body
 import { ChatLog, CHAT_REJOIN_MS } from '../net/chat.js';   // CHAT1: the tabs and their lines
-import { SocialState, accountId, accountSecret } from '../net/social.js';   // SOC2: the friends and the party, as the hub says them; the account the hub's hello carries
+import { SocialState, accountId, accountSecret } from '../net/social.js';   // SOC2: the friends and the party, as the hub says them; the account the hub's hello carries; SOC3: and the two colours a name wears in the DOM - my party's green, a friend's blue
 import { SOCIAL_ROOM, PARTY_SEND_MS } from '../net/wire.js';   // SOC2: the hub's room and the party pose's floor (a second wire import: AUDIT WORLD4 A1 pins the first as it stands)
 import { createChatPanel } from '../ui/chatPanel.js';   // CHAT1: the enhanced skin's chat over the world
 import { createPartyPanel } from '../ui/partyPanel.js';   // SOC4: the party HUD - my party's portraits and their health / stamina / magicka
+import { createSocialPanel } from '../ui/socialPanel.js';   // SOC3: the friends + party panel the Social button opens
 import { relayVersionSeen, buildUpdateSeen, fetchLiveBuildTag, RELAY_RESTART_TEXT, BUILD_UPDATE_TEXT, BUILD_POLL_MS } from '../net/updateNotice.js';   // SRV-N: the relay moved, or the build did
 import { BUILD_TAG } from '../buildTag.js';   // SRV-N: which build this tab is actually running
 import { morrowindDataCount, morrowindDataGeneration } from './dataSource.js';   // MWBODY1: the bodies' gate - Morrowind data attached - and its generation
@@ -6779,7 +6780,26 @@ export async function bootWorld(canvas, renderer, params, status) {
   // party HUD, made in socialStart beside `social` and driven from chatFrame. Null until there is a hub link to be
   // anyone on, and it hides itself whenever the party is empty of anyone but me.
   let partyPanel = null;
+  // SOC3 (Mac: "A social button next to the chat UI, that when tapped opens the new friends list + party
+  // interface"): the panel that button opens (ui/socialPanel.js), made in socialStart beside the chat's. It is a
+  // POINTER SURFACE like the chat, so the host's own three (canOpen, onOpen, onClose) are what it is handed, and
+  // SOC5's key reaches it through `hudCtx.openSocial` rather than a second copy of this reference.
+  let socialPanel = null;
   const socialLink = () => { const tab = chatLog?.tabs.find((t) => t.room === SOCIAL_ROOM); return tab ? (chatLinks?.get(tab.id) ?? null) : null; };
+  /** SOC3 (Mac: "invite friends or other individuals"): what a click on a chat ROSTER ROW offers for that peer. The
+   *  roster is the one place a stranger has a name, so it is the one place "other individuals" can be acted on -
+   *  and every answer here is net/social.js's (actionsFor), including the reason a refused one carries. An act by
+   *  PEER id, because a stranger has no account I can name; Remove is by account, which by then I hold. */
+  const socialRowActions = (peerId) => {
+    if (!social || !peerId) return [];
+    const a = social.actionsFor(peerId);
+    const out = [
+      { label: 'Add friend', enabled: a.canFriend, why: a.whyNotFriend, run: () => socialLink()?.sendSocial({ k: 'friend.request', peer: peerId }) ?? false },
+      { label: 'Invite to party', enabled: a.canInvite, why: a.whyNotInvite, run: () => socialLink()?.sendSocial({ k: 'party.invite', peer: peerId }) ?? false },
+    ];
+    if (a.relation === 'friend') out.push({ label: 'Remove friend', enabled: true, why: null, run: () => socialLink()?.sendSocial({ k: 'friend.remove', acct: a.acct }) ?? false });
+    return out;
+  };
   let _worldPublishedAt = -Infinity;   // WORLD1: when this host last published the room's memory (the frame clock)
   // WORLD1 (Mac: "The world is the server ... True persistence"): the room's memory out - this player's, when the
   // relay says they are the room's host and a dungeon stands: every WORLD_PUBLISH_MS, and at once on the way out
@@ -6987,6 +7007,14 @@ export async function bootWorld(canvas, renderer, params, status) {
       canOpen: () => !gamePaused() && !(townTalk.hudCovered || (modes?.hudCovered ?? false)),   // no chat under a window: the window's keys are the window's
       onOpen: () => { setCursorActive(false); releaseLook(); },   // AUDIT CHAT C2: the panel is a pointer surface - the mouse is freed on open   // PL3: the Enter that opened the chat is the CHAT'S - the toggle (the same key, a capture listener bound earlier) had already flipped cursorActive on it, and the close's relock was refused by the precedence line for the rest of the session
       onClose: () => { if (!gamePaused()) requestLook(canvas); },   // and taken back inside the closing gesture (MAC1's rule, ui/pauseDoor.js)
+      // SOC3: the three social seams of the chat, all read LAZILY - `social` and `socialPanel` are made by
+      // socialStart below, which runs after this call (the panel has to exist before the picture lands beside it),
+      // so every one of these is a closure that asks at the moment of the click or the frame, never a value.
+      social: { onToggle: () => socialPanel?.toggle(), pending: () => social?.pendingCount() ?? 0 },
+      // "the players name who are in a party together should turn green" - and a friend who is not in my party
+      // wears the friend colour, which is the list's own mark carried into the conversation
+      nameColor: (id) => social?.cssColorOf(id) ?? null,   // SOC7 integration: the picture answers (net/social.js cssColorOf - party green, friend blue, a stranger none); the host names no colour, which SOC4's pin holds it to
+      rowActions: (peerId) => socialRowActions(peerId),
     });
     socialStart();   // SOC2: the picture over the hub's link, once the panel it lands beside exists
   };
@@ -7004,6 +7032,21 @@ export async function bootWorld(canvas, renderer, params, status) {
     social.onNote = (note, text) => { if (text) chatLog.push(tab.id, { text, system: true }); };
     social.onError = (text) => { chatLog.push(tab.id, { text: `Social: ${text}`, system: true }); };
     // SOC3: the social button and the friends + party panel are made here, over `social`, `link` and `chatPanel`
+    // (Mac: "A social button next to the chat UI, that when tapped opens the new friends list + party interface").
+    // The BUTTON is the chat panel's - it was built with the `social` option above and its onToggle is the line
+    // below's `socialPanel` - so there is one control and no second floating widget to keep out of the HUD's way.
+    // The panel is a POINTER SURFACE and takes the chat's own three doors, word for word: no opening under a
+    // window or the pause door, the cursor freed inside the opening gesture and taken back inside the closing one.
+    socialPanel = createSocialPanel({
+      social,
+      send: (act) => socialLink()?.sendSocial(act) ?? false,   // false is the rate gate's answer: the panel keeps the button and says "try again"
+      canOpen: () => !gamePaused() && !(townTalk.hudCovered || (modes?.hudCovered ?? false)),
+      onOpen: () => { setCursorActive(false); releaseLook(); },
+      onClose: () => { if (!gamePaused()) requestLook(canvas); },
+    });
+    // SOC5 will bind a key to this; `hudCtx` is the ONE door this host's ladders dispatch through (U45), so the key
+    // reaches the panel the same way every other window's does and no second reference to it has to be kept.
+    hudCtx.openSocial = () => socialPanel?.toggle();
     // SOC4: the party HUD (portraits, health / stamina / magicka) is made here, over `social`
     // The art pair is the ESCORT FACES' own (initEscortFaces above): one fetch door and one palette for every
     // classic record this host reads, so a portrait is the same CIF the paper doll draws and nothing is loaded twice.
@@ -7118,6 +7161,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       status: link?.statusLine('chat') ?? null,   // connecting, reconnecting, refused - the session's own line (D12; AUDIT CHAT B5)
     });
     partyFrame(performance.now());   // SOC2: my party pose rides the chat frame - before the dead return with it, so a dead member's card says so as their vitals read zero
+    // SOC3: and the friends + party panel repaints on the same frame, under the same covering rule as the chat -
+    // its body only when the picture moved, its countdowns and its invite toast every time (ui/socialPanel.js).
+    socialPanel?.render({ covered: townTalk.hudCovered || (modes?.hudCovered ?? false) || gamePaused() });
     // SOC4: and the party HUD is drawn from the same frame, under the SAME `covered` word the chat panel takes - a
     // window over the HUD covers both. The panel itself costs one version compare on a frame where nothing moved.
     partyPanel?.render({ covered: townTalk.hudCovered || (modes?.hudCovered ?? false) || gamePaused() });
