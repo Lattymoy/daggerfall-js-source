@@ -56,7 +56,7 @@ import { setMusicReplacements } from '../systems/musicReplacement.js';   // M-EX
 import { setTextureReplacements } from '../systems/textureReplacement.js';   // M-TEX: TextureReplacement's registry
 import { setSeasonsSources } from '../systems/seasonsIliacBayAssets.js';   // SIB1: Seasons of the Iliac Bay's texture door
 import { setWeaponWidgetSources } from '../combat/weaponWidgetAssets.js';   // WW1: Weapon Widget's double-scale textures, from the player's own bundle
-import { getBool } from '../systems/settings.js';   // M-FM: Audio/AlternateMusic, read once for all three hosts
+import { getBool, getInt } from '../systems/settings.js';   // M-FM: Audio/AlternateMusic, read once for all three hosts; MAC-O4: Controls/WeaponSwingMode, the drag route's own missing term
 import { SongManager, musicEnvironment, holdEnvironment } from '../systems/songManager.js';
 import { audio } from '../systems/audio.js';
 
@@ -1864,16 +1864,31 @@ export function createMusicDirector({ fm = null, play = null, stop = null, playi
  *  through to `cam.yaw += movementX` - so every swing inside a
  *  building or a dungeon turned the camera with it.
  *
- *  `dungeon.js:252`, the standalone host, has always had the right
+ *  `dungeon.js:253`, the standalone host, has always had the right
  *  shape: attack, then return. It has no modal sibling to share the
  *  drag with, which is why it never needed a mode in the test at all.
  *
  *  @returns 'swing'  - this host owns the drag; feed its own rig
  *           'modal'  - a mode host owns it; do nothing, and DO NOT LOOK
  *           'look'   - nobody is swinging; the drag is a look
+ *
+ *  MAC-O4 (Mac, 2026-09-16 follow-up: "still can't look while attacking
+ *  in Click / Click or Hold"). WeaponSwingMode was a term this function
+ *  never asked, so a held swing button ALWAYS ate the drag, in every
+ *  mode. That is right for Gesture (0) - the drag over the held button
+ *  IS the swing, tracked in playerWeapon.gesture()'s dx/dy trail - but
+ *  Click (1) and Click-or-Hold (2) track no gesture at all
+ *  (WeaponManager.cs:316-331 rolls a random direction; playerWeapon.js's
+ *  swingMode !== 0 branch never reads dx/dy), and the swing itself keeps
+ *  firing every frame off `held` alone (weaponRig.js's attackInput/held
+ *  latch, set by mousedown/mouseup, independent of mousemove). So
+ *  routing the drag away from 'look' in those two modes fed the rig
+ *  deltas it does not use and cost the player the one thing DFU still
+ *  gives them: turning while the button is down.
  */
-export function routeMouseDrag({ walkMode, buttons, mode = 'exterior' }) {
-  if (!walkMode || !swingHeld(buttons)) return 'look';   // FIX-F: the swing's button is the registry's, not the right one
+export function routeMouseDrag({ walkMode, buttons, mode = 'exterior',
+  swingMode = getInt('Controls', 'WeaponSwingMode', 0, 2) } = {}) {
+  if (!walkMode || swingMode !== 0 || !swingHeld(buttons)) return 'look';   // FIX-F: the swing's button is the registry's, not the right one; MAC-O4: only Gesture (0) ever claims the drag
   return mode === 'exterior' ? 'swing' : 'modal';
 }
 
