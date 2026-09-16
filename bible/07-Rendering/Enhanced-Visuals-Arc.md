@@ -34,9 +34,9 @@ matrix/draw path (GC spikes riding the beat).
 FOUND ON THE WAY, both real: a recenter injects 819.2 units into
 footsteps' stride accumulator (a spurious footstep at every map-pixel
 crossing, footsteps.js:151), and `_playerStill` reads one moving
-frame per crossing (world.js:5743-5745).
+frame per crossing (world.js:5778-5780).
 
-frame per crossing (world.js:8783-8785).
+frame per crossing (world.js:8818-8820).
 
 THE DISTANCE IS FOG-BOUND, NOT STREAM-BOUND. Linear fog ends at 2400
 units (weather.js:50-57, DFU's own number) while the default 7x7
