@@ -299,7 +299,7 @@ export async function bootInterior(canvas, renderer, params, status) {
     // camera is read.
     gamepad?.tick(dt);   // GP1: the pad's frame - its keys, its stick, its look - before the paused gate, so a window still sees Back and a lifted thumb still releases
     if (!gamePaused()) {
-      if (false) lookFilter.settle();
+      if (false) lookFilter.settle();   // MAC-O2: the fourth LookFilter owner mounts NO weapon rig, so nothing here can hold SwingWeapon and swingSuppressesLook (lookFilter.js) has nothing to ask
       else lookFilter.tick(dt, cam);
       // FIX-F: the KEYBOARD look - TurnLeft/TurnRight/LookUp/LookDown
       // (InputManager.cs:1854-1865), one look unit a frame in DFU, paid
