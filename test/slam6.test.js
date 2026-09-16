@@ -22,7 +22,7 @@
 // who it is. A foes frame is still the introduction's: a pose is one figure, a pool is a world.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { poseFan, nearestFan, POSE_FAN_MAX, POSE_FAR_SHARE, ROSTER_MAX } from '../src/net/wire.js';
+import { poseFan, nearestFan, hashKey, POSE_FAN_MAX, POSE_FAR_SHARE, ROSTER_MAX } from '../src/net/wire.js';
 import { POSE_HZ_MIN, GAP_MAX_MS, PEER_TIMEOUT_MS, poseHzFor, OnlineSession } from '../src/net/online.js';
 import * as relay from '../server/src/relay.js';
 import { fakeSocketClass } from './fakeSocket.mjs';
@@ -64,8 +64,10 @@ test('SLAM6: over the bound the NEAREST are in every turn and the rest are cut i
     const ids = got.map((x) => x.id);
     assert.deepEqual(ids.slice(0, POSE_FAN_MAX), list.slice(0, POSE_FAN_MAX).map((x) => x.id), `turn ${turn}: the nearest run, every turn`);
     assert.equal(new Set(ids).size, ids.length, `turn ${turn}: nobody served twice in one pose`);
-    const slice = Math.ceil((n - POSE_FAN_MAX) / POSE_FAR_SHARE);
-    assert.equal(got.length, POSE_FAN_MAX + Math.min(slice, n - POSE_FAN_MAX - turn * slice), `turn ${turn}: the bound plus this turn's slice (the last one is short when the rest do not divide)`);
+    // SLAM10 re-aimed this line: it asserted the far count per turn as an equal SLICE of a rank-ordered list, which
+    // is the law SLAM10 withdrew. A turn now serves the far listeners whose id hashes to it, and their count is
+    // whatever the hash makes it; what is law is that the counts over one rotation add up to everyone once.
+    for (const x of got.slice(POSE_FAN_MAX)) assert.equal(hashKey(x.id) % POSE_FAR_SHARE, turn % POSE_FAR_SHARE, `turn ${turn}: every far listener served is in this turn's bucket`);
     for (const id of ids) seen.set(id, (seen.get(id) ?? 0) + 1);
   }
   assert.equal(seen.size, n, 'over one rotation every listener in the room has heard the sender');
@@ -76,16 +78,25 @@ test('SLAM6: over the bound the NEAREST are in every turn and the rest are cut i
   assert.deepEqual(poseFan(list, from, (x) => x.p, -1).map((x) => x.id), poseFan(list, from, (x) => x.p, POSE_FAR_SHARE - 1).map((x) => x.id));
 });
 
-test('SLAM6: the far tier is ranked by the SAME distance the near one is, and the near set is exactly nearestFan\'s (mutant: the far slices cut in socket order, which puts the man across the square in the same slice as the man at your elbow)', () => {
+test('SLAM6/SLAM10: the NEAR set is exactly nearestFan\'s, by distance - and the FAR tier\'s bucket is a function of the listener\'s id alone, the same wherever anybody stands (mutant: the far tier cut by rank, which SLAM6 shipped and a moving crowd shuffles)', () => {
   const list = line(POSE_FAN_MAX + 20);
   const from = at(0, 1000);   // the sender at the FAR end: "nearest" is the tail, and a first-N answer is exactly wrong
   const near = poseFan(list, from, (x) => x.p, 0).slice(0, POSE_FAN_MAX).map((x) => x.id);
   assert.deepEqual(near, nearestFan(list, from, (x) => x.p).map((x) => x.id), 'one ranking, both doors');
   assert.equal(near[0], list.length - 1, 'the nearest first');
-  // the first far slice is the listeners just past the bound, not the ones at the other end of the square
-  const firstFar = poseFan(list, from, (x) => x.p, 0).slice(POSE_FAN_MAX).map((x) => x.id);
-  const lastFar = poseFan(list, from, (x) => x.p, POSE_FAR_SHARE - 1).slice(POSE_FAN_MAX).map((x) => x.id);
-  assert.ok(Math.min(...firstFar) > Math.max(...lastFar), 'the near slices come first and the far end of the room comes last');
+  // SLAM10: the law this test used to end on - "the near slices come first and the far end of the room comes last" -
+  // is exactly the rank-indexed far tier that a walking crowd breaks, and it is withdrawn. The law now: a far
+  // listener's turn is hashKey(id) % share, so move the sender to the other end of the room (every rank reverses)
+  // and the far listeners served on a given turn are the SAME ids among those still far.
+  const bucketOf = (id) => hashKey(id) % POSE_FAR_SHARE;
+  for (let turn = 0; turn < POSE_FAR_SHARE; turn++) {
+    const hereFar = poseFan(list, from, (x) => x.p, turn).slice(POSE_FAN_MAX).map((x) => x.id);
+    const thereFar = poseFan(list, at(0, -1000), (x) => x.p, turn).slice(POSE_FAN_MAX).map((x) => x.id);
+    for (const id of hereFar) assert.equal(bucketOf(id), turn % POSE_FAR_SHARE);
+    for (const id of thereFar) assert.equal(bucketOf(id), turn % POSE_FAR_SHARE);
+    const farBoth = list.map((x) => x.id).filter((id) => id >= 20 && id < POSE_FAN_MAX);   // far from BOTH ends: ranks 20..31 from one side are ranks 20..31 from the other
+    for (const id of farBoth) assert.equal(hereFar.includes(id), thereFar.includes(id), `listener ${id}: served on turn ${turn} from one end iff from the other`);
+  }
   assert.ok(POSE_FAN_MAX <= ROSTER_MAX, 'the full-rate set is no larger than the welcome the joiner was handed');
 });
 

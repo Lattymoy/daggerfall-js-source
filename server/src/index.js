@@ -109,7 +109,7 @@ import { roomOf, parseClient, inRange, poseGate, chatGate, tokenGate, rosterFor,
 
 /** AUDIT WORLD34 D4: the relay names itself in /health - the deploy is by hand (`npx wrangler deploy`), nothing in
  *  CI does it, and until now nothing said which relay was live. Bump it with every relay-changing slice. */
-export const RELAY_VERSION = 'world70';   // SLAM9: the who budget is the sum of the socket gates, spent before the scan
+export const RELAY_VERSION = 'world71';   // SLAM10: the far tier is bucketed by the listener's id, stable under movement
 
 const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*' } });
 
@@ -597,7 +597,7 @@ export class Room {
         if (other === ws || !b.id) continue;
         if (inRange(a.key ?? '', m.p, b.pose)) heard.push([other, b]);
       }
-      for (const [other] of (still ? heard : poseFan(heard, m.p, (e) => e[1].pose, met.turn))) this._send(other, out);
+      for (const [other] of (still ? heard : poseFan(heard, m.p, (e) => e[1].pose, met.turn, (e) => e[1].id))) this._send(other, out);   // SLAM10: the far tier bucketed by the listener's ID, so a moving crowd cannot shuffle who is served
       return;
     }
     if (m.t === 'chat') {

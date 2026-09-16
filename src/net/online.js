@@ -861,7 +861,18 @@ export class OnlineSession {
     // Measured MOVE to MOVE, never from the welcome: `at` is also stamped when a roster entry first names this peer,
     // and the time between hearing OF somebody and seeing them move is not an interval they are keeping. A peer's
     // first real move therefore has no gap yet and eases on the default.
-    if (p.movedAt != null) p.gap = Math.min(GAP_MAX_MS, Math.max(GAP_MIN_MS, now - p.movedAt));
+    // SLAM10 (AUDIT SLAM): AND THE INTERVAL MAY NOT COLLAPSE FASTER THAN BY HALF. The ease is a lag interpolator -
+    // `from` is where the peer is drawn, `to` the newest pose - so the drawn figure trails by one interval. When
+    // SLAM6 promotes me into a sender's near tier its interval falls from 1000 ms (one in POSE_FAR_SHARE at the
+    // crowd rate) to 250 ms in a single step, and the whole accumulated lag has to be burned inside one 250 ms
+    // segment: measured, a peer walking at 5 u/s was drawn at 20.6 u/s for a quarter second - a dash, under
+    // JUMP_UNITS so the rig plays the walk at 4x rather than snapping. Halving at most per pose caps the catch-up
+    // at twice the peer's real speed and converges in two intervals; growing is unbounded as before (a silence
+    // must still ceiling, not crawl), and the steady state is untouched.
+    if (p.movedAt != null) {
+      const g = Math.min(GAP_MAX_MS, Math.max(GAP_MIN_MS, now - p.movedAt));
+      p.gap = p.gap != null ? Math.max(g, p.gap * 0.5) : g;
+    }
     p.movedAt = now;
     const snap = String(this.room ?? '').startsWith('world:') ? SNAP_WORLD_UNITS : SNAP_SCENE_UNITS;
     const from = p.shown && groundDist(p.shown, pose) <= snap ? { ...p.shown } : { ...pose };

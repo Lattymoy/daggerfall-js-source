@@ -5150,7 +5150,7 @@ mutations, 10 dead.**
 **NOT SEEN ON THE REAL RELAY.** Every number here is this container's
 CPU against the fake Durable Object. A Workers isolate is not this
 machine; treat the SHAPE (quadratic, then linear) as the finding and the
-absolute milliseconds as optimistic. `RELAY_VERSION` is `world70`, and the
+absolute milliseconds as optimistic. `RELAY_VERSION` is `world71`, and the
 relay must be deployed for any of this to be true in production.
 
 
@@ -5425,7 +5425,7 @@ forever). A **foes** frame is still the introduction's: a pose is one
 figure standing where it says it is, a pool is a world, and AUDIT WORLD6b
 A8/C6 holds unchanged.
 
-`RELAY_VERSION` is `world70`. **The relay must be deployed by hand for
+`RELAY_VERSION` is `world71`. **The relay must be deployed by hand for
 any of this to be true in the room** - nothing in CI deploys it.
 
 **Pinned** in `test/slam6.test.js` (6) and in the two re-aimed SLAM1
@@ -5766,3 +5766,71 @@ on `_known`; membership from a pose across a halo; and 200 asks in one
 instant all answered where the old budget answered 60. Five re-aimed pins
 (`slam6`, `online`, `world6biiie`, `auditworld6biiie`) drive `tick()` now
 rather than expecting an ask on the pose.
+
+## SLAM10 - THREE OF SLAM6'S OWN REGRESSIONS (2026-09-16, AUDIT SLAM)
+
+Audit ledger items 3, 4 and 6, all SLAM6's, paid together because each is
+a consequence of standing strangers and tiering the fan.
+
+**THE FAR TIER WAS INDEXED BY A RANK THAT MOVED.** SLAM6 cut the listeners
+past `POSE_FAN_MAX` into `POSE_FAR_SHARE` slices of a list `ranked()`
+re-sorts on every pose, and served slice `turn % share`. A rank is not a
+stable thing. When the crowd moves, ranks shuffle; a listener crossing a
+slice boundary between two turns is served twice or not at all; and
+"served once every `share` poses" - which SLAM6 published as a guarantee
+and derived `POSE_FAR_SHARE` from - was true only for a crowd standing
+perfectly still, the one case it measured. On the shipped law, 200 in one
+block at 4 Hz:
+
+| crowd | never-heard pairs | pairs whose worst gap > `GAP_MAX_MS` | worst gap |
+|---|---|---|---|
+| standing | 0 | 0.0% | 1000 ms |
+| shuffling, 2 u/s | 0 | 15.4% | 6750 ms |
+| walking, 8 u/s | 0 | 50.1% | 5250 ms |
+
+Never-heard stayed 0, so SLAM6's *erasure* fix held; what failed was the
+smoothness law - a far peer sprinting six seconds of walking in one and
+standing frozen for five, the exact artefact the share was derived to
+prevent. The far tier is now bucketed by **`hashKey(listener id) % share`**
+(`wire.js`, FNV-1a), a function of who the listener is and nothing else,
+so over any `share` consecutive poses every far listener is served exactly
+once *by construction*, whatever the crowd does. Driven both ways: a pure
+200-body random walk at 8 u/s over 48 poses with **0 far pairs ever more
+than `POSE_FAR_SHARE` poses unheard**, and over the real `Room` with the
+far listeners' ranks permuted between every one of the sender's poses,
+**every far listener heard exactly one**. The near set is still the
+nearest `max` by distance - that half of the law is about who can see
+whom, and distance is the right measure for it.
+
+**A STRANGER TOOK A MORROWIND BODY.** SLAM6 stands a peer from its pose
+before the relay has named it, and `PeerBodies` offers its `BODIES_MAX`
+rigs to the *nearest* peers - so at an event the eight figures closest to
+the camera were eight **identical default Bretons**, each a multi-second
+mesh parse, each paid twice (once for the placeholder, again at
+`BODY_REBUILD_MS` when the real look landed). A stranger keeps the shared
+look-less doll - one compose for the whole crowd - until it is introduced;
+the rig is the dearest thing a peer can wear and it waits for the name.
+
+**A PEER CROSSING INTO THE NEAR TIER DASHED.** The ease is a lag
+interpolator: `from` is where the peer is drawn, `to` the newest pose, so
+the drawn figure trails by one interval. When SLAM6 promoted a listener
+into a sender's near tier, that sender's interval fell from 1000 ms to
+250 ms in a single step and the whole accumulated lag burned inside one
+250 ms segment - a peer walking at 5 u/s drawn at **20.6 u/s** for a
+quarter second, under `JUMP_UNITS` so the rig played the walk at 4x rather
+than snapping. The measured interval may now **halve at most per pose**:
+the catch-up is capped at twice the peer's real speed and converges in two
+intervals (1000 → 500 → 250, pinned), growth is unbounded as before so a
+silence still ceilings rather than crawls, and the steady state is
+untouched.
+
+`RELAY_VERSION` is `world71`; the version bump was run with
+`test/relayversion.test.js` excluded, as that file now says to.
+
+**Pinned** in `test/slam10.test.js` (5) and in two re-aimed `slam6` pins
+and one `slam1` count that encoded the rank-sliced far tier. **9
+mutations, 9 dead**: the far tier back to rank slices (SLAM6 verbatim),
+the bucket read off the rank index, the hash made constant, the bucket
+ignoring the turn, the relay not passing the id, strangers taking bodies,
+the interval collapsing in one step, shrinking too slowly, and growth
+bounded too.

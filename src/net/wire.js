@@ -514,17 +514,38 @@ export function nearestFan(list, from, poseOf, max = POSE_FAN_MAX) {
   return ranked(list, from, poseOf).slice(0, max);
 }
 
-/** SLAM6: the listeners THIS pose goes to - the nearest `max`, every pose, and one turn of the far tier: the rest
- *  are cut into `share` slices by distance and `turn` (the sender's own pose counter) says which slice is served.
- *  Every listener in the room is therefore served at least once every `share` poses and NOBODY is ever hidden by
- *  the bound; the near ones simply hear it `share` times as often.
- *  Under the bound the list is returned AS IT IS, exactly as `nearestFan`. */
-export function poseFan(list, from, poseOf, turn = 0, max = POSE_FAN_MAX, share = POSE_FAR_SHARE) {
+/** SLAM10 (2026-09-16, AUDIT SLAM): a 32-bit FNV-1a over a string. Not for secrecy - for a BUCKET that is a function
+ *  of the listener and nothing else, so the far tier's rotation cannot be shuffled by where anybody is standing. */
+export function hashKey(s) {
+  let h = 0x811c9dc5;
+  const str = String(s);
+  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  return h >>> 0;
+}
+
+/** SLAM6: the listeners THIS pose goes to - the nearest `max`, every pose, and one turn of the far tier; the near
+ *  ones simply hear it `share` times as often as the rest. Under the bound the list is returned AS IT IS, exactly as
+ *  `nearestFan`.
+ *
+ *  SLAM10 (AUDIT SLAM): THE FAR TIER IS BUCKETED BY WHO THE LISTENER IS, NOT BY WHERE IT RANKS. SLAM6 cut the far
+ *  listeners into `share` slices of a list `ranked()` re-sorts on every pose, and served slice `turn % share`. A rank
+ *  is not a stable thing: when the crowd moves, ranks shuffle, a listener crosses a slice boundary between two turns
+ *  and is served twice or not at all, and "once every `share` poses" was true only for a crowd standing perfectly
+ *  still - which was the one case SLAM6 measured before publishing it as a guarantee. Measured on the shipped law at
+ *  200 in one block: never-heard stayed 0 at every speed (SLAM6's erasure fix held), but 15% of sender-listener pairs
+ *  went longer than GAP_MAX_MS between poses at a shuffle and 50% at a walk, with worst gaps over 6 s - a far peer
+ *  sprinting six seconds of walking in one and then standing frozen for five, which is the exact artefact
+ *  POSE_FAR_SHARE was derived to prevent. A listener is now served on the turn `hashKey(keyOf(listener)) % share`,
+ *  which depends on its id alone; over any `share` consecutive poses every far listener is served exactly once,
+ *  whatever the crowd does, by construction. The near set is still the nearest `max` by distance: that half of the
+ *  law is about who can see whom, and distance is the right measure for it. */
+export function poseFan(list, from, poseOf, turn = 0, keyOf = (x) => x?.id, max = POSE_FAN_MAX, share = POSE_FAR_SHARE) {
   if (!Array.isArray(list) || list.length <= max) return list;
   const sorted = ranked(list, from, poseOf);
-  const slice = Math.ceil((sorted.length - max) / share);
-  const start = max + ((((turn | 0) % share) + share) % share) * slice;
-  return sorted.slice(0, max).concat(sorted.slice(start, start + slice));
+  const bucket = (((turn | 0) % share) + share) % share;
+  const out = sorted.slice(0, max);
+  for (let i = max; i < sorted.length; i++) if (hashKey(keyOf(sorted[i])) % share === bucket) out.push(sorted[i]);
+  return out;
 }
 
 /** SLAM8 (2026-09-16, AUDIT SLAM): HAS A POSE MOVED? Moved here from net/online.js, which is the client alone, because

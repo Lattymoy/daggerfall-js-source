@@ -26,7 +26,7 @@
 // 59.2k sends a second at 200 rather than 159.2k unbounded (arithmetic, as above - not an observation).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { nearestFan, POSE_FAN_MAX, POSE_FAR_SHARE, ROSTER_MAX, PIXEL_UNITS } from '../src/net/wire.js';
+import { nearestFan, hashKey, POSE_FAN_MAX, POSE_FAR_SHARE, ROSTER_MAX, PIXEL_UNITS } from '../src/net/wire.js';
 import * as relay from '../server/src/relay.js';
 import { fakeRoom } from './fakeRoom.mjs';
 
@@ -85,7 +85,13 @@ test('SLAM1/SLAM6: THE RELAY FANS ONE POSE TO THE NEAREST POSE_FAN_MAX AT FULL R
   await r.pose(ws[n - 1], at(0, (n - 1) * 4 + 1));
   const far = n - 1 - POSE_FAN_MAX;   // the listeners past the bound: 15 of them here
   const heard = ws.map((s, i) => [i, ofType(s, 'pose').length]).filter(([, c]) => c > 0);
-  assert.equal(heard.length, POSE_FAN_MAX + Math.ceil(far / POSE_FAR_SHARE), 'the nearest bound, plus ONE TURN of the rest');
+  // SLAM10 re-aimed this count: it was `POSE_FAN_MAX + ceil(far / POSE_FAR_SHARE)`, an equal SLICE of a rank-ordered
+  // list - the law SLAM10 withdrew because a moving crowd shuffles ranks. A turn now serves the far listeners whose
+  // id hashes to it, so the count is the bound plus that bucket's size, read off the sender's own turn counter.
+  const turn = r.room._attach(ws[n - 1]).turn;
+  const farIds = ws.slice(0, far).map((s) => s.att.id);
+  const inBucket = farIds.filter((id) => hashKey(id) % POSE_FAR_SHARE === turn % POSE_FAR_SHARE).length;
+  assert.equal(heard.length, POSE_FAN_MAX + inBucket, `the nearest bound, plus this turn's bucket of the rest (${inBucket} of ${far})`);
   const ids = heard.map(([i]) => i).sort((a, b) => a - b);
   assert.equal(ids[ids.length - 1], n - 2, 'the nearest neighbour heard it');
   assert.ok(ids.includes(n - 1 - POSE_FAN_MAX), 'the whole nearest run is in, every pose');
