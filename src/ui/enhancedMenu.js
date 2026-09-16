@@ -857,9 +857,15 @@ function paneQuickSettings(pane) {
  *  override: the two skins are two hosts and there is nothing to hand
  *  over in place. */
 export function switchSkin(to = otherSkin(uiSkin())) {
-  setUiSkin(to);
+  const stored = setUiSkin(to);
   const url = new URL(location.href);
   url.searchParams.delete('skin');
+  // SKIN-CARRY: the shelf refused the write (a browser with storage
+  // blocked) - the URL is the one carrier left, so the choice rides it
+  // for this session rather than reloading into the default. A stored
+  // choice never needs it, and an override that outlives the choice is
+  // exactly what this function otherwise deletes.
+  if (stored === null) url.searchParams.set('skin', to);
   location.replace(url.toString());
 }
 

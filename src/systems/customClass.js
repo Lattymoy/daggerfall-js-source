@@ -157,6 +157,20 @@ export const REP_GREEN = [0.388, 0.549, 0.223, 1];
 export const REP_RED = [0.580, 0.031, 0, 1];
 export const REP_EXIT = Object.freeze([129, 165, 33, 14]);   // exitButtonRect
 export const REP_GROUPS = Object.freeze(['merchants', 'peasants', 'scholars', 'nobility', 'underworld']);
+/** CC-REP: the ledger's reach - a bar is 0..50px in 5px steps, so a
+ *  group's reputation is -10..+10 (UpdateRep's `height / 5`). */
+export const REP_MAX = 10;
+/** CC-REP (2026-09-16, Ember: "Class creation menu seems to be missing a
+ *  reputation setting"): ONE STEP on one group's bar - the same value law
+ *  as a bar click (an integer, -REP_MAX..REP_MAX, and JS's negative zero
+ *  normalised as UpdateRep's short would), reachable from a control
+ *  shaped for a thumb rather than a pixel faked from one. Answers the
+ *  next value, or null for a group the window does not have. */
+export function repStep(reps, group, dir) {
+  if (!REP_GROUPS.includes(group)) return null;
+  const next = Math.max(-REP_MAX, Math.min(REP_MAX, (reps?.[group] ?? 0) + (dir < 0 ? -1 : 1)));
+  return next || 0;
+}
 
 /** RoundNearestBarHeight (:243-259): 5px steps with the verbatim
  *  quirk - a remainder of exactly 4 rounds UP, 1..3 round DOWN -

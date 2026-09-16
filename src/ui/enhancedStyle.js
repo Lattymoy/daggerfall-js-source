@@ -334,6 +334,10 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   width: 34px; height: 34px; display: grid; place-items: center;
   border: 1px solid var(--iron); color: var(--dim); margin-left: 6px;
   position: relative;
+  /* CC-STEP: the glyph is a minus sign and a plus at the button's own
+     size - 22px on a 34px button, 26px on the 44px thumb one - so it
+     reads across the room, not as a speck. */
+  font-size: 22px; line-height: 1; font-weight: 500;
 }
 .step:hover { color: var(--bone); border-color: var(--dim); }
 /* AUDIT 24's finding, and this file FAILED IT until 2026-08-25.
@@ -1017,6 +1021,15 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
 .skillpool { color: var(--brass); font-size: 12px; }
 .skillpane .row { border-bottom: 1px solid #20262e; }
 .skillpane .acts { justify-content: flex-end; }
+/* CC-GRID: the custom-class builder on one page. Two columns from 900px
+   up - the twelve skills down one, the attributes and the class itself
+   down the other - with the name and the acts spanning both; the
+   list it always was below that width. */
+@media (min-width: 900px) {
+  .skillpane.builder { max-width: 1180px; display: grid; grid-template-columns: 1fr 1fr; column-gap: 34px; align-content: start; }
+  .skillpane.builder > .span { grid-column: 1 / -1; }
+  .skillpane.builder .builder-col { min-width: 0; }
+}
 
 /* ── REVIEW ─────────────────────────────────────────────────────
    The stage that closes the wizard. Everything on it is a control you
@@ -1970,6 +1983,7 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
 @media (pointer: coarse) {
   .step { width: 44px; height: 44px; }
   .rowact, .ctl .act { min-height: 44px; }
+  .step { font-size: 26px; }   /* CC-STEP: the glyph grows with the thumb-sized button (its own rule, so the 44px law's line above stays the one the pins find) */
   /* FT16: THE TILE'S CONTROLS JOIN THE LAW. FT14 replaced the list's
      one cycling .ctl .act - which this block already sized - with a
      segmented bar, chips and a drawer door, and none of them inherited

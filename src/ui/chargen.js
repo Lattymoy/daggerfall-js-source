@@ -26,7 +26,7 @@ import { QUESTION_COUNT, NO_CLASS_INDEX, displayQuestion, pickQuestionIndices, a
 const QANIM_STUCK_MIN_MS = 2000;
 const QANIM_STUCK_PAD_MS = 1000;
 import { ADVANTAGE_KEYS, DISADVANTAGE_KEYS, ONLY_ONE_KEYS, MAX_ITEMS, secondaryListFor, advDisAdjustment, cannotAdd, totalAdjust, parseCareerData } from '../systems/specialAdvantages.js';   // U20b
-import { HP_MIN, HP_MAX, HP_DEFAULT, DIFFICULTY_MIN, DIFFICULTY_MAX, FREE_EDIT_MIN, FREE_EDIT_MAX, STAT_DEFAULT, difficultyPoints, availableSkills, buildCustomCareer, classAffinityIndex, repClick, repPointsToDistribute, HELP_TOPICS } from '../systems/customClass.js';   // U20a
+import { HP_MIN, HP_MAX, HP_DEFAULT, DIFFICULTY_MIN, DIFFICULTY_MAX, FREE_EDIT_MIN, FREE_EDIT_MAX, STAT_DEFAULT, difficultyPoints, availableSkills, buildCustomCareer, classAffinityIndex, repClick, repStep, repPointsToDistribute, HELP_TOPICS } from '../systems/customClass.js';   // U20a
 import { damageModifier, maxEncumbrance, magicResist, toHitModifier, hitPointsModifier, healingRateModifier } from '../combat/formulas.js';   // U10: the derived block
 import { tagEffect, biographySkillBonuses, digestRepChanges } from '../systems/biography.js';   // S3e
 import { fullName, getNameBank, GENDERS } from '../characters/nameHelper.js';   // U15
@@ -2073,6 +2073,16 @@ export class ChargenFlow {
       const r = repClick(hit.repClick[0], hit.repClick[1]);
       if (r) {
         this.custom.reps[r.group] = r.value;
+        this.custom.repPoints = repPointsToDistribute(this.custom.reps);   // UpdatePointsToDistribute
+      }
+      return true;
+    }
+    // CC-REP: the enhanced pane's door - a step on one group, the same
+    // value law as the bar click above and the same ledger update.
+    if (hit.repStep) {
+      const v = repStep(this.custom.reps, hit.repStep.group, hit.repStep.dir);
+      if (v !== null) {
+        this.custom.reps[hit.repStep.group] = v;
         this.custom.repPoints = repPointsToDistribute(this.custom.reps);   // UpdatePointsToDistribute
       }
       return true;
