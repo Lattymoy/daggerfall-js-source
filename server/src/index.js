@@ -109,7 +109,7 @@ import { roomOf, parseClient, inRange, poseGate, chatGate, tokenGate, rosterFor,
 
 /** AUDIT WORLD34 D4: the relay names itself in /health - the deploy is by hand (`npx wrangler deploy`), nothing in
  *  CI does it, and until now nothing said which relay was live. Bump it with every relay-changing slice. */
-export const RELAY_VERSION = 'world66';   // AUDIT WORLD6b-iii(e): the ask carries the room's budget, keeps the looks, answers a pose within range alone, strikes nothing that left
+export const RELAY_VERSION = 'world67';   // SRV-N: the welcome names the deploy, so a client can tell a restarted relay from the one it was talking to
 
 const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*' } });
 
@@ -363,7 +363,10 @@ export class Room {
       await this.state.storage.put(secretKey(m.id), m.secret);
       if (!chat) { await this.state.storage.put(lookKey(m.id), m.look); this._looks.set(m.id, m.look); }   // a channel keeps no look: nobody is drawn from it
       if (!this._setAttach(ws, { ...a, id: m.id, name: m.name, pose: chat ? null : m.pose, since: replaced?.since ?? now })) { this._refuse(ws, 'hello too large'); return; }
-      if (chat) { this._send(ws, JSON.stringify({ t: 'welcome', id: m.id, peers: [] })); return; }   // told no one, announced to no one: a channel has no roster
+      // SRV-N: `v` rides EVERY welcome, a channel's included. A player in the enhanced skin holds a presence socket
+      // and one chat socket per tab; whichever reconnects first after a hand deploy is the one that notices, and the
+      // client's detector (net/updateNotice.js) is a Set so the rest of them say nothing.
+      if (chat) { this._send(ws, JSON.stringify({ t: 'welcome', id: m.id, peers: [], v: RELAY_VERSION })); return; }   // told no one, announced to no one: a channel has no roster
       const looks = others.length ? await this.state.storage.get(others.map((b) => lookKey(b.id))) : new Map();
       const roster = rosterFor(others.map((b) => ({ ...b, look: looks.get(lookKey(b.id)) ?? null })), m.id, m.pose);
       // WORLD1: the host and the room's memory ride the welcome - the world raw, never parsed here; a joiner that
@@ -378,7 +381,7 @@ export class Room {
       // WORLD5: the relay's clock rides the welcome, so a client whose machine's clock is off reads the shared world time through the offset
       // AUDIT WORLD5 C11: stamped as the welcome is BUILT, not as the hello began - four storage awaits sit between the
       // two, and every millisecond of them was an offset the client carried as the relay's clock
-      const welcome = `{"t":"welcome","id":${JSON.stringify(m.id)},"peers":${JSON.stringify(roster)},"host":${JSON.stringify(host)},"world":${world ?? 'null'},"now":${Date.now()}}`;
+      const welcome = `{"t":"welcome","id":${JSON.stringify(m.id)},"peers":${JSON.stringify(roster)},"host":${JSON.stringify(host)},"world":${world ?? 'null'},"now":${Date.now()},"v":${JSON.stringify(RELAY_VERSION)}}`;
       if (!this._send(ws, welcome)) return;
       const join = JSON.stringify({ t: 'join', id: m.id, name: m.name, look: m.look, pose: m.pose });
       for (const [other, b] of [...this._all()]) if (other !== ws && b.id) this._send(other, join);

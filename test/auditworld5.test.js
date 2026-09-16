@@ -22,6 +22,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { RELAY_VERSION } from '../server/src/index.js';
+import { relayVersionAtLeast } from './relayVersion.mjs';
 import { CLASSIC_GAME_START_TIME, MINUTES_PER_DAY } from '../src/systems/gameDate.js';
 import { worldMinutes, setWorldMinutes, setSharedClock, alignEntityClocks, resetMagicRoundMarker, tickPlayerMinutes, claimMagicRounds } from '../src/systems/worldTick.js';
 import { setSharedWeather, resetWeatherSim, rollClimateWeathersForDay, weatherForClimate, ZONE_CLIMATES, tickWeather, currentWeatherEnum, weatherJumpStamp, evolveClimateWeathers, setWeatherEvolution, WEATHER_ENUM } from '../src/systems/weatherSim.js';
@@ -275,8 +276,13 @@ test('AUDIT WORLD5 by source: the sentence refills nothing online (C9), exterior
   assert.equal((af.match(/if \(!sharedClockOn\(\)\) fillVitalSigns\(playerEntity\);/g) ?? []).length, 1, 'the sentence\'s refill alone is gated');
   assert.ok((af.match(/^\s*fillVitalSigns\(playerEntity\);/gm) ?? []).length >= 2, 'the rescue\'s and the acquittal\'s refills stand - neither costs a day offline either');
   assert.match(rd('src/scenes/exterior.js'), /questClockStepMax: \(\) => \(sharedClockOn\(\) \? PLAYED_STEP_MAX_SECONDS : Infinity\),/, 'C10 (WORLD7\'s word: the same as world.js\'s)');
-  assert.match(rd('server/src/index.js'), /"now":\$\{Date\.now\(\)\}\}`;/, 'C11: not the hello\'s start, four awaits earlier');
-  assert.equal(RELAY_VERSION, 'world66', 'C11: the relay bumped (WORLD6a and its audit bumped it again; WORLD6b for the cell)');
+  // SRV-N appended `v` after it, so the stamp is no longer the last field.
+  // What C11 is about is unchanged and is what is matched: Date.now() is
+  // CALLED where the welcome is built, not read from a variable set when
+  // the hello began - four storage awaits earlier, every millisecond of
+  // which the client carried as the relay's clock.
+  assert.match(rd('server/src/index.js'), /"now":\$\{Date\.now\(\)\},"v":/, 'C11: not the hello\'s start, four awaits earlier');
+  assert.ok(relayVersionAtLeast(66), 'C11: the relay bumped, and has not gone backwards since (SRV-N: asked monotonically - five pins used to retype one moving number)');
   assert.match(rd('src/ui/enhancedMenu.js'), /The clock and the sky are the world\\'s and run on real time: a rest, a trip, a sentence or a lesson takes none of it, and the quest clocks stand still\./, 'C12');
   const w = rd('src/scenes/world.js');
   const install = w.indexOf("if (params.has('online')) { setSharedClock(() => sharedClassicMinutes(Date.now() + _sharedOffsetMs), (m) => wallMsForClassicMinutes(m) - _sharedOffsetMs); setSharedWeather(true); }");

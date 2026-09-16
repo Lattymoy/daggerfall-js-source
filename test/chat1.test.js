@@ -38,7 +38,7 @@ import {
 } from '../src/net/wire.js';
 import * as relay from '../server/src/relay.js';
 import { fakeRoom } from './fakeRoom.mjs';
-import worker from '../server/src/index.js';
+import worker, { RELAY_VERSION } from '../server/src/index.js';
 import { OnlineSession, HEARTBEAT_MS, BACKOFF_MIN_MS } from '../src/net/online.js';
 import { ChatLog, CHAT_TABS, CHAT_KEEP, CHAT_FADE_MS, CHAT_PEEK, CHAT_REJOIN_MS, tagOf } from '../src/net/chat.js';
 import { createChatPanel, isOpenKey, CHAT_STYLE_ID, CHAT_OPEN_ACTION, clockOf, CHAT_CSS } from '../src/ui/chatPanel.js';
@@ -116,8 +116,8 @@ test('CHAT1 / AUDIT CHAT: the Room as a CHANNEL - a hello keeps the secret and n
   const r = fakeRoom(CHAT_WORLD_ROOM);
   const a = r.connect(), b = r.connect(), c = r.connect();
   await r.hello(a, 'aaaa-0001'); await r.hello(b, 'bbbb-0002', at(3, 3));
-  assert.deepEqual(a.sent, [{ t: 'welcome', id: 'aaaa-0001', peers: [] }]);
-  assert.deepEqual(b.sent, [{ t: 'welcome', id: 'bbbb-0002', peers: [] }], 'a channel has no roster: b is told no one though a is there');
+  assert.deepEqual(a.sent, [{ t: 'welcome', id: 'aaaa-0001', peers: [], v: RELAY_VERSION }]);   // SRV-N: and the deploy's name, on a channel's welcome too - the only welcome a chat link ever gets
+  assert.deepEqual(b.sent, [{ t: 'welcome', id: 'bbbb-0002', peers: [], v: RELAY_VERSION }], 'a channel has no roster: b is told no one though a is there');
   assert.equal(ofType(a, 'join').length, 0, 'and a hears no join');
   assert.equal(r.store.has('secret:aaaa-0001'), true, 'the secret is kept');
   assert.equal(r.store.has('look:aaaa-0001'), false, 'the look is not: nobody is drawn from a channel');
@@ -342,7 +342,7 @@ test('CHAT1 / AUDIT CHAT: the log - the World tab from CHAT_TABS (one today, eac
   assert.equal(log.push('world', { id: 'a', name: 'A', text: '' }), null, 'nothing to say: nothing kept');
   assert.equal(log.version, v0, 'and nothing to show');
   const l1 = log.push('world', { id: 'a', name: 'A', text: 'one', at: 5 });
-  assert.deepEqual(l1, { seq: 1, id: 'a', name: 'A', text: 'one', at: 5, t: 10_000, mine: false });
+  assert.deepEqual(l1, { seq: 1, id: 'a', name: 'A', text: 'one', at: 5, t: 10_000, mine: false, system: false });   // SRV-N: every line carries the flag, and a player's is false
   assert.equal(log.tab('world').unread, 1, 'closed: unread');
   assert.ok(log.version > v0);
   log.push('world', { id: 'me', name: 'Me', text: 'two', mine: true });
@@ -611,7 +611,7 @@ test('CHAT1 / AUDIT CHAT: the host by source - world.js starts the chat with the
   assert.match(w, /import \{ requestLook, releaseLook, makeLookGate, bindCursorToggle, setCursorActive \} from '\.\.\/player\/pointerLock\.js';/);
   assert.match(w, /if \(enhanced && typeof document !== 'undefined'\) chatStart\(\);/, 'the enhanced skin\'s, with a document (node has none)');
   assert.match(w, /const chatStart = \(\) => \{\s*if \(!online\.url\) return;/, 'AUDIT CHAT A9/B1: a relay the law refused is no relay for the chat either');
-  assert.match(w, /for \(const tab of chatLog\.tabs\) \{\s*const link = new OnlineSession\(\{ url: online\.url, name: online\.name, look: online\.look, id: online\.id, secret: online\.secret, presence: false \}\);\s*link\.onChat = \(line\) => chatLog\.push\(tab\.id, line\);\s*link\.join\(tab\.room\);\s*chatLinks\.set\(tab\.id, link\);/, 'a channel session per tab, the presence session\'s identity, a line to its tab');
+  assert.match(w, /for \(const tab of chatLog\.tabs\) \{\s*const link = new OnlineSession\(\{ url: online\.url, name: online\.name, look: online\.look, id: online\.id, secret: online\.secret, presence: false \}\);\s*link\.onChat = \(line\) => chatLog\.push\(tab\.id, line\);\s*link\.onRelay = onRelayVersion;\s*link\.join\(tab\.room\);\s*chatLinks\.set\(tab\.id, link\);/, 'a channel session per tab, the presence session\'s identity, a line to its tab');
   assert.match(w, /onSend: \(tabId, text\) => chatLinks\.get\(tabId\)\?\.sendChat\(text\) \?\? false,/, 'a typed line down its tab\'s session, and the answer back (B2)');
   assert.match(w, /canOpen: \(\) => !gamePaused\(\) && !\(townTalk\.hudCovered \|\| \(modes\?\.hudCovered \?\? false\)\)/, 'no chat under a window');
   assert.match(w, /onOpen: \(\) => \{ setCursorActive\(false\); releaseLook\(\); \},/, 'AUDIT CHAT C2: the pointer freed on open; PL3: the opening Enter reclaimed from the toggle');
@@ -722,4 +722,43 @@ test('CHAT2: a chat row states that it does not shrink', () => {
   assert.ok(row, 'the row rule is still called .dfchat-line');
   assert.equal(DECLS(row.body).flex, 'none',
     'the row never shrinks - the list scrolls instead (CHAT2; tools/chatLayoutProbe.mjs measures it)');
+});
+
+// ── SRV-N: A LINE NOBODY SENT ────────────────────────────────────────
+
+test('SRV-N: the panel draws a notice UNATTRIBUTED - no name and no #tag, its own colour instead - while a player\'s line keeps both, in the peek and in the open list alike', () => {
+  let clock = 50_000;
+  const log = new ChatLog({ now: () => clock });
+  const doc = fakeDocument(), win = fakeWindow();
+  const panel = createChatPanel({ log, onSend: () => true, canOpen: () => true, action: defaultAction, doc, win, touch: false });
+  const root = doc.body.children[0];
+
+  log.push('world', { id: 'bob-0001', name: 'Bob', text: 'anyone else just get dropped' });
+  log.push('world', { text: 'The server was updated and restarted.', system: true });
+  panel.render();
+  const [player, notice] = find(one(root, 'dfchat-peek'), 'dfchat-line');
+
+  assert.equal(one(player, 'dfchat-name').textContent, 'Bob');
+  assert.equal(one(player, 'dfchat-tag').textContent, `#${tagOf('bob-0001')}`);
+
+  // THE TAG IS THE REASON THIS IS NOT A NAME. `tagOf('')` is a perfectly
+  // real-looking four-character hash, identical on every notice - so a
+  // notice drawn the ordinary way would read as a PLAYER called Server
+  // with a stable tag of their own, which is precisely the thing a
+  // player learns to trust.
+  assert.equal(find(notice, 'dfchat-name').length, 0, 'a notice is nobody\'s');
+  assert.equal(find(notice, 'dfchat-tag').length, 0);
+  assert.equal(one(notice, 'dfchat-text').textContent, 'The server was updated and restarted.');
+  assert.ok(String(notice.className).split(/\s+/).includes('system'), 'its own class, so the sheet can give it its own colour');
+  assert.ok(!String(player.className).split(/\s+/).includes('system'));
+  assert.match(CHAT_CSS, /\.dfchat-line\.system \.dfchat-text \{/, 'and the sheet actually carries that rule');
+
+  // the open list is a second builder over the same node maker, and a
+  // notice must not grow a name on the way into it
+  panel.open(); panel.render();
+  const listRows = find(one(root, 'dfchat-list'), 'dfchat-line');
+  assert.equal(find(listRows.at(-1), 'dfchat-name').length, 0, 'still nobody\'s with the panel open');
+  assert.equal(one(listRows.at(-1), 'dfchat-text').textContent, 'The server was updated and restarted.');
+  assert.ok(one(listRows.at(-1), 'dfchat-time'), 'and it is still stamped like any other line');
+  panel.destroy?.();
 });

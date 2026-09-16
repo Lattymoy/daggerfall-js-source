@@ -226,6 +226,8 @@ export class OnlineSession {
     this.clockOffsetMs = 0;       // WORLD5: the relay's clock minus this machine's, from the welcome - the shared world time is read through it
     this.clockWarning = null;     // OL3: the welcome's clock was a year off this machine's - said on the HUD line while it stands
     this.onClock = null;          // WORLD5: (offsetMs) => void - the welcome said the relay's clock
+    this.relayVersion = null;     // SRV-N: which deploy of the relay this socket is talking to, off the welcome's `v`
+    this.onRelay = null;          // SRV-N: (version) => void - a welcome named the relay's deploy
     this.look = look ?? { race: 'Breton', gender: 'male', faceIndex: 0, items: [] };
     this.id = id ?? peerId();
     this._WS = WebSocketImpl;
@@ -663,6 +665,11 @@ export class OnlineSession {
     const now = this._now();
     const primary = room === this.room;   // WORLD6b-iii(b): a halo room's frames place its peers and carry a peer's foes and blows; the host, the clock and the memory are my own room's alone
     if (m.t === 'welcome') {
+      // SRV-N: WHICH RELAY IS THIS. Read ABOVE the `primary` gate below on purpose - a halo room's welcome comes off
+      // the same Worker as my own room's, and a chat channel's welcome is the only one a chat link ever gets, so
+      // gating this on the primary room would have made the chat's own sessions blind to the restart that just
+      // dropped them. A relay before this slice carries no `v` at all and is left alone (updateNotice.js: 'unknown').
+      if (typeof m.v === 'string' && m.v) { this.relayVersion = m.v; this._deliver('relay', () => this.onRelay?.(m.v)); }
       // merged, not wiped: a peer already known keeps where it is drawn
       const keep = new Set();
       for (const p of Array.isArray(m.peers) ? m.peers : []) {

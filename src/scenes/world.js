@@ -223,6 +223,8 @@ import { makeHitPend } from '../net/hitPend.js';   // AUDIT FOES FOE2: a blow th
 import { PeerBodies } from '../net/peerBodies.js';   // MWBODY1: the others in the Morrowind body
 import { ChatLog, CHAT_REJOIN_MS } from '../net/chat.js';   // CHAT1: the tabs and their lines
 import { createChatPanel } from '../ui/chatPanel.js';   // CHAT1: the enhanced skin's chat over the world
+import { relayVersionSeen, buildUpdateSeen, fetchLiveBuildTag, RELAY_RESTART_TEXT, BUILD_UPDATE_TEXT, BUILD_POLL_MS } from '../net/updateNotice.js';   // SRV-N: the relay moved, or the build did
+import { BUILD_TAG } from '../buildTag.js';   // SRV-N: which build this tab is actually running
 import { morrowindDataCount, morrowindDataGeneration } from './dataSource.js';   // MWBODY1: the bodies' gate - Morrowind data attached - and its generation
 // Q4-v: THE QUEST BRIDGE - the machine goes live in this host.
 import { createQuestBridge, tokensToRows } from './questBridge.js';
@@ -6930,9 +6932,15 @@ export async function bootWorld(canvas, renderer, params, status) {
     for (const tab of chatLog.tabs) {
       const link = new OnlineSession({ url: online.url, name: online.name, look: online.look, id: online.id, secret: online.secret, presence: false });
       link.onChat = (line) => chatLog.push(tab.id, line);
+      link.onRelay = onRelayVersion;
       link.join(tab.room);
       chatLinks.set(tab.id, link);
     }
+    // SRV-N: the PRESENCE session hears the relay too, and it is usually
+    // the first back after a deploy. Both arms run the same detector,
+    // which is a Set - so N sockets reconnecting to a new relay produce
+    // ONE notice, not one each.
+    online.onRelay = onRelayVersion;
     chatPanel = createChatPanel({
       log: chatLog,
       onSend: (tabId, text) => chatLinks.get(tabId)?.sendChat(text) ?? false,   // false keeps the line in the field (B2)
@@ -6948,8 +6956,44 @@ export async function bootWorld(canvas, renderer, params, status) {
       onClose: () => { if (!gamePaused()) requestLook(canvas); },   // and taken back inside the closing gesture (MAC1's rule, ui/pauseDoor.js)
     });
   };
+  // SRV-N (Mac: "a server restart notice whenever we push server
+  // updates. Like a notice that pushes in the chat window"): A NOTICE
+  // GOES ON EVERY TAB. A relay restart and a new build are not a room's
+  // events - they happened to the whole game - so a player reading the
+  // one tab they had open must not have to guess which channel the news
+  // landed on. Today that is the World tab alone; a later row in
+  // CHAT_TABS gets it for free, which is the point of iterating.
+  const chatNotice = (text) => {
+    if (!chatLog) return false;
+    for (const tab of chatLog.tabs) chatLog.push(tab.id, { text, system: true });
+    return true;
+  };
+  const onRelayVersion = (v) => { if (relayVersionSeen(v) === 'changed') chatNotice(RELAY_RESTART_TEXT); };
+  // SRV-N: THE BUILD POLL. The relay moves by hand and rarely; the client
+  // moves on every merge, which is what "whenever we push" actually is
+  // for this project. Nothing tells a tab held open across a deploy that
+  // it is now running code we have replaced - it finds out when a lazy
+  // chunk 404s and systems/staleChunk.js reloads it out from under the
+  // player. So ask the site, on the site's own rhythm rather than the
+  // frame's, and let the player choose the moment.
+  let _buildPolledAt = 0;
+  let _buildPolling = false;
+  const buildPoll = (now) => {
+    // The FIRST poll waits a full interval too. A tab that has only just
+    // loaded is by definition current, and asking at boot would put every
+    // player's page load on the CDN twice for an answer we already know.
+    if (_buildPolling || now - _buildPolledAt < BUILD_POLL_MS) return;
+    _buildPolledAt = now;
+    _buildPolling = true;
+    const href = globalThis.location?.href ?? '';
+    fetchLiveBuildTag(href).then((tag) => {
+      _buildPolling = false;
+      if (buildUpdateSeen(tag, BUILD_TAG) === 'changed') chatNotice(BUILD_UPDATE_TEXT);
+    }, () => { _buildPolling = false; });   // `fetchLiveBuildTag` swallows its own throws; this is the belt for a rejection it cannot see
+  };
   const chatFrame = () => {
     if (!chatLinks) return;
+    buildPoll(performance.now());
     for (const [tabId, link] of chatLinks) {
       link.rejoin(chatLog.tab(tabId).room, CHAT_REJOIN_MS);   // AUDIT CHAT A6/B4/B6: the page's goodbye and a terminal close both get a way back
       link.tick();   // the retry and the heartbeat, on the session's own clock

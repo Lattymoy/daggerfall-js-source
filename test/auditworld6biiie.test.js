@@ -21,6 +21,7 @@ import { readFileSync } from 'node:fs';
 import { WHO_HZ_MAX, WHO_ROOM_HZ_MAX, HIT_ARROWS_MAX, parseClient, PIXEL_UNITS, validPose, RANGE_PIXELS } from '../src/net/wire.js';
 import * as relay from '../server/src/relay.js';
 import { RELAY_VERSION } from '../server/src/index.js';
+import { relayVersionAtLeast } from './relayVersion.mjs';
 import { POISONS } from '../src/systems/poisons.js';
 import { OnlineSession } from '../src/net/online.js';
 import { fakeRoom } from './fakeRoom.mjs';
@@ -179,7 +180,7 @@ test('AUDIT WORLD6b-iii(e) B1/B2/B9: the Room - who carries the room\'s budget (
   assert.match(s, /if \(this\._attach\(tws\)\?\.id !== b\.id\) return;/, 'B9: the socket read again after the await');
   assert.match(s, /this\._looks\.set\(m\.id, m\.look\); \}/, 'set at the hello'); assert.match(s, /this\._looks\.delete\(a\.id\);/, 'gone at the leave'); assert.match(s, /this\._looks\.clear\(\);\s*\n\s*const dead = \['hellos'\];/, 'cleared with the sweep');
   assert.match(s, /if \(!id \|\| id === a\.id\) \{ this\._junk\(ws, a\); return; \}\s*\n\s*const target = [^\n]*\n\s*if \(!target\) return;/, 'B3: one\'s own name is junk, a name that left is nothing');
-  assert.equal(RELAY_VERSION, 'world66', 'the relay says which one it is');
+  assert.ok(relayVersionAtLeast(66), 'the relay says which one it is, and says a later one just as well');
 });
 
 test('AUDIT WORLD6b-iii(e) B4/B6: the session forgets who it asked with the room (leave, and a join elsewhere); the parser refuses a bad name as an error, and passes a good one', () => {
