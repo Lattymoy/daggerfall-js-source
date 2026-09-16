@@ -108,19 +108,24 @@ export function advanceFrame(clock, dt, { frames, riding = false, walkAnimSpeedM
  * that explicit here is what stops a later reader assuming the draw
  * handles it.
  */
-export function spriteFor(table, orientation, frame, look = {}) {
+export function spriteFor(table, orientation, frame, look = {}, { flip = false } = {}) {
   const st = stateFor(table, orientation);
   if (!st) return null;
   const archive = tableArchive(table, look);
+  // AUDIT-EOTB2: `flip` is the Mirror attack string's whole-clip flip
+  // (Graphics.AttackStrings), laid OVER the wheel's own mirror - a
+  // flipped left-facing frame is the unflipped right-facing pixels, so
+  // the two cancel, and the cache key follows the pixels, not the state
+  const mirror = st.mirror !== !!flip;
   return {
     archive,
     record: st.record,
     frame,
-    mirror: st.mirror,
+    mirror,
     key: spriteKey(archive, st.record, frame),
     /** what the renderer caches it under - the mirrored copy is its
      *  own record, because it is its own pixels */
-    rec: `${st.record}-${frame}${st.mirror ? 'm' : ''}`,
+    rec: `${st.record}-${frame}${mirror ? 'm' : ''}`,
   };
 }
 

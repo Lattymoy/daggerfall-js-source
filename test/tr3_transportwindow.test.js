@@ -134,7 +134,7 @@ test('TR3/MAC-K3: the host door - grounded and outdoors only, and EVERY host tha
   assert.match(rig, /if \(isRiding\(mode\)\) \{\s*\n\s*loadRidingArt\(fetchBytes, palette, renderer, mode\)/);
   // F-E1 (the parity audit): OnGUI :293 refuses to draw while paused -
   // an open window hides the mount, it does not freeze it.
-  assert.match(rig, /if \(art && isRiding\(player\.transportMode\) && !ridePaused\) \{/);
+  assert.match(rig, /if \(art && isRiding\(player\.transportMode\) && !ridePaused && !mwViewHides\(\)\.horse\) \{/);   // AUDIT-EOTB2: and not under the Eye Of The Beholder body, which draws the rider with the horse
   // The loop is a REAL channel, not an optional-chained no-op, and the
   // clip is the CLASSIC one, literally: the enhanced 3D horse that once
   // swapped mod clips into this expression was removed whole (2026-09-04).

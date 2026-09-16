@@ -85,7 +85,7 @@ test('HC1: the art loads in the ONE place the mode changes, so every path to a s
 
 test('HC1/MAC-K3: the draw - under the HUD, on EVERY outdoor host, hidden while paused, lifted over the large HUD', () => {
   const rig = read('src/player/mountRig.js');
-  assert.match(rig, /if \(art && isRiding\(player\.transportMode\) && !ridePaused\) \{[\s\S]{0,600}?renderer\.drawScreenQuad\(art\.frames\[r\.frame\], rect\);/, 'drawn from the animator\'s frame');
+  assert.match(rig, /if \(art && isRiding\(player\.transportMode\) && !ridePaused && !mwViewHides\(\)\.horse\) \{[\s\S]{0,600}?renderer\.drawScreenQuad\(art\.frames\[r\.frame\], rect\);/, 'drawn from the animator\'s frame (AUDIT-EOTB2: and not under the Eye Of The Beholder body)');
   assert.match(rig, /const rect = ridingRect\(canvasOf\(\), art, horseOffsetHeight\(\)\);/, 'at DFU\'s rect, over the large HUD when it asks');
 
   // THE LINE THIS PIN USED TO END ON, and why MAC-K3 exists:

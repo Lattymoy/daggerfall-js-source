@@ -205,3 +205,103 @@ export function attackTable(s = {}) {
 /** The sprite the bundle ships for one state, in the vendored naming:
  *  `<archive>_<record>-<frame>`. */
 export const spriteKey = (archive, record, frame) => `${archive}_${record}-${frame}`;
+
+// ═══ AUDIT-EOTB2: THE ONE-SHOTS, THE FACING AND THE AUTO-TOGGLE ══════
+//
+// EVIDENCE, stated per law because the assembly is NOT in the tree.
+// The camera and the table above were read off the IL on a machine
+// that had the bundle; this container has the bundle's manifest, its
+// settings (every key with the author's own description and option
+// labels) and its art, and NOT `Eye Of The Beholder.dll`. So each law
+// below says what it was read from:
+//
+//   [IL]        read off the assembly (the laws above this banner)
+//   [SETTINGS]  the setting's name, description and option labels,
+//               plus the state table the IL gave us
+//   [DFU]       Daggerfall Unity's own member the mod hangs off
+//
+// A [SETTINGS] law is the mod's shape as its author described it to
+// the player, not its body as the compiler saw it. When the assembly
+// is read, each becomes [IL] or is corrected - `bible/06-Systems/
+// Eye-Of-The-Beholder.md` carries the list.
+
+/** Graphics.AttackStrings' options, by index (modsettings.json). */
+export const ATTACK_STRINGS = Object.freeze(['None', 'Mirror', 'PingPong', 'Mixed']);
+
+/**
+ * [SETTINGS] Which string ONE attack plays. `None` plays the clip
+ * forward; `Mirror` alternates the clip's horizontal flip swing by
+ * swing (`MirrorTime` reverts it); `PingPong` plays forward then back
+ * (`PingPongOffset` moves the turn); `Mixed` rolls one of the two per
+ * attack - the only reading under which a "Mixed" option means
+ * anything beside the other three.
+ */
+export function attackString(setting, rolls = Math.random) {
+  const label = ATTACK_STRINGS[setting] ?? 'None';
+  if (label === 'Mixed') return rolls() < 0.5 ? 'Mirror' : 'PingPong';
+  return label;
+}
+
+/**
+ * [SETTINGS] The frame ORDER of a one-shot clip over `n` records.
+ * Forward is 0..n-1. PingPong turns at `n - 1 - offset` - "Adjusts the
+ * point in the animation where it starts playing backwards", shipped
+ * at 1 and ranged -3..3 - and walks back to 0 without repeating the
+ * turn frame. The turn is clamped into the clip, so an offset past
+ * either end is the nearest frame rather than an empty clip.
+ */
+export function clipFrames(n, { pingPong = false, pingPongOffset = 1 } = {}) {
+  const count = Math.max(1, n | 0);
+  const forward = Array.from({ length: count }, (_, i) => i);
+  if (!pingPong) return forward;
+  const turn = Math.max(0, Math.min(count - 1, count - 1 - (pingPongOffset | 0)));
+  const out = forward.slice(0, turn + 1);
+  for (let i = turn - 1; i >= 0; i--) out.push(i);
+  return out;
+}
+
+/** [IL] The death table by form - the two Death rows InitializeStates
+ *  builds; PlayDeathAnimation is the one thing that reaches them. */
+export const deathTable = (s = {}) => (s.transformed ? 'DeathLycan' : 'Death');
+
+/** Graphics.TurnToView's options, by index. */
+export const TURN_TO_VIEW = Object.freeze(['Never', 'OnlyWhenAnimating', 'WhenWeaponReadied', 'Always']);
+
+/**
+ * [SETTINGS] "Configure when the sprite turns to face the view." The
+ * sprite faces the VIEW (the camera's yaw - DFU's player has no body
+ * yaw of its own) when the option says so, and the way it is MOVING
+ * otherwise, so an unarmed player backing away from the camera is
+ * drawn walking toward it. `animating` is a one-shot in flight;
+ * `readied` is a weapon or spell up.
+ */
+export function turnsToView(setting, { animating = false, readied = false } = {}) {
+  const label = TURN_TO_VIEW[setting] ?? 'Never';
+  if (label === 'Always') return true;
+  if (label === 'WhenWeaponReadied') return readied || animating;
+  if (label === 'OnlyWhenAnimating') return animating;
+  return false;
+}
+
+/** AutoTogglePerspective's rows, in the settings' own order. */
+export const AUTO_TOGGLE_ROWS = Object.freeze([
+  'OnFoot', 'OnFootMelee', 'OnFootRanged', 'OnFootSpell', 'OnHorse', 'OnHorseReady', 'OnLycan',
+]);
+/** Its option labels: 0 leaves the view, 1 takes first person, 2 third. */
+export const AUTO_TOGGLE = Object.freeze({ DontChange: 0, FirstPerson: 1, ThirdPerson: 2 });
+
+/**
+ * [SETTINGS] Which AutoTogglePerspective row the player is in, one row
+ * a frame, in the same precedence chooseTable walks (dead is not a
+ * row: the table has none). A row is applied when the situation
+ * CHANGES, never every frame - a `FirstPerson` row re-applied each
+ * frame would fight the wheel, and the mod ships a wheel.
+ */
+export function autoToggleSituation(s = {}) {
+  const readied = !s.sheathed || !!s.spellcasting;
+  if (s.transformed) return 'OnLycan';
+  if (s.riding) return readied ? 'OnHorseReady' : 'OnHorse';
+  if (s.spellcasting) return 'OnFootSpell';
+  if (!s.sheathed) return s.usingBow ? 'OnFootRanged' : 'OnFootMelee';
+  return 'OnFoot';
+}

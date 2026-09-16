@@ -84,7 +84,7 @@ import { entityIsParalyzed } from '../systems/effects.js';   // AUDIT 39r: the S
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 39r: ShowPlayerDamage - an arrow indoors comes through the same door as a blow
 import { sensesContext, subscribeFoePools } from './shared.js';   // IF: the one senses builder every pool is handed; AUDIT 58: and the magic-round fan-out both of them owe
 import { makeInView } from '../player/cameraView.js';   // IF: the swing's in-view test, the guards' own
-import { mwViewFrame, mwViewDrawBody } from '../player/mwView.js';   // MW-D25: the Morrowind camera
+import { mwViewFrame, mwViewDrawBody, mwViewFootstep, mwViewTransition } from '../player/mwView.js';   // MW-D25: the Morrowind camera; AUDIT-EOTB2: the sprite's stride and the door's auto-toggle
 import { MOBILE_TYPES } from '../characters/mobileTypes.js';   // IF: the daedric punishment's name->id door
 import { areEnemiesNearby, setEnemyAlert } from '../systems/encounters.js';   // IF: GameManager.AreEnemiesNearby, one method over this host's database; AUDIT 58: the 354 refusal's other term
 import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
@@ -4684,7 +4684,8 @@ export function createWorldModes(host) {
       const spot = restore?.pos ?? floored;
       player.spawn(spot[0], spot[1], spot[2]);
       mode = 'interior';
-      host.unlockOn?.();   // AUDIT 62 F16/F28: the lock never outlives a mode change - the foe pool and the coordinate frame both change here, and lockOn breaks only on death, a null chest or 32 m, none of which fire for a street foe you walked away from through a door (the interior is parented at the building's world matrix, so it stays metres away).
+      host.unlockOn?.();   // AUDIT 62 F16/F28: the lock never outlives a mode change (its pin wants this on the next line)
+      mwViewTransition('Interior');   // AUDIT-EOTB2: AutoTogglePerspective.OnTransitionInterior, on the building's door (PlayerEnterExit.OnTransitionInterior)   // AUDIT 62 F16/F28: the lock never outlives a mode change - the foe pool and the coordinate frame both change here, and lockOn breaks only on death, a null chest or 32 m, none of which fire for a street foe you walked away from through a door (the interior is parented at the building's world matrix, so it stays metres away).
       console.log(`interior: ${ctx.drawList.length} draws, ${ctx.doors.length} doors, ${ctx.lights.length} lights, ${ctx.people.length} people`);
     } finally {
       transitioning = false;
@@ -5042,6 +5043,7 @@ export function createWorldModes(host) {
     player.spawn(landing[0], repositionFeetY(player.collider.heightAt(landing[0], landing[2]), landing[1]), landing[2]);
     mode = 'exterior';
     host.unlockOn?.();   // AUDIT 62 F16/F28: the lock never outlives a mode change
+    mwViewTransition('Exterior');   // AUDIT-EOTB2: AutoTogglePerspective.OnTransitionExterior, stepping back out of a building (PlayerEnterExit.OnTransitionExterior)
     interiorTorches.destroyAll();   // HT1: DestroyLightSources_OnTransition
     questBridge?.onExteriorTransition();   // Q4-v: CreateFoe's pending-wave invalidation
     npcSession?.onWorldChanged();          // TK-v: OnTransitionToExterior (:3599-3603)
@@ -5665,6 +5667,7 @@ export function createWorldModes(host) {
         const _surf = player.waterSurfaceY;
         const _step = _footsteps.update(player.pos, {
           grounded: player.grounded, swimming: player.swimming, levitating: player.levitating,
+          spriteStep: mwViewFootstep(),   // AUDIT-EOTB2: SyncFootsteps - the sprite's stride while it is on screen
           // AUDIT 64 F3 (review): PlayerFootsteps gates on
           // `playerMotor.IsStandingStill` (PlayerFootsteps.cs:264-265), which
           // is `Vector2(moveDirection.x, moveDirection.z).magnitude == 0`

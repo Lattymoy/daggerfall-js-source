@@ -24,13 +24,19 @@ here - the earlier mod records carry theirs in this line.]**
 ## How much of it is ported
 
 Not all of it, and the arc said otherwise for a day. The assembly
-carries **62 authored methods**; the port implements the arithmetic of
-**thirteen** - the camera's offsets, bounds and smoothing, and the
-sprite's SELECTION. Every attack and death animation, the footsteps,
-the nine-row auto-toggle table, the cart and the boat override are not
-ported. `test/eotb_scope.test.js` holds all 62 rows with a verdict
+carries **62 authored methods**; the port implements **twenty-nine** -
+thirteen read off the IL (the camera's offsets, bounds and smoothing,
+and the sprite's SELECTION) and, since AUDIT-EOTB2 (2026-09-16),
+sixteen read off the SETTINGS' own names and option labels (the attack
+and death one-shots, the footstep sync, the auto-toggle table, the two
+hides, the two transition rows), because the assembly itself is NOT in
+this tree - only the manifest, the settings, the presets and the art
+are, and the bundle is behind a Nexus login. The cart, the boat
+override, the per-sprite offsets and the one-shots' own tick time wait
+on it. `test/eotb_scope.test.js` holds all 62 rows with a verdict
 each, and `bible/06-Systems/Eye-Of-The-Beholder.md` explains which
-gaps have no twin here and which are simply not done yet.
+gaps have no twin here, which need the assembly, and which were read
+from the settings rather than the IL.
 
 ## Why this mod is in a port that already has third person
 

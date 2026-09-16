@@ -99,6 +99,20 @@ export class FootstepMachine {
   update(pos, m, set) {
     const here = [pos[0], pos[2]];
     if (this.last === null) this.last = here;
+    // AUDIT-EOTB2 [SETTINGS]: Eye Of The Beholder's SyncFootsteps - while
+    // the player's sprite is on screen the stride is the PICTURE's
+    // (PlayFootstep on frames 2 and 4 of the walk, DisableVanillaFootsteps
+    // for the distance machine). The anchor follows the feet so the
+    // distance does not pile up under the sprite and fire one long step
+    // the frame it hands the stride back (the :245 landing shape).
+    if (m.spriteStep?.owns) {
+      this.last = here;
+      this.distance = 0;
+      if (!m.spriteStep.fell) return null;
+      const clip = this.alternate ? set[1] : set[0];
+      this.alternate = !this.alternate;
+      return { clip, volume: m.halfSpeed ? FOOTSTEP_VOLUME * 0.5 : FOOTSTEP_VOLUME };
+    }
     // on-foot gate (:221-225): levitation always silences; a mount
     // silences unless the player is in exterior water.
     //

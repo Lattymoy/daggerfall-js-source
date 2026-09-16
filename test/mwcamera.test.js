@@ -257,7 +257,11 @@ test('MW-D30: the pose carries the camera and the load FORCES it', () => {
   // camera (the mount rides the quicksave now), so the camera is no
   // longer the pose's last key. The law pinned is the CARRY, not the tail.
   assert.ok(/camera: mwCamera\.state\(\),/.test(src), 'the saved pose carries mwCamera.state()');
-  assert.ok(/mwCamera\.restore\(pose\.camera\);/.test(src), 'and the one pose-apply restores it');
+  // AUDIT-EOTB2: the one pose-apply goes through the view seam's load
+  // door, which restores the Morrowind camera AND re-seeds the sprite
+  // camera (the mod's OnLoad) - the restore itself is unchanged
+  assert.ok(/mwViewLoadPose\(pose\.camera\);/.test(src), 'and the one pose-apply restores it, through the seam');
+  assert.match(readFileSync(new URL('../src/player/mwView.js', import.meta.url), 'utf8'), /export function mwViewLoadPose\(pose\) \{\s*if \(pose\) mwCamera\.restore\(pose\);/, 'the seam restores exactly as the host did');
   // restore(undefined) is the older-save no-op, behaviorally:
   const cam = createMwCamera();
   cam.wheel(-1);

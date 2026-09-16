@@ -128,7 +128,7 @@ import { createCityGuards } from './cityGuards.js';   // G1
 import { createArrestFlow } from './arrestFlow.js';
 import { clearCrimeOnLocationExit, addGold, goldAmount, deductGold, totalGoldAmount, deductGoldPieces } from '../systems/court.js';   // AUDIT 17e F6   // G2   // F-slice: travel gold; U41: GetGoldAmount + the pieces half of DeductFastTravelGold
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
-import { mwViewFrame, mwViewWheel, mwViewDrawBody } from '../player/mwView.js';   // MW-D25: the Morrowind camera
+import { mwViewFrame, mwViewWheel, mwViewDrawBody, mwViewFootstep, mwViewLoadPose } from '../player/mwView.js';   // MW-D25: the Morrowind camera; AUDIT-EOTB2: the sprite's stride and the load's POV
 import { mwCamera, PITCH_LIMIT } from '../player/mwCamera.js';   // MW-D30: persistence + the reference pitch clamp
 import { pickActivatableHit, pickQuestFoe, pickFoe } from '../player/activate.js';   // G3: corpse loot; QG1: the foe-click door; TI1: the lock-on pick
 import { raceActivation } from '../player/activationRace.js';   // HARD2: one home for "the nearest thing under the one ray takes the click"
@@ -4536,7 +4536,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // togglePOV when the live view differs). A pose without one (an
     // older save, the classic import - a Daggerfall .SAV carries no
     // Morrowind camera) leaves the live camera standing.
-    mwCamera.restore(pose.camera);
+    mwViewLoadPose(pose.camera);   // AUDIT-EOTB2: both lanes - the Morrowind restore above, and the sprite camera's StartInThirdPerson (the mod's OnLoad)
   }
   /**
    * SAV3: the classic-save import arm - StartFromClassicSave's game
@@ -5593,7 +5593,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7292-7304 -
+  // worldModes answers it in BOTH modes (worldModes.js:7295-7307 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -7985,6 +7985,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           const _onWater = _surf.water !== ON_EXTERIOR_WATER.None;
           const _step = footsteps.update(player.pos, {
             grounded: player.grounded, swimming: player.swimming, levitating: player.levitating,
+            spriteStep: mwViewFootstep(),   // AUDIT-EOTB2: SyncFootsteps - the sprite's stride while it is on screen
             // AUDIT 64 F3 (review): PlayerFootsteps gates on
             // `playerMotor.IsStandingStill` (PlayerFootsteps.cs:264-265), which
             // is `Vector2(moveDirection.x, moveDirection.z).magnitude == 0`
