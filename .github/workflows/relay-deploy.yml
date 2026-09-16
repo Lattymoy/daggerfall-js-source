@@ -8,20 +8,26 @@
 # way), and the only way to push one was for somebody to hold the API token
 # in their hands.
 #
-# MANUAL, NOT ON PUSH, and that is deliberate rather than timid. A relay
-# deploy restarts every Durable Object and drops EVERY connected player's
-# socket at once - peers vanish, chat goes quiet. That is a thing to do on
-# purpose at a chosen moment, not a thing to have happen because a comment
-# in `server/` changed. `workflow_dispatch` is the whole trigger.
-name: Deploy relay
+# ═══ THIS DROPS EVERY CONNECTED PLAYER ════════════════════════════
+#
+# A relay deploy restarts every Durable Object and drops every open socket
+# at once - peers vanish, chat goes quiet, and everyone reconnects. Do it
+# at a chosen moment.
+#
+# MANUAL, NOT ON PUSH, and that is the whole of the protection. Running
+# this means somebody went to Actions, picked it out of four workflows and
+# pressed Run; a comment changing in `server/` cannot reach it.
+#
+# There WAS a confirm box here that wanted the word 'deploy' typed into it.
+# It was dispatched twice and refused both times - once on an empty field,
+# once on 'Run', because the operator typed the name of the button into the
+# field beside it. It never stopped an accident; it only ever stopped the
+# deploy. A warning belongs in a name and a header, not in a form field
+# that can only be wrong.
+name: Deploy relay (drops every connected player)
 
 on:
   workflow_dispatch:
-    inputs:
-      confirm:
-        description: "Type deploy to confirm - this drops every connected player"
-        required: true
-        default: ""
 
 permissions:
   contents: read
@@ -30,33 +36,10 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      # THE CONFIRMATION, and it refused its own first run (run 1, step 2,
-      # every later step skipped). Two faults, and the second is why the
-      # first could not be read off the log:
-      #
-      #   IT WAS BRITTLE - one exact string, one context. A trailing space,
-      #   a capital D, or an `inputs` context that does not populate the way
-      #   `github.event.inputs` does, and a deliberate run is refused. This
-      #   is a speed bump before dropping every player in the game; it is
-      #   meant to catch an ACCIDENT, not a typo.
-      #
-      #   IT WAS UNDIAGNOSABLE - the message said what to type and never
-      #   what it GOT, so an empty box and a broken context read identically.
-      #   The same shape as a gate whose state is never written.
-      #
-      # Kept rather than deleted: it fired correctly on its own terms, and
-      # the terms were what was too narrow.
-      - name: Refuse anything but a deliberate run
-        env:
-          CONFIRM: ${{ inputs.confirm || github.event.inputs.confirm }}
+      - name: Say what this run is about to do
         run: |
-          got=$(printf '%s' "${CONFIRM:-}" | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')
-          echo "confirm box received: '${CONFIRM:-}' (normalised: '$got')"
-          if [ "$got" != "deploy" ]; then
-            echo "::error::confirm must be the word 'deploy' - got '${CONFIRM:-<empty>}'. This drops every connected player's socket, so it asks once."
-            exit 1
-          fi
-          echo "confirmed - proceeding"
+          echo "Deploying the relay. Every connected player's socket will drop"
+          echo "and reconnect. Triggered by ${{ github.actor }} on ${{ github.ref_name }}."
 
       - uses: actions/checkout@v4
 
