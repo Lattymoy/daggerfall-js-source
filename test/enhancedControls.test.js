@@ -31,7 +31,7 @@ import { readFileSync } from 'node:fs';
 
 import {
   paneControls, discardControlsStaging, captureArmed, controlsStaging,
-  controlsDuplicates, GRID_ACTIONS, ADVANCED_ROWS, PORT_ROWS, MULTIPLE_ASSIGNMENTS, DEFAULTS_PROMPT,
+  controlsDuplicates, GRID_ACTIONS, ADVANCED_ROWS, PORT_ROWS, PORT_GROUPS, MULTIPLE_ASSIGNMENTS, DEFAULTS_PROMPT,
 } from '../src/ui/enhancedControls.js';
 import { CATEGORY_IDS } from '../src/ui/settingsMap.js';   // AUDIT FT16 CTRL-a: the door the bindings live behind
 import { SYSTEM_PANES } from '../src/ui/enhancedMenu.js';
@@ -211,13 +211,24 @@ test('FIX-F: the pane offers the classic grid’s 38 actions and the ADVANCED si
   // so PORT_ROWS is where they go, and the COVERAGE rule below is what makes it
   // compulsory rather than tidy: a bindable action with no row is a key nobody
   // can rebind, and the classic window cannot draw this one at all.
-  assert.deepEqual(PORT_ROWS.map((r) => r.action), ['SocialInteract']);
+  // QS2 WIDENED IT AGAIN, by a fourth group rather than three more rows under
+  // the third: 'Online' is a true heading for the F-menu and a false one for a
+  // potion press, and a group whose title does not describe its rows is worse
+  // than no group. PORT_ROWS stays the flat union, because the coverage rule
+  // below is asked of the union and not of any one heading.
+  assert.deepEqual(PORT_ROWS.map((r) => r.action),
+    ['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSwap']);
+  assert.deepEqual(PORT_GROUPS.map((g) => [g.title, ...g.rows.map((r) => r.action)]), [
+    ['Online', 'SocialInteract'],
+    ['Quickslots', 'QuickUse1', 'QuickUse2', 'QuickSwap'],
+  ]);
+  assert.deepEqual(PORT_GROUPS.flatMap((g) => g.rows), [...PORT_ROWS], 'the union really is the groups, not a second list beside them');
   // together: every bindable action, none twice
   const all = [...GRID_ACTIONS, ...ADVANCED_ROWS.map((r) => r.action), ...PORT_ROWS.map((r) => r.action)];
   assert.equal(new Set(all).size, all.length);
   assert.deepEqual([...all].sort(), [...ACTIONS].sort());
   withPane(({ view }) => {
-    assert.equal(find(view.body, 'ctl-row').length, 45, 'a row for every action');
+    assert.equal(find(view.body, 'ctl-row').length, 48, 'a row for every action');
     for (const a of all) assert.ok(keyBtn(view, a), `${a} needs a row`);
   });
 });

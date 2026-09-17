@@ -59,6 +59,11 @@
 import { USE_PENDING } from './nativeInventory.js';
 import { PACK_PAGES, PAGE_IDS, pageOf, filterByPage } from './packPages.js';   // PX31: the pack's nine pages (the classic keeps DFU's four)
 import { useItem, isLightSource } from '../systems/useItem.js';   // HT2: the light source's own act
+// QS2: the quickslot model (systems/quickslots.js). This screen is the ONE
+// place a slot is filled - Mac's own words, "in the enhanced menu through the
+// tooltip to slot 1/2" - and it fills one by naming the item's KIND, which is
+// all a slot ever holds.
+import { isQuickConsumable, canSwapTo, quickslotOf, assignQuickslot, clearQuickslot } from '../systems/quickslots.js';
 import { EQUIP_SLOTS } from '../characters/paperdoll.js';
 import { dfWornEquipment } from '../formats/mwItemMap.js';   // PX25
 import { hasDaggerfallArrows } from '../combat/fpArm.js';   // PX26
@@ -1630,6 +1635,14 @@ function itemRow(item, from = 'local') {
   if (sub) mid.append(el('small', null, sub));
   row.append(mid);
   row.append(el('span', 'itemwt', `${line.weight.toFixed(2)} kg`));
+  // QS2: THE CHIP. A slot holds a KIND, so the row that answers to it is the
+  // row that says so - otherwise the only way to learn what is in slot 1 is to
+  // open every tooltip in the pack. LOCAL rows only: a slot resolves against
+  // the pack, and a loot row is not in it.
+  if (from === 'local') {
+    const slot = quickslotOf(item);
+    if (slot) row.append(el('span', 'qs-mark', slot === 'swap' ? 'SWAP' : (slot === 'c1' ? '1' : '2')));
+  }
   // INV1: a LOCAL row drags. A loot row does not - taking from a pile
   // is a click, and a drag that could also transfer would make a slip
   // a theft.
@@ -1820,6 +1833,48 @@ function listCol() {
 // pane answered the same problem the same way (AUDIT F8). So this is
 // that behaviour written deliberately - the detail rises when an item
 // is picked and closes back down - rather than borrowed by accident.
+/**
+ * QS2 - THE SLOT BUTTONS (2026-09-17, Mac: consumables are assigned "in the
+ * enhanced menu through the tooltip to slot 1/2").
+ *
+ * The KIND decides which buttons exist, and the model decides what a kind is:
+ * `isQuickConsumable` (a potion or a drug - the two arms of `useItem` that
+ * consume and act on the entity) and `canSwapTo` (an unequipped weapon that is
+ * not an arrow). A torch is neither - it is the off-hand cell's, through
+ * entity.lightSource - and a book is neither, so neither grows a button. This
+ * screen asks those two questions rather than answering them, for the same
+ * reason the Use button is offered for everything: a judgement made twice is a
+ * judgement that drifts.
+ *
+ * THE BUTTON THAT HOLDS THE ITEM SAYS "UNSLOT" AND CARRIES `on`. A button that
+ * looked the same whether the thing was in the slot or not would make the
+ * player press it to find out, and pressing it is exactly what un-slots it.
+ * `assignQuickslot` moves a kind BETWEEN the two consumable slots itself, so
+ * pressing the other one is a move and not a second copy.
+ *
+ * AND THE TOOLTIP STAYS UP. PX24's law is that a USE closes it - the item is
+ * gone or changed and the card is stale - but slotting changes nothing about
+ * the item, and the player's next act is usually to read the other button. So
+ * this re-renders in place: the labels flip, the row chips appear, the card
+ * keeps its place.
+ */
+function quickslotActs(item) {
+  const inSlot = quickslotOf(item);
+  const button = (slot, set, unset) => {
+    const on = inSlot === slot;
+    const b = el('button', `act qs-act${on ? ' on' : ''}`, on ? unset : set);
+    b.onclick = () => {
+      if (on) clearQuickslot(slot); else assignQuickslot(slot, item);
+      refresh();   // the pack list is where the chips are drawn
+      render();   // ...and the card stays up, with its labels flipped
+    };
+    return b;
+  };
+  if (isQuickConsumable(item)) return [button('c1', 'Slot 1', 'Unslot 1'), button('c2', 'Slot 2', 'Unslot 2')];
+  if (canSwapTo(item)) return [button('swap', 'Swap to', 'Unset swap')];
+  return [];
+}
+
 function detailCol() {
   const col = el('section', `packcol packdetail${picked ? ' open' : ''}`);
   // PX16c: the plaque wears the pause window's own corners - one
@@ -1933,6 +1988,12 @@ function detailCol() {
   u.onclick = () => use(picked,
     side === 'remote' ? remoteTarget(deps, sessionState()) : (deps.items?.() ?? []));
   acts.append(u);
+  // QS2: ...and the quickslot buttons, LOCAL ONLY. A slot resolves against the
+  // PACK every frame (quickslots resolveConsumable), so slotting something
+  // that is still in a corpse would name a kind the player does not carry - a
+  // ghost from the moment it was made. The remote side gets none; take it
+  // first, then slot it.
+  if (side === 'local') for (const b of quickslotActs(picked)) acts.append(b);
   c.append(acts);
   col.append(c);
   // The address, for the player who wants it and the developer who

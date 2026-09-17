@@ -34,6 +34,21 @@ import { doItemEnchantmentPayloads, PAYLOAD } from './enchantments.js';   // E2:
 import { inflictPoison } from './poisons.js';
 import { getItem } from './inventory.js';   // D9: ItemCollection.GetItem - the oil arm's lantern lookup (:1791)
 
+/** THE ARMS WHOSE DESTINATION WINDOW THE PORT HAS NOT BUILT, named so a use
+ *  SAYS something rather than eating itself. Keyed by this module's own result
+ *  `kind`, which is why it lives here: the classic window (ui/nativeInventory
+ *  .js, which re-exports it), the enhanced pack and the quickslot key all read
+ *  the same words for the same arm, and a second copy is how one of the three
+ *  starts saying something else. */
+export const USE_PENDING = Object.freeze({
+  book: 'You cannot read that yet.',
+  potion: 'You drink the potion.',
+  map: 'You study the map.',
+  questItem: 'Nothing happens.',
+  enchanted: 'Nothing happens.',
+  spellbook: 'You cannot open your spellbook here.',
+});
+
 /** The template indices the predicates name (ItemEnums.cs). */
 export const TEMPLATES = Object.freeze({
   Spellbook: 132,          // MiscItems

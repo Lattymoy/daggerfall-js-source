@@ -14,7 +14,7 @@ import {
   resolveConsumable, resolveSwap, quickslotView, useQuickslot, swapQuickslot,
   quickslotSaveData, restoreQuickslotSaveData,
 } from '../src/systems/quickslots.js';
-import { equipItem, equipTableOf, EQUIP_SLOTS, isEquipped } from '../src/systems/equip.js';
+import { equipItem, equipTableOf, EQUIP_SLOTS, isEquipped, getItemHands, ITEM_HANDS } from '../src/systems/equip.js';
 import { potionRecipeKeys, potionRecipeByKey } from '../src/systems/potions.js';
 import { composeSessionState, restoreSessionState } from '../src/systems/save.js';
 
@@ -231,6 +231,38 @@ test('QS1 swap: equipItem does the work, the leaver becomes the swap, and the pa
   const r3 = swapQuickslot({ entity: e2, say });
   assert.equal(r3.kind, 'gone');
   assert.equal(said.at(-1), QUICKSLOT_TEXT.swapGone('Iron Longsword'));
+});
+
+// QS2 (2026-09-17): THE GAP THE WIRING FOUND. Every case QS1 pinned above has
+// the off hand FULL - a shield, or a two-hander that clears both - so
+// `equipItem` evicted the main hand and the swap swapped. With the off hand
+// EMPTY, which is how most characters walk around, GetEquipSlot's weapon arm is
+// `getFirstSlot(RightHand, LeftHand)` - the first OPEN hand - and the swap
+// weapon went into the LEFT hand beside the one already held: nothing left the
+// hand, so no leaver, so the slot CLEARED, and the next press said there was
+// nothing to swap to. The player pressed swap and started dual-wielding.
+test('QS2 swap: with the off hand EMPTY the swap still REPLACES what is held - the off hand is not overflow', () => {
+  const e = player([sword(), dagger()]);
+  const [held, dag] = e.items;
+  equipItem(e, held);
+  assert.equal(equipTableOf(e)[EQUIP_SLOTS.LeftHand], null, 'the off hand really is empty');
+  assignQuickslot('swap', dag);
+  const said = [];
+  const r = swapQuickslot({ entity: e, say: (t) => said.push(t) });
+  assert.equal(r.kind, 'swapped');
+  assert.equal(equipTableOf(e)[EQUIP_SLOTS.RightHand], dag, 'the dagger is in the MAIN hand');
+  assert.equal(equipTableOf(e)[EQUIP_SLOTS.LeftHand], null, 'and the off hand is still empty - no second weapon appeared');
+  assert.ok(!isEquipped(held), 'the longsword left the hand');
+  assert.equal(quickslotOf(held), 'swap', 'so there is something to swap BACK to - the Souls behaviour');
+  // ...and back, which is the half that was unreachable before.
+  swapQuickslot({ entity: e, say: (t) => said.push(t) });
+  assert.equal(equipTableOf(e)[EQUIP_SLOTS.RightHand], held);
+  assert.equal(equipTableOf(e)[EQUIP_SLOTS.LeftHand], null);
+  assert.equal(quickslotOf(dag), 'swap');
+  // THE HAND LAW IS STILL THE EQUIP TABLE'S. A weapon that is LEFT-ONLY by the
+  // table's own answer keeps its hand: this only stops the off hand being used
+  // as overflow for a weapon that wanted the main one.
+  assert.equal(getItemHands(dag), ITEM_HANDS.Either, 'a dagger is either-handed, which is the case the overflow bit');
 });
 
 test('QS1 swap refusals: the window\'s own - broken and forbidden - with its words, never a way round', () => {

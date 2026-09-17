@@ -165,6 +165,7 @@ import { rayDirFromScreen, projectToScreen, ndcFromScreen } from '../player/tapR
 import { isRiding } from '../systems/transport.js';   // TR2: is there a mount under us
 import { useItem } from '../systems/useItem.js';   // UI1: MagicItemPicker_OnItemPicked's two arms
 import { isEnchanted } from '../systems/inventory.js';   // UI1: the use path's enchanted test
+import { useQuickslot, swapQuickslot } from '../systems/quickslots.js';   // QS2: the diamond's two performers - the window's own use ladder, and the one equipItem
 import { createDroppedLoot, droppedLootHooks, containerDropPos } from './droppedLoot.js';   // U8e: the ground piles; G5: the pile's DaggerfallLoot identity
 import { preloadPaperDollArt } from '../ui/paperDoll.js';   // U8f: the avatar base
 import { seedStartingEquipment, EQUIP_SLOTS } from '../systems/equip.js';   // U8h: the worn-weapon binding
@@ -298,7 +299,7 @@ import { CameraRecoiler } from '../player/cameraRecoiler.js';   // AUDIT 28 W9: 
 import { HeadBobber } from '../player/headBobber.js';   // AUDIT 28 W10: HeadBobbing
 import { lastHealthLost, lastHealthLostPercent } from '../ui/hudVitals.js';   // AUDIT 28 W9: the detector's loss
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
-import { actionOf, held, moveHeld, anyMove, swallowBrowserKey, mouseCode, isSwingButton, keyboardLook, isTextEntryTarget, bindings, routeAction, installContextMenuGuard, POLLED_ACTIONS } from '../ui/input.js';
+import { actionOf, held, moveHeld, anyMove, swallowBrowserKey, mouseCode, isSwingButton, keyboardLook, isTextEntryTarget, bindings, routeAction, installContextMenuGuard, POLLED_ACTIONS, QUICKSLOT_ACTIONS } from '../ui/input.js';
 import { armUnloadGuard, releaseUnloadGuard } from '../systems/unloadGuard.js';   // MAC-L3: one door in front of every way out of a running game; AUDIT-MACL F3: ...and down for a door the game opened itself
 import { actionForCode } from '../systems/inputActions.js';   // FIX-E: the overlay's QuickLoad read, off the code alone   // I2: the rebindable registry; AUDIT 39r: the mouse half of the held set
 import { hudShortcutKey } from '../ui/hudShortcuts.js';   // AUDIT 64 F36/F37: DaggerfallHUD.Update's LargeHUDToggle / HUDToggle arms
@@ -3062,6 +3063,43 @@ export async function bootWorld(canvas, renderer, params, status) {
     getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null,
   };
 
+  /** QS2 - THE QUICKSLOT PERFORMERS (2026-09-17, Mac: the Demon's Souls
+   *  diamond on the enhanced HUD's bottom-left).
+   *
+   *  THE HOOKS ARE THE WINDOW'S OWN. `useHooks` above is U53's one bag and
+   *  this adds the three the window adds at its own call site - the clock, the
+   *  enchanted test and the TEXT.RSC reader - so a potion drunk from the key
+   *  goes through exactly the ladder the Use button goes through, refusals and
+   *  all. A second bag here is how the two would drift into two behaviours for
+   *  one potion.
+   *
+   *  BOTH ANSWER TRUE. The press is the port's and it has been spent: an empty
+   *  slot SAYS it is empty (QUICKSLOT_TEXT), which is an answer, and letting
+   *  the key fall through to whatever else the ladder gives it would be a
+   *  number key doing two things at once.
+   *
+   *  AND THE SWAP TELLS THE RIG. `swapQuickslot` equips through `equipItem`,
+   *  which writes the equip table; the rig reads that table on its own frame
+   *  (weaponRig syncWorn) and the ladder answers ahead of the frame, so the
+   *  refresh is asked for here rather than waited for. */
+  const quickslotHooks = () => ({
+    ...useHooks,
+    isEnchanted,
+    nowMinute: () => Math.floor(playerTicker.classicMinutes ?? 0),
+    rows: (id, pick) => townTalk.lines(id, pick),
+  });
+  const quickUse = (n) => {
+    useQuickslot(n === 1 ? 'c1' : 'c2', {
+      entity: playerEntity, items: playerEntity.items ?? [], hooks: quickslotHooks(), say: (l) => townTalk.say(l),
+    });
+    return true;
+  };
+  const quickSwap = () => {
+    swapQuickslot({ entity: playerEntity, say: (l) => townTalk.say(l), rows: (id, pick) => townTalk.lines(id, pick) });
+    weaponRig.refreshWorn();
+    return true;
+  };
+
   /** UI1: MagicItemPicker_OnItemPicked's two arms (:91-97) through the
    *  port's ONE use seam - systems/useItem.js, the same call the
    *  inventory's use mode makes, on the same hooks. */
@@ -5045,6 +5083,11 @@ export async function bootWorld(canvas, renderer, params, status) {
      *  POLLED_ACTIONS (ui/input.js:391), so a Z press reaches the
      *  frame's edge latch and nothing else. */
     toggleSheath: () => weaponRig.toggleSheath(),
+    // QS2: the diamond's three presses, beside the sheath panel's door and for
+    // the same reason - one object is this host's whole routeAction contract,
+    // and a door that is not on it is a key that does nothing.
+    quickUse: (n) => quickUse(n),
+    quickSwap: () => quickSwap(),
     // UI1: DaggerfallUI :581-583 - the U key's window opens only when
     // something in the pack is usable by magic; nothing usable, no
     // window, which is why this returns rather than showing an empty
@@ -5215,6 +5258,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     // at all. It answers here, above the mode gate and under the same overlay and window gates the F-menu opens by
     // (socialMenuCanOpen): the door itself says false on a page with no account, and the ladder falls through.
     if (!townTalk.overlayActive && act === 'SocialInteract' && socialMenuCanOpen() && socialInteract()) { e.preventDefault(); return; }
+    // QS2: THE SAME PLACE, FOR THE SAME REASON. A quickslot is worth more in a
+    // dungeon than it is on a road, so these three answer above the mode gate
+    // too - under the same overlay and pause gates (socialMenuCanOpen is
+    // `not paused and no window over the HUD`, which is exactly the door a
+    // gameplay key takes here) rather than a fourth gate invented for them.
+    if (!townTalk.overlayActive && QUICKSLOT_ACTIONS.has(act) && socialMenuCanOpen() && routeAction(act, hudCtx)) { e.preventDefault(); return; }
     // U45 - THE ONE DOOR PER DESTINATION: this ladder and the large
     // HUD's eleven panels open the same windows, so they read the same
     // object. It is the same law U43 applied to the interior arm, one
@@ -7664,6 +7713,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     // G6: the knightly smith's gift needs THIS host's inventory
     // window in choose-one mode - one builder, one dependency list.
     makeInventory: (extra) => (inventoryDoorReady() ? makeInventoryWindow(extra) : null),
+    // QS2: and the quickslot performers ride down with it, for the same
+    // reason - this host owns the use hooks, the entity and the popup
+    // channel, so the interior mode borrows the door rather than building a
+    // second one. (Its own weapon rig takes the swap's refresh; see
+    // worldModes' interiorKeyCtx.)
+    quickUse: (n) => quickUse(n),
+    quickSwap: () => quickSwap(),
     // S40: AbortRestForEnemySpawn (:301-304) reaches the rest window
     // in THIS host's overlay slot. In DFU the OnEncounter subscription
     // is on the WINDOW (OnPush :264, OnPop :275), so it follows the

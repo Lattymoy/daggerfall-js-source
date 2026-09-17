@@ -19,7 +19,12 @@
 // players to stand in front of, no friends and no parties - so it is a
 // Ledger A row (ONLINE), not a parity claim.
 //
-// It is APPENDED and never inserted: the
+// QS2 (2026-09-17): and three more beside it - 'QuickUse1', 'QuickUse2' and
+// 'QuickSwap', the enhanced HUD's quickslot diamond (systems/quickslots.js).
+// Same class, same reason: DFU's HUD carries no item slots, so these are the
+// port's own rows and not a parity claim either.
+//
+// They are APPENDED and never inserted: the
 // classic controls window indexes this list by NUMBER (ui/controlsWindow.js
 // KEY_GROUPS, DFU's SetupKeybindButtons [2..40) against fixed pixel anchors on
 // CNFG00I0.IMG), so a name spliced into the middle would silently re-label
@@ -50,6 +55,12 @@ export const ACTIONS = Object.freeze([
   // SOC5: the port's own, past DFU's last row - see the header. The F-menu on
   // another player's body, and the friends/party panel when nobody is in reach.
   'SocialInteract',
+  // QS2 (2026-09-17, Mac: the Demon's Souls quickslot diamond on the enhanced
+  // HUD): three more of the port's own, appended for the same reason
+  // 'SocialInteract' was - Daggerfall has no item slots on its HUD at all, so
+  // these are Ledger A rows, not parity claims. The two consumable presses and
+  // the weapon swap the diamond's cells name (systems/quickslots.js).
+  'QuickUse1', 'QuickUse2', 'QuickSwap',
 ]);
 
 /** AUDIT SOC D3: THE PORT'S OWN ROWS, NAMED SO THE CLASSIC WINDOWS CAN YIELD THEM.
@@ -59,8 +70,10 @@ export const ACTIONS = Object.freeze([
  *  row they could not see, could not clear, and could not close the window past. So the port's own actions YIELD
  *  there: systems/controlsConfig.js checkDuplicates takes `{ yield: PORT_ACTIONS }` from the two classic windows
  *  and unbinds the port's row rather than colouring a clash nobody can resolve. The ENHANCED window passes nothing,
- *  because it draws the row (ui/enhancedControls.js PORT_ROWS, the 'Online' group) and can rebind it. */
-export const PORT_ACTIONS = Object.freeze(['SocialInteract']);
+ *  because it draws the row (ui/enhancedControls.js PORT_ROWS, the 'Online' group) and can rebind it.
+ *  QS2: the three quickslot actions join it for the same reason, off the same face - the enhanced pane draws them
+ *  under their own 'Quickslots' heading and the classic windows cannot draw them at all. */
+export const PORT_ACTIONS = Object.freeze(['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSwap']);
 
 const ACTION_SET = new Set(ACTIONS);
 
@@ -126,6 +139,19 @@ export const DEFAULT_BINDINGS = Object.freeze([
   // there first). Rebindable like every other row - the enhanced controls
   // window's ONLINE group.
   ['KeyF', 'SocialInteract'],
+  // QS2: THE NUMBER ROW, which is the one place a Souls player's hand already
+  // goes. Digit1-Digit4 are unspent by SetupDefaults, unspent by the port
+  // (PX15's Tab, HT4's G, SOC5's F, HT's O and X are the whole of the port's
+  // own spending) and unspent by every vendored mod's TextKey defaults - the
+  // HT4 pin in test/ht1_handheldtorches.test.js walks that whole set and is
+  // what makes that a fact rather than a hope. They ride here, not in a host,
+  // so a bindings file written before this slice gains them on the next boot:
+  // loadOrCreateBindings follows every load with resetDefaults(store, true),
+  // whose testSetBinding fills a MISSING action on a FREE code and touches
+  // nothing a player has already bound.
+  ['Digit1', 'QuickUse1'],
+  ['Digit2', 'QuickUse2'],
+  ['Digit3', 'QuickSwap'],
 ]);
 
 // ── key combos ──────────────────────────────────────────────────────

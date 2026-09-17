@@ -7223,6 +7223,19 @@ export function createWorldModes(host) {
     // (THE FOUR HOSTS RULE); routeKey still declines the key
     // (ui/input.js:391), so the frame poll stays its only keyboard door.
     toggleSheath() { interiorWeapon.toggleSheath(); },
+    // QS2: the diamond's three presses, INSIDE. The performers are the outer
+    // host's - it owns the entity, the use hooks and the popup channel, the
+    // same reason this ctx borrows `makeInventory` rather than assembling a
+    // second dependency list - but the RIG here is this mode's own, so the
+    // swap's refresh is asked of `interiorWeapon` and not of the host's. That
+    // split is the whole of AUDIT SOC B4/D1's lesson: the door exists in every
+    // mode, and each mode answers with the parts it actually owns.
+    quickUse(n) { return host.quickUse?.(n) === true; },
+    quickSwap() {
+      const ok = host.quickSwap?.() === true;
+      if (ok) interiorWeapon.refreshWorn();
+      return ok;
+    },
     /** TR5: dfuiOpenTransportWindow's INDOORS arm (DaggerfallUI.cs
      *  :691-694) - inside, the key refuses with a HUD line instead of
      *  opening the picker. Both interior modes are inside. */
