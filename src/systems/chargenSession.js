@@ -442,16 +442,30 @@ function withLevelingChoice(flow, { onDone, onCancel, hudScale = 2 } = {}) {
     get done() { return fired; },
     get levelingPrompt() { return prompt; },   // what a pin reads to know the stage
     input(code, ev) { if (prompt) prompt.input(code, ev); else inner.input(code, ev); },
-    click(vx, vy) { if (!prompt) inner.click?.(vx, vy); },      // the question has nothing to click
-    hover(vx, vy, e = null) { if (!prompt) inner.hover?.(vx, vy, e); },
-    release() { if (!prompt) inner.release?.(); },
-    wheel(dir) { if (!prompt) inner.wheel?.(dir); },
+    // ORL1 (review): the pointer reaches the QUESTION too. It used to be
+    // swallowed here, which dead-ended anyone creating a character with
+    // the mouse - the wizard is completable that way by design (U8b).
+    click(vx, vy) { if (prompt) prompt.click(vx, vy); else inner.click?.(vx, vy); },
+    hover(vx, vy, e = null) { if (prompt) prompt.hover(vx, vy); else inner.hover?.(vx, vy, e); },
+    release() { if (!prompt) inner.release?.(); },             // the question has nothing to drag
+    wheel(dir) { if (!prompt) inner.wheel?.(dir); },           // ...and nothing to scroll
     tick(dt) { if (!prompt) inner.tick?.(dt); },
     draw(renderer, canvas, font, scale = hudScale) {
       if (prompt) prompt.draw(renderer, canvas, font, scale);
       else inner.draw?.(renderer, canvas, font, scale);
     },
-    dispose() { inner.dispose?.(); },
+    dispose() {
+      // A WINDOW TORN DOWN MID-QUESTION STILL HANDS ITS HOST AN ANSWER.
+      // A host may drop an overlay without it being done - townTalk's
+      // font-less arm does exactly that ("never trap the motor"), and
+      // the dungeon host's own chargen fallback is the shape a second
+      // host could grow next. Swallowing the answer there would lose
+      // the finished character with it, so the question falls back to
+      // the same law every unasked path takes: Daggerfall's own.
+      // `_fired` makes this a no-op on every normal close and on cancel.
+      prompt?.answer(LEVELING_CLASSIC);
+      inner.dispose?.();
+    },
   };
 }
 

@@ -120,7 +120,7 @@ export function raiseSkills(entity, classicTimeMinutes, rolls = Math.random, onL
   if ((classicTimeMinutes - (entity.lastSkillCheckTime ?? 0)) <= SKILL_RAISE_CHECK_INTERVAL) return [];
   entity.lastSkillCheckTime = classicTimeMinutes;
   // ORL1: read ONCE per pass, not per raise - the mod's Lua reads its
-  // two storage sections inside the handler (player.lua:38-40), but a
+  // two storage sections inside the handler (player.lua:35-37), but a
   // player cannot move a slider in the middle of one skill check and
   // one read per pass makes every raise in a pass obey the same rules.
   const virtue = usesVirtueLeveling(entity);
@@ -136,7 +136,7 @@ export function raiseSkills(entity, classicTimeMinutes, rolls = Math.random, onL
     // AlreadyMasteredASkill re-evaluated PER RAISE (audit F7): a
     // primary hitting 100 mid-pass blocks later 95+ raises, verbatim.
     if (entity.skills[i] < 100 && (entity.skills[i] < 95 || !alreadyMasteredASkill(entity))) {
-      // ORL1: the mod's own skill-level-up handler (player.lua:28-50),
+      // ORL1: the mod's own skill-level-up handler (player.lua:29-51),
       // in the mod's own position - BEFORE the raise lands, because
       // OpenMW calls it with the value the skill is leaving and the
       // 0.5.3 fix reads exactly that value. It sits inside this gate

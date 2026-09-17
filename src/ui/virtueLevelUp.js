@@ -1,5 +1,5 @@
 // ORL1 (2026-09-17): THE VIRTUE LEVEL-UP SCREEN - OblivionRemaster-
-// LikeLeveling's own level-up window (player.lua:220-590), on the
+// LikeLeveling's own level-up window (player.lua:245-622), on the
 // port's canvas.
 //
 // ── WHY THIS IS A TEXT SCREEN AND NOT A NATIVE WINDOW ─────────────
@@ -42,7 +42,7 @@ import { STAT_KEYS_ORDER } from '../systems/chargen.js';
 import { drawText, measureText } from './text.js';
 import {
   levelingSettings, virtuePurse, canRaiseAttribute, canLowerAttribute,
-  attributeOffset, commitVirtueLevelUp, spendVirtuePurseLowest, LEVELUP_TOTAL,
+  attributeOffset, commitVirtueLevelUp, virtueSpendPlan, LEVELUP_TOTAL,
 } from '../systems/oblivionLeveling.js';
 
 /** l10n/en.yaml:34 remaining_points_error, the author's own words. */
@@ -63,10 +63,13 @@ export class VirtueLevelUpScreen {
     this.entity = entity;
     this.s = settings ?? levelingSettings();
     this._rolls = rolls;
-    // player.lua:596-633 calculateAttributepoints, run at the window's
+    // player.lua:638-677 calculateAttributepoints, run at the window's
     // own registration - so the purse is already clamped to what this
     // character can actually spend before a single key is pressed.
     this.purse = virtuePurse(entity.stats, this.s);
+    /** What the level-up was worth before a single key was pressed -
+     *  the font-less escape re-plans against it. */
+    this.fullPurse = this.purse;
     this.deltas = Object.fromEntries(STAT_KEYS_ORDER.map((k) => [k, 0]));
     this.cursor = 0;
     this.done = false;
@@ -77,8 +80,8 @@ export class VirtueLevelUpScreen {
     this.isVirtueLevelUp = true;
   }
 
-  /** player.lua:264-282 increaseAttribute - the plus button's whole
-   *  body, guarded by the predicate that HIDES it (:534-565). */
+  /** player.lua:286-295 increaseAttribute - the plus button's whole
+   *  body, guarded by the predicate that HIDES it (:599-603). */
   raise(key) {
     if (!canRaiseAttribute(key, this.entity.stats, this.deltas, this.purse, this.s)) return false;
     this.deltas[key] += 1;
@@ -87,7 +90,7 @@ export class VirtueLevelUpScreen {
     return true;
   }
 
-  /** player.lua:284-293 decreaseAttribute. */
+  /** player.lua:297-306 decreaseAttribute. */
   lower(key) {
     if (!canLowerAttribute(key, this.deltas)) return false;
     this.deltas[key] -= 1;
@@ -96,7 +99,7 @@ export class VirtueLevelUpScreen {
     return true;
   }
 
-  /** player.lua:462-483 validateLevelUp: the OK button refuses while
+  /** player.lua:532-552 validateLevelUp: the OK button refuses while
    *  the purse is unspent and says so, and commits when it is zero. */
   confirm() {
     if (this.purse !== 0) { this.refused = true; return false; }
@@ -126,8 +129,41 @@ export class VirtueLevelUpScreen {
    * then closes through the same `confirm` a player would press.
    */
   spendRemainingHeadless() {
-    this.purse = spendVirtuePurseLowest(this.entity.stats, this.deltas, this.purse, this.s);
+    // It plans from SCRATCH rather than finishing what is on screen: a
+    // player can spend their way into a corner no legal move gets out
+    // of - that is what the minus button is for - and a screen nobody
+    // can see has nobody to press it. The full purse is reachable by
+    // construction, so starting over always lands on zero.
+    const { cost, plan } = virtueSpendPlan(this.entity.stats, this.s, this.fullPurse);
+    this.deltas = plan;
+    this.purse = this.fullPurse - cost;
     return this.confirm();
+  }
+
+  /**
+   * ONE ROW, AS WORDS - and the mod's own "HIDE the button, do not grey
+   * it" law (player.lua:599-616) with it. In the text idiom the marker
+   * IS the button, so a button the predicate refuses is a space.
+   *
+   * It is a function rather than four lines inside `draw` because a law
+   * that only exists inside a draw is a law nothing can fail: the pins
+   * lens showed that replacing both markers with unconditional '+' and
+   * '-' passed the whole suite, shipping a window that offers presses
+   * it will not honour.
+   */
+  rowMarkers(key) {
+    return {
+      minus: canLowerAttribute(key, this.deltas),
+      plus: canRaiseAttribute(key, this.entity.stats, this.deltas, this.purse, this.s),
+    };
+  }
+
+  rowText(key, selected = false) {
+    const d = this.deltas[key] ?? 0;
+    const { minus, plus } = this.rowMarkers(key);
+    const cost = attributeOffset(key, this.s);
+    return `${selected ? '>' : ' '} ${label(key).padEnd(12)}${String(this.entity.stats[key] + d).padStart(3)}`
+      + `   ${minus ? '-' : ' '} ${d > 0 ? `+${d}` : ' 0'} ${plus ? '+' : ' '}${cost > 1 ? `   (${cost} per point)` : ''}`;
   }
 
   draw(renderer, canvas, font, s) {
@@ -143,17 +179,8 @@ export class VirtueLevelUpScreen {
     centre(`${REMAINING_POINTS_LABEL}: ${this.purse}`, 40, gold);
 
     STAT_KEYS_ORDER.forEach((k, i) => {
-      const d = this.deltas[k];
-      const canUp = canRaiseAttribute(k, this.entity.stats, this.deltas, this.purse, this.s);
-      // The mod HIDES a button it will not honour rather than greying
-      // it (player.lua:551-572); in the text idiom the marker is the
-      // button, so an unavailable one is a space.
-      const minus = canLowerAttribute(k, this.deltas) ? '-' : ' ';
-      const plus = canUp ? '+' : ' ';
-      const cost = attributeOffset(k, this.s);
-      const row = `${i === this.cursor ? '>' : ' '} ${label(k).padEnd(12)}${String(this.entity.stats[k] + d).padStart(3)}`
-        + `   ${minus} ${d > 0 ? `+${d}` : ' 0'} ${plus}${cost > 1 ? `   (${cost} per point)` : ''}`;
-      drawText(renderer, font, row, 40 * s, (56 + i * 12) * s, s, i === this.cursor ? hot : white);
+      drawText(renderer, font, this.rowText(k, i === this.cursor), 40 * s, (56 + i * 12) * s, s,
+        i === this.cursor ? hot : white);
     });
 
     const y = 56 + 8 * 12;

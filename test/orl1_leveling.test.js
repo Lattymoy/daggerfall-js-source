@@ -27,11 +27,16 @@ import {
   LEVELING_CLASSIC, LEVELING_VIRTUE, levelingSettings, oblivionLevelingEnabled, usesVirtueLeveling,
   skillTier, skillImpact, addSkillProgress, checkForVirtueLevelUp, rollOverLevelProgress,
   attributeOffset, attributeIncreaseLimit, virtuePurse, canRaiseAttribute, canLowerAttribute,
-  commitVirtueLevelUp, spendVirtuePurseLowest, virtueLevelUpHeadless, initVirtueLeveling,
+  commitVirtueLevelUp, virtueSpendPlan, virtueLevelUpHeadless, initVirtueLeveling,
   modVirtuePurse,
 } from '../src/systems/oblivionLeveling.js';
-import { VirtueLevelUpScreen } from '../src/ui/virtueLevelUp.js';
-import { LevelingChoiceScreen, LEVELING_OPTIONS } from '../src/ui/levelingChoice.js';
+import {
+  VirtueLevelUpScreen, REMAINING_POINTS_ERROR, REMAINING_POINTS_LABEL, chooseAttributesLabel,
+} from '../src/ui/virtueLevelUp.js';
+import {
+  LevelingChoiceScreen, LEVELING_OPTION_IDS, levelingOptions,
+  choiceAtNative, CHOICE_TOP, CHOICE_PITCH,
+} from '../src/ui/levelingChoice.js';
 import { MOD_SETTINGS } from '../src/systems/modSettings.js';
 import { FEATURES, MOD_CURATED, GROUPS } from '../src/systems/features.js';
 import { CREDITS } from '../src/ui/credits.js';
@@ -176,7 +181,7 @@ test('ORL1: the two caps are constants.lua\'s, and the version cell is the autho
 
 // ── L1: THE BAR ────────────────────────────────────────────────────
 
-test('ORL1 L1: a skill raise puts its TIER\'s points in the bar (player.lua:36-45)', () => {
+test('ORL1 L1: a skill raise puts its TIER\'s points in the bar (player.lua:39-45)', () => {
   const p = virtuePlayer();
   const s = S();
   assert.equal(skillTier(p, SKILLS.LongBlade), 'primary');
@@ -217,7 +222,7 @@ test('ORL1 L1: a skill standing at 100 feeds the bar NOTHING - the 0.5.3 fix, an
   assert.equal(addSkillProgress(p, SKILLS.LongBlade, S()), 8, 'at 99 it still counts');
 });
 
-test('ORL1 L1: the roll-over boundary is STRICTLY past 100 (helper.lua:126)', () => {
+test('ORL1 L1: the roll-over boundary is STRICTLY past 100 (helper.lua:132)', () => {
   const s = S();
   // landing EXACTLY on the total rolls nothing over
   const exact = virtuePlayer({ levelProgress: 92, levelRollUp: 0 });
@@ -247,7 +252,7 @@ test('ORL1 L1: the bar full raises the SAME readyToLevelUp flag the Daggerfall p
   assert.equal(checkForVirtueLevelUp(p), false, 'and it does not re-raise an already-owed level');
 });
 
-test('ORL1 L2: the roll-over on commit, including the bar that stays FULL (helper.lua:138-148)', () => {
+test('ORL1 L2: the roll-over on commit, including the bar that stays FULL (helper.lua:144-155)', () => {
   const small = virtuePlayer({ levelRollUp: 7 });
   rollOverLevelProgress(small);
   assert.equal(small.levelProgress, 7);
@@ -267,7 +272,7 @@ test('ORL1 L2: the roll-over on commit, including the bar that stays FULL (helpe
 
 // ── L3: THE PURSE ──────────────────────────────────────────────────
 
-test('ORL1 L3: Luck costs more and is capped when the mod may not raise it (player.lua:54-70)', () => {
+test('ORL1 L3: Luck costs more and is capped when the mod may not raise it (player.lua:53-69)', () => {
   const on = S();
   assert.equal(attributeOffset('luck', on), 4);
   assert.equal(attributeOffset('strength', on), 1);
@@ -349,20 +354,102 @@ test('ORL1 L3: a remainder that could only buy Luck is rounded DOWN to whole Luc
   assert.equal(virtuePurse(p.stats, S({ attributePoints: 14 })), 13, '1 ordinary + three Luck');
 });
 
-test('ORL1 L3: every purse virtuePurse mints is EXACTLY spendable - the property the clamp exists for', () => {
+/** The true answer, by exhaustive search over every legal assignment -
+ *  an INDEPENDENT implementation, so a mutation of the port's own
+ *  solver cannot hide behind the pin that checks it. */
+function bestSpendable(stats, s, budget) {
+  const rows = STAT_KEYS_ORDER.map((k) => ({
+    off: attributeOffset(k, s),
+    room: Math.max(0, Math.min(attributeIncreaseLimit(k, s), MAX_ATTRIBUTE_VALUE - stats[k])),
+  }));
+  let best = 0;
+  const walk = (i, used, cost) => {
+    if (cost > budget) return;
+    if (cost > best) best = cost;
+    if (i === rows.length) return;
+    walk(i + 1, used, cost);
+    if (used < s.maxUpdatableAttribute) {
+      for (let d = 1; d <= rows[i].room; d++) walk(i + 1, used + 1, cost + d * rows[i].off);
+    }
+  };
+  walk(0, 0, 0);
+  return best;
+}
+
+test('ORL1 L3: the purse is THE MOST a player could legally spend - not what one greedy happened to place', () => {
+  // THE FIRST VERSION OF THE PORT'S CLAMP FAILED THIS. It measured the
+  // purse with a lowest-value-first greedy, which at the ceiling spends
+  // the row budget on the rows with the least headroom and then calls
+  // the rest unplaceable: eight attributes at 99 minted 11, could
+  // legally take 6, and were handed 3. The pin that was here asked only
+  // that the purse could be spent to zero, which 3 satisfies - so it
+  // could not see the three virtues being destroyed. It asks for the
+  // MAXIMUM now, against an independent exhaustive search.
+  const worst = virtuePlayer();
+  for (const k of STAT_KEYS_ORDER) worst.stats[k] = 99;
+  assert.equal(modVirtuePurse(worst.stats, S()), 11, 'the mod mints eleven');
+  assert.equal(virtuePurse(worst.stats, S()), 6, 'and six of them can be spent: Luck +1 at four, two rows at one');
+
+  let clamped = 0;
+  for (const maxRows of [2, 3, 4, 8]) {
+    for (const luckCost of [1, 3, 4, 7]) {
+      for (const allowLuck of [true, false]) {
+        for (const luck of [50, 90, 96, 99, 100]) {
+          for (const rest of [50, 97, 98, 99, 100]) {
+            const p = virtuePlayer();
+            for (const k of STAT_KEYS_ORDER) p.stats[k] = rest;
+            p.stats.luck = luck;
+            const s = S({ luckIncreaseCost: luckCost, maxUpdatableAttribute: maxRows, allowLuckIncrease: allowLuck });
+            const minted = modVirtuePurse(p.stats, s);
+            const purse = virtuePurse(p.stats, s);
+            const where = `maxRows ${maxRows}, luckCost ${luckCost}, allowLuck ${allowLuck}, luck ${luck}, rest ${rest}`;
+            assert.equal(purse, bestSpendable(p.stats, s, minted), `${where}: the purse is not the maximum`);
+
+            // ...and the plan that comes with it really pays for it,
+            // inside every one of the mod's caps.
+            const { cost, plan } = virtueSpendPlan(p.stats, s, minted);
+            assert.equal(cost, purse, `${where}: the plan's cost is the purse`);
+            let spent = 0, opened = 0;
+            for (const k of STAT_KEYS_ORDER) {
+              const d = plan[k] ?? 0;
+              if (!d) continue;
+              opened += 1;
+              spent += d * attributeOffset(k, s);
+              assert.ok(d <= attributeIncreaseLimit(k, s), `${where}: ${k} past its limit`);
+              assert.ok(p.stats[k] + d <= MAX_ATTRIBUTE_VALUE, `${where}: ${k} past 100`);
+            }
+            assert.equal(spent, cost, `${where}: the plan pays exactly`);
+            assert.ok(opened <= maxRows, `${where}: the plan opened ${opened} rows`);
+            if (purse < minted) clamped += 1;
+          }
+        }
+      }
+    }
+  }
+  // ...and the port's clamp REALLY BITES somewhere in that walk, or the
+  // whole pin would pass against a `virtuePurse` that is just the mod's
+  // own arithmetic and proves nothing.
+  assert.ok(clamped > 0, 'the port\'s second clamp never fired - the walk does not reach the case it exists for');
+});
+
+test('ORL1 L3: OLD, RETIRED - every purse is still spendable to exactly zero', () => {
   // The window refuses to close on an unspent point, so a purse that
   // cannot be spent to zero is a trap. This walks the awkward shapes.
-  for (const luckCost of [1, 3, 4, 7]) {
-    for (const luck of [50, 90, 96, 99, 100]) {
-      for (const rest of [50, 97, 99, 100]) {
-        const p = virtuePlayer();
-        for (const k of STAT_KEYS_ORDER) p.stats[k] = rest;
-        p.stats.luck = luck;
-        const s = S({ luckIncreaseCost: luckCost });
-        const purse = virtuePurse(p.stats, s);
-        const deltas = zeroDeltas();
-        assert.equal(spendVirtuePurseLowest(p.stats, deltas, purse, s), 0,
-          `luckCost ${luckCost}, luck ${luck}, rest ${rest}: ${purse} left unspendable`);
+  // The original property, kept beside the stronger one: whatever else
+  // is true, a purse the window will not close on is a wall.
+  for (const maxRows of [2, 3, 4, 8]) {
+    for (const luckCost of [1, 3, 4, 7]) {
+      for (const luck of [50, 90, 96, 99, 100]) {
+        for (const rest of [50, 97, 99, 100]) {
+          const p = virtuePlayer();
+          for (const k of STAT_KEYS_ORDER) p.stats[k] = rest;
+          p.stats.luck = luck;
+          const s = S({ luckIncreaseCost: luckCost, maxUpdatableAttribute: maxRows });
+          const purse = virtuePurse(p.stats, s);
+          const { cost } = virtueSpendPlan(p.stats, s, purse);
+          assert.equal(cost, purse,
+            `maxRows ${maxRows}, luckCost ${luckCost}, luck ${luck}, rest ${rest}: ${purse} left unspendable`);
+        }
       }
     }
   }
@@ -370,7 +457,38 @@ test('ORL1 L3: every purse virtuePurse mints is EXACTLY spendable - the property
 
 // ── L4: WHAT THE BUTTONS ALLOW ─────────────────────────────────────
 
-test('ORL1 L4: each of the five reasons the PLUS is withheld, one at a time (player.lua:534-565)', () => {
+test('ORL1: a row the player has ALREADY raised costs the plan no new row slot', () => {
+  // `virtueSpendPlan` takes the live deltas so a caller can ask "what
+  // can still be done from here". The window's font-less escape re-plans
+  // from scratch instead (a player can spend into a corner that only the
+  // minus button gets out of), so nothing in the shipping game passes
+  // deltas today - which left the contract with no pin and its mutant
+  // alive. It is a law of the function either way, and the next caller
+  // to want it should find it held rather than assumed.
+  const p = virtuePlayer();
+  for (const k of STAT_KEYS_ORDER) p.stats[k] = 50;
+  const s = S();   // three rows, twelve points, Luck at four
+
+  // three rows already open: a plan may still top THEM up...
+  const open3 = { ...zeroDeltas(), strength: 1, agility: 1, speed: 1 };
+  const more = virtueSpendPlan(p.stats, s, 9, open3);
+  assert.ok(more.cost > 0, 'an open row can still take more');
+  for (const k of STAT_KEYS_ORDER) {
+    if (more.plan[k] > 0) assert.ok(open3[k] > 0, `${k} was already open - the plan opened no fourth row`);
+  }
+  // ...and their REMAINING room is what is on offer, not the whole limit
+  const atLimit = { ...zeroDeltas(), strength: ATTRIBUTE_INCREASE_LIMIT };
+  const capped = virtueSpendPlan(p.stats, s, 12, atLimit);
+  assert.equal(capped.plan.strength, 0, 'a row at its limit takes nothing more');
+
+  // one row open leaves TWO slots, not three
+  const open1 = { ...zeroDeltas(), strength: 1 };
+  const after = virtueSpendPlan(p.stats, s, 12, open1);
+  const opened = STAT_KEYS_ORDER.filter((k) => after.plan[k] > 0 && !open1[k]).length;
+  assert.ok(opened <= s.maxUpdatableAttribute - 1, `the plan opened ${opened} new rows with one already open`);
+});
+
+test('ORL1 L4: each of the five reasons the PLUS is withheld, one at a time (player.lua:599-603)', () => {
   const p = virtuePlayer();
   for (const k of STAT_KEYS_ORDER) p.stats[k] = 50;
   const s = S();
@@ -423,10 +541,13 @@ test('ORL1 L5: the commit lands the attributes, DAGGERFALL\'s health, the level 
   assert.equal(p.stats.agility, 55);
   assert.equal(p.stats.speed, 52);
   assert.equal(p.stats.endurance, 50, 'a row nobody touched is untouched');
-  // THE HEALTH RULE IS DAGGERFALL'S, not `Endurance * fLevelUpHealthEndMult`.
-  // hitPointsPerLevelUp reads the endurance the level-up just raised,
-  // which is the order the Lua commits in too.
-  assert.equal(p.maxHealth, hp0 + hitPointsPerLevelUp(career, p.stats.endurance, seq(0)));
+  // THE HEALTH RULE IS DAGGERFALL'S, not `Endurance * fLevelUpHealthEndMult` -
+  // and so is its POSITION. applyLevelUp rolls hit points BEFORE it hands
+  // out the pool, on the endurance the character came in with; the mod
+  // rolls AFTER its attribute loop, on the endurance just bought. Taking
+  // the mod's order with Daggerfall's formula would pay a virtue
+  // character for their own Endurance purchase in the same breath.
+  assert.equal(p.maxHealth, hp0 + hitPointsPerLevelUp(career, 50, seq(0)));
   assert.ok(p.maxHealth > hp0);
   assert.equal(p.health, 40, 'the live pool is only ever clamped down');
   assert.equal(p.level, 4, 'ONE level, never a jump');
@@ -434,6 +555,41 @@ test('ORL1 L5: the commit lands the attributes, DAGGERFALL\'s health, the level 
   assert.equal(p.levelRollUp, 0);
   assert.equal(p.readyToLevelUp, false);
   assert.equal(p.pendingLevel, null);
+});
+
+test('ORL1: the two lanes hand the same character the same hit points', () => {
+  // The whole of departure 2 in one pin: buying Endurance at a virtue
+  // level-up must not pay its own hit points. hitPointsPerLevelUp reads
+  // `floor(END/10) - 5`, so a character at 58 who buys 5 crosses a ten
+  // boundary - which is exactly where the two orders disagree.
+  const mk = () => {
+    const p = virtuePlayer({ levelProgress: LEVELUP_TOTAL, level: 4 });
+    for (const k of STAT_KEYS_ORDER) p.stats[k] = 50;
+    p.stats.endurance = 58;
+    p.maxHealth = 90; p.health = 90;
+    checkForVirtueLevelUp(p);
+    return p;
+  };
+  const bought = mk();
+  commitVirtueLevelUp(bought, { ...zeroDeltas(), endurance: 5, strength: 5, agility: 2 }, 0, S(), seq(0));
+  assert.equal(bought.stats.endurance, 63, 'the purchase landed');
+
+  const untouched = mk();
+  commitVirtueLevelUp(untouched, { ...zeroDeltas(), strength: 5, agility: 5, speed: 2 }, 0, S(), seq(0));
+  assert.equal(untouched.stats.endurance, 58);
+
+  assert.equal(bought.maxHealth, untouched.maxHealth,
+    'the Endurance purchase must not pay its own hit points - the roll reads the endurance the level began with');
+  // ...and it reads ENDURANCE, not whichever stat happens to sit beside
+  // it: the pins lens showed `entity.stats.strength` in that line passed
+  // the whole suite. Two characters alike but for endurance must differ.
+  const lowEnd = mk(); lowEnd.stats.endurance = 38;
+  commitVirtueLevelUp(lowEnd, { ...zeroDeltas(), strength: 5, agility: 5, speed: 2 }, 0, S(), seq(0));
+  assert.equal(lowEnd.maxHealth, 90 + hitPointsPerLevelUp(career, 38, seq(0)));
+  assert.notEqual(lowEnd.maxHealth, untouched.maxHealth,
+    'endurance is what the roll reads - a character ten points lower gets less');
+  // ...and that IS what the Daggerfall lane would have rolled
+  assert.equal(bought.maxHealth, 90 + hitPointsPerLevelUp(career, 58, seq(0)));
 });
 
 test('ORL1 L5: an unspent purse is REFUSED, and no level is owed without the flag', () => {
@@ -579,12 +735,142 @@ test('ORL1: the level-up window spends by the mod\'s law and commits through the
   w.cursor = STAT_KEYS_ORDER.indexOf('agility');
   for (let i = 0; i < 5; i++) w.input('plus');
   w.cursor = STAT_KEYS_ORDER.indexOf('speed');
-  while (w.purse > 0) w.input('plus');
+  // BOUNDED ON PURPOSE. An unbounded `while (w.purse > 0)` here hung
+  // the mutation runner for twenty minutes on the one mutant that
+  // makes every row refuse a press: the pin never finished, so the
+  // mutant neither died nor survived, it just stopped the campaign.
+  // A pin that cannot fail is bad; a pin that cannot RETURN is worse.
+  for (let guard = 0; w.purse > 0 && guard < 64; guard++) w.input('plus');
+  assert.equal(w.purse, 0, 'the purse really can be spent down from here');
   w.input('confirm');
   assert.equal(w.done, true);
   assert.equal(p.level, 3);
   assert.equal(p.stats.strength, 53);
   assert.equal(p.stats.agility, 55);
+});
+
+test('ORL1: the window HIDES a press it will not honour, as the mod does', () => {
+  const p = virtuePlayer({ levelProgress: LEVELUP_TOTAL, level: 2 });
+  for (const k of STAT_KEYS_ORDER) p.stats[k] = 50;
+  checkForVirtueLevelUp(p);
+  const w = new VirtueLevelUpScreen(p, { settings: S(), rolls: seq(0) });
+  // a fresh row offers PLUS and no MINUS
+  assert.deepEqual(w.rowMarkers('strength'), { minus: false, plus: true });
+  // ...and the WORDS carry the markers, in their own columns
+  assert.equal(w.rowText('strength'), '  Strength     50      0 +', 'a space where minus would be, a plus where plus is');
+  // raise it and MINUS appears
+  w.cursor = STAT_KEYS_ORDER.indexOf('strength');
+  w.input('plus');
+  assert.deepEqual(w.rowMarkers('strength'), { minus: true, plus: true });
+  assert.equal(w.rowText('strength'), '  Strength     51   - +1 +');
+  // a row at its per-level limit loses PLUS
+  for (let i = 0; i < 4; i++) w.input('plus');
+  assert.equal(w.deltas.strength, ATTRIBUTE_INCREASE_LIMIT);
+  assert.deepEqual(w.rowMarkers('strength'), { minus: true, plus: false },
+    'plus is HIDDEN at the row limit, not shown and refused');
+  assert.equal(w.rowText('strength'), '  Strength     55   - +5  ', 'and the plus column is a SPACE, not a dimmed plus');
+  // ...and a row the three-attribute cap shuts out loses it too
+  w.cursor = STAT_KEYS_ORDER.indexOf('agility'); w.input('plus');
+  w.cursor = STAT_KEYS_ORDER.indexOf('speed'); w.input('plus');
+  assert.deepEqual(w.rowMarkers('endurance'), { minus: false, plus: false }, 'a fourth row is not offered a press');
+  // Luck's price is on its row and nowhere else
+  assert.match(w.rowText('luck'), /\(4 per point\)/);
+  assert.ok(!w.rowText('strength').includes('per point'));
+  // and the selected row is the one marked
+  assert.ok(w.rowText('luck', true).startsWith('>'));
+  assert.ok(w.rowText('luck', false).startsWith(' '));
+});
+
+test('ORL1: the window\'s cursor walks every row, in both directions', () => {
+  // The pins lens: the window test used to WRITE `w.cursor` by hand, so
+  // both navigation arms were unreachable and `(cursor + 7) % 8` could
+  // become `+ 6` - which makes half the attributes unselectable going
+  // up - without a single assertion failing.
+  const p = virtuePlayer({ levelProgress: LEVELUP_TOTAL, level: 2 });
+  for (const k of STAT_KEYS_ORDER) p.stats[k] = 50;
+  checkForVirtueLevelUp(p);
+  const w = new VirtueLevelUpScreen(p, { settings: S(), rolls: seq(0) });
+  assert.equal(w.cursor, 0);
+  const seenDown = [];
+  for (let i = 0; i < STAT_KEYS_ORDER.length; i++) { seenDown.push(w.cursor); w.input('down'); }
+  assert.deepEqual(seenDown, [...STAT_KEYS_ORDER.keys()], 'down visits every row in order and wraps home');
+  assert.equal(w.cursor, 0);
+  const seenUp = [];
+  for (let i = 0; i < STAT_KEYS_ORDER.length; i++) { w.input('up'); seenUp.push(w.cursor); }
+  assert.deepEqual(seenUp, [7, 6, 5, 4, 3, 2, 1, 0], 'and up walks back through every one of them');
+  // ...and the cursor really selects: a plus lands on the row it names
+  w.input('down');   // -> 1, intelligence
+  w.input('plus');
+  assert.equal(w.deltas[STAT_KEYS_ORDER[1]], 1);
+  assert.equal(w.deltas[STAT_KEYS_ORDER[0]], 0);
+});
+
+test('ORL1: the refusal line clears the moment the player acts on it', () => {
+  const p = virtuePlayer({ levelProgress: LEVELUP_TOTAL, level: 2 });
+  for (const k of STAT_KEYS_ORDER) p.stats[k] = 50;
+  checkForVirtueLevelUp(p);
+  const w = new VirtueLevelUpScreen(p, { settings: S(), rolls: seq(0) });
+  w.input('confirm');
+  assert.equal(w.refused, true, 'a purse with points left refuses');
+  w.input('plus');
+  assert.equal(w.refused, false, 'spending clears it - it must not sit under a purse that now reads 0');
+  w.input('confirm');
+  assert.equal(w.refused, true);
+  w.input('minus');
+  assert.equal(w.refused, false, 'and so does taking a point back');
+});
+
+test('ORL1: the window\'s three strings are the AUTHOR\'S OWN, out of en.yaml', () => {
+  // The settings descriptions are pinned against the mod's l10n; these
+  // three said the same thing about themselves and were pinned by
+  // nothing (the pins lens). Same file, same law.
+  const yaml = rdMod(`${MOD}/l10n/en.yaml`);
+  const line = (k) => new RegExp(`^${k}: "(.*)"$`, 'm').exec(yaml)?.[1];
+  assert.equal(REMAINING_POINTS_ERROR, line('remaining_points_error'));
+  assert.equal(REMAINING_POINTS_LABEL, line('remaining_points_label'));
+  // the count label is the author's with {count} filled in, not re-worded
+  const tmpl = line('choose_attributes_label');
+  assert.ok(tmpl.includes('{count}'), 'the mod\'s string really is a template');
+  assert.equal(chooseAttributesLabel(3), tmpl.replace('{count}', '3'));
+  assert.equal(chooseAttributesLabel(5), tmpl.replace('{count}', '5'));
+});
+
+test('ORL1: the question\'s UP arm is bound, both spellings', () => {
+  // Two options, so either direction moves between them - but a table
+  // that advertises Up and does not answer it strands a player who has
+  // walked onto the second option and wants the first (the pins lens).
+  for (const key of ['up', 'ArrowUp', 'down', 'ArrowDown']) {
+    const got = [];
+    const q = new LevelingChoiceScreen((id) => got.push(id));
+    assert.equal(q.cursor, 0);
+    q.input(key);
+    assert.equal(q.cursor, 1, `${key} moves the choice`);
+    q.input(key);
+    assert.equal(q.cursor, 0, `${key} moves it back`);
+    q.input('confirm');
+    assert.deepEqual(got, [LEVELING_CLASSIC]);
+  }
+});
+
+test('ORL1: the interior host\'s two level-up arms, and the dungeon host\'s font-less escape', () => {
+  // The pins lens: reverting either interior arm, or the dungeon's
+  // virtue escape, passed the whole suite - the only coverage was a
+  // substring check against a COMMENT in another file. These are source
+  // laws because the hosts are not constructible in a unit test, and
+  // they are held by CONTENT rather than by a file name.
+  const wm = rd('src/scenes/worldModes.js');
+  const arms = wm.match(/\?\? \(usesVirtueLeveling\(playerEntity\) && !playerEntity\.oghmaLevelUp\n\s*\? new VirtueLevelUpScreen\(playerEntity\)\n\s*: new LevelUpScreen\(playerEntity\)\)/g) ?? [];
+  assert.equal(arms.length, 2, 'BOTH interior level-up arms know whose law levels this character');
+  assert.match(wm, /import \{ VirtueLevelUpScreen \} from '\.\.\/ui\/virtueLevelUp\.js';/);
+
+  const dc = rd('src/scenes/dungeonContext.js');
+  // the virtue arm comes BEFORE the classic ones, or the purse would be
+  // spent by a policy that does not know the mod's caps
+  const virtue = dc.indexOf('activeOverlay?.isVirtueLevelUp');
+  const classic = dc.indexOf('activeOverlay instanceof LevelUpScreen');
+  assert.ok(virtue > 0 && classic > 0 && virtue < classic,
+    'the font-less escape asks about the mod\'s window FIRST');
+  assert.match(dc, /activeOverlay\.spendRemainingHeadless\(\);/);
 });
 
 test('ORL1: the window\'s font-less escape spends within the caps and closes', () => {
@@ -600,8 +886,66 @@ test('ORL1: the window\'s font-less escape spends within the caps and closes', (
   for (const k of moved) assert.ok(p.stats[k] - 50 <= ATTRIBUTE_INCREASE_LIMIT);
 });
 
+test('ORL1: the question can be answered with the MOUSE, which is how the wizard can be finished', () => {
+  // The classic wizard is completable by pointer alone and has been
+  // since U8b; a screen the door puts in front of its OK that swallows
+  // every click dead-ends that player entirely (ORL1's review).
+  const mid = (i) => CHOICE_TOP + i * CHOICE_PITCH + 4;
+  assert.equal(choiceAtNative(160, mid(0)), 0);
+  assert.equal(choiceAtNative(160, mid(1)), 1);
+  assert.equal(choiceAtNative(160, 8), -1, 'the headline is not an answer');
+  assert.equal(choiceAtNative(2, mid(0)), -1, 'nor is the margin');
+  assert.equal(choiceAtNative(160, mid(1) + CHOICE_PITCH), -1, 'nor is the footer');
+
+  let got = [];
+  const q = new LevelingChoiceScreen((id) => got.push(id));
+  assert.equal(q.click(2, mid(0)), false, 'a click outside the rows answers nothing');
+  assert.deepEqual(got, []);
+  assert.equal(q.click(160, mid(1)), true);
+  assert.deepEqual(got, [LEVELING_VIRTUE], 'one press picks AND answers');
+  assert.equal(q.done, true);
+  q.click(160, mid(0));
+  assert.deepEqual(got, [LEVELING_VIRTUE], 'and it answers once');
+
+  // the highlight follows the pointer
+  const q2 = new LevelingChoiceScreen(() => {});
+  q2.hover(160, mid(1));
+  assert.equal(q2.cursor, 1);
+  q2.hover(160, mid(0));
+  assert.equal(q2.cursor, 0);
+  q2.hover(160, 8);
+  assert.equal(q2.cursor, 0, 'a hover off the rows leaves the choice where it was');
+
+  // ...and the chargen door really forwards it
+  const cs = rd('src/systems/chargenSession.js');
+  assert.match(cs, /click\(vx, vy\) \{ if \(prompt\) prompt\.click\(vx, vy\); else inner\.click\?\.\(vx, vy\); \},/);
+  assert.match(cs, /hover\(vx, vy, e = null\) \{ if \(prompt\) prompt\.hover\(vx, vy\); else inner\.hover\?\.\(vx, vy, e\); \},/);
+});
+
+test('ORL1: the question describes the purse the game will actually hand out', () => {
+  // THE SCREEN A CHARACTER CANNOT COME BACK TO must not describe a
+  // level-up the settings do not give. `attributePoints` is a slider
+  // from 0 to 60 and the Mods pane exposes it; the blurb used to say
+  // "twelve virtues" whatever it was set to (ORL1's review).
+  const words = (over) => levelingOptions(S(over)).find((o) => o.id === LEVELING_VIRTUE).lines.join(' ');
+  assert.match(words({}), /12 virtues to spend across at most 3 of your attributes/);
+  assert.match(words({ attributePoints: 20, maxUpdatableAttribute: 5 }),
+    /20 virtues to spend across at most 5 of your attributes/);
+  assert.match(words({ attributePoints: 1 }), /\b1 virtue to spend\b/, 'and it counts in English');
+  // ...and a purse of NOTHING says so rather than promising virtues
+  const none = words({ attributePoints: 0 });
+  assert.match(none, /no virtues at all/);
+  assert.doesNotMatch(none, /\b0 virtues to spend/);
+  // the bar's size is the mod's own number, not a second copy of it
+  assert.match(words({}), new RegExp(`at ${LEVELUP_TOTAL} you level`));
+  // Daggerfall's own half says what the port's own law does, unchanged
+  const classic = levelingOptions(S({})).find((o) => o.id === LEVELING_CLASSIC).lines.join(' ');
+  assert.match(classic, /fifteen points of it is a level/);
+  assert.match(classic, /four to six points/);
+});
+
 test('ORL1: the new-game question offers Daggerfall FIRST and answers exactly once', () => {
-  assert.deepEqual(LEVELING_OPTIONS.map((o) => o.id), [LEVELING_CLASSIC, LEVELING_VIRTUE],
+  assert.deepEqual([...LEVELING_OPTION_IDS], [LEVELING_CLASSIC, LEVELING_VIRTUE],
     'the port\'s own law is the default a player gets by pressing Enter');
   let got = [];
   const q = new LevelingChoiceScreen((id) => got.push(id));
@@ -700,6 +1044,37 @@ test('ORL1: the wizard\'s window stays OPEN on the question, and the answer reac
   assert.equal(plain.levelingSystem, LEVELING_CLASSIC);
 });
 
+test('ORL1: a wizard torn down mid-question still hands its host an answer', () => {
+  // A host may drop an overlay that is not done - townTalk's font-less
+  // arm does, by the never-trap law - and the character is finished by
+  // then. The question falls back to Daggerfall's own system rather
+  // than swallowing the answer and the character with it.
+  let result = null;
+  let calls = 0;
+  const w = createChargenWindow(new ChargenFlow([{ name: 'Warrior', career }], () => 0),
+    { onDone: (r) => { calls += 1; result = r; } });
+  const key = (code, n = 1) => { for (let i = 0; i < n; i++) w.input(code); };
+  key('Enter'); key('KeyM'); key('Enter'); key('Enter');
+  for (const c of 'KeyM KeyA KeyC'.split(' ')) w.input(c);
+  key('Enter'); key('Enter');
+  key('Equal', 6); key('Enter');
+  key('Equal', 6); key('ArrowDown', 3);
+  key('Equal', 6); key('ArrowDown', 3);
+  key('Equal', 6); key('Enter');
+  key('Enter'); key('Enter');
+  assert.ok(w.levelingPrompt, 'the question is up and unanswered');
+  assert.equal(calls, 0);
+
+  w.dispose();
+  assert.equal(calls, 1, 'the host is handed its character');
+  assert.equal(result.levelingSystem, LEVELING_CLASSIC, 'under the port\'s own law');
+  assert.equal(w.done, true);
+  // ...and once, however many doors call it
+  w.dispose();
+  w.input('Enter');
+  assert.equal(calls, 1);
+});
+
 test('ORL1: the choice rides the ONE chargen door, and every apply path answers it', () => {
   const cs = rd('src/systems/chargenSession.js');
   assert.match(cs, /return withLevelingChoice\(flow, \{ onDone, onCancel, hudScale \}\);/,
@@ -756,7 +1131,15 @@ test('ORL1: the tile, the group, the credit and the registry row', () => {
   assert.deepEqual(row.kinds, ['mod']);
   assert.equal(row.group, 'character');
   assert.ok(GROUPS.character, 'and the group it names exists');
+  // ONE SOURCE - and the words themselves, because `row.note` IS that
+  // property, so comparing the two is a constant against itself and
+  // holds for an empty string (the pins lens). What the tile owes a
+  // player is a note that says what the switch DOES.
   assert.equal(row.note, MOD_SETTINGS[V].keys.Enabled.description, 'the mod\'s own words, one source');
+  assert.match(row.note, /100-point bar/, 'and the note says what the system is');
+  assert.match(row.note, /virtues/);
+  assert.match(row.note, /asked which system they want/, '...and that it is a choice, not a switch that converts anyone');
+  assert.ok(row.note.length > 120, 'a placeholder is not a note');
   // the effect line is the one that had to say NEXT CHARACTER: every
   // other mod's switch lands on the running game.
   assert.match(row.effect, /^Takes effect on the next character you make/);

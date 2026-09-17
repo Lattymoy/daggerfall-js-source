@@ -541,7 +541,7 @@ export const MOD_SETTINGS = Object.freeze({
   // first MORROWIND mod in this store, and the only one whose switches
   // come out of OpenMW `I.Settings.registerGroup` calls rather than a
   // `modsettings.json`. The mod's own two groups are `levelUpSettings`
-  // (settings.lua:11-68) and `skillSettings` (:70-107); their names,
+  // (settings.lua:10-64) and `skillSettings` (:66-108); their names,
   // minimums and defaults are the mod's, and the DESCRIPTIONS are the
   // author's own English strings out of `l10n/en.yaml` - the pane shows
   // them as they were written, the same law the other mods' rows follow.

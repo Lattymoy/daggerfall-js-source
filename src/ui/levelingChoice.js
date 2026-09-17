@@ -32,38 +32,88 @@
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import { drawText, measureText } from './text.js';
-import { LEVELING_CLASSIC, LEVELING_VIRTUE } from '../systems/oblivionLeveling.js';
+import {
+  LEVELING_CLASSIC, LEVELING_VIRTUE, levelingSettings, LEVELUP_TOTAL,
+} from '../systems/oblivionLeveling.js';
 
-/** The two answers, in the order they are offered. Daggerfall's own is
- *  FIRST and is what a player who presses Enter without reading gets -
- *  the port's own law is the default, and the mod is the opt-in. */
-export const LEVELING_OPTIONS = Object.freeze([
-  Object.freeze({
-    id: LEVELING_CLASSIC,
-    title: 'Daggerfall',
-    lines: Object.freeze([
-      'Level with your skills, as Daggerfall does. Your primary,',
-      'major and minor skills are weighed into one sum, and every',
-      'fifteen points of it is a level. Each level rolls you four to',
-      'six points to spread across your attributes.',
-    ]),
-  }),
-  Object.freeze({
-    id: LEVELING_VIRTUE,
-    title: 'Oblivion Remastered',
-    lines: Object.freeze([
-      'Level with a bar, as Oblivion Remastered does. Every skill you',
-      'raise fills it - your best skills fill it fastest - and at a',
-      'hundred you level, with anything over carried into the next.',
-      'Each level hands you twelve virtues to spend where you choose.',
-    ]),
-  }),
-]);
+/**
+ * The two answers, in the order they are offered. Daggerfall's own is
+ * FIRST and is what a player who presses Enter without reading gets -
+ * the port's own law is the default, and the mod is the opt-in.
+ *
+ * IT IS A FUNCTION, NOT A FROZEN TABLE, because the mod's purse and its
+ * bar are SETTINGS: `attributePoints` is a slider from 0 to 60 and the
+ * Mods pane exposes it. A literal "twelve virtues" here would lie to
+ * any player who had moved it - and this is the one screen a character
+ * cannot come back to, so it is the worst screen in the game to lie on.
+ * (ORL1's adversarial review; the answer is read once, when the
+ * question is built.)
+ */
+export function levelingOptions(s = null) {
+  const set = s ?? levelingSettings();
+  const purse = set.attributePoints;
+  const virtues = purse === 1 ? '1 virtue' : `${purse} virtues`;
+  return Object.freeze([
+    Object.freeze({
+      id: LEVELING_CLASSIC,
+      title: 'Daggerfall',
+      lines: Object.freeze([
+        'Level with your skills, as Daggerfall does. Your primary,',
+        'major and minor skills are weighed into one sum, and every',
+        'fifteen points of it is a level. Each level rolls you four to',
+        'six points to spread across your attributes.',
+      ]),
+    }),
+    Object.freeze({
+      id: LEVELING_VIRTUE,
+      title: 'Oblivion Remastered',
+      lines: Object.freeze([
+        'Level with a bar, as Oblivion Remastered does. Every skill you',
+        'raise fills it - your best skills fill it fastest - and at',
+        `${LEVELUP_TOTAL} you level, with anything over carried into the next.`,
+        purse > 0
+          ? `Each level hands you ${virtues} to spend across at most`
+          : 'Each level hands you no virtues at all, as you have set it,',
+        purse > 0
+          ? `${set.maxUpdatableAttribute} of your attributes.`
+          : 'so levelling raises only your health.',
+      ]),
+    }),
+  ]);
+}
+
+/** The ids, in the order the screen offers them - what a caller wants
+ *  when it is asking about the ANSWERS rather than drawing the words. */
+export const LEVELING_OPTION_IDS = Object.freeze([LEVELING_CLASSIC, LEVELING_VIRTUE]);
+
+/** WHERE THE TWO ANSWERS SIT, in the 320x200 native units the hosts'
+ *  pointer seam speaks (ui/chargen.js's `clickNative`, townTalk's own
+ *  route). ONE table, read by the draw AND by the hit test, because a
+ *  screen whose picture and whose click target are written twice is a
+ *  screen that will one day disagree with itself. */
+export const CHOICE_TOP = 44;          // the first option's title row
+export const CHOICE_PITCH = 60;        // title + four lines + the gap
+export const CHOICE_HEIGHT = 52;       // what a click on that option covers
+export const CHOICE_X0 = 16, CHOICE_X1 = 304;
+
+/** The option a native-coordinate point falls on, or -1. */
+export function choiceAtNative(vx, vy, count = 2) {
+  if (vx < CHOICE_X0 || vx > CHOICE_X1) return -1;
+  for (let i = 0; i < count; i++) {
+    const top = CHOICE_TOP + i * CHOICE_PITCH;
+    if (vy >= top && vy < top + CHOICE_HEIGHT) return i;
+  }
+  return -1;
+}
 
 export class LevelingChoiceScreen {
   /** @param {(id: string) => void} onAnswer */
-  constructor(onAnswer) {
+  constructor(onAnswer, { settings = null } = {}) {
     this._onAnswer = onAnswer;
+    /** Read ONCE, when the question is built - a player cannot move a
+     *  slider while this screen is up, and re-reading per frame would
+     *  make the words change under them. */
+    this.options = levelingOptions(settings);
     this._fired = false;
     this.cursor = 0;
     this.done = false;
@@ -100,14 +150,43 @@ export class LevelingChoiceScreen {
     if (this._fired) return;
     switch (LevelingChoiceScreen.ACTIONS[action]) {
       case 'up':
-        this.cursor = (this.cursor + 1) % LEVELING_OPTIONS.length;
+        this.cursor = (this.cursor + 1) % this.options.length;
         audio.playOneShot(SOUND.ButtonClick, 1);
         break;
-      case 'one': this.answer(LEVELING_OPTIONS[0].id); break;
-      case 'two': this.answer(LEVELING_OPTIONS[1].id); break;
-      case 'confirm': this.answer(LEVELING_OPTIONS[this.cursor].id); break;
+      case 'one': this.answer(this.options[0].id); break;
+      case 'two': this.answer(this.options[1].id); break;
+      case 'confirm': this.answer(this.options[this.cursor].id); break;
       default: break;   // every other key is inert: this screen has no way out but an answer
     }
+  }
+
+  /**
+   * THE POINTER SEAM (U10's law: the hosts hand NATIVE 320x200 coords).
+   *
+   * The classic wizard is completable with the mouse alone and has been
+   * since U8b - `tools/chargenClickProbe.mjs` is the pin - so a screen
+   * the door puts in FRONT of its OK must be clickable too. Without
+   * this a player who never touched the keyboard reached the question
+   * and could go no further: the wizard was finished, `done` never came
+   * true, and `finishChargen` never ran. (ORL1's adversarial review.)
+   *
+   * A click on an option picks it AND answers, which is the one-press
+   * behaviour every other picker in the wizard has.
+   */
+  click(vx, vy) {
+    if (this._fired) return false;
+    const i = choiceAtNative(vx, vy, this.options.length);
+    if (i < 0) return false;
+    this.cursor = i;
+    audio.playOneShot(SOUND.ButtonClick, 1);
+    return this.answer(this.options[i].id);
+  }
+
+  /** ...and the highlight follows the pointer, as the wizard's lists do. */
+  hover(vx, vy) {
+    if (this._fired) return;
+    const i = choiceAtNative(vx, vy, this.options.length);
+    if (i >= 0) this.cursor = i;
   }
 
   draw(renderer, canvas, font, s) {
@@ -121,18 +200,18 @@ export class LevelingChoiceScreen {
     centre('HOW WILL YOU GROW?', 14, gold);
     centre('Choose the leveling system for this character. It cannot be changed later.', 26, dim);
 
-    let y = 44;
-    LEVELING_OPTIONS.forEach((opt, i) => {
+    this.options.forEach((opt, i) => {
       const on = i === this.cursor;
+      let y = CHOICE_TOP + i * CHOICE_PITCH;   // the same table the hit test reads
       drawText(renderer, font, `${on ? '>' : ' '} ${i + 1}. ${opt.title}`, 32 * s, y * s, s, on ? hot : white);
       y += 12;
       for (const line of opt.lines) {
         drawText(renderer, font, `     ${line}`, 32 * s, y * s, s, on ? white : dim);
         y += 10;
       }
-      y += 8;
     });
 
-    centre('up/down to choose, 1 or 2 to pick, ENTER to confirm', y + 4, dim);
+    const foot = CHOICE_TOP + this.options.length * CHOICE_PITCH + 4;
+    centre('click one, or up/down and ENTER, or press 1 or 2', foot, dim);
   }
 }

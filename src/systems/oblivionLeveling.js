@@ -42,7 +42,7 @@
 //    say so; the mod has no such key because Morrowind has no such tier.
 //
 // 2. HEALTH. The mod raises health by `Endurance * fLevelUpHealthEndMult`
-//    (helper.lua:275-283). That is not the mod's rule - it is
+//    (helper.lua:272-282). That is not the mod's rule - it is
 //    MORROWIND'S OWN engine rule, which the mod has to restate because
 //    it took over the level-up dialog. Daggerfall's own rule is
 //    FormulaHelper's hit-points-per-level roll, which this port already
@@ -79,7 +79,7 @@ export const ATTRIBUTE_INCREASE_LIMIT = 5;
 export const MAX_ATTRIBUTE_VALUE = 100;
 export const MAX_SKILL_VALUE = 100;
 
-/** constants.lua:47-54 - and `STAT_KEYS_ORDER` already spells all
+/** constants.lua:56-65 - and `STAT_KEYS_ORDER` already spells all
  *  eight the same way. The mod's ATRIBUTES table is that list in
  *  Morrowind's display order; the port draws Daggerfall's order, which
  *  is STAT_KEYS_ORDER's. */
@@ -101,7 +101,7 @@ const read = (k, r = null) => (r ? r(k) : modSetting(ORL_VENDOR, k));
  *  asked the question and every character levels the Daggerfall way. */
 export const oblivionLevelingEnabled = (r = null) => !!read('Enabled', r);
 
-/** settings.lua:20-66 + :71-107, resolved in one object - what the
+/** settings.lua:10-64 + :66-108, resolved in one object - what the
  *  mod's two `storage.playerSection` handles read. */
 export function levelingSettings(r = null) {
   return Object.freeze({
@@ -125,7 +125,7 @@ export function usesVirtueLeveling(entity) {
 
 // ── the skill tiers ────────────────────────────────────────────────
 
-/** helper.lua:23-42 isMajorSkill / isMinorSkill / isMiscSkill, over
+/** helper.lua:24-42 isMajorSkill / isMinorSkill / isMiscSkill, over
  *  Daggerfall's four tiers instead of Morrowind's three. Misc is the
  *  DERIVED set, exactly as the Lua derives it: every skill the career
  *  did not name. */
@@ -138,7 +138,7 @@ export function skillTier(entity, skillId) {
   return 'misc';
 }
 
-/** player.lua:36-45 - the tier's points, and the `miscSkillsImpact > 0`
+/** player.lua:39-45 - the tier's points, and the `miscSkillsImpact > 0`
  *  gate the Lua writes as an `elseif` (a misc skill with its impact set
  *  to 0 contributes NOTHING, which is also what 0 points would do; the
  *  gate is kept because it is the mod's shape). */
@@ -152,10 +152,13 @@ export function skillImpact(tier, s) {
 // ── the bar ────────────────────────────────────────────────────────
 
 /**
- * player.lua:28-50's handler and helper.lua:118-136
+ * player.lua:29-51's handler and helper.lua:124-142
  * increaselevelUpProgress, together.
  *
- * Called with the skill id that has JUST been raised, after the raise.
+ * Called with the skill id that is ABOUT TO BE RAISED, before the raise
+ * lands - OpenMW calls its handler with the value the skill is leaving,
+ * and the 0.5.3 guard below reads exactly that value. advancement.js
+ * calls it from inside the cap gate, in that position.
  *
  * THE 0.5.3 FIX IS LAW, NOT AN ACCIDENT (the author's changelog:
  * "Infinite Leveling increase and roll over after a skill reach 100"):
@@ -163,7 +166,7 @@ export function skillImpact(tier, s) {
  * so a skill standing at 100 feeds the bar nothing. Without it a
  * mastered skill re-raising every check drove the bar forever.
  *
- * THE COMPARISON IS STRICTLY `>` (helper.lua:126). Landing exactly on
+ * THE COMPARISON IS STRICTLY `>` (helper.lua:132). Landing exactly on
  * 100 rolls nothing over; only passing it does.
  *
  * Returns the points actually added to the bar (what the Lua hands
@@ -197,7 +200,7 @@ export function checkForVirtueLevelUp(entity) {
   return true;
 }
 
-/** helper.lua:138-148 levelUp - the roll-over on commit. A roll-over
+/** helper.lua:144-155 levelUp - the roll-over on commit. A roll-over
  *  big enough to fill the next bar leaves it FULL (progress = 100),
  *  which is what immediately re-offers the next level. */
 export function rollOverLevelProgress(entity) {
@@ -213,14 +216,14 @@ export function rollOverLevelProgress(entity) {
 
 // ── the purse ──────────────────────────────────────────────────────
 
-/** player.lua:54-62 getOffset - what one point of this attribute
+/** player.lua:53-61 getOffset - what one point of this attribute
  *  COSTS. Luck costs more, and only while the mod is allowed to raise
  *  it by more than one. */
 export function attributeOffset(attrKey, s) {
   return (attrKey === LUCK && s.allowLuckIncrease) ? s.luckIncreaseCost : 1;
 }
 
-/** player.lua:64-70 getAttributeIncreaseLimit - how far one attribute
+/** player.lua:63-69 getAttributeIncreaseLimit - how far one attribute
  *  may move in one level. Luck is pinned to +1 when the mod is not
  *  allowed to raise it. */
 export function attributeIncreaseLimit(attrKey, s) {
@@ -228,7 +231,7 @@ export function attributeIncreaseLimit(attrKey, s) {
 }
 
 /** What this one attribute could absorb, in PURSE POINTS - the inner
- *  loop of calculateAttributepoints (player.lua:606-620). */
+ *  loop of calculateAttributepoints (player.lua:647-668). */
 function spendableOn(value, attrKey, s) {
   const limit = attributeIncreaseLimit(attrKey, s);
   const offset = attributeOffset(attrKey, s);
@@ -239,7 +242,7 @@ function spendableOn(value, attrKey, s) {
 }
 
 /**
- * player.lua:596-633 calculateAttributepoints - the purse, clamped so
+ * player.lua:638-677 calculateAttributepoints - the purse, clamped so
  * that it is always exactly spendable.
  *
  * Two clamps, and the second is the subtle one. If the character
@@ -274,28 +277,109 @@ export function modVirtuePurse(stats, s) {
  * `maxUpdatableAttribute` - but the window will only let three of them
  * be raised, and it refuses to close on an unspent point. So a
  * late-game character can be handed a purse no legal set of three rows
- * can spend, and the level-up window becomes a wall: seven attributes
- * at 97 and Luck at 50 leaves three rows able to take 11 of the 12
- * points. The mod has that hole too; the port must not ship it.
+ * can spend, and the level-up window becomes a wall. With the mod's own
+ * defaults and Luck barred from rising, a character at 98 across the
+ * board is minted 12 points that three rows can take only 6 of. The mod
+ * has that hole; the port must not ship it.
  *
- * The second clamp is therefore "what the spend can actually place",
- * measured by running the headless policy on a scratch copy - which is
- * exact rather than another formula that could disagree with the
- * predicate. A player is never worse off than the headless path,
- * because they can always make the same choices it makes.
+ * THE FIRST VERSION OF THIS CLAMP WAS ITSELF THE BUG (found by ORL1's
+ * adversarial review). It measured "what can be placed" by running a
+ * LOWEST-VALUE-FIRST greedy and subtracting what that greedy failed to
+ * place - and lowest-first is not a maximising packing under the mod's
+ * predicate. At the ceiling the lowest-valued rows are the ones with
+ * the least headroom, so the greedy spent the row budget on rows worth
+ * one point each and reported the rest unplaceable: eight attributes at
+ * 99 minted 11, could legally take 6, and were handed 3. It destroyed
+ * virtues a player had every right to spend.
+ *
+ * So the clamp does not guess. Choosing at most N rows and a delta in
+ * each is a bounded knapsack with a row-count constraint, over eight
+ * rows, at most five points each and a purse of at most sixty - a state
+ * space small enough to solve exactly, every time, in
+ * `virtueSpendPlan`. The purse IS a reachable cost, by construction,
+ * and the plan that reaches it is what the headless paths spend.
  *
  * The mod's own arithmetic is kept whole and exported as
  * `modVirtuePurse`, so the departure is a line you can read rather
  * than an edit inside a ported function.
  */
 export function virtuePurse(stats, s) {
-  const minted = modVirtuePurse(stats, s);
-  const scratch = Object.fromEntries(STAT_KEYS_ORDER.map((k) => [k, 0]));
-  return minted - spendVirtuePurseLowest(stats, scratch, minted, s);
+  return virtueSpendPlan(stats, s, modVirtuePurse(stats, s)).cost;
 }
 
 /**
- * player.lua:534-565 refreshAttributePoints, as a question rather than
+ * THE EXACT ANSWER to "what can this character actually spend, and how".
+ *
+ * Returns `{ cost, plan }`: the largest purse not exceeding `budget`
+ * that some legal assignment pays for, and one assignment that pays it.
+ * A legal assignment opens at most `maxUpdatableAttribute` rows and
+ * gives each a delta inside its own limit and its headroom.
+ *
+ * `deltas` lets the window ask the same question part-way through a
+ * spend: a row the player has ALREADY raised is open, so it costs no
+ * new row slot and only its remaining room is on offer.
+ *
+ * The table is `step[row][slots][cost]` holding the delta taken on that
+ * row, or -1 where the state is unreachable, which is what lets the
+ * plan be walked back out of it. Sixty is the largest purse the store
+ * will mint and five the largest delta, so the whole table is a few
+ * hundred bytes and it is rebuilt per level-up rather than cached.
+ */
+export function virtueSpendPlan(stats, s, budget, deltas = null) {
+  const rows = STAT_KEYS_ORDER.map((k) => {
+    const taken = deltas?.[k] ?? 0;
+    const headroom = MAX_ATTRIBUTE_VALUE - stats[k] - taken;
+    return {
+      k,
+      off: attributeOffset(k, s),
+      room: Math.max(0, Math.min(attributeIncreaseLimit(k, s) - taken, headroom)),
+      slot: taken > 0 ? 0 : 1,   // an already-open row costs no new slot
+    };
+  });
+  const open = rows.reduce((n, r) => n + (r.slot === 0 ? 1 : 0), 0);
+  const slots = Math.max(0, (s.maxUpdatableAttribute | 0) - open);
+  const B = Math.max(0, budget | 0);
+
+  let cur = Array.from({ length: slots + 1 }, () => new Int8Array(B + 1).fill(-1));
+  cur[0][0] = 0;
+  const trail = [];
+  for (const row of rows) {
+    const next = Array.from({ length: slots + 1 }, () => new Int8Array(B + 1).fill(-1));
+    for (let n = 0; n <= slots; n++) {
+      for (let c = 0; c <= B; c++) {
+        if (cur[n][c] < 0) continue;
+        if (next[n][c] < 0) next[n][c] = 0;      // leave this row alone
+        const n2 = n + row.slot;
+        if (n2 > slots) continue;
+        for (let d = 1; d <= row.room; d++) {
+          const cc = c + d * row.off;
+          if (cc > B) break;
+          if (next[n2][cc] < 0) next[n2][cc] = d;
+        }
+      }
+    }
+    trail.push(next);
+    cur = next;
+  }
+
+  let cost = 0, usedSlots = 0;
+  for (let c = B; c >= 0; c--) {
+    let n = -1;
+    for (let i = 0; i <= slots; i++) if (cur[i][c] >= 0) { n = i; break; }
+    if (n >= 0) { cost = c; usedSlots = n; break; }
+  }
+
+  const plan = Object.fromEntries(STAT_KEYS_ORDER.map((k) => [k, 0]));
+  let c = cost, n = usedSlots;
+  for (let i = rows.length - 1; i >= 0; i--) {
+    const d = trail[i][n][c];
+    if (d > 0) { plan[rows[i].k] = d; c -= d * rows[i].off; n -= rows[i].slot; }
+  }
+  return { cost, plan };
+}
+
+/**
+ * player.lua:592-619 refreshAttributePoints, as a question rather than
  * a redraw: may this row's PLUS be pressed?
  *
  * `deltas` is the whole row set, so the "at most N attributes" law can
@@ -313,7 +397,7 @@ export function canRaiseAttribute(attrKey, stats, deltas, purse, s) {
   return true;
 }
 
-/** player.lua:568-572 - minus is shown exactly while this row has
+/** player.lua:612-616 - minus is shown exactly while this row has
  *  something to give back. */
 export function canLowerAttribute(attrKey, deltas) {
   return (deltas[attrKey] ?? 0) > 0;
@@ -322,30 +406,40 @@ export function canLowerAttribute(attrKey, deltas) {
 // ── the commit ─────────────────────────────────────────────────────
 
 /**
- * player.lua:462-483 validateLevelUp, with Daggerfall's health rule in
+ * player.lua:532-552 validateLevelUp, with Daggerfall's health rule in
  * place of Morrowind's (see the header's point 2).
  *
  * The purse must read ZERO. The Lua refuses with
  * `remaining_points_error` and leaves the window open; the caller does
  * the same, and this returns false rather than half-committing.
  *
- * ORDER IS THE LUA'S: the attributes land, then health, then the level
- * and the roll-over. Health reads the endurance the level-up just
- * raised - `increaseHealth` is called AFTER the attribute loop
- * (player.lua:472-474), and Daggerfall's own formula reads endurance
- * the same way, so the order carries across unchanged.
+ * THE ORDER IS DAGGERFALL'S, NOT THE LUA'S, AND THAT IS DELIBERATE
+ * (ORL1's adversarial review caught the first version claiming
+ * otherwise). The mod calls `increaseHealth` AFTER its attribute loop,
+ * so Morrowind's `Endurance * fLevelUpHealthEndMult` reads the
+ * Endurance the player has just bought. But the port's health rule is
+ * DAGGERFALL'S - departure 2 - and `advancement.applyLevelUp` rolls hit
+ * points BEFORE it distributes the pool, on the endurance the character
+ * had going in ("PERMANENT endurance, verbatim", audit F8). Taking the
+ * mod's ORDER with Daggerfall's FORMULA would be half of each: a virtue
+ * character who spent five points on Endurance would collect the hit
+ * points for them in the same breath, and out-earn the identical
+ * character on the Daggerfall path. So the roll comes first here too,
+ * and the two lanes hand the same character the same hit points.
  */
 export function commitVirtueLevelUp(entity, deltas, purse, s, rolls = Math.random) {
   if (!entity.readyToLevelUp) return false;
   if (purse !== 0) return false;
+  // Daggerfall's hit-points-per-level, not Morrowind's
+  // Endurance * fLevelUpHealthEndMult - the header's point 2 - and so
+  // in Daggerfall's position, BEFORE the attributes land, reading the
+  // endurance the character came in with.
+  entity.maxHealth += hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);
+  entity.health = Math.min(entity.health, entity.maxHealth);
   for (const key of STAT_KEYS_ORDER) {
     const d = deltas[key] ?? 0;
     if (d > 0) entity.stats[key] = entity.stats[key] + d;
   }
-  // Daggerfall's hit-points-per-level, not Morrowind's
-  // Endurance * fLevelUpHealthEndMult - the header's point 2.
-  entity.maxHealth += hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);
-  entity.health = Math.min(entity.health, entity.maxHealth);
   entity.level += 1;
   rollOverLevelProgress(entity);
   entity.readyToLevelUp = false;
@@ -353,45 +447,16 @@ export function commitVirtueLevelUp(entity, deltas, purse, s, rolls = Math.rando
   return true;
 }
 
-/**
- * THE HEADLESS SPEND, and the ONE home for it - the window's font-less
- * escape (ui/virtueLevelUp.js) and raiseSkills' no-host arm both call
- * this rather than keeping a policy each.
- *
- * It is chargen.spendPoolLowest's policy (one point at a time into the
- * lowest eligible value) run through the MOD'S predicate, so a
- * headless level-up cannot put an attribute somewhere the window would
- * have refused to. `spendPoolLowest` itself cannot be reused: it has no
- * cap at all (a known hazard of that function) and no notion of an
- * attribute costing more than one point.
- *
- * Terminates: every pass either spends - and an offset is at least 1,
- * so the purse strictly falls - or finds no legal row and stops.
- * Returns the purse that is left, which is 0 for any purse
- * `virtuePurse` minted.
- */
-export function spendVirtuePurseLowest(stats, deltas, purse, s) {
-  let left = purse;
-  for (;;) {
-    let low = null;
-    for (const k of STAT_KEYS_ORDER) {
-      if (!canRaiseAttribute(k, stats, deltas, left, s)) continue;
-      if (low === null || stats[k] + (deltas[k] ?? 0) < stats[low] + (deltas[low] ?? 0)) low = k;
-    }
-    if (low === null) return left;
-    deltas[low] = (deltas[low] ?? 0) + 1;
-    left -= attributeOffset(low, s);
-  }
-}
-
-/** raiseSkills' no-host arm under the mod's law: mint the purse, spend
- *  it lowest-first, commit. The DFU twin is the `spendPoolLowest` call
- *  beside it in advancement.js. */
+/** raiseSkills' no-host arm under the mod's law: mint the purse, take
+ *  the plan that pays for it, commit. The DFU twin is the
+ *  `spendPoolLowest` call beside it in advancement.js - which cannot be
+ *  reused here, because it has no cap at all (a known hazard of that
+ *  function) and no notion of an attribute costing more than a point. */
 export function virtueLevelUpHeadless(entity, s, rolls = Math.random) {
-  const deltas = Object.fromEntries(STAT_KEYS_ORDER.map((k) => [k, 0]));
-  const purse = virtuePurse(entity.stats, s);
-  const left = spendVirtuePurseLowest(entity.stats, deltas, purse, s);
-  return commitVirtueLevelUp(entity, deltas, left, s, rolls);
+  const { plan } = virtueSpendPlan(entity.stats, s, modVirtuePurse(entity.stats, s));
+  // The plan pays for exactly the purse `virtuePurse` would have handed
+  // out, so there is nothing left over - which is what the commit asks.
+  return commitVirtueLevelUp(entity, plan, 0, s, rolls);
 }
 
 /** The bar a character starts a new game on. Called once, beside

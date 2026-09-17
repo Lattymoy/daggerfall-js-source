@@ -10,8 +10,8 @@ from the author's own Lua, vendored whole in
 `vendor/oblivion-remaster-leveling/`. The port is
 `src/systems/oblivionLeveling.js` (the law), `src/ui/virtueLevelUp.js`
 (the level-up window) and `src/ui/levelingChoice.js` (the question a new
-character answers). Pinned by `test/orl1_leveling.test.js`; mutants in
-`tools/mutants/orl1.json`. Registry row: `01-Overview/Mod-Registry.md`.
+character answers). Pinned by `test/orl1_leveling.test.js` (44); mutants in
+`tools/mutants/orl1.json` (72: 67 dead, 5 equivalent as recorded). Registry row: `01-Overview/Mod-Registry.md`.
 
 ---
 
@@ -62,13 +62,13 @@ GMST  NAME "iLevelupTotal"  INTV 0x64
 ```
 
 That is `LEVELUP_TOTAL = 100`, the size of the bar. Everything else the
-mod does is in 1,384 lines of Lua.
+mod does is in 1,313 lines of Lua.
 
 ---
 
 ## THE LAW, AGAINST THE LUA
 
-### L1 - the bar (`player.lua:28-50`, `helper.lua:118-136`)
+### L1 - the bar (`player.lua:29-51`, `helper.lua:124-142`)
 
 Every skill level-up puts points in. The handler's whole body sits
 inside `if constants.MAX_SKILL_VALUE > skillbase`, so **a skill standing
@@ -94,7 +94,7 @@ with the value the skill is leaving, and a raise the port's cap refuses
 is a skill that never levelled up, which OpenMW would not have called
 the handler for at all.
 
-### L2 - the roll-over on commit (`helper.lua:138-148`)
+### L2 - the roll-over on commit (`helper.lua:144-155`)
 
 ```
 level += 1
@@ -106,7 +106,7 @@ A roll-over big enough to fill the next bar **leaves it full**, which is
 what immediately re-offers the next level. Port:
 `rollOverLevelProgress`.
 
-### L3 - the purse, and the clamp that makes it spendable (`player.lua:596-633`)
+### L3 - the purse, and the clamp that makes it spendable (`player.lua:638-677`)
 
 Twelve points by default. For each attribute the mod computes what it
 could absorb, in purse points: `limit * offset` when there is headroom
@@ -123,7 +123,7 @@ point is unspent, so a remainder smaller than one Luck point would trap
 the player in the dialog for ever. Port: `modVirtuePurse` - and see
 departure 6, because **the mod's own clamp does not finish the job**.
 
-### L4 - what the buttons allow (`player.lua:534-572`)
+### L4 - what the buttons allow (`player.lua:592-619`)
 
 Plus is **hidden** - not greyed - when any of: the purse is empty; the
 purse cannot pay this attribute's cost; this row is already at its limit
@@ -133,7 +133,7 @@ them. Minus is shown exactly while this row has something to give back.
 Port: `canRaiseAttribute` / `canLowerAttribute` - a predicate rather
 than a redraw, so the window and the headless path obey one rule.
 
-### L5 - the commit (`player.lua:462-483`)
+### L5 - the commit (`player.lua:532-552`)
 
 The purse must read zero, or the OK is refused with the author's own
 line ("You must distribute all your points to continue."). Then the
@@ -183,7 +183,7 @@ so in the pane.
 
 ### 2. Health: the mod's rule is Morrowind's engine, not the mod
 
-`helper.lua:275-283` raises health by `Endurance * fLevelUpHealthEndMult`.
+`helper.lua:272-282` raises health by `Endurance * fLevelUpHealthEndMult`.
 That is not something the mod invented - it is **Morrowind's own
 level-up rule**, which the mod has to restate because it took the
 level-up dialog over. Daggerfall's own rule is FormulaHelper's
@@ -193,6 +193,20 @@ hit-points-per-level roll, which this port already carries verbatim.
 (`chargen.hitPointsPerLevelUp`). Porting a Morrowind constant into
 Daggerfall would be importing the wrong game's engine under cover of
 porting a mod.
+
+**AND IN DAGGERFALL'S POSITION, WHICH IS NOT THE MOD'S.** The mod calls
+`increaseHealth` after its attribute loop, so Morrowind's formula reads
+the Endurance the player has just bought. `advancement.applyLevelUp`
+does the opposite: it rolls hit points BEFORE it hands out the pool, on
+the endurance the character came in with ("PERMANENT endurance,
+verbatim", audit F8). The first cut of this port took the mod's ORDER
+with Daggerfall's FORMULA and claimed in a comment that the two agreed -
+they do not, and the review caught both the divergence and the false
+claim. A virtue character who spent five points on Endurance was
+collecting the hit points for them in the same breath, out-earning the
+identical character on the Daggerfall path at every level whose spend
+crossed a multiple of ten. The roll comes first here too, so the two
+lanes hand the same character the same hit points.
 
 ### 3. When you level: Morrowind makes you sleep
 
@@ -219,6 +233,13 @@ parchment box (`ui/messageBox.js`) would have been the right frame for a
 question Daggerfall DID ask - but it needs `SPOP.RCI`, and a screen that
 stands between a finished character and the game must not be able to
 fail to draw.
+
+**And the question reads the settings, rather than a number written into
+it.** `attributePoints` is a slider from 0 to 60 that the Mods pane
+exposes, and the first cut of the screen said "twelve virtues" whatever
+it was set to. This is the one screen a character can never come back
+to, which makes it the worst screen in the game to be wrong on; it is
+built from the live settings now, and says so when the purse is zero.
 
 **The window is not the Oghma Infinium's rollout.** That artefact is
 Daggerfall's own - thirty points, no level, no health - and thirty
@@ -278,23 +299,41 @@ as classic anyway, so an old save loads as exactly the character it was.
    pictures, its GMST tooltips and its triumph music are Morrowind's.
    The port plays its own level-up fanfare and draws text.
 5. **The Oghma Infinium stays on Daggerfall's rollout**, in both lanes.
-6. **A SECOND CLAMP ON THE PURSE, because the mod's first one can hand
-   out a purse it will not let you spend.** `calculateAttributepoints`
+6. **A SECOND CLAMP ON THE PURSE, because the mod's first one can mint
+   points its own window will not let you spend.** `calculateAttributepoints`
    sums what all EIGHT attributes could absorb and never looks at
    `maxUpdatableAttribute` - but the window only lets three rows be
-   raised, and it refuses to close on an unspent point. Seven
-   attributes at 97 with Luck at 50 mints twelve points that three rows
-   can only take eleven of, and the level-up window becomes a wall with
-   no way out. **The mod has that hole; the port must not ship it.** So
-   `modVirtuePurse` is the mod's arithmetic kept whole, and
-   `virtuePurse` clamps its answer to what the spend can actually
-   place - measured by running the headless policy on a scratch copy,
-   which is exact rather than a second formula that could disagree with
-   the predicate the buttons use. A player is never worse off than the
-   headless path, because they can always make the same choices it
-   makes. `test/orl1_leveling.test.js` walks the awkward shapes
-   (four Luck prices x five Luck values x four spreads) and asserts
-   every minted purse spends to exactly zero.
+   raised, and it refuses to close on an unspent point. With the mod's
+   own defaults and Luck barred from rising, a character at 98 across
+   the board is minted 12 points that three rows can take only 6 of, and
+   the level-up window becomes a wall with no way out. **The mod has
+   that hole; the port must not ship it.** So `modVirtuePurse` is the
+   mod's arithmetic kept whole, and `virtuePurse` clamps its answer to
+   the most a legal spend can actually pay for.
+
+   **THE FIRST VERSION OF THIS CLAMP WAS ITSELF A WORSE BUG, and the
+   adversarial review caught it.** It measured "what can be placed" by
+   running a lowest-value-first greedy and subtracting what that greedy
+   failed to place. Lowest-first is not a maximising packing under the
+   mod's own predicate: at the ceiling the lowest-valued rows are the
+   ones with the least headroom, so the greedy spent the three-row
+   budget on rows worth a point each and called the rest unplaceable.
+   Eight attributes at 98 - **the shipped defaults, no settings
+   changed** - mints 12, can legally take all 12, and was handed 6. Half
+   a level-up destroyed, silently, on a state any long-lived character
+   reaches. The pin that was supposed to hold this asked only that the
+   purse could be spent to zero, which 6 satisfies, so it could not see
+   it; two of the review's four lenses found it independently.
+
+   The clamp does not guess now. Choosing at most N rows and a delta in
+   each is a bounded knapsack with a row-count constraint, over eight
+   rows, at most five points apiece and a purse of at most sixty - a
+   state space small enough to solve exactly, every time
+   (`virtueSpendPlan`). The purse IS a reachable cost by construction,
+   and the plan that reaches it is what the headless paths spend. The
+   pin asks for the MAXIMUM now, against an independent exhaustive
+   search, over four row budgets x four Luck prices x both Luck switches
+   x five Luck values x five spreads.
 
 ---
 
@@ -322,6 +361,43 @@ leaves the bar full and the next skill check re-offers the level - the
 same shape AUDIT 23's `entity-9` records for the DFU path.
 
 ---
+
+## THE REVIEW, AND WHAT IT CHANGED
+
+Four adversarial lenses read this slice against the vendored Lua and the
+port's own doctrine - fidelity, edge cases, the seams, the pins. What
+came back was not a list of nits:
+
+- **the port's own purse clamp destroyed up to half a level-up** at the
+  shipped defaults (departure 6), found by two lenses independently and
+  reproduced by hand before it was believed;
+- **the health roll read the endurance it had just sold you**, and the
+  comment beside it claimed the opposite (departure 2);
+- **the new-game question named a purse the settings might not hand
+  out** - a literal "twelve virtues" over a slider;
+- **the worked example that justified departure 6 did not reproduce**;
+- **every citation into the vendored Lua was a few lines out**, because
+  they were written off a display rather than off the file, and several
+  landed inside a different function of the same file;
+- **the page's headline count of the mod's size was 71 lines wrong.**
+
+Every one is fixed above. The shape worth keeping is the first: a pin
+that asks for a WEAKER property than the law needs will pass over the
+law being broken. "The purse can be spent to zero" was true of a purse
+half the size it should have been.
+
+**AND THE PROGRAMME'S OWN RULE WAS BROKEN TO GET HERE, knowingly.**
+`Home.md` says DO NOT FIX WHILE THE VERIFIER IS READING: an adversarial
+review reads the WORKING TREE, and fixing its findings while its verify
+pass is still running makes every verdict come back "refuted - the code
+you quote does not exist", which is indistinguishable from "the finding
+was wrong". That is exactly what happened here - the verify verdicts on
+this review are worthless and are not the evidence for anything above.
+What IS the evidence is that each finding was reproduced by RUNNING the
+shipped code before it was believed (the purse numbers in departure 6
+are measured, not argued), and that the two independent lenses agreed.
+The right order next time is: let the verify pass finish, or hand the
+verifiers a snapshot.
 
 ## OPEN, FOR MAC
 
