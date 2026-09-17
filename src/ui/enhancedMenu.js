@@ -1478,6 +1478,16 @@ function morrowindCard() {
       + 'Off: the classic weapon sprites, and Eye Of The Beholder for third person. Turning it on builds the body '
       + '(a few seconds, once); the archives stay attached either way.',
       { onChange: (on) => { toggleMorrowind(on); }, home: true }));
+    // WS1: the holster - rebuilt into the standing body when the switch moves.
+    mw.append(prefRow('mwSheathing', 'Weapon sheathing',
+      'A sheathed weapon stays on the body - on the hip or the back, in the scabbard Weapon Sheathing '
+      + '(Greatness7 and the artists it credits) ships for it, with a quiver for a bow. Off: a lowered weapon vanishes, as in vanilla Morrowind.',
+      { onChange: async () => {
+        if (!getPref('mwArms') || !count) { render(); return; }
+        const { buildArmsFor } = await import('../combat/weaponRig.js');
+        await buildArmsFor(playerEntity);
+        render();
+      } }));
   }
   const armActions = [
     { label: 'Attach data', primary: !count, onClick: async () => {

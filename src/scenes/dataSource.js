@@ -462,7 +462,7 @@ export async function loadDerivedJson(key) {
  *  data-files frame ("meshes/maxhorse/xhorse1.nif"), so the key slices
  *  from the FIRST known asset root, lowercased, slashes normalized. A
  *  path with no known root keys by its basename (a file picked alone). */
-const MW_LOOSE_ROOTS = ['meshes/', 'textures/', 'sound/', 'icons/', 'bookart/', 'music/', 'splash/', 'video/', 'fonts/'];
+const MW_LOOSE_ROOTS = ['meshes/', 'textures/', 'sound/', 'icons/', 'bookart/', 'music/', 'splash/', 'video/', 'fonts/', 'animations/'];   // WS1: the bone addons' folder
 export function mwLoosePath(name) {
   const p = String(name).replace(/\\/g, '/').toLowerCase();
   for (const root of MW_LOOSE_ROOTS) {
@@ -662,6 +662,15 @@ async function _openMorrowindArchives() {
       if (bytes) loose.set(n, bytes);
     }
     archives.push(makeLooseArchive(loose));
+  }
+  // WS1: Weapon Sheathing's vendored scabbards and bone addons, after
+  // the player's own loose files (a replacer wins) and before every
+  // .bsa (retail carries none of these names).
+  try {
+    const ws = await import('../systems/weaponSheathingAssets.js');
+    archives.push(ws.weaponSheathingArchive());
+  } catch (err) {
+    console.warn(`weapon sheathing assets: ${err.message}`);
   }
   for (const n of names) {
     try {
@@ -926,7 +935,7 @@ export const ASSET_PICKER_Z = 40;
 /** MWFIX: is the asset picker on screen? A modal opened FROM another
  *  overlay has to be able to say so, because the opener may own the
  *  keyboard - the enhanced shell takes Escape on `globalThis` in
- *  CAPTURE and stops it (enhancedMenu.js:2107), which is right for a
+ *  CAPTURE and stops it (enhancedMenu.js:2117), which is right for a
  *  screen with nothing above it and wrong the moment something is.
  *  Its own stated law is that a modal overlay owns its input; this is
  *  how the one above it says "that's me". */

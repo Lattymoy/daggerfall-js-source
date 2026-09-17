@@ -76,6 +76,8 @@ import { materialName } from '../systems/itemInfo.js';
 import { composeWornArmor, shadowSkinRows, fpWornAdds, mwArmorRecords, mwClothingRecord, CLOTHING_NAME } from '../formats/mwItemMap.js';
 import { correctTexturePath, correctActorModelPath, wrapModes, warningImage, decodeTextureImage } from '../formats/mwTexture.js';
 import { diffuseAt, emissiveAt } from '../formats/mwNifMesh.js';   // MWT2: the emission the pass has always resolved and never read
+import { boneSourcesFor, resolveHolsterParts, holsterPartPaths, holsterHidden, HOLSTER_SLOTS } from '../systems/weaponSheathing.js';   // WS1
+import { injectSkeletonNodes } from '../formats/mwSkin.js';   // WS1: the dry injection the holster's bone probe runs
 
 // MW-LOAD (2026-09-08, Mac: "improve the load time when Morrowind assets
 // are enabled"): THE ARCHIVE IS OPENED, NOT READ, AND THIS FILE IS ITS
@@ -565,6 +567,17 @@ function skeletonHasBone(skeletonBytes, name) {
     return skel.byName.has(String(name).toLowerCase());
   } catch { return false; }
 }
+/** WS1: skeletonHasBone AFTER the bone addons - a dry injection over the
+ *  same bytes, so the holster resolves against the skeleton the
+ *  assembly will build. */
+function boneProbe(skeletonBytes, boneSources) {
+  let skel = null;
+  try {
+    skel = buildSkeleton(parseNifOnce(skeletonBytes));
+    for (const src of boneSources ?? []) { try { injectSkeletonNodes(skel, parseNifOnce(src.bytes)); } catch { /* the assembly notes it */ } }
+  } catch { skel = null; }
+  return (name) => !!skel && skel.byName.has(String(name).toLowerCase());
+}
 
 /**
  * MW-D9's WEAPON RESOLUTION, one home (extracted at MW-D19 so a live
@@ -907,6 +920,12 @@ export const DF_ARROW_TEMPLATE = 131;
 export function hasDaggerfallArrows(items) {
   return !!items?.some((it) => it.templateIndex === DF_ARROW_TEMPLATE && (it.stackCount ?? 1) > 0);
 }
+/** WS1: how many arrows the pack carries - the quiver shows min(count, its slots). */
+export function daggerfallArrowCount(items) {
+  let n = 0;
+  for (const it of items ?? []) if (it.templateIndex === DF_ARROW_TEMPLATE) n += Math.max(0, it.stackCount ?? 1);
+  return n;
+}
 
 /**
  * MW-LOAD: THE ARCHIVE PATHS resolveWeaponParts WILL READ, before it
@@ -1117,6 +1136,7 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
 async function buildTpBody({
   race, female, beast, faceIndex, faceMatch, weapon, hasAmmo, worn, archives, parts, allWeapons, find, gen = null,
   torch = false, allLights = [],   // MW-D51
+  sheathing = true, ammoCount = null,   // WS1: the holster, and the quiver's count (null: a full quiver when there is ammunition)
 }) {
   const exists = (p) => archives.some((a) => a.has(p));
   const settingsSkeleton = tpSkeletonPath({ female, beast });
@@ -1171,8 +1191,26 @@ async function buildTpBody({
     // MW-D51: the held torch, at THIS rig's Shield Bone.
     const resolvedTorch = resolveTorchPart({ torch, allLights, find, skeletonBytes, has: archiveHas(archives) });
     partBytes.push(...resolvedTorch.parts);
+    // WS1: THE BONE ADDONS and THE HOLSTER. Every .nif under the base
+    // model's and this skeleton's animations/ folders joins the skeleton
+    // (injectSkeletonNodes, inside the assembly); the sheathed weapon,
+    // its scabbard and its quiver resolve against the skeleton AS IT
+    // WILL BE, through a dry injection over the same bytes.
+    const boneSourcePaths = boneSourcesFor(TP_BASE_MODEL, skeletonPath, archives);
+    await loadFromArchives(archives, [...boneSourcePaths, ...holsterPartPaths({ weaponModel: resolvedWeapon.weaponInfo?.model })]);
+    const boneSources = boneSourcePaths.map((path) => ({ name: path, bytes: find(path)?.get(path)?.slice() })).filter((b) => b.bytes);
+    const resolvedHolster = sheathing
+      ? resolveHolsterParts({
+        mwType: resolvedWeapon.mwType, weaponModel: resolvedWeapon.weaponInfo?.model,
+        weaponBytes: resolvedWeapon.parts.find((p) => p.slot === 'weapon')?.bytes ?? null,
+        ammo: resolvedWeapon.arrowInfo ? { bytes: resolvedWeapon.parts.find((p) => p.slot === 'arrow')?.bytes ?? null, type: resolvedWeapon.arrowInfo.type } : null,
+        ammoCount: ammoCount ?? (hasAmmo ? Number.MAX_SAFE_INTEGER : 0),
+        find, hasBone: boneProbe(skeletonBytes, boneSources), parseNif: parseNifOnce,
+      })
+      : { parts: [], info: null, notes: [] };
+    partBytes.push(...resolvedHolster.parts);
 
-    const arm = await assembleFirstPersonArm({ skeletonBytes, parts: partBytes });
+    const arm = await assembleFirstPersonArm({ skeletonBytes, parts: partBytes, boneSources });
     if (!arm.ok) {
       return { ok: false, stage: arm.stage || 'assembly', error: arm.error, notes: [...missing, ...(arm.notes || [])], rows };
     }
@@ -1235,9 +1273,12 @@ async function buildTpBody({
       weapon: resolvedWeapon.weaponInfo,
       arrow: resolvedWeapon.arrowInfo,
       torch: resolvedTorch.torchInfo,   // MW-D51
+      holster: resolvedHolster.info,   // WS1
+      boneSources: boneSourcePaths,   // WS1: the addons this skeleton took
+      sheathing,
       leftArm: blendMaskBones(arm.skeleton),   // MW-D51: rule 25's LeftArm mask on THIS skeleton
       rows,
-      notes: [...missing, ...resolvedWeapon.notes, ...resolvedTorch.notes, ...(arm.notes || [])],
+      notes: [...missing, ...resolvedWeapon.notes, ...resolvedTorch.notes, ...resolvedHolster.notes, ...(arm.notes || [])],
       pieces: armPieceRows(arm.pieces).length,
       // MW-D24: the live weapon swap re-resolves against THIS skeleton's
       // bones, exactly as the arm's swap does against its own.
@@ -1251,6 +1292,7 @@ async function buildTpBody({
 export async function buildFpArm({
   race, female = false, beast = null, faceIndex = 0, weapon = null, hasAmmo = false, armor = null, deps = null,
   torch = false,   // MW-D51: a lit Daggerfall torch in hand at the build
+  sheathing = true, ammoCount = null,   // WS1: the holster on the third-person body, and the quiver's count
 } = {}) {
   const d = deps || await import('../scenes/dataSource.js');
   let settingsSkeleton = null;
@@ -1580,7 +1622,7 @@ export async function buildFpArm({
     // MW-D24: the THIRD-PERSON BODY, while the same archives are open.
     // Its refusal is a note on the card, never the arm's refusal.
     const third = arm.ok
-      ? await buildTpBody({ race, female, beast, faceIndex, faceMatch, weapon, hasAmmo, worn, archives, parts, allWeapons, find, gen, torch, allLights })   // MW-D51
+      ? await buildTpBody({ race, female, beast, faceIndex, faceMatch, weapon, hasAmmo, worn, archives, parts, allWeapons, find, gen, torch, allLights, sheathing, ammoCount })   // MW-D51; WS1
       : null;
     stage('meshes');
     // IG2: the mapped archives are NO LONGER truncated here - they are
@@ -3038,7 +3080,7 @@ export function createFpArm() {
       wornEquipKey = key;
       return this.build({ ...lastBuildOpts, armor: pieces, weapon: lastBuildOpts.weapon });
     },
-    setWeapon(item, { hasAmmo = false } = {}) {
+    setWeapon(item, { hasAmmo = false, ammoCount = null } = {}) {
       if (!built || !built.ok) return false;
       const key = fpWeaponKey(item, hasAmmo);
       if (key === wornKey) return false;
@@ -3111,9 +3153,25 @@ export function createFpArm() {
               weapon: item, hasAmmo, allWeapons: token.allWeapons, find,
               skeletonBytes: t.skeletonBytes, has: archiveHas(archives),   // MW-D50
             });
-            t.arm.pieces = t.arm.pieces.filter((p) => p.slot !== 'weapon' && p.slot !== 'arrow');
-            bindPartsInto(t.arm, tResolved.parts);
-            const tFresh = t.arm.pieces.filter((p) => p.slot === 'weapon' || p.slot === 'arrow');
+            // WS1: the holster follows the hand - the scabbard preloaded,
+            // the parts resolved against THIS rig's skeleton (its addons
+            // already in it), the old three slots dropped with the weapon's.
+            await loadFromArchives(archives, holsterPartPaths({ weaponModel: tResolved.weaponInfo?.model }));
+            const tHolster = t.sheathing !== false
+              ? resolveHolsterParts({
+                mwType: tResolved.mwType, weaponModel: tResolved.weaponInfo?.model,
+                weaponBytes: tResolved.parts.find((p) => p.slot === 'weapon')?.bytes ?? null,
+                ammo: tResolved.arrowInfo ? { bytes: tResolved.parts.find((p) => p.slot === 'arrow')?.bytes ?? null, type: tResolved.arrowInfo.type } : null,
+                ammoCount: ammoCount ?? (hasAmmo ? Number.MAX_SAFE_INTEGER : 0),
+                find, hasBone: (n) => t.arm.skeleton.byName.has(String(n).toLowerCase()), parseNif: parseNifOnce,
+              })
+              : { parts: [], info: null, notes: [] };
+            const swapped = new Set(['weapon', 'arrow', ...HOLSTER_SLOTS]);
+            t.arm.pieces = t.arm.pieces.filter((p) => !swapped.has(p.slot));
+            bindPartsInto(t.arm, [...tResolved.parts, ...tHolster.parts]);
+            t.holster = tHolster.info;
+            t.notes = [...(t.notes || []).filter((n) => !/^holster[ :@]/.test(n)), ...tHolster.notes];
+            const tFresh = t.arm.pieces.filter((p) => swapped.has(p.slot));
             // MW-LOAD: same cover for the third-person rig's new pieces.
             await preloadArmTextures(tFresh, archives);
             for (const [file, tex] of collectArmTextures(tFresh, archives)) {
@@ -3511,6 +3569,7 @@ export function createFpArm() {
           if (r.slot === 'weapon') r.hidden = !weaponShown;
           else if (r.slot === 'arrow') r.hidden = !arrowShown;
           else if (r.slot === 'torch') r.hidden = !torchVisible();   // MW-D51
+          else if (HOLSTER_SLOTS.includes(r.slot)) r.hidden = holsterHidden(r.slot, weaponShown, { arrowShown, tag: r.piece?.tag });   // WS1: the holster while the hand is empty, the scabbard always, the quiver less the round on the string
         }
         frames++;
         return;
@@ -3931,6 +3990,7 @@ export function createFpArm() {
         if (r.slot === 'weapon') r.hidden = false;
         else if (r.slot === 'arrow') r.hidden = !arrowShown;
         else if (r.slot === 'torch') r.hidden = !torchLit;   // MW-D51: a portrait shows what you carry - the lit light, whatever the hand holds
+        else if (HOLSTER_SLOTS.includes(r.slot)) r.hidden = holsterHidden(r.slot, true, { arrowShown, tag: r.piece?.tag });   // WS1: the weapon is in the hand here, so the holster is empty; the scabbard and quiver show
       }
       const u = 1 / MW_UNITS_PER_METER;
       const rs = (built && built.raceScale) || { weight: 1, height: 1 };

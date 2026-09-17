@@ -474,6 +474,22 @@ export const FEATURES = Object.freeze([
   // BA1 (2026-09-16): BETTER AMBIENCE - read every frame; the dungeon's fog
   // and light are rolled at the door, so those two land on the next dungeon.
   modFeature('better-ambience', 'Takes effect at once. A dungeon\u2019s fog and light are rolled at its door.', 'world'),
+  // WS1 (2026-09-17): WEAPON SHEATHING - Greatness7's scabbards and the
+  // OpenMW mechanism, on the port's Morrowind third-person body. The
+  // switch is the port's own pref (the mod ships no settings of its own);
+  // RF4: declared here, once, the shelf's default and the online answer
+  // riding the row. Forced on online as the arms are (mwArms), so every
+  // body a peer sees wears its blade the same way.
+  Object.freeze({
+    id: 'mod-weapon-sheathing',
+    group: 'combat',
+    title: 'Weapon Sheathing',
+    note: 'With Morrowind assets on, a sheathed weapon stays on the body - on the hip or the back, in the scabbard Greatness7\u2019s Weapon '
+      + 'Sheathing ships for it, with a quiver for a bow. Off, a lowered weapon vanishes as in vanilla Morrowind.',
+    effect: 'Takes effect when the Morrowind body next builds; the Mods page\u2019s switch rebuilds it at once.',
+    kinds: Object.freeze(['mod']),
+    control: Object.freeze({ store: 'prefs', key: 'mwSheathing', initial: true, online: true }),
+  }),
   // FT10 (2026-09-14): DFU'S OWN DUNGEON ENHANCEMENTS - three of the
   // Enhancements section's switches, each read by the port at the point
   // of use as DFU reads it. DFU Classic: Daggerfall Unity's departures
