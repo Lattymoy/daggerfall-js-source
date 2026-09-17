@@ -31,7 +31,7 @@ import { racialRestBlock } from '../systems/vampirism.js';   // V2b: the vampire
 import { ArrowFlight, playerArrowHitFoe } from '../combat/arrowFlight.js';   // C13: visible exterior arrows; AUDIT 39 (#64): and the shaft that LANDS
 import { inflictPoison } from '../systems/poisons.js';   // AUDIT 39 (#64): a poisoned shaft doses its mark
 import { PLAYED_STEP_MAX_SECONDS } from '../systems/quest/clock.js';   // WORLD7: the quest clocks' played step online
-import { addItem, spendArrow, carriedWeight } from '../systems/inventory.js';   // E4: PlayerEntity.CarriedWeight carries the gold counter's own term; ROAD-G G2: BowDamage's recoverable shaft
+import { addItem, spendArrow, carriedWeight, isEnchanted } from '../systems/inventory.js';   // E4: PlayerEntity.CarriedWeight carries the gold counter's own term; ROAD-G G2: BowDamage's recoverable shaft
 import { calculateAttackDamage } from '../combat/formulas.js';   // ROAD-G G2: enemy-arrow impacts
 import { bowDamageArrow } from '../combat/enemyEquipment.js';   // MAC-N1: the recovered shaft is CreateWeapon's arrow, value and all
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // ROAD-G G2: an arrow owes the flash too (AUDIT 24 wave 46)
@@ -172,7 +172,8 @@ import { CameraRecoiler } from '../player/cameraRecoiler.js';   // AUDIT 28 W9: 
 import { HeadBobber } from '../player/headBobber.js';   // AUDIT 28 W10: HeadBobbing
 import { lastHealthLost, lastHealthLostPercent } from '../ui/hudVitals.js';   // AUDIT 28 W9: the detector's loss
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
-import { actionOf, held, moveHeld, anyMove, swallowBrowserKey, mouseCode, isSwingButton, keyboardLook, routeAction, installContextMenuGuard, POLLED_ACTIONS } from '../ui/input.js';
+import { actionOf, held, moveHeld, anyMove, swallowBrowserKey, mouseCode, isSwingButton, keyboardLook, routeAction, installContextMenuGuard, POLLED_ACTIONS, QUICKSLOT_ACTIONS } from '../ui/input.js';
+import { useQuickslot, swapQuickslot } from '../systems/quickslots.js';   // QS2: the diamond's two performers
 import { armUnloadGuard, releaseUnloadGuard } from '../systems/unloadGuard.js';   // MAC-L3: one door in front of every way out of a running game; AUDIT-MACL F3: ...and down for a door the game opened itself   // I2: the rebindable registry; AUDIT 39r: the mouse half of the held set
 import { hudShortcutKey } from '../ui/hudShortcuts.js';   // AUDIT 64 F36/F37: DaggerfallHUD.Update's LargeHUDToggle / HUDToggle arms
 import { createActivateGate, activateFrame, setClickDelay } from '../systems/activateGate.js';   // A8: PlayerActivate's ActivateCenterObject frame
@@ -1983,19 +1984,17 @@ export async function bootExterior(canvas, renderer, params, status) {
   // later service needs). One builder per host, still - the
   // service asks the host for its own window rather than
   // assembling a second one from a different dependency list.
-  const makeInventoryWindow = (extra = {}) => createInventoryWindow({
-    openBook: openBookHook,   // B1: the use-mode book arm
-    say: (l) => townTalk.say(l),   // FX1 (F128): the "Equipping %s" cue on close
-    items: () => (playerEntity.items ??= []),
-    wagonItems: () => (playerEntity.wagonItems ??= []),   // W-slice: the cart's collection
-    entity: playerEntity,
-    icons: { getTexture, uploadRecord, textures: renderer.textures },
+  /** U53's ONE-BUILDER LAW, held here too: the host-owned USE hooks live in
+   *  ONE bag, and every reader takes it - the inventory builder below and
+   *  QS2's quickslot performers. The world host has carried this shape since
+   *  U53; this host had the same expressions written inline in the builder's
+   *  argument list, which is one copy away from two behaviours for one potion.
+   *  The window's two module-level reads - `isEnchanted` and the enchanted
+   *  rider it drives - are handed to the quickslot use at its own call, exactly
+   *  as the world host hands them, so the bag stays the window's dependency
+   *  list and nothing inert rides in it. */
+  const useHooks = {
     rows: (id, pick) => townTalk.lines(id, pick),   // U25: the real item info + use text (TEXT.RSC)
-    // U42: USING the Spellbook item opens the book
-    // (DaggerfallInventoryWindow.cs:1748-1764). showOverlay REPLACES
-    // the slot, so this bypasses toggleSpellbook's already-open guard
-    // - the inventory has just run its own close law.
-    openSpellbook: () => { const b = makeSpellbookWindow(); if (b) townTalk.showOverlay(b); },
     // U44: NULL on purpose. RecordLocationFromMap reveals a random
     // undiscovered location in the CURRENT REGION, and this page has
     // no region index to walk - `?town` is one built location, not a
@@ -2012,6 +2011,34 @@ export async function bootExterior(canvas, renderer, params, status) {
     // world host.
     getQuest: (uid) => questBridge?.machine?.getQuest?.(uid) ?? null,
     nowMinute: () => Math.floor(playerTicker.classicMinutes),
+  };
+  /** QS2: the diamond's presses - see scenes/world.js's twin for the whole of
+   *  the reason (the window's own hooks, the true answer, and the rig told at
+   *  once rather than on the next frame). */
+  const quickUse = (n) => {
+    useQuickslot(n === 1 ? 'c1' : 'c2', {
+      entity: playerEntity, items: playerEntity.items ?? [], hooks: { ...useHooks, isEnchanted }, say: (l) => townTalk.say(l),
+    });
+    return true;
+  };
+  const quickSwap = () => {
+    swapQuickslot({ entity: playerEntity, say: (l) => townTalk.say(l), rows: (id, pick) => townTalk.lines(id, pick) });
+    weaponRig.refreshWorn();
+    return true;
+  };
+  const makeInventoryWindow = (extra = {}) => createInventoryWindow({
+    openBook: openBookHook,   // B1: the use-mode book arm
+    say: (l) => townTalk.say(l),   // FX1 (F128): the "Equipping %s" cue on close
+    items: () => (playerEntity.items ??= []),
+    wagonItems: () => (playerEntity.wagonItems ??= []),   // W-slice: the cart's collection
+    entity: playerEntity,
+    icons: { getTexture, uploadRecord, textures: renderer.textures },
+    // U42: USING the Spellbook item opens the book
+    // (DaggerfallInventoryWindow.cs:1748-1764). showOverlay REPLACES
+    // the slot, so this bypasses toggleSpellbook's already-open guard
+    // - the inventory has just run its own close law.
+    openSpellbook: () => { const b = makeSpellbookWindow(); if (b) townTalk.showOverlay(b); },
+    ...useHooks,   // U53: the one bag
     // U8e: OnPop mints the world pile. G5: with the drop icon the
     // player cycled to (null = CreateDroppedLootContainer's -1 roll)
     // and, when the window replaced a loot target, that container's
@@ -2211,6 +2238,10 @@ export async function bootExterior(canvas, renderer, params, status) {
     // (THE FOUR HOSTS RULE); routeKey still declines the key
     // (ui/input.js:391), so the frame poll stays its only keyboard door.
     toggleSheath: () => weaponRig.toggleSheath(),
+    // QS2: the diamond's three presses, on the ctx beside the sheath panel's
+    // door - one object is this host's whole routeAction contract.
+    quickUse: (n) => quickUse(n),
+    quickSwap: () => quickSwap(),
     // QX1/U43: the two journal keys, which this host had never
     // answered - the doors are the same ONE window the sheet's LOGBOOK
     // button opens, and the world and both interior hosts have answered
@@ -2384,6 +2415,12 @@ export async function bootExterior(canvas, renderer, params, status) {
     // LATCH (G3/GR); it carries the suppression half too (:1681-1685,
     // "space is jump, LeftShift+Space opens inventory: ignore it").
     const act = actionOf(e, keys);   // I2: the registry owns the code -> action read
+    // QS2: ABOVE THE MODE GATE, which is AUDIT SOC B4/D1's lesson taken the
+    // first time rather than the second. The gate below is `exterior mode
+    // only`, and this host mounts the interior mode over itself - a quickslot
+    // that died the moment the player walked into a shop is the same bug F had
+    // in a tavern. The overlay gate is the same one every arm below takes.
+    if (!townTalk.overlayActive && QUICKSLOT_ACTIONS.has(act) && !gamePaused() && routeAction(act, hudCtx)) { e.preventDefault(); return; }
     // U45: the ladder below and the large HUD's panels are the SAME
     // doors, so they are one object now rather than two ladders that
     // would drift. `hudCtx` is ui/input.js's routeAction contract.
@@ -3131,6 +3168,13 @@ export async function bootExterior(canvas, renderer, params, status) {
     // G6: the knightly smith's gift needs THIS host's inventory
     // window in choose-one mode - one builder, one dependency list.
     makeInventory: (extra) => (inventoryDoorReady() ? makeInventoryWindow(extra) : null),
+    // QS2: and the quickslot performers ride down with it, for the same
+    // reason - this host owns the use hooks, the entity and the popup
+    // channel, so the interior mode borrows the door rather than building a
+    // second one. (Its own weapon rig takes the swap's refresh; see
+    // worldModes' interiorKeyCtx.)
+    quickUse: (n) => quickUse(n),
+    quickSwap: () => quickSwap(),
     // S40: AbortRestForEnemySpawn (:301-304) reaches the rest window
     // in THIS host's overlay slot. In DFU the OnEncounter subscription
     // is on the WINDOW (OnPush :264, OnPop :275), so it follows the

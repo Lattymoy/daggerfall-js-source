@@ -39,7 +39,8 @@ import { ActionTextBox, ActionInputBox } from '../ui/actionText.js';
 import { makeWindowStack, pauseWhileOpen } from '../ui/windowStack.js';   // ROAD-B B1: UserInterfaceManager's stack, under this context's one slot; ROAD-tail: and its PAUSE
 import { healthStatusRows, statusInfoRows } from '../systems/healthStatus.js';   // BS1/F198: the Status health box
 import { playerEntity, surfacePlayer, hurtPlayer as hurtEntity, damageShieldPool, setDeathPresenter, setAvoidDeathHook } from '../characters/playerEntity.js';   // AUDIT 58: DecreaseHealth's shield hook is the BASE class's, so every entity's door owes it
-import { addItem, spendArrow } from '../systems/inventory.js';
+import { addItem, spendArrow, isEnchanted } from '../systems/inventory.js';
+import { useQuickslot, swapQuickslot } from '../systems/quickslots.js';   // QS2: the diamond's two performers
 import { worldAabb, objectAabb } from '../player/activate.js';   // AUDIT 63 F37/F38: objectAabb is the LIVE box a ray or a collision meets
 import { createWeaponRig, envAttack } from '../combat/weaponRig.js';   // C10: the shared FP-weapon surface
 import { weaponPoseOf, applyWeaponPose } from '../combat/playerWeapon.js';   // HARD2c: the sheath+hand pair as ONE law (SerializablePlayer.cs:175-176 / :420-421)
@@ -1340,6 +1341,42 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     });
   }
 
+  /** U53's ONE-BUILDER LAW, held here too: this context's host-owned USE hooks
+   *  in ONE bag, taken by the inventory builder below and by QS2's quickslot
+   *  performers. They were written inline in the builder's argument list, which
+   *  is one copy away from a potion behaving differently from the key than it
+   *  does from the Use button. */
+  const useHooks = {
+    // ROAD-A7: the reader takes a PICK now. The painting arm of the
+    // info panel asks for GetRandomTokens' dfRand draw (TextProvider
+    // .cs:228); everything else keeps Random.Range's default.
+    rows: (id, pick) => textRsc?.variantLinesById(id, pick ?? Math.random) ?? [],   // AUDIT 22 F2
+    drinkPotion: (key) => magic.drinkPotion(key),   // U44: DrinkPotion through the ONE cast engine
+    // QuestMachine.GetQuest - the use-click block
+    // (DaggerfallInventoryWindow.cs:1673) and ResolveItemLongName's
+    // quest-letter arm (ItemHelper.cs:338). The standalone `?dungeon`
+    // page mounts no bridge and answers null, which is the same
+    // fall-through DFU takes with nothing watching.
+    getQuest: (uid) => opts.questBridge?.machine?.getQuest?.(uid) ?? null,
+    // U44: no reveal seam - this context has no region index to walk
+    revealMap: null,
+    nowMinute: () => Math.floor(worldMinutes()),   // AUDIT 21 F2: the one clock
+  };
+  /** QS2: the diamond's presses - see scenes/world.js's twin for the whole of
+   *  the reason. `say` is this context's own HUD line, the one the weapon rig
+   *  and the dropped torches already speak through. */
+  const quickUse = (n) => {
+    useQuickslot(n === 1 ? 'c1' : 'c2', {
+      entity: playerEntity, items: playerEntity.items ?? [], hooks: { ...useHooks, isEnchanted }, say: (l) => hudText.add(l),
+    });
+    return true;
+  };
+  const quickSwap = () => {
+    swapQuickslot({ entity: playerEntity, say: (l) => hudText.add(l), rows: useHooks.rows });
+    weaponRig.refreshWorn();
+    return true;
+  };
+
   function openInventory(lootItems, onEmptied = null, { wagonPrompt = false, lootHooks = null, lootKey = null } = {}) {
     // V4: GetSuppressInventory (LycanthropyEffect.cs:409-421) - a
     // transformed lycanthrope opens NO inventory, loot included; the
@@ -1365,24 +1402,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       },
       entity: playerEntity,
       icons: { getTexture, uploadRecord, textures: renderer.textures },
-      // ROAD-A7: the reader takes a PICK now. The painting arm of the
-      // info panel asks for GetRandomTokens' dfRand draw (TextProvider
-      // .cs:228); everything else keeps Random.Range's default.
-      rows: (id, pick) => textRsc?.variantLinesById(id, pick ?? Math.random) ?? [],   // AUDIT 22 F2
       // U42: USING the Spellbook item opens the book
       // (DaggerfallInventoryWindow.cs:1748-1764). The inventory has
       // just run its own close law, so the slot is free.
       openSpellbook: () => { const b = makeSpellbookWindow(); if (b) activeOverlay = b; },
-      drinkPotion: (key) => magic.drinkPotion(key),   // U44: DrinkPotion through the ONE cast engine
-      // QuestMachine.GetQuest - the use-click block
-      // (DaggerfallInventoryWindow.cs:1673) and ResolveItemLongName's
-      // quest-letter arm (ItemHelper.cs:338). The standalone `?dungeon`
-      // page mounts no bridge and answers null, which is the same
-      // fall-through DFU takes with nothing watching.
-      getQuest: (uid) => opts.questBridge?.machine?.getQuest?.(uid) ?? null,
-      // U44: no reveal seam - this context has no region index to walk
-      revealMap: null,
-      nowMinute: () => Math.floor(worldMinutes()),   // AUDIT 21 F2: the one clock
+      ...useHooks,   // U53: the one bag
       // G5: a DROPPED pile hands DaggerfallLoot's whole identity
       // (playerOwned + TextureArchive/TextureRecord + position); an RDB
       // treasure pile or a corpse hands its FLAT alone, which is
@@ -5245,6 +5269,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     weaponRig: () => weaponRig,   // AUDIT WORLD C1: the rig the player's hands are in underground, for the pose's arm
     readiedSpell: () => magic.readied(),   // ROAD-Ar: PlayerEffectManager.ReadySpell - the gate needs its TargetType for the ByTouch exception (PlayerActivate.cs:250-258)
     toggleSheath: weaponRig.toggleSheath,
+    // QS2: the diamond's three presses. This ctx is routeKey's, in BOTH hosts
+    // that mount it - the standalone `?dungeon` page and the world's dungeon
+    // mode - so the doors land on the ladder in each the moment they exist.
+    quickUse: (n) => quickUse(n),
+    quickSwap: () => quickSwap(),
     switchHand: weaponRig.switchHand, readyWeapon: weaponRig.readyWeapon,   // a12: SwitchHand (H) - the same one door as the sheathe toggle; MAC-O1: and the ReadyWeapon KEY's own door (WeaponManager.Update:229-269), beside the panel's raw ToggleSheath above
     // S24 probe seam: drive a real spell record onto the player
     // through the host's own absorption path (the same function the

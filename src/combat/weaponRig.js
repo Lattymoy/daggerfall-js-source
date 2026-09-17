@@ -536,6 +536,18 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   }
 
   return {
+    /** QS2 - RE-READ THE HANDS NOW, not on the next frame.
+     *
+     *  `syncWorn` is DFU's UpdateHands + ApplyWeapon and the rig already runs
+     *  it every frame (`frame` above), which is how an equip made in the
+     *  inventory window reaches the hand: the window changes the equip table,
+     *  the next frame reads it. A quickslot SWAP is the same equip made from
+     *  the key ladder, with no window open - and the ladder answers BEFORE the
+     *  frame, so anything that reads the rig in the same press (the HUD's
+     *  diamond, a pin) would see the weapon that just left the hand. This is
+     *  the same read, on demand; it is idempotent, so calling it costs the
+     *  frame's own call nothing. */
+    refreshWorn() { syncWorn(); },
     /** MW-D39: the host's cast moment runs the arm's spellcast release.
      *  One door, like setWeapon - the host never reaches into fpArm.
      *

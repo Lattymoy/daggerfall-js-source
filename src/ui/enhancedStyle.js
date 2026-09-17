@@ -265,6 +265,11 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   width: 100%; height: 44px; min-width: 44px;
 }
 .act.primary:hover { background: var(--brass); color: var(--ink); }
+/* QS2: the ON state of a toggling act - the readied plaque's own brass, so
+   "this slot holds this item" reads the same way "this hand holds this weapon"
+   does one surface over. It is the act's BORDER and not a second control, so
+   the 44px target rule below still measures the same button. */
+.act.on { border-color: var(--brass); color: var(--brass); }
 .act[disabled] { opacity: 0.4; cursor: not-allowed; }
 .act[disabled]:hover { color: var(--dim); border-color: var(--iron); }
 
@@ -832,6 +837,13 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
 .packdetail ul.rarity li:first-child { text-transform: uppercase; letter-spacing: 0.16em; font-size: 10.5px; color: var(--dim); }
 .packdetail ul.rarity li:last-child:not(:first-child):not(:nth-child(2)) { color: var(--dim); font-style: italic; }
 .itemwt { flex: 0 0 auto; color: var(--dim); font-size: 12px; font-variant-numeric: tabular-nums; }
+/* QS2: THE ROW'S CHIP - '1', '2' or SWAP at the row's right end, on the rows
+   whose KIND is in a slot. The HUD's own hand label (.hud-handkind) is the
+   face it borrows, because it is the same fact in the same words one surface
+   over: 10px, letter-spaced, uppercase, brass, in a 2px frame. */
+.qs-mark { flex: 0 0 auto; border: 2px solid rgba(125, 116, 96, 0.5); color: var(--brass);
+  font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+  padding: 1px 5px; line-height: 1.5; font-variant-numeric: tabular-nums; }
 .packempty { color: var(--dim); font-size: 14px; margin: 10px 2px; }
 .packdetail .sheet-close { display: none; }
 
@@ -935,6 +947,14 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
     color: var(--dim); font-size: 12px; letter-spacing: 0.16em;
     text-transform: uppercase; border-bottom: 1px solid var(--iron); text-align: center;
   }
+  /* QS2: FIVE BUTTONS, ONE PHONE. The .acts row already wraps, so nothing was
+     ever cut off - but 20px of horizontal padding on each of five turns one row
+     into three inside a sheet that is already 70dvh tall. Narrower HERE only
+     (the settings pane's own pills are untouched), and the 46px min-height the
+     44px touch target rests on is kept exactly: this changes how wide a button
+     is, never how tall. */
+  .packdetail .acts { gap: 6px; }
+  .packdetail .acts .act { padding-left: 12px; padding-right: 12px; flex: 1 1 auto; text-align: center; }
 }
 
 /* ── THE WIZARD ─────────────────────────────────────────────
@@ -2555,6 +2575,13 @@ body:has(.dfchat.touch) .hudtext-stack { top: ${HUD_TEXT_TOP_CHAT_TOUCH_PX}px; }
 .pack-shell .itemrow .itemname { position: absolute; width: 1px; height: 1px;
   overflow: hidden; clip-path: inset(50%); }   /* the probes read it; the plaque shows it */
 .pack-shell .itemrow .itemwt { display: none; }
+/* QS2: in the pixel face a row is a 56px TILE, so the chip is a corner badge
+   rather than a column - top-left, opposite the stack count at bottom-right,
+   with the tile's own shadowed pixel text and no frame of its own (the tile is
+   already framed). */
+.pack-shell .itemrow .qs-mark { position: absolute; left: 2px; top: 1px; border: 0;
+  padding: 0; font-size: 9px; letter-spacing: 0.12em; color: var(--brass);
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
 .pack-shell .itemrow .rowcount, .pack-shell .itemrow .count { position: absolute;
   right: 2px; bottom: 1px; font-size: 9px; color: var(--brass);
   text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }

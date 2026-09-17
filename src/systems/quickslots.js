@@ -42,9 +42,9 @@
 // that swapped for free would be the exploit the pause exists to
 // stop - so the swap takes the same snapshot-and-bill the window
 // takes, around the one equip it makes.
-import { isPotion, isDrug, useItem } from './useItem.js';
-import { USE_PENDING } from '../ui/nativeInventory.js';   // the window's own stand-ins for a host that handed no hook
-import { equipItem, equipTableOf, EQUIP_SLOTS, isBrokenItem, isForbiddenEquip, isEquipped,
+import { isPotion, isDrug, useItem, USE_PENDING } from './useItem.js';   // ...and the ladder's own stand-ins for a host that handed no hook
+import { equipItem, equipTableOf, EQUIP_SLOTS, isBrokenItem, isForbiddenEquip, isEquipped, unequipSlot,
+  getItemHands, ITEM_HANDS,
   equipDelaySnapshot, billEquipDelayOnClose, ITEM_BROKEN_TEXT_ID, FORBIDDEN_EQUIPMENT_TEXT_ID } from './equip.js';
 import { isShieldTemplate } from './armorMaterials.js';
 import { itemLongName, conditionPercentage } from './itemInfo.js';
@@ -247,10 +247,31 @@ export function swapQuickslot({ entity = null, say = null, rows = null } = {}) {
   if (isForbiddenEquip(entity?.career, r.item)) return refuse(FORBIDDEN_EQUIPMENT_TEXT_ID, 'forbidden');
   const previous = equipTableOf(entity)[EQUIP_SLOTS.RightHand] ?? null;
   const snap = equipDelaySnapshot(entity);
+  // QS2 - A SWAP REPLACES WHAT IS IN THE HAND, and `equipItem` alone does not.
+  // GetEquipSlot's weapon arm is `getFirstSlot(RightHand, LeftHand)` for an
+  // EITHER-handed weapon (ItemEquipTable.cs, characters/equipTable.js) - the
+  // FIRST OPEN hand - which is exactly right for the inventory window, where
+  // equipping a second dagger with a free off hand means "hold both". It is
+  // not what a swap means. A player holding a longsword with an empty off hand
+  // - the common case - pressed the key and got a dagger in the LEFT hand, the
+  // sword still in the right, nothing leaving the hand, and so (no leaver) the
+  // slot CLEARED: the swap did not swap, and the next press said there was
+  // nothing to swap to. So the main hand is emptied first when the swap weapon
+  // would otherwise land beside it rather than in it. A LEFT-ONLY weapon (a
+  // bow under Enhancements.BowLeftHandWithSwitching) keeps its own hand - the
+  // hand law is still the equip table's, this only stops the off hand being
+  // used as overflow - and with the main hand free `getFirstSlot` answers it,
+  // so `equipItem` performs the one equip it always did.
+  const bumped = previous && getItemHands(r.item) !== ITEM_HANDS.LeftOnly
+    ? unequipSlot(entity, EQUIP_SLOTS.RightHand)
+    : null;
   const un = equipItem(entity, r.item);
-  if (un === null) return { kind: 'refused', name: r.name };
+  if (un === null) {
+    if (bumped) equipItem(entity, bumped);   // the refusal changes nothing: the hand goes back as it was
+    return { kind: 'refused', name: r.name };
+  }
   billEquipDelayOnClose(entity, snap);
-  const leaver = un.find((it) => it === previous) ?? null;
+  const leaver = un.find((it) => it === previous) ?? bumped ?? null;
   if (leaver && canSwapTo(leaver)) state.swap = { key: quickslotKey(leaver), name: itemLongName(leaver) };
   else state.swap = null;
   say?.(QUICKSLOT_TEXT.swapped(r.name));
