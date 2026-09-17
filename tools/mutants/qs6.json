@@ -1,0 +1,375 @@
+[
+  {
+    "name": "QS6-the-hold-never-cycles-so-the-key-is-a-press-again",
+    "file": "src/systems/quickslots.js",
+    "old": "        st.cycled = true;\n        onCycle?.(slot, cycleQuickslot(slot, { entity }));   // the cycle raises the lamp itself",
+    "new": "        st.cycled = false;\n        onCycle?.(slot, null);",
+    "tests": [
+      "test/qs6_spellslot.test.js"
+    ]
+  },
+  {
+    "name": "QS6-the-release-of-a-hold-performs-the-slot-too",
+    "file": "src/systems/quickslots.js",
+    "old": "      if (!st.cycled) onTap?.(slot);",
+    "new": "      onTap?.(slot);",
+    "tests": [
+      "test/qs6_spellslot.test.js"
+    ]
+  },
+  {
+    "name": "QS6-a-blocked-frame-reads-as-a-release-and-fires-the-slot",
+    "file": "src/systems/quickslots.js",
+    "old": "  if (blocked || gap > QUICK_GAP_MS || typeof isHeld !== 'function') {",
+    "new": "  if (gap > QUICK_GAP_MS || typeof isHeld !== 'function') {",
+    "tests": [
+      "test/qs6_spellslot.test.js"
+    ]
+  },
+  {
+    "name": "QS6-a-stalled-frame-bursts-the-cycle",
+    "file": "src/systems/quickslots.js",
+    "old": "  const ms = Math.min(QUICK_TICK_MAX_MS, Math.max(0, (Number(dt) || 0) * 1000));",
+    "new": "  const ms = Math.max(0, (Number(dt) || 0) * 1000);",
+    "tests": [
+      "test/qs6_spellslot.test.js"
+    ]
+  },
+  {
+    "name": "QS6-the-cycle-does-not-wrap-so-a-hold-sticks-at-the-end",
+    "file": "src/systems/quickslots.js",
+    "old": "    const next = at < 0 ? (step > 0 ? 0 : list.length - 1) : (at + step + list.length) % list.length;\n    setSpellQuickslot(list[next]);",
+    "new": "    const next = Math.max(0, Math.min(list.length - 1, at + step));\n    setSpellQuickslot(list[next]);",
+    "tests": [
+      "test/qs6_spellslot.test.js"
+    ]
+  },
+  {
+    "name": "QS6-a-consumable-cycle-offers-the-other-slots-kind-and-so-empties-it",
+    "file": "src/systems/quickslots.js",
+    "old": "    if (key == null || seen.has(key) || taken.includes(key)) continue;",
+    "new": "    if (key == null || seen.has(key)) continue;",
+    "tests": [
+      "test/qs6_spellslot.test.js"
+    ]
+  },
+  {
+    "name": "QS6-a-consumable-cycle-offers-a-record-per-stack-rather-than-a-kind",
+    "file": "src/systems/quickslots.js",
+    "old": "    seen.add(key);\n    out.push({ key, name: itemLongName(it), item: it });",
+    "new": "    out.push({ key, name: itemLongName(it), item: it });",
+    "tests": [
+      "test/qs6_spellslot.test.js"
+    ]
+  },
+  {
+    "name": "QS6-the-cycle-offers-anything-in-the-pack-not-a-consumable",
+    "file": "src/systems/quickslots.js",
+    "old": "    if (!isQuickConsumable(it)) continue;",
+    "new": "    if (false) continue;",
+    "tests": [
+      "test/qs6_spellslot.test.js"
+    ]
+  },
+  {
+    "name": "QS6-an-unset-spell-slot-refuses-instead-of-taking-the-books-first",
+    "file": "src/systems/quickslots.js",
+    "old": "    const first = bookOf(entity).find(keyedSpell) ?? null;",
+    "new": "    const first = null;",
+    "tests": [
+      "test/qs6_spellslot.test.js"
+    ]
+  },
+  {
+    "name": "QS6-a-second-press-readies-again-instead-of-putting-the-spell-away",
+    "file": "src/systems/quickslots.js",
+    "old": "  if (magic?.readiedIndex?.() === r.index) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/qs6_spellslot.test.js"
+    ]
+  },
+  {
+    "name": "QS6-a-ghost-spell-is-readied-as-undefined",
+    "file": "src/systems/quickslots.js",
+    "old": "  if (!r.spell) { say?.(QUICKSLOT_TEXT.spellGone(r.name)); return { kind: 'gone', name: r.name }; }",
+    "new": "  if (false) { say?.(QUICKSLOT_TEXT.spellGone(r.name)); return { kind: 'gone', name: r.name }; }",
+    "tests": [
+      "test/qs6_spellslot.test.js"
+    ]
+  },
+  {
+    "name": "QS6-the-slot-is-keyed-by-name-so-a-rename-empties-it",
+    "file": "src/systems/quickslots.js",
+    "old": "  const spell = bookOf(entity).find((sp) => sp?.index === spellState.index) ?? null;",
+    "new": "  const spell = bookOf(entity).find((sp) => sp?.name === spellState.name) ?? null;",
+    "tests": [
+      "test/qs6_spellslot.test.js"
+    ]
+  },
+  {
+    "name": "QS6-a-record-with-no-index-is-admitted-to-the-slot",
+    "file": "src/systems/quickslots.js",
+    "old": "  if (!keyedSpell(sp)) return false;",
+    "new": "  if (!sp) return false;",
+    "tests": [
+      "test/qs6_spellslot.test.js"
+    ]
+  },
+  {
+    "name": "QS6-the-spell-slot-is-left-out-of-the-save",
+    "file": "src/systems/quickslots.js",
+    "old": "  out.spell = spellState ? { index: spellState.index, name: spellState.name } : null;",
+    "new": "  out.spell = null;",
+    "tests": [
+      "test/qs6_spellslot.test.js",
+      "test/quickslots.test.js"
+    ]
+  },
+  {
+    "name": "QS6-a-malformed-spell-block-is-admitted-on-restore",
+    "file": "src/systems/quickslots.js",
+    "old": "  if (sp && Number.isFinite(sp.index) && typeof sp.name === 'string') spellState = { index: sp.index, name: sp.name };",
+    "new": "  if (sp) spellState = { index: sp.index, name: sp.name };",
+    "tests": [
+      "test/qs6_spellslot.test.js"
+    ]
+  },
+  {
+    "name": "QS6-clearQuickslots-leaves-the-spell-slot-standing",
+    "file": "src/systems/quickslots.js",
+    "old": "export function clearQuickslots() { for (const s of QUICKSLOTS) state[s] = null; spellState = null; }",
+    "new": "export function clearQuickslots() { for (const s of QUICKSLOTS) state[s] = null; }",
+    "tests": [
+      "test/qs6_spellslot.test.js"
+    ]
+  },
+  {
+    "name": "QS6-the-off-hand-presses-the-swap-whatever-the-cell-shows",
+    "file": "src/systems/quickslots.js",
+    "old": "export const offHandOffersSwap = (entity) => quickslotView(entity).off.kind === 'swap';",
+    "new": "export const offHandOffersSwap = () => true;",
+    "tests": [
+      "test/qs6_spellslot.test.js"
+    ]
+  },
+  {
+    "name": "QS6-the-chip-lights-for-the-slots-spell-rather-than-the-one-in-hand",
+    "file": "src/systems/quickslots.js",
+    "old": "  const spell = sp ? { ...sp, readied: readiedIndex != null && readiedIndex === sp.index } : null;",
+    "new": "  const spell = sp ? { ...sp, readied: true } : null;",
+    "tests": [
+      "test/qs6_spellslot.test.js"
+    ]
+  },
+  {
+    "name": "QS6-the-cycle-raises-no-lamp-so-the-HUD-never-shows-a-hold",
+    "file": "src/systems/quickslots.js",
+    "old": "    cycling = { slot, ms: QUICK_CYCLE_LINGER_MS };\n    return { slot, index: list[next].index, name: list[next].name, spell: list[next] };",
+    "new": "    return { slot, index: list[next].index, name: list[next].name, spell: list[next] };",
+    "tests": [
+      "test/qs6_spellslot.test.js"
+    ]
+  },
+  {
+    "name": "QS6-the-lamp-never-falls",
+    "file": "src/systems/quickslots.js",
+    "old": "  if (cycling) { cycling.ms -= ms; if (cycling.ms <= 0) cycling = null; }",
+    "new": "  if (cycling) { cycling.ms -= 0; }",
+    "tests": [
+      "test/qs6_spellslot.test.js"
+    ]
+  },
+  {
+    "name": "QS6-the-third-digit-swaps-a-weapon-again",
+    "file": "src/systems/inputActions.js",
+    "old": "  ['Digit3', 'QuickSpell'],",
+    "new": "  ['Digit3', 'QuickSwap'],",
+    "tests": [
+      "test/qs2_inputs.test.js",
+      "test/inputactions.test.js"
+    ]
+  },
+  {
+    "name": "QS6-the-three-that-hold-are-dispatched-on-their-down-edge-again",
+    "file": "src/ui/input.js",
+    "old": "export const POLLED_ACTIONS = new Set(['ReadyWeapon', 'SwitchHand', 'QuickUse1', 'QuickUse2', 'QuickSpell']);",
+    "new": "export const POLLED_ACTIONS = new Set(['ReadyWeapon', 'SwitchHand']);",
+    "tests": [
+      "test/qs2_inputs.test.js",
+      "test/sheathkey.test.js"
+    ]
+  },
+  {
+    "name": "QS6-the-spell-key-reaches-no-door",
+    "file": "src/ui/input.js",
+    "old": "    case 'QuickSpell': return ctx.quickSpell?.() === true;",
+    "new": "    case 'QuickSpell': return false;",
+    "tests": [
+      "test/qs2_inputs.test.js"
+    ]
+  },
+  {
+    "name": "QS6-the-self-routing-hosts-answer-the-polled-three-on-the-down-edge",
+    "file": "src/scenes/world.js",
+    "old": "    if (!townTalk.overlayActive && QUICKSLOT_ACTIONS.has(act) && !POLLED_ACTIONS.has(act) && socialMenuCanOpen() && routeAction(act, hudCtx)) { e.preventDefault(); return; }",
+    "new": "    if (!townTalk.overlayActive && QUICKSLOT_ACTIONS.has(act) && socialMenuCanOpen() && routeAction(act, hudCtx)) { e.preventDefault(); return; }",
+    "tests": [
+      "test/qs2_inputs.test.js"
+    ]
+  },
+  {
+    "name": "QS6-the-world-host-never-drives-the-hold-machine",
+    "file": "src/scenes/world.js",
+    "old": "        tickQuickHold(dt);   // QS6: the quickslot holds, beside the two latches they are modelled on",
+    "new": "        void dt;",
+    "tests": [
+      "test/qs6_spellslot.test.js",
+      "test/qs2_inputs.test.js"
+    ]
+  },
+  {
+    "name": "QS6-the-dungeon-page-never-drives-the-hold-machine",
+    "file": "src/scenes/dungeon.js",
+    "old": "    ctx.tickQuickHold?.(dt, { isHeld: (a) => held(keys, a), blocked: overlayHeld || !walkMode });",
+    "new": "    void dt;",
+    "tests": [
+      "test/qs6_spellslot.test.js"
+    ]
+  },
+  {
+    "name": "QS6-the-world-hosts-tick-has-no-gate",
+    "file": "src/scenes/world.js",
+    "old": "    blocked: gamePaused(),   // `townTalk.overlayActive || modes.overlayHeld` - the same door every gameplay key takes",
+    "new": "    blocked: false,",
+    "tests": [
+      "test/qs6_spellslot.test.js"
+    ]
+  },
+  {
+    "name": "QS6-the-off-hand-key-no-longer-presses-the-swap-the-cell-shows",
+    "file": "src/scenes/world.js",
+    "old": "    if (offHandOffersSwap(playerEntity)) return quickSwap();",
+    "new": "    if (false) return quickSwap();",
+    "tests": [
+      "test/qs2_inputs.test.js"
+    ]
+  },
+  {
+    "name": "QS6-the-caption-doubles-the-readied-spell-the-chip-already-names",
+    "file": "src/ui/enhancedHud.js",
+    "old": "  const readyName = readySpell && !doubled ? String(readySpell.name ?? '') : null;",
+    "new": "  const readyName = readySpell ? String(readySpell.name ?? '') : null;",
+    "tests": [
+      "test/enhancedHud.test.js"
+    ]
+  },
+  {
+    "name": "QS6-a-fingers-hold-performs-the-slot-on-release-as-well-as-cycling",
+    "file": "src/ui/enhancedHud.js",
+    "old": "        if (!held) act();",
+    "new": "        act();",
+    "tests": [
+      "test/qs3_hud.test.js"
+    ]
+  },
+  {
+    "name": "QS6-the-spell-chip-is-never-drawn",
+    "file": "src/ui/enhancedHud.js",
+    "old": "  cap.append(cornerWord, spellChip, readied);",
+    "new": "  cap.append(cornerWord, readied);",
+    "tests": [
+      "test/qs3_hud.test.js"
+    ]
+  },
+  {
+    "name": "QS6-F2-a-blocked-frame-FORGETS-the-hold-instead-of-disarming-it",
+    "file": "src/systems/quickslots.js",
+    "old": "    for (const slot of CYCLE_SLOTS) holds.set(slot, disarm());",
+    "new": "    holds.clear();",
+    "tests": [
+      "test/qs6_spellslot.test.js"
+    ]
+  },
+  {
+    "name": "QS6-F2-a-disarmed-hold-still-performs-on-release",
+    "file": "src/systems/quickslots.js",
+    "old": "const disarm = () => ({ down: true, ms: 0, next: Infinity, cycled: true });",
+    "new": "const disarm = () => ({ down: true, ms: 0, next: Infinity, cycled: false });",
+    "tests": [
+      "test/qs6_spellslot.test.js"
+    ]
+  },
+  {
+    "name": "QS6-F2-a-disarmed-hold-walks-the-book-under-the-window",
+    "file": "src/systems/quickslots.js",
+    "old": "const disarm = () => ({ down: true, ms: 0, next: Infinity, cycled: true });",
+    "new": "const disarm = () => ({ down: true, ms: 0, next: 0, cycled: true });",
+    "tests": [
+      "test/qs6_spellslot.test.js"
+    ]
+  },
+  {
+    "name": "QS6-F4-the-cell-lamp-is-not-in-the-blocks-signature-so-it-never-goes-out",
+    "file": "src/ui/enhancedHud.js",
+    "old": "    quickslotCycling() ?? '',\n  ].join('~');",
+    "new": "  ].join('~');",
+    "tests": [
+      "test/qs3_hud.test.js"
+    ]
+  },
+  {
+    "name": "QS6-F4-the-lamp-never-lights-at-all",
+    "file": "src/ui/enhancedHud.js",
+    "old": "  const lamp = quickslotCycling();",
+    "new": "  const lamp = null;",
+    "tests": [
+      "test/qs3_hud.test.js"
+    ]
+  },
+  {
+    "name": "QS6-F3-the-fingers-timers-outlive-the-HUD",
+    "file": "src/ui/enhancedHud.js",
+    "old": "  for (const h of holds) h.off();   // AUDIT QS6 F3: a finger mid-cycle does not outlive the HUD\n  holds.length = 0;",
+    "new": "  holds.length = 0;",
+    "tests": [
+      "test/qs3_hud.test.js"
+    ]
+  },
+  {
+    "name": "QS6-F3-a-finger-lifted-leaves-its-timer-running",
+    "file": "src/ui/enhancedHud.js",
+    "old": "        const held = cycled;\n        stop();",
+    "new": "        const held = cycled;",
+    "tests": [
+      "test/qs3_hud.test.js"
+    ]
+  },
+  {
+    "name": "QS6-F6-a-gap-in-the-frames-is-not-noticed",
+    "file": "src/systems/quickslots.js",
+    "old": "  if (blocked || gap > QUICK_GAP_MS || typeof isHeld !== 'function') {",
+    "new": "  if (blocked || typeof isHeld !== 'function') {",
+    "tests": [
+      "test/qs6_spellslot.test.js"
+    ]
+  },
+  {
+    "name": "QS6-F6-the-clock-never-advances-so-every-frame-looks-like-a-gap",
+    "file": "src/systems/quickslots.js",
+    "old": "  lastTickAt = at;",
+    "new": "  lastTickAt = 0;",
+    "tests": [
+      "test/qs6_spellslot.test.js"
+    ]
+  },
+  {
+    "name": "QS6-F6-the-dungeon-page-ticks-inside-its-own-overlay-gate-again",
+    "file": "src/scenes/dungeon.js",
+    "old": "    ctx.tickQuickHold?.(dt, { isHeld: (a) => held(keys, a), blocked: overlayHeld || !walkMode });",
+    "new": "    ctx.tickQuickHold?.(dt, { isHeld: (a) => held(keys, a), blocked: overlayHeld });",
+    "tests": [
+      "test/qs6_spellslot.test.js"
+    ]
+  }
+]

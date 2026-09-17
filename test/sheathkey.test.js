@@ -56,7 +56,13 @@ test('SHEATH: the large HUD panel still reaches the door through routeAction', (
   // - the same frame, the same "not GameManager's chain" - and no
   // routeAction arm answers it, so routeKey must decline it too.
   assert.ok(POLLED_ACTIONS.has('SwitchHand'));
-  assert.equal(POLLED_ACTIONS.size, 2, 'two polled actions; a third joins here, not in a host');
+  // QS6 joined three more, and the reason is the same one twice over: a key
+  // whose HOLD means something cannot be answered on its down edge, so the
+  // frame's machine owns it and the keyboard dispatch declines. (The comment
+  // above invited the third here rather than in a host; it arrived with two
+  // siblings.) They are named, not counted loosely, so a fourth joins here too.
+  assert.deepEqual([...POLLED_ACTIONS], ['ReadyWeapon', 'SwitchHand', 'QuickUse1', 'QuickUse2', 'QuickSpell']);
+  assert.equal(POLLED_ACTIONS.size, 5, 'five polled actions; a sixth joins here, not in a host');
   assert.equal(routeAction('SwitchHand', ctx), false, 'no panel door - the frame poll is the only one');
 });
 

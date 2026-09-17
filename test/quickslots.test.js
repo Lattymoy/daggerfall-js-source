@@ -369,7 +369,7 @@ test('QS1 save: the slots ride the one session composer, and a save without the 
   assignQuickslot('c1', potion(HEAL_KEY));
   assignQuickslot('swap', dagger());
   const data = quickslotSaveData();
-  assert.deepEqual(Object.keys(data), ['c1', 'c2', 'swap']);
+  assert.deepEqual(Object.keys(data), ['c1', 'c2', 'swap', 'spell']);   // QS6: the spell slot rides the same block
   assert.equal(data.c2, null);
   assert.equal(data.swap.name, 'Elven Dagger');
   assert.equal(JSON.parse(JSON.stringify(data)).c1.key, data.c1.key, 'plain data, JSON-safe');
@@ -382,7 +382,7 @@ test('QS1 save: the slots ride the one session composer, and a save without the 
   assert.deepEqual(quickslotSaveData(), data);
   // A pre-QS save, or another character's: cleared, never stale.
   restoreSessionState({ quest: null }, {});
-  assert.deepEqual(quickslotSaveData(), { c1: null, c2: null, swap: null });
+  assert.deepEqual(quickslotSaveData(), { c1: null, c2: null, swap: null, spell: null });
   // A malformed block is refused entry by entry.
   restoreQuickslotSaveData({ c1: { key: 5, name: 'x' }, c2: { key: 'k', name: 'Potion' }, swap: 'no' });
   assert.equal(quickslotEntry('c1'), null);

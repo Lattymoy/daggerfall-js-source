@@ -4615,7 +4615,7 @@ appended its own note to the end of the line that already carried
 **Why that is an invulnerable enemy.** Online, a joiner applies no local
 damage to a layout foe - `damageFoe`'s non-authority arm hands the blow
 to the room's host through `opts.onFoeHit?.(...)` and RETURNS
-(`dungeonContext.js:3848`). With the property missing that call is a
+(`dungeonContext.js:3868`). With the property missing that call is a
 no-op on `undefined`: no damage, no frame, no warning, nothing on the
 console. Every layout foe in every online dungeon absorbed every blow
 from everyone but the room's authority, for eight slices, in silence.
@@ -6546,3 +6546,72 @@ layer is not hidden on `gamePaused()` (only on `hudCovered`, the gate the
 old call took); not destroyed at pagehide (a bfcached page's rejoin would
 be nameless for life).
 
+## RESPAWN1 - A DUNGEON'S DEAD STOOD BACK UP, AND THE DOOR WAS WHY (2026-09-17)
+
+Mac, forwarding a patch he was sent: a dungeon's kills did not persist.
+Clear a room, leave, come back, and everything is alive again.
+
+**One line, and every other part of the pipeline was already right.** The
+kill was stamped with the relay's clock (`died`, WORLD8), collected by
+`collectWorld`, sent inside the room's memory, stored by the relay and
+served back on the next join. Then the RESTORE threw the whole thing
+away, because `validSharedFoe` - AUDIT ONCRASH1 A3's door over the
+memory's foes - asked for `team` and `mobileTeam` as NUMBERS:
+
+```js
+if (!Number.isInteger(sf[k]) || sf[k] < -1 || sf[k] > 255) return null;
+```
+
+They are not numbers in this port. `entity.team` is `MobileTeams`' NAME -
+'PlayerEnemy', 'PlayerAlly', 'Vermin' - which is what
+`characters/enemyEntity.js` defaults, what the whole of
+`characters/enemyTargets.js` compares, and what `combat/playerWeapon.js`
+reads as `=== 'PlayerAlly'`. The number came from DFU's own serializer
+(`SerializableEnemy.cs:125`, `(int)entity.Team + 1`), which is the
+reading the port did not take. And the publisher hands the LIVE field
+over (AUDIT 63 F26's pair), so every foe record carried a string where
+the door wanted an integer.
+
+A bad field refuses the record WHOLE - that is the door's own law, and
+the right one - and the restore drops a refused record
+(`.filter(Boolean)`). **Every foe has a team. So every record was
+refused, every dungeon memory restored as an empty list, and the room
+rebuilt itself alive** however correctly the kill had been stamped,
+stored and served. Driven before the fix: a record carrying the real
+`team: 'PlayerEnemy'` answered `null`; the same record without the pair
+passed.
+
+**The pin that should have caught it encoded the bug.** ONCRASH1 A3's
+own test passed `team: 2`. That is the shape of a fault that survives a
+green suite: the test and the code made the same wrong reading, so they
+agreed. `test/respawn1.test.js` is deliberately not another example - it
+reads the PUBLISHER's field list out of `collectWorld`'s own record in
+the source, builds the record that publisher would really write, and
+asserts the door admits it whole and field by field. A field added to
+the record with a law the door does not share now names itself there
+rather than emptying a dungeon's memory in silence.
+
+### The other half of the patch, measured and declined
+
+The patch also wrapped every `ws.close()` in `net/online.js` in a drain
+loop, on the claim that a `send()` issued a moment earlier is "silently
+dropped" - and that the frame so lost is the `final: true` snapshot a
+dungeon publishes on its way out (`leave`, which `join` calls on every
+room change). **Measured, it is not.** `tools/wsDrainProbe.mjs` stands a
+real RFC 6455 server (there is no `ws` package in this tree, so it is
+the handshake and a byte count) and drives Chromium at it: a 256 KiB
+payload, still sitting in `bufferedAmount` at the moment of the close in
+10 trials out of 10, arrived whole in 10 out of 10. The browser flushes
+the send buffer before the close frame, which is RFC 6455 7.1.1's own
+order. A drain loop there buys nothing, and costs a polling timer and a
+deferred socket teardown, so it is not taken. The probe is kept, because
+the claim will be made again.
+
+The wire's law changed, so the relay's version did: **`world80`**, with
+its row in `test/relayversion.test.js` beside the bytes it names. The
+deploy workflow (`relay-deploy.yml`) takes it to the worker on the push
+to main, because `/health` will report `world79` until it does.
+
+The patch's two scene files were not taken either: they are a copy of an
+older tree and would have reverted the Enhanced Lighting arc and the
+quickslot arc wholesale. They carried no respawn change of their own.

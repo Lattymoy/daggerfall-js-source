@@ -130,7 +130,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // below, after this context; null falls to standing defaults.
       motorState: () => (_motorRef ? { eyeLevel: _motorRef.eye[1] - _motorRef.pos[1], capsule: _motorRef.height } : null),
       // MAC1 J: this host's canvas, for the pause door's relock. The
-      // context owns none of its own (dungeonContext.js:5507), so each
+      // context owns none of its own (dungeonContext.js:5529), so each
       // dungeon host hands its own in and the resume gesture carries
       // the pointer back with it (ui/pauseDoor.js:207-224).
       relock: () => requestLook(canvas) });
@@ -745,6 +745,14 @@ export async function bootDungeon(canvas, renderer, params, status) {
       hudBlocked: activeMouseOverLargeHUD(),   // PlayerActivate.cs:230-236 - the bar's own click is not the world's
       paused: overlayHeld,                     // InputManager.cs:486-503 - a window holds the action itself
     });
+    // QS6 (AUDIT QS6 F6): THE HOLD MACHINE TICKS EVERY FRAME, ABOVE THE GATE.
+    // It sat inside `walkMode && !overlayHeld` below, beside the ReadyWeapon
+    // and SwitchHand latches it is modelled on - and there its `blocked`
+    // argument was DEAD: a blocked frame never reached the call at all, so the
+    // machine simply stopped being ticked with a key still down and read the
+    // resumed frames as a fresh press. The other three hosts tick
+    // unconditionally and let `blocked` disarm; this one does now too.
+    ctx.tickQuickHold?.(dt, { isHeld: (a) => held(keys, a), blocked: overlayHeld || !walkMode });
     if (!overlayHeld) ctx.actions.update(dt);
     if (!overlayHeld) ctx.automapTick?.(dt, cam.pos, fwd);   // A1: the 5 Hz reveal probes (paused under overlays, as DFU's coroutine pauses under the open map)
     if (walkMode && !overlayHeld) {
