@@ -91,12 +91,26 @@ export const SHADOW_MIN_SUN_Y = 0.05;
  *  the eye's own (the Light effect's candle at the camera) and never the
  *  caster - its shadows would be hidden by their own occluders anyway. */
 export const SHADOW_POINT_NEAR = 0.1;
-export const SHADOW_CASTER_MIN_DISTANCE = 0.25;
+export const SHADOW_CASTER_MIN_DISTANCE = 1.5;   // F3 (2026-09-17, Mac: "when you peak around corners, a large shadow moves around ... when the torch is equipped"): THE LIGHT IN THE HAND CASTS NOTHING - Handheld Torches puts the flame 0.34 left, 0.7 below and 0.25 ahead of the eye (0.8 away), and at 0.25 it was the NEAREST caster every frame: a 512^2 cube map from a light a hand's width from the wall, its edges a metre wide and swimming with the bob. DFU's PlayerTorch is a Unity light that casts no shadows at all. A unit and a half is the glare's own hand distance (AIR_GLARE_MIN_DISTANCE); the same law skips the contact march for such a light (enhancedLighting.js)
 /** AUDIT-EL F11: a light with a range past this is the storm's flash (Dynamic
  *  Skies: 500..1000 over the player, for a fifth of a second), never the
  *  caster - six 512^2 replays of the whole town to a far plane of a
  *  thousand, for a frame, were a hitch and nothing else. */
 export const SHADOW_CASTER_MAX_RANGE = 120;
+/** F2 (2026-09-17, Mac: "objects on the ground can sometimes have standing
+ *  shadows"): a flat is a standing card, and the sun drew a loot pile, a
+ *  dropped bottle or a coin heap as a card standing on its point - a
+ *  standing shadow off a thing lying on the ground. The treasure archive
+ *  (216, every loot pile) casts nothing, a batch a host marks `noShadow`
+ *  (dropped items, droppedLoot.js) casts nothing, and a flat shorter than
+ *  SHADOW_FLAT_MIN_HEIGHT (a key, a potion, a heap) casts nothing - its
+ *  shadow was a sliver anyway and a wrong one. */
+export const SHADOW_NO_CAST_ARCHIVES = Object.freeze(new Set([216]));
+export const SHADOW_FLAT_MIN_HEIGHT = 0.5;
+/** F5: a caster smaller than this many of a cascade's texels is not
+ *  replayed into it - the far cascade's texel is 23 cm, and a rock or a
+ *  weed half a metre across shadows two texels of it for a replay each. */
+export const SHADOW_CASCADE_MIN_RADIUS_TEXELS = 2;
 /** AUDIT-EL F15: the biases, in the space they mean - the sun's in the
  *  ortho box's [0,1] depth (600 units of half-depth: 5e-5 is 0.06 units),
  *  the lantern's in WORLD units off the major axis (the cube's depth is
@@ -487,7 +501,7 @@ export class ShadowPass {
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.sunFbos[c]);
         gl.viewport(0, 0, SHADOW_SUN_SIZE, SHADOW_SUN_SIZE);
         gl.clear(gl.DEPTH_BUFFER_BIT);
-        this.stats.sunDraws += this.replay(f, this.sunVP[c], null);
+        this.stats.sunDraws += this.replay(f, this.sunVP[c], null, false, SHADOW_CASCADE_MIN_RADIUS_TEXELS * sunTexelWorld(c));   // F5: the small casters skipped by the cascade's texel
         this._sunDrawn[c] = 1; this.stats.cascadesDrawn++;
       }
       for (let c = 0; c < SHADOW_CASCADES.length; c++) { this.sunParams[c] = SHADOW_CASCADES[c]; this.sunTexel[c] = sunTexelWorld(c); this._sunVPFlat.set(this.sunVP[c], c * 16); }
@@ -528,7 +542,7 @@ export class ShadowPass {
     gl.enable(gl.CULL_FACE);
   }
 
-  replay(f, vp, lightPos, recordBasis = false) {
+  replay(f, vp, lightPos, recordBasis = false, minRadius = 0) {
     const gl = this.gl;
     const P = this.programs;
     const planes = spherePlanes(vp, this._planes);   // EL5: this replay's frustum - a record outside it is not drawn
@@ -538,6 +552,7 @@ export class ShadowPass {
     for (let i = 0; i < this.count; i++) {
       const r = this.records[i];
       if (r.kind !== REC_BB && !recordVisible(planes, r)) { this.stats.culled++; continue; }
+      if (minRadius > 0 && r.kind !== REC_BB && r.kind !== REC_CHAR && r.bounded && r.sphere && r.sphere[3] < minRadius) { this.stats.culled++; continue; }   // F5: a small solid or terrain piece; a rig is a person
       if (r.kind === REC_MESH) {
         const mesh = r.mesh;
         if (!mesh?.vao || mesh._dead || !mesh.subMeshes?.length) continue;
@@ -576,7 +591,9 @@ export class ShadowPass {
         for (const b of r.batches) {
           if (!b?.vao || b._dead || b.conceal || f.isSpectral(b.archive)) continue;   // a concealed foe and a ghost cast nothing
           if (lightPos && b.archive === SHADOW_LIGHT_FLATS) continue;   // EL6: a flame is the lantern, not its occluder
+          if (b.noShadow || SHADOW_NO_CAST_ARCHIVES.has(b.archive) || (b.size && b.size.h < SHADOW_FLAT_MIN_HEIGHT)) { this.stats.culled++; continue; }   // F2: a thing on the ground is no standing card
           if (!batchVisible(planes, b)) { this.stats.culled++; continue; }   // EL5
+          if (minRadius > 0 && b.bounds && b.bounds[3] < minRadius) { this.stats.culled++; continue; }   // F5
           const key = b._bbKey ?? (b.frame == null ? `${b.archive}_${b.record}` : `${b.archive}_${b.record}#${b.frame}`);
           const tex = f.textures.get(key);
           if (!tex) continue;

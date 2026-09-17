@@ -669,3 +669,29 @@ test('WW4b (Mac\'s curated fix): after a swing under Recovery = Hide the melee i
   assert.equal(lf.widget.state, S.Idle);
   assert.ok(lf.widget.frame >= 0, 'a real frame, untouched by the re-entry');
 });
+
+test('F1 (2026-09-17, Mac: "when thrusting with a weapon, it can be glitchy"): a StrikeUp recovers in reverse ONCE - under Recovery = Last Frame the reverse used to run again every lap until the original\'s swing ended (mutant: the latch dropped)', () => {
+  const b = bench({ over: { 'Swings.Recovery': RECOVERY.LastFrame } });
+  b.frame();
+  assert.ok(machineAttack(b.machine, 'StrikeUp'));
+  const trace = [];
+  for (let i = 0; i < 80 && b.machine.state !== 'Idle'; i++) { b.frame(0.02); trace.push(b.widget.frame); }
+  assert.equal(b.machine.state, 'Idle');
+  // the strike went forward to its last frame, back down to 0 once, then held the last frame (the setting's pose) until the swing ended
+  let descents = 0, climbsAfterReverse = 0, reversed = false;
+  for (let i = 1; i < trace.length; i++) {
+    const a = trace[i - 1], c = trace[i];
+    if (a > 0 && c === a - 1) { descents++; if (c === 0) reversed = true; }
+    else if (reversed && c > a && a === 0) climbsAfterReverse++;
+  }
+  assert.ok(trace.includes(0) && trace.includes(4), `the strike rose to 4 and came back to 0 (${trace.join(',')})`);
+  assert.equal(descents, 4, `one reverse of four steps (${trace.join(',')})`);
+  assert.ok(climbsAfterReverse <= 1, `after the reverse the frame is set to the last once and held, never reversed again (${trace.join(',')})`);
+  // and under the shipped Hide the reverse runs once too, then the hidden frame
+  const h = bench();
+  h.frame(); machineAttack(h.machine, 'StrikeUp');
+  const t2 = [];
+  for (let i = 0; i < 80 && h.machine.state !== 'Idle'; i++) { h.frame(0.02); t2.push(h.widget.frame); }
+  let d2 = 0; for (let i = 1; i < t2.length; i++) if (t2[i - 1] > 0 && t2[i] === t2[i - 1] - 1) d2++;
+  assert.equal(d2, 4, `Hide: one reverse (${t2.join(',')})`);
+});

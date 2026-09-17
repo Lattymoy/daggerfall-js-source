@@ -102,6 +102,7 @@ export function createDroppedLoot({ renderer, getTexture, uploadRecordFrame, pic
       // slice 2 - a frame index appended to a record that already ends
       // in one reads `5#0#2`.
       pile.batch = renderer.createBillboardBatch(pile.archive, pile.record, size, [[pile.pos[0], pile.pos[1], pile.pos[2]]]);
+      pile.batch.noShadow = true;   // F2: a thing lying on the ground is no standing card for the sun (shadowPass.js)
       pile.batch.frame = 0;
       armFlatAnim(pile.batch, t, pile.archive, pile.record, flatAnims, uploadRecordFrame);
     }).catch(() => {});
@@ -350,6 +351,7 @@ export function createDroppedLoot({ renderer, getTexture, uploadRecordFrame, pic
       if (p.batch) {
         renderer.destroyBillboardBatch(p.batch);
         p.batch = renderer.createBillboardBatch(p.archive, p.record, p.size, [[p.pos[0], p.pos[1], p.pos[2]]]);
+        p.batch.noShadow = true;   // F2
         p.batch.frame = 0;
       }
     }
