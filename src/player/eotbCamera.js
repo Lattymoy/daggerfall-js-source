@@ -581,6 +581,30 @@ export function createEotbCamera() {
         if (local[2] > minZ) local[2] = minZ;
         posCurrent = add(feet, bodyVector(local, yaw));
       }
+      // EOTB-WALL (2026-09-17, Mac: "3rd person clips through walls and ceilings allowing you to see outside wall
+      // bounds. Morrowind 3rd person doesnt have this issue"): THE PORT'S OWN LINE-OF-SIGHT CAST, after the mod's.
+      // CheckBounds stands as the IL has it - one cast per AXIS of the eye's basis, from the head - and that is
+      // exactly how the eye ends up inside a wall: the three axis casts never measure the DIAGONAL the camera
+      // actually stands on (a wall at the back-right corner is missed by the "right" cast and by the "back" cast
+      // alike, a ceiling at the back-up diagonal by the "up" and the "back"), and posCurrent LAGS the pulled-in
+      // target by MoveTowards, so a turn against a wall leaves the eye in the wall for as many frames as the
+      // smoothing takes. The Morrowind camera (mwCamera.js, camera.cpp:200-206) casts ONE ray from the focal along
+      // the eye's own direction and pulls in, which is why it never clips. That cast is added here, on the SMOOTHED
+      // position, with the mod's own clearance (2 * eyeRadius, what CheckBounds keeps off an axis hit) so a wall
+      // straight behind answers exactly as the mod's own cast does; the target is untouched, so the smoothing
+      // walks the camera back out when the wall is gone. A departure from the assembly, recorded in the Ledger.
+      if (raycast) {
+        const d = [posCurrent[0] - origin[0], posCurrent[1] - origin[1], posCurrent[2] - origin[2]];
+        const len = Math.hypot(d[0], d[1], d[2]);
+        if (len > 1e-6) {
+          const dir = [d[0] / len, d[1] / len, d[2] / len];
+          const hit = raycast(origin, dir, len + EYE_RADIUS * 2);
+          if (hit != null && hit < len + EYE_RADIUS * 2) {
+            const keep = Math.max(0, hit - EYE_RADIUS * 2);
+            posCurrent = [origin[0] + dir[0] * keep, origin[1] + dir[1] * keep, origin[2] + dir[2] * keep];
+          }
+        }
+      }
       return {
         eye: [...posCurrent],
         thirdPerson: true,
