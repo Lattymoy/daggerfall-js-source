@@ -144,10 +144,81 @@ beside the lane; the Dungeon Brightness and Torch Brightness knobs scale
 display values that the lane then decodes, which is the same monotone
 order but a different curve.
 
-## EL2 - shadows (OPEN)
+## EL2 - shadows (SHIPPED 2026-09-17)
 
-A cascaded sun shadow map outdoors, a cube-map shadow for the nearest
-point light indoors, depth-only programs per draw path, PCF.
+`render/shadowPass.js`. The renderer has no scene graph - the hosts issue
+every world draw from their own culled lists - so the pass RECORDS what
+the world pass draws (each mesh with a copy of its matrix, each terrain
+surface, each billboard batch list; a pooled list, `SHADOW_RECORD_MAX`
+6000, minted once and reused by index) and at the top of the NEXT frame's
+`beginFrame`, before the clear, replays it depth-only from the light. The
+maps are current with this frame's light and eye; only the caster list is
+a frame old. No host changes its draw order or draws twice.
+
+**Two maps, one per kind of scene**, chosen per frame off the lighting the
+host already set (`shadowKind`: a sun with scale and height, else the
+cube): outdoors a two-cascade orthographic map centred on the eye - 40
+units at 2048^2 for the street, 240 for the town - as a depth texture
+array with hardware compare, texel-snapped so the edge holds still as the
+camera walks (`sunCascadeMatrices`, pinned: the eye at the centre, the
+radius at the edge, the world origin on the texel grid, a sub-texel step
+of the eye moving a world point by a whole texel or none); indoors a cube
+map of six 512^2 depth faces from the nearest lantern that is not the
+eye's own (`pickShadowCaster`: the Light effect's candle sits at the
+camera and its shadows hide behind their own occluders), the shader's
+depth reference being the face's own projected depth of the major axis
+(`cubeDepthRef`, pinned equal to the face matrix's output on and off the
+axis). The lane's shaders read them through `SHADOW_GLSL`: the sun map on
+the sun term beside the cloud's shadow, 3x3 PCF over the hardware
+compare, a normal offset of a texel and a half and a constant bias; the
+cube on the one lantern it belongs to (`uShadowIndex`), five taps. A
+flat reads its shadow half a unit up its placement base (`vBBBase`, a
+varying the classic vertex shader now writes and the classic fragment
+shader ignores), once for the whole sprite - a sprite in its own map
+would shadow itself.
+
+**The depth programs** are the renderer's own vertex shaders (handed to
+the pass at construction; the pass imports nothing of the renderer or the
+lane) over two tiny fragment shaders: nothing for a solid, the 0.5 cutout
+for a flat, so a tree's shadow is its silhouette. The flats face the
+light for the replay (right = up x lightDir for the sun; toward the
+lantern per flat for the cube), the wind's lean rides along. Culling is
+off under the light's projection (it is not the world's mirrored one,
+and an open model must cast from both faces); colour writes are off.
+
+**The renderer's half.** `setLightingLane` builds one `ShadowPass` for a
+lane that asks (`EL_LANE.shadows`), once, kept across swaps; the three
+draw paths record behind one gate (`_casting`: a lane with shadows,
+outside a panel frame - the automap's and a preview's draws are not
+casters, and a panel frame drops the records it inherited); a wireframe
+draw records nothing; `destroyMesh` and the two batch destroys mark the
+object `_dead` so a record from the last frame skips it; the receiver's
+six uniforms ride the lane's per-program table and go up with the lane's
+own (`_uploadEl`), the maps bound on units 13 and 14 (the cloud shadow's
+15 beside them).
+
+**Known limits, recorded:** a caster the frame did not draw casts nothing
+- the hosts' frustum culling (EV3) means a tower behind the camera throws
+no shadow into the view; the character rigs (the Morrowind body, the
+peers, the first-person arm) cast none; the water surface receives none;
+the moon casts none (the map is the sun's, and at night the lanterns are
+the light). EL3 or a later pass owns those.
+
+**Pinned** (`test/el2_shadows.test.js`, 8): the constants; the cascades'
+geometry and snap; the cube faces against the depth reference; the caster
+pick and the kind; the receiver block, the depth shaders, the five lane
+shaders' use of them and the classic shaders' innocence; the fake-GL
+lifecycle (the pass built with the lane and kept, two cascade
+framebuffers and six faces, three records a frame, the maps drawn before
+the clear under the sun then under the cube, the records spent and
+released, a destroyed mesh and a concealed flat skipped, a panel frame
+recording nothing, the classic set recording nothing); the bounded and
+reused pool; the renderer's wiring. Campaign `tools/mutants/el2.json`: 40
+mutants, 40 killed (the one first-run survivor, a flipped cube face's up
+vector, is why the six face orientations are pinned by name now).
+**NOT SEEN ON A GPU** - the depth
+array and cube formats, the compare mode and the face convention are
+WebGL2's by the book, and the book has been wrong before.
 
 ## EL3 - depth and air (OPEN)
 

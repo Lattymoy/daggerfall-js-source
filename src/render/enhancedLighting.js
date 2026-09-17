@@ -59,6 +59,7 @@
 
 import { getPref } from '../systems/uiPrefs.js';
 import { isEnhanced } from '../systems/uiSkin.js';
+import { SHADOW_GLSL } from './shadowPass.js';   // EL2: the receiver block - the sun map on the sun term, the cube map on its lantern
 
 /** The lane's light cap - the classic lane's sixteen, tripled. Forty-eight
  *  vec4 + forty-eight vec3 are 96 uniform vectors; ES 3.0 guarantees 224
@@ -235,15 +236,20 @@ vec3 elPointLit(vec3 wp, vec3 n) {
     if (i >= uPointCount) break;
     vec3 L = uPointLights[i].xyz - wp;
     float d = length(L);
-    acc += elAttenuation(d, uPointLights[i].w) * max(dot(n, L / max(d, 1e-4)), 0.0) * uPointColors[i];
+    float sh = i == uShadowIndex ? pointShadowAt(wp, n) : 1.0;   // EL2: the one lantern with a cube map
+    acc += sh * elAttenuation(d, uPointLights[i].w) * max(dot(n, L / max(d, 1e-4)), 0.0) * uPointColors[i];
   }
   return acc;
 }
-vec3 elPointFlat(vec3 wp) {
+// a flat's lantern term, attenuation only; its shadow is read at the
+// flat's base (one value for the whole sprite - a sprite in its own map
+// would shadow itself)
+vec3 elPointFlat(vec3 wp, vec3 base) {
   vec3 acc = vec3(0.0);
   for (int i = 0; i < ${EL_MAX_LIGHTS}; i++) {
     if (i >= uPointCount) break;
-    acc += elAttenuation(length(uPointLights[i].xyz - wp), uPointLights[i].w) * uPointColors[i];
+    float sh = i == uShadowIndex ? pointShadowAt(base, vec3(0.0, 1.0, 0.0)) : 1.0;   // EL2
+    acc += sh * elAttenuation(length(uPointLights[i].xyz - wp), uPointLights[i].w) * uPointColors[i];
   }
   return acc;
 }
@@ -328,6 +334,7 @@ float cloudShadowAt(vec3 wp) {
   return 1.0 - (1.0 - texture(uCloudShadowMap, uv).r) * uCloudShadowRect.w;
 }
 ${EL_GLSL}
+${SHADOW_GLSL}
 ${EL_FOG_GLSL}
 ${EL_POINT_LIT_GLSL}
 out vec4 outColor;
@@ -337,7 +344,7 @@ void main() {
   else if (vWorldPos.y > uClipY) discard;
   vec4 tex = texture(uTex, vUV);
   vec3 n = normalize(vNormal);
-  float diff = max(dot(n, uLightDir), 0.0) * cloudShadowAt(vWorldPos);
+  float diff = max(dot(n, uLightDir), 0.0) * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n);   // EL2: the sun map
   float mdiff = max(dot(n, uMoonDir), 0.0);
   float l3diff = max(dot(n, uLight3Dir), 0.0);
   // emission cancels other light (DaggerfallDefault.shader:83-85), in linear
@@ -369,6 +376,7 @@ export const EL_BB_FS = `#version 300 es
 precision highp float;
 in vec2 vUV;
 in vec3 vBBWorld;
+in vec3 vBBBase;   // EL2: the flat's placement base (BB_VS)
 uniform sampler2D uTex;
 uniform sampler2D uEmissionTex;
 uniform int uSpectral;
@@ -395,6 +403,7 @@ float cloudShadowAt(vec3 wp) {
   return 1.0 - (1.0 - texture(uCloudShadowMap, uv).r) * uCloudShadowRect.w;
 }
 ${EL_GLSL}
+${SHADOW_GLSL}
 ${EL_FOG_GLSL}
 ${EL_POINT_LIT_GLSL}
 out vec4 outColor;
@@ -408,7 +417,8 @@ void main() {
   if (tex.a < ((uSpectral == 1 || uConceal.x > 0.0) ? 0.1 : 0.5)) discard;
   vec3 emission = elDecode(texture(uEmissionTex, uv).rgb);
   vec3 albedo = max(elDecode(tex.rgb) - emission, vec3(0.0));
-  vec3 lit = albedo * (uTint + uBBSun * cloudShadowAt(vBBWorld) + elPointFlat(vBBWorld) + elIndirectFlat(vBBWorld)) + emission;
+  vec3 base = vBBBase + vec3(0.0, 0.5, 0.0);   // EL2: the shadow is read a half unit up the sprite's base, once for the whole flat
+  vec3 lit = albedo * (uTint + uBBSun * cloudShadowAt(vBBWorld) * sunShadowAt(base, vec3(0.0, 1.0, 0.0)) + elPointFlat(vBBWorld, base) + elIndirectFlat(vBBWorld)) + emission;
   if (uConceal.x == 2.0) lit *= uShadeDark;
   if (uConceal.x == 4.0) lit = vec3(0.0);
   float alpha = uSpectral == 1 ? tex.a : 1.0;
@@ -454,6 +464,7 @@ float cloudShadowAt(vec3 wp) {
   return 1.0 - (1.0 - texture(uCloudShadowMap, uv).r) * uCloudShadowRect.w;
 }
 ${EL_GLSL}
+${SHADOW_GLSL}
 ${EL_FOG_GLSL}
 ${EL_POINT_LIT_GLSL}
 out vec4 outColor;
@@ -474,7 +485,7 @@ void main() {
   vec2 tuv = ROT[t] * tileUV + TRANS[t];
   vec3 tex = elDecode(texture(uTileArr, vec3(tuv, float(layer))).rgb);
   vec3 n = normalize(vNormal);
-  float diff = max(dot(n, uLightDir), 0.0) * cloudShadowAt(vWorldPos);
+  float diff = max(dot(n, uLightDir), 0.0) * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n);   // EL2: the sun map
   float mdiff = max(dot(n, uMoonDir), 0.0);
   vec3 lit = tex * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff)
     + elPointLit(vWorldPos, n) + elIndirectLit(vWorldPos, n));
@@ -519,6 +530,7 @@ float cloudShadowAt(vec3 wp) {
   return 1.0 - (1.0 - texture(uCloudShadowMap, uv).r) * uCloudShadowRect.w;
 }
 ${EL_GLSL}
+${SHADOW_GLSL}
 ${EL_FOG_GLSL}
 ${EL_POINT_LIT_GLSL}
 out vec4 outColor;
@@ -527,7 +539,7 @@ void main() {
   vec4 texel = uUseTex > 0.5 ? texture(uTex, vUV) : vec4(1.0);
   if (uAlphaCut > 0.0 && texel.a < uAlphaCut) discard;
   vec3 albedo = elDecode(vColor * texel.rgb);
-  float diff = max(dot(n, uLightDir), 0.0) * cloudShadowAt(vWorldPos);
+  float diff = max(dot(n, uLightDir), 0.0) * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n);   // EL2: the sun map
   float mdiff = max(dot(n, uMoonDir), 0.0);
   vec3 lit = albedo * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff)
     + elPointLit(vWorldPos, n) + elIndirectLit(vWorldPos, n));
@@ -585,6 +597,7 @@ export const EL_LANE = Object.freeze({
   terrainFs: EL_TERRAIN_FS,
   charFs: EL_CHAR_FS,
   farRingFs: EL_FAR_RING_FS,
+  shadows: true,   // EL2: the renderer builds its ShadowPass for this lane
   maxLights: EL_MAX_LIGHTS,
   decode3: elDecode3,
   decodeN: elDecodeN,

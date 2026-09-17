@@ -199,20 +199,20 @@ test('EL1: the renderer builds the classic set alone, compiles the lane once on 
   const classicMesh = r.program, classicBb = r.bbProgram, classicTerrain = r.terrainProgram, classicChar = r.charProgram;
   assert.equal(r.lightingLane, null); assert.equal(r.maxPointLights, 16);
   r.setLightingLane(EL_LANE);
-  assert.equal(count(calls, 'compileShader') - boot, 8, 'the lane: four programs, a VS and an FS each');
+  assert.equal(count(calls, 'compileShader') - boot, 14, 'the lane: four programs, a VS and an FS each; EL2: and the shadow pass\'s three depth programs');
   assert.equal(r.lightingLane, EL_LANE); assert.equal(r.maxPointLights, 48);
   assert.notEqual(r.program, classicMesh); assert.notEqual(r.bbProgram, classicBb); assert.notEqual(r.terrainProgram, classicTerrain); assert.notEqual(r.charProgram, classicChar);
   const laneMesh = r.program;
   const lookups = count(calls, 'getUniformLocation');
   r.setLightingLane(EL_LANE);
-  assert.equal(count(calls, 'compileShader') - boot, 8, 'the same lane again compiles nothing');
+  assert.equal(count(calls, 'compileShader') - boot, 14, 'the same lane again compiles nothing');
   assert.equal(count(calls, 'getUniformLocation'), lookups, 'and looks nothing up: the same lane again is a no-op');
   r.setLightingLane(null);
-  assert.equal(count(calls, 'compileShader') - boot, 8, 'back to classic compiles nothing');
+  assert.equal(count(calls, 'compileShader') - boot, 14, 'back to classic compiles nothing');
   assert.equal(r.program, classicMesh); assert.equal(r.bbProgram, classicBb); assert.equal(r.terrainProgram, classicTerrain); assert.equal(r.charProgram, classicChar);
   assert.equal(r.maxPointLights, 16); assert.equal(r.lightingLane, null);
   r.setLightingLane(EL_LANE);
-  assert.equal(count(calls, 'compileShader') - boot, 8, 'the lane again is the kept set');
+  assert.equal(count(calls, 'compileShader') - boot, 14, 'the lane again is the kept set');
   assert.equal(r.program, laneMesh);
   // the cap: 48 lights survive setPointLights on the lane, 16 on classic
   const lights = new Float32Array(60 * 4).map((_, i) => i);

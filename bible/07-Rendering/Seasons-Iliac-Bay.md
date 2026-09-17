@@ -211,9 +211,9 @@ needs ARENA2, which the container lacks.
 plant drew UPSIDE-DOWN.** The port's texel convention is bottom-up:
 `getColor32` writes `dstRow = (height - 1 - y) * width`
 (`baseImageFile.js:143`, `BaseImageFile.cs:250`), `uploadTexture`
-uploads as-is with `UNPACK_FLIP_Y_WEBGL` off (`renderer.js:1995`), and
+uploads as-is with `UNPACK_FLIP_Y_WEBGL` off (`renderer.js:2038`), and
 `BB_VS` samples the quad's TOP at v=1, i.e. the LAST row
-(`renderer.js:328-331`). The seasonal record arrived in PNG raster
+(`renderer.js:330-332`). The seasonal record arrived in PNG raster
 order instead - `decodeTexture2D` flips Unity's bottom-up rows to
 top-down for its own consumers, and the loose arm is a canvas
 `getImageData` - and `world.js:1252` / `exterior.js:819` handed that

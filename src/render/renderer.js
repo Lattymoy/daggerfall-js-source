@@ -299,8 +299,10 @@ uniform vec4 uFlatWind;   // WIND3: the wind's rate x, z (m/s, the lab's rate fr
 uniform float uSway;      // WIND3: this batch's share of the lean (0 = stands still)
 out vec2 vUV;
 out vec3 vBBWorld;
+out vec3 vBBBase;   // EL2: the flat's placement base, where the lane's shadow is read for the whole sprite (the classic FS declares it not, which GLSL allows)
 void main() {
   // Bottom-anchored: centre sits half a height above the placement base.
+  vBBBase = aCenter + uOrigin;
   vec3 world = aCenter + uOrigin
     + uRight * (aCorner.x * uSize.x)
     + uUp * ((aCorner.y + 0.5) * uSize.y);
@@ -332,6 +334,7 @@ void main() {
   gl_Position = uProj * uView * vec4(world, 1.0);
 }`;
 
+import { ShadowPass } from './shadowPass.js';   // EL2: the lane's shadow maps - a leaf that compiles nothing until a lane asks
 import { SHADE_DARK } from '../systems/concealDraw.js';   // ECV1 / AUDIT 65 PN-3: the shade's pull toward black, interpolated into BB_FS below - the shader restated 0.12 as a second literal. The LEAF, not systems/combatVisuals.js, which re-exports it: that module's graph would take this file's closure from 13 modules to 69
 
 const BB_FS = `#version 300 es
@@ -835,6 +838,8 @@ export class Renderer {
     this._lane = null;       // the installed lane, or null for classic
     this._laneSet = null;    // the lane's compiled set, kept across a swap back and forth
     this._exposure = 1;      // the lane's exposure (EL1); inert on the classic set
+    this._shadows = null;    // EL2: the ShadowPass while a lane that asks for shadows is installed
+    this._shadowPass = null; // ...built once and kept across swaps, like the lane's programs
     this.maxPointLights = CLASSIC_MAX_LIGHTS;
     this._decA = new Float32Array(3); this._decB = new Float32Array(3);   // EL1: the decode scratch (two, for the billboard tint's two terms)
     this._pointColorDec = new Float32Array(CLASSIC_MAX_LIGHTS * 3);
@@ -1248,12 +1253,17 @@ export class Renderer {
     this.bbUFlatWind = gl.getUniformLocation(this.bbProgram, 'uFlatWind');   // WIND3
     this.bbUSway = gl.getUniformLocation(this.bbProgram, 'uSway');   // WIND3
     // EL1: the lane's own uniforms, per program (null on the classic set, which never declares them)
-    this._el = {
-      mesh: [gl.getUniformLocation(set.mesh, 'uELExposure'), gl.getUniformLocation(set.mesh, 'uELScatter')],
-      char: [gl.getUniformLocation(set.char, 'uELExposure'), gl.getUniformLocation(set.char, 'uELScatter')],
-      bb: [gl.getUniformLocation(set.bb, 'uELExposure'), gl.getUniformLocation(set.bb, 'uELScatter')],
-      terrain: [gl.getUniformLocation(set.terrain, 'uELExposure'), gl.getUniformLocation(set.terrain, 'uELScatter')],
+    // EL2: the shadow receiver's six ride the same table (null on the classic set)
+    const elLocs = (p) => {
+      /** @type {any[] & { shadow?: object }} */
+      const a = [gl.getUniformLocation(p, 'uELExposure'), gl.getUniformLocation(p, 'uELScatter')];
+      a.shadow = {
+        sunShadow: gl.getUniformLocation(p, 'uSunShadow'), sunVP: gl.getUniformLocation(p, 'uSunVP'), sunParams: gl.getUniformLocation(p, 'uSunShadowParams'),
+        pointShadow: gl.getUniformLocation(p, 'uPointShadow'), pointParams: gl.getUniformLocation(p, 'uPointShadowParams'), shadowIndex: gl.getUniformLocation(p, 'uShadowIndex'),
+      };
+      return a;
     };
+    this._el = { mesh: elLocs(set.mesh), char: elLocs(set.char), bb: elLocs(set.bb), terrain: elLocs(set.terrain) };
     this._tFrameStamp = -1;
     this._csUploaded = {};
     this._emissionColorUp = null;
@@ -1278,6 +1288,13 @@ export class Renderer {
       this._installWorldSet(this._classicSet);
     }
     this._lane = lane;
+    // EL2: the shadow pass rides a lane that asks for it; built once, kept
+    if (lane?.shadows) {
+      this._shadows = this._shadowPass ??= new ShadowPass(this.gl, { build: (vs, fs) => this._buildProgram(vs, fs), vs: { mesh: VS, bb: BB_VS, terrain: TERRAIN_VS } });
+    } else {
+      this._shadows?.discard();
+      this._shadows = null;
+    }
     this.maxPointLights = lane ? lane.maxLights : CLASSIC_MAX_LIGHTS;
     const n = this.maxPointLights;
     if (this._flashLightScratch.length < n * 4) {
@@ -1317,7 +1334,33 @@ export class Renderer {
     const gl = this.gl, [expLoc, scLoc] = this._el[key];
     gl.uniform1f(expLoc, this._exposure);
     gl.uniform1f(scLoc, lane.scatter * lane.scatterDensity(this._fogMode, this._fogDensity, this._fogRange[0], this._fogRange[1]));
+    if (this._shadows) this._shadows.upload(this._el[key].shadow);   // EL2: the maps and the receiver's uniforms
   }
+
+  /** EL2: THE SHADOW MAPS, drawn at the top of beginFrame - from the LAST
+   *  frame's records under THIS frame's light and eye (render/shadowPass.js).
+   *  A panel frame drops the records it inherited and draws no map. The
+   *  pass binds its own programs and VAOs; beginFrame forgets the shadows
+   *  right after, as it always did. */
+  _renderShadowMaps(view, lightDir) {
+    if (this._panelSaved) { this._shadows.discard(); return; }
+    const v = view;
+    this._camPos[0] = -(v[0] * v[12] + v[1] * v[13] + v[2] * v[14]);
+    this._camPos[1] = -(v[4] * v[12] + v[5] * v[13] + v[6] * v[14]);
+    this._camPos[2] = -(v[8] * v[12] + v[9] * v[13] + v[10] * v[14]);
+    this._shadows.render({
+      eye: this._camPos, lightDir, sunScale: this._sunScale, pointLights: this._pointLights,
+      textures: this.textures, isSpectral: isSpectralArchive, bindVao: (vao) => this._bindVao(vao),
+    });
+  }
+
+  /** EL2: whether this draw is recorded for the shadow maps - a lane with
+   *  shadows, outside a panel frame (a panel's draws are the automap's or
+   *  a preview's, from its own camera, and cast nothing). */
+  get _casting() { return !!this._shadows && !this._panelSaved; }   // !! - a bare prototype (the crash-report tests) has no pass at all
+
+  /** EL2: the ShadowPass or null - a probe's read. */
+  get shadows() { return this._shadows; }
 
   _buildProgram(vsSrc, fsSrc) {
     const gl = this.gl;
@@ -2211,6 +2254,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   beginFrame(proj, view, lightDir) {
     const s = this.stats;
     s.draws = 0; s.programBinds = 0; s.vaoBinds = 0; s.texBinds = 0;
+    if (this._shadows) this._renderShadowMaps(view, lightDir);   // EL2: the maps, before the clear
     // VC4: the cloud shadow deck is a FRAME's, not the renderer's - a host
     // that wants one sets it after this (the exterior hosts do, per
     // pixel); an interior or a dungeon, which never does, gets none, and
@@ -2796,6 +2840,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   destroyBillboardBatch(batch) {
     const gl = this.gl;
     if (!batch) return;
+    batch._dead = true;   // EL2: a shadow record from the last frame may still hold it
     if (batch.vao) gl.deleteVertexArray(batch.vao);
     for (const b of batch.buffers || []) gl.deleteBuffer(b);
     batch.vao = null;
@@ -2805,6 +2850,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   /** Release a createMesh bundle's GPU resources. */
   destroyMesh(mesh) {
     const gl = this.gl;
+    mesh._dead = true;   // EL2: a shadow record from the last frame may still hold it
     for (const b of mesh.buffers) gl.deleteBuffer(b);
     gl.deleteVertexArray(mesh.vao);
     // c2/S6: the wireframe cache is the mesh's, and dies with it
@@ -2818,6 +2864,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   /** Release a billboard batch's GPU resources. */
   destroyBatch(batch) {
     const gl = this.gl;
+    batch._dead = true;   // EL2
     for (const b of batch.buffers) gl.deleteBuffer(b);
     gl.deleteVertexArray(batch.vao);
   }
@@ -2963,6 +3010,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   drawTerrain(surface, modelMatrix, arrayTex, tilemapTex, tileSize) {
     const gl = this.gl;
     this._use(this.terrainProgram);
+    if (this._casting) this._shadows.recordTerrain(surface, modelMatrix, arrayTex, tilemapTex, tileSize);   // EL2
     gl.uniformMatrix4fv(this.tUModel, false, modelMatrix);
     gl.uniform1f(this.tUTileSize, tileSize);
     // EE5 / VC4: the deck's shadow map, or nothing at all
@@ -3130,6 +3178,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   /** Draw billboard batches facing the camera. Call after solid geometry. */
   drawBillboards(batches, camRight, camUp) {
     const gl = this.gl;
+    if (this._casting) this._shadows.recordBillboards(batches, this._flatWind);   // EL2
     this._use(this.bbProgram);
     this._uploadCloudShadow('bb');   // VC4
     gl.uniformMatrix4fv(this.bbUProj, false, this._proj);
@@ -3385,6 +3434,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this._use(this.program);
     this._uploadCloudShadow('mesh');   // VC4
     gl.uniformMatrix4fv(this.uModel, false, modelMatrix);
+    if (!wire && this._casting) this._shadows.recordMesh(mesh, modelMatrix, texRemap);   // EL2
     this._bindVao(wire ? wireMesh.vao : mesh.vao);
     for (let smi = 0; smi < mesh.subMeshes.length; smi++) {
       const sm = mesh.subMeshes[smi];
