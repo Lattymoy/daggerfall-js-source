@@ -2,7 +2,7 @@
 // place). These initial values are the PRE-CHARGEN state only:
 // createCharacter (systems/chargen) rolls the real career the first
 // time a chargen-running context boots, and every host runs it
-// through systems/chargenSession.js - dungeonContext.js:1911,
+// through systems/chargenSession.js - dungeonContext.js:1917,
 // world.js:2173, exterior.js:1207 and applyHeadlessChargen for the
 // test room (AUDIT 23).
 //

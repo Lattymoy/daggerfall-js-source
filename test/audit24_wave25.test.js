@@ -137,7 +137,7 @@ test('audit24 wave25: the factionListener comments name PlayerActivate, and clai
   // PlayerActivate.StaticNPCClick:1534 - and TalkManager.cs does not
   // contain the word Listener. Three port comments named TalkManager
   // and marked the wiring "(Q4 wires)", over a reader that ships at
-  // worldModes.js:486.
+  // worldModes.js:487.
   const m = rd('src/systems/quest/machine.js');
   assert.doesNotMatch(m, /TalkManager reads the map/);
   assert.doesNotMatch(m, /TalkManager's Q4 signal/);
