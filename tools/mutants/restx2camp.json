@@ -1,0 +1,219 @@
+[
+  {
+    "name": "RESTX2-the-quest-tick-rides-the-online-sub-tick",
+    "file": "src/systems/restSession.js",
+    "old": "      if (!online) this.deps.tickQuests?.();",
+    "new": "      this.deps.tickQuests?.();",
+    "tests": ["test/restx2_online_rest.test.js"]
+  },
+  {
+    "name": "RESTX2-the-sim-minute-runs-twenty-a-sub-tick",
+    "file": "src/systems/restSession.js",
+    "old": "        this._onlineSimMinutes += MINUTES_PER_TICK;",
+    "new": "        this._onlineSimMinutes += MINUTES_PER_TICK * 2;",
+    "tests": ["test/restx2_online_rest.test.js", "test/world5.test.js"]
+  },
+  {
+    "name": "RESTX2-the-seed-is-not-floored",
+    "file": "src/systems/restSession.js",
+    "old": "        if (this._onlineSimMinutes == null) this._onlineSimMinutes = Math.floor(this.deps.sharedMinutes());",
+    "new": "        if (this._onlineSimMinutes == null) this._onlineSimMinutes = this.deps.sharedMinutes();",
+    "tests": ["test/restx2_online_rest.test.js", "test/auditworld5.test.js"]
+  },
+  {
+    "name": "RESTX2-the-seed-is-re-read-off-the-live-clock-every-sub-tick",
+    "file": "src/systems/restSession.js",
+    "old": "        if (this._onlineSimMinutes == null) this._onlineSimMinutes = Math.floor(this.deps.sharedMinutes());",
+    "new": "        this._onlineSimMinutes = Math.floor(this.deps.sharedMinutes());",
+    "tests": ["test/restx2_online_rest.test.js", "test/auditworld5.test.js"]
+  },
+  {
+    "name": "RESTX2-the-host-is-handed-the-live-shared-clock-not-the-sim-minute",
+    "file": "src/systems/restSession.js",
+    "old": "      this.deps.advanceMinutes(MINUTES_PER_TICK, online ? this._onlineSimMinutes : null);",
+    "new": "      this.deps.advanceMinutes(MINUTES_PER_TICK, online ? this.deps.sharedMinutes() : null);",
+    "tests": ["test/restx2_online_rest.test.js"]
+  },
+  {
+    "name": "RESTX2-online-banks-no-real-time-RESTX1s-skip-back",
+    "file": "src/systems/restSession.js",
+    "old": "  _accrue(dt) {\n    this._timer += dt;\n  }",
+    "new": "  _accrue(dt) {\n    if (!Number.isFinite(this.deps.sharedMinutes?.())) this._timer += dt;\n  }",
+    "tests": ["test/restx2_online_rest.test.js"]
+  },
+  {
+    "name": "RESTX2-F1s-full-health-guard-put-back",
+    "file": "src/systems/restSession.js",
+    "old": "        this.deps.tickVitals();\n        if (--this.hoursRemaining < 1) done = REST_TEXT.wakeUp;",
+    "new": "        if (!this.deps.fullyHealed?.()) this.deps.tickVitals();\n        if (--this.hoursRemaining < 1) done = REST_TEXT.wakeUp;",
+    "tests": ["test/restx2_online_rest.test.js"]
+  },
+  {
+    "name": "RESTX2-the-rest-windows-line-says-the-pace-that-is-no-longer-true",
+    "file": "src/ui/restWindow.js",
+    "old": "  return `World time ${two(d.hour)}:${two(d.minute)} - resting does not move it`;",
+    "new": "  return `World time ${two(d.hour)}:${two(d.minute)} - an hour here is 5 real minutes`;",
+    "tests": ["test/ol2.test.js", "test/restx2_online_rest.test.js"]
+  },
+  {
+    "name": "RESTX2-world-js-reads-the-standing-clock-under-a-rest",
+    "file": "src/scenes/world.js",
+    "old": "    const now = simMinutesEnd ?? Math.floor(playerTicker.classicMinutes);",
+    "new": "    const now = Math.floor(playerTicker.classicMinutes);",
+    "tests": ["test/restx2_online_rest.test.js"]
+  },
+  {
+    "name": "RESTX2-exterior-js-drops-the-sessions-end-on-the-floor",
+    "file": "src/scenes/exterior.js",
+    "old": "    advanceMinutes: (n, sharedEnd) => { playerTicker.advance(n); runEncounterTick(walkMode ? player.pos : cam.pos, sharedEnd); },",
+    "new": "    advanceMinutes: (n, sharedEnd) => { playerTicker.advance(n); runEncounterTick(walkMode ? player.pos : cam.pos); },",
+    "tests": ["test/restx2_online_rest.test.js", "test/exteriorfoes.test.js"]
+  },
+  {
+    "name": "CAMP1-the-window-opens-every-thirty-real-minutes",
+    "file": "src/systems/campEncounters.js",
+    "old": "export const campWindowOpen = (gameMinutes) => Math.floor(gameMinutes) % CAMP_WINDOW_MINUTES === 0;",
+    "new": "export const campWindowOpen = (gameMinutes) => Math.floor(gameMinutes) % (CAMP_WINDOW_MINUTES * 2) === 0;",
+    "tests": ["test/camp1_groups.test.js"]
+  },
+  {
+    "name": "CAMP1-a-camp-in-the-town-rect",
+    "file": "src/systems/campEncounters.js",
+    "old": "const campGateOk = (ctx) => !(ctx.inside || ctx.inLocationRect || ctx.preventEnemySpawns);",
+    "new": "const campGateOk = (ctx) => !(ctx.inside || ctx.preventEnemySpawns);",
+    "tests": ["test/camp1_groups.test.js"]
+  },
+  {
+    "name": "CAMP1-the-timer-path-rolls-the-five-percent-after-all",
+    "file": "src/systems/campEncounters.js",
+    "old": "  if (!campWindowOpen(ctx.gameMinutes)) return null;\n  // GUARANTEED: no chance check here any more - every open window (once\n  // per 15 real minutes) spawns a group. See the header note above.\n  return rollGroupComposition(ctx, rolls);",
+    "new": "  if (!campWindowOpen(ctx.gameMinutes)) return null;\n  if (!rollCampChance(rolls())) return null;\n  return rollGroupComposition(ctx, rolls);",
+    "tests": ["test/camp1_groups.test.js"]
+  },
+  {
+    "name": "CAMP1-the-chunk-load-roll-is-guaranteed",
+    "file": "src/systems/campEncounters.js",
+    "old": "  if (!rollCampChanceOnChunkLoad(rolls())) return null;\n  return rollGroupComposition(ctx, rolls);",
+    "new": "  return rollGroupComposition(ctx, rolls);",
+    "tests": ["test/camp1_groups.test.js"]
+  },
+  {
+    "name": "CAMP1-the-ring-excludes-its-own-edge",
+    "file": "src/systems/campEncounters.js",
+    "old": "    if (dx * dx + dz * dz > r2) continue;\n    const pid = String(p.id);",
+    "new": "    if (dx * dx + dz * dz >= r2) continue;\n    const pid = String(p.id);",
+    "tests": ["test/camp1_groups.test.js"]
+  },
+  {
+    "name": "CAMP1-the-highest-id-rolls",
+    "file": "src/systems/campEncounters.js",
+    "old": "    if (pid < lowest) lowest = pid;",
+    "new": "    if (pid > lowest) lowest = pid;",
+    "tests": ["test/camp1_groups.test.js"]
+  },
+  {
+    "name": "CAMP1-offline-nobody-rolls",
+    "file": "src/systems/campEncounters.js",
+    "old": "  if (myId == null || !myFeet || !peers?.length) return true;",
+    "new": "  if (myId == null || !myFeet || !peers?.length) return false;",
+    "tests": ["test/camp1_groups.test.js"]
+  },
+  {
+    "name": "CAMP1-a-pack-is-a-camp",
+    "file": "src/systems/campEncounters.js",
+    "old": "    spacing: kind === 'camp' ? CAMP_SPACING : PACK_SPACING,",
+    "new": "    spacing: CAMP_SPACING,",
+    "tests": ["test/camp1_groups.test.js"]
+  },
+  {
+    "name": "CAMP1-the-world-host-rolls-without-asking-who-owns-the-group",
+    "file": "src/scenes/world.js",
+    "old": "      if (getPref('wildernessCamps') !== false && amGroupRollOwner(online?.id ?? null, playerFeet, peersNear())) {\n        const campHit = rollCampEncounter({",
+    "new": "      if (getPref('wildernessCamps') !== false) {\n        const campHit = rollCampEncounter({",
+    "tests": ["test/camp1_groups.test.js"]
+  },
+  {
+    "name": "CAMP1-the-chunk-roll-fires-from-inside-a-dungeon",
+    "file": "src/scenes/world.js",
+    "old": "      if ((modes?.mode ?? 'exterior') === 'exterior' && getPref('wildernessCamps') !== false && amGroupRollOwner(online?.id ?? null, player.feetAt(), peersNear())) {",
+    "new": "      if (getPref('wildernessCamps') !== false && amGroupRollOwner(online?.id ?? null, player.feetAt(), peersNear())) {",
+    "tests": ["test/camp1_groups.test.js"]
+  },
+  {
+    "name": "CAMP1-a-member-already-hunting-shouts-every-frame",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "        if (!hadTarget && ai.target && f.campId != null) wakeCampmates(f);",
+    "new": "        if (ai.target && f.campId != null) wakeCampmates(f);",
+    "tests": ["test/camp1_groups.test.js"]
+  },
+  {
+    "name": "CAMP1-the-shout-wakes-the-whole-street",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (g === f || g.dead || g.campId !== f.campId || g.ai?.target) continue;",
+    "new": "      if (g === f || g.dead || g.ai?.target) continue;",
+    "tests": ["test/camp1_groups.test.js"]
+  },
+  {
+    "name": "WINFOE1-the-encounter-pool-freezes-under-a-window-again",
+    "file": "src/scenes/world.js",
+    "old": "      exteriorFoes.update(dt, _pf, cam.pos, _foeSenses());   // WINFOE1: a window no longer zeroes the foes' clock",
+    "new": "      exteriorFoes.update(townTalk.overlayActive ? 0 : dt, _pf, cam.pos, _foeSenses());",
+    "tests": ["test/winfoe1_foes_under_windows.test.js"]
+  },
+  {
+    "name": "WINFOE1-the-civilians-walk-away-mid-talk",
+    "file": "src/scenes/exterior.js",
+    "old": "      const popDt = townTalk.overlayActive ? 0 : dt;",
+    "new": "      const popDt = dt;",
+    "tests": ["test/winfoe1_foes_under_windows.test.js", "test/qx1_exterior_host.test.js"]
+  },
+  {
+    "name": "D-ONLINE1-a-respawn-can-leave-no-health",
+    "file": "src/systems/deathRespawn.js",
+    "old": "export const respawnHealth = (maxHealth) => Math.max(1, Math.floor((maxHealth ?? 0) * RESPAWN_HEALTH_FRACTION));",
+    "new": "export const respawnHealth = (maxHealth) => Math.floor((maxHealth ?? 0) * RESPAWN_HEALTH_FRACTION);",
+    "tests": ["test/donline1_respawn.test.js"]
+  },
+  {
+    "name": "D-ONLINE1-any-graveyard-is-a-safe-landing",
+    "file": "src/systems/deathRespawn.js",
+    "old": "  { kind: 'graveyard', match: (e) => e.locationType === LOCATION_TYPES.Graveyard && e.dungeonType === DUNGEON_TYPES.Cemetery },",
+    "new": "  { kind: 'graveyard', match: (e) => e.locationType === LOCATION_TYPES.Graveyard },",
+    "tests": ["test/donline1_respawn.test.js"]
+  },
+  {
+    "name": "D-ONLINE1-the-nearest-is-measured-in-the-wrong-axes",
+    "file": "src/systems/deathRespawn.js",
+    "old": "    const px = longitudeLatitudeToMapPixel(e.longitude, e.latitude);",
+    "new": "    const px = longitudeLatitudeToMapPixel(e.latitude, e.longitude);",
+    "tests": ["test/donline1_respawn.test.js"]
+  },
+  {
+    "name": "D-ONLINE1-the-open-world-is-not-an-online-death",
+    "file": "src/scenes/world.js",
+    "old": "  const _onlineWorldSession = () => !!(online && online.status === 'open' && (isWorldRoom(online.room) || isCellRoom(online.room)));",
+    "new": "  const _onlineWorldSession = () => !!(online && online.status === 'open' && isWorldRoom(online.room));",
+    "tests": ["test/donline1_respawn.test.js"]
+  },
+  {
+    "name": "D-ONLINE1-a-death-in-a-tavern-respawns-inside-the-tavern",
+    "file": "src/scenes/world.js",
+    "old": "      if (mode !== 'exterior') modes?.forceExitToExterior();",
+    "new": "      if (wasInDungeon) modes?.forceExitToExterior();",
+    "tests": ["test/donline1_respawn.test.js"]
+  },
+  {
+    "name": "D-ONLINE1-F11-still-quickloads-an-online-death",
+    "file": "src/scenes/world.js",
+    "old": "      if (townTalk.overlay instanceof DeathScreen && _deathWasOnline) respawnOnlinePlayer();\n      else hudCtx.quickLoad();",
+    "new": "      hudCtx.quickLoad();",
+    "tests": ["test/donline1_respawn.test.js", "test/fixe_deathMenu.test.js"]
+  },
+  {
+    "name": "D-ONLINE1-the-snapshot-is-taken-after-the-leave-cleared-the-room",
+    "file": "src/scenes/world.js",
+    "old": "      if (_deathWasOnline == null) _deathWasOnline = _onlineWorldSession();   // D-ONLINE1: the modal hosts' deaths (a dungeon's, a building's) are captured here, BEFORE the leave below clears online.room\n      if (online.room) { worldPublish(now, true); online.leave(); exteriorFoes.clearPuppets(); _foesRoom = null; }",
+    "new": "      if (online.room) { worldPublish(now, true); online.leave(); exteriorFoes.clearPuppets(); _foesRoom = null; }\n      if (_deathWasOnline == null) _deathWasOnline = _onlineWorldSession();",
+    "tests": ["test/donline1_respawn.test.js", "test/auditworld.test.js"]
+  }
+]

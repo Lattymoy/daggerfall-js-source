@@ -341,7 +341,7 @@ export function createWorldModes(host) {
       // z-index 13) left in the slot stayed in the DOM over the death,
       // the video and whatever followed, eating every pointer event.
       interiorOverlay?.dispose?.();
-      interiorOverlay = new DeathScreen({ eyeHeight: player.eye[1] - player.pos[1], capsuleHeight: player.height, onReset: () => endRunToTitleMenu(renderer) });   // D1
+      interiorOverlay = new DeathScreen({ eyeHeight: player.eye[1] - player.pos[1], capsuleHeight: player.height, onReset: () => { if (!host.onlineRespawn?.()) endRunToTitleMenu(renderer); } });   // D1; D-ONLINE1: online play respawns instead of ending the run
     }
   };
   // AUDIT 23 (hosts-1): this constructor runs AFTER the exterior host
@@ -963,7 +963,7 @@ export function createWorldModes(host) {
    *  This host owned two pools and ran NO fan-out at all - no
    *  runMagicRoundsFor, so no tickActiveEffects and no updatePoisons
    *  (worldTick.js:232-233), and no killIfAnyLiveStatZero. Both pools
-   *  READ the effect list every frame (exteriorFoes.js:817-818 and
+   *  READ the effect list every frame (exteriorFoes.js:845-846 and
    *  cityGuards.js:790-791 each take `entityIsParalyzed` +
    *  `applyEnemyMotorEffectFlags`), and nothing ever ended one: a
    *  Continuous Damage bundle on a foe in a shop never took a round,
@@ -5093,6 +5093,12 @@ export function createWorldModes(host) {
           activateHeld: () => held(keys, 'ActivateCenterObject') || !!host.activateDown?.(),
           keyDown: (code) => keys.has(code),   // HT1: the torch keys
           useMagicItem: (item) => host.useMagicItem?.(item),
+          // D-ONLINE1: the dungeon death screen's own door - see
+          // dungeonContext.js's DeathScreen construction. Delegates to
+          // the outer host exactly as dungeonOnline/useMagicItem do;
+          // answers false when this is not a live online session, so
+          // the death screen falls back to endRunToTitleMenu.
+          onlineRespawn: () => host.onlineRespawn?.() ?? false,
           // FOE1 (2026-09-15, Mac, relaying players: "during online play,
           // certain enemies cant be damaged"): THIS LINE WAS INSIDE A
           // COMMENT. HT1 appended `// HT1: the torch keys` to the end of
@@ -5813,7 +5819,7 @@ export function createWorldModes(host) {
       // every other pool (MT) - the candidate list is this host's
       // whole active-enemy database, which is the pool itself.
       if (interiorFoes && interiorCtx) {
-        interiorFoes.update(overlayHeld ? 0 : dt, player.pos, cam.pos, _interiorSenses());
+        interiorFoes.update(dt, player.pos, cam.pos, _interiorSenses());   // WINFOE1 (2026-09-17, Mac: "enemies should still be able to do damage"): a window no longer zeroes the foes' clock - world.js's line
         // AUDIT 63 F42: EnemyMotor.OpenDoors, the step that follows
         // ObstacleCheck inside the same Move (EnemyMotor.cs:1424-1442).
         if (!overlayHeld) openInteriorDoors(interiorFoes.foes);
@@ -6109,7 +6115,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:6646's own wave-46 note); the interior
+          // a blow (world.js:6793's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage(dmg);   // BA1: RemoveHealth carries the amount
@@ -6188,7 +6194,7 @@ export function createWorldModes(host) {
     // beside the draw rather than up in the sim block, which has no
     // render context to hand it.
     if (interiorGuards && interiorCtx) {
-      const _guardBatches = interiorGuards.update(overlayHeld ? 0 : dt, player.pos, cam.pos,
+      const _guardBatches = interiorGuards.update(dt, player.pos, cam.pos,   // WINFOE1: the watch keeps its clock under a window too
         _interiorSenses(), { canvas, proj, view, eye: mwv.eye });
       // AUDIT 63 F42: the foe pool's arm, beside the drive that owns
       // it - Knight_CityWatch is a CanOpenDoors mobile
@@ -6915,7 +6921,7 @@ export function createWorldModes(host) {
   addEventListener('mousedown', (e) => {
     // AUDIT-MACK F2: THIS HOST DOES NOT FEED THE HELD SET, and MAC-K1
     // briefly made it. `keys` is not this host's - it arrives on the
-    // host bag (`exterior.js:3200`, `world.js`'s twin), and the OUTER
+    // host bag (`exterior.js:3265`, `world.js`'s twin), and the OUTER
     // host's own mousedown writes `keys.add(mouseCode(e.button))`
     // UNGATED, before any mode test, on a listener that is never
     // removed. So the three button codes were already in the Set while
@@ -8327,9 +8333,9 @@ export function createWorldModes(host) {
      *  .cs:175-176 writes `weaponDrawn`/`usingLeftHand` off it,
      *  :420-421 restores them onto it. The port has FOUR PlayerWeapons
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
-     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:2777-2799), and IS1 routed the inside-a-building save to
+     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:2842-2864), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
-     *  unconditionally (world.js:4433). So an F9 pressed in a shop
+     *  unconditionally (world.js:4572). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them
      *  back into the street's rig; the rig actually in the player's
      *  hands was in no envelope at all.
@@ -8356,7 +8362,7 @@ export function createWorldModes(host) {
      *  presenter for the whole visit) or the interior's? world.js's gate read townTalk's slot alone. */
     deathUp() { return mode === 'dungeon' ? !!dungeonCtx?.deathUp?.() : interiorOverlay instanceof DeathScreen; },
     /** The restore half - and NOT gated on the mode, deliberately.
-     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:4515)
+     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:4654)
      *  and only re-enters the building at :4217, so the mode at apply
      *  time is whatever the LOAD landed in, not whatever the SAVE was
      *  taken in: an outdoor save loaded while the player was indoors
@@ -8366,7 +8372,7 @@ export function createWorldModes(host) {
      *
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
-     *  HARD2c: this used to spell them out, and named `world.js:4627`
+     *  HARD2c: this used to spell them out, and named `world.js:4766`
      *  and `dungeonContext.js:5601` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */

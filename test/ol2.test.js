@@ -14,7 +14,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { RestWindow, restClockLine, REAL_MINUTES_PER_WORLD_HOUR } from '../src/ui/restWindow.js';
+import { RestWindow, restClockLine } from '../src/ui/restWindow.js';
 import { TravelPopUpWindow, ONLINE_TRAVEL_LINE, LABEL_POS } from '../src/ui/travelPopUp.js';
 import { CLASSIC_GAME_START_TIME } from '../src/systems/gameDate.js';
 import { ONLINE_MINUTES_PER_MS } from '../src/net/wire.js';
@@ -36,13 +36,17 @@ test('OL2 (5): the rest window\'s status carries the world\'s minutes while the 
   assert.deepEqual(new RestWindow(winDeps()).status(), { panel: 'main' });
 });
 
-test('OL2 (5): the clock line says the world\'s time of day and the pace, and the pace is the wire\'s rate, not a spelled number', () => {
-  assert.equal(REAL_MINUTES_PER_WORLD_HOUR, Math.round(60 / (ONLINE_MINUTES_PER_MS * 60000)));
-  assert.equal(REAL_MINUTES_PER_WORLD_HOUR, 5, 'TimeScale 12: five real minutes an hour');
-  assert.equal(restClockLine(CLASSIC_GAME_START_TIME), 'World time 13:30 - an hour here is 5 real minutes', 'the classic start, 13:30');
-  assert.equal(restClockLine(CLASSIC_GAME_START_TIME + 95), 'World time 15:05 - an hour here is 5 real minutes', 'padded');
+test('OL2 (5): the clock line says the world\'s time of day (RESTX2: and that a rest does not move it - the pace half went with the shared-clock pacing)', () => {
+  // RESTX2 (2026-09-17) put every mode on the window's own timer, so "an
+  // hour here is 5 real minutes" stopped being true and the line says
+  // the one thing that still is: the world's clock, which a rest online
+  // never moves. REAL_MINUTES_PER_WORLD_HOUR went with the sentence.
+  assert.equal(restClockLine(CLASSIC_GAME_START_TIME), 'World time 13:30 - resting does not move it', 'the classic start, 13:30');
+  assert.equal(restClockLine(CLASSIC_GAME_START_TIME + 95), 'World time 15:05 - resting does not move it', 'padded');
+  assert.ok(!rd('src/ui/restWindow.js').includes('REAL_MINUTES_PER_WORLD_HOUR'), 'no spelled pace on the page, and no constant left to drift');
+  void ONLINE_MINUTES_PER_MS;
   const on = resting({ sharedMinutes: () => CLASSIC_GAME_START_TIME + 95, vitals: () => ({ health: 10, maxHealth: 20, fatigue: 5, magicka: 6 }) });
-  assert.deepEqual(on.restingLines(), ['Resting...', 'Hours remaining: 4', 'World time 15:05 - an hour here is 5 real minutes', 'Health 10/20  Fatigue 5  Magicka 6', '', 'Esc - stop'], 'the text page, between the hours and the vitals');
+  assert.deepEqual(on.restingLines(), ['Resting...', 'Hours remaining: 4', 'World time 15:05 - resting does not move it', 'Health 10/20  Fatigue 5  Magicka 6', '', 'Esc - stop'], 'the text page, between the hours and the vitals');
   const off = resting({ vitals: () => ({ health: 10, maxHealth: 20, fatigue: 5, magicka: 6 }) });
   assert.deepEqual(off.restingLines(), ['Resting...', 'Hours remaining: 4', 'Health 10/20  Fatigue 5  Magicka 6', '', 'Esc - stop'], 'offline: the page it always was');
   const src = rd('src/ui/restWindow.js');

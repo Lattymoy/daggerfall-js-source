@@ -116,7 +116,9 @@ import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: Create
 import { PLAYED_STEP_MAX_SECONDS } from '../systems/quest/clock.js';   // WORLD7: the quest clocks' played step online
 import { mintQuestFoeWave, placeFoeEnv, entityOccupancy, questFoeGender, reviveQuestBehaviour } from './questFoeHost.js';   // B1   // AUDIT 63r F24: SerializableEnemy.cs:206-217's quest-link arm, the one home both hosts use
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';   // MERGE: FinalizeFoe's Flying lift reads the behaviour flag
-import { intermittentEnemySpawn, MIN_WILDERNESS_SPAWN_DISTANCE, setEnemyAlert, areEnemiesNearby, passiveGuardSpawns } from '../systems/encounters.js';   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
+import { intermittentEnemySpawn, MIN_WILDERNESS_SPAWN_DISTANCE, setEnemyAlert, areEnemiesNearby, passiveGuardSpawns } from '../systems/encounters.js';
+import { rollCampEncounter, rollCampEncounterOnChunkLoad, amGroupRollOwner } from '../systems/campEncounters.js';   // CAMP1: the group-encounter roll - camps and packs, riding the same tick, and the chunk-load twin
+import { nearestSafeLocation, respawnFlavorText, respawnHealth } from '../systems/deathRespawn.js';   // D-ONLINE1: online, a death respawns instead of ending the run   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
 import { snapshotPlayer, restorePlayer, resolvePendingSpells, composeSessionState, restoreSessionState, dungeonPixelFor } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
 import { saveSlot, loadSlot, quickLoadSlot, mostRecentRestorable, QUICK_SAVE_NAME, requestScreenshot, capturePendingScreenshot } from '../systems/saveSlots.js';   // SAV4: the quicksave is a SLOT named QuickSave (SaveLoadManager.QuickSave/QuickLoad); SS1: the shot arms at save and lands at frame end
 import { frameBegin, frameEnd } from '../systems/frameClock.js';   // PERF1: the frame's script time
@@ -1794,7 +1796,15 @@ export async function bootWorld(canvas, renderer, params, status) {
     // playerController.height at the death - a crouched death sinks
     // from the crouched eye toward a quarter of the CROUCHED capsule
     // below the feet, not the standing pair.
-    if (!(townTalk.overlay instanceof DeathScreen)) townTalk.showOverlay(new DeathScreen({ eyeHeight: player.eye[1] - player.pos[1], capsuleHeight: player.height, onReset: () => endRunToTitleMenu(renderer) }));   // D1
+    if (!(townTalk.overlay instanceof DeathScreen)) {
+      // D-ONLINE1: captured HERE, synchronously, the instant death is
+      // known - not on the next `onlineFrame` tick, which LEAVES the
+      // room the moment the death screen is up and would read "not
+      // online" a frame later; and not on the reset, which a fast F11
+      // reaches before that frame. The reset reads this snapshot.
+      _deathWasOnline = _onlineWorldSession();
+      townTalk.showOverlay(new DeathScreen({ eyeHeight: player.eye[1] - player.pos[1], capsuleHeight: player.height, onReset: () => (_deathWasOnline ? respawnOnlinePlayer() : endRunToTitleMenu(renderer)) }));   // D1; D-ONLINE1: online play respawns instead of ending the run
+    }
   });
   // F117: Stendarr's rank-in-fifty, consulted by the door before the
   // presenter. This host has no submersion model, so submerged is the
@@ -2391,8 +2401,15 @@ export async function bootWorld(canvas, renderer, params, status) {
   // Fast travel resets the anchor (PreventEnemySpawns parity - DFU
   // suppresses the whole post-travel window).
   let _lastEncMinutes = null;
-  function runEncounterTick(playerFeet) {
-    const now = Math.floor(playerTicker.classicMinutes);
+  function runEncounterTick(playerFeet, simMinutesEnd = null) {
+    // RESTX2: online, playerTicker.classicMinutes stands (WORLD5 - playerTicker.advance in shared.js fabricates
+    // nothing under the shared clock), so reading it here under a rest made `span` zero and the loop below never
+    // rolled - no online rest could be interrupted. `simMinutesEnd`, when given, is the rest session's own
+    // locally-simulated minute counter (never the real shared clock, never written back to it) standing in for
+    // `now` for exactly this roll, as dungeonContext's `_restAdvance` reads its sharedEnd. The tail's
+    // `_lastEncMinutes = now` then sits ahead of the standing clock until it catches up, and those frames roll
+    // nothing - the rest already rolled them.
+    const now = simMinutesEnd ?? Math.floor(playerTicker.classicMinutes);
     if (_lastEncMinutes == null) _lastEncMinutes = now;
     // THE FLAG, AT LAST WITH A READER. PlayerEntity.Update wraps this
     // whole loop - the spawn roll AND the passive guard rolls inside
@@ -2449,6 +2466,27 @@ export async function bootWorld(canvas, renderer, params, status) {
         // they are the spawner's arguments and differ per arm.
         _standEncounterFoe(hit, playerFeet);
         break;
+      }
+      // CAMP1 - GROUP ENCOUNTERS (camps and packs, systems/campEncounters.js):
+      // a second roll on the same tick - only reached when the
+      // single-encounter roll above came back empty, so the two never
+      // both fire on one minute. Off by the feature switch the enhanced
+      // pane draws it under; off, the wilderness is lone wanderers only.
+      // GATED ON GROUP OWNERSHIP: online this roll is per player (this
+      // host streams its own spawns to nearby peers, it asks no host to
+      // decide), so without `amGroupRollOwner` every player standing
+      // together would roll their own camp on the same tick and the
+      // wilderness would fill with duplicates stacked on each other.
+      // Exactly one player within 100m proceeds; the rest skip the roll.
+      if (getPref('wildernessCamps') !== false && amGroupRollOwner(online?.id ?? null, playerFeet, peersNear())) {
+        const campHit = rollCampEncounter({
+          gameMinutes: _lastEncMinutes + l + 1, inside: _m !== 'exterior',
+          inLocationRect: _musicInLocationRect(),
+          climateIndex: maps.getClimateIndex(playerTravelPixel().x, playerTravelPixel().y),
+          playerLevel: playerEntity.level,
+          preventEnemySpawns: playerEntity.preventEnemySpawns,
+        });
+        if (campHit) { _standCampEncounter(campHit, playerFeet); break; }
       }
       // PlayerEntity.Update:498-511 - the SAME minute's second arm,
       // which the port had never called: SpawnCityGuards(FALSE) had no
@@ -2937,6 +2975,52 @@ export async function bootWorld(canvas, renderer, params, status) {
       yaw: Math.atan2(feet[0] - spot.x, feet[2] - spot.z),   // LookAt player
     }).catch(() => null);
   };
+  // CAMP1 - GROUP ENCOUNTERS: one anchor point placed exactly like a
+  // single encounter (the same PlaceFoeFreely, from the player's own
+  // position and yaw, at the group's own band), then each member placed
+  // around THAT anchor by building a second env centred on it - a fresh
+  // `placeFoeEnv` whose "player" is the anchor point and whose yaw is
+  // random, so the same ground/occupancy law that places one foe near
+  // the player places several near a point, with no new geometry code.
+  let _nextCampId = 1;
+  const _standCampEncounter = (hit, feet) => {
+    const anchorEnv = placeFoeEnv({
+      collider,
+      playerFeet: [feet[0], feet[1] + 0.9, feet[2]],
+      playerYawRad: cam.yaw,
+      fovDegrees: fieldOfView() * 180 / Math.PI,
+      isOccupied: entityOccupancy((f) => f.ai?.feet, () => exteriorFoePool(), feet),
+    });
+    let anchor = null;
+    for (let i = 0; i < LOOSE_FOE_PLACE_ATTEMPTS && !anchor; i++) {
+      anchor = placeFoeFreely(anchorEnv, { minDistance: hit.minDistance, maxDistance: hit.maxDistance, lineOfSightCheck: true });
+    }
+    if (!anchor) return;
+    const campId = _nextCampId++;
+    const anchorFeet = [anchor.x, anchor.y, anchor.z];
+    for (const mobileType of hit.mobileTypes) {
+      const memberEnv = placeFoeEnv({
+        collider,
+        playerFeet: [anchorFeet[0], anchorFeet[1] + 0.9, anchorFeet[2]],
+        playerYawRad: Math.random() * Math.PI * 2,
+        fovDegrees: 0,
+        isOccupied: entityOccupancy((f) => f.ai?.feet, () => exteriorFoePool(), anchorFeet),
+      });
+      let spot = null;
+      for (let i = 0; i < LOOSE_FOE_PLACE_ATTEMPTS && !spot; i++) {
+        // lineOfSightCheck false: a member can land on any bearing
+        // around the anchor, not only outside the PLAYER's field of
+        // view - there is no player-relative "outside view" for a
+        // point that is not the player.
+        spot = placeFoeFreely(memberEnv, { minDistance: 1, maxDistance: hit.spacing, lineOfSightCheck: false });
+      }
+      if (!spot) continue;
+      const fly = (ENEMY_BASICS[mobileType]?.behaviour ?? 'General') === 'Flying';
+      exteriorFoes.spawnFoe(mobileType, [spot.x, fly ? spot.y + 1.5 : spot.y, spot.z], {
+        yaw: Math.atan2(anchorFeet[0] - spot.x, anchorFeet[2] - spot.z),
+      }).then((f) => { if (f) { f.campId = campId; f.campAlertRadius = hit.alertRadius; } }).catch(() => null);
+    }
+  };
   const _standLooseFoe = (mobileType, opts = {}) => {
     const mode = _mode();
     // ROAD-G G1: THE INTERIOR ARM, through the pool that exists.
@@ -3312,7 +3396,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // whole rested night's rolls fire in one burst the moment the
     // window closes, which is AUDIT 24 wave 30's finding about the
     // magic rounds, one system over.
-    advanceMinutes: (n) => { playerTicker.advance(n); runEncounterTick(walkMode && playerSpawned ? player.pos : cam.pos); },
+    advanceMinutes: (n, sharedEnd) => { playerTicker.advance(n); runEncounterTick(walkMode && playerSpawned ? player.pos : cam.pos, sharedEnd); },   // RESTX2: sharedEnd is the session's local sim-minutes online, so the roll still gets a fresh `now` while the real clock stands
     // TickRest :379 - QuestMachine.Instance.Tick() rides the same
     // sub-tick as the clock, UNPACED (DFU calls the machine directly,
     // not through QuestMachine.Update's ticksPerSecond timer). This
@@ -4189,6 +4273,61 @@ export async function bootWorld(canvas, renderer, params, status) {
     Promise.resolve().then(async () => {
       await _teleportToPixel(pos.x, pos.y);
       _lastEncMinutes = Math.floor(playerTicker.classicMinutes);
+    });
+  }
+
+  /**
+   * D-ONLINE1 - THE ONLINE DEATH'S RESET, in place of endRunToTitleMenu.
+   *
+   * Classic single-player death is "you die, you load a save"; online
+   * the rest of the party is still playing, and ending the run - or
+   * loading a save that unwinds everyone's progress - is the wrong cost
+   * for one death in co-op. So the same death sequence plays (the sink,
+   * the fade, the sound) and then, instead of the video and the title
+   * menu, the player wakes at the nearest fitting safe point with a
+   * fraction of their health back and a line saying so.
+   *
+   * Died in a dungeon: the door out is the SAME pixel the player is
+   * already on (a dungeon moves nothing on the map, only what is drawn
+   * over it), so this is `transferToCemeteryArm`'s own exterior-forcing
+   * pattern with no location lookup at all - exit to the surface, land
+   * on the door.
+   *
+   * Died outdoors or in a town: `nearestSafeLocation` picks whichever
+   * of a temple, a town or a graveyard is closest, over the same
+   * region-mapTable search the cemetery transfer already makes.
+   *
+   * Either way: half health back (systems/deathRespawn.js), a flavour
+   * line in the death screen's place, and play continues - no video, no
+   * title menu, no save to load.
+   */
+  function respawnOnlinePlayer() {
+    _deathWasOnline = null;   // armed fresh for the NEXT death
+    const mode = modes?.mode ?? 'exterior';
+    const wasInDungeon = mode === 'dungeon';
+    Promise.resolve().then(async () => {
+      // Any mode but the open world is left FIRST - the cemetery
+      // transfer's own order - and forceExitToExterior clears the
+      // modal host's death screen with the rest of its slot (a
+      // building's interiorOverlay, a dungeon's activeOverlay).
+      if (mode !== 'exterior') modes?.forceExitToExterior();
+      const px = playerTravelPixel();
+      let kind, land = px;
+      if (wasInDungeon) kind = 'dungeon';   // the door out: the pixel already under the player
+      else {
+        const mapTable = maps.getRegion(_questRegionIndex())?.mapTable ?? [];
+        const safe = nearestSafeLocation(mapTable, px);
+        if (safe) { land = safe.mapPixel; kind = safe.kind; }
+        else kind = 'city';   // the region carries none of the three - stand where they fell rather than fail loudly
+      }
+      // RandomStartMarker, as TeleportAway names it (AUDIT 64 F19): a
+      // location's start marker - a town's gate, a cemetery's, a
+      // dungeon's door - not the terrain tile's dead centre.
+      await _teleportToPixel(land.x, land.y, null, { reposition: REPOSITION.RandomStartMarker });
+      _lastEncMinutes = Math.floor(playerTicker.classicMinutes);   // PreventEnemySpawns parity, the cemetery transfer's own line
+      playerEntity.health = respawnHealth(playerEntity.maxHealth);
+      surfacePlayer();
+      townTalk.showOverlay(new ActionTextBox([respawnFlavorText(kind)]));
     });
   }
 
@@ -5260,7 +5399,15 @@ export async function bootWorld(canvas, renderer, params, status) {
     // is still the field's (CG2). Read off the code alone: the ring is
     // filled below the overlay gate (G3), and a key under a window
     // joins none - so no combo, as DFU's Update returns before PollInput.
-    if (townTalk.overlayActive && !isTextEntryTarget(e.target) && (modes?.mode ?? 'exterior') === 'exterior' && actionForCode(bindings(), e.code) === 'QuickLoad') { e.preventDefault(); hudCtx.quickLoad(); return; }
+    if (townTalk.overlayActive && !isTextEntryTarget(e.target) && (modes?.mode ?? 'exterior') === 'exterior' && actionForCode(bindings(), e.code) === 'QuickLoad') {
+      e.preventDefault();
+      // D-ONLINE1 (Mac, 2026-09-17: "you should just respawn in this case"): F11 on the death screen used to
+      // always quickload - the player back at their last save, mobs included. Online, respawn IS the answer to
+      // "get me back in", so it takes over from quickload here exactly as Enter and the timer already do.
+      if (townTalk.overlay instanceof DeathScreen && _deathWasOnline) respawnOnlinePlayer();
+      else hudCtx.quickLoad();
+      return;
+    }
     if (e.code === 'Escape') backButtonHeld = true;
     if (townTalk.keydown(e)) return;
     // U8a: F5 opens the classic character sheet (the dungeon's key,
@@ -5800,7 +5947,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7381-7393 -
+  // worldModes answers it in BOTH modes (worldModes.js:7387-7399 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -6961,6 +7108,12 @@ export async function bootWorld(canvas, renderer, params, status) {
   // disagreed with this one's (AUDIT ONLINE D6/D8).
   const onlineOn = params.has('online');
   let online = null, remotePlayers = null, peerBodies = null, nameLayer = null, nameSight = null, _onlineLast = null, _onlineKey = null, _onlineKeySince = 0;
+  // D-ONLINE1 (2026-09-17, a player: "still see you have died then main menu"): `onlineFrame` LEAVES the room the
+  // instant the death screen goes up (AUDIT ONLINE D12: the dead broadcast nothing and see no one), every frame,
+  // BEFORE `onReset` ever runs (the 3-second timer, or Enter) - so a respawn decision that read `online.room` at
+  // the reset always found it null and always ended the run. This snapshot is taken the moment death starts
+  // (the presenter above, and the frame below as a backstop) and the reset reads IT, not the cleared live state.
+  let _deathWasOnline = null;
   let chatLog = null, chatPanel = null, chatLinks = null;   // CHAT1: the log, the panel, one channel session per tab (Map tabId -> OnlineSession)
   // SOC2 (Mac: "friend other users ... the new 4 person party system"): THE SOCIAL PICTURE - the hub's word (the
   // world tab's link, whose room is the hub, SOC1), held pure in net/social.js. `social` is read by the panels (the
@@ -7042,6 +7195,13 @@ export async function bootWorld(canvas, renderer, params, status) {
   // WORLD4: a container's key rides the same set, and is re-read the same way.
   const _actPend = new Set();
   const _actLive = () => !!(online && online.status === 'open' && isWorldRoom(online.room));
+  // D-ONLINE1 (2026-09-17, a player: "when i die i just end up at the title menu"): `_actLive` is not "am I
+  // online" - `isWorldRoom` matches only a dungeon or a building interior room (net/wire.js's WORLD_ROOM, the
+  // rooms with host-authoritative save state); the open EXTERIOR is a CELL room (`isCellRoom`, a spawner-owned
+  // streamed area), which `_actLive` has never counted. A death OUTDOORS - where a camp or a pack lives - read
+  // as "not live" and fell straight to endRunToTitleMenu. This is the predicate the death screen needs: any
+  // real streamed play space, dungeon, interior or the open world alike.
+  const _onlineWorldSession = () => !!(online && online.status === 'open' && (isWorldRoom(online.room) || isCellRoom(online.room)));
   // AUDIT WORLD34 C3: a refused act was CLEARED whenever the socket was not open - a reconnect's second or a room hold
   // lost every door touched inside it for good (the seam is a delta, nothing re-sends). The pending set now outlives
   // the socket and is flushed when it comes back; it is cleared only when the room is no world room at all
@@ -7486,7 +7646,11 @@ export async function bootWorld(canvas, renderer, params, status) {
   const onlineFrame = (now, dt) => {
     chatFrame();   // CHAT1: before the dead return, so the channels keep their heartbeat and their reconnect while the death screen is up (the panel itself is paused away like any HUD - AUDIT CHAT B7)
     // AUDIT ONLINE D12: the dead broadcast nothing and see no one
-    if (townTalk.overlay instanceof DeathScreen || modes?.deathUp?.()) { if (online.room) { worldPublish(now, true); online.leave(); exteriorFoes.clearPuppets(); _foesRoom = null; } peerBodies.destroy(); remotePlayers.sync([], onlineToScene); return; }   // AUDIT WORLD B6: the dungeon's and the building's death screens stand in the mode's slot   // AUDIT MWBODY B7: and no body stands frozen over the death screen
+    if (townTalk.overlay instanceof DeathScreen || modes?.deathUp?.()) {
+      if (_deathWasOnline == null) _deathWasOnline = _onlineWorldSession();   // D-ONLINE1: the modal hosts' deaths (a dungeon's, a building's) are captured here, BEFORE the leave below clears online.room
+      if (online.room) { worldPublish(now, true); online.leave(); exteriorFoes.clearPuppets(); _foesRoom = null; }
+      peerBodies.destroy(); remotePlayers.sync([], onlineToScene); return;
+    }   // AUDIT WORLD B6: the dungeon's and the building's death screens stand in the mode's slot   // AUDIT MWBODY B7: and no body stands frozen over the death screen
     const mode = modes?.mode ?? 'exterior';   // audit24_wave37: guarded on the OBJECT above its own declaration (the frame runs after it)
     const overworld = mode === 'exterior';
     const wc = state.worldCoords(player.pos);
@@ -7629,6 +7793,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     selfId: () => online?.id ?? null,
     dungeonAuthority,   // WORLD2: a dungeon built while another hosts starts as puppets
     dungeonOnline: () => onlineOn,   // AUDIT WORLD34 B2: online, the dungeon that gets built is the WHOLE dungeon - the room's layout is one layout
+    // D-ONLINE1: the death screen's door for the deaths this host does
+    // not present itself (a dungeon's, a building interior's -
+    // worldModes.js). False (not handled) when this session is not
+    // live online play, so the caller falls back to endRunToTitleMenu
+    // exactly as it always did offline.
+    onlineRespawn: () => { if (!_deathWasOnline) return false; respawnOnlinePlayer(); return true; },
     activateDir: () => _tapDir,   // TI1: the tap's ray for the modal ladders (eyeDir)
     activateLockOnly: () => _tapLockOnly,   // TS1: the stick-half tap - the modal ladders stop after the lock pick
     currentRegionIndex: () => _questRegionIndex(),   // UL1: PlayerGPS.CurrentRegionIndex for the mode machine's mods
@@ -8856,6 +9026,25 @@ export async function bootWorld(canvas, renderer, params, status) {
         if (want !== p._stride) restrideTerrain(p, want);
       }
       console.log(`stream: entered ${r.current.x},${r.current.y} (load ${r.load.length}, unload ${r.unload.length})`);
+      // CAMP1 - GROUP ENCOUNTERS ON CHUNK LOAD (Mac, 2026-09-17: "this
+      // should always happen when loading world chunks if it works like
+      // that" - it does, this IS that event): a second trigger for the
+      // roll `runEncounterTick` takes every 15 real minutes - ON TOP OF
+      // that timer, not instead of it, so standing still still gets
+      // checked and covering ground gets checked more. Same town gate,
+      // same online group-ownership guard; and only with the player
+      // actually OUTDOORS - a pixel crossed by a dungeon's own streaming
+      // is not a chunk the player walked into.
+      if ((modes?.mode ?? 'exterior') === 'exterior' && getPref('wildernessCamps') !== false && amGroupRollOwner(online?.id ?? null, player.feetAt(), peersNear())) {
+        const chunkCampHit = rollCampEncounterOnChunkLoad({
+          inside: false, inLocationRect: _musicInLocationRect(),
+          climateIndex: maps.getClimateIndex(r.current.x, r.current.y),
+          playerLevel: playerEntity.level,
+          preventEnemySpawns: playerEntity.preventEnemySpawns,
+          gameMinutes: Math.floor(playerTicker.classicMinutes),
+        });
+        if (chunkCampHit) _standCampEncounter(chunkCampHit, player.feetAt());
+      }
     }
     pump();
 
@@ -9280,9 +9469,13 @@ export async function bootWorld(canvas, renderer, params, status) {
         livePersonBatches.push(batch);
       }
     }
-    // G1: the guards drive + draw on the same flats' axis; the sim
-    // freezes with the population under the talk overlay.
-    livePersonBatches.push(...cityGuards.update(townTalk.overlayActive ? 0 : dt,
+    // G1: the guards drive + draw on the same flats' axis. WINFOE1
+    // (2026-09-17, Mac: "enemies should still be able to do damage"): the
+    // ENEMY pools no longer freeze under a window - a rest, the
+    // inventory, a status box, a quest popup - only the civilians above
+    // do (nobody walks away mid-talk); the player's own motor is what a
+    // window holds. A rest can now be broken by a foe that walks up.
+    livePersonBatches.push(...cityGuards.update(dt,
       walkMode && playerSpawned ? player.pos : cam.pos, cam.pos, _foeSenses()));
     // X-slice: the encounter pool drives + draws beside the watch; this
     // is the EXTERIOR arm of the cadence loop (AUDIT 62 F11: the modal
@@ -9291,7 +9484,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const _pf = walkMode && playerSpawned ? player.pos : cam.pos;
     if (!townTalk.overlayActive) runEncounterTick(_pf);
     if ((modes?.mode ?? 'exterior') === 'exterior') {
-      exteriorFoes.update(townTalk.overlayActive ? 0 : dt, _pf, cam.pos, _foeSenses());
+      exteriorFoes.update(dt, _pf, cam.pos, _foeSenses());   // WINFOE1: a window no longer zeroes the foes' clock
       livePersonBatches.push(...exteriorFoes.batches());
     }
     droppedLoot.tickFlats(dt);   // FA1 slice 3

@@ -2,7 +2,7 @@
 // (ItemHelper.cs:1277-1364, MIT Daggerfall Workshop). This retires
 // the iron-dagger stand-in seedStartingEquipment used to hand out
 // (equip.js:305), which survives only as the PRE-CHARGEN fallback its
-// two hosts gate it to - world.js:1997 and exterior.js:1108 seed it
+// two hosts gate it to - world.js:2007 and exterior.js:1109 seed it
 // solely for an entity that never ran chargen. A new character now
 // begins dressed, with a spellbook, their CLASS's weapon, and 100
 // gold, exactly as classic does.

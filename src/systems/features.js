@@ -654,6 +654,22 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'quickslots', initial: true, online: 'player' }),
   }),
+  // CAMP1 (2026-09-17, Mac: camps and roaming packs in the wilderness):
+  // an original addition, not a DFU classic feature - the classic game
+  // spawns wandering monsters one at a time. This is a second roll
+  // (systems/campEncounters.js) that places a small group instead. Off
+  // returns the wilderness to lone wanderers; nothing about the
+  // single-encounter roll changes either way.
+  Object.freeze({
+    id: 'wilderness-camps',
+    group: 'world',
+    title: 'Wilderness camps & packs',
+    note: 'Travelling outdoors, a small group of enemies instead of a lone wanderer - a settled camp or a looser '
+      + 'pack crossing your path. Off keeps only the classic one-at-a-time encounters.',
+    effect: 'Takes effect at once.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'wildernessCamps', initial: true, online: 'player' }),
+  }),
 ]);
 
 // ── RF4: the lanes, and what the stores derive ────────────────────
