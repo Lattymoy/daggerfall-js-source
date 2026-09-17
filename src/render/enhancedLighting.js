@@ -60,7 +60,8 @@
 import { getPref } from '../systems/uiPrefs.js';
 import { isEnhanced } from '../systems/uiSkin.js';
 import { SHADOW_GLSL } from './shadowPass.js';   // EL2: the receiver block - the sun map on the sun term, the cube map on its lantern
-import { AIR_AO_GLSL, AIR_ADAPT_GLSL, airOn } from './airPass.js';
+import { AIR_ADAPT_GLSL, airOn } from './airPass.js';   // EL6: no AO block - the resolve's
+import { BAYER_GLSL, BAYER_MEAN } from './orderedDither.js';   // EL6: the dither at the encode - the port's one Bayer
 import { SHADE_DARK } from '../systems/concealDraw.js';   // AUDIT-EL F14: the shade's pull toward black, interpolated as the classic BB_FS does   // EL3: the ambient occlusion image by screen position, and its kill door; EL4: the adapted exposure
 
 /** The lane's light cap - the classic lane's sixteen, tripled. Forty-eight
@@ -195,6 +196,7 @@ export function elScatterDensity(mode, density, start, end) {
 export const EL_GLSL = `
 uniform float uELExposure;   // EL1: scene exposure before the tonemap
 uniform float uELScatter;    // EL1: in-scatter gain x the fog's density (0 = no fog, no glow)
+${BAYER_GLSL}
 ${AIR_ADAPT_GLSL}
 vec3 elDecode(vec3 c) {
   vec3 lo = c / 12.92;
@@ -250,7 +252,8 @@ vec3 elPointLit(vec3 wp, vec3 n) {
     if (i >= uPointCount) break;
     vec3 L = uPointLights[i].xyz - wp;
     float d = length(L);
-    float sh = i == uShadowIndex ? pointShadowAt(wp, n) : 1.0;   // EL2: the one lantern with a cube map
+    if (d >= uPointLights[i].w) continue;   // EL5: outside the window the term is exactly zero - no shadow taps, no glint, no pow for it
+    float sh = shadowOfLight(i, wp, n);   // EL2: the lantern's map; EL5: any of the casters'
     vec3 Ln = L / max(d, 1e-4);
     // EL4: a glint - Blinn-Phong, a low gloss for stone and wood, a twelfth of the light: wet stone under a torch
     vec3 H = normalize(Ln + normalize(uCamPos - wp));
@@ -266,8 +269,10 @@ vec3 elPointFlat(vec3 wp, vec3 base) {
   vec3 acc = vec3(0.0);
   for (int i = 0; i < ${EL_MAX_LIGHTS}; i++) {
     if (i >= uPointCount) break;
-    float sh = i == uShadowIndex ? pointShadowAt(base, vec3(0.0, 1.0, 0.0)) : 1.0;   // EL2
-    acc += sh * elAttenuation(length(uPointLights[i].xyz - wp), uPointLights[i].w) * uPointColors[i];
+    float d = length(uPointLights[i].xyz - wp);
+    if (d >= uPointLights[i].w) continue;   // EL5
+    float sh = shadowOfLight(i, base, vec3(0.0, 1.0, 0.0));   // EL2; EL5: any caster's
+    acc += sh * elAttenuation(d, uPointLights[i].w) * uPointColors[i];
   }
   return acc;
 }
@@ -291,7 +296,9 @@ vec3 elInScatter(vec3 wp) {
   vec3 acc = vec3(0.0);
   for (int i = 0; i < ${EL_MAX_LIGHTS}; i++) {
     if (i >= uPointCount) break;
-    acc += elScatter(uPointLights[i].xyz - uCamPos, uPointLights[i].w, dir, dist) * uPointColors[i];
+    vec3 rel = uPointLights[i].xyz - uCamPos;
+    if (length(rel) > dist + uPointLights[i].w) continue;   // EL6: a lantern farther than the ray reaches plus its range glows on no part of it
+    acc += elScatter(rel, uPointLights[i].w, dir, dist) * uPointColors[i];
   }
   return acc * uELScatter;
 }
@@ -302,7 +309,7 @@ vec3 elFinish(vec3 lit, vec3 wp) {
   vec3 tm = elTonemap(lit * ex);
   vec3 col = mix(elDecode(uFogColor), tm, fogFactorAt(wp));
   col += elTonemap(elInScatter(wp) * ex);
-  return elEncode(col);
+  return elEncode(col) + (bayer4(gl_FragCoord.xy) - ${BAYER_MEAN}) / 255.0;   // EL6: dithered at the byte, zero-mean - a lantern's falloff on a dark floor is bands without it
 }
 `;
 
@@ -354,7 +361,6 @@ float cloudShadowAt(vec3 wp) {
 }
 ${EL_GLSL}
 ${SHADOW_GLSL}
-${AIR_AO_GLSL}
 ${EL_FOG_GLSL}
 ${EL_POINT_LIT_GLSL}
 out vec4 outColor;
@@ -370,7 +376,7 @@ void main() {
   // emission cancels other light (DaggerfallDefault.shader:83-85), in linear
   vec3 emission = elDecode(texture(uEmissionTex, vUV).rgb) * uEmissionColor;
   vec3 albedo = max(elDecode(tex.rgb) - emission, vec3(0.0));
-  vec3 ambient = (uTrilight > 0.5 ? (n.y >= 0.0 ? mix(uAmbient, uAmbientSky, n.y) : mix(uAmbient, uAmbientGround, -n.y)) : uAmbient) * aoAt();   // EL3: the crevice loses the light that has no direction
+  vec3 ambient = uTrilight > 0.5 ? (n.y >= 0.0 ? mix(uAmbient, uAmbientSky, n.y) : mix(uAmbient, uAmbientGround, -n.y)) : uAmbient;   // EL6: the crevice loses its light at the resolve, off the frame's depth
   vec3 lit = albedo * (ambient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff)
     + uLight3Color * (uLight3Scale * l3diff) + elPointLit(vWorldPos, n) + elIndirectLit(vWorldPos, n));
   outColor = vec4(elFinish(lit + emission, vWorldPos), 1.0);
@@ -484,7 +490,6 @@ float cloudShadowAt(vec3 wp) {
 }
 ${EL_GLSL}
 ${SHADOW_GLSL}
-${AIR_AO_GLSL}
 ${EL_FOG_GLSL}
 ${EL_POINT_LIT_GLSL}
 out vec4 outColor;
@@ -507,7 +512,7 @@ void main() {
   vec3 n = normalize(vNormal);
   float diff = max(dot(n, uLightDir), 0.0) * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n);   // EL2: the sun map
   float mdiff = max(dot(n, uMoonDir), 0.0);
-  vec3 lit = tex * (uAmbient * aoAt() + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff)
+  vec3 lit = tex * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff)
     + elPointLit(vWorldPos, n) + elIndirectLit(vWorldPos, n));   // EL3: the ambient under the AO image
   outColor = vec4(elFinish(lit, vWorldPos), 1.0);
 }`;
@@ -551,7 +556,6 @@ float cloudShadowAt(vec3 wp) {
 }
 ${EL_GLSL}
 ${SHADOW_GLSL}
-${AIR_AO_GLSL}
 ${EL_FOG_GLSL}
 ${EL_POINT_LIT_GLSL}
 out vec4 outColor;
@@ -562,7 +566,7 @@ void main() {
   vec3 albedo = elDecode(vColor * texel.rgb);
   float diff = max(dot(n, uLightDir), 0.0) * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n);   // EL2: the sun map
   float mdiff = max(dot(n, uMoonDir), 0.0);
-  vec3 lit = albedo * (uAmbient * aoAt() + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff)
+  vec3 lit = albedo * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff)
     + elPointLit(vWorldPos, n) + elIndirectLit(vWorldPos, n));   // EL3
   outColor = vec4(elFinish(lit, vWorldPos), 1.0);
 }`;
@@ -605,7 +609,7 @@ void main() {
   float base = uHazeHold * clamp((vDist - uFogStart) / max(uFogEnd - uFogStart, 1.0), 0.0, 1.0);
   float rim = (1.0 - uHazeHold) * smoothstep(uRimStart, uRimEnd, vDist);
   vec3 col = mix(elTonemap(lit * ex), elDecode(uFogColor), min(base + rim, 1.0));
-  outColor = vec4(elEncode(col), 1.0);
+  outColor = vec4(elEncode(col) + (bayer4(gl_FragCoord.xy) - ${BAYER_MEAN}) / 255.0, 1.0);   // EL6: the ring's sky gradient, dithered at the byte
 }`;
 
 /** THE LANE the renderer installs (Renderer.setLightingLane): the four

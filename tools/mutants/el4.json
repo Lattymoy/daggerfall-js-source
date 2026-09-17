@@ -236,8 +236,8 @@
  {
   "name": "renderer-no-adapt-loc",
   "file": "src/render/renderer.js",
-  "old": ", adapt: gl.getUniformLocation(p, 'uAdapt') };   // EL3; EL4: the eye",
-  "new": " };   // EL3",
+  "old": "      a.ao = { adapt: gl.getUniformLocation(p, 'uAdapt') };",
+  "new": "      a.ao = { adapt: null };",
   "tests": [
    "test/el4_frame.test.js"
   ]

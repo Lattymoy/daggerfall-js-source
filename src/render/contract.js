@@ -40,6 +40,7 @@
  * @property {number|null} [frame]                    FA1: null for a still flat, a frame INDEX for an animated one, folded into the texture key
  * @property {number} [sway]                          WIND3: this batch's share of the wind's lean - the flora have one, nothing else does
  * @property {object|null} [conceal]                  ECV1: the concealment visual, which moves the batch into the blended pass
+ * @property {Float32Array} [bounds]                  EL5: the sphere [cx, cy, cz, r] about the origin the shadow and air replays cull by
  */
 
 /**
@@ -54,6 +55,7 @@
  * @property {string} [name]
  * @property {number} [modelId]
  * @property {{vao: WebGLVertexArrayObject, ebo: WebGLBuffer}|null} [_wire]
+ * @property {Float32Array} [bounds]                  EL5: the local sphere [cx, cy, cz, r]; each sub-mesh carries its own as `_bounds`
  */
 
 /**

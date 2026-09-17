@@ -13,7 +13,7 @@ import { fileURLToPath } from 'node:url';
 import { Renderer, WORLD_FRAME } from '../src/render/renderer.js';
 import { EL_LANE, EL_BB_FS, EL_MESH_FS, EL_TERRAIN_FS, dungeonFog, EL_DUNGEON_AMBIENT_SCALE } from '../src/render/enhancedLighting.js';
 import { SHADOW_GLSL, SHADOW_SUN_BIAS, SHADOW_POINT_BIAS, SHADOW_CASTER_MAX_RANGE, pickShadowCaster, cubeDepthOfM, cubeDepthRef, SHADOW_POINT_NEAR } from '../src/render/shadowPass.js';
-import { AIR_GLARE_MAX_RANGE, AIR_AO_UNIT, AIR_ADAPT_UNIT, EMIT_MESH_FS, EMIT_BB_FS } from '../src/render/airPass.js';
+import { AIR_GLARE_MAX_RANGE, AIR_ADAPT_UNIT, EMIT_MESH_FS, EMIT_BB_FS } from '../src/render/airPass.js';
 import { SHADE_DARK } from '../src/systems/concealDraw.js';
 import { frameTarget, setFrameTarget } from '../src/render/renderTarget.js';
 
@@ -44,22 +44,20 @@ function recordingGl() {
 }
 const mesh = () => ({ vao: { id: 'vao-m' }, buffers: [], subMeshes: [{ textureArchive: 1, textureRecord: 1, startIndex: 0, primitiveCount: 1 }] });
 
-test('AUDIT-EL F1/F12: the eye\'s image and the AO sampler are ALWAYS on their units - with the air off, in the studio bake, in a panel; the terrain\'s unit 0 is a sampler2DArray', () => {
+test('AUDIT-EL F1/F12: the eye\'s image is ALWAYS on its unit - with the air off, in the studio bake; the terrain\'s unit 0 is a sampler2DArray (EL6: no AO sampler in a world shader any more)', () => {
   const { calls, canvas } = recordingGl();
   const r = new Renderer(canvas);
   r.setLightingLane(EL_LANE);   // the lane, no air: `?air=off`
   calls.length = 0;
   r.beginFrame(I, I, new Float32Array([0, 1, 0]), WORLD_FRAME);
   assert.ok(calls.some((c) => c[0] === 'uniform1i' && c[1] === 'uAdapt' && c[2] === AIR_ADAPT_UNIT), 'F1: uAdapt on unit 11');
-  assert.ok(calls.some((c) => c[0] === 'uniform1i' && c[1] === 'uAO' && c[2] === AIR_AO_UNIT), 'F12: uAO on unit 12');
+  assert.ok(!calls.some((c) => c[1] === 'uAO' || c[1] === 'uAOInfo'), 'EL6: F12 cannot recur - no AO uniform exists in the world pass');
   const bare = calls.filter((c) => c[0] === 'texImage2D' && c[3] === 1 && c[4] === 1 && c[9]?.[0] === 128);
-  assert.equal(bare.length, 1, 'one bare 1x1 image (the multiplier 1), minted once, serves both');
-  const aoInfo = calls.find((c) => c[0] === 'uniform4fv' && c[1] === 'uAOInfo');
-  assert.ok(aoInfo && [...aoInfo[2]].every((v) => v === 0), 'the AO rect is zeros: off');
+  assert.equal(bare.length, 1, 'one bare 1x1 image (the multiplier 1), minted once');
   // the terrain program too
   calls.length = 0;
   r.drawTerrain({ vao: {}, indexCount: 6 }, I, {}, {}, 6.4);
-  assert.ok(calls.some((c) => c[0] === 'uniform1i' && c[1] === 'uAO' && c[2] === AIR_AO_UNIT) && calls.some((c) => c[0] === 'uniform1i' && c[1] === 'uAdapt' && c[2] === AIR_ADAPT_UNIT));
+  assert.ok(calls.some((c) => c[0] === 'uniform1i' && c[1] === 'uAdapt' && c[2] === AIR_ADAPT_UNIT));
   assert.match(EL_TERRAIN_FS, /uniform sampler2DArray uTileArr;/, 'a different sampler type on unit 0: two types on one unit is INVALID_OPERATION at draw');
   // the studio bake takes the bare image even with the air on
   r.setAir(true);
@@ -75,23 +73,23 @@ test('AUDIT-EL F1/F12: the eye\'s image and the AO sampler are ALWAYS on their u
   assert.equal(r._studioDepth, 0, 'the studio depth returns');
 });
 
-test('AUDIT-EL F2: a foreign rect takes no AO - the sprite pass and a panel upload a zero rect', () => {
+test('AUDIT-EL F2 (EL6): a foreign rect takes no AO because no world shader takes any - the AO is the resolve\'s alone, over the world rect, and 0 with no frame prepared', () => {
   const { calls, canvas } = recordingGl();
   const r = new Renderer(canvas);
   r.setLightingLane(EL_LANE); r.setAir(true);
   r.textures.set('1_1', {});
   r.beginFrame(I, I, new Float32Array([0, 1, 0]), WORLD_FRAME);
   r.drawMesh(mesh(), I, null);
-  r.drawScreenQuad({ id: 'hud' }, { x: 0, y: 0, w: 10, h: 10 });
-  calls.length = 0;
-  r.beginFrame(I, I, new Float32Array([0, 1, 0]), WORLD_FRAME);   // the mesh program's lane uniforms go up here, once a frame
-  const world = calls.filter((c) => c[0] === 'uniform4fv' && c[1] === 'uAOInfo').at(-1);
-  assert.ok(world && world[2][2] === 320, 'the world pass: the rect');
   calls.length = 0;
   r.renderCharacterSprite({ vao: {}, count: 3 }, I, I, I, 8, 8);
-  const sprite = calls.find((c) => c[0] === 'uniform4fv' && c[1] === 'uAOInfo');
-  assert.ok(sprite && [...sprite[2]].every((v) => v === 0), 'the sprite pass: zeros');
+  assert.ok(!calls.some((c) => c[1] === 'uAOInfo' || c[1] === 'uAO'), 'the sprite pass: no AO uniform at all');
   assert.equal(r._spriteDepth, 0);
+  calls.length = 0;
+  r.drawScreenQuad({ id: 'hud' }, { x: 0, y: 0, w: 10, h: 10 });
+  const mix = calls.find((c) => c[0] === 'uniform1f' && c[1] === 'uAOMix');
+  assert.ok(mix && mix[2] > 0, 'the resolve applies the AO over the world rect');
+  const ao = read('src/render/airPass.js');
+  assert.match(ao, /if \(wuv\.x >= 0\.0 && wuv\.x <= 1\.0 && wuv\.y >= 0\.0 && wuv\.y <= 1\.0\) \{\n    c \*= mix\(1\.0, texture\(uAO, wuv\)\.r, uAOMix\);/, 'inside the world rect alone');
 });
 
 test('AUDIT-EL F3: the water surface takes sixteen of the lane\'s forty-eight, raw', () => {
@@ -187,21 +185,25 @@ test('AUDIT-EL F10/F11: no measure off an empty frame; the storm\'s flash is nei
   assert.match(read('src/render/airPass.js'), /if \(this\.measured\) \{\n\s+quad\(P\.lum, this\.lum\);/, 'the luminance and the step ride the measure');
 });
 
-test('AUDIT-EL F13: the camera\'s depth image faces each flat as its record was drawn', () => {
+test('AUDIT-EL F13 (EL6): the emission replay faces each flat as its record was drawn; the sun map faces the sun', () => {
   const { calls, canvas } = recordingGl();
   const r = new Renderer(canvas);
   r.setLightingLane(EL_LANE); r.setAir(true);
-  r.textures.set('210_1', {});
+  r.textures.set('210_1', {}); r.emissionTextures.set('210_1', { id: 'emis' });
   r.beginFrame(I, I, new Float32Array([0.3, 0.8, -0.2]), WORLD_FRAME);
   const right = new Float32Array([0.6, 0, 0.8]), up = new Float32Array([0, 1, 0]);
   r.drawBillboards([{ archive: 210, record: 1, vao: {}, indexCount: 6, size: { w: 1, h: 2 }, origin: [1, 0, 1] }], right, up);
-  r.drawScreenQuad({ id: 'hud' }, { x: 0, y: 0, w: 10, h: 10 });
+  calls.length = 0;
+  r.drawScreenQuad({ id: 'hud' }, { x: 0, y: 0, w: 10, h: 10 });   // EL6: the resolve replays THIS frame's emitters, off their records
+  let rights = calls.filter((c) => c[0] === 'uniform3fv' && c[1] === 'uRight').map((c) => [...c[2]].map((v) => +v.toFixed(3)));
+  assert.ok(rights.some((v) => v[0] === 0.6 && v[2] === 0.8), 'the emitter drew with the camera\'s right');
+  assert.equal(r.air.stats.emitDraws, 1);
   calls.length = 0;
   r.beginFrame(I, I, new Float32Array([0.3, 0.8, -0.2]), WORLD_FRAME);
-  const rights = calls.filter((c) => c[0] === 'uniform3fv' && c[1] === 'uRight').map((c) => [...c[2]].map((v) => +v.toFixed(3)));
-  assert.ok(rights.some((v) => v[0] === 0.6 && v[2] === 0.8), 'the depth image drew the flat with the camera\'s right');
-  assert.ok(rights.some((v) => !(v[0] === 0.6 && v[2] === 0.8)), 'the sun map drew it facing the sun');
-  assert.match(read('src/render/airPass.js'), /sp\.replay\(\{ bindVao: f\.bindVao, textures: f\.textures, isSpectral: f\.isSpectral \}, vp, null, true\);/);
+  rights = calls.filter((c) => c[0] === 'uniform3fv' && c[1] === 'uRight').map((c) => [...c[2]].map((v) => +v.toFixed(3)));
+  assert.ok(rights.length > 0 && rights.every((v) => !(v[0] === 0.6 && v[2] === 0.8)), 'the sun map drew it facing the sun');
+  assert.match(read('src/render/airPass.js'), /gl\.uniform3fv\(P\.emitBb\.uRight, r\.right\); gl\.uniform3fv\(P\.emitBb\.uUp, r\.up\);/);
+  assert.ok(!/sp\.replay\(/.test(read('src/render/airPass.js')), 'EL6: no depth replay - the frame\'s own depth');
 });
 
 test('AUDIT-EL F14/F15/F17/F20: the shade\'s pull is the constant; the biases are in the spaces they mean; no variable hides a built-in; the emitters bloom in linear', () => {
@@ -224,7 +226,7 @@ test('AUDIT-EL F16/F18/F19: the eye measures the scene with itself divided out o
   const a = read('src/render/airPass.js');
   assert.match(a, /acc \+= log2\(max\(dot\(c, vec3\(0\.2126, 0\.7152, 0\.0722\)\) \/ prev, 1e-9\)\);/, 'F16: divided by the eye');
   assert.match(a, /for \(int y = 0; y < 4; y\+\+\) \{\n\s+for \(int x = 0; x < 4; x\+\+\) \{/, 'F16: sixteen taps per texel');
-  assert.match(a, /if \(!\(w > 0 && h > 0\)\) return;   \/\/ AUDIT-EL F18/);
+  assert.match(a, /if \(!\(w > 0 && h > 0\)\) \{ this\.f = null; return; \}   \/\/ AUDIT-EL F18/);
   assert.match(a, /if \(!\(W > 0 && H > 0\)\) return null;   \/\/ AUDIT-EL F18/);
   assert.match(read('src/render/renderer.js'), /this\._restoreWorldViewport\(\);\n\s+this\.markForeignPass\(\);   \/\/ AUDIT-EL F19/);
   // a zero-size world viewport at beginFrame draws nothing and binds no frame

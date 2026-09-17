@@ -16,8 +16,8 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   airOn, AIR_AO_SCALE, AIR_BLOOM_SCALE, AIR_AO_RADIUS, AIR_AO_SAMPLES, AIR_AO_STRENGTH, AIR_AO_BIAS, AIR_BLOOM_STRENGTH,
-  AIR_GLARE_SIZE, AIR_SHAFT_TAPS, AIR_SHAFT_DECAY, AIR_SHAFT_STRENGTH, AIR_SHAFT_REACH, AIR_AO_UNIT,
-  projInfo, viewDepth, sunScreenUV, aoKernel, glareSize, AIR_AO_GLSL, EMIT_MESH_FS, EMIT_BB_FS, AirPass,
+  AIR_GLARE_SIZE, AIR_SHAFT_TAPS, AIR_SHAFT_DECAY, AIR_SHAFT_STRENGTH, AIR_SHAFT_REACH, AIR_AO_RESOLVE,
+  projInfo, viewDepth, sunScreenUV, aoKernel, glareSize, EMIT_MESH_FS, EMIT_BB_FS, AirPass,
 } from '../src/render/airPass.js';
 import { EL_LANE, EL_MESH_FS, EL_BB_FS, EL_TERRAIN_FS, EL_CHAR_FS, EL_FAR_RING_FS } from '../src/render/enhancedLighting.js';
 import { SHADOW_SUN_UNIT, SHADOW_POINT_UNIT } from '../src/render/shadowPass.js';
@@ -73,7 +73,7 @@ test('EL3: the door and the constants - ?air=off, the two scales, the AO\'s radi
   assert.equal(AIR_AO_RADIUS, 0.8); assert.equal(AIR_AO_SAMPLES, 12); assert.equal(AIR_AO_STRENGTH, 1); assert.equal(AIR_AO_BIAS, 0.02);
   assert.equal(AIR_BLOOM_STRENGTH, 0.6); assert.equal(AIR_GLARE_SIZE, 0.35);
   assert.equal(AIR_SHAFT_TAPS, 32); assert.equal(AIR_SHAFT_DECAY, 0.96); assert.equal(AIR_SHAFT_STRENGTH, 0.35); assert.equal(AIR_SHAFT_REACH, 0.35);
-  assert.equal(AIR_AO_UNIT, 12); assert.ok(AIR_AO_UNIT < SHADOW_SUN_UNIT && SHADOW_SUN_UNIT < SHADOW_POINT_UNIT && SHADOW_POINT_UNIT < CLOUD_SHADOW_UNIT, 'four reserved units, in a row');
+  assert.equal(AIR_AO_RESOLVE, 0.75); assert.ok(SHADOW_SUN_UNIT < SHADOW_POINT_UNIT && SHADOW_POINT_UNIT < CLOUD_SHADOW_UNIT, 'four reserved units, in a row');
   assert.ok(near(glareSize(18), 0.35 * Math.sqrt(18))); assert.equal(glareSize(-1), 0); assert.equal(glareSize(0), 0);
 });
 
@@ -141,21 +141,20 @@ test('EL3: the kernel - twelve samples in the +z hemisphere, inside the unit bal
 });
 
 test('EL3: the receiver block and the shaders - the AO by screen position, off at width 0; the three lit lane shaders multiply their ambient alone; the flat and the ring take none; the emission shaders', () => {
-  assert.match(AIR_AO_GLSL, /uniform sampler2D uAO;\nuniform vec4 uAOInfo;/);
-  assert.match(AIR_AO_GLSL, /if \(uAOInfo\.z <= 0\.0\) return 1\.0;/);
-  assert.match(AIR_AO_GLSL, /vec2 uv = \(gl_FragCoord\.xy - uAOInfo\.xy\) \/ uAOInfo\.zw;/);
-  assert.ok(EL_MESH_FS.includes(AIR_AO_GLSL) && EL_TERRAIN_FS.includes(AIR_AO_GLSL) && EL_CHAR_FS.includes(AIR_AO_GLSL));
-  assert.match(EL_MESH_FS, /: uAmbient\) \* aoAt\(\);/, 'the mesh: the whole ambient (flat or trilight) under the AO');
-  assert.match(EL_TERRAIN_FS, /tex \* \(uAmbient \* aoAt\(\) \+ uSunColor/); assert.match(EL_CHAR_FS, /albedo \* \(uAmbient \* aoAt\(\) \+ uSunColor/);
-  for (const fs of [EL_MESH_FS, EL_TERRAIN_FS, EL_CHAR_FS]) assert.equal((fs.match(/\* aoAt\(\)/g) || []).length, 1, 'once: the sun and the lanterns keep their light');
-  assert.ok(!EL_BB_FS.includes('aoAt') && !EL_FAR_RING_FS.includes('aoAt'), 'a flat and the ring take no AO');
+  // EL6: the AO left the world shaders - the resolve reads the frame's own depth and applies it once, whole
+  for (const fs of [EL_MESH_FS, EL_TERRAIN_FS, EL_CHAR_FS, EL_BB_FS, EL_FAR_RING_FS]) assert.ok(!fs.includes('aoAt') && !/\buAO\b/.test(fs), 'EL6: no AO in a world shader');
+  assert.match(EL_MESH_FS, /vec3 ambient = uTrilight > 0\.5 \? \(n\.y >= 0\.0 \? mix\(uAmbient, uAmbientSky, n\.y\) : mix\(uAmbient, uAmbientGround, -n\.y\)\) : uAmbient;/);
+  assert.match(EL_TERRAIN_FS, /tex \* \(uAmbient \+ uSunColor/); assert.match(EL_CHAR_FS, /albedo \* \(uAmbient \+ uSunColor/);
   assert.equal(EL_LANE.air, true);
   assert.match(EMIT_MESH_FS, /texture\(uEmissionTex, vUV\)\.rgb \* uEmissionColor/);
   assert.match(EMIT_BB_FS, /if \(texture\(uTex, vUV\)\.a < 0\.5\) discard;/);
   const a = read('src/render/airPass.js');
-  assert.match(a, /vis = \(ndc\.z \* 0\.5 \+ 0\.5\) <= d \+ 0\.002 \? 1\.0 : 0\.0;/, 'a glare hides behind the depth image');
-  assert.match(a, /float sky = texture\(uDepth, uv\)\.r >= 0\.99999 \? 1\.0 : 0\.0;/, 'the shafts\' mask is the sky');
-  assert.equal((a.match(/gl\.blendFunc\(gl\.ONE, gl\.ONE\);/g) || []).length, 2, 'additive: the bloom source at the render and the bright pass at the resolve (EL4)');
+  assert.match(a, /return viewDist\(depthAt\(uv\)\) \+ \$\{AIR_GLARE_SLACK\} >= lantern \? 1\.0 : 0\.0;/, 'EL5: a glare hides behind the depth IN WORLD UNITS, not a hyperbolic constant (EL6: the frame\'s own depth)');
+  assert.match(a, /export const AIR_GLARE_SLACK = 0\.5;/, 'half a unit of slack: the flame sits on its post');
+  assert.match(a, /vis = \(seen\(uv, lantern\) \+ seen\(uv \+ vec2\(t\.x, 0\.0\), lantern\)[\s\S]*?\) \/ 5\.0;/, 'five taps: a lantern half behind a post is half a glare');
+  assert.match(a, /uniform vec2 uTexel;      \/\/ EL5: one texel of the world rect, in its uv/);
+  assert.match(a, /float sky = depthAt\(uv\) >= 0\.99999 \? 1\.0 : 0\.0;/, 'the shafts\' mask is the sky (EL6: off the frame\'s depth, at the world rect)');
+  assert.equal((a.match(/gl\.blendFunc\(gl\.ONE, gl\.ONE\);/g) || []).length, 2, 'additive: the bloom source and the bright pass, both at the resolve (EL6)');
   assert.ok(!/from '\.\/renderer\.js'/.test(a) && !/from '\.\/enhancedLighting\.js'/.test(a) && !/from '\.\/shadowPass\.js'/.test(a), 'a leaf');
 });
 
@@ -180,45 +179,48 @@ test('EL3: the renderer builds the pass with the lane behind the door, sizes the
   calls.length = 0;
   r.beginFrame(P, I, sun, WORLD_FRAME);
   assert.equal(ap.width, 320); assert.equal(ap.height, 200);
-  assert.equal(ap.targets.ao.w, 160); assert.equal(ap.targets.bloom.w, 80); assert.equal(ap.targets.depth.w, 320);
-  assert.equal(calls.filter((c) => c[0] === 'texStorage2D').length, 1, 'the depth image');
+  assert.equal(ap.targets.ao.w, 160); assert.equal(ap.targets.bloom.w, 80); assert.equal(ap.targets.depth, undefined, 'EL6: no depth image of its own');
+  assert.equal(calls.filter((c) => c[0] === 'texStorage2D').length, 1, 'the frame\'s depth TEXTURE (EL6: the one every pass reads)');
   assert.equal(ap.pending, true, 'a composite is owed');
-  assert.ok(calls.some((c) => c[0] === 'uniform1i' && c[1] === 'uAO' && c[2] === AIR_AO_UNIT), 'the receiver\'s unit');
-  const info = calls.find((c) => c[0] === 'uniform4fv' && c[1] === 'uAOInfo');
-  assert.deepEqual([...info[2]], [0, 0, 320, 200], 'the viewport');
+  assert.ok(!calls.some((c) => c[0] === 'uniform1i' && c[1] === 'uAO'), 'EL6: no uAO upload in the world pass');
+  assert.deepEqual([...ap.rect], [0, 0, 320, 200], 'the viewport, taken at prepare');
   drawWorld(r);
   r.drawScreenQuad({ id: 'hud' }, { x: 0, y: 0, w: 10, h: 10 });   // AUDIT-EL F5: the host's 2D pass resolves frame 1 - a frame still owed at the next beginFrame is resolved there first
-  // frame 2: the shadow maps, then the air's images (depth, ao, box, bloom source, shaft), then the clear
+  // frame 2: the shadow maps, then the clear - EL6: NO image before the frame; they are drawn at the resolve off the frame's depth
   calls.length = 0;
   r.setPointLights(new Float32Array([5, 2, 1, 14, 3, 3, 3, 0]), new Float32Array([1, 0.7, 0.4]));   // and a rangeless light, which glares not
   r.beginFrame(P, I, sun, WORLD_FRAME);
   const firstClear = calls.findIndex((c) => c[0] === 'clear' && c[1] === 16384 + 256);
   const before = calls.slice(0, firstClear);
   const depthClears = before.filter((c) => c[0] === 'clear' && c[1] === 256);
-  assert.equal(depthClears.length, 3, 'two cascades, then the depth image');
-  assert.equal(r.shadows.count, 0, 'the records are spent after both passes');
-  assert.equal(ap.stats.emitDraws, 1, 'the flat with an emission map alone; the plain flat and the mesh (no mask resolved yet) emit nothing');
-  assert.equal(ap.stats.glares, 1, 'one lantern');
+  assert.equal(depthClears.length, 2 + 6, 'two cascades, the one lantern\'s six faces (EL5: lanterns cast under the sun too); EL6: no depth image');
+  assert.equal(r.shadows.count, 0, 'the records are spent after the shadow pass');
+  assert.equal(before.filter((c) => c[0] === 'drawArrays' && c[1] === 5).length, 0, 'EL6: no image quad before the frame');
   const targets = ap.targets;
-  assert.equal(ap.stats.shafts, true, 'the sun is up');
-  assert.equal(before.filter((c) => c[0] === 'drawArrays' && c[1] === 5).length, 1 + 1 + 1 + 1, 'ao, box, the shaft, and one glare quad (EL4: the blur runs at the resolve, once the frame is whole)');
-  const vpCalls = before.filter((c) => c[0] === 'viewport');
-  assert.ok(vpCalls.some((c) => c[1] === 0 && c[3] === 160 && c[4] === 100), 'the AO at half');
-  assert.ok(vpCalls.some((c) => c[3] === 80 && c[4] === 50), 'the bloom at a quarter');
-  assert.deepEqual(vpCalls.at(-1).slice(1), [0, 0, 320, 200], 'the world viewport comes back before the frame');
   const lastBind = before.map((c, i) => [c, i]).filter(([c]) => c[0] === 'bindFramebuffer').at(-1);
   assert.equal(lastBind[0][2], ap.frame.fbo, 'EL4: the frame image is bound for the world pass, the clear included');
-  assert.ok(before.some((c) => c[0] === 'clearColor' && c[1] === 0 && c[2] === 0) && before.at(-1)[0] !== 'clearColor', 'the bloom target cleared black...');
-  const lastClearColor = before.filter((c) => c[0] === 'clearColor').at(-1);
-  assert.ok(near(lastClearColor[1], 0.53, 1e-3), '...and the frame\'s clear colour restored');
-  // the first screen quad composites, once, and hands the 2D pass the full canvas
+  assert.deepEqual(before.filter((c) => c[0] === 'viewport').at(-1).slice(1), [0, 0, 320, 200], 'the world viewport comes back before the frame');
+  drawWorld(r);   // EL6: THIS frame's records are the emitters the resolve replays
+  // the first screen quad resolves, once: the images off the frame's depth (ao, box, the emitters, the glare, the shaft), the eye, the bloom, the frame to the canvas
   calls.length = 0;
   r.drawScreenQuad({ id: 'ui' }, { x: 0, y: 0, w: 10, h: 10 });
+  assert.equal(ap.stats.emitDraws, 1, 'the flat with an emission map alone; the plain flat and the mesh (no mask resolved yet) emit nothing');
+  assert.equal(ap.stats.glares, 1, 'one lantern');
+  assert.equal(ap.stats.shafts, true, 'the sun is up');
+  assert.equal(ap.measured, true, 'the world drew: the eye measures');
+  const vpCalls = calls.filter((c) => c[0] === 'viewport');
+  assert.ok(vpCalls.some((c) => c[1] === 0 && c[3] === 160 && c[4] === 100), 'the AO at half');
+  assert.ok(vpCalls.some((c) => c[3] === 80 && c[4] === 50), 'the bloom at a quarter');
+  assert.ok(calls.some((c) => c[0] === 'clearColor' && c[1] === 0 && c[2] === 0), 'the bloom target cleared black...');
+  assert.ok(near(calls.filter((c) => c[0] === 'clearColor').at(-1)[1], 0.53, 1e-3), '...and the frame\'s clear colour restored');
+  const depthBinds = calls.filter((c) => c[0] === 'bindTexture' && c[2] === ap.frame.depth).length;
+  assert.ok(depthBinds >= 5, `the frame's depth bound for the AO, the emitters, the glare and the shaft (${depthBinds})`);
+  assert.ok(calls.some((c) => c[0] === 'uniform1i' && c[1] === 'uAO' && c[2] === 3) && calls.some((c) => c[0] === 'uniform1f' && c[1] === 'uAOMix' && near(c[2], AIR_AO_RESOLVE, 1e-6)), 'the resolve takes the AO on unit 3 at its mix');
   const comp = calls.findIndex((c) => c[0] === 'uniform4fv' && c[1] === 'uGrade');
   assert.ok(comp >= 0, 'the resolve drew (EL4: the composite became the resolve)');
   assert.ok(near(calls[comp][2][0], AIR_BLOOM_STRENGTH, 1e-6) && calls[comp][2][1] === 1, 'the bloom gain and the shafts\' (a float32 upload)');
   assert.ok(calls.some((c, i) => i > comp && c[0] === 'viewport' && c[3] === 320 && c[4] === 200), 'the full canvas after');
-  assert.deepEqual(calls.filter((c) => c[0] === 'blendFunc').map((c) => [c[1], c[2]]), [[1, 1]], 'the bright pass adds, ONE ONE; the resolve itself replaces');
+  assert.deepEqual(calls.filter((c) => c[0] === 'blendFunc').map((c) => [c[1], c[2]]), [[1, 1], [1, 1]], 'the bloom source adds, the bright pass adds, ONE ONE; the resolve itself replaces');
   assert.equal(ap.pending, false);
   calls.length = 0;
   r.drawScreenQuad({ id: 'ui2' }, { x: 0, y: 0, w: 10, h: 10 });
@@ -227,16 +229,18 @@ test('EL3: the renderer builds the pass with the lane behind the door, sizes the
   r.setLighting(new Float32Array([0.12, 0.12, 0.12]), 0);
   drawWorld(r);
   r.beginFrame(I, I, new Float32Array([0.45, 0.8, 0.35]), WORLD_FRAME);
-  assert.equal(ap.stats.shafts, false);
+  drawWorld(r);
+  r.drawScreenQuad({ id: 'ui3' }, { x: 0, y: 0, w: 10, h: 10 });   // EL6: the images are the resolve's - the shafts' decision too
+  assert.equal(ap.stats.shafts, false, 'no sun indoors: no shafts');
   assert.equal(ap.targets, targets, 'the images are kept while the viewport keeps its size');
+  r.beginFrame(I, I, new Float32Array([0.45, 0.8, 0.35]), WORLD_FRAME);
+  assert.equal(ap.pending, true, 'a frame bound: a resolve owed');
   r.setAir(false);
   assert.equal(ap.pending, false, 'closing the door owes nothing');
   drawWorld(r);
   calls.length = 0;
   r.beginFrame(P, I, sun, WORLD_FRAME);
-  const noAo = calls.find((c) => c[0] === 'uniform4fv' && c[1] === 'uAOInfo');
-  assert.ok(noAo && [...noAo[2]].every((v) => v === 0), 'AUDIT-EL F12: with the air off the AO rect goes up as zeros (off) and the sampler still sits on its unit');
-  assert.ok(calls.some((c) => c[0] === 'uniform1i' && c[1] === 'uAO' && c[2] === AIR_AO_UNIT), 'the terrain\'s unit 0 is a sampler2DArray - uAO left at unit 0 would fail every terrain draw');
+  assert.ok(!calls.some((c) => c[1] === 'uAOInfo' || c[1] === 'uAO'), 'EL6: no AO uniform in the world pass at all (AUDIT-EL F12\'s unit-0 case cannot recur)');
   assert.equal(calls.filter((c) => c[0] === 'clear' && c[1] === 256).length, 6, 'the shadow maps alone (indoors now: the cube\'s six faces, no depth image)');
   // a panel frame draws no image and drops the records
   r.setAir(true);
@@ -252,7 +256,7 @@ test('EL3: the renderer\'s wiring - the air rides the lane and the door, the com
   const r = read('src/render/renderer.js');
   assert.match(r, /const want = this\._airWanted && !!this\._lane\?\.air && !!this\._shadows;/);
   assert.equal((r.match(/this\._compositeAir\(\);   \/\/ EL3/g) || []).length, 2, 'drawScreenQuad and drawScreenQuadRun');
-  assert.match(r, /if \(this\._air\?\.targets\) this\._air\.upload\(this\._el\[key\]\.ao, foreignRect\);/);   // AUDIT-EL F2: no AO in a foreign rect; F12: and none without the images
+  assert.match(r, /this\._uploadAdapt\(this\._el\[key\]\.ao\);   \/\/ EL6/); assert.ok(!/_air\.upload\(/.test(r) && !/_uploadNoAo/.test(r), 'EL6: the world pass uploads no AO');
   assert.match(r, /this\._shadows\.recordBillboards\(batches, this\._flatWind, camRight, camUp\);/);
   const sp = read('src/render/shadowPass.js');
   assert.match(sp, /r\.right\.set\(camRight\); r\.up\.set\(camUp\);/);

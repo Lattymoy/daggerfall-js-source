@@ -25,17 +25,24 @@ directory by `test/audit18_bible_docs.test.js`:
   in particular is written by eight files outside `render/` - its
   `origin`, `sway`, `conceal` and `frame` are the CALLER'S fields and
   until now nothing said so. Exports `{}`, so the bundle never carries it.
-- `airPass.js` - EL3 THE AIR PASS: a depth image of the world from the camera
-  (the shadow pass's records replayed), and off it the ambient occlusion the
-  lane's shaders multiply their ambient by, the bloom sourced from the emitters
-  and the lanterns' glares, and the sun's shafts - composited by the frame's
-  first screen-space draw; EL4: the frame image the whole world draws into, the
-  eye's adaptation off its mean luminance, bloom from its bright pass, the
-  vignette and the contrast in the resolve. `?air=off`. See
+- `airPass.js` - EL3 THE AIR PASS: off the frame's own depth (EL6 - a depth
+  texture on the frame image; before it a replay of the shadow pass's records
+  from the camera), at the resolve: the ambient occlusion the resolve multiplies
+  the frame by, the bloom sourced from the emitters (each occluded by that
+  depth) and the lanterns' glares, and the sun's shafts; EL4: the frame image
+  the whole world draws into, the eye's adaptation off its mean luminance,
+  bloom from its bright pass, the vignette, the contrast in display space and
+  the dither in the resolve. `?air=off`. See
   `07-Rendering/Enhanced-Lighting-Arc.md`.
 - `characterMesh.js` - the voxel character mesh path.
 - `characterSprite.js` - the classic-visuals sprite pass (one fixed
   CHAR_SPRITE_RT_SIZE target).
+- `bounds.js` - EL5 THE BOUNDS AND THE CULL: a bundle's bounding sphere
+  (`boundsOf`, computed at upload for a mesh and each sub-mesh, a terrain
+  surface, a billboard batch), the record's world sphere
+  (`transformSphere`), the frustum's normalised planes (`spherePlanes`,
+  over frustum.js's extraction) and the sphere test the shadow and air
+  replays cull by. A leaf: no GL. See `07-Rendering/Enhanced-Lighting-Arc.md`.
 - `shadowPass.js` - EL2 THE SHADOW PASS: records what the world pass draws and
   replays it depth-only from the light at the top of the next frame - a
   two-cascade sun map outdoors, a cube map from the nearest lantern indoors -

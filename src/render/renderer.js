@@ -334,8 +334,9 @@ void main() {
   gl_Position = uProj * uView * vec4(world, 1.0);
 }`;
 
-import { ShadowPass } from './shadowPass.js';   // EL2: the lane's shadow maps - a leaf that compiles nothing until a lane asks
-import { AirPass, AIR_ADAPT_UNIT as ADAPT_UNIT, AIR_AO_UNIT as AO_UNIT } from './airPass.js';   // EL3: the depth image, the ambient occlusion, the bloom and the shafts - the same kind of leaf; EL4: the eye's unit
+import { ShadowPass } from './shadowPass.js';
+import { boundsOf } from './bounds.js';   // EL5: the bounds every bundle carries for the replays' culling   // EL2: the lane's shadow maps - a leaf that compiles nothing until a lane asks
+import { AirPass, AIR_ADAPT_UNIT as ADAPT_UNIT } from './airPass.js';   // EL3: the ambient occlusion, the bloom and the shafts - the same kind of leaf; EL4: the eye's unit; EL6: all of it off the frame's own depth, at the resolve
 import { SHADE_DARK } from '../systems/concealDraw.js';   // ECV1 / AUDIT 65 PN-3: the shade's pull toward black, interpolated into BB_FS below - the shader restated 0.12 as a second literal. The LEAF, not systems/combatVisuals.js, which re-exports it: that module's graph would take this file's closure from 13 modules to 69
 
 const BB_FS = `#version 300 es
@@ -588,7 +589,6 @@ void main() {
 }`;
 
 const ZERO_ORIGIN = [0, 0, 0];
-const ZERO4 = new Float32Array(4);   // AUDIT-EL F12: the AO rect with the air off
 /** AUDIT-EL F5: what a WORLD host passes beginFrame - the lane replays its records for this frame and not for a map's, a video's or a menu's. */
 export const WORLD_FRAME = Object.freeze({ world: true });
 /** The classic world programs' point-light cap (uPointLights[16] in every shader above); a lane brings its own. */
@@ -1273,7 +1273,7 @@ export class Renderer {
         sunShadow: gl.getUniformLocation(p, 'uSunShadow'), sunVP: gl.getUniformLocation(p, 'uSunVP'), sunParams: gl.getUniformLocation(p, 'uSunShadowParams'),
         pointShadow: gl.getUniformLocation(p, 'uPointShadow'), pointParams: gl.getUniformLocation(p, 'uPointShadowParams'), shadowIndex: gl.getUniformLocation(p, 'uShadowIndex'),
       };
-      a.ao = { ao: gl.getUniformLocation(p, 'uAO'), aoInfo: gl.getUniformLocation(p, 'uAOInfo'), adapt: gl.getUniformLocation(p, 'uAdapt') };   // EL3; EL4: the eye
+      a.ao = { adapt: gl.getUniformLocation(p, 'uAdapt') };   // EL4: the eye (EL6: the AO left the world shaders - the resolve applies it off the frame's depth)
       return a;
     };
     this._el = { mesh: elLocs(set.mesh), char: elLocs(set.char), bb: elLocs(set.bb), terrain: elLocs(set.terrain) };
@@ -1362,14 +1362,7 @@ export class Renderer {
     gl.uniform1f(expLoc, this._exposure);
     gl.uniform1f(scLoc, lane.scatter * lane.scatterDensity(this._fogMode, this._fogDensity, this._fogRange[0], this._fogRange[1]));
     if (this._shadows) this._shadows.upload(this._el[key].shadow);   // EL2: the maps and the receiver's uniforms
-    // AUDIT-EL F2: the AO image is read by gl_FragCoord against the WORLD
-    // rect - a sprite pass (the 1024^2 offscreen target) and a panel frame
-    // (the automap, a preview) have fragments in another rect entirely and
-    // would read a stranger's occlusion; they take none.
-    const foreignRect = this._spriteDepth > 0 || !!this._panelSaved;
-    if (this._air?.targets) this._air.upload(this._el[key].ao, foreignRect);   // EL3: the AO image
-    else this._uploadNoAo(this._el[key].ao);
-    this._uploadAdapt(this._el[key].ao);
+    this._uploadAdapt(this._el[key].ao);   // EL6: the AO is the resolve's now (AUDIT-EL F2/F12's foreign-rect and unit-0 cases went with it)
   }
 
   /** AUDIT-EL F1: THE EYE'S IMAGE IS ALWAYS BOUND. Every lane shader samples
@@ -1393,15 +1386,6 @@ export class Renderer {
    *  program's unit 0 is uTileArr, a sampler2DArray: two samplers of
    *  different types on one unit, INVALID_OPERATION at every terrain draw,
    *  no ground under `?air=off`. A bare image on unit 12 and a zero rect. */
-  _uploadNoAo(loc) {
-    if (!loc?.ao) return;
-    const gl = this.gl;
-    gl.activeTexture(gl.TEXTURE0 + AO_UNIT);
-    gl.bindTexture(gl.TEXTURE_2D, this._adaptOne());
-    gl.activeTexture(gl.TEXTURE0);
-    gl.uniform1i(loc.ao, AO_UNIT);
-    gl.uniform4fv(loc.aoInfo, ZERO4);
-  }
   _adaptOne() {
     if (this._adaptOneTex) return this._adaptOneTex;
     const gl = this.gl, tex = gl.createTexture();
@@ -1450,7 +1434,7 @@ export class Renderer {
     });
     if (this._air) {
       const count = this._pointLights.length / 4;
-      this._air.render({
+      this._air.prepare({   // EL6: the inputs alone - the images are drawn at the resolve, off the frame's depth
         proj, view, lightDir, sunScale: this._sunScale, sunColor: this._sunColor,
         pointLights: this._pointLights, pointColors: count > 0 ? this._pointColorData(count) : null,
         viewport: this._worldViewportPx ?? [0, 0, this.canvas.width, this.canvas.height],
@@ -2350,6 +2334,11 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     buf(gl.ELEMENT_ARRAY_BUFFER, model.indices);
 
     this._bindVao(null);
+    // EL5: the bounds the shadow replays cull by - the mesh's sphere and one
+    // per sub-mesh (a static batch is a whole block in one mesh; its walls
+    // are its sub-meshes). Local space; the record transforms them.
+    const bounds = boundsOf(model.positions);
+    const subMeshes = model.subMeshes.map((sm) => ({ ...sm, _bounds: boundsOf(model.positions, model.indices, sm.startIndex, sm.primitiveCount * 3) }));
     // HOTFIX 2026-08-31 (field crash, Firefox): the sub-meshes are
     // COPIED, never shared with the model. drawMesh's EV2 texture
     // cache stamps `_evTex`/`_evGen`/... onto each sub-mesh, and the
@@ -2366,7 +2355,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // first time a mesh is drawn in the automap's wireframe mode. A
     // bundle built without it simply cannot be wireframed (drawMeshWire
     // draws nothing), which is the honest answer for a hand-built one.
-    return { vao, subMeshes: model.subMeshes.map((sm) => ({ ...sm })), buffers, triIndices: model.indices };
+    return { vao, subMeshes, buffers, triIndices: model.indices, bounds };
   }
 
   /** INCIDENT 2026-09-04: CameraClearManager.cs:23-25/:51-57 - inside,
@@ -2972,7 +2961,11 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // animated one, which the draw folds into the texture key. Still
     // flats keep the exact key they have always had, so nothing that
     // uploaded through uploadRecord has to change.
-    return { vao, indexCount: count * 6, archive, record, size, buffers: [vb, ib], origin: null, frame: null };
+    // EL5: the batch's sphere about its origin - the centres' box, plus a
+    // flat's own half-diagonal (a flat is drawn about its centre, any facing)
+    const bounds = boundsOf(centers.flat());
+    bounds[3] += Math.hypot(size.w, size.h) * 0.5;
+    return { vao, indexCount: count * 6, archive, record, size, buffers: [vb, ib], origin: null, frame: null, bounds };
   }
 
   /** Free one billboard batch's GL objects (S2 pickup removes piles;
@@ -3047,7 +3040,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     buf(normals, 1);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexSet.buffer);
     this._bindVao(null);
-    return { vao, buffers, indexCount: indexSet.count };
+    return { vao, buffers, indexCount: indexSet.count, bounds: boundsOf(positions) };   // EL5: the replays cull by it
   }
 
   /** WATER-AUDIT (M4): a second surface over a terrain surface's OWN
