@@ -1,0 +1,37 @@
+[
+  {
+    "name": "RESPAWN1-the-team-pair-is-a-number-again",
+    "file": "src/net/wire.js",
+    "old": "    if (typeof sf[k] !== 'string' || sf[k].length > TEAM_NAME_MAX) return null;",
+    "new": "    if (!Number.isInteger(sf[k]) || sf[k] < -1 || sf[k] > 255) return null;",
+    "tests": ["test/respawn1.test.js", "test/oncrash1.test.js"]
+  },
+  {
+    "name": "RESPAWN1-the-team-name-is-unbounded",
+    "file": "src/net/wire.js",
+    "old": "    if (typeof sf[k] !== 'string' || sf[k].length > TEAM_NAME_MAX) return null;",
+    "new": "    if (typeof sf[k] !== 'string') return null;",
+    "tests": ["test/respawn1.test.js"]
+  },
+  {
+    "name": "RESPAWN1-the-team-is-admitted-but-never-carried",
+    "file": "src/net/wire.js",
+    "old": "    out[k] = sf[k];\n  }\n  for (const k of ['dead', 'hostile', 'encountered', 'wabbajackActive', 'specialTransformationCompleted'])",
+    "new": "  }\n  for (const k of ['dead', 'hostile', 'encountered', 'wabbajackActive', 'specialTransformationCompleted'])",
+    "tests": ["test/respawn1.test.js"]
+  },
+  {
+    "name": "RESPAWN1-the-restore-stops-projecting-the-foes",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      const sfoes = Array.isArray(shared.world.foes) ? shared.world.foes.slice(0, _layoutFoes).map(validSharedFoe).filter(Boolean) : [];",
+    "new": "      const sfoes = Array.isArray(shared.world.foes) ? shared.world.foes.slice(0, _layoutFoes) : [];",
+    "tests": ["test/respawn1.test.js", "test/auditworld34.test.js"]
+  },
+  {
+    "name": "RESPAWN1-the-kill-stamp-is-dropped-at-the-door",
+    "file": "src/net/wire.js",
+    "old": "  if (sf.died !== undefined && sf.died !== null) { if (!finite(sf.died)) return null; out.died = sf.died; }",
+    "new": "  if (sf.died !== undefined && sf.died !== null) { if (!finite(sf.died)) return null; }",
+    "tests": ["test/respawn1.test.js"]
+  }
+]

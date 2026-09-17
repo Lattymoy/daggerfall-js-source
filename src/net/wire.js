@@ -597,6 +597,10 @@ export function validFoeRecord(r) {
  *  fewer.
  *  @param {*} sf
  */
+/** RESPAWN1: the longest MobileTeams name is 'PlayerEnemy' at 11; 32 is the
+ *  same shape of headroom every other string on this wire is given. */
+export const TEAM_NAME_MAX = 32;
+
 export function validSharedFoe(sf) {
   if (!sf || typeof sf !== 'object' || Array.isArray(sf)) return null;
   const out = {};
@@ -615,7 +619,28 @@ export function validSharedFoe(sf) {
   if (sf.died !== undefined && sf.died !== null) { if (!finite(sf.died)) return null; out.died = sf.died; }
   if (sf.mobileType !== undefined) { if (!Number.isInteger(sf.mobileType) || sf.mobileType < 0 || sf.mobileType > 255) return null; out.mobileType = sf.mobileType; }
   if (sf.gender !== undefined && sf.gender !== null) { if (typeof sf.gender !== 'string' || sf.gender.length > 16) return null; out.gender = sf.gender; }
-  for (const k of ['team', 'mobileTeam']) { if (sf[k] === undefined) continue; if (!Number.isInteger(sf[k]) || sf[k] < -1 || sf[k] > 255) return null; out[k] = sf[k]; }
+  // RESPAWN1 (2026-09-17, Mac, from a patch he was sent): THE TEAM PAIR IS A
+  // STRING, AND THIS ASKED FOR A NUMBER - so every foe record a dungeon ever
+  // published was refused WHOLE and the memory came back EMPTY.
+  //
+  // `entity.team` is `MobileTeams`' NAME in this port, not its ordinal -
+  // 'PlayerEnemy', 'PlayerAlly', 'Vermin' (characters/enemyEntity.js:142's
+  // default, characters/enemyTargets.js' whole law, `f.entity.team ===
+  // 'PlayerAlly'` at combat/playerWeapon.js:230) - and the publisher hands the
+  // live field straight over (dungeonContext.js' foe record, AUDIT 63 F26's
+  // pair). DFU's own serializer writes the ORDINAL there
+  // (SerializableEnemy.cs:125 `(int)entity.Team + 1`), which is where the
+  // number in this line came from; the port's records never carried one.
+  // EVERY foe carries a team, so `validSharedFoe` answered null for every
+  // record, `.filter(Boolean)` dropped the lot (dungeonContext.js' restore),
+  // and a dungeon's dead stood up again however correctly the kill had been
+  // stamped, stored and sent. The pin that should have caught it passed
+  // `team: 2` - it encoded the same wrong reading as the code.
+  for (const k of ['team', 'mobileTeam']) {
+    if (sf[k] === undefined) continue;
+    if (typeof sf[k] !== 'string' || sf[k].length > TEAM_NAME_MAX) return null;
+    out[k] = sf[k];
+  }
   for (const k of ['dead', 'hostile', 'encountered', 'wabbajackActive', 'specialTransformationCompleted']) if (sf[k] !== undefined) out[k] = !!sf[k];
   if (sf.anchor !== undefined) out.anchor = sf.anchor;   // REVIEW 2026-09-05's stamp: read for its presence alone
   // The effect bundles ride as they are - `patchFoe` copies them shallowly and the effect spine reads them by name -
