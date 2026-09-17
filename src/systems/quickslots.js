@@ -406,9 +406,32 @@ export function swapQuickslot({ entity = null, say = null, rows = null } = {}) {
  * The one thing said here is the case the mod says nothing about: a
  * player carrying no light at all pressing a key that is about light.
  */
-export function offHandQuickslot({ entity = null, say = null, toggleLight = null } = {}) {
+export function offHandQuickslot({ entity = null, say = null, toggleLight = null, switchHand = null } = {}) {
+  // MAC-R3 (2026-09-17, Mac: "Tapping the equip hand in the quickbar
+  // doesn't switch to your other weapon in hand (still bound to H). Even
+  // if a torch isn't equipped a message still shows up that you can't
+  // light the torch"): THE PRESS IS WHAT THE CELL SHOWS, in full. The
+  // cell is the OFF HAND's readout (quickslotView: a lit light, else the
+  // shield, else the weapon on the left hand, else the swap, else empty)
+  // and QS4 gave its press ONE act - the light's toggle - so a cell
+  // showing a bow said "You have no light source." A hand cell's own act
+  // is DFU's SwitchHand (WeaponManager.cs:271-273, the H key): the other
+  // weapon in hand. So: a lit light douses; an empty hand with a light
+  // carried ignites it (the mod's own equip-and-light); the shield, the
+  // off-hand weapon and an empty hand with no light SWITCH HANDS, and
+  // the light's refusal is said only where there is no hand to switch
+  // (a host with no rig door). The swap is the caller's arm
+  // (offHandOffersSwap) and is answered before this is asked.
+  const kind = quickslotView(entity).off.kind;
+  if (kind === 'swap') return { kind: 'swap' };
   const carries = !!entity?.lightSource || packOf(entity).some(isLightSource);
-  if (!carries) { say?.(QUICKSLOT_TEXT.noLight); return { kind: 'none' }; }
+  const light = kind === 'torch' || (kind === 'empty' && carries);
+  if (!light) {
+    if (typeof switchHand !== 'function') { say?.(QUICKSLOT_TEXT.noLight); return { kind: 'none' }; }
+    // The rig's verdict: it switched (and said which hand), or refused
+    // silently as DFU's ToggleHand does over a shield (:704-705).
+    return switchHand() === true ? { kind: 'hand' } : { kind: 'refused' };
+  }
   if (typeof toggleLight !== 'function') return { kind: 'none' };
   // The verdict is the mod's: it acted, or it has already said why not.
   // `lit` is the state AFTER the press - what is in the hand now.

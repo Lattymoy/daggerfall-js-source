@@ -1587,10 +1587,19 @@ test('AUDIT INV2: every way a drag can END ends it - release, cancel, Escape, an
   withPack(({ dom, rows, ghost, at, down, move }) => {
     at(dom.body); down(rows()[0], 10, 10); move(60, 60);
     // A RIGHT-CLICK, and Android's long-press, raise this with no cancel
-    // behind it. Nothing listened, so the drag stayed live for ever and
-    // the row was un-draggable until something repainted it.
+    // behind it. INV2 listened and ended the drag on it. MAC-R4 (2026-09-17)
+    // RETIRED that end: a touch pointer's IMPLICIT capture of the row is
+    // given back at the press (see dragFrom), so a repaint that detaches
+    // the row - which raises the same event - can no longer kill a hold;
+    // a right-click never starts a session (button > 0), and the
+    // long-press menu is refused for the session's life. So a lost
+    // capture is NOT an end now, and the cancel that a really-taken
+    // pointer sends still is.
     dom.win.fire('lostpointercapture', { pointerId: DRAG.id });
-    assert.equal(ghost(), null, 'a lost capture ends it');
+    assert.notEqual(ghost(), null, 'MAC-R4: a lost capture does not end it - the session holds no capture to lose');
+    assert.equal(dom.win.count('lostpointercapture'), 0, 'and nothing listens for it');
+    dom.win.fire('pointercancel', { pointerId: DRAG.id });
+    assert.equal(ghost(), null, 'a cancel still does');
   });
   withPack(({ dom, e, rows, ghost, at, down, move }) => {
     const before = e.items.length;

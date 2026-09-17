@@ -748,7 +748,7 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    touchmove, which enhancedInventory's onDragHold takes. These rules
    stay for the gesture that does begin under the class: a SECOND finger
    panning the list out from under a live drag. */
-.itemrow { touch-action: pan-y; -webkit-user-select: none; user-select: none; }
+.itemrow { touch-action: pan-y; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }   /* MAC-R4: no iOS long-press callout over a hold */
 body.draglock .itemrow, body.draglock .packlists { touch-action: none; }
 /* MAC-M2 (Mac: "hold to drag ... doesn't work when trying to take items
    off your character"): THE BODY'S PANELS TAKE THE SAME GESTURE, so
@@ -756,7 +756,7 @@ body.draglock .itemrow, body.draglock .packlists { touch-action: none; }
    the slot name out from under the finger, and a second finger must not
    pan the body out from under a live drag (INV3: which is all
    .draglock was ever able to do). */
-.wornrow { touch-action: pan-y; -webkit-user-select: none; user-select: none; }
+.wornrow { touch-action: pan-y; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }   /* MAC-R4 */
 body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
 .itemrow.dragover { box-shadow: inset 0 2px 0 var(--brass); }
 .wornmap.dragover { outline: 2px solid var(--brass); outline-offset: -2px; }

@@ -808,8 +808,8 @@ function dragStop(commit) {
     globalThis.removeEventListener?.('pointermove', onDragMove, true);
     globalThis.removeEventListener?.('pointerup', onDragUp, true);
     globalThis.removeEventListener?.('pointercancel', onDragAbort, true);
-    globalThis.removeEventListener?.('lostpointercapture', onDragAbort, true);
     globalThis.removeEventListener?.('scroll', onDragScroll, true);
+    globalThis.removeEventListener?.('contextmenu', onDragMenu, true);
     globalThis.removeEventListener?.('touchmove', onDragHold, true);
   }
   if (!d?.moved) return;
@@ -949,6 +949,8 @@ const onDragMove = (e) => {
  *  the class. */
 const onDragHold = (e) => { if (drag?.moved && drag.touch && e.cancelable) e.preventDefault(); };
 const onDragUp = (e) => { if (drag && e.pointerId === drag.id) dragStop(true); };
+/** MAC-R4: the long-press menu never opens over a live session (see dragFrom). */
+const onDragMenu = (e) => { if (drag && e.cancelable) e.preventDefault(); };
 const onDragAbort = (e) => { if (drag && (e.pointerId === undefined || e.pointerId === drag.id)) dragStop(false); };
 // AUDIT INV2 A-F5: a wheel moves the DOM under a STATIONARY cursor, so
 // the highlight and the verb went on naming a row the pointer had left
@@ -970,13 +972,36 @@ function dragFrom(row, item, source = 'local') {
     // from it; `x`/`y` is where the finger is NOW and the ghost arms on it.
     drag = { id: e.pointerId, item, row, ox: e.clientX, oy: e.clientY, x: e.clientX, y: e.clientY, moved: false, want: null, touch, hold: null, source };
     if (touch) drag.hold = setTimeout(dragArm, TOUCH_HOLD_MS);
+    // MAC-R4 (2026-09-17, Mac: "Hold to drag in the enhanced inventory
+    // sometimes doesn't work properly"): A TOUCH POINTER CAPTURES THE ROW
+    // IT LANDS ON, IMPLICITLY, and a captured row that a repaint detaches
+    // raises `lostpointercapture` - which INV2 read as "the pointer taken
+    // back" and ended the session. `render()` runs on things a hold
+    // cannot see coming (an archive icon landing, the doll settling, the
+    // arm rig rebuilding - INV2's own list), so a press that overlapped
+    // one died with no ghost and no refusal: the "sometimes". The
+    // session's listeners are the window's and need no capture at all,
+    // so it is given back the moment it is granted - synchronously here
+    // (Chromium sets it before the pointerdown is dispatched) and again
+    // on `gotpointercapture` for an agent that grants it after. With no
+    // capture there is no capture to lose, and the abort that read its
+    // loss is gone with it: a pointer really taken back arrives as
+    // `pointercancel`, which is still an end (onDragAbort).
+    const giveBack = () => { try { row.releasePointerCapture?.(e.pointerId); } catch { /* not captured */ } };
+    if (touch) { giveBack(); row.addEventListener?.('gotpointercapture', giveBack, { once: true }); }
     // The listeners are the WINDOW's: a repaint detaches this row, and a
     // drag that lived on it died there with the ghost still on screen.
     globalThis.addEventListener?.('pointermove', onDragMove, true);
     globalThis.addEventListener?.('pointerup', onDragUp, true);
     globalThis.addEventListener?.('pointercancel', onDragAbort, true);
-    globalThis.addEventListener?.('lostpointercapture', onDragAbort, true);
     globalThis.addEventListener?.('scroll', onDragScroll, true);
+    // MAC-R4: and the long-press menu - Android raises `contextmenu` at
+    // about the hold's own length, and a menu that opens takes the
+    // pointer (a cancel). The hosts' guard (ui/input.js
+    // installContextMenuGuard) already refuses it on a host's document;
+    // this refuses it for the session's own life on any document, so a
+    // pane mounted without a host holds too.
+    globalThis.addEventListener?.('contextmenu', onDragMenu, true);
     // INV3: passive FALSE, or the preventDefault above is ignored - a
     // window `touchmove` listener is passive by default in Chromium.
     globalThis.addEventListener?.('touchmove', onDragHold, { passive: false, capture: true });
