@@ -72,6 +72,20 @@ function selectedChild(rec) {
  *  triangles. */
 const GEOMETRY_TYPES = new Set(['NiTriShape', 'NiTriStrips']);
 
+/** MAC-Q (2026-09-17, Mac: "the torch doesn't emit fire"): the PARTICLE
+ *  geometries. A batch here is a triangle list by contract, and a particle
+ *  system is not one - it is an emitter and a law, drawn as quads that do
+ *  not exist until the clock runs - so they do not become batches. They
+ *  are handed WHOLE to `opts.effects` when a caller brings a sink, with the
+ *  same composed transform and property chain a shape gets, and the
+ *  NiBSParticleNode's flags the reference reads for AutoPlay and
+ *  LocalSpace (nifloader.cpp:786-787 sets `args.mAnimFlags` from the
+ *  enclosing NiBSAnimationNode or NiBSParticleNode). formats/mwParticles.js
+ *  turns a bundle into a system. A caller with no sink gets exactly what
+ *  it always got: nothing. */
+const PARTICLE_TYPES = new Set(['NiParticles', 'NiAutoNormalParticles', 'NiRotatingParticles']);
+const ANIM_FLAG_NODES = new Set(['NiBSAnimationNode', 'NiBSParticleNode']);
+
 /** nifloader.cpp:1609-1621: one TRIANGLE_STRIP primitive per strip, strips
  *  shorter than 3 skipped, and a shape whose strips are ALL short draws
  *  nothing. Unrolled to the triangle list this module emits, with GL's own
@@ -92,7 +106,7 @@ function stripsToTriangles(data) {
 }
 
 /** Row-major 3x3 multiply: out = a*b. */
-function mat33Mul(a, b) {
+export function mat33Mul(a, b) {
   const o = new Float32Array(9);
   for (let r = 0; r < 3; r++) {
     for (let c = 0; c < 3; c++) {
@@ -103,7 +117,7 @@ function mat33Mul(a, b) {
 }
 
 /** Row-major 3x3 applied to [x,y,z]. */
-function mat33Apply(m, x, y, z) {
+export function mat33Apply(m, x, y, z) {
   return [
     m[0] * x + m[1] * y + m[2] * z,
     m[3] * x + m[4] * y + m[5] * z,
@@ -123,7 +137,7 @@ const IDENTITY = Object.freeze({
 });
 
 /** Compose parent world transform with a node's local transform. */
-function composeTransform(p, node) {
+export function composeTransform(p, node) {
   const rotation = mat33Mul(p.rotation, node.rotation);
   const [tx, ty, tz] = mat33Apply(
     p.rotation,
@@ -173,7 +187,7 @@ export const DRAW_MODE = Object.freeze({ Default: 0, CounterClockwise: 1, Clockw
  * @param hasVertexColors whether the geometry carries a colour array -
  *   which decides the DEFAULT mode and undoes it again at the end
  */
-function resolveMaterial(nif, props, hasVertexColors = false) {
+export function resolveMaterial(nif, props, hasVertexColors = false) {
   const out = {
     name: null,
     // "NIF material defaults don't match OpenGL defaults" (:2740-2742):
@@ -193,6 +207,17 @@ function resolveMaterial(nif, props, hasVertexColors = false) {
     alphaBlend: false,
     alphaTest: false,
     alphaThreshold: 0,
+    // MAC-Q: the blend FUNCTION, which a particle drawable is the first
+    // consumer of. NiAlphaProperty's own bitfield (nif/property.hpp):
+    // bits 1-4 the source factor, bits 5-8 the destination, each an
+    // index into nifloader.cpp getBlendMode's table (:1899-1929); the
+    // reference's default on the ONE/ZERO pair is a NIF with no alpha
+    // property at all, which draws opaque. Kept as the file's index -
+    // the renderer owns the GL names.
+    srcBlend: 6, dstBlend: 7,
+    // NiZBufferProperty (:2542-2548, handleDepthFlags :2143-2154): bit 0
+    // tests, bit 1 writes; a file without the property does both.
+    depthTest: true, depthWrite: true,
     // Rule 64: the mode is the ONE thing set before the loop that is not
     // a default.
     vertexColorMode: hasVertexColors
@@ -235,6 +260,12 @@ function resolveMaterial(nif, props, hasVertexColors = false) {
         out.alphaBlend = (prop.flags & 0x0001) !== 0;
         out.alphaTest = (prop.flags & 0x0200) !== 0;
         out.alphaThreshold = prop.threshold;
+        out.srcBlend = (prop.flags >> 1) & 0xF;   // MAC-Q: sourceBlendMode()
+        out.dstBlend = (prop.flags >> 5) & 0xF;   // MAC-Q: destinationBlendMode()
+        break;
+      case 'NiZBufferProperty':   // MAC-Q
+        out.depthTest = (prop.flags & 0x1) !== 0;
+        out.depthWrite = (prop.flags & 0x2) !== 0;
         break;
       case 'NiVertexColorProperty':
         if (prop.vertexMode === VERT_MODE.SrcIgnore) {
@@ -508,9 +539,10 @@ export function flattenNif(nif, opts = {}) {
   // nowhere else, then carried down the whole traversal.
   let hasMarkers = false;
 
-  function walk(ref, world, props, isRoot = false, inside = !underNode) {
+  function walk(ref, world, props, isRoot = false, inside = !underNode, animFlags = 0) {
     const rec = deref(nif, ref);
     if (!rec) return;
+    if (ANIM_FLAG_NODES.has(rec.type)) animFlags = rec.flags | 0;   // MAC-Q: nifloader.cpp:786-787
     const lname = String(rec.name || '').toLowerCase();
     if (excludeNode && lname === excludeNode) return;   // WS1: the masked subtree
     if (underNode && lname === underNode) inside = true;   // WS1: from here down
@@ -550,6 +582,14 @@ export function flattenNif(nif, opts = {}) {
       if (inside && !skipGeometryName(rec.name, hasMarkers)) emit(rec, nextWorld, nextProps);
       return;
     }
+    if (PARTICLE_TYPES.has(rec.type)) {
+      // MAC-Q: a particle system takes the same gates a shape does (the
+      // hidden flag above, the name skip here) and goes to the sink whole.
+      if (inside && opts.effects && !skipGeometryName(rec.name, hasMarkers)) {
+        opts.effects.push({ ref, rec, world: nextWorld, props: nextProps, animFlags });
+      }
+      return;
+    }
     if (NODE_TYPES.has(rec.type) && rec.children) {
       // AUDIT 39r R18: a switch and a LOD hold every branch but SHOW one.
       // nifloader.cpp:907-924 hangs their children off an osg::Switch
@@ -561,11 +601,11 @@ export function flattenNif(nif, opts = {}) {
       const only = selectedChild(rec);
       if (only !== null) {
         const child = rec.children[only];
-        if (child !== undefined && child >= 0) walk(child, nextWorld, nextProps, false, inside);
+        if (child !== undefined && child >= 0) walk(child, nextWorld, nextProps, false, inside, animFlags);
         return;
       }
       for (const child of rec.children) {
-        if (child >= 0) walk(child, nextWorld, nextProps, false, inside);
+        if (child >= 0) walk(child, nextWorld, nextProps, false, inside, animFlags);
       }
     }
   }

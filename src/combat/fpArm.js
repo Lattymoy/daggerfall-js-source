@@ -17,7 +17,7 @@
 //
 // HOW IT DRAWS, and why this needs no renderer change at all: the port
 // has ALREADY shipped a first-person pass. renderCharacterSprite
-// (render/renderer.js:909) binds an offscreen target with its OWN depth
+// (render/renderer.js:963) binds an offscreen target with its OWN depth
 // renderbuffer, clears colour AND depth, swaps the frame's proj/view for
 // ones the caller supplies, draws, and restores; drawScreenOverlayQuad
 // (:987) composites it fullscreen with an alpha cut and no depth test.
@@ -77,6 +77,7 @@ import { composeWornArmor, shadowSkinRows, fpWornAdds, mwArmorRecords, mwClothin
 import { correctTexturePath, correctActorModelPath, wrapModes, warningImage, decodeTextureImage } from '../formats/mwTexture.js';
 import { diffuseAt, emissiveAt } from '../formats/mwNifMesh.js';   // MWT2: the emission the pass has always resolved and never read
 import { fpLightingOn } from './fpsWeapon.js';   // MAC-P: the first-person lighting switch, shared with the classic sprite it stands in for
+import { createParticleSystem, packParticleQuads, particleDrawState, affineOfTransform, affineMul, affineApply, affineScale } from '../formats/mwParticles.js';   // MAC-Q: the torch's flame, and any other particle system a part carries
 import { boneSourcesFor, resolveHolsterParts, holsterPartPaths, holsterHidden, HOLSTER_SLOTS } from '../systems/weaponSheathing.js';   // WS1
 import { injectSkeletonNodes } from '../formats/mwSkin.js';   // WS1: the dry injection the holster's bone probe runs
 
@@ -448,7 +449,7 @@ export function armReach(eye, unionBounds) {
 /**
  * PACK THE ASSEMBLY for drawCharacter's vertex stream: 9 floats per
  * vertex, [pos.xyz, colour.rgb, normal.xyz], NON-INDEXED, because
- * drawCharacter issues drawArrays (renderer.js:849). The MW readers hand
+ * drawCharacter issues drawArrays (renderer.js:903). The MW readers hand
  * back indexed triangles, so the indices are expanded here.
  *
  * NORMALS ARE COMPUTED, not read. poseAssembly skins positions with a
@@ -462,7 +463,7 @@ export function armReach(eye, unionBounds) {
  * left arm is lit inside-out - dark where the right arm is bright - and
  * that is a lighting bug that reads as "the mesh is wrong" rather than
  * as "the mirror is wrong". drawCharacter disables back-face culling
- * (renderer.js:847), so the winding costs nothing else.
+ * (renderer.js:901), so the winding costs nothing else.
  */
 export function packFpArm(pieces, out = null) {
   let tris = 0;
@@ -1218,8 +1219,8 @@ async function buildTpBody({
     // MW-LOAD: covers collectArmTextures' synchronous reads - rule 36's
     // ladder over the names the assembled pieces carry, which are only
     // knowable now that the NIFs are parsed.
-    await preloadArmTextures(arm.pieces, archives, gen);
-    const textures = collectArmTextures(arm.pieces, archives, gen);
+    await preloadArmTextures([...arm.pieces, ...(arm.effects ?? [])], archives, gen);   // MAC-Q: and the flame's
+    const textures = collectArmTextures([...arm.pieces, ...(arm.effects ?? [])], archives, gen);
 
     const sourcePaths = tpAnimSources(skeletonPath, exists);
     if (!sourcePaths.length) {
@@ -1613,8 +1614,9 @@ export async function buildFpArm({
     // MW-LOAD: and for the same reason the texture LOAD can only happen
     // here - preloadArmTextures covers every read collectArmTextures
     // makes, walking rule 36's ladder with `has` alone.
-    if (arm.ok) await preloadArmTextures(arm.pieces, archives, gen);
-    const textures = arm.ok ? collectArmTextures(arm.pieces, archives, gen) : new Map();
+    // MAC-Q: the particle systems' textures ride the same catalog as the pieces'
+    if (arm.ok) await preloadArmTextures([...arm.pieces, ...(arm.effects ?? [])], archives, gen);
+    const textures = arm.ok ? collectArmTextures([...arm.pieces, ...(arm.effects ?? [])], archives, gen) : new Map();
     stage('textures');
     // MW-D38: THE CATALOG the item icons resolve against - the same
     // archives and records this build used, kept on the result so an
@@ -1962,6 +1964,80 @@ function readFollowCamera() {
  * player got a frozen bind-pose arm where the sprite had been correct. A
  * frozen arm is not a reachable state here; the sprite is.
  */
+/**
+ * MAC-Q: THE AFFINE THAT CARRIES A PART'S PARTICLE SPACE ONTO THE RIG - the
+ * very placement its rigid shapes take, composed rather than applied to
+ * vertices. placeAtBone puts a shape's vertex at `at(mirror(v) + offset)`
+ * over positions that were pre-transformed by the part's own attitude
+ * (applyPre) and baked to the file's root by the flattener; a particle
+ * lives in its NODE's space, so the file-root bake is the node's world
+ * transform, taken here as the last term. Read right to left:
+ * particle -> file root -> the part's attitude -> the mirror and rule 14's
+ * offset -> the bone. One composition, so the flame cannot drift from the
+ * torch it burns on.
+ */
+export function effectPlacement(effect, mats, attachmentTransform) {
+  const at = attachmentTransform(mats, effect.attachRef);
+  const mirror = {
+    a: Float32Array.from([effect.mirrored ? -1 : 1, 0, 0, 0, 1, 0, 0, 0, 1]),
+    t: effect.boneOffset ? [effect.boneOffset[0], effect.boneOffset[1], effect.boneOffset[2]] : [0, 0, 0],
+  };
+  let m = affineMul(at, mirror);
+  if (effect.pre) m = affineMul(m, effect.pre);
+  return affineMul(m, affineOfTransform(effect.desc.world));
+}
+
+/**
+ * MAC-Q: ONE FRAME OF A RIG'S PARTICLE SYSTEMS - stepped on the part's
+ * clock, placed on the posed rig, packed, and (with a renderer and a mesh)
+ * uploaded onto the mesh's `effects`, one GL effect per system, created
+ * on first sight and textured through the SAME catalog the ranges use.
+ *
+ * THE TWO REFERENCE FRAMES (nifloader.cpp:1476-1483): under LocalSpace
+ * the particles are kept in the node's own space and PLACED at pack time,
+ * so the flame rides the hand; without it they are kept in the rig's
+ * space - the nearest thing a lens-local arm has to a world - so a swing
+ * leaves them behind for their lifetime, which is Morrowind's own trailing
+ * fire. The size is scaled by the placement's own scale either way,
+ * because LOCAL_COORDINATES (:1486) sizes a particle in the file's units.
+ *
+ * `clock` null is a system with no source: frozen, as the reference
+ * freezes a controller nobody drives (nifosg/controller.cpp:602-603).
+ */
+export function stepRigEffects(assembly, { dt, clock = null, hidden = () => false, renderer = null, mesh = null, textures = null } = {}) {
+  const list = assembly && assembly.effects ? assembly.effects : [];
+  if (!list.length || !assembly.mats || !assembly.fns) return 0;
+  let live = 0;
+  for (let i = 0; i < list.length; i++) {
+    const eff = list[i];
+    const m = effectPlacement(eff, assembly.mats, assembly.fns.attachmentTransform);
+    if (!eff.sim) eff.sim = createParticleSystem(eff.desc);
+    const local = eff.desc.localSpace;
+    eff.sim.update(dt, clock, local ? null : m);
+    const quads = eff.sim.quads();
+    const packed = packParticleQuads(quads, eff.packed || null, {
+      place: local ? (x, y, z) => affineApply(m, x, y, z) : null,
+      sizeScale: affineScale(m),
+    });
+    eff.packed = packed.packed; eff.count = packed.count;
+    live += quads.length;
+    if (renderer && mesh) {
+      if (!mesh.effects) mesh.effects = [];
+      let gpu = mesh.effects[i];
+      if (!gpu) {
+        gpu = renderer.createParticleEffect(eff.sim.quota, particleDrawState(eff.material));
+        const file = eff.material && eff.material.textureFile;
+        const entry = file && textures ? textures.get(file) : null;
+        if (entry && entry.image) gpu.tex = renderer.createCharacterTexture(entry.image.mips, wrapModes(eff.material.clampMode ?? 3));
+        mesh.effects[i] = gpu;
+      }
+      gpu.hidden = !!hidden(eff);
+      renderer.updateParticleEffect(gpu, packed.packed, packed.count);
+    }
+  }
+  return live;
+}
+
 export function createFpArm() {
   let renderer = null;
   let camera = null;
@@ -2177,6 +2253,8 @@ export function createFpArm() {
       // rebuilt on every attach would otherwise leak one upload per
       // piece per build, which is the shape of NT1's teardown leaks.
       for (const r of m.ranges || []) if (r.tex) gl.deleteTexture(r.tex);
+      for (const e of m.effects || []) renderer.releaseParticleEffect(e);   // MAC-Q: the flame's buffer and texture go with the mesh
+      m.effects = null;
     }
   }
   function releaseMesh() { releaseGpu(mesh); mesh = null; }
@@ -2444,6 +2522,14 @@ export function createFpArm() {
    *  group lives in base_anim.kf (mwAnim.js's LOOPING_ANIMATIONS names
    *  it) - a rig whose sources lack it is asked once and holds the
    *  torch in the idle's own left hand. */
+  /** MAC-Q: an effect hides with the part it was authored on - the torch's
+   *  flame with the torch (MW-D51's carried-left rule), a weapon's with
+   *  the weapon. Anything else is always drawn. */
+  function effectHidden(eff) {
+    if (eff.slot === 'torch') return !torchVisible();
+    if (eff.slot === 'weapon') return !weaponShown;
+    return false;
+  }
   function refreshTorch(force = false) {
     if (!torchVisible()) { torchState = null; torchSource = null; torchGroup = null; return; }
     if (!force && torchState && torchState.playing) return;
@@ -3366,8 +3452,9 @@ export function createFpArm() {
           const bindTorch = async (rigBuilt) => {
             const resolved = resolveTorchPart({ torch: true, allLights: token.allLights, find, skeletonBytes: rigBuilt.skeletonBytes, has: archiveHas(archives) });
             rigBuilt.arm.pieces = rigBuilt.arm.pieces.filter((p) => p.slot !== 'torch');
+            rigBuilt.arm.effects = (rigBuilt.arm.effects ?? []).filter((e) => e.slot !== 'torch');   // MAC-Q: the old flame goes with the old torch
             bindPartsInto(rigBuilt.arm, resolved.parts);
-            const fresh = rigBuilt.arm.pieces.filter((p) => p.slot === 'torch');
+            const fresh = [...rigBuilt.arm.pieces.filter((p) => p.slot === 'torch'), ...rigBuilt.arm.effects.filter((e) => e.slot === 'torch')];
             await preloadArmTextures(fresh, archives);
             for (const [file, tex] of collectArmTextures(fresh, archives)) {
               if (!rigBuilt.textures.has(file)) rigBuilt.textures.set(file, tex);
@@ -3564,6 +3651,8 @@ export function createFpArm() {
           accumRoot: t.accumRoot,
         });
         uploadThirdMesh(t);
+        // MAC-Q: the body's particle systems, on the clock its parts ride
+        stepRigEffects(t.arm, { dt, clock: tOverlay ? overlayClock : poseTime(state), renderer, mesh: thirdMesh, textures: t.textures, hidden: effectHidden });
         // Rule 57 hides on the SAME flags: sheathed vanilla shows no
         // weapon on the body, and the arrow follows the shoot keys.
         for (const r of thirdMesh.ranges) {
@@ -3653,6 +3742,9 @@ export function createFpArm() {
       } else {
         renderer.updateCharacterMesh(mesh, packed.packed);
       }
+      // MAC-Q: the arm's particle systems - the torch's flame - on the
+      // same clock the pose took, placed on the rig that was just posed
+      stepRigEffects(built.arm, { dt, clock: fOverlay ? overlayClock : poseTime(state), renderer, mesh, textures: built.textures, hidden: effectHidden });
       // NpcAnimation::showWeapons - the reference REMOVES the part
       // (removeIndividualPart(PRT_Weapon), npcanimation.cpp:981) and
       // re-adds it on show. This port keeps the vertices and flips a
