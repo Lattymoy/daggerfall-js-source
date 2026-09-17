@@ -133,8 +133,13 @@ const ONLINE_ROWS = Object.freeze([
 const QUICKSLOT_ROWS = Object.freeze([
   Object.freeze({ action: 'QuickUse1', label: 'Use quickslot 1' }),
   Object.freeze({ action: 'QuickUse2', label: 'Use quickslot 2' }),
+  // QS6: the SPELL slot, beside the two consumables it behaves like -
+  // a tap readies, a hold cycles the book.
+  Object.freeze({ action: 'QuickSpell', label: 'Ready quickslot spell' }),
+  // QS6: the swap keeps its row and its rebind; what it lost is the
+  // default key, so a player who wants one of their own comes here.
   Object.freeze({ action: 'QuickSwap', label: 'Swap weapon' }),
-  Object.freeze({ action: 'QuickOffHand', label: 'Light or douse' }),
+  Object.freeze({ action: 'QuickOffHand', label: 'Off hand: light, douse or swap' }),
 ]);
 /** The heading the third group wears. Its own constant so the pin names it. */
 export const PORT_GROUP_TITLE = 'Online';

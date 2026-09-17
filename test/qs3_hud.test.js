@@ -204,6 +204,11 @@ test('QS3: the diamond is a block of its own on the HUD root, and the hand plaqu
   // move whenever a bar beside it changed width.
   assert.match(HUD, /const quick = el\('div', 'hud-quick'\);/);
   assert.match(HUD, /quick\.append\(cap, diamond\);\s*\n\s*root\.append\(quick\);/);
+  // QS6: the caption carries the spell chip between the mode word and
+  // the readied one - the diamond's four corners are the hands and the
+  // consumables, and a spell is in none of them.
+  assert.match(HUD, /cap\.append\(cornerWord, spellChip, readied\);/);
+  assert.ok(CSS.includes('.hud-qspell'), 'and the sheet dresses it');
   // The four cells and the four tags.
   assert.match(HUD, /const cells = \{ c1: cellOf\('c1'\), off: cellOf\('off'\), main: cellOf\('main'\), c2: cellOf\('c2'\) \};/);
   assert.match(HUD, /\[\['c1', 'top'\], \['off', 'left'\], \['main', 'right'\], \['c2', 'bottom'\]\]/);
@@ -223,7 +228,7 @@ test('QS3: the diamond is a block of its own on the HUD root, and the hand plaqu
   // THE MODE WORD LIVES IN THE BLOCK now - it stood at left 24 bottom
   // 24, which is exactly where the diamond goes. Its show/hide laws
   // are untouched; only its place changed.
-  assert.match(HUD, /cap\.append\(cornerWord, readied\);/);
+
   assert.match(CSS, /\.hud-modecorner \{ flex: 0 0 auto; \}/);
   assert.doesNotMatch(CSS, /\.hud-modecorner \{ position: absolute;/);
   assert.match(HUD, /if \(last\.reticle !== rk\) \{/, 'and the reticle key still guards it');
@@ -347,15 +352,30 @@ test('QS3: the block is written only when it CHANGED, and a phone can press it',
   assert.match(CSS, /@media \(pointer: coarse\) and \(hover: none\) \{[^}]*\}[\s\S]*?\.hud-qstag\.key \{ display: none; \}\s*\n\}/);
   assert.match(HUD, /part\.tag\.classList\.toggle\('key', !!t && t\.kind === 'key'\);/);
   // AUDIT QS F8: the tap is a FINGER's - a mouse on a touchscreen machine is refused.
-  assert.match(HUD, /if \(e && e\.pointerType != null && e\.pointerType !== 'touch' && e\.pointerType !== 'pen'\) return;/);
+  assert.match(HUD, /const finger = \(e\) => !\(e && e\.pointerType != null && e\.pointerType !== 'touch' && e\.pointerType !== 'pen'\);/);
   // AUDIT QS F1: the CELL is the rhombus, so the hit test is the picture's.
   assert.match(CSS, /\.hud-qcell \{ position: absolute; width: var\(--qs-cell\); height: var\(--qs-cell\);\s*\n\s*clip-path: polygon\(50% 0, 100% 50%, 50% 100%, 0 50%\); \}/);
   assert.match(CSS, /\.hud \{ position: fixed; inset: 0; z-index: 4; pointer-events: none;/);
-  assert.match(HUD, /cells\.c1\.cell\.addEventListener\('pointerdown', tap\(\(\) => liveOpts\.quickUse\?\.\(1\)\)\);/);
-  assert.match(HUD, /cells\.c2\.cell\.addEventListener\('pointerdown', tap\(\(\) => liveOpts\.quickUse\?\.\(2\)\)\);/);
+  // QS6: the two consumables and the spell chip take a HOLD as well as a
+  // tap - the phone's own half of Mac's "hold the keybind to switch" -
+  // and the off cell takes a tap alone, because what it offers is what
+  // is in that hand rather than a list.
+  assert.match(HUD, /bindHold\(cells\.c1\.cell, 'c1', \(\) => liveOpts\.quickUse\?\.\(1\)\);/);
+  assert.match(HUD, /bindHold\(cells\.c2\.cell, 'c2', \(\) => liveOpts\.quickUse\?\.\(2\)\);/);
+  assert.match(HUD, /bindHold\(spellChip, 'spell', \(\) => liveOpts\.quickSpell\?\.\(\)\);/);
+  assert.match(HUD, /arm = setTimeout\(\(\) => \{ cycled = true; turn\(\); step = setInterval\(turn, QUICK_STEP_MS\); \}, QUICK_HOLD_MS\);/);
+  assert.match(HUD, /if \(!held\) act\(\);/, 'a hold performs nothing on release - the choosing was the act');
   assert.match(HUD, /if \(offKind === 'swap'\) liveOpts\.quickSwap\?\.\(\);/);
   // bound ONCE, in build - a frame binds nothing
-  assert.equal((HUD.match(/addEventListener\(/g) ?? []).length, 3, 'three listeners, and they are these three');
+  // bound ONCE, in build - a frame binds nothing. QS6 made them FIVE
+  // call sites, not five listeners: `bindHold` subscribes the four
+  // edges a hold needs (down, up, cancel, leave) and is called three
+  // times, and the off cell's tap is the fifth site.
+  assert.equal((HUD.match(/addEventListener\(/g) ?? []).length, 5, 'five listener sites, and they are these five');
+  assert.equal((HUD.match(/\bbindHold\(/g) ?? []).length, 3, 'bindHold is called for exactly three slots');
+  for (const e of ['pointerdown', 'pointerup', 'pointercancel', 'pointerleave']) {
+    assert.ok(HUD.includes(`addEventListener('${e}'`), `a hold hears ${e} - a finger that slides off must not fire the slot`);
+  }
   assert.doesNotMatch(HUD, /registerOverlay/, 'a readout still goes through no door');
   // The main cell takes no action at all - a tap on the weapon is not
   // a swing through the HUD and not a draw either.
@@ -376,18 +396,18 @@ test('QS3: drawHud forwards the sheathe state and the two phone doors', () => {
   // counter's gate) and was never passed on, so the enhanced skin could
   // not tell a drawn sword from a put-away one.
   assert.match(hud, /weaponSheathed: weaponSheathed,/);
-  assert.match(hud, /quickUse: quickUse \?\? null,\s*\n\s*quickSwap: quickSwap \?\? null,\s*\n\s*quickOffHand: quickOffHand \?\? null,/);
-  assert.match(hud, /quickUse = null, quickSwap = null, quickOffHand = null \} = \{\}\) \{/);
+  assert.match(hud, /quickUse: quickUse \?\? null,\s*\n\s*quickSwap: quickSwap \?\? null,\s*\n\s*quickOffHand: quickOffHand \?\? null,[^\n]*\n\s*quickSpell: quickSpell \?\? null,/);
+  assert.match(hud, /quickUse = null, quickSwap = null, quickOffHand = null, quickSpell = null \} = \{\}\) \{/);
   // ...on ONE line, and the new keys BELOW the ones the bible cites by
   // line number: a split in this signature moved four Port-Status src
   // cites and test/citedrift.test.js caught every one of them.
-  assert.match(hud, /readied = null, weapon = null, weaponSheathed = true, quickUse = null, quickSwap = null, quickOffHand = null \} = \{\}\)/);
+  assert.match(hud, /readied = null, weapon = null, weaponSheathed = true, quickUse = null, quickSwap = null, quickOffHand = null, quickSpell = null \} = \{\}\)/);
   // ...and the view is composed from it, with the entity drawHud
   // already hands over.
-  assert.match(HUD, /quickslotView\(vitals, \{ weapon: opts\.weapon \?\? null, sheathed: opts\.weaponSheathed \?\? false \}\)/);
+  assert.match(HUD, /quickslotView\(vitals, \{ weapon: opts\.weapon \?\? null, sheathed: opts\.weaponSheathed \?\? false,\s*\n\s*readiedIndex: opts\.readied\?\.index \?\? null \}\)/);   // QS6: and which spell is actually in hand
   // THE MODEL IS NOT RESTATED HERE. systems/quickslots.js owns what a
   // slot holds, what a ghost is and what the off hand shows.
-  assert.match(HUD, /import \{ quickslotView, quickslotKey \} from '\.\.\/systems\/quickslots\.js';/);
+  assert.match(HUD, /import \{ quickslotView, quickslotKey, cycleQuickslot, quickslotCycling, spellQuickslot,\s*\n\s*QUICK_HOLD_MS, QUICK_STEP_MS \} from '\.\.\/systems\/quickslots\.js';/);
   assert.doesNotMatch(HUD, /isShieldTemplate|lightSource/, 'the off hand\'s ladder is the model\'s, never a second copy');
   // The pad's family comes from the poller, and "the pad is live" from
   // GP1's own importable latch rather than the layer's local.
@@ -544,4 +564,103 @@ test('QS the switch: the features row hides the DIAMOND alone - the caption and 
   // The row exists, on the prefs shelf, on by default, the player's own online.
   const F = read('src/systems/features.js');
   assert.match(F, /id: 'quickslot-diamond',[\s\S]*?control: Object\.freeze\(\{ store: 'prefs', key: 'quickslots', initial: true, online: 'player' \}\)/);
+});
+
+// AUDIT QS6 F3 + F4, both DRIVEN: two defects a source pin could not see.
+//
+//   F4  THE CELL'S CYCLING LAMP NEVER WENT OUT. It was written below the
+//       block's signature guard, and when a hold ends nothing else about
+//       the block changes - so the write was unreachable and the cell
+//       stayed lit for the rest of the session.
+//   F3  THE FINGER'S TIMERS OUTLIVED THE HUD. A hold still cycling when a
+//       host tears the HUD down leaves a `setInterval` running against a
+//       node no `pointerup` can ever reach again.
+test('AUDIT QS6 F3/F4: the cycling lamp falls with the hold, and a finger mid-cycle does not outlive the HUD', async () => {
+  const prev = globalThis.document;
+  const prevSI = globalThis.setInterval, prevCI = globalThis.clearInterval;
+  const prevST = globalThis.setTimeout, prevCT = globalThis.clearTimeout;
+  globalThis.document = {
+    createElement: mkEl, createElementNS: (ns, tag) => Object.assign(mkEl(), { ns }),
+    getElementById: () => null, head: mkEl(), body: mkEl(),
+  };
+  // The timers are counted rather than run: what is pinned is that every
+  // one this file starts is stopped, which is a balance and not a delay.
+  let live = 0; const started = [];
+  globalThis.setTimeout = (fn) => { live++; started.push(fn); return { id: live }; };
+  globalThis.clearTimeout = (h) => { if (h) live--; };
+  globalThis.setInterval = (fn) => { live++; started.push(fn); return { id: live }; };
+  globalThis.clearInterval = (h) => { if (h) live--; };
+  const { drawEnhancedHud, destroyEnhancedHud } = await import('../src/ui/enhancedHud.js');
+  const q = await import('../src/systems/quickslots.js');
+  const { setBindings } = await import('../src/ui/input.js');
+  const store = createBindings();
+  setBinding(store, 'Digit1', 'QuickUse1');
+  setBinding(store, 'Digit3', 'QuickSpell');
+  setBindings(store);
+  q.clearQuickslots();
+  q.resetQuickslotHolds();
+  setPadFamily(null);
+  try {
+    const heal = { group: 'UselessItems1', templateIndex: 83, name: 'Glass Bottle', potionRecipeKey: 1, stackCount: 3, currentCondition: 1, maxCondition: 1 };
+    const cure = { group: 'UselessItems1', templateIndex: 83, name: 'Glass Bottle', potionRecipeKey: 2, stackCount: 2, currentCondition: 1, maxCondition: 1 };
+    const spark = { index: 5, name: 'Spark', rangeType: 2 };
+    const entity = {
+      health: 40, maxHealth: 80, magicka: 10, maxMagicka: 10, fatigue: 100,
+      items: [heal, cure], spells: [spark, { index: 9, name: 'Shock', rangeType: 2 }],
+      equip: { slots: {} }, lightSource: null,
+    };
+    q.assignQuickslot('c1', heal);
+    const draw = (opts = {}) => drawEnhancedHud(entity, 0, 1 / 60, { weapon: null, weaponSheathed: true, ...opts });
+    draw();
+    const root = document.body.children.find((n) => n.className === 'hud');
+    const quick = find(root, 'hud-quick');
+    const c1 = find(quick, 'hud-qc1');
+    assert.ok(!c1.classList.contains('cycling'), 'nothing is being cycled yet');
+
+    // ── F4 ──────────────────────────────────────────────────────────
+    q.cycleQuickslot('c1', { entity });
+    assert.equal(q.quickslotCycling(), 'c1');
+    draw();
+    assert.ok(c1.classList.contains('cycling'), 'the cell a hold is turning wears the lamp');
+    // The hold ends. NOTHING else about the block changes - which is
+    // exactly why the write below the signature guard was unreachable.
+    for (let t = 0; t <= q.QUICK_CYCLE_LINGER_MS + 40; t += 16) q.tickQuickslotHold(0.016, { isHeld: () => false, entity });
+    assert.equal(q.quickslotCycling(), null, 'the model let the lamp fall');
+    draw();
+    assert.ok(!c1.classList.contains('cycling'), 'AND SO DID THE CELL - a lamp that cannot go out is a cell that lies');
+
+    // ── the spell chip, on the same frames ───────────────────────────
+    q.setSpellQuickslot(spark);
+    draw({ readied: spark });
+    const chip = find(root, 'hud-qspell');
+    assert.ok(chip.classList.contains('on'), 'the chip is drawn once a spell is in the slot');
+    assert.equal(find(chip, 'hud-qspname').textContent, 'Spark');
+    assert.ok(chip.classList.contains('readied'), 'and lights for the spell actually in hand');
+    assert.ok(!find(root, 'hud-readied').classList.contains('on'), 'so the generic readied chip stands down');
+    // A spell readied from the BOOK is not the slot's: both stand.
+    draw({ readied: { index: 9, name: 'Shock' } });
+    assert.ok(!chip.classList.contains('readied'));
+    assert.ok(find(root, 'hud-readied').classList.contains('on'));
+    assert.equal(find(root, 'hud-readyname').textContent, 'Shock');
+
+    // ── F3 ──────────────────────────────────────────────────────────
+    const before = live;
+    c1._on.pointerdown({ pointerType: 'touch', preventDefault() {} });
+    assert.equal(live, before + 1, 'a finger down arms one timer');
+    c1._on.pointerup({ pointerType: 'touch' });
+    assert.equal(live, before, 'and lifting it stops that timer');
+    // ...and the case the node cannot answer: torn down mid-cycle.
+    c1._on.pointerdown({ pointerType: 'touch', preventDefault() {} });
+    started.at(-1)();   // the arm fires: the hold begins cycling on an interval
+    assert.ok(live > before, 'a cycling hold is holding timers');
+    destroyEnhancedHud();
+    assert.equal(live, 0, 'THE TEARDOWN STOPS THEM - a removed node can never deliver the pointerup that would');
+  } finally {
+    try { destroyEnhancedHud(); } catch { /* already gone */ }
+    globalThis.document = prev;
+    globalThis.setTimeout = prevST; globalThis.clearTimeout = prevCT;
+    globalThis.setInterval = prevSI; globalThis.clearInterval = prevCI;
+    q.clearQuickslots();
+    q.resetQuickslotHolds();
+  }
 });

@@ -519,7 +519,20 @@ export function routeKey(e, ctx, setPlayerPos = null, keys = null) {
  *  large HUD has no hand panel; DFU's does not either), so the decline
  *  here is the claim that the frame owns the key - written down where
  *  the ReadyWeapon comment above says a second one belongs. */
-export const POLLED_ACTIONS = new Set(['ReadyWeapon', 'SwitchHand']);
+/** QS6: and the three quickslot keys that HOLD (systems/quickslots.js
+ *  CYCLE_SLOTS). Mac asked for one key that does two things - a tap
+ *  performs the slot, a hold cycles what is in it - and a press that
+ *  acts on its DOWN edge cannot be the start of a hold: the potion is
+ *  drunk before the player has held long enough to mean "let me choose
+ *  one". So the keyboard dispatch declines them here, exactly as it
+ *  declines Z and H, and each host's frame drives the machine
+ *  (tickQuickslotHold) that owns both edges.
+ *
+ *  routeAction keeps their arms for the same reason ReadyWeapon keeps
+ *  its one: a PANEL - the HUD diamond's own touch cells - has no frame
+ *  poll and posts the action. 'QuickSwap' and 'QuickOffHand' are NOT
+ *  here: neither holds, so the down edge is the whole of the press. */
+export const POLLED_ACTIONS = new Set(['ReadyWeapon', 'SwitchHand', 'QuickUse1', 'QuickUse2', 'QuickSpell']);
 
 /** QS2 - THE THREE THE TWO SELF-ROUTING HOSTS ANSWER ABOVE THEIR MODE GATE.
  *
@@ -534,7 +547,7 @@ export const POLLED_ACTIONS = new Set(['ReadyWeapon', 'SwitchHand']);
  *  reads this set to answer these three ABOVE the mode gate, under the same
  *  overlay and pause gates every other gameplay door takes. The two hosts that
  *  call `routeKey` need nothing: their ctx already reaches the table. */
-export const QUICKSLOT_ACTIONS = new Set(['QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand']);
+export const QUICKSLOT_ACTIONS = new Set(['QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand', 'QuickSpell']);   // QS6: the spell slot joins them
 
 /**
  * THE ACTION LADDER ALONE, without the key event. U45 pulled it out
@@ -653,6 +666,11 @@ export function routeAction(action, ctx, setPlayerPos = null) {
     // QS4: the off-hand cell's own press - light or douse, through the mod's
     // own guard. Same door law: a host without one answers false.
     case 'QuickOffHand': return ctx.quickOffHand?.() === true;
+    // QS6: the spell slot's press - ready the slot's spell, or put it away
+    // when it is the one already in hand. The performer is the model's
+    // (spellQuickslotPress) over the host's ONE cast engine, so every law
+    // about readying stays where DFU's are ported.
+    case 'QuickSpell': return ctx.quickSpell?.() === true;
     default: return false;
   }
 }

@@ -56,13 +56,13 @@ does the pack's USE arm.
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
                         dungeonContext.js:956, world.js:1723,
-                        exterior.js:2064. It is the only window TWO
+                        exterior.js:2079. It is the only window TWO
                         enhanced screens already push - the sheet's
                         button and the pack's USE hand-off, whose
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:5067, dungeonContext.js:5991. A seam
+    / NOTEBOOK          world.js:5093, dungeonContext.js:6013. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -8493,7 +8493,7 @@ and firing THAT twice is a second PopToHUD.
 
 ### Why only two of the four hosts crashed
 
-`worldModes.js:5503` and `dungeonContext.js:1437` answer the same
+`worldModes.js:5503` and `dungeonContext.js:1457` answer the same
 `onClose` by nulling their slot and never disposing - nothing to
 re-enter. Only the two hosts that come through `townTalk.closeOverlay`
 dispose. **The four-hosts rule caught this one by accident**: the two
@@ -9201,7 +9201,7 @@ than because the screen agrees with a narrower port.
 stays unbuilt - an owner call, unchanged: the port has no gamepad layer
 at all, the serialized joystick blocks are simply absent from
 `KeyBindData_v1`, and the flag that says so is
-`src/systems/inputActions.js:693`. The JOYSTICK tab still answers with
+`src/systems/inputActions.js:708`. The JOYSTICK tab still answers with
 its note, and Ledger `:593`'s live clause now names that window alone.
 `weaponSensitivitySlider` is commented out in DFU itself (:42, :355) -
 nine controls are built, the tenth is a stub - and
@@ -9737,9 +9737,9 @@ re-resolved the `exterior.js` half of a three-file sentence and left the
 `ExteriorAutomapWindow` construction, `:4101` on a `locationName:`
 field). Both halves are now read by `test/citedrift.test.js` - the
 existing entries only ever captured the exterior number, which is how
-the other half went stale unnoticed. (The rest cite named `world.js:5323`,
+the other half went stale unnoticed. (The rest cite named `world.js:5356`,
 the first of the host's TWO identical `act === 'Rest'` arms; ROAD-H H5
-deleted the second and the cite is `world.js:5329` now.)
+deleted the second and the cite is `world.js:5362` now.)
 
 ## AUDIT 62 F24/F25 - THE SENTINEL SWEEP WAS TWO WINDOWS SHORT (2026-09-07)
 
@@ -9913,7 +9913,7 @@ if (alt.ContainsKey(code)) alt.Remove(code);        // InputManager.cs:729-734
 - and for a SECONDARY write the "other" dict IS the primary, so a
 secondary Jump written onto `ShiftLeft` deletes Run's primary row, and
 the reverse order deletes Jump's secondary row by the same line. The
-port carries it at `inputActions.js:403-404`. Either order collapses the
+port carries it at `inputActions.js:418-419`. Either order collapses the
 pair.
 
 The route that DOES produce it is the LOAD path. `LoadActionKeybinds`
@@ -9924,7 +9924,7 @@ if (!dict.ContainsKey(key) && actionVal != Actions.Unknown)
     dict.Add(key, actionVal);                       // InputManager.cs:1950-1969
 ```
 
-- ported at `inputActions.js:542-552`, whose own comment already said
+- ported at `inputActions.js:557-567`, whose own comment already said
 "Raw map-set, NOT setBinding". So a hand-edited `KeyBindings.txt` that
 puts Jump on the run key as a SECONDARY, with the primary `Space` spent
 on something else, loads exactly as written; and it SURVIVES the
@@ -14360,3 +14360,283 @@ the shell still outranking it.
 
 **Pins:** test/touchdevice.test.js (4). tools/mutants/ti3.json (8).
 
+## QS6 - THE THIRD KEY IS A SPELL, AND A HELD KEY FILLS A SLOT (2026-09-17)
+
+Mac, before the merge: "For the new quick bar we introduced, for slot 3,
+I want to change it to be for spells. So you should be able to hold the
+keybind to switch between applicable spells, and then press the keybind
+to equip. Same for 2/3. Pressing the keybind, if not equipped, should
+equip the slot."
+
+Two things, and they are separable. One is a SPELL SLOT. The other is a
+HOLD: a slot's contents chosen by holding its own key rather than by a
+trip to a window, which is the whole point of a quick bar - the bar you
+fill without opening anything.
+
+### The spell slot
+
+**A slot holds a KIND, and a spell's kind is its INDEX.** That is not a
+new idea invented here: a SPELLS.STD record number, or the negative one
+`systems/spellMaker.js` mints for a made spell, is already this port's
+name for "which spell" - it is what `systems/save.js` writes, what a
+restore reads back, and what the cast engine's own `setReadiedByIndex`
+resolves a readied spell by. So the slot keys on it, and three things
+fall out for free: a made spell rides, a RENAME in the spellbook follows
+the spell rather than losing it, and two spells that happen to share a
+name stay two spells.
+
+**The press is the engine's.** `spellQuickslotPress` asks
+`scenes/hostMagic.js` and says nothing over it: the silence gate, the
+spell-point refusal in DFU's own words, the CasterOnly instant cast and
+the "Press button to fire spell." line are SetReadySpell's laws and are
+not restated in the model - which is checked by driving a REAL
+`createPlayerMagic` in the pins rather than a stub that would agree with
+whatever we wrote. The model prices no spell at all.
+
+Three presses, in Mac's own order:
+
+- **Not equipped → equip.** The slot's spell is readied.
+- **Already equipped → put it away**, through the engine's own
+  `AbortReadySpell`. The slot keeps the spell; only the hand let go.
+  It is the shape the swap cell already has, where a second press swaps
+  back.
+- **Nothing chosen yet → take the book's first.** A player who has never
+  held the key has an empty slot, and a key that answers "nothing is
+  here" while the book is full teaches nothing. The hold is how you
+  choose; the first press is how you start.
+
+A spell the book no longer holds is a GHOST, exactly as a spent potion
+is: the slot keeps the name so the refusal can say which one it was.
+
+### The hold, and why the keys had to become polled
+
+**A press that acts on its DOWN edge cannot be the start of a hold.** The
+potion is already drunk by the time the player has held long enough to
+mean "let me choose one". QS2 wrote the opposite law down and was right
+at the time ("a held 1 drinks one potion, not one a frame"); Mac then
+asked for the hold to MEAN something, and that reverses it.
+
+So `QuickUse1`, `QuickUse2` and `QuickSpell` join `POLLED_ACTIONS` - the
+seam this port already has for exactly this claim, carrying ReadyWeapon
+and SwitchHand for the same reason ("the frame owns the key"). The
+keyboard dispatch declines them, `routeAction` keeps their arms for the
+panel that has no poll, and each host's frame drives one machine:
+
+    tickQuickslotHold(dt, { isHeld, entity, onTap, blocked })
+
+past `QUICK_HOLD_MS` (350) the press is a hold and steps every
+`QUICK_STEP_MS` (300); a release that never stepped is a TAP and calls
+the host's performer; a release that stepped performs NOTHING, because
+the choosing was the act. The CYCLE is the model's (a candidate list is
+the model's own knowledge) and the TAP is the host's (a potion needs the
+window's use hooks and a spell needs the cast engine) - the same split
+every other quickslot performer already keeps.
+
+Two things the machine has to get right and a frame cannot be trusted
+for: a `blocked` frame (a window up, the game paused) drops every hold
+SILENTLY, so a key still down when the window closes is not read as a
+press; and a frame longer than a quarter-second was a stall rather than
+play, so a backgrounded tab comes back to one step and not fourteen.
+
+**"Applicable" is the pack and the book, not a filter over them.** A
+spell you cannot presently afford is still a spell you know, and
+SetReadySpell already refuses it at the press; hiding it would make the
+list flicker as magicka moved and would teach the player a spell had
+been forgotten. The one thing a consumable cycle does NOT offer is the
+kind the other consumable slot holds - "one kind lives in one slot" is
+`assignQuickslot`'s law, and a cycle that could steal the neighbour's
+potion would enforce it by emptying that cell.
+
+**Mac wrote "Same for 2/3", which reads two ways, so this is the
+superset**: the hold is on slots 1, 2 and 3. Every reading is satisfied
+and the odd one out would have been the stranger thing to build.
+
+### Where the swap went, and where the spell is drawn
+
+The swap did not lose its action. It is in `ACTIONS` at the index it has
+always had, in `PORT_ACTIONS`, on the enhanced pane, rebindable - it
+lost its DEFAULT key, and that is all, because the CELL it is drawn in
+is the off hand's and Digit4 already presses that cell. The law is the
+one the diamond has had since QS4: **the key does what the cell shows.**
+So `quickOffHand` asks `offHandOffersSwap(entity)` - which is the VIEW's
+own answer, not a second reading of the same hands - and presses the
+swap where the cell is offering one, the light everywhere else. A lit
+light, a shield or a weapon in that hand outranks the offer, exactly as
+the drawn cell does. The cell's tag shows the player's own QuickSwap
+binding if they made one, and the off hand's key otherwise.
+
+And the spell is not a fifth corner, because a diamond has four. The
+four corners are the two hands and the two consumables; a spell is in
+none of them. It goes on the CAPTION - the row the readied spell already
+stood on, above the cells, where a player already looks - as a chip
+carrying its own key tag and its name, lit when that spell is the one
+actually in hand. When the chip is already naming the readied spell the
+generic readied chip stands down: two chips a hand's width apart saying
+one word is a stutter, not a readout.
+
+**The phone holds too.** A phone has no key to hold, and the cells ARE
+the phone's keys (DEPARTURE 2's whole claim), so the two consumables and
+the spell chip carry the same pair over the same two numbers: tap to
+perform, hold to cycle. It subscribes the four edges a hold needs -
+down, up, cancel and leave - because a finger that slides off a cell
+must not fire it.
+
+### Pinned
+
+`test/qs6_spellslot.test.js` (13): the spell slot driven through a real
+cast engine (equip, unequip, the engine's refusals in its own words, the
+ghost, the empty book), the index key against a rename and a shared
+name, both cycles (wrap, direction, the near end, the neighbour's kind,
+kinds not records, nothing that is not a consumable), the tap/hold split
+on all three slots, the blocked frame, the stalled frame, the lamp, the
+save round trip, the off hand's fold, and the four host frames.
+`test/qs2_inputs.test.js` carries the registry half (the appended
+action, the moved default, the unbound swap, the polled three and the
+two self-routing ladders that must now decline them).
+`tools/mutants/qs6.json`: 31, all dead.
+
+`tools/qs3Probe.mjs` grew the chip: node has no layout engine, so "the
+chip is drawn, it names the slot's spell, it lights when that spell is in
+hand, the readied chip stands down for it, and a finger can reach it"
+are claims only a browser can answer. Measured over the same 18 pages
+(three sizes x three HUD scales x both stick anchors), plus two more: a
+spell readied from the BOOK, where both chips must stand because the
+stand-down is about identity and not about the chip existing, and a LONG
+spell name on a 430px phone, where the chip must ellipsis inside the
+caption's cap rather than run the block off the edge (measured: 124px
+wide of 430, contained). All clear.
+
+## AUDIT QS6 - SEVEN FINDINGS, BEFORE THE MERGE (2026-09-17)
+
+Mac: "Audit everything before merging." Four lenses over the merged tree -
+the diff read adversarially, the wiring walked host by host, the whole
+chain driven by a real browser's keyboard, and the pins and records read
+back. Six findings were defects and one was a defect in the pins
+themselves. All seven are fixed; each is pinned by something that failed
+before the fix and a mutant that dies on it.
+
+### F1 - a cite tool rewrote a number inside a PIN, and found five that nobody had ever read
+
+The merge ran `citeMerge`, which moved a cite number **inside a pick
+regex** in `test/citedrift.test.js`. That is WM3's own documented
+hazard, written at the top of that file: a literal in the pick decides
+whether an entry MATCHES and asserts nothing.
+
+Following it out was worse than the symptom. Five Ledger rows cite a
+PAIR - `` `world.js:N`, `exterior.js:M` `` - and the table captured `M`
+alone. So `M` was re-resolved at every wave for a year and `N` was never
+read: `world.js:3968` named a line that is 8950, `:645` one that is
+1215, `:1094` one that is 2194, `:3903` one that is 3066, `:3920` one
+that is 8907. `world.js:3719-3738` and `dungeonContext.js:1307` were
+stale the same way. Seven numbers re-resolved BY CONTENT, every
+uncaptured half de-baked to `\d+`, and eight new entries added so every
+number in a pair is captured. The half nobody reads cannot rot in
+silence again.
+
+### F2 - a hold that spanned a window drank a potion on the way out
+
+DRIVEN, because it is a sequence and not a line. The player holds `1`;
+a window opens and the frame goes `blocked`, which **cleared** every
+hold; the window closes WHILE THE KEY IS STILL DOWN; the next tick finds
+no state for the slot, reads the key as down, and calls that a rising
+edge - so the release a moment later is a tap and a potion is drunk that
+the player never asked for.
+
+The guard had moved the bug one step later rather than removing it, and
+the pin missed it by releasing the key *during* the blocked stretch. A
+blocked frame DISARMS now: held down, already cycled (so its release
+performs nothing), stepping never (so it does not walk the book under an
+open window). The key has to come up and go down again to mean anything.
+
+### F3 - the finger's timers outlived the HUD
+
+The phone's hold is a `setTimeout` into a `setInterval`. A hold still
+cycling when a host tears the HUD down left that interval running for
+the life of the page: the node is gone, so no `pointerup` can ever reach
+it again. The handles are kept and stopped in `destroyEnhancedHud`,
+which is the law QS3 already stated for the listeners.
+
+### F4 - the cycling lamp could never go out
+
+The cell's `.cycling` class was written BELOW the block's signature
+guard. A cycle changes a slot's name, so the lamp came on; when the hold
+ends **nothing else about the block changes**, so the signature was
+identical, the early return fired and the write was unreachable. The
+cell stayed lit for the rest of the session. The lamp is part of the
+signature now. A cell that cannot stop glowing is a cell that lies about
+what the thumb is doing.
+
+### F5 - the RESPAWN1 pin read the wrong publisher, and said "admitted" where it meant "carried"
+
+Two weaknesses in one pin. It read `collectWorld`'s keys and called them
+"the record the dungeon really publishes" - they are not: `sharedWorld`
+STRIPS that record before the memory is sent (`delete f.items`, because
+a corpse's loot is the room's `loot` half, AUDIT WORLD4 D4/B3). And its
+field-by-field loop asserted only that a record came back TRUTHY, which
+it always did, because `health: 1` rode beside every field. A field the
+door has no law for is DROPPED IN SILENCE - which is the exact shape of
+the bug RESPAWN1 was. The claim is `k in out` now, the vocabulary is
+read off `sharedWorld`, and what the publisher strips the door must
+refuse.
+
+### F6 - one host's `blocked` argument was dead, and two more had doors it could not reach
+
+The wiring walk. `scenes/dungeon.js` had its tick INSIDE its own
+`walkMode && !overlayHeld` gate, so a blocked frame never reached the
+call and the argument was decoration. The two outdoor hosts return above
+their tick while a full-screen video holds the frame (`frameHeld`), and
+a backgrounded tab gets no frames at all. Three doors, one hazard - and
+a law enforced by four hosts is a law enforced by memory.
+
+So the machine defends itself: a gap in the WALL CLOCK past
+`QUICK_GAP_MS` disarms every hold, whatever the caller declared. The
+dungeon page's tick moved above its gate as well, so its `blocked` is
+live again. This is the one place real time is read in the model, and it
+is read about FRAMES rather than about the game.
+
+### F7 - ten mutants had quietly stopped applying
+
+A mutant record names the exact source text it replaces. When that text
+moves, `mutate.mjs` cannot apply it, says "did not apply" at the end of
+a run nobody is reading, and the law it was the only killer of is
+checked by nothing - while the slice still reports "N dead, 0 survived",
+because a record that never applied is not a survivor. Eight had gone
+stale under QS6 itself (five actions where there had been four, a
+`blocked` decline added to two host ladders, a tap guard given a name)
+and two in `relayversion` had been stale for waves, their anchor having
+left `server/src/index.js` entirely.
+
+All ten re-aimed by content. And the class is closed:
+`test/mutantdrift.test.js` sweeps all 879 records the way
+`test/citedrift.test.js` sweeps the cites, because it is the same claim -
+a reference into source rots. Twelve records in four unrelated arcs were
+ALREADY stale on the day it was written; they are carried in a named,
+dated list that can only shrink, rather than re-aimed inside a quickslot
+change.
+
+### Recorded, not fixed
+
+A lycanthropy or vampire spell is granted as a copy of its SPELLS.STD
+record and keeps that record's INDEX, so a player who also knew the
+standard spell of that number would have two book entries with one
+index, and the slot would resolve to whichever came first. The cast
+engine's own `setReadiedByIndex` has had exactly this law since S1, and
+the save writes the same key - so the slot is CONSISTENT with the engine,
+which is what makes the chip honest. Inventing a second identity here
+would buy correctness in a case nothing can reach and lose the one
+property the chip depends on. Flagged for Mac.
+
+### What was driven
+
+`tools/qs6HoldProbe.mjs` is the chain a player actually uses, in
+Chromium, with Playwright pressing the keys: a real keydown, the OS's
+own auto-repeat storm, a real keyup, a host's listeners written the way
+`scenes/world.js` writes them, `held()` through the binding registry, and
+a rAF loop asking the machine once a frame with whatever dt the frame
+really took. Seven scenarios, 24 checks: a tap performs once and NOT on
+the down edge; a hold cycles and drinks nothing; the spell key readies
+and puts away through the engine's own arms; the auto-repeat storm is
+declined every time; a window spanned by a held key performs nothing on
+the way out; and the hold follows a REBIND, because it is an action and
+not a key literal. It cannot boot the game - this container has no
+ARENA2 - but every module the arc touched is the real one.

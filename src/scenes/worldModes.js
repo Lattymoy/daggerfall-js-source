@@ -38,7 +38,7 @@ import { removeOne, addItem, isEnchanted, carriedWeight, letterOfCredit, LETTER_
 import { isEquipped, unequipSlot } from '../systems/equip.js';   // AUDIT 17e F4: worn gear is not merchandise
 import { targetAimPoint, missileAimDirection } from '../characters/enemyTargets.js';   // AUDIT WORLD6b-iii(a) C3: the ONE aim law for an enemy missile (the peer's transform, mine otherwise)
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
-import { offHandQuickslot } from '../systems/quickslots.js';   // QS4: the off-hand cell's press, on THIS mode's own rig
+import { offHandQuickslot, offHandOffersSwap, tickQuickslotHold } from '../systems/quickslots.js';   // QS4: the off-hand cell's press, on THIS mode's own rig   // QS6: the off hand's swap question, and the hold machine this mode's frame drives
 import { createPlayerTicker , wireInfectionVideos, endRunToTitleMenu, exitToTitleMenu, doorSpellFor, exteriorOpenSpellFor, consumeDoorSpell, wireDoorSpells, createDetectFeed, createRestDeps, foeNearbyRecord, nearbyLootRecords} from './shared.js';   // AUDIT 18: the interior host's world clock; S40: its rest deps
 import { triggerExteriorOpen, DOOR_SPELL_TEXT } from '../systems/mysticism.js';   // X3: the Open spell's EXTERIOR-door arm
 import { buildInteriorContext, seedInteriorTreasure } from './interiorContext.js';   // AUDIT 63 F22: AddFlats' RandomTreasure arm lives with the walk that finds its markers
@@ -1281,10 +1281,10 @@ export function createWorldModes(host) {
    *  billboard is CENTRE-anchored, so the base ends up ON the marker
    *  inside a building and half a height BELOW it inside a dungeon.
    *  This port's billboard shader is BOTTOM-anchored (position = base,
-   *  the C11 law dungeonContext.js:1582 states), so the same visual
+   *  the C11 law dungeonContext.js:1602 states), so the same visual
    *  result needs the shift on the DUNGEON side - which is exactly the
    *  shift the dungeon's own RDB flats already take
-   *  (dungeonContext.js:1487, `y - size.h / 2`), and which a building's
+   *  (dungeonContext.js:1507, `y - size.h / 2`), and which a building's
    *  flats correctly do not (interiorContext.js passes its centers
    *  straight through).
    *
@@ -5145,10 +5145,10 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:5507), so the OUTER host's one rides in.
+          // (dungeonContext.js:5529), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
-          // the key falls to routeKey -> ui/input.js:539 -> the
+          // the key falls to routeKey -> ui/input.js:552 -> the
           // context's togglePause (ui/pauseDoor.js:207-224).
           relock: () => host.relock?.(),
           // B4: the dungeon quicksave rides the ONE composer - DFU
@@ -5893,6 +5893,15 @@ export function createWorldModes(host) {
       else interiorWeapon.switchHand();
     }
     hPrev = hNow;
+    // QS6: the quickslot holds, beside the two latches they are modelled on.
+    // PER-MODE, for C9's reason one rung up: underground the machine is the
+    // dungeon context's (its entity, its use hooks, its cast engine), and
+    // indoors it is this mode's own over the outer host's performers.
+    if (mode === 'dungeon') dungeonCtx?.tickQuickHold?.(dt, { isHeld: (a) => held(keys, a), blocked: overlayHeld });
+    else tickQuickslotHold(dt, {
+      isHeld: (a) => held(keys, a), blocked: overlayHeld, entity: playerEntity,
+      onTap: (slot) => (slot === 'spell' ? interiorKeyCtx.quickSpell() : interiorKeyCtx.quickUse(slot === 'c1' ? 1 : 2)),
+    });
     if ((_act.activate || (useHeld && !latch.use)) && !overlayHeld) (mode === 'dungeon' ? tryExitDungeon : tryExit)();
     latch.use = useHeld;
     // A successful exit destroyed the modal context and flipped the
@@ -6092,7 +6101,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:6606's own wave-46 note); the interior
+          // a blow (world.js:6639's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage(dmg);   // BA1: RemoveHealth carries the amount
@@ -6294,7 +6303,7 @@ export function createWorldModes(host) {
         { detected: _detected, playerXZ: [player.pos[0], player.pos[2]],
           // QS4: the phone's own doors, this mode's own rig - see world.js's twin.
           quickUse: (n) => interiorKeyCtx.quickUse(n), quickSwap: () => interiorKeyCtx.quickSwap(),
-          quickOffHand: () => interiorKeyCtx.quickOffHand(),
+          quickOffHand: () => interiorKeyCtx.quickOffHand(), quickSpell: () => interiorKeyCtx.quickSpell(),   // QS6
           largeHud: largeHudOptions({ renderer, fetchBytes, palette }, playerEntity),
           // AUDIT 28 W2: the interior frame never handed drawHud a font,
           // so nothing text-shaped on the classic HUD (the mode word,
@@ -6898,7 +6907,7 @@ export function createWorldModes(host) {
   addEventListener('mousedown', (e) => {
     // AUDIT-MACK F2: THIS HOST DOES NOT FEED THE HELD SET, and MAC-K1
     // briefly made it. `keys` is not this host's - it arrives on the
-    // host bag (`exterior.js:3177`, `world.js`'s twin), and the OUTER
+    // host bag (`exterior.js:3195`, `world.js`'s twin), and the OUTER
     // host's own mousedown writes `keys.add(mouseCode(e.button))`
     // UNGATED, before any mode test, on a listener that is never
     // removed. So the three button codes were already in the Set while
@@ -7245,7 +7254,14 @@ export function createWorldModes(host) {
     // QS4: and the off hand, whose light is THIS mode's rig - the outer host's
     // performer would toggle the wrong one, so the door is answered here with
     // the parts this mode owns.
+    // QS6: the spell slot's press. The outer host's, like quickUse above -
+    // the cast engine indoors IS the host's `magic`, so a second performer
+    // here would be a second engine's ready.
+    quickSpell() { return host.quickSpell?.() === true; },
     quickOffHand() {
+      // QS6: the SWAP when that is what the cell shows - the key does what the
+      // cell shows. The swap is THIS ctx's (it refreshes this mode's rig).
+      if (offHandOffersSwap(playerEntity)) return interiorKeyCtx.quickSwap();
       offHandQuickslot({ entity: playerEntity, say: (l) => townTalk?.say?.(l),
         toggleLight: () => interiorWeapon.toggleLight() });
       return true;
@@ -8292,9 +8308,9 @@ export function createWorldModes(host) {
      *  .cs:175-176 writes `weaponDrawn`/`usingLeftHand` off it,
      *  :420-421 restores them onto it. The port has FOUR PlayerWeapons
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
-     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:2754-2776), and IS1 routed the inside-a-building save to
+     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:2772-2794), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
-     *  unconditionally (world.js:4407). So an F9 pressed in a shop
+     *  unconditionally (world.js:4433). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them
      *  back into the street's rig; the rig actually in the player's
      *  hands was in no envelope at all.
@@ -8321,7 +8337,7 @@ export function createWorldModes(host) {
      *  presenter for the whole visit) or the interior's? world.js's gate read townTalk's slot alone. */
     deathUp() { return mode === 'dungeon' ? !!dungeonCtx?.deathUp?.() : interiorOverlay instanceof DeathScreen; },
     /** The restore half - and NOT gated on the mode, deliberately.
-     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:4489)
+     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:4515)
      *  and only re-enters the building at :4217, so the mode at apply
      *  time is whatever the LOAD landed in, not whatever the SAVE was
      *  taken in: an outdoor save loaded while the player was indoors
@@ -8331,8 +8347,8 @@ export function createWorldModes(host) {
      *
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
-     *  HARD2c: this used to spell them out, and named `world.js:4601`
-     *  and `dungeonContext.js:5579` for its two sibling copies - lines
+     *  HARD2c: this used to spell them out, and named `world.js:4627`
+     *  and `dungeonContext.js:5601` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */
     applyWeaponPose(pose) {

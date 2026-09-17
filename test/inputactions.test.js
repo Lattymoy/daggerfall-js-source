@@ -40,6 +40,9 @@ test('I1: the Actions enum, verbatim names and order (:324-384)', () => {
     'QuickUse1', 'QuickUse2', 'QuickSwap',
     // QS4: and the off-hand cell's own, appended after them.
     'QuickOffHand',
+    // QS6: and the SPELL slot's, appended after that. 'QuickSwap' above keeps
+    // its index - an action is never removed from this list, only unbound.
+    'QuickSpell',
   ]);
   // ActionNameToEnum's sentinel: unknown parses to Unknown, and
   // Unknown itself is NOT a bindable action.
@@ -73,7 +76,10 @@ test('I1: ResetDefaults\' table, every row (:979-1032)', () => {
     // QS2: the number row. Digit1-Digit3 are unspent by SetupDefaults, by the
     // port and by every vendored mod's TextKey defaults (the HT4 pin in
     // test/ht1_handheldtorches.test.js walks that whole set).
-    'Digit1=QuickUse1', 'Digit2=QuickUse2', 'Digit3=QuickSwap', 'Digit4=QuickOffHand',
+    // QS6: the third digit readies the SPELL slot; the swap keeps its row in
+    // the enum above and ships UNBOUND, because the cell it is drawn in is
+    // the off hand's and Digit4 presses that.
+    'Digit1=QuickUse1', 'Digit2=QuickUse2', 'Digit3=QuickSpell', 'Digit4=QuickOffHand',
   ]);
   // every bindable action except the four with no default key
   // (MoveLeft/MoveRight arrive via A/D; TurnLeft/TurnRight via
@@ -83,9 +89,14 @@ test('I1: ResetDefaults\' table, every row (:979-1032)', () => {
   // rows, so the coverage rule (every bindable action defaulted, none twice)
   // grew with it.
   const bound = new Set(DEFAULT_BINDINGS.map(([, a]) => a));
+  // QS6 broke the "one default per action" identity, deliberately and once:
+  // the swap gave Digit3 to the spell slot and ships UNBOUND, so the table is
+  // one row shorter than the enum. It is still one default per action AT MOST,
+  // and the one action without one is named rather than counted away.
   assert.equal(DEFAULT_BINDINGS.length, 49);
   assert.equal(bound.size, 49, 'no action is defaulted twice');
-  assert.equal(ACTIONS.length, 49, 'and a default for every action, still');
+  assert.equal(ACTIONS.length, 50);
+  assert.deepEqual(ACTIONS.filter((a) => !bound.has(a)), ['QuickSwap'], 'exactly one action ships unbound');
   const codes = DEFAULT_BINDINGS.map(([c]) => c);
   assert.equal(new Set(codes).size, codes.length, 'and no KEY is spent twice - the number row was free');
 });

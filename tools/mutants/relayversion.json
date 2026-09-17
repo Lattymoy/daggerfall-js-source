@@ -2,8 +2,8 @@
   {
     "name": "R1-index-edited-under-shipped-version",
     "file": "server/src/index.js",
-    "old": "export { RELAY_VERSION };",
-    "new": "export { RELAY_VERSION };\n// a comment is a different bundle",
+    "old": "    this._sayNote(them, 'party.kicked', them, trec?.name ?? null);\n    return null;\n  }\n}",
+    "new": "    this._sayNote(them, 'party.kicked', them, trec?.name ?? null);\n    return null;\n  }\n}\n// a comment is a different bundle",
     "tests": [
       "test/relayversion.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "R5-index-import-line-added",
     "file": "server/src/index.js",
-    "old": "export { RELAY_VERSION };",
-    "new": "export { RELAY_VERSION };\nimport './relay.js';",
+    "old": "import { roomOf, parseClient,",
+    "new": "import './relay.js';\nimport { roomOf, parseClient,",
     "tests": [
       "test/relayversion.test.js"
     ]

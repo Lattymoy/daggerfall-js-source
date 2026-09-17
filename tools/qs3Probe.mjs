@@ -44,7 +44,7 @@ const PAGE = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewp
 <style>html,body{margin:0;height:100%;background:#12141a;overflow:hidden}</style></head><body>
 <script type="module">
 import { drawEnhancedHud } from '/src/ui/enhancedHud.js';
-import { assignQuickslot, clearQuickslots } from '/src/systems/quickslots.js';
+import { assignQuickslot, clearQuickslots, setSpellQuickslot } from '/src/systems/quickslots.js';   // QS6
 import { setPref } from '/src/systems/uiPrefs.js';
 import { EQUIP_SLOTS } from '/src/characters/paperdoll.js';
 
@@ -61,17 +61,25 @@ const entity = {
   health: 42, maxHealth: 80, magicka: 19, maxMagicka: 40, fatigue: 5000,
   stats: { strength: 50, endurance: 50 },
   items: [weapon, shield, heal],
+  // QS6: a book, so the caption's spell chip has something to name - and a
+  // LONG name, because the caption is capped at the diamond's own width and
+  // an unbounded chip is what ran the block off a 430px phone once already.
+  spells: [{ index: 5, name: 'Spark' }, { index: 9, name: 'Far Silence of the Iliac Bay' }],
   equip: { slots: { [EQUIP_SLOTS.LeftHand]: shield } },
   lightSource: null,
 };
 clearQuickslots();
 assignQuickslot('c1', heal);
 assignQuickslot('c2', cure);
+setSpellQuickslot(entity.spells[q.get('longspell') === '1' ? 1 : 0]);   // QS6
 
 drawEnhancedHud(entity, 0.02, 1 / 60, {
   weapon, weaponSheathed: q.get('sheathed') === '1',
-  readied: q.get('spell') === '1' ? { name: 'Far Silence' } : null,
-  quickUse: () => {}, quickSwap: () => {},
+  // QS6: the readied spell is the SLOT's own unless ?other=1 is set (no
+  // backticks in here: this whole page is one template literal) - the chip
+  // must then say it once and the generic readied chip must stand down.
+  readied: q.get('spell') === '1' ? (q.get('other') === '1' ? entity.spells[1] : entity.spells[0]) : null,
+  quickUse: () => {}, quickSwap: () => {}, quickSpell: () => {},
 });
 
 const box = (sel) => { const el = document.querySelector(sel); if (!el) return null;
@@ -94,6 +102,13 @@ window.__probe = {
   pointer: getComputedStyle(document.querySelector('.hud-qmain')).pointerEvents,
   rootPointer: getComputedStyle(document.querySelector('.hud')).pointerEvents,
   hands: !!document.querySelector('.hud-hands'),
+  // QS6: the caption's spell chip - its box, whether it is drawn, the name
+  // it carries, and whether a finger can reach it.
+  spellChip: box('.hud-qspell'), spellOn: shown('.hud-qspell'),
+  spellName: txt('.hud-qspname'), spellClass: cls('.hud-qspell'),
+  spellPointer: document.querySelector('.hud-qspell') ? getComputedStyle(document.querySelector('.hud-qspell')).pointerEvents : null,
+  spellKeyShown: shown('.hud-qspell .hud-qstag'), spellKey: txt('.hud-qspell .hud-qstext'),
+  readiedOn: shown('.hud-readied'), readiedName: txt('.hud-readyname'),
   // AUDIT QS F1: WHAT A FINGER LANDS ON. The centre of each cell must be
   // that cell; the diamond's empty middle and the gap between two cells
   // must be NOTHING of the diamond's (they fall through to the game).
@@ -165,6 +180,17 @@ try {
         // diamond, the caption and whichever tags are standing.
         // ...and the diamond's own SQUARE is four corners of nothing, so
         // the four cells are measured rather than the box round them.
+        console.log(`   .hud-qspell   ${p.spellOn ? `x ${p.spellChip.x} y ${p.spellChip.y} ${p.spellChip.w}x${p.spellChip.h} "${p.spellName}" key "${p.spellKey}" [${p.spellClass}]` : 'hidden'}; the readied chip ${p.readiedOn ? 'drawn' : 'stood down'}`);
+        // QS6: the chip is drawn, it names the slot's spell, and - when the
+        // readied spell IS the slot's - the generic readied chip stands down
+        // rather than saying the same word twice.
+        if (!p.spellOn) fails.push(`${label}: the caption's spell chip is not drawn`);
+        if (p.spellOn && !p.spellName) fails.push(`${label}: the spell chip carries no name`);
+        if (p.spellOn && p.readiedOn) fails.push(`${label}: the readied chip doubles the spell chip's own word ("${p.readiedName}")`);
+        if (p.spellOn && !p.spellClass.includes('readied')) fails.push(`${label}: the spell in hand does not light its own chip`);
+        if (touch && p.spellOn && p.spellPointer !== 'auto') fails.push(`${label}: a phone cannot reach the spell chip (pointer-events ${p.spellPointer})`);
+        if (touch && p.spellKeyShown) fails.push(`${label}: a KEY chip is drawn on a device with no keyboard`);
+        if (!touch && !p.spellKeyShown) fails.push(`${label}: the spell chip names no key`);
         const drawn = [...['main', 'off', 'c1', 'c2'].map((k) => [`the ${k} cell`, p.cells[k]]), ['the caption', p.cap],
           ...['top', 'left', 'right', 'bottom'].filter((k) => p.tagsOn[k]).map((k) => [`the ${k} tag`, p.tags[k]])];
         const hit = (box, what) => { for (const [name, r] of drawn) if (overlaps(r, box)) fails.push(`${label}: ${name} overlaps ${what}`); };
@@ -202,6 +228,35 @@ try {
         await page.close();
       }
     }
+  }
+  // QS6, the other half: a spell readied from the BOOK is not the slot's, so
+  // BOTH chips stand - the stand-down above must be about identity and not
+  // about the chip merely existing.
+  {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    await page.goto(`http://127.0.0.1:${port}/tools/${PAGE_NAME}?nofonts&scale=1&stick=float&spell=1&other=1`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+    await page.waitForFunction(() => !!window.__probe, null, { timeout: 30000 }).catch(() => {});
+    const p2 = await page.evaluate(() => window.__probe ?? null);
+    console.log(`\n== desktop, a spell readied from the BOOK (not the slot's)`);
+    console.log(`   .hud-qspell "${p2?.spellName}" [${p2?.spellClass}]; .hud-readied ${p2?.readiedOn ? `"${p2.readiedName}"` : 'hidden'}`);
+    if (!p2?.spellOn) fails.push('book-readied: the spell chip vanished');
+    if (!p2?.readiedOn) fails.push('book-readied: the readied chip stood down for a spell the slot does NOT name');
+    if (p2?.spellClass.includes('readied')) fails.push('book-readied: the slot\'s chip lit for a spell that is not in it');
+    await page.close();
+  }
+  // QS6: A LONG SPELL NAME on the narrowest screen. A spell can be called
+  // anything a player types, and an unbounded chip on this row is exactly
+  // what ran the whole block off a 430px phone once already (the qcap cap).
+  for (const [name, size] of [['phone-portrait', { width: 430, height: 860 }], ['desktop', { width: 1280, height: 800 }]]) {
+    const page = await browser.newPage({ viewport: size, hasTouch: name !== 'desktop', isMobile: name !== 'desktop' });
+    await page.goto(`http://127.0.0.1:${port}/tools/${PAGE_NAME}?nofonts&scale=1&stick=float&longspell=1`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+    await page.waitForFunction(() => !!window.__probe, null, { timeout: 30000 }).catch(() => {});
+    const p3 = await page.evaluate(() => window.__probe ?? null);
+    console.log(`\n== ${name}, a spell with a long name`);
+    console.log(`   .hud-qcap ${p3.cap.w}x${p3.cap.h} right ${p3.cap.right}; .hud-qspell ${p3.spellChip.w}x${p3.spellChip.h} "${p3.spellName}" of ${p3.W} wide`);
+    if (p3.cap.right > p3.W) fails.push(`${name} long name: the caption runs off the right edge (right ${p3.cap.right} of ${p3.W})`);
+    if (p3.spellChip.right > p3.cap.right + 0.5) fails.push(`${name} long name: the chip escapes the caption's cap`);
+    await page.close();
   }
 } finally {
   await browser.close();

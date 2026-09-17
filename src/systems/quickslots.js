@@ -69,6 +69,13 @@ export const QUICKSLOT_TEXT = Object.freeze({
   putAway: (name) => `You put away your ${name}.`,
   handsEmpty: 'Your hands are already empty.',
   noLight: 'You have no light source.',
+  // QS6 - the spell slot's own three. The READY says nothing here: DFU's
+  // SetReadySpell speaks for itself ("Press button to fire spell.", the
+  // silence line, the spell-point refusal), and a second line over it
+  // would be the port talking across the game.
+  noSpells: 'You know no spells.',
+  spellGone: (name) => `You no longer know ${name}.`,
+  unreadied: (name) => `You put away ${name}.`,
 });
 
 /** AUDIT QS F2 - BARE HANDS ARE A SWAP TARGET. A swap out of empty hands
@@ -84,6 +91,18 @@ export const BARE_NAME = 'Bare hands';
 const bareHandOf = (key) => (key === BARE_KEYS.L ? 'L' : key === BARE_KEYS.R ? 'R' : null);
 
 const state = { c1: null, c2: null, swap: null };
+/** QS6 - THE SPELL SLOT, which is not one of those. A spell is not an
+ *  item: it carries no group, no template and no material, so
+ *  `quickslotKey` has nothing to say about it. What it does carry is an
+ *  INDEX - a SPELLS.STD record number, or the negative one a made spell
+ *  mints (systems/spellMaker.js:212-230) - and that index is already
+ *  this port's name for "which spell": it is what the save writes
+ *  (systems/save.js:271), what a restore reads back, and what
+ *  `setReadiedByIndex` resolves a readied spell by. So the slot keeps
+ *  the same key the rest of the port keeps, and a book that changed
+ *  under it (a spell sold, a made spell deleted) leaves a GHOST that
+ *  reads by name, exactly as a spent potion does. */
+let spellState = null;   // { index, name }
 
 /** THE KEY. The fields a player reads as "the same item": the template
  *  and its group, the material (an elven dagger is not an iron one),
@@ -148,7 +167,7 @@ export function assignQuickslot(slot, item) {
 }
 
 export function clearQuickslot(slot) { assertSlot(slot); state[slot] = null; }
-export function clearQuickslots() { for (const s of QUICKSLOTS) state[s] = null; }
+export function clearQuickslots() { for (const s of QUICKSLOTS) state[s] = null; spellState = null; }   // QS6: the spell slot is a slot too
 
 /** The slot this item's kind is in, or null. The tooltip's buttons
  *  read it to show "Unslot" on the one that holds the item. */
@@ -216,7 +235,7 @@ const cell = (item, extra = {}) => ({ item, name: itemLongName(item), condition:
  *         (`held`), or a ghost when it left the pack - else `empty`.
  * `c1`, `c2`: the consumables, each null when unassigned.
  */
-export function quickslotView(entity, { weapon = null, sheathed = false } = {}) {
+export function quickslotView(entity, { weapon = null, sheathed = false, readiedIndex = null } = {}) {
   const main = weapon ? cell(weapon, { sheathed: !!sheathed }) : null;
   let off;
   const lit = entity?.lightSource ?? null;
@@ -234,8 +253,28 @@ export function quickslotView(entity, { weapon = null, sheathed = false } = {}) 
         : r.held ? cell(r.held, { kind: 'swap', held: true })
           : { kind: 'swap', item: null, name: r.name, condition: null };
   } else off = { kind: 'empty', item: null, name: null, condition: null };
-  return { main, off, c1: resolveConsumable(entity, 'c1'), c2: resolveConsumable(entity, 'c2') };
+  // QS6: and the spell, which is the caption's chip rather than a
+  // corner - `readied` is the host's own read of the engine's readied
+  // index, so the chip lights for the spell that is actually in hand
+  // and not merely for the one the slot points at.
+  const sp = resolveSpellQuickslot(entity);
+  const spell = sp ? { ...sp, readied: readiedIndex != null && readiedIndex === sp.index } : null;
+  return { main, off, spell, cycling: quickslotCycling(),
+    c1: resolveConsumable(entity, 'c1'), c2: resolveConsumable(entity, 'c2') };
 }
+
+/** QS6 - DOES THE OFF-HAND CELL OFFER A SWAP RIGHT NOW?
+ *
+ *  The swap gave up its default key to the spell slot, and the cell it
+ *  is DRAWN in is the off hand's - so the off hand's key presses it,
+ *  under the rule the diamond has had since QS4: the key does what the
+ *  cell shows. A host asks this before it lights a torch, because a
+ *  free off hand offering a weapon is offering the weapon, not a light.
+ *
+ *  It is the VIEW's own answer, not a second reading of the same facts:
+ *  the order a lit light, a shield, an off-hand weapon and the swap
+ *  stand in lives in one place. */
+export const offHandOffersSwap = (entity) => quickslotView(entity).off.kind === 'swap';
 
 /**
  * THE USE. `hooks` are the host's own use hooks - the same object the
@@ -376,6 +415,284 @@ export function offHandQuickslot({ entity = null, say = null, toggleLight = null
   return toggleLight() === true ? { kind: 'light', lit: !!entity?.lightSource } : { kind: 'refused' };
 }
 
+// ── QS6: THE SPELL SLOT, AND THE HOLD THAT PICKS WHAT IS IN A SLOT ──
+//
+// Mac, 2026-09-17: "for slot 3, I want to change it to be for spells.
+// So you should be able to hold the keybind to switch between
+// applicable spells, and then press the keybind to equip. Same for 2/3.
+// Pressing the keybind, if not equipped, should equip the slot."
+//
+// TWO THINGS, and they are separable. The first is a SPELL SLOT: the
+// third key readies a spell instead of swapping a weapon. The second is
+// a HOLD: a slot's contents are chosen by holding its own key rather
+// than by a trip to a window, which is the whole point of a quick bar -
+// the bar you fill without opening anything.
+//
+// WHAT THE KEY DOES IS WHAT THE CELL SHOWS, still. The weapon swap did
+// not lose its action (it is in the registry, rebindable, and the
+// off-hand cell already DRAWS it whenever that hand is free) - it lost
+// its DEFAULT KEY, because the cell it is drawn in is the off hand's
+// and the off hand's key is the one a player will press looking at it.
+// Three of the four cells took a hold; the off hand did not, because
+// what it offers is not a list the player picks from - it is whatever
+// is in that hand.
+//
+// "APPLICABLE" IS THE PACK AND THE BOOK, not a filter over them. A
+// spell you cannot presently afford is still a spell you know, and
+// SetReadySpell already refuses it in DFU's own words at the press
+// (EntityEffectManager.cs:337-343); hiding it from the cycle would
+// make the list flicker as magicka moved, and would teach the player a
+// spell had been forgotten. So the cycle offers the whole book and the
+// whole of the pack's consumables, and every refusal stays where the
+// refusals already live.
+
+const bookOf = (entity) => (Array.isArray(entity?.spells) ? entity.spells : []);
+/** A spell this slot can hold: one with the numeric index that is the
+ *  port's name for it. Everything the book can contain has one. */
+const keyedSpell = (sp) => !!sp && typeof sp === 'object' && Number.isFinite(sp.index);
+
+/** The slot's stored spell kind, or null. A copy, as quickslotEntry is. */
+export const spellQuickslot = () => (spellState ? { ...spellState } : null);
+
+/** Point the slot at a spell. False, and nothing changed, for anything
+ *  the book could not have given us. */
+export function setSpellQuickslot(sp) {
+  if (!keyedSpell(sp)) return false;
+  spellState = { index: sp.index, name: String(sp.name ?? '') };
+  return true;
+}
+
+export function clearSpellQuickslot() { spellState = null; }
+
+/** The slot resolved against the BOOK: the live record a press readies,
+ *  and the name to draw. Null when unassigned; `spell` null for a ghost
+ *  - a spell the player no longer knows - which keeps its name so the
+ *  refusal can say which one it was. */
+export function resolveSpellQuickslot(entity) {
+  if (!spellState) return null;
+  const spell = bookOf(entity).find((sp) => sp?.index === spellState.index) ?? null;
+  return { index: spellState.index, name: spell?.name || spellState.name, spell };
+}
+
+/**
+ * THE SPELL SLOT'S PRESS. Mac: "Pressing the keybind, if not equipped,
+ * should equip the slot."
+ *
+ * `magic` is the host's ONE cast engine (scenes/hostMagic.js) and every
+ * law about readying is its own: the silence gate, the spell-point
+ * refusal, the CasterOnly instant cast, the "Press button to fire
+ * spell." line. This asks it and says nothing over it.
+ *
+ * A press with the slot ALREADY readied puts the spell away, through
+ * the engine's own AbortReadySpell (EntityEffectManager.cs:268-270) -
+ * the same shape the swap cell has, where a second press swaps back.
+ *
+ * An UNSET slot takes the book's first spell rather than refusing: a
+ * player who has never held the key has an empty slot, and a key that
+ * says "nothing is here" while the book is full is a key that teaches
+ * nothing. The hold is how you choose; the first press is how you start.
+ */
+export function spellQuickslotPress({ entity = null, magic = null, say = null } = {}) {
+  let r = resolveSpellQuickslot(entity);
+  if (!r) {
+    const first = bookOf(entity).find(keyedSpell) ?? null;
+    if (!first) { say?.(QUICKSLOT_TEXT.noSpells); return { kind: 'none' }; }
+    setSpellQuickslot(first);
+    r = resolveSpellQuickslot(entity);
+  }
+  if (!r.spell) { say?.(QUICKSLOT_TEXT.spellGone(r.name)); return { kind: 'gone', name: r.name }; }
+  // ALREADY IN HAND: the press puts it away. `readiedIndex` is the
+  // engine's own read of which spell is readied - the same index this
+  // slot keys on, so the two cannot disagree about identity.
+  if (magic?.readiedIndex?.() === r.index) {
+    const put = magic.abortReadySpell?.() === true;
+    if (put) say?.(QUICKSLOT_TEXT.unreadied(r.name));
+    // `readied` is the state AFTER the press, as QS4's `lit` is.
+    return { kind: put ? 'unreadied' : 'pressed', name: r.name, readied: !put };
+  }
+  magic?.readySpell?.(r.spell);
+  // THE KIND DOES NOT JUDGE THE ENGINE. `readied` is simply whether the
+  // spell is in hand now, and a spell NOT in hand is not a refusal: a
+  // CasterOnly spell readies and CASTS in the same breath (DFU's
+  // SetReadySpell :350-351), so it is spent rather than held. Which of
+  // those two happened is the engine's to say, and it has said it.
+  return { kind: 'pressed', name: r.name, readied: magic?.readiedIndex?.() === r.index };
+}
+
+// ── THE CYCLE ─────────────────────────────────────────────────────
+
+/** The consumable KINDS the pack holds, in pack order, one entry per
+ *  kind - what a consumable slot can be pointed at. The kind the OTHER
+ *  consumable slot holds is not offered: "one kind lives in one slot"
+ *  is assignQuickslot's law, and a cycle that could steal the other
+ *  cell's potion would enforce it by emptying that cell. */
+export function consumableCandidates(entity, slot) {
+  const taken = CONSUMABLE_SLOTS.filter((s) => s !== slot).map((s) => state[s]?.key).filter((k) => k != null);
+  const out = [];
+  const seen = new Set();
+  for (const it of packOf(entity)) {
+    if (!isQuickConsumable(it)) continue;
+    const key = quickslotKey(it);
+    if (key == null || seen.has(key) || taken.includes(key)) continue;
+    seen.add(key);
+    out.push({ key, name: itemLongName(it), item: it });
+  }
+  return out;
+}
+
+/** The book, as the spell slot's candidate list. */
+export const spellCandidates = (entity) => bookOf(entity).filter(keyedSpell);
+
+/** The slots a hold can cycle - the two consumables and the spell. The
+ *  off hand is not one: see the header. */
+export const CYCLE_SLOTS = Object.freeze(['c1', 'c2', 'spell']);
+
+export const QUICK_CYCLE_LINGER_MS = 1200;   // how long the HUD keeps showing what a cycle chose
+let cycling = null;   // { slot, ms } - what the HUD lights up
+
+/** The slot a cycle last landed in, while it is still worth showing, or
+ *  null. The HUD reads it; a cycle raises it and the frame's tick lets
+ *  it fall, so a hold on a KEY and a hold on a phone's own cell light
+ *  the same lamp. */
+export const quickslotCycling = () => (cycling ? cycling.slot : null);
+
+/**
+ * ADVANCE a slot through its candidates and answer what it landed on
+ * (null when there is nothing to land on). This CHANGES the slot and
+ * performs NOTHING - the tap is what acts, which is the whole of the
+ * hold/press split Mac described.
+ *
+ * A slot whose kind is not in the list - an empty slot, or a ghost
+ * whose potion is spent - starts at the list's near end rather than
+ * nowhere, so the first step of a hold always shows something.
+ */
+export function cycleQuickslot(slot, { entity = null, dir = 1 } = {}) {
+  const step = dir < 0 ? -1 : 1;
+  if (slot === 'spell') {
+    const list = spellCandidates(entity);
+    if (!list.length) return null;
+    const at = spellState ? list.findIndex((sp) => sp.index === spellState.index) : -1;
+    const next = at < 0 ? (step > 0 ? 0 : list.length - 1) : (at + step + list.length) % list.length;
+    setSpellQuickslot(list[next]);
+    cycling = { slot, ms: QUICK_CYCLE_LINGER_MS };
+    return { slot, index: list[next].index, name: list[next].name, spell: list[next] };
+  }
+  if (!CONSUMABLE_SLOTS.includes(slot)) throw new Error(`quickslots: ${slot} does not cycle`);
+  const list = consumableCandidates(entity, slot);
+  if (!list.length) return null;
+  const at = state[slot] ? list.findIndex((c) => c.key === state[slot].key) : -1;
+  const next = at < 0 ? (step > 0 ? 0 : list.length - 1) : (at + step + list.length) % list.length;
+  state[slot] = { key: list[next].key, name: list[next].name };
+  cycling = { slot, ms: QUICK_CYCLE_LINGER_MS };
+  return { slot, key: list[next].key, name: list[next].name, item: list[next].item };
+}
+
+// ── THE HOLD ──────────────────────────────────────────────────────
+//
+// THE FRAME OWNS THESE KEYS, not the keydown. A press that acts on its
+// DOWN edge cannot also be the start of a hold - the potion is already
+// drunk by the time the player has held long enough to mean "let me
+// choose one". So the three are POLLED_ACTIONS (ui/input.js): the
+// keyboard dispatch declines them and each host's frame drives this
+// machine instead, the same way ReadyWeapon and SwitchHand are driven.
+//
+// The TAP is the host's - a potion needs the window's use hooks and a
+// spell needs the cast engine - and the CYCLE is ours, because a
+// candidate list is the model's own knowledge.
+
+export const QUICK_HOLD_MS = 350;    // past this the press is a hold, not a tap
+export const QUICK_STEP_MS = 300;    // ...and it steps this often while it is held
+const QUICK_TICK_MAX_MS = 250;       // a frame longer than this was a stall, not play
+/** AUDIT QS6 F6 - AND A GAP IN THE FRAMES IS A BLOCKED FRAME NOBODY DECLARED.
+ *
+ *  F2 taught that a hold carried across a window must not perform on the way
+ *  out, and `blocked` says so - but only where a host remembers to pass it,
+ *  and only where the tick is REACHED. `scenes/dungeon.js` had the call
+ *  inside its own `!overlayHeld` gate, so its `blocked` argument was dead;
+ *  the two outdoor hosts return above the tick while a full-screen video
+ *  holds the frame (`frameHeld`, scenes/shared.js), and a backgrounded tab
+ *  gets no frames at all. Each of those is the same hazard behind a
+ *  different door, and a law enforced by four hosts is a law enforced by
+ *  memory.
+ *
+ *  So the machine defends itself: if the WALL CLOCK says the frames stopped,
+ *  every hold disarms, whatever the caller declared. This is the one place
+ *  real time is read here, and it is read about FRAMES rather than about the
+ *  game - `dt` is still what measures a hold. */
+export const QUICK_GAP_MS = 1000;
+let lastTickAt = 0;
+
+/** slot -> action. The registry's own names; a rebind moves the key,
+ *  not this. */
+export const CYCLE_ACTIONS = Object.freeze({ c1: 'QuickUse1', c2: 'QuickUse2', spell: 'QuickSpell' });
+
+const holds = new Map();
+
+/** Every hold forgotten and the lamp put out. Nothing in `src/` calls
+ *  this - the hosts pass `blocked` instead, which is the same act
+ *  without the gap - so it exists for a driver that wants a clean
+ *  machine between two runs (the pins, and any probe). */
+export function resetQuickslotHolds() { holds.clear(); cycling = null; lastTickAt = 0; }
+
+/** AUDIT QS6 F2 - A HOLD THAT SPANS AN OVERLAY MUST NOT PERFORM ON THE
+ *  WAY OUT, and CLEARING the holds was not enough to stop it.
+ *
+ *  The sequence, driven: the player holds 1 in play; a window opens and
+ *  the frame goes `blocked`, which dropped every hold; the window closes
+ *  WHILE THE KEY IS STILL DOWN; the next tick finds no state for the
+ *  slot, reads the key as down, and calls that a RISING EDGE - so the
+ *  release a moment later is a tap and a potion is drunk that the player
+ *  never asked for. The guard had moved the bug one step later rather
+ *  than removing it.
+ *
+ *  So a blocked frame DISARMS rather than forgets: every slot is held
+ *  down, already cycled (so its release performs nothing) and stepping
+ *  never (so it does not quietly walk the book under the window). The
+ *  key has to come up and go down again to mean anything. */
+const disarm = () => ({ down: true, ms: 0, next: Infinity, cycled: true });
+
+/**
+ * ONE FRAME of the hold machine.
+ *
+ *   isHeld(action)   the host's own `held(keys, action)`
+ *   entity           whose pack and book the candidates come from
+ *   onTap(slot)      the host's performer for a short press
+ *   onCycle(slot, r) optional; what the hold landed on
+ *   blocked          true while this frame's keys are not the player's
+ *                    (an overlay, a pause) - every hold drops, silently
+ */
+export function tickQuickslotHold(dt, { isHeld = null, entity = null, onTap = null, onCycle = null, blocked = false } = {}) {
+  const ms = Math.min(QUICK_TICK_MAX_MS, Math.max(0, (Number(dt) || 0) * 1000));
+  if (cycling) { cycling.ms -= ms; if (cycling.ms <= 0) cycling = null; }
+  const at = Date.now();
+  const gap = lastTickAt ? at - lastTickAt : 0;
+  lastTickAt = at;
+  if (blocked || gap > QUICK_GAP_MS || typeof isHeld !== 'function') {
+    for (const slot of CYCLE_SLOTS) holds.set(slot, disarm());
+    return;
+  }
+  for (const slot of CYCLE_SLOTS) {
+    const st = holds.get(slot) ?? { down: false, ms: 0, next: QUICK_HOLD_MS, cycled: false };
+    const down = isHeld(CYCLE_ACTIONS[slot]) === true;
+    if (down && !st.down) { st.down = true; st.ms = 0; st.next = QUICK_HOLD_MS; st.cycled = false; }
+    else if (down) {
+      st.ms += ms;
+      while (st.ms >= st.next) {
+        st.next += QUICK_STEP_MS;
+        st.cycled = true;
+        onCycle?.(slot, cycleQuickslot(slot, { entity }));   // the cycle raises the lamp itself
+      }
+    } else if (st.down) {
+      st.down = false;
+      // A HOLD IS NOT A PRESS. The release of a hold performs nothing -
+      // it has already done its work, which was choosing.
+      if (!st.cycled) onTap?.(slot);
+      else cycling = { slot, ms: QUICK_CYCLE_LINGER_MS };
+    }
+    holds.set(slot, st);
+  }
+}
+
 // ── THE SAVE ──────────────────────────────────────────────────────
 // Rides composeSessionState / restoreSessionState (systems/save.js),
 // the seam every host's save already passes through, so no host is
@@ -386,6 +703,9 @@ export function offHandQuickslot({ entity = null, say = null, toggleLight = null
 export function quickslotSaveData() {
   const out = {};
   for (const s of QUICKSLOTS) out[s] = state[s] ? { key: state[s].key, name: state[s].name } : null;
+  // QS6: the spell slot rides the same block, keyed the way save.js
+  // already keys a spell - by index (systems/save.js:271).
+  out.spell = spellState ? { index: spellState.index, name: spellState.name } : null;
   return out;
 }
 
@@ -396,4 +716,6 @@ export function restoreQuickslotSaveData(data) {
     const e = data[s];
     if (e && typeof e.key === 'string' && typeof e.name === 'string') state[s] = { key: e.key, name: e.name };
   }
+  const sp = data.spell;
+  if (sp && Number.isFinite(sp.index) && typeof sp.name === 'string') spellState = { index: sp.index, name: sp.name };
 }

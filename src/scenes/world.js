@@ -167,7 +167,7 @@ import { rayDirFromScreen, projectToScreen, ndcFromScreen } from '../player/tapR
 import { isRiding } from '../systems/transport.js';   // TR2: is there a mount under us
 import { useItem } from '../systems/useItem.js';   // UI1: MagicItemPicker_OnItemPicked's two arms
 import { isEnchanted } from '../systems/inventory.js';   // UI1: the use path's enchanted test
-import { useQuickslot, swapQuickslot, offHandQuickslot } from '../systems/quickslots.js';   // QS2: the diamond's two performers - the window's own use ladder, and the one equipItem
+import { useQuickslot, swapQuickslot, offHandQuickslot, spellQuickslotPress, offHandOffersSwap, tickQuickslotHold } from '../systems/quickslots.js';   // QS2: the diamond's two performers - the window's own use ladder, and the one equipItem   // QS6: the spell slot's press, the off hand's swap question, and the hold machine the frame drives
 import { createDroppedLoot, droppedLootHooks, containerDropPos } from './droppedLoot.js';   // U8e: the ground piles; G5: the pile's DaggerfallLoot identity
 import { preloadPaperDollArt } from '../ui/paperDoll.js';   // U8f: the avatar base
 import { seedStartingEquipment, EQUIP_SLOTS } from '../systems/equip.js';   // U8h: the worn-weapon binding
@@ -2768,7 +2768,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2163 mounts the same one, gated on
+  // and dungeonContext.js:2183 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
   // that context through modes.dungeonCtx - so worldModes.js:4629
@@ -3106,12 +3106,38 @@ export async function bootWorld(canvas, renderer, params, status) {
     weaponRig.refreshWorn();
     return true;
   };
+  /** QS6 (Mac: "for slot 3, I want to change it to be for spells"): the spell
+   *  slot's press. Every law about readying is the cast engine's - the silence
+   *  gate, the spell-point refusal, the CasterOnly instant cast, the line it
+   *  says - so this host names the entity, the engine and the popup channel and
+   *  nothing else. */
+  const quickSpell = () => {
+    spellQuickslotPress({ entity: playerEntity, magic, say: (l) => townTalk.say(l) });
+    return true;
+  };
   /** QS4: the off-hand cell's press. The light is the MOD's, so the act is
-   *  the rig's door onto it and this host only names the entity and the line. */
+   *  the rig's door onto it and this host only names the entity and the line.
+   *
+   *  QS6: AND THE SWAP, when that is what the cell is showing. The swap gave up
+   *  Digit3 to the spell slot and the cell it is drawn in is this one, so the
+   *  key does what the cell shows - which is the law the diamond has had since
+   *  QS4, applied to the one state that had two keys and now has one. */
   const quickOffHand = () => {
+    if (offHandOffersSwap(playerEntity)) return quickSwap();
     offHandQuickslot({ entity: playerEntity, say: (l) => townTalk.say(l), toggleLight: () => weaponRig.toggleLight() });
     return true;
   };
+  /** QS6 - ONE FRAME of the hold machine, in the host's own words. A tap
+   *  performs the slot; a hold cycles what is in it. The three keys are
+   *  POLLED_ACTIONS (ui/input.js) because only the frame can tell those apart,
+   *  so this is their ONE door for a key here, exactly as the Z and H latches
+   *  below are theirs. `blocked` is the same gate a gameplay key takes. */
+  const tickQuickHold = (dt) => tickQuickslotHold(dt, {
+    isHeld: (a) => held(keys, a),
+    blocked: gamePaused(),   // `townTalk.overlayActive || modes.overlayHeld` - the same door every gameplay key takes
+    entity: playerEntity,
+    onTap: (slot) => (slot === 'spell' ? quickSpell() : quickUse(slot === 'c1' ? 1 : 2)),
+  });
 
   /** UI1: MagicItemPicker_OnItemPicked's two arms (:91-97) through the
    *  port's ONE use seam - systems/useItem.js, the same call the
@@ -4370,7 +4396,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:5487), so exterior mode and a
+    // composer, dungeonContext.js:5509), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -5102,6 +5128,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     quickUse: (n) => quickUse(n),
     quickSwap: () => quickSwap(),
     quickOffHand: () => quickOffHand(),
+    quickSpell: () => quickSpell(),   // QS6
     // UI1: DaggerfallUI :581-583 - the U key's window opens only when
     // something in the pack is usable by magic; nothing usable, no
     // window, which is why this returns rather than showing an empty
@@ -5277,7 +5304,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     // too - under the same overlay and pause gates (socialMenuCanOpen is
     // `not paused and no window over the HUD`, which is exactly the door a
     // gameplay key takes here) rather than a fourth gate invented for them.
-    if (!townTalk.overlayActive && QUICKSLOT_ACTIONS.has(act) && socialMenuCanOpen() && routeAction(act, hudCtx)) { e.preventDefault(); return; }
+    // QS6: EXCEPT THE THREE THAT HOLD. QuickUse1, QuickUse2 and QuickSpell are
+    // POLLED_ACTIONS now (ui/input.js): a tap performs the slot and a hold
+    // cycles it, and only the frame can tell those apart - so this ladder must
+    // decline them here exactly as routeKey's own `POLLED_ACTIONS.has(act)`
+    // arm does, or the down edge would drink the potion the hold was about to
+    // choose. This is WEAPON-VIS2's lesson at a second door.
+    if (!townTalk.overlayActive && QUICKSLOT_ACTIONS.has(act) && !POLLED_ACTIONS.has(act) && socialMenuCanOpen() && routeAction(act, hudCtx)) { e.preventDefault(); return; }
     // U45 - THE ONE DOOR PER DESTINATION: this ladder and the large
     // HUD's eleven panels open the same windows, so they read the same
     // object. It is the same law U43 applied to the interior arm, one
@@ -5737,7 +5770,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7370-7382 -
+  // worldModes answers it in BOTH modes (worldModes.js:7386-7398 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -7735,6 +7768,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     quickUse: (n) => quickUse(n),
     quickSwap: () => quickSwap(),
     quickOffHand: () => quickOffHand(),
+    quickSpell: () => quickSpell(),   // QS6
     // S40: AbortRestForEnemySpawn (:301-304) reaches the rest window
     // in THIS host's overlay slot. In DFU the OnEncounter subscription
     // is on the WINDOW (OnPush :264, OnPop :275), so it follows the
@@ -8431,6 +8465,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         const hNowW = held(keys, 'SwitchHand');
         if (!hNowW && hPrevW) weaponRig.switchHand();
         hPrevW = hNowW;
+        tickQuickHold(dt);   // QS6: the quickslot holds, beside the two latches they are modelled on
         // P14 fall damage (host parity - CheckFallingDamage +
         // PlayerHealth verbatim; sounds 91/92). FD1 took the
         // outdoor-water exemption off the board: playerGroundTile is
@@ -9562,7 +9597,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           // on a touch-first device (ui/enhancedHud.js's second departure),
           // and a door the host never handed over is a control that
           // platform does not have - which is the whole of AUDIT SOC C9.
-          quickUse: (n) => quickUse(n), quickSwap: () => quickSwap(), quickOffHand: () => quickOffHand(),
+          quickUse: (n) => quickUse(n), quickSwap: () => quickSwap(), quickOffHand: () => quickOffHand(), quickSpell: () => quickSpell(),   // QS6
           weaponSheathed: !!weaponRig.playerWeapon.sheathed });   // AUDIT 28 W2: the arrow counter's drawn-bow gate   // U38 + X4 + U43
     }
     townTalk.frame(dt);   // T3b: HUD lines + the talk overlay, above everything

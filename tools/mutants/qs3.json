@@ -177,8 +177,8 @@
   {
     "name": "AUDITQS-F8-a-mouse-on-a-touchscreen-fires-the-slot",
     "file": "src/ui/enhancedHud.js",
-    "old": "    if (e && e.pointerType != null && e.pointerType !== 'touch' && e.pointerType !== 'pen') return;",
-    "new": "",
+    "old": "  const finger = (e) => !(e && e.pointerType != null && e.pointerType !== 'touch' && e.pointerType !== 'pen');",
+    "new": "  const finger = () => true;",
     "tests": [
       "test/qs3_hud.test.js"
     ]
@@ -250,7 +250,7 @@
   {
     "name": "QS4-the-off-cell-loses-its-key-again",
     "file": "src/ui/quickslotTags.js",
-    "old": "  if (kind === 'swap') return quickslotTag(CELL_ACTIONS.swap, opts);\n  return quickslotTag(CELL_ACTIONS.off, opts);",
+    "old": "  if (kind === 'swap') return quickslotTag(CELL_ACTIONS.swap, opts) ?? quickslotTag(CELL_ACTIONS.off, opts);\n  return quickslotTag(CELL_ACTIONS.off, opts);",
     "new": "  if (kind === 'torch') return torchTag(opts.readTorchKey ?? undefined);\n  if (kind === 'swap') return quickslotTag(CELL_ACTIONS.swap, opts);\n  return null;",
     "tests": [
       "test/qs3_hud.test.js"
