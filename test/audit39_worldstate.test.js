@@ -109,7 +109,7 @@ test('AUDIT 39r: the interior arrow that lands on the player flashes the screen'
   assert.match(WORLD_MODES, /import \{ flashPlayerDamage \} from '\.\.\/ui\/damageFlash\.js';/);
   const hit = WORLD_MODES.slice(WORLD_MODES.indexOf('onPlayerHit: (m) => {'));
   const body = hit.slice(0, hit.indexOf('addItem(playerEntity.items,'));
-  assert.ok(body.includes('hurtPlayer(playerEntity, dmg);') && body.includes('flashPlayerDamage();'),
+  assert.ok(body.includes('hurtPlayer(playerEntity, dmg);') && body.includes('flashPlayerDamage(dmg);'),
     'the flash sits with the damage, the sound and the cry');
 });
 

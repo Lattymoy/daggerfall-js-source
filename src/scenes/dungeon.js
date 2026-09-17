@@ -14,7 +14,8 @@ import { INTERIOR_CLEAR } from '../render/renderer.js';
 import { getInteractionMode, setInteractionMode, MODE_ACTIONS } from '../player/interactionMode.js';   // R1: the global PlayerActivate mode; AUDIT 58: its four ACTIONS
 import { setMidScreenText } from '../ui/midScreenText.js';   // AUDIT 64 F34: DaggerfallHUD's centred label
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
-import { immersiveFootsteps } from '../systems/immersiveFootsteps.js';   // IF1: Immersive Footsteps owns the stride and the three landing sounds once its clips are in (DisableVanillaFootsteps)
+import { immersiveFootsteps } from '../systems/immersiveFootsteps.js';
+import { betterAmbience, classicFootstepAllowed } from '../systems/betterAmbience.js';   // BA1: Better Ambience - the shake, the dungeon's fog and light, the reverb, the indoor rain, its own stride   // IF1: Immersive Footsteps owns the stride and the three landing sounds once its clips are in (DisableVanillaFootsteps)
 import { applyFog, DUNGEON_FOG } from '../render/underwaterFog.js';   // ROAD-B (b3): UnderwaterFog + WeatherManager.DungeonFogSettings
 import { audio } from '../systems/audio.js';   // FS-slice: the stride plays flat 2D, as PlayerFootsteps' customAudioSource does
 import { requestLook, makeLookGate, bindCursorToggle } from '../player/pointerLock.js';   // U45: PlayerMouseLook.cursorActive
@@ -125,7 +126,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // below, after this context; null falls to standing defaults.
       motorState: () => (_motorRef ? { eyeLevel: _motorRef.eye[1] - _motorRef.pos[1], capsule: _motorRef.height } : null),
       // MAC1 J: this host's canvas, for the pause door's relock. The
-      // context owns none of its own (dungeonContext.js:5452), so each
+      // context owns none of its own (dungeonContext.js:5453), so each
       // dungeon host hands its own in and the resume gesture carries
       // the pointer back with it (ui/pauseDoor.js:207-224).
       relock: () => requestLook(canvas) });
@@ -190,6 +191,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   _motorRef = player;   // DC1: the motorState seam binds here
     const _footsteps = new FootstepMachine();   // FS-slice
     immersiveFootsteps.onTransitionDungeonInterior();   // IF1: the standalone dungeon boot IS the dungeon transition (UpdateFootsteps_OnTransitionDungeonInterior)
+    betterAmbience.onTransition({ dungeon: { regionName: dfLocation.regionName, name: dfLocation.name, inCastle: () => !!ctx.insideDungeonCastle?.(), exitPos: ctx.enterMarker ? [ctx.enterMarker.x, ctx.enterMarker.y, ctx.enterMarker.z] : null } });   // BA1: the boot is the dungeon transition here too
   player.spawn(spawn[0], spawn[1], spawn[2]);
   console.log(`[spawn] marker ${JSON.stringify(ctx.startMarker)} -> feet [${spawn.map((v) => v.toFixed(3)).join(', ')}] (startSpawn build)`);
   // P10 Teleport actions: player transform = the destination object's
@@ -861,7 +863,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
           // `height` getter IS controller.height, and the swim toggle
           // three dozen lines above already reads it.
           dungeonShallow: _footsteps.waterStep(player.pos[1] + player.height / 2, surf, player.swimming) }));
-        if (_step && !immersiveFootsteps.ownsStride()) audio.playOneShot(_step.clip, _step.volume);   // IF1: DisableVanillaFootsteps - every classic clip is None while the mod owns the stride
+        if (_step && classicFootstepAllowed(_step.clip)) audio.playOneShot(_step.clip, _step.volume);   // IF1: DisableVanillaFootsteps - every classic clip is None while the mod owns the stride; BA1: Better Ambience nulls all but Dungeon2 and Outside2 (DisableBuiltInFootsteps' slip)
         // IF1: ImmersiveFootstepsObject.FixedUpdate - the dungeon arm off the water level (null = blockWaterLevel 10000) and the LIVE capsule centre.
         immersiveFootsteps.update(dt, {
           paused: overlayHeld, entity: playerEntity,
@@ -869,6 +871,14 @@ export async function bootDungeon(canvas, renderer, params, status) {
           transportMode: player.transportMode, swimming: !!player.isPlayerSwimming, pos: player.pos,
           inside: true, inDungeon: true,
           centreY: player.pos[1] + player.height / 2, waterSurfaceY: surf ?? null,
+        });
+        // BA1: BetterFootstepsComponentPlayer.Update, CameraShaker.Update, ReverbMod.Update and the rain source's Update, one call.
+        betterAmbience.frame(dt, {
+          entity: playerEntity, inside: true, inBuilding: false, inDungeon: true,
+          grounded: player.grounded, standingStill: player.standing, isRunning: player.isRunning, movingLessThanHalfSpeed: player.movingLessThanHalfSpeed,
+          levitating: player.levitating, swimming: !!player.isPlayerSwimming, motorSwimming: !!player.swimming, pos: player.pos, centreY: player.pos[1] + player.height / 2,
+          waterSurfaceY: surf ?? null, onExteriorWater: false, onExteriorWaterAny: false, onExteriorPath: false, onStaticGeometry: false, onFoot: true,
+          winter: false, climateIndex: 0, loadInProgress: false, paused: overlayHeld,   // AUDIT-BA F3
         });
       }
       cam.pos = player.eyeAt();   // EV1: the interpolated render eye
@@ -942,7 +952,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
           raycast: (o, d, m) => ctx.collider.raycast(o, d, m) })
       : { eye: cam.pos, thirdPerson: false };
     const target = [mwv.eye[0] + fwd[0], mwv.eye[1] + fwd[1], mwv.eye[2] + fwd[2]];
-    const view = lookAt(mwv.eye, target, [0, 1, 0]);
+    const view = betterAmbience.view(lookAt(mwv.eye, target, [0, 1, 0]));   // BA1: the shaker sits between the follower and the camera
     _lastProj = proj; _lastView = view;   // TI1: the tap ray unprojects through the frame the finger saw
     if (touch) {   // TI1: the lock-on dot over the foe's chest, hidden behind the camera
       const _dp = _lockChest ? projectToScreen(_lockChest, canvas.clientWidth, canvas.clientHeight, proj, view, largeHudViewportRect(canvas.clientHeight)) : null;
@@ -954,12 +964,12 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // on which block the player stands in (PlayerAmbientLight.cs:82-90),
     // so it has to follow them across a castle or special-area
     // boundary the way the load-time write never could.
-    renderer.setLighting(new Float32Array(ctx.ambient), 0);
+    { const _tri = betterAmbience.dungeonAmbient(); renderer.setLighting(new Float32Array(_tri ? _tri.equator : ctx.ambient), 0, undefined, _tri); }   // BA1: FoggyDungeons' Trilight, else PlayerAmbientLight's flat
     // ROAD-B (b3): UnderwaterFog.UpdateFog, at PlayerEnterExit.Update's
     // own cadence (:349-352). The load-time setFog at :331 stays as the
     // dry state; this is the per-frame one, and DUNGEON_FOG is the same
     // DungeonFogSettings written there (WeatherManager.cs:77).
-    applyFog(renderer, ctx.underwaterFogSettings?.(cam.pos[1], player.pos, DUNGEON_FOG) ?? DUNGEON_FOG);
+    applyFog(renderer, ctx.underwaterFogSettings?.(cam.pos[1], player.pos, betterAmbience.dungeonFog() ?? DUNGEON_FOG) ?? betterAmbience.dungeonFog() ?? DUNGEON_FOG);   // BA1: FoggyDungeons' linear fog is the base the water murk overrides
     renderer.setPointLights(
       // A10: DungeonLightHandler's XZ block range culls first, the
       // 16-slot shader cap picks from what survives (dungeonLights.js

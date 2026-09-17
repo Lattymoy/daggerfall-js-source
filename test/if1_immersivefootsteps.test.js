@@ -606,10 +606,10 @@ test('AUDIT-IF F3: LoadAudio puts every clip in flight at once, and one missing 
 test('IF1: the four stride hosts ask ownsStride before the classic play and drive the component each frame; the modal host raises the three transitions and the standalone dungeon its own; the three landing sinks and the dungeon context\'s three gates; the interior context lists the combined mesh\'s materials; the inventory close refreshes; the records', () => {
   const world = rd('src/scenes/world.js'), ext = rd('src/scenes/exterior.js'), wm = rd('src/scenes/worldModes.js'), dj = rd('src/scenes/dungeon.js'), dc = rd('src/scenes/dungeonContext.js');
   for (const [name, src] of [['world', world], ['exterior', ext], ['worldModes', wm], ['dungeon', dj]]) {
-    assert.match(src, /if \(_step && !immersiveFootsteps\.ownsStride\(\)\) audio\.playOneShot\(_step\.clip, _step\.volume\);/, `${name}: DisableVanillaFootsteps`);
+    assert.match(src, /if \(_step && classicFootstepAllowed\(_step\.clip\)\) audio\.playOneShot\(_step\.clip, _step\.volume\);/, `${name}: DisableVanillaFootsteps (BA1: through the one gate both mods' DisableBuiltInFootsteps answer)`);
     assert.ok(!/if \(_step\) audio\.playOneShot\(_step\.clip, _step\.volume\);/.test(src), `${name}: no ungated classic play`);
     assert.equal((src.match(/immersiveFootsteps\.update\(dt, \{/g) ?? []).length, 1, `${name}: one FixedUpdate feed`);
-    assert.match(src, /import \{ immersiveFootsteps \} from '\.\.\/systems\/immersiveFootsteps\.js'/, name);
+    assert.match(src, /import \{ immersiveFootsteps(?:, [^}]+)? \} from '\.\.\/systems\/immersiveFootsteps\.js'/, name);   // BA1: world.js also takes reportModCompatibilityIssues
   }
   // the exterior hosts hand the exterior arm's reads; the inside hosts the water arm's
   for (const src of [world, ext]) {

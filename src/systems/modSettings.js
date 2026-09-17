@@ -467,7 +467,7 @@ export const MOD_SETTINGS = Object.freeze({
     keys: Object.freeze({
       Enabled: Object.freeze({
         default: true,
-        description: 'Kirk.O\u2019s Immersive Footsteps 1.01, 1:1: footsteps that sound like the ground you walk on, and armour that sways as you move.',
+        description: 'Kirk.O\u2019s Immersive Footsteps 1.01, 1:1: footsteps by the ground you walk on, armour that sways as you move.',
       }),
       'AudioQualitySettings.SoundClipQuality': Object.freeze({ default: 0, options: Object.freeze(['Low-Quality (Retro)', 'High-Quality']), description: 'What Quality Sound-Clips Get Used' }),
       'FootstepSettings.AllowFootstepSounds': Object.freeze({ default: true, description: 'If Player Footsteps Should Make A Sound || Default = True' }),
@@ -479,6 +479,51 @@ export const MOD_SETTINGS = Object.freeze({
       'ErrorLoggingAndCompatibilitySettings.AllowModCompatWarnings': Object.freeze({ default: true, description: 'If Mod Should Give Warning Messages About Detected Incompatibility Issues || Default = True' }),
       'ErrorLoggingAndCompatibilitySettings.AllowVerboseErrorLogging': Object.freeze({ default: false, description: 'If Mod Should Print Full & Verbose Error Logs For Debugging || Default = False' }),
       'ErrorLoggingAndCompatibilitySettings.DoNotSpamExceptionsLogs': Object.freeze({ default: true, description: 'Only Log Mod Exceptions Once Per Session, To Not Fill Log File || Default = True' }),
+    }),
+  }),
+  // BA1 (2026-09-16, Mac: "Next mod to integrate 1:1 ensuring compatibility"):
+  // BETTER AMBIENCE 0.1.4 (Joshua Steinhauer). The shipped modsettings.json's
+  // six sections and twenty keys, section and name joined with a dot (the
+  // section names carry spaces, as the mod wrote them: 'Better Footsteps.enable'),
+  // the port's own `Enabled` in front (MO1). ONE DEPARTURE FROM THE SHIPPED
+  // KEYS: `Better Footsteps.enable` ships OFF. The mod ships it on, and so
+  // does Immersive Footsteps ship its own stride on - and Immersive Footsteps'
+  // author wrote the ruling (ImmersiveFootstepsMain.cs:424-449): with both
+  // on "you will be constantly hearing overlapping footstep sounds", so
+  // "you should always have Better Ambience's 'Better Footsteps' setting
+  // disabled", and it posts a warning box at every game start until you do.
+  // This port ships the pair the way that author says a player should run
+  // them, and ports his warning for the player who turns both on anyway.
+  // Every other module ships as the mod ships it. The keys the mod wrote no
+  // description for carry the port's words (the pin requires one).
+  'better-ambience': Object.freeze({
+    title: 'Better Ambience',
+    author: 'Joshua Steinhauer',
+    keys: Object.freeze({
+      Enabled: Object.freeze({
+        default: true,
+        description: 'Joshua Steinhauer\u2019s Better Ambience 0.1.4, 1:1: the camera shakes when you are hurt, a dungeon gets its own fog, light and echo, and rain is heard indoors.',
+      }),
+      'Better Footsteps.enable': Object.freeze({ default: false, description: 'Enables better footsteps module' }),
+      'Better Footsteps.armorVolume': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'Volume for armor clanking' }),
+      'Better Footsteps.footstepVolume': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'Volume for footsteps' }),
+      'Dungeon Reverb.level': Object.freeze({ default: 1, options: Object.freeze(['Low', 'Medium', 'High']), description: 'How much a dungeon echoes: Low is a cave, Medium a stone room, High a quarry.' }),
+      'Camera Shake.shakeAmountAdd': Object.freeze({ default: 0.0, min: 0.0, max: 20.0, float: true, step: 0.5, description: 'Shake added to every hit, before the hit\u2019s own share.' }),
+      'Camera Shake.shakeAmountMultiplier': Object.freeze({ default: 10.0, min: 0.0, max: 20.0, float: true, step: 0.5, description: 'Shake per hit, scaled by the damage as a share of your full health.' }),
+      'Camera Shake.maxShake': Object.freeze({ default: 10.0, min: 0.1, max: 30.0, float: true, step: 0.5, description: 'The most one hit can shake the camera.' }),
+      'Camera Shake.roughness': Object.freeze({ default: 10.0, min: 0.1, max: 30.0, float: true, step: 0.5, description: 'How jarring the shake is: lower is smoother.' }),
+      'Camera Shake.fadeInTime': Object.freeze({ default: 0.3, min: 0.05, max: 3.0, float: true, step: 0.05, description: 'Seconds the shake takes to build.' }),
+      'Camera Shake.fadeOutTime': Object.freeze({ default: 0.5, min: 0.05, max: 3.0, float: true, step: 0.05, description: 'Seconds the shake takes to settle.' }),
+      'Dungeon Fog.enableFog': Object.freeze({ default: true, description: 'Enables random dungeon Fog Effect' }),
+      'Dungeon Fog.maxFogDistance': Object.freeze({ default: 100.0, min: 20.0, max: 200.0, float: true, step: 1, description: 'Max fog distance from fog start' }),
+      'Dungeon Fog.minFogDistance': Object.freeze({ default: 80.0, min: 20.0, max: 200.0, float: true, step: 1, description: 'Min fog distance from fog start' }),
+      'Dungeon Fog.maxFogStart': Object.freeze({ default: 10.0, min: 0.0, max: 100.0, float: true, step: 1, description: 'Max fog start from camera' }),
+      'Dungeon Fog.minFogStart': Object.freeze({ default: 0.0, min: 0.0, max: 100.0, float: true, step: 1, description: 'Min fog start from camera' }),
+      'Dungeon Lighting.enableFogAmbientEffect': Object.freeze({ default: true, description: 'Enables custom dungeon ambient lighting' }),
+      'Dungeon Lighting.dungeonDarkness': Object.freeze({ default: 1.0, min: 0.0, max: 3.0, float: true, step: 0.1, description: 'The darkness of dungeons' }),
+      'Dungeon Lighting.fogAmbientEffect': Object.freeze({ default: 0.2, min: 0.0, max: 1.0, float: true, step: 0.05, description: 'How much the random dungeon color affects dungeon lighting' }),
+      'Better Rain.enableBetterRain': Object.freeze({ default: true, description: 'Makes rain particles look a bit better' }),
+      'Better Rain.enableBetterSnow': Object.freeze({ default: true, description: 'Makes snow particles look a bit better' }),
     }),
   }),
 });

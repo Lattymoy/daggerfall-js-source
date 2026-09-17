@@ -1078,7 +1078,7 @@ export function applyFallLanding(entity, distance, { hurt = null, sound = null, 
     // AUDIT 24 (wave 39): PlayerHealth.ApplyPlayerFallDamage calls
     // RemoveHealth (:57), which is ShowPlayerDamage.Flash's only
     // trigger. A fall flashes the screen; a poison does not.
-    flashPlayerDamage();
+    flashPlayerDamage(dmg);   // BA1: RemoveHealth carries the amount
     // AUDIT 58: at FootstepVolumeScale, not full. ApplyPlayerFallDamage
     // is `PlayOneShot((int)FallDamageSound, 0, FootstepVolumeScale)`
     // (PlayerFootsteps.cs:307-311) and HardFallAlert the same for
@@ -1864,7 +1864,7 @@ export function createMusicDirector({ fm = null, play = null, stop = null, playi
  *  through to `cam.yaw += movementX` - so every swing inside a
  *  building or a dungeon turned the camera with it.
  *
- *  `dungeon.js:255`, the standalone host, has always had the right
+ *  `dungeon.js:257`, the standalone host, has always had the right
  *  shape: attack, then return. It has no modal sibling to share the
  *  drag with, which is why it never needed a mode in the test at all.
  *

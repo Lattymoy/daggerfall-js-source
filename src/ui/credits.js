@@ -170,5 +170,14 @@ export const CREDITS = Object.freeze({
       contact: 'forums.dfworkshop.net',
       vendor: Object.freeze(['immersive-footsteps']),
     }),
+    Object.freeze({
+      title: 'Better Ambience',
+      version: '0.1.4',
+      author: 'Joshua Steinhauer',
+      what: 'The camera shakes when you are hurt, by how much of you the blow took (BA1); a dungeon gets its own fog colour and its own light, rolled from its name, and a stone reverb over every sound; rain is heard indoors, muffled, and at a dungeon\u2019s door; and its own footsteps with an armour clank, kept off beside Immersive Footsteps as that mod\u2019s author asks.',
+      terms: 'Ported 1:1 from the sixteen sources the shipped bundle carries, under the author\u2019s MIT licence; the 29 clips the mod asks for vendored from the author\u2019s repository - see vendor/better-ambience/README.md for the permission record. The rain and snow particle tweaks have no twin: the port\u2019s precipitation is its own.',
+      contact: 'forums.dfworkshop.net',
+      vendor: Object.freeze(['better-ambience']),
+    }),
   ]),
 });

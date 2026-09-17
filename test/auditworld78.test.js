@@ -135,7 +135,7 @@ test('AUDIT WORLD7/8 A4/A10/C7/C9: the records and the residue - the machine tic
 test('AUDIT WORLD7/8 B1/B4/C2: the stamp is the RELAY\'s millisecond - under an installed offset the wire\'s inverse over the shared minute answers the relay\'s instant, where sharedWallMs answers this machine\'s (right for a display, wrong for a stamp two machines compare); a stamp ahead of now is clamped at both readers by source', () => {
   const off = 2 * 3600 * 1000;   // this machine two hours from the relay
   const t0 = Date.now();
-  setSharedClock(() => sharedClassicMinutes(Date.now() + off), (m) => wallMsForClassicMinutes(m) - off);   // world.js:338's own install
+  setSharedClock(() => sharedClassicMinutes(Date.now() + off), (m) => wallMsForClassicMinutes(m) - off);   // world.js:339's own install
   try {
     assert.equal(sharedClockOn(), true);
     const relay = wallMsForClassicMinutes(worldMinutes());

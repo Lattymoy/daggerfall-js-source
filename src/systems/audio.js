@@ -13,6 +13,7 @@
 
 import { SndFile, SAMPLE_RATE } from '../formats/sndFile.js';
 import { getFloat } from './settings.js';   // SETT: SoundVolume
+import { REVERB_PRESET, reverbImpulse } from './reverbPresets.js';   // BA1: AudioReverbZone's presets and the impulse built from them
 import { setEquipSoundSink } from './equip.js';   // ES2: the equip moment's one audio door
 
 /** The ArrayBuffer decodeAudioData is allowed to detach: THE VIEW'S OWN
@@ -62,10 +63,55 @@ export class AudioEngine {
     if (!this._master || this._master.context !== this.ctx) {
       this._master = this.ctx.createGain();
       this._master.connect(this.ctx.destination);
+      // BA1 / AUDIT-BA F4: THE REVERB SEND. Unity's zone takes every AudioSource the listener stands near at its
+      // reverbZoneMix (1 by default) - the music's included. The port's music runs its own master on the same
+      // context (systems/songPlayer.js), so the zone is a SEND node both masters feed; setReverb hangs the
+      // convolver off it, and nothing is downstream of it while no zone is on.
+      this._reverbIn = this.ctx.createGain();
+      this._master.connect(this._reverbIn);
+      this._reverb = null;   // a new context is a new bus; the zone is re-armed by its next setReverb
     }
     this._master.gain.value = getFloat('Controls', 'SoundVolume', 0, 1);
     return this._master;
   }
+
+  /** BA1: AudioLowPassFilter - a biquad low-pass at `cutoffHz` (Unity's default resonance Q 1). */
+  _lowpass(cutoffHz) {
+    const f = this.ctx.createBiquadFilter();
+    f.type = 'lowpass';
+    f.frequency.value = cutoffHz;
+    f.Q.value = 1;
+    return f;
+  }
+
+  /** BA1: AudioReverbZone (ReverbMod.cs) - Unity's zone sits on the player with min and max distance 1000, so
+   *  the listener is always at its centre and EVERY source (2D and 3D alike, reverbZoneMix 1) is sent through
+   *  the preset's reverb and heard wet beside its dry self. The port's bus is one master gain, so the zone is a
+   *  convolver hung off it: master -> destination (dry) and master -> convolver -> wet -> destination. The
+   *  impulse is SYNTHESISED from the preset's I3DL2 numbers (systems/reverbPresets.js) - the decay time, its
+   *  high-frequency ratio, the reflections and reverb levels and delays - not FMOD's algorithm; the shape is
+   *  the preset's, the exact tail is not. `preset` null takes the zone off. */
+  setReverb(preset) {
+    this._ensureCtx();
+    if (!this.ctx) return false;
+    this._out();
+    const send = this._reverbIn;
+    if (this._reverb) { try { send.disconnect(); this._reverb.wet.disconnect(); } catch { /* gone */ } this._reverb = null; }
+    if (!preset) return true;
+    const p = typeof preset === 'string' ? REVERB_PRESET[preset] : preset;
+    if (!p) return false;
+    const conv = this.ctx.createConvolver();
+    conv.normalize = false;
+    conv.buffer = reverbImpulse(this.ctx, p);
+    const wet = this.ctx.createGain();
+    wet.gain.value = 1;
+    send.connect(conv).connect(wet).connect(this.ctx.destination);
+    this._reverb = { conv, wet, preset: typeof preset === 'string' ? preset : 'custom' };
+    return true;
+  }
+  get reverbPreset() { return this._reverb?.preset ?? null; }
+  /** AUDIT-BA F4: the zone's send, for a bus that is not this master (the music's). Null with no context. */
+  reverbSend() { return this._out() ? this._reverbIn : null; }
 
   /** AUDIT 18 F6: the one bootstrap every host calls.
    *
@@ -263,7 +309,7 @@ export class AudioEngine {
 
   /** Non-positional looping source (A3: the rain/crickets ambience
    *  loops - DFU spatialBlend 0). Returns a stop handle or null. */
-  loop(index, volume = 1) {
+  loop(index, volume = 1, { lowpass = 0 } = {}) {
     if (!this._ready()) return null;
     const buf = this._buffer(index);
     if (!buf) return null;
@@ -272,7 +318,10 @@ export class AudioEngine {
     src.loop = true;
     const gain = this.ctx.createGain();
     gain.gain.value = volume;
-    src.connect(gain).connect(this._out());
+    // BA1: Unity's AudioLowPassFilter on the source's object (InteriorAmbientSoundSource.cs:26-27) - a biquad
+    // low-pass at its cutoff, between the gain and the bus; 0 is no filter.
+    const tail = lowpass > 0 ? this._lowpass(lowpass) : null;
+    if (tail) src.connect(gain).connect(tail).connect(this._out()); else src.connect(gain).connect(this._out());
     src.start();
     return {
       stop() {
@@ -395,7 +444,7 @@ export class AudioEngine {
    *  the streaming world shifts its origin under a built pixel, and a
    *  source that stayed at the old numbers would drift away from the
    *  mill it belongs to. */
-  loop3d(index, pos, volume = 1, { refDistance = 1, maxDistance = 5, distanceModel = 'linear' } = {}) {
+  loop3d(index, pos, volume = 1, { refDistance = 1, maxDistance = 5, distanceModel = 'linear', lowpass = 0 } = {}) {
     if (!this._ready()) return null;
     const buf = this._buffer(index);
     if (!buf) return null;
@@ -410,7 +459,8 @@ export class AudioEngine {
     pan.positionX.value = pos[0]; pan.positionY.value = pos[1]; pan.positionZ.value = pos[2];
     const gain = this.ctx.createGain();
     gain.gain.value = volume;
-    src.connect(gain).connect(pan).connect(this._out());
+    const tail = lowpass > 0 ? this._lowpass(lowpass) : null;   // BA1: AudioLowPassFilter, as loop() has it
+    if (tail) src.connect(gain).connect(pan).connect(tail).connect(this._out()); else src.connect(gain).connect(pan).connect(this._out());
     src.start();
     return {
       move(p) {
