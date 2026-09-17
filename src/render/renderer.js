@@ -335,7 +335,7 @@ void main() {
 }`;
 
 import { ShadowPass } from './shadowPass.js';   // EL2: the lane's shadow maps - a leaf that compiles nothing until a lane asks
-import { AirPass, AIR_ADAPT_UNIT as ADAPT_UNIT } from './airPass.js';   // EL3: the depth image, the ambient occlusion, the bloom and the shafts - the same kind of leaf; EL4: the eye's unit
+import { AirPass, AIR_ADAPT_UNIT as ADAPT_UNIT, AIR_AO_UNIT as AO_UNIT } from './airPass.js';   // EL3: the depth image, the ambient occlusion, the bloom and the shafts - the same kind of leaf; EL4: the eye's unit
 import { SHADE_DARK } from '../systems/concealDraw.js';   // ECV1 / AUDIT 65 PN-3: the shade's pull toward black, interpolated into BB_FS below - the shader restated 0.12 as a second literal. The LEAF, not systems/combatVisuals.js, which re-exports it: that module's graph would take this file's closure from 13 modules to 69
 
 const BB_FS = `#version 300 es
@@ -588,6 +588,9 @@ void main() {
 }`;
 
 const ZERO_ORIGIN = [0, 0, 0];
+const ZERO4 = new Float32Array(4);   // AUDIT-EL F12: the AO rect with the air off
+/** AUDIT-EL F5: what a WORLD host passes beginFrame - the lane replays its records for this frame and not for a map's, a video's or a menu's. */
+export const WORLD_FRAME = Object.freeze({ world: true });
 /** The classic world programs' point-light cap (uPointLights[16] in every shader above); a lane brings its own. */
 const CLASSIC_MAX_LIGHTS = 16;
 const ZERO_FLAT_WIND = new Float32Array(4);   // WIND3: a bare prototype (the crash-report tests) has no wind
@@ -846,6 +849,7 @@ export class Renderer {
     this._airWanted = false;
     this._frameFbo = null;   // EL4: the frame image the world pass draws into while the air is on (null = the canvas)
     this._spriteDepth = 0;   // AUDIT-EL F2: inside renderCharacterSprite (a foreign rect: no AO)
+    this._panelLane = null;  // AUDIT-EL F7: the lane a panel bracket suspended
     this._studioDepth = 0;   // AUDIT-EL F1: inside the studio bake (a UI picture: no eye)
     this._adaptOneTex = null;
     this.maxPointLights = CLASSIC_MAX_LIGHTS;
@@ -1363,7 +1367,8 @@ export class Renderer {
     // (the automap, a preview) have fragments in another rect entirely and
     // would read a stranger's occlusion; they take none.
     const foreignRect = this._spriteDepth > 0 || !!this._panelSaved;
-    if (this._air) this._air.upload(this._el[key].ao, foreignRect);   // EL3: the AO image
+    if (this._air?.targets) this._air.upload(this._el[key].ao, foreignRect);   // EL3: the AO image
+    else this._uploadNoAo(this._el[key].ao);
     this._uploadAdapt(this._el[key].ao);
   }
 
@@ -1383,6 +1388,20 @@ export class Renderer {
     gl.activeTexture(gl.TEXTURE0);
     gl.uniform1i(loc.adapt, ADAPT_UNIT);
   }
+  /** AUDIT-EL F12: THE AO SAMPLER IS ALWAYS ON ITS UNIT. With the air off
+   *  (or before its images exist) uAO sat at unit 0 - and the TERRAIN
+   *  program's unit 0 is uTileArr, a sampler2DArray: two samplers of
+   *  different types on one unit, INVALID_OPERATION at every terrain draw,
+   *  no ground under `?air=off`. A bare image on unit 12 and a zero rect. */
+  _uploadNoAo(loc) {
+    if (!loc?.ao) return;
+    const gl = this.gl;
+    gl.activeTexture(gl.TEXTURE0 + AO_UNIT);
+    gl.bindTexture(gl.TEXTURE_2D, this._adaptOne());
+    gl.activeTexture(gl.TEXTURE0);
+    gl.uniform1i(loc.ao, AO_UNIT);
+    gl.uniform4fv(loc.aoInfo, ZERO4);
+  }
   _adaptOne() {
     if (this._adaptOneTex) return this._adaptOneTex;
     const gl = this.gl, tex = gl.createTexture();
@@ -1394,6 +1413,22 @@ export class Renderer {
     return (this._adaptOneTex = tex);
   }
 
+  /** AUDIT-EL F5: THE LANE'S FRAME START. A WORLD frame (the six host sites
+   *  pass `{ world: true }`) replays and spends the records for its maps and
+   *  images. Any other beginFrame - the enhanced travel map, a video, a menu
+   *  raised mid-game, a panel - is a SECOND frame in one presented frame:
+   *  it resolves the frame still owed (or the world's image would be lost
+   *  under a map that then never reached the canvas), keeps the world's
+   *  records for the world's next frame, and draws with the maps already
+   *  made. Every non-panel frame draws into a frame image, resolved by its
+   *  first screen draw or by resolveFrame(). */
+  _beginLane(proj, view, lightDir, world) {
+    if (this._air?.pending && !this._panelSaved) this._compositeAir();
+    if (this._shadows && world) this._renderPasses(proj, view, lightDir);
+    // EL4: THE FRAME IMAGE - the world pass draws into it, the clear included; a panel frame keeps the canvas
+    this._frameFbo = this._air && !this._panelSaved ? this._air.beginFrameTarget(this.canvas.width, this.canvas.height) : null;
+  }
+
   /** EL2/EL3: THE PASSES BEFORE THE FRAME, at the top of beginFrame - the
    *  shadow maps (render/shadowPass.js) and then the air's images
    *  (render/airPass.js: the depth image, the AO, the bloom source, the
@@ -1403,8 +1438,7 @@ export class Renderer {
    *  programs, VAOs and viewports; the world viewport comes back here and
    *  beginFrame forgets the shadows right after, as it always did. */
   _renderPasses(proj, view, lightDir) {
-    const sp = this._shadows;
-    if (this._panelSaved) { sp.discard(); return; }
+    const sp = this._shadows;   // AUDIT-EL F8: a panel frame never reaches here - it is no WORLD frame (F5) - so the world's records survive it (_casting keeps it from adding any)
     const v = view;
     this._camPos[0] = -(v[0] * v[12] + v[1] * v[13] + v[2] * v[14]);
     this._camPos[1] = -(v[4] * v[12] + v[5] * v[13] + v[6] * v[14]);
@@ -1426,12 +1460,17 @@ export class Renderer {
     }
     sp.discard();
     this._restoreWorldViewport();
-    this._lastProgram = null; this._lastVao = null;
+    this.markForeignPass();   // AUDIT-EL F19: the last replayed VAO is unbound for real (a shadow set to null over a live bind is a capture waiting to happen), and the shadows forgotten
   }
 
   /** EL3: the frame's first screen-space draw composites the bloom and
    *  the shafts over the world (the 2D pass has begun; the world pass and
    *  every foreign pass are done), then hands the 2D pass the full canvas. */
+  /** AUDIT-EL F5: resolve the frame image to the canvas NOW - for a pass
+   *  that opened its own beginFrame and draws no screen quad after it (the
+   *  enhanced travel map's relief). A no-op with nothing owed. */
+  resolveFrame() { this._compositeAir(); }
+
   _compositeAir() {
     if (!this._air?.pending) return;
     this._air.composite();   // EL4: the resolve - the frame to the canvas
@@ -2343,7 +2382,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this.gl.clearColor(rgba[0], rgba[1], rgba[2], rgba[3]);
   }
 
-  beginFrame(proj, view, lightDir) {
+  beginFrame(proj, view, lightDir, opts = null) {
     const s = this.stats;
     s.draws = 0; s.programBinds = 0; s.vaoBinds = 0; s.texBinds = 0;
     // VC4: the cloud shadow deck is a FRAME's, not the renderer's - a host
@@ -2382,9 +2421,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
         : null;
       if (this._worldViewportPx) this._restoreWorldViewport();
     }
-    if (this._shadows) this._renderPasses(proj, view, lightDir);   // EL2/EL3: the maps and the images, before the clear
-    // EL4: THE FRAME IMAGE - the world pass draws into it, the clear included; a panel frame keeps the canvas
-    this._frameFbo = this._air && !this._panelSaved ? this._air.beginFrameTarget(this.canvas.width, this.canvas.height) : null;
+    this._beginLane(proj, view, lightDir, opts?.world === true);   // EL2/EL3/EL4: the maps, the images and the frame, before the clear
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     this._use(this.program);
     gl.uniformMatrix4fv(this.uProj, false, proj);
@@ -2511,6 +2548,13 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // have its own overrides saved as the "entry" state and restored
     // on the way out - the leak this bracket exists to end.
     if (setup) setup();
+    // AUDIT-EL F7: THE PANEL DRAWS ON THE CLASSIC SET. The automap's unlit
+    // bracket and the bank's preview are pictures, not the world: under the
+    // lane they came through the tonemap and the eye's multiplier, a map
+    // whose brightness drifted with the dungeon the player had just stood
+    // in. The lane is suspended for the bracket and put back after it.
+    this._panelLane = this._lane;
+    if (this._lane) { this._lane = null; this._installWorldSet(this._classicSet); }
     this.setScreenScissor(rect.x, rect.y, rect.w, rect.h);   // BEFORE beginFrame - SCISSOR_TEST gates gl.clear
     gl.colorMask(false, false, false, false);                // ...and the colour half of that clear must not land
     this.beginFrame(proj, view, lightDir);
@@ -2541,6 +2585,8 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     const s = this._panelSaved;
     if (!s) return;
     this._panelSaved = null;
+    if (this._panelLane) { this._lane = this._panelLane; this._installWorldSet(this._laneSet); }   // AUDIT-EL F7: the lane back
+    this._panelLane = null;
     const gl = this.gl;
     this.setClipY(s.clipY);
     this.setAutomapMode(s.automapMode);

@@ -93,6 +93,9 @@ export const AIR_AO_BIAS = 0.02;
  *  square root of a lantern's range (range 18 -> ~1.5 units). */
 export const AIR_BLOOM_STRENGTH = 0.6;
 export const AIR_GLARE_SIZE = 0.35;
+/** AUDIT-EL F11: a light with a range past this is the storm's flash (Dynamic
+ *  Skies: 500..1000), not a lantern, and gets no glare. */
+export const AIR_GLARE_MAX_RANGE = 120;
 /** The shafts: taps along the ray, the per-tap decay, the gain, the
  *  angular reach of the sun's mask (in the shaft image's UV). */
 export const AIR_SHAFT_TAPS = 32;
@@ -244,15 +247,28 @@ const LUM_FS = `#version 300 es
 precision highp float;
 in vec2 vUV;
 uniform sampler2D uFrame;
+uniform sampler2D uPrev;   // AUDIT-EL F16: the eye's own multiplier, divided out - the frame is the ADAPTED image
 uniform vec4 uRect;     // the world rect in canvas pixels
 uniform vec2 uCanvas;
 ${CODEC_GLSL}
 out vec4 outColor;
 void main() {
-  vec2 uv = (uRect.xy + vUV * uRect.zw) / uCanvas;
-  vec3 c = airDecode(texture(uFrame, uv).rgb);
-  float lum = dot(c, vec3(0.2126, 0.7152, 0.0722));
-  float v = (log2(max(lum, 1e-9)) - (${AIR_LUM_LOG_RANGE[0]}.0)) / ${AIR_LUM_LOG_RANGE[1] - AIR_LUM_LOG_RANGE[0]}.0;
+  // AUDIT-EL F16: sixteen taps over this texel's cell of the world rect, not
+  // one - a torch crossing a single tap moved the mean a stop as the camera
+  // panned; and the luminance is the SCENE's, the eye divided out, so the
+  // step aims at the unadapted world and not at its own output
+  float prev = exp2(texture(uPrev, vec2(0.5)).r * ${AIR_ADAPT_LOG_RANGE[1] - AIR_ADAPT_LOG_RANGE[0]}.0 + (${AIR_ADAPT_LOG_RANGE[0]}.0));
+  vec2 cell = 1.0 / vec2(${AIR_LUM_SIZE}.0);
+  float acc = 0.0;
+  for (int y = 0; y < 4; y++) {
+    for (int x = 0; x < 4; x++) {
+      vec2 t = vUV + (vec2(float(x), float(y)) + 0.5) * cell * 0.25 - cell * 0.5;
+      vec2 uv = (uRect.xy + t * uRect.zw) / uCanvas;
+      vec3 c = airDecode(texture(uFrame, uv).rgb);
+      acc += log2(max(dot(c, vec3(0.2126, 0.7152, 0.0722)) / prev, 1e-9));
+    }
+  }
+  float v = (acc / 16.0 - (${AIR_LUM_LOG_RANGE[0]}.0)) / ${AIR_LUM_LOG_RANGE[1] - AIR_LUM_LOG_RANGE[0]}.0;
   outColor = vec4(vec3(clamp(v, 0.0, 1.0)), 1.0);
 }`;
 
@@ -406,13 +422,13 @@ float mask(vec2 uv) {
   return sky * smoothstep(uShaftParams.z, 0.0, length(d));
 }
 void main() {
-  vec2 step = (uSun - vUV) / ${AIR_SHAFT_TAPS}.0;
+  vec2 ray = (uSun - vUV) / ${AIR_SHAFT_TAPS}.0;   // AUDIT-EL F17: not 'step' - a built-in's name
   vec2 uv = vUV;
   float acc = 0.0, w = 1.0;
   for (int i = 0; i < ${AIR_SHAFT_TAPS}; i++) {
     acc += mask(uv) * w;
     w *= uShaftParams.x;
-    uv += step;
+    uv += ray;
   }
   outColor = vec4(uSunColor * (acc / ${AIR_SHAFT_TAPS}.0 * uShaftParams.y), 1.0);
 }`;
@@ -425,19 +441,21 @@ precision highp float;
 in vec2 vUV;
 uniform sampler2D uEmissionTex;
 uniform vec3 uEmissionColor;
+${CODEC_GLSL}
 out vec4 outColor;
 void main() {
-  outColor = vec4(texture(uEmissionTex, vUV).rgb * uEmissionColor, 1.0);
+  outColor = vec4(airDecode(texture(uEmissionTex, vUV).rgb * uEmissionColor), 1.0);   // AUDIT-EL F20: linear, like the glares and the bright pass beside it
 }`;
 export const EMIT_BB_FS = `#version 300 es
 precision highp float;
 in vec2 vUV;
 uniform sampler2D uTex;
 uniform sampler2D uEmissionTex;
+${CODEC_GLSL}
 out vec4 outColor;
 void main() {
   if (texture(uTex, vUV).a < 0.5) discard;
-  outColor = vec4(texture(uEmissionTex, vUV).rgb, 1.0);
+  outColor = vec4(airDecode(texture(uEmissionTex, vUV).rgb), 1.0);   // AUDIT-EL F20
 }`;
 
 /** The lantern glare: a camera-facing quad at the light, collapsed to
@@ -496,7 +514,7 @@ export class AirPass {
       emitBb: P(opts.vs.bb, EMIT_BB_FS, ['uProj', 'uView', 'uRight', 'uUp', 'uOrigin', 'uSize', 'uTex', 'uEmissionTex', 'uFlatWind', 'uSway']),
       glare: P(GLARE_VS, GLARE_FS, ['uProj', 'uView', 'uCenter', 'uSize', 'uDepth', 'uColor']),
       // EL4
-      lum: P(QUAD_VS, LUM_FS, ['uFrame', 'uRect', 'uCanvas']),
+      lum: P(QUAD_VS, LUM_FS, ['uFrame', 'uPrev', 'uRect', 'uCanvas']),
       adapt: P(QUAD_VS, ADAPT_FS, ['uPrev', 'uLum', 'uAdaptParams', 'uAdaptRates']),
       bright: P(QUAD_VS, BRIGHT_FS, ['uFrame', 'uRect', 'uCanvas', 'uThreshold']),
       resolve: P(QUAD_VS, RESOLVE_FS, ['uFrame', 'uBloom', 'uShaft', 'uRect', 'uCanvas', 'uGrade']),
@@ -537,6 +555,7 @@ export class AirPass {
     this.canvas = new Float32Array(2);
     this.rect = new Float32Array(4);
     this._lastResolve = 0;
+    this.measured = false;   // AUDIT-EL F10
     this._now = opts.now ?? (() => (globalThis.performance?.now?.() ?? Date.now()));
     this.stats = { emitDraws: 0, glares: 0, shafts: false };
     this._identityView = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
@@ -660,10 +679,12 @@ export class AirPass {
   /** EL4: bind the frame image for the world pass of a W x H canvas, and
    *  make it the frame target every pass restores to. Returns its fbo. */
   beginFrameTarget(W, H) {
+    if (!(W > 0 && H > 0)) return null;   // AUDIT-EL F18
     const f = this._ensureFrame(W, H);
     this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, f.fbo);
     setFrameTarget(f.fbo);
     this.canvas[0] = W; this.canvas[1] = H;
+    this.pending = true;   // AUDIT-EL F5: a bound frame is a resolve owed, whether or not the passes ran for it
     return f.fbo;
   }
 
@@ -677,9 +698,11 @@ export class AirPass {
   render(f) {
     const gl = this.gl, sp = f.shadows;
     const [, , w, h] = f.viewport;
+    if (!(w > 0 && h > 0)) return;   // AUDIT-EL F18: a hidden canvas has no images to draw (texStorage2D refuses 0)
     this.resize(w, h);
     const T = this.targets;
     this.stats.emitDraws = 0; this.stats.glares = 0; this.stats.shafts = false;
+    this.measured = !!(sp && sp.count > 0);   // AUDIT-EL F10: a frame with no world in it (a video, a menu) is not one the eye adapts to
     projInfo(f.proj, this.projInfo);
     const vp = multiply(f.proj, f.view, this._vp);
     // 1. the depth image, from the records
@@ -690,7 +713,7 @@ export class AirPass {
     gl.depthMask(true);
     gl.colorMask(false, false, false, false);
     gl.clear(gl.DEPTH_BUFFER_BIT);
-    if (sp && sp.count > 0) sp.replay({ bindVao: f.bindVao, textures: f.textures, isSpectral: f.isSpectral }, vp, null);
+    if (sp && sp.count > 0) sp.replay({ bindVao: f.bindVao, textures: f.textures, isSpectral: f.isSpectral }, vp, null, true);   // AUDIT-EL F13: the flats face the camera, off their records
     gl.colorMask(true, true, true, true);
     gl.disable(gl.DEPTH_TEST);
     gl.depthMask(false);
@@ -814,7 +837,7 @@ export class AirPass {
     gl.bindVertexArray(this.glareVao);
     for (let i = 0; i < n; i++) {
       const range = L[i * 4 + 3];
-      if (!(range > 0)) continue;
+      if (!(range > 0) || range > AIR_GLARE_MAX_RANGE) continue;   // AUDIT-EL F11: the lightning flash (range 500..1000 over the player) is no lantern
       gl.uniform3f(P.uCenter, L[i * 4], L[i * 4 + 1], L[i * 4 + 2]);
       gl.uniform1f(P.uSize, glareSize(range));
       gl.uniform3f(P.uColor, C ? C[i * 3] : 1, C ? C[i * 3 + 1] : 1, C ? C[i * 3 + 2] : 1);
@@ -860,10 +883,15 @@ export class AirPass {
       gl.useProgram(prog.p);
     };
     gl.activeTexture(gl.TEXTURE0);
-    // 1. the luminance image and its mean
+    // 1. the luminance image and its mean - AUDIT-EL F10: not off a frame the
+    // world never drew (the passes saw no records): the eye would adapt to
+    // the clear colour behind a video or a menu and swing back on return
+    if (this.measured) {
     quad(P.lum, this.lum);
     gl.bindTexture(gl.TEXTURE_2D, F.tex);
     gl.uniform1i(P.lum.uFrame, 0);
+    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, this.adapt[this.adaptIndex].tex); gl.uniform1i(P.lum.uPrev, 1);   // AUDIT-EL F16
+    gl.activeTexture(gl.TEXTURE0);
     gl.uniform4fv(P.lum.uRect, this.rect);
     gl.uniform2fv(P.lum.uCanvas, this.canvas);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
@@ -880,6 +908,7 @@ export class AirPass {
     gl.uniform2fv(P.adapt.uAdaptRates, this.adaptRates);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     this.adaptIndex = 1 - this.adaptIndex;
+    }
     // 3. the bright pass joins the emitters and the glares, then the blur, twice
     quad(P.bright, T.bloom);
     gl.enable(gl.BLEND);

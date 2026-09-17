@@ -1,0 +1,299 @@
+[
+ {
+  "name": "f1-eye-at-zero",
+  "file": "src/render/renderer.js",
+  "old": "    const tex = this._air && this._studioDepth === 0 ? this._air.adaptTexture : this._adaptOne();",
+  "new": "    const tex = this._air ? this._air.adaptTexture : this._adaptOne();",
+  "tests": [
+   "test/audit_el.test.js"
+  ]
+ },
+ {
+  "name": "f1-no-bind-without-air",
+  "file": "src/render/renderer.js",
+  "old": "    this._uploadAdapt(this._el[key].ao);\n  }\n\n  /** AUDIT-EL F1",
+  "new": "    if (this._air) this._uploadAdapt(this._el[key].ao);\n  }\n\n  /** AUDIT-EL F1",
+  "tests": [
+   "test/audit_el.test.js"
+  ]
+ },
+ {
+  "name": "f12-no-ao-unit-without-air",
+  "file": "src/render/renderer.js",
+  "old": "    else this._uploadNoAo(this._el[key].ao);\n",
+  "new": "",
+  "tests": [
+   "test/audit_el.test.js"
+  ]
+ },
+ {
+  "name": "f2-sprite-takes-ao",
+  "file": "src/render/renderer.js",
+  "old": "    const foreignRect = this._spriteDepth > 0 || !!this._panelSaved;",
+  "new": "    const foreignRect = !!this._panelSaved;",
+  "tests": [
+   "test/audit_el.test.js"
+  ]
+ },
+ {
+  "name": "f2-depth-not-returned",
+  "file": "src/render/renderer.js",
+  "old": "      this._spriteDepth--;   // AUDIT-EL F2\n",
+  "new": "",
+  "tests": [
+   "test/audit_el.test.js"
+  ]
+ },
+ {
+  "name": "f3-water-48",
+  "file": "src/render/renderer.js",
+  "old": "    const count = Math.min(this._pointLights.length / 4, CLASSIC_MAX_LIGHTS);\n    gl.uniform1i(L.pointCount, count);",
+  "new": "    const count = this._pointLights.length / 4;\n    gl.uniform1i(L.pointCount, count);",
+  "tests": [
+   "test/audit_el.test.js"
+  ]
+ },
+ {
+  "name": "f3-water-decoded",
+  "file": "src/render/renderer.js",
+  "old": "    if (count > 0) gl.uniform3fv(L.pointColors, this._pointColorData(count, true));",
+  "new": "    if (count > 0) gl.uniform3fv(L.pointColors, this._pointColorData(count));",
+  "tests": [
+   "test/audit_el.test.js"
+  ]
+ },
+ {
+  "name": "f4-composer-caps",
+  "file": "src/scenes/magicCandle.js",
+  "old": "  const keep = (base.length / 4) * 4;\n",
+  "new": "  const keep = Math.min(16 - live.length, base.length / 4) * 4;\n",
+  "tests": [
+   "test/audit_el.test.js"
+  ]
+ },
+ {
+  "name": "f5-second-frame-spends",
+  "file": "src/render/renderer.js",
+  "old": "    if (this._shadows && world) this._renderPasses(proj, view, lightDir);",
+  "new": "    if (this._shadows) this._renderPasses(proj, view, lightDir);",
+  "tests": [
+   "test/audit_el.test.js"
+  ]
+ },
+ {
+  "name": "f5-owed-frame-lost",
+  "file": "src/render/renderer.js",
+  "old": "    if (this._air?.pending && !this._panelSaved) this._compositeAir();\n    if (this._shadows && world)",
+  "new": "    if (this._shadows && world)",
+  "tests": [
+   "test/audit_el.test.js"
+  ]
+ },
+ {
+  "name": "f5-bound-frame-not-owed",
+  "file": "src/render/airPass.js",
+  "old": "    this.pending = true;   // AUDIT-EL F5: a bound frame is a resolve owed, whether or not the passes ran for it\n",
+  "new": "",
+  "tests": [
+   "test/audit_el.test.js"
+  ]
+ },
+ {
+  "name": "f5-map-no-resolve",
+  "file": "src/ui/overworldMap.js",
+  "old": "        renderer.resolveFrame?.();   // AUDIT-EL F5",
+  "new": "        // AUDIT-EL F5",
+  "tests": [
+   "test/audit_el.test.js"
+  ]
+ },
+ {
+  "name": "f6-fog-unscaled",
+  "file": "src/render/enhancedLighting.js",
+  "old": "  return { ...fog, color: [c[0] * EL_DUNGEON_AMBIENT_SCALE, c[1] * EL_DUNGEON_AMBIENT_SCALE, c[2] * EL_DUNGEON_AMBIENT_SCALE] };",
+  "new": "  return { ...fog, color: [c[0], c[1], c[2]] };",
+  "tests": [
+   "test/audit_el.test.js"
+  ]
+ },
+ {
+  "name": "f7-panel-on-lane",
+  "file": "src/render/renderer.js",
+  "old": "    this._panelLane = this._lane;\n    if (this._lane) { this._lane = null; this._installWorldSet(this._classicSet); }\n",
+  "new": "    this._panelLane = null;\n",
+  "tests": [
+   "test/audit_el.test.js"
+  ]
+ },
+ {
+  "name": "f7-lane-not-restored",
+  "file": "src/render/renderer.js",
+  "old": "    if (this._panelLane) { this._lane = this._panelLane; this._installWorldSet(this._laneSet); }   // AUDIT-EL F7: the lane back\n",
+  "new": "",
+  "tests": [
+   "test/audit_el.test.js"
+  ]
+ },
+ {
+  "name": "f10-measure-always",
+  "file": "src/render/airPass.js",
+  "old": "    this.measured = !!(sp && sp.count > 0);   // AUDIT-EL F10",
+  "new": "    this.measured = true;   // AUDIT-EL F10",
+  "tests": [
+   "test/audit_el.test.js"
+  ]
+ },
+ {
+  "name": "f11-flash-casts",
+  "file": "src/render/shadowPass.js",
+  "old": " || lights[i * 4 + 3] > SHADOW_CASTER_MAX_RANGE) continue;   // AUDIT-EL F11",
+  "new": ") continue;   // AUDIT-EL F11",
+  "tests": [
+   "test/audit_el.test.js"
+  ]
+ },
+ {
+  "name": "f11-flash-glares",
+  "file": "src/render/airPass.js",
+  "old": "      if (!(range > 0) || range > AIR_GLARE_MAX_RANGE) continue;   // AUDIT-EL F11",
+  "new": "      if (!(range > 0)) continue;   // AUDIT-EL F11",
+  "tests": [
+   "test/audit_el.test.js"
+  ]
+ },
+ {
+  "name": "f13-camera-faces-sun",
+  "file": "src/render/airPass.js",
+  "old": "    if (sp && sp.count > 0) sp.replay({ bindVao: f.bindVao, textures: f.textures, isSpectral: f.isSpectral }, vp, null, true);",
+  "new": "    if (sp && sp.count > 0) sp.replay({ bindVao: f.bindVao, textures: f.textures, isSpectral: f.isSpectral }, vp, null, false);",
+  "tests": [
+   "test/audit_el.test.js"
+  ]
+ },
+ {
+  "name": "f13-record-basis-ignored",
+  "file": "src/render/shadowPass.js",
+  "old": "          gl.uniform3fv(P.bb.right, recordBasis ? r.right : this._right);",
+  "new": "          gl.uniform3fv(P.bb.right, this._right);",
+  "tests": [
+   "test/audit_el.test.js"
+  ]
+ },
+ {
+  "name": "f14-shade-black",
+  "file": "src/render/enhancedLighting.js",
+  "old": "  if (uConceal.x == 2.0) lit *= ${SHADE_DARK};",
+  "new": "  if (uConceal.x == 2.0) lit *= 0.0;",
+  "tests": [
+   "test/audit_el.test.js"
+  ]
+ },
+ {
+  "name": "f15-sun-bias-old",
+  "file": "src/render/shadowPass.js",
+  "old": "export const SHADOW_SUN_BIAS = 0.00005;",
+  "new": "export const SHADOW_SUN_BIAS = 0.0004;",
+  "tests": [
+   "test/audit_el.test.js"
+  ]
+ },
+ {
+  "name": "f15-point-bias-in-depth",
+  "file": "src/render/shadowPass.js",
+  "old": "  float ref = cubeDepthOfM(m - ${SHADOW_POINT_BIAS}, far);",
+  "new": "  float ref = cubeDepthOfM(m, far) - 0.002;",
+  "tests": [
+   "test/audit_el.test.js"
+  ]
+ },
+ {
+  "name": "f15-m-no-near-clamp",
+  "file": "src/render/shadowPass.js",
+  "old": "export function cubeDepthOfM(m, far, near = SHADOW_POINT_NEAR) {\n  m = Math.max(m, near);",
+  "new": "export function cubeDepthOfM(m, far, near = SHADOW_POINT_NEAR) {",
+  "tests": [
+   "test/audit_el.test.js"
+  ]
+ },
+ {
+  "name": "f16-eye-not-divided",
+  "file": "src/render/airPass.js",
+  "old": "      acc += log2(max(dot(c, vec3(0.2126, 0.7152, 0.0722)) / prev, 1e-9));",
+  "new": "      acc += log2(max(dot(c, vec3(0.2126, 0.7152, 0.0722)), 1e-9));",
+  "tests": [
+   "test/audit_el.test.js"
+  ]
+ },
+ {
+  "name": "f16-one-tap",
+  "file": "src/render/airPass.js",
+  "old": "  for (int y = 0; y < 4; y++) {\n    for (int x = 0; x < 4; x++) {\n      vec2 t = vUV",
+  "new": "  for (int y = 0; y < 1; y++) {\n    for (int x = 0; x < 1; x++) {\n      vec2 t = vUV",
+  "tests": [
+   "test/audit_el.test.js"
+  ]
+ },
+ {
+  "name": "f17-step-back",
+  "file": "src/render/airPass.js",
+  "old": "  vec2 ray = (uSun - vUV) / ${AIR_SHAFT_TAPS}.0;",
+  "new": "  vec2 step = (uSun - vUV) / ${AIR_SHAFT_TAPS}.0;",
+  "tests": [
+   "test/audit_el.test.js"
+  ]
+ },
+ {
+  "name": "f18-zero-size-draws",
+  "file": "src/render/airPass.js",
+  "old": "    if (!(w > 0 && h > 0)) return;   // AUDIT-EL F18: a hidden canvas has no images to draw (texStorage2D refuses 0)\n",
+  "new": "",
+  "tests": [
+   "test/audit_el.test.js"
+  ]
+ },
+ {
+  "name": "f18-zero-frame-bound",
+  "file": "src/render/airPass.js",
+  "old": "    if (!(W > 0 && H > 0)) return null;   // AUDIT-EL F18\n",
+  "new": "",
+  "tests": [
+   "test/audit_el.test.js"
+  ]
+ },
+ {
+  "name": "f19-shadow-only",
+  "file": "src/render/renderer.js",
+  "old": "    this.markForeignPass();   // AUDIT-EL F19",
+  "new": "    this._lastProgram = null; this._lastVao = null;   // AUDIT-EL F19",
+  "tests": [
+   "test/audit_el.test.js"
+  ]
+ },
+ {
+  "name": "f20-emitters-display",
+  "file": "src/render/airPass.js",
+  "old": "  outColor = vec4(airDecode(texture(uEmissionTex, vUV).rgb * uEmissionColor), 1.0);   // AUDIT-EL F20",
+  "new": "  outColor = vec4(texture(uEmissionTex, vUV).rgb * uEmissionColor, 1.0);   // AUDIT-EL F20",
+  "tests": [
+   "test/audit_el.test.js"
+  ]
+ },
+ {
+  "name": "rt-frame-target-null",
+  "file": "src/render/renderTarget.js",
+  "old": "export function frameTarget() { return _frameTarget; }",
+  "new": "export function frameTarget() { return null; }",
+  "tests": [
+   "test/audit_el.test.js"
+  ]
+ },
+ {
+  "name": "f8-panel-is-world",
+  "file": "src/render/renderer.js",
+  "old": "    if (this._shadows && world) this._renderPasses(proj, view, lightDir);",
+  "new": "    if (this._shadows && (world || this._panelSaved)) this._renderPasses(proj, view, lightDir);",
+  "tests": [
+   "test/audit_el.test.js"
+  ]
+ }
+]

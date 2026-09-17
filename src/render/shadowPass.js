@@ -54,6 +54,17 @@ export const SHADOW_MIN_SUN_Y = 0.05;
  *  caster - its shadows would be hidden by their own occluders anyway. */
 export const SHADOW_POINT_NEAR = 0.1;
 export const SHADOW_CASTER_MIN_DISTANCE = 0.25;
+/** AUDIT-EL F11: a light with a range past this is the storm's flash (Dynamic
+ *  Skies: 500..1000 over the player, for a fifth of a second), never the
+ *  caster - six 512^2 replays of the whole town to a far plane of a
+ *  thousand, for a frame, were a hitch and nothing else. */
+export const SHADOW_CASTER_MAX_RANGE = 120;
+/** AUDIT-EL F15: the biases, in the space they mean - the sun's in the
+ *  ortho box's [0,1] depth (600 units of half-depth: 5e-5 is 0.06 units),
+ *  the lantern's in WORLD units off the major axis (the cube's depth is
+ *  hyperbolic; a constant in it is a bias that grows with distance). */
+export const SHADOW_SUN_BIAS = 0.00005;
+export const SHADOW_POINT_BIAS = 0.04;
 /** The reserved texture units (CLOUD_SHADOW_UNIT is 15). */
 export const SHADOW_SUN_UNIT = 13;
 export const SHADOW_POINT_UNIT = 14;
@@ -117,7 +128,11 @@ export function pointFaceMatrices(pos, far, out) {
  *  through the face's projection, in [0, 1] - the JS of the shader's
  *  cubeDepthRef, term for term. */
 export function cubeDepthRef(dx, dy, dz, far, near = SHADOW_POINT_NEAR) {
-  const m = Math.max(Math.abs(dx), Math.abs(dy), Math.abs(dz), near);
+  return cubeDepthOfM(Math.max(Math.abs(dx), Math.abs(dy), Math.abs(dz)), far, near);
+}
+/** The same, off the major-axis distance itself (the shader's cubeDepthOfM). */
+export function cubeDepthOfM(m, far, near = SHADOW_POINT_NEAR) {
+  m = Math.max(m, near);
   const ndc = (far + near) / (far - near) - (2 * far * near) / ((far - near) * m);
   return ndc * 0.5 + 0.5;
 }
@@ -131,7 +146,7 @@ export function pickShadowCaster(lights, eye, minDist = SHADOW_CASTER_MIN_DISTAN
   for (let i = 0; i < n; i++) {
     const dx = lights[i * 4] - eye[0], dy = lights[i * 4 + 1] - eye[1], dz = lights[i * 4 + 2] - eye[2];
     const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
-    if (d < minDist || !(lights[i * 4 + 3] > 0)) continue;
+    if (d < minDist || !(lights[i * 4 + 3] > 0) || lights[i * 4 + 3] > SHADOW_CASTER_MAX_RANGE) continue;   // AUDIT-EL F11
     if (d < bestD) { bestD = d; best = i; }
   }
   return best;
@@ -165,19 +180,20 @@ float sunShadowAt(vec3 wp, vec3 n) {
   vec4 lp = vp * vec4(wp + n * texel * 1.5, 1.0);
   vec3 p = lp.xyz / lp.w * 0.5 + 0.5;
   if (p.x < 0.0 || p.x > 1.0 || p.y < 0.0 || p.y > 1.0 || p.z > 1.0) return 1.0;
-  float ref = p.z - 0.0004;
-  float step = 1.0 / ${SHADOW_SUN_SIZE}.0;
+  float ref = p.z - ${SHADOW_SUN_BIAS};   // AUDIT-EL F15: ~0.06 world units over the 1200-unit box (0.0004 was half a unit - feet floated off their shadows)
+  float texelUv = 1.0 / ${SHADOW_SUN_SIZE}.0;   // AUDIT-EL F17: not 'step' - a built-in's name
   float lit = 0.0;
   for (int y = -1; y <= 1; y++) {
     for (int x = -1; x <= 1; x++) {
-      lit += texture(uSunShadow, vec4(p.xy + vec2(float(x), float(y)) * step, float(c), ref));
+      lit += texture(uSunShadow, vec4(p.xy + vec2(float(x), float(y)) * texelUv, float(c), ref));
     }
   }
   return lit / 9.0;
 }
-float cubeDepthRef(vec3 d, float far) {
+// the face's depth of a point whose major-axis distance is m (cubeDepthRef in shadowPass.js)
+float cubeDepthOfM(float m, float far) {
   float near = ${SHADOW_POINT_NEAR};
-  float m = max(max(abs(d.x), abs(d.y)), max(abs(d.z), near));
+  m = max(m, near);
   float ndc = (far + near) / (far - near) - (2.0 * far * near) / ((far - near) * m);
   return ndc * 0.5 + 0.5;
 }
@@ -185,7 +201,11 @@ float pointShadowAt(vec3 wp, vec3 n) {
   float far = uPointShadowParams.w;
   if (far <= 0.0) return 1.0;
   vec3 d = (wp + n * 0.05) - uPointShadowParams.xyz;
-  float ref = cubeDepthRef(d, far) - 0.002;
+  // AUDIT-EL F15: THE BIAS IS IN WORLD UNITS - the depth is hyperbolic, and a
+  // constant 0.002 off it was half a unit at five units and four at fifteen:
+  // an occluder within four units of a wall cast nothing near a lantern's range
+  float m = max(max(abs(d.x), abs(d.y)), abs(d.z));
+  float ref = cubeDepthOfM(m - ${SHADOW_POINT_BIAS}, far);
   float lit = texture(uPointShadow, vec4(d, ref));
   vec3 a = abs(d);
   vec3 t = a.x > a.y && a.x > a.z ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);
@@ -379,10 +399,10 @@ export class ShadowPass {
 
   /** One map's worth of depth-only draws under view-projection `vp`
    *  (uploaded as uProj with an identity uView). `lightPos` is the cube's
-   *  light, for the flats' facing; null for the sun (this._right - which
-   *  the air pass's camera replay sets to the camera's right first).
-   *  Returns the draw count. */
-  replay(f, vp, lightPos) {
+   *  light, for the flats' facing; null for the sun (this._right);
+   *  `recordBasis` (the air pass's camera replay) faces each flat as its
+   *  record was drawn. Returns the draw count. */
+  replay(f, vp, lightPos, recordBasis = false) {
     const gl = this.gl;
     const P = this.programs;
     let draws = 0;
@@ -426,8 +446,11 @@ export class ShadowPass {
             const l = Math.hypot(dx, dz) || 1;
             this._right[0] = dz / l; this._right[1] = 0; this._right[2] = -dx / l;
           }
-          gl.uniform3fv(P.bb.right, this._right);
-          gl.uniform3fv(P.bb.up, this._up);
+          // AUDIT-EL F13: the CAMERA's depth image (the air pass) draws a flat
+          // with the basis it was drawn with, off the record - the sun's basis
+          // drew every tree edge-on, a sliver the AO and the glares saw through
+          gl.uniform3fv(P.bb.right, recordBasis ? r.right : this._right);
+          gl.uniform3fv(P.bb.up, recordBasis ? r.up : this._up);
           gl.uniform3f(P.bb.origin, o[0], o[1], o[2]);
           gl.uniform2f(P.bb.size, b.size.w, b.size.h);
           const sw = b.sway || 0;

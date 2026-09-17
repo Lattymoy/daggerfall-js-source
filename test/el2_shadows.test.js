@@ -20,7 +20,7 @@ import {
   SHADOW_GLSL, DEPTH_FS, DEPTH_BB_FS, ShadowPass,
 } from '../src/render/shadowPass.js';
 import { EL_LANE, EL_MESH_FS, EL_BB_FS, EL_TERRAIN_FS, EL_CHAR_FS, EL_FAR_RING_FS } from '../src/render/enhancedLighting.js';
-import { Renderer, CLOUD_SHADOW_UNIT } from '../src/render/renderer.js';
+import { Renderer, CLOUD_SHADOW_UNIT, WORLD_FRAME } from '../src/render/renderer.js';
 import { transformPoint } from '../src/world/mat4.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -212,14 +212,14 @@ test('EL2: the renderer builds the pass with the lane, records the three draw ki
   // frame 1 outdoors: the sun
   r.setLighting(new Float32Array([0.5, 0.5, 0.5]), 0.55, new Float32Array([1, 1, 1]));
   const sun = new Float32Array([0.3, 0.8, 0.2]);
-  r.beginFrame(I, I, sun);
+  r.beginFrame(I, I, sun, WORLD_FRAME);
   assert.equal(sp.count, 0, 'nothing recorded yet');
   const { mesh } = drawWorld(r);
   assert.equal(sp.count, 3, 'a mesh, a terrain, a billboard call');
   assert.equal(sp.records[0].mesh, mesh); assert.notEqual(sp.records[0].matrix, I, 'the matrix is COPIED'); assert.deepEqual([...sp.records[0].matrix], [...I]);
   // frame 2: the maps are drawn from frame 1's records, before the clear
   calls.length = 0;
-  r.beginFrame(I, I, sun);
+  r.beginFrame(I, I, sun, WORLD_FRAME);
   const firstClear = calls.findIndex((c) => c[0] === 'clear' && c[1] === 16384 + 256);
   const depthClears = calls.filter((c, i) => c[0] === 'clear' && c[1] === 256 && i < firstClear);
   assert.equal(depthClears.length, 2, 'two cascades cleared before the frame\'s own clear');
@@ -237,7 +237,7 @@ test('EL2: the renderer builds the pass with the lane, records the three draw ki
   r.setLighting(new Float32Array([0.12, 0.12, 0.12]), 0);
   r.setPointLights(new Float32Array([0, 0, 0, 10, 6, 2, 1, 14]), new Float32Array([1, 1, 1]));
   calls.length = 0;
-  r.beginFrame(I, I, new Float32Array([0.45, 0.8, 0.35]));
+  r.beginFrame(I, I, new Float32Array([0.45, 0.8, 0.35]), WORLD_FRAME);
   assert.equal(sp.kind, 'point'); assert.equal(sp.shadowIndex, 1, 'the eye\'s own light (at the origin, where the identity view puts the eye) is skipped');
   assert.deepEqual([...sp.pointParams], [6, 2, 1, 14]);
   assert.equal(sp.stats.pointDraws, 6 * 4, 'six faces');
@@ -249,15 +249,15 @@ test('EL2: the renderer builds the pass with the lane, records the three draw ki
   r.destroyMesh(w.mesh);
   assert.equal(w.mesh._dead, true);
   r.drawBillboards([{ archive: 210, record: 1, vao: {}, indexCount: 6, size: { w: 1, h: 1 }, conceal: { x: 2 } }], new Float32Array([1, 0, 0]), new Float32Array([0, 1, 0]));
-  r.beginFrame(I, I, new Float32Array([0.45, 0.8, 0.35]));
+  r.beginFrame(I, I, new Float32Array([0.45, 0.8, 0.35]), WORLD_FRAME);
   assert.equal(sp.stats.pointDraws, 6 * 2, 'the terrain and the flat alone');
   // a panel frame records nothing and drops what it inherited
   drawWorld(r);
   assert.equal(sp.count, 3);
   r.panelFrame({ proj: I, view: I, lightDir: new Float32Array([0, 1, 0]), rect: { x: 0, y: 0, w: 100, h: 100 } }, () => {
-    assert.equal(sp.count, 0, 'dropped at the panel\'s beginFrame');
+    assert.equal(sp.count, 3, 'AUDIT-EL F8: KEPT through the panel\'s beginFrame - they are the world\'s next frame\'s casters');
     drawWorld(r);
-    assert.equal(sp.count, 0, 'a panel draw is not a caster');
+    assert.equal(sp.count, 3, 'a panel draw is not a caster');
   });
   // the classic set records nothing at all
   r.setLightingLane(null);
@@ -272,12 +272,12 @@ test('EL2: the record pool is bounded and reused', () => {
   const sp = r.shadows;
   const mesh = { vao: {}, subMeshes: [{ textureArchive: 1, textureRecord: 1, startIndex: 0, primitiveCount: 1 }] };
   r.textures.set('1_1', {});
-  r.beginFrame(I, I, new Float32Array([0, 1, 0]));
+  r.beginFrame(I, I, new Float32Array([0, 1, 0]), WORLD_FRAME);
   for (let i = 0; i < SHADOW_RECORD_MAX + 50; i++) r.drawMesh(mesh, I, null);
   assert.equal(sp.count, SHADOW_RECORD_MAX, 'truncated at the ceiling');
   assert.equal(sp.records.length, SHADOW_RECORD_MAX, 'never past it');
   const first = sp.records[0];
-  r.beginFrame(I, I, new Float32Array([0, 1, 0]));
+  r.beginFrame(I, I, new Float32Array([0, 1, 0]), WORLD_FRAME);
   r.drawMesh(mesh, I, null);
   assert.equal(sp.records[0], first, 'the same record object, reused');
 });
@@ -287,10 +287,11 @@ test('EL2: the renderer\'s wiring - the three draw paths record behind one gate,
   assert.equal((r.match(/this\._casting\) this\._shadows\.record/g) || []).length, 3, 'mesh, terrain, billboards');
   assert.match(r, /if \(!wire && this\._casting\) this\._shadows\.recordMesh\(mesh, modelMatrix, texRemap\);/, 'a wireframe draw (the automap) is not a caster');
   assert.match(r, /get _casting\(\) \{ return !!this\._shadows && !this\._panelSaved; \}/);
-  const bf = r.slice(r.indexOf('beginFrame(proj, view, lightDir) {'), r.indexOf('beginFrame(proj, view, lightDir) {') + 2600);
-  const passes = bf.indexOf('this._renderPasses(proj, view, lightDir)');
-  assert.ok(passes > 0 && passes < bf.indexOf('gl.clear('), 'the maps before the clear (EL3: with the air\'s images, one call)');
-  assert.match(r, /if \(this\._panelSaved\) \{ sp\.discard\(\); return; \}/);
+  const bf = r.slice(r.indexOf('beginFrame(proj, view, lightDir, opts = null) {'), r.indexOf('beginFrame(proj, view, lightDir, opts = null) {') + 2600);   // AUDIT-EL F5
+  const passes = bf.indexOf('this._beginLane(proj, view, lightDir, opts?.world === true)');
+  assert.ok(passes > 0 && passes < bf.indexOf('gl.clear('), 'the maps before the clear (EL3: with the air\'s images; AUDIT-EL F5: one call, for a WORLD frame)');
+  assert.match(r, /if \(this\._shadows && world\) this\._renderPasses\(proj, view, lightDir\);/);
+  assert.match(r, /const sp = this\._shadows;   \/\/ AUDIT-EL F8: a panel frame never reaches here/, 'a panel frame keeps the records');
   assert.match(r, /    sp\.discard\(\);\n    this\._restoreWorldViewport\(\);/, 'the records are dropped after both passes and the world viewport comes back');
   assert.equal((r.match(/_dead = true;   \/\/ EL2/g) || []).length, 3, 'destroyMesh, destroyBillboardBatch, destroyBatch');
   assert.match(r, /this\._shadows = this\._shadowPass \?\?= new ShadowPass\(this\.gl, \{ build: \(vs, fs\) => this\._buildProgram\(vs, fs\), vs: \{ mesh: VS, bb: BB_VS, terrain: TERRAIN_VS \} \}\);/);

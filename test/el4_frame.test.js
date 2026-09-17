@@ -23,7 +23,7 @@ import {
   EL_LANE, EL_GLSL, EL_MESH_FS, EL_TERRAIN_FS, EL_CHAR_FS, EL_BB_FS, EL_FAR_RING_FS, EL_DUNGEON_AMBIENT_SCALE, EL_SPEC_GLOSS, EL_SPEC_STRENGTH,
   dungeonAmbient, dungeonTrilight,
 } from '../src/render/enhancedLighting.js';
-import { Renderer } from '../src/render/renderer.js';
+import { Renderer, WORLD_FRAME } from '../src/render/renderer.js';
 import { FarRingRenderer } from '../src/render/farRing.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -180,7 +180,7 @@ test('EL4: the frame lifecycle on the fake GL - bound for the world pass, every 
   ap._now = () => t;
   r.setLighting(new Float32Array([0.5, 0.5, 0.5]), 0.55, new Float32Array([1, 1, 1]));
   assert.equal(ap.frame, null, 'no frame until a world pass');
-  r.beginFrame(I, I, new Float32Array([0.3, 0.8, -0.2]));
+  r.beginFrame(I, I, new Float32Array([0.3, 0.8, -0.2]), WORLD_FRAME);
   assert.ok(ap.frame && ap.frame.w === 320 && ap.frame.h === 200, 'the frame image is the canvas\'s size');
   assert.equal(frameTarget(), ap.frame.fbo, 'and the frame target the passes restore to');
   assert.equal(r._frameFbo, ap.frame.fbo);
@@ -194,15 +194,30 @@ test('EL4: the frame lifecycle on the fake GL - bound for the world pass, every 
   calls.length = 0;
   withTarget(r.gl, { fbo: { id: 'map' }, tex: {}, width: 4, height: 4, attached: false }, [0, 0, 320, 200], () => {});
   assert.equal(calls.filter((c) => c[0] === 'bindFramebuffer').at(-1)[2], ap.frame.fbo);
-  // the first screen quad: the luminance, the mip chain, the adaptation step into the other image, the bright pass, the blur, the resolve to the canvas
+  // the first screen quad: AUDIT-EL F10 - this frame drew no world (the passes saw no records), so the eye does NOT measure it; the bright pass, the blur and the resolve still run
   t = 1016;
+  calls.length = 0;
+  r.drawScreenQuad({ id: 'ui' }, { x: 0, y: 0, w: 10, h: 10 });
+  assert.ok(!calls.some((c) => c[0] === 'generateMipmap'), 'F10: no measure off an empty frame');
+  assert.equal(ap.adaptIndex, 0, 'the eye\'s image did not swap');
+  assert.ok(calls.some((c) => c[0] === 'uniform4fv' && c[1] === 'uGrade'), 'but the frame resolved');
+  assert.equal(calls.filter((c) => c[0] === 'uniform2f' && c[1] === 'uDir').length, 4, 'the gaussian ran twice, both axes each time');
+  // a world frame: the records exist at the next passes, and THAT frame's resolve measures
+  r.textures.set('1_1', { id: 't11' });
+  r.beginFrame(I, I, new Float32Array([0.3, 0.8, -0.2]), WORLD_FRAME);
+  r.drawMesh({ vao: { id: 'vao-m' }, buffers: [], subMeshes: [{ textureArchive: 1, textureRecord: 1, startIndex: 0, primitiveCount: 1 }] }, I, null);
+  r.drawScreenQuad({ id: 'ui' }, { x: 0, y: 0, w: 10, h: 10 });
+  r.beginFrame(I, I, new Float32Array([0.3, 0.8, -0.2]), WORLD_FRAME);
+  assert.equal(ap.measured, true, 'the passes saw the world');
+  r.drawMesh({ vao: { id: 'vao-m' }, buffers: [], subMeshes: [{ textureArchive: 1, textureRecord: 1, startIndex: 0, primitiveCount: 1 }] }, I, null);   // so the next frame measures too
   calls.length = 0;
   r.drawScreenQuad({ id: 'ui' }, { x: 0, y: 0, w: 10, h: 10 });
   const names = calls.filter((c) => c[0] === 'useProgram').map((c) => c[1]);
   assert.ok(calls.some((c) => c[0] === 'generateMipmap'), 'the mean by mip');
   assert.equal(ap.adaptIndex, 1, 'the eye\'s image swapped');
+  assert.ok(calls.some((c) => c[0] === 'uniform1i' && c[1] === 'uPrev' && c[2] === 1), 'F16: the luminance pass divides the eye out (uPrev on unit 1)');
   const ad = calls.find((c) => c[0] === 'uniform4fv' && c[1] === 'uAdaptParams');
-  assert.ok(ad && ad[2][0] === 0 && near(ad[2][1], 0.18, 1e-6) && near(ad[2][2], 0.7, 1e-6) && near(ad[2][3], 1.8, 1e-6), 'the first resolve integrates no time; the key and the clamps ride along');
+  assert.ok(ad && ad[2][0] === 0 && near(ad[2][1], 0.18, 1e-6) && near(ad[2][2], 0.7, 1e-6) && near(ad[2][3], 1.8, 1e-6), 'the first measured resolve integrates no time (t did not move); the key and the clamps ride along');
   assert.ok(calls.some((c) => c[0] === 'uniform1f' && c[1] === 'uThreshold' && near(c[2], 0.85, 1e-6)), 'the bright pass');
   const grade = calls.find((c) => c[0] === 'uniform4fv' && c[1] === 'uGrade');
   assert.ok(grade && near(grade[2][2], 0.28, 1e-6) && near(grade[2][3], 1.04, 1e-6), 'the vignette and the contrast');
@@ -212,7 +227,7 @@ test('EL4: the frame lifecycle on the fake GL - bound for the world pass, every 
   assert.equal(ap.pending, false);
   assert.ok(names.length >= 6, 'the resolve ran its programs');
   // the next frame integrates the time since the last resolve, bounded
-  r.beginFrame(I, I, new Float32Array([0.3, 0.8, -0.2]));
+  r.beginFrame(I, I, new Float32Array([0.3, 0.8, -0.2]), WORLD_FRAME);
   t = 1016 + 5000;
   calls.length = 0;
   r.drawScreenQuad({ id: 'ui' }, { x: 0, y: 0, w: 10, h: 10 });
@@ -222,22 +237,26 @@ test('EL4: the frame lifecycle on the fake GL - bound for the world pass, every 
   // the far ring's texture is the current eye
   assert.equal(r.adaptTexture, ap.adapt[0].tex);
   // the door closes mid-frame: the frame target is released and nothing is owed
-  r.beginFrame(I, I, new Float32Array([0.3, 0.8, -0.2]));
+  r.beginFrame(I, I, new Float32Array([0.3, 0.8, -0.2]), WORLD_FRAME);
   assert.equal(frameTarget(), ap.frame.fbo);
   r.setAir(false);
   assert.equal(frameTarget(), null); assert.equal(r._frameFbo, null); assert.equal(ap.pending, false);
   calls.length = 0;
   r.drawScreenQuad({ id: 'ui' }, { x: 0, y: 0, w: 10, h: 10 });
   assert.ok(!calls.some((c) => c[0] === 'uniform4fv' && c[1] === 'uGrade'), 'no resolve owed');
-  // a panel frame keeps the canvas
+  // a panel frame keeps the canvas: its beginFrame never binds the frame image, so its own
+  // clear quad has nothing to resolve (a bound frame there would paint the stale world into the panel's rect)
   r.setAir(true);
+  calls.length = 0;
   r.panelFrame({ proj: I, view: I, lightDir: new Float32Array([0, 1, 0]), rect: { x: 0, y: 0, w: 100, h: 100 } }, () => {
     assert.equal(r._frameFbo, null); assert.equal(frameTarget(), null);
   });
+  assert.ok(!calls.some((c) => c[0] === 'bindFramebuffer' && c[2] === ap.frame.fbo), 'the panel never bound the frame image');
+  assert.ok(!calls.some((c) => c[0] === 'uniform4fv' && c[1] === 'uGrade'), 'and nothing resolved inside the bracket');
   // a resize reallocates the frame
   canvas.clientWidth = 640; canvas.clientHeight = 400;
   const old = ap.frame;
-  r.beginFrame(I, I, new Float32Array([0.3, 0.8, -0.2]));
+  r.beginFrame(I, I, new Float32Array([0.3, 0.8, -0.2]), WORLD_FRAME);
   assert.notEqual(ap.frame, old); assert.equal(ap.frame.w, 640);
   r.drawScreenQuad({ id: 'ui' }, { x: 0, y: 0, w: 10, h: 10 });
   assert.equal(frameTarget(), null);

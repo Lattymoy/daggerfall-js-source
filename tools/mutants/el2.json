@@ -56,8 +56,8 @@
  {
   "name": "cube-ref-no-near-clamp",
   "file": "src/render/shadowPass.js",
-  "old": "  const m = Math.max(Math.abs(dx), Math.abs(dy), Math.abs(dz), near);",
-  "new": "  const m = Math.max(Math.abs(dx), Math.abs(dy), Math.abs(dz));",
+  "old": "export function cubeDepthOfM(m, far, near = SHADOW_POINT_NEAR) {\n  m = Math.max(m, near);",
+  "new": "export function cubeDepthOfM(m, far, near = SHADOW_POINT_NEAR) {",
   "tests": [
    "test/el2_shadows.test.js"
   ]
@@ -74,8 +74,8 @@
  {
   "name": "caster-takes-eye",
   "file": "src/render/shadowPass.js",
-  "old": "    if (d < minDist || !(lights[i * 4 + 3] > 0)) continue;",
-  "new": "    if (!(lights[i * 4 + 3] > 0)) continue;",
+  "old": "    if (d < minDist || !(lights[i * 4 + 3] > 0) || lights[i * 4 + 3] > SHADOW_CASTER_MAX_RANGE) continue;",
+  "new": "    if (!(lights[i * 4 + 3] > 0) || lights[i * 4 + 3] > SHADOW_CASTER_MAX_RANGE) continue;",
   "tests": [
    "test/el2_shadows.test.js"
   ]
@@ -83,8 +83,8 @@
  {
   "name": "caster-takes-rangeless",
   "file": "src/render/shadowPass.js",
-  "old": "    if (d < minDist || !(lights[i * 4 + 3] > 0)) continue;",
-  "new": "    if (d < minDist) continue;",
+  "old": "    if (d < minDist || !(lights[i * 4 + 3] > 0) || lights[i * 4 + 3] > SHADOW_CASTER_MAX_RANGE) continue;",
+  "new": "    if (d < minDist || lights[i * 4 + 3] > SHADOW_CASTER_MAX_RANGE) continue;",
   "tests": [
    "test/el2_shadows.test.js"
   ]
@@ -272,8 +272,8 @@
  {
   "name": "renderer-panel-casts",
   "file": "src/render/renderer.js",
-  "old": "  get _casting() { return this._shadows !== null && !this._panelSaved; }",
-  "new": "  get _casting() { return this._shadows !== null; }",
+  "old": "  get _casting() { return !!this._shadows && !this._panelSaved; }",
+  "new": "  get _casting() { return !!this._shadows; }",
   "tests": [
    "test/el2_shadows.test.js"
   ]
@@ -281,10 +281,11 @@
  {
   "name": "renderer-panel-keeps",
   "file": "src/render/renderer.js",
-  "old": "    if (this._panelSaved) { this._shadows.discard(); return; }",
-  "new": "    if (this._panelSaved) return;",
+  "old": "    if (this._air?.pending && !this._panelSaved) this._compositeAir();\n    if (this._shadows && world) this._renderPasses(proj, view, lightDir);",
+  "new": "    if (this._air?.pending && !this._panelSaved) this._compositeAir();\n    if (this._shadows && (world || this._panelSaved)) this._renderPasses(proj, view, lightDir);",
   "tests": [
-   "test/el2_shadows.test.js"
+   "test/el2_shadows.test.js",
+   "test/audit_el.test.js"
   ]
  },
  {
@@ -317,8 +318,8 @@
  {
   "name": "renderer-maps-after-clear",
   "file": "src/render/renderer.js",
-  "old": "    if (this._shadows) this._renderShadowMaps(view, lightDir);   // EL2: the maps, before the clear\n",
-  "new": "",
+  "old": "    this._beginLane(proj, view, lightDir, opts?.world === true);   // EL2/EL3/EL4: the maps, the images and the frame, before the clear\n    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);\n",
+  "new": "    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);\n    this._beginLane(proj, view, lightDir, opts?.world === true);\n",
   "tests": [
    "test/el2_shadows.test.js"
   ]

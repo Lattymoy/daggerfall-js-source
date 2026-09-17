@@ -106,7 +106,7 @@ direction). The real staleness is where the sweep cannot see:
   row's own title records the previous three.
 - `:340` residue "a static NPC currently answers with the
   no-response line" - contradicts the same row's own head and row
-  `:446` (B7); `worldModes.js:1239-1250` opens the real talk window.
+  `:446` (B7); `worldModes.js:1240-1251` opens the real talk window.
 - `:339` "house/ship PURCHASE popups... still out" - contradicts row
   `:441` ("this row is now CLOSED", H1-H3) and
   `ui/bankPurchaseWindow.js`.
@@ -163,7 +163,7 @@ per arc:
   `:3368`); `:4722` is now flatly false ("the interior host's
   char-sheet and inventory panels swallow their click and do
   nothing") and contradicts U43 in the same file
-  (`worldModes.js:4283-4284` routes them). UI-Arc carries no records
+  (`worldModes.js:4284-4285` routes them). UI-Arc carries no records
   at all for H1-H3 - the banking windows exist only in the Ledger.
 - *Combat.md*: the status head (first 51 lines) is the stale part -
   DrainMagicka "INTERIM no-op" (`:19`, real since S4a and
@@ -234,8 +234,8 @@ opposite of their own code and deserve a slice's attention:
 ## Line-citation drift (low, batched)
 
 `Port-Ledger.md:510` (save.js:29/:504/:513 → :28/:530/:560), `:522`
-(world.js:2003 → :2412); `Quest-Arc.md:719`/`:2905`
-(worldModes.js:484 → :903); `Player-Arc.md:955` (worldModes.js:689 →
+(world.js:2004 → :2412); `Quest-Arc.md:719`/`:2905`
+(worldModes.js:485 → :903); `Player-Arc.md:955` (worldModes.js:690 →
 :2764), `:304` (world.js "531 lines" → 3,564); `Characters-Arc.md:190`
 (CHAR_PIXEL "7" - `renderer.js:478` ships 9, and the doc missed two
 later revisions recorded in `paperdollViewer.js:138`), `:2114`

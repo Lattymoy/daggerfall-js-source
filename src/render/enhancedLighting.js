@@ -60,7 +60,8 @@
 import { getPref } from '../systems/uiPrefs.js';
 import { isEnhanced } from '../systems/uiSkin.js';
 import { SHADOW_GLSL } from './shadowPass.js';   // EL2: the receiver block - the sun map on the sun term, the cube map on its lantern
-import { AIR_AO_GLSL, AIR_ADAPT_GLSL, airOn } from './airPass.js';   // EL3: the ambient occlusion image by screen position, and its kill door; EL4: the adapted exposure
+import { AIR_AO_GLSL, AIR_ADAPT_GLSL, airOn } from './airPass.js';
+import { SHADE_DARK } from '../systems/concealDraw.js';   // AUDIT-EL F14: the shade's pull toward black, interpolated as the classic BB_FS does   // EL3: the ambient occlusion image by screen position, and its kill door; EL4: the adapted exposure
 
 /** The lane's light cap - the classic lane's sixteen, tripled. Forty-eight
  *  vec4 + forty-eight vec3 are 96 uniform vectors; ES 3.0 guarantees 224
@@ -402,7 +403,6 @@ uniform int uSpectral;
 uniform vec4 uConceal;
 uniform vec3 uTint;
 uniform vec3 uBBSun;
-uniform float uShadeDark;    // EL1: concealDraw.js's SHADE_DARK, uploaded (the classic FS interpolates it)
 uniform int uPointCount;
 uniform vec4 uPointLights[${EL_MAX_LIGHTS}];
 uniform vec3 uPointColors[${EL_MAX_LIGHTS}];
@@ -438,7 +438,7 @@ void main() {
   vec3 albedo = max(elDecode(tex.rgb) - emission, vec3(0.0));
   vec3 base = vBBBase + vec3(0.0, 0.5, 0.0);   // EL2: the shadow is read a half unit up the sprite's base, once for the whole flat
   vec3 lit = albedo * (uTint + uBBSun * cloudShadowAt(vBBWorld) * sunShadowAt(base, vec3(0.0, 1.0, 0.0)) + elPointFlat(vBBWorld, base) + elIndirectFlat(vBBWorld)) + emission;
-  if (uConceal.x == 2.0) lit *= uShadeDark;
+  if (uConceal.x == 2.0) lit *= ${SHADE_DARK};   // AUDIT-EL F14: a uniform nothing uploaded read 0 - every shade a black cut-out
   if (uConceal.x == 4.0) lit = vec3(0.0);
   float alpha = uSpectral == 1 ? tex.a : 1.0;
   if (uConceal.x > 0.0) alpha = tex.a * uConceal.y;
@@ -645,6 +645,15 @@ export function syncLightingLane(renderer, search = globalThis.location?.search 
 export function dungeonAmbient(on, rgb) {
   if (!on) return rgb;
   return new Float32Array([rgb[0] * EL_DUNGEON_AMBIENT_SCALE, rgb[1] * EL_DUNGEON_AMBIENT_SCALE, rgb[2] * EL_DUNGEON_AMBIENT_SCALE]);
+}
+/** AUDIT-EL F6: a dungeon's FOG colour goes down with its ambient - Better
+ *  Ambience's fog colour is the colour its trilight is lerped toward, so a
+ *  scaled ambient under an unscaled fog put the far end of a hall BRIGHTER
+ *  than its near walls. The underwater override is not this one's. */
+export function dungeonFog(on, fog) {
+  if (!on || !fog?.color) return fog;
+  const c = fog.color;
+  return { ...fog, color: [c[0] * EL_DUNGEON_AMBIENT_SCALE, c[1] * EL_DUNGEON_AMBIENT_SCALE, c[2] * EL_DUNGEON_AMBIENT_SCALE] };
 }
 export function dungeonTrilight(on, tri) {
   if (!on || !tri) return tri;

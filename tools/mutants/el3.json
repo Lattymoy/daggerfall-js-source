@@ -141,13 +141,15 @@
   "new": "  }\n\n  _replayEmission",
   "tests": [
    "test/el3_air.test.js"
-  ]
+  ],
+  "equivalent": true,
+  "why": "AUDIT-EL F5: a bound frame is a resolve owed - beginFrameTarget sets `pending` itself now, so render()'s own set is a second hand on the same flag"
  },
  {
   "name": "render-clear-not-restored",
   "file": "src/render/airPass.js",
-  "old": "    gl.clearColor(f.clearColor[0], f.clearColor[1], f.clearColor[2], f.clearColor[3]);\n    this.pending = true;",
-  "new": "    this.pending = true;",
+  "old": "    gl.clearColor(f.clearColor[0], f.clearColor[1], f.clearColor[2], f.clearColor[3]);\n    this.rect.set(f.viewport);",
+  "new": "    this.rect.set(f.viewport);",
   "tests": [
    "test/el3_air.test.js"
   ]
@@ -164,10 +166,10 @@
  {
   "name": "render-one-gauss",
   "file": "src/render/airPass.js",
-  "old": "    for (let pass = 0; pass < 2; pass++) {\n      quad(this.programs.gauss, T.bloomB);",
-  "new": "    for (let pass = 0; pass < 1; pass++) {\n      quad(this.programs.gauss, T.bloomB);",
+  "old": "    for (let pass = 0; pass < 2; pass++) {\n      quad(P.gauss, T.bloomB);",
+  "new": "    for (let pass = 0; pass < 1; pass++) {\n      quad(P.gauss, T.bloomB);",
   "tests": [
-   "test/el3_air.test.js"
+   "test/el4_frame.test.js"
   ]
  },
  {
@@ -200,8 +202,8 @@
  {
   "name": "glare-rangeless",
   "file": "src/render/airPass.js",
-  "old": "      if (!(range > 0)) continue;\n",
-  "new": "",
+  "old": "      if (!(range > 0) || range > AIR_GLARE_MAX_RANGE) continue;   // AUDIT-EL F11: the lightning flash (range 500..1000 over the player) is no lantern\n",
+  "new": "      if (range > AIR_GLARE_MAX_RANGE) continue;\n",
   "tests": [
    "test/el3_air.test.js"
   ]
@@ -209,8 +211,8 @@
  {
   "name": "composite-twice",
   "file": "src/render/airPass.js",
-  "old": "    if (!this.pending || !this.targets) return;\n    this.pending = false;",
-  "new": "    if (!this.pending || !this.targets) return;",
+  "old": "    if (!this.pending || !this.targets || !this.frame) return;\n    this.pending = false;",
+  "new": "    if (!this.pending || !this.targets || !this.frame) return;",
   "tests": [
    "test/el3_air.test.js"
   ]
@@ -218,8 +220,8 @@
  {
   "name": "composite-gain",
   "file": "src/render/airPass.js",
-  "old": "    this.gain = new Float32Array([AIR_BLOOM_STRENGTH, 1]);",
-  "new": "    this.gain = new Float32Array([1, 1]);",
+  "old": "    this.grade = new Float32Array([AIR_BLOOM_STRENGTH, 1, AIR_VIGNETTE, AIR_CONTRAST]);",
+  "new": "    this.grade = new Float32Array([1, 1, AIR_VIGNETTE, AIR_CONTRAST]);",
   "tests": [
    "test/el3_air.test.js"
   ]
@@ -227,8 +229,8 @@
  {
   "name": "composite-alpha-blend",
   "file": "src/render/airPass.js",
-  "old": "    gl.enable(gl.BLEND);\n    gl.blendFunc(gl.ONE, gl.ONE);\n    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);\n    gl.disable(gl.BLEND);\n    gl.enable(gl.CULL_FACE);",
-  "new": "    gl.enable(gl.BLEND);\n    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);\n    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);\n    gl.disable(gl.BLEND);\n    gl.enable(gl.CULL_FACE);",
+  "old": "    quad(P.bright, T.bloom);\n    gl.enable(gl.BLEND);\n    gl.blendFunc(gl.ONE, gl.ONE);",
+  "new": "    quad(P.bright, T.bloom);\n    gl.enable(gl.BLEND);\n    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);",
   "tests": [
    "test/el3_air.test.js"
   ]
@@ -254,7 +256,7 @@
  {
   "name": "renderer-air-off-keeps-pending",
   "file": "src/render/renderer.js",
-  "old": "    else { if (this._air) this._air.pending = false; this._air = null; }",
+  "old": "    else { if (this._air) { this._air.release(); this._frameFbo = null; } this._air = null; }",
   "new": "    else { this._air = null; }",
   "tests": [
    "test/el3_air.test.js"
@@ -263,8 +265,8 @@
  {
   "name": "renderer-no-ao-upload",
   "file": "src/render/renderer.js",
-  "old": "    if (this._air) this._air.upload(this._el[key].ao);   // EL3: the AO image\n",
-  "new": "",
+  "old": "    if (this._air?.targets) this._air.upload(this._el[key].ao, foreignRect);   // EL3: the AO image\n    else this._uploadNoAo(this._el[key].ao);\n",
+  "new": "    this._uploadNoAo(this._el[key].ao);\n",
   "tests": [
    "test/el3_air.test.js"
   ]
@@ -281,8 +283,8 @@
  {
   "name": "renderer-composite-no-viewport",
   "file": "src/render/renderer.js",
-  "old": "    this._air.composite();\n    this._lastProgram = null; this._lastVao = null;\n    this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);",
-  "new": "    this._air.composite();\n    this._lastProgram = null; this._lastVao = null;",
+  "old": "    this._air.composite();   // EL4: the resolve - the frame to the canvas\n    this._frameFbo = null;\n    this._lastProgram = null; this._lastVao = null;\n    this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);",
+  "new": "    this._air.composite();   // EL4: the resolve - the frame to the canvas\n    this._frameFbo = null;\n    this._lastProgram = null; this._lastVao = null;",
   "tests": [
    "test/el3_air.test.js"
   ]
@@ -290,8 +292,8 @@
  {
   "name": "renderer-records-kept",
   "file": "src/render/renderer.js",
-  "old": "    sp.discard();\n    this._restoreWorldViewport();\n    this._lastProgram = null; this._lastVao = null;\n  }",
-  "new": "    this._restoreWorldViewport();\n    this._lastProgram = null; this._lastVao = null;\n  }",
+  "old": "    sp.discard();\n    this._restoreWorldViewport();\n    this.markForeignPass();",
+  "new": "    this._restoreWorldViewport();\n    this.markForeignPass();",
   "tests": [
    "test/el3_air.test.js"
   ]
@@ -299,8 +301,8 @@
  {
   "name": "renderer-viewport-not-restored",
   "file": "src/render/renderer.js",
-  "old": "    sp.discard();\n    this._restoreWorldViewport();\n    this._lastProgram = null; this._lastVao = null;\n  }",
-  "new": "    sp.discard();\n    this._lastProgram = null; this._lastVao = null;\n  }",
+  "old": "    sp.discard();\n    this._restoreWorldViewport();\n    this.markForeignPass();",
+  "new": "    sp.discard();\n    this.markForeignPass();",
   "tests": [
    "test/el3_air.test.js"
   ]

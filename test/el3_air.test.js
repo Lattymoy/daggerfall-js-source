@@ -21,7 +21,7 @@ import {
 } from '../src/render/airPass.js';
 import { EL_LANE, EL_MESH_FS, EL_BB_FS, EL_TERRAIN_FS, EL_CHAR_FS, EL_FAR_RING_FS } from '../src/render/enhancedLighting.js';
 import { SHADOW_SUN_UNIT, SHADOW_POINT_UNIT } from '../src/render/shadowPass.js';
-import { Renderer, CLOUD_SHADOW_UNIT } from '../src/render/renderer.js';
+import { Renderer, CLOUD_SHADOW_UNIT, WORLD_FRAME } from '../src/render/renderer.js';
 import { perspective, mirrorProjectionX, lookAt, transformPoint } from '../src/world/mat4.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -178,7 +178,7 @@ test('EL3: the renderer builds the pass with the lane behind the door, sizes the
   const sun = new Float32Array([0.3, 0.8, -0.2]);   // in front of an eye at the origin looking down -z (the identity view)
   const P = mirrorProjectionX(perspective(1, 1.6, 0.5, 6000));   // a real projection: the shafts want the sun's screen position
   calls.length = 0;
-  r.beginFrame(P, I, sun);
+  r.beginFrame(P, I, sun, WORLD_FRAME);
   assert.equal(ap.width, 320); assert.equal(ap.height, 200);
   assert.equal(ap.targets.ao.w, 160); assert.equal(ap.targets.bloom.w, 80); assert.equal(ap.targets.depth.w, 320);
   assert.equal(calls.filter((c) => c[0] === 'texStorage2D').length, 1, 'the depth image');
@@ -187,10 +187,11 @@ test('EL3: the renderer builds the pass with the lane behind the door, sizes the
   const info = calls.find((c) => c[0] === 'uniform4fv' && c[1] === 'uAOInfo');
   assert.deepEqual([...info[2]], [0, 0, 320, 200], 'the viewport');
   drawWorld(r);
-  // frame 2: the shadow maps, then the air's images (depth, ao, box, bloom source, gauss x4, shaft), then the clear
+  r.drawScreenQuad({ id: 'hud' }, { x: 0, y: 0, w: 10, h: 10 });   // AUDIT-EL F5: the host's 2D pass resolves frame 1 - a frame still owed at the next beginFrame is resolved there first
+  // frame 2: the shadow maps, then the air's images (depth, ao, box, bloom source, shaft), then the clear
   calls.length = 0;
   r.setPointLights(new Float32Array([5, 2, 1, 14, 3, 3, 3, 0]), new Float32Array([1, 0.7, 0.4]));   // and a rangeless light, which glares not
-  r.beginFrame(P, I, sun);
+  r.beginFrame(P, I, sun, WORLD_FRAME);
   const firstClear = calls.findIndex((c) => c[0] === 'clear' && c[1] === 16384 + 256);
   const before = calls.slice(0, firstClear);
   const depthClears = before.filter((c) => c[0] === 'clear' && c[1] === 256);
@@ -225,22 +226,24 @@ test('EL3: the renderer builds the pass with the lane behind the door, sizes the
   // indoors at night: no shafts; the door closed: no render, no composite owed
   r.setLighting(new Float32Array([0.12, 0.12, 0.12]), 0);
   drawWorld(r);
-  r.beginFrame(I, I, new Float32Array([0.45, 0.8, 0.35]));
+  r.beginFrame(I, I, new Float32Array([0.45, 0.8, 0.35]), WORLD_FRAME);
   assert.equal(ap.stats.shafts, false);
   assert.equal(ap.targets, targets, 'the images are kept while the viewport keeps its size');
   r.setAir(false);
   assert.equal(ap.pending, false, 'closing the door owes nothing');
   drawWorld(r);
   calls.length = 0;
-  r.beginFrame(P, I, sun);
-  assert.ok(!calls.some((c) => c[0] === 'uniform4fv' && c[1] === 'uAOInfo'), 'no receiver upload with the air off');
+  r.beginFrame(P, I, sun, WORLD_FRAME);
+  const noAo = calls.find((c) => c[0] === 'uniform4fv' && c[1] === 'uAOInfo');
+  assert.ok(noAo && [...noAo[2]].every((v) => v === 0), 'AUDIT-EL F12: with the air off the AO rect goes up as zeros (off) and the sampler still sits on its unit');
+  assert.ok(calls.some((c) => c[0] === 'uniform1i' && c[1] === 'uAO' && c[2] === AIR_AO_UNIT), 'the terrain\'s unit 0 is a sampler2DArray - uAO left at unit 0 would fail every terrain draw');
   assert.equal(calls.filter((c) => c[0] === 'clear' && c[1] === 256).length, 6, 'the shadow maps alone (indoors now: the cube\'s six faces, no depth image)');
   // a panel frame draws no image and drops the records
   r.setAir(true);
   drawWorld(r);
   calls.length = 0;
   r.panelFrame({ proj: I, view: I, lightDir: new Float32Array([0, 1, 0]), rect: { x: 0, y: 0, w: 100, h: 100 } }, () => {
-    assert.equal(r.shadows.count, 0);
+    assert.equal(r.shadows.count, 3, 'AUDIT-EL F8: a panel frame keeps the world\'s records');
   });
   assert.ok(!calls.some((c) => c[0] === 'uniform4fv' && c[1] === 'uGrade'), 'no resolve inside a panel');
 });
@@ -249,7 +252,7 @@ test('EL3: the renderer\'s wiring - the air rides the lane and the door, the com
   const r = read('src/render/renderer.js');
   assert.match(r, /const want = this\._airWanted && !!this\._lane\?\.air && !!this\._shadows;/);
   assert.equal((r.match(/this\._compositeAir\(\);   \/\/ EL3/g) || []).length, 2, 'drawScreenQuad and drawScreenQuadRun');
-  assert.match(r, /if \(this\._air\) this\._air\.upload\(this\._el\[key\]\.ao, foreignRect\);/);   // AUDIT-EL F2: no AO in a foreign rect
+  assert.match(r, /if \(this\._air\?\.targets\) this\._air\.upload\(this\._el\[key\]\.ao, foreignRect\);/);   // AUDIT-EL F2: no AO in a foreign rect; F12: and none without the images
   assert.match(r, /this\._shadows\.recordBillboards\(batches, this\._flatWind, camRight, camUp\);/);
   const sp = read('src/render/shadowPass.js');
   assert.match(sp, /r\.right\.set\(camRight\); r\.up\.set\(camUp\);/);

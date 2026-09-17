@@ -218,8 +218,8 @@
  {
   "name": "renderer-frame-not-bound",
   "file": "src/render/renderer.js",
-  "old": "    this._frameFbo = this._air && !this._panelSaved ? this._air.beginFrameTarget(this.canvas.width, this.canvas.height) : null;\n    gl.clear(",
-  "new": "    this._frameFbo = null;\n    gl.clear(",
+  "old": "    this._frameFbo = this._air && !this._panelSaved ? this._air.beginFrameTarget(this.canvas.width, this.canvas.height) : null;",
+  "new": "    this._frameFbo = null;",
   "tests": [
    "test/el4_frame.test.js"
   ]

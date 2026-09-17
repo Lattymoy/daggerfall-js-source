@@ -220,8 +220,8 @@
  {
   "name": "sync-no-exposure",
   "file": "src/render/enhancedLighting.js",
-  "old": "  if (on) renderer.setExposure(exposureFor(search));",
-  "new": "",
+  "old": "  if (on) { renderer.setExposure(exposureFor(search)); renderer.setAir(airOn(search)); }   // EL3: the door is the page's, read here alone",
+  "new": "  if (on) { renderer.setAir(airOn(search)); }",
   "tests": [
    "test/el1_enhancedlighting.test.js"
   ]
@@ -283,7 +283,7 @@
  {
   "name": "renderer-pointcolors-raw",
   "file": "src/render/renderer.js",
-  "old": "    return this._lane ? this._lane.decodeN(out, this._pointColorDec, count) : out;   // EL1: linear for the lane",
+  "old": "    return this._lane && !raw ? this._lane.decodeN(out, this._pointColorDec, count) : out;",
   "new": "    return out;",
   "tests": [
    "test/el1_enhancedlighting.test.js"
@@ -364,7 +364,7 @@
  {
   "name": "farring-no-exposure",
   "file": "src/render/farRing.js",
-  "old": "    if (this.lane) gl.uniform1f(this.u.uELExposure, exposure);",
+  "old": "      gl.uniform1f(this.u.uELExposure, exposure);\n",
   "new": "",
   "tests": [
    "test/el1_enhancedlighting.test.js"

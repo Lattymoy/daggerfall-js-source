@@ -95,7 +95,7 @@ test('EV6: every program and VAO bind in renderer.js funnels through the shadows
   // _use would land in whatever foreign program the sky or the ring
   // left bound, and the counting stub's uniform no-ops would never see
   // it.
-  const bfStart = r.indexOf('beginFrame(proj, view, lightDir) {');
+  const bfStart = r.indexOf('beginFrame(proj, view, lightDir, opts = null) {');   // AUDIT-EL F5: the world flag
   const bf = r.slice(bfStart, bfStart + 2600);
   const reset = bf.indexOf('this._lastProgram = null;');
   const use = bf.indexOf('this._use(this.program);');

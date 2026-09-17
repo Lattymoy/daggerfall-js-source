@@ -408,6 +408,7 @@ export class OverworldMapWindow {
         // back and no longer restores (AUDIT 39 F55) - the veil quad
         // below draws on the renderer's own program and must rebind.
         renderer.markForeignPass();
+        renderer.resolveFrame?.();   // AUDIT-EL F5: the relief was drawn into the lane's frame image; nothing below draws a screen quad in the 'map' phase, so it is resolved here or never
         this._proj = proj; this._view = view; this._vw = w; this._vh = h;
       }
       if (this._veil > 0.001) {

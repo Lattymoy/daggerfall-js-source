@@ -399,3 +399,111 @@ Campaign `tools/mutants/el4.json`: 35 mutants, 35 killed (the one
 first-run survivor, the eye images' starting byte, pinned). **NOT SEEN ON
 A GPU** - the adaptation's rates, clamps and key, the dungeon scale, the
 vignette and the contrast are Mac's eye's; every one is a named constant.
+
+## AUDIT-EL (2026-09-17, Mac: "Audit")
+
+Four lanes: two unanchored reviewer reads handed the code and not my
+conclusions (the GL and shader lane; the host wiring and light data flow),
+and two of my own (the frame lifecycle under real WebGL semantics; the
+classic lane's byte-identity against the merge base - the ten classic
+shaders compared template for template, the one difference the `vBBBase`
+varying EL2 added, which the classic fragment shader ignores). Twenty
+findings, every one fixed and pinned (`test/audit_el.test.js`, 11;
+campaign `tools/mutants/audit_el.json`, 33 mutants, 33 killed; the four
+tier campaigns re-run over the audited code).
+
+**The ones that would have shown on the first GPU frame.**
+- F12 (GL lane, HIGH): with `?air=off` the terrain drew NOTHING. The lane's
+  terrain shader carries `uAO`, a `sampler2D`, and with the air off nothing
+  bound it - so it sat at unit 0 beside `uTileArr`, a `sampler2DArray`.
+  Two samplers of different types on one unit is INVALID_OPERATION at
+  every draw. The AO sampler is on unit 12 always now, with a bare image
+  and a zero rect when there is no image.
+- F1 (mine): every lane shader samples `uAdapt`; with the air off nothing
+  bound it either, and it read the diffuse texture's centre texel as an
+  exposure - a different exposure per material. A bare 1x1 image holding
+  the multiplier 1 is bound whenever the air is off, and in the studio
+  bake (the item icons, the inventory's body), where the world's eye would
+  have made an icon baked in a dark dungeon brighter than one baked at
+  noon.
+- F5 (wiring lane, HIGH): the enhanced travel map vanished. It opens a
+  SECOND `beginFrame` after the host's HUD; with the air on that rebound
+  and cleared the frame image, the relief drew into it, and nothing after
+  it drew a screen quad in the 'map' phase - so the map's frame was never
+  resolved and the canvas kept the world. `beginFrame` takes a world flag
+  now (`WORLD_FRAME`, the six host sites): a world frame replays and
+  spends the records; any other frame - the map, a video, a menu - first
+  resolves the frame still owed, keeps the world's records for the world's
+  next frame, and draws into a frame of its own that its first screen
+  draw or `resolveFrame()` (the map calls it after its relief) resolves.
+- F4 (mine, then the wiring lane): FORTY-EIGHT LANTERNS NEVER REACHED THE
+  SHADER. `withPlayerLights` cut the scene's lights to sixteen minus the
+  player's whatever set was installed - the classic cap restated in the
+  composer. It keeps every light now; the renderer's `setPointLights` cuts
+  to the installed cap with the player's first, which drops the farthest
+  of the scene's - light for light what the old arithmetic dropped on the
+  classic set (three older pins re-aimed to say so).
+- F13 (GL lane): the camera's depth image drew every flat edge-on - the
+  replay used the sun's basis for the air pass too - so the AO ignored
+  every tree and foe, the glares shone through them and the shafts
+  streamed through every canopy. The record carries the basis the flat was
+  drawn with; the camera replay uses it.
+- F14 (GL lane): the lane's billboard shader declared `uShadeDark` and
+  nothing uploaded it - every shade-concealed foe a black cut-out. The
+  constant is interpolated as the classic shader does.
+
+**The ones that would have looked wrong.**
+- F6 (wiring lane): Better Ambience's fog colour was not scaled with the
+  dungeon's ambient, so the far end of a foggy hall was BRIGHTER than its
+  near walls - the inverse of the dark. `dungeonFog` scales it with the
+  same constant; the underwater override is untouched.
+- F7 (wiring lane): the automap's unlit bracket and the bank's preview
+  drew through the lane's tonemap and the world's eye - a map whose
+  brightness drifted with the dungeon the player had just stood in. A
+  panel frame suspends the lane and draws on the classic set.
+- F15 (GL lane): the shadow biases were constants in non-linear depth -
+  the cube's 0.002 was half a world unit at five units and four at
+  fifteen (an occluder within four units of a wall cast nothing near a
+  lantern's range), the sun's 0.0004 half a unit over the 1200-unit box.
+  Both are in the space they mean now: 0.04 world units off the major
+  axis, 5e-5 of the box (0.06 units), the normal offsets kept.
+- F16 (GL lane): the eye measured its own output - the fixed point was the
+  square root of the intended correction - and off a single bilinear tap
+  per texel, so a torch crossing a tap moved the mean a stop. The
+  luminance pass divides the current multiplier out and takes sixteen taps
+  per texel.
+- F2 (mine): the AO image is read by `gl_FragCoord` against the world
+  rect; the sprite pass's 1024^2 target and a panel read a stranger's
+  occlusion. A foreign rect takes none.
+- F3 (mine): the water surface is a classic-space program with sixteen
+  slots; it took the lane's forty-eight and, on the lane, decoded colours
+  that dimmed every lantern's reflection. Sixteen, raw.
+- F10 (wiring lane): the eye adapted to the clear colour behind a video or
+  a menu and swung back on return. A frame the world never drew (the
+  passes saw no records) is not measured.
+- F11 (wiring lane): Dynamic Skies' lightning flash (range 500..1000 over
+  the player) became the cube map's caster - six 512^2 replays of the town
+  to a far plane of a thousand, for a frame - and an eleven-unit glare. A
+  light past 120 units of range is neither.
+- F20 (GL lane): the emitters bloomed in display space beside linear
+  glares. Decoded.
+
+**The small ones.** F8 the records survive a panel frame (a dead branch
+removed; F5 made a panel no world frame); F17 two variables named `step`
+hid the built-in (renamed); F18 a hidden canvas allocated a 0x0 image
+(guarded); F19 the passes' last VAO was left bound under a shadow set to
+null (a real unbind through `markForeignPass`); F9 the castle and special
+areas darken with the dungeon under the lane - the ratio AUDIT 26 F183
+set (five times the dungeon) holds, the absolute is the lane's - a
+judgement, recorded and kept.
+
+**Performance, recorded, not measured:** a city frame replays its ~1000
+records three times outdoors (two cascades and the depth image) and seven
+indoors (six faces and the depth image), one matrix upload and one draw
+per record; the fake harness cannot show the CPU cost. The doors are
+`?air=off` (drops the depth image and its three effects, keeps the
+shadows) and `?lighting=classic`.
+
+**NOT SEEN ON A GPU** - still; the two reviewers read the code as a GPU
+would, which is the most this session can do. Mac's eye is the gate.
+
