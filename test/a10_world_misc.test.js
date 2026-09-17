@@ -105,7 +105,7 @@ test('A10: both dungeon hosts pass the block range; the exterior/interior ones d
   // The interior arm in the same file must NOT take it - a building
   // interior has no DungeonLightHandler on its lights at all.
   const wm = read('src/scenes/worldModes.js');
-  assert.match(wm, /nearestLights\(interiorCtx\.lights, cam\.pos, 16, interiorCtx\.lights\.map\(\(l\) => l\.range\)/);
+  assert.match(wm, /nearestLights\(interiorCtx\.lights, cam\.pos, renderer\.maxPointLights, interiorCtx\.lights\.map\(\(l\) => l\.range\)/);   // EL1: the installed set's cap
 });
 
 // ---------------------------------------------------------------

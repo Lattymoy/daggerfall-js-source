@@ -158,9 +158,9 @@ test('seams 2: every host sets the clear colour - interiors black, the streaming
   assert.match(src('src/scenes/world.js'), /renderer\.setClearColor\(SKY_CLEAR\);/);
   assert.match(src('src/scenes/exterior.js'), /renderer\.setClearColor\(SKY_CLEAR\);/);
   const wm = src('src/scenes/worldModes.js');
-  const modeFrames = [...wm.matchAll(/renderer\.setClearColor\(INTERIOR_CLEAR\);[^\n]*\n\s+renderer\.setWorldViewport\([^\n]*\n\s+renderer\.beginFrame\(proj, view, INTERIOR_LIGHT_DIR\);/g)];
+  const modeFrames = [...wm.matchAll(/renderer\.setClearColor\(INTERIOR_CLEAR\);[^\n]*\n\s+renderer\.setWorldViewport\([^\n]*\n\s+renderer\.beginFrame\(proj, view, INTERIOR_LIGHT_DIR, WORLD_FRAME\);/g)];   // AUDIT-EL F5: a world frame
   assert.equal(modeFrames.length, 2, 'both mode frames (dungeon, interior) clear black above their viewport + beginFrame pair (E5 wants the rect immediately above the frame)');
-  assert.equal([...wm.matchAll(/renderer\.beginFrame\(proj, view, INTERIOR_LIGHT_DIR\);/g)].length, 2, 'and those are the only two');
+  assert.equal([...wm.matchAll(/renderer\.beginFrame\(proj, view, INTERIOR_LIGHT_DIR, WORLD_FRAME\);/g)].length, 2, 'and those are the only two');
   // the mode-driven pair run BEFORE the frame they colour
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const s = src(f);

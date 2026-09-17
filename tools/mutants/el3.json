@@ -1,0 +1,346 @@
+[
+ {
+  "name": "door-ignored",
+  "file": "src/render/airPass.js",
+  "old": "  return new URLSearchParams(search).get('air') !== 'off';",
+  "new": "  return true;",
+  "tests": [
+   "test/el3_air.test.js"
+  ]
+ },
+ {
+  "name": "ao-scale",
+  "file": "src/render/airPass.js",
+  "old": "export const AIR_AO_SCALE = 0.5;",
+  "new": "export const AIR_AO_SCALE = 1;",
+  "tests": [
+   "test/el3_air.test.js"
+  ]
+ },
+ {
+  "name": "bloom-scale",
+  "file": "src/render/airPass.js",
+  "old": "export const AIR_BLOOM_SCALE = 0.25;",
+  "new": "export const AIR_BLOOM_SCALE = 0.5;",
+  "tests": [
+   "test/el3_air.test.js"
+  ]
+ },
+ {
+  "name": "projinfo-swapped",
+  "file": "src/render/airPass.js",
+  "old": "  out[0] = proj[0]; out[1] = proj[5]; out[2] = proj[10]; out[3] = proj[14];",
+  "new": "  out[0] = proj[5]; out[1] = proj[0]; out[2] = proj[10]; out[3] = proj[14];",
+  "tests": [
+   "test/el3_air.test.js"
+  ]
+ },
+ {
+  "name": "viewdepth-sign",
+  "file": "src/render/airPass.js",
+  "old": "  return -p14 / (zNdc + p10);",
+  "new": "  return p14 / (zNdc + p10);",
+  "tests": [
+   "test/el3_air.test.js"
+  ]
+ },
+ {
+  "name": "sun-behind-allowed",
+  "file": "src/render/airPass.js",
+  "old": "  if (!(cw > 1e-6)) return null;",
+  "new": "  if (cw === 0) return null;",
+  "tests": [
+   "test/el3_air.test.js"
+  ]
+ },
+ {
+  "name": "sun-no-view",
+  "file": "src/render/airPass.js",
+  "old": "  const vx = view[0] * lightDir[0] + view[4] * lightDir[1] + view[8] * lightDir[2];",
+  "new": "  const vx = lightDir[0];",
+  "tests": [
+   "test/el3_air.test.js"
+  ]
+ },
+ {
+  "name": "kernel-full-sphere",
+  "file": "src/render/airPass.js",
+  "old": "    let x = rnd() * 2 - 1, y = rnd() * 2 - 1, z = rnd();",
+  "new": "    let x = rnd() * 2 - 1, y = rnd() * 2 - 1, z = rnd() * 2 - 1;",
+  "tests": [
+   "test/el3_air.test.js"
+  ]
+ },
+ {
+  "name": "kernel-flat-scale",
+  "file": "src/render/airPass.js",
+  "old": "    const scale = (0.1 + 0.9 * t * t) * rnd();",
+  "new": "    const scale = rnd();",
+  "tests": [
+   "test/el3_air.test.js"
+  ]
+ },
+ {
+  "name": "kernel-unseeded",
+  "file": "src/render/airPass.js",
+  "old": "  let seed = 0x2545F491;",
+  "new": "  let seed = (Date.now() & 0xffff) | 1;",
+  "tests": [
+   "test/el3_air.test.js"
+  ]
+ },
+ {
+  "name": "glare-linear",
+  "file": "src/render/airPass.js",
+  "old": "  return AIR_GLARE_SIZE * Math.sqrt(Math.max(range, 0));",
+  "new": "  return AIR_GLARE_SIZE * Math.max(range, 0);",
+  "tests": [
+   "test/el3_air.test.js"
+  ]
+ },
+ {
+  "name": "glsl-ao-off-dark",
+  "file": "src/render/airPass.js",
+  "old": "  if (uAOInfo.z <= 0.0) return 1.0;",
+  "new": "  if (uAOInfo.z <= 0.0) return 0.0;",
+  "tests": [
+   "test/el3_air.test.js"
+  ]
+ },
+ {
+  "name": "glsl-glare-no-hide",
+  "file": "src/render/airPass.js",
+  "old": "      vis = (ndc.z * 0.5 + 0.5) <= d + 0.002 ? 1.0 : 0.0;",
+  "new": "      vis = 1.0;",
+  "tests": [
+   "test/el3_air.test.js"
+  ]
+ },
+ {
+  "name": "glsl-shaft-no-sky",
+  "file": "src/render/airPass.js",
+  "old": "  float sky = texture(uDepth, uv).r >= 0.99999 ? 1.0 : 0.0;",
+  "new": "  float sky = 1.0;",
+  "tests": [
+   "test/el3_air.test.js"
+  ]
+ },
+ {
+  "name": "glsl-normal-unflipped",
+  "file": "src/render/airPass.js",
+  "old": "  if (dot(n, -p) < 0.0) n = -n;   // a normal faces the eye whatever the projection's handedness did to the derivatives\n",
+  "new": "",
+  "tests": [
+   "test/el3_air.test.js"
+  ]
+ },
+ {
+  "name": "render-no-pending",
+  "file": "src/render/airPass.js",
+  "old": "    this.pending = true;\n  }\n\n  _replayEmission",
+  "new": "  }\n\n  _replayEmission",
+  "tests": [
+   "test/el3_air.test.js"
+  ],
+  "equivalent": true,
+  "why": "AUDIT-EL F5: a bound frame is a resolve owed - beginFrameTarget sets `pending` itself now, so render()'s own set is a second hand on the same flag"
+ },
+ {
+  "name": "render-clear-not-restored",
+  "file": "src/render/airPass.js",
+  "old": "    gl.clearColor(f.clearColor[0], f.clearColor[1], f.clearColor[2], f.clearColor[3]);\n    this.rect.set(f.viewport);",
+  "new": "    this.rect.set(f.viewport);",
+  "tests": [
+   "test/el3_air.test.js"
+  ]
+ },
+ {
+  "name": "render-shafts-always",
+  "file": "src/render/airPass.js",
+  "old": "    const sun = f.sunScale > 0.01 && f.lightDir && f.lightDir[1] > 0 ? sunScreenUV(f.proj, f.view, f.lightDir) : null;",
+  "new": "    const sun = f.lightDir ? (sunScreenUV(f.proj, f.view, f.lightDir) ?? [0.5, 0.5]) : null;",
+  "tests": [
+   "test/el3_air.test.js"
+  ]
+ },
+ {
+  "name": "render-one-gauss",
+  "file": "src/render/airPass.js",
+  "old": "    for (let pass = 0; pass < 2; pass++) {\n      quad(P.gauss, T.bloomB);",
+  "new": "    for (let pass = 0; pass < 1; pass++) {\n      quad(P.gauss, T.bloomB);",
+  "tests": [
+   "test/el4_frame.test.js"
+  ]
+ },
+ {
+  "name": "render-no-depth-clear",
+  "file": "src/render/airPass.js",
+  "old": "    gl.colorMask(false, false, false, false);\n    gl.clear(gl.DEPTH_BUFFER_BIT);\n",
+  "new": "    gl.colorMask(false, false, false, false);\n",
+  "tests": [
+   "test/el3_air.test.js"
+  ]
+ },
+ {
+  "name": "resize-always",
+  "file": "src/render/airPass.js",
+  "old": "    if (this.targets && this.width === w && this.height === h) return;\n",
+  "new": "",
+  "tests": [
+   "test/el3_air.test.js"
+  ]
+ },
+ {
+  "name": "emit-flat-without-map",
+  "file": "src/render/airPass.js",
+  "old": "          if (!emis || !tex) continue;\n",
+  "new": "          if (!tex) continue;\n",
+  "tests": [
+   "test/el3_air.test.js"
+  ]
+ },
+ {
+  "name": "glare-rangeless",
+  "file": "src/render/airPass.js",
+  "old": "      if (!(range > 0) || range > AIR_GLARE_MAX_RANGE) continue;   // AUDIT-EL F11: the lightning flash (range 500..1000 over the player) is no lantern\n",
+  "new": "      if (range > AIR_GLARE_MAX_RANGE) continue;\n",
+  "tests": [
+   "test/el3_air.test.js"
+  ]
+ },
+ {
+  "name": "composite-twice",
+  "file": "src/render/airPass.js",
+  "old": "    if (!this.pending || !this.targets || !this.frame) return;\n    this.pending = false;",
+  "new": "    if (!this.pending || !this.targets || !this.frame) return;",
+  "tests": [
+   "test/el3_air.test.js"
+  ]
+ },
+ {
+  "name": "composite-gain",
+  "file": "src/render/airPass.js",
+  "old": "    this.grade = new Float32Array([AIR_BLOOM_STRENGTH, 1, AIR_VIGNETTE, AIR_CONTRAST]);",
+  "new": "    this.grade = new Float32Array([1, 1, AIR_VIGNETTE, AIR_CONTRAST]);",
+  "tests": [
+   "test/el3_air.test.js"
+  ]
+ },
+ {
+  "name": "composite-alpha-blend",
+  "file": "src/render/airPass.js",
+  "old": "    quad(P.bright, T.bloom);\n    gl.enable(gl.BLEND);\n    gl.blendFunc(gl.ONE, gl.ONE);",
+  "new": "    quad(P.bright, T.bloom);\n    gl.enable(gl.BLEND);\n    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);",
+  "tests": [
+   "test/el3_air.test.js"
+  ]
+ },
+ {
+  "name": "renderer-air-without-lane",
+  "file": "src/render/renderer.js",
+  "old": "    const want = this._airWanted && !!this._lane?.air && !!this._shadows;   // the air pass replays the shadow pass's records",
+  "new": "    const want = this._airWanted;",
+  "tests": [
+   "test/el3_air.test.js"
+  ]
+ },
+ {
+  "name": "renderer-air-rebuilt",
+  "file": "src/render/renderer.js",
+  "old": "    if (want) this._air = this._airPass ??= new AirPass(",
+  "new": "    if (want) this._air = this._airPass = new AirPass(",
+  "tests": [
+   "test/el3_air.test.js"
+  ]
+ },
+ {
+  "name": "renderer-air-off-keeps-pending",
+  "file": "src/render/renderer.js",
+  "old": "    else { if (this._air) { this._air.release(); this._frameFbo = null; } this._air = null; }",
+  "new": "    else { this._air = null; }",
+  "tests": [
+   "test/el3_air.test.js"
+  ]
+ },
+ {
+  "name": "renderer-no-ao-upload",
+  "file": "src/render/renderer.js",
+  "old": "    if (this._air?.targets) this._air.upload(this._el[key].ao, foreignRect);   // EL3: the AO image\n    else this._uploadNoAo(this._el[key].ao);\n",
+  "new": "    this._uploadNoAo(this._el[key].ao);\n",
+  "tests": [
+   "test/el3_air.test.js"
+  ]
+ },
+ {
+  "name": "renderer-composite-once-only",
+  "file": "src/render/renderer.js",
+  "old": "    if (this._worldViewportPx) this.endWorldPass();\n    this._compositeAir();   // EL3: a no-op unless a render is owed\n    if (!this.screenQuadProgram) {",
+  "new": "    if (this._worldViewportPx) this.endWorldPass();\n    if (!this.screenQuadProgram) {",
+  "tests": [
+   "test/el3_air.test.js"
+  ]
+ },
+ {
+  "name": "renderer-composite-no-viewport",
+  "file": "src/render/renderer.js",
+  "old": "    this._air.composite();   // EL4: the resolve - the frame to the canvas\n    this._frameFbo = null;\n    this._lastProgram = null; this._lastVao = null;\n    this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);",
+  "new": "    this._air.composite();   // EL4: the resolve - the frame to the canvas\n    this._frameFbo = null;\n    this._lastProgram = null; this._lastVao = null;",
+  "tests": [
+   "test/el3_air.test.js"
+  ]
+ },
+ {
+  "name": "renderer-records-kept",
+  "file": "src/render/renderer.js",
+  "old": "    sp.discard();\n    this._restoreWorldViewport();\n    this.markForeignPass();",
+  "new": "    this._restoreWorldViewport();\n    this.markForeignPass();",
+  "tests": [
+   "test/el3_air.test.js"
+  ]
+ },
+ {
+  "name": "renderer-viewport-not-restored",
+  "file": "src/render/renderer.js",
+  "old": "    sp.discard();\n    this._restoreWorldViewport();\n    this.markForeignPass();",
+  "new": "    sp.discard();\n    this.markForeignPass();",
+  "tests": [
+   "test/el3_air.test.js"
+  ]
+ },
+ {
+  "name": "renderer-air-before-shadows",
+  "file": "src/render/renderer.js",
+  "old": "    sp.render({\n      eye: this._camPos, lightDir, sunScale: this._sunScale, pointLights: this._pointLights,\n      textures: this.textures, isSpectral: isSpectralArchive, bindVao,\n    });\n    if (this._air) {",
+  "new": "    if (this._air) {",
+  "tests": [
+   "test/el3_air.test.js"
+  ]
+ },
+ {
+  "name": "lane-no-air",
+  "file": "src/render/enhancedLighting.js",
+  "old": "  air: true,       // EL3: and its AirPass, behind `?air=off` (syncLightingLane reads the door)\n",
+  "new": "",
+  "tests": [
+   "test/el3_air.test.js"
+  ]
+ },
+ {
+  "name": "lane-mesh-ao-on-sun",
+  "file": "src/render/enhancedLighting.js",
+  "old": "  vec3 ambient = (uTrilight > 0.5 ? (n.y >= 0.0 ? mix(uAmbient, uAmbientSky, n.y) : mix(uAmbient, uAmbientGround, -n.y)) : uAmbient) * aoAt();   // EL3: the crevice loses the light that has no direction",
+  "new": "  vec3 ambient = (uTrilight > 0.5 ? (n.y >= 0.0 ? mix(uAmbient, uAmbientSky, n.y) : mix(uAmbient, uAmbientGround, -n.y)) : uAmbient);\n  diff *= aoAt();",
+  "tests": [
+   "test/el3_air.test.js"
+  ]
+ },
+ {
+  "name": "sync-no-air",
+  "file": "src/render/enhancedLighting.js",
+  "old": "  if (on) { renderer.setExposure(exposureFor(search)); renderer.setAir(airOn(search)); }   // EL3: the door is the page's, read here alone",
+  "new": "  if (on) { renderer.setExposure(exposureFor(search)); renderer.setAir(true); }",
+  "tests": [
+   "test/el1_enhancedlighting.test.js"
+  ]
+ }
+]

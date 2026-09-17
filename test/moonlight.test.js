@@ -87,7 +87,8 @@ test('EV5: the wiring - three lit shaders, the latched flat tint, the studio, th
   // the flats: the Lambert-average half, INSIDE the _clockLit latch -
   // clockless scenes keep their full-bright flats
   const litBranch = r.slice(r.indexOf('if (this._clockLit)'), r.indexOf('gl.uniform3f(this.bbUTint, 1, 1, 1)'));
-  assert.equal((litBranch.match(/this\._moonColor\[\d\] \* this\._moonScale \* 0\.5/g) || []).length, 3);
+  assert.equal((litBranch.match(/mc\[\d\] \* this\._moonScale \* 0\.5/g) || []).length, 3);   // EL1: `mc` is _moonColor as the installed set wants it (_c3)
+  assert.match(litBranch, /mc = this\._c3\(this\._moonColor, this\._decB\)/);
   // the studio borrow zeroes the moon and returns it - no moonlight on
   // a UI read-back panel
   const borrowStart = r.indexOf('const saved = studio');

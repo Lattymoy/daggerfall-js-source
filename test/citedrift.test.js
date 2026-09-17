@@ -655,7 +655,7 @@ const SOURCE_CITES = [
   ['bible/09-Testing/Testing.md', /keydown ladder \(exterior\.js:(\d+)-\d+\)/,
     EX, /addEventListener\('keydown', \(e\) => \{/],
   ['bible/10-UI/UI-Arc.md', /exterior\.js:(\d+)\. It is the only window/, EX, /createSpellbookWindow\(\{/],
-  ['bible/10-UI/Settings-Screen-Spec.md', /`exterior\.js:(\d+)`, `dungeon\.js:883`/, EX, /^ {6}fieldOfView\(\),$/],
+  ['bible/10-UI/Settings-Screen-Spec.md', /`exterior\.js:(\d+)`, `dungeon\.js:887`/, EX, /^ {6}fieldOfView\(\),$/],
   // ROAD-G G7 (review): the entry above reads the exterior number out of
   // that sentence and nothing else, so the sentence's ANCHOR cite - the
   // function the other five read - was the one cite in it no pin

@@ -5,6 +5,7 @@
 // location's climate (CLIMATE.PAK -> GetWorldClimateSettings).
 
 import { getFloat } from '../systems/settings.js';   // AUDIT 28 W1: NightAmbientLightScale
+import { WORLD_FRAME } from '../render/renderer.js';   // AUDIT-EL F5
 import { windmillsOn } from '../world/windmills.js';   // WM3: the Windmills pack's switch
 import { frameBegin, frameEnd } from '../systems/frameClock.js';   // PERF1: the frame's script time
 import { SKY_CLEAR } from '../render/renderer.js'; import { centreFromFeet } from '../characters/enemyAnchor.js';   // REVIEW 2026-09-05: one line, so the cites below it hold
@@ -50,6 +51,7 @@ import { setDefaultEnchantCtx } from '../systems/enchantments.js';   // AUDIT 58
 import { createEnchantCtx, standLooseFoe, LOOSE_FOE_PLACE_ATTEMPTS } from './hostEnchant.js';   // FS1 (wave D): the ONE ctx body + SD1's loose-foe placement
 import { windowEmissionRGB } from '../render/windowEmission.js';
 import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights } from '../world/cityLights.js';
+import { syncLightingLane, lanternColor } from '../render/enhancedLighting.js';   // EL1
 import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the PLAYER carries
 import { playerTorchLight } from '../systems/playerTorch.js';   // T1
 import { applyClimate, getTerrainGroundArchive, getNatureArchive, climateSeasonFromMinutes, INTERIOR_SEASON } from '../world/climateSwaps.js';   // A1: the season is the calendar's, and an interior's is Summer whatever the date
@@ -143,7 +145,7 @@ import { ChoiceWindow } from '../ui/talkWindow.js';   // V1: the infection popup
 import { startInfection, liveInfection } from '../systems/infection.js';   // V1 probe surface: the bite and the lifecycle
 import { diseaseCount } from '../systems/diseases.js';
 import { MINUTES_PER_DAY } from '../systems/gameDate.js';
-import { spellRecordOfIndex } from '../systems/loot.js';   // QG1: CastSpellDo's classic-record read (the G4 registry) - world.js:132's import
+import { spellRecordOfIndex } from '../systems/loot.js';   // QG1: CastSpellDo's classic-record read (the G4 registry) - world.js:134's import
 import { fetchBytes, loadMagicRegistries, seasonOverride, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, nearbyLootRecords, claimFrame, frameAlive, frameHeld, applyFallLanding, ensureAudio, applyMotorEffectFlags, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag, liveEnchantFoes, liveEnchantFoeSinks, enchantFoeHost } from './shared.js';   // AUDIT 58 (f2/hosts): the live enchant pool, its sinks router and the membership question
 import {
   WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
@@ -352,7 +354,8 @@ export async function bootExterior(canvas, renderer, params, status) {
   const tilemapDim = GROUND_TILE_DIM * Math.max(loc.width, loc.height);
   const locationTilemap = new Uint8Array(tilemapDim * tilemapDim);
   const cityLights = []; // archive-210 lantern point lights (R3)
-  const CITY_LIGHT_COLOR_F32 = new Float32Array(CITY_LIGHT_COLOR);
+  const lightingOn = syncLightingLane(renderer);   // EL1: the lane, installed at mount
+  const CITY_LIGHT_COLOR_F32 = lanternColor(lightingOn, new Float32Array(CITY_LIGHT_COLOR));   // EL1: the lane's flame over the classic white
   // World clock (R5): ?tod=HH:MM (default noon), ?timescale=game-min/sec.
   // Weather (R12 presentation; W1 live state - world.js's twin note).
   // ?weather pins for shots; otherwise the sim drives and applyWeather
@@ -2663,7 +2666,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     lookFilter.add(e.movementX * lookScale(), -e.movementY * lookScale() * lookInvert());
   });
   // U41: `!townTalk.overlayActive` is the dungeon host's own gate
-  // (dungeon.js:222, "a right-click on a window is the window's...
+  // (dungeon.js:226, "a right-click on a window is the window's...
   // never a swing"), which these two hosts never got. It matters now
   // that the travel map makes RMB a ROUTINE gesture - its zoom - and
   // an ungated one fires a readied spell or looses an arrow at the
@@ -4310,7 +4313,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     if (lightsOn) lightAnimator.tick(dt);
     renderer.setPointLights(
       withPlayerLights(lightsOn
-        ? nearestLights(cityLights, eye, 16, lightAnimator.ranges)
+        ? nearestLights(cityLights, eye, renderer.maxPointLights, lightAnimator.ranges)   // EL1: the installed set's cap
         : new Float32Array(0),
       magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw), ...droppedTorches.lights()),   // X11: the candle burns by day too - the effect has no time gate; T1: so does the torch; HT1 the dropped lights
       CITY_LIGHT_COLOR_F32
@@ -4318,7 +4321,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     renderer.setClearColor(SKY_CLEAR);   // INCIDENT 2026-09-04 / REVIEW 2026-09-05: this frame is the EXTERIOR's (the mode frames returned above and clear black in worldModes) - CameraClearManager.cs:51-57
     renderer.setFlashLight(sky.lightningLight());   // DS1: Dynamic Skies' LightningFlash, composed first on the point-light channel just stored
     renderer.setWorldViewport(largeHudViewportRect(canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
-    renderer.beginFrame(proj, view, sunDirection(minute));
+    renderer.beginFrame(proj, view, sunDirection(minute), WORLD_FRAME);   // AUDIT-EL F5: a WORLD frame - the lane replays its records for this one
     renderer.setCloudShadow(sky?.cloudShadow ?? null);   // VC4: the frame's deck, for the body and everything before the terrain
     mwViewDrawBody(canvas, { proj, view, eye, feet: player.feetAt(), yaw: cam.yaw });   // MW-D24
     mwViewDrawWagon(renderer, texRemap);   // EOTB-IL: the cart, when the transport is the cart

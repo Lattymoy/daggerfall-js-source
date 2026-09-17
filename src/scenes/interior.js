@@ -6,6 +6,7 @@
 // there); this file is data loading, the fly camera, and the frame loop.
 
 import { Arch3dFile } from '../formats/arch3dFile.js';
+import { WORLD_FRAME } from '../render/renderer.js';   // AUDIT-EL F5
 import { INTERIOR_CLEAR } from '../render/renderer.js';
 import { PITCH_LIMIT } from '../player/mwCamera.js';   // MW-D30: camera.cpp:323-331's own clamp
 import { requestLook } from '../player/pointerLock.js';
@@ -18,6 +19,7 @@ import { INTERIOR_AMBIENT, INTERIOR_NIGHT_AMBIENT, INTERIOR_LIGHT_DIR } from '..
 import { isNight } from '../world/worldClock.js';   // AUDIT 23 (C12)
 import { worldMinutes } from '../systems/worldTick.js';   // AUDIT 23 (C12)
 import { nearestLights } from '../world/cityLights.js';
+import { syncLightingLane } from '../render/enhancedLighting.js';   // EL1
 import { INTERIOR_MARKER } from '../world/interiorLayout.js';
 import { lookAt, perspective, mirrorProjectionX, UP_Y } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
 import { fetchBytes, seasonOverride, ensureAudio } from './shared.js';
@@ -42,6 +44,7 @@ import { swallowBrowserKey, actionOf, keyboardLook } from '../ui/input.js';   //
 export async function bootInterior(canvas, renderer, params, status) {
   const [blockName, recordStr] = params.get('interior').split(':');
   const recordIndex = Number(recordStr || 0);
+  syncLightingLane(renderer);   // EL1: the lane, installed at mount (the interior's lights carry their own colours)
   // DFU interiors climate-swap their models (SetClimate with
   // WindowStyle.Disabled - emission stays dark here by default). A
   // standalone block has no location, so ClimateBases.Temperate is the
@@ -178,7 +181,7 @@ export async function bootInterior(canvas, renderer, params, status) {
     // (ui/input.js:470-471) is "every host that registers a keydown
     // calls this FIRST", and it is NOT conditional on the host having
     // a destination for the key. First, because every arm below
-    // returns before its own preventDefault - worldModes.js:7143 sits
+    // returns before its own preventDefault - worldModes.js:7145 sits
     // ahead of its arms for the same reason.
     swallowBrowserKey(e);
     // The open map owns the keyboard, exactly as it does in the three
@@ -328,10 +331,10 @@ export async function bootInterior(canvas, renderer, params, status) {
 
     // LT1: per-light range AND colour x intensity - AddLight's whole
     // second switch reaches the GPU (interiorLightProperties).
-    const lit = nearestLights(ctx.lights, cam.pos, 16, ctx.lights.map((l) => l.range),
+    const lit = nearestLights(ctx.lights, cam.pos, renderer.maxPointLights, ctx.lights.map((l) => l.range),   // EL1: the installed set's cap
       (l) => [l.color[0] * l.intensity, l.color[1] * l.intensity, l.color[2] * l.intensity]);
     renderer.setPointLights(lit.data, null, lit.colors);
-    renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR);
+    renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR, WORLD_FRAME);   // AUDIT-EL F5: a WORLD frame - the lane replays its records for this one
     for (const d of ctx.drawList) renderer.drawMesh(d.mesh, d.matrix, ctx.texRemap);
     // WM4b: the mill's machinery turns at Kamer's rate, in here too.
     for (const r of ctx.rotors) {
@@ -356,7 +359,7 @@ export async function bootInterior(canvas, renderer, params, status) {
     // scan, for the reason DFU states on the gate (SetActive(false) on
     // the geometry would mess with the open map's rendering). Update's
     // own call at :1001 is the one-shot lazy init, not a per-frame
-    // driver. dungeon.js:705 and worldModes.js:5212/:5239 gate the same
+    // driver. dungeon.js:709 and worldModes.js:5214/:5241 gate the same
     // way; this is that gate for this host.
     if (!gamePaused()) ctx.automapTick?.(dt, cam.pos, fwd);
     if (overlay) {

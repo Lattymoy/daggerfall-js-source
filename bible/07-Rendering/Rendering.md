@@ -25,9 +25,23 @@ directory by `test/audit18_bible_docs.test.js`:
   in particular is written by eight files outside `render/` - its
   `origin`, `sway`, `conceal` and `frame` are the CALLER'S fields and
   until now nothing said so. Exports `{}`, so the bundle never carries it.
+- `airPass.js` - EL3 THE AIR PASS: a depth image of the world from the camera
+  (the shadow pass's records replayed), and off it the ambient occlusion the
+  lane's shaders multiply their ambient by, the bloom sourced from the emitters
+  and the lanterns' glares, and the sun's shafts - composited by the frame's
+  first screen-space draw; EL4: the frame image the whole world draws into, the
+  eye's adaptation off its mean luminance, bloom from its bright pass, the
+  vignette and the contrast in the resolve. `?air=off`. See
+  `07-Rendering/Enhanced-Lighting-Arc.md`.
 - `characterMesh.js` - the voxel character mesh path.
 - `characterSprite.js` - the classic-visuals sprite pass (one fixed
   CHAR_SPRITE_RT_SIZE target).
+- `shadowPass.js` - EL2 THE SHADOW PASS: records what the world pass draws and
+  replays it depth-only from the light at the top of the next frame - a
+  two-cascade sun map outdoors, a cube map from the nearest lantern indoors -
+  with the receiver block the lane's shaders read (`SHADOW_GLSL`); the depth
+  programs are the renderer's own vertex shaders. See
+  `07-Rendering/Enhanced-Lighting-Arc.md`.
 - `skyRenderer.js` - painted skies (R4) + the night sky.
 - `labGrass.js` - GR1 the LAB'S GRASS: grass-proto.html's blade shaders
   verbatim, its placer law, and a renderer of its own beside the world's,
@@ -237,6 +251,13 @@ directory by `test/audit18_bible_docs.test.js`:
   WX1's byte-exact shaders untouched; both hosts wired alike; `?weather=`
   still pins the sim and a pinned boot is never a front; the stub audio
   handles. Still unseen: all of it, in a browser, with ARENA2.
+- `enhancedLighting.js` - EL1 THE ENHANCED LIGHTING LANE: five fragment shaders
+  (mesh, billboard, terrain, character, far ring) the renderer installs as a
+  unit over its classic set - sRGB decode, linear light, windowed inverse-square
+  lanterns x48, exposure + extended Reinhard, fog in-scatter, sRGB encode - and
+  the pure functions that ARE their terms; the switch (`enhancedLightingOn`),
+  the host's one call (`syncLightingLane`), the flame colour. See
+  `07-Rendering/Enhanced-Lighting-Arc.md`.
 - `enhancedSky.js` - ES1 the ENHANCED SKY: one fullscreen procedural
 - `dynamicSkiesRenderer.js` - DS1: Dynamic Skies' own skybox (BLBProceduralSkybox, translated line for line), the enhanced lane's sky while the vendored mod's switch is on; the same draw contract as `enhancedSky.js`.
 - `dynamicSkiesBridge.js` - DS2: the mod's state in the port's shapes - `dynamicMoonState` (the world's moonlight off the mod's orbits, DS1) and `cloudsStateUnderMod` (the volumetric clouds' six fields off the mod's sun, moons and horizon over the port's colours); one home the controller and the sky lab both import.
@@ -299,7 +320,7 @@ directory by `test/audit18_bible_docs.test.js`:
   models merged once at build time into one mesh grouped by resolved texture, one
   draw call per texture instead of one per sub-mesh per model; the gates and the
   mills stay individual draws (test/perf4.test.js).
-- `renderTarget.js` - VC2 THE RENDER TARGET: a 2D colour target and a 3D
+- `renderTarget.js` (EL4: also the FRAME TARGET every pass restores to - the canvas, or the lane's frame image) - VC2 THE RENDER TARGET: a 2D colour target and a 3D
   volume, creation under the upload law (it sizes, parameterises and binds
   no framebuffer), the framebuffer work on named DRAW paths that leave the
   default framebuffer and the caller's viewport behind and never ask GL.

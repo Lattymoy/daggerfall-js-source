@@ -168,7 +168,7 @@ test('EV8: the pass stands up, builds, re-punches and draws under the Proxy-GL s
 
 test('EV8: the wiring - enhanced-gated, weather-gated, inside the sky\'s foreign span, one origin', () => {
   const world = readFileSync('src/scenes/world.js', 'utf8');
-  assert.ok(world.includes('const farRing = (isEnhanced() && !ringDisabled()) ? new FarRingRenderer(renderer.gl) : null'),
+  assert.ok(world.includes('const farRing = (isEnhanced() && !ringDisabled()) ? new FarRingRenderer(renderer.gl, { lane: renderer.lightingLane }) : null'),   // EL1: the ring takes the lighting lane
     'the 1:1 lane keeps the fog horizon DFU draws');
   // the draw sits between the sky and the one existing seam mark - no
   // third markForeignPass (glstate.test.js counts exactly two)

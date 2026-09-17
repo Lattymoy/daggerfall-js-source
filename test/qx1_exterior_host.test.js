@@ -304,7 +304,7 @@ test('QX1 review: every faction read is the PERSISTENT store, and the Person cha
   // (4) ...and the family degrades to the charter's refusal when
   // FACTION.TXT has not loaded - never a throw on `store.dict`. The
   // People/Courts pair is left out of this arm deliberately: their
-  // expressions are world.js:5946/5948's verbatim, and talk.js's
+  // expressions are world.js:5904/5906's verbatim, and talk.js's
   // findFactions dereferences the dictionary it is handed, so the two
   // hosts share one shape there and neither invents a private guard.
   const cold = mountQuestWorld({ factionDict: null });

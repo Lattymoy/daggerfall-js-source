@@ -155,7 +155,14 @@ export function withPlayerLights(base, ...lights) {
   }
   const live = lights.filter(Boolean);
   if (!live.length) return base;
-  const keep = Math.min(Math.max(0, 16 - live.length), base.length / 4) * 4;
+  // AUDIT-EL F4: NO CAP HERE. This composer cut the scene's lights to
+  // sixteen minus the player's, which was the shader's cap restated - and
+  // under the Enhanced Lighting lane (forty-eight slots) it silently kept
+  // the classic count in every host. The renderer's setPointLights cuts
+  // the total to the INSTALLED set's cap, and since the player's lights
+  // sit first, what it drops is the base's farthest - which is exactly
+  // what the old arithmetic dropped on the classic set, light for light.
+  const keep = (base.length / 4) * 4;
   const out = new Float32Array(keep + live.length * 4);
   live.forEach((l, i) => {
     out[i * 4] = l.x; out[i * 4 + 1] = l.y; out[i * 4 + 2] = l.z; out[i * 4 + 3] = l.range;

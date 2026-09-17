@@ -15,6 +15,7 @@ import {
   TORCH_OFFSET, LIGHT_DIES_TEXT, LANTERN_TEMPLATE,
 } from '../src/systems/playerTorch.js';
 import { withPlayerLights } from '../src/scenes/magicCandle.js';
+import { Renderer } from '../src/render/renderer.js';
 import { useItem } from '../src/systems/useItem.js';
 import { tickPlayerMinutes } from '../src/systems/worldTick.js';
 import { LIVE, setValue, getBool } from '../src/systems/settings.js';
@@ -174,7 +175,10 @@ test('T1 the channel: the player\'s lights go FIRST, both of them, inside the 16
   const torch = { x: 1, y: 2, z: 3, range: 14 };
   const candle = { x: 4, y: 5, z: 6, range: 15 };
   const both = withPlayerLights(base, candle, torch);
-  assert.equal(both.length, 16 * 4, 'the renderer takes 16 vec4s and no more');
+  assert.equal(both.length, 18 * 4, 'AUDIT-EL F4: the composer keeps every light; the renderer cuts to the installed set\'s cap');
+  const st = { maxPointLights: 16, _pointColor: new Float32Array(3), _pointColors: null, _pointLights: null };
+  Renderer.prototype.setPointLights.call(st, both, null);
+  assert.equal(st._pointLights.length, 16 * 4, 'the classic set takes 16 vec4s and no more - the farthest two of the scene\'s dropped');
   assert.deepEqual([...both.subarray(0, 8)], [4, 5, 6, 15, 1, 2, 3, 14], 'in the order given');
   assert.equal(both[8], 7, 'then the scene lights');
   // a host with only one of them
