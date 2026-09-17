@@ -1,0 +1,648 @@
+[
+  {
+    "name": "NAME1-anchor-gap-dropped",
+    "file": "src/net/remotePlayers.js",
+    "old": "      const top = n.y - NAME_GAP_PX * scale - font.fnt.fixedHeight * s;",
+    "new": "      const top = n.y - font.fnt.fixedHeight * s;",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "NAME1-anchor-label-hangs-from-the-head",
+    "file": "src/net/remotePlayers.js",
+    "old": "      const top = n.y - NAME_GAP_PX * scale - font.fnt.fixedHeight * s;",
+    "new": "      const top = n.y;",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "NAME1-anchor-old-world-lift-back",
+    "file": "src/net/remotePlayers.js",
+    "old": "      const head = [f[0], f[1] + e.height, f[2]];",
+    "new": "      const head = [f[0], f[1] + e.height + 0.25, f[2]];",
+    "tests": [
+      "test/name1_bubbles.test.js",
+      "test/online.test.js"
+    ]
+  },
+  {
+    "name": "NAME1-anchor-dom-gap-dropped",
+    "file": "src/ui/nameLayer.js",
+    "old": "        setStyle(tag.node, 'top', `${Math.round(p.y - NAME_GAP_PX)}px`);",
+    "new": "        setStyle(tag.node, 'top', `${Math.round(p.y)}px`);",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "NAME1-anchor-dom-stack-grows-down",
+    "file": "src/ui/nameLayer.js",
+    "old": "  transform: translate(-50%, -100%); }",
+    "new": "  transform: translate(-50%, 0); }",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "NAME1-size-inverted",
+    "file": "src/net/remotePlayers.js",
+    "old": "  return Math.min(NAME_SCALE_MAX, Math.max(NAME_SCALE_MIN, NAME_SCALE_REF / depth));",
+    "new": "  return Math.min(NAME_SCALE_MAX, Math.max(NAME_SCALE_MIN, depth / NAME_SCALE_REF));",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "NAME1-size-constant",
+    "file": "src/net/remotePlayers.js",
+    "old": "  return Math.min(NAME_SCALE_MAX, Math.max(NAME_SCALE_MIN, NAME_SCALE_REF / depth));",
+    "new": "  return 1;",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "NAME1-size-clamps-dropped",
+    "file": "src/net/remotePlayers.js",
+    "old": "  return Math.min(NAME_SCALE_MAX, Math.max(NAME_SCALE_MIN, NAME_SCALE_REF / depth));",
+    "new": "  return NAME_SCALE_REF / depth;",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "NAME1-size-clamps-swapped",
+    "file": "src/net/remotePlayers.js",
+    "old": "  return Math.min(NAME_SCALE_MAX, Math.max(NAME_SCALE_MIN, NAME_SCALE_REF / depth));",
+    "new": "  return Math.min(NAME_SCALE_MIN, Math.max(NAME_SCALE_MAX, NAME_SCALE_REF / depth));",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "NAME1-size-not-taken-at-the-draw",
+    "file": "src/net/remotePlayers.js",
+    "old": "      const s = scale * n.scale;",
+    "new": "      const s = scale;",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "NAME1-size-not-taken-in-the-dom",
+    "file": "src/ui/nameLayer.js",
+    "old": "        setStyle(tag.node, 'fontSize', `${namePixelSize(p.scale ?? 1, vp, hudScale).toFixed(1)}px`);",
+    "new": "        setStyle(tag.node, 'fontSize', `${NAME_BASE_PX.toFixed(1)}px`);",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "NAME1-depth-not-reported",
+    "file": "src/player/tapRay.js",
+    "old": "  return { x: r.x + ((nx + 1) / 2) * r.w, y: r.y + ((1 - ny) / 2) * r.h, depth: cw, front: true };",
+    "new": "  return { x: r.x + ((nx + 1) / 2) * r.w, y: r.y + ((1 - ny) / 2) * r.h, depth: 1, front: true };",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "NAME1-sight-hit-read-as-a-miss",
+    "file": "src/net/remotePlayers.js",
+    "old": "  return Number.isFinite(hit) && hit < reach;",
+    "new": "  return Number.isFinite(hit) && hit > reach;",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "NAME1-sight-never-blocks",
+    "file": "src/net/remotePlayers.js",
+    "old": "  return Number.isFinite(hit) && hit < reach;",
+    "new": "  return false;",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "NAME1-sight-skin-swallows-the-wall",
+    "file": "src/net/remotePlayers.js",
+    "old": "  const reach = d - skin;",
+    "new": "  const reach = d - 6;",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "NAME1-sight-no-skin-at-all",
+    "file": "src/net/remotePlayers.js",
+    "old": "export const NAME_SIGHT_SKIN = 0.2;",
+    "new": "export const NAME_SIGHT_SKIN = 0;",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "NAME1-sight-cull-dropped",
+    "file": "src/net/remotePlayers.js",
+    "old": "      if (blocked && blocked(head, e.peer.id)) continue;",
+    "new": "      if (false && blocked && blocked(head, e.peer.id)) continue;",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "NAME1-sight-ray-cast-before-the-range-cull",
+    "file": "src/net/remotePlayers.js",
+    "old": "      if (eye) { const dx = f[0] - eye[0], dz = f[2] - eye[2]; if (dx * dx + dz * dz > NAME_RANGE * NAME_RANGE) continue; }\n      const head = [f[0], f[1] + e.height, f[2]];",
+    "new": "      const head = [f[0], f[1] + e.height, f[2]];\n      if (blocked) blocked(head);\n      if (eye) { const dx = f[0] - eye[0], dz = f[2] - eye[2]; if (dx * dx + dz * dz > NAME_RANGE * NAME_RANGE) continue; }",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "NAME1-host-sight-test-dropped",
+    "file": "src/scenes/world.js",
+    "old": "    const blocked = (head, id) => nameSight.blocked(player.collider, eye, id, head);",
+    "new": "    const blocked = null;",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "NAME1-host-both-faces-drawn",
+    "file": "src/net/remotePlayers.js",
+    "old": "    if (layer) {\n      // the world viewport's own height where the docked HUD shrinks it (E5) - the name is sized by the frame it\n      // is drawn into, not by the page (AUDIT NAME1 F3). The rect is NORMALISED (ui/hudLarge.js\n      // largeHudViewportRect: `{ x: 0, y: hudHeight, w: 1, h: 1 - hudHeight }`), so its height is a SHARE of the\n      // canvas and the pixels are that share of it.\n      layer.render({ points, log, covered, colorOf, viewport: (Number.isFinite(rect?.h) ? rect.h : 1) * h, hudScale });\n      return points.length;   // the NAMES the frame drew; the layer's own return is its bubbles (bubbleCount)\n    }",
+    "new": "    if (layer) layer.render({ points, log, covered, colorOf, viewport: (Number.isFinite(rect?.h) ? rect.h : 1) * h, hudScale });",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "NAME1-host-layer-built-without-a-document",
+    "file": "src/scenes/world.js",
+    "old": "    if (nameLayerWanted(enhanced)) nameLayer = createNameLayer({});",
+    "new": "    nameLayer = createNameLayer({});",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "NAME1-dom-rebuilt-every-frame",
+    "file": "src/ui/nameLayer.js",
+    "old": "        let tag = tags.get(p.id);",
+    "new": "        let tag = undefined;",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "NAME1-dom-writes-unguarded",
+    "file": "src/ui/nameLayer.js",
+    "old": "  const setStyle = (n, k, v) => { if (n.style[k] !== v) n.style[k] = v; };",
+    "new": "  const setStyle = (n, k, v) => { n.style[k] = v; };",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "NAME1-dom-window-ignored",
+    "file": "src/ui/nameLayer.js",
+    "old": "      const want = !covered && points.length > 0;",
+    "new": "      const want = points.length > 0;",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "NAME1-party-colour-unclamped",
+    "file": "src/ui/nameLayer.js",
+    "old": "  const hex = (v) => Math.max(0, Math.min(255, Math.round(Number(v) * 255))).toString(16).padStart(2, '0');",
+    "new": "  const hex = (v) => Math.round(Number(v) * 255).toString(16).padStart(2, '0');",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "NAME1-party-colour-dropped",
+    "file": "src/ui/nameLayer.js",
+    "old": "        setStyle(tag.name, 'color', cssRgba(colorOf?.(p.id)) ?? '');",
+    "new": "        setStyle(tag.name, 'color', '');",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "BUBBLE1-system-lines-speak",
+    "file": "src/ui/nameLayer.js",
+    "old": "  if (line.system || line.mine) return false;",
+    "new": "  if (line.mine) return false;",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "BUBBLE1-my-own-line-speaks",
+    "file": "src/ui/nameLayer.js",
+    "old": "  if (line.system || line.mine) return false;",
+    "new": "  if (line.system) return false;",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "BUBBLE1-any-tab-speaks",
+    "file": "src/ui/nameLayer.js",
+    "old": "  if (tabId !== BUBBLE_TAB || !line || typeof line !== 'object') return false;",
+    "new": "  if (!line || typeof line !== 'object') return false;",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "BUBBLE1-cap-lifted",
+    "file": "src/ui/nameLayer.js",
+    "old": "    while (bubbles.size > BUBBLE_MAX) bubbles.delete(bubbles.keys().next().value);",
+    "new": "    while (false && bubbles.size > BUBBLE_MAX) bubbles.delete(bubbles.keys().next().value);",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "BUBBLE1-cap-drops-the-newest",
+    "file": "src/ui/nameLayer.js",
+    "old": "    while (bubbles.size > BUBBLE_MAX) bubbles.delete(bubbles.keys().next().value);",
+    "new": "    while (bubbles.size > BUBBLE_MAX) bubbles.delete([...bubbles.keys()].pop());",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "BUBBLE1-older-line-wins",
+    "file": "src/ui/nameLayer.js",
+    "old": "    bubbles.delete(id);\n    bubbles.set(id, { text: body, at });",
+    "new": "    if (!bubbles.has(id)) bubbles.set(id, { text: body, at });",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "BUBBLE1-window-unbounded",
+    "file": "src/ui/nameLayer.js",
+    "old": "      for (const [id, b] of [...bubbles]) if (t - b.at >= BUBBLE_MS) bubbles.delete(id);",
+    "new": "      for (const [id, b] of [...bubbles]) if (false && t - b.at >= BUBBLE_MS) bubbles.delete(id);",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "BUBBLE1-fade-inverted",
+    "file": "src/ui/nameLayer.js",
+    "old": "  return age < hold ? 1 : Math.max(0, 1 - (age - hold) / (life - hold));",
+    "new": "  return age < hold ? 1 : Math.max(0, (age - hold) / (life - hold));",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "BUBBLE1-no-fade-at-all",
+    "file": "src/ui/nameLayer.js",
+    "old": "  return age < hold ? 1 : Math.max(0, 1 - (age - hold) / (life - hold));",
+    "new": "  return 1;",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "BUBBLE1-cut-dropped",
+    "file": "src/ui/nameLayer.js",
+    "old": "  if (s.length <= BUBBLE_CHARS) return s;",
+    "new": "  return s;",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "BUBBLE1-cut-unmarked",
+    "file": "src/ui/nameLayer.js",
+    "old": "  return s.slice(0, BUBBLE_CHARS).trimEnd() + BUBBLE_ELLIPSIS;",
+    "new": "  return s.slice(0, BUBBLE_CHARS).trimEnd();",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "BUBBLE1-bubble-over-the-wrong-peer",
+    "file": "src/ui/nameLayer.js",
+    "old": "        const b = bubbles.get(p.id);",
+    "new": "        const b = bubbles.get(p.name);",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "BUBBLE1-watermark-only-advanced-for-a-line-that-earns-a-bubble",
+    "file": "src/ui/nameLayer.js",
+    "old": "      seq = line.seq;\n",
+    "new": "      if (!bubbleLineOk(BUBBLE_TAB, line)) continue;\n      seq = line.seq;\n",
+    "equivalent": true,
+    "why": "A refused line produces nothing either way - the watermark past it buys a walk, not a law. The only difference is that a session with one system notice in the log re-reads that one line every frame for the rest of its life, which is a cost no pin can see and none here pretends to. Kept as written because the cost is real and the shape ('read forward, once') is the one a later channel tab will inherit. AUDIT NAME1 re-aimed the record at the `seq = line.seq;` line alone, which the F6 fix moved the rest of.",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAME1-F1-dungeon-overlay-skips-the-name-pass",
+    "file": "src/scenes/worldModes.js",
+    "old": "if (dungeonCtx.uiOverlayActive) { dungeonCtx.hideHudText?.(); dungeonCtx.tickOverlay(dt); host.drawPeerNames?.({ proj, view, eye: mwv.eye }); dungeonCtx.drawOverlay(canvas); return true; }",
+    "new": "if (dungeonCtx.uiOverlayActive) { dungeonCtx.hideHudText?.(); dungeonCtx.tickOverlay(dt); dungeonCtx.drawOverlay(canvas); return true; }",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAME1-F1-a-covered-frame-is-not-a-frame",
+    "file": "src/net/remotePlayers.js",
+    "old": "    if (layer) {\n      // the world viewport's own height",
+    "new": "    if (layer && !covered) {\n      // the world viewport's own height",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAME1-F2-no-broad-phase",
+    "file": "src/player/collider.js",
+    "old": "      if (!segmentHitsBox(ox, oy, oz, dir, bucket.min, bucket.max, Math.min(maxDist, best))) continue;",
+    "new": "      if (false) continue;",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAME1-F2-broad-phase-inverted",
+    "file": "src/player/collider.js",
+    "old": "      if (!segmentHitsBox(ox, oy, oz, dir, bucket.min, bucket.max, Math.min(maxDist, best))) continue;",
+    "new": "      if (segmentHitsBox(ox, oy, oz, dir, bucket.min, bucket.max, Math.min(maxDist, best))) continue;",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAME1-F2-bounds-not-kept",
+    "file": "src/player/collider.js",
+    "old": "          if (v[k] < bucket.min[k]) bucket.min[k] = v[k];",
+    "new": "          if (false) bucket.min[k] = v[k];",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAME1-F2-box-ignores-the-ray-s-reach",
+    "file": "src/player/collider.js",
+    "old": "  let tMin = 0, tMax = limit;",
+    "new": "  let tMin = 0, tMax = Infinity;",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAME1-F2-sight-cache-asks-every-frame",
+    "file": "src/net/remotePlayers.js",
+    "old": "    if (!(t - e.at < every)) {",
+    "new": "    if (true) {",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAME1-F2-sight-cache-keyed-by-nothing",
+    "file": "src/net/remotePlayers.js",
+    "old": "    let e = seen.get(id);",
+    "new": "    let e = seen.get('one');",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAME1-F3-lens-term-dropped",
+    "file": "src/net/remotePlayers.js",
+    "old": "        scale: nameScaleFor(s.depth) * lens, depth: s.depth, lens });",
+    "new": "        scale: nameScaleFor(s.depth), depth: s.depth, lens });",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAME1-F3-lens-read-upside-down",
+    "file": "src/net/remotePlayers.js",
+    "old": "  return f / NAME_REF_FOCAL;",
+    "new": "  return NAME_REF_FOCAL / f;",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAME1-F3-viewport-term-dropped",
+    "file": "src/net/remotePlayers.js",
+    "old": "  return Math.max(NAME_PX_MIN, Math.min(NAME_PX_MAX, NAME_BASE_PX * s * v)) * hud;",
+    "new": "  return Math.max(NAME_PX_MIN, Math.min(NAME_PX_MAX, NAME_BASE_PX * s)) * hud;",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAME1-F3-legible-band-dropped",
+    "file": "src/net/remotePlayers.js",
+    "old": "  return Math.max(NAME_PX_MIN, Math.min(NAME_PX_MAX, NAME_BASE_PX * s * v)) * hud;",
+    "new": "  return NAME_BASE_PX * s * v * hud;",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAME1-F3-hud-scale-taken-inside-the-band",
+    "file": "src/net/remotePlayers.js",
+    "old": "  return Math.max(NAME_PX_MIN, Math.min(NAME_PX_MAX, NAME_BASE_PX * s * v)) * hud;",
+    "new": "  return Math.max(NAME_PX_MIN, Math.min(NAME_PX_MAX, NAME_BASE_PX * s * v * hud));",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAME1-F3-viewport-not-the-world-rect-s",
+    "file": "src/net/remotePlayers.js",
+    "old": "      layer.render({ points, log, covered, colorOf, viewport: (Number.isFinite(rect?.h) ? rect.h : 1) * h, hudScale });",
+    "new": "      layer.render({ points, log, covered, colorOf, viewport: h, hudScale });",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAME1-F4-names-tie-with-the-hud",
+    "file": "src/ui/nameLayer.js",
+    "old": ".dfnames { position: fixed; inset: 0; z-index: 3; pointer-events: none; overflow: hidden;",
+    "new": ".dfnames { position: fixed; inset: 0; z-index: 4; pointer-events: none; overflow: hidden;",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAME1-F5-no-hysteresis",
+    "file": "src/net/remotePlayers.js",
+    "old": "    return e.raw && e.since !== null && t - e.since >= hold;",
+    "new": "    return e.raw;",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAME1-F5-the-stamp-re-taken-every-blocked-answer",
+    "file": "src/net/remotePlayers.js",
+    "old": "      e.since = raw ? (e.raw ? e.since : t) : null;",
+    "new": "      e.since = raw ? t : null;",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAME1-F5-seen-waits-out-a-hold-of-its-own",
+    "file": "src/net/remotePlayers.js",
+    "old": "      e.since = raw ? (e.raw ? e.since : t) : null;",
+    "new": "      e.since = raw ? (e.raw ? e.since : t) : e.since;",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ],
+    "equivalent": true,
+    "why": "A stamp left behind on a SEEN answer is never read: the return is `e.raw && ...`, and `raw` is false for exactly as long as the stale stamp exists - and the next blocked answer re-stamps it anyway, because `e.raw` is false at that moment. Written as `: null` because a field that is only correct by the grace of another field's value is the kind of thing the next hand gets wrong."
+  },
+  {
+    "name": "AUDIT-NAME1-F6-bubble-stamped-from-the-pump",
+    "file": "src/ui/nameLayer.js",
+    "old": "      if (bubbleLineOk(BUBBLE_TAB, line)) say(line.id, line.text, Number.isFinite(line.t) ? line.t : line.at);",
+    "new": "      if (bubbleLineOk(BUBBLE_TAB, line)) say(line.id, line.text);",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAME1-F6-the-relay-s-clock-preferred",
+    "file": "src/ui/nameLayer.js",
+    "old": "      if (bubbleLineOk(BUBBLE_TAB, line)) say(line.id, line.text, Number.isFinite(line.t) ? line.t : line.at);",
+    "new": "      if (bubbleLineOk(BUBBLE_TAB, line)) say(line.id, line.text, Number.isFinite(line.at) ? line.at : line.t);",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAME1-F7-the-dom-face-gated-on-the-document-alone",
+    "file": "src/ui/nameLayer.js",
+    "old": "  return !!enhanced && !!doc;",
+    "new": "  return !!doc;",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAME1-F8-watermark-outlives-the-log",
+    "file": "src/ui/nameLayer.js",
+    "old": "    if (log !== lastLog) { lastLog = log; seq = 0; }",
+    "new": "    if (false) { lastLog = log; seq = 0; }",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAME1-F8-watermark-reset-every-pump",
+    "file": "src/ui/nameLayer.js",
+    "old": "    if (log !== lastLog) { lastLog = log; seq = 0; }",
+    "new": "    { lastLog = log; seq = 0; }",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAME1-F9-an-invisible-bubble-is-still-drawn",
+    "file": "src/ui/nameLayer.js",
+    "old": "        if (alpha > 0) {",
+    "new": "        if (b) {",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAME1-F10-whitespace-is-a-remark",
+    "file": "src/ui/nameLayer.js",
+    "old": "  const said = bubbleText(text);\n  return said.trim() ? said : '';",
+    "new": "  return bubbleText(text);",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAME1-F11-a-point-that-is-not-a-number-is-still-a-place",
+    "file": "src/ui/nameLayer.js",
+    "old": "        if (!Number.isFinite(p.x) || !Number.isFinite(p.y)) continue;",
+    "new": "        if (false) continue;",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAME1-F11-a-bubble-stamped-with-nothing",
+    "file": "src/ui/nameLayer.js",
+    "old": "    if (!id || !body || !Number.isFinite(at)) return false;",
+    "new": "    if (!id || !body) return false;",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAME1-F12-the-bone-fallback-is-the-hud-s-ivory",
+    "file": "src/ui/nameLayer.js",
+    "old": ".dfname-tag { white-space: nowrap; line-height: 1; color: var(--bone, #e9e4d9);",
+    "new": ".dfname-tag { white-space: nowrap; line-height: 1; color: var(--bone, #d8cfae);",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAME1-F13-the-bitmap-gap-unscaled",
+    "file": "src/net/remotePlayers.js",
+    "old": "      const top = n.y - NAME_GAP_PX * scale - font.fnt.fixedHeight * s;",
+    "new": "      const top = n.y - NAME_GAP_PX - font.fnt.fixedHeight * s;",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAME1-F13-the-bitmap-gap-swings-with-depth",
+    "file": "src/net/remotePlayers.js",
+    "old": "      const top = n.y - NAME_GAP_PX * scale - font.fnt.fixedHeight * s;",
+    "new": "      const top = n.y - NAME_GAP_PX * s - font.fnt.fixedHeight * s;",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAME1-F14-both-faces-drawn-from-the-one-pass",
+    "file": "src/net/remotePlayers.js",
+    "old": "    if (covered) return 0;\n    return this.drawNamePoints(renderer, font, points, scale, colorOf);",
+    "new": "    return this.drawNamePoints(renderer, font, points, scale, colorOf);",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ],
+    "equivalent": true,
+    "why": "A covered frame has no points - `covered ? [] : namePoints(...)` decided that two lines above - so the bitmap face draws nothing either way and no pin can tell. The early return is kept because it says the intent where the reader is (a window over the HUD draws no name), and because the day the points stop being emptied first, this line is the one that still refuses."
+  },
+  {
+    "name": "AUDIT-NAME1-F14-the-pass-projects-under-a-window",
+    "file": "src/net/remotePlayers.js",
+    "old": "    const points = covered ? [] : this.namePoints(proj, view, w, h, eye, toScene, rect, blocked);",
+    "new": "    const points = this.namePoints(proj, view, w, h, eye, toScene, rect, blocked);",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ]
+  }
+]

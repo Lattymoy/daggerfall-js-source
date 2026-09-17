@@ -183,9 +183,13 @@ test('EOTB2: the obstacle cast is per axis, skipped when the offset is zero, and
   c.loadSettings((v, k) => ({ 'Camera.FrontalPlaneOffset': [0, 0], 'Camera.LongitudinalDistance': 2, 'Camera.MinimumDistance': 0 })[k]);
   c.toggleOffset(true);
   c.eye({ fpEye: [0, 1.6, 0], feet: [0, 0, 0], yaw: 0, pitch: 0, dt: 1, raycast });
-  assert.equal(casts.length, 1, 'x and y are zero, so only z is cast');
-  assert.equal(casts[0].len, Math.abs(-2 * 2) + EYE_RADIUS, 'the cast runs |offset * 2| + eyeRadius');
-  assert.deepEqual(casts[0].d, [0, 0, -1], 'a negative z offset casts BACKWARD along the view');
+  // EOTB-WALL: the port adds ONE line-of-sight cast after the mod's, along the head-to-eye line - with x and y zero
+  // and the eye straight back it points the same way as the z cast, so it is told from the mod's by its LENGTH
+  // (the eye's own distance plus the clearance, not |offset * 2| + eyeRadius)
+  const modCasts = casts.filter((k) => k.len === r4(Math.abs(-2 * 2) + EYE_RADIUS));
+  assert.equal(modCasts.length, 1, 'x and y are zero, so the mod casts z alone');
+  assert.equal(casts.length, 2, 'and the port\'s one line-of-sight cast follows it (EOTB-WALL)');
+  assert.deepEqual(modCasts[0].d, [0, 0, -1], 'a negative z offset casts BACKWARD along the view');
 
   // now with all three, and a hit on z
   casts.length = 0;
@@ -578,3 +582,40 @@ test('MAC-O3: Start runs ONCE per boot - a second rig (a building, a dungeon) do
   // the doors still work after it
   assert.equal(c.onLoad(false), true, 'OnLoad, disarmed: StartInThirdPerson');
 });
+
+test('EOTB-WALL (2026-09-17, Mac: "3rd person clips through walls and ceilings ... Morrowind 3rd person doesnt have this issue"): one line-of-sight cast from the head to the SMOOTHED eye, after the mod\'s axis casts - a wall on the diagonal the axis casts miss pulls the camera in with the mod\'s own clearance, a ceiling on the back-up diagonal the same, the mod\'s straight-back answer is unchanged, and the smoothing walks the camera back out when the wall is gone (mutants: the cast dropped; the clearance dropped; the cast on the target instead of the smoothed position; the cast skipped when the axis casts hit nothing)', () => {
+  const mk = (x = 0.5) => {
+    const c = createEotbCamera();
+    c.loadSettings((v, k) => ({ 'Camera.FrontalPlaneOffset': [x, 0], 'Camera.LongitudinalDistance': 2, 'Camera.MinimumDistance': 0, 'Camera.Speed': 100, 'Camera.Dampen': 0 })[k]);
+    c.toggleOffset(true);
+    return c;
+  };
+  const head = [0, 1.6, 0];
+  const len = (v) => Math.hypot(v[0] - head[0], v[1] - head[1], v[2] - head[2]);
+  // the axis casts (along +-x, +-y, +-z of the eye basis at yaw 0 / pitch 0) see nothing; a wall stands 1.0 out along the DIAGONAL only
+  const axisAligned = (d) => [Math.abs(d[0]), Math.abs(d[1]), Math.abs(d[2])].filter((n) => n > 0.999).length === 1;
+  const diagonalWall = (o, d, l) => (axisAligned(d) ? null : 1.0);
+  const free = mk().eye({ fpEye: head, feet: [0, 0, 0], yaw: 0, pitch: 0, dt: 1000, raycast: () => null });
+  assert.equal(Number(len(free.eye).toFixed(4)), Number(Math.hypot(0.5, 2).toFixed(4)), 'nothing in the way: the camera stands on the diagonal at the offset\'s own length');
+  const pinned = mk().eye({ fpEye: head, feet: [0, 0, 0], yaw: 0, pitch: 0, dt: 1000, raycast: diagonalWall });
+  assert.equal(Number(len(pinned.eye).toFixed(4)), Number((1.0 - EYE_RADIUS * 2).toFixed(4)), 'the wall the three axis casts never measured: pulled in to hit - 2 * eyeRadius along the eye\'s own direction');
+  const dirFree = [free.eye[0] - head[0], free.eye[1] - head[1], free.eye[2] - head[2]].map((n) => n / len(free.eye));
+  const dirPinned = [pinned.eye[0] - head[0], pinned.eye[1] - head[1], pinned.eye[2] - head[2]].map((n) => n / len(pinned.eye));
+  assert.deepEqual(dirPinned.map(r3), dirFree.map(r3), 'pulled IN along the line of sight, not sideways');
+  // the ceiling: looking down, the camera sits up and back on a diagonal no axis cast walks
+  const ceiling = mk(0).eye({ fpEye: head, feet: [0, 0, 0], yaw: 0, pitch: -0.9, dt: 1000, raycast: (o, d, l) => (d[1] > 0.5 && Math.abs(d[2]) > 0.3 ? 0.8 : null) });
+  assert.equal(Number(len(ceiling.eye).toFixed(4)), Number((0.8 - EYE_RADIUS * 2).toFixed(4)), 'a ceiling on the back-up diagonal pulls the camera under it');
+  // the mod\'s own straight-back law is unchanged: a wall 1.0 back answers hit - 2 * eyeRadius exactly as before
+  const back = mk(0).eye({ fpEye: head, feet: [0, 0, 0], yaw: 0, pitch: 0, dt: 1000, raycast: () => 1.0 });
+  assert.equal(Number(back.eye[2].toFixed(4)), -(1.0 - EYE_RADIUS * 2), 'straight back: the same number the mod\'s axis cast gives');
+  // the wall goes: the smoothing walks the camera back out, frame by frame, from where the wall left it
+  const c = mk();
+  c.eye({ fpEye: head, feet: [0, 0, 0], yaw: 0, pitch: 0, dt: 1000, raycast: diagonalWall });
+  const step1 = c.eye({ fpEye: head, feet: [0, 0, 0], yaw: 0, pitch: 0, dt: 0.005, raycast: () => null });
+  const step2 = c.eye({ fpEye: head, feet: [0, 0, 0], yaw: 0, pitch: 0, dt: 0.005, raycast: () => null });
+  assert.ok(len(step1.eye) > 1.0 - EYE_RADIUS * 2 && len(step2.eye) > len(step1.eye) && len(step2.eye) < Math.hypot(0.5, 2), `the camera walks back out over frames (${len(step1.eye).toFixed(3)} -> ${len(step2.eye).toFixed(3)}), the target untouched`);
+  // and the cast is on the SMOOTHED position: a wall that appears mid-walk pins the camera where it IS, not where the target is
+  const far = c.eye({ fpEye: head, feet: [0, 0, 0], yaw: 0, pitch: 0, dt: 0.005, raycast: (o, d, l) => (axisAligned(d) ? null : 0.9) });
+  assert.equal(Number(len(far.eye).toFixed(4)), Number((0.9 - EYE_RADIUS * 2).toFixed(4)), 'a nearer wall pins the smoothed eye');
+});
+

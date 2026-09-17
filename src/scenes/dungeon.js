@@ -130,7 +130,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // below, after this context; null falls to standing defaults.
       motorState: () => (_motorRef ? { eyeLevel: _motorRef.eye[1] - _motorRef.pos[1], capsule: _motorRef.height } : null),
       // MAC1 J: this host's canvas, for the pause door's relock. The
-      // context owns none of its own (dungeonContext.js:5453), so each
+      // context owns none of its own (dungeonContext.js:5466), so each
       // dungeon host hands its own in and the resume gesture carries
       // the pointer back with it (ui/pauseDoor.js:207-224).
       relock: () => requestLook(canvas) });
@@ -460,6 +460,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // skin cannot change without a reload (both switches end in
     // location.replace), so this boot-time read is exact.
     dial: isEnhanced(),
+    enhanced: isEnhanced(),   // AUDIT FONT F5: the layer's text in the pixel face under the enhanced skin - FONT1 wired this in scenes/world.js alone, so every OTHER host's touch buttons stayed system-ui
     overlayActive: () => !!ctx.uiOverlayActive,
     // AUDIT 62 F7: the finger's pause gate - this host's own mouse
     // predicate (mousedown :`!ctx.uiOverlayActive`, mousemove's return).
@@ -1004,8 +1005,15 @@ export async function bootDungeon(canvas, renderer, params, status) {
       dungeonKey: ctx.musicSeed,
       locationIndex: dfLocation?.locationIndex ?? -1,
     });
+    // AUDIT FONT F3: the branch below returns above `drawFoes`, the only
+    // place this host reaches drawHud - so ui/hud.js's mid-screen
+    // draw/hide and the popup column's never ran on an overlay frame,
+    // and both are DOM under the enhanced skin: they stay painted until
+    // told otherwise (AUDIT 64 F37's law). On ?dungeon there is no
+    // townTalk drawing a second column behind them either. So the hide
+    // doors ride the branch's own first line, before the return.
     if (ctx.uiOverlayActive) {
-      ctx.tickOverlay(dt); ctx.drawOverlay(canvas);
+      ctx.hideHudText?.(); ctx.tickOverlay(dt); ctx.drawOverlay(canvas);
       // U26: the shot counter advances HERE TOO. This early return
       // skipped it, so __frame froze the moment any overlay opened -
       // and the Process rule says a probe must frame-sync rather than

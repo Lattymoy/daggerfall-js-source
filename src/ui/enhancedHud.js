@@ -37,6 +37,7 @@ import { foeTarget, tickFoeTarget } from './hudFoeTarget.js';
 // styles show a corner word - imported rather than restated.
 import { crosshairEnabled, interactionIconStyle, iconReplacesCrosshair, modeIconEnabled, MODE_LABEL } from './hudCrosshair.js';
 import { getInteractionMode } from '../player/interactionMode.js';
+import { setEnhancedHudTextScale } from './enhancedHudText.js';   // AUDIT FONT F2: the popup column and the mid-screen label are layers beside this one, not inside it
 
 /**
  * PX30c (Mac: "is there anyway I can adjust the sizing?"): THE HUD'S
@@ -315,6 +316,12 @@ export function drawEnhancedHud(vitals, heading01, dt = 0, opts = {}) {
     host.style.setProperty('--hud-scale', String(scale));
     // HN1: the damage numbers read the same scale, on their own layer.
     document.getElementById('enhanced-hitnums')?.style.setProperty('--hud-scale', String(scale));
+    // AUDIT FONT F2: ...and so do the popup column and the mid-screen
+    // label, which are layers of their own beside this one and never
+    // INHERITED the variable - they are siblings of `.hud` on
+    // document.body, not children of it. At hudScale 2 the column drew
+    // through the compass block at half size and at 0.5 it floated.
+    setEnhancedHudTextScale(scale, document);
   }
 
   // THE COMPASS. Each point is placed by the same shortest-way-round

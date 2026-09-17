@@ -104,9 +104,17 @@ export function projectToScreen(p, w, h, proj, view, rect = null) {
   const pv = multiply(proj, view);
   const [x, y, z] = p;
   const cw = pv[3] * x + pv[7] * y + pv[11] * z + pv[15];
-  if (!(cw > 0)) return { x: 0, y: 0, front: false };
+  if (!(cw > 0)) return { x: 0, y: 0, depth: 0, front: false };
   const nx = (pv[0] * x + pv[4] * y + pv[8] * z + pv[12]) / cw;
   const ny = (pv[1] * x + pv[5] * y + pv[9] * z + pv[13]) / cw;
   const r = worldRectPx(rect, w, h);
-  return { x: r.x + ((nx + 1) / 2) * r.w, y: r.y + ((1 - ny) / 2) * r.h, front: true };
+  // NAME1 (2026-09-16): `depth` is the clip w this projection already
+  // divided by - the view-space depth for every perspective lens the
+  // port builds (world/mat4.js perspective + mirrorProjectionX). It is
+  // handed back rather than re-derived because a screen SIZE is the one
+  // thing a projected point cannot answer on its own: a fixed world
+  // height lands on `f * H / depth` pixels, so anything that must shrink
+  // with the thing it labels needs this number and nothing else. Purely
+  // additive - every existing caller reads x, y and front.
+  return { x: r.x + ((nx + 1) / 2) * r.w, y: r.y + ((1 - ny) / 2) * r.h, depth: cw, front: true };
 }

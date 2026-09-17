@@ -521,3 +521,34 @@ test('AUDIT 62 F16/F28: EVERY mode change releases the lock (mutant: drop the un
     assert.match(read(h), /exteriorFoes\.removeFoe\(f\); \}[\s\S]{0,40}lockOn\.unlock\(\);/, `${h}: ClearEnemies lets the lock go too`);
   }
 });
+
+// ---------------------------------------------------------------
+// AUDIT FONT F5 + F6 - THE LAYER'S FACE, EXECUTED
+// ---------------------------------------------------------------
+// FONT1 put the touch layer in the enhanced skin's face behind
+// `hooks.enhanced`, and pinned it by reading the source line. Two
+// things that reading could not see: only ONE of the four hosts passed
+// the hook (scenes/world.js), and the naming field sets its own font
+// shorthand - it is an <input>, and inherits nothing from the layer's
+// root. Both are driven here, over the real layer.
+test('AUDIT FONT F5/F6: with the enhanced hook the layer AND its naming field are in the pixel face; without it both keep the system face (mutants: the hook ignored; the field left on its own system-ui shorthand)', () => {
+  const faceOf = (hooks) => withTouchDom((keys, attach) => {
+    const h = attach({ getBoundingClientRect: () => ({ left: 0, top: 0, width: 1000, height: 600 }), addEventListener() {}, style: {} }, hooks);
+    const abc = h.el.children.find((c) => c.textContent === 'abc')
+      ?? h.el.children.flatMap((c) => c.children ?? []).find((c) => c.textContent === 'abc');
+    abc.fire('touchstart', { preventDefault() {}, stopPropagation() {} });
+    const field = h.el.children.find((c) => c.style?.cssText?.includes('placeholder') || c.type === 'text');
+    return { root: h.el.style.cssText, entry: field?.style?.cssText ?? '' };
+  });
+  const PIXEL = "font-family: 'Pixelify Five', 'Pixelify Sans', monospace";
+  const on = faceOf({ look() {}, enhanced: true });
+  assert.ok(on.root.includes(PIXEL), 'the enhanced layer is in the pixel stack');
+  assert.ok(on.root.includes('-webkit-font-smoothing: none'), '...unsmoothed, as every pixel surface in this skin is');
+  assert.ok(on.entry.includes(PIXEL), 'AUDIT FONT F6: and so is the one field on this layer a player types in');
+  assert.ok(on.entry.includes('font-size:18px'), '...at the size it always drew at - a face is not a reason to shrink a target');
+  assert.ok(!on.entry.includes('system-ui'), 'mutant: the field\'s own system-ui shorthand left in place under the pixel layer');
+
+  const off = faceOf({ look() {}, enhanced: false });
+  assert.ok(off.root.includes('system-ui') && !off.root.includes('Pixelify'), 'the classic skin keeps the system face it always drew');
+  assert.ok(off.entry.includes('system-ui') && !off.entry.includes('Pixelify'), '...field and all');
+});

@@ -1,0 +1,38 @@
+[
+  {
+    "name": "EOTB-WALL-the-line-of-sight-cast-dropped",
+    "file": "src/player/eotbCamera.js",
+    "old": "          const hit = raycast(origin, dir, len + EYE_RADIUS * 2);",
+    "new": "          const hit = null;",
+    "tests": [
+      "test/eotb_camera.test.js"
+    ]
+  },
+  {
+    "name": "EOTB-WALL-the-clearance-dropped",
+    "file": "src/player/eotbCamera.js",
+    "old": "            const keep = Math.max(0, hit - EYE_RADIUS * 2);",
+    "new": "            const keep = Math.max(0, hit);",
+    "tests": [
+      "test/eotb_camera.test.js"
+    ]
+  },
+  {
+    "name": "EOTB-WALL-the-cast-on-the-target-not-the-smoothed-eye",
+    "file": "src/player/eotbCamera.js",
+    "old": "        const d = [posCurrent[0] - origin[0], posCurrent[1] - origin[1], posCurrent[2] - origin[2]];",
+    "new": "        const d = [posTarget[0] - origin[0], posTarget[1] - origin[1], posTarget[2] - origin[2]];",
+    "tests": [
+      "test/eotb_camera.test.js"
+    ]
+  },
+  {
+    "name": "EOTB-WALL-the-eye-pinned-without-moving-the-smoothed-state",
+    "file": "src/player/eotbCamera.js",
+    "old": "            posCurrent = [origin[0] + dir[0] * keep, origin[1] + dir[1] * keep, origin[2] + dir[2] * keep];",
+    "new": "            return { eye: [origin[0] + dir[0] * keep, origin[1] + dir[1] * keep, origin[2] + dir[2] * keep], thirdPerson: true, distance: keep, focal: origin };",
+    "tests": [
+      "test/eotb_camera.test.js"
+    ]
+  }
+]
