@@ -810,6 +810,7 @@ function dragStop(commit) {
     globalThis.removeEventListener?.('pointercancel', onDragAbort, true);
     globalThis.removeEventListener?.('lostpointercapture', onDragAbort, true);
     globalThis.removeEventListener?.('scroll', onDragScroll, true);
+    globalThis.removeEventListener?.('touchmove', onDragHold, true);
   }
   if (!d?.moved) return;
   _dragged = true;   // the click that follows a real drag is not a pick
@@ -845,9 +846,52 @@ function dragStop(commit) {
  *  pan-y`), a flick scrolls and is never a drag, and only a finger that
  *  stays still picks anything up. Once it has, `.draglock` takes the
  *  pan back for the rest of the gesture. A MOUSE keeps the 4px
- *  threshold - a mouse has no scroll to steal. */
+ *  threshold - a mouse has no scroll to steal.
+ *
+ *  INV3 corrects two of A1's numbers below: the slop is per-axis rather
+ *  than one Manhattan sum, and `.draglock` does NOT take the pan back
+ *  for the gesture in flight - `onDragHold` does. */
 const TOUCH_HOLD_MS = 320;
-const TOUCH_HOLD_SLOP = 8;
+/** INV3 (2026-09-17, Mac: "Hold to drag functionality in inventory
+ *  sometimes doesnt work"): AND THE AXIS THAT CANNOT SCROLL IS NOT
+ *  EVIDENCE OF A SCROLL.
+ *
+ *  A1 was right about the law and wrong about the measurement. It asked
+ *  `|dx| + |dy| > 8` - one Manhattan sum over BOTH axes against half the
+ *  room the browser itself allows - and a resting thumb does not hold
+ *  still to five pixels. Measured in Chromium on a 430x860 phone
+ *  (`tools/invDragProbe.mjs`), on the `touch-action: pan-y` tile this
+ *  law is written for:
+ *
+ *  - the browser takes the gesture (`pointercancel`) at **16 CSS px**
+ *    of VERTICAL travel and keeps it at 15 - the same number at device
+ *    pixel ratio 1, 2 and 3, so it is CSS px and not device px;
+ *  - it never takes it for HORIZONTAL travel at all, out to 160px,
+ *    because a `pan-y` surface has no sideways pan to hand over.
+ *
+ *  So the old sum cancelled the hold twice over: at 8px when the
+ *  browser allows 16, and on an axis where the browser has nothing to
+ *  take. A finger drifting 5px across and 4px down - neither of which
+ *  can scroll anything - lost the item it was reaching for. That is the
+ *  SOMETIMES: the hold survived 0 of 12 trials at a 6px drift before
+ *  this and 12 of 12 after.
+ *
+ *  ONE AXIS IS THE SCROLLER'S. The slop is per-axis now: vertical,
+ *  where a pan really can start, at 12 - under the browser's own 16, so
+ *  this law is the one that fires and it fires the same way every time -
+ *  and horizontal at twice that, because nothing can take the gesture
+ *  there and the only thing sideways travel proves is that the finger is
+ *  going somewhere rather than resting.
+ *
+ *  A1'S LAW IS UNTOUCHED: a flick is vertical, so it still scrolls and
+ *  is still never a drag, and a MOUSE still crosses at 4px. */
+const TOUCH_HOLD_SLOP = 12;
+const TOUCH_HOLD_SLOP_X = TOUCH_HOLD_SLOP * 2;
+/** Has this finger left the hold? `dy` is the axis the list pans in and
+ *  is judged tightly; `dx` is an axis nothing can pan and is judged
+ *  loosely. Exported so the law can be pinned as a LAW rather than as
+ *  whatever the drag happened to do on one path. */
+export const holdBroken = (dx, dy) => Math.abs(dy) > TOUCH_HOLD_SLOP || Math.abs(dx) > TOUCH_HOLD_SLOP_X;
 const dragLock = (on) => document.body?.classList?.toggle('draglock', !!on);
 function dragArm() {
   if (!drag || drag.moved) return;
@@ -859,16 +903,51 @@ function dragArm() {
 }
 const onDragMove = (e) => {
   if (!drag || e.pointerId !== drag.id) return;
-  const far = Math.abs(e.clientX - drag.x) + Math.abs(e.clientY - drag.y);
+  const dx = e.clientX - drag.ox;
+  const dy = e.clientY - drag.oy;
   if (!drag.moved) {
     // a finger that moves before the hold was scrolling: let it go
-    if (drag.touch) { if (far > TOUCH_HOLD_SLOP) dragStop(false); return; }
-    if (far <= 4) return;
+    if (drag.touch) {
+      if (holdBroken(dx, dy)) { dragStop(false); return; }
+      // INV3: the hold STANDS, and it stands HERE. The origin is what
+      // the slop is measured from, but the ghost must arm under the
+      // finger's real position - drifting the allowed 12px and then
+      // lifting an icon a dozen pixels away (and asking `dropIntent`
+      // what is under THAT point) is the tell that the two were one
+      // field.
+      drag.x = e.clientX; drag.y = e.clientY;
+      return;
+    }
+    if (Math.abs(dx) + Math.abs(dy) <= 4) return;
     drag.moved = true;
     ghostStart(drag.item);
   }
   dragTo(e.clientX, e.clientY);
 };
+/** INV3: AND `.draglock` CANNOT TAKE THE PAN BACK ON ITS OWN.
+ *
+ *  A1 wrote "once the hold has armed, `.draglock` takes the pan back
+ *  for the rest of the gesture", and the browser does not work that
+ *  way: Chromium reads the effective `touch-action` when the touch
+ *  SEQUENCE begins, and a rule that lands 320ms later does not reach
+ *  the gesture already in flight. Measured, on a bare `pan-y` tile in a
+ *  scroller with the lock applied the instant the hold armed: the list
+ *  scrolled anyway and the pointer was cancelled anyway, exactly as
+ *  with no lock at all. So the ghost lifted and then VANISHED the
+ *  moment the carry moved down a scrollable list - the other half of
+ *  Mac's "sometimes".
+ *
+ *  The one thing that still holds a live gesture is `preventDefault` on
+ *  a cancelable `touchmove`, and an armed drag takes them (same probe:
+ *  no cancel, and the list did not move). It is registered from the
+ *  press rather than from the arming, because the first move after the
+ *  hold is the one that must not get through, and it refuses nothing
+ *  while the drag is unarmed - a flick still scrolls.
+ *
+ *  `.draglock` stays: it is what stops a SECOND finger panning the list
+ *  out from under a live drag, which is a gesture that does begin under
+ *  the class. */
+const onDragHold = (e) => { if (drag?.moved && drag.touch && e.cancelable) e.preventDefault(); };
 const onDragUp = (e) => { if (drag && e.pointerId === drag.id) dragStop(true); };
 const onDragAbort = (e) => { if (drag && (e.pointerId === undefined || e.pointerId === drag.id)) dragStop(false); };
 // AUDIT INV2 A-F5: a wheel moves the DOM under a STATIONARY cursor, so
@@ -887,7 +966,9 @@ function dragFrom(row, item, source = 'local') {
   row.onpointerdown = (e) => {
     if (drag || e.button > 0) return;   // ONE pointer for the PANE: a second finger on a second row was how one drag dropped another's item
     const touch = e.pointerType === 'touch' || e.pointerType === 'pen';
-    drag = { id: e.pointerId, item, row, x: e.clientX, y: e.clientY, moved: false, want: null, touch, hold: null, source };
+    // INV3: `ox`/`oy` is where the finger LANDED and the slop is measured
+    // from it; `x`/`y` is where the finger is NOW and the ghost arms on it.
+    drag = { id: e.pointerId, item, row, ox: e.clientX, oy: e.clientY, x: e.clientX, y: e.clientY, moved: false, want: null, touch, hold: null, source };
     if (touch) drag.hold = setTimeout(dragArm, TOUCH_HOLD_MS);
     // The listeners are the WINDOW's: a repaint detaches this row, and a
     // drag that lived on it died there with the ghost still on screen.
@@ -896,6 +977,9 @@ function dragFrom(row, item, source = 'local') {
     globalThis.addEventListener?.('pointercancel', onDragAbort, true);
     globalThis.addEventListener?.('lostpointercapture', onDragAbort, true);
     globalThis.addEventListener?.('scroll', onDragScroll, true);
+    // INV3: passive FALSE, or the preventDefault above is ignored - a
+    // window `touchmove` listener is passive by default in Chromium.
+    globalThis.addEventListener?.('touchmove', onDragHold, { passive: false, capture: true });
   };
   rowItems.set(row, item);
 }

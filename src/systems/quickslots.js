@@ -42,7 +42,7 @@
 // that swapped for free would be the exploit the pause exists to
 // stop - so the swap takes the same snapshot-and-bill the window
 // takes, around the one equip it makes.
-import { isPotion, isDrug, useItem, USE_PENDING } from './useItem.js';   // ...and the ladder's own stand-ins for a host that handed no hook
+import { isPotion, isDrug, isLightSource, useItem, USE_PENDING } from './useItem.js';   // ...and the ladder's own stand-ins for a host that handed no hook
 import { equipItem, equipTableOf, EQUIP_SLOTS, isBrokenItem, isForbiddenEquip, isEquipped, unequipSlot,
   getItemHands, ITEM_HANDS,
   equipDelaySnapshot, billEquipDelayOnClose, ITEM_BROKEN_TEXT_ID, FORBIDDEN_EQUIPMENT_TEXT_ID } from './equip.js';
@@ -68,6 +68,7 @@ export const QUICKSLOT_TEXT = Object.freeze({
   swapped: (name) => `You ready your ${name}.`,
   putAway: (name) => `You put away your ${name}.`,
   handsEmpty: 'Your hands are already empty.',
+  noLight: 'You have no light source.',
 });
 
 /** AUDIT QS F2 - BARE HANDS ARE A SWAP TARGET. A swap out of empty hands
@@ -343,6 +344,36 @@ export function swapQuickslot({ entity = null, say = null, rows = null } = {}) {
   else state.swap = null;
   say?.(QUICKSLOT_TEXT.swapped(r.name));
   return { kind: 'swapped', name: r.name, item: r.item, previous: leaver };
+}
+
+/**
+ * QS4 (Mac: "The 4th quickslot doesnt have a keybind") - THE OFF-HAND
+ * CELL'S OWN PRESS.
+ *
+ * Three of the diamond's four corners named a key and the fourth did
+ * not: the off hand spoke only when it held a lit torch (Handheld
+ * Torches' own mod key, which no pad can carry and the enhanced pane
+ * cannot rebind) or when it was offering a swap. A cell with no key is
+ * a slot a player cannot use, which is the drawn door PX14 named,
+ * wearing a diamond.
+ *
+ * SO THE OFF HAND HAS ONE ACT, AND IT IS THE ONE DAGGERFALL HAS: light
+ * your light source, or put it out. `toggleLight` is the host's door
+ * onto the mod's own `toggleLightPress` - its free-hand guard, its
+ * relaxed-lantern carve-out and its refusal line are the mod's, not
+ * restated here - so a shield in that hand refuses in the mod's own
+ * words, which is exactly what the player needs to hear.
+ *
+ * The one thing said here is the case the mod says nothing about: a
+ * player carrying no light at all pressing a key that is about light.
+ */
+export function offHandQuickslot({ entity = null, say = null, toggleLight = null } = {}) {
+  const carries = !!entity?.lightSource || packOf(entity).some(isLightSource);
+  if (!carries) { say?.(QUICKSLOT_TEXT.noLight); return { kind: 'none' }; }
+  if (typeof toggleLight !== 'function') return { kind: 'none' };
+  // The verdict is the mod's: it acted, or it has already said why not.
+  // `lit` is the state AFTER the press - what is in the hand now.
+  return toggleLight() === true ? { kind: 'light', lit: !!entity?.lightSource } : { kind: 'refused' };
 }
 
 // ── THE SAVE ──────────────────────────────────────────────────────

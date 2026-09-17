@@ -52,17 +52,17 @@ still push CLASSIC canvas windows as children under the DOM, and so
 does the pack's USE arm.
 
     THE SPELLBOOK       FIVE construction sites across FOUR hosts:
-                        worldModes.js:1855 (the factory) and :1904 (a
+                        worldModes.js:1856 (the factory) and :1904 (a
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
                         dungeonContext.js:956, world.js:1723,
-                        exterior.js:2059. It is the only window TWO
+                        exterior.js:2064. It is the only window TWO
                         enhanced screens already push - the sheet's
                         button and the pack's USE hand-off, whose
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:5061, dungeonContext.js:5979. A seam
+    / NOTEBOOK          world.js:5067, dungeonContext.js:5991. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -7783,7 +7783,7 @@ same answer: `ui/spellbookDoor.js`, with each host handing it only
 what that host knows.
 
 THE "HAND-ROLLED DUPLICATE" WAS NOT ONE. The board recorded
-worldModes.js:2672 as a second book built by hand 342 lines below the
+worldModes.js:2673 as a second book built by hand 342 lines below the
 factory. Read closely it is the SPELL MERCHANT'S SHOP - buyMode, with
 `offered`, the building's quality, the shop name, the haggling skills
 and the classic clock. A different question with different deps, and
@@ -8493,7 +8493,7 @@ and firing THAT twice is a second PopToHUD.
 
 ### Why only two of the four hosts crashed
 
-`worldModes.js:5502` and `dungeonContext.js:1431` answer the same
+`worldModes.js:5503` and `dungeonContext.js:1437` answer the same
 `onClose` by nulling their slot and never disposing - nothing to
 re-enter. Only the two hosts that come through `townTalk.closeOverlay`
 dispose. **The four-hosts rule caught this one by accident**: the two
@@ -9201,7 +9201,7 @@ than because the screen agrees with a narrower port.
 stays unbuilt - an owner call, unchanged: the port has no gamepad layer
 at all, the serialized joystick blocks are simply absent from
 `KeyBindData_v1`, and the flag that says so is
-`src/systems/inputActions.js:684`. The JOYSTICK tab still answers with
+`src/systems/inputActions.js:693`. The JOYSTICK tab still answers with
 its note, and Ledger `:593`'s live clause now names that window alone.
 `weaponSensitivitySlider` is commented out in DFU itself (:42, :355) -
 nine controls are built, the tenth is a stub - and
@@ -9737,9 +9737,9 @@ re-resolved the `exterior.js` half of a three-file sentence and left the
 `ExteriorAutomapWindow` construction, `:4101` on a `locationName:`
 field). Both halves are now read by `test/citedrift.test.js` - the
 existing entries only ever captured the exterior number, which is how
-the other half went stale unnoticed. (The rest cite named `world.js:5316`,
+the other half went stale unnoticed. (The rest cite named `world.js:5323`,
 the first of the host's TWO identical `act === 'Rest'` arms; ROAD-H H5
-deleted the second and the cite is `world.js:5322` now.)
+deleted the second and the cite is `world.js:5329` now.)
 
 ## AUDIT 62 F24/F25 - THE SENTINEL SWEEP WAS TWO WINDOWS SHORT (2026-09-07)
 
@@ -9913,7 +9913,7 @@ if (alt.ContainsKey(code)) alt.Remove(code);        // InputManager.cs:729-734
 - and for a SECONDARY write the "other" dict IS the primary, so a
 secondary Jump written onto `ShiftLeft` deletes Run's primary row, and
 the reverse order deletes Jump's secondary row by the same line. The
-port carries it at `inputActions.js:394-395`. Either order collapses the
+port carries it at `inputActions.js:403-404`. Either order collapses the
 pair.
 
 The route that DOES produce it is the LOAD path. `LoadActionKeybinds`
@@ -9924,7 +9924,7 @@ if (!dict.ContainsKey(key) && actionVal != Actions.Unknown)
     dict.Add(key, actionVal);                       // InputManager.cs:1950-1969
 ```
 
-- ported at `inputActions.js:533-543`, whose own comment already said
+- ported at `inputActions.js:542-552`, whose own comment already said
 "Raw map-set, NOT setBinding". So a hand-edited `KeyBindings.txt` that
 puts Jump on the run key as a SECONDARY, with the primary `Space` spent
 on something else, loads exactly as written; and it SURVIVES the
@@ -14127,3 +14127,177 @@ gates, save ordering, the wagon's rows, the tooltip's `picked` surviving
 a slot press, the Morrowind arm following a swap on the next frame, the
 refusals leaving the hands untouched, and every window-shaped gate the
 hotkey shares with the inventory.
+
+## QS4 + QS5 - THE FOURTH KEY, AND THE DURABILITY OFF THE SPRITE (2026-09-17)
+
+Mac, playing the merged diamond: "We need a better design for durability
+instead of the line sitting inside with the sprite" and "The 4th
+quickslot doesnt have a keybind."
+
+### QS5 - the cell's own lower edges are the gauge
+
+The strip was a 36x4 bar under the art INSIDE an 84px cell - a second
+object competing with the picture for the only room the cell has, and at
+the phone size (60px) it left the sprite almost nothing. The diamond
+already draws the two lines a gauge wants: its own bottom-left and
+bottom-right edges. So the gauge IS the frame now - an SVG of three
+paths per cell (a dark track, and the two lit halves) stroked INSIDE the
+rhombus, because the cell is clipped to that shape and a stroke on the
+boundary loses its outer half. Each half starts at the BOTTOM POINT and
+is hidden from the side corner inward by a `stroke-dashoffset`, so the
+two drain together, a battered weapon keeps a stub at the point, and a
+fresh one is lit corner to corner. `crispEdges`, like every other drawn
+thing in this skin: a 45-degree line here is a hard stair-step, not a
+smoothed one. Under 40% the two halves take the health bar's red, which
+is the one law the strip had and kept. The art gets the whole cell back.
+
+The trap the pins caught, twice: an SVG node minted with
+`createElement` is an unknown HTML element that draws NOTHING, so the
+namespace is the whole of the difference (`svgEl`), and the test fake
+marks it - a fake that answered the same object either way could not
+tell the two apart. And reversing a half's path direction changes
+nothing a dash offset can see, so the pin reads the `d` itself.
+
+### QS4 - the off hand had no key, and now has its own
+
+Three of the four corners named a key and the off hand did not: it spoke
+only when it held a lit torch (Handheld Torches' own TextKey, which the
+enhanced pane cannot rebind and no pad can carry) or when it was
+offering a swap. A cell with no key is a slot the player has no way to
+reach - PX14's drawn door wearing a diamond.
+
+**`QuickOffHand`, appended after the other three, on Digit4** - the last
+of the digit row this arc spends, still unspent by DFU, by the port and
+by every vendored mod's TextKey defaults. It is in `PORT_ACTIONS` (the
+classic windows yield it), it has its row in the enhanced pane's
+Quickslots group ("Light or douse"), it answers above the mode gate in
+every host, and it wears a pad glyph like the rest.
+
+**The act is the MOD's, through one door.** The toggle key's own arm -
+the free-hand guard, the relaxed-lantern carve-out and the refusal line
+- became `toggleLightPress()` in `systems/handheldTorches.js`, and the
+mod's key poll presses that instead of restating it. `weaponRig
+.toggleLight()` is the rig's door onto it (the mod being OFF is an
+answer, not a throw), and `offHandQuickslot` in the model asks the door
+and says nothing over it. The ONE line the model adds is the one the mod
+has no word for: a player carrying no light at all pressing a key that
+is about light. The mod's own key still works, as HT4 kept every other
+key the mod ships; the CELL names the port's action, because that is the
+one a player can rebind and a pad can press.
+
+So the off cell's tag is the swap's where it offers a swap, and
+`QuickOffHand` in every other state - a lit torch, a shield, an off-hand
+weapon, an empty socket. With a shield in that hand the press refuses in
+the mod's own words, which is exactly what the player needs to hear.
+
+**And the phone's taps were never wired.** QS3's second departure gave
+the cells a finger and `drawHud` the doors to call, but no host ever
+passed them - the tap was dead on the one platform the departure exists
+for, which is AUDIT SOC C9 for the second time in one arc. All four
+hosts hand over `quickUse`, `quickSwap` and `quickOffHand` now, and a
+pin walks them.
+
+### Pinned
+
+`test/qs4_offhand.test.js` (3, driving a real Handheld Torches component
+through the door: it lights, it douses, a full hand refuses in the mod's
+line, and the model adds nothing over it), the off-hand performer in
+`test/quickslots.test.js`, the tag law and the gauge in
+`test/qs3_hud.test.js`, the fourth action across
+`test/qs2_inputs.test.js`, `test/inputactions.test.js`,
+`test/enhancedControls.test.js` and `test/soc5_interact.test.js`.
+Measured again in Chromium (`tools/qs3Probe.mjs`): every corner carries
+a chip at all three sizes, three scales and both stick anchors.
+
+## HT6 - THE HAND LAW AT THE EQUIP MOMENT (2026-09-17)
+
+Mac: "When equipping a shield or other offhand item, the torch in the
+inventory isnt shown unequipped and replaced."
+
+Two things were true, and only one of them was a bug.
+
+**The bug: the law runs on a frame, and an open window stops the
+frames.** Handheld Torches stows or drops a lit light the moment a hand
+is taken (its Update, 0x15c6-0x1689), but the weapon rig only runs
+Update on a frame the host is not holding for an overlay - every host
+reads `overlayHeld ? [] : rig.frame(...)`. So a shield equipped in an
+OPEN inventory did not reach the law until the window closed, and the
+window went on painting a lit torch beside the shield the player had
+just put on the same arm. The block is lifted out of Update as
+`handLaw` and the equip table's own listener runs the SAME code at the
+equip moment - UpdateFreeHand then the law, in Update's own order, over
+freshly read settings. Nothing of the rule is restated, and the reverse
+works too: the shield coming off frees the hand that takes the
+remembered light back up, at the unequip moment.
+
+One trap, and it is the one this port has learned to look for: the hosts
+build a rig EACH, and a component that is not being given frames still
+holds its last context - a `sheathed` and a `usingRightHand` from
+whenever that host last had the player. So the module registers ONE
+listener at import (entityMods' own shape) which dispatches to the
+component whose Update ran last, and a teardown releases the pointer
+only if it is its own.
+
+**Not a bug: sheathed, the mod keeps the torch.** UpdateFreeHand's
+sheathed arm (0x2c91-0x2cb8) clears a hand only for a BOW in the left
+slot - a shield does not take a hand while your weapon is away. That is
+the mod's own law and it is a defensible one in this game: a Daggerfall
+shield is ARMOUR (group `Armor`), strapped to the arm rather than
+gripped, so a torch in that hand with the sword on your back is a true
+reading. Draw the weapon and the torch stows on the next frame. It is
+recorded here rather than departed from; if it should change, that is a
+decision, not a fix.
+
+**A consequence worth knowing.** The mod ships `Handling.OnStow = Drop`
+and the port keeps it, so with the weapon DRAWN, equipping a shield now
+drops the lit torch on the floor while the window is still open. It
+always did that - it just used to happen a beat later, after the window
+closed. The Mods pane's `OnStow` dial changes it to Unequip.
+
+## INV3 - THE HOLD THAT SOMETIMES DID NOT TAKE (2026-09-17)
+
+Mac: "Hold to drag functionality in inventory sometimes doesnt work."
+
+Two causes, and the second was in a record rather than only in the code.
+
+**The slop was a sum, in an axis nothing can scroll.** AUDIT INV2 A1
+was right about the law - the rows pan by default, a flick scrolls and
+is never a drag, only a still finger picks anything up - and wrong about
+the measurement: `|dx| + |dy| > 8`, one Manhattan sum over both axes.
+Measured on the real `touch-action: pan-y` tile in Chromium, the browser
+takes the gesture at 16 CSS px of VERTICAL travel (the same number at
+device pixel ratio 1, 2 and 3) and never takes it sideways at all, out
+to 160 px, because a `pan-y` surface has no sideways pan to hand over.
+So the port gave up at half the room the browser allows, and on an axis
+the browser does not care about: a thumb drifting 5 across and 4 down
+lost the item it was reaching for. The slop is per-axis now - 12
+vertical, deliberately under the browser's own 16 so the port's law is
+the one that fires and fires deterministically, and twice that sideways
+- through an exported pure `holdBroken`, so it is pinned as a LAW rather
+than as whatever one path happened to do.
+
+**`.draglock` never took the pan back.** A1 and MAC-M2 A both say that
+once the hold has armed the class takes the pan back for the rest of the
+gesture. It does not: Chromium reads the effective `touch-action` when
+the touch SEQUENCE begins, so a class applied 320 ms later cannot reach
+a gesture already in flight - measured byte-identical to no lock at all.
+The ghost lifted and then VANISHED as soon as the carry moved down a
+list with somewhere to scroll, which is the other half of the report.
+An armed touch drag preventDefaults cancelable `touchmove`s instead,
+registered `{ passive: false, capture: true }`; that is what holds a
+live gesture. The rules stay, because they are what stops a SECOND
+finger panning under a live drag - a gesture that does begin under the
+class - and the prose now says that rather than the thing that was not
+true. **Both of those records carried the false claim and are corrected
+here rather than quietly in the stylesheet.**
+
+The ghost arms under the FINGER now rather than at the landing point up
+to 12 px away, so `dropIntent` is asked about the point the player is
+actually touching.
+
+A resting thumb picked up 14 of 24 times before and 24 of 24 after; a 6,
+8 or 10 px drift went 0 of 12 to 12 of 12. A1's law re-measured intact
+after the fix: a flick still scrolls the pack and puts nothing on the
+floor, a tap is still a pick, the mouse still crosses at 4 px with no
+hold. `tools/invDragProbe.mjs` is kept - 46 checks, all clear, and 24 of
+them failed before the fix.

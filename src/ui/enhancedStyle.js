@@ -738,15 +738,24 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    between tiles as the only surface a finger could scroll from - every
    finger-down was a drag at a 4px threshold, and INV2 had just made a
    release off the panel a DROP. A flick pans the list now; a touch drag
-   begins on a HOLD (enhancedInventory's TOUCH_HOLD_MS), and only then
-   does .draglock take the pan back for the rest of the gesture. */
+   begins on a HOLD (enhancedInventory's TOUCH_HOLD_MS).
+   INV3: AND .draglock DOES NOT TAKE THE PAN BACK FOR THAT GESTURE.
+   Chromium reads the effective touch-action when the touch SEQUENCE
+   begins, so a class that lands 320ms later reaches the next gesture
+   and not the one in flight - measured, with the lock on the list
+   scrolled and the pointer cancelled exactly as with no lock at all.
+   What holds a live gesture is preventDefault on a cancelable
+   touchmove, which enhancedInventory's onDragHold takes. These rules
+   stay for the gesture that does begin under the class: a SECOND finger
+   panning the list out from under a live drag. */
 .itemrow { touch-action: pan-y; -webkit-user-select: none; user-select: none; }
 body.draglock .itemrow, body.draglock .packlists { touch-action: none; }
 /* MAC-M2 (Mac: "hold to drag ... doesn't work when trying to take items
    off your character"): THE BODY'S PANELS TAKE THE SAME GESTURE, so
    they take the same two rules - a hold must not also long-press-select
-   the slot name out from under the finger, and once the hold has armed,
-   .draglock takes the pan back here too. */
+   the slot name out from under the finger, and a second finger must not
+   pan the body out from under a live drag (INV3: which is all
+   .draglock was ever able to do). */
 .wornrow { touch-action: pan-y; -webkit-user-select: none; user-select: none; }
 body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
 .itemrow.dragover { box-shadow: inset 0 2px 0 var(--brass); }
@@ -2007,11 +2016,20 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
    the inventory tile's own reasoning, at the HUD's size. */
 .hud-qicon { display: block; max-width: 44px; max-height: 44px; image-rendering: pixelated; }
 .hud-qinit { font-size: 13px; letter-spacing: 0.08em; color: #a89f88; }
-/* The durability strip, under the art inside the hand cells. */
-.hud-qbar { display: none; width: 36px; height: 4px; background: rgba(10,12,17,0.9); }
-.hud-qcell.hasbar .hud-qbar { display: block; }
-.hud-qbarfill { display: block; height: 100%; width: 100%; background: var(--brass); }
-.hud-qcell.worn .hud-qbarfill { background: #d98074; }
+/* QS5 - THE DURABILITY IS THE CELL'S OWN LOWER EDGES (Mac: "a better
+   design for durability instead of the line sitting inside with the
+   sprite"). A strip under the art was a second object competing with
+   the picture in an 84px cell; the diamond already draws the two lines
+   the gauge needs. The stroke is inside the rhombus, because the cell
+   is clipped to it and a stroke on the boundary would lose its outer
+   half; it is crisp rather than smooth, which is what every other
+   drawn thing in this skin is. */
+.hud-qwear { display: none; position: absolute; inset: 0; width: 100%; height: 100%;
+  pointer-events: none; overflow: visible; }
+.hud-qcell.hasbar .hud-qwear { display: block; }
+.hud-qwtrack { fill: none; stroke: rgba(10,12,17,0.85); stroke-width: 5; }
+.hud-qwfill { fill: none; stroke: var(--brass); stroke-width: 5; }
+.hud-qcell.worn .hud-qwfill { stroke: #d98074; }
 /* The count, inside the lower-right face of a consumable cell. */
 .hud-qcount { position: absolute; right: 26px; bottom: 18px; font-size: 12px;
   font-variant-numeric: tabular-nums; color: #d8cfae; }
@@ -2204,7 +2222,7 @@ body:has(.dfchat.touch) .hudtext-stack { top: ${HUD_TEXT_TOP_CHAT_TOUCH_PX}px; }
   .hud-quick.stickclear { left: calc(160px + env(safe-area-inset-left, 0px)); }
   .hud-qdiamond { margin-top: 14px; }
   .hud-qicon { max-width: 32px; max-height: 32px; }
-  .hud-qbar { width: 26px; }
+  .hud-qwtrack, .hud-qwfill { stroke-width: 6; }
   .hud-qcount { right: 18px; bottom: 13px; font-size: 11px; }
   /* the compass and the bar above it move up with .hud-top, so the column follows them */
   .hudtext-stack { top: ${HUD_TEXT_TOP_NARROW_PX}px; }

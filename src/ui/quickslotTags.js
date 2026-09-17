@@ -38,12 +38,19 @@ export const CELL_ACTIONS = Object.freeze({
   c1: 'QuickUse1',
   c2: 'QuickUse2',
   swap: 'QuickSwap',
+  off: 'QuickOffHand',   // QS4: light or douse - what an off hand does
 });
 
 /** Handheld Torches binds its toggle as a MOD TextKey rather than an
  *  InputManager action (systems/handheldTorches.js readTorchSettings,
- *  default "O"), so the torch cell's tag is read from the mod's own
- *  store and is KEYBOARD ONLY - a TextKey cannot name a pad button. */
+ *  default "O"), so a tag read from the mod's own store is KEYBOARD ONLY -
+ *  a TextKey cannot name a pad button.
+ *
+ *  QS4 KEPT IT AND STOPPED SHOWING IT. The mod's key still works, as
+ *  HT4 kept every other key the mod ships; but the CELL names the
+ *  port's own `QuickOffHand`, which presses the same act through the
+ *  same guard, is rebindable in the enhanced pane, and can wear a pad
+ *  glyph. `torchTag` stands for a caller that wants the mod's own key. */
 export const TORCH_TOGGLE_SETTING = 'Handling.ToggleLightInput';
 export const TORCH_VENDOR = 'handheld-torches';
 
@@ -99,9 +106,14 @@ export function torchTag(read = () => modSetting(TORCH_VENDOR, TORCH_TOGGLE_SETT
  *  is the mod's key, a swap weapon is QuickSwap, and a shield or an
  *  empty socket has nothing to press. */
 export function quickslotOffTag(kind, opts = {}) {
-  if (kind === 'torch') return torchTag(opts.readTorchKey ?? undefined);
+  // QS4 (Mac: "The 4th quickslot doesnt have a keybind"): EVERY STATE
+  // NAMES A KEY. A swap is the swap's; everything else - a lit torch, a
+  // shield, an off-hand weapon, an empty socket - is the off hand's own
+  // press, which lights or douses and refuses in the mod's own words
+  // when that hand is full. A corner with no chip was a slot the player
+  // had no way to reach.
   if (kind === 'swap') return quickslotTag(CELL_ACTIONS.swap, opts);
-  return null;
+  return quickslotTag(CELL_ACTIONS.off, opts);
 }
 
 /** The tag as ONE STRING, for the HUD's changed-only write. Two tags

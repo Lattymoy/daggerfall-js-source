@@ -40,13 +40,13 @@ import { USE_PENDING as USE_PENDING_UI } from '../src/ui/nativeInventory.js';
 
 const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
 
-const QS = Object.freeze(['QuickUse1', 'QuickUse2', 'QuickSwap']);
+const QS = Object.freeze(['QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand']);
 
 // ── THE ACTIONS ──────────────────────────────────────────────────────
 
 test('QS2: the three actions are APPENDED - past DFU\'s forty-four and past SOC5\'s row - parse, and never displace an index the classic grid draws by number (mutants: a name spliced mid-list; a name the parser answers Unknown for)', () => {
-  assert.deepEqual(ACTIONS.slice(-3), QS, 'the last three rows, in this order');
-  assert.equal(ACTIONS.length, 48, 'DFU\'s 44 + SOC5\'s 1 + QS2\'s 3');
+  assert.deepEqual(ACTIONS.slice(-4), QS, 'the last four rows, in this order');
+  assert.equal(ACTIONS.length, 49, 'DFU\'s 44 + SOC5\'s 1 + QS2\'s 3 + QS4\'s 1');
   // Every index DFU's own enum had, it still has. This is the whole reason the
   // list is appended to and never inserted into (ui/controlsWindow.js).
   assert.equal(ACTIONS[43], 'AutoRun', 'DFU\'s last row keeps index 43');
@@ -75,6 +75,7 @@ test('QS2: the defaults are the number row, spent exactly once each, and free be
   assert.equal(byCode.get('Digit1'), 'QuickUse1');
   assert.equal(byCode.get('Digit2'), 'QuickUse2');
   assert.equal(byCode.get('Digit3'), 'QuickSwap');
+  assert.equal(byCode.get('Digit4'), 'QuickOffHand');
   const codes = DEFAULT_BINDINGS.map(([c]) => c);
   assert.equal(new Set(codes).size, codes.length, 'no key is spent twice');
   assert.equal(DEFAULT_BINDINGS.length, ACTIONS.length, 'and every action still has exactly one default');
@@ -90,6 +91,7 @@ test('QS2: the defaults are the number row, spent exactly once each, and free be
   resetDefaults(s);
   assert.equal(actionForCode(s, 'Digit1'), 'QuickUse1');
   assert.equal(getBinding(s, 'QuickSwap'), 'Digit3');
+  assert.equal(getBinding(s, 'QuickOffHand'), 'Digit4');
 });
 
 test('QS2: a bindings blob written BEFORE this slice gains the three on the next load, and a player who had already bound a digit keeps it (mutants: the autofill stealing a bound key; the rows put in a host so an existing save never gets them)', () => {
@@ -106,6 +108,7 @@ test('QS2: a bindings blob written BEFORE this slice gains the three on the next
   assert.equal(actionForCode(fresh, 'Digit1'), 'QuickUse1', 'the autofill gives an existing player the action - no reset, no lost bindings');
   assert.equal(actionForCode(fresh, 'Digit2'), 'QuickUse2');
   assert.equal(actionForCode(fresh, 'Digit3'), 'QuickSwap');
+  assert.equal(actionForCode(fresh, 'Digit4'), 'QuickOffHand');
   assert.equal(getBinding(fresh, 'Rest'), 'KeyR', 'and disturbs nothing else');
   assert.equal(getBinding(fresh, 'SocialInteract'), 'KeyF', 'SOC5\'s row included');
   // ...and a player who put Rest on 1 keeps Rest on 1; QuickUse1 simply waits.
@@ -127,6 +130,7 @@ test('QS2: the enhanced pane draws the three under their OWN heading, and the co
     ['QuickUse1', 'Use quickslot 1'],
     ['QuickUse2', 'Use quickslot 2'],
     ['QuickSwap', 'Swap weapon'],
+    ['QuickOffHand', 'Light or douse'],   // QS4: the fourth cell's own press
   ]);
   assert.ok(!PORT_GROUPS[0].rows.some((r) => QS.includes(r.action)), 'not under Online - a potion press is not an online act');
   // COVERAGE: every bindable action has exactly one row across every group.
@@ -148,14 +152,17 @@ test('QS2: routeAction sends each action to its ctx door with the slot number, a
   const ctx = {
     quickUse: (n) => { calls.push(['use', n]); return true; },
     quickSwap: () => { calls.push(['swap']); return true; },
+    quickOffHand: () => { calls.push(['off']); return true; },
   };
   assert.equal(routeAction('QuickUse1', ctx), true);
   assert.equal(routeAction('QuickUse2', ctx), true);
   assert.equal(routeAction('QuickSwap', ctx), true);
-  assert.deepEqual(calls, [['use', 1], ['use', 2], ['swap']], 'each arm is its own, and the SLOT NUMBER travels');
+  assert.equal(routeAction('QuickOffHand', ctx), true);
+  assert.deepEqual(calls, [['use', 1], ['use', 2], ['swap'], ['off']], 'each arm is its own, and the SLOT NUMBER travels');
   // The door's answer, passed through.
   assert.equal(routeAction('QuickUse1', { quickUse: () => false }), false);
   assert.equal(routeAction('QuickSwap', { quickSwap: () => false }), false);
+  assert.equal(routeAction('QuickOffHand', { quickOffHand: () => false }), false);
   assert.equal(routeAction('QuickUse2', { quickUse: () => undefined }), false, 'a door that answers nothing is not a door that consumed');
   // A host with NO doors: false, and nothing thrown.
   for (const a of QS) assert.equal(routeAction(a, {}), false, `${a} on a bare ctx`);
@@ -170,6 +177,7 @@ test('QS2: routeAction sends each action to its ctx door with the slot number, a
   assert.match(src, /case 'QuickUse1': return ctx\.quickUse\?\.\(1\) === true;/);
   assert.match(src, /case 'QuickUse2': return ctx\.quickUse\?\.\(2\) === true;/);
   assert.match(src, /case 'QuickSwap': return ctx\.quickSwap\?\.\(\) === true;/);
+  assert.match(src, /case 'QuickOffHand': return ctx\.quickOffHand\?\.\(\) === true;/);
   assert.deepEqual([...QUICKSLOT_ACTIONS].sort(), [...QS].sort(), 'and the set the self-routing hosts read is the same three');
 });
 
@@ -186,18 +194,22 @@ const HOSTS = Object.freeze([
   ['src/scenes/worldModes.js', 'the interior mode'],
 ]);
 
-test('QS2: every host ctx that carries toggleSheath carries quickUse and quickSwap - the AUDIT SOC B4/D1 walk (mutants: a door dropped from one host, so the keys die in a shop or underground)', () => {
+test('QS2: every host ctx that carries toggleSheath carries quickUse, quickSwap and quickOffHand - the AUDIT SOC B4/D1 walk (mutants: a door dropped from one host, so the keys die in a shop or underground)', () => {
   for (const [path, what] of HOSTS) {
     const src = rd(path);
     assert.match(src, /toggleSheath/, `${path} really is a host that answers gameplay keys`);
     assert.match(src, /quickUse/, `${path} (${what}) has no quickUse door`);
     assert.match(src, /quickSwap/, `${path} (${what}) has no quickSwap door`);
+    assert.match(src, /quickOffHand/, `${path} (${what}) has no quickOffHand door`);
   }
   // The three that OWN a performer call the model; none of them writes a
   // second use ladder or a second equip.
   for (const path of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeonContext.js']) {
     const src = rd(path);
-    assert.match(src, /import \{ useQuickslot, swapQuickslot \} from '\.\.\/systems\/quickslots\.js';/, `${path} takes the model's two performers`);
+    assert.match(src, /import \{ useQuickslot, swapQuickslot, offHandQuickslot \} from '\.\.\/systems\/quickslots\.js';/, `${path} takes the model's performers`);
+    // QS4: and the off hand's light is the MOD's act, reached through the rig's
+    // one door - no host lights a torch itself.
+    assert.match(src, /offHandQuickslot\(\{ entity: playerEntity, say: [^\n]*toggleLight: \(\) => weaponRig\.toggleLight\(\) \}\);/s, `${path}: the off hand is the model's, on the rig's door`);
     assert.match(src, /useQuickslot\(n === 1 \? 'c1' : 'c2', \{/, `${path}: the slot number picks the slot`);
     assert.match(src, /swapQuickslot\(\{ entity: playerEntity, say:/, `${path}: the swap is the model's`);
     assert.match(src, /weaponRig\.refreshWorn\(\);/, `${path}: and the rig is told at once`);
@@ -216,11 +228,14 @@ test('QS2: every host ctx that carries toggleSheath carries quickUse and quickSw
   assert.match(wm, /quickUse\(n\) \{ return host\.quickUse\?\.\(n\) === true; \},/);
   assert.match(wm, /const ok = host\.quickSwap\?\.\(\) === true;\s*\n\s*if \(ok\) interiorWeapon\.refreshWorn\(\);/,
     'the interior rig is the one this mode draws, so it is the one told');
+  // QS4: and its light is that rig's too - the outer host's door would toggle
+  // the wrong one, which is the same B4/D1 lesson one hand over.
+  assert.match(wm, /toggleLight: \(\) => interiorWeapon\.toggleLight\(\)/);
   for (const path of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     assert.match(rd(path), /quickUse: \(n\) => quickUse\(n\),\s*\n\s*quickSwap: \(\) => quickSwap\(\),/g,
       `${path} hands the performers down to the mode machine as well as onto its own ctx`);
-    assert.equal((rd(path).match(/quickUse: \(n\) => quickUse\(n\),/g) ?? []).length, 2,
-      `${path}: once on hudCtx (the key ladder) and once on the host bag (the interior mode)`);
+    assert.equal((rd(path).match(/quickUse: \(n\) => quickUse\(n\),/g) ?? []).length, 3,
+      `${path}: on hudCtx (the key ladder), on the host bag (the interior mode), and on drawHud (QS4: the phone's tap)`);
   }
 });
 

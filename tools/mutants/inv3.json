@@ -1,0 +1,107 @@
+[
+  {
+    "name": "INV3-the-slop-is-a-Manhattan-sum-again",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "export const holdBroken = (dx, dy) => Math.abs(dy) > TOUCH_HOLD_SLOP || Math.abs(dx) > TOUCH_HOLD_SLOP_X;",
+    "new": "export const holdBroken = (dx, dy) => Math.abs(dx) + Math.abs(dy) > TOUCH_HOLD_SLOP;",
+    "tests": ["test/inv3_holddrag.test.js"]
+  },
+  {
+    "name": "INV3-the-vertical-slop-goes-back-to-eight",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "const TOUCH_HOLD_SLOP = 12;",
+    "new": "const TOUCH_HOLD_SLOP = 8;",
+    "tests": ["test/inv3_holddrag.test.js"]
+  },
+  {
+    "name": "INV3-the-vertical-slop-passes-the-browsers-own",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "const TOUCH_HOLD_SLOP = 12;",
+    "new": "const TOUCH_HOLD_SLOP = 20;",
+    "tests": ["test/inv3_holddrag.test.js"]
+  },
+  {
+    "name": "INV3-both-axes-judged-tightly",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "const TOUCH_HOLD_SLOP_X = TOUCH_HOLD_SLOP * 2;",
+    "new": "const TOUCH_HOLD_SLOP_X = TOUCH_HOLD_SLOP;",
+    "tests": ["test/inv3_holddrag.test.js"]
+  },
+  {
+    "name": "INV3-the-axes-are-swapped",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "export const holdBroken = (dx, dy) => Math.abs(dy) > TOUCH_HOLD_SLOP || Math.abs(dx) > TOUCH_HOLD_SLOP_X;",
+    "new": "export const holdBroken = (dx, dy) => Math.abs(dx) > TOUCH_HOLD_SLOP || Math.abs(dy) > TOUCH_HOLD_SLOP_X;",
+    "tests": ["test/inv3_holddrag.test.js"]
+  },
+  {
+    "name": "INV3-the-sideways-axis-is-unbounded",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "export const holdBroken = (dx, dy) => Math.abs(dy) > TOUCH_HOLD_SLOP || Math.abs(dx) > TOUCH_HOLD_SLOP_X;",
+    "new": "export const holdBroken = (dx, dy) => Math.abs(dy) > TOUCH_HOLD_SLOP;",
+    "tests": ["test/inv3_holddrag.test.js"]
+  },
+  {
+    "name": "INV3-the-slop-is-measured-from-the-moving-point",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  const dx = e.clientX - drag.ox;\n  const dy = e.clientY - drag.oy;",
+    "new": "  const dx = e.clientX - drag.x;\n  const dy = e.clientY - drag.y;",
+    "tests": ["test/inv3_holddrag.test.js", "test/enhancedInventory.test.js"]
+  },
+  {
+    "name": "INV3-the-ghost-arms-where-the-finger-landed",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "      drag.x = e.clientX; drag.y = e.clientY;\n      return;",
+    "new": "      return;",
+    "tests": ["test/inv3_holddrag.test.js"]
+  },
+  {
+    "name": "INV3-a-drifting-touch-falls-through-to-the-mouse-threshold",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "      drag.x = e.clientX; drag.y = e.clientY;\n      return;\n    }",
+    "new": "      drag.x = e.clientX; drag.y = e.clientY;\n    }",
+    "tests": ["test/inv3_holddrag.test.js"]
+  },
+  {
+    "name": "INV3-the-mouse-threshold-moves-with-the-touch-slop",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "    if (Math.abs(dx) + Math.abs(dy) <= 4) return;",
+    "new": "    if (Math.abs(dx) + Math.abs(dy) <= TOUCH_HOLD_SLOP) return;",
+    "tests": ["test/inv3_holddrag.test.js", "test/enhancedInventory.test.js"]
+  },
+  {
+    "name": "INV3-nothing-holds-the-live-gesture",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "const onDragHold = (e) => { if (drag?.moved && drag.touch && e.cancelable) e.preventDefault(); };",
+    "new": "const onDragHold = () => {};",
+    "tests": ["test/inv3_holddrag.test.js"]
+  },
+  {
+    "name": "INV3-the-hold-refuses-moves-before-it-has-armed",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "const onDragHold = (e) => { if (drag?.moved && drag.touch && e.cancelable) e.preventDefault(); };",
+    "new": "const onDragHold = (e) => { if (drag && drag.touch && e.cancelable) e.preventDefault(); };",
+    "tests": ["test/inv3_holddrag.test.js"]
+  },
+  {
+    "name": "INV3-a-mouse-drag-swallows-touchmoves-too",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "const onDragHold = (e) => { if (drag?.moved && drag.touch && e.cancelable) e.preventDefault(); };",
+    "new": "const onDragHold = (e) => { if (drag?.moved && e.cancelable) e.preventDefault(); };",
+    "tests": ["test/inv3_holddrag.test.js"]
+  },
+  {
+    "name": "INV3-the-hold-listener-is-passive-after-all",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "    globalThis.addEventListener?.('touchmove', onDragHold, { passive: false, capture: true });",
+    "new": "    globalThis.addEventListener?.('touchmove', onDragHold, true);",
+    "tests": ["test/inv3_holddrag.test.js"]
+  },
+  {
+    "name": "INV3-the-hold-listener-outlives-the-drag",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "    globalThis.removeEventListener?.('touchmove', onDragHold, true);",
+    "new": "",
+    "tests": ["test/inv3_holddrag.test.js"]
+  }
+]

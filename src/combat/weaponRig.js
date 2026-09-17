@@ -172,9 +172,9 @@ export async function autoBuildArms(entity, { wanted = () => getPref('mwArms'), 
  *                     The note that hosts without a HUD text layer
  *                     pass console is retired: every call site hands
  *                     over a real one - hudText.add
- *                     (dungeonContext.js:2608), townTalk.say
+ *                     (dungeonContext.js:2614), townTalk.say
  *                     (exterior.js:1653, world.js:2584) and
- *                     worldModes' own interior sink (worldModes.js:384,
+ *                     worldModes' own interior sink (worldModes.js:385,
  *                     which warns to console only where a host mounts
  *                     no townTalk at all), so the empty default below
  *                     is unreached,
@@ -548,6 +548,12 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
      *  the same read, on demand; it is idempotent, so calling it costs the
      *  frame's own call nothing. */
     refreshWorn() { syncWorn(); },
+    /** QS4 - THE OFF-HAND KEY'S LIGHT ARM. The quickslot diamond's
+     *  off-hand cell presses the same thing Handheld Torches' own toggle
+     *  key presses (its `toggleLightPress`, the free-hand guard and all),
+     *  because it is the same act on the same hand - and the mod being
+     *  OFF is an answer too: no light system, nothing toggled, false. */
+    toggleLight() { return handheldOn() ? handheld.toggleLightPress() === true : false; },
     /** MW-D39: the host's cast moment runs the arm's spellcast release.
      *  One door, like setWeapon - the host never reaches into fpArm.
      *

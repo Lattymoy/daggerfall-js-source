@@ -534,7 +534,7 @@ export const POLLED_ACTIONS = new Set(['ReadyWeapon', 'SwitchHand']);
  *  reads this set to answer these three ABOVE the mode gate, under the same
  *  overlay and pause gates every other gameplay door takes. The two hosts that
  *  call `routeKey` need nothing: their ctx already reaches the table. */
-export const QUICKSLOT_ACTIONS = new Set(['QuickUse1', 'QuickUse2', 'QuickSwap']);
+export const QUICKSLOT_ACTIONS = new Set(['QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand']);
 
 /**
  * THE ACTION LADDER ALONE, without the key event. U45 pulled it out
@@ -650,6 +650,9 @@ export function routeAction(action, ctx, setPlayerPos = null) {
     case 'QuickUse1': return ctx.quickUse?.(1) === true;
     case 'QuickUse2': return ctx.quickUse?.(2) === true;
     case 'QuickSwap': return ctx.quickSwap?.() === true;
+    // QS4: the off-hand cell's own press - light or douse, through the mod's
+    // own guard. Same door law: a host without one answers false.
+    case 'QuickOffHand': return ctx.quickOffHand?.() === true;
     default: return false;
   }
 }

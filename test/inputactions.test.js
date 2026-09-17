@@ -38,6 +38,8 @@ test('I1: the Actions enum, verbatim names and order (:324-384)', () => {
     // item slots, so these are Ledger A rows and every existing index still
     // means what it meant.
     'QuickUse1', 'QuickUse2', 'QuickSwap',
+    // QS4: and the off-hand cell's own, appended after them.
+    'QuickOffHand',
   ]);
   // ActionNameToEnum's sentinel: unknown parses to Unknown, and
   // Unknown itself is NOT a bindable action.
@@ -71,7 +73,7 @@ test('I1: ResetDefaults\' table, every row (:979-1032)', () => {
     // QS2: the number row. Digit1-Digit3 are unspent by SetupDefaults, by the
     // port and by every vendored mod's TextKey defaults (the HT4 pin in
     // test/ht1_handheldtorches.test.js walks that whole set).
-    'Digit1=QuickUse1', 'Digit2=QuickUse2', 'Digit3=QuickSwap',
+    'Digit1=QuickUse1', 'Digit2=QuickUse2', 'Digit3=QuickSwap', 'Digit4=QuickOffHand',
   ]);
   // every bindable action except the four with no default key
   // (MoveLeft/MoveRight arrive via A/D; TurnLeft/TurnRight via
@@ -81,9 +83,9 @@ test('I1: ResetDefaults\' table, every row (:979-1032)', () => {
   // rows, so the coverage rule (every bindable action defaulted, none twice)
   // grew with it.
   const bound = new Set(DEFAULT_BINDINGS.map(([, a]) => a));
-  assert.equal(DEFAULT_BINDINGS.length, 48);
-  assert.equal(bound.size, 48, 'no action is defaulted twice');
-  assert.equal(ACTIONS.length, 48, 'and a default for every action, still');
+  assert.equal(DEFAULT_BINDINGS.length, 49);
+  assert.equal(bound.size, 49, 'no action is defaulted twice');
+  assert.equal(ACTIONS.length, 49, 'and a default for every action, still');
   const codes = DEFAULT_BINDINGS.map(([c]) => c);
   assert.equal(new Set(codes).size, codes.length, 'and no KEY is spent twice - the number row was free');
 });
@@ -127,7 +129,7 @@ test('I1: the two clears - by action walks all its codes, by code takes one (:80
 test('I1: a FULL reset clears primary and the removed list but NOT secondary (:956-960)', () => {
   const s = createBindings();
   resetDefaults(s);
-  assert.equal(s.primary.size, 48);   // SOC5: DFU's 44 plus SocialInteract; QS2: plus the three quickslot rows
+  assert.equal(s.primary.size, 49);   // SOC5: DFU's 44 plus SocialInteract; QS2: plus the three quickslot rows; QS4: plus the off hand's
   // a secondary binding on a code no default uses SURVIVES the reset;
   // one on a default's code is stolen back by SetBinding's alt-removal.
   setBinding(s, 'KeyP', 'Rest', false);
