@@ -37,6 +37,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { isEnhanced } from '../systems/uiSkin.js';
+import { actionOf } from './input.js';   // MAC-C: the REGISTRY's answer for the two window keys
 import { mountEnhancedChunk } from './enhancedChunk.js';   // MENU1: the one lazy-chunk door
 import { registerOverlay } from './enhancedOverlays.js';   // PX28: Tab puts it away
 import { CharSheet, LevelUpScreen, charSheetArtLoaded } from './charsheet.js';
@@ -121,11 +122,61 @@ function enhancedSheetPageOverlay(hooks) {
     view = null;
     host.remove();
     fired = true;   // last: `done` must not be true while the DOM is up
+    // MAC-C: EVERY LISTENER HAS AN OWNER. The capture handler below
+    // outlives the DOM it was raised for unless this line runs, and an
+    // orphan capture listener that swallows F5 for the life of the page
+    // is the hazard this file's own siblings warn about.
+    globalThis.removeEventListener?.('keydown', onSheetKey, true);
     unregister();
   };
   // PX28: AFTER `close` exists - a const is not hoisted, and the
   // first placement of this line read it before its initialiser.
   unregister = registerOverlay(close);
+  // MAC-C (2026-09-17, Mac: "you can exit out of the F6 menu
+  // (inventory) by pressing F6 again, but you cannot do the same for
+  // the F5 one (char sheet)" + "it would be extra cool if you could
+  // like, be on the F5 page, press F6 and then go straight from char
+  // sheet to inv").
+  //
+  // THE SHEET HAD NO KEY OF ITS OWN. PX27 made the enhanced sheet the
+  // pause window's Stats page, and `enhancedMenu`'s capture handler
+  // answers ONE key - Escape, the back stack's. That is right for the
+  // pause face it is shared with (F5 must not close a paused game),
+  // which is exactly why the arm belongs HERE, on the overlay F5
+  // opened, and not there.
+  //
+  // Both keys come off the REGISTRY rather than the literals, because
+  // a rebound sheet key that cannot close the sheet is the same bug
+  // one layer down. The pack arm reuses the door the four buttons
+  // already have (`hooks.inventory`), so a host that hands no pack
+  // gets a key that falls through - the same honest refusal that
+  // button gives.
+  // A FUNCTION DECLARATION, hoisted on purpose: `close` above names it
+  // and `registerOverlay` is handed `close` before this line is
+  // reached. PX28's note two paragraphs up is the same hazard read
+  // from the other side - a const here would be in its own temporal
+  // dead zone for any caller that fired early.
+  function onSheetKey(e) {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const t = e.target;
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+    const act = actionOf(e);
+    if (act !== 'CharacterSheet' && !(act === 'Inventory' && hooks.inventory)) return;
+    // A MODAL OVERLAY OWNS ITS INPUT (U50's law, the same one
+    // enhancedMenu's handler states): on CAPTURE and stopped, so the
+    // host's window keydown - which would re-open the very screen this
+    // press is closing - never sees a key this screen used.
+    e.preventDefault();
+    e.stopPropagation();
+    const toPack = act === 'Inventory';
+    close();                              // the sheet's own close law runs FIRST...
+    if (toPack) hooks.inventory();        // ...and this replaces the slot it just freed
+  }
+  // `globalThis` and OPTIONAL, for the reason this file's own forks
+  // give: node drives these hosts headless and has no listener target,
+  // so a bare `addEventListener` is a ReferenceError at mount rather
+  // than a feature that is off. (Caught by the pins on the first run.)
+  globalThis.addEventListener?.('keydown', onSheetKey, true);
   // MENU1: the ONE lazy-chunk door (ui/enhancedChunk.js). This door
   // had NO catch at all - a deploy that moved `enhancedMenu` left an
   // unhandled rejection and a dial arm that did nothing.

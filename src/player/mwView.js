@@ -91,7 +91,7 @@ let pendingClicks = 0;
  *
  * @returns {{eye:number[], thirdPerson:boolean, distance:number}}
  */
-export function mwViewFrame({ fpEye, feet, yaw, pitch, heightScale = null, raycast = null, ...state }) {
+export function mwViewFrame({ fpEye, feet, yaw, pitch, heightScale = null, raycast = null, spherecast = null, ...state }) {
   // EOTB4: the other lane, resolved first and returned whole - its
   // camera keeps its own ladder, its own smoothing and its own
   // obstacle casts (EOTB2), and nothing of Morrowind's runs.
@@ -150,7 +150,7 @@ export function mwViewFrame({ fpEye, feet, yaw, pitch, heightScale = null, rayca
   } else {
     fpArm.setViewMode('first');
   }
-  return mwCamera.eye({ fpEye, feet, yaw, pitch, heightScale, raycast });
+  return mwCamera.eye({ fpEye, feet, yaw, pitch, heightScale, raycast, spherecast });   // MAC-A: the obstacle guards are castSphere's, where the host has one
 }
 
 /**

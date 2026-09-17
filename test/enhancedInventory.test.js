@@ -397,8 +397,12 @@ test('U53: no host builds a pack past the door', () => {
 test('U53: Escape and F6 close it, and F6 is claimed', () => {
   const src = read('src/ui/enhancedInventory.js');
   const onKey = src.slice(src.indexOf('function onKey(e)'), src.indexOf('function releaseLock()'));
-  assert.match(onKey, /overlayAction\(e\) !== 'back' && e\.key !== 'F6'/);
-  const testAt = onKey.indexOf("e.key !== 'F6'");
+  // MAC-C: the key is the REGISTRY's, not the literal - a rebound
+  // Inventory used to open the pack on the player's key and close it
+  // on Bethesda's. The law this pin states (decide, THEN claim) is
+  // unchanged.
+  assert.match(onKey, /overlayAction\(e\) !== 'back' && act !== 'Inventory'/);
+  const testAt = onKey.indexOf("act !== 'Inventory'");
   const claimAt = onKey.lastIndexOf('e.preventDefault()');
   assert.ok(testAt > 0 && claimAt > testAt, 'decide it used the key before claiming it');
   // AUDIT INV2 A-F7: and ABOVE that decision sits the drag's abort - Escape

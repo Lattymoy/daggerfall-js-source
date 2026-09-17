@@ -47,7 +47,7 @@ import { MINUTES_PER_DAY } from '../systems/worldTick.js';
 import { validFoeRecord, CELL_PUPPETS_MAX, CELL_FRAME_RECORDS_MAX, POSE_BOUND, POSE_Y_BOUND, tokenGate, FOE_HEALTH_MAX, hitPoisonOf, HIT_ARROWS_MAX } from '../net/wire.js';
 import { CORPSE_ACTIVATION_DISTANCE } from '../player/activate.js';   // AUDIT WORLD6b-iii(c) A1/C7: the owner reads the taker's reach
 import { createWeapon, bowDamageArrow } from '../combat/enemyEquipment.js';   // MAC-N1: the recovered shaft is CreateWeapon's arrow, value and all   // AUDIT WORLD6b-ii B2: a puppet's weapon is its owner's word, rebuilt from the descriptor   // AUDIT WORLD6b B3/C2: a cell's record projected and its puppets capped, the wire's law
-import { mintCorpseMarker, playBodyFall, playRareDrop, corpseLootTargets, takeCorpseLoot, sayEnemyDied, raiseEnemyDeath } from './corpseMarker.js';
+import { mintCorpseMarker, playBodyFall, playRareDrop, corpseLootTargets, takeCorpseLoot, openCorpseLoot, sayEnemyDied, raiseEnemyDeath } from './corpseMarker.js';
 import { bloodCentre } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
 import { addItem } from '../systems/inventory.js';   // AR1: BowDamage's recoverable arrow, in the TARGET's items
 import { EnemySoundSource, acuteHearingMultiplier } from '../characters/enemySounds.js';   // AUDIT 24 (wave 41): EnemySounds.cs, one home
@@ -1094,7 +1094,12 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       feetOf: (f) => f.corpseMarker?.pos ?? f.ai?.feet ?? null,
     });
   }
-  function takeLoot(key, say2 = () => {}) {
+  // MAC-E: and the general arm is the WINDOW now (PlayerActivate.cs:957),
+  // not a bulk transfer - `openWindow` is the host's own inventory door.
+  // The PUPPET arm below is untouched: a peer's body is its owner's to
+  // empty, the grant arrives already chosen, and there is nothing for a
+  // window to offer (see the grant landing's own `takeCorpseLoot`).
+  function takeLoot(key, say2 = () => {}, openWindow = null) {
     const uid = Number(key.split(':')[1]);
     const f = foes.find((x) => x.uid === uid);
     // WORLD6b-iii(c): a PUPPET's body is its owner's pile - the take is ASKED of the owner (a hit frame naming the body)
@@ -1108,7 +1113,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         { sent: () => { f._takeAsked = _now(); } });
       return 0;
     }
-    return takeCorpseLoot(f, playerEntity, say2);   // AUDIT WORLD6b B15: by the stable key
+    return openCorpseLoot(f, { playerEntity, say: say2, openWindow });   // AUDIT WORLD6b B15: by the stable key
   }
   /** WORLD6b-iii(c): the owner's answer to a take - as much of the body's pile as one hit frame carries (the rest
    *  stays, and the next record still says it holds something), through WORLD4's projection; the pile is emptied of

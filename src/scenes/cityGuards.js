@@ -84,7 +84,7 @@ import { enemyControllerHeight, idleSpriteHeight } from '../characters/enemyAnch
 import { tallySkill, SKILLS } from '../systems/skills.js';
 import { WEAPON_REACH } from '../combat/playerWeapon.js';
 import { rayPersonDistance } from './townTalk.js';
-import { mintCorpseMarker, playBodyFall, playRareDrop, corpseLootTargets, takeCorpseLoot, sayEnemyDied, raiseEnemyDeath } from './corpseMarker.js';
+import { mintCorpseMarker, playBodyFall, playRareDrop, corpseLootTargets, openCorpseLoot, sayEnemyDied, raiseEnemyDeath } from './corpseMarker.js';
 import { bloodCentre } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
 import { EnemySoundSource, acuteHearingMultiplier } from '../characters/enemySounds.js';   // AUDIT 24 (wave 41): EnemySounds.cs, one home
 import { placeFoeEnv, entityOccupancy } from './questFoeHost.js';   // D9: FoeSpawner.PlaceFoeFreely's env, over THIS pool's collider
@@ -571,7 +571,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
    *  which arrowFlight.js calls unconditionally (arrowFlight.js:230)
    *  because `dealDamage` is inside its own `dmg > 0` fork - so the
    *  door is PUBLIC (the returned surface below), exactly as the
-   *  encounter pool's is (exteriorFoes.js:1699). */
+   *  encounter pool's is (exteriorFoes.js:1704). */
   function handleAttackFromPlayer(g, playerFeet = null) {
     if (!g?.ai) return;
     if (!g.ai.isHostile) makeAreaHostile?.();
@@ -1111,9 +1111,11 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       idOf: (g) => g.id,   // AUDIT 39: stable across the walk-away prune, where an index is not
     });
   }
-  function takeLoot(key, say2 = () => {}) {
+  // MAC-E: and the general arm is the WINDOW now (PlayerActivate.cs:957),
+  // not a bulk transfer - `openWindow` is the host's own inventory door.
+  function takeLoot(key, say2 = () => {}, openWindow = null) {
     const id = Number(key.split(':')[1]);
-    return takeCorpseLoot(guards.find((g) => g.id === id), playerEntity, say2);
+    return openCorpseLoot(guards.find((g) => g.id === id), { playerEntity, say: say2, openWindow });
   }
 
   /** CollectLooseObjects (StreamingWorld.cs:1040-1052), the corpse

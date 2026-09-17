@@ -56,7 +56,7 @@ does the pack's USE arm.
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
                         dungeonContext.js:956, world.js:1723,
-                        exterior.js:2079. It is the only window TWO
+                        exterior.js:2080. It is the only window TWO
                         enhanced screens already push - the sheet's
                         button and the pack's USE hand-off, whose
                         close-then-hand-over ordering U55 got
@@ -15023,3 +15023,167 @@ four places a macro can sit, the other three sentinels surviving
 and where a widened-sentinel mutant lived), the walk left verbatim, both
 player-facing doors taking the step, and one warning per symbol. Six of
 `tools/mutants/qs7.json`'s ten.
+
+## MAC-A/C/D/E - four of Mac's five, and the fifth's findings
+
+2026-09-17, five reports in one message. Four are fixed below; the
+fifth is investigated and NOT fixed, with what was actually found.
+
+### MAC-A - the camera's obstacle guards are sphere casts
+
+*"Going in some interiors with roof pillars interacts negatively with
+the 3rd person camera"*.
+
+The reference casts a SPHERE for both of them - `rayCasting->castSphere`
+at `camera.cpp:186` (the focal's ceiling guard, radius
+`focalObstacleLimit` = 10) and `:200` (the camera's pull-in, radius
+`cameraObstacleLimit` = 5). The port cast a RAY for each and then took
+the limit off the END of the distance.
+
+A ray and a five-unit sphere disagree in exactly the place Mac found.
+**A pillar is thin.** One ray from the head to the camera threads PAST
+one that a sphere of radius 5 hits square, so the camera slides through
+the pillar, it fills the frame, and it pops out the far side. And when
+the ray *does* catch an edge, `hit - limit` changes by the whole width
+of the pillar between one frame and the next, so the camera snaps in
+and out as you walk by. Both are one mistake: **a line where the
+reference has a volume.**
+
+The distance is the swept sphere's own now, with nothing taken off it.
+OpenMW re-derives the sphere's centre at contact
+(`hitPos + hitNormal * limit`) and measures that back to the focal -
+and that centre is precisely what a swept-sphere cast reports as the
+distance travelled, which is what `collider.sphereCast` already returns
+("how far the sphere's CENTRE travels before the leading cap touches").
+Subtracting the limit again would pay for the clearance twice.
+
+`spherecast` is a new seam beside `raycast`; a host that hands only the
+ray keeps the old line, so nothing written before this changes.
+
+### MAC-C - the two window keys
+
+*"you can exit out of the F6 menu (inventory) by pressing F6 again, but
+you cannot do the same for the F5 one (char sheet)"* and *"it would be
+extra cool if you could like, be on the F5 page, press F6 and then go
+straight from char sheet to inv."*
+
+Two faults, one root. The pack's key arm read `e.key !== 'F6'` - the
+DFU DEFAULT spelled as a literal, which is I2's and FIX-F's bug twice
+over - and the sheet had no key arm at all, because PX27 made the
+enhanced sheet the pause window's Stats page and `enhancedMenu`'s
+capture handler answers exactly one key: Escape, the back stack's. That
+is right for the pause face it shares (F5 must not close a paused
+game), which is why the arm belongs on the OVERLAY F5 opened.
+
+All three windows that answer these keys read the REGISTRY now - the
+enhanced pack, the enhanced sheet page and the classic canvas sheet -
+so a rebind moves them.
+
+And the cross-over is the same law read sideways: a window key naming
+ANOTHER window closes this one and opens that one, **in that order**,
+because `showOverlay` REPLACES the host's single slot. The sheet
+already had the door (its own Items button); the pack needed one, so
+every host hands it the same `openCharSheet` it already hands
+`openSpellbook`. The dungeon's sheet builder came out of
+`toggleCharSheet` to make that possible - U52's argument, applied to
+the host that still had it inline.
+
+### MAC-D - a quest names what it asks for
+
+*"I was given a quest to find a book, but the book's name was just
+Book"*.
+
+`Item.ExpandMacro` (Item.cs:236-260) answers `_symbol_` and `=symbol_`
+with `GetLongName(item)`, and `GetLongName` (:304-307) is one line:
+`ItemHelper.ResolveItemLongName(item, false)`. The port returned the
+raw `name` field instead, under a note that said so and gave its
+reason - the port had no long-name maker when it was written.
+
+**It has had one since D7**, which ported `ResolveItemLongName` whole,
+and nothing came back here. So the quest machine went on naming a
+Daedric Broadsword "Broadsword", a potion "Glass Bottle", a quest
+letter "Parchment" - and a book "Book", which is the one a player read
+out loud. The book is the loudest because `ResolveItemName` treats
+Books as a case of their own (:277-279): a book's name IS its title,
+and the template name is only the fallback for an id no BOOK file
+backs.
+
+`differentiatePlantIngredients` is FALSE because :306 passes false - a
+quest asking for a plant names the plant, not its (northern) variant.
+
+### MAC-E - a body is opened, not emptied
+
+*"seems like when i click on a dead enemy now, i loot all their items
+automatically? ... it lets me exceed my carry weight with no penalty"*.
+
+Not a mod. A RESIDUE this port wrote down and left, in
+`scenes/corpseMarker.js`'s own header: *"DFU's general arm opens the
+inventory window with the corpse as the remote LootTarget (:957). The
+port transfers the lot and reports the count - the pre-existing G3
+shape, kept so this wave does not smuggle a UI change into a parity
+fix."* **A recorded residue is a bug with a note on it**, and this one
+had a note for three waves.
+
+The dungeon host has done it correctly since U26 ("the old takeLoot
+vacuumed everything in one keypress"). The two EXTERIOR pools -
+`exteriorFoes` and `cityGuards`, which is every body in a street, a
+road or a wilderness encounter - never got that change. So a click
+emptied the body into the pack past every weight the window shows, and
+said "You take 2 items.", a line Daggerfall does not have.
+
+`openCorpseLoot` is :926-955 whole now: the empty body's refusal, the
+arrows-only pickup, then the WINDOW. A caller with no window does NOT
+fall back to a bulk take - it warns and takes nothing, because a silent
+fallback is how the vacuum survived its own note for as long as it did.
+
+What stays a bulk take is the ONLINE grant landing, and not from
+laziness: a peer's body is its owner's to empty, the owner has already
+chosen what leaves it, and the items are in flight by the time this
+client sees them. There is nothing for a window to offer.
+
+**THE CARRY WEIGHT IS NOT A SECOND BUG.** Neither `PlayerSpeedChanger.cs`
+nor `PlayerEntity.cs` mentions encumbrance at all - DFU draws the
+figure on the target icon and never charges for exceeding it. What the
+window restores is the CHOICE, which is the half that was missing.
+
+### MAC-B - the tavern light, investigated and NOT changed
+
+*"Tavern lights have this gloomy blue that only pops in when
+approaching the room"*.
+
+Nothing in the interior light path is wrong, and the check was not a
+glance:
+
+- `AddLight`'s second switch (`DaggerfallInterior.cs:1034-1151`) is
+  transcribed cell for cell in `world/interiorLights.js`, re-read
+  against the live C# for this report. Every row matches, including the
+  one that is BLUE: **record 8, the "Turkis lamp", is
+  `Color(0.68, 1.0, 0.94)` in Daggerfall Unity** - turquoise is what
+  that lamp is. It sets the colour ONLY, keeping the prefab's range 15
+  and intensity 1, and the port does the same.
+- the interior ambient is `PlayerAmbientLight`'s verbatim pair, and the
+  night variant's purple tint is DFU's own (`0.20, 0.18, 0.20`).
+- the light positions go through the interior's transform, and the
+  ranges are in the same metres DFU's are (the port's capsule is 1.8,
+  as DFU's controller is).
+- `withPlayerLights` keeps the data and colour arrays paired under one
+  cap, so no light wears another's colour.
+
+What the port DOES have that DFU does not is a **fixed light-slot cap**
+with a nearest-N selection: when the 17th light displaces the 16th the
+swap is instant, where Unity's forward renderer fades. That is the best
+candidate for "pops in", and it is a hardware-shaped departure rather
+than a defect with a line to point at.
+
+So this one is not fixed, and is not being guessed at. Changing DFU's
+own light table on a hunch is the same move `%2com` was refused for.
+What would settle it: which tavern, and whether the lamp in frame is
+the turquoise one.
+
+### Pinned
+
+`test/maca_camera_sphere.test.js` (6), `test/macc_window_keys.test.js`
+(5), `test/macd_quest_item_name.test.js` (5),
+`test/mace_corpse_window.test.js` (7), plus the grown pins in
+`audit24_wave38`, `cityguards` and `nativeinventory`.
+`tools/mutants/macbugs.json` (15, all dead).

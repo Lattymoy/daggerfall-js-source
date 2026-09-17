@@ -1,0 +1,138 @@
+[
+  {
+    "name": "MAC-E-the-body-empties-itself-again-the-vacuum",
+    "file": "src/scenes/corpseMarker.js",
+    "old": "  openWindow(corpseLootHooks(entry));\n  return items.length;",
+    "new": "  for (const item of items) addItem(playerEntity.items, item);\n  items.length = 0;\n  return 1;",
+    "tests": [
+      "test/mace_corpse_window.test.js"
+    ]
+  },
+  {
+    "name": "MAC-E-a-missing-door-is-taken-as-permission-to-empty-the-body",
+    "file": "src/scenes/corpseMarker.js",
+    "old": "  if (typeof openWindow !== 'function') {\n    console.warn('[corpse] no inventory door - the body stays shut rather than emptying itself');\n    return items.length;\n  }",
+    "new": "  if (typeof openWindow !== 'function') return takeCorpseLoot(entry, playerEntity, say);",
+    "tests": [
+      "test/mace_corpse_window.test.js"
+    ]
+  },
+  {
+    "name": "MAC-E-the-corpse-container-reads-as-player-owned-so-its-icon-cycles",
+    "file": "src/scenes/corpseMarker.js",
+    "old": "  playerOwned: false,\n  textureArchive: entry.corpseMarker?.archive ?? 0,",
+    "new": "  playerOwned: true,\n  textureArchive: entry.corpseMarker?.archive ?? 0,",
+    "tests": [
+      "test/mace_corpse_window.test.js"
+    ]
+  },
+  {
+    "name": "MAC-E-the-empty-body-is-disabled-on-the-take-so-the-line-is-never-heard",
+    "file": "src/scenes/corpseMarker.js",
+    "old": "  if (!items?.length) {\n    entry.corpseDisabled = true;\n    say('The body has no treasure.');   // theBodyHasNoTreasure\n    return 0;\n  }\n  if (items.length === 1 && items[0]?.templateIndex === ARROW_TEMPLATE_INDEX) {\n    playerEntity.items = playerEntity.items || [];\n    addItem(playerEntity.items, items[0]);\n    items.length = 0;\n    say('You collect the arrows.');   // youCollectArrows\n    return 1;\n  }\n  if (typeof openWindow !== 'function') {",
+    "new": "  if (!items?.length) {\n    entry.corpseDisabled = true;\n    return 0;\n  }\n  if (items.length === 1 && items[0]?.templateIndex === ARROW_TEMPLATE_INDEX) {\n    playerEntity.items = playerEntity.items || [];\n    addItem(playerEntity.items, items[0]);\n    items.length = 0;\n    say('You collect the arrows.');   // youCollectArrows\n    return 1;\n  }\n  if (typeof openWindow !== 'function') {",
+    "tests": [
+      "test/mace_corpse_window.test.js",
+      "test/cityguards.test.js"
+    ]
+  },
+  {
+    "name": "MAC-C-the-pack-goes-back-to-the-hardcoded-F6",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  if (overlayAction(e) !== 'back' && act !== 'Inventory') return;",
+    "new": "  if (overlayAction(e) !== 'back' && e.key !== 'F6') return;",
+    "tests": [
+      "test/macc_window_keys.test.js"
+    ]
+  },
+  {
+    "name": "MAC-C-the-pack-opens-the-sheet-BEFORE-it-closes-itself",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "    onExit();                 // the pack's own close law runs FIRST...\n    deps.openCharSheet();     // ...and this replaces the slot it just freed",
+    "new": "    deps.openCharSheet();\n    onExit();",
+    "tests": [
+      "test/macc_window_keys.test.js"
+    ]
+  },
+  {
+    "name": "MAC-C-the-sheet-page-claims-every-key-not-just-its-two",
+    "file": "src/ui/charSheetDoor.js",
+    "old": "    if (act !== 'CharacterSheet' && !(act === 'Inventory' && hooks.inventory)) return;",
+    "new": "    if (act === null) return;",
+    "tests": [
+      "test/macc_window_keys.test.js"
+    ]
+  },
+  {
+    "name": "MAC-C-the-sheet-page-leaves-its-capture-listener-behind",
+    "file": "src/ui/charSheetDoor.js",
+    "old": "    globalThis.removeEventListener?.('keydown', onSheetKey, true);",
+    "new": "",
+    "tests": [
+      "test/macc_window_keys.test.js"
+    ]
+  },
+  {
+    "name": "MAC-C-the-classic-sheet-goes-back-to-the-literal-F5",
+    "file": "src/ui/charsheet.js",
+    "old": "      || action === 'Enter' || action === 'Escape' || bound === 'CharacterSheet' || action === 'KeyE') {",
+    "new": "      || action === 'Enter' || action === 'Escape' || action === 'F5' || action === 'KeyE') {",
+    "tests": [
+      "test/macc_window_keys.test.js"
+    ]
+  },
+  {
+    "name": "MAC-C-the-classic-sheet-crosses-over-with-no-door-so-it-just-shuts",
+    "file": "src/ui/charsheet.js",
+    "old": "    if (bound === 'Inventory' && this.hooks?.inventory) {",
+    "new": "    if (bound === 'Inventory') {",
+    "tests": [
+      "test/macc_window_keys.test.js"
+    ]
+  },
+  {
+    "name": "MAC-D-the-quest-names-the-raw-field-again-so-a-book-is-Book",
+    "file": "src/systems/quest/item.js",
+    "old": "    const long = itemLongName(it, {",
+    "new": "    const long = (it.name ?? '') && itemLongName(it, {",
+    "tests": [
+      "test/macd_quest_item_name.test.js"
+    ]
+  },
+  {
+    "name": "MAC-D-the-plant-variant-is-differentiated-where-306-passes-false",
+    "file": "src/systems/quest/item.js",
+    "old": "      differentiatePlantIngredients: false,",
+    "new": "      differentiatePlantIngredients: true,",
+    "tests": [
+      "test/macd_quest_item_name.test.js"
+    ]
+  },
+  {
+    "name": "MAC-A-the-camera-subtracts-the-limit-off-the-sphere-cast-paying-for-clearance-twice",
+    "file": "src/player/mwCamera.js",
+    "old": "        if (hit != null && hit < dist) dist = Math.max(0, spherecast ? hit : hit - limit);",
+    "new": "        if (hit != null && hit < dist) dist = Math.max(0, hit - limit);",
+    "tests": [
+      "test/maca_camera_sphere.test.js"
+    ]
+  },
+  {
+    "name": "MAC-A-the-pull-in-casts-a-RAY-again-so-a-thin-pillar-is-threaded",
+    "file": "src/player/mwCamera.js",
+    "old": "      const cast = spherecast\n        ? (o, d, m, r) => spherecast(o, r, d, m)\n        : (raycast ? (o, d, m) => raycast(o, d, m) : null);",
+    "new": "      const cast = raycast ? (o, d, m) => raycast(o, d, m) : null;",
+    "tests": [
+      "test/maca_camera_sphere.test.js"
+    ]
+  },
+  {
+    "name": "MAC-A-a-clear-sweep-leaks-Infinity-into-the-camera-instead-of-a-miss",
+    "file": "src/scenes/world.js",
+    "old": "      spherecast: (o, r, d, m) => { const h = collider.sphereCast(o, r, d, m).dist; return Number.isFinite(h) ? h : null; },",
+    "new": "      spherecast: (o, r, d, m) => collider.sphereCast(o, r, d, m).dist,",
+    "tests": [
+      "test/maca_camera_sphere.test.js"
+    ]
+  }
+]

@@ -194,22 +194,61 @@ export function createMwCamera() {
      * uses, so the focal lands dead centre of the frame - which is
      * vanilla's centered-behind camera (no shoulder offset by default,
      * settings.lua:44).
+     *
+     * MAC-A (2026-09-17, Mac: "Going in some interiors with roof
+     * pillars interacts negatively with the 3rd person camera").
+     *
+     * BOTH GUARDS ARE SPHERE CASTS, because both of the reference's
+     * are: `rayCasting->castSphere(...)` at camera.cpp:186 and :200,
+     * with the limit as the SPHERE'S RADIUS - not a ray with the limit
+     * subtracted off the end, which is what this port had.
+     *
+     * A ray and a five-unit sphere disagree in exactly the place Mac
+     * found. A pillar is thin, and a single ray from the head to the
+     * camera threads PAST one that a sphere of radius 5 hits square:
+     * the camera slides through the pillar, the pillar fills the frame
+     * for a frame or two, and it pops out the far side. When the ray
+     * does catch an EDGE, `hit - limit` is a different number from one
+     * frame to the next by the whole width of the pillar, so the
+     * camera snaps in and out as you walk past it. Both are the same
+     * mistake: a line where the reference has a volume.
+     *
+     * The distance is the SWEPT SPHERE'S OWN, with nothing taken off
+     * it. `castSphere` answers a hit POINT and the reference then
+     * re-derives the sphere's centre at contact
+     * (`hitPos + hitNormal * limit`) before measuring back to the
+     * focal - and that centre is precisely what a swept-sphere cast
+     * reports as the distance travelled, which is what
+     * `collider.sphereCast` returns (player/collider.js: "how far the
+     * sphere's CENTRE travels before the leading cap touches"). So the
+     * clearance is kept by the radius rather than by a subtraction,
+     * and the old `- CAMERA_OBSTACLE_LIMIT` would now take it twice.
+     *
+     * `spherecast(origin, radius, dir, maxDist) -> dist|null` is the
+     * new seam; a host that hands only `raycast` keeps the old line
+     * (the headless pins, and any caller written before this).
      */
-    eye({ fpEye, feet, yaw, pitch, heightScale = 1, raycast = null }) {
+    eye({ fpEye, feet, yaw, pitch, heightScale = 1, raycast = null, spherecast = null }) {
       if (firstPerson) {
         cameraDistance = 0;   // camera.cpp:165-169
         return { eye: fpEye, thirdPerson: false, distance: 0, focal: null };
       }
       const u = 1 / MW_UNITS_PER_METER;
       const focal = [feet[0], feet[1] + FOCAL_HEIGHT * heightScale * u, feet[2]];
-      if (raycast) {
+      // MAC-A: the cast is a SPHERE where the host has one
+      // (castSphere, camera.cpp:186); the ray is the fallback for a
+      // host that hands no sphere seam.
+      const cast = spherecast
+        ? (o, d, m, r) => spherecast(o, r, d, m)
+        : (raycast ? (o, d, m) => raycast(o, d, m) : null);
+      if (cast) {
         // camera.cpp:177-193 with the default zero focal offset: the
         // offset the cast walks is the +10 ceiling term alone
         // (camera.cpp:180), so the whole clause reduces to "keep the
         // focal FOCAL_OBSTACLE_LIMIT under the ceiling, dropping it at
         // most the offset's own length".
         const guard = FOCAL_OBSTACLE_LIMIT * u;
-        const up = raycast([focal[0], focal[1] - guard, focal[2]], [0, 1, 0], guard * 2);
+        const up = cast([focal[0], focal[1] - guard, focal[2]], [0, 1, 0], guard * 2, guard);
         if (up != null && up < guard * 2) {
           const ceilingY = focal[1] - guard + up;
           focal[1] = Math.max(focal[1] - guard, Math.min(focal[1], ceilingY - guard));
@@ -218,11 +257,14 @@ export function createMwCamera() {
       const cp = Math.cos(pitch);
       const fwd = [Math.sin(yaw) * cp, Math.sin(pitch), Math.cos(yaw) * cp];
       let dist = preferredDistance() * u;
-      if (raycast) {
+      if (cast) {
         // camera.cpp:200-206 - pull in to the obstacle, keeping
-        // CAMERA_OBSTACLE_LIMIT of clearance.
-        const hit = raycast(focal, [-fwd[0], -fwd[1], -fwd[2]], dist);
-        if (hit != null && hit < dist) dist = Math.max(0, hit - CAMERA_OBSTACLE_LIMIT * u);
+        // CAMERA_OBSTACLE_LIMIT of clearance. MAC-A: the clearance is
+        // the swept sphere's RADIUS now, so the distance is the cast's
+        // own and nothing is subtracted from it.
+        const limit = CAMERA_OBSTACLE_LIMIT * u;
+        const hit = cast(focal, [-fwd[0], -fwd[1], -fwd[2]], dist, limit);
+        if (hit != null && hit < dist) dist = Math.max(0, spherecast ? hit : hit - limit);
       }
       cameraDistance = dist * MW_UNITS_PER_METER;
       return {

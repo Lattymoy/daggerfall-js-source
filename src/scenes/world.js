@@ -2858,7 +2858,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // encounter pool's remover for both. That was not a leak: removeFoe
     // (exteriorFoes.js:365-370) never looks the record up in `foes`, and
     // both pools share this host's one renderer, so a struck WATCHMAN
-    // got exactly what removeGuard (cityGuards.js:1238-1242) gives it -
+    // got exactly what removeGuard (cityGuards.js:1240-1242) gives it -
     // batch freed, `dead = true`, no corpse, skipped by the next AI pass
     // (cityGuards.js:782) and spliced out at the end of it (:964).
     // Routing by POOL MEMBERSHIP is an OWNERSHIP fix: each pool owns the
@@ -3167,6 +3167,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // the slot, so this bypasses toggleSpellbook's already-open guard
     // - the inventory has just run its own close law.
     openSpellbook: () => { const b = makeSpellbookWindow(); if (b) townTalk.showOverlay(b); },
+    openCharSheet: () => { if (charSheetDoorReady()) townTalk.showOverlay(makeCharSheetWindow()); },   // MAC-C: the pack's other window key crosses over rather than doing nothing - the same door the sheet's own Items button takes back the other way
     ...useHooks,   // U53: the one bag (revealMap, drinkPotion, getQuest)
     nowMinute: () => Math.floor(playerTicker.classicMinutes),
     // U8e: OnPop mints the world pile; P2: stamped with its map pixel.
@@ -8738,9 +8739,15 @@ export async function bootWorld(canvas, renderer, params, status) {
             // speak, where the old pick dropped it in silence and let
             // the click fall through to the door behind it.
             if (lootKey && _lootPick.distance > _lootPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT);
+              // MAC-E: a body under the ray opens the inventory WITH the body
+              // as the remote target (PlayerActivate.cs:957), exactly as the
+              // pile arm below does and as the dungeon host has since U26.
+              // The pool still owns the empty-body refusal and the arrows
+              // pickup; this hands it the door and nothing else.
             else if (lootKey) {
               const pool = lootKey.startsWith('foeCorpse:') ? exteriorFoes : cityGuards;
-              pool.takeLoot(lootKey, (l) => townTalk.say(l));
+              pool.takeLoot(lootKey, (l) => townTalk.say(l),
+                inventoryDoorReady() ? (loot) => townTalk.showOverlay(makeInventoryWindow({ loot })) : null);
               surfacePlayer();
             }
             // U58: THE DOOR AGAIN. U53 pinned this arm to the ART
@@ -8868,6 +8875,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       dt, riding: !!player.riding,   // AUDIT-EOTB F3/F4: the host's own clock, and the one state only it has
       cart: player.transportMode === TRANSPORT_MODES.Cart, onExteriorPath: _surfPath,   // EOTB-IL: UpdateWagon's two host facts
       raycast: (o, d, m) => collider.raycast(o, d, m),
+      spherecast: (o, r, d, m) => { const h = collider.sphereCast(o, r, d, m).dist; return Number.isFinite(h) ? h : null; },   // MAC-A: castSphere's seam beside the ray - the camera's two obstacle guards are sphere casts (camera.cpp:186, :200)
     });
     const view = betterAmbience.view(lookAt(mwv.eye, [mwv.eye[0] + fwd[0], mwv.eye[1] + fwd[1], mwv.eye[2] + fwd[2]], [0, 1, 0]));   // BA1: the shaker sits between the follower and the camera
     _lastProj = proj; _lastView = view;   // TI1: the tap ray unprojects through the frame the finger saw
