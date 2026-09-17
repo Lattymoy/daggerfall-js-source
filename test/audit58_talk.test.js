@@ -29,7 +29,7 @@ const src = (f) => readFileSync(join(root, f), 'utf8');
 
 const dblClick = (w, x, y) => {
   // AUDIT 65 UI-1: the host's shape is `click(vx, vy, right, middle)`
-  // (townTalk.js:1150) - the clock is the window's own `_now()` seam,
+  // (townTalk.js:1154) - the clock is the window's own `_now()` seam,
   // never a positional, so the pair is stepped on the SEAM.
   let t = 1000;
   w._now = () => t;
