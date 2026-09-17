@@ -2454,9 +2454,27 @@ export async function bootExterior(canvas, renderer, params, status) {
     // only`, and this host mounts the interior mode over itself - a quickslot
     // that died the moment the player walked into a shop is the same bug F had
     // in a tavern. The overlay gate is the same one every arm below takes.
+    // (QS7 below RETIRED that placement: the interior mode answers these keys
+    // through its own ladder now, so the quickslot lives through a shop door
+    // on ONE dispatch rather than two.)
     // QS6: and not the three that HOLD - see the same line in scenes/world.js.
     // A polled quickslot's down edge belongs to the frame's machine alone.
-    if (!townTalk.overlayActive && QUICKSLOT_ACTIONS.has(act) && !POLLED_ACTIONS.has(act) && !gamePaused() && routeAction(act, hudCtx)) { e.preventDefault(); return; }
+    // QS7 (2026-09-17, Mac: "if you go into a tavern with a lit torch, pressing 4
+    // does not actually make it go out, it just goes thru the 'douse' and
+    // 'ignite' motions"). AND THE MODE GATE IS BACK ON THIS ARM, because what
+    // it was written to reach now answers for itself. QS2 put the quickslots
+    // ABOVE the gate when the modal contexts carried no quickslot doors at
+    // all; QS4 gave `interiorKeyCtx` and `dungeonCtx` the whole set, and
+    // worldModes' own ladder (U43's one dispatch) routes the same ui/input.js
+    // table over them. Two ladders, both live on the same window, both
+    // reaching the ONE handheld-torches mod - so a single Digit4 in a tavern
+    // pressed `toggleLightPress` TWICE: douse, then ignite, net nothing, with
+    // both clips played. That is WEAPON-VIS2's double-fire exactly, at a third
+    // door, and the fix is the same one: whoever owns the mode owns the key.
+    // (The SocialInteract arm above stays ungated - AUDIT SOC B4/D1's whole
+    // finding is that the modal contexts carry NO socialInteract, so there is
+    // no second answer to collide with.)
+    if (!townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior' && QUICKSLOT_ACTIONS.has(act) && !POLLED_ACTIONS.has(act) && !gamePaused() && routeAction(act, hudCtx)) { e.preventDefault(); return; }
     // U45: the ladder below and the large HUD's panels are the SAME
     // doors, so they are one object now rather than two ladders that
     // would drift. `hudCtx` is ui/input.js's routeAction contract.

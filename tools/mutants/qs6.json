@@ -212,8 +212,8 @@
   {
     "name": "QS6-the-self-routing-hosts-answer-the-polled-three-on-the-down-edge",
     "file": "src/scenes/world.js",
-    "old": "    if (!townTalk.overlayActive && QUICKSLOT_ACTIONS.has(act) && !POLLED_ACTIONS.has(act) && socialMenuCanOpen() && routeAction(act, hudCtx)) { e.preventDefault(); return; }",
-    "new": "    if (!townTalk.overlayActive && QUICKSLOT_ACTIONS.has(act) && socialMenuCanOpen() && routeAction(act, hudCtx)) { e.preventDefault(); return; }",
+    "old": "    if (!townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior' && QUICKSLOT_ACTIONS.has(act) && !POLLED_ACTIONS.has(act) && socialMenuCanOpen() && routeAction(act, hudCtx)) { e.preventDefault(); return; }",
+    "new": "    if (!townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior' && QUICKSLOT_ACTIONS.has(act) && socialMenuCanOpen() && routeAction(act, hudCtx)) { e.preventDefault(); return; }",
     "tests": [
       "test/qs2_inputs.test.js"
     ]

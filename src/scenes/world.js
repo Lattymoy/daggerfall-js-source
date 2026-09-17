@@ -5310,17 +5310,35 @@ export async function bootWorld(canvas, renderer, params, status) {
     // (socialMenuCanOpen): the door itself says false on a page with no account, and the ladder falls through.
     if (!townTalk.overlayActive && act === 'SocialInteract' && socialMenuCanOpen() && socialInteract()) { e.preventDefault(); return; }
     // QS2: THE SAME PLACE, FOR THE SAME REASON. A quickslot is worth more in a
-    // dungeon than it is on a road, so these three answer above the mode gate
+    // dungeon than it is on a road, so these three answered above the mode gate
     // too - under the same overlay and pause gates (socialMenuCanOpen is
     // `not paused and no window over the HUD`, which is exactly the door a
     // gameplay key takes here) rather than a fourth gate invented for them.
+    // (QS7 below RETIRED that placement: the modal ctxs answer these keys
+    // themselves now, so the quickslot is still live in a dungeon and in a
+    // tavern - through ONE ladder instead of two.)
     // QS6: EXCEPT THE THREE THAT HOLD. QuickUse1, QuickUse2 and QuickSpell are
     // POLLED_ACTIONS now (ui/input.js): a tap performs the slot and a hold
     // cycles it, and only the frame can tell those apart - so this ladder must
     // decline them here exactly as routeKey's own `POLLED_ACTIONS.has(act)`
     // arm does, or the down edge would drink the potion the hold was about to
     // choose. This is WEAPON-VIS2's lesson at a second door.
-    if (!townTalk.overlayActive && QUICKSLOT_ACTIONS.has(act) && !POLLED_ACTIONS.has(act) && socialMenuCanOpen() && routeAction(act, hudCtx)) { e.preventDefault(); return; }
+    // QS7 (2026-09-17, Mac: "if you go into a tavern with a lit torch, pressing 4
+    // does not actually make it go out, it just goes thru the 'douse' and
+    // 'ignite' motions"). AND THE MODE GATE IS BACK ON THIS ARM, because what
+    // it was written to reach now answers for itself. QS2 put the quickslots
+    // ABOVE the gate when the modal contexts carried no quickslot doors at
+    // all; QS4 gave `interiorKeyCtx` and `dungeonCtx` the whole set, and
+    // worldModes' own ladder (U43's one dispatch) routes the same ui/input.js
+    // table over them. Two ladders, both live on the same window, both
+    // reaching the ONE handheld-torches mod - so a single Digit4 in a tavern
+    // pressed `toggleLightPress` TWICE: douse, then ignite, net nothing, with
+    // both clips played. That is WEAPON-VIS2's double-fire exactly, at a third
+    // door, and the fix is the same one: whoever owns the mode owns the key.
+    // (The SocialInteract arm above stays ungated - AUDIT SOC B4/D1's whole
+    // finding is that the modal contexts carry NO socialInteract, so there is
+    // no second answer to collide with.)
+    if (!townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior' && QUICKSLOT_ACTIONS.has(act) && !POLLED_ACTIONS.has(act) && socialMenuCanOpen() && routeAction(act, hudCtx)) { e.preventDefault(); return; }
     // U45 - THE ONE DOOR PER DESTINATION: this ladder and the large
     // HUD's eleven panels open the same windows, so they read the same
     // object. It is the same law U43 applied to the interior arm, one

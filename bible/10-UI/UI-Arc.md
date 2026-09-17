@@ -14913,3 +14913,113 @@ not a player's input timing; it is the harness synchronising itself to
 the thing under test. The events go through a raw CDP session back to
 back now, unawaited, which is what a 50 ms tap inside a 110 ms frame
 actually looks like.
+
+## QS7 - one mode, one dispatch
+
+Mac, 2026-09-17: *"if you go into a tavern with a lit torch, pressing 4
+does not actually make it go out, it just goes thru the 'douse' and
+'ignite' motions"*.
+
+### Two ladders answered one key
+
+The world and exterior hosts each run a keydown ladder, and each MOUNTS
+`worldModes` over itself - which runs a keydown ladder of its own
+(U43's one dispatch: `routeKey` over `interiorKeyCtx` indoors, over
+`dungeonCtx` underground). Both listen on the same window and neither
+stops the other's propagation, so a key BOTH can answer is answered
+twice.
+
+QS2 put the quickslot arm ABOVE the outer hosts' mode gate on purpose.
+At the time the modal contexts carried no quickslot doors at all, and a
+quickslot that died at a shop door was exactly the bug AUDIT SOC B4/D1
+had just found for F. **QS4 then gave `interiorKeyCtx` and `dungeonCtx`
+the whole set - and nothing went back to the arm that had been standing
+in for them.** From that commit a Digit4 in a tavern pressed the mod's
+`toggleLightPress` twice.
+
+Twice is not nothing and it is not two, because the mod's toggle is a
+FLIP: the first press douses the torch, the second re-ignites it, both
+clips play, both lines are said, and the player is left holding a lit
+torch they just asked to put out. That is WEAPON-VIS2's double-fire
+("drawn, then sheathed straight back, net nothing, every time") at a
+third door - and it is the third time a COUNT rather than a state is
+what makes this class of bug visible.
+
+### The fix, and its bounds
+
+The outer arm takes the exterior-mode gate its siblings take. The
+quickslots stay live indoors and underground, through the modal ladder
+that already routes them. The `SocialInteract` arm beside it stays
+UNGATED, because AUDIT SOC B4/D1's whole finding is that the modal
+contexts carry no `socialInteract` - there is no second answer for F to
+collide with, and gating it would re-break what that audit fixed.
+
+Only two actions were ever reaching this door: `QuickOffHand` and
+`QuickSwap`. The other three are `POLLED_ACTIONS` since QS6 and belong
+to the frame's hold machine, which the modal frame owns alone.
+
+### Pinned
+
+`test/qs7_one_dispatch.test.js` (3) - the mechanism DRIVEN through the
+real mod (one press puts the torch out with one douse clip; two presses
+leave it lit with a douse AND an ignite, which is the sentence Mac
+wrote), the gate on both outer hosts with the social arm explicitly
+left ungated, and the modal ladders' own doors proved present so the
+fix cannot silently delete the key indoors. Four of
+`tools/mutants/qs7.json`'s ten.
+
+## TALK-UNKNOWN - a debug sentinel in a tavern
+
+Mac, the same day, with a screenshot: *"Listen up. Know anything about
+work possibilities %2com[undefined]?"*
+
+### It is classic's macro, and Daggerfall Unity never implemented it
+
+`MacroHelper.cs`'s dictionary carries `%1com` (:44,
+`GreetingOrFollowUpText`) and has **no row for `%2com`** - 217 rows,
+diffed cell for cell against the C# by `test/macrocoverage.test.js`,
+with `%2com` in neither the handled set nor the null one. So `GetValue`
+takes its outermost else (:526-527) and answers `symbolStr +
+"[undefined]"`, and TEXT.RSC 7212 - the Work question, which reads
+`%1com ... %key %2com?` - puts that in the player's own mouth. DFU,
+handed the same TEXT.RSC, does the same thing. **This is not a place
+the port drifted**, and the walk is not what gets fixed.
+
+### What gets fixed is the step after it
+
+E7 moved this walk off the empty string and onto the sentinel
+deliberately, and was right to: with a 26-row table the empty string
+deleted ~190 macros DFU renders for real and made all four of C#'s
+error shapes unreachable. But E7's argument - *"the table is all 217
+rows now, so the shape is safe to speak"* - holds only for macros DFU
+has heard of. The coverage gate is precisely what makes `[undefined]`
+mean ONE thing and nothing else: **classic wrote a macro Daggerfall
+Unity never implemented.** A tavern is not a debugger.
+
+So `expandTalkMacros` stays verbatim, every sentinel included, and one
+step is added between the expansion and the player: `speakable` drops an
+`[undefined]` from spoken text and collapses the whitespace around it,
+so "possibilities %2com?" reads "possibilities?" rather than
+"possibilities ?". The other three sentinels SPEAK, because each of them
+names a context the port could actually be getting wrong -
+`[nullMCP]`, `[unhandled]` and `[srcDataUnknown]` are diagnoses, not
+gaps in the table.
+
+The symbol is not lost: `unknownTalkMacros()` collects every one met and
+each warns ONCE, so a macro classic uses and DFU does not is a thing a
+reader can find rather than a thing a player reads.
+
+**What this does NOT claim:** it does not say what `%2com` should
+render. Classic knows; the port cannot recover it from the data it
+ships, and inventing a word would be a departure wearing a port's
+clothes. If that text is ever recovered the change is one handler.
+
+### Pinned
+
+`test/talkunknown.test.js` (7) - the table fact that makes the sentinel
+readable, Mac's sentence both ways, the whitespace law in each of the
+four places a macro can sit, the other three sentinels surviving
+(including BESIDE an unknown one, which is the case the early-out hides
+and where a widened-sentinel mutant lived), the walk left verbatim, both
+player-facing doors taking the step, and one warning per symbol. Six of
+`tools/mutants/qs7.json`'s ten.
