@@ -8402,7 +8402,7 @@ export async function bootWorld(canvas, renderer, params, status) {
             grounded: player.grounded, standingStill: player.standing, isRunning: player.isRunning, movingLessThanHalfSpeed: player.movingLessThanHalfSpeed,
             levitating: player.levitating, swimming: !!player.isPlayerSwimming, motorSwimming: !!player.swimming, pos: player.pos, centreY: player.pos[1] + player.height / 2,
             waterSurfaceY: null, onExteriorWater: _onWater, onExteriorWaterAny: _onWater, onExteriorPath: !!_surf.path, onStaticGeometry: !!_surf.staticGeometry, onFoot: isOnFoot(player.transportMode),
-            winter: season === SEASON.Winter, climateIndex: maps.getClimateIndex(_p.x, _p.y), loadInProgress: _seasonHeld,
+            winter: season === SEASON.Winter, climateIndex: maps.getClimateIndex(_p.x, _p.y), loadInProgress: false, paused: _overlayHeld || _seasonHeld,   // AUDIT-BA F2/F3: the reposition rides rebase(); a held frame is a paused one
           });
         }
         // EV1: the interpolated render eye. AUDIT EV F-SIM5: rays and

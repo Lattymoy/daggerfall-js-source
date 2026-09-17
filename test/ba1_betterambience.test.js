@@ -422,7 +422,37 @@ test('BA1: the reverb presets are the I3DL2 numbers Unity\'s AudioReverbPreset c
     void at;
     let peak = 0; for (const v of l) peak = Math.max(peak, Math.abs(v));
     assert.ok(peak < 1, `${name}: under full scale`);
+    // AUDIT-BA F1: the whole impulse carries the LEVEL's energy and no more - a wet signal never louder than the dry
+    let energy = 0; for (const v of l) energy += v * v;
+    const tailGain = mbToGain(p.reverb) * mbToGain(p.room), reflGain = mbToGain(p.reflections) * mbToGain(p.room);
+    near(energy, tailGain * tailGain + reflGain * reflGain * (1 + 0.75 ** 2 + 0.75 ** 4 + 0.75 ** 6 + 0.75 ** 8), 1e-2, `${name}: energy ${energy.toFixed(4)} is the tail's gain squared plus the five taps' (the first draft carried ${name === 'Cave' ? '134' : 'hundreds'})`);
+    assert.ok(energy < 1, `${name}: under the dry`);
   }
+});
+
+test('AUDIT-BA F2 + F3: the floating origin\'s rebase is IsRepositioningPlayer - the next landing is swallowed like a load\'s; and the shake clock is Time.deltaTime, zero under a pause', async () => {
+  const r = rig({ 'Better Footsteps.enable': true }, { rolls: Array(300).fill(0.5) });
+  await r.boot();
+  const m = r.outdoors();
+  r.walk(7, m); r.shots.length = 0;
+  // two air/land cycles land a step each once the boot's swallow is spent
+  r.walk(3, r.outdoors({ pos: m.pos, grounded: false })); r.c.frame(0.016, r.outdoors({ pos: m.pos }));
+  r.walk(3, r.outdoors({ pos: m.pos, grounded: false })); r.c.frame(0.016, r.outdoors({ pos: m.pos }));
+  assert.equal(r.shots.length, 1, 'the second landing plays');
+  r.shots.length = 0;
+  r.c.rebase();   // the world shifted under the feet
+  r.walk(3, r.outdoors({ pos: m.pos, grounded: false })); r.c.frame(0.016, r.outdoors({ pos: m.pos }));
+  assert.equal(r.shots.length, 0, 'F2: the landing after a reposition is swallowed (StreamingWorld.IsRepositioningPlayer -> ignoreLostGrounding)');
+  r.walk(3, r.outdoors({ pos: m.pos, grounded: false })); r.c.frame(0.016, r.outdoors({ pos: m.pos }));
+  assert.equal(r.shots.length, 1, 'and the one after plays');
+  // F3
+  r.c.removeHealth(50, 100);
+  r.c.frame(0.1, r.outdoors({ pos: m.pos, paused: true }));
+  r.c.frame(0.1, r.outdoors({ pos: m.pos, paused: true }));
+  near(r.c.shaker.instances[0].currentFadeTime, 0, 1e-9, 'paused: the fade has not moved');
+  assert.deepEqual(r.c.status().shake.pos, [0, 0, 0], 'and the camera has not');
+  r.c.frame(0.1, r.outdoors({ pos: m.pos }));
+  assert.ok(r.c.shaker.instances[0].currentFadeTime > 0, 'unpaused: it runs');
 });
 
 // ═══ the compatibility brief ═══════════════════════════════════════════════════
@@ -462,6 +492,8 @@ test('BA1: the four hosts gate the classic stride through the one gate, drive th
     assert.match(src, /swimming: !!player\.isPlayerSwimming, motorSwimming: !!player\.swimming,/, `${name}: PlayerEnterExit.IsPlayerSwimming AND playerMotor.IsSwimming, the two the source reads`);
   }
   for (const src of [world, ext]) assert.match(src, /onExteriorWater: _onWater, onExteriorWaterAny: _onWater, onExteriorPath: !!_surf\.path, onStaticGeometry: !!_surf\.staticGeometry, onFoot: isOnFoot\(player\.transportMode\),/);
+  assert.match(world, /loadInProgress: false, paused: _overlayHeld \|\| _seasonHeld,/, 'AUDIT-BA F2/F3: no debug key is a load; a held frame is paused');
+  assert.match(ext, /paused: _overlayHeld,/); assert.match(wm, /paused: overlayHeld,/); assert.match(dj, /paused: overlayHeld,/);
   for (const [name, src] of [['worldModes', wm], ['dungeon', dj]]) {
     assert.match(src, /underwaterFogSettings\?\.\(cam\.pos\[1\], player\.pos, betterAmbience\.dungeonFog\(\) \?\? DUNGEON_FOG\)/, `${name}: the fog base`);
     assert.match(src, /const _tri = betterAmbience\.dungeonAmbient\(\); renderer\.setLighting\(new Float32Array\(_tri \? _tri\.equator : [a-zA-Z]+\.ambient\), 0, undefined, _tri\);/, `${name}: the trilight`);
@@ -480,7 +512,13 @@ test('BA1: the four hosts gate the classic stride through the one gate, drive th
   assert.match(rd('src/systems/betterAmbience.js'), /setRemoveHealthListener\(\(amount\) => betterAmbience\.removeHealth\(amount, playerEntity\.maxHealth \?\? 0\)\);/);
   // the engine seams
   const audio = rd('src/systems/audio.js');
-  assert.match(audio, /setReverb\(preset\) \{/); assert.match(audio, /loop\(index, volume = 1, \{ lowpass = 0 \} = \{\}\)/); assert.match(audio, /master\.connect\(conv\)\.connect\(wet\)\.connect\(this\.ctx\.destination\);/, 'wet beside dry');
+  assert.match(audio, /setReverb\(preset\) \{/); assert.match(audio, /loop\(index, volume = 1, \{ lowpass = 0 \} = \{\}\)/); assert.match(audio, /send\.connect\(conv\)\.connect\(wet\)\.connect\(this\.ctx\.destination\);/, 'wet beside dry, off the send');
+  // AUDIT-BA F4: the zone takes the music too - the send every bus feeds, both song players
+  assert.match(audio, /this\._master\.connect\(this\._reverbIn\);/, 'the sound master feeds the send'); assert.match(audio, /reverbSend\(\) \{ return this\._out\(\) \? this\._reverbIn : null; \}/);
+  const music = rd('src/systems/music.js');
+  assert.match(music, /new SongPlayer\(audio\.ctx, null, audio\.reverbSend\?\.\(\) \?\? null\)/, 'the MIDI player hands its master to the send');
+  assert.match(music, /new AudioSongPlayer\(audio\.ctx, null, audio\.reverbSend\?\.\(\) \?\? null\)/, 'and the streamed one');
+  assert.equal((rd('src/systems/songPlayer.js').match(/if \(this\._reverbSend\) this\._master\.connect\(this\._reverbSend\);/g) ?? []).length, 2, 'both players\' masters');
   const renderer = rd('src/render/renderer.js');
   assert.match(renderer, /uniform vec3 uAmbientSky;/); assert.match(renderer, /mix\(uAmbient, uAmbientSky, n\.y\) : mix\(uAmbient, uAmbientGround, -n\.y\)/, 'Trilight by the normal');
   assert.match(renderer, /setLighting\(ambient, sunScale, sunColor, trilight = null\) \{[\s\S]{0,400}this\.setAmbientTrilight\(trilight\);/, 'every flat caller clears it');

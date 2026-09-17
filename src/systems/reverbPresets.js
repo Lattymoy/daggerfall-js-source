@@ -45,7 +45,13 @@ export function reverbImpulseSamples(p, sampleRate) {
     }
   }
   // the tail: noise decaying to -60 dB over decayTime; the high band (a one-pole split at HFReference)
-  // decays decayHFRatio times as fast and is scaled by roomHF
+  // decays decayHFRatio times as fast and is scaled by roomHF.
+  //
+  // AUDIT-BA F1: THE TAIL IS NORMALISED TO UNIT ENERGY before the level gain scales it. A noise tail written at
+  // amplitude `tail` per sample convolves to a wet signal of RMS gain tail x sqrt(N) over its N samples - the
+  // first draft's Cave came out 11.6x the dry (energy 134), a Stoneroom 16x: not an echo, a blast into clipping.
+  // A reverb LEVEL in millibels is the level of the reverberation as a whole against the direct sound, so the
+  // whole tail carries energy tail^2 and no more; the early taps are impulses and carry their gain squared each.
   const start = Math.floor(p.reverbDelay * sampleRate);
   const lowDecay = Math.log(1000) / (p.decayTime * sampleRate);
   const highDecay = Math.log(1000) / ((p.decayTime / Math.max(0.05, p.decayHFRatio)) * sampleRate);
@@ -53,13 +59,19 @@ export function reverbImpulseSamples(p, sampleRate) {
   for (let ch = 0; ch < 2; ch++) {
     const rnd = noise(0x9e3779b9 + ch * 7919);
     let low = 0;
+    const raw = new Float32Array(Math.max(0, length - start));
+    let energy = 0;
     for (let i = start; i < length; i++) {
       const n = rnd();
       low = low * alpha + n * (1 - alpha);   // the low band, one pole
       const high = n - low;
       const t = i - start;
-      out[ch][i] += tail * (low * Math.exp(-lowDecay * t) + high * roomHF * Math.exp(-highDecay * t));
+      const v = low * Math.exp(-lowDecay * t) + high * roomHF * Math.exp(-highDecay * t);
+      raw[t] = v;
+      energy += v * v;
     }
+    const k = energy > 0 ? tail / Math.sqrt(energy) : 0;
+    for (let t = 0; t < raw.length; t++) out[ch][start + t] += raw[t] * k;
   }
   return out;
 }

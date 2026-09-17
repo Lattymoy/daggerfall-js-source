@@ -304,8 +304,10 @@ export function createBetterFootsteps({ audio = defaultAudio, random = Math.rand
   }
   return {
     applyFootsteps, loadSettings, update,
-    /** EV1: the floating origin moved the world, not the feet (footsteps.js rebase). */
-    rebase() { lastPosition = null; },
+    /** EV1: the floating origin moved the world, not the feet (footsteps.js rebase). AUDIT-BA F2: that shift
+     *  IS StreamingWorld.IsRepositioningPlayer (:66-70), which the mod answers with ignoreLostGrounding = true -
+     *  the next landing step is swallowed, as after a load; the first draft only dropped the anchor. */
+    rebase() { lastPosition = null; ignoreLostGrounding = true; },
     lists,
     status() { return { list: nameOf(currentFootstepSoundList), distance, lostGrounding, ignoreLostGrounding, played: played.slice() }; },
   };
@@ -598,7 +600,7 @@ export function createBetterAmbience({ audio = defaultAudio, settings = readBett
       if (!s.Enabled) { if (reverbOn) updateReverb(false); if (rainLoop) stopRain(); fogState = null; return; }
       updateReverb(!!m.inDungeon);
       if (rainKind && rainWeather !== weather()) updateSource();
-      shaker.update(Math.max(0, Number(dt) || 0));   // CameraShaker.Update
+      shaker.update(m.paused ? 0 : Math.max(0, Number(dt) || 0));   // CameraShaker.Update - AUDIT-BA F3: Time.deltaTime is 0 under IsGamePaused, so a shake freezes under a window
       if (s.footstepsEnable && clipsLoaded) footsteps.update(m);   // BetterFootstepsComponentPlayer.Update
     },
     view(view) { return s?.Enabled ? shakeView(view, shaker.posAddShake, shaker.rotAddShake) : view; },

@@ -63,7 +63,13 @@ export class AudioEngine {
     if (!this._master || this._master.context !== this.ctx) {
       this._master = this.ctx.createGain();
       this._master.connect(this.ctx.destination);
-      this._reverb = null;   // BA1: a new context is a new bus; the zone is re-armed by its next setReverb
+      // BA1 / AUDIT-BA F4: THE REVERB SEND. Unity's zone takes every AudioSource the listener stands near at its
+      // reverbZoneMix (1 by default) - the music's included. The port's music runs its own master on the same
+      // context (systems/songPlayer.js), so the zone is a SEND node both masters feed; setReverb hangs the
+      // convolver off it, and nothing is downstream of it while no zone is on.
+      this._reverbIn = this.ctx.createGain();
+      this._master.connect(this._reverbIn);
+      this._reverb = null;   // a new context is a new bus; the zone is re-armed by its next setReverb
     }
     this._master.gain.value = getFloat('Controls', 'SoundVolume', 0, 1);
     return this._master;
@@ -88,8 +94,9 @@ export class AudioEngine {
   setReverb(preset) {
     this._ensureCtx();
     if (!this.ctx) return false;
-    const master = this._out();
-    if (this._reverb) { try { master.disconnect(this._reverb.conv); this._reverb.wet.disconnect(); } catch { /* gone */ } this._reverb = null; }
+    this._out();
+    const send = this._reverbIn;
+    if (this._reverb) { try { send.disconnect(); this._reverb.wet.disconnect(); } catch { /* gone */ } this._reverb = null; }
     if (!preset) return true;
     const p = typeof preset === 'string' ? REVERB_PRESET[preset] : preset;
     if (!p) return false;
@@ -98,11 +105,13 @@ export class AudioEngine {
     conv.buffer = reverbImpulse(this.ctx, p);
     const wet = this.ctx.createGain();
     wet.gain.value = 1;
-    master.connect(conv).connect(wet).connect(this.ctx.destination);
+    send.connect(conv).connect(wet).connect(this.ctx.destination);
     this._reverb = { conv, wet, preset: typeof preset === 'string' ? preset : 'custom' };
     return true;
   }
   get reverbPreset() { return this._reverb?.preset ?? null; }
+  /** AUDIT-BA F4: the zone's send, for a bus that is not this master (the music's). Null with no context. */
+  reverbSend() { return this._out() ? this._reverbIn : null; }
 
   /** AUDIT 18 F6: the one bootstrap every host calls.
    *

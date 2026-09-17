@@ -878,7 +878,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
           grounded: player.grounded, standingStill: player.standing, isRunning: player.isRunning, movingLessThanHalfSpeed: player.movingLessThanHalfSpeed,
           levitating: player.levitating, swimming: !!player.isPlayerSwimming, motorSwimming: !!player.swimming, pos: player.pos, centreY: player.pos[1] + player.height / 2,
           waterSurfaceY: surf ?? null, onExteriorWater: false, onExteriorWaterAny: false, onExteriorPath: false, onStaticGeometry: false, onFoot: true,
-          winter: false, climateIndex: 0, loadInProgress: false,
+          winter: false, climateIndex: 0, loadInProgress: false, paused: overlayHeld,   // AUDIT-BA F3
         });
       }
       cam.pos = player.eyeAt();   // EV1: the interpolated render eye

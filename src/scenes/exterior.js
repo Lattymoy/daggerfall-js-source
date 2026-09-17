@@ -3948,7 +3948,7 @@ export async function bootExterior(canvas, renderer, params, status) {
           grounded: player.grounded, standingStill: player.standing, isRunning: player.isRunning, movingLessThanHalfSpeed: player.movingLessThanHalfSpeed,
           levitating: player.levitating, swimming: !!player.isPlayerSwimming, motorSwimming: !!player.swimming, pos: player.pos, centreY: player.pos[1] + player.height / 2,
           waterSurfaceY: null, onExteriorWater: _onWater, onExteriorWaterAny: _onWater, onExteriorPath: !!_surf.path, onStaticGeometry: !!_surf.staticGeometry, onFoot: isOnFoot(player.transportMode),
-          winter: season === SEASON.Winter, climateIndex: locClimateIndex, loadInProgress: false,
+          winter: season === SEASON.Winter, climateIndex: locClimateIndex, loadInProgress: false, paused: _overlayHeld,   // AUDIT-BA F3
         });
       }
       cam.pos = player.eyeAt();   // EV1: the interpolated render eye

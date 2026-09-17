@@ -20,8 +20,8 @@ and the impulse built from each) and three engine seams: the audio bus
 takes a reverb zone and its loops a low-pass, the renderer's mesh
 program takes a trilight ambient, and the damage flash's RemoveHealth
 edge carries its amount. On by default (MO1), with ONE departure
-below. Pins: 13 in `test/ba1_betterambience.test.js`; campaign
-`tools/mutants/ba1.json`, 39 mutants, 38 killed, 1 equivalent as
+below. Pins: 14 in `test/ba1_betterambience.test.js`; campaign
+`tools/mutants/ba1.json`, 42 mutants, 41 killed, 1 equivalent as
 recorded (the classic gate's Immersive Footsteps arm, which no
 node-run singleton can turn on). FOUR SURVIVORS ON THE FIRST RUN, each
 made to bite: the view fold was pinned as "not the same matrix" and
@@ -159,3 +159,54 @@ stand, the tail is synthesised).
 NOT HEARD OR SEEN ON A GPU: the suite runs under node with recording
 audio and a null renderer; the convolver, the low-pass, the trilight
 shader path and the view fold are pinned as arithmetic and wiring.
+
+## AUDIT-BA (2026-09-16, Mac: "Audit now before merging")
+
+Read again from the outside - the bus, the wall program, the hosts'
+frame order, the boot order, the pause - rather than through the pins
+that had passed. Four findings, fixed and pinned; three more mutants
+on the campaign (42, 41 killed, 1 equivalent as recorded).
+
+- **F1 - THE REVERB WOULD HAVE BLASTED.** The impulse's noise tail was
+  written at the level gain PER SAMPLE, and a noise tail of amplitude a
+  over N samples convolves to a wet signal of RMS gain a x sqrt(N): the
+  Cave came out 11.6 times the dry (energy 134), the Stoneroom 16 times
+  - every sound in a dungeon a clipping roar, and "not heard on a GPU"
+  is exactly why. A reverb level in millibels is the level of the
+  reverberation as a whole against the direct sound, so the tail is
+  normalised to unit energy before the gain scales it; the whole
+  impulse now carries the tail's gain squared plus the five taps',
+  under the dry (Cave 0.10, Stoneroom 0.16, Quarry 0.32), and the pin
+  computes that sum and holds it.
+- **F2 - THE REPOSITION.** The mod answers `StreamingWorld
+  .IsRepositioningPlayer` with `ignoreLostGrounding = true` (:66-70),
+  and the port's floating-origin shift IS that reposition; the first
+  draft's `rebase()` only dropped the anchor, so a landing right after a
+  map-pixel crossing played where DFU swallows it. And world.js handed
+  `loadInProgress: _seasonHeld` - a debug hold key is not a load; it is
+  false now, the reposition riding rebase().
+- **F3 - THE SHAKE UNDER A PAUSE.** `Time.deltaTime` is 0 under
+  IsGamePaused, so a shake freezes under a window; the hosts hand the
+  frame's dt whether or not they hold the world, and the shaker ran on
+  under the pause menu. The hosts hand `paused` (the same held flag
+  Immersive Footsteps takes) and the shaker's clock takes 0 for it.
+- **F4 - THE MUSIC WAS DRY.** Unity's zone takes every AudioSource the
+  listener stands near at its reverbZoneMix, 1 by default, the music's
+  included; the port's two song players (the MIDI synth and the
+  streamed one) run their own masters on the same context and bypassed
+  the convolver. The zone is a SEND now: a node the sound master and
+  both music masters feed, the convolver hung off it.
+
+**Checked and standing.** The dungeon's walls and floors draw through
+the one mesh program the trilight lives on (no separate static-batch
+program). The four hosts run `frame()` before they build the view the
+fold is applied to. The talk layer that shows the compatibility box
+exists before any OnStartGame site can call it. `setLighting` clears
+the trilight for every flat caller, so it cannot outlive a dungeon.
+The rain loop's `loop()` signature change is additive and every other
+caller passes two arguments.
+
+**Not audited.** The convolver, the low-pass, the trilight shader path
+and the view fold's handedness remain unheard and unseen on a GPU; the
+fold's rotation sign against Unity's left-handed euler is noise either
+way, and is said so.
