@@ -47,7 +47,7 @@ import { CREDITS } from '../src/ui/credits.js';
 import { SKILLS } from '../src/systems/skills.js';
 import { createCharacter, hitPointsPerLevelUp, STAT_KEYS_ORDER } from '../src/systems/chargen.js';
 import {
-  raiseSkills, skillUsesForAdvancement, calculatePlayerLevel, checkForLevelUp,
+  raiseSkills, skillUsesForAdvancement, calculatePlayerLevel, checkForLevelUp, applyLevelUp,
   LEVELUP_SKILL_SUM_PER_LEVEL, LEVELUP_BONUS_POOL_MIN, LEVELUP_BONUS_POOL_MAX,
 } from '../src/systems/advancement.js';
 import { CLASSIC_GAME_START_TIME as T0 } from '../src/systems/gameDate.js';
@@ -1248,16 +1248,37 @@ test('ORL1 deep audit: the question PAINTS where the hit test LOOKS, on every ca
     // every glyph of an option's block must read back as THAT option
     const glyphs = r.quads.filter((x) => x.tex === 'font');
     assert.ok(glyphs.length > 100, `${W}x${H}: ${glyphs.length} glyphs is not a screen`);
-    let inside = 0;
-    for (const g of glyphs) {
-      const vx = (g.x - m.ox) / m.s, vy = (g.y - m.oy) / m.s;
-      const i = choiceAtNative(vx, vy, opts);
-      if (i >= 0) inside++;
-      // and nothing painted for one option may read back as the other:
-      // that is the wrong-system click, and it is what this asserts away.
+    // EVERY GLYPH IS ATTRIBUTED TO THE OPTION IT WAS PAINTED FOR, and then
+    // read back through the hit test. A glyph of option 0 that reads as
+    // option 1 IS the wrong-system click - the defect that shipped - so it
+    // is named here rather than counted around. The earlier version of this
+    // pin only counted how many glyphs landed in SOME option's box, which a
+    // screen painting entirely in the wrong place still satisfies.
+    const paintedFor = new Map();
+    opts.forEach((opt, i) => {
+      const r2 = drawRecorder();
+      const solo = new LevelingChoiceScreen(() => {});
+      solo.cursor = i;
+      solo.draw(r2, canvasOf(W, H), stubFont());
+      const top = choiceTop(i), bottom = top + choiceHeight(opt);
+      for (const g of r2.quads.filter((x) => x.tex === 'font')) {
+        const vy = (g.y - m.oy) / m.s;
+        if (vy >= top && vy < bottom) paintedFor.set(`${g.x},${g.y}`, i);
+      }
+    });
+    assert.ok(paintedFor.size > 80, `${W}x${H}: only ${paintedFor.size} glyphs belong to an option`);
+    let wrong = 0, dead = 0;
+    for (const [at, owner] of paintedFor) {
+      const [gx, gy] = at.split(',').map(Number);
+      const vx = (gx - m.ox) / m.s, vy = (gy - m.oy) / m.s;
       assert.ok(vx >= 0 && vx <= 320, `${W}x${H}: a glyph at native x ${vx.toFixed(1)} is off the game area`);
+      const read = choiceAtNative(vx, vy, opts);
+      if (read >= 0 && read !== owner) wrong++;
+      if (read < 0) dead++;
     }
-    assert.ok(inside > 40, `${W}x${H}: only ${inside} painted glyphs fall inside an option's hit box`);
+    assert.equal(wrong, 0,
+      `${W}x${H}: ${wrong} glyphs painted for one option are clicked as the OTHER - the wrong leveling system`);
+    assert.equal(dead, 0, `${W}x${H}: ${dead} painted glyphs answer no click at all`);
   }
 });
 
@@ -1338,13 +1359,34 @@ test('ORL1 deep audit: the level-up window can be finished with the POINTER alon
   assert.equal(w.done, false);
   assert.equal(w.refused, true);
 
-  // ...and a finger can spend it and close it
+  // ...and a POINTER THAT TRAVELS can spend it and close it.
+  //
+  // THIS PIN USED TO TELEPORT, and that is how a real defect shipped past
+  // it: the window had a hover seam that moved the selection, the rows end
+  // four units above the presses, so a pointer going from a row DOWN to
+  // [ + ] crossed every row beneath it and arrived selecting Luck. Every
+  // press acted on the wrong attribute, and a pin that jumps from point to
+  // point cannot see it. `travel` is the fix and the assertion: it walks
+  // the straight line a mouse walks, through every seam the window exposes.
+  const travel = (fromX, fromY, toX, toY) => {
+    const steps = Math.max(1, Math.round(Math.hypot(toX - fromX, toY - fromY) / 2));
+    for (let i = 1; i <= steps; i++) {
+      const t = i / steps;
+      w.hover?.(fromX + (toX - fromX) * t, fromY + (toY - fromY) * t);
+    }
+  };
   let guard = 0;
   while (w.purse > 0 && guard++ < 64) {
     let moved = false;
     for (let i = 0; i < 8 && !moved; i++) {
-      w.click(ROW_X + 4, ROW_TOP + i * ROW_PITCH + 4);
+      const rowY = ROW_TOP + i * ROW_PITCH + 4;
+      travel(PLUS_X + 4, PRESS_Y + 4, ROW_X + 4, rowY);
+      w.click(ROW_X + 4, rowY);
+      assert.equal(w.cursor, i, 'reaching the row selected it and the journey did not move it again');
       const before = w.purse;
+      travel(ROW_X + 4, rowY, PLUS_X + 4, PRESS_Y + 4);
+      assert.equal(w.cursor, i,
+        `the trip to the plus moved the selection from ${i} to ${w.cursor} - the press would hit the wrong attribute`);
       w.click(PLUS_X + 4, PRESS_Y + 4);
       if (w.purse < before) moved = true;
     }
@@ -1366,11 +1408,10 @@ test('ORL1 deep audit: the level-up window can be finished with the POINTER alon
   w2.click(MINUS_X + 4, PRESS_Y + 4);
   assert.equal(w2.purse, spent + 1, 'the minus button returns the point');
 
-  // the cursor follows the pointer
-  w2.hover(ROW_X + 4, ROW_TOP + 5 * ROW_PITCH + 4);
-  assert.equal(w2.cursor, 5);
-  w2.hover(160, 8);
-  assert.equal(w2.cursor, 5, 'a hover off the rows leaves the cursor where it was');
+  // ...and there is NO hover seam, on purpose: one existed and it dragged
+  // the selection to Luck on the way down to the presses.
+  assert.equal(typeof w2.hover, 'undefined',
+    'a hover that selects is a second rule that disagrees with the click');
 });
 
 test('ORL1 deep audit: the level-up window PAINTS where its hit test looks', () => {
@@ -1387,14 +1428,33 @@ test('ORL1 deep audit: the level-up window PAINTS where its hit test looks', () 
     w.draw(r, canvasOf(W, H), stubFont());
     const glyphs = r.quads.filter((x) => x.tex === 'font');
     assert.ok(glyphs.length > 100, `${W}x${H}: ${glyphs.length} glyphs is not a window`);
-    let rows = 0;
     for (const g of glyphs) {
       const vx = (g.x - m.ox) / m.s, vy = (g.y - m.oy) / m.s;
       assert.ok(vx >= 0 && vx <= 320, `${W}x${H}: a glyph at native x ${vx.toFixed(1)} is off the game area`);
       assert.ok(vy >= 0 && vy <= 200, `${W}x${H}: a glyph at native y ${vy.toFixed(1)} is off the game area`);
-      if (levelUpHitNative(vx, vy)) rows++;
     }
-    assert.ok(rows > 40, `${W}x${H}: only ${rows} painted glyphs are reachable by the pointer`);
+    // EVERY PRESS THE WINDOW PAINTS MUST BE PRESSABLE, and every attribute
+    // row it paints must select. Counting "some glyphs are reachable" let a
+    // painted [ OK ] that no click could reach pass (ORL1's fix review).
+    const glyphAt = (x, y) => glyphs.some((g) => g.x === x && g.y === y);
+    for (const [label, x] of [['minus', MINUS_X], ['plus', PLUS_X], ['ok', OK_X]]) {
+      assert.ok(glyphAt(m.ox + x * m.s, m.oy + PRESS_Y * m.s),
+        `${W}x${H}: the ${label} press is not painted where its rect says`);
+      assert.equal(levelUpHitNative(x + 2, PRESS_Y + 2)?.press, label,
+        `${W}x${H}: the painted ${label} press answers no click`);
+    }
+    // An UNSELECTED row's text opens with a space and `drawText` advances
+    // past a space without painting one, so the row is found by its LINE
+    // rather than by its first column.
+    for (let i = 0; i < STAT_KEYS_ORDER.length; i++) {
+      const y = ROW_TOP + i * ROW_PITCH;
+      const onLine = glyphs.filter((g) => g.y === m.oy + y * m.s);
+      assert.ok(onLine.length > 5, `${W}x${H}: row ${i} painted ${onLine.length} glyphs`);
+      const firstX = Math.min(...onLine.map((g) => g.x));
+      assert.ok(firstX >= m.ox + ROW_X * m.s, `${W}x${H}: row ${i} starts left of ROW_X`);
+      assert.equal(levelUpHitNative((firstX - m.ox) / m.s + 2, y + 2)?.row, i,
+        `${W}x${H}: the painted row ${i} answers no click`);
+    }
   }
 });
 
@@ -1407,20 +1467,29 @@ test('ORL1 deep audit: the window is NEVER A WALL - every reachable state has a 
   // opens at most `maxUpdatableAttribute` rows, each within its limit and
   // its headroom, and costs no more than the purse.
   const KEYS = STAT_KEYS_ORDER;
+  // THE RECORDS QUOTE THIS WALK'S SIZE, so the walk counts itself and the
+  // numbers are asserted here rather than typed into a page. The first
+  // version of the bible's paragraph quoted a WIDER THROWAWAY SWEEP that no
+  // pin reproduces (ORL1's fix review).
+  let configurations = 0, vectors = 0, corners = 0;
   const scan = (stats, s) => {
+    configurations += 1;
     const purse = virtuePurse(stats, s);
     if (purse === 0) return null;
     const room = KEYS.map((k) => Math.max(0, Math.min(attributeIncreaseLimit(k, s), MAX_ATTRIBUTE_VALUE - stats[k])));
     const off = KEYS.map((k) => attributeOffset(k, s));
     const d = Object.fromEntries(KEYS.map((k) => [k, 0]));
-    let dead = null;
+    let dead = null, corner = false;
     const rec = (i, opened, spent) => {
       if (dead) return;
       if (i === KEYS.length) {
+        vectors += 1;
         const left = purse - spent;
-        if (left > 0
-          && !KEYS.some((k) => canRaiseAttribute(k, stats, d, left, s))
-          && !KEYS.some((k) => canLowerAttribute(k, d))) dead = { ...d };
+        const noPlus = !KEYS.some((k) => canRaiseAttribute(k, stats, d, left, s));
+        if (left > 0 && noPlus) {
+          corner = true;
+          if (!KEYS.some((k) => canLowerAttribute(k, d))) dead = { ...d };
+        }
         return;
       }
       rec(i + 1, opened, spent);
@@ -1433,6 +1502,7 @@ test('ORL1 deep audit: the window is NEVER A WALL - every reachable state has a 
       d[KEYS[i]] = 0;
     };
     rec(0, 0, 0);
+    if (corner) corners += 1;
     return dead;
   };
   for (const attributePoints of [1, 3, 12, 25])
@@ -1449,6 +1519,10 @@ test('ORL1 deep audit: the window is NEVER A WALL - every reachable state has a 
             assert.equal(scan(stats, s), null,
               `a wall at ${JSON.stringify({ attributePoints, maxUpdatableAttribute, allowLuckIncrease, luckIncreaseCost, spread })}`);
           }
+  // ...and the size of the walk IS what the records say it is
+  assert.equal(configurations, 576, 'the records quote this configuration count');
+  assert.equal(vectors, 1375685, 'and this many reachable delta vectors');
+  assert.equal(corners, 121, 'and this many configurations containing a no-plus corner');
 });
 
 test('ORL1 deep audit: the plan buys the MOST ATTRIBUTE POINTS, not merely the most purse', () => {
@@ -1788,14 +1862,34 @@ test('ORL1 deep audit: the WINDOW obeys the settings, not only the law module do
       assert.ok(w.lower(LUCK));
       assert.equal(w.purse, before, `${label}: and the same on the way back`);
     }
-    // the row cap is this window's row cap: open rows until it refuses
+    // THE ROW CAP IS THIS WINDOW'S, and the cap must actually BITE. The
+    // earlier version could not fail: `opened` only ever grew when `raise`
+    // succeeded, so it was `<=` by construction whatever the window did.
+    // This presses until nothing more opens and then asserts the count is
+    // the cap the SETTINGS name - or that the purse, not the cap, is what
+    // stopped it.
     const opened = new Set();
     for (let guard = 0; guard < 64; guard++) {
       const k = STAT_KEYS_ORDER.find((key) => !opened.has(key) && w.raise(key));
       if (!k) break;
       opened.add(k);
     }
-    assert.ok(opened.size <= maxUpdatableAttribute, `${label}: ${opened.size} rows opened`);
+    const capBit = opened.size === Math.min(maxUpdatableAttribute, STAT_KEYS_ORDER.length);
+    const purseSpent = !STAT_KEYS_ORDER.some((key) => w.raise(key));
+    assert.ok(capBit || purseSpent,
+      `${label}: ${opened.size} rows opened against a cap of ${maxUpdatableAttribute}, `
+      + `and the purse still had ${w.purse}`);
+    if (opened.size > 0) {
+      assert.ok(opened.size <= maxUpdatableAttribute, `${label}: ${opened.size} rows opened`);
+      // ...and a row OUTSIDE the open set is refused while the cap is full
+      if (capBit) {
+        const shut = STAT_KEYS_ORDER.find((key) => !opened.has(key));
+        if (shut) {
+          assert.equal(canRaiseAttribute(shut, w.entity.stats, w.deltas, w.purse + 99, s), false,
+            `${label}: ${shut} may be opened past the row cap even with points to spare`);
+        }
+      }
+    }
     // ...and the row text prices Luck the same way the window does
     assert.equal(/\(\d+ per point\)/.test(w.rowText(LUCK)), allowLuckIncrease && luckIncreaseCost > 1, label);
   }
@@ -1828,13 +1922,32 @@ test('ORL1 deep audit: the corner hint is shown IN a corner and nowhere else', (
   c.raise('speed');
   assert.equal(c.cornered(), true);
   assert.ok(STAT_KEYS_ORDER.some((k) => c.rowMarkers(k).minus), 'and the way out is open');
+  assert.equal(c.confirm(), false, 'and OK refuses, which is what puts the lines on screen');
+  assert.equal(c.refused, true);
   // ...and a spent purse is not a corner either, whatever the rows say
   const done = new VirtueLevelUpScreen(flat(), { settings: S({ attributePoints: 0 }), rolls: () => 0.5 });
   assert.equal(done.purse, 0);
   assert.equal(done.cornered(), false, 'nothing owed is not a corner');
 
-  // and the draw really asks the predicate
-  assert.match(rd('src/ui/virtueLevelUp.js'), /if \(this\.cornered\(\)\) centre\(TAKE_ONE_BACK_HINT/);
+  // AND THE DRAW REALLY PAINTS IT, in the game area, only in a corner.
+  // A regex over the source said the call existed; it could not say the
+  // line landed anywhere a player can see (ORL1's fix review).
+  const painted = (win) => {
+    const r = { quads: [], drawScreenQuad(tex, rect, uv, color) { this.quads.push({ tex, ...rect, color }); } };
+    const font = { tex: 'font', fnt: { fixedWidth: 6, fixedHeight: 8, glyphWidth: () => 5 } };
+    win.draw(r, { width: 1600, height: 1000 }, font);
+    return r.quads.filter((q) => q.tex === 'font');
+  };
+  const cornerGlyphs = painted(c);
+  const plainGlyphs = painted(w);
+  assert.ok(cornerGlyphs.length > plainGlyphs.length,
+    'the cornered window paints MORE than the plainly refused one - the hint');
+  const hintRow = Math.max(...cornerGlyphs.map((g) => g.y));
+  assert.ok(hintRow > Math.max(...plainGlyphs.map((g) => g.y)), 'and it is the lowest line');
+  for (const g of cornerGlyphs) {
+    assert.ok(g.x >= 0 && g.x + g.w <= 1600, 'the hint stays inside the game area');
+    assert.ok(g.y >= 0 && g.y + g.h <= 1000, 'and on the screen');
+  }
 });
 
 test('ORL1 deep audit: the divisor the question quotes is DAGGERFALL\'s, not merely its own', () => {
@@ -1851,4 +1964,31 @@ test('ORL1 deep audit: the divisor the question quotes is DAGGERFALL\'s, not mer
   // ...and the four-to-six pool is DFU's own pair, not a number typed twice
   assert.equal(LEVELUP_BONUS_POOL_MIN, 4);
   assert.equal(LEVELUP_BONUS_POOL_MAX, 6);
+});
+
+test('ORL1 fix review: the re-offer does NOT fire on top of a pending Oghma Infinium', () => {
+  // Removing `if (readyToLevelUp) return false` also removed what kept this
+  // check off the book: the Infinium latches readyToLevelUp AND oghmaLevelUp
+  // together, and with a full bar underneath it the headless arm ran
+  // commitVirtueLevelUp - which has no Oghma arm, so it took a Level++ and a
+  // health roll the book forbids, spent the mod's purse in place of the
+  // book's thirty, and left oghmaLevelUp latched true.
+  const p = virtuePlayer({ readyToLevelUp: true, oghmaLevelUp: true, levelProgress: LEVELUP_TOTAL });
+  const level = p.level, hp = p.maxHealth;
+  assert.equal(checkForVirtueLevelUp(p), false, 'the book is not the mod\'s to level');
+  assert.equal(p.oghmaLevelUp, true, 'and it is left latched for the door that owns it');
+  assert.equal(p.level, level);
+  assert.equal(p.maxHealth, hp);
+
+  // the classic lane's own arm takes the book: both flags clear, no Level++
+  applyLevelUp(p, () => {}, () => 0.5);
+  assert.equal(p.readyToLevelUp, false);
+  assert.equal(p.oghmaLevelUp, false);
+  assert.equal(p.level, level, 'the Infinium grants no level');
+  assert.equal(p.maxHealth, hp, 'and no health');
+
+  // ...and the level the bar owes is offered on the very next pass
+  assert.equal(p.levelProgress, LEVELUP_TOTAL, 'the bar is untouched by the book');
+  assert.equal(checkForVirtueLevelUp(p), true);
+  assert.equal(p.pendingLevel, level + 1);
 });

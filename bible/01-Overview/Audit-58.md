@@ -327,7 +327,7 @@ and cannot be seen to stop. Each was confirmed by running the mutant in
 an isolated mirror of the tree, not by reading the test.
 
 The two that matter most are in advancement. **The reflexes use-scale
-`>> 16`** (`src/systems/advancement.js:133`) was unpinned: change it and
+`>> 16`** (`src/systems/advancement.js:140`) was unpinned: change it and
 every skill in the game advances twice as fast, with the suite green.
 **`GetAdvancementMultiplier` is a 35-row DFU table pinned at four rows**,
 so Jumping and CriticalStrike floated free. Then `LootTables`' per-level

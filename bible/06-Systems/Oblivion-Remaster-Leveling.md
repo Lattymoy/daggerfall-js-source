@@ -522,10 +522,11 @@ them landing inside code this slice had just added.
 **THE PINS WERE THE ROOT OF MOST OF IT, AND THE ROOT OF THAT WAS ONE
 THING: NEITHER NEW SCREEN'S `draw` HAD EVER BEEN CALLED.** Thirteen draw
 mutations survived the whole suite, `draw() { return; }` among them, on
-two screens whose entire defect surface is geometry. Both are drawn now,
-on eight canvases, against a stub font with a known pessimistic metric,
-and every painted glyph is read back through the hit test it is meant to
-answer. The rest of that lens: the hit box was pinned against its own
+two screens whose entire defect surface is geometry. Both are drawn now -
+the question on eight canvases from 375x667 to 2560x1440, the level-up
+window on six from 640x400 to 1920x1080 - against a stub font with a
+known pessimistic metric, and every painted glyph is read back through
+the hit test it is meant to answer. The rest of that lens: the hit box was pinned against its own
 arithmetic; the `1` key's branch was driven by nothing (making it answer
 with the mod survived everything); `isVirtueLevelUp` was asserted on the
 dungeon side only, so setting it false survived and silently dropped
@@ -534,17 +535,25 @@ a local `const usesVirtueLeveling = () => false` walks straight past;
 the `deltas` contract was "held" by three probes at 50 across, where
 neither cap can bind; and a mutant recorded EQUIVALENT was not - the
 font-less escape had simply never been driven from a partly spent
-window. Nineteen pins added, two turned around, one retired, 92 mutants.
+window. Nineteen pins added, two turned around, one retired. Then the FIX REVIEW below added one more and rewrote four that did not hold what they claimed. 64 pins, 94 mutants, 90 dead, 4 equivalent as recorded.
 
 **One defect this audit looked hard for and did not find:** departure
-6's promise that the level-up window is never a WALL. Walked
-exhaustively - 1,296 settings and stat spreads, 12.9 million reachable
-delta vectors - there is no state with neither a legal plus nor a legal
-minus. 196 of those configurations do contain corners where points
-remain and no plus is legal; every one is escapable by minus, which is
-what the code comments already said, and the window names that way out
-now instead of repeating an instruction its buttons have stopped
+6's promise that the level-up window is never a WALL. The shipped pin
+walks it exhaustively - 576 settings and stat spreads (4 purses x 3 row
+caps x both Luck switches x 3 Luck prices x 8 spreads), 1,375,685
+reachable delta vectors - and there is no state with neither a legal plus
+nor a legal minus. 121 of those configurations DO contain corners where
+points remain and no plus is legal; every one is escapable by minus,
+which is what the code comments already said, and the window names that
+way out now instead of repeating an instruction its buttons have stopped
 honouring.
+
+(The first version of this paragraph said 1,296 settings, 12.9 million
+vectors and 196 corners. Those came from a WIDER THROWAWAY SWEEP run
+while hunting, not from the pin that ships, so nobody reading the suite
+could ever have reproduced them - which is the same fault as quoting a
+mod's numbers from memory instead of parsing them out of the mod. The
+figures above are the pin's own. ORL1's fix review.)
 
 ## OPEN, FOR MAC
 

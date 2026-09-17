@@ -16,8 +16,11 @@ READABLE - 1,314 lines of Lua, 72 more of l10n yaml and a 487-byte data
 file - so the port is read off the author's own source, not off a
 decompile, and every one of its laws is cited to a line of it.
 
-(That figure was written as "1,384 lines of Lua", which is the Lua and
-the yaml added together and called Lua. The bible page carried the same
+(That figure was written as "1,384 lines of Lua", which is `wc -l` of the
+Lua and of the yaml added together and called Lua: 1,313 + 71. The real
+line counts above are two higher, because `templates.lua` and `fr.yaml`
+each end without a newline and `wc -l` does not count a last line that
+has none. The bible page carried the same
 error and was corrected; this file was missed, and ORL1's deep audit
 found it still standing here.)
 

@@ -206,6 +206,19 @@ export function checkForVirtueLevelUp(entity) {
   // carry piling up (measured, both lanes, same character). Nothing
   // was lost numerically; the player was simply never told again.
   // (ORL1's deep audit.)
+  // THE OGHMA INFINIUM IS NOT THIS SYSTEM'S TO LEVEL, and the guard that
+  // used to keep it out went with the one above. The book latches
+  // `readyToLevelUp` AND `oghmaLevelUp` together (systems/artifactEffects.js);
+  // with a full bar underneath it, the headless arm ran `commitVirtueLevelUp`,
+  // which has no Oghma arm - a Level++ and a health roll the book forbids,
+  // the mod's purse in place of the book's thirty, and `oghmaLevelUp` left
+  // latched true afterwards. `applyLevelUp` gets that state right on the
+  // classic side, and `ui/charSheetDoor.js`, `CharSheet._mountStatsRollout`
+  // and both of worldModes' last-resort arms all carry this same exclusion.
+  // This is the fourth place it belongs. The book is taken first; the bar is
+  // still full afterwards, so the level it owes is offered on the next pass.
+  // (ORL1's fix review.)
+  if (entity.oghmaLevelUp) return false;
   if ((entity.levelProgress ?? 0) < LEVELUP_TOTAL) return false;
   entity.readyToLevelUp = true;
   entity.pendingLevel = entity.level + 1;

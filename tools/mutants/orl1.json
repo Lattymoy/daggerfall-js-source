@@ -839,5 +839,23 @@
     "tests": [
       "test/orl1_leveling.test.js"
     ]
+  },
+  {
+    "name": "the-re-offer-fires-on-top-of-a-pending-oghma",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "  if (entity.oghmaLevelUp) return false;",
+    "new": "  if (false) return false;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-window-grows-a-hover-that-drags-the-selection",
+    "file": "src/ui/virtueLevelUp.js",
+    "old": "  click(vx, vy) {\n    if (this.done) return false;",
+    "new": "  hover(vx, vy) { const h = levelUpHitNative(vx, vy); if (h?.row != null) this.cursor = h.row; }\n\n  click(vx, vy) {\n    if (this.done) return false;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
   }
 ]

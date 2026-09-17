@@ -72,9 +72,9 @@ const label = (k) => k.charAt(0).toUpperCase() + k.slice(1);
  *  disagreed on every canvas that was not exactly 16:10.
  *
  *  THE PRESSES ARE THEIR OWN BUTTONS rather than the +/- inside a row's
- *  text, because FONT0003 is PROPORTIONAL: `rowText` pads its label to
- *  twelve CHARACTERS, so those markers land on a different pixel in every
- *  row and no fixed rect could cover them. Three labelled zones below the
+ *  text, because FONT0003 is PROPORTIONAL: `rowText` pads its label to a
+ *  fixed number of CHARACTERS, so those markers land on a different pixel
+ *  in every row and no fixed rect could cover them. Three labelled zones below the
  *  list act on the SELECTED row, which is exactly what the keyboard's +/-
  *  and ENTER already do - one set of rules, not two.
  */
@@ -247,12 +247,21 @@ export class VirtueLevelUpScreen {
     return true;
   }
 
-  /** ...and the cursor follows the pointer, as the sheet's rows do. */
-  hover(vx, vy) {
-    if (this.done) return;
-    const hit = levelUpHitNative(vx, vy);
-    if (hit?.row != null) this.cursor = hit.row;
-  }
+  /**
+   * THERE IS NO HOVER SEAM, AND THAT IS THE FIX.
+   *
+   * One existed and it dragged the selection: the rows end at native y
+   * `ROW_TOP + 8 * ROW_PITCH` and the presses sit four below that, so a
+   * pointer travelling from any row down to [ + ] or [ - ] crossed every row
+   * beneath it and the cursor followed. It always arrived on the LAST row -
+   * Luck, which costs `luckIncreaseCost` a point instead of one. Click
+   * Strength, move to the plus, press it, and the window raised LUCK.
+   * EVERY mouse press acted on the wrong attribute. (ORL1's fix review.)
+   *
+   * The rule above is the one rule: a row CLICK selects, and the presses act
+   * on the selection. A hover that also selects is a second rule that
+   * disagrees with it wherever the pointer happens to travel.
+   */
 
   /** Painted where the hit test looks: `nativeMetrics` is the idiom every
    *  clickable native window uses, and it is right in both hosts - the
