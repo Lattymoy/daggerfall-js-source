@@ -138,6 +138,15 @@ const svgEl = (doc, tag, cls) => {
   return n;
 };
 
+// FOEBAR1: the blade face's two pictures RIDE THE MODULE. `new URL(...,
+// import.meta.url)` is the pattern the workers use (ai/navClient.js): vite
+// serves it in dev and bundles it with the page's base in a build, and
+// node resolves it to a file URL it never fetches. public/ was wrong for
+// this: it is served at the root alone, and the game runs at /play/, where
+// a page-relative ./hud/ is the SPA page and a root-absolute /hud/ is not
+// under the build's './' base.
+const BLADE_EMPTY_URL = new URL('./assets/foe-blade-empty.png', import.meta.url).href;
+const BLADE_FULL_URL = new URL('./assets/foe-blade-full.png', import.meta.url).href;
 const el = (tag, cls, text) => {
   const n = document.createElement(tag);
   if (cls) n.className = cls;
@@ -294,6 +303,8 @@ function build(doc) {
   const foeBlade = el('div', 'hud-foeblade');
   const foeBladeEmpty = el('i', 'hud-bladeempty');
   const foeBladeFull = el('i', 'hud-bladefull');
+  foeBladeEmpty.style.backgroundImage = `url("${BLADE_EMPTY_URL}")`;
+  foeBladeFull.style.backgroundImage = `url("${BLADE_FULL_URL}")`;
   foeBlade.append(foeBladeEmpty, foeBladeFull);
   foe.append(foeName, foeTrack, foeBlade);
   top.append(foe);

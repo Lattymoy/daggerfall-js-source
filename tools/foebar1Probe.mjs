@@ -10,7 +10,7 @@
 // pref, the plain track hides under it, the clip is inset(0 X% 0 X%) with
 // X = (100 - pct) / 2, and both pictures resolve (no broken image).
 //
-//     PROBE_PORT=5199 node tools/foebar1Probe.mjs        # shots into tools/foebar1-*.png
+//     PROBE_PORT=5199 FOEBAR1_OUT=<dir> node tools/foebar1Probe.mjs   # shots into <dir>/foebar1-*.png (default tools/)
 import { writeFile, unlink, mkdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, normalize } from 'node:path';
@@ -18,7 +18,7 @@ import { chromium } from 'playwright';
 import { createServer } from 'vite';
 
 const ROOT = normalize(join(dirname(fileURLToPath(import.meta.url)), '..'));
-const PAGE_NAME = 'foebar1-probe.tmp.html';   // written at the ROOT, not tools/: the pictures are page-relative (./hud/), as the doll's ./skin/ is
+const PAGE_NAME = 'foebar1-probe.tmp.html';   // written into play/ - the game's own directory (U60: no probe drives the root as the game)
 const OUT = process.env.FOEBAR1_OUT ?? join(ROOT, 'tools');
 
 const PAGE = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>FOEBAR1 probe</title>
@@ -45,7 +45,8 @@ globalThis.__probe = {
       clip: full?.style.clipPath ?? null, fill: document.querySelector('.hud-fill')?.style.width ?? null,
       emptyImg: cs(empty)?.backgroundImage, fullImg: cs(full)?.backgroundImage, w: blade?.getBoundingClientRect().width, h: blade?.getBoundingClientRect().height };
   },
-  loaded: async () => { const urls = ['./hud/foe-blade-empty.png', './hud/foe-blade-full.png']; const out = {}; for (const u of urls) { const r = await fetch(u); out[u] = r.ok ? (await r.blob()).size : r.status; } return out; },
+  // (no backslashes here - this source sits inside a template literal, which eats them)
+  loaded: async () => { const out = {}; for (const sel of ['.hud-bladeempty', '.hud-bladefull']) { const n = document.querySelector(sel); const s = n?.style.backgroundImage ?? ''; const u = s.startsWith('url(') ? s.slice(4, -1).replace(/^["']|["']$/g, '') : null; if (!u) { out[sel] = 'unset'; continue; } const r = await fetch(u); const type = r.headers.get('content-type') ?? ''; out[u] = r.ok && type.includes('image/png') ? (await r.blob()).size : r.status + ' ' + type; } return out; },
 };
 document.title = 'ready';
 <\/script></body></html>`;
@@ -53,7 +54,7 @@ document.title = 'ready';
 const fails = [];
 const check = (name, ok, detail = '') => { if (!ok) fails.push(`${name}${detail ? ` - ${detail}` : ''}`); console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? ` - ${detail}` : ''}`); };
 
-await writeFile(join(ROOT, PAGE_NAME), PAGE);
+await writeFile(join(ROOT, 'play', PAGE_NAME), PAGE);
 await mkdir(OUT, { recursive: true });
 const vite = process.env.PROBE_PORT ? null : await createServer({ root: ROOT, server: { port: 0, host: '127.0.0.1', watch: null }, logLevel: 'error' });
 if (vite) await vite.listen();
@@ -64,12 +65,12 @@ try {
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', (er) => errors.push(er.message));
-  await page.goto(`http://127.0.0.1:${port}/${PAGE_NAME}?nofonts`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await page.goto(`http://127.0.0.1:${port}/play/${PAGE_NAME}?nofonts`, { waitUntil: 'domcontentloaded', timeout: 60000 });
   await page.waitForFunction(() => !!globalThis.__probe, null, { timeout: 30000 });
   const P = (fn, ...a) => page.evaluate(fn, ...a);
   const sleep = (ms) => page.waitForTimeout(ms);
   const loaded = await P(() => globalThis.__probe.loaded());
-  check('both pictures are served', Object.values(loaded).every((v) => v > 1000), JSON.stringify(loaded));
+  check('both pictures are served as PNG from the module\'s own URL, from the game\'s directory', Object.keys(loaded).length === 2 && Object.values(loaded).every((v) => typeof v === 'number' && v > 1000), JSON.stringify(loaded));
   for (const style of ['bar', 'blade']) {
     check(`the pref takes '${style}'`, (await P((s) => globalThis.__probe.style(s), style)) === style);
     for (const pct of [100, 50, 10]) {
@@ -99,7 +100,7 @@ try {
 } finally {
   await browser.close();
   await vite?.close();
-  await unlink(join(ROOT, PAGE_NAME)).catch(() => {});
+  await unlink(join(ROOT, 'play', PAGE_NAME)).catch(() => {});
 }
 console.log(fails.length ? `\n${fails.length} FAILED` : '\nall passed');
 process.exit(fails.length ? 1 : 0);

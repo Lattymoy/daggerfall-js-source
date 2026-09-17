@@ -15634,7 +15634,11 @@ shape whole and empty is the dark one with its skull. The two pictures
 are one crop of both originals (their union alpha box, 981x130, cut with
 pngjs since the container has no image tool), so they register pixel for
 pixel; the CSS keeps that aspect and hides the plain track under the
-blade. `prefs.foeBarStyle` ('bar' | 'blade', default 'bar') is the port's
+blade. They live in `src/ui/assets/` and ride the module by
+`new URL(..., import.meta.url)`, the workers' pattern - a first cut put
+them under `public/`, which is served at the root alone: from `/play/`,
+where the game runs, a page-relative `./hud/` came back as the SPA page
+and a root-absolute `/hud/` is not under the build's `./` base. `prefs.foeBarStyle` ('bar' | 'blade', default 'bar') is the port's
 own pref like `hudScale` - DFU draws no enemy health at all, so the
 readout is original and the face is an original on it - and the
 Interface card offers the two as a two-way row in the stick-position
@@ -15646,9 +15650,10 @@ readout's name and fade already live.
 strikes a foe at full, half and a tenth, screenshots both faces and reads
 the laws off the DOM: the blade shows only under the pref and the track
 hides, the clip is `inset(0 X% 0 X%)` with X = (100 - pct) / 2 (Chromium
-normalises it to `inset(0px X%)`), both pictures resolve page-relative
-(the probe page is written at the ROOT for that - `./hud/` resolves as the
-doll's `./skin/` does), and the shape keeps the crop's aspect. Mac has
+normalises it to `inset(0px X%)`), both pictures resolve as PNG from the
+module's own URL with the probe page written into `play/`, the game's own
+directory (U60: no probe drives the root as the game), and the shape keeps
+the crop's aspect. Mac has
 the three blade shots and the bar for comparison.
 
 `test/foebar1_blade.test.js` - 2 pins. `tools/mutants/foebar1.json`.
