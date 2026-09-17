@@ -15617,3 +15617,50 @@ are real either way.
 `test/macr_fixes.test.js` - 5 pins across the four. `tools/mutants/macr.json`
 - 18 dead. AUDIT INV2's lost-capture pin, QS3's listener count and
 main-cell pins, drawHud's signature pins re-aimed.
+
+## FOEBAR1 - the target bar's blade face (2026-09-17, Mac, from a friend's pictures)
+
+Mac: "My friend wants me to implement these as alternate versions of the
+enemy health bar we have implemented" - two 1000x1000 pictures, a red
+twin-bladed shape and the same shape dark with a skull at the hub, and a
+mock of it across the top of a screen.
+
+**What it is.** An alternate FACE for the enhanced HUD's target readout
+(the bar under the compass that appears when you strike something and
+fades). The dark picture is the empty bar, the red one the fill, and the
+fill is clipped from BOTH tips toward the hub as the foe's health falls -
+`bladeInset(pct) = (100 - pct) / 2` off each side, so full is the red
+shape whole and empty is the dark one with its skull. The two pictures
+are one crop of both originals (their union alpha box, 981x130, cut with
+pngjs since the container has no image tool), so they register pixel for
+pixel; the CSS keeps that aspect and hides the plain track under the
+blade. They live in `src/ui/assets/` and ride the module by
+`new URL(..., import.meta.url)`, the workers' pattern - a first cut put
+them under `public/`, which is served at the root alone: from `/play/`,
+where the game runs, a page-relative `./hud/` came back as the SPA page
+and a root-absolute `/hud/` is not under the build's `./` base. `prefs.foeBarStyle` ('bar' | 'blade', default 'bar') is the port's
+own pref like `hudScale` - DFU draws no enemy health at all, so the
+readout is original and the face is an original on it - and the
+Interface card offers the two as a two-way row in the stick-position
+row's shape. It sits where the target bar sits, under the compass,
+rather than across the top as the mock had it: that is where the
+readout's name and fade already live.
+
+**Seen.** `tools/foebar1Probe.mjs` draws the HUD over the real module,
+strikes a foe at full, half and a tenth, screenshots both faces and reads
+the laws off the DOM: the blade shows only under the pref and the track
+hides, the clip is `inset(0 X% 0 X%)` with X = (100 - pct) / 2 (Chromium
+normalises it to `inset(0px X%)`), both pictures resolve as PNG from the
+module's own URL with the probe page written into `play/`, the game's own
+directory (U60: no probe drives the root as the game), and the shape keeps
+the crop's aspect. Mac has
+the three blade shots and the bar for comparison.
+
+**FOEBAR1b (same day).** Mac, with a crop of the friend's screen: "Make
+sure you give the drained health background slight transparency like
+the image" - in it the sky and trees show through the dark blade. So
+`.hud-bladeempty` draws at opacity 0.72 and the red fill stays solid
+(the sheet gives `.hud-bladefull` no opacity). The probe reads both off
+the computed style.
+
+`test/foebar1_blade.test.js` - 2 pins. `tools/mutants/foebar1.json`.

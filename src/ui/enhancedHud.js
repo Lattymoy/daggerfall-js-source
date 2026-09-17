@@ -138,6 +138,15 @@ const svgEl = (doc, tag, cls) => {
   return n;
 };
 
+// FOEBAR1: the blade face's two pictures RIDE THE MODULE. `new URL(...,
+// import.meta.url)` is the pattern the workers use (ai/navClient.js): vite
+// serves it in dev and bundles it with the page's base in a build, and
+// node resolves it to a file URL it never fetches. public/ was wrong for
+// this: it is served at the root alone, and the game runs at /play/, where
+// a page-relative ./hud/ is the SPA page and a root-absolute /hud/ is not
+// under the build's './' base.
+const BLADE_EMPTY_URL = new URL('./assets/foe-blade-empty.png', import.meta.url).href;
+const BLADE_FULL_URL = new URL('./assets/foe-blade-full.png', import.meta.url).href;
 const el = (tag, cls, text) => {
   const n = document.createElement(tag);
   if (cls) n.className = cls;
@@ -236,6 +245,18 @@ const put = (node, key, value) => {
   last[key] = value;
   node.textContent = value;
 };
+/** FOEBAR1: how far the blade's fill is clipped in from EACH tip, as a
+ *  percentage of its width, for a health fraction `pct` (0..100): the
+ *  two blades recede toward the hub together, so half of what is lost
+ *  comes off each end. Full is 0, empty is 50 (the two clips meet at the
+ *  hub), and the clamp is the same one `width` gives the plain fill. */
+export const bladeInset = (pct) => (100 - Math.max(0, Math.min(100, pct))) / 2;
+const clipInset = (node, key, side) => {
+  const v = `inset(0 ${side.toFixed(2)}% 0 ${side.toFixed(2)}%)`;
+  if (last[key] === v) return;
+  last[key] = v;
+  node.style.clipPath = v;
+};
 const width = (node, key, pct) => {
   const v = `${Math.max(0, Math.min(100, pct)).toFixed(1)}%`;
   if (last[key] === v) return;
@@ -272,7 +293,20 @@ function build(doc) {
   const foeTrack = el('div', 'hud-track hud-foetrack');
   const foeFill = el('i', 'hud-fill');
   foeTrack.append(foeFill);
-  foe.append(foeName, foeTrack);
+  // FOEBAR1 (2026-09-17, Mac, from a friend's two pictures): THE BLADE -
+  // an alternate face for the same readout. Two pictures under the one
+  // track: the dark twin-bladed shape with the skull hub is the empty
+  // bar, the red one is the fill, and the fill is CLIPPED from both tips
+  // toward the hub as the foe's health falls (bladeInset). Which face
+  // shows is prefs.foeBarStyle ('bar' | 'blade'), read each draw; the
+  // plain track stays exactly what it was for 'bar'.
+  const foeBlade = el('div', 'hud-foeblade');
+  const foeBladeEmpty = el('i', 'hud-bladeempty');
+  const foeBladeFull = el('i', 'hud-bladefull');
+  foeBladeEmpty.style.backgroundImage = `url("${BLADE_EMPTY_URL}")`;
+  foeBladeFull.style.backgroundImage = `url("${BLADE_FULL_URL}")`;
+  foeBlade.append(foeBladeEmpty, foeBladeFull);
+  foe.append(foeName, foeTrack, foeBlade);
   top.append(foe);
   root.append(top);
 
@@ -483,7 +517,7 @@ function build(doc) {
   cells.main.cell.addEventListener('pointerdown', tap(() => { liveOpts.quickSwitchHand?.(); }));
 
   doc.body.append(root);
-  return { root, compass, marks, detectMarks: [], foe, foeName, foeFill, magicka, health, fatigue, effects,
+  return { root, compass, marks, detectMarks: [], foe, foeName, foeFill, foeBladeFull, magicka, health, fatigue, effects,
     breath, breathFill, readied, reticle, cross, centreWord, cornerWord,
     quick, quickCells: cells, quickTags: tags,
     spellChip: { chip: spellChip, tag: spellTag, img: spellGlyph, text: spellText, name: spellName } };
@@ -600,7 +634,14 @@ export function drawEnhancedHud(vitals, heading01, dt = 0, opts = {}) {
   } else {
     if (last.foe !== t.name) { last.foe = t.name; parts.foe.classList.add('on'); }
     put(parts.foeName, 'foeName', t.name);
-    width(parts.foeFill, 'foeFill', (t.health / t.maxHealth) * 100);
+    const foePct = (t.health / t.maxHealth) * 100;
+    width(parts.foeFill, 'foeFill', foePct);
+    // FOEBAR1: the blade face, when the pref says so - the class picks
+    // which of the two children shows, and the red picture is clipped in
+    // from both tips by the same fraction the plain fill gives up.
+    const blade = getPref('foeBarStyle') === 'blade';
+    if (last.foeStyle !== blade) { last.foeStyle = blade; parts.foe.classList.toggle('blade', blade); }
+    if (blade) clipInset(parts.foeBladeFull, 'foeBlade', bladeInset(foePct));
     const o = t.fade < 1 ? String(t.fade.toFixed(2)) : '';
     if (parts.foe.style.opacity !== o) parts.foe.style.opacity = o;
   }
