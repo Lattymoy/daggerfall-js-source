@@ -125,7 +125,7 @@ test('MAC-O1: the TORCH comes back - a spell Z can put away no longer keeps the 
   const store = Object.fromEntries(Object.entries(MOD_SETTINGS[HANDHELD_TORCHES_VENDOR].keys).map(([k, d]) => [k, d.default]));
   assert.equal(store['Handling.StowWhenSpellcasting'], true, 'the mod stows on a readied spell');
   // Handling.OnStow ships Drop; Unequip is the arm that REMEMBERS the
-  // light (handheldTorches.js:473-480), which is what makes the return
+  // light (handheldTorches.js:494-501), which is what makes the return
   // visible at all - the free hand is the law either way.
   store['Handling.OnStow'] = ON_STOW.Unequip;
   const { r, magic } = rig();
@@ -172,7 +172,11 @@ test('MAC-O1 (THE FOUR HOSTS RULE): every host polls the KEY’s door and hands 
   // dungeonContext's rig.
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/worldModes.js', 'src/scenes/dungeon.js']) {
     const s = read(f);
-    assert.match(s, /held\(keys, 'ReadyWeapon'\)/, `${f} still polls the key`);
+    // MWCROUCH: the poll is GetKeyDown now (`pressed`, ui/input.js) - the
+    // `held(keys, 'ReadyWeapon') && !zPrev` derivation it replaced dropped
+    // any press shorter than a frame. The law is unchanged: EVERY host
+    // reads the key itself rather than leaning on a window's door.
+    assert.match(s, /pressed\((keyEdge|latch\.edge), keys, 'ReadyWeapon'\)/, `${f} still polls the key`);
     assert.match(s, /readyWeapon\(\)|readyWeapon\?\.\(\)/, `${f}: the Z edge takes WeaponManager.Update's arm`);
   }
   // ...and the arm is reachable on the dungeon ctx the two dungeon

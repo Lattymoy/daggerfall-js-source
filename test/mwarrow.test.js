@@ -575,7 +575,7 @@ test('MW-D48: nodeTransformOf composes the same chain flattenNif does', () => {
 // attach.cpp:147-159), every rigid attach whose BoneOffset was hidden
 // or nested under collision silently lost its
 // PositionAttitudeTransform. flattenNif's identical returns are a
-// DRAWABLES rule (mwNifMesh.js:483-491) and do not transfer to a
+// DRAWABLES rule (mwNifMesh.js:524-530) and do not transfer to a
 // function that returns a node.
 test('MW-D49: findNodeByName honours rule 58, like the scene the reference searches', () => {
   const I3 = [1, 0, 0, 0, 1, 0, 0, 0, 1];

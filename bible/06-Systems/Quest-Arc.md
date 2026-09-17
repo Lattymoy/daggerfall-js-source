@@ -1452,7 +1452,7 @@ spamming the same questor does not re-pulse the task. DFU makes you go
 click someone else and come back.
 
 The port carries `lastNPCClicked` as an NPCData-shaped OBJECT LITERAL,
-and both hosts mint a fresh one at every click - worldModes.js:1073's
+and both hosts mint a fresh one at every click - worldModes.js:1071's
 quest-flat arm builds `{ hash, flags, factionID, nameSeed, gender,
 buildingKey, mapID }` inline, and questBridge.clickNpc runs
 `staticNpcData(pn, sceneCtx)`. So `lastClicked === this.clickMemory`
@@ -4857,7 +4857,7 @@ found `mode !== 'exterior'`, fell through, and turned the camera. So
 you swung and the view swung with you - every time, in every building
 and every dungeon reached from the town.
 
-`dungeon.js:261`, the standalone host, has always had the right shape:
+`dungeon.js:262`, the standalone host, has always had the right shape:
 attack, then `return`, with no mode in the test at all. It has no modal
 sibling to share the drag with, which is precisely why it never needed
 one - and why the difference between the three files never looked like
@@ -5493,7 +5493,7 @@ whole route could therefore never latch and never fire. The pair the
 other two engine-owning hosts wire (`world.js:2571-2572`,
 `dungeonContext.js:2054-2055`) is wired here now, and with it
 `CastSpellDo`'s two world reads — `getClassicSpellEffects` and the
-byte-folded `spellHasMatchForClassicEffect` (`world.js:5846-5849`),
+byte-folded `spellHasMatchForClassicEffect` (`world.js:5853-5856`),
 absent which the action self-completes at *parse*
 (`actions.js:2756`/`:2763`) and the task can never arm at all.
 

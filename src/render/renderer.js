@@ -201,6 +201,10 @@ layout(location=2) in vec3 aNormal;
 // the constant attribute, so every voxel caller draws exactly what it
 // drew before - the layout is additive, not a variant.
 layout(location=3) in vec2 aUV;
+// MWT2: the OPTIONAL fifth channel, additive exactly as aUV is - a VAO
+// that never enables it reads the constant attribute, which is zero, and
+// zero emission is what every caller before this one had.
+layout(location=4) in vec3 aEmissive;
 uniform mat4 uProj;
 uniform mat4 uView;
 uniform mat4 uModel;
@@ -208,8 +212,10 @@ out vec3 vColor;
 out vec3 vNormal;
 out vec3 vWorldPos;
 out vec2 vUV;
+out vec3 vEmissive;
 void main() {
   vColor = aColor;
+  vEmissive = aEmissive;
   vNormal = mat3(uModel) * aNormal;
   vUV = aUV;
   vec4 world = uModel * vec4(aPos, 1.0);
@@ -218,14 +224,26 @@ void main() {
 }`;
 
 // Character fragment: the mesh path's lighting + fog verbatim, sampling
-// the rig's vertex color instead of a texture (C4b - no emission, no
-// alpha cutout: rig faces are opaque solids).
+// the rig's vertex color instead of a texture (C4b - no alpha cutout: rig
+// faces are opaque solids).
+//
+// MWT2 (2026-09-17, Mac: the Morrowind model's torch "isnt lit"): C4b's
+// "no emission" was true of the VOXEL rigs this program was written for
+// and stopped being true at MW-D11, which brought real Morrowind meshes
+// through it. The reference resolves an emission per material and adds it
+// INTO the lighting sum, which the texture is then multiplied by
+// (lighting.glsl `... + getEmissionColor()`, objects.frag
+// `gl_FragData[0].xyz *= lighting`) - and its LightMode_Emissive arm
+// forces the DIFFUSE and the AMBIENT to black, so a self-illuminated
+// surface has NOTHING BUT that term. Dropping it drew those surfaces
+// black: a torch with a black flame, which is a stick.
 const CHAR_FS = `#version 300 es
 precision highp float;
 in vec3 vColor;
 in vec3 vNormal;
 in vec3 vWorldPos;
 in vec2 vUV;
+in vec3 vEmissive;
 uniform sampler2D uTex;
 uniform float uUseTex;      // MW-D11: 0 for the voxel rigs, 1 for a textured mesh
 uniform float uAlphaCut;    // 0 = opaque; above it, discard below this alpha
@@ -283,6 +301,13 @@ void main() {
   float iD = length(iL);
   float iAtt = clamp(1.0 - iD / max(uIndirect.w, 1e-4), 0.0, 1.0);
   lit += albedo * (iAtt * iAtt * max(dot(n, iL / max(iD, 1e-4)), 0.0)) * uIndirectColor;
+  // MWT2: the EMISSION, times the texel and nothing else. The reference
+  // adds it into the lighting sum before the texture multiply, so an
+  // emissive surface keeps its picture and owes the room nothing - which
+  // is the whole of what "self-illuminated" means. It is the one term
+  // above that the vertex colour does NOT gate: LightMode_Emissive has
+  // already forced that colour to black.
+  lit += vEmissive * texel.rgb;
   outColor = vec4(mix(uFogColor, lit, fogFactorAt(vWorldPos)), 1.0);
 }`;
 
@@ -1528,7 +1553,11 @@ export class Renderer {
   createCharacterMesh(packed, opts = {}) {
     const gl = this.gl;
     const uv = !!opts.uv;
-    const floats = uv ? 11 : 9;
+    // MWT2: the emission rides with the UV - a Morrowind mesh has both or
+    // neither, and the voxel rigs have neither. `floats` is what the pack
+    // wrote, so it is derived here rather than guessed at.
+    const emissive = uv && opts.emissive !== false;
+    const floats = uv ? (emissive ? 14 : 11) : 9;
     const vao = gl.createVertexArray();
     this._bindVao(vao);
     const vbo = gl.createBuffer();
@@ -1544,6 +1573,10 @@ export class Renderer {
     if (uv) {
       gl.enableVertexAttribArray(3);
       gl.vertexAttribPointer(3, 2, gl.FLOAT, false, stride, 36);
+    }
+    if (emissive) {
+      gl.enableVertexAttribArray(4);
+      gl.vertexAttribPointer(4, 3, gl.FLOAT, false, stride, 44);
     }
     this._bindVao(null);
     return { vao, count: packed.length / floats, buffers: [vbo], vbo, floats, bounds: boundsOf(packed, null, 0, -1, floats) };   // EL7: the rig's sphere, for the shadow replays' cull

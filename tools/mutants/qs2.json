@@ -78,8 +78,8 @@
   {
     "name": "QS2-the-world-host-answers-the-keys-with-a-window-up",
     "file": "src/scenes/world.js",
-    "old": "    if (!townTalk.overlayActive && QUICKSLOT_ACTIONS.has(act) && !POLLED_ACTIONS.has(act) && socialMenuCanOpen() && routeAction(act, hudCtx)) { e.preventDefault(); return; }",
-    "new": "    if (QUICKSLOT_ACTIONS.has(act) && !POLLED_ACTIONS.has(act) && routeAction(act, hudCtx)) { e.preventDefault(); return; }",
+    "old": "    if (!townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior' && QUICKSLOT_ACTIONS.has(act) && !POLLED_ACTIONS.has(act) && socialMenuCanOpen() && routeAction(act, hudCtx)) { e.preventDefault(); return; }",
+    "new": "    if ((modes?.mode ?? 'exterior') === 'exterior' && QUICKSLOT_ACTIONS.has(act) && !POLLED_ACTIONS.has(act) && routeAction(act, hudCtx)) { e.preventDefault(); return; }",
     "tests": [
       "test/qs2_inputs.test.js"
     ]
@@ -87,7 +87,7 @@
   {
     "name": "QS2-the-exterior-host-answers-the-keys-inside-its-mode-gate",
     "file": "src/scenes/exterior.js",
-    "old": "    if (!townTalk.overlayActive && QUICKSLOT_ACTIONS.has(act) && !POLLED_ACTIONS.has(act) && !gamePaused() && routeAction(act, hudCtx)) { e.preventDefault(); return; }",
+    "old": "    if (!townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior' && QUICKSLOT_ACTIONS.has(act) && !POLLED_ACTIONS.has(act) && !gamePaused() && routeAction(act, hudCtx)) { e.preventDefault(); return; }",
     "new": "    if (false && QUICKSLOT_ACTIONS.has(act) && routeAction(act, hudCtx)) { e.preventDefault(); return; }",
     "tests": [
       "test/qs2_inputs.test.js"

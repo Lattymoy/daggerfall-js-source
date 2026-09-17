@@ -293,7 +293,7 @@ test('QS2: every host ctx that carries toggleSheath carries quickUse, quickSwap 
   }
 });
 
-test('QS2: the two self-routing hosts answer the three ABOVE their mode gate, under the overlay gate - AUDIT SOC B4/D1 taken the first time (mutants: the arm moved inside the mode gate so a quickslot dies in a shop; the overlay gate dropped so 1 drinks a potion while a window is typing)', () => {
+test('QS2 + QS7: the two self-routing hosts answer the dispatchable quickslots in EXTERIOR mode, under the overlay gate - the modal ladders own the key where they are mounted (mutants: the mode gate dropped so a tavern fires both ladders and the torch douses then re-ignites; the overlay gate dropped so 1 drinks a potion while a window is typing)', () => {
   // scenes/world.js: beside SOC5's own arm, which is the one that had to be
   // moved here after the fact.
   const w = rd('src/scenes/world.js');
@@ -301,20 +301,31 @@ test('QS2: the two self-routing hosts answer the three ABOVE their mode gate, un
   // potion the hold was about to choose. This ladder never calls routeKey, so
   // routeKey's own POLLED_ACTIONS arm never reaches it - WEAPON-VIS2's lesson
   // at a second door.
-  const wArm = /if \(!townTalk\.overlayActive && QUICKSLOT_ACTIONS\.has\(act\) && !POLLED_ACTIONS\.has\(act\) && socialMenuCanOpen\(\) && routeAction\(act, hudCtx\)\) \{ e\.preventDefault\(\); return; \}/;
+  // QS7 (2026-09-17) REVERSED THIS PIN'S OWN CLAUSE, and the reason is
+  // the whole finding: the arm stood above the mode gate because the
+  // modal contexts had no quickslot doors, and QS4 gave them the whole
+  // set without anyone coming back here. Two ladders then answered one
+  // key - the outer host's and worldModes' - and because the mod's
+  // off-hand toggle is a FLIP, a Digit4 in a tavern doused the torch and
+  // re-lit it in the same press. The law it was defending (a quickslot
+  // works in a tavern and in a dungeon) is UNCHANGED and now held by the
+  // modal ladder; what changed is which ladder holds it.
+  // test/qs7_one_dispatch.test.js drives the flip and proves the doors.
+  const wArm = /if \(!townTalk\.overlayActive && \(modes\?\.mode \?\? 'exterior'\) === 'exterior' && QUICKSLOT_ACTIONS\.has\(act\) && !POLLED_ACTIONS\.has\(act\) && socialMenuCanOpen\(\) && routeAction\(act, hudCtx\)\) \{ e\.preventDefault\(\); return; \}/;
   assert.match(w, wArm);
   const social = w.indexOf("act === 'SocialInteract' && socialMenuCanOpen()");
   const mine = w.search(wArm);
-  const modeGate = w.indexOf("if (!townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {");
-  assert.ok(social > 0 && mine > 0 && modeGate > 0);
+  assert.ok(social > 0 && mine > 0);
   assert.ok(mine > social, 'it stands beside the social door, whose note carries the lesson');
-  assert.ok(mine < modeGate, 'and ABOVE the exterior-mode gate - a quickslot must work in a tavern and in a dungeon');
+  // ...and the social arm keeps NO mode gate: the modal contexts carry
+  // no socialInteract, so F has no second answer to collide with and
+  // AUDIT SOC B4/D1's finding stands exactly as it was.
+  const socialLine = w.split('\n').find((l) => l.includes("act === 'SocialInteract'"));
+  assert.ok(!/\(modes\?\.mode \?\? 'exterior'\) === 'exterior'/.test(socialLine), 'F still answers inside');
   // scenes/exterior.js: the same place, its own gate words.
   const x = rd('src/scenes/exterior.js');
-  const xArm = /if \(!townTalk\.overlayActive && QUICKSLOT_ACTIONS\.has\(act\) && !POLLED_ACTIONS\.has\(act\) && !gamePaused\(\) && routeAction\(act, hudCtx\)\) \{ e\.preventDefault\(\); return; \}/;
+  const xArm = /if \(!townTalk\.overlayActive && \(modes\?\.mode \?\? 'exterior'\) === 'exterior' && QUICKSLOT_ACTIONS\.has\(act\) && !POLLED_ACTIONS\.has\(act\) && !gamePaused\(\) && routeAction\(act, hudCtx\)\) \{ e\.preventDefault\(\); return; \}/;
   assert.match(x, xArm);
-  assert.ok(x.search(xArm) < x.indexOf("if (!townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {"),
-    'above the mode gate here too');
   // The two hosts that call routeKey need no arm at all - routeKey's own
   // overlay branch and its routeAction tail are the gate and the door.
   for (const path of ['src/scenes/worldModes.js', 'src/scenes/dungeon.js']) {

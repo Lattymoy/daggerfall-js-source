@@ -178,7 +178,10 @@ test('ROAD-Ar: dungeon.js runs the gate ABOVE its overlay-gated walk branch', ()
   const walk = s.indexOf('if (walkMode && !overlayHeld) {');
   assert.ok(call > 0 && walk > 0);
   assert.ok(call < walk, 'the gate ticks before the walk branch, not inside it');
-  assert.ok(s.indexOf('if (_act.activate || (useHeld && !prevUse)) tryActivate();') > walk,
+  // MWCROUCH: `useHeld && !prevUse` is `useEdge` now - GetKeyDown off
+  // the frame's key ring (ui/input.js) rather than a held-ring
+  // derivation - and the position this pin states is unchanged.
+  assert.ok(s.indexOf('if (_act.activate || useEdge) tryActivate();') > walk,
     'but the CONSUMER stays inside it');
 });
 

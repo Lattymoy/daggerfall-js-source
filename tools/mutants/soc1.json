@@ -1,40 +1,347 @@
 [
-  { "name": "S1-party-five-seats", "file": "src/net/wire.js", "old": "export const PARTY_MAX = 4;", "new": "export const PARTY_MAX = 5;", "tests": ["test/soc1_hub.test.js"] },
-  { "name": "S2-account-secret-optional", "file": "src/net/wire.js", "old": "if (!acct || !asecret) return { error: 'bad account' };", "new": "if (!acct) return { error: 'bad account' };", "tests": ["test/soc1_hub.test.js"] },
-  { "name": "S3-target-both-admitted", "file": "src/net/wire.js", "old": "if (needs === 'target' && (!!acct === !!peer)) return { error: 'bad social' };", "new": "if (needs === 'target' && !acct && !peer) return { error: 'bad social' };", "tests": ["test/soc1_hub.test.js"] },
-  { "name": "S4-vital-unbounded", "file": "src/net/wire.js", "old": "if (!finite(v) || v < 0 || v > FOE_HEALTH_MAX) return null;\n    out[k] = Math.round(v);", "new": "if (!finite(v) || v < 0) return null;\n    out[k] = Math.round(v);", "tests": ["test/soc1_hub.test.js"] },
-  { "name": "S5-vital-fraction-kept", "file": "src/net/wire.js", "old": "out[k] = Math.round(v);", "new": "out[k] = v;", "tests": ["test/soc1_hub.test.js"] },
-  { "name": "S6-place-unfiltered", "file": "src/net/wire.js", "old": "return !filter || nameAllowed(s) ? s : '';", "new": "return s;", "tests": ["test/soc1_hub.test.js"] },
-  { "name": "S7-leader-need-not-be-member", "file": "src/net/wire.js", "old": "if (!members.some((m) => m.acct === leader)) return null;", "new": "", "tests": ["test/soc1_hub.test.js"] },
-  { "name": "S8-bad-row-dropped-not-refused", "file": "src/net/wire.js", "old": "const row = one(r); if (!row) return null; out.push(row);", "new": "const row = one(r); if (!row) continue; out.push(row);", "tests": ["test/soc1_hub.test.js"] },
-  { "name": "S9-note-code-unchecked", "file": "src/net/wire.js", "old": "if (m.k === 'note') { if (!NOTE_CODES.includes(m.code)) return null;", "new": "if (m.k === 'note') { if (typeof m.code !== 'string') return null;", "tests": ["test/soc1_hub.test.js"] },
-  { "name": "S10-account-taken-admitted", "file": "server/src/index.js", "old": "if (held && held !== m.asecret) { this._sayError(ws, 'account taken'); return; }", "new": "if (held && held !== m.asecret) { this._sayError(ws, 'account taken'); }", "tests": ["test/soc1_hub.test.js"] },
-  { "name": "S11-state-to-every-tab", "file": "server/src/index.js", "old": "await this._sayState(m.acct, rec, now, ws);\n    this._sayPresence(m.acct, rec, now);", "new": "await this._sayState(m.acct, rec, now);\n    this._sayPresence(m.acct, rec, now);", "tests": ["test/soc1_hub.test.js"] },
-  { "name": "S12-presence-to-the-room", "file": "server/src/index.js", "old": "for (const f of rec.friends) this._sayTo(f, out, except);", "new": "for (const [other, b] of this._all()) if (other !== except && b.id) this._send(other, out);", "tests": ["test/soc1_hub.test.js"] },
-  { "name": "S13-seen-stamped-on-first-tab", "file": "server/src/index.js", "old": "const next = gone ? { ...rec, seen: now } : rec;\n    if (gone) await this.state.storage.put(acctKey(a.acct), next);", "new": "const next = { ...rec, seen: now };\n    await this.state.storage.put(acctKey(a.acct), next);", "tests": ["test/soc1_hub.test.js"] },
-  { "name": "S14-one-sided-friendship", "file": "server/src/index.js", "old": "const theirs = { ...trec, in: without(trec.in, me), out: without(trec.out, me), friends: trec.friends.includes(me) ? trec.friends : [...trec.friends, me] };", "new": "const theirs = { ...trec, in: without(trec.in, me), out: without(trec.out, me) };", "tests": ["test/soc1_hub.test.js"] },
-  { "name": "S15-mutual-request-left-pending", "file": "server/src/index.js", "old": "if (hasEntry(rec.in, them)) return this._friendAccept(me, rec, them, now);   // they asked first: a request back is a yes", "new": "", "tests": ["test/soc1_hub.test.js"] },
-  { "name": "S16-note-to-the-sender", "file": "server/src/index.js", "old": "this._sayNote(them, 'friend.requested', me, mine.name);", "new": "this._sayNote(me, 'friend.requested', me, mine.name);", "tests": ["test/soc1_hub.test.js"] },
-  { "name": "S17-friends-cap-one-side", "file": "server/src/index.js", "old": "if (trec.friends.length >= FRIENDS_MAX) return 'their friend list is full';\n    if (rec.out.length >= PENDING_MAX) return 'too many requests out';", "new": "if (rec.out.length >= PENDING_MAX) return 'too many requests out';", "tests": ["test/soc1_hub.test.js"] },
-  { "name": "S18-inbox-unbounded", "file": "server/src/index.js", "old": "if (trec.in.length >= PENDING_MAX) return 'their inbox is full';", "new": "", "tests": ["test/soc1_hub.test.js"] },
-  { "name": "S19-party-unmade-by-invite", "file": "server/src/index.js", "old": "if (made) this._markParty(me, next.id);", "new": "", "tests": ["test/soc1_hub.test.js"] },
-  { "name": "S20-invite-to-the-room", "file": "server/src/index.js", "old": "this._sayTo(them, JSON.stringify({ t: 'social', k: 'invite', party: next.id,", "new": "this._sayTo(me, JSON.stringify({ t: 'social', k: 'invite', party: next.id,", "tests": ["test/soc1_hub.test.js"] },
-  { "name": "S21-fifth-seat", "file": "server/src/index.js", "old": "if (party.members.length >= PARTY_MAX) return 'the party is full';\n    const live", "new": "if (party.members.length > PARTY_MAX) return 'the party is full';\n    const live", "tests": ["test/soc1_hub.test.js"] },
-  { "name": "S22-lapsed-invite-honoured", "file": "server/src/index.js", "old": "if (now - inv.at >= INVITE_TTL_MS) return refuse('that invite has lapsed');", "new": "", "tests": ["test/soc1_hub.test.js"] },
-  { "name": "S23-seat-passed-to-the-newest", "file": "server/src/index.js", "old": "const leader = party.leader === acct ? members[0] : party.leader;", "new": "const leader = party.leader === acct ? members[members.length - 1] : party.leader;", "tests": ["test/soc1_hub.test.js"] },
-  { "name": "S24-empty-party-kept", "file": "server/src/index.js", "old": "if (!members.length) { await this._delParty(party.id); return null; }", "new": "if (!members.length) { return null; }", "tests": ["test/soc1_hub.test.js"] },
-  { "name": "S25-anyone-kicks", "file": "server/src/index.js", "old": "if (party.leader !== me) return 'only the leader can do that';", "new": "", "tests": ["test/soc1_hub.test.js"] },
-  { "name": "S26-two-parties-at-once", "file": "server/src/index.js", "old": "if (old) await this._partyOut(me, old, now, 'party.left', mine.name);", "new": "", "tests": ["test/soc1_hub.test.js"] },
-  { "name": "S27-pose-fanned-back", "file": "server/src/index.js", "old": "for (const member of party.members) if (member !== a.acct) for (const other of this._socketsOf(member)) this._send(other, out);", "new": "for (const member of party.members) for (const other of this._socketsOf(member)) if (other !== ws) this._send(other, out);", "tests": ["test/soc1_hub.test.js"] },
-  { "name": "S28-view-without-pose", "file": "server/src/index.js", "old": "return { ...this._rowOf(id, recs.get(id), now, except), p };", "new": "return { ...this._rowOf(id, recs.get(id), now, except), p: null };", "tests": ["test/soc1_hub.test.js"] },
-  { "name": "S29-seat-lost-on-drop", "file": "server/src/index.js", "old": "if (gone) { party = { ...party, away: { ...(party.away ?? {}), [a.acct]: now } }; await this._putParty(party); }", "new": "if (gone) { party = await this._partyOut(a.acct, party, now, 'party.left', next.name); if (!party) return; }", "tests": ["test/soc1_hub.test.js"] },
-  { "name": "S30-seat-kept-for-ever", "file": "server/src/index.js", "old": "const lapsed = party.members.filter((id) => party.away?.[id] != null && now - party.away[id] >= PARTY_OFFLINE_MS && !this._socketsOf(id).length);", "new": "const lapsed = [];", "tests": ["test/soc1_hub.test.js"] },
-  { "name": "S31-social-act-ungated", "file": "server/src/index.js", "old": "a = this._meterSocial(ws, a, now); if (!a) return;\n      if (!isSocialRoom(a.key)) { this._junk(ws, a); return; }", "new": "if (!isSocialRoom(a.key)) { this._junk(ws, a); return; }", "tests": ["test/soc1_hub.test.js"] },
-  { "name": "S32-room-budget-missing", "file": "server/src/index.js", "old": "if (!budget.pass) { this._sayError(ws, 'busy'); return; }", "new": "", "tests": ["test/soc1_hub.test.js"] },
-  { "name": "S33-cell-takes-party-poses", "file": "server/src/index.js", "old": "if (!isSocialRoom(a.key) || !a.acct) { this._junk(ws, a); return; }", "new": "if (!a.acct) { this._junk(ws, a); return; }", "tests": ["test/soc1_hub.test.js"] },
-  { "name": "S34-party-on-the-instance-alone", "file": "server/src/index.js", "old": "async _putParty(party) { this._parties.set(party.id, party); await this.state.storage.put(partyKey(party.id), party); }", "new": "async _putParty(party) { this._parties.set(party.id, party); }", "tests": ["test/soc1_hub.test.js"] },
-  { "name": "S35-acct-swept-with-the-looks", "file": "server/src/index.js", "old": "this._parties.clear(); for (const k of (await this.state.storage.list({ prefix: 'party:' })).keys()) dead.push(k);", "new": "this._parties.clear(); for (const p of ['party:', 'acct:']) for (const k of (await this.state.storage.list({ prefix: p })).keys()) dead.push(k);", "tests": ["test/soc1_hub.test.js"] },
-  { "name": "S36-party-kept-for-ever", "file": "server/src/index.js", "old": "this._parties.clear(); for (const k of (await this.state.storage.list({ prefix: 'party:' })).keys()) dead.push(k);", "new": "this._parties.clear();", "tests": ["test/soc1_hub.test.js"] },
-  { "name": "S37-picture-before-the-welcome", "file": "server/src/index.js", "old": "if (!this._send(ws, JSON.stringify({ t: 'welcome', id: m.id, peers: named, n: others.length + 1, v: RELAY_VERSION }))) return;\n        const said", "new": "if (isSocialRoom(a.key) && m.acct) await this._helloAccount(ws, m, now);\n        if (!this._send(ws, JSON.stringify({ t: 'welcome', id: m.id, peers: named, n: others.length + 1, v: RELAY_VERSION }))) return;\n        const said", "tests": ["test/soc1_hub.test.js"] },
-  { "name": "S38-version-not-bumped", "file": "src/net/wire.js", "old": "export const RELAY_VERSION = 'world78';", "new": "export const RELAY_VERSION = 'world77';", "tests": ["test/soc1_hub.test.js", "test/relayversion.test.js"] }
+  {
+    "name": "S1-party-five-seats",
+    "file": "src/net/wire.js",
+    "old": "export const PARTY_MAX = 4;",
+    "new": "export const PARTY_MAX = 5;",
+    "tests": [
+      "test/soc1_hub.test.js"
+    ]
+  },
+  {
+    "name": "S2-account-secret-optional",
+    "file": "src/net/wire.js",
+    "old": "if (!acct || !asecret) return { error: 'bad account' };",
+    "new": "if (!acct) return { error: 'bad account' };",
+    "tests": [
+      "test/soc1_hub.test.js"
+    ]
+  },
+  {
+    "name": "S3-target-both-admitted",
+    "file": "src/net/wire.js",
+    "old": "  if (needs === 'target' && (!!acct === !!peer)) return null;   // one of the two, never both and never neither",
+    "new": "  if (needs === 'target' && !acct && !peer) return null;",
+    "tests": [
+      "test/soc1_hub.test.js"
+    ]
+  },
+  {
+    "name": "S4-vital-unbounded",
+    "file": "src/net/wire.js",
+    "old": "if (!finite(v) || v < 0 || v > FOE_HEALTH_MAX) return null;\n    out[k] = Math.round(v);",
+    "new": "if (!finite(v) || v < 0) return null;\n    out[k] = Math.round(v);",
+    "tests": [
+      "test/soc1_hub.test.js"
+    ]
+  },
+  {
+    "name": "S5-vital-fraction-kept",
+    "file": "src/net/wire.js",
+    "old": "out[k] = Math.round(v);",
+    "new": "out[k] = v;",
+    "tests": [
+      "test/soc1_hub.test.js"
+    ]
+  },
+  {
+    "name": "S6-place-unfiltered",
+    "file": "src/net/wire.js",
+    "old": "return !filter || nameAllowed(s) ? s : '';",
+    "new": "return s;",
+    "tests": [
+      "test/soc1_hub.test.js"
+    ]
+  },
+  {
+    "name": "S7-leader-need-not-be-member",
+    "file": "src/net/wire.js",
+    "old": "if (!members.some((m) => m.acct === leader)) return null;",
+    "new": "",
+    "tests": [
+      "test/soc1_hub.test.js"
+    ]
+  },
+  {
+    "name": "S8-bad-row-dropped-not-refused",
+    "file": "src/net/wire.js",
+    "old": "const row = one(r); if (!row) return null; out.push(row);",
+    "new": "const row = one(r); if (!row) continue; out.push(row);",
+    "tests": [
+      "test/soc1_hub.test.js"
+    ]
+  },
+  {
+    "name": "S9-note-code-unchecked",
+    "file": "src/net/wire.js",
+    "old": "if (m.k === 'note') { if (!NOTE_CODES.includes(m.code)) return null;",
+    "new": "if (m.k === 'note') { if (typeof m.code !== 'string') return null;",
+    "tests": [
+      "test/soc1_hub.test.js"
+    ]
+  },
+  {
+    "name": "S10-account-taken-admitted",
+    "file": "server/src/index.js",
+    "old": "if (held && held !== m.asecret) { this._sayError(ws, 'account taken'); return; }",
+    "new": "if (held && held !== m.asecret) { this._sayError(ws, 'account taken'); }",
+    "tests": [
+      "test/soc1_hub.test.js"
+    ]
+  },
+  {
+    "name": "S11-state-to-every-tab",
+    "file": "server/src/index.js",
+    "old": "await this._sayState(m.acct, rec, now, ws);\n    this._sayPresence(m.acct, rec, now);",
+    "new": "await this._sayState(m.acct, rec, now);\n    this._sayPresence(m.acct, rec, now);",
+    "tests": [
+      "test/soc1_hub.test.js"
+    ]
+  },
+  {
+    "name": "S12-presence-to-the-room",
+    "file": "server/src/index.js",
+    "old": "for (const f of rec.friends) this._sayTo(f, out, except);",
+    "new": "for (const [other, b] of this._all()) if (other !== except && b.id) this._send(other, out);",
+    "tests": [
+      "test/soc1_hub.test.js"
+    ]
+  },
+  {
+    "name": "S13-seen-stamped-on-first-tab",
+    "file": "server/src/index.js",
+    "old": "    let next = gone ? { ...rec, seen: now } : rec;",
+    "new": "    let next = { ...rec, seen: now };",
+    "tests": [
+      "test/soc1_hub.test.js"
+    ],
+    "equivalent": true,
+    "why": "AUDIT QS6 F7: unobservable, and shown so rather than assumed. `next` is written to the store only under `if (gone)`, where the two agree; and a friend's presence row never reads `rec.seen` while the account is online (`_rowOf`: `seen: socks.length ? now : rec.seen`), so a `seen` stamped on a record that is not stored reaches nobody. The LAW - stamped when the last tab goes and not before - is pinned on the STORE in test/soc1_hub.test.js, which is where it is enforced."
+  },
+  {
+    "name": "S14-one-sided-friendship",
+    "file": "server/src/index.js",
+    "old": "const theirs = { ...trec, in: without(trec.in, me), out: without(trec.out, me), friends: trec.friends.includes(me) ? trec.friends : [...trec.friends, me] };",
+    "new": "const theirs = { ...trec, in: without(trec.in, me), out: without(trec.out, me) };",
+    "tests": [
+      "test/soc1_hub.test.js"
+    ]
+  },
+  {
+    "name": "S15-mutual-request-left-pending",
+    "file": "server/src/index.js",
+    "old": "if (hasEntry(rec.in, them)) return this._friendAccept(me, rec, them, now);   // they asked first: a request back is a yes",
+    "new": "",
+    "tests": [
+      "test/soc1_hub.test.js"
+    ]
+  },
+  {
+    "name": "S16-note-to-the-sender",
+    "file": "server/src/index.js",
+    "old": "this._sayNote(them, 'friend.requested', me, mine.name);",
+    "new": "this._sayNote(me, 'friend.requested', me, mine.name);",
+    "tests": [
+      "test/soc1_hub.test.js"
+    ]
+  },
+  {
+    "name": "S17-friends-cap-one-side",
+    "file": "server/src/index.js",
+    "old": "if (trec.friends.length >= FRIENDS_MAX) return 'their friend list is full';\n    if (rec.out.length >= PENDING_MAX) return 'too many requests out';",
+    "new": "if (rec.out.length >= PENDING_MAX) return 'too many requests out';",
+    "tests": [
+      "test/soc1_hub.test.js"
+    ]
+  },
+  {
+    "name": "S18-inbox-unbounded",
+    "file": "server/src/index.js",
+    "old": "if (trec.in.length >= PENDING_MAX) return 'their inbox is full';",
+    "new": "",
+    "tests": [
+      "test/soc1_hub.test.js"
+    ]
+  },
+  {
+    "name": "S19-party-unmade-by-invite",
+    "file": "server/src/index.js",
+    "old": "if (made) this._markParty(me, next.id);",
+    "new": "",
+    "tests": [
+      "test/soc1_hub.test.js"
+    ]
+  },
+  {
+    "name": "S20-invite-to-the-room",
+    "file": "server/src/index.js",
+    "old": "this._sayTo(them, JSON.stringify({ t: 'social', k: 'invite', party: next.id,",
+    "new": "this._sayTo(me, JSON.stringify({ t: 'social', k: 'invite', party: next.id,",
+    "tests": [
+      "test/soc1_hub.test.js"
+    ]
+  },
+  {
+    "name": "S21-fifth-seat",
+    "file": "server/src/index.js",
+    "old": "if (party.members.length >= PARTY_MAX) return 'the party is full';\n    const live",
+    "new": "if (party.members.length > PARTY_MAX) return 'the party is full';\n    const live",
+    "tests": [
+      "test/soc1_hub.test.js"
+    ]
+  },
+  {
+    "name": "S22-lapsed-invite-honoured",
+    "file": "server/src/index.js",
+    "old": "if (now - inv.at >= INVITE_TTL_MS) return refuse('that invite has lapsed');",
+    "new": "",
+    "tests": [
+      "test/soc1_hub.test.js"
+    ]
+  },
+  {
+    "name": "S23-seat-passed-to-the-newest",
+    "file": "server/src/index.js",
+    "old": "const leader = party.leader === acct ? members[0] : party.leader;",
+    "new": "const leader = party.leader === acct ? members[members.length - 1] : party.leader;",
+    "tests": [
+      "test/soc1_hub.test.js"
+    ]
+  },
+  {
+    "name": "S24-empty-party-kept",
+    "file": "server/src/index.js",
+    "old": "if (!members.length) { await this._delParty(party.id); return null; }",
+    "new": "if (!members.length) { return null; }",
+    "tests": [
+      "test/soc1_hub.test.js"
+    ]
+  },
+  {
+    "name": "S25-anyone-kicks",
+    "file": "server/src/index.js",
+    "old": "if (party.leader !== me) return 'only the leader can do that';",
+    "new": "",
+    "tests": [
+      "test/soc1_hub.test.js"
+    ]
+  },
+  {
+    "name": "S26-two-parties-at-once",
+    "file": "server/src/index.js",
+    "old": "if (old) await this._partyOut(me, old, now, 'party.left', mine.name);",
+    "new": "",
+    "tests": [
+      "test/soc1_hub.test.js"
+    ]
+  },
+  {
+    "name": "S27-pose-fanned-back",
+    "file": "server/src/index.js",
+    "old": "for (const member of party.members) if (member !== a.acct) for (const other of this._socketsOf(member)) this._send(other, out);",
+    "new": "for (const member of party.members) for (const other of this._socketsOf(member)) if (other !== ws) this._send(other, out);",
+    "tests": [
+      "test/soc1_hub.test.js"
+    ]
+  },
+  {
+    "name": "S28-view-without-pose",
+    "file": "server/src/index.js",
+    "old": "return { ...this._rowOf(id, recs.get(id), now, except), p };",
+    "new": "return { ...this._rowOf(id, recs.get(id), now, except), p: null };",
+    "tests": [
+      "test/soc1_hub.test.js"
+    ]
+  },
+  {
+    "name": "S29-seat-lost-on-drop",
+    "file": "server/src/index.js",
+    "old": "if (gone) { party = { ...party, away: { ...(party.away ?? {}), [a.acct]: now } }; await this._putParty(party); }",
+    "new": "if (gone) { party = await this._partyOut(a.acct, party, now, 'party.left', next.name); if (!party) return; }",
+    "tests": [
+      "test/soc1_hub.test.js"
+    ]
+  },
+  {
+    "name": "S30-seat-kept-for-ever",
+    "file": "server/src/index.js",
+    "old": "const lapsed = party.members.filter((id) => party.away?.[id] != null && now - party.away[id] >= PARTY_OFFLINE_MS && !this._socketsOf(id).length);",
+    "new": "const lapsed = [];",
+    "tests": [
+      "test/soc1_hub.test.js"
+    ]
+  },
+  {
+    "name": "S31-social-act-ungated",
+    "file": "server/src/index.js",
+    "old": "a = this._meterSocial(ws, a, now); if (!a) return;\n      if (!isSocialRoom(a.key)) { this._junk(ws, a); return; }",
+    "new": "if (!isSocialRoom(a.key)) { this._junk(ws, a); return; }",
+    "tests": [
+      "test/soc1_hub.test.js"
+    ]
+  },
+  {
+    "name": "S32-room-budget-missing",
+    "file": "server/src/index.js",
+    "old": "if (!budget.pass) { this._sayError(ws, 'busy'); return; }",
+    "new": "",
+    "tests": [
+      "test/soc1_hub.test.js"
+    ]
+  },
+  {
+    "name": "S33-cell-takes-party-poses",
+    "file": "server/src/index.js",
+    "old": "if (!isSocialRoom(a.key) || !a.acct) { this._junk(ws, a); return; }",
+    "new": "if (!a.acct) { this._junk(ws, a); return; }",
+    "tests": [
+      "test/soc1_hub.test.js"
+    ]
+  },
+  {
+    "name": "S34-party-on-the-instance-alone",
+    "file": "server/src/index.js",
+    "old": "async _putParty(party) { this._parties.set(party.id, party); await this.state.storage.put(partyKey(party.id), party); }",
+    "new": "async _putParty(party) { this._parties.set(party.id, party); }",
+    "tests": [
+      "test/soc1_hub.test.js"
+    ]
+  },
+  {
+    "name": "S35-acct-swept-with-the-looks",
+    "file": "server/src/index.js",
+    "old": "    this._parties.clear(); for (const k of await this._keysOf('party:')) dead.push(k);",
+    "new": "    this._parties.clear(); for (const p of ['party:', 'acct:']) for (const k of await this._keysOf(p)) dead.push(k);",
+    "tests": [
+      "test/soc1_hub.test.js"
+    ]
+  },
+  {
+    "name": "S36-party-kept-for-ever",
+    "file": "server/src/index.js",
+    "old": "    this._parties.clear(); for (const k of await this._keysOf('party:')) dead.push(k);",
+    "new": "    this._parties.clear();",
+    "tests": [
+      "test/soc1_hub.test.js"
+    ]
+  },
+  {
+    "name": "S37-picture-before-the-welcome",
+    "file": "server/src/index.js",
+    "old": "        const said = JSON.stringify({ t: 'join', id: m.id, name: m.name });\n        for (const [other, b] of [...this._all()]) if (other !== ws && b.id) this._send(other, said);",
+    "new": "        const said = JSON.stringify({ t: 'join', id: m.id, name: m.name });\n        if (isSocialRoom(a.key) && m.acct) { try { await this._helloAccount(ws, m, now); } catch { /* the mutant's early hello */ } }\n        for (const [other, b] of [...this._all()]) if (other !== ws && b.id) this._send(other, said);",
+    "tests": [
+      "test/soc1_hub.test.js"
+    ]
+  },
+  {
+    "name": "S38-version-not-bumped",
+    "file": "src/net/wire.js",
+    "old": "export const RELAY_VERSION = 'world80';",
+    "new": "export const RELAY_VERSION = 'world79';",
+    "tests": [
+      "test/soc1_hub.test.js",
+      "test/relayversion.test.js"
+    ]
+  }
 ]

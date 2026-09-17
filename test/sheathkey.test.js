@@ -72,12 +72,15 @@ test('SHEATH: every host polls ReadyWeapon on an edge, and the dungeon hosts rou
   // dungeon keydown listeners go through routeKey (they stay). The
   // decline in routeKey is what keeps them from adding up.
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/worldModes.js', 'src/scenes/dungeon.js']) {
-    assert.match(read(f), /held\(keys, 'ReadyWeapon'\)/, `${f} polls ReadyWeapon`);
-    // a12: and SwitchHand beside it, on the INVERTED latch -
+    // MWCROUCH: the poll is GetKeyDown now (`pressed`, ui/input.js)
+    // rather than `held(keys, act) && !prev` - the derivation dropped
+    // any press that began and ended between two frames. The law here
+    // is the one it always was: EVERY host polls the action itself.
+    assert.match(read(f), /pressed\((keyEdge|latch\.edge), keys, 'ReadyWeapon'\)/, `${f} polls ReadyWeapon`);
+    // a12: and SwitchHand beside it, on the INVERTED edge -
     // ActionComplete is the release (InputManager.cs:634-637), where
-    // ReadyWeapon's ActionStarted is the press.
-    assert.match(read(f), /held\(keys, 'SwitchHand'\)/, `${f} polls SwitchHand`);
-    assert.match(read(f), /if \(!hNow[W]? && hPrev[W]?\)/, `${f} switches the hand on the RELEASE edge`);
+    // ReadyWeapon's ActionStarted is the press. Two rings, one law.
+    assert.match(read(f), /released\((keyEdge|latch\.edge), keys, 'SwitchHand'\)/, `${f} switches the hand on the RELEASE edge`);
   }
   assert.match(read('src/scenes/worldModes.js'), /routeKey\(e, dungeonCtx/);
   assert.match(read('src/scenes/dungeon.js'), /routeKey\(e, ctx/);
@@ -141,6 +144,6 @@ test('SHEATH: the two outdoor fall-through tails decline POLLED_ACTIONS too - AU
       `${f}: the fall-through tail declines a polled action before it ever reaches routeAction, exactly as routeKey does`);
     // AUDIT MW-TORCH: the poll is now the ONLY door for Z in these two
     // hosts - so its presence is pinned beside the decline.
-    assert.match(src, /const zNowW = held\(keys, 'ReadyWeapon'\);\n\s+if \(zNowW && !zPrevW\) weaponRig\.readyWeapon\(\);/, `${f}: the frame's edge poll stands`);
+    assert.match(src, /if \(pressed\(latch\.edge, keys, 'ReadyWeapon'\)\) weaponRig\.readyWeapon\(\);/, `${f}: the frame's edge poll stands`);
   }
 });

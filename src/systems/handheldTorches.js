@@ -49,7 +49,6 @@ import { TEMPLATES, isLightSource } from './useItem.js';
 import { getItem, addItem } from './inventory.js';
 import { conditionWord, itemLongName } from './itemInfo.js';
 import { getItemHands, EQUIP_SLOTS, ITEM_HANDS, addEquipChangeListener } from './equip.js';   // HT6: the worn set's own door - the hand law runs at the equip moment too
-import { isShieldTemplate } from './armorMaterials.js';
 import { weaponTypeForItem, WEAPON_TYPES, NATIVE_W, NATIVE_H } from '../combat/fpsWeapon.js';
 import { weaponOffsetHeight } from '../ui/hudLarge.js';
 import { SOUND } from './soundClips.js';
@@ -294,32 +293,54 @@ export function createHandheldTorches({
     w.handRight = true; w.handLeft = true;
     const slots = ctx?.entity?.equip?.slots ?? {};   // the table as it stands - read, never minted here (the rig's worn-item sync reads the same slot and must not see one appear)
     const left = slots[EQUIP_SLOTS.LeftHand] ?? null, right = slots[EQUIP_SLOTS.RightHand] ?? null;   // slot 21, slot 19
-    const isShield = (it) => it.group === 'Armor' && isShieldTemplate(it.templateIndex);
+    // HT7: `isShield` stood here for the mod's sheathed arm alone, and
+    // that arm is gone - what is WORN takes a hand now, shield or not.
     const isBow = (it) => weaponTypeForItem(it) === WEAPON_TYPES.Bow;
     // WeaponManager.Sheathed (ldfld 0x2c8a) and UsingRightHand (0x2cfc,
     // 0x2d5d) are read LIVE here, not the mod's own latched copies -
     // those are the edge detectors below in Update, written after this
     const sheathedNow = !!ctx?.sheathed, usingRightNow = ctx?.usingRightHand !== false;
-    if (sheathedNow) {
-      // sheathed, a bow in the left slot still takes the left hand (0x2c91-0x2cb8)
-      if (left && !isShield(left) && isBow(left)) w.handLeft = false;
-    } else {
-      if (left) {
-        w.handLeft = false;
-        if (getItemHands(left) === ITEM_HANDS.LeftOnly) { if (!usingRightNow) w.handLeft = false; }
-        else if (isBow(left)) w.handRight = false;
-      }
-      if (right) {
-        w.handRight = false;
-        // IL 0x2d1a: `GetItemHands() == 2` (LeftOnly) - a two-hander
-        // answers Both (4), so the relaxed-two-hander arm below fires
-        // on nothing a right hand holds; kept exactly as the mod has it
-        if (getItemHands(right) === ITEM_HANDS.LeftOnly) {
-          if (w.s.twoHandedRelaxed) { if (isBow(right)) w.handLeft = false; else if (w.attacking) w.handLeft = false; }
-          else w.handLeft = false;
-        }
-      } else if (usingRightNow) w.handRight = false;   // bare right hand, in use (0x2d53)
+    // HT7 (2026-09-17, Mac: "Take care of both") - THE PORT'S ONE DEPARTURE
+    // FROM UpdateFreeHand, and it is about DAGGERFALL rather than about
+    // the mod.
+    //
+    // The mod's sheathed arm (0x2c91-0x2cb8) clears a hand only for a BOW
+    // in the left slot, on the premise that a sheathed weapon is away and
+    // takes no hand. HT6 recorded the consequence - a shield equipped
+    // while sheathed left the torch lit in the arm the shield had just
+    // gone onto - defended it ("a Daggerfall shield is ARMOUR, strapped
+    // rather than gripped, so a torch in that hand with the sword on your
+    // back is a true reading") and flagged it for Mac. He has decided.
+    //
+    // AND THE DEFENCE WAS WRONG ABOUT THIS GAME. Daggerfall has no back
+    // sheath. "Sheathed" here is WeaponManager's stance - the weapon is
+    // lowered, still held, still drawn on screen the moment you swing -
+    // and the port draws it that way. There is no state in which the
+    // sword is on your back, so there is no state in which that hand is
+    // free to hold a torch. Mac's original report is exactly this case:
+    // "When equipping a shield or other offhand item, the torch in the
+    // inventory isnt shown unequipped and replaced" - and with the weapon
+    // sheathed, which is how a player walks around, it still was not.
+    //
+    // So WHAT IS WORN takes a hand whether the stance is sheathed or not,
+    // and the ONE clause that stays stance-bound is the mod's own bare
+    // right hand "in use" (0x2d53): an empty hand you are not swinging
+    // with is free, which is what lets a weaponless player carry a light.
+    if (left) {
+      w.handLeft = false;
+      if (getItemHands(left) === ITEM_HANDS.LeftOnly) { if (!usingRightNow) w.handLeft = false; }
+      else if (isBow(left)) w.handRight = false;
     }
+    if (right) {
+      w.handRight = false;
+      // IL 0x2d1a: `GetItemHands() == 2` (LeftOnly) - a two-hander
+      // answers Both (4), so the relaxed-two-hander arm below fires
+      // on nothing a right hand holds; kept exactly as the mod has it
+      if (getItemHands(right) === ITEM_HANDS.LeftOnly) {
+        if (w.s.twoHandedRelaxed) { if (isBow(right)) w.handLeft = false; else if (w.attacking) w.handLeft = false; }
+        else w.handLeft = false;
+      }
+    } else if (!sheathedNow && usingRightNow) w.handRight = false;   // bare right hand, in use (0x2d53) - and only with the weapon up
     if (w.s.stowOnSpellcasting && w.spellcasting) { w.handRight = false; w.handLeft = false; }
     if (w.s.stowOnClimbing && w.climbing) { w.handRight = false; w.handLeft = false; }
     if (w.s.stowOnSwimming && w.swimming) { w.handRight = false; w.handLeft = false; }

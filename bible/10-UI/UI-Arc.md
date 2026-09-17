@@ -52,7 +52,7 @@ still push CLASSIC canvas windows as children under the DOM, and so
 does the pack's USE arm.
 
     THE SPELLBOOK       FIVE construction sites across FOUR hosts:
-                        worldModes.js:1856 (the factory) and :1904 (a
+                        worldModes.js:1854 (the factory) and :1904 (a
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
                         dungeonContext.js:956, world.js:1723,
@@ -62,7 +62,7 @@ does the pack's USE arm.
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:5093, dungeonContext.js:6013. A seam
+    / NOTEBOOK          world.js:5098, dungeonContext.js:6013. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -7783,7 +7783,7 @@ same answer: `ui/spellbookDoor.js`, with each host handing it only
 what that host knows.
 
 THE "HAND-ROLLED DUPLICATE" WAS NOT ONE. The board recorded
-worldModes.js:2673 as a second book built by hand 342 lines below the
+worldModes.js:2671 as a second book built by hand 342 lines below the
 factory. Read closely it is the SPELL MERCHANT'S SHOP - buyMode, with
 `offered`, the building's quality, the shop name, the haggling skills
 and the classic clock. A different question with different deps, and
@@ -8493,7 +8493,7 @@ and firing THAT twice is a second PopToHUD.
 
 ### Why only two of the four hosts crashed
 
-`worldModes.js:5503` and `dungeonContext.js:1457` answer the same
+`worldModes.js:5501` and `dungeonContext.js:1457` answer the same
 `onClose` by nulling their slot and never disposing - nothing to
 re-enter. Only the two hosts that come through `townTalk.closeOverlay`
 dispose. **The four-hosts rule caught this one by accident**: the two
@@ -8558,7 +8558,7 @@ cited and ported somewhere in `src/`. FOUR were not:
 
 ### UI1 CLOSED: the use-magic-item window
 
-The port had the DOOR and not the room. `input.js:521` routed
+The port had the DOOR and not the room. `input.js:588` routed
 `Actions.UseMagicItem` to `ctx.openUseMagicItem`, `hudLarge.js:151`
 gave the large HUD's button its rect, `inputActions.js` bound KeyU -
 and no host implemented the method, so a live binding silently did
@@ -9737,9 +9737,9 @@ re-resolved the `exterior.js` half of a three-file sentence and left the
 `ExteriorAutomapWindow` construction, `:4101` on a `locationName:`
 field). Both halves are now read by `test/citedrift.test.js` - the
 existing entries only ever captured the exterior number, which is how
-the other half went stale unnoticed. (The rest cite named `world.js:5356`,
+the other half went stale unnoticed. (The rest cite named `world.js:5362`,
 the first of the host's TWO identical `act === 'Rest'` arms; ROAD-H H5
-deleted the second and the cite is `world.js:5362` now.)
+deleted the second and the cite is `world.js:5368` now.)
 
 ## AUDIT 62 F24/F25 - THE SENTINEL SWEEP WAS TWO WINDOWS SHORT (2026-09-07)
 
@@ -14640,3 +14640,386 @@ declined every time; a window spanned by a held key performs nothing on
 the way out; and the hold follows a REBIND, because it is an action and
 not a key literal. It cannot boot the game - this container has no
 ARENA2 - but every module the arc touched is the real one.
+
+## HT7 + MWT1 + MWT2 - THE TORCH, THREE WAYS (2026-09-17)
+
+Mac: "Take care of both. Also fix morrowind model's torch. It's
+positioned incorrectly and isnt lit."
+
+"Both" is HT6's pair - the two laws it recorded rather than departed
+from, flagged as decisions and not fixes. He has made them.
+
+### HT7 - a hand holding something is not free, sheathed or drawn
+
+Handheld Torches' `UpdateFreeHand` has a sheathed arm (0x2c91-0x2cb8)
+that clears a hand only for a BOW in the left slot, on the premise that
+a sheathed weapon is away and takes no hand. HT6 recorded the
+consequence - equip a shield with your weapon lowered and the torch
+stayed lit in the arm the shield had just gone onto - and DEFENDED it:
+"a Daggerfall shield is ARMOUR, strapped rather than gripped, so a torch
+in that hand with the sword on your back is a true reading."
+
+**That defence was wrong about this game.** Daggerfall has no back
+sheath. "Sheathed" is WeaponManager's stance - the weapon is lowered,
+still held, and drawn on screen the moment you swing - and this port
+draws it that way. There is no state in which the sword is on your back,
+so there is no state in which that hand is free to hold a torch. And it
+is exactly the case Mac's ORIGINAL report was about ("When equipping a
+shield or other offhand item, the torch in the inventory isnt shown
+unequipped and replaced"), because sheathed is how a player walks
+around.
+
+So what is WORN takes a hand whether the stance is sheathed or not, and
+the one clause that stays stance-bound is the mod's own bare right hand
+"in use" (0x2d53): an empty hand you are not swinging with is free,
+which is what lets a weaponless player carry a light. One line differs
+from the IL.
+
+The first cut of this was nearly INERT and the pins said so: clearing
+the left hand alone still left the right one free, so the torch simply
+moved across and Mac would have seen no change at all. The fixture that
+caught it is the one that equips a sword AND a shield, which is a
+player.
+
+### HT7 - and the default that put your torch on the floor
+
+The mod ships `Handling.OnStow = Drop`. HT6 made the hand law run at the
+EQUIP MOMENT rather than on the next frame, and recorded what that
+means: equipping a shield with your weapon drawn now drops the lit torch
+on the floor while the inventory is still open, in front of you. A
+player who equips a shield mid-fight has not asked to drop anything, and
+a torch on a dungeon floor is an item lost to whoever does not think to
+look down.
+
+The port **defaults it to Unequip** - the light goes back to the pack and
+`RememberLastLightSource` lights it again when a hand comes free, which
+is what the rest of this mod is built around. The mod's own value is one
+click away on the Mods pane's dial, nothing about the Drop path is
+removed, and the throw is still how you put a torch on the floor on
+purpose. It is the fourth entry in `PORT_DEFAULT` and the first that is
+not about a key.
+
+### MWT1 - the right bone, the wrong way up
+
+`resolveTorchPart` hangs the Morrowind torch at `Shield Bone`, which is
+the reference's own answer (a carried Light is a `PRT_Shield` part, rule
+4's table and updateParts' "a carried Light's shield mesh"). The BONE
+was never the problem. The ROTATION was missing.
+
+`SceneUtil::attach` puts one PositionAttitudeTransform between the
+actor's bone and the attached model, and the only rotation it can carry
+is the caller's `attitude` - which `ActorAnimation::attach` passes for
+`isLight` ALONE (:97-103) and never for a weapon (:104-105). It is an
+extra **-90 degrees about X**, and this port's own reference notes wrote
+it down at `02-Formats/Morrowind-Rules.md:3228`, beside the two
+engine-injected transforms it DID port. The code never applied it.
+
+It rides `preTransform`, the seam the arrow already uses - the same place
+in the chain the reference's PAT sits, and Shield Bone carries no "Left"
+so no mirror intervenes. The pin EXECUTES the rotation over the three
+axes rather than reading the matrix, because a transposed matrix is a
+different wrong answer that looks the same in a literal.
+
+### MWT2 - the emission this port resolved and never read
+
+`mwNifMesh.js` has always ported the reference's two emissive laws
+exactly: `LightMode_Emissive` forces the DIFFUSE and the AMBIENT to
+BLACK, so the surface "is lit only by its emissive term" (:2895-2902),
+and `VertexMode_SrcEmissive` names the vertex colour as that term. It
+resolved them into `material.emissive` - and **nothing ever read it.**
+`packFpArm` wrote `diffuseAt` alone, and the character fragment had no
+emission at all; its own comment said so ("C4b - no emission"), written
+when the only meshes on that program were the voxel rigs, before MW-D11
+brought real Morrowind meshes through it.
+
+So the port drew a self-illuminated surface as a BLACK diffuse, times a
+texture, times the room's light: black. **The torch's flame is exactly
+that surface**, and a torch with a black flame is a stick.
+
+`emissiveAt` is `diffuseAt`'s mirror on rule 63's substitution law. The
+pack is three floats wider (`FP_FLOATS` 11 -> 14), the character program
+takes a fifth attribute at location 4 - additive exactly as MW-D11's UV
+channel was, so a VAO that never enables it reads the constant zero and
+every voxel caller draws what it drew before - and the fragment adds
+`vEmissive * texel.rgb` as the LAST term, after every light. It is the
+one term the vertex colour does not gate, because LightMode_Emissive has
+already forced that colour to black, which is the whole bug.
+
+### Pinned
+
+`test/mwtorch.test.js` (the attitude, executed over the axes),
+`test/mwnifmesh.test.js` (+2: `emissiveAt`'s substitution both ways on
+one material, the absent field reading as no light rather than a throw,
+and the channel end to end), `test/ht1_handheldtorches.test.js` and
+`test/ht6_offhand.test.js` (+1: the equip moment reading the dial FRESH -
+a survivor AUDIT QS6 F7's sweep exposed, because every fixture had set
+its dial before the first frame and a stale read looked identical).
+
+### The debt AUDIT QS6 F7 carried, paid
+
+The twelve mutant records the sweep found already stale are re-aimed and
+the CARRIED list is EMPTY. Two came back on the BOX1/TI3 merge; the
+other ten were re-aimed by content here - four of them had to move file
+as well as line, because the law had left the module the record named
+(`host-world-ungated` now points at `classicFootstepAllowed`, the one
+gate BA1 folded both mods' DisableBuiltInFootsteps into).
+
+And re-aiming them was not bookkeeping. Three of the ten, once they
+applied again, **SURVIVED** - which is what a stale record hides:
+
+- the classic footstep gate had no pin but a source regex over the call
+  site, so nothing checked that Immersive Footsteps owning the stride
+  actually silences a clip, or that it outranks Better Ambience;
+- the equip moment's fresh settings read had no pin that could fail;
+- and `S13` turned out to be genuinely EQUIVALENT - the store is written
+  only under `if (gone)` and a friend's presence row never reads
+  `rec.seen` while the account is online - so it is recorded as such,
+  with the reasoning, rather than pinned by a claim the code does not
+  make.
+
+## MWCROUCH - GetKeyDown and GetKeyUp, which the port had been deriving
+
+Mac, 2026-09-17: *"When crouching with the morrowind model. you can't
+uncrouch"*.
+
+### It is not the motor, and it is not the Morrowind rig
+
+The diagnosis went the long way round and the long way round is the
+record. `player/motor.js`'s `_heightAction` has no view-mode arm and
+`get height()` has no Morrowind branch; the collider holds world
+geometry buckets only (`addMesh`'s fifteen call sites are all level
+meshes and action objects), so nothing about a drawn body can block
+`CanStand`'s upward sphere cast; `combat/fpArm.js` reads the SNEAK key
+rather than the crouch by a rule of its own (Rule 32(a): "Morrowind has
+one sneak stance, and Daggerfall's crouch is a height change the
+collider owns"); and `mwCamera.eye`'s third-person focal is
+`feet + FOCAL_HEIGHT` with no stance term at all. A crouch/uncrouch
+driven against a real `Collider` in a real room stands the player up
+every time.
+
+So the Morrowind model reaches the crouch by exactly one route: **it is
+the heaviest thing the port draws, and it makes frames long.**
+
+### The bug is one frame wide
+
+All four hosts built every press edge the same way:
+
+```js
+crouch: held(keys, 'Crouch') && !latch.crouch
+...
+latch.crouch = held(keys, 'Crouch');
+```
+
+That is a DERIVATION off the held ring, sampled once a render frame. A
+press whose keydown AND keyup both land between two frames is never in
+the ring on a frame that looks at it, so the edge does not exist and the
+tap is swallowed whole. At 60 Hz a 50 ms tap spans three frames and
+always lands; at 10 Hz - a loaded scene with the Morrowind body in it -
+it often lands in none. Crouching is then a thing that works when it
+works, and standing back up is a thing that does not, which is the
+sentence Mac wrote.
+
+**Unity does not work that way**, which is why Daggerfall Unity does not
+have this bug at any frame rate. `Input.GetKeyDown(k)` answers true on
+the frame FOLLOWING the press event whatever the key does afterwards,
+because the events are buffered and drained per frame; DFU reads exactly
+that through `InputManager` (:1084-1108, one poll a frame in
+`FindKeyboardActions`). The port had `GetKey` - `held()` - and no
+`GetKeyDown` at all, so every consumer wrote its own out of the only
+read there was.
+
+`motor.js:1001` had already named this bug's twin from the other side:
+"a render frame that accumulates less than one physics step swallowed
+the press" - the fix there moved `_heightAction` out of the fixed-step
+loop. The half that remained was the host's.
+
+### The seam
+
+`ui/input.js` gains the missing buffer, not a new rule:
+
+- `keyEdges()` - a host's ring: two live accumulators and two frame
+  halves.
+- `noteKeyDown(edges, code, repeat)` / `noteKeyUp(edges, code)` - the
+  listeners' half, beside the `keys.add` / `keys.delete` they already
+  do. `repeat` is the DOM's: auto-repeat is one physical press to Unity
+  and fires `GetKeyDown` once.
+- `beginInputFrame(edges)` - the frame's ONE rotation, at the head of
+  the frame, ABOVE the video hold. Rotating once a frame is what gives
+  an edge exactly one frame of life - the single frame Unity gives it -
+  so a reader behind a shut overlay still DROPS its edge rather than
+  banking it, which is the paused-InputManager law (:487-503) the old
+  latches were standing in for.
+- `pressed` / `released` - `GetKeyDown` and `GetKeyUp` over the same
+  dual-dict fallthrough and the same combo arm `held` takes.
+- `pressedCode` - the raw code, for the port's one recorded departure
+  that is not a binding at all (E activates beside Mouse0).
+
+`codeDown` took a `ring` parameter to do it, and the comment that
+parameter needed was **already in the file**: "the modifier arm reads
+HELD whatever edge the caller asked for; only the combo'd key takes
+`method`". `ring` IS that `method`. The modifier arm and the plain-key
+suppression both keep reading the held Set, because that is what :1695
+and :1683 read whatever edge is being asked for.
+
+### Four laws, four hosts, one shape
+
+The same derivation carried four things, and all four are now the edge
+they always claimed to be:
+
+| law | was | is |
+| --- | --- | --- |
+| crouch toggle | `crouchHeld && !latch.crouch` | `pressed(edge, keys, 'Crouch')` |
+| ReadyWeapon (Z) | `zNow && !zPrev` | `pressed(edge, keys, 'ReadyWeapon')` |
+| SwitchHand (H) | `!hNow && hPrev` | `released(edge, keys, 'SwitchHand')` |
+| E activate | `useHeld && !latch.use` | `pressedCode(edge, 'KeyE')` |
+
+The crouch KEY is still read HELD beside it, because the levitate
+descent is a held key (AUDIT 26 F031, `LevitateMotor` :88-89) and always
+was; only the STANCE toggle is an edge.
+
+`world.js` and `exterior.js` own a frame each and a ring each, on the
+`latch` bag whose two fields this retired - and `worldModes.js` READS
+that ring off the same shared bag and never rotates it, because the mode
+machine does not own a frame. `dungeon.js` is standalone and owns its
+own. The MOUSE codes ride the ring too: AUDIT 39r put them in `keys` for
+`GetKey`, and an edge read has the same claim on them.
+
+### Pinned
+
+`test/mwcrouch_edges.test.js` (10) - the sub-frame tap both ways, the
+one-frame life of an edge, auto-repeat as one press, the combo arm's
+split (modifier HELD, key on the ring), a rebind moving the edge, the
+raw-code door, a driven motor crouching AND standing at 10 fps, and the
+source sweep: no host may derive a press off the held ring again, every
+frame-owning host rotates exactly once and feeds both listeners, and the
+mode machine must not own a ring. `tools/mutants/mwcrouch.json` (14,
+all dead).
+
+And DRIVEN IN CHROMIUM: `tools/mwcrouchProbe.mjs` runs BOTH readers off
+the same real key events, in a page whose frame callback busy-waits to
+~9 fps, each driving its own real `PlayerMotor` against a real
+`Collider` room. Three taps - an odd count, so the two end in different
+STANCES rather than differing by a counter - and the old derivation sees
+**none** of them while the ring sees all three: `{latch: false, edge:
+true}`, which is Mac's sentence in two booleans. At 60 fps the two agree
+exactly, which is the other half of the claim: the fix changes nothing
+where the old reader worked.
+
+The probe found its own harness lying first. Playwright's
+`keyboard.press` AWAITS the keydown, so against a page that busy-waits
+it only sends the keyup once the loop has come back for air and already
+sampled the key - and the old derivation caught all four taps. That is
+not a player's input timing; it is the harness synchronising itself to
+the thing under test. The events go through a raw CDP session back to
+back now, unawaited, which is what a 50 ms tap inside a 110 ms frame
+actually looks like.
+
+## QS7 - one mode, one dispatch
+
+Mac, 2026-09-17: *"if you go into a tavern with a lit torch, pressing 4
+does not actually make it go out, it just goes thru the 'douse' and
+'ignite' motions"*.
+
+### Two ladders answered one key
+
+The world and exterior hosts each run a keydown ladder, and each MOUNTS
+`worldModes` over itself - which runs a keydown ladder of its own
+(U43's one dispatch: `routeKey` over `interiorKeyCtx` indoors, over
+`dungeonCtx` underground). Both listen on the same window and neither
+stops the other's propagation, so a key BOTH can answer is answered
+twice.
+
+QS2 put the quickslot arm ABOVE the outer hosts' mode gate on purpose.
+At the time the modal contexts carried no quickslot doors at all, and a
+quickslot that died at a shop door was exactly the bug AUDIT SOC B4/D1
+had just found for F. **QS4 then gave `interiorKeyCtx` and `dungeonCtx`
+the whole set - and nothing went back to the arm that had been standing
+in for them.** From that commit a Digit4 in a tavern pressed the mod's
+`toggleLightPress` twice.
+
+Twice is not nothing and it is not two, because the mod's toggle is a
+FLIP: the first press douses the torch, the second re-ignites it, both
+clips play, both lines are said, and the player is left holding a lit
+torch they just asked to put out. That is WEAPON-VIS2's double-fire
+("drawn, then sheathed straight back, net nothing, every time") at a
+third door - and it is the third time a COUNT rather than a state is
+what makes this class of bug visible.
+
+### The fix, and its bounds
+
+The outer arm takes the exterior-mode gate its siblings take. The
+quickslots stay live indoors and underground, through the modal ladder
+that already routes them. The `SocialInteract` arm beside it stays
+UNGATED, because AUDIT SOC B4/D1's whole finding is that the modal
+contexts carry no `socialInteract` - there is no second answer for F to
+collide with, and gating it would re-break what that audit fixed.
+
+Only two actions were ever reaching this door: `QuickOffHand` and
+`QuickSwap`. The other three are `POLLED_ACTIONS` since QS6 and belong
+to the frame's hold machine, which the modal frame owns alone.
+
+### Pinned
+
+`test/qs7_one_dispatch.test.js` (3) - the mechanism DRIVEN through the
+real mod (one press puts the torch out with one douse clip; two presses
+leave it lit with a douse AND an ignite, which is the sentence Mac
+wrote), the gate on both outer hosts with the social arm explicitly
+left ungated, and the modal ladders' own doors proved present so the
+fix cannot silently delete the key indoors. Four of
+`tools/mutants/qs7.json`'s ten.
+
+## TALK-UNKNOWN - a debug sentinel in a tavern
+
+Mac, the same day, with a screenshot: *"Listen up. Know anything about
+work possibilities %2com[undefined]?"*
+
+### It is classic's macro, and Daggerfall Unity never implemented it
+
+`MacroHelper.cs`'s dictionary carries `%1com` (:44,
+`GreetingOrFollowUpText`) and has **no row for `%2com`** - 217 rows,
+diffed cell for cell against the C# by `test/macrocoverage.test.js`,
+with `%2com` in neither the handled set nor the null one. So `GetValue`
+takes its outermost else (:526-527) and answers `symbolStr +
+"[undefined]"`, and TEXT.RSC 7212 - the Work question, which reads
+`%1com ... %key %2com?` - puts that in the player's own mouth. DFU,
+handed the same TEXT.RSC, does the same thing. **This is not a place
+the port drifted**, and the walk is not what gets fixed.
+
+### What gets fixed is the step after it
+
+E7 moved this walk off the empty string and onto the sentinel
+deliberately, and was right to: with a 26-row table the empty string
+deleted ~190 macros DFU renders for real and made all four of C#'s
+error shapes unreachable. But E7's argument - *"the table is all 217
+rows now, so the shape is safe to speak"* - holds only for macros DFU
+has heard of. The coverage gate is precisely what makes `[undefined]`
+mean ONE thing and nothing else: **classic wrote a macro Daggerfall
+Unity never implemented.** A tavern is not a debugger.
+
+So `expandTalkMacros` stays verbatim, every sentinel included, and one
+step is added between the expansion and the player: `speakable` drops an
+`[undefined]` from spoken text and collapses the whitespace around it,
+so "possibilities %2com?" reads "possibilities?" rather than
+"possibilities ?". The other three sentinels SPEAK, because each of them
+names a context the port could actually be getting wrong -
+`[nullMCP]`, `[unhandled]` and `[srcDataUnknown]` are diagnoses, not
+gaps in the table.
+
+The symbol is not lost: `unknownTalkMacros()` collects every one met and
+each warns ONCE, so a macro classic uses and DFU does not is a thing a
+reader can find rather than a thing a player reads.
+
+**What this does NOT claim:** it does not say what `%2com` should
+render. Classic knows; the port cannot recover it from the data it
+ships, and inventing a word would be a departure wearing a port's
+clothes. If that text is ever recovered the change is one handler.
+
+### Pinned
+
+`test/talkunknown.test.js` (7) - the table fact that makes the sentinel
+readable, Mac's sentence both ways, the whitespace law in each of the
+four places a macro can sit, the other three sentinels surviving
+(including BESIDE an unknown one, which is the case the early-out hides
+and where a widened-sentinel mutant lived), the walk left verbatim, both
+player-facing doors taking the step, and one warning per symbol. Six of
+`tools/mutants/qs7.json`'s ten.

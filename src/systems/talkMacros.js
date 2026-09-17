@@ -276,7 +276,11 @@ export function talkMacroHandlers(ctx, mcp = { source: talkMacroSource(ctx) }) {
  *  TalkManager singleton directly whatever the mcp. */
 export function expandMessageBoxTokens(tokens, ctx) {
   const copy = (tokens ?? []).map((t) => ({ ...t }));
-  return expandTalkMacros(copy, talkMacroHandlers(ctx, null));
+  expandTalkMacros(copy, talkMacroHandlers(ctx, null));
+  // TALK-UNKNOWN: the same one step, at the other door the player reads
+  // through. `speakable` is declared below beside its reasoning.
+  for (const tk of copy) if (typeof tk.text === 'string') tk.text = speakable(tk.text);
+  return copy;
 }
 
 /** MacroHelper's macro terminators (:412). Any non-alpha character
@@ -349,5 +353,60 @@ export function expandTalkMacros(tokens, handlers) {
 export function expandRandomTextRecord(recordIndex, ctx) {
   const tokens = (ctx.randomTokens?.(recordIndex) ?? []).map((t) => ({ ...t }));
   expandTalkMacros(tokens, talkMacroHandlers(ctx));
-  return tokensToString(tokens, false);
+  return speakable(tokensToString(tokens, false));
+}
+
+/**
+ * TALK-UNKNOWN (2026-09-17, Mac, with the screenshot: "Listen up. Know
+ * anything about work possibilities %2com?").
+ *
+ * `%2com` is a CLASSIC macro. MacroHelper.cs's dictionary carries
+ * `%1com` (:44, GreetingOrFollowUpText) and has no row for its sibling
+ * - 217 rows, checked cell for cell against the C# by
+ * test/macrocoverage.test.js, and `%2com` is in neither the handled
+ * set nor the null one. So GetValue takes its outermost else
+ * (:526-527) and answers `symbolStr + "[undefined]"`, and TEXT.RSC
+ * 7212's own text puts that straight in the player's mouth. Daggerfall
+ * Unity does the same thing with the same data; this is not a place
+ * the port drifted.
+ *
+ * It is still wrong at the player. E7 moved this walk OFF the empty
+ * string and onto the sentinel deliberately, and was right to: with a
+ * 26-row table the empty string deleted ~190 macros DFU renders for
+ * real, and all four of C#'s error shapes were unreachable. But the
+ * argument E7 made - "the table is all 217 rows now, so the shape is
+ * safe to speak" - holds only for macros DFU HAS HEARD OF. `[undefined]`
+ * is now, by the coverage gate's own proof, the one sentinel that can
+ * ONLY mean "classic wrote a macro Daggerfall Unity never implemented".
+ * That is a debug shape, and a tavern is not a debugger.
+ *
+ * THE DEPARTURE, and its bounds: the walk above stays verbatim - every
+ * sentinel, including this one, is produced exactly as C# produces it,
+ * and the four-sentinel pins are untouched. What changes is the ONE
+ * step between the expansion and the player: an `[undefined]` sentinel
+ * is dropped from SPOKEN text, with the whitespace around it collapsed
+ * so "possibilities %2com?" reads "possibilities?" rather than
+ * "possibilities ?". The other three sentinels SPEAK, because each of
+ * them names a context the port could actually be getting wrong.
+ *
+ * The symbol is not lost: `unknownTalkMacros()` collects every one seen
+ * and each warns ONCE, so a macro classic uses and DFU does not is a
+ * thing a reader can find rather than a thing a player reads.
+ */
+const UNKNOWN_MACRO = /(\s*)(%[^[\s]*)\[undefined\](\s*)/g;
+const seenUnknownMacros = new Set();
+/** Every `[undefined]` symbol this session has met, in first-seen order. */
+export function unknownTalkMacros() { return [...seenUnknownMacros]; }
+/** Test seam: the set is a session log, and a pin needs a clean one. */
+export function resetUnknownTalkMacros() { seenUnknownMacros.clear(); }
+/** The one step between an expanded talk record and the player. */
+export function speakable(text) {
+  if (typeof text !== 'string' || !text.includes('[undefined]')) return text;
+  return text.replace(UNKNOWN_MACRO, (_, pre, symbol, post) => {
+    if (!seenUnknownMacros.has(symbol)) {
+      seenUnknownMacros.add(symbol);
+      console.warn(`talk: ${symbol} is a classic macro Daggerfall Unity never implemented (MacroHelper.cs has no row) - rendering nothing`);
+    }
+    return pre && post ? ' ' : '';
+  });
 }

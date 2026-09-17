@@ -106,40 +106,104 @@ test('HT6: a shield equipped with the weapon DRAWN stows the torch AT THE EQUIP 
   assert.equal(r.h.lastLightSource, null, 'and the memory is spent');
 });
 
-test('HT6: the DROP arm is the mod\'s shipped default - a shield equipped while drawn drops the lit torch where the mod drops it, at the equip moment', () => {
-  assert.equal(MOD_SETTINGS[V].keys['Handling.OnStow'].default, ON_STOW.Drop, 'the shipped default is Drop');
+test('HT7 (Mac: "Take care of both"): the port DEFAULTS to Unequip - a shield equipped while drawn puts the lit torch back in the pack and remembers it; the mod\'s Drop is still on the dial and still drops it exactly where the mod does', () => {
+  // HT6 recorded the consequence of keeping the mod's shipped `OnStow =
+  // Drop` once the hand law ran at the equip moment: equipping a shield
+  // with your weapon drawn puts the lit torch on the DUNGEON FLOOR, in
+  // front of you, while the inventory is still open. A player who equips
+  // a shield mid-fight has not asked to drop anything. Mac's decision.
+  assert.equal(MOD_SETTINGS[V].keys['Handling.OnStow'].default, ON_STOW.Unequip, 'the PORT\'s default');
+  assert.deepEqual([...MOD_SETTINGS[V].keys['Handling.OnStow'].options], ['Unequip', 'Drop'],
+    'and the mod\'s own value is one click away, in the mod\'s own order');
+
+  // THE DEFAULT, driven: the light is stowed, the PACK KEEPS IT, and it
+  // is REMEMBERED - which is what lights it again when a hand comes free.
   const r = holding();
   r.ctx.sheathed = false;
   const sh = shield();
   r.entity.items.push(sh);
   equipItem(r.entity, sh);
-  assert.equal(r.entity.lightSource, null);
-  assert.equal(r.pool.spawned.length, 1, 'the dropped-torch pool took it');
-  assert.equal(r.entity.items.includes(r.t), false, 'and the pack lost it - DropLightSource removes it');
-  assert.equal(r.h.lastLightSource, null, 'a dropped light is not remembered');
+  assert.equal(r.entity.lightSource, null, 'the hand is taken, so the light is stowed');
+  assert.deepEqual(r.pool.spawned, [], 'NOTHING was dropped on the floor');
+  assert.equal(r.entity.items.includes(r.t), true, 'the pack still has the torch');
+  assert.equal(r.h.lastLightSource, r.t, 'and it is remembered, which is the whole point of Unequip');
+  // ...and the hand coming free lights it again, at the unequip moment.
+  unequipSlot(r.entity, EQUIP_SLOTS.LeftHand);
+  assert.equal(r.entity.lightSource, r.t, 'the shield off, the remembered light comes back up');
+
+  // THE DIAL, driven: set to the mod's own value, the Drop arm is
+  // untouched - the pool takes it, the pack loses it, nothing remembers.
+  const d = holding({ 'Handling.OnStow': ON_STOW.Drop });
+  d.ctx.sheathed = false;
+  const sh2 = shield();
+  d.entity.items.push(sh2);
+  equipItem(d.entity, sh2);
+  assert.equal(d.entity.lightSource, null);
+  assert.equal(d.pool.spawned.length, 1, 'the dropped-torch pool took it, where the mod drops it');
+  assert.equal(d.entity.items.includes(d.t), false, 'and the pack lost it - DropLightSource removes it');
+  assert.equal(d.h.lastLightSource, null, 'a dropped light is not remembered');
 });
 
-test('HT6: SHEATHED, the mod keeps the torch - a shield in the left hand is not a hand taken (UpdateFreeHand 0x2c91-0x2cb8), and drawing is what stows it', () => {
+test('HT7 (Mac: "Take care of both"): SHEATHED, a shield takes the hand TOO - the port\'s one departure from UpdateFreeHand\'s sheathed arm (0x2c91-0x2cb8), which cleared a hand for a bow alone', () => {
   const r = holding({ 'Handling.OnStow': ON_STOW.Unequip });
   r.ctx.sheathed = true;
+  // MAC'S CASE, which is a player walking around: a sword worn and a
+  // shield going on, the weapon lowered rather than drawn. Daggerfall has
+  // no back sheath - "sheathed" is a stance, the sword is still in the
+  // hand - so both hands are taken and the torch has nowhere to be.
+  const sw = weapon(WEAPONS.Longsword);
+  r.entity.items.push(sw);
+  equipItem(r.entity, sw);
   r.frame();
   const sh = shield();
   r.entity.items.push(sh);
   equipItem(r.entity, sh);
-  // The mod's own law, 1:1: sheathed, only a BOW in the left slot takes
-  // the left hand. The port makes no departure from it.
-  assert.equal(r.entity.lightSource, r.t, 'sheathed with a shield on, the torch stays lit');
-  assert.equal(r.h.hasFreeHand, true);
-  // Draw the weapon and the law stows it on the very next frame.
+  // THE DEPARTURE. The mod's sheathed arm clears the left hand only for a
+  // BOW, so a shield took nothing and the torch stayed lit in the arm the
+  // shield had just gone onto. HT6 recorded that and defended it - a
+  // Daggerfall shield is ARMOUR, strapped rather than gripped - and
+  // flagged it for Mac, whose ORIGINAL report was that very case ("When
+  // equipping a shield or other offhand item, the torch in the inventory
+  // isnt shown unequipped and replaced"). A hand holding a shield is not
+  // free, sheathed or drawn.
+  assert.equal(r.entity.lightSource, null, 'sheathed, the shield takes the hand and the torch is stowed');
+  assert.equal(r.h.hasFreeHand, false);
+  assert.equal(r.h.lastLightSource, r.t, 'remembered, because the port\'s OnStow is Unequip');
+  assert.deepEqual(r.pool.spawned, [], 'and nothing on the floor');
+  // ...and taking the shield off gives the hand back, at the unequip
+  // moment, sheathed throughout - the reverse of the same law.
+  unequipSlot(r.entity, EQUIP_SLOTS.LeftHand);
+  assert.equal(r.entity.lightSource, r.t, 'the shield off, the remembered light comes back up');
+  // Drawing the weapon changes nothing here: the hands were already taken.
+  equipItem(r.entity, sh);
   r.ctx.sheathed = false;
   r.frame();
-  assert.equal(r.entity.lightSource, null, 'drawing takes the hand, and the law stows the torch');
+  assert.equal(r.entity.lightSource, null, 'still stowed with the weapon drawn');
   assert.equal(r.h.lastLightSource, r.t);
-  // The sheathed arm clears handLeft ONLY, and only for a bow
-  // (0x2c91-0x2cb8) - handRight is never cleared while sheathed, so
-  // hasFreeHand is true whatever the table holds. Nothing worn stows a
-  // light while the weapon is away. Driven with the full hand: a
-  // longsword right, a bow left, a shield bumped off by it.
+
+  // AND THE CASE THAT IS NOT A DEPARTURE, kept beside it so the rule is
+  // not read as "a shield always stows the torch": with NO weapon worn,
+  // the right hand is genuinely free and the light moves into it. That
+  // is the mod's law, it is true of this game, and it is the reason the
+  // clause above is about what is WORN rather than about shields.
+  const f = holding({ 'Handling.OnStow': ON_STOW.Unequip });
+  f.ctx.sheathed = true;
+  f.frame();
+  const sh2 = shield();
+  f.entity.items.push(sh2);
+  equipItem(f.entity, sh2);
+  assert.equal(f.entity.lightSource, f.t, 'no weapon worn: the free right hand takes the torch');
+  assert.equal(f.h.hasFreeHand, true);
+  // A BOW, and what it really does - measured rather than assumed. This
+  // block's comment used to say "a bow left, a shield bumped off by it";
+  // the bow is EITHER-handed here, so `equipItem` evicts the longsword
+  // and takes the RIGHT slot, leaving the left empty. The left hand is
+  // therefore free and the torch stays lit - which was true before HT7
+  // and is true after it, because HT7 only changed what a WORN item does
+  // and nothing is worn on that side.
+  //
+  // It is kept because it is the shape that would catch HT7 over-reaching
+  // into "a weapon anywhere stows the light", which is not the rule.
   const b = rig({ 'Handling.OnStow': ON_STOW.Unequip });
   const bt = torch();
   b.entity.items.push(bt); b.entity.lightSource = bt;
@@ -149,7 +213,20 @@ test('HT6: SHEATHED, the mod keeps the torch - a shield in the left hand is not 
   b.entity.items.push(sword, bow);
   equipItem(b.entity, sword);
   equipItem(b.entity, bow);
-  assert.equal(b.entity.lightSource, bt, 'sheathed, a full weapon hand still leaves the torch lit - the mod\'s law');
+  assert.equal(equipTableOf(b.entity)[EQUIP_SLOTS.LeftHand] ?? null, null, 'the bow took the RIGHT slot and evicted the sword');
+  assert.equal(b.entity.lightSource, bt, 'the left hand is free, so the torch stays lit');
+  assert.equal(b.h.hasFreeHand, true);
+  // ...and put something in that hand and it goes, which is HT7.
+  const bsh = shield();
+  b.entity.items.push(bsh);
+  equipItem(b.entity, bsh);
+  // ...and putting a SHIELD on bumps the two-hander out of the right
+  // slot, which hands the torch the hand the bow was using. Measured, and
+  // kept as the boundary of HT7: what is WORN takes a hand, so an EMPTY
+  // hand is free whatever was in it a moment ago.
+  assert.equal(equipTableOf(b.entity)[EQUIP_SLOTS.LeftHand], bsh, 'the shield is on the left');
+  assert.equal(equipTableOf(b.entity)[EQUIP_SLOTS.RightHand] ?? null, null, 'and the bow was bumped out of the right');
+  assert.equal(b.entity.lightSource, bt, 'so the right hand is free again and the torch is back up');
   assert.equal(b.h.hasFreeHand, true);
 });
 
@@ -290,4 +367,40 @@ test('HT6: the WINDOW reads the truth - the enhanced inventory\'s lit row and th
   equipItem(r.entity, sh2);
   assert.equal(itemLine(r.t, r.entity).lit, true, 'sheathed, the torch is still in hand and the window says so');
   assert.equal(quickslotView(r.entity, { weapon: null, sheathed: true }).off.kind, 'torch');
+});
+
+
+// AUDIT QS6 F7's THIRD CATCH. `HT6-the-equip-moment-obeys-a-stale-dial`
+// SURVIVED once the sweep made every record apply again: HT6's own note
+// says applyHandLaw re-reads the settings so the equip moment runs "over
+// freshly read settings", and nothing here could fail dropping that read.
+// Every fixture set its dial before the first frame, so the frame's own
+// read had already cached the right answer and a stale one looked
+// identical. The dial has to MOVE after the last frame for the claim to
+// mean anything - which is the case it exists for: a player changes
+// OnStow on the Mods pane with the inventory open, then equips.
+test('HT6/HT7: the equip moment reads the dial FRESH - a setting changed since the last frame is obeyed at the equip, not the one the frame cached (mutant: the settings read dropped from applyHandLaw)', () => {
+  const r = holding({ 'Handling.OnStow': ON_STOW.Unequip });
+  r.ctx.sheathed = false;
+  r.frame();                       // the frame caches Unequip
+  r.store['Handling.OnStow'] = ON_STOW.Drop;   // ...and the player moves the dial with the window open
+  const sh = shield();
+  r.entity.items.push(sh);
+  equipItem(r.entity, sh);
+  assert.equal(r.entity.lightSource, null, 'the hand is taken either way');
+  assert.equal(r.pool.spawned.length, 1, 'DROP - the dial as it stands NOW, not as the last frame read it');
+  assert.equal(r.entity.items.includes(r.t), false);
+
+  // ...and the other way round, so the pin cannot pass by always dropping.
+  const u = holding({ 'Handling.OnStow': ON_STOW.Drop });
+  u.ctx.sheathed = false;
+  u.frame();
+  u.store['Handling.OnStow'] = ON_STOW.Unequip;
+  const sh2 = shield();
+  u.entity.items.push(sh2);
+  equipItem(u.entity, sh2);
+  assert.equal(u.entity.lightSource, null);
+  assert.deepEqual(u.pool.spawned, [], 'UNEQUIP - nothing on the floor');
+  assert.equal(u.entity.items.includes(u.t), true, 'the pack kept it');
+  assert.equal(u.h.lastLightSource, u.t, 'and it is remembered');
 });

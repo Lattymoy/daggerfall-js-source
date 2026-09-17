@@ -301,7 +301,7 @@ import { CameraRecoiler } from '../player/cameraRecoiler.js';   // AUDIT 28 W9: 
 import { HeadBobber } from '../player/headBobber.js';   // AUDIT 28 W10: HeadBobbing
 import { lastHealthLost, lastHealthLostPercent } from '../ui/hudVitals.js';   // AUDIT 28 W9: the detector's loss
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
-import { actionOf, held, moveHeld, anyMove, swallowBrowserKey, mouseCode, isSwingButton, keyboardLook, isTextEntryTarget, bindings, routeAction, installContextMenuGuard, POLLED_ACTIONS, QUICKSLOT_ACTIONS } from '../ui/input.js';
+import { keyEdges, noteKeyDown, noteKeyUp, beginInputFrame, pressed, released, pressedCode, actionOf, held, moveHeld, anyMove, swallowBrowserKey, mouseCode, isSwingButton, keyboardLook, isTextEntryTarget, bindings, routeAction, installContextMenuGuard, POLLED_ACTIONS, QUICKSLOT_ACTIONS } from '../ui/input.js';
 import { armUnloadGuard, releaseUnloadGuard } from '../systems/unloadGuard.js';   // MAC-L3: one door in front of every way out of a running game; AUDIT-MACL F3: ...and down for a door the game opened itself
 import { actionForCode } from '../systems/inputActions.js';   // FIX-E: the overlay's QuickLoad read, off the code alone   // I2: the rebindable registry; AUDIT 39r: the mouse half of the held set
 import { hudShortcutKey } from '../ui/hudShortcuts.js';   // AUDIT 64 F36/F37: DaggerfallHUD.Update's LargeHUDToggle / HUDToggle arms
@@ -2771,7 +2771,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // and dungeonContext.js:2183 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:4629
+  // that context through modes.dungeonCtx - so worldModes.js:4627
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -5024,9 +5024,18 @@ export async function bootWorld(canvas, renderer, params, status) {
   };
   // Edge-detect latch shared with the mode machine: a held key must not
   // re-trigger across a mode switch.
-  const latch = { use: false, crouch: false };   // audit 16f: jump is HELD since P14 - the latch slot was dead
-  let zPrevW = false;   // C9: the exterior ReadyWeapon (Z) edge
-  let hPrevW = false;   // a12: the exterior SwitchHand (H) edge - RELEASED, not pressed (WeaponManager.cs:272)
+  // MWCROUCH: the four press latches this host kept - the crouch
+  // toggle, E, Z and H - were derivations off the held ring
+  // (`held(keys, act) && !prev`) and dropped any tap that began and
+  // ended between two frames; GetKeyDown/GetKeyUp do not. The bag
+  // stays, because the mode machine shares it: `edge` is the frame's
+  // key edges (ui/input.js), rotated once at the top of the frame and
+  // read by this host AND by worldModes.
+  // THE ROTATION IS AT THE HEAD OF THE FRAME, above the video hold, on
+  // purpose: an edge lives exactly one frame - the single frame Unity
+  // gives it - and a held frame is DFU's paused InputManager, which
+  // DROPS the edge rather than banking it for whenever the video ends.
+  const latch = { edge: keyEdges() };   // audit 16f: jump is HELD since P14 - the latch slot was dead
   if (playerPixel.location) {
     const tilePos = getLocationTerrainTileOrigin(startLoc);
     const extentZ = startLoc.exterior.exteriorData.height * RMB_SIDE;
@@ -5112,14 +5121,14 @@ export async function bootWorld(canvas, renderer, params, status) {
      *  GameManager.Instance.WeaponManager.ToggleSheath() - a SINGLETON
      *  call with no scene gate at all, registered for both buttons at
      *  :211-212, so the panel is live on every screen the bar is drawn
-     *  on. Here routeAction's arm is optional (ui/input.js:520) and
+     *  on. Here routeAction's arm is optional (ui/input.js:587) and
      *  only dungeonContext.js carried the door, so above ground, in
      *  ?exterior and inside a building the click was swallowed by
      *  routeLargeHudClick's unconditional `return true` and nothing
      *  drew or sheathed - while Z kept working everywhere, which is
      *  why it read as "only the panel is dead". THE FOUR HOSTS RULE.
      *  No double-fire from the keyboard: routeKey declines
-     *  POLLED_ACTIONS (ui/input.js:391), so a Z press reaches the
+     *  POLLED_ACTIONS (ui/input.js:458), so a Z press reaches the
      *  frame's edge latch and nothing else. */
     toggleSheath: () => weaponRig.toggleSheath(),
     // QS2: the diamond's three presses, beside the sheath panel's door and for
@@ -5281,6 +5290,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // a pausing window is up (:487-503), so a key typed into a window
     // joins no ring there either.
     keys.add(e.code);
+    noteKeyDown(latch.edge, e.code, e.repeat);   // MWCROUCH: the press event, buffered for the frame that reads it
     // AUDIT 58 (f3/input) - THE COMBO ARM'S MISSING ARGUMENT.
     // actionOf resolves a COMBO code only when it is handed the host's
     // held-keys Set (ui/input.js:159-180), and no host passed one - so
@@ -5300,17 +5310,35 @@ export async function bootWorld(canvas, renderer, params, status) {
     // (socialMenuCanOpen): the door itself says false on a page with no account, and the ladder falls through.
     if (!townTalk.overlayActive && act === 'SocialInteract' && socialMenuCanOpen() && socialInteract()) { e.preventDefault(); return; }
     // QS2: THE SAME PLACE, FOR THE SAME REASON. A quickslot is worth more in a
-    // dungeon than it is on a road, so these three answer above the mode gate
+    // dungeon than it is on a road, so these three answered above the mode gate
     // too - under the same overlay and pause gates (socialMenuCanOpen is
     // `not paused and no window over the HUD`, which is exactly the door a
     // gameplay key takes here) rather than a fourth gate invented for them.
+    // (QS7 below RETIRED that placement: the modal ctxs answer these keys
+    // themselves now, so the quickslot is still live in a dungeon and in a
+    // tavern - through ONE ladder instead of two.)
     // QS6: EXCEPT THE THREE THAT HOLD. QuickUse1, QuickUse2 and QuickSpell are
     // POLLED_ACTIONS now (ui/input.js): a tap performs the slot and a hold
     // cycles it, and only the frame can tell those apart - so this ladder must
     // decline them here exactly as routeKey's own `POLLED_ACTIONS.has(act)`
     // arm does, or the down edge would drink the potion the hold was about to
     // choose. This is WEAPON-VIS2's lesson at a second door.
-    if (!townTalk.overlayActive && QUICKSLOT_ACTIONS.has(act) && !POLLED_ACTIONS.has(act) && socialMenuCanOpen() && routeAction(act, hudCtx)) { e.preventDefault(); return; }
+    // QS7 (2026-09-17, Mac: "if you go into a tavern with a lit torch, pressing 4
+    // does not actually make it go out, it just goes thru the 'douse' and
+    // 'ignite' motions"). AND THE MODE GATE IS BACK ON THIS ARM, because what
+    // it was written to reach now answers for itself. QS2 put the quickslots
+    // ABOVE the gate when the modal contexts carried no quickslot doors at
+    // all; QS4 gave `interiorKeyCtx` and `dungeonCtx` the whole set, and
+    // worldModes' own ladder (U43's one dispatch) routes the same ui/input.js
+    // table over them. Two ladders, both live on the same window, both
+    // reaching the ONE handheld-torches mod - so a single Digit4 in a tavern
+    // pressed `toggleLightPress` TWICE: douse, then ignite, net nothing, with
+    // both clips played. That is WEAPON-VIS2's double-fire exactly, at a third
+    // door, and the fix is the same one: whoever owns the mode owns the key.
+    // (The SocialInteract arm above stays ungated - AUDIT SOC B4/D1's whole
+    // finding is that the modal contexts carry NO socialInteract, so there is
+    // no second answer to collide with.)
+    if (!townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior' && QUICKSLOT_ACTIONS.has(act) && !POLLED_ACTIONS.has(act) && socialMenuCanOpen() && routeAction(act, hudCtx)) { e.preventDefault(); return; }
     // U45 - THE ONE DOOR PER DESTINATION: this ladder and the large
     // HUD's eleven panels open the same windows, so they read the same
     // object. It is the same law U43 applied to the interior arm, one
@@ -5400,11 +5428,12 @@ export async function bootWorld(canvas, renderer, params, status) {
       // gates the position now, not just the presence.
       // WEAPON-VIS2: this ladder never calls routeKey (the comment
       // above the Escape arm says so directly), so routeKey's own
-      // `POLLED_ACTIONS.has(act)` decline (ui/input.js:493) never
+      // `POLLED_ACTIONS.has(act)` decline (ui/input.js:560) never
       // touched this door. hudCtx carries toggleSheath (AUDIT 58, for
       // the large HUD's sheath panel), so 'ReadyWeapon' - Z - reached
       // routeAction from BOTH here AND the frame's own poll below
-      // (`zNowW && !zPrevW`) on every single press: drawn, then
+      // (MWCROUCH's `pressed(latch.edge, keys, 'ReadyWeapon')`, the
+      // `zNowW && !zPrevW` latch at the time) on every single press: drawn, then
       // sheathed straight back, net nothing, every time. A player
       // could equip a weapon, see it confirmed in the inventory, hear
       // a sheathe click on every press, and never once see it on
@@ -5428,7 +5457,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // movement Set since the first host and never told the open window
   // anything; DFU's buttons hear both edges (Button.cs:79-92) and the
   // travel popup's EXIT is the deferral that needs the release.
-  addEventListener('keyup', (e) => { keys.delete(e.code); if (e.code === 'Escape') backButtonHeld = false; if (e.code === 'AltLeft') e.preventDefault(); townTalk.keyup(e); modes?.keyup?.(e); });   // ROAD-E E1: the up seam reaches BOTH slots this host feeds - the outer overlay and the mode machine's
+  addEventListener('keyup', (e) => { keys.delete(e.code); noteKeyUp(latch.edge, e.code); if (e.code === 'Escape') backButtonHeld = false; if (e.code === 'AltLeft') e.preventDefault(); townTalk.keyup(e); modes?.keyup?.(e); });   // ROAD-E E1: the up seam reaches BOTH slots this host feeds - the outer overlay and the mode machine's
   // U45: Actions.ActivateCursor (Enter) - PlayerMouseLook.cursorActive,
   // bound since I1 with no consumer, and the flag the large HUD's
   // IsLargeHUDInteractable actually is.
@@ -5557,8 +5586,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   // (Mouse2, the wheel) and the drawn bow's ActivateCenterObject
   // un-draw (Mouse0) could never read true. mouseCode owns the
   // Unity/DOM middle-button crossover; the RELEASE is unconditional.
-  addEventListener('mousedown', (e) => { if (isSwingButton(e.button)) rightHeld = true; const mc = mouseCode(e.button); if (mc) keys.add(mc); if (isSwingButton(e.button) && !townTalk.overlayActive && walkMode && modeNow() === 'exterior') { if (magic.interceptAttack(true)) return; weaponRig.attackInput(0, 0, true); } });   // M2; FIX-F: the swing's button is the registry's (Mouse1 -> SwingWeapon by default)
-  addEventListener('mouseup', (e) => { if (isSwingButton(e.button)) rightHeld = false; const mc = mouseCode(e.button); if (mc) keys.delete(mc); if (isSwingButton(e.button) && walkMode && modeNow() === 'exterior') weaponRig.attackInput(0, 0, false); });   // the RELEASE is never gated - a window opened mid-swing must still let go
+  addEventListener('mousedown', (e) => { if (isSwingButton(e.button)) rightHeld = true; const mc = mouseCode(e.button); if (mc) { keys.add(mc); noteKeyDown(latch.edge, mc); } if (isSwingButton(e.button) && !townTalk.overlayActive && walkMode && modeNow() === 'exterior') { if (magic.interceptAttack(true)) return; weaponRig.attackInput(0, 0, true); } });   // M2; FIX-F: the swing's button is the registry's (Mouse1 -> SwingWeapon by default)
+  addEventListener('mouseup', (e) => { if (isSwingButton(e.button)) rightHeld = false; const mc = mouseCode(e.button); if (mc) { keys.delete(mc); noteKeyUp(latch.edge, mc); } if (isSwingButton(e.button) && walkMode && modeNow() === 'exterior') weaponRig.attackInput(0, 0, false); });   // the RELEASE is never gated - a window opened mid-swing must still let go
   const inputHooks = {   // GP1: one hooks object for the finger AND the pad   // mobile: stick synthesizes WASD; the right half is classified (TI1)
     look: (dx, dy) => {
       lookFilter.add(dx * lookScale(), -dy * lookScale() * lookInvert());   // AUDIT 28 W7: through the look filter (HANDEDNESS, mat4's law)
@@ -5770,7 +5799,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7386-7398 -
+  // worldModes answers it in BOTH modes (worldModes.js:7381-7393 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -8151,6 +8180,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   function frame(now) {
     if (!frameAlive(_frameToken)) return;   // P0: a later boot or an unwind killed this loop
     frameBegin(now);   // PERF1: the script time (systems/frameClock.js)
+    beginInputFrame(latch.edge);   // MWCROUCH
     // AUDIT 39 (#160): a full-screen video owns the canvas for its
     // lifetime (DFU pauses the game for it). The loop WAITS - it
     // neither simulates nor draws - and the clock does not accrue.
@@ -8376,6 +8406,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (playerSpawned) {
         const jumpHeld = held(keys, 'Jump');
         const crouchHeld = held(keys, 'Crouch');   // P12 host parity (audit F4); I2: DFU's default C
+        const crouchPress = pressed(latch.edge, keys, 'Crouch');   // MWCROUCH: GetKeyDown, not a held-ring derivation - the levitate descent below still reads the HELD key
         const _overlayHeld = (modes?.dungeonCtx?.uiOverlayActive ?? false) || townTalk.overlayActive;   // chargen/windows/talk hold the motor - typing must not walk the player
       // AUDIT 18 F9: the player's world clock, HELD by the same gate.
       // It ran only inside a dungeon before F8 moved it here; F8 then
@@ -8433,7 +8464,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // through the paralysis fired a synthetic press on the frame it lifted.
         // ROAD-Ar (R0): ...and the season hold stops the motor dead,
         // because there is no floor under it while the re-skin runs.
-        if (!_overlayHeld && !_seasonHeld) player.update(dt, paralyzed ? { forward: 0, strafe: 0, run: held(keys, 'Run'), autoRun: held(keys, 'AutoRun'), back: mv.backwards, sneak: held(keys, 'Sneak'), jump: false, up: false, down: false, crouch: crouchHeld && !latch.crouch } : {
+        if (!_overlayHeld && !_seasonHeld) player.update(dt, paralyzed ? { forward: 0, strafe: 0, run: held(keys, 'Run'), autoRun: held(keys, 'AutoRun'), back: mv.backwards, sneak: held(keys, 'Sneak'), jump: false, up: false, down: false, crouch: crouchPress } : {
           forward: axes.forward,   // AUDIT 28 W8: InputManager's axes - accelerated under MovementAcceleration, the held difference without
           strafe: axes.strafe,
           run: held(keys, 'Run'),
@@ -8452,19 +8483,14 @@ export async function bootWorld(canvas, renderer, params, status) {
           // port's own motor contract said so and every host passed
           // FloatDown alone, so C did nothing but toggle the stance.
           down: crouchHeld || held(keys, 'FloatDown'),
-          crouch: crouchHeld && !latch.crouch,
+          crouch: crouchPress,
         }, cam.yaw, cam.pitch);
-        latch.crouch = crouchHeld;
         // C9: ReadyWeapon (Z) - the sheathe toggle, host parity.
-        const zNowW = held(keys, 'ReadyWeapon');
-        if (zNowW && !zPrevW) weaponRig.readyWeapon();   // MAC-O1: the KEY takes WeaponManager.Update's arm (:229-269), not HUDLarge's raw ToggleSheath
-        zPrevW = zNowW;
+        if (pressed(latch.edge, keys, 'ReadyWeapon')) weaponRig.readyWeapon();   // MAC-O1: the KEY takes WeaponManager.Update's arm (:229-269), not HUDLarge's raw ToggleSheath
         // a12: SwitchHand (H) - WeaponManager.cs:272 reads it through
-        // ActionComplete, the RELEASE edge, so the latch is inverted
-        // against Z's above. The rig owns the isAttacking gate.
-        const hNowW = held(keys, 'SwitchHand');
-        if (!hNowW && hPrevW) weaponRig.switchHand();
-        hPrevW = hNowW;
+        // ActionComplete, the RELEASE edge, so it reads the UP ring
+        // where Z reads the down one. The rig owns the isAttacking gate.
+        if (released(latch.edge, keys, 'SwitchHand')) weaponRig.switchHand();
         tickQuickHold(dt);   // QS6: the quickslot holds, beside the two latches they are modelled on
         // P14 fall damage (host parity - CheckFallingDamage +
         // PlayerHealth verbatim; sounds 91/92). FD1 took the
@@ -8598,8 +8624,8 @@ export async function bootWorld(canvas, renderer, params, status) {
           paused: _overlayHeld,
         });
         if (_act.cast) magic.interceptAttack(true);   // the frame's firePending sends it down the live look
-        const useHeld = keys.has('KeyE');   // I2 departure, kept beside A8's Mouse0: DFU binds E to AbortSpell
-        if ((_act.activate || (useHeld && !latch.use)) && !modes.transitioning) {
+        const useEdge = pressedCode(latch.edge, 'KeyE');   // I2 departure, kept beside A8's Mouse0: DFU binds E to AbortSpell
+        if ((_act.activate || useEdge) && !modes.transitioning) {
           // T3b: a townsperson under the ray wins the activation (the
           // PlayerActivate nearest-hit order); G3: a guard corpse next
           // (loot pickup on the dungeon's S2 shape); doors otherwise.
@@ -8742,7 +8768,6 @@ export async function bootWorld(canvas, renderer, params, status) {
             }   // HT1: the torch arm's else
           }
         }
-        latch.use = useHeld;
       }
     } else {
       const speed = (keys.has('ShiftLeft') ? 400 : 40) * dt;   // fly-cam (dev): raw keys, not an action
