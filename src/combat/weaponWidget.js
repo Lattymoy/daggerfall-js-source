@@ -441,10 +441,17 @@ export function createWeaponWidget({
     }
     w.animatingCancel = true;
     const recover = w.s.swingRecoveryOverride && recoveryOverride();
-    // the recovery, while the ORIGINAL is still attacking: in reverse on a hit or the override, else the setting's pose
+    // the recovery, while the ORIGINAL is still attacking: in reverse on a hit or the override, else the setting's pose.
+    // F1 (2026-09-17, Mac: "when thrusting with a weapon, it can be glitchy"): the reverse runs ONCE. It sat inside the
+    // attacking loop unlatched, and with Recovery = Last Frame the frame it left at 0 was set back to the last frame and
+    // reversed again, every lap, until the original's swing ended - a thrust (the one strike that recovers in reverse
+    // under the shipped VanillaRecoveryOverride) flickering backwards over and over.
+    let reversed = false;
     while (machineIsAttacking()) {
-      if (recover || w.hasCurrentAttackHit) {
+      if (!reversed && (recover || w.hasCurrentAttackHit)) {
+        reversed = true;
         while (w.currentFrame > 0) { w.offsetCurrent = [0, 0]; w.offsetTarget = [0, 0]; w.currentFrame -= 1; updateWeapon(); yield tickTime; }
+        continue;
       }
       w.currentFrame = w.s.swingRecovery === RECOVERY.LastFrame ? numFrames(ctx?.machine?.isBow, STATE_NAMES[w.weaponState]) - 1 : -1;
       yield FRAME;

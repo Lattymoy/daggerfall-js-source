@@ -121,6 +121,9 @@ const result = await page.evaluate(async ({ W, H }) => {
   sub('far', () => box(-11, 0, -11.5, -9, 2, -10.5));            // a far crate, out of any lantern's range
   const model = { positions: new Float32Array(P), normals: new Float32Array(N), uvs: new Float32Array(UV), indices: new Uint32Array(IDX), subMeshes: subs.map(({ name, ...sm }) => sm) };
   const mesh = r.createMesh(model);
+  // BUGS-5 F4: the same room with a thin panel between the eye and lantern B (0.3 in front of it) - the glare's presence test must see the panel, not the flame
+  sub('panelB', () => box(3.5, 2, 1.3, 4.5, 3, 1.4));
+  const meshPanel = r.createMesh({ positions: new Float32Array(P), normals: new Float32Array(N), uvs: new Float32Array(UV), indices: new Uint32Array(IDX), subMeshes: subs.map(({ name, ...sm }) => sm) });
   // the same scene under the open sky: the room's box replaced by a ground plane (a street: the wall, the pillar, the crate)
   P.length = N.length = UV.length = IDX.length = 0; subs = [];
   sub('ground', () => quad([-60, 0, 60], [60, 0, 60], [60, 0, -60], [-60, 0, -60], [0, 1, 0], 20));
@@ -146,15 +149,15 @@ const result = await page.evaluate(async ({ W, H }) => {
   const read = () => { const px = new Uint8Array(W * H * 4); gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, px); return px; };
 
   const frames = {};
-  const scene = (label, { lane, air, sun, withA, sky = false, night = false, withEmitter = true, emitterInFront = false, withFlameB = true, carried = false, contact = null }) => {
+  const scene = (label, { lane, air, sun, withA, sky = false, night = false, withEmitter = true, emitterInFront = false, withFlameB = true, carried = false, contact = null, panelB = false }) => {
     r.setLightingLane(lane ? EL_LANE : null);
     r.setAir(!!air);
     if (r.air) r.air._now = () => 1000;   // the eye's clock frozen: no adaptation between frames or scenes, so a with/without comparison is the scene's alone
     const on = !!lane;
     let L = lights(withA);
     if (carried) L = new Float32Array([...L, eye[0], eye[1] - 0.2, eye[2] - 0.6, 8]);   // EL7: `carried` adds the torch in the hand - a light in open air, half a unit ahead of the eye
-    if (contact !== null) {   // EL8: six dim lanterns beside the eye take the caster slots, so A and B are contact-shadowed, not mapped
-      const dummies = []; for (let k = 0; k < 6; k++) dummies.push(eye[0] + 0.4 * Math.cos(k), eye[1] - 0.5, eye[2] + 0.4 * Math.sin(k), 0.3);
+    if (contact !== null) {   // EL8: six dim lanterns beside the eye take the caster slots, so A and B are contact-shadowed, not mapped (BUGS-5 F3: two units out - a light within 1.5 of the eye is the hand's and never casts)
+      const dummies = []; for (let k = 0; k < 6; k++) dummies.push(eye[0] + 2 * Math.cos(k), eye[1] - 0.5, eye[2] + 2 * Math.sin(k), 0.3);
       L = new Float32Array([...dummies, ...L]);
       r.setContact(contact);
     } else r.setContact(true);
@@ -179,7 +182,7 @@ const result = await page.evaluate(async ({ W, H }) => {
     for (let f = 0; f < 4; f++) {   // frame 1 records; frame 2 replays and draws the maps; a few more settle the eye
       r.beginFrame(proj, view, lightDir, WORLD_FRAME);
       const shadowStats = r.shadows ? { ...r.shadows.stats, kind: r.shadows.kind, casters: r.shadows.casters, index: r.shadows.shadowIndex ? [...r.shadows.shadowIndex] : null } : null;   // the maps are drawn at beginFrame
-      r.drawMesh(sky ? open : mesh, I, null);
+      r.drawMesh(sky ? open : panelB ? meshPanel : mesh, I, null);
       r.drawBillboards([flat, ...(withEmitter ? [emitterInFront ? emitterFront : emitter] : []), ...(withFlameB ? [flameB] : [])], new Float32Array([1, 0, 0]), new Float32Array([0, 1, 0]));
       r.resolveFrame();   // EL6: the air's images are drawn here, off the frame's depth
       st = { label, gl: gl.getError(), shadows: shadowStats, air: r.air ? { ...r.air.stats } : null };
@@ -202,6 +205,7 @@ const result = await page.evaluate(async ({ W, H }) => {
   scene('dungeon-lane-emitFront', { lane: true, air: true, sun: false, withA: true, emitterInFront: true });
   scene('dungeon-lane-bareB', { lane: true, air: true, sun: false, withA: true, withFlameB: false });   // EL7: lantern B with no flame under it - no glare
   scene('dungeon-lane-carried', { lane: true, air: true, sun: false, withA: true, carried: true });   // EL7: a torch in the hand - no glare ball ahead of the eye
+  scene('dungeon-lane-panelB', { lane: true, air: true, sun: false, withA: true, panelB: true });   // BUGS-5 F4: lantern B behind a thin panel - no glare through it
   scene('dungeon-lane-contact', { lane: true, air: true, sun: false, withA: true, contact: true });   // EL8: A and B without caster slots - the contact march
   scene('dungeon-lane-nocontact', { lane: true, air: true, sun: false, withA: true, contact: false });
   scene('dungeon-lane-noair', { lane: true, air: false, sun: false, withA: true });
@@ -269,6 +273,12 @@ console.log(`lantern B's glare: the bloom source sums ${withFlame} with its flam
 if (!(withFlame > bare)) failures.push(`a flame under lantern B made no glare (${withFlame} vs ${bare} without it)`);
 if (!(bare === 0)) failures.push(`a lantern with no flame under it glared (${bare})`);
 if (!(carried === withFlame)) failures.push(`the torch in the hand drew a glare (${carried} vs ${withFlame})`);
+const panel = result.frames['dungeon-lane-panelB'].bloom?.sum;
+console.log(`lantern B behind a panel: the bloom source sums ${panel}`);
+if (!(panel === 0)) failures.push(`lantern B glared through the panel in front of it (${panel})`);   // BUGS-5 F4: the glare's presence test must see the panel's depth, not the flame's
+const carriedIndex = result.frames['dungeon-lane-carried'].stats.shadows?.index || [];
+console.log(`the torch in the hand: caster slots ${JSON.stringify(carriedIndex)} (the hand's light is light 2)`);
+if (carriedIndex.includes(2)) failures.push(`the torch in the hand took a caster slot (${JSON.stringify(carriedIndex)})`);   // BUGS-5 F3: a light within 1.5 of the eye never casts
 if (result.frames['dungeon-lane'].stats.air.emitDraws < 1) failures.push('the emitter was never replayed into the bloom source');
 const wallLane = regionMean(lane, result.wallRect), wallNoA = regionMean(noA, result.wallRect);
 const shadowLane = regionMean(lane, result.shadowRect), openLane = regionMean(lane, result.openRect);

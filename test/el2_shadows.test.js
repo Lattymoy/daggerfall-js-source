@@ -68,7 +68,7 @@ function drawWorld(r) {
 test('EL2: the constants - three cascades (EL7), the sizes, the reserved units above every foreign pass and beside the cloud shadow', () => {
   assert.deepEqual([...SHADOW_CASCADES], [12, 48, 240], 'EL7: the room, the street, the town');
   assert.equal(SHADOW_SUN_SIZE, 2048); assert.equal(SHADOW_POINT_SIZE, 512); assert.equal(SHADOW_SUN_DEPTH, 600);
-  assert.equal(SHADOW_MIN_SUN_Y, 0.05); assert.equal(SHADOW_POINT_NEAR, 0.1); assert.equal(SHADOW_CASTER_MIN_DISTANCE, 0.25);
+  assert.equal(SHADOW_MIN_SUN_Y, 0.05); assert.equal(SHADOW_POINT_NEAR, 0.1); assert.equal(SHADOW_CASTER_MIN_DISTANCE, 1.5);   // F3: the light in the hand casts nothing
   assert.equal(SHADOW_SUN_UNIT, 13); assert.equal(SHADOW_POINT_UNIT, 14); assert.equal(CLOUD_SHADOW_UNIT, 15);
   assert.equal(SHADOW_RECORD_MAX, 6000);
   assert.ok(near(sunTexelWorld(0), 24 / 2048) && near(sunTexelWorld(1), 96 / 2048) && near(sunTexelWorld(2), 480 / 2048), 'EL7: 1.2 cm, 4.7 cm, 23 cm');
@@ -186,7 +186,7 @@ test('EL2: the receiver block and the depth shaders - six uniforms, no dynamic m
   for (const [name, fs] of [['mesh', EL_MESH_FS], ['terrain', EL_TERRAIN_FS], ['char', EL_CHAR_FS]]) {
     assert.ok(fs.includes(SHADOW_GLSL), `${name} carries the block`);
     assert.match(fs, /cloudShadowAt\(vWorldPos\) \* sunShadowAt\(vWorldPos, n\)/, `${name}: the sun term wears both shadows`);
-    assert.match(fs, /if \(d >= uPointLights\[i\]\.w\) continue;[^\n]*\n    vec3 Ln = L \/ max\(d, 1e-4\);\n    int k = uCasterOf\[i\];[^\n]*\n    float sh = k >= 0 \? pointShadowAt\(k, wp, n\) : contactShadow\(wp, n, Ln, d\);/, `${name}: EL5 - out of the window nothing is computed; EL8: a caster's map by the table, else a contact shadow`);
+    assert.match(fs, /if \(d >= uPointLights\[i\]\.w\) continue;[^\n]*\n    vec3 Ln = L \/ max\(d, 1e-4\);\n    int k = uCasterOf\[i\];[^\n]*\n(?:    \/\/[^\n]*\n)*    float sh = k >= 0 \? pointShadowAt\(k, wp, n\)\n      : \(d > uPointLights\[i\]\.w \* 0\.7 \|\| length\(uPointLights\[i\]\.xyz - uCamPos\) < 1\.5\) \? 1\.0\n      : contactShadow\(wp, n, Ln, d\);/, `${name}: EL5 - out of the window nothing is computed; EL8: a caster's map by the table, else a contact shadow`);
   }
   assert.ok(EL_BB_FS.includes(SHADOW_GLSL));
   assert.match(EL_BB_FS, /in vec3 vBBBase;/);
