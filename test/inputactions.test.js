@@ -33,6 +33,13 @@ test('I1: the Actions enum, verbatim names and order (:324-384)', () => {
     // .js indexes this list by number against fixed art). The pin above is
     // still DFU's list verbatim, in DFU's order, up to here.
     'SocialInteract',
+    // QS2 (2026-09-17, Mac's quickslot diamond): three more of the port's own,
+    // appended for the same reason and under the same law - DFU's HUD has no
+    // item slots, so these are Ledger A rows and every existing index still
+    // means what it meant.
+    'QuickUse1', 'QuickUse2', 'QuickSwap',
+    // QS4: and the off-hand cell's own, appended after them.
+    'QuickOffHand',
   ]);
   // ActionNameToEnum's sentinel: unknown parses to Unknown, and
   // Unknown itself is NOT a bindable action.
@@ -63,17 +70,24 @@ test('I1: ResetDefaults\' table, every row (:979-1032)', () => {
     // SOC5: the port's own row, past DFU's table - KeyF, which SetupDefaults
     // never spends. The forty-four above are still DFU's, row for row.
     'KeyF=SocialInteract',
+    // QS2: the number row. Digit1-Digit3 are unspent by SetupDefaults, by the
+    // port and by every vendored mod's TextKey defaults (the HT4 pin in
+    // test/ht1_handheldtorches.test.js walks that whole set).
+    'Digit1=QuickUse1', 'Digit2=QuickUse2', 'Digit3=QuickSwap', 'Digit4=QuickOffHand',
   ]);
   // every bindable action except the four with no default key
   // (MoveLeft/MoveRight arrive via A/D; TurnLeft/TurnRight via
   // arrows; the four WITHOUT a default are none - check coverage:
   // 44 rows over 44 distinct actions).
-  // SOC5 widened both counts by exactly one: the law grew a row, so the
-  // coverage rule (every bindable action defaulted, none twice) grew with it.
+  // SOC5 widened both counts by exactly one and QS2 by three: the law grew
+  // rows, so the coverage rule (every bindable action defaulted, none twice)
+  // grew with it.
   const bound = new Set(DEFAULT_BINDINGS.map(([, a]) => a));
-  assert.equal(DEFAULT_BINDINGS.length, 45);
-  assert.equal(bound.size, 45, 'no action is defaulted twice');
-  assert.equal(ACTIONS.length, 45, 'and a default for every action, still');
+  assert.equal(DEFAULT_BINDINGS.length, 49);
+  assert.equal(bound.size, 49, 'no action is defaulted twice');
+  assert.equal(ACTIONS.length, 49, 'and a default for every action, still');
+  const codes = DEFAULT_BINDINGS.map(([c]) => c);
+  assert.equal(new Set(codes).size, codes.length, 'and no KEY is spent twice - the number row was free');
 });
 
 test('I1: SetBinding steals from the other dict, clears the old code, un-removes (:727-758)', () => {
@@ -115,7 +129,7 @@ test('I1: the two clears - by action walks all its codes, by code takes one (:80
 test('I1: a FULL reset clears primary and the removed list but NOT secondary (:956-960)', () => {
   const s = createBindings();
   resetDefaults(s);
-  assert.equal(s.primary.size, 45);   // SOC5: DFU's 44 plus the port's own SocialInteract row
+  assert.equal(s.primary.size, 49);   // SOC5: DFU's 44 plus SocialInteract; QS2: plus the three quickslot rows; QS4: plus the off hand's
   // a secondary binding on a code no default uses SURVIVES the reset;
   // one on a default's code is stolen back by SetBinding's alt-removal.
   setBinding(s, 'KeyP', 'Rest', false);

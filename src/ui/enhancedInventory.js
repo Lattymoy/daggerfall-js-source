@@ -59,12 +59,18 @@
 import { USE_PENDING } from './nativeInventory.js';
 import { PACK_PAGES, PAGE_IDS, pageOf, filterByPage } from './packPages.js';   // PX31: the pack's nine pages (the classic keeps DFU's four)
 import { useItem, isLightSource } from '../systems/useItem.js';   // HT2: the light source's own act
+// QS2: the quickslot model (systems/quickslots.js). This screen is the ONE
+// place a slot is filled - Mac's own words, "in the enhanced menu through the
+// tooltip to slot 1/2" - and it fills one by naming the item's KIND, which is
+// all a slot ever holds.
+import { isQuickConsumable, canSwapTo, quickslotOf, assignQuickslot, clearQuickslot } from '../systems/quickslots.js';
 import { EQUIP_SLOTS } from '../characters/paperdoll.js';
 import { dfWornEquipment } from '../formats/mwItemMap.js';   // PX25
 import { hasDaggerfallArrows } from '../combat/fpArm.js';   // PX26
 import { ARMOR_ENUM } from '../combat/enemyEquipment.js';   // PX25
 import { inventoryItemImage, templateByIndex } from '../systems/itemTemplates.js';
 import { requestIcon, paperDollDataUrl } from './textureCanvas.js';
+import { modelIconUrl as modelIconUrlOf } from './itemIconUrl.js';   // MW-D38, shared with the HUD's quickslots (QS3)
 // U59: the AVATAR. The compositor is ui/paperDoll.js - the same one
 // the classic window draws - and this reads its finished pixels rather
 // than re-deriving PaperDollRenderer's layer order for a second time.
@@ -804,6 +810,7 @@ function dragStop(commit) {
     globalThis.removeEventListener?.('pointercancel', onDragAbort, true);
     globalThis.removeEventListener?.('lostpointercapture', onDragAbort, true);
     globalThis.removeEventListener?.('scroll', onDragScroll, true);
+    globalThis.removeEventListener?.('touchmove', onDragHold, true);
   }
   if (!d?.moved) return;
   _dragged = true;   // the click that follows a real drag is not a pick
@@ -839,9 +846,52 @@ function dragStop(commit) {
  *  pan-y`), a flick scrolls and is never a drag, and only a finger that
  *  stays still picks anything up. Once it has, `.draglock` takes the
  *  pan back for the rest of the gesture. A MOUSE keeps the 4px
- *  threshold - a mouse has no scroll to steal. */
+ *  threshold - a mouse has no scroll to steal.
+ *
+ *  INV3 corrects two of A1's numbers below: the slop is per-axis rather
+ *  than one Manhattan sum, and `.draglock` does NOT take the pan back
+ *  for the gesture in flight - `onDragHold` does. */
 const TOUCH_HOLD_MS = 320;
-const TOUCH_HOLD_SLOP = 8;
+/** INV3 (2026-09-17, Mac: "Hold to drag functionality in inventory
+ *  sometimes doesnt work"): AND THE AXIS THAT CANNOT SCROLL IS NOT
+ *  EVIDENCE OF A SCROLL.
+ *
+ *  A1 was right about the law and wrong about the measurement. It asked
+ *  `|dx| + |dy| > 8` - one Manhattan sum over BOTH axes against half the
+ *  room the browser itself allows - and a resting thumb does not hold
+ *  still to five pixels. Measured in Chromium on a 430x860 phone
+ *  (`tools/invDragProbe.mjs`), on the `touch-action: pan-y` tile this
+ *  law is written for:
+ *
+ *  - the browser takes the gesture (`pointercancel`) at **16 CSS px**
+ *    of VERTICAL travel and keeps it at 15 - the same number at device
+ *    pixel ratio 1, 2 and 3, so it is CSS px and not device px;
+ *  - it never takes it for HORIZONTAL travel at all, out to 160px,
+ *    because a `pan-y` surface has no sideways pan to hand over.
+ *
+ *  So the old sum cancelled the hold twice over: at 8px when the
+ *  browser allows 16, and on an axis where the browser has nothing to
+ *  take. A finger drifting 5px across and 4px down - neither of which
+ *  can scroll anything - lost the item it was reaching for. That is the
+ *  SOMETIMES: the hold survived 0 of 12 trials at a 6px drift before
+ *  this and 12 of 12 after.
+ *
+ *  ONE AXIS IS THE SCROLLER'S. The slop is per-axis now: vertical,
+ *  where a pan really can start, at 12 - under the browser's own 16, so
+ *  this law is the one that fires and it fires the same way every time -
+ *  and horizontal at twice that, because nothing can take the gesture
+ *  there and the only thing sideways travel proves is that the finger is
+ *  going somewhere rather than resting.
+ *
+ *  A1'S LAW IS UNTOUCHED: a flick is vertical, so it still scrolls and
+ *  is still never a drag, and a MOUSE still crosses at 4px. */
+const TOUCH_HOLD_SLOP = 12;
+const TOUCH_HOLD_SLOP_X = TOUCH_HOLD_SLOP * 2;
+/** Has this finger left the hold? `dy` is the axis the list pans in and
+ *  is judged tightly; `dx` is an axis nothing can pan and is judged
+ *  loosely. Exported so the law can be pinned as a LAW rather than as
+ *  whatever the drag happened to do on one path. */
+export const holdBroken = (dx, dy) => Math.abs(dy) > TOUCH_HOLD_SLOP || Math.abs(dx) > TOUCH_HOLD_SLOP_X;
 const dragLock = (on) => document.body?.classList?.toggle('draglock', !!on);
 function dragArm() {
   if (!drag || drag.moved) return;
@@ -853,16 +903,51 @@ function dragArm() {
 }
 const onDragMove = (e) => {
   if (!drag || e.pointerId !== drag.id) return;
-  const far = Math.abs(e.clientX - drag.x) + Math.abs(e.clientY - drag.y);
+  const dx = e.clientX - drag.ox;
+  const dy = e.clientY - drag.oy;
   if (!drag.moved) {
     // a finger that moves before the hold was scrolling: let it go
-    if (drag.touch) { if (far > TOUCH_HOLD_SLOP) dragStop(false); return; }
-    if (far <= 4) return;
+    if (drag.touch) {
+      if (holdBroken(dx, dy)) { dragStop(false); return; }
+      // INV3: the hold STANDS, and it stands HERE. The origin is what
+      // the slop is measured from, but the ghost must arm under the
+      // finger's real position - drifting the allowed 12px and then
+      // lifting an icon a dozen pixels away (and asking `dropIntent`
+      // what is under THAT point) is the tell that the two were one
+      // field.
+      drag.x = e.clientX; drag.y = e.clientY;
+      return;
+    }
+    if (Math.abs(dx) + Math.abs(dy) <= 4) return;
     drag.moved = true;
     ghostStart(drag.item);
   }
   dragTo(e.clientX, e.clientY);
 };
+/** INV3: AND `.draglock` CANNOT TAKE THE PAN BACK ON ITS OWN.
+ *
+ *  A1 wrote "once the hold has armed, `.draglock` takes the pan back
+ *  for the rest of the gesture", and the browser does not work that
+ *  way: Chromium reads the effective `touch-action` when the touch
+ *  SEQUENCE begins, and a rule that lands 320ms later does not reach
+ *  the gesture already in flight. Measured, on a bare `pan-y` tile in a
+ *  scroller with the lock applied the instant the hold armed: the list
+ *  scrolled anyway and the pointer was cancelled anyway, exactly as
+ *  with no lock at all. So the ghost lifted and then VANISHED the
+ *  moment the carry moved down a scrollable list - the other half of
+ *  Mac's "sometimes".
+ *
+ *  The one thing that still holds a live gesture is `preventDefault` on
+ *  a cancelable `touchmove`, and an armed drag takes them (same probe:
+ *  no cancel, and the list did not move). It is registered from the
+ *  press rather than from the arming, because the first move after the
+ *  hold is the one that must not get through, and it refuses nothing
+ *  while the drag is unarmed - a flick still scrolls.
+ *
+ *  `.draglock` stays: it is what stops a SECOND finger panning the list
+ *  out from under a live drag, which is a gesture that does begin under
+ *  the class. */
+const onDragHold = (e) => { if (drag?.moved && drag.touch && e.cancelable) e.preventDefault(); };
 const onDragUp = (e) => { if (drag && e.pointerId === drag.id) dragStop(true); };
 const onDragAbort = (e) => { if (drag && (e.pointerId === undefined || e.pointerId === drag.id)) dragStop(false); };
 // AUDIT INV2 A-F5: a wheel moves the DOM under a STATIONARY cursor, so
@@ -881,7 +966,9 @@ function dragFrom(row, item, source = 'local') {
   row.onpointerdown = (e) => {
     if (drag || e.button > 0) return;   // ONE pointer for the PANE: a second finger on a second row was how one drag dropped another's item
     const touch = e.pointerType === 'touch' || e.pointerType === 'pen';
-    drag = { id: e.pointerId, item, row, x: e.clientX, y: e.clientY, moved: false, want: null, touch, hold: null, source };
+    // INV3: `ox`/`oy` is where the finger LANDED and the slop is measured
+    // from it; `x`/`y` is where the finger is NOW and the ghost arms on it.
+    drag = { id: e.pointerId, item, row, ox: e.clientX, oy: e.clientY, x: e.clientX, y: e.clientY, moved: false, want: null, touch, hold: null, source };
     if (touch) drag.hold = setTimeout(dragArm, TOUCH_HOLD_MS);
     // The listeners are the WINDOW's: a repaint detaches this row, and a
     // drag that lived on it died there with the ghost still on screen.
@@ -890,6 +977,9 @@ function dragFrom(row, item, source = 'local') {
     globalThis.addEventListener?.('pointercancel', onDragAbort, true);
     globalThis.addEventListener?.('lostpointercapture', onDragAbort, true);
     globalThis.addEventListener?.('scroll', onDragScroll, true);
+    // INV3: passive FALSE, or the preventDefault above is ignored - a
+    // window `touchmove` listener is passive by default in Chromium.
+    globalThis.addEventListener?.('touchmove', onDragHold, { passive: false, capture: true });
   };
   rowItems.set(row, item);
 }
@@ -1057,7 +1147,7 @@ function stow(item) {
   // 26 F156: planStore answers `{ ok: true, map: true }` for a
   // MiscItems.Map - the reveal runs, the paper is consumed, nothing
   // lands in the destination. The classic window routes it
-  // (nativeInventory.js:774) and this one did not, so dragging a
+  // (nativeInventory.js:777) and this one did not, so dragging a
   // treasure map out of the pack dropped the paper on the floor and
   // revealed nothing.
   if (plan.map) { use(item, deps.items?.() ?? []); return; }
@@ -1072,7 +1162,7 @@ function stow(item) {
   // again on the other side, and a tip that stays open after every
   // press is the quirk being fixed.
   // AUDIT INV2 B-F1: THE ENTITY AND THE PROVENANCE RIDE, as they do at
-  // the classic window's own call (nativeInventory.js:776). Without them
+  // the classic window's own call (nativeInventory.js:779). Without them
   // `clearLightSourceOnLeave` - AUDIT 26 F157's first statement inside
   // applyTransfer - is a no-op, so a LIT TORCH dropped on the ground
   // went on lighting the player from where it lay. INV2 made that a
@@ -1106,7 +1196,7 @@ function take(item) {
   if (plan.map) { use(item, remoteTarget(deps, sessionState())); return; }
   // MAC-O6 (report: "looting gold/items makes no sound"): DoTransferItem's
   // own cue (:1569 gold's clink, :1583 everything else), which the classic
-  // window plays (nativeInventory.js:842) and this one never did - the ONLY
+  // window plays (nativeInventory.js:845) and this one never did - the ONLY
   // difference between the two windows' calls to planTake/applyTransfer was
   // that this one dropped `plan.sound` on the floor. Played here, ahead of
   // the gold interception below, exactly as DFU's own PlayOneShot sits
@@ -1239,22 +1329,13 @@ function modelFigure() {
   return cv;
 }
 /** MW-D38: a Daggerfall item's Morrowind icon as a data URL, or null.
- *  The rig caches the pixels per record; this caches the encoding. */
-const _iconUrls = new Map();
-function modelIconUrl(item, size) {
-  const armMod = deps.fpArm;
-  if (!armMod || typeof armMod.itemIcon !== 'function' || !item) return null;
-  let img = null;
-  try { img = armMod.itemIcon(item, { size }); } catch { img = null; }
-  if (!img || !img.width) return null;
-  if (_iconUrls.has(img)) return _iconUrls.get(img);
-  const cv = document.createElement('canvas');
-  cv.width = img.width; cv.height = img.height;
-  cv.getContext('2d').putImageData(new ImageData(img.data, img.width, img.height), 0, 0);
-  const url = cv.toDataURL('image/png');
-  _iconUrls.set(img, url);
-  return url;
-}
+ *  QS3 moved the body to ui/itemIconUrl.js, because the HUD's quickslot
+ *  diamond wants the same picture of the same item and importing this
+ *  screen to reach twenty lines would drag the whole window into every
+ *  frame drawHud makes. The rig it reads is still the one the host
+ *  mounted this screen with - a page with no Morrowind data behind it
+ *  draws the classic icon, exactly as before. */
+const modelIconUrl = (item, size) => modelIconUrlOf(item, size, deps.fpArm);
 
 /** Drag left/right to turn the figure; a tap does nothing (display only).
  *  MF1: the move records the yaw and asks for ONE repaint on the next
@@ -1638,6 +1719,14 @@ function itemRow(item, from = 'local') {
   if (sub) mid.append(el('small', null, sub));
   row.append(mid);
   row.append(el('span', 'itemwt', `${line.weight.toFixed(2)} kg`));
+  // QS2: THE CHIP. A slot holds a KIND, so the row that answers to it is the
+  // row that says so - otherwise the only way to learn what is in slot 1 is to
+  // open every tooltip in the pack. LOCAL rows only: a slot resolves against
+  // the pack, and a loot row is not in it.
+  if (from === 'local') {
+    const slot = quickslotOf(item);
+    if (slot) row.append(el('span', 'qs-mark', slot === 'swap' ? 'SWAP' : (slot === 'c1' ? '1' : '2')));
+  }
   // INV1: a LOCAL row drags. A loot row does not - taking from a pile
   // is a click, and a drag that could also transfer would make a slip
   // a theft.
@@ -1828,6 +1917,48 @@ function listCol() {
 // pane answered the same problem the same way (AUDIT F8). So this is
 // that behaviour written deliberately - the detail rises when an item
 // is picked and closes back down - rather than borrowed by accident.
+/**
+ * QS2 - THE SLOT BUTTONS (2026-09-17, Mac: consumables are assigned "in the
+ * enhanced menu through the tooltip to slot 1/2").
+ *
+ * The KIND decides which buttons exist, and the model decides what a kind is:
+ * `isQuickConsumable` (a potion or a drug - the two arms of `useItem` that
+ * consume and act on the entity) and `canSwapTo` (an unequipped weapon that is
+ * not an arrow). A torch is neither - it is the off-hand cell's, through
+ * entity.lightSource - and a book is neither, so neither grows a button. This
+ * screen asks those two questions rather than answering them, for the same
+ * reason the Use button is offered for everything: a judgement made twice is a
+ * judgement that drifts.
+ *
+ * THE BUTTON THAT HOLDS THE ITEM SAYS "UNSLOT" AND CARRIES `on`. A button that
+ * looked the same whether the thing was in the slot or not would make the
+ * player press it to find out, and pressing it is exactly what un-slots it.
+ * `assignQuickslot` moves a kind BETWEEN the two consumable slots itself, so
+ * pressing the other one is a move and not a second copy.
+ *
+ * AND THE TOOLTIP STAYS UP. PX24's law is that a USE closes it - the item is
+ * gone or changed and the card is stale - but slotting changes nothing about
+ * the item, and the player's next act is usually to read the other button. So
+ * this re-renders in place: the labels flip, the row chips appear, the card
+ * keeps its place.
+ */
+function quickslotActs(item) {
+  const inSlot = quickslotOf(item);
+  const button = (slot, set, unset) => {
+    const on = inSlot === slot;
+    const b = el('button', `act qs-act${on ? ' on' : ''}`, on ? unset : set);
+    b.onclick = () => {
+      if (on) clearQuickslot(slot); else assignQuickslot(slot, item);
+      refresh();   // the pack list is where the chips are drawn
+      render();   // ...and the card stays up, with its labels flipped
+    };
+    return b;
+  };
+  if (isQuickConsumable(item)) return [button('c1', 'Slot 1', 'Unslot 1'), button('c2', 'Slot 2', 'Unslot 2')];
+  if (canSwapTo(item)) return [button('swap', 'Swap to', 'Unset swap')];
+  return [];
+}
+
 function detailCol() {
   const col = el('section', `packcol packdetail${picked ? ' open' : ''}`);
   // PX16c: the plaque wears the pause window's own corners - one
@@ -1941,6 +2072,12 @@ function detailCol() {
   u.onclick = () => use(picked,
     side === 'remote' ? remoteTarget(deps, sessionState()) : (deps.items?.() ?? []));
   acts.append(u);
+  // QS2: ...and the quickslot buttons, LOCAL ONLY. A slot resolves against the
+  // PACK every frame (quickslots resolveConsumable), so slotting something
+  // that is still in a corpse would name a kind the player does not carry - a
+  // ghost from the moment it was made. The remote side gets none; take it
+  // first, then slot it.
+  if (side === 'local') for (const b of quickslotActs(picked)) acts.append(b);
   c.append(acts);
   col.append(c);
   // The address, for the player who wants it and the developer who

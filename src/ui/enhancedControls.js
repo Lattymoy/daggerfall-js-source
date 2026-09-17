@@ -119,11 +119,34 @@ export const ADVANCED_ROWS = Object.freeze([
  *  So the port's own actions get their own heading. Today it is one row. The
  *  pane's coverage rule - every bindable action has a row, none twice - is what
  *  makes this a requirement rather than a preference. */
-export const PORT_ROWS = Object.freeze([
+const ONLINE_ROWS = Object.freeze([
   Object.freeze({ action: 'SocialInteract', label: 'Interact with player' }),
+]);
+/** QS2 (2026-09-17, Mac's quickslot diamond): A FOURTH GROUP, and the reason is
+ *  the heading rather than the list. 'Online' is a true word for the F-menu and
+ *  a false one for a potion press: a player scanning for "how do I drink the
+ *  thing in slot one" would never look under it, and a group whose title does
+ *  not describe its rows is worse than no group at all. So the port's rows are
+ *  a LIST OF GROUPS now - one heading per kind of departure - and PORT_ROWS
+ *  stays the flat union of them, because the pane's coverage rule (every
+ *  bindable action has a row, none twice) is asked of the union. */
+const QUICKSLOT_ROWS = Object.freeze([
+  Object.freeze({ action: 'QuickUse1', label: 'Use quickslot 1' }),
+  Object.freeze({ action: 'QuickUse2', label: 'Use quickslot 2' }),
+  Object.freeze({ action: 'QuickSwap', label: 'Swap weapon' }),
+  Object.freeze({ action: 'QuickOffHand', label: 'Light or douse' }),
 ]);
 /** The heading the third group wears. Its own constant so the pin names it. */
 export const PORT_GROUP_TITLE = 'Online';
+/** QS2's own, the same way. */
+export const QUICKSLOT_GROUP_TITLE = 'Quickslots';
+/** The port's own headings, in the order the pane draws them. */
+export const PORT_GROUPS = Object.freeze([
+  Object.freeze({ title: PORT_GROUP_TITLE, rows: ONLINE_ROWS }),
+  Object.freeze({ title: QUICKSLOT_GROUP_TITLE, rows: QUICKSLOT_ROWS }),
+]);
+/** Every port row, flat: the coverage rule's half of the answer. */
+export const PORT_ROWS = Object.freeze([...ONLINE_ROWS, ...QUICKSLOT_ROWS]);
 
 /** ShowMultipleAssignmentsMessage's line, the string the classic grid
  *  draws (ui/controlsWindow.js's `top === 'dupes'` row). The same
@@ -428,5 +451,5 @@ export function paneControls(body, { render = () => {} } = {}) {
   // SOC5: the port's own row. It is drawn LAST because it is the newest law,
   // and because the classic window - which this pane is the skin of - has no
   // place for it at all: the enhanced window is the one door to rebinding F.
-  group(body, PORT_GROUP_TITLE, PORT_ROWS.map((r) => [r.action, r.label]));
+  for (const g of PORT_GROUPS) group(body, g.title, g.rows.map((r) => [r.action, r.label]));
 }

@@ -521,6 +521,21 @@ export function routeKey(e, ctx, setPlayerPos = null, keys = null) {
  *  the ReadyWeapon comment above says a second one belongs. */
 export const POLLED_ACTIONS = new Set(['ReadyWeapon', 'SwitchHand']);
 
+/** QS2 - THE THREE THE TWO SELF-ROUTING HOSTS ANSWER ABOVE THEIR MODE GATE.
+ *
+ *  AUDIT SOC B4/D1 is the whole of the reason this list exists. SOC5 put the
+ *  social door inside `scenes/world.js`'s exterior-mode gate, and the interior
+ *  and dungeon modes' own contexts carry their own ctx - so F did nothing in a
+ *  tavern and nothing in a dungeon, and nobody noticed because it worked in the
+ *  street. A quickslot is worth MORE underground than it is on a road, so the
+ *  same trap would have been worse here.
+ *
+ *  `scenes/world.js` and `scenes/exterior.js` route their own keys and each
+ *  reads this set to answer these three ABOVE the mode gate, under the same
+ *  overlay and pause gates every other gameplay door takes. The two hosts that
+ *  call `routeKey` need nothing: their ctx already reaches the table. */
+export const QUICKSLOT_ACTIONS = new Set(['QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand']);
+
 /**
  * THE ACTION LADDER ALONE, without the key event. U45 pulled it out
  * of routeKey because the large HUD's eleven panels post ACTIONS -
@@ -621,6 +636,23 @@ export function routeAction(action, ctx, setPlayerPos = null) {
     // the key keeps whatever meaning the rest of the host gives it. A host
     // without the door at all is the same answer one step earlier.
     case 'SocialInteract': return ctx.socialInteract?.() === true;
+    // QS2 (2026-09-17, Mac: the Demon's Souls quickslot diamond on the
+    // enhanced HUD): the three port actions the diamond's cells name. They are
+    // EDGE actions, never polled - a held 1 drinks one potion, not one a frame
+    // - so they belong in this table and not in POLLED_ACTIONS.
+    //
+    // The DOOR answers, as SocialInteract's does: a host that has not grown
+    // one, or a classic-skin page with no diamond, is a false and the ladder
+    // falls through with the key still meaning whatever else the host gives
+    // it. The performer itself is systems/quickslots.js - the window's own use
+    // ladder and the one equipItem - so a hotkey is not a way round the
+    // window's law.
+    case 'QuickUse1': return ctx.quickUse?.(1) === true;
+    case 'QuickUse2': return ctx.quickUse?.(2) === true;
+    case 'QuickSwap': return ctx.quickSwap?.() === true;
+    // QS4: the off-hand cell's own press - light or douse, through the mod's
+    // own guard. Same door law: a host without one answers false.
+    case 'QuickOffHand': return ctx.quickOffHand?.() === true;
     default: return false;
   }
 }

@@ -396,7 +396,7 @@ test('AUDIT 64 F35/F37: on the enhanced skin the hide door is reached, and the e
     append(...c) { this.children.push(...c); }, appendChild(c) { this.children.push(c); return c; },
     replaceChildren(...c) { this.children = c; }, addEventListener() {},
   });
-  globalThis.document = { createElement: mkEl, getElementById: () => null, head: mkEl(), body: mkEl() };
+  globalThis.document = { createElement: mkEl, createElementNS: (ns, tag) => mkEl(tag), getElementById: () => null, head: mkEl(), body: mkEl() };
   _resetHudRender();
   const canvas = { width: 1920, height: 1080 };
   const bytes = new Uint8Array(64 * 64);

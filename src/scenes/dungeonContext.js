@@ -39,7 +39,8 @@ import { ActionTextBox, ActionInputBox } from '../ui/actionText.js';
 import { makeWindowStack, pauseWhileOpen } from '../ui/windowStack.js';   // ROAD-B B1: UserInterfaceManager's stack, under this context's one slot; ROAD-tail: and its PAUSE
 import { healthStatusRows, statusInfoRows } from '../systems/healthStatus.js';   // BS1/F198: the Status health box
 import { playerEntity, surfacePlayer, hurtPlayer as hurtEntity, damageShieldPool, setDeathPresenter, setAvoidDeathHook } from '../characters/playerEntity.js';   // AUDIT 58: DecreaseHealth's shield hook is the BASE class's, so every entity's door owes it
-import { addItem, spendArrow } from '../systems/inventory.js';
+import { addItem, spendArrow, isEnchanted } from '../systems/inventory.js';
+import { useQuickslot, swapQuickslot, offHandQuickslot } from '../systems/quickslots.js';   // QS2/QS4: the diamond's performers
 import { worldAabb, objectAabb } from '../player/activate.js';   // AUDIT 63 F37/F38: objectAabb is the LIVE box a ray or a collision meets
 import { createWeaponRig, envAttack } from '../combat/weaponRig.js';   // C10: the shared FP-weapon surface
 import { weaponPoseOf, applyWeaponPose } from '../combat/playerWeapon.js';   // HARD2c: the sheath+hand pair as ONE law (SerializablePlayer.cs:175-176 / :420-421)
@@ -1340,6 +1341,48 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     });
   }
 
+  /** U53's ONE-BUILDER LAW, held here too: this context's host-owned USE hooks
+   *  in ONE bag, taken by the inventory builder below and by QS2's quickslot
+   *  performers. They were written inline in the builder's argument list, which
+   *  is one copy away from a potion behaving differently from the key than it
+   *  does from the Use button. */
+  const useHooks = {
+    // ROAD-A7: the reader takes a PICK now. The painting arm of the
+    // info panel asks for GetRandomTokens' dfRand draw (TextProvider
+    // .cs:228); everything else keeps Random.Range's default.
+    rows: (id, pick) => textRsc?.variantLinesById(id, pick ?? Math.random) ?? [],   // AUDIT 22 F2
+    drinkPotion: (key) => magic.drinkPotion(key),   // U44: DrinkPotion through the ONE cast engine
+    // QuestMachine.GetQuest - the use-click block
+    // (DaggerfallInventoryWindow.cs:1673) and ResolveItemLongName's
+    // quest-letter arm (ItemHelper.cs:338). The standalone `?dungeon`
+    // page mounts no bridge and answers null, which is the same
+    // fall-through DFU takes with nothing watching.
+    getQuest: (uid) => opts.questBridge?.machine?.getQuest?.(uid) ?? null,
+    // U44: no reveal seam - this context has no region index to walk
+    revealMap: null,
+    nowMinute: () => Math.floor(worldMinutes()),   // AUDIT 21 F2: the one clock
+  };
+  /** QS2: the diamond's presses - see scenes/world.js's twin for the whole of
+   *  the reason. `say` is this context's own HUD line, the one the weapon rig
+   *  and the dropped torches already speak through. */
+  const quickUse = (n) => {
+    useQuickslot(n === 1 ? 'c1' : 'c2', {
+      entity: playerEntity, items: playerEntity.items ?? [], hooks: { ...useHooks, isEnchanted }, say: (l) => hudText.add(l),
+    });
+    return true;
+  };
+  const quickSwap = () => {
+    swapQuickslot({ entity: playerEntity, say: (l) => hudText.add(l), rows: useHooks.rows });
+    weaponRig.refreshWorn();
+    return true;
+  };
+  /** QS4: the off-hand cell's press - see scenes/world.js's twin. Underground
+   *  it is the one of the four that matters most. */
+  const quickOffHand = () => {
+    offHandQuickslot({ entity: playerEntity, say: (l) => hudText.add(l), toggleLight: () => weaponRig.toggleLight() });
+    return true;
+  };
+
   function openInventory(lootItems, onEmptied = null, { wagonPrompt = false, lootHooks = null, lootKey = null } = {}) {
     // V4: GetSuppressInventory (LycanthropyEffect.cs:409-421) - a
     // transformed lycanthrope opens NO inventory, loot included; the
@@ -1365,24 +1408,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       },
       entity: playerEntity,
       icons: { getTexture, uploadRecord, textures: renderer.textures },
-      // ROAD-A7: the reader takes a PICK now. The painting arm of the
-      // info panel asks for GetRandomTokens' dfRand draw (TextProvider
-      // .cs:228); everything else keeps Random.Range's default.
-      rows: (id, pick) => textRsc?.variantLinesById(id, pick ?? Math.random) ?? [],   // AUDIT 22 F2
       // U42: USING the Spellbook item opens the book
       // (DaggerfallInventoryWindow.cs:1748-1764). The inventory has
       // just run its own close law, so the slot is free.
       openSpellbook: () => { const b = makeSpellbookWindow(); if (b) activeOverlay = b; },
-      drinkPotion: (key) => magic.drinkPotion(key),   // U44: DrinkPotion through the ONE cast engine
-      // QuestMachine.GetQuest - the use-click block
-      // (DaggerfallInventoryWindow.cs:1673) and ResolveItemLongName's
-      // quest-letter arm (ItemHelper.cs:338). The standalone `?dungeon`
-      // page mounts no bridge and answers null, which is the same
-      // fall-through DFU takes with nothing watching.
-      getQuest: (uid) => opts.questBridge?.machine?.getQuest?.(uid) ?? null,
-      // U44: no reveal seam - this context has no region index to walk
-      revealMap: null,
-      nowMinute: () => Math.floor(worldMinutes()),   // AUDIT 21 F2: the one clock
+      ...useHooks,   // U53: the one bag
       // G5: a DROPPED pile hands DaggerfallLoot's whole identity
       // (playerOwned + TextureArchive/TextureRecord + position); an RDB
       // treasure pile or a corpse hands its FLAT alone, which is
@@ -1418,7 +1448,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:6783 / exterior.js:3045), set
+  // host's own townTalk sink (world.js:6839 / exterior.js:3088), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -1895,7 +1925,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // copied mount would have diverged the first time an arm grew.
   /** DR1: THE TWO SPELL WINDOWS THIS HOST MOUNTS NOW, and the one door
    *  they go through. `mountSpellWindow` is worldModes'
-   *  mountSpellWindow DUNGEON ARM (worldModes.js:1049,
+   *  mountSpellWindow DUNGEON ARM (worldModes.js:1050,
    *  `dungeonCtx?.showOverlay(win)`) resolved to what it actually
    *  calls here - this file's own pushDungeonWindow, which IS
    *  UserInterfaceManager.PushWindow. So a spell window raised over an
@@ -2375,7 +2405,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:980 against :981; worldModes.js:5975 against :5975).
+    // (dungeon.js:980 against :981; worldModes.js:5975 against :5976).
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -2865,8 +2895,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:9332,
-              // exterior.js:4418 and worldModes.js:6116 already ran;
+              // playerArrowHitFoe is the one copy world.js:9396,
+              // exterior.js:4469 and worldModes.js:6117 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -4914,6 +4944,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // AUDIT 39: the enhanced HUD's two hand plaques - see world.js.
         readied: magic.readied() ?? null,
         weapon: playerWeapon.weapon ?? null,
+        // QS4: THE PHONE'S OWN DOORS. The diamond's cells take a finger
+        // on a touch-first device (ui/enhancedHud.js's second departure),
+        // and a door the host never handed over is a control that
+        // platform does not have - which is the whole of AUDIT SOC C9.
+        quickUse: (n) => quickUse(n), quickSwap: () => quickSwap(), quickOffHand: () => quickOffHand(),
         weaponSheathed: !!playerWeapon.sheathed });   // AUDIT 28 W2: the arrow counter's drawn-bow gate   // U38 + X4 + U43
     hudText.tick(dt);
     // AUDIT 64 F37: popupText is a NativePanel component of the HUD
@@ -5173,7 +5208,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // both of them hand it in: dungeon.js's opts bag and
         // worldModes' (the world-hosted crawl, which is where the
         // classic start into Privateer's Hold lives, and which is the
-        // pause door ui/input.js:524 reaches underground).
+        // pause door ui/input.js:539 reaches underground).
         relock: () => opts.relock?.(),
         // the LOAD arm needs the host's position applier, exactly as
         // routeKey's own QuickLoad case passes it
@@ -5245,6 +5280,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     weaponRig: () => weaponRig,   // AUDIT WORLD C1: the rig the player's hands are in underground, for the pose's arm
     readiedSpell: () => magic.readied(),   // ROAD-Ar: PlayerEffectManager.ReadySpell - the gate needs its TargetType for the ByTouch exception (PlayerActivate.cs:250-258)
     toggleSheath: weaponRig.toggleSheath,
+    // QS2: the diamond's three presses. This ctx is routeKey's, in BOTH hosts
+    // that mount it - the standalone `?dungeon` page and the world's dungeon
+    // mode - so the doors land on the ladder in each the moment they exist.
+    quickUse: (n) => quickUse(n),
+    quickSwap: () => quickSwap(),
+    quickOffHand: () => quickOffHand(),
     switchHand: weaponRig.switchHand, readyWeapon: weaponRig.readyWeapon,   // a12: SwitchHand (H) - the same one door as the sheathe toggle; MAC-O1: and the ReadyWeapon KEY's own door (WeaponManager.Update:229-269), beside the panel's raw ToggleSheath above
     // S24 probe seam: drive a real spell record onto the player
     // through the host's own absorption path (the same function the
@@ -6237,7 +6278,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       //
       // The interior host's `interiorHitEffects.clear()` is NOT the same
       // line and was never a precedent for one: that pool is built with
-      // no `onSpawn` (worldModes.js:509), so it owns its batches and
+      // no `onSpawn` (worldModes.js:510), so it owns its batches and
       // clear() is the only thing that frees them - and it runs on a
       // between-buildings RESET, not a teardown.
       // AUDIT 64 F41: the scene ambience leaves with the scene too -

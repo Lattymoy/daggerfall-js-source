@@ -172,9 +172,9 @@ export async function autoBuildArms(entity, { wanted = () => getPref('mwArms'), 
  *                     The note that hosts without a HUD text layer
  *                     pass console is retired: every call site hands
  *                     over a real one - hudText.add
- *                     (dungeonContext.js:2173), townTalk.say
- *                     (exterior.js:1360, world.js:2583) and
- *                     worldModes' own interior sink (worldModes.js:378,
+ *                     (dungeonContext.js:2614), townTalk.say
+ *                     (exterior.js:1653, world.js:2584) and
+ *                     worldModes' own interior sink (worldModes.js:385,
  *                     which warns to console only where a host mounts
  *                     no townTalk at all), so the empty default below
  *                     is unreached,
@@ -536,6 +536,24 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   }
 
   return {
+    /** QS2 - RE-READ THE HANDS NOW, not on the next frame.
+     *
+     *  `syncWorn` is DFU's UpdateHands + ApplyWeapon and the rig already runs
+     *  it every frame (`frame` above), which is how an equip made in the
+     *  inventory window reaches the hand: the window changes the equip table,
+     *  the next frame reads it. A quickslot SWAP is the same equip made from
+     *  the key ladder, with no window open - and the ladder answers BEFORE the
+     *  frame, so anything that reads the rig in the same press (the HUD's
+     *  diamond, a pin) would see the weapon that just left the hand. This is
+     *  the same read, on demand; it is idempotent, so calling it costs the
+     *  frame's own call nothing. */
+    refreshWorn() { syncWorn(); },
+    /** QS4 - THE OFF-HAND KEY'S LIGHT ARM. The quickslot diamond's
+     *  off-hand cell presses the same thing Handheld Torches' own toggle
+     *  key presses (its `toggleLightPress`, the free-hand guard and all),
+     *  because it is the same act on the same hand - and the mod being
+     *  OFF is an answer too: no light system, nothing toggled, false. */
+    toggleLight() { return handheldOn() ? handheld.toggleLightPress() === true : false; },
     /** MW-D39: the host's cast moment runs the arm's spellcast release.
      *  One door, like setWeapon - the host never reaches into fpArm.
      *

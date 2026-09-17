@@ -1,0 +1,343 @@
+// QS2 (2026-09-17, Mac: a Demon's Souls quickslot diamond on the ENHANCED
+// HUD's bottom-left - main hand, off hand, and two consumables, each with a
+// keybind tag): THE ACTIONS, THE ROUTE, AND THE FOUR HOSTS' DOORS.
+//
+// QS1 built the model (systems/quickslots.js) and nothing could reach it. This
+// is the wiring, and it has four laws:
+//
+//   - THE ACTIONS. Three more of the port's own, APPENDED past DFU's
+//     forty-four and past SOC5's row, because the classic controls window
+//     indexes ACTIONS by NUMBER against fixed art. Defaulted to the number row,
+//     which nothing in DFU, the port or any vendored mod spends. A bindings
+//     file written before this slice gains them on the next boot.
+//   - THE PANE. Every bindable action needs a row a player can rebind from, and
+//     the classic window cannot draw these - so they go in the enhanced pane,
+//     under their own heading rather than SOC5's 'Online'.
+//   - THE ROUTE. routeAction hands each to a ctx door and passes the DOOR's
+//     answer back; a host without one consumes nothing and throws nothing.
+//   - THE FOUR HOSTS. AUDIT SOC B4/D1 is the lesson this slice is written
+//     against: SOC5 put its door under the exterior host's MODE gate and F did
+//     nothing in a tavern or a dungeon for a week. Every host that carries
+//     `toggleSheath` carries these, and the two self-routing hosts answer them
+//     ABOVE their mode gate.
+//
+// Plus the thing a source pin cannot claim: that a swap actually changes what
+// the weapon rig reports as held. That one is DRIVEN, on a real rig.
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import {
+  ACTIONS, PORT_ACTIONS, DEFAULT_BINDINGS, parseActionName,
+  createBindings, resetDefaults, setBinding, getBinding, actionForCode, loadKeyBinds, serializeKeyBinds,
+} from '../src/systems/inputActions.js';
+import { routeAction, QUICKSLOT_ACTIONS, POLLED_ACTIONS } from '../src/ui/input.js';
+import { GRID_ACTIONS, ADVANCED_ROWS, PORT_ROWS, PORT_GROUPS, QUICKSLOT_GROUP_TITLE } from '../src/ui/enhancedControls.js';
+import { createWeaponRig } from '../src/combat/weaponRig.js';
+import { equipItem, equipTableOf, EQUIP_SLOTS } from '../src/systems/equip.js';
+import { assignQuickslot, clearQuickslots, swapQuickslot, quickslotOf } from '../src/systems/quickslots.js';
+import { USE_PENDING as USE_PENDING_SYS } from '../src/systems/useItem.js';
+import { USE_PENDING as USE_PENDING_UI } from '../src/ui/nativeInventory.js';
+
+const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
+
+const QS = Object.freeze(['QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand']);
+
+// ── THE ACTIONS ──────────────────────────────────────────────────────
+
+test('QS2: the three actions are APPENDED - past DFU\'s forty-four and past SOC5\'s row - parse, and never displace an index the classic grid draws by number (mutants: a name spliced mid-list; a name the parser answers Unknown for)', () => {
+  assert.deepEqual(ACTIONS.slice(-4), QS, 'the last four rows, in this order');
+  assert.equal(ACTIONS.length, 49, 'DFU\'s 44 + SOC5\'s 1 + QS2\'s 3 + QS4\'s 1');
+  // Every index DFU's own enum had, it still has. This is the whole reason the
+  // list is appended to and never inserted into (ui/controlsWindow.js).
+  assert.equal(ACTIONS[43], 'AutoRun', 'DFU\'s last row keeps index 43');
+  assert.equal(ACTIONS[44], 'SocialInteract', 'and SOC5\'s keeps 44');
+  assert.deepEqual([...GRID_ACTIONS], ACTIONS.slice(2, 40), 'so the classic grid\'s slice still means what it meant');
+  for (const a of QS) {
+    assert.equal(ACTIONS.filter((x) => x === a).length, 1, `${a} once`);
+    assert.equal(parseActionName(a), a);
+  }
+  assert.equal(parseActionName('QuickUse3'), 'Unknown', 'the sentinel still answers for a near miss');
+});
+
+test('QS2: the port\'s own actions YIELD in the classic windows - all four of them, because none of the four is on either classic face (mutant: the three left out of PORT_ACTIONS, so a classic player is told of a clash against a row they cannot see or clear)', () => {
+  assert.deepEqual([...PORT_ACTIONS], ['SocialInteract', ...QS]);
+  // The claim PORT_ACTIONS makes is "not drawable by a classic window", and it
+  // is derived here rather than asserted: the classic grid is ACTIONS[2..40)
+  // and the ADVANCED popup is its six.
+  const classicFace = new Set([...GRID_ACTIONS, ...ADVANCED_ROWS.map((r) => r.action)]);
+  for (const a of PORT_ACTIONS) assert.ok(!classicFace.has(a), `${a} is on neither classic face`);
+  // ...and the other way: nothing DFU's own windows DO draw yields there.
+  for (const a of classicFace) assert.ok(!PORT_ACTIONS.includes(a), `${a} is drawable and must not yield`);
+});
+
+test('QS2: the defaults are the number row, spent exactly once each, and free before this slice took them (mutants: a default on a key DFU or a vendored mod already answers; two actions on one digit)', () => {
+  const byCode = new Map(DEFAULT_BINDINGS.map(([c, a]) => [c, a]));
+  assert.equal(byCode.get('Digit1'), 'QuickUse1');
+  assert.equal(byCode.get('Digit2'), 'QuickUse2');
+  assert.equal(byCode.get('Digit3'), 'QuickSwap');
+  assert.equal(byCode.get('Digit4'), 'QuickOffHand');
+  const codes = DEFAULT_BINDINGS.map(([c]) => c);
+  assert.equal(new Set(codes).size, codes.length, 'no key is spent twice');
+  assert.equal(DEFAULT_BINDINGS.length, ACTIONS.length, 'and every action still has exactly one default');
+  // THE KEYS WERE FREE. DFU's own table is the rows above SOC5's, and none of
+  // them is a digit - read off the table rather than asserted about it.
+  const dfu = DEFAULT_BINDINGS.slice(0, 44).map(([c]) => c);
+  for (const d of ['Digit1', 'Digit2', 'Digit3']) assert.ok(!dfu.includes(d), `SetupDefaults never spends ${d}`);
+  // The port's own spending, named where it is spent, so a rename there fails
+  // here (the same shape HT4's pin uses one file over).
+  assert.match(rd('src/ui/input.js'), /if \(e\.code === 'Tab'\) \{ return ctx\.toggleDial/, 'PX15: Tab is the pixel dial');
+  // A live store built from the defaults answers each digit with its action.
+  const s = createBindings();
+  resetDefaults(s);
+  assert.equal(actionForCode(s, 'Digit1'), 'QuickUse1');
+  assert.equal(getBinding(s, 'QuickSwap'), 'Digit3');
+  assert.equal(getBinding(s, 'QuickOffHand'), 'Digit4');
+});
+
+test('QS2: a bindings blob written BEFORE this slice gains the three on the next load, and a player who had already bound a digit keeps it (mutants: the autofill stealing a bound key; the rows put in a host so an existing save never gets them)', () => {
+  // The startup path is loadKeyBinds then resetDefaults(store, true) - what
+  // loadOrCreateBindings does after every load.
+  const old = createBindings();
+  resetDefaults(old);
+  const file = serializeKeyBinds(old);
+  for (const d of ['Digit1', 'Digit2', 'Digit3']) delete file.actionKeyBinds[d];   // the blob as it was written before QS2
+  const fresh = createBindings();
+  loadKeyBinds(fresh, file);
+  for (const d of ['Digit1', 'Digit2', 'Digit3']) assert.equal(actionForCode(fresh, d), null, 'the blob itself says nothing about the digits');
+  resetDefaults(fresh, true);
+  assert.equal(actionForCode(fresh, 'Digit1'), 'QuickUse1', 'the autofill gives an existing player the action - no reset, no lost bindings');
+  assert.equal(actionForCode(fresh, 'Digit2'), 'QuickUse2');
+  assert.equal(actionForCode(fresh, 'Digit3'), 'QuickSwap');
+  assert.equal(actionForCode(fresh, 'Digit4'), 'QuickOffHand');
+  assert.equal(getBinding(fresh, 'Rest'), 'KeyR', 'and disturbs nothing else');
+  assert.equal(getBinding(fresh, 'SocialInteract'), 'KeyF', 'SOC5\'s row included');
+  // ...and a player who put Rest on 1 keeps Rest on 1; QuickUse1 simply waits.
+  const mine = createBindings();
+  loadKeyBinds(mine, file);
+  setBinding(mine, 'Digit1', 'Rest');
+  resetDefaults(mine, true);
+  assert.equal(actionForCode(mine, 'Digit1'), 'Rest', 'testSetBinding never steals a code the player has spent');
+  assert.equal(getBinding(mine, 'QuickUse1'), null, 'so the new action waits, rebindable, rather than fighting for the key');
+  assert.equal(actionForCode(mine, 'Digit2'), 'QuickUse2', 'and its siblings are unaffected');
+});
+
+// ── THE PANE ─────────────────────────────────────────────────────────
+
+test('QS2: the enhanced pane draws the three under their OWN heading, and the coverage rule still holds over every group (mutants: the rows dropped so the keys are unrebindable; the rows hidden under SOC5\'s Online heading; a row twice)', () => {
+  assert.deepEqual(PORT_GROUPS.map((g) => g.title), ['Online', QUICKSLOT_GROUP_TITLE]);
+  assert.equal(QUICKSLOT_GROUP_TITLE, 'Quickslots');
+  assert.deepEqual(PORT_GROUPS[1].rows.map((r) => [r.action, r.label]), [
+    ['QuickUse1', 'Use quickslot 1'],
+    ['QuickUse2', 'Use quickslot 2'],
+    ['QuickSwap', 'Swap weapon'],
+    ['QuickOffHand', 'Light or douse'],   // QS4: the fourth cell's own press
+  ]);
+  assert.ok(!PORT_GROUPS[0].rows.some((r) => QS.includes(r.action)), 'not under Online - a potion press is not an online act');
+  // COVERAGE: every bindable action has exactly one row across every group.
+  const all = [...GRID_ACTIONS, ...ADVANCED_ROWS.map((r) => r.action), ...PORT_ROWS.map((r) => r.action)];
+  assert.equal(new Set(all).size, all.length, 'none twice');
+  assert.deepEqual([...all].sort(), [...ACTIONS].sort(), 'and none missing');
+  // ...and the union really is the groups, so the coverage rule cannot be
+  // satisfied by a flat list nothing draws.
+  assert.deepEqual(PORT_GROUPS.flatMap((g) => g.rows), [...PORT_ROWS]);
+  assert.match(rd('src/ui/enhancedControls.js'),
+    /for \(const g of PORT_GROUPS\) group\(body, g\.title, g\.rows\.map\(\(r\) => \[r\.action, r\.label\]\)\);/,
+    'the groups are RENDERED, not merely declared');
+});
+
+// ── THE ROUTE ────────────────────────────────────────────────────────
+
+test('QS2: routeAction sends each action to its ctx door with the slot number, and passes the DOOR\'S answer back (mutants: the arms swapped so 1 drinks slot 2; a bare true so the key is eaten on a host with no door; the arm missing so the key is dead)', () => {
+  const calls = [];
+  const ctx = {
+    quickUse: (n) => { calls.push(['use', n]); return true; },
+    quickSwap: () => { calls.push(['swap']); return true; },
+    quickOffHand: () => { calls.push(['off']); return true; },
+  };
+  assert.equal(routeAction('QuickUse1', ctx), true);
+  assert.equal(routeAction('QuickUse2', ctx), true);
+  assert.equal(routeAction('QuickSwap', ctx), true);
+  assert.equal(routeAction('QuickOffHand', ctx), true);
+  assert.deepEqual(calls, [['use', 1], ['use', 2], ['swap'], ['off']], 'each arm is its own, and the SLOT NUMBER travels');
+  // The door's answer, passed through.
+  assert.equal(routeAction('QuickUse1', { quickUse: () => false }), false);
+  assert.equal(routeAction('QuickSwap', { quickSwap: () => false }), false);
+  assert.equal(routeAction('QuickOffHand', { quickOffHand: () => false }), false);
+  assert.equal(routeAction('QuickUse2', { quickUse: () => undefined }), false, 'a door that answers nothing is not a door that consumed');
+  // A host with NO doors: false, and nothing thrown.
+  for (const a of QS) assert.equal(routeAction(a, {}), false, `${a} on a bare ctx`);
+  // The arms steal nothing from their neighbours.
+  let sheath = 0, social = 0;
+  routeAction('ReadyWeapon', { toggleSheath: () => { sheath++; } });
+  routeAction('SocialInteract', { socialInteract: () => { social++; return true; } });
+  assert.deepEqual([sheath, social], [1, 1]);
+  // THE EDGE, not the poll: a held 1 drinks one potion, not one a frame.
+  for (const a of QS) assert.ok(!POLLED_ACTIONS.has(a), `${a} is an edge action`);
+  const src = rd('src/ui/input.js');
+  assert.match(src, /case 'QuickUse1': return ctx\.quickUse\?\.\(1\) === true;/);
+  assert.match(src, /case 'QuickUse2': return ctx\.quickUse\?\.\(2\) === true;/);
+  assert.match(src, /case 'QuickSwap': return ctx\.quickSwap\?\.\(\) === true;/);
+  assert.match(src, /case 'QuickOffHand': return ctx\.quickOffHand\?\.\(\) === true;/);
+  assert.deepEqual([...QUICKSLOT_ACTIONS].sort(), [...QS].sort(), 'and the set the self-routing hosts read is the same three');
+});
+
+// ── THE FOUR HOSTS ───────────────────────────────────────────────────
+
+// AUDIT SOC B4/D1's pin, twinned. The social one walks world.js for the door
+// and the arm; this walks EVERY host ctx that carries `toggleSheath`, because
+// that list is exactly the list of places a gameplay key is answered, and a
+// door missing from one of them is the tavern bug again.
+const HOSTS = Object.freeze([
+  ['src/scenes/world.js', 'the streaming world'],
+  ['src/scenes/exterior.js', 'the ?town/?exterior host'],
+  ['src/scenes/dungeonContext.js', 'the dungeon context, in both hosts that mount it'],
+  ['src/scenes/worldModes.js', 'the interior mode'],
+]);
+
+test('QS2: every host ctx that carries toggleSheath carries quickUse, quickSwap and quickOffHand - the AUDIT SOC B4/D1 walk (mutants: a door dropped from one host, so the keys die in a shop or underground)', () => {
+  for (const [path, what] of HOSTS) {
+    const src = rd(path);
+    assert.match(src, /toggleSheath/, `${path} really is a host that answers gameplay keys`);
+    assert.match(src, /quickUse/, `${path} (${what}) has no quickUse door`);
+    assert.match(src, /quickSwap/, `${path} (${what}) has no quickSwap door`);
+    assert.match(src, /quickOffHand/, `${path} (${what}) has no quickOffHand door`);
+  }
+  // The three that OWN a performer call the model; none of them writes a
+  // second use ladder or a second equip.
+  for (const path of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeonContext.js']) {
+    const src = rd(path);
+    assert.match(src, /import \{ useQuickslot, swapQuickslot, offHandQuickslot \} from '\.\.\/systems\/quickslots\.js';/, `${path} takes the model's performers`);
+    // QS4: and the off hand's light is the MOD's act, reached through the rig's
+    // one door - no host lights a torch itself.
+    assert.match(src, /offHandQuickslot\(\{ entity: playerEntity, say: [^\n]*toggleLight: \(\) => weaponRig\.toggleLight\(\) \}\);/s, `${path}: the off hand is the model's, on the rig's door`);
+    assert.match(src, /useQuickslot\(n === 1 \? 'c1' : 'c2', \{/, `${path}: the slot number picks the slot`);
+    assert.match(src, /swapQuickslot\(\{ entity: playerEntity, say:/, `${path}: the swap is the model's`);
+    assert.match(src, /weaponRig\.refreshWorn\(\);/, `${path}: and the rig is told at once`);
+    // THE HOOKS ARE THE WINDOW'S OWN BAG, not a second one written beside it -
+    // U53's one-builder law, which is what makes a potion drunk from the key
+    // and a potion drunk from the Use button the same potion. The bag is named
+    // `useHooks` in every host and the inventory builder spreads the same one.
+    assert.match(src, /hooks: (\{ \.\.\.useHooks[^}]*\}|quickslotHooks\(\))/, `${path}: the quickslot use takes the host's own bag`);
+    assert.match(src, /const useHooks = \{/, `${path}: and there is exactly one of it`);
+    assert.equal((src.match(/const useHooks = \{/g) ?? []).length, 1, `${path}: exactly one bag, not two`);
+    assert.match(src, /\.\.\.useHooks,/, `${path}: which the inventory builder takes too`);
+  }
+  // The INTERIOR mode borrows the outer host's performer and refreshes its OWN
+  // rig - the one place the two halves differ, and the reason it is written out.
+  const wm = rd('src/scenes/worldModes.js');
+  assert.match(wm, /quickUse\(n\) \{ return host\.quickUse\?\.\(n\) === true; \},/);
+  assert.match(wm, /const ok = host\.quickSwap\?\.\(\) === true;\s*\n\s*if \(ok\) interiorWeapon\.refreshWorn\(\);/,
+    'the interior rig is the one this mode draws, so it is the one told');
+  // QS4: and its light is that rig's too - the outer host's door would toggle
+  // the wrong one, which is the same B4/D1 lesson one hand over.
+  assert.match(wm, /toggleLight: \(\) => interiorWeapon\.toggleLight\(\)/);
+  for (const path of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    assert.match(rd(path), /quickUse: \(n\) => quickUse\(n\),\s*\n\s*quickSwap: \(\) => quickSwap\(\),/g,
+      `${path} hands the performers down to the mode machine as well as onto its own ctx`);
+    assert.equal((rd(path).match(/quickUse: \(n\) => quickUse\(n\),/g) ?? []).length, 3,
+      `${path}: on hudCtx (the key ladder), on the host bag (the interior mode), and on drawHud (QS4: the phone's tap)`);
+  }
+});
+
+test('QS2: the two self-routing hosts answer the three ABOVE their mode gate, under the overlay gate - AUDIT SOC B4/D1 taken the first time (mutants: the arm moved inside the mode gate so a quickslot dies in a shop; the overlay gate dropped so 1 drinks a potion while a window is typing)', () => {
+  // scenes/world.js: beside SOC5's own arm, which is the one that had to be
+  // moved here after the fact.
+  const w = rd('src/scenes/world.js');
+  const wArm = /if \(!townTalk\.overlayActive && QUICKSLOT_ACTIONS\.has\(act\) && socialMenuCanOpen\(\) && routeAction\(act, hudCtx\)\) \{ e\.preventDefault\(\); return; \}/;
+  assert.match(w, wArm);
+  const social = w.indexOf("act === 'SocialInteract' && socialMenuCanOpen()");
+  const mine = w.search(wArm);
+  const modeGate = w.indexOf("if (!townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {");
+  assert.ok(social > 0 && mine > 0 && modeGate > 0);
+  assert.ok(mine > social, 'it stands beside the social door, whose note carries the lesson');
+  assert.ok(mine < modeGate, 'and ABOVE the exterior-mode gate - a quickslot must work in a tavern and in a dungeon');
+  // scenes/exterior.js: the same place, its own gate words.
+  const x = rd('src/scenes/exterior.js');
+  const xArm = /if \(!townTalk\.overlayActive && QUICKSLOT_ACTIONS\.has\(act\) && !gamePaused\(\) && routeAction\(act, hudCtx\)\) \{ e\.preventDefault\(\); return; \}/;
+  assert.match(x, xArm);
+  assert.ok(x.search(xArm) < x.indexOf("if (!townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {"),
+    'above the mode gate here too');
+  // The two hosts that call routeKey need no arm at all - routeKey's own
+  // overlay branch and its routeAction tail are the gate and the door.
+  for (const path of ['src/scenes/worldModes.js', 'src/scenes/dungeon.js']) {
+    assert.match(rd(path), /routeKey\(/, `${path} routes through routeKey, so it inherits the table`);
+    assert.doesNotMatch(rd(path), /QUICKSLOT_ACTIONS/, `${path} must not grow a second ladder for these`);
+  }
+});
+
+// ── THE MODEL'S OWN IMPORTS ──────────────────────────────────────────
+
+test('QS2: the quickslot model imports no UI window - the cycle that killed five test files the moment anything imported it (mutant: USE_PENDING taken from ui/nativeInventory.js again)', () => {
+  // QS1 read the classic window's USE_PENDING table straight out of
+  // ui/nativeInventory.js. Nothing imported the quickslots yet, so the edge
+  // was invisible; this slice imports them from the enhanced pack and from
+  // four hosts, and that closed a cycle through ui/targetIconPanel.js -
+  // droppedloot, interiordrop, targeticonpanel, audit26_questitem and x11b all
+  // died on `Cannot access 'LOCAL_TARGET_ICON_RECT' before initialization`.
+  // The table lives beside the result KINDS it is keyed by now
+  // (systems/useItem.js), and the window re-exports it, so every reader still
+  // reads the same words.
+  const src = rd('src/systems/quickslots.js');
+  const imports = [...src.matchAll(/from '([^']+)';/g)].map((m) => m[1]);   // the multi-line one counts too
+  assert.ok(imports.length >= 4, 'the model really does import things');
+  for (const i of imports) assert.ok(!i.includes('/ui/'), `systems/quickslots.js must not import a UI module (${i})`);
+  assert.ok(imports.includes('./useItem.js'), 'the use ladder, which is where the stand-in words now live');
+  assert.match(rd('src/systems/useItem.js'), /export const USE_PENDING = Object\.freeze\(\{/);
+  assert.match(rd('src/ui/nativeInventory.js'), /export \{ USE_PENDING \};/, 'and the window re-exports it, so its own readers are untouched');
+  // The words themselves are one table, read three ways.
+  assert.equal(USE_PENDING_UI, USE_PENDING_SYS, 'the window and the ladder hand out the same frozen object');
+});
+
+// ── THE RIG, DRIVEN ──────────────────────────────────────────────────
+
+// A source pin over `refreshWorn()` proves a call exists, not that a swap
+// changes what the player is holding. This is the host's shape - an entity, an
+// equip table, a real rig - with the swap performed and the rig ASKED.
+const CANVAS = { clientWidth: 1000, clientHeight: 800 };
+const sword = () => ({ group: 'Weapons', templateIndex: 120, material: 0, name: 'Longsword', currentCondition: 800, maxCondition: 1000 });
+const dagger = () => ({ group: 'Weapons', templateIndex: 113, material: 3, name: 'Dagger', currentCondition: 50, maxCondition: 100 });
+const hero = (items) => ({ isPlayer: true, level: 5, career: {}, activeEffects: [], spells: [], stats: {}, items });
+const rigFor = (entity) => createWeaponRig({
+  renderer: {}, canvas: CANVAS, fetchBytes: () => { throw new Error('no art in tests'); },
+  palette: null, audio: { playOneShot() {} }, entity, say: () => {},
+});
+
+test.beforeEach(() => clearQuickslots());
+
+test('QS2: a swap changes what the RIG reports as held, in the same press - not on the next frame (mutants: refreshWorn dropped from the performer; refreshWorn made a no-op)', () => {
+  const e = hero([sword(), dagger()]);
+  const [held, dag] = e.items;
+  equipItem(e, held);
+  const rig = rigFor(e);
+  rig.frame(1 / 60);
+  assert.equal(rig.playerWeapon.weapon, held, 'the rig starts on the worn weapon');
+  assignQuickslot('swap', dag);
+
+  // The performer's two halves, in the order every host writes them.
+  const r = swapQuickslot({ entity: e, say: () => {} });
+  assert.equal(r.kind, 'swapped');
+  assert.equal(equipTableOf(e)[EQUIP_SLOTS.RightHand], dag, 'the equip table changed');
+  assert.equal(rig.playerWeapon.weapon, held, 'and the rig has NOT noticed - this is why the refresh is called at all');
+  rig.refreshWorn();
+  assert.equal(rig.playerWeapon.weapon, dag, 'now the hand holds the dagger');
+  assert.equal(quickslotOf(held), 'swap', 'and the sword is the next press');
+
+  // ...and the frame's own read agrees, so the refresh is the same law early
+  // and not a second one.
+  swapQuickslot({ entity: e, say: () => {} });
+  rig.frame(1 / 60);
+  assert.equal(rig.playerWeapon.weapon, held);
+});
+
+test('QS2: the rig\'s refresh door is idempotent and changes nothing on its own (mutant: refreshWorn wired to something that toggles)', () => {
+  const e = hero([sword()]);
+  equipItem(e, e.items[0]);
+  const rig = rigFor(e);
+  rig.frame(1 / 60);
+  const before = rig.playerWeapon.weapon;
+  const sheathed = rig.playerWeapon.sheathed;
+  rig.refreshWorn(); rig.refreshWorn(); rig.refreshWorn();
+  assert.equal(rig.playerWeapon.weapon, before, 'asking twice is asking once');
+  assert.equal(rig.playerWeapon.sheathed, sheathed, 'and it is not a second sheath door');
+  assert.equal(rig.toggleSheathCalls, 0, 'the sheath counter never moved');
+});

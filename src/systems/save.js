@@ -27,6 +27,7 @@ import { seedBundleSeq } from './effects.js';   // X10: the live-bundle counter'
 import { SOCIAL_GROUPS } from '../formats/factionFile.js';   // AUDIT 24
 import { travelMapSaveData, restoreTravelMapSaveData } from './travelMapState.js';   // U41: TravelMapSaveData
 import { getEscortFacesSaveData, restoreEscortFacesSaveData } from '../ui/hudEscortFaces.js';   // FE1: SaveData_v1.escortingFaces
+import { quickslotSaveData, restoreQuickslotSaveData } from './quickslots.js';   // QS1: the quickslot diamond rides the one composer
 import { resetMagicRoundMarker, sharedClockOn, worldMinutes, alignEntityClocks } from './worldTick.js';   // EntityEffectBroker.InitMagicRoundTimer, on the LOAD arm (:230-233); AUDIT WORLD5 C4: a load online is an arrival
 import { isMembershipStore } from './guilds.js';   // V2e: the two-book membership store rides the save whole
 import { restoreKnightlyOrderFlags } from './knightlyGifts.js';   // D9: KnightlyOrder.RestoreGuildData's armour-bit back-fill
@@ -803,6 +804,10 @@ export function composeSessionState({ questBridge = null, talk = null } = {}) {
     // escort portraits ride every save, off the one panel, exactly as
     // DFU reaches DaggerfallHUD.EscortingFaces from its serializer.
     escortingFaces: getEscortFacesSaveData(),
+    // QS1: the quickslot diamond's two consumables and its swap weapon
+    // (systems/quickslots.js) - per-character state, so it rides the
+    // save and not the browser's prefs shelf.
+    quickslots: quickslotSaveData(),
   };
 }
 
@@ -889,6 +894,9 @@ export function restoreSessionState(extras, { questBridge = null, talk = null, e
   // null is DFU's OWN arm here: a save without the block CLEARS the
   // panel, so a pre-FE1 save loads with no stale portraits.
   restoreEscortFacesSaveData(extras?.escortingFaces ?? null);
+  // QS1: the same arm - a save without the block CLEARS the slots, so
+  // a pre-QS save and another character's never carry a stale kind.
+  restoreQuickslotSaveData(extras?.quickslots ?? null);
   if (extras?.talk && talk) {
     talk.mill.restoreSaveData(extras.talk);
     talk.tree.restoreSaveData(extras.talk);   // the orphan sweep + relink + TellMeAbout tail run inside

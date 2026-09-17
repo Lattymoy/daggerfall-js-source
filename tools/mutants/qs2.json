@@ -1,0 +1,178 @@
+[
+  {
+    "name": "QS2-the-three-actions-reordered",
+    "file": "src/systems/inputActions.js",
+    "old": "  'QuickUse1', 'QuickUse2', 'QuickSwap',\n]);",
+    "new": "  'QuickSwap', 'QuickUse1', 'QuickUse2',\n]);",
+    "tests": [
+      "test/qs2_inputs.test.js"
+    ]
+  },
+  {
+    "name": "QS2-a-default-on-a-key-DFU-already-spends",
+    "file": "src/systems/inputActions.js",
+    "old": "  ['Digit1', 'QuickUse1'],",
+    "new": "  ['KeyR', 'QuickUse1'],",
+    "tests": [
+      "test/qs2_inputs.test.js",
+      "test/inputactions.test.js",
+      "test/ht1_handheldtorches.test.js"
+    ]
+  },
+  {
+    "name": "QS2-the-three-never-yield-in-the-classic-windows",
+    "file": "src/systems/inputActions.js",
+    "old": "export const PORT_ACTIONS = Object.freeze(['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSwap']);",
+    "new": "export const PORT_ACTIONS = Object.freeze(['SocialInteract']);",
+    "tests": [
+      "test/qs2_inputs.test.js",
+      "test/soc5_interact.test.js"
+    ]
+  },
+  {
+    "name": "QS2-the-quickslot-rows-hidden-under-the-Online-heading",
+    "file": "src/ui/enhancedControls.js",
+    "old": "  for (const g of PORT_GROUPS) group(body, g.title, g.rows.map((r) => [r.action, r.label]));",
+    "new": "  group(body, PORT_GROUP_TITLE, PORT_ROWS.map((r) => [r.action, r.label]));",
+    "tests": [
+      "test/qs2_inputs.test.js",
+      "test/soc5_interact.test.js"
+    ]
+  },
+  {
+    "name": "QS2-two-pane-rows-name-the-same-slot",
+    "file": "src/ui/enhancedControls.js",
+    "old": "  Object.freeze({ action: 'QuickUse2', label: 'Use quickslot 2' }),",
+    "new": "  Object.freeze({ action: 'QuickUse2', label: 'Use quickslot 1' }),",
+    "tests": [
+      "test/qs2_inputs.test.js"
+    ]
+  },
+  {
+    "name": "QS2-the-second-slot-key-drinks-the-first-slot",
+    "file": "src/ui/input.js",
+    "old": "    case 'QuickUse2': return ctx.quickUse?.(2) === true;",
+    "new": "    case 'QuickUse2': return ctx.quickUse?.(1) === true;",
+    "tests": [
+      "test/qs2_inputs.test.js"
+    ]
+  },
+  {
+    "name": "QS2-the-swap-key-eaten-on-a-host-with-no-door",
+    "file": "src/ui/input.js",
+    "old": "    case 'QuickSwap': return ctx.quickSwap?.() === true;",
+    "new": "    case 'QuickSwap': { ctx.quickSwap?.(); return true; }",
+    "tests": [
+      "test/qs2_inputs.test.js"
+    ]
+  },
+  {
+    "name": "QS2-the-rig-never-re-reads-the-hand-after-a-swap",
+    "file": "src/combat/weaponRig.js",
+    "old": "    refreshWorn() { syncWorn(); },",
+    "new": "    refreshWorn() { },",
+    "tests": [
+      "test/qs2_inputs.test.js"
+    ]
+  },
+  {
+    "name": "QS2-the-world-host-answers-the-keys-with-a-window-up",
+    "file": "src/scenes/world.js",
+    "old": "    if (!townTalk.overlayActive && QUICKSLOT_ACTIONS.has(act) && socialMenuCanOpen() && routeAction(act, hudCtx)) { e.preventDefault(); return; }",
+    "new": "    if (QUICKSLOT_ACTIONS.has(act) && routeAction(act, hudCtx)) { e.preventDefault(); return; }",
+    "tests": [
+      "test/qs2_inputs.test.js"
+    ]
+  },
+  {
+    "name": "QS2-the-exterior-host-answers-the-keys-inside-its-mode-gate",
+    "file": "src/scenes/exterior.js",
+    "old": "    if (!townTalk.overlayActive && QUICKSLOT_ACTIONS.has(act) && !gamePaused() && routeAction(act, hudCtx)) { e.preventDefault(); return; }",
+    "new": "    if (false && QUICKSLOT_ACTIONS.has(act) && routeAction(act, hudCtx)) { e.preventDefault(); return; }",
+    "tests": [
+      "test/qs2_inputs.test.js"
+    ]
+  },
+  {
+    "name": "QS2-the-interior-mode-never-refreshes-its-own-rig",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (ok) interiorWeapon.refreshWorn();",
+    "new": "      if (!ok) interiorWeapon.refreshWorn();",
+    "tests": [
+      "test/qs2_inputs.test.js"
+    ]
+  },
+  {
+    "name": "QS2-the-off-hand-used-as-overflow-so-a-swap-dual-wields",
+    "file": "src/systems/quickslots.js",
+    "old": "  const bumped = previous && getItemHands(r.item) !== ITEM_HANDS.LeftOnly\n    ? unequipSlot(entity, EQUIP_SLOTS.RightHand)\n    : null;",
+    "new": "  const bumped = null;",
+    "tests": [
+      "test/quickslots.test.js"
+    ]
+  },
+  {
+    "name": "QS2-the-slot-buttons-drawn-on-a-loot-row-too",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  if (side === 'local') for (const b of quickslotActs(picked)) acts.append(b);",
+    "new": "  for (const b of quickslotActs(picked)) acts.append(b);",
+    "tests": [
+      "test/qs2_tooltip.test.js"
+    ]
+  },
+  {
+    "name": "QS2-the-consumable-test-inverted",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  if (isQuickConsumable(item)) return [button('c1', 'Slot 1', 'Unslot 1'), button('c2', 'Slot 2', 'Unslot 2')];",
+    "new": "  if (!isQuickConsumable(item)) return [button('c1', 'Slot 1', 'Unslot 1'), button('c2', 'Slot 2', 'Unslot 2')];",
+    "tests": [
+      "test/qs2_tooltip.test.js"
+    ]
+  },
+  {
+    "name": "QS2-Unslot-assigns-again-so-nothing-can-be-cleared",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "      if (on) clearQuickslot(slot); else assignQuickslot(slot, item);",
+    "new": "      assignQuickslot(slot, item);",
+    "tests": [
+      "test/qs2_tooltip.test.js"
+    ]
+  },
+  {
+    "name": "QS2-slotting-closes-the-tooltip-like-a-use",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "      refresh();   // the pack list is where the chips are drawn\n      render();   // ...and the card stays up, with its labels flipped",
+    "new": "      refresh();\n      picked = null;\n      render();",
+    "tests": [
+      "test/qs2_tooltip.test.js"
+    ]
+  },
+  {
+    "name": "QS2-the-row-chip-dropped",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "    if (slot) row.append(el('span', 'qs-mark', slot === 'swap' ? 'SWAP' : (slot === 'c1' ? '1' : '2')));",
+    "new": "    if (slot === 'nothing') row.append(el('span', 'qs-mark', slot));",
+    "tests": [
+      "test/qs2_tooltip.test.js"
+    ]
+  },
+  {
+    "name": "QS2-the-chip-drawn-on-remote-rows-too",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  if (from === 'local') {\n    const slot = quickslotOf(item);",
+    "new": "  if (from === 'local' || from === 'remote') {\n    const slot = quickslotOf(item);",
+    "tests": [
+      "test/qs2_tooltip.test.js"
+    ]
+  },
+  {
+    "name": "QS2-the-model-reaches-back-up-into-the-window",
+    "file": "src/systems/quickslots.js",
+    "old": "import { isPotion, isDrug, useItem, USE_PENDING } from './useItem.js';   // ...and the ladder's own stand-ins for a host that handed no hook",
+    "new": "import { isPotion, isDrug, useItem } from './useItem.js';\nimport { USE_PENDING } from '../ui/nativeInventory.js';",
+    "tests": [
+      "test/qs2_inputs.test.js",
+      "test/droppedloot.test.js"
+    ]
+  }
+]

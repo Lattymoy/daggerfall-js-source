@@ -938,3 +938,14 @@ skin and pref, the wind riding it with its door, both cues behind it
 by source, the classic window's cue unchanged); `wind3_windworld` and
 `features` re-pinned on the new id and key.
 
+## QS - THE DIAMOND'S SWITCH (2026-09-17)
+
+The quickslot diamond (`10-UI/UI-Arc.md` QS) gets its row, `quickslot-
+diamond`, under Sight: an Enhanced row on a `prefs` switch (`quickslots`,
+on by default, the player's own online). It hides the DIAMOND alone -
+the three keys, the tooltip's slot buttons and the row chips keep
+working, because a player who turns the picture off has not asked to
+lose the presses; the HUD reads it each frame, guarded, and toggles one
+class. The home holds 34 rows now: 13 Enhanced, 13 Mod Authored, 10 DFU
+Classic. Pins re-aimed: FT0's id list. `test/qs3_hud.test.js` pins the
+read and the rule.

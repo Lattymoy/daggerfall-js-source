@@ -52,17 +52,17 @@ still push CLASSIC canvas windows as children under the DOM, and so
 does the pack's USE arm.
 
     THE SPELLBOOK       FIVE construction sites across FOUR hosts:
-                        worldModes.js:1855 (the factory) and :1904 (a
+                        worldModes.js:1856 (the factory) and :1904 (a
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
-                        dungeonContext.js:955, world.js:1722,
-                        exterior.js:2032. It is the only window TWO
+                        dungeonContext.js:956, world.js:1723,
+                        exterior.js:2064. It is the only window TWO
                         enhanced screens already push - the sheet's
                         button and the pack's USE hand-off, whose
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:5023, dungeonContext.js:5950. A seam
+    / NOTEBOOK          world.js:5067, dungeonContext.js:5991. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -3945,7 +3945,7 @@ literal with no duplicates; all 71 display labels match DFU's recovered
 FALL.EXE text exactly; every secondary list matches its DFU array in
 order; the builder is reconstructed on re-entry on both sides, so the
 pick lists reset; a career's flags survive the save round trip (the
-career is spread as plain CFG data, save.js:63,88 - worth checking
+career is spread as plain CFG data, save.js:64,88 - worth checking
 because AUDIT 17h caught exactly this shape dropping player
 reputation); and parseCareerData leaves every numeric field finite and
 unsigned under the maximal fourteen-pick set.
@@ -7783,7 +7783,7 @@ same answer: `ui/spellbookDoor.js`, with each host handing it only
 what that host knows.
 
 THE "HAND-ROLLED DUPLICATE" WAS NOT ONE. The board recorded
-worldModes.js:2672 as a second book built by hand 342 lines below the
+worldModes.js:2673 as a second book built by hand 342 lines below the
 factory. Read closely it is the SPELL MERCHANT'S SHOP - buyMode, with
 `offered`, the building's quality, the shop name, the haggling skills
 and the classic clock. A different question with different deps, and
@@ -7866,7 +7866,7 @@ mutations, 4 dead.
 
 PX24 (Mac: "with the logbook and history, I want them as one detailed
 UI"): THE CHRONICLE. Two classic windows built at four sites -
-questJournal.js from charSheetNav:53, world.js:2060 and
+questJournal.js from charSheetNav:53, world.js:2061 and
 dungeonContext.js, playerHistory.js from charSheetNav:61 - become ONE
 seam (ui/chronicleDoor.js, the U52/U53/PX23 shape a sixth time) and,
 on the enhanced skin, ONE WINDOW.
@@ -8493,7 +8493,7 @@ and firing THAT twice is a second PopToHUD.
 
 ### Why only two of the four hosts crashed
 
-`worldModes.js:5502` and `dungeonContext.js:1407` answer the same
+`worldModes.js:5503` and `dungeonContext.js:1437` answer the same
 `onClose` by nulling their slot and never disposing - nothing to
 re-enter. Only the two hosts that come through `townTalk.closeOverlay`
 dispose. **The four-hosts rule caught this one by accident**: the two
@@ -9201,7 +9201,7 @@ than because the screen agrees with a narrower port.
 stays unbuilt - an owner call, unchanged: the port has no gamepad layer
 at all, the serialized joystick blocks are simply absent from
 `KeyBindData_v1`, and the flag that says so is
-`src/systems/inputActions.js:658`. The JOYSTICK tab still answers with
+`src/systems/inputActions.js:693`. The JOYSTICK tab still answers with
 its note, and Ledger `:593`'s live clause now names that window alone.
 `weaponSensitivitySlider` is commented out in DFU itself (:42, :355) -
 nine controls are built, the tenth is a stub - and
@@ -9737,9 +9737,9 @@ re-resolved the `exterior.js` half of a three-file sentence and left the
 `ExteriorAutomapWindow` construction, `:4101` on a `locationName:`
 field). Both halves are now read by `test/citedrift.test.js` - the
 existing entries only ever captured the exterior number, which is how
-the other half went stale unnoticed. (The rest cite named `world.js:5267`,
+the other half went stale unnoticed. (The rest cite named `world.js:5323`,
 the first of the host's TWO identical `act === 'Rest'` arms; ROAD-H H5
-deleted the second and the cite is `world.js:5273` now.)
+deleted the second and the cite is `world.js:5329` now.)
 
 ## AUDIT 62 F24/F25 - THE SENTINEL SWEEP WAS TWO WINDOWS SHORT (2026-09-07)
 
@@ -9913,7 +9913,7 @@ if (alt.ContainsKey(code)) alt.Remove(code);        // InputManager.cs:729-734
 - and for a SECONDARY write the "other" dict IS the primary, so a
 secondary Jump written onto `ShiftLeft` deletes Run's primary row, and
 the reverse order deletes Jump's secondary row by the same line. The
-port carries it at `inputActions.js:368-369`. Either order collapses the
+port carries it at `inputActions.js:403-404`. Either order collapses the
 pair.
 
 The route that DOES produce it is the LOAD path. `LoadActionKeybinds`
@@ -9924,7 +9924,7 @@ if (!dict.ContainsKey(key) && actionVal != Actions.Unknown)
     dict.Add(key, actionVal);                       // InputManager.cs:1950-1969
 ```
 
-- ported at `inputActions.js:507-517`, whose own comment already said
+- ported at `inputActions.js:542-552`, whose own comment already said
 "Raw map-set, NOT setBinding". So a hand-edited `KeyBindings.txt` that
 puts Jump on the run key as a SECONDARY, with the primary `Space` spent
 on something else, loads exactly as written; and it SURVIVES the
@@ -13389,7 +13389,7 @@ items off your character."*
 
 It did not, and the whole of the reason is one line. INV1 hung the
 gesture on the pack's rows - `itemRow`'s `if (from === 'local')
-dragFrom(row, item)` (`ui/enhancedInventory.js:1711`) - and made the
+dragFrom(row, item)` (`ui/enhancedInventory.js:1716`) - and made the
 body a drop TARGET, with `equippedList` saying so in its own comment:
 *"the body is the equip target - `dragFrom`'s pointerup finds it by hit
 test, so the map needs no handler of its own"*. True for the direction
@@ -13826,3 +13826,478 @@ in five sheets (F10, kept: one home, five uses, said so), 73% only at 16:10
 canvas native windows unrecorded (F13, above). `tools/mutants/font1.json`
 86 - 86 dead; `test/hudtext.test.js` 17, `test/audit62_touch.test.js` 18.
 
+## QS - THE QUICKSLOT DIAMOND (2026-09-17)
+
+Mac, with a frame of the Demon's Souls remake's bottom-left corner: "I
+want to implement a new enhanced UI feature that replaces the current
+ui below the health/stamina/magicka. Where we have the main hand slot.
+So my inspiration for this is the bottom left corner of the screen will
+have this UI with slots for the mainhand/secondhand, consumable and
+mount with proper keybind tooltips/controller icon tooltips." Then the
+four answers that shaped it: the mount slot became a SECOND consumable
+slot; the off hand is "Shield, torch, empty, or swap to"; the glyphs
+are our own, Xbox or PlayStation by the pad; and "Allow the user in the
+enhanced menu to apply consumables through the tooltip to slot 1/2."
+One survey, the model by the lead, two Opus lanes (QS2 the inputs and
+the tooltip, QS3 the HUD and the glyphs), then the integration below.
+Enhanced skin only; the classic HUD is untouched.
+
+**What Daggerfall has, and what it does not.** DFU's HUD has a compass,
+vitals, a breath bar, the active spells and nothing a player presses -
+no item slots, no hotbar. So there was nothing to port and everything to
+decide, and the Ledger A row (THE QUICKSLOT DIAMOND) names six
+departures. The reading below is the same one PX30 made for the vitals:
+the reference's shape in this arc's own language - square 2px frames,
+the pixel face, brass and bone, states that snap.
+
+### QS1 - the model (`systems/quickslots.js`)
+
+**A slot holds a KIND, not a record.** No item in this port carries a
+unique id (`itemFields.js` declares none), `snapshotPlayer` shallow-
+copies every record, and the pack reorders by splice - so a reference
+or an index would not survive a load, a drag or the last bottle drunk.
+What a slot keeps is `quickslotKey(item)` - the fields a player reads as
+"the same thing": template, group, material, potion recipe (every potion
+is one Glass_Bottle template, AUDIT 22 F5's lesson), enchantments, the
+legendary name, the affixes - and the item's long name. Condition and
+stack count are NOT in it. Each frame the pack is walked for the key:
+the FIRST match is the record a use consumes, the COUNT is every match's
+stackCount summed (two stacks of one potion read as one number), and a
+kind that matches nothing is a GHOST - it keeps its name, reads 0, and
+refills on the next buy without a trip to the tooltip. The key is cached
+per record in a WeakMap, because the fields it reads are set at the mint.
+
+**Three slots, two kinds.** `c1` and `c2` take a consumable - a potion or
+a drug, the two arms of `useItem` that consume and act on the entity; a
+torch is not one (it is the off-hand cell's, through `entity.lightSource`)
+and a book is not. `swap` takes an unequipped weapon that is not an
+arrow. One kind lives in one slot: filling slot 2 with what slot 1 held
+empties slot 1.
+
+**The hands are read, never stored.** `quickslotView(entity, { weapon,
+sheathed })` answers the four cells each frame: `main` is the rig's
+weapon (drawHud already carries it) with its condition and whether it is
+put away; `off` is, in this order, the LIT light source (it is in the
+hand, and what is left to burn is `conditionPercentage` - Handheld
+Torches burns currentCondition down), else the SHIELD on the left hand,
+else the SWAP weapon (a ghost when it left the pack), else `empty`.
+
+**The use is the window's.** `useQuickslot` goes through the one
+`useItem` ladder with the host's own hooks - DrinkPotion by recipe key
+through the cast engine (U44), RemoveOne off the stack, the drug arm -
+and says what the window would say: an explicit text, a TEXT.RSC id
+through the host's rows, the pending stand-in for a host with no hook
+(`USE_PENDING`, which QS2 moved to `systems/useItem.js` beside the result
+kinds it is keyed by, `ui/nativeInventory.js` re-exporting it, because a
+systems module reaching up into a window closed a cycle through
+`targetIconPanel` that killed five test files), the enchanted rider last.
+A potion drunk through a live hook says nothing: the effect is the HUD's
+and the count is the slot's.
+
+**The swap is `equipItem`, billed.** `swapQuickslot` equips the swap
+weapon through the one `equipItem` - which evicts, splits a stack, bumps
+a shield for a two-hander, plays the sound and tells the enchantment
+hooks - and then points the slot at the weapon that LEFT the hand, so
+the next press swaps back; out of empty hands there is nothing to swap
+back to and the slot clears. The window's two refusals stand (broken 29,
+forbidden 1068, through the host's rows), and a sound record of the kind
+is preferred over a broken one because condition is not in the key. And
+it BILLS the equip pause: DFU bills a swap when the inventory window
+closes (`billEquipDelayOnClose`, FX1), and a hotkey that swapped for
+free would be the exploit the pause exists to stop. QS2 found the gap
+the lead's nine pins missed: `GetEquipSlot`'s either-hand arm is the
+first OPEN hand, so a longsword with an empty off hand got the dagger in
+the LEFT hand and swapped nothing - the main hand is emptied first now,
+a left-only bow keeps its hand, a refused equip puts the bumped weapon
+back.
+
+**The save.** `quickslotSaveData` rides `composeSessionState` and its
+twin `restoreSessionState` - the seam every host's save already passes
+through - and a save without the block CLEARS the slots, exactly as FE1's
+escort faces and U41's travel map treat a missing block: a pre-QS save
+and another character's never carry a stale kind.
+
+### QS2 - the actions, the hosts, the tooltip
+
+**Three port actions**, `QuickUse1`, `QuickUse2`, `QuickSwap`, appended
+after SocialInteract and never inserted (the classic window indexes by
+number), in `PORT_ACTIONS` so the two classic windows yield them (AUDIT
+SOC D3), on Digit1-3 - unspent by DFU's defaults, by the port and by
+every vendored mod's TextKey defaults, which the HT4 pin class makes a
+fact rather than a hope. A bindings file written before the slice gains
+them on the next boot through `resetDefaults(store, true)`'s
+`testSetBinding`, which fills a missing action on a free code and touches
+nothing the player bound. The enhanced pane's port rows are a list of
+groups now (`PORT_GROUPS`: Online, Quickslots) with `PORT_ROWS` their
+flat union, because "how do I drink slot 1" is not a question anyone
+asks under Online.
+
+**The doors, above the mode gate.** AUDIT SOC B4/D1 is the whole reason:
+SOC5's F sat under world.js's exterior gate and did nothing in a tavern
+or a dungeon. `routeAction` dispatches the three to `ctx.quickUse(n)` and
+`ctx.quickSwap()`; every host ctx carries both (world, exterior,
+dungeonContext, and the interior mode, which borrows the outer host's
+performers and refreshes ITS OWN rig); the two self-routing hosts answer
+them above their mode gate under the same overlay and pause gates the
+F-menu takes. Both answer true: an empty slot SAYS it is empty, which is
+an answer, and a number key that fell through to a second meaning would
+be one key doing two things. `exterior.js` and `dungeonContext.js` grew a
+named `useHooks` bag where the expressions were inline, because the
+quickslot use needs the same hooks and a copy is the drift U53's one-
+builder law exists to stop. **The swap tells the rig**: `weaponRig
+.refreshWorn()` is `syncWorn` on demand - the same UpdateHands+ApplyWeapon
+read the rig makes every frame - because the key ladder answers before
+the frame and the diamond would otherwise draw the weapon that just left.
+
+**The tooltip.** `detailCol`'s act row gains, for a LOCAL pack item,
+Slot 1 and Slot 2 on a consumable and Swap to on a weapon; the button
+holding the item reads Unslot and wears `on` (the readied chip's brass),
+pressing the other moves the kind, and the card STAYS UP - PX24's close
+is a use's, and slotting changes nothing about the item. Remote rows get
+none: a slot resolves against the pack, and a reward tray is not in it.
+Every local row whose kind is slotted wears a chip - '1', '2' or SWAP -
+so the answer to "what is in slot 1" is in the list, not behind every
+tooltip. Five buttons fit one row on a 430px phone; the 44px target is
+untouched.
+
+### QS3 - the diamond, the tags, the glyphs (`ui/enhancedHud.js`,
+`ui/quickslotTags.js`, `ui/padGlyphs.js`, `ui/itemIconUrl.js`)
+
+**Clipped, never rotated.** A 45-degree transform would rotate every
+sprite in the cell, and a rotated pixel sprite is a blurred one. So a
+cell is two stacked squares under `clip-path: polygon(50% 0, 100% 50%,
+50% 100%, 0 50%)` - the frame, and the ground inset by the skin's own
+2px - with the content upright inside: the item's art (the Morrowind
+ground mesh where the rig has one, MW-D38, else the classic icon through
+`requestIcon`, else two letters, exactly the inventory tile's ladder -
+`modelIconUrl` moved to `ui/itemIconUrl.js` so the HUD does not import
+the 2200-line window; the wearer is passed as identity so the two draw
+the same picture), a 36x4 durability strip on the hands (brass, the
+health bar's red under 40%; a torch's is what is left to burn), the
+count in the lower-right face of a consumable. Four cells of 84px at the
+four points of a 172px square, the facing edges 4px apart; 60 in a 124
+square under 860px. The block sits bottom-left with the safe-area
+insets, scales with `--hud-scale` from its own corner, and its bottom
+edge rides the vitals' top line at every scale (22 + 32 x scale from the
+bottom, the row's own 22 + 30 x scale plus air) because the bars are
+centred and reach this corner once the scale passes about 1.2 - the
+first draft stepped 30px per unit, which cleared scale 2 and put the
+bottom cell in the magicka bar at 1.5 (AUDIT QS, measured). The mode
+word lived at left 24 / bottom 24 - the diamond's own corner - so it is
+the block's CAPTION now, beside the readied spell's chip, with every one
+of its show/hide laws untouched.
+
+**Two departures, written where they land.** (1) AN EMPTY CELL IS A
+SOCKET. PX30b's law is that a plaque draws only when filled, because an
+empty one is PX14's drawn door. That law stands where it was made and
+does not reach here: the SHAPE is the readout, and a diamond with a
+corner missing is a wedge the player re-reads every time the last potion
+is drunk. A socket is the frame at a third of its alpha and nothing
+inside - it says a slot exists and that the tooltip fills it. (2) ON A
+PHONE THE CELLS TAKE A TAP. "Nothing here takes a click" is the file's
+first law and it is kept everywhere else - the root is still
+`pointer-events: none` - but under `pointer: coarse` the four cells take
+one, because a phone has no Digit1 and AUDIT SOC C9 is what happens to a
+control one platform cannot reach. Bound once in `build()`, reading the
+live options bag; the main cell takes the pointer with no handler so a
+tap on the weapon does not fall through and swing.
+
+**Updated, not rebuilt.** One signature string per frame - names, kinds,
+rounded conditions, counts, sheathed, the four tag keys - and an
+unchanged string skips every write; an icon is requested only when a
+cell's KIND changed, and a record that lands cold marks the block dirty
+for the next frame rather than rebuilding inside a render. `weaponSheathed`
+- carried by drawHud since AUDIT 28 W2 and never forwarded - reaches the
+diamond now, and a put-away weapon is half there.
+
+**The tag law** (`quickslotTags.js`, pure): the pad's glyph while the
+pad is the live device (`controllerLook`, GP1's own latch) and the action
+carries a JoystickButton binding in either dict; the key's name
+otherwise - and the digit row reads its DIGIT, because DFU's
+GetButtonText says "A1" (Alpha1) and on a corner chip that is a grid
+reference, the numpad KP-n, everything else `buttonText`'s short form;
+the glyph alone for an action bound only to the pad; and NO TAG for an
+unbound action, never NONE - a chip telling a player to press a key that
+does not exist. Which corner says what: the main cell ReadyWeapon (draw
+and sheathe), the off cell the mod's own TextKey for a lit torch
+(Handheld Torches' `Handling.ToggleLightInput`, keyboard only - a TextKey
+cannot name a pad button) or QuickSwap for a swap weapon and nothing for
+a shield or a socket, the consumables QuickUse1 and QuickUse2.
+
+**Our own glyphs** (`padGlyphs.js`): ten buttons per family as 11x11
+bitmaps in three characters - the shape, the mark, off - a ring for the
+face buttons (A B X Y; Cross Circle Square Triangle), a pill for the
+bumpers (LB RB; L1 R1), View and Menu (two boxes; three bars), Share and
+Options, the stick housing thickened on its side for L3 and R3. Rendered
+to an SVG data URL of run-merged `<rect>`s with `shape-rendering:
+crispEdges`, cached per family, code, size and colour, so a test can pin
+what was drawn. The family is the pad's own id: `padFamilyOf` reads Sony
+off the Gamepad API string (playstation, dualshock, dualsense, sony, the
+054c vendor id) and everything else is Xbox; `gamepadInput.js` writes it
+each tick beside `setControllerLook` and clears it when the pad goes,
+because a glyph for a pad nobody is holding is a lie.
+
+**Measured** (`tools/qs3Probe.mjs`, Chromium over the real modules on
+Vite's own dev server - a static server hands the browser the
+`import.meta.glob` macro and the page dies; `QS3_SHOTS=<dir>` writes a
+screenshot per page): at 1280x800, 860x400 and 430x860, hud scale 1 and
+2, stick floating and fixed, no drawn part of the block overlaps the
+vitals column, the touch layer's bottom-right buttons or a fixed stick.
+Three collisions the first draft had and the numbers fixed: the bottom
+cell in the magicka bar at scale 2 (the inset that rides the vitals'
+line), a 515px caption on a 430px phone (capped at the diamond's width,
+wrapping), the right tag under the phone's leftmost button (the block
+lifts to 76px, the party panel's own clearance, under 860px; the
+stick-clear offset 156, 160 under 860). At scale 2 on a phone the WHOLE
+HUD is over-scaled - the vitals column is 711px wide on a 430px screen -
+and the probe reports the diamond's overflow there as a note, because
+that is PX30c's clamp and not this slice.
+
+**The switch.** A features row, `quickslot-diamond` (Sight, Enhanced, a
+`prefs` switch on by default, the player's own online), hides the
+DIAMOND alone: the caption keeps the mode word, the keys keep working,
+the tooltip keeps filling slots.
+
+### Pinned
+
+`test/quickslots.test.js` 10, `test/qs2_inputs.test.js` 11,
+`test/qs2_tooltip.test.js` 10, `test/qs3_hud.test.js` 11, one each in
+`gamepad` and `features`; two PX30 pins re-aimed in `enhancedHud.test.js`
+(the readout listens to nothing but the three coarse-pointer taps the
+departure names; the two hands still arrive through drawHud's bag and
+`.hud-hand` is pinned gone). Mutated: `tools/mutants/qs1.json` 22/22,
+`qs2.json` 19/19, `qs3.json` 27/27 dead. NOT SEEN ON A GPU with ARENA2
+art: the probe's cells drew their two-letter fallback, which is the
+ladder's last arm and not its first.
+
+### AUDIT QS - the arc audited the same day
+
+One read-only adversarial lane over the merged tree, driving the model,
+the tags and the HUD in Chromium rather than reading them; ten findings,
+eight fixed and pinned, two recorded. In severity order:
+
+- **F1, a fifth of the taps fired the wrong cell.** The clip-path that
+  made a cell a diamond was on the frame and the ground, and the CELL
+  under them was a square - four squares overlapping in four patches,
+  later siblings winning - so on a phone 398 of 1922 points inside one
+  cell's picture hit another cell (a tap on the top potion swapped the
+  weapon), and the diamond's empty middle swallowed a tap meant for the
+  game. The cell is the rhombus now (clip-path clips the hit test as it
+  clips the paint); `tools/qs3Probe.mjs` opens the phone sizes as touch
+  devices and pins the centres, the middle and a square corner.
+- **F2, the swap slot emptied out of empty hands.** Nothing had left
+  the hand to become the next swap, so the first press a new player made
+  emptied the cell and the second said there was nothing to swap to; a
+  left-hand bow (Enhancements.BowLeftHandWithSwitching) did the same and
+  left the player dual-holding. Nothing is a kind too: the slot points
+  at BARE HANDS (`bare:R` / `bare:L`, the hand named because a bow
+  swaps through the left), the next press puts the weapon away, billed,
+  and the weapon is the swap again.
+- **F3, the key cache outlived an in-place enchantment.** Already
+  narrowed at integration (a record carrying enchantments or affixes is
+  never cached, because the item maker writes `item.enchantments` onto
+  an existing record); the audit's driven case confirmed the shape.
+- **F4, the off hand could not show a left-hand bow** - it read as a
+  socket, or as the swap. Any left-hand item that is not a shield is a
+  `weapon` cell now, before the swap arm.
+- **F5, three of the rig's four `say` cites named the wrong lines** -
+  the drift tool renumbers by line map and carried an already-wrong cite
+  forward. Re-aimed by content.
+- **F6, a combo tag read '...'** (`buttonText`'s ten-character cap on
+  "LSHIFT + A1"); each half goes through the tag law and joins tight,
+  `LSHIFT+1`. And an action bound only to a pad AXIS key drew no tag:
+  the key arm is everything that is not a drawable pad button.
+- **F7, "not in your pack" for a weapon in your hand.** A record of the
+  kind that is equipped is `held`: the press says so and the cell draws
+  it.
+- **F8, a mouse on a touchscreen machine fired a slot.** Chromium
+  answers `pointer: coarse` for a desktop with a touchscreen; the rule is
+  the touch-first PAIR, coarse AND `hover: none`, and the tap handler
+  refuses anything but a finger or a pen.
+- **F9, recorded, not a bug:** the hotkey bills the window's own sum for
+  the same table transition, and its transition is deliberately not the
+  window's (it empties the main hand first). The Ledger row says so.
+- **F10, the phone's chips named keys it has not got.** Under the same
+  touch-first pair a keyboard chip hides and a pad's glyph stays.
+
+Refuted by the lane and kept out of the list: the per-frame cost (0.34 ms
+with 200 enchanted records and every key cold), the late `onReady` after
+a teardown, a listener leak per host transition, the skin and visibility
+gates, save ordering, the wagon's rows, the tooltip's `picked` surviving
+a slot press, the Morrowind arm following a swap on the next frame, the
+refusals leaving the hands untouched, and every window-shaped gate the
+hotkey shares with the inventory.
+
+## QS4 + QS5 - THE FOURTH KEY, AND THE DURABILITY OFF THE SPRITE (2026-09-17)
+
+Mac, playing the merged diamond: "We need a better design for durability
+instead of the line sitting inside with the sprite" and "The 4th
+quickslot doesnt have a keybind."
+
+### QS5 - the cell's own lower edges are the gauge
+
+The strip was a 36x4 bar under the art INSIDE an 84px cell - a second
+object competing with the picture for the only room the cell has, and at
+the phone size (60px) it left the sprite almost nothing. The diamond
+already draws the two lines a gauge wants: its own bottom-left and
+bottom-right edges. So the gauge IS the frame now - an SVG of three
+paths per cell (a dark track, and the two lit halves) stroked INSIDE the
+rhombus, because the cell is clipped to that shape and a stroke on the
+boundary loses its outer half. Each half starts at the BOTTOM POINT and
+is hidden from the side corner inward by a `stroke-dashoffset`, so the
+two drain together, a battered weapon keeps a stub at the point, and a
+fresh one is lit corner to corner. `crispEdges`, like every other drawn
+thing in this skin: a 45-degree line here is a hard stair-step, not a
+smoothed one. Under 40% the two halves take the health bar's red, which
+is the one law the strip had and kept. The art gets the whole cell back.
+
+The trap the pins caught, twice: an SVG node minted with
+`createElement` is an unknown HTML element that draws NOTHING, so the
+namespace is the whole of the difference (`svgEl`), and the test fake
+marks it - a fake that answered the same object either way could not
+tell the two apart. And reversing a half's path direction changes
+nothing a dash offset can see, so the pin reads the `d` itself.
+
+### QS4 - the off hand had no key, and now has its own
+
+Three of the four corners named a key and the off hand did not: it spoke
+only when it held a lit torch (Handheld Torches' own TextKey, which the
+enhanced pane cannot rebind and no pad can carry) or when it was
+offering a swap. A cell with no key is a slot the player has no way to
+reach - PX14's drawn door wearing a diamond.
+
+**`QuickOffHand`, appended after the other three, on Digit4** - the last
+of the digit row this arc spends, still unspent by DFU, by the port and
+by every vendored mod's TextKey defaults. It is in `PORT_ACTIONS` (the
+classic windows yield it), it has its row in the enhanced pane's
+Quickslots group ("Light or douse"), it answers above the mode gate in
+every host, and it wears a pad glyph like the rest.
+
+**The act is the MOD's, through one door.** The toggle key's own arm -
+the free-hand guard, the relaxed-lantern carve-out and the refusal line
+- became `toggleLightPress()` in `systems/handheldTorches.js`, and the
+mod's key poll presses that instead of restating it. `weaponRig
+.toggleLight()` is the rig's door onto it (the mod being OFF is an
+answer, not a throw), and `offHandQuickslot` in the model asks the door
+and says nothing over it. The ONE line the model adds is the one the mod
+has no word for: a player carrying no light at all pressing a key that
+is about light. The mod's own key still works, as HT4 kept every other
+key the mod ships; the CELL names the port's action, because that is the
+one a player can rebind and a pad can press.
+
+So the off cell's tag is the swap's where it offers a swap, and
+`QuickOffHand` in every other state - a lit torch, a shield, an off-hand
+weapon, an empty socket. With a shield in that hand the press refuses in
+the mod's own words, which is exactly what the player needs to hear.
+
+**And the phone's taps were never wired.** QS3's second departure gave
+the cells a finger and `drawHud` the doors to call, but no host ever
+passed them - the tap was dead on the one platform the departure exists
+for, which is AUDIT SOC C9 for the second time in one arc. All four
+hosts hand over `quickUse`, `quickSwap` and `quickOffHand` now, and a
+pin walks them.
+
+### Pinned
+
+`test/qs4_offhand.test.js` (3, driving a real Handheld Torches component
+through the door: it lights, it douses, a full hand refuses in the mod's
+line, and the model adds nothing over it), the off-hand performer in
+`test/quickslots.test.js`, the tag law and the gauge in
+`test/qs3_hud.test.js`, the fourth action across
+`test/qs2_inputs.test.js`, `test/inputactions.test.js`,
+`test/enhancedControls.test.js` and `test/soc5_interact.test.js`.
+Measured again in Chromium (`tools/qs3Probe.mjs`): every corner carries
+a chip at all three sizes, three scales and both stick anchors.
+
+## HT6 - THE HAND LAW AT THE EQUIP MOMENT (2026-09-17)
+
+Mac: "When equipping a shield or other offhand item, the torch in the
+inventory isnt shown unequipped and replaced."
+
+Two things were true, and only one of them was a bug.
+
+**The bug: the law runs on a frame, and an open window stops the
+frames.** Handheld Torches stows or drops a lit light the moment a hand
+is taken (its Update, 0x15c6-0x1689), but the weapon rig only runs
+Update on a frame the host is not holding for an overlay - every host
+reads `overlayHeld ? [] : rig.frame(...)`. So a shield equipped in an
+OPEN inventory did not reach the law until the window closed, and the
+window went on painting a lit torch beside the shield the player had
+just put on the same arm. The block is lifted out of Update as
+`handLaw` and the equip table's own listener runs the SAME code at the
+equip moment - UpdateFreeHand then the law, in Update's own order, over
+freshly read settings. Nothing of the rule is restated, and the reverse
+works too: the shield coming off frees the hand that takes the
+remembered light back up, at the unequip moment.
+
+One trap, and it is the one this port has learned to look for: the hosts
+build a rig EACH, and a component that is not being given frames still
+holds its last context - a `sheathed` and a `usingRightHand` from
+whenever that host last had the player. So the module registers ONE
+listener at import (entityMods' own shape) which dispatches to the
+component whose Update ran last, and a teardown releases the pointer
+only if it is its own.
+
+**Not a bug: sheathed, the mod keeps the torch.** UpdateFreeHand's
+sheathed arm (0x2c91-0x2cb8) clears a hand only for a BOW in the left
+slot - a shield does not take a hand while your weapon is away. That is
+the mod's own law and it is a defensible one in this game: a Daggerfall
+shield is ARMOUR (group `Armor`), strapped to the arm rather than
+gripped, so a torch in that hand with the sword on your back is a true
+reading. Draw the weapon and the torch stows on the next frame. It is
+recorded here rather than departed from; if it should change, that is a
+decision, not a fix.
+
+**A consequence worth knowing.** The mod ships `Handling.OnStow = Drop`
+and the port keeps it, so with the weapon DRAWN, equipping a shield now
+drops the lit torch on the floor while the window is still open. It
+always did that - it just used to happen a beat later, after the window
+closed. The Mods pane's `OnStow` dial changes it to Unequip.
+
+## INV3 - THE HOLD THAT SOMETIMES DID NOT TAKE (2026-09-17)
+
+Mac: "Hold to drag functionality in inventory sometimes doesnt work."
+
+Two causes, and the second was in a record rather than only in the code.
+
+**The slop was a sum, in an axis nothing can scroll.** AUDIT INV2 A1
+was right about the law - the rows pan by default, a flick scrolls and
+is never a drag, only a still finger picks anything up - and wrong about
+the measurement: `|dx| + |dy| > 8`, one Manhattan sum over both axes.
+Measured on the real `touch-action: pan-y` tile in Chromium, the browser
+takes the gesture at 16 CSS px of VERTICAL travel (the same number at
+device pixel ratio 1, 2 and 3) and never takes it sideways at all, out
+to 160 px, because a `pan-y` surface has no sideways pan to hand over.
+So the port gave up at half the room the browser allows, and on an axis
+the browser does not care about: a thumb drifting 5 across and 4 down
+lost the item it was reaching for. The slop is per-axis now - 12
+vertical, deliberately under the browser's own 16 so the port's law is
+the one that fires and fires deterministically, and twice that sideways
+- through an exported pure `holdBroken`, so it is pinned as a LAW rather
+than as whatever one path happened to do.
+
+**`.draglock` never took the pan back.** A1 and MAC-M2 A both say that
+once the hold has armed the class takes the pan back for the rest of the
+gesture. It does not: Chromium reads the effective `touch-action` when
+the touch SEQUENCE begins, so a class applied 320 ms later cannot reach
+a gesture already in flight - measured byte-identical to no lock at all.
+The ghost lifted and then VANISHED as soon as the carry moved down a
+list with somewhere to scroll, which is the other half of the report.
+An armed touch drag preventDefaults cancelable `touchmove`s instead,
+registered `{ passive: false, capture: true }`; that is what holds a
+live gesture. The rules stay, because they are what stops a SECOND
+finger panning under a live drag - a gesture that does begin under the
+class - and the prose now says that rather than the thing that was not
+true. **Both of those records carried the false claim and are corrected
+here rather than quietly in the stylesheet.**
+
+The ghost arms under the FINGER now rather than at the landing point up
+to 12 px away, so `dropIntent` is asked about the point the player is
+actually touching.
+
+A resting thumb picked up 14 of 24 times before and 24 of 24 after; a 6,
+8 or 10 px drift went 0 of 12 to 12 of 12. A1's law re-measured intact
+after the fix: a flick still scrolls the pack and puts nothing on the
+floor, a tap is still a pick, the mouse still crosses at 4 px with no
+hold. `tools/invDragProbe.mjs` is kept - 46 checks, all clear, and 24 of
+them failed before the fix.

@@ -57,7 +57,7 @@
 import { loadImg, nativeMetrics, drawImg, drawImgSub, drawImgCrop, shadowText, DEFAULT_TEXT_COLOR } from './nativePanel.js';
 import { getBool } from '../systems/settings.js';   // UI4: EnableInventoryInfoPanel
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';   // U25
-import { useItem, isLightSource, isPotionRecipe, nextVariant } from '../systems/useItem.js';   // U25; AUDIT 64 F49/F50
+import { useItem, isLightSource, isPotionRecipe, nextVariant, USE_PENDING } from '../systems/useItem.js';   // U25; AUDIT 64 F49/F50
 import { potionRecipeByKey } from '../systems/potions.js';   // AUDIT 64 F49: PotionRecipeIngredients' recipe lookup
 import { itemInfoRows, itemInfoPanelRows, infoPanelShorten, questLetterName, INFO_TEXT } from '../systems/itemInfo.js';   // U25; AUDIT 64 F51
 import { paintingImage, setPaintingArtDeps } from './paintingImage.js';   // ROAD-A7: the painting's picture
@@ -165,15 +165,18 @@ export const goldPanelRows = (gold, weightKg) => [
   { text: `Weight: ${weightKg % 1 === 0 ? weightKg.toFixed(0) : weightKg.toFixed(2)} kg`, center: true },
 ];
 /** The arms whose destination window the port has not built. Named,
- *  so a Use click SAYS something rather than eating itself. */
-export const USE_PENDING = Object.freeze({
-  book: 'You cannot read that yet.',
-  potion: 'You drink the potion.',
-  map: 'You study the map.',
-  questItem: 'Nothing happens.',
-  enchanted: 'Nothing happens.',
-  spellbook: 'You cannot open your spellbook here.',
-});
+ *  so a Use click SAYS something rather than eating itself.
+ *
+ *  QS2: THE TABLE LIVES IN `systems/useItem.js` NOW, and this is the re-export
+ *  every reader already had. It is keyed by `useItem`'s own result KINDS, so
+ *  it belonged beside them - and it had become an import a SYSTEMS module
+ *  needed (systems/quickslots.js speaks the same ladder from the key), which
+ *  made `systems/ -> ui/nativeInventory.js` a real edge and closed a cycle
+ *  through targetIconPanel: five test files died on
+ *  `Cannot access 'LOCAL_TARGET_ICON_RECT' before initialization` the moment
+ *  anything imported the quickslots. A window's strings may live under systems;
+ *  a system reaching up into a window is how that cycle came back. */
+export { USE_PENDING };
 
 /** TEXT.RSC 25 - the drop-gold prompt (:1272). */
 export const GOLD_TO_DROP_TEXT_ID = 25;
