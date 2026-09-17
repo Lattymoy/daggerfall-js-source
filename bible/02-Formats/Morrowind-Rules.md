@@ -6704,3 +6704,44 @@ it; no vendored file does. The `Extras/` alternate draw animations
 sheathing (`updateHolsteredShield`, `Bip01 AttachShield`) is not
 ported: the mod ships no shield art and the port's Morrowind body
 carries no shield.
+
+## MAC-R1 (2026-09-17): the raised blade is not cut
+
+Mac: "Morrowind weapons that go above the screen show their blade
+clipped off." The arm's first-person pass (combat/fpArm.js `draw`)
+rendered a frame that was EXACTLY the screen - `pw x ph` rows of the
+sprite target at the screen's aspect, `FP_FIELD_OF_VIEW` vertical - and
+composited it fullscreen. Under the Weapon Widget (WW1) the composite is
+instead a screen-space RECT the widget's channels move: `armsTransform`
+applies the mod's Position and Scale (the bob, the inertia, the step),
+and `transformRect` clamps the rect to the screen's height minus its
+own `weaponOffsetHeight`. A rect the screen's size shifted DOWN by the
+bob has its top edge below the screen's top, and the frame has nothing
+above its own top edge - so a blade raised through it ended in a
+straight horizontal cut that moved with the bob.
+
+**The fix is to render what is above the screen.** While a screen
+transform is set, the frame is padded by `FP_TOP_PAD` (0.5 - half a
+screen; the widget's clamp keeps every shift under one screen height)
+of the screen's own height in extra rows ON TOP: `phFull = ph + pad`.
+The projection is the SAME lens with its top edge raised - an off-centre
+`frustum` (combat/fpArm.js, glFrustum's matrix; `perspective` is its
+symmetric case, pinned element for element; it lives beside its one
+reader and not in world/mat4.js, which the relay bundles under
+RELAY_VERSION's hash law) over the screen's bottom
+edge, its sides and its near plane, with `top = hh * (1 + 2 * padFrac)`.
+So the screen still occupies the bottom `ph` of the `phFull` rows at
+exactly the same pixel scale (its top lands at NDC (1-p)/(1+p), its
+bottom at -1), and the pad sees what is above it. The composite is the
+widget's rect extended UPWARD by `rect.h * padFrac`, sampling the whole
+padded sub-rect: at rest the pad lands above the screen and is unseen;
+shifted down, it shows the blade instead of a cut. The RT cap
+(`CHAR_SPRITE_RT_SIZE`) counts the pad. With no transform `padFrac` is
+0, the matrices are the same matrix and the fullscreen overlay path is
+untouched.
+
+Not seen in a browser: no Morrowind data in this container, and the cut
+needs the widget's shift over a raised blade. The lens law is pinned
+numerically (`test/macr_fixes.test.js`) and the draw by source; MW-D10
+and MW-D23's projection pins re-aimed. Mutants in
+`tools/mutants/macr.json`.

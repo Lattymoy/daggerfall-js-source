@@ -200,11 +200,13 @@
   {
     "name": "QS4-the-off-hand-presses-with-no-light-at-all",
     "file": "src/systems/quickslots.js",
-    "old": "  if (!carries) { say?.(QUICKSLOT_TEXT.noLight); return { kind: 'none' }; }",
+    "old": "    if (typeof switchHand !== 'function') { say?.(QUICKSLOT_TEXT.noLight); return { kind: 'none' }; }",
     "new": "",
     "tests": [
-      "test/quickslots.test.js"
-    ]
+      "test/qs4_offhand.test.js",
+      "test/macr_fixes.test.js"
+    ],
+    "why_reaimed": " MAC-R2/R3 (2026-09-17) moved the line; re-aimed to its new text."
   },
   {
     "name": "QS4-the-mods-verdict-is-ignored",

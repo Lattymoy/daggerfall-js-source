@@ -476,6 +476,11 @@ function build(doc) {
   cells.off.cell.addEventListener('pointerdown', tap(() => {
     if (offKind === 'swap') liveOpts.quickSwap?.(); else liveOpts.quickOffHand?.();
   }));
+  // MAC-R3 (Mac: "Tapping the equip hand in the quickbar doesn't switch to
+  // your other weapon in hand (still bound to H)"): the MAIN cell is the
+  // weapon in hand, and a hand cell's own act is the other hand - DFU's
+  // SwitchHand. It does not hold: what is in the hand is not a list.
+  cells.main.cell.addEventListener('pointerdown', tap(() => { liveOpts.quickSwitchHand?.(); }));
 
   doc.body.append(root);
   return { root, compass, marks, detectMarks: [], foe, foeName, foeFill, magicka, health, fatigue, effects,

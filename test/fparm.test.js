@@ -235,8 +235,8 @@ test('MW-D10: the draw is rule 54 and nothing else - no framing, no offsets, no 
     'the eye is the camera node, read fresh from the pose');
   // MAC-P: the call carries the viewmodel's LIGHT too (the room's own at the camera); the
   // lens-local flag and the basis-change matrix are what this pin is for, and neither moved.
-  assert.match(draw, /renderCharacterSprite\(mesh, NIF_TO_PASS, proj, view, pw, ph, \{ lensLocal: true, viewmodelLight: vmLight \}\)/,
-    'and the model matrix is the basis change alone - no placement, no scale');
+  assert.match(draw, /renderCharacterSprite\(mesh, NIF_TO_PASS, proj, view, pw, phFull, \{ lensLocal: true, viewmodelLight: vmLight \}\)/,
+    'and the model matrix is the basis change alone - no placement, no scale (MAC-R1: phFull is the screen\'s rows plus the pad above them; with no transform the two are equal)');
   assert.match(draw, /perspective\(FP_FIELD_OF_VIEW, pw \/ ph,/, 'rule 29\'s own field of view');
   // THE RETIRED MECHANISM, and the sentence goes with it: none of the
   // mapper's constants may come back, in the draw or anywhere else.
@@ -253,7 +253,7 @@ test('MW-D10: the draw is rule 54 and nothing else - no framing, no offsets, no 
   // whose widest pose is four times its idle would have clipped the
   // knuckles off the camera to save the elbow.
   assert.match(draw, /const near = Math\.max\(\(built\.idleReach \?\? built\.reach\) \/ 200, 1e-4\);/);
-  assert.match(draw, /perspective\(FP_FIELD_OF_VIEW, pw \/ ph, near, built\.reach \* 4\)/);
+  assert.match(draw, /const far = built\.reach \* 4;[\s\S]{0,400}?perspective\(FP_FIELD_OF_VIEW, pw \/ ph, near, far\)/, 'the far plane off the swept reach, into the same lens (MAC-R1 named it)');
 });
 
 test('MW-D8: a build that cannot reach its data REFUSES with a stage, and never throws', async () => {
@@ -486,8 +486,8 @@ test('MW-D23: the actor\'s RIGHT lands SCREEN-RIGHT through the pass\'s OWN comp
   // The source must NOT mirror this pass: the world's mirror belongs to
   // the world's own composition, and borrowing it across compositions
   // is how MW-D9's fix became MW-D23's bug.
-  assert.match(src, /const proj = perspective\(FP_FIELD_OF_VIEW, pw \/ ph,/,
-    'the arm\'s projection is the bare 60-degree lens');
+  assert.match(src, /const proj = pad > 0 \? frustum\(-hw, hw, -hh, hh \* \(1 \+ 2 \* padFrac\), near, far\) : perspective\(FP_FIELD_OF_VIEW, pw \/ ph, near, far\);/,
+    'the arm\'s projection is the bare 60-degree lens (MAC-R1: and under a screen transform the same lens with its top edge raised - test/macr_fixes.test.js holds that the two agree over the screen)');
   // MW-D34 loosened this from "the word appears nowhere" to "is never
   // imported or called": drawThird's comment now NAMES the world's
   // mirror to explain the -u chirality flip, and a comment is not a

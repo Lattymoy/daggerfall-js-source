@@ -401,6 +401,42 @@ export const NIF_TO_PASS = trs(0, 0, 0, -90, 0, 0);
 
 /** files/settings-default.cfg: `first person field of view = 60.0`. */
 export const FP_FIELD_OF_VIEW = Math.PI / 3;
+/** MAC-R1 (2026-09-17, Mac: "Morrowind weapons that go above the screen
+ *  show their blade clipped off"): how much of the frame is rendered
+ *  ABOVE the screen's top edge, as a fraction of the screen's height,
+ *  while a screen transform (the Weapon Widget's bob, inertia and step,
+ *  weaponRig.js's `setScreenTransform`) is set. The arm's frame was
+ *  exactly the screen, and the widget's channels move the COMPOSITE -
+ *  a rect the same size as the screen, shifted down by the bob - so
+ *  the frame's top edge sat a few dozen pixels below the screen's, and
+ *  a blade raised through it ended in a straight cut with nothing
+ *  above. The widget clamps the rect to the screen's height minus its
+ *  own `weaponOffsetHeight` (transformRect), so half a screen of extra
+ *  rows covers every shift it can make; the composite rect is extended
+ *  upward by the same fraction, so the padding lands above the screen
+ *  and only the shift reveals it. Without a transform the frame IS the
+ *  screen and nothing is padded - the fullscreen overlay path is
+ *  untouched. */
+export const FP_TOP_PAD = 0.5;
+/** MAC-R1: the general GL frustum (glFrustum's matrix) - `perspective`
+ *  (world/mat4.js) is its symmetric case (l = -r, b = -t). An OFF-CENTRE
+ *  frame is the one thing perspective cannot say, and this pass is its
+ *  one reader: the padded frame's top edge is further from the axis than
+ *  its bottom. It lives HERE and not in world/mat4.js because the relay
+ *  bundles that module (net/wire.js imports its wrapAngle) and every byte
+ *  of the bundle is under RELAY_VERSION's hash law - a client-only lens
+ *  must not bump the relay. */
+export function frustum(left, right, bottom, top, near, far) {
+  const out = new Float32Array(16);
+  out[0] = (2 * near) / (right - left);
+  out[5] = (2 * near) / (top - bottom);
+  out[8] = (right + left) / (right - left);
+  out[9] = (top + bottom) / (top - bottom);
+  out[10] = (far + near) / (near - far);
+  out[11] = -1;
+  out[14] = (2 * far * near) / (near - far);
+  return out;
+}
 
 // IG6 (Mac's final call, 2026-08-31): NO tilt constants. The IG5 tilt
 // (an under-rotated draw lens) came out INVERTED on the played screen
@@ -3772,9 +3808,13 @@ export function createFpArm() {
       // MW-D43: the ARM's dial, not the sprite pass's. See MW_ARM_PIXEL.
       const wantW = canvas.clientWidth / MW_ARM_PIXEL;
       const wantH = canvas.clientHeight / MW_ARM_PIXEL;
-      const s = Math.min(1, CHAR_SPRITE_RT_SIZE / wantW, CHAR_SPRITE_RT_SIZE / wantH);
+      // MAC-R1: the rows above the screen, only under a transform (FP_TOP_PAD's note).
+      const padFrac = screenTransform ? FP_TOP_PAD : 0;
+      const s = Math.min(1, CHAR_SPRITE_RT_SIZE / wantW, CHAR_SPRITE_RT_SIZE / (wantH * (1 + padFrac)));
       const pw = Math.max(2, Math.round(wantW * s));
       const ph = Math.max(2, Math.round(wantH * s));
+      const pad = Math.round(ph * padFrac);   // extra rows on top of the screen's ph
+      const phFull = ph + pad;
 
       // RULE 54: THE WHOLE PASS LIVES IN THE RIG'S OWN SPACE.
       //
@@ -3836,13 +3876,23 @@ export function createFpArm() {
       // AUDIT 37 F1: the near plane off the IDLE reach, the far off the
       // swept one - see the build's note.
       const near = Math.max((built.idleReach ?? built.reach) / 200, 1e-4);
-      const proj = perspective(FP_FIELD_OF_VIEW, pw / ph, near, built.reach * 4);
+      // MAC-R1: the SCREEN's frame is the symmetric perspective it always
+      // was (FP_FIELD_OF_VIEW vertical, pw/ph); the padded frame keeps
+      // that frame's bottom, its sides and its near plane and raises the
+      // top edge by 2 x padFrac half-heights, so the screen still occupies
+      // the bottom ph of the phFull rows at exactly the same pixel scale
+      // and the extra rows see what is above it. With no pad the two
+      // matrices are the same matrix.
+      const far = built.reach * 4;
+      const hh = near * Math.tan(FP_FIELD_OF_VIEW / 2);
+      const hw = hh * (pw / ph);
+      const proj = pad > 0 ? frustum(-hw, hw, -hh, hh * (1 + 2 * padFrac), near, far) : perspective(FP_FIELD_OF_VIEW, pw / ph, near, far);
       // MAC-P: the room's own light on the arm (render/renderer.js's
       // viewmodel borrow), off the SAME `flatLightAt` the classic sprites
       // take under MAC-I - one answer, both lanes. Null keeps the frame's
       // light exactly as it was, which is what the switch off means.
       const vmLight = fpLightingOn() ? (renderer.flatLightAt?.() ?? null) : null;
-      const tex = renderer.renderCharacterSprite(mesh, NIF_TO_PASS, proj, view, pw, ph, { lensLocal: true, viewmodelLight: vmLight });   // VC5 review: lens-local - no cloud deck on the arm
+      const tex = renderer.renderCharacterSprite(mesh, NIF_TO_PASS, proj, view, pw, phFull, { lensLocal: true, viewmodelLight: vmLight });   // VC5 review: lens-local - no cloud deck on the arm   // MAC-R1: phFull - the screen's rows and the pad above them
       // WW1: Weapon Widget's channels move the composite as they move the
       // classic sprite - a screen-space rect in place of the fullscreen
       // overlay when a transform is set, the same alpha cut either way
@@ -3851,7 +3901,13 @@ export function createFpArm() {
       if (screenTransform) {
         const W = canvas.clientWidth || canvas.width, H = canvas.clientHeight || canvas.height;
         const rect = screenTransform({ x: 0, y: 0, w: W, h: H });
-        renderer.drawScreenQuad(tex, rect, { u0: 0, v0: ph / CHAR_SPRITE_RT_SIZE, u1: pw / CHAR_SPRITE_RT_SIZE, v1: 0 });
+        // MAC-R1: the composite is the SCREEN's rect extended upward by the
+        // pad's share of its height - the padded rows land above the
+        // screen's top when the rect sits at 0, and a rect the widget has
+        // shifted down shows them instead of a cut. The sampled corner is
+        // the whole phFull-tall sub-rect.
+        const up = rect.h * padFrac;
+        renderer.drawScreenQuad(tex, { x: rect.x, y: rect.y - up, w: rect.w, h: rect.h + up }, { u0: 0, v0: phFull / CHAR_SPRITE_RT_SIZE, u1: pw / CHAR_SPRITE_RT_SIZE, v1: 0 });
         return true;
       }
       renderer.drawScreenOverlayQuad(tex, pw / CHAR_SPRITE_RT_SIZE, ph / CHAR_SPRITE_RT_SIZE);

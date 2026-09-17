@@ -558,6 +558,16 @@ export function routeKey(e, ctx, setPlayerPos = null, keys = null) {
   if (e.code === 'Tab') { return ctx.toggleDial?.() === true; }
   const act = actionOf(e, keys);
   if (POLLED_ACTIONS.has(act)) return false;
+  // MAC-R2 (2026-09-17, Mac: "The enhanced quickbar sometimes shows double
+  // messages"): A HELD KEY AUTO-REPEATS ITS KEYDOWN, and the two quickslot
+  // actions that are NOT polled (the swap and the off hand) were routed on
+  // every one of them - so a key held a beat too long readied the swap and
+  // put it away again, or lit the torch and doused it, two lines and a net
+  // nothing. DFU's ActionStarted is the press edge alone (InputManager
+  // .cs:634-637), which is what `noteKeyDown` already gives the polled
+  // three; the repeat is nothing here too, and it is SWALLOWED rather than
+  // handed on, so no ladder below can act on it either.
+  if (e.repeat && QUICKSLOT_ACTIONS.has(act)) return true;
   return routeAction(act, ctx, setPlayerPos);
 }
 
