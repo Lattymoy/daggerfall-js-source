@@ -1,0 +1,51 @@
+[
+  {
+    "name": "FOEBAR1-the-fill-recedes-from-one-tip-only",
+    "file": "src/ui/enhancedHud.js",
+    "old": "export const bladeInset = (pct) => (100 - Math.max(0, Math.min(100, pct))) / 2;",
+    "new": "export const bladeInset = (pct) => (100 - Math.max(0, Math.min(100, pct)));",
+    "tests": ["test/foebar1_blade.test.js"]
+  },
+  {
+    "name": "FOEBAR1-the-inset-is-not-clamped",
+    "file": "src/ui/enhancedHud.js",
+    "old": "export const bladeInset = (pct) => (100 - Math.max(0, Math.min(100, pct))) / 2;",
+    "new": "export const bladeInset = (pct) => (100 - pct) / 2;",
+    "tests": ["test/foebar1_blade.test.js"]
+  },
+  {
+    "name": "FOEBAR1-the-blade-shows-whatever-the-pref-says",
+    "file": "src/ui/enhancedHud.js",
+    "old": "    const blade = getPref('foeBarStyle') === 'blade';\n    if (last.foeStyle !== blade)",
+    "new": "    const blade = true;\n    if (last.foeStyle !== blade)",
+    "tests": ["test/foebar1_blade.test.js"]
+  },
+  {
+    "name": "FOEBAR1-the-clip-is-not-written",
+    "file": "src/ui/enhancedHud.js",
+    "old": "    if (blade) clipInset(parts.foeBladeFull, 'foeBlade', bladeInset(foePct));",
+    "new": "",
+    "tests": ["test/foebar1_blade.test.js"]
+  },
+  {
+    "name": "FOEBAR1-the-plain-track-stays-under-the-blade",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".hud-foe.blade .hud-foetrack { display: none; }",
+    "new": "",
+    "tests": ["test/foebar1_blade.test.js"]
+  },
+  {
+    "name": "FOEBAR1-the-pref-defaults-to-the-blade",
+    "file": "src/systems/uiPrefs.js",
+    "old": "  foeBarStyle: 'bar',",
+    "new": "  foeBarStyle: 'blade',",
+    "tests": ["test/foebar1_blade.test.js"]
+  },
+  {
+    "name": "FOEBAR1-the-menus-button-names-the-option-already-on",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "    const b = el('button', 'act rowact', blade ? 'Blade' : 'Bar');",
+    "new": "    const b = el('button', 'act rowact', blade ? 'Bar' : 'Blade');",
+    "tests": ["test/foebar1_blade.test.js"]
+  }
+]
