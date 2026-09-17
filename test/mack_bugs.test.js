@@ -36,7 +36,7 @@ test('AUDIT-MACK F2: ONE feeder per held-key Set, and every reader is on a fed o
   // matters: it asserted that every file reading `held(keys, ...)`
   // must itself write the mouse codes into that Set. `worldModes.js`
   // does not OWN a Set - it takes `keys` off the host bag
-  // (`exterior.js:3195`) - and the lender's own mousedown writes the
+  // (`exterior.js:3200`) - and the lender's own mousedown writes the
   // codes UNGATED on a listener that is never removed. The codes were
   // always there.
   //
@@ -61,9 +61,11 @@ test('AUDIT-MACK F2: ONE feeder per held-key Set, and every reader is on a fed o
     `the port has both kinds (${owners.length} owners, ${borrowers.length} borrowers)`);
 
   for (const [f, src] of owners) {
-    assert.match(src, /const mc = mouseCode\(e\.button\);\s*\n?\s*if \(mc\) keys\.add\(mc\);/s,
+    // MWCROUCH: `keys.add(mc)` now sits in a block beside the key-edge
+    // ring's own note of the same button - one feeder, two readers.
+    assert.match(src, /const mc = mouseCode\(e\.button\);\s*\n?\s*if \(mc\) \{ keys\.add\(mc\);/s,
       `${f} DECLARES the Set, so a mouse press must reach it - Mouse2 is AutoRun and Mouse0 the drawn bow's un-draw at the shipped bindings`);
-    assert.match(src, /const mc = mouseCode\(e\.button\);\s*\n?\s*if \(mc\) keys\.delete\(mc\);/s,
+    assert.match(src, /const mc = mouseCode\(e\.button\);\s*\n?\s*if \(mc\) \{ keys\.delete\(mc\);/s,
       `${f} must also let the button GO - a stuck Mouse2 is a stuck AutoRun`);
     // ...and the write must be UNGATED, which is what makes a borrower
     // safe: the lender records the press whatever mode is mounted.

@@ -434,7 +434,11 @@ test('QS6: every host that answers a gameplay key DRIVES the hold machine, on it
     const src = read(path);
     assert.match(src, re, `${path} never drives the machine`);
     // ...and it stands with the polled latches, not somewhere of its own.
-    assert.match(src, /held\(keys, 'SwitchHand'\)/, `${path} really is a frame that polls`);
+    // MWCROUCH: SwitchHand is `released` off the frame's key-edge ring now
+    // (ActionComplete is the RELEASE, WeaponManager.cs:272) - what this
+    // clause asks is unchanged, that the hold machine stands with the
+    // frame's other per-frame key reads and not somewhere of its own.
+    assert.match(src, /released\((keyEdge|latch\.edge), keys, 'SwitchHand'\)/, `${path} really is a frame that polls`);
   }
   // THE GATE. Every builder of the tick names one - a key under an open window
   // is the window's, and the held-key Set is not even filled there.

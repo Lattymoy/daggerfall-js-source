@@ -69,11 +69,15 @@ test('AUDIT 39r: the paralysed bag zeroes the movement VECTOR and keeps the spee
   // lifted. The crouch toggle stays live either way (DecideHeightAction
   // has no paralysis check).
   const KEYS = "run: held(keys, 'Run'), autoRun: held(keys, 'AutoRun'), back: mv.backwards, sneak: held(keys, 'Sneak')";
-  for (const [name, s, latch] of [
-    ['world.js', WORLD, 'latch.crouch'], ['exterior.js', EXTERIOR, 'latch.crouch'],
-    ['worldModes.js', WORLD_MODES, 'latch.crouch'], ['dungeon.js', src('src/scenes/dungeon.js'), 'prevCrouch'],
+  // MWCROUCH replaced the `crouchHeld && !<latch>` derivation the four
+  // hosts shared with `crouchPress` - GetKeyDown off the frame's key
+  // ring (ui/input.js). The law this pin states is untouched: the
+  // paralysed bag zeroes the VECTOR and still carries the live crouch.
+  for (const [name, s] of [
+    ['world.js', WORLD], ['exterior.js', EXTERIOR],
+    ['worldModes.js', WORLD_MODES], ['dungeon.js', src('src/scenes/dungeon.js')],
   ]) {
-    assert.ok(s.includes(`player.update(dt, paralyzed ? { forward: 0, strafe: 0, ${KEYS}, jump: false, up: false, down: false, crouch: crouchHeld && !${latch} } : {`),
+    assert.ok(s.includes(`player.update(dt, paralyzed ? { forward: 0, strafe: 0, ${KEYS}, jump: false, up: false, down: false, crouch: crouchPress } : {`),
       `${name}: the vector is zeroed, the capture keys ride through`);
     assert.ok(!s.includes('paralyzed ? { forward: 0, strafe: 0, run: false,'), `${name}: and the old reduced bag is gone`);
   }

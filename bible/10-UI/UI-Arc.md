@@ -52,7 +52,7 @@ still push CLASSIC canvas windows as children under the DOM, and so
 does the pack's USE arm.
 
     THE SPELLBOOK       FIVE construction sites across FOUR hosts:
-                        worldModes.js:1856 (the factory) and :1904 (a
+                        worldModes.js:1854 (the factory) and :1904 (a
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
                         dungeonContext.js:956, world.js:1723,
@@ -62,7 +62,7 @@ does the pack's USE arm.
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:5093, dungeonContext.js:6013. A seam
+    / NOTEBOOK          world.js:5098, dungeonContext.js:6013. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -7783,7 +7783,7 @@ same answer: `ui/spellbookDoor.js`, with each host handing it only
 what that host knows.
 
 THE "HAND-ROLLED DUPLICATE" WAS NOT ONE. The board recorded
-worldModes.js:2673 as a second book built by hand 342 lines below the
+worldModes.js:2671 as a second book built by hand 342 lines below the
 factory. Read closely it is the SPELL MERCHANT'S SHOP - buyMode, with
 `offered`, the building's quality, the shop name, the haggling skills
 and the classic clock. A different question with different deps, and
@@ -8493,7 +8493,7 @@ and firing THAT twice is a second PopToHUD.
 
 ### Why only two of the four hosts crashed
 
-`worldModes.js:5503` and `dungeonContext.js:1457` answer the same
+`worldModes.js:5501` and `dungeonContext.js:1457` answer the same
 `onClose` by nulling their slot and never disposing - nothing to
 re-enter. Only the two hosts that come through `townTalk.closeOverlay`
 dispose. **The four-hosts rule caught this one by accident**: the two
@@ -8558,7 +8558,7 @@ cited and ported somewhere in `src/`. FOUR were not:
 
 ### UI1 CLOSED: the use-magic-item window
 
-The port had the DOOR and not the room. `input.js:521` routed
+The port had the DOOR and not the room. `input.js:588` routed
 `Actions.UseMagicItem` to `ctx.openUseMagicItem`, `hudLarge.js:151`
 gave the large HUD's button its rect, `inputActions.js` bound KeyU -
 and no host implemented the method, so a live binding silently did
@@ -9737,9 +9737,9 @@ re-resolved the `exterior.js` half of a three-file sentence and left the
 `ExteriorAutomapWindow` construction, `:4101` on a `locationName:`
 field). Both halves are now read by `test/citedrift.test.js` - the
 existing entries only ever captured the exterior number, which is how
-the other half went stale unnoticed. (The rest cite named `world.js:5356`,
+the other half went stale unnoticed. (The rest cite named `world.js:5362`,
 the first of the host's TWO identical `act === 'Rest'` arms; ROAD-H H5
-deleted the second and the cite is `world.js:5362` now.)
+deleted the second and the cite is `world.js:5368` now.)
 
 ## AUDIT 62 F24/F25 - THE SENTINEL SWEEP WAS TWO WINDOWS SHORT (2026-09-07)
 
@@ -14776,3 +14776,140 @@ applied again, **SURVIVED** - which is what a stale record hides:
   `rec.seen` while the account is online - so it is recorded as such,
   with the reasoning, rather than pinned by a claim the code does not
   make.
+
+## MWCROUCH - GetKeyDown and GetKeyUp, which the port had been deriving
+
+Mac, 2026-09-17: *"When crouching with the morrowind model. you can't
+uncrouch"*.
+
+### It is not the motor, and it is not the Morrowind rig
+
+The diagnosis went the long way round and the long way round is the
+record. `player/motor.js`'s `_heightAction` has no view-mode arm and
+`get height()` has no Morrowind branch; the collider holds world
+geometry buckets only (`addMesh`'s fifteen call sites are all level
+meshes and action objects), so nothing about a drawn body can block
+`CanStand`'s upward sphere cast; `combat/fpArm.js` reads the SNEAK key
+rather than the crouch by a rule of its own (Rule 32(a): "Morrowind has
+one sneak stance, and Daggerfall's crouch is a height change the
+collider owns"); and `mwCamera.eye`'s third-person focal is
+`feet + FOCAL_HEIGHT` with no stance term at all. A crouch/uncrouch
+driven against a real `Collider` in a real room stands the player up
+every time.
+
+So the Morrowind model reaches the crouch by exactly one route: **it is
+the heaviest thing the port draws, and it makes frames long.**
+
+### The bug is one frame wide
+
+All four hosts built every press edge the same way:
+
+```js
+crouch: held(keys, 'Crouch') && !latch.crouch
+...
+latch.crouch = held(keys, 'Crouch');
+```
+
+That is a DERIVATION off the held ring, sampled once a render frame. A
+press whose keydown AND keyup both land between two frames is never in
+the ring on a frame that looks at it, so the edge does not exist and the
+tap is swallowed whole. At 60 Hz a 50 ms tap spans three frames and
+always lands; at 10 Hz - a loaded scene with the Morrowind body in it -
+it often lands in none. Crouching is then a thing that works when it
+works, and standing back up is a thing that does not, which is the
+sentence Mac wrote.
+
+**Unity does not work that way**, which is why Daggerfall Unity does not
+have this bug at any frame rate. `Input.GetKeyDown(k)` answers true on
+the frame FOLLOWING the press event whatever the key does afterwards,
+because the events are buffered and drained per frame; DFU reads exactly
+that through `InputManager` (:1084-1108, one poll a frame in
+`FindKeyboardActions`). The port had `GetKey` - `held()` - and no
+`GetKeyDown` at all, so every consumer wrote its own out of the only
+read there was.
+
+`motor.js:1001` had already named this bug's twin from the other side:
+"a render frame that accumulates less than one physics step swallowed
+the press" - the fix there moved `_heightAction` out of the fixed-step
+loop. The half that remained was the host's.
+
+### The seam
+
+`ui/input.js` gains the missing buffer, not a new rule:
+
+- `keyEdges()` - a host's ring: two live accumulators and two frame
+  halves.
+- `noteKeyDown(edges, code, repeat)` / `noteKeyUp(edges, code)` - the
+  listeners' half, beside the `keys.add` / `keys.delete` they already
+  do. `repeat` is the DOM's: auto-repeat is one physical press to Unity
+  and fires `GetKeyDown` once.
+- `beginInputFrame(edges)` - the frame's ONE rotation, at the head of
+  the frame, ABOVE the video hold. Rotating once a frame is what gives
+  an edge exactly one frame of life - the single frame Unity gives it -
+  so a reader behind a shut overlay still DROPS its edge rather than
+  banking it, which is the paused-InputManager law (:487-503) the old
+  latches were standing in for.
+- `pressed` / `released` - `GetKeyDown` and `GetKeyUp` over the same
+  dual-dict fallthrough and the same combo arm `held` takes.
+- `pressedCode` - the raw code, for the port's one recorded departure
+  that is not a binding at all (E activates beside Mouse0).
+
+`codeDown` took a `ring` parameter to do it, and the comment that
+parameter needed was **already in the file**: "the modifier arm reads
+HELD whatever edge the caller asked for; only the combo'd key takes
+`method`". `ring` IS that `method`. The modifier arm and the plain-key
+suppression both keep reading the held Set, because that is what :1695
+and :1683 read whatever edge is being asked for.
+
+### Four laws, four hosts, one shape
+
+The same derivation carried four things, and all four are now the edge
+they always claimed to be:
+
+| law | was | is |
+| --- | --- | --- |
+| crouch toggle | `crouchHeld && !latch.crouch` | `pressed(edge, keys, 'Crouch')` |
+| ReadyWeapon (Z) | `zNow && !zPrev` | `pressed(edge, keys, 'ReadyWeapon')` |
+| SwitchHand (H) | `!hNow && hPrev` | `released(edge, keys, 'SwitchHand')` |
+| E activate | `useHeld && !latch.use` | `pressedCode(edge, 'KeyE')` |
+
+The crouch KEY is still read HELD beside it, because the levitate
+descent is a held key (AUDIT 26 F031, `LevitateMotor` :88-89) and always
+was; only the STANCE toggle is an edge.
+
+`world.js` and `exterior.js` own a frame each and a ring each, on the
+`latch` bag whose two fields this retired - and `worldModes.js` READS
+that ring off the same shared bag and never rotates it, because the mode
+machine does not own a frame. `dungeon.js` is standalone and owns its
+own. The MOUSE codes ride the ring too: AUDIT 39r put them in `keys` for
+`GetKey`, and an edge read has the same claim on them.
+
+### Pinned
+
+`test/mwcrouch_edges.test.js` (10) - the sub-frame tap both ways, the
+one-frame life of an edge, auto-repeat as one press, the combo arm's
+split (modifier HELD, key on the ring), a rebind moving the edge, the
+raw-code door, a driven motor crouching AND standing at 10 fps, and the
+source sweep: no host may derive a press off the held ring again, every
+frame-owning host rotates exactly once and feeds both listeners, and the
+mode machine must not own a ring. `tools/mutants/mwcrouch.json` (14,
+all dead).
+
+And DRIVEN IN CHROMIUM: `tools/mwcrouchProbe.mjs` runs BOTH readers off
+the same real key events, in a page whose frame callback busy-waits to
+~9 fps, each driving its own real `PlayerMotor` against a real
+`Collider` room. Three taps - an odd count, so the two end in different
+STANCES rather than differing by a counter - and the old derivation sees
+**none** of them while the ring sees all three: `{latch: false, edge:
+true}`, which is Mac's sentence in two booleans. At 60 fps the two agree
+exactly, which is the other half of the claim: the fix changes nothing
+where the old reader worked.
+
+The probe found its own harness lying first. Playwright's
+`keyboard.press` AWAITS the keydown, so against a page that busy-waits
+it only sends the keyup once the loop has come back for air and already
+sampled the key - and the old derivation caught all four taps. That is
+not a player's input timing; it is the harness synchronising itself to
+the thing under test. The events go through a raw CDP session back to
+back now, unawaited, which is what a 50 ms tap inside a 110 ms frame
+actually looks like.

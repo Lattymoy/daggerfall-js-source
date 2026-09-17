@@ -124,7 +124,11 @@ test('A8: every host reads the one gate, and its FLAG is retired', () => {
     assert.ok(!/the pointer-parity slice owns the move/.test(s),
       `${h}'s pointer-parity flag is retired, not orphaned`);
     // and E survives beside it - "Mouse2 + E preserved"
-    assert.match(s, /keys\.has\('KeyE'\)/, `${h} keeps the port's own E`);
+    // MWCROUCH: the port's own E is an EDGE now (`pressedCode`), not a
+    // held read - the derivation it replaced dropped any tap shorter
+    // than a frame. The departure it states is untouched: E activates,
+    // beside Mouse0, on the raw code rather than a binding.
+    assert.match(s, /pressedCode\((keyEdge|latch\.edge), 'KeyE'\)/, `${h} keeps the port's own E`);
   }
   // the flag in the input map's header too
   const input = readFileSync(join(root, 'src/ui/input.js'), 'utf8');
