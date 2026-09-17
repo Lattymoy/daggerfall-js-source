@@ -6609,62 +6609,98 @@ reading the state and rolling no dice for the sneak base.
 ## WS1 (2026-09-17): weapon sheathing - the bone addons, the holster, the quiver
 
 Mac: "Can we implement this for the morrowind model" (Greatness7's
-Weapon Sheathing 1.6, the OpenMW archive).
+Weapon Sheathing 1.6, the OpenMW archive). Written from the files at
+WS1; REWRITTEN AT AUDIT-WS (the same day) off the reference itself -
+`apps/openmw/mwrender/actoranimation.cpp`, `animation.cpp`,
+`npcanimation.cpp`, `mwmechanics/weapontype.hpp`,
+`components/nifosg/nifloader.cpp` at tag openmw-0.48.0, fetched into
+the session - every cite below is to those files.
 
-**The bone addons - RECORDED FROM THE FILES, not read off the visitor.**
-OpenMW's `use additional anim sources` loads every file under
-`animations/<model>/` beside the model's own `.kf`: the `.kf` files as
-animation sources, the `.nif` files as bone addons (animation.cpp,
-injectCustomBones). The addon this mod ships (`xbase_anim_sh.nif`,
-68 records) is the retail `Bip01` hierarchy - every bone, the fingers
-included - with fourteen new NiNodes among them, thirteen carrying a
-"BONE" NiStringExtraData: `Bip01 AttachWeapon` under `Bip01`; the
-one-handed sheathing bones, the thrown one and the crossbow's under
-`Bip01 Pelvis`; the two-handed ones, the bow's and `Bip01
-AttachShield` under `Bip01 Spine2`. The file carries the retail nodes
-for the same reason a body part does (mwCharacter.js's header): to
-carry the parent NAMES across. So the rule the port takes: a node the
-skeleton lacks is added under the skeleton's node of its parent's
-name, with the addon's local transform; a node the skeleton has is
-left as the skeleton has it; an addon root the skeleton does not
-carry is transparent. The reference's exact visitor was not read here
-(no OpenMW checkout in this session) - said so, not hidden; a reader
-with the source should check `injectCustomBones` against
-`injectSkeletonNodes` and correct the rule with the code in hand.
+**The bone addons** (animation.cpp:1306-1322 injectCustomBones ->
+:1284-1304 loadBonesFromFile). With `use additional anim sources`
+on, setObjectRoot (:1368-1400) injects for the default skeleton
+(`xbaseanim`, `meshes/xbase_anim.nif`) and then for the actor's own
+model (:1339-1340, :1360-1361 - the two calls, base first). Each
+looks at every `.nif` under `animations/<model without extension>/`
+(:1310-1321). loadBonesFromFile runs GetExtendedBonesVisitor
+(:218-236) over the addon: a node carrying the "CustomBone" user
+description is recorded with its PARENT and NOT descended into; the
+description is what the NIF loader gives a node whose extra chain
+carries a NiStringExtraData "BONE" (nifloader.cpp:630-633, the chain
+walked whole :618-640). For each found bone the parent's NAME is
+looked up in the actor (FindByNameVisitor, :1293-1296) and, when
+found, a DEEP copy of the bone and its subtree is added under it
+(:1298-1302). Nothing is checked for already existing - a second node
+of the name would be added, and the bone cache answers the FIRST
+(rule 16), so the copy is dead. So the port's rule, corrected: ONLY
+marked nodes join, each under the actor's node of its addon parent's
+name, with its subtree; an unmarked node never (Weapon Sheathing's
+`Bip01 AttachWeapon` is unmarked - thirteen join, not fourteen); a
+marked node whose parent the actor lacks is skipped (silently there,
+named in `skipped` here); a name already present is skipped (the
+reference's dead copy, the same observable). `injectSkeletonNodes`
+and `hasBoneMarker` (mwSkin.js).
 
-**The sheathing bones** are weapontype.cpp's mSheathingBone column,
-and the addon's node names are that column: `Bip01 ` + the type's
-name, except the two two-handed types that end in `TwoClose`
-(`LongBladeTwoClose`, `AxeTwoClose`). Verified against the file, not
-recalled: every name in `SHEATHING_BONE` is a node the addon carries
-(the pin walks both).
+**The sheathing bones** (weapontype.hpp, the `sheath bone` column):
+`Bip01 ShortBladeOneHand` (:73), `Bip01 LongBladeOneHand` (:87), `Bip01
+BluntOneHand` (:101), **`Bip01 LongBladeOneHand` for AxeOneHand**
+(:115 - not the addon's own `Bip01 AxeOneHand`, which the reference
+never names; AUDIT-WS F1), `Bip01 LongBladeTwoClose` (:129), `Bip01
+AxeTwoClose` (:143), `Bip01 BluntTwoClose` (:157), `Bip01 BluntTwoWide`
+(:171), `Bip01 SpearTwoWide` (:185), `Bip01 MarksmanBow` (:199), `Bip01
+MarksmanCrossbow` (:213), `Bip01 MarksmanThrown` (:227); Arrow and Bolt
+none (:241, :255). getHolsteredWeaponBoneName (actoranimation.cpp
+:292-306) answers the column for a WEAP record and "" for anything
+else.
 
-**The holster** (actoranimation.cpp updateHolsteredWeapon, as the port
-cites it): thrown weapons return early ("since throwing weapons
-stack, their models don't look good when sheathed"); the scabbard is
-the weapon's model with `_sh` before the extension; absent, the
-weapon's own mesh attaches at the bone while holstered; present, the
-whole file attaches and its `Bip01 Weapon` node takes
-`setNodeMask(0)` while the weapon is drawn, or, when the node has no
-children, `getInstance(mesh, weaponNode)` - the base mesh under it,
-bare (MW-D44's law: a bare instance wears its parent's PAT, here the
-scabbard's). A file with no `Bip01 Weapon` node returns after the
-attach: whole and unmasked. The enchantment glow is not ported (the
-port draws no glow on any Morrowind mesh yet).
+**The holster** (actoranimation.cpp:318-394 updateHolsteredWeapon,
+called as `updateHolsteredWeapon(!mShowWeapons)` from showWeapons,
+npcanimation.cpp:958-994 :992): behind `weapon sheathing`; the carried
+right slot must hold a WEAP (:330-332); a THROWN weapon does not turn
+the holster off - it forces `showHolsteredWeapons = false` (:333-336,
+"since throwing weapons stack themselves, do not show such weapon
+itself"), so its scabbard, if one exists, still attaches with the
+weapon node masked (AUDIT-WS F3). The scabbard is the model with
+`_sh.nif` for its last four characters (:348); absent, the weapon mesh
+attaches at the bone while holstered and nothing while not (:352-360);
+present, it attaches whole (:363), `Bip01 Weapon` is looked up in the
+ACTOR (getBoneByName :367 - the attached scabbard's node) and masked
+while the weapon is shown (:375-378), or, when it has no children, the
+weapon mesh is instanced under it (:383-387, "use transformation from
+this node, but use the common weapon mesh"). A file with no `Bip01
+Weapon` returns after the attach (:368-369): whole, never masked.
+**Every attach here is attachMesh (:66-83) - `getInstance(model,
+parent)` under the bone, NOT SceneUtil::attach** - so no BoneOffset
+and no mirror ride a holstered mesh, unlike the weapon in the hand
+(AUDIT-WS F6: every WS1 part is `bare`). The enchantment glow (:355,
+:389-393) is not ported - the port draws no glow on any Morrowind
+mesh.
 
-**The quiver** (updateQuiver): `Bip01 Ammo`'s children each take one
-`getInstance` of the ammunition's model, `min(count, children)`;
-arrows suit a bow, bolts a crossbow, a thrown weapon's own stack
-itself. The port's count is the Daggerfall arrow stack.
+**The quiver** (actoranimation.cpp:396-471 updateQuiver, run from
+showWeapons :993 and at attachArrow / detachArrow / releaseArrow,
+npcanimation.cpp:1062-1074): `Bip01 Ammo` in the actor (:414-416);
+for a thrown weapon the ammo is the weapon's own stack, one fewer
+while one is in the hand (:424-433); otherwise the ammunition slot,
+`ammoCount--` while an arrow is attached (:437-444, isArrowAttached =
+`mAmmunition != nullptr`, npcanimation.cpp:1313-1316), suitable only
+when its type is the weapon type's ammo type (:446); `min(count,
+children)` (:453); every child's old instance removed, one
+`getInstance(model, arrowNode)` per slot (:456-471). The port: the
+count is the Daggerfall arrow stack, the last slot emptied while the
+round is on the string (AUDIT-WS F4: the quiver parts carry `{ i, n }`
+and the rig's hide law reads `arrowShown`); the thrown stack is
+unreachable from Daggerfall's weapon table (nothing maps to
+MarksmanThrown) and is not carried.
 
-**Where the first person stands.** No addon ships for
-`xbase_anim.1st`, the first-person rig takes no holster, and the
-reference draws none in first person either (the holster is an
-ActorAnimation part the first-person camera does not see).
+**Where the first person stands.** No addon ships for `xbase_anim.1st`,
+attachMesh finds no sheathing bone there (:68-70) and attaches nothing;
+the port's first-person rig takes no holster parts at all.
 
 **Recorded deltas.** `findNodeByName` answers null for a NiTriShape
 named as the node (its own recorded delta), so a scabbard that names a
 SHAPE `Bip01 Weapon` would stand whole here where the reference masks
 it; no vendored file does. The `Extras/` alternate draw animations
-(two-handed weapons drawn from the back) are not vendored.
-
+(two-handed weapons drawn from the back) are not vendored. Shield
+sheathing (`updateHolsteredShield`, `Bip01 AttachShield`) is not
+ported: the mod ships no shield art and the port's Morrowind body
+carries no shield.

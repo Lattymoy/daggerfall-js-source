@@ -6,7 +6,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { parseNif, deref } from '../src/formats/mwNifFile.js';
-import { buildSkeleton, injectSkeletonNodes, skeletonSpaceMatrices, poseSkeleton, INJECTED_REF_BASE } from '../src/formats/mwSkin.js';
+import { buildSkeleton, injectSkeletonNodes, hasBoneMarker, skeletonSpaceMatrices, poseSkeleton, INJECTED_REF_BASE } from '../src/formats/mwSkin.js';
 import { flattenNif } from '../src/formats/mwNifMesh.js';
 import { bindPart, nodeTransformOf, findNodeByName } from '../src/formats/mwCharacter.js';
 import { assembleFirstPersonArm, MW_WEAPON_TYPE, TP_BASE_MODEL } from '../src/formats/mwFirstPerson.js';
@@ -28,24 +28,24 @@ const LONGBOW = bytes('Meshes/w/w_longbow_sh.nif');
 const CRESCENT = bytes('Meshes/w/w_art_blade_crescent_sh.nif');
 const near = (a, b, eps = 1e-5) => Math.abs(a - b) < eps;
 
-/** The addon's fourteen, with the retail node each hangs under. */
+/** The addon's thirteen MARKED nodes ("BONE" NiStringExtraData), with the retail node each hangs under.
+ *  "Bip01 AttachWeapon" is in the file too, unmarked, and the reference never adds it. */
 const ADDON_BONES = Object.freeze({
-  'Bip01 AttachWeapon': 'Bip01',
   'Bip01 AxeOneHand': 'Bip01 Pelvis', 'Bip01 BluntOneHand': 'Bip01 Pelvis', 'Bip01 LongBladeOneHand': 'Bip01 Pelvis',
   'Bip01 MarksmanThrown': 'Bip01 Pelvis', 'Bip01 ShortBladeOneHand': 'Bip01 Pelvis', 'Bip01 MarksmanCrossbow': 'Bip01 Pelvis',
   'Bip01 AttachShield': 'Bip01 Spine2', 'Bip01 AxeTwoClose': 'Bip01 Spine2', 'Bip01 BluntTwoClose': 'Bip01 Spine2',
   'Bip01 LongBladeTwoClose': 'Bip01 Spine2', 'Bip01 MarksmanBow': 'Bip01 Spine2', 'Bip01 SpearTwoWide': 'Bip01 Spine2', 'Bip01 BluntTwoWide': 'Bip01 Spine2',
 });
-/** A "retail" skeleton: the addon's own hierarchy with its fourteen taken out (thirteen carry a "BONE"
- *  NiStringExtraData; "Bip01 AttachWeapon" does not, so the list is by name). */
+/** A "retail" skeleton: the addon's own hierarchy with its thirteen marked nodes taken out - and its
+ *  unmarked "Bip01 AttachWeapon" taken out too, so the pin can show it is NOT brought back. */
 function retailSkeleton() {
   const nif = parseNif(ADDON);
   const skel = buildSkeleton(nif);
+  const marked = [];
   for (const [ref, node] of [...skel.nodes]) {
-    if (ADDON_BONES[node.name]) { skel.nodes.delete(ref); skel.byName.delete(node.name.toLowerCase()); }
+    if (hasBoneMarker(nif, deref(nif, ref)) || node.name === 'Bip01 AttachWeapon') { skel.nodes.delete(ref); skel.byName.delete(node.name.toLowerCase()); if (node.name !== 'Bip01 AttachWeapon') marked.push(node.name); }
   }
-  const marked = [...skel.nodes.keys()].filter((ref) => { const rec = deref(nif, ref); const e = rec?.extra >= 0 ? deref(nif, rec.extra) : null; return e?.string === 'BONE'; });
-  assert.deepEqual(marked, [], 'every BONE-marked node is one of the fourteen');
+  assert.deepEqual(marked.sort(), Object.keys(ADDON_BONES).sort(), 'the thirteen marked nodes are the table');
   return { nif, skel };
 }
 
@@ -53,6 +53,7 @@ test('WS1: the sheathing-bone column names the addon\'s nodes for the twelve wea
   assert.equal(Object.keys(SHEATHING_BONE).length, 12);
   assert.equal(SHEATHING_BONE[MW_WEAPON_TYPE.LongBladeTwoHand], 'Bip01 LongBladeTwoClose');
   assert.equal(SHEATHING_BONE[MW_WEAPON_TYPE.AxeTwoHand], 'Bip01 AxeTwoClose');
+  assert.equal(SHEATHING_BONE[MW_WEAPON_TYPE.AxeOneHand], 'Bip01 LongBladeOneHand', 'AUDIT-WS F1: weapontype.hpp:115, not the addon\'s "Bip01 AxeOneHand"');
   assert.equal(SHEATHING_BONE[MW_WEAPON_TYPE.MarksmanCrossbow], 'Bip01 MarksmanCrossbow');
   for (const name of Object.values(SHEATHING_BONE)) assert.ok(ADDON_BONES[name], `${name} is a node the addon carries`);
   assert.equal(holsters(MW_WEAPON_TYPE.MarksmanThrown), false); assert.equal(holsters(MW_WEAPON_TYPE.ShortBladeOneHand), true);
@@ -67,16 +68,22 @@ test('WS1: the sheathing-bone column names the addon\'s nodes for the twelve wea
   assert.deepEqual(HOLSTER_SLOTS, ['holster', 'sheath', 'quiver']);
   assert.equal(holsterHidden('holster', true), true); assert.equal(holsterHidden('holster', false), false);
   assert.equal(holsterHidden('sheath', true), false); assert.equal(holsterHidden('quiver', true), false); assert.equal(holsterHidden('weapon', true), null);
+  // AUDIT-WS F4: a round on the string empties the LAST quiver slot, and only that one
+  assert.equal(holsterHidden('quiver', true, { arrowShown: true, tag: { i: 6, n: 7 } }), true);
+  assert.equal(holsterHidden('quiver', true, { arrowShown: true, tag: { i: 5, n: 7 } }), false);
+  assert.equal(holsterHidden('quiver', true, { arrowShown: false, tag: { i: 6, n: 7 } }), false);
+  assert.equal(holsterHidden('quiver', false, { arrowShown: true, tag: null }), false);
 });
 
-test('WS1: the addon joins a retail skeleton - fourteen nodes under the node of their parent\'s name, the addon\'s own transform, refs past any record, known nodes untouched, a transparent root, nothing twice', () => {
+test('WS1: the addon joins a retail skeleton - the thirteen BONE-marked nodes under the node of their addon parent\'s name, the addon\'s own transform, refs past any record; the unmarked node is never added, a known name is skipped, a missing parent is skipped', () => {
   const { nif, skel } = retailSkeleton();
   assert.equal(skel.byName.has('bip01 longbladeonehand'), false, 'the fixture is retail: no sheathing bones');
   const before = skel.nodes.size;
   const r = injectSkeletonNodes(skel, nif);
   assert.deepEqual([...r.added].sort(), Object.keys(ADDON_BONES).sort());
   assert.deepEqual(r.skipped, []);
-  assert.equal(skel.nodes.size, before + 14);
+  assert.equal(skel.nodes.size, before + 13);
+  assert.equal(skel.byName.has('bip01 attachweapon'), false, 'AUDIT-WS F2: an unmarked node is not a custom bone (GetExtendedBonesVisitor, animation.cpp:218-236)');
   for (const [name, parent] of Object.entries(ADDON_BONES)) {
     const ref = skel.byName.get(name.toLowerCase());
     assert.ok(ref >= INJECTED_REF_BASE, `${name}: a minted ref`);
@@ -93,25 +100,53 @@ test('WS1: the addon joins a retail skeleton - fourteen nodes under the node of 
   const want = nodeTransformOf(nif, 'Bip01 MarksmanBow');
   for (let i = 0; i < 3; i++) assert.ok(near(at.t[i], want.t[i], 1e-3), `t[${i}] ${at.t[i]} vs ${want.t[i]}`);
   for (let i = 0; i < 9; i++) assert.ok(near(at.a[i], want.a[i], 1e-3), `a[${i}]`);
-  // again: nothing is added twice, and a known node keeps the retail transform
+  // again: a name already here is a dead copy in the reference (rule 16's first answers) and a skip here
   const pelvis = skel.nodes.get(skel.byName.get('bip01 pelvis'));
   const t0 = [...pelvis.rest.translation];
   const r2 = injectSkeletonNodes(skel, nif);
-  assert.deepEqual(r2.added, []); assert.equal(skel.nodes.size, before + 14);
+  assert.deepEqual(r2.added, []); assert.equal(r2.skipped.length, 13); assert.match(r2.skipped[0], /\(already here\)$/);
+  assert.equal(skel.nodes.size, before + 13);
   assert.deepEqual([...pelvis.rest.translation], t0);
-  // a skeleton whose ROOT is not the addon's ("Bip01" at the top, as retail rigs and other addons differ in
-  // their root's name): the addon's root is transparent, its children matched by name beneath it
+  // the parent is found by NAME in the actor, wherever the actor keeps it: a root renamed changes nothing
   {
     const { nif: n3, skel: s3 } = retailSkeleton();
     const rootRef = [...s3.nodes.entries()].find(([, n]) => n.parent < 0)[0];
     const rootNode = s3.nodes.get(rootRef);
     s3.byName.delete(rootNode.name.toLowerCase()); rootNode.name = 'Some Other Root'; s3.byName.set('some other root', rootRef);
     const r3 = injectSkeletonNodes(s3, n3);
-    assert.equal(r3.added.length, 14, 'the addon\'s unknown root is looked through');
-    assert.deepEqual(r3.skipped, []);
-    assert.equal(s3.nodes.get(s3.nodes.get(s3.byName.get('bip01 attachweapon')).parent).name, 'Bip01');
+    assert.equal(r3.added.length, 13); assert.deepEqual(r3.skipped, []);
   }
-  // the three addons (male, female, beast) carry the same fourteen
+  // a marked node whose parent the actor lacks is skipped, by name (the reference's FindByNameVisitor finds nothing and moves on)
+  {
+    const { nif: n4, skel: s4 } = retailSkeleton();
+    const spine2 = s4.byName.get('bip01 spine2');
+    s4.byName.delete('bip01 spine2'); s4.nodes.get(spine2).name = 'Bip01 Spine2x'; s4.byName.set('bip01 spine2x', spine2);
+    const r4 = injectSkeletonNodes(s4, n4);
+    assert.equal(r4.added.length, 6, 'the pelvis six');
+    assert.equal(r4.skipped.length, 7); assert.ok(r4.skipped.every((x) => /\(no "Bip01 Spine2" here\)$/.test(x)), r4.skipped.join('; '));
+  }
+  // the marker: the reference's own test (nifloader.cpp:630-633)
+  assert.equal(hasBoneMarker(nif, findNodeByName(nif, 'Bip01 MarksmanBow').rec), true);
+  assert.equal(hasBoneMarker(nif, findNodeByName(nif, 'Bip01 AttachWeapon').rec), false);
+  assert.equal(hasBoneMarker(nif, findNodeByName(nif, 'Bip01 Pelvis').rec), false);
+  assert.equal(hasBoneMarker(nif, { extra: -1 }), false); assert.equal(hasBoneMarker(nif, null), false);
+  // ...and it is the STRING that marks, found anywhere down the extra chain (nifloader.cpp:618-640 walks it whole)
+  const chain = { records: [{ type: 'NiStringExtraData', string: 'MRK', next: 1 }, { type: 'NiStringExtraData', string: 'BONE', next: -1 }, { type: 'NiStringExtraData', string: 'NCO', next: -1 }], roots: [] };
+  assert.equal(hasBoneMarker(chain, { extra: 0 }), true, 'BONE second in the chain');
+  assert.equal(hasBoneMarker(chain, { extra: 2 }), false, 'another string is not the marker');
+  // a marked bone's SUBTREE rides with it (DEEP_COPY_NODES, animation.cpp:1300): a tip node hung under the bow's bone in a stand-in addon
+  {
+    const { nif: n5, skel: s5 } = retailSkeleton();
+    const bowRef = n5.records.findIndex((r) => r?.type === 'NiNode' && r.name === 'Bip01 MarksmanBow');
+    const tip = { type: 'NiNode', name: 'Bip01 MarksmanBow Tip', flags: 0, children: [], translation: [1, 2, 3], rotation: Float32Array.from([1, 0, 0, 0, 1, 0, 0, 0, 1]), scale: 1, extra: -1, properties: [] };
+    const addon = { records: n5.records.map((r, i) => (i === bowRef ? { ...r, children: [...(r.children ?? []), n5.records.length] } : r)).concat([tip]), roots: n5.roots };
+    const r5 = injectSkeletonNodes(s5, addon);
+    assert.equal(r5.added.length, 14); assert.ok(r5.added.includes('Bip01 MarksmanBow Tip'));
+    const tipRef = s5.byName.get('bip01 marksmanbow tip');
+    assert.equal(s5.nodes.get(s5.nodes.get(tipRef).parent).name, 'Bip01 MarksmanBow', 'under the bone it came with, not under the actor\'s Spine2');
+    assert.deepEqual([...s5.nodes.get(tipRef).rest.translation], [1, 2, 3]);
+  }
+  // the three addons (male, female, beast) carry the same thirteen
   for (const dir of ['xbase_anim_female', 'xbase_animkna']) {
     const { skel: s2 } = retailSkeleton();
     const other = parseNif(bytes(`Animations/${dir}/xbase_anim_sh.nif`));
@@ -168,7 +203,7 @@ test('WS1: the holster\'s decisions - scabbard less its weapon node plus the wea
     ['holster', 'Bip01 LongBladeOneHand', SHEATH_WEAPON_NODE, null],
   ]);
   assert.equal(sword.parts[0].bytes, sword.parts[1].bytes, 'one file, two subtrees');
-  assert.deepEqual(sword.info, { bone: 'Bip01 LongBladeOneHand', scabbard: 'meshes/w\\w_iron_longsword_sh.nif', weaponNode: true, weaponNodeEmpty: false, quiver: 0 });
+  assert.deepEqual(sword.info, { bone: 'Bip01 LongBladeOneHand', scabbard: 'meshes/w\\w_iron_longsword_sh.nif', weaponNode: true, weaponNodeEmpty: false, quiver: 0, thrown: false });
   assert.deepEqual(sword.notes, []);
   const bare = resolveHolsterParts({ mwType: MW_WEAPON_TYPE.BluntOneHand, weaponModel: 'w\\w_no_such_club.nif', weaponBytes: WEAPON, find, hasBone: hasAll, parseNif });
   assert.deepEqual(bare.parts.map((p) => [p.slot, p.bones[0], p.bytes]), [['holster', 'Bip01 BluntOneHand', WEAPON]]);
@@ -186,7 +221,11 @@ test('WS1: the holster\'s decisions - scabbard less its weapon node plus the wea
   // a SHAPE named as the weapon node is not found (findNodeByName's recorded delta on geometry): the file stands whole
   const geomNode = { records: cres.records.map((r) => (String(r?.name).toLowerCase() === 'bip01 weapon' ? { ...r, type: 'NiTriShape' } : r)), roots: cres.roots };
   assert.equal(resolveHolsterParts({ mwType: MW_WEAPON_TYPE.LongBladeTwoHand, weaponModel: 'w\\w_art_blade_crescent.nif', weaponBytes: WEAPON, find, hasBone: hasAll, parseNif: () => geomNode }).info.weaponNode, false);
-  assert.deepEqual(resolveHolsterParts({ mwType: MW_WEAPON_TYPE.MarksmanThrown, weaponModel: 'w\\w_dart.nif', weaponBytes: WEAPON, find, hasBone: hasAll, parseNif }).parts, []);
+  // AUDIT-WS F3: thrown - showHolsteredWeapons forced off (actoranimation.cpp:333-336): no bare mesh, and a scabbard that exists stands with its weapon node masked
+  const dart = resolveHolsterParts({ mwType: MW_WEAPON_TYPE.MarksmanThrown, weaponModel: 'w\\w_dart.nif', weaponBytes: WEAPON, find, hasBone: hasAll, parseNif });
+  assert.deepEqual(dart.parts, []); assert.equal(dart.info.thrown, true); assert.equal(dart.info.bone, 'Bip01 MarksmanThrown');
+  const dartSh = resolveHolsterParts({ mwType: MW_WEAPON_TYPE.MarksmanThrown, weaponModel: 'w\\w_iron_longsword.nif', weaponBytes: WEAPON, find, hasBone: hasAll, parseNif });
+  assert.deepEqual(dartSh.parts.map((p) => [p.slot, p.excludeNode ?? null]), [['sheath', SHEATH_WEAPON_NODE]]); assert.equal(dartSh.info.thrown, true);
   assert.deepEqual(resolveHolsterParts({ mwType: MW_WEAPON_TYPE.None, weaponModel: 'w\\x.nif', weaponBytes: WEAPON, find, hasBone: hasAll, parseNif }).parts, []);
   assert.deepEqual(resolveHolsterParts({ mwType: MW_WEAPON_TYPE.LongBladeOneHand, weaponModel: null, weaponBytes: WEAPON, find, hasBone: hasAll, parseNif }).parts, []);
   const noBone = resolveHolsterParts({ mwType: MW_WEAPON_TYPE.LongBladeOneHand, weaponModel: 'w\\w_iron_longsword.nif', weaponBytes: WEAPON, find, hasBone: () => false, parseNif });
@@ -194,6 +233,21 @@ test('WS1: the holster\'s decisions - scabbard less its weapon node plus the wea
   // a scabbard that will not parse: the base mesh, and a note
   const broken = resolveHolsterParts({ mwType: MW_WEAPON_TYPE.LongBladeOneHand, weaponModel: 'w\\w_iron_longsword.nif', weaponBytes: WEAPON, find: () => ({ get: () => new Uint8Array([1, 2, 3]) }), hasBone: hasAll, parseNif });
   assert.deepEqual(broken.parts.map((p) => p.slot), ['holster']); assert.equal(broken.parts[0].bytes, WEAPON); assert.match(broken.notes[0], /^holster: /);
+});
+
+test('AUDIT-WS F6: every holster part is a bare instance (attachMesh is getInstance under the bone, actoranimation.cpp:66-83) - a weapon mesh with a BoneOffset node hangs at the sheathing bone without it', async () => {
+  const find = vendoredFind();
+  const sword = resolveHolsterParts({ mwType: MW_WEAPON_TYPE.LongBladeOneHand, weaponModel: 'w\\w_iron_longsword.nif', weaponBytes: WEAPON, find, hasBone: hasAll, parseNif });
+  assert.ok(sword.parts.every((p) => p.bare === true), 'the scabbard and the weapon node');
+  const bare = resolveHolsterParts({ mwType: MW_WEAPON_TYPE.BluntOneHand, weaponModel: 'w\\w_no_such_club.nif', weaponBytes: WEAPON, find, hasBone: hasAll, parseNif });
+  assert.ok(bare.parts.every((p) => p.bare === true), 'the fallback mesh');
+  // executed: the boneoffset fixture as a weapon mesh - bound as the HAND's weapon it takes its offset, holstered it does not
+  const OFFSET = new Uint8Array(readFileSync(new URL('./fixtures/mw/boneoffset.nif', import.meta.url)));
+  const held = await assembleFirstPersonArm({ skeletonBytes: ADDON, parts: [{ slot: 'weapon', bones: ['Weapon Bone'], bytes: OFFSET }] });
+  const holstered = await assembleFirstPersonArm({ skeletonBytes: ADDON, parts: resolveHolsterParts({ mwType: MW_WEAPON_TYPE.BluntOneHand, weaponModel: 'w\\w_no_such_club.nif', weaponBytes: OFFSET, find, hasBone: hasAll, parseNif }).parts });
+  assert.ok(held.ok && holstered.ok);
+  assert.ok(held.pieces.some((p) => p.boneOffset), 'the fixture carries a BoneOffset, and the hand takes it (rule 14)');
+  assert.ok(holstered.pieces.length > 0 && holstered.pieces.every((p) => p.boneOffset === null && p.slot === 'holster'), 'the holster ignores it');
 });
 
 test('WS1: an empty weapon node takes the base mesh under the node\'s own transform, bare, on the scabbard\'s offset', () => {
@@ -217,6 +271,7 @@ test('WS1: the quiver - one arrow per "Bip01 Ammo N" up to the count, arrows for
   const q = three.parts.filter((p) => p.slot === 'quiver');
   assert.equal(q.length, 3); assert.equal(three.info.quiver, 3);
   for (const p of q) { assert.equal(p.bytes, ARROW); assert.equal(p.bare, true); assert.equal(p.inheritOffsetFrom, 'sheath'); assert.equal(p.bones[0], 'Bip01 MarksmanBow'); assert.ok(p.preTransform); }
+  assert.deepEqual(q.map((p) => p.tag), [{ i: 0, n: 3 }, { i: 1, n: 3 }, { i: 2, n: 3 }], 'AUDIT-WS F4: each slot tagged with its index and the count');
   assert.notDeepEqual([...q[0].preTransform.t], [...q[1].preTransform.t], 'each under its own slot');
   const nif = parseNif(LONGBOW);
   const slots = findNodeByName(nif, SHEATH_AMMO_NODE).rec.children.filter((c) => c >= 0).length;
@@ -237,7 +292,7 @@ test('WS1: the whole assembly - the addon in, the scabbard and the holster place
   // the retail skeleton cannot be written back as a file, so the addon file itself stands as the skeleton (it carries the retail hierarchy) and is ALSO the bone source: every node known, nothing added, nothing lost
   const arm = await assembleFirstPersonArm({ skeletonBytes: ADDON, parts: sword.parts, boneSources: [{ name: 'animations/xbase_anim/xbase_anim_sh.nif', bytes: ADDON }] });
   assert.ok(arm.ok, `the assembly: ${arm.error}`);
-  assert.deepEqual(arm.injected, [{ name: 'animations/xbase_anim/xbase_anim_sh.nif', added: [], skipped: [] }]);
+  assert.equal(arm.injected.length, 1); assert.deepEqual(arm.injected[0].added, []); assert.equal(arm.injected[0].skipped.length, 13, 'the addon over itself: every bone already here');
   const slots = arm.pieces.map((p) => p.slot);
   assert.ok(slots.includes('sheath') && slots.includes('holster'), `slots ${slots}`);
   assert.deepEqual([slots.filter((x) => x === 'sheath').length, slots.filter((x) => x === 'holster').length], [4, 4], 'the file\'s eight shapes, four a side - each subtree once');
@@ -249,6 +304,7 @@ test('WS1: the whole assembly - the addon in, the scabbard and the holster place
   const quiver = arm2.pieces.filter((p) => p.slot === 'quiver');
   assert.ok(quiver.length >= 2, 'the two rounds bound');
   assert.ok(quiver.every((p) => p.bone === 'Bip01 MarksmanBow' && p.boneOffset === null), 'bare, and the scabbard carries no BoneOffset');
+  assert.ok(quiver.some((p) => p.tag && p.tag.i === 1 && p.tag.n === 2), 'the tag rides the piece');
   // an addon that will not parse is a note, not a refusal
   const arm3 = await assembleFirstPersonArm({ skeletonBytes: ADDON, parts: sword.parts, boneSources: [{ name: 'bad.nif', bytes: new Uint8Array([1, 2]) }] });
   assert.ok(arm3.ok, 'a bad addon is not a refusal'); assert.match(arm3.notes.find((n) => n.startsWith('bones: bad.nif')), /bad\.nif/);
@@ -316,8 +372,9 @@ test('WS1: the wiring, by source - the third-person build takes the addons and t
   assert.equal((fp.match(/ammoCount: ammoCount \?\? \(hasAmmo \? Number\.MAX_SAFE_INTEGER : 0\),/g) || []).length, 2, 'the build and the swap');
   assert.match(fp, /const swapped = new Set\(\['weapon', 'arrow', \.\.\.HOLSTER_SLOTS\]\);/);
   assert.match(fp, /bindPartsInto\(t\.arm, \[\.\.\.tResolved\.parts, \.\.\.tHolster\.parts\]\);/);
-  assert.equal((fp.match(/else if \(HOLSTER_SLOTS\.includes\(r\.slot\)\) r\.hidden = holsterHidden\(r\.slot, weaponShown\);/g) || []).length, 1, 'the world draw');
-  assert.equal((fp.match(/else if \(HOLSTER_SLOTS\.includes\(r\.slot\)\) r\.hidden = holsterHidden\(r\.slot, true\);/g) || []).length, 1, 'the portrait: the weapon is in the hand');
+  assert.equal((fp.match(/else if \(HOLSTER_SLOTS\.includes\(r\.slot\)\) r\.hidden = holsterHidden\(r\.slot, weaponShown, \{ arrowShown, tag: r\.piece\?\.tag \}\);/g) || []).length, 1, 'the world draw, with the round on the string');
+  assert.equal((fp.match(/else if \(HOLSTER_SLOTS\.includes\(r\.slot\)\) r\.hidden = holsterHidden\(r\.slot, true, \{ arrowShown, tag: r\.piece\?\.tag \}\);/g) || []).length, 1, 'the portrait: the weapon is in the hand');
+  assert.match(rd('src/systems/weaponSheathingAssets.js'), /\{ eager: true, query: '\?url', import: 'default' \}/, 'AUDIT-WS: the table is eager - no chunk per file');
   assert.match(fp, /sheathing = true, ammoCount = null,/);
   const rig = rd('src/combat/weaponRig.js');
   assert.match(rig, /sheathing: getPref\('mwSheathing'\),/); assert.match(rig, /ammoCount: daggerfallArrowCount\(entity\.items\),/);

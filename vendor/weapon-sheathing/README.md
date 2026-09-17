@@ -31,9 +31,10 @@ not charge a monetary fee." The credit is on the About screen
   take the quiver's arrows.
 - `Data Files/Animations/xbase_anim/xbase_anim_sh.nif`,
   `xbase_anim_female/`, `xbase_animkna/` - the skeleton addons: the
-  retail hierarchy carrying the fourteen sheathing nodes (`Bip01
+  retail hierarchy carrying thirteen nodes marked "BONE" (`Bip01
   ShortBladeOneHand` ... `Bip01 MarksmanCrossbow`, `Bip01
-  AttachShield`, `Bip01 AttachWeapon`).
+  AttachShield`) that the engine injects, and one unmarked (`Bip01
+  AttachWeapon`) that it does not.
 - `WeaponSheathing.txt` - the shipped readme: the change log, the
   modder notes, the permission, and the full credits of every artist
   whose asset is here (akortunov, Greatness7, Heinrich, London Rook,

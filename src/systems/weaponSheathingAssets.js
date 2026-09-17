@@ -15,10 +15,13 @@
 import { makeVendoredArchive, vendoredDataPath } from './weaponSheathing.js';
 
 const IN_BROWSER = typeof window !== 'undefined';
-const FILES = IN_BROWSER ? import.meta.glob('../../vendor/weapon-sheathing/Data Files/**/*.nif', { query: '?url', import: 'default' }) : {};
+// AUDIT-WS: EAGER. A lazy glob emitted one chunk per file (seventy-four
+// chunks of one URL string each, a request apiece); eager, the table is
+// the URLs themselves, in the module that owns it.
+const FILES = IN_BROWSER ? import.meta.glob('../../vendor/weapon-sheathing/Data Files/**/*.nif', { eager: true, query: '?url', import: 'default' }) : {};
 
-/** Canonical data-files path -> a lazy URL, for the vendored tree. */
-export const WEAPON_SHEATHING_URLS = Object.freeze(Object.fromEntries(Object.entries(FILES).map(([p, load]) => [vendoredDataPath(p), load])));
+/** Canonical data-files path -> its URL, for the vendored tree. */
+export const WEAPON_SHEATHING_URLS = Object.freeze(Object.fromEntries(Object.entries(FILES).map(([p, url]) => [vendoredDataPath(p), url])));
 
 const fetchBytes = async (url) => new Uint8Array(await (await fetch(url)).arrayBuffer());
 

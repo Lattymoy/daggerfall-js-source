@@ -2086,7 +2086,7 @@ export function bindPartsInto(assembly, parts) {
         const nodeName = nodeRef != null && skeleton.nodes.has(nodeRef) ? skeleton.nodes.get(nodeRef).name : (bone || '');
         const mirror = nodeName.includes('Left');
         for (const batch of bound.attached) {
-          pieces.push({ slot: part.slot, bone, kind: 'rigid', mirrored: mirror,
+          pieces.push({ slot: part.slot, bone, kind: 'rigid', mirrored: mirror, tag: part.tag ?? null,   // WS1: a part's own tag (the quiver slot's index)
             // MW-D16: a part instanced under a node INSIDE another part's
             // mesh (the arrow, under the bow's ArrowBone) carries that
             // node's whole chain. It is baked in ONCE here rather than

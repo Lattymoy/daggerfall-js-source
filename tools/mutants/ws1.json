@@ -29,8 +29,8 @@
   {
     "name": "sheath-keeps-weapon-node",
     "file": "src/systems/weaponSheathing.js",
-    "old": "  parts.push({ slot: 'sheath', bones: [bone], bytes: shBytes, excludeNode: SHEATH_WEAPON_NODE });",
-    "new": "  parts.push({ slot: 'sheath', bones: [bone], bytes: shBytes });",
+    "old": "  parts.push({ slot: 'sheath', bones: [bone], bytes: shBytes, excludeNode: SHEATH_WEAPON_NODE, bare: true });",
+    "new": "  parts.push({ slot: 'sheath', bones: [bone], bytes: shBytes, bare: true });",
     "tests": [
       "test/ws1_sheathing.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "holster-whole-file",
     "file": "src/systems/weaponSheathing.js",
-    "old": "    parts.push({ slot: 'holster', bones: [bone], bytes: shBytes, underNode: SHEATH_WEAPON_NODE });",
-    "new": "    parts.push({ slot: 'holster', bones: [bone], bytes: shBytes });",
+    "old": "    parts.push({ slot: 'holster', bones: [bone], bytes: shBytes, underNode: SHEATH_WEAPON_NODE, bare: true });",
+    "new": "    parts.push({ slot: 'holster', bones: [bone], bytes: shBytes, bare: true });",
     "tests": [
       "test/ws1_sheathing.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "no-scabbard-no-holster",
     "file": "src/systems/weaponSheathing.js",
-    "old": "    parts.push({ slot: 'holster', bones: [bone], bytes: weaponBytes });\n    return { parts, info: { bone, scabbard: null, weaponNode: false }, notes };\n  }\n  const shBytes",
-    "new": "    return { parts, info: { bone, scabbard: null, weaponNode: false }, notes };\n  }\n  const shBytes",
+    "old": "    if (showHolstered) parts.push({ slot: 'holster', bones: [bone], bytes: weaponBytes, bare: true });\n    return { parts, info: { bone, scabbard: null, weaponNode: false, thrown: !showHolstered }, notes };\n  }\n  const shBytes",
+    "new": "    return { parts, info: { bone, scabbard: null, weaponNode: false, thrown: !showHolstered }, notes };\n  }\n  const shBytes",
     "tests": [
       "test/ws1_sheathing.test.js"
     ]
@@ -103,33 +103,6 @@
     "file": "src/systems/weaponSheathing.js",
     "old": "  return at >= 0 ? p.slice(at + 'data files/'.length) : p.slice(p.lastIndexOf('/') + 1);",
     "new": "  return p.slice(p.lastIndexOf('/') + 1);",
-    "tests": [
-      "test/ws1_sheathing.test.js"
-    ]
-  },
-  {
-    "name": "inject-overwrites-known",
-    "file": "src/formats/mwSkin.js",
-    "old": "    let hereRef = key ? skeleton.byName.get(key) : undefined;\n    if (hereRef === undefined) {",
-    "new": "    let hereRef = undefined;\n    if (hereRef === undefined) {",
-    "tests": [
-      "test/ws1_sheathing.test.js"
-    ]
-  },
-  {
-    "name": "inject-root-not-transparent",
-    "file": "src/formats/mwSkin.js",
-    "old": "        for (const child of rec.children ?? []) if (child >= 0) walk(child, undefined, false);\n        return;",
-    "new": "        return;",
-    "tests": [
-      "test/ws1_sheathing.test.js"
-    ]
-  },
-  {
-    "name": "inject-parent-lost",
-    "file": "src/formats/mwSkin.js",
-    "old": "        ref: hereRef, name: rec.name, parent: parentRef,",
-    "new": "        ref: hereRef, name: rec.name, parent: -1,",
     "tests": [
       "test/ws1_sheathing.test.js"
     ]
@@ -202,6 +175,141 @@
     "file": "src/systems/features.js",
     "old": "control: Object.freeze({ store: 'prefs', key: 'mwSheathing', initial: true, online: true }),",
     "new": "control: Object.freeze({ store: 'prefs', key: 'mwSheathing', initial: false, online: true }),",
+    "tests": [
+      "test/ws1_sheathing.test.js"
+    ]
+  },
+  {
+    "name": "bone-axe-one-hand-addon-name",
+    "file": "src/systems/weaponSheathing.js",
+    "old": "  [MW_WEAPON_TYPE.AxeOneHand]: 'Bip01 LongBladeOneHand',",
+    "new": "  [MW_WEAPON_TYPE.AxeOneHand]: 'Bip01 AxeOneHand',",
+    "tests": [
+      "test/ws1_sheathing.test.js"
+    ]
+  },
+  {
+    "name": "thrown-scabbard-shows-weapon",
+    "file": "src/systems/weaponSheathing.js",
+    "old": "  if (!showHolstered) {\n    // thrown: the weapon node is masked whatever the hand does (:375-378 with showHolsteredWeapons forced false)\n  } else if (weaponKids > 0) {",
+    "new": "  if (weaponKids > 0) {",
+    "tests": [
+      "test/ws1_sheathing.test.js"
+    ]
+  },
+  {
+    "name": "thrown-bare-mesh-shown",
+    "file": "src/systems/weaponSheathing.js",
+    "old": "    if (showHolstered) parts.push({ slot: 'holster', bones: [bone], bytes: weaponBytes, bare: true });\n    return { parts, info: { bone, scabbard: null, weaponNode: false, thrown: !showHolstered }, notes };\n  }\n  const shBytes",
+    "new": "    parts.push({ slot: 'holster', bones: [bone], bytes: weaponBytes, bare: true });\n    return { parts, info: { bone, scabbard: null, weaponNode: false, thrown: !showHolstered }, notes };\n  }\n  const shBytes",
+    "tests": [
+      "test/ws1_sheathing.test.js"
+    ]
+  },
+  {
+    "name": "quiver-last-slot-never-empties",
+    "file": "src/systems/weaponSheathing.js",
+    "old": "  if (slot === 'quiver') return !!(arrowShown && tag && tag.i === tag.n - 1);",
+    "new": "  if (slot === 'quiver') return false;",
+    "tests": [
+      "test/ws1_sheathing.test.js"
+    ]
+  },
+  {
+    "name": "quiver-first-slot-empties",
+    "file": "src/systems/weaponSheathing.js",
+    "old": "  if (slot === 'quiver') return !!(arrowShown && tag && tag.i === tag.n - 1);",
+    "new": "  if (slot === 'quiver') return !!(arrowShown && tag && tag.i === 0);",
+    "tests": [
+      "test/ws1_sheathing.test.js"
+    ]
+  },
+  {
+    "name": "quiver-untagged",
+    "file": "src/systems/weaponSheathing.js",
+    "old": "bare: true, inheritOffsetFrom: 'sheath', tag: { i, n } });",
+    "new": "bare: true, inheritOffsetFrom: 'sheath' });",
+    "tests": [
+      "test/ws1_sheathing.test.js"
+    ]
+  },
+  {
+    "name": "binder-tag-lost",
+    "file": "src/formats/mwFirstPerson.js",
+    "old": "kind: 'rigid', mirrored: mirror, tag: part.tag ?? null,",
+    "new": "kind: 'rigid', mirrored: mirror,",
+    "tests": [
+      "test/ws1_sheathing.test.js"
+    ]
+  },
+  {
+    "name": "inject-unmarked-too",
+    "file": "src/formats/mwSkin.js",
+    "old": "    if (hasBoneMarker(addonNif, rec)) {",
+    "new": "    if (hasBoneMarker(addonNif, rec) || String(rec.name || '').startsWith('Bip01 Attach')) {",
+    "tests": [
+      "test/ws1_sheathing.test.js"
+    ]
+  },
+  {
+    "name": "inject-any-string-marks",
+    "file": "src/formats/mwSkin.js",
+    "old": "    if (x.type === 'NiStringExtraData' && x.string === 'BONE') return true;",
+    "new": "    if (x.type === 'NiStringExtraData') return true;",
+    "tests": [
+      "test/ws1_sheathing.test.js"
+    ]
+  },
+  {
+    "name": "inject-known-overwritten",
+    "file": "src/formats/mwSkin.js",
+    "old": "      if (key && skeleton.byName.has(key)) { skipped.push(`${rec.name} (already here)`); return; }\n",
+    "new": "",
+    "tests": [
+      "test/ws1_sheathing.test.js"
+    ]
+  },
+  {
+    "name": "inject-parent-missing-added-at-root",
+    "file": "src/formats/mwSkin.js",
+    "old": "      if (baseParent === undefined) { skipped.push(`${rec.name || '(nameless)'} (no \"${parentRec?.name ?? ''}\" here)`); return; }",
+    "new": "      if (baseParent === undefined) { copy(ref, -1); return; }",
+    "tests": [
+      "test/ws1_sheathing.test.js"
+    ]
+  },
+  {
+    "name": "inject-subtree-not-copied",
+    "file": "src/formats/mwSkin.js",
+    "old": "    for (const child of rec.children ?? []) if (child >= 0) copy(child, hereRef);\n  }",
+    "new": "  }",
+    "tests": [
+      "test/ws1_sheathing.test.js"
+    ]
+  },
+  {
+    "name": "hide-arrow-ignored",
+    "file": "src/combat/fpArm.js",
+    "old": "r.hidden = holsterHidden(r.slot, weaponShown, { arrowShown, tag: r.piece?.tag });",
+    "new": "r.hidden = holsterHidden(r.slot, weaponShown);",
+    "tests": [
+      "test/ws1_sheathing.test.js"
+    ]
+  },
+  {
+    "name": "holster-takes-own-offset",
+    "file": "src/systems/weaponSheathing.js",
+    "old": "    if (showHolstered) parts.push({ slot: 'holster', bones: [bone], bytes: weaponBytes, bare: true });\n    return { parts, info: { bone, scabbard: null, weaponNode: false, thrown: !showHolstered }, notes };\n  }\n  const shBytes",
+    "new": "    if (showHolstered) parts.push({ slot: 'holster', bones: [bone], bytes: weaponBytes });\n    return { parts, info: { bone, scabbard: null, weaponNode: false, thrown: !showHolstered }, notes };\n  }\n  const shBytes",
+    "tests": [
+      "test/ws1_sheathing.test.js"
+    ]
+  },
+  {
+    "name": "sheath-takes-own-offset",
+    "file": "src/systems/weaponSheathing.js",
+    "old": "bytes: shBytes, excludeNode: SHEATH_WEAPON_NODE, bare: true });",
+    "new": "bytes: shBytes, excludeNode: SHEATH_WEAPON_NODE });",
     "tests": [
       "test/ws1_sheathing.test.js"
     ]
