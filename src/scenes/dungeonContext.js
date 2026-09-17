@@ -1432,6 +1432,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // (DaggerfallInventoryWindow.cs:1748-1764). The inventory has
       // just run its own close law, so the slot is free.
       openSpellbook: () => { const b = makeSpellbookWindow(); if (b) activeOverlay = b; },
+      openCharSheet: () => { const w = api.makeCharSheet(); if (w) activeOverlay = w; },   // MAC-C: the pack's other window key crosses over rather than doing nothing - the same door the sheet's own Items button takes back the other way
       ...useHooks,   // U53: the one bag
       // G5: a DROPPED pile hands DaggerfallLoot's whole identity
       // (playerOwned + TextureArchive/TextureRecord + position); an RDB
@@ -2915,8 +2916,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:9456,
-              // exterior.js:4513 and worldModes.js:6121 already ran;
+              // playerArrowHitFoe is the one copy world.js:9464,
+              // exterior.js:4524 and worldModes.js:6122 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -5212,6 +5213,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // resumed the game and opened nothing.
         openPack: () => { const w = openInventory(null); if (w) activeOverlay = w; },
         openSpellbook: () => { const w = makeSpellbookWindow(); if (w) activeOverlay = w; },
+        openCharSheet: () => { const w = api.makeCharSheet(); if (w) activeOverlay = w; },   // MAC-C: the pack's other window key crosses over rather than doing nothing - the same door the sheet's own Items button takes back the other way
         openChronicle: () => { const w = makeJournalWindow('notebook'); if (w) activeOverlay = w; },
         // PX17c: the dungeon HAS the bridge (opts.questBridge feeds
         // the F5 journal at :3449 and the notebook at :867) - the PX3
@@ -6004,9 +6006,25 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // FIX-F: routeKey's RecastSpell / AbortSpell arms (EntityEffectManager.cs:257-270) - the dungeon's ctx
     recastSpell() { magic.recastSpell(); },
     abortSpell() { magic.abortReadySpell(); },
+    /** MAC-C: the sheet's ONE construction here, lifted out of
+     *  `toggleCharSheet` so the pack's cross-over key can reach it
+     *  without a second bag - U52's whole argument, applied to the
+     *  host that had the builder inline. The free-slot GUARD stays on
+     *  the toggle, because the toggle is the thing with a slot to
+     *  guard; a cross-over has just freed one. */
+    makeCharSheet() {
+      preloadCharSheetArt({ renderer, fetchBytes, palette });   // U8a: lazy - ready by the next open at worst
+      return createCharSheetWindow({
+        entity: playerEntity,
+        artDeps: { renderer, fetchBytes, palette },
+        rows: (id, pick) => textRsc?.variantLinesById(id, pick ?? Math.random) ?? [],   // AUDIT 58: the eight attribute popups' TEXT.RSC records 0..7
+        inventory: () => openInventory(null),
+        spellbook: makeSpellbookWindow,
+        ...questJournalHooks(),
+      });
+    },
     toggleCharSheet() {
       if (activeOverlay) return;
-      preloadCharSheetArt({ renderer, fetchBytes, palette });   // U8a: lazy - ready by the next open at worst
       // U32: the sheet's navigation buttons.
       //
       // U43: this used to read "this host has no quest bridge, so
@@ -6019,14 +6037,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // charSheetHooks' refusal is still the honest answer, which is
       // why this passes the bridge's own null through rather than
       // substituting an empty list.
-      activeOverlay = createCharSheetWindow({
-        entity: playerEntity,
-        artDeps: { renderer, fetchBytes, palette },
-        rows: (id, pick) => textRsc?.variantLinesById(id, pick ?? Math.random) ?? [],   // AUDIT 58: the eight attribute popups' TEXT.RSC records 0..7
-        inventory: () => openInventory(null),
-        spellbook: makeSpellbookWindow,
-        ...questJournalHooks(),
-      });
+      activeOverlay = api.makeCharSheet();
     },
     /** U43: the two journal doors (GameManager.cs:541-548). ONE window
      *  either way - LogBook opens it as it stands, NoteBook on the

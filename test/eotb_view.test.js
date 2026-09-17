@@ -290,7 +290,7 @@ test('AUDIT-EOTB F3b: EVERY host passes dt to the seam - derived from the call s
     const s = readFileSync(join(root, `src/scenes/${h}.js`), 'utf8');
     if (!/mwViewFrame\(/.test(s)) continue;
     callers.push(h);
-    const call = /mwViewFrame\(\{[\s\S]{0,400}?\}\)/.exec(s);
+    const call = /mwViewFrame\(\{[\s\S]{0,700}?\}\)/.exec(s);   // MAC-A widened it: the camera's sphere seam rides beside the ray
     assert.ok(call, `${h}.js: could not read its mwViewFrame call`);
     assert.match(call[0], /\bdt\b/, `${h}.js calls mwViewFrame without a dt - the camera would freeze there`);
     assert.match(call[0], /riding:/, `${h}.js calls mwViewFrame without riding - the riding offset would never apply`);

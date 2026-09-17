@@ -203,11 +203,23 @@ test('U25 / THE ONE CONSTRUCTION SEAM: ONE inventory builder per host', () => {
     // ...and the loot arm goes THROUGH it, carrying only what differs
     assert.match(src, /townTalk\.showOverlay\(makeInventoryWindow\(\{/,
       `${f}: the loot pile must reach the same builder`);
-    const loot = src.slice(src.indexOf('townTalk.showOverlay(makeInventoryWindow({'));
+    // MAC-E added a SECOND site to this law - the corpse, which used to
+    // empty itself into the pack instead of opening at all - so the
+    // slices below are found by what each one carries rather than by
+    // being the first `showOverlay(makeInventoryWindow({` in the file.
+    const pileAt = src.indexOf('loot: droppedLootHooks(pile)');
+    assert.ok(pileAt > 0, `${f}: the pile arm no longer names its own identity`);
+    const pile = src.slice(src.lastIndexOf('townTalk.showOverlay(makeInventoryWindow({', pileAt), pileAt + 400);
     // G5: DaggerfallLoot's identity travels with the pile through the
     // ONE shared shape, so a fifth call site cannot ship a partial one.
-    assert.match(loot.slice(0, 700), /loot: droppedLootHooks\(pile\)/);
-    assert.match(loot.slice(0, 700), /onClose: \(\) => droppedLoot\.releaseEmptied\(\)/);
+    assert.match(pile, /loot: droppedLootHooks\(pile\)/);
+    assert.match(pile, /onClose: \(\) => droppedLoot\.releaseEmptied\(\)/);
+    // ...and the BODY's identity travels the same way, built by the
+    // pool rather than the host (scenes/corpseMarker.js's
+    // corpseLootHooks): the host hands over a door, the pool decides
+    // what goes through it.
+    assert.match(src, /takeLoot\(lootKey, \(l\) => townTalk\.say\(l\),\n\s*inventoryDoorReady\(\) \? \(loot\) => townTalk\.showOverlay\(makeInventoryWindow\(\{ loot \}\)\) : null\)/,
+      `${f}: the corpse must reach the same builder, behind the same art gate`);
   }
   // the dungeon host has one too, and it is the door's
   const dc = readFileSync(join(root, 'src/scenes/dungeonContext.js'), 'utf8');

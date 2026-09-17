@@ -102,7 +102,7 @@ import { rarityAttr, rarityLines } from '../systems/lootRarity.js';   // LR1: th
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { closeOnOutsideTap } from './enhancedOverlays.js';   // OT1
 import { repaintKeepingScroll } from './domRepaint.js';
-import { overlayAction } from './input.js';
+import { overlayAction, actionOf } from './input.js';   // MAC-C: and the REGISTRY's answer for the two window keys
 import { audio } from '../systems/audio.js';   // MAC-O6: the pack's own transfer cue - this window carried none at all
 import { enhancedSoundsOn } from '../systems/enhancedSounds.js';   // ES1: both cues ride the Enhanced sounds switch
 import { SOUND } from '../systems/soundClips.js';
@@ -2270,9 +2270,25 @@ function render() {
 }
 
 // ── THE KEYBOARD ─────────────────────────────────────────────────
-// ESCAPE AND F6, the two keys the classic window closes on. F6 is a
-// host BINDING rather than overlay vocabulary, so it is read from the
-// event and CLAIMED - the same law U52's sheet applies to F5.
+// ESCAPE AND THE INVENTORY KEY, the two the classic window closes on.
+//
+// MAC-C (2026-09-17, Mac: "you can exit out of the F6 menu (inventory)
+// by pressing F6 again, but you cannot do the same for the F5 one
+// (char sheet)" + "it would be extra cool if you could like, be on the
+// F5 page, press F6 and then go straight from char sheet to inv.").
+//
+// This line used to read `e.key !== 'F6'` - the DFU DEFAULT spelled as
+// a literal, which is I2's and FIX-F's bug twice over: a player who
+// rebinds Inventory in the controls window gets a pack that opens on
+// their key and closes on nobody's. It reads the REGISTRY now, the same
+// `actionOf` the hosts' own ladders read.
+//
+// And the other window key CROSSES OVER rather than doing nothing: the
+// pack closes and the sheet opens, in that order, because `showOverlay`
+// REPLACES the host's one slot (the same note `openSpellbook` carries
+// four lines of hooks above). A host that hands no sheet door gets a
+// key that falls through, which is the honest refusal every other
+// optional hook here gives.
 function onKey(e) {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
   const t = e.target;
@@ -2285,7 +2301,15 @@ function onKey(e) {
   // world (A-F4). Escape ends the drag and keeps the window; a second
   // one closes it, as it always did.
   if (overlayAction(e) === 'back' && drag) { e.preventDefault(); e.stopPropagation(); dragStop(false); return; }
-  if (overlayAction(e) !== 'back' && e.key !== 'F6') return;
+  const act = actionOf(e);
+  if (act === 'CharacterSheet' && deps?.openCharSheet) {
+    e.preventDefault();
+    e.stopPropagation();
+    onExit();                 // the pack's own close law runs FIRST...
+    deps.openCharSheet();     // ...and this replaces the slot it just freed
+    return;
+  }
+  if (overlayAction(e) !== 'back' && act !== 'Inventory') return;
   e.preventDefault();
   e.stopPropagation();
   onExit();

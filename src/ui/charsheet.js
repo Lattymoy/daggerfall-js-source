@@ -26,6 +26,8 @@
 // a later U8 slice).
 
 import { statUp, statDown, MAX_STAT_VALUE } from './chargen.js';
+import { actionForCode } from '../systems/inputActions.js';   // MAC-C: the sheet's toggle key is the registry's
+import { bindings } from './input.js';
 import { carriedWeight } from '../systems/inventory.js';   // AUDIT 17e F30; E4: PlayerEntity.CarriedWeight, one home
 import { totalGoldAmount } from '../systems/court.js';   // PlayerEntity.GetGoldAmount - coins plus letters of credit
 import { entityMaxEncumbrance, handToHandMinDamage, handToHandMaxDamage } from '../combat/formulas.js';   // U10; AUDIT 63 F34: CalculateHandToHandMin/MaxDamage
@@ -402,8 +404,23 @@ export class CharSheet {
     const p = pages[action];
     if (p) { this.page = this.page === p ? 0 : p; return; }
     if (this.page && (action === 'back' || action === 'Escape')) { this.page = 0; return; }
+    // MAC-C: the toggle key is the REGISTRY's, not the literal 'F5'.
+    // This window takes RAW codes (isChoiceWindow), so the code is
+    // resolved here the way every host ladder resolves one - a player
+    // who rebinds CharacterSheet gets a sheet that closes on their key
+    // rather than on Bethesda's.
+    const bound = actionForCode(bindings(), action);
+    // ...and the PACK key crosses over rather than doing nothing, which
+    // is the same law the enhanced sheet takes (ui/charSheetDoor.js).
+    // The hook is the sheet's own Items button; no hook, no key.
+    if (bound === 'Inventory' && this.hooks?.inventory) {
+      if (!this._checkIfDoneLeveling()) return;   // the same gate the exit takes: no leaving with points owed
+      this.done = true;
+      this.hooks.inventory();
+      return;
+    }
     if (action === 'confirm' || action === 'back' || action === 'sheet'
-      || action === 'Enter' || action === 'Escape' || action === 'F5' || action === 'KeyE') {
+      || action === 'Enter' || action === 'Escape' || bound === 'CharacterSheet' || action === 'KeyE') {
       // CancelWindow / the toggle key / the exit button all run the
       // same gate (:241, :259, :944) - the sheet does not close while
       // bonus points are owed.
