@@ -127,6 +127,16 @@ export const COMPASS_POINTS = Object.freeze([
  *  view, narrow enough that turning MOVES. */
 export const COMPASS_SPAN = 0.25;
 
+/** QS5: the wear gauge is SVG, and an SVG node minted with
+ *  `createElement` is an unknown HTML element that draws nothing - the
+ *  namespace is the whole of the difference. */
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const svgEl = (doc, tag, cls) => {
+  const n = doc.createElementNS(SVG_NS, tag);
+  if (cls) n.setAttribute('class', cls);
+  return n;
+};
+
 const el = (tag, cls, text) => {
   const n = document.createElement(tag);
   if (cls) n.className = cls;
@@ -348,14 +358,33 @@ function build(doc) {
     const icon = el('img', 'hud-qicon');
     icon.alt = '';
     const init = el('span', 'hud-qinit');
-    const bar = el('i', 'hud-qbar');
-    const fill = el('i', 'hud-qbarfill');
-    bar.append(fill);
-    body.append(icon, init, bar);
+    body.append(icon, init);
+    // QS5 (Mac: "We need a better design for durability instead of the
+    // line sitting inside with the sprite"): THE CELL'S OWN LOWER EDGES
+    // ARE THE GAUGE. A bar under the art was a second object in a cell
+    // 84px wide, and it stole the room the sprite wanted; the diamond
+    // already draws two lines under the picture - its own bottom-left
+    // and bottom-right edges - and a gauge that IS the frame costs the
+    // art nothing. It drains from the bottom POINT outward, so a
+    // battered sword keeps a stub at the point and a fresh one is lit
+    // corner to corner, and the two halves fill symmetrically because
+    // the shape is symmetric.
+    const gauge = svgEl(doc, 'svg', 'hud-qwear');
+    gauge.setAttribute('viewBox', '0 0 100 100');
+    gauge.setAttribute('shape-rendering', 'crispEdges');
+    gauge.setAttribute('aria-hidden', 'true');
+    const track = svgEl(doc, 'path', 'hud-qwtrack');
+    track.setAttribute('d', `M ${WEAR_L} L ${WEAR_R.slice(2)}`);
+    const wearL = svgEl(doc, 'path', 'hud-qwfill');
+    wearL.setAttribute('d', `M ${WEAR_L}`);
+    const wearR = svgEl(doc, 'path', 'hud-qwfill');
+    wearR.setAttribute('d', `M ${WEAR_R}`);
+    for (const p of [wearL, wearR]) { p.setAttribute('stroke-dasharray', String(WEAR_LEN)); p.setAttribute('stroke-dashoffset', '0'); }
+    gauge.append(track, wearL, wearR);
     const count = el('span', 'hud-qcount');
-    cell.append(body, count);
+    cell.append(body, gauge, count);
     diamond.append(cell);
-    return { cell, icon, init, fill, count };
+    return { cell, icon, init, wear: [wearL, wearR], count };
   };
   const cells = { c1: cellOf('c1'), off: cellOf('off'), main: cellOf('main'), c2: cellOf('c2') };
   const tags = {};
@@ -381,7 +410,11 @@ function build(doc) {
   };
   cells.c1.cell.addEventListener('pointerdown', tap(() => liveOpts.quickUse?.(1)));
   cells.c2.cell.addEventListener('pointerdown', tap(() => liveOpts.quickUse?.(2)));
-  cells.off.cell.addEventListener('pointerdown', tap(() => { if (offKind === 'swap') liveOpts.quickSwap?.(); }));
+  // QS4: the off cell presses what it SHOWS - the swap where it offers
+  // one, the off hand's own light act everywhere else.
+  cells.off.cell.addEventListener('pointerdown', tap(() => {
+    if (offKind === 'swap') liveOpts.quickSwap?.(); else liveOpts.quickOffHand?.();
+  }));
 
   doc.body.append(root);
   return { root, compass, marks, detectMarks: [], foe, foeName, foeFill, magicka, health, fatigue, effects,
@@ -403,6 +436,19 @@ let liveEntity = null;
  *  own repair prompt has no such line - this is the port's, and it is
  *  the one number the strip exists to warn about. */
 export const QUICK_WORN_PCT = 40;
+
+/** QS5 - THE GAUGE'S GEOMETRY, in the cell's own 100x100 box. The
+ *  rhombus has its corners at the edge midpoints, so its lower two
+ *  edges run (0,50) - (50,100) - (100,50); the gauge is that V drawn
+ *  INSIDE the frame (a stroke on the boundary itself would be halved by
+ *  the cell's clip-path), each half starting at the bottom point so the
+ *  two drain together. WEAR_LEN is the half's length - the hypotenuse
+ *  of a 44 by 44 triangle - and the dash offset is what the condition
+ *  writes. */
+const WEAR_INSET = 44;
+const WEAR_L = `50 ${50 + WEAR_INSET} L ${50 - WEAR_INSET} 50`;
+const WEAR_R = `50 ${50 + WEAR_INSET} L ${50 + WEAR_INSET} 50`;
+const WEAR_LEN = Math.round(Math.hypot(WEAR_INSET, WEAR_INSET) * 10) / 10;
 
 /** The item's kind, for "has this cell's picture changed" - the
  *  quickslot model's own key, which is the fields that make two records
@@ -430,6 +476,7 @@ const initialsOf = (name) => String(name ?? '').split(/\s+/).filter(Boolean)
  *   playerXZ        - where they are measured from
  *   quickUse(n)     - the phone's tap on consumable slot n (QS3)
  *   quickSwap()     - and on the off hand while it offers a swap
+ *   quickOffHand()  - the off hand's own press in every other state (QS4)
  */
 export function drawEnhancedHud(vitals, heading01, dt = 0, opts = {}) {
   const { hidden = false } = opts;
@@ -682,7 +729,13 @@ function quickCell(part, slot, s) {
   const hasBar = !s.socket && Number.isFinite(s.condition);
   if (last[`${slot}Bar`] !== hasBar) { last[`${slot}Bar`] = hasBar; cls.toggle('hasbar', hasBar); }
   if (hasBar) {
-    width(part.fill, `${slot}BarW`, s.condition);
+    // The dash hides what is GONE, from each side corner inward, so what
+    // is left stands at the bottom point of the diamond.
+    const off = (WEAR_LEN * (1 - Math.max(0, Math.min(100, s.condition)) / 100)).toFixed(1);
+    if (last[`${slot}BarW`] !== off) {
+      last[`${slot}BarW`] = off;
+      for (const p of part.wear) p.setAttribute('stroke-dashoffset', off);
+    }
     const worn = s.condition < QUICK_WORN_PCT;
     if (last[`${slot}Worn`] !== worn) { last[`${slot}Worn`] = worn; cls.toggle('worn', worn); }
   }

@@ -40,7 +40,7 @@ import { makeWindowStack, pauseWhileOpen } from '../ui/windowStack.js';   // ROA
 import { healthStatusRows, statusInfoRows } from '../systems/healthStatus.js';   // BS1/F198: the Status health box
 import { playerEntity, surfacePlayer, hurtPlayer as hurtEntity, damageShieldPool, setDeathPresenter, setAvoidDeathHook } from '../characters/playerEntity.js';   // AUDIT 58: DecreaseHealth's shield hook is the BASE class's, so every entity's door owes it
 import { addItem, spendArrow, isEnchanted } from '../systems/inventory.js';
-import { useQuickslot, swapQuickslot } from '../systems/quickslots.js';   // QS2: the diamond's two performers
+import { useQuickslot, swapQuickslot, offHandQuickslot } from '../systems/quickslots.js';   // QS2/QS4: the diamond's performers
 import { worldAabb, objectAabb } from '../player/activate.js';   // AUDIT 63 F37/F38: objectAabb is the LIVE box a ray or a collision meets
 import { createWeaponRig, envAttack } from '../combat/weaponRig.js';   // C10: the shared FP-weapon surface
 import { weaponPoseOf, applyWeaponPose } from '../combat/playerWeapon.js';   // HARD2c: the sheath+hand pair as ONE law (SerializablePlayer.cs:175-176 / :420-421)
@@ -1374,6 +1374,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   const quickSwap = () => {
     swapQuickslot({ entity: playerEntity, say: (l) => hudText.add(l), rows: useHooks.rows });
     weaponRig.refreshWorn();
+    return true;
+  };
+  /** QS4: the off-hand cell's press - see scenes/world.js's twin. Underground
+   *  it is the one of the four that matters most. */
+  const quickOffHand = () => {
+    offHandQuickslot({ entity: playerEntity, say: (l) => hudText.add(l), toggleLight: () => weaponRig.toggleLight() });
     return true;
   };
 
@@ -4938,6 +4944,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // AUDIT 39: the enhanced HUD's two hand plaques - see world.js.
         readied: magic.readied() ?? null,
         weapon: playerWeapon.weapon ?? null,
+        // QS4: THE PHONE'S OWN DOORS. The diamond's cells take a finger
+        // on a touch-first device (ui/enhancedHud.js's second departure),
+        // and a door the host never handed over is a control that
+        // platform does not have - which is the whole of AUDIT SOC C9.
+        quickUse: (n) => quickUse(n), quickSwap: () => quickSwap(), quickOffHand: () => quickOffHand(),
         weaponSheathed: !!playerWeapon.sheathed });   // AUDIT 28 W2: the arrow counter's drawn-bow gate   // U38 + X4 + U43
     hudText.tick(dt);
     // AUDIT 64 F37: popupText is a NativePanel component of the HUD
@@ -5274,6 +5285,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // mode - so the doors land on the ladder in each the moment they exist.
     quickUse: (n) => quickUse(n),
     quickSwap: () => quickSwap(),
+    quickOffHand: () => quickOffHand(),
     switchHand: weaponRig.switchHand, readyWeapon: weaponRig.readyWeapon,   // a12: SwitchHand (H) - the same one door as the sheathe toggle; MAC-O1: and the ReadyWeapon KEY's own door (WeaponManager.Update:229-269), beside the panel's raw ToggleSheath above
     // S24 probe seam: drive a real spell record onto the player
     // through the host's own absorption path (the same function the

@@ -12,7 +12,7 @@ import {
   QUICKSLOTS, QUICKSLOT_TEXT, quickslotKey, isQuickConsumable, canSwapTo,
   assignQuickslot, clearQuickslot, clearQuickslots, quickslotOf, quickslotEntry,
   resolveConsumable, resolveSwap, quickslotView, useQuickslot, swapQuickslot,
-  quickslotSaveData, restoreQuickslotSaveData, BARE_KEYS, BARE_NAME,
+  quickslotSaveData, restoreQuickslotSaveData, BARE_KEYS, BARE_NAME, offHandQuickslot,
 } from '../src/systems/quickslots.js';
 import { equipItem, equipTableOf, EQUIP_SLOTS, isEquipped, getItemHands, ITEM_HANDS, unequipSlot } from '../src/systems/equip.js';
 import { potionRecipeKeys, potionRecipeByKey } from '../src/systems/potions.js';
@@ -334,6 +334,35 @@ test('QS1 swap refusals: the window\'s own - broken and forbidden - with its wor
   r = swapQuickslot({ entity: e, say: (t) => said.push(t) });
   assert.equal(r.kind, 'forbidden');
   assert.equal(said.length, before);
+});
+
+test('QS4 the off hand: the mod\'s own light act, and the one line the mod does not say', () => {
+  const e = player([sword()]);
+  const said = [];
+  const say = (l) => said.push(l);
+  let calls = 0;
+  const yes = () => { calls++; return true; };
+  // NO LIGHT ANYWHERE: the mod says nothing about a player who carries
+  // none, so this does - and the hook is never troubled.
+  assert.deepEqual(offHandQuickslot({ entity: e, say, toggleLight: yes }), { kind: 'none' });
+  assert.equal(said.at(-1), QUICKSLOT_TEXT.noLight);
+  assert.equal(calls, 0, 'nothing to toggle, nothing asked');
+  // A TORCH IN THE PACK: the act is the mod's, and its verdict is the answer.
+  e.items.push(torch());
+  assert.deepEqual(offHandQuickslot({ entity: e, say, toggleLight: yes }), { kind: 'light', lit: false });
+  assert.equal(calls, 1);
+  // THE MOD REFUSED (a shield in that hand, its own noFreeHand line): we
+  // add nothing - it has already said why.
+  const before = said.length;
+  assert.deepEqual(offHandQuickslot({ entity: e, say, toggleLight: () => false }), { kind: 'refused' });
+  assert.equal(said.length, before, 'the refusal is the mod\'s own words, not a second line over them');
+  // A LIT light counts as carrying one, even with an empty pack.
+  const lit = player([]);
+  lit.lightSource = torch();
+  assert.deepEqual(offHandQuickslot({ entity: lit, say, toggleLight: yes }), { kind: 'light', lit: true });
+  // THE MOD OFF, or a host with no door: nothing happens and nothing throws.
+  assert.deepEqual(offHandQuickslot({ entity: lit, say }), { kind: 'none' });
+  assert.deepEqual(offHandQuickslot({}), { kind: 'none' });
 });
 
 test('QS1 save: the slots ride the one session composer, and a save without the block CLEARS them', () => {

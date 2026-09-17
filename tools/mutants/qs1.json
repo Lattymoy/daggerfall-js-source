@@ -196,5 +196,32 @@
     "tests": [
       "test/quickslots.test.js"
     ]
+  },
+  {
+    "name": "QS4-the-off-hand-presses-with-no-light-at-all",
+    "file": "src/systems/quickslots.js",
+    "old": "  if (!carries) { say?.(QUICKSLOT_TEXT.noLight); return { kind: 'none' }; }",
+    "new": "",
+    "tests": [
+      "test/quickslots.test.js"
+    ]
+  },
+  {
+    "name": "QS4-the-mods-verdict-is-ignored",
+    "file": "src/systems/quickslots.js",
+    "old": "  return toggleLight() === true ? { kind: 'light', lit: !!entity?.lightSource } : { kind: 'refused' };",
+    "new": "  toggleLight(); return { kind: 'light', lit: !!entity?.lightSource };",
+    "tests": [
+      "test/quickslots.test.js"
+    ]
+  },
+  {
+    "name": "QS4-a-lit-light-is-not-carrying-one",
+    "file": "src/systems/quickslots.js",
+    "old": "  const carries = !!entity?.lightSource || packOf(entity).some(isLightSource);",
+    "new": "  const carries = packOf(entity).some(isLightSource);",
+    "tests": [
+      "test/quickslots.test.js"
+    ]
   }
 ]

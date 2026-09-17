@@ -61,6 +61,11 @@ export const ACTIONS = Object.freeze([
   // these are Ledger A rows, not parity claims. The two consumable presses and
   // the weapon swap the diamond's cells name (systems/quickslots.js).
   'QuickUse1', 'QuickUse2', 'QuickSwap',
+  // QS4 (2026-09-17, Mac: "The 4th quickslot doesnt have a keybind"): the
+  // diamond's OFF-HAND cell, which had none - it spoke only through Handheld
+  // Torches' own mod key, which the enhanced pane cannot rebind and no pad can
+  // carry. Appended, like the three above and for the same reason.
+  'QuickOffHand',
 ]);
 
 /** AUDIT SOC D3: THE PORT'S OWN ROWS, NAMED SO THE CLASSIC WINDOWS CAN YIELD THEM.
@@ -73,7 +78,7 @@ export const ACTIONS = Object.freeze([
  *  because it draws the row (ui/enhancedControls.js PORT_ROWS, the 'Online' group) and can rebind it.
  *  QS2: the three quickslot actions join it for the same reason, off the same face - the enhanced pane draws them
  *  under their own 'Quickslots' heading and the classic windows cannot draw them at all. */
-export const PORT_ACTIONS = Object.freeze(['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSwap']);
+export const PORT_ACTIONS = Object.freeze(['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand']);
 
 const ACTION_SET = new Set(ACTIONS);
 
@@ -152,6 +157,10 @@ export const DEFAULT_BINDINGS = Object.freeze([
   ['Digit1', 'QuickUse1'],
   ['Digit2', 'QuickUse2'],
   ['Digit3', 'QuickSwap'],
+  // QS4: the fourth cell takes the fourth digit, the last of the row this
+  // slice spends and still unspent by DFU, by the port and by every vendored
+  // mod's TextKey defaults.
+  ['Digit4', 'QuickOffHand'],
 ]);
 
 // ── key combos ──────────────────────────────────────────────────────

@@ -38,6 +38,7 @@ import { removeOne, addItem, isEnchanted, carriedWeight, letterOfCredit, LETTER_
 import { isEquipped, unequipSlot } from '../systems/equip.js';   // AUDIT 17e F4: worn gear is not merchandise
 import { targetAimPoint, missileAimDirection } from '../characters/enemyTargets.js';   // AUDIT WORLD6b-iii(a) C3: the ONE aim law for an enemy missile (the peer's transform, mine otherwise)
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
+import { offHandQuickslot } from '../systems/quickslots.js';   // QS4: the off-hand cell's press, on THIS mode's own rig
 import { createPlayerTicker , wireInfectionVideos, endRunToTitleMenu, exitToTitleMenu, doorSpellFor, exteriorOpenSpellFor, consumeDoorSpell, wireDoorSpells, createDetectFeed, createRestDeps, foeNearbyRecord, nearbyLootRecords} from './shared.js';   // AUDIT 18: the interior host's world clock; S40: its rest deps
 import { triggerExteriorOpen, DOOR_SPELL_TEXT } from '../systems/mysticism.js';   // X3: the Open spell's EXTERIOR-door arm
 import { buildInteriorContext, seedInteriorTreasure } from './interiorContext.js';   // AUDIT 63 F22: AddFlats' RandomTreasure arm lives with the walk that finds its markers
@@ -6291,6 +6292,9 @@ export function createWorldModes(host) {
       drawHud(renderer, canvas, hudArt, playerEntity,
         ((Math.atan2(_hfw[0], _hfw[1]) / (Math.PI * 2)) % 1 + 1) % 1, dt,
         { detected: _detected, playerXZ: [player.pos[0], player.pos[2]],
+          // QS4: the phone's own doors, this mode's own rig - see world.js's twin.
+          quickUse: (n) => interiorKeyCtx.quickUse(n), quickSwap: () => interiorKeyCtx.quickSwap(),
+          quickOffHand: () => interiorKeyCtx.quickOffHand(),
           largeHud: largeHudOptions({ renderer, fetchBytes, palette }, playerEntity),
           // AUDIT 28 W2: the interior frame never handed drawHud a font,
           // so nothing text-shaped on the classic HUD (the mode word,
@@ -7237,6 +7241,14 @@ export function createWorldModes(host) {
       const ok = host.quickSwap?.() === true;
       if (ok) interiorWeapon.refreshWorn();
       return ok;
+    },
+    // QS4: and the off hand, whose light is THIS mode's rig - the outer host's
+    // performer would toggle the wrong one, so the door is answered here with
+    // the parts this mode owns.
+    quickOffHand() {
+      offHandQuickslot({ entity: playerEntity, say: (l) => townTalk?.say?.(l),
+        toggleLight: () => interiorWeapon.toggleLight() });
+      return true;
     },
     /** TR5: dfuiOpenTransportWindow's INDOORS arm (DaggerfallUI.cs
      *  :691-694) - inside, the key refuses with a HUD line instead of

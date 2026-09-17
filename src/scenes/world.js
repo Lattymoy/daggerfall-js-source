@@ -167,7 +167,7 @@ import { rayDirFromScreen, projectToScreen, ndcFromScreen } from '../player/tapR
 import { isRiding } from '../systems/transport.js';   // TR2: is there a mount under us
 import { useItem } from '../systems/useItem.js';   // UI1: MagicItemPicker_OnItemPicked's two arms
 import { isEnchanted } from '../systems/inventory.js';   // UI1: the use path's enchanted test
-import { useQuickslot, swapQuickslot } from '../systems/quickslots.js';   // QS2: the diamond's two performers - the window's own use ladder, and the one equipItem
+import { useQuickslot, swapQuickslot, offHandQuickslot } from '../systems/quickslots.js';   // QS2: the diamond's two performers - the window's own use ladder, and the one equipItem
 import { createDroppedLoot, droppedLootHooks, containerDropPos } from './droppedLoot.js';   // U8e: the ground piles; G5: the pile's DaggerfallLoot identity
 import { preloadPaperDollArt } from '../ui/paperDoll.js';   // U8f: the avatar base
 import { seedStartingEquipment, EQUIP_SLOTS } from '../systems/equip.js';   // U8h: the worn-weapon binding
@@ -3106,6 +3106,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     weaponRig.refreshWorn();
     return true;
   };
+  /** QS4: the off-hand cell's press. The light is the MOD's, so the act is
+   *  the rig's door onto it and this host only names the entity and the line. */
+  const quickOffHand = () => {
+    offHandQuickslot({ entity: playerEntity, say: (l) => townTalk.say(l), toggleLight: () => weaponRig.toggleLight() });
+    return true;
+  };
 
   /** UI1: MagicItemPicker_OnItemPicked's two arms (:91-97) through the
    *  port's ONE use seam - systems/useItem.js, the same call the
@@ -5095,6 +5101,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // and a door that is not on it is a key that does nothing.
     quickUse: (n) => quickUse(n),
     quickSwap: () => quickSwap(),
+    quickOffHand: () => quickOffHand(),
     // UI1: DaggerfallUI :581-583 - the U key's window opens only when
     // something in the pack is usable by magic; nothing usable, no
     // window, which is why this returns rather than showing an empty
@@ -7727,6 +7734,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // worldModes' interiorKeyCtx.)
     quickUse: (n) => quickUse(n),
     quickSwap: () => quickSwap(),
+    quickOffHand: () => quickOffHand(),
     // S40: AbortRestForEnemySpawn (:301-304) reaches the rest window
     // in THIS host's overlay slot. In DFU the OnEncounter subscription
     // is on the WINDOW (OnPush :264, OnPop :275), so it follows the
@@ -9550,6 +9558,11 @@ export async function bootWorld(canvas, renderer, params, status) {
           // neither draws neither, which is what made the seam dead.
           readied: magic?.readied?.() ?? null,
           weapon: weaponRig.playerWeapon.weapon ?? null,
+          // QS4: THE PHONE'S OWN DOORS. The diamond's cells take a finger
+          // on a touch-first device (ui/enhancedHud.js's second departure),
+          // and a door the host never handed over is a control that
+          // platform does not have - which is the whole of AUDIT SOC C9.
+          quickUse: (n) => quickUse(n), quickSwap: () => quickSwap(), quickOffHand: () => quickOffHand(),
           weaponSheathed: !!weaponRig.playerWeapon.sheathed });   // AUDIT 28 W2: the arrow counter's drawn-bow gate   // U38 + X4 + U43
     }
     townTalk.frame(dt);   // T3b: HUD lines + the talk overlay, above everything

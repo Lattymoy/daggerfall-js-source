@@ -171,17 +171,25 @@ test('QS3 the tag law: the pad while the pad is live, the key otherwise, and NOT
   }
 
   // WHICH TAG GOES WHERE. The off hand's is decided by what stands in
-  // it: a lit torch is the MOD's key, a swap weapon is QuickSwap, and a
-  // shield or an empty socket has nothing to press at all.
-  assert.deepEqual(CELL_ACTIONS, { main: 'ReadyWeapon', c1: 'QuickUse1', c2: 'QuickUse2', swap: 'QuickSwap' });
-  assert.equal(quickslotOffTag('shield', key), null);
-  assert.equal(quickslotOffTag('empty', key), null);
+  // it: a swap weapon is QuickSwap, and every other state of the off hand
+  // is QuickOffHand - QS4, the corner that had no key at all.
+  assert.deepEqual(CELL_ACTIONS,
+    { main: 'ReadyWeapon', c1: 'QuickUse1', c2: 'QuickUse2', swap: 'QuickSwap', off: 'QuickOffHand' });
+  // QS4: EVERY STATE OF THE OFF CELL NAMES A KEY. A swap is the swap's;
+  // a lit torch, a shield, an off-hand weapon and an empty socket are the
+  // off hand's own press - the cell a player could not reach before.
+  setBinding(store, 'Digit4', 'QuickOffHand');
+  for (const kind of ['shield', 'empty', 'weapon', 'torch']) {
+    assert.deepEqual(quickslotOffTag(kind, key), { kind: 'key', text: '4' }, `the ${kind} cell names its key`);
+  }
   assert.deepEqual(quickslotOffTag('swap', key), { kind: 'glyph', family: 'xbox', code: 'JoystickButton3' });
-  assert.deepEqual(quickslotOffTag('torch', { ...key, readTorchKey: () => 'O' }), { kind: 'key', text: 'O' });
+  // The mod's own key is still a tag a caller can ask for - HT4 kept the
+  // mod's keys, and this one still presses the same act.
+  assert.deepEqual(torchTag(() => 'O'), { kind: 'key', text: 'O' });
   // Handheld Torches binds a KeyCode name in its own settings, not an
   // InputManager action - so the torch cell is keyboard only and reads
   // the mod's store (HT4 moved its default to O).
-  assert.equal(quickslotOffTag('torch', { ...key, readTorchKey: () => 'None' }), null, 'an unbound mod key is no tag either');
+  assert.equal(torchTag(() => 'None'), null, 'an unbound mod key is no tag either');
   assert.deepEqual(torchTag(() => 'Alpha4'), { kind: 'key', text: '4' });
   assert.equal(torchTag(() => { throw new Error('no store'); }), null, 'a store that is not there is not a key');
   // The tag's string, which is what the HUD writes on.
@@ -199,7 +207,7 @@ test('QS3: the diamond is a block of its own on the HUD root, and the hand plaqu
   // The four cells and the four tags.
   assert.match(HUD, /const cells = \{ c1: cellOf\('c1'\), off: cellOf\('off'\), main: cellOf\('main'\), c2: cellOf\('c2'\) \};/);
   assert.match(HUD, /\[\['c1', 'top'\], \['off', 'left'\], \['main', 'right'\], \['c2', 'bottom'\]\]/);
-  for (const c of ['hud-qcell', 'hud-qframe', 'hud-qground', 'hud-qbody', 'hud-qicon', 'hud-qbar', 'hud-qcount', 'hud-qstag']) {
+  for (const c of ['hud-qcell', 'hud-qframe', 'hud-qground', 'hud-qbody', 'hud-qicon', 'hud-qwear', 'hud-qcount', 'hud-qstag']) {
     assert.ok(CSS.includes(`.${c}`), `the sheet carries .${c}`);
   }
   // PX30b's two plaques go ENTIRELY - the diamond says both of those
@@ -265,9 +273,18 @@ test('QS3: the sheet - clipped not rotated, one number for the geometry, and the
   assert.match(CSS, /\.hud-qicon \{ display: block; max-width: 44px; max-height: 44px; image-rendering: pixelated; \}/);
   // THE STRIP: 36x4 under the art, brass, and the health bar's red
   // below the worn line.
-  assert.match(CSS, /\.hud-qbar \{ display: none; width: 36px; height: 4px;/);
-  assert.match(CSS, /\.hud-qbarfill \{[^}]*background: var\(--brass\); \}/);
-  assert.match(CSS, /\.hud-qcell\.worn \.hud-qbarfill \{ background: #d98074; \}/);
+  // QS5: the durability gauge IS the cell's two lower edges - no strip
+  // inside the art, and the old rules are gone with it.
+  assert.doesNotMatch(CSS, /hud-qbar/, 'the strip under the sprite is gone from the sheet');
+  assert.doesNotMatch(HUD, /hud-qbar/, '...and from the DOM');
+  assert.match(CSS, /\.hud-qcell\.hasbar \.hud-qwear \{ display: block; \}/);
+  assert.match(CSS, /\.hud-qwfill \{ fill: none; stroke: var\(--brass\); stroke-width: 5; \}/);
+  assert.match(CSS, /\.hud-qcell\.worn \.hud-qwfill \{ stroke: #d98074; \}/);
+  // The stroke is INSIDE the rhombus: the cell is clipped to that shape
+  // and a stroke on the boundary loses its outer half.
+  assert.match(HUD, /const WEAR_INSET = 44;/);
+  assert.match(HUD, /gauge\.setAttribute\('shape-rendering', 'crispEdges'\);/);
+  assert.match(HUD, /const SVG_NS = 'http:\/\/www\.w3\.org\/2000\/svg';/, 'an SVG node minted by createElement draws nothing');
   assert.match(HUD, /export const QUICK_WORN_PCT = 40;/);
   assert.match(HUD, /const worn = s\.condition < QUICK_WORN_PCT;/);
   // THE COUNT: tabular, and at zero it takes the classic shadowed pair
@@ -345,18 +362,26 @@ test('QS3: the block is written only when it CHANGED, and a phone can press it',
   assert.doesNotMatch(HUD, /cells\.main\.cell\.addEventListener/);
 });
 
+test('QS4: every host hands drawHud the diamond\'s three doors - a tap on a phone is a control only if the host gave one (mutant: a host that forwards none, so the cells are dead on the one platform the departure exists for)', () => {
+  for (const p of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeonContext.js']) {
+    assert.match(read(p), /quickUse: \(n\) => quickUse\(n\), quickSwap: \(\) => quickSwap\(\), quickOffHand: \(\) => quickOffHand\(\),/, `${p} hands the doors to drawHud`);
+  }
+  assert.match(read('src/scenes/worldModes.js'), /quickUse: \(n\) => interiorKeyCtx\.quickUse\(n\), quickSwap: \(\) => interiorKeyCtx\.quickSwap\(\),/,
+    'the interior mode hands its OWN ctx\'s, because its rig is its own');
+});
+
 test('QS3: drawHud forwards the sheathe state and the two phone doors', () => {
   const hud = read('src/ui/hud.js');
   // `weaponSheathed` has reached drawHud since AUDIT 28 W2 (the arrow
   // counter's gate) and was never passed on, so the enhanced skin could
   // not tell a drawn sword from a put-away one.
   assert.match(hud, /weaponSheathed: weaponSheathed,/);
-  assert.match(hud, /quickUse: quickUse \?\? null,\s*\n\s*quickSwap: quickSwap \?\? null,/);
-  assert.match(hud, /quickUse = null, quickSwap = null \} = \{\}\) \{/);
+  assert.match(hud, /quickUse: quickUse \?\? null,\s*\n\s*quickSwap: quickSwap \?\? null,\s*\n\s*quickOffHand: quickOffHand \?\? null,/);
+  assert.match(hud, /quickUse = null, quickSwap = null, quickOffHand = null \} = \{\}\) \{/);
   // ...on ONE line, and the new keys BELOW the ones the bible cites by
   // line number: a split in this signature moved four Port-Status src
   // cites and test/citedrift.test.js caught every one of them.
-  assert.match(hud, /readied = null, weapon = null, weaponSheathed = true, quickUse = null, quickSwap = null \} = \{\}\)/);
+  assert.match(hud, /readied = null, weapon = null, weaponSheathed = true, quickUse = null, quickSwap = null, quickOffHand = null \} = \{\}\)/);
   // ...and the view is composed from it, with the entity drawHud
   // already hands over.
   assert.match(HUD, /quickslotView\(vitals, \{ weapon: opts\.weapon \?\? null, sheathed: opts\.weaponSheathed \?\? false \}\)/);
@@ -387,7 +412,12 @@ const mkEl = () => ({
     add(...c) { c.forEach((x) => this._s.add(x)); }, remove(...c) { c.forEach((x) => this._s.delete(x)); },
     toggle(c, on) { if (on) this._s.add(c); else this._s.delete(c); }, contains(c) { return this._s.has(c); },
   },
-  setAttribute() {}, removeAttribute(a) { this[a] = ''; }, remove() {},
+  // QS5: the wear gauge is SVG and writes through attributes, so the fake
+  // RECORDS them - a setter that swallowed its argument would pin nothing.
+  attrs: {},
+  setAttribute(k, v) { this.attrs[k] = String(v); if (k === 'class') this.className = String(v); },
+  getAttribute(k) { return this.attrs[k]; },
+  removeAttribute(a) { delete this.attrs[a]; this[a] = ''; }, remove() {},
   append(...c) { this.children.push(...c); }, appendChild(c) { this.children.push(c); return c; },
   replaceChildren(...c) { this.children = c; }, addEventListener(type, fn) { (this._on ??= {})[type] = fn; },
 });
@@ -400,7 +430,13 @@ const find = (node, cls) => {
 
 test('QS3 the states, executed: the socket, the sheathed hand, the ghost\'s 0, and the tag chips', async () => {
   const prev = globalThis.document;
-  globalThis.document = { createElement: mkEl, getElementById: () => null, head: mkEl(), body: mkEl() };
+  // QS5: the fake MARKS the namespace, because an SVG node minted by
+  // `createElement` is an unknown HTML element that draws nothing - a fake
+  // that answered the same object either way could not tell the two apart.
+  globalThis.document = {
+    createElement: mkEl, createElementNS: (ns, tag) => Object.assign(mkEl(), { ns }),
+    getElementById: () => null, head: mkEl(), body: mkEl(),
+  };
   const { drawEnhancedHud, destroyEnhancedHud } = await import('../src/ui/enhancedHud.js');
   const { assignQuickslot, clearQuickslots } = await import('../src/systems/quickslots.js');
   const { setBindings } = await import('../src/ui/input.js');
@@ -454,7 +490,18 @@ test('QS3 the states, executed: the socket, the sheathed hand, the ghost\'s 0, a
     assert.ok(!has('main', 'socket'));
     assert.ok(has('main', 'sheathed'), 'a put-away weapon is half there');
     assert.ok(has('main', 'hasbar'), 'and it carries its durability');
-    assert.equal(find(cell('main'), 'hud-qbarfill').style.width, '30.0%', '12 of 40');
+    // QS5: the gauge is the cell's own lower edges, drained from the
+    // bottom point outward - the dash hides what is GONE, so 30% of a
+    // 62.2-unit half leaves 43.5 hidden at each side corner.
+    assert.equal(find(cell('main'), 'hud-qwfill').attrs['stroke-dashoffset'], '43.5', '12 of 40');
+    assert.equal(cell('main').children.filter((n) => n.className === 'hud-qwear').length, 1, 'one gauge per cell');
+    assert.equal(find(cell('main'), 'hud-qwear').ns, 'http://www.w3.org/2000/svg', 'minted in the SVG namespace, or it draws nothing');
+    // BOTH HALVES START AT THE BOTTOM POINT, which is what makes the two
+    // drain together and leaves a stub at the point rather than a gap in
+    // the middle of the V.
+    for (const p of cell('main').children.find((n) => n.className === 'hud-qwear').children.filter((n) => n.className === 'hud-qwfill')) {
+      assert.match(p.attrs.d, /^M 50 94 L (?:6|94) 50$/, 'a half runs from the point outward');
+    }
     assert.ok(has('main', 'worn'), 'under 40% it takes the health bar\'s red');
     assert.equal(find(cell('c1'), 'hud-qcount').textContent, '1');
     // DRAWN: the same weapon, and only the class changed.

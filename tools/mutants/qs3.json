@@ -58,8 +58,8 @@
   {
     "name": "QS3-the-durability-strip-reads-full-whatever-the-condition",
     "file": "src/ui/enhancedHud.js",
-    "old": "    width(part.fill, `${slot}BarW`, s.condition);",
-    "new": "    width(part.fill, `${slot}BarW`, 100);",
+    "old": "    const off = (WEAR_LEN * (1 - Math.max(0, Math.min(100, s.condition)) / 100)).toFixed(1);",
+    "new": "    const off = '0';",
     "tests": [
       "test/qs3_hud.test.js"
     ]
@@ -96,24 +96,6 @@
     "file": "src/ui/quickslotTags.js",
     "old": "  const key = codes.find((c) => !unityButtonGlyph(family, c));\n  if (key) return { kind: 'key', text: tagText(key) };",
     "new": "  const key = codes.find((c) => !unityButtonGlyph(family, c)) ?? null;\n  if (key !== undefined) return { kind: 'key', text: buttonText(key) };",
-    "tests": [
-      "test/qs3_hud.test.js"
-    ]
-  },
-  {
-    "name": "QS3-the-torch-cell-borrows-an-action-instead-of-the-mods-own-key",
-    "file": "src/ui/quickslotTags.js",
-    "old": "  if (kind === 'torch') return torchTag(opts.readTorchKey ?? undefined);",
-    "new": "  if (kind === 'torch') return quickslotTag(CELL_ACTIONS.swap, opts);",
-    "tests": [
-      "test/qs3_hud.test.js"
-    ]
-  },
-  {
-    "name": "QS3-a-shield-in-the-off-hand-grows-a-tag-that-presses-nothing",
-    "file": "src/ui/quickslotTags.js",
-    "old": "  if (kind === 'swap') return quickslotTag(CELL_ACTIONS.swap, opts);\n  return null;",
-    "new": "  return quickslotTag(CELL_ACTIONS.swap, opts);",
     "tests": [
       "test/qs3_hud.test.js"
     ]
@@ -243,6 +225,51 @@
     "file": "src/ui/enhancedStyle.js",
     "old": "  bottom: calc(22px + 32px * var(--hud-scale) + env(safe-area-inset-bottom, 0px));",
     "new": "  bottom: calc(24px + 30px * (var(--hud-scale) - 1) + env(safe-area-inset-bottom, 0px));",
+    "tests": [
+      "test/qs3_hud.test.js"
+    ]
+  },
+  {
+    "name": "QS5-the-gauge-drains-from-the-corners-inward-not-the-point-outward",
+    "file": "src/ui/enhancedHud.js",
+    "old": "const WEAR_L = `50 ${50 + WEAR_INSET} L ${50 - WEAR_INSET} 50`;",
+    "new": "const WEAR_L = `${50 - WEAR_INSET} 50 L 50 ${50 + WEAR_INSET}`;",
+    "tests": [
+      "test/qs3_hud.test.js"
+    ]
+  },
+  {
+    "name": "QS5-the-gauge-is-minted-as-an-HTML-element",
+    "file": "src/ui/enhancedHud.js",
+    "old": "  const n = doc.createElementNS(SVG_NS, tag);",
+    "new": "  const n = doc.createElement(tag);",
+    "tests": [
+      "test/qs3_hud.test.js"
+    ]
+  },
+  {
+    "name": "QS4-the-off-cell-loses-its-key-again",
+    "file": "src/ui/quickslotTags.js",
+    "old": "  if (kind === 'swap') return quickslotTag(CELL_ACTIONS.swap, opts);\n  return quickslotTag(CELL_ACTIONS.off, opts);",
+    "new": "  if (kind === 'torch') return torchTag(opts.readTorchKey ?? undefined);\n  if (kind === 'swap') return quickslotTag(CELL_ACTIONS.swap, opts);\n  return null;",
+    "tests": [
+      "test/qs3_hud.test.js"
+    ]
+  },
+  {
+    "name": "QS4-the-off-cells-tap-does-the-swap-in-every-state",
+    "file": "src/ui/enhancedHud.js",
+    "old": "    if (offKind === 'swap') liveOpts.quickSwap?.(); else liveOpts.quickOffHand?.();",
+    "new": "    liveOpts.quickSwap?.();",
+    "tests": [
+      "test/qs3_hud.test.js"
+    ]
+  },
+  {
+    "name": "QS4-the-hosts-hand-drawHud-no-doors",
+    "file": "src/scenes/world.js",
+    "old": "          quickUse: (n) => quickUse(n), quickSwap: () => quickSwap(), quickOffHand: () => quickOffHand(),",
+    "new": "",
     "tests": [
       "test/qs3_hud.test.js"
     ]

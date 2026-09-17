@@ -134,6 +134,7 @@ const QUICKSLOT_ROWS = Object.freeze([
   Object.freeze({ action: 'QuickUse1', label: 'Use quickslot 1' }),
   Object.freeze({ action: 'QuickUse2', label: 'Use quickslot 2' }),
   Object.freeze({ action: 'QuickSwap', label: 'Swap weapon' }),
+  Object.freeze({ action: 'QuickOffHand', label: 'Light or douse' }),
 ]);
 /** The heading the third group wears. Its own constant so the pin names it. */
 export const PORT_GROUP_TITLE = 'Online';

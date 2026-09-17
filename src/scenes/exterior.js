@@ -175,7 +175,7 @@ import { HeadBobber } from '../player/headBobber.js';   // AUDIT 28 W10: HeadBob
 import { lastHealthLost, lastHealthLostPercent } from '../ui/hudVitals.js';   // AUDIT 28 W9: the detector's loss
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { actionOf, held, moveHeld, anyMove, swallowBrowserKey, mouseCode, isSwingButton, keyboardLook, routeAction, installContextMenuGuard, POLLED_ACTIONS, QUICKSLOT_ACTIONS } from '../ui/input.js';
-import { useQuickslot, swapQuickslot } from '../systems/quickslots.js';   // QS2: the diamond's two performers
+import { useQuickslot, swapQuickslot, offHandQuickslot } from '../systems/quickslots.js';   // QS2/QS4: the diamond's performers
 import { armUnloadGuard, releaseUnloadGuard } from '../systems/unloadGuard.js';   // MAC-L3: one door in front of every way out of a running game; AUDIT-MACL F3: ...and down for a door the game opened itself   // I2: the rebindable registry; AUDIT 39r: the mouse half of the held set
 import { hudShortcutKey } from '../ui/hudShortcuts.js';   // AUDIT 64 F36/F37: DaggerfallHUD.Update's LargeHUDToggle / HUDToggle arms
 import { createActivateGate, activateFrame, setClickDelay } from '../systems/activateGate.js';   // A8: PlayerActivate's ActivateCenterObject frame
@@ -2029,6 +2029,11 @@ export async function bootExterior(canvas, renderer, params, status) {
     weaponRig.refreshWorn();
     return true;
   };
+  /** QS4: the off-hand cell's press - see scenes/world.js's twin. */
+  const quickOffHand = () => {
+    offHandQuickslot({ entity: playerEntity, say: (l) => townTalk.say(l), toggleLight: () => weaponRig.toggleLight() });
+    return true;
+  };
   const makeInventoryWindow = (extra = {}) => createInventoryWindow({
     openBook: openBookHook,   // B1: the use-mode book arm
     say: (l) => townTalk.say(l),   // FX1 (F128): the "Equipping %s" cue on close
@@ -2245,6 +2250,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // door - one object is this host's whole routeAction contract.
     quickUse: (n) => quickUse(n),
     quickSwap: () => quickSwap(),
+    quickOffHand: () => quickOffHand(),
     // QX1/U43: the two journal keys, which this host had never
     // answered - the doors are the same ONE window the sheet's LOGBOOK
     // button opens, and the world and both interior hosts have answered
@@ -3178,6 +3184,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // worldModes' interiorKeyCtx.)
     quickUse: (n) => quickUse(n),
     quickSwap: () => quickSwap(),
+    quickOffHand: () => quickOffHand(),
     // S40: AbortRestForEnemySpawn (:301-304) reaches the rest window
     // in THIS host's overlay slot. In DFU the OnEncounter subscription
     // is on the WINDOW (OnPush :264, OnPop :275), so it follows the
@@ -4720,6 +4727,11 @@ export async function bootExterior(canvas, renderer, params, status) {
           // AUDIT 39: the enhanced HUD's two hand plaques - see world.js.
           readied: magic?.readied?.() ?? null,
           weapon: weaponRig.playerWeapon.weapon ?? null,
+          // QS4: THE PHONE'S OWN DOORS. The diamond's cells take a finger
+          // on a touch-first device (ui/enhancedHud.js's second departure),
+          // and a door the host never handed over is a control that
+          // platform does not have - which is the whole of AUDIT SOC C9.
+          quickUse: (n) => quickUse(n), quickSwap: () => quickSwap(), quickOffHand: () => quickOffHand(),
           weaponSheathed: !!weaponRig.playerWeapon.sheathed });   // AUDIT 28 W2: the arrow counter's drawn-bow gate   // U38 + X4 + U43
     }
     townTalk.frame(dt);   // T3b: HUD lines + the talk overlay, above everything

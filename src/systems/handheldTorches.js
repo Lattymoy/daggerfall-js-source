@@ -377,6 +377,21 @@ export function createHandheldTorches({
     }
     say(MESSAGES.dropTorchless);
   }
+  /** QS4 - THE TOGGLE KEY'S OWN ARM, AS A DOOR. The mod's key presses
+   *  this (0x17e1's first branch) and so does the port's own
+   *  `QuickOffHand` action, which is the quickslot diamond's off-hand
+   *  cell - the free-hand guard and the relaxed-lantern carve-out are
+   *  the mod's, and a second copy at the second caller is how the two
+   *  would drift. Answers whether it acted; a refusal has already said
+   *  why. */
+  function toggleLightPress() {
+    if (w.s.lanternRelaxed) {
+      if (hasFreeHand() || contains('UselessItems2', T.Lantern)) { toggleLightSourceAction(); return true; }
+    } else if (hasFreeHand()) { toggleLightSourceAction(); return true; }
+    say(MESSAGES.noFreeHand);
+    return false;
+  }
+
   /** ToggleLightSourceAction (0x33b8): douse the lit light; else the last stowed one; else the remembered kind; else a lantern, a torch, a candle, a holy candle. */
   function toggleLightSourceAction() {
     const l = light();
@@ -489,11 +504,7 @@ export function createHandheldTorches({
     const down = (code) => !!code && !!c.keyDown?.(code);
     const pressed = (code) => down(code) && !w.keysLast.has(code);
     const released = (code) => !down(code) && !!code && w.keysLast.has(code);
-    if (pressed(w.s.toggleKey)) {
-      if (w.s.lanternRelaxed) {
-        if (hasFreeHand() || contains('UselessItems2', T.Lantern)) toggleLightSourceAction(); else say(MESSAGES.noFreeHand);
-      } else if (hasFreeHand()) toggleLightSourceAction(); else say(MESSAGES.noFreeHand);
-    }
+    if (pressed(w.s.toggleKey)) toggleLightPress();
     if (pressed(w.s.dropKey)) { if (hasFreeHand()) dropLightSourceAction(light()); else say(MESSAGES.noFreeHand); }
     if (pressed(w.s.throwKey)) {
       if (contains('UselessItems2', T.Torch)) {
@@ -620,7 +631,7 @@ export function createHandheldTorches({
 
   return {
     update, lateUpdate, draw, dispose, receivePickedUp,
-    toggleLightSourceAction, dropLightSourceAction, throwLightSourceAction,
+    toggleLightSourceAction, dropLightSourceAction, throwLightSourceAction, toggleLightPress,
     get hasFreeHand() { return hasFreeHand(); },
     get freeHand() { return getFreeHand(); },
     get flipped() { return w.flipped; },
