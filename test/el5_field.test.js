@@ -135,13 +135,13 @@ test('EL5: the face basis the shader selects by is pointFaceMatrices\' own - a p
   assert.match(SHADOW_GLSL, /if \(a\.x >= a\.y && a\.x >= a\.z\) \{ face = d\.x > 0\.0 \? 0 : 1; m = a\.x; \}\n  else if \(a\.y >= a\.z\) \{ face = d\.y > 0\.0 \? 2 : 3; m = a\.y; \}\n  else \{ face = d\.z > 0\.0 \? 4 : 5; m = a\.z; \}/, 'the same major-axis selection');
   assert.match(SHADOW_GLSL, /vec2 uv = vec2\(dot\(FACE_X\[face\], d\), dot\(FACE_Y\[face\], d\)\) \/ max\(m, 1e-4\) \* 0\.5 \+ 0\.5;/);
   assert.match(SHADOW_GLSL, /float t = 1\.5 \/ 512\.0;/, 'the five taps a texel and a half apart');
-  assert.match(SHADOW_GLSL, /if \(uShadowIndex\[k\] == i\) return pointShadowAt\(k, wp, n\);\n  \}\n  return 1\.0;\n\}/, 'a light with no caster is lit');
+  assert.match(SHADOW_GLSL, /int k = uCasterOf\[i\];\n  return k >= 0 \? pointShadowAt\(k, wp, n\) : 1\.0;\n\}/, 'a light with no caster is lit (the flat\'s path; EL8: by the table)');
   assert.equal(SHADOW_POINT_SIZE, 512); assert.equal(SHADOW_POINT_NEAR, 0.1);
 });
 
 test('EL5: every lane shader takes any caster\'s shadow through shadowOfLight, after the range early-out; the flat too', () => {
   for (const [name, fs] of [['mesh', EL_MESH_FS], ['terrain', EL_TERRAIN_FS], ['char', EL_CHAR_FS]]) {
-    assert.match(fs, /float d = length\(L\);\n    if \(d >= uPointLights\[i\]\.w\) continue;[^\n]*\n    float sh = shadowOfLight\(i, wp, n\);/, name);
+    assert.match(fs, /float d = length\(L\);\n    if \(d >= uPointLights\[i\]\.w\) continue;[^\n]*\n    vec3 Ln = L \/ max\(d, 1e-4\);\n    int k = uCasterOf\[i\];[^\n]*\n    float sh = k >= 0 \? pointShadowAt\(k, wp, n\) : contactShadow\(wp, n, Ln, d\);/, `${name}: EL8 - a caster's map, else a contact shadow`);
     assert.ok(!/uShadowIndex \?/.test(fs), `${name}: no single-index compare left`);
   }
   assert.match(EL_BB_FS, /float d = length\(uPointLights\[i\]\.xyz - wp\);\n    if \(d >= uPointLights\[i\]\.w\) continue;[^\n]*\n    float sh = shadowOfLight\(i, base, vec3\(0\.0, 1\.0, 0\.0\)\);/);

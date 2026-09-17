@@ -32,7 +32,9 @@ directory by `test/audit18_bible_docs.test.js`:
   depth) and the lanterns' glares, and the sun's shafts; EL4: the frame image
   the whole world draws into, the eye's adaptation off its mean luminance,
   bloom from its bright pass, the vignette, the contrast in display space and
-  the dither in the resolve. `?air=off`. See
+  the dither in the resolve; EL8: two depth textures on the frame image,
+  ping-ponged, so the lane's contact shadows (`AIR_CONTACT_GLSL`) march
+  through the previous frame's depth. `?air=off`, `?contact=off`. See
   `07-Rendering/Enhanced-Lighting-Arc.md`.
 - `characterMesh.js` - the voxel character mesh path.
 - `characterSprite.js` - the classic-visuals sprite pass (one fixed
@@ -48,7 +50,8 @@ directory by `test/audit18_bible_docs.test.js`:
   two-cascade sun map outdoors, a cube map from the nearest lantern indoors -
   with the receiver block the lane's shaders read (`SHADOW_GLSL`); the depth
   programs are the renderer's own vertex shaders (EL7: three cascades, the
-  rigs recorded too, the water surface a receiver). See
+  rigs recorded too, the water surface a receiver; EL8: the caster table
+  `uCasterOf`, the far cascade and the far casters on a cadence). See
   `07-Rendering/Enhanced-Lighting-Arc.md`.
 - `skyRenderer.js` - painted skies (R4) + the night sky.
 - `labGrass.js` - GR1 the LAB'S GRASS: grass-proto.html's blade shaders
@@ -336,6 +339,10 @@ directory by `test/audit18_bible_docs.test.js`:
   + Worley at 8/16/32) and a 32^3 detail volume (Worley at 4/8/16), tiling on
   every axis, generated on the GPU one layer per draw; the lab's slice viewer
   (`?noise=`) behind tools/cloudNoiseProbe.mjs.
+- `perfMeter.js` - EL8 THE PERF READOUT: `?perf` - the frame's GPU time on
+  `EXT_disjoint_timer_query_webgl2` and the lane's counts, one console line
+  every PERF_EVERY world frames. A leaf: no renderer, no lane. See
+  `07-Rendering/Enhanced-Lighting-Arc.md`.
 - `orderedDither.js` - what remains of the retro pass after FT3 (2026-09-14,
   Mac: "Remove our version of pixelated sky"): `ringSnap` (ES1g's ring grid,
   used now only to name a world-fixed cell a third of a degree across) and

@@ -174,7 +174,8 @@ test('EL2: the receiver block and the depth shaders - six uniforms, no dynamic m
   assert.match(SHADOW_GLSL, /precision highp sampler2DArrayShadow;/, 'the shadow sampler has no default precision in ES 3.00');
   assert.ok(!SHADOW_GLSL.includes('samplerCubeShadow'), 'EL5: no cube sampler - the faces are layers, selected by hand');
   assert.match(SHADOW_GLSL, /float pointShadowAt\(int k, vec3 wp, vec3 n\)/); assert.match(SHADOW_GLSL, /float layer = float\(k \* 6 \+ face\);/);
-  assert.match(SHADOW_GLSL, /float shadowOfLight\(int i, vec3 wp, vec3 n\) \{\n  for \(int k = 0; k < 6; k\+\+\) \{\n    if \(uShadowIndex\[k\] == i\) return pointShadowAt\(k, wp, n\);/);
+  assert.match(SHADOW_GLSL, /float shadowOfLight\(int i, vec3 wp, vec3 n\) \{\n  int k = uCasterOf\[i\];\n  return k >= 0 \? pointShadowAt\(k, wp, n\) : 1\.0;/, 'EL8: the caster by the table, one lookup');
+  assert.match(SHADOW_GLSL, /uniform int uCasterOf\[48\];/);
   assert.match(SHADOW_GLSL, /mat4 vp = c == 0 \? uSunVP\[0\] : c == 1 \? uSunVP\[1\] : uSunVP\[2\];/, 'no dynamic index into the uniform array (EL7: three)');
   assert.match(SHADOW_GLSL, /int c = d < uSunShadowParams\.x \* 0\.9 \? 0 : d < uSunShadowParams\.y \* 0\.9 \? 1 : 2;/, 'the cascade by view distance');
   assert.match(SHADOW_GLSL, /for \(int y = -1; y <= 1; y\+\+\)/, 'a 3x3 PCF');
@@ -185,7 +186,7 @@ test('EL2: the receiver block and the depth shaders - six uniforms, no dynamic m
   for (const [name, fs] of [['mesh', EL_MESH_FS], ['terrain', EL_TERRAIN_FS], ['char', EL_CHAR_FS]]) {
     assert.ok(fs.includes(SHADOW_GLSL), `${name} carries the block`);
     assert.match(fs, /cloudShadowAt\(vWorldPos\) \* sunShadowAt\(vWorldPos, n\)/, `${name}: the sun term wears both shadows`);
-    assert.match(fs, /if \(d >= uPointLights\[i\]\.w\) continue;[^\n]*\n    float sh = shadowOfLight\(i, wp, n\);/, `${name}: EL5 - out of the window nothing is computed; any caster's shadow`);
+    assert.match(fs, /if \(d >= uPointLights\[i\]\.w\) continue;[^\n]*\n    vec3 Ln = L \/ max\(d, 1e-4\);\n    int k = uCasterOf\[i\];[^\n]*\n    float sh = k >= 0 \? pointShadowAt\(k, wp, n\) : contactShadow\(wp, n, Ln, d\);/, `${name}: EL5 - out of the window nothing is computed; EL8: a caster's map by the table, else a contact shadow`);
   }
   assert.ok(EL_BB_FS.includes(SHADOW_GLSL));
   assert.match(EL_BB_FS, /in vec3 vBBBase;/);

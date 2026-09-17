@@ -64,6 +64,18 @@ export const SHADOW_SUN_SIZE = 2048;
 export const SHADOW_POINT_SIZE = 512;
 /** EL5: how many lanterns cast at once - the nearest to the eye. */
 export const SHADOW_POINT_CASTERS = 6;   // EL6: six - a gate passage has that many lanterns in reach
+/** EL8: the caster-slot table's size - one int per light slot the lane can
+ *  hold (enhancedLighting.js EL_MAX_LIGHTS, pinned equal): a light's slot in
+ *  one lookup, not a search over the casters per light per fragment. */
+export const SHADOW_CASTER_TABLE = 48;
+/** EL8: THE CADENCE. The far cascade (the town) is drawn every other frame;
+ *  casters past the first two (the nearest lanterns) every third, staggered,
+ *  unless the slot's light changed - then at once. A shadow a frame or two
+ *  old is the same shadow to the eye; a map that does not match its light is
+ *  not. */
+export const SHADOW_FAR_CASCADE_EVERY = 2;
+export const SHADOW_FAR_CASTER_EVERY = 3;
+export const SHADOW_NEAR_CASTERS = 2;
 /** The cascades' radii around the eye, world units (a terrain tile is 6.4,
  *  an RMB block 102.4): EL7 - the room the player stands in (a texel of
  *  1.2 cm at 2048: the hairline at an eave's contact is four times thinner
@@ -233,6 +245,7 @@ uniform vec4 uSunTexel;           // x y z the cascades' texel size (world)
 uniform sampler2DArrayShadow uPointShadow;   // EL5: six face layers per caster
 uniform vec4 uPointShadowParams[${SHADOW_POINT_CASTERS}];  // xyz the light, w its far plane (0 = off)
 uniform int uShadowIndex[${SHADOW_POINT_CASTERS}];         // the lantern each caster's layers belong to, -1 for none
+uniform int uCasterOf[${SHADOW_CASTER_TABLE}];              // EL8: light i's caster slot, -1 for none - one lookup
 ${faceBasisGlsl()}
 float sunShadowAt(vec3 wp, vec3 n) {
   if (uSunShadowParams.w <= 0.0) return 1.0;
@@ -284,12 +297,10 @@ float pointShadowAt(int k, vec3 wp, vec3 n) {
        + texture(uPointShadow, vec4(uv + vec2(0.0, t), layer, ref)) + texture(uPointShadow, vec4(uv - vec2(0.0, t), layer, ref));
   return lit / 5.0;
 }
-// EL5: light i's shadow - its caster's, if it has one this frame
+// EL5: light i's shadow - its caster's, if it has one this frame (EL8: by the table, one lookup)
 float shadowOfLight(int i, vec3 wp, vec3 n) {
-  for (int k = 0; k < ${SHADOW_POINT_CASTERS}; k++) {
-    if (uShadowIndex[k] == i) return pointShadowAt(k, wp, n);
-  }
-  return 1.0;
+  int k = uCasterOf[i];
+  return k >= 0 ? pointShadowAt(k, wp, n) : 1.0;
 }
 `;
 
@@ -384,10 +395,15 @@ export class ShadowPass {
     this.sunTexel = new Float32Array(4);   // EL7
     this.pointParams = new Float32Array(4 * SHADOW_POINT_CASTERS);   // EL5: one vec4 per caster
     this.shadowIndex = new Int32Array(SHADOW_POINT_CASTERS).fill(-1);
+    this.casterOf = new Int32Array(SHADOW_CASTER_TABLE).fill(-1);   // EL8
     this.casters = 0;
+    this.frameNo = 0;   // EL8: the cadence's clock
+    this._slotLight = new Float32Array(4 * SHADOW_POINT_CASTERS).fill(NaN);   // EL8: the light each slot's layers were last drawn from
+    this._sunVPNew = SHADOW_CASCADES.map(() => new Float32Array(16));
+    this._sunDrawn = new Uint8Array(SHADOW_CASCADES.length);
     this.kind = null;
     /** per-frame counts, for a probe */
-    this.stats = { records: 0, sunDraws: 0, pointDraws: 0, culled: 0 };
+    this.stats = { records: 0, sunDraws: 0, pointDraws: 0, culled: 0, cascadesDrawn: 0, facesDrawn: 0 };
     this._planes = new Float32Array(24);   // EL5: the replay's frustum
     this._identityView = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
     this._right = new Float32Array(3); this._up = new Float32Array([0, 1, 0]);
@@ -450,22 +466,29 @@ export class ShadowPass {
     const gl = this.gl;
     this.stats.records = this.count; this.stats.sunDraws = 0; this.stats.pointDraws = 0; this.stats.culled = 0;
     this.kind = shadowKind(f.sunScale, f.lightDir);
-    this.sunParams[3] = 0; this.pointParams.fill(0); this.shadowIndex.fill(-1); this.casters = 0;
-    if (this.count === 0) { this.kind = null; return; }
+    this.frameNo++;
+    this.stats.cascadesDrawn = 0; this.stats.facesDrawn = 0;
+    this.sunParams[3] = 0; this.pointParams.fill(0); this.shadowIndex.fill(-1); this.casterOf.fill(-1); this.casters = 0;
+    if (this.count === 0) { this.kind = null; this._slotLight.fill(NaN); return; }
     gl.disable(gl.CULL_FACE);   // the light's projection is not the mirrored one: winding is not the world's, and both faces of an open model must cast
     gl.enable(gl.DEPTH_TEST);
     gl.depthMask(true);
     gl.colorMask(false, false, false, false);
     if (this.kind === 'sun') {
-      sunCascadeMatrices(f.eye, f.lightDir, this.sunVP);
+      sunCascadeMatrices(f.eye, f.lightDir, this._sunVPNew);
       const ld = f.lightDir;
       const rl = Math.hypot(ld[2], ld[0]) || 1;
       this._right[0] = ld[2] / rl; this._right[1] = 0; this._right[2] = -ld[0] / rl;
+      const last = SHADOW_CASCADES.length - 1;
       for (let c = 0; c < SHADOW_CASCADES.length; c++) {
+        // EL8: the far cascade every other frame (its map keeps its matrix until it is drawn again); a cascade never drawn is drawn now
+        if (c === last && this._sunDrawn[c] && this.frameNo % SHADOW_FAR_CASCADE_EVERY !== 0) continue;
+        this.sunVP[c].set(this._sunVPNew[c]);
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.sunFbos[c]);
         gl.viewport(0, 0, SHADOW_SUN_SIZE, SHADOW_SUN_SIZE);
         gl.clear(gl.DEPTH_BUFFER_BIT);
         this.stats.sunDraws += this.replay(f, this.sunVP[c], null);
+        this._sunDrawn[c] = 1; this.stats.cascadesDrawn++;
       }
       for (let c = 0; c < SHADOW_CASCADES.length; c++) { this.sunParams[c] = SHADOW_CASCADES[c]; this.sunTexel[c] = sunTexelWorld(c); this._sunVPFlat.set(this.sunVP[c], c * 16); }
       this.sunParams[3] = 1;
@@ -479,16 +502,26 @@ export class ShadowPass {
       const i = casters[k];
       const pos = [L[i * 4], L[i * 4 + 1], L[i * 4 + 2]];
       const far = L[i * 4 + 3];
-      pointFaceMatrices(pos, far, this.faceVP);
-      for (let face = 0; face < 6; face++) {
-        gl.bindFramebuffer(gl.FRAMEBUFFER, this.pointFbos[k * 6 + face]);
-        gl.viewport(0, 0, SHADOW_POINT_SIZE, SHADOW_POINT_SIZE);
-        gl.clear(gl.DEPTH_BUFFER_BIT);
-        this.stats.pointDraws += this.replay(f, this.faceVP[face], pos);
+      // EL8: the slot's layers are drawn again when its light changed (position or range), every frame for the nearest slots, every third otherwise
+      const sl = this._slotLight, o = k * 4;
+      const changed = !(sl[o] === pos[0] && sl[o + 1] === pos[1] && sl[o + 2] === pos[2] && sl[o + 3] === far);
+      const due = k < SHADOW_NEAR_CASTERS || (this.frameNo + k) % SHADOW_FAR_CASTER_EVERY === 0;
+      if (changed || due) {
+        pointFaceMatrices(pos, far, this.faceVP);
+        for (let face = 0; face < 6; face++) {
+          gl.bindFramebuffer(gl.FRAMEBUFFER, this.pointFbos[k * 6 + face]);
+          gl.viewport(0, 0, SHADOW_POINT_SIZE, SHADOW_POINT_SIZE);
+          gl.clear(gl.DEPTH_BUFFER_BIT);
+          this.stats.pointDraws += this.replay(f, this.faceVP[face], pos);
+        }
+        sl[o] = pos[0]; sl[o + 1] = pos[1]; sl[o + 2] = pos[2]; sl[o + 3] = far;
+        this.stats.facesDrawn += 6;
       }
       this.pointParams[k * 4] = pos[0]; this.pointParams[k * 4 + 1] = pos[1]; this.pointParams[k * 4 + 2] = pos[2]; this.pointParams[k * 4 + 3] = far;
       this.shadowIndex[k] = i;
+      if (i < SHADOW_CASTER_TABLE) this.casterOf[i] = k;
     }
+    for (let k = casters.length; k < SHADOW_POINT_CASTERS; k++) this._slotLight[k * 4] = NaN;   // an emptied slot is drawn afresh when it is filled
     this.casters = casters.length;
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.colorMask(true, true, true, true);
@@ -590,6 +623,7 @@ export class ShadowPass {
     gl.uniform4fv(loc.sunTexel, this.sunTexel);   // EL7
     gl.uniform4fv(loc.pointParams, this.pointParams);   // EL5: all the casters' vec4s at once
     gl.uniform1iv(loc.shadowIndex, this.shadowIndex);
+    gl.uniform1iv(loc.casterOf, this.casterOf);   // EL8
   }
 
 }

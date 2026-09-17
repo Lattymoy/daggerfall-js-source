@@ -335,8 +335,9 @@ void main() {
 }`;
 
 import { ShadowPass, SHADOW_GLSL } from './shadowPass.js';   // EL7: the receiver block, for the water surface's lane program
-import { boundsOf } from './bounds.js';   // EL5: the bounds every bundle carries for the replays' culling   // EL2: the lane's shadow maps - a leaf that compiles nothing until a lane asks
-import { AirPass, AIR_ADAPT_UNIT as ADAPT_UNIT } from './airPass.js';   // EL3: the ambient occlusion, the bloom and the shafts - the same kind of leaf; EL4: the eye's unit; EL6: all of it off the frame's own depth, at the resolve
+import { boundsOf } from './bounds.js';
+import { PerfMeter, perfOn } from './perfMeter.js';   // EL8: `?perf`   // EL5: the bounds every bundle carries for the replays' culling   // EL2: the lane's shadow maps - a leaf that compiles nothing until a lane asks
+import { AirPass, AIR_ADAPT_UNIT as ADAPT_UNIT, AIR_CONTACT_UNIT as CONTACT_UNIT } from './airPass.js';   // EL3: the ambient occlusion, the bloom and the shafts - the same kind of leaf; EL4: the eye's unit; EL6: all of it off the frame's own depth, at the resolve
 import { SHADE_DARK } from '../systems/concealDraw.js';   // ECV1 / AUDIT 65 PN-3: the shade's pull toward black, interpolated into BB_FS below - the shader restated 0.12 as a second literal. The LEAF, not systems/combatVisuals.js, which re-exports it: that module's graph would take this file's closure from 13 modules to 69
 
 const BB_FS = `#version 300 es
@@ -588,6 +589,7 @@ void main() {
   outColor = vec4(mix(uFogColor, lit, fogFactorAt(vWorldPos)), 1.0);
 }`;
 
+const ZERO_CONTACT = new Float32Array(4);   // EL8: the contact params with the air off
 const ZERO_ORIGIN = [0, 0, 0];
 /** AUDIT-EL F5: what a WORLD host passes beginFrame - the lane replays its records for this frame and not for a map's, a video's or a menu's. */
 export const WORLD_FRAME = Object.freeze({ world: true });
@@ -889,6 +891,7 @@ export class Renderer {
     // terrain culling it exists to measure. texBinds counts the binds a
     // DRAW pays; upload-time binds are creation cost, not frame cost.
     this.stats = { draws: 0, programBinds: 0, vaoBinds: 0, texBinds: 0 };
+    this._perf = perfOn() ? new PerfMeter(gl) : null;   // EL8: `?perf` - a GPU-timed line every PERF_EVERY world frames
     this._frameStamp = 0;      // PERF3: bumped by beginFrame (and the state restores) - the terrain program's frame-constant block is uploaded once per stamp
     this._tFrameStamp = -1;
     this._windowEmission = new Float32Array([0, 0, 0]);
@@ -1255,13 +1258,15 @@ export class Renderer {
     // EL1: the lane's own uniforms, per program (null on the classic set, which never declares them)
     // EL2: the shadow receiver's six ride the same table (null on the classic set)
     const elLocs = (p) => {
-      /** @type {any[] & { shadow?: object, ao?: object }} */
+      /** @type {any[] & { shadow?: object, ao?: object, contact?: object }} */
       const a = [gl.getUniformLocation(p, 'uELExposure'), gl.getUniformLocation(p, 'uELScatter')];
       a.shadow = {
         sunShadow: gl.getUniformLocation(p, 'uSunShadow'), sunVP: gl.getUniformLocation(p, 'uSunVP'), sunParams: gl.getUniformLocation(p, 'uSunShadowParams'), sunTexel: gl.getUniformLocation(p, 'uSunTexel'),
         pointShadow: gl.getUniformLocation(p, 'uPointShadow'), pointParams: gl.getUniformLocation(p, 'uPointShadowParams'), shadowIndex: gl.getUniformLocation(p, 'uShadowIndex'),
+        casterOf: gl.getUniformLocation(p, 'uCasterOf'),   // EL8
       };
       a.ao = { adapt: gl.getUniformLocation(p, 'uAdapt') };   // EL4: the eye (EL6: the AO left the world shaders - the resolve applies it off the frame's depth)
+      a.contact = { prevDepth: gl.getUniformLocation(p, 'uPrevDepth'), prevVP: gl.getUniformLocation(p, 'uPrevVP'), prevProjInfo: gl.getUniformLocation(p, 'uPrevProjInfo'), contactParams: gl.getUniformLocation(p, 'uContactParams') };   // EL8
       return a;
     };
     this._el = { mesh: elLocs(set.mesh), char: elLocs(set.char), bb: elLocs(set.bb), terrain: elLocs(set.terrain) };
@@ -1329,6 +1334,8 @@ export class Renderer {
   /** EL3: the page's air door (syncLightingLane reads `?air=off`): the
    *  AirPass rides a lane that asks for it AND this. */
   setAir(on) { this._airWanted = !!on; this._syncAir(); }
+  /** EL8: the contact shadows' door (`?contact=off`); on by default. */
+  setContact(on) { this._contactWanted = !!on; }
   _syncAir() {
     const want = this._airWanted && !!this._lane?.air && !!this._shadows;   // the air pass replays the shadow pass's records
     if (want) this._air = this._airPass ??= new AirPass(this.gl, { build: (vs, fs) => this._buildProgram(vs, fs), vs: { mesh: VS, bb: BB_VS } });
@@ -1361,6 +1368,19 @@ export class Renderer {
     gl.uniform1f(scLoc, lane.scatter * lane.scatterDensity(this._fogMode, this._fogDensity, this._fogRange[0], this._fogRange[1]));
     if (this._shadows) this._shadows.upload(this._el[key].shadow);   // EL2: the maps and the receiver's uniforms
     this._uploadAdapt(this._el[key].ao);   // EL6: the AO is the resolve's now (AUDIT-EL F2/F12's foreign-rect and unit-0 cases went with it)
+    // EL8: the contact block - the previous frame's depth, for a WORLD frame's own draws alone (a sprite pass, a bake or a panel is another view: the march would read a stranger's depth)
+    if (this._air) this._air.uploadContact(this._el[key].contact, this._contactWanted !== false && this._spriteDepth === 0 && this._studioDepth === 0 && !this._panelSaved);
+    else this._uploadNoContact(this._el[key].contact);
+  }
+  /** EL8: with the air off the contact sampler still needs a texture (AUDIT-EL F1's law) and the params say off. */
+  _uploadNoContact(loc) {
+    if (!loc?.prevDepth) return;
+    const gl = this.gl;
+    gl.activeTexture(gl.TEXTURE0 + CONTACT_UNIT);
+    gl.bindTexture(gl.TEXTURE_2D, this._adaptOne());
+    gl.activeTexture(gl.TEXTURE0);
+    gl.uniform1i(loc.prevDepth, CONTACT_UNIT);
+    gl.uniform4fv(loc.contactParams, ZERO_CONTACT);
   }
 
   /** AUDIT-EL F1: THE EYE'S IMAGE IS ALWAYS BOUND. Every lane shader samples
@@ -1405,6 +1425,7 @@ export class Renderer {
    *  made. Every non-panel frame draws into a frame image, resolved by its
    *  first screen draw or by resolveFrame(). */
   _beginLane(proj, view, lightDir, world) {
+    if (world && this._perf) { this._perf.begin(); this.stats.draws = 0; }   // EL8: the frame's clock starts with its passes
     if (this._air?.pending && !this._panelSaved) this._compositeAir();
     if (this._shadows && world) this._renderPasses(proj, view, lightDir);
     // EL4: THE FRAME IMAGE - the world pass draws into it, the clear included; a panel frame keeps the canvas
@@ -1456,6 +1477,11 @@ export class Renderer {
   _compositeAir() {
     if (!this._air?.pending) return;
     this._air.composite();   // EL4: the resolve - the frame to the canvas
+    if (this._perf) {   // EL8: the clock stops at the resolve; the line, when it is due
+      this._perf.end();
+      const line = this._perf.frame({ draws: this.stats.draws, shadows: this._shadows ? { ...this._shadows.stats, casters: this._shadows.casters } : null, air: { ...this._air.stats } });
+      if (line) console.info(line);
+    }
     this._frameFbo = null;
     this._lastProgram = null; this._lastVao = null;
     this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
