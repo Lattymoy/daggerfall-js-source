@@ -2,25 +2,32 @@
 // EL3 (2026-09-17, the Enhanced Lighting arc, tier three - DEPTH AND AIR).
 //
 // WHAT THIS IS. Three screen-space effects the lane adds on top of EL1's
-// light and EL2's shadows, all fed by ONE new thing: a depth image of the
-// world from the camera, drawn at the top of the frame from the shadow
-// pass's records (render/shadowPass.js - the same replay, the camera's
-// view-projection instead of the light's). Off that depth:
+// light and EL2's shadows, all fed by ONE depth: THE FRAME'S OWN (EL6 -
+// before it, a depth image was drawn at the top of the frame by replaying
+// the shadow pass's records from the camera: a third walk of the town per
+// frame, one frame stale, and the emitters that bloomed off it were never
+// tested against it). The images are drawn at the RESOLVE, once the world
+// pass has written the frame's depth (a texture on the frame's
+// framebuffer):
 //
 //   1. AMBIENT OCCLUSION (SSAO at half resolution): a hemisphere of
 //      twelve samples about the surface normal reconstructed from the
-//      depth, each projected back and tested against the depth image,
-//      range-checked, rotated per pixel by a hash so the pattern is noise
-//      and not a stamp, then a 4x4 box blur. The lane's mesh, terrain and
-//      character shaders read the result by screen position (AIR_AO_GLSL)
-//      and multiply their AMBIENT term - the light that has no direction
-//      is the light a crevice loses; the sun and the lanterns keep theirs.
+//      depth, each projected back and tested against it, range-checked,
+//      rotated per pixel by a 4x4 ORDERED pattern (EL6: a hash was grain
+//      that the blur never cancelled - in the dark the grain was all a
+//      texture had), then a 4x4 box blur that averages exactly one tile.
+//      The RESOLVE multiplies the decoded frame by it over the world rect
+//      (AIR_AO_RESOLVE of it) - EL6: the world shaders read no AO at all,
+//      which is one texture fetch fewer per fragment and no sampler unit
+//      to keep bound (AUDIT-EL F2/F12's cases cannot recur).
 //   2. BLOOM (quarter resolution): sourced from what actually emits -
-//      every window's emission map and every self-lit record (the
-//      records replayed with an emission-only program), and a glare
-//      sprite at each lantern, sized by its range, hidden when the depth
-//      image says a wall is in front of it - then a separable 9-tap
-//      gaussian, twice, added over the frame.
+//      every window's emission map and every self-lit record (THIS frame's
+//      records replayed with an emission-only program, each fragment
+//      discarding when the frame's depth holds a nearer surface - EL6:
+//      "all lighting sources can be seen through walls" was the emitters
+//      drawing with no depth test), and a glare sprite at each lantern,
+//      sized by its range, faded by the depth in world units (EL5) - then
+//      a separable 9-tap gaussian, twice, added over the frame.
 //   3. LIGHT SHAFTS (quarter resolution, outdoors): the sky's mask (depth
 //      at the far plane) weighted toward the sun's screen position, radially
 //      blurred toward it with decay - the classic screen-space god rays -
@@ -65,7 +72,9 @@
 // the headroom (a torch's near field still blooms to white inside EL1's
 // shoulder), and the foreign passes keep writing the display values they
 // always wrote - a float frame would need every one of their shaders to
-// output linear, which is the one thing this pass does not touch.
+// output linear, which is the one thing this pass does not touch. EL6:
+// both encodes (the lane's, the resolve's) are DITHERED at the byte
+// (orderedDither.js's bayer4, zero-mean) - a lantern's falloff on a dark floor was bands.
 //
 // This module imports nothing of the renderer or the lane; the renderer
 // hands it its own vertex shaders and its program builder, as the shadow
@@ -73,6 +82,7 @@
 
 import { multiply } from '../world/mat4.js';
 import { setFrameTarget } from './renderTarget.js';
+import { BAYER_GLSL, BAYER_MEAN } from './orderedDither.js';   // EL6: the port's one Bayer - the dither at the byte, the AO's rotation
 import { spherePlanes, recordVisible, subMeshVisible, batchVisible } from './bounds.js';   // EL5: the emission replay culls by the records' spheres too (a leaf's import: bounds.js touches no GL)
 
 /** The kill door: `?air=off` keeps EL1 and EL2 and drops the three effects. */
@@ -90,6 +100,14 @@ export const AIR_AO_RADIUS = 0.8;
 export const AIR_AO_SAMPLES = 12;
 export const AIR_AO_STRENGTH = 1.0;
 export const AIR_AO_BIAS = 0.02;
+/** EL6: how much of the AO the resolve applies to the whole frame (the
+ *  occlusion is read off the frame's own depth now, at the resolve, and
+ *  multiplies the lit result - not the ambient alone in the world shaders). */
+export const AIR_AO_RESOLVE = 0.75;
+/** EL6: an emitter's own slack against the frame's depth, world units - it
+ *  is IN the depth image (the same draw), so its own texel passes; a wall in
+ *  front of it does not. */
+export const AIR_EMIT_SLACK = 0.15;
 /** The bloom's gain on the composite, and the glare sprite's size per
  *  square root of a lantern's range (range 18 -> ~1.5 units). */
 export const AIR_BLOOM_STRENGTH = 0.6;
@@ -106,8 +124,6 @@ export const AIR_SHAFT_TAPS = 32;
 export const AIR_SHAFT_DECAY = 0.96;
 export const AIR_SHAFT_STRENGTH = 0.35;
 export const AIR_SHAFT_REACH = 0.35;
-/** The reserved texture unit for the AO image (the shadow maps are 13 and 14, the cloud shadow 15). */
-export const AIR_AO_UNIT = 12;
 /** EL4: the adapted-exposure image's unit, below the AO's. */
 export const AIR_ADAPT_UNIT = 11;
 /** EL4: the luminance image's side (its mip chain's top is the mean). */
@@ -202,17 +218,24 @@ export function glareSize(range) {
   return AIR_GLARE_SIZE * Math.sqrt(Math.max(range, 0));
 }
 
-/** THE RECEIVER BLOCK for the lane's lit shaders: the AO image by screen
- *  position, 1.0 while the pass is off (params.z, the viewport's width). */
-export const AIR_AO_GLSL = `
-uniform sampler2D uAO;
-uniform vec4 uAOInfo;   // the world viewport x, y, w, h in pixels; w 0 = no AO
-float aoAt() {
-  if (uAOInfo.z <= 0.0) return 1.0;
-  vec2 uv = (gl_FragCoord.xy - uAOInfo.xy) / uAOInfo.zw;
-  return texture(uAO, uv).r;
+/** EL6: THE DEPTH BLOCK, for every pass that reads the frame's depth: the
+ *  texel's view distance and the sample at a world-rect uv (the frame is
+ *  canvas-sized; the images are the world rect's). */
+const DEPTH_GLSL = `
+uniform sampler2D uDepth;
+uniform vec4 uProjInfo;   // proj[0], proj[5], proj[10], proj[14]
+uniform vec4 uRect;       // the world rect in canvas pixels
+uniform vec2 uCanvas;
+float viewDist(float d01) {
+  float z = d01 * 2.0 - 1.0;
+  return uProjInfo.w / (z + uProjInfo.z);   // -viewZ: positive, along the eye's -z
+}
+float depthAt(vec2 wuv) {
+  return texture(uDepth, (uRect.xy + wuv * uRect.zw) / uCanvas).r;
 }
 `;
+
+
 
 /** EL4: THE ADAPTATION BLOCK, for every shader that exposes: the 1x1
  *  image's multiplier, decoded from its log encoding. */
@@ -327,12 +350,16 @@ uniform sampler2D uShaft;
 uniform vec4 uRect;      // the world rect in canvas pixels
 uniform vec2 uCanvas;
 uniform vec4 uGrade;     // bloom gain, shaft gain, vignette, contrast
+uniform sampler2D uAO;   // EL6: the occlusion off the frame's own depth
+uniform float uAOMix;
 ${CODEC_GLSL}
+${BAYER_GLSL}
 out vec4 outColor;
 void main() {
   vec3 c = airDecode(texture(uFrame, vUV).rgb);
   vec2 wuv = (vUV * uCanvas - uRect.xy) / uRect.zw;
   if (wuv.x >= 0.0 && wuv.x <= 1.0 && wuv.y >= 0.0 && wuv.y <= 1.0) {
+    c *= mix(1.0, texture(uAO, wuv).r, uAOMix);   // EL6: the crevice loses its light here, once, whole
     c += texture(uBloom, wuv).rgb * uGrade.x + texture(uShaft, wuv).rgb * uGrade.y;
     float r = length((wuv - 0.5) * 2.0);
     c *= 1.0 - uGrade.z * smoothstep(0.55, 1.35, r);
@@ -342,32 +369,37 @@ void main() {
   // of a night street: the frame came back with six pixels in ten pure black.
   // Around mid-grey of the encoded value the same 1.04 is a grade, not a gate.
   vec3 e = airEncode(max(c, vec3(0.0)));
-  e = clamp((e - 0.5) * uGrade.w + 0.5, 0.0, 1.0);
-  outColor = vec4(e, 1.0);
+  e = (e - 0.5) * uGrade.w + 0.5;
+  e += (bayer4(gl_FragCoord.xy) - ${BAYER_MEAN}) / 255.0;   // EL6: the dither, at the byte, zero-mean
+  outColor = vec4(clamp(e, 0.0, 1.0), 1.0);
 }`;
 
 const AO_FS = `#version 300 es
 precision highp float;
 in vec2 vUV;
-uniform sampler2D uDepth;
-uniform vec4 uProjInfo;     // proj[0], proj[5], proj[10], proj[14]
+${DEPTH_GLSL}
+${BAYER_GLSL}
 uniform vec3 uKernel[${AIR_AO_SAMPLES}];
 uniform vec4 uAOParams;     // radius, strength, bias, unused
 out vec4 outColor;
 vec3 posAt(vec2 uv) {
-  float z = texture(uDepth, uv).r * 2.0 - 1.0;
+  float z = depthAt(uv) * 2.0 - 1.0;
   float vz = -uProjInfo.w / (z + uProjInfo.z);
   vec2 ndc = uv * 2.0 - 1.0;
   return vec3(ndc.x * (-vz) / uProjInfo.x, ndc.y * (-vz) / uProjInfo.y, vz);
 }
-float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
 void main() {
-  float d0 = texture(uDepth, vUV).r;
+  float d0 = depthAt(vUV);
   if (d0 >= 0.99999) { outColor = vec4(1.0); return; }
   vec3 p = posAt(vUV);
   vec3 n = normalize(cross(dFdx(p), dFdy(p)));
   if (dot(n, -p) < 0.0) n = -n;   // a normal faces the eye whatever the projection's handedness did to the derivatives
-  vec3 rnd = normalize(vec3(hash(gl_FragCoord.xy) * 2.0 - 1.0, hash(gl_FragCoord.yx + 7.0) * 2.0 - 1.0, 0.0));
+  // EL6: the kernel's rotation is a 4x4 ORDERED pattern, not a hash - the 4x4
+  // box blur after it averages exactly one tile, so the pattern cancels; a
+  // hash was grain that never cancelled, and in the dark the grain was all
+  // a texture had ("textures in the dark look weird")
+  float ang = bayer4(gl_FragCoord.xy) * 6.2831853;
+  vec3 rnd = vec3(cos(ang), sin(ang), 0.0);
   vec3 t = normalize(rnd - n * dot(rnd, n));
   vec3 b = cross(n, t);
   mat3 tbn = mat3(t, b, n);
@@ -420,13 +452,13 @@ void main() {
 const SHAFT_FS = `#version 300 es
 precision highp float;
 in vec2 vUV;
-uniform sampler2D uDepth;
+${DEPTH_GLSL}
 uniform vec2 uSun;          // the sun's screen position, uv
 uniform vec4 uShaftParams;  // decay, strength, reach, aspect
 uniform vec3 uSunColor;
 out vec4 outColor;
 float mask(vec2 uv) {
-  float sky = texture(uDepth, uv).r >= 0.99999 ? 1.0 : 0.0;
+  float sky = depthAt(uv) >= 0.99999 ? 1.0 : 0.0;
   vec2 d = (uv - uSun) * vec2(uShaftParams.w, 1.0);
   return sky * smoothstep(uShaftParams.z, 0.0, length(d));
 }
@@ -445,14 +477,31 @@ void main() {
 /** The emission-only fragment shaders for the bloom source: a solid's
  *  emission map in its colour (the window style, or white for a self-lit
  *  record); a flat's emission map behind its cutout. */
+// EL6: AN EMITTER BEHIND A WALL DOES NOT BLOOM. The bloom source has no depth
+// of its own (a quarter-res colour target), so every emitter used to draw
+// whatever stood in front of it - a torch two rooms away bloomed through
+// the stone ("all lighting sources can be seen through walls"). Each
+// fragment now asks the frame's depth at its own screen position and
+// discards when a nearer surface is there, with its own slack (it IS in
+// that image).
+const EMIT_OCCLUSION_GLSL = `
+uniform vec2 uBloomSize;
+bool occluded() {
+  vec2 wuv = gl_FragCoord.xy / uBloomSize;
+  return viewDist(gl_FragCoord.z) > viewDist(depthAt(wuv)) + ${AIR_EMIT_SLACK};
+}
+`;
 export const EMIT_MESH_FS = `#version 300 es
 precision highp float;
 in vec2 vUV;
 uniform sampler2D uEmissionTex;
 uniform vec3 uEmissionColor;
 ${CODEC_GLSL}
+${DEPTH_GLSL}
+${EMIT_OCCLUSION_GLSL}
 out vec4 outColor;
 void main() {
+  if (occluded()) discard;   // EL6
   outColor = vec4(airDecode(texture(uEmissionTex, vUV).rgb * uEmissionColor), 1.0);   // AUDIT-EL F20: linear, like the glares and the bright pass beside it
 }`;
 export const EMIT_BB_FS = `#version 300 es
@@ -461,9 +510,12 @@ in vec2 vUV;
 uniform sampler2D uTex;
 uniform sampler2D uEmissionTex;
 ${CODEC_GLSL}
+${DEPTH_GLSL}
+${EMIT_OCCLUSION_GLSL}
 out vec4 outColor;
 void main() {
   if (texture(uTex, vUV).a < 0.5) discard;
+  if (occluded()) discard;   // EL6
   outColor = vec4(airDecode(texture(uEmissionTex, vUV).rgb), 1.0);   // AUDIT-EL F20
 }`;
 
@@ -475,9 +527,8 @@ uniform mat4 uProj;
 uniform mat4 uView;
 uniform vec3 uCenter;
 uniform float uSize;
-uniform sampler2D uDepth;
-uniform vec4 uProjInfo;   // EL5: x y the projection's scales, z w its depth terms (viewDepth in this file)
-uniform vec2 uTexel;      // EL5: one texel of the depth image
+${DEPTH_GLSL}
+uniform vec2 uTexel;      // EL5: one texel of the world rect, in its uv
 out vec2 vUV;
 out float vVis;
 // EL5: THE OCCLUSION IS IN WORLD UNITS. The depth image is hyperbolic: a
@@ -485,12 +536,8 @@ out float vVis;
 // glared through its walls (the first field report). The texel's view depth
 // is reconstructed and compared to the lantern's, half a unit of slack, at
 // five taps so a lantern half behind a post is half a glare.
-float viewDist(float d01) {
-  float z = d01 * 2.0 - 1.0;
-  return uProjInfo.w / (z + uProjInfo.z);   // -viewZ: positive, along the eye's -z
-}
 float seen(vec2 uv, float lantern) {
-  return viewDist(texture(uDepth, uv).r) + ${AIR_GLARE_SLACK} >= lantern ? 1.0 : 0.0;
+  return viewDist(depthAt(uv)) + ${AIR_GLARE_SLACK} >= lantern ? 1.0 : 0.0;
 }
 void main() {
   vec4 vc = uView * vec4(uCenter, 1.0);
@@ -532,18 +579,18 @@ export class AirPass {
     const u = (p, n) => gl.getUniformLocation(p, n);
     const P = (vs, fs, names) => { const p = opts.build(vs, fs); const o = { p }; for (const n of names) o[n] = u(p, n); return o; };
     this.programs = {
-      ao: P(QUAD_VS, AO_FS, ['uDepth', 'uProjInfo', 'uKernel', 'uAOParams']),
+      ao: P(QUAD_VS, AO_FS, ['uDepth', 'uProjInfo', 'uKernel', 'uAOParams', 'uRect', 'uCanvas']),
       box: P(QUAD_VS, BOX_FS, ['uSrc', 'uTexel']),
       gauss: P(QUAD_VS, GAUSS_FS, ['uSrc', 'uDir']),
-      shaft: P(QUAD_VS, SHAFT_FS, ['uDepth', 'uSun', 'uShaftParams', 'uSunColor']),
-      emitMesh: P(opts.vs.mesh, EMIT_MESH_FS, ['uProj', 'uView', 'uModel', 'uEmissionTex', 'uEmissionColor']),
-      emitBb: P(opts.vs.bb, EMIT_BB_FS, ['uProj', 'uView', 'uRight', 'uUp', 'uOrigin', 'uSize', 'uTex', 'uEmissionTex', 'uFlatWind', 'uSway']),
-      glare: P(GLARE_VS, GLARE_FS, ['uProj', 'uView', 'uCenter', 'uSize', 'uDepth', 'uColor', 'uProjInfo', 'uTexel']),
+      shaft: P(QUAD_VS, SHAFT_FS, ['uDepth', 'uSun', 'uShaftParams', 'uSunColor', 'uProjInfo', 'uRect', 'uCanvas']),
+      emitMesh: P(opts.vs.mesh, EMIT_MESH_FS, ['uProj', 'uView', 'uModel', 'uEmissionTex', 'uEmissionColor', 'uDepth', 'uProjInfo', 'uRect', 'uCanvas', 'uBloomSize']),
+      emitBb: P(opts.vs.bb, EMIT_BB_FS, ['uProj', 'uView', 'uRight', 'uUp', 'uOrigin', 'uSize', 'uTex', 'uEmissionTex', 'uFlatWind', 'uSway', 'uDepth', 'uProjInfo', 'uRect', 'uCanvas', 'uBloomSize']),
+      glare: P(GLARE_VS, GLARE_FS, ['uProj', 'uView', 'uCenter', 'uSize', 'uDepth', 'uColor', 'uProjInfo', 'uTexel', 'uRect', 'uCanvas']),
       // EL4
       lum: P(QUAD_VS, LUM_FS, ['uFrame', 'uPrev', 'uRect', 'uCanvas']),
       adapt: P(QUAD_VS, ADAPT_FS, ['uPrev', 'uLum', 'uAdaptParams', 'uAdaptRates']),
       bright: P(QUAD_VS, BRIGHT_FS, ['uFrame', 'uRect', 'uCanvas', 'uThreshold']),
-      resolve: P(QUAD_VS, RESOLVE_FS, ['uFrame', 'uBloom', 'uShaft', 'uRect', 'uCanvas', 'uGrade']),
+      resolve: P(QUAD_VS, RESOLVE_FS, ['uFrame', 'uBloom', 'uShaft', 'uRect', 'uCanvas', 'uGrade', 'uAO', 'uAOMix']),
     };
     // the fullscreen quad and the glare's corner quad
     this.quadVao = gl.createVertexArray();
@@ -565,8 +612,7 @@ export class AirPass {
     this.projInfo = new Float32Array(4);
     this.aoParams = new Float32Array([AIR_AO_RADIUS, AIR_AO_STRENGTH, AIR_AO_BIAS, 0]);
     this.shaftParams = new Float32Array([AIR_SHAFT_DECAY, AIR_SHAFT_STRENGTH, AIR_SHAFT_REACH, 1]);
-    this.aoInfo = new Float32Array(4);
-    this._noAo = new Float32Array(4);   // AUDIT-EL F2
+    this.f = null;   // EL6: the frame's inputs, from prepare() to composite()
     this.pending = false;   // a resolve is owed to the frame
     this.width = 0; this.height = 0;
     this.targets = null;
@@ -611,23 +657,10 @@ export class AirPass {
       gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
       return { tex, fbo, w: cw, h: ch };
     };
-    // the depth image: a depth texture, sampled plainly (no compare)
-    const depthTex = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, depthTex);
-    gl.texStorage2D(gl.TEXTURE_2D, 1, gl.DEPTH_COMPONENT24, w, h);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    const depthFbo = gl.createFramebuffer();
-    gl.bindFramebuffer(gl.FRAMEBUFFER, depthFbo);
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, depthTex, 0);
-    gl.drawBuffers([gl.NONE]);
-    gl.readBuffer(gl.NONE);
+    // EL6: no depth image of its own - the frame's depth is the one every pass reads
     const aw = Math.max(1, Math.round(w * AIR_AO_SCALE)), ah = Math.max(1, Math.round(h * AIR_AO_SCALE));
     const bw = Math.max(1, Math.round(w * AIR_BLOOM_SCALE)), bh = Math.max(1, Math.round(h * AIR_BLOOM_SCALE));
     this.targets = {
-      depth: { tex: depthTex, fbo: depthFbo, w, h },
       ao: color(aw, ah), aoBlur: color(aw, ah),
       bloom: color(bw, bh), bloomB: color(bw, bh),
       shaft: color(bw, bh),
@@ -642,11 +675,13 @@ export class AirPass {
   }
 
   /** EL4: the frame image for a canvas of W x H - RGBA8 with a 24-bit depth
-   *  renderbuffer, (re)allocated when the canvas changes size. */
+   *  TEXTURE (EL6: the AO, the glares, the emitters and the shafts read it
+   *  at the resolve - the frame's own depth, no replay), (re)allocated when
+   *  the canvas changes size. */
   _ensureFrame(W, H) {
     const gl = this.gl;
     if (this.frame && this.frame.w === W && this.frame.h === H) return this.frame;
-    if (this.frame) { gl.deleteTexture(this.frame.tex); gl.deleteRenderbuffer(this.frame.rb); gl.deleteFramebuffer(this.frame.fbo); }
+    if (this.frame) { gl.deleteTexture(this.frame.tex); gl.deleteTexture(this.frame.depth); gl.deleteFramebuffer(this.frame.fbo); }
     const tex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, tex);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, W, H, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
@@ -654,16 +689,20 @@ export class AirPass {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    const rb = gl.createRenderbuffer();
-    gl.bindRenderbuffer(gl.RENDERBUFFER, rb);
-    gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT24, W, H);
+    const depth = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, depth);
+    gl.texStorage2D(gl.TEXTURE_2D, 1, gl.DEPTH_COMPONENT24, W, H);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     const fbo = gl.createFramebuffer();
     gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
-    gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, rb);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, depth, 0);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.bindTexture(gl.TEXTURE_2D, null);
-    this.frame = { tex, rb, fbo, w: W, h: H };
+    this.frame = { tex, depth, fbo, w: W, h: H };
     if (!this.lum) this._ensureAdapt();
     return this.frame;
   }
@@ -716,46 +755,51 @@ export class AirPass {
   }
 
   /**
-   * Draw the frame's images. `f`: { proj, view, lightDir, sunScale,
-   * sunColor, pointLights, pointColors (decoded vec3s), viewport [x,y,w,h],
-   * shadows (the ShadowPass: its records and its depth programs), textures,
-   * emissionTextures, blackTex, windowEmission, isSpectral, bindVao }.
-   * Leaves no framebuffer bound; the caller's program shadow is dirty.
+   * EL6: TAKE THE FRAME'S INPUTS, at the top of a world frame - nothing is
+   * drawn here. `f`: { proj, view, lightDir, sunScale, sunColor,
+   * pointLights, pointColors (decoded vec3s), viewport [x,y,w,h], shadows
+   * (the ShadowPass: its records and its depth programs), textures,
+   * emissionTextures, blackTex, windowEmission, isSpectral, bindVao,
+   * clearColor }. The images are drawn at the resolve, off the frame's own
+   * depth: the AO, the bloom source (the emitters and the glares, both
+   * occluded by that depth), the shafts. Before EL6 they were drawn HERE,
+   * off a depth image the records were replayed into - a third walk of the
+   * town per frame, one frame stale, and the emitters drew through walls.
    */
-  render(f) {
-    const gl = this.gl, sp = f.shadows;
+  prepare(f) {
     const [, , w, h] = f.viewport;
-    if (!(w > 0 && h > 0)) return;   // AUDIT-EL F18: a hidden canvas has no images to draw (texStorage2D refuses 0)
+    if (!(w > 0 && h > 0)) { this.f = null; return; }   // AUDIT-EL F18: a hidden canvas has no images to draw (texStorage2D refuses 0)
     this.resize(w, h);
-    const T = this.targets;
+    this.f = f;
+    this.rect.set(f.viewport);
+    projInfo(f.proj, this.projInfo);
+    this.measured = false;   // AUDIT-EL F10: set at the resolve, by whether the world drew
+    this.stats.emitDraws = 0; this.stats.glares = 0; this.stats.shafts = false;   // this frame's, counted at the resolve
+  }
+
+  /** EL6: the images, at the resolve, off the frame's depth. */
+  _images() {
+    const gl = this.gl, f = this.f, sp = f.shadows, T = this.targets, F = this.frame;
     this.stats.emitDraws = 0; this.stats.glares = 0; this.stats.shafts = false;
     this.measured = !!(sp && sp.count > 0);   // AUDIT-EL F10: a frame with no world in it (a video, a menu) is not one the eye adapts to
-    projInfo(f.proj, this.projInfo);
     const vp = multiply(f.proj, f.view, this._vp);
-    // 1. the depth image, from the records
-    gl.bindFramebuffer(gl.FRAMEBUFFER, T.depth.fbo);
-    gl.viewport(0, 0, w, h);
-    gl.disable(gl.CULL_FACE);
-    gl.enable(gl.DEPTH_TEST);
-    gl.depthMask(true);
-    gl.colorMask(false, false, false, false);
-    gl.clear(gl.DEPTH_BUFFER_BIT);
-    if (sp && sp.count > 0) sp.replay({ bindVao: f.bindVao, textures: f.textures, isSpectral: f.isSpectral }, vp, null, true);   // AUDIT-EL F13: the flats face the camera, off their records
-    gl.colorMask(true, true, true, true);
-    gl.disable(gl.DEPTH_TEST);
-    gl.depthMask(false);
-    // 2. the ambient occlusion, then its box blur
     const quad = (prog, target) => {
       gl.bindFramebuffer(gl.FRAMEBUFFER, target.fbo);
       gl.viewport(0, 0, target.w, target.h);
       gl.useProgram(prog.p);
       gl.bindVertexArray(this.quadVao);
     };
-    gl.activeTexture(gl.TEXTURE0);
+    const depthOn = (prog) => {   // the depth block's four uniforms, the depth on unit 0
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, F.depth);
+      gl.uniform1i(prog.uDepth, 0);
+      gl.uniform4fv(prog.uProjInfo, this.projInfo);
+      gl.uniform4fv(prog.uRect, this.rect);
+      gl.uniform2fv(prog.uCanvas, this.canvas);
+    };
+    // 1. the ambient occlusion, then its box blur (exactly one tile of the ordered rotation)
     quad(this.programs.ao, T.ao);
-    gl.bindTexture(gl.TEXTURE_2D, T.depth.tex);
-    gl.uniform1i(this.programs.ao.uDepth, 0);
-    gl.uniform4fv(this.programs.ao.uProjInfo, this.projInfo);
+    depthOn(this.programs.ao);
     gl.uniform3fv(this.programs.ao.uKernel, this.kernel);
     gl.uniform4fv(this.programs.ao.uAOParams, this.aoParams);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
@@ -764,26 +808,24 @@ export class AirPass {
     gl.uniform1i(this.programs.box.uSrc, 0);
     gl.uniform2f(this.programs.box.uTexel, 1 / T.ao.w, 1 / T.ao.h);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-    this.aoInfo[0] = f.viewport[0]; this.aoInfo[1] = f.viewport[1]; this.aoInfo[2] = w; this.aoInfo[3] = h;
-    // 3. the bloom source: the emitters, and a glare per lantern
+    // 2. the bloom source: the emitters (this frame's records, culled, occluded), and a glare per lantern
     gl.bindFramebuffer(gl.FRAMEBUFFER, T.bloom.fbo);
     gl.viewport(0, 0, T.bloom.w, T.bloom.h);
     gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.enable(gl.BLEND);   // the emitters and the glares add; the target has no depth, the glares hide by the depth image themselves
+    gl.enable(gl.BLEND);   // the emitters and the glares add; the target has no depth - both hide by the frame's depth themselves
     gl.blendFunc(gl.ONE, gl.ONE);
-    if (sp && sp.count > 0) this._replayEmission(f, sp, vp);
-    this._glares(f);
+    if (sp && sp.count > 0) this._replayEmission(f, sp, vp, depthOn);
+    this._glares(f, depthOn);
     gl.disable(gl.BLEND);
-    // EL4: the bright pass joins them at the resolve, and the blur runs there, once the frame is whole
-    // 4. the shafts, when the sun is up and in front of the camera
+    // EL4: the bright pass joins them, and the blur runs, once the frame is whole
+    // 3. the shafts, when the sun is up and in front of the camera
     const sun = f.sunScale > 0.01 && f.lightDir && f.lightDir[1] > 0 ? sunScreenUV(f.proj, f.view, f.lightDir) : null;
     quad(this.programs.shaft, T.shaft);
     if (sun) {
-      gl.bindTexture(gl.TEXTURE_2D, T.depth.tex);
-      gl.uniform1i(this.programs.shaft.uDepth, 0);
+      depthOn(this.programs.shaft);
       gl.uniform2f(this.programs.shaft.uSun, sun[0], sun[1]);
-      this.shaftParams[3] = w / h;
+      this.shaftParams[3] = T.shaft.w / T.shaft.h;
       gl.uniform4fv(this.programs.shaft.uShaftParams, this.shaftParams);
       gl.uniform3fv(this.programs.shaft.uSunColor, f.sunColor);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
@@ -792,18 +834,11 @@ export class AirPass {
       gl.clearColor(0, 0, 0, 1);
       gl.clear(gl.COLOR_BUFFER_BIT);
     }
-    gl.bindVertexArray(null);
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    gl.enable(gl.DEPTH_TEST);
-    gl.depthMask(true);
-    gl.enable(gl.CULL_FACE);
     gl.clearColor(f.clearColor[0], f.clearColor[1], f.clearColor[2], f.clearColor[3]);
-    this.rect.set(f.viewport);
-    this.pending = true;
   }
 
-  _replayEmission(f, sp, vp) {
-    const gl = this.gl, P = this.programs;
+  _replayEmission(f, sp, vp, depthOn) {
+    const gl = this.gl, P = this.programs, T = this.targets;
     const planes = spherePlanes(vp, this._planes);   // EL5: the eye's frustum - what it cannot see cannot bloom
     let bound = null;
     for (let i = 0; i < sp.count; i++) {
@@ -818,7 +853,7 @@ export class AirPass {
           const emis = sm._evEmis;
           if (!emis || emis === f.blackTex) continue;   // nothing to bloom: the main pass resolved no mask, or the black one
           if (!subMeshVisible(planes, r, k)) continue;   // EL5
-          if (bound !== P.emitMesh) { bound = P.emitMesh; gl.useProgram(bound.p); gl.uniformMatrix4fv(bound.uProj, false, vp); gl.uniformMatrix4fv(bound.uView, false, this._identityView); gl.uniform1i(bound.uEmissionTex, 1); }
+          if (bound !== P.emitMesh) { bound = P.emitMesh; gl.useProgram(bound.p); gl.uniformMatrix4fv(bound.uProj, false, vp); gl.uniformMatrix4fv(bound.uView, false, this._identityView); gl.uniform1i(bound.uEmissionTex, 1); this._emitDepth(bound, depthOn, T); }
           if (!vaoBound) { gl.uniformMatrix4fv(P.emitMesh.uModel, false, r.matrix); f.bindVao(mesh.vao); vaoBound = true; }
           gl.uniform3fv(P.emitMesh.uEmissionColor, sm._evEmisWhite ? this._white : f.windowEmission);
           gl.activeTexture(gl.TEXTURE1);
@@ -839,6 +874,7 @@ export class AirPass {
             gl.uniformMatrix4fv(bound.uProj, false, vp); gl.uniformMatrix4fv(bound.uView, false, this._identityView);
             gl.uniform1i(bound.uTex, 0); gl.uniform1i(bound.uEmissionTex, 1);
             gl.uniform4fv(bound.uFlatWind, r.flatWind);
+            this._emitDepth(bound, depthOn, T);
           }
           gl.uniform3fv(P.emitBb.uRight, r.right); gl.uniform3fv(P.emitBb.uUp, r.up);   // the camera basis the batch was drawn with
           const o = b.origin || [0, 0, 0];
@@ -855,19 +891,26 @@ export class AirPass {
     }
     gl.activeTexture(gl.TEXTURE0);
   }
+  /** EL6: the frame's depth for an emitter program - on unit 2 (0 and 1 are its own textures). */
+  _emitDepth(prog, depthOn, T) {
+    const gl = this.gl;
+    depthOn(prog);
+    gl.activeTexture(gl.TEXTURE2);
+    gl.bindTexture(gl.TEXTURE_2D, this.frame.depth);
+    gl.uniform1i(prog.uDepth, 2);
+    gl.uniform2f(prog.uBloomSize, T.bloom.w, T.bloom.h);
+    gl.activeTexture(gl.TEXTURE0);
+  }
 
-  _glares(f) {
+  _glares(f, depthOn) {
     const gl = this.gl, P = this.programs.glare, L = f.pointLights, C = f.pointColors;
     const n = L.length >> 2;
     if (n === 0) return;
     gl.useProgram(P.p);
     gl.uniformMatrix4fv(P.uProj, false, f.proj);
     gl.uniformMatrix4fv(P.uView, false, f.view);
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, this.targets.depth.tex);
-    gl.uniform1i(P.uDepth, 0);
-    gl.uniform4fv(P.uProjInfo, this.projInfo);   // EL5: the depth's reconstruction
-    gl.uniform2f(P.uTexel, 1 / this.targets.depth.w, 1 / this.targets.depth.h);
+    depthOn(P);   // EL5/EL6: the depth's reconstruction, off the frame's own
+    gl.uniform2f(P.uTexel, 1 / this.width, 1 / this.height);
     gl.bindVertexArray(this.glareVao);
     for (let i = 0; i < n; i++) {
       const range = L[i * 4 + 3];
@@ -880,19 +923,6 @@ export class AirPass {
     }
   }
 
-  /** Bind the AO image on its unit and upload the receiver's two uniforms
-   *  for one program (`loc`: ao, aoInfo). */
-  upload(loc, foreignRect = false) {
-    const gl = this.gl;
-    if (!this.targets) return;
-    gl.activeTexture(gl.TEXTURE0 + AIR_AO_UNIT);
-    gl.bindTexture(gl.TEXTURE_2D, this.targets.aoBlur.tex);
-    gl.activeTexture(gl.TEXTURE0);
-    gl.uniform1i(loc.ao, AIR_AO_UNIT);
-    // AUDIT-EL F2: a pass whose fragments are not in the world rect (the
-    // sprite target, a panel) takes no AO - width 0 is the shader's off
-    gl.uniform4fv(loc.aoInfo, foreignRect ? this._noAo : this.aoInfo);
-  }
 
   /** EL4: THE RESOLVE. Called by the frame's first screen-space draw; a
    *  no-op until a render is owed. Measures the frame (the luminance image,
@@ -917,6 +947,10 @@ export class AirPass {
       gl.useProgram(prog.p);
     };
     gl.activeTexture(gl.TEXTURE0);
+    // 0. EL6: the images, off the frame's depth (the frame is whole now)
+    if (this.f) this._images();
+    gl.disable(gl.BLEND);
+    gl.bindVertexArray(this.quadVao);
     // 1. the luminance image and its mean - AUDIT-EL F10: not off a frame the
     // world never drew (the passes saw no records): the eye would adapt to
     // the clear colour behind a video or a menu and swing back on return
@@ -973,6 +1007,8 @@ export class AirPass {
     gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, F.tex); gl.uniform1i(P.resolve.uFrame, 0);
     gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, T.bloom.tex); gl.uniform1i(P.resolve.uBloom, 1);
     gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, T.shaft.tex); gl.uniform1i(P.resolve.uShaft, 2);
+    gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, T.aoBlur.tex); gl.uniform1i(P.resolve.uAO, 3);   // EL6
+    gl.uniform1f(P.resolve.uAOMix, this.f ? AIR_AO_RESOLVE : 0);
     gl.activeTexture(gl.TEXTURE0);
     gl.uniform4fv(P.resolve.uRect, this.rect);
     gl.uniform2fv(P.resolve.uCanvas, this.canvas);

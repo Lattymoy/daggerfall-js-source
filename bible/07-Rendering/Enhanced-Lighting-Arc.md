@@ -601,3 +601,88 @@ batch, a bare bundle); the glare, the resolve and the probe's own checks
 as text. tools/mutants/el5.json (33). The el2/el3 pins re-aimed to the
 array and the array uploads; four el2/el3 records re-aimed.
 
+## EL6 - THE FIELD'S FOUR (2026-09-17, Mac's second list)
+
+Mac, on the EL5 push: "Wanted to add. Just in case youre unaware 1. Some
+shadows (like campfire) are wonky 2. Textures in the dark look weird 3. All
+lighting sources can be seen through walls 4. Need to comprehensively make
+this where it doesnt tank performance". Each mapped to a cause the harness
+could show, then fixed at the source.
+
+1. **THE CAMPFIRE'S SHADOW** - the flame flat is the lantern. A point
+   light sits AT its flat (the torch, the campfire, the candle: archive
+   210, `SHADOW_LIGHT_FLATS`), so a cube face drawn from the light's
+   position saw that flat first in every direction and shadowed a wedge of
+   the room - turning with the flat's basis, which the replay recomputes
+   toward the light. A light flat casts from the sun (a tree's cutout
+   shadow is right) and never from a lantern.
+2. **TEXTURES IN THE DARK** - two sources. The SSAO's per-pixel rotation
+   was a hash: grain the 4x4 box blur never cancelled, and in the dark,
+   where the ambient is the only light, the grain was all a texture had.
+   It is a 4x4 ORDERED pattern now, and the blur averages exactly one tile
+   of it. And every dark gradient - a lantern's falloff across a floor -
+   was eight-bit bands; both encodes (the lane's `elFinish`, the resolve)
+   are dithered at the byte (`DITHER_GLSL`, a Bayer threshold).
+3. **LIGHTS THROUGH WALLS** - the glare was EL5's; what remained was the
+   BLOOM'S EMITTERS. The bloom source is a quarter-res colour target with
+   no depth of its own, so every emissive flat and every window drew into
+   it whatever stood in front - a torch two rooms away bloomed through the
+   stone. Each emitter fragment now asks the frame's depth at its own
+   screen position and discards when a nearer surface is there
+   (`AIR_EMIT_SLACK` 0.15 - it is in that image itself). The probe puts an
+   emitter flat behind the wall: the wall's pixels no longer change.
+4. **PERFORMANCE, COMPREHENSIVELY** - after EL5's culling the largest cost
+   left was THE CAMERA DEPTH REPLAY: the whole scene drawn a third time
+   each frame, one frame stale, only to feed the AO, the glares and the
+   shafts. The frame has a depth of its own. The frame's depth attachment
+   is a TEXTURE now, and the air's images are drawn at the RESOLVE off it:
+   the replay is gone (a full walk of the town per frame), the AO left the
+   world shaders (one texture fetch fewer per fragment; the resolve
+   multiplies the decoded frame once, `AIR_AO_RESOLVE` 0.75 of it, over the
+   world rect; AUDIT-EL F2/F12's sampler cases cannot recur), and the
+   emitters replay THIS frame's records, exact, and culled (EL5). Beside
+   it: the in-scatter loop skips a lantern the ray cannot reach (its
+   distance from the eye past the ray's length plus its range - the loop
+   ran a closed-form integral for all forty-eight), and the point-light
+   loop's early-out (EL5) stands. The casters went to six
+   (`SHADOW_POINT_CASTERS`): a gate passage has that many lanterns in
+   reach, and the culled faces are cheap.
+
+**What a frame costs now, in draws of a town of N records:** the main pass
+N; the two cascades, culled by their boxes (the near one a street's worth);
+six casters' thirty-six faces, each the records within the lantern's range
+and in front of the face; the emitters, frustum-culled. Before EL5: 10N.
+The fill: two 2048^2 depth cascades, 36 x 512^2 faces cleared and mostly
+empty, the half-res AO, the quarter-res bloom and shafts, the 32x32
+luminance, one resolve.
+
+**The order of a frame now.** beginFrame: resolve any frame still owed;
+the shadow pass draws its maps from last frame's records and drops them;
+`AirPass.prepare` takes the frame's inputs (nothing drawn); the frame image
+is bound. The world pass draws and records. The first screen draw (or
+`resolveFrame()`): `_images` off the frame's depth (AO and its blur, the
+bloom source - emitters and glares - the shafts), then the eye, the bright
+pass and the blur, then the frame to the canvas with the AO, the vignette,
+the contrast in display space, the dither.
+
+**Pins:** the el3, el4, el5 and audit_el files re-aimed to the order above
+(no image before the frame, the images and their counts at the resolve, the
+frame's depth bound for each, the AO on the resolve's unit at its mix, the
+flames never drawn from a lantern, the emitters replayed from this frame's
+records with their basis); test/el6_field.test.js (2) for the pins the
+EL6 campaign found no test could fail; tools/mutants/el6.json (26). The probe's new check:
+the emitter behind the wall.
+
+**The probe, sharpened.** Its with/without comparisons carried the eye:
+the adaptation's state ran on from scene to scene and every difference
+was a hundredth of exposure drift, not the scene's. The eye's clock is
+frozen in the probe now (`_now` constant, as the el4 pin does it), the
+air's counts are read after the resolve (they are the resolve's), and
+the bleed thresholds are five times tighter. The emitter behind the wall
+changes the wall's pixels by 0.0000; the same emitter in front of it
+fills the bloom source and lays its halo on the wall - the occlusion
+discriminates, it does not discard all.
+
+**Still not seen on Mac's GPU** - the harness is SwiftShader, the frames
+are synthetic. The four are fixed at their causes; the field decides.
+

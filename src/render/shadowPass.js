@@ -63,7 +63,7 @@ export const SHADOW_SUN_SIZE = 2048;
 /** A caster's face size (six layers of the point depth array per caster). */
 export const SHADOW_POINT_SIZE = 512;
 /** EL5: how many lanterns cast at once - the nearest to the eye. */
-export const SHADOW_POINT_CASTERS = 4;
+export const SHADOW_POINT_CASTERS = 6;   // EL6: six - a gate passage has that many lanterns in reach
 /** The cascades' radii around the eye, world units (a terrain tile is 6.4,
  *  an RMB block 102.4): the near street, and the town. */
 export const SHADOW_CASCADES = Object.freeze([40, 240]);
@@ -92,6 +92,12 @@ export const SHADOW_POINT_BIAS = 0.04;
 /** The reserved texture units (CLOUD_SHADOW_UNIT is 15). */
 export const SHADOW_SUN_UNIT = 13;
 export const SHADOW_POINT_UNIT = 14;
+/** EL6: Daggerfall's lights archive (world/cityLights.js LIGHTS_ARCHIVE) - the
+ *  torch, campfire, candle and lantern flats. THEY ARE THE LANTERNS: a flame
+ *  flat drawn from its own light's position is the nearest occluder in every
+ *  direction and shadowed a wedge of the room ("some shadows, like the
+ *  campfire, are wonky"). A flame casts from the sun, never from a lantern. */
+export const SHADOW_LIGHT_FLATS = 210;
 /** The record pool's ceiling - a city frame draws ~1000 meshes. Past it a
  *  frame's casters are truncated, never reallocated. */
 export const SHADOW_RECORD_MAX = 6000;
@@ -514,6 +520,7 @@ export class ShadowPass {
         let lastSway = null;
         for (const b of r.batches) {
           if (!b?.vao || b._dead || b.conceal || f.isSpectral(b.archive)) continue;   // a concealed foe and a ghost cast nothing
+          if (lightPos && b.archive === SHADOW_LIGHT_FLATS) continue;   // EL6: a flame is the lantern, not its occluder
           if (!batchVisible(planes, b)) { this.stats.culled++; continue; }   // EL5
           const key = b._bbKey ?? (b.frame == null ? `${b.archive}_${b.record}` : `${b.archive}_${b.record}#${b.frame}`);
           const tex = f.textures.get(key);

@@ -23,6 +23,19 @@
 // fragment sits inside it.
 
 /** ringSnap(dir, stepRad, cellOut) and bayer4(p). */
+/** EL6: THE BAYER FUNCTION ALONE - what the lane's encodes, the resolve
+ *  and the AO's rotation take (one home: this is the port's only bayer4).
+ *  Zero-mean use is bayer4(p) - BAYER_MEAN. */
+export const BAYER_GLSL = `
+// Bayer 4x4, the ordered dither a 256-colour gradient used.
+float bayer4(vec2 p) {
+  int x = int(mod(p.x, 4.0)), y = int(mod(p.y, 4.0));
+  int i = y * 4 + x;
+  float m[16] = float[16](0.0, 8.0, 2.0, 10.0, 12.0, 4.0, 14.0, 6.0, 3.0, 11.0, 1.0, 9.0, 15.0, 7.0, 13.0, 5.0);
+  return m[i] / 16.0;
+}
+`;
+
 export const DITHER_GLSL = `
 // A world-fixed cell: rings of constant elevation, each one stepRad tall,
 // each holding as many cells as fit at one stepRad wide. No faces, so no
@@ -55,14 +68,7 @@ vec3 ringSnap(vec3 dir, float stepRad, out vec2 cellOut) {
   return vec3(sin(azC) * ce, sin(elC), cos(azC) * ce);       // already unit: ce is cos(elC)
 }
 
-// Bayer 4x4, the ordered dither a 256-colour gradient used.
-float bayer4(vec2 p) {
-  int x = int(mod(p.x, 4.0)), y = int(mod(p.y, 4.0));
-  int i = y * 4 + x;
-  float m[16] = float[16](0.0, 8.0, 2.0, 10.0, 12.0, 4.0, 14.0, 6.0, 3.0, 11.0, 1.0, 9.0, 15.0, 7.0, 13.0, 5.0);
-  return m[i] / 16.0;
-}
-`;
+${BAYER_GLSL}`;
 
 /** bayer4's mean is 7.5/16, so `bayer4(p) - 0.5` is biased low by 1/32 of
  *  a step. Anything that must not move a quantizer's MEAN subtracts this

@@ -74,8 +74,8 @@
  {
   "name": "casters-three",
   "file": "src/render/shadowPass.js",
-  "old": "export const SHADOW_POINT_CASTERS = 4;",
-  "new": "export const SHADOW_POINT_CASTERS = 3;",
+  "old": "export const SHADOW_POINT_CASTERS = 6;",
+  "new": "export const SHADOW_POINT_CASTERS = 5;",
   "tests": [
    "test/el5_field.test.js"
   ]
@@ -227,7 +227,7 @@
  {
   "name": "glare-no-texel",
   "file": "src/render/airPass.js",
-  "old": "    gl.uniform2f(P.uTexel, 1 / this.targets.depth.w, 1 / this.targets.depth.h);\n",
+  "old": "    gl.uniform2f(P.uTexel, 1 / this.width, 1 / this.height);\n",
   "new": "",
   "tests": [
    "test/el5_field.test.js"
@@ -236,8 +236,8 @@
  {
   "name": "resolve-linear-pivot",
   "file": "src/render/airPass.js",
-  "old": "  e = clamp((e - 0.5) * uGrade.w + 0.5, 0.0, 1.0);",
-  "new": "  e = clamp((e - 0.18) * uGrade.w + 0.18, 0.0, 1.0);",
+  "old": "  e = (e - 0.5) * uGrade.w + 0.5;",
+  "new": "  e = (e - 0.18) * uGrade.w + 0.18;",
   "tests": [
    "test/el5_field.test.js"
   ]

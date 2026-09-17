@@ -94,7 +94,7 @@ test('EL5: boundsOf and transformSphere - the box centre, the farthest vertex, a
   assert.deepEqual([...out.slice(0, 4)], [0, 0, 0, 0], 'the rest untouched');
 });
 
-test('EL5: the casters - the nearest lanterns first, at most four, the eye\'s own and the flash skipped; the old pick is the first of them', () => {
+test('EL5: the casters - the nearest lanterns first, at most SHADOW_POINT_CASTERS, the eye\'s own and the flash skipped; the old pick is the first of them', () => {
   const L = new Float32Array([
     0, 0, 0, 10,      // the eye's own (the candle)
     30, 0, 0, 12,
@@ -105,11 +105,12 @@ test('EL5: the casters - the nearest lanterns first, at most four, the eye\'s ow
     20, 0, 0, 14,
     12, 0, 0, 12,
   ]);
-  assert.deepEqual(pickShadowCasters(L, [0, 0, 0]), [2, 5, 7, 6], 'by distance: 5, 10, 12, 20 - the one at 30 left out');
+  assert.deepEqual(pickShadowCasters(L, [0, 0, 0]), [2, 5, 7, 6, 1], 'by distance: 5, 10, 12, 20, 30 - the five lanterns, all within six');
+  assert.deepEqual(pickShadowCasters(L, [0, 0, 0], 4), [2, 5, 7, 6], 'at four: the one at 30 left out');
   assert.deepEqual(pickShadowCasters(L, [0, 0, 0], 2), [2, 5]);
   assert.equal(pickShadowCaster(L, [0, 0, 0]), 2, 'the old pick is the nearest');
   assert.deepEqual(pickShadowCasters(new Float32Array(0), [0, 0, 0]), []);
-  assert.equal(SHADOW_POINT_CASTERS, 4);
+  assert.equal(SHADOW_POINT_CASTERS, 6);
 });
 
 test('EL5: the face basis the shader selects by is pointFaceMatrices\' own - a point projects to the same uv both ways, on every face', () => {
@@ -170,12 +171,13 @@ test('EL5: the replays cull - a record outside a face\'s frustum is not drawn, a
   const sp = r.shadows;
   assert.ok(calls.some((c) => c[0] === 'texStorage3D' && c[6] === 6 * SHADOW_POINT_CASTERS), 'six layers per caster');
   assert.equal(calls.filter((c) => c[0] === 'framebufferTextureLayer').length, 2 + 6 * SHADOW_POINT_CASTERS);
-  r.textures.set('1_1', { id: 't' }); r.textures.set('210_1', { id: 'b' });
+  r.textures.set('1_1', { id: 't' }); r.textures.set('201_1', { id: 'b' }); r.textures.set('210_1', { id: 'flame' });
   // a mesh of two sub-meshes: one at the origin (in the lantern's range), one 100 units out
   const positions = new Float32Array([0, 0, 0, 1, 0, 0, 1, 1, 0, 100, 0, 0, 101, 0, 0, 101, 1, 0]);
   const mesh = r.createMesh({ positions, normals: positions, uvs: new Float32Array(12), indices: new Uint32Array([0, 1, 2, 3, 4, 5]), subMeshes: [{ textureArchive: 1, textureRecord: 1, startIndex: 0, primitiveCount: 1 }, { textureArchive: 1, textureRecord: 1, startIndex: 3, primitiveCount: 1 }] });
-  const nearBatch = r.createBillboardBatch(210, 1, { w: 1, h: 1 }, [[2, 0, 0]]);
-  const farBatch = r.createBillboardBatch(210, 1, { w: 1, h: 1 }, [[0, 0, 200], [1, 0, 200]]);   // two flats: 12 indices, told apart from the near one's 6
+  const nearBatch = r.createBillboardBatch(201, 1, { w: 1, h: 1 }, [[2, 0, 0]]);
+  const farBatch = r.createBillboardBatch(201, 1, { w: 1, h: 1 }, [[0, 0, 200], [1, 0, 200]]);   // two flats: 12 indices, told apart from the near one's 6
+  const flames = r.createBillboardBatch(210, 1, { w: 1, h: 1 }, [[3, 0, 0], [3, 0, 1], [3, 0, -1]]);   // EL6: the lights archive by the lantern - three flats, 18 indices, never a lantern's caster
   const farTerrain = r.createTerrainSurface(new Float32Array([300, 0, 0, 306, 0, 0, 306, 0, 6, 300, 0, 6, 303, 1, 3]), new Float32Array(15), new Uint32Array([0, 1, 4, 1, 2, 4, 2, 3, 4]));   // 9 indices, 300 units out
   const bare = { vao: { id: 'bare' }, buffers: [], subMeshes: [{ textureArchive: 1, textureRecord: 1, startIndex: 0, primitiveCount: 1 }] };   // no bounds: a hand-built bundle
   r.setLighting(new Float32Array([0.1, 0.1, 0.1]), 0);
@@ -184,13 +186,13 @@ test('EL5: the replays cull - a record outside a face\'s frustum is not drawn, a
   r.drawMesh(mesh, I, null);
   r.drawMesh(bare, I, null);
   r.drawTerrain(farTerrain, I, {}, {}, 6.4);
-  r.drawBillboards([nearBatch, farBatch], new Float32Array([1, 0, 0]), new Float32Array([0, 1, 0]));
+  r.drawBillboards([nearBatch, farBatch, flames], new Float32Array([1, 0, 0]), new Float32Array([0, 1, 0]));
   assert.equal(sp.count, 4);
   assert.equal(sp.records[0].bounded, true); assert.equal(sp.records[1].bounded, false); assert.equal(sp.records[2].bounded, true);
   assert.deepEqual([...sp.records[0].subSpheres.slice(4, 8)].map((v) => +v.toFixed(3)), [100.5, 0.5, 0, +Math.hypot(0.5, 0.5).toFixed(3)], 'the far sub-mesh\'s world sphere');
   calls.length = 0;
   r.beginFrame(I, I, new Float32Array([0, 1, 0]), WORLD_FRAME);
-  assert.equal(sp.kind, 'point'); assert.equal(sp.casters, 2, 'both lanterns cast'); assert.deepEqual([...sp.shadowIndex], [0, 1, -1, -1], 'nearest first');
+  assert.equal(sp.kind, 'point'); assert.equal(sp.casters, 2, 'both lanterns cast'); assert.deepEqual([...sp.shadowIndex], [0, 1, -1, -1, -1, -1], 'nearest first');
   assert.deepEqual([...sp.pointParams].slice(0, 8), [3, 1, 0, 10, 0, 1, 40, 8]);
   // twelve faces: the near sub-mesh is in front of some (drawn there), the far one is out of every face's far plane; the bare mesh draws on all twelve; the far terrain and the far batch never
   assert.ok(sp.stats.pointDraws < 12 * 5, `culled: ${sp.stats.pointDraws} of 60 draws`);
@@ -199,6 +201,7 @@ test('EL5: the replays cull - a record outside a face\'s frustum is not drawn, a
   assert.equal(drawn.filter((c) => c[4] === 12).length, 0, 'the far sub-mesh (index offset 12) was never drawn from a lantern');
   assert.equal(drawn.filter((c) => c[2] === 9).length, 0, 'the far terrain (9 indices) was never drawn - the record\'s own sphere');
   assert.equal(drawn.filter((c) => c[2] === 12).length, 0, 'the far batch (12 indices) was never drawn');
+  assert.equal(drawn.filter((c) => c[2] === 18).length, 0, 'EL6: the flames (archive 210, in range) were never drawn from a lantern - a flame is the lantern');
   assert.ok(drawn.filter((c) => c[2] === 3 && c[4] === 0).length >= 12 + 1, 'the bare mesh drew on every face of both lanterns (and the near sub-mesh on at least one)');
   const bbDraws = drawn.filter((c) => c[2] === 6);
   assert.ok(bbDraws.length >= 1 && bbDraws.length < 12, `the near batch: ${bbDraws.length} draws of a possible 12`);
@@ -216,15 +219,18 @@ test('EL5: the glare hides in world units at five taps, the resolve grades in di
   assert.match(a, /float viewDist\(float d01\) \{\n  float z = d01 \* 2\.0 - 1\.0;\n  return uProjInfo\.w \/ \(z \+ uProjInfo\.z\);/, 'the depth image linearised the way the AO does');
   assert.match(a, /float lantern = -vc\.z;/);
   assert.ok(!/<= d \+ 0\.002/.test(a), 'no hyperbolic constant left');
-  assert.match(a, /gl\.uniform4fv\(P\.uProjInfo, this\.projInfo\);/); assert.match(a, /gl\.uniform2f\(P\.uTexel, 1 \/ this\.targets\.depth\.w, 1 \/ this\.targets\.depth\.h\);/);
-  assert.match(a, /vec3 e = airEncode\(max\(c, vec3\(0\.0\)\)\);\n  e = clamp\(\(e - 0\.5\) \* uGrade\.w \+ 0\.5, 0\.0, 1\.0\);\n  outColor = vec4\(e, 1\.0\);/, 'the contrast after the encode, about mid-grey');
+  assert.match(a, /depthOn\(P\);   \/\/ EL5\/EL6/); assert.match(a, /gl\.uniform2f\(P\.uTexel, 1 \/ this\.width, 1 \/ this\.height\);/);
+  assert.match(a, /vec3 e = airEncode\(max\(c, vec3\(0\.0\)\)\);\n  e = \(e - 0\.5\) \* uGrade\.w \+ 0\.5;\n  e \+= \(bayer4\(gl_FragCoord\.xy\) - \$\{BAYER_MEAN\}\) \/ 255\.0;/, 'the contrast after the encode, about mid-grey; EL6: dithered at the byte, zero-mean');
   assert.ok(!/c = \(c - 0\.18\) \* uGrade\.w \+ 0\.18;/.test(a), 'the linear pivot is gone');
   assert.match(a, /import \{ spherePlanes, recordVisible, subMeshVisible, batchVisible \} from '\.\/bounds\.js';/, 'the leaf imports a leaf');
   const b = read('src/render/bounds.js');
   assert.match(b, /^import \{ frustumPlanes \} from '\.\/frustum\.js';/m, 'bounds.js imports EV3\'s plane extraction and nothing else (one home)');
   assert.equal((b.match(/^import /gm) || []).length, 1);
   const probe = read('tools/enhancedLightingProbe.mjs');
-  assert.match(probe, /if \(bleed > 0\.02\) failures\.push\(`lantern A bleeds through the wall/, 'the bleed check');
+  assert.match(probe, /if \(bleed > 0\.005\) failures\.push\(`lantern A bleeds through the wall/, 'the bleed check (EL6: the eye frozen, five times tighter)');
+  assert.match(probe, /if \(emitBleed > 0\.002\) failures\.push\(`the emitter behind the wall blooms through it/, 'EL6: the emitter check');
+  assert.match(probe, /if \(!\(front\.bloom\?\.sum > 0\)\) failures\.push\('an emitter in view put nothing in the bloom source/, 'EL6: and the occlusion discriminates');
+  assert.match(probe, /if \(r\.air\) r\.air\._now = \(\) => 1000;/, 'EL6: the eye frozen for the comparisons');
   assert.match(probe, /if \(!\(shadowLane < shadowClassic \* 0\.6\)\) failures\.push/, 'the shadow check');
   assert.match(probe, /sh\.culled === 0\) failures\.push\('the replays culled nothing/, 'the cull check');
   assert.match(probe, /'--use-angle=swiftshader'/, 'a real GL, software');

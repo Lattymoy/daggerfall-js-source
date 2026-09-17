@@ -11,8 +11,8 @@
  {
   "name": "f1-no-bind-without-air",
   "file": "src/render/renderer.js",
-  "old": "    this._uploadAdapt(this._el[key].ao);\n  }\n\n  /** AUDIT-EL F1",
-  "new": "    if (this._air) this._uploadAdapt(this._el[key].ao);\n  }\n\n  /** AUDIT-EL F1",
+  "old": "    const tex = this._air && this._studioDepth === 0 ? this._air.adaptTexture : this._adaptOne();",
+  "new": "    const tex = this._air ? this._air.adaptTexture : this._adaptOne();",
   "tests": [
    "test/audit_el.test.js"
   ]
@@ -20,17 +20,17 @@
  {
   "name": "f12-no-ao-unit-without-air",
   "file": "src/render/renderer.js",
-  "old": "    else this._uploadNoAo(this._el[key].ao);\n",
-  "new": "",
+  "old": "  _uploadAdapt(loc) {\n    if (!loc?.adapt) return;",
+  "new": "  _uploadAdapt(loc) {\n    if (!loc?.adapt || !this._air) return;",
   "tests": [
    "test/audit_el.test.js"
   ]
  },
  {
   "name": "f2-sprite-takes-ao",
-  "file": "src/render/renderer.js",
-  "old": "    const foreignRect = this._spriteDepth > 0 || !!this._panelSaved;",
-  "new": "    const foreignRect = !!this._panelSaved;",
+  "file": "src/render/airPass.js",
+  "old": "  if (wuv.x >= 0.0 && wuv.x <= 1.0 && wuv.y >= 0.0 && wuv.y <= 1.0) {\n    c *= mix(1.0, texture(uAO, wuv).r, uAOMix);   // EL6: the crevice loses its light here, once, whole\n",
+  "new": "  c *= mix(1.0, texture(uAO, wuv).r, uAOMix);\n  if (wuv.x >= 0.0 && wuv.x <= 1.0 && wuv.y >= 0.0 && wuv.y <= 1.0) {\n",
   "tests": [
    "test/audit_el.test.js"
   ]
@@ -164,8 +164,8 @@
  {
   "name": "f13-camera-faces-sun",
   "file": "src/render/airPass.js",
-  "old": "    if (sp && sp.count > 0) sp.replay({ bindVao: f.bindVao, textures: f.textures, isSpectral: f.isSpectral }, vp, null, true);",
-  "new": "    if (sp && sp.count > 0) sp.replay({ bindVao: f.bindVao, textures: f.textures, isSpectral: f.isSpectral }, vp, null, false);",
+  "old": "          gl.uniform3fv(P.emitBb.uRight, r.right); gl.uniform3fv(P.emitBb.uUp, r.up);",
+  "new": "          gl.uniform3fv(P.emitBb.uRight, new Float32Array([1, 0, 0])); gl.uniform3fv(P.emitBb.uUp, r.up);",
   "tests": [
    "test/audit_el.test.js"
   ]
@@ -177,7 +177,9 @@
   "new": "          gl.uniform3fv(P.bb.right, this._right);",
   "tests": [
    "test/audit_el.test.js"
-  ]
+  ],
+  "equivalent": true,
+  "why": "EL6: no replay passes recordBasis=true any more - the camera depth replay is gone (the frame's own depth) and the emitters carry their basis in _replayEmission"
  },
  {
   "name": "f14-shade-black",
@@ -245,7 +247,7 @@
  {
   "name": "f18-zero-size-draws",
   "file": "src/render/airPass.js",
-  "old": "    if (!(w > 0 && h > 0)) return;   // AUDIT-EL F18: a hidden canvas has no images to draw (texStorage2D refuses 0)\n",
+  "old": "    if (!(w > 0 && h > 0)) { this.f = null; return; }   // AUDIT-EL F18: a hidden canvas has no images to draw (texStorage2D refuses 0)\n",
   "new": "",
   "tests": [
    "test/audit_el.test.js"

@@ -92,6 +92,7 @@ const result = await page.evaluate(async ({ W, H }) => {
   })();
   r.uploadTexture(1, 1, stone);
   r.uploadTexture(210, 1, disc);
+  r.uploadTexture(210, 2, disc); r.uploadEmissionTexture(210, 2, disc);   // EL6: an EMITTER flat - it blooms
 
   // ---- the room: a mesh builder
   const P = [], N = [], UV = [], IDX = [];
@@ -128,6 +129,8 @@ const result = await page.evaluate(async ({ W, H }) => {
   sub('far', () => box(-11, 0, -11.5, -9, 2, -10.5));
   const open = r.createMesh({ positions: new Float32Array(P), normals: new Float32Array(N), uvs: new Float32Array(UV), indices: new Uint32Array(IDX), subMeshes: subs.map(({ name, ...sm }) => sm) });
   const flat = r.createBillboardBatch(210, 1, { w: 1, h: 2 }, [[-6, 1, 0]]);
+  const emitter = r.createBillboardBatch(210, 2, { w: 1, h: 1.5 }, [[0, 1.5, -5]]);   // EL6: behind the wall, in front of lantern A - its bloom must not reach the wall's pixels
+  const emitterFront = r.createBillboardBatch(210, 2, { w: 1, h: 1.5 }, [[0, 1.5, 0]]);   // the same emitter in front of the wall: its bloom MUST show (the occlusion discriminates, it does not discard all)
   const proj = mirrorProjectionX(perspective(Math.PI / 3, W / H, 0.1, 200));
   const eye = [0, 1.7, 9];
   const view = lookAt(eye, [0, 1.2, -4], [0, 1, 0]);
@@ -138,13 +141,13 @@ const result = await page.evaluate(async ({ W, H }) => {
   const lights = (withA) => new Float32Array(withA ? [...lanternA, ...lanternB] : [...lanternB]);
   const DUNGEON_LIGHT = new Float32Array([0.8, 0.8, 0.8]);
 
-  const stats = (label) => ({ label, gl: gl.getError(), shadows: r.shadows ? { ...r.shadows.stats, kind: r.shadows.kind, casters: r.shadows.casters, index: r.shadows.shadowIndex ? [...r.shadows.shadowIndex] : r.shadows.shadowIndex } : null, air: r.air ? { ...r.air.stats } : null });
   const read = () => { const px = new Uint8Array(W * H * 4); gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, px); return px; };
 
   const frames = {};
-  const scene = (label, { lane, air, sun, withA, sky = false, night = false }) => {
+  const scene = (label, { lane, air, sun, withA, sky = false, night = false, withEmitter = true, emitterInFront = false }) => {
     r.setLightingLane(lane ? EL_LANE : null);
     r.setAir(!!air);
+    if (r.air) r.air._now = () => 1000;   // the eye's clock frozen: no adaptation between frames or scenes, so a with/without comparison is the scene's alone
     const on = !!lane;
     r.setPointLights(lights(withA), lanternColor(on, DUNGEON_LIGHT));
     if (sky && night) {
@@ -163,19 +166,31 @@ const result = await page.evaluate(async ({ W, H }) => {
     }
     const lightDir = sun ? new Float32Array([0.35, 0.8, 0.25]) : new Float32Array([0.45, 0.8, 0.35]);
     let st = null, px = null;
+    let bloom = null;
     for (let f = 0; f < 4; f++) {   // frame 1 records; frame 2 replays and draws the maps; a few more settle the eye
       r.beginFrame(proj, view, lightDir, WORLD_FRAME);
-      st = stats(label);
+      const shadowStats = r.shadows ? { ...r.shadows.stats, kind: r.shadows.kind, casters: r.shadows.casters, index: r.shadows.shadowIndex ? [...r.shadows.shadowIndex] : null } : null;   // the maps are drawn at beginFrame
       r.drawMesh(sky ? open : mesh, I, null);
-      r.drawBillboards([flat], new Float32Array([1, 0, 0]), new Float32Array([0, 1, 0]));
-      r.resolveFrame();
+      r.drawBillboards(withEmitter ? [flat, emitterInFront ? emitterFront : emitter] : [flat], new Float32Array([1, 0, 0]), new Float32Array([0, 1, 0]));
+      r.resolveFrame();   // EL6: the air's images are drawn here, off the frame's depth
+      st = { label, gl: gl.getError(), shadows: shadowStats, air: r.air ? { ...r.air.stats } : null };
       px = read();
+      if (r.air?.targets) {   // the bloom source, for the emitter check: read back at its own size
+        const T = r.air.targets.bloom;
+        gl.bindFramebuffer(gl.FRAMEBUFFER, T.fbo);
+        const b = new Uint8Array(T.w * T.h * 4); gl.readPixels(0, 0, T.w, T.h, gl.RGBA, gl.UNSIGNED_BYTE, b);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        let sum = 0; for (let i = 0; i < b.length; i += 4) sum += b[i] + b[i + 1] + b[i + 2];
+        bloom = { w: T.w, h: T.h, sum };
+      }
     }
-    frames[label] = { px: Array.from(px), stats: st };
+    frames[label] = { px: Array.from(px), stats: st, bloom };
   };
   scene('dungeon-classic', { lane: false, air: false, sun: false, withA: true });
   scene('dungeon-lane', { lane: true, air: true, sun: false, withA: true });
   scene('dungeon-lane-noA', { lane: true, air: true, sun: false, withA: false });
+  scene('dungeon-lane-noEmit', { lane: true, air: true, sun: false, withA: true, withEmitter: false });
+  scene('dungeon-lane-emitFront', { lane: true, air: true, sun: false, withA: true, emitterInFront: true });
   scene('dungeon-lane-noair', { lane: true, air: false, sun: false, withA: true });
   scene('exterior-classic', { lane: false, air: false, sun: true, withA: true });
   scene('exterior-lane', { lane: true, air: true, sun: true, withA: true });
@@ -213,12 +228,29 @@ console.log('renderer:', result.renderer, '| wall rect', JSON.stringify(result.w
 const lane = Uint8Array.from(result.frames['dungeon-lane'].px), noA = Uint8Array.from(result.frames['dungeon-lane-noA'].px);
 const classic = Uint8Array.from(result.frames['dungeon-classic'].px);
 const bleed = regionDiff(lane, noA, result.wallRect);
+const noEmit = Uint8Array.from(result.frames['dungeon-lane-noEmit'].px);
+const emitBleed = regionDiff(lane, noEmit, result.wallRect);
+console.log(`the emitter flat behind the wall: the wall's pixels differ by ${emitBleed.toFixed(4)} with and without it (EL6: it must not bloom through); the bloom source sums ${result.frames['dungeon-lane'].bloom?.sum} with it, ${result.frames['dungeon-lane-noEmit'].bloom?.sum} without`);
+{ // where does the frame differ with the emitter? a diff image, amplified, and the brightest difference
+  const d = new Uint8Array(W * H * 4); let best = 0, bx = 0, by = 0, whole = 0;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = (y * W + x) * 4; const v = Math.abs(lum(lane, i) - lum(noEmit, i)); whole += v; if (v > best) { best = v; bx = x; by = H - 1 - y; }
+    d[i] = d[i + 1] = d[i + 2] = Math.min(255, v * 255 * 20); d[i + 3] = 255; }
+  writeFileSync(`${outDir}/diff-emitter.png`, png(W, H, d));
+  console.log(`  whole-frame mean |diff| ${(whole / (W * H)).toFixed(4)}; the largest at (${bx}, ${by}) = ${best.toFixed(3)} (image y from the top)`);
+}
+if (emitBleed > 0.002) failures.push(`the emitter behind the wall blooms through it (mean |diff| ${emitBleed.toFixed(4)})`);
+const front = result.frames['dungeon-lane-emitFront'];
+const frontGlow = regionDiff(Uint8Array.from(front.px), noEmit, result.wallRect);
+console.log(`the same emitter in front of the wall: the bloom source sums ${front.bloom?.sum}, the wall's pixels differ by ${frontGlow.toFixed(4)} (its halo)`);
+if (!(front.bloom?.sum > 0)) failures.push('an emitter in view put nothing in the bloom source - the occlusion discards everything');
+if (!(frontGlow > 0.002)) failures.push(`an emitter in view left no halo on the wall (${frontGlow.toFixed(4)})`);
+if (result.frames['dungeon-lane'].stats.air.emitDraws < 1) failures.push('the emitter was never replayed into the bloom source');
 const wallLane = regionMean(lane, result.wallRect), wallNoA = regionMean(noA, result.wallRect);
 const shadowLane = regionMean(lane, result.shadowRect), openLane = regionMean(lane, result.openRect);
 const shadowClassic = regionMean(classic, result.shadowRect);
 console.log(`the wall between the eye and lantern A: lane ${wallLane.toFixed(4)} vs without A ${wallNoA.toFixed(4)} (mean |diff| ${bleed.toFixed(4)})`);
 console.log(`the floor in A's shadow behind the wall: lane ${shadowLane.toFixed(4)} (classic, unshadowed ${shadowClassic.toFixed(4)}); the open floor under B: ${openLane.toFixed(4)}`);
-if (bleed > 0.02) failures.push(`lantern A bleeds through the wall (mean |diff| ${bleed.toFixed(4)} over the wall's pixels)`);
+if (bleed > 0.005) failures.push(`lantern A bleeds through the wall (mean |diff| ${bleed.toFixed(4)} over the wall's pixels)`);
 if (!(shadowLane < shadowClassic * 0.6)) failures.push(`the wall casts no shadow from lantern A (lane ${shadowLane.toFixed(4)} vs classic ${shadowClassic.toFixed(4)})`);
 const sh = result.frames['dungeon-lane'].stats.shadows;
 if (!sh || sh.culled === 0) failures.push('the replays culled nothing - the record spheres are not wired');

@@ -168,13 +168,13 @@ test('EL2: the caster and the kind - the nearest lantern that is not the eye\'s 
 });
 
 test('EL2: the receiver block and the depth shaders - six uniforms, no dynamic mat4 index, PCF, the cutout; the five lane shaders carry the block and shadow the sun term', () => {
-  for (const u of ['uniform sampler2DArrayShadow uSunShadow;', 'uniform mat4 uSunVP[2];', 'uniform vec4 uSunShadowParams;', 'uniform sampler2DArrayShadow uPointShadow;', 'uniform vec4 uPointShadowParams[4];', 'uniform int uShadowIndex[4];']) {   // EL5: the casters' layers in one array, a vec4 and an index per caster
+  for (const u of ['uniform sampler2DArrayShadow uSunShadow;', 'uniform mat4 uSunVP[2];', 'uniform vec4 uSunShadowParams;', 'uniform sampler2DArrayShadow uPointShadow;', 'uniform vec4 uPointShadowParams[6];', 'uniform int uShadowIndex[6];']) {   // EL5: the casters' layers in one array, a vec4 and an index per caster
     assert.ok(SHADOW_GLSL.includes(u), u);
   }
   assert.match(SHADOW_GLSL, /precision highp sampler2DArrayShadow;/, 'the shadow sampler has no default precision in ES 3.00');
   assert.ok(!SHADOW_GLSL.includes('samplerCubeShadow'), 'EL5: no cube sampler - the faces are layers, selected by hand');
   assert.match(SHADOW_GLSL, /float pointShadowAt\(int k, vec3 wp, vec3 n\)/); assert.match(SHADOW_GLSL, /float layer = float\(k \* 6 \+ face\);/);
-  assert.match(SHADOW_GLSL, /float shadowOfLight\(int i, vec3 wp, vec3 n\) \{\n  for \(int k = 0; k < 4; k\+\+\) \{\n    if \(uShadowIndex\[k\] == i\) return pointShadowAt\(k, wp, n\);/);
+  assert.match(SHADOW_GLSL, /float shadowOfLight\(int i, vec3 wp, vec3 n\) \{\n  for \(int k = 0; k < 6; k\+\+\) \{\n    if \(uShadowIndex\[k\] == i\) return pointShadowAt\(k, wp, n\);/);
   assert.match(SHADOW_GLSL, /mat4 vp = c == 0 \? uSunVP\[0\] : uSunVP\[1\];/, 'no dynamic index into the uniform array');
   assert.match(SHADOW_GLSL, /for \(int y = -1; y <= 1; y\+\+\)/, 'a 3x3 PCF');
   assert.match(SHADOW_GLSL, /float near = 0\.1;/, 'the cube near plane, the constant');
@@ -205,10 +205,10 @@ test('EL2: the renderer builds the pass with the lane, records the three draw ki
   r.setLightingLane(EL_LANE);
   const sp = r.shadows;
   assert.ok(sp instanceof ShadowPass);
-  assert.equal(count(calls, 'framebufferTextureLayer'), 2 + 6 * 4, 'two cascade framebuffers, then six layers per caster (EL5)');
+  assert.equal(count(calls, 'framebufferTextureLayer'), 2 + 6 * 6, 'two cascade framebuffers, then six layers per caster (EL5; EL6: six casters)');
   assert.equal(calls.filter((c) => c[0] === 'framebufferTexture2D' && c[3] >= 100 && c[3] < 106).length, 0, 'EL5: no cube faces - the faces are layers');
   assert.equal(calls.filter((c) => c[0] === 'texStorage3D').length, 2, 'the sun array and the casters\' array'); assert.equal(calls.filter((c) => c[0] === 'texStorage2D').length, 0);
-  assert.ok(calls.some((c) => c[0] === 'texStorage3D' && c[4] === 512 && c[5] === 512 && c[6] === 24), 'four casters of six 512^2 layers');
+  assert.ok(calls.some((c) => c[0] === 'texStorage3D' && c[4] === 512 && c[5] === 512 && c[6] === 36), 'six casters of six 512^2 layers');
   assert.ok(calls.some((c) => c[0] === 'texParameteri' && c[2] === 1 && c[3] === 1), 'compare mode set');
   // the kept pass across swaps
   r.setLightingLane(null); assert.equal(r.shadows, null);
@@ -229,7 +229,7 @@ test('EL2: the renderer builds the pass with the lane, records the three draw ki
   assert.equal(depthClears.length, 2, 'two cascades cleared before the frame\'s own clear');
   assert.equal(sp.kind, 'sun'); assert.equal(sp.stats.records, 3); assert.equal(sp.stats.sunDraws, 2 * (2 + 1 + 1), 'two sub-meshes, the terrain, the flat - per cascade');
   assert.equal(sp.count, 0, 'the records are spent'); assert.equal(sp.records[0].mesh, null, 'and released');
-  assert.equal(sp.sunParams[3], 1); assert.deepEqual([...sp.shadowIndex], [-1, -1, -1, -1]); assert.ok([...sp.pointParams].every((v) => v === 0)); assert.equal(sp.casters, 0, 'no lantern: no caster, sun or not');
+  assert.equal(sp.sunParams[3], 1); assert.deepEqual([...sp.shadowIndex], [-1, -1, -1, -1, -1, -1]); assert.ok([...sp.pointParams].every((v) => v === 0)); assert.equal(sp.casters, 0, 'no lantern: no caster, sun or not');
   assert.ok(calls.some((c) => c[0] === 'colorMask' && c[1] === false), 'depth only'); assert.ok(calls.some((c) => c[0] === 'disable' && c[1] === 1), 'no culling under the light\'s projection');
   const bindNull = calls.findIndex((c) => c[0] === 'bindFramebuffer' && c[2] === null);
   assert.ok(bindNull > 0 && bindNull < firstClear, 'the canvas is back before the frame clears');
@@ -242,19 +242,20 @@ test('EL2: the renderer builds the pass with the lane, records the three draw ki
   r.setPointLights(new Float32Array([0, 0, 0, 10, 6, 2, 1, 14]), new Float32Array([1, 1, 1]));
   calls.length = 0;
   r.beginFrame(I, I, new Float32Array([0.45, 0.8, 0.35]), WORLD_FRAME);
-  assert.equal(sp.kind, 'point'); assert.deepEqual([...sp.shadowIndex], [1, -1, -1, -1], 'the eye\'s own light (at the origin, where the identity view puts the eye) is skipped');
-  assert.deepEqual([...sp.pointParams], [6, 2, 1, 14, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]); assert.equal(sp.casters, 1);
-  assert.equal(sp.stats.pointDraws, 6 * 4, 'six faces (the fake bundles carry no bounds: nothing is culled)');
+  assert.equal(sp.kind, 'point'); assert.deepEqual([...sp.shadowIndex], [1, -1, -1, -1, -1, -1], 'the eye\'s own light (at the origin, where the identity view puts the eye) is skipped');
+  assert.deepEqual([...sp.pointParams], [6, 2, 1, 14, ...new Array(20).fill(0)]); assert.equal(sp.casters, 1);
+  assert.equal(sp.stats.pointDraws, 6 * 3, 'six faces of the two sub-meshes and the terrain (the fake bundles carry no bounds: nothing is culled); EL6: the flat is a light flat (archive 210) and never casts from a lantern');
   assert.equal(calls.filter((c) => c[0] === 'clear' && c[1] === 256).length, 6);
-  assert.ok(calls.some((c) => c[0] === 'uniform1iv' && c[1] === 'uShadowIndex' && c[2][0] === 1 && c[2].length === 4), 'EL5: the indices go up as one int array');
+  assert.ok(calls.some((c) => c[0] === 'uniform1iv' && c[1] === 'uShadowIndex' && c[2][0] === 1 && c[2].length === 6), 'EL5: the indices go up as one int array');
   assert.ok(calls.some((c) => c[0] === 'uniform4fv' && c[1] === 'uSunShadowParams' && c[2][3] === 0), 'and the sun map is off');
   // frame 4: a destroyed mesh in last frame's records is skipped, a spectral flat and a concealed one cast nothing
   const w = drawWorld(r);
   r.destroyMesh(w.mesh);
   assert.equal(w.mesh._dead, true);
-  r.drawBillboards([{ archive: 210, record: 1, vao: {}, indexCount: 6, size: { w: 1, h: 1 }, conceal: { x: 2 } }], new Float32Array([1, 0, 0]), new Float32Array([0, 1, 0]));
+  r.textures.set('201_1', { id: 't2011' });
+  r.drawBillboards([{ archive: 201, record: 1, vao: {}, indexCount: 6, size: { w: 1, h: 1 }, conceal: { x: 2 } }], new Float32Array([1, 0, 0]), new Float32Array([0, 1, 0]));
   r.beginFrame(I, I, new Float32Array([0.45, 0.8, 0.35]), WORLD_FRAME);
-  assert.equal(sp.stats.pointDraws, 6 * 2, 'the terrain and the flat alone');
+  assert.equal(sp.stats.pointDraws, 6 * 1, 'the terrain alone (the flat is the lantern\'s own kind; the concealed one, of another archive, casts nothing)');
   // a panel frame records nothing and drops what it inherited
   drawWorld(r);
   assert.equal(sp.count, 3);
