@@ -13,6 +13,8 @@
 // it 404s and the picker is the source. Names are normalized to
 // UPPERCASE basenames - real ARENA2 ships uppercase, user folders vary.
 
+import { isTouchDevice } from '../ui/touchDevice.js';   // TI3
+
 const DB_NAME = 'project-dagger';
 const STORE = 'arena2';
 /** M-EXT: user-supplied music lives in its OWN store, and that is not
@@ -116,8 +118,10 @@ const mem = new Map(); // NAME -> Uint8Array
 // fell back to the in-page picker used to ingest the sky-less lean
 // set with no way out of it from the app. The shell's presence
 // (daggerShell, the preload bridge) outranks the touch sniff.
-const LEAN = typeof window !== 'undefined' && !window.daggerShell &&
-  ('ontouchstart' in window || (navigator?.maxTouchPoints ?? 0) > 0);
+// TI3: ...and the touch sniff is ui/touchDevice.js's law - a finger as
+// the PRIMARY pointer - so a touchscreen laptop in a browser is not lean
+// either.
+const LEAN = typeof window !== 'undefined' && !window.daggerShell && isTouchDevice();
 export const KEEP = (name, lean = LEAN) => /^TEXTURE\.\d+$/.test(name) ||
   /\.(BSA|COL|PAL|PAK|CFG|FNT|WLD|DEF|STD|IMG|CIF|RSC|RCI|SND|TXT|GFX|BSS|CFA)$/.test(name) ||   // U45 added BSS: the three compass needles, 116KB for all three; HC1 added CFA: TR2's riding sprites (MRED00I0/MRED01I0), which the deployed site had NEVER held - the horse and cart drew nothing there
   name === 'CLASSES.DAT' ||

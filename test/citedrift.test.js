@@ -655,7 +655,18 @@ const SOURCE_CITES = [
   ['bible/09-Testing/Testing.md', /keydown ladder \(exterior\.js:(\d+)-\d+\)/,
     EX, /addEventListener\('keydown', \(e\) => \{/],
   ['bible/10-UI/UI-Arc.md', /exterior\.js:(\d+)\. It is the only window/, EX, /createSpellbookWindow\(\{/],
-  ['bible/10-UI/Settings-Screen-Spec.md', /`exterior\.js:(\d+)`, `dungeon\.js:887`/, EX, /^ {6}fieldOfView\(\),$/],
+  // AUDIT QS6 F1, a fifth time and at a second door: this row names FIVE hosts
+  // and the table captured ONE, with a sixth number baked into the pick - so
+  // citeMerge bumped the LITERAL at the BOX1/TI3 merge and left the doc, and
+  // four of the five had been stale for waves (`worldModes.js:5648` for a line
+  // that is 5921, `world.js:8126` for 8836, `interior.js:297` for 329,
+  // `dungeon.js:887` for 959). Every one is captured now, against the
+  // projection each host really builds.
+  ['bible/10-UI/Settings-Screen-Spec.md', /`exterior\.js:(\d+)`, `dungeon\.js:\d+`/, EX, /^ {6}fieldOfView\(\),$/],
+  ['bible/10-UI/Settings-Screen-Spec.md', /`exterior\.js:\d+`, `dungeon\.js:(\d+)`/, 'src/scenes/dungeon.js', /^ {4}const proj = mirrorProjectionX\(perspective\(fieldOfView\(\), largeHudWorldAspect/],
+  ['bible/10-UI/Settings-Screen-Spec.md', /`worldModes\.js:(\d+)`, `world\.js:\d+`, `interior\.js:\d+`, `exterior\.js/, WM, /^ {4}const proj = mirrorProjectionX\(perspective\(fieldOfView\(\), largeHudWorldAspect/],
+  ['bible/10-UI/Settings-Screen-Spec.md', /`worldModes\.js:\d+`, `world\.js:(\d+)`, `interior\.js:\d+`, `exterior\.js/, WO, /^ {4}const proj = mirrorProjectionX\(perspective\(fieldOfView\(\), worldAspect/],
+  ['bible/10-UI/Settings-Screen-Spec.md', /`worldModes\.js:\d+`, `world\.js:\d+`, `interior\.js:(\d+)`, `exterior\.js/, 'src/scenes/interior.js', /^ {4}const proj = mirrorProjectionX\(perspective\(fieldOfView\(\), canvas\.clientWidth/],
   // ROAD-G G7 (review): the entry above reads the exterior number out of
   // that sentence and nothing else, so the sentence's ANCHOR cite - the
   // function the other five read - was the one cite in it no pin
@@ -736,7 +747,12 @@ const SOURCE_CITES = [
 // removed says so, rather than carrying a number that lands on a
 // stranger. Pinned as the absence.
 const NO_LINE_LEFT = [
-  [/`world\.js:4219-4222` and its `exterior\.js` twin, both DELETED by FX1/, 'no loot'],
+  // AUDIT QS6 F1 again: the number here names code that IS DELETED, so it can
+  // never be content-resolved and must never be moved - and baking it into the
+  // pick let citeMerge bump the LITERAL (4219-4222 -> 4245-4248) at a merge and
+  // leave the Ledger behind, breaking the pin over a clause nothing was wrong
+  // with. What this entry claims is the CLAUSE and the absence, not a line.
+  [/`world\.js:\d+-\d+` and its `exterior\.js` twin, both DELETED by FX1/, 'no loot'],
   [/`exterior\.js`'s inline rest-deps twin - DELETED, see the strike/, 'inTownOutside: true'],
 ];
 

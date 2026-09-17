@@ -146,13 +146,19 @@ const result = await page.evaluate(async ({ W, H }) => {
   const read = () => { const px = new Uint8Array(W * H * 4); gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, px); return px; };
 
   const frames = {};
-  const scene = (label, { lane, air, sun, withA, sky = false, night = false, withEmitter = true, emitterInFront = false, withFlameB = true, carried = false }) => {
+  const scene = (label, { lane, air, sun, withA, sky = false, night = false, withEmitter = true, emitterInFront = false, withFlameB = true, carried = false, contact = null }) => {
     r.setLightingLane(lane ? EL_LANE : null);
     r.setAir(!!air);
     if (r.air) r.air._now = () => 1000;   // the eye's clock frozen: no adaptation between frames or scenes, so a with/without comparison is the scene's alone
     const on = !!lane;
-    const L = lights(withA);
-    r.setPointLights(carried ? new Float32Array([...L, eye[0], eye[1] - 0.2, eye[2] - 0.6, 8]) : L, lanternColor(on, DUNGEON_LIGHT));   // EL7: `carried` adds the torch in the hand - a light in open air, half a unit ahead of the eye
+    let L = lights(withA);
+    if (carried) L = new Float32Array([...L, eye[0], eye[1] - 0.2, eye[2] - 0.6, 8]);   // EL7: `carried` adds the torch in the hand - a light in open air, half a unit ahead of the eye
+    if (contact !== null) {   // EL8: six dim lanterns beside the eye take the caster slots, so A and B are contact-shadowed, not mapped
+      const dummies = []; for (let k = 0; k < 6; k++) dummies.push(eye[0] + 0.4 * Math.cos(k), eye[1] - 0.5, eye[2] + 0.4 * Math.sin(k), 0.3);
+      L = new Float32Array([...dummies, ...L]);
+      r.setContact(contact);
+    } else r.setContact(true);
+    r.setPointLights(L, lanternColor(on, DUNGEON_LIGHT));
     if (sky && night) {
       r.setClearColor([0.02, 0.02, 0.05, 1]);
       r.setLighting(new Float32Array([0.09, 0.09, 0.12]), 0, new Float32Array([1, 0.95, 0.85]));
@@ -196,6 +202,8 @@ const result = await page.evaluate(async ({ W, H }) => {
   scene('dungeon-lane-emitFront', { lane: true, air: true, sun: false, withA: true, emitterInFront: true });
   scene('dungeon-lane-bareB', { lane: true, air: true, sun: false, withA: true, withFlameB: false });   // EL7: lantern B with no flame under it - no glare
   scene('dungeon-lane-carried', { lane: true, air: true, sun: false, withA: true, carried: true });   // EL7: a torch in the hand - no glare ball ahead of the eye
+  scene('dungeon-lane-contact', { lane: true, air: true, sun: false, withA: true, contact: true });   // EL8: A and B without caster slots - the contact march
+  scene('dungeon-lane-nocontact', { lane: true, air: true, sun: false, withA: true, contact: false });
   scene('dungeon-lane-noair', { lane: true, air: false, sun: false, withA: true });
   scene('exterior-classic', { lane: false, air: false, sun: true, withA: true });
   scene('exterior-lane', { lane: true, air: true, sun: true, withA: true });
@@ -210,9 +218,10 @@ const result = await page.evaluate(async ({ W, H }) => {
   const rect = (pts) => { const xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]); return { x0: Math.round(Math.min(...xs)), x1: Math.round(Math.max(...xs)), y0: Math.round(Math.min(...ys)), y1: Math.round(Math.max(...ys)) }; };
   const wallRect = rect([[-3, 0.6, -2], [3, 0.6, -2], [3, 3.2, -2], [-3, 3.2, -2]].map(project));
   const shadowRect = rect([[-1.5, 0, 0], [1.5, 0, 0], [1.5, 0, 1.5], [-1.5, 0, 1.5]].map(project));   // the floor just in front of the wall, A's shadow, out of B's reach? (B at x 7)
+  const footRect = rect([[-1.5, 0, -1.9], [1.5, 0, -1.9], [1.5, 0, -1.5], [-1.5, 0, -1.5]].map(project));   // EL8: the strip at the wall's foot on the eye's side - within the contact march of the wall, lit through it by A without a caster slot
   const openRect = rect([[3.5, 0, -5], [5, 0, -5], [5, 0, -3.5], [3.5, 0, -3.5]].map(project));   // floor beside the wall on A's side of it, five units from A, seen past the wall's edge
   const bPix = project(lanternB);
-  return { frames, wallRect, shadowRect, openRect, bPix, renderer: gl.getParameter(gl.RENDERER) };
+  return { frames, wallRect, shadowRect, openRect, footRect, bPix, renderer: gl.getParameter(gl.RENDERER) };
 }, { W, H });
 
 // ---- the numbers
@@ -250,6 +259,10 @@ const frontGlow = regionDiff(Uint8Array.from(front.px), noEmit, result.wallRect)
 console.log(`the same emitter in front of the wall: the bloom source sums ${front.bloom?.sum}, the wall's pixels differ by ${frontGlow.toFixed(4)} (its halo)`);
 if (!(front.bloom?.sum > 0)) failures.push('an emitter in view put nothing in the bloom source - the occlusion discards everything');
 if (!(frontGlow > 0.002)) failures.push(`an emitter in view left no halo on the wall (${frontGlow.toFixed(4)})`);
+// EL8: with no caster slot, lantern A lights the strip at the wall's foot through the wall; the contact march takes it back
+const footOn = regionMean(Uint8Array.from(result.frames['dungeon-lane-contact'].px), result.footRect), footOff = regionMean(Uint8Array.from(result.frames['dungeon-lane-nocontact'].px), result.footRect);
+console.log(`the strip at the wall's foot, A without a caster slot: ${footOff.toFixed(4)} with the contact march off, ${footOn.toFixed(4)} with it on`);
+if (!(footOn < footOff * 0.7)) failures.push(`the contact march does not shadow the wall's foot from a lantern behind it (${footOn.toFixed(4)} on vs ${footOff.toFixed(4)} off)`);
 // EL7: the glare needs a flame under it, and a light in the hand draws none
 const withFlame = result.frames['dungeon-lane'].bloom?.sum, bare = result.frames['dungeon-lane-bareB'].bloom?.sum, carried = result.frames['dungeon-lane-carried'].bloom?.sum;
 console.log(`lantern B's glare: the bloom source sums ${withFlame} with its flame flat, ${bare} without it, ${carried} with a torch in the hand added`);

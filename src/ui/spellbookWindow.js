@@ -272,6 +272,7 @@ export class SpellbookWindow {
     this.deleteSpellIndex = -1;
     this.presentedCost = 0;
     this._box = null;
+    this._boxMemo = null;   // BOX1
     this._noteRows = null;
     this._rows = [];
     this.offeredSpells = [];
@@ -686,6 +687,15 @@ export class SpellbookWindow {
     const price = this.tradePrice();
     const hasBook = (entity?.items ?? []).some(
       (it) => it.group === 'MiscItems' && it.templateIndex === SPELLBOOK_TEMPLATE_INDEX);
+    // BOX1 (2026-09-17, Mac: "When buying a spell, the dialouge ui Flickers
+    // between 2 seperate conversations"): a box's text is READ ONCE, when
+    // the box opens. The host's `rows(id)` is TextProvider's random-variant
+    // draw (townTalk.lines -> variantLinesById), and this window used to
+    // ask it again on every draw() - so a record with two variants (the
+    // trade lines are) flickered between them at frame rate. DFU's
+    // BuyButton_OnMouseClick reads the tokens once into the box
+    // (DaggerfallSpellBookWindow.cs:984-1000); so does this.
+    this._boxMemo = null;
     if (!hasBook) { this.top = 'noSpellbook'; return; }
     if (totalGoldAmount(entity) < price) { this.top = 'notEnoughGold'; return; }
     // The three bands (:984-990) are cureOfferMessageOffset's - DFU
@@ -929,7 +939,17 @@ export class SpellbookWindow {
     });
   }
 
+  /** BOX1: the three buy-mode boxes latch their rows on the first read
+   *  after the box opened (buyButton clears the memo); the delete and
+   *  sort prompts are constants and the rename box is live by design. */
   _boxRows() {
+    if (this.top === 'noSpellbook' || this.top === 'notEnoughGold' || this.top === 'trade') {
+      this._boxMemo ??= this._boxRowsNow();   // buyButton is the one opener and clears it
+      return this._boxMemo;
+    }
+    return this._boxRowsNow();
+  }
+  _boxRowsNow() {
     if (this.top === 'delete') return [DELETE_SPELL_PROMPT];
     if (this.top === 'sort') return [SORT_SPELLS_PROMPT];
     if (this.top === 'noSpellbook') {

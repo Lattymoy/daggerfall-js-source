@@ -36,8 +36,6 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
  *  killer no longer applies; each is owed a re-aim BY CONTENT in its own
  *  arc's next pass, not a positional bump. */
 const CARRIED = new Set([
-  'ba1.json::reverb-tail-no-decay',
-  'ba1.json::host-dungeon-flat-ambient',
   'if1.json::host-world-ungated',
   'soc1.json::S3-target-both-admitted',
   'soc1.json::S13-seen-stamped-on-first-tab',

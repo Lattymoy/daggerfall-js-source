@@ -180,7 +180,7 @@ test('EL3: the renderer builds the pass with the lane behind the door, sizes the
   r.beginFrame(P, I, sun, WORLD_FRAME);
   assert.equal(ap.width, 320); assert.equal(ap.height, 200);
   assert.equal(ap.targets.ao.w, 160); assert.equal(ap.targets.bloom.w, 80); assert.equal(ap.targets.depth, undefined, 'EL6: no depth image of its own');
-  assert.equal(calls.filter((c) => c[0] === 'texStorage2D').length, 1, 'the frame\'s depth TEXTURE (EL6: the one every pass reads)');
+  assert.equal(calls.filter((c) => c[0] === 'texStorage2D').length, 2, 'the frame\'s two depth TEXTURES (EL6: the one every pass reads; EL8: and the previous frame\'s, for the contact march)');
   assert.equal(ap.pending, true, 'a composite is owed');
   assert.ok(!calls.some((c) => c[0] === 'uniform1i' && c[1] === 'uAO'), 'EL6: no uAO upload in the world pass');
   assert.deepEqual([...ap.rect], [0, 0, 320, 200], 'the viewport, taken at prepare');

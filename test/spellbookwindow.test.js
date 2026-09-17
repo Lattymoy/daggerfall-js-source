@@ -987,6 +987,32 @@ test('U42 buy: Witches Festival halves the presented cost, with a floor of one',
   assert.equal(cheap.w.presentedCost, 1, '0 >> 1 is 0, which the floor lifts back to 1');
 });
 
+test('BOX1: the buy box reads its record ONCE per open - the host\'s rows() is a random-variant draw and used to be asked every frame (mutant: the memo dropped, or never cleared)', () => {
+  let n = 0;
+  const { w, entity } = shop([spell('Arc Bolt', 20), spell('Wildfire', 30)], { rows: (id) => [{ text: `[${id}] variant ${++n}: %a gold`, center: true }] });
+  entity.items = [{ group: 'MiscItems', templateIndex: SPELLBOOK_TEMPLATE_INDEX }];
+  entity.goldPieces = 100000;
+  w.buyButton();
+  assert.equal(w.top, 'trade');
+  const first = w._boxRows()[0].text;
+  assert.match(first, /variant 1:/);
+  for (let i = 0; i < 5; i++) assert.equal(w._boxRows()[0].text, first, `draw ${i}: the same line`);
+  assert.equal(n, 1, 'one read for the open box');
+  // the box closes and opens again (another spell): a fresh read, so the price line is this spell's
+  w.top = null; w.selectNext();
+  w.buyButton();
+  assert.equal(w.top, 'trade');
+  assert.match(w._boxRows()[0].text, /variant 2:/, 'a new box is a new read');
+  assert.equal(n, 2);
+  // the refusal boxes latch the same way
+  const noBook = shop([spell('Arc Bolt', 20)], { rows: (id) => [{ text: `[${id}] v${++n}`, center: true }] });
+  noBook.entity.items = [];
+  noBook.w.buyButton();
+  const nb = noBook.w._boxRows()[0].text;
+  assert.equal(noBook.w._boxRows()[0].text, nb);
+  assert.equal(n, 3);
+});
+
 test('U42 buy: the ladder is spellbook, then gold, then the haggle line', () => {
   // BuyButton_OnMouseClick (:975-1013), in DFU's exact order.
   const noBook = shop([spell('Arc Bolt', 20)]);

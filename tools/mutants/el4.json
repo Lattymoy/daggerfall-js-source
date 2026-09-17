@@ -1,317 +1,317 @@
 [
- {
-  "name": "pack-linear",
-  "file": "src/render/airPass.js",
-  "old": "  const v = (Math.log2(Math.max(x, 1e-9)) - range[0]) / (range[1] - range[0]);",
-  "new": "  const v = (x - range[0]) / (range[1] - range[0]);",
-  "tests": [
-   "test/el4_frame.test.js"
-  ]
- },
- {
-  "name": "unpack-linear",
-  "file": "src/render/airPass.js",
-  "old": "  return Math.pow(2, range[0] + v * (range[1] - range[0]));",
-  "new": "  return range[0] + v * (range[1] - range[0]);",
-  "tests": [
-   "test/el4_frame.test.js"
-  ]
- },
- {
-  "name": "adapt-no-clamp",
-  "file": "src/render/airPass.js",
-  "old": "  const target = Math.min(Math.max(AIR_ADAPT_KEY / Math.max(lum, 1e-6), AIR_ADAPT_MIN), AIR_ADAPT_MAX);",
-  "new": "  const target = AIR_ADAPT_KEY / Math.max(lum, 1e-6);",
-  "tests": [
-   "test/el4_frame.test.js"
-  ]
- },
- {
-  "name": "adapt-one-rate",
-  "file": "src/render/airPass.js",
-  "old": "  const rate = target > prev ? AIR_ADAPT_OPEN : AIR_ADAPT_CLOSE;",
-  "new": "  const rate = AIR_ADAPT_OPEN;",
-  "tests": [
-   "test/el4_frame.test.js"
-  ]
- },
- {
-  "name": "adapt-unbounded-dt",
-  "file": "src/render/airPass.js",
-  "old": "  const t = 1 - Math.exp(-Math.min(Math.max(dt, 0), AIR_ADAPT_MAX_DT) * rate);",
-  "new": "  const t = 1 - Math.exp(-Math.max(dt, 0) * rate);",
-  "tests": [
-   "test/el4_frame.test.js"
-  ]
- },
- {
-  "name": "adapt-max",
-  "file": "src/render/airPass.js",
-  "old": "export const AIR_ADAPT_MAX = 1.8;",
-  "new": "export const AIR_ADAPT_MAX = 4;",
-  "tests": [
-   "test/el4_frame.test.js"
-  ]
- },
- {
-  "name": "adapt-min",
-  "file": "src/render/airPass.js",
-  "old": "export const AIR_ADAPT_MIN = 0.7;",
-  "new": "export const AIR_ADAPT_MIN = 0.3;",
-  "tests": [
-   "test/el4_frame.test.js"
-  ]
- },
- {
-  "name": "adapt-rates-swapped",
-  "file": "src/render/airPass.js",
-  "old": "export const AIR_ADAPT_OPEN = 0.6;\nexport const AIR_ADAPT_CLOSE = 3.0;",
-  "new": "export const AIR_ADAPT_OPEN = 3.0;\nexport const AIR_ADAPT_CLOSE = 0.6;",
-  "tests": [
-   "test/el4_frame.test.js"
-  ]
- },
- {
-  "name": "glsl-adapt-range",
-  "file": "src/render/airPass.js",
-  "old": "  return exp2(texture(uAdapt, vec2(0.5)).r * ${AIR_ADAPT_LOG_RANGE[1] - AIR_ADAPT_LOG_RANGE[0]}.0 + (${AIR_ADAPT_LOG_RANGE[0]}.0));",
-  "new": "  return exp2(texture(uAdapt, vec2(0.5)).r * 4.0);",
-  "tests": [
-   "test/el4_frame.test.js"
-  ]
- },
- {
-  "name": "glsl-adapt-no-clamp",
-  "file": "src/render/airPass.js",
-  "old": "  float target = clamp(uAdaptParams.y / max(lum, 1e-6), uAdaptParams.z, uAdaptParams.w);",
-  "new": "  float target = uAdaptParams.y / max(lum, 1e-6);",
-  "tests": [
-   "test/el4_frame.test.js"
-  ]
- },
- {
-  "name": "glsl-lum-top-mip",
-  "file": "src/render/airPass.js",
-  "old": "  float lv = textureLod(uLum, vec2(0.5), ${Math.log2(AIR_LUM_SIZE)}.0).r;",
-  "new": "  float lv = texture(uLum, vec2(0.5)).r;",
-  "tests": [
-   "test/el4_frame.test.js"
-  ]
- },
- {
-  "name": "frame-no-realloc",
-  "file": "src/render/airPass.js",
-  "old": "    if (this.frame && this.frame.w === W && this.frame.h === H) return this.frame;",
-  "new": "    if (this.frame) return this.frame;",
-  "tests": [
-   "test/el4_frame.test.js"
-  ]
- },
- {
-  "name": "frame-target-not-set",
-  "file": "src/render/airPass.js",
-  "old": "    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, f.fbo);\n    setFrameTarget(f.fbo);",
-  "new": "    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, f.fbo);",
-  "tests": [
-   "test/el4_frame.test.js"
-  ]
- },
- {
-  "name": "adapt-images-start-dark",
-  "file": "src/render/airPass.js",
-  "old": "    const one = Math.round(packLog(1, AIR_ADAPT_LOG_RANGE) * 255);",
-  "new": "    const one = 0;",
-  "tests": [
-   "test/el4_frame.test.js"
-  ]
- },
- {
-  "name": "resolve-no-swap",
-  "file": "src/render/airPass.js",
-  "old": "    this.adaptIndex = 1 - this.adaptIndex;\n",
-  "new": "",
-  "tests": [
-   "test/el4_frame.test.js"
-  ]
- },
- {
-  "name": "resolve-dt-unbounded",
-  "file": "src/render/airPass.js",
-  "old": "    const dt = this._lastResolve ? Math.min(Math.max((now - this._lastResolve) / 1000, 0), AIR_ADAPT_MAX_DT) : 0;",
-  "new": "    const dt = this._lastResolve ? Math.max((now - this._lastResolve) / 1000, 0) : 0;",
-  "tests": [
-   "test/el4_frame.test.js"
-  ]
- },
- {
-  "name": "resolve-no-mipmap",
-  "file": "src/render/airPass.js",
-  "old": "    gl.bindTexture(gl.TEXTURE_2D, this.lum.tex);\n    gl.generateMipmap(gl.TEXTURE_2D);\n",
-  "new": "",
-  "tests": [
-   "test/el4_frame.test.js"
-  ]
- },
- {
-  "name": "resolve-frame-kept",
-  "file": "src/render/airPass.js",
-  "old": "    gl.bindFramebuffer(gl.FRAMEBUFFER, null);\n    setFrameTarget(null);\n    gl.viewport(0, 0, F.w, F.h);",
-  "new": "    gl.bindFramebuffer(gl.FRAMEBUFFER, null);\n    gl.viewport(0, 0, F.w, F.h);",
-  "tests": [
-   "test/el4_frame.test.js"
-  ]
- },
- {
-  "name": "resolve-no-threshold",
-  "file": "src/render/airPass.js",
-  "old": "    gl.uniform1f(P.bright.uThreshold, AIR_BRIGHT_THRESHOLD);",
-  "new": "    gl.uniform1f(P.bright.uThreshold, 0.0);",
-  "tests": [
-   "test/el4_frame.test.js"
-  ]
- },
- {
-  "name": "resolve-no-vignette",
-  "file": "src/render/airPass.js",
-  "old": "    this.grade = new Float32Array([AIR_BLOOM_STRENGTH, 1, AIR_VIGNETTE, AIR_CONTRAST]);",
-  "new": "    this.grade = new Float32Array([AIR_BLOOM_STRENGTH, 1, 0, AIR_CONTRAST]);",
-  "tests": [
-   "test/el4_frame.test.js"
-  ]
- },
- {
-  "name": "release-keeps-target",
-  "file": "src/render/airPass.js",
-  "old": "  release() {\n    if (this.frame) setFrameTarget(null);\n    this.pending = false;\n  }",
-  "new": "  release() {\n    this.pending = false;\n  }",
-  "tests": [
-   "test/el4_frame.test.js"
-  ]
- },
- {
-  "name": "rt-withtarget-canvas",
-  "file": "src/render/renderTarget.js",
-  "old": "  gl.bindFramebuffer(gl.FRAMEBUFFER, _frameTarget);   // EL4: the frame, or the canvas\n  gl.viewport(restoreViewport[0]",
-  "new": "  gl.bindFramebuffer(gl.FRAMEBUFFER, null);\n  gl.viewport(restoreViewport[0]",
-  "tests": [
-   "test/el4_frame.test.js"
-  ]
- },
- {
-  "name": "rt-finishvolume-canvas",
-  "file": "src/render/renderTarget.js",
-  "old": "  gl.bindFramebuffer(gl.FRAMEBUFFER, _frameTarget);   // EL4\n  gl.viewport",
-  "new": "  gl.bindFramebuffer(gl.FRAMEBUFFER, null);\n  gl.viewport",
-  "tests": [
-   "test/el4_frame.test.js"
-  ]
- },
- {
-  "name": "renderer-frame-in-panel",
-  "file": "src/render/renderer.js",
-  "old": "    this._frameFbo = this._air && !this._panelSaved ? this._air.beginFrameTarget(this.canvas.width, this.canvas.height) : null;",
-  "new": "    this._frameFbo = this._air ? this._air.beginFrameTarget(this.canvas.width, this.canvas.height) : null;",
-  "tests": [
-   "test/el4_frame.test.js"
-  ]
- },
- {
-  "name": "renderer-frame-not-bound",
-  "file": "src/render/renderer.js",
-  "old": "    this._frameFbo = this._air && !this._panelSaved ? this._air.beginFrameTarget(this.canvas.width, this.canvas.height) : null;",
-  "new": "    this._frameFbo = null;",
-  "tests": [
-   "test/el4_frame.test.js"
-  ]
- },
- {
-  "name": "renderer-air-off-no-release",
-  "file": "src/render/renderer.js",
-  "old": "    else { if (this._air) { this._air.release(); this._frameFbo = null; } this._air = null; }",
-  "new": "    else { this._air = null; }",
-  "tests": [
-   "test/el4_frame.test.js"
-  ]
- },
- {
-  "name": "renderer-no-adapt-loc",
-  "file": "src/render/renderer.js",
-  "old": "      a.ao = { adapt: gl.getUniformLocation(p, 'uAdapt') };",
-  "new": "      a.ao = { adapt: null };",
-  "tests": [
-   "test/el4_frame.test.js"
-  ]
- },
- {
-  "name": "lane-no-adapt",
-  "file": "src/render/enhancedLighting.js",
-  "old": "  float ex = uELExposure * elAdapt();   // EL4: the eye's own multiplier rides the scene's exposure\n  vec3 tm = elTonemap(lit * ex);",
-  "new": "  float ex = uELExposure;   // EL4\n  vec3 tm = elTonemap(lit * ex);",
-  "tests": [
-   "test/el4_frame.test.js"
-  ]
- },
- {
-  "name": "lane-dungeon-scale",
-  "file": "src/render/enhancedLighting.js",
-  "old": "export const EL_DUNGEON_AMBIENT_SCALE = 0.35;",
-  "new": "export const EL_DUNGEON_AMBIENT_SCALE = 0.6;",
-  "tests": [
-   "test/el4_frame.test.js"
-  ]
- },
- {
-  "name": "lane-dungeon-always",
-  "file": "src/render/enhancedLighting.js",
-  "old": "export function dungeonAmbient(on, rgb) {\n  if (!on) return rgb;",
-  "new": "export function dungeonAmbient(on, rgb) {",
-  "tests": [
-   "test/el4_frame.test.js"
-  ]
- },
- {
-  "name": "lane-trilight-unscaled",
-  "file": "src/render/enhancedLighting.js",
-  "old": "  if (!on || !tri) return tri;\n  const k = (c) =>",
-  "new": "  if (!on || tri) return tri;\n  const k = (c) =>",
-  "tests": [
-   "test/el4_frame.test.js"
-  ]
- },
- {
-  "name": "lane-spec-gloss",
-  "file": "src/render/enhancedLighting.js",
-  "old": "export const EL_SPEC_GLOSS = 24;",
-  "new": "export const EL_SPEC_GLOSS = 8;",
-  "tests": [
-   "test/el4_frame.test.js"
-  ]
- },
- {
-  "name": "lane-spec-dropped",
-  "file": "src/render/enhancedLighting.js",
-  "old": "    acc += sh * elAttenuation(d, uPointLights[i].w) * (max(dot(n, Ln), 0.0) + spec) * uPointColors[i];",
-  "new": "    acc += sh * elAttenuation(d, uPointLights[i].w) * max(dot(n, Ln), 0.0) * uPointColors[i];",
-  "tests": [
-   "test/el4_frame.test.js"
-  ]
- },
- {
-  "name": "farring-no-adapt",
-  "file": "src/render/farRing.js",
-  "old": "      gl.uniform1i(this.u.uAdapt, 11);\n",
-  "new": "",
-  "tests": [
-   "test/el4_frame.test.js"
-  ]
- },
- {
-  "name": "farring-adapt-dark",
-  "file": "src/render/farRing.js",
-  "old": "new Uint8Array([128, 128, 128, 255])",
-  "new": "new Uint8Array([0, 0, 0, 255])",
-  "tests": [
-   "test/el4_frame.test.js"
-  ]
- }
+  {
+    "name": "pack-linear",
+    "file": "src/render/airPass.js",
+    "old": "  const v = (Math.log2(Math.max(x, 1e-9)) - range[0]) / (range[1] - range[0]);",
+    "new": "  const v = (x - range[0]) / (range[1] - range[0]);",
+    "tests": [
+      "test/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "unpack-linear",
+    "file": "src/render/airPass.js",
+    "old": "  return Math.pow(2, range[0] + v * (range[1] - range[0]));",
+    "new": "  return range[0] + v * (range[1] - range[0]);",
+    "tests": [
+      "test/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "adapt-no-clamp",
+    "file": "src/render/airPass.js",
+    "old": "  const target = Math.min(Math.max(AIR_ADAPT_KEY / Math.max(lum, 1e-6), AIR_ADAPT_MIN), AIR_ADAPT_MAX);",
+    "new": "  const target = AIR_ADAPT_KEY / Math.max(lum, 1e-6);",
+    "tests": [
+      "test/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "adapt-one-rate",
+    "file": "src/render/airPass.js",
+    "old": "  const rate = target > prev ? AIR_ADAPT_OPEN : AIR_ADAPT_CLOSE;",
+    "new": "  const rate = AIR_ADAPT_OPEN;",
+    "tests": [
+      "test/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "adapt-unbounded-dt",
+    "file": "src/render/airPass.js",
+    "old": "  const t = 1 - Math.exp(-Math.min(Math.max(dt, 0), AIR_ADAPT_MAX_DT) * rate);",
+    "new": "  const t = 1 - Math.exp(-Math.max(dt, 0) * rate);",
+    "tests": [
+      "test/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "adapt-max",
+    "file": "src/render/airPass.js",
+    "old": "export const AIR_ADAPT_MAX = 1.8;",
+    "new": "export const AIR_ADAPT_MAX = 4;",
+    "tests": [
+      "test/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "adapt-min",
+    "file": "src/render/airPass.js",
+    "old": "export const AIR_ADAPT_MIN = 0.7;",
+    "new": "export const AIR_ADAPT_MIN = 0.3;",
+    "tests": [
+      "test/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "adapt-rates-swapped",
+    "file": "src/render/airPass.js",
+    "old": "export const AIR_ADAPT_OPEN = 0.6;\nexport const AIR_ADAPT_CLOSE = 3.0;",
+    "new": "export const AIR_ADAPT_OPEN = 3.0;\nexport const AIR_ADAPT_CLOSE = 0.6;",
+    "tests": [
+      "test/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "glsl-adapt-range",
+    "file": "src/render/airPass.js",
+    "old": "  return exp2(texture(uAdapt, vec2(0.5)).r * ${AIR_ADAPT_LOG_RANGE[1] - AIR_ADAPT_LOG_RANGE[0]}.0 + (${AIR_ADAPT_LOG_RANGE[0]}.0));",
+    "new": "  return exp2(texture(uAdapt, vec2(0.5)).r * 4.0);",
+    "tests": [
+      "test/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "glsl-adapt-no-clamp",
+    "file": "src/render/airPass.js",
+    "old": "  float target = clamp(uAdaptParams.y / max(lum, 1e-6), uAdaptParams.z, uAdaptParams.w);",
+    "new": "  float target = uAdaptParams.y / max(lum, 1e-6);",
+    "tests": [
+      "test/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "glsl-lum-top-mip",
+    "file": "src/render/airPass.js",
+    "old": "  float lv = textureLod(uLum, vec2(0.5), ${Math.log2(AIR_LUM_SIZE)}.0).r;",
+    "new": "  float lv = texture(uLum, vec2(0.5)).r;",
+    "tests": [
+      "test/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "frame-no-realloc",
+    "file": "src/render/airPass.js",
+    "old": "    if (this.frame && this.frame.w === W && this.frame.h === H) return this.frame;",
+    "new": "    if (this.frame) return this.frame;",
+    "tests": [
+      "test/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "frame-target-not-set",
+    "file": "src/render/airPass.js",
+    "old": "    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, f.depth, 0);\n    setFrameTarget(f.fbo);",
+    "new": "    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, f.depth, 0);",
+    "tests": [
+      "test/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "adapt-images-start-dark",
+    "file": "src/render/airPass.js",
+    "old": "    const one = Math.round(packLog(1, AIR_ADAPT_LOG_RANGE) * 255);",
+    "new": "    const one = 0;",
+    "tests": [
+      "test/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "resolve-no-swap",
+    "file": "src/render/airPass.js",
+    "old": "    this.adaptIndex = 1 - this.adaptIndex;\n",
+    "new": "",
+    "tests": [
+      "test/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "resolve-dt-unbounded",
+    "file": "src/render/airPass.js",
+    "old": "    const dt = this._lastResolve ? Math.min(Math.max((now - this._lastResolve) / 1000, 0), AIR_ADAPT_MAX_DT) : 0;",
+    "new": "    const dt = this._lastResolve ? Math.max((now - this._lastResolve) / 1000, 0) : 0;",
+    "tests": [
+      "test/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "resolve-no-mipmap",
+    "file": "src/render/airPass.js",
+    "old": "    gl.bindTexture(gl.TEXTURE_2D, this.lum.tex);\n    gl.generateMipmap(gl.TEXTURE_2D);\n",
+    "new": "",
+    "tests": [
+      "test/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "resolve-frame-kept",
+    "file": "src/render/airPass.js",
+    "old": "    gl.bindFramebuffer(gl.FRAMEBUFFER, null);\n    setFrameTarget(null);\n    gl.viewport(0, 0, F.w, F.h);",
+    "new": "    gl.bindFramebuffer(gl.FRAMEBUFFER, null);\n    gl.viewport(0, 0, F.w, F.h);",
+    "tests": [
+      "test/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "resolve-no-threshold",
+    "file": "src/render/airPass.js",
+    "old": "    gl.uniform1f(P.bright.uThreshold, AIR_BRIGHT_THRESHOLD);",
+    "new": "    gl.uniform1f(P.bright.uThreshold, 0.0);",
+    "tests": [
+      "test/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "resolve-no-vignette",
+    "file": "src/render/airPass.js",
+    "old": "    this.grade = new Float32Array([AIR_BLOOM_STRENGTH, 1, AIR_VIGNETTE, AIR_CONTRAST]);",
+    "new": "    this.grade = new Float32Array([AIR_BLOOM_STRENGTH, 1, 0, AIR_CONTRAST]);",
+    "tests": [
+      "test/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "release-keeps-target",
+    "file": "src/render/airPass.js",
+    "old": "  release() {\n    if (this.frame) setFrameTarget(null);\n    this.pending = false;\n  }",
+    "new": "  release() {\n    this.pending = false;\n  }",
+    "tests": [
+      "test/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "rt-withtarget-canvas",
+    "file": "src/render/renderTarget.js",
+    "old": "  gl.bindFramebuffer(gl.FRAMEBUFFER, _frameTarget);   // EL4: the frame, or the canvas\n  gl.viewport(restoreViewport[0]",
+    "new": "  gl.bindFramebuffer(gl.FRAMEBUFFER, null);\n  gl.viewport(restoreViewport[0]",
+    "tests": [
+      "test/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "rt-finishvolume-canvas",
+    "file": "src/render/renderTarget.js",
+    "old": "  gl.bindFramebuffer(gl.FRAMEBUFFER, _frameTarget);   // EL4\n  gl.viewport",
+    "new": "  gl.bindFramebuffer(gl.FRAMEBUFFER, null);\n  gl.viewport",
+    "tests": [
+      "test/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "renderer-frame-in-panel",
+    "file": "src/render/renderer.js",
+    "old": "    this._frameFbo = this._air && !this._panelSaved ? this._air.beginFrameTarget(this.canvas.width, this.canvas.height) : null;",
+    "new": "    this._frameFbo = this._air ? this._air.beginFrameTarget(this.canvas.width, this.canvas.height) : null;",
+    "tests": [
+      "test/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "renderer-frame-not-bound",
+    "file": "src/render/renderer.js",
+    "old": "    this._frameFbo = this._air && !this._panelSaved ? this._air.beginFrameTarget(this.canvas.width, this.canvas.height) : null;",
+    "new": "    this._frameFbo = null;",
+    "tests": [
+      "test/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "renderer-air-off-no-release",
+    "file": "src/render/renderer.js",
+    "old": "    else { if (this._air) { this._air.release(); this._frameFbo = null; } this._air = null; }",
+    "new": "    else { this._air = null; }",
+    "tests": [
+      "test/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "renderer-no-adapt-loc",
+    "file": "src/render/renderer.js",
+    "old": "      a.ao = { adapt: gl.getUniformLocation(p, 'uAdapt') };",
+    "new": "      a.ao = { adapt: null };",
+    "tests": [
+      "test/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "lane-no-adapt",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  float ex = uELExposure * elAdapt();   // EL4: the eye's own multiplier rides the scene's exposure\n  vec3 tm = elTonemap(lit * ex);",
+    "new": "  float ex = uELExposure;   // EL4\n  vec3 tm = elTonemap(lit * ex);",
+    "tests": [
+      "test/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "lane-dungeon-scale",
+    "file": "src/render/enhancedLighting.js",
+    "old": "export const EL_DUNGEON_AMBIENT_SCALE = 0.35;",
+    "new": "export const EL_DUNGEON_AMBIENT_SCALE = 0.6;",
+    "tests": [
+      "test/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "lane-dungeon-always",
+    "file": "src/render/enhancedLighting.js",
+    "old": "export function dungeonAmbient(on, rgb) {\n  if (!on) return rgb;",
+    "new": "export function dungeonAmbient(on, rgb) {",
+    "tests": [
+      "test/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "lane-trilight-unscaled",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  if (!on || !tri) return tri;\n  const k = (c) =>",
+    "new": "  if (!on || tri) return tri;\n  const k = (c) =>",
+    "tests": [
+      "test/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "lane-spec-gloss",
+    "file": "src/render/enhancedLighting.js",
+    "old": "export const EL_SPEC_GLOSS = 24;",
+    "new": "export const EL_SPEC_GLOSS = 8;",
+    "tests": [
+      "test/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "lane-spec-dropped",
+    "file": "src/render/enhancedLighting.js",
+    "old": "    acc += sh * elAttenuation(d, uPointLights[i].w) * (max(dot(n, Ln), 0.0) + spec) * uPointColors[i];",
+    "new": "    acc += sh * elAttenuation(d, uPointLights[i].w) * max(dot(n, Ln), 0.0) * uPointColors[i];",
+    "tests": [
+      "test/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "farring-no-adapt",
+    "file": "src/render/farRing.js",
+    "old": "      gl.uniform1i(this.u.uAdapt, 11);\n",
+    "new": "",
+    "tests": [
+      "test/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "farring-adapt-dark",
+    "file": "src/render/farRing.js",
+    "old": "new Uint8Array([128, 128, 128, 255])",
+    "new": "new Uint8Array([0, 0, 0, 255])",
+    "tests": [
+      "test/el4_frame.test.js"
+    ]
+  }
 ]

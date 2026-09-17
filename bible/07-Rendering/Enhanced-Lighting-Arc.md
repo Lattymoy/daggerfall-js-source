@@ -736,3 +736,67 @@ without, and not for a torch added in the hand.
 (three cascades, the compile counts, the glare's presence test and size,
 the rig's record from drawCharacter alone). tools/mutants/el7.json (26).
 
+## EL8 - THE CONTACT AND THE CADENCE (2026-09-17, Mac: "1. Screen space contact shadows 2. Continue to find ways to improve performance while retaining quality")
+
+**Contact shadows.** Six lanterns hold caster slots; the forty-two
+others lit through every wall (EL5's lantern behind the gate, at a
+smaller scale: the strip at a wall's foot, lit from the far side). Now
+every lantern WITHOUT a slot marches toward its light through the
+frame's depth: `contactShadow(wp, n, toLight, dist)` (`AIR_CONTACT_GLSL`,
+after `SHADOW_GLSL` in the four lane shaders) takes `AIR_CONTACT_STEPS`
+(6) along the light ray over `AIR_CONTACT_LENGTH` (0.6 units, or the
+distance to the light if nearer), reprojects each point into the
+PREVIOUS frame (`uPrevVP`, `uPrevProjInfo`) and, where the depth there
+is in front of the point by less than `AIR_CONTACT_THICKNESS` (0.8), the
+lantern is shadowed down to `AIR_CONTACT_FLOOR` (0.15). The previous
+frame's depth because the world pass writes this frame's as it goes: the
+frame image carries TWO depth textures and `beginFrameTarget` ping-pongs
+them (`depthIndex`, `prevDepth`, cleared at birth; `prevVP` kept by
+`prepare`), and the first frame, with no previous, marches nothing
+(`prevValid`). It is a contact shadow: a lantern behind a wall still
+lights the room's far side, and only the 0.6 units nearest an occluder
+darken - a foot, a sill, a doorframe's edge - which is the part the eye
+reads. The march runs only in the lane's world frames: never from the
+sprite or studio targets nor the saved panel (`_uploadNoContact` puts the
+zero params and a bare image on the unit). `?contact=off` the door,
+`setContact` the renderer's switch.
+
+**The caster table.** `shadowOfLight` and the lit block walked the
+caster slots per light (six compares per lantern per fragment, forty-eight
+lanterns). `uCasterOf[48]` carries light i's slot, -1 for none, one
+lookup; the shadow pass fills `casterOf` as it assigns slots.
+
+**The cadence.** Per frame the shadow pass drew three cascades and six
+lanterns' six faces: thirty-nine depth replays of the visible world. Now
+the far cascade (the town, 240 units) redraws every
+`SHADOW_FAR_CASCADE_EVERY` (2) frames and keeps its matrix until it does
+(`_sunVPNew` holds the new one, `sunVP` the drawn one; the receiver
+reads what was drawn); the casters beyond `SHADOW_NEAR_CASTERS` (2)
+redraw every `SHADOW_FAR_CASTER_EVERY` (3) frames, staggered
+`(frameNo + k) % 3` so at most two far lanterns draw in one frame - and
+at once when the slot's light changed (`_slotLight`: a lantern that
+walked in, a slot re-assigned), so no frame reads another lantern's
+faces. Twenty-two and a half replays a frame on average where it was
+thirty-nine;
+the near cascade and the two nearest lanterns every frame, so what is
+close is never stale. `stats.cascadesDrawn` and `stats.facesDrawn`
+count it.
+
+**`?perf`.** `render/perfMeter.js`: the frame's GPU time from
+`beginFrame` to the resolve on `EXT_disjoint_timer_query_webgl2` (Chrome
+has it; where the browser does not the line carries the counts alone)
+and the lane's counts - draws, cascades and sun draws, casters, faces and
+lantern draws, culled records, emitters, glares, shafts - one console
+line every `PERF_EVERY` (120) world frames. This session cannot see Mac's
+GPU; this is how Mac can.
+
+**The probe's check.** A and B with no caster slot (six dim lanterns
+beside the eye take the six): the strip at the wall's foot on the eye's
+side, lit through the wall by A, reads 0.2019 with the march off and
+0.1060 with it on; the open floor, the glares (446 with the flame, none
+without) and the wall's far side unchanged.
+
+**Pins:** test/el8_contact.test.js (4); the el2/el3/el5 pins re-aimed
+(the table's uniform, two depth textures on the frame, the cadence's
+counts). tools/mutants/el8.json (32).
+
