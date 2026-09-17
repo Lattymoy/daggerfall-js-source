@@ -17,7 +17,7 @@
 //
 // HOW IT DRAWS, and why this needs no renderer change at all: the port
 // has ALREADY shipped a first-person pass. renderCharacterSprite
-// (render/renderer.js:873) binds an offscreen target with its OWN depth
+// (render/renderer.js:898) binds an offscreen target with its OWN depth
 // renderbuffer, clears colour AND depth, swaps the frame's proj/view for
 // ones the caller supplies, draws, and restores; drawScreenOverlayQuad
 // (:987) composites it fullscreen with an alpha cut and no depth test.
@@ -75,7 +75,7 @@ import { WEAPONS } from '../characters/weapons.js';
 import { materialName } from '../systems/itemInfo.js';
 import { composeWornArmor, shadowSkinRows, fpWornAdds, mwArmorRecords, mwClothingRecord, CLOTHING_NAME } from '../formats/mwItemMap.js';
 import { correctTexturePath, correctActorModelPath, wrapModes, warningImage, decodeTextureImage } from '../formats/mwTexture.js';
-import { diffuseAt } from '../formats/mwNifMesh.js';
+import { diffuseAt, emissiveAt } from '../formats/mwNifMesh.js';   // MWT2: the emission the pass has always resolved and never read
 
 // MW-LOAD (2026-09-08, Mac: "improve the load time when Morrowind assets
 // are enabled"): THE ARCHIVE IS OPENED, NOT READ, AND THIS FILE IS ITS
@@ -409,7 +409,12 @@ export const FP_FIELD_OF_VIEW = Math.PI / 3;
 /** MW-D11: nine floats became eleven - [pos.xyz, colour.rgb, normal.xyz,
  *  uv.xy]. Stated once, here, because the pack and the VAO have to agree
  *  and a second copy of the number is how they stop agreeing. */
-export const FP_FLOATS = 11;
+// MWT2: 14, not 11 - three more for the EMISSION. An emissive surface's
+// diffuse is forced BLACK by the reference's own law (rule 63's
+// LightMode_Emissive arm), so without this channel a self-illuminated
+// mesh - the torch's flame above all - is drawn black times a texture
+// times the scene's light, which is black.
+export const FP_FLOATS = 14;
 
 /** Rule 54's placement, in the pass's axes: the camera node's rig-space
  *  translation, with the Z-up basis turned into the renderer's Y-up. */
@@ -440,7 +445,7 @@ export function armReach(eye, unionBounds) {
 /**
  * PACK THE ASSEMBLY for drawCharacter's vertex stream: 9 floats per
  * vertex, [pos.xyz, colour.rgb, normal.xyz], NON-INDEXED, because
- * drawCharacter issues drawArrays (renderer.js:813). The MW readers hand
+ * drawCharacter issues drawArrays (renderer.js:838). The MW readers hand
  * back indexed triangles, so the indices are expanded here.
  *
  * NORMALS ARE COMPUTED, not read. poseAssembly skins positions with a
@@ -454,7 +459,7 @@ export function armReach(eye, unionBounds) {
  * left arm is lit inside-out - dark where the right arm is bright - and
  * that is a lighting bug that reads as "the mesh is wrong" rather than
  * as "the mirror is wrong". drawCharacter disables back-face culling
- * (renderer.js:811), so the winding costs nothing else.
+ * (renderer.js:836), so the winding costs nothing else.
  */
 export function packFpArm(pieces, out = null) {
   let tris = 0;
@@ -508,6 +513,13 @@ export function packFpArm(pieces, out = null) {
         buf[o++] = nx; buf[o++] = ny; buf[o++] = nz;
         buf[o++] = uvs ? uvs[vi] : 0;
         buf[o++] = uvs ? uvs[vi + 1] : 0;
+        // MWT2: the reference adds the emission INTO the lighting sum and
+        // multiplies the texture by the whole of it (objects.frag's
+        // `gl_FragData[0].xyz *= lighting`, lighting.glsl's
+        // `... + getEmissionColor()`), so an emissive surface keeps its
+        // picture and stops caring what the room is lit by.
+        const [er, eg, eb] = emissiveAt(mat, cols, idx[i + k]);
+        buf[o++] = er; buf[o++] = eg; buf[o++] = eb;
       }
     }
     const count = (idx.length / 3) * 3;
@@ -943,6 +955,30 @@ export function torchPartPaths({ torch = false, allLights, has = null }) {
  *  skeletonHasBone test the weapon's typed bone takes, injectable for
  *  a fixture without the bone). */
 export const TORCH_BONE = 'Shield Bone';
+/**
+ * MWT1 (2026-09-17, Mac: the Morrowind model's torch "is positioned
+ * incorrectly") - THE ATTITUDE A HELD LIGHT IS GIVEN, AND ONLY A LIGHT.
+ *
+ * The bone was right and the rotation was missing. `SceneUtil::attach`
+ * puts ONE PositionAttitudeTransform between the actor's bone and the
+ * attached model, and the only rotation it can carry is the caller's
+ * `attitude` - which `ActorAnimation::attach` passes for `isLight` ALONE
+ * (actoranimation.cpp:97-103) and never for a weapon (:104-105). It is an
+ * extra -90 degrees about X, and this port's own reference notes wrote it
+ * down at `02-Formats/Morrowind-Rules.md:3228` ("a held light (the torch
+ * in the player's left hand) gets an extra -90 deg X rotation passed as
+ * attitude") beside the two engine-injected transforms it DID port. The
+ * torch hung at Shield Bone unrotated: the right bone, the wrong way up.
+ *
+ * Rx(-90) row-major, which is the shape `preTransform` already takes for
+ * the arrow (`{ a: 3x3, t: 3 }`, applied to the positions before the
+ * bone) - the same place in the chain the reference's PAT sits, and the
+ * bone carries no "Left" so no mirror intervenes.
+ */
+export const LIGHT_ATTITUDE = Object.freeze({
+  a: Object.freeze([1, 0, 0, 0, 0, 1, 0, -1, 0]),
+  t: Object.freeze([0, 0, 0]),
+});
 export function resolveTorchPart({ torch = false, allLights, find, skeletonBytes, has = null, hasBone = null }) {
   const notes = [];
   const parts = [];
@@ -955,8 +991,8 @@ export function resolveTorchPart({ torch = false, allLights, find, skeletonBytes
   if (!arc) { notes.push(`torch: ${path} (${rec.id}) is not in your archives`); return { parts, torchInfo, notes }; }
   const carries = hasBone ? hasBone(TORCH_BONE) : skeletonHasBone(skeletonBytes, TORCH_BONE);
   if (!carries) { notes.push(`torch: this skeleton has no "${TORCH_BONE}" - nowhere to hold it`); return { parts, torchInfo, notes }; }
-  parts.push({ slot: 'torch', bones: [TORCH_BONE], bytes: arc.get(path).slice() });
-  torchInfo = { id: rec.id, name: rec.name, model: rec.model, bone: TORCH_BONE, fire: !!rec.fire };
+  parts.push({ slot: 'torch', bones: [TORCH_BONE], bytes: arc.get(path).slice(), preTransform: LIGHT_ATTITUDE });   // MWT1
+  torchInfo = { id: rec.id, name: rec.name, model: rec.model, bone: TORCH_BONE, fire: !!rec.fire, attitude: true };
   return { parts, torchInfo, notes };
 }
 

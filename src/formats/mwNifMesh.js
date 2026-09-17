@@ -311,6 +311,43 @@ export function diffuseAt(material, colors, i) {
 }
 
 /**
+ * MWT2 (2026-09-17, Mac: the Morrowind model's torch "isnt lit") - THE
+ * EMISSION, which this file has always RESOLVED and nobody has ever read.
+ *
+ * `resolveMaterial` above already ports the reference's two emissive laws
+ * exactly: `LightMode_Emissive` forces the DIFFUSE and the AMBIENT to
+ * BLACK ("the surface is lit only by its emissive term", :2895-2902), and
+ * `VertexMode_SrcEmissive` names the vertex colour as the emission. Then
+ * `packFpArm` wrote only `diffuseAt` into the buffer and the character
+ * fragment had no emission term at all (its own comment said so - "C4b -
+ * no emission", written when the only meshes on that program were the
+ * voxel rigs). So a self-illuminated Morrowind surface was drawn with a
+ * BLACK diffuse, times a texture, times the scene's light: black. The
+ * torch's flame is that surface, and a torch whose flame is black is a
+ * stick.
+ *
+ * This is `diffuseAt`'s mirror, on the reference's own substitution law
+ * (rule 63): the vertex colour IS the emission where the mode names it,
+ * the material's own emissive otherwise.
+ *
+ * @param material resolveMaterial's output
+ * @param colors the geometry's colour array, or null
+ * @param i vertex index
+ * @returns the EMISSION colour for that vertex, [r,g,b]
+ */
+export function emissiveAt(material, colors, i) {
+  const m = material ? material.vertexColorMode : VERTEX_COLOR_MODE.None;
+  if (colors && m === VERTEX_COLOR_MODE.Emission) {
+    return [colors[i * 4], colors[i * 4 + 1], colors[i * 4 + 2]];
+  }
+  // A material with no emissive field at all reads as NO emission rather
+  // than throwing: `resolveMaterial` always writes one, but this is the
+  // channel whose absence must never cost a frame, and a missing glow is
+  // the safe direction where a thrown pack is a rig that does not draw.
+  return material?.emissive ?? [0, 0, 0];
+}
+
+/**
  * Flatten a parsed NIF into draw-ready batches.
  * @param {{records:object[], roots:number[]}} nif - from parseNif.
  * @param {{includeHidden?: boolean}} [opts]

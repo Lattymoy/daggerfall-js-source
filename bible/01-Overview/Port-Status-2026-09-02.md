@@ -298,7 +298,7 @@ reference surface absent · **Departure** = deliberate, ledgered.
 |---|---|---|---|
 | **formats-core** | Verbatim | **Verbatim** | 46/50 API classes cited, `API/Save` 14/14. The malformed-CIF runaway parse was in the AUDIT-44 wave. Residue: `DFValidator`, `PowerOfTwo`. |
 | **formats-game** | Verbatim readers / broken consumer | **Verbatim** | The `ItemRecord` conversions were in the wave; ROAD-A A4 took the classic-import stragglers (building-level MAPSAVE, the native bank record, `LegacyArtifactIndexBitfieldCheck`). ~~Ledger row `:650`'s one residue is the phone path - no zip arm in the saves picker, a desktop-first charter call.~~ **CLOSED (OT1, 2026-09-10): the saves picker took the ARENA2 door's zip arm, and the row is struck whole.** |
-| **formats-mw** | Departure lane, faithful within it | **Departure lane, now consumed** | `clipSweepTimes` has a production caller: `combat/fpArm.js:1636` runs the whole-clip reach sweep the superseded page said had never run in the game. 17 modules / 8,842 lines. |
+| **formats-mw** | Departure lane, faithful within it | **Departure lane, now consumed** | `clipSweepTimes` has a production caller: `combat/fpArm.js:1672` runs the whole-clip reach sweep the superseded page said had never run in the game. 17 modules / 8,842 lines. |
 | **world-terrain** | Near-1:1 | **Near-1:1** | ROAD-A A1 moved the texture season onto `DaggerfallDateTime.SeasonValue` - climate swaps, the winter sunlight term and sky selection - and demoted `?season` to a debug override. The lightning flash stays a recorded enhanced-lane departure. |
 | **world-layout** | Near-1:1 | **Near-1:1** | `rmbLayout`'s shared-block mutation is gated: `attachWindmillRecord` runs only when `enhanced` is true, is idempotent by a `subs.findIndex(r => r?.windmill)` guard, and the header names `subRecords.length` as the count three subsystems bind on (`world/rmbLayout.js:139-150` the gated call, `:179` the guard). |
 | **scenes-world** | Law 1:1 / seams broken | **Near-1:1** | `currentWeatherKey` reads a live getter (`world.js:5138`). Region identity, the quest region/vampire faction seams and `CleanupUntrackedObjects` were the wave; `world.js:3016` carries the sweep and `hostMagic.js:608` its missile half. |
@@ -594,7 +594,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   `Utility/ViewportChanger.cs:52-61` and `HUDCrosshair.cs:43-52` are a dozen
   lines each; the cost is the seam. `gl.viewport` is set full-canvas at
   four sites inside the renderer's own frame brackets
-  (`render/renderer.js:1574, :1548, :2048, :2224`) and the 2D passes
+  (`render/renderer.js:1607, :1581, :2081, :2257`) and the 2D passes
   need the full canvas back. D10 withdrew one clause as stale with
   evidence: there are no screen-to-ray conversions to fix, because the
   port's activation ray is the camera's forward vector, not a pixel

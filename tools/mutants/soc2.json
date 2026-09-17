@@ -38,8 +38,8 @@
   {
     "name": "C5-made-up-kind-sent",
     "file": "src/net/online.js",
-    "old": "if (!this.acct || !act || typeof act !== 'object' || !Object.prototype.hasOwnProperty.call(SOCIAL_ACTS, act.k)) return false;",
-    "new": "if (!this.acct || !act || typeof act !== 'object' || typeof act.k !== 'string') return false;",
+    "old": "    const shaped = validSocialAct(act);\n    if (!shaped) return false;",
+    "new": "    const shaped = act;",
     "tests": [
       "test/soc2_session.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "C6-act-without-account",
     "file": "src/net/online.js",
-    "old": "if (!this.acct || !act || typeof act !== 'object' || !Object.prototype.hasOwnProperty.call(SOCIAL_ACTS, act.k)) return false;",
-    "new": "if (!act || typeof act !== 'object' || !Object.prototype.hasOwnProperty.call(SOCIAL_ACTS, act.k)) return false;",
+    "old": "  sendSocial(act) {\n    if (!this.acct) return false;",
+    "new": "  sendSocial(act) {",
     "tests": [
       "test/soc2_session.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "C13-stale-invite-after-joining",
     "file": "src/net/social.js",
-    "old": "if (f.party) this.invites.delete(f.party.id);   // seated: that invite is spent",
-    "new": "",
+    "old": "        const spent = !!f.party && this.invites.delete(f.party.id);   // seated: that invite is spent",
+    "new": "        const spent = !!f.party;",
     "tests": [
       "test/soc2_session.test.js"
     ]

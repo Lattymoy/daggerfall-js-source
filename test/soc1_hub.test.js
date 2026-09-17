@@ -293,9 +293,22 @@ test('SOC1 hub: presence - a friend\'s hello and leave reach its friends alone, 
   assert.equal(ofKind(c, 'presence').length, 0, 'c is nobody\'s friend and hears no presence');
   const seenAtB2 = r.store.get('acct:acct-b').seen;
   assert.equal(seenAtB2, now() - 600, 'the record takes every hello\'s clock');
+  const atDrop = now();
   await r.drop(b); tick();
   assert.deepEqual(lastOf(a, 'presence').peers, ['peer-b2']); assert.equal(lastOf(a, 'presence').online, true, 'one tab of two gone: still online');
   assert.equal(r.store.get('acct:acct-b').seen, seenAtB2, 'seen is the hello\'s until the last tab goes');
+  // AUDIT QS6 F7's FOURTH CATCH, and it turned out to be a mutant with no
+  // victim. `S13-seen-stamped-on-first-tab` SURVIVED once the sweep made
+  // every record apply again, so the question was what stamping `next`
+  // unconditionally would COST - and the answer is nothing: the store is
+  // written only when the last tab goes (`if (gone) await
+  // this._putAcct(...)`, pinned by the line above) and a friend's
+  // presence row never reads `rec.seen` while the account is online
+  // (`_rowOf`: `seen: socks.length ? now : rec.seen`). So the record is
+  // marked EQUIVALENT with that reasoning rather than pinned by a claim
+  // the code does not make. What is asserted here is the law itself.
+  assert.equal(lastOf(a, 'presence').seen, atDrop,
+    'an ONLINE account\'s row reads the clock AT THE FRAME, never the record - `seen` is what you say about somebody who is not here');
   tick(5000);
   await r.drop(b2); tick();
   assert.deepEqual(lastOf(a, 'presence'), { t: 'social', k: 'presence', acct: 'acct-b', name: 'b', online: false, seen: now() - 600, peers: [] }, 'the last tab gone: offline, last seen now');

@@ -14640,3 +14640,139 @@ declined every time; a window spanned by a held key performs nothing on
 the way out; and the hold follows a REBIND, because it is an action and
 not a key literal. It cannot boot the game - this container has no
 ARENA2 - but every module the arc touched is the real one.
+
+## HT7 + MWT1 + MWT2 - THE TORCH, THREE WAYS (2026-09-17)
+
+Mac: "Take care of both. Also fix morrowind model's torch. It's
+positioned incorrectly and isnt lit."
+
+"Both" is HT6's pair - the two laws it recorded rather than departed
+from, flagged as decisions and not fixes. He has made them.
+
+### HT7 - a hand holding something is not free, sheathed or drawn
+
+Handheld Torches' `UpdateFreeHand` has a sheathed arm (0x2c91-0x2cb8)
+that clears a hand only for a BOW in the left slot, on the premise that
+a sheathed weapon is away and takes no hand. HT6 recorded the
+consequence - equip a shield with your weapon lowered and the torch
+stayed lit in the arm the shield had just gone onto - and DEFENDED it:
+"a Daggerfall shield is ARMOUR, strapped rather than gripped, so a torch
+in that hand with the sword on your back is a true reading."
+
+**That defence was wrong about this game.** Daggerfall has no back
+sheath. "Sheathed" is WeaponManager's stance - the weapon is lowered,
+still held, and drawn on screen the moment you swing - and this port
+draws it that way. There is no state in which the sword is on your back,
+so there is no state in which that hand is free to hold a torch. And it
+is exactly the case Mac's ORIGINAL report was about ("When equipping a
+shield or other offhand item, the torch in the inventory isnt shown
+unequipped and replaced"), because sheathed is how a player walks
+around.
+
+So what is WORN takes a hand whether the stance is sheathed or not, and
+the one clause that stays stance-bound is the mod's own bare right hand
+"in use" (0x2d53): an empty hand you are not swinging with is free,
+which is what lets a weaponless player carry a light. One line differs
+from the IL.
+
+The first cut of this was nearly INERT and the pins said so: clearing
+the left hand alone still left the right one free, so the torch simply
+moved across and Mac would have seen no change at all. The fixture that
+caught it is the one that equips a sword AND a shield, which is a
+player.
+
+### HT7 - and the default that put your torch on the floor
+
+The mod ships `Handling.OnStow = Drop`. HT6 made the hand law run at the
+EQUIP MOMENT rather than on the next frame, and recorded what that
+means: equipping a shield with your weapon drawn now drops the lit torch
+on the floor while the inventory is still open, in front of you. A
+player who equips a shield mid-fight has not asked to drop anything, and
+a torch on a dungeon floor is an item lost to whoever does not think to
+look down.
+
+The port **defaults it to Unequip** - the light goes back to the pack and
+`RememberLastLightSource` lights it again when a hand comes free, which
+is what the rest of this mod is built around. The mod's own value is one
+click away on the Mods pane's dial, nothing about the Drop path is
+removed, and the throw is still how you put a torch on the floor on
+purpose. It is the fourth entry in `PORT_DEFAULT` and the first that is
+not about a key.
+
+### MWT1 - the right bone, the wrong way up
+
+`resolveTorchPart` hangs the Morrowind torch at `Shield Bone`, which is
+the reference's own answer (a carried Light is a `PRT_Shield` part, rule
+4's table and updateParts' "a carried Light's shield mesh"). The BONE
+was never the problem. The ROTATION was missing.
+
+`SceneUtil::attach` puts one PositionAttitudeTransform between the
+actor's bone and the attached model, and the only rotation it can carry
+is the caller's `attitude` - which `ActorAnimation::attach` passes for
+`isLight` ALONE (:97-103) and never for a weapon (:104-105). It is an
+extra **-90 degrees about X**, and this port's own reference notes wrote
+it down at `02-Formats/Morrowind-Rules.md:3228`, beside the two
+engine-injected transforms it DID port. The code never applied it.
+
+It rides `preTransform`, the seam the arrow already uses - the same place
+in the chain the reference's PAT sits, and Shield Bone carries no "Left"
+so no mirror intervenes. The pin EXECUTES the rotation over the three
+axes rather than reading the matrix, because a transposed matrix is a
+different wrong answer that looks the same in a literal.
+
+### MWT2 - the emission this port resolved and never read
+
+`mwNifMesh.js` has always ported the reference's two emissive laws
+exactly: `LightMode_Emissive` forces the DIFFUSE and the AMBIENT to
+BLACK, so the surface "is lit only by its emissive term" (:2895-2902),
+and `VertexMode_SrcEmissive` names the vertex colour as that term. It
+resolved them into `material.emissive` - and **nothing ever read it.**
+`packFpArm` wrote `diffuseAt` alone, and the character fragment had no
+emission at all; its own comment said so ("C4b - no emission"), written
+when the only meshes on that program were the voxel rigs, before MW-D11
+brought real Morrowind meshes through it.
+
+So the port drew a self-illuminated surface as a BLACK diffuse, times a
+texture, times the room's light: black. **The torch's flame is exactly
+that surface**, and a torch with a black flame is a stick.
+
+`emissiveAt` is `diffuseAt`'s mirror on rule 63's substitution law. The
+pack is three floats wider (`FP_FLOATS` 11 -> 14), the character program
+takes a fifth attribute at location 4 - additive exactly as MW-D11's UV
+channel was, so a VAO that never enables it reads the constant zero and
+every voxel caller draws what it drew before - and the fragment adds
+`vEmissive * texel.rgb` as the LAST term, after every light. It is the
+one term the vertex colour does not gate, because LightMode_Emissive has
+already forced that colour to black, which is the whole bug.
+
+### Pinned
+
+`test/mwtorch.test.js` (the attitude, executed over the axes),
+`test/mwnifmesh.test.js` (+2: `emissiveAt`'s substitution both ways on
+one material, the absent field reading as no light rather than a throw,
+and the channel end to end), `test/ht1_handheldtorches.test.js` and
+`test/ht6_offhand.test.js` (+1: the equip moment reading the dial FRESH -
+a survivor AUDIT QS6 F7's sweep exposed, because every fixture had set
+its dial before the first frame and a stale read looked identical).
+
+### The debt AUDIT QS6 F7 carried, paid
+
+The twelve mutant records the sweep found already stale are re-aimed and
+the CARRIED list is EMPTY. Two came back on the BOX1/TI3 merge; the
+other ten were re-aimed by content here - four of them had to move file
+as well as line, because the law had left the module the record named
+(`host-world-ungated` now points at `classicFootstepAllowed`, the one
+gate BA1 folded both mods' DisableBuiltInFootsteps into).
+
+And re-aiming them was not bookkeeping. Three of the ten, once they
+applied again, **SURVIVED** - which is what a stale record hides:
+
+- the classic footstep gate had no pin but a source regex over the call
+  site, so nothing checked that Immersive Footsteps owning the stride
+  actually silences a clip, or that it outranks Better Ambience;
+- the equip moment's fresh settings read had no pin that could fail;
+- and `S13` turned out to be genuinely EQUIVALENT - the store is written
+  only under `if (gone)` and a friend's presence row never reads
+  `rec.seen` while the account is online - so it is recorded as such,
+  with the reasoning, rather than pinned by a claim the code does not
+  make.
