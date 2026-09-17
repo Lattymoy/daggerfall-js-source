@@ -214,8 +214,13 @@ export function ringDisabled(search = globalThis.location?.search) {
 }
 
 export class FarRingRenderer {
-  constructor(gl) {
+  /** EL1: `opts.lane` (render/enhancedLighting.js's EL_LANE, or null) picks
+   *  the lane's fragment shader over the classic one - two programs, never
+   *  one with a switch - and decodes the scene colours draw() takes. */
+  constructor(gl, opts = {}) {
     this.gl = gl;
+    this.lane = opts.lane ?? null;
+    this._dec = new Float32Array(3);
     const compile = (type, src) => {
       const sh = gl.createShader(type);
       gl.shaderSource(sh, src);
@@ -227,7 +232,7 @@ export class FarRingRenderer {
     };
     const p = gl.createProgram();
     gl.attachShader(p, compile(gl.VERTEX_SHADER, VS));
-    gl.attachShader(p, compile(gl.FRAGMENT_SHADER, FS));
+    gl.attachShader(p, compile(gl.FRAGMENT_SHADER, this.lane ? this.lane.farRingFs : FS));
     gl.linkProgram(p);
     if (!gl.getProgramParameter(p, gl.LINK_STATUS)) {
       throw new Error(`far ring link: ${gl.getProgramInfoLog(p)}`);
@@ -236,7 +241,7 @@ export class FarRingRenderer {
     this.u = {};
     for (const name of ['uProj', 'uView', 'uOrigin', 'uLightDir', 'uAmbient', 'uSunScale', 'uSunColor',
       'uMoonDir', 'uMoonScale', 'uMoonColor',
-      'uFogColor', 'uFogStart', 'uFogEnd', 'uRimStart', 'uRimEnd', 'uHazeHold']) {
+      'uFogColor', 'uFogStart', 'uFogEnd', 'uRimStart', 'uRimEnd', 'uHazeHold', 'uELExposure']) {
       this.u[name] = gl.getUniformLocation(p, name);
     }
     this.vao = null;
@@ -306,7 +311,7 @@ export class FarRingRenderer {
    * the streamed world paints over it); its OWN projection, because
    * the world's 6000-unit far plane is 7.3 map pixels.
    */
-  draw(view, { origin, lightDir, ambient, sunScale, sunColor, moonDir, moonScale = 0, moonColor, fogColor, fogStart = 0, fogEnd, fovY, aspect }) {
+  draw(view, { origin, lightDir, ambient, sunScale, sunColor, moonDir, moonScale = 0, moonColor, fogColor, fogStart = 0, fogEnd, fovY, aspect, exposure = 1 }) {
     if (!this._built || !this.indexCount) return;
     const gl = this.gl;
     const far = (RING_RADIUS + 1) * TERRAIN_SIZE * 1.5;
@@ -320,12 +325,14 @@ export class FarRingRenderer {
     gl.uniformMatrix4fv(this.u.uView, false, view);
     gl.uniform3f(this.u.uOrigin, origin[0], origin[1], origin[2]);
     gl.uniform3fv(this.u.uLightDir, lightDir);
-    gl.uniform3fv(this.u.uAmbient, ambient);
+    const c3 = (c) => (this.lane ? this.lane.decode3(c, this._dec) : c);   // EL1: linear for the lane, as the renderer's _c3
+    gl.uniform3fv(this.u.uAmbient, c3(ambient));
     gl.uniform1f(this.u.uSunScale, sunScale);
-    gl.uniform3fv(this.u.uSunColor, sunColor);
+    gl.uniform3fv(this.u.uSunColor, c3(sunColor));
     gl.uniform3fv(this.u.uMoonDir, moonDir ?? FLAT_UP);
     gl.uniform1f(this.u.uMoonScale, moonScale);
-    gl.uniform3fv(this.u.uMoonColor, moonColor ?? FLAT_WHITE);
+    gl.uniform3fv(this.u.uMoonColor, c3(moonColor ?? FLAT_WHITE));
+    if (this.lane) gl.uniform1f(this.u.uELExposure, exposure);
     gl.uniform3fv(this.u.uFogColor, fogColor);
     gl.uniform1f(this.u.uFogStart, fogStart);
     gl.uniform1f(this.u.uFogEnd, fogEnd);

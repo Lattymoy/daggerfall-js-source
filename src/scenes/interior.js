@@ -17,6 +17,7 @@ import { INTERIOR_AMBIENT, INTERIOR_NIGHT_AMBIENT, INTERIOR_LIGHT_DIR } from '..
 import { isNight } from '../world/worldClock.js';   // AUDIT 23 (C12)
 import { worldMinutes } from '../systems/worldTick.js';   // AUDIT 23 (C12)
 import { nearestLights } from '../world/cityLights.js';
+import { syncLightingLane } from '../render/enhancedLighting.js';   // EL1
 import { INTERIOR_MARKER } from '../world/interiorLayout.js';
 import { lookAt, perspective, mirrorProjectionX, UP_Y } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
 import { fetchBytes, seasonOverride, ensureAudio } from './shared.js';
@@ -41,6 +42,7 @@ import { swallowBrowserKey, actionOf, keyboardLook } from '../ui/input.js';   //
 export async function bootInterior(canvas, renderer, params, status) {
   const [blockName, recordStr] = params.get('interior').split(':');
   const recordIndex = Number(recordStr || 0);
+  syncLightingLane(renderer);   // EL1: the lane, installed at mount (the interior's lights carry their own colours)
   // DFU interiors climate-swap their models (SetClimate with
   // WindowStyle.Disabled - emission stays dark here by default). A
   // standalone block has no location, so ClimateBases.Temperate is the
@@ -177,7 +179,7 @@ export async function bootInterior(canvas, renderer, params, status) {
     // (ui/input.js:470-471) is "every host that registers a keydown
     // calls this FIRST", and it is NOT conditional on the host having
     // a destination for the key. First, because every arm below
-    // returns before its own preventDefault - worldModes.js:7129 sits
+    // returns before its own preventDefault - worldModes.js:7130 sits
     // ahead of its arms for the same reason.
     swallowBrowserKey(e);
     // The open map owns the keyboard, exactly as it does in the three
@@ -326,7 +328,7 @@ export async function bootInterior(canvas, renderer, params, status) {
 
     // LT1: per-light range AND colour x intensity - AddLight's whole
     // second switch reaches the GPU (interiorLightProperties).
-    const lit = nearestLights(ctx.lights, cam.pos, 16, ctx.lights.map((l) => l.range),
+    const lit = nearestLights(ctx.lights, cam.pos, renderer.maxPointLights, ctx.lights.map((l) => l.range),   // EL1: the installed set's cap
       (l) => [l.color[0] * l.intensity, l.color[1] * l.intensity, l.color[2] * l.intensity]);
     renderer.setPointLights(lit.data, null, lit.colors);
     renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR);
@@ -354,7 +356,7 @@ export async function bootInterior(canvas, renderer, params, status) {
     // scan, for the reason DFU states on the gate (SetActive(false) on
     // the geometry would mess with the open map's rendering). Update's
     // own call at :1001 is the one-shot lazy init, not a per-frame
-    // driver. dungeon.js:704 and worldModes.js:5212/:5239 gate the same
+    // driver. dungeon.js:707 and worldModes.js:5213/:5240 gate the same
     // way; this is that gate for this host.
     if (!gamePaused()) ctx.automapTick?.(dt, cam.pos, fwd);
     if (overlay) {

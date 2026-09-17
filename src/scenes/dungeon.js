@@ -27,6 +27,7 @@ import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
 import { MapsFile } from '../formats/mapsFile.js';
 import { DUNGEON_AMBIENT, DUNGEON_LIGHT_COLOR, DUNGEON_LIGHT_BLOCK_RANGE } from '../world/dungeonLights.js';   // A10: the block-range cut
+import { syncLightingLane, lanternColor } from '../render/enhancedLighting.js';   // EL1
 import { INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
 import { nearestLights } from '../world/cityLights.js';
 import { withPlayerLights } from './magicCandle.js';   // X11/T1
@@ -84,6 +85,8 @@ const WATER_COLOR = [1, 1, 1, 0.82];
 export async function bootDungeon(canvas, renderer, params, status) {
   const regionName = params.get('region') || 'Daggerfall';
   const dungeonName = params.get('dungeon') || "Privateer's Hold";
+  const lightingOn = syncLightingLane(renderer);   // EL1: the lane, installed at mount
+  const DUNGEON_LANTERN_F32 = lanternColor(lightingOn, new Float32Array(DUNGEON_LIGHT_COLOR));   // EL1: the lane's flame at the dungeon's intensity
 
   status('loading data');
   const [palBytes, blocksBytes, archBytes, mapsBytes, climateBytes, politicBytes] =
@@ -974,9 +977,9 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // A10: DungeonLightHandler's XZ block range culls first, the
       // 16-slot shader cap picks from what survives (dungeonLights.js
       // carries the composition and why that order).
-      withPlayerLights(nearestLights(ctx.lights, cam.pos, 16, ctx.flicker.ranges, null, DUNGEON_LIGHT_BLOCK_RANGE),
+      withPlayerLights(nearestLights(ctx.lights, cam.pos, renderer.maxPointLights, ctx.flicker.ranges, null, DUNGEON_LIGHT_BLOCK_RANGE),   // EL1: the installed set's cap
         ctx.candleLight?.(), playerTorchLight(playerEntity, player.pos, cam.yaw), ...ctx.torchLights()),   // X11 candle; T1 torch; HT1 the dropped lights
-      new Float32Array(DUNGEON_LIGHT_COLOR));
+      DUNGEON_LANTERN_F32);
     renderer.setWorldViewport(largeHudViewportRect(canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
     renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR);
     if (walkMode) mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.feetAt(), yaw: cam.yaw });   // MW-D24

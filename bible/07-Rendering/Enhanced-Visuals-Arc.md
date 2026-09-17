@@ -34,9 +34,9 @@ matrix/draw path (GC spikes riding the beat).
 FOUND ON THE WAY, both real: a recenter injects 819.2 units into
 footsteps' stride accumulator (a spurious footstep at every map-pixel
 crossing, footsteps.js:151), and `_playerStill` reads one moving
-frame per crossing (world.js:5803-5805).
+frame per crossing (world.js:5809-5811).
 
-frame per crossing (world.js:8880-8882).
+frame per crossing (world.js:8886-8888).
 
 THE DISTANCE IS FOG-BOUND, NOT STREAM-BOUND. Linear fog ends at 2400
 units (weather.js:50-57, DFU's own number) while the default 7x7
@@ -52,7 +52,7 @@ rows, terrainSurface.js:92-95): a permanent lighting lattice at every
 THERE IS NO CULLING AND NO MEASUREMENT. Zero frustum tests anywhere;
 ~1045 drawMesh calls in a city with per-call useProgram + per-submesh
 double texture binds and a template-string key allocated per submesh
-per frame (renderer.js:1980 - thousands of strings/frame, the single
+per frame (renderer.js:2080 - thousands of strings/frame, the single
 largest GC source). No FPS counter, no draw counter; the proven
 measurement pattern is window.__renderer + probe monkeypatching
 (hudCrosshairProbe), exposed today by the dungeon host alone.
@@ -70,11 +70,11 @@ tint term without a vertex-format change across ~20 call sites.
 
 ## Hard constraints (the tripwires, so no slice trips them)
 
-- Source-text pins count GLSL substrings (perlightcolors.test.js:125,
+- Source-text pins count GLSL substrings (perlightcolors.test.js:127,
   handedness, the fparm studio borrow) and audit18_bible_docs pins
   Rendering.md's literal "directional light 0.45 + 0.55*diffuse" -
   shader math changes move the doc in the same commit.
-- `_clockLit` (renderer.js:623) is a regression latch: set once,
+- `_clockLit` (renderer.js:625) is a regression latch: set once,
   never cleared. Flats' tint path must keep it.
 - No sRGB anywhere; lighting happens on palette bytes; the enhanced
   sky's posterise pass and NEAREST/REPEAT cutout laws stay.

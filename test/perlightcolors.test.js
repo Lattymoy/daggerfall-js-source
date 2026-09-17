@@ -94,6 +94,8 @@ const rendererState = () => ({
   _pointColor: new Float32Array([1, 1, 1]),
   _pointColors: null,
   _pointColorScratch: new Float32Array(16 * 3),
+  maxPointLights: 16,   // EL1: the installed set's cap
+  _lane: null,
 });
 
 test('LT1: setPointLights stores the per-light colours and CLEARS them when a host passes none', () => {

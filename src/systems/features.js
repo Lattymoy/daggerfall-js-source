@@ -279,6 +279,21 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'enhancedWater', initial: true, online: true }),   // WATER1: on by default like the other enhanced visuals; `?water=off` the kill door
   }),
+  // EL1 (2026-09-17, the Enhanced Lighting arc, tier one): the renderer's
+  // lit world on a linear pipeline - render/enhancedLighting.js carries
+  // the law; `?lighting=classic` is the kill door.
+  Object.freeze({
+    id: 'enhanced-lighting',
+    group: 'sight',
+    title: 'Enhanced lighting',
+    note: 'Light that adds the way light does: textures and lights read in linear colour, a tonemap that lets a torch\u2019s '
+      + 'near field bloom instead of clip, lanterns and braziers with a flame\u2019s warmth falling off by the inverse square, '
+      + 'forty-eight of them in view instead of sixteen, and fog that glows where their light crosses it. Off is '
+      + 'Daggerfall Unity\u2019s flat shading.',
+    effect: 'Takes effect when the world next loads.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'enhancedLighting', initial: true, online: true }),
+  }),
   // FT7 (2026-09-14): THE TWO QUALITY TIERS OF THE ENHANCED OUTDOORS
   // (PERF1) - the grass field's fraction and the clouds' march. Both
   // are inert unless the outdoors row above is on (world.js gates the

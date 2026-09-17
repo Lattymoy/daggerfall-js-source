@@ -237,6 +237,13 @@ directory by `test/audit18_bible_docs.test.js`:
   WX1's byte-exact shaders untouched; both hosts wired alike; `?weather=`
   still pins the sim and a pinned boot is never a front; the stub audio
   handles. Still unseen: all of it, in a browser, with ARENA2.
+- `enhancedLighting.js` - EL1 THE ENHANCED LIGHTING LANE: five fragment shaders
+  (mesh, billboard, terrain, character, far ring) the renderer installs as a
+  unit over its classic set - sRGB decode, linear light, windowed inverse-square
+  lanterns x48, exposure + extended Reinhard, fog in-scatter, sRGB encode - and
+  the pure functions that ARE their terms; the switch (`enhancedLightingOn`),
+  the host's one call (`syncLightingLane`), the flame colour. See
+  `07-Rendering/Enhanced-Lighting-Arc.md`.
 - `enhancedSky.js` - ES1 the ENHANCED SKY: one fullscreen procedural
 - `dynamicSkiesRenderer.js` - DS1: Dynamic Skies' own skybox (BLBProceduralSkybox, translated line for line), the enhanced lane's sky while the vendored mod's switch is on; the same draw contract as `enhancedSky.js`.
 - `dynamicSkiesBridge.js` - DS2: the mod's state in the port's shapes - `dynamicMoonState` (the world's moonlight off the mod's orbits, DS1) and `cloudsStateUnderMod` (the volumetric clouds' six fields off the mod's sun, moons and horizon over the port's colours); one home the controller and the sky lab both import.
