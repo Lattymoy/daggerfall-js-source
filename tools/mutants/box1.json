@@ -1,0 +1,58 @@
+[
+  {
+    "name": "spellbook-no-memo",
+    "file": "src/ui/spellbookWindow.js",
+    "old": "      this._boxMemo ??= this._boxRowsNow();   // buyButton is the one opener and clears it\n      return this._boxMemo;",
+    "new": "      return this._boxRowsNow();",
+    "tests": [
+      "test/spellbookwindow.test.js"
+    ]
+  },
+  {
+    "name": "spellbook-memo-never-cleared",
+    "file": "src/ui/spellbookWindow.js",
+    "old": "    this._boxMemo = null;\n    if (!hasBook)",
+    "new": "    if (!hasBook)",
+    "tests": [
+      "test/spellbookwindow.test.js"
+    ]
+  },
+  {
+    "name": "latch-reads-every-call",
+    "file": "src/ui/messageBox.js",
+    "old": "  box.rows ??= rows?.(box.textId) ?? [];\n  return box.rows;",
+    "new": "  return box.rows ?? rows?.(box.textId) ?? [];",
+    "tests": [
+      "test/messagebox.test.js"
+    ]
+  },
+  {
+    "name": "latch-drops-given-rows",
+    "file": "src/ui/messageBox.js",
+    "old": "  box.rows ??= rows?.(box.textId) ?? [];",
+    "new": "  box.rows = rows?.(box.textId) ?? box.rows ?? [];",
+    "tests": [
+      "test/messagebox.test.js"
+    ]
+  },
+  {
+    "name": "guild-popup-reads-per-draw",
+    "file": "src/ui/guildServiceWindow.js",
+    "old": "latchBoxRows(top, this.hooks.rows)",
+    "new": "(top.rows ?? this.hooks.rows?.(top.textId) ?? [])",
+    "tests": [
+      "test/messagebox.test.js",
+      "test/guildservicewindow.test.js",
+      "test/box1_latch.test.js"
+    ]
+  },
+  {
+    "name": "coven-reads-per-draw",
+    "file": "src/ui/covenWindow.js",
+    "old": "latchBoxRows(top, this.hooks.rows)",
+    "new": "(top.rows ?? this.hooks.rows?.(top.textId) ?? [])",
+    "tests": [
+      "test/box1_latch.test.js"
+    ]
+  }
+]

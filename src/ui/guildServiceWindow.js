@@ -53,7 +53,7 @@ import { loadImg, nativeMetrics, drawImg, shadowText, DEFAULT_TEXT_COLOR } from 
 import { drawScreenDimBackdrop } from './chargenArt.js';
 import { audio } from '../systems/audio.js';   // F141: the ButtonClick roster
 import { SOUND } from '../systems/soundClips.js';
-import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';
+import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS, latchBoxRows } from './messageBox.js';
 import { drawText, measureText } from './text.js';
 import { serviceLabel, serviceShortcutButton } from '../systems/guildServiceFlow.js';
 import { firstHotkey } from '../systems/dialogShortcuts.js';   // A8: the DaggerfallShortcut table
@@ -76,6 +76,8 @@ export const GUILD_RECTS = Object.freeze({
 export const SERVICE_LABEL_OFFSET_Y = 1;
 
 let _art = null;
+/** BOX1: the test seam every other art-gated window carries. */
+export function _setGuildServiceArtForTests(art) { _art = art; }
 export async function preloadGuildServiceArt(deps) {
   if (_art) return;
   try {
@@ -250,7 +252,7 @@ export class GuildServiceWindow {
     const top = this.top;
     if (top) {
       const buttons = top.buttons === 'YesNo' ? [MB_BUTTONS.Yes, MB_BUTTONS.No] : [];
-      this._box = layoutMessageBox(font, top.rows ?? this.hooks.rows?.(top.textId) ?? [], buttons);
+      this._box = layoutMessageBox(font, latchBoxRows(top, this.hooks.rows), buttons);   // BOX1: a textId box reads its (random-variant) record ONCE
       if (!drawMessageBox(renderer, m, font, this._box)) {
         // art-less fallback keeps the text chain (the U11 shape)
         (this._box.rows ?? []).forEach((r, i) =>
