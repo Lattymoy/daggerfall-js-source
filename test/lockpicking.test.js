@@ -11,7 +11,8 @@ import {
   interiorLockpickingChance, exteriorLockpickingChance,
 } from '../src/world/actionSystem.js';
 import {
-  OPEN_HOURS, CLOSE_HOURS, isBuildingOpen, buildingIsUnlocked, buildingLockValue,
+  OPEN_HOURS, CLOSE_HOURS, classicBuildingOpen, buildingHoursState,
+  SHOP_STAFFING, isBuildingOpen, buildingIsUnlocked, buildingLockValue,
   LOCKED_EXTERIOR_DOOR_TEXT,
 } from '../src/systems/buildingLocks.js';
 import { BUILDING_TYPES } from '../src/world/buildingNames.js';
@@ -108,15 +109,38 @@ test('R1 hours: the verbatim tables and their edge rows (PlayerActivate.cs:91-10
   assert.ok(!isBuildingOpen(BUILDING_TYPES.House1, 12), 'House1 is 0/0 - NEVER open');
   assert.ok(isBuildingOpen(BUILDING_TYPES.Alchemist, 7) && !isBuildingOpen(BUILDING_TYPES.Alchemist, 22), 'alchemist 7-22, close hour exclusive');
   assert.ok(isBuildingOpen(BUILDING_TYPES.House2, 6) && !isBuildingOpen(BUILDING_TYPES.House2, 18), 'houses 6-18');
+
+  // OL4: the classic primitive remains exactly the same while the
+  // effective online schedule adds a staffed shift for SHOPS only.
+  assert.equal(classicBuildingOpen(BUILDING_TYPES.Alchemist, 23), false,
+    'the preserved DFU law still says the alchemist is closed at 23:00');
+  const afterHours = buildingHoursState(BUILDING_TYPES.Alchemist, { hour: 23, online: true });
+  assert.deepEqual(afterHours, {
+    open: true,
+    classicOpen: false,
+    staffing: SHOP_STAFFING.ONLINE_SHIFT,
+  }, 'online commerce is a layer above classic hours, not a rewritten table');
+  assert.equal(isBuildingOpen(BUILDING_TYPES.Alchemist, 23, { online: true }), true,
+    'the entry-time shop latch reads the effective online answer');
+  assert.equal(isBuildingOpen(BUILDING_TYPES.House2, 23, { online: true }), false,
+    'online staffing does not flatten residence hours');
+  assert.equal(isBuildingOpen(BUILDING_TYPES.Palace, 23, { online: true }), false,
+    'online staffing does not flatten palace hours');
 });
 
 test('R1 unlocked ladder: guild bypasses, the quest override, Suns Rest, ships (PlayerActivate.cs:1258-1312)', () => {
   const b = (buildingType, factionId = 0) => ({ buildingType, factionId, buildingKey: 7, quality: 12 });
-  // shops: open by hours, CLOSED on Suns Rest whatever the hour
-  assert.ok(buildingIsUnlocked(b(BUILDING_TYPES.Alchemist), { hour: 12 }));
-  assert.ok(!buildingIsUnlocked(b(BUILDING_TYPES.Alchemist), { hour: 12, holidayId: HOLIDAYS.Suns_Rest }));
-  // guild hall at 3am: only anytime access opens it
-  assert.ok(!buildingIsUnlocked(b(BUILDING_TYPES.GuildHall, 41), { hour: 3, guildForBuilding: () => ({ hallAccessAnytime: false, isMember: true }) }));
+  // shops: open by hours, CLOSED on Suns Rest whatever the hour offline
+  assert.ok(buildingIsUnlocked(b(BUILDING_TYPES.Alchemist), { hour: 12, online: false }));
+  assert.ok(!buildingIsUnlocked(b(BUILDING_TYPES.Alchemist), { hour: 12, holidayId: HOLIDAYS.Suns_Rest, online: false }));
+  assert.ok(!buildingIsUnlocked(b(BUILDING_TYPES.Alchemist), { hour: 3, online: false }), 'offline still has the classic closed hours');
+  // OL4: online commerce is continuously staffed, including the classic
+  // night and holiday closures. The classic result remains available
+  // through buildingHoursState/classicBuildingOpen above.
+  assert.ok(buildingIsUnlocked(b(BUILDING_TYPES.Alchemist), { hour: 3, online: true }), 'the online night shift did not open the shop');
+  assert.ok(buildingIsUnlocked(b(BUILDING_TYPES.Alchemist), { hour: 12, holidayId: HOLIDAYS.Suns_Rest, online: true }), 'Suns Rest shut the shared-world shop for a real-time day');
+  // guild hall at 3am: only anytime access opens it, online included
+  assert.ok(!buildingIsUnlocked(b(BUILDING_TYPES.GuildHall, 41), { hour: 3, online: true, guildForBuilding: () => ({ hallAccessAnytime: false, isMember: true }) }));
   assert.ok(buildingIsUnlocked(b(BUILDING_TYPES.GuildHall, 41), { hour: 3, guildForBuilding: () => ({ hallAccessAnytime: true, isMember: true }) }));
   // a factioned House2 (TG/DB) is members-only, hours notwithstanding
   assert.ok(!buildingIsUnlocked(b(BUILDING_TYPES.House2, 42), { hour: 12, guildForBuilding: () => ({ hallAccessAnytime: false, isMember: false }) }));
