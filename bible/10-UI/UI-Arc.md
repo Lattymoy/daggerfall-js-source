@@ -14208,3 +14208,48 @@ line, and the model adds nothing over it), the off-hand performer in
 `test/enhancedControls.test.js` and `test/soc5_interact.test.js`.
 Measured again in Chromium (`tools/qs3Probe.mjs`): every corner carries
 a chip at all three sizes, three scales and both stick anchors.
+
+## HT6 - THE HAND LAW AT THE EQUIP MOMENT (2026-09-17)
+
+Mac: "When equipping a shield or other offhand item, the torch in the
+inventory isnt shown unequipped and replaced."
+
+Two things were true, and only one of them was a bug.
+
+**The bug: the law runs on a frame, and an open window stops the
+frames.** Handheld Torches stows or drops a lit light the moment a hand
+is taken (its Update, 0x15c6-0x1689), but the weapon rig only runs
+Update on a frame the host is not holding for an overlay - every host
+reads `overlayHeld ? [] : rig.frame(...)`. So a shield equipped in an
+OPEN inventory did not reach the law until the window closed, and the
+window went on painting a lit torch beside the shield the player had
+just put on the same arm. The block is lifted out of Update as
+`handLaw` and the equip table's own listener runs the SAME code at the
+equip moment - UpdateFreeHand then the law, in Update's own order, over
+freshly read settings. Nothing of the rule is restated, and the reverse
+works too: the shield coming off frees the hand that takes the
+remembered light back up, at the unequip moment.
+
+One trap, and it is the one this port has learned to look for: the hosts
+build a rig EACH, and a component that is not being given frames still
+holds its last context - a `sheathed` and a `usingRightHand` from
+whenever that host last had the player. So the module registers ONE
+listener at import (entityMods' own shape) which dispatches to the
+component whose Update ran last, and a teardown releases the pointer
+only if it is its own.
+
+**Not a bug: sheathed, the mod keeps the torch.** UpdateFreeHand's
+sheathed arm (0x2c91-0x2cb8) clears a hand only for a BOW in the left
+slot - a shield does not take a hand while your weapon is away. That is
+the mod's own law and it is a defensible one in this game: a Daggerfall
+shield is ARMOUR (group `Armor`), strapped to the arm rather than
+gripped, so a torch in that hand with the sword on your back is a true
+reading. Draw the weapon and the torch stows on the next frame. It is
+recorded here rather than departed from; if it should change, that is a
+decision, not a fix.
+
+**A consequence worth knowing.** The mod ships `Handling.OnStow = Drop`
+and the port keeps it, so with the weapon DRAWN, equipping a shield now
+drops the lit torch on the floor while the window is still open. It
+always did that - it just used to happen a beat later, after the window
+closed. The Mods pane's `OnStow` dial changes it to Unequip.
