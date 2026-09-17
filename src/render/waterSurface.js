@@ -195,7 +195,7 @@ void main() {
  * to nothing along the shore's diagonal; a texel outside any water is
  * discarded before it costs a blend.
  */
-export const waterSurfaceFs = (cloudShadowGlsl) => `#version 300 es
+export const waterSurfaceFs = (cloudShadowGlsl, shadowGlsl = '') => `#version 300 es   // EL7: with SHADOW_GLSL the water receives the lane's sun shadow
 precision highp float;
 precision highp usampler2D;
 precision highp sampler2DArray;
@@ -235,6 +235,7 @@ uniform int uFogMode;
 uniform float uFogDensity;
 uniform vec2 uFogRange;
 uniform vec3 uCamPos;
+${shadowGlsl}
 out vec4 outColor;
 float fogFactorAt(vec3 worldPos) {
   if (uFogMode == 0) return 1.0;
@@ -307,7 +308,7 @@ void main() {
   float F = uF0 + (0.72 - uF0) * pow(1.0 - NdV, 5.0);
   vec3 R = reflect(-V, n);
   vec3 skyRefl = mix(uSkyHorizon, uSkyZenith, clamp(0.2 + R.y * 1.4, 0.0, 1.0));
-  float shadow = cloudShadowAt(vWorldPos);
+  float shadow = cloudShadowAt(vWorldPos)${shadowGlsl ? ' * sunShadowAt(vWorldPos, n)' : ''};   // EL7: a quay's shadow lies on the water under the lane
   // the classic texel, the body of the water, lit as the ground is lit
   vec2 uv = fract(f + vec2(uScroll));
   vec3 tex = texture(uTileArr, vec3(uv, 0.0)).rgb * uTint;

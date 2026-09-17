@@ -38,8 +38,8 @@
  {
   "name": "bounds-range-start",
   "file": "src/render/bounds.js",
-  "old": "  const at = (k) => (indices ? indices[start + k] : k) * 3;",
-  "new": "  const at = (k) => (indices ? indices[k] : k) * 3;",
+  "old": "  const at = (k) => (indices ? indices[start + k] : k) * stride;",
+  "new": "  const at = (k) => (indices ? indices[k] : k) * stride;",
   "tests": [
    "test/el5_field.test.js"
   ]
@@ -200,7 +200,7 @@
  {
   "name": "glare-slack-zero",
   "file": "src/render/airPass.js",
-  "old": "export const AIR_GLARE_SLACK = 0.5;",
+  "old": "export const AIR_GLARE_SLACK = 1.0;",
   "new": "export const AIR_GLARE_SLACK = 0.0;",
   "tests": [
    "test/el5_field.test.js"
@@ -209,8 +209,8 @@
  {
   "name": "glare-one-tap",
   "file": "src/render/airPass.js",
-  "old": "      vis = (seen(uv, lantern) + seen(uv + vec2(t.x, 0.0), lantern) + seen(uv - vec2(t.x, 0.0), lantern)\n           + seen(uv + vec2(0.0, t.y), lantern) + seen(uv - vec2(0.0, t.y), lantern)) / 5.0;",
-  "new": "      vis = seen(uv, lantern);",
+  "old": "      vis = (flame(vc, lantern)\n           + flame(vc + vec4(0.0, s, 0.0, 0.0), lantern) + flame(vc + vec4(0.0, 2.0 * s, 0.0, 0.0), lantern)\n           + flame(vc + vec4(0.0, -s, 0.0, 0.0), lantern) + flame(vc + vec4(0.0, -2.0 * s, 0.0, 0.0), lantern)\n           + flame(vc + vec4(s, 0.0, 0.0, 0.0), lantern) + flame(vc + vec4(-s, 0.0, 0.0, 0.0), lantern)) / 7.0;",
+  "new": "      vis = flame(vc, lantern);",
   "tests": [
    "test/el3_air.test.js"
   ]
@@ -227,10 +227,10 @@
  {
   "name": "glare-no-texel",
   "file": "src/render/airPass.js",
-  "old": "    gl.uniform2f(P.uTexel, 1 / this.width, 1 / this.height);\n",
-  "new": "",
+  "old": "< AIR_GLARE_MIN_DISTANCE) continue;   // EL7: the torch in the hand, the candle",
+  "new": "< 0.0) continue;   // EL7: the torch in the hand, the candle",
   "tests": [
-   "test/el5_field.test.js"
+   "test/el7_polish.test.js"
   ]
  },
  {

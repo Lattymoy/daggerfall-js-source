@@ -71,10 +71,10 @@ test('EL3: the door and the constants - ?air=off, the two scales, the AO\'s radi
   assert.equal(airOn(''), true); assert.equal(airOn('?air=off'), false); assert.equal(airOn('?air=on'), true);
   assert.equal(AIR_AO_SCALE, 0.5); assert.equal(AIR_BLOOM_SCALE, 0.25);
   assert.equal(AIR_AO_RADIUS, 0.8); assert.equal(AIR_AO_SAMPLES, 12); assert.equal(AIR_AO_STRENGTH, 1); assert.equal(AIR_AO_BIAS, 0.02);
-  assert.equal(AIR_BLOOM_STRENGTH, 0.6); assert.equal(AIR_GLARE_SIZE, 0.35);
+  assert.equal(AIR_BLOOM_STRENGTH, 0.6); assert.equal(AIR_GLARE_SIZE, 0.25);   // EL7: a flame's size
   assert.equal(AIR_SHAFT_TAPS, 32); assert.equal(AIR_SHAFT_DECAY, 0.96); assert.equal(AIR_SHAFT_STRENGTH, 0.35); assert.equal(AIR_SHAFT_REACH, 0.35);
   assert.equal(AIR_AO_RESOLVE, 0.75); assert.ok(SHADOW_SUN_UNIT < SHADOW_POINT_UNIT && SHADOW_POINT_UNIT < CLOUD_SHADOW_UNIT, 'four reserved units, in a row');
-  assert.ok(near(glareSize(18), 0.35 * Math.sqrt(18))); assert.equal(glareSize(-1), 0); assert.equal(glareSize(0), 0);
+  assert.ok(near(glareSize(18), 0.25 * Math.sqrt(18))); assert.equal(glareSize(-1), 0); assert.equal(glareSize(0), 0);
 });
 
 test('EL3: the depth reconstruction undoes the renderer\'s perspective, mirrored or not - the four numbers and the view depth against the matrix itself', () => {
@@ -149,10 +149,10 @@ test('EL3: the receiver block and the shaders - the AO by screen position, off a
   assert.match(EMIT_MESH_FS, /texture\(uEmissionTex, vUV\)\.rgb \* uEmissionColor/);
   assert.match(EMIT_BB_FS, /if \(texture\(uTex, vUV\)\.a < 0\.5\) discard;/);
   const a = read('src/render/airPass.js');
-  assert.match(a, /return viewDist\(depthAt\(uv\)\) \+ \$\{AIR_GLARE_SLACK\} >= lantern \? 1\.0 : 0\.0;/, 'EL5: a glare hides behind the depth IN WORLD UNITS, not a hyperbolic constant (EL6: the frame\'s own depth)');
-  assert.match(a, /export const AIR_GLARE_SLACK = 0\.5;/, 'half a unit of slack: the flame sits on its post');
-  assert.match(a, /vis = \(seen\(uv, lantern\) \+ seen\(uv \+ vec2\(t\.x, 0\.0\), lantern\)[\s\S]*?\) \/ 5\.0;/, 'five taps: a lantern half behind a post is half a glare');
-  assert.match(a, /uniform vec2 uTexel;      \/\/ EL5: one texel of the world rect, in its uv/);
+  assert.match(a, /return abs\(viewDist\(depthAt\(uv\)\) - lantern\) <= \$\{glslFloat\(AIR_GLARE_SLACK\)\} \? 1\.0 : 0\.0;/, 'EL5: a glare hides behind the depth IN WORLD UNITS, not a hyperbolic constant; EL7: and needs a flame under it - presence, not "nothing nearer"');
+  assert.match(a, /export const AIR_GLARE_SLACK = 1\.0;/, 'EL7: a unit - the flame within it of its light');
+  assert.match(a, /vis = \(flame\(vc, lantern\)\n\s+\+ flame\(vc \+ vec4\(0\.0, s, 0\.0, 0\.0\), lantern\) \+ flame\(vc \+ vec4\(0\.0, 2\.0 \* s, 0\.0, 0\.0\), lantern\)\n\s+\+ flame\(vc \+ vec4\(0\.0, -s, 0\.0, 0\.0\), lantern\) \+ flame\(vc \+ vec4\(0\.0, -2\.0 \* s, 0\.0, 0\.0\), lantern\)\n\s+\+ flame\(vc \+ vec4\(s, 0\.0, 0\.0, 0\.0\), lantern\) \+ flame\(vc \+ vec4\(-s, 0\.0, 0\.0, 0\.0\), lantern\)\) \/ 7\.0;/, 'seven taps over the footprint (EL7: the centre, two above and two below - a city light sits at the top of its flat, a dungeon light at its base - and either side): a flame half behind a post is half a glare');
+  assert.match(a, /float flame\(vec4 vc, float lantern\) \{/, 'EL7: the presence test, per tap in view space');
   assert.match(a, /float sky = depthAt\(uv\) >= 0\.99999 \? 1\.0 : 0\.0;/, 'the shafts\' mask is the sky (EL6: off the frame\'s depth, at the world rect)');
   assert.equal((a.match(/gl\.blendFunc\(gl\.ONE, gl\.ONE\);/g) || []).length, 2, 'additive: the bloom source and the bright pass, both at the resolve (EL6)');
   assert.ok(!/from '\.\/renderer\.js'/.test(a) && !/from '\.\/enhancedLighting\.js'/.test(a) && !/from '\.\/shadowPass\.js'/.test(a), 'a leaf');
@@ -193,7 +193,7 @@ test('EL3: the renderer builds the pass with the lane behind the door, sizes the
   const firstClear = calls.findIndex((c) => c[0] === 'clear' && c[1] === 16384 + 256);
   const before = calls.slice(0, firstClear);
   const depthClears = before.filter((c) => c[0] === 'clear' && c[1] === 256);
-  assert.equal(depthClears.length, 2 + 6, 'two cascades, the one lantern\'s six faces (EL5: lanterns cast under the sun too); EL6: no depth image');
+  assert.equal(depthClears.length, 3 + 6, 'three cascades (EL7), the one lantern\'s six faces (EL5: lanterns cast under the sun too); EL6: no depth image');
   assert.equal(r.shadows.count, 0, 'the records are spent after the shadow pass');
   assert.equal(before.filter((c) => c[0] === 'drawArrays' && c[1] === 5).length, 0, 'EL6: no image quad before the frame');
   const targets = ap.targets;

@@ -65,8 +65,10 @@ export const SHADOW_POINT_SIZE = 512;
 /** EL5: how many lanterns cast at once - the nearest to the eye. */
 export const SHADOW_POINT_CASTERS = 6;   // EL6: six - a gate passage has that many lanterns in reach
 /** The cascades' radii around the eye, world units (a terrain tile is 6.4,
- *  an RMB block 102.4): the near street, and the town. */
-export const SHADOW_CASCADES = Object.freeze([40, 240]);
+ *  an RMB block 102.4): EL7 - the room the player stands in (a texel of
+ *  1.2 cm at 2048: the hairline at an eave's contact is four times thinner
+ *  than EL2's 40-unit cascade left it), the street, and the town. */
+export const SHADOW_CASCADES = Object.freeze([12, 48, 240]);
 /** The ortho box's half-depth along the light: enough to take a mountain
  *  pixel's height above or below the eye. */
 export const SHADOW_SUN_DEPTH = 600;
@@ -225,8 +227,9 @@ function faceBasisGlsl() {
 export const SHADOW_GLSL = `
 precision highp sampler2DArrayShadow;
 uniform sampler2DArrayShadow uSunShadow;
-uniform mat4 uSunVP[2];
-uniform vec4 uSunShadowParams;    // x the near cascade's radius, y z the two cascades' texel size (world), w 1 = on
+uniform mat4 uSunVP[3];
+uniform vec4 uSunShadowParams;    // x y z the three cascades' radii, w 1 = on (EL7: three)
+uniform vec4 uSunTexel;           // x y z the cascades' texel size (world)
 uniform sampler2DArrayShadow uPointShadow;   // EL5: six face layers per caster
 uniform vec4 uPointShadowParams[${SHADOW_POINT_CASTERS}];  // xyz the light, w its far plane (0 = off)
 uniform int uShadowIndex[${SHADOW_POINT_CASTERS}];         // the lantern each caster's layers belong to, -1 for none
@@ -234,9 +237,9 @@ ${faceBasisGlsl()}
 float sunShadowAt(vec3 wp, vec3 n) {
   if (uSunShadowParams.w <= 0.0) return 1.0;
   float d = length(wp - uCamPos);
-  int c = d < uSunShadowParams.x * 0.9 ? 0 : 1;
-  float texel = c == 0 ? uSunShadowParams.y : uSunShadowParams.z;
-  mat4 vp = c == 0 ? uSunVP[0] : uSunVP[1];
+  int c = d < uSunShadowParams.x * 0.9 ? 0 : d < uSunShadowParams.y * 0.9 ? 1 : 2;
+  float texel = c == 0 ? uSunTexel.x : c == 1 ? uSunTexel.y : uSunTexel.z;
+  mat4 vp = c == 0 ? uSunVP[0] : c == 1 ? uSunVP[1] : uSunVP[2];
   vec4 lp = vp * vec4(wp + n * texel * 1.5, 1.0);
   vec3 p = lp.xyz / lp.w * 0.5 + 0.5;
   if (p.x < 0.0 || p.x > 1.0 || p.y < 0.0 || p.y > 1.0 || p.z > 1.0) return 1.0;
@@ -303,7 +306,7 @@ void main() {
   if (texture(uTex, vUV).a < 0.5) discard;
 }`;
 
-const REC_MESH = 0, REC_TERRAIN = 1, REC_BB = 2;
+const REC_MESH = 0, REC_TERRAIN = 1, REC_BB = 2, REC_CHAR = 3;   // EL7: the character rigs cast
 
 /**
  * The pass: the maps, the depth programs, the record pool, the replay.
@@ -317,8 +320,10 @@ export class ShadowPass {
     const mesh = opts.build(opts.vs.mesh, DEPTH_FS);
     const terrain = opts.build(opts.vs.terrain, DEPTH_FS);
     const bb = opts.build(opts.vs.bb, DEPTH_BB_FS);
+    const char = opts.vs.char ? opts.build(opts.vs.char, DEPTH_FS) : null;   // EL7: the rigs' own vertex layout
     this.programs = {
       mesh: { p: mesh, proj: u(mesh, 'uProj'), view: u(mesh, 'uView'), model: u(mesh, 'uModel') },
+      char: char ? { p: char, proj: u(char, 'uProj'), view: u(char, 'uView'), model: u(char, 'uModel') } : null,
       terrain: { p: terrain, proj: u(terrain, 'uProj'), view: u(terrain, 'uView'), model: u(terrain, 'uModel') },
       bb: {
         p: bb, proj: u(bb, 'uProj'), view: u(bb, 'uView'), right: u(bb, 'uRight'), up: u(bb, 'uUp'), origin: u(bb, 'uOrigin'),
@@ -373,9 +378,10 @@ export class ShadowPass {
     this.records = [];
     this.count = 0;
     this.recording = true;
-    this.sunVP = [new Float32Array(16), new Float32Array(16)];
+    this.sunVP = SHADOW_CASCADES.map(() => new Float32Array(16));
     this.faceVP = [0, 1, 2, 3, 4, 5].map(() => new Float32Array(16));
     this.sunParams = new Float32Array(4);
+    this.sunTexel = new Float32Array(4);   // EL7
     this.pointParams = new Float32Array(4 * SHADOW_POINT_CASTERS);   // EL5: one vec4 per caster
     this.shadowIndex = new Int32Array(SHADOW_POINT_CASTERS).fill(-1);
     this.casters = 0;
@@ -386,7 +392,7 @@ export class ShadowPass {
     this._identityView = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
     this._right = new Float32Array(3); this._up = new Float32Array([0, 1, 0]);
     this._zeroWind = new Float32Array(4);
-    this._sunVPFlat = new Float32Array(32);
+    this._sunVPFlat = new Float32Array(16 * SHADOW_CASCADES.length);
   }
 
   _rec() {
@@ -421,6 +427,13 @@ export class ShadowPass {
     r.bounded = !!surface.bounds;
     if (r.bounded) transformSphere(matrix, surface.bounds, r.sphere);
   }
+  /** EL7: a character rig (createCharacterMesh's bundle: vao, count, ranges) casts too. */
+  recordCharacter(mesh, matrix) {
+    const r = this._rec(); if (!r) return;
+    r.kind = REC_CHAR; r.mesh = mesh; r.matrix.set(matrix);
+    r.bounded = !!mesh.bounds;
+    if (r.bounded) transformSphere(matrix, mesh.bounds, r.sphere);
+  }
   recordBillboards(batches, flatWind, camRight, camUp) {
     const r = this._rec(); if (!r) return;
     r.kind = REC_BB; r.batches = batches; r.flatWind.set(flatWind ?? this._zeroWind);
@@ -454,8 +467,8 @@ export class ShadowPass {
         gl.clear(gl.DEPTH_BUFFER_BIT);
         this.stats.sunDraws += this.replay(f, this.sunVP[c], null);
       }
-      this.sunParams[0] = SHADOW_CASCADES[0]; this.sunParams[1] = sunTexelWorld(0); this.sunParams[2] = sunTexelWorld(1); this.sunParams[3] = 1;
-      this._sunVPFlat.set(this.sunVP[0], 0); this._sunVPFlat.set(this.sunVP[1], 16);
+      for (let c = 0; c < SHADOW_CASCADES.length; c++) { this.sunParams[c] = SHADOW_CASCADES[c]; this.sunTexel[c] = sunTexelWorld(c); this._sunVPFlat.set(this.sunVP[c], c * 16); }
+      this.sunParams[3] = 1;
     }
     // EL5: THE LANTERNS CAST TOO, sun or no sun - the nearest SHADOW_POINT_CASTERS
     // of them, each into its six layers; the replays are culled to the
@@ -504,6 +517,15 @@ export class ShadowPass {
           gl.drawElements(gl.TRIANGLES, sm.primitiveCount * 3, gl.UNSIGNED_INT, sm.startIndex * 4);
           draws++;
         }
+      } else if (r.kind === REC_CHAR) {
+        const mesh = r.mesh;
+        if (!P.char || !mesh?.vao || mesh._dead) continue;
+        use(P.char);
+        gl.uniformMatrix4fv(P.char.model, false, r.matrix);
+        f.bindVao(mesh.vao);
+        if (mesh.ranges && mesh.ranges.length) {
+          for (const rg of mesh.ranges) { if (rg.hidden) continue; gl.drawArrays(gl.TRIANGLES, rg.first, rg.count); draws++; }
+        } else { gl.drawArrays(gl.TRIANGLES, 0, mesh.count); draws++; }
       } else if (r.kind === REC_TERRAIN) {
         const s = r.surface;
         if (!s?.vao || s._dead) continue;
@@ -565,6 +587,7 @@ export class ShadowPass {
     gl.uniform1i(loc.pointShadow, SHADOW_POINT_UNIT);
     gl.uniformMatrix4fv(loc.sunVP, false, this._sunVPFlat);
     gl.uniform4fv(loc.sunParams, this.sunParams);
+    gl.uniform4fv(loc.sunTexel, this.sunTexel);   // EL7
     gl.uniform4fv(loc.pointParams, this.pointParams);   // EL5: all the casters' vec4s at once
     gl.uniform1iv(loc.shadowIndex, this.shadowIndex);
   }

@@ -50,7 +50,7 @@
   "old": "    gl.activeTexture(gl.TEXTURE2);\n    gl.bindTexture(gl.TEXTURE_2D, this.frame.depth);\n    gl.uniform1i(prog.uDepth, 2);",
   "new": "    gl.activeTexture(gl.TEXTURE2);\n    gl.uniform1i(prog.uDepth, 2);",
   "tests": [
-   "test/el3_air.test.js"
+   "test/el6_field.test.js"
   ]
  },
  {
@@ -173,10 +173,10 @@
  {
   "name": "glare-texel-old",
   "file": "src/render/airPass.js",
-  "old": "    gl.uniform2f(P.uTexel, 1 / this.width, 1 / this.height);",
-  "new": "    gl.uniform2f(P.uTexel, 1 / this.canvas[0], 1 / this.canvas[1]);",
+  "old": "      if (eye && Math.hypot(L[i * 4] - eye[0], L[i * 4 + 1] - eye[1], L[i * 4 + 2] - eye[2]) < AIR_GLARE_MIN_DISTANCE) continue;",
+  "new": "      if (false) continue;",
   "tests": [
-   "test/el5_field.test.js"
+   "test/el7_polish.test.js"
   ]
  },
  {

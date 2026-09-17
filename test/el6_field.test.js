@@ -88,9 +88,14 @@ test('EL6: on the fake GL - nothing measured at prepare, the frame\'s depth is a
   assert.ok(calls.some((c) => c[0] === 'framebufferTexture2D' && c[2] === 36096 && c[4] === ap.frame.depth), 'attached as the frame\'s depth');
   assert.ok(!calls.some((c) => c[0] === 'renderbufferStorage'), 'no renderbuffer');
   r.drawMesh({ vao: { id: 'vao-m' }, buffers: [], subMeshes: [{ textureArchive: 1, textureRecord: 1, startIndex: 0, primitiveCount: 1 }] }, I, null);
+  r.textures.set('210_1', { id: 'flat' }); r.emissionTextures.set('210_1', { id: 'emis' });
+  r.drawBillboards([{ archive: 210, record: 1, vao: { id: 'vao-b' }, indexCount: 6, size: { w: 1, h: 1 }, origin: [0, 0, -3] }], new Float32Array([1, 0, 0]), new Float32Array([0, 1, 0]));   // an emitter, for the depth on its unit
   calls.length = 0;
   r.drawScreenQuad({ id: 'ui' }, { x: 0, y: 0, w: 10, h: 10 });
   assert.equal(ap.measured, true, 'the frame drew: measured at the resolve');
+  assert.equal(ap.stats.emitDraws, 1);
+  const unit2 = calls.findIndex((c) => c[0] === 'uniform1i' && c[1] === 'uDepth' && c[2] === 2);
+  assert.ok(unit2 > 0 && calls[unit2 - 1][0] === 'bindTexture' && calls[unit2 - 1][2] === ap.frame.depth, 'the emitter program takes the frame\'s depth on unit 2, bound right before the sampler is pointed there (its own textures sit on 0 and 1)');
   const rects = calls.filter((c) => c[0] === 'uniform4fv' && c[1] === 'uRect');
   assert.ok(rects.length >= 4, `the AO, the luminance, the bright pass and the resolve all take the world rect (no sun: no shaft; no lantern: no glare) (${rects.length})`);
   assert.ok(rects.every((c) => c[2][2] === 320 && c[2][3] === 200));

@@ -686,3 +686,53 @@ discriminates, it does not discard all.
 **Still not seen on Mac's GPU** - the harness is SwiftShader, the frames
 are synthetic. The four are fixed at their causes; the field decides.
 
+## EL7 - THE POLISH (2026-09-17, Mac: "Lets do #7 + I notice a bug with light sources, that have this bright translucent ball that isnt connected to the source")
+
+**The ball.** The lane's lantern glare is a camera-facing quad at the
+light's position, and the light is not where the flame is: a city light
+sits at the TOP of its flat (`collectCityLights`: `-yPos + size.h`), a
+dungeon light at its flat's centre, and the torch in the player's hand
+and the Light spell's candle have no flat at all - a bright ball half a
+unit ahead of the eye, floating. Three laws: A GLARE NEEDS A FLAME UNDER
+IT (the frame's depth within `AIR_GLARE_SLACK` (1.0) of the light at
+seven taps over the footprint - the centre, one and two half-sizes above
+and below it, either side, because a flat stands on its point and the
+light may sit at its base or its top; presence, not "nothing nearer", so
+a light in open air draws nothing and a light behind a wall draws
+nothing); no glare for a
+light within `AIR_GLARE_MIN_DISTANCE` (1.5) of the eye; and the glare is
+a flame's size (`AIR_GLARE_SIZE` 0.25 - 0.35 was a unit and a half across
+at a lantern's range: a ball).
+
+**#7, the four.**
+- THE AO BLUR IS DEPTH-AWARE: a tap counts while its view distance is
+  within the AO radius of the centre's; a wall's occlusion no longer
+  smears into the sky beside it nor a pillar's into the floor behind.
+- THREE CASCADES by view distance (`SHADOW_CASCADES` 12, 48, 240: the
+  room, the street, the town; `uSunTexel` carries the three texel sizes).
+  The near cascade's texel is 1.2 cm; the eave hairline EL5 recorded is
+  four times thinner than the 40-unit cascade left it.
+- THE RIGS CAST: `createCharacterMesh`'s bundle carries a bounding sphere
+  (`boundsOf` with the rig's stride, refreshed by `updateCharacterMesh`),
+  `drawCharacter` records it (`recordCharacter`; never from the sprite
+  target or the studio bake - a rig drawn to a 1024^2 target in a studio
+  view is no caster), and the shadow pass replays it with its own depth
+  program over CHAR_VS, the visible ranges alone.
+- THE WATER RECEIVES: `waterSurfaceFs(cloud, SHADOW_GLSL)` puts the sun
+  map on the water's sun term; the renderer builds the lane's water
+  program once with the lane (`waterSurfaceProgramLane`, its own uniform
+  table through `_waterLocs`) and `drawWaterSurface` takes it, with the
+  maps, whenever the lane and the shadows are on. A quay's shadow lies on
+  the harbour.
+
+**The probe's catch.** `${AIR_GLARE_SLACK}` with the slack at 1.0 reached
+the shader as `1` - an int, and "'<=' : wrong operand types" on a real
+GPU; the fake GL compiles anything. `glslFloat` is the one door a
+whole-number constant takes into a shader. The probe's lantern B now has
+a flame flat under it, in view: the glare shows with the flat, not
+without, and not for a torch added in the hand.
+
+**Pins:** test/el7_polish.test.js (3); the el1/el2/el3/el5 pins re-aimed
+(three cascades, the compile counts, the glare's presence test and size,
+the rig's record from drawCharacter alone). tools/mutants/el7.json (26).
+
