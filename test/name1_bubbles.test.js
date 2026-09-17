@@ -16,11 +16,13 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  RemotePlayers, nameScaleFor, sightBlockedBy,
+  RemotePlayers, nameScaleFor, sightBlockedBy, createSightCache,
+  nameLensScale, nameViewportScale, namePixelSize,
   NAME_GAP_PX, NAME_BASE_PX, NAME_SCALE_REF, NAME_SCALE_MIN, NAME_SCALE_MAX, NAME_SIGHT_SKIN, NAME_RANGE, PEER_HEIGHT,
+  NAME_REF_H, NAME_REF_FOV, NAME_PX_MIN, NAME_PX_MAX, NAME_SIGHT_MS, NAME_SIGHT_HOLD_MS,
 } from '../src/net/remotePlayers.js';
 import {
-  createNameLayer, injectNameStyle, cssRgba, bubbleAlpha, bubbleText, bubbleLineOk,
+  createNameLayer, injectNameStyle, cssRgba, bubbleAlpha, bubbleText, bubbleSaid, bubbleLineOk, nameLayerWanted,
   NAME_STYLE_ID, NAME_CSS, BUBBLE_TAB, BUBBLE_MS, BUBBLE_HOLD, BUBBLE_MAX, BUBBLE_CHARS, BUBBLE_ELLIPSIS,
 } from '../src/ui/nameLayer.js';
 import { Collider } from '../src/player/collider.js';
@@ -140,8 +142,10 @@ test('NAME1 (Mac: "additionally grow in size the further away"): the size is PER
   const rp = stand([{ id: 'near', at: [0, 0, -6], height: 1.8 }, { id: 'far', at: [0, 0, -30], height: 1.8 }]);
   const [near, far] = rp.namePoints(PROJ, VIEW, W, H, EYE, (p) => [p.x, p.y, p.z]);
   assert.ok(Math.abs(near.depth - 6) < 1e-4 && Math.abs(far.depth - 30) < 1e-4, 'the depth is the lens\' own clip w');
-  assert.equal(near.scale, nameScaleFor(near.depth));
-  assert.equal(far.scale, nameScaleFor(far.depth));
+  // AUDIT NAME1 F3: the point's scale is the depth law TIMES the frame's lens term, and this frame's lens IS the
+  // reference one (60 degrees) - so these are equal to the precision a Float32Array projection can hold it in.
+  assert.ok(Math.abs(near.scale - nameScaleFor(near.depth)) < 1e-6);
+  assert.ok(Math.abs(far.scale - nameScaleFor(far.depth)) < 1e-6);
   assert.ok(far.scale < near.scale, 'THE BUG, inverted: the far name is the SMALL one');
 
   // and the drawn label is actually smaller on screen
@@ -199,7 +203,8 @@ test('NAME1: the sight test is the ENGINE\'S OWN and says what it cannot see - t
   assert.match(src, /TERRAIN is not one of them/, 'the limit is written down where the law is');
   assert.match(src, /pickActivatableHit|pickFoeAlong/, 'and it cites the two picks that already ask this question');
   const w = rd('src/scenes/world.js');
-  assert.match(w, /const blocked = \(head\) => sightBlockedBy\(player\.collider, eye, head\);/, 'the host casts against player.collider - the LIVE one worldModes re-points at every door');
+  assert.match(w, /const blocked = \(head, id\) => nameSight\.blocked\(player\.collider, eye, id, head\);/,
+    'the host casts against player.collider - the LIVE one worldModes re-points at every door - through the session\'s own cache (AUDIT NAME1 F2/F5)');
   assert.match(rd('src/scenes/worldModes.js'), /player\.collider = ctx\.collider;/, 'and worldModes really does re-point it (the interior and the dungeon)');
 });
 
@@ -215,9 +220,16 @@ test('NAME1: the enhanced face - a DOM layer in PIXEL_STACK on bone, one element
   assert.equal([doc.head, ...doc.head.children].filter((n) => n.id === NAME_STYLE_ID).length, 1, 'injected once');
   assert.ok(NAME_CSS.includes(`font-family: ${PIXEL_STACK};`), 'the enhanced skin\'s own stack (ui/pixelifyFive.js), never a second spelling of it');
   assert.match(NAME_CSS, /-webkit-font-smoothing: none;/, 'unsmoothed, as every other enhanced surface is');
-  assert.match(NAME_CSS, /\.dfnames \{ position: fixed; inset: 0; z-index: 4; pointer-events: none;/, 'over the world, taking no click');
+  // AUDIT NAME1 F4: UNDER the HUD, not level with it - at 4 it tied with .hud and every readout beside it, and a
+  // tie goes to the later element, which is this one.
+  assert.match(NAME_CSS, /\.dfnames \{ position: fixed; inset: 0; z-index: 3; pointer-events: none;/, 'over the world, under the HUD, taking no click');
+  assert.ok(Number(/\.dfnames \{[^}]*z-index: (\d+)/.exec(NAME_CSS)[1]) < 4, 'strictly below the HUD\'s own level');
   assert.match(NAME_CSS, /transform: translate\(-50%, -100%\);/, 'THE ANCHOR: the stack grows UP from the point, so its bottom edge is on it');
-  assert.match(NAME_CSS, /color: var\(--bone, #d8cfae\)/, 'bone');
+  // AUDIT NAME1 F12: --bone's OWN fallback (ui/enhancedStyle.js :root), the one the party and friends panels use.
+  assert.match(NAME_CSS, /color: var\(--bone, #e9e4d9\)/, 'bone');
+  assert.doesNotMatch(NAME_CSS.replace(/\/\*[\s\S]*?\*\//g, ' '), /#d8cfae/, 'and not .hud\'s ivory, which is a different colour wearing the same word');
+  assert.match(rd('src/ui/enhancedStyle.js'), /--bone: #e9e4d9;/, '...which is the token\'s real value');
+  assert.match(rd('src/ui/partyPanel.js'), /var\(--bone, #e9e4d9\)/, '...and the sibling panel\'s own fallback');
   assert.match(NAME_CSS, /max-width: 15em;/, 'and the bubble wraps at a bounded width');
   assert.equal(layer.root.attrs['aria-hidden'], 'true');
   assert.equal(layer.root.style.display, 'none', 'nothing before the first frame says there is somebody to label');
@@ -234,8 +246,11 @@ test('NAME1: the enhanced face - a DOM layer in PIXEL_STACK on bone, one element
   assert.equal(bran.name.textContent, 'BRAN');
   assert.equal(bran.node.style.left, '100px');
   assert.equal(bran.node.style.top, `${300 - NAME_GAP_PX}px`, 'the element sits the gap ABOVE the head point and grows upward from there');
-  assert.equal(bran.node.style.fontSize, `${NAME_BASE_PX.toFixed(1)}px`);
-  assert.equal(layer.tagFor('zed').node.style.fontSize, `${(NAME_BASE_PX * 0.5).toFixed(1)}px`, 'half the scale, half the face');
+  assert.equal(bran.node.style.fontSize, `${NAME_BASE_PX.toFixed(1)}px`, 'the reference frame: the base size, exactly');
+  // AUDIT NAME1 F3: half the scale is half the face until the legible floor takes over - 8 px is not a word.
+  assert.equal(layer.tagFor('zed').node.style.fontSize, `${NAME_PX_MIN.toFixed(1)}px`, 'half the scale, held at the floor');
+  assert.equal(namePixelSize(0.5), NAME_PX_MIN, '...which is the law\'s own answer, not this layer\'s');
+  assert.equal(namePixelSize(0.75), NAME_BASE_PX * 0.75, 'and inside the band it is simply the base times the scale');
   // THE GREEN IS THE PICTURE'S, converted - not a second constant
   assert.equal(bran.name.style.color, PARTY_GREEN_CSS, 'my party\'s tab, green');
   assert.equal(layer.tagFor('zed').name.style.color, '', 'a stranger keeps the sheet\'s bone');
@@ -351,6 +366,7 @@ test('BUBBLE1: the refusals and the bound - no bubble for a peer nobody is drawi
   const log2 = new ChatLog({ now: () => clock.t });
   for (const p of many) log2.push(BUBBLE_TAB, line({ id: p.id, text: `I am ${p.id}` }));
   assert.equal(layer2.render({ points: pointsOf(many), log: log2 }), BUBBLE_MAX, 'the cap holds whatever a crowd says');
+  assert.equal(layer2.storedCount(), BUBBLE_MAX, 'and the STORE is the bound - six speakers, four entries');
   assert.equal(layer2.tagFor('p0').bubble.className, 'dfname-bubble off', 'the OLDEST went');
   assert.equal(layer2.tagFor(`p${BUBBLE_MAX + 1}`).bubble.className, 'dfname-bubble', 'the newest stayed');
 
@@ -378,22 +394,488 @@ test('BUBBLE1: the text is the WIRE\'S, cut and never re-sanitized - bounded at 
 
 // ── THE HOST ──────────────────────────────────────────────────────────────────────────────────────
 
-test('NAME1 + BUBBLE1: the wiring in scenes/world.js - the layer is made ONCE beside the peers and only where there is a document, driven from the one name pass with the sight test, the chat log and the picture\'s colour, and the classic bitmap pass is the fallback where no document exists (mutants: the layer made per frame; both faces drawn at once; the sight test dropped at the host; the bubbles fed from a tab that is not the world\'s)', () => {
+test('NAME1 + BUBBLE1: the wiring in scenes/world.js - the layer is made ONCE beside the peers and only for the skin that owns the screen, driven from the one name pass with the sight test, the chat log and the picture\'s colour, and the classic bitmap pass is the fallback where there is no layer (mutants: the layer made per frame; both faces drawn at once; the sight test dropped at the host; the bubbles fed from a tab that is not the world\'s)', () => {
   const w = rd('src/scenes/world.js');
   const bare = w.replace(/\/\/[^\n]*/g, ' ');
-  assert.match(w, /import \{ createNameLayer \} from '\.\.\/ui\/nameLayer\.js';/);
-  assert.match(w, /import \{ RemotePlayers, composeLook, sightBlockedBy \} from '\.\.\/net\/remotePlayers\.js';/);
-  assert.match(bare, /let online = null, remotePlayers = null, peerBodies = null, nameLayer = null,/, 'one handle, held for the session');
-  assert.match(bare, /if \(typeof document !== 'undefined'\) nameLayer = createNameLayer\(\{\}\);/, 'made where there is a document to put it in');
+  assert.match(w, /import \{ createNameLayer, nameLayerWanted \} from '\.\.\/ui\/nameLayer\.js';/);
+  assert.match(w, /import \{ RemotePlayers, composeLook, sightBlockedBy, createSightCache \} from '\.\.\/net\/remotePlayers\.js';/);
+  assert.match(bare, /let online = null, remotePlayers = null, peerBodies = null, nameLayer = null, nameSight = null,/, 'one handle each, held for the session');
+  // AUDIT NAME1 F7: the SKIN gates the DOM face, exactly as it gates the chat panel the bubbles belong to.
+  assert.match(bare, /if \(nameLayerWanted\(enhanced\)\) nameLayer = createNameLayer\(\{\}\);/, 'made for the skin that owns this screen, and where there is a document to put it in');
+  assert.match(bare, /if \(enhanced && typeof document !== 'undefined'\) chatStart\(\);/, '...the same gate the chat takes');
+  assert.ok(bare.indexOf('const enhanced = isEnhanced();') < bare.indexOf('nameLayerWanted(enhanced)'), 'the skin is read before it is asked about');
   assert.equal((w.match(/createNameLayer\(/g) ?? []).length, 1, 'called in exactly one place - never per frame');
-  assert.match(bare, /const blocked = \(head\) => sightBlockedBy\(player\.collider, eye, head\);/);
-  assert.match(bare, /const points = covered \? \[\] : remotePlayers\.namePoints\(proj, view, canvas\.clientWidth, canvas\.clientHeight, eye, onlineToScene, largeHudViewportRect\(canvas\.clientHeight\), blocked\);/,
-    'CSS pixels for a style attribute, the docked HUD\'s rect, and the sight test');
-  assert.match(bare, /nameLayer\.render\(\{ points, log: chatLog, covered, colorOf: \(id\) => social\?\.colorOf\(id\) \?\? null \}\);/,
-    'the points, the log the bubbles come from, the window\'s word and the picture\'s colour');
-  assert.match(bare, /if \(!nameLayer\) remotePlayers\.drawNames\(/, 'ONE face a frame: the bitmap pass runs only where there is no layer');
+  assert.match(bare, /nameSight = createSightCache\(\);/, 'AUDIT NAME1 F2/F5: and the sight cache is the session\'s, made once beside it');
+  assert.equal((w.match(/createSightCache\(/g) ?? []).length, 1, 'never per frame either - a cache rebuilt every frame is no cache');
+  assert.match(bare, /const blocked = \(head, id\) => nameSight\.blocked\(player\.collider, eye, id, head\);/);
+  // AUDIT NAME1 F1/F14: ONE call, into the pass the test below drives end to end.
+  assert.match(bare, /remotePlayers\.nameFrame\(\{/, 'the whole pass in one call');
+  assert.match(bare, /w: nameLayer \? canvas\.clientWidth : canvas\.width,/, 'CSS pixels for a style attribute, the buffer\'s for the bitmap pass');
+  assert.match(bare, /h: nameLayer \? canvas\.clientHeight : canvas\.height,/);
+  assert.match(bare, /rect: largeHudViewportRect\(canvas\.clientHeight\),/, 'the docked HUD\'s own viewport (E5)');
+  assert.match(bare, /layer: nameLayer, log: chatLog, colorOf: \(id\) => social\?\.colorOf\(id\) \?\? null, blocked,/,
+    'the layer, the log the bubbles come from and the picture\'s colour');
+  assert.match(bare, /renderer, font: townTalk\.font, scale, hudScale: enhancedHudScale\(\),/, 'AUDIT NAME1 F3: and the player\'s own HUD scale');
   assert.doesNotMatch(bare, /PARTY_GREEN/, 'the host still never carries the colour itself');
+  assert.doesNotMatch(bare, /nameLayer\.render\(/, 'the host does not drive the layer behind the pass\'s back');
   // the bubbles ride the log the chat panel shows - the chat wiring itself is untouched (CHAT1's pin still holds it)
   assert.match(w, /link\.onChat = \(line\) => chatLog\.push\(tab\.id, line\);/, 'a PULL from the log, so CHAT1\'s five lines are exactly as they were');
   assert.equal(BUBBLE_TAB, 'world');
+});
+
+// ── THE FIXES (AUDIT NAME1, 2026-09-16: fifteen findings read off the slice, driven here) ──────────
+
+test('AUDIT NAME1 F7: the DOM face is the SKIN\'S, not the document\'s - a classic-skin page (online\'s forcing can fail, MAC-N3) keeps the classic bitmap names it always had, and never gets the enhanced pixel face with no chat panel beside it (mutant: the gate back on the document alone)', () => {
+  assert.equal(nameLayerWanted(true, {}), true, 'the enhanced skin, in a browser: the DOM face');
+  assert.equal(nameLayerWanted(false, {}), false, 'THE FINDING: a classic skin with a document gets NO layer - so `if (!nameLayer)` draws the bitmap names');
+  assert.equal(nameLayerWanted(true, null), false, 'and a Node probe gets none either');
+  assert.equal(nameLayerWanted(true, undefined), false);
+  assert.equal(nameLayerWanted(undefined, {}), false);
+  // and the whole point of the refusal: the classic page still HAS a face, because the fallback is gated on the layer
+  const rp = stand([{ id: 'a', at: [0, 0, -10], height: 1.8 }]);
+  const r = recorder();
+  assert.equal(rp.nameFrame({ proj: PROJ, view: VIEW, w: W, h: H, eye: EYE, layer: null, renderer: r, font: FONT }), 1,
+    'no layer, one bitmap name');
+  assert.equal(r.runs.length, 1);
+});
+
+// ── AUDIT NAME1 F3: THE SIZE IS THE FRAME'S ───────────────────────────────────────────────────────
+
+const PROJ120 = mirrorProjectionX(perspective((120 * Math.PI) / 180, 16 / 9, 0.2, 6000));
+
+test('AUDIT NAME1 F3 (the size law ignored the frame): a name is sized by the VIEWPORT it is drawn into and the LENS it is drawn through - the same peer at the same depth wears 16.0px on a 900-px view at FOV 60 and 9.0px at FOV 120, where the sprite under it is three times smaller, and 10.7px on a 600-px view; the HUD scale multiplies the answer and the legible band holds the ends (mutants: the lens term dropped; the viewport term dropped; the terms inverted; the band dropped; the HUD scale dropped or taken inside the band)', () => {
+  // the two terms, by value
+  assert.equal(nameViewportScale(NAME_REF_H), 1, 'the reference height is the reference');
+  assert.equal(nameViewportScale(450), 0.5, 'half the view, half the size');
+  assert.equal(nameViewportScale(0), 1, 'and nothing readable is the reference, not a division');
+  assert.equal(nameViewportScale(NaN), 1);
+  assert.ok(Math.abs(nameLensScale(PROJ) - 1) < 1e-6, `60 degrees IS the reference lens (${nameLensScale(PROJ)})`);
+  assert.ok(Math.abs(nameLensScale(PROJ120) - 1 / 3) < 1e-6, `FOV 120: a third (${nameLensScale(PROJ120)}) - tan(30) / tan(60), the same third the sprite shrank by`);
+  assert.equal(nameLensScale(null), 1, 'no matrix is the reference lens');
+  assert.equal(nameLensScale([0, 0, 0, 0, 0, 0]), 1, 'and neither is a broken one');
+  assert.equal(NAME_REF_FOV, Math.PI / 3, 'the reference lens is the one the port drew with before FieldOfView was wired');
+
+  // the size, by value, through the real law
+  assert.equal(namePixelSize(1, 1, 1), NAME_BASE_PX);
+  assert.ok(Math.abs(namePixelSize(1, nameViewportScale(600), 1) - NAME_BASE_PX * (600 / 900)) < 1e-9);
+  assert.equal(namePixelSize(1, nameViewportScale(400), 1), NAME_PX_MIN, 'a phone at the reference depth: the floor, not seven point one');
+  assert.equal(namePixelSize(3, 1, 1), NAME_PX_MAX, 'and the ceiling holds the other end');
+  assert.equal(namePixelSize(1, 1, 2), NAME_BASE_PX * 2, 'the player\'s HUD scale is OUTSIDE the band - it is a request, not an accident');
+  assert.equal(namePixelSize(3, 1, 2), NAME_PX_MAX * 2);
+  assert.equal(namePixelSize(NaN, NaN, NaN), NAME_BASE_PX, 'nothing readable is the reference frame');
+
+  // and through the DOM face, driven: ONE peer, ONE depth, four frames
+  const peer = [{ id: 'bran', at: [0, 0, -NAME_SCALE_REF], height: 1.8 }];   // the head point at the reference depth exactly (the view looks down -z)
+  const px = (proj, h, hudScale = 1) => {
+    const doc = fakeDocument();
+    const layer = createNameLayer({ doc, now: () => 1000 });
+    const rp = stand(peer);
+    const points = rp.namePoints(proj, VIEW, W, h, EYE, (p) => [p.x, p.y, p.z]);
+    layer.render({ points, viewport: h, hudScale });
+    return layer.tagFor('bran').node.style.fontSize;
+  };
+  assert.equal(px(PROJ, 900), '16.0px', 'the reference frame: the base size');
+  assert.equal(px(PROJ, 600), '10.7px', 'a two-thirds-height view: two thirds of it');
+  assert.equal(px(PROJ120, 900), '9.0px', 'THE FINDING: at FOV 120 the sprite is a third the size and the name used to be 16.0px too');
+  assert.equal(px(PROJ120, 900), `${NAME_PX_MIN.toFixed(1)}px`, '...held at the legible floor, because a third of 16 is not a word');
+  assert.equal(px(PROJ, 900, 2), '32.0px', 'and the HUD scale the player set moves it like every other enhanced surface');
+  assert.notEqual(px(PROJ, 900), px(PROJ120, 900), 'the lens is read, not ignored');
+  assert.notEqual(px(PROJ, 900), px(PROJ, 600), 'and so is the viewport');
+
+  // and through the HOST's own call, where the docked HUD's rect is the world viewport (E5): the name is sized by
+  // the frame it is DRAWN into, not by the page around it
+  const doc = fakeDocument();
+  const layer = createNameLayer({ doc, now: () => 1000 });
+  const rp = stand(peer);
+  // the rect is NORMALISED, as ui/hudLarge.js largeHudViewportRect mints it: a docked bar taking a third of the
+  // canvas leaves the world two thirds of 900 px
+  rp.nameFrame({ proj: PROJ, view: VIEW, w: W, h: 900, eye: EYE, rect: { x: 0, y: 1 / 3, w: 1, h: 2 / 3 }, layer });
+  assert.equal(layer.tagFor('bran').node.style.fontSize, '10.7px', 'the docked HUD shrank the world to 600 px and the name went with it');
+  const full = createNameLayer({ doc: fakeDocument(), now: () => 1000 });
+  rp.nameFrame({ proj: PROJ, view: VIEW, w: W, h: 900, eye: EYE, rect: null, layer: full });
+  assert.equal(full.tagFor('bran').node.style.fontSize, '16.0px', 'and with no docked bar the whole canvas is the frame');
+});
+
+// ── AUDIT NAME1 F2: THE RAY'S BUDGET, AND THE BUCKET'S OWN BOX ────────────────────────────────────
+
+/** A brute-force nearest hit over a known triangle list - the answer the grid and its broad phase must not change. */
+function brute(tris, o, d, maxDist) {
+  let best = Infinity;
+  for (const [a, b, c] of tris) {
+    const e1 = [b[0] - a[0], b[1] - a[1], b[2] - a[2]];
+    const e2 = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
+    const px = [d[1] * e2[2] - d[2] * e2[1], d[2] * e2[0] - d[0] * e2[2], d[0] * e2[1] - d[1] * e2[0]];
+    const det = e1[0] * px[0] + e1[1] * px[1] + e1[2] * px[2];
+    if (Math.abs(det) < 1e-12) continue;
+    const inv = 1 / det;
+    const t = [o[0] - a[0], o[1] - a[1], o[2] - a[2]];
+    const u = (t[0] * px[0] + t[1] * px[1] + t[2] * px[2]) * inv;
+    if (u < 0 || u > 1) continue;
+    const q = [t[1] * e1[2] - t[2] * e1[1], t[2] * e1[0] - t[0] * e1[2], t[0] * e1[1] - t[1] * e1[0]];
+    const v = (d[0] * q[0] + d[1] * q[1] + d[2] * q[2]) * inv;
+    if (v < 0 || u + v > 1) continue;
+    const dist = (e2[0] * q[0] + e2[1] * q[1] + e2[2] * q[2]) * inv;
+    if (dist >= 0 && dist <= maxDist && dist < best) best = dist;
+  }
+  return best;
+}
+const QUAD = (x0, x1, y0, y1, z) => [x0, y0, z, x1, y0, z, x1, y1, z, x0, y1, z];
+const IDENT = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+const QUAD_TRIS = (x0, x1, y0, y1, z) => [[[x0, y0, z], [x1, y0, z], [x1, y1, z]], [[x0, y0, z], [x1, y1, z], [x0, y1, z]]];
+
+test('AUDIT NAME1 F2 (one ray a peer walked EVERY bucket to maxDist): the collider rejects a bucket the ray never enters with the bucket\'s own box, before a single cell of it is looked at - a town\'s thirty streamed buckets are thirty box tests, not thirty DDAs - and the answer stays the brute-force one (mutants: the box test dropped; the bounds not kept; the reject inverted; the box grown to everything)', () => {
+  const c = new Collider();
+  const tris = [];
+  // the wall the ray really meets, at z = -5
+  c.addMesh('wall', QUAD(-2, 2, 0, 5, -5), [0, 1, 2, 0, 2, 3], IDENT);
+  tris.push(...QUAD_TRIS(-2, 2, 0, 5, -5));
+  // and thirty streamed map pixels standing well off the line, as an exterior collider holds them
+  for (let i = 0; i < 30; i++) {
+    const x = 200 + i * 40;
+    c.addMesh(`px:${i}`, QUAD(x, x + 30, 0, 6, -5 - i), [0, 1, 2, 0, 2, 3], IDENT);
+    tris.push(...QUAD_TRIS(x, x + 30, 0, 6, -5 - i));
+  }
+  // count the CELLS each bucket is asked for: a walk is grid.get calls, a reject is none at all
+  const walks = new Map();
+  for (const [key, bucket] of c._buckets) {
+    const real = bucket.grid.get.bind(bucket.grid);
+    walks.set(key, 0);
+    bucket.grid.get = (k) => { walks.set(key, walks.get(key) + 1); return real(k); };
+  }
+  const o = [0, 1.7, 0], d = [0, 0, -1], reach = 40;
+  const hit = c.raycast(o, d, reach);
+  assert.ok(Math.abs(hit - brute(tris, o, d, reach)) < 1e-6, 'the wall, at the distance the triangles themselves say');
+  assert.ok(walks.get('wall') > 0, 'the bucket the ray crosses IS walked');
+  let off = 0;
+  for (const [key, n] of walks) if (key !== 'wall') off += n;
+  assert.equal(off, 0, 'THE FINDING: thirty buckets nowhere near the line, and not one cell of them is looked at');
+
+  // and the box can never hide a hit: a fan of rays agrees with the triangles themselves, near and far
+  for (let a = -0.9; a <= 0.9; a += 0.15) {
+    for (const len of [3, 6, 40]) {
+      const dir = [Math.sin(a), 0, -Math.cos(a)];
+      const got = c.raycast(o, dir, len), want = brute(tris, o, dir, len);
+      assert.ok((got === Infinity && want === Infinity) || Math.abs(got - want) < 1e-6,
+        `a fan ray at ${a.toFixed(2)} over ${len}: ${got} against the triangles' own ${want}`);
+    }
+  }
+  for (const [, ] of walks) break;
+  for (const k of walks.keys()) walks.set(k, 0);
+  assert.equal(c.raycast(o, d, 1), Infinity, 'a ray that stops short of the box is a reject, and still the right answer');
+  assert.equal(walks.get('wall'), 0, '...a REJECT: the box takes the ray\'s reach, so a one-unit ray does not walk a wall five units away');
+  // a ray that climbs OVER the wall: the box has a y, so it is rejected on height alone
+  assert.equal(c.raycast([0, 1.7, 0], [0, 0.9, -0.43589], 40), Infinity, 'over the top of a five-unit wall');
+});
+
+test('AUDIT NAME1 F2: the sight test is CACHED per peer - one ray a peer every NAME_SIGHT_MS however many frames go by, so a crowd costs the frame what a crowd is worth rather than sixty rays a frame each (mutants: the cache bypassed; the interval dropped; the cache keyed by something that is not the peer; the entry never released)', () => {
+  const clock = { t: 0 };
+  const collider = walled();
+  const sight = createSightCache({ now: () => clock.t });
+  const rp = stand([{ id: 'a', at: [8, 0, -10], height: 1.8 }, { id: 'b', at: [9, 0, -12], height: 1.8 }, { id: 'c', at: [10, 0, -14], height: 1.8 }]);
+  const blocked = (head, id) => sight.blocked(collider, EYE, id, head);
+  for (let f = 0; f < 60; f++) {
+    assert.equal(rp.namePoints(PROJ, VIEW, W, H, EYE, (p) => [p.x, p.y, p.z], null, blocked).length, 3, `frame ${f}: three names`);
+    clock.t += 16;
+  }
+  // 60 frames of 16 ms is 944 ms: six re-tests a peer (0, 160, 320, 480, 640, 800), eighteen rays for 180 asks
+  assert.equal(sight.rays(), 18, `the ray budget over 60 frames and 3 peers: ${sight.rays()} (uncached: 180)`);
+  assert.ok(sight.rays() <= 3 * Math.ceil(960 / NAME_SIGHT_MS), 'at most one ray a peer an interval, by the law rather than by the number');
+  assert.equal(sight.size(), 3, 'one entry a peer');
+  assert.equal(NAME_SIGHT_MS >= 100 && NAME_SIGHT_MS <= 300, true, 'the interval is a glance, not a second');
+
+  // the cache is the PEER'S: a second peer does not read the first one's answer
+  const one = createSightCache({ now: () => clock.t });
+  const wall = walled();
+  assert.equal(one.blocked(wall, EYE, 'hidden', [0, 1.8, -10]), false, 'the first blocked answer is still inside the hold');
+  assert.equal(one.rays(), 1);
+  one.blocked(wall, EYE, 'hidden', [0, 1.8, -10]);
+  assert.equal(one.rays(), 1, 'the same peer inside the interval: no second ray');
+  one.blocked(wall, EYE, 'other', [8, 1.8, -10]);
+  assert.equal(one.rays(), 2, 'a different peer: their own ray');
+  // an id nobody has asked about for the whole TTL is forgotten rather than kept for the session
+  clock.t += 60000;
+  one.blocked(wall, EYE, 'other', [8, 1.8, -10]);
+  assert.equal(one.size(), 1, 'the peer who left took their entry with them');
+});
+
+// ── AUDIT NAME1 F5: THE HYSTERESIS ───────────────────────────────────────────────────────────────
+
+test('AUDIT NAME1 F5 (one un-hysteresised ray strobed a name behind a railing and REBUILT its element every flicker): the name goes only once the ray has said "blocked" for NAME_SIGHT_HOLD_MS and comes back the instant it says "seen" - over ten flickering frames the DOM builds nothing and loses nothing, where the raw ray built a dozen nodes and took the name away five times (mutants: the hold dropped; the stamp re-stamped on every blocked answer; the name held for ever once blocked)', () => {
+  const clock = { t: 0 };
+  // A RAILING: the ray says blocked on every other frame, which is what an upright between two players does.
+  let n = 0;
+  const flicker = () => (n++ % 2 === 0);
+  // TWO peers, because one flickering peer alone empties the point list and the layer simply hides its root: the
+  // rebuild the finding measured needs somebody still standing there while the other one blinks.
+  const peer = [{ id: 'bran', at: [8, 0, -10], height: 1.8 }, { id: 'zed', at: [-8, 0, -10], height: 1.8 }];
+  const onlyBran = (head, fn) => (head[0] > 0 ? fn() : false);
+
+  // THE FIX: through the cache, re-tested every frame so the HOLD alone is doing the work
+  const doc = fakeDocument();
+  const layer = createNameLayer({ doc, now: () => clock.t });
+  const rp = stand(peer);
+  const sight = createSightCache({ now: () => clock.t, every: 0, cast: (c, eye, head) => onlyBran(head, flicker) });
+  layer.render({ points: rp.namePoints(PROJ, VIEW, W, H, EYE, (p) => [p.x, p.y, p.z]) });   // the elements exist before the flicker starts
+  doc.zero();
+  let gone = 0;
+  for (let f = 0; f < 10; f++) {
+    const points = rp.namePoints(PROJ, VIEW, W, H, EYE, (p) => [p.x, p.y, p.z], null, (head, id) => sight.blocked(null, EYE, id, head));
+    assert.equal(points.length, 2, `frame ${f}: the name is still there`);
+    layer.render({ points });
+    if (!layer.tagFor('bran')) gone++;
+    clock.t += 16;
+  }
+  assert.equal(doc.built, 0, 'ten flickering frames build NOTHING - the element is moved, as it is on any other frame');
+  assert.equal(doc.structure, 0, 'and re-parent nothing');
+  assert.equal(gone, 0, 'the name is never taken away');
+
+  // THE COUNTERFACTUAL, same flicker, no hysteresis: the element is destroyed and rebuilt as the ray strobes
+  n = 0;
+  const doc2 = fakeDocument();
+  const layer2 = createNameLayer({ doc: doc2, now: () => clock.t });
+  const rp2 = stand(peer);
+  doc2.zero();
+  let gone2 = 0;
+  for (let f = 0; f < 10; f++) {
+    layer2.render({ points: rp2.namePoints(PROJ, VIEW, W, H, EYE, (p) => [p.x, p.y, p.z], null, (head) => onlyBran(head, flicker)) });
+    if (!layer2.tagFor('bran')) gone2++;
+  }
+  assert.ok(doc2.built >= 8, `the raw ray rebuilds the element every flicker: ${doc2.built} nodes built against 0`);
+  assert.ok(gone2 >= 4, `and the name is simply absent on ${gone2} of the ten frames`);
+
+  // the law still WORKS: a ray that keeps saying blocked takes the name away, one hold later
+  const clock2 = { t: 0 };
+  const always = createSightCache({ now: () => clock2.t, every: 0, cast: () => true });
+  assert.equal(always.blocked(null, EYE, 'p', [0, 1.8, -10]), false, 'the first blocked answer is not yet an answer');
+  clock2.t += NAME_SIGHT_HOLD_MS - 1;
+  assert.equal(always.blocked(null, EYE, 'p', [0, 1.8, -10]), false, 'a millisecond short of the hold: still shown');
+  clock2.t += 1;
+  assert.equal(always.blocked(null, EYE, 'p', [0, 1.8, -10]), true, 'and at the hold exactly, it goes');
+  clock2.t += 10000;
+  assert.equal(always.blocked(null, EYE, 'p', [0, 1.8, -10]), true, 'and stays gone while the wall stays there');
+  // ...and a seen answer gives it straight back, with no hold of its own
+  const back = createSightCache({ now: () => clock2.t, every: 0, cast: () => false });
+  assert.equal(back.blocked(null, EYE, 'p', [0, 1.8, -10]), false, 'seen is answered at once - a name never waits to come back');
+  assert.ok(NAME_SIGHT_HOLD_MS >= 100 && NAME_SIGHT_HOLD_MS <= 400, 'the hold is a flicker\'s length, not a mood');
+});
+
+// ── AUDIT NAME1 F1 + F14: THE FRAME, DRIVEN END TO END ───────────────────────────────────────────
+
+/** The host's own composition, built the way scenes/world.js builds it: real peers, a real layer over a fake
+ *  document, a real Collider with a real wall in it, a real ChatLog, real matrices. */
+function hostFrame({ rows = [{ id: 'bran', at: [8, 0, -10], height: 1.8 }, { id: 'zed', at: [9, 0, -12], height: 1.8 }] } = {}) {
+  const clock = { t: 10000 };
+  const doc = fakeDocument();
+  const rp = stand(rows);
+  const layer = createNameLayer({ doc, now: () => clock.t });
+  const collider = walled();
+  const sight = createSightCache({ now: () => clock.t });
+  const log = new ChatLog({ now: () => clock.t });
+  const frame = (over = {}) => rp.nameFrame({
+    proj: PROJ, view: VIEW, w: W, h: H, eye: EYE, toScene: (p) => [p.x, p.y, p.z],
+    layer, log, blocked: (head, id) => sight.blocked(collider, EYE, id, head), hudScale: 1, viewport: H,
+    ...over,
+  });
+  return { clock, doc, rp, layer, collider, sight, log, frame };
+}
+
+test('AUDIT NAME1 F1 (in a dungeon any open window FROZE the name layer): a covered frame is still a frame - the layer is told, so it takes itself down instead of standing on the glass with the positions of the frame the window opened on, and the bubble pump still runs while it is covered; the pass costs no projection and no ray while it is covered (mutants: the covered frame not passed to the layer; the layer left up under a window; the points projected anyway; the pump skipped)', () => {
+  const { layer, sight, log, frame, clock } = hostFrame();
+  assert.equal(frame(), 2, 'two names before the window opens');
+  assert.equal(layer.root.style.display, '', 'up');
+  const rays = sight.rays();
+
+  // THE WINDOW. The dungeon arm used to return before the pass; the layer then kept the frame it last had.
+  assert.equal(frame({ covered: true }), 0, 'a covered frame draws no name');
+  assert.equal(layer.root.style.display, 'none', 'THE FINDING: the layer comes DOWN, rather than standing on the glass over the overlay');
+  assert.equal(sight.rays(), rays, 'and it costs no ray - a covered frame projects nothing');
+
+  // THE PUMP STILL RUNS: a line said while the window is open is a bubble the moment it closes, at its own age
+  log.push(BUBBLE_TAB, { id: 'bran', name: 'Bran', text: 'behind you', at: clock.t });
+  assert.equal(frame({ covered: true }), 0, 'still nothing drawn');
+  clock.t += 1000;
+  assert.equal(frame(), 2, 'the window closes');
+  assert.equal(layer.bubbleCount(), 1, 'and the line said under it is there');
+  assert.equal(layer.tagFor('bran').bubble.textContent, 'behind you');
+  assert.equal(layer.root.style.display, '', 'up again');
+
+  // and the host arm that had the early return really does call the pass before it takes it
+  const wm = rd('src/scenes/worldModes.js');
+  const arm = /if \(dungeonCtx\.uiOverlayActive\) \{[^\n]*\}/.exec(wm)[0];
+  assert.match(arm, /host\.drawPeerNames\?\.\(\{ proj, view, eye: mwv\.eye \}\)/, 'the dungeon overlay arm draws the names');
+  assert.ok(arm.indexOf('drawPeerNames') < arm.indexOf('return true'), '...before it returns, not after');
+  assert.ok(arm.indexOf('drawPeerNames') < arm.indexOf('drawOverlay'), '...and under the overlay, not over it');
+  assert.equal((wm.match(/host\.drawPeerNames\?\./g) ?? []).length, 3, 'the dungeon\'s two arms and the interior\'s - every exit of this host');
+});
+
+test('AUDIT NAME1 F14 (the host wiring was pinned by regex alone): the whole pass driven - the four culls, the sight test over a REAL collider, the DOM face, the party colour and the bitmap fallback, through the one call scenes/world.js makes (mutants: the culls reordered; the layer and the bitmap face both drawn; the rect ignored; the colour dropped)', () => {
+  // a peer behind the wall, a peer beside it, a peer out of range, a peer behind the lens
+  const hostFrameClock = hostFrame({ rows: [
+    { id: 'hidden', at: [0, 0, -10], height: 1.8 },
+    { id: 'seen', at: [8, 0, -10], height: 1.8 },
+    { id: 'miles', at: [0, 0, -(NAME_RANGE + 10)], height: 1.8 },
+    { id: 'behind', at: [0, 0, 10], height: 1.8 },
+  ] });
+  const { layer, sight, frame } = hostFrameClock;
+  const { clock } = hostFrameClock;
+  assert.equal(frame(), 2, 'the two in front and in range are drawn - the wall is not BELIEVED for a hold yet (AUDIT NAME1 F5)');
+  clock.t += NAME_SIGHT_HOLD_MS;
+  assert.equal(frame(), 1, 'and one hold later the one behind the wall is gone');
+  assert.equal(layer.tagCount(), 1);
+  assert.equal(layer.tagFor('seen').name.textContent, 'SEEN');
+  assert.equal(layer.tagFor('hidden'), null, 'the wall answers for the one behind it');
+  assert.equal(sight.rays(), 4, `the ray is the LAST cull: ${sight.rays()} rays over two frames for FOUR peers - out of range and behind the lens cost none`);
+
+  // the party's green rides the same call
+  const social = new SocialState();
+  social.apply({ t: 'social', k: 'state', acct: 'acct-me', name: 'Mac', friends: [], in: [], out: [], invites: [],
+    party: { id: 'p1', leader: 'acct-me', members: [{ acct: 'acct-me', name: 'Mac', online: true, seen: 1, peers: ['me'] }, { acct: 'acct-b', name: 'Seen', online: true, seen: 1, peers: ['seen'] }] } });
+  frame({ colorOf: (id) => social.colorOf(id) ?? null });
+  assert.equal(layer.tagFor('seen').name.style.color, PARTY_GREEN_CSS);
+
+  // ONE FACE A FRAME: hand the same call no layer and the bitmap pass answers instead
+  const rp = stand([{ id: 'seen', at: [8, 0, -10], height: 1.8 }]);
+  const r = recorder();
+  assert.equal(rp.nameFrame({ proj: PROJ, view: VIEW, w: W, h: H, eye: EYE, renderer: r, font: FONT, scale: 1 }), 1);
+  assert.equal(r.runs.length, 1, 'the bitmap face drew it');
+  const r2 = recorder();
+  assert.equal(rp.nameFrame({ proj: PROJ, view: VIEW, w: W, h: H, eye: EYE, layer, renderer: r2, font: FONT, scale: 1 }), 1);
+  assert.equal(r2.runs.length, 0, 'and with a layer it does NOT - one face a frame, never both');
+  // a covered bitmap frame draws nothing at all
+  const r3 = recorder();
+  assert.equal(rp.nameFrame({ proj: PROJ, view: VIEW, w: W, h: H, eye: EYE, renderer: r3, font: FONT, covered: true }), 0);
+  assert.equal(r3.runs.length, 0);
+});
+
+// ── AUDIT NAME1 F13: THE TWO FACES AGREE ABOUT THE GAP ───────────────────────────────────────────
+
+test('AUDIT NAME1 F13: the classic face\'s gap takes the HOST scale, like the glyph box over it - at hudScale 4 the clearance is four buffer pixels a CSS pixel, which is the same clearance the DOM face leaves, and it does NOT take the point\'s own depth term, because a clearance that swings with depth is the world lift NAME1 took out (mutants: the gap unscaled; the gap scaled by the depth term too; the gap scaled twice)', () => {
+  const rp = stand([{ id: 'x', at: [0, 0, -NAME_SCALE_REF], height: 1.8 }]);
+  const [p] = rp.namePoints(PROJ, VIEW, W, H, EYE, (q) => [q.x, q.y, q.z]);
+  const bottomAt = (scale) => {
+    const r = recorder();
+    assert.equal(rp.drawNames(r, FONT, PROJ, VIEW, W, H, EYE, scale, (q) => [q.x, q.y, q.z]), 1);
+    return Math.max(...r.runs[0].quads.map((g) => g.dst.y + g.dst.h));
+  };
+  for (const scale of [1, 2, 4]) {
+    const gap = p.y - bottomAt(scale);
+    assert.ok(Math.abs(gap - NAME_GAP_PX * scale) <= 1, `at hudScale ${scale} the gap is ${gap} buffer px, which is ${NAME_GAP_PX} screen px`);
+  }
+  assert.ok(Math.abs((p.y - bottomAt(4)) / 4 - NAME_GAP_PX) <= 0.5, 'four times the scale, four times the pixels, the SAME clearance');
+  // the DOM face's own gap, at the same point: NAME_GAP_PX CSS px, measured in CSS px
+  const doc = fakeDocument();
+  const layer = createNameLayer({ doc, now: () => 1000 });
+  layer.render({ points: [p], viewport: H });
+  assert.equal(layer.tagFor('x').node.style.top, `${Math.round(p.y - NAME_GAP_PX)}px`, 'the two faces leave the same clearance in their own pixels');
+  // ...and the gap is NOT the depth term: a far peer gets the same screen clearance as a near one
+  const far = stand([{ id: 'x', at: [0, 0, -40], height: 1.8 }]);
+  const [q] = far.namePoints(PROJ, VIEW, W, H, EYE, (v) => [v.x, v.y, v.z]);
+  const r = recorder();
+  far.drawNames(r, FONT, PROJ, VIEW, W, H, EYE, 2, (v) => [v.x, v.y, v.z]);
+  const farGap = q.y - Math.max(...r.runs[0].quads.map((g) => g.dst.y + g.dst.h));
+  assert.ok(Math.abs(farGap - NAME_GAP_PX * 2) <= 1, `forty units out at hudScale 2 the gap is still ${farGap}, not a fraction of it`);
+});
+
+// ── AUDIT NAME1 F6 / F8 / F9 / F10 / F11: THE BUBBLE'S OWN CORRECTIONS ───────────────────────────
+
+test('AUDIT NAME1 F6 (a bubble was stamped from the PUMP\'S clock, not the line\'s): a five-minute-old line read for the first time - the pass never ran while a window stood over the HUD - is already gone, not brand new over somebody\'s head, and the stamp is net/chat.js\' own `t`, the one ChatLog.peek fades by (mutants: the stamp taken at the pump; the relay\'s `at` preferred over the local clock; the stamp dropped)', () => {
+  const doc = fakeDocument();
+  const clock = { t: 1000 };
+  const layer = createNameLayer({ doc, now: () => clock.t });
+  const log = new ChatLog({ now: () => clock.t });
+  const pts = pointsOf([{ id: 'bran' }]);
+
+  log.push(BUBBLE_TAB, { id: 'bran', name: 'Bran', text: 'said five minutes ago' });
+  clock.t += 5 * 60 * 1000;   // the window stood open for five minutes and the layer was never rendered
+  assert.equal(layer.render({ points: pts, log }), 0, 'THE FINDING: a line this old does not arrive as news');
+  assert.equal(layer.tagFor('bran').bubble.className, 'dfname-bubble off');
+
+  // a line said NOW, through the same door, still speaks
+  log.push(BUBBLE_TAB, { id: 'bran', name: 'Bran', text: 'said just now' });
+  assert.equal(layer.render({ points: pts, log }), 1);
+  assert.equal(layer.tagFor('bran').bubble.textContent, 'said just now');
+
+  // the stamp is the LINE's: a line whose local stamp is old fades on that stamp, whatever the relay's `at` says
+  const fresh = new ChatLog({ now: () => clock.t });
+  const line = fresh.push(BUBBLE_TAB, { id: 'zed', name: 'Zed', text: 'from a clock of its own', at: clock.t + 999999 });
+  assert.equal(line.t, clock.t, 'net/chat.js keeps the local stamp as `t` and the relay\'s as `at`');
+  const layer2 = createNameLayer({ doc: fakeDocument(), now: () => clock.t + BUBBLE_MS + 1 });
+  assert.equal(layer2.render({ points: pointsOf([{ id: 'zed' }]), log: fresh }), 0, 'the local stamp decides, so a future `at` cannot hold a bubble open');
+  assert.match(rd('src/ui/nameLayer.js'), /say\(line\.id, line\.text, Number\.isFinite\(line\.t\) \? line\.t : line\.at\)/, 'and the stamp really is the line\'s own');
+});
+
+test('AUDIT NAME1 F8 (the seq watermark outlived the log): the watermark belongs to ONE log - a replaced ChatLog starts a new count, where before every line below the old watermark was mute for the rest of the session (mutants: the watermark kept across logs; the watermark reset on every pump, so a line bubbles twice)', () => {
+  const doc = fakeDocument();
+  const clock = { t: 10000 };
+  const layer = createNameLayer({ doc, now: () => clock.t });
+  const pts = pointsOf([{ id: 'bran' }]);
+
+  const first = new ChatLog({ now: () => clock.t });
+  for (let i = 0; i < 12; i++) first.push(BUBBLE_TAB, { id: 'bran', name: 'Bran', text: `line ${i}` });
+  assert.equal(layer.render({ points: pts, log: first }), 1, 'the newest of the first log');
+  assert.equal(layer.tagFor('bran').bubble.textContent, 'line 11');
+
+  // the session rejoins and the host builds a NEW log: its line 1 is under the old watermark of 12
+  clock.t += BUBBLE_MS + 1;
+  const second = new ChatLog({ now: () => clock.t });
+  second.push(BUBBLE_TAB, { id: 'bran', name: 'Bran', text: 'the first line of the new log' });
+  assert.equal(layer.render({ points: pts, log: second }), 1, 'THE FINDING: it speaks');
+  assert.equal(layer.tagFor('bran').bubble.textContent, 'the first line of the new log');
+  // and within one log the watermark still holds: nothing is replayed. THE LINE THAT PROVES IT is a line put in
+  // by the layer's own door after the pump has read the log - a replay would overwrite it with the log's last line.
+  layer.say('bran', 'straight in, not through the log');
+  assert.equal(layer.render({ points: pts, log: second }), 1);
+  assert.equal(layer.tagFor('bran').bubble.textContent, 'straight in, not through the log', 'the log is read forward from a watermark, never replayed');
+  clock.t += BUBBLE_MS + 1;
+  assert.equal(layer.render({ points: pts, log: second }), 0, 'read forward, once');
+  assert.equal(layer.render({ points: pts, log: second }), 0);
+  assert.equal(layer.storedCount(), 0, 'and a line past its window is gone from the STORE as well as from the screen');
+});
+
+test('AUDIT NAME1 F9 / F10 / F11: a bubble with nothing to show is not shown - a zero-alpha line (a clock stepped backwards, a stamp from the future) is neither drawn nor counted, whitespace is not a remark, and a point that is not a number draws nothing at all rather than leaving the element where it last was (mutants: alpha ignored; the trim dropped; the finite guards dropped)', () => {
+  const doc = fakeDocument();
+  const clock = { t: 10000 };
+  const layer = createNameLayer({ doc, now: () => clock.t });
+  const pts = pointsOf([{ id: 'bran' }]);
+
+  // F9: a stamp from the future is a negative age, which is alpha 0
+  assert.equal(layer.say('bran', 'from the future', clock.t + 5000), true, 'the store takes it');
+  assert.equal(layer.render({ points: pts }), 0, 'and nothing shows it');
+  assert.equal(layer.bubbleCount(), 0, 'nor counts it');
+  assert.equal(layer.tagFor('bran').bubble.className, 'dfname-bubble off');
+  assert.equal(bubbleAlpha(-1), 0, 'the curve says so too');
+  const stamps = createNameLayer({ doc: fakeDocument(), now: () => clock.t });
+  assert.equal(stamps.say('bran', 'stamped with nothing', NaN), false, 'and a stamp that is not a time is refused at the door');
+  assert.equal(stamps.storedCount(), 0);
+  assert.equal(stamps.say('bran', 'stamped with nothing', undefined), true, '...where no stamp at all is simply now');
+  assert.equal(stamps.storedCount(), 1, 'one line a peer in the store');
+
+  // F10: whitespace is not a remark
+  assert.equal(bubbleSaid('   '), '', 'three spaces is an empty bordered box over somebody\'s head');
+  assert.equal(bubbleSaid('\t\n '), '');
+  assert.equal(bubbleSaid(' hello '), ' hello ', 'and a line with words in it is the SPEAKER\'S, spaces and all');
+  assert.equal(bubbleSaid(''), '');
+  assert.equal(layer.say('bran', '   '), false, 'the door refuses it');
+  assert.equal(layer.render({ points: pts }), 0);
+  assert.equal(layer.say('bran', 'a real line'), true);
+  assert.equal(layer.render({ points: pts }), 1, '...and takes a real one');
+
+  // F11: a point that is not a place
+  const doc2 = fakeDocument();
+  const layer2 = createNameLayer({ doc: doc2, now: () => clock.t });
+  layer2.render({ points: pointsOf([{ id: 'bran' }, { id: 'zed', x: 400 }]) });
+  assert.equal(layer2.tagCount(), 2);
+  const nanPoints = [{ id: 'bran', name: 'BRAN', x: NaN, y: 200, scale: 1 }, { id: 'zed', name: 'ZED', x: 400, y: 260, scale: 0.5 }];
+  layer2.render({ points: nanPoints });
+  assert.equal(layer2.tagFor('bran'), null, 'THE FINDING: it is not left standing at the last place it was');
+  assert.equal(layer2.tagCount(), 1, 'and the peer beside it is untouched');
+  for (const bad of [{ x: 0, y: Infinity }, { x: -Infinity, y: 0 }, { x: 'a', y: 0 }, { x: 0, y: null }]) {
+    const l = createNameLayer({ doc: fakeDocument(), now: () => clock.t });
+    l.render({ points: [{ id: 'q', name: 'Q', scale: 1, ...bad }] });
+    assert.equal(l.tagCount(), 0, `a point at (${bad.x}, ${bad.y}) is no place to put a name`);
+  }
+  // a scale that is not a number is still a readable name, because the size law answers for it
+  const l3 = createNameLayer({ doc: fakeDocument(), now: () => clock.t });
+  l3.render({ points: [{ id: 'q', name: 'Q', x: 10, y: 20, scale: NaN }] });
+  assert.equal(l3.tagFor('q').node.style.fontSize, `${NAME_BASE_PX.toFixed(1)}px`);
 });

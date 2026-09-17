@@ -364,7 +364,9 @@ test('SOC4: the names over the bodies - drawNames takes the party colour as its 
   // the same reason: both faces size a label from one number.
   assert.match(src, /drawNames\(renderer, font, proj, view, w, h, eye, scale = 1, toScene = \(p\) => \[p\.x, p\.y, p\.z\], rect = null, colorOf = null, blocked = null\) \{/, 'appended, so every existing call site keeps its meaning');
   assert.match(src, /s, colorOf\?\.\(n\.id\) \?\? \[1, 1, 1, 1\]\);/, 'and the white is the fallback, not a branch that can be inverted');
-  assert.match(src, /out\.push\(\{ id: e\.peer\.id, name: e\.peer\.name \?\? '', x: s\.x, y: s\.y, scale: nameScaleFor\(s\.depth\), depth: s\.depth \}\);/, 'the point carries the id');
+  // AUDIT NAME1 F3 MOVED IT AGAIN, the same way: the point grew a `lens` beside the scale (the frame's own FOV
+  // term) and the id is still the first thing on it.
+  assert.match(src, /out\.push\(\{ id: e\.peer\.id, name: e\.peer\.name \?\? '', x: s\.x, y: s\.y,\n\s*scale: nameScaleFor\(s\.depth\) \* lens, depth: s\.depth, lens \}\);/, 'the point carries the id');
 });
 
 // ── THE HOST ──────────────────────────────────────────────────────────────────────────────────────
@@ -384,10 +386,13 @@ test('SOC4: the wiring in scenes/world.js - the panel is made in socialStart ove
   // NAME1 MOVED THIS PIN TOO, and the finding is named: the names are the enhanced skin's DOM now (ui/nameLayer.js),
   // so the host has TWO faces - the layer where there is a document and the classic bitmap pass where there is not.
   // Both ask the SAME question of the picture, which is the whole of what SOC4 pinned here.
-  assert.match(w, /nameLayer\.render\(\{ points, log: chatLog, covered, colorOf: \(id\) => social\?\.colorOf\(id\) \?\? null \}\);/,
-    'the DOM face asks net/social.js for the colour - the host never decides what green means');
-  assert.match(w, /if \(!nameLayer\) remotePlayers\.drawNames\(renderer, townTalk\.font, proj, view, canvas\.width, canvas\.height, eye, scale, onlineToScene, largeHudViewportRect\(canvas\.clientHeight\), \(id\) => social\?\.colorOf\(id\) \?\? null, blocked\);/,
-    'and so does the bitmap face, unchanged but for the sight test appended');
+  // AUDIT NAME1 F1/F14 MOVED IT ONCE MORE, and in one direction: the four statements became ONE call
+  // (net/remotePlayers.js nameFrame, where a pin drives them), and BOTH faces are inside it. The colour is still
+  // the picture's own answer, handed in at the one door - which is the whole of what SOC4 pinned here.
+  assert.match(w, /layer: nameLayer, log: chatLog, colorOf: \(id\) => social\?\.colorOf\(id\) \?\? null, blocked,/,
+    'the name pass asks net/social.js for the colour - the host never decides what green means');
+  assert.match(rd('src/net/remotePlayers.js'), /layer\.render\(\{ points, log, covered, colorOf, viewport: \(Number\.isFinite\(rect\?\.h\) \? rect\.h : 1\) \* h, hudScale \}\);/, 'the DOM face takes it');
+  assert.match(rd('src/net/remotePlayers.js'), /return this\.drawNamePoints\(renderer, font, points, scale, colorOf\);/, 'and so does the bitmap face, the one a host with no layer draws');
   assert.doesNotMatch(bare, /PARTY_GREEN/, 'and the host never carries the colour itself: one home, in the picture');
 });
 

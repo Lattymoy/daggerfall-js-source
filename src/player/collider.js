@@ -35,6 +35,33 @@ const SUBSTEPS_MAX = 256;
 const GROUND_NY = Math.cos((SLOPE_LIMIT_DEG * Math.PI) / 180);
 const SKIN = 0.02;
 
+/** The slack on the broad-phase box, in world units: the triangles' own arithmetic is float, so the box is grown by
+ *  a hair rather than trusted to the last bit. Far below CELL, so it costs nothing in rejects. */
+const BOX_SKIN = 1e-3;
+/** AUDIT NAME1 F2: THE BROAD PHASE. Does the segment `origin + dir * [0, limit]` touch this box at all?
+ *  Slab test, exact - a miss here CANNOT hide a hit, because every triangle in the bucket is inside the box the
+ *  bucket's own vertices made (BOX_SKIN covers the rounding of that arithmetic). Written as a free function rather
+ *  than inline so the one reject is the same reject for every walk that later wants it.
+ *  @returns {boolean} true when the box must be walked */
+export function segmentHitsBox(ox, oy, oz, dir, min, max, limit) {
+  if (!(limit >= 0)) return false;
+  const o = [ox, oy, oz];
+  let tMin = 0, tMax = limit;
+  for (let k = 0; k < 3; k++) {
+    const lo = min[k] - BOX_SKIN, hi = max[k] + BOX_SKIN;
+    if (!(hi >= lo)) return false;           // an empty bucket has no box and nothing to walk
+    const d = dir[k];
+    if (d === 0) { if (o[k] < lo || o[k] > hi) return false; continue; }
+    const inv = 1 / d;
+    let t1 = (lo - o[k]) * inv, t2 = (hi - o[k]) * inv;
+    if (t1 > t2) { const s = t1; t1 = t2; t2 = s; }
+    if (t1 > tMin) tMin = t1;
+    if (t2 < tMax) tMax = t2;
+    if (tMin > tMax) return false;
+  }
+  return true;
+}
+
 function closestPointOnTriangle(p, a, b, c, out) {
   // Ericson, Real-Time Collision Detection 5.1.5.
   const ab = [b[0] - a[0], b[1] - a[1], b[2] - a[2]];
@@ -83,7 +110,7 @@ export class Collider {
   /** @param {(x:number,z:number)=>number} heightAt floor beneath everything */
   constructor(heightAt = () => -Infinity) {
     this.heightAt = heightAt;
-    this._buckets = new Map(); // key -> {tris: Float32Array, grid: Map, t: () => [x,y,z]}
+    this._buckets = new Map(); // key -> {tris, grid: Map, t: () => [x,y,z], min: [x,y,z], max: [x,y,z]}   // AUDIT NAME1 F2: the bounds are the ray's broad phase
   }
 
   /**
@@ -93,7 +120,11 @@ export class Collider {
   addMesh(bucketKey, positions, indices, matrix, translation = null) {
     let bucket = this._buckets.get(bucketKey);
     if (!bucket) {
-      bucket = { tris: [], grid: new Map(), t: translation || (() => ZERO3) };
+      // AUDIT NAME1 F2: `min`/`max` are the bucket's own bounds in ITS
+      // OWN space (the translation is applied to the RAY, as the DDA
+      // already does), kept as the triangles go in - one compare per
+      // vertex, paid once at load, against a walk paid per ray.
+      bucket = { tris: [], grid: new Map(), t: translation || (() => ZERO3), min: [Infinity, Infinity, Infinity], max: [-Infinity, -Infinity, -Infinity] };
       this._buckets.set(bucketKey, bucket);
     }
     const m = matrix;
@@ -113,6 +144,12 @@ export class Collider {
       const c = tx(indices[i + 2]);
       const idx = bucket.tris.length;
       bucket.tris.push([a, b, c]);
+      for (const v of [a, b, c]) {
+        for (let k = 0; k < 3; k++) {
+          if (v[k] < bucket.min[k]) bucket.min[k] = v[k];
+          if (v[k] > bucket.max[k]) bucket.max[k] = v[k];
+        }
+      }
       const minX = Math.floor(Math.min(a[0], b[0], c[0]) / CELL);
       const maxX = Math.floor(Math.max(a[0], b[0], c[0]) / CELL);
       const minZ = Math.floor(Math.min(a[2], b[2], c[2]) / CELL);
@@ -170,6 +207,19 @@ export class Collider {
       const ox = origin[0] - t[0];
       const oy = origin[1] - t[1];
       const oz = origin[2] - t[2];
+      // AUDIT NAME1 F2: THE BUCKET'S OWN BOX, FIRST. Without it every
+      // ray walked a full 2-D DDA to maxDist through EVERY bucket -
+      // and an exterior collider holds one bucket per streamed map
+      // pixel plus the gates and the action doors, 20-60 in a town. The
+      // name pass casts one ray a peer, so the walk was multiplied by
+      // the crowd: the audit measured 3.85 ms a frame at 30 buckets x
+      // 60 peers and 24 ms at 60 x 199. Measured again here over a
+      // synthetic 30-bucket town, before and after: 2.13 -> 0.19 ms a
+      // frame at 60 peers, 8.63 -> 0.33 at 199, and 209 cell lookups
+      // for 60 rays where the bare DDA walks 21,720. A box test is six
+      // compares, and a bucket the ray never enters is now six
+      // compares.
+      if (!segmentHitsBox(ox, oy, oz, dir, bucket.min, bucket.max, Math.min(maxDist, best))) continue;
       // 2D DDA across cells.
       let cx = Math.floor(ox / CELL);
       let cz = Math.floor(oz / CELL);

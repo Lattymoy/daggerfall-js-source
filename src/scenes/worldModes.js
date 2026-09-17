@@ -5951,7 +5951,14 @@ export function createWorldModes(host) {
       // through and run its whole exterior frame on top - the town
       // drawn over the dungeon, and in ?world the streaming recenter
       // fed dungeon-local coordinates.
-      if (dungeonCtx.uiOverlayActive) { dungeonCtx.tickOverlay(dt); dungeonCtx.drawOverlay(canvas); return true; }   // U2b/U3: overlays gate the dungeon (AUDIT 18 F5: the overlay's own clock still runs)
+      // AUDIT NAME1 F1: the name pass runs on THIS arm too, before the overlay is drawn. The names are a DOM layer
+      // now (ui/nameLayer.js), and a layer that is not told about a frame keeps the last one it was told about:
+      // any window opened in a dungeon froze every name on the glass at the position it had when the window opened
+      // - painted over the overlay - and stalled the bubble pump with it, until the window closed. The host's own
+      // `covered` word (modeHudCovered) still decides whether they are SHOWN; what it cannot do is decide it while
+      // the pass is never called. The other three hosts (world.js, the interior arm here, dungeonContext's own)
+      // have no such return and needed nothing.
+      if (dungeonCtx.uiOverlayActive) { dungeonCtx.tickOverlay(dt); host.drawPeerNames?.({ proj, view, eye: mwv.eye }); dungeonCtx.drawOverlay(canvas); return true; }   // U2b/U3: overlays gate the dungeon (AUDIT 18 F5: the overlay's own clock still runs)
       dungeonCtx.drawFoes(dt, canvas, proj, view, cam.pos, player.pos, anyMove(moveHeld(keys)), player.height, !!player.isSneaking, motionBagOf(player), player.bobOffset ? player.bobOffset[1] : 0, !!player.crouching);   // ROAD-H H1b: PlayerMotor.IsCrouching rides in beside the live height - the archer's 0.05 dip (DaggerfallMissile.cs:583-585) is the latched STATE, not a 0.9 capsule   // PX26 F4: the jump-state inputs the interior lane never sent - without them `grounded` read undefined, the rig thought the player was permanently airborne, and BOTH the movement selection and the jump play died in every interior   // moveHeld: the collision-trigger input gate (verbatim)   // C8 foes + S3b clock + S4b missiles - internally gated, must run foes or not (trap spells fire in empty dungeons)
       if (dungeonCtx.waterQuads.length) {
         renderer.drawWater(dungeonCtx.waterQuads, DUNGEON_WATER_COLOR,

@@ -6463,14 +6463,20 @@ open a hill hides the body and not the name.
 `ui/nameLayer.js`: a fixed, pointer-transparent layer in PIXEL_STACK
 (bone, no smoothing), one `.dfname` element per visible peer, MOVED per
 frame and never rebuilt (a write counter pins it: a moved name is two
-property writes and no node), z-index 4 under the chat, the party HUD,
-the friends panel and the FPS read-out. The party colour is SOC4's own
+property writes and no node), z-index 3 - under the enhanced HUD, its
+text column, the mid-screen label and the status line at 4 (a tie goes
+to the later element, and this layer is appended after them - AUDIT
+NAME F4), and under the chat, the party HUD, the friends panel and the
+FPS read-out. The party colour is SOC4's own
 seam (`social?.colorOf(id)`, an RGBA) converted by `cssRgba` -
 `cssRgba(PARTY_GREEN) === PARTY_GREEN_CSS` exactly. The bitmap face
 (`drawNames`, the classic font) is KEPT for a host with no document (every
-Node probe, the suite) and reads the same `namePoints`, so the two faces
-cannot drift on anchor, size or sight; `world.js` draws exactly one of
-them per frame (`if (!nameLayer)`). `blocked` is appended BEHIND `colorOf`
+Node probe, the suite) and reads the same points: one law, two rulers -
+the point carries the anchor, the depth and the lens for both, and each
+face applies its own pixel term (AUDIT NAME F3/F13: the bitmap gap is
+scaled by the host scale, the DOM size takes the viewport and the HUD
+scale by value); `RemotePlayers.nameFrame` draws exactly one of them per
+frame, and `world.js` is one call (F14). `blocked` is appended BEHIND `colorOf`
 in `drawNames`'s signature so SOC4's law ("a caller that says nothing
 draws the names it always drew") holds as written.
 
@@ -6484,22 +6490,58 @@ chatLog.push(tab.id, line)` is byte for byte what CHAT1 pinned. Refused:
 another tab, `system: true`, `mine: true`, no id, no text. Bounded: one
 bubble per peer (the newest replaces), BUBBLE_MAX (4) at once with the
 oldest evicted, and only for a peer the name pass is drawing - out of
-range, behind a wall, off the strip or under a window is no bubble either.
+range, behind a wall, off the strip or under a window is no bubble either
+(AUDIT NAME F1: in a dungeon the pass was not called under a window, so
+the names froze on the glass and the pump stalled - the dungeon overlay
+arm runs the pass before it returns now, and a line said under the window
+bubbles at its own age when it closes).
 The text is the wire's own (net/online.js ran `sanitizeChat` before
 `onChat`; this module names that and never re-runs it, and never writes
 innerHTML). No bubble for my own lines anywhere: I have no body in my own
 view, and ChatLog.peek already shows my last lines over the world.
 
-**Seen** in Chromium over a static harness of the real modules: three
-peers at three depths, names at 24 / 16 / 8.8 px with their bottom edges
-at headY - 5, the pixel stack resolved, party green `rgb(115,255,115)`,
-two bubbles with tails, a long line wrapped and cut, none on the far
-peer. Not in the game (ARENA2 absent). Pinned in `test/name1_bubbles.test.js`
-(9: the anchor at two depths, the size law by value and monotone, the sight
-test against a REAL `player/collider.js` wall, the DOM face's write
-counter, the bubbles' every refusal and the cap); `tools/mutants/name1.json`
-39 - 38 dead, 1 equivalent as recorded (the watermark advanced inside the
-accept: a cost no pin can see). Left open: terrain does not occlude; the
+**Seen** in Chromium over `tools/name1Probe.mjs` (the real modules served
+same-origin - the artifact the first record lacked): at 1600x900 and FOV
+60 three peers at depths 6 / 18 / 36 draw at 24.0 / 16.0 / 9.0 px (the
+legible floor) with bottom edges 4.7-5.0 px above the head, bone
+`rgb(233,228,217)`, party green `rgb(115,255,115)`, the layer at z-index 3
+and pointer-transparent, a 9-character bubble over two lines and a
+155-character line cut to 102 with `...`; at FOV 120 every name is at the
+9 px floor; on a 390x844 phone 22.5 / 15.0 / 9.0 px. Not in the game
+(ARENA2 absent). Pinned in `test/name1_bubbles.test.js` (20: the anchor at
+two depths, the size law by value and monotone and at two heights and two
+FOVs, the sight test against a REAL `player/collider.js` wall with the
+bucket boxes and the ray budget, the hysteresis over a flickering ray, the
+DOM face's write counter, the bubbles' every refusal, the cap, the line's
+own age, the watermark keyed to the log, the host's composition driven
+end to end); `tools/mutants/name1.json` 71 - 68 dead, 3 equivalent as
+recorded.
+
+**AUDIT NAME (2026-09-17).** A read-only lens over the slice found fifteen
+things, all fixed the same day. HIGH: the dungeon overlay arm returned
+before the name pass, so under any dungeon window the DOM layer stayed
+painted at last frame's positions and the bubble pump stalled (F1); the
+sight ray walked EVERY collider bucket with a full DDA - 3.9 ms a frame at
+30 buckets and 60 peers, 24 ms at 199 - so each bucket keeps its AABB and
+rejects a ray by a slab test before any walk, and a per-peer sight cache
+re-asks every NAME_SIGHT_MS (150) with NAME_SIGHT_HOLD_MS of hysteresis
+before a name goes (2.13 -> 0.19 ms at 60 peers, 8.63 -> 0.33 at 199; 18
+rays for 60 frames of 3 peers where the raw law asked 180) (F2/F5).
+MEDIUM: the size law had no viewport, FOV or HUD-scale term (2.2x
+oversized on a phone, unchanged at FOV 120 where the body is 3x smaller)
+- `nameLensScale(proj)` reads 1/tan(fovY/2) off the projection itself,
+`nameViewportScale(h)` the height, `namePixelSize` applies the HUD scale
+outside a 9..30 px legible band (F3); z-index 3 (F4); a bubble's age is
+the LINE's stamp, not the pump's, so lines queued under a window do not
+bubble as new when it closes (F6); the DOM face is gated on the skin as
+the chat is, so a classic-skin online page keeps the bitmap names (F7).
+LOW: the watermark keyed to the log's identity (F8), a zero-alpha bubble
+neither shown nor counted (F9), whitespace-only text no bubble (F10),
+finite guards on a point and a stamp (F11), one bone (`--bone`, #e9e4d9)
+(F12), the bitmap gap scaled (F13), the host's four statements in
+`nameFrame` where a pin can drive them (F14), the probe artifact (F15).
+Still open, as the slice recorded: terrain does not occlude; the layer is
+not hidden on `gamePaused()`; not destroyed at pagehide. Left open: terrain does not occlude; the
 layer is not hidden on `gamePaused()` (only on `hudCovered`, the gate the
 old call took); not destroyed at pagehide (a bfcached page's rejoin would
 be nameless for life).

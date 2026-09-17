@@ -219,8 +219,9 @@ import { OnlineSession, roomKeyFor, DEFAULT_SERVER, WORLD_PUBLISH_MS, FOES_MS, F
 import { POSE_STRIKES, isWorldRoom, isCellRoom, cellHaloFor, actFrameFits, sharedClassicMinutes, wallMsForClassicMinutes } from '../net/wire.js';   // WORLD6b-iii(b): the cell seam's halo   // MAC7 #1: the swing's kind on the wire; AUDIT WORLD4 A1: whether an act frame can be said at all
 import { hasDaggerfallArrows } from '../combat/fpArm.js';   // MAC7 #2: the arrow bit on the wire - weaponRig's own read
 import { drawText } from '../ui/text.js';   // ONLINE1: the session's status line
-import { RemotePlayers, composeLook, sightBlockedBy } from '../net/remotePlayers.js';   // ONLINE1: the others, drawn; NAME1: and the sight test their names take
-import { createNameLayer } from '../ui/nameLayer.js';   // NAME1 + BUBBLE1: the names and the chat bubbles, in the enhanced face
+import { RemotePlayers, composeLook, sightBlockedBy, createSightCache } from '../net/remotePlayers.js';   // ONLINE1: the others, drawn; NAME1: and the sight test their names take, cached and hysteresised (AUDIT NAME1 F2/F5)
+import { createNameLayer, nameLayerWanted } from '../ui/nameLayer.js';   // NAME1 + BUBBLE1: the names and the chat bubbles, in the enhanced face; AUDIT NAME1 F7: and who gets that face
+import { enhancedHudScale } from '../ui/enhancedHud.js';   // AUDIT NAME1 F3: the player's own HUD scale, which the names wear like every other enhanced surface
 import { makeHitPend } from '../net/hitPend.js';   // AUDIT FOES FOE2: a blow the wire refused waits and goes
 import { PeerBodies } from '../net/peerBodies.js';   // MWBODY1: the others in the Morrowind body
 import { ChatLog, CHAT_REJOIN_MS } from '../net/chat.js';   // CHAT1: the tabs and their lines
@@ -6823,7 +6824,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // front door never boots, and its interior frame and town room
   // disagreed with this one's (AUDIT ONLINE D6/D8).
   const onlineOn = params.has('online');
-  let online = null, remotePlayers = null, peerBodies = null, nameLayer = null, _onlineLast = null, _onlineKey = null, _onlineKeySince = 0;
+  let online = null, remotePlayers = null, peerBodies = null, nameLayer = null, nameSight = null, _onlineLast = null, _onlineKey = null, _onlineKeySince = 0;
   let chatLog = null, chatPanel = null, chatLinks = null;   // CHAT1: the log, the panel, one channel session per tab (Map tabId -> OnlineSession)
   // SOC2 (Mac: "friend other users ... the new 4 person party system"): THE SOCIAL PICTURE - the hub's word (the
   // world tab's link, whose room is the hub, SOC1), held pure in net/social.js. `social` is read by the panels (the
@@ -7005,13 +7006,20 @@ export async function bootWorld(canvas, renderer, params, status) {
     onlineArrival();
     online.onClock = (offsetMs) => { const was = _sharedOffsetMs; _sharedOffsetMs = offsetMs; if (Math.abs(offsetMs - was) > 1000) onlineArrival(); };   // WORLD5: the relay's clock corrects this machine's
     remotePlayers = new RemotePlayers({ renderer, deps: { fetchBytes, palette, getTexture } });
-    // NAME1 + BUBBLE1: the names are the enhanced skin's DOM now (ui/nameLayer.js) - online forces that skin
-    // (OL1), so this is always the face a player sees. Made ONCE, here, beside the peers it labels; a host
-    // with no document (the Node probes) makes none and takes the classic bitmap pass below instead.
-    if (typeof document !== 'undefined') nameLayer = createNameLayer({});
     // MWBODY1: the enhanced skin with Morrowind data attached puts every peer in a body of its own; otherwise the doll
     const enhanced = isEnhanced();   // the skin cannot change without a reload (switchSkin), so it is read once, not per frame
     peerBodies = new PeerBodies({ renderer, enabled: () => enhanced && !!getPref('mwArms') && morrowindDataCount() > 0, generation: morrowindDataGeneration });
+    // NAME1 + BUBBLE1: the names are the enhanced skin's DOM now (ui/nameLayer.js) - online forces that skin
+    // (OL1), so this is normally the face a player sees. Made ONCE, here, beside the peers it labels.
+    // AUDIT NAME1 F7: gated on the SKIN as well as the document, exactly as the chat below is. Online's forcing of
+    // the enhanced lane can fail (MAC-N3 records how), and a classic-skin online page was getting this layer: the
+    // enhanced pixel face over a classic HUD, no classic name pass under it (the fallback is `if (!nameLayer)`)
+    // and no chat panel to put the bubbles beside. One gate, one answer - the skin either owns this screen or it
+    // does not, and a classic page keeps the bitmap names it always had.
+    if (nameLayerWanted(enhanced)) nameLayer = createNameLayer({});
+    // AUDIT NAME1 F2/F5: the sight cache is the SESSION'S, not a frame's - it is keyed by peer id and it remembers
+    // both the last ray and how long it has been saying "blocked". Made beside the layer and kept with it.
+    nameSight = createSightCache();
     if (enhanced && typeof document !== 'undefined') chatStart();   // CHAT1: the live chat is the enhanced skin's (a DOM panel); classic has no place for it yet   // the player's own arms switch (MWA1) turns the layer on; new data, new bodies
     // AUDIT ONLINE D12: a clean goodbye - the room's leave, not a silence; the rigs and the dolls released. The panel
     // stays: a page restored from the cache gets its chat back through chatFrame's rejoin (AUDIT CHAT B4).
@@ -7438,20 +7446,27 @@ export async function bootWorld(canvas, renderer, params, status) {
     // same triangles the player cannot walk through and the same raycast the activation ladder rejects a target
     // behind a wall with (player/activate.js pickActivatableHit). The arithmetic is net/remotePlayers.js
     // sightBlockedBy's, so a test can drive it with two points and a wall.
-    const blocked = (head) => sightBlockedBy(player.collider, eye, head);
+    // AUDIT NAME1 F2/F5: through the session's cache - one ray a peer every NAME_SIGHT_MS, and a name taken away
+    // only once the ray has said "blocked" for NAME_SIGHT_HOLD_MS, so a railing crossing the line for a frame
+    // does not strobe the name (and rebuild its element) on the way past.
+    const blocked = (head, id) => nameSight.blocked(player.collider, eye, id, head);
     // the docked HUD's viewport rect (E5), so the name lands over the head the world pass drew (AUDIT ONLINE C6/D3)
     // SOC4 (Mac: "the players name who are in a party together should turn green"): `colorOf` is the party's colour
     // for a peer - net/social.js colorOf answers PARTY_GREEN for my party's other tabs and null for everyone else,
     // so a stranger's name is the white (in the DOM face, the bone) it always was.
-    if (nameLayer) {
-      // NAME1 + BUBBLE1: the DOM face. CSS PIXELS, because that is what a style attribute is measured in - the
-      // bitmap pass below projects into the drawing buffer instead and pays hudScale for the difference.
-      const points = covered ? [] : remotePlayers.namePoints(proj, view, canvas.clientWidth, canvas.clientHeight, eye, onlineToScene, largeHudViewportRect(canvas.clientHeight), blocked);
-      nameLayer.render({ points, log: chatLog, covered, colorOf: (id) => social?.colorOf(id) ?? null });
-    }
-    if (covered) { sayNetStatus(null); return; }
     const scale = hudScale(canvas.width, canvas.height);
-    if (!nameLayer) remotePlayers.drawNames(renderer, townTalk.font, proj, view, canvas.width, canvas.height, eye, scale, onlineToScene, largeHudViewportRect(canvas.clientHeight), (id) => social?.colorOf(id) ?? null, blocked);
+    // AUDIT NAME1 F1/F14: ONE call, and the pass itself lives in net/remotePlayers.js nameFrame where a pin can
+    // drive it. ONE FACE A FRAME, so the pixels are that face's own: CSS for the DOM layer (a style attribute is
+    // measured in them), the drawing buffer's for the bitmap pass, which pays hudScale for the difference.
+    remotePlayers.nameFrame({
+      proj, view, eye, toScene: onlineToScene, covered,
+      w: nameLayer ? canvas.clientWidth : canvas.width,
+      h: nameLayer ? canvas.clientHeight : canvas.height,
+      rect: largeHudViewportRect(canvas.clientHeight),
+      layer: nameLayer, log: chatLog, colorOf: (id) => social?.colorOf(id) ?? null, blocked,
+      renderer, font: townTalk.font, scale, hudScale: enhancedHudScale(),
+    });
+    if (covered) { sayNetStatus(null); return; }
     sayNetStatus(online?.statusLine());   // AUDIT ONLINE D12/E11: connecting, reconnecting, refused, replaced - said, not silent (FONT1: in the enhanced face)
   };
   // VAR, not const: the pointer and wheel listeners far above close over
