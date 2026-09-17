@@ -217,10 +217,10 @@ test('FIX-F: the pane offers the classic grid’s 38 actions and the ADVANCED si
   // than no group. PORT_ROWS stays the flat union, because the coverage rule
   // below is asked of the union and not of any one heading.
   assert.deepEqual(PORT_ROWS.map((r) => r.action),
-    ['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand']);
+    ['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSpell', 'QuickSwap', 'QuickOffHand']);   // QS6: the spell slot, above the swap it took the key from
   assert.deepEqual(PORT_GROUPS.map((g) => [g.title, ...g.rows.map((r) => r.action)]), [
     ['Online', 'SocialInteract'],
-    ['Quickslots', 'QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand'],
+    ['Quickslots', 'QuickUse1', 'QuickUse2', 'QuickSpell', 'QuickSwap', 'QuickOffHand'],
   ]);
   assert.deepEqual(PORT_GROUPS.flatMap((g) => g.rows), [...PORT_ROWS], 'the union really is the groups, not a second list beside them');
   // together: every bindable action, none twice
@@ -228,7 +228,7 @@ test('FIX-F: the pane offers the classic grid’s 38 actions and the ADVANCED si
   assert.equal(new Set(all).size, all.length);
   assert.deepEqual([...all].sort(), [...ACTIONS].sort());
   withPane(({ view }) => {
-    assert.equal(find(view.body, 'ctl-row').length, 49, 'a row for every action');
+    assert.equal(find(view.body, 'ctl-row').length, 50, 'a row for every action');   // QS6: fifty, including the swap that ships unbound
     for (const a of all) assert.ok(keyBtn(view, a), `${a} needs a row`);
   });
 });

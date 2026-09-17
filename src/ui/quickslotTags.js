@@ -112,9 +112,23 @@ export function quickslotOffTag(kind, opts = {}) {
   // press, which lights or douses and refuses in the mod's own words
   // when that hand is full. A corner with no chip was a slot the player
   // had no way to reach.
-  if (kind === 'swap') return quickslotTag(CELL_ACTIONS.swap, opts);
+  //
+  // QS6 MOVED THE SWAP'S DEFAULT KEY ONTO THIS CELL. The swap gave up
+  // Digit3 to the spell slot, so on a fresh bindings file 'QuickSwap' is
+  // bound to nothing at all - and a chip that named it would be no chip.
+  // The swap is what the OFF HAND'S key presses while this cell offers
+  // one, so the off hand's key is what the cell names. A player who
+  // bound QuickSwap to a key of their own still sees THEIRS: that
+  // binding works, and the tag is the key the player would press.
+  if (kind === 'swap') return quickslotTag(CELL_ACTIONS.swap, opts) ?? quickslotTag(CELL_ACTIONS.off, opts);
   return quickslotTag(CELL_ACTIONS.off, opts);
 }
+
+/** QS6: the caption's SPELL chip names its own action. It is not a
+ *  corner of the diamond - a spell is not in a hand - so it is not in
+ *  CELL_ACTIONS' four; it is the fifth thing the bar can press. */
+export const SPELL_ACTION = 'QuickSpell';
+export const quickslotSpellTag = (opts = {}) => quickslotTag(SPELL_ACTION, opts);
 
 /** The tag as ONE STRING, for the HUD's changed-only write. Two tags
  *  that read the same are the same tag. */

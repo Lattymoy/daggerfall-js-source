@@ -92,8 +92,16 @@ test('PX30: it is a READOUT, and it is updated rather than rebuilt', () => {
   // action. The three listeners are bound ONCE, in build(), and the
   // `.hud` root is still pointer-events none, which is what keeps the
   // game underneath reachable.
-  assert.equal((src.match(/addEventListener\(/g) ?? []).length, 3, 'three listeners, and they are the quickslot cells\'');
-  for (const m of src.match(/\.addEventListener\('(\w+)'/g) ?? []) assert.equal(m, ".addEventListener('pointerdown'");
+  // QS6 widened it by exactly its own departure and no further: the two
+  // consumables and the spell chip take a HOLD as well as a tap - Mac's
+  // "hold the keybind to switch", which a phone has no key to hold - so a
+  // hold's four edges (down, up, cancel, leave) are subscribed by ONE helper
+  // called for three slots, and the off cell's tap is the fifth site. Still
+  // bound once, in build(), and still nothing else on this layer.
+  assert.equal((src.match(/addEventListener\(/g) ?? []).length, 5, 'five listener sites, and they are the quickslot cells\' and the spell chip\'s');
+  const events = new Set((src.match(/\.addEventListener\('(\w+)'/g) ?? []).map((m) => m.slice(19, -1)));
+  assert.deepEqual([...events].sort(), ['pointercancel', 'pointerdown', 'pointerleave', 'pointerup'],
+    'pointer edges only - a readout hears no key, no click and no wheel');
   // AUDIT QS F8: TOUCH-FIRST is coarse AND hover-none - a desktop with a
   // touchscreen answers coarse alone, and a mouse click there swallowed a swing.
   assert.match(css, /@media \(pointer: coarse\) and \(hover: none\) \{\s*\n\s*\.hud-qcell \{ pointer-events: auto;/);
@@ -146,8 +154,12 @@ test('PX30b: the breath bar and the two hands - each only when there is one', ()
   // is a SOCKET, because the diamond's shape is the readout.
   assert.match(src, /parts\.readied\.classList\.toggle\('on', !!readyName\);/);
   assert.doesNotMatch(css, /\.hud-hand \{|\.hud-hands|\.hud-hand\.on/, 'the plaques went with the diamond');
-  assert.match(src, /quickslotView\(vitals, \{ weapon: opts\.weapon \?\? null, sheathed: opts\.weaponSheathed \?\? false \}\)/,
+  assert.match(src, /quickslotView\(vitals, \{ weapon: opts\.weapon \?\? null, sheathed: opts\.weaponSheathed \?\? false,/,
     'the weapon is the diamond\'s main cell now');
+  // QS6: and the readied chip stands down when the SPELL CHIP is already
+  // naming that spell - two chips a hand's width apart saying one word is a
+  // stutter, not a readout.
+  assert.match(src, /const readyName = readySpell && !doubled \? String\(readySpell\.name \?\? ''\) : null;/);
   // The host hands them over through drawHud's own options bag, so a
   // host that knows neither passes neither.
   // AUDIT 28 W2a re-aimed from the literal bag-tail: the bag grew

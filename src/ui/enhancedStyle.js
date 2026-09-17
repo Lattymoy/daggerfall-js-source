@@ -1990,6 +1990,33 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
   color: #7d7460; }
 .hud-readyname { font-size: 13px; color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
 
+/* QS6 - THE SPELL CHIP. The diamond's four corners are the two hands
+   and the two consumables; a spell is in none of them, so the spell
+   slot reads on the CAPTION, beside the readied chip it replaces when
+   the two would say the same word. It wears its OWN key, because the
+   key is what changes it: a tap readies, a hold cycles the book.
+   The tag inside is the corner chip's own class, un-cornered - the
+   diamond positions those absolutely and this one sits in a row. */
+.hud-qspell { display: none; align-items: center; gap: 6px; padding: 3px 10px;
+  max-width: 100%; background: rgba(10,12,17,0.6); border: 2px solid rgba(125,116,96,0.55); }
+.hud-qspell.on { display: flex; }
+.hud-qspell .hud-qstag { position: static; transform: none; background: none; border: 0;
+  min-width: 0; height: auto; padding: 0; color: #7d7460; }
+.hud-qspname { font-size: 13px; color: #d8cfae; text-shadow: 2px 2px 0 rgba(10,12,17,0.9);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* IN HAND: the same bone-and-amber the readied chip wears, because it
+   is saying the same thing the readied chip used to say. */
+.hud-qspell.readied { border-color: var(--brass); }
+.hud-qspell.readied .hud-qspname { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+/* A GHOST: a spell the book no longer holds - the slot keeps the name
+   so the refusal can say which one, and the chip says so first. */
+.hud-qspell.ghost .hud-qspname { color: #6a6353; }
+/* BEING CYCLED: a hold is turning this slot right now. The lamp lingers
+   a moment past the release (QUICK_CYCLE_LINGER_MS) so the last name a
+   player landed on is the one they see. */
+.hud-qspell.cycling { border-color: rgb(243,239,44); }
+.hud-qcell.cycling .hud-qframe { background: rgb(243,239,44); }   /* the frame is a clipped rhombus, so its colour is a BACKGROUND */
+
 .hud-qdiamond { position: relative; width: var(--qs-box); height: var(--qs-box); margin-top: 18px; }
 /* AUDIT QS F1: THE CELL ITSELF IS THE RHOMBUS. The clip was on the
    frame and the ground alone, and the cell under them was a SQUARE -
@@ -2066,6 +2093,9 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
    on the diamond there fired a slot and swallowed a swing. */
 @media (pointer: coarse) and (hover: none) {
   .hud-qcell { pointer-events: auto; touch-action: none; }
+  /* QS6: the spell chip is a control on a phone too - tap to ready,
+     hold to cycle the book, the same pair the cells carry. */
+  .hud-qspell { pointer-events: auto; touch-action: none; }
   /* AUDIT QS F10: a chip naming a KEY on a device with no keyboard
      tells the player to press something that is not there; a pad's
      glyph stays, because a pad on a phone is a pad. */
@@ -2075,6 +2105,9 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
    tags; the caption row above it stays, because the mode word lives
    there and the switch is about the diamond. */
 .hud-quick.nodiamond .hud-qdiamond { display: none; }
+/* QS6: and the spell chip with it - it is a quickslot readout, not the
+   mode word. The KEY still works, as the diamond's four do. */
+.hud-quick.nodiamond .hud-qspell { display: none; }
 
 /* PX32: THE RETICLE. A square cross in bone with the classic shadow,
    at the viewport's centre; the mode's word takes its place under the

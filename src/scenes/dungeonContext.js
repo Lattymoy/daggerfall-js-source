@@ -40,7 +40,7 @@ import { makeWindowStack, pauseWhileOpen } from '../ui/windowStack.js';   // ROA
 import { healthStatusRows, statusInfoRows } from '../systems/healthStatus.js';   // BS1/F198: the Status health box
 import { playerEntity, surfacePlayer, hurtPlayer as hurtEntity, damageShieldPool, setDeathPresenter, setAvoidDeathHook } from '../characters/playerEntity.js';   // AUDIT 58: DecreaseHealth's shield hook is the BASE class's, so every entity's door owes it
 import { addItem, spendArrow, isEnchanted } from '../systems/inventory.js';
-import { useQuickslot, swapQuickslot, offHandQuickslot } from '../systems/quickslots.js';   // QS2/QS4: the diamond's performers
+import { useQuickslot, swapQuickslot, offHandQuickslot, spellQuickslotPress, offHandOffersSwap, tickQuickslotHold } from '../systems/quickslots.js';   // QS2/QS4: the diamond's performers   // QS6: the spell slot, the off hand's swap question, and the hold machine
 import { worldAabb, objectAabb } from '../player/activate.js';   // AUDIT 63 F37/F38: objectAabb is the LIVE box a ray or a collision meets
 import { createWeaponRig, envAttack } from '../combat/weaponRig.js';   // C10: the shared FP-weapon surface
 import { weaponPoseOf, applyWeaponPose } from '../combat/playerWeapon.js';   // HARD2c: the sheath+hand pair as ONE law (SerializablePlayer.cs:175-176 / :420-421)
@@ -1376,12 +1376,32 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     weaponRig.refreshWorn();
     return true;
   };
+  /** QS6: the spell slot's press - see scenes/world.js's twin. `magic` is
+   *  THIS context's cast engine, which is the one the dungeon's hands cast
+   *  from, so the ready the key makes is the ready the click fires. */
+  const quickSpell = () => {
+    spellQuickslotPress({ entity: playerEntity, magic, say: (l) => hudText.add(l) });
+    return true;
+  };
   /** QS4: the off-hand cell's press - see scenes/world.js's twin. Underground
-   *  it is the one of the four that matters most. */
+   *  it is the one of the four that matters most.
+   *  QS6: and the SWAP when that is what the cell shows - the key does what
+   *  the cell shows, which is this cell's law since QS4. */
   const quickOffHand = () => {
+    if (offHandOffersSwap(playerEntity)) return quickSwap();
     offHandQuickslot({ entity: playerEntity, say: (l) => hudText.add(l), toggleLight: () => weaponRig.toggleLight() });
     return true;
   };
+  /** QS6 - ONE FRAME of the hold machine, handed OUT rather than driven here:
+   *  this context has no frame of its own, and BOTH hosts that mount it (the
+   *  standalone `?dungeon` page and the world's dungeon mode) own one. They
+   *  call this beside their own ReadyWeapon latch, which is where the other
+   *  polled keys are read. `isHeld` is theirs too - the held-key Set is the
+   *  host's - so the gate a key takes here is the gate that host gives it. */
+  const tickQuickHold = (dt, { isHeld = null, blocked = false } = {}) => tickQuickslotHold(dt, {
+    isHeld, blocked, entity: playerEntity,
+    onTap: (slot) => (slot === 'spell' ? quickSpell() : quickUse(slot === 'c1' ? 1 : 2)),
+  });
 
   function openInventory(lootItems, onEmptied = null, { wagonPrompt = false, lootHooks = null, lootKey = null } = {}) {
     // V4: GetSuppressInventory (LycanthropyEffect.cs:409-421) - a
@@ -1448,7 +1468,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:6839 / exterior.js:3088), set
+  // host's own townTalk sink (world.js:6872 / exterior.js:3106), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -2405,7 +2425,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:980 against :981; worldModes.js:5975 against :5976).
+    // (dungeon.js:994 against :1032; worldModes.js:5985 against :6008).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -2895,8 +2915,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:9396,
-              // exterior.js:4469 and worldModes.js:6117 already ran;
+              // playerArrowHitFoe is the one copy world.js:9431,
+              // exterior.js:4489 and worldModes.js:6126 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -4948,7 +4968,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // on a touch-first device (ui/enhancedHud.js's second departure),
         // and a door the host never handed over is a control that
         // platform does not have - which is the whole of AUDIT SOC C9.
-        quickUse: (n) => quickUse(n), quickSwap: () => quickSwap(), quickOffHand: () => quickOffHand(),
+        quickUse: (n) => quickUse(n), quickSwap: () => quickSwap(), quickOffHand: () => quickOffHand(), quickSpell: () => quickSpell(),   // QS6
         weaponSheathed: !!playerWeapon.sheathed });   // AUDIT 28 W2: the arrow counter's drawn-bow gate   // U38 + X4 + U43
     hudText.tick(dt);
     // AUDIT 64 F37: popupText is a NativePanel component of the HUD
@@ -5208,7 +5228,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // both of them hand it in: dungeon.js's opts bag and
         // worldModes' (the world-hosted crawl, which is where the
         // classic start into Privateer's Hold lives, and which is the
-        // pause door ui/input.js:539 reaches underground).
+        // pause door ui/input.js:552 reaches underground).
         relock: () => opts.relock?.(),
         // the LOAD arm needs the host's position applier, exactly as
         // routeKey's own QuickLoad case passes it
@@ -5286,6 +5306,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     quickUse: (n) => quickUse(n),
     quickSwap: () => quickSwap(),
     quickOffHand: () => quickOffHand(),
+    quickSpell: () => quickSpell(),   // QS6: the spell slot's press
+    tickQuickHold,                    // QS6: ...and the hold machine, for whichever host owns the frame
     switchHand: weaponRig.switchHand, readyWeapon: weaponRig.readyWeapon,   // a12: SwitchHand (H) - the same one door as the sheathe toggle; MAC-O1: and the ReadyWeapon KEY's own door (WeaponManager.Update:229-269), beside the panel's raw ToggleSheath above
     // S24 probe seam: drive a real spell record onto the player
     // through the host's own absorption path (the same function the

@@ -40,13 +40,20 @@ import { USE_PENDING as USE_PENDING_UI } from '../src/ui/nativeInventory.js';
 
 const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
 
-const QS = Object.freeze(['QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand']);
+// QS6 (2026-09-17) added a fifth - 'QuickSpell' - and moved Digit3 onto it.
+// 'QuickSwap' keeps its row here for the reason the header above gives: an
+// action is never removed from ACTIONS, and the swap is still rebindable. What
+// it lost is its DEFAULT key, which the off-hand cell that draws it now carries.
+const QS = Object.freeze(['QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand', 'QuickSpell']);
+/** The three a HOLD belongs to: a tap performs the slot, a hold cycles it, and
+ *  only the frame can tell those apart - so these are polled, not dispatched. */
+const HOLD = Object.freeze(['QuickUse1', 'QuickUse2', 'QuickSpell']);
 
 // ── THE ACTIONS ──────────────────────────────────────────────────────
 
 test('QS2: the three actions are APPENDED - past DFU\'s forty-four and past SOC5\'s row - parse, and never displace an index the classic grid draws by number (mutants: a name spliced mid-list; a name the parser answers Unknown for)', () => {
-  assert.deepEqual(ACTIONS.slice(-4), QS, 'the last four rows, in this order');
-  assert.equal(ACTIONS.length, 49, 'DFU\'s 44 + SOC5\'s 1 + QS2\'s 3 + QS4\'s 1');
+  assert.deepEqual(ACTIONS.slice(-5), QS, 'the last five rows, in this order');
+  assert.equal(ACTIONS.length, 50, 'DFU\'s 44 + SOC5\'s 1 + QS2\'s 3 + QS4\'s 1 + QS6\'s 1');
   // Every index DFU's own enum had, it still has. This is the whole reason the
   // list is appended to and never inserted into (ui/controlsWindow.js).
   assert.equal(ACTIONS[43], 'AutoRun', 'DFU\'s last row keeps index 43');
@@ -56,6 +63,7 @@ test('QS2: the three actions are APPENDED - past DFU\'s forty-four and past SOC5
     assert.equal(ACTIONS.filter((x) => x === a).length, 1, `${a} once`);
     assert.equal(parseActionName(a), a);
   }
+  assert.equal(ACTIONS[47], 'QuickSwap', 'and QS2\'s swap keeps ITS index - an action is never removed, only unbound');
   assert.equal(parseActionName('QuickUse3'), 'Unknown', 'the sentinel still answers for a near miss');
 });
 
@@ -74,11 +82,20 @@ test('QS2: the defaults are the number row, spent exactly once each, and free be
   const byCode = new Map(DEFAULT_BINDINGS.map(([c, a]) => [c, a]));
   assert.equal(byCode.get('Digit1'), 'QuickUse1');
   assert.equal(byCode.get('Digit2'), 'QuickUse2');
-  assert.equal(byCode.get('Digit3'), 'QuickSwap');
+  // QS6: the third digit is the SPELL slot now.
+  assert.equal(byCode.get('Digit3'), 'QuickSpell');
   assert.equal(byCode.get('Digit4'), 'QuickOffHand');
   const codes = DEFAULT_BINDINGS.map(([c]) => c);
   assert.equal(new Set(codes).size, codes.length, 'no key is spent twice');
-  assert.equal(DEFAULT_BINDINGS.length, ACTIONS.length, 'and every action still has exactly one default');
+  // QS6: EVERY ACTION HAS AT MOST ONE DEFAULT, and exactly one has none - the
+  // swap, which gave its digit to the spell slot. It is still in ACTIONS and
+  // still on the enhanced pane, so a player who wants a dedicated swap key
+  // binds one; what it must not be is a second action on a spent key.
+  const acts = DEFAULT_BINDINGS.map(([, a]) => a);
+  assert.equal(new Set(acts).size, acts.length, 'no action is defaulted twice');
+  assert.deepEqual(ACTIONS.filter((a) => !acts.includes(a)), ['QuickSwap'],
+    'exactly one action ships unbound, and it is the one whose cell another key presses');
+  assert.equal(DEFAULT_BINDINGS.length, ACTIONS.length - 1);
   // THE KEYS WERE FREE. DFU's own table is the rows above SOC5's, and none of
   // them is a digit - read off the table rather than asserted about it.
   const dfu = DEFAULT_BINDINGS.slice(0, 44).map(([c]) => c);
@@ -90,8 +107,9 @@ test('QS2: the defaults are the number row, spent exactly once each, and free be
   const s = createBindings();
   resetDefaults(s);
   assert.equal(actionForCode(s, 'Digit1'), 'QuickUse1');
-  assert.equal(getBinding(s, 'QuickSwap'), 'Digit3');
+  assert.equal(getBinding(s, 'QuickSpell'), 'Digit3');
   assert.equal(getBinding(s, 'QuickOffHand'), 'Digit4');
+  assert.equal(getBinding(s, 'QuickSwap'), null, 'the swap ships unbound and rebindable');
 });
 
 test('QS2: a bindings blob written BEFORE this slice gains the three on the next load, and a player who had already bound a digit keeps it (mutants: the autofill stealing a bound key; the rows put in a host so an existing save never gets them)', () => {
@@ -107,7 +125,7 @@ test('QS2: a bindings blob written BEFORE this slice gains the three on the next
   resetDefaults(fresh, true);
   assert.equal(actionForCode(fresh, 'Digit1'), 'QuickUse1', 'the autofill gives an existing player the action - no reset, no lost bindings');
   assert.equal(actionForCode(fresh, 'Digit2'), 'QuickUse2');
-  assert.equal(actionForCode(fresh, 'Digit3'), 'QuickSwap');
+  assert.equal(actionForCode(fresh, 'Digit3'), 'QuickSpell');
   assert.equal(actionForCode(fresh, 'Digit4'), 'QuickOffHand');
   assert.equal(getBinding(fresh, 'Rest'), 'KeyR', 'and disturbs nothing else');
   assert.equal(getBinding(fresh, 'SocialInteract'), 'KeyF', 'SOC5\'s row included');
@@ -129,8 +147,9 @@ test('QS2: the enhanced pane draws the three under their OWN heading, and the co
   assert.deepEqual(PORT_GROUPS[1].rows.map((r) => [r.action, r.label]), [
     ['QuickUse1', 'Use quickslot 1'],
     ['QuickUse2', 'Use quickslot 2'],
-    ['QuickSwap', 'Swap weapon'],
-    ['QuickOffHand', 'Light or douse'],   // QS4: the fourth cell's own press
+    ['QuickSpell', 'Ready quickslot spell'],   // QS6: the spell slot, beside the two it behaves like
+    ['QuickSwap', 'Swap weapon'],              // QS6: still here, still rebindable, shipped unbound
+    ['QuickOffHand', 'Off hand: light, douse or swap'],   // QS4's press, and QS6's fold
   ]);
   assert.ok(!PORT_GROUPS[0].rows.some((r) => QS.includes(r.action)), 'not under Online - a potion press is not an online act');
   // COVERAGE: every bindable action has exactly one row across every group.
@@ -153,16 +172,19 @@ test('QS2: routeAction sends each action to its ctx door with the slot number, a
     quickUse: (n) => { calls.push(['use', n]); return true; },
     quickSwap: () => { calls.push(['swap']); return true; },
     quickOffHand: () => { calls.push(['off']); return true; },
+    quickSpell: () => { calls.push(['spell']); return true; },   // QS6
   };
   assert.equal(routeAction('QuickUse1', ctx), true);
   assert.equal(routeAction('QuickUse2', ctx), true);
   assert.equal(routeAction('QuickSwap', ctx), true);
   assert.equal(routeAction('QuickOffHand', ctx), true);
-  assert.deepEqual(calls, [['use', 1], ['use', 2], ['swap'], ['off']], 'each arm is its own, and the SLOT NUMBER travels');
+  assert.equal(routeAction('QuickSpell', ctx), true);
+  assert.deepEqual(calls, [['use', 1], ['use', 2], ['swap'], ['off'], ['spell']], 'each arm is its own, and the SLOT NUMBER travels');
   // The door's answer, passed through.
   assert.equal(routeAction('QuickUse1', { quickUse: () => false }), false);
   assert.equal(routeAction('QuickSwap', { quickSwap: () => false }), false);
   assert.equal(routeAction('QuickOffHand', { quickOffHand: () => false }), false);
+  assert.equal(routeAction('QuickSpell', { quickSpell: () => false }), false);
   assert.equal(routeAction('QuickUse2', { quickUse: () => undefined }), false, 'a door that answers nothing is not a door that consumed');
   // A host with NO doors: false, and nothing thrown.
   for (const a of QS) assert.equal(routeAction(a, {}), false, `${a} on a bare ctx`);
@@ -171,14 +193,24 @@ test('QS2: routeAction sends each action to its ctx door with the slot number, a
   routeAction('ReadyWeapon', { toggleSheath: () => { sheath++; } });
   routeAction('SocialInteract', { socialInteract: () => { social++; return true; } });
   assert.deepEqual([sheath, social], [1, 1]);
-  // THE EDGE, not the poll: a held 1 drinks one potion, not one a frame.
-  for (const a of QS) assert.ok(!POLLED_ACTIONS.has(a), `${a} is an edge action`);
+  // QS6 - THE POLL, not the edge, FOR THE THREE THAT HOLD. QS2 wrote the
+  // opposite here and was right at the time: a held 1 must not drink one
+  // potion a frame. Mac then asked for the hold to MEAN something ("hold the
+  // keybind to switch between applicable spells"), and a press that acts on
+  // its DOWN edge cannot also be the start of a hold - the potion is drunk
+  // before the player has held long enough to mean "let me choose one". So the
+  // three are polled and the frame's machine owns both edges; routeAction
+  // keeps their arms for the panel, which has no poll. The two that do NOT
+  // hold stay edge actions, because there the down edge is the whole press.
+  for (const a of HOLD) assert.ok(POLLED_ACTIONS.has(a), `${a} holds, so the frame owns it`);
+  for (const a of QS) if (!HOLD.includes(a)) assert.ok(!POLLED_ACTIONS.has(a), `${a} does not hold, so it is an edge action`);
   const src = rd('src/ui/input.js');
   assert.match(src, /case 'QuickUse1': return ctx\.quickUse\?\.\(1\) === true;/);
   assert.match(src, /case 'QuickUse2': return ctx\.quickUse\?\.\(2\) === true;/);
   assert.match(src, /case 'QuickSwap': return ctx\.quickSwap\?\.\(\) === true;/);
   assert.match(src, /case 'QuickOffHand': return ctx\.quickOffHand\?\.\(\) === true;/);
-  assert.deepEqual([...QUICKSLOT_ACTIONS].sort(), [...QS].sort(), 'and the set the self-routing hosts read is the same three');
+  assert.match(src, /case 'QuickSpell': return ctx\.quickSpell\?\.\(\) === true;/);
+  assert.deepEqual([...QUICKSLOT_ACTIONS].sort(), [...QS].sort(), 'and the set the self-routing hosts read is the same five');
 });
 
 // ── THE FOUR HOSTS ───────────────────────────────────────────────────
@@ -201,12 +233,23 @@ test('QS2: every host ctx that carries toggleSheath carries quickUse, quickSwap 
     assert.match(src, /quickUse/, `${path} (${what}) has no quickUse door`);
     assert.match(src, /quickSwap/, `${path} (${what}) has no quickSwap door`);
     assert.match(src, /quickOffHand/, `${path} (${what}) has no quickOffHand door`);
+    assert.match(src, /quickSpell/, `${path} (${what}) has no quickSpell door`);   // QS6
+    // QS6: and the HOLD machine reaches every one of them - a host that never
+    // ticks it is a host where the three polled keys do nothing at all, which
+    // is the AUDIT SOC B4/D1 trap wearing a new hat.
+    assert.match(src, /tickQuickslotHold|tickQuickHold/, `${path} (${what}) never drives the hold machine`);
   }
   // The three that OWN a performer call the model; none of them writes a
   // second use ladder or a second equip.
   for (const path of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeonContext.js']) {
     const src = rd(path);
-    assert.match(src, /import \{ useQuickslot, swapQuickslot, offHandQuickslot \} from '\.\.\/systems\/quickslots\.js';/, `${path} takes the model's performers`);
+    assert.match(src, /import \{ useQuickslot, swapQuickslot, offHandQuickslot, spellQuickslotPress, offHandOffersSwap, tickQuickslotHold \} from '\.\.\/systems\/quickslots\.js';/, `${path} takes the model's performers`);
+    // QS6: the spell's ready is the CAST ENGINE's, asked through the model.
+    assert.match(src, /spellQuickslotPress\(\{ entity: playerEntity, magic, say:/, `${path}: the spell slot presses the one engine`);
+    // QS6: and the off hand presses the SWAP when that is what the cell shows.
+    assert.match(src, /if \(offHandOffersSwap\(playerEntity\)\) return quickSwap\(\);/, `${path}: the key does what the cell shows`);
+    // The tap performs, the hold cycles - the model's split, named in the host.
+    assert.match(src, /onTap: \(slot\) => \(slot === 'spell' \? quickSpell\(\) : quickUse\(slot === 'c1' \? 1 : 2\)\),/, `${path}: the tap is the host's performer`);
     // QS4: and the off hand's light is the MOD's act, reached through the rig's
     // one door - no host lights a torch itself.
     assert.match(src, /offHandQuickslot\(\{ entity: playerEntity, say: [^\n]*toggleLight: \(\) => weaponRig\.toggleLight\(\) \}\);/s, `${path}: the off hand is the model's, on the rig's door`);
@@ -231,9 +274,18 @@ test('QS2: every host ctx that carries toggleSheath carries quickUse, quickSwap 
   // QS4: and its light is that rig's too - the outer host's door would toggle
   // the wrong one, which is the same B4/D1 lesson one hand over.
   assert.match(wm, /toggleLight: \(\) => interiorWeapon\.toggleLight\(\)/);
+  // QS6: the spell is the OUTER host's, like the use - the cast engine indoors
+  // IS that host's `magic`, so a second performer here would ready on a second
+  // engine. And the hold machine is driven PER MODE, because underground the
+  // parts it needs are the dungeon context's.
+  assert.match(wm, /quickSpell\(\) \{ return host\.quickSpell\?\.\(\) === true; \},/);
+  assert.match(wm, /if \(mode === 'dungeon'\) dungeonCtx\?\.tickQuickHold\?\.\(dt, \{ isHeld: \(a\) => held\(keys, a\), blocked: overlayHeld \}\);/);
+  assert.match(rd('src/scenes/dungeon.js'), /ctx\.tickQuickHold\?\.\(dt, \{ isHeld: \(a\) => held\(keys, a\), blocked: overlayHeld \}\);/,
+    'the standalone ?dungeon page drives the same machine with its own keys');
   for (const path of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     assert.match(rd(path), /quickUse: \(n\) => quickUse\(n\),\s*\n\s*quickSwap: \(\) => quickSwap\(\),/g,
       `${path} hands the performers down to the mode machine as well as onto its own ctx`);
+    assert.match(rd(path), /quickSpell: \(\) => quickSpell\(\),/, `${path} hands the spell door down too`);
     assert.equal((rd(path).match(/quickUse: \(n\) => quickUse\(n\),/g) ?? []).length, 3,
       `${path}: on hudCtx (the key ladder), on the host bag (the interior mode), and on drawHud (QS4: the phone's tap)`);
   }
@@ -243,7 +295,11 @@ test('QS2: the two self-routing hosts answer the three ABOVE their mode gate, un
   // scenes/world.js: beside SOC5's own arm, which is the one that had to be
   // moved here after the fact.
   const w = rd('src/scenes/world.js');
-  const wArm = /if \(!townTalk\.overlayActive && QUICKSLOT_ACTIONS\.has\(act\) && socialMenuCanOpen\(\) && routeAction\(act, hudCtx\)\) \{ e\.preventDefault\(\); return; \}/;
+  // QS6: ...and DECLINES the polled three, or the down edge would drink the
+  // potion the hold was about to choose. This ladder never calls routeKey, so
+  // routeKey's own POLLED_ACTIONS arm never reaches it - WEAPON-VIS2's lesson
+  // at a second door.
+  const wArm = /if \(!townTalk\.overlayActive && QUICKSLOT_ACTIONS\.has\(act\) && !POLLED_ACTIONS\.has\(act\) && socialMenuCanOpen\(\) && routeAction\(act, hudCtx\)\) \{ e\.preventDefault\(\); return; \}/;
   assert.match(w, wArm);
   const social = w.indexOf("act === 'SocialInteract' && socialMenuCanOpen()");
   const mine = w.search(wArm);
@@ -253,7 +309,7 @@ test('QS2: the two self-routing hosts answer the three ABOVE their mode gate, un
   assert.ok(mine < modeGate, 'and ABOVE the exterior-mode gate - a quickslot must work in a tavern and in a dungeon');
   // scenes/exterior.js: the same place, its own gate words.
   const x = rd('src/scenes/exterior.js');
-  const xArm = /if \(!townTalk\.overlayActive && QUICKSLOT_ACTIONS\.has\(act\) && !gamePaused\(\) && routeAction\(act, hudCtx\)\) \{ e\.preventDefault\(\); return; \}/;
+  const xArm = /if \(!townTalk\.overlayActive && QUICKSLOT_ACTIONS\.has\(act\) && !POLLED_ACTIONS\.has\(act\) && !gamePaused\(\) && routeAction\(act, hudCtx\)\) \{ e\.preventDefault\(\); return; \}/;
   assert.match(x, xArm);
   assert.ok(x.search(xArm) < x.indexOf("if (!townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {"),
     'above the mode gate here too');

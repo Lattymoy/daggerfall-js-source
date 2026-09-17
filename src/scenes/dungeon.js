@@ -130,7 +130,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // below, after this context; null falls to standing defaults.
       motorState: () => (_motorRef ? { eyeLevel: _motorRef.eye[1] - _motorRef.pos[1], capsule: _motorRef.height } : null),
       // MAC1 J: this host's canvas, for the pause door's relock. The
-      // context owns none of its own (dungeonContext.js:5507), so each
+      // context owns none of its own (dungeonContext.js:5529), so each
       // dungeon host hands its own in and the resume gesture carries
       // the pointer back with it (ui/pauseDoor.js:207-224).
       relock: () => requestLook(canvas) });
@@ -918,6 +918,10 @@ export async function bootDungeon(canvas, renderer, params, status) {
       const hNow = held(keys, 'SwitchHand');
       if (!hNow && hPrev) ctx.switchHand?.();
       hPrev = hNow;
+      // QS6: the quickslot holds, beside the two latches they are modelled on.
+      // The machine is the context's (it owns the entity, the use hooks and the
+      // cast engine); the KEYS are this host's, and so is the gate.
+      ctx.tickQuickHold?.(dt, { isHeld: (a) => held(keys, a), blocked: overlayHeld });
       if (_act.activate || (useHeld && !prevUse)) tryActivate();
       prevUse = useHeld;
       // `held` here USED to be this frame's local overlay boolean; it was
