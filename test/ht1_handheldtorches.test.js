@@ -884,6 +884,14 @@ test('HT4: no vendored mod ships a key the port has already spent', () => {
       // the DECLARATION rather than guessing from the value. The
       // assertion below stays strict for everything that IS a key.
       if (!def.text || def.axis || typeof def.default !== 'string') continue;   // only the KeyCode fields
+      // TO1: ...and an EMPTY default is not a key either. Travel
+      // Options' `RoadsIntegration.FollowPathsCustomKeyBind` ships ""
+      // because it is only read when the CHOICE above it is set to
+      // "Custom Key Bind" (TravelOptionsMod.cs:224-232), and an unset
+      // custom bind falls back to F there. Nothing is bound, so nothing
+      // can collide; the gate below stays strict for every key that
+      // names one.
+      if (def.default === '') continue;
       const code = domCodeForKeyCode(def.default);
       assert.ok(code, `${vendor}/${key} ships "${def.default}", which is not a KeyCode the port can bind`);
       if (portSpent.has(def.default) || dfuBound.has(code)) offenders.push(`${vendor}/${key} = ${def.default} (${code})`);

@@ -216,6 +216,7 @@ import { ClimbingState, climbingSpeed } from './climbing.js';
 import { PlayerMoveScanner } from './moveScanner.js';
 import { getBool } from '../systems/settings.js';   // AUDIT 28 W5: Controls/ToggleSneak (StartGameBehaviour :277)
 import { TRANSPORT_MODES, isRiding, rideBaseFor, canRunUnlessRiding } from '../systems/transport.js';   // TR1: the mount's speed, run and climb laws
+import { timeScale } from '../systems/timeScale.js';   // TO1: Unity's Time.fixedDeltaTime rides Time.timeScale (see update())
 
 /** PlayerSpeedChanger.GetWalkSpeed, verbatim (audit 2026-08-16e F1):
  *  drag = 0.5 x (100 - max(30, LiveSpeed)) rides the WALK base only -
@@ -984,7 +985,25 @@ export class PlayerMotor {
   update(dt, input, yaw, pitch = 0) {
     this.jumped = false;
     this.landedFallDistance = 0;
-    const frameDt = Math.min(dt, MAX_FRAME_DT);
+    // TO1: MAX_FRAME_DT IS UNITY'S `Time.maximumDeltaTime`, WHICH IS AN
+    // UNSCALED BOUND. Unity clamps the REAL frame first and applies the
+    // time scale after (`deltaTime = min(unscaledDeltaTime,
+    // maximumDeltaTime) * timeScale`), so a x50 journey's frame is fifty
+    // times as long as an ordinary one and the jank guard still bites at
+    // the same quarter-second of WALL clock. Clamping the scaled number
+    // against the unscaled bound instead would silently cap the journey
+    // at about x15 on a 60 Hz screen - the clock accelerating while the
+    // player did not - which is the shape the field would report as
+    // "the estimate never matches the ground covered". At a scale of 1
+    // this is exactly MAX_FRAME_DT.
+    // ...and the SCALE IS APPLIED HERE, not by the caller. Unity's
+    // physics reads `Time.deltaTime` and `Time.fixedDeltaTime` off the
+    // global clock; its callers hand it nothing. So every host hands
+    // this the REAL frame, as all four always have, and the motor
+    // scales it - which is why `player.update(dt, ...)` is unchanged in
+    // all four of them and a journey still accelerates the traveller.
+    const scale = timeScale();
+    const frameDt = Math.min(dt, MAX_FRAME_DT) * scale;
     // InputManager.Update's half of the input capture - press edges
     // and the ToggleAutorun clear - runs BEFORE and OUTSIDE the
     // levitation gate below, because InputManager has none.
@@ -1002,17 +1021,30 @@ export class PlayerMotor {
     // than one physics step swallowed the press. Same home as
     // _heightAction (DecideHeightAction, :371) for the same reason.
     if (!this.levitating) this._captureSpeedAdjustment(input);
+    // TO1: THE STEP IS `Time.fixedDeltaTime`, AND IT SCALES WITH THE
+    // CLOCK. Travel Options runs an accelerated journey by setting
+    // Unity's `Time.timeScale` - and, in the same method and for the
+    // reason its own comment gives ("Must set fixed delta time to scale
+    // the fixed (physics) updates as well", TravelOptionsMod.cs:386),
+    // `Time.fixedDeltaTime = timeScale * baseFixedDeltaTime`. Its host
+    // hands this update a dt already multiplied by the scale; without
+    // the second half a x50 journey would ask for fifty times the
+    // STEPS - three thousand a second - instead of steps fifty times
+    // as long, which is a freeze rather than a fast walk. At a scale of
+    // 1, which is every frame that is not an accelerated journey, this
+    // is exactly FIXED_DT and nothing changes.
+    const step = FIXED_DT * scale;
     this._acc = (this._acc ?? 0) + frameDt;
-    while (this._acc >= FIXED_DT) {
-      this._acc -= FIXED_DT;
+    while (this._acc >= step) {
+      this._acc -= step;
       // EV1: latch the span's START. Per step, so a multi-step frame
       // interpolates across the LAST step only (the standard
       // fix-your-timestep shape) and a zero-step frame keeps the
       // previous span and just advances alpha.
       this._prevPos[0] = this.pos[0]; this._prevPos[1] = this.pos[1]; this._prevPos[2] = this.pos[2];
-      this._step(FIXED_DT, input, yaw, pitch);
+      this._step(step, input, yaw, pitch);
     }
-    this._alpha = Math.min(1, this._acc / FIXED_DT);
+    this._alpha = Math.min(1, this._acc / step);
     this._smoothEyeFeet(frameDt);   // MAC1: once per RENDER frame, like the bob and the look
   }
 

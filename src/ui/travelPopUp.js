@@ -90,6 +90,13 @@ import { guildFastTravel } from '../systems/guildVariants.js';   // TP1: GuildMa
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import { firstHotkey } from '../systems/dialogShortcuts.js';   // A8: the DaggerfallShortcut table
+// TO1: Travel Options' own popup - TravelOptionsPopUp.cs. Which of the
+// two journeys a trip takes is decided HERE, by the three toggles
+// against the player's settings, and the fare is scaled here too.
+import { TRAVEL_OPTIONS_TEXT as TO_TEXT, format as toFormat } from '../systems/travelOptionsText.js';
+import { hasPort } from '../systems/travelPorts.js';
+import { calculateTradePrice } from '../systems/shopStock.js';   // TravelTimeCalculatorTO's FormulaHelper.CalculateTradePrice
+import { liveStat } from '../systems/statMods.js';
 
 /** The five Hotkey assignments this window makes, in DFU's own setup
  *  order (:167, :171, :176, :188, :200) - Panel.ProcessHotkeySequences
@@ -173,6 +180,11 @@ export class TravelPopUpWindow {
     this.isCloseWindowDeferred = false;   // :83, EXIT's key-up flag
     this.top = null;          // 'diseased' | 'gold' - the two pushed boxes
     this._box = null;
+    // TO1: the mod, read once as the popup is built (DFU's
+    // `TravelOptionsMod.Instance`), and the mod's own coordinate arm -
+    // a destination with no location, which can only be walked to.
+    this._to = deps.travelOptions?.() ?? null;
+    this.coordsOnly = !!deps.coordsOnly;
     this.refresh();
   }
 
@@ -196,6 +208,64 @@ export class TravelPopUpWindow {
 
   /** Refresh -> UpdateTogglePanels + UpdateLabels (:254-258). The
    *  toggle panels are positional state, so only the labels compute. */
+  /** TravelOptionsPopUp.cs:80-83, IsPlayerControlledTravel - the whole
+   *  decision. A trip is WALKED when the mod owns the speed the player
+   *  picked, owns the sleep mode they picked, and they are not sailing:
+   *
+   *    (CautiousTravel || !SpeedCautious)
+   *      && (StopAtInnsTravel || !SleepModeInn)
+   *      && !TravelShip
+   *
+   *  Read it as: "cautious is mine, or you did not choose cautious" -
+   *  so with the two Player Controlled settings OFF the only walked
+   *  trip is reckless, on foot, camping out, which is the readme's
+   *  "recklessly by foot/horse with camp out options will ALWAYS
+   *  initiate time accelerated travel". A ship is never walked. */
+  isPlayerControlledTravel() {
+    const s = this._to?.settings;
+    if (!s) return false;
+    return (s.cautiousTravel || !this.speedCautious) && (s.stopAtInnsTravel || !this.sleepModeInn) && !this.travelShip;
+  }
+
+  /** :85-89, IsNotAtPort - the place the player stands in must be a
+   *  port for a ship to sail from it. */
+  isNotAtPort() {
+    const here = this.deps.currentLocationMapId?.();
+    return here == null || !hasPort(here);
+  }
+
+  /** :91-94, HasNoOceanTravel - a crossing with no ocean in it and no
+   *  ship under the player and no port at the far end needs no ship. */
+  hasNoOceanTravel() {
+    return (this.trip.oceanPixels ?? 0) === 0 && !this.deps.isOnShip?.() && !hasPort(this._destinationMapId());
+  }
+
+  /** :96-99, IsDestNotValidPort. */
+  isDestNotValidPort() {
+    return !!this._to?.settings?.shipTravelDestinationPortsOnly && !hasPort(this._destinationMapId());
+  }
+
+  _destinationMapId() { return this.deps.locationSummary?.()?.mapID ?? this.deps.locationSummary?.()?.mapId ?? null; }
+
+  /** :168-180, IsShipTravelValid - and the three message boxes it puts
+   *  up, in the mod's own order. Returns the box key, or null when the
+   *  ship is allowed. */
+  shipTravelRefusal() {
+    if (this.isNotAtPort()) return 'noport';
+    if (this.isDestNotValidPort()) return 'nodestport';
+    if (this.hasNoOceanTravel()) return 'nosailing';
+    return null;
+  }
+
+  /** :55-70, OnPush's own guard: with the ports restriction on, a trip
+   *  that cannot sail does not START on the ship toggle. */
+  enforceShipRestriction() {
+    if (!this._to?.settings?.shipTravelPortsOnly) return;
+    if (this.isNotAtPort() || this.hasNoOceanTravel() || this.isDestNotValidPort()) {
+      if (this.travelShip) { this.travelShip = false; this.refresh(); }
+    }
+  }
+
   refresh() {
     const t = calculateTravelTime(this.deps.getPlayerPixel(), this.endPos, {
       speedCautious: this.speedCautious,
@@ -214,7 +284,7 @@ export class TravelPopUpWindow {
     this.travelTimeTotalMins = guildFastTravel(this.deps.playerEntity?.() ?? null,
       this.travelTimeTotalMins);
     // OL2: no nights online (noWorldTime), so no inn - the toggle stands, the cost ignores it
-    const c = calculateTripCost(this.travelTimeTotalMins, t.oceanPixels, {
+    const c0 = calculateTripCost(this.travelTimeTotalMins, t.oceanPixels, {
       sleepModeInn: this.sleepModeInn && !this.noWorldTime(),   // OL2
       hasShip: this.hasShip,
       travelShip: this.travelShip,
@@ -224,8 +294,60 @@ export class TravelPopUpWindow {
       // formula, so it re-answers on every toggle.
       freeTavernRooms: this.freeTavernRooms(),
     });
+    const c = this._scaleTripCost(c0);
     this.trip = { ...t, ...c };
+    // TO1 (TravelOptionsPopUp.cs:104-137, UpdateLabels): a WALKED trip
+    // has no fare and its own estimate.
+    //
+    // The estimate is the classic one asked with the two settings the
+    // mod has TAKEN OVER inverted - `SpeedCautious && !CautiousTravel`,
+    // `SleepModeInn && !StopAtInnsTravel` - so a cautious walk is not
+    // also charged classic's cautious penalty, and then divided by
+    // TWICE the speed multiplier, the mod's own "manually controlled is
+    // roughly twice as fast, depending on player speed". The division
+    // truncates (`(int)`).
+    if (this.isPlayerControlledTravel() || this.coordsOnly) {
+      const s = this._to.settings;
+      const w = calculateTravelTime(this.deps.getPlayerPixel(), this.endPos, {
+        speedCautious: this.speedCautious && !s.cautiousTravel,
+        sleepModeInn: this.sleepModeInn && !s.stopAtInnsTravel,
+        travelShip: this.travelShip,
+        hasHorse: this.hasHorse,
+        hasCart: this.hasCart,
+      }, this.deps.getClimateIndex);
+      let mins = guildFastTravel(this.deps.playerEntity?.() ?? null, w.minutes);
+      const mult = ((this.speedCautious && s.cautiousTravel) ? s.cautiousTravelMultiplier : s.recklessTravelMultiplier) * 2;
+      this.travelTimeTotalMins = Math.trunc(mins / mult);
+      this.walkedTrip = true;
+      this.countdownValueTravelTimeDays = 0;   // a walked trip counts no days down: it starts at once
+      return;
+    }
+    this.walkedTrip = false;
     this.countdownValueTravelTimeDays = this.noWorldTime() ? 0 : travelDays(this.travelTimeTotalMins);   // OL2: online the arrival is now
+  }
+
+  /** TO1 - TravelTimeCalculatorTO.cs:24-40, CalculateTripCost. The mod
+   *  scales the two halves of the fare SEPARATELY and puts each through
+   *  the shop-price formula at quality 10 afterwards, which is what
+   *  keeps a scaled fare a plausible price rather than a multiple:
+   *  "suggest x4-x6 for Climate & Calories" (modsettings.json).
+   *  A factor of 1 - the shipped default - leaves its half untouched,
+   *  formula and all. */
+  _scaleTripCost(c) {
+    const s = this._to?.settings;
+    if (!s) return c;
+    const inns = s.fastTravelCostScaleFactor | 0, ships = s.shipTravelCostScaleFactor | 0;
+    if (inns <= 1 && ships <= 1) return c;
+    const e = this.deps.playerEntity?.() ?? null;
+    const trade = (cost) => calculateTradePrice(cost, 10, {
+      mercantile: e ? (liveStat(e, 'mercantile') ?? 0) : 0,
+      personality: e ? (liveStat(e, 'personality') ?? 50) : 50,
+    }, false);
+    let piecesCost = c.piecesCost;
+    let shipCost = c.totalCost - c.piecesCost;
+    if (inns > 1) piecesCost = trade(piecesCost * inns);
+    if (ships > 1) shipCost = trade(shipCost * ships);
+    return { piecesCost, totalCost: piecesCost + shipCost };
   }
 
   /** enoughGoldCheck (:388-392). BOTH halves: GetGoldAmount (coins
@@ -251,8 +373,27 @@ export class TravelPopUpWindow {
     this.callFastTravelGoldCheck();
   }
 
-  /** CallFastTravelGoldCheck (:458-468). */
+  /** CallFastTravelGoldCheck (:458-468), and TO1's override of it
+   *  (TravelOptionsPopUp.cs:139-166).
+   *
+   *  THE FORK IS HERE and nowhere else. A destination with no location
+   *  (the coordinates arm) is always walked; a location the mod's three
+   *  toggles say is player-controlled is walked; everything else falls
+   *  to DFU's own gold check and its day countdown. A walked trip pays
+   *  no fare, so it never reaches `enoughGoldCheck` - which is the
+   *  mod's own order, not an omission. */
   callFastTravelGoldCheck() {
+    if (this.coordsOnly || this.isPlayerControlledTravel()) {
+      this.doFastTravel = false;
+      this.done = true;
+      this.deps.onTravel?.(this.endPos, {
+        speedCautious: this.speedCautious,
+        sleepModeInn: this.sleepModeInn,
+        travelShip: this.travelShip,
+        playerControlled: true,
+      }, { ...this.trip, minutes: this.travelTimeTotalMins });
+      return;
+    }
     if (!this.enoughGoldCheck()) { this.top = 'gold'; return; }
     this.doFastTravel = true;
   }
@@ -296,6 +437,7 @@ export class TravelPopUpWindow {
       return;
     }
     if (this.top === 'gold') { this.top = null; return; }   // ClickAnywhereToClose (:403)
+    if (this.top === 'noport' || this.top === 'nodestport' || this.top === 'nosailing') { this.top = null; return; }   // TO1: the three ship refusals, likewise
     if (key === 'Escape') { this.exit(); return; }
     // A8: the five buttons' Hotkeys, from the table rather than from
     // five literals (DaggerfallTravelPopUp.cs:167/171/176/188/200).
@@ -324,13 +466,21 @@ export class TravelPopUpWindow {
       return true;
     }
     if (this.top === 'gold') { this.top = null; return true; }
+    if (this.top === 'noport' || this.top === 'nodestport' || this.top === 'nosailing') { this.top = null; return true; }
     if (inRect(POPUP_RECTS.begin, vx, vy)) { this.begin(); return true; }
     if (inRect(POPUP_RECTS.exit, vx, vy)) { this.exit(); return true; }
     // The click handlers ASSIGN (sender == button); only the hotkeys
     // toggle (:497-556).
     if (inRect(POPUP_RECTS.cautious, vx, vy)) { this._click(); this.speedCautious = true; this.refresh(); return true; }
     if (inRect(POPUP_RECTS.reckless, vx, vy)) { this._click(); this.speedCautious = false; this.refresh(); return true; }
-    if (inRect(POPUP_RECTS.ship, vx, vy)) { this._click(); this.travelShip = true; this.refresh(); return true; }
+    // TO1 (:182-189, TransportModeButtonOnClickHandler): with the ports
+    // restriction on, the SHIP button refuses with a message instead of
+    // toggling - the mod checks before it lets the base handler run.
+    if (inRect(POPUP_RECTS.ship, vx, vy)) {
+      const refusal = this._to?.settings?.shipTravelPortsOnly ? this.shipTravelRefusal() : null;
+      if (refusal) { this._click(); this.top = refusal; return true; }
+      this._click(); this.travelShip = true; this.refresh(); return true;
+    }
     if (inRect(POPUP_RECTS.footHorse, vx, vy)) { this._click(); this.travelShip = false; this.refresh(); return true; }
     if (inRect(POPUP_RECTS.inns, vx, vy)) { this._click(); this.sleepModeInn = true; this.refresh(); return true; }
     if (inRect(POPUP_RECTS.campout, vx, vy)) { this._click(); this.sleepModeInn = false; this.refresh(); return true; }
@@ -388,6 +538,10 @@ export class TravelPopUpWindow {
       return t?.variantLinesById?.(DISEASED_WARNING_TEXT_ID, this.deps.pick ?? Math.random)
         ?? ['You are diseased. Travel anyway?'];
     }
+    // TO1 (:169-180) - the three ship refusals, the mod's own words
+    if (this.top === 'noport') return [{ text: TO_TEXT.MsgNoPort, center: true }];
+    if (this.top === 'nodestport') return [{ text: TO_TEXT.MsgNoDestPort, center: true }];
+    if (this.top === 'nosailing') return [{ text: TO_TEXT.MsgNoSailing, center: true }];
     return t?.linesById?.(NOT_ENOUGH_GOLD_TEXT_ID) ?? ['You do not have enough gold.'];
   }
 
@@ -412,8 +566,20 @@ export class TravelPopUpWindow {
     // COINS, not GetGoldAmount's coins-plus-letters total.
     const pieces = this.deps.goldPieces?.() ?? this.deps.gold?.() ?? 0;
     shadowText(renderer, font, String(pieces), m, LABEL_POS.gold[0], LABEL_POS.gold[1]);
-    shadowText(renderer, font, String(this.trip.totalCost), m, LABEL_POS.cost[0], LABEL_POS.cost[1]);
-    shadowText(renderer, font, this.noWorldTime() ? 'now' : String(this.countdownValueTravelTimeDays), m, LABEL_POS.time[0], LABEL_POS.time[1]);   // OL2: the days label says "now" online
+    // TO1 (TravelOptionsPopUp.cs:121-134): a WALKED trip has no fare -
+    // the cost row says so in the mod's own words - and its time row
+    // is HOURS AND MINUTES rather than a count of days, because the
+    // journey starts now and the days are the ones you will live
+    // through. `MsgTimeFormat` is the SDF spelling (the port's text is
+    // neither of DFU's two fonts - systems/travelOptionsText.js).
+    if (this.walkedTrip) {
+      shadowText(renderer, font, TO_TEXT.MsgPlayerControlled, m, LABEL_POS.cost[0], LABEL_POS.cost[1]);
+      const hours = Math.trunc(this.travelTimeTotalMins / 60), mins = this.travelTimeTotalMins % 60;
+      shadowText(renderer, font, toFormat(TO_TEXT.MsgTimeFormat, hours, mins), m, LABEL_POS.time[0], LABEL_POS.time[1]);
+    } else {
+      shadowText(renderer, font, String(this.trip.totalCost), m, LABEL_POS.cost[0], LABEL_POS.cost[1]);
+      shadowText(renderer, font, this.noWorldTime() ? 'now' : String(this.countdownValueTravelTimeDays), m, LABEL_POS.time[0], LABEL_POS.time[1]);   // OL2: the days label says "now" online
+    }
     if (this.noWorldTime()) shadowText(renderer, font, ONLINE_TRAVEL_LINE, m, 0, POPUP_RECTS.native[1] + POPUP_RECTS.native[3] + 4, { align: 'center', w: NATIVE_W });
     if (!_art) {
       // art-less fallback: the option rows the classic art labels

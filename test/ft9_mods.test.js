@@ -29,7 +29,7 @@ test('FT9: every vendored mod with a switch has exactly one row over it, and eve
   }
   for (const f of rows) assert.ok(MOD_SETTINGS[f.control.vendor]?.keys?.[f.control.key], `${f.id} names a real switch`);
   assert.deepEqual(checkFeatures(FEATURES), []);
-  assert.equal(rows.length, 11, 'eleven direct rows (Dynamic Skies rides the outdoors row through `also`; WW1 added Weapon Widget, HT1 Handheld Torches, AT0 Ambient Text, EOTB0 Eye Of The Beholder, IF1 Immersive Footsteps, BA1 Better Ambience)');
+  assert.equal(rows.length, 12, 'twelve direct rows (Dynamic Skies rides the outdoors row through `also`; WW1 added Weapon Widget, HT1 Handheld Torches, AT0 Ambient Text, EOTB0 Eye Of The Beholder, IF1 Immersive Footsteps, BA1 Better Ambience, TO1 Travel Options)');
   // WM3: the Mod Authored tag is worn by the mods-store rows PLUS
   // exactly two that are not mods-store rows - the outdoors row, which
   // Dynamic Skies rides through `also`, and Windmills, whose row is a
@@ -60,7 +60,7 @@ test('FT9: a mod row is the mod\'s own - the creator in the title, the modsettin
     assert.equal(mod.keys.Enabled.default, true, `${f.id} ships on (MO1)`);
     assert.match(f.effect, /^Takes effect /, `${f.id} says when`);
   }
-  assert.deepEqual(rows.map((f) => f.id), ['mod-seasons-iliac-bay', 'mod-roads-hazelnut', 'mod-meanermonsters', 'mod-pcaao', 'mod-unleveledloot', 'mod-weapon-widget', 'mod-handheld-torches', 'mod-ambient-text', 'mod-eye-of-the-beholder', 'mod-immersive-footsteps', 'mod-better-ambience'], 'the Mods pane\'s order');
+  assert.deepEqual(rows.map((f) => f.id), ['mod-seasons-iliac-bay', 'mod-roads-hazelnut', 'mod-travel-options', 'mod-meanermonsters', 'mod-pcaao', 'mod-unleveledloot', 'mod-weapon-widget', 'mod-handheld-torches', 'mod-ambient-text', 'mod-eye-of-the-beholder', 'mod-immersive-footsteps', 'mod-better-ambience'], 'the Mods pane\'s order');
 });
 
 test('FT9: when each switch lands, as the port knows it', () => {

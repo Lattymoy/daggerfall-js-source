@@ -139,6 +139,18 @@ export const MOD_CURATED = Object.freeze({
   unleveledLoot: Object.freeze(['Iron', 'Steel', 'Silver', 'Elven', 'Dwarven', 'Mithril',
     'Adamantium', 'Ebony', 'Orcish', 'Daedric']),
   'roads-hazelnut': Object.freeze(['SmoothRoads', 'RiversAndStreams']),
+  // TO1: the mod ships FIFTY-ONE keys across twelve sections, so this
+  // one is curated hard. The five are what a player reaches for first:
+  // whether a cautious trip is walked, whether a ship needs a port,
+  // what a location does to a journey in progress, how fast it may run,
+  // and which key follows a road. Everything else - the fourteen dot
+  // colours, the junction map's placement, the fare scaling - stays in
+  // the mod's own pane.
+  'travel-options': Object.freeze([
+    'CautiousTravel.PlayerControlledCautiousTravel', 'ShipTravel.OnlyFromPorts',
+    'GeneralOptions.LocationPause', 'TimeAcceleration.AccelerationLimit',
+    'RoadsIntegration.FollowPathsKey',
+  ]),
   'ambient-text': Object.freeze(['textChance', 'interval', 'postTextInterval', 'textDisplayTime']),   // AT0: all four it ships - the mod is small enough that curation would only hide something
   // EOTB0: the mod ships FIFTY-FOUR keys across nine sections, so this
   // one IS curated, and the four are the ones a player reaches for
@@ -447,6 +459,13 @@ export const FEATURES = Object.freeze([
   }),
   modFeature('seasons-iliac-bay', 'Takes effect when the world next loads.', 'world'),
   modFeature('roads-hazelnut', 'Takes effect when the world next loads.', 'world'),
+  // TO1 (2026-09-17): TRAVEL OPTIONS - `world`, because what it changes
+  // is how you cross it. The effect line is honest about the one half
+  // that is not immediate: the settings are read ONCE at world load
+  // (the mod's own "won't take effect without restarting DFU" keys are
+  // its roads integration and its junction map), so a switch flipped
+  // mid-session reaches the NEXT world.
+  modFeature('travel-options', 'Takes effect when the world next loads.', 'world'),
   modFeature('meanerMonsters', 'Takes effect on monsters spawned after the switch.', 'combat'),
   modFeature('pcaao', 'Takes effect at once.', 'combat'),
   modFeature('unleveledLoot', 'Takes effect on the next roll.', 'loot'),

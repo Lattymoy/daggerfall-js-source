@@ -93,11 +93,21 @@
 
 import { loadImg, nativeMetrics, drawImg, drawImgCrop, drawRect, shadowText, NATIVE_W } from './nativePanel.js';
 import { OVERWORLD_ROAD, OVERWORLD_TRACK, OVERWORLD_RIVER, OVERWORLD_STREAM } from './overworldModel.js';   // ROADS 13/24: the relief's colours
+// TO1: Travel Options' own additions to this window - the ports
+// filter, the five-texel region page with his road network on it, the
+// I key's location information, the resume prompt and the teleport
+// charge (ui/travelMapOptions.js, TravelOptionsMapWindow.cs).
+import {
+  portsBarAnchors, portsFilterAllows, drawRegionPageWithPaths, PORTS_SIZE,
+  locationInfoRows, INFO_TABS, resumePrompt, teleportCost, teleportCostPrompt,
+} from './travelMapOptions.js';
+import { DOT_SCALE } from './travelPathsOverlay.js';
+import { TRAVEL_OPTIONS_TEXT as TO_TEXT, format as toFormat } from '../systems/travelOptionsText.js';
 import { readPartyMarks, partyMarksKey, PARTY_DOT_RGB, PARTY_OFFLINE_DOT_RGB } from './partyMapMarks.js';   // SOC6: the party's marks, the one reading both maps share
 import { MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS, messageBoxArtLoaded } from './messageBox.js';
 import { ListPickerWindow, preloadListPickerArt, listPickerArtLoaded } from './listPicker.js';
-import { TravelPopUpWindow, preloadTravelPopUpArt } from './travelPopUp.js';
+import { TravelPopUpWindow, preloadTravelPopUpArt, NOT_ENOUGH_GOLD_TEXT_ID } from './travelPopUp.js';
 import { TeleportPopUpWindow, preloadTeleportPopUpArt } from './teleportPopUp.js';   // G5
 import { drawText } from './text.js';
 import { typedChar, bindings } from './input.js';
@@ -304,6 +314,25 @@ let _art = null;
 /** The window's whole art bundle: the overworld, the picker BITMAP
  *  (indices, not a texture - the region shapes are read out of it),
  *  the button sheets, the border, FMAP_PAL.COL and TEXT.RSC. */
+/** TO1: a PNG out of a vendored mod folder, in the shape `drawImg`
+ *  reads. The precedent is systems/handheldTorches.js:703-708 -
+ *  `toScreenOrder`, not `toColor32`, because this is drawn on a screen
+ *  quad and the flip would stand it on its head. A file that is not
+ *  there answers null and the caller draws nothing. */
+async function loadVendorPng(deps, name) {
+  try {
+    const fetchFn = deps?.fetchFn ?? globalThis.fetch;
+    if (!fetchFn) return null;
+    const url = new URL(`../../vendor/travel-options/Textures/${name}.png`, import.meta.url).href;
+    const res = await fetchFn(url);
+    if (!res?.ok) return null;
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    const { decodePng } = await import('../systems/textureReplacement.js');
+    const { toScreenOrder } = await import('../formats/color32Order.js');
+    return toScreenOrder(await decodePng(bytes));
+  } catch { return null; }
+}
+
 export async function preloadTravelMapArt(deps) {
   if (_art) return _art;
   const { fetchBytes, palette } = deps;
@@ -327,8 +356,17 @@ export async function preloadTravelMapArt(deps) {
   const identifyFlashColor = packRGBA(
     fmapPalette.getRed(IDENTIFY_FLASH_COLOR_INDEX), fmapPalette.getGreen(IDENTIFY_FLASH_COLOR_INDEX),
     fmapPalette.getBlue(IDENTIFY_FLASH_COLOR_INDEX), 255);
+  // TO1 (:80-84, :148-158): the mod's two PORTS textures, out of its
+  // own vendored folder. They are the only art it ships for this
+  // window, and a player without them gets no ports button - which is
+  // the mod's own arm too (`TryImportImage` returning false RETURNS
+  // from Setup before the button is made, :150-153).
+  const [portsOff, portsOn] = await Promise.all([
+    loadVendorPng(deps, 'TOportsOff'), loadVendorPng(deps, 'TOportsOn'),
+  ]);
   _art = {
     overworld, findAt, filterOn, filterOff, downArrow, upArrow, rightArrow, leftArrow, border,
+    portsOff, portsOn,
     pickerBitmap: picker.getDFBitmap(), fmapPalette, textRsc,
     locationPixelColors, identifyFlashColor,
     regionMaps: new Map(),   // lazily filled, DFU's regionTextures
@@ -450,6 +488,11 @@ export class TravelMapWindow {
     this._dotsKey = null;
     this._outlineKey = null;
     this._identifyKey = null;
+    // TO1 (:183-184): with roads integration on, the dots texture is
+    // FIVE times the page in each direction, so a map pixel has room
+    // for a road crossing it. Allocated only then - 1600x800 of uint32
+    // is five megabytes, and a player without the mod pays none of it.
+    this._dotsScale = 1;
     this._dotsBuf = new Uint32Array(REGION_W * REGION_H);
     this._outlineBuf = new Uint32Array(REGION_W * REGION_H);
     this._identifyBuf = new Uint32Array(REGION_W * REGION_H);
@@ -464,8 +507,26 @@ export class TravelMapWindow {
     // only when a member's pixel, floor, name or presence changed.
     this._partyKey = '';
     this._partyPoll = 0;
+    // TO1: Travel Options' own state on this window. `_to` is the mod
+    // itself (null when it is off), read ONCE per open the way DFU
+    // reads `TravelOptionsMod.Instance` in the constructor
+    // (TravelOptionsMapWindow.cs:115-146). `portsFilter` is the mod's
+    // own field (:96) and, unlike the four DFU filters, it does NOT
+    // outlive the window - the mod's own is an instance field on a
+    // window DFU keeps alive, and the port's window is per-open, so
+    // this is the one place the two shapes differ and the bible says so.
+    this._to = deps.travelOptions?.() ?? null;
+    this.portsFilter = false;
+    this.markedMapId = -1;          // :102, the middle-click mark
+    this.infoBox = null;            // :109, the I key's box
+    this._resumeAsked = false;      // :322-345, the resume prompt, once per open
+    this._teleportChargeDone = false;
     this._distance = null;
     this._distanceRegionName = null;
+    if (this._to?.settings?.roadsIntegration) {
+      this._dotsScale = DOT_SCALE;
+      this._dotsBuf = new Uint32Array(REGION_W * DOT_SCALE * REGION_H * DOT_SCALE);
+    }
     this._regionMapName = null;   // the page whose art is mounted
     // Setup's tail (:343-347) - identify the player's region.
     this._startIdentify();
@@ -508,7 +569,13 @@ export class TravelMapWindow {
 
   /** checkLocationDiscovered (:1121-1131) - the instance door onto the
    *  module member below, which is where the law lives. */
-  checkLocationDiscovered(summary) { return checkLocationDiscovered(summary); }
+  checkLocationDiscovered(summary) {
+    // TO1 (:828-844): with the PORTS filter on, a place without a
+    // harbour is not on the map at all - the mod's override answers
+    // false before DFU's own discovery test is even reached.
+    if (!portsFilterAllows(this.portsFilter, summary?.mapID ?? summary?.mapId)) return false;
+    return checkLocationDiscovered(summary);
+  }
 
   /** CanFindPlace (:1134-1146) - likewise. The journal's click-through
    *  asks this question from a host that has no map window open yet, so
@@ -539,6 +606,19 @@ export class TravelMapWindow {
     const outlineOn = this.outlineEnabled;
 
     this.scale = getRegionMapScale(this.selectedRegion);
+    // TO1 (:579-591): with roads integration on the whole page is drawn
+    // by the mod's own routine instead - five texels a map pixel, his
+    // roads and tracks as LINES under the dots, and each dot a square
+    // sized by its type. Cybiades (region 61) is the mod's own
+    // exception (:582) and takes the classic walk: its page is a
+    // quarter-scale zoom whose pixel coordinates are not scaled to
+    // match, so a five-times buffer would plot it in the wrong place.
+    if (this._to?.settings?.roadsIntegration && this.selectedRegion !== 61 && this._dotsScale === DOT_SCALE) {
+      this._updateMapLocationDotsWithPaths(originX, originY, width, height, colors, outline, outlineOn);
+      this._drawPartyMarks(originX, originY, width, height);
+      this._dotsDirty = true;
+      return;
+    }
     this._dotsBuf.fill(0);
     this._outlineBuf.fill(0);
     // ROADS 13 (the ROADS 7 gap, named three times): THE CLASSIC MAP
@@ -609,6 +689,21 @@ export class TravelMapWindow {
     // (scenes/world.js composePartyPose), so the dot lands on the place
     // - which is the whole of what a 320x160 page can say. The word for
     // which is on the enhanced map's label, where there is room for it.
+    this._drawPartyMarks(originX, originY, width, height);
+    this._dotsDirty = true;
+  }
+
+  /** SOC6's marks, extracted whole when TO1 gave this page a second
+   *  walk: both the classic page and the mod's five-texel one end with
+   *  the party over everything, and one copy is the port's rule. On the
+   *  five-texel page a member fills the same 5x5 cell a small dot does,
+   *  so the marker stays the size of the places it stands among. */
+  _drawPartyMarks(originX, originY, width, height) {
+    const maps = this.deps.maps;
+    const outlineOn = this.outlineEnabled;
+    const outline = packRGBA(...DOT_OUTLINE_RGBA);
+    const sc = this._dotsScale;
+    const width5 = width * sc;
     const partyPx = packRGBA(PARTY_DOT_RGB[0], PARTY_DOT_RGB[1], PARTY_DOT_RGB[2], 255);
     const partyOffPx = packRGBA(PARTY_OFFLINE_DOT_RGB[0], PARTY_OFFLINE_DOT_RGB[1], PARTY_OFFLINE_DOT_RGB[2], 255);
     const marks = readPartyMarks(this.deps.party, { width: MAP_WIDTH, height: MAP_HEIGHT });
@@ -620,9 +715,47 @@ export class TravelMapWindow {
       const offset = Math.trunc((((height - y - 1) * width) + x) * this.scale);
       if (offset >= width * height) continue;
       if (outlineOn) this._outlineBuf[offset] = outline;
-      this._dotsBuf[offset] = m.online ? partyPx : partyOffPx;
+      const px = m.online ? partyPx : partyOffPx;
+      if (sc === 1) { this._dotsBuf[offset] = px; continue; }
+      const offset5 = Math.trunc((((height - y - 1) * sc * width5) + (x * sc)) * this.scale);
+      for (let yy = 1; yy < 4; yy++) for (let xx = 1; xx < 4; xx++) this._dotsBuf[offset5 + (yy * width5) + xx] = px;
     }
-    this._dotsDirty = true;
+  }
+
+  /** TO1: UpdateMapLocationDotsTextureWithPaths (:593-662) - the mod's
+   *  own region page. The walk itself is ui/travelMapOptions.js; this
+   *  is the window's half: which flags are on, which colours, and the
+   *  four reads it hands over. */
+  _updateMapLocationDotsWithPaths(originX, originY, width, height, colors, outline, outlineOn) {
+    const maps = this.deps.maps;
+    const net = this.deps.roads?.() ?? null;
+    const s = this._to?.settings ?? {};
+    // The four toggles are the port's shared store, inverted as every
+    // DFU filter is (TRUE means HIDDEN) - see the ROADS 12 note above.
+    // Rivers and streams also need the mod's own EnableWaterways, which
+    // is what puts them on its map at all (:126-135).
+    const water = !!net?.water && !!s.waterwaysEnabled;
+    const showPaths = [!this.filters.roads, !this.filters.tracks,
+      water && !this.filters.rivers, water && !this.filters.streams];
+    drawRegionPageWithPaths(this._dotsBuf, this._outlineBuf, {
+      originX, originY, width, height, scale: this.scale, selectedRegion: this.selectedRegion,
+    }, {
+      politicAt: (x, y) => maps.getPoliticIndex(x, y),
+      summaryAt: (x, y) => locationSummaryAt(this.deps.mapDict, x, y),
+      discovered: (summary) => this.checkLocationDiscovered(summary),
+      colorIndexOf: (t) => getPixelColorIndex(t, this.filters),
+      colors,
+      pathsAt: (x, y, type) => {
+        if (!net || x < 0 || y < 0 || x >= MAP_WIDTH || y >= MAP_HEIGHT) return 0;
+        const arr = [net.roads, net.tracks, net.rivers, net.streams][type];
+        return arr ? (arr[y * MAP_WIDTH + x] & 0xff) : 0;
+      },
+      showPaths,
+      onlyLargeDots: !s.variableSizeDots,
+      markedMapId: this.markedMapId,
+      markColor: s.markLocationColor ?? null,
+      outlineOn, outlineColor: outline,
+    });
   }
 
   /** SOC6: the party moves while the page is up, so the page asks the
@@ -1031,25 +1164,11 @@ export class TravelMapWindow {
       return;
     }
     this.popUp = new TravelPopUpWindow(pos, {
-      getPlayerPixel: this.deps.getPlayerPixel,
-      getClimateIndex: this.deps.getClimateIndex,
-      gold: this.deps.gold,
-      goldPieces: this.deps.goldPieces,
-      hasHorse: this.deps.hasHorse,
-      hasCart: this.deps.hasCart,
-      hasShip: this.deps.hasShip,
-      // TravelTimeCalculator.cs:163's Knightly Order consult, passed
-      // through for the same reason FastTravel's entity is.
-      freeTavernRooms: this.deps.freeTavernRooms,
-      noWorldTime: this.deps.noWorldTime,   // OL2: the host's word that the trip takes no world time (online)
-      diseaseCount: this.deps.diseaseCount,
-      poisonCount: this.deps.poisonCount,
-      textRsc: _art?.textRsc ?? null,
-      pick: this.deps.pick,
-      // TP1: GuildManager.FastTravel reads the player's memberships,
-      // so the popup needs the entity. Passed through rather than
-      // resolved here - this window knows about maps, not guilds.
-      playerEntity: this.deps.playerEntity,
+      // TravelTimeCalculator.cs:163's Knightly Order consult, the
+      // host's online word, TP1's entity for GuildManager.FastTravel
+      // and TO1's mod handle all ride in the one shared bag
+      // (_popUpDeps), so this popup and the coordinates one cannot drift.
+      ...this._popUpDeps(),
       onExit: () => { this._rememberPopUpState(); this.popUp = null; },
       onTravel: (endPos, opts, computed) => {
         this._rememberPopUpState();
@@ -1069,6 +1188,121 @@ export class TravelMapWindow {
     // holding (SetTravelMapFromSaveData's half, :1325-1336).
     Object.assign(this.popUp, travelMapPopUpState());
     this.popUp.refresh();
+  }
+
+  /** TO1 (:505-530 and TravelOptionsPopUp.cs:151-163): the popup on
+   *  BARE COORDINATES. The pixel is the one under the cursor
+   *  (GetClickMPCoords, which is this window's own `_getCoordinates`
+   *  divided by the region's scale with the same Betony and Cybiades
+   *  fixups - :552-577 is `_updateMouseOverLocation`'s arithmetic, and
+   *  the port has it once, so this reads it rather than repeating it).
+   *  The journey is the mod's, always: a place with no name cannot be
+   *  fast-travelled to, so `CallFastTravelGoldCheck`'s first arm goes
+   *  straight to BeginTravelToCoords. */
+  _createCoordsPopUpWindow() {
+    const pos = this._mapPixelUnderCursor();
+    if (!pos) return;
+    this.popUp = new TravelPopUpWindow(pos, {
+      ...this._popUpDeps(),
+      coordsOnly: true,
+      onExit: () => { this._rememberPopUpState(); this.popUp = null; },
+      onTravel: (endPos, opts) => {
+        this._rememberPopUpState();
+        this.popUp = null;
+        this.deps.onTravelToCoords?.({ pixel: endPos, name: toFormat(TO_TEXT.MsgTargetCoords, endPos.x, endPos.y) }, opts);
+        this.closeTravelWindows(true);
+      },
+    });
+    Object.assign(this.popUp, travelMapPopUpState());
+    this.popUp.refresh();
+  }
+
+  /** The cursor's map pixel, in the same two steps
+   *  `_updateMouseOverLocation` takes: the page coordinates, then the
+   *  region's scale and its two fixups. */
+  _mapPixelUnderCursor() {
+    if (!this.regionSelected) return null;
+    const scale = getRegionMapScale(this.selectedRegion);
+    const c = this._getCoordinates();
+    let x = Math.trunc(c[0] / scale);
+    let y = Math.trunc(c[1] / scale);
+    if (this.selectedRegion === BETONY_INDEX) { x += 60; y += 212; }
+    if (this.selectedRegion === 61) {
+      const xDiff = Math.trunc((x - 440) / 4), yDiff = Math.trunc((y - 340) / 4);
+      x = 440 + xDiff; y = 340 + yDiff;
+    }
+    if (x < 0 || y < 0 || x >= MAP_WIDTH || y >= MAP_HEIGHT) return null;
+    return { x, y };
+  }
+
+  /** TO1 (:199-220): where the ports button and the two arrows sit on
+   *  this page. The ports button shows only while the mod restricts
+   *  ship travel to ports (:148); the shuffle happens whenever either
+   *  arrow is enabled, which is the mod's own condition. */
+  _portsBar() {
+    const portsShown = !!this._to?.settings?.shipTravelPortsOnly;
+    const paging = this.regionSelected && (this.hasMultipleMaps || this.hasVerticalMaps);
+    const anchors = portsBarAnchors(portsShown && paging);
+    return { ...anchors, portsShown };
+  }
+
+  /** TO1 (:532-550), MarkLocationHandler - the MIDDLE click marks the
+   *  location under the cursor, or clears the mark when it is already
+   *  this one. The ring is drawn by the five-texel page (drawLocation's
+   *  `highlight`), so on a classic page the mark is remembered and not
+   *  seen, which is what the mod does without its roads integration. */
+  _markLocationHandler() {
+    if (!(this.regionSelected && this.locationSelected && !this.mouseOverOtherRegion)) return;
+    const id = this.locationSummary?.mapID ?? this.locationSummary?.mapId ?? -1;
+    this.markedMapId = this.markedMapId === id ? -1 : id;
+    this._updateMapLocationDotsTexture();
+  }
+
+  /** TO1 (:374-464), DisplayLocationInfo - the I key over a selected
+   *  place. The rows are ui/travelMapOptions.js's; this holds the box. */
+  _displayLocationInfo() {
+    if (!this.locationSelected || this.infoBox) return;
+    const summary = this.locationSummary;
+    const info = locationInfoRows(summary?.locationType,
+      this.deps.discoveredBuildings?.(summary) ?? null,
+      (t) => this.deps.buildingTypeName?.(t) ?? String(t));
+    const title = this._getLocationNameInCurrentRegion();
+    if (!info) {
+      this.infoBox = { rows: [{ text: toFormat(TO_TEXT.MsgNoKnowledge, title), center: true }], anywhere: true };
+      return;
+    }
+    const rows = [{ text: title, center: true, highlight: true }, { text: '', center: true }];
+    if (info.guilds) rows.push({ text: info.guilds, center: false });
+    // :437-441 - two columns, on the mod's own three tab stops
+    for (let i = 0; i < info.rows.length; i += 2) {
+      const a = info.rows[i], b = info.rows[i + 1];
+      const left = `${a.name}${' '.repeat(Math.max(1, 14 - a.name.length))}${a.count}`;
+      rows.push({ text: b ? `${left}   ${b.name}${' '.repeat(Math.max(1, 14 - b.name.length))}${b.count}` : left, center: false });
+    }
+    this.infoBox = { rows, anywhere: true, tabs: INFO_TABS };
+  }
+
+  /** The popup's dep bag, shared by the location popup and the
+   *  coordinates one so the two cannot drift. */
+  _popUpDeps() {
+    return {
+      getPlayerPixel: this.deps.getPlayerPixel,
+      getClimateIndex: this.deps.getClimateIndex,
+      gold: this.deps.gold,
+      goldPieces: this.deps.goldPieces,
+      hasHorse: this.deps.hasHorse,
+      hasCart: this.deps.hasCart,
+      hasShip: this.deps.hasShip,
+      freeTavernRooms: this.deps.freeTavernRooms,
+      noWorldTime: this.deps.noWorldTime,
+      diseaseCount: this.deps.diseaseCount,
+      poisonCount: this.deps.poisonCount,
+      textRsc: _art?.textRsc ?? null,
+      pick: this.deps.pick,
+      playerEntity: this.deps.playerEntity,
+      travelOptions: this.deps.travelOptions,
+      locationSummary: () => this.locationSummary,
+    };
   }
 
   /** The popup is minted per trip here where DFU keeps one; its three
@@ -1096,6 +1330,16 @@ export class TravelMapWindow {
   _clickHandler(vx, vy) {
     const y = vy - REGION_PANEL_OFFSET;
     if (vx < 0 || vx > REGION_W || y < 0 || y > REGION_H) return;
+    // TO1 (:505-530), ClickHandler's own first arm: with
+    // AllowTargetingMapCoordinates set, a click on an EMPTY map pixel
+    // inside an open region opens the travel popup on those bare
+    // coordinates - a journey to a place with no name. The mod runs its
+    // own bounds check in the region texture's own coordinates, which
+    // is the `y` above, and falls through to DFU's handler otherwise.
+    if (this._to?.settings?.targetCoordsAllowed && this.regionSelected && !this.locationSelected && !this.mouseOverOtherRegion) {
+      this._createCoordsPopUpWindow();
+      return;
+    }
     if (!this.regionSelected) {
       if (this.mouseOverRegionValid) this._openRegionPanel(this.mouseOverRegion);
     } else if (this.locationSelected) {
@@ -1201,6 +1445,33 @@ export class TravelMapWindow {
       if (code === 'KeyN' || code === 'Escape') { this._click(); this.top = null; this._stopIdentify(); }
       return;
     }
+    // TO1 (:330-344): YES resumes the journey and CLOSES the map twice
+    // over - the mod calls CloseWindow before the branch and again
+    // inside it, which is what takes the player straight back to the
+    // world rather than to the region page.
+    if (this.top === 'resume') {
+      if (code === 'KeyY') { this._click(); this.top = null; this.deps.onResumeTravel?.(); this.closeTravelWindows(true); return; }
+      if (code === 'KeyN' || code === 'Escape') { this._click(); this.top = null; this.closeTravelWindows(true); }
+      return;
+    }
+    // TO1 (:477-497): the teleport fee. Yes pays it, No closes the map.
+    if (this.top === 'teleportcost') {
+      if (code === 'KeyY') { this._click(); this.top = null; this.deps.payTeleport?.(this._teleportCost ?? 0); return; }
+      if (code === 'KeyN' || code === 'Escape') { this._click(); this.top = null; this.closeTravelWindows(true); }
+      return;
+    }
+    if (this.top === 'teleportpoor') { this.top = null; this.closeTravelWindows(true); return; }
+    // TO1 (:348-370), Update's own two keys. The info box is
+    // ClickAnywhereToClose, so ANY key closes it and nothing else
+    // happens that frame (:451-453, `infoBox.ClickAnywhereToClose`).
+    if (this.infoBox) { this.infoBox = null; return; }
+    if (this._to) {
+      // :360-366 - I over a selected place; the mod guards on
+      // `infoBox == null`, which the arm above has just made true.
+      if (code === 'KeyI' && this.locationSelected) { this._displayLocationInfo(); return; }
+      // :367-370 - H anywhere on the map opens the mod's help.
+      if (code === 'KeyH') { this.deps.onHelp?.(); return; }
+    }
     // Update's own keys (:378-425)
     // Update's toggle-closed binding and the back button (:376-386)
     if (code === 'Escape' || actionForCode(bindings(), code) === 'TravelMap') {
@@ -1263,7 +1534,16 @@ export class TravelMapWindow {
     }
   }
 
-  click(vx, vy, right = false) {
+  click(vx, vy, right = false, middle = false) {
+    // TO1 (:539, NativePanel.OnMiddleMouseClick += MarkLocationHandler):
+    // the middle button marks the place under the cursor and does
+    // nothing else - it never reaches a sub-window or the bar.
+    if (middle) {
+      this.lastMousePos = [vx, vy];
+      if (this.regionSelected) this._updateMouseOverLocation();
+      this._markLocationHandler();
+      return true;
+    }
     if (this.telePopUp) {
       this.telePopUp.click(vx, vy);
       if (this.telePopUp?.done) this.telePopUp = null;
@@ -1279,12 +1559,16 @@ export class TravelMapWindow {
       if (this.picker?.done) this.picker = null;
       return true;
     }
-    if (this.top === 'confirm') {
+    if (this.top === 'confirm' || this.top === 'resume' || this.top === 'teleportcost') {
       const hit = this._box ? messageBoxHit(this._box, vx, vy) : null;
       if (hit === MB_BUTTONS.Yes) this.input('KeyY');
       else if (hit === MB_BUTTONS.No) this.input('KeyN');
       return true;
     }
+    // TO1: the two ClickAnywhereToClose boxes - the mod's own info box
+    // (:449) and the "not enough gold" (:500).
+    if (this.top === 'teleportpoor') { this.input('KeyN'); return true; }
+    if (this.infoBox) { this.infoBox = null; return true; }
     // TEXT.RSC 13 is ClickAnywhereToClose (:1454); the find box is a
     // FIELD and answers only Return and Escape.
     if (this.top === 'notfound') { this.top = null; return true; }
@@ -1310,8 +1594,21 @@ export class TravelMapWindow {
     // so on the province map they neither draw nor take a click, even
     // when the player's own region happens to page (:511, :519,
     // :529-549, :1111-1112).
-    if (this.regionSelected && this.hasMultipleMaps && inRect(BUTTON_RECTS.horizontalArrow, vx, vy)) { this._arrowButtonClick('horizontal'); return true; }
-    if (this.regionSelected && this.hasVerticalMaps && inRect(BUTTON_RECTS.verticalArrow, vx, vy)) { this._arrowButtonClick('vertical'); return true; }
+    {
+      const bar = this._portsBar();
+      // TO1 (:191-197): the ports filter, hit-tested BEFORE the arrows
+      // because it may be sitting on top of where they were.
+      if (bar.portsShown && inRect([bar.ports[0], bar.ports[1], PORTS_SIZE[0], PORTS_SIZE[1]], vx, vy)) {
+        this._click();
+        this.portsFilter = !this.portsFilter;
+        this._updateMapLocationDotsTexture();
+        return true;
+      }
+      const [, , hw, hh] = BUTTON_RECTS.horizontalArrow;
+      const [, , vw, vh] = BUTTON_RECTS.verticalArrow;
+      if (this.regionSelected && this.hasMultipleMaps && inRect([bar.horizontalArrow[0], bar.horizontalArrow[1], hw, hh], vx, vy)) { this._arrowButtonClick('horizontal'); return true; }
+      if (this.regionSelected && this.hasVerticalMaps && inRect([bar.verticalArrow[0], bar.verticalArrow[1], vw, vh], vx, vy)) { this._arrowButtonClick('vertical'); return true; }
+    }
     // A click lands where the cursor is: keep the hover state honest
     // for hosts that never send a move (touch).
     this.lastMousePos = [vx, vy];
@@ -1335,6 +1632,31 @@ export class TravelMapWindow {
   gotoPlace(place) { this._gotoPlace = place ?? null; }
 
   tick(dt) {
+    // TO1 (:322-345), OnPush's own tail. The map opens either ON the
+    // player's region, because a journey is running and the player is
+    // steering it, or on a YES/NO asking whether to take the active
+    // destination up again. Once per open: the mod does it in OnPush
+    // and the port's window is per-open, so the first tick is that
+    // moment. It is a tick rather than the constructor because the box
+    // wants the window drawn underneath it, which is the same reason
+    // the mod moved its own teleport charge out of OnPush (:352-355).
+    if (!this._resumeAsked) {
+      this._resumeAsked = true;
+      if (this._to) {
+        if (this._to.isTravelActive) this._openRegionPanel(this._getPlayerRegion());
+        else if (this._to.destinationName) { this.top = 'resume'; }
+      }
+    }
+    // TO1 (:352-355, :470-503): the teleport charge, once, and only
+    // for a teleport visit with the paid service on.
+    if (!this._teleportChargeDone && this.teleportationTravel && this._to?.settings?.teleportCost) {
+      this._teleportChargeDone = true;
+      const cost = teleportCost(this.deps.magesGuildRank?.() ?? 0);
+      if (cost > 0) {
+        this._teleportCost = cost;
+        this.top = (this.deps.gold?.() ?? 0) >= cost ? 'teleportcost' : 'teleportpoor';
+      }
+    }
     // :443-455 - DFU runs this at the tail of Update, unconditionally.
     // The only setter is GotoPlace, which fires before this window is
     // ever shown, so it is consumed on the first tick either way.
@@ -1378,13 +1700,13 @@ export class TravelMapWindow {
   /** One generated buffer to a texture: DFU's bottom-up buffer
    *  flipped into the port's top-down upload, under a versioned key
    *  the dispose releases. */
-  _upload(renderer, kind, buf) {
-    const flipped = new Uint32Array(REGION_W * REGION_H);
-    for (let y = 0; y < REGION_H; y++) {
-      flipped.set(buf.subarray((REGION_H - y - 1) * REGION_W, (REGION_H - y) * REGION_W), y * REGION_W);
+  _upload(renderer, kind, buf, w = REGION_W, h = REGION_H) {
+    const flipped = new Uint32Array(w * h);
+    for (let y = 0; y < h; y++) {
+      flipped.set(buf.subarray((h - y - 1) * w, (h - y) * w), y * w);
     }
     const key = `${kind}-${++_texVer}`;
-    const tex = renderer.uploadTexture('travelmap', key, { width: REGION_W, height: REGION_H, colors: flipped });
+    const tex = renderer.uploadTexture('travelmap', key, { width: w, height: h, colors: flipped });
     return { key, tex };
   }
 
@@ -1392,7 +1714,7 @@ export class TravelMapWindow {
     this._renderer = renderer;
     if (this._dotsDirty) {
       const prevDots = this._dotsKey, prevOutline = this._outlineKey;
-      const dots = this._upload(renderer, 'dots', this._dotsBuf);
+      const dots = this._upload(renderer, 'dots', this._dotsBuf, REGION_W * this._dotsScale, REGION_H * this._dotsScale);   // TO1: five times the page with roads integration on
       const outline = this._upload(renderer, 'outline', this._outlineBuf);
       this._dotsKey = dots.key; this._dotsTex = dots.tex;
       this._outlineKey = outline.key; this._outlineTex = outline.tex;
@@ -1451,7 +1773,7 @@ export class TravelMapWindow {
             dx * DOTS_OUTLINE_THICKNESS / m.s, dy * DOTS_OUTLINE_THICKNESS / m.s, { blend: true });
         }
       }
-      if (this._dotsTex) this._drawPage(renderer, m, this._dotsTex, REGION_W, REGION_H, 0, 0);
+      if (this._dotsTex) this._drawPage(renderer, m, this._dotsTex, REGION_W * this._dotsScale, REGION_H * this._dotsScale, 0, 0);   // TO1: _cropRect already scales by the texture's own size
     }
     if (this.identifying && this.identifyState && this._identifyTex) {
       this._drawPage(renderer, m, this._identifyTex, REGION_W, REGION_H, 0, 0);
@@ -1471,13 +1793,25 @@ export class TravelMapWindow {
       // SetupArrowButtons (:529-549): the button is 22x20 and the
       // texture is a Button BackgroundTexture, so it stretches to the
       // BUTTON, not to its own size.
+      // TO1 (:199-220): the mod's PORTS button lives where the arrows
+      // do, so when a region pages it moves all three - the ports
+      // button up seven pixels, both arrows down eight.
+      const bar = this._portsBar();
       if (this.regionSelected && this.hasMultipleMaps) {
-        const [hx, hy, hw, hh] = BUTTON_RECTS.horizontalArrow;
+        const [hx, hy] = bar.horizontalArrow;
+        const [, , hw, hh] = BUTTON_RECTS.horizontalArrow;
         drawImg(renderer, (this.mapIndex % 2 === 0) ? _art.rightArrow : _art.leftArrow, m, hx, hy, hw, hh);
       }
       if (this.regionSelected && this.hasVerticalMaps) {
-        const [vx, vy, vw, vh] = BUTTON_RECTS.verticalArrow;
+        const [vx, vy] = bar.verticalArrow;
+        const [, , vw, vh] = BUTTON_RECTS.verticalArrow;
         drawImg(renderer, (this.mapIndex > 1) ? _art.upArrow : _art.downArrow, m, vx, vy, vw, vh);
+      }
+      // :148-158 - the ports button itself, only while the mod is
+      // restricting ship travel to ports (there is nothing to filter
+      // for otherwise).
+      if (bar.portsShown && _art.portsOn && _art.portsOff) {
+        drawImg(renderer, this.portsFilter ? _art.portsOn : _art.portsOff, m, bar.ports[0], bar.ports[1], PORTS_SIZE[0], PORTS_SIZE[1]);
       }
     }
 
@@ -1500,6 +1834,19 @@ export class TravelMapWindow {
       this._drawBox(renderer, m, font);
     } else if (this.top === 'confirm') {
       this._box = layoutMessageBox(font, this._confirmRows(), [MB_BUTTONS.Yes, MB_BUTTONS.No]);
+      this._drawBox(renderer, m, font);
+    } else if (this.top === 'resume') {
+      // TO1 (:326-345) - the mod's own YES/NO over the map.
+      this._box = layoutMessageBox(font, [{ text: resumePrompt(this._to?.destinationName ?? ''), center: true }], [MB_BUTTONS.Yes, MB_BUTTONS.No]);
+      this._drawBox(renderer, m, font);
+    } else if (this.top === 'teleportcost') {
+      this._box = layoutMessageBox(font, [{ text: teleportCostPrompt(this._teleportCost ?? 0), center: true }], [MB_BUTTONS.Yes, MB_BUTTONS.No]);
+      this._drawBox(renderer, m, font);
+    } else if (this.top === 'teleportpoor') {
+      this._box = layoutMessageBox(font, _art?.textRsc?.linesById?.(NOT_ENOUGH_GOLD_TEXT_ID) ?? ['You do not have enough gold.'], []);   // TO1 (:500) - DFU's own record, one home (ui/travelPopUp.js)
+      this._drawBox(renderer, m, font);
+    } else if (this.infoBox) {
+      this._box = layoutMessageBox(font, this.infoBox.rows, []);
       this._drawBox(renderer, m, font);
     } else this._box = null;
   }

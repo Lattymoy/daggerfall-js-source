@@ -1879,6 +1879,63 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
 /* THE COMPASS. A strip of a quarter of the circle, the points placed
    by heading and HIDDEN when they fall off it - a marker pinned to the
    rim would say "north is exactly there", which is a lie. */
+
+/* TO1 - THE ENHANCED LANE'S TRAVEL PANEL (ui/enhancedTravelControl.js).
+   Mac's own addition beside the mod: the five controls of Hazelnut's
+   320x27 strip, in this skin's language and at the screen's own
+   resolution. It sits ABOVE the HUD's z-index 4 and below every window,
+   because it is up while the player walks and must not cover a map or
+   a message box. Like the HUD it is pointer-transparent; its BUTTONS
+   are not, which is the touch-quickslot pattern and the only way a
+   panel that does not pause the game can still be clicked. */
+.travelpanel { position: fixed; inset: 0; z-index: 5; pointer-events: none;
+  font-family: var(--data); color: var(--bone); }
+.travelpanel-bar { position: absolute; left: 50%; top: 14px; transform: translateX(-50%);
+  display: flex; align-items: stretch; gap: 0; min-width: min(680px, 92vw);
+  background: linear-gradient(180deg, rgba(23,27,33,0.94), rgba(14,16,19,0.94));
+  border: 1px solid rgba(192,138,62,0.45); border-radius: 3px;
+  box-shadow: 0 2px 14px rgba(0,0,0,0.55); }
+.travelpanel-dest { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center;
+  padding: 7px 14px; min-width: 0; }
+.travelpanel-label { font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--dim); }
+.travelpanel-name { font-family: var(--display); font-size: 20px; line-height: 1.1; color: var(--bone);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.travelpanel-sub { font-size: 11px; color: var(--dim); letter-spacing: 0.04em; }
+.travelpanel.following .travelpanel-name { color: var(--brass); }
+.travelpanel-speed { display: flex; flex-direction: column; justify-content: center; gap: 2px;
+  padding: 7px 14px; border-left: 1px solid rgba(192,138,62,0.25); }
+.travelpanel-stepper { display: flex; align-items: center; gap: 6px; }
+.travelpanel-accel { font-family: var(--display); font-size: 19px; min-width: 46px; text-align: center; color: var(--brass); }
+.travelpanel-step { pointer-events: auto; width: 22px; height: 22px; line-height: 1;
+  background: rgba(43,50,59,0.9); color: var(--bone); border: 1px solid rgba(192,138,62,0.4);
+  border-radius: 2px; font-size: 14px; cursor: pointer; }
+.travelpanel-step:hover { background: rgba(78,127,114,0.35); border-color: var(--verdigris); }
+.travelpanel-acts { display: flex; align-items: center; gap: 6px; padding: 7px 12px;
+  border-left: 1px solid rgba(192,138,62,0.25); }
+.travelpanel-act { pointer-events: auto; padding: 6px 12px; cursor: pointer;
+  background: rgba(43,50,59,0.9); color: var(--bone); border: 1px solid rgba(192,138,62,0.4);
+  border-radius: 2px; font-family: var(--data); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; }
+.travelpanel-act:hover { background: rgba(78,127,114,0.35); border-color: var(--verdigris); }
+.travelpanel-exit:hover { background: rgba(140,58,50,0.45); border-color: var(--blood); }
+.travelpanel-msg { position: absolute; left: 50%; top: 86px; transform: translateX(-50%);
+  font-size: 13px; color: var(--brass); text-shadow: 0 1px 2px rgba(0,0,0,0.9);
+  opacity: 0; transition: opacity 180ms ease; }
+.travelpanel-msg.show { opacity: 1; }
+/* The junction map. "image-rendering: pixelated" because it IS a
+   hundred texels a side - the mod's own Point filter mode, which is
+   its shipped default. */
+.travelpanel-junction { position: absolute; right: 22px; top: 96px; width: 160px; height: 160px;
+  display: none; image-rendering: pixelated;
+  border: 1px solid rgba(192,138,62,0.4); border-radius: 50%;
+  background: rgba(14,16,19,0.72); box-shadow: 0 2px 12px rgba(0,0,0,0.5); }
+.travelpanel-junction.show { display: block; }
+@media (max-width: 760px) {
+  .travelpanel-bar { min-width: 96vw; }
+  .travelpanel-name { font-size: 16px; }
+  .travelpanel-act { padding: 6px 8px; font-size: 11px; }
+  .travelpanel-junction { width: 108px; height: 108px; right: 12px; }
+}
+
 .hud-compass { position: relative; width: min(520px, 60vw); height: 26px;
   border-bottom: 2px solid rgba(125,116,96,0.55); }
 .hud-strip { position: absolute; inset: 0; overflow: hidden; }
