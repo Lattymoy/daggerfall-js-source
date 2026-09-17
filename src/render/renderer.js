@@ -299,8 +299,10 @@ uniform vec4 uFlatWind;   // WIND3: the wind's rate x, z (m/s, the lab's rate fr
 uniform float uSway;      // WIND3: this batch's share of the lean (0 = stands still)
 out vec2 vUV;
 out vec3 vBBWorld;
+out vec3 vBBBase;   // EL2: the flat's placement base, where the lane's shadow is read for the whole sprite (the classic FS declares it not, which GLSL allows)
 void main() {
   // Bottom-anchored: centre sits half a height above the placement base.
+  vBBBase = aCenter + uOrigin;
   vec3 world = aCenter + uOrigin
     + uRight * (aCorner.x * uSize.x)
     + uUp * ((aCorner.y + 0.5) * uSize.y);
@@ -332,6 +334,8 @@ void main() {
   gl_Position = uProj * uView * vec4(world, 1.0);
 }`;
 
+import { ShadowPass } from './shadowPass.js';   // EL2: the lane's shadow maps - a leaf that compiles nothing until a lane asks
+import { AirPass, AIR_ADAPT_UNIT as ADAPT_UNIT, AIR_AO_UNIT as AO_UNIT } from './airPass.js';   // EL3: the depth image, the ambient occlusion, the bloom and the shafts - the same kind of leaf; EL4: the eye's unit
 import { SHADE_DARK } from '../systems/concealDraw.js';   // ECV1 / AUDIT 65 PN-3: the shade's pull toward black, interpolated into BB_FS below - the shader restated 0.12 as a second literal. The LEAF, not systems/combatVisuals.js, which re-exports it: that module's graph would take this file's closure from 13 modules to 69
 
 const BB_FS = `#version 300 es
@@ -584,6 +588,11 @@ void main() {
 }`;
 
 const ZERO_ORIGIN = [0, 0, 0];
+const ZERO4 = new Float32Array(4);   // AUDIT-EL F12: the AO rect with the air off
+/** AUDIT-EL F5: what a WORLD host passes beginFrame - the lane replays its records for this frame and not for a map's, a video's or a menu's. */
+export const WORLD_FRAME = Object.freeze({ world: true });
+/** The classic world programs' point-light cap (uPointLights[16] in every shader above); a lane brings its own. */
+const CLASSIC_MAX_LIGHTS = 16;
 const ZERO_FLAT_WIND = new Float32Array(4);   // WIND3: a bare prototype (the crash-report tests) has no wind
 // MaterialReader.cs:448-453: the auto-emissive arm's EmissionColor.
 const EMISSION_WHITE = new Float32Array([1, 1, 1]);
@@ -824,32 +833,31 @@ export class Renderer {
     if (!gl) throw new Error('WebGL2 required');
     this.gl = gl;
 
-    this.program = this._buildProgram(VS, FS);
-    this.uProj = gl.getUniformLocation(this.program, 'uProj');
-    this.uView = gl.getUniformLocation(this.program, 'uView');
-    this.uModel = gl.getUniformLocation(this.program, 'uModel');
-    this.uLightDir = gl.getUniformLocation(this.program, 'uLightDir');
-    this.uAmbient = gl.getUniformLocation(this.program, 'uAmbient');
-    this.uAmbientSky = gl.getUniformLocation(this.program, 'uAmbientSky');       // BA1
-    this.uAmbientGround = gl.getUniformLocation(this.program, 'uAmbientGround');
-    this.uTrilight = gl.getUniformLocation(this.program, 'uTrilight');
+    // EL1: THE WORLD PROGRAM SET - mesh, character, billboard, terrain -
+    // is BUILT as a unit and INSTALLED as a unit, because the Enhanced
+    // Lighting lane (render/enhancedLighting.js) replaces all four
+    // fragment shaders at once (setLightingLane). The classic set is
+    // built here and is all a classic page ever compiles.
+    this._csLoc = {};   // EE5 / VC4: the cloud shadow map's uniforms, one pair per program that lights by the sun (the water pair joins below)
+    this._lane = null;       // the installed lane, or null for classic
+    this._laneSet = null;    // the lane's compiled set, kept across a swap back and forth
+    this._exposure = 1;      // the lane's exposure (EL1); inert on the classic set
+    this._shadows = null;    // EL2: the ShadowPass while a lane that asks for shadows is installed
+    this._shadowPass = null; // ...built once and kept across swaps, like the lane's programs
+    this._air = null;        // EL3: the AirPass while a lane that asks for it is installed AND the page's door is open
+    this._airPass = null;
+    this._airWanted = false;
+    this._frameFbo = null;   // EL4: the frame image the world pass draws into while the air is on (null = the canvas)
+    this._spriteDepth = 0;   // AUDIT-EL F2: inside renderCharacterSprite (a foreign rect: no AO)
+    this._panelLane = null;  // AUDIT-EL F7: the lane a panel bracket suspended
+    this._studioDepth = 0;   // AUDIT-EL F1: inside the studio bake (a UI picture: no eye)
+    this._adaptOneTex = null;
+    this.maxPointLights = CLASSIC_MAX_LIGHTS;
+    this._decA = new Float32Array(3); this._decB = new Float32Array(3);   // EL1: the decode scratch (two, for the billboard tint's two terms)
+    this._pointColorDec = new Float32Array(CLASSIC_MAX_LIGHTS * 3);
+    this._classicSet = this._buildWorldSet({ key: 'classic', meshFs: FS, bbFs: BB_FS, terrainFs: TERRAIN_FS, charFs: CHAR_FS });
+    this._installWorldSet(this._classicSet);
     this._ambientTri = null;
-    this.uSunScale = gl.getUniformLocation(this.program, 'uSunScale');
-    this.uSunColor = gl.getUniformLocation(this.program, 'uSunColor');
-    this.uMoonDir = gl.getUniformLocation(this.program, 'uMoonDir');
-    this.uMoonScale = gl.getUniformLocation(this.program, 'uMoonScale');
-    this.uMoonColor = gl.getUniformLocation(this.program, 'uMoonColor');
-    this.uLight3Dir = gl.getUniformLocation(this.program, 'uLight3Dir');
-    this.uLight3Scale = gl.getUniformLocation(this.program, 'uLight3Scale');
-    this.uLight3Color = gl.getUniformLocation(this.program, 'uLight3Color');
-    this.uTex = gl.getUniformLocation(this.program, 'uTex');
-    this.uEmissionTex = gl.getUniformLocation(this.program, 'uEmissionTex');
-    this.uEmissionColor = gl.getUniformLocation(this.program, 'uEmissionColor');
-    this.uPointCount = gl.getUniformLocation(this.program, 'uPointCount');
-    this.uPointLights = gl.getUniformLocation(this.program, 'uPointLights');
-    this.uPointColors = gl.getUniformLocation(this.program, 'uPointColors');
-    this.uIndirect = gl.getUniformLocation(this.program, 'uIndirect');
-    this.uIndirectColor = gl.getUniformLocation(this.program, 'uIndirectColor');
 
     this.textures = new Map(); // "archive_record" -> WebGLTexture
     this.emissionTextures = new Map(); // "archive_record" -> window mask
@@ -886,14 +894,14 @@ export class Renderer {
     this._windowEmission = new Float32Array([0, 0, 0]);
     this._pointLights = new Float32Array(0); // vec4 per light [x,y,z,range]
     this._flashLight = null;   // DS1: the storm's flash, composed in by setFlashLight
-    this._flashLightScratch = new Float32Array(16 * 4);
-    this._flashColorScratch = new Float32Array(16 * 3);
+    this._flashLightScratch = new Float32Array(CLASSIC_MAX_LIGHTS * 4);
+    this._flashColorScratch = new Float32Array(CLASSIC_MAX_LIGHTS * 3);
     this._pointColor = new Float32Array([1, 1, 1]);
     // LT1: per-light colour x intensity (vec3 per light). null = every
     // light wears the shared _pointColor - the exterior lantern path,
     // bit-identical to the pre-LT1 scalar channel.
     this._pointColors = null;
-    this._pointColorScratch = new Float32Array(16 * 3);
+    this._pointColorScratch = new Float32Array(CLASSIC_MAX_LIGHTS * 3);
     // R12: the player-following indirect light - zeroed = off (the
     // shader term contributes nothing), so unlit scenes stay exact.
     this._indirect = new Float32Array([0, 0, 0, 0]);
@@ -912,43 +920,6 @@ export class Renderer {
     // every automap fragment in DFU actually lerps toward.
     this._automapWaterLevel = AUTOMAP_NO_WATER;
     this._automapWaterColor = new Float32Array(AUTOMAP_WATER_COLOR);
-    const fogLocs = (program) => ({
-      fogColor: gl.getUniformLocation(program, 'uFogColor'),
-      fogMode: gl.getUniformLocation(program, 'uFogMode'),
-      clipY: gl.getUniformLocation(program, 'uClipY'),
-      amMode: gl.getUniformLocation(program, 'uAutomapMode'),
-      amWaterLevel: gl.getUniformLocation(program, 'uAutomapWaterLevel'),
-      amWaterColor: gl.getUniformLocation(program, 'uAutomapWaterColor'),
-      fogDensity: gl.getUniformLocation(program, 'uFogDensity'),
-      fogRange: gl.getUniformLocation(program, 'uFogRange'),
-      camPos: gl.getUniformLocation(program, 'uCamPos'),
-    });
-    this._solidFog = fogLocs(this.program);
-    // Character program (C4b): rig vertex-color path, same scene
-    // lighting/fog model as the mesh program.
-    this.charProgram = this._buildProgram(CHAR_VS, CHAR_FS);
-    const cp = this.charProgram;
-    this._char = {
-      proj: gl.getUniformLocation(cp, 'uProj'),
-      view: gl.getUniformLocation(cp, 'uView'),
-      model: gl.getUniformLocation(cp, 'uModel'),
-      lightDir: gl.getUniformLocation(cp, 'uLightDir'),
-      ambient: gl.getUniformLocation(cp, 'uAmbient'),
-      sunScale: gl.getUniformLocation(cp, 'uSunScale'),
-      sunColor: gl.getUniformLocation(cp, 'uSunColor'),
-      moonDir: gl.getUniformLocation(cp, 'uMoonDir'),
-      moonScale: gl.getUniformLocation(cp, 'uMoonScale'),
-      moonColor: gl.getUniformLocation(cp, 'uMoonColor'),
-      pointCount: gl.getUniformLocation(cp, 'uPointCount'),
-      pointLights: gl.getUniformLocation(cp, 'uPointLights'),
-      pointColors: gl.getUniformLocation(cp, 'uPointColors'),
-      indirect: gl.getUniformLocation(cp, 'uIndirect'),
-      indirectColor: gl.getUniformLocation(cp, 'uIndirectColor'),
-      tex: gl.getUniformLocation(cp, 'uTex'),
-      useTex: gl.getUniformLocation(cp, 'uUseTex'),
-      alphaCut: gl.getUniformLocation(cp, 'uAlphaCut'),
-    };
-    this._charFog = fogLocs(cp);
     // Defaults reproduce the pre-R5 fixed lighting (0.45 + 0.55 * diff).
     this._ambient = new Float32Array([0.45, 0.45, 0.45]);
     this._sunScale = 0.55;
@@ -977,34 +948,7 @@ export class Renderer {
       new Uint8Array([0, 0, 0, 255])
     );
 
-    this.bbProgram = this._buildProgram(BB_VS, BB_FS);
-    this.terrainProgram = this._buildProgram(TERRAIN_VS, TERRAIN_FS);
-    this.tUProj = gl.getUniformLocation(this.terrainProgram, 'uProj');
-    this.tUView = gl.getUniformLocation(this.terrainProgram, 'uView');
-    this.tUModel = gl.getUniformLocation(this.terrainProgram, 'uModel');
-    // EE5 / VC4: the cloud shadow map's uniforms, one pair per program that lights by the sun
-    this._csLoc = {
-      terrain: [gl.getUniformLocation(this.terrainProgram, 'uCloudShadowMap'), gl.getUniformLocation(this.terrainProgram, 'uCloudShadowRect')],
-      mesh: [gl.getUniformLocation(this.program, 'uCloudShadowMap'), gl.getUniformLocation(this.program, 'uCloudShadowRect')],
-      char: [gl.getUniformLocation(this.charProgram, 'uCloudShadowMap'), gl.getUniformLocation(this.charProgram, 'uCloudShadowRect')],
-      bb: [gl.getUniformLocation(this.bbProgram, 'uCloudShadowMap'), gl.getUniformLocation(this.bbProgram, 'uCloudShadowRect')],
-    };
     this._csStamp = 0; this._csUploaded = {}; this._csRect = new Float32Array(4);
-    this.tUTileArr = gl.getUniformLocation(this.terrainProgram, 'uTileArr');
-    this.tUTilemap = gl.getUniformLocation(this.terrainProgram, 'uTilemap');
-    this.tUTileSize = gl.getUniformLocation(this.terrainProgram, 'uTileSize');
-    this.tULightDir = gl.getUniformLocation(this.terrainProgram, 'uLightDir');
-    this.tUAmbient = gl.getUniformLocation(this.terrainProgram, 'uAmbient');
-    this.tUSunScale = gl.getUniformLocation(this.terrainProgram, 'uSunScale');
-    this.tUSunColor = gl.getUniformLocation(this.terrainProgram, 'uSunColor');
-    this.tUMoonDir = gl.getUniformLocation(this.terrainProgram, 'uMoonDir');
-    this.tUMoonScale = gl.getUniformLocation(this.terrainProgram, 'uMoonScale');
-    this.tUMoonColor = gl.getUniformLocation(this.terrainProgram, 'uMoonColor');
-    this.tUPointCount = gl.getUniformLocation(this.terrainProgram, 'uPointCount');
-    this.tUPointLights = gl.getUniformLocation(this.terrainProgram, 'uPointLights');
-    this.tUPointColors = gl.getUniformLocation(this.terrainProgram, 'uPointColors');
-    this.tUIndirect = gl.getUniformLocation(this.terrainProgram, 'uIndirect');
-    this.tUIndirectColor = gl.getUniformLocation(this.terrainProgram, 'uIndirectColor');
     this.tileArrays = new Map(); // archive -> TEXTURE_2D_ARRAY
     /** EE5: the cloud deck the ground shadows under, handed over by the
      *  host from the SKY's own state. Null = no shadows, which is the
@@ -1038,20 +982,6 @@ export class Renderer {
       // VC4 recorded that the deck's shadow reached neither the grass nor the water; WATER1 closes the water half
       this._csLoc.water = [u('uCloudShadowMap'), u('uCloudShadowRect')];
     }
-    this._bbFog = {
-      fogColor: gl.getUniformLocation(this.bbProgram, 'uFogColor'),
-      fogMode: gl.getUniformLocation(this.bbProgram, 'uFogMode'),
-      fogDensity: gl.getUniformLocation(this.bbProgram, 'uFogDensity'),
-      fogRange: gl.getUniformLocation(this.bbProgram, 'uFogRange'),
-      camPos: gl.getUniformLocation(this.bbProgram, 'uCamPos'),
-    };
-    this._terrainFog = {
-      fogColor: gl.getUniformLocation(this.terrainProgram, 'uFogColor'),
-      fogMode: gl.getUniformLocation(this.terrainProgram, 'uFogMode'),
-      fogDensity: gl.getUniformLocation(this.terrainProgram, 'uFogDensity'),
-      fogRange: gl.getUniformLocation(this.terrainProgram, 'uFogRange'),
-      camPos: gl.getUniformLocation(this.terrainProgram, 'uCamPos'),
-    };
     this._waterFog = {
       fogColor: gl.getUniformLocation(this.waterProgram, 'uFogColor'),
       fogMode: gl.getUniformLocation(this.waterProgram, 'uFogMode'),
@@ -1077,25 +1007,6 @@ export class Renderer {
       gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
       this._bindVao(null);
     }
-    this.bbUProj = gl.getUniformLocation(this.bbProgram, 'uProj');
-    this.bbUView = gl.getUniformLocation(this.bbProgram, 'uView');
-    this.bbURight = gl.getUniformLocation(this.bbProgram, 'uRight');
-    this.bbUUp = gl.getUniformLocation(this.bbProgram, 'uUp');
-    this.bbUSize = gl.getUniformLocation(this.bbProgram, 'uSize');
-    this.bbUOrigin = gl.getUniformLocation(this.bbProgram, 'uOrigin');
-    this.bbUTex = gl.getUniformLocation(this.bbProgram, 'uTex');
-    this.bbUEmissionTex = gl.getUniformLocation(this.bbProgram, 'uEmissionTex');
-    this.bbUSpectral = gl.getUniformLocation(this.bbProgram, 'uSpectral');
-    this.bbUConceal = gl.getUniformLocation(this.bbProgram, 'uConceal');   // ECV1
-    this.bbUTint = gl.getUniformLocation(this.bbProgram, 'uTint');
-    this.bbUSun = gl.getUniformLocation(this.bbProgram, 'uBBSun');   // VC4
-    this.bbUPointCount = gl.getUniformLocation(this.bbProgram, 'uPointCount');
-    this.bbUPointLights = gl.getUniformLocation(this.bbProgram, 'uPointLights');
-    this.bbUPointColors = gl.getUniformLocation(this.bbProgram, 'uPointColors');
-    this.bbUIndirect = gl.getUniformLocation(this.bbProgram, 'uIndirect');
-    this.bbUIndirectColor = gl.getUniformLocation(this.bbProgram, 'uIndirectColor');
-    this.bbUFlatWind = gl.getUniformLocation(this.bbProgram, 'uFlatWind');   // WIND3
-    this.bbUSway = gl.getUniformLocation(this.bbProgram, 'uSway');   // WIND3
     this._flatWind = new Float32Array(4);   // WIND3: rate x, z, clock, gust - zero until an exterior host sets it, and zero is still
     this._proj = null;
     this._view = null;
@@ -1220,6 +1131,362 @@ export class Renderer {
     this._csUploaded = {};
   }
 
+  /** EL1: compile one world program set from its four fragment shaders
+   *  (the vertex shaders are the renderer's own - a lane changes how a
+   *  fragment is lit, never how a vertex lands). */
+  _buildWorldSet(src) {
+    return {
+      key: src.key,
+      mesh: this._buildProgram(VS, src.meshFs),
+      char: this._buildProgram(CHAR_VS, src.charFs),
+      bb: this._buildProgram(BB_VS, src.bbFs),
+      terrain: this._buildProgram(TERRAIN_VS, src.terrainFs),
+    };
+  }
+
+  _fogLocs(program) {
+    const gl = this.gl;
+    return {
+      fogColor: gl.getUniformLocation(program, 'uFogColor'),
+      fogMode: gl.getUniformLocation(program, 'uFogMode'),
+      clipY: gl.getUniformLocation(program, 'uClipY'),
+      amMode: gl.getUniformLocation(program, 'uAutomapMode'),
+      amWaterLevel: gl.getUniformLocation(program, 'uAutomapWaterLevel'),
+      amWaterColor: gl.getUniformLocation(program, 'uAutomapWaterColor'),
+      fogDensity: gl.getUniformLocation(program, 'uFogDensity'),
+      fogRange: gl.getUniformLocation(program, 'uFogRange'),
+      camPos: gl.getUniformLocation(program, 'uCamPos'),
+    };
+  }
+
+  /** EL1: make `set` the renderer's world programs - every uniform
+   *  location the draw paths read is looked up again here, and every
+   *  "already uploaded" claim (the terrain's frame block, the cloud
+   *  shadow stamps, the emission colour shadow, the bound-program
+   *  shadow) is dropped, because they were the OLD set's. */
+  _installWorldSet(set) {
+    const gl = this.gl;
+    this._worldSet = set;
+    this.program = set.mesh;
+    this.uProj = gl.getUniformLocation(this.program, 'uProj');
+    this.uView = gl.getUniformLocation(this.program, 'uView');
+    this.uModel = gl.getUniformLocation(this.program, 'uModel');
+    this.uLightDir = gl.getUniformLocation(this.program, 'uLightDir');
+    this.uAmbient = gl.getUniformLocation(this.program, 'uAmbient');
+    this.uAmbientSky = gl.getUniformLocation(this.program, 'uAmbientSky');       // BA1
+    this.uAmbientGround = gl.getUniformLocation(this.program, 'uAmbientGround');
+    this.uTrilight = gl.getUniformLocation(this.program, 'uTrilight');
+    this.uSunScale = gl.getUniformLocation(this.program, 'uSunScale');
+    this.uSunColor = gl.getUniformLocation(this.program, 'uSunColor');
+    this.uMoonDir = gl.getUniformLocation(this.program, 'uMoonDir');
+    this.uMoonScale = gl.getUniformLocation(this.program, 'uMoonScale');
+    this.uMoonColor = gl.getUniformLocation(this.program, 'uMoonColor');
+    this.uLight3Dir = gl.getUniformLocation(this.program, 'uLight3Dir');
+    this.uLight3Scale = gl.getUniformLocation(this.program, 'uLight3Scale');
+    this.uLight3Color = gl.getUniformLocation(this.program, 'uLight3Color');
+    this.uTex = gl.getUniformLocation(this.program, 'uTex');
+    this.uEmissionTex = gl.getUniformLocation(this.program, 'uEmissionTex');
+    this.uEmissionColor = gl.getUniformLocation(this.program, 'uEmissionColor');
+    this.uPointCount = gl.getUniformLocation(this.program, 'uPointCount');
+    this.uPointLights = gl.getUniformLocation(this.program, 'uPointLights');
+    this.uPointColors = gl.getUniformLocation(this.program, 'uPointColors');
+    this.uIndirect = gl.getUniformLocation(this.program, 'uIndirect');
+    this.uIndirectColor = gl.getUniformLocation(this.program, 'uIndirectColor');
+    this._solidFog = this._fogLocs(this.program);
+    // Character program (C4b): rig vertex-color path, same scene
+    // lighting/fog model as the mesh program.
+    this.charProgram = set.char;
+    const cp = this.charProgram;
+    this._char = {
+      proj: gl.getUniformLocation(cp, 'uProj'),
+      view: gl.getUniformLocation(cp, 'uView'),
+      model: gl.getUniformLocation(cp, 'uModel'),
+      lightDir: gl.getUniformLocation(cp, 'uLightDir'),
+      ambient: gl.getUniformLocation(cp, 'uAmbient'),
+      sunScale: gl.getUniformLocation(cp, 'uSunScale'),
+      sunColor: gl.getUniformLocation(cp, 'uSunColor'),
+      moonDir: gl.getUniformLocation(cp, 'uMoonDir'),
+      moonScale: gl.getUniformLocation(cp, 'uMoonScale'),
+      moonColor: gl.getUniformLocation(cp, 'uMoonColor'),
+      pointCount: gl.getUniformLocation(cp, 'uPointCount'),
+      pointLights: gl.getUniformLocation(cp, 'uPointLights'),
+      pointColors: gl.getUniformLocation(cp, 'uPointColors'),
+      indirect: gl.getUniformLocation(cp, 'uIndirect'),
+      indirectColor: gl.getUniformLocation(cp, 'uIndirectColor'),
+      tex: gl.getUniformLocation(cp, 'uTex'),
+      useTex: gl.getUniformLocation(cp, 'uUseTex'),
+      alphaCut: gl.getUniformLocation(cp, 'uAlphaCut'),
+    };
+    this._charFog = this._fogLocs(cp);
+    this.bbProgram = set.bb;
+    this.terrainProgram = set.terrain;
+    this.tUProj = gl.getUniformLocation(this.terrainProgram, 'uProj');
+    this.tUView = gl.getUniformLocation(this.terrainProgram, 'uView');
+    this.tUModel = gl.getUniformLocation(this.terrainProgram, 'uModel');
+    // EE5 / VC4: the cloud shadow map's uniforms, one pair per program that lights by the sun
+    this._csLoc.terrain = [gl.getUniformLocation(this.terrainProgram, 'uCloudShadowMap'), gl.getUniformLocation(this.terrainProgram, 'uCloudShadowRect')];
+    this._csLoc.mesh = [gl.getUniformLocation(this.program, 'uCloudShadowMap'), gl.getUniformLocation(this.program, 'uCloudShadowRect')];
+    this._csLoc.char = [gl.getUniformLocation(this.charProgram, 'uCloudShadowMap'), gl.getUniformLocation(this.charProgram, 'uCloudShadowRect')];
+    this._csLoc.bb = [gl.getUniformLocation(this.bbProgram, 'uCloudShadowMap'), gl.getUniformLocation(this.bbProgram, 'uCloudShadowRect')];
+    this.tUTileArr = gl.getUniformLocation(this.terrainProgram, 'uTileArr');
+    this.tUTilemap = gl.getUniformLocation(this.terrainProgram, 'uTilemap');
+    this.tUTileSize = gl.getUniformLocation(this.terrainProgram, 'uTileSize');
+    this.tULightDir = gl.getUniformLocation(this.terrainProgram, 'uLightDir');
+    this.tUAmbient = gl.getUniformLocation(this.terrainProgram, 'uAmbient');
+    this.tUSunScale = gl.getUniformLocation(this.terrainProgram, 'uSunScale');
+    this.tUSunColor = gl.getUniformLocation(this.terrainProgram, 'uSunColor');
+    this.tUMoonDir = gl.getUniformLocation(this.terrainProgram, 'uMoonDir');
+    this.tUMoonScale = gl.getUniformLocation(this.terrainProgram, 'uMoonScale');
+    this.tUMoonColor = gl.getUniformLocation(this.terrainProgram, 'uMoonColor');
+    this.tUPointCount = gl.getUniformLocation(this.terrainProgram, 'uPointCount');
+    this.tUPointLights = gl.getUniformLocation(this.terrainProgram, 'uPointLights');
+    this.tUPointColors = gl.getUniformLocation(this.terrainProgram, 'uPointColors');
+    this.tUIndirect = gl.getUniformLocation(this.terrainProgram, 'uIndirect');
+    this.tUIndirectColor = gl.getUniformLocation(this.terrainProgram, 'uIndirectColor');
+    this._bbFog = this._fogLocs(this.bbProgram);
+    this._terrainFog = this._fogLocs(this.terrainProgram);
+    this.bbUProj = gl.getUniformLocation(this.bbProgram, 'uProj');
+    this.bbUView = gl.getUniformLocation(this.bbProgram, 'uView');
+    this.bbURight = gl.getUniformLocation(this.bbProgram, 'uRight');
+    this.bbUUp = gl.getUniformLocation(this.bbProgram, 'uUp');
+    this.bbUSize = gl.getUniformLocation(this.bbProgram, 'uSize');
+    this.bbUOrigin = gl.getUniformLocation(this.bbProgram, 'uOrigin');
+    this.bbUTex = gl.getUniformLocation(this.bbProgram, 'uTex');
+    this.bbUEmissionTex = gl.getUniformLocation(this.bbProgram, 'uEmissionTex');
+    this.bbUSpectral = gl.getUniformLocation(this.bbProgram, 'uSpectral');
+    this.bbUConceal = gl.getUniformLocation(this.bbProgram, 'uConceal');   // ECV1
+    this.bbUTint = gl.getUniformLocation(this.bbProgram, 'uTint');
+    this.bbUSun = gl.getUniformLocation(this.bbProgram, 'uBBSun');   // VC4
+    this.bbUPointCount = gl.getUniformLocation(this.bbProgram, 'uPointCount');
+    this.bbUPointLights = gl.getUniformLocation(this.bbProgram, 'uPointLights');
+    this.bbUPointColors = gl.getUniformLocation(this.bbProgram, 'uPointColors');
+    this.bbUIndirect = gl.getUniformLocation(this.bbProgram, 'uIndirect');
+    this.bbUIndirectColor = gl.getUniformLocation(this.bbProgram, 'uIndirectColor');
+    this.bbUFlatWind = gl.getUniformLocation(this.bbProgram, 'uFlatWind');   // WIND3
+    this.bbUSway = gl.getUniformLocation(this.bbProgram, 'uSway');   // WIND3
+    // EL1: the lane's own uniforms, per program (null on the classic set, which never declares them)
+    // EL2: the shadow receiver's six ride the same table (null on the classic set)
+    const elLocs = (p) => {
+      /** @type {any[] & { shadow?: object, ao?: object }} */
+      const a = [gl.getUniformLocation(p, 'uELExposure'), gl.getUniformLocation(p, 'uELScatter')];
+      a.shadow = {
+        sunShadow: gl.getUniformLocation(p, 'uSunShadow'), sunVP: gl.getUniformLocation(p, 'uSunVP'), sunParams: gl.getUniformLocation(p, 'uSunShadowParams'),
+        pointShadow: gl.getUniformLocation(p, 'uPointShadow'), pointParams: gl.getUniformLocation(p, 'uPointShadowParams'), shadowIndex: gl.getUniformLocation(p, 'uShadowIndex'),
+      };
+      a.ao = { ao: gl.getUniformLocation(p, 'uAO'), aoInfo: gl.getUniformLocation(p, 'uAOInfo'), adapt: gl.getUniformLocation(p, 'uAdapt') };   // EL3; EL4: the eye
+      return a;
+    };
+    this._el = { mesh: elLocs(set.mesh), char: elLocs(set.char), bb: elLocs(set.bb), terrain: elLocs(set.terrain) };
+    this._tFrameStamp = -1;
+    this._csUploaded = {};
+    this._emissionColorUp = null;
+    this._lastProgram = null;
+  }
+
+  /**
+   * EL1: INSTALL A LIGHTING LANE, or the classic set with null. A lane is
+   * render/enhancedLighting.js's EL_LANE shape: four fragment shaders, a
+   * light cap, a colour decode. Compiled ONCE per lane key and kept, so a
+   * host that mounts with the lane, then one without, then one with
+   * again pays the compile once; the classic set is never rebuilt. The
+   * same lane again is a no-op.
+   */
+  setLightingLane(lane) {
+    lane = lane ?? null;
+    if (lane === this._lane) return;
+    if (lane) {
+      if (!this._laneSet || this._laneSet.key !== lane.key) this._laneSet = this._buildWorldSet(lane);
+      this._installWorldSet(this._laneSet);
+    } else {
+      this._installWorldSet(this._classicSet);
+    }
+    this._lane = lane;
+    // EL2: the shadow pass rides a lane that asks for it; built once, kept
+    if (lane?.shadows) {
+      this._shadows = this._shadowPass ??= new ShadowPass(this.gl, { build: (vs, fs) => this._buildProgram(vs, fs), vs: { mesh: VS, bb: BB_VS, terrain: TERRAIN_VS } });
+    } else {
+      this._shadows?.discard();
+      this._shadows = null;
+    }
+    this._syncAir();
+    this.maxPointLights = lane ? lane.maxLights : CLASSIC_MAX_LIGHTS;
+    const n = this.maxPointLights;
+    if (this._flashLightScratch.length < n * 4) {
+      this._flashLightScratch = new Float32Array(n * 4);
+      this._flashColorScratch = new Float32Array(n * 3);
+      this._pointColorScratch = new Float32Array(n * 3);
+      this._pointColorDec = new Float32Array(n * 3);
+    }
+    // a light list stored under the other cap is re-cut to this one
+    if (this._pointLights.length > n * 4) this._pointLights = this._pointLights.subarray ? this._pointLights.subarray(0, n * 4) : this._pointLights.slice(0, n * 4);
+    if (this._pointColors && this._pointColors.length > n * 3) this._pointColors = this._pointColors.subarray ? this._pointColors.subarray(0, n * 3) : this._pointColors.slice(0, n * 3);
+  }
+
+  /** EL1: the installed lane (EL_LANE) or null - what a host hands the far
+   *  ring and reads its lantern colour by. */
+  get lightingLane() { return this._lane; }
+  /** EL1: the lane's exposure, for a foreign pass that lights on the lane (the far ring). */
+  get exposure() { return this._exposure; }
+
+  /** EL3: the page's air door (syncLightingLane reads `?air=off`): the
+   *  AirPass rides a lane that asks for it AND this. */
+  setAir(on) { this._airWanted = !!on; this._syncAir(); }
+  _syncAir() {
+    const want = this._airWanted && !!this._lane?.air && !!this._shadows;   // the air pass replays the shadow pass's records
+    if (want) this._air = this._airPass ??= new AirPass(this.gl, { build: (vs, fs) => this._buildProgram(vs, fs), vs: { mesh: VS, bb: BB_VS } });
+    else { if (this._air) { this._air.release(); this._frameFbo = null; } this._air = null; }
+  }
+  /** EL4: the adaptation image, for a foreign pass that exposes on the lane (the far ring). */
+  get adaptTexture() { return this._air?.adaptTexture ?? null; }
+  /** EL3: the AirPass or null - a probe's read. */
+  get air() { return this._air; }
+
+  /** EL1: the lane's exposure - a scene-wide gain before the tonemap.
+   *  Shadowed and uploaded with the frame; inert on the classic set. */
+  setExposure(v) { this._exposure = v > 0 ? v : 1; }
+
+  /** EL1: a host colour as the installed set wants it - the classic set
+   *  takes it as given, the lane takes it decoded to linear (into one of
+   *  the two scratch triples; every upload copies at the call). */
+  _c3(src, scratch = this._decA) {
+    return this._lane ? this._lane.decode3(src, scratch) : src;
+  }
+
+  /** EL1: the lane's own uniforms for one program, when a lane is on -
+   *  the exposure, and the in-scatter gain folded with the fog's density
+   *  (zero with the fog off, so clear air glows nowhere). */
+  _uploadEl(key) {
+    const lane = this._lane;
+    if (!lane) return;
+    const gl = this.gl, [expLoc, scLoc] = this._el[key];
+    gl.uniform1f(expLoc, this._exposure);
+    gl.uniform1f(scLoc, lane.scatter * lane.scatterDensity(this._fogMode, this._fogDensity, this._fogRange[0], this._fogRange[1]));
+    if (this._shadows) this._shadows.upload(this._el[key].shadow);   // EL2: the maps and the receiver's uniforms
+    // AUDIT-EL F2: the AO image is read by gl_FragCoord against the WORLD
+    // rect - a sprite pass (the 1024^2 offscreen target) and a panel frame
+    // (the automap, a preview) have fragments in another rect entirely and
+    // would read a stranger's occlusion; they take none.
+    const foreignRect = this._spriteDepth > 0 || !!this._panelSaved;
+    if (this._air?.targets) this._air.upload(this._el[key].ao, foreignRect);   // EL3: the AO image
+    else this._uploadNoAo(this._el[key].ao);
+    this._uploadAdapt(this._el[key].ao);
+  }
+
+  /** AUDIT-EL F1: THE EYE'S IMAGE IS ALWAYS BOUND. Every lane shader samples
+   *  uAdapt; with the air off (`?air=off`) nothing bound it, the sampler sat
+   *  at unit 0 and read the diffuse texture's centre texel as an exposure -
+   *  a different exposure per material. A UI picture (the icon bake, the
+   *  inventory's body - `_studioDepth`) takes no adaptation either: an item
+   *  baked while the eye was open in a dungeon would be a brighter icon
+   *  than one baked at noon. Both read a bare 1x1 image holding 1. */
+  _uploadAdapt(loc) {
+    if (!loc?.adapt) return;
+    const gl = this.gl;
+    const tex = this._air && this._studioDepth === 0 ? this._air.adaptTexture : this._adaptOne();
+    gl.activeTexture(gl.TEXTURE0 + ADAPT_UNIT);
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.uniform1i(loc.adapt, ADAPT_UNIT);
+  }
+  /** AUDIT-EL F12: THE AO SAMPLER IS ALWAYS ON ITS UNIT. With the air off
+   *  (or before its images exist) uAO sat at unit 0 - and the TERRAIN
+   *  program's unit 0 is uTileArr, a sampler2DArray: two samplers of
+   *  different types on one unit, INVALID_OPERATION at every terrain draw,
+   *  no ground under `?air=off`. A bare image on unit 12 and a zero rect. */
+  _uploadNoAo(loc) {
+    if (!loc?.ao) return;
+    const gl = this.gl;
+    gl.activeTexture(gl.TEXTURE0 + AO_UNIT);
+    gl.bindTexture(gl.TEXTURE_2D, this._adaptOne());
+    gl.activeTexture(gl.TEXTURE0);
+    gl.uniform1i(loc.ao, AO_UNIT);
+    gl.uniform4fv(loc.aoInfo, ZERO4);
+  }
+  _adaptOne() {
+    if (this._adaptOneTex) return this._adaptOneTex;
+    const gl = this.gl, tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([128, 128, 128, 255]));   // the log encoding's midpoint: a multiplier of 1
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    return (this._adaptOneTex = tex);
+  }
+
+  /** AUDIT-EL F5: THE LANE'S FRAME START. A WORLD frame (the six host sites
+   *  pass `{ world: true }`) replays and spends the records for its maps and
+   *  images. Any other beginFrame - the enhanced travel map, a video, a menu
+   *  raised mid-game, a panel - is a SECOND frame in one presented frame:
+   *  it resolves the frame still owed (or the world's image would be lost
+   *  under a map that then never reached the canvas), keeps the world's
+   *  records for the world's next frame, and draws with the maps already
+   *  made. Every non-panel frame draws into a frame image, resolved by its
+   *  first screen draw or by resolveFrame(). */
+  _beginLane(proj, view, lightDir, world) {
+    if (this._air?.pending && !this._panelSaved) this._compositeAir();
+    if (this._shadows && world) this._renderPasses(proj, view, lightDir);
+    // EL4: THE FRAME IMAGE - the world pass draws into it, the clear included; a panel frame keeps the canvas
+    this._frameFbo = this._air && !this._panelSaved ? this._air.beginFrameTarget(this.canvas.width, this.canvas.height) : null;
+  }
+
+  /** EL2/EL3: THE PASSES BEFORE THE FRAME, at the top of beginFrame - the
+   *  shadow maps (render/shadowPass.js) and then the air's images
+   *  (render/airPass.js: the depth image, the AO, the bloom source, the
+   *  shafts), both from the LAST frame's records under THIS frame's light,
+   *  eye and viewport; then the records are dropped. A panel frame drops
+   *  the records it inherited and draws nothing. The passes bind their own
+   *  programs, VAOs and viewports; the world viewport comes back here and
+   *  beginFrame forgets the shadows right after, as it always did. */
+  _renderPasses(proj, view, lightDir) {
+    const sp = this._shadows;   // AUDIT-EL F8: a panel frame never reaches here - it is no WORLD frame (F5) - so the world's records survive it (_casting keeps it from adding any)
+    const v = view;
+    this._camPos[0] = -(v[0] * v[12] + v[1] * v[13] + v[2] * v[14]);
+    this._camPos[1] = -(v[4] * v[12] + v[5] * v[13] + v[6] * v[14]);
+    this._camPos[2] = -(v[8] * v[12] + v[9] * v[13] + v[10] * v[14]);
+    const bindVao = (vao) => this._bindVao(vao);
+    sp.render({
+      eye: this._camPos, lightDir, sunScale: this._sunScale, pointLights: this._pointLights,
+      textures: this.textures, isSpectral: isSpectralArchive, bindVao,
+    });
+    if (this._air) {
+      const count = this._pointLights.length / 4;
+      this._air.render({
+        proj, view, lightDir, sunScale: this._sunScale, sunColor: this._sunColor,
+        pointLights: this._pointLights, pointColors: count > 0 ? this._pointColorData(count) : null,
+        viewport: this._worldViewportPx ?? [0, 0, this.canvas.width, this.canvas.height],
+        shadows: sp, textures: this.textures, emissionTextures: this.emissionTextures, blackTex: this._blackTex,
+        windowEmission: this._windowEmission, isSpectral: isSpectralArchive, bindVao, clearColor: this._clearColor,
+      });
+    }
+    sp.discard();
+    this._restoreWorldViewport();
+    this.markForeignPass();   // AUDIT-EL F19: the last replayed VAO is unbound for real (a shadow set to null over a live bind is a capture waiting to happen), and the shadows forgotten
+  }
+
+  /** EL3: the frame's first screen-space draw composites the bloom and
+   *  the shafts over the world (the 2D pass has begun; the world pass and
+   *  every foreign pass are done), then hands the 2D pass the full canvas. */
+  /** AUDIT-EL F5: resolve the frame image to the canvas NOW - for a pass
+   *  that opened its own beginFrame and draws no screen quad after it (the
+   *  enhanced travel map's relief). A no-op with nothing owed. */
+  resolveFrame() { this._compositeAir(); }
+
+  _compositeAir() {
+    if (!this._air?.pending) return;
+    this._air.composite();   // EL4: the resolve - the frame to the canvas
+    this._frameFbo = null;
+    this._lastProgram = null; this._lastVao = null;
+    this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+  }
+
+  /** EL2: whether this draw is recorded for the shadow maps - a lane with
+   *  shadows, outside a panel frame (a panel's draws are the automap's or
+   *  a preview's, from its own camera, and cast nothing). */
+  get _casting() { return !!this._shadows && !this._panelSaved; }   // !! - a bare prototype (the crash-report tests) has no pass at all
+
+  /** EL2: the ShadowPass or null - a probe's read. */
+  get shadows() { return this._shadows; }
+
   _buildProgram(vsSrc, fsSrc) {
     const gl = this.gl;
     const compile = (type, src) => {
@@ -1325,19 +1592,20 @@ export class Renderer {
     gl.uniformMatrix4fv(c.view, false, this._view);
     gl.uniformMatrix4fv(c.model, false, modelMatrix);
     gl.uniform3fv(c.lightDir, this._lightDir);
-    gl.uniform3fv(c.ambient, this._ambient);
+    gl.uniform3fv(c.ambient, this._c3(this._ambient));
     gl.uniform1f(c.sunScale, this._sunScale);
-    gl.uniform3fv(c.sunColor, this._sunColor);
+    gl.uniform3fv(c.sunColor, this._c3(this._sunColor));
     gl.uniform3fv(c.moonDir, this._moonDir);
     gl.uniform1f(c.moonScale, this._moonScale);
-    gl.uniform3fv(c.moonColor, this._moonColor);
+    gl.uniform3fv(c.moonColor, this._c3(this._moonColor));
     const count = this._pointLights.length / 4;
     gl.uniform1i(c.pointCount, count);
     if (count > 0) gl.uniform4fv(c.pointLights, this._pointLights);
     if (count > 0) gl.uniform3fv(c.pointColors, this._pointColorData(count));
     gl.uniform4fv(c.indirect, this._indirect);
-    gl.uniform3fv(c.indirectColor, this._indirectColor);
+    gl.uniform3fv(c.indirectColor, this._c3(this._indirectColor));
     this._uploadFog(this._charFog);
+    this._uploadEl('char');   // EL1
     gl.disable(gl.CULL_FACE);
     this._bindVao(mesh.vao);
     // MW-D11: a textured mesh carries RANGES - one per piece, each with
@@ -1413,7 +1681,7 @@ export class Renderer {
       gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
       gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
       gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, rb);
-      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, this._frameFbo ?? null);   // EL4: minted mid-frame, the frame comes back
       cs = this._csRT = { fbo, tex, rb };
     }
     return cs;
@@ -1470,6 +1738,7 @@ export class Renderer {
     const sd = lensLocal ? this._cloudShadow : null;
     if (sd) { this._cloudShadow = null; this._csStamp++; }
     this._proj = proj; this._view = view; this._fogMode = 0;
+    this._spriteDepth++;   // AUDIT-EL F2
     // AUDIT 65 RS-2: EVERY borrow above is returned in ONE finally, the
     // GL state first and the JS caches after. drawCharacter dereferences
     // the mesh (`mesh.vao`, `mesh.ranges`), so it can throw, and the
@@ -1483,7 +1752,7 @@ export class Renderer {
     // permanently, off one caught exception.
     try { this.drawCharacter(mesh, modelMatrix); }
     finally {
-      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, this._frameFbo ?? null);   // EL4: the frame, or the canvas
       // ROAD-E E5: the viewport is BORROWED here too. This pass runs in
       // the middle of the world pass (every voxel character composites
       // through it), so returning a hardcoded full canvas would undo a
@@ -1495,6 +1764,7 @@ export class Renderer {
       const cc = this._clearColor;
       gl.clearColor(cc[0], cc[1], cc[2], cc[3]);
       this._proj = sp; this._view = sv; this._fogMode = sf;
+      this._spriteDepth--;   // AUDIT-EL F2
       if (sd) { this._cloudShadow = sd; this._csStamp++; }
     }
     return cs.tex;
@@ -1529,6 +1799,7 @@ export class Renderer {
       this._sunColor = st.sunColor; this._pointLights = st.pointLights; this._indirect = st.indirect;
       this._moonScale = 0;
     }
+    if (studio) this._studioDepth++;   // AUDIT-EL F1: a UI picture takes no eye
     try {
       this.renderCharacterSprite(mesh, modelMatrix, proj, view, pw, ph);
     } finally {
@@ -1538,6 +1809,7 @@ export class Renderer {
         this._moonScale = saved.moonScale;
         if (saved.cloudShadow) { this._cloudShadow = saved.cloudShadow; this._csStamp++; }   // VC4: the frame's deck back
       }
+      if (studio) this._studioDepth--;   // AUDIT-EL F1: the eye back after the light
     }
     const cs = this._charSpriteRT();
     gl.bindFramebuffer(gl.FRAMEBUFFER, cs.fbo);
@@ -1546,7 +1818,7 @@ export class Renderer {
     // for the same reason the sprite pass's is - this one runs under
     // itemIcon's catch too.
     try { gl.readPixels(0, 0, pw, ph, gl.RGBA, gl.UNSIGNED_BYTE, raw); }
-    finally { gl.bindFramebuffer(gl.FRAMEBUFFER, null); }
+    finally { gl.bindFramebuffer(gl.FRAMEBUFFER, this._frameFbo ?? null); }   // EL4
     const out = new Uint8ClampedArray(pw * ph * 4);
     for (let y = 0; y < ph; y++) out.set(raw.subarray(y * pw * 4, (y + 1) * pw * 4), (ph - 1 - y) * pw * 4);
     return { width: pw, height: ph, data: out };
@@ -1695,6 +1967,7 @@ void main() {
     // back - the reduced rect is renderer-owned frame state, not a
     // call every host has to remember (and forget once).
     if (this._worldViewportPx) this.endWorldPass();
+    this._compositeAir();   // EL3: a no-op unless a render is owed
     if (!this.screenQuadProgram) {
       const vs = `#version 300 es
 layout(location=0) in vec2 aPos;
@@ -1821,6 +2094,7 @@ void main() {
     // The same law drawScreenQuad opens with (ROAD-E E5): the first 2D
     // primitive after a shrunk world pass is where the canvas returns.
     if (this._worldViewportPx) this.endWorldPass();
+    this._compositeAir();   // EL3: a no-op unless a render is owed
     if (!this.screenQuadRunProgram) {
       const vs = `#version 300 es
 layout(location=0) in vec2 aPos;
@@ -2108,7 +2382,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this.gl.clearColor(rgba[0], rgba[1], rgba[2], rgba[3]);
   }
 
-  beginFrame(proj, view, lightDir) {
+  beginFrame(proj, view, lightDir, opts = null) {
     const s = this.stats;
     s.draws = 0; s.programBinds = 0; s.vaoBinds = 0; s.texBinds = 0;
     // VC4: the cloud shadow deck is a FRAME's, not the renderer's - a host
@@ -2147,6 +2421,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
         : null;
       if (this._worldViewportPx) this._restoreWorldViewport();
     }
+    this._beginLane(proj, view, lightDir, opts?.world === true);   // EL2/EL3/EL4: the maps, the images and the frame, before the clear
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     this._use(this.program);
     gl.uniformMatrix4fv(this.uProj, false, proj);
@@ -2154,26 +2429,27 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniform3fv(this.uLightDir, lightDir);
     this._lightDir = lightDir;
     this._frameStamp++;   // PERF3
-    gl.uniform3fv(this.uAmbient, this._ambient);
+    gl.uniform3fv(this.uAmbient, this._c3(this._ambient));   // EL1: every colour goes up as the installed set wants it (_c3)
     this._uploadTrilight();
     gl.uniform1f(this.uSunScale, this._sunScale);
-    gl.uniform3fv(this.uSunColor, this._sunColor);
+    gl.uniform3fv(this.uSunColor, this._c3(this._sunColor));
     gl.uniform3fv(this.uMoonDir, this._moonDir);
     gl.uniform1f(this.uMoonScale, this._moonScale);
-    gl.uniform3fv(this.uMoonColor, this._moonColor);
+    gl.uniform3fv(this.uMoonColor, this._c3(this._moonColor));
     gl.uniform3fv(this.uLight3Dir, this._light3Dir);
     gl.uniform1f(this.uLight3Scale, this._light3Scale);
-    gl.uniform3fv(this.uLight3Color, this._light3Color);
+    gl.uniform3fv(this.uLight3Color, this._c3(this._light3Color));
     gl.uniform1i(this.uTex, 0);
     gl.uniform1i(this.uEmissionTex, 1);
-    gl.uniform3fv(this.uEmissionColor, this._windowEmission);
+    gl.uniform3fv(this.uEmissionColor, this._c3(this._windowEmission));
     this._emissionColorUp = this._windowEmission;   // F49: the per-sub-mesh shadow starts the frame true
     const count = this._pointLights.length / 4;
     gl.uniform1i(this.uPointCount, count);
     if (count > 0) gl.uniform4fv(this.uPointLights, this._pointLights);
     if (count > 0) gl.uniform3fv(this.uPointColors, this._pointColorData(count));
     gl.uniform4fv(this.uIndirect, this._indirect);
-    gl.uniform3fv(this.uIndirectColor, this._indirectColor);
+    gl.uniform3fv(this.uIndirectColor, this._c3(this._indirectColor));
+    this._uploadEl('mesh');   // EL1
     // Camera position from the view matrix (view = R^T * T(-eye)).
     const v = view;
     this._camPos[0] = -(v[0] * v[12] + v[1] * v[13] + v[2] * v[14]);
@@ -2272,6 +2548,13 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // have its own overrides saved as the "entry" state and restored
     // on the way out - the leak this bracket exists to end.
     if (setup) setup();
+    // AUDIT-EL F7: THE PANEL DRAWS ON THE CLASSIC SET. The automap's unlit
+    // bracket and the bank's preview are pictures, not the world: under the
+    // lane they came through the tonemap and the eye's multiplier, a map
+    // whose brightness drifted with the dungeon the player had just stood
+    // in. The lane is suspended for the bracket and put back after it.
+    this._panelLane = this._lane;
+    if (this._lane) { this._lane = null; this._installWorldSet(this._classicSet); }
     this.setScreenScissor(rect.x, rect.y, rect.w, rect.h);   // BEFORE beginFrame - SCISSOR_TEST gates gl.clear
     gl.colorMask(false, false, false, false);                // ...and the colour half of that clear must not land
     this.beginFrame(proj, view, lightDir);
@@ -2302,6 +2585,8 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     const s = this._panelSaved;
     if (!s) return;
     this._panelSaved = null;
+    if (this._panelLane) { this._lane = this._panelLane; this._installWorldSet(this._laneSet); }   // AUDIT-EL F7: the lane back
+    this._panelLane = null;
     const gl = this.gl;
     this.setClipY(s.clipY);
     this.setAutomapMode(s.automapMode);
@@ -2402,16 +2687,16 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     const gl = this.gl;
     this._use(this.program);
     gl.uniform3fv(this.uLightDir, this._lightDir);
-    gl.uniform3fv(this.uAmbient, this._ambient);
+    gl.uniform3fv(this.uAmbient, this._c3(this._ambient));
     this._uploadTrilight();
     gl.uniform1f(this.uSunScale, this._sunScale);
-    gl.uniform3fv(this.uSunColor, this._sunColor);
+    gl.uniform3fv(this.uSunColor, this._c3(this._sunColor));
     gl.uniform3fv(this.uMoonDir, this._moonDir);
     gl.uniform1f(this.uMoonScale, this._moonScale);
-    gl.uniform3fv(this.uMoonColor, this._moonColor);
+    gl.uniform3fv(this.uMoonColor, this._c3(this._moonColor));
     gl.uniform3fv(this.uLight3Dir, this._light3Dir);
     gl.uniform1f(this.uLight3Scale, this._light3Scale);
-    gl.uniform3fv(this.uLight3Color, this._light3Color);
+    gl.uniform3fv(this.uLight3Color, this._c3(this._light3Color));
   }
 
   /** Time-of-day lighting: ambient color, sun scale, sun color. */
@@ -2433,7 +2718,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     const gl = this.gl;
     const tri = this._ambientTri;
     gl.uniform1f(this.uTrilight, tri ? 1 : 0);
-    if (tri) { gl.uniform3fv(this.uAmbientSky, tri.sky); gl.uniform3fv(this.uAmbientGround, tri.ground); }
+    if (tri) { gl.uniform3fv(this.uAmbientSky, this._c3(tri.sky)); gl.uniform3fv(this.uAmbientGround, this._c3(tri.ground)); }
   }
 
   /** Distance fog for every world pass. mode 'off'|'linear'|'exp'|'exp2'
@@ -2535,9 +2820,10 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
    *  switch, interiorLightProperties). Absent, every light wears the
    *  shared `color` - the exterior lantern path, unchanged. */
   setPointLights(data, color, colors = null) {
-    this._pointLights = data.subarray ? data.subarray(0, 16 * 4) : data;
+    const n = this.maxPointLights;   // EL1: the installed set's cap
+    this._pointLights = data.subarray ? data.subarray(0, n * 4) : data;
     if (color) this._pointColor = color;
-    this._pointColors = colors ? (colors.subarray ? colors.subarray(0, 16 * 3) : colors) : null;
+    this._pointColors = colors ? (colors.subarray ? colors.subarray(0, n * 3) : colors) : null;
   }
 
   /** DS1: THE LIGHTNING FLASH - Dynamic Skies' LightningFlash point light
@@ -2554,7 +2840,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this._flashLight = light ?? null;
     if (!light) return;
     const data = this._pointLights, colors = this._pointColors, f = light;
-    const keep = Math.min(15, Math.floor(data.length / 4));
+    const keep = Math.min(this.maxPointLights - 1, Math.floor(data.length / 4));   // EL1: one slot under the installed cap
     const out = this._flashLightScratch;
     out[0] = f.x; out[1] = f.y; out[2] = f.z; out[3] = f.range;
     out.set(data.subarray ? data.subarray(0, keep * 4) : data.slice(0, keep * 4), 4);
@@ -2571,13 +2857,17 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
 
   /** LT1: the vec3 array a frame uploads - the host's per-light colours
    *  when given, else the shared colour splatted across the count. */
-  _pointColorData(count) {
-    if (this._pointColors) return this._pointColors;
-    const s = this._pointColorScratch;
-    for (let i = 0; i < count * 3; i += 3) {
-      s[i] = this._pointColor[0]; s[i + 1] = this._pointColor[1]; s[i + 2] = this._pointColor[2];
+  _pointColorData(count, raw = false) {
+    let out;
+    if (this._pointColors) out = count * 3 < this._pointColors.length ? this._pointColors.subarray(0, count * 3) : this._pointColors;   // AUDIT-EL F3: cut to the program's slots
+    else {
+      const s = this._pointColorScratch;
+      for (let i = 0; i < count * 3; i += 3) {
+        s[i] = this._pointColor[0]; s[i + 1] = this._pointColor[1]; s[i + 2] = this._pointColor[2];
+      }
+      out = s.subarray(0, count * 3);
     }
-    return s.subarray(0, count * 3);
+    return this._lane && !raw ? this._lane.decodeN(out, this._pointColorDec, count) : out;   // EL1: linear for the lane; `raw` for a classic-space program under it (the water)
   }
 
   /** R12: the player-following indirect point light (SunlightRig's
@@ -2690,6 +2980,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   destroyBillboardBatch(batch) {
     const gl = this.gl;
     if (!batch) return;
+    batch._dead = true;   // EL2: a shadow record from the last frame may still hold it
     if (batch.vao) gl.deleteVertexArray(batch.vao);
     for (const b of batch.buffers || []) gl.deleteBuffer(b);
     batch.vao = null;
@@ -2699,6 +2990,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   /** Release a createMesh bundle's GPU resources. */
   destroyMesh(mesh) {
     const gl = this.gl;
+    mesh._dead = true;   // EL2: a shadow record from the last frame may still hold it
     for (const b of mesh.buffers) gl.deleteBuffer(b);
     gl.deleteVertexArray(mesh.vao);
     // c2/S6: the wireframe cache is the mesh's, and dies with it
@@ -2712,6 +3004,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   /** Release a billboard batch's GPU resources. */
   destroyBatch(batch) {
     const gl = this.gl;
+    batch._dead = true;   // EL2
     for (const b of batch.buffers) gl.deleteBuffer(b);
     gl.deleteVertexArray(batch.vao);
   }
@@ -2857,6 +3150,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   drawTerrain(surface, modelMatrix, arrayTex, tilemapTex, tileSize) {
     const gl = this.gl;
     this._use(this.terrainProgram);
+    if (this._casting) this._shadows.recordTerrain(surface, modelMatrix, arrayTex, tilemapTex, tileSize);   // EL2
     gl.uniformMatrix4fv(this.tUModel, false, modelMatrix);
     gl.uniform1f(this.tUTileSize, tileSize);
     // EE5 / VC4: the deck's shadow map, or nothing at all
@@ -2874,18 +3168,19 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       gl.uniformMatrix4fv(this.tUView, false, this._view);
       this._uploadFog(this._terrainFog);
       gl.uniform3fv(this.tULightDir, this._lightDir);
-      gl.uniform3fv(this.tUAmbient, this._ambient);
+      gl.uniform3fv(this.tUAmbient, this._c3(this._ambient));
       gl.uniform1f(this.tUSunScale, this._sunScale);
-      gl.uniform3fv(this.tUSunColor, this._sunColor);
+      gl.uniform3fv(this.tUSunColor, this._c3(this._sunColor));
       gl.uniform3fv(this.tUMoonDir, this._moonDir);
       gl.uniform1f(this.tUMoonScale, this._moonScale);
-      gl.uniform3fv(this.tUMoonColor, this._moonColor);
+      gl.uniform3fv(this.tUMoonColor, this._c3(this._moonColor));
       const count = this._pointLights.length / 4;
       gl.uniform1i(this.tUPointCount, count);
       if (count > 0) gl.uniform4fv(this.tUPointLights, this._pointLights);
       if (count > 0) gl.uniform3fv(this.tUPointColors, this._pointColorData(count));
       gl.uniform4fv(this.tUIndirect, this._indirect);
-      gl.uniform3fv(this.tUIndirectColor, this._indirectColor);
+      gl.uniform3fv(this.tUIndirectColor, this._c3(this._indirectColor));
+      this._uploadEl('terrain');   // EL1
       gl.uniform1i(this.tUTileArr, 0);
       gl.uniform1i(this.tUTilemap, 2);
     }
@@ -2974,10 +3269,16 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniform3fv(L.moonDir, this._moonDir);
     gl.uniform1f(L.moonScale, this._moonScale);
     gl.uniform3fv(L.moonColor, this._moonColor);
-    const count = this._pointLights.length / 4;
+    // AUDIT-EL F3: the water surface is a CLASSIC-SPACE program with sixteen
+    // slots (waterSurface.js uPointLights[16]) whatever lane is installed:
+    // it takes the nearest sixteen of the lane's forty-eight, and the
+    // colours as the host gave them - not decoded, which is what the lane's
+    // own programs take (_pointColorData) and would have dimmed every
+    // lantern's reflection on the water.
+    const count = Math.min(this._pointLights.length / 4, CLASSIC_MAX_LIGHTS);
     gl.uniform1i(L.pointCount, count);
-    if (count > 0) gl.uniform4fv(L.pointLights, this._pointLights);
-    if (count > 0) gl.uniform3fv(L.pointColors, this._pointColorData(count));
+    if (count > 0) gl.uniform4fv(L.pointLights, this._pointLights.subarray ? this._pointLights.subarray(0, count * 4) : this._pointLights.slice(0, count * 4));
+    if (count > 0) gl.uniform3fv(L.pointColors, this._pointColorData(count, true));
     gl.uniform4fv(L.indirect, this._indirect);
     gl.uniform3fv(L.indirectColor, this._indirectColor);
     gl.activeTexture(gl.TEXTURE0);
@@ -3023,6 +3324,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   /** Draw billboard batches facing the camera. Call after solid geometry. */
   drawBillboards(batches, camRight, camUp) {
     const gl = this.gl;
+    if (this._casting) this._shadows.recordBillboards(batches, this._flatWind, camRight, camUp);   // EL2 (EL3: with the basis)
     this._use(this.bbProgram);
     this._uploadCloudShadow('bb');   // VC4
     gl.uniformMatrix4fv(this.bbUProj, false, this._proj);
@@ -3038,13 +3340,16 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     if (this._clockLit) {
       // EV5: the flats have no normals, so the moon takes the same
       // Lambert-average half the sun does - a scalar on the tint.
+      // EL1: under the lane the two terms are decoded FIRST and added in
+      // linear (_c3 on each, into the two scratch triples).
+      const am = this._c3(this._ambient, this._decA), mc = this._c3(this._moonColor, this._decB), sc = this._c3(this._sunColor, this._decB);
       gl.uniform3f(
         this.bbUTint,
-        this._ambient[0] + this._moonColor[0] * this._moonScale * 0.5,
-        this._ambient[1] + this._moonColor[1] * this._moonScale * 0.5,
-        this._ambient[2] + this._moonColor[2] * this._moonScale * 0.5
+        am[0] + mc[0] * this._moonScale * 0.5,
+        am[1] + mc[1] * this._moonScale * 0.5,
+        am[2] + mc[2] * this._moonScale * 0.5
       );
-      gl.uniform3f(this.bbUSun, this._sunColor[0] * this._sunScale * 0.5, this._sunColor[1] * this._sunScale * 0.5, this._sunColor[2] * this._sunScale * 0.5);   // VC4: the sun's half, shadowed in the shader
+      gl.uniform3f(this.bbUSun, sc[0] * this._sunScale * 0.5, sc[1] * this._sunScale * 0.5, sc[2] * this._sunScale * 0.5);   // VC4: the sun's half, shadowed in the shader
     } else {
       gl.uniform3f(this.bbUTint, 1, 1, 1);
       gl.uniform3f(this.bbUSun, 0, 0, 0);
@@ -3054,7 +3359,8 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     if (bbCount > 0) gl.uniform4fv(this.bbUPointLights, this._pointLights);
     if (bbCount > 0) gl.uniform3fv(this.bbUPointColors, this._pointColorData(bbCount));
     gl.uniform4fv(this.bbUIndirect, this._indirect);
-    gl.uniform3fv(this.bbUIndirectColor, this._indirectColor);
+    gl.uniform3fv(this.bbUIndirectColor, this._c3(this._indirectColor));
+    this._uploadEl('bb');   // EL1
     gl.uniform1i(this.bbUEmissionTex, 1);
     gl.disable(gl.CULL_FACE);
     // Two phases: opaque flats first (classic cutout), then SPECTRAL
@@ -3274,6 +3580,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this._use(this.program);
     this._uploadCloudShadow('mesh');   // VC4
     gl.uniformMatrix4fv(this.uModel, false, modelMatrix);
+    if (!wire && this._casting) this._shadows.recordMesh(mesh, modelMatrix, texRemap);   // EL2
     this._bindVao(wire ? wireMesh.vao : mesh.vao);
     for (let smi = 0; smi < mesh.subMeshes.length; smi++) {
       const sm = mesh.subMeshes[smi];
@@ -3310,7 +3617,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       // Color.white; only a window mask wears the window style.
       const emisColor = sm._evEmisWhite ? EMISSION_WHITE : this._windowEmission;
       if (this._emissionColorUp !== emisColor) {
-        gl.uniform3fv(this.uEmissionColor, emisColor);
+        gl.uniform3fv(this.uEmissionColor, this._c3(emisColor));   // EL1
         this._emissionColorUp = emisColor;
       }
       gl.activeTexture(gl.TEXTURE1);

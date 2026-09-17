@@ -483,7 +483,7 @@ test('ROAD-B b3: both dungeon hosts run UpdateFog per frame; no exterior host do
   walk(SRC);
   for (const host of ['scenes/dungeon.js', 'scenes/worldModes.js']) {
     assert.ok(callers.has(host), `${host} must apply the underwater fog`);
-    assert.match(callers.get(host), /applyFog\(renderer, [a-zA-Z]+\.underwaterFogSettings\?\.\([^)]*\) \?\? DUNGEON_FOG\)/,
+    assert.match(callers.get(host), /applyFog\(renderer, [a-zA-Z]+\.underwaterFogSettings\?\.\([^)]*\) \?\? _fog\)/,   // AUDIT-EL F6: the base is the lane-scaled dungeon fog (`_fog`, DUNGEON_FOG or Better Ambience's), the murk over it
       `${host} passes the DungeonFogSettings base and falls back to it off-block`);
   }
   assert.ok(callers.has('scenes/dungeonContext.js'), 'the context owns the instance');

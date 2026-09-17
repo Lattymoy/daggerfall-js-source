@@ -1,0 +1,373 @@
+[
+ {
+  "name": "decode-toe",
+  "file": "src/render/enhancedLighting.js",
+  "old": "  return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);",
+  "new": "  return Math.pow(c, 2.2);",
+  "tests": [
+   "test/el1_enhancedlighting.test.js"
+  ]
+ },
+ {
+  "name": "encode-no-clamp",
+  "file": "src/render/enhancedLighting.js",
+  "old": "  c = Math.min(Math.max(c, 0), 1);\n  return c <= 0.0031308",
+  "new": "  return c <= 0.0031308",
+  "tests": [
+   "test/el1_enhancedlighting.test.js"
+  ]
+ },
+ {
+  "name": "decodeN-count",
+  "file": "src/render/enhancedLighting.js",
+  "old": "  for (let i = 0; i < count * 3; i++) out[i] = elDecode(src[i]);",
+  "new": "  for (let i = 0; i < count * 3 - 1; i++) out[i] = elDecode(src[i]);",
+  "tests": [
+   "test/el1_enhancedlighting.test.js"
+  ]
+ },
+ {
+  "name": "atten-no-window",
+  "file": "src/render/enhancedLighting.js",
+  "old": "  return EL_LIGHT_GAIN / (1 + EL_LIGHT_KNEE * x2) * win;",
+  "new": "  return EL_LIGHT_GAIN / (1 + EL_LIGHT_KNEE * x2);",
+  "tests": [
+   "test/el1_enhancedlighting.test.js"
+  ]
+ },
+ {
+  "name": "atten-window-linear",
+  "file": "src/render/enhancedLighting.js",
+  "old": "  let win = 1 - x2 * x2;\n  win *= win;",
+  "new": "  let win = 1 - x;",
+  "tests": [
+   "test/el1_enhancedlighting.test.js"
+  ]
+ },
+ {
+  "name": "atten-range-inclusive",
+  "file": "src/render/enhancedLighting.js",
+  "old": "  if (!(range > 0) || d >= range) return 0;",
+  "new": "  if (!(range > 0) || d > range) return 0;",
+  "tests": [
+   "test/el1_enhancedlighting.test.js"
+  ],
+  "equivalent": true,
+  "why": "at d == range the window (1 - x^4)^2 is exactly zero, so the early return only spares the arithmetic; d beyond the range is still the guard's"
+ },
+ {
+  "name": "atten-gain",
+  "file": "src/render/enhancedLighting.js",
+  "old": "export const EL_LIGHT_GAIN = 2;",
+  "new": "export const EL_LIGHT_GAIN = 3;",
+  "tests": [
+   "test/el1_enhancedlighting.test.js"
+  ]
+ },
+ {
+  "name": "atten-knee",
+  "file": "src/render/enhancedLighting.js",
+  "old": "export const EL_LIGHT_KNEE = 16;",
+  "new": "export const EL_LIGHT_KNEE = 25;",
+  "tests": [
+   "test/el1_enhancedlighting.test.js"
+  ]
+ },
+ {
+  "name": "tonemap-plain-reinhard",
+  "file": "src/render/enhancedLighting.js",
+  "old": "  return x * (1 + x / (white * white)) / (1 + x);",
+  "new": "  return x / (1 + x);",
+  "tests": [
+   "test/el1_enhancedlighting.test.js"
+  ]
+ },
+ {
+  "name": "tonemap-white",
+  "file": "src/render/enhancedLighting.js",
+  "old": "export const EL_WHITE = 4;",
+  "new": "export const EL_WHITE = 3;",
+  "tests": [
+   "test/el1_enhancedlighting.test.js"
+  ]
+ },
+ {
+  "name": "exposure",
+  "file": "src/render/enhancedLighting.js",
+  "old": "export const EL_EXPOSURE = 1.4;",
+  "new": "export const EL_EXPOSURE = 1.2;",
+  "tests": [
+   "test/el1_enhancedlighting.test.js"
+  ]
+ },
+ {
+  "name": "scatter-no-window",
+  "file": "src/render/enhancedLighting.js",
+  "old": "  const ta = Math.max(0, t0 - range), tb = Math.min(dist, t0 + range);",
+  "new": "  const ta = 0, tb = dist;",
+  "tests": [
+   "test/el1_enhancedlighting.test.js"
+  ]
+ },
+ {
+  "name": "scatter-h-floor",
+  "file": "src/render/enhancedLighting.js",
+  "old": "  const h = Math.max(Math.sqrt(hx * hx + hy * hy + hz * hz), 0.25);",
+  "new": "  const h = Math.sqrt(hx * hx + hy * hy + hz * hz);",
+  "tests": [
+   "test/el1_enhancedlighting.test.js"
+  ]
+ },
+ {
+  "name": "scatter-no-h-divide",
+  "file": "src/render/enhancedLighting.js",
+  "old": "  return density * (Math.atan((tb - t0) / h) - Math.atan((ta - t0) / h)) / h;",
+  "new": "  return density * (Math.atan((tb - t0) / h) - Math.atan((ta - t0) / h));",
+  "tests": [
+   "test/el1_enhancedlighting.test.js"
+  ]
+ },
+ {
+  "name": "scatter-density-linear",
+  "file": "src/render/enhancedLighting.js",
+  "old": "  if (mode === 1) return 1 / Math.max(end - start, 1e-4);",
+  "new": "  if (mode === 1) return 1 / Math.max(end, 1e-4);",
+  "tests": [
+   "test/el1_enhancedlighting.test.js"
+  ]
+ },
+ {
+  "name": "scatter-density-exp2",
+  "file": "src/render/enhancedLighting.js",
+  "old": "  if (mode === 2 || mode === 3) return density;",
+  "new": "  if (mode === 2) return density;",
+  "tests": [
+   "test/el1_enhancedlighting.test.js"
+  ]
+ },
+ {
+  "name": "scatter-gain",
+  "file": "src/render/enhancedLighting.js",
+  "old": "export const EL_SCATTER = 0.35;",
+  "new": "export const EL_SCATTER = 0.5;",
+  "tests": [
+   "test/el1_enhancedlighting.test.js"
+  ]
+ },
+ {
+  "name": "switch-no-skin",
+  "file": "src/render/enhancedLighting.js",
+  "old": "  return isEnhanced() && !!getPref('enhancedLighting') && new URLSearchParams(search).get('lighting') !== 'classic';",
+  "new": "  return !!getPref('enhancedLighting') && new URLSearchParams(search).get('lighting') !== 'classic';",
+  "tests": [
+   "test/el1_enhancedlighting.test.js"
+  ]
+ },
+ {
+  "name": "switch-no-door",
+  "file": "src/render/enhancedLighting.js",
+  "old": "  return isEnhanced() && !!getPref('enhancedLighting') && new URLSearchParams(search).get('lighting') !== 'classic';",
+  "new": "  return isEnhanced() && !!getPref('enhancedLighting');",
+  "tests": [
+   "test/el1_enhancedlighting.test.js"
+  ]
+ },
+ {
+  "name": "exposure-door-zero",
+  "file": "src/render/enhancedLighting.js",
+  "old": "  return Number.isFinite(v) && v > 0 ? v : EL_EXPOSURE;",
+  "new": "  return Number.isFinite(v) ? v : EL_EXPOSURE;",
+  "tests": [
+   "test/el1_enhancedlighting.test.js"
+  ]
+ },
+ {
+  "name": "glsl-fog-blend-raw",
+  "file": "src/render/enhancedLighting.js",
+  "old": "  vec3 col = mix(elDecode(uFogColor), tm, fogFactorAt(wp));",
+  "new": "  vec3 col = mix(uFogColor, tm, fogFactorAt(wp));",
+  "tests": [
+   "test/el1_enhancedlighting.test.js"
+  ]
+ },
+ {
+  "name": "glsl-max-lights",
+  "file": "src/render/enhancedLighting.js",
+  "old": "export const EL_MAX_LIGHTS = 48;",
+  "new": "export const EL_MAX_LIGHTS = 32;",
+  "tests": [
+   "test/el1_enhancedlighting.test.js"
+  ]
+ },
+ {
+  "name": "lantern-no-intensity",
+  "file": "src/render/enhancedLighting.js",
+  "old": "  const k = classic[1];",
+  "new": "  const k = 1;",
+  "tests": [
+   "test/el1_enhancedlighting.test.js"
+  ]
+ },
+ {
+  "name": "lantern-always",
+  "file": "src/render/enhancedLighting.js",
+  "old": "  if (!on) return classic;\n  const k = classic[1];",
+  "new": "  const k = classic[1];",
+  "tests": [
+   "test/el1_enhancedlighting.test.js"
+  ]
+ },
+ {
+  "name": "sync-no-exposure",
+  "file": "src/render/enhancedLighting.js",
+  "old": "  if (on) { renderer.setExposure(exposureFor(search)); renderer.setAir(airOn(search)); }   // EL3: the door is the page's, read here alone",
+  "new": "  if (on) { renderer.setAir(airOn(search)); }",
+  "tests": [
+   "test/el1_enhancedlighting.test.js"
+  ]
+ },
+ {
+  "name": "lane-farring-fs",
+  "file": "src/render/enhancedLighting.js",
+  "old": "  farRingFs: EL_FAR_RING_FS,",
+  "new": "  farRingFs: EL_MESH_FS,",
+  "tests": [
+   "test/el1_enhancedlighting.test.js"
+  ]
+ },
+ {
+  "name": "renderer-lane-recompile",
+  "file": "src/render/renderer.js",
+  "old": "      if (!this._laneSet || this._laneSet.key !== lane.key) this._laneSet = this._buildWorldSet(lane);",
+  "new": "      this._laneSet = this._buildWorldSet(lane);",
+  "tests": [
+   "test/el1_enhancedlighting.test.js"
+  ]
+ },
+ {
+  "name": "renderer-lane-same-noop",
+  "file": "src/render/renderer.js",
+  "old": "    if (lane === this._lane) return;\n    if (lane) {",
+  "new": "    if (lane) {",
+  "tests": [
+   "test/el1_enhancedlighting.test.js"
+  ]
+ },
+ {
+  "name": "renderer-cap-not-restored",
+  "file": "src/render/renderer.js",
+  "old": "    this.maxPointLights = lane ? lane.maxLights : CLASSIC_MAX_LIGHTS;",
+  "new": "    this.maxPointLights = lane ? lane.maxLights : this.maxPointLights;",
+  "tests": [
+   "test/el1_enhancedlighting.test.js"
+  ]
+ },
+ {
+  "name": "renderer-no-recut",
+  "file": "src/render/renderer.js",
+  "old": "    if (this._pointLights.length > n * 4) this._pointLights = this._pointLights.subarray ? this._pointLights.subarray(0, n * 4) : this._pointLights.slice(0, n * 4);",
+  "new": "",
+  "tests": [
+   "test/el1_enhancedlighting.test.js"
+  ]
+ },
+ {
+  "name": "renderer-c3-never-decodes",
+  "file": "src/render/renderer.js",
+  "old": "    return this._lane ? this._lane.decode3(src, scratch) : src;",
+  "new": "    return src;",
+  "tests": [
+   "test/el1_enhancedlighting.test.js"
+  ]
+ },
+ {
+  "name": "renderer-pointcolors-raw",
+  "file": "src/render/renderer.js",
+  "old": "    return this._lane && !raw ? this._lane.decodeN(out, this._pointColorDec, count) : out;",
+  "new": "    return out;",
+  "tests": [
+   "test/el1_enhancedlighting.test.js"
+  ]
+ },
+ {
+  "name": "renderer-scatter-unfolded",
+  "file": "src/render/renderer.js",
+  "old": "    gl.uniform1f(scLoc, lane.scatter * lane.scatterDensity(this._fogMode, this._fogDensity, this._fogRange[0], this._fogRange[1]));",
+  "new": "    gl.uniform1f(scLoc, lane.scatter);",
+  "tests": [
+   "test/el1_enhancedlighting.test.js"
+  ]
+ },
+ {
+  "name": "renderer-el-terrain-dropped",
+  "file": "src/render/renderer.js",
+  "old": "      this._uploadEl('terrain');   // EL1\n",
+  "new": "",
+  "tests": [
+   "test/el1_enhancedlighting.test.js"
+  ]
+ },
+ {
+  "name": "renderer-el-char-dropped",
+  "file": "src/render/renderer.js",
+  "old": "    this._uploadEl('char');   // EL1\n",
+  "new": "",
+  "tests": [
+   "test/el1_enhancedlighting.test.js"
+  ]
+ },
+ {
+  "name": "renderer-bb-tint-raw",
+  "file": "src/render/renderer.js",
+  "old": "      const am = this._c3(this._ambient, this._decA), mc = this._c3(this._moonColor, this._decB), sc = this._c3(this._sunColor, this._decB);",
+  "new": "      const am = this._ambient, mc = this._moonColor, sc = this._sunColor;",
+  "tests": [
+   "test/el1_enhancedlighting.test.js"
+  ]
+ },
+ {
+  "name": "renderer-flash-cap",
+  "file": "src/render/renderer.js",
+  "old": "    const keep = Math.min(this.maxPointLights - 1, Math.floor(data.length / 4));   // EL1: one slot under the installed cap",
+  "new": "    const keep = Math.min(15, Math.floor(data.length / 4));",
+  "tests": [
+   "test/el1_enhancedlighting.test.js"
+  ]
+ },
+ {
+  "name": "renderer-setlights-cap",
+  "file": "src/render/renderer.js",
+  "old": "    const n = this.maxPointLights;   // EL1: the installed set's cap\n    this._pointLights = data.subarray ? data.subarray(0, n * 4) : data;",
+  "new": "    const n = 16;\n    this._pointLights = data.subarray ? data.subarray(0, n * 4) : data;",
+  "tests": [
+   "test/el1_enhancedlighting.test.js"
+  ]
+ },
+ {
+  "name": "farring-classic-fs",
+  "file": "src/render/farRing.js",
+  "old": "    gl.attachShader(p, compile(gl.FRAGMENT_SHADER, this.lane ? this.lane.farRingFs : FS));",
+  "new": "    gl.attachShader(p, compile(gl.FRAGMENT_SHADER, FS));",
+  "tests": [
+   "test/el1_enhancedlighting.test.js"
+  ]
+ },
+ {
+  "name": "farring-no-decode",
+  "file": "src/render/farRing.js",
+  "old": "    const c3 = (c) => (this.lane ? this.lane.decode3(c, this._dec) : c);   // EL1: linear for the lane, as the renderer's _c3",
+  "new": "    const c3 = (c) => c;",
+  "tests": [
+   "test/el1_enhancedlighting.test.js"
+  ]
+ },
+ {
+  "name": "farring-no-exposure",
+  "file": "src/render/farRing.js",
+  "old": "      gl.uniform1f(this.u.uELExposure, exposure);\n",
+  "new": "",
+  "tests": [
+   "test/el1_enhancedlighting.test.js"
+  ]
+ }
+]

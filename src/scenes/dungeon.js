@@ -9,6 +9,7 @@
 // and the frame loop.
 
 import { Arch3dFile } from '../formats/arch3dFile.js';
+import { WORLD_FRAME } from '../render/renderer.js';   // AUDIT-EL F5
 import { frameBegin, frameEnd } from '../systems/frameClock.js';   // PERF1: the frame's script time
 import { INTERIOR_CLEAR } from '../render/renderer.js';
 import { getInteractionMode, setInteractionMode, MODE_ACTIONS } from '../player/interactionMode.js';   // R1: the global PlayerActivate mode; AUDIT 58: its four ACTIONS
@@ -27,6 +28,7 @@ import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
 import { MapsFile } from '../formats/mapsFile.js';
 import { DUNGEON_AMBIENT, DUNGEON_LIGHT_COLOR, DUNGEON_LIGHT_BLOCK_RANGE } from '../world/dungeonLights.js';   // A10: the block-range cut
+import { syncLightingLane, lanternColor, dungeonAmbient, dungeonTrilight, dungeonFog } from '../render/enhancedLighting.js';   // EL1; EL4: the dark; AUDIT-EL F6: the fog with it
 import { INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
 import { nearestLights } from '../world/cityLights.js';
 import { withPlayerLights } from './magicCandle.js';   // X11/T1
@@ -84,6 +86,8 @@ const WATER_COLOR = [1, 1, 1, 0.82];
 export async function bootDungeon(canvas, renderer, params, status) {
   const regionName = params.get('region') || 'Daggerfall';
   const dungeonName = params.get('dungeon') || "Privateer's Hold";
+  const lightingOn = syncLightingLane(renderer);   // EL1: the lane, installed at mount
+  const DUNGEON_LANTERN_F32 = lanternColor(lightingOn, new Float32Array(DUNGEON_LIGHT_COLOR));   // EL1: the lane's flame at the dungeon's intensity
 
   status('loading data');
   const [palBytes, blocksBytes, archBytes, mapsBytes, climateBytes, politicBytes] =
@@ -501,7 +505,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
 
   // Verbatim dungeon lighting: PlayerAmbientLight.DungeonAmbientLight,
   // no sun; every light flickers (DaggerfallLight Animate).
-  renderer.setLighting(new Float32Array(DUNGEON_AMBIENT), 0);
+  renderer.setLighting(dungeonAmbient(lightingOn, new Float32Array(DUNGEON_AMBIENT)), 0);   // EL4: the lane's dark
   renderer.setWindowEmission(windowEmissionRGB('day'));   // F001: SetDungeonTextures keeps GetMaterial's Day default (MaterialReader.cs:456-461)
   // Verbatim DungeonFogSettings: exponential 0.005, fog color black.
   renderer.setFog('exp', 0.005, 0, 0, new Float32Array([0, 0, 0]));
@@ -965,21 +969,21 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // on which block the player stands in (PlayerAmbientLight.cs:82-90),
     // so it has to follow them across a castle or special-area
     // boundary the way the load-time write never could.
-    { const _tri = betterAmbience.dungeonAmbient(); renderer.setLighting(new Float32Array(_tri ? _tri.equator : ctx.ambient), 0, undefined, _tri); }   // BA1: FoggyDungeons' Trilight, else PlayerAmbientLight's flat
+    { const _tri = dungeonTrilight(lightingOn, betterAmbience.dungeonAmbient()); renderer.setLighting(new Float32Array(_tri ? _tri.equator : dungeonAmbient(lightingOn, ctx.ambient)), 0, undefined, _tri); }   // EL4: the lane's dark - the trilight scaled once, the flat ambient once   // BA1: FoggyDungeons' Trilight, else PlayerAmbientLight's flat
     // ROAD-B (b3): UnderwaterFog.UpdateFog, at PlayerEnterExit.Update's
     // own cadence (:349-352). The load-time setFog at :331 stays as the
     // dry state; this is the per-frame one, and DUNGEON_FOG is the same
     // DungeonFogSettings written there (WeatherManager.cs:77).
-    applyFog(renderer, ctx.underwaterFogSettings?.(cam.pos[1], player.pos, betterAmbience.dungeonFog() ?? DUNGEON_FOG) ?? betterAmbience.dungeonFog() ?? DUNGEON_FOG);   // BA1: FoggyDungeons' linear fog is the base the water murk overrides
+    { const _fog = dungeonFog(lightingOn, betterAmbience.dungeonFog() ?? DUNGEON_FOG); applyFog(renderer, ctx.underwaterFogSettings?.(cam.pos[1], player.pos, _fog) ?? _fog); }   // AUDIT-EL F6: the fog colour under the lane's dark   // BA1: FoggyDungeons' linear fog is the base the water murk overrides
     renderer.setPointLights(
       // A10: DungeonLightHandler's XZ block range culls first, the
       // 16-slot shader cap picks from what survives (dungeonLights.js
       // carries the composition and why that order).
-      withPlayerLights(nearestLights(ctx.lights, cam.pos, 16, ctx.flicker.ranges, null, DUNGEON_LIGHT_BLOCK_RANGE),
+      withPlayerLights(nearestLights(ctx.lights, cam.pos, renderer.maxPointLights, ctx.flicker.ranges, null, DUNGEON_LIGHT_BLOCK_RANGE),   // EL1: the installed set's cap
         ctx.candleLight?.(), playerTorchLight(playerEntity, player.pos, cam.yaw), ...ctx.torchLights()),   // X11 candle; T1 torch; HT1 the dropped lights
-      new Float32Array(DUNGEON_LIGHT_COLOR));
+      DUNGEON_LANTERN_F32);
     renderer.setWorldViewport(largeHudViewportRect(canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
-    renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR);
+    renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR, WORLD_FRAME);   // AUDIT-EL F5: a WORLD frame - the lane replays its records for this one
     if (walkMode) mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.feetAt(), yaw: cam.yaw });   // MW-D24
     if (ctx.staticBatch) renderer.drawMesh(ctx.staticBatch, BATCH_IDENTITY, null);   // PERF5: the level's static models, one call per texture (keys resolved in the merge)
     for (const d of ctx.drawList) if (!d._batched) renderer.drawMesh(d.mesh, d.matrix, ctx.texRemap);

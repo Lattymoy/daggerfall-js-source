@@ -1,0 +1,363 @@
+[
+ {
+  "name": "cascade-no-snap",
+  "file": "src/render/shadowPass.js",
+  "old": "    vp[12] += (Math.round(ox) - ox) / half;\n    vp[13] += (Math.round(oy) - oy) / half;\n",
+  "new": "",
+  "tests": [
+   "test/el2_shadows.test.js"
+  ]
+ },
+ {
+  "name": "cascade-depth-half",
+  "file": "src/render/shadowPass.js",
+  "old": "    const proj = ortho(r, r, 0, 2 * SHADOW_SUN_DEPTH);",
+  "new": "    const proj = ortho(r, r, 0, SHADOW_SUN_DEPTH);",
+  "tests": [
+   "test/el2_shadows.test.js"
+  ]
+ },
+ {
+  "name": "cascade-radius",
+  "file": "src/render/shadowPass.js",
+  "old": "export const SHADOW_CASCADES = Object.freeze([40, 240]);",
+  "new": "export const SHADOW_CASCADES = Object.freeze([60, 240]);",
+  "tests": [
+   "test/el2_shadows.test.js"
+  ]
+ },
+ {
+  "name": "cascade-vertical-up",
+  "file": "src/render/shadowPass.js",
+  "old": "  const up = Math.abs(lightDir[1]) > 0.99 ? Z_UP : Y_UP;",
+  "new": "  const up = Y_UP;",
+  "tests": [
+   "test/el2_shadows.test.js"
+  ]
+ },
+ {
+  "name": "cube-face-up",
+  "file": "src/render/shadowPass.js",
+  "old": "  [[0, 1, 0], [0, 0, 1]], [[0, -1, 0], [0, 0, -1]],",
+  "new": "  [[0, 1, 0], [0, 0, -1]], [[0, -1, 0], [0, 0, 1]],",
+  "tests": [
+   "test/el2_shadows.test.js"
+  ]
+ },
+ {
+  "name": "cube-ref-linear",
+  "file": "src/render/shadowPass.js",
+  "old": "  const ndc = (far + near) / (far - near) - (2 * far * near) / ((far - near) * m);\n  return ndc * 0.5 + 0.5;",
+  "new": "  return m / far;",
+  "tests": [
+   "test/el2_shadows.test.js"
+  ]
+ },
+ {
+  "name": "cube-ref-no-near-clamp",
+  "file": "src/render/shadowPass.js",
+  "old": "export function cubeDepthOfM(m, far, near = SHADOW_POINT_NEAR) {\n  m = Math.max(m, near);",
+  "new": "export function cubeDepthOfM(m, far, near = SHADOW_POINT_NEAR) {",
+  "tests": [
+   "test/el2_shadows.test.js"
+  ]
+ },
+ {
+  "name": "cube-near",
+  "file": "src/render/shadowPass.js",
+  "old": "export const SHADOW_POINT_NEAR = 0.1;",
+  "new": "export const SHADOW_POINT_NEAR = 0.5;",
+  "tests": [
+   "test/el2_shadows.test.js"
+  ]
+ },
+ {
+  "name": "caster-takes-eye",
+  "file": "src/render/shadowPass.js",
+  "old": "    if (d < minDist || !(lights[i * 4 + 3] > 0) || lights[i * 4 + 3] > SHADOW_CASTER_MAX_RANGE) continue;",
+  "new": "    if (!(lights[i * 4 + 3] > 0) || lights[i * 4 + 3] > SHADOW_CASTER_MAX_RANGE) continue;",
+  "tests": [
+   "test/el2_shadows.test.js"
+  ]
+ },
+ {
+  "name": "caster-takes-rangeless",
+  "file": "src/render/shadowPass.js",
+  "old": "    if (d < minDist || !(lights[i * 4 + 3] > 0) || lights[i * 4 + 3] > SHADOW_CASTER_MAX_RANGE) continue;",
+  "new": "    if (d < minDist || lights[i * 4 + 3] > SHADOW_CASTER_MAX_RANGE) continue;",
+  "tests": [
+   "test/el2_shadows.test.js"
+  ]
+ },
+ {
+  "name": "caster-farthest",
+  "file": "src/render/shadowPass.js",
+  "old": "    if (d < bestD) { bestD = d; best = i; }",
+  "new": "    if (d > bestD || best < 0) { bestD = d; best = i; }",
+  "tests": [
+   "test/el2_shadows.test.js"
+  ]
+ },
+ {
+  "name": "kind-no-height",
+  "file": "src/render/shadowPass.js",
+  "old": "  return sunScale > 0.01 && lightDir && lightDir[1] > SHADOW_MIN_SUN_Y ? 'sun' : 'point';",
+  "new": "  return sunScale > 0.01 && lightDir ? 'sun' : 'point';",
+  "tests": [
+   "test/el2_shadows.test.js"
+  ]
+ },
+ {
+  "name": "kind-no-scale",
+  "file": "src/render/shadowPass.js",
+  "old": "  return sunScale > 0.01 && lightDir && lightDir[1] > SHADOW_MIN_SUN_Y ? 'sun' : 'point';",
+  "new": "  return lightDir && lightDir[1] > SHADOW_MIN_SUN_Y ? 'sun' : 'point';",
+  "tests": [
+   "test/el2_shadows.test.js"
+  ]
+ },
+ {
+  "name": "glsl-dynamic-index",
+  "file": "src/render/shadowPass.js",
+  "old": "  mat4 vp = c == 0 ? uSunVP[0] : uSunVP[1];\n  vec4 lp = vp * vec4(wp + n * texel * 1.5, 1.0);",
+  "new": "  vec4 lp = uSunVP[c] * vec4(wp + n * texel * 1.5, 1.0);",
+  "tests": [
+   "test/el2_shadows.test.js"
+  ]
+ },
+ {
+  "name": "glsl-sun-off-dark",
+  "file": "src/render/shadowPass.js",
+  "old": "  if (uSunShadowParams.w <= 0.0) return 1.0;",
+  "new": "  if (uSunShadowParams.w <= 0.0) return 0.0;",
+  "tests": [
+   "test/el2_shadows.test.js"
+  ]
+ },
+ {
+  "name": "glsl-point-off-dark",
+  "file": "src/render/shadowPass.js",
+  "old": "  float far = uPointShadowParams.w;\n  if (far <= 0.0) return 1.0;",
+  "new": "  float far = uPointShadowParams.w;\n  if (far <= 0.0) return 0.0;",
+  "tests": [
+   "test/el2_shadows.test.js"
+  ]
+ },
+ {
+  "name": "depth-bb-no-cutout",
+  "file": "src/render/shadowPass.js",
+  "old": "  if (texture(uTex, vUV).a < 0.5) discard;",
+  "new": "  if (texture(uTex, vUV).a < 0.1) discard;",
+  "tests": [
+   "test/el2_shadows.test.js"
+  ]
+ },
+ {
+  "name": "record-no-copy",
+  "file": "src/render/shadowPass.js",
+  "old": "    r.kind = REC_MESH; r.mesh = mesh; r.matrix.set(matrix); r.texRemap = texRemap;",
+  "new": "    r.kind = REC_MESH; r.mesh = mesh; r.matrix = matrix; r.texRemap = texRemap;",
+  "tests": [
+   "test/el2_shadows.test.js"
+  ]
+ },
+ {
+  "name": "record-unbounded",
+  "file": "src/render/shadowPass.js",
+  "old": "    if (this.count >= SHADOW_RECORD_MAX) return null;\n",
+  "new": "",
+  "tests": [
+   "test/el2_shadows.test.js"
+  ]
+ },
+ {
+  "name": "discard-keeps-refs",
+  "file": "src/render/shadowPass.js",
+  "old": "    for (let i = 0; i < this.count; i++) { const r = this.records[i]; r.mesh = null; r.surface = null; r.batches = null; r.texRemap = null; }\n    this.count = 0;",
+  "new": "    this.count = 0;",
+  "tests": [
+   "test/el2_shadows.test.js"
+  ]
+ },
+ {
+  "name": "render-one-cascade",
+  "file": "src/render/shadowPass.js",
+  "old": "      for (let c = 0; c < SHADOW_CASCADES.length; c++) {\n        gl.bindFramebuffer(gl.FRAMEBUFFER, this.sunFbos[c]);",
+  "new": "      for (let c = 0; c < 1; c++) {\n        gl.bindFramebuffer(gl.FRAMEBUFFER, this.sunFbos[c]);",
+  "tests": [
+   "test/el2_shadows.test.js"
+  ]
+ },
+ {
+  "name": "render-sun-flag",
+  "file": "src/render/shadowPass.js",
+  "old": "this.sunParams[2] = sunTexelWorld(1); this.sunParams[3] = 1;",
+  "new": "this.sunParams[2] = sunTexelWorld(1); this.sunParams[3] = 0;",
+  "tests": [
+   "test/el2_shadows.test.js"
+  ]
+ },
+ {
+  "name": "render-point-index",
+  "file": "src/render/shadowPass.js",
+  "old": "        this.shadowIndex = i;\n",
+  "new": "",
+  "tests": [
+   "test/el2_shadows.test.js"
+  ]
+ },
+ {
+  "name": "render-no-fbo-restore",
+  "file": "src/render/shadowPass.js",
+  "old": "    gl.bindFramebuffer(gl.FRAMEBUFFER, null);\n    gl.colorMask(true, true, true, true);",
+  "new": "    gl.colorMask(true, true, true, true);",
+  "tests": [
+   "test/el2_shadows.test.js"
+  ]
+ },
+ {
+  "name": "render-no-colormask",
+  "file": "src/render/shadowPass.js",
+  "old": "    gl.colorMask(false, false, false, false);\n    if (this.kind === 'sun') {",
+  "new": "    if (this.kind === 'sun') {",
+  "tests": [
+   "test/el2_shadows.test.js"
+  ]
+ },
+ {
+  "name": "render-culls",
+  "file": "src/render/shadowPass.js",
+  "old": "    gl.disable(gl.CULL_FACE);   // the light's projection",
+  "new": "    gl.enable(gl.CULL_FACE);   // the light's projection",
+  "tests": [
+   "test/el2_shadows.test.js"
+  ]
+ },
+ {
+  "name": "replay-dead-mesh",
+  "file": "src/render/shadowPass.js",
+  "old": "        if (!mesh?.vao || mesh._dead || !mesh.subMeshes?.length) continue;",
+  "new": "        if (!mesh?.vao || !mesh.subMeshes?.length) continue;",
+  "tests": [
+   "test/el2_shadows.test.js"
+  ]
+ },
+ {
+  "name": "replay-concealed-casts",
+  "file": "src/render/shadowPass.js",
+  "old": "          if (!b?.vao || b._dead || b.conceal || f.isSpectral(b.archive)) continue;",
+  "new": "          if (!b?.vao || b._dead || f.isSpectral(b.archive)) continue;",
+  "tests": [
+   "test/el2_shadows.test.js"
+  ]
+ },
+ {
+  "name": "replay-no-terrain",
+  "file": "src/render/shadowPass.js",
+  "old": "        f.bindVao(s.vao);\n        gl.drawElements(gl.TRIANGLES, s.indexCount, gl.UNSIGNED_INT, 0);\n        draws++;",
+  "new": "        f.bindVao(s.vao);",
+  "tests": [
+   "test/el2_shadows.test.js"
+  ]
+ },
+ {
+  "name": "upload-units-swapped",
+  "file": "src/render/shadowPass.js",
+  "old": "    gl.uniform1i(loc.sunShadow, SHADOW_SUN_UNIT);\n    gl.uniform1i(loc.pointShadow, SHADOW_POINT_UNIT);",
+  "new": "    gl.uniform1i(loc.sunShadow, SHADOW_POINT_UNIT);\n    gl.uniform1i(loc.pointShadow, SHADOW_SUN_UNIT);",
+  "tests": [
+   "test/el2_shadows.test.js"
+  ]
+ },
+ {
+  "name": "renderer-panel-casts",
+  "file": "src/render/renderer.js",
+  "old": "  get _casting() { return !!this._shadows && !this._panelSaved; }",
+  "new": "  get _casting() { return !!this._shadows; }",
+  "tests": [
+   "test/el2_shadows.test.js"
+  ]
+ },
+ {
+  "name": "renderer-panel-keeps",
+  "file": "src/render/renderer.js",
+  "old": "    if (this._air?.pending && !this._panelSaved) this._compositeAir();\n    if (this._shadows && world) this._renderPasses(proj, view, lightDir);",
+  "new": "    if (this._air?.pending && !this._panelSaved) this._compositeAir();\n    if (this._shadows && (world || this._panelSaved)) this._renderPasses(proj, view, lightDir);",
+  "tests": [
+   "test/el2_shadows.test.js",
+   "test/audit_el.test.js"
+  ]
+ },
+ {
+  "name": "renderer-wire-casts",
+  "file": "src/render/renderer.js",
+  "old": "    if (!wire && this._casting) this._shadows.recordMesh(mesh, modelMatrix, texRemap);   // EL2",
+  "new": "    if (this._casting) this._shadows.recordMesh(mesh, modelMatrix, texRemap);   // EL2",
+  "tests": [
+   "test/el2_shadows.test.js"
+  ]
+ },
+ {
+  "name": "renderer-no-dead-mark",
+  "file": "src/render/renderer.js",
+  "old": "    mesh._dead = true;   // EL2: a shadow record from the last frame may still hold it\n",
+  "new": "",
+  "tests": [
+   "test/el2_shadows.test.js"
+  ]
+ },
+ {
+  "name": "renderer-pass-rebuilt",
+  "file": "src/render/renderer.js",
+  "old": "      this._shadows = this._shadowPass ??= new ShadowPass(",
+  "new": "      this._shadows = this._shadowPass = new ShadowPass(",
+  "tests": [
+   "test/el2_shadows.test.js"
+  ]
+ },
+ {
+  "name": "renderer-maps-after-clear",
+  "file": "src/render/renderer.js",
+  "old": "    this._beginLane(proj, view, lightDir, opts?.world === true);   // EL2/EL3/EL4: the maps, the images and the frame, before the clear\n    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);\n",
+  "new": "    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);\n    this._beginLane(proj, view, lightDir, opts?.world === true);\n",
+  "tests": [
+   "test/el2_shadows.test.js"
+  ]
+ },
+ {
+  "name": "renderer-no-upload",
+  "file": "src/render/renderer.js",
+  "old": "    if (this._shadows) this._shadows.upload(this._el[key].shadow);   // EL2: the maps and the receiver's uniforms\n",
+  "new": "",
+  "tests": [
+   "test/el2_shadows.test.js"
+  ]
+ },
+ {
+  "name": "lane-no-shadows",
+  "file": "src/render/enhancedLighting.js",
+  "old": "  shadows: true,   // EL2: the renderer builds its ShadowPass for this lane\n",
+  "new": "",
+  "tests": [
+   "test/el2_shadows.test.js"
+  ]
+ },
+ {
+  "name": "lane-bb-shadow-at-fragment",
+  "file": "src/render/enhancedLighting.js",
+  "old": "  vec3 base = vBBBase + vec3(0.0, 0.5, 0.0);   // EL2",
+  "new": "  vec3 base = vBBWorld;   // EL2",
+  "tests": [
+   "test/el2_shadows.test.js"
+  ]
+ },
+ {
+  "name": "lane-mesh-no-sun-shadow",
+  "file": "src/render/enhancedLighting.js",
+  "old": "  float diff = max(dot(n, uLightDir), 0.0) * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n);   // EL2: the sun map\n  float mdiff = max(dot(n, uMoonDir), 0.0);\n  float l3diff",
+  "new": "  float diff = max(dot(n, uLightDir), 0.0) * cloudShadowAt(vWorldPos);\n  float mdiff = max(dot(n, uMoonDir), 0.0);\n  float l3diff",
+  "tests": [
+   "test/el2_shadows.test.js"
+  ]
+ }
+]

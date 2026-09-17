@@ -83,8 +83,8 @@ test('audit26 F183: the special area is the ONE block SpecialAreaCheck names, an
   assert.match(dc, /inSpecialArea: specialAreaBlockAt\(feet\[0\], feet\[2\]\),/);
   // both hosts apply the per-block ambient, and neither spells the
   // plain constant into its lighting call any more
-  assert.match(src('src/scenes/worldModes.js'), /renderer\.setLighting\(new Float32Array\(_tri \? _tri\.equator : dungeonCtx\.ambient\), 0, undefined, _tri\);/, 'BA1: the selector still feeds the flat ambient, under Better Ambience\'s trilight when a dungeon has one');
-  assert.match(src('src/scenes/dungeon.js'), /renderer\.setLighting\(new Float32Array\(_tri \? _tri\.equator : ctx\.ambient\), 0, undefined, _tri\);/);
+  assert.match(src('src/scenes/worldModes.js'), /renderer\.setLighting\(new Float32Array\(_tri \? _tri\.equator : dungeonAmbient\(_on, dungeonCtx\.ambient\)\), 0, undefined, _tri\);/, 'BA1 (EL4: through the lane\'s dark): the selector still feeds the flat ambient, under Better Ambience\'s trilight when a dungeon has one');
+  assert.match(src('src/scenes/dungeon.js'), /renderer\.setLighting\(new Float32Array\(_tri \? _tri\.equator : dungeonAmbient\(lightingOn, ctx\.ambient\)\), 0, undefined, _tri\);/);   // EL4
 });
 
 // ---------------------------------------------------------------

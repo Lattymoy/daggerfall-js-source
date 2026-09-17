@@ -38,7 +38,7 @@ test('FT0: three kinds in label order, three stores, and the registry is empty a
   assert.deepEqual(KIND_ORDER, ['enhanced', 'mod', 'classic']);
   assert.deepEqual(KIND_ORDER.map((k) => KINDS[k].label), ['Enhanced', 'Mod Authored', 'DFU Classic'], "Mac's three labels");
   assert.deepEqual(STORES, ['prefs', 'settings', 'mods']);
-  assert.deepEqual(FEATURES.map((f) => f.id), ['smaller-dungeons', 'land-view-distance', 'enhanced-environments', 'enhanced-ai', 'enhanced-water', 'grass-density', 'cloud-quality', 'enhanced-combat-visuals', 'loot-rarity', 'wind-wisps', 'enhanced-sounds', 'flora-sway', 'weather-events', 'mod-windmills-kamer', 'mod-seasons-iliac-bay', 'mod-roads-hazelnut', 'mod-meanermonsters', 'mod-pcaao', 'mod-unleveledloot', 'mod-weapon-widget', 'mod-handheld-torches', 'mod-ambient-text', 'mod-eye-of-the-beholder', 'mod-immersive-footsteps', 'mod-better-ambience', 'enemy-infighting', 'varied-dungeon-monsters', 'torches-from-items', 'combat-voices', 'near-death-warning', 'bows-left-hand', 'choose-guild-jobs', 'dungeon-wall-style'], 'FT0 shipped the home empty; FT1, FT2, FT4-FT11 moved rows in (one slice at a time); LR1 added the first row built in house; WIND3 three more; WEATHER2b the weather field; WM3 gave Windmills the switch it had never had; AT0 Ambient Text; EOTB0 Eye Of The Beholder; IF1 Immersive Footsteps; BA1 Better Ambience');
+  assert.deepEqual(FEATURES.map((f) => f.id), ['smaller-dungeons', 'land-view-distance', 'enhanced-environments', 'enhanced-ai', 'enhanced-water', 'enhanced-lighting', 'grass-density', 'cloud-quality', 'enhanced-combat-visuals', 'loot-rarity', 'wind-wisps', 'enhanced-sounds', 'flora-sway', 'weather-events', 'mod-windmills-kamer', 'mod-seasons-iliac-bay', 'mod-roads-hazelnut', 'mod-meanermonsters', 'mod-pcaao', 'mod-unleveledloot', 'mod-weapon-widget', 'mod-handheld-torches', 'mod-ambient-text', 'mod-eye-of-the-beholder', 'mod-immersive-footsteps', 'mod-better-ambience', 'enemy-infighting', 'varied-dungeon-monsters', 'torches-from-items', 'combat-voices', 'near-death-warning', 'bows-left-hand', 'choose-guild-jobs', 'dungeon-wall-style'], 'FT0 shipped the home empty; FT1, FT2, FT4-FT11 moved rows in (one slice at a time); LR1 added the first row built in house; WIND3 three more; WEATHER2b the weather field; WM3 gave Windmills the switch it had never had; AT0 Ambient Text; EOTB0 Eye Of The Beholder; IF1 Immersive Footsteps; BA1 Better Ambience; EL1 Enhanced Lighting');
   assert.deepEqual(checkFeatures(FEATURES), []);
 });
 
@@ -238,7 +238,7 @@ test('FT0: the three kinds have three colours, all the skin\'s own tokens', () =
 // slices AND a name collision) must not have to fight it.
 test('FT15: every note is one or two sentences, and the panel stays under its budget', () => {
   const MAX_ROW = 450;
-  const MAX_TOTAL = 7800;   // BA1: two more mod rows (IF1, BA1) at under 160 chars each; every row still under MAX_ROW
+  const MAX_TOTAL = 8200;   // BA1: two more mod rows (IF1, BA1) at under 160 chars each; EL1: the lighting row (~380 chars); every row still under MAX_ROW
   let total = 0;
   for (const f of FEATURES) {
     assert.ok(typeof f.note === 'string' && f.note.length > 0, `${f.id} has a note`);
@@ -248,7 +248,7 @@ test('FT15: every note is one or two sentences, and the panel stays under its bu
     assert.ok(!f.note.startsWith(f.title), `${f.id}'s note opens by restating its title`);
     total += f.note.length;
   }
-  assert.ok(total <= MAX_TOTAL, `the 28 notes are ${total} chars (max ${MAX_TOTAL})`);
+  assert.ok(total <= MAX_TOTAL, `the ${FEATURES.length} notes are ${total} chars (max ${MAX_TOTAL})`);
 
   // and the seven mod rows are STILL the mod's own description - FT15 trimmed the
   // description itself rather than adding a short-note override, so there is no

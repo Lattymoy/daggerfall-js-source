@@ -54,7 +54,7 @@
 // dome only (never under the Dynamic Skies mod, whose sky is its own),
 // `?clouds=off` the kill switch, `?clouds=lo|hi` the quality doors.
 
-import { createRenderTarget, withTarget } from './renderTarget.js';
+import { createRenderTarget, withTarget, frameTarget } from './renderTarget.js';
 import { CloudNoise } from './cloudNoise.js';
 import { WEATHER_EASE_MINUTES, WEATHER_SKY } from './enhancedSky.js';   // WEATHER2c: a cell's cover and grey are its weather's row
 
@@ -594,7 +594,7 @@ export class VolumetricClouds {
     const sx0 = Math.max(0, dx), sx1 = Math.min(n, n + dx), sy0 = Math.max(0, dz), sy1 = Math.min(n, n + dz);
     gl.blitFramebuffer(sx0, sy0, sx1, sy1, sx0 - dx, sy0 - dz, sx1 - dx, sy1 - dz, gl.COLOR_BUFFER_BIT, gl.NEAREST);
     gl.bindFramebuffer(gl.READ_FRAMEBUFFER, null);
-    gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, null);
+    gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, frameTarget());   // EL4: the frame, or the canvas
     this.shadowMap = dst; this.shadowScratch = src;
     this.mapOrigin = [this.origin[0], this.origin[1]];
     this.pendingShift = null;
