@@ -41,6 +41,7 @@
 //     arm (systems/travelOptionsText.js says why).
 
 import { modSetting, colorKeyRgba } from './modSettings.js';
+import { registerCustomGuild } from './guildServices.js';   // AUDIT-TO1 F1: GuildManager.RegisterCustomGuild (:331-336)
 import {
   MAX_CIRCUMNAVIGATION_ACCEL, LOC_PAUSE_OFF, LOC_PAUSE_NEAR, LOC_PAUSE_ENTER,
   MID_LO, P_SIZE, MP_WORLD_UNITS,
@@ -314,6 +315,27 @@ export function createTravelOptions(deps = {}) {
     lastPlayerFacing: 0,
     junctionMapOn: false,
   };
+
+  // AUDIT-TO1 F1: :331-336, Init's guild registration. With paid
+  // teleportation on, the mod registers MagesGuildTO for the whole
+  // MagesGuild group - a class whose only body is
+  // `CanAccessService(Teleport) => true` - so a member of ANY rank
+  // reaches the teleport service and is charged the rank-scaled fee
+  // (ChargeForTeleport, :470-503). The port's own MagesGuild law is
+  // DFU's rank >= 8, and the service is FREE at rank 8 and above, so
+  // without this the whole paid-teleport feature - the setting, the
+  // cost formula, both boxes - was unreachable by every player it was
+  // written for.
+  //
+  // DFU THROWS if the group is already overridden ("unable to register
+  // MagesGuildTO guild class"); the port's registry is last-writer and
+  // this is its only writer, so a second construction re-registers the
+  // same arm rather than dying. The arm DECLINES (undefined) for every
+  // service but Teleport, which leaves the rest of the guild's law -
+  // training, spells, magic items, soul gems, summoning - exactly DFU's.
+  registerCustomGuild('MagesGuild', s0.teleportCost
+    ? (_membership, service) => (service === 'Teleport' ? true : undefined)
+    : null);
 
   const ui = deps.ui;
   const say = (text) => deps.say?.(text);

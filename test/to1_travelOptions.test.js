@@ -34,6 +34,23 @@ import {
   TRAVEL_OPTIONS_VENDOR,
 } from '../src/systems/travelOptions.js';
 import { TRAVEL_OPTIONS_TEXT, format, localize, directionText } from '../src/systems/travelOptionsText.js';
+// AUDIT-TO1: the two classes the port did not carry, pinned at the foot
+import { registerCustomGuild, canAccessService } from '../src/systems/guildServices.js';
+import { ENCHANTMENT_TYPES, enchantmentMagicRound } from '../src/systems/enchantments.js';
+import { resetSyntheticTimeIncrease } from '../src/systems/effectBroker.js';
+import { ITEM_GROUPS } from '../src/characters/equipRules.js';
+
+/** audit63_effects.test.js's own two fixtures, which is where the
+ *  synthetic-time half of this guard is already pinned. */
+const item = (type, param = -1, over = {}) => ({
+  name: 'Test Item', templateIndex: 135, group: ITEM_GROUPS.Jewellery,
+  currentCondition: 100, maxCondition: 100, equipSlot: 9,
+  enchantments: [{ type, param }], ...over,
+});
+const wearer = (items, over = {}) => ({
+  name: 'W', health: 200, maxHealth: 300, items, level: 5, isPlayer: true,
+  stats: {}, skills: [40, 40, 40, 40], activeEffects: [], ...over,
+});
 import { PORT_LOCATION_IDS, PORT_LOCATION_IDS_MAIN, PORT_LOCATION_IDS_EXTRAS, maskMapId, hasPort } from '../src/systems/travelPorts.js';
 import {
   drawPath, drawLocation, drawMapSection, isLocationLarge, packColor, packRGBA, DOT_SCALE,
@@ -1154,4 +1171,102 @@ test('TO1: the map and the popup carry the mod\'s own additions', () => {
   assert.match(p, /playerControlled: true,/);
   assert.match(p, /_scaleTripCost\(c0\)/);
   assert.match(p, /shipTravelRefusal\(\) \{/);
+});
+
+// ═══ AUDIT-TO1: the two classes the port did not carry ════════════════
+//
+// Travel Options ships EIGHT C# classes. TO1 carried five and the small
+// service classes went unread; two of the three cost the player
+// something, and both are behaviours the mod exists to provide rather
+// than scaffolding it could drop.
+
+test('AUDIT-TO1 F1: paid teleportation reaches a member of ANY rank, and only while the mod asks for it', () => {
+  // MagesGuildTO.cs:9-17 is the whole class: `CanAccessService(Teleport)
+  // => true`. The mod registers it, for the whole MagesGuild group, ONLY
+  // when EnablePaidTeleportation is on (TravelOptionsMod.cs:331-336).
+  // Without it the port answered DFU's own MagesGuild.cs:154 - rank >= 8
+  // - and teleportation is FREE from rank 8 up, so the paid service the
+  // port had already built (the cost formula, both boxes, the setting)
+  // could never be reached by a player who would have paid for it.
+  const guild = { name: 'MagesGuild' };
+  const novice = { rank: 1, joined: true };
+  const master = { rank: 8, joined: true };
+
+  registerCustomGuild('MagesGuild', null);   // the mod off, or never built
+  assert.equal(canAccessService(guild, novice, 'Teleport'), false, 'stock law: rank 8');
+  assert.equal(canAccessService(guild, master, 'Teleport'), true);
+
+  // ...and with the mod's own arm installed, exactly as createTravelOptions
+  // installs it when settings.teleportCost is true.
+  registerCustomGuild('MagesGuild', (_m, service) => (service === 'Teleport' ? true : undefined));
+  assert.equal(canAccessService(guild, novice, 'Teleport'), true, 'the fee is reachable at rank 1');
+  assert.equal(canAccessService(guild, master, 'Teleport'), true);
+
+  // THE ARM DECLINES FOR EVERYTHING ELSE. MagesGuildTO overrides one
+  // service and inherits the rest, so a registry that answered `false`
+  // by default - or one that swallowed the switch - would quietly strip
+  // the guild of its other six rank gates.
+  assert.equal(canAccessService(guild, novice, 'BuyMagicItems'), false, 'still rank 3');
+  assert.equal(canAccessService(guild, { rank: 3, joined: true }, 'BuyMagicItems'), true);
+  assert.equal(canAccessService(guild, novice, 'DaedraSummoning'), false, 'still rank 6');
+  assert.equal(canAccessService(guild, novice, 'Identify'), true, 'and the ungated ones stay open');
+
+  // A NON-MEMBER never reaches the override, because GetGuild hands a
+  // stranger guildNotMember before any subclass is asked (the comment
+  // canAccessService opens with). The mod does not change that.
+  assert.equal(canAccessService(guild, null, 'Teleport'), false, 'a stranger is still refused');
+  registerCustomGuild('MagesGuild', null);
+
+  // and the install itself is the mod's, on the mod's own setting
+  const t = read('src/systems/travelOptions.js');
+  assert.match(t, /registerCustomGuild\('MagesGuild', s0\.teleportCost/,
+    'the registration is gated on EnablePaidTeleportation, as :331-336 gates it');
+  assert.match(t, /\(_membership, service\) => \(service === 'Teleport' \? true : undefined\)/);
+});
+
+test('AUDIT-TO1 F2: a walked journey costs a Cast-When-Held item no durability at all', () => {
+  // CastWhenHeldTO.cs:26-35 replaces DFU's CastWhenHeld outright
+  // (RegisterEffectTemplate, :338 - UNCONDITIONALLY, behind no setting)
+  // for one reason: its guard is `!SyntheticTimeIncrease && !
+  // GetTravelControlUI().isShowing`. DFU's fast travel raises the
+  // synthetic flag, so a classic trip costs a held enchantment nothing;
+  // an accelerated journey is REAL time, raises no flag, and billed
+  // every game minute it covered.
+  resetSyntheticTimeIncrease();
+  const rounds = 2880;   // one long crossing, at the port's catch-up cap
+
+  // WITHOUT the panel: the stock law, and it is brutal - 2880/4 = 720
+  // points, which destroys the item twice over.
+  const bare = item(ENCHANTMENT_TYPES.CastWhenHeld, 4);
+  const w1 = wearer([bare]);
+  const noPanel = { hurtSelf: () => {}, travelUIShowing: () => false };
+  for (let r = 1; r <= rounds; r++) enchantmentMagicRound(w1, r, { nowMinutes: r, ctx: noPanel });
+  assert.ok(bare.currentCondition < 100, 'real time really does bill this arm');
+
+  // WITH the panel up: not one point, which is the mod's behaviour and
+  // the same answer a classic fast travel already gets.
+  const worn = item(ENCHANTMENT_TYPES.CastWhenHeld, 4);
+  const w2 = wearer([worn]);
+  const panelUp = { hurtSelf: () => {}, travelUIShowing: () => true };
+  for (let r = 1; r <= rounds; r++) enchantmentMagicRound(w2, r, { nowMinutes: r, ctx: panelUp });
+  assert.equal(worn.currentCondition, 100, 'the journey costs the item nothing');
+  assert.ok(w2.items.includes(worn), 'and it does not break out of the pack');
+
+  // THE PANEL IS THE TEST, NOT THE CLOCK. A journey paused for camp sits
+  // at a time scale of 1 with the panel still showing, and the mod still
+  // charges it nothing - so a guard written on the time scale instead
+  // would have wear resume the moment the player made camp.
+  assert.equal(timeScale(), 1, 'the pin asserts this with the clock at rest');
+
+  // the wiring: the world host is the only one that can run a journey,
+  // and it reads the panel through a holder because the ctx is built
+  // first (AUDIT 24 wave 37's temporal-dead-zone shape).
+  const e = read('src/systems/enchantments.js');
+  assert.match(e, /if \(ctx\?\.travelUIShowing\?\.\(\)\) return;/);
+  const h = read('src/scenes/hostEnchant.js');
+  assert.match(h, /travelUIShowing = \(\) => false,/, 'every host but one answers false');
+  const w = read('src/scenes/world.js');
+  assert.match(w, /travelUIShowing: \(\) => !!_travelUIHolder\.ui\?\.isShowing,/);
+  assert.match(w, /_travelUIHolder\.ui = travelControlUI;/);
+  resetSyntheticTimeIncrease();
 });

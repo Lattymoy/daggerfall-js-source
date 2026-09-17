@@ -3014,6 +3014,14 @@ export async function bootWorld(canvas, renderer, params, status) {
     // AllowMagicRepairs read - lives in one body, so it cannot be
     // right in one host and stale in the other.
     setDefaultEnchantCtx(createEnchantCtx({
+      // AUDIT-TO1 F2: CastWhenHeldTO's second guard. The control UI is
+      // built six hundred lines below this, so the ctx reads it through
+      // a HOLDER rather than the `const` itself: the arrow is created
+      // here and called from a magic round, and a closure over a `const`
+      // in its temporal dead zone is the shape AUDIT 24 wave 37 was
+      // written about. The holder exists from this line on and answers
+      // false until the UI lands, which is the right answer then.
+      travelUIShowing: () => !!_travelUIHolder.ui?.isShowing,
       playerEntity,
       spellsByIndex: () => spellsByIndex,
       now: () => Math.floor(playerTicker.classicMinutes),
@@ -3434,6 +3442,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // W1: the map dictionary the window reads is built at the top of
   // this boot, with the terrain repairs that also need HasLocation.
   let _travelMap = null;   // the live window, for the probe surface
+  // AUDIT-TO1 F2: the live travel control panel, for the one reader
+  // that is built before it - CastWhenHeld's durability guard. Filled
+  // where the panel is constructed; null in every frame with no journey.
+  const _travelUIHolder = { ui: null };
   /** ItemCollection.Contains(ItemGroups.Transportation, template) -
    *  the same one-line test ui/nativeInventory.js's wagon gate uses. */
   const hasTransport = (template) => (playerEntity.items ?? []).some((it) => it.templateIndex === template);
@@ -4911,6 +4923,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** TO1: the mod itself. Null while its switch is off, and every call
    *  site guards - a player who turns Travel Options off has the
    *  classic travel map and classic fast travel, whole. */
+  _travelUIHolder.ui = travelControlUI;   // AUDIT-TO1 F2: the holder the enchant ctx reads
   const travelOptions = travelOptionsOn ? createTravelOptions({
     settings: travelOptionsSettings,
     ui: travelControlUI,

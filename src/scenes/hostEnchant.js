@@ -103,6 +103,9 @@ export function standLooseFoe({ collider, feet, yawRad, fovDegrees, foes, spawn 
  * @param openCharacterSheet () => push the sheet
  * @param replaceFoe        (targetEntity, mobileType) => the Wabbajack
  * @param isResting         () => bool (CastWhenHeld's degrade rate)
+ * @param travelUIShowing   () => bool (AUDIT-TO1 F2: CastWhenHeldTO - no
+ *                          wear at all while an accelerated journey's
+ *                          control panel is up)
  */
 export function createEnchantCtx({
   playerEntity,
@@ -120,6 +123,7 @@ export function createEnchantCtx({
   openCharacterSheet = null,
   replaceFoe = null,
   isResting = () => !!playerEntity?.isResting,
+  travelUIShowing = () => false,
   rolls = Math.random,
 } = {}) {
   return {
@@ -138,6 +142,15 @@ export function createEnchantCtx({
     // window raises the flag on OPEN, so it is live the moment the
     // rest page is up.
     isResting,
+    // AUDIT-TO1 F2: CastWhenHeldTO.cs:26-35. Travel Options replaces
+    // DFU's CastWhenHeld outright (RegisterEffectTemplate, :338 -
+    // UNCONDITIONALLY, not behind a setting) for one reason: its own
+    // guard reads `!SyntheticTimeIncrease && !GetTravelControlUI().isShowing`.
+    // DFU's fast travel raises the synthetic flag and costs a held
+    // enchantment nothing; an accelerated journey is REAL time, raises
+    // no flag, and would bill every one of its game minutes. Only the
+    // world host runs a journey, so every other host leaves this false.
+    travelUIShowing,
     // V2c: the E1 conditional arms' two flags (RepairsObjects' sun
     // gate, the affinity/curse place gates). Both read seams the mode
     // machine registers, so they route by LIVE mode in every host.
