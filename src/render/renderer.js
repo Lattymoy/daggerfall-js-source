@@ -709,6 +709,17 @@ export function color32Bytes(color32, where) {
 
 /** The two clear colours: the sky behind an exterior frame, and
  *  CameraClearManager's black behind an interior one. */
+/** MAC-I: the floor under `flatLightAt`. A flat in a black room goes
+ *  black and the player reads that as the room; a HAND that goes black
+ *  is a hole in the middle of the screen, and the player cannot tell a
+ *  drawn weapon from a sheathed one. DFU never faces this because it
+ *  never tints the viewmodel at all - so the number is the port's, and
+ *  it is written here rather than inline: a quarter of the sprite's own
+ *  albedo, which is dark enough to read as unlit and bright enough to
+ *  keep a silhouette.
+ */
+export const FLAT_LIGHT_FLOOR = 0.25;
+
 export const SKY_CLEAR = Object.freeze([0.53, 0.7, 0.92, 1.0]);
 export const INTERIOR_CLEAR = Object.freeze([0, 0, 0, 1.0]);
 
@@ -1736,7 +1747,55 @@ export class Renderer {
    *  the mesh sits at the ORIGIN of a private lens space (the FP
    *  viewmodel), not in the world - the cloud deck is borrowed off for
    *  it (VC5 review), as the studio variant does for the panels. */
-  renderCharacterSprite(mesh, modelMatrix, proj, view, pw, ph, { lensLocal = false } = {}) {
+  renderCharacterSprite(mesh, modelMatrix, proj, view, pw, ph, { lensLocal = false, viewmodelLight = null } = {}) {
+    const gl = this.gl;
+    // MAC-P (2026-09-17, Mac: "morrowind's first person view also doesn't
+    // receive lighting and is consistently dark"): THE VIEWMODEL'S LIGHT.
+    //
+    // He is right, and the reason is the space this pass runs in. A
+    // lens-local arm sits at the ORIGIN of a camera-local space while
+    // `_pointLights` are in WORLD space, so every torch, lantern and
+    // interior lamp in the room misses it by exactly the player's distance
+    // from the world origin - the arm has only ever had the ambient and the
+    // sun's N.L. In a dungeon that is a dark arm holding a lit torch.
+    //
+    // The answer is the STUDIO's shape (a key light at the eye, which is
+    // what makes a viewmodel's form read) SCALED by the room's own light at
+    // the camera - the same `flatLightAt` answer MAC-I gives the classic
+    // sprites, so the two lanes darken together. At full daylight the tint
+    // is [1,1,1] and this is exactly the studio the pass used to install,
+    // byte for byte; it only ever takes light AWAY, where the room has
+    // none to give. Borrow-and-return, the same shape the UI read-back's
+    // studio has had since PX23.
+    const vmSaved = viewmodelLight ? {
+      lightDir: this._lightDir, ambient: this._ambient, sunScale: this._sunScale,
+      sunColor: this._sunColor, pointLights: this._pointLights, indirect: this._indirect,
+      moonScale: this._moonScale,
+    } : null;
+    if (viewmodelLight) {
+      const st = studioLight(view);
+      this._lightDir = st.lightDir;
+      this._ambient = new Float32Array([
+        STUDIO_AMBIENT * viewmodelLight[0], STUDIO_AMBIENT * viewmodelLight[1], STUDIO_AMBIENT * viewmodelLight[2]]);
+      this._sunScale = STUDIO_KEY;
+      this._sunColor = new Float32Array([viewmodelLight[0], viewmodelLight[1], viewmodelLight[2]]);
+      this._pointLights = st.pointLights;   // world-space lights have no meaning at this origin
+      this._indirect = st.indirect;
+      this._moonScale = 0;
+    }
+    try {
+      return this._renderCharacterSprite(mesh, modelMatrix, proj, view, pw, ph, { lensLocal });
+    } finally {
+      if (vmSaved) {
+        this._lightDir = vmSaved.lightDir; this._ambient = vmSaved.ambient; this._sunScale = vmSaved.sunScale;
+        this._sunColor = vmSaved.sunColor; this._pointLights = vmSaved.pointLights; this._indirect = vmSaved.indirect;
+        this._moonScale = vmSaved.moonScale;
+      }
+    }
+  }
+
+  /** The pass itself - MAC-P's light borrow wraps it above. */
+  _renderCharacterSprite(mesh, modelMatrix, proj, view, pw, ph, { lensLocal = false } = {}) {
     const gl = this.gl;
     const cs = this._charSpriteRT();
     gl.bindFramebuffer(gl.FRAMEBUFFER, cs.fbo);
@@ -2916,6 +2975,85 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       out = s.subarray(0, count * 3);
     }
     return this._lane && !raw ? this._lane.decodeN(out, this._pointColorDec, count) : out;   // EL1: linear for the lane; `raw` for a classic-space program under it (the water)
+  }
+
+  /**
+   * MAC-I (2026-09-17, Mac: "The classic sprite should react to
+   * lighting (first person)"): THE LIGHT A FLAT WOULD TAKE AT A POINT.
+   *
+   * The first-person sprites are screen quads, so nothing in the world
+   * pass ever touched them - a torch hand, a weapon and a pair of
+   * casting hands drew at full albedo in a pitch-black dungeon while
+   * every flat in the room went dark around them. DFU has the SEAM for
+   * this and leaves it white: `FPSWeapon.Tint` (FPSWeapon.cs:108) is
+   * passed to the draw (:182) and nothing in DFU core ever writes it -
+   * it is the First-Person Lighting mod's channel. This is the port
+   * writing it, off the light the scene's own flats take.
+   *
+   * IT IS THE BILLBOARD SHADER'S COMPOSITION, not a second lighting
+   * model: the tint (ambient plus the moon's Lambert-average half), the
+   * sun's half, every point light with the SAME squared-linear falloff
+   * to its range, and the indirect term - the four terms of the flat
+   * program's `lit` (the `uTint + uBBSun + pointAcc + iAtt * iAtt *
+   * uIndirectColor` above), with no normal, because a flat has none and
+   * a screen sprite has less than none.
+   *
+   * TWO THINGS ARE DELIBERATELY NOT IN IT.
+   *  - THE CLOUD SHADOW. `cloudShadowAt` is a shader function over a
+   *    shadow map; sampling it here would mean reading a texture back.
+   *    So a cloud passing over darkens the land and not the hand, and
+   *    that is a recorded departure rather than an oversight.
+   *  - THE LANE'S DECODE. Every uniform above goes up through `_c3`,
+   *    which linearises under the enhanced-lighting lane; this answer
+   *    does NOT, because a screen quad is drawn by the 2D pass AFTER
+   *    the lane's composite has resolved the frame to display space
+   *    (`_compositeAir` on the first screen draw). Tinting in the space
+   *    the 2D pass paints in is the same choice the water's own classic
+   *    -space read makes (`_pointColorData(count, true)`).
+   *
+   * A clockless scene (no `setLighting` yet - the test room, a probe)
+   * has no light to answer with and gets white, which is exactly what
+   * the flats get there.
+   *
+   * @param {number[]|null} pos scene-space point; the camera by default,
+   *        which is where a first-person sprite is
+   * @returns {number[]} [r, g, b], each at or above FLAT_LIGHT_FLOOR
+   */
+  flatLightAt(pos = null, floor = FLAT_LIGHT_FLOOR) {
+    if (!this._clockLit) return [1, 1, 1];
+    const p = pos ?? this._camPos;
+    const am = this._ambient, mc = this._moonColor, sc = this._sunColor;
+    const out = [
+      am[0] + mc[0] * this._moonScale * 0.5 + sc[0] * this._sunScale * 0.5,
+      am[1] + mc[1] * this._moonScale * 0.5 + sc[1] * this._sunScale * 0.5,
+      am[2] + mc[2] * this._moonScale * 0.5 + sc[2] * this._sunScale * 0.5,
+    ];
+    const count = this._pointLights.length >> 2;
+    if (count > 0) {
+      const colors = this._pointColorData(count, true);   // EL1: the classic-space read, as the water takes
+      for (let i = 0; i < count; i++) {
+        const dx = this._pointLights[i * 4] - p[0];
+        const dy = this._pointLights[i * 4 + 1] - p[1];
+        const dz = this._pointLights[i * 4 + 2] - p[2];
+        const range = this._pointLights[i * 4 + 3];
+        if (!(range > 0)) continue;
+        const att = Math.max(0, Math.min(1, 1 - Math.hypot(dx, dy, dz) / range));
+        const a2 = att * att;
+        if (a2 <= 0) continue;
+        out[0] += a2 * colors[i * 3]; out[1] += a2 * colors[i * 3 + 1]; out[2] += a2 * colors[i * 3 + 2];
+      }
+    }
+    const iRange = this._indirect[3];
+    if (iRange > 0) {
+      const iAtt = Math.max(0, Math.min(1, 1 - Math.hypot(
+        this._indirect[0] - p[0], this._indirect[1] - p[1], this._indirect[2] - p[2]) / iRange));
+      const i2 = iAtt * iAtt;
+      out[0] += i2 * this._indirectColor[0];
+      out[1] += i2 * this._indirectColor[1];
+      out[2] += i2 * this._indirectColor[2];
+    }
+    for (let i = 0; i < 3; i++) out[i] = Math.max(floor, Math.min(1, out[i]));
+    return out;
   }
 
   /** R12: the player-following indirect point light (SunlightRig's

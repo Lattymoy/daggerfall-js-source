@@ -15305,3 +15305,139 @@ Neither report is a law, so the pins are source and model and the CLAIM
 that the two windows work is `tools/macfgProbe.mjs`'s: it mounts both
 over the live `/play/` page with no ARENA2 anywhere, folds the cards,
 walks the tabs and reads the Advantages rows back - 20/20.
+
+## MAC-H/I/J/P - what you hold, and what it is lit by
+
+2026-09-17, three notes and then a fourth while the first three were being
+fixed.
+
+### MAC-H - the hand held nothing and drew a torch anyway
+
+*"On the classic sprite, when a torch is unequipped, a random sprite is
+shown on the left middle of the screen."*
+
+The torch hand's `OnGUI` had two gates: the module's Sprite switch, and
+"is there a texture". `w.currentTexture` is set ONCE - to `list[0]`,
+torch frame 0 - the moment `InitializeTextures` finishes, and nothing
+ever clears it. So from the first frame after the sprites loaded, every
+host drew a torch at `SetGuard`'s rest position with or without a torch
+in the player's hand. SetGuard puts it in from the side by half the
+screen times Offset.x and up from the bottom by a quarter: the left
+middle of the screen, exactly where Mac saw it.
+
+The frame law already knew the answer - `offsetFrame` is -1 for no light
+and for a CANDLE, which has no frames - but it is computed in Update and
+this is a draw, so the draw asks the LIGHT rather than trusting an
+ordering. That is also what makes the sprite go the same frame the torch
+leaves the hand, with no frame in between: a window that is open has
+stopped the frames a latch would be updated on, which is the trap HT6
+already paid for once.
+
+### MAC-I - FPSWeapon.Tint, written
+
+*"The classic sprite should react to lighting (first person)."*
+
+DFU has the channel and leaves it white. `FPSWeapon.Tint`
+(`FPSWeapon.cs:108`) is handed to the draw (`:182`) and nothing in DFU
+core ever writes it - it is the First-Person Lighting mod's. The port
+writes it, from the light the room's own FLATS take.
+
+`renderer.flatLightAt(pos)` is the billboard program's composition, not
+a second lighting model: the tint (ambient plus the moon's Lambert-
+average half), the sun's half, every point light with the same squared-
+linear falloff to its range, and the indirect term - the four terms of
+the flat shader's `lit`, with no normal, because a flat has none and a
+screen sprite has less than none. It reaches all four first-person
+sprites: the weapon, the widget's clone, the casting hands and the torch
+hand.
+
+Two things are deliberately NOT in it. THE CLOUD SHADOW is a shader
+function over a shadow map and sampling it here would mean a read-back,
+so a cloud darkens the land and not the hand. THE LANE'S DECODE is
+skipped because a screen quad is drawn by the 2D pass AFTER the enhanced
+lane's composite has resolved the frame to display space - the same
+classic-space read the water already takes.
+
+A FLOOR of 0.25 is the port's own number and is written down as such: a
+flat in a black room goes black and the player reads that as the room,
+but a HAND that goes black is a hole in the middle of the screen, and
+you cannot tell a drawn weapon from a sheathed one.
+
+### MAC-P - and the Morrowind arms, which were worse
+
+*"morrowind's first person view also doesn't receive lighting and is
+consistently dark."*
+
+Right, and for a different reason: the arm is rendered LENS-LOCAL, at
+the origin of a camera-local space, while `_pointLights` are in WORLD
+space. Every torch, lantern and lamp in the room misses it by exactly
+the player's distance from the world origin, so the arm has only ever
+had the ambient and the sun's N.L. Measured in the probe: five of 255
+in a dark room, holding a lit torch.
+
+The answer is the STUDIO's shape - a key light at the eye, which is what
+makes a viewmodel's form read - SCALED by the same `flatLightAt` answer
+the classic sprites take. At full daylight the tint is [1,1,1] and the
+pass installs exactly the studio it used to, byte for byte; it only ever
+takes light away, where the room has none to give. Borrow-and-return in
+a `finally`, because a leaked studio is permanent.
+
+One switch for both lanes: Features -> First-person lighting, on by
+default, `?fplight=off` the kill door.
+
+### MAC-J - a name wearing the enhanced skin's button
+
+*"The online section where player's names are shown are too large and
+shouldn't be large rectangles"* - the chat window's roster column.
+
+A CSS collision, and it could not be seen in either file alone. The
+roster marked a clickable name with a bare `act`; `.act` is the enhanced
+skin's BUTTON (`padding: 12px 20px`, a 1px iron border, `min-height:
+46px`), and that sheet is in the document of every online game because
+online forces the enhanced lane. So every name a player could click was
+drawn as a button - 46 to 58 pixels tall, measured - and the one name
+that is never a door, your own, sat 16px high beside them, which is what
+made it read as "too large" rather than as a style.
+
+The marker is `dfchat-act` now. Every other class in that sheet was
+already prefixed; this one was the exception. The pin is the general
+law, not the instance: no class the chat panel writes may be a bare
+selector in the enhanced sheet.
+
+### MAC-Q - the torch's fire, investigated and NOT fixed
+
+*"and the torch doesn't emit fire."*
+
+Not a torch bug and not a light bug - MW-TORCH placed the mesh and MW-D51
+lights it. THIS PORT HAS NEVER DRAWN A MORROWIND PARTICLE SYSTEM, and a
+Morrowind torch's flame is one. `mwNifFile.js` parses
+`NiAutoNormalParticles`, its data and `NiParticleSystemController`'s
+emitter terms in full; `mwNifMesh.js` then walks `NiBSParticleNode` as a
+NODE and emits nothing from it, because `GEOMETRY_TYPES` is
+`NiTriShape` and `NiTriStrips`. The flame is read off the disk, carried
+through the graph and dropped.
+
+What it would take is osgParticle's own shape: the emitter off the
+controller (rate, lifetime, speed, the emitter node's frame), the
+modifier chain (grow/fade, colour, gravity, collider), a billboarded
+quad per particle and a sorted additive pass. It is a slice, not a fix,
+and it cannot be verified in this container at all - there is no
+Morrowind data here. Shipping an unverified flame is what MAC-B was
+refused for, so it is written down instead, with the pin that holds the
+premise (`test/machij_sprites_and_chat.test.js`).
+
+Worth saying, because it narrows the next attempt: the EMISSION channel
+is not the gap. A flame authored as a TRIANGLE with LightMode_Emissive
+has drawn correctly since MWT2.
+
+### Pinned
+
+`test/machij_sprites_and_chat.test.js` (14).
+`tools/mutants/machijp.json` (20: 18 dead, 2 recorded equivalent).
+
+Two probes, because none of this is a law a node test can settle:
+`tools/macfpLightProbe.mjs` builds a REAL Renderer, lights it as a host
+does, draws a white texel under the tint and reads the pixel back (a
+quarter tint is 64/255), then renders a quad through the ARM's own call
+at two light levels - 13/13. `tools/macjRosterProbe.mjs` mounts the chat
+panel with BOTH sheets in the document and measures the rows - 6/6.

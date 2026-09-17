@@ -165,7 +165,9 @@ test('VC3: the seam - the clouds ride the dome only, behind the one switch, on t
   assert.match(rr, /if \(saved\.cloudShadow\) \{ this\._cloudShadow = saved\.cloudShadow; this\._csStamp\+\+; \}/, 'and returns it');
   for (const h of ['src/scenes/world.js', 'src/scenes/exterior.js']) assert.match(read(h), /renderer\.setCloudShadow\(sky\?\.cloudShadow \?\? null\);[^\n]*\n\s*mwViewDrawBody\(/, `${h}: the body takes the frame's deck`);
   // VC5 review: the FP arm is lens-local geometry at the origin - the deck is borrowed off for it, and only for it
-  assert.match(rr, /renderCharacterSprite\(mesh, modelMatrix, proj, view, pw, ph, \{ lensLocal = false \} = \{\}\)/);
+  // MAC-P: the pass is `_renderCharacterSprite` now - `renderCharacterSprite` wraps it with the
+  // viewmodel light borrow, and the lens-local flag it takes is unchanged.
+  assert.match(rr, /_renderCharacterSprite\(mesh, modelMatrix, proj, view, pw, ph, \{ lensLocal = false \} = \{\}\)/);
   assert.match(rr, /const sd = lensLocal \? this\._cloudShadow : null;\s*\n\s*if \(sd\) \{ this\._cloudShadow = null; this\._csStamp\+\+; \}/, 'borrowed off');
   // AUDIT 65 RS-2: the deck's return is still here and still
   // unconditional - but it is now the TAIL of one finally that returns
@@ -173,7 +175,7 @@ test('VC3: the seam - the clouds ride the dome only, behind the one switch, on t
   // colour), which used to sit below the block and never ran on a
   // throw. The behavioural half is test/glstate.test.js's RS-2 pin.
   assert.match(rr, /finally \{\s*\n\s*gl\.bindFramebuffer\(gl\.FRAMEBUFFER, this\._frameFbo \?\? null\);[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*this\._restoreWorldViewport\(\);\s*\n\s*const cc = this\._clearColor;\s*\n\s*gl\.clearColor\(cc\[0\], cc\[1\], cc\[2\], cc\[3\]\);\s*\n\s*this\._proj = sp; this\._view = sv; this\._fogMode = sf;\s*\n(?:\s*this\._spriteDepth--;[^\n]*\n)?\s*if \(sd\) \{ this\._cloudShadow = sd; this\._csStamp\+\+; \}\s*\n\s*\}/, 'and returned with the stamp bumped, whatever the draw did');   // AUDIT-EL F2: the sprite depth returns in the same finally
-  assert.match(read('src/combat/fpArm.js'), /renderer\.renderCharacterSprite\(mesh, NIF_TO_PASS, proj, view, pw, ph, \{ lensLocal: true \}\)/, 'the arm says so');
+  assert.match(read('src/combat/fpArm.js'), /renderer\.renderCharacterSprite\(mesh, NIF_TO_PASS, proj, view, pw, ph, \{ lensLocal: true, viewmodelLight: vmLight \}\)/, 'the arm says so');
   assert.doesNotMatch(read('src/render/characterSprite.js'), /lensLocal/, 'the rig sprite box is in the world: it keeps the deck');
   assert.match(shared, /clouds\?\.setState\(enhancedSky\.state, weatherRowNow, weatherName, easeDt, driftXZ, extra\?\.flash \?\? 0, extra\?\.pos \?\? null, extra\?\.cells \?\? null\);/, 'the eased row, the front-stretched dt, the one drift integral, the host\'s flash and position (WEATHER2c: and the field\'s cells)');
   assert.match(shared, /draw\(yaw, pitch, fovY, aspect, viewport = \[0, 0, gl\.drawingBufferWidth, gl\.drawingBufferHeight\]\) \{\s*\n\s*\(enhancedSky \?\? dynamicSky \?\? sky\)\.draw\(yaw, pitch, fovY, aspect\);\s*\n\s*if \(clouds\) \{ clouds\.update\(viewport\); clouds\.draw\(yaw, pitch, fovY, aspect\); \}/, 'marched then composited after the dome, inside the host\'s marked span');
