@@ -299,9 +299,13 @@ test('ONLINE1: the others drawn through a fake renderer - the figure cropped to 
   const rect = { x: 0, y: 0, w: 1, h: 0.77 };
   const [n] = rp.namePoints(proj, view, 1600, 900, [0, 1.7, 0], undefined, rect);
   assert.equal(n.name, 'BOB');
-  const want = projectToScreen([0, PEER_HEIGHT + 0.25, -10], 1600, 900, proj, view, rect);
+  // NAME1 (2026-09-16, Mac: "Player names clip and cut off the top of the sprite head..."): the anchor is the head
+  // top EXACTLY - `feet + height`. The `+ 0.25` world lift this pin used to carry was half of the clip Mac reported:
+  // a quarter of a unit is many pixels at arm's length and barely one at forty, so the clearance it bought swung
+  // with depth. The clearance is NAME_GAP_PX now, in screen pixels, taken by the drawing pass.
+  const want = projectToScreen([0, PEER_HEIGHT, -10], 1600, 900, proj, view, rect);
   assert.ok(Math.abs(n.x - want.x) < 1e-9 && Math.abs(n.y - want.y) < 1e-9, 'the same point tapRay projects, in the rect');
-  const whole = projectToScreen([0, PEER_HEIGHT + 0.25, -10], 1600, 900, proj, view, null);
+  const whole = projectToScreen([0, PEER_HEIGHT, -10], 1600, 900, proj, view, null);
   assert.ok(Math.abs(whole.y - n.y) > 20, 'the docked HUD\'s rect moves it - the whole canvas would land the name off the head');
   assert.equal(rp.namePoints(proj, view, 1600, 900, [500, 0, 0]).length, 0, 'out of NAME_RANGE: no name');
   // the oldest doll goes past DOLLS_MAX, its texture released

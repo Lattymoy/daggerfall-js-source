@@ -83,6 +83,54 @@ export const fontsUrl = (families) =>
  *  own claim. */
 export const ENHANCED_FONTS_URL = fontsUrl([FONT_DISPLAY, FONT_DATA, FONT_PIXEL_BRAND, FONT_PIXEL_DATA]);
 
+/* FONT1: THE POPUP COLUMN'S TWO NUMBERS, in one home. The sheet below
+   sets them and ui/enhancedHudText.js reads them - the slide is
+   computed in pixels from the row height, so a row that is 20px in the
+   sheet and 18 in the module would scroll out by the wrong amount
+   every time a line leaves. `TOP` clears the compass strip and a named
+   target's bar (measured in Chromium, tools/font1Probe.mjs). */
+export const HUD_TEXT_TOP_PX = 96;
+export const HUD_TEXT_ROW_PX = 20;
+/* AUDIT FONT F9: the narrow top was a LITERAL in the max-width 860
+   block while the wide one was interpolated from the export above, so
+   a slice that moved the compass would have moved one of the two. It
+   is an export like its sibling, and the sheet interpolates both. */
+export const HUD_TEXT_TOP_NARROW_PX = 82;
+
+/* AUDIT FONT F7: THE COLUMN AND THE CHAT PEEK SHARE A CORNER, and at
+   the tops above they share it almost entirely. `.dfchat` (ui/chatPanel
+   .js) is fixed at top 44 - 72 on the touch skin - and its PEEK is
+   CHAT_PEEK (net/chat.js, 5) lines of `.dfchat-line` under it; the
+   panel is z-index 5 and the column z-index 4, so on a 430px phone the
+   chat's last five lines simply sat on top of "Your Long Blade skill
+   has improved." and neither was readable.
+   So where the chat is MOUNTED the column starts under the peek
+   instead. The numbers below are the chat sheet's own, and they are
+   CHECKED TWICE: test/hudtext.test.js reads the tops, the line box and
+   the gap back out of CHAT_CSS itself, so a chat that moves reddens
+   this rather than sliding back under the column; and
+   tools/font1Probe.mjs builds the real panel in Chromium and measures
+   where it actually ends (248.5 and 292.5 at the time of writing).
+   A peek line WRAPS at 440px more often than not, which is where the
+   two rows per line come from - the probe is the ruler for that.
+   The alternative, measuring the panel on every frame, is a forced
+   layout sixty times a second for a surface that moves twice a
+   session. */
+const CHAT_TOP_PX = 44;               // `.dfchat` top
+const CHAT_TOP_TOUCH_PX = 72;         // `.dfchat.touch` top
+const CHAT_PEEK_LINES = 5;            // net/chat.js CHAT_PEEK
+const CHAT_PEEK_ROWS = 2;             // a peek line wraps in a 440px box (measured)
+const CHAT_PEEK_LINE_PX = 13 * 1.35;  // `.dfchat-line` font-size x line-height
+const CHAT_PEEK_GAP_PX = 3;           // `.dfchat-peek` gap
+const CHAT_HINT_PX = 17;              // `.dfchat-hint` ("Enter to chat") and its 4px margin - the desktop tail
+const CHAT_OPEN_BTN_PX = 33;          // `.dfchat.touch .dfchat-open` (the Chat button) in the hint's place
+const CHAT_AIR_PX = 4;                // ...and a step of air, so the first popup line is not flush against it
+const chatPeekBottom = (top, tail) => Math.ceil(
+  top + CHAT_PEEK_LINES * CHAT_PEEK_ROWS * CHAT_PEEK_LINE_PX
+  + (CHAT_PEEK_LINES - 1) * CHAT_PEEK_GAP_PX + tail + CHAT_AIR_PX);
+export const HUD_TEXT_TOP_CHAT_PX = chatPeekBottom(CHAT_TOP_PX, CHAT_HINT_PX);
+export const HUD_TEXT_TOP_CHAT_TOUCH_PX = chatPeekBottom(CHAT_TOP_TOUCH_PX, CHAT_OPEN_BTN_PX);
+
 export const ENHANCED_CSS = `
 /* ── FIX-D: the digit five is Silkscreen's - see ui/pixelifyFive.js */
 ${PIXELIFY_FIVE_FACE}
@@ -1896,11 +1944,104 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
   text-shadow: 2px 2px 0 rgb(93,77,12); }
 .hud-effrounds { color: var(--brass); font-variant-numeric: tabular-nums; }
 
+/* ── FONT1: THE POPUP COLUMN ─────────────────────────────────────
+   Every line the game says without opening a window - the Ambient Text
+   mod's street lines, "Your Long Blade skill has improved.", the loot
+   tallies - drew in the classic BITMAP font under this skin until
+   FONT1, because the enhanced HUD replaced the bars and never took the
+   text (ui/enhancedHudText.js, ui/hudText.js). It is PopupText's own
+   column, in this skin's face: centred, growing downward, sliding up
+   by one row as the front line leaves, in the classic shadowed pair
+   the classic popup is drawn in (nativePanel DEFAULT_TEXT_COLOR is
+   rgb(243,239,44) and its shadow rgb(93,77,12) - the same yellow the
+   mode word wears above).
+
+   IT STARTS BELOW THE COMPASS. The classic column starts at the top of
+   the native panel; here the compass strip (top 18, 26 tall) and the
+   target bar stand there, so 96px clears both - measured, not guessed
+   (tools/font1Probe.mjs). The row box is 20px, which is
+   ENHANCED_HUD_TEXT_ROW_H in that module: the slide is computed in
+   pixels from it, so the two numbers are one number.
+
+   AUDIT FONT F1 - THE STACK AND THE COLUMNS. There is more than one
+   PopupText model alive in this port (scenes/townTalk.js's and
+   scenes/dungeonContext.js's, both live on ?world in a dungeon), so
+   the column is TWO elements: \`.hudtext-stack\`, one per document,
+   which owns the place, the z-index and --hud-scale; and a \`.hudtext\`
+   inside it PER OWNER, which owns that model's rows and that model's
+   own scroll-out. Two models stack rather than overwrite one element.
+
+   AUDIT FONT F2 - THE SLIDE IS INSIDE THE SCALE. \`--hudtext-slide\` is
+   a translateY on the inner column, so at --hud-scale 2 a row leaves
+   by two scaled rows rather than by one unscaled one.
+
+   AUDIT FONT F8 - A LONG LINE IS DRAWN WHOLE. The classic column draws
+   the whole string (PopupText.Draw measures it and centres it; nothing
+   clips), and a quest or TEXT.RSC line is regularly longer than 86vw
+   on a phone, so an ellipsis took the operative half of it. The rows
+   wrap; the box is a MINIMUM height, and the module measures the
+   front row rather than assuming it is one. */
+.hudtext-stack { position: fixed; left: 50%; top: ${HUD_TEXT_TOP_PX}px; z-index: 4; pointer-events: none;
+  transform: translateX(-50%) scale(var(--hud-scale, 1));
+  transform-origin: top center;
+  display: flex; flex-direction: column; align-items: center;
+  max-width: min(680px, 86vw); }
+.hudtext { display: flex; flex-direction: column; align-items: center; width: 100%;
+  transform: translateY(var(--hudtext-slide, 0px));
+  font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none;
+  font-variant-ligatures: none; font-feature-settings: 'liga' 0, 'clig' 0;
+  color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.hudtext-row { min-height: ${HUD_TEXT_ROW_PX}px; line-height: ${HUD_TEXT_ROW_PX}px; font-size: 14px;
+  letter-spacing: 0.04em; white-space: normal; overflow-wrap: anywhere; text-align: center; max-width: 100%; }
+
+/* AUDIT FONT F7: ...and it steps out of the chat's peek where the chat
+   is mounted. \`:has\` is the whole rule - a browser without it keeps the
+   compass-clearing top, which is what shipped. */
+body:has(.dfchat) .hudtext-stack { top: ${HUD_TEXT_TOP_CHAT_PX}px; }
+body:has(.dfchat.touch) .hudtext-stack { top: ${HUD_TEXT_TOP_CHAT_TOUCH_PX}px; }
+
+/* FONT1: THE MID-SCREEN LABEL - DaggerfallHUD's OTHER text surface
+   (AUDIT 64 F34, ui/midScreenText.js): one centred line that replaces
+   itself, where the mode word and every "You are too far away" is
+   spoken. DFU puts it at native y=146 of 200.
+
+   AUDIT FONT F11: 73% IS THAT PROPORTION ONLY AT 16:10, and this rule
+   used to claim outright that a player swapping skins finds the line
+   where they left it. The classic label is a NativePanel child, and
+   nativePanel.nativeMetrics FLOORS the fit (\`Math.floor(min(w/320,
+   h/200))\`) and centres the panel in what is left, so at 1280x1024 the
+   panel is 320x200 at scale 4 with oy 112 and the label sits at
+   (112 + 146*4)/1024 = 68%, not 73%. So the module WRITES the real
+   number: ui/enhancedHudText.js sets --hudmid-top in CSS pixels from
+   the same floored arithmetic, off the same canvas, and 73% is the
+   fallback for a frame that has not been drawn yet. */
+.hudmid { position: fixed; left: 50%; top: var(--hudmid-top, 73%); transform: translateX(-50%) scale(var(--hud-scale, 1));
+  transform-origin: top center; z-index: 4; pointer-events: none; text-align: center;
+  max-width: min(680px, 86vw); font-size: 15px; letter-spacing: 0.04em;
+  font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none;
+  font-variant-ligatures: none; font-feature-settings: 'liga' 0, 'clig' 0;
+  color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+
+/* FONT1: THE ONLINE STATUS LINE - the socket's own word (connecting,
+   reconnecting, refused), top-left where the classic drew it and clear
+   of the chat panel's corner at 44. The online lane IS the enhanced
+   lane (systems/onlineLane.js), so this line is never seen in any
+   other face. Brass rather than the popup's yellow: it is the machine
+   talking, not the game. */
+.hudstatus { position: fixed; left: calc(8px + env(safe-area-inset-left, 0px));
+  top: calc(8px + env(safe-area-inset-top, 0px)); z-index: 4; pointer-events: none;
+  max-width: min(420px, 60vw); font-size: 13px; letter-spacing: 0.04em;
+  font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none;
+  font-variant-ligatures: none; font-feature-settings: 'liga' 0, 'clig' 0;
+  color: #e0b070; text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+
 @media (max-width: 860px) {
   .hud-top { top: 10px; }
   .hud-bottom { bottom: 12px; gap: 8px; }
   .hud-bars { gap: 10px; }
   .hud-vital .hud-track { width: 26vw; }
+  /* the compass and the bar above it move up with .hud-top, so the column follows them */
+  .hudtext-stack { top: ${HUD_TEXT_TOP_NARROW_PX}px; }
 }
 
 /* PX25: the doors the F5 sheet carried, on the page that is the sheet. */
@@ -3107,7 +3248,8 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
 .shell .ft-rail-kv { border-top: 2px solid rgba(125,116,96,0.3); }
 `;
 
-const STYLE_ID = 'dagger-enhanced-style';
+export const ENHANCED_STYLE_ID = 'dagger-enhanced-style';
+const STYLE_ID = ENHANCED_STYLE_ID;
 
 /** Put the stylesheet in the document, once. Safe to call from every
  *  mount site; the second call is a no-op. */

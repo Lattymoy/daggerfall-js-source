@@ -50,7 +50,7 @@ import { setInfectionHost } from '../systems/infection.js';   // AUDIT 39 (#37):
 // window owns equipping, the career gate (S23) and the paperdoll, so
 // the duplicate pair here had nothing left to serve. AUDIT 17e F17's
 // point stands and is now made in ONE place instead of two.
-import { loadHud, drawHud, hudScale as hudScaleFor } from '../ui/hud.js';
+import { loadHud, drawHud, hudScale as hudScaleFor, hideHudTextSurfaces } from '../ui/hud.js';   // AUDIT FONT F3: the two DOM text surfaces' one hide door, for the hosts' overlay branch
 import { largeHudOptions } from '../ui/hudLarge.js';   // U45: the classic bottom bar
 import { drawText, makeFont } from '../ui/text.js';
 import { HudText } from '../ui/hudText.js';
@@ -1403,7 +1403,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     });
   }
 
-  const hudText = new HudText();   // U5: classic popup messages
+  const hudText = new HudText('dungeon');   // U5: classic popup messages   // AUDIT FONT F1: named, because scenes/townTalk.js owns a SECOND PopupText that draws in the same frame on ?world - under the enhanced skin the two shared one DOM column and each blanked the other
   // wave 22: this host has a HudText of its own, so it needs the same
   // notebook sink PopupText.AddText carries (:123).
   hudText.onMessage = (t) => opts.hudMessageSink?.(t);
@@ -1413,12 +1413,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // the journal's Messages page through the same host sink.
   //
   // EVERY ALLOCATION HAS AN OWNER: `hudText` is this context's own, but
-  // `midScreenText` is a MODULE SINGLETON (ui/midScreenText.js:152) -
+  // `midScreenText` is a MODULE SINGLETON (ui/midScreenText.js:177) -
   // the one label the outer host shares - so the seam is BORROWED, not
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:6772 / exterior.js:3041), set
+  // host's own townTalk sink (world.js:6776 / exterior.js:3042), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -2375,7 +2375,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:975 against :981; worldModes.js:5973 against :5975).
+    // (dungeon.js:976 against :981; worldModes.js:5973 against :5975).
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -2865,8 +2865,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:9275,
-              // exterior.js:4414 and worldModes.js:6100 already ran;
+              // playerArrowHitFoe is the one copy world.js:9325,
+              // exterior.js:4415 and worldModes.js:6114 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -4920,7 +4920,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // window (DaggerfallHUD.cs:172-173) and the Draw override
     // (:347-351) suppresses it with everything else; the tick is
     // Update's and keeps draining.
-    if (hudFont && hudRenderEnabled()) hudText.draw(renderer, canvas, hudFont, hudScaleFor(canvas.width, canvas.height));
+    hudText.observe(!!activeOverlay);   // AUDIT FONT F4: a canvas window standing over the column takes it down - the DOM column has no draw order to put it underneath
+    if (hudFont && hudRenderEnabled()) hudText.draw(renderer, canvas, hudFont, hudScaleFor(canvas.width, canvas.height)); else hudText.hide();   // FONT1: the refused frame reaches the hide door - the enhanced skin's column is DOM and persists (AUDIT 64 F37)
     // The CLICK TO LOOK banner retired with click-to-look itself: the
     // hosts re-engage a dropped lock on the next gesture (DFU shape),
     // so an unlocked frame is transient, not a mode to advertise.
@@ -5045,6 +5046,18 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     },
     dynamicDraws,
     actions,
+    /** AUDIT FONT F3: THE HIDE DOORS, for the hosts' OVERLAY BRANCH.
+     *  Both dungeon hosts (scenes/dungeon.js, scenes/worldModes.js)
+     *  return out of the frame before `drawFoes` while a window is up,
+     *  and drawFoes is the only place either of them reaches drawHud -
+     *  so ui/hud.js's `if (hudDrawn) midScreenText.draw(); else
+     *  midScreenText.hide();` never ran on those frames at all. Under
+     *  the enhanced skin both surfaces are DOM and stay painted until
+     *  told otherwise, so "You are too far away" stood over an open
+     *  dungeon window until it closed, and on ?dungeon - which has no
+     *  townTalk to draw a second time - the popup column stood too.
+     *  The branch says it now, in one call that owns both. */
+    hideHudText: () => hideHudTextSurfaces(hudText),
     hudSay: (t, delayInSeconds = undefined) => hudText.add(t, delayInSeconds),   // R1: the host's one-line channel (the F1-F4 mode line)   // AT2: AddHUDText's delay arg rides through, as townTalk.say's does - Ambient Text sets it per line (textDisplayTime)
     hudBox: (rows) => pushDungeonWindow(new ActionTextBox(rows)),   // AUDIT 63 F33: DaggerfallUI.MessageBox, for the enemy arm's success boxes
     randomText: (id) => textRsc?.randomTextById(id, Math.random) ?? '',   // AUDIT 63 F33: TextProvider.GetRandomText (:250-269) - the 8999 pool
@@ -6258,6 +6271,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // singleton (:1366). A dungeon left behind must not keep a dead
       // context's opts closure installed on it.
       midScreenText.onMessage = _prevMidScreenSink;
+      // ...and this context's OWN popup column (AUDIT FONT F1) - EVERY
+      // ALLOCATION HAS AN OWNER, and a torn-down context's DOM column
+      // would otherwise outlive it on the page.
+      hudText.dispose();
     },
   };
   api.enhancedNav = enhancedNav;   // ENHANCED AI 3b: the bake for the motor (4); null chf until it lands

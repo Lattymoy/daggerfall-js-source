@@ -286,9 +286,11 @@ the same nodes; the cards are re-parented only when the seat order really
 changed - and the pins COUNT the writes (sixty quiet frames write
 nothing).
 
-**The green names**: `net/remotePlayers.js drawNames` gains a trailing
-optional `colorOf` ((id) => rgba or null; the default path - every caller
-written before the party existed - is white byte for byte), and
+**The green names**: `net/remotePlayers.js drawNames` gains an optional
+`colorOf` ((id) => rgba or null; the default path - every caller written
+before the party existed - is white byte for byte; since NAME1 the enhanced
+lane draws its names through `ui/nameLayer.js` on the same seam, with
+`blocked` appended behind `colorOf` so this law holds as written), and
 `world.js` hands it `(id) => social?.colorOf(id) ?? null`: my party's
 tabs in PARTY_GREEN, a friend who is not in my party white (a friend is a
 list, a party is a formation). `test/soc4_partyhud.test.js` - 8 pins at SOC4, 10 since AUDIT SOC,

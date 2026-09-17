@@ -545,6 +545,20 @@ test('AUDIT 64 F37: the popup column is a HUD component too, so its DRAW is gate
   for (const host of ['scenes/townTalk.js', 'scenes/dungeonContext.js']) {
     const s = src(host);
     assert.match(s, /hudRenderEnabled\(\)\) hud(Text)?\.draw\(/, `${host} gates the popup draw`);
+    // FONT1 (2026-09-16, Mac: "Any enhanced UI or text must be our
+    // enhanced version"): AND THE REFUSED FRAME IS SAID OUT LOUD. The
+    // enhanced skin draws this column in the DOM (ui/enhancedHudText.js),
+    // and a DOM column is not repainted - it stays until it is told
+    // otherwise, which is THIS finding's own law. A gate that merely
+    // skips the paint cannot hide it, so every gated site carries the
+    // hide door on its else.
+    // EVERY gated site, not just one: townTalk has two (the street
+    // frame and the interior hudFrame) and a hide door on one of them
+    // leaves the other's lines standing.
+    const gated = [...s.matchAll(/hudRenderEnabled\(\)\) hud(?:Text)?\.draw\(/g)].length;
+    const doors = [...s.matchAll(/\); else hud(?:Text)?\.hide\(\);/g)].length;
+    assert.ok(gated >= 1 && doors === gated,
+      `${host} gates the popup draw at ${gated} site(s) and sends the refused frame to hide() at ${doors} - a DOM column skipped is a DOM column still painted`);
   }
   // the tick keeps draining - PopupText.Update is DaggerfallHUD.Update's
   // work, which renderHUD does not touch (:347-351 overrides Draw only).

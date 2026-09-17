@@ -858,3 +858,31 @@ test('CHAT-G: the console says it ONCE - a flood must not become its own flood',
     assert.match(said[0], /faster than 20\/s/);
   } finally { console.warn = warn; }
 });
+
+// ── FONT1 (2026-09-16, Mac: "Enhanced mode UI. Especially the new
+// online interfaces font use our enhanced font ... Any enhanced UI or
+// text must be our enhanced version") ───────────────────────────────
+
+test('FONT1: the chat is set in the ENHANCED face, not the launcher\'s - unsmoothed, with Silkscreen\'s five in the sheet', () => {
+  // The panel stood over an enhanced world in `--data` (Barlow Semi
+  // Condensed), which is the MENU's face - the boot screens' and the
+  // settings pages'. In-game the enhanced skin is the pixel stack, and
+  // the chat is in-game.
+  assert.match(CHAT_CSS, /\.dfchat \{[^}]*font-family: 'Pixelify Five', 'Pixelify Sans', monospace;/,
+    'mutants: the root left on var(--data) - the launcher face over the world; the five dropped out of the stack, so every 5 reads as an 8 (FIX-D)');
+  assert.match(CHAT_CSS, /\.dfchat \{[^}]*-webkit-font-smoothing: none;/,
+    'mutant: the smoothing left on, which blurs every pixel glyph in the panel');
+  assert.doesNotMatch(CHAT_CSS, /--data/, 'no corner of this sheet is still in the menu\'s face');
+  // FIX-D: the five is a data-URI @font-face, and this sheet is
+  // injected on its own - a document that never mounted the skin's
+  // stylesheet must still get Silkscreen's 5.
+  assert.match(CHAT_CSS, /@font-face \{ font-family: 'Pixelify Five'; unicode-range: U\+0035;/,
+    'mutant: the face dropped from this sheet, so a chat mounted without the skin\'s stylesheet draws Pixelify\'s 5');
+  assert.ok(CHAT_CSS.indexOf('@font-face') < CHAT_CSS.indexOf('.dfchat {'), 'and it stands before the first rule that sets the stack');
+  // Text over the WORLD takes the HUD's hard shadow pair, never a blur:
+  // a blurred drop shadow under a pixel face reads as a rendering
+  // fault. The open list, which sits on a plate, still takes none.
+  assert.match(CHAT_CSS, /\.dfchat-line \{[^}]*text-shadow: 2px 2px 0 rgba\(0,0,0,0\.85\); \}/,
+    'mutant: the old `0 1px 2px #000, 0 0 6px` blur kept under the pixel face');
+  assert.match(CHAT_CSS, /\.dfchat-list \.dfchat-line \{ text-shadow: none; \}/);
+});

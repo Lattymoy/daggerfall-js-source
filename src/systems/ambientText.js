@@ -135,7 +135,14 @@ export const hasAmbientText = (key, texts = AMBIENT_TEXTS) => Object.prototype.h
  *                  actually being built, which is where DFU calls it.
  *   ready()        DaggerfallUnity.Instance.IsReady && PlayerEnterExit exists
  *   paused()       GameManager.IsGamePaused
- *   say(text, s)   DaggerfallUI.AddHUDText(text, seconds)
+ *   say(text, s)   DaggerfallUI.AddHUDText(text, seconds). FONT1
+ *                  (2026-09-16, Mac: "Ambient Text mod also doesnt use
+ *                  it"): the mod says nothing about how its lines are
+ *                  DRAWN and never did - the host's `say` is
+ *                  townTalk.say, which is HudText.add, which is
+ *                  PopupText. That column is the enhanced skin's own
+ *                  face now (ui/enhancedHudText.js), so these lines
+ *                  are too, and no line of this mod changed to do it.
  *   rolls          Random.Range, as a [0, 1) source
  *   enabled()      the mod's own switch (the port's - DFU enables a mod by listing it)
  *   texts          AmbientText.AmbientTexts, the static Hashtable. A seam

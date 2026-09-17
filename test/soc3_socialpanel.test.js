@@ -906,3 +906,29 @@ test('AUDIT SOC C20: a roster row with NOTHING behind it is not a door - which i
   assert.equal(find(root, 'dfchat-rowmenu').length, 0, 'clicking it opens nothing');
   assert.match(rowFor('Zed').className, /\bact\b/, 'a stranger still is one');
 });
+
+// ── FONT1 (2026-09-16, Mac: "Especially the new online interfaces font
+// use our enhanced font ... Any enhanced UI or text must be our
+// enhanced version") ────────────────────────────────────────────────
+
+test('FONT1: the friends + party panel and its toast wear the enhanced face, unsmoothed, with the five in their own sheet', () => {
+  // `--data` is the MENU's face (the boot screens, the settings pages).
+  // This panel opens over an enhanced world, where the face is the
+  // pixel stack every window and the HUD are set in.
+  for (const sel of ['.dfsocial', '.dfsocial-toast']) {
+    const rule = SOCIAL_CSS.slice(SOCIAL_CSS.indexOf(`\n${sel} {`));
+    assert.match(rule.slice(0, rule.indexOf('}')), /font-family: 'Pixelify Five', 'Pixelify Sans', monospace;/,
+      `${sel} mutants: left on var(--data) - the launcher face over the world; the five dropped from the stack, so a "1:58 left" reads with an 8-shaped 5 (FIX-D)`);
+    assert.match(rule.slice(0, rule.indexOf('}')), /-webkit-font-smoothing: none;/,
+      `${sel} mutant: the smoothing left on, which blurs every pixel glyph`);
+  }
+  assert.doesNotMatch(SOCIAL_CSS, /--data/, 'no corner of this sheet is still in the menu\'s face');
+  assert.match(SOCIAL_CSS, /@font-face \{ font-family: 'Pixelify Five'; unicode-range: U\+0035;/,
+    'mutant: the face dropped from this sheet - it is injected on its own, and a panel without the skin\'s stylesheet would draw Pixelify\'s 5');
+  assert.ok(SOCIAL_CSS.indexOf('@font-face') < SOCIAL_CSS.indexOf('\n.dfsocial {'), 'and it stands before the first rule that sets the stack');
+  // The pixel face runs about 1.29x the width of the one it replaced
+  // (measured in Chromium, tools/font1Probe.mjs), and AUDIT SOC C8's
+  // targets are a PLATFORM rule rather than a typographic one: the
+  // finger keeps its 44px whatever the letters do.
+  assert.match(SOCIAL_CSS, /\.dfsocial\.touch \.dfsocial-tab \{ min-height: 44px;/, 'mutant: the touch targets shrunk to make room for the wider face');
+});

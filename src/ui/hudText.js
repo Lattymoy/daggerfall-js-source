@@ -18,8 +18,29 @@
 // is only that the skill/loot literals here are not yet read from
 // their TEXT.RSC record ids (AUDIT 23 narrowed the stale flag).
 
+// FONT1 (2026-09-16, Mac: "Enhanced mode UI ... Ambient Text mod also
+// doesnt use it. Any enhanced UI or text must be our enhanced
+// version"): THE MODEL IS ONE, THE DRAW IS TWO.
+//
+// Everything above this line - the queue, the timer, the rubberband,
+// the notebook tail - is PopupText and stays PopupText whatever skin
+// is on: a second queue for the enhanced skin would be a second
+// PopupText, and two of them drift apart on the first line that pops
+// while a window is open. What the skin changes is the PAINT, so
+// `draw` branches at its top and hands ui/enhancedHudText.js the frame
+// this class would have drawn - the same rows, the same slide. The
+// classic arm below is byte for byte what it was.
 import { drawText, measureText } from './text.js';
 import { nativeMetrics, NATIVE_W, DEFAULT_TEXT_COLOR } from './nativePanel.js';
+import { isEnhanced } from '../systems/uiSkin.js';
+import { drawEnhancedHudText, releaseEnhancedHudText } from './enhancedHudText.js';
+
+/** AUDIT FONT F1: every model gets a name of its own, so two never
+ *  share one DOM column - see ui/enhancedHudText.js's header for why
+ *  there are two at all. A caller that passes none still gets a
+ *  unique one, because the failure this closes was exactly two
+ *  instances agreeing on a default. */
+let _hudTextSeq = 0;
 
 export const HUD_TEXT_POP_DELAY = 1.0;      // PopupText.popDelay
 export const HUD_TEXT_MAX_ROWS = 7;         // PopupText.maxRows
@@ -28,7 +49,16 @@ export const HUD_TEXT_RUBBERBAND = 0.8;     // PopupText.rubberbandFactor
 export const HUD_TEXT_TOP = 4;              // PopupText.Draw's `float y = 4`
 
 export class HudText {
-  constructor() {
+  constructor(key = null) {
+    /** AUDIT FONT F1: this model's own DOM column (ui/enhancedHudText
+     *  .js). `key` names the OWNER for a reader of the rendered page;
+     *  the sequence is appended whatever is passed, so two contexts
+     *  that overlap for a frame - one built before the other's
+     *  teardown - can never land on one element either. */
+    this.key = `${key ?? 'hud'}${++_hudTextSeq}`;
+    /** AUDIT FONT F4: the host's last word on whether a canvas window
+     *  stands over this column - see observe() below. */
+    this.covered = false;
     this.lines = [];
     this.timer = 0;
     this.nextPopDelay = HUD_TEXT_POP_DELAY;
@@ -65,8 +95,71 @@ export class HudText {
     }
   }
 
-  /** PopupText.Draw verbatim, in NativePanel coordinates. */
+  /** FONT1: PopupText.Draw's frame as DATA - the rows it would paint,
+   *  front first, and the scroll-out in ROWS - for a renderer that is
+   *  not the bitmap one. The row count is Draw's own: the loop breaks
+   *  AFTER the row that takes the count past maxRows (`if (++count >
+   *  maxCount) break`), so a full queue paints maxRows + 1 rows. That
+   *  is DFU's off-by-one and it is kept, because this is the same Draw
+   *  described twice and the two must not disagree. */
+  frame() {
+    const maxCount = Math.min(this.lines.length, HUD_TEXT_MAX_ROWS);
+    return {
+      rows: this.lines.slice(0, maxCount + 1).map((l) => l.text),
+      slide: this.timer < 0 ? this.timer / HUD_TEXT_POP_DELAY : 0,
+    };
+  }
+
+  /** FONT1: THE HIDE DOOR, and why there is one at all.
+   *
+   *  The classic column is repainted every frame, so a host that wants
+   *  it gone simply does not call `draw` - which is what the hosts'
+   *  `if (font && hudRenderEnabled())` has always been. A DOM column is
+   *  not repainted: it STAYS until it is told otherwise (AUDIT 64 F37,
+   *  the enhanced HUD's own finding), so under the enhanced skin the
+   *  not-drawing has to be SAID. The hosts say it in the `else` of the
+   *  gate they already had, and on the classic skin this is nothing at
+   *  all - which is exactly what the classic did with those frames. */
+  hide() {
+    if (isEnhanced() && typeof document !== 'undefined') drawEnhancedHudText({ rows: [], slide: 0, visible: false }, undefined, this.key);
+  }
+
+  /** EVERY ALLOCATION HAS AN OWNER (AUDIT FONT F1): a model whose host
+   *  is ending takes its DOM column with it. */
+  dispose() {
+    if (typeof document !== 'undefined') releaseEnhancedHudText(this.key);
+  }
+
+  /** AUDIT FONT F4 - WHAT THE HOST CAN SEE AND THIS MODEL CANNOT: a
+   *  canvas window standing over the column.
+   *
+   *  The classic column is painted by the host BEFORE the window on
+   *  top of it (scenes/townTalk.js draws the column, then the overlay
+   *  stack), which is DFU's order too - DaggerfallHUD paints under the
+   *  top window. The DOM column is at z-index 4 over the canvas and
+   *  obeys no such order, so under the enhanced skin the popup lines
+   *  stood OVER the death screen, the rest and save windows, the
+   *  travel pop-up, the quest journal and every MessageBox. So the
+   *  hosts REPORT their window slot per frame - the same idiom
+   *  ui/hud.js already uses for the mid-screen label's `observe` -
+   *  and the enhanced arm hides the column for as long as one stands.
+   *  The classic arm reads it not at all: there the draw order has
+   *  always said it, and DFU really does paint that column under the
+   *  window. A window slot is the HOST's to know, and a fourth
+   *  positional argument here is a slot the window sweep reserves for
+   *  the scale (audit24 wave40). */
+  observe(covered) { this.covered = !!covered; }
+
+  /** PopupText.Draw verbatim, in NativePanel coordinates - and, under
+   *  the enhanced skin, the same frame handed to the DOM column
+   *  instead (FONT1). The hosts pass a fourth argument (the HUD scale)
+   *  and this has never declared one: the classic column measures
+   *  itself off the native panel and the enhanced one off --hud-scale. */
   draw(renderer, canvas, font) {
+    if (isEnhanced() && typeof document !== 'undefined') {
+      drawEnhancedHudText({ ...this.frame(), visible: !this.covered }, undefined, this.key);
+      return;
+    }
     if (!font || !this.lines.length) return;
     const m = nativeMetrics(canvas);
     const rowH = font.fnt.fixedHeight;   // TextLabel.TextHeight = font.GlyphHeight

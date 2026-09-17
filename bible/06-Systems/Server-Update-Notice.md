@@ -14,7 +14,7 @@ one that actually happens.
 
 | | what it is | how often | what a player sees |
 |---|---|---|---|
-| **the relay** | `server/`, a Cloudflare Worker and its Durable Objects | **by hand** — `npx wrangler deploy`, nothing in CI does it | every socket drops at once: peers vanish, chat goes quiet |
+| **the relay** | `server/`, a Cloudflare Worker and its Durable Objects | **in CI since SRV-N/CI (PR #209, 2026-09-17)**: `.github/workflows/relay-deploy.yml` runs on every push to main, reads `RELAY_VERSION` from `src/net/wire.js`, asks the live `/health`, and deploys only when they differ, then polls `/health` until it names the new version (a `workflow_dispatch` forces one). Before #209 it was by hand - `npx wrangler deploy` - and the slices below say so as they stood | every socket drops at once: peers vanish, chat goes quiet |
 | **the build** | the client, on GitHub Pages | **every merge to main**, several times a day | nothing — they keep running code we replaced |
 
 Mac's words name the first. Mac's *situation* is the second: "whenever
@@ -142,7 +142,8 @@ page load on the CDN twice for an answer we already have.
 **The relay half is inert until the relay is hand-deployed.** The live
 Worker is `world66`, its welcomes carry no `v`, and the client reads a
 missing version as `unknown` and stays silent — which is correct, and is
-also why nothing will be seen until someone runs `npx wrangler deploy`.
+also why nothing will be seen until someone runs `npx wrangler deploy`
+(as it stood; since SRV-N/CI the push to main deploys it - the table above).
 
 And the deploy that lands it is **itself silent**, which follows from the
 ladder rather than working around it: a player connected across the

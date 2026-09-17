@@ -231,7 +231,7 @@ time is read back off the wall.
 | DFU | here |
 |---|---|
 | `PlayerEnterExit.IsPlayerInsideBuilding` | the host slot's own `insideBuilding()` - see AUDIT AT F5 |
-| `DaggerfallUI.AddHUDText(text, delay)` | `townTalk.say(line, delay)` / `ctx.hudSay(line, delay)` → `ui/hudText.js` `add` |
+| `DaggerfallUI.AddHUDText(text, delay)` | `townTalk.say(line, delay)` / `ctx.hudSay(line, delay)` → `ui/hudText.js` `add` (drawn by the classic bitmap arm on the classic skin and, since FONT1 2026-09-16, by `ui/enhancedHudText.js` in the pixel face on the enhanced one - Mac: "Ambient Text mod also doesnt use it") |
 | `Dice100.SuccessRoll(chance)` | `combat/formulas.js` `dice100` |
 | `PlayerGPS.IsPlayerInLocationRect` / `CurrentLocationType` | the hosts' `_musicInLocationRect` / `_musicLocationType` |
 | `PlayerGPS.CurrentClimateIndex` | `maps.getClimateIndex(px.x, px.y)` |
