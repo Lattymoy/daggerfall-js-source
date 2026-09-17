@@ -60,6 +60,7 @@
 import { getPref } from '../systems/uiPrefs.js';
 import { isEnhanced } from '../systems/uiSkin.js';
 import { SHADOW_GLSL } from './shadowPass.js';   // EL2: the receiver block - the sun map on the sun term, the cube map on its lantern
+import { AIR_AO_GLSL, airOn } from './airPass.js';   // EL3: the ambient occlusion image by screen position, and its kill door
 
 /** The lane's light cap - the classic lane's sixteen, tripled. Forty-eight
  *  vec4 + forty-eight vec3 are 96 uniform vectors; ES 3.0 guarantees 224
@@ -335,6 +336,7 @@ float cloudShadowAt(vec3 wp) {
 }
 ${EL_GLSL}
 ${SHADOW_GLSL}
+${AIR_AO_GLSL}
 ${EL_FOG_GLSL}
 ${EL_POINT_LIT_GLSL}
 out vec4 outColor;
@@ -350,7 +352,7 @@ void main() {
   // emission cancels other light (DaggerfallDefault.shader:83-85), in linear
   vec3 emission = elDecode(texture(uEmissionTex, vUV).rgb) * uEmissionColor;
   vec3 albedo = max(elDecode(tex.rgb) - emission, vec3(0.0));
-  vec3 ambient = uTrilight > 0.5 ? (n.y >= 0.0 ? mix(uAmbient, uAmbientSky, n.y) : mix(uAmbient, uAmbientGround, -n.y)) : uAmbient;
+  vec3 ambient = (uTrilight > 0.5 ? (n.y >= 0.0 ? mix(uAmbient, uAmbientSky, n.y) : mix(uAmbient, uAmbientGround, -n.y)) : uAmbient) * aoAt();   // EL3: the crevice loses the light that has no direction
   vec3 lit = albedo * (ambient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff)
     + uLight3Color * (uLight3Scale * l3diff) + elPointLit(vWorldPos, n) + elIndirectLit(vWorldPos, n));
   outColor = vec4(elFinish(lit + emission, vWorldPos), 1.0);
@@ -465,6 +467,7 @@ float cloudShadowAt(vec3 wp) {
 }
 ${EL_GLSL}
 ${SHADOW_GLSL}
+${AIR_AO_GLSL}
 ${EL_FOG_GLSL}
 ${EL_POINT_LIT_GLSL}
 out vec4 outColor;
@@ -487,8 +490,8 @@ void main() {
   vec3 n = normalize(vNormal);
   float diff = max(dot(n, uLightDir), 0.0) * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n);   // EL2: the sun map
   float mdiff = max(dot(n, uMoonDir), 0.0);
-  vec3 lit = tex * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff)
-    + elPointLit(vWorldPos, n) + elIndirectLit(vWorldPos, n));
+  vec3 lit = tex * (uAmbient * aoAt() + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff)
+    + elPointLit(vWorldPos, n) + elIndirectLit(vWorldPos, n));   // EL3: the ambient under the AO image
   outColor = vec4(elFinish(lit, vWorldPos), 1.0);
 }`;
 
@@ -531,6 +534,7 @@ float cloudShadowAt(vec3 wp) {
 }
 ${EL_GLSL}
 ${SHADOW_GLSL}
+${AIR_AO_GLSL}
 ${EL_FOG_GLSL}
 ${EL_POINT_LIT_GLSL}
 out vec4 outColor;
@@ -541,8 +545,8 @@ void main() {
   vec3 albedo = elDecode(vColor * texel.rgb);
   float diff = max(dot(n, uLightDir), 0.0) * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n);   // EL2: the sun map
   float mdiff = max(dot(n, uMoonDir), 0.0);
-  vec3 lit = albedo * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff)
-    + elPointLit(vWorldPos, n) + elIndirectLit(vWorldPos, n));
+  vec3 lit = albedo * (uAmbient * aoAt() + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff)
+    + elPointLit(vWorldPos, n) + elIndirectLit(vWorldPos, n));   // EL3
   outColor = vec4(elFinish(lit, vWorldPos), 1.0);
 }`;
 
@@ -598,6 +602,7 @@ export const EL_LANE = Object.freeze({
   charFs: EL_CHAR_FS,
   farRingFs: EL_FAR_RING_FS,
   shadows: true,   // EL2: the renderer builds its ShadowPass for this lane
+  air: true,       // EL3: and its AirPass, behind `?air=off` (syncLightingLane reads the door)
   maxLights: EL_MAX_LIGHTS,
   decode3: elDecode3,
   decodeN: elDecodeN,
@@ -612,7 +617,7 @@ export const EL_LANE = Object.freeze({
 export function syncLightingLane(renderer, search = globalThis.location?.search ?? '') {
   const on = enhancedLightingOn(search);
   renderer.setLightingLane(on ? EL_LANE : null);
-  if (on) renderer.setExposure(exposureFor(search));
+  if (on) { renderer.setExposure(exposureFor(search)); renderer.setAir(airOn(search)); }   // EL3: the door is the page's, read here alone
   return on;
 }
 

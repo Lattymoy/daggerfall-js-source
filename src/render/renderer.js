@@ -335,6 +335,7 @@ void main() {
 }`;
 
 import { ShadowPass } from './shadowPass.js';   // EL2: the lane's shadow maps - a leaf that compiles nothing until a lane asks
+import { AirPass } from './airPass.js';   // EL3: the depth image, the ambient occlusion, the bloom and the shafts - the same kind of leaf
 import { SHADE_DARK } from '../systems/concealDraw.js';   // ECV1 / AUDIT 65 PN-3: the shade's pull toward black, interpolated into BB_FS below - the shader restated 0.12 as a second literal. The LEAF, not systems/combatVisuals.js, which re-exports it: that module's graph would take this file's closure from 13 modules to 69
 
 const BB_FS = `#version 300 es
@@ -840,6 +841,9 @@ export class Renderer {
     this._exposure = 1;      // the lane's exposure (EL1); inert on the classic set
     this._shadows = null;    // EL2: the ShadowPass while a lane that asks for shadows is installed
     this._shadowPass = null; // ...built once and kept across swaps, like the lane's programs
+    this._air = null;        // EL3: the AirPass while a lane that asks for it is installed AND the page's door is open
+    this._airPass = null;
+    this._airWanted = false;
     this.maxPointLights = CLASSIC_MAX_LIGHTS;
     this._decA = new Float32Array(3); this._decB = new Float32Array(3);   // EL1: the decode scratch (two, for the billboard tint's two terms)
     this._pointColorDec = new Float32Array(CLASSIC_MAX_LIGHTS * 3);
@@ -1255,12 +1259,13 @@ export class Renderer {
     // EL1: the lane's own uniforms, per program (null on the classic set, which never declares them)
     // EL2: the shadow receiver's six ride the same table (null on the classic set)
     const elLocs = (p) => {
-      /** @type {any[] & { shadow?: object }} */
+      /** @type {any[] & { shadow?: object, ao?: object }} */
       const a = [gl.getUniformLocation(p, 'uELExposure'), gl.getUniformLocation(p, 'uELScatter')];
       a.shadow = {
         sunShadow: gl.getUniformLocation(p, 'uSunShadow'), sunVP: gl.getUniformLocation(p, 'uSunVP'), sunParams: gl.getUniformLocation(p, 'uSunShadowParams'),
         pointShadow: gl.getUniformLocation(p, 'uPointShadow'), pointParams: gl.getUniformLocation(p, 'uPointShadowParams'), shadowIndex: gl.getUniformLocation(p, 'uShadowIndex'),
       };
+      a.ao = { ao: gl.getUniformLocation(p, 'uAO'), aoInfo: gl.getUniformLocation(p, 'uAOInfo') };   // EL3
       return a;
     };
     this._el = { mesh: elLocs(set.mesh), char: elLocs(set.char), bb: elLocs(set.bb), terrain: elLocs(set.terrain) };
@@ -1295,6 +1300,7 @@ export class Renderer {
       this._shadows?.discard();
       this._shadows = null;
     }
+    this._syncAir();
     this.maxPointLights = lane ? lane.maxLights : CLASSIC_MAX_LIGHTS;
     const n = this.maxPointLights;
     if (this._flashLightScratch.length < n * 4) {
@@ -1313,6 +1319,17 @@ export class Renderer {
   get lightingLane() { return this._lane; }
   /** EL1: the lane's exposure, for a foreign pass that lights on the lane (the far ring). */
   get exposure() { return this._exposure; }
+
+  /** EL3: the page's air door (syncLightingLane reads `?air=off`): the
+   *  AirPass rides a lane that asks for it AND this. */
+  setAir(on) { this._airWanted = !!on; this._syncAir(); }
+  _syncAir() {
+    const want = this._airWanted && !!this._lane?.air && !!this._shadows;   // the air pass replays the shadow pass's records
+    if (want) this._air = this._airPass ??= new AirPass(this.gl, { build: (vs, fs) => this._buildProgram(vs, fs), vs: { mesh: VS, bb: BB_VS } });
+    else { if (this._air) this._air.pending = false; this._air = null; }
+  }
+  /** EL3: the AirPass or null - a probe's read. */
+  get air() { return this._air; }
 
   /** EL1: the lane's exposure - a scene-wide gain before the tonemap.
    *  Shadowed and uploaded with the frame; inert on the classic set. */
@@ -1335,23 +1352,52 @@ export class Renderer {
     gl.uniform1f(expLoc, this._exposure);
     gl.uniform1f(scLoc, lane.scatter * lane.scatterDensity(this._fogMode, this._fogDensity, this._fogRange[0], this._fogRange[1]));
     if (this._shadows) this._shadows.upload(this._el[key].shadow);   // EL2: the maps and the receiver's uniforms
+    if (this._air) this._air.upload(this._el[key].ao);   // EL3: the AO image
   }
 
-  /** EL2: THE SHADOW MAPS, drawn at the top of beginFrame - from the LAST
-   *  frame's records under THIS frame's light and eye (render/shadowPass.js).
-   *  A panel frame drops the records it inherited and draws no map. The
-   *  pass binds its own programs and VAOs; beginFrame forgets the shadows
-   *  right after, as it always did. */
-  _renderShadowMaps(view, lightDir) {
-    if (this._panelSaved) { this._shadows.discard(); return; }
+  /** EL2/EL3: THE PASSES BEFORE THE FRAME, at the top of beginFrame - the
+   *  shadow maps (render/shadowPass.js) and then the air's images
+   *  (render/airPass.js: the depth image, the AO, the bloom source, the
+   *  shafts), both from the LAST frame's records under THIS frame's light,
+   *  eye and viewport; then the records are dropped. A panel frame drops
+   *  the records it inherited and draws nothing. The passes bind their own
+   *  programs, VAOs and viewports; the world viewport comes back here and
+   *  beginFrame forgets the shadows right after, as it always did. */
+  _renderPasses(proj, view, lightDir) {
+    const sp = this._shadows;
+    if (this._panelSaved) { sp.discard(); return; }
     const v = view;
     this._camPos[0] = -(v[0] * v[12] + v[1] * v[13] + v[2] * v[14]);
     this._camPos[1] = -(v[4] * v[12] + v[5] * v[13] + v[6] * v[14]);
     this._camPos[2] = -(v[8] * v[12] + v[9] * v[13] + v[10] * v[14]);
-    this._shadows.render({
+    const bindVao = (vao) => this._bindVao(vao);
+    sp.render({
       eye: this._camPos, lightDir, sunScale: this._sunScale, pointLights: this._pointLights,
-      textures: this.textures, isSpectral: isSpectralArchive, bindVao: (vao) => this._bindVao(vao),
+      textures: this.textures, isSpectral: isSpectralArchive, bindVao,
     });
+    if (this._air) {
+      const count = this._pointLights.length / 4;
+      this._air.render({
+        proj, view, lightDir, sunScale: this._sunScale, sunColor: this._sunColor,
+        pointLights: this._pointLights, pointColors: count > 0 ? this._pointColorData(count) : null,
+        viewport: this._worldViewportPx ?? [0, 0, this.canvas.width, this.canvas.height],
+        shadows: sp, textures: this.textures, emissionTextures: this.emissionTextures, blackTex: this._blackTex,
+        windowEmission: this._windowEmission, isSpectral: isSpectralArchive, bindVao, clearColor: this._clearColor,
+      });
+    }
+    sp.discard();
+    this._restoreWorldViewport();
+    this._lastProgram = null; this._lastVao = null;
+  }
+
+  /** EL3: the frame's first screen-space draw composites the bloom and
+   *  the shafts over the world (the 2D pass has begun; the world pass and
+   *  every foreign pass are done), then hands the 2D pass the full canvas. */
+  _compositeAir() {
+    if (!this._air?.pending) return;
+    this._air.composite();
+    this._lastProgram = null; this._lastVao = null;
+    this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
   }
 
   /** EL2: whether this draw is recorded for the shadow maps - a lane with
@@ -1838,6 +1884,7 @@ void main() {
     // back - the reduced rect is renderer-owned frame state, not a
     // call every host has to remember (and forget once).
     if (this._worldViewportPx) this.endWorldPass();
+    this._compositeAir();   // EL3: a no-op unless a render is owed
     if (!this.screenQuadProgram) {
       const vs = `#version 300 es
 layout(location=0) in vec2 aPos;
@@ -1964,6 +2011,7 @@ void main() {
     // The same law drawScreenQuad opens with (ROAD-E E5): the first 2D
     // primitive after a shrunk world pass is where the canvas returns.
     if (this._worldViewportPx) this.endWorldPass();
+    this._compositeAir();   // EL3: a no-op unless a render is owed
     if (!this.screenQuadRunProgram) {
       const vs = `#version 300 es
 layout(location=0) in vec2 aPos;
@@ -2254,7 +2302,6 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   beginFrame(proj, view, lightDir) {
     const s = this.stats;
     s.draws = 0; s.programBinds = 0; s.vaoBinds = 0; s.texBinds = 0;
-    if (this._shadows) this._renderShadowMaps(view, lightDir);   // EL2: the maps, before the clear
     // VC4: the cloud shadow deck is a FRAME's, not the renderer's - a host
     // that wants one sets it after this (the exterior hosts do, per
     // pixel); an interior or a dungeon, which never does, gets none, and
@@ -2291,6 +2338,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
         : null;
       if (this._worldViewportPx) this._restoreWorldViewport();
     }
+    if (this._shadows) this._renderPasses(proj, view, lightDir);   // EL2/EL3: the maps and the images, before the clear
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     this._use(this.program);
     gl.uniformMatrix4fv(this.uProj, false, proj);
@@ -3178,7 +3226,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   /** Draw billboard batches facing the camera. Call after solid geometry. */
   drawBillboards(batches, camRight, camUp) {
     const gl = this.gl;
-    if (this._casting) this._shadows.recordBillboards(batches, this._flatWind);   // EL2
+    if (this._casting) this._shadows.recordBillboards(batches, this._flatWind, camRight, camUp);   // EL2 (EL3: with the basis)
     this._use(this.bbProgram);
     this._uploadCloudShadow('bb');   // VC4
     gl.uniformMatrix4fv(this.bbUProj, false, this._proj);

@@ -276,7 +276,7 @@ export class ShadowPass {
     gl.bindTexture(gl.TEXTURE_2D_ARRAY, null);
     gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);
     // the pool: records are minted once and reused by index
-    /** @type {Array<{kind:number, mesh:any, matrix:Float32Array, texRemap:any, surface:any, arrayTex:any, tilemapTex:any, tileSize:number, batches:any, flatWind:Float32Array}>} */
+    /** @type {Array<{kind:number, mesh:any, matrix:Float32Array, texRemap:any, surface:any, arrayTex:any, tilemapTex:any, tileSize:number, batches:any, flatWind:Float32Array, right:Float32Array, up:Float32Array}>} */
     this.records = [];
     this.count = 0;
     this.recording = true;
@@ -298,7 +298,7 @@ export class ShadowPass {
     if (this.count >= SHADOW_RECORD_MAX) return null;
     let r = this.records[this.count];
     if (!r) {
-      r = { kind: 0, mesh: null, matrix: new Float32Array(16), texRemap: null, surface: null, arrayTex: null, tilemapTex: null, tileSize: 0, batches: null, flatWind: new Float32Array(4) };
+      r = { kind: 0, mesh: null, matrix: new Float32Array(16), texRemap: null, surface: null, arrayTex: null, tilemapTex: null, tileSize: 0, batches: null, flatWind: new Float32Array(4), right: new Float32Array(3), up: new Float32Array(3) };
       this.records[this.count] = r;
     }
     this.count++;
@@ -312,9 +312,10 @@ export class ShadowPass {
     const r = this._rec(); if (!r) return;
     r.kind = REC_TERRAIN; r.surface = surface; r.matrix.set(matrix); r.arrayTex = arrayTex; r.tilemapTex = tilemapTex; r.tileSize = tileSize;
   }
-  recordBillboards(batches, flatWind) {
+  recordBillboards(batches, flatWind, camRight, camUp) {
     const r = this._rec(); if (!r) return;
     r.kind = REC_BB; r.batches = batches; r.flatWind.set(flatWind ?? this._zeroWind);
+    r.right.set(camRight); r.up.set(camUp);   // EL3: the basis the batch was drawn with, for the emission replay
   }
   /** Drop the frame's records without drawing them (a frame that ran no
    *  world pass, a panel frame). */
@@ -324,8 +325,9 @@ export class ShadowPass {
   }
 
   /**
-   * Draw the maps for THIS frame from LAST frame's records, then drop
-   * them. `f` is the frame: { eye, lightDir, sunScale, pointLights (the
+   * Draw the maps for THIS frame from LAST frame's records. The records
+   * stay for the air pass (EL3); the renderer discards them after both.
+   * `f` is the frame: { eye, lightDir, sunScale, pointLights (the
    * vec4s), textures (the renderer's map), blackTex, bindVao, use }.
    * Leaves no framebuffer bound and the caller's program shadow dirty.
    */
@@ -349,7 +351,7 @@ export class ShadowPass {
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.sunFbos[c]);
         gl.viewport(0, 0, SHADOW_SUN_SIZE, SHADOW_SUN_SIZE);
         gl.clear(gl.DEPTH_BUFFER_BIT);
-        this.stats.sunDraws += this._replay(f, this.sunVP[c], null);
+        this.stats.sunDraws += this.replay(f, this.sunVP[c], null);
       }
       this.sunParams[0] = SHADOW_CASCADES[0]; this.sunParams[1] = sunTexelWorld(0); this.sunParams[2] = sunTexelWorld(1); this.sunParams[3] = 1;
       this._sunVPFlat.set(this.sunVP[0], 0); this._sunVPFlat.set(this.sunVP[1], 16);
@@ -364,7 +366,7 @@ export class ShadowPass {
           gl.bindFramebuffer(gl.FRAMEBUFFER, this.pointFbos[face]);
           gl.viewport(0, 0, SHADOW_POINT_SIZE, SHADOW_POINT_SIZE);
           gl.clear(gl.DEPTH_BUFFER_BIT);
-          this.stats.pointDraws += this._replay(f, this.faceVP[face], pos);
+          this.stats.pointDraws += this.replay(f, this.faceVP[face], pos);
         }
         this.pointParams[0] = pos[0]; this.pointParams[1] = pos[1]; this.pointParams[2] = pos[2]; this.pointParams[3] = far;
         this.shadowIndex = i;
@@ -373,13 +375,14 @@ export class ShadowPass {
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.colorMask(true, true, true, true);
     gl.enable(gl.CULL_FACE);
-    this.discard();
   }
 
-  /** One map's worth of draws under view-projection `vp` (uploaded as
-   *  uProj with an identity uView). `lightPos` is the cube's light, for the
-   *  flats' facing; null for the sun (this._right). Returns the draw count. */
-  _replay(f, vp, lightPos) {
+  /** One map's worth of depth-only draws under view-projection `vp`
+   *  (uploaded as uProj with an identity uView). `lightPos` is the cube's
+   *  light, for the flats' facing; null for the sun (this._right - which
+   *  the air pass's camera replay sets to the camera's right first).
+   *  Returns the draw count. */
+  replay(f, vp, lightPos) {
     const gl = this.gl;
     const P = this.programs;
     let draws = 0;

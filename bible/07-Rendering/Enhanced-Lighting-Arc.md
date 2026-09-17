@@ -220,8 +220,96 @@ vector, is why the six face orientations are pinned by name now).
 array and cube formats, the compare mode and the face convention are
 WebGL2's by the book, and the book has been wrong before.
 
-## EL3 - depth and air (OPEN)
+## EL3 - depth and air (SHIPPED 2026-09-17)
 
-An RGBA16F HDR target with a depth texture, a depth prepass, SSAO
-multiplying the ambient, bloom on emissive surfaces and flames, volumetric
-light shafts, the tonemap moved to a final composite.
+`render/airPass.js`. Three screen-space effects on EL1's light and EL2's
+shadows, all fed by one new thing: a DEPTH IMAGE of the world from the
+camera, drawn at the top of the frame from the shadow pass's records (the
+same replay under the camera's view-projection). Off that depth:
+
+1. **Ambient occlusion** (SSAO at half resolution): the view-space
+   position reconstructed from the depth with the projection's four
+   numbers (`projInfo`, `viewDepth` - pinned against the perspective
+   matrix itself, mirrored and not), the normal from the derivatives and
+   flipped to face the eye whatever the mirror did, a hemisphere of twelve
+   samples (`aoKernel`, a fixed seed, denser near the origin) rotated per
+   pixel by a hash, each projected back and tested against the depth
+   image with a range check and a bias, then a 4x4 box blur. The lane's
+   mesh, terrain and character shaders read the image by screen position
+   (`AIR_AO_GLSL`, unit 12) and multiply their AMBIENT term alone - the
+   light that has no direction is the light a crevice loses; the sun and
+   the lanterns keep theirs. The flats and the far ring take none.
+2. **Bloom** (quarter resolution): sourced from what emits - every
+   window's emission map and every self-lit record, the records replayed
+   with an emission-only program (the sub-mesh's resolved mask, the window
+   colour or white), the flats' masks behind their cutout - and a GLARE
+   SPRITE at each lantern sized by the square root of its range, hidden
+   when the depth image holds a surface in front of its centre (the
+   vertex shader reads the depth); additive into a quarter target, then a
+   separable 9-tap gaussian twice.
+3. **Light shafts** (quarter resolution, outdoors): the sky's mask (depth
+   at the far plane) weighted toward the sun's screen position
+   (`sunScreenUV`: a directional light is a point at infinity, null behind
+   the camera; pinned dead centre when looked at and east-is-right under
+   the mirrored projection), radially blurred toward it over 32 taps with
+   decay, in the sun's colour; drawn only with a sun that has scale and
+   height and is in front of the camera.
+
+The bloom and the shafts are COMPOSITED additively by the frame's first
+screen-space draw (`drawScreenQuad` / `drawScreenQuadRun`, where the 2D
+pass begins and the world pass and every foreign pass have ended) over the
+world viewport, once a frame; the 2D pass then gets the full canvas back.
+`?air=off` keeps EL1 and EL2 and drops the three (`airOn`, read by
+`syncLightingLane`, handed to `Renderer.setAir`; the pass rides a lane
+that asks for it AND the door, built once and kept).
+
+**THE DEPARTURE FROM THE PLAN, recorded.** The plan named an RGBA16F
+target for the whole world with the tonemap moved to a final composite.
+Six foreign passes (both skies, the clouds, the precipitation, the grass,
+the far ring) restore `bindFramebuffer(null)` behind the renderer's back -
+the render-target helper's own law - so a world drawn off-screen would
+lose every one of them to the canvas. The scene stays forward-tonemapped
+(EL1); the bloom is sourced from the emitters themselves, which is the
+bloom that means something; a later pass that teaches the six about a
+current target can move the tonemap. Nothing shipped here needs a float
+target.
+
+**The renderer's half.** One `_renderPasses` at the top of `beginFrame`,
+after the viewport is set and before the clear: the shadow maps, then the
+air's images, then the records are dropped and the world viewport comes
+back. The shadow pass no longer drops its own records (the air needs
+them); the billboard record carries the camera basis the batch was drawn
+with, for the emission replay. The receiver's two uniforms ride the lane's
+per-program table. `setAir` and `_syncAir` decide the pass from the door,
+the lane's `air` flag and the presence of the shadow pass.
+
+**Known limits, recorded:** the AO, the bloom source and the depth image
+are a frame old in geometry (the records), current in camera; a caster
+the frame did not draw is absent from all three; the character rigs are in
+none; the bloom adds in display space over a tonemapped frame (an HDR
+composite is the later pass above); a classic panorama sky drawn as a
+screen quad (`?sky=classic` on the enhanced skin) would trigger the
+composite before the world's flats.
+
+**Pinned** (`test/el3_air.test.js`, 7): the door and the constants
+(four reserved units in a row); the reconstruction against the
+perspective matrix, mirrored and not, and the GLSL's arithmetic; the
+sun's screen position (the centre, above, east-is-right facing north,
+null behind, the direction's not the eye's); the kernel (hemisphere, unit
+ball, denser near the origin, the fixed seed's first sample); the
+receiver block and the shaders (the ambient alone, once, in the three lit
+shaders; none on the flat and the ring; the emitters; the glare hiding;
+the sky mask; additive twice; a leaf); the fake-GL lifecycle (built behind
+the door and kept, the images sized to the viewport and kept while it
+holds, the three depth clears before the frame's, the emitters counted,
+the rangeless light no glare, the shafts with the sun, the viewports and
+the framebuffer and the clear colour restored, the composite once on the
+first screen quad with ONE ONE and the full canvas after, none indoors at
+night for the shafts, none with the door closed, none inside a panel);
+the renderer's wiring. Campaign `tools/mutants/el3.json`: 38 mutants, 38
+killed; the five first-run survivors (an unseeded kernel, a reallocation
+every frame, a flat without a map emitting, a rangeless glare, an alpha
+composite) each made to bite. **NOT SEEN ON A GPU** - the SSAO's
+reconstruction and the glare's depth read are by the book; the look
+(radius, strengths, the shaft's reach) is Mac's eye and the doors are
+`?air=off` and the constants.

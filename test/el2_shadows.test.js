@@ -288,8 +288,10 @@ test('EL2: the renderer\'s wiring - the three draw paths record behind one gate,
   assert.match(r, /if \(!wire && this\._casting\) this\._shadows\.recordMesh\(mesh, modelMatrix, texRemap\);/, 'a wireframe draw (the automap) is not a caster');
   assert.match(r, /get _casting\(\) \{ return !!this\._shadows && !this\._panelSaved; \}/);
   const bf = r.slice(r.indexOf('beginFrame(proj, view, lightDir) {'), r.indexOf('beginFrame(proj, view, lightDir) {') + 2600);
-  assert.ok(bf.indexOf('this._renderShadowMaps(view, lightDir)') < bf.indexOf('gl.clear('), 'the maps before the clear');
-  assert.match(r, /if \(this\._panelSaved\) \{ this\._shadows\.discard\(\); return; \}/);
+  const passes = bf.indexOf('this._renderPasses(proj, view, lightDir)');
+  assert.ok(passes > 0 && passes < bf.indexOf('gl.clear('), 'the maps before the clear (EL3: with the air\'s images, one call)');
+  assert.match(r, /if \(this\._panelSaved\) \{ sp\.discard\(\); return; \}/);
+  assert.match(r, /    sp\.discard\(\);\n    this\._restoreWorldViewport\(\);/, 'the records are dropped after both passes and the world viewport comes back');
   assert.equal((r.match(/_dead = true;   \/\/ EL2/g) || []).length, 3, 'destroyMesh, destroyBillboardBatch, destroyBatch');
   assert.match(r, /this\._shadows = this\._shadowPass \?\?= new ShadowPass\(this\.gl, \{ build: \(vs, fs\) => this\._buildProgram\(vs, fs\), vs: \{ mesh: VS, bb: BB_VS, terrain: TERRAIN_VS \} \}\);/);
   assert.match(r, /if \(this\._shadows\) this\._shadows\.upload\(this\._el\[key\]\.shadow\);/);

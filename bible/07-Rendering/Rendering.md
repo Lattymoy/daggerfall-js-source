@@ -25,6 +25,12 @@ directory by `test/audit18_bible_docs.test.js`:
   in particular is written by eight files outside `render/` - its
   `origin`, `sway`, `conceal` and `frame` are the CALLER'S fields and
   until now nothing said so. Exports `{}`, so the bundle never carries it.
+- `airPass.js` - EL3 THE AIR PASS: a depth image of the world from the camera
+  (the shadow pass's records replayed), and off it the ambient occlusion the
+  lane's shaders multiply their ambient by, the bloom sourced from the emitters
+  and the lanterns' glares, and the sun's shafts - composited by the frame's
+  first screen-space draw. `?air=off`. See
+  `07-Rendering/Enhanced-Lighting-Arc.md`.
 - `characterMesh.js` - the voxel character mesh path.
 - `characterSprite.js` - the classic-visuals sprite pass (one fixed
   CHAR_SPRITE_RT_SIZE target).

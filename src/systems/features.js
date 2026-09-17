@@ -286,10 +286,10 @@ export const FEATURES = Object.freeze([
     id: 'enhanced-lighting',
     group: 'sight',
     title: 'Enhanced lighting',
-    note: 'Light that adds the way light does: textures and lights read in linear colour, a tonemap that lets a torch\u2019s '
-      + 'near field bloom instead of clip, lanterns and braziers with a flame\u2019s warmth falling off by the inverse square, '
-      + 'forty-eight of them in view instead of sixteen, and fog that glows where their light crosses it. Off is '
-      + 'Daggerfall Unity\u2019s flat shading.',
+    note: 'Light that adds the way light does: textures and lights in linear colour under a tonemap, forty-eight lanterns '
+      + 'with a flame\u2019s warmth falling off by the inverse square, fog that glows where their light crosses it, the '
+      + 'sun\u2019s and the nearest torch\u2019s shadows, ambient occlusion in the corners, bloom on windows and flames, and '
+      + 'shafts of sunlight. Off is Daggerfall Unity\u2019s flat shading.',
     effect: 'Takes effect when the world next loads.',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'enhancedLighting', initial: true, online: true }),

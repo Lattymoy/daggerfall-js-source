@@ -304,14 +304,17 @@ test('EL1: the far ring takes the lane at construction - its FS, the decode, the
 test('EL1: syncLightingLane is the host\'s one call, the flame colour rides the lane, and every host reads the installed cap', () => {
   const skin = uiSkin(); const pref = PREF_DEFAULTS.enhancedLighting;
   const seen = [];
-  const fake = { setLightingLane: (l) => seen.push(['lane', l]), setExposure: (v) => seen.push(['exposure', v]) };
+  const fake = { setLightingLane: (l) => seen.push(['lane', l]), setExposure: (v) => seen.push(['exposure', v]), setAir: (v) => seen.push(['air', v]) };
   try {
     setUiSkin('enhanced'); setPref('enhancedLighting', true);
     assert.equal(syncLightingLane(fake, '?exposure=1.1'), true);
-    assert.deepEqual(seen, [['lane', EL_LANE], ['exposure', 1.1]]);
+    assert.deepEqual(seen, [['lane', EL_LANE], ['exposure', 1.1], ['air', true]]);   // EL3: the air door too
+    seen.length = 0;
+    assert.equal(syncLightingLane(fake, '?exposure=1.1&air=off'), true);
+    assert.deepEqual(seen, [['lane', EL_LANE], ['exposure', 1.1], ['air', false]], 'EL3: ?air=off keeps the lane and closes the air');
     seen.length = 0;
     assert.equal(syncLightingLane(fake, '?lighting=classic'), false);
-    assert.deepEqual(seen, [['lane', null]], 'off installs the classic set and leaves the exposure alone');
+    assert.deepEqual(seen, [['lane', null]], 'off installs the classic set and leaves the exposure and the air alone');
   } finally { setUiSkin(skin); setPref('enhancedLighting', pref); }
   const white = new Float32Array([1, 1, 1]);
   assert.equal(lanternColor(false, white), white, 'off: the host\'s own colour, the same object');
