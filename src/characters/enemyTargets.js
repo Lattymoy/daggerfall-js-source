@@ -56,6 +56,14 @@ export const isPlayerTarget = (c) => c === PLAYER_TARGET || c?.isPlayer === true
  *  team chain, the quest gate, the NoTarget mode) and to the melee fork, measured at its OWN feet and height
  *  where the local player is measured at playerFeet; its health the host's word (0 once it left). */
 export const isPeerTarget = (c) => c?.isPeer === true;
+/** AUDIT WATCH1 (one home): a target in the WIRE's spelling - '.' the owner (the local player), a peer's id, '' none
+ *  (WORLD3's spelling for the dungeon's stream, WORLD6b-ii's for the cell's). Every pool that streams whom a foe's
+ *  blow or cast was at reads it from here; the audit found three hand copies, one of them handed FEET instead of a
+ *  target and so always '' (the watch's swing was never at anyone). */
+export const wireRecipient = (t) => (t?.isPeer ? t.id : (t == null ? '' : (t.isPlayer ? '.' : '')));
+/** AUDIT WATCH1 (one home): the attack count on the wire - the count in the high bits, the ranged bit low (WORLD2's
+ *  spelling); one more swing, this one ranged or not. */
+export const bumpAtkCount = (a, ranged) => ((((a | 0) >> 1) + 1) << 1) | (ranged ? 1 : 0);
 /** AUDIT WORLD3 C3: THE LOCAL player - the one this client answers for. WORLD3 made `isPlayer` true for a PEER, so
  *  every guard that spelled "not another foe, therefore mine" as isPlayerTarget now admits another player's body: the
  *  alert, the rest gate, the exhaustion collapse, the encounter edge, the stealth roll. A site that means MY player

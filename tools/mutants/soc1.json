@@ -337,8 +337,8 @@
   {
     "name": "S38-version-not-bumped",
     "file": "src/net/wire.js",
-    "old": "export const RELAY_VERSION = 'world80';",
-    "new": "export const RELAY_VERSION = 'world79';",
+    "old": "export const RELAY_VERSION = 'world81';",
+    "new": "export const RELAY_VERSION = 'world80';",
     "tests": [
       "test/soc1_hub.test.js",
       "test/relayversion.test.js"

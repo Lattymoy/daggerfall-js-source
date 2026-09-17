@@ -2,8 +2,8 @@
   {
     "name": "WATCH1-the-watch-never-rides",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "    for (const f of [...foes, ...watchList()]) {",
-    "new": "    for (const f of foes) {",
+    "old": "    for (const [f, onWatch] of [...foes.map((f) => [f, false]), ...watchList().map((g) => [g, true])]) {",
+    "new": "    for (const [f, onWatch] of foes.map((f) => [f, false])) {",
     "tests": [
       "test/watch1.test.js"
     ]
@@ -38,7 +38,7 @@
   {
     "name": "WATCH1-a-watchman-goes-through-the-foes-door",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "    if (onWatch) _net.watch.hurt(f, dmg, at, dir, { kind });\n    else damageFoe(f, dmg, at, dir, { fromPlayer: true, kind, peer: true, peerId: from });",
+    "old": "    if (onWatch) _net.watch.hurt(f, dmg, at, dir);   // (the provenance - a peer's, not this player's - is the host's to add: world.js hands `{ fromPlayer: false, peer: true }`)\n    else damageFoe(f, dmg, at, dir, { fromPlayer: true, kind, peer: true, peerId: from });",
     "new": "    damageFoe(f, dmg, at, dir, { fromPlayer: true, kind, peer: true, peerId: from });",
     "tests": [
       "test/watch1.test.js"
@@ -47,8 +47,8 @@
   {
     "name": "WATCH1-a-peers-blow-on-my-watch-is-my-blow",
     "file": "src/scenes/world.js",
-    "old": "      watch: { list: () => cityGuards.guards, hurt: (g, dmg, at, dir) => cityGuards.hurtGuard(g, dmg, at, dir, { fromPlayer: false }) },",
-    "new": "      watch: { list: () => cityGuards.guards, hurt: (g, dmg, at, dir) => cityGuards.hurtGuard(g, dmg, at, dir) },",
+    "old": "      watch: { list: () => cityGuards.guards, hurt: (g, dmg, at, dir) => cityGuards.hurtGuard(g, dmg, at, dir, { fromPlayer: false, peer: true }) },",
+    "new": "      watch: { list: () => cityGuards.guards, hurt: (g, dmg, at, dir) => cityGuards.hurtGuard(g, dmg, at, dir, { peer: true }) },",
     "tests": [
       "test/watch1.test.js"
     ]
@@ -56,7 +56,7 @@
   {
     "name": "WATCH1-the-net-carries-no-watch",
     "file": "src/scenes/world.js",
-    "old": "      watch: { list: () => cityGuards.guards, hurt: (g, dmg, at, dir) => cityGuards.hurtGuard(g, dmg, at, dir, { fromPlayer: false }) },",
+    "old": "      watch: { list: () => cityGuards.guards, hurt: (g, dmg, at, dir) => cityGuards.hurtGuard(g, dmg, at, dir, { fromPlayer: false, peer: true }) },",
     "new": "",
     "tests": [
       "test/watch1.test.js"
@@ -65,7 +65,7 @@
   {
     "name": "WATCH1-the-strike-edge-latches-no-count",
     "file": "src/scenes/cityGuards.js",
-    "old": "      if (strikeEdge) { g._atkA = ((((g._atkA | 0) >> 1) + 1) << 1); g._atkB = isPlayerTarget(_tgt) ? '.' : ''; }",
+    "old": "      if (strikeEdge) { g._atkA = bumpAtkCount(g._atkA, false); g._atkB = wireRecipient(g.ai.target); }",
     "new": "",
     "tests": [
       "test/watch1.test.js"
@@ -76,6 +76,224 @@
     "file": "src/scenes/cityGuards.js",
     "old": "        seq: null, _atkA: 0, _atkB: '',",
     "new": "",
+    "tests": [
+      "test/watch1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WATCH1-A2-a-watchmans-swing-is-always-at-nobody",
+    "file": "src/scenes/cityGuards.js",
+    "old": "g._atkB = wireRecipient(g.ai.target); }",
+    "new": "g._atkB = ''; }",
+    "tests": [
+      "test/watch1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WATCH1-A2-the-recipient-read-off-the-feet-again",
+    "file": "src/scenes/cityGuards.js",
+    "old": "g._atkB = wireRecipient(g.ai.target); }",
+    "new": "g._atkB = wireRecipient(_tgt); }",
+    "tests": [
+      "test/watch1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WATCH1-A2-the-frame-drops-a-and-b",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "d: f.dead ? 1 : 0, a: f._atkA | 0, b: f._atkB ?? '', m: f.ai.moving ? 1 : 0",
+    "new": "d: f.dead ? 1 : 0, a: 0, b: '', m: f.ai.moving ? 1 : 0",
+    "tests": [
+      "test/watch1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WATCH1-A2-one-home-the-recipient-spelling-drifts",
+    "file": "src/characters/enemyTargets.js",
+    "old": "export const wireRecipient = (t) => (t?.isPeer ? t.id : (t == null ? '' : (t.isPlayer ? '.' : '')));",
+    "new": "export const wireRecipient = (t) => (t?.isPeer ? t.id : '');",
+    "tests": [
+      "test/watch1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WATCH1-A2-one-home-the-count-does-not-move",
+    "file": "src/characters/enemyTargets.js",
+    "old": "export const bumpAtkCount = (a, ranged) => ((((a | 0) >> 1) + 1) << 1) | (ranged ? 1 : 0);",
+    "new": "export const bumpAtkCount = (a, ranged) => ((a | 0) & ~1) | (ranged ? 1 : 0);",
+    "tests": [
+      "test/watch1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WATCH1-A3-a-watch-body-advertises-its-pile",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "o: onWatch ? 0 : (f.corpse ? Math.min(255, f.entity?.items?.length | 0) : 0) }",
+    "new": "o: f.corpse ? Math.min(255, f.entity?.items?.length | 0) : 0 }",
+    "tests": [
+      "test/watch1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WATCH1-A3-a-peer-killed-watchman-keeps-his-kit",
+    "file": "src/scenes/cityGuards.js",
+    "old": "      if (peer) g.entity.items = [];",
+    "new": "",
+    "tests": [
+      "test/watch1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WATCH1-A4-a-peers-kill-speaks-my-notice",
+    "file": "src/scenes/cityGuards.js",
+    "old": "      if (!peer) sayEnemyDied(say, GUARD_MOBILE_TYPE);",
+    "new": "      sayEnemyDied(say, GUARD_MOBILE_TYPE);",
+    "tests": [
+      "test/watch1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WATCH1-A4-the-host-hands-no-provenance",
+    "file": "src/scenes/world.js",
+    "old": "cityGuards.hurtGuard(g, dmg, at, dir, { fromPlayer: false, peer: true }) },",
+    "new": "cityGuards.hurtGuard(g, dmg, at, dir, { fromPlayer: false }) },",
+    "tests": [
+      "test/watch1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WATCH1-A5-the-puppet-rolls-the-city-watch-bonus-again",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "{ exactLevel: !!puppet });",
+    "new": "{ exactLevel: false });",
+    "tests": [
+      "test/watch1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WATCH1-A5-exactLevel-is-ignored",
+    "file": "src/characters/enemyEntity.js",
+    "old": "    if (mobileType === KNIGHT_CITYWATCH_ID && !exactLevel) level += 3 + Math.floor(rollFn() * 4);",
+    "new": "    if (mobileType === KNIGHT_CITYWATCH_ID) level += 3 + Math.floor(rollFn() * 4);",
+    "tests": [
+      "test/watch1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WATCH1-A1-one-cap-for-foes-and-watch",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (r.t === KNIGHT_CITYWATCH_ID ? livePuppetsOf(from, true) >= CELL_WATCH_PUPPETS_MAX : livePuppetsOf(from) >= CELL_PUPPETS_MAX) continue;",
+    "new": "      if (livePuppetsOf(from) + livePuppetsOf(from, true) >= CELL_PUPPETS_MAX) continue;",
+    "tests": [
+      "test/watch1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WATCH1-A1-the-watch-allowance-is-unbounded",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (r.t === KNIGHT_CITYWATCH_ID ? livePuppetsOf(from, true) >= CELL_WATCH_PUPPETS_MAX : livePuppetsOf(from) >= CELL_PUPPETS_MAX) continue;",
+    "new": "      if (r.t !== KNIGHT_CITYWATCH_ID && livePuppetsOf(from) >= CELL_PUPPETS_MAX) continue;",
+    "tests": [
+      "test/watch1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WATCH1-A1-the-count-does-not-tell-the-watch-apart",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    for (const f of _pupIndex.values()) if (f.puppet === from && !f.dead && (f.mobileType === KNIGHT_CITYWATCH_ID) === watch) n++;",
+    "new": "    for (const f of _pupIndex.values()) if (f.puppet === from && !f.dead) n++;",
+    "tests": [
+      "test/watch1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WATCH1-B2-a-blow-from-a-stranger-lands",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (!striker || Math.hypot(striker.feet[0] - f.ai.feet[0], striker.feet[1] - f.ai.feet[1], striker.feet[2] - f.ai.feet[2]) > reach) return false;",
+    "new": "      if (striker && Math.hypot(striker.feet[0] - f.ai.feet[0], striker.feet[1] - f.ai.feet[1], striker.feet[2] - f.ai.feet[2]) > reach) return false;",
+    "tests": [
+      "test/watch1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WATCH1-B2-a-blow-from-anywhere-lands",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (!striker || Math.hypot(striker.feet[0] - f.ai.feet[0], striker.feet[1] - f.ai.feet[1], striker.feet[2] - f.ai.feet[2]) > reach) return false;",
+    "new": "      if (!striker) return false;",
+    "tests": [
+      "test/watch1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WATCH1-B2-every-blow-reaches-like-a-shaft",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      const reach = (kind === 'melee' ? WEAPON_REACH : MAX_RANGED_DISTANCE) + PUPPET_LEAP_SLACK;",
+    "new": "      const reach = MAX_RANGED_DISTANCE + PUPPET_LEAP_SLACK;",
+    "tests": [
+      "test/watch1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WATCH1-B2-a-shaft-reaches-like-a-blade",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      const reach = (kind === 'melee' ? WEAPON_REACH : MAX_RANGED_DISTANCE) + PUPPET_LEAP_SLACK;",
+    "new": "      const reach = WEAPON_REACH + PUPPET_LEAP_SLACK;",
+    "tests": [
+      "test/watch1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WATCH1-B2-a-host-with-no-door-throws",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (!_net?.watch?.hurt) return false;",
+    "new": "",
+    "tests": [
+      "test/watch1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WATCH1-A6-a-watch-body-is-never-stamped",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (f.dead && f.corpse && f._diedAt == null) f._diedAt = _now();",
+    "new": "",
+    "tests": [
+      "test/watch1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WATCH1-A6-the-trim-sorts-the-foes-bodies-alone",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      const diedAt = new Map([...foes, ...watchList()].filter((f) => !f.puppet).map((f) => [f.seq, f._diedAt ?? 0]));",
+    "new": "      const diedAt = new Map(foes.map((f) => [f.seq, f._diedAt ?? 0]));",
+    "tests": [
+      "test/watch1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WATCH1-B6-a-dropped-record-stays-sent",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      for (const r of before) if (!out.includes(r)) { const f = src.get(r); if (f) f._sentKey = null; }",
+    "new": "",
+    "tests": [
+      "test/watch1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WATCH1-G1-a-removed-watchman-still-rides",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (f.puppet || f.isQuestFoe || (f.dead && !f.corpse)) continue;   // (a removed watchman - dead, no body - rides no more, as a culled foe does)",
+    "new": "      if (f.puppet || f.isQuestFoe) continue;",
+    "tests": [
+      "test/watch1.test.js"
+    ]
+  },
+  {
+    "name": "WATCH1-a-dead-watchman-takes-a-blow",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "  const watchOf = (i) => watchList().find((g) => g.seq === i) ?? null;",
+    "new": "  const watchOf = (i) => watchList().find((g) => g.seq === i && !g.dead) ?? null;",
+    "equivalent": true,
+    "why": "applyHit's own `f.dead` gate refuses a body before onWatch is computed, and watchOf is reached from nowhere else; the dead gate itself is pinned (a blow on a killed watchman is refused).",
     "tests": [
       "test/watch1.test.js"
     ]

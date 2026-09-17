@@ -332,7 +332,7 @@ reference surface absent · **Departure** = deliberate, ledgered.
 **The pause primitive, precisely.** ROAD-B B1 built the stack DFU's
 `UserInterfaceManager` has, with `PauseWhileOpen` as a real latch
 (`ui/windowStack.js:107`, `:101`, `:280`). It is mounted in the two hosts
-that own overlay slots - `worldModes.js:69` and `dungeonContext.js:38` -
+that own overlay slots - `worldModes.js:69` and `dungeonContext.js:39` -
 and `world.js:202` reaches it by mounting `worldModes`. But `grep -rn
 "paused()" src/` returns exactly one hit, the definition at
 `windowStack.js:264`: **no host reads the primitive.** Every host still

@@ -532,6 +532,12 @@ export const whoIdOf = (m) => (m && typeof m.id === 'string' && ID_RE.test(m.id)
  *  legitimate owner can exceed is by quest foes, which never ride). */
 export const CELL_FRAME_RECORDS_MAX = 64;
 export const CELL_PUPPETS_MAX = 8;
+/** AUDIT WATCH1 A1: THE WATCH HAS ITS OWN ALLOWANCE. A criminal's frame is its encounter foes AND its watch, and the
+ *  watch rides behind the foes - so under one cap of eight a criminal carrying a full encounter roll streamed a watch
+ *  no reader ever stood (the cap counts standing puppets, so no later frame could get one in). The watch is counted
+ *  apart: SpawnCityGuards stands at most five, but makeNpcGuardsIntoEnemies converts a town's whole wandering-guard
+ *  population uncapped, so ten. */
+export const CELL_WATCH_PUPPETS_MAX = 10;
 export const FOE_SEQ_MAX = 1e9;
 export const FOE_HEALTH_MAX = 1e5;
 /** AUDIT ONCRASH1 A3: the most effect bundles a stored foe record may carry - the one list in a memory's foe with no other bound. */
@@ -624,7 +630,7 @@ export function validSharedFoe(sf) {
   // published was refused WHOLE and the memory came back EMPTY.
   //
   // `entity.team` is `MobileTeams`' NAME in this port, not its ordinal -
-  // 'PlayerEnemy', 'PlayerAlly', 'Vermin' (characters/enemyEntity.js:142's
+  // 'PlayerEnemy', 'PlayerAlly', 'Vermin' (characters/enemyEntity.js:146's
   // default, characters/enemyTargets.js' whole law, `f.entity.team ===
   // 'PlayerAlly'` at combat/playerWeapon.js:230) - and the publisher hands the
   // live field straight over (dungeonContext.js' foe record, AUDIT 63 F26's
@@ -714,7 +720,7 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  carries it (`v`), and a client whose wire.js was built against another version says so on the console: the client
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
-export const RELAY_VERSION = 'world80';   // RESPAWN1: the memory's foe door takes the team pair as the NAME this port writes, so a dungeon's kills survive the trip home
+export const RELAY_VERSION = 'world81';   // RESPAWN1: the memory's foe door takes the team pair as the NAME this port writes, so a dungeon's kills survive the trip home
 
 /** The listeners sorted by distance from `from`, nearest first; one with no pose yet sorts last, because a peer that
  *  has never said where it is cannot be near. The ordering is Euclidean in the POSE'S OWN FRAME, which is a cell's

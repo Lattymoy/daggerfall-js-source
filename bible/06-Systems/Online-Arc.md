@@ -3951,8 +3951,9 @@ starts from the record and not from memory.
 
 **Shipped and live.** Everything from ONLINE1 through WORLD6b-iii(e)
 and its audit is merged to main; the relay is deployed at `world66`
-and answers on `/health`. The suite stands at 7474 tests across 755
-files, green. In one line each:
+and answers on `/health`. The suite stood at ~~7474 tests across 755
+files~~ at the stop (superseded - Testing.md carries the live count),
+green. In one line each:
 
 - ONLINE1/SLOTS1/MWBODY1/CHAT1/MAC6/MAC7: presence, the doll, the
   chat, the dungeon save, the peer's weapon and swing.
@@ -3972,13 +3973,13 @@ files, green. In one line each:
 see "6b-iii (recorded, next)" above and the explanation given at the
 stop):
 
-- **The guards on a shared crime.** PAID by WATCH1 (2026-09-17, the
-  smaller reading - see its section below). The watch is a crime's response
-  and the crime is the player's own (the flag, the witnesses, the
-  legal reputation). Sharing it is a crime event on the wire, the
-  witness test run once, then the guards as a pool with the laws the
-  encounter foes have. The open decision: whether a peer's murder
-  marks the region for everyone, and whom the watch hunts.
+- ~~**The guards on a shared crime.**~~ PAID by WATCH1 (2026-09-17,
+  the smaller reading - see its section below): the crime stays the
+  criminal's, the watch rides the criminal's cell frames as puppets,
+  hunts its owner alone, and a peer's blow on it is not the owner's.
+  Recorded, not paid, in that section: the larger reading (a crime
+  event on the wire, the witness test run once, a peer's murder
+  marking the region for everyone, a watchman hunting a peer).
 - **One economy.** The day's rolls are the world's already (WORLD6b);
   the STATE the walk applies to is each player's (the prices read the
   player's own faction reputation; a returning player catches up from
@@ -4232,7 +4233,7 @@ room exists.
 
 **The boundary that makes that safe is `_layoutFoes`** - the dungeon
 host's index of where the layout's own run ends. Every foe past it "is
-this player's own" (`dungeonContext.js:1045`, AUDIT WORLD B2): a quest
+this player's own" (`dungeonContext.js:1046`, AUDIT WORLD B2): a quest
 foe is minted above it, never streamed, never puppet-ised by the room's
 authority switch, and never touched by a joiner's stream. So a joiner's
 quest foe really does spawn and really can be killed by the player whose
@@ -4616,7 +4617,7 @@ appended its own note to the end of the line that already carried
 **Why that is an invulnerable enemy.** Online, a joiner applies no local
 damage to a layout foe - `damageFoe`'s non-authority arm hands the blow
 to the room's host through `opts.onFoeHit?.(...)` and RETURNS
-(`dungeonContext.js:3868`). With the property missing that call is a
+(`dungeonContext.js:3869`). With the property missing that call is a
 no-op on `undefined`: no damage, no frame, no warning, nothing on the
 console. Every layout foe in every online dungeon absorbed every blow
 from everyone but the room's authority, for eight slices, in silence.
@@ -6761,7 +6762,10 @@ Every peer in range stands them as puppets through `applyFoes`'s one
 spawn chain, exactly as a rat of mine is stood (at the streamed feet,
 at the owner's level, no loot, outside the reader's cap); they walk,
 swing and fall where the stream says. The relay reads nothing inside a
-record, so there is no relay change and `RELAY_VERSION` stands.
+record, so there is no relay change. (`RELAY_VERSION` moved to
+`world81` at AUDIT WATCH1 all the same: `wire.js` gained the reader's
+`CELL_WATCH_PUPPETS_MAX`, and the relay bundle's bytes are its law -
+SLAM8 - so the worker is redeployed with nothing new to do.)
 
 **A FOE IS ITS SPAWNER'S, and so is a watchman.** A peer's blow on a
 watch puppet goes to its owner as a hit by the number the watchman
@@ -6775,18 +6779,21 @@ Player` gate, F035's law, which a peer is outside. So no aggro turn
 kills is no Murder of the criminal's - the crime stays what it was.
 The knockback still lands (C15's gate is knockDir's), the shield
 still absorbs, the corpse still falls and rides the next frame as `d:
-1` with its pile, and the peer's own screen rang, bled and voiced the
-blow before the divert, as it does for any puppet.
+1` - with NO pile on the wire and none on the body (AUDIT WATCH1 A3,
+below) - and the peer's own screen rang, bled and voiced the blow
+before the divert, as it does for any puppet.
 
 **Whom the watch hunts: its owner and its owner's foes, never a
 peer.** The watch's target candidates are the host's own
 (`_foeSenses().candidates()`, MT-ii) - the roster is the encounter
 pool's alone - so a watchman's `g` on the wire is `'.'` (me) or `''`
 (a foe of mine), and his `_atkB` the same; a puppet of him lands
-nothing at its reader (applyPuppetRecord's recipient gate) and only
-draws the swing. The strike edge in `cityGuards.update` latches the
-attack count in the pool's spelling (the ranged bit low: the watch
-never shoots, EW1).
+nothing at its reader (exteriorFoes' `update`, the puppet arm:
+`recipientIsMe(f, f._pupBlowAt)`) and only draws the swing. The strike
+edge in `cityGuards.update` latches the attack count in the wire's
+spelling (the ranged bit low: the watch never shoots - `rangedAttack =
+false`, AUDIT 18) through the one home, `enemyTargets.bumpAtkCount`
+and `wireRecipient`.
 
 **The seams, by name.** `cityGuards.js`: the guard record gains `seq`
 (null until he rides), `_atkA`, `_atkB`; the strike edge latches the
@@ -6795,10 +6802,16 @@ count. `exteriorFoes.js`: `setNet` takes `watch` - `{ list, hurt }` -
 watchman off `_nextSeq`; `applyHit` looks a number up in the foes then
 the watch (`watchOf`), and routes a watchman to `_net.watch.hurt`.
 `world.js`: the net hands `cityGuards.guards` and `hurtGuard(...,
-{ fromPlayer: false })`. The striker's own melee door routes by pool
-membership (`cityGuards.guards.includes(f)`), never by species, so a
-146 puppet is the encounter pool's and no crime arm of the striker's
-runs.
+{ fromPlayer: false, peer: true })`. The striker's own melee door routes
+by pool membership (`cityGuards.guards.includes(f)`), never by species,
+so a 146 puppet is the encounter pool's and no crime arm of the
+striker's runs. THE FOUR HOSTS: `world.js` alone is online and is
+wired; `exterior.js` (the fixed city, a full encounter pool and a
+watch) and `worldModes.js` (the interior host's `interiorFoes` and
+ROAD-B's indoor watch) mount no net at all - `setNet` is called from
+`world.js` and nowhere else - so their watches stream nothing and are
+flagged here by name; the dungeon's foes are the host's stream
+(WORLD2) and it has no watch on the wire.
 
 **Recorded and NOT carried - the larger reading, if wanted:**
 - A peer who strikes or kills my watch commits nothing: the striker's
@@ -6816,12 +6829,98 @@ runs.
   taken down at the readers by the next FULL frame, the encounter
   foes' own law for a culled foe; up to FOES_FULL_MS a peer sees a
   standing watchman the owner no longer runs.
-- `exterior.js`'s guard-only host and the dungeon's watch stream
-  nothing (no `watch` in their net); the world host alone is online.
+- `exterior.js` and `worldModes.js` mount no net (see THE FOUR HOSTS
+  above); the world host alone is online.
+- A peer's shafts can stuff a watchman's kit with Arrows up to
+  HIT_ARROWS_MAX (the foes' own bound, pre-existing arm, new target):
+  the kit reads into the knockback weight and, on a kill by the owner,
+  into the pile. Bounded; recorded.
 
 Not verified in a browser: no online session and no second player
 exist in this container; the whole path is pinned by execution across
-two real pools netted together (`test/watch1.test.js`, 4 pins) and
-`tools/mutants/watch1.json` (9 mutants, 9 dead). AUDIT WORLD6b-iii(b)'s
-C1 source pin, WORLD6b's net pin and WORLD6b-iii(e)'s owner-door pin
-re-aimed to the new lookup, the new net field and the new door.
+two real pools netted together (`test/watch1.test.js`, 5 pins) and
+`tools/mutants/watch1.json` (33 mutants, 32 dead, 1 equivalent as
+recorded). AUDIT WORLD6b-iii(b)'s C1 source pin, WORLD6b's net pin,
+WORLD6b-ii's and WORLD6b-iii(a)'s spelling pins, WORLD6b-iii(c)'s
+record pin, WORLD6b-iii(e)'s owner-door pin and WORLD2's count pin
+re-aimed.
+
+### AUDIT WATCH1 (2026-09-17, Mac: "Audit this first") - three opus lenses over the first cut
+
+Three lenses (the game law and the net flow; the wire, the relay and
+abuse; the pins, the mutants and the records), every finding
+reproduced against the real pools before it was paid. In severity
+order:
+
+- **A1 THE WATCH NEVER STOOD FOR A BUSY CRIMINAL.** The reader's
+  per-owner puppet cap (CELL_PUPPETS_MAX, 8) was one cap for foes and
+  watch, and the watch rides behind the foes - so a criminal carrying
+  a full encounter roll (the murderer fleeing through the country, the
+  headline case) streamed a watch no peer ever stood, on every frame,
+  for ever (the cap counts STANDING puppets). Paid: the watch has its
+  own allowance, CELL_WATCH_PUPPETS_MAX (10 - SpawnCityGuards stands
+  five, but makeNpcGuardsIntoEnemies converts a town's whole
+  wandering-guard population uncapped), counted apart in
+  `livePuppetsOf`, pending builds included.
+- **A2 THE SWING WAS NEVER AT ANYONE.** The strike edge handed
+  `isPlayerTarget` the target's FEET (`_tgt`), so `_atkB` was always
+  `''` and the `'.'` arm was dead code, while the record and the pin
+  certified it. Latent (a reader compares the recipient against
+  itself), but the field the record claims. Paid through ONE HOME:
+  `enemyTargets.wireRecipient` and `bumpAtkCount`, now read by the
+  encounter pool (which had two hand copies of the spelling), the
+  watch and the dungeon host's count. The dungeon's own recipient
+  spelling (a null target under unarmed targeting is '.') is a
+  deliberate variant and stays.
+- **A3 A BODY NO PEER CAN OPEN, ADVERTISED AS OPEN.** A killed
+  watchman rode with `o` its kit, so every reader offered the body as
+  a loot target; the take arm never reached the watch, the owner
+  answered silence, and the peer clicked a corpse for ever with no
+  line. Paid the smaller way: a watch record rides `o: 0` (its body is
+  the owner's own door, cityGuards.takeLoot). And the no-Murder door
+  was a loot farm: two clients could clear a town's watch at no cost
+  and the owner strip five armed bodies for free. Paid: a body another
+  hand felled carries nothing (the G3 walk-away precedent).
+- **A4 THE OWNER HEARD "City Watch just died." FOR A PEER'S KILL,** and
+  ECV1's reveal flashed for a peer's blow - the foes' door has had
+  WORLD6b B2's peer half since the cell stream landed. Paid: the host
+  hands `peer: true` and `damageGuard` gates the notice and the reveal
+  on it.
+- **A5 A WATCH PUPPET STOOD THREE TO SIX LEVELS ABOVE ITS WATCHMAN.**
+  `makeEnemyEntity` rolls the City Watch bonus for 146 unconditionally
+  and the reader handed it the streamed level, which carries the bonus
+  already - the one species where `builtLevel` and `entity.level`
+  disagreed, and the one term a crafted `t: 146` record could ride.
+  Paid: `exactLevel` on the puppet arm.
+- **B2 FIVE HIT FRAMES FROM ANYWHERE IN THE CELL ENDED THE WATCH.** No
+  reach, no liveness: a socket across the cell (or a halo) could kill
+  every watchman unseen, and with no watchman standing the conversion
+  stops and the surrender box resets - GUARD1's spree re-opened by
+  another player's word. Paid: the take arm's law - the striker must
+  be a peer the hunt sees (the roster's pose), within the PLAYER's own
+  reach of the watchman (WEAPON_REACH for a blade, MAX_RANGED_DISTANCE
+  for a shaft or a spell, plus the pose's slack), or the blow is
+  nothing. A net with `list` and no `hurt` refuses rather than throws.
+  The foes' own hit arm keeps its old law (no reach) - recorded here,
+  not this slice's.
+- **A6/B6 THE FRAME'S TRIM.** Past CELL_FRAME_RECORDS_MAX the trim
+  sorted bodies by a map built from the foes alone, so every watch body
+  read as the oldest; and `_sentKey` was latched before the trim, so a
+  record the trim dropped was unsent until the next full frame
+  (pre-existing, widened). Paid: a body is stamped on the pool's own
+  clock when it first rides, the map reads both pools and never a
+  puppet's number, and a dropped record's key is cleared.
+- **G1** the `dead && !corpse` skip is load-bearing for a watchman
+  world.js's cross-pool remover ended between frames - pinned and
+  mutated now. **The records**: the FOUR HOSTS named; "applyPuppetRecord's
+  gate" named the wrong function (it is `update`'s puppet arm,
+  `recipientIsMe`); EW1 was the wrong citation for `rangedAttack =
+  false` (AUDIT 18); the STOP bullet retired properly; the `_damage`
+  seam comment's caller list; the equivalent mutant recorded, not
+  dropped; the superseded suite figure at the STOP marked.
+
+Not paid, recorded: the take arm for a watch body (a `watch.take` seam
+beside `watch.hurt`, granting out of cityGuards' own emptying door) - a
+slice of its own if a peer is ever to loot the watch; the foes' hit
+arm's reach; the striker's routing door pinned by source (an executed
+pin would have to stand world.js's own `dealDamage` closure).
