@@ -189,5 +189,20 @@ export const CREDITS = Object.freeze({
       contact: 'forums.dfworkshop.net',
       vendor: Object.freeze(['better-ambience']),
     }),
+    Object.freeze({
+      title: 'Oblivion Remaster Like Leveling',
+      version: '0.5.3',
+      // THE ONE ROW ON THIS SCREEN WHOSE AUTHOR IS NOT KNOWN. Nothing
+      // in the shipped archive names them - no licence file, no script
+      // header, an empty author field in the `.omwaddon` - so the
+      // screen says so and names the page the mod comes from, rather
+      // than crediting a guess. The record is open in
+      // vendor/oblivion-remaster-leveling/README.md and in the
+      // registry row, and it is filled in the moment Mac has the name.
+      author: 'Unnamed (Nexus Morrowind 56569)',
+      what: 'An alternative way to level, offered when you make a character (ORL1): every skill you raise fills a hundred-point bar instead of Daggerfall\u2019s skill sum - your primaries and majors fastest, your minors next, everything else slowest - with whatever spills over carried into the next level; and levelling up hands you a purse of virtues to spend across a few of your attributes, with Luck priced higher — how many, across how many, and what Luck costs are all yours to set on the mod’s own tile. The first MORROWIND mod in the port: it is an OpenMW Lua mod, ported 1:1 from the author\u2019s own source (systems/oblivionLeveling.js), in both lanes.',
+      terms: 'Carried by the author\u2019s permission, on Mac\u2019s word - the archive states no licence and names no author. Ported 1:1 from the shipped Lua, which is vendored whole; see vendor/oblivion-remaster-leveling/README.md for the open permission record.',
+      vendor: Object.freeze(['oblivion-remaster-leveling']),
+    }),
   ]),
 });

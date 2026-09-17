@@ -118,6 +118,8 @@ import { liveBundles, dispelBundle, dispellableBundles, DISPEL_MAGIC_TEXT } from
 import { ListPickerWindow, listPickerArtLoaded } from '../ui/listPicker.js';   // X10
 import { createItemLabels, grantCreatedItem, lastCreateItemIndex, setLastCreateItemIndex } from '../systems/createItem.js';   // X11b
 import { LevelUpScreen } from '../ui/charsheet.js';   // AUDIT 21 hosts F3: levelling in a building
+import { VirtueLevelUpScreen } from '../ui/virtueLevelUp.js';   // ORL1: ...and the mod's own, for the same two arms
+import { usesVirtueLeveling } from '../systems/oblivionLeveling.js';   // ORL1
 import { NativeTradeWindow, preloadTradeArt, tradeArtLoaded, TRADE_RECTS } from '../ui/nativeTrade.js';   // U8c
 // U23: the static-NPC seam and the guild service popup.
 import { STATIC_NPC_ACTIVATION_DISTANCE, DEFAULT_ACTIVATION_DISTANCE, RAY_DISTANCE } from '../systems/talk.js';
@@ -405,7 +407,17 @@ export function createWorldModes(host) {
       // levels the player in classic. This host builds no windows -
       // host.makeCharSheet is the outer host's own builder, the same
       // one toggleCharSheet mounts.
-      if (!interiorOverlay) interiorOverlay = host.makeCharSheet?.() ?? new LevelUpScreen(playerEntity);
+      // ORL1: ...and the LAST-RESORT screen, for a host that hands no
+      // builder, is the mod's window when the mod's law is this
+      // character's. The builder route already knows (it is
+      // ui/charSheetDoor.js's one seam); this arm is the only place
+      // in the tree that reaches for a level-up screen without it.
+      if (!interiorOverlay) {
+        interiorOverlay = host.makeCharSheet?.()
+          ?? (usesVirtueLeveling(playerEntity) && !playerEntity.oghmaLevelUp
+            ? new VirtueLevelUpScreen(playerEntity)
+            : new LevelUpScreen(playerEntity));
+      }
     },
   });
 
@@ -7101,7 +7113,17 @@ export function createWorldModes(host) {
       // levels the player in classic. This host builds no windows -
       // host.makeCharSheet is the outer host's own builder, the same
       // one toggleCharSheet mounts.
-      if (!interiorOverlay) interiorOverlay = host.makeCharSheet?.() ?? new LevelUpScreen(playerEntity);
+      // ORL1: ...and the LAST-RESORT screen, for a host that hands no
+      // builder, is the mod's window when the mod's law is this
+      // character's. The builder route already knows (it is
+      // ui/charSheetDoor.js's one seam); this arm is the only place
+      // in the tree that reaches for a level-up screen without it.
+      if (!interiorOverlay) {
+        interiorOverlay = host.makeCharSheet?.()
+          ?? (usesVirtueLeveling(playerEntity) && !playerEntity.oghmaLevelUp
+            ? new VirtueLevelUpScreen(playerEntity)
+            : new LevelUpScreen(playerEntity));
+      }
     },
     day: () => false, inside: () => true,   // a building interior, always
   });

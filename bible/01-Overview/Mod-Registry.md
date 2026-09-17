@@ -1,5 +1,21 @@
 # The vendored-work registry (HARD4, 2026-09-15)
 
+> **The counts in the next two sections are HARD4's own moment and are
+> left as it wrote them.** They were true of the fifteen rows that
+> existed on 2026-09-15 and they are the record of what putting those
+> rows side by side found. The live numbers are derived, not written:
+> `vendor/` holds 19 directories and 11 of their READMEs still carry an
+> unfilled permission line, each shown as `RECORD OPEN` in the table.
+> ORL1 (2026-09-17) added the nineteenth, and the first vendored MOD
+> that is not a Daggerfall Unity one - an OpenMW Lua mod for Morrowind.
+> It carries no `*.dfmod.json`, so the gate below reads no version or
+> author cell for it and its own suite checks both instead; its row in
+> *Known deviations* says so. (Eight of the nineteen directories carry no
+> manifest. Six of the other seven are not mods at all - Daggerfall
+> Unity's own shipped data, a font, a road table, Mac's own project - and
+> the seventh, `windmills-kamer`, is a Daggerfall Unity mod shipped as
+> loose meshes rather than as a bundle.)
+
 The fourth slice of `01-Overview/Hardening.md`. One row per directory in
 `vendor/`, and `test/hard4_registry.test.js` derives the row list from
 the filesystem, so a fourteenth entry cannot arrive without one.
@@ -61,6 +77,7 @@ not the date the slice shipped, where those differ.
 | `dynamic-skies` | presets, textures, shader read | BadLuckBurt and carademono | 2.3.4 | `.dfmod` bundle, cross-read against `drcarademono/dynamic-skies` @ `04506e2` | granted to Mac 2026-09-04 - **RECORD OPEN** | DS1, DS2 | 2026-09-04 | `07-Rendering/Dynamic-Skies.md` |
 | `handheld-torches` | 39 textures, manifest, settings | RedRoryOTheGlen | 1.4.1 | shipped zip `Handheld_Torches-780-1-4-1`; behaviour off the DLL's IL | granted (Mac handed the zip over 2026-09-14) - **RECORD OPEN** | HT0-HT4 | 2026-09-14 (AUDIT 66) | `06-Systems/Handheld-Torches.md` |
 | `meanerMonsters` | 46 sprite-scale XML, manifest | Ralzar (header: Hazelnut and Ralzar) | 1.5.2 | shipped zip; code from `Ralzar81/Meaner-Monsters` master | MIT (source header) | MM1 | 2026-09-12 | `04-Characters/Meaner-Monsters.md` |
+| `oblivion-remaster-leveling` | the whole mod: its ten shipped files - the 1,314 lines of Lua, the 487-byte `.omwaddon` (one GMST, `iLevelupTotal` 100), the manifest, both l10n yaml and the author's README | **not named in any shipped file** (Nexus Morrowind 56569) | 0.5.3 | shipped `.zip` `OblivionRemasterLikeLeveling_0.5.3-56569-v0-5-3-1748644502`; behaviour off the author's OWN LUA, which is the mod - there is nothing compiled to read | **the archive states NO LICENCE**; granted (Mac handed the archive over 2026-09-17) - **RECORD OPEN** | ORL1 | 2026-09-17 | `06-Systems/Oblivion-Remaster-Leveling.md` |
 | `pcaao` | manifest, settings | Kirk.O | 1.44 | shipped `.dfmod`, DLL decompiled (ILSpy 8.2.0.7535); **source repo only covers 1.40** (`6e19023`) | repository states none; granted (Mac handed the bundle over 2026-09-12) - **RECORD OPEN** | PCO1 | 2026-09-12 | `05-Combat/Physical-Combat-Overhaul.md` |
 | `raum-book` | the animated book itself | Mac (Lattymoy), project-raum | - | `Lattymoy/project-raum` @ `7fa7119e` | Mac's own work, at his word 2026-09-12 | the enhanced book | 2026-09-12 | `10-UI/UI-Arc.md` |
 | `roads-hazelnut` | four 500,000-byte path masks | Hazelnut | - | `ajrb/dfunity-mods`, `BasicRoads/`, sha256-verified | code MIT; **data carries no licence text** - granted to Mac 2026-09-02 - **RECORD OPEN** | ROADS 22-25 | 2026-09-02 | `03-World/Roads.md` |
@@ -76,6 +93,13 @@ not the date the slice shipped, where those differ.
 Only the ones a maintainer would be surprised by. Each README carries the
 full account; this is the index to it.
 
+- **`oblivion-remaster-leveling`** - the only row that is not a
+  Daggerfall Unity mod: OpenMW Lua for Morrowind, so there is no
+  `*.dfmod.json` and `test/hard4_registry.test.js` reads no version or
+  author cell for it. Its own suite checks both instead, against the
+  author's changelog heading and the Lua's own defaults. The archive
+  names no author and states no licence, so the author cell is the Nexus
+  id and the permission line is still a prompt.
 - **`dynamic-skies`** - the repository's `Resources/*Night.json` presets
   are NOT carried, because they are not in the shipped manifest and the
   mod therefore never loads them.

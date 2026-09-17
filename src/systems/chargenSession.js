@@ -36,6 +36,10 @@ import { SOCIAL_GROUP_COUNT, FactionFile } from '../formats/factionFile.js';   /
 import { attachFactionRep } from './factionRep.js';   // S25
 import { createRegionConditions } from './regionConditions.js';
 import { bootstrapRegionPower } from './regionPower.js';   // AUDIT 26 F107   // PlayerEntity.InitializeRegionData (:2189-2218), at every new game
+// ORL1: the leveling choice - its screen, and the two names the
+// answer is spelled with.
+import { LevelingChoiceScreen } from '../ui/levelingChoice.js';
+import { oblivionLevelingEnabled, initVirtueLeveling, LEVELING_CLASSIC } from './oblivionLeveling.js';
 
 /** SPELLS.STD as an index -> spell map. AUDIT 17f: the exterior
  *  hosts ran chargen without one and called finishChargen with no
@@ -146,6 +150,12 @@ export async function applyHeadlessChargen(playerEntity, classIndex, { fetchByte
   playerEntity.regionConditions = createRegionConditions();
   // AUDIT 26 F107: InitializeRegionData's own tail (:2211-2217).
   bootstrapRegionPower(playerEntity.factionRep, { regionConditions: playerEntity.regionConditions });
+  // ORL1: THE SKIP IS NOT A CHOICE, so it takes the port's own law.
+  // `?class=` exists to get past the wizard without a player - a probe,
+  // a test, a headless run - and a question nobody is there to answer
+  // must not be asked and must not be guessed at. Daggerfall's leveling
+  // is what every ?class= character has always had.
+  initVirtueLeveling(playerEntity, LEVELING_CLASSIC);
   console.log(`[chargen] ${CLASS_CAREERS[classIndex]}: HP ${playerEntity.maxHealth}, spells ${playerEntity.spells.length}`);
   return playerEntity;
 }
@@ -264,6 +274,14 @@ export function finishChargen(playerEntity, result, spellsByIndex = null, { roll
   // first raiseSkills raise jumped the character straight to level 3.
   playerEntity.currentLevelUpSkillSum = levelUpSkillSum(playerEntity);
   playerEntity.startingLevelUpSkillSum = playerEntity.currentLevelUpSkillSum;
+  // ORL1: ...and THE LEVELING ANCHOR'S TWIN is taken in the same
+  // breath, for the same reason - whichever system this character
+  // answered for, its starting state is set once, here, where the DFU
+  // anchor is set. `result.levelingSystem` is the answer the door's
+  // question wrote (createChargenWindow); a result that carries none -
+  // a test's literal, a caller that built a flow by hand - is a classic
+  // character, which is the port's own law and the safe default.
+  initVirtueLeveling(playerEntity, result.levelingSystem ?? LEVELING_CLASSIC);
   return playerEntity;
 }
 
@@ -341,6 +359,31 @@ export async function createChargenFlow(fetchBytes, { rolls = Math.random } = {}
  *      U31 that path is the `?dungeon` dev scene alone, which is why
  *      it stayed open so long - but small is not the same as absent. */
 export function createChargenWindow(flow, { onDone, onCancel, hudScale = 2 } = {}) {
+  // ORL1: ...AND THE LEVELING CHOICE RIDES THIS DOOR (Mac: "On new
+  // game, I want the player to receive a notification on which leveling
+  // system they would like to use").
+  //
+  // THE FOUR HOSTS RULE, answered here rather than three times over.
+  // Three hosts run a new game and all three build their wizard
+  // through this function - world.js:2175, exterior.js:1209,
+  // dungeonContext.js:2270 - so the question is asked once, in the
+  // seam, and not one of them learns a new word. THE FOURTH HOST,
+  // scenes/worldModes.js, IS ACCOUNTED FOR AND ASKS NOTHING: a new game
+  // never begins inside a building, that host runs no chargen at all
+  // (it has no createChargenFlow call), and so it has no new-game
+  // moment to ask at. It does LEVEL a character, and both of its
+  // level-up arms were wired for this slice.
+  //
+  // (The reserved word for an unwired host is deliberately not used
+  // here: this file's own pin, test/enhancedChargen.test.js's "the FOUR
+  // HOSTS are each named at the seam", holds that the SKIN fork has no
+  // host outside it, and that guard must keep meaning what it says.)
+  return withLevelingChoice(flow, { onDone, onCancel, hudScale });
+}
+
+/** The wizard this skin wears - the fork createChargenWindow used to
+ *  be, unchanged, now with the choice wrapped around it. */
+function chargenWizard(flow, { onDone, onCancel, hudScale = 2 } = {}) {
   // A DOM view needs a DOM. The headless suite constructs this window
   // to pin the fire-once law and has no document, so the fork asks
   // rather than assuming - and a host without one keeps the canvas
@@ -350,6 +393,80 @@ export function createChargenWindow(flow, { onDone, onCancel, hudScale = 2 } = {
     return enhancedChargenOverlay(flow, { onDone, onCancel, hudScale });
   }
   return classicChargenWindow(flow, { onDone, onCancel, hudScale });
+}
+
+/**
+ * THE WIZARD, THEN THE QUESTION, IN ONE OVERLAY.
+ *
+ * The hosts hold ONE overlay slot, so the choice cannot be a second
+ * window pushed beside the wizard - it is a second STAGE of the same
+ * one. `done` stays false until the question is answered, which is
+ * what keeps the host from tearing the slot down in between; every
+ * other arm is forwarded to whichever stage is live.
+ *
+ * `isChoiceWindow` is a GETTER for the same reason: the wizard wants
+ * raw key codes and the question wants the shared overlayAction names,
+ * and the hosts read that flag at routing time (townTalk.js:371,
+ * worldModes.js's overlayIsNative), so one object can want both in
+ * turn.
+ *
+ * WITH THE MOD OFF there is no question and no wrapper stage: the
+ * wizard's own answer goes straight out, carrying the classic system.
+ * The same is true of every path that never builds a window at all -
+ * applyHeadlessChargen (the `?class=` skip) sets it there.
+ */
+function withLevelingChoice(flow, { onDone, onCancel, hudScale = 2 } = {}) {
+  if (!oblivionLevelingEnabled()) {
+    return chargenWizard(flow, {
+      onCancel, hudScale, onDone: (r) => onDone?.({ ...r, levelingSystem: LEVELING_CLASSIC }),
+    });
+  }
+  let fired = false;
+  let prompt = null;
+  const inner = chargenWizard(flow, {
+    hudScale,
+    onCancel: () => { fired = true; onCancel?.(); },
+    onDone: (r) => {
+      // AUDIT 17f's law, one layer out: the wizard fires once, and the
+      // question it opens is built once with it.
+      if (prompt || fired) return;
+      prompt = new LevelingChoiceScreen((id) => {
+        fired = true;
+        onDone?.({ ...r, levelingSystem: id });
+      });
+    },
+  });
+  return {
+    get flow() { return flow; },
+    get isChoiceWindow() { return prompt ? false : !!inner.isChoiceWindow; },
+    get done() { return fired; },
+    get levelingPrompt() { return prompt; },   // what a pin reads to know the stage
+    input(code, ev) { if (prompt) prompt.input(code, ev); else inner.input(code, ev); },
+    // ORL1 (review): the pointer reaches the QUESTION too. It used to be
+    // swallowed here, which dead-ended anyone creating a character with
+    // the mouse - the wizard is completable that way by design (U8b).
+    click(vx, vy) { if (prompt) prompt.click(vx, vy); else inner.click?.(vx, vy); },
+    hover(vx, vy, e = null) { if (prompt) prompt.hover(vx, vy); else inner.hover?.(vx, vy, e); },
+    release() { if (!prompt) inner.release?.(); },             // the question has nothing to drag
+    wheel(dir) { if (!prompt) inner.wheel?.(dir); },           // ...and nothing to scroll
+    tick(dt) { if (!prompt) inner.tick?.(dt); },
+    draw(renderer, canvas, font, scale = hudScale) {
+      if (prompt) prompt.draw(renderer, canvas, font, scale);
+      else inner.draw?.(renderer, canvas, font, scale);
+    },
+    dispose() {
+      // A WINDOW TORN DOWN MID-QUESTION STILL HANDS ITS HOST AN ANSWER.
+      // A host may drop an overlay without it being done - townTalk's
+      // font-less arm does exactly that ("never trap the motor"), and
+      // the dungeon host's own chargen fallback is the shape a second
+      // host could grow next. Swallowing the answer there would lose
+      // the finished character with it, so the question falls back to
+      // the same law every unasked path takes: Daggerfall's own.
+      // `_fired` makes this a no-op on every normal close and on cancel.
+      prompt?.answer(LEVELING_CLASSIC);
+      inner.dispose?.();
+    },
+  };
 }
 
 /** THE CLASSIC WIZARD's overlay: the canvas-drawn screens, keyed and
@@ -402,7 +519,7 @@ function classicChargenWindow(flow, { onDone, onCancel, hudScale = 2 } = {}) {
     // the wizard already routes a mousemove here: world.js and
     // exterior.js through `townTalk.hover` (townTalk.js:1198-1209,
     // the route itself :1207), dungeonContext.js through `overlayHover`
-    // (:5924), which dungeon.js:488 and worldModes.js:7569 both feed.
+    // (:5934), which dungeon.js:488 and worldModes.js:7591 both feed.
     // (ROAD-G G4 review: all four were stale - re-resolved by content,
     // against the same six routes G4-11 sweeps.) Hovering never
     // advances the flow, so no done check.

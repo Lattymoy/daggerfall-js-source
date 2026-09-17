@@ -181,7 +181,17 @@ test('B5: the LEVEL-UP screen keeps its slot test - it is the other half of PopT
   // it free. Converting this guard to a push would make that ordering
   // law unobservable - the screen would open either way - so the pair
   // moves together or not at all.
-  assert.match(src('src/scenes/worldModes.js'),
-    /if \(!interiorOverlay\) interiorOverlay = host\.makeCharSheet\?\.\(\) \?\? new LevelUpScreen\(playerEntity\);/);
+  // ORL1 re-shaped the arm's TAIL (the last-resort screen is now the
+  // mod's window for a character who levels by the mod's law), so the
+  // pin holds what it was written to hold and nothing else: THE GUARD,
+  // and the builder being asked FIRST. Both of this host's two arms
+  // carry it - the count is here because a guard restored on one arm
+  // and lost on the other is exactly the half-fix the FOUR HOSTS rule
+  // keeps finding.
+  const wm = src('src/scenes/worldModes.js');
+  const guarded = wm.match(/if \(!interiorOverlay\) \{\n\s*interiorOverlay = host\.makeCharSheet\?\.\(\)\n/g) ?? [];
+  assert.equal(guarded.length, 2, 'both interior level-up arms fill only an EMPTY slot, and ask the host\'s builder first');
+  assert.match(wm, /\?\? \(usesVirtueLeveling\(playerEntity\) && !playerEntity\.oghmaLevelUp/,
+    'and the last resort knows whose law levels this character (ORL1)');
   assert.match(src('src/ui/restWindow.js'), /PopToHUD\(\); RaiseSkills\(\);/);
 });

@@ -34,6 +34,7 @@ import { entityMaxEncumbrance, handToHandMinDamage, handToHandMaxDamage } from '
 import { STAT_KEYS_ORDER } from '../systems/chargen.js';
 import { SKILLS, SKILL_NAMES, skillValue, getSkillRecentlyIncreased, resetSkillsRecentlyRaised } from '../systems/skills.js';
 import { applyLevelUp, LEVELUP_BONUS_POOL_MIN, LEVELUP_BONUS_POOL_MAX } from '../systems/advancement.js';
+import { usesVirtueLeveling } from '../systems/oblivionLeveling.js';   // ORL1: whose law levels this character
 import { ActionTextBox } from './actionText.js';   // the mustDistributeBonusPoints refusal, ClickAnywhereToClose
 import { OGHMA_BONUS_POOL } from '../systems/artifactEffects.js';   // AUDIT 39: the sheet's oghmaBonusPool (:44)
 import { drawText, measureText } from './text.js';
@@ -304,6 +305,15 @@ export class CharSheet {
   _mountStatsRollout(rolls) {
     const e = this.entity;
     if (!e?.readyToLevelUp) return;
+    // ORL1: ...and the sheet does NOT level a character who levels by
+    // the mod's law. ui/charSheetDoor.js hands that character
+    // VirtueLevelUpScreen instead, and this guard is the other half of
+    // it: without it, a classic-lane F5 pressed while a virtue level-up
+    // is owed would mount DFU's rollout, take the Level++ and the
+    // health roll at mount (below), and the mod's window would then
+    // find nothing left to award. The Oghma arm is the exception the
+    // door makes too - that pool is Daggerfall's own.
+    if (!e.oghmaLevelUp && usesVirtueLeveling(e)) return;
     this.leveling = true;
     audio.playOneShot(SOUND.LevelUp, 1);   // levelUpSound (:46, :373)
     this.oghma = !!e.oghmaLevelUp;
