@@ -1947,16 +1947,20 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
    ui/enhancedHud.js. */
 .hud-quick { position: absolute;
   left: calc(24px + env(safe-area-inset-left, 0px));
-  /* THE INSET GROWS WITH THE SCALE, and 30px is measured rather than
-     chosen: \`.hud-bottom\` is anchored at the bottom and grows UPWARD
-     with --hud-scale, so the vitals row's top edge is at 778 - 30 *
-     scale on an 800px viewport (748 at 1, 718 at 2 - tools/qs3Probe
-     .mjs). At scale 1 the two never meet, because the bars are centred
-     and this is in a corner; at 2 the bars are 1196px wide and they
-     do. The block steps up by exactly the rate they come down. */
-  bottom: calc(24px + 30px * (var(--hud-scale) - 1) + env(safe-area-inset-bottom, 0px));
+  /* THE BLOCK'S BOTTOM EDGE RIDES THE VITALS' TOP LINE. \`.hud-bottom\`
+     is anchored 22px up and its vitals row is 30px tall, both scaled, so
+     the row's top edge sits at 22 + 30 * scale from the bottom (748 at 1,
+     718 at 2 on an 800px viewport - tools/qs3Probe.mjs). The bars are
+     centred and this is a corner, so at scale 1 they never meet; past
+     about 1.2 the bars are wide enough to reach this column, and then
+     the block must already be above them - not only at 2, which is where
+     the first draft measured (a 30px-per-unit step that cleared 2 and
+     put the bottom cell IN the magicka bar at 1.5, AUDIT QS). 22 + 32 *
+     scale: the bars' own line plus two pixels of air, at every scale. */
+  bottom: calc(22px + 32px * var(--hud-scale) + env(safe-area-inset-bottom, 0px));
   transform: scale(var(--hud-scale)); transform-origin: bottom left;
-  padding: 0 30px 18px; display: flex; flex-direction: column; align-items: flex-start;
+  /* 22px under the diamond holds the bottom tag (4px of air and a 16px chip). */
+  padding: 0 30px 22px; display: flex; flex-direction: column; align-items: flex-start;
   --qs-cell: 84px; --qs-box: 172px; }
 /* TI2: a FIXED virtual stick lives bottom-left at inset 36 radius 56 -
    so it owns x 36..148, which is this corner. The block steps clear of
@@ -1978,7 +1982,16 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
 .hud-readyname { font-size: 13px; color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
 
 .hud-qdiamond { position: relative; width: var(--qs-box); height: var(--qs-box); margin-top: 18px; }
-.hud-qcell { position: absolute; width: var(--qs-cell); height: var(--qs-cell); }
+/* AUDIT QS F1: THE CELL ITSELF IS THE RHOMBUS. The clip was on the
+   frame and the ground alone, and the cell under them was a SQUARE -
+   four squares that overlap in four patches, later siblings winning -
+   so on a phone a fifth of the taps inside one cell's picture fired
+   another cell's action, and the empty middle of the diamond swallowed
+   a tap meant for the game. clip-path clips the hit test as it clips
+   the paint; the tags are the diamond's children, not the cells', and
+   stand outside it. */
+.hud-qcell { position: absolute; width: var(--qs-cell); height: var(--qs-cell);
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
 .hud-qc1 { left: calc((var(--qs-box) - var(--qs-cell)) / 2); top: 0; }
 .hud-qoff { left: 0; top: calc((var(--qs-box) - var(--qs-cell)) / 2); }
 .hud-qmain { left: calc(var(--qs-box) - var(--qs-cell)); top: calc((var(--qs-box) - var(--qs-cell)) / 2); }
@@ -2029,9 +2042,16 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
 /* DEPARTURE 2 (ui/enhancedHud.js's header): on a phone the cells are
    the only control for the two quick uses and the swap, so they - and
    only they - take a finger. The \`.hud\` root stays pointer-events
-   none, which is what keeps the game underneath reachable. */
-@media (pointer: coarse) {
+   none, which is what keeps the game underneath reachable. TOUCH-FIRST
+   is the pair \`pointer: coarse\` AND \`hover: none\` (AUDIT QS F8): a
+   desktop with a touchscreen answers coarse alone, and a mouse click
+   on the diamond there fired a slot and swallowed a swing. */
+@media (pointer: coarse) and (hover: none) {
   .hud-qcell { pointer-events: auto; touch-action: none; }
+  /* AUDIT QS F10: a chip naming a KEY on a device with no keyboard
+     tells the player to press something that is not there; a pad's
+     glyph stays, because a pad on a phone is a pad. */
+  .hud-qstag.key { display: none; }
 }
 /* The switch (features 'quickslot-diamond') hides the diamond and its
    tags; the caption row above it stays, because the mode word lives
@@ -2172,7 +2192,7 @@ body:has(.dfchat.touch) .hudtext-stack { top: ${HUD_TEXT_TOP_CHAT_TOUCH_PX}px; }
      the four placements follow it. MEASURED against the touch layer's
      bottom-right column and the vitals above it at 860x400 and
      430x860, at hud scale 1 and 2. */
-  .hud-quick { --qs-cell: 60px; --qs-box: 124px; padding: 0 24px 14px;
+  .hud-quick { --qs-cell: 60px; --qs-box: 124px; padding: 0 24px 22px;
     left: calc(14px + env(safe-area-inset-left, 0px));
     /* ...AND IT SITS ABOVE THE TOUCH LAYER'S BUTTON ROW. ui/touch.js
        puts Jump, sheathe, the mode cycle and the social door along the

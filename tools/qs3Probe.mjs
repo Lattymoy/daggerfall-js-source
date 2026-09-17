@@ -39,7 +39,7 @@ const ROOT = normalize(join(dirname(fileURLToPath(import.meta.url)), '..'));
 const PAGE_REL = 'tools/qs3-probe.tmp.html';
 const PAGE_PATH = join(ROOT, PAGE_REL);
 
-const PAGE = `<!doctype html><html><head><meta charset="utf-8"><title>QS3 probe</title>
+const PAGE = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>QS3 probe</title>
 <style>html,body{margin:0;height:100%;background:#12141a;overflow:hidden}</style></head><body>
 <script type="module">
 import { drawEnhancedHud } from '/src/ui/enhancedHud.js';
@@ -93,6 +93,25 @@ window.__probe = {
   pointer: getComputedStyle(document.querySelector('.hud-qmain')).pointerEvents,
   rootPointer: getComputedStyle(document.querySelector('.hud')).pointerEvents,
   hands: !!document.querySelector('.hud-hands'),
+  // AUDIT QS F1: WHAT A FINGER LANDS ON. The centre of each cell must be
+  // that cell; the diamond's empty middle and the gap between two cells
+  // must be NOTHING of the diamond's (they fall through to the game).
+  hit: (() => {
+    const cellOf = (el) => el?.closest?.('.hud-qcell')?.className.match(/hud-q(c1|c2|off|main)/)?.[1] ?? null;
+    const at = (x, y) => cellOf(document.elementFromPoint(x, y));
+    const c = (sel) => { const r = document.querySelector(sel).getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; };
+    const d = document.querySelector('.hud-qdiamond').getBoundingClientRect();
+    const mid = [d.x + d.width / 2, d.y + d.height / 2];
+    const [c1x, c1y] = c('.hud-qc1'); const [offx, offy] = c('.hud-qoff');
+    return {
+      c1: at(...c('.hud-qc1')), off: at(...c('.hud-qoff')), main: at(...c('.hud-qmain')), c2: at(...c('.hud-qc2')),
+      middle: at(...mid),
+      // inside c1's bounding SQUARE, outside every cell's rhombus (an L1 distance
+      // past half a cell from each centre): a square cell would take it, a rhombus lets it through
+      corner: at(c1x - d.width * 0.15, c1y - d.height * 0.13),
+      gap: at((c1x + offx) / 2, (c1y + offy) / 2),
+    };
+  })(),
 };
 document.title = 'ready';
 <\/script></body></html>`;
@@ -113,9 +132,13 @@ const notes = [];
 try {
   const sizes = [['desktop', { width: 1280, height: 800 }], ['phone-landscape', { width: 860, height: 400 }], ['phone-portrait', { width: 430, height: 860 }]];
   for (const [name, size] of sizes) {
-    for (const scale of [1, 2]) {
+    for (const scale of [1, 1.5, 2]) {
       for (const stick of ['float', 'fixed']) {
-        const page = await browser.newPage({ viewport: size });
+        // The phone sizes are opened as a PHONE - a touch-first device, so the
+        // sheet's `(pointer: coarse) and (hover: none)` rule is live and the
+        // hit test below measures what a finger lands on.
+        const touch = name !== 'desktop';
+        const page = await browser.newPage({ viewport: size, hasTouch: touch, isMobile: touch });
         const errors = [];
         page.on('pageerror', (e) => errors.push(String(e)));
         await page.goto(`http://127.0.0.1:${port}/${PAGE_REL}?nofonts&scale=${scale}&stick=${stick}&spell=1`, { waitUntil: 'domcontentloaded', timeout: 60000 }).catch((e) => errors.push(e.message));
@@ -165,6 +188,13 @@ try {
         if (stick === 'fixed' && !p.classes.quick.includes('stickclear')) fails.push(`${label}: the stick-clear class was not toggled`);
         if (stick === 'float' && p.classes.quick.includes('stickclear')) fails.push(`${label}: the stick-clear class stuck on`);
         if (p.rootPointer !== 'none') fails.push(`${label}: the HUD root takes the pointer`);
+        if (touch) {
+          if (p.pointer !== 'auto') fails.push(`${label}: a phone's cells do not take the finger (pointer-events ${p.pointer})`);
+          for (const k of ['c1', 'off', 'main', 'c2']) if (p.hit[k] !== k) fails.push(`${label}: the centre of the ${k} cell hits ${p.hit[k]}`);
+          if (p.hit.middle !== null) fails.push(`${label}: the diamond's empty middle hits the ${p.hit.middle} cell`);
+          if (p.hit.corner !== null) fails.push(`${label}: c1's square corner hits the ${p.hit.corner} cell - the cell is a square, not a rhombus`);
+        } else if (p.pointer !== 'none') fails.push(`${label}: a desktop's cells take the pointer`);
+        console.log(`   hit test: centres ${['c1', 'off', 'main', 'c2'].map((k) => p.hit[k]).join('/')}, middle ${p.hit.middle}, corner ${p.hit.corner}, gap ${p.hit.gap}`);
         // QS3_SHOTS=<dir>: a screenshot per page, for a reader who wants
         // to SEE the diamond rather than read its rectangles.
         if (process.env.QS3_SHOTS) await page.screenshot({ path: join(process.env.QS3_SHOTS, `qs3-${name}-x${scale}-${stick}.png`) });

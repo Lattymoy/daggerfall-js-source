@@ -64,8 +64,23 @@ export const QUICKSLOT_TEXT = Object.freeze({
   noneLeft: (name) => `You have no ${name} left.`,
   noSwap: 'No weapon is set to swap to.',
   swapGone: (name) => `Your ${name} is not in your pack.`,
+  swapHeld: (name) => `You are already holding your ${name}.`,
   swapped: (name) => `You ready your ${name}.`,
+  putAway: (name) => `You put away your ${name}.`,
+  handsEmpty: 'Your hands are already empty.',
 });
+
+/** AUDIT QS F2 - BARE HANDS ARE A SWAP TARGET. A swap out of empty hands
+ *  used to CLEAR the slot, because nothing had left the hand to become
+ *  the next swap - so the first press a new player made emptied the
+ *  cell and the second said there was nothing to swap to. What left
+ *  the hand was NOTHING, and nothing is a kind too: the slot points at
+ *  bare hands, and the next press puts the weapon away again. The key
+ *  names the hand, because a left-only bow swaps in and out of the
+ *  left. */
+export const BARE_KEYS = Object.freeze({ R: 'bare:R', L: 'bare:L' });
+export const BARE_NAME = 'Bare hands';
+const bareHandOf = (key) => (key === BARE_KEYS.L ? 'L' : key === BARE_KEYS.R ? 'R' : null);
 
 const state = { c1: null, c2: null, swap: null };
 
@@ -172,9 +187,15 @@ export function resolveConsumable(entity, slot) {
 export function resolveSwap(entity) {
   const e = state.swap;
   if (!e) return null;
-  const matches = packOf(entity).filter((it) => !isEquipped(it) && quickslotKey(it) === e.key);
+  const bare = bareHandOf(e.key);
+  if (bare) return { key: e.key, name: e.name, item: null, bare };
+  const ofKind = packOf(entity).filter((it) => quickslotKey(it) === e.key);
+  const matches = ofKind.filter((it) => !isEquipped(it));
   const item = matches.find((it) => !isBrokenItem(it)) ?? matches[0] ?? null;
-  return { key: e.key, name: e.name, item };
+  // AUDIT QS F7: a record of the kind that is IN A HAND is not "not in
+  // your pack" - the cell draws it as held and the press says so.
+  const held = item ? null : (ofKind.find((it) => isEquipped(it)) ?? null);
+  return { key: e.key, name: e.name, item, held };
 }
 
 const cell = (item, extra = {}) => ({ item, name: itemLongName(item), condition: conditionPercentage(item), ...extra });
@@ -188,8 +209,10 @@ const cell = (item, extra = {}) => ({ item, name: itemLongName(item), condition:
  * `off`:  the off-hand cell, in this order - a LIT light source (it is
  *         in the hand, and its "condition" is what is left to burn -
  *         Handheld Torches burns currentCondition down), else the
- *         SHIELD on the left hand, else the SWAP weapon when one is
- *         set (a ghost when it is not in the pack), else `empty`.
+ *         SHIELD on the left hand, else any other WEAPON on the left
+ *         hand (a bow), else the SWAP when one is set - the weapon, or
+ *         bare hands (`bare`), or the record already in a hand
+ *         (`held`), or a ghost when it left the pack - else `empty`.
  * `c1`, `c2`: the consumables, each null when unassigned.
  */
 export function quickslotView(entity, { weapon = null, sheathed = false } = {}) {
@@ -199,9 +222,16 @@ export function quickslotView(entity, { weapon = null, sheathed = false } = {}) 
   const left = entity ? (equipTableOf(entity)[EQUIP_SLOTS.LeftHand] ?? null) : null;
   if (lit) off = cell(lit, { kind: 'torch' });
   else if (left && isShieldTemplate(left.templateIndex)) off = cell(left, { kind: 'shield' });
+  // AUDIT QS F4: anything else on the left hand - a bow under
+  // Enhancements.BowLeftHandWithSwitching - is IN the off hand, and the
+  // cell is the off hand's readout before it is the swap's offer.
+  else if (left) off = cell(left, { kind: 'weapon' });
   else if (state.swap) {
     const r = resolveSwap(entity);
-    off = r.item ? cell(r.item, { kind: 'swap' }) : { kind: 'swap', item: null, name: r.name, condition: null };
+    off = r.item ? cell(r.item, { kind: 'swap' })
+      : r.bare ? { kind: 'swap', item: null, name: r.name, condition: null, bare: true }
+        : r.held ? cell(r.held, { kind: 'swap', held: true })
+          : { kind: 'swap', item: null, name: r.name, condition: null };
   } else off = { kind: 'empty', item: null, name: null, condition: null };
   return { main, off, c1: resolveConsumable(entity, 'c1'), c2: resolveConsumable(entity, 'c2') };
 }
@@ -254,7 +284,23 @@ export function useQuickslot(slot, { entity = null, items = null, hooks = {}, sa
 export function swapQuickslot({ entity = null, say = null, rows = null } = {}) {
   const r = resolveSwap(entity);
   if (!r) { say?.(QUICKSLOT_TEXT.noSwap); return { kind: 'none' }; }
-  if (!r.item) { say?.(QUICKSLOT_TEXT.swapGone(r.name)); return { kind: 'gone', name: r.name }; }
+  const table = equipTableOf(entity);
+  const snap = equipDelaySnapshot(entity);
+  // Bare hands: put the weapon in that hand away, and it becomes the swap.
+  if (r.bare) {
+    const hand = r.bare === 'L' ? EQUIP_SLOTS.LeftHand : EQUIP_SLOTS.RightHand;
+    const held = table[hand] ?? null;
+    if (!held) { say?.(QUICKSLOT_TEXT.handsEmpty); return { kind: 'none' }; }
+    unequipSlot(entity, hand);
+    billEquipDelayOnClose(entity, snap);
+    state.swap = canSwapTo(held) ? { key: quickslotKey(held), name: itemLongName(held) } : null;
+    say?.(QUICKSLOT_TEXT.putAway(itemLongName(held)));
+    return { kind: 'swapped', name: r.name, item: null, previous: held };
+  }
+  if (!r.item) {
+    if (r.held) { say?.(QUICKSLOT_TEXT.swapHeld(r.name)); return { kind: 'held', name: r.name }; }
+    say?.(QUICKSLOT_TEXT.swapGone(r.name)); return { kind: 'gone', name: r.name };
+  }
   const refuse = (id, kind) => {
     const text = rows ? (rows(id) ?? []).map((row) => (typeof row === 'string' ? row : row?.text ?? '')).join(' ').trim() : '';
     if (text) say?.(text);
@@ -262,8 +308,12 @@ export function swapQuickslot({ entity = null, say = null, rows = null } = {}) {
   };
   if (isBrokenItem(r.item)) return refuse(ITEM_BROKEN_TEXT_ID, 'broken');
   if (isForbiddenEquip(entity?.career, r.item)) return refuse(FORBIDDEN_EQUIPMENT_TEXT_ID, 'forbidden');
-  const previous = equipTableOf(entity)[EQUIP_SLOTS.RightHand] ?? null;
-  const snap = equipDelaySnapshot(entity);
+  // THE HAND THE SWAP IS FOR. A left-only weapon (a bow under
+  // Enhancements.BowLeftHandWithSwitching) lives in the left; everything
+  // else the swap puts in the RIGHT, and what was there is the leaver.
+  const leftOnly = getItemHands(r.item) === ITEM_HANDS.LeftOnly;
+  const hand = leftOnly ? EQUIP_SLOTS.LeftHand : EQUIP_SLOTS.RightHand;
+  const previous = table[hand] ?? null;
   // QS2 - A SWAP REPLACES WHAT IS IN THE HAND, and `equipItem` alone does not.
   // GetEquipSlot's weapon arm is `getFirstSlot(RightHand, LeftHand)` for an
   // EITHER-handed weapon (ItemEquipTable.cs, characters/equipTable.js) - the
@@ -274,22 +324,22 @@ export function swapQuickslot({ entity = null, say = null, rows = null } = {}) {
   // sword still in the right, nothing leaving the hand, and so (no leaver) the
   // slot CLEARED: the swap did not swap, and the next press said there was
   // nothing to swap to. So the main hand is emptied first when the swap weapon
-  // would otherwise land beside it rather than in it. A LEFT-ONLY weapon (a
-  // bow under Enhancements.BowLeftHandWithSwitching) keeps its own hand - the
-  // hand law is still the equip table's, this only stops the off hand being
-  // used as overflow - and with the main hand free `getFirstSlot` answers it,
-  // so `equipItem` performs the one equip it always did.
-  const bumped = previous && getItemHands(r.item) !== ITEM_HANDS.LeftOnly
-    ? unequipSlot(entity, EQUIP_SLOTS.RightHand)
-    : null;
+  // would otherwise land beside it rather than in it; a left-only weapon keeps
+  // its own hand, and `equipItem` evicts that hand's occupant itself.
+  const bumped = previous && !leftOnly ? unequipSlot(entity, EQUIP_SLOTS.RightHand) : null;
   const un = equipItem(entity, r.item);
   if (un === null) {
     if (bumped) equipItem(entity, bumped);   // the refusal changes nothing: the hand goes back as it was
     return { kind: 'refused', name: r.name };
   }
   billEquipDelayOnClose(entity, snap);
-  const leaver = un.find((it) => it === previous) ?? bumped ?? null;
+  // THE NEXT SWAP is what left the hand: the weapon that was there, or
+  // bare hands when nothing was (AUDIT QS F2). A leaver that is not a
+  // weapon - a shield a left-only bow bumped - is not a swap, and the
+  // slot clears.
+  const leaver = previous && !isEquipped(previous) ? previous : null;
   if (leaver && canSwapTo(leaver)) state.swap = { key: quickslotKey(leaver), name: itemLongName(leaver) };
+  else if (!previous) state.swap = { key: leftOnly ? BARE_KEYS.L : BARE_KEYS.R, name: BARE_NAME };
   else state.swap = null;
   say?.(QUICKSLOT_TEXT.swapped(r.name));
   return { kind: 'swapped', name: r.name, item: r.item, previous: leaver };

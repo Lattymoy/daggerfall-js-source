@@ -141,6 +141,15 @@ test('QS3 the tag law: the pad while the pad is live, the key otherwise, and NOT
   assert.equal(tagText('Numpad7'), 'KP7');
   assert.equal(tagText('KeyZ'), 'Z');
   assert.equal(tagText('ArrowLeft'), 'LEFT');
+  // AUDIT QS F6: a combo is each half through the same law, joined tight
+  // - never buttonText's '...' - and an action bound only to a pad AXIS
+  // key reads as bound.
+  assert.equal(tagText('ShiftLeft+Digit1'), 'LSHIFT+1');
+  const axis = createBindings();
+  setBinding(axis, 'JoystickAxis3+', 'QuickUse1');
+  const axisTag = quickslotTag('QuickUse1', { bindings: axis, controller: true, family: 'xbox' });
+  assert.equal(axisTag?.kind, 'key');
+  assert.ok(axisTag.text.length > 0 && axisTag.text !== '...' && axisTag.text !== 'NONE');
   // ...and the pad's own button while the pad is the live device.
   assert.deepEqual(quickslotTag('QuickUse1', pad), { kind: 'glyph', family: 'xbox', code: 'JoystickButton2' });
   assert.deepEqual(quickslotTag('QuickUse1', { ...pad, family: 'ps' }), { kind: 'glyph', family: 'ps', code: 'JoystickButton2' });
@@ -228,7 +237,7 @@ test('QS3: the sheet - clipped not rotated, one number for the geometry, and the
   assert.match(CSS, /\.hud-qc2 \{[^}]*top: calc\(var\(--qs-box\) - var\(--qs-cell\)\); \}/);
   // The block's corner, and the HUD's own scale on it.
   assert.match(CSS, /\.hud-quick \{ position: absolute;\s*\n\s*left: calc\(24px \+ env\(safe-area-inset-left, 0px\)\);/);
-  assert.match(CSS, /\.hud-quick \{[\s\S]{0,700}?transform: scale\(var\(--hud-scale\)\); transform-origin: bottom left;/);
+  assert.match(CSS, /\.hud-quick \{[\s\S]{0,1100}?transform: scale\(var\(--hud-scale\)\); transform-origin: bottom left;/);
   // THE INSET GROWS WITH THE SCALE, and 30px is MEASURED rather than
   // chosen: `.hud-bottom` is bottom-anchored and grows upward, so the
   // vitals row's top edge is at 778 - 30 * scale on an 800px viewport
@@ -313,7 +322,14 @@ test('QS3: the block is written only when it CHANGED, and a phone can press it',
   assert.doesNotMatch(read('src/ui/itemIconUrl.js'), /^import /m, 'the shared module imports nothing at all');
   // DEPARTURE 2: on a phone the cells are the only control for these
   // actions (AUDIT SOC C9's lesson). The `.hud` root stays unclickable.
-  assert.match(CSS, /@media \(pointer: coarse\) \{\s*\n\s*\.hud-qcell \{ pointer-events: auto; touch-action: none; \}\s*\n\}/);
+  assert.match(CSS, /@media \(pointer: coarse\) and \(hover: none\) \{\s*\n\s*\.hud-qcell \{ pointer-events: auto; touch-action: none; \}/);
+  // AUDIT QS F10: under the same touch-first pair a KEYBOARD chip hides and a pad's glyph stays.
+  assert.match(CSS, /@media \(pointer: coarse\) and \(hover: none\) \{[^}]*\}[\s\S]*?\.hud-qstag\.key \{ display: none; \}\s*\n\}/);
+  assert.match(HUD, /part\.tag\.classList\.toggle\('key', !!t && t\.kind === 'key'\);/);
+  // AUDIT QS F8: the tap is a FINGER's - a mouse on a touchscreen machine is refused.
+  assert.match(HUD, /if \(e && e\.pointerType != null && e\.pointerType !== 'touch' && e\.pointerType !== 'pen'\) return;/);
+  // AUDIT QS F1: the CELL is the rhombus, so the hit test is the picture's.
+  assert.match(CSS, /\.hud-qcell \{ position: absolute; width: var\(--qs-cell\); height: var\(--qs-cell\);\s*\n\s*clip-path: polygon\(50% 0, 100% 50%, 50% 100%, 0 50%\); \}/);
   assert.match(CSS, /\.hud \{ position: fixed; inset: 0; z-index: 4; pointer-events: none;/);
   assert.match(HUD, /cells\.c1\.cell\.addEventListener\('pointerdown', tap\(\(\) => liveOpts\.quickUse\?\.\(1\)\)\);/);
   assert.match(HUD, /cells\.c2\.cell\.addEventListener\('pointerdown', tap\(\(\) => liveOpts\.quickUse\?\.\(2\)\)\);/);

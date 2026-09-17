@@ -13977,9 +13977,12 @@ health bar's red under 40%; a torch's is what is left to burn), the
 count in the lower-right face of a consumable. Four cells of 84px at the
 four points of a 172px square, the facing edges 4px apart; 60 in a 124
 square under 860px. The block sits bottom-left with the safe-area
-insets, scales with `--hud-scale` from its own corner, and its inset
-grows by 30px per unit of scale because the vitals column is bottom-
-anchored and grows upward at exactly that rate (measured). The mode
+insets, scales with `--hud-scale` from its own corner, and its bottom
+edge rides the vitals' top line at every scale (22 + 32 x scale from the
+bottom, the row's own 22 + 30 x scale plus air) because the bars are
+centred and reach this corner once the scale passes about 1.2 - the
+first draft stepped 30px per unit, which cleared scale 2 and put the
+bottom cell in the magicka bar at 1.5 (AUDIT QS, measured). The mode
 word lived at left 24 / bottom 24 - the diamond's own corner - so it is
 the block's CAPTION now, beside the readied spell's chip, with every one
 of its show/hide laws untouched.
@@ -14041,8 +14044,8 @@ screenshot per page): at 1280x800, 860x400 and 430x860, hud scale 1 and
 2, stick floating and fixed, no drawn part of the block overlaps the
 vitals column, the touch layer's bottom-right buttons or a fixed stick.
 Three collisions the first draft had and the numbers fixed: the bottom
-cell in the magicka bar at scale 2 (the inset that grows with the
-scale), a 515px caption on a 430px phone (capped at the diamond's width,
+cell in the magicka bar at scale 2 (the inset that rides the vitals'
+line), a 515px caption on a 430px phone (capped at the diamond's width,
 wrapping), the right tag under the phone's leftmost button (the block
 lifts to 76px, the party panel's own clearance, under 860px; the
 stick-clear offset 156, 160 under 860). At scale 2 on a phone the WHOLE
@@ -14062,7 +14065,65 @@ the tooltip keeps filling slots.
 `gamepad` and `features`; two PX30 pins re-aimed in `enhancedHud.test.js`
 (the readout listens to nothing but the three coarse-pointer taps the
 departure names; the two hands still arrive through drawHud's bag and
-`.hud-hand` is pinned gone). Mutated: `tools/mutants/qs1.json` 17/17,
-`qs2.json` 19/19, `qs3.json` 20/20 dead. NOT SEEN ON A GPU with ARENA2
+`.hud-hand` is pinned gone). Mutated: `tools/mutants/qs1.json` 22/22,
+`qs2.json` 19/19, `qs3.json` 26/26 dead. NOT SEEN ON A GPU with ARENA2
 art: the probe's cells drew their two-letter fallback, which is the
 ladder's last arm and not its first.
+
+### AUDIT QS - the arc audited the same day
+
+One read-only adversarial lane over the merged tree, driving the model,
+the tags and the HUD in Chromium rather than reading them; ten findings,
+eight fixed and pinned, two recorded. In severity order:
+
+- **F1, a fifth of the taps fired the wrong cell.** The clip-path that
+  made a cell a diamond was on the frame and the ground, and the CELL
+  under them was a square - four squares overlapping in four patches,
+  later siblings winning - so on a phone 398 of 1922 points inside one
+  cell's picture hit another cell (a tap on the top potion swapped the
+  weapon), and the diamond's empty middle swallowed a tap meant for the
+  game. The cell is the rhombus now (clip-path clips the hit test as it
+  clips the paint); `tools/qs3Probe.mjs` opens the phone sizes as touch
+  devices and pins the centres, the middle and a square corner.
+- **F2, the swap slot emptied out of empty hands.** Nothing had left
+  the hand to become the next swap, so the first press a new player made
+  emptied the cell and the second said there was nothing to swap to; a
+  left-hand bow (Enhancements.BowLeftHandWithSwitching) did the same and
+  left the player dual-holding. Nothing is a kind too: the slot points
+  at BARE HANDS (`bare:R` / `bare:L`, the hand named because a bow
+  swaps through the left), the next press puts the weapon away, billed,
+  and the weapon is the swap again.
+- **F3, the key cache outlived an in-place enchantment.** Already
+  narrowed at integration (a record carrying enchantments or affixes is
+  never cached, because the item maker writes `item.enchantments` onto
+  an existing record); the audit's driven case confirmed the shape.
+- **F4, the off hand could not show a left-hand bow** - it read as a
+  socket, or as the swap. Any left-hand item that is not a shield is a
+  `weapon` cell now, before the swap arm.
+- **F5, three of the rig's four `say` cites named the wrong lines** -
+  the drift tool renumbers by line map and carried an already-wrong cite
+  forward. Re-aimed by content.
+- **F6, a combo tag read '...'** (`buttonText`'s ten-character cap on
+  "LSHIFT + A1"); each half goes through the tag law and joins tight,
+  `LSHIFT+1`. And an action bound only to a pad AXIS key drew no tag:
+  the key arm is everything that is not a drawable pad button.
+- **F7, "not in your pack" for a weapon in your hand.** A record of the
+  kind that is equipped is `held`: the press says so and the cell draws
+  it.
+- **F8, a mouse on a touchscreen machine fired a slot.** Chromium
+  answers `pointer: coarse` for a desktop with a touchscreen; the rule is
+  the touch-first PAIR, coarse AND `hover: none`, and the tap handler
+  refuses anything but a finger or a pen.
+- **F9, recorded, not a bug:** the hotkey bills the window's own sum for
+  the same table transition, and its transition is deliberately not the
+  window's (it empties the main hand first). The Ledger row says so.
+- **F10, the phone's chips named keys it has not got.** Under the same
+  touch-first pair a keyboard chip hides and a pad's glyph stays.
+
+Refuted by the lane and kept out of the list: the per-frame cost (0.34 ms
+with 200 enchanted records and every key cold), the late `onReady` after
+a teardown, a listener leak per host transition, the skin and visibility
+gates, save ordering, the wagon's rows, the tooltip's `picked` surviving
+a slot press, the Morrowind arm following a swap on the next frame, the
+refusals leaving the hands untouched, and every window-shaped gate the
+hotkey shares with the inventory.

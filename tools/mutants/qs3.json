@@ -94,8 +94,8 @@
   {
     "name": "QS3-an-unbound-action-says-NONE",
     "file": "src/ui/quickslotTags.js",
-    "old": "  const key = codes.find((c) => !isJoystickCode(c));\n  if (key) return { kind: 'key', text: tagText(key) };",
-    "new": "  const key = codes.find((c) => !isJoystickCode(c)) ?? null;\n  if (key !== undefined) return { kind: 'key', text: buttonText(key) };",
+    "old": "  const key = codes.find((c) => !unityButtonGlyph(family, c));\n  if (key) return { kind: 'key', text: tagText(key) };",
+    "new": "  const key = codes.find((c) => !unityButtonGlyph(family, c)) ?? null;\n  if (key !== undefined) return { kind: 'key', text: buttonText(key) };",
     "tests": [
       "test/qs3_hud.test.js"
     ]
@@ -179,6 +179,61 @@
     "file": "src/ui/enhancedHud.js",
     "old": "  const off = getPref('quickslots') === false;",
     "new": "  const off = false;",
+    "tests": [
+      "test/qs3_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQS-F1-the-cell-is-a-square-again",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".hud-qcell { position: absolute; width: var(--qs-cell); height: var(--qs-cell);\n  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }",
+    "new": ".hud-qcell { position: absolute; width: var(--qs-cell); height: var(--qs-cell); }",
+    "tests": [
+      "test/qs3_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQS-F8-a-mouse-on-a-touchscreen-fires-the-slot",
+    "file": "src/ui/enhancedHud.js",
+    "old": "    if (e && e.pointerType != null && e.pointerType !== 'touch' && e.pointerType !== 'pen') return;",
+    "new": "",
+    "tests": [
+      "test/qs3_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQS-F8-coarse-alone-is-touch-first",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "@media (pointer: coarse) and (hover: none) {\n  .hud-qcell { pointer-events: auto; touch-action: none; }",
+    "new": "@media (pointer: coarse) {\n  .hud-qcell { pointer-events: auto; touch-action: none; }",
+    "tests": [
+      "test/qs3_hud.test.js",
+      "test/enhancedHud.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQS-F6-a-combo-chip-reads-dots",
+    "file": "src/ui/quickslotTags.js",
+    "old": "  if (isCombo(code)) { const [mod, key] = getCombo(code); return `${tagText(mod)}+${tagText(key)}`; }",
+    "new": "",
+    "tests": [
+      "test/qs3_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQS-F6-an-axis-key-is-no-tag",
+    "file": "src/ui/quickslotTags.js",
+    "old": "  const key = codes.find((c) => !unityButtonGlyph(family, c));",
+    "new": "  const key = codes.find((c) => !c.startsWith('Joystick'));",
+    "tests": [
+      "test/qs3_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQS-F10-the-keyboard-chip-stays-on-the-phone",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  .hud-qstag.key { display: none; }",
+    "new": "",
     "tests": [
       "test/qs3_hud.test.js"
     ]

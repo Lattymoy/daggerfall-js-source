@@ -12,9 +12,9 @@ import {
   QUICKSLOTS, QUICKSLOT_TEXT, quickslotKey, isQuickConsumable, canSwapTo,
   assignQuickslot, clearQuickslot, clearQuickslots, quickslotOf, quickslotEntry,
   resolveConsumable, resolveSwap, quickslotView, useQuickslot, swapQuickslot,
-  quickslotSaveData, restoreQuickslotSaveData,
+  quickslotSaveData, restoreQuickslotSaveData, BARE_KEYS, BARE_NAME,
 } from '../src/systems/quickslots.js';
-import { equipItem, equipTableOf, EQUIP_SLOTS, isEquipped, getItemHands, ITEM_HANDS } from '../src/systems/equip.js';
+import { equipItem, equipTableOf, EQUIP_SLOTS, isEquipped, getItemHands, ITEM_HANDS, unequipSlot } from '../src/systems/equip.js';
 import { potionRecipeKeys, potionRecipeByKey } from '../src/systems/potions.js';
 import { composeSessionState, restoreSessionState } from '../src/systems/save.js';
 
@@ -232,12 +232,41 @@ test('QS1 swap: equipItem does the work, the leaver becomes the swap, and the pa
   swapQuickslot({ entity: e, say });
   assert.equal(equipTableOf(e)[EQUIP_SLOTS.LeftHand], null, 'the shield came off for the claymore');
   assert.equal(quickslotOf(held), 'swap');
-  // Out of empty hands there is nothing to swap back to: the slot clears.
+  // AUDIT QS F2: out of empty hands what left the hand was NOTHING, and
+  // nothing is a kind - the slot points at bare hands, the next press
+  // puts the weapon away, and the weapon is the swap again.
   const e2 = player([dagger()]);
   assignQuickslot('swap', e2.items[0]);
   swapQuickslot({ entity: e2, say });
   assert.equal(equipTableOf(e2)[EQUIP_SLOTS.RightHand], e2.items[0]);
-  assert.equal(quickslotEntry('swap'), null);
+  assert.deepEqual(quickslotEntry('swap'), { key: BARE_KEYS.R, name: BARE_NAME });
+  assert.equal(quickslotView(e2, { weapon: e2.items[0] }).off.bare, true, 'the cell shows bare hands, not a ghost');
+  e2.equipCountdown = 0;
+  const r2 = swapQuickslot({ entity: e2, say });
+  assert.equal(r2.kind, 'swapped');
+  assert.equal(equipTableOf(e2)[EQUIP_SLOTS.RightHand], null, 'put away');
+  assert.ok((e2.equipCountdown ?? 0) > 0, 'putting a weapon away bills the pause as the window would');
+  assert.equal(said.at(-1), QUICKSLOT_TEXT.putAway('Elven Dagger'));
+  assert.equal(quickslotOf(e2.items[0]), 'swap', 'and the dagger is the swap again');
+  swapQuickslot({ entity: e2, say });
+  assert.equal(equipTableOf(e2)[EQUIP_SLOTS.RightHand], e2.items[0], 'round and round');
+  // Bare hands with nothing in the hand says so and moves nothing.
+  restoreQuickslotSaveData({ swap: { key: BARE_KEYS.R, name: BARE_NAME } });
+  unequipSlot(e2, EQUIP_SLOTS.RightHand);
+  assert.equal(swapQuickslot({ entity: e2, say }).kind, 'none');
+  assert.equal(said.at(-1), QUICKSLOT_TEXT.handsEmpty);
+  // AUDIT QS F7: the kind IN A HAND is held, not gone.
+  const e3 = player([sword(), dagger()]);
+  equipItem(e3, e3.items[0]);
+  assignQuickslot('swap', e3.items[1]);
+  equipItem(e3, e3.items[1]);   // the window puts the dagger in the free left hand
+  assert.equal(equipTableOf(e3)[EQUIP_SLOTS.LeftHand], e3.items[1]);
+  const r3h = swapQuickslot({ entity: e3, say });
+  assert.equal(r3h.kind, 'held');
+  assert.equal(said.at(-1), QUICKSLOT_TEXT.swapHeld('Elven Dagger'));
+  const v3 = quickslotView(e3, { weapon: e3.items[0] });
+  assert.equal(v3.off.kind, 'weapon', 'AUDIT QS F4: the off hand shows what is IN it before any swap');
+  assert.equal(v3.off.item, e3.items[1]);
   // A ghost (the weapon left the pack) says so and equips nothing.
   assignQuickslot('swap', sword());
   const r3 = swapQuickslot({ entity: e2, say });

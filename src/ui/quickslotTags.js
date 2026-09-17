@@ -24,7 +24,7 @@
 // And one tail: an action bound ONLY to the pad still shows its glyph
 // with the keyboard live, because there is no key to name and a blank
 // corner would be a lie of a different kind.
-import { getBinding } from '../systems/inputActions.js';
+import { getBinding, isCombo, getCombo } from '../systems/inputActions.js';
 import { buttonText } from '../systems/controlsConfig.js';
 import { modSetting } from '../systems/modSettings.js';
 import { domCodeForKeyCode } from '../systems/keyCodes.js';
@@ -47,8 +47,6 @@ export const CELL_ACTIONS = Object.freeze({
 export const TORCH_TOGGLE_SETTING = 'Handling.ToggleLightInput';
 export const TORCH_VENDOR = 'handheld-torches';
 
-const isJoystickCode = (c) => typeof c === 'string' && c.startsWith('Joystick');
-
 /** The key's name on a chip. `buttonText` is DFU's GetButtonText and
  *  names the digit row Alpha1..Alpha0 - 'A1' on the controls grid,
  *  which is where a player rebinds and where DFU's own word belongs.
@@ -57,11 +55,16 @@ const isJoystickCode = (c) => typeof c === 'string' && c.startsWith('Joystick');
  *  the numpad its digit with the pad's own prefix, and every other key
  *  the classic name. */
 export function tagText(code) {
+  // AUDIT QS F6: a COMBO is each half through this same law, joined
+  // tight - `LSHIFT+1` - because `buttonText`'s short form caps the
+  // joined classic string at ten characters and a chip reading '...'
+  // says nothing at all.
+  if (isCombo(code)) { const [mod, key] = getCombo(code); return `${tagText(mod)}+${tagText(key)}`; }
   const digit = /^Digit([0-9])$/.exec(code);
   if (digit) return digit[1];
   const pad = /^Numpad([0-9])$/.exec(code);
   if (pad) return `KP${pad[1]}`;
-  return buttonText(code);
+  return buttonText(code, true);
 }
 
 /**
@@ -75,7 +78,10 @@ export function quickslotTag(action, { bindings = null, controller = false, fami
   const codes = [getBinding(bindings, action), getBinding(bindings, action, false)].filter(Boolean);
   const pad = codes.find((c) => unityButtonGlyph(family, c));
   if (controller && pad) return { kind: 'glyph', family, code: pad };
-  const key = codes.find((c) => !isJoystickCode(c));
+  // AUDIT QS F6: the KEY arm is everything that is not a drawable pad
+  // button - a keyboard key, a mouse button, a pad AXIS key - so an
+  // action bound only to `JoystickAxis3+` reads as bound, not as nothing.
+  const key = codes.find((c) => !unityButtonGlyph(family, c));
   if (key) return { kind: 'key', text: tagText(key) };
   if (pad) return { kind: 'glyph', family, code: pad };
   return null;

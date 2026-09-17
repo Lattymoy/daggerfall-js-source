@@ -372,7 +372,13 @@ function build(doc) {
   root.append(quick);
   // DEPARTURE 2 (see the header): the only listeners this readout owns.
   // Bound once, reading the LIVE options bag - a frame binds nothing.
-  const tap = (fn) => (e) => { e?.preventDefault?.(); fn(); };
+  // AUDIT QS F8: a FINGER, not a mouse that happens to live on a
+  // machine with a touchscreen - Chromium answers `pointer: coarse` for
+  // one, and a mouse click on the diamond swallowed a swing.
+  const tap = (fn) => (e) => {
+    if (e && e.pointerType != null && e.pointerType !== 'touch' && e.pointerType !== 'pen') return;
+    e?.preventDefault?.(); fn();
+  };
   cells.c1.cell.addEventListener('pointerdown', tap(() => liveOpts.quickUse?.(1)));
   cells.c2.cell.addEventListener('pointerdown', tap(() => liveOpts.quickUse?.(2)));
   cells.off.cell.addEventListener('pointerdown', tap(() => { if (offKind === 'swap') liveOpts.quickSwap?.(); }));
@@ -644,7 +650,7 @@ function drawQuickslots(vitals, opts) {
   });
   quickCell(parts.quickCells.off, 'off', {
     item: o.item, name: o.name, condition: o.condition,
-    socket: o.kind === 'empty', sheathed: false, ghost: o.kind === 'swap' && !o.item, count: null,
+    socket: o.kind === 'empty', sheathed: false, ghost: o.kind === 'swap' && !o.item && !o.bare, count: null,
   });
   for (const k of ['c1', 'c2']) {
     const c = view[k];
@@ -717,6 +723,10 @@ function quickTag(part, slot, t) {
   if (last[`${slot}Tag`] === k) return;
   last[`${slot}Tag`] = k;
   part.tag.classList.toggle('on', !!t);
+  // The chip's KIND is a class, so the touch-first sheet can hide a
+  // keyboard chip on a device with no keyboard and keep a pad's glyph.
+  part.tag.classList.toggle('key', !!t && t.kind === 'key');
+  part.tag.classList.toggle('glyph', !!t && t.kind === 'glyph');
   if (t && t.kind === 'glyph') {
     part.img.src = glyphSvg(t.family, t.code, { size: 12 }) ?? '';
     part.img.style.display = '';

@@ -110,8 +110,8 @@
   {
     "name": "QS1-the-swap-bills-no-pause",
     "file": "src/systems/quickslots.js",
-    "old": "  billEquipDelayOnClose(entity, snap);",
-    "new": "",
+    "old": "  billEquipDelayOnClose(entity, snap);\n  // THE NEXT SWAP is what left the hand",
+    "new": "  // THE NEXT SWAP is what left the hand",
     "tests": [
       "test/quickslots.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "QS1-the-leaver-is-forgotten",
     "file": "src/systems/quickslots.js",
-    "old": "  if (leaver && canSwapTo(leaver)) state.swap = { key: quickslotKey(leaver), name: itemLongName(leaver) };\n  else state.swap = null;",
-    "new": "  state.swap = null;",
+    "old": "  if (leaver && canSwapTo(leaver)) state.swap = { key: quickslotKey(leaver), name: itemLongName(leaver) };\n  else if (!previous)",
+    "new": "  if (!previous)",
     "tests": [
       "test/quickslots.test.js"
     ]
@@ -148,6 +148,51 @@
     "file": "src/systems/quickslots.js",
     "old": "  if (!plain(item)) return computeKey(item);",
     "new": "",
+    "tests": [
+      "test/quickslots.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQS-F2-empty-hands-clear-the-slot-again",
+    "file": "src/systems/quickslots.js",
+    "old": "  else if (!previous) state.swap = { key: leftOnly ? BARE_KEYS.L : BARE_KEYS.R, name: BARE_NAME };",
+    "new": "",
+    "tests": [
+      "test/quickslots.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQS-F2-bare-hands-put-nothing-away",
+    "file": "src/systems/quickslots.js",
+    "old": "    unequipSlot(entity, hand);\n    billEquipDelayOnClose(entity, snap);",
+    "new": "    billEquipDelayOnClose(entity, snap);",
+    "tests": [
+      "test/quickslots.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQS-F7-the-held-record-is-gone",
+    "file": "src/systems/quickslots.js",
+    "old": "  const held = item ? null : (ofKind.find((it) => isEquipped(it)) ?? null);",
+    "new": "  const held = null;",
+    "tests": [
+      "test/quickslots.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQS-F4-the-left-hand-bow-is-a-socket",
+    "file": "src/systems/quickslots.js",
+    "old": "  else if (left) off = cell(left, { kind: 'weapon' });",
+    "new": "",
+    "tests": [
+      "test/quickslots.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQS-F2-putting-the-weapon-away-bills-no-pause",
+    "file": "src/systems/quickslots.js",
+    "old": "    unequipSlot(entity, hand);\n    billEquipDelayOnClose(entity, snap);",
+    "new": "    unequipSlot(entity, hand);",
     "tests": [
       "test/quickslots.test.js"
     ]

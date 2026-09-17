@@ -94,7 +94,9 @@ test('PX30: it is a READOUT, and it is updated rather than rebuilt', () => {
   // game underneath reachable.
   assert.equal((src.match(/addEventListener\(/g) ?? []).length, 3, 'three listeners, and they are the quickslot cells\'');
   for (const m of src.match(/\.addEventListener\('(\w+)'/g) ?? []) assert.equal(m, ".addEventListener('pointerdown'");
-  assert.match(css, /@media \(pointer: coarse\) \{\s*\n\s*\.hud-qcell \{ pointer-events: auto;/);
+  // AUDIT QS F8: TOUCH-FIRST is coarse AND hover-none - a desktop with a
+  // touchscreen answers coarse alone, and a mouse click there swallowed a swing.
+  assert.match(css, /@media \(pointer: coarse\) and \(hover: none\) \{\s*\n\s*\.hud-qcell \{ pointer-events: auto;/);
   // UPDATED, NOT REBUILT: a per-frame innerHTML is PX19k's entrance
   // replay at sixty times a second. Every write is guarded.
   assert.match(src, /const put = \(node, key, value\) => \{\s*\n\s*if \(last\[key\] === value\) return;/);
