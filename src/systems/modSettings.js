@@ -494,6 +494,17 @@ export const MOD_SETTINGS = Object.freeze({
   // disabled", and it posts a warning box at every game start until you do.
   // This port ships the pair the way that author says a player should run
   // them, and ports his warning for the player who turns both on anyway.
+  // BA2 (2026-09-17, Mac: "before any lighting work/the ambient mod that was
+  // introduced I really liked how the dungeons were properly dark ... is
+  // there any way to reintroduce that properly?"): THE SECOND DEPARTURE.
+  // `Dungeon Lighting.enableFogAmbientEffect` ships OFF. The mod ships it
+  // on, and on it replaces DFU's flat 0.12 dungeon ambient with a Trilight
+  // grey of ~0.40 tinted toward the dungeon's fog colour - three times the
+  // classic dark, and past the Dungeon Brightness setting, which only
+  // scales the flat ambient. Off, a dungeon is as dark as DFU's (and, under
+  // the enhanced lane, EL4's dark on top); the fog and the reverb stay as
+  // shipped, and a player who sets the toggle keeps it. The other departure
+  // is the footsteps' above.
   // Every other module ships as the mod ships it. The keys the mod wrote no
   // description for carry the port's words (the pin requires one).
   'better-ambience': Object.freeze({
@@ -519,7 +530,7 @@ export const MOD_SETTINGS = Object.freeze({
       'Dungeon Fog.minFogDistance': Object.freeze({ default: 80.0, min: 20.0, max: 200.0, float: true, step: 1, description: 'Min fog distance from fog start' }),
       'Dungeon Fog.maxFogStart': Object.freeze({ default: 10.0, min: 0.0, max: 100.0, float: true, step: 1, description: 'Max fog start from camera' }),
       'Dungeon Fog.minFogStart': Object.freeze({ default: 0.0, min: 0.0, max: 100.0, float: true, step: 1, description: 'Min fog start from camera' }),
-      'Dungeon Lighting.enableFogAmbientEffect': Object.freeze({ default: true, description: 'Enables custom dungeon ambient lighting' }),
+      'Dungeon Lighting.enableFogAmbientEffect': Object.freeze({ default: false, description: 'Enables custom dungeon ambient lighting' }),   // BA2: ships off (see above)
       'Dungeon Lighting.dungeonDarkness': Object.freeze({ default: 1.0, min: 0.0, max: 3.0, float: true, step: 0.1, description: 'The darkness of dungeons' }),
       'Dungeon Lighting.fogAmbientEffect': Object.freeze({ default: 0.2, min: 0.0, max: 1.0, float: true, step: 0.05, description: 'How much the random dungeon color affects dungeon lighting' }),
       'Better Rain.enableBetterRain': Object.freeze({ default: true, description: 'Makes rain particles look a bit better' }),

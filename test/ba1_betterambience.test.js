@@ -96,7 +96,7 @@ test('BA1: the Mods pane entry is the shipped modsettings.json - six sections, t
   assert.equal(manifest.Files.filter((f) => /\.wav$/i.test(f)).length, 51, 'the 51 clips the manifest names');
   assert.match(rd('vendor/better-ambience/LICENSE'), /^MIT License/);
   const shipped = JSON.parse(rd('vendor/better-ambience/modsettings.json'));
-  const PORT_DEFAULT = Object.freeze({ 'Better Footsteps.enable': false });   // THE departure (modSettings.js says why)
+  const PORT_DEFAULT = Object.freeze({ 'Better Footsteps.enable': false, 'Dungeon Lighting.enableFogAmbientEffect': false });   // the two departures (modSettings.js says why; BA2 the second)
   let n = 0; const kinds = new Set();
   for (const section of shipped.Sections) {
     for (const k of section.Keys) {
@@ -122,6 +122,12 @@ test('BA1: the Mods pane entry is the shipped modsettings.json - six sections, t
   assert.equal(m.keys.Enabled.default, true, 'MO1');
   assert.equal(m.keys['Better Footsteps.enable'].default, false, 'the departure: Immersive Footsteps\' author says so');
   assert.equal(JSON.parse(rd('vendor/better-ambience/modsettings.json')).Sections[0].Keys[0].Value, true, 'and the mod ships it on');
+  // BA2 (2026-09-17, Mac: the dungeons were "properly dark" before the mod): the mod's Trilight ambient ships OFF - the classic flat 0.12 stays the dungeon's dark; the fog and the reverb ship on
+  assert.equal(m.keys['Dungeon Lighting.enableFogAmbientEffect'].default, false, 'BA2: the mod\'s dungeon ambient ships off');
+  assert.equal(JSON.parse(rd('vendor/better-ambience/modsettings.json')).Sections[4].Keys[0].Value, true, 'and the mod ships it on');
+  assert.equal(m.keys['Dungeon Fog.enableFog'].default, true); assert.equal(m.keys['Dungeon Lighting.dungeonDarkness'].default, 1.0);
+  assert.equal(readBetterAmbienceSettings(() => defaults()).enableAmbientLighting, false, 'the component reads the shipped default');
+  assert.equal(readBetterAmbienceSettings(() => defaults()).enableFog, true);
   assert.deepEqual(m.keys['Dungeon Reverb.level'].options, ['Low', 'Medium', 'High']);
   const row = FEATURES.find((f) => f.id === 'mod-better-ambience');
   assert.ok(row); assert.equal(row.control.store, 'mods'); assert.equal(row.control.key, 'Enabled'); assert.match(row.effect, /^Takes effect at once/); assert.equal(row.group, 'world');
@@ -362,7 +368,7 @@ test('BA1: System.Random is the .NET reference (seed 42 opens 0.6681064659115423
 });
 
 test('BA1: the component - a dungeon transition owes the four-frame wait, then the fog and trilight stand for the frames the host draws (and a castle clears them), the reverb bus takes the level\'s preset on the inside-dungeon edge and comes off outside, the rain source is 2D and low-passed in a building and 3D at the dungeon exit, follows the weather word, and stops on the transition; Enabled off takes everything down', async () => {
-  const r = rig({}, { weather: 'sunny' });
+  const r = rig({ 'Dungeon Lighting.enableFogAmbientEffect': true }, { weather: 'sunny' });   // BA2: the ambient module on, as the mod ships it - this pin is the mod's behaviour
   await r.boot();
   const d = { regionName: 'Daggerfall', name: 'Privateer\'s Hold', inCastle: () => false, exitPos: [1, 2, 3] };
   r.c.onTransition({ dungeon: d });
@@ -372,6 +378,7 @@ test('BA1: the component - a dungeon transition owes the four-frame wait, then t
   r.c.frame(0.016, r.dungeon());
   assert.ok(r.c.dungeonFog(), 'the fifth frame: EnableDungeonFog');
   assert.equal(r.c.dungeonFog().mode, 'linear'); assert.ok(r.c.dungeonAmbient().sky.length === 3);
+  { const r0 = rig({}, { weather: 'sunny' }); r0.c.onTransition({ dungeon: d }); r0.c.settleTransition(); assert.ok(r0.c.dungeonFog(), 'BA2: the port\'s defaults - the fog'); assert.equal(r0.c.dungeonAmbient(), null, 'and no ambient: the host keeps the classic flat 0.12'); }
   assert.deepEqual(r.reverbs, ['Stoneroom'], 'level 1 Medium, on the edge into the dungeon');
   assert.equal(r.c.status().rain, null, 'sunny: the source is there, silent');
   r.w.word = 'rain'; r.c.frame(0.016, r.dungeon());

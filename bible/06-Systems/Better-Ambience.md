@@ -31,7 +31,7 @@ as "no restart" and a stop is not a restart; the reverb tail's decay
 was one sample against one sample of noise, a coin toss, and is a
 windowed mean now.
 
-## The compatibility brief, and the one departure
+## The compatibility brief, and the two departures
 
 Immersive Footsteps (IF1) and this mod both take the player's stride:
 each nulls PlayerFootsteps' clips and plays its own. Immersive
@@ -57,6 +57,18 @@ overlapping each other." So:
   entirely while Immersive Footsteps owns it; while Better Ambience
   owns it, only the two clips its DisableBuiltInFootsteps forgot (below).
   Both on is both playing, as in DFU.
+- BA2 (2026-09-17, Mac: "before any lighting work/the ambient mod that
+  was introduced I really liked how the dungeons were properly dark
+  ... is there any way to reintroduce that properly?"):
+  `Dungeon Lighting.enableFogAmbientEffect` SHIPS OFF. On, the module
+  replaces DFU's flat 0.12 dungeon ambient with its Trilight (~0.40 at
+  the equator, tinted toward the fog colour) - three times the classic
+  dark, and past the Dungeon Brightness setting, which scales the flat
+  ambient alone (in DFU too: the mod disables PlayerAmbientLight). Off,
+  the dungeon keeps the classic 0.12 (and EL4's dark under the lane);
+  the fog and the reverb ship on as before; a player who set the toggle
+  keeps it. The pin holds the mod's own behaviour with the key on and
+  the port's default with it off.
 
 ## The laws, and where they live
 
