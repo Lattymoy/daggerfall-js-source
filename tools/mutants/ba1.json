@@ -1,0 +1,382 @@
+[
+ {
+  "name": "stride-interval-3",
+  "file": "src/systems/betterAmbience.js",
+  "old": "export const BA_WALK_STEP_INTERVAL = 2.5;",
+  "new": "export const BA_WALK_STEP_INTERVAL = 3.0;",
+  "tests": [
+   "test/ba1_betterambience.test.js"
+  ]
+ },
+ {
+  "name": "half-speed-not-halved",
+  "file": "src/systems/betterAmbience.js",
+  "old": "      if (m.movingLessThanHalfSpeed) volumeScale *= 0.5;",
+  "new": "",
+  "tests": [
+   "test/ba1_betterambience.test.js"
+  ]
+ },
+ {
+  "name": "outside-volume",
+  "file": "src/systems/betterAmbience.js",
+  "old": "FootstepSoundOutside: ['footstepVolume', 0.15]",
+  "new": "FootstepSoundOutside: ['footstepVolume', 0.4]",
+  "tests": [
+   "test/ba1_betterambience.test.js"
+  ]
+ },
+ {
+  "name": "armor-pitch",
+  "file": "src/systems/betterAmbience.js",
+  "old": "stem: 'sfx_footstep_armor_light', count: 11, pitch: [1, 1.2]",
+  "new": "stem: 'sfx_footstep_armor_light', count: 11, pitch: [0.8, 1.2]",
+  "tests": [
+   "test/ba1_betterambience.test.js"
+  ]
+ },
+ {
+  "name": "leather-clanks",
+  "file": "src/systems/betterAmbience.js",
+  "old": "  if (chest && (chest.material ?? ARMOR_MATERIAL.Leather) !== ARMOR_MATERIAL.Leather) return true;",
+  "new": "  if (chest) return true;",
+  "tests": [
+   "test/ba1_betterambience.test.js"
+  ]
+ },
+ {
+  "name": "clank-when-submerged",
+  "file": "src/systems/betterAmbience.js",
+  "old": "    if (currentFootstepSoundList !== lists.FootstepSoundSubmerged && hasArmor(entity)) {",
+  "new": "    if (hasArmor(entity)) {",
+  "tests": [
+   "test/ba1_betterambience.test.js"
+  ]
+ },
+ {
+  "name": "path-is-outside",
+  "file": "src/systems/betterAmbience.js",
+  "old": "    if (pnExteriorPath) currentFootstepSoundList = lists.FootstepSoundDungeon;",
+  "new": "",
+  "tests": [
+   "test/ba1_betterambience.test.js"
+  ]
+ },
+ {
+  "name": "shallow-at-057",
+  "file": "src/systems/betterAmbience.js",
+  "old": "export const SHALLOW_ENTER = 0.55;",
+  "new": "export const SHALLOW_ENTER = 0.57;",
+  "tests": [
+   "test/ba1_betterambience.test.js"
+  ]
+ },
+ {
+  "name": "leave-at-055",
+  "file": "src/systems/betterAmbience.js",
+  "old": "export const SHALLOW_LEAVE = 0.95;",
+  "new": "export const SHALLOW_LEAVE = 0.55;",
+  "tests": [
+   "test/ba1_betterambience.test.js"
+  ]
+ },
+ {
+  "name": "mounted-in-water-silent",
+  "file": "src/systems/betterAmbience.js",
+  "old": "    if (m.levitating || (m.onFoot === false && !m.onExteriorWaterAny)) { distance = 0; return; }",
+  "new": "    if (m.levitating || m.onFoot === false) { distance = 0; return; }",
+  "tests": [
+   "test/ba1_betterambience.test.js"
+  ]
+ },
+ {
+  "name": "first-landing-plays",
+  "file": "src/systems/betterAmbience.js",
+  "old": "  let ignoreLostGrounding = true;",
+  "new": "  let ignoreLostGrounding = false;",
+  "tests": [
+   "test/ba1_betterambience.test.js"
+  ]
+ },
+ {
+  "name": "snow-free-ignored",
+  "file": "src/systems/betterAmbience.js",
+  "old": "        if (m.winter && !snowFree(currentClimateIndex)) currentFootstepSoundList = lists.FootstepSoundSnow;",
+  "new": "        if (m.winter) currentFootstepSoundList = lists.FootstepSoundSnow;",
+  "tests": [
+   "test/ba1_betterambience.test.js"
+  ]
+ },
+ {
+  "name": "classic-kept-all",
+  "file": "src/systems/betterAmbience.js",
+  "old": "export const CLASSIC_CLIPS_KEPT = Object.freeze(new Set([FOOTSTEP.Stone2, FOOTSTEP.Outside2]));",
+  "new": "export const CLASSIC_CLIPS_KEPT = Object.freeze(new Set([FOOTSTEP.Stone1, FOOTSTEP.Stone2, FOOTSTEP.Outside1, FOOTSTEP.Outside2]));",
+  "tests": [
+   "test/ba1_betterambience.test.js"
+  ]
+ },
+ {
+  "name": "soundlist-pitch-int",
+  "file": "src/systems/betterAmbience.js",
+  "old": "    const pitch = rangeFloat(random, this.pitchMin, this.pitchMax);",
+  "new": "    const pitch = this.pitchMin;",
+  "tests": [
+   "test/ba1_betterambience.test.js"
+  ]
+ },
+ {
+  "name": "shake-once-per-frame",
+  "file": "src/systems/betterAmbience.js",
+  "old": "        const r = mulVec(c.updateShake(dt), c.RotationInfluence);",
+  "new": "        const r = mulVec(p, c.RotationInfluence);",
+  "tests": [
+   "test/ba1_betterambience.test.js"
+  ]
+ },
+ {
+  "name": "fade-out-unscaled-clock",
+  "file": "src/systems/betterAmbience.js",
+  "old": "    else this.tick += dt * this.Roughness * this.roughMod * this.currentFadeTime;",
+  "new": "    else this.tick += dt * this.Roughness * this.roughMod;",
+  "tests": [
+   "test/ba1_betterambience.test.js"
+  ]
+ },
+ {
+  "name": "damage-unclamped",
+  "file": "src/systems/betterAmbience.js",
+  "old": "  shakeAmount = Math.max(0, Math.min(s.maxShake, shakeAmount));",
+  "new": "",
+  "tests": [
+   "test/ba1_betterambience.test.js"
+  ]
+ },
+ {
+  "name": "shake-magnitude-zero-shakes",
+  "file": "src/systems/betterAmbience.js",
+  "old": "    if (magnitude === 0) return null;\n    const shake = new CameraShakeInstance(magnitude, roughness, fadeInTime, fadeOutTime, this.random);",
+  "new": "    const shake = new CameraShakeInstance(magnitude, roughness, fadeInTime, fadeOutTime, this.random);",
+  "tests": [
+   "test/ba1_betterambience.test.js"
+  ]
+ },
+ {
+  "name": "inactive-kept",
+  "file": "src/systems/betterAmbience.js",
+  "old": "      if (c.currentState === 3 && c.DeleteOnInactive) { this.instances.splice(i, 1); i--; }",
+  "new": "      if (false) { this.instances.splice(i, 1); i--; }",
+  "tests": [
+   "test/ba1_betterambience.test.js"
+  ]
+ },
+ {
+  "name": "view-not-inverted",
+  "file": "src/systems/betterAmbience.js",
+  "old": "  return multiply(rigidInverse(local), view);",
+  "new": "  return multiply(local, view);",
+  "tests": [
+   "test/ba1_betterambience.test.js"
+  ]
+ },
+ {
+  "name": "random-seed-ignored",
+  "file": "src/systems/betterAmbience.js",
+  "old": "    const subtraction = seed === -2147483648 ? 2147483647 : Math.abs(seed | 0);",
+  "new": "    const subtraction = 0;",
+  "tests": [
+   "test/ba1_betterambience.test.js"
+  ]
+ },
+ {
+  "name": "hash-shift-4",
+  "file": "src/systems/betterAmbience.js",
+  "old": "  for (let i = 0; i < s.length; i++) h = ((h << 5) - h + s.charCodeAt(i)) | 0;",
+  "new": "  for (let i = 0; i < s.length; i++) h = ((h << 4) - h + s.charCodeAt(i)) | 0;",
+  "tests": [
+   "test/ba1_betterambience.test.js"
+  ]
+ },
+ {
+  "name": "fog-end-without-start",
+  "file": "src/systems/betterAmbience.js",
+  "old": "    const end = rnd.nextDouble() * (s.maxFogDistance - s.minFogDistance) + s.minFogDistance + start;",
+  "new": "    const end = rnd.nextDouble() * (s.maxFogDistance - s.minFogDistance) + s.minFogDistance;",
+  "tests": [
+   "test/ba1_betterambience.test.js"
+  ]
+ },
+ {
+  "name": "darkness-not-on-fog",
+  "file": "src/systems/betterAmbience.js",
+  "old": "    fog = { mode: 'linear', density: 0, start, end, color: scale3(fogColor, s.dungeonDarkness) };",
+  "new": "    fog = { mode: 'linear', density: 0, start, end, color: fogColor };",
+  "tests": [
+   "test/ba1_betterambience.test.js"
+  ]
+ },
+ {
+  "name": "trilight-greys",
+  "file": "src/systems/betterAmbience.js",
+  "old": "const GREY = Object.freeze({ sky: [0.433, 0.433, 0.433], equator: [0.396, 0.396, 0.396], ground: [0.254, 0.254, 0.254] });",
+  "new": "const GREY = Object.freeze({ sky: [0.433, 0.433, 0.433], equator: [0.433, 0.433, 0.433], ground: [0.254, 0.254, 0.254] });",
+  "tests": [
+   "test/ba1_betterambience.test.js"
+  ]
+ },
+ {
+  "name": "castle-fogged",
+  "file": "src/systems/betterAmbience.js",
+  "old": "    if (!s.Enabled || !d || inCastle) { fogState = null; return; }",
+  "new": "    if (!s.Enabled || !d) { fogState = null; return; }",
+  "tests": [
+   "test/ba1_betterambience.test.js"
+  ]
+ },
+ {
+  "name": "wait-three-frames",
+  "file": "src/systems/betterAmbience.js",
+  "old": "export const TRANSITION_WAIT_FRAMES = 4;",
+  "new": "export const TRANSITION_WAIT_FRAMES = 3;",
+  "tests": [
+   "test/ba1_betterambience.test.js"
+  ]
+ },
+ {
+  "name": "reverb-level-shifted",
+  "file": "src/systems/betterAmbience.js",
+  "old": "export const reverbPresetFor = (level) => REVERB_PRESETS[level] ?? null;",
+  "new": "export const reverbPresetFor = (level) => REVERB_PRESETS[level + 1] ?? null;",
+  "tests": [
+   "test/ba1_betterambience.test.js"
+  ]
+ },
+ {
+  "name": "reverb-stays-outside",
+  "file": "src/systems/betterAmbience.js",
+  "old": "    const want = s.Enabled && inDungeon ? reverbPresetFor(s.reverbLevel) : null;",
+  "new": "    const want = s.Enabled ? reverbPresetFor(s.reverbLevel) : null;",
+  "tests": [
+   "test/ba1_betterambience.test.js"
+  ]
+ },
+ {
+  "name": "rain-no-lowpass",
+  "file": "src/systems/betterAmbience.js",
+  "old": "          ? audio.loop(baSoundKey(AMBIENT_RAIN_CLIP), 1, { lowpass: AMBIENT_RAIN_LOWPASS_HZ })",
+  "new": "          ? audio.loop(baSoundKey(AMBIENT_RAIN_CLIP), 1, {})",
+  "tests": [
+   "test/ba1_betterambience.test.js"
+  ]
+ },
+ {
+  "name": "thunder-not-rain",
+  "file": "src/systems/betterAmbience.js",
+  "old": "    if (w === 'rain' || w === 'thunder') {",
+  "new": "    if (w === 'rain') {",
+  "tests": [
+   "test/ba1_betterambience.test.js"
+  ]
+ },
+ {
+  "name": "rain-outdoors",
+  "file": "src/systems/betterAmbience.js",
+  "old": "    else rainKind = null;\n  }",
+  "new": "    else rainKind = 'interior';\n  }",
+  "tests": [
+   "test/ba1_betterambience.test.js"
+  ]
+ },
+ {
+  "name": "gate-if-not-consulted",
+  "file": "src/systems/betterAmbience.js",
+  "old": "  if (immersiveFootsteps.ownsStride()) return false;",
+  "new": "",
+  "tests": [
+   "test/ba1_betterambience.test.js"
+  ],
+  "equivalent": true,
+  "why": "under node the singleton never loads clips, so ownsStride is false whichever mod is asked; the gate's two arms are pinned through ownsStride()'s own pin in if1 and classicClipKept here, and the hosts' regex holds the call - a live-audio drive would be needed to fail this one"
+ },
+ {
+  "name": "compat-warning-ungated",
+  "file": "src/systems/immersiveFootsteps.js",
+  "old": "  if (!(c.betterAmbienceCheck && c.betterAmbienceFootstepsModuleCheck)) return false;",
+  "new": "",
+  "tests": [
+   "test/ba1_betterambience.test.js"
+  ]
+ },
+ {
+  "name": "compat-ignores-allow",
+  "file": "src/systems/immersiveFootsteps.js",
+  "old": "  if (!s.Enabled || !s.AllowCompatibilityWarnings) return false;",
+  "new": "  if (!s.Enabled) return false;",
+  "tests": [
+   "test/ba1_betterambience.test.js"
+  ]
+ },
+ {
+  "name": "reverb-tail-no-decay",
+  "file": "src/systems/reverbPresets.js",
+  "old": "      out[ch][i] += tail * (low * Math.exp(-lowDecay * t) + high * roomHF * Math.exp(-highDecay * t));",
+  "new": "      out[ch][i] += tail * (low + high * roomHF);",
+  "tests": [
+   "test/ba1_betterambience.test.js"
+  ]
+ },
+ {
+  "name": "flash-drops-amount",
+  "file": "src/ui/damageFlash.js",
+  "old": "  _removeHealthListener?.(amount);",
+  "new": "  _removeHealthListener?.(0);",
+  "tests": [
+   "test/ba1_betterambience.test.js"
+  ]
+ },
+ {
+  "name": "host-world-no-shake",
+  "file": "src/scenes/world.js",
+  "old": "const view = betterAmbience.view(lookAt(mwv.eye, [mwv.eye[0] + fwd[0], mwv.eye[1] + fwd[1], mwv.eye[2] + fwd[2]], [0, 1, 0]));",
+  "new": "const view = lookAt(mwv.eye, [mwv.eye[0] + fwd[0], mwv.eye[1] + fwd[1], mwv.eye[2] + fwd[2]], [0, 1, 0]);",
+  "tests": [
+   "test/ba1_betterambience.test.js"
+  ]
+ },
+ {
+  "name": "host-dungeon-flat-ambient",
+  "file": "src/scenes/dungeon.js",
+  "old": "{ const _tri = betterAmbience.dungeonAmbient(); renderer.setLighting(new Float32Array(_tri ? _tri.equator : ctx.ambient), 0, undefined, _tri); }",
+  "new": "renderer.setLighting(new Float32Array(ctx.ambient), 0);",
+  "tests": [
+   "test/ba1_betterambience.test.js"
+  ]
+ },
+ {
+  "name": "ir-unnormalised",
+  "file": "src/systems/reverbPresets.js",
+  "old": "    const k = energy > 0 ? tail / Math.sqrt(energy) : 0;",
+  "new": "    const k = tail;",
+  "tests": [
+   "test/ba1_betterambience.test.js"
+  ]
+ },
+ {
+  "name": "rebase-no-swallow",
+  "file": "src/systems/betterAmbience.js",
+  "old": "    rebase() { lastPosition = null; ignoreLostGrounding = true; },",
+  "new": "    rebase() { lastPosition = null; },",
+  "tests": [
+   "test/ba1_betterambience.test.js"
+  ]
+ },
+ {
+  "name": "shake-runs-paused",
+  "file": "src/systems/betterAmbience.js",
+  "old": "      shaker.update(m.paused ? 0 : Math.max(0, Number(dt) || 0));",
+  "new": "      shaker.update(Math.max(0, Number(dt) || 0));",
+  "tests": [
+   "test/ba1_betterambience.test.js"
+  ]
+ }
+]

@@ -923,7 +923,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
           // `PlayerObject.SendMessage("RemoveHealth", damage)` - which
           // is ShowPlayerDamage.Flash's trigger. An enemy's BLOW
           // flashes the screen; the poison it carries does not.
-          if (dmg > 0) { onPlayerHurt?.(dmg, wpn); flashPlayerDamage(); }   // G2: the host's arrest interception rides this
+          if (dmg > 0) { onPlayerHurt?.(dmg, wpn); flashPlayerDamage(dmg); }   // G2: the host's arrest interception rides this
           // C2-slice (combat-9): a connected attack that LOST the
           // roll rings the miss sound (ApplyDamageToPlayer's else)
           else audio?.play3d?.(enemyMissSound(wpn), gmid, 1, { maxDistance: 16 });

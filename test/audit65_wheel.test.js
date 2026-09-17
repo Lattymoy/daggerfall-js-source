@@ -48,7 +48,7 @@ const hero = (items) => { const e = { stats: { strength: 80 }, items }; equipOf(
 const LOCAL_SLOT = (s = 0) => [INV_RECTS.localList[0] + CELL_X + 5, INV_RECTS.localList[1] + s * SLOT_H + 5];
 const REMOTE_SLOT = (s = 0) => [INV_RECTS.remoteList[0] + CELL_X + 5, INV_RECTS.remoteList[1] + s * SLOT_H + 5];
 
-/** The producer, not a literal: ui/inventoryDoor.js:59 is the ONE seam
+/** The producer, not a literal: ui/inventoryDoor.js:60 is the ONE seam
  *  every host opens the pack through (U53), and headless it mints the
  *  classic window. */
 const pack = (bag, pile) => {
@@ -93,8 +93,8 @@ test('AUDIT 65 UI-5: the notch carries its own point, so the pack scrolls before
 
 test('AUDIT 65 UI-5: every host wheel seam hands the window the live point', () => {
   const POINT = /wheel\?\.\(Math\.sign\(e\.deltaY\), v \? v\[0\] : -1, v \? v\[1\] : -1\);/;
-  // townTalk.js is the seam for BOTH outdoor hosts (world.js:5383 and
-  // exterior.js:2563 hand it the raw event).
+  // townTalk.js is the seam for BOTH outdoor hosts (world.js:5393 and
+  // exterior.js:2565 hand it the raw event).
   assert.match(read('src/scenes/townTalk.js'), POINT, 'townTalk.js');
   // worldModes.js: BOTH arms - the interior slot and the mounted
   // dungeon context's.

@@ -1,0 +1,119 @@
+{
+    "Version": "1.00",
+    "Sections": [
+	{
+            "Name": "AudioQualitySettings",
+            "Description": "Related To Sound-Clip Quality Settings",
+            "IsAdvanced": false,
+            "Keys": [
+				{
+                    "Options": [
+                        "Low-Quality (Retro)",
+						"High-Quality"
+                    ],
+                    "Value": 0,
+                    "Name": "SoundClipQuality",
+                    "Description": "What Quality Sound-Clips Get Used",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.MultipleChoiceKey"
+                }
+            ],
+            "$version": "v1"
+        },
+		{
+            "Name": "FootstepSettings",
+            "Description": "Related To Footstep Sound Settings",
+            "IsAdvanced": false,
+            "Keys": [
+				{
+                    "Value": true,
+                    "Name": "AllowFootstepSounds",
+                    "Description": "If Player Footsteps Should Make A Sound || Default = True",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+				{
+                    "Min": 0.0,
+                    "Max": 10.0,
+                    "Value": 1.0,
+                    "Name": "FootstepVolumeMulti",
+                    "Description": "The Volume Level Multiplier For Footstep Sounds",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+                },
+				{
+                    "Min": 0.3,
+                    "Max": 3.0,
+                    "Value": 0.6,
+                    "Name": "FootstepFrequency",
+                    "Description": "How Frequent Footstep Sounds Should Be, Lower = More Often, Higher = Less Often",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+                }
+            ],
+            "$version": "v1"
+        },
+		{
+            "Name": "ArmorSwaySettings",
+            "Description": "Related To Armor Sway Sound Settings",
+            "IsAdvanced": false,
+            "Keys": [
+                {
+                    "Value": true,
+                    "Name": "AllowArmorSwaySounds",
+                    "Description": "If Armor Specific Sounds Play When The Player Moves About || Default = True",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+				{
+                    "Min": 0.0,
+                    "Max": 10.0,
+                    "Value": 1.0,
+                    "Name": "ArmorSwayVolumeMulti",
+                    "Description": "The Volume Level Multiplier For Armor Sway Sounds",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+                },
+				{
+                    "Min": 0.3,
+                    "Max": 3.0,
+                    "Value": 0.6,
+                    "Name": "ArmorSwayFrequency",
+                    "Description": "How Frequent Armor Sway Sounds Should Be, Lower = More Often, Higher = Less Often",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+                }
+            ],
+            "$version": "v1"
+        },
+		{
+            "Name": "ErrorLoggingAndCompatibilitySettings",
+            "Description": "Related To Error Logging And Automatic Mod Compatibility Messages",
+            "IsAdvanced": false,
+            "Keys": [
+				{
+                    "Value": true,
+                    "Name": "AllowModCompatWarnings",
+                    "Description": "If Mod Should Give Warning Messages About Detected Incompatibility Issues || Default = True",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+				{
+                    "Value": false,
+                    "Name": "AllowVerboseErrorLogging",
+                    "Description": "If Mod Should Print Full & Verbose Error Logs For Debugging || Default = False",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+				{
+                    "Value": true,
+                    "Name": "DoNotSpamExceptionsLogs",
+                    "Description": "Only Log Mod Exceptions Once Per Session, To Not Fill Log File || Default = True",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                }
+            ],
+            "$version": "v1"
+        }
+    ]
+}

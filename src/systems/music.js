@@ -135,7 +135,7 @@ export class MusicService {
     if (!this.enabled) return null;
     if (this.player) return this.player;
     if (!audio.ctx) return null;
-    this.player = new SongPlayer(audio.ctx);
+    this.player = new SongPlayer(audio.ctx, null, audio.reverbSend?.() ?? null);
     return this.player;
   }
 
@@ -194,7 +194,7 @@ export class MusicService {
   _ensureAudioPlayer() {
     if (this._audio) return this._audio;
     if (!audio.ctx) return null;
-    this._audio = new AudioSongPlayer(audio.ctx);
+    this._audio = new AudioSongPlayer(audio.ctx, null, audio.reverbSend?.() ?? null);
     return this._audio;
   }
 

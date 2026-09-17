@@ -94,6 +94,7 @@ import { LIST_SLOTS, scrollerHit, applyScroll, makeIconDrawer, drawStackLabel, s
 import { templateByIndex, itemBaseValue, inventoryItemImage } from '../systems/itemTemplates.js';
 import { FntFile } from '../formats/fntFile.js';
 import { audio } from '../systems/audio.js';
+import { immersiveFootsteps } from '../systems/immersiveFootsteps.js';   // IF1: the inventory close refreshes the mod's armour slots
 import { SOUND } from '../systems/soundClips.js';
 import { makeFont, drawText } from './text.js';
 import { typedChar } from './input.js';   // U26: one reader for both hosts' key routing
@@ -499,6 +500,11 @@ export class NativeInventoryWindow {
    *  skipped and a session drop was silently LOST. */
   _closeSilently() {
     this.done = true;
+    // IF1: UIManager.OnWindowChange's inventory arm (ImmersiveFootstepsMain
+    // .cs:372-398) - the inventory window popped, so the mod re-reads the
+    // seven armour slots; this is the one close law (B-C1), so every
+    // host's inventory reaches it.
+    immersiveFootsteps.onInventoryClose(this.hooks.entity ?? null);
     // FX1 (F128): SetEquipDelayTime(true) on the pop - the ONE bill
     // for this visit, then DFU's "Equipping %s" cue per changed hand
     // (:729-756; the string is Internal_Strings' equippingWeapon,

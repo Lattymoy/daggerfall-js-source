@@ -248,11 +248,11 @@ test('audit24 wave39: which hits flash is a LAW, not an omission', () => {
   // PlayerHealth.RemoveHealth is ShowPlayerDamage's only trigger, and
   // the whole DFU tree sends that message from three places. Spell
   // damage is NOT one of them.
-  assert.match(rd('src/scenes/shared.js'), /flashPlayerDamage\(\);/, 'the fall (PlayerHealth.cs:57)');
+  assert.match(rd('src/scenes/shared.js'), /flashPlayerDamage\(dmg\);/, 'the fall (PlayerHealth.cs:57) - BA1: the message carries its amount');
   const act = rd('src/world/actionSystem.js');
-  assert.equal((act.match(/flashPlayerDamage\(\)/g) ?? []).length, 2, 'both damage traps (DaggerfallAction :739 and :768)');
+  assert.equal((act.match(/flashPlayerDamage\(dmg\)/g) ?? []).length, 2, 'both damage traps (DaggerfallAction :739 and :768) - BA1: with the amount');
   for (const f of ['src/scenes/cityGuards.js', 'src/scenes/exteriorFoes.js', 'src/scenes/dungeonContext.js']) {
-    assert.match(rd(f), /flashPlayerDamage\(\)/, `${f}: an enemy blow (EnemyAttack:406)`);
+    assert.match(rd(f), /flashPlayerDamage\(dmg\)/, `${f}: an enemy blow (EnemyAttack:406) - BA1: with the amount`);
   }
   // and NOT from the spell spine - DamageHealth, ContinuousDamageHealth
   // and TransferHealth all pass showBlood:false / never touch

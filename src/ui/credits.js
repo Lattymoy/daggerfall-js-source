@@ -161,5 +161,23 @@ export const CREDITS = Object.freeze({
       contact: 'rmufrancisco@gmail.com',
       vendor: Object.freeze(['eye-of-the-beholder']),
     }),
+    Object.freeze({
+      title: 'Immersive Footsteps',
+      version: '1.01',
+      author: 'Kirk.O',
+      what: 'Footsteps that sound like the ground (IF1): grass, gravel, sand, mud and snow by climate and tile outdoors, path stone and shallow or deep water, a building\u2019s tile, stone or wood floor read off its own textures, a dungeon\u2019s water, and boots of leather, chain or plate on stone; armour that sways as you walk, by what you wear; and the mod\u2019s own landing and splash sounds. Two clip qualities.',
+      terms: 'Ported 1:1 from the author\u2019s own MIT sources (the two C# scripts the shipped bundle was built from, vendored); the mod\u2019s 210 sound clips vendored as the author ships them - see vendor/immersive-footsteps/README.md for the permission record.',
+      contact: 'forums.dfworkshop.net',
+      vendor: Object.freeze(['immersive-footsteps']),
+    }),
+    Object.freeze({
+      title: 'Better Ambience',
+      version: '0.1.4',
+      author: 'Joshua Steinhauer',
+      what: 'The camera shakes when you are hurt, by how much of you the blow took (BA1); a dungeon gets its own fog colour and its own light, rolled from its name, and a stone reverb over every sound; rain is heard indoors, muffled, and at a dungeon\u2019s door; and its own footsteps with an armour clank, kept off beside Immersive Footsteps as that mod\u2019s author asks.',
+      terms: 'Ported 1:1 from the sixteen sources the shipped bundle carries, under the author\u2019s MIT licence; the 29 clips the mod asks for vendored from the author\u2019s repository - see vendor/better-ambience/README.md for the permission record. The rain and snow particle tweaks have no twin: the port\u2019s precipitation is its own.',
+      contact: 'forums.dfworkshop.net',
+      vendor: Object.freeze(['better-ambience']),
+    }),
   ]),
 });
