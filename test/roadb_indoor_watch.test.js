@@ -132,7 +132,7 @@ test('ROAD-B: the mode machine mints a watch pool with every interior and tears 
   assert.equal((wm.match(/interiorGuards\?\.clearLive\?\.\(\);[^\n]*\n\s*interiorGuards = null;/g) ?? []).length, 2,
     'and nulled at both, so a stale pool cannot outlive its collider');
   // it drives, draws, and can be swung at
-  assert.match(wm, /const _guardBatches = interiorGuards\.update\(overlayHeld \? 0 : dt, player\.pos, cam\.pos,/);
+  assert.match(wm, /const _guardBatches = interiorGuards\.update\(dt, player\.pos, cam\.pos,/);   // WINFOE1 (2026-09-17): the watch keeps its clock under a window
   assert.match(wm, /renderer\.drawBillboards\(_guardBatches, camRight, UP_Y\)/);
   assert.match(wm, /if \(interiorGuards\?\.resolvePlayerHit\(interiorWeapon\.playerWeapon/,
     'and the interior swing resolves against the watch FIRST, as it does above ground');

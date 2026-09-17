@@ -642,11 +642,39 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     if (!senses?.candidates) return senses;
     return {
       ...senses,
-      targeting: (ai, pf, cdt) => runTargetMachine(f, [...senses.candidates(), PLAYER_TARGET, ...peerCandidates()], pf, cdt, {   // WORLD6b-ii: the peers are MY foes' candidates; AUDIT WORLD6b-ii A5: after ME (a peer never beats me on a tie), A9: a puppet never steps here
-        playerEntity: senses.playerEntity ?? null,
-        playerHeight: senses.playerHeight,   // AUDIT 62 F23: GetTargets measures the player at its LIVE capsule too
-      }),
+      targeting: (ai, pf, cdt) => {
+        const hadTarget = !!ai.target;
+        const result = runTargetMachine(f, [...senses.candidates(), PLAYER_TARGET, ...peerCandidates()], pf, cdt, {   // WORLD6b-ii: the peers are MY foes' candidates; AUDIT WORLD6b-ii A5: after ME (a peer never beats me on a tie), A9: a puppet never steps here
+          playerEntity: senses.playerEntity ?? null,
+          playerHeight: senses.playerHeight,   // AUDIT 62 F23: GetTargets measures the player at its LIVE capsule too
+        });
+        // CAMP1 - GROUP ENCOUNTERS: the one new behaviour that makes a
+        // camp or pack read as a GROUP rather than several unrelated
+        // spawns - a member that just noticed the player wakes its
+        // campmates. `campId` is set only on foes `_standCampEncounter`
+        // placed together; a lone wandering monster carries none and
+        // this never runs for it.
+        if (!hadTarget && ai.target && f.campId != null) wakeCampmates(f);
+        return result;
+      },
     };
+  }
+  /** CAMP1: a campmate within alert radius that has not already noticed
+   *  the player is handed the same target directly - it has not seen
+   *  the player itself, so it is told rather than left to roll its own
+   *  senses, exactly the shortcut a shout across a camp is. */
+  function wakeCampmates(f) {
+    const feet = f.ai?.feet;
+    const r2 = (f.campAlertRadius ?? 0) ** 2;
+    if (!feet || !r2) return;
+    for (const g of foes) {
+      if (g === f || g.dead || g.campId !== f.campId || g.ai?.target) continue;
+      const gf = g.ai?.feet;
+      if (!gf) continue;
+      const dx = gf[0] - feet[0], dz = gf[2] - feet[2];
+      if (dx * dx + dz * dz > r2) continue;
+      g.ai.target = f.ai.target;
+    }
   }
   /** WORLD6b-ii: the peers in my cell as target candidates (WORLD3) - read once a frame off the net, each a stable
    *  identity; a peer gone is dead to the machine (health 0, targetHealth's read) and dropped. */

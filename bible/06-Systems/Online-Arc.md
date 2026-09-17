@@ -4159,7 +4159,7 @@ were made to keep it small, each easy to change:
    question, not a correctness one.
 3. **Loiter was left alone.** See above.
 
-`test/restx1_online_rest.test.js` - 7 pins, 8 mutants, 8 dead.
+`test/restx1_online_rest.test.js` - 7 pins, 8 mutants, 8 dead. (RESTX2, 2026-09-17: the lane and its test are RETIRED; `test/restx2_online_rest.test.js` holds the law that replaced it - see RESTX2 below.)
 
 ## AUDIT RESTX + AUDIT OQ (2026-09-15)
 
@@ -4742,7 +4742,7 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:2708` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:2746` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
   provenance argument `applySpellToFoe` hands them (`hostMagic.js:187`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
@@ -6615,3 +6615,121 @@ to main, because `/health` will report `world79` until it does.
 The patch's two scene files were not taken either: they are a copy of an
 older tree and would have reverted the Enhanced Lighting arc and the
 quickslot arc wholesale. They carried no respawn change of their own.
+
+## RESTX2 (2026-09-17): online, a rest paces on the window's own timer
+
+Mac's "BetterResting" zip, two files cut from an older main. What it
+asked for, in its own comments: monsters should still be able to
+interrupt an online wait, and the hours-remaining counter should
+visibly tick down rather than jump straight to its answer.
+
+RESTX1 (above) made an online REST resolve in ONE frame - the whole
+hourly ladder inside a single `tick()`, no minutes passed, no host
+clock jump, no encounter roll, no countdown - and left LOITER pacing
+off the shared world clock at DFU's TimeScale, five real minutes an
+hour. Both were the same mistake from two sides: the shared clock was
+being read for PACING, when the only thing it has to say online is
+that it cannot be written.
+
+**One law, every mode, online or off:** the window's own real-time
+timer (`REST_WAIT_PER_HOUR` / `LOITER_WAIT_PER_HOUR` real seconds a
+simulated hour - waitTimePerHour / minutesPerTick, DFU's quirk, so an
+hour is six sub-ticks of 0.075 s) paces every sub-tick. `_accrue`
+banks the frame in every lane; `_takeSubTick` consults the timer and
+nothing else. So online the counter ticks down at the offline rate
+(eight hours in under four real seconds), and `advanceMinutes` is
+spent on EVERY sub-tick, so the magic-round catch-up and the hourly
+rest-interruption roll run online as they always have offline: a foe
+that walks up breaks the rest.
+
+**What the roll reads.** The shared clock is still refused every local
+write (worldTick.setWorldMinutes), and `playerTicker.classicMinutes`
+stands under it - so a host reading it under a rest computed a span
+of zero and rolled nothing. The session keeps `_onlineSimMinutes`: a
+counter local to this one session, seeded from the shared clock at
+the first sub-tick (floored), ten a sub-tick from there, forgotten
+when the session ends, handed to the host as the sub-tick's END
+(AUDIT WORLD5 C8's slot; null offline, where the host reads its own
+clock). Nothing here is visible to another player or survives past
+the rest; it only has to look, from the inside, like an hour passed.
+After the rest the host's `_lastEncMinutes` sits ahead of the standing
+clock until it catches up, and those frames roll nothing - the rest
+already rolled them.
+
+**The quest tick alone stays offline-only.** A quest clock is
+cross-player-visible state; ticking it against a locally simulated
+minute would desync this player's quests from everyone else's.
+
+**Retired with the lane:** `_free()`, `FREE_REST_HOUR_CAP`,
+`_freeHours`, `_sharedAt`, `_sharedTaken`, `_holdShared` (a covered
+frame banks nothing because `_accrue` is never reached under a cover -
+the timer's own law, in every lane now), and AUDIT RESTX F1's
+full-health guard on the Medical tally: the exploit it closed ("rest
+99 hours" = 99 tallies on one click) needed an hour that cost no time,
+and every hour costs its real seconds again. DFU's unconditional tally
+stands everywhere. The rest window's OL2 clock line lost its pace half
+("an hour here is 5 real minutes" stopped being true) and says the one
+thing that still is: `World time 15:05 - resting does not move it`;
+`REAL_MINUTES_PER_WORLD_HOUR` went with the sentence.
+
+**THE FOUR HOSTS.** The zip fixed `exterior.js`'s `runEncounterTick`
+alone; `world.js` reads the standing clock the same way and got the
+same seam: `runEncounterTick(playerFeet, simMinutesEnd = null)`, `now`
+is the rest's minute when handed one, and the rest deps hand
+`sharedEnd` through. The dungeon's `_restAdvance` already read it; the
+interior's arm rolls nothing inside a building and is unchanged.
+
+`test/restx2_online_rest.test.js` - 8 pins; WORLD5's loiter pin, AUDIT
+WORLD5 C7/C8 and OL2 (5) re-aimed onto the timer; `restx1_online_rest`
+retired. `tools/mutants/restx2camp.json` carries RESTX2's ten.
+
+## D-ONLINE1 (2026-09-17): online, a death respawns instead of ending the run
+
+Mac's "daggerfalljsWildlifeSpawnsRespawn" zip, the respawn half.
+Players: "when i die i just end up at the title menu", "still see you
+have died then main menu"; Mac: "you should just respawn in this
+case". Classic single-player death is "you die, you load a save"; in
+co-op the party is still playing, and ending the run - or loading a
+save that unwinds everyone's progress - is the wrong cost for one
+death. An original addition, not a DFU system, riding the cemetery
+transfer's own teleport core.
+
+**Three bugs the zip found in the path it built, kept as written.**
+`_actLive` was never "am I online": `isWorldRoom` matches a dungeon or
+a building room alone, and the open world stands in a CELL room, so a
+death OUTDOORS - where a camp lives - read as offline.
+`_onlineWorldSession` counts both. And `onlineFrame` LEAVES the room
+the instant the death screen is up (AUDIT ONLINE D12), every frame,
+before `onReset` ever runs - so a reset that read `online.room` always
+found it null. `_deathWasOnline` is snapshotted at the PRESENTER,
+synchronously (a fast F11 reaches the reset before the next frame),
+and at the frame as a backstop for the modal hosts' deaths, BEFORE the
+leave.
+
+**The reset.** Enter, the three-second timer, or F11 (which used to
+quickload from under the death screen - online, respawn IS "get me
+back in"): `respawnOnlinePlayer`. Two things differ from the zip.
+It left a building's interior standing (only a dungeon was exited);
+any mode but the open world is left first through
+`forceExitToExterior`, which also clears the modal host's death screen
+with its slot. And it landed on the tile's dead centre (the
+`_teleportToPixel` default); the landing is a `RandomStartMarker`, as
+TeleportAway names it (AUDIT 64 F19) - a town's gate, a cemetery's, a
+dungeon's door. Dead underground the door out is the pixel already
+under the player; otherwise `nearestSafeLocation` (systems/
+deathRespawn.js) picks the closest temple, town or CEMETERY graveyard
+by map-pixel distance over the region's mapTable, the same search the
+cemetery transfer makes; a region with none stands where they fell.
+Then `_lastEncMinutes` is reset (no encounter catch-up across the
+trip), half health back and never none, `surfacePlayer`, and a flavour
+line in the death screen's place. The modal hosts ask through one
+door: worldModes' interior death screen calls `host.onlineRespawn`,
+the dungeon context is handed the same as `opts.onlineRespawn`, and
+both end the run as ever when it answers false - offline is untouched,
+and the fixed city keeps the bare form.
+
+Not carried: `window.__online`, a console debug hook the zip left on
+unconditionally. Not verified in a browser: no online session exists in
+this container; the door is pinned by source and the pick by law.
+`test/donline1_respawn.test.js` - 3 pins; FIX-E, AUDIT 21 F6, AUDIT
+WORLD B6 and MWBODY1 re-aimed. Mutants in `tools/mutants/restx2camp.json`.

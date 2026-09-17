@@ -206,7 +206,7 @@ const q3 = (v) => Math.round(v * 1000) / 1000; const GENDER_BIT = ['male', 'fema
 const HIT_POS_MAX = 1e6;
 // AUDIT FOES FOE5: the most damage one peer's blow may claim. The host TRUSTS the number (it never recomputes - the
 // striker's own calc is the game's), so without a bound any joiner could one-shot every foe in the room and empty it
-// through the kill door. The exterior twin has carried this bound since WORLD6b (exteriorFoes.js:1636); the dungeon
+// through the kill door. The exterior twin has carried this bound since WORLD6b (exteriorFoes.js:1664); the dungeon
 // had none. Past anything a legal swing, shaft or blast can roll.
 const HIT_DMG_MAX = 10000;
 /** AUDIT WORLD3 E3: can the ONE build chain actually stand this species? Both of buildFoeAt's branches need a truthy
@@ -1469,7 +1469,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:6879 / exterior.js:3111), set
+  // host's own townTalk sink (world.js:7026 / exterior.js:3176), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -1820,7 +1820,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // A host that passes none falls to the constructor's standing
       // defaults, which is the crouched death's geometry lost.
       const _ms = opts.motorState?.() ?? null;
-      activeOverlay = new DeathScreen({ eyeHeight: _ms?.eyeLevel, capsuleHeight: _ms?.capsule, onReset: () => endRunToTitleMenu(renderer) });   // D1
+      activeOverlay = new DeathScreen({ eyeHeight: _ms?.eyeLevel, capsuleHeight: _ms?.capsule, onReset: () => { if (!opts.onlineRespawn?.()) endRunToTitleMenu(renderer); } });   // D1; D-ONLINE1: online play respawns instead of ending the run (worldModes.js's opts.onlineRespawn, world.js's onlineRespawn)
     }
   });
   // F117: Stendarr's rank-in-fifty, consulted by the door before the
@@ -2426,7 +2426,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:996 against :1032; worldModes.js:5980 against :6008).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
+    // (dungeon.js:996 against :1032; worldModes.js:5986 against :6008).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -2916,8 +2916,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:9464,
-              // exterior.js:4524 and worldModes.js:6122 already ran;
+              // playerArrowHitFoe is the one copy world.js:9657,
+              // exterior.js:4589 and worldModes.js:6128 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -3271,7 +3271,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (!_authority || !data || typeof data !== 'object') return false;
     const i = data.i | 0, dmg = Number(data.dmg);
     const f = foes[i];
-    // AUDIT FOES FOE5: BOUNDED, as the exterior twin's applyHit is (exteriorFoes.js:1636). The number is a peer's
+    // AUDIT FOES FOE5: BOUNDED, as the exterior twin's applyHit is (exteriorFoes.js:1664). The number is a peer's
     // word and the host trusts it without recomputing, so an unbounded one let any joiner one-shot every foe in the
     // room - and, through the kill door, empty it. 10000 is past anything a legal swing, shaft or blast can roll.
     if (!f || i >= _layoutFoes || f.dead || !Number.isFinite(dmg) || dmg < 0 || dmg > HIT_DMG_MAX) return false;
@@ -3747,7 +3747,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // InstantiatePrefab's a fresh GameObject per saved record, so
     // EnemyEntity's `PickpocketByPlayerAttempted` default is the loaded
     // truth for every enemy. The re-minting pools match that by
-    // construction (exteriorFoes.js:1303's restoreWorld goes through
+    // construction (exteriorFoes.js:1331's restoreWorld goes through
     // spawnFoe), but this host patches the LIVE foes in place, so a
     // same-dungeon reload kept a raised latch and a failed pickpocket
     // could never be retried - falsifying the law
@@ -5388,7 +5388,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // through the overlay as 'back' (ends a running rest)": that route
     // was never real. ROAD-B B5 built the real one. With a window up,
     // overlayAction turns any single character into `char:<k>`, so
-    // KeyR arrives as 'char:r', and ui/restWindow.js:289-291 runs A8's
+    // KeyR arrives as 'char:r', and ui/restWindow.js:287-289 runs A8's
     // normalizeCode inverse to turn it back into 'KeyR' - DFU's
     // toggleClosedBinding - so a second Rest press ends a running rest
     // or closes the selection page (:302-315), which is

@@ -40,5 +40,5 @@ test('FT8/FT12: the Enhanced category emptied into the home and then left the se
   const test = menu.slice(menu.indexOf('function paneTest('), menu.indexOf('\n}', menu.indexOf('function paneTest(')));
   assert.match(test, /outdoors\.append\(outdoorsTestRow\(\)\);/, 'the outdoors test door is the Test Room\'s');
   // the home holds every switch the category ever drew
-  assert.deepEqual(featureCounts(FEATURES).enhanced, 15);   // FT4-FT8's seven, LR1's loot rarity, WIND3's three, WEATHER2b's field, EL1's lighting, QS's diamond, MAC-I's first-person lighting
+  assert.deepEqual(featureCounts(FEATURES).enhanced, 16);   // FT4-FT8's seven, LR1's loot rarity, WIND3's three, WEATHER2b's field, EL1's lighting, QS's diamond, MAC-I's first-person lighting, CAMP1's camps & packs
 });
