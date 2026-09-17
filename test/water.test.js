@@ -177,10 +177,11 @@ test('WATER1: the renderer - one program, the deck\'s shadow key, and a draw sta
   assert.match(r, /import \{ WATER_SURFACE_VS, waterSurfaceFs \} from '\.\/waterSurface\.js';/);
   assert.match(r, /import \{ packWaterMask \} from '\.\.\/world\/waterCorners\.js';/, 'MAC2: the corner table\'s one home is the world leaf the player\'s feet share');
   assert.match(r, /this\.waterSurfaceProgram = this\._buildProgram\(WATER_SURFACE_VS, waterSurfaceFs\(CLOUD_SHADOW_GLSL\)\);/, 'the same block the terrain interpolates');
-  assert.match(r, /this\._csLoc\.water = \[u\('uCloudShadowMap'\), u\('uCloudShadowRect'\)\];/, 'VC4\'s recorded gap, closed');
+  assert.match(r, /cloud: \[u\('uCloudShadowMap'\), u\('uCloudShadowRect'\)\],/, 'VC4\'s recorded gap, closed (EL7: in the one uniform table both water programs take)');
+  assert.match(r, /this\._csLoc\.water = this\._ws\.cloud;/);
   const draw = r.slice(r.indexOf('  drawWaterSurface(surface, modelMatrix, arrayTex, tilemapTex, tileSize, u, tileDim = 128) {'));
   const body = draw.slice(0, draw.indexOf('\n  }\n'));
-  assert.match(body, /if \(!this\._waterMaskUploaded\) \{ gl\.uniform4uiv\(L\.mask, packWaterMask\(\)\); this\._waterMaskUploaded = true; \}/, 'the table once');
+  assert.match(body, /if \(!L\.maskUploaded\) \{ gl\.uniform4uiv\(L\.mask, packWaterMask\(\)\); L\.maskUploaded = true; \}/, 'the table once per program (EL7: the lane\'s water program has its own)');
   assert.match(body, /this\._uploadCloudShadow\('water'\);/);
   assert.match(body, /this\._uploadFog\(this\._waterSurfaceFog\);/);
   for (const k of ['_lightDir', '_ambient', '_sunScale', '_sunColor', '_moonDir', '_moonScale', '_moonColor']) {

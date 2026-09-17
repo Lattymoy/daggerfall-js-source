@@ -65,13 +65,13 @@ function drawWorld(r) {
   return { mesh, surface, batch };
 }
 
-test('EL2: the constants - two cascades, the sizes, the reserved units above every foreign pass and beside the cloud shadow', () => {
-  assert.deepEqual([...SHADOW_CASCADES], [40, 240]);
+test('EL2: the constants - three cascades (EL7), the sizes, the reserved units above every foreign pass and beside the cloud shadow', () => {
+  assert.deepEqual([...SHADOW_CASCADES], [12, 48, 240], 'EL7: the room, the street, the town');
   assert.equal(SHADOW_SUN_SIZE, 2048); assert.equal(SHADOW_POINT_SIZE, 512); assert.equal(SHADOW_SUN_DEPTH, 600);
   assert.equal(SHADOW_MIN_SUN_Y, 0.05); assert.equal(SHADOW_POINT_NEAR, 0.1); assert.equal(SHADOW_CASTER_MIN_DISTANCE, 0.25);
   assert.equal(SHADOW_SUN_UNIT, 13); assert.equal(SHADOW_POINT_UNIT, 14); assert.equal(CLOUD_SHADOW_UNIT, 15);
   assert.equal(SHADOW_RECORD_MAX, 6000);
-  assert.ok(near(sunTexelWorld(0), 80 / 2048) && near(sunTexelWorld(1), 480 / 2048));
+  assert.ok(near(sunTexelWorld(0), 24 / 2048) && near(sunTexelWorld(1), 96 / 2048) && near(sunTexelWorld(2), 480 / 2048), 'EL7: 1.2 cm, 4.7 cm, 23 cm');
 });
 
 test('EL2: the sun cascades - the eye at the centre, the radius at the edge, the depth along the light, and the texel snap that holds a world point still', () => {
@@ -168,14 +168,15 @@ test('EL2: the caster and the kind - the nearest lantern that is not the eye\'s 
 });
 
 test('EL2: the receiver block and the depth shaders - six uniforms, no dynamic mat4 index, PCF, the cutout; the five lane shaders carry the block and shadow the sun term', () => {
-  for (const u of ['uniform sampler2DArrayShadow uSunShadow;', 'uniform mat4 uSunVP[2];', 'uniform vec4 uSunShadowParams;', 'uniform sampler2DArrayShadow uPointShadow;', 'uniform vec4 uPointShadowParams[6];', 'uniform int uShadowIndex[6];']) {   // EL5: the casters' layers in one array, a vec4 and an index per caster
+  for (const u of ['uniform sampler2DArrayShadow uSunShadow;', 'uniform mat4 uSunVP[3];', 'uniform vec4 uSunShadowParams;', 'uniform vec4 uSunTexel;', 'uniform sampler2DArrayShadow uPointShadow;', 'uniform vec4 uPointShadowParams[6];', 'uniform int uShadowIndex[6];']) {   // EL5: the casters' layers in one array, a vec4 and an index per caster
     assert.ok(SHADOW_GLSL.includes(u), u);
   }
   assert.match(SHADOW_GLSL, /precision highp sampler2DArrayShadow;/, 'the shadow sampler has no default precision in ES 3.00');
   assert.ok(!SHADOW_GLSL.includes('samplerCubeShadow'), 'EL5: no cube sampler - the faces are layers, selected by hand');
   assert.match(SHADOW_GLSL, /float pointShadowAt\(int k, vec3 wp, vec3 n\)/); assert.match(SHADOW_GLSL, /float layer = float\(k \* 6 \+ face\);/);
   assert.match(SHADOW_GLSL, /float shadowOfLight\(int i, vec3 wp, vec3 n\) \{\n  for \(int k = 0; k < 6; k\+\+\) \{\n    if \(uShadowIndex\[k\] == i\) return pointShadowAt\(k, wp, n\);/);
-  assert.match(SHADOW_GLSL, /mat4 vp = c == 0 \? uSunVP\[0\] : uSunVP\[1\];/, 'no dynamic index into the uniform array');
+  assert.match(SHADOW_GLSL, /mat4 vp = c == 0 \? uSunVP\[0\] : c == 1 \? uSunVP\[1\] : uSunVP\[2\];/, 'no dynamic index into the uniform array (EL7: three)');
+  assert.match(SHADOW_GLSL, /int c = d < uSunShadowParams\.x \* 0\.9 \? 0 : d < uSunShadowParams\.y \* 0\.9 \? 1 : 2;/, 'the cascade by view distance');
   assert.match(SHADOW_GLSL, /for \(int y = -1; y <= 1; y\+\+\)/, 'a 3x3 PCF');
   assert.match(SHADOW_GLSL, /float near = 0\.1;/, 'the cube near plane, the constant');
   assert.match(SHADOW_GLSL, /if \(uSunShadowParams\.w <= 0\.0\) return 1\.0;/); assert.match(SHADOW_GLSL, /if \(far <= 0\.0\) return 1\.0;/);
@@ -205,7 +206,7 @@ test('EL2: the renderer builds the pass with the lane, records the three draw ki
   r.setLightingLane(EL_LANE);
   const sp = r.shadows;
   assert.ok(sp instanceof ShadowPass);
-  assert.equal(count(calls, 'framebufferTextureLayer'), 2 + 6 * 6, 'two cascade framebuffers, then six layers per caster (EL5; EL6: six casters)');
+  assert.equal(count(calls, 'framebufferTextureLayer'), 3 + 6 * 6, 'three cascade framebuffers (EL7), then six layers per caster (EL5; EL6: six casters)');
   assert.equal(calls.filter((c) => c[0] === 'framebufferTexture2D' && c[3] >= 100 && c[3] < 106).length, 0, 'EL5: no cube faces - the faces are layers');
   assert.equal(calls.filter((c) => c[0] === 'texStorage3D').length, 2, 'the sun array and the casters\' array'); assert.equal(calls.filter((c) => c[0] === 'texStorage2D').length, 0);
   assert.ok(calls.some((c) => c[0] === 'texStorage3D' && c[4] === 512 && c[5] === 512 && c[6] === 36), 'six casters of six 512^2 layers');
@@ -226,15 +227,16 @@ test('EL2: the renderer builds the pass with the lane, records the three draw ki
   r.beginFrame(I, I, sun, WORLD_FRAME);
   const firstClear = calls.findIndex((c) => c[0] === 'clear' && c[1] === 16384 + 256);
   const depthClears = calls.filter((c, i) => c[0] === 'clear' && c[1] === 256 && i < firstClear);
-  assert.equal(depthClears.length, 2, 'two cascades cleared before the frame\'s own clear');
-  assert.equal(sp.kind, 'sun'); assert.equal(sp.stats.records, 3); assert.equal(sp.stats.sunDraws, 2 * (2 + 1 + 1), 'two sub-meshes, the terrain, the flat - per cascade');
+  assert.equal(depthClears.length, 3, 'three cascades cleared before the frame\'s own clear (EL7)');
+  assert.equal(sp.kind, 'sun'); assert.equal(sp.stats.records, 3); assert.equal(sp.stats.sunDraws, 3 * (2 + 1 + 1), 'two sub-meshes, the terrain, the flat - per cascade');
   assert.equal(sp.count, 0, 'the records are spent'); assert.equal(sp.records[0].mesh, null, 'and released');
   assert.equal(sp.sunParams[3], 1); assert.deepEqual([...sp.shadowIndex], [-1, -1, -1, -1, -1, -1]); assert.ok([...sp.pointParams].every((v) => v === 0)); assert.equal(sp.casters, 0, 'no lantern: no caster, sun or not');
   assert.ok(calls.some((c) => c[0] === 'colorMask' && c[1] === false), 'depth only'); assert.ok(calls.some((c) => c[0] === 'disable' && c[1] === 1), 'no culling under the light\'s projection');
   const bindNull = calls.findIndex((c) => c[0] === 'bindFramebuffer' && c[2] === null);
   assert.ok(bindNull > 0 && bindNull < firstClear, 'the canvas is back before the frame clears');
   assert.ok(calls.some((c) => c[0] === 'uniform4fv' && c[1] === 'uSunShadowParams' && c[2][3] === 1), 'the receiver hears the sun map is on');
-  assert.ok(calls.some((c) => c[0] === 'uniformMatrix4fv' && c[1] === 'uSunVP' && c[3].length === 32), 'both cascades in one upload');
+  assert.ok(calls.some((c) => c[0] === 'uniformMatrix4fv' && c[1] === 'uSunVP' && c[3].length === 48), 'all three cascades in one upload');
+  assert.ok(calls.some((c) => c[0] === 'uniform4fv' && c[1] === 'uSunTexel' && c[2][0] > 0 && c[2][2] > c[2][0]), 'EL7: the texel sizes, the town\'s the coarsest');
   assert.ok(calls.some((c) => c[0] === 'uniform1i' && c[1] === 'uSunShadow' && c[2] === 13) && calls.some((c) => c[0] === 'uniform1i' && c[1] === 'uPointShadow' && c[2] === 14));
   // frame 3 indoors: the cube from the nearest lantern that is not the eye's
   drawWorld(r);
@@ -290,6 +292,7 @@ test('EL2: the record pool is bounded and reused', () => {
 test('EL2: the renderer\'s wiring - the three draw paths record behind one gate, the maps are drawn before the clear, the destroys mark, the far ring takes no map', () => {
   const r = read('src/render/renderer.js');
   assert.equal((r.match(/this\._casting\) this\._shadows\.record/g) || []).length, 3, 'mesh, terrain, billboards');
+  assert.match(r, /if \(this\._casting && this\._spriteDepth === 0 && this\._studioDepth === 0\) this\._shadows\.recordCharacter\(mesh, modelMatrix\);/, 'EL7: the rigs, never from the sprite target or the studio');
   assert.match(r, /if \(!wire && this\._casting\) this\._shadows\.recordMesh\(mesh, modelMatrix, texRemap\);/, 'a wireframe draw (the automap) is not a caster');
   assert.match(r, /get _casting\(\) \{ return !!this\._shadows && !this\._panelSaved; \}/);
   const bf = r.slice(r.indexOf('beginFrame(proj, view, lightDir, opts = null) {'), r.indexOf('beginFrame(proj, view, lightDir, opts = null) {') + 2600);   // AUDIT-EL F5
@@ -299,7 +302,7 @@ test('EL2: the renderer\'s wiring - the three draw paths record behind one gate,
   assert.match(r, /const sp = this\._shadows;   \/\/ AUDIT-EL F8: a panel frame never reaches here/, 'a panel frame keeps the records');
   assert.match(r, /    sp\.discard\(\);\n    this\._restoreWorldViewport\(\);/, 'the records are dropped after both passes and the world viewport comes back');
   assert.equal((r.match(/_dead = true;   \/\/ EL2/g) || []).length, 3, 'destroyMesh, destroyBillboardBatch, destroyBatch');
-  assert.match(r, /this\._shadows = this\._shadowPass \?\?= new ShadowPass\(this\.gl, \{ build: \(vs, fs\) => this\._buildProgram\(vs, fs\), vs: \{ mesh: VS, bb: BB_VS, terrain: TERRAIN_VS \} \}\);/);
+  assert.match(r, /this\._shadows = this\._shadowPass \?\?= new ShadowPass\(this\.gl, \{ build: \(vs, fs\) => this\._buildProgram\(vs, fs\), vs: \{ mesh: VS, bb: BB_VS, terrain: TERRAIN_VS, char: CHAR_VS \} \}\);/);
   assert.match(r, /if \(this\._shadows\) this\._shadows\.upload\(this\._el\[key\]\.shadow\);/);
   const sp = read('src/render/shadowPass.js');
   assert.ok(!/from '\.\/renderer\.js'/.test(sp), 'the pass imports nothing of the renderer');

@@ -110,7 +110,7 @@
  {
   "name": "glsl-glare-no-hide",
   "file": "src/render/airPass.js",
-  "old": "  return viewDist(depthAt(uv)) + ${AIR_GLARE_SLACK} >= lantern ? 1.0 : 0.0;",
+  "old": "  return abs(viewDist(depthAt(uv)) - lantern) <= ${glslFloat(AIR_GLARE_SLACK)} ? 1.0 : 0.0;",
   "new": "  return 1.0;",
   "tests": [
    "test/el3_air.test.js"

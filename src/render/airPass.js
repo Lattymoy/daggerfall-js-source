@@ -111,10 +111,21 @@ export const AIR_EMIT_SLACK = 0.15;
 /** The bloom's gain on the composite, and the glare sprite's size per
  *  square root of a lantern's range (range 18 -> ~1.5 units). */
 export const AIR_BLOOM_STRENGTH = 0.6;
-export const AIR_GLARE_SIZE = 0.35;
-/** EL5: the world-unit slack of a glare's occlusion test - a lantern's flame sits
- *  on its post, and the post is in the depth image. */
-export const AIR_GLARE_SLACK = 0.5;
+export const AIR_GLARE_SIZE = 0.25;   // EL7: a glare the size of a flame, not a ball (0.35 was a unit and a half across at a lantern's range)
+/** EL5: the world-unit slack of a glare's occlusion test; EL7: it is a
+ *  PRESENCE test now - the frame's depth must hold a surface within this of
+ *  the light (the flame flat under it), else there is no glare: a light
+ *  floating in air (the torch in the player's hand, the Light spell's
+ *  candle, a lantern placed above its flat) drew a bright ball "not
+ *  connected to the source". */
+export const AIR_GLARE_SLACK = 1.0;
+/** EL7: no glare for a light this close to the eye - the carried torch and the candle. */
+export const AIR_GLARE_MIN_DISTANCE = 1.5;
+/** EL7: a JS number as a GLSL float literal. `${1.0}` is "1" - an int to the
+ *  compiler, and "'<=' : wrong operand types" on a real GPU (the probe's
+ *  catch; the fake GL compiles anything). Every whole-number constant that
+ *  reaches a shader goes through here. */
+export const glslFloat = (v) => (Number.isInteger(v) ? `${v}.0` : String(v));
 /** AUDIT-EL F11: a light with a range past this is the storm's flash (Dynamic
  *  Skies: 500..1000), not a lantern, and gets no glare. */
 export const AIR_GLARE_MAX_RANGE = 120;
@@ -417,20 +428,30 @@ void main() {
   outColor = vec4(vec3(ao), 1.0);
 }`;
 
+// EL7: THE BLUR IS DEPTH-AWARE. A plain box averaged a wall's occlusion into
+// the sky beside it and a pillar's into the floor behind it - a halo at every
+// edge. A tap counts only while its view distance is within uBlurRange of
+// the centre's (the AO radius: what could have occluded it at all).
 const BOX_FS = `#version 300 es
 precision highp float;
 in vec2 vUV;
 uniform sampler2D uSrc;
 uniform vec2 uTexel;
+uniform float uBlurRange;
+${DEPTH_GLSL}
 out vec4 outColor;
 void main() {
-  float acc = 0.0;
+  float here = viewDist(depthAt(vUV));
+  float acc = 0.0, wsum = 0.0;
   for (int y = -2; y < 2; y++) {
     for (int x = -2; x < 2; x++) {
-      acc += texture(uSrc, vUV + (vec2(float(x), float(y)) + 0.5) * uTexel).r;
+      vec2 uv = vUV + (vec2(float(x), float(y)) + 0.5) * uTexel;
+      float w = abs(viewDist(depthAt(uv)) - here) <= uBlurRange ? 1.0 : 0.0;
+      acc += texture(uSrc, uv).r * w;
+      wsum += w;
     }
   }
-  outColor = vec4(vec3(acc / 16.0), 1.0);
+  outColor = vec4(vec3(wsum > 0.0 ? acc / wsum : 1.0), 1.0);
 }`;
 
 const GAUSS_FS = `#version 300 es
@@ -488,7 +509,7 @@ const EMIT_OCCLUSION_GLSL = `
 uniform vec2 uBloomSize;
 bool occluded() {
   vec2 wuv = gl_FragCoord.xy / uBloomSize;
-  return viewDist(gl_FragCoord.z) > viewDist(depthAt(wuv)) + ${AIR_EMIT_SLACK};
+  return viewDist(gl_FragCoord.z) > viewDist(depthAt(wuv)) + ${glslFloat(AIR_EMIT_SLACK)};
 }
 `;
 export const EMIT_MESH_FS = `#version 300 es
@@ -528,16 +549,25 @@ uniform mat4 uView;
 uniform vec3 uCenter;
 uniform float uSize;
 ${DEPTH_GLSL}
-uniform vec2 uTexel;      // EL5: one texel of the world rect, in its uv
 out vec2 vUV;
 out float vVis;
 // EL5: THE OCCLUSION IS IN WORLD UNITS. The depth image is hyperbolic: a
 // constant 0.002 off it hid nothing past twenty units, and a town's lanterns
-// glared through its walls (the first field report). The texel's view depth
-// is reconstructed and compared to the lantern's, half a unit of slack, at
-// five taps so a lantern half behind a post is half a glare.
-float seen(vec2 uv, float lantern) {
-  return viewDist(depthAt(uv)) + ${AIR_GLARE_SLACK} >= lantern ? 1.0 : 0.0;
+// glared through its walls (the first field report).
+// EL7: AND A GLARE NEEDS A FLAME UNDER IT. The test is presence, not
+// "nothing nearer": the frame's depth at the tap must hold a surface within
+// AIR_GLARE_SLACK of the light's own distance - the flame flat. A light in
+// open air draws nothing; a light behind a wall draws nothing; seven taps
+// over the glare's footprint (the centre, one and two half-sizes above and
+// below it - a city light sits at the TOP of its flat, a dungeon light at
+// its BASE, and a flat stands on its point - and either side), so a flame
+// half behind a post is half a glare.
+float flame(vec4 vc, float lantern) {
+  vec4 clip = uProj * vc;
+  if (clip.w <= 0.0) return 0.0;
+  vec2 uv = clip.xy / clip.w * 0.5 + 0.5;
+  if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) return 0.0;
+  return abs(viewDist(depthAt(uv)) - lantern) <= ${glslFloat(AIR_GLARE_SLACK)} ? 1.0 : 0.0;
 }
 void main() {
   vec4 vc = uView * vec4(uCenter, 1.0);
@@ -546,11 +576,12 @@ void main() {
   if (clip.w > 0.0) {
     vec3 ndc = clip.xyz / clip.w;
     if (abs(ndc.x) < 1.2 && abs(ndc.y) < 1.2) {
-      vec2 uv = ndc.xy * 0.5 + 0.5;
       float lantern = -vc.z;
-      vec2 t = uTexel * 2.0;
-      vis = (seen(uv, lantern) + seen(uv + vec2(t.x, 0.0), lantern) + seen(uv - vec2(t.x, 0.0), lantern)
-           + seen(uv + vec2(0.0, t.y), lantern) + seen(uv - vec2(0.0, t.y), lantern)) / 5.0;
+      float s = uSize * 0.5;
+      vis = (flame(vc, lantern)
+           + flame(vc + vec4(0.0, s, 0.0, 0.0), lantern) + flame(vc + vec4(0.0, 2.0 * s, 0.0, 0.0), lantern)
+           + flame(vc + vec4(0.0, -s, 0.0, 0.0), lantern) + flame(vc + vec4(0.0, -2.0 * s, 0.0, 0.0), lantern)
+           + flame(vc + vec4(s, 0.0, 0.0, 0.0), lantern) + flame(vc + vec4(-s, 0.0, 0.0, 0.0), lantern)) / 7.0;
     }
   }
   vVis = vis;
@@ -580,12 +611,12 @@ export class AirPass {
     const P = (vs, fs, names) => { const p = opts.build(vs, fs); const o = { p }; for (const n of names) o[n] = u(p, n); return o; };
     this.programs = {
       ao: P(QUAD_VS, AO_FS, ['uDepth', 'uProjInfo', 'uKernel', 'uAOParams', 'uRect', 'uCanvas']),
-      box: P(QUAD_VS, BOX_FS, ['uSrc', 'uTexel']),
+      box: P(QUAD_VS, BOX_FS, ['uSrc', 'uTexel', 'uBlurRange', 'uDepth', 'uProjInfo', 'uRect', 'uCanvas']),
       gauss: P(QUAD_VS, GAUSS_FS, ['uSrc', 'uDir']),
       shaft: P(QUAD_VS, SHAFT_FS, ['uDepth', 'uSun', 'uShaftParams', 'uSunColor', 'uProjInfo', 'uRect', 'uCanvas']),
       emitMesh: P(opts.vs.mesh, EMIT_MESH_FS, ['uProj', 'uView', 'uModel', 'uEmissionTex', 'uEmissionColor', 'uDepth', 'uProjInfo', 'uRect', 'uCanvas', 'uBloomSize']),
       emitBb: P(opts.vs.bb, EMIT_BB_FS, ['uProj', 'uView', 'uRight', 'uUp', 'uOrigin', 'uSize', 'uTex', 'uEmissionTex', 'uFlatWind', 'uSway', 'uDepth', 'uProjInfo', 'uRect', 'uCanvas', 'uBloomSize']),
-      glare: P(GLARE_VS, GLARE_FS, ['uProj', 'uView', 'uCenter', 'uSize', 'uDepth', 'uColor', 'uProjInfo', 'uTexel', 'uRect', 'uCanvas']),
+      glare: P(GLARE_VS, GLARE_FS, ['uProj', 'uView', 'uCenter', 'uSize', 'uDepth', 'uColor', 'uProjInfo', 'uRect', 'uCanvas']),
       // EL4
       lum: P(QUAD_VS, LUM_FS, ['uFrame', 'uPrev', 'uRect', 'uCanvas']),
       adapt: P(QUAD_VS, ADAPT_FS, ['uPrev', 'uLum', 'uAdaptParams', 'uAdaptRates']),
@@ -804,9 +835,11 @@ export class AirPass {
     gl.uniform4fv(this.programs.ao.uAOParams, this.aoParams);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     quad(this.programs.box, T.aoBlur);
-    gl.bindTexture(gl.TEXTURE_2D, T.ao.tex);
-    gl.uniform1i(this.programs.box.uSrc, 0);
+    depthOn(this.programs.box);   // EL7: the blur reads the depth too - on unit 0; the AO on unit 1
+    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, T.ao.tex); gl.uniform1i(this.programs.box.uSrc, 1);
+    gl.activeTexture(gl.TEXTURE0);
     gl.uniform2f(this.programs.box.uTexel, 1 / T.ao.w, 1 / T.ao.h);
+    gl.uniform1f(this.programs.box.uBlurRange, AIR_AO_RADIUS);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     // 2. the bloom source: the emitters (this frame's records, culled, occluded), and a glare per lantern
     gl.bindFramebuffer(gl.FRAMEBUFFER, T.bloom.fbo);
@@ -910,11 +943,12 @@ export class AirPass {
     gl.uniformMatrix4fv(P.uProj, false, f.proj);
     gl.uniformMatrix4fv(P.uView, false, f.view);
     depthOn(P);   // EL5/EL6: the depth's reconstruction, off the frame's own
-    gl.uniform2f(P.uTexel, 1 / this.width, 1 / this.height);
     gl.bindVertexArray(this.glareVao);
+    const eye = f.eye;
     for (let i = 0; i < n; i++) {
       const range = L[i * 4 + 3];
       if (!(range > 0) || range > AIR_GLARE_MAX_RANGE) continue;   // AUDIT-EL F11: the lightning flash (range 500..1000 over the player) is no lantern
+      if (eye && Math.hypot(L[i * 4] - eye[0], L[i * 4 + 1] - eye[1], L[i * 4 + 2] - eye[2]) < AIR_GLARE_MIN_DISTANCE) continue;   // EL7: the torch in the hand, the candle
       gl.uniform3f(P.uCenter, L[i * 4], L[i * 4 + 1], L[i * 4 + 2]);
       gl.uniform1f(P.uSize, glareSize(range));
       gl.uniform3f(P.uColor, C ? C[i * 3] : 1, C ? C[i * 3 + 1] : 1, C ? C[i * 3 + 2] : 1);

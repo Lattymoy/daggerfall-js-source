@@ -47,7 +47,8 @@ directory by `test/audit18_bible_docs.test.js`:
   replays it depth-only from the light at the top of the next frame - a
   two-cascade sun map outdoors, a cube map from the nearest lantern indoors -
   with the receiver block the lane's shaders read (`SHADOW_GLSL`); the depth
-  programs are the renderer's own vertex shaders. See
+  programs are the renderer's own vertex shaders (EL7: three cascades, the
+  rigs recorded too, the water surface a receiver). See
   `07-Rendering/Enhanced-Lighting-Arc.md`.
 - `skyRenderer.js` - painted skies (R4) + the night sky.
 - `labGrass.js` - GR1 the LAB'S GRASS: grass-proto.html's blade shaders

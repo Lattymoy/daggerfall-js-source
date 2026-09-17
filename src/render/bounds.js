@@ -37,10 +37,10 @@ export function sphereInPlanes(planes, x, y, z, r) {
  *  whole array or the vertices an index range names (`start` and `count`
  *  in index units). The centre is the box's, the radius the farthest
  *  vertex from it. Empty input gives a zero sphere at the origin. */
-export function boundsOf(positions, indices = null, start = 0, count = -1) {
+export function boundsOf(positions, indices = null, start = 0, count = -1, stride = 3) {
   let minX = Infinity, minY = Infinity, minZ = Infinity, maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
-  const n = indices ? (count < 0 ? indices.length - start : count) : positions.length / 3;
-  const at = (k) => (indices ? indices[start + k] : k) * 3;
+  const n = indices ? (count < 0 ? indices.length - start : count) : Math.floor(positions.length / stride);
+  const at = (k) => (indices ? indices[start + k] : k) * stride;   // EL7: `stride` floats per vertex (a character rig's interleaved 9 or 11)
   for (let k = 0; k < n; k++) {
     const o = at(k), x = positions[o], y = positions[o + 1], z = positions[o + 2];
     if (x < minX) minX = x; if (x > maxX) maxX = x;

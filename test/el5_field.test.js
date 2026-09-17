@@ -170,7 +170,7 @@ test('EL5: the replays cull - a record outside a face\'s frustum is not drawn, a
   r.setLightingLane(EL_LANE);
   const sp = r.shadows;
   assert.ok(calls.some((c) => c[0] === 'texStorage3D' && c[6] === 6 * SHADOW_POINT_CASTERS), 'six layers per caster');
-  assert.equal(calls.filter((c) => c[0] === 'framebufferTextureLayer').length, 2 + 6 * SHADOW_POINT_CASTERS);
+  assert.equal(calls.filter((c) => c[0] === 'framebufferTextureLayer').length, 3 + 6 * SHADOW_POINT_CASTERS);   // EL7: three cascades
   r.textures.set('1_1', { id: 't' }); r.textures.set('201_1', { id: 'b' }); r.textures.set('210_1', { id: 'flame' });
   // a mesh of two sub-meshes: one at the origin (in the lantern's range), one 100 units out
   const positions = new Float32Array([0, 0, 0, 1, 0, 0, 1, 1, 0, 100, 0, 0, 101, 0, 0, 101, 1, 0]);
@@ -215,11 +215,11 @@ test('EL5: the replays cull - a record outside a face\'s frustum is not drawn, a
 
 test('EL5: the glare hides in world units at five taps, the resolve grades in display space, and the probe checks the field\'s two laws', () => {
   const a = read('src/render/airPass.js');
-  assert.equal(AIR_GLARE_SLACK, 0.5);
+  assert.equal(AIR_GLARE_SLACK, 1.0, 'EL7: the flame within a unit of its light');
   assert.match(a, /float viewDist\(float d01\) \{\n  float z = d01 \* 2\.0 - 1\.0;\n  return uProjInfo\.w \/ \(z \+ uProjInfo\.z\);/, 'the depth image linearised the way the AO does');
   assert.match(a, /float lantern = -vc\.z;/);
   assert.ok(!/<= d \+ 0\.002/.test(a), 'no hyperbolic constant left');
-  assert.match(a, /depthOn\(P\);   \/\/ EL5\/EL6/); assert.match(a, /gl\.uniform2f\(P\.uTexel, 1 \/ this\.width, 1 \/ this\.height\);/);
+  assert.match(a, /depthOn\(P\);   \/\/ EL5\/EL6/); assert.match(a, /< AIR_GLARE_MIN_DISTANCE\) continue;   \/\/ EL7: the torch in the hand, the candle/);
   assert.match(a, /vec3 e = airEncode\(max\(c, vec3\(0\.0\)\)\);\n  e = \(e - 0\.5\) \* uGrade\.w \+ 0\.5;\n  e \+= \(bayer4\(gl_FragCoord\.xy\) - \$\{BAYER_MEAN\}\) \/ 255\.0;/, 'the contrast after the encode, about mid-grey; EL6: dithered at the byte, zero-mean');
   assert.ok(!/c = \(c - 0\.18\) \* uGrade\.w \+ 0\.18;/.test(a), 'the linear pivot is gone');
   assert.match(a, /import \{ spherePlanes, recordVisible, subMeshVisible, batchVisible \} from '\.\/bounds\.js';/, 'the leaf imports a leaf');
@@ -231,7 +231,8 @@ test('EL5: the glare hides in world units at five taps, the resolve grades in di
   assert.match(probe, /if \(emitBleed > 0\.002\) failures\.push\(`the emitter behind the wall blooms through it/, 'EL6: the emitter check');
   assert.match(probe, /if \(!\(front\.bloom\?\.sum > 0\)\) failures\.push\('an emitter in view put nothing in the bloom source/, 'EL6: and the occlusion discriminates');
   assert.match(probe, /if \(r\.air\) r\.air\._now = \(\) => 1000;/, 'EL6: the eye frozen for the comparisons');
-  assert.match(probe, /if \(!\(shadowLane < shadowClassic \* 0\.6\)\) failures\.push/, 'the shadow check');
+  assert.match(probe, /if \(!\(shadowLane - shadowNoA < 0\.01\)\) failures\.push/, 'the shadow check (EL7: A\'s own contribution behind the wall, none)');
+  assert.match(probe, /if \(!\(openLane - openNoA > 0\.02\)\) failures\.push/, 'and beside it, some');
   assert.match(probe, /sh\.culled === 0\) failures\.push\('the replays culled nothing/, 'the cull check');
   assert.match(probe, /'--use-angle=swiftshader'/, 'a real GL, software');
 });

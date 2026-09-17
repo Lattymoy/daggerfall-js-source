@@ -334,7 +334,7 @@ void main() {
   gl_Position = uProj * uView * vec4(world, 1.0);
 }`;
 
-import { ShadowPass } from './shadowPass.js';
+import { ShadowPass, SHADOW_GLSL } from './shadowPass.js';   // EL7: the receiver block, for the water surface's lane program
 import { boundsOf } from './bounds.js';   // EL5: the bounds every bundle carries for the replays' culling   // EL2: the lane's shadow maps - a leaf that compiles nothing until a lane asks
 import { AirPass, AIR_ADAPT_UNIT as ADAPT_UNIT } from './airPass.js';   // EL3: the ambient occlusion, the bloom and the shafts - the same kind of leaf; EL4: the eye's unit; EL6: all of it off the frame's own depth, at the resolve
 import { SHADE_DARK } from '../systems/concealDraw.js';   // ECV1 / AUDIT 65 PN-3: the shade's pull toward black, interpolated into BB_FS below - the shader restated 0.12 as a second literal. The LEAF, not systems/combatVisuals.js, which re-exports it: that module's graph would take this file's closure from 13 modules to 69
@@ -966,22 +966,10 @@ export class Renderer {
     // WATER1: the exterior water surface - the terrain grid drawn again,
     // lifted, every non-water texel discarded (render/waterSurface.js).
     this.waterSurfaceProgram = this._buildProgram(WATER_SURFACE_VS, waterSurfaceFs(CLOUD_SHADOW_GLSL));
-    {
-      const P = this.waterSurfaceProgram, u = (n) => gl.getUniformLocation(P, n);
-      this._ws = {
-        proj: u('uProj'), view: u('uView'), model: u('uModel'), lift: u('uLift'),
-        tileArr: u('uTileArr'), tilemap: u('uTilemap'), tileSize: u('uTileSize'), tileDim: u('uTileDim'), mask: u('uWaterMask'),
-        pointCount: u('uPointCount'), pointLights: u('uPointLights'), pointColors: u('uPointColors'), indirect: u('uIndirect'), indirectColor: u('uIndirectColor'),
-        time: u('uTime'), windDir: u('uWindDir'), windStrength: u('uWindStrength'), rain: u('uRain'), scroll: u('uScroll'),
-        lightDir: u('uLightDir'), ambient: u('uAmbient'), sunScale: u('uSunScale'), sunColor: u('uSunColor'),
-        moonDir: u('uMoonDir'), moonScale: u('uMoonScale'), moonColor: u('uMoonColor'),
-        zenith: u('uSkyZenith'), horizon: u('uSkyHorizon'), tint: u('uTint'), opacity: u('uOpacity'), f0: u('uF0'), shoreSoft: u('uShoreSoft'),
-      };
-      this._waterSurfaceFog = { fogColor: u('uFogColor'), fogMode: u('uFogMode'), fogDensity: u('uFogDensity'), fogRange: u('uFogRange'), camPos: u('uCamPos') };
-      this._waterMaskUploaded = false;
-      // VC4 recorded that the deck's shadow reached neither the grass nor the water; WATER1 closes the water half
-      this._csLoc.water = [u('uCloudShadowMap'), u('uCloudShadowRect')];
-    }
+    this.waterSurfaceProgramLane = null; this._wsLane = null;   // EL7: built with the lane
+    this._ws = this._waterLocs(this.waterSurfaceProgram);
+    this._waterSurfaceFog = this._ws.fog;
+    this._csLoc.water = this._ws.cloud;
     this._waterFog = {
       fogColor: gl.getUniformLocation(this.waterProgram, 'uFogColor'),
       fogMode: gl.getUniformLocation(this.waterProgram, 'uFogMode'),
@@ -1270,7 +1258,7 @@ export class Renderer {
       /** @type {any[] & { shadow?: object, ao?: object }} */
       const a = [gl.getUniformLocation(p, 'uELExposure'), gl.getUniformLocation(p, 'uELScatter')];
       a.shadow = {
-        sunShadow: gl.getUniformLocation(p, 'uSunShadow'), sunVP: gl.getUniformLocation(p, 'uSunVP'), sunParams: gl.getUniformLocation(p, 'uSunShadowParams'),
+        sunShadow: gl.getUniformLocation(p, 'uSunShadow'), sunVP: gl.getUniformLocation(p, 'uSunVP'), sunParams: gl.getUniformLocation(p, 'uSunShadowParams'), sunTexel: gl.getUniformLocation(p, 'uSunTexel'),
         pointShadow: gl.getUniformLocation(p, 'uPointShadow'), pointParams: gl.getUniformLocation(p, 'uPointShadowParams'), shadowIndex: gl.getUniformLocation(p, 'uShadowIndex'),
       };
       a.ao = { adapt: gl.getUniformLocation(p, 'uAdapt') };   // EL4: the eye (EL6: the AO left the world shaders - the resolve applies it off the frame's depth)
@@ -1303,7 +1291,17 @@ export class Renderer {
     this._lane = lane;
     // EL2: the shadow pass rides a lane that asks for it; built once, kept
     if (lane?.shadows) {
-      this._shadows = this._shadowPass ??= new ShadowPass(this.gl, { build: (vs, fs) => this._buildProgram(vs, fs), vs: { mesh: VS, bb: BB_VS, terrain: TERRAIN_VS } });
+      this._shadows = this._shadowPass ??= new ShadowPass(this.gl, { build: (vs, fs) => this._buildProgram(vs, fs), vs: { mesh: VS, bb: BB_VS, terrain: TERRAIN_VS, char: CHAR_VS } });   // EL7: the rigs cast
+      // EL7: the water surface receives the lane's sun shadow - its own program with the receiver block, built once
+      if (lane.shadows && !this.waterSurfaceProgramLane) {
+        this.waterSurfaceProgramLane = this._buildProgram(WATER_SURFACE_VS, waterSurfaceFs(CLOUD_SHADOW_GLSL, SHADOW_GLSL));
+        this._wsLane = this._waterLocs(this.waterSurfaceProgramLane);
+        const p = this.waterSurfaceProgramLane, gl = this.gl;
+        this._wsLane.shadow = {
+          sunShadow: gl.getUniformLocation(p, 'uSunShadow'), sunVP: gl.getUniformLocation(p, 'uSunVP'), sunParams: gl.getUniformLocation(p, 'uSunShadowParams'), sunTexel: gl.getUniformLocation(p, 'uSunTexel'),
+          pointShadow: gl.getUniformLocation(p, 'uPointShadow'), pointParams: gl.getUniformLocation(p, 'uPointShadowParams'), shadowIndex: gl.getUniformLocation(p, 'uShadowIndex'),
+        };
+      }
     } else {
       this._shadows?.discard();
       this._shadows = null;
@@ -1435,7 +1433,7 @@ export class Renderer {
     if (this._air) {
       const count = this._pointLights.length / 4;
       this._air.prepare({   // EL6: the inputs alone - the images are drawn at the resolve, off the frame's depth
-        proj, view, lightDir, sunScale: this._sunScale, sunColor: this._sunColor,
+        proj, view, lightDir, eye: this._camPos, sunScale: this._sunScale, sunColor: this._sunColor,
         pointLights: this._pointLights, pointColors: count > 0 ? this._pointColorData(count) : null,
         viewport: this._worldViewportPx ?? [0, 0, this.canvas.width, this.canvas.height],
         shadows: sp, textures: this.textures, emissionTextures: this.emissionTextures, blackTex: this._blackTex,
@@ -1522,7 +1520,7 @@ export class Renderer {
       gl.vertexAttribPointer(3, 2, gl.FLOAT, false, stride, 36);
     }
     this._bindVao(null);
-    return { vao, count: packed.length / floats, buffers: [vbo], vbo, floats };
+    return { vao, count: packed.length / floats, buffers: [vbo], vbo, floats, bounds: boundsOf(packed, null, 0, -1, floats) };   // EL7: the rig's sphere, for the shadow replays' cull
   }
 
   /**
@@ -1557,6 +1555,7 @@ export class Renderer {
     const gl = this.gl;
     gl.bindBuffer(gl.ARRAY_BUFFER, mesh.vbo);
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, packed);
+    if (mesh.bounds) boundsOf(packed, null, 0, -1, mesh.floats).forEach((v, i) => { mesh.bounds[i] = v; });   // EL7: an animated rig's sphere follows it
   }
 
   /**
@@ -1570,6 +1569,7 @@ export class Renderer {
   drawCharacter(mesh, modelMatrix) {
     const gl = this.gl;
     const c = this._char;
+    if (this._casting && this._spriteDepth === 0 && this._studioDepth === 0) this._shadows.recordCharacter(mesh, modelMatrix);   // EL7: the rigs cast - never from the sprite target or the studio bake
     this._use(this.charProgram);
     this._uploadCloudShadow('char');   // VC4
     gl.uniformMatrix4fv(c.proj, false, this._proj);
@@ -3230,10 +3230,31 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
    * lift is still the surface). Call after every opaque pass of the
    * pixel and before the flats. `u` is waterUniforms' object.
    */
+  /** WATER1's uniform table for one water-surface program (EL7: the classic and the lane's). */
+  _waterLocs(P) {
+    const gl = this.gl, u = (n) => gl.getUniformLocation(P, n);
+    return {
+      proj: u('uProj'), view: u('uView'), model: u('uModel'), lift: u('uLift'),
+      tileArr: u('uTileArr'), tilemap: u('uTilemap'), tileSize: u('uTileSize'), tileDim: u('uTileDim'), mask: u('uWaterMask'),
+      pointCount: u('uPointCount'), pointLights: u('uPointLights'), pointColors: u('uPointColors'), indirect: u('uIndirect'), indirectColor: u('uIndirectColor'),
+      time: u('uTime'), windDir: u('uWindDir'), windStrength: u('uWindStrength'), rain: u('uRain'), scroll: u('uScroll'),
+      lightDir: u('uLightDir'), ambient: u('uAmbient'), sunScale: u('uSunScale'), sunColor: u('uSunColor'),
+      moonDir: u('uMoonDir'), moonScale: u('uMoonScale'), moonColor: u('uMoonColor'),
+      zenith: u('uSkyZenith'), horizon: u('uSkyHorizon'), tint: u('uTint'), opacity: u('uOpacity'), f0: u('uF0'), shoreSoft: u('uShoreSoft'),
+      fog: { fogColor: u('uFogColor'), fogMode: u('uFogMode'), fogDensity: u('uFogDensity'), fogRange: u('uFogRange'), camPos: u('uCamPos') },
+      // VC4 recorded that the deck's shadow reached neither the grass nor the water; WATER1 closes the water half
+      cloud: [u('uCloudShadowMap'), u('uCloudShadowRect')],
+      maskUploaded: false,
+    };
+  }
+
   drawWaterSurface(surface, modelMatrix, arrayTex, tilemapTex, tileSize, u, tileDim = 128) {
-    const gl = this.gl, L = this._ws;
-    this._use(this.waterSurfaceProgram);
-    if (!this._waterMaskUploaded) { gl.uniform4uiv(L.mask, packWaterMask()); this._waterMaskUploaded = true; }
+    const gl = this.gl;
+    const laneWater = !!(this._lane?.shadows && this.waterSurfaceProgramLane && this._shadows);   // EL7: the lane's water receives the sun map
+    const L = laneWater ? this._wsLane : this._ws;
+    this._use(laneWater ? this.waterSurfaceProgramLane : this.waterSurfaceProgram);
+    this._csLoc.water = L.cloud; this._waterSurfaceFog = L.fog;
+    if (!L.maskUploaded) { gl.uniform4uiv(L.mask, packWaterMask()); L.maskUploaded = true; }
     gl.uniformMatrix4fv(L.proj, false, this._proj);
     gl.uniformMatrix4fv(L.view, false, this._view);
     gl.uniformMatrix4fv(L.model, false, modelMatrix);
@@ -3255,6 +3276,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // frame the land beside it is lit in
     this._uploadCloudShadow('water');
     this._uploadFog(this._waterSurfaceFog);
+    if (laneWater) this._shadows.upload(L.shadow);   // EL7: the maps and the receiver's uniforms
     gl.uniform3fv(L.lightDir, this._lightDir);
     gl.uniform3fv(L.ambient, this._ambient);
     gl.uniform1f(L.sunScale, this._sunScale);
