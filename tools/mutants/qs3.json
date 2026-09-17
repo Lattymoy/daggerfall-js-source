@@ -164,5 +164,23 @@
     "tests": [
       "test/qs3_hud.test.js"
     ]
+  },
+  {
+    "name": "QS3-the-switch-hides-the-whole-block-mode-word-and-all",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".hud-quick.nodiamond .hud-qdiamond { display: none; }",
+    "new": ".hud-quick.nodiamond { display: none; }",
+    "tests": [
+      "test/qs3_hud.test.js"
+    ]
+  },
+  {
+    "name": "QS3-the-switch-is-never-read",
+    "file": "src/ui/enhancedHud.js",
+    "old": "  const off = getPref('quickslots') === false;",
+    "new": "  const off = false;",
+    "tests": [
+      "test/qs3_hud.test.js"
+    ]
   }
 ]

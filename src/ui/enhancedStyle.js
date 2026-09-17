@@ -838,9 +838,9 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
 .packdetail ul.rarity li:last-child:not(:first-child):not(:nth-child(2)) { color: var(--dim); font-style: italic; }
 .itemwt { flex: 0 0 auto; color: var(--dim); font-size: 12px; font-variant-numeric: tabular-nums; }
 /* QS2: THE ROW'S CHIP - '1', '2' or SWAP at the row's right end, on the rows
-   whose KIND is in a slot. The HUD's own hand label (.hud-handkind) is the
-   face it borrows, because it is the same fact in the same words one surface
-   over: 10px, letter-spaced, uppercase, brass, in a 2px frame. */
+   whose KIND is in a slot. The HUD's readied chip's label (.hud-readykind)
+   is the face it borrows, because it is the same fact in the same words one
+   surface over: 10px, letter-spaced, uppercase, brass, in a 2px frame. */
 .qs-mark { flex: 0 0 auto; border: 2px solid rgba(125, 116, 96, 0.5); color: var(--brass);
   font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
   padding: 1px 5px; line-height: 1.5; font-variant-numeric: tabular-nums; }
@@ -2033,6 +2033,10 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
 @media (pointer: coarse) {
   .hud-qcell { pointer-events: auto; touch-action: none; }
 }
+/* The switch (features 'quickslot-diamond') hides the diamond and its
+   tags; the caption row above it stays, because the mode word lives
+   there and the switch is about the diamond. */
+.hud-quick.nodiamond .hud-qdiamond { display: none; }
 
 /* PX32: THE RETICLE. A square cross in bone with the classic shadow,
    at the viewport's centre; the mode's word takes its place under the

@@ -464,3 +464,18 @@ test('QS3 the states, executed: the socket, the sheathed hand, the ghost\'s 0, a
     globalThis.document = prev;
   }
 });
+
+test('QS the switch: the features row hides the DIAMOND alone - the caption and the keys stand', () => {
+  const HUD = read('src/ui/enhancedHud.js');
+  const CSS = read('src/ui/enhancedStyle.js');
+  // The read is the prefs shelf's, each frame, guarded on change like every other write here.
+  assert.match(HUD, /const off = getPref\('quickslots'\) === false;/);
+  assert.match(HUD, /parts\.quick\.classList\.toggle\('nodiamond', off\);/);
+  assert.match(HUD, /if \(off\) return;/, 'off skips the cells and the tags, nothing else');
+  // ...and the rule hides the diamond, not the block: the mode word lives in the caption.
+  assert.match(CSS, /\.hud-quick\.nodiamond \.hud-qdiamond \{ display: none; \}/);
+  assert.doesNotMatch(CSS, /\.hud-quick\.nodiamond \{ display: none/);
+  // The row exists, on the prefs shelf, on by default, the player's own online.
+  const F = read('src/systems/features.js');
+  assert.match(F, /id: 'quickslot-diamond',[\s\S]*?control: Object\.freeze\(\{ store: 'prefs', key: 'quickslots', initial: true, online: 'player' \}\)/);
+});

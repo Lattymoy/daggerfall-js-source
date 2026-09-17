@@ -617,6 +617,16 @@ function drawQuickslots(vitals, opts) {
     last.qstick = fixedStick;
     parts.quick.classList.toggle('stickclear', fixedStick);
   }
+  // THE SWITCH (systems/features.js 'quickslot-diamond'): off hides the
+  // diamond and its tags, and nothing else - the caption keeps the mode
+  // word, the keys keep working, the tooltip keeps filling slots. A
+  // player who turned the picture off did not ask to lose the presses.
+  const off = getPref('quickslots') === false;
+  if (last.qoff !== off) {
+    last.qoff = off;
+    parts.quick.classList.toggle('nodiamond', off);
+  }
+  if (off) return;
   const pct = (c) => (Number.isFinite(c) ? String(Math.round(c)) : '');
   const m = view.main, o = view.off;
   const sig = [

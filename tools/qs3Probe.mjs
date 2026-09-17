@@ -27,7 +27,8 @@
 //     node tools/qs3Probe.mjs
 //
 // PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers here; pass CHROMIUM=... to
-// point at another executable.
+// point at another executable. QS3_SHOTS=<dir> writes a screenshot per
+// page beside the numbers.
 import { writeFile, unlink } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, normalize } from 'node:path';
@@ -164,6 +165,9 @@ try {
         if (stick === 'fixed' && !p.classes.quick.includes('stickclear')) fails.push(`${label}: the stick-clear class was not toggled`);
         if (stick === 'float' && p.classes.quick.includes('stickclear')) fails.push(`${label}: the stick-clear class stuck on`);
         if (p.rootPointer !== 'none') fails.push(`${label}: the HUD root takes the pointer`);
+        // QS3_SHOTS=<dir>: a screenshot per page, for a reader who wants
+        // to SEE the diamond rather than read its rectangles.
+        if (process.env.QS3_SHOTS) await page.screenshot({ path: join(process.env.QS3_SHOTS, `qs3-${name}-x${scale}-${stick}.png`) });
         await page.close();
       }
     }
