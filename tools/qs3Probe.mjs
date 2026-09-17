@@ -36,7 +36,8 @@ import { chromium } from 'playwright';
 import { createServer } from 'vite';
 
 const ROOT = normalize(join(dirname(fileURLToPath(import.meta.url)), '..'));
-const PAGE_REL = 'tools/qs3-probe.tmp.html';
+const PAGE_NAME = 'qs3-probe.tmp.html';
+const PAGE_REL = `tools/${PAGE_NAME}`;
 const PAGE_PATH = join(ROOT, PAGE_REL);
 
 const PAGE = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>QS3 probe</title>
@@ -141,7 +142,7 @@ try {
         const page = await browser.newPage({ viewport: size, hasTouch: touch, isMobile: touch });
         const errors = [];
         page.on('pageerror', (e) => errors.push(String(e)));
-        await page.goto(`http://127.0.0.1:${port}/${PAGE_REL}?nofonts&scale=${scale}&stick=${stick}&spell=1`, { waitUntil: 'domcontentloaded', timeout: 60000 }).catch((e) => errors.push(e.message));
+        await page.goto(`http://127.0.0.1:${port}/tools/${PAGE_NAME}?nofonts&scale=${scale}&stick=${stick}&spell=1`, { waitUntil: 'domcontentloaded', timeout: 60000 }).catch((e) => errors.push(e.message));
         await page.waitForFunction(() => !!window.__probe, null, { timeout: 30000 }).catch(() => {});
         const p = await page.evaluate(() => window.__probe ?? null);
         if (!p) { fails.push(`${name} x${scale} ${stick}: the page never reported (${errors.join('; ') || 'no error'})`); await page.close(); continue; }

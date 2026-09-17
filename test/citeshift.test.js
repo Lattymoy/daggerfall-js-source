@@ -35,8 +35,8 @@ test('CS1: the spellings - path, basename, range, the tests\' escaped form, and 
   assert.deepEqual(pick('otherworld.js:5'), [], 'nor a suffix of another name');
   const L = 'bible/01-Overview/Port-Ledger.md';
   const pickL = (s) => citeSpellings(L).flatMap((re) => [...s.matchAll(re)].map((m) => `${m[0]}|${m[1]}`));
-  assert.deepEqual(pickL('(Port-Ledger.md:523) and Port-Ledger row :522 and Ledger row `:601` and Ledger rows `:604`'),
-    ['Port-Ledger.md:523|522', 'Port-Ledger row :522|522', 'Ledger row `:601`|601', 'Ledger rows `:604`|604']);
+  assert.deepEqual(pickL('(Port-Ledger.md:522) and Port-Ledger row :522 and Ledger row `:601` and Ledger rows `:604`'),
+    ['Port-Ledger.md:522|522', 'Port-Ledger row :522|522', 'Ledger row `:601`|601', 'Ledger rows `:604`|604']);
   assert.deepEqual(pickL('a visible row at `:436`'), [], 'a bare "row `:N`" is a JS line as often as a Ledger row - not a spelling');
 });
 

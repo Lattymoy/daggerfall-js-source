@@ -43,6 +43,8 @@ test('composeSessionState: bridge + trio -> {quest, talk}; absent halves -> null
   assert.deepEqual(composeSessionState({}), {
     quest: null,
     talk: null,
+    // QS1: the quickslot diamond's three slots ride the same composer.
+    quickslots: { c1: null, c2: null, swap: null },
     travelMap: {
       filterDungeons: false, filterTemples: false, filterHomes: false, filterTowns: false,
       filterRoads: false, filterTracks: false,   // ROADS 12
