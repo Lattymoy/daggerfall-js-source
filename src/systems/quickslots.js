@@ -603,6 +603,24 @@ export function cycleQuickslot(slot, { entity = null, dir = 1 } = {}) {
 export const QUICK_HOLD_MS = 350;    // past this the press is a hold, not a tap
 export const QUICK_STEP_MS = 300;    // ...and it steps this often while it is held
 const QUICK_TICK_MAX_MS = 250;       // a frame longer than this was a stall, not play
+/** AUDIT QS6 F6 - AND A GAP IN THE FRAMES IS A BLOCKED FRAME NOBODY DECLARED.
+ *
+ *  F2 taught that a hold carried across a window must not perform on the way
+ *  out, and `blocked` says so - but only where a host remembers to pass it,
+ *  and only where the tick is REACHED. `scenes/dungeon.js` had the call
+ *  inside its own `!overlayHeld` gate, so its `blocked` argument was dead;
+ *  the two outdoor hosts return above the tick while a full-screen video
+ *  holds the frame (`frameHeld`, scenes/shared.js), and a backgrounded tab
+ *  gets no frames at all. Each of those is the same hazard behind a
+ *  different door, and a law enforced by four hosts is a law enforced by
+ *  memory.
+ *
+ *  So the machine defends itself: if the WALL CLOCK says the frames stopped,
+ *  every hold disarms, whatever the caller declared. This is the one place
+ *  real time is read here, and it is read about FRAMES rather than about the
+ *  game - `dt` is still what measures a hold. */
+export const QUICK_GAP_MS = 1000;
+let lastTickAt = 0;
 
 /** slot -> action. The registry's own names; a rebind moves the key,
  *  not this. */
@@ -610,10 +628,28 @@ export const CYCLE_ACTIONS = Object.freeze({ c1: 'QuickUse1', c2: 'QuickUse2', s
 
 const holds = new Map();
 
-/** Every hold dropped with nothing performed - what a host calls when
- *  it stops ticking (an overlay opened, the mode changed), so the key
- *  that is still down when it resumes is not read as a release. */
-export function resetQuickslotHolds() { holds.clear(); cycling = null; }
+/** Every hold forgotten and the lamp put out. Nothing in `src/` calls
+ *  this - the hosts pass `blocked` instead, which is the same act
+ *  without the gap - so it exists for a driver that wants a clean
+ *  machine between two runs (the pins, and any probe). */
+export function resetQuickslotHolds() { holds.clear(); cycling = null; lastTickAt = 0; }
+
+/** AUDIT QS6 F2 - A HOLD THAT SPANS AN OVERLAY MUST NOT PERFORM ON THE
+ *  WAY OUT, and CLEARING the holds was not enough to stop it.
+ *
+ *  The sequence, driven: the player holds 1 in play; a window opens and
+ *  the frame goes `blocked`, which dropped every hold; the window closes
+ *  WHILE THE KEY IS STILL DOWN; the next tick finds no state for the
+ *  slot, reads the key as down, and calls that a RISING EDGE - so the
+ *  release a moment later is a tap and a potion is drunk that the player
+ *  never asked for. The guard had moved the bug one step later rather
+ *  than removing it.
+ *
+ *  So a blocked frame DISARMS rather than forgets: every slot is held
+ *  down, already cycled (so its release performs nothing) and stepping
+ *  never (so it does not quietly walk the book under the window). The
+ *  key has to come up and go down again to mean anything. */
+const disarm = () => ({ down: true, ms: 0, next: Infinity, cycled: true });
 
 /**
  * ONE FRAME of the hold machine.
@@ -628,7 +664,13 @@ export function resetQuickslotHolds() { holds.clear(); cycling = null; }
 export function tickQuickslotHold(dt, { isHeld = null, entity = null, onTap = null, onCycle = null, blocked = false } = {}) {
   const ms = Math.min(QUICK_TICK_MAX_MS, Math.max(0, (Number(dt) || 0) * 1000));
   if (cycling) { cycling.ms -= ms; if (cycling.ms <= 0) cycling = null; }
-  if (blocked || typeof isHeld !== 'function') { holds.clear(); return; }
+  const at = Date.now();
+  const gap = lastTickAt ? at - lastTickAt : 0;
+  lastTickAt = at;
+  if (blocked || gap > QUICK_GAP_MS || typeof isHeld !== 'function') {
+    for (const slot of CYCLE_SLOTS) holds.set(slot, disarm());
+    return;
+  }
   for (const slot of CYCLE_SLOTS) {
     const st = holds.get(slot) ?? { down: false, ms: 0, next: QUICK_HOLD_MS, cycled: false };
     const down = isHeld(CYCLE_ACTIONS[slot]) === true;

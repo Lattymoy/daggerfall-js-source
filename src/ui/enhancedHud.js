@@ -431,6 +431,12 @@ function build(doc) {
   // two numbers the frame's machine uses, over the model's one cycle.
   // The entity is the one the last frame drew, which is the one the
   // player is.
+  // AUDIT QS6 F3 - THE FINGER'S TIMERS MUST DIE WITH THE HUD. A hold that is
+  // still cycling when a host tears the HUD down (a fast travel, a scene
+  // change) left its `setInterval` running for the life of the page: the node
+  // is gone, so no `pointerup` can ever reach it. It is held here so
+  // `destroyEnhancedHud` can stop it, which is the same law QS3 stated for
+  // the listeners ("the bound-once handlers went with the nodes").
   const holdTap = (slot, act) => {
     let arm = null; let step = null; let cycled = false;
     const stop = () => { clearTimeout(arm); clearInterval(step); arm = null; step = null; };
@@ -455,6 +461,7 @@ function build(doc) {
   };
   const bindHold = (node, slot, act) => {
     const h = holdTap(slot, act);
+    holds.push(h);   // AUDIT QS6 F3: a teardown has to be able to stop them
     node.addEventListener('pointerdown', h.down);
     node.addEventListener('pointerup', h.up);
     node.addEventListener('pointercancel', h.off);
@@ -486,6 +493,9 @@ let offKind = null;
  *  clothing or armour archive by who wears it, and the inventory
  *  window passes the same identity, so the two draw the same picture. */
 let liveEntity = null;
+/** AUDIT QS6 F3: the finger-hold handles, so a teardown can stop a timer
+ *  the removed node can no longer deliver a `pointerup` to. */
+const holds = [];
 
 /** Below this the durability strip takes the health bar's red. DFU's
  *  own repair prompt has no such line - this is the port's, and it is
@@ -754,6 +764,12 @@ function drawQuickslots(vitals, opts) {
     `${o.kind}|${o.name ?? ''}|${pct(o.condition)}|${o.item ? 1 : 0}`,
     ...['c1', 'c2'].map((k) => (view[k] ? `${view[k].name}|${view[k].count}` : '')),
     ...['main', 'off', 'c1', 'c2'].map((k) => tagKey(tags[k])),
+    // AUDIT QS6 F4: THE LAMP IS PART OF WHAT THE BLOCK SAYS. It was written
+    // below the early return, so it came on with the cycle that changed a
+    // name and then NEVER WENT OUT - nothing else changes when a hold ends,
+    // so the signature was identical and the write was unreachable. A cell
+    // left glowing is a cell that lies about what the thumb is doing.
+    quickslotCycling() ?? '',
   ].join('~');
   if (last.quick === sig) return;
   last.quick = sig;
@@ -887,6 +903,8 @@ function quickTag(part, slot, t) {
 
 /** A host tearing down. */
 export function destroyEnhancedHud() {
+  for (const h of holds) h.off();   // AUDIT QS6 F3: a finger mid-cycle does not outlive the HUD
+  holds.length = 0;
   try { host?.remove(); } catch { /* already gone */ }
   host = null; parts = null;
   liveOpts = {}; offKind = null; liveEntity = null;   // QS3: the bound-once handlers went with the nodes

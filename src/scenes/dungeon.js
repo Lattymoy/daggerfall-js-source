@@ -745,6 +745,14 @@ export async function bootDungeon(canvas, renderer, params, status) {
       hudBlocked: activeMouseOverLargeHUD(),   // PlayerActivate.cs:230-236 - the bar's own click is not the world's
       paused: overlayHeld,                     // InputManager.cs:486-503 - a window holds the action itself
     });
+    // QS6 (AUDIT QS6 F6): THE HOLD MACHINE TICKS EVERY FRAME, ABOVE THE GATE.
+    // It sat inside `walkMode && !overlayHeld` below, beside the ReadyWeapon
+    // and SwitchHand latches it is modelled on - and there its `blocked`
+    // argument was DEAD: a blocked frame never reached the call at all, so the
+    // machine simply stopped being ticked with a key still down and read the
+    // resumed frames as a fresh press. The other three hosts tick
+    // unconditionally and let `blocked` disarm; this one does now too.
+    ctx.tickQuickHold?.(dt, { isHeld: (a) => held(keys, a), blocked: overlayHeld || !walkMode });
     if (!overlayHeld) ctx.actions.update(dt);
     if (!overlayHeld) ctx.automapTick?.(dt, cam.pos, fwd);   // A1: the 5 Hz reveal probes (paused under overlays, as DFU's coroutine pauses under the open map)
     if (walkMode && !overlayHeld) {
@@ -918,10 +926,6 @@ export async function bootDungeon(canvas, renderer, params, status) {
       const hNow = held(keys, 'SwitchHand');
       if (!hNow && hPrev) ctx.switchHand?.();
       hPrev = hNow;
-      // QS6: the quickslot holds, beside the two latches they are modelled on.
-      // The machine is the context's (it owns the entity, the use hooks and the
-      // cast engine); the KEYS are this host's, and so is the gate.
-      ctx.tickQuickHold?.(dt, { isHeld: (a) => held(keys, a), blocked: overlayHeld });
       if (_act.activate || (useHeld && !prevUse)) tryActivate();
       prevUse = useHeld;
       // `held` here USED to be this frame's local overlay boolean; it was

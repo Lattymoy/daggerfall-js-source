@@ -565,3 +565,102 @@ test('QS the switch: the features row hides the DIAMOND alone - the caption and 
   const F = read('src/systems/features.js');
   assert.match(F, /id: 'quickslot-diamond',[\s\S]*?control: Object\.freeze\(\{ store: 'prefs', key: 'quickslots', initial: true, online: 'player' \}\)/);
 });
+
+// AUDIT QS6 F3 + F4, both DRIVEN: two defects a source pin could not see.
+//
+//   F4  THE CELL'S CYCLING LAMP NEVER WENT OUT. It was written below the
+//       block's signature guard, and when a hold ends nothing else about
+//       the block changes - so the write was unreachable and the cell
+//       stayed lit for the rest of the session.
+//   F3  THE FINGER'S TIMERS OUTLIVED THE HUD. A hold still cycling when a
+//       host tears the HUD down leaves a `setInterval` running against a
+//       node no `pointerup` can ever reach again.
+test('AUDIT QS6 F3/F4: the cycling lamp falls with the hold, and a finger mid-cycle does not outlive the HUD', async () => {
+  const prev = globalThis.document;
+  const prevSI = globalThis.setInterval, prevCI = globalThis.clearInterval;
+  const prevST = globalThis.setTimeout, prevCT = globalThis.clearTimeout;
+  globalThis.document = {
+    createElement: mkEl, createElementNS: (ns, tag) => Object.assign(mkEl(), { ns }),
+    getElementById: () => null, head: mkEl(), body: mkEl(),
+  };
+  // The timers are counted rather than run: what is pinned is that every
+  // one this file starts is stopped, which is a balance and not a delay.
+  let live = 0; const started = [];
+  globalThis.setTimeout = (fn) => { live++; started.push(fn); return { id: live }; };
+  globalThis.clearTimeout = (h) => { if (h) live--; };
+  globalThis.setInterval = (fn) => { live++; started.push(fn); return { id: live }; };
+  globalThis.clearInterval = (h) => { if (h) live--; };
+  const { drawEnhancedHud, destroyEnhancedHud } = await import('../src/ui/enhancedHud.js');
+  const q = await import('../src/systems/quickslots.js');
+  const { setBindings } = await import('../src/ui/input.js');
+  const store = createBindings();
+  setBinding(store, 'Digit1', 'QuickUse1');
+  setBinding(store, 'Digit3', 'QuickSpell');
+  setBindings(store);
+  q.clearQuickslots();
+  q.resetQuickslotHolds();
+  setPadFamily(null);
+  try {
+    const heal = { group: 'UselessItems1', templateIndex: 83, name: 'Glass Bottle', potionRecipeKey: 1, stackCount: 3, currentCondition: 1, maxCondition: 1 };
+    const cure = { group: 'UselessItems1', templateIndex: 83, name: 'Glass Bottle', potionRecipeKey: 2, stackCount: 2, currentCondition: 1, maxCondition: 1 };
+    const spark = { index: 5, name: 'Spark', rangeType: 2 };
+    const entity = {
+      health: 40, maxHealth: 80, magicka: 10, maxMagicka: 10, fatigue: 100,
+      items: [heal, cure], spells: [spark, { index: 9, name: 'Shock', rangeType: 2 }],
+      equip: { slots: {} }, lightSource: null,
+    };
+    q.assignQuickslot('c1', heal);
+    const draw = (opts = {}) => drawEnhancedHud(entity, 0, 1 / 60, { weapon: null, weaponSheathed: true, ...opts });
+    draw();
+    const root = document.body.children.find((n) => n.className === 'hud');
+    const quick = find(root, 'hud-quick');
+    const c1 = find(quick, 'hud-qc1');
+    assert.ok(!c1.classList.contains('cycling'), 'nothing is being cycled yet');
+
+    // ── F4 ──────────────────────────────────────────────────────────
+    q.cycleQuickslot('c1', { entity });
+    assert.equal(q.quickslotCycling(), 'c1');
+    draw();
+    assert.ok(c1.classList.contains('cycling'), 'the cell a hold is turning wears the lamp');
+    // The hold ends. NOTHING else about the block changes - which is
+    // exactly why the write below the signature guard was unreachable.
+    for (let t = 0; t <= q.QUICK_CYCLE_LINGER_MS + 40; t += 16) q.tickQuickslotHold(0.016, { isHeld: () => false, entity });
+    assert.equal(q.quickslotCycling(), null, 'the model let the lamp fall');
+    draw();
+    assert.ok(!c1.classList.contains('cycling'), 'AND SO DID THE CELL - a lamp that cannot go out is a cell that lies');
+
+    // ── the spell chip, on the same frames ───────────────────────────
+    q.setSpellQuickslot(spark);
+    draw({ readied: spark });
+    const chip = find(root, 'hud-qspell');
+    assert.ok(chip.classList.contains('on'), 'the chip is drawn once a spell is in the slot');
+    assert.equal(find(chip, 'hud-qspname').textContent, 'Spark');
+    assert.ok(chip.classList.contains('readied'), 'and lights for the spell actually in hand');
+    assert.ok(!find(root, 'hud-readied').classList.contains('on'), 'so the generic readied chip stands down');
+    // A spell readied from the BOOK is not the slot's: both stand.
+    draw({ readied: { index: 9, name: 'Shock' } });
+    assert.ok(!chip.classList.contains('readied'));
+    assert.ok(find(root, 'hud-readied').classList.contains('on'));
+    assert.equal(find(root, 'hud-readyname').textContent, 'Shock');
+
+    // ── F3 ──────────────────────────────────────────────────────────
+    const before = live;
+    c1._on.pointerdown({ pointerType: 'touch', preventDefault() {} });
+    assert.equal(live, before + 1, 'a finger down arms one timer');
+    c1._on.pointerup({ pointerType: 'touch' });
+    assert.equal(live, before, 'and lifting it stops that timer');
+    // ...and the case the node cannot answer: torn down mid-cycle.
+    c1._on.pointerdown({ pointerType: 'touch', preventDefault() {} });
+    started.at(-1)();   // the arm fires: the hold begins cycling on an interval
+    assert.ok(live > before, 'a cycling hold is holding timers');
+    destroyEnhancedHud();
+    assert.equal(live, 0, 'THE TEARDOWN STOPS THEM - a removed node can never deliver the pointerup that would');
+  } finally {
+    try { destroyEnhancedHud(); } catch { /* already gone */ }
+    globalThis.document = prev;
+    globalThis.setTimeout = prevST; globalThis.clearTimeout = prevCT;
+    globalThis.setInterval = prevSI; globalThis.clearInterval = prevCI;
+    q.clearQuickslots();
+    q.resetQuickslotHolds();
+  }
+});

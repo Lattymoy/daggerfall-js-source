@@ -28,7 +28,7 @@ import {
   spellQuickslot, setSpellQuickslot, clearSpellQuickslot, resolveSpellQuickslot, spellQuickslotPress,
   cycleQuickslot, consumableCandidates, spellCandidates, CYCLE_SLOTS, CYCLE_ACTIONS,
   tickQuickslotHold, resetQuickslotHolds, quickslotCycling,
-  QUICK_HOLD_MS, QUICK_STEP_MS, QUICK_CYCLE_LINGER_MS,
+  QUICK_HOLD_MS, QUICK_STEP_MS, QUICK_CYCLE_LINGER_MS, QUICK_GAP_MS,
   assignQuickslot, clearQuickslots, quickslotEntry, quickslotView, quickslotSaveData, restoreQuickslotSaveData,
   offHandOffersSwap, QUICKSLOT_TEXT,
 } from '../src/systems/quickslots.js';
@@ -288,6 +288,60 @@ test('QS6: all three cycling slots hold on their own action, and a blocked frame
   steps([], true, 5);                      // the player lets go under the window
   steps([], false, 5);                     // the window closes
   assert.deepEqual(taps, [], 'not one potion drunk by a key that was never released in play');
+
+  // AUDIT QS6 F2 - THE HARDER HALF, and the one the pin above missed: the
+  // window closes while the key is STILL DOWN. Clearing the holds on a
+  // blocked frame left no state for the slot, so the next tick read the
+  // key as a fresh RISING EDGE and the release a moment later drank a
+  // potion the player never asked for. Driven, because this is a sequence
+  // and not a line: it went 1 tap before the fix and 0 after.
+  reset();
+  taps.length = 0;
+  steps(['QuickUse1'], false, 3);          // held in play
+  steps(['QuickUse1'], true, 20);          // a window over it, key still down
+  steps(['QuickUse1'], false, 1);          // the window closes, key STILL down
+  steps([], false, 3);                     // ...and only now do they let go
+  assert.deepEqual(taps, [], 'a hold that spanned a window performs nothing when the key finally comes up');
+  // ...and the machine is not broken by it: the NEXT press is a clean tap.
+  steps(['QuickUse1'], false, 1);
+  steps([], false, 1);
+  assert.deepEqual(taps, ['c1'], 'a fresh press after the window works');
+  // A blocked stretch never steps the slot either - no walking the book
+  // under an open window.
+  reset();
+  const turns = [];
+  for (let i = 0; i < 60; i++) tickQuickslotHold(0.016, { isHeld: () => true, entity, onCycle: (s2) => turns.push(s2), blocked: true });
+  assert.deepEqual(turns, [], 'a blocked frame steps nothing, however long the key is down');
+  // ...and a key STILL DOWN when the window closes does not start stepping
+  // either: a disarmed hold steps NEVER, not merely not-yet. It has to come
+  // up and go down again to mean anything at all.
+  for (let i = 0; i < 60; i++) tickQuickslotHold(0.016, { isHeld: () => true, entity, onCycle: (s2) => turns.push(s2) });
+  assert.deepEqual(turns, [], 'a hold carried through a window does not resume stepping when it closes');
+});
+
+test('AUDIT QS6 F6: a GAP in the frames disarms every hold on its own, whatever the host declared - the law is the machine\'s, not four hosts\' memory', async () => {
+  // F2 gave the hosts `blocked`. Then the walk found scenes/dungeon.js had
+  // the call INSIDE its own `!overlayHeld` gate, so that argument was dead;
+  // the two outdoor hosts return above their tick while a video holds the
+  // frame; and a backgrounded tab gets no frames at all. Three doors, one
+  // hazard - so the machine reads the wall clock and defends itself.
+  reset();
+  const entity = { items: [potion(HEAL)], spells: [] };
+  assignQuickslot('c1', potion(HEAL));
+  const taps = [];
+  const tick = (held) => tickQuickslotHold(0.016, { isHeld: (a) => held.includes(a), entity, onTap: (s) => taps.push(s) });
+  tick(['QuickUse1']);        // the key goes down in play
+  // THE FRAMES STOP - no `blocked`, no host, nothing declared at all. The
+  // gap is real time, so it is waited rather than faked: a machine that
+  // trusted a number handed to it would not be defending itself.
+  await new Promise((r) => setTimeout(r, QUICK_GAP_MS + 120));
+  tick(['QuickUse1']);        // frames again, key STILL down
+  tick([]);                   // ...and released
+  assert.deepEqual(taps, [], 'a hold that spanned a gap in the frames performs nothing');
+  // ...and the machine still works straight afterwards.
+  tick(['QuickUse1']);
+  tick([]);
+  assert.deepEqual(taps, ['c1'], 'the next real press is a real press');
 });
 
 test('QS6: a stalled frame does not burst the cycle - a tab left in the background comes back to ONE step, not fifty (mutant: the clamp dropped, so a 4-second dt walks the book fourteen times)', () => {
@@ -370,7 +424,10 @@ test('QS6: every host that answers a gameplay key DRIVES the hold machine, on it
   const sites = [
     ['src/scenes/world.js', /tickQuickHold\(dt\);/],
     ['src/scenes/exterior.js', /tickQuickHold\(dt\);/],
-    ['src/scenes/dungeon.js', /ctx\.tickQuickHold\?\.\(dt, \{ isHeld: \(a\) => held\(keys, a\), blocked: overlayHeld \}\);/],
+    // AUDIT QS6 F6: ABOVE the host's own `walkMode && !overlayHeld` gate, where
+    // the call used to sit - there a blocked frame never reached it at all and
+    // the `blocked` argument was dead.
+    ['src/scenes/dungeon.js', /ctx\.tickQuickHold\?\.\(dt, \{ isHeld: \(a\) => held\(keys, a\), blocked: overlayHeld \|\| !walkMode \}\);/],
     ['src/scenes/worldModes.js', /dungeonCtx\?\.tickQuickHold\?\.\(dt, \{ isHeld: \(a\) => held\(keys, a\), blocked: overlayHeld \}\);/],
   ];
   for (const [path, re] of sites) {

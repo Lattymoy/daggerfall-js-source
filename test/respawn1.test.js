@@ -22,6 +22,25 @@ import { validSharedFoe, TEAM_NAME_MAX } from '../src/net/wire.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 
+/** AUDIT QS6 F5 - THE MEMORY'S PUBLISHER IS `sharedWorld`, NOT `collectWorld`.
+ *
+ *  This pin read `collectWorld`'s keys and called them "the record the dungeon
+ *  really publishes". They are not: `sharedWorld` takes that record and STRIPS
+ *  it before the memory is sent - `for (const f of w.foes) delete f.items;`,
+ *  because a corpse's loot is the room's `loot` half and not the foe's (AUDIT
+ *  WORLD4 D4/B3). So the pin was carrying a field the door is RIGHT to refuse,
+ *  and claiming the door was wrong to be silent about it.
+ *
+ *  Read off the source, so a sixth deletion joins here by itself. */
+function strippedFoeKeys() {
+  const src = read('src/scenes/dungeonContext.js');
+  const at = src.indexOf('    sharedWorld() {');
+  assert.ok(at > 0, 'sharedWorld no longer opens where this pin looks');
+  const end = src.indexOf('\n    },', at);
+  const body = src.slice(at, end);
+  return new Set([...body.matchAll(/for \(const f of w\.foes\) delete f\.(\w+);/g)].map((m) => m[1]));
+}
+
 /** The keys `collectWorld`'s foe record really writes, read off the
  *  source - so this pin follows the publisher rather than a copy of it. */
 function publishedFoeKeys() {
@@ -59,7 +78,11 @@ test('RESPAWN1: the door admits the record the dungeon really publishes - every 
   const unknown = [...keys].filter((k) => !(k in REAL));
   assert.deepEqual(unknown, [], 'collectWorld publishes a field this pin has no real value for - add one, and check the door has an arm for it');
 
-  const record = Object.fromEntries([...keys].map((k) => [k, REAL[k]]));
+  // AUDIT QS6 F5: the MEMORY's record is the stripped one.
+  const stripped = strippedFoeKeys();
+  assert.ok(stripped.has('items'), 'sharedWorld still strips the corpse\'s loot - the room\'s `loot` half carries it');
+  const memoryKeys = [...keys].filter((k) => !stripped.has(k));
+  const record = Object.fromEntries(memoryKeys.map((k) => [k, REAL[k]]));
   const out = validSharedFoe(record);
   assert.ok(out, 'THE WHOLE RECORD IS REFUSED - which is what dropped every dungeon memory this port ever wrote');
 
@@ -71,11 +94,21 @@ test('RESPAWN1: the door admits the record the dungeon really publishes - every 
   assert.equal(out.team, 'PlayerEnemy');
   assert.equal(out.mobileTeam, 'PlayerEnemy');
 
-  // AND FIELD BY FIELD, so the next one added with the wrong law names
-  // itself here rather than emptying a dungeon's memory in silence.
-  for (const k of keys) {
-    const one = { health: 1, [k]: REAL[k] };
-    assert.ok(validSharedFoe(one), `a record carrying only ${k} is refused - the door's law for it is not the publisher's`);
+  // AUDIT QS6 F5, THE SECOND HALF: ADMITTED IS NOT CARRIED. This loop used to
+  // assert only that a record carrying one field came back TRUTHY - and it
+  // always did, because `health: 1` rode beside it. A field the door has no
+  // law for is DROPPED in silence, which is the exact shape of the bug this
+  // file exists for, so the claim is `k in out` now.
+  for (const k of memoryKeys) {
+    const one = validSharedFoe({ health: 1, [k]: REAL[k] });
+    assert.ok(one, `a record carrying only ${k} is refused - the door's law for it is not the publisher's`);
+    assert.ok(k in one, `${k} is ADMITTED AND THEN DROPPED - the memory would carry it home and lose it at the door`);
+  }
+  // ...and the other way: what the publisher will not say, the door will not
+  // hear. A stripped field offered anyway is not carried.
+  for (const k of stripped) {
+    const one = validSharedFoe({ health: 1, [k]: REAL[k] });
+    assert.ok(one && !(k in one), `${k} is stripped by sharedWorld, so the door must not admit it either`);
   }
 });
 

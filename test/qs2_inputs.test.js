@@ -280,7 +280,9 @@ test('QS2: every host ctx that carries toggleSheath carries quickUse, quickSwap 
   // parts it needs are the dungeon context's.
   assert.match(wm, /quickSpell\(\) \{ return host\.quickSpell\?\.\(\) === true; \},/);
   assert.match(wm, /if \(mode === 'dungeon'\) dungeonCtx\?\.tickQuickHold\?\.\(dt, \{ isHeld: \(a\) => held\(keys, a\), blocked: overlayHeld \}\);/);
-  assert.match(rd('src/scenes/dungeon.js'), /ctx\.tickQuickHold\?\.\(dt, \{ isHeld: \(a\) => held\(keys, a\), blocked: overlayHeld \}\);/,
+  // AUDIT QS6 F6: above its own `walkMode && !overlayHeld` gate, so `blocked`
+  // is a live argument rather than a dead one.
+  assert.match(rd('src/scenes/dungeon.js'), /ctx\.tickQuickHold\?\.\(dt, \{ isHeld: \(a\) => held\(keys, a\), blocked: overlayHeld \|\| !walkMode \}\);/,
     'the standalone ?dungeon page drives the same machine with its own keys');
   for (const path of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     assert.match(rd(path), /quickUse: \(n\) => quickUse\(n\),\s*\n\s*quickSwap: \(\) => quickSwap\(\),/g,
