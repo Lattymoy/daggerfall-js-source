@@ -89,6 +89,10 @@ import { spherePlanes, recordVisible, subMeshVisible, batchVisible } from './bou
 export function airOn(search = globalThis.location?.search ?? '') {
   return new URLSearchParams(search).get('air') !== 'off';
 }
+/** EL8: the contact shadows' door - `?contact=off` (the air's shape). */
+export function contactOn(search = globalThis.location?.search ?? '') {
+  return new URLSearchParams(search).get('contact') !== 'off';
+}
 
 /** The AO image's scale of the world viewport, and the bloom's and shafts'. */
 export const AIR_AO_SCALE = 0.5;
@@ -121,6 +125,20 @@ export const AIR_GLARE_SIZE = 0.25;   // EL7: a glare the size of a flame, not a
 export const AIR_GLARE_SLACK = 1.0;
 /** EL7: no glare for a light this close to the eye - the carried torch and the candle. */
 export const AIR_GLARE_MIN_DISTANCE = 1.5;
+/** EL8: SCREEN-SPACE CONTACT SHADOWS - for every lantern that has no caster
+ *  slot (the forty-two past the six), a march from the fragment toward the
+ *  light through the PREVIOUS frame's depth, reprojected by the previous
+ *  frame's view-projection (the current frame's depth is being written
+ *  while the world pass reads - a frame old and reprojected is the depth a
+ *  forward renderer can have): the length in world units, the thickness a
+ *  ray may pass behind a surface and still count it an occluder, the steps,
+ *  and the floor a contact shadow darkens to (an approximation is not
+ *  black). The reserved unit is the AO's old one. */
+export const AIR_CONTACT_LENGTH = 0.6;
+export const AIR_CONTACT_THICKNESS = 0.8;
+export const AIR_CONTACT_STEPS = 6;
+export const AIR_CONTACT_FLOOR = 0.15;
+export const AIR_CONTACT_UNIT = 12;
 /** EL7: a JS number as a GLSL float literal. `${1.0}` is "1" - an int to the
  *  compiler, and "'<=' : wrong operand types" on a real GPU (the probe's
  *  catch; the fake GL compiles anything). Every whole-number constant that
@@ -247,6 +265,34 @@ float depthAt(vec2 wuv) {
 `;
 
 
+
+/** EL8: THE CONTACT BLOCK, for the lit lane shaders (a solid's, the terrain's,
+ *  a rig's - not a flat's): light i without a caster slot takes a contact
+ *  shadow off the previous frame's depth. `toLight` is the unit direction,
+ *  `dist` the distance; the march covers min(dist, AIR_CONTACT_LENGTH). */
+export const AIR_CONTACT_GLSL = `
+uniform sampler2D uPrevDepth;
+uniform mat4 uPrevVP;
+uniform vec4 uPrevProjInfo;   // the previous frame's projection terms (viewDist)
+uniform vec4 uContactParams;  // x length, y thickness, z floor, w 1 = on
+float contactShadow(vec3 wp, vec3 n, vec3 toLight, float dist) {
+  if (uContactParams.w <= 0.0) return 1.0;
+  float len = min(dist, uContactParams.x);
+  vec3 start = wp + n * 0.02;
+  for (int i = 1; i <= ${AIR_CONTACT_STEPS}; i++) {
+    vec3 p = start + toLight * (len * float(i) / ${glslFloat(AIR_CONTACT_STEPS)});
+    vec4 c = uPrevVP * vec4(p, 1.0);
+    if (c.w <= 0.0) break;
+    vec2 uv = c.xy / c.w * 0.5 + 0.5;
+    if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) break;
+    float z = texture(uPrevDepth, uv).r * 2.0 - 1.0;
+    float sceneDist = uPrevProjInfo.w / (z + uPrevProjInfo.z);
+    float behind = c.w - sceneDist;   // c.w is the point's view distance under that projection
+    if (behind > 0.02 && behind < uContactParams.y) return uContactParams.z;
+  }
+  return 1.0;
+}
+`;
 
 /** EL4: THE ADAPTATION BLOCK, for every shader that exposes: the 1x1
  *  image's multiplier, decoded from its log encoding. */
@@ -644,6 +690,9 @@ export class AirPass {
     this.aoParams = new Float32Array([AIR_AO_RADIUS, AIR_AO_STRENGTH, AIR_AO_BIAS, 0]);
     this.shaftParams = new Float32Array([AIR_SHAFT_DECAY, AIR_SHAFT_STRENGTH, AIR_SHAFT_REACH, 1]);
     this.f = null;   // EL6: the frame's inputs, from prepare() to composite()
+    // EL8: the previous frame's view-projection and projection terms, for the contact march; valid once a frame has been prepared
+    this.prevVP = new Float32Array(16); this.prevProjInfo = new Float32Array(4); this.prevValid = false;
+    this.contactParams = new Float32Array([AIR_CONTACT_LENGTH, AIR_CONTACT_THICKNESS, AIR_CONTACT_FLOOR, 0]);
     this.pending = false;   // a resolve is owed to the frame
     this.width = 0; this.height = 0;
     this.targets = null;
@@ -712,7 +761,7 @@ export class AirPass {
   _ensureFrame(W, H) {
     const gl = this.gl;
     if (this.frame && this.frame.w === W && this.frame.h === H) return this.frame;
-    if (this.frame) { gl.deleteTexture(this.frame.tex); gl.deleteTexture(this.frame.depth); gl.deleteFramebuffer(this.frame.fbo); }
+    if (this.frame) { gl.deleteTexture(this.frame.tex); for (const d of this.frame.depths) gl.deleteTexture(d); for (const f of this.frame.depthFbos) gl.deleteFramebuffer(f); gl.deleteFramebuffer(this.frame.fbo); }
     const tex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, tex);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, W, H, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
@@ -720,20 +769,35 @@ export class AirPass {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    const depth = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, depth);
-    gl.texStorage2D(gl.TEXTURE_2D, 1, gl.DEPTH_COMPONENT24, W, H);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    // EL8: TWO depth textures the frames ping-pong between - the one being
+    // written, and the previous frame's for the contact march; each cleared to
+    // the far plane at birth through its own framebuffer
+    const depths = [], depthFbos = [];
+    for (let k = 0; k < 2; k++) {
+      const depth = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, depth);
+      gl.texStorage2D(gl.TEXTURE_2D, 1, gl.DEPTH_COMPONENT24, W, H);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      const dfbo = gl.createFramebuffer();
+      gl.bindFramebuffer(gl.FRAMEBUFFER, dfbo);
+      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, depth, 0);
+      gl.drawBuffers([gl.NONE]);
+      gl.readBuffer(gl.NONE);
+      gl.clearDepth(1);
+      gl.clear(gl.DEPTH_BUFFER_BIT);
+      depths.push(depth); depthFbos.push(dfbo);
+    }
     const fbo = gl.createFramebuffer();
     gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, depth, 0);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, depths[0], 0);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.bindTexture(gl.TEXTURE_2D, null);
-    this.frame = { tex, depth, fbo, w: W, h: H };
+    this.frame = { tex, depths, depthFbos, depthIndex: 0, depth: depths[0], prevDepth: depths[1], fbo, w: W, h: H };
+    this.prevValid = false;   // a new frame image: the previous depth is the far plane
     if (!this.lum) this._ensureAdapt();
     return this.frame;
   }
@@ -778,7 +842,12 @@ export class AirPass {
   beginFrameTarget(W, H) {
     if (!(W > 0 && H > 0)) return null;   // AUDIT-EL F18
     const f = this._ensureFrame(W, H);
-    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, f.fbo);
+    const gl = this.gl;
+    // EL8: this frame writes the other depth; the one just written is the previous
+    f.depthIndex ^= 1;
+    f.depth = f.depths[f.depthIndex]; f.prevDepth = f.depths[f.depthIndex ^ 1];
+    gl.bindFramebuffer(gl.FRAMEBUFFER, f.fbo);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, f.depth, 0);
     setFrameTarget(f.fbo);
     this.canvas[0] = W; this.canvas[1] = H;
     this.pending = true;   // AUDIT-EL F5: a bound frame is a resolve owed, whether or not the passes ran for it
@@ -801,9 +870,12 @@ export class AirPass {
     const [, , w, h] = f.viewport;
     if (!(w > 0 && h > 0)) { this.f = null; return; }   // AUDIT-EL F18: a hidden canvas has no images to draw (texStorage2D refuses 0)
     this.resize(w, h);
+    // EL8: the frame just resolved becomes the previous - its view-projection and terms, for the contact march
+    if (this.f) { this.prevVP.set(this._vp); this.prevProjInfo.set(this.projInfo); this.prevValid = !!this.frame; }
     this.f = f;
     this.rect.set(f.viewport);
     projInfo(f.proj, this.projInfo);
+    multiply(f.proj, f.view, this._vp);
     this.measured = false;   // AUDIT-EL F10: set at the resolve, by whether the world drew
     this.stats.emitDraws = 0; this.stats.glares = 0; this.stats.shafts = false;   // this frame's, counted at the resolve
   }
@@ -924,6 +996,22 @@ export class AirPass {
     }
     gl.activeTexture(gl.TEXTURE0);
   }
+  /** EL8: the contact block's uniforms for one lane program - the previous
+   *  frame's depth on its unit, its view-projection and terms, the params
+   *  (off when no previous frame exists or the caller says so). */
+  uploadContact(loc, on = true) {
+    const gl = this.gl;
+    const live = on && this.prevValid && this.frame;
+    gl.activeTexture(gl.TEXTURE0 + AIR_CONTACT_UNIT);
+    gl.bindTexture(gl.TEXTURE_2D, live ? this.frame.prevDepth : (this.frame ? this.frame.prevDepth : null));
+    gl.activeTexture(gl.TEXTURE0);
+    gl.uniform1i(loc.prevDepth, AIR_CONTACT_UNIT);
+    gl.uniformMatrix4fv(loc.prevVP, false, this.prevVP);
+    gl.uniform4fv(loc.prevProjInfo, this.prevProjInfo);
+    this.contactParams[3] = live ? 1 : 0;
+    gl.uniform4fv(loc.contactParams, this.contactParams);
+  }
+
   /** EL6: the frame's depth for an emitter program - on unit 2 (0 and 1 are its own textures). */
   _emitDepth(prog, depthOn, T) {
     const gl = this.gl;

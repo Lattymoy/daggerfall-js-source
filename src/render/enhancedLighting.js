@@ -60,7 +60,7 @@
 import { getPref } from '../systems/uiPrefs.js';
 import { isEnhanced } from '../systems/uiSkin.js';
 import { SHADOW_GLSL } from './shadowPass.js';   // EL2: the receiver block - the sun map on the sun term, the cube map on its lantern
-import { AIR_ADAPT_GLSL, airOn } from './airPass.js';   // EL6: no AO block - the resolve's
+import { AIR_ADAPT_GLSL, AIR_CONTACT_GLSL, airOn, contactOn } from './airPass.js';   // EL6: no AO block - the resolve's; EL8: the contact block
 import { BAYER_GLSL, BAYER_MEAN } from './orderedDither.js';   // EL6: the dither at the encode - the port's one Bayer
 import { SHADE_DARK } from '../systems/concealDraw.js';   // AUDIT-EL F14: the shade's pull toward black, interpolated as the classic BB_FS does   // EL3: the ambient occlusion image by screen position, and its kill door; EL4: the adapted exposure
 
@@ -253,8 +253,9 @@ vec3 elPointLit(vec3 wp, vec3 n) {
     vec3 L = uPointLights[i].xyz - wp;
     float d = length(L);
     if (d >= uPointLights[i].w) continue;   // EL5: outside the window the term is exactly zero - no shadow taps, no glint, no pow for it
-    float sh = shadowOfLight(i, wp, n);   // EL2: the lantern's map; EL5: any of the casters'
     vec3 Ln = L / max(d, 1e-4);
+    int k = uCasterOf[i];   // EL8: the light's caster slot in one lookup
+    float sh = k >= 0 ? pointShadowAt(k, wp, n) : contactShadow(wp, n, Ln, d);   // EL2: the lantern's map; EL8: every other lantern a contact shadow off the previous frame's depth
     // EL4: a glint - Blinn-Phong, a low gloss for stone and wood, a twelfth of the light: wet stone under a torch
     vec3 H = normalize(Ln + normalize(uCamPos - wp));
     float spec = pow(max(dot(n, H), 0.0), ${EL_SPEC_GLOSS}.0) * ${EL_SPEC_STRENGTH};
@@ -361,6 +362,7 @@ float cloudShadowAt(vec3 wp) {
 }
 ${EL_GLSL}
 ${SHADOW_GLSL}
+${AIR_CONTACT_GLSL}
 ${EL_FOG_GLSL}
 ${EL_POINT_LIT_GLSL}
 out vec4 outColor;
@@ -429,6 +431,7 @@ float cloudShadowAt(vec3 wp) {
 }
 ${EL_GLSL}
 ${SHADOW_GLSL}
+${AIR_CONTACT_GLSL}
 ${EL_FOG_GLSL}
 ${EL_POINT_LIT_GLSL}
 out vec4 outColor;
@@ -490,6 +493,7 @@ float cloudShadowAt(vec3 wp) {
 }
 ${EL_GLSL}
 ${SHADOW_GLSL}
+${AIR_CONTACT_GLSL}
 ${EL_FOG_GLSL}
 ${EL_POINT_LIT_GLSL}
 out vec4 outColor;
@@ -556,6 +560,7 @@ float cloudShadowAt(vec3 wp) {
 }
 ${EL_GLSL}
 ${SHADOW_GLSL}
+${AIR_CONTACT_GLSL}
 ${EL_FOG_GLSL}
 ${EL_POINT_LIT_GLSL}
 out vec4 outColor;
@@ -639,7 +644,7 @@ export const EL_LANE = Object.freeze({
 export function syncLightingLane(renderer, search = globalThis.location?.search ?? '') {
   const on = enhancedLightingOn(search);
   renderer.setLightingLane(on ? EL_LANE : null);
-  if (on) { renderer.setExposure(exposureFor(search)); renderer.setAir(airOn(search)); }   // EL3: the door is the page's, read here alone
+  if (on) { renderer.setExposure(exposureFor(search)); renderer.setAir(airOn(search)); renderer.setContact?.(contactOn(search)); }   // EL3: the door is the page's, read here alone; EL8: the contact door too
   return on;
 }
 
