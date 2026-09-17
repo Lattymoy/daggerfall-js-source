@@ -155,7 +155,7 @@ test('EL3: the receiver block and the shaders - the AO by screen position, off a
   const a = read('src/render/airPass.js');
   assert.match(a, /vis = \(ndc\.z \* 0\.5 \+ 0\.5\) <= d \+ 0\.002 \? 1\.0 : 0\.0;/, 'a glare hides behind the depth image');
   assert.match(a, /float sky = texture\(uDepth, uv\)\.r >= 0\.99999 \? 1\.0 : 0\.0;/, 'the shafts\' mask is the sky');
-  assert.equal((a.match(/gl\.blendFunc\(gl\.ONE, gl\.ONE\);/g) || []).length, 2, 'additive: the bloom source and the composite');
+  assert.equal((a.match(/gl\.blendFunc\(gl\.ONE, gl\.ONE\);/g) || []).length, 2, 'additive: the bloom source at the render and the bright pass at the resolve (EL4)');
   assert.ok(!/from '\.\/renderer\.js'/.test(a) && !/from '\.\/enhancedLighting\.js'/.test(a) && !/from '\.\/shadowPass\.js'/.test(a), 'a leaf');
 });
 
@@ -168,7 +168,7 @@ test('EL3: the renderer builds the pass with the lane behind the door, sizes the
   r.setAir(true);
   const ap = r.air;
   assert.ok(ap instanceof AirPass);
-  assert.equal(count(calls, 'compileShader') - beforeAir, 16, 'eight programs: ao, box, gauss, shaft, composite, two emitters, the glare');
+  assert.equal(count(calls, 'compileShader') - beforeAir, 22, 'eleven programs: ao, box, gauss, shaft, two emitters, the glare; EL4: the luminance, the adaptation, the bright pass, the resolve');
   r.setAir(false); assert.equal(r.air, null);
   r.setAir(true); assert.equal(r.air, ap, 'kept');
   r.setLightingLane(null); assert.equal(r.air, null, 'no lane, no air');
@@ -200,28 +200,28 @@ test('EL3: the renderer builds the pass with the lane behind the door, sizes the
   assert.equal(ap.stats.glares, 1, 'one lantern');
   const targets = ap.targets;
   assert.equal(ap.stats.shafts, true, 'the sun is up');
-  assert.equal(before.filter((c) => c[0] === 'drawArrays' && c[1] === 5).length, 1 + 1 + 4 + 1 + 1, 'ao, box, four gauss, the shaft, and one glare quad');
+  assert.equal(before.filter((c) => c[0] === 'drawArrays' && c[1] === 5).length, 1 + 1 + 1 + 1, 'ao, box, the shaft, and one glare quad (EL4: the blur runs at the resolve, once the frame is whole)');
   const vpCalls = before.filter((c) => c[0] === 'viewport');
   assert.ok(vpCalls.some((c) => c[1] === 0 && c[3] === 160 && c[4] === 100), 'the AO at half');
   assert.ok(vpCalls.some((c) => c[3] === 80 && c[4] === 50), 'the bloom at a quarter');
   assert.deepEqual(vpCalls.at(-1).slice(1), [0, 0, 320, 200], 'the world viewport comes back before the frame');
   const lastBind = before.map((c, i) => [c, i]).filter(([c]) => c[0] === 'bindFramebuffer').at(-1);
-  assert.equal(lastBind[0][2], null, 'the canvas is back');
+  assert.equal(lastBind[0][2], ap.frame.fbo, 'EL4: the frame image is bound for the world pass, the clear included');
   assert.ok(before.some((c) => c[0] === 'clearColor' && c[1] === 0 && c[2] === 0) && before.at(-1)[0] !== 'clearColor', 'the bloom target cleared black...');
   const lastClearColor = before.filter((c) => c[0] === 'clearColor').at(-1);
   assert.ok(near(lastClearColor[1], 0.53, 1e-3), '...and the frame\'s clear colour restored');
   // the first screen quad composites, once, and hands the 2D pass the full canvas
   calls.length = 0;
   r.drawScreenQuad({ id: 'ui' }, { x: 0, y: 0, w: 10, h: 10 });
-  const comp = calls.findIndex((c) => c[0] === 'uniform2fv' && c[1] === 'uGain');
-  assert.ok(comp >= 0, 'the composite drew');
+  const comp = calls.findIndex((c) => c[0] === 'uniform4fv' && c[1] === 'uGrade');
+  assert.ok(comp >= 0, 'the resolve drew (EL4: the composite became the resolve)');
   assert.ok(near(calls[comp][2][0], AIR_BLOOM_STRENGTH, 1e-6) && calls[comp][2][1] === 1, 'the bloom gain and the shafts\' (a float32 upload)');
   assert.ok(calls.some((c, i) => i > comp && c[0] === 'viewport' && c[3] === 320 && c[4] === 200), 'the full canvas after');
-  assert.deepEqual(calls.filter((c) => c[0] === 'blendFunc').map((c) => [c[1], c[2]]), [[1, 1]], 'additive, ONE ONE');
+  assert.deepEqual(calls.filter((c) => c[0] === 'blendFunc').map((c) => [c[1], c[2]]), [[1, 1]], 'the bright pass adds, ONE ONE; the resolve itself replaces');
   assert.equal(ap.pending, false);
   calls.length = 0;
   r.drawScreenQuad({ id: 'ui2' }, { x: 0, y: 0, w: 10, h: 10 });
-  assert.ok(!calls.some((c) => c[0] === 'uniform2fv' && c[1] === 'uGain'), 'once a frame');
+  assert.ok(!calls.some((c) => c[0] === 'uniform4fv' && c[1] === 'uGrade'), 'once a frame');
   // indoors at night: no shafts; the door closed: no render, no composite owed
   r.setLighting(new Float32Array([0.12, 0.12, 0.12]), 0);
   drawWorld(r);
@@ -242,7 +242,7 @@ test('EL3: the renderer builds the pass with the lane behind the door, sizes the
   r.panelFrame({ proj: I, view: I, lightDir: new Float32Array([0, 1, 0]), rect: { x: 0, y: 0, w: 100, h: 100 } }, () => {
     assert.equal(r.shadows.count, 0);
   });
-  assert.ok(!calls.some((c) => c[0] === 'uniform2fv' && c[1] === 'uGain'), 'no composite inside a panel');
+  assert.ok(!calls.some((c) => c[0] === 'uniform4fv' && c[1] === 'uGrade'), 'no resolve inside a panel');
 });
 
 test('EL3: the renderer\'s wiring - the air rides the lane and the door, the composite hook sits on both screen-quad entry points, the record carries the flat\'s basis', () => {

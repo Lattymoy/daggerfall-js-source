@@ -204,7 +204,7 @@ test('AUDIT 65 RS-2: the sprite pass hands back the FBO, the world rect AND the 
   // there is no seam to make the stub's readPixels throw, so this half
   // is pinned on the source (the funnel-law idiom above).
   assert.match(readFileSync('src/render/renderer.js', 'utf8'),
-    /try \{ gl\.readPixels\(0, 0, pw, ph, gl\.RGBA, gl\.UNSIGNED_BYTE, raw\); \}\s*\n\s*finally \{ gl\.bindFramebuffer\(gl\.FRAMEBUFFER, null\); \}/,
+    /try \{ gl\.readPixels\(0, 0, pw, ph, gl\.RGBA, gl\.UNSIGNED_BYTE, raw\); \}\s*\n\s*finally \{ gl\.bindFramebuffer\(gl\.FRAMEBUFFER, this\._frameFbo \?\? null\); \}/,   // EL4: the frame image while the lane draws into one, the canvas otherwise
     'renderCharacterSpriteImage returns the read-back bind too');
 });
 
@@ -275,6 +275,7 @@ test('AUDIT 47: no shader in the tree uses a uniform it did not declare in its o
   const files = ['src/render/renderer.js', 'src/render/precipitation.js', 'src/render/enhancedSky.js', 'src/render/cloudNoise.js', 'src/render/volumetricClouds.js', 'src/render/enhancedLighting.js', 'src/render/farRing.js', 'src/render/shadowPass.js', 'src/render/airPass.js'];   // VC2/VC3: the noise generators, the slice viewer, the march and the composite; EL1: the lighting lane's five, and the far ring; EL2: the depth programs
   const shadowGlsl = (readFileSync('src/render/shadowPass.js', 'utf8').match(/export const SHADOW_GLSL = `([\s\S]*?)`;/) || [, ''])[1];   // EL2: the receiver block another file composes in
   const aoGlsl = (readFileSync('src/render/airPass.js', 'utf8').match(/export const AIR_AO_GLSL = `([\s\S]*?)`;/) || [, ''])[1];   // EL3: and the AO's
+  const adaptGlsl = (readFileSync('src/render/airPass.js', 'utf8').match(/export const AIR_ADAPT_GLSL = `([\s\S]*?)`;/) || [, ''])[1];   // EL4: and the eye's
   // AUDIT 49: labGrass.js composes its stages as HEAD + FIELD + body, so
   // the reader composes them the same way before it looks
   {
@@ -302,7 +303,7 @@ test('AUDIT 47: no shader in the tree uses a uniform it did not declare in its o
       seen++;
       // EL1: a file's OTHER interpolated blocks (`const NAME = \`...\`` with no #version) expand the same way - the
       // lighting lane composes EL_GLSL + EL_FOG_GLSL + EL_POINT_LIT_GLSL into each of its shaders
-      const body = m[2].replace(/\$\{CLOUD_SHADOW_GLSL\}/g, shared).replace(/\$\{CLOUD_FIELD_GLSL\}/g, field).replace(/\$\{SHADOW_GLSL\}/g, shadowGlsl).replace(/\$\{AIR_AO_GLSL\}/g, aoGlsl)
+      const body = m[2].replace(/\$\{CLOUD_SHADOW_GLSL\}/g, shared).replace(/\$\{CLOUD_FIELD_GLSL\}/g, field).replace(/\$\{SHADOW_GLSL\}/g, shadowGlsl).replace(/\$\{AIR_AO_GLSL\}/g, aoGlsl).replace(/\$\{AIR_ADAPT_GLSL\}/g, adaptGlsl)
         .replace(/\$\{([A-Z_]+)\}/g, (all, name) => { const b = s.match(new RegExp(`const ${name} = \`([^\`]*)\``)); return b ? b[1] : all; });
       const declared = new Set([...body.matchAll(/uniform\s+\w+\s+([^;]+);/g)]
         .flatMap((x) => x[1].split(',').map((v) => v.trim().replace(/\[.*?\]/, '').split('//')[0].trim())));

@@ -27,7 +27,7 @@ import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
 import { MapsFile } from '../formats/mapsFile.js';
 import { DUNGEON_AMBIENT, DUNGEON_LIGHT_COLOR, DUNGEON_LIGHT_BLOCK_RANGE } from '../world/dungeonLights.js';   // A10: the block-range cut
-import { syncLightingLane, lanternColor } from '../render/enhancedLighting.js';   // EL1
+import { syncLightingLane, lanternColor, dungeonAmbient, dungeonTrilight } from '../render/enhancedLighting.js';   // EL1; EL4: the dark
 import { INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
 import { nearestLights } from '../world/cityLights.js';
 import { withPlayerLights } from './magicCandle.js';   // X11/T1
@@ -503,7 +503,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
 
   // Verbatim dungeon lighting: PlayerAmbientLight.DungeonAmbientLight,
   // no sun; every light flickers (DaggerfallLight Animate).
-  renderer.setLighting(new Float32Array(DUNGEON_AMBIENT), 0);
+  renderer.setLighting(dungeonAmbient(lightingOn, new Float32Array(DUNGEON_AMBIENT)), 0);   // EL4: the lane's dark
   renderer.setWindowEmission(windowEmissionRGB('day'));   // F001: SetDungeonTextures keeps GetMaterial's Day default (MaterialReader.cs:456-461)
   // Verbatim DungeonFogSettings: exponential 0.005, fog color black.
   renderer.setFog('exp', 0.005, 0, 0, new Float32Array([0, 0, 0]));
@@ -967,7 +967,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // on which block the player stands in (PlayerAmbientLight.cs:82-90),
     // so it has to follow them across a castle or special-area
     // boundary the way the load-time write never could.
-    { const _tri = betterAmbience.dungeonAmbient(); renderer.setLighting(new Float32Array(_tri ? _tri.equator : ctx.ambient), 0, undefined, _tri); }   // BA1: FoggyDungeons' Trilight, else PlayerAmbientLight's flat
+    { const _tri = dungeonTrilight(lightingOn, betterAmbience.dungeonAmbient()); renderer.setLighting(new Float32Array(_tri ? _tri.equator : dungeonAmbient(lightingOn, ctx.ambient)), 0, undefined, _tri); }   // EL4: the lane's dark - the trilight scaled once, the flat ambient once   // BA1: FoggyDungeons' Trilight, else PlayerAmbientLight's flat
     // ROAD-B (b3): UnderwaterFog.UpdateFog, at PlayerEnterExit.Update's
     // own cadence (:349-352). The load-time setFog at :331 stays as the
     // dry state; this is the per-frame one, and DUNGEON_FOG is the same

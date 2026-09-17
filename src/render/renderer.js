@@ -844,6 +844,7 @@ export class Renderer {
     this._air = null;        // EL3: the AirPass while a lane that asks for it is installed AND the page's door is open
     this._airPass = null;
     this._airWanted = false;
+    this._frameFbo = null;   // EL4: the frame image the world pass draws into while the air is on (null = the canvas)
     this.maxPointLights = CLASSIC_MAX_LIGHTS;
     this._decA = new Float32Array(3); this._decB = new Float32Array(3);   // EL1: the decode scratch (two, for the billboard tint's two terms)
     this._pointColorDec = new Float32Array(CLASSIC_MAX_LIGHTS * 3);
@@ -1265,7 +1266,7 @@ export class Renderer {
         sunShadow: gl.getUniformLocation(p, 'uSunShadow'), sunVP: gl.getUniformLocation(p, 'uSunVP'), sunParams: gl.getUniformLocation(p, 'uSunShadowParams'),
         pointShadow: gl.getUniformLocation(p, 'uPointShadow'), pointParams: gl.getUniformLocation(p, 'uPointShadowParams'), shadowIndex: gl.getUniformLocation(p, 'uShadowIndex'),
       };
-      a.ao = { ao: gl.getUniformLocation(p, 'uAO'), aoInfo: gl.getUniformLocation(p, 'uAOInfo') };   // EL3
+      a.ao = { ao: gl.getUniformLocation(p, 'uAO'), aoInfo: gl.getUniformLocation(p, 'uAOInfo'), adapt: gl.getUniformLocation(p, 'uAdapt') };   // EL3; EL4: the eye
       return a;
     };
     this._el = { mesh: elLocs(set.mesh), char: elLocs(set.char), bb: elLocs(set.bb), terrain: elLocs(set.terrain) };
@@ -1326,8 +1327,10 @@ export class Renderer {
   _syncAir() {
     const want = this._airWanted && !!this._lane?.air && !!this._shadows;   // the air pass replays the shadow pass's records
     if (want) this._air = this._airPass ??= new AirPass(this.gl, { build: (vs, fs) => this._buildProgram(vs, fs), vs: { mesh: VS, bb: BB_VS } });
-    else { if (this._air) this._air.pending = false; this._air = null; }
+    else { if (this._air) { this._air.release(); this._frameFbo = null; } this._air = null; }
   }
+  /** EL4: the adaptation image, for a foreign pass that exposes on the lane (the far ring). */
+  get adaptTexture() { return this._air?.adaptTexture ?? null; }
   /** EL3: the AirPass or null - a probe's read. */
   get air() { return this._air; }
 
@@ -1395,7 +1398,8 @@ export class Renderer {
    *  every foreign pass are done), then hands the 2D pass the full canvas. */
   _compositeAir() {
     if (!this._air?.pending) return;
-    this._air.composite();
+    this._air.composite();   // EL4: the resolve - the frame to the canvas
+    this._frameFbo = null;
     this._lastProgram = null; this._lastVao = null;
     this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
   }
@@ -1602,7 +1606,7 @@ export class Renderer {
       gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
       gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
       gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, rb);
-      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, this._frameFbo ?? null);   // EL4: minted mid-frame, the frame comes back
       cs = this._csRT = { fbo, tex, rb };
     }
     return cs;
@@ -1672,7 +1676,7 @@ export class Renderer {
     // permanently, off one caught exception.
     try { this.drawCharacter(mesh, modelMatrix); }
     finally {
-      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, this._frameFbo ?? null);   // EL4: the frame, or the canvas
       // ROAD-E E5: the viewport is BORROWED here too. This pass runs in
       // the middle of the world pass (every voxel character composites
       // through it), so returning a hardcoded full canvas would undo a
@@ -1735,7 +1739,7 @@ export class Renderer {
     // for the same reason the sprite pass's is - this one runs under
     // itemIcon's catch too.
     try { gl.readPixels(0, 0, pw, ph, gl.RGBA, gl.UNSIGNED_BYTE, raw); }
-    finally { gl.bindFramebuffer(gl.FRAMEBUFFER, null); }
+    finally { gl.bindFramebuffer(gl.FRAMEBUFFER, this._frameFbo ?? null); }   // EL4
     const out = new Uint8ClampedArray(pw * ph * 4);
     for (let y = 0; y < ph; y++) out.set(raw.subarray(y * pw * 4, (y + 1) * pw * 4), (ph - 1 - y) * pw * 4);
     return { width: pw, height: ph, data: out };
@@ -2339,6 +2343,8 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       if (this._worldViewportPx) this._restoreWorldViewport();
     }
     if (this._shadows) this._renderPasses(proj, view, lightDir);   // EL2/EL3: the maps and the images, before the clear
+    // EL4: THE FRAME IMAGE - the world pass draws into it, the clear included; a panel frame keeps the canvas
+    this._frameFbo = this._air && !this._panelSaved ? this._air.beginFrameTarget(this.canvas.width, this.canvas.height) : null;
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     this._use(this.program);
     gl.uniformMatrix4fv(this.uProj, false, proj);

@@ -8984,7 +8984,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // without it a full-Masser night stepped in brightness at the
         // exact boundary the hole machinery works to hide
         moonDir: renderer._moonDir, moonScale: renderer._moonScale, moonColor: renderer._moonColor,
-        fogColor, fogStart: fogNow.start ?? 0, fogEnd: fogNow.end, exposure: renderer.exposure,   // EL1
+        fogColor, fogStart: fogNow.start ?? 0, fogEnd: fogNow.end, exposure: renderer.exposure, adaptTex: renderer.adaptTexture,   // EL1; EL4: the eye
         // E5: the ring draws INTO the world pass's rect, so it takes
         // that pass's aspect - a horizon built on the full-canvas ratio
         // would step against the terrain in front of it under a docked bar.

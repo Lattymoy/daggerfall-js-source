@@ -46,7 +46,7 @@ import { bowDamageArrow } from '../combat/enemyEquipment.js';   // MAC-N1: the r
 import { DOOR_TYPE } from '../world/meshReader.js';
 import { getGroundArchive } from '../world/climateSwaps.js';
 import { DUNGEON_AMBIENT, DUNGEON_LIGHT_COLOR, DUNGEON_LIGHT_BLOCK_RANGE } from '../world/dungeonLights.js';   // A10: the block-range cut
-import { lanternColor } from '../render/enhancedLighting.js';   // EL1: the world host installed the lane; this reads it
+import { lanternColor, dungeonAmbient, dungeonTrilight } from '../render/enhancedLighting.js';   // EL1: the world host installed the lane; this reads it; EL4: the dark
 import { INTERIOR_AMBIENT, INTERIOR_NIGHT_AMBIENT, INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
 import { isNight } from '../world/worldClock.js';   // AUDIT 23 (C12)
 import { worldMinutes, setWorldMinutes, sharedRealTimeText } from '../systems/worldTick.js';   // AUDIT 23 (C12); OL3: the prices said in real time online: the one clock; G4's probe moves it
@@ -5929,7 +5929,7 @@ export function createWorldModes(host) {
       // :82-90) - Castle Daggerfall, Wayrest and Sentinel's non-hostile
       // wings rendered about five times darker than DFU. The predicate
       // was already live here, driving music and water sounds.
-      { const _tri = betterAmbience.dungeonAmbient(); renderer.setLighting(new Float32Array(_tri ? _tri.equator : dungeonCtx.ambient), 0, undefined, _tri); }   // BA1: FoggyDungeons' Trilight, else PlayerAmbientLight's flat
+      { const _on = !!renderer.lightingLane; const _tri = dungeonTrilight(_on, betterAmbience.dungeonAmbient()); renderer.setLighting(new Float32Array(_tri ? _tri.equator : dungeonAmbient(_on, dungeonCtx.ambient)), 0, undefined, _tri); }   // EL4: the lane's dark   // BA1: FoggyDungeons' Trilight, else PlayerAmbientLight's flat
       // AUDIT EV F-R1 (the F001 shape, one field over): the MOON and
       // the player-following INDIRECT light are renderer globals the
       // exterior hosts set per frame and nothing here ever cleared -

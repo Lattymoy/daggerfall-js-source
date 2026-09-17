@@ -54,15 +54,26 @@ export function createVolume(gl, size) {
   return { fbo, tex, size };
 }
 
+/** EL4: THE FRAME TARGET. The framebuffer a pass restores when it is done
+ *  with its own - the canvas (null) by default, the Enhanced Lighting
+ *  lane's frame image while the renderer has one bound (render/airPass.js
+ *  sets it at beginFrame and clears it at the resolve). Every restore in
+ *  this file and in volumetricClouds.js's blit goes through it, so a pass
+ *  that draws its own map mid-frame hands the world back to the frame it
+ *  was drawing into, not to the canvas. */
+let _frameTarget = null;
+export function setFrameTarget(fbo) { _frameTarget = fbo ?? null; }
+export function frameTarget() { return _frameTarget; }
+
 /** DRAW PATH. Bind the target, set its viewport, run `draw`, then
- *  restore the default framebuffer and the viewport the caller names
+ *  restore the frame target and the viewport the caller names
  *  (the host's world viewport - the caller knows it, GL is not asked). */
 export function withTarget(gl, target, restoreViewport, draw) {
   gl.bindFramebuffer(gl.FRAMEBUFFER, target.fbo);
   if (!target.attached) { gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, target.tex, 0); target.attached = true; }
   gl.viewport(0, 0, target.width, target.height);
   draw();
-  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, _frameTarget);   // EL4: the frame, or the canvas
   gl.viewport(restoreViewport[0], restoreViewport[1], restoreViewport[2], restoreViewport[3]);
 }
 
@@ -79,7 +90,7 @@ export function withVolumeLayer(gl, volume, z, draw) {
 /** After the layers: the default framebuffer back, the caller's
  *  viewport back, the mip chain built. */
 export function finishVolume(gl, volume, restoreViewport) {
-  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, _frameTarget);   // EL4
   gl.viewport(restoreViewport[0], restoreViewport[1], restoreViewport[2], restoreViewport[3]);
   gl.bindTexture(gl.TEXTURE_3D, volume.tex);
   gl.generateMipmap(gl.TEXTURE_3D);

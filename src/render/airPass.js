@@ -32,22 +32,47 @@
 // which is where the 2D pass begins and the world pass has ended for every
 // host, foreign passes included) over the world viewport.
 //
-// THE DEPARTURE FROM THE PLAN, recorded: the plan named an RGBA16F target
-// for the whole world with the tonemap moved to a final composite. Six
-// foreign passes (both skies, the clouds, the precipitation, the grass,
-// the far ring) restore `bindFramebuffer(null)` behind the renderer's back
-// - the render-target helper's own law - so a world drawn off-screen would
-// lose every one of them to the canvas. The scene stays forward-tonemapped
-// (EL1); the bloom is sourced from the emitters themselves, which is the
-// bloom that means something, and a later pass that teaches the six about
-// a current target can move the tonemap. Nothing here needs a float
-// target.
+// EL4 (same day, Mac: "Polished and exceptional detail. Proper darker
+// dungeons. The goal isn't a half visioned system"): THE FRAME. EL3 had
+// recorded a departure - the world stayed on the canvas because "six
+// foreign passes restore bindFramebuffer(null)". The survey that followed
+// found TWO restore sites in the tree (render/renderTarget.js's withTarget
+// and finishVolume, and the clouds' blit), and both now restore the FRAME
+// TARGET (renderTarget.js setFrameTarget). So:
+//
+//   4. THE FRAME IMAGE: with the lane on, the whole world - the renderer's
+//      passes and every foreign pass alike - draws into a canvas-sized
+//      image with its own depth, bound at beginFrame. The frame's first
+//      screen-space draw RESOLVES it to the canvas: the frame decoded to
+//      linear, the bloom and the shafts added, a vignette over the world
+//      rect, a touch of contrast about mid-grey, encoded once.
+//   5. EYE ADAPTATION: the resolve measures the frame's mean log
+//      luminance over the world rect (a 32x32 image and its mip chain), and
+//      a 1x1 image carries the adapted exposure multiplier - eased toward
+//      key / luminance each frame, fast when the eye closes (into light),
+//      slow when it opens (into dark), clamped to [AIR_ADAPT_MIN,
+//      AIR_ADAPT_MAX]. The lane's shaders and the far ring multiply their
+//      exposure by it (uAdapt, unit 11) - which is why a walk from noon
+//      into a dungeon goes near-black and opens over seconds, and why the
+//      dungeon stays dark once it has: the multiplier's ceiling is the
+//      floor of the dark.
+//   6. BLOOM FROM THE FRAME: the bright pass of the decoded frame (above
+//      AIR_BRIGHT_THRESHOLD) joins the emitters and the glares in the
+//      bloom source before the blur, so a sunlit wall and a flame both
+//      glow, not only what carries an emission map.
+//
+// The frame is 8-bit and display-encoded: the lane's forward tonemap keeps
+// the headroom (a torch's near field still blooms to white inside EL1's
+// shoulder), and the foreign passes keep writing the display values they
+// always wrote - a float frame would need every one of their shaders to
+// output linear, which is the one thing this pass does not touch.
 //
 // This module imports nothing of the renderer or the lane; the renderer
 // hands it its own vertex shaders and its program builder, as the shadow
 // pass takes them.
 
 import { multiply } from '../world/mat4.js';
+import { setFrameTarget } from './renderTarget.js';
 
 /** The kill door: `?air=off` keeps EL1 and EL2 and drops the three effects. */
 export function airOn(search = globalThis.location?.search ?? '') {
@@ -76,6 +101,48 @@ export const AIR_SHAFT_STRENGTH = 0.35;
 export const AIR_SHAFT_REACH = 0.35;
 /** The reserved texture unit for the AO image (the shadow maps are 13 and 14, the cloud shadow 15). */
 export const AIR_AO_UNIT = 12;
+/** EL4: the adapted-exposure image's unit, below the AO's. */
+export const AIR_ADAPT_UNIT = 11;
+/** EL4: the luminance image's side (its mip chain's top is the mean). */
+export const AIR_LUM_SIZE = 32;
+/** EL4: the adaptation - the mid-grey the eye aims the mean luminance at,
+ *  the multiplier's floor and ceiling (the ceiling is what keeps a dark
+ *  dungeon dark once the eye has opened), the rates per second toward a
+ *  brighter multiplier (opening, into dark) and a dimmer one (closing,
+ *  into light - the eye closes faster than it opens). */
+export const AIR_ADAPT_KEY = 0.18;
+export const AIR_ADAPT_MIN = 0.7;
+export const AIR_ADAPT_MAX = 1.8;
+export const AIR_ADAPT_OPEN = 0.6;
+export const AIR_ADAPT_CLOSE = 3.0;
+/** EL4: the 8-bit encodings - log2 luminance over [-12, 4] stops, log2
+ *  multiplier over [-2, 2]. */
+export const AIR_LUM_LOG_RANGE = Object.freeze([-12, 4]);
+export const AIR_ADAPT_LOG_RANGE = Object.freeze([-2, 2]);
+/** EL4: the bright pass's threshold on the decoded frame, the vignette's
+ *  strength at the corners of the world rect, the contrast about mid-grey. */
+export const AIR_BRIGHT_THRESHOLD = 0.85;
+export const AIR_VIGNETTE = 0.28;
+export const AIR_CONTRAST = 1.04;
+/** EL4: the longest step the adaptation integrates (a hitch is not a second). */
+export const AIR_ADAPT_MAX_DT = 0.1;
+
+/** EL4: the 8-bit log encodings, JS of the shaders' - term for term. */
+export function packLog(x, range) {
+  const v = (Math.log2(Math.max(x, 1e-9)) - range[0]) / (range[1] - range[0]);
+  return Math.min(Math.max(v, 0), 1);
+}
+export function unpackLog(v, range) {
+  return Math.pow(2, range[0] + v * (range[1] - range[0]));
+}
+/** EL4: one adaptation step - the JS of ADAPT_FS. `prev` and the result are
+ *  multipliers, `lum` the frame's mean luminance (linear), `dt` seconds. */
+export function adaptStep(prev, lum, dt) {
+  const target = Math.min(Math.max(AIR_ADAPT_KEY / Math.max(lum, 1e-6), AIR_ADAPT_MIN), AIR_ADAPT_MAX);
+  const rate = target > prev ? AIR_ADAPT_OPEN : AIR_ADAPT_CLOSE;
+  const t = 1 - Math.exp(-Math.min(Math.max(dt, 0), AIR_ADAPT_MAX_DT) * rate);
+  return prev + (target - prev) * t;
+}
 
 /** The four numbers a shader needs to undo the renderer's perspective
  *  (world/mat4.js's `perspective`, mirrored or not): [0] and [5] the focal
@@ -140,12 +207,118 @@ float aoAt() {
 }
 `;
 
+/** EL4: THE ADAPTATION BLOCK, for every shader that exposes: the 1x1
+ *  image's multiplier, decoded from its log encoding. */
+export const AIR_ADAPT_GLSL = `
+uniform sampler2D uAdapt;
+float elAdapt() {
+  return exp2(texture(uAdapt, vec2(0.5)).r * ${AIR_ADAPT_LOG_RANGE[1] - AIR_ADAPT_LOG_RANGE[0]}.0 + (${AIR_ADAPT_LOG_RANGE[0]}.0));
+}
+`;
+
 const QUAD_VS = `#version 300 es
 layout(location=0) in vec2 aPos;
 out vec2 vUV;
 void main() {
   vUV = aPos * 0.5 + 0.5;
   gl_Position = vec4(aPos, 0.0, 1.0);
+}`;
+
+// the sRGB codec, the lane's (enhancedLighting.js elDecode / elEncode) restated - this module imports nothing of the lane
+const CODEC_GLSL = `
+vec3 airDecode(vec3 c) {
+  vec3 lo = c / 12.92;
+  vec3 hi = pow((c + 0.055) / 1.055, vec3(2.4));
+  return mix(hi, lo, step(c, vec3(0.04045)));
+}
+vec3 airEncode(vec3 c) {
+  c = clamp(c, 0.0, 1.0);
+  vec3 lo = c * 12.92;
+  vec3 hi = 1.055 * pow(c, vec3(1.0 / 2.4)) - 0.055;
+  return mix(hi, lo, step(c, vec3(0.0031308)));
+}
+`;
+
+/** EL4: the frame's log luminance over the world rect, into the 32x32 image. */
+const LUM_FS = `#version 300 es
+precision highp float;
+in vec2 vUV;
+uniform sampler2D uFrame;
+uniform vec4 uRect;     // the world rect in canvas pixels
+uniform vec2 uCanvas;
+${CODEC_GLSL}
+out vec4 outColor;
+void main() {
+  vec2 uv = (uRect.xy + vUV * uRect.zw) / uCanvas;
+  vec3 c = airDecode(texture(uFrame, uv).rgb);
+  float lum = dot(c, vec3(0.2126, 0.7152, 0.0722));
+  float v = (log2(max(lum, 1e-9)) - (${AIR_LUM_LOG_RANGE[0]}.0)) / ${AIR_LUM_LOG_RANGE[1] - AIR_LUM_LOG_RANGE[0]}.0;
+  outColor = vec4(vec3(clamp(v, 0.0, 1.0)), 1.0);
+}`;
+
+/** EL4: one adaptation step (adaptStep, term for term) from the previous
+ *  1x1 image and the luminance image's top mip. */
+const ADAPT_FS = `#version 300 es
+precision highp float;
+in vec2 vUV;
+uniform sampler2D uPrev;
+uniform sampler2D uLum;
+uniform vec4 uAdaptParams;   // dt, key, min, max
+uniform vec2 uAdaptRates;    // open, close
+out vec4 outColor;
+void main() {
+  float prev = exp2(texture(uPrev, vec2(0.5)).r * ${AIR_ADAPT_LOG_RANGE[1] - AIR_ADAPT_LOG_RANGE[0]}.0 + (${AIR_ADAPT_LOG_RANGE[0]}.0));
+  float lv = textureLod(uLum, vec2(0.5), ${Math.log2(AIR_LUM_SIZE)}.0).r;
+  float lum = exp2(lv * ${AIR_LUM_LOG_RANGE[1] - AIR_LUM_LOG_RANGE[0]}.0 + (${AIR_LUM_LOG_RANGE[0]}.0));
+  float target = clamp(uAdaptParams.y / max(lum, 1e-6), uAdaptParams.z, uAdaptParams.w);
+  float rate = target > prev ? uAdaptRates.x : uAdaptRates.y;
+  float t = 1.0 - exp(-uAdaptParams.x * rate);
+  float next = prev + (target - prev) * t;
+  float v = (log2(next) - (${AIR_ADAPT_LOG_RANGE[0]}.0)) / ${AIR_ADAPT_LOG_RANGE[1] - AIR_ADAPT_LOG_RANGE[0]}.0;
+  outColor = vec4(vec3(clamp(v, 0.0, 1.0)), 1.0);
+}`;
+
+/** EL4: the bright pass - what the decoded frame holds above the threshold, over the world rect. */
+const BRIGHT_FS = `#version 300 es
+precision highp float;
+in vec2 vUV;
+uniform sampler2D uFrame;
+uniform vec4 uRect;
+uniform vec2 uCanvas;
+uniform float uThreshold;
+${CODEC_GLSL}
+out vec4 outColor;
+void main() {
+  vec2 uv = (uRect.xy + vUV * uRect.zw) / uCanvas;
+  vec3 c = airDecode(texture(uFrame, uv).rgb);
+  float lum = dot(c, vec3(0.2126, 0.7152, 0.0722));
+  float k = smoothstep(uThreshold, 1.0, lum);
+  outColor = vec4(c * k, 1.0);
+}`;
+
+/** EL4: THE RESOLVE - the frame to the canvas: decoded, the bloom and the
+ *  shafts added over the world rect, the vignette, the contrast, encoded. */
+const RESOLVE_FS = `#version 300 es
+precision highp float;
+in vec2 vUV;
+uniform sampler2D uFrame;
+uniform sampler2D uBloom;
+uniform sampler2D uShaft;
+uniform vec4 uRect;      // the world rect in canvas pixels
+uniform vec2 uCanvas;
+uniform vec4 uGrade;     // bloom gain, shaft gain, vignette, contrast
+${CODEC_GLSL}
+out vec4 outColor;
+void main() {
+  vec3 c = airDecode(texture(uFrame, vUV).rgb);
+  vec2 wuv = (vUV * uCanvas - uRect.xy) / uRect.zw;
+  if (wuv.x >= 0.0 && wuv.x <= 1.0 && wuv.y >= 0.0 && wuv.y <= 1.0) {
+    c += texture(uBloom, wuv).rgb * uGrade.x + texture(uShaft, wuv).rgb * uGrade.y;
+    float r = length((wuv - 0.5) * 2.0);
+    c *= 1.0 - uGrade.z * smoothstep(0.55, 1.35, r);
+    c = (c - 0.18) * uGrade.w + 0.18;
+  }
+  outColor = vec4(airEncode(max(c, vec3(0.0))), 1.0);
 }`;
 
 const AO_FS = `#version 300 es
@@ -244,17 +417,6 @@ void main() {
   outColor = vec4(uSunColor * (acc / ${AIR_SHAFT_TAPS}.0 * uShaftParams.y), 1.0);
 }`;
 
-const COMPOSITE_FS = `#version 300 es
-precision highp float;
-in vec2 vUV;
-uniform sampler2D uBloom;
-uniform sampler2D uShaft;
-uniform vec2 uGain;   // bloom, shafts
-out vec4 outColor;
-void main() {
-  outColor = vec4(texture(uBloom, vUV).rgb * uGain.x + texture(uShaft, vUV).rgb * uGain.y, 1.0);
-}`;
-
 /** The emission-only fragment shaders for the bloom source: a solid's
  *  emission map in its colour (the window style, or white for a self-lit
  *  record); a flat's emission map behind its cutout. */
@@ -330,10 +492,14 @@ export class AirPass {
       box: P(QUAD_VS, BOX_FS, ['uSrc', 'uTexel']),
       gauss: P(QUAD_VS, GAUSS_FS, ['uSrc', 'uDir']),
       shaft: P(QUAD_VS, SHAFT_FS, ['uDepth', 'uSun', 'uShaftParams', 'uSunColor']),
-      composite: P(QUAD_VS, COMPOSITE_FS, ['uBloom', 'uShaft', 'uGain']),
       emitMesh: P(opts.vs.mesh, EMIT_MESH_FS, ['uProj', 'uView', 'uModel', 'uEmissionTex', 'uEmissionColor']),
       emitBb: P(opts.vs.bb, EMIT_BB_FS, ['uProj', 'uView', 'uRight', 'uUp', 'uOrigin', 'uSize', 'uTex', 'uEmissionTex', 'uFlatWind', 'uSway']),
       glare: P(GLARE_VS, GLARE_FS, ['uProj', 'uView', 'uCenter', 'uSize', 'uDepth', 'uColor']),
+      // EL4
+      lum: P(QUAD_VS, LUM_FS, ['uFrame', 'uRect', 'uCanvas']),
+      adapt: P(QUAD_VS, ADAPT_FS, ['uPrev', 'uLum', 'uAdaptParams', 'uAdaptRates']),
+      bright: P(QUAD_VS, BRIGHT_FS, ['uFrame', 'uRect', 'uCanvas', 'uThreshold']),
+      resolve: P(QUAD_VS, RESOLVE_FS, ['uFrame', 'uBloom', 'uShaft', 'uRect', 'uCanvas', 'uGrade']),
     };
     // the fullscreen quad and the glare's corner quad
     this.quadVao = gl.createVertexArray();
@@ -356,10 +522,21 @@ export class AirPass {
     this.aoParams = new Float32Array([AIR_AO_RADIUS, AIR_AO_STRENGTH, AIR_AO_BIAS, 0]);
     this.shaftParams = new Float32Array([AIR_SHAFT_DECAY, AIR_SHAFT_STRENGTH, AIR_SHAFT_REACH, 1]);
     this.aoInfo = new Float32Array(4);
-    this.gain = new Float32Array([AIR_BLOOM_STRENGTH, 1]);
-    this.pending = false;   // a composite is owed to the frame
+    this.pending = false;   // a resolve is owed to the frame
     this.width = 0; this.height = 0;
     this.targets = null;
+    // EL4: the frame image (canvas-sized), the luminance image and the two adaptation images
+    this.frame = null;
+    this.lum = null;
+    this.adapt = null;      // [a, b], this.adaptIndex the current
+    this.adaptIndex = 0;
+    this.grade = new Float32Array([AIR_BLOOM_STRENGTH, 1, AIR_VIGNETTE, AIR_CONTRAST]);
+    this.adaptParams = new Float32Array([0, AIR_ADAPT_KEY, AIR_ADAPT_MIN, AIR_ADAPT_MAX]);
+    this.adaptRates = new Float32Array([AIR_ADAPT_OPEN, AIR_ADAPT_CLOSE]);
+    this.canvas = new Float32Array(2);
+    this.rect = new Float32Array(4);
+    this._lastResolve = 0;
+    this._now = opts.now ?? (() => (globalThis.performance?.now?.() ?? Date.now()));
     this.stats = { emitDraws: 0, glares: 0, shafts: false };
     this._identityView = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
     this._black = new Float32Array(3);
@@ -415,6 +592,78 @@ export class AirPass {
     const gl = this.gl, t = this.targets;
     for (const k of Object.keys(t)) { gl.deleteTexture(t[k].tex); gl.deleteFramebuffer(t[k].fbo); }
     this.targets = null;
+  }
+
+  /** EL4: the frame image for a canvas of W x H - RGBA8 with a 24-bit depth
+   *  renderbuffer, (re)allocated when the canvas changes size. */
+  _ensureFrame(W, H) {
+    const gl = this.gl;
+    if (this.frame && this.frame.w === W && this.frame.h === H) return this.frame;
+    if (this.frame) { gl.deleteTexture(this.frame.tex); gl.deleteRenderbuffer(this.frame.rb); gl.deleteFramebuffer(this.frame.fbo); }
+    const tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, W, H, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    const rb = gl.createRenderbuffer();
+    gl.bindRenderbuffer(gl.RENDERBUFFER, rb);
+    gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT24, W, H);
+    const fbo = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+    gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, rb);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    this.frame = { tex, rb, fbo, w: W, h: H };
+    if (!this.lum) this._ensureAdapt();
+    return this.frame;
+  }
+  /** EL4: the luminance image with its mip chain and the two 1x1
+   *  adaptation images, the current one starting at a multiplier of 1. */
+  _ensureAdapt() {
+    const gl = this.gl;
+    const lumTex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, lumTex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, AIR_LUM_SIZE, AIR_LUM_SIZE, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    const lumFbo = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, lumFbo);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, lumTex, 0);
+    this.lum = { tex: lumTex, fbo: lumFbo, w: AIR_LUM_SIZE, h: AIR_LUM_SIZE };
+    const one = Math.round(packLog(1, AIR_ADAPT_LOG_RANGE) * 255);
+    this.adapt = [0, 1].map(() => {
+      const tex = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, tex);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([one, one, one, 255]));
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      const fbo = gl.createFramebuffer();
+      gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+      return { tex, fbo, w: 1, h: 1 };
+    });
+    this.adaptIndex = 0;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+  }
+  /** EL4: the current adaptation image - what the lane's shaders and the far ring read. */
+  get adaptTexture() { return this.adapt ? this.adapt[this.adaptIndex].tex : null; }
+
+  /** EL4: bind the frame image for the world pass of a W x H canvas, and
+   *  make it the frame target every pass restores to. Returns its fbo. */
+  beginFrameTarget(W, H) {
+    const f = this._ensureFrame(W, H);
+    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, f.fbo);
+    setFrameTarget(f.fbo);
+    this.canvas[0] = W; this.canvas[1] = H;
+    return f.fbo;
   }
 
   /**
@@ -475,18 +724,7 @@ export class AirPass {
     if (sp && sp.count > 0) this._replayEmission(f, sp, vp);
     this._glares(f);
     gl.disable(gl.BLEND);
-    // ...blurred, twice, across the two bloom images
-    for (let pass = 0; pass < 2; pass++) {
-      quad(this.programs.gauss, T.bloomB);
-      gl.bindTexture(gl.TEXTURE_2D, T.bloom.tex);
-      gl.uniform1i(this.programs.gauss.uSrc, 0);
-      gl.uniform2f(this.programs.gauss.uDir, 1 / T.bloom.w, 0);
-      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-      quad(this.programs.gauss, T.bloom);
-      gl.bindTexture(gl.TEXTURE_2D, T.bloomB.tex);
-      gl.uniform2f(this.programs.gauss.uDir, 0, 1 / T.bloom.h);
-      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-    }
+    // EL4: the bright pass joins them at the resolve, and the blur runs there, once the frame is whole
     // 4. the shafts, when the sun is up and in front of the camera
     const sun = f.sunScale > 0.01 && f.lightDir && f.lightDir[1] > 0 ? sunScreenUV(f.proj, f.view, f.lightDir) : null;
     quad(this.programs.shaft, T.shaft);
@@ -509,6 +747,7 @@ export class AirPass {
     gl.depthMask(true);
     gl.enable(gl.CULL_FACE);
     gl.clearColor(f.clearColor[0], f.clearColor[1], f.clearColor[2], f.clearColor[3]);
+    this.rect.set(f.viewport);
     this.pending = true;
   }
 
@@ -593,30 +832,105 @@ export class AirPass {
     gl.activeTexture(gl.TEXTURE0);
     gl.uniform1i(loc.ao, AIR_AO_UNIT);
     gl.uniform4fv(loc.aoInfo, this.aoInfo);
+    this.uploadAdapt(loc);
+  }
+  /** EL4: bind the adaptation image on its unit for one program (`loc.adapt`). */
+  uploadAdapt(loc) {
+    const gl = this.gl;
+    if (!this.adapt || !loc?.adapt) return;
+    gl.activeTexture(gl.TEXTURE0 + AIR_ADAPT_UNIT);
+    gl.bindTexture(gl.TEXTURE_2D, this.adapt[this.adaptIndex].tex);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.uniform1i(loc.adapt, AIR_ADAPT_UNIT);
   }
 
-  /** Add the bloom and the shafts over the world viewport. Called by the
-   *  frame's first screen-space draw; a no-op until a render is owed. */
+  /** EL4: THE RESOLVE. Called by the frame's first screen-space draw; a
+   *  no-op until a render is owed. Measures the frame (the luminance image,
+   *  the adaptation step), finishes the bloom (the bright pass, the blur),
+   *  then draws the frame to the canvas through RESOLVE_FS and releases the
+   *  frame target. Leaves the canvas bound at the full canvas viewport. */
   composite() {
-    if (!this.pending || !this.targets) return;
+    if (!this.pending || !this.targets || !this.frame) return;
     this.pending = false;
-    const gl = this.gl, P = this.programs.composite, T = this.targets;
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    gl.viewport(this.aoInfo[0], this.aoInfo[1], this.aoInfo[2], this.aoInfo[3]);
-    gl.useProgram(P.p);
-    gl.bindVertexArray(this.quadVao);
-    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, T.bloom.tex); gl.uniform1i(P.uBloom, 0);
-    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, T.shaft.tex); gl.uniform1i(P.uShaft, 1);
-    gl.activeTexture(gl.TEXTURE0);
-    gl.uniform2fv(P.uGain, this.gain);
+    const gl = this.gl, P = this.programs, T = this.targets, F = this.frame;
+    const now = this._now();
+    const dt = this._lastResolve ? Math.min(Math.max((now - this._lastResolve) / 1000, 0), AIR_ADAPT_MAX_DT) : 0;
+    this._lastResolve = now;
     gl.disable(gl.DEPTH_TEST);
+    gl.depthMask(false);
     gl.disable(gl.CULL_FACE);
+    gl.disable(gl.BLEND);
+    gl.bindVertexArray(this.quadVao);
+    const quad = (prog, target) => {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, target.fbo);
+      gl.viewport(0, 0, target.w, target.h);
+      gl.useProgram(prog.p);
+    };
+    gl.activeTexture(gl.TEXTURE0);
+    // 1. the luminance image and its mean
+    quad(P.lum, this.lum);
+    gl.bindTexture(gl.TEXTURE_2D, F.tex);
+    gl.uniform1i(P.lum.uFrame, 0);
+    gl.uniform4fv(P.lum.uRect, this.rect);
+    gl.uniform2fv(P.lum.uCanvas, this.canvas);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    gl.bindTexture(gl.TEXTURE_2D, this.lum.tex);
+    gl.generateMipmap(gl.TEXTURE_2D);
+    // 2. the adaptation step, into the other 1x1 image
+    const prev = this.adapt[this.adaptIndex], next = this.adapt[1 - this.adaptIndex];
+    quad(P.adapt, next);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, prev.tex); gl.uniform1i(P.adapt.uPrev, 0);
+    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, this.lum.tex); gl.uniform1i(P.adapt.uLum, 1);
+    gl.activeTexture(gl.TEXTURE0);
+    this.adaptParams[0] = dt;
+    gl.uniform4fv(P.adapt.uAdaptParams, this.adaptParams);
+    gl.uniform2fv(P.adapt.uAdaptRates, this.adaptRates);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    this.adaptIndex = 1 - this.adaptIndex;
+    // 3. the bright pass joins the emitters and the glares, then the blur, twice
+    quad(P.bright, T.bloom);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE);
+    gl.bindTexture(gl.TEXTURE_2D, F.tex);
+    gl.uniform1i(P.bright.uFrame, 0);
+    gl.uniform4fv(P.bright.uRect, this.rect);
+    gl.uniform2fv(P.bright.uCanvas, this.canvas);
+    gl.uniform1f(P.bright.uThreshold, AIR_BRIGHT_THRESHOLD);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     gl.disable(gl.BLEND);
+    for (let pass = 0; pass < 2; pass++) {
+      quad(P.gauss, T.bloomB);
+      gl.bindTexture(gl.TEXTURE_2D, T.bloom.tex);
+      gl.uniform1i(P.gauss.uSrc, 0);
+      gl.uniform2f(P.gauss.uDir, 1 / T.bloom.w, 0);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      quad(P.gauss, T.bloom);
+      gl.bindTexture(gl.TEXTURE_2D, T.bloomB.tex);
+      gl.uniform2f(P.gauss.uDir, 0, 1 / T.bloom.h);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    }
+    // 4. the frame to the canvas
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    setFrameTarget(null);
+    gl.viewport(0, 0, F.w, F.h);
+    gl.useProgram(P.resolve.p);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, F.tex); gl.uniform1i(P.resolve.uFrame, 0);
+    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, T.bloom.tex); gl.uniform1i(P.resolve.uBloom, 1);
+    gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, T.shaft.tex); gl.uniform1i(P.resolve.uShaft, 2);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.uniform4fv(P.resolve.uRect, this.rect);
+    gl.uniform2fv(P.resolve.uCanvas, this.canvas);
+    gl.uniform4fv(P.resolve.uGrade, this.grade);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    gl.bindVertexArray(null);
+    gl.depthMask(true);
     gl.enable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
-    gl.bindVertexArray(null);
+  }
+
+  /** EL4: drop the frame target without resolving (the door closed, the lane left mid-frame). */
+  release() {
+    if (this.frame) setFrameTarget(null);
+    this.pending = false;
   }
 }

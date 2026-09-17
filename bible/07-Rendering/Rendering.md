@@ -29,7 +29,9 @@ directory by `test/audit18_bible_docs.test.js`:
   (the shadow pass's records replayed), and off it the ambient occlusion the
   lane's shaders multiply their ambient by, the bloom sourced from the emitters
   and the lanterns' glares, and the sun's shafts - composited by the frame's
-  first screen-space draw. `?air=off`. See
+  first screen-space draw; EL4: the frame image the whole world draws into, the
+  eye's adaptation off its mean luminance, bloom from its bright pass, the
+  vignette and the contrast in the resolve. `?air=off`. See
   `07-Rendering/Enhanced-Lighting-Arc.md`.
 - `characterMesh.js` - the voxel character mesh path.
 - `characterSprite.js` - the classic-visuals sprite pass (one fixed
@@ -318,7 +320,7 @@ directory by `test/audit18_bible_docs.test.js`:
   models merged once at build time into one mesh grouped by resolved texture, one
   draw call per texture instead of one per sub-mesh per model; the gates and the
   mills stay individual draws (test/perf4.test.js).
-- `renderTarget.js` - VC2 THE RENDER TARGET: a 2D colour target and a 3D
+- `renderTarget.js` (EL4: also the FRAME TARGET every pass restores to - the canvas, or the lane's frame image) - VC2 THE RENDER TARGET: a 2D colour target and a 3D
   volume, creation under the upload law (it sizes, parameterises and binds
   no framebuffer), the framebuffer work on named DRAW paths that leave the
   default framebuffer and the caller's viewport behind and never ask GL.

@@ -60,7 +60,7 @@
 import { getPref } from '../systems/uiPrefs.js';
 import { isEnhanced } from '../systems/uiSkin.js';
 import { SHADOW_GLSL } from './shadowPass.js';   // EL2: the receiver block - the sun map on the sun term, the cube map on its lantern
-import { AIR_AO_GLSL, airOn } from './airPass.js';   // EL3: the ambient occlusion image by screen position, and its kill door
+import { AIR_AO_GLSL, AIR_ADAPT_GLSL, airOn } from './airPass.js';   // EL3: the ambient occlusion image by screen position, and its kill door; EL4: the adapted exposure
 
 /** The lane's light cap - the classic lane's sixteen, tripled. Forty-eight
  *  vec4 + forty-eight vec3 are 96 uniform vectors; ES 3.0 guarantees 224
@@ -86,6 +86,17 @@ export const EL_SCATTER = 0.35;
 /** The near-field gain and the falloff's knee (elAttenuation). */
 export const EL_LIGHT_GAIN = 2;
 export const EL_LIGHT_KNEE = 16;
+/** EL4: the lanterns' glint - Blinn-Phong gloss and strength, on the mesh,
+ *  terrain and character shaders (a flat has no normal). */
+export const EL_SPEC_GLOSS = 24;
+export const EL_SPEC_STRENGTH = 0.12;
+/** EL4: PROPER DARK DUNGEONS. The lane scales a dungeon's ambient (DFU's
+ *  flat 0.12 and Better Ambience's trilight alike; the Dungeon Brightness
+ *  setting still rides on top) to this, so the light between the torches
+ *  is the light the torches throw and the far end of a hall is dark. The
+ *  eye's adaptation (airPass.js) opens over seconds into it and stops at
+ *  its ceiling, so the dark stays dark. */
+export const EL_DUNGEON_AMBIENT_SCALE = 0.35;
 /** The warm flame the lane hands every lantern, torch and brazier whose
  *  host kept the classic white: a blackbody at ~1900 K, normalised to
  *  keep the green channel's brightness so the light is no dimmer than the
@@ -183,6 +194,7 @@ export function elScatterDensity(mode, density, start, end) {
 export const EL_GLSL = `
 uniform float uELExposure;   // EL1: scene exposure before the tonemap
 uniform float uELScatter;    // EL1: in-scatter gain x the fog's density (0 = no fog, no glow)
+${AIR_ADAPT_GLSL}
 vec3 elDecode(vec3 c) {
   vec3 lo = c / 12.92;
   vec3 hi = pow((c + 0.055) / 1.055, vec3(2.4));
@@ -238,7 +250,11 @@ vec3 elPointLit(vec3 wp, vec3 n) {
     vec3 L = uPointLights[i].xyz - wp;
     float d = length(L);
     float sh = i == uShadowIndex ? pointShadowAt(wp, n) : 1.0;   // EL2: the one lantern with a cube map
-    acc += sh * elAttenuation(d, uPointLights[i].w) * max(dot(n, L / max(d, 1e-4)), 0.0) * uPointColors[i];
+    vec3 Ln = L / max(d, 1e-4);
+    // EL4: a glint - Blinn-Phong, a low gloss for stone and wood, a twelfth of the light: wet stone under a torch
+    vec3 H = normalize(Ln + normalize(uCamPos - wp));
+    float spec = pow(max(dot(n, H), 0.0), ${EL_SPEC_GLOSS}.0) * ${EL_SPEC_STRENGTH};
+    acc += sh * elAttenuation(d, uPointLights[i].w) * (max(dot(n, Ln), 0.0) + spec) * uPointColors[i];
   }
   return acc;
 }
@@ -281,9 +297,10 @@ vec3 elInScatter(vec3 wp) {
 // the lane's output: tonemap the lit surface, blend the (decoded) fog
 // colour in linear, add the tonemapped glow, encode
 vec3 elFinish(vec3 lit, vec3 wp) {
-  vec3 tm = elTonemap(lit * uELExposure);
+  float ex = uELExposure * elAdapt();   // EL4: the eye's own multiplier rides the scene's exposure
+  vec3 tm = elTonemap(lit * ex);
   vec3 col = mix(elDecode(uFogColor), tm, fogFactorAt(wp));
-  col += elTonemap(elInScatter(wp) * uELExposure);
+  col += elTonemap(elInScatter(wp) * ex);
   return elEncode(col);
 }
 `;
@@ -580,13 +597,14 @@ ${EL_GLSL}
 out vec4 outColor;
 void main() {
   gl_FragDepth = 1.0;
+  float ex = uELExposure * elAdapt();   // EL4
   vec3 n = normalize(vNormal);
   float diff = max(dot(n, uLightDir), 0.0);
   float mdiff = max(dot(n, uMoonDir), 0.0);
   vec3 lit = elDecode(vColor) * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff));
   float base = uHazeHold * clamp((vDist - uFogStart) / max(uFogEnd - uFogStart, 1.0), 0.0, 1.0);
   float rim = (1.0 - uHazeHold) * smoothstep(uRimStart, uRimEnd, vDist);
-  vec3 col = mix(elTonemap(lit * uELExposure), elDecode(uFogColor), min(base + rim, 1.0));
+  vec3 col = mix(elTonemap(lit * ex), elDecode(uFogColor), min(base + rim, 1.0));
   outColor = vec4(elEncode(col), 1.0);
 }`;
 
@@ -619,6 +637,19 @@ export function syncLightingLane(renderer, search = globalThis.location?.search 
   renderer.setLightingLane(on ? EL_LANE : null);
   if (on) { renderer.setExposure(exposureFor(search)); renderer.setAir(airOn(search)); }   // EL3: the door is the page's, read here alone
   return on;
+}
+
+/** EL4: a dungeon host's ambient under the lane - scaled to the dark - and
+ *  the host's own otherwise. `tri` is Better Ambience's { sky, equator,
+ *  ground } or null. */
+export function dungeonAmbient(on, rgb) {
+  if (!on) return rgb;
+  return new Float32Array([rgb[0] * EL_DUNGEON_AMBIENT_SCALE, rgb[1] * EL_DUNGEON_AMBIENT_SCALE, rgb[2] * EL_DUNGEON_AMBIENT_SCALE]);
+}
+export function dungeonTrilight(on, tri) {
+  if (!on || !tri) return tri;
+  const k = (c) => [c[0] * EL_DUNGEON_AMBIENT_SCALE, c[1] * EL_DUNGEON_AMBIENT_SCALE, c[2] * EL_DUNGEON_AMBIENT_SCALE];
+  return { sky: k(tri.sky), equator: k(tri.equator), ground: k(tri.ground) };
 }
 
 /** The colour a host hands its white lanterns under the lane - the flame

@@ -263,16 +263,13 @@ world viewport, once a frame; the 2D pass then gets the full canvas back.
 `syncLightingLane`, handed to `Renderer.setAir`; the pass rides a lane
 that asks for it AND the door, built once and kept).
 
-**THE DEPARTURE FROM THE PLAN, recorded.** The plan named an RGBA16F
-target for the whole world with the tonemap moved to a final composite.
-Six foreign passes (both skies, the clouds, the precipitation, the grass,
-the far ring) restore `bindFramebuffer(null)` behind the renderer's back -
-the render-target helper's own law - so a world drawn off-screen would
-lose every one of them to the canvas. The scene stays forward-tonemapped
-(EL1); the bloom is sourced from the emitters themselves, which is the
-bloom that means something; a later pass that teaches the six about a
-current target can move the tonemap. Nothing shipped here needs a float
-target.
+**THE DEPARTURE FROM THE PLAN, recorded and then CLOSED (EL4, below).**
+The plan named an RGBA16F target for the whole world with the tonemap
+moved to a final composite; EL3 shipped without it on the claim that six
+foreign passes restore `bindFramebuffer(null)` behind the renderer's back.
+Mac: "The goal isnt a half visioned system." The survey that followed
+found the claim wrong - TWO restore sites in the whole tree - and EL4
+built the frame.
 
 **The renderer's half.** One `_renderPasses` at the top of `beginFrame`,
 after the viewport is set and before the clear: the shadow maps, then the
@@ -291,7 +288,8 @@ composite is the later pass above); a classic panorama sky drawn as a
 screen quad (`?sky=classic` on the enhanced skin) would trigger the
 composite before the world's flats.
 
-**Pinned** (`test/el3_air.test.js`, 7): the door and the constants
+**Pinned** (`test/el3_air.test.js`, 7; EL4 re-aimed the composite pins to
+the resolve): the door and the constants
 (four reserved units in a row); the reconstruction against the
 perspective matrix, mirrored and not, and the GLSL's arithmetic; the
 sun's screen position (the centre, above, east-is-right facing north,
@@ -313,3 +311,91 @@ composite) each made to bite. **NOT SEEN ON A GPU** - the SSAO's
 reconstruction and the glare's depth read are by the book; the look
 (radius, strengths, the shaft's reach) is Mac's eye and the doors are
 `?air=off` and the constants.
+
+## EL4 - the frame (SHIPPED 2026-09-17)
+
+**Mac, mid-arc: "Im expecting Polished and exceptional detail. Proper
+darker dungeons. The goal isnt a half visioned system. Its something that
+will really blow everything out of the water."** Two things were half
+done: EL3's recorded departure (no frame, no adaptation), and EL1's
+dungeons, which the tonemap had left at 0.145 for DFU's 0.12 - a shade
+brighter, not darker.
+
+**The frame-target law** (`render/renderTarget.js` `setFrameTarget` /
+`frameTarget`). The survey found the restore sites: `withTarget` and
+`finishVolume` in the helper, the clouds' blit in `volumetricClouds.js`,
+and the renderer's own sprite pass - nothing in the skies, the
+precipitation, the grass, the water or the far ring, which draw into
+whatever is bound. All four now restore the frame target: the canvas by
+default, the lane's frame image while the renderer has one bound. That
+is the whole of what EL3 had called impossible.
+
+**The frame image** (`airPass.js` `beginFrameTarget`): with the air on,
+`beginFrame` binds a canvas-sized RGBA8 image with a 24-bit depth
+renderbuffer before the clear, and the world pass - the renderer's draws
+and every foreign pass - lands in it. The frame's first screen-space draw
+RESOLVES it (`composite`, which is the resolve now): the frame decoded to
+linear, the bloom and the shafts added over the world rect, a vignette
+(`AIR_VIGNETTE` 0.28 at the corners of the world rect), a touch of
+contrast about mid-grey (`AIR_CONTRAST` 1.04), encoded once. A panel frame
+keeps the canvas; the door closing mid-frame releases the target.
+
+**Eye adaptation.** The resolve measures the frame's mean log luminance
+over the world rect (a 32x32 image, its mip chain's top; the 8-bit log
+encodings `packLog` / `unpackLog` over 16 stops of luminance and 4 of
+multiplier, pinned as inverses) and steps a 1x1 image toward
+`AIR_ADAPT_KEY / luminance` (`adaptStep`, the JS of `ADAPT_FS` term for
+term): the eye OPENS into the dark at 0.6/s and CLOSES into the light at
+3/s, the step bounded to a tenth of a second, the multiplier clamped to
+[0.7, 1.8]. Every lane shader and the far ring multiply their exposure by
+it (`elAdapt`, `uAdapt` on unit 11). The loop is closed on the exposed
+image, so it half-corrects (the fixed point is the square root of the
+correction) and never flattens a scene to grey. A walk from noon into a
+dungeon goes near-black and opens over seconds; the ceiling is what keeps
+the dungeon dark once it has.
+
+**Proper dark dungeons** (`EL_DUNGEON_AMBIENT_SCALE` 0.35, `dungeonAmbient`
+/ `dungeonTrilight`): the standalone dungeon and the world's dungeon mode
+hand the lane their ambient - DFU's flat 0.12 and Better Ambience's
+trilight alike, the Dungeon Brightness setting still on top - scaled to
+a third. The light between the torches is the light the torches throw;
+the far end of a hall is dark; the eye opens into it and stops. An
+interior (a shop, a tavern) keeps its daylight ambient.
+
+**Bloom from the frame.** The bright pass of the decoded frame (above
+`AIR_BRIGHT_THRESHOLD` 0.85 in luminance) joins the emitters and the
+glares in the bloom source before the blur, so a sunlit wall and a flame
+both glow, not only what carries an emission map. The blur runs at the
+resolve, once the frame is whole.
+
+**The lanterns' glints** (`EL_SPEC_GLOSS` 24, `EL_SPEC_STRENGTH` 0.12): a
+Blinn-Phong term in every lantern's contribution on the mesh, terrain and
+character shaders, under the lantern's own shadow and falloff - wet stone
+under a torch. A flat has no normal and no glint.
+
+**What the frame is not.** 8-bit and display-encoded, not RGBA16F: the
+lane's forward tonemap keeps the headroom (a torch's near field still
+blooms to white inside EL1's shoulder), and the foreign passes keep
+writing the display values they always wrote. A float frame would need
+every one of their shaders to output linear, which is the one thing this
+tier does not touch; the resolve works in linear on the decoded frame.
+
+**Pinned** (`test/el4_frame.test.js`, 6): the constants and the encodings
+(inverses, the midpoint byte); the adaptation step (slow open, fast close,
+both clamps reached, mid-grey at rest, the bounded step, the GLSL's same
+lines); the frame-target law (the helper's two restores, the clouds' blit,
+the sprite pass's three, and the seven passes that bind nothing of their
+own); the dark dungeons (the scale, once, the trilight with it, the three
+host sites, the interior untouched) and the glints (the half vector, the
+gloss and the strength, under the lantern's colour, none on a flat); the
+eye in every lane shader and the far ring (with the bare 1x1 image for a
+lane frame without the air); the fake-GL lifecycle (the frame bound for
+the world pass and its clear, a foreign restore handed the frame, the
+luminance and the mip chain, the eye's images swapping, the first resolve
+integrating no time and a five-second gap the bound, the bright pass, the
+grade, the canvas at the resolve and the target released, the door
+closing mid-frame, a panel frame on the canvas, a resize reallocating).
+Campaign `tools/mutants/el4.json`: 35 mutants, 35 killed (the one
+first-run survivor, the eye images' starting byte, pinned). **NOT SEEN ON
+A GPU** - the adaptation's rates, clamps and key, the dungeon scale, the
+vignette and the contrast are Mac's eye's; every one is a named constant.

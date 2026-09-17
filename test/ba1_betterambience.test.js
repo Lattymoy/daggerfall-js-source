@@ -496,7 +496,7 @@ test('BA1: the four hosts gate the classic stride through the one gate, drive th
   assert.match(ext, /paused: _overlayHeld,/); assert.match(wm, /paused: overlayHeld,/); assert.match(dj, /paused: overlayHeld,/);
   for (const [name, src] of [['worldModes', wm], ['dungeon', dj]]) {
     assert.match(src, /underwaterFogSettings\?\.\(cam\.pos\[1\], player\.pos, betterAmbience\.dungeonFog\(\) \?\? DUNGEON_FOG\)/, `${name}: the fog base`);
-    assert.match(src, /const _tri = betterAmbience\.dungeonAmbient\(\); renderer\.setLighting\(new Float32Array\(_tri \? _tri\.equator : [a-zA-Z]+\.ambient\), 0, undefined, _tri\);/, `${name}: the trilight`);
+    assert.match(src, /const _tri = dungeonTrilight\((?:lightingOn|_on), betterAmbience\.dungeonAmbient\(\)\); renderer\.setLighting\(new Float32Array\(_tri \? _tri\.equator : dungeonAmbient\((?:lightingOn|_on), [a-zA-Z]+\.ambient\)\), 0, undefined, _tri\);/, `${name}: the trilight (EL4: through the lane's dark, scaled once)`);
     assert.match(src, /betterAmbience\.onTransition\(\{ dungeon: \{ regionName: dfLocation\.regionName, name: dfLocation\.name, inCastle: \(\) => !!ctx\.insideDungeonCastle\?\.\(\), exitPos: ctx\.enterMarker \? \[ctx\.enterMarker\.x, ctx\.enterMarker\.y, ctx\.enterMarker\.z\] : null \} \}\);/, `${name}: the dungeon transition`);
   }
   assert.equal((wm.match(/betterAmbience\.onTransition\(null\);/g) ?? []).length, 2, 'the two exits');
