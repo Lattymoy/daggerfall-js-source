@@ -14,7 +14,7 @@
 
 import { BUILDING_TYPES } from '../world/buildingNames.js';
 import { isShop } from './shopStock.js';
-import { HOLIDAYS } from './holidays.js';
+import { HOLIDAYS } from './holidays.js'; import { isOnlinePage } from './onlineLane.js';
 
 /** Opening and closing hours by building type (PlayerActivate.cs:
  *  91-92), indexed by DFLocation.BuildingTypes 0..24. closeHours 25
@@ -25,9 +25,9 @@ import { HOLIDAYS } from './holidays.js';
 export const OPEN_HOURS = Object.freeze([7, 8, 9, 8, 0, 9, 10, 10, 9, 6, 9, 11, 9, 9, 0, 0, 10, 0, 6, 6, 6, 6, 6, 6, 0]);
 export const CLOSE_HOURS = Object.freeze([22, 16, 19, 15, 25, 21, 19, 20, 18, 23, 23, 23, 20, 20, 25, 25, 16, 0, 18, 18, 18, 18, 18, 18, 25]);
 
-/** IsBuildingOpen (:102-106): openHours <= hour < closeHours. */
-export function isBuildingOpen(buildingType, hour) {
-  return (OPEN_HOURS[buildingType] ?? 0) <= hour && (CLOSE_HOURS[buildingType] ?? 25) > hour;
+/** Effective IsBuildingOpen; offline is :102-106, online shops layer OL4. */
+export function isBuildingOpen(buildingType, hour, opts = {}) {
+  return buildingHoursState(buildingType, { ...opts, hour }).open;
 }
 
 /** GetBuildingLockValue (:669-681): quality / 2 - DFU's own comment
@@ -69,7 +69,7 @@ export const buildingLockValue = (quality) => Math.trunc((quality ?? 0) / 2);
  *                                   door it opens)
  */
 export function buildingIsUnlocked(building, {
-  hour = 12, holidayId = -1,
+  hour = 12, holidayId = -1, online = isOnlinePage(),
   isHouseOwned = null, isActiveQuestBuilding = null,
   guildForBuilding = null, ownsShip = false,
 } = {}) {
@@ -94,8 +94,8 @@ export function buildingIsUnlocked(building, {
   }
   // Stores close on the Suns Rest holiday (:1294-1302)
   if (isShop(type)) {
-    if (holidayId === HOLIDAYS.Suns_Rest) return false;
-    return isBuildingOpen(type, hour);
+    // OL4: the effective shop schedule keeps the preserved classic answer beside it.
+    return buildingHoursState(type, { hour, holidayId, online }).open;
   }
   // Other structures - temples, taverns, palaces (:1304-1307)
   if (type <= BUILDING_TYPES.Palace && type >= 0) {
@@ -113,3 +113,55 @@ export function buildingIsUnlocked(building, {
  *  follows it from actionSystem.lookAtLockText, classic's
  *  interior-formula oversight included). */
 export const LOCKED_EXTERIOR_DOOR_TEXT = 'Locked.';
+
+// OL4 - ONLINE COMMERCE. Classic's schedule remains a pure primitive;
+// the shared-world policy is layered above it. Online players cannot
+// advance the shared clock by resting, so a classic "sleep until the
+// shop opens" schedule becomes a real-time lockout. Only storefronts
+// gain a continuous relief shift. Houses, guild halls, temples,
+// palaces, ships and every other building keep the exact R1 rules.
+//
+// The staffing answer is data on purpose. Today the existing shop
+// people remain the visible staff. A later presentation slice can use
+// ONLINE_SHIFT for a distinct night clerk without guessing from the
+// clock or changing the access law again.
+export const SHOP_STAFFING = Object.freeze({
+  CLOSED: 'closed',
+  CLASSIC: 'classic',
+  ONLINE_SHIFT: 'online-shift',
+});
+
+/** PlayerActivate.IsBuildingOpen (:102-106), preserved exactly. */
+export function classicBuildingOpen(buildingType, hour) {
+  return (OPEN_HOURS[buildingType] ?? 0) <= hour && (CLOSE_HOURS[buildingType] ?? 25) > hour;
+}
+
+/**
+ * One effective schedule for every caller. `classicOpen` records what
+ * untouched Daggerfall would say; `open` is what this running world says.
+ * Offline they are identical. Online, and only for a shop, a closure is
+ * covered by ONLINE_SHIFT. Suns Rest is part of the classic shop closure,
+ * so it is covered by the same policy rather than becoming a real-time
+ * full-day outage.
+ *
+ * `online` is injectable for node tests. Production defaults to the same
+ * authoritative ?online page signal used by the rest of the online lane.
+ */
+export function buildingHoursState(buildingType, {
+  hour = 12,
+  holidayId = -1,
+  online = isOnlinePage(),
+} = {}) {
+  const type = buildingType ?? BUILDING_TYPES.None;
+  const shop = isShop(type);
+  const holidayClosed = shop && holidayId === HOLIDAYS.Suns_Rest;
+  const classicOpen = classicBuildingOpen(type, hour) && !holidayClosed;
+  if (shop && online && !classicOpen) {
+    return { open: true, classicOpen: false, staffing: SHOP_STAFFING.ONLINE_SHIFT };
+  }
+  return {
+    open: classicOpen,
+    classicOpen,
+    staffing: shop ? (classicOpen ? SHOP_STAFFING.CLASSIC : SHOP_STAFFING.CLOSED) : null,
+  };
+}
