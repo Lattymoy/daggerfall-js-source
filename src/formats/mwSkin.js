@@ -133,6 +133,62 @@ export function buildSkeleton(nif) {
   return { nodes, byName };
 }
 
+/** WS1: an injected node's ref - past any record index a NIF can carry,
+ *  so it never collides with the skeleton file's own. */
+export const INJECTED_REF_BASE = 1 << 24;
+
+/**
+ * WS1 (2026-09-17): CUSTOM BONES, OpenMW's `use additional anim sources`
+ * (animation.cpp injectCustomBones): every .nif under
+ * `animations/<model>/` is a bone ADDON - a copy of the retail hierarchy
+ * carrying new nodes (Weapon Sheathing's `xbase_anim_sh.nif` marks its
+ * fourteen with a "BONE" NiStringExtraData) - and a node whose name the
+ * actor's skeleton lacks is added under the actor's node of its PARENT's
+ * name, with the addon's own local transform. Nodes the skeleton already
+ * carries are left as they are (their transforms are the retail rig's,
+ * not the addon's); a node whose parent the skeleton lacks is skipped
+ * with its subtree, and returned in `skipped` so a card can say so.
+ * Refs are minted above INJECTED_REF_BASE; `pose.get(ref)` misses them
+ * and skeletonSpaceMatrices poses them at rest, which is what an
+ * unanimated attach bone is.
+ *
+ * @returns {{added:string[], skipped:string[]}}
+ */
+export function injectSkeletonNodes(skeleton, addonNif) {
+  const added = [];
+  const skipped = [];
+  let next = INJECTED_REF_BASE;
+  for (const [ref] of skeleton.nodes) if (ref >= next) next = ref + 1;
+  function walk(ref, parentRef, isRoot = false) {
+    const rec = deref(addonNif, ref);
+    if (!rec || !NODE_TYPES.has(rec.type)) return;
+    const key = String(rec.name || '').toLowerCase();
+    let hereRef = key ? skeleton.byName.get(key) : undefined;
+    if (hereRef === undefined) {
+      if (parentRef === undefined || !key) {
+        // An addon ROOT the skeleton does not carry ("xbase_anim_sh.nif"
+        // over a rig whose root is "Bip01") is transparent: its
+        // children are matched by name as if it were not there. A
+        // nameless or parentless node deeper down cannot be placed.
+        if (!isRoot) skipped.push(rec.name || '(nameless)');
+        for (const child of rec.children ?? []) if (child >= 0) walk(child, undefined, false);
+        return;
+      }
+      hereRef = next++;
+      skeleton.nodes.set(hereRef, {
+        ref: hereRef, name: rec.name, parent: parentRef,
+        rest: { rotation: rec.rotation, translation: rec.translation, scale: rec.scale },
+        injected: true,
+      });
+      skeleton.byName.set(key, hereRef);
+      added.push(rec.name);
+    }
+    for (const child of rec.children ?? []) if (child >= 0) walk(child, hereRef, false);
+  }
+  for (const root of addonNif.roots) if (root >= 0) walk(root, undefined, true);
+  return { added, skipped };
+}
+
 /**
  * RULE 56: THE ACCUMULATION ROOT IS A TWO-NAME TABLE, not a search.
  *

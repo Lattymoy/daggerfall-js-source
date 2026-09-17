@@ -79,7 +79,7 @@ import { skeletonSpaceMatrices, GRAPH_ROOT } from './mwSkin.js';
  * MW-D13 - which means every rigid part whose mesh carries the node has
  * been drawn at the bone's bare origin.
  *
- * @returns {[number,number,number]|null}
+ * @returns {{rec: any, parents: any[]}|null}
  */
 export function findNodeByName(nif, name) {
   const want = String(name).toLowerCase();
@@ -146,7 +146,7 @@ export function findNodeByName(nif, name) {
     // MW-D44 was landed to fix. flattenNif's identical early returns
     // are NOT this rule: they are justified there by "this flattener
     // produces DRAWABLES, and a hidden subgraph contributes none"
-    // (mwNifMesh.js:472-480), and carry an `includeHidden` escape
+    // (mwNifMesh.js:483-491), and carry an `includeHidden` escape
     // hatch besides. This function produces a NODE.
     //
     if (String(rec.name || '').toLowerCase() === want) { found = { rec, parents }; return; }
@@ -222,7 +222,7 @@ const mulAffine = (p, l) => {
 };
 
 export function bindPart(skeleton, partNif, opts = {}) {
-  const batches = flattenNif(partNif);
+  const batches = flattenNif(partNif, { underNode: opts.underNode, excludeNode: opts.excludeNode });   // WS1
   const skinned = [];
   const attached = [];
   const missingBones = new Set();

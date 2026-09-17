@@ -358,6 +358,14 @@ export function skipGeometryName(name, hasMarkers) {
 
 export function flattenNif(nif, opts = {}) {
   const includeHidden = opts.includeHidden === true;
+  // WS1: the scabbard files. `underNode` emits only the geometry BELOW
+  // the node of that name (case-insensitive exact - the reference's
+  // FindByNameVisitor test), `excludeNode` everything but that subtree;
+  // both keep the full transform chain from the file root, because the
+  // reference attaches the WHOLE file and masks one node
+  // (actoranimation.cpp updateHolsteredWeapon: `weaponNode->setNodeMask(0)`).
+  const underNode = opts.underNode ? String(opts.underNode).toLowerCase() : null;
+  const excludeNode = opts.excludeNode ? String(opts.excludeNode).toLowerCase() : null;
   const batches = [];
 
   function emit(shape, world, props) {
@@ -463,9 +471,12 @@ export function flattenNif(nif, opts = {}) {
   // nowhere else, then carried down the whole traversal.
   let hasMarkers = false;
 
-  function walk(ref, world, props, isRoot = false) {
+  function walk(ref, world, props, isRoot = false, inside = !underNode) {
     const rec = deref(nif, ref);
     if (!rec) return;
+    const lname = String(rec.name || '').toLowerCase();
+    if (excludeNode && lname === excludeNode) return;   // WS1: the masked subtree
+    if (underNode && lname === underNode) inside = true;   // WS1: from here down
     // RULE 58 (1): "Bounding Box", case-insensitive EXACT, and the node
     // AND ITS WHOLE SUBTREE never enter the scene at all. The guard is
     // `args.mRootNode && ...` and mRootNode is null on the first call, so
@@ -499,7 +510,7 @@ export function flattenNif(nif, opts = {}) {
       // been composed. The node is still walked - it simply emits
       // nothing - which is the difference between skipping a drawable
       // and pruning a subtree.
-      if (!skipGeometryName(rec.name, hasMarkers)) emit(rec, nextWorld, nextProps);
+      if (inside && !skipGeometryName(rec.name, hasMarkers)) emit(rec, nextWorld, nextProps);
       return;
     }
     if (NODE_TYPES.has(rec.type) && rec.children) {
@@ -513,11 +524,11 @@ export function flattenNif(nif, opts = {}) {
       const only = selectedChild(rec);
       if (only !== null) {
         const child = rec.children[only];
-        if (child !== undefined && child >= 0) walk(child, nextWorld, nextProps);
+        if (child !== undefined && child >= 0) walk(child, nextWorld, nextProps, false, inside);
         return;
       }
       for (const child of rec.children) {
-        if (child >= 0) walk(child, nextWorld, nextProps);
+        if (child >= 0) walk(child, nextWorld, nextProps, false, inside);
       }
     }
   }

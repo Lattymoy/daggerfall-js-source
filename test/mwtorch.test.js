@@ -273,7 +273,7 @@ test('AUDIT MW-TORCH F6/F7: a build arriving mid-build is queued and runs (the n
 test('MW-D51/52 pins: the rig hands the lit light over per frame and at the build; the arm hides the torch on the carried-left rule, overlays it on both rigs, re-picks it on a view switch; the idle reads the stance (mutant: a door dropped)', () => {
   const rig = rd('src/combat/weaponRig.js');
   assert.match(rig, /torch: isLitTorch\(entity\.lightSource\),/, 'armBuildOptsOf carries the lit light');
-  assert.match(rig, /fpArm\.setWeapon\(playerWeapon\.weapon, \{ hasAmmo: hasDaggerfallArrows\(entity\?\.items\) \}\);\n(?:\s*\/\/[^\n]*\n)*\s*fpArm\.setTorch\(isLitTorch\(entity\?\.lightSource\)\);/, 'the per-frame hand-over, beside the weapon');
+  assert.match(rig, /fpArm\.setWeapon\(playerWeapon\.weapon, \{ hasAmmo: hasDaggerfallArrows\(entity\?\.items\), ammoCount: daggerfallArrowCount\(entity\?\.items\) \}\);[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*fpArm\.setTorch\(isLitTorch\(entity\?\.lightSource\)\);/, 'the per-frame hand-over, beside the weapon');
   assert.equal(isLitTorch({ templateIndex: TEMPLATES.Torch }), true);
   assert.equal(isLitTorch({ templateIndex: TEMPLATES.Lantern }), false, 'a lantern is the classic lane’s');
   assert.equal(isLitTorch(null), false);

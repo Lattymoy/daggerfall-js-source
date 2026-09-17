@@ -283,7 +283,7 @@ test('MW-D19: the rig hands the worn item to the arm every frame, in machine ord
   // the reference's updateWeaponState reads stance before weapon), the
   // swap next, the tick last so a swapped arm poses its OWN clip.
   assert.match(rig,
-    /fpArm\.setWeapon\(playerWeapon\.weapon, \{ hasAmmo: hasDaggerfallArrows\(entity\?\.items\) \}\);/,
+    /fpArm\.setWeapon\(playerWeapon\.weapon, \{ hasAmmo: hasDaggerfallArrows\(entity\?\.items\), ammoCount: daggerfallArrowCount\(entity\?\.items\) \}\);/,   // WS1: the quiver's count rides the same read
     'the swap seam reads the same worn item the sprite does, ammo included');
   const sheatheAt = rig.indexOf('fpArm.setSheathed(');
   const swapAt = rig.indexOf('fpArm.setWeapon(');

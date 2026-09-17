@@ -40,7 +40,7 @@ import { fpsSpellCasting, loadSpellCastArt, drawSpellCastHands, magicAnimFilenam
 // and runs untouched otherwise. The Morrowind arm below is an opt-in
 // layer that either draws whole or does not draw at all - there is no
 // state in which both reach the screen, and none in which neither does.
-import { fpArm, hasDaggerfallArrows } from './fpArm.js';
+import { fpArm, hasDaggerfallArrows, daggerfallArrowCount } from './fpArm.js';
 import { getPref } from '../systems/uiPrefs.js';   // MWA1: the arms switch
 import { morrowindDataCount, morrowindDataFingerprint, registerMorrowindData } from '../scenes/dataSource.js';   // MWA1: are the archives attached; AUDIT 65 XL-6: and measured
 import { mwRaceId } from '../formats/mwNpc.js';   // TR2: the one race-id spelling
@@ -86,7 +86,9 @@ export function armBuildOptsOf(entity) {
     armor: dfWornEquipment(equipTableOf(entity), EQUIP_SLOTS, ARMOR_ENUM),
     weapon: entity.equip?.slots?.[EQUIP_SLOTS.RightHand] ?? null,
     hasAmmo: hasDaggerfallArrows(entity.items),
+    ammoCount: daggerfallArrowCount(entity.items),   // WS1: the quiver
     torch: isLitTorch(entity.lightSource),   // MW-D51: the lit light, in the left hand
+    sheathing: getPref('mwSheathing'),   // WS1: the holster on the third-person body
   };
 }
 
@@ -764,7 +766,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
         // Morrowind arm now rides the same read. setWeapon's fast path
         // is one key compare - the swap itself runs only when the item
         // in the hand actually changed.
-        fpArm.setWeapon(playerWeapon.weapon, { hasAmmo: hasDaggerfallArrows(entity?.items) });
+        fpArm.setWeapon(playerWeapon.weapon, { hasAmmo: hasDaggerfallArrows(entity?.items), ammoCount: daggerfallArrowCount(entity?.items) });   // WS1: the quiver's count rides the swap
         // MW-D51: THE LIGHT FOLLOWS THE HAND. The same per-frame read
         // Handheld Torches' hand law writes (PlayerEntity.LightSource -
         // lit by use, stowed when no hand is free) hands the Morrowind

@@ -2850,7 +2850,7 @@ test('MAC-S1: ONE flush, called from every exit out of `busy`', () => {
   // ...and setWeapon's own `finally` still does all three of its duties.
   // The file's own prose is not its wiring, so it is stripped first.
   const code = src.replace(/^\s*\/\/.*$/gm, '');
-  const swap = code.slice(code.indexOf('    setWeapon(item, { hasAmmo = false } = {}) {'));
+  const swap = code.slice(code.indexOf('    setWeapon(item, { hasAmmo = false, ammoCount = null } = {}) {'));
   const tail = swap.slice(swap.indexOf('        } finally {'), swap.indexOf('        } finally {') + 600);
   assert.match(tail, /busy = false;/, 'the swap still frees the rig');
   assert.match(tail, /for \(const fn of listeners\)/, 'and still repaints (PX33)');
@@ -3235,7 +3235,7 @@ test('PX33: a weapon swap notifies the panel, like every other settlement', asyn
   // showing a weapon the rig failed to bind, which is the state most
   // worth redrawing.
   const src = readFileSync('src/combat/fpArm.js', 'utf8');
-  const sw = src.slice(src.indexOf('    setWeapon(item, { hasAmmo = false } = {}) {'));
+  const sw = src.slice(src.indexOf('    setWeapon(item, { hasAmmo = false, ammoCount = null } = {}) {'));
   const body = sw.slice(0, sw.indexOf('\n    attack(strike'));
   const fin = body.indexOf('} finally {');
   assert.ok(fin > 0, 'the swap still ends in a finally');
