@@ -22,6 +22,7 @@ import {
 import { setBindings } from '../src/ui/input.js';
 import { attachGamepad, pickPad, SWING_PX_PER_SEC } from '../src/ui/gamepadInput.js';
 import { controllerLook, setControllerLook, LookFilter } from '../src/player/lookFilter.js';
+import { padFamily, setPadFamily } from '../src/ui/padGlyphs.js';   // QS3: the family the poller writes
 import { setValue, _resetForTests, LIVE, UNAVAILABLE } from '../src/systems/settings.js';
 import { lookScale } from '../src/ui/lookSettings.js';
 
@@ -209,6 +210,43 @@ test('GP1 the poller: buttons and bound axis keys become synthetic keys by Unity
     assert.equal(pickPad([null, { connected: false, mapping: 'standard' }, { connected: true, mapping: '' }]).mapping, '', 'the first connected pad, a blank mapping allowed');
     assert.equal(pickPad([{ connected: true, mapping: 'xr-standard' }]), null);
   } finally { globalThis.window = prev.w; setBindings(null); setControllerLook(false); _resetForTests(); }
+});
+
+test('QS3 the pad\'s FAMILY: written from the pad\'s own id each tick, cleared when the pad goes and when the layer is disposed (mutant: the clear dropped, and a DualShock keeps drawing A/B/X/Y)', () => {
+  // The HUD's quickslot tags draw OUR OWN pixel buttons when the pad is
+  // the live device (ui/padGlyphs.js), and which family they draw is
+  // the pad's id - the one place in the port that knows it. The HUD
+  // asks a module rather than reaching into this layer, so this layer
+  // writes it beside `setControllerLook`.
+  const prev = { w: globalThis.window };
+  globalThis.window = { addEventListener: () => {}, removeEventListener: () => {}, dispatchEvent: () => {} };
+  const store = createBindings(); resetDefaults(store); setBindings(store);
+  let pads = [];
+  try {
+    _resetForTests();
+    setPadFamily(null);
+    const gp = attachGamepad({}, {}, { getPads: () => pads, dispatch: () => {} });
+    gp.tick(1 / 60);
+    assert.equal(padFamily(), null, 'no pad, no family');
+    const pad = (id) => ({ id, connected: true, mapping: 'standard', axes: [0, 0, 0, 0], buttons: Array.from({ length: 17 }, () => ({ pressed: false, value: 0 })) });
+    pads = [pad('Xbox Wireless Controller (STANDARD GAMEPAD Vendor: 045e Product: 02fd)')];
+    gp.tick(1 / 60);
+    assert.equal(padFamily(), 'xbox');
+    pads = [pad('Wireless Controller (STANDARD GAMEPAD Vendor: 054c Product: 09cc)')];
+    gp.tick(1 / 60);
+    assert.equal(padFamily(), 'ps', 'a DualShock 4 reports no name at all, only Sony\'s 054c');
+    // THE PAD GOING AWAY CLEARS IT. A glyph for a pad nobody is holding
+    // is a lie, and the tag falls back to the keyboard key.
+    pads = [];
+    gp.tick(1 / 60);
+    assert.equal(padFamily(), null);
+    // ...and so does disposing the layer, with the pad still connected.
+    pads = [pad('DualSense Wireless Controller')];
+    gp.tick(1 / 60);
+    assert.equal(padFamily(), 'ps');
+    gp.dispose();
+    assert.equal(padFamily(), null, 'a disposed layer leaves no family behind, as it leaves no key held');
+  } finally { globalThis.window = prev.w; setBindings(null); setControllerLook(false); setPadFamily(null); _resetForTests(); }
 });
 
 test('GP3 the controller cursor: born where the mouse last was when the pad becomes the live device, moved by the movement stick at JoystickCursorSensitivity * 900 px/s (raw axes, up is up, clamped to the canvas) with a pointermove at each step, the three click actions as pointerdown/up at its point, all of it only under a window, a real mouse move ending it with any held click released (mutant: y unflipped, or the clamp dropped, or a click left held)', () => {
