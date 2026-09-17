@@ -372,6 +372,7 @@ export function offHandQuickslot({ entity = null, say = null, toggleLight = null
   if (!carries) { say?.(QUICKSLOT_TEXT.noLight); return { kind: 'none' }; }
   if (typeof toggleLight !== 'function') return { kind: 'none' };
   // The verdict is the mod's: it acted, or it has already said why not.
+  // `lit` is the state AFTER the press - what is in the hand now.
   return toggleLight() === true ? { kind: 'light', lit: !!entity?.lightSource } : { kind: 'refused' };
 }
 
