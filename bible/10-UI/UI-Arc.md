@@ -15441,3 +15441,103 @@ does, draws a white texel under the tint and reads the pixel back (a
 quarter tint is 64/255), then renders a quad through the ARM's own call
 at two light levels - 13/13. `tools/macjRosterProbe.mjs` mounts the chat
 panel with BOTH sheets in the document and measures the rows - 6/6.
+
+## MAC-Q - the torch's fire, taken care of
+
+2026-09-17. The MAC-H/I/J/P record above closed this as investigated and
+not fixed: *"this port has never drawn a Morrowind particle system, and a
+Morrowind torch's flame is one ... it cannot be verified in this container
+at all - there is no Morrowind data here."* Mac read that and answered:
+*"Please take care of the morrowind torch flame."* His call, and this is
+the slice it asked for.
+
+### What was ported, and from where
+
+The particle system is OpenMW's, law by law, out of the files that run it
+there: `components/nifosg/particle.cpp` (the shooter, the emitter, the
+grow/fade, colour and gravity affectors, both colliders),
+`nifloader.cpp`'s `handleParticleSystem` with `handleParticleInitialState`,
+`handleParticleEmitter` and `handleParticlePrograms`, the
+`ParticleSystemController` and `ControllerFunction` in
+`nifosg/controller.cpp`, and under them osgParticle's own
+`Particle::update` and the quad `ParticleSystem::drawImplementation`
+draws. Every constant is the reference's - the counter's carried
+remainder, the speed range at half the variation, the emit rate as slots
+over the mean life, GravityAffector's `magic = 1.6f`, the
+`orthoNormalize` on the emitter's frame, the strict `x > 1` death test.
+
+### Where it lives
+
+- `formats/mwNifMesh.js` walks the three particle geometries as it always
+  walked them and, when a caller brings a sink, hands each one over WHOLE
+  - the composed transform, the property chain and the enclosing
+  NiBSParticleNode's flags (AutoPlay, LocalSpace), which is what
+  `args.mAnimFlags` is in the reference. No sink is the port before this
+  change. NiAlphaProperty's blend FUNCTION and NiZBufferProperty's two bits
+  reach the material now; nothing had asked for them before a drawable
+  that blends.
+- `formats/mwParticles.js` is the descriptor and the running system.
+  `particleSystemsOf(nif)` answers what a file carries; `createParticleSystem`
+  emits, operates and ages in the reference's own update order and answers
+  `quads()` - centre, half-extent, colour, alpha - exactly as osgParticle
+  would draw them. Pure: no GL, a `rolls` the pins can drive.
+- `formats/mwCharacter.js` `bindPart` carries a part's systems out beside
+  its batches; `mwFirstPerson.js` `bindPartsInto` puts them on
+  `assembly.effects` with the SAME placement the part's rigid shapes take -
+  the bone, the mirror, rule 14's offset, the part's attitude - because
+  they were authored in the same file at the same origin.
+- `combat/fpArm.js` `stepRigEffects` runs them each frame on the part's
+  clock (the torch overlay's when it plays, the pose's otherwise; no clock
+  is a frozen system, as the reference freezes a controller nobody
+  drives), places them through `effectPlacement` - `placeAtBone`'s own
+  arithmetic composed rather than applied - packs and uploads them, hides
+  the torch's with the torch (MW-D51's carried-left rule) and releases
+  them with the mesh. Both rigs: the arm and the body.
+- `render/renderer.js` grew one small program. The quad is built in the
+  shader off the model-view rotation's rows, so one stream serves the
+  first-person pass and the third-person body; the effect draws after the
+  body's ranges in the same pass, with the file's own blend function and
+  depth flags, never writing depth, never cast as a shadow.
+
+### The two reference frames
+
+`ParticleFlag_LocalSpace` decides them, as it does in the reference
+(nifloader.cpp:1476-1483). Under it the particles live in their node's
+space and are placed at pack time - the flame rides the hand. Without it
+they are kept in the RIG's space, the nearest thing a lens-local arm has to
+a world, so a swing leaves them behind for their lifetime: Morrowind's own
+trailing fire. That "world" is a recorded departure - it does not include
+the player's walk through the real one.
+
+### Not carried, recorded
+
+NiBSPArrayController's emission over a target's vertices or nodes (a
+torch emits from one node; the flag is read and the system refused with a
+note), NiParticleBomb (in no torch), NiParticleRotation (unused in the
+reference too), and the soft-particle effect (a shader feature of the
+reference's own).
+
+### The picture's orientation, and why it is written down
+
+osgParticle gives the quad's bottom-left corner the texture's (0,0), and
+OSG stores images bottom row first. This port uploads a decoded DDS top
+row first, exactly as the NIF's own UVs expect - every textured piece
+proves it - so here the TOP corners take v 0. One constant
+(`PARTICLE_CORNERS`), so it is one place to look if a flame ever stands on
+its head.
+
+### What could be verified here, and what could not
+
+No Morrowind file could be opened in this container, so the torch's own
+flame was not seen. What was: every law against the reference's numbers
+(`test/macq_flame.test.js`, 20), the whole chain from a hand-built file to
+pixels in a real GL context (`tools/macqFlameProbe.mjs` - the flame reads
+`[255,140,26]` where it stands, black beside it, black when hidden), and
+the seams (`bindPart`, `bindPartsInto`, `stepRigEffects`, the arm's two
+frame sites, the renderer's draw). The first look at the real thing is
+Mac's.
+
+### Pinned
+
+`test/macq_flame.test.js` (20). `tools/mutants/macq.json` (28: 27 dead,
+1 recorded equivalent). `tools/macqFlameProbe.mjs` 7/7.

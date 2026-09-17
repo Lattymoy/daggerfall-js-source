@@ -1903,6 +1903,7 @@ export async function assembleFirstPersonArm({ skeletonBytes, parts, boneSources
 
   const pieces = [];
   const notes = [];
+  const effects = [];   // MAC-Q
   // WS1: the bone addons (OpenMW's `use additional anim sources`) join
   // the skeleton BEFORE any part binds, so a part may attach at a bone
   // the addon brought. Each is `{ name, bytes }`; a file that will not
@@ -1916,10 +1917,11 @@ export async function assembleFirstPersonArm({ skeletonBytes, parts, boneSources
       notes.push(`bones: ${src.name}: ${err.message}`);
     }
   }
-  bindPartsInto({ pieces, notes, skeleton, fns: mod }, parts);
+  bindPartsInto({ pieces, notes, effects, skeleton, fns: mod }, parts);
   const assembly = {
     ok: pieces.length > 0,
     pieces,
+    effects,   // MAC-Q: the parts' particle systems, placed like their rigid shapes
     notes,
     skeleton,
     rootRef,
@@ -1947,6 +1949,7 @@ export async function assembleFirstPersonArm({ skeletonBytes, parts, boneSources
 export function bindPartsInto(assembly, parts) {
   const mod = assembly.fns;
   const { skeleton, pieces, notes } = assembly;
+  const effects = assembly.effects ?? (assembly.effects = []);   // MAC-Q: the parts' particle systems
   // MW-D44: the WEAPON's own BoneOffset, kept for the ammunition that
   // rides inside its mesh. resolveWeaponParts pushes 'weapon' before
   // 'arrow', so by the time the arrow binds this is the offset the
@@ -2155,6 +2158,21 @@ export function bindPartsInto(assembly, parts) {
                 : (bound.boneOffset || null),
             uvs: batch.uvs || null, colors: batch.colors || null, material: batch.material || null,
             positions: new Float32Array(batch.positions.length), indices: batch.indices });
+        }
+        // MAC-Q: THE PART'S PARTICLE SYSTEMS ride the same placement its
+        // rigid shapes do - the bone, the mirror, rule 14's offset and the
+        // part's pre-transform - because they were authored in the same
+        // file at the same origin. A torch's flame is one. They are kept
+        // apart from the pieces (a piece is a triangle list; this is a
+        // law and a clock) on `assembly.effects`, which combat/fpArm.js
+        // runs and draws. Only a RIGID part carries them: a skinned file's
+        // particles would follow a bone this flattener does not track.
+        for (const desc of bound.effects ?? []) {
+          effects.push({
+            slot: part.slot, bone, mirrored: mirror, tag: part.tag ?? null,
+            attachRef: bound.attachRef, boneOffset: bound.boneOffset || null, pre: part.preTransform || null,
+            desc, material: desc.material,
+          });
         }
         // MW-D44: the weapon's offset, held for the ammunition that
         // rides inside its mesh. Only the weapon's - a shield or a body

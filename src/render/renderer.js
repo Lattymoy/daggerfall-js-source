@@ -223,6 +223,60 @@ void main() {
   gl_Position = uProj * uView * world;
 }`;
 
+// MAC-Q (2026-09-17): THE PARTICLE QUAD, osgParticle's own (ParticleSystem
+// .cpp:360-403): a camera-facing quad of half-extent `size` on the view's
+// x and y axes, textured, times the particle's colour with its alpha. The
+// billboard is built HERE, off the rows of the model-view rotation, so the
+// stream a rig packs is view-independent and the same buffer serves the
+// first-person pass and the third-person body. Unlit by construction: a
+// Morrowind flame is a LightMode_Emissive material, and the reference's
+// emissive arm leaves nothing but the emission (MWT2's own note) - the
+// colour is the light.
+const PARTICLE_VS = `#version 300 es
+layout(location=0) in vec3 aCenter;
+layout(location=1) in vec2 aCorner;
+layout(location=2) in vec2 aUV;
+layout(location=3) in vec4 aColor;
+layout(location=4) in float aSize;
+uniform mat4 uProj;
+uniform mat4 uView;
+uniform mat4 uModel;
+out vec2 vUV;
+out vec4 vColor;
+void main() {
+  mat3 mv = mat3(uView * uModel);
+  // the view's x and y axes, expressed in the model's space: the ROWS of the model-view rotation
+  vec3 right = normalize(vec3(mv[0][0], mv[1][0], mv[2][0]));
+  vec3 up = normalize(vec3(mv[0][1], mv[1][1], mv[2][1]));
+  vec3 p = aCenter + (right * aCorner.x + up * aCorner.y) * aSize;
+  vUV = aUV;
+  vColor = aColor;
+  gl_Position = uProj * uView * uModel * vec4(p, 1.0);
+}`;
+const PARTICLE_FS = `#version 300 es
+precision highp float;
+in vec2 vUV;
+in vec4 vColor;
+uniform sampler2D uTex;
+uniform float uUseTex;
+uniform float uAlphaCut;
+out vec4 outColor;
+void main() {
+  vec4 texel = uUseTex > 0.5 ? texture(uTex, vUV) : vec4(1.0);
+  vec4 c = texel * vColor;
+  if (uAlphaCut > 0.0 && c.a < uAlphaCut) discard;
+  outColor = c;
+}`;
+
+/** NiAlphaProperty's blend-mode index to GL (nifloader.cpp getBlendMode,
+ *  :1899-1929) - the reference's table, one for one, with its own
+ *  fallback of SRC_ALPHA for an index it does not know. */
+export const NIF_BLEND_MODES = Object.freeze([
+  'ONE', 'ZERO', 'SRC_COLOR', 'ONE_MINUS_SRC_COLOR', 'DST_COLOR', 'ONE_MINUS_DST_COLOR',
+  'SRC_ALPHA', 'ONE_MINUS_SRC_ALPHA', 'DST_ALPHA', 'ONE_MINUS_DST_ALPHA', 'SRC_ALPHA_SATURATE',
+]);
+export const nifBlendMode = (mode) => NIF_BLEND_MODES[mode] ?? 'SRC_ALPHA';
+
 // Character fragment: the mesh path's lighting + fog verbatim, sampling
 // the rig's vertex color instead of a texture (C4b - no alpha cutout: rig
 // faces are opaque solids).
@@ -1621,6 +1675,106 @@ export class Renderer {
 
   /** Re-upload a character mesh's vertex stream in place (per-frame
    *  animation). `packed` must match the original layout/length. */
+  /** MAC-Q: a particle EFFECT's GL objects - a VAO over PARTICLE_FLOATS
+   *  (formats/mwParticles.js packParticleQuads' stream), sized for
+   *  `capacity` quads and refilled each frame. Rides a character mesh's
+   *  `effects` list and is drawn after its ranges. */
+  createParticleEffect(capacity, state = {}) {
+    const gl = this.gl;
+    const floats = 12;
+    const vao = gl.createVertexArray();
+    this._bindVao(vao);
+    const vbo = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+    gl.bufferData(gl.ARRAY_BUFFER, Math.max(1, capacity) * 6 * floats * 4, gl.DYNAMIC_DRAW);
+    const stride = floats * 4;
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, stride, 0);
+    gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 2, gl.FLOAT, false, stride, 12);
+    gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 2, gl.FLOAT, false, stride, 20);
+    gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3, 4, gl.FLOAT, false, stride, 28);
+    gl.enableVertexAttribArray(4); gl.vertexAttribPointer(4, 1, gl.FLOAT, false, stride, 44);
+    this._bindVao(null);
+    return {
+      vao, vbo, capacity: Math.max(1, capacity), count: 0, floats, hidden: false,
+      tex: null,
+      blend: !!state.blend, srcBlend: state.srcBlend ?? 6, dstBlend: state.dstBlend ?? 7,
+      alphaCut: state.alphaCut ?? 0, depthTest: state.depthTest !== false, depthWrite: state.depthWrite !== false,
+    };
+  }
+
+  /** The frame's quads into the effect. `count` is in VERTICES. */
+  updateParticleEffect(effect, packed, count) {
+    const gl = this.gl;
+    const cap = effect.capacity * 6;
+    effect.count = Math.min(count, cap);
+    if (!effect.count) return;
+    gl.bindBuffer(gl.ARRAY_BUFFER, effect.vbo);
+    gl.bufferSubData(gl.ARRAY_BUFFER, 0, packed.subarray ? packed.subarray(0, effect.count * effect.floats) : packed);
+  }
+
+  releaseParticleEffect(effect) {
+    const gl = this.gl;
+    if (!effect) return;
+    if (effect.vao) gl.deleteVertexArray(effect.vao);
+    if (effect.vbo) gl.deleteBuffer(effect.vbo);
+    if (effect.tex) gl.deleteTexture(effect.tex);
+    effect.vao = null; effect.vbo = null; effect.tex = null; effect.count = 0;
+  }
+
+  /** The effects of a character mesh, after its ranges: the NIF's own
+   *  blend function and depth flags (nifloader.cpp applyDrawableProperties
+   *  over the particle drawable, :1521-1523), depth-tested against the
+   *  body that was just drawn and never writing over it. State is
+   *  returned to the character pass's baseline on the way out. */
+  _drawParticleEffects(mesh, modelMatrix) {
+    const gl = this.gl;
+    const list = mesh.effects;
+    if (!list || !list.length) return;
+    if (!this.particleProgram) {
+      this.particleProgram = this._buildProgram(PARTICLE_VS, PARTICLE_FS);
+      const pp = this.particleProgram;
+      this._particle = {
+        proj: gl.getUniformLocation(pp, 'uProj'), view: gl.getUniformLocation(pp, 'uView'), model: gl.getUniformLocation(pp, 'uModel'),
+        tex: gl.getUniformLocation(pp, 'uTex'), useTex: gl.getUniformLocation(pp, 'uUseTex'), alphaCut: gl.getUniformLocation(pp, 'uAlphaCut'),
+      };
+    }
+    let any = false;
+    for (const e of list) {
+      if (!e || e.hidden || !e.count) continue;
+      if (!any) {
+        any = true;
+        this._use(this.particleProgram);
+        const u = this._particle;
+        gl.uniformMatrix4fv(u.proj, false, this._proj);
+        gl.uniformMatrix4fv(u.view, false, this._view);
+        gl.uniformMatrix4fv(u.model, false, modelMatrix);
+        gl.activeTexture(gl.TEXTURE0);
+        gl.uniform1i(u.tex, 0);
+        gl.depthMask(false);
+      }
+      const u = this._particle;
+      gl.uniform1f(u.useTex, e.tex ? 1 : 0);
+      gl.uniform1f(u.alphaCut, e.alphaCut || 0);
+      gl.bindTexture(gl.TEXTURE_2D, e.tex || this._blackTex);
+      if (e.blend) { gl.enable(gl.BLEND); gl.blendFunc(gl[nifBlendMode(e.srcBlend)], gl[nifBlendMode(e.dstBlend)]); }
+      else gl.disable(gl.BLEND);
+      if (e.depthTest) gl.enable(gl.DEPTH_TEST); else gl.disable(gl.DEPTH_TEST);
+      if (e.depthWrite) gl.depthMask(true); else gl.depthMask(false);
+      this._bindVao(e.vao);
+      gl.drawArrays(gl.TRIANGLES, 0, e.count);
+      this.stats.draws++;
+    }
+    if (any) {
+      gl.disable(gl.BLEND);
+      gl.enable(gl.DEPTH_TEST);
+      gl.depthMask(true);
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+      gl.bindTexture(gl.TEXTURE_2D, null);
+      this._bindVao(null);
+      this._use(this.charProgram);   // the pass's own program back, for the caller's next draw
+    }
+  }
+
   updateCharacterMesh(mesh, packed) {
     const gl = this.gl;
     gl.bindBuffer(gl.ARRAY_BUFFER, mesh.vbo);
@@ -1697,6 +1851,10 @@ export class Renderer {
     gl.uniform1f(c.useTex, 0);
     gl.uniform1f(c.alphaCut, 0);
     this._bindVao(null);
+    // MAC-Q: the rig's particle effects, over the body, in the same pass -
+    // never recorded for the shadows (a flame casts none in the reference
+    // either: osgParticle draws in the transparent bin)
+    if (mesh.effects && mesh.effects.length) this._drawParticleEffects(mesh, modelMatrix);
     gl.enable(gl.CULL_FACE);
   }
 
