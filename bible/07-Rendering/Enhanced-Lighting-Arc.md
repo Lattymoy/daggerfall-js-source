@@ -507,3 +507,232 @@ shadows) and `?lighting=classic`.
 **NOT SEEN ON A GPU** - still; the two reviewers read the code as a GPU
 would, which is the most this session can do. Mac's eye is the gate.
 
+## EL5 - THE FIELD (2026-09-17, the first report from the game)
+
+**The report.** A player at a town gate at night, on Discord (bug-reports,
+4:22 AM): "whoa... what the - the lights from inside the city are all
+bleeding through, tanking my framerate too", with a frame: the gate
+passage, orange glare blobs on the passage's inner wall where the city's
+lanterns stood behind it, the passage floor lit through the stone. Mac
+(6:09 AM): "Testing the new enhanced lighting. Will look into this", and to
+this session: "There see some major issues with the new enhanced lighting.
+No questions please investigate and ensure this is perfect", then: "Town
+gateways count as entrances for interior lighting?"
+
+**The answer to the question.** No. A gate passage is the exterior host's
+geometry under the exterior host's lighting; nothing about it is an
+interior. What the frame showed was two of the arc's own laws failing on a
+GPU - the audit's last line ("NOT SEEN ON A GPU - still") was the warning.
+
+**The two laws, and a third the harness found.**
+
+- THE GLARE'S OCCLUSION WAS A HYPERBOLIC CONSTANT (the bleeding). EL3's
+  glare quad hid itself by comparing the lantern's depth to the depth
+  image with 0.002 of slack IN THE DEPTH BUFFER'S OWN UNITS - the same
+  mistake AUDIT-EL F15 found in the cube map's bias, in the one place the
+  audit did not look. A perspective depth buffer spends most of its range
+  on the first few units: past twenty units the wall and the lantern
+  behind it differ by less than the slack, and every lantern in the town
+  glared through every wall. The test is in world units now
+  (`AIR_GLARE_SLACK` 0.5 - the flame sits on its post), the texel's view
+  depth reconstructed the way the AO's is, at five taps so a lantern half
+  behind a post is half a glare.
+- EVERY REPLAY DREW EVERY RECORD (the framerate). Six cube faces, two
+  cascades, the depth image and the emitters each walked the whole record
+  list - ten draws of the town for one frame of it, a thousand draw calls
+  each, and at night the cube map's six were of the WHOLE town to a
+  lantern's 18-unit range. `render/bounds.js`: every bundle carries a
+  bounding sphere (`Renderer.createMesh` computes one for the mesh AND one
+  per sub-mesh - a static batch is a whole block in one mesh, so the
+  block's sphere is useless and its walls' are what cull; the terrain
+  surface and the billboard batch theirs), every record its world sphere,
+  every replay its frustum's planes (frustum.js's EV3 extraction,
+  normalised); a record, a sub-mesh or a batch outside is not drawn. In
+  the probe's room a lantern's six faces draw 24 sub-meshes and cull 36.
+- ONE LANTERN CAST (the passage lit through the stone). EL2 gave the
+  nearest lantern a cube map; the other twenty lit the inner walls
+  through them. Up to `SHADOW_POINT_CASTERS` (4) lanterns cast now, the
+  nearest to the eye, sun or no sun, each into six layers of ONE depth
+  array (`sampler2DArrayShadow`; the cube's face is selected by hand in
+  `pointShadowAt(k, ...)` from a basis generated off `CUBE_FACES`, so the
+  receiver and `pointFaceMatrices` cannot disagree - `faceBasis`, pinned
+  both ways). One texture unit for any number of casters; the culling
+  above is what makes 24 face replays cheap. `shadowOfLight(i, ...)` gives
+  each light its caster's shadow, after a range early-out that spares the
+  shadow taps, the glint and the pow for every light out of its window.
+- THE RESOLVE CRUSHED THE DARKS (the harness's find). EL4's contrast,
+  1.04 about 0.18 IN LINEAR LIGHT, sent everything under 0.007 linear
+  (byte 18) to black: six pixels in ten of a dungeon frame, half of a
+  night street. The same 1.04 about mid-grey of the ENCODED value is a
+  grade, not a gate.
+
+**THE HARNESS: `tools/enhancedLightingProbe.mjs`.** The arc's pins run on a
+fake GL that compiles anything and draws nothing; this session has no
+game data. The probe draws a synthetic room and a street through the real
+renderer on a real WebGL2 context (headless Chromium, ANGLE over
+SwiftShader): classic and lane, dungeon and exterior, day and night, a
+lantern behind a wall and one in the open, a flat. It reads the pixels
+back, writes the PNGs (`scratch/el5/`, ignored), and FAILS on: a program
+that does not compile, a black or white frame, a lantern whose glare
+reaches the wall in front of it (the wall's pixels with and without the
+lantern: 0.005 of difference now, the bleed gone), a wall that casts no
+shadow from the lantern behind it (the floor in its shadow at 0.05 against
+the classic's unshadowed 0.11), replays that cull nothing. Every lane
+program compiles and links; the frames read as the design meant them:
+warm lantern light with the wall's shadow, sun shadows of the pillar, the
+wall, the crate and the flat's cutout on the street, the night street's
+lanterns with their glares.
+
+**Known limits, seen in the probe and recorded:** a hairline of light at
+the junction of a sun-facing wall and the ceiling above it in a roofed
+room under the sun (the PCF's outer taps fall past the occluder's
+silhouette) - the classic contact leak of every shadow map, mitigated not
+cured by the normal offset; a dungeon has no sun, so it shows outdoors
+under eaves and arches. The eye's image, the shafts and the AO were not
+re-judged here beyond "they run and the frame is right".
+
+**Pins:** test/el5_field.test.js (8): the sphere planes and the sphere
+test on an ortho box, a perspective frustum and the six faces; boundsOf
+and transformSphere; the casters' pick; the face basis against
+pointFaceMatrices on every face, and the shader's constants; every lane
+shader's early-out and `shadowOfLight`; the bundles' bounds; the replays'
+culling on the fake GL (two casters, a far sub-mesh, a far terrain, a far
+batch, a bare bundle); the glare, the resolve and the probe's own checks
+as text. tools/mutants/el5.json (33). The el2/el3 pins re-aimed to the
+array and the array uploads; four el2/el3 records re-aimed.
+
+## EL6 - THE FIELD'S FOUR (2026-09-17, Mac's second list)
+
+Mac, on the EL5 push: "Wanted to add. Just in case youre unaware 1. Some
+shadows (like campfire) are wonky 2. Textures in the dark look weird 3. All
+lighting sources can be seen through walls 4. Need to comprehensively make
+this where it doesnt tank performance". Each mapped to a cause the harness
+could show, then fixed at the source.
+
+1. **THE CAMPFIRE'S SHADOW** - the flame flat is the lantern. A point
+   light sits AT its flat (the torch, the campfire, the candle: archive
+   210, `SHADOW_LIGHT_FLATS`), so a cube face drawn from the light's
+   position saw that flat first in every direction and shadowed a wedge of
+   the room - turning with the flat's basis, which the replay recomputes
+   toward the light. A light flat casts from the sun (a tree's cutout
+   shadow is right) and never from a lantern.
+2. **TEXTURES IN THE DARK** - two sources. The SSAO's per-pixel rotation
+   was a hash: grain the 4x4 box blur never cancelled, and in the dark,
+   where the ambient is the only light, the grain was all a texture had.
+   It is a 4x4 ORDERED pattern now, and the blur averages exactly one tile
+   of it. And every dark gradient - a lantern's falloff across a floor -
+   was eight-bit bands; both encodes (the lane's `elFinish`, the resolve)
+   are dithered at the byte (`DITHER_GLSL`, a Bayer threshold).
+3. **LIGHTS THROUGH WALLS** - the glare was EL5's; what remained was the
+   BLOOM'S EMITTERS. The bloom source is a quarter-res colour target with
+   no depth of its own, so every emissive flat and every window drew into
+   it whatever stood in front - a torch two rooms away bloomed through the
+   stone. Each emitter fragment now asks the frame's depth at its own
+   screen position and discards when a nearer surface is there
+   (`AIR_EMIT_SLACK` 0.15 - it is in that image itself). The probe puts an
+   emitter flat behind the wall: the wall's pixels no longer change.
+4. **PERFORMANCE, COMPREHENSIVELY** - after EL5's culling the largest cost
+   left was THE CAMERA DEPTH REPLAY: the whole scene drawn a third time
+   each frame, one frame stale, only to feed the AO, the glares and the
+   shafts. The frame has a depth of its own. The frame's depth attachment
+   is a TEXTURE now, and the air's images are drawn at the RESOLVE off it:
+   the replay is gone (a full walk of the town per frame), the AO left the
+   world shaders (one texture fetch fewer per fragment; the resolve
+   multiplies the decoded frame once, `AIR_AO_RESOLVE` 0.75 of it, over the
+   world rect; AUDIT-EL F2/F12's sampler cases cannot recur), and the
+   emitters replay THIS frame's records, exact, and culled (EL5). Beside
+   it: the in-scatter loop skips a lantern the ray cannot reach (its
+   distance from the eye past the ray's length plus its range - the loop
+   ran a closed-form integral for all forty-eight), and the point-light
+   loop's early-out (EL5) stands. The casters went to six
+   (`SHADOW_POINT_CASTERS`): a gate passage has that many lanterns in
+   reach, and the culled faces are cheap.
+
+**What a frame costs now, in draws of a town of N records:** the main pass
+N; the two cascades, culled by their boxes (the near one a street's worth);
+six casters' thirty-six faces, each the records within the lantern's range
+and in front of the face; the emitters, frustum-culled. Before EL5: 10N.
+The fill: two 2048^2 depth cascades, 36 x 512^2 faces cleared and mostly
+empty, the half-res AO, the quarter-res bloom and shafts, the 32x32
+luminance, one resolve.
+
+**The order of a frame now.** beginFrame: resolve any frame still owed;
+the shadow pass draws its maps from last frame's records and drops them;
+`AirPass.prepare` takes the frame's inputs (nothing drawn); the frame image
+is bound. The world pass draws and records. The first screen draw (or
+`resolveFrame()`): `_images` off the frame's depth (AO and its blur, the
+bloom source - emitters and glares - the shafts), then the eye, the bright
+pass and the blur, then the frame to the canvas with the AO, the vignette,
+the contrast in display space, the dither.
+
+**Pins:** the el3, el4, el5 and audit_el files re-aimed to the order above
+(no image before the frame, the images and their counts at the resolve, the
+frame's depth bound for each, the AO on the resolve's unit at its mix, the
+flames never drawn from a lantern, the emitters replayed from this frame's
+records with their basis); test/el6_field.test.js (2) for the pins the
+EL6 campaign found no test could fail; tools/mutants/el6.json (26). The probe's new check:
+the emitter behind the wall.
+
+**The probe, sharpened.** Its with/without comparisons carried the eye:
+the adaptation's state ran on from scene to scene and every difference
+was a hundredth of exposure drift, not the scene's. The eye's clock is
+frozen in the probe now (`_now` constant, as the el4 pin does it), the
+air's counts are read after the resolve (they are the resolve's), and
+the bleed thresholds are five times tighter. The emitter behind the wall
+changes the wall's pixels by 0.0000; the same emitter in front of it
+fills the bloom source and lays its halo on the wall - the occlusion
+discriminates, it does not discard all.
+
+**Still not seen on Mac's GPU** - the harness is SwiftShader, the frames
+are synthetic. The four are fixed at their causes; the field decides.
+
+## EL7 - THE POLISH (2026-09-17, Mac: "Lets do #7 + I notice a bug with light sources, that have this bright translucent ball that isnt connected to the source")
+
+**The ball.** The lane's lantern glare is a camera-facing quad at the
+light's position, and the light is not where the flame is: a city light
+sits at the TOP of its flat (`collectCityLights`: `-yPos + size.h`), a
+dungeon light at its flat's centre, and the torch in the player's hand
+and the Light spell's candle have no flat at all - a bright ball half a
+unit ahead of the eye, floating. Three laws: A GLARE NEEDS A FLAME UNDER
+IT (the frame's depth within `AIR_GLARE_SLACK` (1.0) of the light at
+seven taps over the footprint - the centre, one and two half-sizes above
+and below it, either side, because a flat stands on its point and the
+light may sit at its base or its top; presence, not "nothing nearer", so
+a light in open air draws nothing and a light behind a wall draws
+nothing); no glare for a
+light within `AIR_GLARE_MIN_DISTANCE` (1.5) of the eye; and the glare is
+a flame's size (`AIR_GLARE_SIZE` 0.25 - 0.35 was a unit and a half across
+at a lantern's range: a ball).
+
+**#7, the four.**
+- THE AO BLUR IS DEPTH-AWARE: a tap counts while its view distance is
+  within the AO radius of the centre's; a wall's occlusion no longer
+  smears into the sky beside it nor a pillar's into the floor behind.
+- THREE CASCADES by view distance (`SHADOW_CASCADES` 12, 48, 240: the
+  room, the street, the town; `uSunTexel` carries the three texel sizes).
+  The near cascade's texel is 1.2 cm; the eave hairline EL5 recorded is
+  four times thinner than the 40-unit cascade left it.
+- THE RIGS CAST: `createCharacterMesh`'s bundle carries a bounding sphere
+  (`boundsOf` with the rig's stride, refreshed by `updateCharacterMesh`),
+  `drawCharacter` records it (`recordCharacter`; never from the sprite
+  target or the studio bake - a rig drawn to a 1024^2 target in a studio
+  view is no caster), and the shadow pass replays it with its own depth
+  program over CHAR_VS, the visible ranges alone.
+- THE WATER RECEIVES: `waterSurfaceFs(cloud, SHADOW_GLSL)` puts the sun
+  map on the water's sun term; the renderer builds the lane's water
+  program once with the lane (`waterSurfaceProgramLane`, its own uniform
+  table through `_waterLocs`) and `drawWaterSurface` takes it, with the
+  maps, whenever the lane and the shadows are on. A quay's shadow lies on
+  the harbour.
+
+**The probe's catch.** `${AIR_GLARE_SLACK}` with the slack at 1.0 reached
+the shader as `1` - an int, and "'<=' : wrong operand types" on a real
+GPU; the fake GL compiles anything. `glslFloat` is the one door a
+whole-number constant takes into a shader. The probe's lantern B now has
+a flame flat under it, in view: the glare shows with the flat, not
+without, and not for a torch added in the hand.
+
+**Pins:** test/el7_polish.test.js (3); the el1/el2/el3/el5 pins re-aimed
+(three cascades, the compile counts, the glare's presence test and size,
+the rig's record from drawCharacter alone). tools/mutants/el7.json (26).
+

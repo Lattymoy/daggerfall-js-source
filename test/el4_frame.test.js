@@ -16,7 +16,7 @@ import { fileURLToPath } from 'node:url';
 import {
   AIR_ADAPT_UNIT, AIR_LUM_SIZE, AIR_ADAPT_KEY, AIR_ADAPT_MIN, AIR_ADAPT_MAX, AIR_ADAPT_OPEN, AIR_ADAPT_CLOSE,
   AIR_LUM_LOG_RANGE, AIR_ADAPT_LOG_RANGE, AIR_BRIGHT_THRESHOLD, AIR_VIGNETTE, AIR_CONTRAST, AIR_ADAPT_MAX_DT,
-  packLog, unpackLog, adaptStep, AIR_ADAPT_GLSL, AirPass, AIR_AO_UNIT,
+  packLog, unpackLog, adaptStep, AIR_ADAPT_GLSL, AirPass,
 } from '../src/render/airPass.js';
 import { setFrameTarget, frameTarget, withTarget, finishVolume } from '../src/render/renderTarget.js';
 import {
@@ -53,7 +53,7 @@ function recordingGl() {
 }
 
 test('EL4: the constants and the encodings - log luminance over 16 stops, the multiplier over 4, each the inverse of the other, 1 at the midpoint', () => {
-  assert.equal(AIR_ADAPT_UNIT, 11); assert.ok(AIR_ADAPT_UNIT < AIR_AO_UNIT);
+  assert.equal(AIR_ADAPT_UNIT, 11);
   assert.equal(AIR_LUM_SIZE, 32);
   assert.equal(AIR_ADAPT_KEY, 0.18); assert.equal(AIR_ADAPT_MIN, 0.7); assert.equal(AIR_ADAPT_MAX, 1.8);
   assert.equal(AIR_ADAPT_OPEN, 0.6); assert.equal(AIR_ADAPT_CLOSE, 3.0); assert.ok(AIR_ADAPT_CLOSE > AIR_ADAPT_OPEN, 'the eye closes faster than it opens');
@@ -207,14 +207,15 @@ test('EL4: the frame lifecycle on the fake GL - bound for the world pass, every 
   r.beginFrame(I, I, new Float32Array([0.3, 0.8, -0.2]), WORLD_FRAME);
   r.drawMesh({ vao: { id: 'vao-m' }, buffers: [], subMeshes: [{ textureArchive: 1, textureRecord: 1, startIndex: 0, primitiveCount: 1 }] }, I, null);
   r.drawScreenQuad({ id: 'ui' }, { x: 0, y: 0, w: 10, h: 10 });
+  assert.equal(ap.measured, true, 'EL6: the resolve of the frame that drew measures it');
+  assert.equal(ap.adaptIndex, 1, 'the eye\'s image swapped');
   r.beginFrame(I, I, new Float32Array([0.3, 0.8, -0.2]), WORLD_FRAME);
-  assert.equal(ap.measured, true, 'the passes saw the world');
-  r.drawMesh({ vao: { id: 'vao-m' }, buffers: [], subMeshes: [{ textureArchive: 1, textureRecord: 1, startIndex: 0, primitiveCount: 1 }] }, I, null);   // so the next frame measures too
+  r.drawMesh({ vao: { id: 'vao-m' }, buffers: [], subMeshes: [{ textureArchive: 1, textureRecord: 1, startIndex: 0, primitiveCount: 1 }] }, I, null);   // so this frame measures too
   calls.length = 0;
   r.drawScreenQuad({ id: 'ui' }, { x: 0, y: 0, w: 10, h: 10 });
   const names = calls.filter((c) => c[0] === 'useProgram').map((c) => c[1]);
   assert.ok(calls.some((c) => c[0] === 'generateMipmap'), 'the mean by mip');
-  assert.equal(ap.adaptIndex, 1, 'the eye\'s image swapped');
+  assert.equal(ap.adaptIndex, 0, 'the eye\'s image swapped again');
   assert.ok(calls.some((c) => c[0] === 'uniform1i' && c[1] === 'uPrev' && c[2] === 1), 'F16: the luminance pass divides the eye out (uPrev on unit 1)');
   const ad = calls.find((c) => c[0] === 'uniform4fv' && c[1] === 'uAdaptParams');
   assert.ok(ad && ad[2][0] === 0 && near(ad[2][1], 0.18, 1e-6) && near(ad[2][2], 0.7, 1e-6) && near(ad[2][3], 1.8, 1e-6), 'the first measured resolve integrates no time (t did not move); the key and the clamps ride along');
@@ -228,14 +229,15 @@ test('EL4: the frame lifecycle on the fake GL - bound for the world pass, every 
   assert.ok(names.length >= 6, 'the resolve ran its programs');
   // the next frame integrates the time since the last resolve, bounded
   r.beginFrame(I, I, new Float32Array([0.3, 0.8, -0.2]), WORLD_FRAME);
+  r.drawMesh({ vao: { id: 'vao-m' }, buffers: [], subMeshes: [{ textureArchive: 1, textureRecord: 1, startIndex: 0, primitiveCount: 1 }] }, I, null);   // EL6: a frame measures when it drew
   t = 1016 + 5000;
   calls.length = 0;
   r.drawScreenQuad({ id: 'ui' }, { x: 0, y: 0, w: 10, h: 10 });
   const ad2 = calls.find((c) => c[0] === 'uniform4fv' && c[1] === 'uAdaptParams');
   assert.ok(near(ad2[2][0], AIR_ADAPT_MAX_DT, 1e-6), 'five seconds integrate as the bound');
-  assert.equal(ap.adaptIndex, 0, 'swapped back');
+  assert.equal(ap.adaptIndex, 1, 'swapped back');
   // the far ring's texture is the current eye
-  assert.equal(r.adaptTexture, ap.adapt[0].tex);
+  assert.equal(r.adaptTexture, ap.adapt[1].tex);
   // the door closes mid-frame: the frame target is released and nothing is owed
   r.beginFrame(I, I, new Float32Array([0.3, 0.8, -0.2]), WORLD_FRAME);
   assert.equal(frameTarget(), ap.frame.fbo);

@@ -666,12 +666,44 @@ const SOURCE_CITES = [
   // "Original finding" is a dated snapshot, so where its subject still
   // stands the cite is re-resolved and where the fix DELETED the
   // subject the number is gone and the seam is named instead.
-  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)`, `dungeonContext\.js:1307`/,
-    EX, /drinkPotion: \(key\) => magic\.drinkPotion\(key\)/],
-  ['bible/01-Overview/Port-Ledger.md', /`world\.js:3968`, `exterior\.js:(\d+)`/,
+  // AUDIT QS6 F1 (2026-09-17): WM3's own law, applied to the half these
+  // PAIRS never checked. Five Ledger rows cite `world.js:N`, `exterior.js:M`
+  // and this table captured M alone - so M was resolved at every wave and N
+  // was never read at all. All five N's were stale by thousands of lines
+  // (`world.js:3968` for a line that is 8950; `:645` for 1215; `:1094` for
+  // 2194; `:3903` for 3066; `:3920` for 8907), and citeMerge rewrote one of
+  // them INSIDE THE PICK REGEX at the QS6 merge - which is WM3's hazard
+  // exactly: a literal in the pick decides whether the entry matches at all,
+  // and asserts nothing. Every uncaptured half is `\d+` now, and each has its
+  // own entry against `WO` beside the one it stood next to.
+  // AUDIT QS6 F1, the other three pairs the same law reaches: the U44 potion
+  // door in all three hosts, the modal-frame return before the ambience
+  // update, and the modal block's own range. Every number in a pair is
+  // captured now, so none of them can be the half nobody reads.
+  ['bible/01-Overview/Port-Ledger.md', /wired at `world\.js:(\d+)`, `exterior\.js:\d+`, `dungeonContext\.js:\d+`/,
+    WO, /drinkPotion: \(key\) => magic\.drinkPotion\(key\),/],
+  ['bible/01-Overview/Port-Ledger.md', /wired at `world\.js:\d+`, `exterior\.js:(\d+)`, `dungeonContext\.js:\d+`/,
+    EX, /drinkPotion: \(key\) => magic\.drinkPotion\(key\),/],
+  ['bible/01-Overview/Port-Ledger.md', /wired at `world\.js:\d+`, `exterior\.js:\d+`, `dungeonContext\.js:(\d+)`/,
+    DC, /drinkPotion: \(key\) => magic\.drinkPotion\(key\),/],
+  ['bible/01-Overview/Port-Ledger.md', /before the ambience update \(`world\.js:(\d+)`, `exterior\.js:\d+`\)/,
+    WO, /^ {4}ambience\.update\(dt, \{ playerPos: cam\.pos, inside: false \}\);/],
+  ['bible/01-Overview/Port-Ledger.md', /before the ambience update \(`world\.js:\d+`, `exterior\.js:(\d+)`\)/,
+    EX, /^ {4}ambience\.update\(dt, \{ playerPos: eye, inside: false \}\);/],
+  ['bible/01-Overview/Port-Ledger.md', /`world\.js:(\d+)-\d+` and `exterior\.js:\d+-\d+` return on modal frames/,
+    WO, /^ {4}if \(modes\.frame\(dt, now\)\) \{$/],
+  ['bible/01-Overview/Port-Ledger.md', /`world\.js:\d+-(\d+)` and `exterior\.js:\d+-\d+` return on modal frames/,
+    WO, /^ {4}\}$/],
+  ['bible/01-Overview/Port-Ledger.md', /`world\.js:\d+-\d+` and `exterior\.js:(\d+)-\d+` return on modal frames/,
+    EX, /^ {4}if \(modes\.frame\(dt, now\)\) \{$/],
+  ['bible/01-Overview/Port-Ledger.md', /only exterior frames write it \(`world\.js:\d+`, `exterior\.js:(\d+)`\)/,
     EX, /renderer\.setWindowEmission\(windowEmissionRGB\(/],
-  ['bible/01-Overview/Port-Ledger.md', /`world\.js:645`, `exterior\.js:(\d+)` pass `getNameBankOfRegion`/,
+  ['bible/01-Overview/Port-Ledger.md', /only exterior frames write it \(`world\.js:(\d+)`, `exterior\.js:\d+`\)/,
+    WO, /renderer\.setWindowEmission\(windowEmissionRGB\(/],
+  ['bible/01-Overview/Port-Ledger.md', /`world\.js:\d+`, `exterior\.js:(\d+)` pass `getNameBankOfRegion`/,
     EX, /nameBank: getNameBankOfRegion\(dfLocation\.regionIndex\),/],
+  ['bible/01-Overview/Port-Ledger.md', /`world\.js:(\d+)`, `exterior\.js:\d+` pass `getNameBankOfRegion`/,
+    WO, /nameBank: getNameBankOfRegion\(dfLocation\.regionIndex\),/],
   ['bible/01-Overview/Port-Ledger.md', /rig sprite \(`exterior\.js:(\d+)`/, EX, /drawCharacterSprite\(renderer, canvas, rig/],
   // ROAD-G G1 (review): BOTH ends, because the half-shifted range is
   // exactly the defect this file exists to catch - the leading number
@@ -681,8 +713,10 @@ const SOURCE_CITES = [
     EX, /const detectFeed = createDetectFeed\(playerEntity, \{/],
   ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:\d+-(\d+)` build `createDetectFeed`/,
     EX, /^ {2}\}\);$/],
-  ['bible/01-Overview/Port-Ledger.md', /`world\.js:1094`, `exterior\.js:(\d+)`/,
+  ['bible/01-Overview/Port-Ledger.md', /world piles from player drops \(`world\.js:\d+`, `exterior\.js:(\d+)`\)/,
     EX, /const droppedLoot = createDroppedLoot\(/],
+  ['bible/01-Overview/Port-Ledger.md', /world piles from player drops \(`world\.js:(\d+)`, `exterior\.js:\d+`\)/,
+    WO, /const droppedLoot = createDroppedLoot\(/],
   ['bible/01-Overview/Port-Ledger.md', /createTownTalk passes no engine, `exterior\.js:(\d+)-\d+`/,
     EX, /const townTalk = createTownTalk\(\{/],
   ['bible/01-Overview/Port-Ledger.md', /at HEAD `exterior\.js:(\d+)` answers/,

@@ -594,7 +594,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   `Utility/ViewportChanger.cs:52-61` and `HUDCrosshair.cs:43-52` are a dozen
   lines each; the cost is the seam. `gl.viewport` is set full-canvas at
   four sites inside the renderer's own frame brackets
-  (`render/renderer.js:1566, :1540, :2038, :2214`) and the 2D passes
+  (`render/renderer.js:1548, :1522, :2022, :2198`) and the 2D passes
   need the full canvas back. D10 withdrew one clause as stale with
   evidence: there are no screen-to-ray conversions to fix, because the
   port's activation ray is the camera's forward vector, not a pixel
@@ -649,7 +649,7 @@ regenerated onto the new sites: ~~`exterior.js:1313` -> `:1149`~~
 (**CLOSED at TP2**: the Recall interim narrowed to the one arm this host
 cannot take, `exterior.js:1648`), ~~`exterior.js:1691` -> `:1401`~~
 (**CLOSED at QX1**: this host took the quest bridge, so the pause window's
-Quests tab has a machine to read), ~~`world.js:3305` -> `:3127`~~
+Quests tab has a machine to read), ~~`world.js:3305` -> `:3153`~~
 (**CLOSED at the ship landing**), ~~`worldModes.js:1860` -> `:1718`~~
 (**CLOSED at ROAD-F GS1**, below), `pauseWindow.js:58` -> `:65`. The
 entries in the two lists above still quote the line numbers of the

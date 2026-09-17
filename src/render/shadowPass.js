@@ -33,16 +33,42 @@
 // at construction - this module imports nothing of the renderer, so a
 // classic page never loads a shadow program) over two tiny fragment
 // shaders: nothing at all for a solid, the 0.5 cutout for a flat.
+//
+// EL5 (2026-09-17, THE FIELD - the first report from the game): "the lights
+// from inside the city are all bleeding through, tanking my framerate too"
+// (a town gate at night). Two of this file's own laws were the cause.
+//   - EVERY REPLAY DREW EVERY RECORD. Six faces of the cube map, two
+//     cascades, the camera's depth image and the emitters' image each
+//     walked the whole record list - ten draws of the town for one frame
+//     of it. Every record now carries a world-space bounding sphere
+//     (renderer.createMesh computes one per mesh AND per sub-mesh - a
+//     static batch is a whole block in one mesh, so the batch's sphere is
+//     the block's and its sub-meshes' are the walls' - the terrain and the
+//     billboard batches theirs), and every replay culls against its own
+//     frustum (frustumPlanes/sphereInPlanes): a cube face draws what is in
+//     the lantern's range and in front of that face, the near cascade the
+//     street, the camera's depth image what the eye sees.
+//   - ONE LANTERN CAST. The other twenty lit the gate's inner walls through
+//     the stone. Up to SHADOW_POINT_CASTERS lanterns cast now, the nearest
+//     to the eye, each into six layers of ONE depth array
+//     (sampler2DArrayShadow - the cube's face selection is done by hand in
+//     pointShadowAt, so any number of casters costs one texture unit);
+//     the culling above is what makes 24 face replays cheap.
 
 import { lookAt, multiply, ortho, perspective } from '../world/mat4.js';
+import { spherePlanes, transformSphere, recordVisible, subMeshVisible, batchVisible } from './bounds.js';   // EL5: the cull
 
 /** The sun map: two cascades of this size, as a depth texture array. */
 export const SHADOW_SUN_SIZE = 2048;
-/** The cube map's face size. */
+/** A caster's face size (six layers of the point depth array per caster). */
 export const SHADOW_POINT_SIZE = 512;
+/** EL5: how many lanterns cast at once - the nearest to the eye. */
+export const SHADOW_POINT_CASTERS = 6;   // EL6: six - a gate passage has that many lanterns in reach
 /** The cascades' radii around the eye, world units (a terrain tile is 6.4,
- *  an RMB block 102.4): the near street, and the town. */
-export const SHADOW_CASCADES = Object.freeze([40, 240]);
+ *  an RMB block 102.4): EL7 - the room the player stands in (a texel of
+ *  1.2 cm at 2048: the hairline at an eave's contact is four times thinner
+ *  than EL2's 40-unit cascade left it), the street, and the town. */
+export const SHADOW_CASCADES = Object.freeze([12, 48, 240]);
 /** The ortho box's half-depth along the light: enough to take a mountain
  *  pixel's height above or below the eye. */
 export const SHADOW_SUN_DEPTH = 600;
@@ -68,6 +94,12 @@ export const SHADOW_POINT_BIAS = 0.04;
 /** The reserved texture units (CLOUD_SHADOW_UNIT is 15). */
 export const SHADOW_SUN_UNIT = 13;
 export const SHADOW_POINT_UNIT = 14;
+/** EL6: Daggerfall's lights archive (world/cityLights.js LIGHTS_ARCHIVE) - the
+ *  torch, campfire, candle and lantern flats. THEY ARE THE LANTERNS: a flame
+ *  flat drawn from its own light's position is the nearest occluder in every
+ *  direction and shadowed a wedge of the room ("some shadows, like the
+ *  campfire, are wonky"). A flame casts from the sun, never from a lantern. */
+export const SHADOW_LIGHT_FLATS = 210;
 /** The record pool's ceiling - a city frame draws ~1000 meshes. Past it a
  *  frame's casters are truncated, never reallocated. */
 export const SHADOW_RECORD_MAX = 6000;
@@ -137,19 +169,40 @@ export function cubeDepthOfM(m, far, near = SHADOW_POINT_NEAR) {
   return ndc * 0.5 + 0.5;
 }
 
+/** EL5: a face's view basis - the x and y axes lookAt builds for CUBE_FACES[f]
+ *  (z is -dir). The shader's face selection projects a light-relative
+ *  vector d onto these: uv = (x.d, y.d) / major-axis * 0.5 + 0.5. */
+export function faceBasis(f) {
+  const [d, up] = CUBE_FACES[f];
+  const z = [-d[0], -d[1], -d[2]];
+  const x = [up[1] * z[2] - up[2] * z[1], up[2] * z[0] - up[0] * z[2], up[0] * z[1] - up[1] * z[0]];
+  const y = [z[1] * x[2] - z[2] * x[1], z[2] * x[0] - z[0] * x[2], z[0] * x[1] - z[1] * x[0]];
+  return { x, y };
+}
+
 /** The lantern the cube map belongs to: the nearest to the eye of the
  *  frame's point lights (vec4s: xyz, range) that is at least `minDist`
  *  away and has a range; -1 for none. */
 export function pickShadowCaster(lights, eye, minDist = SHADOW_CASTER_MIN_DISTANCE) {
-  let best = -1, bestD = Infinity;
+  return pickShadowCasters(lights, eye, 1, minDist)[0] ?? -1;
+}
+
+/** EL5: up to `max` casters - the lights nearest the eye that are a
+ *  lantern (F11's range cap) and not the eye's own candle, nearest first. */
+export function pickShadowCasters(lights, eye, max = SHADOW_POINT_CASTERS, minDist = SHADOW_CASTER_MIN_DISTANCE) {
   const n = lights.length >> 2;
+  const picked = [];   // [index, distance], kept sorted, at most `max`
   for (let i = 0; i < n; i++) {
     const dx = lights[i * 4] - eye[0], dy = lights[i * 4 + 1] - eye[1], dz = lights[i * 4 + 2] - eye[2];
     const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
     if (d < minDist || !(lights[i * 4 + 3] > 0) || lights[i * 4 + 3] > SHADOW_CASTER_MAX_RANGE) continue;   // AUDIT-EL F11
-    if (d < bestD) { bestD = d; best = i; }
+    if (picked.length === max && d >= picked[max - 1][1]) continue;
+    let at = picked.length;
+    while (at > 0 && picked[at - 1][1] > d) at--;
+    picked.splice(at, 0, [i, d]);
+    if (picked.length > max) picked.pop();
   }
-  return best;
+  return picked.map((p) => p[0]);
 }
 
 /** The frame's shadow kind off the lighting the host set: the sun map
@@ -162,21 +215,31 @@ export function shadowKind(sunScale, lightDir) {
  *  the sun or a lantern. sunShadowAt: the sun term's visibility at a world
  *  point with normal n (1 = lit); pointShadowAt: the same for the one
  *  shadowed lantern. Both 1.0 while their map is off (params.w). */
+/** EL5: the shader's face bases, generated from CUBE_FACES so the receiver
+ *  and pointFaceMatrices can never disagree. */
+function faceBasisGlsl() {
+  const v = (a) => `vec3(${a.map((x) => x.toFixed(1)).join(', ')})`;
+  const xs = [], ys = [];
+  for (let f = 0; f < 6; f++) { const b = faceBasis(f); xs.push(v(b.x)); ys.push(v(b.y)); }
+  return `const vec3 FACE_X[6] = vec3[6](${xs.join(', ')});\nconst vec3 FACE_Y[6] = vec3[6](${ys.join(', ')});`;
+}
+
 export const SHADOW_GLSL = `
 precision highp sampler2DArrayShadow;
-precision highp samplerCubeShadow;
 uniform sampler2DArrayShadow uSunShadow;
-uniform mat4 uSunVP[2];
-uniform vec4 uSunShadowParams;    // x the near cascade's radius, y z the two cascades' texel size (world), w 1 = on
-uniform samplerCubeShadow uPointShadow;
-uniform vec4 uPointShadowParams;  // xyz the light, w its far plane (0 = off)
-uniform int uShadowIndex;         // the lantern the cube map belongs to, -1 for none
+uniform mat4 uSunVP[3];
+uniform vec4 uSunShadowParams;    // x y z the three cascades' radii, w 1 = on (EL7: three)
+uniform vec4 uSunTexel;           // x y z the cascades' texel size (world)
+uniform sampler2DArrayShadow uPointShadow;   // EL5: six face layers per caster
+uniform vec4 uPointShadowParams[${SHADOW_POINT_CASTERS}];  // xyz the light, w its far plane (0 = off)
+uniform int uShadowIndex[${SHADOW_POINT_CASTERS}];         // the lantern each caster's layers belong to, -1 for none
+${faceBasisGlsl()}
 float sunShadowAt(vec3 wp, vec3 n) {
   if (uSunShadowParams.w <= 0.0) return 1.0;
   float d = length(wp - uCamPos);
-  int c = d < uSunShadowParams.x * 0.9 ? 0 : 1;
-  float texel = c == 0 ? uSunShadowParams.y : uSunShadowParams.z;
-  mat4 vp = c == 0 ? uSunVP[0] : uSunVP[1];
+  int c = d < uSunShadowParams.x * 0.9 ? 0 : d < uSunShadowParams.y * 0.9 ? 1 : 2;
+  float texel = c == 0 ? uSunTexel.x : c == 1 ? uSunTexel.y : uSunTexel.z;
+  mat4 vp = c == 0 ? uSunVP[0] : c == 1 ? uSunVP[1] : uSunVP[2];
   vec4 lp = vp * vec4(wp + n * texel * 1.5, 1.0);
   vec3 p = lp.xyz / lp.w * 0.5 + 0.5;
   if (p.x < 0.0 || p.x > 1.0 || p.y < 0.0 || p.y > 1.0 || p.z > 1.0) return 1.0;
@@ -197,23 +260,36 @@ float cubeDepthOfM(float m, float far) {
   float ndc = (far + near) / (far - near) - (2.0 * far * near) / ((far - near) * m);
   return ndc * 0.5 + 0.5;
 }
-float pointShadowAt(vec3 wp, vec3 n) {
-  float far = uPointShadowParams.w;
+// EL5: caster k's shadow at wp - the cube's face by the major axis, the face's
+// uv by its basis (pointFaceMatrices' own lookAt axes), the layer k * 6 + face
+float pointShadowAt(int k, vec3 wp, vec3 n) {
+  vec4 P = uPointShadowParams[k];
+  float far = P.w;
   if (far <= 0.0) return 1.0;
-  vec3 d = (wp + n * 0.05) - uPointShadowParams.xyz;
+  vec3 d = (wp + n * 0.05) - P.xyz;
+  vec3 a = abs(d);
+  int face; float m;
+  if (a.x >= a.y && a.x >= a.z) { face = d.x > 0.0 ? 0 : 1; m = a.x; }
+  else if (a.y >= a.z) { face = d.y > 0.0 ? 2 : 3; m = a.y; }
+  else { face = d.z > 0.0 ? 4 : 5; m = a.z; }
+  vec2 uv = vec2(dot(FACE_X[face], d), dot(FACE_Y[face], d)) / max(m, 1e-4) * 0.5 + 0.5;
+  float layer = float(k * 6 + face);
   // AUDIT-EL F15: THE BIAS IS IN WORLD UNITS - the depth is hyperbolic, and a
   // constant 0.002 off it was half a unit at five units and four at fifteen:
   // an occluder within four units of a wall cast nothing near a lantern's range
-  float m = max(max(abs(d.x), abs(d.y)), abs(d.z));
   float ref = cubeDepthOfM(m - ${SHADOW_POINT_BIAS}, far);
-  float lit = texture(uPointShadow, vec4(d, ref));
-  vec3 a = abs(d);
-  vec3 t = a.x > a.y && a.x > a.z ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);
-  vec3 u = normalize(cross(d, t)) * length(d) * 0.01;
-  vec3 v = normalize(cross(d, u)) * length(d) * 0.01;
-  lit += texture(uPointShadow, vec4(d + u, ref)) + texture(uPointShadow, vec4(d - u, ref))
-       + texture(uPointShadow, vec4(d + v, ref)) + texture(uPointShadow, vec4(d - v, ref));
+  float t = 1.5 / ${SHADOW_POINT_SIZE}.0;
+  float lit = texture(uPointShadow, vec4(uv, layer, ref));
+  lit += texture(uPointShadow, vec4(uv + vec2(t, 0.0), layer, ref)) + texture(uPointShadow, vec4(uv - vec2(t, 0.0), layer, ref))
+       + texture(uPointShadow, vec4(uv + vec2(0.0, t), layer, ref)) + texture(uPointShadow, vec4(uv - vec2(0.0, t), layer, ref));
   return lit / 5.0;
+}
+// EL5: light i's shadow - its caster's, if it has one this frame
+float shadowOfLight(int i, vec3 wp, vec3 n) {
+  for (int k = 0; k < ${SHADOW_POINT_CASTERS}; k++) {
+    if (uShadowIndex[k] == i) return pointShadowAt(k, wp, n);
+  }
+  return 1.0;
 }
 `;
 
@@ -230,7 +306,7 @@ void main() {
   if (texture(uTex, vUV).a < 0.5) discard;
 }`;
 
-const REC_MESH = 0, REC_TERRAIN = 1, REC_BB = 2;
+const REC_MESH = 0, REC_TERRAIN = 1, REC_BB = 2, REC_CHAR = 3;   // EL7: the character rigs cast
 
 /**
  * The pass: the maps, the depth programs, the record pool, the replay.
@@ -244,8 +320,10 @@ export class ShadowPass {
     const mesh = opts.build(opts.vs.mesh, DEPTH_FS);
     const terrain = opts.build(opts.vs.terrain, DEPTH_FS);
     const bb = opts.build(opts.vs.bb, DEPTH_BB_FS);
+    const char = opts.vs.char ? opts.build(opts.vs.char, DEPTH_FS) : null;   // EL7: the rigs' own vertex layout
     this.programs = {
       mesh: { p: mesh, proj: u(mesh, 'uProj'), view: u(mesh, 'uView'), model: u(mesh, 'uModel') },
+      char: char ? { p: char, proj: u(char, 'uProj'), view: u(char, 'uView'), model: u(char, 'uModel') } : null,
       terrain: { p: terrain, proj: u(terrain, 'uProj'), view: u(terrain, 'uView'), model: u(terrain, 'uModel') },
       bb: {
         p: bb, proj: u(bb, 'uProj'), view: u(bb, 'uView'), right: u(bb, 'uRight'), up: u(bb, 'uUp'), origin: u(bb, 'uOrigin'),
@@ -273,52 +351,56 @@ export class ShadowPass {
       this.sunFbos.push(fbo);
     }
     // the cube map: six depth faces, one framebuffer per face
-    const cube = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_CUBE_MAP, cube);
-    gl.texStorage2D(gl.TEXTURE_CUBE_MAP, 1, gl.DEPTH_COMPONENT24, SHADOW_POINT_SIZE, SHADOW_POINT_SIZE);
-    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_COMPARE_MODE, gl.COMPARE_REF_TO_TEXTURE);
-    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_COMPARE_FUNC, gl.LEQUAL);
-    this.pointTex = cube;
+    // EL5: the point maps - six layers per caster in ONE depth array
+    const point = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D_ARRAY, point);
+    gl.texStorage3D(gl.TEXTURE_2D_ARRAY, 1, gl.DEPTH_COMPONENT24, SHADOW_POINT_SIZE, SHADOW_POINT_SIZE, 6 * SHADOW_POINT_CASTERS);
+    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_COMPARE_MODE, gl.COMPARE_REF_TO_TEXTURE);
+    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_COMPARE_FUNC, gl.LEQUAL);
+    this.pointTex = point;
     this.pointFbos = [];
-    for (let f = 0; f < 6; f++) {
+    for (let l = 0; l < 6 * SHADOW_POINT_CASTERS; l++) {
       const fbo = gl.createFramebuffer();
       gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
-      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_CUBE_MAP_POSITIVE_X + f, cube, 0);
+      gl.framebufferTextureLayer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, point, 0, l);
       gl.drawBuffers([gl.NONE]);
       gl.readBuffer(gl.NONE);
       this.pointFbos.push(fbo);
     }
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.bindTexture(gl.TEXTURE_2D_ARRAY, null);
-    gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);
     // the pool: records are minted once and reused by index
-    /** @type {Array<{kind:number, mesh:any, matrix:Float32Array, texRemap:any, surface:any, arrayTex:any, tilemapTex:any, tileSize:number, batches:any, flatWind:Float32Array, right:Float32Array, up:Float32Array}>} */
+    /** @type {Array<{kind:number, mesh:any, matrix:Float32Array, texRemap:any, surface:any, arrayTex:any, tilemapTex:any, tileSize:number, batches:any, flatWind:Float32Array, right:Float32Array, up:Float32Array, bounded:boolean, sphere:Float32Array, subSpheres:Float32Array}>} */
     this.records = [];
     this.count = 0;
     this.recording = true;
-    this.sunVP = [new Float32Array(16), new Float32Array(16)];
+    this.sunVP = SHADOW_CASCADES.map(() => new Float32Array(16));
     this.faceVP = [0, 1, 2, 3, 4, 5].map(() => new Float32Array(16));
     this.sunParams = new Float32Array(4);
-    this.pointParams = new Float32Array(4);
-    this.shadowIndex = -1;
+    this.sunTexel = new Float32Array(4);   // EL7
+    this.pointParams = new Float32Array(4 * SHADOW_POINT_CASTERS);   // EL5: one vec4 per caster
+    this.shadowIndex = new Int32Array(SHADOW_POINT_CASTERS).fill(-1);
+    this.casters = 0;
     this.kind = null;
     /** per-frame counts, for a probe */
-    this.stats = { records: 0, sunDraws: 0, pointDraws: 0 };
+    this.stats = { records: 0, sunDraws: 0, pointDraws: 0, culled: 0 };
+    this._planes = new Float32Array(24);   // EL5: the replay's frustum
     this._identityView = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
     this._right = new Float32Array(3); this._up = new Float32Array([0, 1, 0]);
     this._zeroWind = new Float32Array(4);
-    this._sunVPFlat = new Float32Array(32);
+    this._sunVPFlat = new Float32Array(16 * SHADOW_CASCADES.length);
   }
 
   _rec() {
     if (this.count >= SHADOW_RECORD_MAX) return null;
     let r = this.records[this.count];
     if (!r) {
-      r = { kind: 0, mesh: null, matrix: new Float32Array(16), texRemap: null, surface: null, arrayTex: null, tilemapTex: null, tileSize: 0, batches: null, flatWind: new Float32Array(4), right: new Float32Array(3), up: new Float32Array(3) };
+      r = { kind: 0, mesh: null, matrix: new Float32Array(16), texRemap: null, surface: null, arrayTex: null, tilemapTex: null, tileSize: 0, batches: null, flatWind: new Float32Array(4), right: new Float32Array(3), up: new Float32Array(3),
+        bounded: false, sphere: new Float32Array(4), subSpheres: new Float32Array(0) };   // EL5: the world-space spheres, the record's and its sub-meshes'
       this.records[this.count] = r;
     }
     this.count++;
@@ -327,35 +409,48 @@ export class ShadowPass {
   recordMesh(mesh, matrix, texRemap) {
     const r = this._rec(); if (!r) return;
     r.kind = REC_MESH; r.mesh = mesh; r.matrix.set(matrix); r.texRemap = texRemap;
+    // EL5: the spheres, in the world, once per record (a mesh without bounds is drawn by every replay)
+    r.bounded = !!mesh.bounds;
+    if (r.bounded) {
+      transformSphere(matrix, mesh.bounds, r.sphere);
+      const subs = mesh.subMeshes;
+      if (r.subSpheres.length < subs.length * 4) r.subSpheres = new Float32Array(subs.length * 4);
+      for (let i = 0; i < subs.length; i++) {
+        const b = subs[i]._bounds;
+        if (b) transformSphere(matrix, b, r.subSpheres, i * 4); else r.subSpheres[i * 4 + 3] = -1;   // -1: unbounded, always drawn
+      }
+    }
   }
   recordTerrain(surface, matrix, arrayTex, tilemapTex, tileSize) {
     const r = this._rec(); if (!r) return;
     r.kind = REC_TERRAIN; r.surface = surface; r.matrix.set(matrix); r.arrayTex = arrayTex; r.tilemapTex = tilemapTex; r.tileSize = tileSize;
+    r.bounded = !!surface.bounds;
+    if (r.bounded) transformSphere(matrix, surface.bounds, r.sphere);
+  }
+  /** EL7: a character rig (createCharacterMesh's bundle: vao, count, ranges) casts too. */
+  recordCharacter(mesh, matrix) {
+    const r = this._rec(); if (!r) return;
+    r.kind = REC_CHAR; r.mesh = mesh; r.matrix.set(matrix);
+    r.bounded = !!mesh.bounds;
+    if (r.bounded) transformSphere(matrix, mesh.bounds, r.sphere);
   }
   recordBillboards(batches, flatWind, camRight, camUp) {
     const r = this._rec(); if (!r) return;
     r.kind = REC_BB; r.batches = batches; r.flatWind.set(flatWind ?? this._zeroWind);
     r.right.set(camRight); r.up.set(camUp);   // EL3: the basis the batch was drawn with, for the emission replay
+    r.bounded = false;   // a batch list is culled batch by batch (each has its own bounds about its origin)
   }
-  /** Drop the frame's records without drawing them (a frame that ran no
-   *  world pass, a panel frame). */
   discard() {
     for (let i = 0; i < this.count; i++) { const r = this.records[i]; r.mesh = null; r.surface = null; r.batches = null; r.texRemap = null; }
     this.count = 0;
   }
 
-  /**
-   * Draw the maps for THIS frame from LAST frame's records. The records
-   * stay for the air pass (EL3); the renderer discards them after both.
-   * `f` is the frame: { eye, lightDir, sunScale, pointLights (the
-   * vec4s), textures (the renderer's map), blackTex, bindVao, use }.
-   * Leaves no framebuffer bound and the caller's program shadow dirty.
-   */
+
   render(f) {
     const gl = this.gl;
-    this.stats.records = this.count; this.stats.sunDraws = 0; this.stats.pointDraws = 0;
+    this.stats.records = this.count; this.stats.sunDraws = 0; this.stats.pointDraws = 0; this.stats.culled = 0;
     this.kind = shadowKind(f.sunScale, f.lightDir);
-    this.sunParams[3] = 0; this.pointParams[3] = 0; this.shadowIndex = -1;
+    this.sunParams[3] = 0; this.pointParams.fill(0); this.shadowIndex.fill(-1); this.casters = 0;
     if (this.count === 0) { this.kind = null; return; }
     gl.disable(gl.CULL_FACE);   // the light's projection is not the mirrored one: winding is not the world's, and both faces of an open model must cast
     gl.enable(gl.DEPTH_TEST);
@@ -364,7 +459,6 @@ export class ShadowPass {
     if (this.kind === 'sun') {
       sunCascadeMatrices(f.eye, f.lightDir, this.sunVP);
       const ld = f.lightDir;
-      // the flats face the sun for their silhouette: right = up x lightDir
       const rl = Math.hypot(ld[2], ld[0]) || 1;
       this._right[0] = ld[2] / rl; this._right[1] = 0; this._right[2] = -ld[0] / rl;
       for (let c = 0; c < SHADOW_CASCADES.length; c++) {
@@ -373,53 +467,65 @@ export class ShadowPass {
         gl.clear(gl.DEPTH_BUFFER_BIT);
         this.stats.sunDraws += this.replay(f, this.sunVP[c], null);
       }
-      this.sunParams[0] = SHADOW_CASCADES[0]; this.sunParams[1] = sunTexelWorld(0); this.sunParams[2] = sunTexelWorld(1); this.sunParams[3] = 1;
-      this._sunVPFlat.set(this.sunVP[0], 0); this._sunVPFlat.set(this.sunVP[1], 16);
-    } else {
-      const i = pickShadowCaster(f.pointLights, f.eye);
-      if (i >= 0) {
-        const L = f.pointLights;
-        const pos = [L[i * 4], L[i * 4 + 1], L[i * 4 + 2]];
-        const far = L[i * 4 + 3];
-        pointFaceMatrices(pos, far, this.faceVP);
-        for (let face = 0; face < 6; face++) {
-          gl.bindFramebuffer(gl.FRAMEBUFFER, this.pointFbos[face]);
-          gl.viewport(0, 0, SHADOW_POINT_SIZE, SHADOW_POINT_SIZE);
-          gl.clear(gl.DEPTH_BUFFER_BIT);
-          this.stats.pointDraws += this.replay(f, this.faceVP[face], pos);
-        }
-        this.pointParams[0] = pos[0]; this.pointParams[1] = pos[1]; this.pointParams[2] = pos[2]; this.pointParams[3] = far;
-        this.shadowIndex = i;
-      }
+      for (let c = 0; c < SHADOW_CASCADES.length; c++) { this.sunParams[c] = SHADOW_CASCADES[c]; this.sunTexel[c] = sunTexelWorld(c); this._sunVPFlat.set(this.sunVP[c], c * 16); }
+      this.sunParams[3] = 1;
     }
+    // EL5: THE LANTERNS CAST TOO, sun or no sun - the nearest SHADOW_POINT_CASTERS
+    // of them, each into its six layers; the replays are culled to the
+    // lantern's range and the face's frustum, so a caster costs what it lights
+    const casters = pickShadowCasters(f.pointLights, f.eye);
+    const L = f.pointLights;
+    for (let k = 0; k < casters.length; k++) {
+      const i = casters[k];
+      const pos = [L[i * 4], L[i * 4 + 1], L[i * 4 + 2]];
+      const far = L[i * 4 + 3];
+      pointFaceMatrices(pos, far, this.faceVP);
+      for (let face = 0; face < 6; face++) {
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this.pointFbos[k * 6 + face]);
+        gl.viewport(0, 0, SHADOW_POINT_SIZE, SHADOW_POINT_SIZE);
+        gl.clear(gl.DEPTH_BUFFER_BIT);
+        this.stats.pointDraws += this.replay(f, this.faceVP[face], pos);
+      }
+      this.pointParams[k * 4] = pos[0]; this.pointParams[k * 4 + 1] = pos[1]; this.pointParams[k * 4 + 2] = pos[2]; this.pointParams[k * 4 + 3] = far;
+      this.shadowIndex[k] = i;
+    }
+    this.casters = casters.length;
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.colorMask(true, true, true, true);
     gl.enable(gl.CULL_FACE);
   }
 
-  /** One map's worth of depth-only draws under view-projection `vp`
-   *  (uploaded as uProj with an identity uView). `lightPos` is the cube's
-   *  light, for the flats' facing; null for the sun (this._right);
-   *  `recordBasis` (the air pass's camera replay) faces each flat as its
-   *  record was drawn. Returns the draw count. */
   replay(f, vp, lightPos, recordBasis = false) {
     const gl = this.gl;
     const P = this.programs;
+    const planes = spherePlanes(vp, this._planes);   // EL5: this replay's frustum - a record outside it is not drawn
     let draws = 0;
     let bound = null;
     const use = (prog) => { if (bound !== prog) { gl.useProgram(prog.p); gl.uniformMatrix4fv(prog.proj, false, vp); gl.uniformMatrix4fv(prog.view, false, this._identityView); bound = prog; } };
     for (let i = 0; i < this.count; i++) {
       const r = this.records[i];
+      if (r.kind !== REC_BB && !recordVisible(planes, r)) { this.stats.culled++; continue; }
       if (r.kind === REC_MESH) {
         const mesh = r.mesh;
         if (!mesh?.vao || mesh._dead || !mesh.subMeshes?.length) continue;
-        use(P.mesh);
-        gl.uniformMatrix4fv(P.mesh.model, false, r.matrix);
-        f.bindVao(mesh.vao);
-        for (const sm of mesh.subMeshes) {
+        let vaoBound = false;
+        const subs = mesh.subMeshes;
+        for (let k = 0; k < subs.length; k++) {
+          if (!subMeshVisible(planes, r, k)) { this.stats.culled++; continue; }
+          if (!vaoBound) { use(P.mesh); gl.uniformMatrix4fv(P.mesh.model, false, r.matrix); f.bindVao(mesh.vao); vaoBound = true; }
+          const sm = subs[k];
           gl.drawElements(gl.TRIANGLES, sm.primitiveCount * 3, gl.UNSIGNED_INT, sm.startIndex * 4);
           draws++;
         }
+      } else if (r.kind === REC_CHAR) {
+        const mesh = r.mesh;
+        if (!P.char || !mesh?.vao || mesh._dead) continue;
+        use(P.char);
+        gl.uniformMatrix4fv(P.char.model, false, r.matrix);
+        f.bindVao(mesh.vao);
+        if (mesh.ranges && mesh.ranges.length) {
+          for (const rg of mesh.ranges) { if (rg.hidden) continue; gl.drawArrays(gl.TRIANGLES, rg.first, rg.count); draws++; }
+        } else { gl.drawArrays(gl.TRIANGLES, 0, mesh.count); draws++; }
       } else if (r.kind === REC_TERRAIN) {
         const s = r.surface;
         if (!s?.vao || s._dead) continue;
@@ -436,6 +542,8 @@ export class ShadowPass {
         let lastSway = null;
         for (const b of r.batches) {
           if (!b?.vao || b._dead || b.conceal || f.isSpectral(b.archive)) continue;   // a concealed foe and a ghost cast nothing
+          if (lightPos && b.archive === SHADOW_LIGHT_FLATS) continue;   // EL6: a flame is the lantern, not its occluder
+          if (!batchVisible(planes, b)) { this.stats.culled++; continue; }   // EL5
           const key = b._bbKey ?? (b.frame == null ? `${b.archive}_${b.record}` : `${b.archive}_${b.record}#${b.frame}`);
           const tex = f.textures.get(key);
           if (!tex) continue;
@@ -473,14 +581,15 @@ export class ShadowPass {
     gl.activeTexture(gl.TEXTURE0 + SHADOW_SUN_UNIT);
     gl.bindTexture(gl.TEXTURE_2D_ARRAY, this.sunTex);
     gl.activeTexture(gl.TEXTURE0 + SHADOW_POINT_UNIT);
-    gl.bindTexture(gl.TEXTURE_CUBE_MAP, this.pointTex);
+    gl.bindTexture(gl.TEXTURE_2D_ARRAY, this.pointTex);   // EL5: the casters' layers
     gl.activeTexture(gl.TEXTURE0);
     gl.uniform1i(loc.sunShadow, SHADOW_SUN_UNIT);
     gl.uniform1i(loc.pointShadow, SHADOW_POINT_UNIT);
     gl.uniformMatrix4fv(loc.sunVP, false, this._sunVPFlat);
     gl.uniform4fv(loc.sunParams, this.sunParams);
-    gl.uniform4fv(loc.pointParams, this.pointParams);
-    gl.uniform1i(loc.shadowIndex, this.shadowIndex);
+    gl.uniform4fv(loc.sunTexel, this.sunTexel);   // EL7
+    gl.uniform4fv(loc.pointParams, this.pointParams);   // EL5: all the casters' vec4s at once
+    gl.uniform1iv(loc.shadowIndex, this.shadowIndex);
   }
 
 }
