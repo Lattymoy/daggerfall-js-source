@@ -208,7 +208,13 @@ if ((await st()).reflexes !== 1) { console.log('SUMMARY REFLEX PICKER DEAD'); pr
 await click(246 + 30, 95 + 4);               // back to VERY HIGH
 if ((await st()).reflexes !== 0) { console.log('SUMMARY REFLEX PICKER DEAD (2)'); process.exit(1); }
 
-await click(283, 183);                       // OK -> done
+await click(283, 183);                       // OK -> ORL1's leveling question
+await waitFrames(2);
+// ORL1: and the question takes a CLICK, which is the whole point of this
+// probe - a screen in front of the wizard's OK that only answered to the
+// keyboard would dead-end every player who creates a character by mouse.
+await click(160, 48);                        // the first option: Daggerfall's own
+await waitFrames(2);
 await waitFrames(6);
 const e = await page.evaluate(() => ({ done: !!window.__playerEntity.chargenDone, race: window.__playerEntity.race,
   gender: window.__playerEntity.gender, reflexes: window.__playerEntity.reflexes }));

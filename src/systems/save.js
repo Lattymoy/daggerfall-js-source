@@ -62,6 +62,22 @@ const ENTITY_FIELDS = [
   'currentBreath',   // P12 (SerializablePlayer carries it; missing = 0/surfaced on old saves)
   'startingLevelUpSkillSum', 'currentLevelUpSkillSum',
   'readyToLevelUp', 'pendingLevel', 'chargenDone',
+  // ORL1 (2026-09-17): WHICH LEVELING SYSTEM THIS CHARACTER LEVELS BY,
+  // and the mod's bar. `levelingSystem` is answered ONCE, at chargen,
+  // and is a property of the CHARACTER rather than of the install -
+  // which is why it rides here and not in modSettings beside the mod's
+  // sliders. The Mods pane switch decides whether a new character is
+  // ASKED; this decides what an existing one plays.
+  //
+  // A SAVE WRITTEN BEFORE THIS SLICE carries none of the three. The
+  // reader leaves them undefined, `usesVirtueLeveling` reads undefined
+  // as classic, and the two bar fields default to 0 at their only
+  // readers - so an old save loads as exactly the character it was.
+  // The mod's own save does the same with one value (player.lua:707-716
+  // persists `skillPointRollUp` alone and nothing else); the port
+  // carries the bar too, because Daggerfall has no engine-side level
+  // progress counter for it to live in the way Morrowind does.
+  'levelingSystem', 'levelProgress', 'levelRollUp',
   // AUDIT 17h F1: the six BIOGRAPHY modifiers, which DFU persists
   // one-for-one (SerializablePlayer.cs:136-141, :305-310). Without
   // them a load reset every biography answer's lasting effect.
