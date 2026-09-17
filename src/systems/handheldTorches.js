@@ -29,7 +29,9 @@
 // feeds it the frame - update() is Update, lateUpdate() is LateUpdate
 // (the mod runs both; the rig calls them in that order), draw() is
 // OnGUI's repaint. The keys are read as KeyCode names the way the
-// mod parses them (systems/keyCodes.js).
+// mod parses them (systems/keyCodes.js). The hand law has ONE other
+// caller than Update - the equip change (HT6 below), because a window
+// that is open has stopped the frames the law would otherwise run on.
 //
 // NOT CARRIED, recorded: the cross-mod seams (Vanilla Combat Event
 // Handler's onToggleOffset - isInThirdPerson stays the rig's word;
@@ -46,7 +48,7 @@ import { liveStat } from './statMods.js';
 import { TEMPLATES, isLightSource } from './useItem.js';
 import { getItem, addItem } from './inventory.js';
 import { conditionWord, itemLongName } from './itemInfo.js';
-import { getItemHands, EQUIP_SLOTS, ITEM_HANDS } from './equip.js';
+import { getItemHands, EQUIP_SLOTS, ITEM_HANDS, addEquipChangeListener } from './equip.js';   // HT6: the worn set's own door - the hand law runs at the equip moment too
 import { isShieldTemplate } from './armorMaterials.js';
 import { weaponTypeForItem, WEAPON_TYPES, NATIVE_W, NATIVE_H } from '../combat/fpsWeapon.js';
 import { weaponOffsetHeight } from '../ui/hudLarge.js';
@@ -152,6 +154,19 @@ export const torchItemWords = (item) => `${conditionWord(item).toLowerCase()} ${
 
 /** The vendored sprite's URL (the mod's own PNG, Unity's import of it). */
 export const spriteUrl = (record, frame) => new URL(`../../vendor/handheld-torches/Textures/${SPRITE_ARCHIVE}_${record}-${frame}.png`, import.meta.url).href;
+
+/** HT6: THE LIVE COMPONENT - the one whose Update ran last, and the
+ *  only one the equip change may reach. The hosts build a rig EACH
+ *  (worldModes' interior rig, dungeonContext's), so a component that is
+ *  not being given frames still holds its last `ctx` - stale `sheathed`
+ *  and `usingRightHand` from whenever that host last had the player -
+ *  and applying the law off that would stow a torch by a fact that is
+ *  no longer true. `dispose` (the rig's teardown when the mod is
+ *  switched off) clears the pointer. ONE listener for the module,
+ *  registered once at import, so no number of rigs can leave a stack of
+ *  them behind - the same shape systems/entityMods.js registers with. */
+let _liveHandLaw = null;
+addEquipChangeListener((entity) => _liveHandLaw?.(entity));
 
 /**
  * The component. `deps`:
@@ -446,6 +461,51 @@ export function createHandheldTorches({
 
   const clampStrength = (v) => Math.max(THROW_STRENGTH_MIN, Math.min(THROW_STRENGTH_MAX, v));
 
+  /** THE HAND LAW (Update 0x15c6-0x1689), the mod's own block, lifted
+   *  out of Update as a function so the EQUIP MOMENT can run the SAME
+   *  code (HT6 below) instead of a second copy of the rule. `l` is the
+   *  light Update read at the top of the frame. */
+  function handLaw(l) {
+    if (!hasFreeHand() && l && !isLantern(l)) {
+      if (w.s.onStow > ON_STOW.Unequip) dropLightSource(l);
+      else { w.lastLightSource = l; setLight(null); }
+    } else if (!hasFreeHand() && l && isLantern(l) && !w.s.lanternRelaxed) {
+      if (!w.sheathed) say(MESSAGES.noFreeHand);
+      w.lastLightSource = l; setLight(null);
+    } else if (hasFreeHand() && w.lastLightSource) {
+      setLight(w.lastLightSource); w.lastLightSource = null;
+    }
+  }
+
+  /** HT6 (2026-09-17, Mac: "When equipping a shield or other offhand
+   *  item, the torch in the inventory isnt shown unequipped and
+   *  replaced"): THE HAND LAW AT THE EQUIP MOMENT.
+   *
+   *  The law above is Update's, and the rig only runs Update on a frame
+   *  the host is not holding for an overlay (weaponRig's frame, gated
+   *  by `overlayHeld` at every host) - so a shield equipped in an OPEN
+   *  inventory window did not reach the law until the window closed,
+   *  and the window went on painting a lit torch (`lit:` in
+   *  ui/enhancedInventory.js reads entity.lightSource at render time)
+   *  beside the shield the player had just put on the same hand. The
+   *  equip table fires its listeners inside equipItem / unequipSlot
+   *  (equip.js's fireEquipChange), so the SAME block runs the moment
+   *  the table changes and the window's own refresh paints the truth -
+   *  and the reverse too, the shield coming off freeing the hand that
+   *  takes `lastLightSource` back up.
+   *
+   *  NOTHING of the rule is restated here: UpdateFreeHand then the hand
+   *  law, in Update's own order, over the settings Update reads fresh.
+   *  What the mod would NOT stow stays held - a shield in the left hand
+   *  with the weapon SHEATHED leaves a hand free by UpdateFreeHand's
+   *  own sheathed arm (0x2c91-0x2cb8), and the torch stays lit. */
+  const applyHandLaw = (entity) => {
+    if (ctx?.entity !== entity) return;   // no frame has run yet (no ctx to read sheathed from), or this is another host's wearer
+    w.s = settings();
+    updateFreeHand();
+    handLaw(light());
+  };
+
   // ---- Update (IL 0x13b0) ----
   /**
    * @param dt   the frame's seconds
@@ -455,6 +515,7 @@ export function createHandheldTorches({
    */
   function update(dt, c) {
     ctx = c;
+    _liveHandLaw = applyHandLaw;   // HT6: this host has the player, so this component answers the equip change
     w.s = settings();
     w.time += dt;
     if (!w.textures.length) loadTextures(c.renderer);
@@ -469,16 +530,7 @@ export function createHandheldTorches({
     else if (!w.sheathed) { w.sheathed = true; if (w.s.lanternRelaxed && l && isLantern(l) && hasFreeHand()) setGuard(); }
     if (c.usingRightHand !== false) { if (!w.usingRightHand) { w.usingRightHand = true; if (w.s.lanternRelaxed && l && isLantern(l) && hasFreeHand()) setGuard(); } }
     else if (w.usingRightHand) { w.usingRightHand = false; if (w.s.lanternRelaxed && l && isLantern(l) && hasFreeHand()) setGuard(); }
-    // the hand law (0x15c6-0x1689)
-    if (!hasFreeHand() && l && !isLantern(l)) {
-      if (w.s.onStow > ON_STOW.Unequip) dropLightSource(l);
-      else { w.lastLightSource = l; setLight(null); }
-    } else if (!hasFreeHand() && l && isLantern(l) && !w.s.lanternRelaxed) {
-      if (!w.sheathed) say(MESSAGES.noFreeHand);
-      w.lastLightSource = l; setLight(null);
-    } else if (hasFreeHand() && w.lastLightSource) {
-      setLight(w.lastLightSource); w.lastLightSource = null;
-    }
+    handLaw(l);
     // the sprite's frames (0x1689-0x175a): a torch's or a lantern's, a candle has none
     if (w.s.showSprite) {
       const cur = light();
@@ -627,7 +679,7 @@ export function createHandheldTorches({
     return true;
   }
 
-  function dispose() { w.loop?.stop?.(); w.loop = null; if (lightOffsetSet) { setPlayerTorchOffsetOverride(null); lightOffsetSet = null; } }
+  function dispose() { w.loop?.stop?.(); w.loop = null; if (lightOffsetSet) { setPlayerTorchOffsetOverride(null); lightOffsetSet = null; } if (_liveHandLaw === applyHandLaw) _liveHandLaw = null; }   // HT6: a torn-down component stops answering the equip change
 
   return {
     update, lateUpdate, draw, dispose, receivePickedUp,
