@@ -98,7 +98,7 @@ test('PX30: it is a READOUT, and it is updated rather than rebuilt', () => {
   // hold's four edges (down, up, cancel, leave) are subscribed by ONE helper
   // called for three slots, and the off cell's tap is the fifth site. Still
   // bound once, in build(), and still nothing else on this layer.
-  assert.equal((src.match(/addEventListener\(/g) ?? []).length, 5, 'five listener sites, and they are the quickslot cells\' and the spell chip\'s');
+  assert.equal((src.match(/addEventListener\(/g) ?? []).length, 6, 'six listener sites, and they are the quickslot cells\' and the spell chip\'s (MAC-R3: the main cell\'s hand switch joined them)');
   const events = new Set((src.match(/\.addEventListener\('(\w+)'/g) ?? []).map((m) => m.slice(19, -1)));
   assert.deepEqual([...events].sort(), ['pointercancel', 'pointerdown', 'pointerleave', 'pointerup'],
     'pointer edges only - a readout hears no key, no click and no wheel');

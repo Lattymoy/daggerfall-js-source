@@ -713,7 +713,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // caught in review, hoisted).
     const [shared, engineRig, { buildRaceCharacter },
       { EnemyAI, withinYaw, isBackFacing, openDoorsStep }, { EnemyAttack }, { makeEnemyEntity, loadMonsterCareer }, { EnemyCaster, castEnemySpell: castShared, hasMagickaToCast },
-      { runTargetMachine, isPlayerTarget, isLocalPlayerTarget, PLAYER_TARGET, PEER_CAST_TARGET, resetAllyTeamOnPlayerAttack, targetAimPoint, enemyArrowOrigin, enemyTransformPoint, arrowAimDirection, bumpAtkCount },
+      { runTargetMachine, isPlayerTarget, isLocalPlayerTarget, PLAYER_TARGET, PEER_CAST_TARGET, resetAllyTeamOnPlayerAttack, targetAimPoint, enemyArrowOrigin, enemyTransformPoint, arrowAimDirection },
       { EnhancedEnemyAI, makeNavWorld }] = await Promise.all([
       import('./shared.js'), import('../characters/engineRig.js'),
       import('../characters/raceCharacter.js'),
@@ -755,7 +755,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // MT-iv: the target machine. Every consumer below the lazy block
       // reads foeDeps.* and must guard on foeDeps first, as
       // resolvePlayerHit already does.
-      runTargetMachine, isPlayerTarget, isLocalPlayerTarget, PLAYER_TARGET, PEER_CAST_TARGET, resetAllyTeamOnPlayerAttack, bumpAtkCount,   // AUDIT WATCH1 (one home): the attack count's spelling on the wire, through the LAZY subsystem (MT-iv)   // AUDIT WORLD3 C3: the local player, told from any player; AUDIT WORLD6b-iii(a) A10: the peer's cast stand-in
+      runTargetMachine, isPlayerTarget, isLocalPlayerTarget, PLAYER_TARGET, PEER_CAST_TARGET, resetAllyTeamOnPlayerAttack,   // AUDIT WORLD3 C3: the local player, told from any player; AUDIT WORLD6b-iii(a) A10: the peer's cast stand-in
       targetAimPoint, enemyArrowOrigin, enemyTransformPoint, arrowAimDirection,   // AUDIT 62 F21 (review): the ONE aim-point law, shared with the exterior pool   // ROAD-H H1/H1b: and the ONE arrow loose point + the crouch dip beside it
     };
     // ENHANCED AI 4: the routes' world - the per-frame findPath budget
@@ -1390,9 +1390,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  the cell shows, which is this cell's law since QS4. */
   const quickOffHand = () => {
     if (offHandOffersSwap(playerEntity)) return quickSwap();
-    offHandQuickslot({ entity: playerEntity, say: (l) => hudText.add(l), toggleLight: () => weaponRig.toggleLight() });
+    offHandQuickslot({ entity: playerEntity, say: (l) => hudText.add(l), switchHand: () => weaponRig.switchHand(), toggleLight: () => weaponRig.toggleLight() });   // MAC-R3: the hand's own act beside the light's
     return true;
   };
+  const quickSwitchHand = () => { weaponRig.switchHand(); return true; };   // MAC-R3: the main cell's press - world.js's line
   /** QS6 - ONE FRAME of the hold machine, handed OUT rather than driven here:
    *  this context has no frame of its own, and BOTH hosts that mount it (the
    *  standalone `?dungeon` page and the world's dungeon mode) own one. They
@@ -1470,7 +1471,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:7026 / exterior.js:3176), set
+  // host's own townTalk sink (world.js:7030 / exterior.js:3177), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -2926,8 +2927,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:9662,
-              // exterior.js:4589 and worldModes.js:6140 already ran;
+              // playerArrowHitFoe is the one copy world.js:9666,
+              // exterior.js:4590 and worldModes.js:6140 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -4734,7 +4735,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const _mstate = f.attack.machine.state;
       _strikeEdge = _mstate !== 'Idle' && (f._prevMState ?? 'Idle') === 'Idle';
       f._prevMState = _mstate;
-      if (_strikeEdge) f._atkA = foeDeps.bumpAtkCount(f._atkA, f.attack.firedRanged);   // WORLD2: the attack count out, the ranged bit in its low bit (AUDIT WATCH1: one home, enemyTargets.bumpAtkCount)
+      if (_strikeEdge) f._atkA = (((f._atkA | 0) >> 1) + 1) * 2 + (f.attack.firedRanged ? 1 : 0);   // WORLD2: the attack count out, the ranged bit in its low bit
       // PlayAttackSound (:100-113) - half the time, humans silent
       // except the watch, at whatever volumeScale the last attract
       // sound left behind. Through the one home (AUDIT 24 wave 41):
@@ -4979,7 +4980,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // on a touch-first device (ui/enhancedHud.js's second departure),
         // and a door the host never handed over is a control that
         // platform does not have - which is the whole of AUDIT SOC C9.
-        quickUse: (n) => quickUse(n), quickSwap: () => quickSwap(), quickOffHand: () => quickOffHand(), quickSpell: () => quickSpell(),   // QS6
+        quickUse: (n) => quickUse(n), quickSwap: () => quickSwap(), quickOffHand: () => quickOffHand(), quickSpell: () => quickSpell(), quickSwitchHand: () => quickSwitchHand(),   // QS6   // MAC-R3
         weaponSheathed: !!playerWeapon.sheathed });   // AUDIT 28 W2: the arrow counter's drawn-bow gate   // U38 + X4 + U43
     hudText.tick(dt);
     // AUDIT 64 F37: popupText is a NativePanel component of the HUD
@@ -5240,7 +5241,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // both of them hand it in: dungeon.js's opts bag and
         // worldModes' (the world-hosted crawl, which is where the
         // classic start into Privateer's Hold lives, and which is the
-        // pause door ui/input.js:619 reaches underground).
+        // pause door ui/input.js:629 reaches underground).
         relock: () => opts.relock?.(),
         // the LOAD arm needs the host's position applier, exactly as
         // routeKey's own QuickLoad case passes it

@@ -55,14 +55,14 @@ does the pack's USE arm.
                         worldModes.js:1854 (the factory) and :1904 (a
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
-                        dungeonContext.js:957, world.js:1725,
-                        exterior.js:2145. It is the only window TWO
+                        dungeonContext.js:956, world.js:1725,
+                        exterior.js:2146. It is the only window TWO
                         enhanced screens already push - the sheet's
                         button and the pack's USE hand-off, whose
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:5237, dungeonContext.js:6014. A seam
+    / NOTEBOOK          world.js:5241, dungeonContext.js:6014. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -8558,7 +8558,7 @@ cited and ported somewhere in `src/`. FOUR were not:
 
 ### UI1 CLOSED: the use-magic-item window
 
-The port had the DOOR and not the room. `input.js:588` routed
+The port had the DOOR and not the room. `input.js:598` routed
 `Actions.UseMagicItem` to `ctx.openUseMagicItem`, `hudLarge.js:151`
 gave the large HUD's button its rect, `inputActions.js` bound KeyU -
 and no host implemented the method, so a live binding silently did
@@ -9737,9 +9737,9 @@ re-resolved the `exterior.js` half of a three-file sentence and left the
 `ExteriorAutomapWindow` construction, `:4101` on a `locationName:`
 field). Both halves are now read by `test/citedrift.test.js` - the
 existing entries only ever captured the exterior number, which is how
-the other half went stale unnoticed. (The rest cite named `world.js:5509`,
+the other half went stale unnoticed. (The rest cite named `world.js:5513`,
 the first of the host's TWO identical `act === 'Rest'` arms; ROAD-H H5
-deleted the second and the cite is `world.js:5515` now.)
+deleted the second and the cite is `world.js:5519` now.)
 
 ## AUDIT 62 F24/F25 - THE SENTINEL SWEEP WAS TWO WINDOWS SHORT (2026-09-07)
 
@@ -13389,7 +13389,7 @@ items off your character."*
 
 It did not, and the whole of the reason is one line. INV1 hung the
 gesture on the pack's rows - `itemRow`'s `if (from === 'local')
-dragFrom(row, item)` (`ui/enhancedInventory.js:1716`) - and made the
+dragFrom(row, item)` (`ui/enhancedInventory.js:1741`) - and made the
 body a drop TARGET, with `equippedList` saying so in its own comment:
 *"the body is the equip target - `dragFrom`'s pointerup finds it by hit
 test, so the map needs no handler of its own"*. True for the direction
@@ -14525,9 +14525,9 @@ whether an entry MATCHES and asserts nothing.
 Following it out was worse than the symptom. Five Ledger rows cite a
 PAIR - `` `world.js:N`, `exterior.js:M` `` - and the table captured `M`
 alone. So `M` was re-resolved at every wave for a year and `N` was never
-read: `world.js:4052` named a line that is 8950, `:647` one that is
+read: `world.js:4056` named a line that is 8950, `:647` one that is
 1215, `:1094` one that is 2194, `:3903` one that is 3066, `:3920` one
-that is 8907. `world.js:3803-3822` and `dungeonContext.js:1308` were
+that is 8907. `world.js:3807-3826` and `dungeonContext.js:1307` were
 stale the same way. Seven numbers re-resolved BY CONTENT, every
 uncaptured half de-baked to `\d+`, and eight new entries added so every
 number in a pair is captured. The half nobody reads cannot rot in
@@ -15541,3 +15541,79 @@ Mac's.
 
 `test/macq_flame.test.js` (20). `tools/mutants/macq.json` (28: 27 dead,
 1 recorded equivalent). `tools/macqFlameProbe.mjs` 7/7.
+
+## MAC-R2/R3/R4 - the doubled line, the hand cells, the hold under a repaint (2026-09-17)
+
+Three of the four bugs on Mac's list (the fourth, the raised blade, is
+02-Formats/Morrowind-Rules.md MAC-R1).
+
+**R2 - "The enhanced quickbar sometimes shows double messages."** The
+diamond's finger was measured first and acquitted:
+`tools/macrHudTapProbe.mjs` draws the HUD over the real module on a
+phone context and presses every cell with real touch points through
+CDP - one tap is ONE performer call on c1, c2, the off cell and the
+main cell, a wandering tap is one, two quick taps are two, a hold is
+none, a mouse click is none (19/19). The double is the KEY's: a held key
+auto-repeats its `keydown`, and the two quickslot actions that are not
+polled - the swap and the off hand - were routed on every repeat by the
+two self-routing hosts' arms (world.js, exterior.js) and by `routeKey`
+for the modal hosts. A key held a beat too long readied the swap and put
+it away again, or lit the torch and doused it: two lines and a net
+nothing, "sometimes" because it takes the beat. The polled three were
+already edge-only (`noteKeyDown` drops the repeat flag, MWCROUCH), and
+DFU's ActionStarted is the press edge alone (InputManager.cs:634-637).
+Now `routeKey` swallows a quickslot action's repeat before the table,
+and the two arms route the press edge and eat the repeat.
+
+**R3 - "Tapping the equip hand in the quickbar doesn't switch to your
+other weapon in hand (still bound to H). Even if a torch isn't equipped a
+message still shows up that you can't light the torch."** QS4 gave the
+off cell ONE act, the light's toggle, and the main cell none - so a cell
+showing the bow on the left said "You have no light source.", and the
+weapon in hand answered nothing. A hand cell's own act is DFU's
+SwitchHand (WeaponManager.cs:271-273, the H key): the other weapon in
+hand. `offHandQuickslot` now presses what the cell SHOWS, in full, over
+`quickslotView`'s kinds: a lit light douses; an empty hand with a light
+carried ignites it (the mod's own equip-and-light); the shield, the
+off-hand weapon and an empty hand with no light SWITCH HANDS through the
+rig's `switchHand` (the rig's own refusal over a shield stays silent, as
+DFU's ToggleHand); the swap is the caller's arm as before; and the
+light's refusal is said only where there is no hand to switch (a host
+with no rig door). The four hosts hand `switchHand` beside `toggleLight`
+- the world's and the fixed city's `weaponRig`, the interior's
+`interiorWeapon`, the dungeon's own rig - and a `quickSwitchHand`
+performer through `drawHud` to the diamond, whose MAIN cell now taps it:
+one listener, no hold (what is in the hand is not a list). QS3's
+"the main cell takes no action" pin is re-aimed to "one action, the hand".
+
+**R4 - "Hold to drag in the enhanced inventory sometimes doesn't work
+properly."** INV3 measured the finger's drift; this is the pane's own
+repaint. A touch pointer IMPLICITLY CAPTURES the row it lands on, and a
+captured row that `render()` detaches raises `lostpointercapture` -
+which AUDIT INV2 listened for and read as "the pointer taken back", one
+door out of the session. The pane repaints on things a hold cannot see
+coming (INV2's own list: an archive icon landing, the doll settling, the
+arm rig rebuilding), so a press that overlapped one died with no ghost
+and no refusal. The session's listeners are the window's and need no
+capture at all, so it is given back the moment it is granted -
+synchronously in the press handler and again on `gotpointercapture` -
+and the abort that read its loss is retired; a pointer really taken
+back still arrives as `pointercancel`. Two more doors a real phone has
+that the probe's did not: Android's long-press `contextmenu` is refused
+for the session's life on any document (the hosts' guard covers a
+host's), and iOS's long-press callout is off the tiles and the panels
+(`-webkit-touch-callout: none`).
+
+Said plainly: `tools/macrHoldRepaintProbe.mjs` drives a hold with two
+repaints inside it under real CDP touch and it arms, carries and
+releases 8/8 - and so did the OLD code, because this headless Chromium
+dispatched no implicit capture for CDP touch (no `gotpointercapture` in
+the event log either way). The repaint premise stands on the Pointer
+Events spec's implicit-capture release on removal and on Android
+Chrome, where it is implemented, not on a measurement made here. The
+fix costs nothing where the premise is false and the two phone doors
+are real either way.
+
+`test/macr_fixes.test.js` - 5 pins across the four. `tools/mutants/macr.json`
+- 18 dead. AUDIT INV2's lost-capture pin, QS3's listener count and
+main-cell pins, drawHud's signature pins re-aimed.

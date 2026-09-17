@@ -630,7 +630,7 @@ export function validSharedFoe(sf) {
   // published was refused WHOLE and the memory came back EMPTY.
   //
   // `entity.team` is `MobileTeams`' NAME in this port, not its ordinal -
-  // 'PlayerEnemy', 'PlayerAlly', 'Vermin' (characters/enemyEntity.js:146's
+  // 'PlayerEnemy', 'PlayerAlly', 'Vermin' (characters/enemyEntity.js:150's
   // default, characters/enemyTargets.js' whole law, `f.entity.team ===
   // 'PlayerAlly'` at combat/playerWeapon.js:230) - and the publisher hands the
   // live field straight over (dungeonContext.js' foe record, AUDIT 63 F26's

@@ -370,16 +370,21 @@ test('QS3: the block is written only when it CHANGED, and a phone can press it',
   // bound ONCE, in build - a frame binds nothing. QS6 made them FIVE
   // call sites, not five listeners: `bindHold` subscribes the four
   // edges a hold needs (down, up, cancel, leave) and is called three
-  // times, and the off cell's tap is the fifth site.
-  assert.equal((HUD.match(/addEventListener\(/g) ?? []).length, 5, 'five listener sites, and they are these five');
+  // times, and the off cell's tap is the fifth site. MAC-R3 (2026-09-17):
+  // and the MAIN cell's tap is the sixth - the hand switch.
+  assert.equal((HUD.match(/addEventListener\(/g) ?? []).length, 6, 'six listener sites, and they are these six');
+  assert.match(HUD, /cells\.main\.cell\.addEventListener\('pointerdown', tap\(\(\) => \{ liveOpts\.quickSwitchHand\?\.\(\); \}\)\);/, 'MAC-R3: the main cell switches hands');
   assert.equal((HUD.match(/\bbindHold\(/g) ?? []).length, 3, 'bindHold is called for exactly three slots');
   for (const e of ['pointerdown', 'pointerup', 'pointercancel', 'pointerleave']) {
     assert.ok(HUD.includes(`addEventListener('${e}'`), `a hold hears ${e} - a finger that slides off must not fire the slot`);
   }
   assert.doesNotMatch(HUD, /registerOverlay/, 'a readout still goes through no door');
-  // The main cell takes no action at all - a tap on the weapon is not
-  // a swing through the HUD and not a draw either.
-  assert.doesNotMatch(HUD, /cells\.main\.cell\.addEventListener/);
+  // The main cell took no action at all - a tap on the weapon is not a
+  // swing through the HUD and not a draw either. MAC-R3 (2026-09-17)
+  // gave it the ONE act a hand cell has, DFU's SwitchHand, and nothing
+  // else: no swing, no draw, no hold.
+  assert.equal((HUD.match(/cells\.main\.cell\.addEventListener/g) ?? []).length, 1, 'the main cell listens once, for the hand switch');
+  assert.doesNotMatch(HUD, /bindHold\(cells\.main/, 'and it does not hold - what is in the hand is not a list');
 });
 
 test('QS4: every host hands drawHud the diamond\'s three doors - a tap on a phone is a control only if the host gave one (mutant: a host that forwards none, so the cells are dead on the one platform the departure exists for)', () => {
@@ -397,11 +402,11 @@ test('QS3: drawHud forwards the sheathe state and the two phone doors', () => {
   // not tell a drawn sword from a put-away one.
   assert.match(hud, /weaponSheathed: weaponSheathed,/);
   assert.match(hud, /quickUse: quickUse \?\? null,\s*\n\s*quickSwap: quickSwap \?\? null,\s*\n\s*quickOffHand: quickOffHand \?\? null,[^\n]*\n\s*quickSpell: quickSpell \?\? null,/);
-  assert.match(hud, /quickUse = null, quickSwap = null, quickOffHand = null, quickSpell = null \} = \{\}\) \{/);
+  assert.match(hud, /quickUse = null, quickSwap = null, quickOffHand = null, quickSpell = null, quickSwitchHand = null \} = \{\}\) \{/);   // MAC-R3: the hand switch joins them
   // ...on ONE line, and the new keys BELOW the ones the bible cites by
   // line number: a split in this signature moved four Port-Status src
   // cites and test/citedrift.test.js caught every one of them.
-  assert.match(hud, /readied = null, weapon = null, weaponSheathed = true, quickUse = null, quickSwap = null, quickOffHand = null, quickSpell = null \} = \{\}\)/);
+  assert.match(hud, /readied = null, weapon = null, weaponSheathed = true, quickUse = null, quickSwap = null, quickOffHand = null, quickSpell = null, quickSwitchHand = null \} = \{\}\)/);
   // ...and the view is composed from it, with the entity drawHud
   // already hands over.
   assert.match(HUD, /quickslotView\(vitals, \{ weapon: opts\.weapon \?\? null, sheathed: opts\.weaponSheathed \?\? false,\s*\n\s*readiedIndex: opts\.readied\?\.index \?\? null \}\)/);   // QS6: and which spell is actually in hand

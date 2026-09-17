@@ -2894,7 +2894,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // through the one that owns the billboard - `exteriorFoePool` is
     // the watch AND the encounter foes, and this arm reached the
     // encounter pool's remover for both. That was not a leak: removeFoe
-    // (exteriorFoes.js:366-371) never looks the record up in `foes`, and
+    // (exteriorFoes.js:367-372) never looks the record up in `foes`, and
     // both pools share this host's one renderer, so a struck WATCHMAN
     // got exactly what removeGuard (cityGuards.js:1260-1262) gives it -
     // batch freed, `dead = true`, no corpse, skipped by the next AI pass
@@ -3208,9 +3208,13 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  QS4, applied to the one state that had two keys and now has one. */
   const quickOffHand = () => {
     if (offHandOffersSwap(playerEntity)) return quickSwap();
-    offHandQuickslot({ entity: playerEntity, say: (l) => townTalk.say(l), toggleLight: () => weaponRig.toggleLight() });
+    offHandQuickslot({ entity: playerEntity, say: (l) => townTalk.say(l), switchHand: () => weaponRig.switchHand(), toggleLight: () => weaponRig.toggleLight() });   // MAC-R3: the hand's own act beside the light's
     return true;
   };
+  /** MAC-R3: the main cell's press - the weapon in hand's own act is the
+   *  OTHER hand (SwitchHand, H): the same door the key's release edge
+   *  takes in the frame, so the diamond and the key cannot differ. */
+  const quickSwitchHand = () => { weaponRig.switchHand(); return true; };
   /** QS6 - ONE FRAME of the hold machine, in the host's own words. A tap
    *  performs the slot; a hold cycles what is in it. The three keys are
    *  POLLED_ACTIONS (ui/input.js) because only the frame can tell those apart,
@@ -5261,7 +5265,7 @@ export async function bootWorld(canvas, renderer, params, status) {
      *  GameManager.Instance.WeaponManager.ToggleSheath() - a SINGLETON
      *  call with no scene gate at all, registered for both buttons at
      *  :211-212, so the panel is live on every screen the bar is drawn
-     *  on. Here routeAction's arm is optional (ui/input.js:587) and
+     *  on. Here routeAction's arm is optional (ui/input.js:597) and
      *  only dungeonContext.js carried the door, so above ground, in
      *  ?exterior and inside a building the click was swallowed by
      *  routeLargeHudClick's unconditional `return true` and nothing
@@ -5486,7 +5490,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // (The SocialInteract arm above stays ungated - AUDIT SOC B4/D1's whole
     // finding is that the modal contexts carry NO socialInteract, so there is
     // no second answer to collide with.)
-    if (!townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior' && QUICKSLOT_ACTIONS.has(act) && !POLLED_ACTIONS.has(act) && socialMenuCanOpen() && routeAction(act, hudCtx)) { e.preventDefault(); return; }
+    if (!townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior' && QUICKSLOT_ACTIONS.has(act) && !POLLED_ACTIONS.has(act) && socialMenuCanOpen()) { if (!e.repeat && routeAction(act, hudCtx)) { e.preventDefault(); return; } if (e.repeat) { e.preventDefault(); return; } }   // MAC-R2: the press edge alone - a held key's auto-repeat is nothing (ui/input.js routeKey has the law)
     // U45 - THE ONE DOOR PER DESTINATION: this ladder and the large
     // HUD's eleven panels open the same windows, so they read the same
     // object. It is the same law U43 applied to the interior arm, one
@@ -5947,7 +5951,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7387-7399 -
+  // worldModes answers it in BOTH modes (worldModes.js:7390-7402 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -9670,11 +9674,11 @@ export async function bootWorld(canvas, renderer, params, status) {
         // AFTER the damage fork closes (:615), so a shaft that lost the
         // roll still enrages what it hit and wakes the area. ROAD-G G1
         // (review): the WATCH carries the pair now
-        // (cityGuards.js:580-585), so this seam ROUTES by pool exactly
+        // (cityGuards.js:585-590), so this seam ROUTES by pool exactly
         // as `dealDamage` above it does, instead of excluding the
         // guards - a zero-damage shaft into a pacified watchman has to
         // reach the same door the zero-damage SWING already reaches
-        // (cityGuards.js:1049). DFU makes no pool distinction:
+        // (cityGuards.js:1069). DFU makes no pool distinction:
         // AssignBowDamageToTarget's player arm (DaggerfallMissile.cs
         // :660-688) calls WeaponDamage, so :630 runs for the shaft as
         // for the swing.
@@ -9828,7 +9832,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           // on a touch-first device (ui/enhancedHud.js's second departure),
           // and a door the host never handed over is a control that
           // platform does not have - which is the whole of AUDIT SOC C9.
-          quickUse: (n) => quickUse(n), quickSwap: () => quickSwap(), quickOffHand: () => quickOffHand(), quickSpell: () => quickSpell(),   // QS6
+          quickUse: (n) => quickUse(n), quickSwap: () => quickSwap(), quickOffHand: () => quickOffHand(), quickSpell: () => quickSpell(), quickSwitchHand: () => quickSwitchHand(),   // QS6   // MAC-R3: the main cell's hand switch
           weaponSheathed: !!weaponRig.playerWeapon.sheathed });   // AUDIT 28 W2: the arrow counter's drawn-bow gate   // U38 + X4 + U43
     }
     townTalk.frame(dt);   // T3b: HUD lines + the talk overlay, above everything

@@ -5164,7 +5164,7 @@ export function createWorldModes(host) {
           // (dungeonContext.js:5530), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
-          // the key falls to routeKey -> ui/input.js:619 -> the
+          // the key falls to routeKey -> ui/input.js:629 -> the
           // context's togglePause (ui/pauseDoor.js:207-224).
           relock: () => host.relock?.(),
           // B4: the dungeon quicksave rides the ONE composer - DFU
@@ -6115,7 +6115,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:6793's own wave-46 note); the interior
+          // a blow (world.js:6797's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage(dmg);   // BA1: RemoveHealth carries the amount
@@ -6317,7 +6317,7 @@ export function createWorldModes(host) {
         { detected: _detected, playerXZ: [player.pos[0], player.pos[2]],
           // QS4: the phone's own doors, this mode's own rig - see world.js's twin.
           quickUse: (n) => interiorKeyCtx.quickUse(n), quickSwap: () => interiorKeyCtx.quickSwap(),
-          quickOffHand: () => interiorKeyCtx.quickOffHand(), quickSpell: () => interiorKeyCtx.quickSpell(),   // QS6
+          quickOffHand: () => interiorKeyCtx.quickOffHand(), quickSpell: () => interiorKeyCtx.quickSpell(), quickSwitchHand: () => interiorKeyCtx.quickSwitchHand(),   // QS6   // MAC-R3
           largeHud: largeHudOptions({ renderer, fetchBytes, palette }, playerEntity),
           // AUDIT 28 W2: the interior frame never handed drawHud a font,
           // so nothing text-shaped on the classic HUD (the mode word,
@@ -6921,7 +6921,7 @@ export function createWorldModes(host) {
   addEventListener('mousedown', (e) => {
     // AUDIT-MACK F2: THIS HOST DOES NOT FEED THE HELD SET, and MAC-K1
     // briefly made it. `keys` is not this host's - it arrives on the
-    // host bag (`exterior.js:3265`, `world.js`'s twin), and the OUTER
+    // host bag (`exterior.js:3266`, `world.js`'s twin), and the OUTER
     // host's own mousedown writes `keys.add(mouseCode(e.button))`
     // UNGATED, before any mode test, on a listener that is never
     // removed. So the three button codes were already in the Set while
@@ -7288,9 +7288,12 @@ export function createWorldModes(host) {
       // cell shows. The swap is THIS ctx's (it refreshes this mode's rig).
       if (offHandOffersSwap(playerEntity)) return interiorKeyCtx.quickSwap();
       offHandQuickslot({ entity: playerEntity, say: (l) => townTalk?.say?.(l),
+        switchHand: () => interiorWeapon.switchHand(),   // MAC-R3: the hand's own act beside the light's - THIS mode's rig
         toggleLight: () => interiorWeapon.toggleLight() });
       return true;
     },
+    /** MAC-R3: the main cell's press indoors - this mode's rig, as H is. */
+    quickSwitchHand() { interiorWeapon.switchHand(); return true; },
     /** TR5: dfuiOpenTransportWindow's INDOORS arm (DaggerfallUI.cs
      *  :691-694) - inside, the key refuses with a HUD line instead of
      *  opening the picker. Both interior modes are inside. */
@@ -8333,9 +8336,9 @@ export function createWorldModes(host) {
      *  .cs:175-176 writes `weaponDrawn`/`usingLeftHand` off it,
      *  :420-421 restores them onto it. The port has FOUR PlayerWeapons
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
-     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:2842-2864), and IS1 routed the inside-a-building save to
+     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:2843-2865), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
-     *  unconditionally (world.js:4572). So an F9 pressed in a shop
+     *  unconditionally (world.js:4576). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them
      *  back into the street's rig; the rig actually in the player's
      *  hands was in no envelope at all.
@@ -8362,7 +8365,7 @@ export function createWorldModes(host) {
      *  presenter for the whole visit) or the interior's? world.js's gate read townTalk's slot alone. */
     deathUp() { return mode === 'dungeon' ? !!dungeonCtx?.deathUp?.() : interiorOverlay instanceof DeathScreen; },
     /** The restore half - and NOT gated on the mode, deliberately.
-     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:4654)
+     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:4658)
      *  and only re-enters the building at :4217, so the mode at apply
      *  time is whatever the LOAD landed in, not whatever the SAVE was
      *  taken in: an outdoor save loaded while the player was indoors
@@ -8372,7 +8375,7 @@ export function createWorldModes(host) {
      *
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
-     *  HARD2c: this used to spell them out, and named `world.js:4766`
+     *  HARD2c: this used to spell them out, and named `world.js:4770`
      *  and `dungeonContext.js:5602` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */

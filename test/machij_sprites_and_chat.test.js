@@ -304,7 +304,7 @@ test('MAC-P: the borrow survives a throw, because a leaked studio is permanent',
 test('MAC-P: the arm asks for the same light the sprites do, through the same switch', () => {
   const arm = read('src/combat/fpArm.js');
   assert.match(arm, /const vmLight = fpLightingOn\(\) \? \(renderer\.flatLightAt\?\.\(\) \?\? null\) : null;/);
-  assert.match(arm, /renderCharacterSprite\(mesh, NIF_TO_PASS, proj, view, pw, ph, \{ lensLocal: true, viewmodelLight: vmLight \}\)/);
+  assert.match(arm, /renderCharacterSprite\(mesh, NIF_TO_PASS, proj, view, pw, phFull, \{ lensLocal: true, viewmodelLight: vmLight \}\)/);
   assert.match(arm, /import \{ fpLightingOn \} from '\.\/fpsWeapon\.js';/,
     'one switch, not two - the sprite lane and the arm lane are the same setting');
   // the UI read-back keeps its OWN studio: a picture on a panel is not in the room
