@@ -335,7 +335,7 @@ void main() {
 }`;
 
 import { ShadowPass } from './shadowPass.js';   // EL2: the lane's shadow maps - a leaf that compiles nothing until a lane asks
-import { AirPass } from './airPass.js';   // EL3: the depth image, the ambient occlusion, the bloom and the shafts - the same kind of leaf
+import { AirPass, AIR_ADAPT_UNIT as ADAPT_UNIT } from './airPass.js';   // EL3: the depth image, the ambient occlusion, the bloom and the shafts - the same kind of leaf; EL4: the eye's unit
 import { SHADE_DARK } from '../systems/concealDraw.js';   // ECV1 / AUDIT 65 PN-3: the shade's pull toward black, interpolated into BB_FS below - the shader restated 0.12 as a second literal. The LEAF, not systems/combatVisuals.js, which re-exports it: that module's graph would take this file's closure from 13 modules to 69
 
 const BB_FS = `#version 300 es
@@ -845,6 +845,9 @@ export class Renderer {
     this._airPass = null;
     this._airWanted = false;
     this._frameFbo = null;   // EL4: the frame image the world pass draws into while the air is on (null = the canvas)
+    this._spriteDepth = 0;   // AUDIT-EL F2: inside renderCharacterSprite (a foreign rect: no AO)
+    this._studioDepth = 0;   // AUDIT-EL F1: inside the studio bake (a UI picture: no eye)
+    this._adaptOneTex = null;
     this.maxPointLights = CLASSIC_MAX_LIGHTS;
     this._decA = new Float32Array(3); this._decB = new Float32Array(3);   // EL1: the decode scratch (two, for the billboard tint's two terms)
     this._pointColorDec = new Float32Array(CLASSIC_MAX_LIGHTS * 3);
@@ -1355,7 +1358,40 @@ export class Renderer {
     gl.uniform1f(expLoc, this._exposure);
     gl.uniform1f(scLoc, lane.scatter * lane.scatterDensity(this._fogMode, this._fogDensity, this._fogRange[0], this._fogRange[1]));
     if (this._shadows) this._shadows.upload(this._el[key].shadow);   // EL2: the maps and the receiver's uniforms
-    if (this._air) this._air.upload(this._el[key].ao);   // EL3: the AO image
+    // AUDIT-EL F2: the AO image is read by gl_FragCoord against the WORLD
+    // rect - a sprite pass (the 1024^2 offscreen target) and a panel frame
+    // (the automap, a preview) have fragments in another rect entirely and
+    // would read a stranger's occlusion; they take none.
+    const foreignRect = this._spriteDepth > 0 || !!this._panelSaved;
+    if (this._air) this._air.upload(this._el[key].ao, foreignRect);   // EL3: the AO image
+    this._uploadAdapt(this._el[key].ao);
+  }
+
+  /** AUDIT-EL F1: THE EYE'S IMAGE IS ALWAYS BOUND. Every lane shader samples
+   *  uAdapt; with the air off (`?air=off`) nothing bound it, the sampler sat
+   *  at unit 0 and read the diffuse texture's centre texel as an exposure -
+   *  a different exposure per material. A UI picture (the icon bake, the
+   *  inventory's body - `_studioDepth`) takes no adaptation either: an item
+   *  baked while the eye was open in a dungeon would be a brighter icon
+   *  than one baked at noon. Both read a bare 1x1 image holding 1. */
+  _uploadAdapt(loc) {
+    if (!loc?.adapt) return;
+    const gl = this.gl;
+    const tex = this._air && this._studioDepth === 0 ? this._air.adaptTexture : this._adaptOne();
+    gl.activeTexture(gl.TEXTURE0 + ADAPT_UNIT);
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.uniform1i(loc.adapt, ADAPT_UNIT);
+  }
+  _adaptOne() {
+    if (this._adaptOneTex) return this._adaptOneTex;
+    const gl = this.gl, tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([128, 128, 128, 255]));   // the log encoding's midpoint: a multiplier of 1
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    return (this._adaptOneTex = tex);
   }
 
   /** EL2/EL3: THE PASSES BEFORE THE FRAME, at the top of beginFrame - the
@@ -1663,6 +1699,7 @@ export class Renderer {
     const sd = lensLocal ? this._cloudShadow : null;
     if (sd) { this._cloudShadow = null; this._csStamp++; }
     this._proj = proj; this._view = view; this._fogMode = 0;
+    this._spriteDepth++;   // AUDIT-EL F2
     // AUDIT 65 RS-2: EVERY borrow above is returned in ONE finally, the
     // GL state first and the JS caches after. drawCharacter dereferences
     // the mesh (`mesh.vao`, `mesh.ranges`), so it can throw, and the
@@ -1688,6 +1725,7 @@ export class Renderer {
       const cc = this._clearColor;
       gl.clearColor(cc[0], cc[1], cc[2], cc[3]);
       this._proj = sp; this._view = sv; this._fogMode = sf;
+      this._spriteDepth--;   // AUDIT-EL F2
       if (sd) { this._cloudShadow = sd; this._csStamp++; }
     }
     return cs.tex;
@@ -1722,6 +1760,7 @@ export class Renderer {
       this._sunColor = st.sunColor; this._pointLights = st.pointLights; this._indirect = st.indirect;
       this._moonScale = 0;
     }
+    if (studio) this._studioDepth++;   // AUDIT-EL F1: a UI picture takes no eye
     try {
       this.renderCharacterSprite(mesh, modelMatrix, proj, view, pw, ph);
     } finally {
@@ -1731,6 +1770,7 @@ export class Renderer {
         this._moonScale = saved.moonScale;
         if (saved.cloudShadow) { this._cloudShadow = saved.cloudShadow; this._csStamp++; }   // VC4: the frame's deck back
       }
+      if (studio) this._studioDepth--;   // AUDIT-EL F1: the eye back after the light
     }
     const cs = this._charSpriteRT();
     gl.bindFramebuffer(gl.FRAMEBUFFER, cs.fbo);
@@ -2771,9 +2811,9 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
 
   /** LT1: the vec3 array a frame uploads - the host's per-light colours
    *  when given, else the shared colour splatted across the count. */
-  _pointColorData(count) {
+  _pointColorData(count, raw = false) {
     let out;
-    if (this._pointColors) out = this._pointColors;
+    if (this._pointColors) out = count * 3 < this._pointColors.length ? this._pointColors.subarray(0, count * 3) : this._pointColors;   // AUDIT-EL F3: cut to the program's slots
     else {
       const s = this._pointColorScratch;
       for (let i = 0; i < count * 3; i += 3) {
@@ -2781,7 +2821,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       }
       out = s.subarray(0, count * 3);
     }
-    return this._lane ? this._lane.decodeN(out, this._pointColorDec, count) : out;   // EL1: linear for the lane
+    return this._lane && !raw ? this._lane.decodeN(out, this._pointColorDec, count) : out;   // EL1: linear for the lane; `raw` for a classic-space program under it (the water)
   }
 
   /** R12: the player-following indirect point light (SunlightRig's
@@ -3183,10 +3223,16 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniform3fv(L.moonDir, this._moonDir);
     gl.uniform1f(L.moonScale, this._moonScale);
     gl.uniform3fv(L.moonColor, this._moonColor);
-    const count = this._pointLights.length / 4;
+    // AUDIT-EL F3: the water surface is a CLASSIC-SPACE program with sixteen
+    // slots (waterSurface.js uPointLights[16]) whatever lane is installed:
+    // it takes the nearest sixteen of the lane's forty-eight, and the
+    // colours as the host gave them - not decoded, which is what the lane's
+    // own programs take (_pointColorData) and would have dimmed every
+    // lantern's reflection on the water.
+    const count = Math.min(this._pointLights.length / 4, CLASSIC_MAX_LIGHTS);
     gl.uniform1i(L.pointCount, count);
-    if (count > 0) gl.uniform4fv(L.pointLights, this._pointLights);
-    if (count > 0) gl.uniform3fv(L.pointColors, this._pointColorData(count));
+    if (count > 0) gl.uniform4fv(L.pointLights, this._pointLights.subarray ? this._pointLights.subarray(0, count * 4) : this._pointLights.slice(0, count * 4));
+    if (count > 0) gl.uniform3fv(L.pointColors, this._pointColorData(count, true));
     gl.uniform4fv(L.indirect, this._indirect);
     gl.uniform3fv(L.indirectColor, this._indirectColor);
     gl.activeTexture(gl.TEXTURE0);

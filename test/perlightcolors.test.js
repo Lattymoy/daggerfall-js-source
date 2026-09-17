@@ -69,15 +69,20 @@ test('LT1: the paired shape prepends player lights to BOTH arrays under the one 
   assert.deepEqual([...out.colors.slice(6, 9)], [0, 1, 0]);
 });
 
+/** AUDIT-EL F4: the cap is the RENDERER's now (setPointLights cuts to the installed set's), not the composer's - the classic set's sixteen, applied here as the renderer applies it */
+const cappedBy16 = (data, colors = null) => { const st = { maxPointLights: 16, _pointColor: new Float32Array([1, 1, 1]), _pointColors: null, _pointLights: null }; Renderer.prototype.setPointLights.call(st, data, null, colors); return st; };
 test('LT1: the paired cap drops FAR lights, never the player\'s own', () => {
   const many = Array.from({ length: 16 }, (_, i) => ({ x: i + 1, y: 0, z: 0, range: 5, color: [i / 16, 0, 0] }));
   const base = nearestLights(many, [0, 0, 0], 16, many.map((l) => l.range), (l) => l.color);
   const out = withPlayerLights(base, { x: 0, y: 0, z: 0, range: 3 });
-  assert.equal(out.data.length / 4, 16, 'capped at the renderer\'s 16');
-  assert.equal(out.colors.length / 3, 16);
-  assert.equal(out.data[0], 0, 'the player light leads');
-  assert.equal(out.data[15 * 4], 15, 'the 16th slot is the 15th base light - the farthest dropped');
-  assert.ok(Math.abs(out.colors[15 * 3] - 14 / 16) < 1e-6, 'its colour dropped WITH it');
+  assert.equal(out.data.length / 4, 17, 'AUDIT-EL F4: the composer keeps every light - the cap is the installed set\'s, in the renderer');
+  assert.equal(out.colors.length / 3, 17);
+  const st = cappedBy16(out.data, out.colors);
+  assert.equal(st._pointLights.length / 4, 16, 'capped at the classic set\'s 16 by setPointLights');
+  assert.equal(st._pointColors.length / 3, 16);
+  assert.equal(st._pointLights[0], 0, 'the player light leads');
+  assert.equal(st._pointLights[15 * 4], 15, 'the 16th slot is the 15th base light - the farthest dropped');
+  assert.ok(Math.abs(st._pointColors[15 * 3] - 14 / 16) < 1e-6, 'its colour dropped WITH it');
 });
 
 test('LT1: a paired base with no live player lights comes back untouched', () => {

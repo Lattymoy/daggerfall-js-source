@@ -249,7 +249,7 @@ test('EL3: the renderer\'s wiring - the air rides the lane and the door, the com
   const r = read('src/render/renderer.js');
   assert.match(r, /const want = this\._airWanted && !!this\._lane\?\.air && !!this\._shadows;/);
   assert.equal((r.match(/this\._compositeAir\(\);   \/\/ EL3/g) || []).length, 2, 'drawScreenQuad and drawScreenQuadRun');
-  assert.match(r, /if \(this\._air\) this\._air\.upload\(this\._el\[key\]\.ao\);/);
+  assert.match(r, /if \(this\._air\) this\._air\.upload\(this\._el\[key\]\.ao, foreignRect\);/);   // AUDIT-EL F2: no AO in a foreign rect
   assert.match(r, /this\._shadows\.recordBillboards\(batches, this\._flatWind, camRight, camUp\);/);
   const sp = read('src/render/shadowPass.js');
   assert.match(sp, /r\.right\.set\(camRight\); r\.up\.set\(camUp\);/);

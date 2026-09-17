@@ -21,6 +21,7 @@ import { effectByKey, PORTED_KEYS, SPELL_MAKER_EFFECTS } from '../src/systems/sp
 import { calculateEnemyPacification } from '../src/combat/formulas.js';
 import { SKILLS } from '../src/systems/skills.js';
 import { CANDLE, candleBase, createCandleWobble, insideUnitSphere, withPlayerLights } from '../src/scenes/magicCandle.js';
+import { Renderer } from '../src/render/renderer.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const src = (p) => readFileSync(join(ROOT, p), 'utf8');
@@ -296,7 +297,11 @@ test('X11 the magic candle: the wobble stays inside its 0.125 sphere and keeps m
 test('X11 the magic candle: the light goes to the FRONT of a host\'s array, and the cap holds', () => {
   const base = new Float32Array(16 * 4).fill(7);
   const out = withPlayerLights(base, { x: 1, y: 2, z: 3, range: 15 });
-  assert.equal(out.length, 16 * 4, 'the renderer takes 16 vec4s and no more');
+  assert.equal(out.length, 17 * 4, 'AUDIT-EL F4: the composer keeps every light');
+  const st = { maxPointLights: 16, _pointColor: new Float32Array(3), _pointColors: null, _pointLights: null };
+  Renderer.prototype.setPointLights.call(st, out, null);
+  assert.equal(st._pointLights.length, 16 * 4, 'the classic set takes 16 vec4s and no more');
+  assert.equal(st._pointLights[0], 1, 'and the candle survives the cut');
   assert.deepEqual([...out.subarray(0, 4)], [1, 2, 3, 15], 'the candle is first - it is always the nearest');
   assert.equal(out[4], 7, 'the rest follow');
   // an empty array (a daylight exterior) still gets the candle

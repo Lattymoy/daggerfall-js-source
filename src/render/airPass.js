@@ -522,6 +522,7 @@ export class AirPass {
     this.aoParams = new Float32Array([AIR_AO_RADIUS, AIR_AO_STRENGTH, AIR_AO_BIAS, 0]);
     this.shaftParams = new Float32Array([AIR_SHAFT_DECAY, AIR_SHAFT_STRENGTH, AIR_SHAFT_REACH, 1]);
     this.aoInfo = new Float32Array(4);
+    this._noAo = new Float32Array(4);   // AUDIT-EL F2
     this.pending = false;   // a resolve is owed to the frame
     this.width = 0; this.height = 0;
     this.targets = null;
@@ -824,24 +825,16 @@ export class AirPass {
 
   /** Bind the AO image on its unit and upload the receiver's two uniforms
    *  for one program (`loc`: ao, aoInfo). */
-  upload(loc) {
+  upload(loc, foreignRect = false) {
     const gl = this.gl;
     if (!this.targets) return;
     gl.activeTexture(gl.TEXTURE0 + AIR_AO_UNIT);
     gl.bindTexture(gl.TEXTURE_2D, this.targets.aoBlur.tex);
     gl.activeTexture(gl.TEXTURE0);
     gl.uniform1i(loc.ao, AIR_AO_UNIT);
-    gl.uniform4fv(loc.aoInfo, this.aoInfo);
-    this.uploadAdapt(loc);
-  }
-  /** EL4: bind the adaptation image on its unit for one program (`loc.adapt`). */
-  uploadAdapt(loc) {
-    const gl = this.gl;
-    if (!this.adapt || !loc?.adapt) return;
-    gl.activeTexture(gl.TEXTURE0 + AIR_ADAPT_UNIT);
-    gl.bindTexture(gl.TEXTURE_2D, this.adapt[this.adaptIndex].tex);
-    gl.activeTexture(gl.TEXTURE0);
-    gl.uniform1i(loc.adapt, AIR_ADAPT_UNIT);
+    // AUDIT-EL F2: a pass whose fragments are not in the world rect (the
+    // sprite target, a panel) takes no AO - width 0 is the shader's off
+    gl.uniform4fv(loc.aoInfo, foreignRect ? this._noAo : this.aoInfo);
   }
 
   /** EL4: THE RESOLVE. Called by the frame's first screen-space draw; a
