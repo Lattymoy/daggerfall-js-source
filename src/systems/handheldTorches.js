@@ -690,13 +690,40 @@ export function createHandheldTorches({
   }
 
   /** OnGUI (IL 0x114c): the sprite, while the module shows it and the
-   *  view is first person; white (FPSWeapon.Tint is First-Person
-   *  Lighting's channel - the port has no such mod). */
-  function draw(renderer, canvas) {
+   *  view is first person.
+   *
+   *  MAC-H (2026-09-17, Mac: "On the classic sprite, when a torch is
+   *  unequipped, a random sprite is shown on the left middle of the
+   *  screen"). THE HAND HOLDS NOTHING, SO IT DRAWS NOTHING. The only
+   *  gates here were the module's switch and "is there a texture at
+   *  all" - and `w.currentTexture` is set ONCE, to `list[0]`, the
+   *  moment InitializeTextures finishes (:234), and is never cleared
+   *  again. So from the first frame after the sprites loaded, every
+   *  host drew torch frame 0 at the guard position, with or without a
+   *  torch in the player's hand: the left middle of the screen, which
+   *  is exactly where SetGuard puts it, showing the one sprite the
+   *  player never asked for.
+   *
+   *  The frame law above already knows the answer - `offsetFrame` is
+   *  -1 for no light and for a CANDLE, which has no frames - but it
+   *  is computed in Update and this is a draw, so the light is asked
+   *  again here rather than trusting an ordering. A hand with a candle
+   *  in it draws nothing, as it always should have: the mod ships
+   *  frames for the torch (record 0) and the lantern (record 1), and
+   *  for nothing else.
+   *
+   *  MAC-I: the tint is the room's now, not white. FPSWeapon.Tint is
+   *  First-Person Lighting's own channel and DFU core never writes it
+   *  (FPSWeapon.cs:108, :182) - the port writes it from the light the
+   *  scene's flats take, so the hand goes dark with the room it is in.
+   *  A host that hands no tint gets white, byte for byte. */
+  function draw(renderer, canvas, tint = null) {
     if (!w.s.showSprite || !ctx || !renderer || !canvas) return false;
     if (ctx.thirdPerson || w.isInThirdPerson) return false;
+    const held = light();
+    if (!held || !(isTorch(held) || isLantern(held))) return false;   // MAC-H: nothing in the hand, nothing on the screen
     if (!w.currentTexture?.tex) return false;
-    renderer.drawScreenQuad(w.currentTexture.tex, getSpriteRect(), w.curAnimRect);
+    renderer.drawScreenQuad(w.currentTexture.tex, getSpriteRect(), w.curAnimRect, tint ?? undefined);
     return true;
   }
 

@@ -30,7 +30,7 @@ import { racialFpsWeapon } from '../systems/lycanthropy.js';   // V4: the transf
 import { EQUIP_SLOTS, equipTableOf } from '../systems/equip.js';   // AUDIT 17e F17; MW-D32 the worn read
 import { dfWornEquipment } from '../formats/mwItemMap.js';   // MW-D32
 import { ARMOR_ENUM } from './enemyEquipment.js';   // MW-D32
-import { loadFpsWeaponArt, drawFpsWeapon, weaponTypeForItem, WEAPON_TYPES } from './fpsWeapon.js';
+import { loadFpsWeaponArt, drawFpsWeapon, weaponTypeForItem, WEAPON_TYPES, fpLightingOn } from './fpsWeapon.js';   // MAC-I: the tint's switch, with the sprite it tints
 // ROAD-tail (FPSSpellCasting.cs): the classic spellcasting HANDS. A
 // separate component in DFU and a separate module here, drawn by the
 // same rig because this is the one surface every FPS-weapon host
@@ -949,8 +949,18 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // EOTB-IL: `spellCasting.enabled = false` while the sprite camera is
       // out (ToggleOffset, IL_22f9) - the hands' picture goes, the cast
       // still resolves (a disabled MonoBehaviour's coroutine runs on)
+      // MAC-I (Mac: "The classic sprite should react to lighting (first
+      // person)"): THE ROOM'S LIGHT, once a frame, for every sprite this
+      // seam draws. `FPSWeapon.Tint` is the channel DFU declares and
+      // never writes (FPSWeapon.cs:108, :182); `flatLightAt` answers it
+      // with the same four terms a FLAT in the room takes, sampled at
+      // the camera - which is where a first-person sprite is. The
+      // Morrowind arms are a lit MESH and take the world's light
+      // already, so this is the classic lane's alone; the switch is the
+      // player's (Features -> First-person lighting).
+      const fpTint = fpLightingOn() ? (renderer?.flatLightAt?.() ?? null) : null;
       if (c && !fpArm.active()) {
-        drawSpellCastHands(renderer, c, spellArtFor(fpsSpellCasting.element), fpsSpellCasting.frameIndex);
+        drawSpellCastHands(renderer, c, spellArtFor(fpsSpellCasting.element), fpsSpellCasting.frameIndex, { tint: fpTint });
       }
       if (paralyzed || !shown()) return;
       // THE ONE SEAM. The arm draws whole and RETURNS, or it is inactive
@@ -975,10 +985,10 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // with no order between them in DFU; the port picks the one that
       // keeps the weapon whole. Under the Morrowind arms it is not drawn
       // (a classic hand beside a modelled arm is neither mod nor lane).
-      if (handheldOn() && c) handheld.draw(renderer, c);
-      if (widgetOn() && c && widget.draw(renderer, c)) return;
+      if (handheldOn() && c) handheld.draw(renderer, c, fpTint);
+      if (widgetOn() && c && widget.draw(renderer, c, fpTint)) return;
       const art = c && artFor(playerWeapon.weapon);
-      if (art) drawFpsWeapon(renderer, c, art, playerWeapon.machine.state, playerWeapon.machine.frame);
+      if (art) drawFpsWeapon(renderer, c, art, playerWeapon.machine.state, playerWeapon.machine.frame, { tint: fpTint });
     }
   }
 }

@@ -17,7 +17,7 @@
 //
 // HOW IT DRAWS, and why this needs no renderer change at all: the port
 // has ALREADY shipped a first-person pass. renderCharacterSprite
-// (render/renderer.js:898) binds an offscreen target with its OWN depth
+// (render/renderer.js:909) binds an offscreen target with its OWN depth
 // renderbuffer, clears colour AND depth, swaps the frame's proj/view for
 // ones the caller supplies, draws, and restores; drawScreenOverlayQuad
 // (:987) composites it fullscreen with an alpha cut and no depth test.
@@ -76,6 +76,7 @@ import { materialName } from '../systems/itemInfo.js';
 import { composeWornArmor, shadowSkinRows, fpWornAdds, mwArmorRecords, mwClothingRecord, CLOTHING_NAME } from '../formats/mwItemMap.js';
 import { correctTexturePath, correctActorModelPath, wrapModes, warningImage, decodeTextureImage } from '../formats/mwTexture.js';
 import { diffuseAt, emissiveAt } from '../formats/mwNifMesh.js';   // MWT2: the emission the pass has always resolved and never read
+import { fpLightingOn } from './fpsWeapon.js';   // MAC-P: the first-person lighting switch, shared with the classic sprite it stands in for
 import { boneSourcesFor, resolveHolsterParts, holsterPartPaths, holsterHidden, HOLSTER_SLOTS } from '../systems/weaponSheathing.js';   // WS1
 import { injectSkeletonNodes } from '../formats/mwSkin.js';   // WS1: the dry injection the holster's bone probe runs
 
@@ -447,7 +448,7 @@ export function armReach(eye, unionBounds) {
 /**
  * PACK THE ASSEMBLY for drawCharacter's vertex stream: 9 floats per
  * vertex, [pos.xyz, colour.rgb, normal.xyz], NON-INDEXED, because
- * drawCharacter issues drawArrays (renderer.js:838). The MW readers hand
+ * drawCharacter issues drawArrays (renderer.js:849). The MW readers hand
  * back indexed triangles, so the indices are expanded here.
  *
  * NORMALS ARE COMPUTED, not read. poseAssembly skins positions with a
@@ -461,7 +462,7 @@ export function armReach(eye, unionBounds) {
  * left arm is lit inside-out - dark where the right arm is bright - and
  * that is a lighting bug that reads as "the mesh is wrong" rather than
  * as "the mirror is wrong". drawCharacter disables back-face culling
- * (renderer.js:836), so the winding costs nothing else.
+ * (renderer.js:847), so the winding costs nothing else.
  */
 export function packFpArm(pieces, out = null) {
   let tris = 0;
@@ -3744,7 +3745,12 @@ export function createFpArm() {
       // swept one - see the build's note.
       const near = Math.max((built.idleReach ?? built.reach) / 200, 1e-4);
       const proj = perspective(FP_FIELD_OF_VIEW, pw / ph, near, built.reach * 4);
-      const tex = renderer.renderCharacterSprite(mesh, NIF_TO_PASS, proj, view, pw, ph, { lensLocal: true });   // VC5 review: lens-local - no cloud deck on the arm
+      // MAC-P: the room's own light on the arm (render/renderer.js's
+      // viewmodel borrow), off the SAME `flatLightAt` the classic sprites
+      // take under MAC-I - one answer, both lanes. Null keeps the frame's
+      // light exactly as it was, which is what the switch off means.
+      const vmLight = fpLightingOn() ? (renderer.flatLightAt?.() ?? null) : null;
+      const tex = renderer.renderCharacterSprite(mesh, NIF_TO_PASS, proj, view, pw, ph, { lensLocal: true, viewmodelLight: vmLight });   // VC5 review: lens-local - no cloud deck on the arm
       // WW1: Weapon Widget's channels move the composite as they move the
       // classic sprite - a screen-space rect in place of the fullscreen
       // overlay when a transform is set, the same alpha cut either way

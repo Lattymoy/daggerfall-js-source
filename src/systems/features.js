@@ -389,6 +389,29 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'soundEnhancements', initial: true, online: 'player' }),   // ES1: systems/enhancedSounds.js enhancedSoundsOn; windAudio.js windSoundOn rides it
   }),
+  // MAC-I + MAC-P (2026-09-17, Mac: "The classic sprite should react to
+  // lighting (first person)" and "morrowind's first person view also
+  // doesn't receive lighting and is consistently dark"): the viewmodel
+  // takes the room's light, in BOTH lanes. FPSWeapon.Tint is DFU's own
+  // channel for the sprite and DFU core never writes it (FPSWeapon.cs:108,
+  // :182) - that is the First-Person Lighting mod's job there; the
+  // Morrowind arms had a fixed STUDIO light, right for a UI picture and
+  // wrong for a thing standing in the world. One answer feeds both
+  // (render/renderer.js flatLightAt, the FLAT's own four terms at the
+  // camera). On by default, because a hand that ignores the dark is the
+  // thing that was reported; off returns the white DFU draws and the
+  // studio the arms had.
+  Object.freeze({
+    id: 'first-person-lighting',
+    group: 'sight',
+    title: 'First-person lighting',
+    note: 'What you hold in first person takes the light of the room you are in: the classic weapon sprite, the '
+      + 'casting hands and the torch in your off hand, and the Morrowind arms, which were lit by a fixed studio '
+      + 'and read dark everywhere.',
+    effect: 'Takes effect at once.',
+    kinds: Object.freeze(['enhanced', 'classic']),
+    control: Object.freeze({ store: 'prefs', key: 'firstPersonLighting', initial: true, online: 'player' }),   // MAC-I: combat/weaponRig.js fpLightingOn
+  }),
   Object.freeze({
     id: 'flora-sway',
     group: 'sight',
