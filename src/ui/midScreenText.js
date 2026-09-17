@@ -53,7 +53,7 @@
 import { drawText, measureText } from './text.js';
 import { nativeMetrics, NATIVE_W, DEFAULT_TEXT_COLOR } from './nativePanel.js';
 import { isEnhanced } from '../systems/uiSkin.js';
-import { drawEnhancedMidText } from './enhancedHudText.js';
+import { drawEnhancedMidText, midTextTopPx } from './enhancedHudText.js';
 
 /** DaggerfallHUD.cs:25 `const int midScreenTextDefaultY = 146`, the
  *  label's Position.y on the 320x200 NativePanel (:176). */
@@ -141,7 +141,11 @@ export class MidScreenText {
    *  centred native fit exactly as the popup column does. */
   draw(renderer, canvas, font) {
     if (isEnhanced() && typeof document !== 'undefined') {
-      drawEnhancedMidText({ text: this.text, visible: true });
+      // AUDIT FONT F11: the DOM label lands on the CLASSIC label's own
+      // line, computed from the same floored native fit off the same
+      // canvas (and `this.y`, which the large-HUD lift moves) rather
+      // than on a proportion that is only right at 16:10.
+      drawEnhancedMidText({ text: this.text, visible: true, top: midTextTopPx(canvas, this.y) });
       return;
     }
     if (!font || !this.text) return;

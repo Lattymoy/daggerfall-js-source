@@ -24,6 +24,15 @@
 //   4. THE POPUP COLUMN CLEARS THE COMPASS - ui/enhancedHudText.js
 //      starts at HUD_TEXT_TOP_PX, and the compass strip and a named
 //      target's bar stand above it. This measures their bottom edge.
+//      AUDIT FONT added three claims to the same page: the column also
+//      clears the CHAT'S PEEK where a chat is mounted (F7 - the two
+//      shared this corner and .dfchat is z-index 5 over it, so the
+//      panel is built here and its real bottom measured); TWO models'
+//      columns STACK rather than overlap (F1 - townTalk's and
+//      dungeonContext's are both alive on ?world in a dungeon); and a
+//      TEXT.RSC-length line WRAPS whole rather than being ellipsised
+//      (F8), which is also where the two-rows-a-peek-line number in
+//      enhancedStyle's chat offset comes from.
 //
 // THE FONTS COME FROM THE GAME'S OWN REQUEST. ENHANCED_FONTS_URL is
 // fetched here in node (the browser in this harness has no route to it)
@@ -41,7 +50,7 @@ import { CHAT_CSS } from '../src/ui/chatPanel.js';
 import { SOCIAL_CSS } from '../src/ui/socialPanel.js';
 import { PARTY_CSS } from '../src/ui/partyPanel.js';
 import { SOCIAL_MENU_CSS } from '../src/ui/socialMenu.js';
-import { ENHANCED_CSS, ENHANCED_FONTS_URL, HUD_TEXT_TOP_PX, HUD_TEXT_ROW_PX } from '../src/ui/enhancedStyle.js';
+import { ENHANCED_CSS, ENHANCED_FONTS_URL, HUD_TEXT_TOP_PX, HUD_TEXT_ROW_PX, HUD_TEXT_TOP_CHAT_PX, HUD_TEXT_TOP_CHAT_TOUCH_PX } from '../src/ui/enhancedStyle.js';
 
 const UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
@@ -223,10 +232,44 @@ const MEASURE_HUDTEXT = () => {
   top.append(compass, foe);
   hud.append(top);
   document.body.append(hud);
+  // AUDIT FONT F1: the column is a STACK (one per document, holding the
+  // place and the scale) with one `.hudtext` per PopupText model inside
+  // it - townTalk's and dungeonContext's both draw on ?world in a
+  // dungeon. The probe builds both, so what is measured is what two
+  // live models really produce.
+  const stack = el('div', 'hudtext-stack');
   const column = el('div', 'hudtext');
   const rows = ['Your Long Blade skill has improved.', 'You found 25 gold pieces.'];
   for (const t of rows) column.append(el('div', 'hudtext-row', t));
-  document.body.append(column);
+  const second = el('div', 'hudtext');
+  second.append(el('div', 'hudtext-row', 'The wind carries the smell of the sea.'));
+  stack.append(column, second);
+  document.body.append(stack);
+  // AUDIT FONT F7: ...and the CHAT, which shares this corner. .dfchat is
+  // fixed at top 44 (72 on the touch skin) with CHAT_PEEK lines under
+  // it at z-index 5, so a column that starts at HUD_TEXT_TOP_PX draws
+  // underneath the peek and neither is readable. The sheet steps the
+  // column below the peek where the chat is MOUNTED, so the page must
+  // hold one for the number to mean anything.
+  const buildChat = (touch) => {
+    const c = el('div', `dfchat${touch ? ' touch' : ''}`);
+    c.dataset.state = 'closed';
+    const pk = el('div', 'dfchat-peek');
+    for (let i = 0; i < 5; i++) {
+      const line = el('div', 'dfchat-line');
+      line.append(el('span', 'dfchat-time', '12:34'), el('span', 'dfchat-name', 'Mac the Wanderer'),
+        el('span', 'dfchat-tag', '#ab12'), el('span', 'dfchat-text', 'the road to Daggerfall is 5 days from here'));
+      pk.append(line);
+    }
+    const open = el('button', 'dfchat-open', 'Chat');
+    c.append(pk, el('div', 'dfchat-hint', 'Enter to chat'), el('div', 'dfchat-status'), open);
+    document.body.append(c);
+    return c;
+  };
+  const chatTouch = buildChat(true);
+  const chatTouchBottom = +chatTouch.getBoundingClientRect().bottom.toFixed(1);
+  chatTouch.remove();
+  const chat = buildChat(false);
   const at = (slide) => {
     column.style.setProperty('--hudtext-slide', `${slide}px`);
     return column.getBoundingClientRect();
@@ -234,6 +277,16 @@ const MEASURE_HUDTEXT = () => {
   const rest = at(0);
   const row0 = column.children[0].getBoundingClientRect();
   const slid = at(-20);
+  at(0);
+  const chatBottom = +chat.getBoundingClientRect().bottom.toFixed(1);
+  const stackBox = stack.getBoundingClientRect();
+  const secondBox = second.getBoundingClientRect();
+  // AUDIT FONT F8: a TEXT.RSC-length line is drawn whole, not cut.
+  const longRow = column.children[0];
+  const LONG = 'You have been given a letter of introduction to the Knights of the Dragon, and are expected at their hall in Daggerfall before the 15th of Hearthfire.';
+  longRow.textContent = LONG;
+  const longBox = { content: +longRow.scrollWidth.toFixed(1), box: +longRow.clientWidth.toFixed(1), h: +longRow.getBoundingClientRect().height.toFixed(1) };
+  longRow.textContent = rows[0];
   // ...and the OTHER text surface: the mid-screen label, at DFU's own
   // 146-of-200 height, against the bottom block it must not sit on.
   const bottom = el('div', 'hud-bottom');
@@ -247,8 +300,17 @@ const MEASURE_HUDTEXT = () => {
   hud.append(bottom);
   const mid = el('div', 'hudmid', 'Interaction is now in talk mode.');
   document.body.append(mid);
+  const fallbackBox = mid.getBoundingClientRect();
+  // AUDIT FONT F11: ...at the number ui/enhancedHudText.js writes for
+  // this viewport, which is the CLASSIC label's own line - the floored
+  // native fit (Math.floor(min(w/320, h/200))) with the 320x200 panel
+  // centred in what is left. The sheet's 73% is the fallback above.
+  const s = Math.max(1, Math.floor(Math.min(window.innerWidth / 320, window.innerHeight / 200)));
+  const oy = Math.floor((window.innerHeight - 200 * s) / 2);
+  mid.style.setProperty('--hudmid-top', `${oy + 146 * s}px`);
   const midBox = mid.getBoundingClientRect();
   return {
+    midFallbackTop: +fallbackBox.top.toFixed(1),
     midTop: +midBox.top.toFixed(1),
     midBottom: +midBox.bottom.toFixed(1),
     barsTop: +bottom.getBoundingClientRect().top.toFixed(1),
@@ -259,6 +321,12 @@ const MEASURE_HUDTEXT = () => {
     rowHeight: +row0.height.toFixed(1),
     slidBy: +(rest.top - slid.top).toFixed(1),
     centred: Math.abs((rest.left + rest.right) / 2 - window.innerWidth / 2) < 1,
+    chatBottom,
+    chatTouchBottom,
+    stackTop: +stackBox.top.toFixed(1),
+    secondTop: +secondBox.top.toFixed(1),
+    columnBottom: +rest.bottom.toFixed(1),
+    longRow: longBox,
   };
 };
 
@@ -313,13 +381,22 @@ console.log('\n4. THE POPUP COLUMN (FONT1) - under the compass, centred, sliding
 const h = await page.evaluate(MEASURE_HUDTEXT);
 console.log(`   the HUD's top block ends at ${h.topBlockBottom}px; the column starts at ${h.columnTop}px (HUD_TEXT_TOP_PX ${HUD_TEXT_TOP_PX})`);
 console.log(`   a row is ${h.rowHeight}px (HUD_TEXT_ROW_PX ${HUD_TEXT_ROW_PX}); a -20px slide moves the column ${h.slidBy}px; centred: ${h.centred}`);
-console.log(`   the mid-screen label (DFU's y=146 of 200, here 73%) stands ${h.midTop}-${h.midBottom}px, under the reticle's ${h.reticleBottom}px and over the bars at ${h.barsTop}px`);
+console.log(`   the mid-screen label (DFU's y=146 of 200) stands ${h.midTop}-${h.midBottom}px, under the reticle's ${h.reticleBottom}px and over the bars at ${h.barsTop}px`);
+console.log(`   ...where the sheet's 73% fallback alone would have put it at ${h.midFallbackTop}px (AUDIT FONT F11: the two agree at 16:10 and nowhere else)`);
 if (h.midTop < h.reticleBottom) fails.push(`the mid-screen label starts at ${h.midTop}px, on top of the reticle (${h.reticleBottom}px)`);
 if (h.midBottom > h.barsTop) fails.push(`the mid-screen label ends at ${h.midBottom}px, inside the bars at ${h.barsTop}px`);
 if (h.columnTop < h.topBlockBottom) fails.push(`the popup column starts at ${h.columnTop}px, inside the HUD's top block, which ends at ${h.topBlockBottom}px`);
 if (Math.abs(h.rowHeight - HUD_TEXT_ROW_PX) > 0.5) fails.push(`a row measures ${h.rowHeight}px where the module slides by ${HUD_TEXT_ROW_PX}px`);
 if (Math.abs(h.slidBy - 20) > 0.5) fails.push(`the slide moved the column ${h.slidBy}px, not 20`);
 if (!h.centred) fails.push('the popup column is not centred on the screen, as PopupText\'s is on the panel');
+console.log(`   the chat's peek ends at ${h.chatBottom}px (${h.chatTouchBottom}px on the touch skin) and the column starts at ${h.stackTop}px (AUDIT FONT F7: HUD_TEXT_TOP_CHAT_PX ${HUD_TEXT_TOP_CHAT_PX} / ${HUD_TEXT_TOP_CHAT_TOUCH_PX})`);
+if (HUD_TEXT_TOP_CHAT_TOUCH_PX < h.chatTouchBottom) fails.push(`the touch skin's offset is ${HUD_TEXT_TOP_CHAT_TOUCH_PX}px where its chat ends at ${h.chatTouchBottom}px`);
+console.log(`   the second model's column starts at ${h.secondTop}px, under the first's ${h.columnBottom}px (AUDIT FONT F1: two models stack, never overwrite)`);
+console.log(`   a ${h.longRow.content}px line wraps into a ${h.longRow.box}px box ${h.longRow.h}px tall (AUDIT FONT F8)`);
+if (h.stackTop < h.chatBottom) fails.push(`the popup column starts at ${h.stackTop}px, inside the chat peek which ends at ${h.chatBottom}px`);
+if (h.secondTop < h.columnBottom - 0.5) fails.push(`the second model's column starts at ${h.secondTop}px, over the first's rows which end at ${h.columnBottom}px`);
+if (h.longRow.content > h.longRow.box + 1) fails.push(`a TEXT.RSC-length line is ${h.longRow.content}px in a ${h.longRow.box}px box - it is being cut, not wrapped`);
+if (h.longRow.h <= h.rowHeight + 0.5) fails.push('a long line did not wrap to a second row - the column is still one line high');
 
 await browser.close();
 if (fails.length) {

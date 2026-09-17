@@ -5958,7 +5958,14 @@ export function createWorldModes(host) {
       // `covered` word (modeHudCovered) still decides whether they are SHOWN; what it cannot do is decide it while
       // the pass is never called. The other three hosts (world.js, the interior arm here, dungeonContext's own)
       // have no such return and needed nothing.
-      if (dungeonCtx.uiOverlayActive) { dungeonCtx.tickOverlay(dt); host.drawPeerNames?.({ proj, view, eye: mwv.eye }); dungeonCtx.drawOverlay(canvas); return true; }   // U2b/U3: overlays gate the dungeon (AUDIT 18 F5: the overlay's own clock still runs)
+      // AUDIT FONT F3: the hide doors BEFORE the return. This branch
+      // returns above `drawFoes`, which is the only place this host
+      // reaches drawHud - so ui/hud.js's mid-screen draw/hide and the
+      // popup column's never ran on an overlay frame, and both are DOM
+      // under the enhanced skin: they stay painted until told otherwise
+      // (AUDIT 64 F37's law). A refusal spoken as a window opened stood
+      // over that window until it closed.
+      if (dungeonCtx.uiOverlayActive) { dungeonCtx.hideHudText?.(); dungeonCtx.tickOverlay(dt); host.drawPeerNames?.({ proj, view, eye: mwv.eye }); dungeonCtx.drawOverlay(canvas); return true; }   // U2b/U3: overlays gate the dungeon (AUDIT 18 F5: the overlay's own clock still runs)
       dungeonCtx.drawFoes(dt, canvas, proj, view, cam.pos, player.pos, anyMove(moveHeld(keys)), player.height, !!player.isSneaking, motionBagOf(player), player.bobOffset ? player.bobOffset[1] : 0, !!player.crouching);   // ROAD-H H1b: PlayerMotor.IsCrouching rides in beside the live height - the archer's 0.05 dip (DaggerfallMissile.cs:583-585) is the latched STATE, not a 0.9 capsule   // PX26 F4: the jump-state inputs the interior lane never sent - without them `grounded` read undefined, the rig thought the player was permanently airborne, and BOTH the movement selection and the jump play died in every interior   // moveHeld: the collision-trigger input gate (verbatim)   // C8 foes + S3b clock + S4b missiles - internally gated, must run foes or not (trap spells fire in empty dungeons)
       if (dungeonCtx.waterQuads.length) {
         renderer.drawWater(dungeonCtx.waterQuads, DUNGEON_WATER_COLOR,

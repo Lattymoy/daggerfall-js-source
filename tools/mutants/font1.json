@@ -135,8 +135,8 @@
   {
     "name": "hudtext-enhanced-arm-dropped",
     "file": "src/ui/hudText.js",
-    "old": "    if (isEnhanced() && typeof document !== 'undefined') {\n      drawEnhancedHudText({ ...this.frame(), visible: true });",
-    "new": "    if (false && typeof document !== 'undefined') {\n      drawEnhancedHudText({ ...this.frame(), visible: true });",
+    "old": "    if (isEnhanced() && typeof document !== 'undefined') {\n      drawEnhancedHudText({ ...this.frame(), visible: !this.covered }, undefined, this.key);",
+    "new": "    if (false && typeof document !== 'undefined') {\n      drawEnhancedHudText({ ...this.frame(), visible: !this.covered }, undefined, this.key);",
     "tests": [
       "test/hudtext.test.js"
     ]
@@ -144,8 +144,8 @@
   {
     "name": "hudtext-enhanced-arm-taken-on-both-skins",
     "file": "src/ui/hudText.js",
-    "old": "    if (isEnhanced() && typeof document !== 'undefined') {\n      drawEnhancedHudText({ ...this.frame(), visible: true });",
-    "new": "    if (typeof document !== 'undefined') {\n      drawEnhancedHudText({ ...this.frame(), visible: true });",
+    "old": "    if (isEnhanced() && typeof document !== 'undefined') {\n      drawEnhancedHudText({ ...this.frame(), visible: !this.covered }, undefined, this.key);",
+    "new": "    if (typeof document !== 'undefined') {\n      drawEnhancedHudText({ ...this.frame(), visible: !this.covered }, undefined, this.key);",
     "tests": [
       "test/hudtext.test.js"
     ]
@@ -171,8 +171,8 @@
   {
     "name": "hudtext-hide-door-a-no-op",
     "file": "src/ui/hudText.js",
-    "old": "    if (isEnhanced() && typeof document !== 'undefined') drawEnhancedHudText({ rows: [], slide: 0, visible: false });",
-    "new": "    if (false) drawEnhancedHudText({ rows: [], slide: 0, visible: false });",
+    "old": "    if (isEnhanced() && typeof document !== 'undefined') drawEnhancedHudText({ rows: [], slide: 0, visible: false }, undefined, this.key);",
+    "new": "    if (false) drawEnhancedHudText({ rows: [], slide: 0, visible: false }, undefined, this.key);",
     "tests": [
       "test/hudtext.test.js"
     ]
@@ -180,7 +180,7 @@
   {
     "name": "column-never-slides",
     "file": "src/ui/enhancedHudText.js",
-    "old": "  const y = `${(slide * ENHANCED_HUD_TEXT_ROW_H).toFixed(2)}px`;",
+    "old": "  const y = `${(slide * rowH).toFixed(2)}px`;",
     "new": "  const y = '0.00px';",
     "tests": [
       "test/hudtext.test.js"
@@ -189,8 +189,8 @@
   {
     "name": "column-slides-the-wrong-way",
     "file": "src/ui/enhancedHudText.js",
-    "old": "  const y = `${(slide * ENHANCED_HUD_TEXT_ROW_H).toFixed(2)}px`;",
-    "new": "  const y = `${(-slide * ENHANCED_HUD_TEXT_ROW_H).toFixed(2)}px`;",
+    "old": "  const y = `${(slide * rowH).toFixed(2)}px`;",
+    "new": "  const y = `${(-slide * rowH).toFixed(2)}px`;",
     "tests": [
       "test/hudtext.test.js"
     ]
@@ -198,8 +198,8 @@
   {
     "name": "column-rebuilt-every-frame",
     "file": "src/ui/enhancedHudText.js",
-    "old": "  if (!host) { host = build(doc); rows = []; }",
-    "new": "  { host = build(doc); rows = []; }",
+    "old": "  if (!col) { col = buildColumn(doc, key); columns.set(key, col); }",
+    "new": "  { col = buildColumn(doc, key); columns.set(key, col); }",
     "tests": [
       "test/hudtext.test.js"
     ]
@@ -279,8 +279,8 @@
   {
     "name": "midscreen-enhanced-arm-dropped",
     "file": "src/ui/midScreenText.js",
-    "old": "    if (isEnhanced() && typeof document !== 'undefined') {\n      drawEnhancedMidText({ text: this.text, visible: true });",
-    "new": "    if (false && typeof document !== 'undefined') {\n      drawEnhancedMidText({ text: this.text, visible: true });",
+    "old": "    if (isEnhanced() && typeof document !== 'undefined') {\n      // AUDIT FONT F11",
+    "new": "    if (false && typeof document !== 'undefined') {\n      // AUDIT FONT F11",
     "tests": [
       "test/hudtext.test.js"
     ]
@@ -288,8 +288,8 @@
   {
     "name": "midscreen-enhanced-arm-taken-on-both-skins",
     "file": "src/ui/midScreenText.js",
-    "old": "    if (isEnhanced() && typeof document !== 'undefined') {\n      drawEnhancedMidText({ text: this.text, visible: true });",
-    "new": "    if (typeof document !== 'undefined') {\n      drawEnhancedMidText({ text: this.text, visible: true });",
+    "old": "    if (isEnhanced() && typeof document !== 'undefined') {\n      // AUDIT FONT F11",
+    "new": "    if (typeof document !== 'undefined') {\n      // AUDIT FONT F11",
     "tests": [
       "test/hudtext.test.js"
     ]
@@ -306,8 +306,8 @@
   {
     "name": "midscreen-label-off-its-classic-height",
     "file": "src/ui/enhancedStyle.js",
-    "old": ".hudmid { position: fixed; left: 50%; top: 73%;",
-    "new": ".hudmid { position: fixed; left: 50%; top: 40%;",
+    "old": ".hudmid { position: fixed; left: 50%; top: var(--hudmid-top, 73%);",
+    "new": ".hudmid { position: fixed; left: 50%; top: var(--hudmid-top, 40%);",
     "tests": [
       "test/hudtext.test.js"
     ]
@@ -409,6 +409,378 @@
     "new": "const face = 'font:600 15px system-ui,-apple-system,\"Segoe UI\",sans-serif';",
     "tests": [
       "test/audit39_uicore.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FONT-F1-one-column-for-every-model",
+    "file": "src/ui/hudText.js",
+    "old": "    this.key = `${key ?? 'hud'}${++_hudTextSeq}`;",
+    "new": "    this.key = 'hud';",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FONT-F1-the-owner-key-never-reaches-the-renderer",
+    "file": "src/ui/hudText.js",
+    "old": "      drawEnhancedHudText({ ...this.frame(), visible: !this.covered }, undefined, this.key);",
+    "new": "      drawEnhancedHudText({ ...this.frame(), visible: !this.covered });",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FONT-F1-the-hide-door-blanks-every-model",
+    "file": "src/ui/enhancedHudText.js",
+    "old": "  let col = columns.get(key);",
+    "new": "  let col = columns.values().next().value;",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FONT-F1-the-column-is-never-released",
+    "file": "src/ui/enhancedHudText.js",
+    "old": "  try { col.host.remove(); } catch { /* already gone */ }\n  columns.delete(key);",
+    "new": "  columns.delete(key);",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FONT-F1-the-stack-outlives-its-last-column",
+    "file": "src/ui/enhancedHudText.js",
+    "old": "  if (!columns.size) { try { stack?.remove(); } catch { /* already gone */ } stack = null; }",
+    "new": "  if (false) { stack = null; }",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FONT-F1-the-context-never-disposes-its-column",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      hudText.dispose();",
+    "new": "      void hudText;",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FONT-F2-the-scale-never-reaches-the-two-hosts",
+    "file": "src/ui/enhancedHud.js",
+    "old": "    setEnhancedHudTextScale(scale, document);",
+    "new": "    void scale;",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FONT-F2-the-scale-reaches-the-column-alone",
+    "file": "src/ui/enhancedHudText.js",
+    "old": "  for (const id of [ENHANCED_HUD_TEXT_ID, ENHANCED_MID_TEXT_ID]) {",
+    "new": "  for (const id of [ENHANCED_HUD_TEXT_ID]) {",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FONT-F2-the-slide-back-outside-the-scale",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".hudtext-stack { position: fixed; left: 50%; top: ${HUD_TEXT_TOP_PX}px; z-index: 4; pointer-events: none;\n  transform: translateX(-50%) scale(var(--hud-scale, 1));",
+    "new": ".hudtext-stack { position: fixed; left: 50%; top: ${HUD_TEXT_TOP_PX}px; z-index: 4; pointer-events: none;\n  transform: translateX(-50%) translateY(var(--hudtext-slide, 0px)) scale(var(--hud-scale, 1));",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FONT-F3-worldModes-overlay-branch-drops-the-hide-doors",
+    "file": "src/scenes/worldModes.js",
+    "old": "if (dungeonCtx.uiOverlayActive) { dungeonCtx.hideHudText?.(); dungeonCtx.tickOverlay(dt);",
+    "new": "if (dungeonCtx.uiOverlayActive) { dungeonCtx.tickOverlay(dt);",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FONT-F3-dungeon-overlay-branch-drops-the-hide-doors",
+    "file": "src/scenes/dungeon.js",
+    "old": "      ctx.hideHudText?.(); ctx.tickOverlay(dt); ctx.drawOverlay(canvas);",
+    "new": "      ctx.tickOverlay(dt); ctx.drawOverlay(canvas);",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FONT-F3-the-door-takes-the-column-and-not-the-label",
+    "file": "src/ui/hud.js",
+    "old": "  hudText?.hide();\n  midScreenText.hide();",
+    "new": "  hudText?.hide();",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FONT-F3-the-door-takes-the-label-and-not-the-column",
+    "file": "src/ui/hud.js",
+    "old": "  hudText?.hide();\n  midScreenText.hide();",
+    "new": "  midScreenText.hide();",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FONT-F3-the-context-door-hides-nothing",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    hideHudText: () => hideHudTextSurfaces(hudText),",
+    "new": "    hideHudText: () => {},",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FONT-F4-the-covered-window-is-ignored",
+    "file": "src/ui/hudText.js",
+    "old": "      drawEnhancedHudText({ ...this.frame(), visible: !this.covered }, undefined, this.key);",
+    "new": "      drawEnhancedHudText({ ...this.frame(), visible: true }, undefined, this.key);",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FONT-F4-townTalk-stops-naming-its-window",
+    "file": "src/scenes/townTalk.js",
+    "old": "    hud.observe(!!overlay);\n    if (font && hudRenderEnabled())",
+    "new": "    hud.observe(false);\n    if (font && hudRenderEnabled())",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FONT-F4-the-interior-frame-stops-naming-its-window",
+    "file": "src/scenes/townTalk.js",
+    "old": "      hud.observe(!!overlay);   // AUDIT FONT F4",
+    "new": "      hud.observe(false);   // AUDIT FONT F4",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FONT-F4-the-dungeon-stops-naming-its-window",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    hudText.observe(!!activeOverlay);",
+    "new": "    hudText.observe(false);",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FONT-F4-the-classic-arm-takes-the-covered-gate-too",
+    "file": "src/ui/hudText.js",
+    "old": "    if (!font || !this.lines.length) return;",
+    "new": "    if (!font || this.covered || !this.lines.length) return;",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FONT-F5-exterior-keeps-the-system-face",
+    "file": "src/scenes/exterior.js",
+    "old": "    enhanced: isEnhanced(),   // AUDIT FONT F5",
+    "new": "    _enhanced: isEnhanced(),   // AUDIT FONT F5",
+    "tests": [
+      "test/audit39_uicore.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FONT-F5-the-standalone-dungeon-keeps-the-system-face",
+    "file": "src/scenes/dungeon.js",
+    "old": "    enhanced: isEnhanced(),   // AUDIT FONT F5",
+    "new": "    _enhanced: isEnhanced(),   // AUDIT FONT F5",
+    "tests": [
+      "test/audit39_uicore.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FONT-F5-the-interior-keeps-the-system-face",
+    "file": "src/scenes/interior.js",
+    "old": "    enhanced: isEnhanced(),   // AUDIT FONT F5",
+    "new": "    _enhanced: isEnhanced(),   // AUDIT FONT F5",
+    "tests": [
+      "test/audit39_uicore.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FONT-F5-the-layer-ignores-the-hook",
+    "file": "src/ui/touch.js",
+    "old": "  const face = hooks.enhanced ? `font-weight:500;font-size:15px;${PIXEL_FONT_CSS}`",
+    "new": "  const face = false ? `font-weight:500;font-size:15px;${PIXEL_FONT_CSS}`",
+    "tests": [
+      "test/audit62_touch.test.js",
+      "test/audit39_uicore.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FONT-F6-the-naming-field-keeps-the-system-face",
+    "file": "src/ui/touch.js",
+    "old": "  const entryFace = hooks.enhanced ? `font-weight:600;font-size:18px;${PIXEL_FONT_CSS}`",
+    "new": "  const entryFace = false ? `font-weight:600;font-size:18px;${PIXEL_FONT_CSS}`",
+    "tests": [
+      "test/audit62_touch.test.js",
+      "test/audit39_uicore.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FONT-F7-the-column-back-inside-the-chat-peek",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "body:has(.dfchat) .hudtext-stack { top: ${HUD_TEXT_TOP_CHAT_PX}px; }",
+    "new": "",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FONT-F7-the-touch-chat-top-forgotten",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "body:has(.dfchat.touch) .hudtext-stack { top: ${HUD_TEXT_TOP_CHAT_TOUCH_PX}px; }",
+    "new": "",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FONT-F7-the-offset-stops-clearing-the-peek",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "const CHAT_PEEK_ROWS = 2;",
+    "new": "const CHAT_PEEK_ROWS = 1;",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FONT-F8-the-long-line-ellipsised-again",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  letter-spacing: 0.04em; white-space: normal; overflow-wrap: anywhere; text-align: center; max-width: 100%; }",
+    "new": "  letter-spacing: 0.04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FONT-F8-a-wrapped-row-boxed-at-one-row",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".hudtext-row { min-height: ${HUD_TEXT_ROW_PX}px;",
+    "new": ".hudtext-row { height: ${HUD_TEXT_ROW_PX}px;",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FONT-F8-the-slide-stops-measuring-the-row",
+    "file": "src/ui/enhancedHudText.js",
+    "old": "  const rowH = (slide !== 0 && rows[0]?.offsetHeight) || ENHANCED_HUD_TEXT_ROW_H;",
+    "new": "  const rowH = ENHANCED_HUD_TEXT_ROW_H;",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FONT-F8-the-measured-row-has-no-fallback",
+    "file": "src/ui/enhancedHudText.js",
+    "old": "  const rowH = (slide !== 0 && rows[0]?.offsetHeight) || ENHANCED_HUD_TEXT_ROW_H;",
+    "new": "  const rowH = rows[0]?.offsetHeight;",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FONT-F9-the-narrow-top-back-as-a-literal",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  .hudtext-stack { top: ${HUD_TEXT_TOP_NARROW_PX}px; }",
+    "new": "  .hudtext-stack { top: 82px; }",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FONT-F11-the-label-back-on-a-bare-proportion",
+    "file": "src/ui/midScreenText.js",
+    "old": "      drawEnhancedMidText({ text: this.text, visible: true, top: midTextTopPx(canvas, this.y) });",
+    "new": "      drawEnhancedMidText({ text: this.text, visible: true });",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FONT-F11-the-native-scale-stops-being-floored",
+    "file": "src/ui/enhancedHudText.js",
+    "old": "  const m = nativeMetrics(canvas);\n  const dpr = canvas.clientWidth > 0 ? canvas.width / canvas.clientWidth : 1;\n  return (m.oy + y * m.s) / dpr;",
+    "new": "  const dpr = canvas.clientWidth > 0 ? canvas.width / canvas.clientWidth : 1;\n  return (canvas.height * y / 200) / dpr;",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FONT-F11-the-panel-centring-dropped",
+    "file": "src/ui/enhancedHudText.js",
+    "old": "  return (m.oy + y * m.s) / dpr;",
+    "new": "  return (y * m.s) / dpr;",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FONT-F11-the-large-HUD-lift-never-reaches-the-label",
+    "file": "src/ui/midScreenText.js",
+    "old": "top: midTextTopPx(canvas, this.y) });",
+    "new": "top: midTextTopPx(canvas, MID_SCREEN_TEXT_DEFAULT_Y) });",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FONT-F12-the-teardown-doc-names-a-caller-that-does-not-exist",
+    "file": "src/ui/enhancedHudText.js",
+    "old": " *  AUDIT FONT F12: this used to name \"the same hand that calls",
+    "new": " *  is the same hand that calls ui/enhancedHud.js destroyEnhancedHud.\n *  AUDIT FONT F12: this used to name \"the same hand that calls",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FONT-F4-the-window-slot-back-as-a-fourth-draw-argument",
+    "file": "src/ui/hudText.js",
+    "old": "  draw(renderer, canvas, font) {",
+    "new": "  draw(renderer, canvas, font, covered = false) {",
+    "tests": [
+      "test/hudtext.test.js",
+      "test/audit24_wave40.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FONT-F2-the-scale-is-not-kept-for-a-host-built-later",
+    "file": "src/ui/enhancedHudText.js",
+    "old": "  if (hudScaleVar !== null) node.style.setProperty('--hud-scale', hudScaleVar);",
+    "new": "  void node;",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FONT-F2-the-stack-is-built-without-the-scale",
+    "file": "src/ui/enhancedHudText.js",
+    "old": "  applyScale(root);\n  doc.body.append(root);",
+    "new": "  doc.body.append(root);",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FONT-F2-the-label-is-built-without-the-scale",
+    "file": "src/ui/enhancedHudText.js",
+    "old": "    applyScale(midHost);\n    doc.body.append(midHost);",
+    "new": "    doc.body.append(midHost);",
+    "tests": [
+      "test/hudtext.test.js"
     ]
   }
 ]

@@ -2671,6 +2671,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // skin cannot change without a reload (both switches end in
     // location.replace), so this boot-time read is exact.
     dial: isEnhanced(),
+    enhanced: isEnhanced(),   // AUDIT FONT F5: the layer's text in the pixel face under the enhanced skin - FONT1 wired this in scenes/world.js alone, so every OTHER host's touch buttons stayed system-ui
     cycleMode: () => townTalk.nextMode(),   // T3-touch: the phone's F1-F4
     overlayActive: () => townTalk.overlayActive,
     // AUDIT 62 F7: the finger's pause gate - the same predicate the

@@ -163,6 +163,11 @@ export function attachTouch(canvas, hooks = {}) {
   // buttons, entry field and nav are in the pixel face (ui/pixelifyFive.js PIXEL_FONT_CSS - one home); the classic skin
   // keeps the system face it always drew. The skin cannot change without a reload, so the boot-time hook is exact.
   const face = hooks.enhanced ? `font-weight:500;font-size:15px;${PIXEL_FONT_CSS}` : 'font:600 15px system-ui,-apple-system,"Segoe UI",sans-serif';
+  // AUDIT FONT F6: the naming field sets its OWN font shorthand (it is
+  // an <input>, which inherits nothing from the layer), so the one
+  // place on this layer a player TYPES in was the one place FONT1's
+  // face never reached. Same size, this skin's letters.
+  const entryFace = hooks.enhanced ? `font-weight:600;font-size:18px;${PIXEL_FONT_CSS}` : 'font:600 18px system-ui,-apple-system,sans-serif';
   ui.style.cssText = `position:fixed;inset:0;pointer-events:none;z-index:5;${face};-webkit-user-select:none;user-select:none;-webkit-touch-callout:none`;
   document.body.appendChild(ui);
 
@@ -364,7 +369,7 @@ export function attachTouch(canvas, hooks = {}) {
     entry.autocapitalize = 'words';
     entry.autocomplete = 'off';
     entry.placeholder = 'name';
-    entry.style.cssText = `position:absolute;left:50%;${edge('top', 76)};transform:translateX(-50%);width:min(70vw,360px);height:48px;padding:0 16px;box-sizing:border-box;font:600 18px system-ui,-apple-system,sans-serif;color:#eee;background:rgba(14,16,19,.85);border:1px solid rgba(255,255,255,.3);border-radius:14px;outline:none;pointer-events:auto`;
+    entry.style.cssText = `position:absolute;left:50%;${edge('top', 76)};transform:translateX(-50%);width:min(70vw,360px);height:48px;padding:0 16px;box-sizing:border-box;${entryFace};color:#eee;background:rgba(14,16,19,.85);border:1px solid rgba(255,255,255,.3);border-radius:14px;outline:none;pointer-events:auto`;
     entry.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') { const t = entry.value; closeEntry(); if (t) sendText(t); }
       else if (e.key === 'Escape') closeEntry();

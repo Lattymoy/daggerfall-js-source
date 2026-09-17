@@ -47,9 +47,13 @@ test('hudText: the rubberband speedup only engages past maxRows', () => {
 // through, cut to what this renderer touches) and the classic arm over
 // a recording renderer, and each pin names the mutants it kills.
 import { readFileSync } from 'node:fs';
-import { drawEnhancedHudText, drawEnhancedStatusLine, destroyEnhancedHudText, ENHANCED_HUD_TEXT_ID, ENHANCED_MID_TEXT_ID, ENHANCED_STATUS_ID, ENHANCED_HUD_TEXT_ROW_H } from '../src/ui/enhancedHudText.js';
-import { MidScreenText, MID_SCREEN_TEXT_DEFAULT_DELAY } from '../src/ui/midScreenText.js';
-import { ENHANCED_CSS, HUD_TEXT_ROW_PX, HUD_TEXT_TOP_PX } from '../src/ui/enhancedStyle.js';
+import { drawEnhancedHudText, drawEnhancedStatusLine, destroyEnhancedHudText, setEnhancedHudTextScale, midTextTopPx, ENHANCED_HUD_TEXT_ID, ENHANCED_MID_TEXT_ID, ENHANCED_STATUS_ID, ENHANCED_HUD_TEXT_ROW_H } from '../src/ui/enhancedHudText.js';
+import { MidScreenText, MID_SCREEN_TEXT_DEFAULT_DELAY, midScreenText } from '../src/ui/midScreenText.js';
+import { ENHANCED_CSS, ENHANCED_STYLE_ID, injectEnhancedStyle, HUD_TEXT_ROW_PX, HUD_TEXT_TOP_PX, HUD_TEXT_TOP_NARROW_PX, HUD_TEXT_TOP_CHAT_PX, HUD_TEXT_TOP_CHAT_TOUCH_PX } from '../src/ui/enhancedStyle.js';
+import { CHAT_CSS } from '../src/ui/chatPanel.js';
+import { CHAT_PEEK } from '../src/net/chat.js';
+import { hideHudTextSurfaces } from '../src/ui/hud.js';
+import { nativeMetrics } from '../src/ui/nativePanel.js';
 
 const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
 
@@ -122,10 +126,15 @@ test('FONT1: under the enhanced skin the column is DOM in the pixel face, update
     // classic bitmap font nothing, and a skin that could not speak
     // without ARENA2's font would be the classic skin wearing a coat.
     h.draw(recorder(), { width: 1280, height: 800 }, null);
-    const host = doc.getElementById(ENHANCED_HUD_TEXT_ID);
-    assert.ok(host, 'mutants: the enhanced arm dropped, so the lines draw in the 1996 bitmap face (or not at all with no font)');
+    // AUDIT FONT F1: the id is the STACK's - one per document - and the
+    // column inside it is this model's own (see that finding below).
+    const stack = doc.getElementById(ENHANCED_HUD_TEXT_ID);
+    assert.ok(stack, 'mutants: the enhanced arm dropped, so the lines draw in the 1996 bitmap face (or not at all with no font)');
+    assert.equal(stack.className, 'hudtext-stack');
+    assert.equal(stack.attrs['aria-hidden'], 'true', 'a readout, not a reading order - the notebook carries the words');
+    const host = stack.children[0];
     assert.equal(host.className, 'hudtext');
-    assert.equal(host.attrs['aria-hidden'], 'true', 'a readout, not a reading order - the notebook carries the words');
+    assert.equal(host.dataset.owner, h.key, 'the column is named for the model that draws it');
     assert.deepEqual(rowsOf(host), ['Your Long Blade skill has improved.', 'You found 5 gold pieces.']);
     assert.equal(host.style['--hudtext-slide'], '0.00px', 'at rest the column does not slide');
 
@@ -136,6 +145,7 @@ test('FONT1: under the enhanced skin the column is DOM in the pixel face, update
     assert.equal(host.children[0], first, 'mutants: the column rebuilt every frame (PX19k at sixty times a second)');
     assert.equal(doc.body.children.filter((c) => c.id === ENHANCED_HUD_TEXT_ID).length, 1,
       'mutant: a fresh host built every frame, stacking dead columns under the live one');
+    assert.equal(stack.children.length, 1, 'and one column for one model');
 
     // The scroll-out: PopupText's timer, in pixels, off the ONE row
     // height the sheet and the module share. 1.5 s in, the timer is
@@ -195,12 +205,12 @@ test('FONT1: the enhanced column wears the skin\'s face and stands clear of the 
   assert.match(css, /\.hudtext \{[^}]*font-family: 'Pixelify Five', 'Pixelify Sans', monospace;[^}]*-webkit-font-smoothing: none;/,
     'mutants: the column left in --data (the launcher face); the smoothing left on, which blurs a pixel glyph');
   assert.match(css, /\.hudtext \{[^}]*color: rgb\(243,239,44\); text-shadow: 2px 2px 0 rgb\(93,77,12\);/);
-  assert.match(css, /\.hudtext \{[^}]*pointer-events: none;/, 'a readout takes no clicks');
+  assert.match(css, /\.hudtext-stack \{[^}]*pointer-events: none;/, 'a readout takes no clicks');
   // The two numbers are one number: the sheet's row height IS the pixel
   // step the module slides by, and the top is the sheet's too.
   assert.equal(ENHANCED_HUD_TEXT_ROW_H, HUD_TEXT_ROW_PX, 'mutants: the module keeps a row height of its own and the scroll-out slides by the wrong amount');
-  assert.match(css, new RegExp(`\\.hudtext-row \\{ height: ${HUD_TEXT_ROW_PX}px; line-height: ${HUD_TEXT_ROW_PX}px;`));
-  assert.match(css, new RegExp(`\\.hudtext \\{[^}]*top: ${HUD_TEXT_TOP_PX}px;`));
+  assert.match(css, new RegExp(`\\.hudtext-row \\{ min-height: ${HUD_TEXT_ROW_PX}px; line-height: ${HUD_TEXT_ROW_PX}px;`));
+  assert.match(css, new RegExp(`\\.hudtext-stack \\{[^}]*top: ${HUD_TEXT_TOP_PX}px;`));
   // The compass strip is at top 18 and 26 tall, so the column must
   // start below 44 - tools/font1Probe.mjs measures the whole top block
   // (with a named target under the compass) at 82 and this at 96.
@@ -255,7 +265,8 @@ test('FONT1: the HUD\'s OTHER text surface - the mid-screen label - speaks in th
   });
   // ...and the sheet dresses it in the skin's face at DFU's own height
   // (146 of 200 native rows is 73% of the screen).
-  assert.match(ENHANCED_CSS, /\.hudmid \{[^}]*top: 73%;/, 'mutant: moved off the classic label\'s proportion, so the line jumps when a player swaps skins');
+  assert.match(ENHANCED_CSS, /\.hudmid \{[^}]*top: var\(--hudmid-top, 73%\);/,
+    'mutants: the module\'s own number dropped, leaving a proportion that is only right at 16:10 (AUDIT FONT F11); the fallback dropped, so a label drawn before any frame has no place at all');
   assert.match(ENHANCED_CSS, /\.hudmid \{[^}]*font-family: 'Pixelify Five', 'Pixelify Sans', monospace; -webkit-font-smoothing: none;/,
     'mutants: left in --data (the launcher face); the smoothing left on');
   assert.match(ENHANCED_CSS, /\.hudmid \{[^}]*pointer-events: none;/);
@@ -293,4 +304,343 @@ test('FONT1: the online status line is the skin\'s face too, and every silent pa
     'mutant: a silent return that does not hide the strip - the door is declared once and called on BOTH early returns as well as at the draw');
   assert.match(rd('src/ui/enhancedStyle.js'), /\.hudstatus \{[^}]*font-family: \$\{PIXEL_STACK\}; -webkit-font-smoothing: none;/,
     'mutants: the strip in --data; the smoothing left on');
+});
+
+// ── AUDIT FONT (2026-09-16) - THE FONT1 SLICE AUDITED ────────────────
+//
+// Thirteen findings against FONT1's own arm. These are the fixes, each
+// driven over a fake document through the REAL modules - a HudText, a
+// MidScreenText, the sheet as it is actually injected - because the
+// failures they close are failures of what the modules DO to a
+// document, and a regex over the source could not have seen any of
+// them. Each names the mutants it kills (tools/mutants/font1.json).
+
+const CANVAS = { width: 1280, height: 800 };
+/** The columns inside the one stack, by the model that owns each. */
+const columnOf = (doc, h) => doc.getElementById(ENHANCED_HUD_TEXT_ID)?.children.find((c) => c.dataset.owner === h.key);
+
+test('AUDIT FONT F1: two PopupText models, two columns - a dungeon line survives townTalk\'s empty frame, and both sets are readable', () => {
+  withSkin('enhanced', () => {
+    const doc = fakeDocument();
+    globalThis.document = doc;
+    // The two that are alive at once on ?world inside a dungeon:
+    // scenes/dungeonContext.js's (the skill lines, the loot tallies,
+    // the door texts, every ctx.hudSay) and scenes/townTalk.js's (the
+    // street, and the Ambient Text mod's lines - which are said in a
+    // dungeon too, through townTalk.say).
+    const dungeon = new HudText('dungeon');
+    const town = new HudText('town');
+    assert.notEqual(dungeon.key, town.key,
+      'mutant: one key for every model - which IS the finding: FONT1 kept the host, the row pool and the last-frame cache as module singletons');
+
+    dungeon.add('You found 25 gold pieces.');
+    dungeon.draw(recorder(), CANVAS, null);
+    assert.deepEqual(rowsOf(columnOf(doc, dungeon)), ['You found 25 gold pieces.']);
+
+    // THE FRAME ORDER, verbatim: worldModes' dungeon arm draws the
+    // dungeon's column and returns true, then townTalk.frame draws its
+    // own - empty, because the street is not talking - in the same task.
+    town.draw(recorder(), CANVAS, null);
+    assert.equal(columnOf(doc, town), undefined, 'silence still builds nothing');
+    assert.equal(columnOf(doc, dungeon).style.display, '',
+      'mutants: the two models share one element, so townTalk\'s empty draw hid every dungeon popup this port has ever spoken');
+    assert.deepEqual(rowsOf(columnOf(doc, dungeon)), ['You found 25 gold pieces.']);
+
+    // ...and when the street DOES talk, the two stack rather than
+    // overwrite: both sets of lines readable, which is the whole point.
+    town.add('A dog barks somewhere behind you.');
+    town.draw(recorder(), CANVAS, null);
+    assert.deepEqual(rowsOf(columnOf(doc, town)), ['A dog barks somewhere behind you.']);
+    assert.deepEqual(rowsOf(columnOf(doc, dungeon)), ['You found 25 gold pieces.'],
+      'mutant: the later model writes the earlier one\'s rows');
+    assert.equal(doc.body.children.filter((c) => c.id === ENHANCED_HUD_TEXT_ID).length, 1,
+      'one STACK holds both - the place, the z-index and the scale are the document\'s, the rows are each model\'s');
+    assert.equal(doc.getElementById(ENHANCED_HUD_TEXT_ID).children.length, 2);
+
+    // EVERY ALLOCATION HAS AN OWNER: a dungeon context ends inside a
+    // session (scenes/dungeonContext.js destroy), and takes its column.
+    dungeon.dispose();
+    assert.equal(columnOf(doc, dungeon), undefined, 'mutant: dispose a no-op, so a torn-down context\'s column outlives it');
+    assert.deepEqual(rowsOf(columnOf(doc, town)), ['A dog barks somewhere behind you.'], 'and it takes only its own');
+    town.dispose();
+    assert.equal(doc.getElementById(ENHANCED_HUD_TEXT_ID), null, 'mutant: the stack outlives its last column');
+  });
+});
+
+test('AUDIT FONT F2: --hud-scale reaches the column and the label - they are SIBLINGS of .hud, not children of it', () => {
+  withSkin('enhanced', () => {
+    const doc = fakeDocument();
+    globalThis.document = doc;
+    const h = new HudText('town');
+    h.add('Your Long Blade skill has improved.');
+    h.draw(recorder(), CANVAS, null);
+    const label = new MidScreenText();
+    label.set('Interaction is now in steal mode.');
+    label.draw(recorder(), CANVAS, null);
+    const stack = doc.getElementById(ENHANCED_HUD_TEXT_ID);
+    const mid = doc.getElementById(ENHANCED_MID_TEXT_ID);
+    assert.equal(stack.style['--hud-scale'], undefined, 'nothing has set it yet - the variable is declared on .hud and does not inherit here');
+    setEnhancedHudTextScale(2, doc);
+    assert.equal(stack.style['--hud-scale'], '2',
+      'mutants: the column left off the scale write, so at hudScale 2 it draws at 1 - straight through the compass block - and at 0.5 it floats');
+    assert.equal(mid.style['--hud-scale'], '2', 'mutants: the mid-screen label left off it');
+  });
+  // ...AND THE HOST BUILT AFTERWARDS GETS IT TOO. enhancedHud writes
+  // the scale only when it CHANGES - once at boot - and these hosts are
+  // built on the first line the game says, which may be an hour later.
+  withSkin('enhanced', () => {
+    const doc = fakeDocument();
+    globalThis.document = doc;
+    setEnhancedHudTextScale(0.5, doc);          // the boot frame, with nothing built yet
+    const h = new HudText('town');
+    h.add('Your Long Blade skill has improved.');
+    h.draw(recorder(), CANVAS, null);
+    const label = new MidScreenText();
+    label.set('You are too far away.');
+    label.draw(recorder(), CANVAS, null);
+    assert.equal(doc.getElementById(ENHANCED_HUD_TEXT_ID).style['--hud-scale'], '0.5',
+      'mutant: the scale not kept, so a column built after the one write draws at 1 under a HUD at 0.5');
+    assert.equal(doc.getElementById(ENHANCED_MID_TEXT_ID).style['--hud-scale'], '0.5',
+      'mutant: ...and the label with it');
+  });
+  // ...and the one hand that knows the live scale calls it, beside the
+  // damage-number layer it already fed for exactly this reason.
+  assert.match(rd('src/ui/enhancedHud.js'), /getElementById\('enhanced-hitnums'\)\?\.style\.setProperty\('--hud-scale', String\(scale\)\);[\s\S]{0,400}?setEnhancedHudTextScale\(scale, document\);/,
+    'mutant: the propagation dropped out of the scale write, so nothing ever sets it on either host');
+  // AND THE SLIDE RIDES INSIDE THE SCALE. The scale is on the stack,
+  // the translateY on the column within it - so a row leaves by a
+  // SCALED row. FONT1 put both on one element with the translate
+  // outside the scale, so the scroll-out was always unscaled pixels.
+  assert.match(ENHANCED_CSS, /\.hudtext-stack \{[^}]*transform: translateX\(-50%\) scale\(var\(--hud-scale, 1\)\);/);
+  assert.match(ENHANCED_CSS, /\.hudtext \{[^}]*transform: translateY\(var\(--hudtext-slide, 0px\)\);/,
+    'mutant: the slide back outside the scale, so the scroll-out does not match the rows it is scrolling');
+});
+
+test('AUDIT FONT F3: the dungeon hosts\' overlay branch takes BOTH DOM surfaces down before it returns', () => {
+  withSkin('enhanced', () => {
+    const doc = fakeDocument();
+    globalThis.document = doc;
+    const hud = new HudText('dungeon');
+    hud.add('You found 25 gold pieces.');
+    hud.draw(recorder(), CANVAS, null);
+    midScreenText._reset();
+    midScreenText.set('You are too far away.');
+    midScreenText.draw(recorder(), CANVAS, null);
+    const col = columnOf(doc, hud);
+    const mid = doc.getElementById(ENHANCED_MID_TEXT_ID);
+    assert.equal(col.style.display, '');
+    assert.equal(mid.style.display, '');
+    // The frame a dungeon host runs with a window up: it returns above
+    // drawFoes, which is the only place it reaches drawHud, so this is
+    // the ONLY call that can ever take these two down on such a frame.
+    hideHudTextSurfaces(hud);
+    assert.equal(col.style.display, 'none',
+      'mutants: the popup column left standing over an open dungeon window (and on ?dungeon there is no second column behind it)');
+    assert.equal(mid.style.display, 'none',
+      'mutants: "You are too far away" left standing over the window that opened under it');
+    // The PAINT went; the model did not. PopupText.Update keeps
+    // draining under a window and the label keeps its 1.5 s.
+    assert.deepEqual(hud.lines.map((l) => l.text), ['You found 25 gold pieces.']);
+    assert.equal(midScreenText.text, 'You are too far away.');
+    // ...and a door with no popup model still takes the label down (the
+    // hosts pass theirs; a future caller that has none must not throw).
+    midScreenText.set('back');
+    midScreenText.draw(recorder(), CANVAS, null);
+    hideHudTextSurfaces();
+    assert.equal(mid.style.display, 'none');
+    midScreenText._reset();
+  });
+  // BOTH dungeon hosts say it, ON the branch, BEFORE the return - the
+  // branch is an early return and a hide written after it is dead code.
+  assert.match(rd('src/scenes/worldModes.js'),
+    /if \(dungeonCtx\.uiOverlayActive\) \{ dungeonCtx\.hideHudText\?\.\(\); dungeonCtx\.tickOverlay\(dt\); host\.drawPeerNames\?\.\(\{ proj, view, eye: mwv\.eye \}\); dungeonCtx\.drawOverlay\(canvas\); return true; \}/,   // AUDIT NAME1 F1 runs the name pass on the same arm, between the clock and the overlay
+    'mutants: the hide door dropped from ?world\'s dungeon arm, or written after the return where nothing runs it');
+  const dg = rd('src/scenes/dungeon.js');
+  const branch = dg.indexOf('if (ctx.uiOverlayActive) {');
+  const hidden = dg.indexOf('ctx.hideHudText?.();', branch);
+  const drawn = dg.indexOf('ctx.tickOverlay(dt); ctx.drawOverlay(canvas);', branch);
+  assert.ok(branch > 0 && hidden > branch && hidden < drawn,
+    'mutants: the hide door dropped from ?dungeon\'s overlay branch, or written after the return where nothing runs it');
+  assert.match(rd('src/scenes/dungeonContext.js'), /hideHudText: \(\) => hideHudTextSurfaces\(hudText\),/,
+    'mutants: the context\'s door hides one surface and not the other');
+});
+
+test('AUDIT FONT F4: a canvas window covers the classic column, so the DOM column goes while one is up', () => {
+  withSkin('enhanced', () => {
+    const doc = fakeDocument();
+    globalThis.document = doc;
+    const h = new HudText('town');
+    h.add('Your Long Blade skill has improved.');
+    h.observe(false);
+    h.draw(recorder(), CANVAS, null);
+    const col = columnOf(doc, h);
+    assert.deepEqual(rowsOf(col), ['Your Long Blade skill has improved.']);
+    // The death screen, the rest and save windows, the travel pop-up,
+    // the quest journal, every MessageBox and ActionTextBox are drawn
+    // on the CANVAS after this column - so on the classic skin they
+    // cover it. The DOM column is at z-index 4 over all of them.
+    h.observe(true);
+    h.draw(recorder(), CANVAS, null);
+    assert.equal(col.style.display, 'none',
+      'mutants: the covered flag ignored, so the popup lines stand OVER the death screen and every native window');
+    assert.deepEqual(h.lines.map((l) => l.text), ['Your Long Blade skill has improved.'],
+      'the paint went, the queue did not - PopupText.Update drains under a window');
+    h.observe(false);
+    h.draw(recorder(), CANVAS, null);
+    assert.equal(col.style.display, '', 'and the window closing brings it back');
+  });
+  // The classic arm is byte for byte what it was: there the draw ORDER
+  // already says it, and a `covered` frame still paints its glyphs
+  // under the window exactly as DFU's HUD does.
+  withSkin('classic', () => {
+    const doc = fakeDocument();
+    globalThis.document = doc;
+    const h = new HudText('town');
+    h.add('AB');
+    const r = recorder();
+    h.observe(true);
+    h.draw(r, { width: 1920, height: 1080 }, FONT);
+    assert.ok(r.quads.length >= 2, 'mutant: the covered gate taken on the classic arm too, which would blank a column DFU draws');
+    assert.equal(doc.getElementById(ENHANCED_HUD_TEXT_ID), null);
+  });
+  // ...and every host that owns a column hands its own window slot in.
+  const town = rd('src/scenes/townTalk.js');
+  assert.equal([...town.matchAll(/hud\.observe\(!!overlay\);/g)].length, 2,
+    'mutants: townTalk\'s frame - or the interior arm\'s own hudFrame - stops telling the column that a window is up');
+  assert.match(rd('src/scenes/dungeonContext.js'), /hudText\.observe\(!!activeOverlay\);/,
+    'mutants: the dungeon\'s frame stops telling it');
+  // ...and the model's own draw is back to three arguments: a fourth
+  // positional slot on a `draw` in src/ui is the scale's (audit24
+  // wave40's sweep), which is why this is a report and not an argument.
+  assert.match(rd('src/ui/hudText.js'), /  draw\(renderer, canvas, font\) \{/,
+    'mutant: the window slot smuggled into draw\'s argument list, where the sheet\'s forward fills the fourth with a number');
+});
+
+test('AUDIT FONT F7: the column steps out of the chat\'s peek where the chat is mounted, and the numbers are the chat sheet\'s own', () => {
+  withSkin('enhanced', () => {
+    const doc = fakeDocument();
+    globalThis.document = doc;
+    // The sheet as it is really injected, not a string read off the
+    // module: one <style> in the head, carrying the rule.
+    const h = new HudText('town');
+    h.add('Your Long Blade skill has improved.');
+    h.draw(recorder(), CANVAS, null);
+    const sheet = doc.getElementById(ENHANCED_STYLE_ID);
+    assert.ok(sheet, 'the module injects its sheet on the first line it paints');
+    assert.match(sheet.textContent, new RegExp(`body:has\\(\\.dfchat\\) \\.hudtext-stack \\{ top: ${HUD_TEXT_TOP_CHAT_PX}px; \\}`),
+      'mutants: the offset dropped, so the column sits inside the chat peek - .dfchat is z-index 5 over it and on a 430px phone the two boxes are the same box');
+    assert.match(sheet.textContent, new RegExp(`body:has\\(\\.dfchat\\.touch\\) \\.hudtext-stack \\{ top: ${HUD_TEXT_TOP_CHAT_TOUCH_PX}px; \\}`),
+      'mutant: the touch skin\'s own chat top (72, not 44) forgotten');
+  });
+  // The numbers are DERIVED from the chat's sheet, so a chat that moves
+  // reddens this rather than quietly sliding under the column again.
+  const chatTop = Number(/\.dfchat \{[^}]*top: calc\((\d+)px/.exec(CHAT_CSS)[1]);
+  const chatTouchTop = Number(/\.dfchat\.touch \{ top: calc\((\d+)px/.exec(CHAT_CSS)[1]);
+  const line = /\.dfchat-line \{[^}]*font-size: (\d+)px; line-height: ([\d.]+);/.exec(CHAT_CSS);
+  const gap = Number(/\.dfchat-peek \{[^}]*gap: (\d+)px;/.exec(CHAT_CSS)[1]);
+  // A peek line wraps in .dfchat's 440px box - tools/font1Probe.mjs
+  // measures the real panel at 248.5 (292.5 touch) and that is two
+  // rows a line, so the floor here is the two-row peek.
+  const peekH = CHAT_PEEK * 2 * Number(line[1]) * Number(line[2]) + (CHAT_PEEK - 1) * gap;
+  assert.ok(HUD_TEXT_TOP_CHAT_PX >= chatTop + peekH,
+    `mutant: the offset stops clearing the peek (${HUD_TEXT_TOP_CHAT_PX} against ${chatTop} + ${peekH.toFixed(1)})`);
+  assert.ok(HUD_TEXT_TOP_CHAT_TOUCH_PX >= chatTouchTop + peekH,
+    'mutant: the touch offset stops clearing the peek');
+  assert.ok(HUD_TEXT_TOP_CHAT_PX > HUD_TEXT_TOP_PX && HUD_TEXT_TOP_CHAT_TOUCH_PX > HUD_TEXT_TOP_CHAT_PX,
+    'the compass clearance is a FLOOR - the chat only ever pushes the column further down');
+});
+
+test('AUDIT FONT F8: a long line is drawn WHOLE, and the scroll-out is measured off the row it is scrolling', () => {
+  withSkin('enhanced', () => {
+    const doc = fakeDocument();
+    globalThis.document = doc;
+    const h = new HudText('town');
+    // A TEXT.RSC-length line - the shape a quest or a door text really
+    // has. The classic column measures the string and draws all of it.
+    const LONG = 'You have been given a letter of introduction to the Knights of the Dragon, and are expected at their hall in Daggerfall before the 15th of Hearthfire.';
+    h.add(LONG);
+    h.draw(recorder(), CANVAS, null);
+    const col = columnOf(doc, h);
+    assert.deepEqual(rowsOf(col), [LONG],
+      'mutants: the row truncated in the DOM, so the operative half of a quest line never reaches the player at all');
+    assert.equal(col.children[0].textContent.length, LONG.length);
+    // The sheet wraps rather than ellipsising it.
+    assert.match(ENHANCED_CSS, /\.hudtext-row \{[^}]*white-space: normal; overflow-wrap: anywhere;/,
+      'mutants: nowrap back on the row; the overflow-wrap dropped, so a long unbroken word spills out of the column');
+    assert.doesNotMatch(ENHANCED_CSS, /\.hudtext-row \{[^}]*text-overflow: ellipsis;/,
+      'mutant: the ellipsis back, which is what cut the line');
+    assert.match(ENHANCED_CSS, new RegExp(`\\.hudtext-row \\{ min-height: ${HUD_TEXT_ROW_PX}px;`),
+      'mutant: a fixed height back on a row that now wraps, so the second line draws outside its own box');
+
+    // ...and the slide is honest about that row's REAL height. A row
+    // that wrapped to two lines and scrolled out by one row's worth
+    // would jump; the module measures the front row and falls back to
+    // the sheet's minimum for a row that has never been laid out.
+    h.tick(HUD_TEXT_POP_DELAY + 0.5);
+    col.children[0].offsetHeight = 44;          // what a two-line row measures
+    h.draw(recorder(), CANVAS, null);
+    assert.equal(col.style['--hudtext-slide'], `${(h.timer * 44).toFixed(2)}px`,
+      'mutants: the slide taken off the constant while the row is taller, so a wrapped line leaves by half of itself');
+    delete col.children[0].offsetHeight;
+    h.draw(recorder(), CANVAS, null);
+    assert.equal(col.style['--hudtext-slide'], `${(h.timer * ENHANCED_HUD_TEXT_ROW_H).toFixed(2)}px`,
+      'mutant: no fallback, so a row with no layout yet slides by NaN and the column vanishes');
+  });
+});
+
+test('AUDIT FONT F9: the narrow top is an export the sheet interpolates, like its wide sibling', () => {
+  assert.equal(typeof HUD_TEXT_TOP_NARROW_PX, 'number');
+  assert.ok(HUD_TEXT_TOP_NARROW_PX < HUD_TEXT_TOP_PX,
+    'the compass block moves UP under 860px (.hud-top 18 -> 10), so the column follows it');
+  assert.match(ENHANCED_CSS, new RegExp(`@media \\(max-width: 860px\\) \\{[\\s\\S]*?\\.hudtext-stack \\{ top: ${HUD_TEXT_TOP_NARROW_PX}px; \\}`),
+    'mutants: the narrow top back as a literal, so a slice that moves the compass moves one of the two numbers and not the other');
+  assert.doesNotMatch(rd('src/ui/enhancedStyle.js'), /\.hudtext-stack \{ top: 82px; \}/,
+    'mutant: the literal restored beside the export');
+});
+
+test('AUDIT FONT F11: the mid-screen label lands on the CLASSIC label\'s own line, not on a proportion that is right at 16:10 alone', () => {
+  // DFU's y=146 of 200 is a NativePanel row, and nativeMetrics FLOORS
+  // the fit and centres what is left - so the label's real place is
+  // (oy + 146*s), and only at 16:10 does that come out at 73%.
+  const at = (w, h) => {
+    const m = nativeMetrics({ width: w, height: h });
+    return { want: m.oy + 146 * m.s, got: midTextTopPx({ width: w, height: h }, 146) };
+  };
+  for (const [w, h] of [[1280, 800], [1280, 1024], [1920, 1080], [430, 932]]) {
+    const r = at(w, h);
+    assert.equal(r.got, r.want, `${w}x${h}: mutants: the label taken off a bare proportion again; the floored scale or the centring dropped`);
+  }
+  const wide = at(1280, 800), tall = at(1280, 1024);
+  assert.ok(Math.abs(wide.want / 800 - 0.73) < 0.01, '16:10 really is 73% - which is why the proportion looked right');
+  assert.ok(Math.abs(tall.want / 1024 - 0.73) > 0.04,
+    '...and 5:4 is not: the panel is scale 4 with oy 112 there, so 73% put the line four native rows off');
+  assert.equal(midTextTopPx(null, 146), null, 'and no canvas leaves the sheet\'s fallback alone');
+
+  withSkin('enhanced', () => {
+    const doc = fakeDocument();
+    globalThis.document = doc;
+    const label = new MidScreenText();
+    label.set('You are too far away.');
+    label.draw(recorder(), { width: 1280, height: 1024 }, null);
+    const node = doc.getElementById(ENHANCED_MID_TEXT_ID);
+    assert.equal(node.style['--hudmid-top'], `${at(1280, 1024).want.toFixed(1)}px`,
+      'mutants: the label never writes its place, so it keeps the 73% fallback wherever the canvas puts the classic one');
+    // The large-HUD lift moves `this.y`, and the label follows it.
+    label.observe(1024, 4, 500);   // a bar tall enough to lift the label (:356-365's clamp keeps a SHORT one at 146)
+    label.set('You are too far away.');
+    label.draw(recorder(), { width: 1280, height: 1024 }, null);
+    assert.ok(label.y < 146);
+    assert.equal(node.style['--hudmid-top'], `${(nativeMetrics({ width: 1280, height: 1024 }).oy + label.y * 4).toFixed(1)}px`,
+      'mutant: the label drawn at the default row while the classic one is lifted off the large HUD');
+  });
+});
+
+test('AUDIT FONT F12: the teardown\'s doc names callers that exist', () => {
+  const s = rd('src/ui/enhancedHudText.js');
+  assert.doesNotMatch(s, /the same hand that calls ui\/enhancedHud\.js destroyEnhancedHud/,
+    'mutant: the old sentence back - it named a caller that is nowhere in src/, and destroyEnhancedHud has none either');
+  assert.match(s, /export function releaseEnhancedHudText\(key\)/,
+    'the per-owner teardown a live host really does reach');
+  assert.equal([...rd('src/scenes/dungeonContext.js').matchAll(/hudText\.dispose\(\);/g)].length, 1,
+    'mutant: the context\'s column never released, so a torn-down dungeon leaves its column on the page');
 });

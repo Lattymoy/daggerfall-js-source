@@ -434,6 +434,28 @@ export function drawCompassStrip(renderer, art, x, y, s, heading01) {
   return { bw, bh };
 }
 
+/**
+ * AUDIT FONT F3: THE HUD'S TWO DOM TEXT SURFACES, DOWN - in one call,
+ * for the frame that never reaches drawHud at all.
+ *
+ * drawHud is the only place a host says either of these, and both
+ * dungeon hosts (scenes/dungeon.js, scenes/worldModes.js's dungeon arm)
+ * RETURN out of the frame while a window is up, above the `drawFoes`
+ * that would have called it. On the classic skin that is exactly right
+ * - nothing painted is nothing seen - but under the enhanced skin both
+ * surfaces are DOM and stay painted until told otherwise (AUDIT 64
+ * F37's law), so "You are too far away" stood over an open dungeon
+ * window until the player closed it, and on ?dungeon - which has no
+ * townTalk drawing a second column - the popup column stood too.
+ *
+ * ONE call rather than two lines in each host, because the next host
+ * to grow an early return is the one that remembers one of them.
+ */
+export function hideHudTextSurfaces(hudText = null) {
+  hudText?.hide();
+  midScreenText.hide();
+}
+
 export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   { font = null, cursorActive = false, windowCoversHud = null, detected = null, playerXZ = null, largeHud = null, hover = null,
     readied = null, weapon = null, weaponSheathed = true } = {}) {   // PX30b: for the enhanced HUD's hand plaques; AUDIT 28 W2: the arrow counter's gate; AUDIT 64 F35: the host's previousWindow answer

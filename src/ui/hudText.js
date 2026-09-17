@@ -33,7 +33,14 @@
 import { drawText, measureText } from './text.js';
 import { nativeMetrics, NATIVE_W, DEFAULT_TEXT_COLOR } from './nativePanel.js';
 import { isEnhanced } from '../systems/uiSkin.js';
-import { drawEnhancedHudText } from './enhancedHudText.js';
+import { drawEnhancedHudText, releaseEnhancedHudText } from './enhancedHudText.js';
+
+/** AUDIT FONT F1: every model gets a name of its own, so two never
+ *  share one DOM column - see ui/enhancedHudText.js's header for why
+ *  there are two at all. A caller that passes none still gets a
+ *  unique one, because the failure this closes was exactly two
+ *  instances agreeing on a default. */
+let _hudTextSeq = 0;
 
 export const HUD_TEXT_POP_DELAY = 1.0;      // PopupText.popDelay
 export const HUD_TEXT_MAX_ROWS = 7;         // PopupText.maxRows
@@ -42,7 +49,16 @@ export const HUD_TEXT_RUBBERBAND = 0.8;     // PopupText.rubberbandFactor
 export const HUD_TEXT_TOP = 4;              // PopupText.Draw's `float y = 4`
 
 export class HudText {
-  constructor() {
+  constructor(key = null) {
+    /** AUDIT FONT F1: this model's own DOM column (ui/enhancedHudText
+     *  .js). `key` names the OWNER for a reader of the rendered page;
+     *  the sequence is appended whatever is passed, so two contexts
+     *  that overlap for a frame - one built before the other's
+     *  teardown - can never land on one element either. */
+    this.key = `${key ?? 'hud'}${++_hudTextSeq}`;
+    /** AUDIT FONT F4: the host's last word on whether a canvas window
+     *  stands over this column - see observe() below. */
+    this.covered = false;
     this.lines = [];
     this.timer = 0;
     this.nextPopDelay = HUD_TEXT_POP_DELAY;
@@ -105,8 +121,34 @@ export class HudText {
    *  gate they already had, and on the classic skin this is nothing at
    *  all - which is exactly what the classic did with those frames. */
   hide() {
-    if (isEnhanced() && typeof document !== 'undefined') drawEnhancedHudText({ rows: [], slide: 0, visible: false });
+    if (isEnhanced() && typeof document !== 'undefined') drawEnhancedHudText({ rows: [], slide: 0, visible: false }, undefined, this.key);
   }
+
+  /** EVERY ALLOCATION HAS AN OWNER (AUDIT FONT F1): a model whose host
+   *  is ending takes its DOM column with it. */
+  dispose() {
+    if (typeof document !== 'undefined') releaseEnhancedHudText(this.key);
+  }
+
+  /** AUDIT FONT F4 - WHAT THE HOST CAN SEE AND THIS MODEL CANNOT: a
+   *  canvas window standing over the column.
+   *
+   *  The classic column is painted by the host BEFORE the window on
+   *  top of it (scenes/townTalk.js draws the column, then the overlay
+   *  stack), which is DFU's order too - DaggerfallHUD paints under the
+   *  top window. The DOM column is at z-index 4 over the canvas and
+   *  obeys no such order, so under the enhanced skin the popup lines
+   *  stood OVER the death screen, the rest and save windows, the
+   *  travel pop-up, the quest journal and every MessageBox. So the
+   *  hosts REPORT their window slot per frame - the same idiom
+   *  ui/hud.js already uses for the mid-screen label's `observe` -
+   *  and the enhanced arm hides the column for as long as one stands.
+   *  The classic arm reads it not at all: there the draw order has
+   *  always said it, and DFU really does paint that column under the
+   *  window. A window slot is the HOST's to know, and a fourth
+   *  positional argument here is a slot the window sweep reserves for
+   *  the scale (audit24 wave40). */
+  observe(covered) { this.covered = !!covered; }
 
   /** PopupText.Draw verbatim, in NativePanel coordinates - and, under
    *  the enhanced skin, the same frame handed to the DOM column
@@ -115,7 +157,7 @@ export class HudText {
    *  itself off the native panel and the enhanced one off --hud-scale. */
   draw(renderer, canvas, font) {
     if (isEnhanced() && typeof document !== 'undefined') {
-      drawEnhancedHudText({ ...this.frame(), visible: true });
+      drawEnhancedHudText({ ...this.frame(), visible: !this.covered }, undefined, this.key);
       return;
     }
     if (!font || !this.lines.length) return;
