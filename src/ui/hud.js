@@ -458,7 +458,7 @@ export function hideHudTextSurfaces(hudText = null) {
 
 export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   { font = null, cursorActive = false, windowCoversHud = null, detected = null, playerXZ = null, largeHud = null, hover = null,
-    readied = null, weapon = null, weaponSheathed = true } = {}) {   // PX30b: for the enhanced HUD's hand plaques; AUDIT 28 W2: the arrow counter's gate; AUDIT 64 F35: the host's previousWindow answer
+    readied = null, weapon = null, weaponSheathed = true, quickUse = null, quickSwap = null } = {}) {   // PX30b: for the enhanced HUD's hand plaques; AUDIT 28 W2: the arrow counter's gate; AUDIT 64 F35: the host's previousWindow answer; QS3: the diamond's sheathe state and its two phone taps
   // AUDIT 24 (wave 39): ShowPlayerDamage's red flash, under the bars.
   // THE FOUR HOSTS RULE, applied before the fact: drawHud is the one
   // host-agnostic call all four make, "last, over the viewmodel", so
@@ -595,6 +595,17 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
       // classic compass carries them too.
       detected: detected ?? null,
       playerXZ: playerXZ ?? null,
+      // QS3: the quickslot diamond dims its main cell when the weapon
+      // is put away. drawHud has carried `weaponSheathed` since AUDIT
+      // 28 W2 for the arrow counter's gate and never passed it on, so
+      // the enhanced skin had no way to know and a drawn sword read
+      // exactly as a sheathed one. One line.
+      weaponSheathed: weaponSheathed,
+      // QS3's second departure: on a phone the diamond's cells are the
+      // only control for the two quick uses and the swap. A host with
+      // no such door passes none and the tap does nothing.
+      quickUse: quickUse ?? null,
+      quickSwap: quickSwap ?? null,
     });
     // FE1 + AUDIT 39 F133: the escort column is not the classic skin's
     // - DaggerfallHUD adds it unconditionally (:183-185) and even the

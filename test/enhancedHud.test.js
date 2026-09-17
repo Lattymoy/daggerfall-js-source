@@ -83,7 +83,18 @@ test('PX30: it is a READOUT, and it is updated rather than rebuilt', () => {
   // Tab does not close it - it is the game's own face.
   assert.match(css, /\.hud \{ position: fixed; inset: 0; z-index: 4; pointer-events: none;/);
   assert.match(src, /setAttribute\('aria-hidden', 'true'\)/);
-  assert.doesNotMatch(src, /registerOverlay|addEventListener/, 'a readout listens to nothing');
+  assert.doesNotMatch(src, /registerOverlay/, 'a readout goes through no door');
+  // QS3 narrowed this pin by exactly its own departure and no further.
+  // It read "a readout listens to nothing"; under `pointer: coarse` the
+  // four quickslot cells - and nothing else on this layer - take a
+  // pointerdown, because a phone has no Digit1, Digit2 or Digit3 and
+  // AUDIT SOC C9 is what happens when a platform cannot reach an
+  // action. The three listeners are bound ONCE, in build(), and the
+  // `.hud` root is still pointer-events none, which is what keeps the
+  // game underneath reachable.
+  assert.equal((src.match(/addEventListener\(/g) ?? []).length, 3, 'three listeners, and they are the quickslot cells\'');
+  for (const m of src.match(/\.addEventListener\('(\w+)'/g) ?? []) assert.equal(m, ".addEventListener('pointerdown'");
+  assert.match(css, /@media \(pointer: coarse\) \{\s*\n\s*\.hud-qcell \{ pointer-events: auto;/);
   // UPDATED, NOT REBUILT: a per-frame innerHTML is PX19k's entrance
   // replay at sixty times a second. Every write is guarded.
   assert.match(src, /const put = \(node, key, value\) => \{\s*\n\s*if \(last\[key\] === value\) return;/);
@@ -116,22 +127,34 @@ test('PX30b: the breath bar and the two hands - each only when there is one', ()
   assert.match(css, /\.hud-breath \{ display: none;[\s\S]{0,80}\.hud-breath\.on \{ display: flex; \}/);
   // THE HANDS. The reference's ability bar has no Daggerfall
   // equivalent - there are no hotkeyed abilities - but the two things
-  // it would hold do exist. Each plaque draws only when filled: an
-  // empty one is PX14's drawn door, and a HUD is the worst place for
-  // furniture that says nothing.
+  // it would hold do exist: the spell you have READIED and what is in
+  // your hand.
+  //
+  // QS3 REPLACED THE TWO PLAQUES WITH THE QUICKSLOT DIAMOND, and this
+  // pin was re-aimed rather than deleted. What it protected is still
+  // protected: BOTH values still arrive through drawHud's own options
+  // bag, so a host that knows neither passes neither, and both are
+  // still GUARDED writes. What changed is where they are drawn - the
+  // readied spell is the diamond's caption chip and the weapon is its
+  // main cell - so the `.hud-hand` plaque rules are gone with them, and
+  // the "each only when filled" half of this law now lives where it was
+  // made: on the CHIP, which carries a name and says nothing without
+  // one. The cells are the arc's recorded departure (see
+  // test/qs3_hud.test.js and ui/enhancedHud.js's header): an empty cell
+  // is a SOCKET, because the diamond's shape is the readout.
   assert.match(src, /parts\.readied\.classList\.toggle\('on', !!readyName\);/);
-  assert.match(src, /parts\.weapon\.classList\.toggle\('on', !!weaponName\);/);
-  assert.match(css, /\.hud-hand \{ display: none;/);
-  assert.match(css, /\.hud-hand\.on \{ display: flex; \}/);
+  assert.doesNotMatch(css, /\.hud-hand \{|\.hud-hands|\.hud-hand\.on/, 'the plaques went with the diamond');
+  assert.match(src, /quickslotView\(vitals, \{ weapon: opts\.weapon \?\? null, sheathed: opts\.weaponSheathed \?\? false \}\)/,
+    'the weapon is the diamond\'s main cell now');
   // The host hands them over through drawHud's own options bag, so a
   // host that knows neither passes neither.
   // AUDIT 28 W2a re-aimed from the literal bag-tail: the bag grew
   // weaponSheathed after these two, and the law is that both are there.
-  assert.match(read('src/ui/hud.js'), /readied = null, weapon = null(, [^}]*)? \} = \{\}\)/);
+  assert.match(read('src/ui/hud.js'), /readied = null, weapon = null(, [^}]*)? \} = \{\}[,)]/s);
   assert.match(read('src/ui/hud.js'), /readied: readied \?\? null,\s*\n\s*weapon: weapon \?\? null,/);
   // ...and both are still GUARDED writes, like everything else here.
   assert.match(src, /if \(last\.readied !== readyName\) \{/);
-  assert.match(src, /if \(last\.weapon !== weaponName\) \{/);
+  assert.match(src, /if \(last\.quick === sig\) return;/);
 });
 
 test('AUDIT 39: every host that draws a HUD fills the two hands', () => {

@@ -65,6 +65,7 @@ import { hasDaggerfallArrows } from '../combat/fpArm.js';   // PX26
 import { ARMOR_ENUM } from '../combat/enemyEquipment.js';   // PX25
 import { inventoryItemImage, templateByIndex } from '../systems/itemTemplates.js';
 import { requestIcon, paperDollDataUrl } from './textureCanvas.js';
+import { modelIconUrl as modelIconUrlOf } from './itemIconUrl.js';   // MW-D38, shared with the HUD's quickslots (QS3)
 // U59: the AVATAR. The compositor is ui/paperDoll.js - the same one
 // the classic window draws - and this reads its finished pixels rather
 // than re-deriving PaperDollRenderer's layer order for a second time.
@@ -1239,22 +1240,13 @@ function modelFigure() {
   return cv;
 }
 /** MW-D38: a Daggerfall item's Morrowind icon as a data URL, or null.
- *  The rig caches the pixels per record; this caches the encoding. */
-const _iconUrls = new Map();
-function modelIconUrl(item, size) {
-  const armMod = deps.fpArm;
-  if (!armMod || typeof armMod.itemIcon !== 'function' || !item) return null;
-  let img = null;
-  try { img = armMod.itemIcon(item, { size }); } catch { img = null; }
-  if (!img || !img.width) return null;
-  if (_iconUrls.has(img)) return _iconUrls.get(img);
-  const cv = document.createElement('canvas');
-  cv.width = img.width; cv.height = img.height;
-  cv.getContext('2d').putImageData(new ImageData(img.data, img.width, img.height), 0, 0);
-  const url = cv.toDataURL('image/png');
-  _iconUrls.set(img, url);
-  return url;
-}
+ *  QS3 moved the body to ui/itemIconUrl.js, because the HUD's quickslot
+ *  diamond wants the same picture of the same item and importing this
+ *  screen to reach twenty lines would drag the whole window into every
+ *  frame drawHud makes. The rig it reads is still the one the host
+ *  mounted this screen with - a page with no Morrowind data behind it
+ *  draws the classic icon, exactly as before. */
+const modelIconUrl = (item, size) => modelIconUrlOf(item, size, deps.fpArm);
 
 /** Drag left/right to turn the figure; a tap does nothing (display only).
  *  MF1: the move records the yaw and asks for ONE repaint on the next
