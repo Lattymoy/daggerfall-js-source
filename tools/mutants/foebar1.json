@@ -42,6 +42,13 @@
     "tests": ["test/foebar1_blade.test.js"]
   },
   {
+    "name": "FOEBAR1b-the-drained-bar-is-opaque",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".hud-bladeempty { opacity: 0.72; }",
+    "new": "",
+    "tests": ["test/foebar1_blade.test.js"]
+  },
+  {
     "name": "FOEBAR1-the-menus-button-names-the-option-already-on",
     "file": "src/ui/enhancedMenu.js",
     "old": "    const b = el('button', 'act rowact', blade ? 'Blade' : 'Bar');",

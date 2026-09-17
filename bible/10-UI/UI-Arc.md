@@ -15656,4 +15656,11 @@ directory (U60: no probe drives the root as the game), and the shape keeps
 the crop's aspect. Mac has
 the three blade shots and the bar for comparison.
 
+**FOEBAR1b (same day).** Mac, with a crop of the friend's screen: "Make
+sure you give the drained health background slight transparency like
+the image" - in it the sky and trees show through the dark blade. So
+`.hud-bladeempty` draws at opacity 0.72 and the red fill stays solid
+(the sheet gives `.hud-bladefull` no opacity). The probe reads both off
+the computed style.
+
 `test/foebar1_blade.test.js` - 2 pins. `tools/mutants/foebar1.json`.

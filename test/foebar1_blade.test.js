@@ -48,6 +48,8 @@ test('FOEBAR1: the two pictures are one crop, the pref defaults to the plain bar
   assert.match(css, /\.hud-foe\.blade \.hud-foeblade \{ display: block; \}/);
   assert.match(css, /\.hud-bladeempty, \.hud-bladefull \{ position: absolute; inset: 0; display: block;\s*\n\s*background-position: center; background-size: 100% 100%; background-repeat: no-repeat; \}/, 'the sheet sizes the pictures and names none - the URLs are the module\'s');
   assert.doesNotMatch(css, /foe-blade-(?:empty|full)\.png/, 'no picture URL in the sheet');
+  assert.match(css, /\.hud-bladeempty \{ opacity: 0\.72; \}/, 'FOEBAR1b: the drained bar is slightly see-through, the fill is not');
+  assert.doesNotMatch(css, /\.hud-bladefull \{[^}]*opacity/, 'the fill stays solid red');
   const menu = read('src/ui/enhancedMenu.js');
   assert.match(menu, /const blade = getPref\('foeBarStyle'\) === 'blade';[\s\S]{0,900}?setPref\('foeBarStyle', blade \? 'bar' : 'blade'\); render\(\);/, 'the Interface card offers the two faces as a two-way row');
   assert.match(menu, /el\('button', 'act rowact', blade \? 'Blade' : 'Bar'\)/, 'whose button names the OTHER option');

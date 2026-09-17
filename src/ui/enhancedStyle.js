@@ -1911,6 +1911,7 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
 .hud-foe.blade .hud-foeblade { display: block; }
 .hud-bladeempty, .hud-bladefull { position: absolute; inset: 0; display: block;
   background-position: center; background-size: 100% 100%; background-repeat: no-repeat; }
+.hud-bladeempty { opacity: 0.72; }   /* FOEBAR1b: the drained bar lets the world through, as the friend's picture does */
 
 /* THE VITALS. Magicka, health, fatigue - the reference's own order and
    DFU's own three, each with its number beside it. */

@@ -43,7 +43,7 @@ globalThis.__probe = {
     const cs = (n) => n ? getComputedStyle(n) : null;
     return { on: foe?.classList.contains('on'), blade: foe?.classList.contains('blade'), trackDisplay: cs(track)?.display, bladeDisplay: cs(blade)?.display,
       clip: full?.style.clipPath ?? null, fill: document.querySelector('.hud-fill')?.style.width ?? null,
-      emptyImg: cs(empty)?.backgroundImage, fullImg: cs(full)?.backgroundImage, w: blade?.getBoundingClientRect().width, h: blade?.getBoundingClientRect().height };
+      emptyImg: cs(empty)?.backgroundImage, fullImg: cs(full)?.backgroundImage, emptyOpacity: cs(empty)?.opacity, fullOpacity: cs(full)?.opacity, w: blade?.getBoundingClientRect().width, h: blade?.getBoundingClientRect().height };
   },
   // (no backslashes here - this source sits inside a template literal, which eats them)
   loaded: async () => { const out = {}; for (const sel of ['.hud-bladeempty', '.hud-bladefull']) { const n = document.querySelector(sel); const s = n?.style.backgroundImage ?? ''; const u = s.startsWith('url(') ? s.slice(4, -1).replace(/^["']|["']$/g, '') : null; if (!u) { out[sel] = 'unset'; continue; } const r = await fetch(u); const type = r.headers.get('content-type') ?? ''; out[u] = r.ok && type.includes('image/png') ? (await r.blob()).size : r.status + ' ' + type; } return out; },
@@ -86,6 +86,7 @@ try {
         check(`blade @${pct}: the fill is clipped in ${x}% from each tip`, insets.length >= 1 && insets.every((v) => Math.abs(v - Number(x)) < 0.01) && /^inset\(0(?:px)? /.test(r.clip), r.clip);
         check(`blade @${pct}: both pictures are the crop`, /foe-blade-empty\.png/.test(r.emptyImg) && /foe-blade-full\.png/.test(r.fullImg), `${r.emptyImg} | ${r.fullImg}`);
         check(`blade @${pct}: the shape keeps the crop's aspect`, Math.abs(r.w / r.h - 981 / 130) < 0.05, `${r.w}x${r.h}`);
+        check(`blade @${pct}: the drained bar lets the world through and the fill does not`, Math.abs(parseFloat(r.emptyOpacity) - 0.72) < 0.001 && parseFloat(r.fullOpacity) === 1, `${r.emptyOpacity}/${r.fullOpacity}`);
       } else {
         check(`bar @${pct}: the plain track shows and the blade hides`, !r.blade && r.trackDisplay !== 'none' && r.bladeDisplay === 'none', `${r.trackDisplay}/${r.bladeDisplay}`);
         check(`bar @${pct}: the fill is ${pct}%`, Math.abs(parseFloat(r.fill) - pct) < 0.01, r.fill);
