@@ -99,6 +99,7 @@ import { createPlayerMagic } from './hostMagic.js';   // M3: the ONE cast engine
 import { tallySkill, skillValue, SKILLS, SKILL_NAMES } from '../systems/skills.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT, startRestGroundedCheck } from '../player/motor.js';   // the rest gate's grounded input, one home
 import { applyLevelUp } from '../systems/advancement.js';
+import { initVirtueLeveling, LEVELING_CLASSIC } from '../systems/oblivionLeveling.js';   // ORL1: the font-less creation path answers the question it could not ask
 import { tickPlayerMinutes, claimMagicRounds, runMagicRoundsFor } from '../systems/worldTick.js';   // AUDIT 18: the player tick every host shares
 import { mintSharedStamp, hitPoisonOf, HIT_ARROWS_MAX, respawnDue, wallMsForClassicMinutes, validFoeRecord, validSharedFoe, FOE_HEALTH_MAX } from '../net/wire.js';   // AUDIT ONCRASH1 B4a/A3: the stream's door and the memory's, which this host had neither of   // WORLD8: the hour's respawn   // AUDIT WORLD6a B7: the memory's stamp, from the wire's one mint
 import { spendPoolLowest } from '../systems/chargen.js';
@@ -1925,7 +1926,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // copied mount would have diverged the first time an arm grew.
   /** DR1: THE TWO SPELL WINDOWS THIS HOST MOUNTS NOW, and the one door
    *  they go through. `mountSpellWindow` is worldModes'
-   *  mountSpellWindow DUNGEON ARM (worldModes.js:1050,
+   *  mountSpellWindow DUNGEON ARM (worldModes.js:1062,
    *  `dungeonCtx?.showOverlay(win)`) resolved to what it actually
    *  calls here - this file's own pushDungeonWindow, which IS
    *  UserInterfaceManager.PushWindow. So a spell window raised over an
@@ -2262,7 +2263,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // systems/chargenSession.js FS-slice - SHIPPED (wave D). This
       // host held the RAW flow as its own overlay and drew it
       // directly, so it could not reach the skin fork that lives in
-      // createChargenWindow (chargenSession.js:361) - THE ONE
+      // createChargenWindow (chargenSession.js:464) - THE ONE
       // CONSTRUCTION SEAM AUDIT 17i split out precisely so no host
       // would wire chargen by hand a fourth time. It is through that
       // door now, which is also where the fire-once law, the shared
@@ -2315,6 +2316,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     };
     createCharacter(playerEntity, r.career, r.careerIndex);
     applyCreationExtras(playerEntity, r, spellsByIndex);
+    // ORL1: THE THIRD APPLY PATH, and the one the one-seam note above
+    // is a warning about - it does not reach finishChargen, so it does
+    // not reach the leveling anchor's twin either. A character made
+    // here was never ASKED the question (there is no font to draw it
+    // with), so the answer is the port's own law, set explicitly rather
+    // than left undefined: `usesVirtueLeveling` would read an absent
+    // field the same way, but a creation path that mints a complete
+    // entity everywhere else should not leave two fields blank here.
+    initVirtueLeveling(playerEntity, LEVELING_CLASSIC);
     surfacePlayer();
     chargenFlow = null;
     chargenWindow = null;
@@ -2405,7 +2415,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:980 against :981; worldModes.js:5975 against :5976).
+    // (dungeon.js:990 against :1028; worldModes.js:5988 against :6011).
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -2896,7 +2906,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
               // playerArrowHitFoe is the one copy world.js:9396,
-              // exterior.js:4469 and worldModes.js:6117 already ran;
+              // exterior.js:4469 and worldModes.js:6129 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -5773,7 +5783,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // FS-slice (wave D): the race screen's back-out used to be
       // POLLED here off `chargenFlow.cancelled`. The window owns it
       // now and fires onCancel from the very input that sets the flag
-      // (chargenSession.js:375), which is the shape the other hosts
+      // (chargenSession.js:478), which is the shape the other hosts
       // have always had - and the enhanced skin, whose DOM view never
       // reaches this host's input seam at all, could never have been
       // cancelled by a poll on a flow the host was not driving.
@@ -5926,6 +5936,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // the headless roll; a pending level-up applies headlessly;
         // anything else just closes. All loud.
         if (activeOverlay === chargenWindow) { chargenInputFallback(); }
+        // ORL1: the mod's window first, because its purse is not a DFU
+        // bonus pool - spending it with spendPoolLowest would ignore
+        // the mod's three-attribute cap, its +5 ceiling and Luck's
+        // price. The window spends its own purse by its own rules and
+        // commits through the same door a player's Enter uses.
+        else if (activeOverlay?.isVirtueLevelUp) {
+          console.warn('[levelup] FONT art unavailable; applying headlessly');
+          activeOverlay.spendRemainingHeadless();
+          surfacePlayer();
+        }
         else if (activeOverlay instanceof LevelUpScreen) {
           console.warn('[levelup] FONT art unavailable; applying headlessly');
           applyLevelUp(playerEntity, (st, pool) => spendPoolLowest(st, Object.keys(st), pool));
@@ -6278,7 +6298,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       //
       // The interior host's `interiorHitEffects.clear()` is NOT the same
       // line and was never a precedent for one: that pool is built with
-      // no `onSpawn` (worldModes.js:510), so it owns its batches and
+      // no `onSpawn` (worldModes.js:522), so it owns its batches and
       // clear() is the only thing that frees them - and it runs on a
       // between-buildings RESET, not a teardown.
       // AUDIT 64 F41: the scene ambience leaves with the scene too -

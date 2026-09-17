@@ -168,7 +168,7 @@ now has a name per host.
 readers asked one.** `interiorFoes` and `interiorGuards` are both live
 inside a building; the senses feed, the enchant pool and the rest refusal
 each walked only the first, so the indoor city watch was invisible to all
-three (`src/scenes/worldModes.js:901-969`). **The exterior host mounted no
+three (`src/scenes/worldModes.js:913-981`). **The exterior host mounted no
 enchant ctx at all** - the session has ONE, and that host set none, so
 every enchantment payload that needs a foe idled in the host a player
 spends most of their time in (`setDefaultEnchantCtx` is imported at
@@ -327,7 +327,7 @@ and cannot be seen to stop. Each was confirmed by running the mutant in
 an isolated mirror of the tree, not by reading the test.
 
 The two that matter most are in advancement. **The reflexes use-scale
-`>> 16`** (`src/systems/advancement.js:121`) was unpinned: change it and
+`>> 16`** (`src/systems/advancement.js:133`) was unpinned: change it and
 every skill in the game advances twice as fast, with the suite green.
 **`GetAdvancementMultiplier` is a 35-row DFU table pinned at four rows**,
 so Jumping and CriticalStrike floated free. Then `LootTables`' per-level

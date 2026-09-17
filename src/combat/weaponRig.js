@@ -72,7 +72,7 @@ import { walkSpeed } from '../player/motor.js';   // WW1: GetBaseSpeed's walk ar
  *
  * AND THE GENDER FIX: `gender` is the STRING 'male'/'female'
  * everywhere in this port (chargen.js applyCharacter,
- * classicSave.js:690), so the card's old `female: !!playerEntity
+ * classicSave.js:691), so the card's old `female: !!playerEntity
  * .gender` was TRUE FOR EVERYONE - every build asked for the female
  * skeleton and the female body columns, and the male-record fallback
  * fills made it look almost right. The test is the string compare,
@@ -174,7 +174,7 @@ export async function autoBuildArms(entity, { wanted = () => getPref('mwArms'), 
  *                     over a real one - hudText.add
  *                     (dungeonContext.js:2614), townTalk.say
  *                     (exterior.js:1653, world.js:2584) and
- *                     worldModes' own interior sink (worldModes.js:385,
+ *                     worldModes' own interior sink (worldModes.js:387,
  *                     which warns to console only where a host mounts
  *                     no townTalk at all), so the empty default below
  *                     is unreached,

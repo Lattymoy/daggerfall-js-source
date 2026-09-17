@@ -41,6 +41,8 @@ import { mountEnhancedChunk } from './enhancedChunk.js';   // MENU1: the one laz
 import { registerOverlay } from './enhancedOverlays.js';   // PX28: Tab puts it away
 import { CharSheet, LevelUpScreen, charSheetArtLoaded } from './charsheet.js';
 import { charSheetHooks } from './charSheetNav.js';
+import { VirtueLevelUpScreen } from './virtueLevelUp.js';   // ORL1
+import { usesVirtueLeveling } from '../systems/oblivionLeveling.js';   // ORL1
 
 export { charSheetArtLoaded };
 
@@ -74,6 +76,17 @@ export function createCharSheetWindow(deps = {}) {
   // points, and the skills pages behind it still work while it does.
   // LevelUpScreen stays as the ENHANCED skin's door, which has no
   // native panel to mount a rollout onto.
+  // ORL1: ...AND BEFORE EITHER LANE'S OWN ROLLOUT, the mod's window.
+  // A character created under Oblivion-Remaster-Like Leveling levels by
+  // the mod's law in BOTH skins, because the mod's window is the mod's
+  // window - the fork above is about which SHEET a skin wears, and this
+  // is not a sheet. The Oghma Infinium is excluded on purpose: that
+  // artefact is Daggerfall's own, its thirty points are DFU's law, and
+  // they cannot be spent under the mod's three-attribute cap - so it
+  // falls through to the port's own rollout below, in whichever lane.
+  if (deps.entity?.readyToLevelUp && !deps.entity?.oghmaLevelUp && usesVirtueLeveling(deps.entity)) {
+    return new VirtueLevelUpScreen(deps.entity);
+  }
   if (deps.entity?.readyToLevelUp && isEnhanced()) return new LevelUpScreen(deps.entity);
   const hooks = charSheetHooks(deps);
   // `document` for the reason chargenSession's and pauseDoor's forks

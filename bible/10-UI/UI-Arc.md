@@ -52,7 +52,7 @@ still push CLASSIC canvas windows as children under the DOM, and so
 does the pack's USE arm.
 
     THE SPELLBOOK       FIVE construction sites across FOUR hosts:
-                        worldModes.js:1856 (the factory) and :1904 (a
+                        worldModes.js:1868 (the factory) and :1904 (a
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
                         dungeonContext.js:956, world.js:1723,
@@ -62,7 +62,7 @@ does the pack's USE arm.
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:5067, dungeonContext.js:5991. A seam
+    / NOTEBOOK          world.js:5067, dungeonContext.js:6001. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -4716,7 +4716,7 @@ and `questJournal.js` (DaggerfallQuestJournalWindow), both on
 LGBK00I0.IMG - DFU's own choice: in classic your history and your log
 are the same book. Neither needed new state. History reads
 `playerEntity.backStory`, which chargen has composed since U13 and
-`save.js` has round-tripped since; `chargenSession.js:170` names this
+`save.js` has round-tripped since; `chargenSession.js:180` names this
 window in its own comment. The journal reads
 `QuestMachine.getAllQuestLogMessages()` (already verbatim) and
 `PlayerNotebook`, whose module has carried `MAX_LINES_QUESTS` /
@@ -7783,7 +7783,7 @@ same answer: `ui/spellbookDoor.js`, with each host handing it only
 what that host knows.
 
 THE "HAND-ROLLED DUPLICATE" WAS NOT ONE. The board recorded
-worldModes.js:2673 as a second book built by hand 342 lines below the
+worldModes.js:2685 as a second book built by hand 342 lines below the
 factory. Read closely it is the SPELL MERCHANT'S SHOP - buyMode, with
 `offered`, the building's quality, the shop name, the haggling skills
 and the classic clock. A different question with different deps, and
@@ -8493,7 +8493,7 @@ and firing THAT twice is a second PopToHUD.
 
 ### Why only two of the four hosts crashed
 
-`worldModes.js:5503` and `dungeonContext.js:1437` answer the same
+`worldModes.js:5515` and `dungeonContext.js:1437` answer the same
 `onClose` by nulling their slot and never disposing - nothing to
 re-enter. Only the two hosts that come through `townTalk.closeOverlay`
 dispose. **The four-hosts rule caught this one by accident**: the two

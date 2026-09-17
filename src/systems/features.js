@@ -68,8 +68,13 @@ export const GROUPS = Object.freeze({
   world: Object.freeze({ label: 'The world' }),
   loot: Object.freeze({ label: 'Loot & items' }),
   combat: Object.freeze({ label: 'Combat' }),
+  // ORL1 (2026-09-17): the fifth group. A leveling system is not what
+  // you see, where you are, what you carry or how you fight - it is
+  // what you BECOME, and filing it under any of the four would have
+  // been filing it under the nearest one rather than the right one.
+  character: Object.freeze({ label: 'Your character' }),
 });
-export const GROUP_ORDER = Object.freeze(['sight', 'world', 'loot', 'combat']);
+export const GROUP_ORDER = Object.freeze(['sight', 'world', 'loot', 'combat', 'character']);
 
 /** WM3: the Windmills pack's switch key. It is declared HERE with its
  *  row (RF4's law) rather than in `world/windmills.js`, because that
@@ -103,12 +108,21 @@ const modFeature = (vendor, effect, group) => {
 
 /** FT14 (2026-09-15) - WHAT A MOD'S TILE SHOWS, AND WHAT IT DOES NOT.
  *
- *  The eight vendored mods carry 125 settings keys between them -
- *  Handheld Torches alone has 53 and the Weapon Widget 42, which is
- *  two thirds of the total in two mods. That is the real reason the
- *  Mods pane was a scroll, and no amount of layout fixes a list that
- *  long. So the tile shows the few a player would actually move (46 of
- *  the 125), and the other 79 keep the values the mod ships.
+ *  The eight vendored mods carried 125 settings keys between them when
+ *  this was written - Handheld Torches alone had 53 and the Weapon
+ *  Widget 42, which was two thirds of the total in two mods. That is
+ *  the real reason the Mods pane was a scroll, and no amount of layout
+ *  fixes a list that long. So the tile shows the few a player would
+ *  actually move (46 of the 125 then), and the rest keep the values the
+ *  mod ships.
+ *
+ *  ORL1 (2026-09-17) RE-COUNTED RATHER THAN RE-WORDED: thirteen mods,
+ *  227 keys, 65 shown. The ratio held as the list grew, which is the
+ *  only thing the paragraph above was ever claiming - but a count in
+ *  prose is a claim like any other, and leaving the old one standing
+ *  would have read as the live number. The numbers are derivable
+ *  (MOD_SETTINGS, modModules + modDials), so nothing here is the
+ *  authority for them; they are here to be read beside the argument.
  *
  *  TWO SHAPES, because the mods have two. A key under `Modules.` is a
  *  SUB-FEATURE the mod can turn off whole (the Widget's nine: its
@@ -151,6 +165,14 @@ export const MOD_CURATED = Object.freeze({
   'immersive-footsteps': Object.freeze(['AudioQualitySettings.SoundClipQuality', 'FootstepSettings.FootstepVolumeMulti', 'ArmorSwaySettings.ArmorSwayVolumeMulti']),
   // BA1: the footsteps switch (off beside Immersive Footsteps), the echo, the darkness.
   'better-ambience': Object.freeze(['Better Footsteps.enable', 'Dungeon Reverb.level', 'Dungeon Lighting.dungeonDarkness']),
+  // ORL1: the mod ships eight knobs and ALL EIGHT are on the tile - the
+  // same call Ambient Text's row made, and for the same reason. These
+  // are not presentation dials a player sets once; they are the rules
+  // of the leveling system, and hiding four of them would leave a
+  // player unable to see why their bar fills at the rate it does.
+  'oblivion-remaster-leveling': Object.freeze(['attributePoints', 'maxUpdatableAttribute',
+    'allowLuckIncrease', 'luckIncreaseCost', 'primarySkillsImpact', 'majorSkillsImpact',
+    'minorSkillsImpact', 'miscSkillsImpact']),
 });
 
 /** The `Modules.` keys a vendor ships, in the mod's own order - the
@@ -474,6 +496,15 @@ export const FEATURES = Object.freeze([
   // BA1 (2026-09-16): BETTER AMBIENCE - read every frame; the dungeon's fog
   // and light are rolled at the door, so those two land on the next dungeon.
   modFeature('better-ambience', 'Takes effect at once. A dungeon\u2019s fog and light are rolled at its door.', 'world'),
+  // ORL1 (2026-09-17): OBLIVION-REMASTER-LIKE LEVELING - the first
+  // Morrowind mod, and the only row whose effect line has to say NEXT
+  // CHARACTER. Every other mod's switch lands on the running game; this
+  // one decides whether a character is ASKED the question at creation,
+  // and the answer then rides that character's save. Turning it off
+  // does not convert a character who is already levelling by virtues,
+  // and saying so on the tile is the honest line - the alternative is a
+  // player flipping the switch mid-game and wondering why nothing moved.
+  modFeature('oblivion-remaster-leveling', 'Takes effect on the next character you make; a character keeps the system they were created with.', 'character'),
   // FT10 (2026-09-14): DFU'S OWN DUNGEON ENHANCEMENTS - three of the
   // Enhancements section's switches, each read by the port at the point
   // of use as DFU reads it. DFU Classic: Daggerfall Unity's departures
