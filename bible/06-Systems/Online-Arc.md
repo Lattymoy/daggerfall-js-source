@@ -6607,6 +6607,11 @@ order. A drain loop there buys nothing, and costs a polling timer and a
 deferred socket teardown, so it is not taken. The probe is kept, because
 the claim will be made again.
 
+The wire's law changed, so the relay's version did: **`world80`**, with
+its row in `test/relayversion.test.js` beside the bytes it names. The
+deploy workflow (`relay-deploy.yml`) takes it to the worker on the push
+to main, because `/health` will report `world79` until it does.
+
 The patch's two scene files were not taken either: they are a copy of an
 older tree and would have reverted the Enhanced Lighting arc and the
 quickslot arc wholesale. They carried no respawn change of their own.
