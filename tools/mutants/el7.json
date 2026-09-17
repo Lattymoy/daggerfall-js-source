@@ -2,7 +2,7 @@
  {
   "name": "glare-slack-half",
   "file": "src/render/airPass.js",
-  "old": "export const AIR_GLARE_SLACK = 1.0;",
+  "old": "export const AIR_GLARE_SLACK = 0.25;",
   "new": "export const AIR_GLARE_SLACK = 0.5;",
   "tests": [
    "test/el7_polish.test.js"

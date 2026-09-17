@@ -37,7 +37,7 @@ import { loadImg, nativeMetrics, drawImg, shadowText } from './nativePanel.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
 import { audio } from '../systems/audio.js';   // F141: the ButtonClick roster
 import { SOUND } from '../systems/soundClips.js';
-import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';
+import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS, latchBoxRows } from './messageBox.js';
 import { firstHotkey } from '../systems/dialogShortcuts.js';   // A8: the DaggerfallShortcut table
 
 /** The window's DaggerfallShortcut.Buttons, in ctor ADD order
@@ -66,6 +66,8 @@ export const COVEN_RECTS = Object.freeze({
 });
 
 let _art = null;
+/** BOX1: the test seam every other art-gated window carries. */
+export function _setCovenArtForTests(art) { _art = art; }
 export async function preloadCovenArt(deps) {
   if (_art) return;
   try {
@@ -181,7 +183,7 @@ export class CovenWindow {
     const top = this.top;
     if (top) {
       const buttons = top.buttons === 'YesNo' ? [MB_BUTTONS.Yes, MB_BUTTONS.No] : [];
-      this._box = layoutMessageBox(font, top.rows ?? this.hooks.rows?.(top.textId) ?? [], buttons);
+      this._box = layoutMessageBox(font, latchBoxRows(top, this.hooks.rows), buttons);   // BOX1: a textId box reads its (random-variant) record ONCE
       if (!drawMessageBox(renderer, m, font, this._box)) {
         (this._box.rows ?? []).forEach((r, i) =>
           shadowText(renderer, font, r.text, m, 20, 20 + i * this._box.rowH));

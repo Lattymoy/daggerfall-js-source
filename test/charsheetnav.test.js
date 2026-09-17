@@ -133,8 +133,14 @@ test('U43: the dungeon host opens the journal only when it can SEE quests', () =
   // U52 re-aimed the slice, not the law: the bag is the same bag, it
   // is handed to ui/charSheetDoor.js now instead of to CharSheet's
   // constructor, and the door passes it to charSheetHooks unchanged.
-  const bagAt = dc.indexOf('activeOverlay = createCharSheetWindow({');
+  // MAC-C lifted that construction out of `toggleCharSheet` into
+  // `makeCharSheet`, so the pack's cross-over key can reach it without
+  // a second bag (U52's argument, applied to the host that still had
+  // the builder inline). The BAG is the same bag and this reads it
+  // where it now lives.
+  const bagAt = dc.indexOf('return createCharSheetWindow({');
   assert.ok(bagAt > 0, 'the dungeon host builds its sheet through the door');
+  assert.match(dc, /activeOverlay = api\.makeCharSheet\(\);/, '...and the toggle calls that ONE builder');
   const sheetBag = dc.slice(bagAt, dc.indexOf('toggleLogbook()'));
   assert.match(sheetBag, /\.\.\.questJournalHooks\(\),/, 'and the SHEET gets them');
   assert.match(dc, /toggleLogbook\(\) \{ this\._openJournal\('activeQuests'\); \}/);

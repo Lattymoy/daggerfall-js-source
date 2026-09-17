@@ -257,7 +257,26 @@ export const MOD_SETTINGS = Object.freeze({
       // own defaults (inputActions.js DEFAULT_BINDINGS) and unused by the
       // mod's other two keys, and it stays the player's to rebind.
       'Handling.ManualDropInput': Object.freeze({ default: "G", text: true, description: 'Button used to manually drop a light source' }),
-      'Handling.OnStow': Object.freeze({ default: 1, options: Object.freeze(["Unequip", "Drop"]), description: 'Behavior when forced to stow a light source' }),
+      // HT7 (2026-09-17, Mac: "Take care of both") - THE ONE DEFAULT THIS
+      // PORT MOVES, and it is an owner decision rather than a misread.
+      //
+      // Handheld Torches ships `OnStow = Drop` (1), and the port kept it
+      // with every other shipped default. HT6 recorded the consequence:
+      // with the weapon DRAWN, equipping a shield puts your lit torch on
+      // the floor - and since HT6 made the law run at the equip moment,
+      // it happens while the inventory is still open, in front of you.
+      // A player who equips a shield mid-fight has not asked to drop
+      // anything, and a torch on a dungeon floor is an item lost to
+      // whoever does not think to look down.
+      //
+      // So the port DEFAULTS to Unequip (0) - the light goes back to the
+      // pack and `RememberLastLightSource` lights it again when a hand
+      // comes free, which is the behaviour the rest of this mod is built
+      // around. The mod's own default is ONE CLICK away on the Mods
+      // pane's dial; nothing about the Drop path is removed, and the
+      // throw (Throwing.ThrowTorchInput) is still how you put a torch on
+      // the floor on purpose.
+      'Handling.OnStow': Object.freeze({ default: 0, options: Object.freeze(["Unequip", "Drop"]), description: 'Behavior when forced to stow a light source' }),
       'Handling.OnPick': Object.freeze({ default: 1, options: Object.freeze(["Store", "Equip", "Force Equip"]), description: 'Behavior when picking up a light source' }),
       'Handling.StowWhenSpellcasting': Object.freeze({ default: true, description: 'Casting, or holding a readied spell, stows the light: no free hand.' }),
       'Handling.StowWhenClimbing': Object.freeze({ default: true, description: 'Climbing stows the light: no free hand.' }),

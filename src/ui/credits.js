@@ -96,6 +96,16 @@ export const CREDITS = Object.freeze({
       link: 'https://www.nexusmods.com/daggerfallunity/mods/860',
     }),
     Object.freeze({
+      title: 'Weapon Sheathing',
+      version: '1.6',
+      author: 'Greatness7',
+      what: 'A sheathed Morrowind weapon stays on the body, on the hip or the back, in its own scabbard, with a quiver for a bow (WS1): the seventy-one scabbard meshes and three skeleton addons vendored, the OpenMW mechanism ported for the port\u2019s third-person body. The scabbards are by akortunov, Greatness7, Heinrich, London Rook, Lord Berandas, Melchior Dahrk, MementoMoritius, Petethegoat, PikachunoTM and Remiros, as the shipped readme credits them.',
+      terms: 'The mod\u2019s own permission: free to use with credit and no fee; see vendor/weapon-sheathing/README.md and WeaponSheathing.txt.',
+      contact: 'Greatness7, through the Nexus page (morrowind mod 46069)',
+      vendor: Object.freeze(['weapon-sheathing']),
+      link: 'https://www.nexusmods.com/morrowind/mods/46069',
+    }),
+    Object.freeze({
       title: 'Handheld Torches',
       version: '1.4.1',
       author: 'RedRoryOTheGlen',

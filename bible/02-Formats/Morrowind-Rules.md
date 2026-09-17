@@ -916,7 +916,7 @@ Enhanced pane's Morrowind card.
 
 NO RENDERER CHANGE WAS NEEDED, which was the surprise. The port had
 ALREADY shipped a first-person pass: renderCharacterSprite
-(render/renderer.js:873) binds an offscreen target with its own depth
+(render/renderer.js:963) binds an offscreen target with its own depth
 renderbuffer, clears colour and depth, SWAPS the frame's proj/view for
 ones the caller hands it, draws, and restores; drawScreenOverlayQuad
 (:987) composites it fullscreen with an alpha cut and no depth test. It
@@ -3560,7 +3560,7 @@ sound, this is the condition it must not be read past):
 
 > Nearly everything checks out against upstream, but the sorting claim states as unconditional what the code guards. Confirmed accurate: property.hpp:414-463 has Flag_Blending=0x0001, Flag_Testing=0x0200, Flag_NoSorter=0x2000, uint16 mFlags + uint8 mThreshold, and sourceBlendMode()=(mFlags>>1)&0xF, destinationBlendMode()=(mFlags>>5)&0xF, alphaTestMode()=(mFlags>>10)&0x7. getBlendMode (nifloader.cpp:1899-1928) and getTestMode (1930-1954) match the quoted tables including the SRC_ALPHA / LEQUAL defaults with Log(Debug::Info). handleAlphaTesting uses threshold/255.f, and both handlers really do removeAttribute + removeMode on the OFF branch; collectDrawableProperties (nifloader.cpp:189-211) recurses into the parent first and appends the node's own props last, so a child NiAlphaProperty genuinely cancels an ancestor's on the shared drawable stateset. The DST_ALPHA -> ONE rewrite and the objects.frag ordering (157 `gl_FragData[0].a *= diffuseColor.a * alpha * actorFade;`, 160-161 darkMap, 164 alphaTest) are verbatim correct. The defect: "blending WITHOUT the 0x2000 bit puts the drawable in the TRANSPARENT_BIN (back-to-front); with the bit set it inherits the opaque bin" drops the `if (!mPushedSorter)` guard that sits on BOTH bin calls in the quoted snippet. mPushedSorter is the enclosing NiSortAdjustNode (nifloader.cpp:329, pushed at :800-803). When one is in scope, handleAlphaBlending sets NO bin at all — it only sets hasSortAlpha — and the bin is decided later at nifloader.cpp:2943-2985 from the sorter's mode and subsorter type. That inverts the stated outcome in real cases: under SortingMode::Off a blending drawable with the sorter bit CLEAR gets setBinTraversal (bin 2, "TraversalOrderBin"), not back-to-front; and under a NiClusterAccumulator subsorter a drawable WITH the 0x2000 bit set still gets setBinBackToFront regardless of hasSortAlpha, rather than inheriting. A port that hardcodes the rule as written mis-sorts every mesh under a NiSortAdjustNode. Two smaller inaccuracies ride along: the back-to-front path outside handleAlphaBlending is setRenderBinDetails(0, "SORT_BACK_TO_FRONT"), not the TRANSPARENT_BIN hint (bin 10, DepthSortedBin); and setRenderBinToInherit() means inheriting whatever bin is in effect, which is not necessarily "the opaque bin".
 
-> The rule cannot hold here because its entire subject is absent from this codebase, and the code that actually renders the first-person player body contradicts it. This repository is /home/user/project-dagger, a JavaScript port of Daggerfall (logic from Daggerfall Unity, presentation on hand-rolled WebGL2) — not OpenMW. All three cited sources are non-existent paths: there is no components/ directory, no files/shaders/ directory, no .gitmodules, and zero .cpp/.hpp/.frag/.glsl files anywhere in the tree. A full-tree grep (excluding .git and node_modules) for NiAlphaProperty, nifloader, nifosg, and openmw returns no hits; the sole filename matching *nif* is /home/user/project-dagger/test/manifest.test.js, matching on the substring inside "manifest". Daggerfall assets are ARCH3D/CIF/IMG, never NIF, so no mFlags/mThreshold decode, blend-factor table, test-function table, stateset, or sorting bin exists to be overridden. Where it matters for a first-person player body, the real behaviour is different in kind, not just in detail. Alpha is a fixed 1-bit cutout compiled into the shaders rather than a per-material reference derived from mThreshold/255.0: `if (t.a < 0.5) discard;` at /home/user/project-dagger/src/render/renderer.js:85, :861 and :895, with the one exception being spectral (ghost) flats at renderer.js:258, `if (tex.a < (uSpectral == 1 ? 0.1 : 0.5)) discard;`. The comment at renderer.js:952-956 states the governing law: classic art is a 1-bit palette cutout (index 0 transparent, everything else fully opaque), so the default discards and forces alpha 1, with a narrow `uBlendTex` opt-in for art authored outside that palette. Blending, where enabled at all, is one hard-coded pair with no factor decoding — gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA) at renderer.js:1088, :1781, :1858, overworldRenderer.js:370 and :385, and precipitation.js:166 — so there is no source/destination factor selection and therefore no DST_ALPHA-to-ONE rewrite. Because the renderer is immediate-mode WebGL2 with no stateset graph, the rule's two load-bearing behaviours have no mechanism to exist: nothing can REMOVE a blend func or alpha func from a parent's state to cancel it, and there is no noSorter bit or TRANSPARENT_BIN assignment. The specific special cases the task asked about confirm the same. The first-person viewmodel entry point, drawFirstPersonViewmodel at /home/user/project-dagger/src/render/characterSprite.js:55, is explicitly marked ON ICE (2026-08-17) with "No consumer"; the live first-person path is src/combat/fpsWeapon.js using WEAPON*.CIF sprites, and neith ...
+> The rule cannot hold here because its entire subject is absent from this codebase, and the code that actually renders the first-person player body contradicts it. This repository is /home/user/project-dagger, a JavaScript port of Daggerfall (logic from Daggerfall Unity, presentation on hand-rolled WebGL2) — not OpenMW. All three cited sources are non-existent paths: there is no components/ directory, no files/shaders/ directory, no .gitmodules, and zero .cpp/.hpp/.frag/.glsl files anywhere in the tree. A full-tree grep (excluding .git and node_modules) for NiAlphaProperty, nifloader, nifosg, and openmw returns no hits; the sole filename matching *nif* is /home/user/project-dagger/test/manifest.test.js, matching on the substring inside "manifest". Daggerfall assets are ARCH3D/CIF/IMG, never NIF, so no mFlags/mThreshold decode, blend-factor table, test-function table, stateset, or sorting bin exists to be overridden. Where it matters for a first-person player body, the real behaviour is different in kind, not just in detail. Alpha is a fixed 1-bit cutout compiled into the shaders rather than a per-material reference derived from mThreshold/255.0: `if (t.a < 0.5) discard;` at /home/user/project-dagger/src/render/renderer.js:85, :951 and :895, with the one exception being spectral (ghost) flats at renderer.js:330, `if (tex.a < (uSpectral == 1 ? 0.1 : 0.5)) discard;`. The comment at renderer.js:1042-1046 states the governing law: classic art is a 1-bit palette cutout (index 0 transparent, everything else fully opaque), so the default discards and forces alpha 1, with a narrow `uBlendTex` opt-in for art authored outside that palette. Blending, where enabled at all, is one hard-coded pair with no factor decoding — gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA) at renderer.js:1178, :2031, :2108, overworldRenderer.js:370 and :385, and precipitation.js:166 — so there is no source/destination factor selection and therefore no DST_ALPHA-to-ONE rewrite. Because the renderer is immediate-mode WebGL2 with no stateset graph, the rule's two load-bearing behaviours have no mechanism to exist: nothing can REMOVE a blend func or alpha func from a parent's state to cancel it, and there is no noSorter bit or TRANSPARENT_BIN assignment. The specific special cases the task asked about confirm the same. The first-person viewmodel entry point, drawFirstPersonViewmodel at /home/user/project-dagger/src/render/characterSprite.js:55, is explicitly marked ON ICE (2026-08-17) with "No consumer"; the live first-person path is src/combat/fpsWeapon.js using WEAPON*.CIF sprites, and neith ...
 
 **Corrected form offered:** Same as stated for the flags, the bit fields, both lookup tables (SRC_ALPHA / LEQUAL fallbacks), alphaRef = mThreshold/255.0, the remove-on-off cancellation semantics, the DST_ALPHA -> ONE destination rewrite, and the shader ordering — but the sorting rule is conditional on there being no enclosing NiSortAdjustNode. The call site passes sort = !alphaprop->noSorter() (nifloader.cpp:2829-2830), and handleAlphaBlending's blending branch always records hasSortAlpha = sort; the bin, however, is only touched when mPushedSorter == nullptr: sort -> setRenderingHint(TRANSPARENT_BIN), !sort -> setRenderBinToInherit(), and the OFF branch also calls setRenderBinToInherit(). When an ancestor NiSortAdjustNode IS in scope, handleAlphaBlending sets no bin; the end of applyDrawableProperties (nifloader.cpp:2943-2985) assigns it instead: SortingMode::Off -> setRenderBinDetails(2, "TraversalOrderBin") no matter what the alpha flags say; Inherit/Subsort with a NiAlphaAccumulator -> setRenderBinDetails(0, "SORT_BACK_TO_FRONT") if hasSortAlpha else TraversalOrderBin; with a NiClusterAccumulator -> SORT_BACK_TO_FRONT unconditionally. Also, with no pushed sorter, a non-sorting drawable that carries a sten
 
@@ -6606,3 +6606,101 @@ fixture rig's stance reaching refreshIdle (no sneak idle in the
 fixture .kf: the plain idle, as hasAnimation's miss); the refresh
 reading the state and rolling no dice for the sneak base.
 
+## WS1 (2026-09-17): weapon sheathing - the bone addons, the holster, the quiver
+
+Mac: "Can we implement this for the morrowind model" (Greatness7's
+Weapon Sheathing 1.6, the OpenMW archive). Written from the files at
+WS1; REWRITTEN AT AUDIT-WS (the same day) off the reference itself -
+`apps/openmw/mwrender/actoranimation.cpp`, `animation.cpp`,
+`npcanimation.cpp`, `mwmechanics/weapontype.hpp`,
+`components/nifosg/nifloader.cpp` at tag openmw-0.48.0, fetched into
+the session - every cite below is to those files.
+
+**The bone addons** (animation.cpp:1306-1322 injectCustomBones ->
+:1284-1304 loadBonesFromFile). With `use additional anim sources`
+on, setObjectRoot (:1368-1400) injects for the default skeleton
+(`xbaseanim`, `meshes/xbase_anim.nif`) and then for the actor's own
+model (:1339-1340, :1360-1361 - the two calls, base first). Each
+looks at every `.nif` under `animations/<model without extension>/`
+(:1310-1321). loadBonesFromFile runs GetExtendedBonesVisitor
+(:218-236) over the addon: a node carrying the "CustomBone" user
+description is recorded with its PARENT and NOT descended into; the
+description is what the NIF loader gives a node whose extra chain
+carries a NiStringExtraData "BONE" (nifloader.cpp:630-633, the chain
+walked whole :618-640). For each found bone the parent's NAME is
+looked up in the actor (FindByNameVisitor, :1293-1296) and, when
+found, a DEEP copy of the bone and its subtree is added under it
+(:1298-1302). Nothing is checked for already existing - a second node
+of the name would be added, and the bone cache answers the FIRST
+(rule 16), so the copy is dead. So the port's rule, corrected: ONLY
+marked nodes join, each under the actor's node of its addon parent's
+name, with its subtree; an unmarked node never (Weapon Sheathing's
+`Bip01 AttachWeapon` is unmarked - thirteen join, not fourteen); a
+marked node whose parent the actor lacks is skipped (silently there,
+named in `skipped` here); a name already present is skipped (the
+reference's dead copy, the same observable). `injectSkeletonNodes`
+and `hasBoneMarker` (mwSkin.js).
+
+**The sheathing bones** (weapontype.hpp, the `sheath bone` column):
+`Bip01 ShortBladeOneHand` (:73), `Bip01 LongBladeOneHand` (:87), `Bip01
+BluntOneHand` (:101), **`Bip01 LongBladeOneHand` for AxeOneHand**
+(:115 - not the addon's own `Bip01 AxeOneHand`, which the reference
+never names; AUDIT-WS F1), `Bip01 LongBladeTwoClose` (:129), `Bip01
+AxeTwoClose` (:143), `Bip01 BluntTwoClose` (:157), `Bip01 BluntTwoWide`
+(:171), `Bip01 SpearTwoWide` (:185), `Bip01 MarksmanBow` (:199), `Bip01
+MarksmanCrossbow` (:213), `Bip01 MarksmanThrown` (:227); Arrow and Bolt
+none (:241, :255). getHolsteredWeaponBoneName (actoranimation.cpp
+:292-306) answers the column for a WEAP record and "" for anything
+else.
+
+**The holster** (actoranimation.cpp:318-394 updateHolsteredWeapon,
+called as `updateHolsteredWeapon(!mShowWeapons)` from showWeapons,
+npcanimation.cpp:958-994 :992): behind `weapon sheathing`; the carried
+right slot must hold a WEAP (:330-332); a THROWN weapon does not turn
+the holster off - it forces `showHolsteredWeapons = false` (:333-336,
+"since throwing weapons stack themselves, do not show such weapon
+itself"), so its scabbard, if one exists, still attaches with the
+weapon node masked (AUDIT-WS F3). The scabbard is the model with
+`_sh.nif` for its last four characters (:348); absent, the weapon mesh
+attaches at the bone while holstered and nothing while not (:352-360);
+present, it attaches whole (:363), `Bip01 Weapon` is looked up in the
+ACTOR (getBoneByName :367 - the attached scabbard's node) and masked
+while the weapon is shown (:375-378), or, when it has no children, the
+weapon mesh is instanced under it (:383-387, "use transformation from
+this node, but use the common weapon mesh"). A file with no `Bip01
+Weapon` returns after the attach (:368-369): whole, never masked.
+**Every attach here is attachMesh (:66-83) - `getInstance(model,
+parent)` under the bone, NOT SceneUtil::attach** - so no BoneOffset
+and no mirror ride a holstered mesh, unlike the weapon in the hand
+(AUDIT-WS F6: every WS1 part is `bare`). The enchantment glow (:355,
+:389-393) is not ported - the port draws no glow on any Morrowind
+mesh.
+
+**The quiver** (actoranimation.cpp:396-471 updateQuiver, run from
+showWeapons :993 and at attachArrow / detachArrow / releaseArrow,
+npcanimation.cpp:1062-1074): `Bip01 Ammo` in the actor (:414-416);
+for a thrown weapon the ammo is the weapon's own stack, one fewer
+while one is in the hand (:424-433); otherwise the ammunition slot,
+`ammoCount--` while an arrow is attached (:437-444, isArrowAttached =
+`mAmmunition != nullptr`, npcanimation.cpp:1313-1316), suitable only
+when its type is the weapon type's ammo type (:446); `min(count,
+children)` (:453); every child's old instance removed, one
+`getInstance(model, arrowNode)` per slot (:456-471). The port: the
+count is the Daggerfall arrow stack, the last slot emptied while the
+round is on the string (AUDIT-WS F4: the quiver parts carry `{ i, n }`
+and the rig's hide law reads `arrowShown`); the thrown stack is
+unreachable from Daggerfall's weapon table (nothing maps to
+MarksmanThrown) and is not carried.
+
+**Where the first person stands.** No addon ships for `xbase_anim.1st`,
+attachMesh finds no sheathing bone there (:68-70) and attaches nothing;
+the port's first-person rig takes no holster parts at all.
+
+**Recorded deltas.** `findNodeByName` answers null for a NiTriShape
+named as the node (its own recorded delta), so a scabbard that names a
+SHAPE `Bip01 Weapon` would stand whole here where the reference masks
+it; no vendored file does. The `Extras/` alternate draw animations
+(two-handed weapons drawn from the back) are not vendored. Shield
+sheathing (`updateHolsteredShield`, `Bip01 AttachShield`) is not
+ported: the mod ships no shield art and the port's Morrowind body
+carries no shield.

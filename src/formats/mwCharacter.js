@@ -9,6 +9,7 @@
 
 import { deref } from './mwNifFile.js';
 import { flattenNif } from './mwNifMesh.js';
+import { particleSystemOf } from './mwParticles.js';   // MAC-Q: a part's particle systems, off the same walk
 import { skeletonSpaceMatrices, GRAPH_ROOT } from './mwSkin.js';
 
 /**
@@ -79,7 +80,7 @@ import { skeletonSpaceMatrices, GRAPH_ROOT } from './mwSkin.js';
  * MW-D13 - which means every rigid part whose mesh carries the node has
  * been drawn at the bone's bare origin.
  *
- * @returns {[number,number,number]|null}
+ * @returns {{rec: any, parents: any[]}|null}
  */
 export function findNodeByName(nif, name) {
   const want = String(name).toLowerCase();
@@ -146,7 +147,7 @@ export function findNodeByName(nif, name) {
     // MW-D44 was landed to fix. flattenNif's identical early returns
     // are NOT this rule: they are justified there by "this flattener
     // produces DRAWABLES, and a hidden subgraph contributes none"
-    // (mwNifMesh.js:472-480), and carry an `includeHidden` escape
+    // (mwNifMesh.js:556-562), and carry an `includeHidden` escape
     // hatch besides. This function produces a NODE.
     //
     if (String(rec.name || '').toLowerCase() === want) { found = { rec, parents }; return; }
@@ -222,7 +223,15 @@ const mulAffine = (p, l) => {
 };
 
 export function bindPart(skeleton, partNif, opts = {}) {
-  const batches = flattenNif(partNif);
+  // MAC-Q: the file's PARTICLE SYSTEMS come out of the same walk, into
+  // their own list - a flame is not a batch and a batch is not a flame.
+  const sink = [];
+  const batches = flattenNif(partNif, { underNode: opts.underNode, excludeNode: opts.excludeNode, effects: sink });   // WS1
+  const effects = [];
+  for (const bundle of sink) {
+    const d = particleSystemOf(partNif, bundle);
+    if (d) effects.push(d);
+  }
   const skinned = [];
   const attached = [];
   const missingBones = new Set();
@@ -279,7 +288,7 @@ export function bindPart(skeleton, partNif, opts = {}) {
     // offset from.
     boneOffset = boneOffsetOf(partNif);
   }
-  return { skinned, attached, attachRef, boneOffset, missingBones: [...missingBones] };
+  return { skinned, attached, attachRef, boneOffset, missingBones: [...missingBones], effects };
 }
 
 function firstRoot(skeleton) {

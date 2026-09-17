@@ -2,8 +2,8 @@
   {
     "name": "QS2-the-three-actions-reordered",
     "file": "src/systems/inputActions.js",
-    "old": "  'QuickUse1', 'QuickUse2', 'QuickSwap',\n]);",
-    "new": "  'QuickSwap', 'QuickUse1', 'QuickUse2',\n]);",
+    "old": "  'QuickUse1', 'QuickUse2', 'QuickSwap',",
+    "new": "  'QuickSwap', 'QuickUse1', 'QuickUse2',",
     "tests": [
       "test/qs2_inputs.test.js"
     ]
@@ -22,7 +22,7 @@
   {
     "name": "QS2-the-three-never-yield-in-the-classic-windows",
     "file": "src/systems/inputActions.js",
-    "old": "export const PORT_ACTIONS = Object.freeze(['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSwap']);",
+    "old": "export const PORT_ACTIONS = Object.freeze(['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand', 'QuickSpell']);",
     "new": "export const PORT_ACTIONS = Object.freeze(['SocialInteract']);",
     "tests": [
       "test/qs2_inputs.test.js",
@@ -78,8 +78,8 @@
   {
     "name": "QS2-the-world-host-answers-the-keys-with-a-window-up",
     "file": "src/scenes/world.js",
-    "old": "    if (!townTalk.overlayActive && QUICKSLOT_ACTIONS.has(act) && socialMenuCanOpen() && routeAction(act, hudCtx)) { e.preventDefault(); return; }",
-    "new": "    if (QUICKSLOT_ACTIONS.has(act) && routeAction(act, hudCtx)) { e.preventDefault(); return; }",
+    "old": "    if (!townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior' && QUICKSLOT_ACTIONS.has(act) && !POLLED_ACTIONS.has(act) && socialMenuCanOpen() && routeAction(act, hudCtx)) { e.preventDefault(); return; }",
+    "new": "    if ((modes?.mode ?? 'exterior') === 'exterior' && QUICKSLOT_ACTIONS.has(act) && !POLLED_ACTIONS.has(act) && routeAction(act, hudCtx)) { e.preventDefault(); return; }",
     "tests": [
       "test/qs2_inputs.test.js"
     ]
@@ -87,7 +87,7 @@
   {
     "name": "QS2-the-exterior-host-answers-the-keys-inside-its-mode-gate",
     "file": "src/scenes/exterior.js",
-    "old": "    if (!townTalk.overlayActive && QUICKSLOT_ACTIONS.has(act) && !gamePaused() && routeAction(act, hudCtx)) { e.preventDefault(); return; }",
+    "old": "    if (!townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior' && QUICKSLOT_ACTIONS.has(act) && !POLLED_ACTIONS.has(act) && !gamePaused() && routeAction(act, hudCtx)) { e.preventDefault(); return; }",
     "new": "    if (false && QUICKSLOT_ACTIONS.has(act) && routeAction(act, hudCtx)) { e.preventDefault(); return; }",
     "tests": [
       "test/qs2_inputs.test.js"
@@ -105,7 +105,7 @@
   {
     "name": "QS2-the-off-hand-used-as-overflow-so-a-swap-dual-wields",
     "file": "src/systems/quickslots.js",
-    "old": "  const bumped = previous && getItemHands(r.item) !== ITEM_HANDS.LeftOnly\n    ? unequipSlot(entity, EQUIP_SLOTS.RightHand)\n    : null;",
+    "old": "  const bumped = previous && !leftOnly ? unequipSlot(entity, EQUIP_SLOTS.RightHand) : null;",
     "new": "  const bumped = null;",
     "tests": [
       "test/quickslots.test.js"
@@ -168,8 +168,8 @@
   {
     "name": "QS2-the-model-reaches-back-up-into-the-window",
     "file": "src/systems/quickslots.js",
-    "old": "import { isPotion, isDrug, useItem, USE_PENDING } from './useItem.js';   // ...and the ladder's own stand-ins for a host that handed no hook",
-    "new": "import { isPotion, isDrug, useItem } from './useItem.js';\nimport { USE_PENDING } from '../ui/nativeInventory.js';",
+    "old": "import { isPotion, isDrug, isLightSource, useItem, USE_PENDING } from './useItem.js';   // ...and the ladder's own stand-ins for a host that handed no hook",
+    "new": "import { isPotion, isDrug, isLightSource, useItem } from './useItem.js';\nimport { USE_PENDING } from '../ui/nativeInventory.js';",
     "tests": [
       "test/qs2_inputs.test.js",
       "test/droppedloot.test.js"

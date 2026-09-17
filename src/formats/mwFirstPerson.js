@@ -1879,13 +1879,14 @@ export function checkRequiredBones(report) {
  * rather than a second copy of the same arithmetic - which is what lets
  * the result be re-posed at all.
  */
-export async function assembleFirstPersonArm({ skeletonBytes, parts }) {
+export async function assembleFirstPersonArm({ skeletonBytes, parts, boneSources = [] }) {
   const mod = {};
   try {
     ({ parseNif: mod.parseNif } = await import('./mwNifFile.js'));
     ({ buildSkeleton: mod.buildSkeleton, poseSkeleton: mod.poseSkeleton,
       skeletonSpaceMatrices: mod.skelMats, skinBatch: mod.skinBatch,
-      accumRootRef: mod.accumRootRef, trackBinding: mod.trackBinding } = await import('./mwSkin.js'));
+      accumRootRef: mod.accumRootRef, trackBinding: mod.trackBinding,
+      injectSkeletonNodes: mod.injectSkeletonNodes } = await import('./mwSkin.js'));
     ({ bindPart: mod.bindPart, attachmentTransform: mod.attachmentTransform } = await import('./mwCharacter.js'));
     ({ PART_BONES: mod.PART_BONES } = await import('./mwNpc.js'));
   } catch (err) {
@@ -1902,10 +1903,25 @@ export async function assembleFirstPersonArm({ skeletonBytes, parts }) {
 
   const pieces = [];
   const notes = [];
-  bindPartsInto({ pieces, notes, skeleton, fns: mod }, parts);
+  const effects = [];   // MAC-Q
+  // WS1: the bone addons (OpenMW's `use additional anim sources`) join
+  // the skeleton BEFORE any part binds, so a part may attach at a bone
+  // the addon brought. Each is `{ name, bytes }`; a file that will not
+  // parse is a note, never the assembly's refusal.
+  const injected = [];
+  for (const src of boneSources ?? []) {
+    try {
+      const r = mod.injectSkeletonNodes(skeleton, mod.parseNif(src.bytes));
+      injected.push({ name: src.name, added: r.added, skipped: r.skipped });
+    } catch (err) {
+      notes.push(`bones: ${src.name}: ${err.message}`);
+    }
+  }
+  bindPartsInto({ pieces, notes, effects, skeleton, fns: mod }, parts);
   const assembly = {
     ok: pieces.length > 0,
     pieces,
+    effects,   // MAC-Q: the parts' particle systems, placed like their rigid shapes
     notes,
     skeleton,
     rootRef,
@@ -1914,6 +1930,7 @@ export async function assembleFirstPersonArm({ skeletonBytes, parts }) {
     // frame; this function already paid for them once.
     fns: mod,
     bounds: null,
+    injected,   // WS1: what each bone addon added
     error: pieces.length ? null : 'nothing bound - see the notes for why',
   };
   // THE REST POSE IS NOW "pose at t=0 with no tracks" - one home, and the
@@ -1932,6 +1949,7 @@ export async function assembleFirstPersonArm({ skeletonBytes, parts }) {
 export function bindPartsInto(assembly, parts) {
   const mod = assembly.fns;
   const { skeleton, pieces, notes } = assembly;
+  const effects = assembly.effects ?? (assembly.effects = []);   // MAC-Q: the parts' particle systems
   // MW-D44: the WEAPON's own BoneOffset, kept for the ammunition that
   // rides inside its mesh. resolveWeaponParts pushes 'weapon' before
   // 'arrow', so by the time the arrow binds this is the offset the
@@ -1939,6 +1957,12 @@ export function bindPartsInto(assembly, parts) {
   // every other part list and reset per call, so a body without a
   // weapon cannot inherit a stale one.
   let weaponBoneOffset = null;
+  // WS1: the SCABBARD's offset, for what rides inside its file - the
+  // holstered weapon the base mesh stands in for (getInstance(mesh,
+  // weaponNode)) and the quiver's arrows (getInstance(model, arrowNode))
+  // are bare instances under nodes of the scabbard's graph, so they wear
+  // the scabbard's PAT exactly as the arrow wears the weapon's (MW-D44).
+  let sheathBoneOffset = null;
   for (const part of parts) {
     // `part.bones` overrides the table so a test can drive real assembly
     // against a fixture skeleton whose bone names are not Morrowind's.
@@ -1962,7 +1986,7 @@ export function bindPartsInto(assembly, parts) {
       }
       let bound;
       try {
-        bound = mod.bindPart(skeleton, nif, bone ? { attachBone: bone } : {});
+        bound = mod.bindPart(skeleton, nif, { ...(bone ? { attachBone: bone } : {}), underNode: part.underNode, excludeNode: part.excludeNode });   // WS1: a subtree of the file
       } catch (err) {
         notes.push(`${part.slot} @ ${bone}: ${err.message}`);
         continue;
@@ -2065,7 +2089,7 @@ export function bindPartsInto(assembly, parts) {
         const nodeName = nodeRef != null && skeleton.nodes.has(nodeRef) ? skeleton.nodes.get(nodeRef).name : (bone || '');
         const mirror = nodeName.includes('Left');
         for (const batch of bound.attached) {
-          pieces.push({ slot: part.slot, bone, kind: 'rigid', mirrored: mirror,
+          pieces.push({ slot: part.slot, bone, kind: 'rigid', mirrored: mirror, tag: part.tag ?? null,   // WS1: a part's own tag (the quiver slot's index)
             // MW-D16: a part instanced under a node INSIDE another part's
             // mesh (the arrow, under the bow's ArrowBone) carries that
             // node's whole chain. It is baked in ONCE here rather than
@@ -2129,14 +2153,32 @@ export function bindPartsInto(assembly, parts) {
             // other way.
             boneOffset: part.ammo
               ? (part.preTransform ? weaponBoneOffset : null)
-              : (bound.boneOffset || null),
+              : part.bare
+                ? (part.inheritOffsetFrom === 'sheath' ? sheathBoneOffset : null)   // WS1: a bare instance under the scabbard's node
+                : (bound.boneOffset || null),
             uvs: batch.uvs || null, colors: batch.colors || null, material: batch.material || null,
             positions: new Float32Array(batch.positions.length), indices: batch.indices });
+        }
+        // MAC-Q: THE PART'S PARTICLE SYSTEMS ride the same placement its
+        // rigid shapes do - the bone, the mirror, rule 14's offset and the
+        // part's pre-transform - because they were authored in the same
+        // file at the same origin. A torch's flame is one. They are kept
+        // apart from the pieces (a piece is a triangle list; this is a
+        // law and a clock) on `assembly.effects`, which combat/fpArm.js
+        // runs and draws. Only a RIGID part carries them: a skinned file's
+        // particles would follow a bone this flattener does not track.
+        for (const desc of bound.effects ?? []) {
+          effects.push({
+            slot: part.slot, bone, mirrored: mirror, tag: part.tag ?? null,
+            attachRef: bound.attachRef, boneOffset: bound.boneOffset || null, pre: part.preTransform || null,
+            desc, material: desc.material,
+          });
         }
         // MW-D44: the weapon's offset, held for the ammunition that
         // rides inside its mesh. Only the weapon's - a shield or a body
         // part must not lend the arrow anything.
         if (part.slot === 'weapon') weaponBoneOffset = bound.boneOffset || null;
+        if (part.slot === 'sheath') sheathBoneOffset = bound.boneOffset || null;   // WS1
       }
       // THE SILENT HOLE, CLOSED. A bone whose every NAMED skinned shape
       // fails rule 15's filter used to bind NOTHING and say NOTHING -

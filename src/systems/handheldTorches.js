@@ -49,7 +49,6 @@ import { TEMPLATES, isLightSource } from './useItem.js';
 import { getItem, addItem } from './inventory.js';
 import { conditionWord, itemLongName } from './itemInfo.js';
 import { getItemHands, EQUIP_SLOTS, ITEM_HANDS, addEquipChangeListener } from './equip.js';   // HT6: the worn set's own door - the hand law runs at the equip moment too
-import { isShieldTemplate } from './armorMaterials.js';
 import { weaponTypeForItem, WEAPON_TYPES, NATIVE_W, NATIVE_H } from '../combat/fpsWeapon.js';
 import { weaponOffsetHeight } from '../ui/hudLarge.js';
 import { SOUND } from './soundClips.js';
@@ -294,32 +293,54 @@ export function createHandheldTorches({
     w.handRight = true; w.handLeft = true;
     const slots = ctx?.entity?.equip?.slots ?? {};   // the table as it stands - read, never minted here (the rig's worn-item sync reads the same slot and must not see one appear)
     const left = slots[EQUIP_SLOTS.LeftHand] ?? null, right = slots[EQUIP_SLOTS.RightHand] ?? null;   // slot 21, slot 19
-    const isShield = (it) => it.group === 'Armor' && isShieldTemplate(it.templateIndex);
+    // HT7: `isShield` stood here for the mod's sheathed arm alone, and
+    // that arm is gone - what is WORN takes a hand now, shield or not.
     const isBow = (it) => weaponTypeForItem(it) === WEAPON_TYPES.Bow;
     // WeaponManager.Sheathed (ldfld 0x2c8a) and UsingRightHand (0x2cfc,
     // 0x2d5d) are read LIVE here, not the mod's own latched copies -
     // those are the edge detectors below in Update, written after this
     const sheathedNow = !!ctx?.sheathed, usingRightNow = ctx?.usingRightHand !== false;
-    if (sheathedNow) {
-      // sheathed, a bow in the left slot still takes the left hand (0x2c91-0x2cb8)
-      if (left && !isShield(left) && isBow(left)) w.handLeft = false;
-    } else {
-      if (left) {
-        w.handLeft = false;
-        if (getItemHands(left) === ITEM_HANDS.LeftOnly) { if (!usingRightNow) w.handLeft = false; }
-        else if (isBow(left)) w.handRight = false;
-      }
-      if (right) {
-        w.handRight = false;
-        // IL 0x2d1a: `GetItemHands() == 2` (LeftOnly) - a two-hander
-        // answers Both (4), so the relaxed-two-hander arm below fires
-        // on nothing a right hand holds; kept exactly as the mod has it
-        if (getItemHands(right) === ITEM_HANDS.LeftOnly) {
-          if (w.s.twoHandedRelaxed) { if (isBow(right)) w.handLeft = false; else if (w.attacking) w.handLeft = false; }
-          else w.handLeft = false;
-        }
-      } else if (usingRightNow) w.handRight = false;   // bare right hand, in use (0x2d53)
+    // HT7 (2026-09-17, Mac: "Take care of both") - THE PORT'S ONE DEPARTURE
+    // FROM UpdateFreeHand, and it is about DAGGERFALL rather than about
+    // the mod.
+    //
+    // The mod's sheathed arm (0x2c91-0x2cb8) clears a hand only for a BOW
+    // in the left slot, on the premise that a sheathed weapon is away and
+    // takes no hand. HT6 recorded the consequence - a shield equipped
+    // while sheathed left the torch lit in the arm the shield had just
+    // gone onto - defended it ("a Daggerfall shield is ARMOUR, strapped
+    // rather than gripped, so a torch in that hand with the sword on your
+    // back is a true reading") and flagged it for Mac. He has decided.
+    //
+    // AND THE DEFENCE WAS WRONG ABOUT THIS GAME. Daggerfall has no back
+    // sheath. "Sheathed" here is WeaponManager's stance - the weapon is
+    // lowered, still held, still drawn on screen the moment you swing -
+    // and the port draws it that way. There is no state in which the
+    // sword is on your back, so there is no state in which that hand is
+    // free to hold a torch. Mac's original report is exactly this case:
+    // "When equipping a shield or other offhand item, the torch in the
+    // inventory isnt shown unequipped and replaced" - and with the weapon
+    // sheathed, which is how a player walks around, it still was not.
+    //
+    // So WHAT IS WORN takes a hand whether the stance is sheathed or not,
+    // and the ONE clause that stays stance-bound is the mod's own bare
+    // right hand "in use" (0x2d53): an empty hand you are not swinging
+    // with is free, which is what lets a weaponless player carry a light.
+    if (left) {
+      w.handLeft = false;
+      if (getItemHands(left) === ITEM_HANDS.LeftOnly) { if (!usingRightNow) w.handLeft = false; }
+      else if (isBow(left)) w.handRight = false;
     }
+    if (right) {
+      w.handRight = false;
+      // IL 0x2d1a: `GetItemHands() == 2` (LeftOnly) - a two-hander
+      // answers Both (4), so the relaxed-two-hander arm below fires
+      // on nothing a right hand holds; kept exactly as the mod has it
+      if (getItemHands(right) === ITEM_HANDS.LeftOnly) {
+        if (w.s.twoHandedRelaxed) { if (isBow(right)) w.handLeft = false; else if (w.attacking) w.handLeft = false; }
+        else w.handLeft = false;
+      }
+    } else if (!sheathedNow && usingRightNow) w.handRight = false;   // bare right hand, in use (0x2d53) - and only with the weapon up
     if (w.s.stowOnSpellcasting && w.spellcasting) { w.handRight = false; w.handLeft = false; }
     if (w.s.stowOnClimbing && w.climbing) { w.handRight = false; w.handLeft = false; }
     if (w.s.stowOnSwimming && w.swimming) { w.handRight = false; w.handLeft = false; }
@@ -669,13 +690,40 @@ export function createHandheldTorches({
   }
 
   /** OnGUI (IL 0x114c): the sprite, while the module shows it and the
-   *  view is first person; white (FPSWeapon.Tint is First-Person
-   *  Lighting's channel - the port has no such mod). */
-  function draw(renderer, canvas) {
+   *  view is first person.
+   *
+   *  MAC-H (2026-09-17, Mac: "On the classic sprite, when a torch is
+   *  unequipped, a random sprite is shown on the left middle of the
+   *  screen"). THE HAND HOLDS NOTHING, SO IT DRAWS NOTHING. The only
+   *  gates here were the module's switch and "is there a texture at
+   *  all" - and `w.currentTexture` is set ONCE, to `list[0]`, the
+   *  moment InitializeTextures finishes (:234), and is never cleared
+   *  again. So from the first frame after the sprites loaded, every
+   *  host drew torch frame 0 at the guard position, with or without a
+   *  torch in the player's hand: the left middle of the screen, which
+   *  is exactly where SetGuard puts it, showing the one sprite the
+   *  player never asked for.
+   *
+   *  The frame law above already knows the answer - `offsetFrame` is
+   *  -1 for no light and for a CANDLE, which has no frames - but it
+   *  is computed in Update and this is a draw, so the light is asked
+   *  again here rather than trusting an ordering. A hand with a candle
+   *  in it draws nothing, as it always should have: the mod ships
+   *  frames for the torch (record 0) and the lantern (record 1), and
+   *  for nothing else.
+   *
+   *  MAC-I: the tint is the room's now, not white. FPSWeapon.Tint is
+   *  First-Person Lighting's own channel and DFU core never writes it
+   *  (FPSWeapon.cs:108, :182) - the port writes it from the light the
+   *  scene's flats take, so the hand goes dark with the room it is in.
+   *  A host that hands no tint gets white, byte for byte. */
+  function draw(renderer, canvas, tint = null) {
     if (!w.s.showSprite || !ctx || !renderer || !canvas) return false;
     if (ctx.thirdPerson || w.isInThirdPerson) return false;
+    const held = light();
+    if (!held || !(isTorch(held) || isLantern(held))) return false;   // MAC-H: nothing in the hand, nothing on the screen
     if (!w.currentTexture?.tex) return false;
-    renderer.drawScreenQuad(w.currentTexture.tex, getSpriteRect(), w.curAnimRect);
+    renderer.drawScreenQuad(w.currentTexture.tex, getSpriteRect(), w.curAnimRect, tint ?? undefined);
     return true;
   }
 

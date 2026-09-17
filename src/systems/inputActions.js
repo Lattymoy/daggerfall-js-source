@@ -66,6 +66,14 @@ export const ACTIONS = Object.freeze([
   // Torches' own mod key, which the enhanced pane cannot rebind and no pad can
   // carry. Appended, like the three above and for the same reason.
   'QuickOffHand',
+  // QS6 (2026-09-17, Mac: "for slot 3, I want to change it to be for spells.
+  // So you should be able to hold the keybind to switch between applicable
+  // spells, and then press the keybind to equip"): the diamond's SPELL slot.
+  // Appended, like the four above; 'QuickSwap' keeps its row and its place -
+  // an action is never removed from this list, and the swap is still
+  // rebindable - it only gives up the DEFAULT key, which the cell it is drawn
+  // in (the off hand's) already carries.
+  'QuickSpell',
 ]);
 
 /** AUDIT SOC D3: THE PORT'S OWN ROWS, NAMED SO THE CLASSIC WINDOWS CAN YIELD THEM.
@@ -78,7 +86,7 @@ export const ACTIONS = Object.freeze([
  *  because it draws the row (ui/enhancedControls.js PORT_ROWS, the 'Online' group) and can rebind it.
  *  QS2: the three quickslot actions join it for the same reason, off the same face - the enhanced pane draws them
  *  under their own 'Quickslots' heading and the classic windows cannot draw them at all. */
-export const PORT_ACTIONS = Object.freeze(['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand']);
+export const PORT_ACTIONS = Object.freeze(['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand', 'QuickSpell']);
 
 const ACTION_SET = new Set(ACTIONS);
 
@@ -156,7 +164,14 @@ export const DEFAULT_BINDINGS = Object.freeze([
   // nothing a player has already bound.
   ['Digit1', 'QuickUse1'],
   ['Digit2', 'QuickUse2'],
-  ['Digit3', 'QuickSwap'],
+  // QS6: the third digit is the SPELL slot now. 'QuickSwap' keeps its row in
+  // ACTIONS and stays rebindable; what it loses is this default, because the
+  // cell that draws the swap is the OFF HAND's and Digit4 already presses it
+  // (ui/quickslotTags.js: the key does what the cell shows). A bindings file
+  // written before this slice keeps whatever the player put on Digit3 -
+  // testSetBinding fills a MISSING action on a FREE code and touches nothing
+  // already bound - so this moves the DEFAULT, never a player's own choice.
+  ['Digit3', 'QuickSpell'],
   // QS4: the fourth cell takes the fourth digit, the last of the row this
   // slice spends and still unspent by DFU, by the port and by every vendored
   // mod's TextKey defaults.

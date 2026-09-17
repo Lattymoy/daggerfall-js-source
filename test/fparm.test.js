@@ -233,7 +233,9 @@ test('MW-D10: the draw is rule 54 and nothing else - no framing, no offsets, no 
   const draw = src.slice(src.indexOf('    draw(canvas)'), src.indexOf('    status()'));
   assert.match(draw, /const eye = firstPersonEye\(built\.arm\.mats, built\.cameraRef\);/,
     'the eye is the camera node, read fresh from the pose');
-  assert.match(draw, /renderCharacterSprite\(mesh, NIF_TO_PASS, proj, view, pw, ph, \{ lensLocal: true \}\)/,
+  // MAC-P: the call carries the viewmodel's LIGHT too (the room's own at the camera); the
+  // lens-local flag and the basis-change matrix are what this pin is for, and neither moved.
+  assert.match(draw, /renderCharacterSprite\(mesh, NIF_TO_PASS, proj, view, pw, ph, \{ lensLocal: true, viewmodelLight: vmLight \}\)/,
     'and the model matrix is the basis change alone - no placement, no scale');
   assert.match(draw, /perspective\(FP_FIELD_OF_VIEW, pw \/ ph,/, 'rule 29\'s own field of view');
   // THE RETIRED MECHANISM, and the sentence goes with it: none of the
@@ -2850,7 +2852,7 @@ test('MAC-S1: ONE flush, called from every exit out of `busy`', () => {
   // ...and setWeapon's own `finally` still does all three of its duties.
   // The file's own prose is not its wiring, so it is stripped first.
   const code = src.replace(/^\s*\/\/.*$/gm, '');
-  const swap = code.slice(code.indexOf('    setWeapon(item, { hasAmmo = false } = {}) {'));
+  const swap = code.slice(code.indexOf('    setWeapon(item, { hasAmmo = false, ammoCount = null } = {}) {'));
   const tail = swap.slice(swap.indexOf('        } finally {'), swap.indexOf('        } finally {') + 600);
   assert.match(tail, /busy = false;/, 'the swap still frees the rig');
   assert.match(tail, /for \(const fn of listeners\)/, 'and still repaints (PX33)');
@@ -3235,7 +3237,7 @@ test('PX33: a weapon swap notifies the panel, like every other settlement', asyn
   // showing a weapon the rig failed to bind, which is the state most
   // worth redrawing.
   const src = readFileSync('src/combat/fpArm.js', 'utf8');
-  const sw = src.slice(src.indexOf('    setWeapon(item, { hasAmmo = false } = {}) {'));
+  const sw = src.slice(src.indexOf('    setWeapon(item, { hasAmmo = false, ammoCount = null } = {}) {'));
   const body = sw.slice(0, sw.indexOf('\n    attack(strike'));
   const fin = body.indexOf('} finally {');
   assert.ok(fin > 0, 'the swap still ends in a finally');

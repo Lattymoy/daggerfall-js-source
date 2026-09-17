@@ -13,6 +13,8 @@
 // it 404s and the picker is the source. Names are normalized to
 // UPPERCASE basenames - real ARENA2 ships uppercase, user folders vary.
 
+import { isTouchDevice } from '../ui/touchDevice.js';   // TI3
+
 const DB_NAME = 'project-dagger';
 const STORE = 'arena2';
 /** M-EXT: user-supplied music lives in its OWN store, and that is not
@@ -116,8 +118,10 @@ const mem = new Map(); // NAME -> Uint8Array
 // fell back to the in-page picker used to ingest the sky-less lean
 // set with no way out of it from the app. The shell's presence
 // (daggerShell, the preload bridge) outranks the touch sniff.
-const LEAN = typeof window !== 'undefined' && !window.daggerShell &&
-  ('ontouchstart' in window || (navigator?.maxTouchPoints ?? 0) > 0);
+// TI3: ...and the touch sniff is ui/touchDevice.js's law - a finger as
+// the PRIMARY pointer - so a touchscreen laptop in a browser is not lean
+// either.
+const LEAN = typeof window !== 'undefined' && !window.daggerShell && isTouchDevice();
 export const KEEP = (name, lean = LEAN) => /^TEXTURE\.\d+$/.test(name) ||
   /\.(BSA|COL|PAL|PAK|CFG|FNT|WLD|DEF|STD|IMG|CIF|RSC|RCI|SND|TXT|GFX|BSS|CFA)$/.test(name) ||   // U45 added BSS: the three compass needles, 116KB for all three; HC1 added CFA: TR2's riding sprites (MRED00I0/MRED01I0), which the deployed site had NEVER held - the horse and cart drew nothing there
   name === 'CLASSES.DAT' ||
@@ -458,7 +462,7 @@ export async function loadDerivedJson(key) {
  *  data-files frame ("meshes/maxhorse/xhorse1.nif"), so the key slices
  *  from the FIRST known asset root, lowercased, slashes normalized. A
  *  path with no known root keys by its basename (a file picked alone). */
-const MW_LOOSE_ROOTS = ['meshes/', 'textures/', 'sound/', 'icons/', 'bookart/', 'music/', 'splash/', 'video/', 'fonts/'];
+const MW_LOOSE_ROOTS = ['meshes/', 'textures/', 'sound/', 'icons/', 'bookart/', 'music/', 'splash/', 'video/', 'fonts/', 'animations/'];   // WS1: the bone addons' folder
 export function mwLoosePath(name) {
   const p = String(name).replace(/\\/g, '/').toLowerCase();
   for (const root of MW_LOOSE_ROOTS) {
@@ -658,6 +662,15 @@ async function _openMorrowindArchives() {
       if (bytes) loose.set(n, bytes);
     }
     archives.push(makeLooseArchive(loose));
+  }
+  // WS1: Weapon Sheathing's vendored scabbards and bone addons, after
+  // the player's own loose files (a replacer wins) and before every
+  // .bsa (retail carries none of these names).
+  try {
+    const ws = await import('../systems/weaponSheathingAssets.js');
+    archives.push(ws.weaponSheathingArchive());
+  } catch (err) {
+    console.warn(`weapon sheathing assets: ${err.message}`);
   }
   for (const n of names) {
     try {
@@ -922,7 +935,7 @@ export const ASSET_PICKER_Z = 40;
 /** MWFIX: is the asset picker on screen? A modal opened FROM another
  *  overlay has to be able to say so, because the opener may own the
  *  keyboard - the enhanced shell takes Escape on `globalThis` in
- *  CAPTURE and stops it (enhancedMenu.js:2107), which is right for a
+ *  CAPTURE and stops it (enhancedMenu.js:2117), which is right for a
  *  screen with nothing above it and wrong the moment something is.
  *  Its own stated law is that a modal overlay owns its input; this is
  *  how the one above it says "that's me". */

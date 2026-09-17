@@ -52,7 +52,7 @@ function recordingGl() {
 const mesh = () => ({ vao: { id: 'vao-m' }, buffers: [], subMeshes: [{ textureArchive: 1, textureRecord: 1, startIndex: 0, primitiveCount: 1 }] });
 
 test('EL8: the constants, the door, the contact block and the table in the shaders', () => {
-  assert.equal(AIR_CONTACT_LENGTH, 0.6); assert.equal(AIR_CONTACT_THICKNESS, 0.8); assert.equal(AIR_CONTACT_STEPS, 6); assert.equal(AIR_CONTACT_FLOOR, 0.15);
+  assert.equal(AIR_CONTACT_LENGTH, 0.6); assert.equal(AIR_CONTACT_THICKNESS, 0.8); assert.equal(AIR_CONTACT_STEPS, 4); assert.equal(AIR_CONTACT_FLOOR, 0.15);
   assert.equal(AIR_CONTACT_UNIT, 12, 'the AO\'s old unit');
   assert.equal(contactOn('?x=1'), true); assert.equal(contactOn('?contact=off'), false); assert.equal(contactOn('?air=off&contact=off'), false);
   assert.equal(SHADOW_CASTER_TABLE, EL_MAX_LIGHTS, 'one slot per light the lane can hold');
@@ -60,13 +60,15 @@ test('EL8: the constants, the door, the contact block and the table in the shade
   assert.match(AIR_CONTACT_GLSL, /uniform sampler2D uPrevDepth;\nuniform mat4 uPrevVP;\nuniform vec4 uPrevProjInfo;/);
   assert.match(AIR_CONTACT_GLSL, /if \(uContactParams\.w <= 0\.0\) return 1\.0;/, 'off is lit');
   assert.match(AIR_CONTACT_GLSL, /float len = min\(dist, uContactParams\.x\);/, 'the march stops at the light');
-  assert.match(AIR_CONTACT_GLSL, /for \(int i = 1; i <= 6; i\+\+\) \{/);
-  assert.match(AIR_CONTACT_GLSL, /vec3 p = start \+ toLight \* \(len \* float\(i\) \/ 6\.0\);/, 'the steps as a float literal');
+  assert.match(AIR_CONTACT_GLSL, /for \(int i = 1; i <= 4; i\+\+\) \{/);
+  assert.match(AIR_CONTACT_GLSL, /vec3 p = start \+ toLight \* \(len \* float\(i\) \/ 4\.0\);/, 'the steps as a float literal');
+  // F3: the surface must have been in the previous frame where it stands, or nothing is marched
+  assert.match(AIR_CONTACT_GLSL, /vec4 c0 = uPrevVP \* vec4\(start, 1\.0\);\n  if \(c0\.w <= 0\.0\) return 1\.0;\n  vec2 uv0 = c0\.xy \/ c0\.w \* 0\.5 \+ 0\.5;\n  if \(uv0\.x < 0\.0 \|\| uv0\.x > 1\.0 \|\| uv0\.y < 0\.0 \|\| uv0\.y > 1\.0\) return 1\.0;\n  float z0 = texture\(uPrevDepth, uv0\)\.r \* 2\.0 - 1\.0;\n  if \(abs\(c0\.w - uPrevProjInfo\.w \/ \(z0 \+ uPrevProjInfo\.z\)\) > uContactParams\.y\) return 1\.0;\n  for \(int i = 1;/, 'F3: the self-check before the march');
   assert.match(AIR_CONTACT_GLSL, /float sceneDist = uPrevProjInfo\.w \/ \(z \+ uPrevProjInfo\.z\);\n\s+float behind = c\.w - sceneDist;/, 'the previous frame\'s terms; c.w is the point\'s view distance under that projection');
   assert.match(AIR_CONTACT_GLSL, /if \(behind > 0\.02 && behind < uContactParams\.y\) return uContactParams\.z;/, 'an occluder within the thickness: the floor, not black');
   for (const [name, fs] of [['mesh', EL_MESH_FS], ['terrain', EL_TERRAIN_FS], ['char', EL_CHAR_FS]]) {
     assert.ok(fs.includes(AIR_CONTACT_GLSL), `${name} carries the contact block`);
-    assert.match(fs, /int k = uCasterOf\[i\];[^\n]*\n    float sh = k >= 0 \? pointShadowAt\(k, wp, n\) : contactShadow\(wp, n, Ln, d\);/, `${name}: the table, then the map or the march`);
+    assert.match(fs, /int k = uCasterOf\[i\];[^\n]*\n(?:    \/\/[^\n]*\n)*    float sh = k >= 0 \? pointShadowAt\(k, wp, n\)\n      : \(d > uPointLights\[i\]\.w \* 0\.7 \|\| length\(uPointLights\[i\]\.xyz - uCamPos\) < 1\.5\) \? 1\.0\n      : contactShadow\(wp, n, Ln, d\);/, `${name}: the table, then the map or the march - never for the hand's light, never past seven tenths of the range (F3, F5)`);
   }
   assert.ok(EL_BB_FS.includes('elPointFlat(vBBWorld, base)') && (EL_BB_FS.match(/elPointLit\(/g) || []).length === 1, 'a flat lights by elPointFlat, which marches nowhere (its own flat would occlude it); elPointLit is defined and never called there');
   assert.match(SHADOW_GLSL, /uniform int uCasterOf\[48\];/);

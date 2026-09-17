@@ -187,7 +187,7 @@ function pollLatch(store, keys) {
   for (const m of comboModifiers(store)) pollModifier(store, keys, m);
 }
 
-function codeDown(store, keys, code) {
+function codeDown(store, keys, code, ring = keys) {
   const c = getCombo(code);
   if (c) {
     const [mod, key] = c;
@@ -196,10 +196,18 @@ function codeDown(store, keys, code) {
     // and it takes it with checkModHeldFirst FALSE - a combo never
     // suppresses its own key. The assignment comes BEFORE the read,
     // exactly as :1695-1708 sits above :1711.
+    //
+    // MWCROUCH: `ring` IS that `method`. It was written into the
+    // comment above long before it was a parameter - the held Set for
+    // GetKey, the frame's down ring for GetKeyDown, the up ring for
+    // GetKeyUp - and only the combo'd key takes it, exactly as the
+    // sentence says. The modifier arm and the plain-key suppression
+    // below both keep reading the HELD Set, because that is what
+    // :1695 and :1683 read whatever edge is being asked for.
     if (!pollModifier(store, keys, mod)) return false;
-    return keys.has(key);
+    return ring.has(key);
   }
-  if (!keys.has(code)) return false;
+  if (!ring.has(code)) return false;
   // :1683-1685 - "space is jump, LeftShift+Space opens inventory. We
   // want to ignore jumping if we were holding shift PRIOR to pressing
   // space". The `prior` is the latch, and it is why pressing space and
@@ -266,6 +274,65 @@ export function held(keys, action) {
   for (const [code, a] of b.secondary) if (a === action && codeDown(b, keys, code)) return true;
   return false;
 }
+
+/**
+ * MWCROUCH (2026-09-17, Mac: "When crouching with the morrowind model.
+ * you can't uncrouch"). THE EDGE RING - GetKeyDown and GetKeyUp, which
+ * the port had no seam for and was deriving instead.
+ *
+ * Every per-frame PRESS in the four hosts was `held(keys, act) && !prev`
+ * with `prev` re-sampled at the foot of the same frame: the crouch
+ * toggle, ReadyWeapon, SwitchHand's release, the E activate. That is a
+ * derivation, not a read, and it drops any press whose keydown AND
+ * keyup both land between two frames - the key is never in the ring on
+ * a frame that looks at it. Unity does not: `Input.GetKeyDown` answers
+ * true on the frame FOLLOWING the press event whatever the key does
+ * afterwards, because the events are buffered and drained per frame,
+ * and DFU reads exactly that (InputManager.GetKey/GetKeyDown/GetKeyUp,
+ * :1084-1108, through FindKeyboardActions' one poll a frame). So a tap
+ * shorter than a frame works in Daggerfall Unity at any frame rate and
+ * did not work here below about 20 fps - which is where the Morrowind
+ * body puts a loaded scene, and why the bug arrived wearing its name.
+ *
+ * The ring is the missing buffer. The host's listeners NOTE each edge
+ * as the DOM delivers it; the frame ROTATES the ring once, at the top,
+ * before any reader; `pressed` / `released` answer off the rotated
+ * halves. Rotating once a frame is what gives an edge exactly one
+ * frame of life - the same single frame Unity gives it - so a reader
+ * gated behind an overlay still DROPS its edge rather than banking it,
+ * which is the paused-InputManager law the old latches carried too.
+ *
+ * `noteKeyDown` takes the DOM's `repeat` flag: auto-repeat is one
+ * physical press to Unity, and GetKeyDown fires once for it.
+ */
+export function keyEdges() { return { down: new Set(), up: new Set(), downFrame: new Set(), upFrame: new Set() }; }
+export function noteKeyDown(edges, code, repeat = false) { if (edges && !repeat) edges.down.add(code); }
+export function noteKeyUp(edges, code) { if (edges) edges.up.add(code); }
+/** The frame's ONE rotation. Idempotent only in the sense that a second
+ *  call in the same frame would throw the frame's edges away - so it is
+ *  called once, at the top of the host's frame, and never inside a gate. */
+export function beginInputFrame(edges) {
+  if (!edges) return;
+  const d = edges.downFrame; const u = edges.upFrame;
+  edges.downFrame = edges.down; edges.upFrame = edges.up;
+  d.clear(); u.clear();
+  edges.down = d; edges.up = u;
+}
+function edgeAction(ring, keys, action) {
+  if (!ring || !ring.size) return false;
+  const b = bindings();
+  pollLatch(b, keys);           // the same frame sweep every read takes (:1826-1832)
+  for (const [code, a] of b.primary) if (a === action && codeDown(b, keys, code, ring)) return true;
+  for (const [code, a] of b.secondary) if (a === action && codeDown(b, keys, code, ring)) return true;
+  return false;
+}
+/** InputManager.GetKeyDown's dual-dict fallthrough over the frame's down ring. */
+export function pressed(edges, keys, action) { return edgeAction(edges?.downFrame, keys, action); }
+/** ...and GetKeyUp's, over the up ring - SwitchHand's ActionComplete edge. */
+export function released(edges, keys, action) { return edgeAction(edges?.upFrame, keys, action); }
+/** The RAW code, for the port's one recorded departure that is not a
+ *  binding at all: E activates beside Mouse0 (`keys.has('KeyE')`). */
+export function pressedCode(edges, code) { return !!edges?.downFrame?.has(code); }
 
 /** AUDIT 39r: the MOUSE half of the held-keys set. InputManager binds
  *  three actions to buttons and polls them through the same GetKey
@@ -519,7 +586,20 @@ export function routeKey(e, ctx, setPlayerPos = null, keys = null) {
  *  large HUD has no hand panel; DFU's does not either), so the decline
  *  here is the claim that the frame owns the key - written down where
  *  the ReadyWeapon comment above says a second one belongs. */
-export const POLLED_ACTIONS = new Set(['ReadyWeapon', 'SwitchHand']);
+/** QS6: and the three quickslot keys that HOLD (systems/quickslots.js
+ *  CYCLE_SLOTS). Mac asked for one key that does two things - a tap
+ *  performs the slot, a hold cycles what is in it - and a press that
+ *  acts on its DOWN edge cannot be the start of a hold: the potion is
+ *  drunk before the player has held long enough to mean "let me choose
+ *  one". So the keyboard dispatch declines them here, exactly as it
+ *  declines Z and H, and each host's frame drives the machine
+ *  (tickQuickslotHold) that owns both edges.
+ *
+ *  routeAction keeps their arms for the same reason ReadyWeapon keeps
+ *  its one: a PANEL - the HUD diamond's own touch cells - has no frame
+ *  poll and posts the action. 'QuickSwap' and 'QuickOffHand' are NOT
+ *  here: neither holds, so the down edge is the whole of the press. */
+export const POLLED_ACTIONS = new Set(['ReadyWeapon', 'SwitchHand', 'QuickUse1', 'QuickUse2', 'QuickSpell']);
 
 /** QS2 - THE THREE THE TWO SELF-ROUTING HOSTS ANSWER ABOVE THEIR MODE GATE.
  *
@@ -534,7 +614,7 @@ export const POLLED_ACTIONS = new Set(['ReadyWeapon', 'SwitchHand']);
  *  reads this set to answer these three ABOVE the mode gate, under the same
  *  overlay and pause gates every other gameplay door takes. The two hosts that
  *  call `routeKey` need nothing: their ctx already reaches the table. */
-export const QUICKSLOT_ACTIONS = new Set(['QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand']);
+export const QUICKSLOT_ACTIONS = new Set(['QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand', 'QuickSpell']);   // QS6: the spell slot joins them
 
 /**
  * THE ACTION LADDER ALONE, without the key event. U45 pulled it out
@@ -653,6 +733,11 @@ export function routeAction(action, ctx, setPlayerPos = null) {
     // QS4: the off-hand cell's own press - light or douse, through the mod's
     // own guard. Same door law: a host without one answers false.
     case 'QuickOffHand': return ctx.quickOffHand?.() === true;
+    // QS6: the spell slot's press - ready the slot's spell, or put it away
+    // when it is the one already in hand. The performer is the model's
+    // (spellQuickslotPress) over the host's ONE cast engine, so every law
+    // about readying stays where DFU's are ported.
+    case 'QuickSpell': return ctx.quickSpell?.() === true;
     default: return false;
   }
 }

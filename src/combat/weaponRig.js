@@ -30,7 +30,7 @@ import { racialFpsWeapon } from '../systems/lycanthropy.js';   // V4: the transf
 import { EQUIP_SLOTS, equipTableOf } from '../systems/equip.js';   // AUDIT 17e F17; MW-D32 the worn read
 import { dfWornEquipment } from '../formats/mwItemMap.js';   // MW-D32
 import { ARMOR_ENUM } from './enemyEquipment.js';   // MW-D32
-import { loadFpsWeaponArt, drawFpsWeapon, weaponTypeForItem, WEAPON_TYPES } from './fpsWeapon.js';
+import { loadFpsWeaponArt, drawFpsWeapon, weaponTypeForItem, WEAPON_TYPES, fpLightingOn } from './fpsWeapon.js';   // MAC-I: the tint's switch, with the sprite it tints
 // ROAD-tail (FPSSpellCasting.cs): the classic spellcasting HANDS. A
 // separate component in DFU and a separate module here, drawn by the
 // same rig because this is the one surface every FPS-weapon host
@@ -40,7 +40,7 @@ import { fpsSpellCasting, loadSpellCastArt, drawSpellCastHands, magicAnimFilenam
 // and runs untouched otherwise. The Morrowind arm below is an opt-in
 // layer that either draws whole or does not draw at all - there is no
 // state in which both reach the screen, and none in which neither does.
-import { fpArm, hasDaggerfallArrows } from './fpArm.js';
+import { fpArm, hasDaggerfallArrows, daggerfallArrowCount } from './fpArm.js';
 import { getPref } from '../systems/uiPrefs.js';   // MWA1: the arms switch
 import { morrowindDataCount, morrowindDataFingerprint, registerMorrowindData } from '../scenes/dataSource.js';   // MWA1: are the archives attached; AUDIT 65 XL-6: and measured
 import { mwRaceId } from '../formats/mwNpc.js';   // TR2: the one race-id spelling
@@ -86,7 +86,9 @@ export function armBuildOptsOf(entity) {
     armor: dfWornEquipment(equipTableOf(entity), EQUIP_SLOTS, ARMOR_ENUM),
     weapon: entity.equip?.slots?.[EQUIP_SLOTS.RightHand] ?? null,
     hasAmmo: hasDaggerfallArrows(entity.items),
+    ammoCount: daggerfallArrowCount(entity.items),   // WS1: the quiver
     torch: isLitTorch(entity.lightSource),   // MW-D51: the lit light, in the left hand
+    sheathing: getPref('mwSheathing'),   // WS1: the holster on the third-person body
   };
 }
 
@@ -172,7 +174,7 @@ export async function autoBuildArms(entity, { wanted = () => getPref('mwArms'), 
  *                     The note that hosts without a HUD text layer
  *                     pass console is retired: every call site hands
  *                     over a real one - hudText.add
- *                     (dungeonContext.js:2614), townTalk.say
+ *                     (dungeonContext.js:2634), townTalk.say
  *                     (exterior.js:1653, world.js:2584) and
  *                     worldModes' own interior sink (worldModes.js:387,
  *                     which warns to console only where a host mounts
@@ -632,7 +634,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
      *             "does not toggle / toggles twice / gets stuck", and
      *             it is why Handheld Torches misbehaved with it: the
      *             mod's UpdateFreeHand reads WeaponManager.Sheathed
-     *             LIVE (handheldTorches.js:287), so a flag flipped to
+     *             LIVE (handheldTorches.js:286), so a flag flipped to
      *             "drawn" with no weapon on screen stows the torch.
      *   :268      `!isAttacking` - the hand already had this gate
      *             (switchHand below); the sheath did not, so Z
@@ -764,7 +766,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
         // Morrowind arm now rides the same read. setWeapon's fast path
         // is one key compare - the swap itself runs only when the item
         // in the hand actually changed.
-        fpArm.setWeapon(playerWeapon.weapon, { hasAmmo: hasDaggerfallArrows(entity?.items) });
+        fpArm.setWeapon(playerWeapon.weapon, { hasAmmo: hasDaggerfallArrows(entity?.items), ammoCount: daggerfallArrowCount(entity?.items) });   // WS1: the quiver's count rides the swap
         // MW-D51: THE LIGHT FOLLOWS THE HAND. The same per-frame read
         // Handheld Torches' hand law writes (PlayerEntity.LightSource -
         // lit by use, stowed when no hand is free) hands the Morrowind
@@ -947,8 +949,18 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // EOTB-IL: `spellCasting.enabled = false` while the sprite camera is
       // out (ToggleOffset, IL_22f9) - the hands' picture goes, the cast
       // still resolves (a disabled MonoBehaviour's coroutine runs on)
+      // MAC-I (Mac: "The classic sprite should react to lighting (first
+      // person)"): THE ROOM'S LIGHT, once a frame, for every sprite this
+      // seam draws. `FPSWeapon.Tint` is the channel DFU declares and
+      // never writes (FPSWeapon.cs:108, :182); `flatLightAt` answers it
+      // with the same four terms a FLAT in the room takes, sampled at
+      // the camera - which is where a first-person sprite is. The
+      // Morrowind arms are a lit MESH and take the world's light
+      // already, so this is the classic lane's alone; the switch is the
+      // player's (Features -> First-person lighting).
+      const fpTint = fpLightingOn() ? (renderer?.flatLightAt?.() ?? null) : null;
       if (c && !fpArm.active()) {
-        drawSpellCastHands(renderer, c, spellArtFor(fpsSpellCasting.element), fpsSpellCasting.frameIndex);
+        drawSpellCastHands(renderer, c, spellArtFor(fpsSpellCasting.element), fpsSpellCasting.frameIndex, { tint: fpTint });
       }
       if (paralyzed || !shown()) return;
       // THE ONE SEAM. The arm draws whole and RETURNS, or it is inactive
@@ -973,10 +985,10 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // with no order between them in DFU; the port picks the one that
       // keeps the weapon whole. Under the Morrowind arms it is not drawn
       // (a classic hand beside a modelled arm is neither mod nor lane).
-      if (handheldOn() && c) handheld.draw(renderer, c);
-      if (widgetOn() && c && widget.draw(renderer, c)) return;
+      if (handheldOn() && c) handheld.draw(renderer, c, fpTint);
+      if (widgetOn() && c && widget.draw(renderer, c, fpTint)) return;
       const art = c && artFor(playerWeapon.weapon);
-      if (art) drawFpsWeapon(renderer, c, art, playerWeapon.machine.state, playerWeapon.machine.frame);
+      if (art) drawFpsWeapon(renderer, c, art, playerWeapon.machine.state, playerWeapon.machine.frame, { tint: fpTint });
     }
   }
 }

@@ -45,8 +45,8 @@ test('FT9: every vendored mod with a switch has exactly one row over it, and eve
   // needs no edit here and cannot quietly pass with the tag missing.
   const tagged = filterFeatures(FEATURES, 'mod');
   const notMods = tagged.filter((f) => !rows.includes(f)).map((f) => f.id).sort();
-  assert.deepEqual(notMods, ['enhanced-environments', 'mod-windmills-kamer'],
-    'the only Mod Authored rows that are not mods-store rows: Dynamic Skies rides the outdoors row, Windmills is a pref');
+  assert.deepEqual(notMods, ['enhanced-environments', 'mod-weapon-sheathing', 'mod-windmills-kamer'],
+    'the only Mod Authored rows that are not mods-store rows: Dynamic Skies rides the outdoors row, Windmills is a pref, Weapon Sheathing (WS1) is a pref - the mod ships art and no settings');
   assert.equal(tagged.length, rows.length + notMods.length);
 });
 

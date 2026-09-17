@@ -70,10 +70,23 @@ import { liveStat, maxFatigue, FATIGUE_MULTIPLIER } from '../systems/statMods.js
 import { entityMaxEncumbrance, handToHandMinDamage, handToHandMaxDamage } from '../combat/formulas.js';   // AUDIT 26: PlayerEntity.MaxEncumbrance, enchantment allowance and all; AUDIT 63 F34: the H2H damage line
 import { carriedWeight } from './charsheet.js';
 import { totalGoldAmount } from '../systems/court.js';   // PlayerEntity.GetGoldAmount, the figure the classic sheet draws
+import { classSpecials } from '../systems/specialAdvantages.js';   // MAC-G: GetClassSpecials, read back off the career's own flags
+import { RACE_TEMPLATES, raceById } from '../systems/races.js';     // MAC-G: the blood half of that list
 
 /** The three career groups, in DFU's own order, plus the remainder.
  *  `_drawSkillPage`'s `names` array, which is what keys 1-4 page. */
 export const SKILL_GROUPS = Object.freeze(['Primary', 'Major', 'Minor', 'Miscellaneous']);
+
+/** MAC-G: the entity's RaceTemplate, however the character was made.
+ *  Chargen writes the race KEY (ui/chargen.js:2139 - `this.race.key`)
+ *  and a classic save may only carry the id, so both roads are taken
+ *  and the display NAME is accepted too rather than trusting one
+ *  writer. No template means no racial rows, not a crash. */
+function raceTemplateOf(e) {
+  return RACE_TEMPLATES.find((r) => r.key === e.race || r.name === e.race)
+    ?? raceById(e.raceId)
+    ?? null;
+}
 
 /**
  * THE SHEET, as data. Pure: no DOM, no entity mutation, every figure
@@ -116,6 +129,12 @@ export function sheetModel(entity) {
     },
     encumbrance: { now: Math.trunc(carriedWeight(e)), max: entityMaxEncumbrance(e) },
     attributes: STAT_KEYS_ORDER.map((key) => ({ key, value: liveStat(e, key) })),
+    // MAC-G (Mac: "the enhanced stat page ... doesn't have any listing
+    // for character advantages/disadvantages"). GetClassSpecials, off
+    // the career's flags and the race template - the same list the
+    // classic sheet's History button pops before the history window,
+    // which the port had never drawn in EITHER skin.
+    specials: classSpecials(e.career, raceTemplateOf(e)),
     groups: SKILL_GROUPS.map((name, i) => ({
       name,
       ids: i < 3 ? career[i] : misc,

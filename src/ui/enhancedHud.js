@@ -68,12 +68,13 @@ import { maxBreath, maxFatigue, liveStat } from '../systems/statMods.js';   // P
 // nothing about it is restated here; the ICON is the one the inventory
 // window draws (ui/itemIconUrl.js, moved out of that 2200-line screen
 // rather than importing it); the TAGS are their own pure module.
-import { quickslotView, quickslotKey } from '../systems/quickslots.js';
+import { quickslotView, quickslotKey, cycleQuickslot, quickslotCycling, spellQuickslot,
+  QUICK_HOLD_MS, QUICK_STEP_MS } from '../systems/quickslots.js';   // QS6: the phone's own hold - a finger cycles a slot the way a held key does
 import { modelIconUrl } from './itemIconUrl.js';
 import { fpArm } from '../combat/fpArm.js';   // the Morrowind ground mesh the inventory takes through its deps bag
 import { requestIcon } from './textureCanvas.js';
 import { inventoryItemImage } from '../systems/itemTemplates.js';
-import { quickslotTag, quickslotOffTag, tagKey, CELL_ACTIONS } from './quickslotTags.js';
+import { quickslotTag, quickslotOffTag, quickslotSpellTag, tagKey, CELL_ACTIONS } from './quickslotTags.js';   // QS6: the caption's spell chip names its own action
 import { glyphSvg, padFamily } from './padGlyphs.js';
 import { controllerLook } from '../player/lookFilter.js';   // GP1's own latch: "the last input was the pad"
 import { bindings } from './input.js';
@@ -345,7 +346,21 @@ function build(doc) {
   const cap = el('div', 'hud-qcap');
   const cornerWord = el('span', 'hud-modeword hud-modecorner');
   const readied = el('div', 'hud-readied');
-  cap.append(cornerWord, readied);
+  // QS6 - THE SPELL CHIP. The diamond's four corners are the two hands
+  // and the two consumables; a spell is in none of them, and a fifth
+  // corner is not a diamond. It belongs on the CAPTION, which is the row
+  // the readied spell already stood on - so the slot's spell and the
+  // spell in hand are read in one glance, at the place a player already
+  // looks, with the key that changes it printed on it.
+  const spellChip = el('div', 'hud-qspell');
+  const spellTag = el('span', 'hud-qstag hud-qspkey');
+  const spellGlyph = el('img', 'hud-qsglyph');
+  spellGlyph.alt = '';
+  const spellText = el('span', 'hud-qstext');
+  spellTag.append(spellGlyph, spellText);
+  const spellName = el('span', 'hud-qspname');
+  spellChip.append(spellTag, spellName);
+  cap.append(cornerWord, spellChip, readied);
   const diamond = el('div', 'hud-qdiamond');
   // A cell is FOUR elements, and the reason is the pixel language: a
   // rotated square would blur every sprite in it, so the diamond is a
@@ -404,14 +419,60 @@ function build(doc) {
   // AUDIT QS F8: a FINGER, not a mouse that happens to live on a
   // machine with a touchscreen - Chromium answers `pointer: coarse` for
   // one, and a mouse click on the diamond swallowed a swing.
+  const finger = (e) => !(e && e.pointerType != null && e.pointerType !== 'touch' && e.pointerType !== 'pen');
   const tap = (fn) => (e) => {
-    if (e && e.pointerType != null && e.pointerType !== 'touch' && e.pointerType !== 'pen') return;
+    if (!finger(e)) return;
     e?.preventDefault?.(); fn();
   };
-  cells.c1.cell.addEventListener('pointerdown', tap(() => liveOpts.quickUse?.(1)));
-  cells.c2.cell.addEventListener('pointerdown', tap(() => liveOpts.quickUse?.(2)));
+  // QS6 - THE FINGER HOLDS TOO. Mac asked for one key that does two
+  // things - a tap performs the slot, a hold cycles what is in it - and
+  // a phone has no key to hold. The cells ARE the phone's keys (that is
+  // DEPARTURE 2's whole claim), so they carry the same pair, on the same
+  // two numbers the frame's machine uses, over the model's one cycle.
+  // The entity is the one the last frame drew, which is the one the
+  // player is.
+  // AUDIT QS6 F3 - THE FINGER'S TIMERS MUST DIE WITH THE HUD. A hold that is
+  // still cycling when a host tears the HUD down (a fast travel, a scene
+  // change) left its `setInterval` running for the life of the page: the node
+  // is gone, so no `pointerup` can ever reach it. It is held here so
+  // `destroyEnhancedHud` can stop it, which is the same law QS3 stated for
+  // the listeners ("the bound-once handlers went with the nodes").
+  const holdTap = (slot, act) => {
+    let arm = null; let step = null; let cycled = false;
+    const stop = () => { clearTimeout(arm); clearInterval(step); arm = null; step = null; };
+    const turn = () => { cycleQuickslot(slot, { entity: liveEntity }); last.quick = null; last.qspell = null; };
+    return {
+      down(e) {
+        if (!finger(e)) return;
+        e?.preventDefault?.();
+        stop();
+        cycled = false;
+        arm = setTimeout(() => { cycled = true; turn(); step = setInterval(turn, QUICK_STEP_MS); }, QUICK_HOLD_MS);
+      },
+      up(e) {
+        if (!finger(e)) return;
+        const held = cycled;
+        stop();
+        // A HOLD IS NOT A PRESS: the choosing was the act.
+        if (!held) act();
+      },
+      off() { stop(); cycled = true; },   // the finger left the cell: neither press nor further turn
+    };
+  };
+  const bindHold = (node, slot, act) => {
+    const h = holdTap(slot, act);
+    holds.push(h);   // AUDIT QS6 F3: a teardown has to be able to stop them
+    node.addEventListener('pointerdown', h.down);
+    node.addEventListener('pointerup', h.up);
+    node.addEventListener('pointercancel', h.off);
+    node.addEventListener('pointerleave', h.off);
+  };
+  bindHold(cells.c1.cell, 'c1', () => liveOpts.quickUse?.(1));
+  bindHold(cells.c2.cell, 'c2', () => liveOpts.quickUse?.(2));
+  bindHold(spellChip, 'spell', () => liveOpts.quickSpell?.());
   // QS4: the off cell presses what it SHOWS - the swap where it offers
-  // one, the off hand's own light act everywhere else.
+  // one, the off hand's own light act everywhere else. It does NOT hold:
+  // what the off hand offers is whatever is in that hand, not a list.
   cells.off.cell.addEventListener('pointerdown', tap(() => {
     if (offKind === 'swap') liveOpts.quickSwap?.(); else liveOpts.quickOffHand?.();
   }));
@@ -419,7 +480,8 @@ function build(doc) {
   doc.body.append(root);
   return { root, compass, marks, detectMarks: [], foe, foeName, foeFill, magicka, health, fatigue, effects,
     breath, breathFill, readied, reticle, cross, centreWord, cornerWord,
-    quick, quickCells: cells, quickTags: tags };
+    quick, quickCells: cells, quickTags: tags,
+    spellChip: { chip: spellChip, tag: spellTag, img: spellGlyph, text: spellText, name: spellName } };
 }
 
 /** DEPARTURE 2's two module variables: the bag the bound-once handlers
@@ -431,6 +493,9 @@ let offKind = null;
  *  clothing or armour archive by who wears it, and the inventory
  *  window passes the same identity, so the two draw the same picture. */
 let liveEntity = null;
+/** AUDIT QS6 F3: the finger-hold handles, so a teardown can stop a timer
+ *  the removed node can no longer deliver a `pointerup` to. */
+const holds = [];
 
 /** Below this the durability strip takes the health bar's red. DFU's
  *  own repair prompt has no such line - this is the port's, and it is
@@ -589,7 +654,13 @@ export function drawEnhancedHud(vitals, heading01, dt = 0, opts = {}) {
   // carries a NAME, which says nothing at all when there is no spell.
   // (The cells below are a different case; see the header.)
   const readySpell = opts.readied ?? null;
-  const readyName = readySpell ? String(readySpell.name ?? '') : null;
+  // QS6: ...and NOT when the spell in hand is the one the spell chip is
+  // already naming. Two chips a hand's width apart carrying the same
+  // word is not a readout, it is a stutter - the chip below says it is
+  // readied by lighting up, which is one thing said once.
+  const slotSpell = spellQuickslot();
+  const doubled = !!readySpell && !!slotSpell && slotSpell.index === readySpell.index;
+  const readyName = readySpell && !doubled ? String(readySpell.name ?? '') : null;
   if (last.readied !== readyName) {
     last.readied = readyName;
     parts.readied.classList.toggle('on', !!readyName);
@@ -648,7 +719,8 @@ export function drawEnhancedHud(vitals, heading01, dt = 0, opts = {}) {
 function drawQuickslots(vitals, opts) {
   liveOpts = opts;
   liveEntity = vitals ?? null;
-  const view = quickslotView(vitals, { weapon: opts.weapon ?? null, sheathed: opts.weaponSheathed ?? false });
+  const view = quickslotView(vitals, { weapon: opts.weapon ?? null, sheathed: opts.weaponSheathed ?? false,
+    readiedIndex: opts.readied?.index ?? null });   // QS6: the chip lights for the spell actually in hand
   offKind = view.off.kind;
   // THE PAD'S FAMILY, not the input layer's local: `controllerLook` is
   // GP1's own importable latch for "the last input was the pad", and
@@ -661,6 +733,7 @@ function drawQuickslots(vitals, opts) {
     off: quickslotOffTag(view.off.kind, tagOpts),
     c1: quickslotTag(CELL_ACTIONS.c1, tagOpts),
     c2: quickslotTag(CELL_ACTIONS.c2, tagOpts),
+    spell: quickslotSpellTag(tagOpts),   // QS6
   };
   // TI2: a FIXED virtual stick sits bottom-left at inset 36 radius 56,
   // which is this block's own corner - so the block steps right of it,
@@ -679,6 +752,10 @@ function drawQuickslots(vitals, opts) {
     last.qoff = off;
     parts.quick.classList.toggle('nodiamond', off);
   }
+  // QS6: THE SPELL CHIP, above the `off` return - it is the caption's,
+  // and the caption is what the switch keeps. Its own guard, because a
+  // spell name changing is not a reason to rewrite twenty cells.
+  drawSpellChip(view, tags.spell);
   if (off) return;
   const pct = (c) => (Number.isFinite(c) ? String(Math.round(c)) : '');
   const m = view.main, o = view.off;
@@ -687,6 +764,12 @@ function drawQuickslots(vitals, opts) {
     `${o.kind}|${o.name ?? ''}|${pct(o.condition)}|${o.item ? 1 : 0}`,
     ...['c1', 'c2'].map((k) => (view[k] ? `${view[k].name}|${view[k].count}` : '')),
     ...['main', 'off', 'c1', 'c2'].map((k) => tagKey(tags[k])),
+    // AUDIT QS6 F4: THE LAMP IS PART OF WHAT THE BLOCK SAYS. It was written
+    // below the early return, so it came on with the cycle that changed a
+    // name and then NEVER WENT OUT - nothing else changes when a hold ends,
+    // so the signature was identical and the write was unreachable. A cell
+    // left glowing is a cell that lies about what the thumb is doing.
+    quickslotCycling() ?? '',
   ].join('~');
   if (last.quick === sig) return;
   last.quick = sig;
@@ -707,6 +790,33 @@ function drawQuickslots(vitals, opts) {
     });
   }
   for (const k of ['main', 'off', 'c1', 'c2']) quickTag(parts.quickTags[k], k, tags[k]);
+  // QS6: the cell a hold is turning right now wears the lamp, so a
+  // player watching the diamond sees which slot their thumb is in.
+  const lamp = quickslotCycling();
+  if (last.qlamp !== lamp) {
+    last.qlamp = lamp;
+    for (const k of ['c1', 'c2']) parts.quickCells[k].cell.classList.toggle('cycling', lamp === k);
+  }
+}
+
+/** QS6 - THE CAPTION'S SPELL CHIP: the key that readies it, the name,
+ *  and three states - EMPTY (nothing chosen yet, so nothing is drawn),
+ *  a GHOST (a spell the book no longer holds), and READIED (it is in
+ *  hand, and the same press puts it away). */
+function drawSpellChip(view, tag) {
+  const sp = view.spell;
+  const lamp = quickslotCycling() === 'spell';
+  const sig = sp ? `${sp.index}|${sp.name}|${sp.spell ? 1 : 0}|${sp.readied ? 1 : 0}|${lamp ? 1 : 0}|${tagKey(tag)}` : `-|${tagKey(tag)}`;
+  if (last.qspell === sig) return;
+  last.qspell = sig;
+  const chip = parts.spellChip;
+  chip.chip.classList.toggle('on', !!sp);
+  if (!sp) return;
+  chip.chip.classList.toggle('readied', !!sp.readied);
+  chip.chip.classList.toggle('ghost', !sp.spell);
+  chip.chip.classList.toggle('cycling', lamp);
+  chip.name.textContent = sp.name || '';
+  quickTag(chip, 'spellcap', tag);
 }
 
 /** One cell's state, art, strip and count. Every write is guarded on
@@ -793,6 +903,8 @@ function quickTag(part, slot, t) {
 
 /** A host tearing down. */
 export function destroyEnhancedHud() {
+  for (const h of holds) h.off();   // AUDIT QS6 F3: a finger mid-cycle does not outlive the HUD
+  holds.length = 0;
   try { host?.remove(); } catch { /* already gone */ }
   host = null; parts = null;
   liveOpts = {}; offKind = null; liveEntity = null;   // QS3: the bound-once handlers went with the nodes

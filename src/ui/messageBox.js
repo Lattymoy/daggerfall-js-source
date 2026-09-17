@@ -457,3 +457,20 @@ export function messageBoxHit(box, vx, vy) {
   }
   return null;
 }
+
+/** BOX1 (2026-09-17, Mac: "When buying a spell, the dialouge ui Flickers
+ *  between 2 seperate conversations"): A BOX READS ITS RECORD ONCE. A
+ *  box carrying a `textId` resolves it through the host's `rows(id)` -
+ *  which is TextProvider's random-VARIANT draw (townTalk.lines ->
+ *  variantLinesById) - and the windows used to resolve it in draw(),
+ *  every frame, so a two-variant record flickered between its lines
+ *  at frame rate. DFU reads the tokens into the box when it is made
+ *  (DaggerfallMessageBox.SetTextTokens); this latches them on the box
+ *  object at the first ask and answers the latch after. A box that
+ *  already carries `rows` keeps them. */
+export function latchBoxRows(box, rows) {
+  if (!box) return [];
+  box.rows ??= rows?.(box.textId) ?? [];
+  return box.rows;
+}
+

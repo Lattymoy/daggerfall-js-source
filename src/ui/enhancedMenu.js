@@ -1478,6 +1478,16 @@ function morrowindCard() {
       + 'Off: the classic weapon sprites, and Eye Of The Beholder for third person. Turning it on builds the body '
       + '(a few seconds, once); the archives stay attached either way.',
       { onChange: (on) => { toggleMorrowind(on); }, home: true }));
+    // WS1: the holster - rebuilt into the standing body when the switch moves.
+    mw.append(prefRow('mwSheathing', 'Weapon sheathing',
+      'A sheathed weapon stays on the body - on the hip or the back, in the scabbard Weapon Sheathing '
+      + '(Greatness7 and the artists it credits) ships for it, with a quiver for a bow. Off: a lowered weapon vanishes, as in vanilla Morrowind.',
+      { onChange: async () => {
+        if (!getPref('mwArms') || !count) { render(); return; }
+        const { buildArmsFor } = await import('../combat/weaponRig.js');
+        await buildArmsFor(playerEntity);
+        render();
+      } }));
   }
   const armActions = [
     { label: 'Attach data', primary: !count, onClick: async () => {
@@ -2266,7 +2276,7 @@ function pauseSystem(body) {
 // the three reputation stores the talk and court systems read.
 const STATS_SECTIONS = Object.freeze([
   ['character', 'Character'], ['attributes', 'Attributes'],
-  ['skills', 'Skills'], ['standing', 'Standing'],
+  ['skills', 'Skills'], ['specials', 'Advantages'], ['standing', 'Standing'],
 ]);
 // The five NAMED social groups getReactionToPlayer reads
 // (formats/factionFile.js:23-27; talk.js seeds the array) - the enum
@@ -2303,7 +2313,7 @@ function pauseStats(body) {
   }
   wrap.append(rail);
   const detail = el('div', 'px-qdetail');
-  ({ character: statsCharacter, attributes: statsAttributes, skills: statsSkills, standing: statsStanding })[statsSec](detail, m);
+  ({ character: statsCharacter, attributes: statsAttributes, skills: statsSkills, specials: statsSpecials, standing: statsStanding })[statsSec](detail, m);
   // PX25: THE DOORS THE F5 SHEET CARRIED. The classic character sheet
   // has four buttons down its side - Inventory, Spellbook, Logbook,
   // History - and the enhanced F5 overlay copied them. This page shows
@@ -2393,6 +2403,40 @@ function statsSkills(detail, m) {
     document.createTextNode(statsAllSkills ? 'Hide miscellaneous' : `Show ${miscCount} miscellaneous skills`));
   more.onclick = () => { statsAllSkills = !statsAllSkills; render(); };
   detail.append(more);
+}
+
+/** ADVANTAGES: GetClassSpecials, which the port had never drawn.
+ *
+ *  MAC-G (Mac: "the enhanced stat page on the pause menu doesn't have
+ *  any listing for character advantages/disadvantages"). DFU prints
+ *  ONE undifferentiated list in a message box behind the classic
+ *  sheet's History button; this page has room for the division the
+ *  player actually made at chargen, so the model tags each row with
+ *  which of the two lists its primary belongs to and the page prints
+ *  them under their own dividers.
+ *
+ *  The SOURCE tag is the other half of the answer: Resistance To Magic
+ *  on a Breton mage can come from the class or from the blood, and a
+ *  list that does not say which leaves the player guessing at what a
+ *  re-rolled class would keep. */
+function statsSpecials(detail, m) {
+  const rows = m.specials ?? [];
+  if (!rows.length) {
+    detail.append(pxDivider('Advantages'));
+    detail.append(el('p', 'px-note', 'No special advantages or disadvantages.'));
+    return;
+  }
+  for (const [kind, title] of [['advantage', 'Advantages'], ['disadvantage', 'Disadvantages']]) {
+    const list = rows.filter((r) => r.kind === kind);
+    if (!list.length) continue;
+    detail.append(pxDivider(title));
+    for (const r of list) {
+      const row = el('div', 'px-stat');
+      row.append(el('span', 'k', r.label));
+      row.append(el('span', 'v px-src', r.source === 'race' ? (m.race || 'Race') : (m.career || 'Class')));
+      detail.append(row);
+    }
+  }
 }
 
 /** STANDING: the three reputation stores the game actually reads -

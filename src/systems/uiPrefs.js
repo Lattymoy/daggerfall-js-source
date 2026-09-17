@@ -68,6 +68,9 @@ export const PREF_DEFAULTS = Object.freeze({
   // every host that owns a weapon rig builds at boot while it is on and
   // the archives are attached (combat/weaponRig.js autoBuildArms).
   mwArms: false,
+  // WS1: `mwSheathing` (Weapon Sheathing on the third-person body) is
+  // declared on its Features row (systems/features.js), RF4's law - it
+  // arrives through FEATURE_PREF_DEFAULTS below.
   // FPS1 (2026-09-11, RookieG via Mac: "we need an ingame fps counter").
   // The overlay in ui/fpsCounter.js: frames a second and the frame's
   // milliseconds, worst frame of the second beside it. ?fps forces it

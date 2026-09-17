@@ -364,7 +364,7 @@ test('U42 sort: alphabetical, then point cost only if the alpha pass changed not
 });
 
 test('U42: every mutation lands on the player\'s OWN array - the save envelope sees it', () => {
-  // PlayerEntity.GetSpells() is the book itself and save.js:181 maps
+  // PlayerEntity.GetSpells() is the book itself and save.js:165 maps
   // that array in order. This pin fails if the window ever copies.
   const { entity, w } = book(spell('B', 5, { index: 7 }), spell('A', 5, { index: 9 }));
   const arr = entity.spells;
@@ -385,7 +385,7 @@ test('U42 rename: a COPY takes the new name, marked custom so the save carries i
   // RenameSpellPromptHandler (:937-950). DFU's EffectBundleSettings
   // is a struct, so GetSpell/SetSpell is a copy-then-write; the
   // port's records are shared objects, so the copy is explicit. The
-  // `custom` flag is what save.js:181 reads to store the whole
+  // `custom` flag is what save.js:165 reads to store the whole
   // record instead of a bare SPELLS.STD index.
   const shared = spell('Fireball', 20, { index: 12 });
   const { entity, w } = book(shared);
@@ -402,7 +402,7 @@ test('U42 rename: a COPY takes the new name, marked custom so the save carries i
 });
 
 test('U42 rename: the renamed COPY survives the save envelope', () => {
-  // The `custom` flag is not decoration - save.js:181 stores the whole
+  // The `custom` flag is not decoration - save.js:165 stores the whole
   // record for a custom spell and a bare SPELLS.STD index for every
   // other, so without it a reload would hand back the ORIGINAL name.
   // This drives the real envelope rather than asserting the flag.
@@ -815,7 +815,7 @@ test('U42 clicks: a list row selects, and a second click inside the double-click
   //
   // AUDIT 65 UI-1: driven through the HOST'S CALL SHAPE. Every host
   // that owns an overlay slot dispatches `click(vx, vy, right, middle)`
-  // - townTalk.js:1154, worldModes.js:7464, dungeonContext.js:5782 -
+  // - townTalk.js:1154, worldModes.js:7453, dungeonContext.js:5804 -
   // so the clock is stubbed on the window's OWN `_now()` seam, not
   // handed to a positional the hosts already fill with a button.
   // MUTANT: `click(vx, vy, now)` with `const t = now ?? Date.now()`
@@ -985,6 +985,32 @@ test('U42 buy: Witches Festival halves the presented cost, with a floor of one',
   cheap.w.presentedCost = 1;
   cheap.w._updatePresentedCost();
   assert.equal(cheap.w.presentedCost, 1, '0 >> 1 is 0, which the floor lifts back to 1');
+});
+
+test('BOX1: the buy box reads its record ONCE per open - the host\'s rows() is a random-variant draw and used to be asked every frame (mutant: the memo dropped, or never cleared)', () => {
+  let n = 0;
+  const { w, entity } = shop([spell('Arc Bolt', 20), spell('Wildfire', 30)], { rows: (id) => [{ text: `[${id}] variant ${++n}: %a gold`, center: true }] });
+  entity.items = [{ group: 'MiscItems', templateIndex: SPELLBOOK_TEMPLATE_INDEX }];
+  entity.goldPieces = 100000;
+  w.buyButton();
+  assert.equal(w.top, 'trade');
+  const first = w._boxRows()[0].text;
+  assert.match(first, /variant 1:/);
+  for (let i = 0; i < 5; i++) assert.equal(w._boxRows()[0].text, first, `draw ${i}: the same line`);
+  assert.equal(n, 1, 'one read for the open box');
+  // the box closes and opens again (another spell): a fresh read, so the price line is this spell's
+  w.top = null; w.selectNext();
+  w.buyButton();
+  assert.equal(w.top, 'trade');
+  assert.match(w._boxRows()[0].text, /variant 2:/, 'a new box is a new read');
+  assert.equal(n, 2);
+  // the refusal boxes latch the same way
+  const noBook = shop([spell('Arc Bolt', 20)], { rows: (id) => [{ text: `[${id}] v${++n}`, center: true }] });
+  noBook.entity.items = [];
+  noBook.w.buyButton();
+  const nb = noBook.w._boxRows()[0].text;
+  assert.equal(noBook.w._boxRows()[0].text, nb);
+  assert.equal(n, 3);
 });
 
 test('U42 buy: the ladder is spellbook, then gold, then the haggle line', () => {

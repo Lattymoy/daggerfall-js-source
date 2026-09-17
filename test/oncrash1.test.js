@@ -299,10 +299,14 @@ test('ONCRASH1 C2: THE SWEEP IS A SWEEP - no hand-rolled angle wrap anywhere und
 });
 
 test('ONCRASH1 A3: validSharedFoe IS the memory\'s door - every field by its own law, a bad one refusing the record WHOLE, a vocabulary it will not say it will not hear (mutant: the feet checked for being an array and nothing else, which is what patchFoe throws on)', () => {
-  const ok = validSharedFoe({ health: 10, maxHealth: 20, dead: false, feet: [1, 2, 3], yaw: 0.5, mobileType: 3, gender: 'male', team: 2, hostile: 1 });
+  // RESPAWN1: `team` is a STRING here, because it is a string everywhere in
+  // this port. This pin passed `team: 2` and encoded the very misreading that
+  // made `validSharedFoe` refuse every real foe record - see the team arm.
+  const ok = validSharedFoe({ health: 10, maxHealth: 20, dead: false, feet: [1, 2, 3], yaw: 0.5, mobileType: 3, gender: 'male', team: 'PlayerEnemy', hostile: 1 });
   assert.deepEqual(ok.feet, [1, 2, 3]);
   assert.equal(ok.yaw, 0.5, 'an ordinary record passes through unmoved');
   assert.equal(ok.hostile, true, 'the flags are booleans, whatever the memory wrote');
+  assert.equal(ok.team, 'PlayerEnemy', 'and the team name rides through');
   // THE FEET are what `patchFoe` indexes - `f.ai.feet[0] = sf.feet[0]` - and an absent or short one is the throw the
   // incident in that function's own comment describes
   for (const feet of [[1, 2], [1, 2, 3, 4], ['a', 2, 3], [NaN, 0, 0], [Infinity, 0, 0], 'xyz', {}, null]) {

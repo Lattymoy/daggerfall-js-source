@@ -800,3 +800,77 @@ without) and the wall's far side unchanged.
 (the table's uniform, two depth textures on the frame, the cadence's
 counts). tools/mutants/el8.json (32).
 
+## BUGS-5 - THE FIELD'S FIVE (2026-09-17, Mac: "1. ... when thrusting with a weapon, it can be glitchy 2. Objects on the ground can sometimes have standing shadows 3. When you peak around corners, a large shadow moves around 4. Bloom circle disconnected from light sources and still reports of light bloom balls appearing behind floors/ceilings 5. We need to improve the performance of not just the interior but especially the outside world", then "#3 is when the torch is equipped")
+
+Five reports, five mechanisms. F1 is the Weapon Widget's (recorded in
+`05-Combat/Weapon-Widget.md`); F2-F5 are the lane's.
+
+**F2 - the standing card.** A flat is a camera-facing card, and the sun
+map replayed every flat as one: a loot pile, a dropped bottle, a coin
+heap - things LYING on the ground - each drew the shadow of a card
+standing on its point. Three rules in the billboard replay
+(`shadowPass.js`): a batch a host marks `noShadow` casts nothing
+(`scenes/droppedLoot.js` marks both of its batches), the treasure
+archive casts nothing (`SHADOW_NO_CAST_ARCHIVES`, 216 - every loot
+pile), and a flat shorter than `SHADOW_FLAT_MIN_HEIGHT` (0.5 - a key, a
+potion, a heap) casts nothing; its shadow was a sliver anyway and a
+wrong one. Standing flats (a tree, a villager, a lamp post) are as they
+were. The flame flats keep EL6's own law (never from a lantern, still
+from the sun).
+
+**F3 - the light in the hand.** Handheld Torches puts the flame 0.34
+left, 0.7 below and 0.25 ahead of the eye - 0.8 away - and with
+`SHADOW_CASTER_MIN_DISTANCE` at 0.25 it was the NEAREST caster every
+frame: six 512^2 faces from a light a hand's width from every wall, its
+penumbra a metre wide, the whole map re-aimed with each step of the bob.
+Peeking round a corner the corner's near face is centimetres from that
+light, and its shadow - the "large shadow" - swept across the far wall
+as the eye moved. DFU's PlayerTorch is a Unity light that casts no
+shadows. The distance is a unit and a half now - the glare's own hand
+distance (`AIR_GLARE_MIN_DISTANCE`, EL7) - so the hand's light lights
+and never casts; a lantern a unit and a half off still does. The same
+law in the lit block skips the contact march for such a light. And the
+march itself had a second corner fault: it reads the PREVIOUS frame's
+depth, and a wall just revealed round a corner was not in it - its
+pixels reproject onto the corner's near face, every sample lands
+"behind" that, and the whole wall wore a contact shadow that swam with
+the turn. `contactShadow` now reprojects the POINT first (the self
+check in `AIR_CONTACT_GLSL`): only a point the previous frame saw where
+it stands - its depth there within the thickness - is marched; a
+disoccluded surface is lit until the next frame has it.
+
+**F4 - the glare's band.** `AIR_GLARE_SLACK` was a unit either side of
+the light's planar depth. A flame flat is a camera-facing quad THROUGH
+the light, so its opaque texels sit at the light's own depth exactly; a
+unit of slack took a ceiling 0.4 in front of a hanging lantern (the ball
+through the floor above) and a wall 0.5 behind a bare light (the ball
+beside a light with no flat) for "a flame". A quarter unit holds the flat
+and nothing else. The probe's new scene: lantern B behind a panel 0.3
+in front of it, the bloom source sums 0.
+
+**F5 - the outside world.** Three cuts, none visible. The far cascade
+(240 units, a 23 cm texel) replayed every record its frustum held - a
+rock, a weed, a sign, each shadowing two texels for a replay; a caster
+under `SHADOW_CASCADE_MIN_RADIUS_TEXELS` (2) of a cascade's texel is not
+replayed into it (`replay`'s `minRadius`, from the record's sphere or
+the batch's bounds - never a rig, a person is always drawn; the near
+cascade's rule is under 3 cm and skips nothing a player could see). The
+contact march takes `AIR_CONTACT_STEPS` 4 (a step every 15 cm under a
+thickness of 80 finds what six found) and runs only within
+`AIR_CONTACT_RANGE_FRACTION` (0.7) of the light's range - past it the
+windowed falloff has the light under a tenth and its contact shadow was
+invisible, and a town's forty lanterns each reached every fragment in
+their window with six depth taps. `?perf` (EL8) reads the cuts.
+
+**The probe.** Two scenes added: `dungeon-lane-panelB` (the glare
+through a panel: 0) and the `carried` scene now asserts the hand's light
+holds no caster slot; the contact scene's six dummy lanterns moved out
+to two units (at 0.4 they were "the hand's" under the new distance, and
+A and B took the maps - the march was no longer what it measured). All
+checks pass on the real GL (WebKit/SwiftShader): the wall's foot 0.1948
+off / 0.0924 on, B's glare 446 / 0 bare / 446 carried / 0 panelled.
+
+**Pins:** test/bugs5_field.test.js (3 - the constants and the picker,
+the no-cast rules on the fake GL, the far cascade's radius rule),
+test/ww1_weaponwidget.test.js's F1 pin; the el2/el3/el5/el7/el8 pins
+re-aimed at the new numbers and the self check. tools/mutants/bugs5.json (20, all dead).

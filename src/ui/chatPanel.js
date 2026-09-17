@@ -188,8 +188,23 @@ ${PIXELIFY_FIVE_FACE}
    individuals"). The "other individuals" are the names in this column,
    so a click on one opens a small menu of what can be done with that
    peer; what cannot carries the reason as its title rather than
-   vanishing, because a missing button teaches nothing. */
-.dfchat-who-row.act { cursor: pointer; }
+   vanishing, because a missing button teaches nothing.
+
+   MAC-J (2026-09-17, Mac: "the online section where player's names are
+   shown are too large and shouldn't be large rectangles"): the marker
+   class is dfchat-act, and the prefix is the whole fix. It was a bare
+   "act" - and .act is the ENHANCED SKIN'S BUTTON (ui/enhancedStyle.js:
+   padding 12px 20px, a 1px iron border, min-height 46px), which is
+   loaded in every online game because online forces the enhanced lane
+   (OL1). So every name a player could click wore a 46px bordered
+   button: four names filled the column, and the one name that is never
+   a door - your own - sat 16px high beside them, which is how the
+   collision reads as "too large" rather than as a style. Every other
+   class in this sheet was already prefixed; this one was the
+   exception, and an unprefixed class in a sheet that shares a document
+   with another sheet is a collision waiting for the other sheet to
+   grow the name. */
+.dfchat-who-row.dfchat-act { cursor: pointer; }
 .dfchat-rowmenu { display: flex; flex-direction: column; gap: 2px; padding: 3px 0 4px; }
 .dfchat-rowbtn { display: flex; align-items: baseline; gap: 4px; background: var(--iron, #2b323b); color: var(--bone, #e9e4d9); border: 0; border-radius: 3px; font: inherit;
   font-size: 11px; text-align: left; padding: 3px 6px; cursor: pointer; }
@@ -199,7 +214,7 @@ ${PIXELIFY_FIVE_FACE}
 /* AUDIT SOC C8: the finger's own sizes for the two controls SOC3 added to this panel - the Social button (23 tall)
    and a roster row's menu buttons (18) - on the touch skin alone, where every one of them is pressed by a thumb. */
 .dfchat.touch .dfchat-social { min-height: 44px; }
-.dfchat.touch .dfchat-who-row.act { min-height: 44px; padding: 12px 0 0; }
+.dfchat.touch .dfchat-who-row.dfchat-act { min-height: 44px; padding: 12px 0 0; }
 .dfchat.touch .dfchat-rowbtn { min-height: 44px; font-size: 13px; padding: 8px 8px; }
 
 /* CHAT-R2: HIDDEN. Not display:none on the root - the panel must
@@ -489,7 +504,7 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
       // anything, and net/social.js would refuse it in words a player should not have to read. A host whose picture
       // is not up yet (no account, no hub) offers nothing, and a row with nothing behind it is not a door either.
       const acts = !!rowActions && !r.me && (rowActions(r.id) ?? []).length > 0;
-      const n = el('div', 'dfchat-who-row' + (r.me ? ' me' : '') + (acts ? ' act' : ''));
+      const n = el('div', 'dfchat-who-row' + (r.me ? ' me' : '') + (acts ? ' dfchat-act' : ''));   // MAC-J: prefixed, because a bare `act` IS the enhanced skin's button
       const nameEl = el('span', 'dfchat-who-name', r.name);
       whoNames.push({ id: r.id, nameEl, css: null });
       n.append(nameEl);

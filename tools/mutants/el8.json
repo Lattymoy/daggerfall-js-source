@@ -137,8 +137,8 @@
   {
     "name": "lane-no-contact",
     "file": "src/render/enhancedLighting.js",
-    "old": "    float sh = k >= 0 ? pointShadowAt(k, wp, n) : contactShadow(wp, n, Ln, d);",
-    "new": "    float sh = k >= 0 ? pointShadowAt(k, wp, n) : 1.0;",
+    "old": "      : contactShadow(wp, n, Ln, d);",
+    "new": "      : 1.0;",
     "tests": [
       "test/el8_contact.test.js"
     ]

@@ -201,6 +201,10 @@ layout(location=2) in vec3 aNormal;
 // the constant attribute, so every voxel caller draws exactly what it
 // drew before - the layout is additive, not a variant.
 layout(location=3) in vec2 aUV;
+// MWT2: the OPTIONAL fifth channel, additive exactly as aUV is - a VAO
+// that never enables it reads the constant attribute, which is zero, and
+// zero emission is what every caller before this one had.
+layout(location=4) in vec3 aEmissive;
 uniform mat4 uProj;
 uniform mat4 uView;
 uniform mat4 uModel;
@@ -208,8 +212,10 @@ out vec3 vColor;
 out vec3 vNormal;
 out vec3 vWorldPos;
 out vec2 vUV;
+out vec3 vEmissive;
 void main() {
   vColor = aColor;
+  vEmissive = aEmissive;
   vNormal = mat3(uModel) * aNormal;
   vUV = aUV;
   vec4 world = uModel * vec4(aPos, 1.0);
@@ -217,15 +223,81 @@ void main() {
   gl_Position = uProj * uView * world;
 }`;
 
+// MAC-Q (2026-09-17): THE PARTICLE QUAD, osgParticle's own (ParticleSystem
+// .cpp:360-403): a camera-facing quad of half-extent `size` on the view's
+// x and y axes, textured, times the particle's colour with its alpha. The
+// billboard is built HERE, off the rows of the model-view rotation, so the
+// stream a rig packs is view-independent and the same buffer serves the
+// first-person pass and the third-person body. Unlit by construction: a
+// Morrowind flame is a LightMode_Emissive material, and the reference's
+// emissive arm leaves nothing but the emission (MWT2's own note) - the
+// colour is the light.
+const PARTICLE_VS = `#version 300 es
+layout(location=0) in vec3 aCenter;
+layout(location=1) in vec2 aCorner;
+layout(location=2) in vec2 aUV;
+layout(location=3) in vec4 aColor;
+layout(location=4) in float aSize;
+uniform mat4 uProj;
+uniform mat4 uView;
+uniform mat4 uModel;
+out vec2 vUV;
+out vec4 vColor;
+void main() {
+  mat3 mv = mat3(uView * uModel);
+  // the view's x and y axes, expressed in the model's space: the ROWS of the model-view rotation
+  vec3 right = normalize(vec3(mv[0][0], mv[1][0], mv[2][0]));
+  vec3 up = normalize(vec3(mv[0][1], mv[1][1], mv[2][1]));
+  vec3 p = aCenter + (right * aCorner.x + up * aCorner.y) * aSize;
+  vUV = aUV;
+  vColor = aColor;
+  gl_Position = uProj * uView * uModel * vec4(p, 1.0);
+}`;
+const PARTICLE_FS = `#version 300 es
+precision highp float;
+in vec2 vUV;
+in vec4 vColor;
+uniform sampler2D uTex;
+uniform float uUseTex;
+uniform float uAlphaCut;
+out vec4 outColor;
+void main() {
+  vec4 texel = uUseTex > 0.5 ? texture(uTex, vUV) : vec4(1.0);
+  vec4 c = texel * vColor;
+  if (uAlphaCut > 0.0 && c.a < uAlphaCut) discard;
+  outColor = c;
+}`;
+
+/** NiAlphaProperty's blend-mode index to GL (nifloader.cpp getBlendMode,
+ *  :1899-1929) - the reference's table, one for one, with its own
+ *  fallback of SRC_ALPHA for an index it does not know. */
+export const NIF_BLEND_MODES = Object.freeze([
+  'ONE', 'ZERO', 'SRC_COLOR', 'ONE_MINUS_SRC_COLOR', 'DST_COLOR', 'ONE_MINUS_DST_COLOR',
+  'SRC_ALPHA', 'ONE_MINUS_SRC_ALPHA', 'DST_ALPHA', 'ONE_MINUS_DST_ALPHA', 'SRC_ALPHA_SATURATE',
+]);
+export const nifBlendMode = (mode) => NIF_BLEND_MODES[mode] ?? 'SRC_ALPHA';
+
 // Character fragment: the mesh path's lighting + fog verbatim, sampling
-// the rig's vertex color instead of a texture (C4b - no emission, no
-// alpha cutout: rig faces are opaque solids).
+// the rig's vertex color instead of a texture (C4b - no alpha cutout: rig
+// faces are opaque solids).
+//
+// MWT2 (2026-09-17, Mac: the Morrowind model's torch "isnt lit"): C4b's
+// "no emission" was true of the VOXEL rigs this program was written for
+// and stopped being true at MW-D11, which brought real Morrowind meshes
+// through it. The reference resolves an emission per material and adds it
+// INTO the lighting sum, which the texture is then multiplied by
+// (lighting.glsl `... + getEmissionColor()`, objects.frag
+// `gl_FragData[0].xyz *= lighting`) - and its LightMode_Emissive arm
+// forces the DIFFUSE and the AMBIENT to black, so a self-illuminated
+// surface has NOTHING BUT that term. Dropping it drew those surfaces
+// black: a torch with a black flame, which is a stick.
 const CHAR_FS = `#version 300 es
 precision highp float;
 in vec3 vColor;
 in vec3 vNormal;
 in vec3 vWorldPos;
 in vec2 vUV;
+in vec3 vEmissive;
 uniform sampler2D uTex;
 uniform float uUseTex;      // MW-D11: 0 for the voxel rigs, 1 for a textured mesh
 uniform float uAlphaCut;    // 0 = opaque; above it, discard below this alpha
@@ -283,6 +355,13 @@ void main() {
   float iD = length(iL);
   float iAtt = clamp(1.0 - iD / max(uIndirect.w, 1e-4), 0.0, 1.0);
   lit += albedo * (iAtt * iAtt * max(dot(n, iL / max(iD, 1e-4)), 0.0)) * uIndirectColor;
+  // MWT2: the EMISSION, times the texel and nothing else. The reference
+  // adds it into the lighting sum before the texture multiply, so an
+  // emissive surface keeps its picture and owes the room nothing - which
+  // is the whole of what "self-illuminated" means. It is the one term
+  // above that the vertex colour does NOT gate: LightMode_Emissive has
+  // already forced that colour to black.
+  lit += vEmissive * texel.rgb;
   outColor = vec4(mix(uFogColor, lit, fogFactorAt(vWorldPos)), 1.0);
 }`;
 
@@ -684,6 +763,17 @@ export function color32Bytes(color32, where) {
 
 /** The two clear colours: the sky behind an exterior frame, and
  *  CameraClearManager's black behind an interior one. */
+/** MAC-I: the floor under `flatLightAt`. A flat in a black room goes
+ *  black and the player reads that as the room; a HAND that goes black
+ *  is a hole in the middle of the screen, and the player cannot tell a
+ *  drawn weapon from a sheathed one. DFU never faces this because it
+ *  never tints the viewmodel at all - so the number is the port's, and
+ *  it is written here rather than inline: a quarter of the sprite's own
+ *  albedo, which is dark enough to read as unlit and bright enough to
+ *  keep a silhouette.
+ */
+export const FLAT_LIGHT_FLOOR = 0.25;
+
 export const SKY_CLEAR = Object.freeze([0.53, 0.7, 0.92, 1.0]);
 export const INTERIOR_CLEAR = Object.freeze([0, 0, 0, 1.0]);
 
@@ -1528,7 +1618,11 @@ export class Renderer {
   createCharacterMesh(packed, opts = {}) {
     const gl = this.gl;
     const uv = !!opts.uv;
-    const floats = uv ? 11 : 9;
+    // MWT2: the emission rides with the UV - a Morrowind mesh has both or
+    // neither, and the voxel rigs have neither. `floats` is what the pack
+    // wrote, so it is derived here rather than guessed at.
+    const emissive = uv && opts.emissive !== false;
+    const floats = uv ? (emissive ? 14 : 11) : 9;
     const vao = gl.createVertexArray();
     this._bindVao(vao);
     const vbo = gl.createBuffer();
@@ -1544,6 +1638,10 @@ export class Renderer {
     if (uv) {
       gl.enableVertexAttribArray(3);
       gl.vertexAttribPointer(3, 2, gl.FLOAT, false, stride, 36);
+    }
+    if (emissive) {
+      gl.enableVertexAttribArray(4);
+      gl.vertexAttribPointer(4, 3, gl.FLOAT, false, stride, 44);
     }
     this._bindVao(null);
     return { vao, count: packed.length / floats, buffers: [vbo], vbo, floats, bounds: boundsOf(packed, null, 0, -1, floats) };   // EL7: the rig's sphere, for the shadow replays' cull
@@ -1577,6 +1675,106 @@ export class Renderer {
 
   /** Re-upload a character mesh's vertex stream in place (per-frame
    *  animation). `packed` must match the original layout/length. */
+  /** MAC-Q: a particle EFFECT's GL objects - a VAO over PARTICLE_FLOATS
+   *  (formats/mwParticles.js packParticleQuads' stream), sized for
+   *  `capacity` quads and refilled each frame. Rides a character mesh's
+   *  `effects` list and is drawn after its ranges. */
+  createParticleEffect(capacity, state = {}) {
+    const gl = this.gl;
+    const floats = 12;
+    const vao = gl.createVertexArray();
+    this._bindVao(vao);
+    const vbo = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+    gl.bufferData(gl.ARRAY_BUFFER, Math.max(1, capacity) * 6 * floats * 4, gl.DYNAMIC_DRAW);
+    const stride = floats * 4;
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, stride, 0);
+    gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 2, gl.FLOAT, false, stride, 12);
+    gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 2, gl.FLOAT, false, stride, 20);
+    gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3, 4, gl.FLOAT, false, stride, 28);
+    gl.enableVertexAttribArray(4); gl.vertexAttribPointer(4, 1, gl.FLOAT, false, stride, 44);
+    this._bindVao(null);
+    return {
+      vao, vbo, capacity: Math.max(1, capacity), count: 0, floats, hidden: false,
+      tex: null,
+      blend: !!state.blend, srcBlend: state.srcBlend ?? 6, dstBlend: state.dstBlend ?? 7,
+      alphaCut: state.alphaCut ?? 0, depthTest: state.depthTest !== false, depthWrite: state.depthWrite !== false,
+    };
+  }
+
+  /** The frame's quads into the effect. `count` is in VERTICES. */
+  updateParticleEffect(effect, packed, count) {
+    const gl = this.gl;
+    const cap = effect.capacity * 6;
+    effect.count = Math.min(count, cap);
+    if (!effect.count) return;
+    gl.bindBuffer(gl.ARRAY_BUFFER, effect.vbo);
+    gl.bufferSubData(gl.ARRAY_BUFFER, 0, packed.subarray ? packed.subarray(0, effect.count * effect.floats) : packed);
+  }
+
+  releaseParticleEffect(effect) {
+    const gl = this.gl;
+    if (!effect) return;
+    if (effect.vao) gl.deleteVertexArray(effect.vao);
+    if (effect.vbo) gl.deleteBuffer(effect.vbo);
+    if (effect.tex) gl.deleteTexture(effect.tex);
+    effect.vao = null; effect.vbo = null; effect.tex = null; effect.count = 0;
+  }
+
+  /** The effects of a character mesh, after its ranges: the NIF's own
+   *  blend function and depth flags (nifloader.cpp applyDrawableProperties
+   *  over the particle drawable, :1521-1523), depth-tested against the
+   *  body that was just drawn and never writing over it. State is
+   *  returned to the character pass's baseline on the way out. */
+  _drawParticleEffects(mesh, modelMatrix) {
+    const gl = this.gl;
+    const list = mesh.effects;
+    if (!list || !list.length) return;
+    if (!this.particleProgram) {
+      this.particleProgram = this._buildProgram(PARTICLE_VS, PARTICLE_FS);
+      const pp = this.particleProgram;
+      this._particle = {
+        proj: gl.getUniformLocation(pp, 'uProj'), view: gl.getUniformLocation(pp, 'uView'), model: gl.getUniformLocation(pp, 'uModel'),
+        tex: gl.getUniformLocation(pp, 'uTex'), useTex: gl.getUniformLocation(pp, 'uUseTex'), alphaCut: gl.getUniformLocation(pp, 'uAlphaCut'),
+      };
+    }
+    let any = false;
+    for (const e of list) {
+      if (!e || e.hidden || !e.count) continue;
+      if (!any) {
+        any = true;
+        this._use(this.particleProgram);
+        const u = this._particle;
+        gl.uniformMatrix4fv(u.proj, false, this._proj);
+        gl.uniformMatrix4fv(u.view, false, this._view);
+        gl.uniformMatrix4fv(u.model, false, modelMatrix);
+        gl.activeTexture(gl.TEXTURE0);
+        gl.uniform1i(u.tex, 0);
+        gl.depthMask(false);
+      }
+      const u = this._particle;
+      gl.uniform1f(u.useTex, e.tex ? 1 : 0);
+      gl.uniform1f(u.alphaCut, e.alphaCut || 0);
+      gl.bindTexture(gl.TEXTURE_2D, e.tex || this._blackTex);
+      if (e.blend) { gl.enable(gl.BLEND); gl.blendFunc(gl[nifBlendMode(e.srcBlend)], gl[nifBlendMode(e.dstBlend)]); }
+      else gl.disable(gl.BLEND);
+      if (e.depthTest) gl.enable(gl.DEPTH_TEST); else gl.disable(gl.DEPTH_TEST);
+      if (e.depthWrite) gl.depthMask(true); else gl.depthMask(false);
+      this._bindVao(e.vao);
+      gl.drawArrays(gl.TRIANGLES, 0, e.count);
+      this.stats.draws++;
+    }
+    if (any) {
+      gl.disable(gl.BLEND);
+      gl.enable(gl.DEPTH_TEST);
+      gl.depthMask(true);
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+      gl.bindTexture(gl.TEXTURE_2D, null);
+      this._bindVao(null);
+      this._use(this.charProgram);   // the pass's own program back, for the caller's next draw
+    }
+  }
+
   updateCharacterMesh(mesh, packed) {
     const gl = this.gl;
     gl.bindBuffer(gl.ARRAY_BUFFER, mesh.vbo);
@@ -1653,6 +1851,10 @@ export class Renderer {
     gl.uniform1f(c.useTex, 0);
     gl.uniform1f(c.alphaCut, 0);
     this._bindVao(null);
+    // MAC-Q: the rig's particle effects, over the body, in the same pass -
+    // never recorded for the shadows (a flame casts none in the reference
+    // either: osgParticle draws in the transparent bin)
+    if (mesh.effects && mesh.effects.length) this._drawParticleEffects(mesh, modelMatrix);
     gl.enable(gl.CULL_FACE);
   }
 
@@ -1703,7 +1905,55 @@ export class Renderer {
    *  the mesh sits at the ORIGIN of a private lens space (the FP
    *  viewmodel), not in the world - the cloud deck is borrowed off for
    *  it (VC5 review), as the studio variant does for the panels. */
-  renderCharacterSprite(mesh, modelMatrix, proj, view, pw, ph, { lensLocal = false } = {}) {
+  renderCharacterSprite(mesh, modelMatrix, proj, view, pw, ph, { lensLocal = false, viewmodelLight = null } = {}) {
+    const gl = this.gl;
+    // MAC-P (2026-09-17, Mac: "morrowind's first person view also doesn't
+    // receive lighting and is consistently dark"): THE VIEWMODEL'S LIGHT.
+    //
+    // He is right, and the reason is the space this pass runs in. A
+    // lens-local arm sits at the ORIGIN of a camera-local space while
+    // `_pointLights` are in WORLD space, so every torch, lantern and
+    // interior lamp in the room misses it by exactly the player's distance
+    // from the world origin - the arm has only ever had the ambient and the
+    // sun's N.L. In a dungeon that is a dark arm holding a lit torch.
+    //
+    // The answer is the STUDIO's shape (a key light at the eye, which is
+    // what makes a viewmodel's form read) SCALED by the room's own light at
+    // the camera - the same `flatLightAt` answer MAC-I gives the classic
+    // sprites, so the two lanes darken together. At full daylight the tint
+    // is [1,1,1] and this is exactly the studio the pass used to install,
+    // byte for byte; it only ever takes light AWAY, where the room has
+    // none to give. Borrow-and-return, the same shape the UI read-back's
+    // studio has had since PX23.
+    const vmSaved = viewmodelLight ? {
+      lightDir: this._lightDir, ambient: this._ambient, sunScale: this._sunScale,
+      sunColor: this._sunColor, pointLights: this._pointLights, indirect: this._indirect,
+      moonScale: this._moonScale,
+    } : null;
+    if (viewmodelLight) {
+      const st = studioLight(view);
+      this._lightDir = st.lightDir;
+      this._ambient = new Float32Array([
+        STUDIO_AMBIENT * viewmodelLight[0], STUDIO_AMBIENT * viewmodelLight[1], STUDIO_AMBIENT * viewmodelLight[2]]);
+      this._sunScale = STUDIO_KEY;
+      this._sunColor = new Float32Array([viewmodelLight[0], viewmodelLight[1], viewmodelLight[2]]);
+      this._pointLights = st.pointLights;   // world-space lights have no meaning at this origin
+      this._indirect = st.indirect;
+      this._moonScale = 0;
+    }
+    try {
+      return this._renderCharacterSprite(mesh, modelMatrix, proj, view, pw, ph, { lensLocal });
+    } finally {
+      if (vmSaved) {
+        this._lightDir = vmSaved.lightDir; this._ambient = vmSaved.ambient; this._sunScale = vmSaved.sunScale;
+        this._sunColor = vmSaved.sunColor; this._pointLights = vmSaved.pointLights; this._indirect = vmSaved.indirect;
+        this._moonScale = vmSaved.moonScale;
+      }
+    }
+  }
+
+  /** The pass itself - MAC-P's light borrow wraps it above. */
+  _renderCharacterSprite(mesh, modelMatrix, proj, view, pw, ph, { lensLocal = false } = {}) {
     const gl = this.gl;
     const cs = this._charSpriteRT();
     gl.bindFramebuffer(gl.FRAMEBUFFER, cs.fbo);
@@ -2883,6 +3133,85 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       out = s.subarray(0, count * 3);
     }
     return this._lane && !raw ? this._lane.decodeN(out, this._pointColorDec, count) : out;   // EL1: linear for the lane; `raw` for a classic-space program under it (the water)
+  }
+
+  /**
+   * MAC-I (2026-09-17, Mac: "The classic sprite should react to
+   * lighting (first person)"): THE LIGHT A FLAT WOULD TAKE AT A POINT.
+   *
+   * The first-person sprites are screen quads, so nothing in the world
+   * pass ever touched them - a torch hand, a weapon and a pair of
+   * casting hands drew at full albedo in a pitch-black dungeon while
+   * every flat in the room went dark around them. DFU has the SEAM for
+   * this and leaves it white: `FPSWeapon.Tint` (FPSWeapon.cs:108) is
+   * passed to the draw (:182) and nothing in DFU core ever writes it -
+   * it is the First-Person Lighting mod's channel. This is the port
+   * writing it, off the light the scene's own flats take.
+   *
+   * IT IS THE BILLBOARD SHADER'S COMPOSITION, not a second lighting
+   * model: the tint (ambient plus the moon's Lambert-average half), the
+   * sun's half, every point light with the SAME squared-linear falloff
+   * to its range, and the indirect term - the four terms of the flat
+   * program's `lit` (the `uTint + uBBSun + pointAcc + iAtt * iAtt *
+   * uIndirectColor` above), with no normal, because a flat has none and
+   * a screen sprite has less than none.
+   *
+   * TWO THINGS ARE DELIBERATELY NOT IN IT.
+   *  - THE CLOUD SHADOW. `cloudShadowAt` is a shader function over a
+   *    shadow map; sampling it here would mean reading a texture back.
+   *    So a cloud passing over darkens the land and not the hand, and
+   *    that is a recorded departure rather than an oversight.
+   *  - THE LANE'S DECODE. Every uniform above goes up through `_c3`,
+   *    which linearises under the enhanced-lighting lane; this answer
+   *    does NOT, because a screen quad is drawn by the 2D pass AFTER
+   *    the lane's composite has resolved the frame to display space
+   *    (`_compositeAir` on the first screen draw). Tinting in the space
+   *    the 2D pass paints in is the same choice the water's own classic
+   *    -space read makes (`_pointColorData(count, true)`).
+   *
+   * A clockless scene (no `setLighting` yet - the test room, a probe)
+   * has no light to answer with and gets white, which is exactly what
+   * the flats get there.
+   *
+   * @param {number[]|null} pos scene-space point; the camera by default,
+   *        which is where a first-person sprite is
+   * @returns {number[]} [r, g, b], each at or above FLAT_LIGHT_FLOOR
+   */
+  flatLightAt(pos = null, floor = FLAT_LIGHT_FLOOR) {
+    if (!this._clockLit) return [1, 1, 1];
+    const p = pos ?? this._camPos;
+    const am = this._ambient, mc = this._moonColor, sc = this._sunColor;
+    const out = [
+      am[0] + mc[0] * this._moonScale * 0.5 + sc[0] * this._sunScale * 0.5,
+      am[1] + mc[1] * this._moonScale * 0.5 + sc[1] * this._sunScale * 0.5,
+      am[2] + mc[2] * this._moonScale * 0.5 + sc[2] * this._sunScale * 0.5,
+    ];
+    const count = this._pointLights.length >> 2;
+    if (count > 0) {
+      const colors = this._pointColorData(count, true);   // EL1: the classic-space read, as the water takes
+      for (let i = 0; i < count; i++) {
+        const dx = this._pointLights[i * 4] - p[0];
+        const dy = this._pointLights[i * 4 + 1] - p[1];
+        const dz = this._pointLights[i * 4 + 2] - p[2];
+        const range = this._pointLights[i * 4 + 3];
+        if (!(range > 0)) continue;
+        const att = Math.max(0, Math.min(1, 1 - Math.hypot(dx, dy, dz) / range));
+        const a2 = att * att;
+        if (a2 <= 0) continue;
+        out[0] += a2 * colors[i * 3]; out[1] += a2 * colors[i * 3 + 1]; out[2] += a2 * colors[i * 3 + 2];
+      }
+    }
+    const iRange = this._indirect[3];
+    if (iRange > 0) {
+      const iAtt = Math.max(0, Math.min(1, 1 - Math.hypot(
+        this._indirect[0] - p[0], this._indirect[1] - p[1], this._indirect[2] - p[2]) / iRange));
+      const i2 = iAtt * iAtt;
+      out[0] += i2 * this._indirectColor[0];
+      out[1] += i2 * this._indirectColor[1];
+      out[2] += i2 * this._indirectColor[2];
+    }
+    for (let i = 0; i < 3; i++) out[i] = Math.max(floor, Math.min(1, out[i]));
+    return out;
   }
 
   /** R12: the player-following indirect point light (SunlightRig's

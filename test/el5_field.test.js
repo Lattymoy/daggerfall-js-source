@@ -141,7 +141,7 @@ test('EL5: the face basis the shader selects by is pointFaceMatrices\' own - a p
 
 test('EL5: every lane shader takes any caster\'s shadow through shadowOfLight, after the range early-out; the flat too', () => {
   for (const [name, fs] of [['mesh', EL_MESH_FS], ['terrain', EL_TERRAIN_FS], ['char', EL_CHAR_FS]]) {
-    assert.match(fs, /float d = length\(L\);\n    if \(d >= uPointLights\[i\]\.w\) continue;[^\n]*\n    vec3 Ln = L \/ max\(d, 1e-4\);\n    int k = uCasterOf\[i\];[^\n]*\n    float sh = k >= 0 \? pointShadowAt\(k, wp, n\) : contactShadow\(wp, n, Ln, d\);/, `${name}: EL8 - a caster's map, else a contact shadow`);
+    assert.match(fs, /float d = length\(L\);\n    if \(d >= uPointLights\[i\]\.w\) continue;[^\n]*\n    vec3 Ln = L \/ max\(d, 1e-4\);\n    int k = uCasterOf\[i\];[^\n]*\n(?:    \/\/[^\n]*\n)*    float sh = k >= 0 \? pointShadowAt\(k, wp, n\)\n      : \(d > uPointLights\[i\]\.w \* 0\.7 \|\| length\(uPointLights\[i\]\.xyz - uCamPos\) < 1\.5\) \? 1\.0\n      : contactShadow\(wp, n, Ln, d\);/, `${name}: EL8 - a caster's map, else a contact shadow`);
     assert.ok(!/uShadowIndex \?/.test(fs), `${name}: no single-index compare left`);
   }
   assert.match(EL_BB_FS, /float d = length\(uPointLights\[i\]\.xyz - wp\);\n    if \(d >= uPointLights\[i\]\.w\) continue;[^\n]*\n    float sh = shadowOfLight\(i, base, vec3\(0\.0, 1\.0, 0\.0\)\);/);
@@ -215,7 +215,7 @@ test('EL5: the replays cull - a record outside a face\'s frustum is not drawn, a
 
 test('EL5: the glare hides in world units at five taps, the resolve grades in display space, and the probe checks the field\'s two laws', () => {
   const a = read('src/render/airPass.js');
-  assert.equal(AIR_GLARE_SLACK, 1.0, 'EL7: the flame within a unit of its light');
+  assert.equal(AIR_GLARE_SLACK, 0.25, 'EL7: the flame within the slack of its light; F4: a quarter unit, the flat and nothing else');
   assert.match(a, /float viewDist\(float d01\) \{\n  float z = d01 \* 2\.0 - 1\.0;\n  return uProjInfo\.w \/ \(z \+ uProjInfo\.z\);/, 'the depth image linearised the way the AO does');
   assert.match(a, /float lantern = -vc\.z;/);
   assert.ok(!/<= d \+ 0\.002/.test(a), 'no hyperbolic constant left');

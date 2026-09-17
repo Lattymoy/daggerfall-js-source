@@ -73,10 +73,10 @@
     ]
   },
   {
-    "name": "HT6-the-sheathed-arm-takes-the-hand-for-a-shield-too",
+    "name": "HT7-the-sheathed-stance-frees-the-bare-right-hand-again",
     "file": "src/systems/handheldTorches.js",
-    "old": "      if (left && !isShield(left) && isBow(left)) w.handLeft = false;",
-    "new": "      if (left) w.handLeft = false;",
+    "old": "    } else if (!sheathedNow && usingRightNow) w.handRight = false;   // bare right hand, in use (0x2d53) - and only with the weapon up",
+    "new": "    } else if (usingRightNow) w.handRight = false;",
     "tests": [
       "test/ht6_offhand.test.js",
       "test/ht1_handheldtorches.test.js"

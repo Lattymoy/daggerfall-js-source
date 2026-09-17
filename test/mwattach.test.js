@@ -171,8 +171,11 @@ test('MWFIX: the classic sprite path is the ONLY path, and fpsWeapon never hears
   // WW1: Weapon Widget's clone stands between - it draws in the sprite's
   // place while its switch is on and returns; off, the sprite draws as
   // it always has. The arm still returns first, so the two never both draw.
+  // MAC-I: each of the three now carries the frame's TINT (FPSWeapon.Tint,
+  // written from the room's light) - the order and the return are what
+  // this pin is for, and they are unchanged.
   assert.match(rig,
-    /if \(fpArm\.active\(\)\) \{ fpArm\.draw\(c\); return; \}\s*(?:\/\/[^\n]*\n\s*)*if \(handheldOn\(\) && c\) handheld\.draw\(renderer, c\);\s*if \(widgetOn\(\) && c && widget\.draw\(renderer, c\)\) return;\s*const art = c && artFor\(playerWeapon\.weapon\);/,
+    /if \(fpArm\.active\(\)\) \{ fpArm\.draw\(c\); return; \}\s*(?:\/\/[^\n]*\n\s*)*if \(handheldOn\(\) && c\) handheld\.draw\(renderer, c, fpTint\);\s*if \(widgetOn\(\) && c && widget\.draw\(renderer, c, fpTint\)\) return;\s*const art = c && artFor\(playerWeapon\.weapon\);/,
     'an inactive arm falls STRAIGHT THROUGH to the clone-or-sprite, and an active one returns so the two never both draw');
   // and the branch must name a module the file actually imports, or it is
   // a literal that satisfies a regex and does nothing.
@@ -283,7 +286,7 @@ test('MW-D19: the rig hands the worn item to the arm every frame, in machine ord
   // the reference's updateWeaponState reads stance before weapon), the
   // swap next, the tick last so a swapped arm poses its OWN clip.
   assert.match(rig,
-    /fpArm\.setWeapon\(playerWeapon\.weapon, \{ hasAmmo: hasDaggerfallArrows\(entity\?\.items\) \}\);/,
+    /fpArm\.setWeapon\(playerWeapon\.weapon, \{ hasAmmo: hasDaggerfallArrows\(entity\?\.items\), ammoCount: daggerfallArrowCount\(entity\?\.items\) \}\);/,   // WS1: the quiver's count rides the same read
     'the swap seam reads the same worn item the sprite does, ammo included');
   const sheatheAt = rig.indexOf('fpArm.setSheathed(');
   const swapAt = rig.indexOf('fpArm.setWeapon(');

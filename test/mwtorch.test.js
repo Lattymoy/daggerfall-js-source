@@ -27,7 +27,7 @@ import {
   pickTorchRecord, blendMaskBones, overlayTracks, overlaySampler, MW_LIGHT_CARRY, MW_LIGHT_FIRE,
 } from '../src/formats/mwFirstPerson.js';
 import {
-  resolveTorchPart, torchPartPaths, TORCH_BONE, TORCH_GROUP, idleBaseFor, FP_IDLE_SNEAK, FP_IDLE_BASE,
+  resolveTorchPart, torchPartPaths, TORCH_BONE, TORCH_GROUP, LIGHT_ATTITUDE, idleBaseFor, FP_IDLE_SNEAK, FP_IDLE_BASE,
   carriedLeftVisible, createFpArm, fpSkeletonPath, FP_CLIP_PATH,
 } from '../src/combat/fpArm.js';
 import { MW_WEAPON_TYPE, weaponFlags, MW_TWO_HANDED } from '../src/formats/mwFirstPerson.js';
@@ -77,7 +77,25 @@ test('MW-D51 resolveTorchPart / torchPartPaths: nothing unlit; a note, never a t
   assert.equal(ok.parts[0].slot, 'torch');
   assert.deepEqual(ok.parts[0].bones, ['Shield Bone'], 'PRT_Shield’s bone - Slot_CarriedLeft is the shield’s slot');
   assert.notEqual(ok.parts[0].bytes, bytes, 'a copy, as the weapon takes one (the archive’s view is not the rig’s)');
-  assert.deepEqual(ok.torchInfo, { id: 'torch', name: 'torch', model: 'l/torch.nif', bone: 'Shield Bone', fire: false });
+  // MWT1 (Mac: the torch "is positioned incorrectly"): the bone was right
+  // and the ROTATION was missing. SceneUtil::attach's one PAT carries the
+  // caller's `attitude`, and ActorAnimation::attach passes one for a LIGHT
+  // alone (:97-103) and never for a weapon (:104-105) - an extra -90 about
+  // X, which this port's own reference notes wrote down at
+  // 02-Formats/Morrowind-Rules.md:3228 and the code never applied. It
+  // rides `preTransform`, the seam the arrow already uses, which is the
+  // same place in the chain the reference's PAT sits.
+  assert.deepEqual(ok.parts[0].preTransform, LIGHT_ATTITUDE);
+  assert.deepEqual([...LIGHT_ATTITUDE.a], [1, 0, 0, 0, 0, 1, 0, -1, 0], 'Rx(-90), row-major');
+  assert.deepEqual([...LIGHT_ATTITUDE.t], [0, 0, 0], 'a rotation and nothing else - the position is the BoneOffset\'s');
+  // ...and it really is -90 about X: the rotation is EXECUTED over the
+  // axes rather than read, because a transposed matrix is a different
+  // wrong answer that looks the same in a literal.
+  const apply = (v) => [0, 1, 2].map((r) => LIGHT_ATTITUDE.a[r * 3] * v[0] + LIGHT_ATTITUDE.a[r * 3 + 1] * v[1] + LIGHT_ATTITUDE.a[r * 3 + 2] * v[2]);
+  assert.deepEqual(apply([1, 0, 0]), [1, 0, 0], 'X is the axis, so X is fixed');
+  assert.deepEqual(apply([0, 1, 0]), [0, 0, -1], 'Y goes to -Z');
+  assert.deepEqual(apply([0, 0, 1]), [0, 1, 0], 'Z goes to +Y');
+  assert.deepEqual(ok.torchInfo, { id: 'torch', name: 'torch', model: 'l/torch.nif', bone: 'Shield Bone', fire: false, attitude: true });
   assert.equal(TORCH_GROUP, 'torch');
 });
 
@@ -273,7 +291,7 @@ test('AUDIT MW-TORCH F6/F7: a build arriving mid-build is queued and runs (the n
 test('MW-D51/52 pins: the rig hands the lit light over per frame and at the build; the arm hides the torch on the carried-left rule, overlays it on both rigs, re-picks it on a view switch; the idle reads the stance (mutant: a door dropped)', () => {
   const rig = rd('src/combat/weaponRig.js');
   assert.match(rig, /torch: isLitTorch\(entity\.lightSource\),/, 'armBuildOptsOf carries the lit light');
-  assert.match(rig, /fpArm\.setWeapon\(playerWeapon\.weapon, \{ hasAmmo: hasDaggerfallArrows\(entity\?\.items\) \}\);\n(?:\s*\/\/[^\n]*\n)*\s*fpArm\.setTorch\(isLitTorch\(entity\?\.lightSource\)\);/, 'the per-frame hand-over, beside the weapon');
+  assert.match(rig, /fpArm\.setWeapon\(playerWeapon\.weapon, \{ hasAmmo: hasDaggerfallArrows\(entity\?\.items\), ammoCount: daggerfallArrowCount\(entity\?\.items\) \}\);[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*fpArm\.setTorch\(isLitTorch\(entity\?\.lightSource\)\);/, 'the per-frame hand-over, beside the weapon');
   assert.equal(isLitTorch({ templateIndex: TEMPLATES.Torch }), true);
   assert.equal(isLitTorch({ templateIndex: TEMPLATES.Lantern }), false, 'a lantern is the classic lane’s');
   assert.equal(isLitTorch(null), false);

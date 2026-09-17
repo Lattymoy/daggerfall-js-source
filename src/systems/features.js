@@ -413,6 +413,29 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'soundEnhancements', initial: true, online: 'player' }),   // ES1: systems/enhancedSounds.js enhancedSoundsOn; windAudio.js windSoundOn rides it
   }),
+  // MAC-I + MAC-P (2026-09-17, Mac: "The classic sprite should react to
+  // lighting (first person)" and "morrowind's first person view also
+  // doesn't receive lighting and is consistently dark"): the viewmodel
+  // takes the room's light, in BOTH lanes. FPSWeapon.Tint is DFU's own
+  // channel for the sprite and DFU core never writes it (FPSWeapon.cs:108,
+  // :182) - that is the First-Person Lighting mod's job there; the
+  // Morrowind arms had a fixed STUDIO light, right for a UI picture and
+  // wrong for a thing standing in the world. One answer feeds both
+  // (render/renderer.js flatLightAt, the FLAT's own four terms at the
+  // camera). On by default, because a hand that ignores the dark is the
+  // thing that was reported; off returns the white DFU draws and the
+  // studio the arms had.
+  Object.freeze({
+    id: 'first-person-lighting',
+    group: 'sight',
+    title: 'First-person lighting',
+    note: 'What you hold in first person takes the light of the room you are in: the classic weapon sprite, the '
+      + 'casting hands and the torch in your off hand, and the Morrowind arms, which were lit by a fixed studio '
+      + 'and read dark everywhere.',
+    effect: 'Takes effect at once.',
+    kinds: Object.freeze(['enhanced', 'classic']),
+    control: Object.freeze({ store: 'prefs', key: 'firstPersonLighting', initial: true, online: 'player' }),   // MAC-I: combat/weaponRig.js fpLightingOn
+  }),
   Object.freeze({
     id: 'flora-sway',
     group: 'sight',
@@ -498,6 +521,22 @@ export const FEATURES = Object.freeze([
   // BA1 (2026-09-16): BETTER AMBIENCE - read every frame; the dungeon's fog
   // and light are rolled at the door, so those two land on the next dungeon.
   modFeature('better-ambience', 'Takes effect at once. A dungeon\u2019s fog and light are rolled at its door.', 'world'),
+  // WS1 (2026-09-17): WEAPON SHEATHING - Greatness7's scabbards and the
+  // OpenMW mechanism, on the port's Morrowind third-person body. The
+  // switch is the port's own pref (the mod ships no settings of its own);
+  // RF4: declared here, once, the shelf's default and the online answer
+  // riding the row. Forced on online as the arms are (mwArms), so every
+  // body a peer sees wears its blade the same way.
+  Object.freeze({
+    id: 'mod-weapon-sheathing',
+    group: 'combat',
+    title: 'Weapon Sheathing',
+    note: 'With Morrowind assets on, a sheathed weapon stays on the body - on the hip or the back, in the scabbard Greatness7\u2019s Weapon '
+      + 'Sheathing ships for it, with a quiver for a bow. Off, a lowered weapon vanishes as in vanilla Morrowind.',
+    effect: 'Takes effect when the Morrowind body next builds; the Mods page\u2019s switch rebuilds it at once.',
+    kinds: Object.freeze(['mod']),
+    control: Object.freeze({ store: 'prefs', key: 'mwSheathing', initial: true, online: true }),
+  }),
   // ORL1 (2026-09-17): OBLIVION-REMASTER-LIKE LEVELING - the first
   // Morrowind mod, and the only row whose effect line has to say NEXT
   // CHARACTER. Every other mod's switch lands on the running game; this

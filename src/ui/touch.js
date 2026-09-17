@@ -106,10 +106,11 @@ const GYRO_MAX_DT = 0.1;        // TI2: a motion sample older than this (a backg
 // enhanced skin's sheets already are (enhancedStyle.js).
 const edge = (side, px) => `${side}:calc(${px}px + env(safe-area-inset-${side}, 0px))`;
 
-export function isTouchDevice() {
-  return typeof window !== 'undefined' &&
-    ('ontouchstart' in window || (navigator.maxTouchPoints ?? 0) > 0);
-}
+// TI3: the law lives in ui/touchDevice.js (a finger as the PRIMARY
+// pointer, the sniff as the fallback, `?touch=` the door); this is the
+// name every caller imports.
+import { isTouchDevice } from './touchDevice.js';
+export { isTouchDevice };
 
 const KEY_NAMES = { KeyW: 'w', KeyA: 'a', KeyS: 's', KeyD: 'd', KeyZ: 'z', Space: ' ', ShiftLeft: 'Shift', Tab: 'Tab', Escape: 'Escape', Enter: 'Enter', ArrowUp: 'ArrowUp', ArrowDown: 'ArrowDown', Equal: '=', Minus: '-' };
 function synth(type, code) {
@@ -124,7 +125,7 @@ function synth(type, code) {
 // InputManager.GetKey's dual-dict fallthrough :1084). Move Jump off
 // Space in the controls window and the JUMP button fired whatever now
 // owned Space; move Run off ShiftLeft and the stick's 80% throw did
-// nothing. The reverse lookup is GetBinding (inputActions.js:436,
+// nothing. The reverse lookup is GetBinding (inputActions.js:451,
 // InputManager.cs:641-671) and it is exactly what the automap, rest
 // and exterior-automap windows already ask. Resolved at PRESS time, so
 // a rebind takes effect on the next touch with no re-attach.
