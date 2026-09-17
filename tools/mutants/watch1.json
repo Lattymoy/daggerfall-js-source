@@ -1,0 +1,83 @@
+[
+  {
+    "name": "WATCH1-the-watch-never-rides",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    for (const f of [...foes, ...watchList()]) {",
+    "new": "    for (const f of foes) {",
+    "tests": [
+      "test/watch1.test.js"
+    ]
+  },
+  {
+    "name": "WATCH1-a-watchman-is-never-numbered",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (f.seq == null) f.seq = _nextSeq++;   // WATCH1: a watchman is numbered the first time he rides, off the foes' own counter",
+    "new": "      if (f.seq == null) continue;",
+    "tests": [
+      "test/watch1.test.js"
+    ]
+  },
+  {
+    "name": "WATCH1-a-watchman-numbered-off-his-own-counter-collides-with-the-foes",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (f.seq == null) f.seq = _nextSeq++;   // WATCH1: a watchman is numbered the first time he rides, off the foes' own counter",
+    "new": "      if (f.seq == null) f.seq = 1;",
+    "tests": [
+      "test/watch1.test.js"
+    ]
+  },
+  {
+    "name": "WATCH1-a-blow-on-the-watch-finds-nobody",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    const f = foes.find((x) => !x.puppet && x.seq === (data.i | 0)) ?? watchOf(data.i | 0);",
+    "new": "    const f = foes.find((x) => !x.puppet && x.seq === (data.i | 0));",
+    "tests": [
+      "test/watch1.test.js"
+    ]
+  },
+  {
+    "name": "WATCH1-a-watchman-goes-through-the-foes-door",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    if (onWatch) _net.watch.hurt(f, dmg, at, dir, { kind });\n    else damageFoe(f, dmg, at, dir, { fromPlayer: true, kind, peer: true, peerId: from });",
+    "new": "    damageFoe(f, dmg, at, dir, { fromPlayer: true, kind, peer: true, peerId: from });",
+    "tests": [
+      "test/watch1.test.js"
+    ]
+  },
+  {
+    "name": "WATCH1-a-peers-blow-on-my-watch-is-my-blow",
+    "file": "src/scenes/world.js",
+    "old": "      watch: { list: () => cityGuards.guards, hurt: (g, dmg, at, dir) => cityGuards.hurtGuard(g, dmg, at, dir, { fromPlayer: false }) },",
+    "new": "      watch: { list: () => cityGuards.guards, hurt: (g, dmg, at, dir) => cityGuards.hurtGuard(g, dmg, at, dir) },",
+    "tests": [
+      "test/watch1.test.js"
+    ]
+  },
+  {
+    "name": "WATCH1-the-net-carries-no-watch",
+    "file": "src/scenes/world.js",
+    "old": "      watch: { list: () => cityGuards.guards, hurt: (g, dmg, at, dir) => cityGuards.hurtGuard(g, dmg, at, dir, { fromPlayer: false }) },",
+    "new": "",
+    "tests": [
+      "test/watch1.test.js"
+    ]
+  },
+  {
+    "name": "WATCH1-the-strike-edge-latches-no-count",
+    "file": "src/scenes/cityGuards.js",
+    "old": "      if (strikeEdge) { g._atkA = ((((g._atkA | 0) >> 1) + 1) << 1); g._atkB = isPlayerTarget(_tgt) ? '.' : ''; }",
+    "new": "",
+    "tests": [
+      "test/watch1.test.js"
+    ]
+  },
+  {
+    "name": "WATCH1-the-record-has-no-wire-fields",
+    "file": "src/scenes/cityGuards.js",
+    "old": "        seq: null, _atkA: 0, _atkB: '',",
+    "new": "",
+    "tests": [
+      "test/watch1.test.js"
+    ]
+  }
+]

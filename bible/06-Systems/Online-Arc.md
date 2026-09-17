@@ -3972,7 +3972,8 @@ files, green. In one line each:
 see "6b-iii (recorded, next)" above and the explanation given at the
 stop):
 
-- **The guards on a shared crime.** The watch is a crime's response
+- **The guards on a shared crime.** PAID by WATCH1 (2026-09-17, the
+  smaller reading - see its section below). The watch is a crime's response
   and the crime is the player's own (the flag, the witnesses, the
   legal reputation). Sharing it is a crime event on the wire, the
   witness test run once, then the guards as a pool with the laws the
@@ -6733,3 +6734,94 @@ unconditionally. Not verified in a browser: no online session exists in
 this container; the door is pinned by source and the pick by law.
 `test/donline1_respawn.test.js` - 3 pins; FIX-E, AUDIT 21 F6, AUDIT
 WORLD B6 and MWBODY1 re-aimed. Mutants in `tools/mutants/restx2camp.json`.
+
+## WATCH1 (2026-09-17): the criminal's watch rides the cell
+
+**Mac, resuming the STOP list above: "1. Gaurds first 2. Whatever is
+best."** The first open slice at the stop was "the guards on a shared
+crime", with two decisions left open there: whether a peer's murder
+marks the region for everyone, and whom the watch hunts. Both are
+decided here on the SMALLER reading, and the reasons are written down
+so the larger one can be argued from the record.
+
+**What a peer saw before.** A crime is its criminal's alone -
+Multiplayer.md's first lock, every player runs their own world from
+their own save - and so was the city watch it summoned: `cityGuards`
+is a pool the encounter stream never named. A peer standing beside a
+murderer saw the killer swing at nothing while five watchmen chased
+them round the village; a peer who tried to help hit air.
+
+**The reading taken.** The crime STAYS the criminal's: the flag, the
+witnesses, the legal reputation, the spawn law, the hunt and the
+despawn on the crime's clearing are all untouched. What changes is
+that the watch RIDES the criminal's own cell `foes` frames, as `t:
+146` records - Knight_CityWatch, whose ENEMY_BASICS row every client
+holds - behind the encounter foes, in the foes' own record shape.
+Every peer in range stands them as puppets through `applyFoes`'s one
+spawn chain, exactly as a rat of mine is stood (at the streamed feet,
+at the owner's level, no loot, outside the reader's cap); they walk,
+swing and fall where the stream says. The relay reads nothing inside a
+record, so there is no relay change and `RELAY_VERSION` stands.
+
+**A FOE IS ITS SPAWNER'S, and so is a watchman.** A peer's blow on a
+watch puppet goes to its owner as a hit by the number the watchman
+rode under - `seq`, minted by the encounter pool's own counter the
+first time he rides, so one number space names one thing and the
+owner's `applyHit` finds a foe or a watchman, never both. At the
+owner the blow lands through `cityGuards`' OWN door (`hurtGuard`) with
+`fromPlayer: false`: DaggerfallEntityBehaviour.cs:203's `source ==
+Player` gate, F035's law, which a peer is outside. So no aggro turn
+(the watch is already the criminal's enemy), and a watchman a peer
+kills is no Murder of the criminal's - the crime stays what it was.
+The knockback still lands (C15's gate is knockDir's), the shield
+still absorbs, the corpse still falls and rides the next frame as `d:
+1` with its pile, and the peer's own screen rang, bled and voiced the
+blow before the divert, as it does for any puppet.
+
+**Whom the watch hunts: its owner and its owner's foes, never a
+peer.** The watch's target candidates are the host's own
+(`_foeSenses().candidates()`, MT-ii) - the roster is the encounter
+pool's alone - so a watchman's `g` on the wire is `'.'` (me) or `''`
+(a foe of mine), and his `_atkB` the same; a puppet of him lands
+nothing at its reader (applyPuppetRecord's recipient gate) and only
+draws the swing. The strike edge in `cityGuards.update` latches the
+attack count in the pool's spelling (the ranged bit low: the watch
+never shoots, EW1).
+
+**The seams, by name.** `cityGuards.js`: the guard record gains `seq`
+(null until he rides), `_atkA`, `_atkB`; the strike edge latches the
+count. `exteriorFoes.js`: `setNet` takes `watch` - `{ list, hurt }` -
+`foesFrame` walks `[...foes, ...watchList()]` and numbers an unnumbered
+watchman off `_nextSeq`; `applyHit` looks a number up in the foes then
+the watch (`watchOf`), and routes a watchman to `_net.watch.hurt`.
+`world.js`: the net hands `cityGuards.guards` and `hurtGuard(...,
+{ fromPlayer: false })`. The striker's own melee door routes by pool
+membership (`cityGuards.guards.includes(f)`), never by species, so a
+146 puppet is the encounter pool's and no crime arm of the striker's
+runs.
+
+**Recorded and NOT carried - the larger reading, if wanted:**
+- A peer who strikes or kills my watch commits nothing: the striker's
+  door is the encounter pool's, which has no crime machinery. In the
+  larger reading that is Assault/Murder at the striker, needing a
+  crime event on the wire.
+- My murder marks no crime and no legal reputation on a peer; the
+  watch hunts only me. The larger reading is the shared crime event
+  with the witness test run once.
+- The townspeople each client converts into watchmen are each client's
+  own roll; a peer sees my converted watchmen as puppets AND its own
+  unconverted townsperson still standing (the civilians are not
+  streamed - that is a slice of its own).
+- A walk-away (the crime cleared) leaves the roll silently and is
+  taken down at the readers by the next FULL frame, the encounter
+  foes' own law for a culled foe; up to FOES_FULL_MS a peer sees a
+  standing watchman the owner no longer runs.
+- `exterior.js`'s guard-only host and the dungeon's watch stream
+  nothing (no `watch` in their net); the world host alone is online.
+
+Not verified in a browser: no online session and no second player
+exist in this container; the whole path is pinned by execution across
+two real pools netted together (`test/watch1.test.js`, 4 pins) and
+`tools/mutants/watch1.json` (9 mutants, 9 dead). AUDIT WORLD6b-iii(b)'s
+C1 source pin, WORLD6b's net pin and WORLD6b-iii(e)'s owner-door pin
+re-aimed to the new lookup, the new net field and the new door.

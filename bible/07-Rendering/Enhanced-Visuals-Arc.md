@@ -36,7 +36,7 @@ footsteps' stride accumulator (a spurious footstep at every map-pixel
 crossing, footsteps.js:151), and `_playerStill` reads one moving
 frame per crossing (world.js:6057-6059).
 
-frame per crossing (world.js:9228-9230).
+frame per crossing (world.js:9233-9235).
 
 THE DISTANCE IS FOG-BOUND, NOT STREAM-BOUND. Linear fog ends at 2400
 units (weather.js:50-57, DFU's own number) while the default 7x7

@@ -280,6 +280,11 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       const mobile = new MobileUnit(GUARD_MOBILE_TYPE, basics, (rec) => tex.getFrameCount(rec), Math.random, 'male');
       const batch = renderer.createBillboardBatch(archive, 0, { w: 1, h: 1 }, [[0, 0, 0]]);
       const g = { id: _nextGuardId++, mobile, ai, attack, entity, batch, tex, archive, mobileType: GUARD_MOBILE_TYPE, idleH, dead: false, _prevMState: 'Idle', _mout: null,
+        // WATCH1: THE WATCH RIDES THE CELL'S STREAM. `seq` is this watchman's number on the wire, minted by the
+        // encounter pool's own counter the first time he rides a frame (one number space with the foes, so a
+        // peer's blow names one thing); `_atkA`/`_atkB` the attack count and its recipient in the pool's spelling
+        // (WORLD6b / AUDIT WORLD6b-iii(a) A3), latched at the strike edge below. Null and zero until he rides.
+        seq: null, _atkA: 0, _atkB: '',
         sounds: new EnemySoundSource(GUARD_MOBILE_TYPE, rand),
         // MT-ii: THE CROSS-POOL DAMAGE DOOR. A striker resolves its
         // melee frame inside its OWN pool's loop, so the target's pool
@@ -571,7 +576,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
    *  which arrowFlight.js calls unconditionally (arrowFlight.js:230)
    *  because `dealDamage` is inside its own `dmg > 0` fork - so the
    *  door is PUBLIC (the returned surface below), exactly as the
-   *  encounter pool's is (exteriorFoes.js:1732). */
+   *  encounter pool's is (exteriorFoes.js:1753). */
   function handleAttackFromPlayer(g, playerFeet = null) {
     if (!g?.ai) return;
     if (!g.ai.isHostile) makeAreaHostile?.();
@@ -856,6 +861,11 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       const strikeEdge = mstate !== 'Idle' && (g._prevMState ?? 'Idle') === 'Idle';
       g._prevMState = mstate;
       if (strikeEdge) playEnemyClip(audio, g.sounds.attack(), g.ai.feet, acuteHearingMultiplier(playerEntity));   // AUDIT 24 (wave 41); CF1: acute hearing
+      // WATCH1: the attack count on the wire, the ranged bit low (the watch never shoots - EW1's `rangedAttack =
+      // false`), and whom the swing was at: '.' me, '' a foe of mine (a watchman brawling a rat, MT-ii). A peer
+      // is never a watchman's target (the hunt's candidates are this host's own, never the roster), so a puppet of
+      // him lands nothing at its reader (applyPuppetRecord's `b` gate) and only draws the swing.
+      if (strikeEdge) { g._atkA = ((((g._atkA | 0) >> 1) + 1) << 1); g._atkB = isPlayerTarget(_tgt) ? '.' : ''; }
       g._mout = g.mobile.update(dt, {
         moving: g.ai.moving,
         striking: strikeEdge,

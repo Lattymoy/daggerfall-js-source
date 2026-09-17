@@ -1425,8 +1425,16 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   const q3 = (v) => Math.round(v * 1000) / 1000;
   /** The world host installs the net: room() (the cell the socket is in), inRoom(k) (WORLD6b-iii(b): my cell or a halo's), selfId() and peers() (WORLD6b-ii: whose blow a
    *  streamed target names, and MY foes' peer candidates), now() and staleMs (C3), onPeerHit(hit) (a blow on a
-   *  puppet, to its owner), toWire(feet) -> the world frame's [x, y, z], toScene([x, y, z]) -> this scene's feet. */
+   *  puppet, to its owner), toWire(feet) -> the world frame's [x, y, z], toScene([x, y, z]) -> this scene's feet.
+   *  WATCH1: and `watch` - { list() -> the city watch pool's live records, hurt(g, dmg, at, dir, { kind }) -> the
+   *  pool's own damage door } - so the criminal's watchmen ride this stream as `t: 146` records and a peer's blow on
+   *  one lands through the watch's door, never this pool's. A watchman's `seq` is minted here, off the one counter. */
   function setNet(net) { _net = net ?? null; }
+  /** WATCH1: the watchmen that ride my stream - every live or killed-and-lying one of MINE (the pool's own prune
+   *  splices the walk-aways; a swept full frame takes them down at the readers). Absent net or pool: none. */
+  const watchList = () => (_net?.watch?.list?.() ?? []);
+  /** WATCH1: the watchman a peer's blow names - by the number he rode under (applyHit's own dead gate refuses a body). */
+  const watchOf = (i) => watchList().find((g) => g.seq === i) ?? null;
   const _now = () => (_net?.now ? _net.now() : Date.now());
   /** My foes out - every one of MINE whose streamed state changed since its last frame (every one when full, so a
    *  dropped frame heals and a foe I culled is missed from the roll and so removed at the peers). A quest's foe is
@@ -1436,8 +1444,13 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   function foesFrame(full = false) {
     if (!_net?.toWire) return null;
     const out = [];
-    for (const f of foes) {
+    // WATCH1: the watch rides behind the foes, in the same record shape - `t` 146 (Knight_CityWatch, whose row every
+    // client's ENEMY_BASICS holds, so applyFoes at a reader stands the puppet through the one spawn chain at the
+    // streamed level), `g` '.' or '' (a watchman hunts me or my foes, never a peer), `x` 0 (the watch is male art,
+    // cityGuards' `basics.maleTexture`). No relay change: a record is a record to the wire and to the Room.
+    for (const f of [...foes, ...watchList()]) {
       if (f.puppet || f.isQuestFoe || (f.dead && !f.corpse)) continue;
+      if (f.seq == null) f.seq = _nextSeq++;   // WATCH1: a watchman is numbered the first time he rides, off the foes' own counter
       const w = _net.toWire(f.ai.feet);
       if (!w) continue;
       // WORLD6b-ii: g the target - '.' me, an id a peer, '' none (WORLD3's spelling)
@@ -1681,9 +1694,12 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       if (n === 0) { f.corpseDisabled = true; f._closedN = Number.isInteger(data.n) ? data.n : (_owners.get(from)?.n ?? -1); }   // A7: closed as of the owner's frame counter
       return true;
     }
-    const f = foes.find((x) => !x.puppet && x.seq === (data.i | 0));
+    // WATCH1: the number names one of my foes or one of my watchmen (one counter, so never both); a watchman's blow
+    // lands through the watch's own door below, with the ring, the blood, the pain and the dose landed here alike
+    const f = foes.find((x) => !x.puppet && x.seq === (data.i | 0)) ?? watchOf(data.i | 0);
     const dmg = Number(data.dmg);
     if (!f || f.dead || !Number.isFinite(dmg) || dmg < 0 || dmg > 10000) return false;
+    const onWatch = !foes.includes(f);
     const kind = data.kind === 'arrow' || data.kind === 'spell' ? data.kind : 'melee';
     // WORLD6b-ii: the striker's feet (p, the world frame - bounded as a pose is, then this scene's) and the blow's
     // direction (d, a spell knocks nothing, verbatim). AUDIT WORLD3 F2's law: a direction is a UNIT vector or it is
@@ -1706,7 +1722,12 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     // striker's word alone, whatever the number - the calc dosed before the Strikes payload could zero it (bounded:
     // twelve poisons, a live one refused again, startPoison's own law)
     if (pt != null) inflictPoison(f.entity, pt, false, { rolls, currentMinute: Math.floor(currentMinute()) });   // ENGINE-PRNG RULE: the pool's uniform seam
-    damageFoe(f, dmg, at, dir, { fromPlayer: true, kind, peer: true, peerId: from });
+    // WATCH1: a peer's blow on MY watchman is NOT MY BLOW - it goes through cityGuards' door with `fromPlayer: false`
+    // (DaggerfallEntityBehaviour.cs:203's `source == Player` gate, F035's law: no aggro turn, and a watchman a peer
+    // kills is no Murder of mine - the crime stays whose it was, Multiplayer.md's lock). The knockback still lands
+    // (the gate is knockDir's), the shield still absorbs, the corpse still falls and rides the next frame as `d: 1`.
+    if (onWatch) _net.watch.hurt(f, dmg, at, dir, { kind });
+    else damageFoe(f, dmg, at, dir, { fromPlayer: true, kind, peer: true, peerId: from });
     // WORLD6b-iii(e): the shaft, where BowDamage puts it (:145-147) - the body's pile says so (o) and the grant carries it.
     // AUDIT WORLD6b-iii(e) A1: BOUNDED - HIT_ARROWS_MAX Arrows a body from peers' shafts, past it the blow lands and no
     // Arrow (a crafted stream minted a stack the projection refused whole, and the grant dropped the pile with it)
