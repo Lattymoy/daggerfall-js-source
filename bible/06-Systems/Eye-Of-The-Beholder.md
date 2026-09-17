@@ -866,3 +866,36 @@ container this was written in. Mac's eye is the gate; the order to
 check is a walk (four frames, no repeat), a swing (six, at the swing's
 own pace, a beat late), a turn to the left (drawn from the left), a
 horse, a death, and the cart behind a wagon-borne player.
+
+## EOTB-WALL (2026-09-17): the camera in the wall
+
+Mac: "3rd person clips through walls and ceilings allowing you to see
+outside wall bounds. Morrowind 3rd person doesnt have this issue."
+
+**Why the mod's own law lets it happen.** `CheckBounds` (kept as the IL
+has it) casts one ray per AXIS of the eye's basis from the head, and
+`SetVectorBounds` clamps each offset component by its own axis's answer.
+Three axis casts never measure the DIAGONAL the camera actually stands on:
+a wall at the back-right corner is missed by the "right" cast and the
+"back" cast alike, a ceiling on the back-up diagonal (looking down, the
+eye sits up and behind) by the "up" and the "back". And `posCurrent` lags
+the pulled-in target by `MoveTowards`, so a turn against a wall leaves the
+eye inside it for as many frames as the smoothing takes. The Morrowind
+camera has neither problem because it casts ONE ray from the focal along
+the eye's own direction and pulls in (`mwCamera.js`, camera.cpp:200-206).
+
+**The port's cast.** After the mod's casts and the minimum-distance floor,
+`eye()` casts once from the head to the SMOOTHED eye, `|eye - head| + 2 *
+eyeRadius` long, and pulls the eye in to `hit - 2 * eyeRadius` along that
+line - the mod's own clearance, so a wall straight behind answers the same
+number `CheckBounds` gave (the two pins that measure it are unchanged).
+The target is untouched, so the smoothing walks the camera back out when
+the wall is gone, and a wall that appears mid-walk pins the camera where
+it IS. A DEPARTURE from the assembly, the fourth (the wheel, the scroll
+default and the shoulder key are the other three), recorded in the Ledger
+row. Pinned in `test/eotb_camera.test.js` (26: a diagonal wall the axis
+casts miss, a ceiling on the back-up diagonal, the straight-back number
+unchanged, the walk back out, the pin on the smoothed eye; the per-axis
+pin tells the port's cast from the mod's by its length);
+`tools/mutants/eotbwall.json` 4 - 4 dead.
+
