@@ -1482,6 +1482,11 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
 .px-skill .px-mtop { margin-bottom: 3px; }
 .px-skill .px-mtop .v { font-size: 16px; }
 .px-disclose { width: auto; margin: 10px auto 0; }
+/* MAC-G: a special's SOURCE rides the row as a quiet tag - the label
+   is the fact, the class or race name is only where it came from, so
+   it must not compete with it at the value's 19px. */
+.px-stat .v.px-src { font-size: 13px; color: #7d7460; letter-spacing: 0.12em;
+  text-transform: uppercase; align-self: center; }
 .px-stat .v.won { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
 .px-stat .v.bad { color: var(--blood); }
 /* ── PX7: THE SYSTEM PAGE ── the shell's own panes repainted in whole
@@ -2331,6 +2336,23 @@ body:has(.dfchat.touch) .hudtext-stack { top: ${HUD_TEXT_TOP_CHAT_TOUCH_PX}px; }
    below holds all three together so there is no fourth. */
 .cr-shell .cr-head.cr-headless { padding-bottom: 0; margin-bottom: 0; border-bottom: 0; }
 .cr-shell .cr-head.cr-headless .cr-when { display: none; }
+/* MAC-F: A CARD FOLDS TO ITS HEAD. The caret and the date are ONE
+   button so the handle is the thing already being read; it has to
+   carry the head's own type, because a <button> does not inherit it.
+   A headless card keeps the caret - that is its only handle - and
+   takes the room back under it that the head row gave up. */
+.cr-shell .cr-fold { flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 10px;
+  padding: 0; background: none; border: 0; font: inherit; color: inherit;
+  text-align: left; cursor: pointer; }
+.cr-shell .cr-fold .cr-caret { flex: 0 0 auto; color: #7d7460; font-size: 11px; }
+.cr-shell .cr-fold:hover .cr-when, .cr-shell .cr-fold:focus-visible .cr-when,
+.cr-shell .cr-fold:hover .cr-caret, .cr-shell .cr-fold:focus-visible .cr-caret {
+  color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.cr-shell .cr-fold:focus-visible { outline: none; }
+.cr-shell .cr-head.cr-headless .cr-fold { padding-bottom: 6px; }
+.cr-shell .cr-foldall { margin: 0 0 14px; max-width: 66ch; }
+.cr-shell .cr-entry.cr-shut { padding-bottom: 12px; }
+.cr-shell .cr-entry.cr-shut .cr-head { padding-bottom: 0; margin-bottom: 0; border-bottom: 0; }
 .cr-shell .sb-frame { margin: 0 0 16px; }
 .cr-shell .cr-compose { display: flex; gap: 10px; margin: 0 0 18px; max-width: 66ch; }
 .cr-shell .cr-compose input { flex: 1; min-width: 0; min-height: 44px; padding: 8px 12px;

@@ -1,0 +1,186 @@
+[
+  {
+    "name": "MAC-F-the-fold-key-forgets-which-tab-it-is-in",
+    "file": "src/ui/enhancedChronicle.js",
+    "old": "export const foldKey = (sec, index) => `${sec}:${index}`;",
+    "new": "export const foldKey = (sec, index) => `${index}`;",
+    "tests": [
+      "test/macfg_fold_and_specials.test.js"
+    ]
+  },
+  {
+    "name": "MAC-F-toggle-only-ever-shuts-a-card",
+    "file": "src/ui/enhancedChronicle.js",
+    "old": "  if (store.has(k)) store.delete(k); else store.add(k);",
+    "new": "  store.add(k);",
+    "tests": [
+      "test/macfg_fold_and_specials.test.js"
+    ]
+  },
+  {
+    "name": "MAC-F-an-empty-tab-offers-to-expand-nothing",
+    "file": "src/ui/enhancedChronicle.js",
+    "old": "export const allFolded = (store, sec, count) =>\n  count > 0 && Array.from({ length: count }, (_, i) => foldKey(sec, i)).every((k) => store.has(k));",
+    "new": "export const allFolded = (store, sec, count) =>\n  Array.from({ length: count }, (_, i) => foldKey(sec, i)).every((k) => store.has(k));",
+    "tests": [
+      "test/macfg_fold_and_specials.test.js"
+    ]
+  },
+  {
+    "name": "MAC-F-all-folded-answers-on-one-shut-card",
+    "file": "src/ui/enhancedChronicle.js",
+    "old": "Array.from({ length: count }, (_, i) => foldKey(sec, i)).every((k) => store.has(k));",
+    "new": "Array.from({ length: count }, (_, i) => foldKey(sec, i)).some((k) => store.has(k));",
+    "tests": [
+      "test/macfg_fold_and_specials.test.js"
+    ]
+  },
+  {
+    "name": "MAC-F-collapse-all-only-ever-collapses",
+    "file": "src/ui/enhancedChronicle.js",
+    "old": "    if (shut) store.add(foldKey(sec, i)); else store.delete(foldKey(sec, i));",
+    "new": "    store.add(foldKey(sec, i));",
+    "tests": [
+      "test/macfg_fold_and_specials.test.js"
+    ]
+  },
+  {
+    "name": "MAC-F-the-body-draws-through-the-fold",
+    "file": "src/ui/enhancedChronicle.js",
+    "old": "        if (!isFolded(folded, section, i)) for (const line of e.body) entry.append(el('p', null, line));",
+    "new": "        for (const line of e.body) entry.append(el('p', null, line));",
+    "tests": [
+      "test/macfg_fold_and_specials.test.js"
+    ]
+  },
+  {
+    "name": "MAC-F-the-section-control-keeps-a-flag-of-its-own",
+    "file": "src/ui/enhancedChronicle.js",
+    "old": "      const shutAll = allFolded(folded, section, rows.length);",
+    "new": "      const shutAll = folded.size > 0;",
+    "tests": [
+      "test/macfg_fold_and_specials.test.js"
+    ]
+  },
+  {
+    "name": "MAC-F-a-fold-outlives-the-window-it-was-made-in",
+    "file": "src/ui/enhancedChronicle.js",
+    "old": "  folded.clear();   // MAC-F: a fresh open reads whole, as it always has",
+    "new": "",
+    "tests": [
+      "test/macfg_fold_and_specials.test.js"
+    ]
+  },
+  {
+    "name": "MAC-G-the-tolerance-read-takes-immunity-before-resistance",
+    "file": "src/systems/specialAdvantages.js",
+    "old": "  ['resistanceFlags', 'resistance'], ['immunityFlags', 'immunity'],",
+    "new": "  ['immunityFlags', 'immunity'], ['resistanceFlags', 'resistance'],",
+    "equivalent": true,
+    "why": "GetTolerance reads resistance first (DFCareer.cs:746-762), but cannotAdd makes two tolerances on ONE effect impossible, so no career the game can build distinguishes the two orders. Kept as the reference's order; recorded as equivalent rather than pinned by a career that cannot exist.",
+    "tests": [
+      "test/macfg_fold_and_specials.test.js"
+    ]
+  },
+  {
+    "name": "MAC-G-expertise-and-forbidden-read-the-same-band",
+    "file": "src/systems/specialAdvantages.js",
+    "old": "    else if (((wasb >>> 16) & bit) === bit) add('expertiseIn', weapon);",
+    "new": "    else if ((wasb & bit) === bit) add('expertiseIn', weapon);",
+    "tests": [
+      "test/macfg_fold_and_specials.test.js"
+    ]
+  },
+  {
+    "name": "MAC-G-a-phobia-is-read-as-a-bonus",
+    "file": "src/systems/specialAdvantages.js",
+    "old": "    if ((atk & bonus) === bonus) add('bonusToHit', group);\n    else if ((atk & phobia) === phobia) add('phobia', group);",
+    "new": "    if ((atk & phobia) === phobia) add('phobia', group);\n    else if ((atk & bonus) === bonus) add('bonusToHit', group);",
+    "tests": [
+      "test/macfg_fold_and_specials.test.js"
+    ]
+  },
+  {
+    "name": "MAC-G-the-magery-band-is-read-off-a-career-that-has-none",
+    "file": "src/systems/specialAdvantages.js",
+    "old": "  if (c.abilityFlagsAndSpellPointsBitfield != null) {",
+    "new": "  if (true) {",
+    "tests": [
+      "test/macfg_fold_and_specials.test.js"
+    ]
+  },
+  {
+    "name": "MAC-G-the-default-magery-is-announced",
+    "file": "src/systems/specialAdvantages.js",
+    "old": "    if (magery !== DEFAULT_MAGERY_BITS) {",
+    "new": "    if (magery !== -1) {",
+    "tests": [
+      "test/macfg_fold_and_specials.test.js"
+    ],
+    "equivalent": true,
+    "why": "DFU guards the magery line on Times_0_50 explicitly (DaggerfallCharacterSheetWindow.cs:616). Here MAGERY_MULT_BITS has no entry for 20, so the lookup already answers null and the guard is the reference's shape rather than a load-bearing branch. Kept because the pair says what the code means, and a table that ever gained a Times_0_50 row would need it."
+  },
+  {
+    "name": "MAC-G-every-special-is-an-advantage",
+    "file": "src/systems/specialAdvantages.js",
+    "old": "      kind: ADVANTAGE_SET.has(primary) ? 'advantage' : 'disadvantage',",
+    "new": "      kind: 'advantage',",
+    "tests": [
+      "test/macfg_fold_and_specials.test.js"
+    ]
+  },
+  {
+    "name": "MAC-G-the-blood-is-said-twice",
+    "file": "src/systems/specialAdvantages.js",
+    "old": "    if (seen.has(k)) return;\n    seen.add(k);",
+    "new": "    seen.add(k);",
+    "tests": [
+      "test/macfg_fold_and_specials.test.js"
+    ]
+  },
+  {
+    "name": "MAC-G-the-blood-is-labelled-as-the-class",
+    "file": "src/systems/specialAdvantages.js",
+    "old": "      if (((race.resistanceFlags ?? 0) & bit) === bit) add('resistance', effect, 'race');",
+    "new": "      if (((race.resistanceFlags ?? 0) & bit) === bit) add('resistance', effect);",
+    "tests": [
+      "test/macfg_fold_and_specials.test.js"
+    ]
+  },
+  {
+    "name": "MAC-G-the-label-keeps-a-trailing-space-with-no-secondary",
+    "file": "src/systems/specialAdvantages.js",
+    "old": "      label: secondary ? `${labelFor(primary)} ${labelFor(secondary)}` : labelFor(primary),",
+    "new": "      label: `${labelFor(primary)} ${labelFor(secondary)}`,",
+    "tests": [
+      "test/macfg_fold_and_specials.test.js"
+    ]
+  },
+  {
+    "name": "MAC-G-DFUs-athleticism-slip-is-ported-with-the-rest",
+    "file": "src/systems/specialAdvantages.js",
+    "old": "    if ((abilities & SPECIAL_ABILITY_BITS.athleticism) === SPECIAL_ABILITY_BITS.athleticism) add('athleticism', '', 'race');",
+    "new": "    if ((abilities & SPECIAL_ABILITY_BITS.athleticism) === SPECIAL_ABILITY_BITS.athleticism) add('acuteHearing', '', 'race');",
+    "tests": [
+      "test/macfg_fold_and_specials.test.js"
+    ]
+  },
+  {
+    "name": "MAC-G-the-sheet-forgets-the-blood",
+    "file": "src/ui/enhancedCharSheet.js",
+    "old": "    specials: classSpecials(e.career, raceTemplateOf(e)),",
+    "new": "    specials: classSpecials(e.career),",
+    "tests": [
+      "test/macfg_fold_and_specials.test.js"
+    ]
+  },
+  {
+    "name": "MAC-G-the-race-is-only-ever-found-by-key",
+    "file": "src/ui/enhancedCharSheet.js",
+    "old": "  return RACE_TEMPLATES.find((r) => r.key === e.race || r.name === e.race)\n    ?? raceById(e.raceId)\n    ?? null;",
+    "new": "  return RACE_TEMPLATES.find((r) => r.key === e.race) ?? null;",
+    "tests": [
+      "test/macfg_fold_and_specials.test.js"
+    ]
+  }
+]

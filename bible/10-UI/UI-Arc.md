@@ -15187,3 +15187,121 @@ the turquoise one.
 `test/mace_corpse_window.test.js` (7), plus the grown pins in
 `audit24_wave38`, `cityguards` and `nativeinventory`.
 `tools/mutants/macbugs.json` (15, all dead).
+
+## MAC-F/MAC-G - a card that folds, and a page that was never drawn
+
+2026-09-17, two reports over two reading screens, with a screenshot of
+the Chronicle's Quests tab and an arrow at **MAIN QUEST BACKBONE**.
+
+### MAC-F - the chronicle's quests fold to their heads
+
+*"In the enhanced chronicle. Quests and their tab's should be able to
+be minimized."*
+
+The screenshot is the whole argument: twelve quests in the rail, and
+the first one's trail filling the column so the other eleven are below
+the fold. This is a cost the enhanced window took on deliberately and
+never paid. The classic logbook cannot have this problem - it draws
+into a 320x200 panel and pages four lines at a time with a Next button
+(PX24's own header says so) - and the enhanced one traded that for a
+scrolling column, which is better until a quest with a long trail is
+the only thing on screen.
+
+Nothing about the MODEL changed. `chronicleModel` still returns the
+same rows from the same walks, and `questRail` is still the one quest
+walk shared with the pause window's Quests tab. What is new is a place
+to put a reading position:
+
+- **the head is the handle.** The caret and the date are ONE button
+  (`cr-fold`), so a card folds by clicking the thing already being
+  read. The note's remove stays a SIBLING of that button: a button
+  inside a button is not HTML, and nesting it would have made every
+  removal a fold as well.
+- **the body is what folds.** The head, its date and its remove all
+  stay - a folded card still says which quest it is and when it was
+  written, which is the only reason to fold it.
+- **the tab folds at once.** `Collapse all` / `Expand all` sits above
+  the cards and READS them (`allFolded`) rather than keeping a flag, so
+  shutting the last card by hand flips the control with it. Folding
+  twelve quests one at a time to see twelve titles is the same wall
+  with extra clicks in it.
+- **a fold is a reading position, not a setting.** The store is a
+  `Set` of `section:index`, it survives a tab change so walking to
+  Notes and back does not undo the work, and it is cleared when the
+  window opens. Nothing about it reaches disk: a player who shut every
+  quest last night opens the book read this morning.
+
+A shut card drops the rule under its title with the body it was
+dividing from - a card that keeps the divider looks like a card whose
+body failed to draw.
+
+### MAC-G - the advantages a character was built out of
+
+*"The enhanced stat page on the pause menu doesn't have any listing
+for character advantages/disadvantages."*
+
+He is right, and the gap is older and wider than the enhanced page.
+DFU HAS this list: `GetClassSpecials`
+(`DaggerfallCharacterSheetWindow.cs:459-762`), popped in a message box
+by the classic sheet's **History** button before the history window
+itself (`:898-903`, `:905-918`). The port had `parseCareerData` - the
+WRITE, U20b's whole point, folding a chargen pick list onto a career's
+bitfields - and **no read anywhere, in either skin**. So the seven-item
+balance a player spends the whole of chargen on became invisible the
+moment the game started, and stayed invisible for every hour after.
+
+`classSpecials(career, race)` is that read, and it lives beside the
+write on purpose: the two walk the same bitfields, so a bit that moves
+breaks both in one file instead of drifting apart across two. It is
+NOT the pick list read back - the pick list exists only inside the
+chargen window, and a character loaded from a classic save never had
+one. The flags are the source, exactly as they are for DFU.
+
+Every section is GetClassSpecials' own, in its order and with its
+pairing: the seven tolerances, the six proficiencies, the four attack
+modifiers, the two magery arms, the three forbidden sets, the spell
+point multiplier, absorption, the four talents, regeneration and rapid
+healing, the two damages, and then the blood - the race template's
+resistances, immunities, low tolerances, critical weaknesses and
+abilities, de-duplicated against what the class already said, because a
+Breton mage can carry Resistance To Magic twice.
+
+Three departures, each deliberate:
+
+- **the split.** DFU prints one undifferentiated list; Mac asked for
+  advantages and disadvantages, and this page has room for the division
+  the player actually made. It is not invented - it is which of the two
+  chargen lists (`ADVANTAGE_KEYS` / `DISADVANTAGE_KEYS`) the primary
+  belongs to, the same division the difficulty table signs.
+- **the source tag.** Resistance To Magic from the class and from the
+  blood are different facts about a re-rollable character, so each row
+  says which it is, quietly, at the value's right.
+- **DFU's own slip is not ported.** Its `raceAbilities` dictionary maps
+  `Athleticism` to `HardStrings.acuteHearing` (`:744`) - a copy-paste
+  fault that would print the wrong ability's name. It is unreachable in
+  DFU and here, because no playable race sets `SpecialAbilities` at all
+  (`RaceTemplate.cs:172-345`, and `systems/races.js` says so), and the
+  port writes what the flag means. Copying it would be porting a typo
+  into a screen a player reads.
+
+What is deliberately NOT here: a vampire's or a werewolf's powers. DFU
+gives a transformed character an OVERRIDE race template whose flags
+feed this same block; the port has no override templates, and the
+curses carry their powers as live effects instead. Writing them in from
+here would mean inventing a table. Recorded rather than hidden.
+
+The classic sheet's History button still opens the history directly,
+without DFU's specials box in front of it. That is a second, older
+parity gap on a different window, and it is not what was asked for.
+
+### Pinned
+
+`test/macfg_fold_and_specials.test.js` (11).
+`tools/mutants/macfg.json` (20: 18 dead, 2 recorded equivalent - the
+tolerance read's order and the magery guard, both unreachable through
+any career the game can build).
+
+Neither report is a law, so the pins are source and model and the CLAIM
+that the two windows work is `tools/macfgProbe.mjs`'s: it mounts both
+over the live `/play/` page with no ARENA2 anywhere, folds the cards,
+walks the tabs and reads the Advantages rows back - 20/20.
