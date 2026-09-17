@@ -388,6 +388,10 @@ function build(doc) {
  *  swap only while a swap is what it offers. */
 let liveOpts = {};
 let offKind = null;
+/** The entity whose diamond this is - `inventoryItemImage` picks a
+ *  clothing or armour archive by who wears it, and the inventory
+ *  window passes the same identity, so the two draw the same picture. */
+let liveEntity = null;
 
 /** Below this the durability strip takes the health bar's red. DFU's
  *  own repair prompt has no such line - this is the port's, and it is
@@ -590,6 +594,7 @@ export function drawEnhancedHud(vitals, heading01, dt = 0, opts = {}) {
  */
 function drawQuickslots(vitals, opts) {
   liveOpts = opts;
+  liveEntity = vitals ?? null;
   const view = quickslotView(vitals, { weapon: opts.weapon ?? null, sheathed: opts.weaponSheathed ?? false });
   offKind = view.off.kind;
   // THE PAD'S FAMILY, not the input layer's local: `controllerLook` is
@@ -679,7 +684,7 @@ function quickIcon(part, slot, item, name) {
   const key = iconKeyOf(item);
   if (last[`${slot}Icon`] === key) return;
   last[`${slot}Icon`] = key;
-  const image = item ? inventoryItemImage(item) : null;
+  const image = item ? inventoryItemImage(item, liveEntity ?? undefined) : null;
   const src = item
     ? (modelIconUrl(item, 96, fpArm)
       || (image ? requestIcon(image.archive, image.record, { scale: 2, onReady: () => { last[`${slot}Icon`] = null; last.quick = null; } }) : null))
@@ -717,7 +722,7 @@ function quickTag(part, slot, t) {
 export function destroyEnhancedHud() {
   try { host?.remove(); } catch { /* already gone */ }
   host = null; parts = null;
-  liveOpts = {}; offKind = null;   // QS3: the bound-once handlers went with the nodes
+  liveOpts = {}; offKind = null; liveEntity = null;   // QS3: the bound-once handlers went with the nodes
   for (const k of Object.keys(last)) delete last[k];
 }
 

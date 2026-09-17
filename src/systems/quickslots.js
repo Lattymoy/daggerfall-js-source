@@ -76,8 +76,17 @@ const state = { c1: null, c2: null, swap: null };
  *  the affixes the loot arc mints. Condition and stack size are NOT in
  *  it: a worn Potion of Healing is still a Potion of Healing, and a
  *  swap weapon that has taken a knock is still the swap weapon. */
+const _keys = new WeakMap();   // per record: the fields below are set at the mint and never move
 export function quickslotKey(item) {
   if (!item) return null;
+  if (typeof item !== 'object') return null;
+  const had = _keys.get(item);
+  if (had !== undefined) return had;
+  const key = computeKey(item);
+  _keys.set(item, key);
+  return key;
+}
+function computeKey(item) {
   const ench = Array.isArray(item.enchantments) && item.enchantments.length
     ? JSON.stringify(item.enchantments) : '';
   const custom = Array.isArray(item.customEnchantments) && item.customEnchantments.length

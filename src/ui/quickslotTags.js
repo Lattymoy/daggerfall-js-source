@@ -49,6 +49,21 @@ export const TORCH_VENDOR = 'handheld-torches';
 
 const isJoystickCode = (c) => typeof c === 'string' && c.startsWith('Joystick');
 
+/** The key's name on a chip. `buttonText` is DFU's GetButtonText and
+ *  names the digit row Alpha1..Alpha0 - 'A1' on the controls grid,
+ *  which is where a player rebinds and where DFU's own word belongs.
+ *  A chip at the corner of a HUD cell is read at a glance, and 'A1'
+ *  there reads as a grid reference; the digit row shows its DIGIT,
+ *  the numpad its digit with the pad's own prefix, and every other key
+ *  the classic name. */
+export function tagText(code) {
+  const digit = /^Digit([0-9])$/.exec(code);
+  if (digit) return digit[1];
+  const pad = /^Numpad([0-9])$/.exec(code);
+  if (pad) return `KP${pad[1]}`;
+  return buttonText(code);
+}
+
 /**
  * The tag for one action:
  *   { kind: 'key', text }              - a keyboard key, named the classic way
@@ -61,7 +76,7 @@ export function quickslotTag(action, { bindings = null, controller = false, fami
   const pad = codes.find((c) => unityButtonGlyph(family, c));
   if (controller && pad) return { kind: 'glyph', family, code: pad };
   const key = codes.find((c) => !isJoystickCode(c));
-  if (key) return { kind: 'key', text: buttonText(key) };
+  if (key) return { kind: 'key', text: tagText(key) };
   if (pad) return { kind: 'glyph', family, code: pad };
   return null;
 }
@@ -71,7 +86,7 @@ export function quickslotTag(action, { bindings = null, controller = false, fami
 export function torchTag(read = () => modSetting(TORCH_VENDOR, TORCH_TOGGLE_SETTING)) {
   let code = null;
   try { code = domCodeForKeyCode(read()); } catch { code = null; }   // a store that is not there is not a key
-  return code ? { kind: 'key', text: buttonText(code) } : null;
+  return code ? { kind: 'key', text: tagText(code) } : null;
 }
 
 /** The off-hand cell's action, by what is standing in it: a lit torch

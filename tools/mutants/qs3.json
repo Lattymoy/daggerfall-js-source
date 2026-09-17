@@ -4,118 +4,165 @@
     "file": "src/ui/hud.js",
     "old": "      weaponSheathed: weaponSheathed,",
     "new": "      weaponSheathed: true,",
-    "tests": ["test/qs3_hud.test.js", "test/enhancedHud.test.js"]
+    "tests": [
+      "test/qs3_hud.test.js",
+      "test/enhancedHud.test.js"
+    ]
   },
   {
     "name": "QS3-the-block-is-written-every-frame",
     "file": "src/ui/enhancedHud.js",
     "old": "  if (last.quick === sig) return;",
     "new": "  if (sig === undefined) return;",
-    "tests": ["test/qs3_hud.test.js", "test/enhancedHud.test.js"]
+    "tests": [
+      "test/qs3_hud.test.js",
+      "test/enhancedHud.test.js"
+    ]
   },
   {
     "name": "QS3-the-icon-is-re-requested-whenever-anything-changed",
     "file": "src/ui/enhancedHud.js",
     "old": "  if (last[`${slot}Icon`] === key) return;",
     "new": "  if (key === undefined) return;",
-    "tests": ["test/qs3_hud.test.js"]
+    "tests": [
+      "test/qs3_hud.test.js"
+    ]
   },
   {
     "name": "QS3-an-empty-hand-is-an-absence-again-not-a-socket",
     "file": "src/ui/enhancedHud.js",
     "old": "    socket: !m, sheathed: !!m?.sheathed, ghost: false, count: null,",
     "new": "    socket: false, sheathed: !!m?.sheathed, ghost: false, count: null,",
-    "tests": ["test/qs3_hud.test.js"]
+    "tests": [
+      "test/qs3_hud.test.js"
+    ]
   },
   {
     "name": "QS3-a-put-away-weapon-reads-as-a-drawn-one",
     "file": "src/ui/enhancedHud.js",
     "old": "    cls.toggle('sheathed', !!s.sheathed);",
     "new": "    cls.toggle('sheathed', false);",
-    "tests": ["test/qs3_hud.test.js"]
+    "tests": [
+      "test/qs3_hud.test.js"
+    ]
   },
   {
     "name": "QS3-a-slot-whose-kind-left-the-pack-is-not-a-ghost",
     "file": "src/ui/enhancedHud.js",
     "old": "      socket: !c, sheathed: false, ghost: !!c && c.count === 0, count: c ? c.count : null,",
     "new": "      socket: !c, sheathed: false, ghost: false, count: c ? c.count : null,",
-    "tests": ["test/qs3_hud.test.js"]
+    "tests": [
+      "test/qs3_hud.test.js"
+    ]
   },
   {
     "name": "QS3-the-durability-strip-reads-full-whatever-the-condition",
     "file": "src/ui/enhancedHud.js",
     "old": "    width(part.fill, `${slot}BarW`, s.condition);",
     "new": "    width(part.fill, `${slot}BarW`, 100);",
-    "tests": ["test/qs3_hud.test.js"]
+    "tests": [
+      "test/qs3_hud.test.js"
+    ]
   },
   {
     "name": "QS3-the-worn-line-never-trips",
     "file": "src/ui/enhancedHud.js",
     "old": "    const worn = s.condition < QUICK_WORN_PCT;",
     "new": "    const worn = s.condition < 0;",
-    "tests": ["test/qs3_hud.test.js"]
+    "tests": [
+      "test/qs3_hud.test.js"
+    ]
   },
   {
     "name": "QS3-the-block-stands-on-a-fixed-virtual-stick",
     "file": "src/ui/enhancedHud.js",
     "old": "    parts.quick.classList.toggle('stickclear', fixedStick);",
     "new": "    parts.quick.classList.toggle('stickclear', false);",
-    "tests": ["test/qs3_hud.test.js"]
+    "tests": [
+      "test/qs3_hud.test.js"
+    ]
   },
   {
     "name": "QS3-the-pad-glyph-never-takes-over-from-the-key",
     "file": "src/ui/quickslotTags.js",
     "old": "  if (controller && pad) return { kind: 'glyph', family, code: pad };",
     "new": "  if (!controller && pad) return { kind: 'glyph', family, code: pad };",
-    "tests": ["test/qs3_hud.test.js"]
+    "tests": [
+      "test/qs3_hud.test.js"
+    ]
   },
   {
     "name": "QS3-an-unbound-action-says-NONE",
     "file": "src/ui/quickslotTags.js",
-    "old": "  const key = codes.find((c) => !isJoystickCode(c));\n  if (key) return { kind: 'key', text: buttonText(key) };",
+    "old": "  const key = codes.find((c) => !isJoystickCode(c));\n  if (key) return { kind: 'key', text: tagText(key) };",
     "new": "  const key = codes.find((c) => !isJoystickCode(c)) ?? null;\n  if (key !== undefined) return { kind: 'key', text: buttonText(key) };",
-    "tests": ["test/qs3_hud.test.js"]
+    "tests": [
+      "test/qs3_hud.test.js"
+    ]
   },
   {
     "name": "QS3-the-torch-cell-borrows-an-action-instead-of-the-mods-own-key",
     "file": "src/ui/quickslotTags.js",
     "old": "  if (kind === 'torch') return torchTag(opts.readTorchKey ?? undefined);",
     "new": "  if (kind === 'torch') return quickslotTag(QUICKSLOT_ACTIONS.swap, opts);",
-    "tests": ["test/qs3_hud.test.js"]
+    "tests": [
+      "test/qs3_hud.test.js"
+    ]
   },
   {
     "name": "QS3-a-shield-in-the-off-hand-grows-a-tag-that-presses-nothing",
     "file": "src/ui/quickslotTags.js",
     "old": "  if (kind === 'swap') return quickslotTag(QUICKSLOT_ACTIONS.swap, opts);\n  return null;",
     "new": "  return quickslotTag(QUICKSLOT_ACTIONS.swap, opts);",
-    "tests": ["test/qs3_hud.test.js"]
+    "tests": [
+      "test/qs3_hud.test.js"
+    ]
   },
   {
     "name": "QS3-every-pad-draws-Xbox-buttons",
     "file": "src/ui/padGlyphs.js",
     "old": "  return PS_ID_RE.test(String(id ?? '')) ? 'ps' : 'xbox';",
     "new": "  return 'xbox';",
-    "tests": ["test/qs3_hud.test.js", "test/gamepad.test.js"]
+    "tests": [
+      "test/qs3_hud.test.js",
+      "test/gamepad.test.js"
+    ]
   },
   {
     "name": "QS3-the-family-outlives-the-pad",
     "file": "src/ui/gamepadInput.js",
     "old": "      setPadFamily(null);   // QS3: a glyph for a pad nobody is holding is a lie",
     "new": "      /* QS3: a glyph for a pad nobody is holding is a lie */",
-    "tests": ["test/gamepad.test.js", "test/qs3_hud.test.js"]
+    "tests": [
+      "test/gamepad.test.js",
+      "test/qs3_hud.test.js"
+    ]
   },
   {
     "name": "QS3-the-glyph-is-drawn-smooth-rather-than-crisp",
     "file": "src/ui/padGlyphs.js",
     "old": "viewBox=\"0 0 ${W} ${W}\" shape-rendering=\"crispEdges\"",
     "new": "viewBox=\"0 0 ${W} ${W}\"",
-    "tests": ["test/qs3_hud.test.js"]
+    "tests": [
+      "test/qs3_hud.test.js"
+    ]
   },
   {
     "name": "QS3-the-marks-accent-is-painted-in-the-shapes-colour",
     "file": "src/ui/padGlyphs.js",
     "old": "fill=\"${ch === 'o' ? ink : color}\"",
     "new": "fill=\"${color}\"",
-    "tests": ["test/qs3_hud.test.js"]
+    "tests": [
+      "test/qs3_hud.test.js"
+    ]
+  },
+  {
+    "name": "QS3-the-digit-row-reads-as-a-grid-reference",
+    "file": "src/ui/quickslotTags.js",
+    "old": "  if (digit) return digit[1];",
+    "new": "  if (digit) return buttonText(code);",
+    "tests": [
+      "test/qs3_hud.test.js"
+    ]
   }
 ]

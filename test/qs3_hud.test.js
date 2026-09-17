@@ -28,7 +28,7 @@ import {
   PAD_GLYPHS, PAD_FAMILIES, GLYPH_SIZE, padFamilyOf, padFamily, setPadFamily,
   unityButtonGlyph, glyphSvg, _clearGlyphCache,
 } from '../src/ui/padGlyphs.js';
-import { quickslotTag, quickslotOffTag, torchTag, tagKey, QUICKSLOT_ACTIONS } from '../src/ui/quickslotTags.js';
+import { quickslotTag, quickslotOffTag, torchTag, tagKey, QUICKSLOT_ACTIONS, tagText } from '../src/ui/quickslotTags.js';
 import { createBindings, setBinding } from '../src/systems/inputActions.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
@@ -132,16 +132,22 @@ test('QS3 the tag law: the pad while the pad is live, the key otherwise, and NOT
   const key = { bindings: store, controller: false, family: 'xbox' };
   const pad = { bindings: store, controller: true, family: 'xbox' };
 
-  // The keyboard arm is `buttonText` at its SHORT form - DFU's own
-  // GetButtonText, which names Digit1 "A1" (Alpha1).
-  assert.deepEqual(quickslotTag('QuickUse1', key), { kind: 'key', text: 'A1' });
+  // The keyboard arm is `tagText`: the digit row shows its DIGIT (DFU's
+  // GetButtonText says "A1", Alpha1, which on a corner chip reads as a
+  // grid reference), the numpad its digit with the pad's prefix, and
+  // every other key `buttonText` at its SHORT form.
+  assert.deepEqual(quickslotTag('QuickUse1', key), { kind: 'key', text: '1' });
+  assert.equal(tagText('Digit0'), '0');
+  assert.equal(tagText('Numpad7'), 'KP7');
+  assert.equal(tagText('KeyZ'), 'Z');
+  assert.equal(tagText('ArrowLeft'), 'LEFT');
   // ...and the pad's own button while the pad is the live device.
   assert.deepEqual(quickslotTag('QuickUse1', pad), { kind: 'glyph', family: 'xbox', code: 'JoystickButton2' });
   assert.deepEqual(quickslotTag('QuickUse1', { ...pad, family: 'ps' }), { kind: 'glyph', family: 'ps', code: 'JoystickButton2' });
   // A pad in hand and NO pad binding is still the keyboard key: a
   // corner that went blank when someone picked up a controller would
   // be worse than either answer.
-  assert.deepEqual(quickslotTag('QuickUse2', pad), { kind: 'key', text: 'A2' });
+  assert.deepEqual(quickslotTag('QuickUse2', pad), { kind: 'key', text: '2' });
   // An action bound ONLY to the pad shows its glyph either way -
   // there is no key to name.
   assert.deepEqual(quickslotTag('QuickSwap', key), { kind: 'glyph', family: 'xbox', code: 'JoystickButton3' });
@@ -167,10 +173,10 @@ test('QS3 the tag law: the pad while the pad is live, the key otherwise, and NOT
   // InputManager action - so the torch cell is keyboard only and reads
   // the mod's store (HT4 moved its default to O).
   assert.equal(quickslotOffTag('torch', { ...key, readTorchKey: () => 'None' }), null, 'an unbound mod key is no tag either');
-  assert.deepEqual(torchTag(() => 'Alpha4'), { kind: 'key', text: 'A4' });
+  assert.deepEqual(torchTag(() => 'Alpha4'), { kind: 'key', text: '4' });
   assert.equal(torchTag(() => { throw new Error('no store'); }), null, 'a store that is not there is not a key');
   // The tag's string, which is what the HUD writes on.
-  assert.equal(tagKey({ kind: 'key', text: 'A1' }), 'k:A1');
+  assert.equal(tagKey({ kind: 'key', text: '1' }), 'k:1');
   assert.equal(tagKey({ kind: 'glyph', family: 'ps', code: 'JoystickButton0' }), 'g:ps:JoystickButton0');
   assert.equal(tagKey(null), '');
 });
@@ -417,8 +423,8 @@ test('QS3 the states, executed: the socket, the sheathed hand, the ghost\'s 0, a
     assert.equal(find(cell('c2'), 'hud-qcount').textContent, '0');
     // The tags: the two bound keys, and nothing at all where nothing is.
     const tag = (at) => find(quick, `hud-qs${at}`);
-    assert.equal(find(tag('top'), 'hud-qstext').textContent, 'A1');
-    assert.equal(find(tag('bottom'), 'hud-qstext').textContent, 'A2');
+    assert.equal(find(tag('top'), 'hud-qstext').textContent, '1');
+    assert.equal(find(tag('bottom'), 'hud-qstext').textContent, '2');
     assert.ok(tag('right').classList.contains('on'), 'ReadyWeapon is bound, so the main corner speaks');
     assert.equal(find(tag('right'), 'hud-qstext').textContent, 'R');
     assert.ok(!tag('left').classList.contains('on'), 'an empty off hand has nothing to press');
@@ -449,7 +455,7 @@ test('QS3 the states, executed: the socket, the sheathed hand, the ghost\'s 0, a
     setControllerLook(false);
     setPadFamily(null);
     drawEnhancedHud(entity, 0, 0, { weapon, weaponSheathed: false });
-    assert.equal(find(tag('top'), 'hud-qstext').textContent, 'A1');
+    assert.equal(find(tag('top'), 'hud-qstext').textContent, '1');
   } finally {
     destroyEnhancedHud();
     clearQuickslots();
