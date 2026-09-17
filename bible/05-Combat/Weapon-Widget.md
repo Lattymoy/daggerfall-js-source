@@ -313,3 +313,26 @@ Beside it, unrelated to the widget but shipped in the same commit:
 (`{ text, center }`) whole as a token's text; `statusInfoRows` takes
 both row shapes now (`systems/healthStatus.js`, pinned in
 `test/statusinfo.test.js`).
+
+## F1 - THE THRUST (2026-09-17, Mac: "when thrusting with a weapon, it can be glitchy")
+
+Two things a thrust does that the other strikes do not, one of them the
+mod's own. The mod's: `CheckForRecoveryOverride` - a StrikeUp of anything
+but a dagger recovers IN REVERSE, at half the tick (`recoveryOverride`,
+under the shipped `VanillaRecoveryOverride`, on by default). A thrust
+therefore plays forward to its hit and then runs backward through its
+frames at double speed, which is the mod's designed look and reads as a
+stutter beside the other strikes' clean Hide/Idle recovery. That is
+reportable as the mod's behaviour, not a bug; the setting turns it off.
+
+The bug: the reverse ran inside the "while the original is still
+attacking" loop UNLATCHED. With Recovery = Last Frame the loop, having
+reversed to frame 0, set the frame back to the LAST frame on its next lap
+and reversed again - every lap until the original's swing ended, a thrust
+flickering backwards over and over. Under Hide (the default) the frame
+went to -1 and the reverse's guard (`currentFrame > 0`) held, so the
+default player saw the double-speed reverse alone. `playWeaponAnimation`
+latches the reverse (`reversed`) and runs it once; the reverse itself is
+the mod's, to frame 0. Pinned in `test/ww1_weaponwidget.test.js`
+(a StrikeUp under Last Frame descends its frames exactly once; under Hide
+as before). Mutants in `tools/mutants/bugs5.json`.

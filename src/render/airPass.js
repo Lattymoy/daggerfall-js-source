@@ -122,7 +122,7 @@ export const AIR_GLARE_SIZE = 0.25;   // EL7: a glare the size of a flame, not a
  *  floating in air (the torch in the player's hand, the Light spell's
  *  candle, a lantern placed above its flat) drew a bright ball "not
  *  connected to the source". */
-export const AIR_GLARE_SLACK = 1.0;
+export const AIR_GLARE_SLACK = 0.25;   // F4 (2026-09-17, Mac: "bloom circle disconnected from light sources and still reports of light bloom balls appearing behind floors/ceilings"): a QUARTER unit, either side. At a unit the band took a ceiling 0.4 in front of a hanging lantern and a wall 0.5 behind a bare light for "a flame" - the ball through the floor above, the ball beside a light with no flat. A flame flat is a camera-facing quad THROUGH the light, so its opaque texels sit at the light's own planar depth: a quarter unit holds the flat and nothing else
 /** EL7: no glare for a light this close to the eye - the carried torch and the candle. */
 export const AIR_GLARE_MIN_DISTANCE = 1.5;
 /** EL8: SCREEN-SPACE CONTACT SHADOWS - for every lantern that has no caster
@@ -136,9 +136,14 @@ export const AIR_GLARE_MIN_DISTANCE = 1.5;
  *  black). The reserved unit is the AO's old one. */
 export const AIR_CONTACT_LENGTH = 0.6;
 export const AIR_CONTACT_THICKNESS = 0.8;
-export const AIR_CONTACT_STEPS = 6;
+export const AIR_CONTACT_STEPS = 4;   // F5: four over 0.6 units is a step every 15 cm under a thickness of 80 - the contact it finds, six found
 export const AIR_CONTACT_FLOOR = 0.15;
 export const AIR_CONTACT_UNIT = 12;
+/** F5: the march runs only for a light within this share of its range of
+ *  the fragment - past it the windowed falloff has the light under a tenth
+ *  and a contact shadow on it is invisible; a town's forty lanterns each
+ *  reached every fragment in their window with four depth taps. */
+export const AIR_CONTACT_RANGE_FRACTION = 0.7;
 /** EL7: a JS number as a GLSL float literal. `${1.0}` is "1" - an int to the
  *  compiler, and "'<=' : wrong operand types" on a real GPU (the probe's
  *  catch; the fake GL compiles anything). Every whole-number constant that
@@ -279,6 +284,18 @@ float contactShadow(vec3 wp, vec3 n, vec3 toLight, float dist) {
   if (uContactParams.w <= 0.0) return 1.0;
   float len = min(dist, uContactParams.x);
   vec3 start = wp + n * 0.02;
+  // F3: THE SURFACE MUST HAVE BEEN THERE. The march reads LAST frame's depth,
+  // and a wall just revealed round a corner was not in it: its pixels
+  // reproject onto the corner's near face, every sample lands "behind" it,
+  // and the whole wall wore a shadow that swam with the turn. So the point
+  // itself is reprojected first, and only a point the previous frame saw
+  // where it stands - its depth there within the thickness - is marched.
+  vec4 c0 = uPrevVP * vec4(start, 1.0);
+  if (c0.w <= 0.0) return 1.0;
+  vec2 uv0 = c0.xy / c0.w * 0.5 + 0.5;
+  if (uv0.x < 0.0 || uv0.x > 1.0 || uv0.y < 0.0 || uv0.y > 1.0) return 1.0;
+  float z0 = texture(uPrevDepth, uv0).r * 2.0 - 1.0;
+  if (abs(c0.w - uPrevProjInfo.w / (z0 + uPrevProjInfo.z)) > uContactParams.y) return 1.0;
   for (int i = 1; i <= ${AIR_CONTACT_STEPS}; i++) {
     vec3 p = start + toLight * (len * float(i) / ${glslFloat(AIR_CONTACT_STEPS)});
     vec4 c = uPrevVP * vec4(p, 1.0);

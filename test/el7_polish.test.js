@@ -49,7 +49,7 @@ function recordingGl() {
 }
 
 test('EL7: the constants and the shader laws - the glare\'s presence test and its size, the three cascades, the depth-aware blur, the float literal', () => {
-  assert.equal(AIR_GLARE_SIZE, 0.25); assert.equal(AIR_GLARE_SLACK, 1.0); assert.equal(AIR_GLARE_MIN_DISTANCE, 1.5);
+  assert.equal(AIR_GLARE_SIZE, 0.25); assert.equal(AIR_GLARE_SLACK, 0.25); assert.equal(AIR_GLARE_MIN_DISTANCE, 1.5);   // F4: the band is a quarter unit
   assert.ok(near(glareSize(18), 0.25 * Math.sqrt(18)));
   assert.equal(glslFloat(1), '1.0'); assert.equal(glslFloat(1.0), '1.0'); assert.equal(glslFloat(0.15), '0.15'); assert.equal(glslFloat(2.5), '2.5');
   const a = read('src/render/airPass.js');

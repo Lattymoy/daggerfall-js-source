@@ -200,7 +200,7 @@
   {
     "name": "glare-slack-zero",
     "file": "src/render/airPass.js",
-    "old": "export const AIR_GLARE_SLACK = 1.0;",
+    "old": "export const AIR_GLARE_SLACK = 0.25;",
     "new": "export const AIR_GLARE_SLACK = 0.0;",
     "tests": [
       "test/el5_field.test.js"

@@ -150,7 +150,7 @@ test('EL3: the receiver block and the shaders - the AO by screen position, off a
   assert.match(EMIT_BB_FS, /if \(texture\(uTex, vUV\)\.a < 0\.5\) discard;/);
   const a = read('src/render/airPass.js');
   assert.match(a, /return abs\(viewDist\(depthAt\(uv\)\) - lantern\) <= \$\{glslFloat\(AIR_GLARE_SLACK\)\} \? 1\.0 : 0\.0;/, 'EL5: a glare hides behind the depth IN WORLD UNITS, not a hyperbolic constant; EL7: and needs a flame under it - presence, not "nothing nearer"');
-  assert.match(a, /export const AIR_GLARE_SLACK = 1\.0;/, 'EL7: a unit - the flame within it of its light');
+  assert.match(a, /export const AIR_GLARE_SLACK = 0\.25;/, 'EL7: the flame within it of its light; F4: a quarter unit');
   assert.match(a, /vis = \(flame\(vc, lantern\)\n\s+\+ flame\(vc \+ vec4\(0\.0, s, 0\.0, 0\.0\), lantern\) \+ flame\(vc \+ vec4\(0\.0, 2\.0 \* s, 0\.0, 0\.0\), lantern\)\n\s+\+ flame\(vc \+ vec4\(0\.0, -s, 0\.0, 0\.0\), lantern\) \+ flame\(vc \+ vec4\(0\.0, -2\.0 \* s, 0\.0, 0\.0\), lantern\)\n\s+\+ flame\(vc \+ vec4\(s, 0\.0, 0\.0, 0\.0\), lantern\) \+ flame\(vc \+ vec4\(-s, 0\.0, 0\.0, 0\.0\), lantern\)\) \/ 7\.0;/, 'seven taps over the footprint (EL7: the centre, two above and two below - a city light sits at the top of its flat, a dungeon light at its base - and either side): a flame half behind a post is half a glare');
   assert.match(a, /float flame\(vec4 vc, float lantern\) \{/, 'EL7: the presence test, per tap in view space');
   assert.match(a, /float sky = depthAt\(uv\) >= 0\.99999 \? 1\.0 : 0\.0;/, 'the shafts\' mask is the sky (EL6: off the frame\'s depth, at the world rect)');

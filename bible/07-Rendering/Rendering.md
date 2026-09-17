@@ -34,7 +34,10 @@ directory by `test/audit18_bible_docs.test.js`:
   bloom from its bright pass, the vignette, the contrast in display space and
   the dither in the resolve; EL8: two depth textures on the frame image,
   ping-ponged, so the lane's contact shadows (`AIR_CONTACT_GLSL`) march
-  through the previous frame's depth. `?air=off`, `?contact=off`. See
+  through the previous frame's depth; BUGS-5: the march reprojects its
+  point first (a surface the previous frame did not see is not marched),
+  four steps within seven tenths of a range, the glare's band a quarter
+  unit. `?air=off`, `?contact=off`. See
   `07-Rendering/Enhanced-Lighting-Arc.md`.
 - `characterMesh.js` - the voxel character mesh path.
 - `characterSprite.js` - the classic-visuals sprite pass (one fixed
@@ -51,8 +54,11 @@ directory by `test/audit18_bible_docs.test.js`:
   with the receiver block the lane's shaders read (`SHADOW_GLSL`); the depth
   programs are the renderer's own vertex shaders (EL7: three cascades, the
   rigs recorded too, the water surface a receiver; EL8: the caster table
-  `uCasterOf`, the far cascade and the far casters on a cadence). See
-  `07-Rendering/Enhanced-Lighting-Arc.md`.
+  `uCasterOf`, the far cascade and the far casters on a cadence; BUGS-5:
+  the light in the hand never casts (`SHADOW_CASTER_MIN_DISTANCE` 1.5), a
+  thing on the ground is no standing card (`noShadow`, archive 216, flats
+  under half a unit), a cascade skips casters under two of its texels).
+  See `07-Rendering/Enhanced-Lighting-Arc.md`.
 - `skyRenderer.js` - painted skies (R4) + the night sky.
 - `labGrass.js` - GR1 the LAB'S GRASS: grass-proto.html's blade shaders
   verbatim, its placer law, and a renderer of its own beside the world's,

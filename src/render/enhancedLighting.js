@@ -59,8 +59,8 @@
 
 import { getPref } from '../systems/uiPrefs.js';
 import { isEnhanced } from '../systems/uiSkin.js';
-import { SHADOW_GLSL } from './shadowPass.js';   // EL2: the receiver block - the sun map on the sun term, the cube map on its lantern
-import { AIR_ADAPT_GLSL, AIR_CONTACT_GLSL, airOn, contactOn } from './airPass.js';   // EL6: no AO block - the resolve's; EL8: the contact block
+import { SHADOW_GLSL, SHADOW_CASTER_MIN_DISTANCE } from './shadowPass.js';   // EL2: the receiver block - the sun map on the sun term, the cube map on its lantern; F3: the hand's distance
+import { AIR_ADAPT_GLSL, AIR_CONTACT_GLSL, AIR_CONTACT_RANGE_FRACTION, airOn, contactOn, glslFloat } from './airPass.js';   // EL6: no AO block - the resolve's; EL8: the contact block
 import { BAYER_GLSL, BAYER_MEAN } from './orderedDither.js';   // EL6: the dither at the encode - the port's one Bayer
 import { SHADE_DARK } from '../systems/concealDraw.js';   // AUDIT-EL F14: the shade's pull toward black, interpolated as the classic BB_FS does   // EL3: the ambient occlusion image by screen position, and its kill door; EL4: the adapted exposure
 
@@ -255,7 +255,12 @@ vec3 elPointLit(vec3 wp, vec3 n) {
     if (d >= uPointLights[i].w) continue;   // EL5: outside the window the term is exactly zero - no shadow taps, no glint, no pow for it
     vec3 Ln = L / max(d, 1e-4);
     int k = uCasterOf[i];   // EL8: the light's caster slot in one lookup
-    float sh = k >= 0 ? pointShadowAt(k, wp, n) : contactShadow(wp, n, Ln, d);   // EL2: the lantern's map; EL8: every other lantern a contact shadow off the previous frame's depth
+    // EL2: the lantern's map; EL8: every other lantern a contact shadow off the previous frame's depth;
+    // F3: never for the light in the hand (the torch, a hand's width from every corner - shadowPass's SHADOW_CASTER_MIN_DISTANCE, the same law that keeps it out of the caster slots);
+    // F5: and only within the share of the range where the light is worth a shadow
+    float sh = k >= 0 ? pointShadowAt(k, wp, n)
+      : (d > uPointLights[i].w * ${glslFloat(AIR_CONTACT_RANGE_FRACTION)} || length(uPointLights[i].xyz - uCamPos) < ${glslFloat(SHADOW_CASTER_MIN_DISTANCE)}) ? 1.0
+      : contactShadow(wp, n, Ln, d);
     // EL4: a glint - Blinn-Phong, a low gloss for stone and wood, a twelfth of the light: wet stone under a torch
     vec3 H = normalize(Ln + normalize(uCamPos - wp));
     float spec = pow(max(dot(n, H), 0.0), ${EL_SPEC_GLOSS}.0) * ${EL_SPEC_STRENGTH};
