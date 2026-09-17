@@ -153,7 +153,10 @@ test('EL3: the receiver block and the shaders - the AO by screen position, off a
   assert.match(EMIT_MESH_FS, /texture\(uEmissionTex, vUV\)\.rgb \* uEmissionColor/);
   assert.match(EMIT_BB_FS, /if \(texture\(uTex, vUV\)\.a < 0\.5\) discard;/);
   const a = read('src/render/airPass.js');
-  assert.match(a, /vis = \(ndc\.z \* 0\.5 \+ 0\.5\) <= d \+ 0\.002 \? 1\.0 : 0\.0;/, 'a glare hides behind the depth image');
+  assert.match(a, /return viewDist\(texture\(uDepth, uv\)\.r\) \+ \$\{AIR_GLARE_SLACK\} >= lantern \? 1\.0 : 0\.0;/, 'EL5: a glare hides behind the depth image IN WORLD UNITS, not a hyperbolic constant');
+  assert.match(a, /export const AIR_GLARE_SLACK = 0\.5;/, 'half a unit of slack: the flame sits on its post');
+  assert.match(a, /vis = \(seen\(uv, lantern\) \+ seen\(uv \+ vec2\(t\.x, 0\.0\), lantern\)[\s\S]*?\) \/ 5\.0;/, 'five taps: a lantern half behind a post is half a glare');
+  assert.match(a, /uniform vec4 uProjInfo;/); assert.match(a, /uniform vec2 uTexel;/);
   assert.match(a, /float sky = texture\(uDepth, uv\)\.r >= 0\.99999 \? 1\.0 : 0\.0;/, 'the shafts\' mask is the sky');
   assert.equal((a.match(/gl\.blendFunc\(gl\.ONE, gl\.ONE\);/g) || []).length, 2, 'additive: the bloom source at the render and the bright pass at the resolve (EL4)');
   assert.ok(!/from '\.\/renderer\.js'/.test(a) && !/from '\.\/enhancedLighting\.js'/.test(a) && !/from '\.\/shadowPass\.js'/.test(a), 'a leaf');
@@ -195,7 +198,7 @@ test('EL3: the renderer builds the pass with the lane behind the door, sizes the
   const firstClear = calls.findIndex((c) => c[0] === 'clear' && c[1] === 16384 + 256);
   const before = calls.slice(0, firstClear);
   const depthClears = before.filter((c) => c[0] === 'clear' && c[1] === 256);
-  assert.equal(depthClears.length, 3, 'two cascades, then the depth image');
+  assert.equal(depthClears.length, 2 + 6 + 1, 'two cascades, the one lantern\'s six faces (EL5: lanterns cast under the sun too), then the depth image');
   assert.equal(r.shadows.count, 0, 'the records are spent after both passes');
   assert.equal(ap.stats.emitDraws, 1, 'the flat with an emission map alone; the plain flat and the mesh (no mask resolved yet) emit nothing');
   assert.equal(ap.stats.glares, 1, 'one lantern');

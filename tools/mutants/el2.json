@@ -92,10 +92,10 @@
  {
   "name": "caster-farthest",
   "file": "src/render/shadowPass.js",
-  "old": "    if (d < bestD) { bestD = d; best = i; }",
-  "new": "    if (d > bestD || best < 0) { bestD = d; best = i; }",
+  "old": "    while (at > 0 && picked[at - 1][1] > d) at--;",
+  "new": "    while (at > 0 && picked[at - 1][1] < d) at--;",
   "tests": [
-   "test/el2_shadows.test.js"
+   "test/el5_field.test.js"
   ]
  },
  {
@@ -137,8 +137,8 @@
  {
   "name": "glsl-point-off-dark",
   "file": "src/render/shadowPass.js",
-  "old": "  float far = uPointShadowParams.w;\n  if (far <= 0.0) return 1.0;",
-  "new": "  float far = uPointShadowParams.w;\n  if (far <= 0.0) return 0.0;",
+  "old": "  float far = P.w;\n  if (far <= 0.0) return 1.0;",
+  "new": "  float far = P.w;\n  if (far <= 0.0) return 0.0;",
   "tests": [
    "test/el2_shadows.test.js"
   ]
@@ -200,7 +200,7 @@
  {
   "name": "render-point-index",
   "file": "src/render/shadowPass.js",
-  "old": "        this.shadowIndex = i;\n",
+  "old": "      this.shadowIndex[k] = i;\n",
   "new": "",
   "tests": [
    "test/el2_shadows.test.js"

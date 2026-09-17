@@ -60,3 +60,6 @@ prototype/
 
 # ONLINE1: wrangler's local state beside the relay
 server/.wrangler/
+
+# Probe output (tools/enhancedLightingProbe.mjs PNGs and the like) - never commit.
+scratch/

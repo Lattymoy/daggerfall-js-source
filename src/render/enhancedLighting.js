@@ -250,7 +250,8 @@ vec3 elPointLit(vec3 wp, vec3 n) {
     if (i >= uPointCount) break;
     vec3 L = uPointLights[i].xyz - wp;
     float d = length(L);
-    float sh = i == uShadowIndex ? pointShadowAt(wp, n) : 1.0;   // EL2: the one lantern with a cube map
+    if (d >= uPointLights[i].w) continue;   // EL5: outside the window the term is exactly zero - no shadow taps, no glint, no pow for it
+    float sh = shadowOfLight(i, wp, n);   // EL2: the lantern's map; EL5: any of the casters'
     vec3 Ln = L / max(d, 1e-4);
     // EL4: a glint - Blinn-Phong, a low gloss for stone and wood, a twelfth of the light: wet stone under a torch
     vec3 H = normalize(Ln + normalize(uCamPos - wp));
@@ -266,8 +267,10 @@ vec3 elPointFlat(vec3 wp, vec3 base) {
   vec3 acc = vec3(0.0);
   for (int i = 0; i < ${EL_MAX_LIGHTS}; i++) {
     if (i >= uPointCount) break;
-    float sh = i == uShadowIndex ? pointShadowAt(base, vec3(0.0, 1.0, 0.0)) : 1.0;   // EL2
-    acc += sh * elAttenuation(length(uPointLights[i].xyz - wp), uPointLights[i].w) * uPointColors[i];
+    float d = length(uPointLights[i].xyz - wp);
+    if (d >= uPointLights[i].w) continue;   // EL5
+    float sh = shadowOfLight(i, base, vec3(0.0, 1.0, 0.0));   // EL2; EL5: any caster's
+    acc += sh * elAttenuation(d, uPointLights[i].w) * uPointColors[i];
   }
   return acc;
 }

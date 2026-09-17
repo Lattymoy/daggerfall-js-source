@@ -334,7 +334,8 @@ void main() {
   gl_Position = uProj * uView * vec4(world, 1.0);
 }`;
 
-import { ShadowPass } from './shadowPass.js';   // EL2: the lane's shadow maps - a leaf that compiles nothing until a lane asks
+import { ShadowPass } from './shadowPass.js';
+import { boundsOf } from './bounds.js';   // EL5: the bounds every bundle carries for the replays' culling   // EL2: the lane's shadow maps - a leaf that compiles nothing until a lane asks
 import { AirPass, AIR_ADAPT_UNIT as ADAPT_UNIT, AIR_AO_UNIT as AO_UNIT } from './airPass.js';   // EL3: the depth image, the ambient occlusion, the bloom and the shafts - the same kind of leaf; EL4: the eye's unit
 import { SHADE_DARK } from '../systems/concealDraw.js';   // ECV1 / AUDIT 65 PN-3: the shade's pull toward black, interpolated into BB_FS below - the shader restated 0.12 as a second literal. The LEAF, not systems/combatVisuals.js, which re-exports it: that module's graph would take this file's closure from 13 modules to 69
 
@@ -2350,6 +2351,11 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     buf(gl.ELEMENT_ARRAY_BUFFER, model.indices);
 
     this._bindVao(null);
+    // EL5: the bounds the shadow replays cull by - the mesh's sphere and one
+    // per sub-mesh (a static batch is a whole block in one mesh; its walls
+    // are its sub-meshes). Local space; the record transforms them.
+    const bounds = boundsOf(model.positions);
+    const subMeshes = model.subMeshes.map((sm) => ({ ...sm, _bounds: boundsOf(model.positions, model.indices, sm.startIndex, sm.primitiveCount * 3) }));
     // HOTFIX 2026-08-31 (field crash, Firefox): the sub-meshes are
     // COPIED, never shared with the model. drawMesh's EV2 texture
     // cache stamps `_evTex`/`_evGen`/... onto each sub-mesh, and the
@@ -2366,7 +2372,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // first time a mesh is drawn in the automap's wireframe mode. A
     // bundle built without it simply cannot be wireframed (drawMeshWire
     // draws nothing), which is the honest answer for a hand-built one.
-    return { vao, subMeshes: model.subMeshes.map((sm) => ({ ...sm })), buffers, triIndices: model.indices };
+    return { vao, subMeshes, buffers, triIndices: model.indices, bounds };
   }
 
   /** INCIDENT 2026-09-04: CameraClearManager.cs:23-25/:51-57 - inside,
@@ -2972,7 +2978,11 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // animated one, which the draw folds into the texture key. Still
     // flats keep the exact key they have always had, so nothing that
     // uploaded through uploadRecord has to change.
-    return { vao, indexCount: count * 6, archive, record, size, buffers: [vb, ib], origin: null, frame: null };
+    // EL5: the batch's sphere about its origin - the centres' box, plus a
+    // flat's own half-diagonal (a flat is drawn about its centre, any facing)
+    const bounds = boundsOf(centers.flat());
+    bounds[3] += Math.hypot(size.w, size.h) * 0.5;
+    return { vao, indexCount: count * 6, archive, record, size, buffers: [vb, ib], origin: null, frame: null, bounds };
   }
 
   /** Free one billboard batch's GL objects (S2 pickup removes piles;
@@ -3047,7 +3057,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     buf(normals, 1);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexSet.buffer);
     this._bindVao(null);
-    return { vao, buffers, indexCount: indexSet.count };
+    return { vao, buffers, indexCount: indexSet.count, bounds: boundsOf(positions) };   // EL5: the replays cull by it
   }
 
   /** WATER-AUDIT (M4): a second surface over a terrain surface's OWN

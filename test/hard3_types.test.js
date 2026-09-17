@@ -187,7 +187,7 @@ test('HARD3: the renderer\'s contract is types only, and the shapes it names are
   // at the top level instead of pattern-matching around the separators.
   const minted = returned.slice(returned.indexOf('{') + 1, returned.lastIndexOf('}'))
     .split(/,(?![^[\]]*\])/).map((part) => /^\s*(\w+)/.exec(part)?.[1]).filter(Boolean);
-  assert.equal(minted.length, 8, `the factory mints ${minted.length} fields and the walk should see every one: ${minted}`);
+  assert.equal(minted.length, 9, `the factory mints ${minted.length} fields and the walk should see every one: ${minted}`);   // EL5: `bounds`
   for (const field of minted) {
     assert.ok(declared.has(field), `the batch is minted with \`${field}\` and contract.js does not declare it`);
   }

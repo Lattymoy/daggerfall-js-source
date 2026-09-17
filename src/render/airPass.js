@@ -73,6 +73,7 @@
 
 import { multiply } from '../world/mat4.js';
 import { setFrameTarget } from './renderTarget.js';
+import { spherePlanes, recordVisible, subMeshVisible, batchVisible } from './bounds.js';   // EL5: the emission replay culls by the records' spheres too (a leaf's import: bounds.js touches no GL)
 
 /** The kill door: `?air=off` keeps EL1 and EL2 and drops the three effects. */
 export function airOn(search = globalThis.location?.search ?? '') {
@@ -93,6 +94,9 @@ export const AIR_AO_BIAS = 0.02;
  *  square root of a lantern's range (range 18 -> ~1.5 units). */
 export const AIR_BLOOM_STRENGTH = 0.6;
 export const AIR_GLARE_SIZE = 0.35;
+/** EL5: the world-unit slack of a glare's occlusion test - a lantern's flame sits
+ *  on its post, and the post is in the depth image. */
+export const AIR_GLARE_SLACK = 0.5;
 /** AUDIT-EL F11: a light with a range past this is the storm's flash (Dynamic
  *  Skies: 500..1000), not a lantern, and gets no glare. */
 export const AIR_GLARE_MAX_RANGE = 120;
@@ -332,9 +336,14 @@ void main() {
     c += texture(uBloom, wuv).rgb * uGrade.x + texture(uShaft, wuv).rgb * uGrade.y;
     float r = length((wuv - 0.5) * 2.0);
     c *= 1.0 - uGrade.z * smoothstep(0.55, 1.35, r);
-    c = (c - 0.18) * uGrade.w + 0.18;
   }
-  outColor = vec4(airEncode(max(c, vec3(0.0))), 1.0);
+  // EL5: THE CONTRAST IS IN DISPLAY SPACE. Around 0.18 in linear light it sent
+  // everything under 0.007 linear (byte 18) to black - most of a dungeon, all
+  // of a night street: the frame came back with six pixels in ten pure black.
+  // Around mid-grey of the encoded value the same 1.04 is a grade, not a gate.
+  vec3 e = airEncode(max(c, vec3(0.0)));
+  e = clamp((e - 0.5) * uGrade.w + 0.5, 0.0, 1.0);
+  outColor = vec4(e, 1.0);
 }`;
 
 const AO_FS = `#version 300 es
@@ -467,8 +476,22 @@ uniform mat4 uView;
 uniform vec3 uCenter;
 uniform float uSize;
 uniform sampler2D uDepth;
+uniform vec4 uProjInfo;   // EL5: x y the projection's scales, z w its depth terms (viewDepth in this file)
+uniform vec2 uTexel;      // EL5: one texel of the depth image
 out vec2 vUV;
 out float vVis;
+// EL5: THE OCCLUSION IS IN WORLD UNITS. The depth image is hyperbolic: a
+// constant 0.002 off it hid nothing past twenty units, and a town's lanterns
+// glared through its walls (the first field report). The texel's view depth
+// is reconstructed and compared to the lantern's, half a unit of slack, at
+// five taps so a lantern half behind a post is half a glare.
+float viewDist(float d01) {
+  float z = d01 * 2.0 - 1.0;
+  return uProjInfo.w / (z + uProjInfo.z);   // -viewZ: positive, along the eye's -z
+}
+float seen(vec2 uv, float lantern) {
+  return viewDist(texture(uDepth, uv).r) + ${AIR_GLARE_SLACK} >= lantern ? 1.0 : 0.0;
+}
 void main() {
   vec4 vc = uView * vec4(uCenter, 1.0);
   vec4 clip = uProj * vc;
@@ -476,8 +499,11 @@ void main() {
   if (clip.w > 0.0) {
     vec3 ndc = clip.xyz / clip.w;
     if (abs(ndc.x) < 1.2 && abs(ndc.y) < 1.2) {
-      float d = texture(uDepth, ndc.xy * 0.5 + 0.5).r;
-      vis = (ndc.z * 0.5 + 0.5) <= d + 0.002 ? 1.0 : 0.0;
+      vec2 uv = ndc.xy * 0.5 + 0.5;
+      float lantern = -vc.z;
+      vec2 t = uTexel * 2.0;
+      vis = (seen(uv, lantern) + seen(uv + vec2(t.x, 0.0), lantern) + seen(uv - vec2(t.x, 0.0), lantern)
+           + seen(uv + vec2(0.0, t.y), lantern) + seen(uv - vec2(0.0, t.y), lantern)) / 5.0;
     }
   }
   vVis = vis;
@@ -512,7 +538,7 @@ export class AirPass {
       shaft: P(QUAD_VS, SHAFT_FS, ['uDepth', 'uSun', 'uShaftParams', 'uSunColor']),
       emitMesh: P(opts.vs.mesh, EMIT_MESH_FS, ['uProj', 'uView', 'uModel', 'uEmissionTex', 'uEmissionColor']),
       emitBb: P(opts.vs.bb, EMIT_BB_FS, ['uProj', 'uView', 'uRight', 'uUp', 'uOrigin', 'uSize', 'uTex', 'uEmissionTex', 'uFlatWind', 'uSway']),
-      glare: P(GLARE_VS, GLARE_FS, ['uProj', 'uView', 'uCenter', 'uSize', 'uDepth', 'uColor']),
+      glare: P(GLARE_VS, GLARE_FS, ['uProj', 'uView', 'uCenter', 'uSize', 'uDepth', 'uColor', 'uProjInfo', 'uTexel']),
       // EL4
       lum: P(QUAD_VS, LUM_FS, ['uFrame', 'uPrev', 'uRect', 'uCanvas']),
       adapt: P(QUAD_VS, ADAPT_FS, ['uPrev', 'uLum', 'uAdaptParams', 'uAdaptRates']),
@@ -559,6 +585,7 @@ export class AirPass {
     this._now = opts.now ?? (() => (globalThis.performance?.now?.() ?? Date.now()));
     this.stats = { emitDraws: 0, glares: 0, shafts: false };
     this._identityView = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+    this._planes = new Float32Array(24);   // EL5: the emission replay's frustum
     this._black = new Float32Array(3);
     this._white = new Float32Array([1, 1, 1]);
     this._zeroWind = new Float32Array(4);
@@ -777,18 +804,22 @@ export class AirPass {
 
   _replayEmission(f, sp, vp) {
     const gl = this.gl, P = this.programs;
+    const planes = spherePlanes(vp, this._planes);   // EL5: the eye's frustum - what it cannot see cannot bloom
     let bound = null;
     for (let i = 0; i < sp.count; i++) {
       const r = sp.records[i];
+      if (r.kind !== 2 && !recordVisible(planes, r)) continue;
       if (r.kind === 0) {
         const mesh = r.mesh;
         if (!mesh?.vao || mesh._dead || !mesh.subMeshes?.length) continue;
-        if (bound !== P.emitMesh) { bound = P.emitMesh; gl.useProgram(bound.p); gl.uniformMatrix4fv(bound.uProj, false, vp); gl.uniformMatrix4fv(bound.uView, false, this._identityView); gl.uniform1i(bound.uEmissionTex, 1); }
-        gl.uniformMatrix4fv(P.emitMesh.uModel, false, r.matrix);
-        f.bindVao(mesh.vao);
-        for (const sm of mesh.subMeshes) {
+        let vaoBound = false;
+        for (let k = 0; k < mesh.subMeshes.length; k++) {
+          const sm = mesh.subMeshes[k];
           const emis = sm._evEmis;
           if (!emis || emis === f.blackTex) continue;   // nothing to bloom: the main pass resolved no mask, or the black one
+          if (!subMeshVisible(planes, r, k)) continue;   // EL5
+          if (bound !== P.emitMesh) { bound = P.emitMesh; gl.useProgram(bound.p); gl.uniformMatrix4fv(bound.uProj, false, vp); gl.uniformMatrix4fv(bound.uView, false, this._identityView); gl.uniform1i(bound.uEmissionTex, 1); }
+          if (!vaoBound) { gl.uniformMatrix4fv(P.emitMesh.uModel, false, r.matrix); f.bindVao(mesh.vao); vaoBound = true; }
           gl.uniform3fv(P.emitMesh.uEmissionColor, sm._evEmisWhite ? this._white : f.windowEmission);
           gl.activeTexture(gl.TEXTURE1);
           gl.bindTexture(gl.TEXTURE_2D, emis);
@@ -798,6 +829,7 @@ export class AirPass {
       } else if (r.kind === 2) {
         for (const b of r.batches) {
           if (!b?.vao || b._dead || b.conceal) continue;
+          if (!batchVisible(planes, b)) continue;   // EL5
           const key = b._bbKey ?? (b.frame == null ? `${b.archive}_${b.record}` : `${b.archive}_${b.record}#${b.frame}`);
           const emis = f.emissionTextures.get(key);
           const tex = f.textures.get(key);
@@ -834,6 +866,8 @@ export class AirPass {
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.targets.depth.tex);
     gl.uniform1i(P.uDepth, 0);
+    gl.uniform4fv(P.uProjInfo, this.projInfo);   // EL5: the depth's reconstruction
+    gl.uniform2f(P.uTexel, 1 / this.targets.depth.w, 1 / this.targets.depth.h);
     gl.bindVertexArray(this.glareVao);
     for (let i = 0; i < n; i++) {
       const range = L[i * 4 + 3];

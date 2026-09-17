@@ -36,6 +36,12 @@ directory by `test/audit18_bible_docs.test.js`:
 - `characterMesh.js` - the voxel character mesh path.
 - `characterSprite.js` - the classic-visuals sprite pass (one fixed
   CHAR_SPRITE_RT_SIZE target).
+- `bounds.js` - EL5 THE BOUNDS AND THE CULL: a bundle's bounding sphere
+  (`boundsOf`, computed at upload for a mesh and each sub-mesh, a terrain
+  surface, a billboard batch), the record's world sphere
+  (`transformSphere`), the frustum's normalised planes (`spherePlanes`,
+  over frustum.js's extraction) and the sphere test the shadow and air
+  replays cull by. A leaf: no GL. See `07-Rendering/Enhanced-Lighting-Arc.md`.
 - `shadowPass.js` - EL2 THE SHADOW PASS: records what the world pass draws and
   replays it depth-only from the light at the top of the next frame - a
   two-cascade sun map outdoors, a cube map from the nearest lantern indoors -

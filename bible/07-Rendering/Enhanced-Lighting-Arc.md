@@ -507,3 +507,97 @@ shadows) and `?lighting=classic`.
 **NOT SEEN ON A GPU** - still; the two reviewers read the code as a GPU
 would, which is the most this session can do. Mac's eye is the gate.
 
+## EL5 - THE FIELD (2026-09-17, the first report from the game)
+
+**The report.** A player at a town gate at night, on Discord (bug-reports,
+4:22 AM): "whoa... what the - the lights from inside the city are all
+bleeding through, tanking my framerate too", with a frame: the gate
+passage, orange glare blobs on the passage's inner wall where the city's
+lanterns stood behind it, the passage floor lit through the stone. Mac
+(6:09 AM): "Testing the new enhanced lighting. Will look into this", and to
+this session: "There see some major issues with the new enhanced lighting.
+No questions please investigate and ensure this is perfect", then: "Town
+gateways count as entrances for interior lighting?"
+
+**The answer to the question.** No. A gate passage is the exterior host's
+geometry under the exterior host's lighting; nothing about it is an
+interior. What the frame showed was two of the arc's own laws failing on a
+GPU - the audit's last line ("NOT SEEN ON A GPU - still") was the warning.
+
+**The two laws, and a third the harness found.**
+
+- THE GLARE'S OCCLUSION WAS A HYPERBOLIC CONSTANT (the bleeding). EL3's
+  glare quad hid itself by comparing the lantern's depth to the depth
+  image with 0.002 of slack IN THE DEPTH BUFFER'S OWN UNITS - the same
+  mistake AUDIT-EL F15 found in the cube map's bias, in the one place the
+  audit did not look. A perspective depth buffer spends most of its range
+  on the first few units: past twenty units the wall and the lantern
+  behind it differ by less than the slack, and every lantern in the town
+  glared through every wall. The test is in world units now
+  (`AIR_GLARE_SLACK` 0.5 - the flame sits on its post), the texel's view
+  depth reconstructed the way the AO's is, at five taps so a lantern half
+  behind a post is half a glare.
+- EVERY REPLAY DREW EVERY RECORD (the framerate). Six cube faces, two
+  cascades, the depth image and the emitters each walked the whole record
+  list - ten draws of the town for one frame of it, a thousand draw calls
+  each, and at night the cube map's six were of the WHOLE town to a
+  lantern's 18-unit range. `render/bounds.js`: every bundle carries a
+  bounding sphere (`Renderer.createMesh` computes one for the mesh AND one
+  per sub-mesh - a static batch is a whole block in one mesh, so the
+  block's sphere is useless and its walls' are what cull; the terrain
+  surface and the billboard batch theirs), every record its world sphere,
+  every replay its frustum's planes (frustum.js's EV3 extraction,
+  normalised); a record, a sub-mesh or a batch outside is not drawn. In
+  the probe's room a lantern's six faces draw 24 sub-meshes and cull 36.
+- ONE LANTERN CAST (the passage lit through the stone). EL2 gave the
+  nearest lantern a cube map; the other twenty lit the inner walls
+  through them. Up to `SHADOW_POINT_CASTERS` (4) lanterns cast now, the
+  nearest to the eye, sun or no sun, each into six layers of ONE depth
+  array (`sampler2DArrayShadow`; the cube's face is selected by hand in
+  `pointShadowAt(k, ...)` from a basis generated off `CUBE_FACES`, so the
+  receiver and `pointFaceMatrices` cannot disagree - `faceBasis`, pinned
+  both ways). One texture unit for any number of casters; the culling
+  above is what makes 24 face replays cheap. `shadowOfLight(i, ...)` gives
+  each light its caster's shadow, after a range early-out that spares the
+  shadow taps, the glint and the pow for every light out of its window.
+- THE RESOLVE CRUSHED THE DARKS (the harness's find). EL4's contrast,
+  1.04 about 0.18 IN LINEAR LIGHT, sent everything under 0.007 linear
+  (byte 18) to black: six pixels in ten of a dungeon frame, half of a
+  night street. The same 1.04 about mid-grey of the ENCODED value is a
+  grade, not a gate.
+
+**THE HARNESS: `tools/enhancedLightingProbe.mjs`.** The arc's pins run on a
+fake GL that compiles anything and draws nothing; this session has no
+game data. The probe draws a synthetic room and a street through the real
+renderer on a real WebGL2 context (headless Chromium, ANGLE over
+SwiftShader): classic and lane, dungeon and exterior, day and night, a
+lantern behind a wall and one in the open, a flat. It reads the pixels
+back, writes the PNGs (`scratch/el5/`, ignored), and FAILS on: a program
+that does not compile, a black or white frame, a lantern whose glare
+reaches the wall in front of it (the wall's pixels with and without the
+lantern: 0.005 of difference now, the bleed gone), a wall that casts no
+shadow from the lantern behind it (the floor in its shadow at 0.05 against
+the classic's unshadowed 0.11), replays that cull nothing. Every lane
+program compiles and links; the frames read as the design meant them:
+warm lantern light with the wall's shadow, sun shadows of the pillar, the
+wall, the crate and the flat's cutout on the street, the night street's
+lanterns with their glares.
+
+**Known limits, seen in the probe and recorded:** a hairline of light at
+the junction of a sun-facing wall and the ceiling above it in a roofed
+room under the sun (the PCF's outer taps fall past the occluder's
+silhouette) - the classic contact leak of every shadow map, mitigated not
+cured by the normal offset; a dungeon has no sun, so it shows outdoors
+under eaves and arches. The eye's image, the shafts and the AO were not
+re-judged here beyond "they run and the frame is right".
+
+**Pins:** test/el5_field.test.js (8): the sphere planes and the sphere
+test on an ortho box, a perspective frustum and the six faces; boundsOf
+and transformSphere; the casters' pick; the face basis against
+pointFaceMatrices on every face, and the shader's constants; every lane
+shader's early-out and `shadowOfLight`; the bundles' bounds; the replays'
+culling on the fake GL (two casters, a far sub-mesh, a far terrain, a far
+batch, a bare bundle); the glare, the resolve and the probe's own checks
+as text. tools/mutants/el5.json (33). The el2/el3 pins re-aimed to the
+array and the array uploads; four el2/el3 records re-aimed.
+
