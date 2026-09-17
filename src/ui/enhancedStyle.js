@@ -738,15 +738,24 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    between tiles as the only surface a finger could scroll from - every
    finger-down was a drag at a 4px threshold, and INV2 had just made a
    release off the panel a DROP. A flick pans the list now; a touch drag
-   begins on a HOLD (enhancedInventory's TOUCH_HOLD_MS), and only then
-   does .draglock take the pan back for the rest of the gesture. */
+   begins on a HOLD (enhancedInventory's TOUCH_HOLD_MS).
+   INV3: AND .draglock DOES NOT TAKE THE PAN BACK FOR THAT GESTURE.
+   Chromium reads the effective touch-action when the touch SEQUENCE
+   begins, so a class that lands 320ms later reaches the next gesture
+   and not the one in flight - measured, with the lock on the list
+   scrolled and the pointer cancelled exactly as with no lock at all.
+   What holds a live gesture is preventDefault on a cancelable
+   touchmove, which enhancedInventory's onDragHold takes. These rules
+   stay for the gesture that does begin under the class: a SECOND finger
+   panning the list out from under a live drag. */
 .itemrow { touch-action: pan-y; -webkit-user-select: none; user-select: none; }
 body.draglock .itemrow, body.draglock .packlists { touch-action: none; }
 /* MAC-M2 (Mac: "hold to drag ... doesn't work when trying to take items
    off your character"): THE BODY'S PANELS TAKE THE SAME GESTURE, so
    they take the same two rules - a hold must not also long-press-select
-   the slot name out from under the finger, and once the hold has armed,
-   .draglock takes the pan back here too. */
+   the slot name out from under the finger, and a second finger must not
+   pan the body out from under a live drag (INV3: which is all
+   .draglock was ever able to do). */
 .wornrow { touch-action: pan-y; -webkit-user-select: none; user-select: none; }
 body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
 .itemrow.dragover { box-shadow: inset 0 2px 0 var(--brass); }
