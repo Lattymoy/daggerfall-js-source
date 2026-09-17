@@ -45,6 +45,18 @@ test('QS1 key: what a player reads as "the same item", and nothing that wears', 
   assert.notEqual(quickslotKey(sword()), quickslotKey(sword({ legendary: 'Chrysamere' })));
   assert.notEqual(quickslotKey(sword()), quickslotKey(sword({ affixes: [{ id: 'keen' }] })));
   assert.equal(quickslotKey(null), null);
+  // A plain record's key is cached for the object's life; an enchanted
+  // one is not, because the item maker writes enchantments onto an
+  // existing record and the key must follow. Both are read through the
+  // same door.
+  const plainSword = sword();
+  assert.equal(quickslotKey(plainSword), quickslotKey(plainSword));
+  const toEnchant = sword();
+  const before = quickslotKey(toEnchant);
+  toEnchant.enchantments = [{ type: 3, param: 4 }];
+  assert.notEqual(quickslotKey(toEnchant), before, 'the enchanted record keys as the enchanted kind');
+  toEnchant.enchantments = [];
+  assert.equal(quickslotKey(toEnchant), before, 'and an emptied list is the plain kind again');
 });
 
 test('QS1 kinds: a consumable is a potion or a drug; a swap is an unequipped weapon that is not an arrow', () => {

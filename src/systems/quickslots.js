@@ -76,10 +76,18 @@ const state = { c1: null, c2: null, swap: null };
  *  the affixes the loot arc mints. Condition and stack size are NOT in
  *  it: a worn Potion of Healing is still a Potion of Healing, and a
  *  swap weapon that has taken a knock is still the swap weapon. */
-const _keys = new WeakMap();   // per record: the fields below are set at the mint and never move
+/** Per record, for the PLAIN ones: template, group, material and recipe
+ *  are set at the mint and never move, so a plain record's key is computed
+ *  once for the life of the object. A record carrying enchantments or
+ *  affixes is NOT cached - the item maker writes `item.enchantments` onto
+ *  an existing record (systems/enchanting.js), and a cached key would say
+ *  the enchanted sword is still the plain one until the next load said
+ *  otherwise. Those are few in a pack, and they pay the stringify. */
+const _keys = new WeakMap();
+const plain = (it) => !(it.enchantments?.length || it.customEnchantments?.length || it.affixes?.length);
 export function quickslotKey(item) {
-  if (!item) return null;
-  if (typeof item !== 'object') return null;
+  if (!item || typeof item !== 'object') return null;
+  if (!plain(item)) return computeKey(item);
   const had = _keys.get(item);
   if (had !== undefined) return had;
   const key = computeKey(item);

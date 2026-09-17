@@ -104,7 +104,7 @@
     "name": "QS3-the-torch-cell-borrows-an-action-instead-of-the-mods-own-key",
     "file": "src/ui/quickslotTags.js",
     "old": "  if (kind === 'torch') return torchTag(opts.readTorchKey ?? undefined);",
-    "new": "  if (kind === 'torch') return quickslotTag(QUICKSLOT_ACTIONS.swap, opts);",
+    "new": "  if (kind === 'torch') return quickslotTag(CELL_ACTIONS.swap, opts);",
     "tests": [
       "test/qs3_hud.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "QS3-a-shield-in-the-off-hand-grows-a-tag-that-presses-nothing",
     "file": "src/ui/quickslotTags.js",
-    "old": "  if (kind === 'swap') return quickslotTag(QUICKSLOT_ACTIONS.swap, opts);\n  return null;",
-    "new": "  return quickslotTag(QUICKSLOT_ACTIONS.swap, opts);",
+    "old": "  if (kind === 'swap') return quickslotTag(CELL_ACTIONS.swap, opts);\n  return null;",
+    "new": "  return quickslotTag(CELL_ACTIONS.swap, opts);",
     "tests": [
       "test/qs3_hud.test.js"
     ]

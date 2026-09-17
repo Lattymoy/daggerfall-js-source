@@ -28,7 +28,7 @@ import {
   PAD_GLYPHS, PAD_FAMILIES, GLYPH_SIZE, padFamilyOf, padFamily, setPadFamily,
   unityButtonGlyph, glyphSvg, _clearGlyphCache,
 } from '../src/ui/padGlyphs.js';
-import { quickslotTag, quickslotOffTag, torchTag, tagKey, QUICKSLOT_ACTIONS, tagText } from '../src/ui/quickslotTags.js';
+import { quickslotTag, quickslotOffTag, torchTag, tagKey, CELL_ACTIONS, tagText } from '../src/ui/quickslotTags.js';
 import { createBindings, setBinding } from '../src/systems/inputActions.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
@@ -164,7 +164,7 @@ test('QS3 the tag law: the pad while the pad is live, the key otherwise, and NOT
   // WHICH TAG GOES WHERE. The off hand's is decided by what stands in
   // it: a lit torch is the MOD's key, a swap weapon is QuickSwap, and a
   // shield or an empty socket has nothing to press at all.
-  assert.deepEqual(QUICKSLOT_ACTIONS, { main: 'ReadyWeapon', c1: 'QuickUse1', c2: 'QuickUse2', swap: 'QuickSwap' });
+  assert.deepEqual(CELL_ACTIONS, { main: 'ReadyWeapon', c1: 'QuickUse1', c2: 'QuickUse2', swap: 'QuickSwap' });
   assert.equal(quickslotOffTag('shield', key), null);
   assert.equal(quickslotOffTag('empty', key), null);
   assert.deepEqual(quickslotOffTag('swap', key), { kind: 'glyph', family: 'xbox', code: 'JoystickButton3' });

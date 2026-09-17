@@ -33,7 +33,7 @@ import { unityButtonGlyph } from './padGlyphs.js';
 /** Which action each cell of the diamond announces. The off hand's is
  *  decided by what is IN it, so it is a function of the kind rather
  *  than a constant - see `quickslotOffAction`. */
-export const QUICKSLOT_ACTIONS = Object.freeze({
+export const CELL_ACTIONS = Object.freeze({
   main: 'ReadyWeapon',   // draw / sheathe: the one thing the main hand's cell does
   c1: 'QuickUse1',
   c2: 'QuickUse2',
@@ -94,7 +94,7 @@ export function torchTag(read = () => modSetting(TORCH_VENDOR, TORCH_TOGGLE_SETT
  *  empty socket has nothing to press. */
 export function quickslotOffTag(kind, opts = {}) {
   if (kind === 'torch') return torchTag(opts.readTorchKey ?? undefined);
-  if (kind === 'swap') return quickslotTag(QUICKSLOT_ACTIONS.swap, opts);
+  if (kind === 'swap') return quickslotTag(CELL_ACTIONS.swap, opts);
   return null;
 }
 

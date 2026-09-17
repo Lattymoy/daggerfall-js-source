@@ -73,7 +73,7 @@ import { modelIconUrl } from './itemIconUrl.js';
 import { fpArm } from '../combat/fpArm.js';   // the Morrowind ground mesh the inventory takes through its deps bag
 import { requestIcon } from './textureCanvas.js';
 import { inventoryItemImage } from '../systems/itemTemplates.js';
-import { quickslotTag, quickslotOffTag, tagKey, QUICKSLOT_ACTIONS } from './quickslotTags.js';
+import { quickslotTag, quickslotOffTag, tagKey, CELL_ACTIONS } from './quickslotTags.js';
 import { glyphSvg, padFamily } from './padGlyphs.js';
 import { controllerLook } from '../player/lookFilter.js';   // GP1's own latch: "the last input was the pad"
 import { bindings } from './input.js';
@@ -604,10 +604,10 @@ function drawQuickslots(vitals, opts) {
   const controller = controllerLook() && !!family;
   const tagOpts = { bindings: bindings(), controller, family: family ?? 'xbox' };
   const tags = {
-    main: quickslotTag(QUICKSLOT_ACTIONS.main, tagOpts),
+    main: quickslotTag(CELL_ACTIONS.main, tagOpts),
     off: quickslotOffTag(view.off.kind, tagOpts),
-    c1: quickslotTag(QUICKSLOT_ACTIONS.c1, tagOpts),
-    c2: quickslotTag(QUICKSLOT_ACTIONS.c2, tagOpts),
+    c1: quickslotTag(CELL_ACTIONS.c1, tagOpts),
+    c2: quickslotTag(CELL_ACTIONS.c2, tagOpts),
   };
   // TI2: a FIXED virtual stick sits bottom-left at inset 36 radius 56,
   // which is this block's own corner - so the block steps right of it,
