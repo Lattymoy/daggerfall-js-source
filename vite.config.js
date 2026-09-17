@@ -114,7 +114,7 @@ export default defineConfig({
     // what every other asset must keep - a callback that returned
     // `true` for them would force-inline them all REGARDLESS of size,
     // which is the opposite mistake and just as quiet.
-    assetsInlineLimit: (filePath) => (/[\\/]vendor[\\/](?:eye-of-the-beholder|immersive-footsteps)[\\/]/.test(filePath) ? false : undefined),   // AUDIT-IF F1: the same class for Immersive Footsteps' 210 clips (123 of them under 4 KB - 250 KB of base64 in the main chunk)
+    assetsInlineLimit: (filePath) => (/[\\/]vendor[\\/](?:eye-of-the-beholder|immersive-footsteps|weapon-sheathing)[\\/]/.test(filePath) ? false : undefined),   // AUDIT-IF F1: the same class for Immersive Footsteps' 210 clips (123 of them under 4 KB - 250 KB of base64 in the main chunk)
     // TWO PAGES. The game, and the voxel editor — which is a real route
     // now rather than a standalone file you have to build yourself.
     // Neither carries game data: the editor asks for the user's ARENA2

@@ -1,0 +1,189 @@
+Weapon Sheathing
+By Greatness7
+
+==========
+CHANGE LOG
+==========
+Version 1.0
+    Initial release.
+Version 1.1
+    Fixed some torch-related bugs.
+    Added alternative axe/blunt rotations.
+Version 1.2
+    Compatibility update for openMW users.
+Version 1.3
+    Fixed lockpick/probe handling.
+    Cleaned up unnecessary logging.
+Version 1.4
+    Added ingame MWSE version check on launch.
+    Fixed an issue that caused some items to not be visible.
+Version 1.5
+    Minor bugfixes
+Version 1.6
+    Minor fixes for various meshes.
+    Significantly reduced memory usage.
+    Added Chrysamere mesh by PikachunoTM.
+    Added Steel Longbow mesh by Remiros.
+    Added Steel Crossbow mesh by akortunov.
+    Adjusted positioning of 2h Axes/Blunt.
+    Added OpenMW-specific animation files.
+
+
+===========
+Description
+===========
+Makes equipped weapons no longer disappear when lowered. Instead they will shown on the character's hip or back. This new functionality affects both the player and all other characters, and works with all weapons from all mods. Additionally features a comprehensive set of high quality quiver and scabbard assets.
+
+============
+Requirements
+============
+
+MWSE Version:
+    You must have MWSE's dependencies installed: https://mwse.readthedocs.io/en/latest/installation.html
+    You must have MWSE 2.1-dev or later, available at: https://nullcascade.com/mwse/mwse-dev.zip
+
+OpenMW Version:
+    You must have the latest nightly build of OpenMW, available at: https://forum.openmw.org/viewtopic.php?t=1808
+
+============
+Installation
+============
+
+MWSE Version:
+    Make sure you're on the latest nightly build of MWSE.
+    Place the contents of the mod archive into your "/Morrowind/Data Files/" directory.
+
+OpenMW Version:
+    Make sure you're on the latest nightly build of OpenMW.
+    Place the contents of the mod archive into your "/Morrowind/Data Files/" directory.
+    Add the following to your settings.cfg file:
+        ﻿﻿[Game]
+        weapon sheathing = true
+        use additional anim sources = true
+
+If you find that the included sheath art clashes with your installed replacers you can simply delete the problematic "_sh.nif" files.
+
+============
+Modder Notes
+============
+If you want to add custom sheath visuals to your own weapons this mod makes the process both easy and efficient. No additional scripting needed. You simply need to place the mesh containing your custom visuals into the same directory as your weapon mesh, and give it a matching filename with an added "_sh" suffix.
+
+Example:
+    meshes/w/w_saber.nif     # the original base mesh
+    meshes/w/w_saber_sh.nif  # the sheathed version
+
+
+The contents of your "_sh" file should follow the conventions of those included in this archive. "Weapon" parts (those that should be removed when drawn) should be placed under a NiNode named "Bip01 Weapon", and "Sheath" parts (those that should always be visible) should be placed under a NiNode named "Bip01 Sheath". If your mesh is a quiver then you should also create a "Bip01 Ammo" NiNode with additional nodes inside (which will be used for attaching ammunition).
+
+Example:
+    |-Scene Root
+    |
+    |---Bip01 Sheath
+    |  |
+    |  |---TriShape(s)
+    |
+    |---Bip01 Weapon
+    |  |
+    |  |---TriShape(s)
+
+There are around 70 "_sh" meshes included in the archive, be sure to check them out for more detailed examples.
+
+Note that all of this is optional! If you choose not to, the mod will still display the weapon's base mesh while sheathed.
+
+
+===========
+Permissions
+===========
+Everything included in this mod is free to use for your own Morrowind projects, so long as you give credit to the original authors and do not charge a monetary fee.
+
+============
+Full Credits
+============
+All credit for the OpenMW implementation goes to akortunov and the OpenMW team.
+
+Special thanks Hrnchamd and NullCascade, their brilliant work on MWSE made this mod possible.
+
+The featured art assets were submitted by a variety of talented artists. Listed below are the names of each author and the assets they authored. Be sure to give credit where it is due if you use any of these in your own projects.
+
+akortunov
+    crossbow
+    steel crossbow
+Greatness7
+    bonemold long bow
+    daedric_crescent_unique
+Heinrich
+    iron broadsword
+    iron dagger
+    iron saber
+    iron tanto
+    iron wakizashi
+    nordic broadsword
+    nordic claymore
+    steel broadsword
+    steel claymore
+    steel dagger
+    steel dai-katana
+    steel katana
+    steel longsword
+    steel saber
+    steel shortsword
+    steel tanto
+    steel wakizashi
+London Rook
+    chitin dagger
+    chitin short bow
+    chitin shortsword
+    glass claymore
+    glass dagger
+    glass longsword
+Lord Berandas
+    adamantium_claymore
+    adamantium_shortsword
+    ebony broadsword
+    ebony longsword
+    ebony scimitar
+    ebony shortsword
+    fork_horripilation_unique
+    silver claymore
+    silver dagger
+    silver longsword
+    silver shortsword
+    sword of almalexia
+Melchior Dahrk
+    claymore_iceblade_unique
+    daedric claymore
+    daedric dagger
+    daedric dai-katana
+    daedric katana
+    daedric long bow
+    daedric longsword
+    daedric shortsword
+    daedric tanto
+    daedric wakizashi
+    dagger_fang_unique
+    goblin_sword
+    iron claymore
+    iron longsword
+    iron shortsword
+MementoMoritius
+    keening
+Petethegoat
+    dwarven claymore
+    dwarven crossbow
+    dwarven shortsword
+PikachunoTM
+    chrysamere
+Remiros
+    bm huntsman crossbow
+    ebony_bow_auriel
+    imperial broadsword
+    imperial shortsword
+    katana_goldbrand_unique
+    long bow
+    longbow_shadows_unique
+    longsword_umbra_unique
+    short bow
+    steel longbow
+
+Additional thanks to Melchior Dahrk for the nexus page art!
+============
