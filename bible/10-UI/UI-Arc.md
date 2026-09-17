@@ -14066,7 +14066,7 @@ the tooltip keeps filling slots.
 (the readout listens to nothing but the three coarse-pointer taps the
 departure names; the two hands still arrive through drawHud's bag and
 `.hud-hand` is pinned gone). Mutated: `tools/mutants/qs1.json` 22/22,
-`qs2.json` 19/19, `qs3.json` 26/26 dead. NOT SEEN ON A GPU with ARENA2
+`qs2.json` 19/19, `qs3.json` 27/27 dead. NOT SEEN ON A GPU with ARENA2
 art: the probe's cells drew their two-letter fallback, which is the
 ladder's last arm and not its first.
 

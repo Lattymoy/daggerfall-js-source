@@ -240,11 +240,14 @@ test('QS3: the sheet - clipped not rotated, one number for the geometry, and the
   assert.match(CSS, /\.hud-quick \{[\s\S]{0,1100}?transform: scale\(var\(--hud-scale\)\); transform-origin: bottom left;/);
   // THE INSET GROWS WITH THE SCALE, and 30px is MEASURED rather than
   // chosen: `.hud-bottom` is bottom-anchored and grows upward, so the
-  // vitals row's top edge is at 778 - 30 * scale on an 800px viewport
-  // (748 at scale 1, 718 at 2 - tools/qs3Probe.mjs). At scale 1 the two
-  // never meet, because the bars are centred and this is in a corner;
-  // at 2 the bars are 1196px wide and the bottom cell stood in them.
-  assert.match(CSS, /bottom: calc\(24px \+ 30px \* \(var\(--hud-scale\) - 1\) \+ env\(safe-area-inset-bottom, 0px\)\);/);
+  // vitals row's top edge is at 22 + 30 * scale from the bottom
+  // (748 at scale 1, 718 at 2 on 800px - tools/qs3Probe.mjs). The bars
+  // are centred and reach this corner past about scale 1.2, so the
+  // block's bottom edge rides that line at EVERY scale - AUDIT QS: the
+  // first draft stepped 30px per unit, cleared 2, and stood in the
+  // magicka bar at 1.5. And 22px under the diamond holds the bottom tag.
+  assert.match(CSS, /bottom: calc\(22px \+ 32px \* var\(--hud-scale\) \+ env\(safe-area-inset-bottom, 0px\)\);/);
+  assert.match(CSS, /padding: 0 30px 22px; display: flex; flex-direction: column;/);
   // THE CAPTION IS CAPPED AT THE DIAMOND'S WIDTH and wraps: a readied
   // spell can be called anything, and an unbounded row made the block
   // 515px wide on a 430px phone - measured, with the whole block off

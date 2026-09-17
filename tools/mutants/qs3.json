@@ -237,5 +237,14 @@
     "tests": [
       "test/qs3_hud.test.js"
     ]
+  },
+  {
+    "name": "AUDITQS-the-block-steps-30-per-unit-and-stands-in-the-bar-at-1.5",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  bottom: calc(22px + 32px * var(--hud-scale) + env(safe-area-inset-bottom, 0px));",
+    "new": "  bottom: calc(24px + 30px * (var(--hud-scale) - 1) + env(safe-area-inset-bottom, 0px));",
+    "tests": [
+      "test/qs3_hud.test.js"
+    ]
   }
 ]
