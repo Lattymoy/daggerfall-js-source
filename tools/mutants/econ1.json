@@ -1,0 +1,137 @@
+[
+  {
+    "name": "ECON1-the-clock-installs-no-price-source",
+    "file": "src/systems/worldTick.js",
+    "old": "  setWorldPriceSource(_sharedClock ? (regionIndex) => worldRegionPrice(regionIndex, _sharedClock()) : null);",
+    "new": "",
+    "tests": [
+      "test/econ1_world_prices.test.js"
+    ]
+  },
+  {
+    "name": "ECON1-the-source-outlives-the-clock",
+    "file": "src/systems/worldTick.js",
+    "old": "  setWorldPriceSource(_sharedClock ? (regionIndex) => worldRegionPrice(regionIndex, _sharedClock()) : null);",
+    "new": "  if (_sharedClock) setWorldPriceSource((regionIndex) => worldRegionPrice(regionIndex, _sharedClock()));",
+    "tests": [
+      "test/econ1_world_prices.test.js"
+    ]
+  },
+  {
+    "name": "ECON1-the-seam-reads-the-players-own",
+    "file": "src/systems/shopStock.js",
+    "old": "  if (_worldPrice) { const p = _worldPrice(regionIndex); if (Number.isFinite(p)) return p; }",
+    "new": "",
+    "tests": [
+      "test/econ1_world_prices.test.js"
+    ]
+  },
+  {
+    "name": "ECON1-the-seam-writes-the-worlds-into-the-save",
+    "file": "src/systems/shopStock.js",
+    "old": "  if (_worldPrice) { const p = _worldPrice(regionIndex); if (Number.isFinite(p)) return p; }",
+    "new": "  if (_worldPrice) { const p = _worldPrice(regionIndex); if (Number.isFinite(p)) { (playerEntity.regionPrices ??= {})[regionIndex] = p; return p; } }",
+    "tests": [
+      "test/econ1_world_prices.test.js"
+    ]
+  },
+  {
+    "name": "ECON1-the-world-opens-at-the-pivot",
+    "file": "src/systems/worldTick.js",
+    "old": "    for (let i = 0; i < REGION_COUNT; i++) prices[i] = initialRegionPrice(init());",
+    "new": "    for (let i = 0; i < REGION_COUNT; i++) prices[i] = 1000;",
+    "tests": [
+      "test/econ1_world_prices.test.js"
+    ]
+  },
+  {
+    "name": "ECON1-the-world-opens-off-the-walks-salt",
+    "file": "src/systems/worldTick.js",
+    "old": "    const init = dayRng(ECON_EPOCH_DAY * MINUTES_PER_DAY, DAY_SALT.priceInit);",
+    "new": "    const init = dayRng(ECON_EPOCH_DAY * MINUTES_PER_DAY, DAY_SALT.prices);",
+    "tests": [
+      "test/econ1_world_prices.test.js"
+    ]
+  },
+  {
+    "name": "ECON1-the-world-walks-with-a-tilt",
+    "file": "src/systems/worldTick.js",
+    "old": "    const prices = _worldPrices.prices.map((adj) => priceWalkStep(adj, 0, gen()));",
+    "new": "    const prices = _worldPrices.prices.map((adj) => priceWalkStep(adj, 5, gen()));",
+    "tests": [
+      "test/econ1_world_prices.test.js"
+    ]
+  },
+  {
+    "name": "ECON1-the-world-walks-one-generator-for-all-days",
+    "file": "src/systems/worldTick.js",
+    "old": "    const gen = dayRng(next * MINUTES_PER_DAY, DAY_SALT.prices);",
+    "new": "    const gen = dayRng(ECON_EPOCH_DAY * MINUTES_PER_DAY, DAY_SALT.prices);",
+    "tests": [
+      "test/econ1_world_prices.test.js"
+    ]
+  },
+  {
+    "name": "ECON1-a-day-behind-the-cache-reads-the-cache",
+    "file": "src/systems/worldTick.js",
+    "old": "  if (!_worldPrices || _worldPrices.day > d) {",
+    "new": "  if (!_worldPrices) {",
+    "tests": [
+      "test/econ1_world_prices.test.js"
+    ]
+  },
+  {
+    "name": "ECON1-online-the-players-prices-are-walked-too",
+    "file": "src/systems/worldTick.js",
+    "old": "      for (let i = 0; i < REGION_COUNT; i++) applyPriceConditionFlags(entity.regionConditions ?? null, i, prices[i], flagRolls);",
+    "new": "      for (let i = 0; i < REGION_COUNT; i++) { (entity.regionPrices ??= {})[i] = prices[i]; applyPriceConditionFlags(entity.regionConditions ?? null, i, prices[i], flagRolls); }",
+    "tests": [
+      "test/econ1_world_prices.test.js"
+    ]
+  },
+  {
+    "name": "ECON1-online-the-flags-are-not-applied",
+    "file": "src/systems/worldTick.js",
+    "old": "      for (let i = 0; i < REGION_COUNT; i++) applyPriceConditionFlags(entity.regionConditions ?? null, i, prices[i], flagRolls);",
+    "new": "",
+    "tests": [
+      "test/econ1_world_prices.test.js"
+    ]
+  },
+  {
+    "name": "ECON1-the-step-rises-on-a-failed-roll",
+    "file": "src/systems/shopStock.js",
+    "old": "  const next = dice100(chanceOfPriceRise, roll01) ? Math.trunc(51 * adj / 50) : Math.trunc(49 * adj / 50);",
+    "new": "  const next = dice100(chanceOfPriceRise, roll01) ? Math.trunc(49 * adj / 50) : Math.trunc(51 * adj / 50);",
+    "tests": [
+      "test/econ1_world_prices.test.js"
+    ]
+  },
+  {
+    "name": "ECON1-the-step-drops-the-players-tilt",
+    "file": "src/systems/shopStock.js",
+    "old": "  const chanceOfPriceRise = (powerBias | 0) + 50 - Math.trunc((adj - 1000) / 25);",
+    "new": "  const chanceOfPriceRise = 50 - Math.trunc((adj - 1000) / 25);",
+    "tests": [
+      "test/econ1_world_prices.test.js"
+    ]
+  },
+  {
+    "name": "ECON1-the-step-never-clamps",
+    "file": "src/systems/shopStock.js",
+    "old": "  return Math.min(PRICE_ADJUSTMENT_MAX, Math.max(PRICE_ADJUSTMENT_MIN, next));",
+    "new": "  return next;",
+    "tests": [
+      "test/econ1_world_prices.test.js"
+    ]
+  },
+  {
+    "name": "ECON1-the-flag-half-forgets-the-low-arm",
+    "file": "src/systems/shopStock.js",
+    "old": "      turnOnConditionFlag(conditions, regionIndex, REGION_FLAGS.PricesLow, rolls);\n    }\n  } else {",
+    "new": "    }\n  } else {",
+    "tests": [
+      "test/econ1_world_prices.test.js"
+    ]
+  }
+]

@@ -73,7 +73,9 @@ import { passiveSpecialsMagicRound } from './passiveSpecials.js';   // V2c: care
 // S41 - the day-change block's four members. They live in their own
 // systems; this file is only the ONE PLACE that runs them on a day
 // boundary, which is where PlayerEntity.Update runs them.
-import { updateRegionalPrices } from './shopStock.js';            // FormulaHelper.UpdateRegionalPrices (:2053)
+import { updateRegionalPrices, setWorldPriceSource, initialRegionPrice, priceWalkStep, applyPriceConditionFlags } from './shopStock.js';            // FormulaHelper.UpdateRegionalPrices (:2053); ECON1: the world's price seam and the walk's one-home pieces
+import { REGION_COUNT } from './regionConditions.js';   // ECON1: the world's walk is region-major, as DFU's
+import { ONLINE_EPOCH_MINUTES } from '../net/wire.js';   // ECON1: the world's economy begins the day the online world stood at the classic start
 import { rollClimateWeathersForDay, evolveClimateWeathers } from './weatherSim.js';      // WeatherManager.SetClimateWeathers (:419); CLK2: the enhanced lane's hourly evolution
 import { seededRng } from './wind.js';   // WORLD6b: the shared day's own generator for the region's walk
 import { removeExpiredRooms } from './tavern.js';                 // PlayerEntity.RemoveExpiredRentedRooms (:257)
@@ -89,12 +91,51 @@ const SHARED_DAY_SEED = 0x44415953;   // 'DAYS'
 /** AUDIT WORLD6b C5: each consumer of a day's rolls has its own SALT - the price walk and the faction powers fired
  *  on one day from one seed and drew the identical sequence from index zero (the weather's rollsFor has a salt for
  *  the same reason). */
-export const DAY_SALT = Object.freeze({ prices: 1, powers: 2 });
+export const DAY_SALT = Object.freeze({ prices: 1, powers: 2, priceInit: 3, conditions: 4 });   // ECON1: the world's opening indices, and the player's flag draws off the world's index
+/** ECON1: THE day's generator - the world's day and the consumer's salt, whoever asks and whether or not the shared
+ *  clock stands (the world's economy is a function of the day alone, computable anywhere). */
+export const dayRng = (minute, salt = 0) => seededRng(((Math.floor(minute / MINUTES_PER_DAY) * 7919) ^ SHARED_DAY_SEED ^ Math.imul(salt | 0, 0x9E3779B1)) >>> 0);
 /** WORLD6b: the generator a day's rolls come from. Under the shared clock the day's rolls are THE DAY'S - the price
  *  walk's and the faction powers' generator is seeded by the world's day (the weather's own law, WORLD5 rollsFor)
- *  and the consumer's salt; offline, the caller's own `rolls`. The STATE stays each player's (the prices and the
- *  powers live on the entity - DFU has one player); one economy is the region as a world, and a later slice. */
-export const dayRollsFor = (minute, rolls, salt = 0) => (sharedClockOn() ? seededRng(((Math.floor(minute / MINUTES_PER_DAY) * 7919) ^ SHARED_DAY_SEED ^ Math.imul(salt | 0, 0x9E3779B1)) >>> 0) : rolls);
+ *  and the consumer's salt; offline, the caller's own `rolls`. The powers' STATE stays each player's (they live on
+ *  the entity, and quests move them - Multiplayer.md's first lock); the PRICES are the world's (ECON1, below). */
+export const dayRollsFor = (minute, rolls, salt = 0) => (sharedClockOn() ? dayRng(minute, salt) : rolls);
+
+// ECON1 (2026-09-17, the STOP list's "one economy"): THE REGION'S PRICES ARE THE WORLD'S. DFU walks each region's
+// price index once a day on the player's own state (RandomizeInitialRegionalPrices at the start, UpdateRegionalPrices
+// :2053-2088 each day), tilted by The Merchants' power against the region's. WORLD6b made the day's ROLLS the world's
+// and left the STATE each player's, so two players who arrived on different days read different prices in one shop.
+// Here the index is a pure function of the world's day: the opening indices are drawn on the world's epoch day (the
+// day the online world stood at the classic start, ONLINE_EPOCH_MINUTES) from the day's own generator, region-major
+// as DFU draws them, and every day since is walked with that day's generator, one roll a region, region-major. The
+// merchants' tilt is DROPPED (the powers are each player's - quests move them - so the term was the one input that
+// could not be the world's; the STOP record offered "split out or dropped"): the world's walk is the pure mean
+// reversion around 1000 that DFU's own comment describes, with the tilt at zero. Catching up equals having stayed,
+// and a player away a week reads exactly what one who stayed reads: today's index. No wire, no owner, no memory -
+// every client computes the same numbers from the same day.
+const ECON_EPOCH_DAY = Math.floor(ONLINE_EPOCH_MINUTES / MINUTES_PER_DAY);
+let _worldPrices = null;   // { day, prices: number[REGION_COUNT] } - the last day computed; a later day walks on from it
+/** ECON1: every region's index on a world day (an absolute day number, classic minutes / MINUTES_PER_DAY). A day
+ *  before the epoch reads the epoch's. Cached by day and walked forward; a day behind the cache is rebuilt from the
+ *  epoch, so the answer is the day's whatever was asked before. */
+export function worldRegionPricesOn(day) {
+  const d = Math.floor(Number.isFinite(day) ? day : ECON_EPOCH_DAY);
+  if (!_worldPrices || _worldPrices.day > d) {   // (a day before the epoch lands here too and reads the epoch's: the walk below has nowhere to go)
+    const init = dayRng(ECON_EPOCH_DAY * MINUTES_PER_DAY, DAY_SALT.priceInit);
+    const prices = new Array(REGION_COUNT);
+    for (let i = 0; i < REGION_COUNT; i++) prices[i] = initialRegionPrice(init());
+    _worldPrices = { day: ECON_EPOCH_DAY, prices };
+  }
+  while (_worldPrices.day < d) {
+    const next = _worldPrices.day + 1;
+    const gen = dayRng(next * MINUTES_PER_DAY, DAY_SALT.prices);
+    const prices = _worldPrices.prices.map((adj) => priceWalkStep(adj, 0, gen()));
+    _worldPrices = { day: next, prices };
+  }
+  return _worldPrices.prices;
+}
+/** ECON1: one region's index at a classic minute of the world's (today's, by default). */
+export const worldRegionPrice = (regionIndex, minute = worldMinutes()) => worldRegionPricesOn(Math.floor(minute / MINUTES_PER_DAY))[regionIndex | 0] ?? 1000;
 
 export { MINUTES_PER_DAY };
 
@@ -342,9 +383,17 @@ export function runDayChange({ entity, lastMinutes, nowMinutes, rolls = Math.ran
   // change (the walk is region-major, day-minor), so a player back from three days away walked a different region
   // than one who was there every day. Per day, the walk is a function of the state and the days walked alone:
   // catching up equals having stayed. Offline the caller's stream walks the span whole, as DFU does.
+  // ECON1: under the shared clock the prices are THE WORLD'S (worldRegionPricesOn) and this player's `regionPrices`
+  // are not walked and not written - the save keeps its own economy for its own world. What is this player's is the
+  // CONDITION half (PricesHigh / PricesLow are the player's region-condition store, which the rumours and the court
+  // read): it is applied from the world's index, one day at a time, with the day's own generator for the flag's
+  // duration draw - so two players who walked different spans read the same flags.
   if (sharedClockOn()) {
     const firstDay = Math.floor(lastMinutes / MINUTES_PER_DAY) + 1, lastDay = Math.floor(nowMinutes / MINUTES_PER_DAY);
-    for (let d = firstDay; d <= lastDay; d++) updateRegionalPrices(entity, entity.factionRep?.dict ?? null, 1, dayRollsFor(d * MINUTES_PER_DAY, rolls, DAY_SALT.prices), entity.regionConditions ?? null);
+    for (let d = firstDay; d <= lastDay; d++) {
+      const prices = worldRegionPricesOn(d), flagRolls = dayRng(d * MINUTES_PER_DAY, DAY_SALT.conditions);
+      for (let i = 0; i < REGION_COUNT; i++) applyPriceConditionFlags(entity.regionConditions ?? null, i, prices[i], flagRolls);
+    }
   } else updateRegionalPrices(entity, entity.factionRep?.dict ?? null, daysPast, rolls, entity.regionConditions ?? null);
 
   // :447-448 - roll the six climate zones and RAISE the pending-apply
@@ -786,6 +835,9 @@ export function setSharedClock(source, wallOf = null) {
   _sharedClock = typeof source === 'function' ? source : null;
   _sharedWall = _sharedClock && typeof wallOf === 'function' ? wallOf : null;
   _sharedLastTick = null;
+  // ECON1: the world's prices stand with the world's clock - every consumer of regionPriceAdjustment reads today's
+  // world index while the clock stands, and the player's own again when it goes
+  setWorldPriceSource(_sharedClock ? (regionIndex) => worldRegionPrice(regionIndex, _sharedClock()) : null);
 }
 export const sharedClockOn = () => _sharedClock !== null;
 

@@ -20,7 +20,8 @@ import { OnlineSession } from '../src/net/online.js';
 import { fakeRoom } from './fakeRoom.mjs';
 import { fakeSocketClass } from './fakeSocket.mjs';
 import { createExteriorFoes, MAX_ACTIVE_ENCOUNTER_FOES } from '../src/scenes/exteriorFoes.js';
-import { runDayChange, dayRollsFor, setSharedClock, sharedClockOn, MINUTES_PER_DAY } from '../src/systems/worldTick.js';
+import { runDayChange, dayRollsFor, setSharedClock, sharedClockOn, MINUTES_PER_DAY, worldRegionPricesOn } from '../src/systems/worldTick.js';
+import { regionPriceAdjustment } from '../src/systems/shopStock.js';   // ECON1
 import { seededRng } from '../src/systems/wind.js';
 import { MERCHANTS_FACTION_ID } from '../src/systems/guilds.js';
 import { FACTION_TYPES } from '../src/formats/factionFile.js';
@@ -303,15 +304,17 @@ test('WORLD6b: the day\'s rolls are the shared day\'s - under the shared clock t
     assert.deepEqual([a(), a(), a()], [b(), b(), b()], 'one day, one sequence, any minute of it');
     const c = dayRollsFor((day + 1) * MINUTES_PER_DAY, Math.random);
     assert.notEqual(a(), c(), 'another day, another sequence');
+    // ECON1: the prices are the world's - the player's own are untouched online and every player reads today's index
     const s1 = price(() => 0.99), s2 = price(() => 0.01);
-    assert.equal(s1, s2, 'two players with the same state, whatever their dice, walk the region alike');
-    const expect = seededRng((((day * 7919) ^ 0x44415953) ^ Math.imul(1, 0x9E3779B1)) >>> 0);   // AUDIT WORLD6b C5: the prices' salt
-    const e = { regionPrices: { 0: 1000 }, factionRep: { dict: dict() } };
-    runDayChange({ entity: e, lastMinutes: (day - 1) * MINUTES_PER_DAY, nowMinutes: day * MINUTES_PER_DAY, rolls: expect });
-    assert.equal(e.regionPrices[0], s1, 'and the seed is the day\'s');
+    assert.equal(s1, 1000); assert.equal(s2, 1000, 'ECON1: the player\'s own prices are not walked online');
+    const e1 = { regionPrices: { 0: 1000 }, factionRep: { dict: dict() } }, e2 = { regionPrices: { 0: 4000 }, factionRep: { dict: dict() } };
+    assert.equal(regionPriceAdjustment(e1, 0), regionPriceAdjustment(e2, 0), 'two players, whatever their own state and dice, read the region alike');
+    assert.equal(regionPriceAdjustment(e1, 0), worldRegionPricesOn(day)[0], 'and it is the world\'s index for the day');
+    const expect = seededRng((((day * 7919) ^ 0x44415953) ^ Math.imul(2, 0x9E3779B1)) >>> 0);   // AUDIT WORLD6b C5: the POWERS' salt still seeds the powers' arm
+    assert.equal(dayRollsFor(day * MINUTES_PER_DAY, Math.random, 2)(), expect(), 'and the seed is the day\'s');
   } finally { setSharedClock(null); }
   const w = rd('src/systems/worldTick.js');
-  assert.match(w, /if \(sharedClockOn\(\)\) \{\s*const firstDay = Math\.floor\(lastMinutes \/ MINUTES_PER_DAY\) \+ 1, lastDay = Math\.floor\(nowMinutes \/ MINUTES_PER_DAY\);\s*for \(let d = firstDay; d <= lastDay; d\+\+\) updateRegionalPrices\(entity, entity\.factionRep\?\.dict \?\? null, 1, dayRollsFor\(d \* MINUTES_PER_DAY, rolls, DAY_SALT\.prices\), entity\.regionConditions \?\? null\);/, 'the day change walks one day at a time online, each from its own generator (AUDIT WORLD6b C4)');
+  assert.match(w, /if \(sharedClockOn\(\)\) \{\s*const firstDay = Math\.floor\(lastMinutes \/ MINUTES_PER_DAY\) \+ 1, lastDay = Math\.floor\(nowMinutes \/ MINUTES_PER_DAY\);\s*for \(let d = firstDay; d <= lastDay; d\+\+\) \{\s*const prices = worldRegionPricesOn\(d\), flagRolls = dayRng\(d \* MINUTES_PER_DAY, DAY_SALT\.conditions\);/, 'ECON1: online the day walk reads the world\'s index and applies the flag half alone'); assert.match(w, /for \(let i = 0; i < REGION_COUNT; i\+\+\) applyPriceConditionFlags\(entity\.regionConditions \?\? null, i, prices\[i\], flagRolls\);/, 'the day change walks one day at a time online, each day from its own generator (AUDIT WORLD6b C4) - the flags off the world\'s index');
   assert.match(w, /const dayRolls = dayRollsFor\(i, rolls, DAY_SALT\.powers\);\s*if \(i % FACTION_POWER_INTERVAL_MINUTES === 0\) \{\s*regionPowerUpdate\(entity\.factionRep \?\? null, \{ rumorMill: entity\.rumorMill \?\? null, rolls: dayRolls \}\);/, 'the powers\' 7-day arm reads the minute\'s day');
   assert.match(w, /rumorMill: entity\.rumorMill \?\? null, rolls: dayRolls,[^\n]*\n\s*updateConditions: true/, 'and the 38-day arm the same generator');
 });

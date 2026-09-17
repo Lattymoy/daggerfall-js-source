@@ -3980,15 +3980,14 @@ stop):
   Recorded, not paid, in that section: the larger reading (a crime
   event on the wire, the witness test run once, a peer's murder
   marking the region for everyone, a watchman hunting a peer).
-- **One economy.** (A first sliver landed as OL4, 2026-09-17: shops
-  staffed around the clock online - see its section below. The shared
-  economy itself is still open.) The day's rolls are the world's already (WORLD6b);
-  the STATE the walk applies to is each player's (the prices read the
-  player's own faction reputation; a returning player catches up from
-  its own starting state). Sharing it is a region memory like a
-  dungeon's, one owner walking the day, the reputation term split out
-  or dropped; it touches the shop, the bank and the guild halls. The
-  open decision: what a player away a week reads.
+- ~~**One economy.**~~ PAID by ECON1 (2026-09-17, see its section
+  below; OL4 the same day put the shops on a night shift online): the
+  region's prices are a pure function of the world's day, computed
+  alike on every client - no memory, no owner, no wire - with the
+  merchants' power tilt dropped (the powers stay each player's: quests
+  move them). A player away a week reads today's index, as one who
+  stayed does. Recorded, not paid, in that section: the powers as a
+  world's, and the bank.
 - Recommended order at the stop: the guards first (contained in a
   cell, the pool laws exist), the economy second.
 
@@ -6960,3 +6959,82 @@ walking the day, the reputation term) is the STOP list's open slice
 still. Not verified in a browser: no online session exists in this
 container; pinned in `test/lockpicking.test.js` (R1's hours pins,
 extended in place) and `tools/mutants/ol4.json`.
+
+## ECON1 (2026-09-17): the region's prices are the world's
+
+**Mac: "Economy slice next."** The STOP list's last open slice, taken
+the way its own bullet suggested: the reputation term dropped rather
+than split out, and the state made a function of the day rather than
+a memory with an owner.
+
+**What was wrong.** DFU walks each region's price index once a day
+(UpdateRegionalPrices, FormulaHelper.cs:2053-2088) on the PLAYER's own
+state - the 62 indices drawn at the start (RandomizeInitialRegionalPrices,
+750..1250) and tilted each day by The Merchants' power against the
+region's - because DFU has one player. WORLD6b made the day's ROLLS
+the world's (one generator per day, seeded by the world's day and the
+consumer's salt) and left the STATE each player's, and said so: "one
+economy is the region as a world, and a later slice". So two players
+in one shop on one day read two prices, by when each had arrived and
+what each save carried.
+
+**The reading taken: computed, not streamed.** Under the shared clock
+the index is a pure function of the world's day, `worldRegionPricesOn(
+day)` in `systems/worldTick.js`:
+- the opening indices are drawn on the world's EPOCH day - the day the
+  online world stood at the classic start, `ONLINE_EPOCH_MINUTES`
+  (WORLD5's constant, `net/wire.js`) - from that day's generator with
+  its own salt (`DAY_SALT.priceInit`), region-major as DFU draws them;
+- every day since is walked with that day's generator (`DAY_SALT
+  .prices`), one roll a region, region-major - DFU's own step
+  (`priceWalkStep`, 51/50 up on a passed roll, 49/50 down, clamped to
+  250..4000) with the merchants' tilt at ZERO. The tilt is dropped
+  because the powers are each player's (quests move them; Multiplayer
+  .md's first lock) - the one input the walk had that could not be the
+  world's. What is left is exactly the mean reversion around 1000 that
+  DFU's own comment describes;
+- cached by day and walked forward; a day behind the cache is rebuilt
+  from the epoch; a day before the epoch reads the epoch's. Cold or
+  warm, the day's answer is the day's: catching up equals having
+  stayed, and the open decision at the STOP ("what a player away a week
+  reads") answers itself - today's index, the same as everyone's.
+
+**The seam.** `shopStock.regionPriceAdjustment` - the one door every
+consumer reads the index through (the shop, repair, the guild services,
+the quest machine's macro; no host reads `regionPrices` directly, pinned)
+- answers the world's while a price source stands, draws nothing off the
+player's dice and writes nothing. `setSharedClock` installs the source
+with the clock and removes it with it. The player's `regionPrices` are
+never written online: the save keeps its own economy for its own world,
+and offline DFU's own walk, tilt and all, resumes from it. `runDayChange`
+online walks no prices; it applies the CONDITION half (PricesHigh over
+2000, PricesLow under 500, the normal band clearing both - the rumours'
+and the court's inputs, the player's own store) from the world's index,
+one day at a time, with the day's own generator (`DAY_SALT.conditions`)
+for the flag's duration draw - so two players who walked different
+spans read the same flags today.
+
+**One home.** The walk's step (`priceWalkStep`), the opening draw
+(`initialRegionPrice`) and the flag half (`applyPriceConditionFlags`)
+are factored out of `updateRegionalPrices` and read by both the player's
+walk and the world's; `dayRng` is the day's generator whoever asks, and
+`dayRollsFor` (WORLD6b's) reads it under the clock.
+
+**Recorded, not carried.**
+- The POWERS stay each player's (WORLD6b's law: the day's rolls, the
+  player's state). A shared power walk would fight every quest's
+  `changePower`; a world's powers are a memory with an owner, which is
+  the larger reading and a slice of its own if wanted.
+- The bank is not region-priced (interest and loans are the player's
+  account's) and is untouched; the guild halls' and repair prices ride
+  the seam and are the world's.
+- A save that went online carries its own prices home unchanged: the
+  world's economy is read, never copied.
+- Offline the merchants' tilt still applies (DFU's own).
+
+No wire change, no relay change: `RELAY_VERSION` stands at `world81`.
+Not verified in a browser: no online session exists in this container;
+`test/econ1_world_prices.test.js` (4 pins) drives the world's function,
+the seam, the day change online and offline, and the sources;
+`tools/mutants/econ1.json` (15 mutants, 15 dead). WORLD6b's and AUDIT
+WORLD6b C4/C5's day-walk pins re-aimed to the world's prices.
