@@ -251,9 +251,9 @@ test('AUDIT 65 CV-2: an enemy shaft meets the player at 0.45 + 0.35, two-sided, 
 test('AUDIT 65 CV-2: EVERY player-side capsule call carries the player body, at all five sites', () => {
   // The seam is five direct calls: hostMagic's AoE arm and its enemy
   // missile contact, dungeonContext's two enemy-missile player arms, and
-  // the shared ArrowFlight the three world hosts fly (world.js:212,
+  // the shared ArrowFlight the three world hosts fly (world.js:213,
   // exterior.js:32, worldModes.js:75; the dungeon runs its own loop and
-  // takes the shared player-arrow LAW at dungeonContext.js:64) - so
+  // takes the shared player-arrow LAW at dungeonContext.js:65) - so
   // worldModes.js and exterior.js hold no arrow contact of their own.
   // THE FOUR HOSTS RULE: the sweep is the WHOLE of src/, not a list of
   // three files, or a fifth host wiring its own contact escapes it.

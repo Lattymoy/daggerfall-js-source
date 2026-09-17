@@ -566,6 +566,22 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['classic']),
     control: Object.freeze({ store: 'settings', key: 'Video/RandomDungeonTextures' }),
   }),
+  // QS (2026-09-17, Mac: the Demon's Souls diamond, "slots for the
+  // mainhand/secondhand, consumable"): THE QUICKSLOT DIAMOND's switch.
+  // The switch hides the DIAMOND alone - the three keys and the tooltip's
+  // slot buttons keep working, because a player who turns the picture off
+  // has not asked to lose the presses. Enhanced skin only; the classic HUD
+  // never drew one.
+  Object.freeze({
+    id: 'quickslot-diamond',
+    group: 'sight',
+    title: 'Quickslot diamond',
+    note: 'The enhanced HUD\u2019s bottom-left diamond: weapon, off hand and two consumable slots filled from the '
+      + 'inventory tooltip, each with its key. Off hides the diamond; the keys still work.',
+    effect: 'Takes effect at once.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'quickslots', initial: true, online: 'player' }),
+  }),
 ]);
 
 // ── RF4: the lanes, and what the stores derive ────────────────────

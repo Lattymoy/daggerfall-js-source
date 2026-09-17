@@ -265,6 +265,11 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   width: 100%; height: 44px; min-width: 44px;
 }
 .act.primary:hover { background: var(--brass); color: var(--ink); }
+/* QS2: the ON state of a toggling act - the readied plaque's own brass, so
+   "this slot holds this item" reads the same way "this hand holds this weapon"
+   does one surface over. It is the act's BORDER and not a second control, so
+   the 44px target rule below still measures the same button. */
+.act.on { border-color: var(--brass); color: var(--brass); }
 .act[disabled] { opacity: 0.4; cursor: not-allowed; }
 .act[disabled]:hover { color: var(--dim); border-color: var(--iron); }
 
@@ -832,6 +837,13 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
 .packdetail ul.rarity li:first-child { text-transform: uppercase; letter-spacing: 0.16em; font-size: 10.5px; color: var(--dim); }
 .packdetail ul.rarity li:last-child:not(:first-child):not(:nth-child(2)) { color: var(--dim); font-style: italic; }
 .itemwt { flex: 0 0 auto; color: var(--dim); font-size: 12px; font-variant-numeric: tabular-nums; }
+/* QS2: THE ROW'S CHIP - '1', '2' or SWAP at the row's right end, on the rows
+   whose KIND is in a slot. The HUD's readied chip's label (.hud-readykind)
+   is the face it borrows, because it is the same fact in the same words one
+   surface over: 10px, letter-spaced, uppercase, brass, in a 2px frame. */
+.qs-mark { flex: 0 0 auto; border: 2px solid rgba(125, 116, 96, 0.5); color: var(--brass);
+  font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+  padding: 1px 5px; line-height: 1.5; font-variant-numeric: tabular-nums; }
 .packempty { color: var(--dim); font-size: 14px; margin: 10px 2px; }
 .packdetail .sheet-close { display: none; }
 
@@ -935,6 +947,14 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
     color: var(--dim); font-size: 12px; letter-spacing: 0.16em;
     text-transform: uppercase; border-bottom: 1px solid var(--iron); text-align: center;
   }
+  /* QS2: FIVE BUTTONS, ONE PHONE. The .acts row already wraps, so nothing was
+     ever cut off - but 20px of horizontal padding on each of five turns one row
+     into three inside a sheet that is already 70dvh tall. Narrower HERE only
+     (the settings pane's own pills are untouched), and the 46px min-height the
+     44px touch target rests on is kept exactly: this changes how wide a button
+     is, never how tall. */
+  .packdetail .acts { gap: 6px; }
+  .packdetail .acts .act { padding-left: 12px; padding-right: 12px; flex: 1 1 auto; text-align: center; }
 }
 
 /* ── THE WIZARD ─────────────────────────────────────────────
@@ -1901,18 +1921,142 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
 .hud-breathlabel { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
   color: #7d7460; }
 
-/* PX30b: WHAT IS IN YOUR HANDS - the readied spell and the weapon, the
-   two things the reference's ability bar would hold if Daggerfall had
-   one. Each only when there is something in it. */
-.hud-hands { display: flex; gap: 10px; }
-.hud-hand { display: none; align-items: baseline; gap: 8px; padding: 3px 10px;
-  background: rgba(10,12,17,0.6); border: 2px solid rgba(125,116,96,0.45); }
-.hud-hand.on { display: flex; }
-.hud-handkind { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+/* ── QS3: THE QUICKSLOT DIAMOND ──────────────────────────────────
+   Mac's reference is the Demon's Souls remake's bottom-left diamond:
+   the off hand left, the weapon right, two consumables above and
+   below. It REPLACES PX30b's "Ready"/"Hand" plaques, which said two of
+   the same four things in words under the vitals.
+
+   THE CELL IS CLIPPED, NEVER ROTATED. A 45-degree transform on a cell
+   would rotate the sprite inside it, and a rotated pixel sprite is a
+   blurred one - which breaks the only rule this whole language has. So
+   the diamond is a clip-path on two stacked squares (the frame, and
+   the ground inset by the same 2px every frame in this skin is) and
+   the CONTENT sits upright inside them.
+
+   THE GEOMETRY IS ONE NUMBER. Four cells of --qs-cell at the four
+   points of a --qs-box square touch along their facing edges when
+   (box - cell) = cell, so box = 2 * cell; the 4px here is the gap the
+   reference leaves between them, measured along the axis rather than
+   across the edge. Every other placement below is (box - cell) / 2.
+
+   AN EMPTY CELL IS A SOCKET - the frame at a third of its alpha and
+   nothing in it. This is the arc's recorded departure from PX30b's
+   "each plaque only when filled": the SHAPE is the readout here, and a
+   diamond with a corner missing is not a diamond. See the header of
+   ui/enhancedHud.js. */
+.hud-quick { position: absolute;
+  left: calc(24px + env(safe-area-inset-left, 0px));
+  /* THE BLOCK'S BOTTOM EDGE RIDES THE VITALS' TOP LINE. \`.hud-bottom\`
+     is anchored 22px up and its vitals row is 30px tall, both scaled, so
+     the row's top edge sits at 22 + 30 * scale from the bottom (748 at 1,
+     718 at 2 on an 800px viewport - tools/qs3Probe.mjs). The bars are
+     centred and this is a corner, so at scale 1 they never meet; past
+     about 1.2 the bars are wide enough to reach this column, and then
+     the block must already be above them - not only at 2, which is where
+     the first draft measured (a 30px-per-unit step that cleared 2 and
+     put the bottom cell IN the magicka bar at 1.5, AUDIT QS). 22 + 32 *
+     scale: the bars' own line plus two pixels of air, at every scale. */
+  bottom: calc(22px + 32px * var(--hud-scale) + env(safe-area-inset-bottom, 0px));
+  transform: scale(var(--hud-scale)); transform-origin: bottom left;
+  /* 22px under the diamond holds the bottom tag (4px of air and a 16px chip). */
+  padding: 0 30px 22px; display: flex; flex-direction: column; align-items: flex-start;
+  --qs-cell: 84px; --qs-box: 172px; }
+/* TI2: a FIXED virtual stick lives bottom-left at inset 36 radius 56 -
+   so it owns x 36..148, which is this corner. The block steps clear of
+   it rather than standing on it; the HUD toggles the class off the same
+   pref the stick reads. */
+.hud-quick.stickclear { left: calc(156px + env(safe-area-inset-left, 0px)); }
+/* The caption row: the interaction mode's word, where it already stood,
+   and the readied spell beside it. CAPPED AT THE DIAMOND'S OWN WIDTH
+   and wrapping, because a readied spell can be called anything and an
+   unbounded row made the block 515px wide on a 430px phone - measured,
+   and the whole block ran off the right edge with it. */
+.hud-qcap { display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  min-height: 20px; max-width: var(--qs-box); }
+.hud-readied { display: none; align-items: baseline; gap: 8px; padding: 3px 10px;
+  background: rgba(10,12,17,0.6); border: 2px solid var(--brass); }
+.hud-readied.on { display: flex; }
+.hud-readykind { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
   color: #7d7460; }
-.hud-handname { font-size: 13px; color: #d8cfae; }
-.hud-readied.on { border-color: var(--brass); }
-.hud-readied .hud-handname { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.hud-readyname { font-size: 13px; color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+
+.hud-qdiamond { position: relative; width: var(--qs-box); height: var(--qs-box); margin-top: 18px; }
+/* AUDIT QS F1: THE CELL ITSELF IS THE RHOMBUS. The clip was on the
+   frame and the ground alone, and the cell under them was a SQUARE -
+   four squares that overlap in four patches, later siblings winning -
+   so on a phone a fifth of the taps inside one cell's picture fired
+   another cell's action, and the empty middle of the diamond swallowed
+   a tap meant for the game. clip-path clips the hit test as it clips
+   the paint; the tags are the diamond's children, not the cells', and
+   stand outside it. */
+.hud-qcell { position: absolute; width: var(--qs-cell); height: var(--qs-cell);
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
+.hud-qc1 { left: calc((var(--qs-box) - var(--qs-cell)) / 2); top: 0; }
+.hud-qoff { left: 0; top: calc((var(--qs-box) - var(--qs-cell)) / 2); }
+.hud-qmain { left: calc(var(--qs-box) - var(--qs-cell)); top: calc((var(--qs-box) - var(--qs-cell)) / 2); }
+.hud-qc2 { left: calc((var(--qs-box) - var(--qs-cell)) / 2); top: calc(var(--qs-box) - var(--qs-cell)); }
+.hud-qframe { position: absolute; inset: 0; background: rgba(125,116,96,0.55);
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
+.hud-qground { position: absolute; inset: 2px; background: rgba(10,12,17,0.75);
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
+.hud-qbody { position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 3px; }
+/* NO WIDTH ATTRIBUTE and no forced square: a dagger is tall and narrow
+   and a cuirass wide, so both axes are capped and the shape stands -
+   the inventory tile's own reasoning, at the HUD's size. */
+.hud-qicon { display: block; max-width: 44px; max-height: 44px; image-rendering: pixelated; }
+.hud-qinit { font-size: 13px; letter-spacing: 0.08em; color: #a89f88; }
+/* The durability strip, under the art inside the hand cells. */
+.hud-qbar { display: none; width: 36px; height: 4px; background: rgba(10,12,17,0.9); }
+.hud-qcell.hasbar .hud-qbar { display: block; }
+.hud-qbarfill { display: block; height: 100%; width: 100%; background: var(--brass); }
+.hud-qcell.worn .hud-qbarfill { background: #d98074; }
+/* The count, inside the lower-right face of a consumable cell. */
+.hud-qcount { position: absolute; right: 26px; bottom: 18px; font-size: 12px;
+  font-variant-numeric: tabular-nums; color: #d8cfae; }
+/* THE STATES, all of them a class the HUD toggles only on change.
+   A sheathed weapon is HALF THERE; a ghost - a slot whose kind has run
+   out of the pack, or a swap weapon that left it - keeps its place in
+   grey, and its count still reads 0 in the classic shadowed pair this
+   UI has always used for what is urgent. */
+.hud-qcell.sheathed { opacity: 0.5; }
+.hud-qcell.ghost .hud-qicon, .hud-qcell.ghost .hud-qinit { filter: grayscale(1); opacity: 0.4; }
+.hud-qcell.ghost .hud-qcount { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.hud-qcell.socket .hud-qframe { background: rgba(125,116,96,0.35); }
+.hud-qcell.socket .hud-qbody, .hud-qcell.socket .hud-qcount { display: none; }
+/* THE TAGS, at the diamond's four outer points: the keyboard key in
+   the pixel face, or our own pad glyph (ui/padGlyphs.js) when the pad
+   is the live device. Hidden outright when nothing is bound - a chip
+   reading NONE tells a player to press a key that does not exist. */
+.hud-qstag { display: none; position: absolute; align-items: center; justify-content: center;
+  min-width: 14px; height: 16px; padding: 0 4px;
+  background: rgba(10,12,17,0.75); border: 2px solid rgba(125,116,96,0.55);
+  font-size: 10px; line-height: 1; letter-spacing: 0.14em; text-transform: uppercase; color: #d8cfae; }
+.hud-qstag.on { display: flex; }
+.hud-qsglyph { display: block; width: 12px; height: 12px; image-rendering: pixelated; }
+.hud-qstop { left: 50%; top: 0; transform: translate(-50%, calc(-100% - 4px)); }
+.hud-qsbottom { left: 50%; top: 100%; transform: translate(-50%, 4px); }
+.hud-qsleft { left: 0; top: 50%; transform: translate(calc(-100% - 4px), -50%); }
+.hud-qsright { left: 100%; top: 50%; transform: translate(4px, -50%); }
+/* DEPARTURE 2 (ui/enhancedHud.js's header): on a phone the cells are
+   the only control for the two quick uses and the swap, so they - and
+   only they - take a finger. The \`.hud\` root stays pointer-events
+   none, which is what keeps the game underneath reachable. TOUCH-FIRST
+   is the pair \`pointer: coarse\` AND \`hover: none\` (AUDIT QS F8): a
+   desktop with a touchscreen answers coarse alone, and a mouse click
+   on the diamond there fired a slot and swallowed a swing. */
+@media (pointer: coarse) and (hover: none) {
+  .hud-qcell { pointer-events: auto; touch-action: none; }
+  /* AUDIT QS F10: a chip naming a KEY on a device with no keyboard
+     tells the player to press something that is not there; a pad's
+     glyph stays, because a pad on a phone is a pad. */
+  .hud-qstag.key { display: none; }
+}
+/* The switch (features 'quickslot-diamond') hides the diamond and its
+   tags; the caption row above it stays, because the mode word lives
+   there and the switch is about the diamond. */
+.hud-quick.nodiamond .hud-qdiamond { display: none; }
 
 /* PX32: THE RETICLE. A square cross in bone with the classic shadow,
    at the viewport's centre; the mode's word takes its place under the
@@ -1930,7 +2074,11 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
 .hud-modeword { font-size: 13px; letter-spacing: 0.2em; text-indent: 0.2em; text-transform: uppercase;
   color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
 .hud-modecentre { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
-.hud-modecorner { position: absolute; left: 24px; bottom: 24px; }
+/* QS3: the mode word is the quickslot diamond's caption now - it stood
+   at left 24 / bottom 24, which is exactly where the diamond goes, so
+   rather than move one out of the other's way it moved INTO it. Its
+   show/hide laws are untouched. */
+.hud-modecorner { flex: 0 0 auto; }
 
 /* THE EFFECTS, beneath the bars. An expiring one takes the classic
    shadowed pair, which is what this UI has always used for urgency. */
@@ -2040,6 +2188,24 @@ body:has(.dfchat.touch) .hudtext-stack { top: ${HUD_TEXT_TOP_CHAT_TOUCH_PX}px; }
   .hud-bottom { bottom: 12px; gap: 8px; }
   .hud-bars { gap: 10px; }
   .hud-vital .hud-track { width: 26vw; }
+  /* QS3: the diamond shrinks with everything else - one number, and
+     the four placements follow it. MEASURED against the touch layer's
+     bottom-right column and the vitals above it at 860x400 and
+     430x860, at hud scale 1 and 2. */
+  .hud-quick { --qs-cell: 60px; --qs-box: 124px; padding: 0 24px 22px;
+    left: calc(14px + env(safe-area-inset-left, 0px));
+    /* ...AND IT SITS ABOVE THE TOUCH LAYER'S BUTTON ROW. ui/touch.js
+       puts Jump, sheathe, the mode cycle and the social door along the
+       bottom-right at edge 16, 48 tall, and the leftmost of them starts
+       at x = W - 280: on a 430px phone that is 150, which the diamond's
+       right tag reached. 76 is the same number ui/partyPanel.js uses to
+       clear that layer's other row - 16 + 48 and twelve of air. */
+    bottom: calc(76px + 30px * (var(--hud-scale) - 1) + env(safe-area-inset-bottom, 0px)); }
+  .hud-quick.stickclear { left: calc(160px + env(safe-area-inset-left, 0px)); }
+  .hud-qdiamond { margin-top: 14px; }
+  .hud-qicon { max-width: 32px; max-height: 32px; }
+  .hud-qbar { width: 26px; }
+  .hud-qcount { right: 18px; bottom: 13px; font-size: 11px; }
   /* the compass and the bar above it move up with .hud-top, so the column follows them */
   .hudtext-stack { top: ${HUD_TEXT_TOP_NARROW_PX}px; }
 }
@@ -2555,6 +2721,13 @@ body:has(.dfchat.touch) .hudtext-stack { top: ${HUD_TEXT_TOP_CHAT_TOUCH_PX}px; }
 .pack-shell .itemrow .itemname { position: absolute; width: 1px; height: 1px;
   overflow: hidden; clip-path: inset(50%); }   /* the probes read it; the plaque shows it */
 .pack-shell .itemrow .itemwt { display: none; }
+/* QS2: in the pixel face a row is a 56px TILE, so the chip is a corner badge
+   rather than a column - top-left, opposite the stack count at bottom-right,
+   with the tile's own shadowed pixel text and no frame of its own (the tile is
+   already framed). */
+.pack-shell .itemrow .qs-mark { position: absolute; left: 2px; top: 1px; border: 0;
+  padding: 0; font-size: 9px; letter-spacing: 0.12em; color: var(--brass);
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
 .pack-shell .itemrow .rowcount, .pack-shell .itemrow .count { position: absolute;
   right: 2px; bottom: 1px; font-size: 9px; color: var(--brass);
   text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
