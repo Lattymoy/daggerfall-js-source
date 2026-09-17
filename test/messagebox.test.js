@@ -2,6 +2,7 @@
 // Every pin fails under a one-character mutation of the law it names.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { latchBoxRows } from '../src/ui/messageBox.js';
 import {
   layoutMessageBox, messageBoxHit, MB_BUTTONS,
   SLICE, MARGIN, MIN_BOX_WIDTH, MIN_BOX_SIDE, BUTTON_W, BUTTON_H,
@@ -107,3 +108,17 @@ test('U11: clicks land on the button rects, and only on them', () => {
   assert.equal(messageBoxHit(box, box.x + 1, box.y + 1), null, 'the frame is not a button');
   assert.equal(messageBoxHit(layoutMessageBox(f, ['hi']), yx + 1, yy + 1), null, 'a box with no buttons has no hits');
 });
+
+test('BOX1: latchBoxRows resolves a textId box once and answers the latch after; a box with rows keeps them (mutant: rows re-read per call)', () => {
+  let n = 0;
+  const rows = (id) => [{ text: `variant ${++n} of ${id}`, center: true }];
+  const box = { textId: 261 };
+  assert.deepEqual(latchBoxRows(box, rows), [{ text: 'variant 1 of 261', center: true }]);
+  assert.deepEqual(latchBoxRows(box, rows), [{ text: 'variant 1 of 261', center: true }], 'the second ask is the latch');
+  assert.equal(n, 1, 'the record was read once');
+  assert.deepEqual(latchBoxRows({ textId: 5, rows: ['kept'] }, rows), ['kept']);
+  assert.equal(n, 1);
+  assert.deepEqual(latchBoxRows({ textId: 7 }, null), [], 'no reader: an empty box, not a throw');
+  assert.deepEqual(latchBoxRows(null, rows), []);
+});
+

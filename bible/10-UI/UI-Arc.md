@@ -9782,7 +9782,7 @@ c2 flight 2 caught the same pair driving the town map's chrome.
   row 0.
 
 **THE FIX.** `vy >= 0 &&` in front of the `update` call in both hovers
-- the arm `ui/chargen.js:1103` and `ui/spellbookWindow.js:428` already
+- the arm `ui/chargen.js:1103` and `ui/spellbookWindow.js:429` already
 carry. (The third guarded sibling is not the same arm:
 `ui/spellIconPickerWindow.js:227` tests `vx >= 0 && vy >= 0`, and
 `test/citedrift.test.js`'s CD8c pins that two-part shape by name.)
@@ -9825,7 +9825,7 @@ mutants - the guard deleted from either new window, "ALL THREE" restored
 to the Ledger, "both" restored to Testing.md - all go red.
 
 **AND THE THREE SIBLINGS ARE NOT ONE ARM.** The first draft of the
-section above called `ui/chargen.js:1103`, `ui/spellbookWindow.js:428`
+section above called `ui/chargen.js:1103`, `ui/spellbookWindow.js:429`
 and `ui/spellIconPickerWindow.js:227` "the same arm". They are not:
 the icon picker tests `vx >= 0 && vy >= 0`, the two-part shape CD8c
 pins by regex, while the other two test `vy` alone. The two new guards
@@ -14301,3 +14301,62 @@ after the fix: a flick still scrolls the pack and puts nothing on the
 floor, a tap is still a pick, the mouse still crosses at 4 px with no
 hold. `tools/invDragProbe.mjs` is kept - 46 checks, all clear, and 24 of
 them failed before the fix.
+
+## BOX1 - A BOX READS ITS RECORD ONCE (2026-09-17, Mac: "When buying a spell, the dialouge ui Flickers between 2 seperate conversations")
+
+**The mechanism.** A window's message box carrying a TEXT.RSC id
+resolves it through the host's `rows(id)`, and that reader is
+TextProvider's random-VARIANT draw (`townTalk.lines` ->
+`variantLinesById`: a record with several subrecords answers one of
+them, rolled per call). The spellbook's buy confirmation built its box
+in `draw()` from `_boxRows()`, which asked `rows(id)` again every
+frame - so the trade lines (records 260+, two variants apiece) flickered
+between their two phrasings at frame rate: two "conversations". The
+guild popup and the coven did the same for every step box that carries
+a `textId` rather than `rows` (the temple's heal, the recharge, the rank
+change): a two-variant record there flickered too.
+
+**The law.** DFU reads the tokens INTO the box when it is made
+(`DaggerfallMessageBox.SetTextTokens`, `BuyButton_OnMouseClick`
+:984-1000); so does the port now, in one home - `latchBoxRows(box,
+rows)` (ui/messageBox.js) resolves a `textId` box on its first ask and
+latches the rows on the box object; the guild popup and the coven draw
+through it. The spellbook memoises its three buy-mode boxes per open
+(`buyButton` clears the memo, so a second spell's box is a fresh read
+with that spell's price); the delete and sort prompts are constants and
+the rename box is live by design. A box that already carries `rows`
+keeps them.
+
+**Pins:** test/messagebox.test.js (+1: the helper), test/box1_latch.test.js
+(2: both popups drawn six times, one read; the art seams
+`_setGuildServiceArtForTests` / `_setCovenArtForTests`),
+test/spellbookwindow.test.js (+1: one read per open, a new open a new
+read). tools/mutants/box1.json (6).
+
+## TI3 - THE TOUCH-DEVICE LAW (2026-09-17, Mac: "Some desktop users are reportably recieving the mobile UI instead of desktop")
+
+**The mechanism.** `isTouchDevice()` was a sniff - `'ontouchstart' in
+window || navigator.maxTouchPoints > 0` - and Chromium answers both on
+any Windows machine with a touch digitizer, and `maxTouchPoints > 0` on
+laptops whose pen or touchpad driver registers as one. Such a desktop
+got the stick, the buttons and the mode button (`attachTouch`), the
+Touch card, the touch layouts of the chat, party and social panels,
+and, outside the shell, the LEAN data diet (no skies) - the whole
+"mobile UI".
+
+**The law.** `ui/touchDevice.js`, a leaf and the one home: a touch
+device is one whose PRIMARY pointer is a finger - `(pointer: coarse)`
+AND `(hover: none)`, the pair AUDIT QS F8 already reached for the
+quickslot diamond. A touchscreen laptop answers fine + hover for its
+mouse and is desktop; a phone or a tablet in hand answers coarse + none.
+The sniff is the FALLBACK, not the law: where `matchMedia` is absent
+(AUDIT 62's stub, an old browser) or the query is unknown (neither
+`coarse` nor `fine` matches), a touch-capable page keeps its layer.
+`?touch=on` / `?touch=off` is the door for whoever the heuristic still
+gets wrong (an iPad with a trackpad answers fine + hover and is desktop
+here; the door puts the layer back). `ui/touch.js` re-exports the name
+every caller imports; `scenes/dataSource.js`'s diet reads the same law,
+the shell still outranking it.
+
+**Pins:** test/touchdevice.test.js (4). tools/mutants/ti3.json (8).
+
