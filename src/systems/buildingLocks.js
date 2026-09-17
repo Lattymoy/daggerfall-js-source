@@ -14,7 +14,8 @@
 
 import { BUILDING_TYPES } from '../world/buildingNames.js';
 import { isShop } from './shopStock.js';
-import { HOLIDAYS } from './holidays.js'; import { isOnlinePage } from './onlineLane.js';
+import { HOLIDAYS } from './holidays.js';
+import { isOnlinePage } from './onlineLane.js';   // OL4: the online lane's one answer to "is this the ?online page"
 
 /** Opening and closing hours by building type (PlayerActivate.cs:
  *  91-92), indexed by DFLocation.BuildingTypes 0..24. closeHours 25
@@ -114,8 +115,11 @@ export function buildingIsUnlocked(building, {
  *  interior-formula oversight included). */
 export const LOCKED_EXTERIOR_DOOR_TEXT = 'Locked.';
 
-// OL4 - ONLINE COMMERCE. Classic's schedule remains a pure primitive;
-// the shared-world policy is layered above it. Online players cannot
+// OL4 - ONLINE COMMERCE (2026-09-17, a player complaint relayed by Mac:
+// players could not shop at night online). A RECORDED DEPARTURE - Ledger
+// A carries it as SHOPS STAFFED AROUND THE CLOCK ONLINE (OL4), naming
+// this file. Classic's schedule remains a pure primitive; the
+// shared-world policy is layered above it. Online players cannot
 // advance the shared clock by resting, so a classic "sleep until the
 // shop opens" schedule becomes a real-time lockout. Only storefronts
 // gain a continuous relief shift. Houses, guild halls, temples,

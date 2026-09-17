@@ -3980,7 +3980,9 @@ stop):
   Recorded, not paid, in that section: the larger reading (a crime
   event on the wire, the witness test run once, a peer's murder
   marking the region for everyone, a watchman hunting a peer).
-- **One economy.** The day's rolls are the world's already (WORLD6b);
+- **One economy.** (A first sliver landed as OL4, 2026-09-17: shops
+  staffed around the clock online - see its section below. The shared
+  economy itself is still open.) The day's rolls are the world's already (WORLD6b);
   the STATE the walk applies to is each player's (the prices read the
   player's own faction reputation; a returning player catches up from
   its own starting state). Sharing it is a region memory like a
@@ -6924,3 +6926,37 @@ beside `watch.hurt`, granting out of cityGuards' own emptying door) - a
 slice of its own if a peer is ever to loot the watch; the foes' hit
 arm's reach; the striker's routing door pinned by source (an executed
 pin would have to stand world.js's own `dealDamage` closure).
+
+## OL4 (2026-09-17): shops staffed around the clock online
+
+**A player complaint relayed by Mac: players could not shop at night
+online.** PR #237 ("OL4 - online shop staffing without rewriting
+classic hours"), landed on this branch with the records it lacked.
+
+**The lockout.** DFU closes a shop outside its hours (PlayerActivate
+.IsBuildingOpen, :102-106, the two tables at :91-92) and on Suns Rest
+(:1294-1302), and the single player sleeps or travels to morning. Online
+the clock is the world's (WORLD5) and nobody can move it - RESTX2's rest
+paces on a timer and the shared clock is refused every write - so a
+classic closure is a real-time lockout of hours, for everyone.
+
+**The reading taken.** Classic's schedule stays a pure primitive,
+`classicBuildingOpen`, preserved exactly. `buildingHoursState(type, {
+hour, holidayId, online })` layers the shared-world policy above it and
+answers BOTH - `classicOpen`, what untouched Daggerfall says, and `open`,
+what this running world says - with `staffing` as data (CLOSED, CLASSIC,
+ONLINE_SHIFT). On the `?online` page (`onlineLane.isOnlinePage`, the
+lane's one answer), and for a SHOP alone, a classic closure is covered
+by a continuous relief shift. `isBuildingOpen` and `buildingIsUnlocked`'s
+shop arm route through it, so the door, the entry-time `insideOpenShop`
+latch, the shelves and the interior people stand on one rule; houses,
+guild halls, temples, palaces and ships keep R1's rules online, and
+offline nothing moves.
+
+**Recorded, not carried.** The night clerk is not drawn distinctly - the
+existing shop people stand the shift; ONLINE_SHIFT is the hook for that
+presentation slice. The shared ECONOMY (one region memory, one owner
+walking the day, the reputation term) is the STOP list's open slice
+still. Not verified in a browser: no online session exists in this
+container; pinned in `test/lockpicking.test.js` (R1's hours pins,
+extended in place) and `tools/mutants/ol4.json`.
