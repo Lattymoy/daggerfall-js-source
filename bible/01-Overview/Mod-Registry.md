@@ -6,10 +6,13 @@
 > rows side by side found. The live numbers are derived, not written:
 > `vendor/` holds 19 directories and 11 of their READMEs still carry an
 > unfilled permission line, each shown as `RECORD OPEN` in the table.
-> ORL1 (2026-09-17) added the nineteenth and the first that is not a
-> Daggerfall Unity mod at all - an OpenMW mod for Morrowind - so the
-> sentence below about every row being a bundle with a manifest now has
-> one exception, and the deviations list says so.
+> ORL1 (2026-09-17) added the nineteenth, and the first vendored MOD
+> that is not a Daggerfall Unity one - an OpenMW Lua mod for Morrowind.
+> It carries no `*.dfmod.json`, so the gate below reads no version or
+> author cell for it and its own suite checks both instead; its row in
+> *Known deviations* says so. (Eight of the nineteen directories carry
+> no manifest, but the other seven are not mods at all - Daggerfall
+> Unity's own shipped data, a font, a road table, Mac's own project.)
 
 The fourth slice of `01-Overview/Hardening.md`. One row per directory in
 `vendor/`, and `test/hard4_registry.test.js` derives the row list from
@@ -87,6 +90,20 @@ not the date the slice shipped, where those differ.
 Only the ones a maintainer would be surprised by. Each README carries the
 full account; this is the index to it.
 
+- **`oblivion-remaster-leveling`** - the only row that is not a
+  Daggerfall Unity mod: OpenMW Lua for Morrowind, so there is no
+  `*.dfmod.json` and `test/hard4_registry.test.js` reads no version or
+  author cell for it. Its own suite checks both instead, against the
+  author's changelog heading and the Lua's own defaults. The archive
+  names no author and states no licence, so the author cell is the Nexus
+  id and the permission line is still a prompt.
+- **`oblivion-remaster-leveling`** - the only row that is not a
+  Daggerfall Unity mod: OpenMW Lua for Morrowind, so there is no
+  `*.dfmod.json` and `test/hard4_registry.test.js` reads no version or
+  author cell for it. Its own suite checks both instead, against the
+  author's changelog heading and the Lua's own defaults. The archive
+  names no author and states no licence, so the author cell is the Nexus
+  id and the permission line is still a prompt.
 - **`dynamic-skies`** - the repository's `Resources/*Night.json` presets
   are NOT carried, because they are not in the shipped manifest and the
   mod therefore never loads them.

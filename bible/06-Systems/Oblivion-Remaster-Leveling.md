@@ -17,10 +17,13 @@ character answers). Pinned by `test/orl1_leveling.test.js` (44); mutants in
 
 ## THE FIRST MORROWIND MOD, AND WHAT THAT CHANGES
 
-Every other row in the registry is a Daggerfall Unity mod: a `.dfmod`
-bundle, a `*.dfmod.json` manifest, C# read off its IL or its author's
-repository. This one is **OpenMW Lua for Morrowind**, and four things
-follow from that:
+Every vendored MOD in the registry so far is a Daggerfall Unity mod: a
+`.dfmod` bundle, a `*.dfmod.json` manifest, C# read off its IL or its
+author's repository. (Eleven of the nineteen directories carry such a
+manifest; the rest are not mods - Daggerfall Unity's own shipped data,
+a font, Mac's own project, a road table.) This one is **OpenMW Lua for
+Morrowind** - the first vendored MOD that is not a Daggerfall Unity one
+- and four things follow from that:
 
 1. **There is no decompile.** OpenMW runs the Lua as shipped, so the
    source in `vendor/` IS the mod. Every function in the port names the
@@ -32,11 +35,17 @@ follow from that:
    cell (`0.5.3`) is an unchecked assertion in that gate - and is
    checked instead by this mod's own suite, against the author's
    `README.upstream.md` changelog heading and the Lua's own defaults.
-3. **The settings have no maxima.** OpenMW's `number` renderer takes a
-   `min` and no `max`; the port's store reads a numeric key only when it
-   has BOTH (`isIntKey`), and a key with one bound would silently become
-   a checkbox. **Every maximum in the port's entry is the port's**, and
-   they are listed under *Departures* below.
+3. **THE MOD declares no maxima** - not the engine. OpenMW's `number`
+   renderer takes a `max` and enforces it
+   (`files/data/scripts/omw/settings/renderers.lua`, the 0.49 branch:
+   `if argument.max and number > argument.max then return end`, and
+   `max = nil` in its own `defaultArgument`); this mod's `settings.lua`
+   simply passes a `min` and stops. The port's store reads a numeric key
+   only when it has BOTH (`isIntKey`), and a key with one bound would
+   silently become a checkbox. **Every maximum in the port's entry is
+   therefore the port's**, and they are listed under *Departures* below.
+   The first version of this page said the ENGINE had no `max` and used
+   that as the warrant; the deep audit fetched the file and it does.
 4. **The mod's art is Morrowind's.** Its window is MWUI flex boxes over
    `icons/k/attribute_*.dds`, a gold-coin purse bar, per-level art
    chosen by specialisation and `Music/Special/MW_Triumph.mp3`.
@@ -45,9 +54,10 @@ follow from that:
 
 **Provenance is open.** The archive states no licence and names no
 author: no `LICENSE`, no script header, an empty author field in the
-`.omwaddon`. Mac handed the archive over, which is the same act that
-settles the other six `RECORD OPEN` rows, and the README's permission
-line is still a prompt. **The author's NAME is part of what is owed
+`.omwaddon`. Mac handed the archive over, which is the act that settles
+seven of the other ten `RECORD OPEN` rows (the remaining three read
+"granted to Mac" with no hand-over), and the README's permission line is
+still a prompt. **The author's NAME is part of what is owed
 here, not only the receipt.**
 
 ---
@@ -62,7 +72,8 @@ GMST  NAME "iLevelupTotal"  INTV 0x64
 ```
 
 That is `LEVELUP_TOTAL = 100`, the size of the bar. Everything else the
-mod does is in 1,313 lines of Lua.
+mod does is in 1,314 lines of Lua (`wc -l` says 1,313: `templates.lua`
+ends without a newline, so the tool does not count its last line).
 
 ---
 
@@ -242,11 +253,36 @@ to, which makes it the worst screen in the game to be wrong on; it is
 built from the live settings now, and says so when the purse is zero.
 
 **The window is not the Oghma Infinium's rollout.** That artefact is
-Daggerfall's own - thirty points, no level, no health - and thirty
-points cannot be spent under "at most three attributes, at most five
-each" anyway. `ui/charSheetDoor.js` keeps the Oghma on the port's own
-rollout in both lanes, and `CharSheet._mountStatsRollout` carries the
-other half of that gate.
+DAGGERFALL'S OWN - thirty points, no level, no health, from a book the
+mod has never heard of - so it is levelled by Daggerfall's law whichever
+system the character uses. `ui/charSheetDoor.js` keeps the Oghma on the
+port's own rollout in both lanes, and `CharSheet._mountStatsRollout`
+carries the other half of that gate.
+
+**THE REASON THIS DEPARTURE USED TO GIVE WAS FALSE, in four places at
+once** (here, `ui/virtueLevelUp.js`, `ui/charSheetDoor.js` and the
+Ledger row): that thirty points "cannot be spent under at most three
+attributes, at most five each anyway". They can, at the mod's own
+shipped defaults, and the port's own solver says so - Personality +5,
+Speed +5 and Luck +5 at four apiece is 5 + 5 + 20 = 30, three rows,
+exactly spent. The departure stands on the sentence above it, which is
+the one that was always doing the work; the arithmetic was decoration,
+and it was wrong. (ORL1's deep audit.)
+
+---
+
+## WHAT THE AUTHOR'S CHANGELOG FIXED, AND WHERE EACH ONE LIVES HERE
+
+`README.upstream.md` is carried for this: four fixes across three
+releases, and the port keeps every one. The vendor README promised that
+this page named them and it named one, which ORL1's deep audit caught.
+
+| release | the author's line | where the port keeps it |
+|---|---|---|
+| 0.5.1 | "Extra point added to level up progression while upgrading a major or minor skills" | `addSkillProgress` adds the tier's impact ONCE and returns what it added; the roll-over is taken out of the same value rather than added beside it |
+| 0.5.1 | "Level Up progression not rolled over if the roll over is greater than one level" | `rollOverLevelProgress` leaves the bar FULL when the carry is a whole level or more, which immediately re-offers the next one |
+| 0.5.2 | "No Health increase on level up" | `commitVirtueLevelUp` raises health on every commit - by Daggerfall's roll, in Daggerfall's position (departure 2) |
+| 0.5.3 | the handler reads the skill's OUTGOING value | `advancement.js` calls `addSkillProgress` BEFORE the raise lands, inside the cap gate, because that is where OpenMW calls the mod's handler |
 
 ---
 
@@ -290,9 +326,10 @@ as classic anyway, so an old save loads as exactly the character it was.
    `Endurance * fLevelUpHealthEndMult`. Reasoned above.
 2. **A fourth impact knob** (`primarySkillsImpact`) for Daggerfall's
    third tier of chosen skills.
-3. **Every maximum in the settings is the port's.** OpenMW declares only
-   minimums; the port's store needs both bounds or a numeric key reads
-   as a boolean. The chosen ceilings (`attributePoints` 60,
+3. **Every maximum in the settings is the port's.** THE MOD declares
+   only minimums - OpenMW's renderer takes a `max` and this mod does not
+   pass one - and the port's store needs both bounds or a numeric key
+   reads as a boolean. The chosen ceilings (`attributePoints` 60,
    `maxUpdatableAttribute` 8, `luckIncreaseCost` 20, the impacts 100)
    have no upstream warrant and clamp what a player may set.
 4. **The look is not ported** - the mod's Morrowind art, its level-up
@@ -398,6 +435,116 @@ shipped code before it was believed (the purse numbers in departure 6
 are measured, not argued), and that the two independent lenses agreed.
 The right order next time is: let the verify pass finish, or hand the
 verifiers a snapshot.
+
+## THE DEEP AUDIT, AND WHAT IT CHANGED (2026-09-17)
+
+Mac: *"Let's do a deep audit ensuring perfection."* Eight adversarial
+lenses read the slice - the Lua against the law, the solver, the seams,
+the pins, the records, the screens, the doctrine, the regression surface
+- and this time the tree was FROZEN while they read, which is the rule
+the first review broke. Twenty-eight findings; every one below was
+reproduced by running code before it was believed.
+
+**THE WORST TWO WERE BOTH SILENT, AND BOTH ABOUT A THING WORKING
+"CORRECTLY" WHILE BEING WORTH A QUARTER OF WHAT IT SHOULD BE.**
+
+*The question's picture and its click target were on different pixels.*
+`LevelingChoiceScreen` painted from the CANVAS ORIGIN at hud scale and
+hit-tested in LETTERBOXED 320x200 native units. Through `townTalk` -
+which is how `world.js` and `exterior.js` both route a pointer - those
+two spaces are `(ox, oy)` apart, and the offset is zero only on an exact
+16:10 canvas. Measured over each painted option, pixel by pixel: on
+1366x768 a click on the Oblivion option selected DAGGERFALL on 27% of
+its area, on 1024x768 29%, on 1512x982 21%, and on 800x600 59% - where a
+click anywhere on the Daggerfall option found it 3% of the time. **The wrong leveling system, chosen silently, on
+the one screen a character can never come back to.** The first review's
+pointer fix was real and this is why it did not work; the click probe
+runs at 1400x900 and clicks a point that happens to fall inside the
+overlap, so it could not see it. Both screens draw through
+`nativeMetrics` now, which is the idiom every other clickable native
+window already used.
+
+*The exact solver maximised the wrong thing.* `virtueSpendPlan`
+maximised the COST paid and, among plans that paid the same cost, kept
+whichever the table reached first - the one with the fewest rows. A
+Luck point costs four, so at the shipped defaults twelve of purse was
+planned as **LUCK +3**: three attribute points where twelve were
+affordable. The purse was right, the spend was legal, the pin asserting
+maximality passed - it asked for the most PURSE and got it. Every
+headless path spends that plan, the font-less escape included. The DP
+carries the point total beside the delta now and prefers more points at
+equal cost, checked against an independent exhaustive search.
+
+**AND ONE THE PLAYER WOULD HAVE FELT WITHOUT EVER SEEING.**
+`checkForVirtueLevelUp` opened with `if (entity.readyToLevelUp) return
+false`, so an owed level was announced ONCE. DFU's own check does the
+opposite deliberately, and this port's prose says why: the hosts have
+ONE overlay slot, `worldModes` mounts the level-up screen only `if
+(!interiorOverlay)`, so a bar that fills behind a shop window is
+announced into nothing. Measured over six skill passes with the slot busy
+every time, on the same character built the same way: SIX offers on the
+classic lane and ONE here, and then a character playing on at a full bar
+with 772 points of carry piling up, never told again.
+
+**THE LEVEL-UP WINDOW COULD NOT BE CLOSED WITH A MOUSE.** In the classic
+skin it stands in for the native sheet's rollout, which IS clickable, so
+a pointer-only player - the only kind there is on a touch screen - could
+open it and never close it. It has a pointer seam now: the rows select,
+and three labelled zones below them press. They are their own buttons
+rather than the `+`/`-` inside a row's text because FONT0003 is
+PROPORTIONAL and `rowText` pads its label to twelve CHARACTERS, so those
+markers land on a different pixel in every row and no fixed rect could
+cover them. (That padding also ran `Intelligence` straight into a
+three-digit value: `Intelligence100`. Thirteen now.)
+
+**THE RECORDS WERE WRONG IN ELEVEN PLACES, and two of them were
+arguments rather than typos.** Departure 5 justified itself four times
+over with "thirty points cannot be spent under at most three attributes,
+at most five each anyway" - they can, at the mod's own defaults, and the
+port's own solver says so (Personality +5, Speed +5, Luck +5 at four
+apiece is exactly thirty). The departure stands on the sentence beside
+it; the arithmetic was decoration and it was false. And "OpenMW's
+`number` renderer takes a `min` and no `max`" - the warrant for every
+ceiling in departure 3 - is contradicted by OpenMW 0.49's own
+`renderers.lua`, which handles `argument.max` and lists it in its
+defaults. THE MOD declares no maxima; the engine is fine. The rest: the
+vendor README still carried the 71-line size error the page records as
+FIXED (and the corrected figure was a `wc -l` figure, which under-counts
+a file that ends without a newline - it is 1,314 lines, counted off the
+files by a pin now); "every other row in the registry is a Daggerfall
+Unity mod" is false of seven of eighteen; "the other six RECORD OPEN
+rows" - there are ten; "the mod ships eight knobs" - seven, and the
+eighth is the port's own; the credits line stated three player-settable
+numbers as facts, which is the exact fault the first review corrected on
+the question screen; and three citations named the wrong line, one of
+them landing inside code this slice had just added.
+
+**THE PINS WERE THE ROOT OF MOST OF IT, AND THE ROOT OF THAT WAS ONE
+THING: NEITHER NEW SCREEN'S `draw` HAD EVER BEEN CALLED.** Thirteen draw
+mutations survived the whole suite, `draw() { return; }` among them, on
+two screens whose entire defect surface is geometry. Both are drawn now,
+on eight canvases, against a stub font with a known pessimistic metric,
+and every painted glyph is read back through the hit test it is meant to
+answer. The rest of that lens: the hit box was pinned against its own
+arithmetic; the `1` key's branch was driven by nothing (making it answer
+with the mod survived everything); `isVirtueLevelUp` was asserted on the
+dungeon side only, so setting it false survived and silently dropped
+every font-less level-up; the char-sheet fork was held by a REGEX, which
+a local `const usesVirtueLeveling = () => false` walks straight past;
+the `deltas` contract was "held" by three probes at 50 across, where
+neither cap can bind; and a mutant recorded EQUIVALENT was not - the
+font-less escape had simply never been driven from a partly spent
+window. Nineteen pins added, two turned around, one retired, 92 mutants.
+
+**One defect this audit looked hard for and did not find:** departure
+6's promise that the level-up window is never a WALL. Walked
+exhaustively - 1,296 settings and stat spreads, 12.9 million reachable
+delta vectors - there is no state with neither a legal plus nor a legal
+minus. 196 of those configurations do contain corners where points
+remain and no plus is legal; every one is escapable by minus, which is
+what the code comments already said, and the window names that way out
+now instead of repeating an instruction its buttons have stopped
+honouring.
 
 ## OPEN, FOR MAC
 

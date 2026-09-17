@@ -81,9 +81,13 @@ export function createCharSheetWindow(deps = {}) {
   // the mod's law in BOTH skins, because the mod's window is the mod's
   // window - the fork above is about which SHEET a skin wears, and this
   // is not a sheet. The Oghma Infinium is excluded on purpose: that
-  // artefact is Daggerfall's own, its thirty points are DFU's law, and
-  // they cannot be spent under the mod's three-attribute cap - so it
-  // falls through to the port's own rollout below, in whichever lane.
+  // artefact is Daggerfall's own and its thirty points are DFU's law -
+  // a book the mod has never heard of - so it falls through to the
+  // port's own rollout below, in whichever lane. (The reason this used
+  // to give, that thirty points cannot be spent under the mod's
+  // three-attribute cap, is FALSE at the mod's own defaults: three rows
+  // at five apiece with Luck at four is exactly thirty. ORL1's deep
+  // audit.)
   if (deps.entity?.readyToLevelUp && !deps.entity?.oghmaLevelUp && usesVirtueLeveling(deps.entity)) {
     return new VirtueLevelUpScreen(deps.entity);
   }

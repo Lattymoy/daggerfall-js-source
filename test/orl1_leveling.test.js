@@ -28,21 +28,28 @@ import {
   skillTier, skillImpact, addSkillProgress, checkForVirtueLevelUp, rollOverLevelProgress,
   attributeOffset, attributeIncreaseLimit, virtuePurse, canRaiseAttribute, canLowerAttribute,
   commitVirtueLevelUp, virtueSpendPlan, virtueLevelUpHeadless, initVirtueLeveling,
-  modVirtuePurse,
+  modVirtuePurse, LUCK,
 } from '../src/systems/oblivionLeveling.js';
+import { createCharSheetWindow } from '../src/ui/charSheetDoor.js';
+import { LevelUpScreen } from '../src/ui/charsheet.js';
 import {
   VirtueLevelUpScreen, REMAINING_POINTS_ERROR, REMAINING_POINTS_LABEL, chooseAttributesLabel,
+  levelUpHitNative, ROW_TOP, ROW_PITCH, ROW_X, MINUS_X, PLUS_X, OK_X, PRESS_Y,
 } from '../src/ui/virtueLevelUp.js';
 import {
   LevelingChoiceScreen, LEVELING_OPTION_IDS, levelingOptions,
-  choiceAtNative, CHOICE_TOP, CHOICE_PITCH,
+  choiceAtNative, choiceTop, choiceHeight, CHOICE_TOP, CHOICE_PITCH,
+  CHOICE_TITLE_H, CHOICE_LINE_H,
 } from '../src/ui/levelingChoice.js';
 import { MOD_SETTINGS } from '../src/systems/modSettings.js';
 import { FEATURES, MOD_CURATED, GROUPS } from '../src/systems/features.js';
 import { CREDITS } from '../src/ui/credits.js';
 import { SKILLS } from '../src/systems/skills.js';
 import { createCharacter, hitPointsPerLevelUp, STAT_KEYS_ORDER } from '../src/systems/chargen.js';
-import { raiseSkills, skillUsesForAdvancement } from '../src/systems/advancement.js';
+import {
+  raiseSkills, skillUsesForAdvancement, calculatePlayerLevel, checkForLevelUp,
+  LEVELUP_SKILL_SUM_PER_LEVEL, LEVELUP_BONUS_POOL_MIN, LEVELUP_BONUS_POOL_MAX,
+} from '../src/systems/advancement.js';
 import { CLASSIC_GAME_START_TIME as T0 } from '../src/systems/gameDate.js';
 import { createChargenWindow, finishChargen } from '../src/systems/chargenSession.js';
 import { ChargenFlow } from '../src/ui/chargen.js';
@@ -249,7 +256,11 @@ test('ORL1 L1: the bar full raises the SAME readyToLevelUp flag the Daggerfall p
   assert.equal(checkForVirtueLevelUp(p), true);
   assert.equal(p.readyToLevelUp, true);
   assert.equal(p.pendingLevel, 4, 'the banner reads the level being gained');
-  assert.equal(checkForVirtueLevelUp(p), false, 'and it does not re-raise an already-owed level');
+  // ...and it KEEPS offering it, which is DFU's own shape: the hosts
+  // have one overlay slot and the first offer may reach it busy
+  // (ORL1's deep audit - this used to assert the opposite).
+  assert.equal(checkForVirtueLevelUp(p), true, 'an owed level is re-offered until it is taken');
+  assert.equal(p.pendingLevel, 4, 'and it still names the same level');
 });
 
 test('ORL1 L2: the roll-over on commit, including the bar that stays FULL (helper.lua:144-155)', () => {
@@ -432,28 +443,6 @@ test('ORL1 L3: the purse is THE MOST a player could legally spend - not what one
   assert.ok(clamped > 0, 'the port\'s second clamp never fired - the walk does not reach the case it exists for');
 });
 
-test('ORL1 L3: OLD, RETIRED - every purse is still spendable to exactly zero', () => {
-  // The window refuses to close on an unspent point, so a purse that
-  // cannot be spent to zero is a trap. This walks the awkward shapes.
-  // The original property, kept beside the stronger one: whatever else
-  // is true, a purse the window will not close on is a wall.
-  for (const maxRows of [2, 3, 4, 8]) {
-    for (const luckCost of [1, 3, 4, 7]) {
-      for (const luck of [50, 90, 96, 99, 100]) {
-        for (const rest of [50, 97, 99, 100]) {
-          const p = virtuePlayer();
-          for (const k of STAT_KEYS_ORDER) p.stats[k] = rest;
-          p.stats.luck = luck;
-          const s = S({ luckIncreaseCost: luckCost, maxUpdatableAttribute: maxRows });
-          const purse = virtuePurse(p.stats, s);
-          const { cost } = virtueSpendPlan(p.stats, s, purse);
-          assert.equal(cost, purse,
-            `maxRows ${maxRows}, luckCost ${luckCost}, luck ${luck}, rest ${rest}: ${purse} left unspendable`);
-        }
-      }
-    }
-  }
-});
 
 // ── L4: WHAT THE BUTTONS ALLOW ─────────────────────────────────────
 
@@ -757,18 +746,18 @@ test('ORL1: the window HIDES a press it will not honour, as the mod does', () =>
   // a fresh row offers PLUS and no MINUS
   assert.deepEqual(w.rowMarkers('strength'), { minus: false, plus: true });
   // ...and the WORDS carry the markers, in their own columns
-  assert.equal(w.rowText('strength'), '  Strength     50      0 +', 'a space where minus would be, a plus where plus is');
+  assert.equal(w.rowText('strength'), '  Strength      50      0 +', 'a space where minus would be, a plus where plus is');
   // raise it and MINUS appears
   w.cursor = STAT_KEYS_ORDER.indexOf('strength');
   w.input('plus');
   assert.deepEqual(w.rowMarkers('strength'), { minus: true, plus: true });
-  assert.equal(w.rowText('strength'), '  Strength     51   - +1 +');
+  assert.equal(w.rowText('strength'), '  Strength      51   - +1 +');
   // a row at its per-level limit loses PLUS
   for (let i = 0; i < 4; i++) w.input('plus');
   assert.equal(w.deltas.strength, ATTRIBUTE_INCREASE_LIMIT);
   assert.deepEqual(w.rowMarkers('strength'), { minus: true, plus: false },
     'plus is HIDDEN at the row limit, not shown and refused');
-  assert.equal(w.rowText('strength'), '  Strength     55   - +5  ', 'and the plus column is a SPACE, not a dimmed plus');
+  assert.equal(w.rowText('strength'), '  Strength      55   - +5  ', 'and the plus column is a SPACE, not a dimmed plus');
   // ...and a row the three-attribute cap shuts out loses it too
   w.cursor = STAT_KEYS_ORDER.indexOf('agility'); w.input('plus');
   w.cursor = STAT_KEYS_ORDER.indexOf('speed'); w.input('plus');
@@ -890,12 +879,15 @@ test('ORL1: the question can be answered with the MOUSE, which is how the wizard
   // The classic wizard is completable by pointer alone and has been
   // since U8b; a screen the door puts in front of its OK that swallows
   // every click dead-ends that player entirely (ORL1's review).
-  const mid = (i) => CHOICE_TOP + i * CHOICE_PITCH + 4;
-  assert.equal(choiceAtNative(160, mid(0)), 0);
-  assert.equal(choiceAtNative(160, mid(1)), 1);
-  assert.equal(choiceAtNative(160, 8), -1, 'the headline is not an answer');
-  assert.equal(choiceAtNative(2, mid(0)), -1, 'nor is the margin');
-  assert.equal(choiceAtNative(160, mid(1) + CHOICE_PITCH), -1, 'nor is the footer');
+  const OPTS = levelingOptions(S());
+  const mid = (i) => choiceTop(i) + 4;
+  assert.equal(CHOICE_TOP, choiceTop(0), 'the table\'s first row IS the first option');
+  assert.ok(CHOICE_PITCH > choiceHeight(OPTS[1]), 'the pitch must clear the taller option\'s whole block');
+  assert.equal(choiceAtNative(160, mid(0), OPTS), 0);
+  assert.equal(choiceAtNative(160, mid(1), OPTS), 1);
+  assert.equal(choiceAtNative(160, 8, OPTS), -1, 'the headline is not an answer');
+  assert.equal(choiceAtNative(2, mid(0), OPTS), -1, 'nor is the margin');
+  assert.equal(choiceAtNative(160, choiceTop(2), OPTS), -1, 'nor is the footer');
 
   let got = [];
   const q = new LevelingChoiceScreen((id) => got.push(id));
@@ -928,24 +920,40 @@ test('ORL1: the question describes the purse the game will actually hand out', (
   // from 0 to 60 and the Mods pane exposes it; the blurb used to say
   // "twelve virtues" whatever it was set to (ORL1's review).
   const words = (over) => levelingOptions(S(over)).find((o) => o.id === LEVELING_VIRTUE).lines.join(' ');
-  assert.match(words({}), /12 virtues to spend across at most 3 of your attributes/);
+  assert.match(words({}), /12 virtues, to spend on at most 3 attributes/);
   assert.match(words({ attributePoints: 20, maxUpdatableAttribute: 5 }),
-    /20 virtues to spend across at most 5 of your attributes/);
-  assert.match(words({ attributePoints: 1 }), /\b1 virtue to spend\b/, 'and it counts in English');
+    /20 virtues, to spend on at most 5 attributes/);
+  assert.match(words({ attributePoints: 1 }), /\b1 virtue\b/, 'and it counts in English');
   // ...and a purse of NOTHING says so rather than promising virtues
   const none = words({ attributePoints: 0 });
-  assert.match(none, /no virtues at all/);
-  assert.doesNotMatch(none, /\b0 virtues to spend/);
+  assert.match(none, /purse to nothing/);
+  assert.doesNotMatch(none, /\b0 virtues/);
   // the bar's size is the mod's own number, not a second copy of it
-  assert.match(words({}), new RegExp(`at ${LEVELUP_TOTAL} you level`));
-  // Daggerfall's own half says what the port's own law does, unchanged
+  assert.match(words({}), new RegExp(`At ${LEVELUP_TOTAL} you level`));
+
+  // DAGGERFALL'S OWN HALF QUOTES THE PORT'S OWN LAW, and quotes it from
+  // the law rather than from a typist. This pin used to read "fifteen
+  // points" and "four to six points" as words, against a blurb that had
+  // typed the same words - a constant measured against itself, and the
+  // exact defect the first review fixed on the virtue half. The deep
+  // audit found it still standing here.
   const classic = levelingOptions(S({})).find((o) => o.id === LEVELING_CLASSIC).lines.join(' ');
-  assert.match(classic, /fifteen points of it is a level/);
-  assert.match(classic, /four to six points/);
+  assert.match(classic, new RegExp(`every ${LEVELUP_SKILL_SUM_PER_LEVEL} points of it is a level`));
+  assert.match(classic, new RegExp(`rolls ${LEVELUP_BONUS_POOL_MIN} to ${LEVELUP_BONUS_POOL_MAX} attribute points`));
+  // ...and those ARE the numbers the level-up they describe uses
+  assert.equal(calculatePlayerLevel(0, LEVELUP_SKILL_SUM_PER_LEVEL * 3 - 28), 3,
+    'the blurb\'s divisor is the one calculatePlayerLevel divides by');
 });
 
 test('ORL1: the new-game question offers Daggerfall FIRST and answers exactly once', () => {
-  assert.deepEqual([...LEVELING_OPTION_IDS], [LEVELING_CLASSIC, LEVELING_VIRTUE],
+  // AGAINST THE SCREEN, not against the two constants it is declared
+  // from. This read `[LEVELING_CLASSIC, LEVELING_VIRTUE]` on both sides,
+  // which is the same import twice - and the array is a hand-written
+  // second copy of the order `levelingOptions` mints, so the two can
+  // disagree and nothing noticed (ORL1's deep audit).
+  assert.deepEqual([...LEVELING_OPTION_IDS], levelingOptions(S()).map((o) => o.id),
+    'the id list IS the order the screen offers');
+  assert.equal(LEVELING_OPTION_IDS[0], LEVELING_CLASSIC,
     'the port\'s own law is the default a player gets by pressing Enter');
   let got = [];
   const q = new LevelingChoiceScreen((id) => got.push(id));
@@ -1176,8 +1184,671 @@ test('ORL1: neither screen claims native geometry it has no source for', () => {
   for (const f of ['src/ui/virtueLevelUp.js', 'src/ui/levelingChoice.js']) {
     const s = rd(f);
     const code = s.split('\n').filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l)).join('\n');
-    assert.doesNotMatch(code, /nativePanel|loadImg|drawImg|messageBox/, `${f} draws no native art`);
+    // ART, not the LETTERBOX. `nativeMetrics` and `NATIVE_W` are how a
+    // window learns where the 320x200 game area sits on this canvas, and
+    // every clickable native window reads them; drawing WITHOUT them is
+    // what put this screen's picture and its click target on different
+    // pixels (ORL1's deep audit). What the rule forbids is claiming
+    // GEOMETRY FROM ART there is no DFU source for, so that is what is
+    // named here.
+    assert.doesNotMatch(code, /loadImg|drawImg|drawRect|shadowText|messageBox|\.IMG|\.CIF/,
+      `${f} draws no native art`);
+    assert.match(code, /nativeMetrics/, `${f} paints where the pointer seam looks`);
     assert.match(s, /drawScreenQuad/, `${f} is the dim-and-text idiom`);
     assert.match(s, /NATIVE-WINDOW RULE/, `${f} says why it is not a native window`);
   }
+});
+
+// ───────────────────────────────────────────────────────────────────
+// ORL1 THE DEEP AUDIT - the pins for the laws the first pass shipped
+// with nothing holding them. The lens that mattered most reported
+// that NEITHER NEW SCREEN'S `draw` WAS EVER CALLED: thirteen draw
+// mutations survived, `draw() { return; }` among them, on two screens
+// whose whole defect surface is geometry. Every pin below either runs
+// a draw or measures the table a draw reads.
+// ───────────────────────────────────────────────────────────────────
+
+/** A font with a KNOWN, PESSIMISTIC metric: six pixels a glyph, where
+ *  FONT0003 gives five for capitals (test/audit18_ui_native.test.js
+ *  F1: measureText(f,'HELLO') === 25). A layout that fits this fits
+ *  the real font with room to spare, and it needs no ARENA2. */
+function stubFont() {
+  return { tex: 'font', fnt: { fixedWidth: 6, fixedHeight: 8, glyphWidth: () => 5 } };
+}
+/** A renderer that records what was painted and where. */
+function drawRecorder() {
+  const quads = [];
+  return { quads, drawScreenQuad: (tex, rect, uv, color) => quads.push({ tex, ...rect, color }) };
+}
+const canvasOf = (width, height) => ({ width, height });
+/** nativeMetrics' own arithmetic, restated so a pin can predict the paint. */
+function metricsOf(width, height) {
+  const s = Math.max(1, Math.floor(Math.min(width / 320, height / 200)));
+  return { s, ox: Math.floor((width - 320 * s) / 2), oy: Math.floor((height - 200 * s) / 2) };
+}
+
+test('ORL1 deep audit: the question PAINTS where the hit test LOOKS, on every canvas', () => {
+  // THE DEFECT THIS HOLDS. The question drew at `32 * s` from the CANVAS
+  // ORIGIN while `choiceAtNative` read letterboxed 320x200 units. Through
+  // townTalk - world.js's and exterior.js's pointer route - the two were
+  // (ox, oy) apart, so a click on the painted Oblivion option selected
+  // DAGGERFALL: 26% of its area on 1366x768, 32% on 1024x768, 60% on
+  // 800x600. The wrong leveling system, chosen silently, on the one
+  // screen a character can never come back to. No pin could see it
+  // because no pin had ever called `draw`.
+  const opts = levelingOptions(S());
+  for (const [W, H] of [[1400, 900], [1920, 1080], [1366, 768], [1024, 768],
+    [800, 600], [1600, 1000], [2560, 1440], [375, 667]]) {
+    const m = metricsOf(W, H);
+    const r = drawRecorder();
+    const q = new LevelingChoiceScreen(() => {});
+    q.draw(r, canvasOf(W, H), stubFont());
+    assert.ok(r.quads.length > 1, `${W}x${H}: the screen painted nothing`);
+
+    // every glyph of an option's block must read back as THAT option
+    const glyphs = r.quads.filter((x) => x.tex === 'font');
+    assert.ok(glyphs.length > 100, `${W}x${H}: ${glyphs.length} glyphs is not a screen`);
+    let inside = 0;
+    for (const g of glyphs) {
+      const vx = (g.x - m.ox) / m.s, vy = (g.y - m.oy) / m.s;
+      const i = choiceAtNative(vx, vy, opts);
+      if (i >= 0) inside++;
+      // and nothing painted for one option may read back as the other:
+      // that is the wrong-system click, and it is what this asserts away.
+      assert.ok(vx >= 0 && vx <= 320, `${W}x${H}: a glyph at native x ${vx.toFixed(1)} is off the game area`);
+    }
+    assert.ok(inside > 40, `${W}x${H}: only ${inside} painted glyphs fall inside an option's hit box`);
+  }
+});
+
+test('ORL1 deep audit: every painted row of an option is inside THAT option, at every slider', () => {
+  // CHOICE_HEIGHT was a literal 52 while the Oblivion option painted 62,
+  // so its last line sat outside its own hit box. The height is derived
+  // from the option now, and this is the assertion that keeps it so -
+  // including at the extremes of three sliders, because the option's
+  // text is built from them.
+  for (const attributePoints of [0, 1, 12, 60]) {
+    for (const maxUpdatableAttribute of [2, 3, 8]) {
+      const s = S({ attributePoints, maxUpdatableAttribute });
+      const opts = levelingOptions(s);
+      opts.forEach((o, i) => {
+        const top = choiceTop(i);
+        assert.equal(choiceHeight(o), CHOICE_TITLE_H + o.lines.length * CHOICE_LINE_H);
+        const rows = [top, ...o.lines.map((_, k) => top + CHOICE_TITLE_H + k * CHOICE_LINE_H)];
+        for (const y of rows) {
+          assert.equal(choiceAtNative(160, y, opts), i,
+            `ap=${attributePoints} mu=${maxUpdatableAttribute}: option ${i}'s row at y=${y} is not in its own hit box`);
+        }
+        // ...and the blocks do not run into each other or off the screen
+        if (i + 1 < opts.length) assert.ok(top + choiceHeight(o) <= choiceTop(i + 1), 'the blocks overlap');
+      });
+      assert.ok(choiceTop(opts.length) + 10 <= 200, 'the footer is off the bottom of the screen');
+    }
+  }
+});
+
+test('ORL1 deep audit: nothing the question paints runs off the 320-unit game area', () => {
+  // It did. The subtitle was 73 characters and the longest body line 66
+  // with its indent, which at five pixels a glyph is past 320 - clipped
+  // on 1600x1000, 640x400 and 1024x768 through townTalk, and on EVERY
+  // canvas in the dungeon host, which hands the draw a 320-unit width.
+  // Measured here against a SIX-pixel font, so the real one has margin.
+  for (const attributePoints of [0, 1, 12, 59, 60]) {
+    for (const maxUpdatableAttribute of [2, 3, 8]) {
+      const r = drawRecorder();
+      const q = new LevelingChoiceScreen(() => {},
+        { settings: S({ attributePoints, maxUpdatableAttribute }) });
+      q.draw(r, canvasOf(1600, 1000), stubFont());   // ox = oy = 0, so native == painted
+      const glyphs = r.quads.filter((x) => x.tex === 'font');
+      for (const g of glyphs) {
+        assert.ok(g.x >= 0 && g.x + g.w <= 1600,
+          `ap=${attributePoints} mu=${maxUpdatableAttribute}: a glyph runs to ${g.x + g.w} of 1600`);
+        assert.ok(g.y >= 0 && g.y + g.h <= 1000, 'a glyph runs off the bottom');
+      }
+    }
+  }
+});
+
+test('ORL1 deep audit: the level-up window can be finished with the POINTER alone', () => {
+  // In the classic skin this window stands in for the native sheet's
+  // rollout, which IS clickable - so without a seam a player levelling a
+  // virtue character by mouse could open it and never close it, and on a
+  // touch screen there was no way in at all.
+  const entity = {
+    level: 4, pendingLevel: 5, readyToLevelUp: true, levelProgress: 100, levelRollUp: 0,
+    health: 40, maxHealth: 40, career,
+    stats: Object.fromEntries(STAT_KEYS_ORDER.map((k) => [k, 50])),
+  };
+  const w = new VirtueLevelUpScreen(entity, { settings: S(), rolls: () => 0.5 });
+  assert.equal(w.purse, 12);
+
+  // the rects say what they mean
+  for (let i = 0; i < 8; i++) {
+    assert.deepEqual(levelUpHitNative(ROW_X + 4, ROW_TOP + i * ROW_PITCH + 4), { row: i });
+  }
+  assert.deepEqual(levelUpHitNative(MINUS_X + 4, PRESS_Y + 4), { press: 'minus' });
+  assert.deepEqual(levelUpHitNative(PLUS_X + 4, PRESS_Y + 4), { press: 'plus' });
+  assert.deepEqual(levelUpHitNative(OK_X + 4, PRESS_Y + 4), { press: 'ok' });
+  assert.equal(levelUpHitNative(4, ROW_TOP + 4), null, 'the margin is not a row');
+  assert.equal(levelUpHitNative(160, 8), null, 'the headline is not a press');
+
+  // OK REFUSES while the purse is unspent, and says so - the same law the
+  // keyboard's ENTER obeys (player.lua:532-552 validateLevelUp)
+  w.click(OK_X + 4, PRESS_Y + 4);
+  assert.equal(w.done, false);
+  assert.equal(w.refused, true);
+
+  // ...and a finger can spend it and close it
+  let guard = 0;
+  while (w.purse > 0 && guard++ < 64) {
+    let moved = false;
+    for (let i = 0; i < 8 && !moved; i++) {
+      w.click(ROW_X + 4, ROW_TOP + i * ROW_PITCH + 4);
+      const before = w.purse;
+      w.click(PLUS_X + 4, PRESS_Y + 4);
+      if (w.purse < before) moved = true;
+    }
+    assert.ok(moved, `the pointer is stuck with ${w.purse} left`);
+  }
+  assert.equal(w.purse, 0);
+  w.click(OK_X + 4, PRESS_Y + 4);
+  assert.equal(w.done, true);
+  assert.equal(entity.level, 5);
+  assert.equal(entity.readyToLevelUp, false);
+
+  // minus hands a point back
+  const w2 = new VirtueLevelUpScreen(
+    { ...entity, readyToLevelUp: true, level: 5, stats: Object.fromEntries(STAT_KEYS_ORDER.map((k) => [k, 50])) },
+    { settings: S(), rolls: () => 0.5 });
+  w2.click(ROW_X + 4, ROW_TOP + 4);
+  w2.click(PLUS_X + 4, PRESS_Y + 4);
+  const spent = w2.purse;
+  w2.click(MINUS_X + 4, PRESS_Y + 4);
+  assert.equal(w2.purse, spent + 1, 'the minus button returns the point');
+
+  // the cursor follows the pointer
+  w2.hover(ROW_X + 4, ROW_TOP + 5 * ROW_PITCH + 4);
+  assert.equal(w2.cursor, 5);
+  w2.hover(160, 8);
+  assert.equal(w2.cursor, 5, 'a hover off the rows leaves the cursor where it was');
+});
+
+test('ORL1 deep audit: the level-up window PAINTS where its hit test looks', () => {
+  const entity = {
+    level: 4, pendingLevel: 5, readyToLevelUp: true, levelProgress: 100, levelRollUp: 7,
+    health: 40, maxHealth: 40, career,
+    stats: Object.fromEntries(STAT_KEYS_ORDER.map((k) => [k, 50])),
+  };
+  for (const [W, H] of [[1400, 900], [1920, 1080], [1366, 768], [1024, 768], [800, 600], [640, 400]]) {
+    const m = metricsOf(W, H);
+    const r = drawRecorder();
+    const w = new VirtueLevelUpScreen(entity, { settings: S(), rolls: () => 0.5 });
+    w.refused = true;   // the refusal line paints too
+    w.draw(r, canvasOf(W, H), stubFont());
+    const glyphs = r.quads.filter((x) => x.tex === 'font');
+    assert.ok(glyphs.length > 100, `${W}x${H}: ${glyphs.length} glyphs is not a window`);
+    let rows = 0;
+    for (const g of glyphs) {
+      const vx = (g.x - m.ox) / m.s, vy = (g.y - m.oy) / m.s;
+      assert.ok(vx >= 0 && vx <= 320, `${W}x${H}: a glyph at native x ${vx.toFixed(1)} is off the game area`);
+      assert.ok(vy >= 0 && vy <= 200, `${W}x${H}: a glyph at native y ${vy.toFixed(1)} is off the game area`);
+      if (levelUpHitNative(vx, vy)) rows++;
+    }
+    assert.ok(rows > 40, `${W}x${H}: only ${rows} painted glyphs are reachable by the pointer`);
+  }
+});
+
+test('ORL1 deep audit: the window is NEVER A WALL - every reachable state has a legal press', () => {
+  // Departure 6's actual promise. A state with points left and no legal
+  // PLUS is allowed (the minus button is the way out, and the font-less
+  // escape re-plans from scratch for exactly that reason) - but a state
+  // with neither would be a level-up a player could not finish and could
+  // not leave. Walked exhaustively: a delta vector is reachable iff it
+  // opens at most `maxUpdatableAttribute` rows, each within its limit and
+  // its headroom, and costs no more than the purse.
+  const KEYS = STAT_KEYS_ORDER;
+  const scan = (stats, s) => {
+    const purse = virtuePurse(stats, s);
+    if (purse === 0) return null;
+    const room = KEYS.map((k) => Math.max(0, Math.min(attributeIncreaseLimit(k, s), MAX_ATTRIBUTE_VALUE - stats[k])));
+    const off = KEYS.map((k) => attributeOffset(k, s));
+    const d = Object.fromEntries(KEYS.map((k) => [k, 0]));
+    let dead = null;
+    const rec = (i, opened, spent) => {
+      if (dead) return;
+      if (i === KEYS.length) {
+        const left = purse - spent;
+        if (left > 0
+          && !KEYS.some((k) => canRaiseAttribute(k, stats, d, left, s))
+          && !KEYS.some((k) => canLowerAttribute(k, d))) dead = { ...d };
+        return;
+      }
+      rec(i + 1, opened, spent);
+      if (opened >= s.maxUpdatableAttribute) return;
+      for (let v = 1; v <= room[i]; v++) {
+        const c = spent + v * off[i];
+        if (c > purse) break;
+        d[KEYS[i]] = v; rec(i + 1, opened + 1, c);
+      }
+      d[KEYS[i]] = 0;
+    };
+    rec(0, 0, 0);
+    return dead;
+  };
+  for (const attributePoints of [1, 3, 12, 25])
+    for (const maxUpdatableAttribute of [2, 3, 5])
+      for (const allowLuckIncrease of [true, false])
+        for (const luckIncreaseCost of [1, 4, 20])
+          for (const spread of [
+            KEYS.map(() => 50), KEYS.map(() => 98), KEYS.map(() => 99), KEYS.map(() => 100),
+            [100, 100, 100, 100, 100, 100, 100, 50], [96, 97, 98, 99, 100, 100, 100, 100],
+            [99, 99, 99, 99, 99, 99, 99, 50], [97, 98, 99, 100, 50, 60, 70, 80],
+          ]) {
+            const s = S({ attributePoints, maxUpdatableAttribute, allowLuckIncrease, luckIncreaseCost });
+            const stats = Object.fromEntries(KEYS.map((k, i) => [k, spread[i]]));
+            assert.equal(scan(stats, s), null,
+              `a wall at ${JSON.stringify({ attributePoints, maxUpdatableAttribute, allowLuckIncrease, luckIncreaseCost, spread })}`);
+          }
+});
+
+test('ORL1 deep audit: the plan buys the MOST ATTRIBUTE POINTS, not merely the most purse', () => {
+  // THE DEFECT THIS HOLDS. `virtueSpendPlan` maximised the COST paid and
+  // kept whichever equal-cost plan the table reached first - the fewest
+  // rows. A Luck point costs four, so at the shipped defaults a character
+  // with every attribute at 50 was planned LUCK +3: three attribute
+  // points, where twelve were affordable for the same twelve of purse.
+  // The purse was right and the spend was legal; it was worth a quarter
+  // of what it should have been. Every headless path spends this plan,
+  // the font-less escape among them.
+  const KEYS = STAT_KEYS_ORDER;
+  const bestPointsAt = (stats, s, cost) => {
+    const room = KEYS.map((k) => Math.max(0, Math.min(attributeIncreaseLimit(k, s), MAX_ATTRIBUTE_VALUE - stats[k])));
+    const off = KEYS.map((k) => attributeOffset(k, s));
+    let best = -1;
+    const rec = (i, opened, spent, got) => {
+      if (spent === cost) best = Math.max(best, got);
+      if (i === KEYS.length || spent > cost) return;
+      rec(i + 1, opened, spent, got);
+      if (opened >= s.maxUpdatableAttribute) return;
+      for (let v = 1; v <= room[i]; v++) {
+        const c = spent + v * off[i];
+        if (c > cost) break;
+        rec(i + 1, opened + 1, c, got + v);
+      }
+    };
+    rec(0, 0, 0, 0);
+    return best;
+  };
+  // the headline case, named, so a reader sees the shape
+  const flat = Object.fromEntries(KEYS.map((k) => [k, 50]));
+  const headline = virtueSpendPlan(flat, S(), virtuePurse(flat, S()));
+  assert.equal(headline.cost, 12);
+  assert.equal(KEYS.reduce((n, k) => n + headline.plan[k], 0), 12,
+    'twelve of purse must buy twelve attribute points, not three of Luck');
+
+  for (const attributePoints of [1, 3, 12, 25, 60])
+    for (const maxUpdatableAttribute of [2, 3, 8])
+      for (const allowLuckIncrease of [true, false])
+        for (const luckIncreaseCost of [1, 4, 20])
+          for (const spread of [
+            KEYS.map(() => 50), KEYS.map(() => 80), KEYS.map(() => 98), KEYS.map(() => 100),
+            [96, 97, 98, 99, 100, 100, 100, 100], [99, 99, 99, 99, 99, 99, 99, 50],
+          ]) {
+            const s = S({ attributePoints, maxUpdatableAttribute, allowLuckIncrease, luckIncreaseCost });
+            const stats = Object.fromEntries(KEYS.map((k, i) => [k, spread[i]]));
+            const { cost, plan } = virtueSpendPlan(stats, s, virtuePurse(stats, s));
+            const got = KEYS.reduce((n, k) => n + (plan[k] ?? 0), 0);
+            assert.equal(got, bestPointsAt(stats, s, cost),
+              `${JSON.stringify({ attributePoints, maxUpdatableAttribute, allowLuckIncrease, luckIncreaseCost, spread })}: `
+              + `cost ${cost} bought ${got} points`);
+          }
+});
+
+test('ORL1 deep audit: each of the question\'s answers has its own key, and the keys disagree', () => {
+  // `1` and `2` each answer, and they answer DIFFERENTLY - a branch that
+  // answered with the same option either way passed the whole suite,
+  // because nothing drove the digits against each other.
+  const got = [];
+  const one = new LevelingChoiceScreen((id) => got.push(id));
+  one.input('char:1');
+  const two = new LevelingChoiceScreen((id) => got.push(id));
+  two.input('char:2');
+  assert.deepEqual(got, [LEVELING_CLASSIC, LEVELING_VIRTUE]);
+  assert.notEqual(got[0], got[1], 'the two digits must not answer with the same system');
+  // ...and the cursor's answer follows the cursor, both ways
+  const c = [];
+  const w = new LevelingChoiceScreen((id) => c.push(id));
+  w.input('ArrowDown');
+  w.input('Enter');
+  assert.deepEqual(c, [LEVELING_VIRTUE], 'DOWN then ENTER takes the second option');
+});
+
+test('ORL1 deep audit: the longest stat name does not run into a three-digit value', () => {
+  // `Intelligence` is exactly twelve characters and the column was twelve
+  // wide, so a character with it at 100 read `Intelligence100`.
+  const p = virtuePlayer({ readyToLevelUp: true, levelProgress: LEVELUP_TOTAL });
+  for (const k of STAT_KEYS_ORDER) p.stats[k] = 100;
+  p.stats.personality = 99;
+  const w = new VirtueLevelUpScreen(p, { settings: S(), rolls: () => 0.5 });
+  for (const k of STAT_KEYS_ORDER) {
+    assert.doesNotMatch(w.rowText(k), /[A-Za-z]\d/, `${k}: the name runs into the value`);
+  }
+  assert.match(w.rowText('intelligence'), /Intelligence\s+100/);
+});
+
+test('ORL1 deep audit: a refusal with no legal plus names the control that still works', () => {
+  // The mod's own line sends the player at the plus buttons; in a corner
+  // there is no legal plus and the way out is the minus. The author's
+  // string is kept and the port's own sentence is added under it.
+  const p = virtuePlayer({ readyToLevelUp: true, levelProgress: LEVELUP_TOTAL });
+  for (const k of STAT_KEYS_ORDER) p.stats[k] = 99;
+  p.stats.luck = 50;
+  // Two rows at 99 take one point each and cap; Luck is the only row with
+  // room left and opening it would be a third. With Luck priced at one,
+  // the purse is minted for three and two of them can be placed.
+  const w = new VirtueLevelUpScreen(p, {
+    settings: S({ attributePoints: 3, maxUpdatableAttribute: 2, luckIncreaseCost: 1 }),
+    rolls: () => 0.5,
+  });
+  w.raise('personality');
+  w.raise('speed');
+  assert.ok(w.purse > 0, 'the corner has points left');
+  assert.ok(!STAT_KEYS_ORDER.some((k) => w.rowMarkers(k).plus), 'and no plus is legal');
+  assert.ok(STAT_KEYS_ORDER.some((k) => w.rowMarkers(k).minus), 'but a minus always is');
+  assert.equal(w.confirm(), false);
+  assert.equal(w.refused, true);
+  // ...and the draw says so
+  const r = { quads: [], drawScreenQuad(tex, rect, uv, color) { this.quads.push({ tex, ...rect, color }); } };
+  const font = { tex: 'font', fnt: { fixedWidth: 6, fixedHeight: 8, glyphWidth: () => 5 } };
+  w.draw(r, { width: 1600, height: 1000 }, font);
+  assert.ok(r.quads.length > 100, 'the window painted');
+  assert.match(rd('src/ui/virtueLevelUp.js'), /TAKE_ONE_BACK_HINT/);
+});
+
+test('ORL1 deep audit: the font-less escape re-plans from SCRATCH, and a partly spent window still closes', () => {
+  // THE RECORD THAT WAS WRONG. The escape's mutant - re-planning against
+  // the REMAINING purse over the live deltas instead of the full one -
+  // was recorded EQUIVALENT because no pin drove the escape from a window
+  // a player had already touched. It is not equivalent: the escape
+  // assigns the plan WHOLESALE and sets the purse to `fullPurse - cost`,
+  // so a re-plan against the remainder leaves the purse non-zero,
+  // `confirm` refuses, the window never closes - and
+  // dungeonContext.js's font-less arm drops the overlay anyway, losing
+  // the level-up with everything already spent in it.
+  const p = virtuePlayer({ readyToLevelUp: true, levelProgress: LEVELUP_TOTAL, pendingLevel: 2 });
+  for (const k of STAT_KEYS_ORDER) p.stats[k] = 50;
+  const level = p.level;
+  const w = new VirtueLevelUpScreen(p, { settings: S(), rolls: () => 0.5 });
+  assert.equal(w.purse, 12);
+  for (let i = 0; i < 5; i++) w.raise('strength');   // a player mid-spend
+  assert.equal(w.purse, 7, 'five points are gone');
+
+  assert.equal(w.spendRemainingHeadless(), true, 'the escape closes a partly spent window');
+  assert.equal(w.done, true);
+  assert.equal(w.purse, 0, 'and it leaves nothing unspent');
+  assert.equal(p.level, level + 1);
+  assert.equal(p.readyToLevelUp, false);
+  // ...and it spent the WHOLE purse's worth, not the remainder's
+  const gained = STAT_KEYS_ORDER.reduce((n, k) => n + (p.stats[k] - 50), 0);
+  assert.equal(gained, 12, 'twelve of purse buys twelve points, whatever was pressed first');
+});
+
+test('ORL1 deep audit: the records\' count of the mod\'s SIZE is the mod\'s size', () => {
+  // The page and the vendor README both quote it, and both have been
+  // wrong once already: the first figure was the Lua PLUS the l10n yaml
+  // counted as Lua (71 lines over), and the correction used `wc -l`,
+  // which under-counts `templates.lua` because that file ends without a
+  // newline. Counted here off the files, so neither record can drift.
+  const files = ['player', 'helper', 'settings', 'constants', 'templates'];
+  const lines = (p) => { const t = rdMod(p); return t === '' ? 0 : t.split('\n').length - (t.endsWith('\n') ? 1 : 0); };
+  const lua = files.reduce((n, f) => n + lines(`${MOD}/scripts/${f}.lua`), 0);
+  const yaml = ['en', 'fr'].reduce((n, f) => n + lines(`${MOD}/l10n/${f}.yaml`), 0);
+  assert.equal(lua, 1314, 'the Lua');
+  assert.equal(yaml, 72, 'the l10n yaml, which is NOT Lua and was once counted as it');
+  const page = rd('bible/06-Systems/Oblivion-Remaster-Leveling.md');
+  const readme = rd(`${MOD}/README.md`);
+  for (const [name, text] of [['the page', page], ['the vendor README', readme]]) {
+    assert.match(text, new RegExp(`1,3${String(lua).slice(2)} lines of Lua`), `${name} quotes the Lua count`);
+    // the CLAIM, not the number: both records name the old figure in a
+    // note saying it was wrong, and a note about a mistake is not the
+    // mistake.
+    assert.doesNotMatch(text, /1,384 lines of Lua and a/, `${name} must not still CLAIM the Lua-plus-yaml figure`);
+  }
+  assert.match(readme, new RegExp(`${yaml} more of l10n yaml`), 'and the README keeps the two apart');
+});
+
+test('ORL1 deep audit: an owed level-up is RE-OFFERED, because the first offer may reach a busy slot', () => {
+  // DFU's checkForLevelUp returns true on every pass while a level is
+  // owed, and the port's own L-slice note says why: the hosts have ONE
+  // overlay slot and worldModes mounts the level-up screen only
+  // `if (!interiorOverlay)`. The virtue lane had a
+  // `if (entity.readyToLevelUp) return false` guard, so a bar that
+  // filled behind a shop window was announced once, into nothing, and
+  // never again.
+  const p = virtuePlayer();
+  p.levelProgress = LEVELUP_TOTAL;
+  assert.equal(checkForVirtueLevelUp(p), true, 'the first offer');
+  assert.equal(p.readyToLevelUp, true);
+  assert.equal(checkForVirtueLevelUp(p), true, 'and the second, because nothing took the first');
+  assert.equal(checkForVirtueLevelUp(p), true, 'and every one after it');
+  assert.equal(p.pendingLevel, p.level + 1, 'and it still names the level being offered');
+
+  // ...and it STOPS once the level is taken
+  const w = new VirtueLevelUpScreen(p, { settings: S(), rolls: () => 0.5 });
+  w.spendRemainingHeadless();
+  assert.equal(p.readyToLevelUp, false);
+  assert.ok((p.levelProgress ?? 0) < LEVELUP_TOTAL, 'the bar is no longer full');
+  assert.equal(checkForVirtueLevelUp(p), false, 'a spent level is not re-offered');
+
+  // ...unless the carry filled the next bar, which is the mod's own rule
+  p.levelRollUp = LEVELUP_TOTAL + 5;
+  rollOverLevelProgress(p);
+  assert.equal(p.levelProgress, LEVELUP_TOTAL);
+  assert.equal(checkForVirtueLevelUp(p), true, 'a carry of a whole level offers the next one');
+
+  // and the SAME shape as the lane it sits beside
+  const c = virtuePlayer({ levelingSystem: LEVELING_CLASSIC });
+  c.startingLevelUpSkillSum = 0;
+  c.currentLevelUpSkillSum = 200;
+  assert.equal(checkForLevelUp(c), true);
+  assert.equal(checkForLevelUp(c), true, 'the classic lane re-offers, which is the law this matches');
+});
+
+test('ORL1 deep audit: the `deltas` contract is held where it BINDS, not where it cannot', () => {
+  // The pin that claimed this put every stat at 50 - headroom 50, and a
+  // plan that opens fewer rows than the budget - so neither cap was ever
+  // exercised through `deltas`. Dropping `- taken` from the headroom, or
+  // from the per-row limit, survived the whole suite and planned an
+  // attribute past 100 or a fourth row open.
+  const KEYS = STAT_KEYS_ORDER;
+  const legal = (stats, s, deltas, plan) => {
+    const already = KEYS.filter((k) => (deltas[k] ?? 0) > 0);
+    let fresh = 0;
+    for (const k of KEYS) {
+      const d = plan[k] ?? 0;
+      if (d === 0) continue;
+      if (!already.includes(k)) fresh++;
+      assert.ok(stats[k] + (deltas[k] ?? 0) + d <= MAX_ATTRIBUTE_VALUE,
+        `${k} planned past ${MAX_ATTRIBUTE_VALUE}`);
+      assert.ok((deltas[k] ?? 0) + d <= attributeIncreaseLimit(k, s),
+        `${k} planned past its own limit`);
+    }
+    // THE PLAN'S own share of the row budget: the rows the player has
+    // already opened are spent, and a spend that has overrun the budget
+    // is the caller's problem, not something the plan may make worse.
+    assert.ok(fresh <= Math.max(0, s.maxUpdatableAttribute - already.length),
+      `the plan opened ${fresh} new rows with ${already.length} of ${s.maxUpdatableAttribute} already open`);
+  };
+  for (const base of [98, 99, 100, 96])
+    for (const taken of [{ strength: 1 }, { strength: 2, speed: 1 }, { luck: 1 }, { strength: 5, speed: 5, luck: 1 }])
+      for (const mu of [2, 3])
+        for (const lc of [1, 4]) {
+          const s = S({ maxUpdatableAttribute: mu, luckIncreaseCost: lc });
+          const stats = Object.fromEntries(KEYS.map((k) => [k, base]));
+          const deltas = { ...zeroDeltas(), ...taken };
+          const { cost, plan } = virtueSpendPlan(stats, s, 12, deltas);
+          legal(stats, s, deltas, plan);
+          // ...and the cost really is what the plan costs
+          const paid = KEYS.reduce((n, k) => n + (plan[k] ?? 0) * attributeOffset(k, s), 0);
+          assert.equal(paid, cost, 'the plan pays the cost it reports');
+          // ...and every point of it is one the BUTTONS would allow
+          const running = { ...deltas };
+          let purse = cost;
+          for (const k of KEYS) {
+            for (let i = 0; i < (plan[k] ?? 0); i++) {
+              assert.ok(canRaiseAttribute(k, stats, running, purse, s),
+                `the plan raises ${k} where the plus button refuses`);
+              running[k] += 1;
+              purse -= attributeOffset(k, s);
+            }
+          }
+          assert.equal(purse, 0);
+        }
+});
+
+test('ORL1 deep audit: the solver\'s table is bounded by the LAW, not by another file\'s slider', () => {
+  // It was sized straight off the budget, so a purse of a billion asked
+  // for gigabytes and killed the process. Only modSettings' declared max
+  // kept that out - and departure 3 records every max in this entry as
+  // the PORT'S OWN, with no upstream warrant. A ceiling in another file
+  // is not a bound on this function.
+  const stats = Object.fromEntries(STAT_KEYS_ORDER.map((k) => [k, 50]));
+  const s = S();
+  const huge = virtueSpendPlan(stats, s, 1e9);
+  const mostRowsCanTake = s.maxUpdatableAttribute * ATTRIBUTE_INCREASE_LIMIT * s.luckIncreaseCost;
+  assert.ok(huge.cost <= mostRowsCanTake, `a billion planned ${huge.cost}`);
+  assert.equal(huge.cost, virtueSpendPlan(stats, s, mostRowsCanTake).cost,
+    'and it plans the same thing an honest ceiling does');
+  // a negative budget is nothing, not a RangeError
+  assert.equal(virtueSpendPlan(stats, s, -4).cost, 0);
+  assert.equal(virtueSpendPlan(stats, s, 0).cost, 0);
+});
+
+test('ORL1 deep audit: the window really carries the flag the font-less escape routes on', () => {
+  // `isVirtueLevelUp` is one half of a duck-typed seam and only the
+  // DUNGEON half was pinned, as a source grep. Setting it false survived
+  // the whole suite - and under it the font-less arm falls past every
+  // branch and drops a virtue level-up silently, for ever, because the
+  // door rebuilds the same window on the next sheet key.
+  const p = virtuePlayer({ readyToLevelUp: true, levelProgress: LEVELUP_TOTAL });
+  const w = new VirtueLevelUpScreen(p, { settings: S(), rolls: () => 0.5 });
+  assert.equal(w.isVirtueLevelUp, true, 'the flag the dungeon host asks for');
+  assert.equal(new LevelUpScreen(virtuePlayer({ readyToLevelUp: true })).isVirtueLevelUp, undefined,
+    'and the screen it is told apart FROM does not carry it');
+  // ...and the escape it gates really finishes the level-up
+  assert.equal(w.spendRemainingHeadless(), true);
+  assert.equal(p.readyToLevelUp, false, 'a font-less level-up is applied, not dropped');
+});
+
+test('ORL1 deep audit: the char-sheet door is driven, not grepped - a shadowed predicate cannot hide', () => {
+  // The fork was held by a regex over charSheetDoor.js's source. Shadowing
+  // `usesVirtueLeveling` with a local `() => false` leaves that text
+  // byte-for-byte intact and sends every virtue level-up to DFU's own
+  // screen, which takes the Level++, the health roll and a 4..6 DFU pool
+  // and ignores the purse, the three-row cap and Luck's price entirely.
+  // The house already drives this door headlessly (enhancedCharSheet)
+  // and asserts on the class it hands back.
+  const owed = (over) => virtuePlayer({ readyToLevelUp: true, levelProgress: LEVELUP_TOTAL, ...over });
+  const name = (entity) => createCharSheetWindow({ entity })?.constructor?.name;
+  assert.equal(name(owed()), 'VirtueLevelUpScreen', 'a virtue character levels by the mod');
+  assert.equal(name(owed({ levelingSystem: LEVELING_CLASSIC })), 'LevelUpScreen',
+    'and a Daggerfall character does not');
+  assert.equal(name(owed({ oghmaLevelUp: true })), 'LevelUpScreen',
+    'and the Oghma is Daggerfall\'s own in both lanes');
+  // ...and a character with nothing owed gets neither
+  const sheet = name(virtuePlayer({ readyToLevelUp: false }));
+  assert.ok(sheet !== 'VirtueLevelUpScreen' && sheet !== 'LevelUpScreen',
+    `a character owed nothing was handed ${sheet}`);
+});
+
+test('ORL1 deep audit: the WINDOW obeys the settings, not only the law module does', () => {
+  // Every `new VirtueLevelUpScreen` in this file passed the shipped
+  // defaults, so dropping the settings injection entirely survived the
+  // whole suite: headless, `levelingSettings()` mints the same numbers.
+  // A player who moves the row cap and Luck's price was running a window
+  // whose purse, plus predicate, refund and count label nothing had ever
+  // exercised. (ORL1's deep audit.)
+  for (const [attributePoints, maxUpdatableAttribute, luckIncreaseCost, allowLuckIncrease] of [
+    [20, 5, 7, true], [6, 2, 1, true], [30, 8, 20, true], [12, 3, 4, false], [1, 2, 4, true],
+  ]) {
+    const s = S({ attributePoints, maxUpdatableAttribute, luckIncreaseCost, allowLuckIncrease });
+    const p = virtuePlayer({ readyToLevelUp: true, levelProgress: LEVELUP_TOTAL });
+    for (const k of STAT_KEYS_ORDER) p.stats[k] = 50;
+    const w = new VirtueLevelUpScreen(p, { settings: s, rolls: () => 0.5 });
+    const label = `ap=${attributePoints} mu=${maxUpdatableAttribute} lc=${luckIncreaseCost} luck=${allowLuckIncrease}`;
+
+    // the count label names THIS window's row cap
+    assert.match(chooseAttributesLabel(s.maxUpdatableAttribute), new RegExp(`\\b${maxUpdatableAttribute}\\b`), label);
+    // the purse is this settings' purse
+    assert.equal(w.purse, virtuePurse(p.stats, s), label);
+    // Luck is priced by THIS window, in both directions
+    const before = w.purse;
+    if (w.raise(LUCK)) {
+      assert.equal(before - w.purse, allowLuckIncrease ? luckIncreaseCost : 1, `${label}: Luck's price on the way out`);
+      assert.ok(w.lower(LUCK));
+      assert.equal(w.purse, before, `${label}: and the same on the way back`);
+    }
+    // the row cap is this window's row cap: open rows until it refuses
+    const opened = new Set();
+    for (let guard = 0; guard < 64; guard++) {
+      const k = STAT_KEYS_ORDER.find((key) => !opened.has(key) && w.raise(key));
+      if (!k) break;
+      opened.add(k);
+    }
+    assert.ok(opened.size <= maxUpdatableAttribute, `${label}: ${opened.size} rows opened`);
+    // ...and the row text prices Luck the same way the window does
+    assert.equal(/\(\d+ per point\)/.test(w.rowText(LUCK)), allowLuckIncrease && luckIncreaseCost > 1, label);
+  }
+});
+
+test('ORL1 deep audit: the corner hint is shown IN a corner and nowhere else', () => {
+  // `if (true)` here - the hint on every refusal, including the ordinary
+  // one where the plus buttons work perfectly well - survived the whole
+  // campaign, because the condition lived inside the draw.
+  const flat = () => {
+    const p = virtuePlayer({ readyToLevelUp: true, levelProgress: LEVELUP_TOTAL });
+    for (const k of STAT_KEYS_ORDER) p.stats[k] = 50;
+    return p;
+  };
+  // an ORDINARY refusal: points left, and plenty of rows that will take them
+  const w = new VirtueLevelUpScreen(flat(), { settings: S(), rolls: () => 0.5 });
+  assert.equal(w.confirm(), false);
+  assert.equal(w.refused, true);
+  assert.equal(w.cornered(), false, 'a refusal with legal pluses is not a corner');
+
+  // a CORNER: two rows at 99 take one point each and cap, and no third may open
+  const p = virtuePlayer({ readyToLevelUp: true, levelProgress: LEVELUP_TOTAL });
+  for (const k of STAT_KEYS_ORDER) p.stats[k] = 99;
+  p.stats.luck = 50;
+  const c = new VirtueLevelUpScreen(p, {
+    settings: S({ attributePoints: 3, maxUpdatableAttribute: 2, luckIncreaseCost: 1 }),
+    rolls: () => 0.5,
+  });
+  c.raise('personality');
+  c.raise('speed');
+  assert.equal(c.cornered(), true);
+  assert.ok(STAT_KEYS_ORDER.some((k) => c.rowMarkers(k).minus), 'and the way out is open');
+  // ...and a spent purse is not a corner either, whatever the rows say
+  const done = new VirtueLevelUpScreen(flat(), { settings: S({ attributePoints: 0 }), rolls: () => 0.5 });
+  assert.equal(done.purse, 0);
+  assert.equal(done.cornered(), false, 'nothing owed is not a corner');
+
+  // and the draw really asks the predicate
+  assert.match(rd('src/ui/virtueLevelUp.js'), /if \(this\.cornered\(\)\) centre\(TAKE_ONE_BACK_HINT/);
+});
+
+test('ORL1 deep audit: the divisor the question quotes is DAGGERFALL\'s, not merely its own', () => {
+  // `LEVELUP_SKILL_SUM_PER_LEVEL` was held by the blurb that prints it
+  // and by `calculatePlayerLevel`, which divides BY it - so changing it
+  // to 14 moved both and survived. DFU's arithmetic is the anchor: a
+  // character whose level-up sums have not moved is level ONE, and
+  // floor(28 / n) is 1 only from 15 to 28.
+  assert.equal(LEVELUP_SKILL_SUM_PER_LEVEL, 15);
+  assert.equal(calculatePlayerLevel(0, 0), 1, 'a character who has raised nothing is level 1');
+  assert.equal(calculatePlayerLevel(0, 2), 2, 'and two points of sum past the start is level 2');
+  assert.equal(calculatePlayerLevel(100, 100), 1, 'wherever the starting sum sits');
+  assert.equal(calculatePlayerLevel(0, 17), 3);
+  // ...and the four-to-six pool is DFU's own pair, not a number typed twice
+  assert.equal(LEVELUP_BONUS_POOL_MIN, 4);
+  assert.equal(LEVELUP_BONUS_POOL_MAX, 6);
 });

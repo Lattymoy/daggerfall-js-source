@@ -32,6 +32,10 @@
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import { drawText, measureText } from './text.js';
+import { nativeMetrics, NATIVE_W } from './nativePanel.js';
+import {
+  LEVELUP_BONUS_POOL_MIN, LEVELUP_BONUS_POOL_MAX, LEVELUP_SKILL_SUM_PER_LEVEL,
+} from '../systems/advancement.js';
 import {
   LEVELING_CLASSIC, LEVELING_VIRTUE, levelingSettings, LEVELUP_TOTAL,
 } from '../systems/oblivionLeveling.js';
@@ -58,24 +62,24 @@ export function levelingOptions(s = null) {
       id: LEVELING_CLASSIC,
       title: 'Daggerfall',
       lines: Object.freeze([
-        'Level with your skills, as Daggerfall does. Your primary,',
-        'major and minor skills are weighed into one sum, and every',
-        'fifteen points of it is a level. Each level rolls you four to',
-        'six points to spread across your attributes.',
+        'Level with your skills, as Daggerfall does.',
+        'Primary, major and minor skills make a sum;',
+        `every ${LEVELUP_SKILL_SUM_PER_LEVEL} points of it is a level.`,
+        `Each level rolls ${LEVELUP_BONUS_POOL_MIN} to ${LEVELUP_BONUS_POOL_MAX} attribute points.`,
       ]),
     }),
     Object.freeze({
       id: LEVELING_VIRTUE,
       title: 'Oblivion Remastered',
       lines: Object.freeze([
-        'Level with a bar, as Oblivion Remastered does. Every skill you',
-        'raise fills it - your best skills fill it fastest - and at',
-        `${LEVELUP_TOTAL} you level, with anything over carried into the next.`,
+        'Level with a bar, as Oblivion Remastered.',
+        'Every skill you raise fills it, your best',
+        `fastest. At ${LEVELUP_TOTAL} you level; the rest rolls`,
         purse > 0
-          ? `Each level hands you ${virtues} to spend across at most`
-          : 'Each level hands you no virtues at all, as you have set it,',
+          ? `over. Each level hands you ${virtues},`
+          : 'over. You have set the purse to nothing,',
         purse > 0
-          ? `${set.maxUpdatableAttribute} of your attributes.`
+          ? `to spend on at most ${set.maxUpdatableAttribute} attributes.`
           : 'so levelling raises only your health.',
       ]),
     }),
@@ -92,16 +96,29 @@ export const LEVELING_OPTION_IDS = Object.freeze([LEVELING_CLASSIC, LEVELING_VIR
  *  screen whose picture and whose click target are written twice is a
  *  screen that will one day disagree with itself. */
 export const CHOICE_TOP = 44;          // the first option's title row
-export const CHOICE_PITCH = 60;        // title + four lines + the gap
-export const CHOICE_HEIGHT = 52;       // what a click on that option covers
+export const CHOICE_PITCH = 70;        // one option's whole block, plus the gap
+export const CHOICE_TITLE_H = 12;      // the title row's own height
+export const CHOICE_LINE_H = 10;       // one body line
 export const CHOICE_X0 = 16, CHOICE_X1 = 304;
 
-/** The option a native-coordinate point falls on, or -1. */
-export function choiceAtNative(vx, vy, count = 2) {
+/** How tall one option's block is - TITLE PLUS ITS LINES, which is what
+ *  the draw paints and therefore what a click on it must cover. It was a
+ *  literal 52 while the Oblivion option painted 62, so its last line sat
+ *  outside its own hit box (ORL1's deep audit). Derived here, once, so
+ *  the picture and the target cannot drift apart again. */
+export const choiceHeight = (opt) =>
+  CHOICE_TITLE_H + (opt?.lines?.length ?? 0) * CHOICE_LINE_H;
+
+/** Where one option's block starts, in native units. */
+export const choiceTop = (i) => CHOICE_TOP + i * CHOICE_PITCH;
+
+/** The option a native-coordinate point falls on, or -1. `options` is the
+ *  live list, because the blocks are as tall as their own text. */
+export function choiceAtNative(vx, vy, options = []) {
   if (vx < CHOICE_X0 || vx > CHOICE_X1) return -1;
-  for (let i = 0; i < count; i++) {
-    const top = CHOICE_TOP + i * CHOICE_PITCH;
-    if (vy >= top && vy < top + CHOICE_HEIGHT) return i;
+  for (let i = 0; i < options.length; i++) {
+    const top = choiceTop(i);
+    if (vy >= top && vy < top + choiceHeight(options[i])) return i;
   }
   return -1;
 }
@@ -175,7 +192,7 @@ export class LevelingChoiceScreen {
    */
   click(vx, vy) {
     if (this._fired) return false;
-    const i = choiceAtNative(vx, vy, this.options.length);
+    const i = choiceAtNative(vx, vy, this.options);
     if (i < 0) return false;
     this.cursor = i;
     audio.playOneShot(SOUND.ButtonClick, 1);
@@ -185,33 +202,60 @@ export class LevelingChoiceScreen {
   /** ...and the highlight follows the pointer, as the wizard's lists do. */
   hover(vx, vy) {
     if (this._fired) return;
-    const i = choiceAtNative(vx, vy, this.options.length);
+    const i = choiceAtNative(vx, vy, this.options);
     if (i >= 0) this.cursor = i;
   }
 
-  draw(renderer, canvas, font, s) {
-    const W = canvas.width, H = canvas.height;
-    renderer.drawScreenQuad(null, { x: 0, y: 0, w: W, h: H }, undefined, [0.04, 0.03, 0.02, 0.94]);
+  /**
+   * THE PICTURE IS PAINTED WHERE THE HIT TEST LOOKS, which it was not.
+   *
+   * This drew at `32 * s` from the CANVAS ORIGIN while `choiceAtNative`
+   * read letterboxed 320x200 native units, so through townTalk - the
+   * pointer route world.js and exterior.js both use - the two were an
+   * (ox, oy) apart. Measured over each painted option: on 1366x768 a
+   * click on the Oblivion option selected DAGGERFALL over 27% of its
+   * area, on 1024x768 29%, on 1512x982 21%, and on 800x600 59% - where a
+   * click on the Daggerfall option landed on it 3% of the time. The
+   * wrong leveling system, chosen
+   * silently, on the one screen a character can never come back to.
+   * tools/chargenClickProbe.mjs runs at 1400x900 and clicked a point
+   * inside the overlap, so it could not see it. (ORL1's deep audit.)
+   *
+   * `nativeMetrics(canvas)` is the idiom every other clickable native
+   * window uses, and it is right in BOTH hosts: dungeonContext hands a
+   * virtual 320*s canvas with the letterbox already on the renderer, and
+   * nativeMetrics of that returns ox = oy = 0.
+   */
+  draw(renderer, canvas, font) {
+    const m = nativeMetrics(canvas);
+    const s = m.s;
+    renderer.drawScreenQuad(null, { x: 0, y: 0, w: canvas.width, h: canvas.height },
+      undefined, [0.04, 0.03, 0.02, 0.94]);
     const gold = [0.85, 0.72, 0.35, 1], white = [0.9, 0.9, 0.85, 1];
     const hot = [1, 0.95, 0.6, 1], dim = [0.5, 0.5, 0.45, 1];
+    const at = (text, x, y, colour) =>
+      drawText(renderer, font, text, m.ox + x * s, m.oy + y * s, s, colour);
+    // centred in the GAME AREA, not on the canvas - the two are the same
+    // thing only at exactly 16:10.
     const centre = (text, y, colour) =>
-      drawText(renderer, font, text, (W - measureText(font.fnt, text) * s) / 2, y * s, s, colour);
+      at(text, (NATIVE_W - measureText(font.fnt, text)) / 2, y, colour);
 
-    centre('HOW WILL YOU GROW?', 14, gold);
-    centre('Choose the leveling system for this character. It cannot be changed later.', 26, dim);
+    centre('HOW WILL YOU GROW?', 12, gold);
+    centre('Choose how this character will level.', 24, dim);
+    centre('It cannot be changed later.', 34, dim);
 
     this.options.forEach((opt, i) => {
       const on = i === this.cursor;
-      let y = CHOICE_TOP + i * CHOICE_PITCH;   // the same table the hit test reads
-      drawText(renderer, font, `${on ? '>' : ' '} ${i + 1}. ${opt.title}`, 32 * s, y * s, s, on ? hot : white);
-      y += 12;
+      let y = choiceTop(i);                    // the same table the hit test reads
+      at(`${on ? '>' : ' '} ${i + 1}. ${opt.title}`, 20, y, on ? hot : white);
+      y += CHOICE_TITLE_H;
       for (const line of opt.lines) {
-        drawText(renderer, font, `     ${line}`, 32 * s, y * s, s, on ? white : dim);
-        y += 10;
+        at(`   ${line}`, 20, y, on ? white : dim);
+        y += CHOICE_LINE_H;
       }
     });
 
-    const foot = CHOICE_TOP + this.options.length * CHOICE_PITCH + 4;
+    const foot = choiceTop(this.options.length) + 2;
     centre('click one, or up/down and ENTER, or press 1 or 2', foot, dim);
   }
 }

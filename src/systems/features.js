@@ -165,7 +165,9 @@ export const MOD_CURATED = Object.freeze({
   'immersive-footsteps': Object.freeze(['AudioQualitySettings.SoundClipQuality', 'FootstepSettings.FootstepVolumeMulti', 'ArmorSwaySettings.ArmorSwayVolumeMulti']),
   // BA1: the footsteps switch (off beside Immersive Footsteps), the echo, the darkness.
   'better-ambience': Object.freeze(['Better Footsteps.enable', 'Dungeon Reverb.level', 'Dungeon Lighting.dungeonDarkness']),
-  // ORL1: the mod ships eight knobs and ALL EIGHT are on the tile - the
+  // ORL1: the mod ships SEVEN knobs and `primarySkillsImpact` is the
+  // port's own eighth (Daggerfall has a tier of chosen skills Morrowind
+  // does not). All eight are on the tile - the
   // same call Ambient Text's row made, and for the same reason. These
   // are not presentation dials a player sets once; they are the rules
   // of the leveling system, and hiding four of them would leave a

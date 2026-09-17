@@ -193,7 +193,19 @@ export function addSkillProgress(entity, skillId, s) {
  *  `readyToLevelUp` flag the DFU path sets, so every host's existing
  *  onLevelUp door opens on it unchanged. */
 export function checkForVirtueLevelUp(entity) {
-  if (entity.readyToLevelUp) return false;
+  // NO `if (entity.readyToLevelUp) return false` GUARD, and the absence
+  // is the law. DFU's checkForLevelUp returns true on EVERY pass while a
+  // level is owed (advancement.js, the L-slice / AUDIT 23 entity-9 note),
+  // because the hosts' one overlay slot may be busy when the first offer
+  // arrives - worldModes mounts the level-up screen only
+  // `if (!interiorOverlay)`, so a bar that fills behind a shop window is
+  // announced into nothing. With the guard the virtue lane offered an
+  // owed level ONCE and then went silent for good: measured over six
+  // skill passes with the slot busy every time: SIX offers on the classic
+  // lane and ONE here, with the character playing on at a full bar and the
+  // carry piling up (measured, both lanes, same character). Nothing
+  // was lost numerically; the player was simply never told again.
+  // (ORL1's deep audit.)
   if ((entity.levelProgress ?? 0) < LEVELUP_TOTAL) return false;
   entity.readyToLevelUp = true;
   entity.pendingLevel = entity.level + 1;
@@ -337,36 +349,68 @@ export function virtueSpendPlan(stats, s, budget, deltas = null) {
     };
   });
   const open = rows.reduce((n, r) => n + (r.slot === 0 ? 1 : 0), 0);
-  const slots = Math.max(0, (s.maxUpdatableAttribute | 0) - open);
-  const B = Math.max(0, budget | 0);
+  // THE TABLE IS BOUNDED BY THE LAW, not by another file's slider.
+  // These were `Math.max(0, ...)` alone, so the size of the DP came
+  // straight off the caller's numbers: a budget of a billion asked for
+  // nine Int8Arrays of a billion bytes apiece and the process was
+  // OOM-killed. The only thing keeping that out was `modSettings`'
+  // declared `max`, which departure 3 records as the PORT'S OWN with no
+  // upstream warrant - a ceiling in a different file is not a bound on
+  // this one. The most any legal spend can cost is every row at its own
+  // limit, so nothing above that is reachable and nothing above that is
+  // allocated. (ORL1's deep audit.)
+  const slots = Math.min(rows.length, Math.max(0, (s.maxUpdatableAttribute | 0) - open));
+  const reachable = rows.reduce((n, r) => n + r.room * r.off, 0);
+  const B = Math.min(reachable, Math.max(0, budget | 0));
 
-  let cur = Array.from({ length: slots + 1 }, () => new Int8Array(B + 1).fill(-1));
-  cur[0][0] = 0;
+  // THE DP CARRIES TWO NUMBERS, AND THE SECOND ONE IS THE POINT OF IT.
+  //
+  // `best[n][c]` is the most ATTRIBUTE POINTS any legal assignment of the
+  // rows seen so far can buy for exactly `c` of purse across `n` new rows
+  // (-1 = unreachable); `take[n][c]` is the delta that row took to get
+  // there, for the walk back.
+  //
+  // Maximising the cost alone is not enough, and the deep audit caught the
+  // port shipping exactly that: a Luck point costs `luckIncreaseCost`, so
+  // twelve of purse buys Luck +3 OR twelve ordinary points, and both pay
+  // the same twelve. The first version kept whichever the DP reached
+  // first, which was the fewest-rows one - at the shipped defaults a
+  // character with every attribute at 50 was handed LUCK +3 and nothing
+  // else. The purse was right and the spend was legal; it was just worth a
+  // quarter of what the same purse could buy. The player at the window
+  // never saw it (they press their own buttons), but every headless path
+  // spends this plan, including the font-less escape a real player hits.
+  const mk = () => Array.from({ length: slots + 1 }, () => new Int16Array(B + 1).fill(-1));
+  let best = mk();
+  best[0][0] = 0;
   const trail = [];
   for (const row of rows) {
-    const next = Array.from({ length: slots + 1 }, () => new Int8Array(B + 1).fill(-1));
+    const nb = mk(), nt = mk();
     for (let n = 0; n <= slots; n++) {
       for (let c = 0; c <= B; c++) {
-        if (cur[n][c] < 0) continue;
-        if (next[n][c] < 0) next[n][c] = 0;      // leave this row alone
+        const have = best[n][c];
+        if (have < 0) continue;
+        if (have > nb[n][c]) { nb[n][c] = have; nt[n][c] = 0; }   // leave this row alone
         const n2 = n + row.slot;
         if (n2 > slots) continue;
         for (let d = 1; d <= row.room; d++) {
           const cc = c + d * row.off;
           if (cc > B) break;
-          if (next[n2][cc] < 0) next[n2][cc] = d;
+          if (have + d > nb[n2][cc]) { nb[n2][cc] = have + d; nt[n2][cc] = d; }
         }
       }
     }
-    trail.push(next);
-    cur = next;
+    trail.push(nt);
+    best = nb;
   }
 
+  // The purse is the largest cost anything reaches; among the row counts
+  // that reach it, the one that buys the most points.
   let cost = 0, usedSlots = 0;
   for (let c = B; c >= 0; c--) {
-    let n = -1;
-    for (let i = 0; i <= slots; i++) if (cur[i][c] >= 0) { n = i; break; }
-    if (n >= 0) { cost = c; usedSlots = n; break; }
+    let n = -1, pts = -1;
+    for (let i = 0; i <= slots; i++) if (best[i][c] > pts) { pts = best[i][c]; n = i; }
+    if (n >= 0 && pts >= 0) { cost = c; usedSlots = n; break; }
   }
 
   const plan = Object.fromEntries(STAT_KEYS_ORDER.map((k) => [k, 0]));

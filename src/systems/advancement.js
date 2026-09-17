@@ -64,8 +64,13 @@ export function skillUsesForAdvancement(skillValue, skillMult, careerAdvMult, le
   return Math.floor((skillValue * skillMult * careerAdvMult * levelMod * 2) / 5) + 1;
 }
 
+/** ORL1 (deep audit): the divisor, named - the leveling question prints
+ *  it, and a screen that quotes a law by copying its number is a screen
+ *  that goes stale the day the law moves. */
+export const LEVELUP_SKILL_SUM_PER_LEVEL = 15;
+
 export const calculatePlayerLevel = (startingSum, currentSum) =>
-  Math.floor((currentSum - startingSum + 28) / 15);
+  Math.floor((currentSum - startingSum + 28) / LEVELUP_SKILL_SUM_PER_LEVEL);
 
 /** sum(primary) + sum(major) - lowest major + highest minor. */
 export function levelUpSkillSum(entity) {
@@ -120,9 +125,11 @@ export function raiseSkills(entity, classicTimeMinutes, rolls = Math.random, onL
   if ((classicTimeMinutes - (entity.lastSkillCheckTime ?? 0)) <= SKILL_RAISE_CHECK_INTERVAL) return [];
   entity.lastSkillCheckTime = classicTimeMinutes;
   // ORL1: read ONCE per pass, not per raise - the mod's Lua reads its
-  // two storage sections inside the handler (player.lua:35-37), but a
-  // player cannot move a slider in the middle of one skill check and
-  // one read per pass makes every raise in a pass obey the same rules.
+  // three impact keys out of `skillsSettings` inside the handler
+  // (player.lua:35-37; its other storage handle, `levelUpSettings`, is
+  // read only outside it), but a player cannot move a slider in the
+  // middle of one skill check and one read per pass makes every raise in
+  // a pass obey the same rules.
   const virtue = usesVirtueLeveling(entity);
   const virtueSettings = virtue ? levelingSettings() : null;
   const raised = [];

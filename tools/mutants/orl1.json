@@ -406,8 +406,8 @@
   {
     "name": "the-question-answers-more-than-once",
     "file": "src/ui/levelingChoice.js",
-    "old": "    if (this._fired) return false;",
-    "new": "    if (false) return false;",
+    "old": "  answer(id) {\n    if (this._fired) return false;",
+    "new": "  answer(id) {\n    if (false) return false;",
     "tests": [
       "test/orl1_leveling.test.js"
     ]
@@ -523,13 +523,15 @@
     ]
   },
   {
-    "name": "the-interior-hosts-last-resort-forgets-the-mod",
+    "name": "the-interior-hosts-FIRST-last-resort-forgets-the-mod",
     "file": "src/scenes/worldModes.js",
     "old": "          ?? (usesVirtueLeveling(playerEntity) && !playerEntity.oghmaLevelUp\n            ? new VirtueLevelUpScreen(playerEntity)\n            : new LevelUpScreen(playerEntity));",
     "new": "          ?? new LevelUpScreen(playerEntity);",
     "tests": [
       "test/orl1_leveling.test.js"
-    ]
+    ],
+    "firstOfTwo": true,
+    "why": "mutate.mjs replaces the FIRST match and the two interior arms are identical, so this one names the first. The second has its own mutant below (ORL1's deep audit: one mutant was standing for two arms)."
   },
   {
     "name": "the-dungeons-font-less-virtue-escape-is-dropped",
@@ -561,7 +563,7 @@
   {
     "name": "the-tile-ships-a-placeholder-note",
     "file": "src/systems/modSettings.js",
-    "old": "        description: 'Oblivion Remastered\u2019s leveling in place of Daggerfall\u2019s: every skill you raise fills a 100-point bar, and levelling up hands you a purse of virtues to spend where you choose. New characters are asked which system they want.',",
+    "old": "        description: 'Oblivion Remastered’s leveling in place of Daggerfall’s: every skill you raise fills a 100-point bar, and levelling up hands you a purse of virtues to spend where you choose. New characters are asked which system they want.',",
     "new": "        description: 'TODO',",
     "tests": [
       "test/orl1_leveling.test.js"
@@ -656,7 +658,186 @@
     "tests": [
       "test/orl1_leveling.test.js"
     ],
-    "equivalent": true,
-    "why": "EQUIVALENT ON EVERY PATH A PIN CAN DRIVE, and kept as the re-plan anyway. The escape only runs when nobody can see the screen, and the two agree whenever the player has not spent into a corner - which is every state the suite reaches, because it drives the escape from a fresh window. The re-plan is the version that also survives a corner, and a corner is precisely the state no one could back out of with the screen dark."
+    "why": "NOT EQUIVALENT, and it was recorded as though it were. The escape assigns the plan WHOLESALE (`this.deltas = plan`) and sets `purse = fullPurse - cost`, so re-planning against the REMAINING purse over the live deltas leaves the purse non-zero, `confirm` refuses, and the window never closes - the host drops it anyway and the level-up is lost with everything already spent. The first record called that an equivalence because no pin drove the escape from a PARTLY SPENT window; one does now (ORL1's deep audit)."
+  },
+  {
+    "name": "the-interior-hosts-SECOND-last-resort-forgets-the-mod",
+    "file": "src/scenes/worldModes.js",
+    "old": "          ?? (usesVirtueLeveling(playerEntity) && !playerEntity.oghmaLevelUp\n            ? new VirtueLevelUpScreen(playerEntity)\n            : new LevelUpScreen(playerEntity));\n      }\n    },\n    day: () => false, inside: () => true,",
+    "new": "          ?? new LevelUpScreen(playerEntity);\n      }\n    },\n    day: () => false, inside: () => true,",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-plan-takes-the-fewest-rows-instead-of-the-most-points",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "          if (have + d > nb[n2][cc]) { nb[n2][cc] = have + d; nt[n2][cc] = d; }",
+    "new": "          if (nb[n2][cc] < 0) { nb[n2][cc] = have + d; nt[n2][cc] = d; }",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-purse-is-picked-without-looking-at-what-it-buys",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "    for (let i = 0; i <= slots; i++) if (best[i][c] > pts) { pts = best[i][c]; n = i; }",
+    "new": "    for (let i = 0; i <= slots; i++) if (best[i][c] >= 0) { pts = best[i][c]; n = i; break; }",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-question-paints-from-the-canvas-origin-again",
+    "file": "src/ui/levelingChoice.js",
+    "old": "      drawText(renderer, font, text, m.ox + x * s, m.oy + y * s, s, colour);",
+    "new": "      drawText(renderer, font, text, x * s, y * s, s, colour);",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-question-centres-on-the-canvas-instead-of-the-game-area",
+    "file": "src/ui/levelingChoice.js",
+    "old": "      at(text, (NATIVE_W - measureText(font.fnt, text)) / 2, y, colour);",
+    "new": "      at(text, (canvas.width - measureText(font.fnt, text)) / 2, y, colour);",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-option-hit-box-goes-back-to-a-literal-height",
+    "file": "src/ui/levelingChoice.js",
+    "old": "  CHOICE_TITLE_H + (opt?.lines?.length ?? 0) * CHOICE_LINE_H;",
+    "new": "  CHOICE_TITLE_H + 4 * CHOICE_LINE_H;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-question-swallows-the-click-again",
+    "file": "src/ui/levelingChoice.js",
+    "old": "    const i = choiceAtNative(vx, vy, this.options);\n    if (i < 0) return false;",
+    "new": "    const i = -1;\n    if (i < 0) return false;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "both-digits-answer-with-the-same-system",
+    "file": "src/ui/levelingChoice.js",
+    "old": "      case 'two': this.answer(this.options[1].id); break;",
+    "new": "      case 'two': this.answer(this.options[0].id); break;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-level-up-window-paints-from-the-canvas-origin-again",
+    "file": "src/ui/virtueLevelUp.js",
+    "old": "      drawText(renderer, font, text, m.ox + x * s, m.oy + y * s, s, colour);",
+    "new": "      drawText(renderer, font, text, x * s, y * s, s, colour);",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-level-up-window-loses-its-pointer-again",
+    "file": "src/ui/virtueLevelUp.js",
+    "old": "    const hit = levelUpHitNative(vx, vy);\n    if (!hit) return false;",
+    "new": "    const hit = null;\n    if (!hit) return false;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-ok-button-commits-without-the-purse-being-spent",
+    "file": "src/ui/virtueLevelUp.js",
+    "old": "    if (hit.press === 'ok') this.confirm();",
+    "new": "    if (hit.press === 'ok') { this.done = true; }",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-stat-name-column-runs-into-its-value-again",
+    "file": "src/ui/virtueLevelUp.js",
+    "old": "    return `${selected ? '>' : ' '} ${label(key).padEnd(13)}${String(this.entity.stats[key] + d).padStart(3)}`",
+    "new": "    return `${selected ? '>' : ' '} ${label(key).padEnd(12)}${String(this.entity.stats[key] + d).padStart(3)}`",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-corner-hint-is-shown-when-a-plus-is-still-legal",
+    "file": "src/ui/virtueLevelUp.js",
+    "old": "    return this.purse > 0 && !STAT_KEYS_ORDER.some((k) => this.rowMarkers(k).plus);",
+    "new": "    return true;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-question-quotes-a-level-divisor-the-law-does-not-use",
+    "file": "src/systems/advancement.js",
+    "old": "export const LEVELUP_SKILL_SUM_PER_LEVEL = 15;",
+    "new": "export const LEVELUP_SKILL_SUM_PER_LEVEL = 14;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "an-owed-level-is-offered-once-and-never-again",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "  if ((entity.levelProgress ?? 0) < LEVELUP_TOTAL) return false;\n  entity.readyToLevelUp = true;",
+    "new": "  if (entity.readyToLevelUp) return false;\n  if ((entity.levelProgress ?? 0) < LEVELUP_TOTAL) return false;\n  entity.readyToLevelUp = true;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-plan-forgets-what-the-player-has-already-taken",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "    const headroom = MAX_ATTRIBUTE_VALUE - stats[k] - taken;",
+    "new": "    const headroom = MAX_ATTRIBUTE_VALUE - stats[k];",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-plan-gives-an-open-row-its-whole-limit-again",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "      room: Math.max(0, Math.min(attributeIncreaseLimit(k, s) - taken, headroom)),",
+    "new": "      room: Math.max(0, Math.min(attributeIncreaseLimit(k, s), headroom)),",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-dp-table-is-sized-off-the-callers-number-again",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "  const B = Math.min(reachable, Math.max(0, budget | 0));",
+    "new": "  const B = Math.max(0, budget | 0);",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-window-stops-carrying-the-flag-the-escape-routes-on",
+    "file": "src/ui/virtueLevelUp.js",
+    "old": "    this.isVirtueLevelUp = true;",
+    "new": "    this.isVirtueLevelUp = false;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-door-sends-a-virtue-character-to-daggerfalls-own-screen",
+    "file": "src/ui/charSheetDoor.js",
+    "old": "  if (deps.entity?.readyToLevelUp && !deps.entity?.oghmaLevelUp && usesVirtueLeveling(deps.entity)) {",
+    "new": "  if (false && deps.entity?.readyToLevelUp && !deps.entity?.oghmaLevelUp && usesVirtueLeveling(deps.entity)) {",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
   }
 ]

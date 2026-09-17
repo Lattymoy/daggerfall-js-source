@@ -5,14 +5,21 @@
 for Open Morrowind 0.49 that simulates the new leveling system
 implemented in Oblivion Remastered."
 
-THIS IS THE FIRST MORROWIND MOD IN THIS TREE. Every other row in the
-registry is a Daggerfall Unity mod: a `.dfmod` bundle, a manifest, C#
-read off its IL or its repository. This one is OpenMW Lua against
-OpenMW's own API, so there is no `.dfmod.json` here and the registry's
-manifest check skips it. What replaces the manifest is that the mod is
-SMALL AND WHOLLY READABLE - 1,384 lines of Lua and a 487-byte data file
-- so the port is read off the author's own source, not off a decompile,
-and every one of its laws is cited to a line of it.
+THIS IS THE FIRST MORROWIND MOD IN THIS TREE. Every vendored MOD before
+it is a Daggerfall Unity mod: a `.dfmod` bundle, a manifest, C# read off
+its IL or its repository. (Some rows are not mods at all - Daggerfall
+Unity's own shipped data, a font, a road table - so they have no
+manifest either.) This one is OpenMW Lua against OpenMW's own API, so
+there is no `.dfmod.json` here and the registry's manifest check skips
+it. What replaces the manifest is that the mod is SMALL AND WHOLLY
+READABLE - 1,314 lines of Lua, 72 more of l10n yaml and a 487-byte data
+file - so the port is read off the author's own source, not off a
+decompile, and every one of its laws is cited to a line of it.
+
+(That figure was written as "1,384 lines of Lua", which is the Lua and
+the yaml added together and called Lua. The bible page carried the same
+error and was corrected; this file was missed, and ORL1's deep audit
+found it still standing here.)
 
 Mac (Lattymoy) handed the shipped zip
 (`OblivionRemasterLikeLeveling_0.5.3-56569-v0-5-3-1748644502`) over on
@@ -56,13 +63,18 @@ The whole mod, verbatim - all ten files of the shipped archive:
 - `scripts/constants.lua` (88 lines) - the two caps (attribute 100,
   per-attribute increase 5), the colours, the textures, the attribute
   table with its GMST tooltip keys, and the per-level message heights.
-- `scripts/templates.lua` (107 lines) - the bordered-button template.
+- `scripts/templates.lua` (108 lines; `wc -l` says 107 because the file
+  ends without a newline) - the bordered-button template.
 - `l10n/en.yaml`, `l10n/fr.yaml` - the mod's own strings, English and
   French, including the setting names and descriptions the port's Mods
   pane restates.
 - `README.upstream.md` - the author's own README, carried because its
   changelog is the record of what 0.5.1, 0.5.2 and 0.5.3 each fixed,
-  and three of those fixes are laws the port keeps (see the page).
+  and all four of those fixes are laws the port keeps: 0.5.1's two (no
+  extra point on a major or minor raise; a roll-over bigger than one
+  level is carried rather than dropped), 0.5.2's (health does rise on a
+  level-up) and 0.5.3's (the handler reads the value the skill is
+  LEAVING). The page names each one against the port's own line.
 - This note.
 
 ## What is NOT here, and why
