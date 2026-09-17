@@ -14253,3 +14253,51 @@ and the port keeps it, so with the weapon DRAWN, equipping a shield now
 drops the lit torch on the floor while the window is still open. It
 always did that - it just used to happen a beat later, after the window
 closed. The Mods pane's `OnStow` dial changes it to Unequip.
+
+## INV3 - THE HOLD THAT SOMETIMES DID NOT TAKE (2026-09-17)
+
+Mac: "Hold to drag functionality in inventory sometimes doesnt work."
+
+Two causes, and the second was in a record rather than only in the code.
+
+**The slop was a sum, in an axis nothing can scroll.** AUDIT INV2 A1
+was right about the law - the rows pan by default, a flick scrolls and
+is never a drag, only a still finger picks anything up - and wrong about
+the measurement: `|dx| + |dy| > 8`, one Manhattan sum over both axes.
+Measured on the real `touch-action: pan-y` tile in Chromium, the browser
+takes the gesture at 16 CSS px of VERTICAL travel (the same number at
+device pixel ratio 1, 2 and 3) and never takes it sideways at all, out
+to 160 px, because a `pan-y` surface has no sideways pan to hand over.
+So the port gave up at half the room the browser allows, and on an axis
+the browser does not care about: a thumb drifting 5 across and 4 down
+lost the item it was reaching for. The slop is per-axis now - 12
+vertical, deliberately under the browser's own 16 so the port's law is
+the one that fires and fires deterministically, and twice that sideways
+- through an exported pure `holdBroken`, so it is pinned as a LAW rather
+than as whatever one path happened to do.
+
+**`.draglock` never took the pan back.** A1 and MAC-M2 A both say that
+once the hold has armed the class takes the pan back for the rest of the
+gesture. It does not: Chromium reads the effective `touch-action` when
+the touch SEQUENCE begins, so a class applied 320 ms later cannot reach
+a gesture already in flight - measured byte-identical to no lock at all.
+The ghost lifted and then VANISHED as soon as the carry moved down a
+list with somewhere to scroll, which is the other half of the report.
+An armed touch drag preventDefaults cancelable `touchmove`s instead,
+registered `{ passive: false, capture: true }`; that is what holds a
+live gesture. The rules stay, because they are what stops a SECOND
+finger panning under a live drag - a gesture that does begin under the
+class - and the prose now says that rather than the thing that was not
+true. **Both of those records carried the false claim and are corrected
+here rather than quietly in the stylesheet.**
+
+The ghost arms under the FINGER now rather than at the landing point up
+to 12 px away, so `dropIntent` is asked about the point the player is
+actually touching.
+
+A resting thumb picked up 14 of 24 times before and 24 of 24 after; a 6,
+8 or 10 px drift went 0 of 12 to 12 of 12. A1's law re-measured intact
+after the fix: a flick still scrolls the pack and puts nothing on the
+floor, a tap is still a pick, the mouse still crosses at 4 px with no
+hold. `tools/invDragProbe.mjs` is kept - 46 checks, all clear, and 24 of
+them failed before the fix.
