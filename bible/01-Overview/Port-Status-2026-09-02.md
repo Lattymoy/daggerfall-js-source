@@ -492,7 +492,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   unknowable, so closing it needs an owner-chosen number. The ON arm
   needs none of it - it re-reads range from the item template every
   frame, which is what ships.*
-- ~~**`src/systems/talkMacros.js:289`** - `GetValue`'s
+- ~~**`src/systems/talkMacros.js:314`** - `GetValue`'s
   `symbolStr + "[undefined]"` sentinel.~~ SHIPPED (E-group E7,
   2026-09-02): *the blocker was the table, so the table was finished.
   `questMacros.js`'s HANDLERS carries all 217 `macroHandlers` rows
