@@ -290,6 +290,27 @@ export function cloudLight(state, profile = null) {
   return { dir: m ? m.dir : [0, 1, 0], color: moon, day: 0 };
 }
 
+/** VC6b: HOW MUCH OF THE LOW-SUN LOOK THIS FRAME TAKES, 0..1 - the one
+ *  weight behind all three of VC6b's terms. Pure.
+ *
+ *  It lives here, on the CPU, and not as a smoothstep on uLightDir in
+ *  the march, because uLightDir is NOT ALWAYS THE SUN: once the sun is
+ *  down it is the brighter visible MOON's, and a moon near the horizon
+ *  read as "the sun is low" - it lit the undersides, opened the direct
+ *  gain and tinted half the sky, a swing that appeared and vanished as
+ *  the moon crossed seventeen degrees, driven by the wrong body.
+ *  `dayWeight` is the SUN's own weight (cloudLight's `day`), so this is
+ *  exactly zero at night and the whole of VC6b is off: a night sky is
+ *  the one it was before the slice. Pinned by value.
+ *
+ *  @param {number} sunY the sun's direction's y - its own, never the light's
+ *  @param {number} dayWeight cloudLight's `day`: 1 while the DECK still sees the sun
+ */
+export function duskWeight(sunY, dayWeight) {
+  const t = Math.min(1, Math.max(0, (0.30 - sunY) / 0.33));   // 0 above 17 degrees, 1 at and below the horizon
+  return dayWeight * t * t * (3 - 2 * t);
+}
+
 /** VC4: the shadow map's square for a camera at (x, z): its corner,
  *  snapped to the pixel grid with the camera's pixel in the middle.
  *  Pure - the seam that keeps a recenter from moving the map. */
@@ -442,6 +463,7 @@ uniform vec3 uCloudLit;
 uniform vec3 uCloudShade;
 uniform vec3 uHorizonColor;
 uniform vec3 uSkyTint;    // VC6b: the zenith's colour - the sky that lights a cloud's shaded side
+uniform float uDusk;      // VC6b: how much of the low-sun look this frame takes (duskWeight) - the SUN's own angle and weight, so the MOON can never drive it
 uniform int uSteps;
 uniform int uLightSteps;
 out vec4 outColor;
@@ -452,7 +474,7 @@ float hash12(vec2 p) { vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.y
 // VC6b: a colour's HUE at luminance one. Every tint below is taken
 // through this, so a tint can only move a colour's hue and never its
 // brightness - the dusk must not be a way of turning the exposure up.
-vec3 hue(vec3 c) { return c / max(dot(c, vec3(0.2126, 0.7152, 0.0722)), 1e-4); }
+vec3 hue(vec3 c) { float l = dot(c, vec3(0.2126, 0.7152, 0.0722)); return l > 1e-3 ? c / l : vec3(1.0); }   // a colour with no light in it has no hue to lend: white, the tint that changes nothing
 // toward the light: a short march, Beer's law with the powder term
 float lightMarch(vec3 p) {
   float sum = 0.0;
@@ -488,7 +510,10 @@ void main() {
   // clouds arent influenced by the sun". Three terms, all of them
   // WEIGHTED BY HOW LOW THE SUN IS and all of them zero by day, so noon
   // is the picture it was:
-  //   low    - 0 above 17 degrees, 1 at and below the horizon.
+  //   low    - 0 above 17 degrees, 1 at and below the horizon, and 0
+  //            at night: it is computed on the CPU (duskWeight) from
+  //            the SUN's own direction and weight, never from
+  //            uLightDir, which is the MOON's once the sun is down.
   //   toward - 0 looking away from the sun, 1 looking at it. At dusk
   //              the sky is not one colour: the half of it the sun is in
   //              is gold and the other half is blue, and a cloud takes
@@ -499,7 +524,7 @@ void main() {
   //              burns. The ambient's height ramp rolls over to match.
   // The direct term's gain opens with it (0.7 -> 1.05): a rim lit by a
   // sun on the horizon is the brightest thing in the sky.
-  float low = smoothstep(0.30, -0.03, uLightDir.y);
+  float low = uDusk;
   float toward = clamp(cosTheta * 0.5 + 0.5, 0.0, 1.0);
   vec3 duskTint = mix(hue(uSkyTint), hue(uLightColor), toward);
   float gain = mix(0.7, 1.05, low);
@@ -639,7 +664,7 @@ function link(gl, vs, fs) {
 
 /** The field's uniforms, shared by both marches. */
 export const FIELD_UNIFORMS = ['uShape', 'uDetail', 'uCover', 'uSoft', 'uBase', 'uTop', 'uDensity', 'uFlat', 'uShear', 'uDark', 'uVary', 'uSlabBase', 'uSlabTop', 'uCellCount', 'uCell', 'uCellA', 'uCellB', 'uCellC', 'uDrift', 'uShift', 'uCamXZ'];   // WEATHER2c: uDark moved in (a cell has its own), the slab and the cells added; VC6a: uVary
-export const MARCH_UNIFORMS = [...FIELD_UNIFORMS, 'uMapSize', 'uLightDir', 'uLightColor', 'uCloudLit', 'uCloudShade', 'uHorizonColor', 'uSkyTint', 'uSteps', 'uLightSteps'];   // VC6b: uSkyTint
+export const MARCH_UNIFORMS = [...FIELD_UNIFORMS, 'uMapSize', 'uLightDir', 'uLightColor', 'uCloudLit', 'uCloudShade', 'uHorizonColor', 'uSkyTint', 'uDusk', 'uSteps', 'uLightSteps'];   // VC6b: uSkyTint, uDusk
 export const SHADOW_UNIFORMS = [...FIELD_UNIFORMS, 'uMapSize', 'uOrigin', 'uExtent', 'uLightDir', 'uSteps'];
 export const COMPOSITE_UNIFORMS = ['uMap', 'uYaw', 'uPitch', 'uTanHalfFov', 'uAspect', 'uFlash'];
 
@@ -812,6 +837,7 @@ export class VolumetricClouds {
       gl.uniform3fv(u.uCloudLit, s.cloudLit); gl.uniform3fv(u.uCloudShade, s.cloudShade);
       gl.uniform3fv(u.uHorizonColor, s.horizon);
       gl.uniform3fv(u.uSkyTint, s.zenith);   // VC6b: the sky that lights the side the sun does not
+      gl.uniform1f(u.uDusk, duskWeight(s.sunDir[1], light.day));   // VC6b: the SUN's own angle and weight - zero at night, so the whole slice is off
       gl.uniform1i(u.uSteps, q.steps); gl.uniform1i(u.uLightSteps, q.light);
       withTarget(gl, this.map, viewport, () => {
         gl.viewport(0, y0, q.width, Math.min(rows, q.height - y0));

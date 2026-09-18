@@ -119,7 +119,7 @@
   {
     "name": "VC6b-the-low-sun-term-never-opens",
     "file": "src/render/volumetricClouds.js",
-    "old": "  float low = smoothstep(0.30, -0.03, uLightDir.y);",
+    "old": "  float low = uDusk;",
     "new": "  float low = 0.0;",
     "tests": [
       "test/vc6_clouds.test.js"
@@ -147,7 +147,7 @@
   {
     "name": "VC6b-the-tint-turns-the-exposure-up-instead-of-the-hue",
     "file": "src/render/volumetricClouds.js",
-    "old": "vec3 hue(vec3 c) { return c / max(dot(c, vec3(0.2126, 0.7152, 0.0722)), 1e-4); }",
+    "old": "vec3 hue(vec3 c) { float l = dot(c, vec3(0.2126, 0.7152, 0.0722)); return l > 1e-3 ? c / l : vec3(1.0); }",
     "new": "vec3 hue(vec3 c) { return c * 2.0; }",
     "tests": [
       "test/vc6_clouds.test.js"
@@ -365,6 +365,42 @@
     "file": "src/render/renderer.js",
     "old": "    if (this._cloudShadow) { this._deckOwed = this._cloudShadow; this._cloudShadow = null; this._csStamp++; }",
     "new": "    if (this._cloudShadow) { this._cloudShadow = null; this._csStamp++; }",
+    "tests": [
+      "test/vc6_clouds.test.js"
+    ]
+  },
+  {
+    "name": "VC6b-a-low-MOON-lights-the-undersides-at-midnight",
+    "file": "src/render/volumetricClouds.js",
+    "old": "  return dayWeight * t * t * (3 - 2 * t);",
+    "new": "  return t * t * (3 - 2 * t);",
+    "tests": [
+      "test/vc6_clouds.test.js"
+    ]
+  },
+  {
+    "name": "VC6b-the-dusk-weight-is-taken-off-the-LIGHTs-direction-not-the-suns",
+    "file": "src/render/volumetricClouds.js",
+    "old": "      gl.uniform1f(u.uDusk, duskWeight(s.sunDir[1], light.day));   // VC6b:",
+    "new": "      gl.uniform1f(u.uDusk, duskWeight(light.dir[1], light.day));   // VC6b:",
+    "tests": [
+      "test/vc6_clouds.test.js"
+    ]
+  },
+  {
+    "name": "VC6b-a-colour-with-no-light-in-it-lends-a-BLACK-tint",
+    "file": "src/render/volumetricClouds.js",
+    "old": "vec3 hue(vec3 c) { float l = dot(c, vec3(0.2126, 0.7152, 0.0722)); return l > 1e-3 ? c / l : vec3(1.0); }",
+    "new": "vec3 hue(vec3 c) { float l = dot(c, vec3(0.2126, 0.7152, 0.0722)); return l > 1e-3 ? c / l : vec3(0.0); }",
+    "tests": [
+      "test/vc6_clouds.test.js"
+    ]
+  },
+  {
+    "name": "VC6b-the-dusk-weight-never-reaches-the-march",
+    "file": "src/render/volumetricClouds.js",
+    "old": "      gl.uniform1f(u.uDusk, duskWeight(s.sunDir[1], light.day));   // VC6b: the SUN's own angle and weight - zero at night, so the whole slice is off\n",
+    "new": "",
     "tests": [
       "test/vc6_clouds.test.js"
     ]

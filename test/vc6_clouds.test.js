@@ -19,7 +19,7 @@ import { fileURLToPath } from 'node:url';
 import {
   CLOUD_FIELD_GLSL, MARCH_FS, SHADOW_FS, MARCH_UNIFORMS, FIELD_UNIFORMS, VC_PROFILE,
   SHAPE_METRES, VARIATION_METRES, DETAIL_METRES, MOTTLE_METRES, WARP_METRES, FIELD_PERIOD_METRES,
-  PIXEL_METRES, MARCH_SLACK, QUALITY, packCells, cellOf, horizonDip, EARTH_RADIUS_M,
+  PIXEL_METRES, MARCH_SLACK, QUALITY, packCells, cellOf, horizonDip, EARTH_RADIUS_M, duskWeight,
 } from '../src/render/volumetricClouds.js';
 import { skyState } from '../src/render/enhancedSky.js';
 import { CLOUD_SHADOW_GLSL } from '../src/render/cloudShadow.js';
@@ -131,7 +131,25 @@ test('VC6b: the deck sees the sun past the ground\'s horizon, and the light it t
 });
 
 test('VC6b: the march\'s three low-sun terms are weighted by how low the sun is, so noon is the picture it was', () => {
-  assert.match(MARCH_FS, /float low = smoothstep\(0\.30, -0\.03, uLightDir\.y\);/, '0 above 17 degrees, 1 at and below the horizon');
+  // ═══ THE WEIGHT IS THE SUN'S, AND IT IS NOT IN THE SHADER ═════════
+  // uLightDir is NOT always the sun: once the sun is down it is the
+  // brighter visible MOON's (cloudLight). A smoothstep on it in the
+  // march therefore read a moon near the horizon as "the sun is low" -
+  // it lit the undersides at midnight, opened the direct gain and
+  // tinted half the sky, and the swing came and went as the moon
+  // crossed seventeen degrees. The weight is computed on the CPU from
+  // the SUN's own direction and its own weight, and is exactly 0 at
+  // night, so the whole of VC6b is off and a night sky is the one it
+  // was before the slice.
+  assert.match(MARCH_FS, /float low = uDusk;/, 'the march is handed the weight, it does not derive one');
+  assert.doesNotMatch(MARCH_FS, /smoothstep\([^)]*uLightDir/, 'and never takes it off the light\'s direction');
+  assert.ok(MARCH_UNIFORMS.includes('uDusk'));
+  assert.match(read('src/render/volumetricClouds.js'), /gl\.uniform1f\(u\.uDusk, duskWeight\(s\.sunDir\[1\], light\.day\)\);/, 'the SUN\'s y and the SUN\'s weight - neither is the light\'s');
+  assert.equal(duskWeight(0.8, 1), 0, 'noon: nothing');
+  assert.ok(duskWeight(0, 1) > 0.95, 'the sun on the horizon: the whole of it');
+  assert.ok(duskWeight(0.09, 1) > 0.5 && duskWeight(0.09, 1) < 0.9, 'five degrees up: most of it');
+  for (const y of [0.02, 0.2, 0.9]) assert.equal(duskWeight(y, 0), 0, `a moon at y=${y} drives NOTHING - the night is untouched`);
+  assert.equal(duskWeight(-0.03, 0), 0, 'and once the deck\'s own sun is gone, so is the look');
   assert.match(MARCH_FS, /float toward = clamp\(cosTheta \* 0\.5 \+ 0\.5, 0\.0, 1\.0\);/, 'the half of the sky the sun is in');
   assert.match(MARCH_FS, /vec3 duskTint = mix\(hue\(uSkyTint\), hue\(uLightColor\), toward\);/, 'gold toward the sun, the zenith\'s blue away from it');
   assert.match(MARCH_FS, /float gain = mix\(0\.7, 1\.05, low\);/, 'the direct term opens as the sun drops - a rim lit from the horizon is the brightest thing in the sky');
@@ -140,7 +158,10 @@ test('VC6b: the march\'s three low-sun terms are weighted by how low the sun is,
   // A TINT MAY NOT TURN THE EXPOSURE UP. Both ends of duskTint go
   // through hue(), which normalises to luminance one, so the term can
   // only move a colour's hue - the golden hour is not a brightness cheat.
-  assert.match(MARCH_FS, /vec3 hue\(vec3 c\) \{ return c \/ max\(dot\(c, vec3\(0\.2126, 0\.7152, 0\.0722\)\), 1e-4\); \}/);
+  // and a colour with no light in it has no hue to LEND: white, the tint
+  // that changes nothing - never c/1e-4, which is a black tint and would
+  // have darkened the cloud it was asked to colour
+  assert.match(MARCH_FS, /vec3 hue\(vec3 c\) \{ float l = dot\(c, vec3\(0\.2126, 0\.7152, 0\.0722\)\); return l > 1e-3 \? c \/ l : vec3\(1\.0\); \}/);
   assert.equal((MARCH_FS.match(/hue\(/g) || []).length, 3, 'declared once, used at both ends of the tint and nowhere else');
   // every one of them is dead at noon: low is 0 for any sun above 0.30
   assert.ok(MARCH_FS.includes('uniform vec3 uSkyTint;'), 'the zenith is a uniform of the march');
