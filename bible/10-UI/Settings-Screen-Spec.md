@@ -38,7 +38,7 @@
 |---|---|
 | 171 keys / 13 sections, all raw strings | `src/systems/settingsDefaults.js`, pinned `test/settings.test.js:35‑35` |
 | Tier counts today: **8 live, 18 unavailable, 145 stored** | `src/systems/settings.js:64‑101` |
-| `canvas.width = canvas.clientWidth` — CSS px, **DPR 1** | `src/render/renderer.js:1189‑1064` |
+| `canvas.width = canvas.clientWidth` — CSS px, **DPR 1** | `src/render/renderer.js:1185‑1064` |
 | `nativeMetrics` floors to **s=1 on every phone in both orientations** | `src/ui/nativePanel.js:28‑31` |
 | Today's launcher draws at a **hardcoded `s=2`** | `src/scenes/launcherScene.js:62`, `:82` | *(DELETED at FD1, 2026-09-11)*
 | FONT0003: `fixedWidth 5`, `fixedHeight 7`, space glyph 4 | pinned `test/audit18_ui_native.test.js:66‑70` |
@@ -48,7 +48,7 @@
 | `layoutMessageBox` hard‑codes `(320‑w)/2, (200‑h)/2`; `drawMessageBox` returns `false` unless SPOP.RCI is preloaded — and nothing preloads it before the game | `src/ui/messageBox.js:143`, `:184` |
 | `ListPickerWindow.draw` calls `nativeMetrics(canvas)` **itself** | `src/ui/listPicker.js:148` |
 | `attachTouch` is called only by world/interior/exterior/dungeon; it unconditionally builds F5/F6/☰/C/SV/LD + a movement stick claiming the left half of the viewport | `src/ui/touch.js:52‑190` |
-| `ensureAudio(fetch)` is exported from `src/scenes/shared.js:464`, is safe un‑awaited, and `audio.ensure` attaches its own gesture‑resume (`src/systems/audio.js:71‑87`) | — |
+| `ensureAudio(fetch)` is exported from `src/scenes/shared.js:465`, is safe un‑awaited, and `audio.ensure` attaches its own gesture‑resume (`src/systems/audio.js:71‑87`) | — |
 | `audio._out()` re‑reads `Controls/SoundVolume` on every connection (`audio.js:49`) — so a `DungeonDoorOpen` preview really demonstrates the slider | — |
 | `lookSettings.js:20` clamps `MouseLookSensitivity` to **0.1..4.0** while DFU's slider runs to 16.0 | — |
 | `saveSettings()`'s boolean is discarded at `launcher.js:100, :122, :193` **and inside `settings.js:240`** | — |
