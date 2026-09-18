@@ -652,3 +652,76 @@ re-aimed to the two-leg gate. Mutants: `map1.json`
 `sprite-url-document-relative`, `map3.json` `sheathed-arm-does-not-draw`
 and `holder-asks-did-it-draw`, `torchvis.json` re-aimed. Browser:
 `tools/heldMapProbe.mjs` 50 checks, the last three from the game's page.
+
+## MAP-FIELD2 - the sheet is HELD (2026-09-18)
+
+Mac, opening the map in a real game: *"the sprite I gave to hold the map
+isnt positioned correctly and is full screen with a black background.
+Its meant to act like any other sprite and be positioned at the bottom
+of the screen. ... The status and magicka/health/fatigue UI element's
+should go away when it is taken out."* Then, after the first fix:
+*"There's still a gap at the bottom of the arms, any way you can author
+the gap?"*
+
+Three separate defects, each of which had survived every pin in this arc
+for the same reason the two above it did: the pins drive a stub document
+that renders nothing, so nothing in them can see a picture.
+
+**The sprite was a picture of hands, not hands.** It was fitted to the
+whole viewport and CENTRED, which is how a held thing becomes a poster.
+It is anchored to the BOTTOM now, on the law every other held thing in
+this port takes, and carried `HELD_MAP_BITE` further down so the arms
+leave the frame rather than ending in mid-air above it. The one number
+that decides the map's size is `HELD_MAP_HEIGHT`, the sprite's height as
+a fraction of the viewport's; the width clamp is the single case where
+the height gives way, on a viewport too narrow to hold the width that
+height asks for, and without it the paper's sides are cut off.
+
+**The black was PAINTED, not alpha.** `art/held-map.png` is fully
+opaque and 47.3% of it is matte, so bottom-anchoring alone would have
+walked a black rectangle down the screen. The key is measured off the
+file rather than chosen (`tools/heldMapArtProbe.mjs`): in the gauntlet
+columns the median pixel is 196 and 110 of 32,220 lie under the ramp, so
+`MATTE_LUM = 8` / `MATTE_EDGE = 24` takes the background and leaves the
+arms. It RAMPS across those sixteen levels because a hard key leaves a
+black fringe against the sky. And the `<img>` is now only the LOADER -
+the stage shows a canvas, because a keyed sprite cannot be an `<img>`.
+
+**The vitals are a SECOND word, not the covering question.** `hud.js`
+already had one - `windowCoversHud` - but DFU deliberately repaints its
+LARGE hud under its own windows (`&& !largeHud?.art`), which is right
+for a window and wrong for a sheet held in the player's hands: the
+enhanced skin kept its bars on the knuckles. So `hidesHud` is its own
+predicate on `windowStack`, the held map is the only window in the port
+that claims it, and the hide sits OUTSIDE that carve-out. It also takes
+no pause gate, unlike the cover: the held map does not stop the world.
+
+**And the gap Mac saw the second time could not be cropped away.** This
+is the part worth remembering. Measured by column, MOST of the forearm
+reaches `SPRITE_ART_FOOT` and the bite carries those columns off the
+bottom edge on its own - which is exactly why the first fix looked
+right. But 69 of the 366 columns outside the paper stop short, the outer
+edges of the cuffs worst of all: on a 900px screen they end up to 68px
+above the bottom, leaving notches bitten out of the arms. No further
+crop closes those, because pushing the sprite down far enough to bury
+them takes the paper off the screen with it. So the pixels are
+AUTHORED - `extendCuffs` carries each outside column's lowest opaque
+pixel straight down to the foot of the sprite. It skips every column
+inside the paper's own rectangle, because the parchment's torn bottom
+edge is art and streaking it would be vandalism, and it runs AFTER the
+key, because extending before it would carry the matte's black down
+every column instead.
+
+**The lesson, again.** `SPRITE_ART_FOOT` is where the painting's content
+ends, and a fifth of the file is empty below it. Anchoring the FILE's
+foot - the obvious reading - is the first gap, and it is invisible in
+any harness that does not load the picture. Every constant in this slice
+is a measurement, and the thing that measures them is a kept probe now
+rather than a scratch script, so the next reader can re-run the numbers
+instead of trusting this page.
+
+Pins: `test/heldmap.test.js` (the geometry as a law over five viewports,
+the matte key, the `hidesHud` word, and the cuffs driven through
+`_keyMatte` itself over a synthetic sprite). Mutants: `map1.json`
+`MAPFIELD2-*` x16, `map3.json` `foot-no-scrim` re-aimed by content.
+Browser: `tools/heldMapArtProbe.mjs`, 9 checks.

@@ -25,8 +25,9 @@ import {
   OVERWORLD_DOT_COLORS, OVERWORLD_DOT_SIZES, OVERWORLD_CLIMATE_COLORS,
 } from '../src/ui/overworldModel.js';
 import { createTravelMapWindow, travelMapDoorReady } from '../src/ui/travelMapDoor.js';
+import { hidesHud } from '../src/ui/windowStack.js';   // MAP-FIELD2: the window that takes the HUD away
 import {
-  HeldMapWindow, HELD_MAP_URL, appRootFrom, SPRITE, PAPER, THUMB_ZONES, HAND_LUM, keyHandPixels, rgbaCss, wheelPixels,
+  HeldMapWindow, HELD_MAP_URL, appRootFrom, SPRITE, PAPER, THUMB_ZONES, HAND_LUM, HELD_MAP_HEIGHT, HELD_MAP_BITE, SPRITE_ART_FOOT, MATTE_LUM, MATTE_EDGE, keyMattePixels, extendCuffs, keyHandPixels, rgbaCss, wheelPixels,
 } from '../src/ui/heldMap.js';
 import { simplifyChain, traceChains } from '../src/ui/overworldModel.js';
 import { travelMapMarkedMapId, setTravelMapMarkedMapId } from '../src/systems/travelMapState.js';
@@ -382,7 +383,11 @@ test('MAP1: the relief map, its renderer and its probe are RETIRED - no file, no
   }
   const css = read('src/ui/enhancedStyle.js');
   assert.doesNotMatch(css, /\.ov[a-z]/, 'the .ov* rules went with the window they dressed');
-  assert.match(css, /\.hmroot \{\s*\n\s*position: fixed; inset: 0; z-index: 13; overflow: hidden;\s*\n\s*background: #000;/, 'the held map\'s root is OPAQUE - the sprite\'s own black');
+  // MAP-FIELD2: the root is CLEAR on both lanes now - the map is held,
+  // so the world is behind it, and the black was what made the sprite a
+  // letterboxed picture instead of a pair of hands.
+  assert.match(css, /\.hmroot \{\s*\n\s*position: fixed; inset: 0; z-index: 13; overflow: hidden;\s*\n\s*background: transparent;/, 'the held map\'s root is CLEAR - the world is behind the hands');
+  assert.doesNotMatch(css, /\.hmroot[^{]*\{[^}]*background: #000/, 'no lane paints its own black');
   assert.match(css, /\.hmink \{ position: absolute; display: block; \}/);
   assert.match(css, /\.hmhands \{[^}]*pointer-events: none;/, 'the hands never take the pointer from the sheet');
 });
@@ -933,11 +938,20 @@ test('MAP1 window: pan, wheel and keys move the VIEW under a clamp, the search g
     globalThis.innerWidth = 1600; globalThis.innerHeight = 900;
     try {
       const win = open(mkWin({ mapSize: { width: 1000, height: 500 }, woods: { heightMapBuffer: new Uint8Array(500000).fill(10) } }));
-      // the stage: 4:3 letterboxed into 16:9 -> 1200x900 at x=200
-      assert.deepEqual(win._stage, { x: 200, y: 0, w: 1200, h: 900 });
-      const pw = 1200 * (PAPER.x1 - PAPER.x0), ph = 900 * (PAPER.y1 - PAPER.y0);
+      // MAP-FIELD2 (Mac): the sheet is HELD - the stage is the sprite's
+      // 4:3 at HELD_MAP_HEIGHT of the viewport, centred across it and
+      // anchored to its BOTTOM, pushed HELD_MAP_OVERHANG of its own
+      // height further down so the arms leave the frame.
+      const sh = 900 * HELD_MAP_HEIGHT / SPRITE_ART_FOOT, sw = sh * SPRITE.w / SPRITE.h;
+      assert.ok(sw < 1600, 'this viewport is wide enough that the height rules');
+      assert.deepEqual(win._stage, { x: (1600 - sw) / 2, y: 900 - (SPRITE_ART_FOOT - HELD_MAP_BITE) * sh, w: sw, h: sh });
+      // THE LAW, not the arithmetic: it sits on the bottom edge and goes
+      // PAST it, so there is no gap under the arms at any size.
+      assert.ok(win._stage.y + win._stage.h * SPRITE_ART_FOOT > 900, 'the PAINTING\'s foot is below the viewport\'s - the file\'s foot is a fifth of matte lower and means nothing');
+      assert.ok(win._stage.y < 900 * 0.2, '...and its head is high on the screen, so the sheet is big enough to read');
+      const pw = sw * (PAPER.x1 - PAPER.x0), ph = sh * (PAPER.y1 - PAPER.y0);
       assert.ok(Math.abs(win._paper.w - pw) < 1e-9 && Math.abs(win._paper.h - ph) < 1e-9, 'the canvas is the paper\'s rectangle');
-      assert.equal(win._chrome.ink.style.left, `${1200 * PAPER.x0}px`);
+      assert.equal(win._chrome.ink.style.left, `${sw * PAPER.x0}px`);
       assert.equal(win._view.scale, scaleMinOf(win._limits()), 'at rest the whole bay is on the sheet');
       const rest = { ...win._view };
       // a nudge past the edge is clamped
@@ -1425,7 +1439,11 @@ test('AUDIT-MAP B2/B4: the sprite\'s handler is set before its source, the displ
   const src = read('src/ui/heldMap.js');
   assert.ok(src.indexOf('sprite.onload = () => this._keyHands(sprite, hands);') < src.indexOf('sprite.src = HELD_MAP_URL;'), 'onload before src - a cached picture cannot land first');
   assert.match(src, /\(fonts\?\.load\?\.\("14px 'Cormorant'"\) \?\? fonts\?\.ready\)\?\.then\?\.\(landed\);/, 'the face is ASKED for (a canvas font never triggers a load), and the sheet repainted when it lands');
-  assert.match(src, /const landed = \(\) => \{ if \(!this\.done\) \{ this\._measureCache\.clear\(\); this\._staticKey = ''; this\._dirty = true; \} \};/, 'the measures and the kept layer are dropped with it');
+  // MAP-FIELD2: the measure cache went with the names - nothing else on
+  // the sheet measures text - so the face's landing drops the kept layer
+  // alone. The repaint is still what the landing is FOR.
+  assert.match(src, /const landed = \(\) => \{ if \(!this\.done\) \{ this\._staticKey = ''; this\._dirty = true; \} \};/, 'the kept layer is dropped with it');
+  assert.doesNotMatch(src, /_measureCache/, 'and no measure cache survives the names it existed for');
   assert.match(src, /stage\.addEventListener\('auxclick', \(e\) => \{ if \(e\.button === 1\) e\.preventDefault\?\.\(\); \}\);/, 'auxclick is where the middle click\'s default lives');
   assert.match(src, /stage\.addEventListener\('mousedown', \(e\) => \{ if \(e\.button === 1\) e\.preventDefault\?\.\(\); \}\);/);
 });
@@ -1742,7 +1760,7 @@ test('MAP3 hands lane: when the holder says the arm is drawn and takes the sheet
       assert.equal(spec, null, 'no spec from the window: the rig\'s pose in force');
       assert.ok(Math.abs(aspect - win._paper.w / win._paper.h) < 1e-9, 'the sheet\'s own aspect, from the 4:3 fit');
       const c = win._chrome;
-      assert.equal(c.sprite.style.display, 'none');
+      assert.equal(c.sheet.style.display, 'none');   // MAP-FIELD2: the CANVAS is the sprite the stage shows; the <img> is only the loader
       assert.equal(c.hands.style.display, 'none', 'the keyed thumbs go with the painting');
       assert.equal(c.stage.style.width, '100%');
       assert.equal(c.ink.style.left, '0px', 'the canvas sits at the origin under its matrix');
@@ -1753,7 +1771,7 @@ test('MAP3 hands lane: when the holder says the arm is drawn and takes the sheet
       const src = read('src/ui/heldMap.js'), css = read('src/ui/enhancedStyle.js');
       assert.match(src, /c\.root\.classList\.toggle\('hmlanehands', true\);/);
       assert.doesNotMatch(src, /classList\.toggle\('hmhands'/);
-      assert.match(css, /\.hmroot\.hmlanehands \{ background: transparent; \}/);
+      assert.match(css, /\.hmroot \{[^}]*background: transparent;/, 'MAP-FIELD2: the root is clear for BOTH lanes, so the hands lane needs no rule of its own');
       assert.doesNotMatch(css, /\.hmroot\.hmhands\b/);
       const q = quadPlacement(win._paper.w, win._paper.h, TRAPEZIUM);
       assert.equal(c.ink.style.transform, q.css, 'the matrix3d of the corners');
@@ -1808,7 +1826,7 @@ test('MAP3 sprite lane stands when the arm is not drawn: no hold is asked, the p
     const win = open(mkWin({ holder }));
     assert.equal(win._lane, 'sprite');
     assert.ok(!holder.calls.some((c) => c[0] === 'hold'), 'never asked');
-    assert.notEqual(win._chrome.sprite.style.display, 'none');
+    assert.notEqual(win._chrome.sheet.style.display, 'none');   // MAP-FIELD2
     assert.deepEqual(win._paperPoint(30, 40), [30, 40]);
     assert.equal(JSON.parse(globalThis.__heldMap()).lane, 'sprite');
     for (let i = 0; i < 40; i++) win.tick(0.05);
@@ -1832,7 +1850,7 @@ test('MAP3 the rig that has not posed yet: the holder refuses the first hold, th
     ok = true;
     win.tick(0.05);
     assert.equal(win._lane, 'hands', 'the fourth ask lands');
-    assert.equal(win._chrome.sprite.style.display, 'none');
+    assert.equal(win._chrome.sheet.style.display, 'none');   // MAP-FIELD2
     win.tick(0.05);
     assert.equal(holder.calls.filter((c) => c[0] === 'hold').length, 4, 'held: no more asking');
     win.dispose();
@@ -1893,7 +1911,7 @@ test('AUDIT-MAP2 the way back: an arm that stops answering corners (paralysed, h
       corners = null;
       for (let i = 0; i < 50; i++) win.tick(0.016);
       assert.equal(win._lane, 'sprite', 'fifty ticks without corners: the painting');
-      assert.equal(win._chrome.sprite.style.display, '');
+      assert.equal(win._chrome.sheet.style.display, '');   // MAP-FIELD2
       assert.equal(win._chrome.hands.style.display, '');
       assert.equal(win._chrome.ink.style.transform, '');
       assert.notEqual(win._chrome.stage.style.width, '100%', 'the 4:3 stage is laid out again');
@@ -2079,7 +2097,7 @@ test('AUDIT-MAP2 perf and polish: the kept static layer is not reset on every pa
   assert.doesNotMatch(src, /byRoad: false/);
   assert.doesNotMatch(src, /walkTravelPath\(/, 'the walk is calculateTravelTime\'s own');
   assert.match(src, /typeof maps\?\.getRegionIndexAt === 'function' \? maps\.getRegionIndexAt\(x, y\)/);
-  assert.match(read('src/ui/enhancedStyle.js'), /\.hmroot\.hmlanehands \.hmfoot \{ background: rgba\(10, 12, 17, 0\.72\);/, 'the foot has its own scrim over the world');
+  assert.match(read('src/ui/enhancedStyle.js'), /\.hmroot \.hmfoot \{ background: rgba\(10, 12, 17, 0\.72\);/, 'the foot has its own scrim over the world - MAP-FIELD2: on both lanes, neither having a black behind it');
   withDocument(() => {
     // the region read: a host maps file whose getRegionIndexAt carries the fixups
     const politic = () => 64;   // the High Rock sea coast byte
@@ -2153,4 +2171,154 @@ test('AUDIT-FIELD: an arm that never comes leaves the painting standing, and the
     assert.ok(win._handsTries >= 30, 'and the retry ran to its bound rather than for ever');
     win.dispose();
   });
+});
+
+// ═══ MAP-FIELD2 (Mac, 2026-09-18) ═══════════════════════════════════
+// "The held map should be at the bottom of the screen, arms should sit
+// slighty below where there is no gap. The status and magicka/health/
+// fatigue UI element's should go away when it is taken out."
+test('MAP-FIELD2: the sheet is HELD - bottom-anchored with the arms past the edge, the world behind it, and the vitals go with it (mutants: MAPFIELD2-*)', () => {
+  const src = read('src/ui/heldMap.js');
+
+  // 1. THE GEOMETRY, as a law rather than as one viewport's numbers.
+  // The sprite was fitted to the whole viewport and CENTRED, which is
+  // why it read as a picture of hands in a letterbox instead of hands.
+  assert.ok(HELD_MAP_HEIGHT > 0 && HELD_MAP_HEIGHT <= 1, 'the height is a fraction of the viewport');
+  assert.ok(HELD_MAP_BITE > 0 && HELD_MAP_BITE < 0.2, 'and the bite a fraction of the sprite, downward');
+  // THE MEASUREMENT THIS RESTS ON. A fifth of `held-map.png` is matte:
+  // below SPRITE_ART_FOOT every row of the file is empty, so anchoring
+  // the FILE to the bottom of the screen leaves the arms ending in
+  // mid-air with that fifth of the screen blank under them - which is
+  // exactly the gap Mac named. It is measured off the picture, and the
+  // probe that measured it is tools/heldMapArtProbe.mjs.
+  assert.ok(SPRITE_ART_FOOT > 0.7 && SPRITE_ART_FOOT < 0.85, `the painting ends at ${SPRITE_ART_FOOT} of the file`);
+  const stageFor = (vw, vh) => {
+    let sh = vh * HELD_MAP_HEIGHT / SPRITE_ART_FOOT, sw = sh * SPRITE.w / SPRITE.h;
+    if (sw > vw) { sw = vw; sh = sw * SPRITE.h / SPRITE.w; }
+    return { x: (vw - sw) / 2, y: vh - (SPRITE_ART_FOOT - HELD_MAP_BITE) * sh, w: sw, h: sh };
+  };
+  for (const [vw, vh, why] of [[1600, 900, 'a desktop'], [1920, 1080, 'a bigger one'], [2400, 900, 'an ultrawide'],
+    [800, 1200, 'a phone held upright'], [640, 360, 'a short landscape phone']]) {
+    const g = stageFor(vw, vh);
+    assert.ok(g.y + g.h * SPRITE_ART_FOOT > vh, `${why}: the PAINTING's foot goes past the bottom edge - there is no gap under the arms`);
+    assert.ok(g.w <= vw + 1e-9, `${why}: and the sheet never runs wider than the screen, which would cut the paper's sides off`);
+    assert.ok(Math.abs(g.w / g.h - SPRITE.w / SPRITE.h) < 1e-9, `${why}: the painting keeps its own aspect`);
+    assert.ok(g.x >= 0, `${why}: centred across, never off the left`);
+  }
+  // the ONE case where the height gives way: a viewport too narrow to
+  // hold the width the height asks for
+  const tall = stageFor(400, 2000);
+  assert.equal(tall.w, 400, 'a narrow viewport takes the width and the height follows');
+  assert.ok(tall.h < 2000 * HELD_MAP_HEIGHT / SPRITE_ART_FOOT, '...which is SHORTER than the height would have been');
+  assert.match(src, /if \(sw > vw\) \{ sw = vw; sh = sw \* SPRITE\.h \/ SPRITE\.w; \}/, 'and that clamp is in the layout, not only in this pin');
+  assert.match(src, /const sx = \(vw - sw\) \/ 2, sy = vh - \(SPRITE_ART_FOOT - HELD_MAP_BITE\) \* sh;/, 'anchored on the PAINTING\'s foot and carried past it');
+
+  // 1b. AND THE BLACK COMES OFF. The file is fully opaque and 47.5% of
+  // it is matte, so bottom-anchoring alone would have walked a black
+  // rectangle down the screen. The key is measured, not guessed: in the
+  // gauntlet columns the median pixel is 187 and only 154 of 47,499
+  // non-black pixels lie between 8 and 32.
+  assert.ok(MATTE_LUM < MATTE_EDGE, 'the matte ends before the art begins');
+  assert.ok(MATTE_EDGE < HAND_LUM, '...and both are well under the hand key, which is a different question');
+  const px = (r, g, b, a = 255) => { const d = new Uint8ClampedArray([r, g, b, a]); keyMattePixels(d); return d[3]; };
+  assert.equal(px(0, 0, 0), 0, 'pure black goes');
+  assert.equal(px(4, 2, 6), 0, 'and so does the dithered near-black around it');
+  assert.equal(px(187, 150, 95), 255, 'the gauntlet stays whole');
+  assert.equal(px(189, 150, 95), 255, 'and so does the paper');
+  assert.ok(px(16, 16, 16) > 0 && px(16, 16, 16) < 255, 'the rim RAMPS rather than cutting - a hard key leaves a black fringe on the sky');
+  assert.match(src, /const sprite = el\('img'\);/, 'the <img> is the LOADER');
+  assert.match(src, /const sheet = el\('canvas', 'hmsprite'\);/, '...and a canvas is what the stage shows');
+  assert.match(src, /stage\.append\(sheet, ink, hands\);/, 'so the keyed sprite is under the ink, where the painting was');
+
+  // 2. THE VITALS GO WITH IT, and not through the covering question.
+  // DFU repaints its LARGE hud under its own windows (hud.js's
+  // `&& !largeHud?.art`), which is right for a window and wrong for a
+  // sheet held in the player's hands - so this is a second, separate
+  // word, and it is NOT inside that carve-out.
+  assert.equal(hidesHud({ hidesHud: true }), true);
+  assert.equal(hidesHud({ hidesHud: 1 }), false, 'the field is the literal true, as previousWindow is');
+  assert.equal(hidesHud({}), false); assert.equal(hidesHud(null), false);
+  assert.match(src, /this\.hidesHud = true;/, 'the sheet declares it');
+  assert.match(read('src/ui/hud.js'), /const hudCovered = hudHidden \|\| \(\(windowCoversHud \?\? cursorActive\) && !largeHud\?\.art\);/,
+    'and the hide is OUTSIDE the large-HUD carve-out - inside it, the enhanced skin would keep its bars on the knuckles');
+  // the overlay's answer takes NO pause gate: the held map does not stop
+  // the world, and the vitals go anyway
+  assert.match(read('src/scenes/townTalk.js'), /get hudHidden\(\) \{ return hidesHud\(overlay\); \},/);
+  for (const h of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    assert.match(read(h), /hudHidden: townTalk\.hudHidden,/, `${h}: the host asks`);
+  }
+  // and nothing ELSE in the port claims it, so no DFU window moved
+  const claims = [];
+  for (const f of ['src/ui/heldMap.js', 'src/ui/travelMapWindow.js', 'src/ui/inventoryWindow.js', 'src/ui/charsheet.js', 'src/ui/pauseWindow.js'])
+    if (existsSync(new URL(`../${f}`, import.meta.url)) && /\bhidesHud = true/.test(read(f))) claims.push(f);
+  assert.deepEqual(claims, ['src/ui/heldMap.js'], 'the held map is the only window that takes the HUD away');
+});
+
+// Mac's second look: "There's still a gap at the bottom of the arms,
+// any way you can author the gap?" - measured by column
+// (tools/heldMapArtProbe.mjs), most of the forearm DOES reach the art's
+// foot and the bite carries it off the edge, but 69 of the 366 columns
+// outside the paper stop up to 68px short of a 900px screen: notches
+// bitten out of the cuffs that no further crop closes, because burying
+// them would take the paper off the screen too.
+test('MAP-FIELD2: the cuffs are AUTHORED down to the foot, and only outside the paper - keyed and extended through the window itself (mutants: MAPFIELD2-the-black-matte-stays-on-the-sprite, MAPFIELD2-the-cuffs-end-in-mid-air, MAPFIELD2-the-extension-smears-the-parchment)', () => {
+  const W = 100, H = 100;
+  const BLACK = [0, 0, 0], ARM = [187, 150, 95], PAPER_RGB = [206, 183, 141];
+  // a sprite the shape of the real one: black everywhere, a parchment
+  // block with a torn foot inside PAPER's rectangle, and two forearms
+  // outside it that STOP above the file's bottom edge - the gap.
+  const paint = () => {
+    const d = new Uint8ClampedArray(W * H * 4);
+    const put = (x, y, [r, g, b]) => { const i = ((y * W) + x) * 4; d[i] = r; d[i + 1] = g; d[i + 2] = b; d[i + 3] = 255; };
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) put(x, y, BLACK);
+    const px0 = Math.floor(PAPER.x0 * W), px1 = Math.ceil(PAPER.x1 * W);
+    for (let y = 14; y <= 75; y++) for (let x = px0; x < px1; x++) put(x, y, PAPER_RGB);
+    for (let y = 50; y <= 70; y++) put(5, y, ARM);      // the left forearm, ending at 70
+    for (let y = 50; y <= 60; y++) put(95, y, ARM);     // the right one, cut higher still
+    return d;
+  };
+  const data = paint();
+  let put = null;
+  const sheet = { width: 0, height: 0, getContext: () => ({
+    drawImage() {}, getImageData: () => ({ data, width: W, height: H }),
+    putImageData(img) { put = img; },
+  }) };
+
+  withDocument(() => {
+    const win = mkWin();
+    win._keyMatte({ naturalWidth: W, naturalHeight: H }, sheet);
+    win.dispose();
+  });
+  assert.equal(sheet.width, W, 'the canvas is sized to the file, not left at zero');
+  assert.equal(sheet.height, H);
+  assert.ok(put, 'and the keyed bytes are written back');
+
+  const at = (x, y) => { const i = ((y * W) + x) * 4; return [data[i], data[i + 1], data[i + 2], data[i + 3]]; };
+  // 1. THE MATTE IS OFF. Without this the sheet walks a black rectangle
+  // down the screen as it is carried past the bottom edge.
+  assert.equal(at(50, 5)[3], 0, 'the matte above the paper is gone');
+  assert.equal(at(5, 5)[3], 0, 'and above the arm');
+  assert.deepEqual(at(50, 40), [...PAPER_RGB, 255], 'the parchment is untouched');
+
+  // 2. THE CUFFS RUN OFF THE BOTTOM. Every row under the forearm's last
+  // painted one carries its colour, all the way to the file's foot.
+  assert.deepEqual(at(5, 70), [...ARM, 255], 'the painted cuff is still the painted cuff');
+  assert.deepEqual(at(5, 71), [...ARM, 255], 'and the row under it is authored');
+  assert.deepEqual(at(5, H - 1), [...ARM, 255], 'down to the last row of the file - no gap left to see');
+  assert.deepEqual(at(95, H - 1), [...ARM, 255], 'the right arm too, though it was cut higher');
+  assert.deepEqual(at(5, 40), [0, 0, 0, 0], 'and ABOVE the arm nothing is invented');
+
+  // 3. AND THE PARCHMENT IS NOT SMEARED. Its torn bottom edge is art;
+  // streaking it down the screen would be vandalism, so every column
+  // inside PAPER's own rectangle is left exactly as the painter left it.
+  assert.equal(at(50, 76)[3], 0, 'under the paper\'s torn foot: still clear');
+  assert.equal(at(50, H - 1)[3], 0, '...all the way down');
+
+  // the pure law, driven on its own: the same answers, and it RETURNS
+  // the buffer it was handed, in place, as the two keys do
+  const solo = paint();
+  assert.equal(extendCuffs(keyMattePixels(solo), W, H), solo, 'in place, like keyMattePixels');
+  const src = read('src/ui/heldMap.js');
+  assert.match(src, /const x0 = Math\.floor\(paper\.x0 \* w\), x1 = Math\.ceil\(paper\.x1 \* w\);/, 'the skipped span is the PAPER\'s, so it is one number to turn if the art changes');
+  assert.match(src, /keyMattePixels\(img\.data\);\s*\n\s*extendCuffs\(img\.data, w, h\);/, 'and the key runs FIRST - extending before it would carry the matte\'s black down every column');
 });
