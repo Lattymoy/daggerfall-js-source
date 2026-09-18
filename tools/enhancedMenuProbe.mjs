@@ -32,7 +32,7 @@ async function run(label, opts) {
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
 
-  await page.goto(`${BASE}/play/`, { waitUntil: 'networkidle' });
+  await page.goto(`${BASE}/play/?nointro`, { waitUntil: 'networkidle' });
   await page.waitForSelector('.px-menu button', { timeout: 15000 });   // PX1: the door is the pixel home now
 
   // 1. THE DOOR OPENED WITHOUT DATA. ensureArena2's picker is a fixed
@@ -122,7 +122,7 @@ async function run(label, opts) {
   //     the switch click timed out. Re-aimed at the tiles: the control
   //     is a SEGMENTED BAR now, not one cycling button, so a tier is
   //     pressed by name rather than stepped into.
-  await page.goto(`${BASE}/play/`, { waitUntil: 'networkidle' });
+  await page.goto(`${BASE}/play/?nointro`, { waitUntil: 'networkidle' });
   await page.locator('.px-menu button').filter({ hasText: /Features/ }).first().click();
   await page.waitForSelector('#enhanced-menu .ft-tile', { timeout: 10000 });
   const skyTile = page.locator('#enhanced-menu .ft-tile')
@@ -153,7 +153,7 @@ async function run(label, opts) {
   await skyTile.locator('.ft-segb', { hasText: /Dynamic Skies/ }).first().click();   // back to where it was
 
   // 3. THE PICK APPEARS WHEN A GAME STARTS, and not one moment before.
-  await page.goto(`${BASE}/play/`, { waitUntil: 'networkidle' });
+  await page.goto(`${BASE}/play/?nointro`, { waitUntil: 'networkidle' });
   await page.keyboard.press('Escape');   // PX2: Escape backs a section out to home
   await page.waitForSelector('.px-menu button', { timeout: 10000 });
   await page.locator('.px-menu button').filter({ hasText: /New Game/ }).first().click();
@@ -176,7 +176,7 @@ await run('phone', { ...devices['Pixel 5'] });
 {
   const ctx = await browser.newContext({ viewport: { width: 1400, height: 900 } });
   const page = await ctx.newPage();
-  await page.goto(`${BASE}/play/?skin=classic`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${BASE}/play/?skin=classic&nointro`, { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('.px-menu button', { timeout: 20000 });
   const st = await page.evaluate(() => JSON.parse(window.__menu()));
   // FT14 took Mods off this rail and FT16 took Controls into Settings;
@@ -197,7 +197,7 @@ await run('phone', { ...devices['Pixel 5'] });
 {
   const ctx = await browser.newContext({ viewport: { width: 1400, height: 900 } });
   const page = await ctx.newPage();
-  await page.goto(`${BASE}/play/`, { waitUntil: 'load' });
+  await page.goto(`${BASE}/play/?nointro`, { waitUntil: 'load' });
   await page.waitForSelector('.px-menu button', { timeout: 20000 });
   await page.locator('.skinswitch .skinopt:not(.on)').click();
   // FD1: the classic door is this same screen with the Begin rail; the pick rises behind Begin

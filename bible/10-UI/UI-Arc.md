@@ -31,12 +31,72 @@ little scatter so a flurry fans out. Enhanced only: the enhanced HUD
 registers the hook; the classic path never has one.
 
 
-## U65 THE INTRO (2026-08-30) - RIPPED OUT
+## INTRO2 THE SCORE-LED INTRO (2026-09-18)
+
+Mac requested a complete overhaul of the unfinished intro, his supplied
+Daggerfall Enhanced logo, a precisely timed final splash, and continued
+quieter music after tapping into the main menu.
+
+The shared front door in `main.js` now owns one `IntroTheme` session from
+Begin through the menu. The recovered recording is decoded before Begin
+is enabled. A trusted gesture unlocks audio; the film follows the audio
+DEVICE timestamp with the observed display interval, not elapsed wall
+time or a guessed tempo. The old U65 capture's corrective audio remuxing
+is not retained. No game archive is requested until a game door is chosen.
+
+| Score time | Presentation |
+|---|---|
+| 0–1.5s | Opening fade over the water |
+| 1.25–5.3s | Interkarma / Daggerfall Unity credit |
+| 5.65–9.3s | Nexus Mods credit |
+| 9.45–12.162s | Continuous perspective camera rises through cloud |
+| 11.712s | Measured cloud-break accent |
+| 18.9s | Camera settles over the bay; GPU frame is held |
+| 20.286667–21.066667s | Supplied logo falls into its final position |
+| 21.066667s | Exact title landing at the decoded musical attack |
+| 22.416667s onward | Tap to continue; final title holds indefinitely |
+| Player tap | 1.1s eased visual fade; same source ramps from 0.82 to 0.26 |
+
+The landscape is the restored seeded, data-free bay generator rendered
+with a new WebGL2 terrain, water, sky and cloud pass. One perspective
+camera replaces the old column-renderer/orthographic handoff. The camera
+finishes before the logo arrives; the subtle impact is composited over the
+held background so terrain work cannot delay the final title. Rendering
+is capped at 900,000 pixels and stops at rest unless the viewport changes.
+Reduced motion keeps a fixed camera and reveals the logo on the same cue.
+
+The supplied 1536×512 JPEG bytes are unchanged, correctly named `.jpg`,
+and shared by the final splash, main-menu wordmark and sidebar home
+button. Screen blending removes the supplied black backdrop without
+resampling or redrawing the mark. Source identity is pinned by SHA-256.
+The two credit assets and original recording are restored unchanged from
+U65e, `8688721e`; no ARENA2-derived pixels are added.
+
+Music levels multiply the live music setting (menu is about 10 dB below
+intro). Fade input is swallowed and the mounted menu is inert until the
+fade finishes. Starting any game releases the source, decoded buffer,
+context and settings listener before classic/game audio can start.
+Backgrounding suspends audio, interrupted playback offers Resume, missing
+audio offers a truthful final card, and Skip remains usable during load.
+The scene's listeners, frame callback and WebGL allocations are disposed
+at handoff. The older classic data-backed title/splash remain on Begin.
+
+Verification lives in `test/intro.test.js`, the independent decoded-score
+check, and the browser probe/capture under `tools/intro*.mjs`. The rendered
+preview evaluates the actual scene at frame/30, muxing the original score
+at zero offset; it is a director's preview, not a hardware latency claim.
+Live timing and uninterrupted lower-volume menu playback are separate
+browser assertions. Desktop, portrait, short landscape, reduced motion,
+missing music and skipping during loading are exercised there.
+`?nointro` opens the existing front door directly for menu probes.
+`?introdebug` and `?introat=seconds` are development-only review controls.
+
+## U65 THE INTRO (2026-08-30) - HISTORICAL REMOVAL
 
 Built through five versions in one day (U65, c, d, e: generated Iliac
 flyover, measured beat grid, sync-verified capture) and removed the
 same day at Mac's direction after every version failed his eye. The
-enhanced door opens directly on the menu. History carries the slice.
+enhanced door opened directly on the menu until INTRO2 above. History carries the original slice.
 
 ## THE BOARD, as of U61 (2026-08-26) — OPEN, not shipped
 
