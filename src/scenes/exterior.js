@@ -4918,6 +4918,7 @@ export async function bootExterior(canvas, renderer, params, status) {
           // (DaggerfallUI.cs:1330 over DaggerfallPopupWindow.cs:76-84);
           // a null-previous window (:512-530) blanks it.
           windowCoversHud: townTalk.hudCovered || (modes?.hudCovered ?? false),
+          hudHidden: townTalk.hudHidden,   // MAP-FIELD2: the held map takes the vitals and the status icons with it, on both skins
           detected: _detected, playerXZ: [_dFeet[0], _dFeet[2]],
           largeHud: largeHudOptions({ renderer, fetchBytes, palette }, playerEntity),
           // AUDIT 39: the enhanced HUD's two hand plaques - see world.js.

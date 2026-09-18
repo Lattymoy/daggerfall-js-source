@@ -1232,22 +1232,27 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
    sprite's 4:3 letterboxed into the viewport, the ink canvas lies on
    the paper's rectangle and the hands canvas keys the thumbs back over
    it. Every class is hm-prefixed (the .detail/.packcol/.empty lesson). */
+/* MAP-FIELD2 (Mac): the map is HELD, so the world is behind it on both
+   lanes - the root's own black made it a picture of hands rather than
+   hands, and it is what put the sprite in a letterbox. */
 .hmroot {
   position: fixed; inset: 0; z-index: 13; overflow: hidden;
-  background: #000; cursor: grab; touch-action: none;
+  background: transparent; cursor: grab; touch-action: none;
   font-family: var(--body, sans-serif); color: var(--bone);
 }
 .hmroot:active { cursor: grabbing; }
 /* MAP3: the hands lane - the Morrowind arm and the world show through,
    the ink canvas lies on the held paper under its matrix3d */
-.hmroot.hmlanehands { background: transparent; }
 .hmroot.hmlanehands .hmink { will-change: transform; }
 /* AUDIT-MAP2: the foot had the root's black behind it; over the world it
-   needs its own scrim */
-.hmroot.hmlanehands .hmfoot { background: rgba(10, 12, 17, 0.72); padding: 6px 10px; border-radius: 4px; }
+   needs its own scrim - MAP-FIELD2: on BOTH lanes now, for the same
+   reason, because neither has a black behind it any more */
+.hmroot .hmfoot { background: rgba(10, 12, 17, 0.72); padding: 6px 10px; border-radius: 4px; }
 .hmstage { position: absolute; }
 /* the painting is 1448x1086 and is only ever shown SMALLER than that, so
-   it is scaled smooth - a pixelated downscale would alias its dither */
+   it is scaled smooth - a pixelated downscale would alias its dither.
+   MAP-FIELD2: it is a CANVAS now, not an <img> - the painting's own
+   black matte is keyed off into it before the stage shows it */
 .hmsprite {
   position: absolute; inset: 0; width: 100%; height: 100%; display: block;
   user-select: none; -webkit-user-drag: none; pointer-events: none;

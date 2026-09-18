@@ -321,7 +321,7 @@ reference surface absent · **Departure** = deliberate, ledgered.
 | **sys-audio** | Data verbatim / engine risk | **Verbatim** | 133 songs, 39 playlists, 76 named clips. |
 | **sys-save** | Broad / three features silently dropped | **Verbatim** | ROAD-A A4 took the envelope stragglers (resistances, `skillsRecentlyRaised`, `minMetalToHit`, `previousVampireClan`, `timeToBecomeVampireOrWerebeast`, `playerTeleportedIntoDungeon`); ROAD-C C1 built the multi-slot window over the store. |
 | **ui-core** | Verbatim | **Verbatim** | ROAD-A A7 built a real `VerticalScrollBar` with a draggable thumb, the item scroller's arrow states, the list picker's double-click law and the message box's scrolling variant with its image panel - and with it, paintings. |
-| **ui-hud** | Verbatim (classic) / Partial (enhanced default) | **Verbatim on both skins** | The skin fork moved BELOW the game-state seams: `ui/hud.js:497` runs `updateHudVitals` and `:551` `drawNearDeathFlicker`, both above the enhanced branch at `:582` and above the `!art` return, and the enhanced HUD takes the Detect markers at `:596`. `lastHealthLost()` is no longer pinned at 0, so `CameraRecoiler` lives in all three hosts. |
+| **ui-hud** | Verbatim (classic) / Partial (enhanced default) | **Verbatim on both skins** | The skin fork moved BELOW the game-state seams: `ui/hud.js:497` runs `updateHudVitals` and `:552` `drawNearDeathFlicker`, both above the enhanced branch at `:583` and above the `!art` return, and the enhanced HUD takes the Detect markers at `:597`. `lastHealthLost()` is no longer pinned at 0, so `CameraRecoiler` lives in all three hosts. |
 | **ui-windows-a** | Rect parity excellent / two crash doors | **Verbatim** | ROAD-D D2 shipped both scroll thumbs (`chargenArt.js:777` over `RECTS.pickScroll`, `spellbookWindow.js:939` over the 7-wide rail). |
 | **ui-windows-b** | Broadly ported | **Verbatim** | Both automaps are native windows. ROAD-D D6 built the ship purchase over the shared bank-market mount and gave `buildingIsUnlocked` the `ownsShip` key its last arm needed. |
 | **ui-enhanced** | Departure lane | **Departure lane, scoped** | `ui/lootHover.js:67` puts the skin gate above `ensure()`, so the unscoped `*`/`html`/`body`/`button`/`#app` rules never reach the classic page. 9 modules / 8,940 lines. |
@@ -331,11 +331,11 @@ reference surface absent · **Departure** = deliberate, ledgered.
 
 **The pause primitive, precisely.** ROAD-B B1 built the stack DFU's
 `UserInterfaceManager` has, with `PauseWhileOpen` as a real latch
-(`ui/windowStack.js:107`, `:101`, `:279`). It is mounted in the two hosts
+(`ui/windowStack.js:122`, `:116`, `:294`). It is mounted in the two hosts
 that own overlay slots - `worldModes.js:72` and `dungeonContext.js:38` -
 and `world.js:227` reaches it by mounting `worldModes`. But `grep -rn
 "paused()" src/` returns exactly one hit, the definition at
-`windowStack.js:264`: **no host reads the primitive.** Every host still
+`windowStack.js:279`: **no host reads the primitive.** Every host still
 gates on its own `overlayHeld`/depth expression. The class is narrowed,
 not retired, and it is narrowed by a member that is itself a dead seam
 of the shape this port keeps finding.

@@ -10641,6 +10641,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           // null-previous windows it pushes from :512-530. Same union
           // `gamePaused` takes, asked of the two stacks' chains.
           windowCoversHud: townTalk.hudCovered || (modes?.hudCovered ?? false),
+          hudHidden: townTalk.hudHidden,   // MAP-FIELD2: the held map takes the vitals and the status icons with it, on both skins
           detected: _detected, playerXZ: [enchantFeet()[0], enchantFeet()[2]],
           largeHud: largeHudOptions({ renderer, fetchBytes, palette }, playerEntity),
           // AUDIT 39: the enhanced HUD's two hand plaques. Both values
