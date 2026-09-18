@@ -20,7 +20,7 @@ import { MapsFile, getWorldClimateSettings, longitudeLatitudeToMapPixel, getPixe
 import { settlementsOf, loadModRoads } from '../world/roadsProducer.js';   // ROADS 3 / AUDIT ROADS F2 / ROADS 22
 import { modSetting } from '../systems/modSettings.js';   // ROADS 24
 import { WoodsFile, MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
-import { buildTerrainGrid, buildTerrainIndices, isOutdoorWaterTile, TERRAIN_TILE_DIM, TERRAIN_SKIRT_DEPTH } from '../world/terrainSurface.js';
+import { buildTerrainGrid, buildTerrainIndices, isOutdoorWaterTile, TERRAIN_TILE_DIM, TERRAIN_SKIRT_DEPTH, surfaceHeightAt } from '../world/terrainSurface.js';
 import { waterUniforms, buildWaterIndices, waterSwitchOn } from '../render/waterSurface.js';   // WATER1: the enhanced water surface over the pixel's own grid; WATER-AUDIT: its own index set
 import { windowEmissionRGB } from '../render/windowEmission.js';
 import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights } from '../world/cityLights.js';
@@ -10399,9 +10399,14 @@ export async function bootWorld(canvas, renderer, params, status) {
         const tx = Math.floor(lx / 6.4); const tz = Math.floor(lz / 6.4);
         const rec = p.tilemapBytes[tz * TERRAIN_TILE_DIM + tx] >> 2;
         if (rec === 0 || !grass || !grass.has(rec)) return null;
-        const hDim = HEIGHTMAP_DIMENSION; const s2 = p.samples;
-        const fx = lx / 6.4; const fz = lz / 6.4; const x0 = Math.min(hDim - 2, tx); const z0 = Math.min(hDim - 2, tz); const ax = fx - x0; const az = fz - z0;
-        const h = ((s2[x0 * hDim + z0] * (1 - ax) + s2[(x0 + 1) * hDim + z0] * ax) * (1 - az) + (s2[x0 * hDim + z0 + 1] * (1 - ax) + s2[(x0 + 1) * hDim + z0 + 1] * ax) * az) * scale;
+        // GRASS3: the height of the surface that is DRAWN, not a
+        // bilinear patch over the same samples. The terrain is cut into
+        // triangles and a bilinear read agrees with them only on the
+        // diagonal - measured, that floats or sinks 41% of blades by
+        // more than half a blade's height on hilly ground and 74% in
+        // mountains. `p._stride` is the ring class this pixel is drawn
+        // at, and the grass only stands on the stride-1 ring anyway.
+        const h = surfaceHeightAt(p.samples, lx, lz, p._stride ?? 1);
         if (h <= sea) return null;
         return h + t[1];
       };
