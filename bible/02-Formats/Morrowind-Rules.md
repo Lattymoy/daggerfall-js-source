@@ -916,7 +916,7 @@ Enhanced pane's Morrowind card.
 
 NO RENDERER CHANGE WAS NEEDED, which was the surprise. The port had
 ALREADY shipped a first-person pass: renderCharacterSprite
-(render/renderer.js:873) binds an offscreen target with its own depth
+(render/renderer.js:963) binds an offscreen target with its own depth
 renderbuffer, clears colour and depth, SWAPS the frame's proj/view for
 ones the caller hands it, draws, and restores; drawScreenOverlayQuad
 (:987) composites it fullscreen with an alpha cut and no depth test. It
@@ -3560,7 +3560,7 @@ sound, this is the condition it must not be read past):
 
 > Nearly everything checks out against upstream, but the sorting claim states as unconditional what the code guards. Confirmed accurate: property.hpp:414-463 has Flag_Blending=0x0001, Flag_Testing=0x0200, Flag_NoSorter=0x2000, uint16 mFlags + uint8 mThreshold, and sourceBlendMode()=(mFlags>>1)&0xF, destinationBlendMode()=(mFlags>>5)&0xF, alphaTestMode()=(mFlags>>10)&0x7. getBlendMode (nifloader.cpp:1899-1928) and getTestMode (1930-1954) match the quoted tables including the SRC_ALPHA / LEQUAL defaults with Log(Debug::Info). handleAlphaTesting uses threshold/255.f, and both handlers really do removeAttribute + removeMode on the OFF branch; collectDrawableProperties (nifloader.cpp:189-211) recurses into the parent first and appends the node's own props last, so a child NiAlphaProperty genuinely cancels an ancestor's on the shared drawable stateset. The DST_ALPHA -> ONE rewrite and the objects.frag ordering (157 `gl_FragData[0].a *= diffuseColor.a * alpha * actorFade;`, 160-161 darkMap, 164 alphaTest) are verbatim correct. The defect: "blending WITHOUT the 0x2000 bit puts the drawable in the TRANSPARENT_BIN (back-to-front); with the bit set it inherits the opaque bin" drops the `if (!mPushedSorter)` guard that sits on BOTH bin calls in the quoted snippet. mPushedSorter is the enclosing NiSortAdjustNode (nifloader.cpp:329, pushed at :800-803). When one is in scope, handleAlphaBlending sets NO bin at all — it only sets hasSortAlpha — and the bin is decided later at nifloader.cpp:2943-2985 from the sorter's mode and subsorter type. That inverts the stated outcome in real cases: under SortingMode::Off a blending drawable with the sorter bit CLEAR gets setBinTraversal (bin 2, "TraversalOrderBin"), not back-to-front; and under a NiClusterAccumulator subsorter a drawable WITH the 0x2000 bit set still gets setBinBackToFront regardless of hasSortAlpha, rather than inheriting. A port that hardcodes the rule as written mis-sorts every mesh under a NiSortAdjustNode. Two smaller inaccuracies ride along: the back-to-front path outside handleAlphaBlending is setRenderBinDetails(0, "SORT_BACK_TO_FRONT"), not the TRANSPARENT_BIN hint (bin 10, DepthSortedBin); and setRenderBinToInherit() means inheriting whatever bin is in effect, which is not necessarily "the opaque bin".
 
-> The rule cannot hold here because its entire subject is absent from this codebase, and the code that actually renders the first-person player body contradicts it. This repository is /home/user/project-dagger, a JavaScript port of Daggerfall (logic from Daggerfall Unity, presentation on hand-rolled WebGL2) — not OpenMW. All three cited sources are non-existent paths: there is no components/ directory, no files/shaders/ directory, no .gitmodules, and zero .cpp/.hpp/.frag/.glsl files anywhere in the tree. A full-tree grep (excluding .git and node_modules) for NiAlphaProperty, nifloader, nifosg, and openmw returns no hits; the sole filename matching *nif* is /home/user/project-dagger/test/manifest.test.js, matching on the substring inside "manifest". Daggerfall assets are ARCH3D/CIF/IMG, never NIF, so no mFlags/mThreshold decode, blend-factor table, test-function table, stateset, or sorting bin exists to be overridden. Where it matters for a first-person player body, the real behaviour is different in kind, not just in detail. Alpha is a fixed 1-bit cutout compiled into the shaders rather than a per-material reference derived from mThreshold/255.0: `if (t.a < 0.5) discard;` at /home/user/project-dagger/src/render/renderer.js:85, :861 and :895, with the one exception being spectral (ghost) flats at renderer.js:258, `if (tex.a < (uSpectral == 1 ? 0.1 : 0.5)) discard;`. The comment at renderer.js:952-956 states the governing law: classic art is a 1-bit palette cutout (index 0 transparent, everything else fully opaque), so the default discards and forces alpha 1, with a narrow `uBlendTex` opt-in for art authored outside that palette. Blending, where enabled at all, is one hard-coded pair with no factor decoding — gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA) at renderer.js:1088, :1781, :1858, overworldRenderer.js:370 and :385, and precipitation.js:166 — so there is no source/destination factor selection and therefore no DST_ALPHA-to-ONE rewrite. Because the renderer is immediate-mode WebGL2 with no stateset graph, the rule's two load-bearing behaviours have no mechanism to exist: nothing can REMOVE a blend func or alpha func from a parent's state to cancel it, and there is no noSorter bit or TRANSPARENT_BIN assignment. The specific special cases the task asked about confirm the same. The first-person viewmodel entry point, drawFirstPersonViewmodel at /home/user/project-dagger/src/render/characterSprite.js:55, is explicitly marked ON ICE (2026-08-17) with "No consumer"; the live first-person path is src/combat/fpsWeapon.js using WEAPON*.CIF sprites, and neith ...
+> The rule cannot hold here because its entire subject is absent from this codebase, and the code that actually renders the first-person player body contradicts it. This repository is /home/user/project-dagger, a JavaScript port of Daggerfall (logic from Daggerfall Unity, presentation on hand-rolled WebGL2) — not OpenMW. All three cited sources are non-existent paths: there is no components/ directory, no files/shaders/ directory, no .gitmodules, and zero .cpp/.hpp/.frag/.glsl files anywhere in the tree. A full-tree grep (excluding .git and node_modules) for NiAlphaProperty, nifloader, nifosg, and openmw returns no hits; the sole filename matching *nif* is /home/user/project-dagger/test/manifest.test.js, matching on the substring inside "manifest". Daggerfall assets are ARCH3D/CIF/IMG, never NIF, so no mFlags/mThreshold decode, blend-factor table, test-function table, stateset, or sorting bin exists to be overridden. Where it matters for a first-person player body, the real behaviour is different in kind, not just in detail. Alpha is a fixed 1-bit cutout compiled into the shaders rather than a per-material reference derived from mThreshold/255.0: `if (t.a < 0.5) discard;` at /home/user/project-dagger/src/render/renderer.js:85, :951 and :895, with the one exception being spectral (ghost) flats at renderer.js:330, `if (tex.a < (uSpectral == 1 ? 0.1 : 0.5)) discard;`. The comment at renderer.js:1044-1048 states the governing law: classic art is a 1-bit palette cutout (index 0 transparent, everything else fully opaque), so the default discards and forces alpha 1, with a narrow `uBlendTex` opt-in for art authored outside that palette. Blending, where enabled at all, is one hard-coded pair with no factor decoding — gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA) at renderer.js:1180, :2034, :2111, overworldRenderer.js:370 and :385, and precipitation.js:166 — so there is no source/destination factor selection and therefore no DST_ALPHA-to-ONE rewrite. Because the renderer is immediate-mode WebGL2 with no stateset graph, the rule's two load-bearing behaviours have no mechanism to exist: nothing can REMOVE a blend func or alpha func from a parent's state to cancel it, and there is no noSorter bit or TRANSPARENT_BIN assignment. The specific special cases the task asked about confirm the same. The first-person viewmodel entry point, drawFirstPersonViewmodel at /home/user/project-dagger/src/render/characterSprite.js:55, is explicitly marked ON ICE (2026-08-17) with "No consumer"; the live first-person path is src/combat/fpsWeapon.js using WEAPON*.CIF sprites, and neith ...
 
 **Corrected form offered:** Same as stated for the flags, the bit fields, both lookup tables (SRC_ALPHA / LEQUAL fallbacks), alphaRef = mThreshold/255.0, the remove-on-off cancellation semantics, the DST_ALPHA -> ONE destination rewrite, and the shader ordering — but the sorting rule is conditional on there being no enclosing NiSortAdjustNode. The call site passes sort = !alphaprop->noSorter() (nifloader.cpp:2829-2830), and handleAlphaBlending's blending branch always records hasSortAlpha = sort; the bin, however, is only touched when mPushedSorter == nullptr: sort -> setRenderingHint(TRANSPARENT_BIN), !sort -> setRenderBinToInherit(), and the OFF branch also calls setRenderBinToInherit(). When an ancestor NiSortAdjustNode IS in scope, handleAlphaBlending sets no bin; the end of applyDrawableProperties (nifloader.cpp:2943-2985) assigns it instead: SortingMode::Off -> setRenderBinDetails(2, "TraversalOrderBin") no matter what the alpha flags say; Inherit/Subsort with a NiAlphaAccumulator -> setRenderBinDetails(0, "SORT_BACK_TO_FRONT") if hasSortAlpha else TraversalOrderBin; with a NiClusterAccumulator -> SORT_BACK_TO_FRONT unconditionally. Also, with no pushed sorter, a non-sorting drawable that carries a sten
 
@@ -6705,6 +6705,46 @@ sheathing (`updateHolsteredShield`, `Bip01 AttachShield`) is not
 ported: the mod ships no shield art and the port's Morrowind body
 carries no shield.
 
+## MAC-R1 (2026-09-17): the raised blade is not cut
+
+Mac: "Morrowind weapons that go above the screen show their blade
+clipped off." The arm's first-person pass (combat/fpArm.js `draw`)
+rendered a frame that was EXACTLY the screen - `pw x ph` rows of the
+sprite target at the screen's aspect, `FP_FIELD_OF_VIEW` vertical - and
+composited it fullscreen. Under the Weapon Widget (WW1) the composite is
+instead a screen-space RECT the widget's channels move: `armsTransform`
+applies the mod's Position and Scale (the bob, the inertia, the step),
+and `transformRect` clamps the rect to the screen's height minus its
+own `weaponOffsetHeight`. A rect the screen's size shifted DOWN by the
+bob has its top edge below the screen's top, and the frame has nothing
+above its own top edge - so a blade raised through it ended in a
+straight horizontal cut that moved with the bob.
+
+**The fix is to render what is above the screen.** While a screen
+transform is set, the frame is padded by `FP_TOP_PAD` (0.5 - half a
+screen; the widget's clamp keeps every shift under one screen height)
+of the screen's own height in extra rows ON TOP: `phFull = ph + pad`.
+The projection is the SAME lens with its top edge raised - an off-centre
+`frustum` (combat/fpArm.js, glFrustum's matrix; `perspective` is its
+symmetric case, pinned element for element; it lives beside its one
+reader and not in world/mat4.js, which the relay bundles under
+RELAY_VERSION's hash law) over the screen's bottom
+edge, its sides and its near plane, with `top = hh * (1 + 2 * padFrac)`.
+So the screen still occupies the bottom `ph` of the `phFull` rows at
+exactly the same pixel scale (its top lands at NDC (1-p)/(1+p), its
+bottom at -1), and the pad sees what is above it. The composite is the
+widget's rect extended UPWARD by `rect.h * padFrac`, sampling the whole
+padded sub-rect: at rest the pad lands above the screen and is unseen;
+shifted down, it shows the blade instead of a cut. The RT cap
+(`CHAR_SPRITE_RT_SIZE`) counts the pad. With no transform `padFrac` is
+0, the matrices are the same matrix and the fullscreen overlay path is
+untouched.
+
+Not seen in a browser: no Morrowind data in this container, and the cut
+needs the widget's shift over a raised blade. The lens law is pinned
+numerically (`test/macr_fixes.test.js`) and the draw by source; MW-D10
+and MW-D23's projection pins re-aimed. Mutants in
+`tools/mutants/macr.json`.
 ## MAP3 (2026-09-18): the held sheet - the first hand-authored pose
 
 Mac (the Held Map arc, `bible/10-UI/Held-Map-Arc.md`): "Morrowind will

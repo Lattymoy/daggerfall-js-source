@@ -30,7 +30,7 @@ import { racialFpsWeapon } from '../systems/lycanthropy.js';   // V4: the transf
 import { EQUIP_SLOTS, equipTableOf } from '../systems/equip.js';   // AUDIT 17e F17; MW-D32 the worn read
 import { dfWornEquipment } from '../formats/mwItemMap.js';   // MW-D32
 import { ARMOR_ENUM } from './enemyEquipment.js';   // MW-D32
-import { loadFpsWeaponArt, drawFpsWeapon, weaponTypeForItem, WEAPON_TYPES } from './fpsWeapon.js';
+import { loadFpsWeaponArt, drawFpsWeapon, weaponTypeForItem, WEAPON_TYPES, fpLightingOn } from './fpsWeapon.js';   // MAC-I: the tint's switch, with the sprite it tints
 // ROAD-tail (FPSSpellCasting.cs): the classic spellcasting HANDS. A
 // separate component in DFU and a separate module here, drawn by the
 // same rig because this is the one surface every FPS-weapon host
@@ -51,7 +51,7 @@ import { SOUND } from '../systems/soundClips.js';
 import { equipSoundFor } from '../characters/weapons.js';   // F023: GetEquipSound
 import { setMidScreenText } from '../ui/midScreenText.js';   // AUDIT 64 F34: FPSWeapon.cs:365's mid-screen line
 import { createWeaponWidget } from './weaponWidget.js';
-import { createHandheldTorches } from '../systems/handheldTorches.js';   // HT1: Handheld Torches' component, one per rig beside the widget
+import { createHandheldTorches, isHeldLight } from '../systems/handheldTorches.js';   // HT1: Handheld Torches' component, one per rig beside the widget; TORCH-VIS: and its own light test
 import { isTransformedLycanthrope, liveLycanthropy } from '../systems/lycanthropy.js';   // WW1: Weapon Widget's FPSWeaponClone, beside the machine; AUDIT-EOTB2: the sprite's form
 import { concealmentFlags } from '../systems/effects.js';   // EOTB-IL: PlayerBillboard.UpdateMaterial reads the player's own IsInvisible / IsAShade / IsBlending
 import { getBool } from '../systems/settings.js';   // EOTB-IL: PlayerBillboard.LateUpdate reads DaggerfallUnity.Settings.BowDrawback
@@ -72,7 +72,7 @@ import { walkSpeed } from '../player/motor.js';   // WW1: GetBaseSpeed's walk ar
  *
  * AND THE GENDER FIX: `gender` is the STRING 'male'/'female'
  * everywhere in this port (chargen.js applyCharacter,
- * classicSave.js:690), so the card's old `female: !!playerEntity
+ * classicSave.js:691), so the card's old `female: !!playerEntity
  * .gender` was TRUE FOR EVERYONE - every build asked for the female
  * skeleton and the female body columns, and the male-record fallback
  * fills made it look almost right. The test is the string compare,
@@ -174,9 +174,9 @@ export async function autoBuildArms(entity, { wanted = () => getPref('mwArms'), 
  *                     The note that hosts without a HUD text layer
  *                     pass console is retired: every call site hands
  *                     over a real one - hudText.add
- *                     (dungeonContext.js:2634), townTalk.say
- *                     (exterior.js:1653, world.js:2626) and
- *                     worldModes' own interior sink (worldModes.js:385,
+ *                     (dungeonContext.js:2654), townTalk.say
+ *                     (exterior.js:1769, world.js:2810) and
+ *                     worldModes' own interior sink (worldModes.js:390,
  *                     which warns to console only where a host mounts
  *                     no townTalk at all), so the empty default below
  *                     is unreached,
@@ -635,7 +635,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
      *             "does not toggle / toggles twice / gets stuck", and
      *             it is why Handheld Torches misbehaved with it: the
      *             mod's UpdateFreeHand reads WeaponManager.Sheathed
-     *             LIVE (handheldTorches.js:287), so a flag flipped to
+     *             LIVE (handheldTorches.js:290), so a flag flipped to
      *             "drawn" with no weapon on screen stows the torch.
      *   :268      `!isAttacking` - the hand already had this gate
      *             (switchHand below); the sheath did not, so Z
@@ -959,10 +959,57 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // EOTB-IL: `spellCasting.enabled = false` while the sprite camera is
       // out (ToggleOffset, IL_22f9) - the hands' picture goes, the cast
       // still resolves (a disabled MonoBehaviour's coroutine runs on)
+      // MAC-I (Mac: "The classic sprite should react to lighting (first
+      // person)"): THE ROOM'S LIGHT, once a frame, for every sprite this
+      // seam draws. `FPSWeapon.Tint` is the channel DFU declares and
+      // never writes (FPSWeapon.cs:108, :182); `flatLightAt` answers it
+      // with the same four terms a FLAT in the room takes, sampled at
+      // the camera - which is where a first-person sprite is. The
+      // Morrowind arms are a lit MESH and take the world's light
+      // already, so this is the classic lane's alone; the switch is the
+      // player's (Features -> First-person lighting).
+      const fpTint = fpLightingOn() ? (renderer?.flatLightAt?.() ?? null) : null;
       if (c && !fpArm.active()) {
-        drawSpellCastHands(renderer, c, spellArtFor(fpsSpellCasting.element), fpsSpellCasting.frameIndex);
+        drawSpellCastHands(renderer, c, spellArtFor(fpsSpellCasting.element), fpsSpellCasting.frameIndex, { tint: fpTint });
       }
-      if (paralyzed || !shown()) return;
+      // TORCH-VIS (2026-09-18, Mac: "if you only have the torch equipped and no weapon, it doesn't show you
+      // holding it in first person (morrowind)"): THE TORCH IS NOT THE WEAPON'S TO HIDE, and a SHEATHED STANCE IS
+      // NOT A STOWED LIGHT. `shown()` is the WEAPON's visibility - this file says so itself a few lines up, where
+      // the classic spellcasting hands were hoisted above it ("NOT under shown() - the weapon is the thing shown()
+      // hides") - and its `sheathed` leg was taking the carried light down with the weapon. A player walking around
+      // with a torch and nothing drawn is sheathed by definition, so the one state the light exists for was the one
+      // state it never drew in.
+      //
+      // BOTH references say it should. Handheld Torches' own hand law leaves "an empty hand you are not swinging
+      // with" free precisely so a weaponless player can carry a light (HT7's note, and its `hasFreeHand`); and the
+      // Morrowind rig answers it outright - `carriedLeftVisible(animWeaponType(type, sheathed, spellReady))` is
+      // NpcAnimation::updateCarriedLeftVisible verbatim, and a sheathed stance maps to None, which is not
+      // two-handed, so the carried left is VISIBLE. The same law answers FALSE for a readied spell, which is why
+      // that leg of shown() must keep hiding it.
+      //
+      // So: the lit hand alone draws while merely sheathed. The other two legs stand - a readied spell is the
+      // reference's own hidden case, an equip countdown is empty hands by construction - and paralysis, third
+      // person and the EOTB body still take everything, above.
+      //
+      // AND THE LANE THAT WILL DRAW IT HAS A VETO. The entity knowing a light is equipped is not the same
+      // question as "will anything actually appear". On the Morrowind lane the arm paints the light itself, and
+      // its held-light art is the TORCH alone (`isLitTorch` above - the classic lane's hand sprite covers the
+      // lantern, as it always has), and a rig can resolve no light at all (no LIGH record, no attached mesh, no
+      // Shield Bone). Opening the gate on those would paint a sheathed idle holding NOTHING where the screen used
+      // to be blank - a state nobody has ever seen, offered as a fix. So on that lane the arm answers:
+      // `fpArm.torchShown()` is its own `torchVisible()`, the reference's three conditions at once. The classic
+      // lane needs no veto - `handheld.draw` asks the same question itself and returns false.
+      //
+      // WHAT DOES COME BACK WITH THE TORCH, said accurately: on the CLASSIC lane, nothing - `torchOnly` returns
+      // below, before the widget's clone and before the sprite. On the MORROWIND lane the arm returns above that
+      // line and paints its own stance, which hides the weapon in the settled sheathed state - but NOT during the
+      // unequip transient, where the rig deliberately keeps the blade in hand until the detach key. So sheathing
+      // with a torch lit now plays the sheathe out instead of cutting to nothing, which is the reference's own
+      // behaviour and is why this note does not claim otherwise.
+      const torchOnly = !shown() && !spellArmed() && !fpsSpellCasting.isPlayingAnim
+        && (entity?.equipCountdown ?? 0) <= 0 && isHeldLight(entity?.lightSource)
+        && (!fpArm.active() || fpArm.torchShown());
+      if (paralyzed || (!shown() && !torchOnly)) return;
       // THE ONE SEAM. The arm draws whole and RETURNS, or it is inactive
       // and the classic sprite draws exactly as it always has. The return
       // is load-bearing: without it both composite and the player sees a
@@ -986,10 +1033,11 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // with no order between them in DFU; the port picks the one that
       // keeps the weapon whole. Under the Morrowind arms it is not drawn
       // (a classic hand beside a modelled arm is neither mod nor lane).
-      if (handheldOn() && c) handheld.draw(renderer, c);
-      if (widgetOn() && c && widget.draw(renderer, c)) return;
+      if (handheldOn() && c) handheld.draw(renderer, c, fpTint);
+      if (torchOnly) return;   // TORCH-VIS: the lit hand ALONE - a sheathed stance still draws no weapon, clone or sprite
+      if (widgetOn() && c && widget.draw(renderer, c, fpTint)) return;
       const art = c && artFor(playerWeapon.weapon);
-      if (art) drawFpsWeapon(renderer, c, art, playerWeapon.machine.state, playerWeapon.machine.frame);
+      if (art) drawFpsWeapon(renderer, c, art, playerWeapon.machine.state, playerWeapon.machine.frame, { tint: fpTint });
     }
   }
 }

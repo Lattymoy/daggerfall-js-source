@@ -29,7 +29,7 @@ import { CLASSIC_GAME_START_TIME, MINUTES_PER_DAY } from '../src/systems/gameDat
 import { CLASSIC_MINUTES_PER_SECOND, worldMinutes, setWorldMinutes, advanceWorldMinutes, setSharedClock, sharedClockOn, alignEntityClocks, resetMagicRoundMarker, tickPlayerMinutes } from '../src/systems/worldTick.js';
 import { createPlayerTicker } from '../src/scenes/shared.js';
 import { setSharedWeather, sharedWeatherOn, resetWeatherSim, rollClimateWeathersForDay, weatherForClimate, ZONE_CLIMATES, tickWeather, weatherRespawn, currentWeatherEnum } from '../src/systems/weatherSim.js';
-import { RestSession, MINUTES_PER_TICK, REST_WAIT_PER_HOUR } from '../src/systems/restSession.js';
+import { RestSession, MINUTES_PER_TICK, REST_WAIT_PER_HOUR, LOITER_WAIT_PER_HOUR } from '../src/systems/restSession.js';
 import { Clock } from '../src/systems/quest/clock.js';
 import { fakeRoom } from './fakeRoom.mjs';
 import { fakeSocketClass } from './fakeSocket.mjs';
@@ -154,39 +154,40 @@ test('WORLD5: the shared weather - two clients under one date roll one sky (the 
   resetWeatherSim();
 });
 
-test('WORLD5 (RESTX1: on LOITER): a session online is paced by the world\'s clock - no sub-tick until the clock has moved MINUTES_PER_TICK, an hour is sixty of the world\'s minutes, and the window\'s own timer is not consulted; offline the timer law is what it was', () => {
-  // RESTX1 (2026-09-15) NARROWED THIS PIN'S SUBJECT, not its law. It was
-  // written on a TIMED rest, because when WORLD5 landed every mode rode
-  // the shared clock. Mac's call ("for online I want to change the rest
-  // mechanic to not use any time") took the REST modes off it: online a
-  // rest resolves at once and passes no minutes, since none were ever
-  // available to pass. LOITER still rides the clock - passing time is
-  // the whole of what loiter is for - so every reading below is still
-  // exactly the world's own pacing. The rest half's new law is
-  // test/restx1_online_rest.test.js; the OFFLINE half at the foot is
-  // still a timed rest, because offline nothing changed at all.
-  const deps = (over = {}) => { const d = { minutes: 0, vitals: 0, advanceMinutes(n) { d.minutes += n; }, tickVitals() { d.vitals++; return false; }, enemiesNearby: () => false, fullyHealed: () => false, dead: () => false, ...over }; return d; };
+test('WORLD5 (RESTX2: retired): a session online paces on the WINDOW\'S OWN TIMER now, loiter included - the shared clock moving is not a sub-tick, the timer is, and an hour is six of its sub-ticks; offline is the same timer it always was', () => {
+  // WORLD5 paced every mode off the shared clock; RESTX1 (2026-09-15)
+  // took the rest modes off it (a free rest, one frame) and left loiter
+  // on it; RESTX2 (2026-09-17, Mac's BetterResting: monsters should
+  // interrupt an online wait, and the counter should tick down) retired
+  // both: one law, the window's timer, in every mode, online or off.
+  // The shared clock is still refused every write (worldTick) - what
+  // changed is only what PACES the session, and what the host is handed
+  // as the sub-tick's end: the session's own sim-minute, seeded from the
+  // shared clock once. test/restx2_online_rest.test.js is the full law.
+  const deps = (over = {}) => { const d = { minutes: 0, vitals: 0, ends: [], advanceMinutes(n, end) { d.minutes += n; d.ends.push(end); }, tickVitals() { d.vitals++; return false; }, enemiesNearby: () => false, fullyHealed: () => false, dead: () => false, ...over }; return d; };
   let clock = 5000;
   const d = deps({ sharedMinutes: () => clock });
   const s = new RestSession('loiter', 3, d);
-  assert.equal(s.tick(100), null, 'a hundred real seconds with the clock still: nothing');
-  assert.deepEqual([d.minutes, d.vitals, s.totalHours], [0, 0, 0]);
-  clock += MINUTES_PER_TICK - 1;
-  s.tick(0.016); assert.equal(d.minutes, 0, 'nine minutes: not yet a sub-tick');
-  clock += 1;
-  s.tick(0.016); assert.equal(d.minutes, MINUTES_PER_TICK, 'ten: one sub-tick, the owed rounds asked of the host');
-  clock += 50;
-  for (let f = 0; f < 5; f++) s.tick(0.016);   // AUDIT WORLD5 C7: one sub-tick a frame, as the timer's clamped dt gives offline
-  assert.deepEqual([d.minutes, d.vitals, s.totalHours], [60, 0, 1], 'sixty of the world\'s minutes: one hour counted (a loiter recovers nothing, which is its own law)');
-  clock += 120;
-  for (let f = 0; f < 12; f++) s.tick(0.016);
-  assert.equal(s.totalHours, 3, 'the clock leapt two hours (the tab was hidden): both counted, a sub-tick a frame');
+  clock += 600;
+  s.tick(0.01);
+  assert.deepEqual([d.minutes, d.vitals, s.totalHours], [0, 0, 0], 'the world\'s clock leapt ten hours: not a sub-tick - the clock paces nothing now');
+  const sub = LOITER_WAIT_PER_HOUR / MINUTES_PER_TICK;
+  s.tick(sub);
+  assert.equal(d.minutes, MINUTES_PER_TICK, 'one of the timer\'s sub-ticks: ten minutes, the owed rounds asked of the host');
+  assert.deepEqual(d.ends, [5610], 'handed the session\'s own sim-minute as the end: the shared reading at the first sub-tick, plus ten - not the live clock');
+  s.tick(sub * 5);
+  assert.deepEqual([d.minutes, d.vitals, s.totalHours], [60, 0, 1], 'six sub-ticks of the timer: one hour counted (a loiter recovers nothing, which is its own law)');
+  clock += 5000;
+  s.tick(sub * 12);
+  assert.equal(s.totalHours, 3, 'two more hours of the timer, and the clock\'s leap in between changed nothing');
+  assert.equal(d.ends.at(-1), 5610 + 17 * MINUTES_PER_TICK, 'the sim-minute ran on from its seed, ten a sub-tick, and never re-read the clock');
   // offline: the timer
   const e = deps();
   const off = new RestSession('timed', 2, e);
-  const sub = REST_WAIT_PER_HOUR / MINUTES_PER_TICK;   // the timer's sub-tick, real seconds
-  off.tick(sub * 5.5); assert.equal(e.minutes, 50, 'five sub-ticks of the timer: not an hour yet');
-  off.tick(sub); assert.ok(e.minutes === 60 && off.totalHours === 1, 'the timer\'s hour');
+  const rsub = REST_WAIT_PER_HOUR / MINUTES_PER_TICK;   // the timer's sub-tick, real seconds
+  off.tick(rsub * 5.5); assert.equal(e.minutes, 50, 'five sub-ticks of the timer: not an hour yet');
+  off.tick(rsub); assert.ok(e.minutes === 60 && off.totalHours === 1, 'the timer\'s hour');
+  assert.deepEqual(e.ends, new Array(6).fill(null), 'offline the host reads its own clock');
 });
 
 test('WORLD5 (superseded by WORLD7): the stand-down is gone - a quest clock charges played time online, the time away forgiven; a quest with no seam charges as ever', () => {
@@ -214,7 +215,7 @@ test('WORLD5: the hosts by source - the shared clock installed at the boot befor
   assert.match(w, /let _sharedOffsetMs = 0;[^\n]*\n\s*if \(params\.has\('online'\)\) \{ setSharedClock\(\(\) => sharedClassicMinutes\(Date\.now\(\) \+ _sharedOffsetMs\), \(m\) => wallMsForClassicMinutes\(m\) - _sharedOffsetMs\); setSharedWeather\(true\); \}/, 'installed at the boot, the shared weather with it (OL3: the inverse beside the source)');
   assert.match(w, /if \(bootTod != null && !sharedClockOn\(\)\) setWorldMinutes\(/, '?tod stands down');
   assert.match(w, /const timeScaleMult = params\.has\('timescale'\) && !sharedClockOn\(\) \? Number\(params\.get\('timescale'\)\) \/ 12 : 1;/, '?timescale stands down');
-  assert.match(w, /online\.onClock = \(offsetMs\) => \{ const was = _sharedOffsetMs; _sharedOffsetMs = offsetMs; if \(Math\.abs\(offsetMs - was\) > 1000\) onlineArrival\(\); \};/, 'the relay\'s clock corrects this machine\'s (AUDIT WORLD5 C2: and a correction is an arrival)');
+  assert.match(w, /online\.onClock = \(offsetMs\) => \{ const was = _sharedOffsetMs; _sharedOffsetMs = offsetMs; if \(Math\.abs\(offsetMs - was\) > 1000\) \{ onlineArrival\(\); alignSurvival\(playerEntity, Math\.floor\(worldMinutes\(\)\), Math\.floor\(worldMinutes\(\)\)\); \} \};/, 'the relay\'s clock corrects this machine\'s (AUDIT WORLD5 C2: and a correction is an arrival)');
   assert.match(w, /const onlineArrival = \(\) => \{ alignEntityClocks\(playerEntity, worldMinutes\(\)\); rollClimateWeathersForDay\(worldMinutes\(\)\); refreshSeason\(worldMinutes\(\)\); \};\s*onlineArrival\(\);/, 'the session\'s start: the markers, the day\'s roll, the season');
   assert.match(w, /\{ arriveMinutes: sharedClockOn\(\) \? worldMinutes\(\) : worldMinutes\(\) \+ computed\.minutes,/, 'the trip takes no world time');
   assert.match(w, /if \(!sharedClockOn\(\)\) \{ setSyntheticTimeIncrease\(true\); playerTicker\.advance\(computed\.minutes\); \}/, 'no jump');

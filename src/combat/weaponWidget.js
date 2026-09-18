@@ -736,7 +736,7 @@ export function createWeaponWidget({
   /** OnGUI's repaint (IL 0x1424-0x1582): with the Offset module the
    *  sprite draws whatever the show clocks say (the slide takes it off
    *  screen); without it, only while the rig would show it. */
-  function draw(renderer, canvas) {
+  function draw(renderer, canvas, tint = null) {   // MAC-I: the room's light, as the sprite this clone stands in for takes it
     if (!ctx || !w.art || !renderer || !canvas) return false;
     if (ctx.weaponType === T.None) return false;
     // WW4 (Mac's curated fix, 2026-09-16): an applicable clone that
@@ -761,7 +761,7 @@ export function createWeaponWidget({
     if (!rec) return false;
     const tex = w.curCustomTexture?.tex ?? rec.frames[Math.min(Math.max(0, w.currentFrame), rec.frames.length - 1)];
     if (!tex) return false;
-    renderer.drawScreenQuad(tex, getWeaponRect(), w.curAnimRect);
+    renderer.drawScreenQuad(tex, getWeaponRect(), w.curAnimRect, tint ?? undefined);
     return true;
   }
 

@@ -209,16 +209,17 @@ export function faceBasis(f) {
 /** The lantern the cube map belongs to: the nearest to the eye of the
  *  frame's point lights (vec4s: xyz, range) that is at least `minDist`
  *  away and has a range; -1 for none. */
-export function pickShadowCaster(lights, eye, minDist = SHADOW_CASTER_MIN_DISTANCE) {
-  return pickShadowCasters(lights, eye, 1, minDist)[0] ?? -1;
+export function pickShadowCaster(lights, eye, minDist = SHADOW_CASTER_MIN_DISTANCE, carried = null) {
+  return pickShadowCasters(lights, eye, 1, minDist, carried)[0] ?? -1;
 }
 
 /** EL5: up to `max` casters - the lights nearest the eye that are a
  *  lantern (F11's range cap) and not the eye's own candle, nearest first. */
-export function pickShadowCasters(lights, eye, max = SHADOW_POINT_CASTERS, minDist = SHADOW_CASTER_MIN_DISTANCE) {
+export function pickShadowCasters(lights, eye, max = SHADOW_POINT_CASTERS, minDist = SHADOW_CASTER_MIN_DISTANCE, carried = null) {
   const n = lights.length >> 2;
   const picked = [];   // [index, distance], kept sorted, at most `max`
   for (let i = 0; i < n; i++) {
+    if (carried && carried[i]) continue;   // MAC-T1: the light in the player's hand takes no caster slot in ANY camera (F3's law by name; the distance below lapses in third person)
     const dx = lights[i * 4] - eye[0], dy = lights[i * 4 + 1] - eye[1], dz = lights[i * 4 + 2] - eye[2];
     const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
     if (d < minDist || !(lights[i * 4 + 3] > 0) || lights[i * 4 + 3] > SHADOW_CASTER_MAX_RANGE) continue;   // AUDIT-EL F11
@@ -510,8 +511,11 @@ export class ShadowPass {
     // EL5: THE LANTERNS CAST TOO, sun or no sun - the nearest SHADOW_POINT_CASTERS
     // of them, each into its six layers; the replays are culled to the
     // lantern's range and the face's frustum, so a caster costs what it lights
-    const casters = pickShadowCasters(f.pointLights, f.eye);
+    const casters = pickShadowCasters(f.pointLights, f.eye, SHADOW_POINT_CASTERS, SHADOW_CASTER_MIN_DISTANCE, f.carried);   // MAC-T1
     const L = f.pointLights;
+    // MAC-T1: the hand's light is -2 in the caster table - no slot, and no contact march either (enhancedLighting reads
+    // the same table): F3's "never for the light in the hand", said by name rather than by distance from the camera
+    if (f.carried) for (let i = 0, m = Math.min(L.length >> 2, SHADOW_CASTER_TABLE); i < m; i++) if (f.carried[i]) this.casterOf[i] = -2;
     for (let k = 0; k < casters.length; k++) {
       const i = casters[k];
       const pos = [L[i * 4], L[i * 4 + 1], L[i * 4 + 2]];

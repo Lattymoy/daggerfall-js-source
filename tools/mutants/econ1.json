@@ -1,0 +1,249 @@
+[
+  {
+    "name": "ECON1-the-clock-installs-no-price-source",
+    "file": "src/systems/worldTick.js",
+    "old": "  setWorldPriceSource(_sharedClock ? (regionIndex) => worldRegionPrice(regionIndex, _sharedClock()) : null);",
+    "new": "",
+    "tests": [
+      "test/econ1_world_prices.test.js"
+    ]
+  },
+  {
+    "name": "ECON1-the-source-outlives-the-clock",
+    "file": "src/systems/worldTick.js",
+    "old": "  setWorldPriceSource(_sharedClock ? (regionIndex) => worldRegionPrice(regionIndex, _sharedClock()) : null);",
+    "new": "  if (_sharedClock) setWorldPriceSource((regionIndex) => worldRegionPrice(regionIndex, _sharedClock()));",
+    "tests": [
+      "test/econ1_world_prices.test.js"
+    ]
+  },
+  {
+    "name": "ECON1-the-seam-reads-the-players-own",
+    "file": "src/systems/shopStock.js",
+    "old": "  if (_worldPrice) { const p = _worldPrice(regionIndex); if (Number.isFinite(p)) return p; }",
+    "new": "",
+    "tests": [
+      "test/econ1_world_prices.test.js"
+    ]
+  },
+  {
+    "name": "ECON1-the-seam-writes-the-worlds-into-the-save",
+    "file": "src/systems/shopStock.js",
+    "old": "  if (_worldPrice) { const p = _worldPrice(regionIndex); if (Number.isFinite(p)) return p; }",
+    "new": "  if (_worldPrice) { const p = _worldPrice(regionIndex); if (Number.isFinite(p)) { (playerEntity.regionPrices ??= {})[regionIndex] = p; return p; } }",
+    "tests": [
+      "test/econ1_world_prices.test.js"
+    ]
+  },
+  {
+    "name": "ECON1-the-world-opens-at-the-pivot",
+    "file": "src/systems/worldTick.js",
+    "old": "    for (let i = 0; i < REGION_COUNT; i++) prices[i] = initialRegionPrice(init());",
+    "new": "    for (let i = 0; i < REGION_COUNT; i++) prices[i] = 1000;",
+    "tests": [
+      "test/econ1_world_prices.test.js"
+    ]
+  },
+  {
+    "name": "ECON1-the-world-opens-off-the-walks-salt",
+    "file": "src/systems/worldTick.js",
+    "old": "    const init = dayRng(ECON_EPOCH_DAY * MINUTES_PER_DAY, DAY_SALT.priceInit);",
+    "new": "    const init = dayRng(ECON_EPOCH_DAY * MINUTES_PER_DAY, DAY_SALT.prices);",
+    "tests": [
+      "test/econ1_world_prices.test.js"
+    ]
+  },
+  {
+    "name": "ECON1-the-world-walks-with-a-tilt",
+    "file": "src/systems/worldTick.js",
+    "old": "const tilt = _worldTilt ? _worldTilt(i) : 0; return tilt == null ? adj : priceWalkStep(adj, tilt, roll); });",
+    "new": "const tilt = _worldTilt ? _worldTilt(i) : 5; return tilt == null ? adj : priceWalkStep(adj, tilt, roll); });",
+    "tests": [
+      "test/econ1_world_prices.test.js"
+    ]
+  },
+  {
+    "name": "ECON1-the-world-walks-one-generator-for-all-days",
+    "file": "src/systems/worldTick.js",
+    "old": "    const gen = dayRng(next * MINUTES_PER_DAY, DAY_SALT.prices);",
+    "new": "    const gen = dayRng(ECON_EPOCH_DAY * MINUTES_PER_DAY, DAY_SALT.prices);",
+    "tests": [
+      "test/econ1_world_prices.test.js"
+    ]
+  },
+  {
+    "name": "ECON1-a-day-behind-the-cache-reads-the-cache",
+    "file": "src/systems/worldTick.js",
+    "old": "  if (!_worldPrices || _worldPrices.day > d) {",
+    "new": "  if (!_worldPrices) {",
+    "tests": [
+      "test/econ1_world_prices.test.js"
+    ]
+  },
+  {
+    "name": "ECON1-online-the-players-prices-are-walked-too",
+    "file": "src/systems/worldTick.js",
+    "old": "      for (let i = 0; i < REGION_COUNT; i++) if (findFactionByTypeAndRegion(dict, FACTION_TYPES.Province, i)) applyPriceConditionFlags(entity.regionConditions ?? null, i, prices[i], flagRolls);",
+    "new": "      for (let i = 0; i < REGION_COUNT; i++) if (findFactionByTypeAndRegion(dict, FACTION_TYPES.Province, i)) { (entity.regionPrices ??= {})[i] = prices[i]; applyPriceConditionFlags(entity.regionConditions ?? null, i, prices[i], flagRolls); }",
+    "tests": [
+      "test/econ1_world_prices.test.js"
+    ]
+  },
+  {
+    "name": "ECON1-online-the-flags-are-not-applied",
+    "file": "src/systems/worldTick.js",
+    "old": "      for (let i = 0; i < REGION_COUNT; i++) if (findFactionByTypeAndRegion(dict, FACTION_TYPES.Province, i)) applyPriceConditionFlags(entity.regionConditions ?? null, i, prices[i], flagRolls);",
+    "new": "",
+    "tests": [
+      "test/econ1_world_prices.test.js"
+    ]
+  },
+  {
+    "name": "ECON1-the-step-rises-on-a-failed-roll",
+    "file": "src/systems/shopStock.js",
+    "old": "  const next = dice100(chanceOfPriceRise, roll01) ? Math.trunc(51 * adj / 50) : Math.trunc(49 * adj / 50);",
+    "new": "  const next = dice100(chanceOfPriceRise, roll01) ? Math.trunc(49 * adj / 50) : Math.trunc(51 * adj / 50);",
+    "tests": [
+      "test/econ1_world_prices.test.js"
+    ]
+  },
+  {
+    "name": "ECON1-the-step-drops-the-players-tilt",
+    "file": "src/systems/shopStock.js",
+    "old": "  const chanceOfPriceRise = (powerBias | 0) + 50 - Math.trunc((adj - 1000) / 25);",
+    "new": "  const chanceOfPriceRise = 50 - Math.trunc((adj - 1000) / 25);",
+    "tests": [
+      "test/econ1_world_prices.test.js"
+    ]
+  },
+  {
+    "name": "ECON1-the-step-never-clamps",
+    "file": "src/systems/shopStock.js",
+    "old": "  return Math.min(PRICE_ADJUSTMENT_MAX, Math.max(PRICE_ADJUSTMENT_MIN, next));",
+    "new": "  return next;",
+    "tests": [
+      "test/econ1_world_prices.test.js"
+    ]
+  },
+  {
+    "name": "ECON1-the-flag-half-forgets-the-low-arm",
+    "file": "src/systems/shopStock.js",
+    "old": "      turnOnConditionFlag(conditions, regionIndex, REGION_FLAGS.PricesLow, rolls);\n    }\n  } else {",
+    "new": "    }\n  } else {",
+    "tests": [
+      "test/econ1_world_prices.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ALL-E1-the-world-walks-untilted",
+    "file": "src/systems/worldTick.js",
+    "old": "const tilt = _worldTilt ? _worldTilt(i) : 0; return tilt == null ? adj : priceWalkStep(adj, tilt, roll); });",
+    "new": "const tilt = 0; return priceWalkStep(adj, tilt, roll); });",
+    "tests": [
+      "test/econ1_world_prices.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ALL-E1-a-region-DFU-skips-walks-anyway",
+    "file": "src/systems/worldTick.js",
+    "old": "return tilt == null ? adj : priceWalkStep(adj, tilt, roll); });",
+    "new": "return priceWalkStep(adj, tilt ?? 0, roll); });",
+    "tests": [
+      "test/econ1_world_prices.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ALL-E1-a-skipped-region-draws-no-roll",
+    "file": "src/systems/worldTick.js",
+    "old": "const prices = _worldPrices.prices.map((adj, i) => { const roll = gen(); const tilt = _worldTilt ? _worldTilt(i) : 0; return tilt == null ? adj : priceWalkStep(adj, tilt, roll); });",
+    "new": "const prices = _worldPrices.prices.map((adj, i) => { const tilt = _worldTilt ? _worldTilt(i) : 0; return tilt == null ? adj : priceWalkStep(adj, tilt, gen()); });",
+    "tests": [
+      "test/econ1_world_prices.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ALL-E1-installing-the-tilt-keeps-the-old-walk",
+    "file": "src/systems/worldTick.js",
+    "old": "export function setWorldPriceTilt(tiltOf) { _worldTilt = typeof tiltOf === 'function' ? tiltOf : null; _worldPrices = null; _checkpoints.clear(); }",
+    "new": "export function setWorldPriceTilt(tiltOf) { _worldTilt = typeof tiltOf === 'function' ? tiltOf : null; }",
+    "tests": [
+      "test/econ1_world_prices.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ALL-E1-the-tilt-truncates-away-from-zero",
+    "file": "src/systems/shopStock.js",
+    "old": "    return province ? Math.trunc(((merchants.power | 0) - (province.power | 0)) / 5) : null;",
+    "new": "    return province ? Math.floor(((merchants.power | 0) - (province.power | 0)) / 5) : null;",
+    "tests": [
+      "test/econ1_world_prices.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ALL-E1-no-merchants-still-tilts",
+    "file": "src/systems/shopStock.js",
+    "old": "  if (!merchants) return () => null;\n  return (regionIndex) => {",
+    "new": "  return (regionIndex) => {\n    if (!merchants) return 0;",
+    "tests": [
+      "test/econ1_world_prices.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ALL-E2-the-walk-leans-on-the-lazy-init",
+    "file": "src/systems/shopStock.js",
+    "old": "  playerEntity.regionPrices ??= {};   // AUDIT ALL E2",
+    "new": "  // AUDIT ALL E2",
+    "tests": [
+      "test/econ1_world_prices.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ALL-E4-no-checkpoints",
+    "file": "src/systems/worldTick.js",
+    "old": "    if (next % CHECKPOINT_DAYS === 0 && !_checkpoints.has(next)) _checkpoints.set(next, prices.slice());",
+    "new": "",
+    "tests": [
+      "test/econ1_world_prices.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ALL-E8-the-flags-ignore-the-province-gate",
+    "file": "src/systems/worldTick.js",
+    "old": "      for (let i = 0; i < REGION_COUNT; i++) if (findFactionByTypeAndRegion(dict, FACTION_TYPES.Province, i)) applyPriceConditionFlags(",
+    "new": "      for (let i = 0; i < REGION_COUNT; i++) applyPriceConditionFlags(",
+    "tests": [
+      "test/econ1_world_prices.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ALL-E8-the-flags-stop-one-region-short",
+    "file": "src/systems/worldTick.js",
+    "old": "      for (let i = 0; i < REGION_COUNT; i++) if (findFactionByTypeAndRegion(dict, FACTION_TYPES.Province, i)) applyPriceConditionFlags(",
+    "new": "      for (let i = 0; i < REGION_COUNT - 1; i++) if (findFactionByTypeAndRegion(dict, FACTION_TYPES.Province, i)) applyPriceConditionFlags(",
+    "tests": [
+      "test/econ1_world_prices.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ALL-the-online-day-walk-reads-the-last-day-for-every-day",
+    "file": "src/systems/worldTick.js",
+    "old": "      const prices = worldRegionPricesOn(d), flagRolls = dayRng(d * MINUTES_PER_DAY, DAY_SALT.conditions);",
+    "new": "      const prices = worldRegionPricesOn(lastDay), flagRolls = dayRng(d * MINUTES_PER_DAY, DAY_SALT.conditions);",
+    "tests": [
+      "test/econ1_world_prices.test.js"
+    ],
+    "equivalent": true,
+    "why": "the flag half's end state is a function of the LAST day's index alone: a lit flag is re-rolled on every day it stands and the normal band clears it, so a span walked at once ends where a span walked day by day ends; the intermediate reads are unobservable after the one call. 'One day at a time' is pinned by the prices (world6b, auditworld6b), not by the flags."
+  },
+  {
+    "name": "ECON1-the-cache-rebuilds-on-its-own-day",
+    "file": "src/systems/worldTick.js",
+    "old": "  if (!_worldPrices || _worldPrices.day > d) {",
+    "new": "  if (!_worldPrices || _worldPrices.day >= d) {",
+    "tests": [
+      "test/econ1_world_prices.test.js"
+    ],
+    "equivalent": true,
+    "why": "a rebuild from the nearest checkpoint walks to the same numbers and lays the same checkpoints (the function is pure in the day); the mutation is a cost, not an answer."
+  }
+]

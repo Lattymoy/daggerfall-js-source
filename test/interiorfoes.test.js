@@ -196,8 +196,8 @@ test('IF: the pool is ARMED for targeting like every other pool, over its own da
     'and the second is the fan-out, one thunk per pool');
   assert.match(WM, /const _interiorSenses = \(\) => sensesContext\(playerEntity, interiorTicker\.classicMinutes, \{/,
     'through the ONE senses builder');
-assert.match(WM, /interiorFoes\.update\(overlayHeld \? 0 : dt, player\.pos, cam\.pos, _interiorSenses\(\)\)/,
-    'and the pool takes it');
+assert.match(WM, /interiorFoes\.update\(dt, player\.pos, cam\.pos, _interiorSenses\(\)\)/,
+    'and the pool takes it (WINFOE1, 2026-09-17: on the frame\'s own dt - a window no longer zeroes the foes\' clock)');
   // INTEGRATION: b2's branch pinned the NPC4b batches(ctx, dt)
   // signature it saw at its pre-revert base; that arc is REVERTED, so
   // the pin holds the plain call the restored tree makes.

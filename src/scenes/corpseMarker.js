@@ -26,12 +26,33 @@
 // is picked up whole without a window (:948-952), and anything else
 // hands its items over.
 //
-// RESIDUE (honest): DFU's general arm opens the inventory window with
-// the corpse as the remote LootTarget (:957). The port transfers the
-// lot and reports the count - the pre-existing G3 shape, kept so this
-// wave does not smuggle a UI change into a parity fix. Info mode
-// ("You see a dead %s") needs an activation mode the hosts do not
-// carry yet.
+// THAT RESIDUE IS PAID (MAC-E, 2026-09-17, Mac: "seems like when i
+// click on a dead enemy now, i loot all their items automatically? ...
+// it lets me exceed my carry weight with no penalty"). This header
+// used to read: "DFU's general arm opens the inventory window with the
+// corpse as the remote LootTarget (:957). The port transfers the lot
+// and reports the count - the pre-existing G3 shape, kept so this wave
+// does not smuggle a UI change into a parity fix." A recorded residue
+// is a bug with a note on it, and a player found this one: one click
+// emptied a body into the pack, past every weight the window shows,
+// and "You take 2 items." is a line DFU does not have.
+//
+// `openCorpseLoot` is :926-955 whole now - the empty body's refusal,
+// the arrows-only pickup, and then the WINDOW with the body as the
+// remote target, which is what the dungeon host has done since U26.
+// `takeCorpseLoot` stays, and is no longer an activation: it is the
+// TAKE, and its one caller is the online grant landing, where the
+// items are already in flight from the body's owner and there is
+// nothing left to choose (exteriorFoes' `data.grant` arm).
+//
+// Info mode ("You see a dead %s") still needs an activation mode the
+// hosts do not carry yet.
+//
+// WHAT IS NOT A BUG: exceeding MaxEncumbrance costs nothing. Neither
+// PlayerSpeedChanger.cs nor PlayerEntity.cs mentions encumbrance at
+// all - DFU shows the figure on the target icon and never charges for
+// it, so the port does the same. What the window restores is the
+// CHOICE, which is the half that was missing.
 
 import { getBool } from '../systems/settings.js';   // AUDIT 28 W1: DisableEnemyDeathAlert
 import { floorLanding } from '../player/enterExit.js';
@@ -188,10 +209,101 @@ export function corpseLootTargets(entries, keyPrefix, { isCorpse, feetOf, idOf =
 }
 
 /**
- * PlayerActivate's CorpseMarker arm (:936-955). Returns the number of
- * items taken - 0 for an empty body, which is a real outcome and not
- * a failure.
+ * THE TAKE (MAC-E). This was PlayerActivate's whole corpse arm and is
+ * not any more - `openCorpseLoot` above is. What is left is the
+ * transfer itself, and its ONE caller is the online grant landing
+ * (`exteriorFoes`' `data.grant` arm): the owner of a peer's body has
+ * already chosen what leaves it and the items are in flight, so there
+ * is nothing for a window to offer. Every LOCAL body goes through
+ * `openCorpseLoot`.
+ *
+ * Returns the number of items taken - 0 for an empty body, which is a
+ * real outcome and not a failure.
  */
+/**
+ * MAC-E - CreateLootableCorpseMarker's OWN identity as the inventory
+ * window's remote target (GameObjectHelper.cs:812-841): the pair
+ * `ReverseCorpseTexture` resolved at the mint, and playerOwned FALSE
+ * (:833) - so `CanChangeDropIcon` refuses to cycle a body's picture,
+ * exactly as it refuses a scene-built container's.
+ *
+ * The archive and record come off the marker the pool already minted
+ * rather than from a second `ReverseCorpseTexture` read, because the
+ * marker IS that read's answer and a second one is a second chance to
+ * disagree.
+ *
+ * NO `containerImage`, and that is the DUNGEON's shape rather than an
+ * omission: `UpdateRemoteTargetIcon` reads the container picture only
+ * in its LAST arm (:885-889), behind the target's own world flat
+ * (:880-884), and a corpse marker ALWAYS has an archive - the mint
+ * refuses without one (`if (!corpseTexture) return null`). So the
+ * picture DFU's call passes (`InventoryContainerImages.Corpse2`, :820)
+ * is unreachable for a body, and `scenes/dungeonContext.js`'s corpse
+ * arm has passed the pair alone since U26 for that reason.
+ *
+ * It also keeps this module a LEAF of the UI: importing
+ * `CONTAINER_IMAGES` from `ui/targetIconPanel.js` closes a cycle
+ * (targetIconPanel -> hud -> ... -> worldTick -> unleveledLoot ->
+ * this file's `registerEnemyDeathHandler`), and the TDZ error it
+ * throws is at module load, so every host dies on boot. Caught by the
+ * pins the moment it was written.
+ */
+export const corpseLootHooks = (entry) => ({
+  items: () => entry.entity?.items ?? [],
+  playerOwned: false,
+  textureArchive: entry.corpseMarker?.archive ?? 0,
+  textureRecord: entry.corpseMarker?.record ?? 0,
+  pos: [...(entry.corpseMarker?.pos ?? entry.ai?.feet ?? [0, 0, 0])],
+});
+
+/**
+ * PlayerActivate's CorpseMarker arm, WHOLE (:936-957).
+ *
+ * The three answers, in C#'s own order:
+ *   the body is empty        -> "The body has no treasure." AND the
+ *                               container is DISABLED (:942-947), so
+ *                               it stops being a target. Note this is
+ *                               the activation AFTER the one that
+ *                               emptied it: DFU disables on the click
+ *                               that FINDS it empty, never on the take,
+ *                               which is what leaves the player that
+ *                               line to hear.
+ *   one item, and it is arrows -> taken whole, no window (:948-952).
+ *   anything else            -> the inventory window opens with the
+ *                               body as the REMOTE TARGET (:957).
+ *
+ * `openWindow` is the host's door onto its own inventory factory; it is
+ * handed `corpseLootHooks(entry)` and nothing else. A caller that has
+ * no window does NOT fall back to a bulk take - it warns and takes
+ * nothing, because a silent fallback is how the vacuum survived a
+ * recorded residue note for as long as it did.
+ *
+ * Returns the number of items the body holds, so a caller's "did
+ * anything happen" test still reads.
+ */
+export function openCorpseLoot(entry, { playerEntity, say = () => {}, openWindow = null } = {}) {
+  if (!entry || entry.corpseDisabled) return 0;
+  const items = entry.entity?.items;
+  if (!items?.length) {
+    entry.corpseDisabled = true;
+    say('The body has no treasure.');   // theBodyHasNoTreasure
+    return 0;
+  }
+  if (items.length === 1 && items[0]?.templateIndex === ARROW_TEMPLATE_INDEX) {
+    playerEntity.items = playerEntity.items || [];
+    addItem(playerEntity.items, items[0]);
+    items.length = 0;
+    say('You collect the arrows.');   // youCollectArrows
+    return 1;
+  }
+  if (typeof openWindow !== 'function') {
+    console.warn('[corpse] no inventory door - the body stays shut rather than emptying itself');
+    return items.length;
+  }
+  openWindow(corpseLootHooks(entry));
+  return items.length;
+}
+
 export function takeCorpseLoot(entry, playerEntity, say = () => {}) {
   if (!entry || entry.corpseDisabled) return 0;
   const items = entry.entity?.items;

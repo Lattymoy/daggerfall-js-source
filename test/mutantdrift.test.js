@@ -35,18 +35,15 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 /** Stale on 2026-09-17, in arcs merged before QS6. Each is a law whose only
  *  killer no longer applies; each is owed a re-aim BY CONTENT in its own
  *  arc's next pass, not a positional bump. */
-const CARRIED = new Set([
-  'if1.json::host-world-ungated',
-  'soc1.json::S3-target-both-admitted',
-  'soc1.json::S13-seen-stamped-on-first-tab',
-  'soc1.json::S35-acct-swept-with-the-looks',
-  'soc1.json::S36-party-kept-for-ever',
-  'soc1.json::S37-picture-before-the-welcome',
-  'soc1.json::S38-version-not-bumped',
-  'soc2.json::C5-made-up-kind-sent',
-  'soc2.json::C6-act-without-account',
-  'soc2.json::C13-stale-invite-after-joining',
-]);
+// EMPTY, and it stays that way. The twelve records this sweep found stale
+// on the day it was written were carried named-and-dated rather than
+// re-aimed inside a quickslot change; two came back on the very next
+// merge (ba1's, whose anchors main restored) and the other ten were
+// re-aimed BY CONTENT the moment there was a pass whose subject they
+// were. A record here is a law nobody checks, so the right size of this
+// list is nought and the pin below asserts BOTH directions: nothing new
+// may rot in, and nothing that applies again may linger.
+const CARRIED = new Set([]);
 
 test('AUDIT QS6 F7: every mutant record still names source that is there - a record that cannot apply is a law nobody checks', () => {
   const dir = join(ROOT, 'tools/mutants');

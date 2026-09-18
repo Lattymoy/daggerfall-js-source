@@ -50,9 +50,15 @@ setPlayerStruckHook((attacker, target, damage) => onPlayerStruckByEnemy(attacker
 installMeanerMonsters();   // MM1: before the overhaul, as DFU Awakes the dependency first
 installPcaao();
 installUnleveledLoot();   // UL1: after everything it would override (its manifest orders it after Roleplay Realism)
+installSurvivalIcons();   // SURV2: the mod's spoiled-food and waterskin icons ride the texture pipeline as the port's own art
+installSurvivalLoot({ enabled: survivalOn });   // SURV2: an animal's corpse carries meat, a humanoid's sometimes a meal (after UL1, which walks the gold); off with the one switch
 import { normalizeReputations, NORMALIZE_INTERVAL_MINUTES } from './court.js';   // AUDIT 23 (C4)
 // S43: the entity update's 7-day and 38-day arms (PlayerEntity.cs:460-472).
 import { regionPowerUpdate } from './regionPower.js';
+import { runSurvivalMinutes, clearSurvivalMods } from './survival/needs.js';   // SURV1: the needs, a world minute at a time; AUDIT SURV A: and the drains dropped when the feed stops
+import { installSurvivalIcons } from './survival/items.js';   // SURV2: the templates register at its import; the icons here
+import { installSurvivalLoot } from './survival/loot.js';   // SURV2: the corpse's food
+import { survivalOn } from './survival/switch.js';   // SURV2: the one switch
 /** :462 - `% 10080`, seven days of game minutes. */
 export const FACTION_POWER_INTERVAL_MINUTES = 10080;
 /** :469 - `% 54720`, thirty-eight days. */
@@ -73,7 +79,12 @@ import { passiveSpecialsMagicRound } from './passiveSpecials.js';   // V2c: care
 // S41 - the day-change block's four members. They live in their own
 // systems; this file is only the ONE PLACE that runs them on a day
 // boundary, which is where PlayerEntity.Update runs them.
-import { updateRegionalPrices } from './shopStock.js';            // FormulaHelper.UpdateRegionalPrices (:2053)
+import { updateRegionalPrices, setWorldPriceSource, initialRegionPrice, priceWalkStep, applyPriceConditionFlags } from './shopStock.js';
+import { findFactionByTypeAndRegion } from './talk.js';   // AUDIT ALL E8: the online flag arm skips a region with no Province faction, as DFU's walk does
+import { FACTION_TYPES } from '../formats/factionFile.js';
+import { MERCHANTS_FACTION_ID } from './guilds.js';   // AUDIT ALL E8: no Merchants, no walk, no flags (DFU's own gate)            // FormulaHelper.UpdateRegionalPrices (:2053); ECON1: the world's price seam and the walk's one-home pieces
+import { REGION_COUNT } from './regionConditions.js';   // ECON1: the world's walk is region-major, as DFU's
+import { ONLINE_EPOCH_MINUTES } from '../net/wire.js';   // ECON1: the world's economy begins the day the online world stood at the classic start
 import { rollClimateWeathersForDay, evolveClimateWeathers } from './weatherSim.js';      // WeatherManager.SetClimateWeathers (:419); CLK2: the enhanced lane's hourly evolution
 import { seededRng } from './wind.js';   // WORLD6b: the shared day's own generator for the region's walk
 import { removeExpiredRooms } from './tavern.js';                 // PlayerEntity.RemoveExpiredRentedRooms (:257)
@@ -89,12 +100,75 @@ const SHARED_DAY_SEED = 0x44415953;   // 'DAYS'
 /** AUDIT WORLD6b C5: each consumer of a day's rolls has its own SALT - the price walk and the faction powers fired
  *  on one day from one seed and drew the identical sequence from index zero (the weather's rollsFor has a salt for
  *  the same reason). */
-export const DAY_SALT = Object.freeze({ prices: 1, powers: 2 });
+export const DAY_SALT = Object.freeze({ prices: 1, powers: 2, priceInit: 3, conditions: 4 });   // ECON1: the world's opening indices, and the player's flag draws off the world's index
+/** ECON1: THE day's generator - the world's day and the consumer's salt, whoever asks and whether or not the shared
+ *  clock stands (the world's economy is a function of the day alone, computable anywhere). */
+export const dayRng = (minute, salt = 0) => seededRng(((Math.floor(minute / MINUTES_PER_DAY) * 7919) ^ SHARED_DAY_SEED ^ Math.imul(salt | 0, 0x9E3779B1)) >>> 0);
 /** WORLD6b: the generator a day's rolls come from. Under the shared clock the day's rolls are THE DAY'S - the price
  *  walk's and the faction powers' generator is seeded by the world's day (the weather's own law, WORLD5 rollsFor)
- *  and the consumer's salt; offline, the caller's own `rolls`. The STATE stays each player's (the prices and the
- *  powers live on the entity - DFU has one player); one economy is the region as a world, and a later slice. */
-export const dayRollsFor = (minute, rolls, salt = 0) => (sharedClockOn() ? seededRng(((Math.floor(minute / MINUTES_PER_DAY) * 7919) ^ SHARED_DAY_SEED ^ Math.imul(salt | 0, 0x9E3779B1)) >>> 0) : rolls);
+ *  and the consumer's salt; offline, the caller's own `rolls`. The powers' STATE stays each player's (they live on
+ *  the entity, and quests move them - Multiplayer.md's first lock); the PRICES are the world's (ECON1, below). */
+export const dayRollsFor = (minute, rolls, salt = 0) => (sharedClockOn() ? dayRng(minute, salt) : rolls);
+
+// ECON1 (2026-09-17, the STOP list's "one economy"): THE REGION'S PRICES ARE THE WORLD'S. DFU walks each region's
+// price index once a day on the player's own state (RandomizeInitialRegionalPrices at the start, UpdateRegionalPrices
+// :2053-2088 each day), tilted by The Merchants' power against the region's. WORLD6b made the day's ROLLS the world's
+// and left the STATE each player's, so two players who arrived on different days read different prices in one shop.
+// Here the index is a pure function of the world's day: the opening indices are drawn on the world's epoch day (the
+// day the online world stood at the classic start, ONLINE_EPOCH_MINUTES) from the day's own generator, region-major
+// as DFU draws them, and every day since is walked with that day's generator, one roll a region, region-major. The
+// merchants' tilt is DROPPED (the powers are each player's - quests move them - so the term was the one input that
+// could not be the world's; the STOP record offered "split out or dropped"): the world's walk is the pure mean
+// reversion around 1000 that DFU's own comment describes, with the tilt at zero. Catching up equals having stayed,
+// and a player away a week reads exactly what one who stayed reads: today's index. No wire, no owner, no memory -
+// every client computes the same numbers from the same day.
+const ECON_EPOCH_DAY = Math.floor(ONLINE_EPOCH_MINUTES / MINUTES_PER_DAY);
+let _worldPrices = null;   // { day, prices: number[REGION_COUNT] } - the last day computed; a later day walks on from it
+// AUDIT ALL E4: a rebuild from the epoch grew without bound (twelve game days a real day: past a frame budget in under
+// two real years) - a checkpoint every CHECKPOINT_DAYS bounds a rebuild to that many steps
+const CHECKPOINT_DAYS = 512;
+const _checkpoints = new Map();   // day -> prices, at multiples of CHECKPOINT_DAYS
+// AUDIT ALL E1: the world's tilt - a function of the region index over the game's own base powers (shopStock
+// .worldPriceTiltOf), installed by the world host once FACTION.TXT is read; null for a region DFU walks nothing for.
+// Until installed the walk is untilted (a boot's first seconds; no shop is open yet) and a later install starts the
+// world over from the epoch, so every client that has the file walks the same numbers.
+let _worldTilt = null;
+/** ECON1 / AUDIT ALL E1: install (a function of a region index answering the tilt, or null to walk nothing) or remove the
+ *  world's tilt; the cache starts over, the tilt being part of every step. */
+export function setWorldPriceTilt(tiltOf) { _worldTilt = typeof tiltOf === 'function' ? tiltOf : null; _worldPrices = null; _checkpoints.clear(); }
+export const worldPriceTiltOn = () => _worldTilt !== null;
+/** AUDIT ALL E4 (a probe): the days a checkpoint stands on, for the pin that proves a rebuild is bounded. */
+export const worldPriceCheckpointDays = () => [..._checkpoints.keys()].sort((a, b) => a - b);
+/** ECON1: every region's index on a world day (an absolute day number, classic minutes / MINUTES_PER_DAY). A day
+ *  before the epoch reads the epoch's. Cached by day and walked forward; a day behind the cache is rebuilt from the
+ *  epoch, so the answer is the day's whatever was asked before. */
+export function worldRegionPricesOn(day) {
+  const d = Math.floor(Number.isFinite(day) ? day : ECON_EPOCH_DAY);
+  if (!_worldPrices || _worldPrices.day > d) {   // (a day before the epoch lands here too and reads the epoch's: the walk below has nowhere to go)
+    // AUDIT ALL E4: from the newest checkpoint at or before the day, else from the epoch
+    let from = null;
+    for (const [cd, cp] of _checkpoints) if (cd <= d && (!from || cd > from.day)) from = { day: cd, prices: cp };
+    if (from) _worldPrices = { day: from.day, prices: from.prices.slice() };
+    else {
+      const init = dayRng(ECON_EPOCH_DAY * MINUTES_PER_DAY, DAY_SALT.priceInit);
+      const prices = new Array(REGION_COUNT);
+      for (let i = 0; i < REGION_COUNT; i++) prices[i] = initialRegionPrice(init());
+      _worldPrices = { day: ECON_EPOCH_DAY, prices };
+    }
+  }
+  while (_worldPrices.day < d) {
+    const next = _worldPrices.day + 1;
+    const gen = dayRng(next * MINUTES_PER_DAY, DAY_SALT.prices);
+    // AUDIT ALL E1: the day's roll is DRAWN for every region in order (DFU's stream position), and spent on a step only
+    // where DFU walks - a region with no Province faction, or a world with no Merchants (the tilt answers null), stands
+    const prices = _worldPrices.prices.map((adj, i) => { const roll = gen(); const tilt = _worldTilt ? _worldTilt(i) : 0; return tilt == null ? adj : priceWalkStep(adj, tilt, roll); });
+    _worldPrices = { day: next, prices };
+    if (next % CHECKPOINT_DAYS === 0 && !_checkpoints.has(next)) _checkpoints.set(next, prices.slice());
+  }
+  return _worldPrices.prices;
+}
+/** ECON1: one region's index at a classic minute of the world's (today's, by default). */
+export const worldRegionPrice = (regionIndex, minute = worldMinutes()) => worldRegionPricesOn(Math.floor(minute / MINUTES_PER_DAY))[regionIndex | 0] ?? 1000;
 
 export { MINUTES_PER_DAY };
 
@@ -342,9 +416,20 @@ export function runDayChange({ entity, lastMinutes, nowMinutes, rolls = Math.ran
   // change (the walk is region-major, day-minor), so a player back from three days away walked a different region
   // than one who was there every day. Per day, the walk is a function of the state and the days walked alone:
   // catching up equals having stayed. Offline the caller's stream walks the span whole, as DFU does.
+  // ECON1: under the shared clock the prices are THE WORLD'S (worldRegionPricesOn) and this player's `regionPrices`
+  // are not walked and not written - the save keeps its own economy for its own world. What is this player's is the
+  // CONDITION half (PricesHigh / PricesLow are the player's region-condition store, which the rumours and the court
+  // read): it is applied from the world's index, one day at a time, with the day's own generator for the flag's
+  // duration draw - so two players who walked different spans read the same flags.
   if (sharedClockOn()) {
     const firstDay = Math.floor(lastMinutes / MINUTES_PER_DAY) + 1, lastDay = Math.floor(nowMinutes / MINUTES_PER_DAY);
-    for (let d = firstDay; d <= lastDay; d++) updateRegionalPrices(entity, entity.factionRep?.dict ?? null, 1, dayRollsFor(d * MINUTES_PER_DAY, rolls, DAY_SALT.prices), entity.regionConditions ?? null);
+    // AUDIT ALL E8: and only for a region DFU's own walk reaches - one with a Province faction in this player's store
+    // (updateRegionalPrices' `continue`); with no store or no Merchants DFU walks nothing and flags nothing
+    const dict = entity.factionRep?.dict ?? null, merchants = dict?.get(MERCHANTS_FACTION_ID) ?? null;
+    for (let d = firstDay; d <= lastDay && merchants; d++) {
+      const prices = worldRegionPricesOn(d), flagRolls = dayRng(d * MINUTES_PER_DAY, DAY_SALT.conditions);
+      for (let i = 0; i < REGION_COUNT; i++) if (findFactionByTypeAndRegion(dict, FACTION_TYPES.Province, i)) applyPriceConditionFlags(entity.regionConditions ?? null, i, prices[i], flagRolls);
+    }
   } else updateRegionalPrices(entity, entity.factionRep?.dict ?? null, daysPast, rolls, entity.regionConditions ?? null);
 
   // :447-448 - roll the six climate zones and RAISE the pending-apply
@@ -409,6 +494,9 @@ export function tickPlayerMinutes({
   // Time.deltaTime, so a rested night burns no torch and cannot kill by
   // a drained stat. Defaults to dt, which is the frame case.
   realSeconds = dt,
+  // SURV1: the needs' law, when the host feeds it - { env, deps } as
+  // survival/needs.js survivalMinute takes them; null runs nothing.
+  survival = null,
 } = {}) {
   // WORLD5: under the SHARED clock the world's time moved on its own between two ticks - this tick owes the rounds
   // and the days from the last tick's reading to now, and fabricates nothing from dt (a jump has no dt, and dt
@@ -705,6 +793,16 @@ export function tickPlayerMinutes({
   // the letter never finds the player in a dungeon.
   handleStartingCrimeGuildQuests(entity, { nowClassicMinutes: next, inside });
 
+  // SURV1 - THE NEEDS, one world minute at a time over the minutes this
+  // tick crossed (the same [last, now] the per-minute loop above walks),
+  // capped at two days so a jump charges what a jump can. Nothing here
+  // draws from the day's generator; the felt temperature comes back out
+  // for the HUD.
+  let felt = null;
+  if (survival && nowMinutes > lastMinutes) {
+    felt = runSurvivalMinutes(entity, lastMinutes, nowMinutes, survival.env ?? {}, { ...(survival.deps ?? {}), sinks: survival.deps?.sinks ?? sinks, rolls });
+  } else if (!survival) clearSurvivalMods(entity);   // AUDIT SURV A: the mod off (or a host with no reader) leaves no drain behind
+
   // EntityEffectManager.UpdateEntityMods' tail (:1855-1866), on its own
   // 0.2s real-time cadence: a live stat at zero kills the host. It sits
   // here rather than in runMagicRounds because DFU's is not a magic
@@ -731,7 +829,7 @@ export function tickPlayerMinutes({
   // A jump is only ever forward; a backward move is a load, and a load
   // does not arrive through this function.
   const jumped = worldMinutes() - clockAtEntry;
-  return { classicMinutes: jumped > 0 ? next + jumped : next, rounds, magicRoundWindow };
+  return { classicMinutes: jumped > 0 ? next + jumped : next, rounds, magicRoundWindow, felt };
 }
 
 // --- THE WORLD CLOCK (AUDIT 21 F2) -----------------------------------
@@ -786,6 +884,9 @@ export function setSharedClock(source, wallOf = null) {
   _sharedClock = typeof source === 'function' ? source : null;
   _sharedWall = _sharedClock && typeof wallOf === 'function' ? wallOf : null;
   _sharedLastTick = null;
+  // ECON1: the world's prices stand with the world's clock - every consumer of regionPriceAdjustment reads today's
+  // world index while the clock stands, and the player's own again when it goes
+  setWorldPriceSource(_sharedClock ? (regionIndex) => worldRegionPrice(regionIndex, _sharedClock()) : null);
 }
 export const sharedClockOn = () => _sharedClock !== null;
 

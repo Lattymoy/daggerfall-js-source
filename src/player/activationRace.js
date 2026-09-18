@@ -63,6 +63,8 @@
  * @property {RayPick|null} drop
  * @property {boolean} torchWins
  * @property {boolean} wagonWins      the cart beat the body, the pile, the torch AND the door (EOTB-IL)
+ * @property {boolean} campWins       a camp's fire or tent beat everything above (SURV3)
+ * @property {boolean} waterWins      a fountain, well or trough beat everything above (SURV3)
  * @property {number} nonPersonRival
  * @property {number} rival
  */
@@ -81,12 +83,14 @@
  * @param {RayPick|null} [opts.pile]    the nearest dropped pile
  * @param {RayPick|null} [opts.torch]   the nearest dropped light
  * @param {RayPick|null} [opts.wagon]   Eye Of The Beholder's cart (EOTB-IL: RegisterCustomActivation(41239, 3.2)), when the lane has one
+ * @param {RayPick|null} [opts.camp]    the nearest camp (SURV3: a tent or a fire, RegisterCustomActivation's 3.2)
+ * @param {RayPick|null} [opts.water]   the nearest water source (SURV3: the mod's fountains, wells and troughs)
  * @param {number} [opts.doorDistance]  the door / board / static-NPC set's nearest, or Infinity
  * @param {number[]} [opts.personDistances]  the street's townsfolk, by the host's own cylinder pick
  * @returns {RaceResult}
  */
 export function raceActivation({
-  corpse = null, pile = null, torch = null, wagon = null, doorDistance = Infinity, personDistances = [],
+  corpse = null, pile = null, torch = null, wagon = null, camp = null, water = null, doorDistance = Infinity, personDistances = [],
 } = {}) {
   // the body and the pile, by distance, the tie to the body
   const pileNearer = !!pile && !(corpse && corpse.distance <= pile.distance);
@@ -97,20 +101,27 @@ export function raceActivation({
   const dropD = drop?.distance ?? Infinity;
   const torchD = torch?.distance ?? Infinity;
   const wagonD = wagon?.distance ?? Infinity;
+  const campD = camp?.distance ?? Infinity;
+  const waterD = water?.distance ?? Infinity;
 
   // what the ground must beat: everything that is not a person
-  const nonPersonRival = Math.min(lootD, dropD, torchD, wagonD, doorDistance);
+  const nonPersonRival = Math.min(lootD, dropD, torchD, wagonD, campD, waterD, doorDistance);
   const rival = Math.min(nonPersonRival, ...personDistances);
 
   // the torch takes the click when nothing on the ground, and no door,
   // is nearer. Its own reach is the ARM's business, not the race's: a
   // winner out of reach still answers, which is how every handler
   // family in this port refuses (AUDIT 65 MC-2).
-  const torchWins = !!torch && torchD <= Math.min(lootD, dropD, wagonD, doorDistance);
+  const torchWins = !!torch && torchD <= Math.min(lootD, dropD, wagonD, campD, waterD, doorDistance);
   // EOTB-IL: the cart is one more custom activation under the same ray
   // (PlayerActivate's registered model 41239). Absent, nothing above
   // changes - `wagonD` is Infinity and every term reads as it did.
-  const wagonWins = !!wagon && wagonD <= Math.min(lootD, dropD, torchD, doorDistance);
+  const wagonWins = !!wagon && wagonD <= Math.min(lootD, dropD, torchD, campD, waterD, doorDistance);
+  // SURV3: two more custom activations under the same ray - a camp
+  // (the mod's tent and fire) and a water source (its fountains,
+  // wells and troughs). Absent, every term above reads as it did.
+  const campWins = !!camp && campD <= Math.min(lootD, dropD, torchD, wagonD, waterD, doorDistance);
+  const waterWins = !!water && waterD <= Math.min(lootD, dropD, torchD, wagonD, campD, doorDistance);
 
-  return { loot, drop, torchWins, wagonWins, nonPersonRival, rival };
+  return { loot, drop, torchWins, wagonWins, campWins, waterWins, nonPersonRival, rival };
 }

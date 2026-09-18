@@ -182,7 +182,8 @@ export function isStackable(item) {
   // marks worn items with equipSlot (equip.js) - so all three clauses
   // of DFU's rule were no-ops.
   if (item.equipSlot != null || isEnchanted(item) || item.questItem) return false;   // never stack
-  if (templates[item.templateIndex]?.isIngredient) return true;   // IsIngredient
+  if (templateByIndex(item.templateIndex)?.isIngredient) return true;   // IsIngredient (SURV2: through the one reader, so a custom row answers)
+  if (templateByIndex(item.templateIndex)?.stackable) return true;     // SURV2: a custom template that says it stacks (rations)
   if (item.group === 'UselessItems1' && item.templateIndex === GLASS_BOTTLE_TEMPLATE) return true;   // IsPotion
   if (item.group === 'Books') return true;                        // ItemGroup == ItemGroups.Books
   if (item.group === 'Currency') return true;                     // IsOfTemplate(Currency, Gold_pieces)
@@ -299,7 +300,7 @@ export function addItem(list, item, position = 'back') {
  * are called by name rather than respelled.
  *
  * ROAD-Ar R5 - THE REMAINDER, RESTATED. A2 recorded two surviving
- * inline re-spellings of this member (equip.js:242 and
+ * inline re-spellings of this member (equip.js:244 and
  * potionMakerWindow.js:167, both on paths where nothing stackable is
  * equippable) and missed a THIRD, which was the one on the main path:
  * itemTransfer._applyTransfer's partial arm, reached by every
@@ -453,8 +454,9 @@ export function weightForMaterial(weightKg, weaponMaterial) {
  *  (DaggerfallUnityItemMCP.cs:144-148) - hasNoEncumbrance does not
  *  zero it, that flag gates only encumbrance. */
 export function unitWeightInKg(item) {
-  const t = templates[item.templateIndex];
+  const t = templateByIndex(item.templateIndex);   // SURV2: custom rows too
   let base = t ? t.baseWeight : 0;
+  if (Number.isFinite(item.water) && item.water > 0) base += item.water;   // SURV2: a waterskin weighs its water
   if (item.group === 'Weapons' && item.name !== 'Arrow' && item.material != null) {
     base = weightForMaterial(base, item.material);
   }
@@ -473,7 +475,7 @@ export function unitWeightInKg(item) {
  *  to DFU's member so the encumbrance gate reads the same value the
  *  weight sum does. */
 export function effectiveUnitWeightInKg(item) {
-  const t = templates[item.templateIndex];
+  const t = templateByIndex(item.templateIndex);
   if (t?.hasNoEncumbrance) return 0;
   return unitWeightInKg(item);
 }

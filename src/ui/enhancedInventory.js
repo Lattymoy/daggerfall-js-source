@@ -58,7 +58,7 @@
 
 import { USE_PENDING } from './nativeInventory.js';
 import { PACK_PAGES, PAGE_IDS, pageOf, filterByPage } from './packPages.js';   // PX31: the pack's nine pages (the classic keeps DFU's four)
-import { useItem, isLightSource } from '../systems/useItem.js';   // HT2: the light source's own act
+import { useItem, isLightSource, usableItem } from '../systems/useItem.js';   // HT2: the light source's own act; Mac: Use only where the law has an arm
 // QS2: the quickslot model (systems/quickslots.js). This screen is the ONE
 // place a slot is filled - Mac's own words, "in the enhanced menu through the
 // tooltip to slot 1/2" - and it fills one by naming the item's KIND, which is
@@ -81,6 +81,7 @@ import {
   equipItem, unequipSlot, equipTableOf, isEquipped,
   isForbiddenEquip, isBrokenItem,
 } from '../systems/equip.js';
+import { getEquipSlot } from '../systems/equip.js';   // Mac (2026-09-18): Wear only where a slot would take it
 import {
   itemWeight, isEnchanted, totalWeight, addItem, goldStack,
   goldPiecesOf, GOLD_PIECE_WEIGHT_KG,   // E4: the counter and its per-coin weight
@@ -98,11 +99,13 @@ import {
 import { entityMaxEncumbrance } from '../combat/formulas.js';   // AUDIT 26: PlayerEntity.MaxEncumbrance, enchantment allowance and all
 import { liveStat } from '../systems/statMods.js';
 import { conditionWord, conditionPercentage, itemNameParts, itemLongName, itemDamageLine, itemArmourLine, itemHandsLine } from '../systems/itemInfo.js';   // RF6: the long name's two parts, ResolveItemLongName's arms once
+import { survivalInfoTokens } from '../systems/itemInfo.js';   // AUDIT SURV C: the survival items' tokens on this skin's card too
+import { isSurvivalItem } from '../systems/survival/items.js';
 import { rarityAttr, rarityLines } from '../systems/lootRarity.js';   // LR1: the row's tier attribute and the card's lines
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { closeOnOutsideTap } from './enhancedOverlays.js';   // OT1
 import { repaintKeepingScroll } from './domRepaint.js';
-import { overlayAction } from './input.js';
+import { overlayAction, actionOf } from './input.js';   // MAC-C: and the REGISTRY's answer for the two window keys
 import { audio } from '../systems/audio.js';   // MAC-O6: the pack's own transfer cue - this window carried none at all
 import { enhancedSoundsOn } from '../systems/enhancedSounds.js';   // ES1: both cues ride the Enhanced sounds switch
 import { SOUND } from '../systems/soundClips.js';
@@ -339,8 +342,10 @@ export function itemLine(item, identity = undefined) {
     item,   // MW-D38: the icon door resolves the item itself
     name: parts.name || t?.name || 'Unknown',
     weight: itemWeight(item),
-    condition: (item.maxCondition ?? 0) > 0 ? conditionPercentage(item) : null,
-    word: (item.maxCondition ?? 0) > 0 ? conditionWord(item) : null,
+    // AUDIT SURV C (review): a survival item's condition is its uses or its keeping, said in its own tokens below -
+    // "Condition New 100%" on a stale bread and "Used 50%" beside "25 uses left" were two words for one thing
+    condition: (item.maxCondition ?? 0) > 0 && !isSurvivalItem(item) ? conditionPercentage(item) : null,
+    word: (item.maxCondition ?? 0) > 0 && !isSurvivalItem(item) ? conditionWord(item) : null,
     material: parts.material || null,
     // MAC-M1 (Mac: "Damage values arent showing on weapon tool tips.
     // Also, not sure if armor has values either"): THE TWO NUMBERS A
@@ -360,6 +365,9 @@ export function itemLine(item, identity = undefined) {
     // the card cannot tell a player a claymore is one-handed while the
     // equip table is emptying both their hands for it.
     hands: itemHandsLine(item),
+    // AUDIT SURV C: a food's worth and stage, a skin's water, the gear's uses - the classic popup's tokens (systems/itemInfo.js
+    // survivalInfoTokens, less the name and the weight this card already carries), so a Waterskin says its water here too
+    survival: isSurvivalItem(item) ? survivalInfoTokens(item).slice(2).map((r) => r.text) : null,
     stack: (item.stackCount ?? 1) > 1 ? item.stackCount : null,
     equipped: isEquipped(item),
     // HT2: the LIT light source, by REFERENCE, exactly as
@@ -415,6 +423,10 @@ export function localPrimaryAct(item, entity = null) {
       ? { kind: 'douse', label: 'Douse' }
       : { kind: 'light', label: 'Light' };
   }
+  // Mac (2026-09-18, off the audit's review shots): "Hide wear for non wearables" - a waterskin, a raw meat, a
+  // gem offered WEAR. The equip table's own answer decides: no slot would take it, no verb. A throwaway table
+  // answers when no entity is at hand (the slot rules are the item's, not the wearer's).
+  if (getEquipSlot(entity ?? {}, item) === EQUIP_SLOTS.None) return null;
   return { kind: 'wear', label: 'Wear' };
 }
 
@@ -451,7 +463,7 @@ export function localPrimaryAct(item, entity = null) {
  * why `pending` exists and why the classic window's own USE_PENDING
  * strings are reused here rather than reworded.
  */
-export function useResultAction(r, { openBook = null, openSpellbook = null } = {}) {
+export function useResultAction(r, { openBook = null, openSpellbook = null, placeCamp = null } = {}) {
   if (!r) return { kind: 'nothing' };
   // AUDIT 26: DaggerfallUI.PopToHUD() + return (:1687-1688). A watched
   // quest item that is neither parchment nor clothing closes the whole
@@ -469,6 +481,12 @@ export function useResultAction(r, { openBook = null, openSpellbook = null } = {
     return openSpellbook
       ? { kind: 'openSpellbook', closeFirst: true }
       : { kind: 'message', text: USE_PENDING.spellbook };
+  }
+  // SURV3: a placeable - close, then hand the item to the host's ground (the spellbook arm's shape)
+  if (r.kind === 'pitchCamp' || r.kind === 'placeFire') {
+    return placeCamp
+      ? { kind: 'placeCamp', item: r.item, closeFirst: true }
+      : { kind: 'message', text: USE_PENDING[r.kind] };
   }
   // The classic window's own ladder, in its own order: an explicit
   // text, then a TEXT.RSC id, then the pending stand-in. AUDIT 22 F9:
@@ -808,8 +826,8 @@ function dragStop(commit) {
     globalThis.removeEventListener?.('pointermove', onDragMove, true);
     globalThis.removeEventListener?.('pointerup', onDragUp, true);
     globalThis.removeEventListener?.('pointercancel', onDragAbort, true);
-    globalThis.removeEventListener?.('lostpointercapture', onDragAbort, true);
     globalThis.removeEventListener?.('scroll', onDragScroll, true);
+    globalThis.removeEventListener?.('contextmenu', onDragMenu, true);
     globalThis.removeEventListener?.('touchmove', onDragHold, true);
   }
   if (!d?.moved) return;
@@ -949,6 +967,8 @@ const onDragMove = (e) => {
  *  the class. */
 const onDragHold = (e) => { if (drag?.moved && drag.touch && e.cancelable) e.preventDefault(); };
 const onDragUp = (e) => { if (drag && e.pointerId === drag.id) dragStop(true); };
+/** MAC-R4: the long-press menu never opens over a live session (see dragFrom). */
+const onDragMenu = (e) => { if (drag && e.cancelable) e.preventDefault(); };
 const onDragAbort = (e) => { if (drag && (e.pointerId === undefined || e.pointerId === drag.id)) dragStop(false); };
 // AUDIT INV2 A-F5: a wheel moves the DOM under a STATIONARY cursor, so
 // the highlight and the verb went on naming a row the pointer had left
@@ -970,13 +990,36 @@ function dragFrom(row, item, source = 'local') {
     // from it; `x`/`y` is where the finger is NOW and the ghost arms on it.
     drag = { id: e.pointerId, item, row, ox: e.clientX, oy: e.clientY, x: e.clientX, y: e.clientY, moved: false, want: null, touch, hold: null, source };
     if (touch) drag.hold = setTimeout(dragArm, TOUCH_HOLD_MS);
+    // MAC-R4 (2026-09-17, Mac: "Hold to drag in the enhanced inventory
+    // sometimes doesn't work properly"): A TOUCH POINTER CAPTURES THE ROW
+    // IT LANDS ON, IMPLICITLY, and a captured row that a repaint detaches
+    // raises `lostpointercapture` - which INV2 read as "the pointer taken
+    // back" and ended the session. `render()` runs on things a hold
+    // cannot see coming (an archive icon landing, the doll settling, the
+    // arm rig rebuilding - INV2's own list), so a press that overlapped
+    // one died with no ghost and no refusal: the "sometimes". The
+    // session's listeners are the window's and need no capture at all,
+    // so it is given back the moment it is granted - synchronously here
+    // (Chromium sets it before the pointerdown is dispatched) and again
+    // on `gotpointercapture` for an agent that grants it after. With no
+    // capture there is no capture to lose, and the abort that read its
+    // loss is gone with it: a pointer really taken back arrives as
+    // `pointercancel`, which is still an end (onDragAbort).
+    const giveBack = () => { try { row.releasePointerCapture?.(e.pointerId); } catch { /* not captured */ } };
+    if (touch) { giveBack(); row.addEventListener?.('gotpointercapture', giveBack, { once: true }); }
     // The listeners are the WINDOW's: a repaint detaches this row, and a
     // drag that lived on it died there with the ghost still on screen.
     globalThis.addEventListener?.('pointermove', onDragMove, true);
     globalThis.addEventListener?.('pointerup', onDragUp, true);
     globalThis.addEventListener?.('pointercancel', onDragAbort, true);
-    globalThis.addEventListener?.('lostpointercapture', onDragAbort, true);
     globalThis.addEventListener?.('scroll', onDragScroll, true);
+    // MAC-R4: and the long-press menu - Android raises `contextmenu` at
+    // about the hold's own length, and a menu that opens takes the
+    // pointer (a cancel). The hosts' guard (ui/input.js
+    // installContextMenuGuard) already refuses it on a host's document;
+    // this refuses it for the session's own life on any document, so a
+    // pane mounted without a host holds too.
+    globalThis.addEventListener?.('contextmenu', onDragMenu, true);
     // INV3: passive FALSE, or the preventDefault above is ignored - a
     // window `touchmove` listener is passive by default in Chromium.
     globalThis.addEventListener?.('touchmove', onDragHold, { passive: false, capture: true });
@@ -1063,7 +1106,7 @@ function use(item, collection = deps.items?.() ?? []) {
     // reach. The same seam the transfer ladder's quest arm reads.
     getQuest: deps.getQuest ?? null,
   });
-  const act = useResultAction(r, { openBook: deps.openBook, openSpellbook: deps.openSpellbook });
+  const act = useResultAction(r, { openBook: deps.openBook, openSpellbook: deps.openSpellbook, placeCamp: deps.placeCamp });
   // AUDIT 26's PopToHUD: the window stack goes, nothing is said.
   if (act.kind === 'close') { onExit(); return; }
   // THE HOOKS ARE READ BEFORE ANYTHING CLOSES. `onExit` unmounts, and
@@ -1082,6 +1125,12 @@ function use(item, collection = deps.items?.() ?? []) {
     const open = deps.openSpellbook;
     onExit();   // CLOSE, THEN HAND OVER - no callback, so free the slot
     open();
+    return;
+  }
+  if (act.kind === 'placeCamp') {
+    const place = deps.placeCamp;
+    onExit();   // SURV3: the same law - the host's HUD line says where the camp stands, or why not
+    place(act.item);
     return;
   }
   if (act.textId && deps.rows) {
@@ -1147,7 +1196,7 @@ function stow(item) {
   // 26 F156: planStore answers `{ ok: true, map: true }` for a
   // MiscItems.Map - the reveal runs, the paper is consumed, nothing
   // lands in the destination. The classic window routes it
-  // (nativeInventory.js:777) and this one did not, so dragging a
+  // (nativeInventory.js:787) and this one did not, so dragging a
   // treasure map out of the pack dropped the paper on the floor and
   // revealed nothing.
   if (plan.map) { use(item, deps.items?.() ?? []); return; }
@@ -1162,7 +1211,7 @@ function stow(item) {
   // again on the other side, and a tip that stays open after every
   // press is the quirk being fixed.
   // AUDIT INV2 B-F1: THE ENTITY AND THE PROVENANCE RIDE, as they do at
-  // the classic window's own call (nativeInventory.js:779). Without them
+  // the classic window's own call (nativeInventory.js:789). Without them
   // `clearLightSourceOnLeave` - AUDIT 26 F157's first statement inside
   // applyTransfer - is a no-op, so a LIT TORCH dropped on the ground
   // went on lighting the player from where it lay. INV2 made that a
@@ -1196,7 +1245,7 @@ function take(item) {
   if (plan.map) { use(item, remoteTarget(deps, sessionState())); return; }
   // MAC-O6 (report: "looting gold/items makes no sound"): DoTransferItem's
   // own cue (:1569 gold's clink, :1583 everything else), which the classic
-  // window plays (nativeInventory.js:845) and this one never did - the ONLY
+  // window plays (nativeInventory.js:855) and this one never did - the ONLY
   // difference between the two windows' calls to planTake/applyTransfer was
   // that this one dropped `plan.sound` on the floor. Played here, ahead of
   // the gold interception below, exactly as DFU's own PlayOneShot sits
@@ -2006,6 +2055,11 @@ function detailCol() {
   // thing is swung - and above the weight, which is not. Null for
   // everything that is not a weapon, so no book grows an empty row.
   pair('Hands', line.hands);
+  for (const t of line.survival ?? []) {   // AUDIT SURV C: the classic popup's tokens, each under a word of its own
+    const i = t.indexOf(': ');
+    if (i > 0) pair(t.slice(0, i), t.slice(i + 2));
+    else pair(/^Nourishes/.test(t) ? 'Food' : /^Raw/.test(t) ? 'Raw' : /uses left/.test(t) ? 'Uses' : /skillet/i.test(t) ? 'Cooking' : 'Note', t);
+  }
   pair('Weight', `${line.weight.toFixed(2)} kg`);
   pair('Condition', line.condition != null ? `${line.word} · ${line.condition}%` : null);
   // HT2: a light source is never WORN - the honest line for one is
@@ -2028,13 +2082,15 @@ function detailCol() {
     // is a use (:1976-1985) and nothing in the equip table will ever
     // take one. The button says which it is doing.
     const act = localPrimaryAct(picked, deps.entity);
-    const b = el('button', 'act primary', act.label);
-    b.onclick = act.kind === 'takeOff' ? () => takeOff(picked.equipSlot)
-      : act.kind === 'wear' ? () => wear(picked)
-      // AUDIT 22 F6: DFU's equip click hands UseItem NO collection
-      // (:1980), so the act that lights a torch can consume nothing.
-      : () => use(picked, null);
-    acts.append(b);
+    if (act) {   // null: nothing would wear it (Mac: no WEAR on a waterskin)
+      const b = el('button', 'act primary', act.label);
+      b.onclick = act.kind === 'takeOff' ? () => takeOff(picked.equipSlot)
+        : act.kind === 'wear' ? () => wear(picked)
+        // AUDIT 22 F6: DFU's equip click hands UseItem NO collection
+        // (:1980), so the act that lights a torch can consume nothing.
+        : () => use(picked, null);
+      acts.append(b);
+    }
     // The verb names the DESTINATION, and the destination is whichever
     // list is showing. Drawn only when the law would either move
     // something or say something (`canStow`).
@@ -2062,6 +2118,8 @@ function detailCol() {
   // appeared only for items this screen believed were usable would be
   // this screen making a judgement the law already makes. DFU offers
   // it on the REMOTE list too (:2048-2051), so this pane does.
+  // Mac (2026-09-18): ...WAS. "Same for use for non-usables" - the law's own predicate (useItem.js usableItem)
+  // says which items an arm would do something with; a sword or a gem gets no Use button.
   const u = el('button', 'act', 'Use');
   // THE COLLECTION IS THE LIVE LIST, not the model's. `useItem`
   // CONSUMES out of what it is handed (:2048-2051 - a potion drunk
@@ -2069,9 +2127,11 @@ function detailCol() {
   // filtered COPY, so passing that would drink the potion and leave it
   // sitting in the pile. The bag travels separately for AUDIT 22 F4's
   // reason, inside `use`.
-  u.onclick = () => use(picked,
-    side === 'remote' ? remoteTarget(deps, sessionState()) : (deps.items?.() ?? []));
-  acts.append(u);
+  if (usableItem(picked)) {
+    u.onclick = () => use(picked,
+      side === 'remote' ? remoteTarget(deps, sessionState()) : (deps.items?.() ?? []));
+    acts.append(u);
+  }
   // QS2: ...and the quickslot buttons, LOCAL ONLY. A slot resolves against the
   // PACK every frame (quickslots resolveConsumable), so slotting something
   // that is still in a corpse would name a kind the player does not carry - a
@@ -2270,9 +2330,25 @@ function render() {
 }
 
 // ── THE KEYBOARD ─────────────────────────────────────────────────
-// ESCAPE AND F6, the two keys the classic window closes on. F6 is a
-// host BINDING rather than overlay vocabulary, so it is read from the
-// event and CLAIMED - the same law U52's sheet applies to F5.
+// ESCAPE AND THE INVENTORY KEY, the two the classic window closes on.
+//
+// MAC-C (2026-09-17, Mac: "you can exit out of the F6 menu (inventory)
+// by pressing F6 again, but you cannot do the same for the F5 one
+// (char sheet)" + "it would be extra cool if you could like, be on the
+// F5 page, press F6 and then go straight from char sheet to inv.").
+//
+// This line used to read `e.key !== 'F6'` - the DFU DEFAULT spelled as
+// a literal, which is I2's and FIX-F's bug twice over: a player who
+// rebinds Inventory in the controls window gets a pack that opens on
+// their key and closes on nobody's. It reads the REGISTRY now, the same
+// `actionOf` the hosts' own ladders read.
+//
+// And the other window key CROSSES OVER rather than doing nothing: the
+// pack closes and the sheet opens, in that order, because `showOverlay`
+// REPLACES the host's one slot (the same note `openSpellbook` carries
+// four lines of hooks above). A host that hands no sheet door gets a
+// key that falls through, which is the honest refusal every other
+// optional hook here gives.
 function onKey(e) {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
   const t = e.target;
@@ -2285,7 +2361,19 @@ function onKey(e) {
   // world (A-F4). Escape ends the drag and keeps the window; a second
   // one closes it, as it always did.
   if (overlayAction(e) === 'back' && drag) { e.preventDefault(); e.stopPropagation(); dragStop(false); return; }
-  if (overlayAction(e) !== 'back' && e.key !== 'F6') return;
+  const act = actionOf(e);
+  if (act === 'CharacterSheet' && typeof deps?.openCharSheet === 'function') {
+    e.preventDefault();
+    e.stopPropagation();
+    // JAN1 (2026-09-18, Janome: "got this while toggling between F5 and F6 menus" - CRASH `openCharSheet is not a
+    // function`): THE HOOK IS READ BEFORE ANYTHING CLOSES - the file's own law at the close arm above - because
+    // `onExit` unmounts, and the unmount clears `deps` to `{}` before this line ran on it.
+    const openCharSheet = deps.openCharSheet;
+    onExit();                 // the pack's own close law runs FIRST...
+    openCharSheet();          // ...and this replaces the slot it just freed
+    return;
+  }
+  if (overlayAction(e) !== 'back' && act !== 'Inventory') return;
   e.preventDefault();
   e.stopPropagation();
   onExit();

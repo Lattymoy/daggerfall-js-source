@@ -277,8 +277,8 @@ test('AUDIT 62 F15: both of world.js\'s placement arms test the watch too', () =
   // watchman's capsule is a collider, so the quest arm may not ask the
   // encounter pool alone.
   const w = src('src/scenes/world.js');
-  assert.equal((w.match(/isOccupied: entityOccupancy\(\(f\) => f\.ai\?\.feet, \(\) => exteriorFoePool\(\), feet\)/g) ?? []).length, 2,
-    'the encounter arm and the quest arm both ask the whole street');
+  assert.equal((w.match(/isOccupied: entityOccupancy\(\(f\) => f\.ai\?\.feet, \(\) => exteriorFoePool\(\), feet\)/g) ?? []).length, 3,
+    'the encounter arm, the quest arm and CAMP1\'s group anchor all ask the whole street (the members ask it around the anchor - test/camp1_groups.test.js)');
   assert.equal(/exteriorFoes\.foes, feet\)/.test(w), false, 'neither asks the encounter pool alone');
   assert.match(src('src/scenes/exterior.js'), /isOccupied: entityOccupancy\(\(f\) => f\.ai\?\.feet, exteriorFoePool, feet\)/,
     'the ?exterior twin already asked it');

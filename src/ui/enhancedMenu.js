@@ -1308,6 +1308,26 @@ function portRowsInterface({ pause = false } = {}) {
   const out = [];
   if (!pause) out.push(skinRow());
   out.push(hudScaleRow());
+  // FOEBAR1: the target bar's face is a two-way choice, not a switch - the
+  // stick-position row's shape: a row whose button names the OTHER option.
+  {
+    const blade = getPref('foeBarStyle') === 'blade';
+    const row = el('div', 'row');
+    const main = el('button', 'row-main');
+    main.append(el('div', 'row-name', 'Target bar'));
+    main.append(el('div', 'row-note', blade
+      ? 'Blade: the twin blades under the compass recede toward their hub as the foe\u2019s health falls.'
+      : 'Bar: the plain track under the compass. Takes effect at once.'));
+    const flip = () => { setPref('foeBarStyle', blade ? 'bar' : 'blade'); render(); };
+    main.onclick = flip;
+    row.append(main);
+    const ctl = el('div', 'ctl');
+    const b = el('button', 'act rowact', blade ? 'Blade' : 'Bar');
+    b.onclick = flip;
+    ctl.append(b, el('span', 'tier live'));
+    row.append(ctl);
+    out.push(row);
+  }
   out.push(prefRow('showFps', 'FPS counter',
     'Frames a second in the top-right corner, with the frame\u2019s milliseconds and the slowest frame of the '
     + 'last second. Takes effect at once. ?fps in the address bar forces it on for a probe.'));
@@ -2276,7 +2296,7 @@ function pauseSystem(body) {
 // the three reputation stores the talk and court systems read.
 const STATS_SECTIONS = Object.freeze([
   ['character', 'Character'], ['attributes', 'Attributes'],
-  ['skills', 'Skills'], ['standing', 'Standing'],
+  ['skills', 'Skills'], ['specials', 'Advantages'], ['standing', 'Standing'],
 ]);
 // The five NAMED social groups getReactionToPlayer reads
 // (formats/factionFile.js:23-27; talk.js seeds the array) - the enum
@@ -2313,7 +2333,7 @@ function pauseStats(body) {
   }
   wrap.append(rail);
   const detail = el('div', 'px-qdetail');
-  ({ character: statsCharacter, attributes: statsAttributes, skills: statsSkills, standing: statsStanding })[statsSec](detail, m);
+  ({ character: statsCharacter, attributes: statsAttributes, skills: statsSkills, specials: statsSpecials, standing: statsStanding })[statsSec](detail, m);
   // PX25: THE DOORS THE F5 SHEET CARRIED. The classic character sheet
   // has four buttons down its side - Inventory, Spellbook, Logbook,
   // History - and the enhanced F5 overlay copied them. This page shows
@@ -2403,6 +2423,40 @@ function statsSkills(detail, m) {
     document.createTextNode(statsAllSkills ? 'Hide miscellaneous' : `Show ${miscCount} miscellaneous skills`));
   more.onclick = () => { statsAllSkills = !statsAllSkills; render(); };
   detail.append(more);
+}
+
+/** ADVANTAGES: GetClassSpecials, which the port had never drawn.
+ *
+ *  MAC-G (Mac: "the enhanced stat page on the pause menu doesn't have
+ *  any listing for character advantages/disadvantages"). DFU prints
+ *  ONE undifferentiated list in a message box behind the classic
+ *  sheet's History button; this page has room for the division the
+ *  player actually made at chargen, so the model tags each row with
+ *  which of the two lists its primary belongs to and the page prints
+ *  them under their own dividers.
+ *
+ *  The SOURCE tag is the other half of the answer: Resistance To Magic
+ *  on a Breton mage can come from the class or from the blood, and a
+ *  list that does not say which leaves the player guessing at what a
+ *  re-rolled class would keep. */
+function statsSpecials(detail, m) {
+  const rows = m.specials ?? [];
+  if (!rows.length) {
+    detail.append(pxDivider('Advantages'));
+    detail.append(el('p', 'px-note', 'No special advantages or disadvantages.'));
+    return;
+  }
+  for (const [kind, title] of [['advantage', 'Advantages'], ['disadvantage', 'Disadvantages']]) {
+    const list = rows.filter((r) => r.kind === kind);
+    if (!list.length) continue;
+    detail.append(pxDivider(title));
+    for (const r of list) {
+      const row = el('div', 'px-stat');
+      row.append(el('span', 'k', r.label));
+      row.append(el('span', 'v px-src', r.source === 'race' ? (m.race || 'Race') : (m.career || 'Class')));
+      detail.append(row);
+    }
+  }
 }
 
 /** STANDING: the three reputation stores the game actually reads -

@@ -68,8 +68,13 @@ export const GROUPS = Object.freeze({
   world: Object.freeze({ label: 'The world' }),
   loot: Object.freeze({ label: 'Loot & items' }),
   combat: Object.freeze({ label: 'Combat' }),
+  // ORL1 (2026-09-17): the fifth group. A leveling system is not what
+  // you see, where you are, what you carry or how you fight - it is
+  // what you BECOME, and filing it under any of the four would have
+  // been filing it under the nearest one rather than the right one.
+  character: Object.freeze({ label: 'Your character' }),
 });
-export const GROUP_ORDER = Object.freeze(['sight', 'world', 'loot', 'combat']);
+export const GROUP_ORDER = Object.freeze(['sight', 'world', 'loot', 'combat', 'character']);
 
 /** WM3: the Windmills pack's switch key. It is declared HERE with its
  *  row (RF4's law) rather than in `world/windmills.js`, because that
@@ -103,12 +108,21 @@ const modFeature = (vendor, effect, group) => {
 
 /** FT14 (2026-09-15) - WHAT A MOD'S TILE SHOWS, AND WHAT IT DOES NOT.
  *
- *  The eight vendored mods carry 125 settings keys between them -
- *  Handheld Torches alone has 53 and the Weapon Widget 42, which is
- *  two thirds of the total in two mods. That is the real reason the
- *  Mods pane was a scroll, and no amount of layout fixes a list that
- *  long. So the tile shows the few a player would actually move (46 of
- *  the 125), and the other 79 keep the values the mod ships.
+ *  The eight vendored mods carried 125 settings keys between them when
+ *  this was written - Handheld Torches alone had 53 and the Weapon
+ *  Widget 42, which was two thirds of the total in two mods. That is
+ *  the real reason the Mods pane was a scroll, and no amount of layout
+ *  fixes a list that long. So the tile shows the few a player would
+ *  actually move (46 of the 125 then), and the rest keep the values the
+ *  mod ships.
+ *
+ *  ORL1 (2026-09-17) RE-COUNTED RATHER THAN RE-WORDED: thirteen mods,
+ *  227 keys, 65 shown. The ratio held as the list grew, which is the
+ *  only thing the paragraph above was ever claiming - but a count in
+ *  prose is a claim like any other, and leaving the old one standing
+ *  would have read as the live number. The numbers are derivable
+ *  (MOD_SETTINGS, modModules + modDials), so nothing here is the
+ *  authority for them; they are here to be read beside the argument.
  *
  *  TWO SHAPES, because the mods have two. A key under `Modules.` is a
  *  SUB-FEATURE the mod can turn off whole (the Widget's nine: its
@@ -163,6 +177,16 @@ export const MOD_CURATED = Object.freeze({
   'immersive-footsteps': Object.freeze(['AudioQualitySettings.SoundClipQuality', 'FootstepSettings.FootstepVolumeMulti', 'ArmorSwaySettings.ArmorSwayVolumeMulti']),
   // BA1: the footsteps switch (off beside Immersive Footsteps), the echo, the darkness.
   'better-ambience': Object.freeze(['Better Footsteps.enable', 'Dungeon Reverb.level', 'Dungeon Lighting.dungeonDarkness']),
+  // ORL1: the mod ships SEVEN knobs and `primarySkillsImpact` is the
+  // port's own eighth (Daggerfall has a tier of chosen skills Morrowind
+  // does not). All eight are on the tile - the
+  // same call Ambient Text's row made, and for the same reason. These
+  // are not presentation dials a player sets once; they are the rules
+  // of the leveling system, and hiding four of them would leave a
+  // player unable to see why their bar fills at the rate it does.
+  'oblivion-remaster-leveling': Object.freeze(['attributePoints', 'maxUpdatableAttribute',
+    'allowLuckIncrease', 'luckIncreaseCost', 'primarySkillsImpact', 'majorSkillsImpact',
+    'minorSkillsImpact', 'miscSkillsImpact']),
 });
 
 /** The `Modules.` keys a vendor ships, in the mod's own order - the
@@ -401,6 +425,29 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'soundEnhancements', initial: true, online: 'player' }),   // ES1: systems/enhancedSounds.js enhancedSoundsOn; windAudio.js windSoundOn rides it
   }),
+  // MAC-I + MAC-P (2026-09-17, Mac: "The classic sprite should react to
+  // lighting (first person)" and "morrowind's first person view also
+  // doesn't receive lighting and is consistently dark"): the viewmodel
+  // takes the room's light, in BOTH lanes. FPSWeapon.Tint is DFU's own
+  // channel for the sprite and DFU core never writes it (FPSWeapon.cs:108,
+  // :182) - that is the First-Person Lighting mod's job there; the
+  // Morrowind arms had a fixed STUDIO light, right for a UI picture and
+  // wrong for a thing standing in the world. One answer feeds both
+  // (render/renderer.js flatLightAt, the FLAT's own four terms at the
+  // camera). On by default, because a hand that ignores the dark is the
+  // thing that was reported; off returns the white DFU draws and the
+  // studio the arms had.
+  Object.freeze({
+    id: 'first-person-lighting',
+    group: 'sight',
+    title: 'First-person lighting',
+    note: 'What you hold in first person takes the light of the room you are in: the classic weapon sprite, the '
+      + 'casting hands and the torch in your off hand, and the Morrowind arms, which were lit by a fixed studio '
+      + 'and read dark everywhere.',
+    effect: 'Takes effect at once.',
+    kinds: Object.freeze(['enhanced', 'classic']),
+    control: Object.freeze({ store: 'prefs', key: 'firstPersonLighting', initial: true, online: 'player' }),   // MAC-I: combat/weaponRig.js fpLightingOn
+  }),
   Object.freeze({
     id: 'flora-sway',
     group: 'sight',
@@ -509,6 +556,15 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['mod']),
     control: Object.freeze({ store: 'prefs', key: 'mwSheathing', initial: true, online: true }),
   }),
+  // ORL1 (2026-09-17): OBLIVION-REMASTER-LIKE LEVELING - the first
+  // Morrowind mod, and the only row whose effect line has to say NEXT
+  // CHARACTER. Every other mod's switch lands on the running game; this
+  // one decides whether a character is ASKED the question at creation,
+  // and the answer then rides that character's save. Turning it off
+  // does not convert a character who is already levelling by virtues,
+  // and saying so on the tile is the honest line - the alternative is a
+  // player flipping the switch mid-game and wondering why nothing moved.
+  modFeature('oblivion-remaster-leveling', 'Takes effect on the next character you make; a character keeps the system they were created with.', 'character'),
   // FT10 (2026-09-14): DFU'S OWN DUNGEON ENHANCEMENTS - three of the
   // Enhancements section's switches, each read by the port at the point
   // of use as DFU reads it. DFU Classic: Daggerfall Unity's departures
@@ -616,6 +672,39 @@ export const FEATURES = Object.freeze([
     effect: 'Takes effect at once.',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'quickslots', initial: true, online: 'player' }),
+  }),
+  // CAMP1 (2026-09-17, Mac: camps and roaming packs in the wilderness):
+  // an original addition, not a DFU classic feature - the classic game
+  // spawns wandering monsters one at a time. This is a second roll
+  // (systems/campEncounters.js) that places a small group instead. Off
+  // returns the wilderness to lone wanderers; nothing about the
+  // single-encounter roll changes either way.
+  Object.freeze({
+    id: 'wilderness-camps',
+    group: 'world',
+    title: 'Wilderness camps & packs',
+    note: 'Travelling outdoors, a small group of enemies instead of a lone wanderer - a settled camp or a looser '
+      + 'pack crossing your path. Off keeps only the classic one-at-a-time encounters.',
+    effect: 'Takes effect at once.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'wildernessCamps', initial: true, online: 'player' }),
+  }),
+  // SURV2 (2026-09-18, Mac: "All on by default"): THE SURVIVAL ARC -
+  // an overhaul of Ralzar's Climates & Calories (vendor/climates-
+  // calories/README.md), not a port. The one switch for the whole of
+  // it: the felt temperature and the five needs on the world minute,
+  // the food, water and camping items the store shelves and a new
+  // character carries, camps and campfires, the costed rest, hunting.
+  // Off is the classic game: no needs, no provisions minted.
+  Object.freeze({
+    id: 'mod-climates-calories',   // a mod-row id: WM3's law reaches the credits' vendor through it
+    group: 'character',
+    title: 'Climates & Calories by Ralzar',   // AUDIT SURV E: the author's name, as every mod row carries it
+    note: 'Heat, cold, rain and the road wear you down - eat, drink, sleep and dress for the weather, and rest at a '
+      + 'campfire or a bed. Off is the classic game, with no needs at all.',
+    effect: 'Takes effect at once. Online the room decides.',
+    kinds: Object.freeze(['mod', 'enhanced', 'classic']),   // AUDIT SURV E: a mod row, under the MOD AUTHORED filter
+    control: Object.freeze({ store: 'prefs', key: 'survival', initial: true, online: true }),
   }),
 ]);
 

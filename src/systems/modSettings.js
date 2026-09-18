@@ -257,7 +257,26 @@ export const MOD_SETTINGS = Object.freeze({
       // own defaults (inputActions.js DEFAULT_BINDINGS) and unused by the
       // mod's other two keys, and it stays the player's to rebind.
       'Handling.ManualDropInput': Object.freeze({ default: "G", text: true, description: 'Button used to manually drop a light source' }),
-      'Handling.OnStow': Object.freeze({ default: 1, options: Object.freeze(["Unequip", "Drop"]), description: 'Behavior when forced to stow a light source' }),
+      // HT7 (2026-09-17, Mac: "Take care of both") - THE ONE DEFAULT THIS
+      // PORT MOVES, and it is an owner decision rather than a misread.
+      //
+      // Handheld Torches ships `OnStow = Drop` (1), and the port kept it
+      // with every other shipped default. HT6 recorded the consequence:
+      // with the weapon DRAWN, equipping a shield puts your lit torch on
+      // the floor - and since HT6 made the law run at the equip moment,
+      // it happens while the inventory is still open, in front of you.
+      // A player who equips a shield mid-fight has not asked to drop
+      // anything, and a torch on a dungeon floor is an item lost to
+      // whoever does not think to look down.
+      //
+      // So the port DEFAULTS to Unequip (0) - the light goes back to the
+      // pack and `RememberLastLightSource` lights it again when a hand
+      // comes free, which is the behaviour the rest of this mod is built
+      // around. The mod's own default is ONE CLICK away on the Mods
+      // pane's dial; nothing about the Drop path is removed, and the
+      // throw (Throwing.ThrowTorchInput) is still how you put a torch on
+      // the floor on purpose.
+      'Handling.OnStow': Object.freeze({ default: 0, options: Object.freeze(["Unequip", "Drop"]), description: 'Behavior when forced to stow a light source' }),
       'Handling.OnPick': Object.freeze({ default: 1, options: Object.freeze(["Store", "Equip", "Force Equip"]), description: 'Behavior when picking up a light source' }),
       'Handling.StowWhenSpellcasting': Object.freeze({ default: true, description: 'Casting, or holding a readied spell, stows the light: no free hand.' }),
       'Handling.StowWhenClimbing': Object.freeze({ default: true, description: 'Climbing stows the light: no free hand.' }),
@@ -535,6 +554,48 @@ export const MOD_SETTINGS = Object.freeze({
       'Dungeon Lighting.fogAmbientEffect': Object.freeze({ default: 0.2, min: 0.0, max: 1.0, float: true, step: 0.05, description: 'How much the random dungeon color affects dungeon lighting' }),
       'Better Rain.enableBetterRain': Object.freeze({ default: true, description: 'Makes rain particles look a bit better' }),
       'Better Rain.enableBetterSnow': Object.freeze({ default: true, description: 'Makes snow particles look a bit better' }),
+    }),
+  }),
+  // ORL1 (2026-09-17): OBLIVION-REMASTER-LIKE LEVELING 0.5.3 - the
+  // first MORROWIND mod in this store, and the only one whose switches
+  // come out of OpenMW `I.Settings.registerGroup` calls rather than a
+  // `modsettings.json`. The mod's own two groups are `levelUpSettings`
+  // (settings.lua:10-64) and `skillSettings` (:66-108); their names,
+  // minimums and defaults are the mod's, and the DESCRIPTIONS are the
+  // author's own English strings out of `l10n/en.yaml` - the pane shows
+  // them as they were written, the same law the other mods' rows follow.
+  //
+  // `Enabled` is the port's, as every vendored mod carries one, and
+  // here it decides ONE thing: whether a new character is ever ASKED
+  // the question. Off, and chargen never shows the prompt and every
+  // character levels the Daggerfall way. It does not change a
+  // character who has already answered - `entity.levelingSystem` is on
+  // the save and the save is the law (systems/oblivionLeveling.js).
+  //
+  // `primarySkillsImpact` IS THE PORT'S OWN and has no key in the mod,
+  // because Morrowind has no primary skills. Its description says so,
+  // so the pane never presents it as the author's work.
+  'oblivion-remaster-leveling': Object.freeze({
+    title: 'Oblivion Remaster Like Leveling',
+    // The archive names no author (no LICENCE, no script header, an
+    // empty `.omwaddon` author field). The registry row and the vendor
+    // README both carry the same open record; until Mac fills it in,
+    // the pane says what is true rather than inventing a name.
+    author: 'Nexus Morrowind 56569',
+    keys: Object.freeze({
+      Enabled: Object.freeze({
+        default: true,
+        description: 'Oblivion Remastered’s leveling in place of Daggerfall’s: every skill you raise fills a 100-point bar, and levelling up hands you a purse of virtues to spend where you choose. New characters are asked which system they want.',
+      }),
+      attributePoints: Object.freeze({ default: 12, min: 0, max: 60, description: 'Amount of points for increasing attributes' }),
+      maxUpdatableAttribute: Object.freeze({ default: 3, min: 2, max: 8, description: 'The number of attributes to be increased in one level up' }),
+      allowLuckIncrease: Object.freeze({ default: true, description: 'Allow Luck to be increased by more than one point' }),
+      luckIncreaseCost: Object.freeze({ default: 4, min: 1, max: 20, description: 'Cost to upgrade Luck by one point' }),
+      // The port's own, for Daggerfall's third tier of chosen skills.
+      primarySkillsImpact: Object.freeze({ default: 8, min: 0, max: 100, description: 'Points given by a Primary Skill level up (100 points required to level up). Daggerfall has a tier of skills Morrowind does not, so this knob is the port’s own; it ships equal to the major skills’, which is where the mod’s own top tier sits.' }),
+      majorSkillsImpact: Object.freeze({ default: 8, min: 0, max: 100, description: 'Points given by a Major Skill level up (100 points required to level up)' }),
+      minorSkillsImpact: Object.freeze({ default: 6, min: 0, max: 100, description: 'Points given by a Minor Skill level up (100 points required to level up)' }),
+      miscSkillsImpact: Object.freeze({ default: 2, min: 0, max: 100, description: 'Points given by a Misc Skill level up (100 points required to level up)' }),
     }),
   }),
   // TO1 (2026-09-17, Mac: "This is the next daggerfall mod we are to

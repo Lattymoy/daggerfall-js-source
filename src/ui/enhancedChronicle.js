@@ -37,6 +37,14 @@ let deps = {};
 let onExit = () => {};
 let section = 'notes';
 let draft = '';   // PX24b: the note being written, kept across renders
+// MAC-F (Mac: "Quests and their tabs should be able to be minimized").
+// WHICH CARDS THE PLAYER HAS SHUT, as `section:index`. A quest's whole
+// trail is its body and twelve of them is a wall of text; the classic
+// logbook answers that with four-lines-and-a-Next-button, this window
+// answers it by letting a card fold to its head. Kept across renders
+// and across a tab change, cleared on mount - a fold is a reading
+// position, not a saved setting, and nothing on disk should learn it.
+const folded = new Set();
 
 // MAC-K2 (Mac: "Logbook not reflecting quests"). QUESTS GOES FIRST,
 // and it is the section this window was missing entirely. The L key
@@ -133,6 +141,28 @@ export function chronicleModel(d = {}) {
   // strings, and playerHistory.js reads exactly this.
   const history = (d.entity?.backStory ?? []).map((l) => String(l ?? '')).filter((l) => l.length);
   return { quests, notes, messages, history };
+}
+
+/** MAC-F: the fold laws, kept pure so a node test can drive them with
+ *  no DOM. The store is a plain Set of keys and the window owns one. */
+export const foldKey = (sec, index) => `${sec}:${index}`;
+export const isFolded = (store, sec, index) => !!store?.has(foldKey(sec, index));
+export function toggleFold(store, sec, index) {
+  const k = foldKey(sec, index);
+  if (store.has(k)) store.delete(k); else store.add(k);
+  return store;
+}
+/** Whether EVERY card in a section is shut - which is what decides
+ *  whether the section's own control offers to collapse or expand. An
+ *  empty section is not "all folded": there is nothing to fold. */
+export const allFolded = (store, sec, count) =>
+  count > 0 && Array.from({ length: count }, (_, i) => foldKey(sec, i)).every((k) => store.has(k));
+/** Fold or unfold a whole section at once. */
+export function setSectionFold(store, sec, count, shut) {
+  for (let i = 0; i < count; i++) {
+    if (shut) store.add(foldKey(sec, i)); else store.delete(foldKey(sec, i));
+  }
+  return store;
 }
 
 function render() {
@@ -239,9 +269,24 @@ function render() {
       const list = section === 'messages'
         ? rows.map((e, i) => ({ e, i })).reverse()
         : rows.map((e, i) => ({ e, i }));
+      // MAC-F: THE WHOLE TAB AT ONCE. Folding twelve quests one at a
+      // time to see the twelve titles is the wall of text again with
+      // extra clicks in it, so the section carries the same control
+      // its cards do - and it reads the cards rather than keeping a
+      // flag of its own, so folding the last one by hand flips it.
+      const shutAll = allFolded(folded, section, rows.length);
+      const every = el('button', 'px-qrow cr-foldall');
+      every.append(el('span', 'px-c', shutAll ? '\u25b8' : '\u25be'),
+        document.createTextNode(shutAll ? 'Expand all' : 'Collapse all'));
+      every.onclick = () => { setSectionFold(folded, section, rows.length, !shutAll); render(); };
+      detail.append(every);
       const box = el('div', 'cr-entries');
       for (const { e, i } of list) {
-        const entry = el('div', 'cr-entry');
+        // MAC-F: a SHUT card says so in its own class, so the head's
+        // divider can go with the body it was dividing from - a card
+        // that keeps a rule under its title looks like a card whose
+        // body failed to draw.
+        const entry = el('div', `cr-entry${isFolded(folded, section, i) ? ' cr-shut' : ''}`);
         const top = el('div', 'cr-head');
         // THE DATE, which the notebook wrote and PX24 lost. A NOTE
         // whose page split files with no header (notebook.js:97-107)
@@ -250,7 +295,18 @@ function render() {
         const head = e.head ?? (section === 'messages'
           ? (i === rows.length - 1 ? 'Most recent' : null)
           : '\u2014 continued \u2014');
-        top.append(el('span', 'cr-when', head ?? ''));
+        // MAC-F: THE HEAD IS THE HANDLE. The caret and the date are one
+        // button - a card folds by clicking the thing you were already
+        // reading, and the remove stays its own control beside it
+        // rather than nested inside a button, which is not HTML.
+        const shut = isFolded(folded, section, i);
+        const fold = el('button', 'cr-fold');
+        fold.append(el('span', 'px-c cr-caret', shut ? '\u25b8' : '\u25be'));
+        fold.append(el('span', 'cr-when', head ?? ''));
+        fold.setAttribute('aria-expanded', String(!shut));
+        fold.title = shut ? 'Expand this entry' : 'Collapse this entry';
+        fold.onclick = () => { toggleFold(folded, section, i); render(); };
+        top.append(fold);
         if (!head) top.classList.add('cr-headless');
         if (section === 'notes' && deps.notebook?.()) {
           const rm = el('button', 'cr-rm', '\u00d7');
@@ -260,7 +316,7 @@ function render() {
           top.append(rm);
         }
         entry.append(top);
-        for (const line of e.body) entry.append(el('p', null, line));
+        if (!isFolded(folded, section, i)) for (const line of e.body) entry.append(el('p', null, line));
         box.append(entry);
       }
       detail.append(box);
@@ -300,13 +356,14 @@ export function mountEnhancedChronicle(hostEl, d = {}) {
   onExit = d.onExit ?? (() => {});
   section = CHRONICLE_SECTIONS.some(([id]) => id === d.section) ? d.section : 'quests';
   draft = '';
+  folded.clear();   // MAC-F: a fresh open reads whole, as it always has
   render();
   window.addEventListener('keydown', onKey, true);
   return {
     render,
     destroy() {
       window.removeEventListener('keydown', onKey, true);
-      host = null; deps = {}; section = 'notes'; draft = '';
+      host = null; deps = {}; section = 'notes'; draft = ''; folded.clear();
     },
   };
 }

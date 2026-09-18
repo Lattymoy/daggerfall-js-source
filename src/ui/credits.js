@@ -116,6 +116,16 @@ export const CREDITS = Object.freeze({
       link: 'https://www.nexusmods.com/daggerfallunity/mods/780',
     }),
     Object.freeze({
+      title: 'Climates & Calories',
+      version: '1.7.1',
+      author: 'Ralzar',
+      what: 'The survival arc (SURV): a felt temperature from climate, season, hour, weather, clothes and armour; hunger, thirst, sleep and wetness as needs; food that spoils; camps and campfires; a costed rest; hunting. Overhauled from the mod\u2019s rules rather than ported - its numbers were the starting point - with its own item art vendored: the foods\u2019 spoiled faces, raw meat and the waterskin.',
+      terms: 'Overhauled with the author\u2019s permission, relayed by Mac (2026-09-17): not a 1:1 port; the rules were read off the shipped bundle\u2019s compiled script and rebuilt, and the mod\u2019s own item art is carried - see vendor/climates-calories/README.md.',
+      contact: 'Ralzar, through the DFU forums (the manifest\u2019s ContactInfo)',
+      vendor: Object.freeze(['climates-calories']),
+      link: 'https://www.nexusmods.com/daggerfallunity/mods/49',
+    }),
+    Object.freeze({
       title: 'Windmills of Daggerfall',
       version: '2.0',
       author: 'Kamer',
@@ -198,6 +208,21 @@ export const CREDITS = Object.freeze({
       terms: 'Ported 1:1 from the sixteen sources the shipped bundle carries, under the author\u2019s MIT licence; the 29 clips the mod asks for vendored from the author\u2019s repository - see vendor/better-ambience/README.md for the permission record. The rain and snow particle tweaks have no twin: the port\u2019s precipitation is its own.',
       contact: 'forums.dfworkshop.net',
       vendor: Object.freeze(['better-ambience']),
+    }),
+    Object.freeze({
+      title: 'Oblivion Remaster Like Leveling',
+      version: '0.5.3',
+      // THE ONE ROW ON THIS SCREEN WHOSE AUTHOR IS NOT KNOWN. Nothing
+      // in the shipped archive names them - no licence file, no script
+      // header, an empty author field in the `.omwaddon` - so the
+      // screen says so and names the page the mod comes from, rather
+      // than crediting a guess. The record is open in
+      // vendor/oblivion-remaster-leveling/README.md and in the
+      // registry row, and it is filled in the moment Mac has the name.
+      author: 'Unnamed (Nexus Morrowind 56569)',
+      what: 'An alternative way to level, offered when you make a character (ORL1): every skill you raise fills a hundred-point bar instead of Daggerfall\u2019s skill sum - your primaries and majors fastest, your minors next, everything else slowest - with whatever spills over carried into the next level; and levelling up hands you a purse of virtues to spend across a few of your attributes, with Luck priced higher — how many, across how many, and what Luck costs are all yours to set on the mod’s own tile. The first MORROWIND mod in the port: it is an OpenMW Lua mod, ported 1:1 from the author\u2019s own source (systems/oblivionLeveling.js), in both lanes.',
+      terms: 'Carried by the author\u2019s permission, on Mac\u2019s word - the archive states no licence and names no author. Ported 1:1 from the shipped Lua, which is vendored whole; see vendor/oblivion-remaster-leveling/README.md for the open permission record.',
+      vendor: Object.freeze(['oblivion-remaster-leveling']),
     }),
   ]),
 });

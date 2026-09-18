@@ -48,7 +48,7 @@ import { pickFoe,   // TI1: the lock-on pick
 import { tryMobileEnemyActivate } from '../player/mobileEnemyActivate.js';
 import { FOUND_NOTHING_VALUABLE_TEXT_ID } from '../systems/talk.js';   // GetRandomText(8999)
 import { createMusicDirector, fetchBytes, motorStats, climbingDeps, ridePlatform, doorSpellFor, wireDoorSpells, claimFrame, frameAlive, frameHeld } from './shared.js';
-import { routeKey, routeKeyUp, held, moveHeld, anyMove, actionOf, swallowBrowserKey, mouseCode, isSwingButton, swingHeld, keyboardLook, installContextMenuGuard } from '../ui/input.js';
+import { keyEdges, noteKeyDown, noteKeyUp, beginInputFrame, pressed, released, pressedCode, routeKey, routeKeyUp, held, moveHeld, anyMove, actionOf, swallowBrowserKey, mouseCode, isSwingButton, swingHeld, keyboardLook, installContextMenuGuard } from '../ui/input.js';
 import { armUnloadGuard } from '../systems/unloadGuard.js';   // MAC-L3: one door in front of every way out of a running game   // AUDIT 39r: the mouse half of the held set
 import { createActivateGate, activateFrame, setClickDelay } from '../systems/activateGate.js';   // A8: PlayerActivate's ActivateCenterObject frame
 import { capturePendingScreenshot } from '../systems/saveSlots.js';   // SS1: the context arms the shot, THIS loop delivers it
@@ -130,7 +130,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // below, after this context; null falls to standing defaults.
       motorState: () => (_motorRef ? { eyeLevel: _motorRef.eye[1] - _motorRef.pos[1], capsule: _motorRef.height } : null),
       // MAC1 J: this host's canvas, for the pause door's relock. The
-      // context owns none of its own (dungeonContext.js:5529), so each
+      // context owns none of its own (dungeonContext.js:5593), so each
       // dungeon host hands its own in and the resume gesture carries
       // the pointer back with it (ui/pauseDoor.js:207-224).
       relock: () => requestLook(canvas) });
@@ -223,12 +223,17 @@ export async function bootDungeon(canvas, renderer, params, status) {
     cam.pos = [...player.eye];
     console.log(`[action] teleport -> [${pos.map((v) => v.toFixed(2)).join(', ')}] (marker yaw ${yawDeg.toFixed(1)}, not applied - PlayerMouseLook owns the heading)`);
   };
-  let prevCrouch = false;   // P12: the crouch-toggle key edge (jump is HELD - P14)
-  let prevUse = false;
+  // MWCROUCH: the frame's key EDGES (ui/input.js). The four press
+  // latches this host used to keep - crouch, E, Z and H - were
+  // derivations off the held ring and dropped any tap that began and
+  // ended between two frames; GetKeyDown/GetKeyUp do not.
+  // THE ROTATION IS AT THE HEAD OF THE FRAME, above the video hold, on
+  // purpose: an edge lives exactly one frame - the single frame Unity
+  // gives it - and a held frame is DFU's paused InputManager, which
+  // DROPS the edge rather than banking it for whenever the video ends.
+  const keyEdge = keyEdges();
   const activateGate = createActivateGate();   // A8: this host's ActivateCenterObject frame state
   console.log(`player: collider ${ctx.colliderTris} tris, ${ctx.actions.objects.size} activatables, walk=${walkMode}`);
-  let zPrev = false;   // ReadyWeapon (Z) edge state
-  let hPrev = false;   // a12: SwitchHand (H) edge - RELEASED, not pressed (WeaponManager.cs:272)
   const tryActivate = () => {
     const dir = _tapDir ?? [   // TI1: the tap's ray, else the centre
       Math.sin(cam.yaw) * Math.cos(cam.pitch),
@@ -286,6 +291,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // moved up to match. Both of this host's keydown listeners run
     // after it, so routeKey below sees this press placed.
     keys.add(e.code);
+    noteKeyDown(keyEdge, e.code, e.repeat);   // MWCROUCH: the press event, buffered for the frame that reads it
     if (e.code === 'AltLeft') e.preventDefault();
     // R1: the four modes switch here too - DFU's currentMode is global
     // and the standalone dungeon has no townTalk to carry the keydown.
@@ -316,7 +322,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // DFU's `GetKeyUp` (the automap's two-phase toggle-close) or polls
   // `GetKey` (its twenty-two IsPressedWith camera arms) could not.
   // routeKey's mirror, on the same ctx.
-  addEventListener('keyup', (e) => { keys.delete(e.code); if (e.code === 'AltLeft') e.preventDefault(); routeKeyUp(e, ctx); });
+  addEventListener('keyup', (e) => { keys.delete(e.code); noteKeyUp(keyEdge, e.code); if (e.code === 'AltLeft') e.preventDefault(); routeKeyUp(e, ctx); });   // MWCROUCH: ...and the release, for SwitchHand's ActionComplete edge
   // U14: an OPEN overlay owns the pointer - the click goes to the
   // window, not to the pointer lock. This host had no pointer path at
   // all, so chargen here was keyboard-only while the exterior hosts
@@ -416,7 +422,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // (Mouse2, the wheel) and the drawn bow's ActivateCenterObject
   // un-draw (Mouse0) could never read true. mouseCode owns the
   // Unity/DOM middle-button crossover; the RELEASE is unconditional.
-  addEventListener('mousedown', (e) => { if (isSwingButton(e.button)) rightHeld = true; const mc = mouseCode(e.button); if (mc) keys.add(mc); if (isSwingButton(e.button) && !ctx.uiOverlayActive) ctx.playerAttackInput(0, 0, true); });   // FIX-F: the swing's button is the registry's   // I4: a right-click on a window is the window's (the remove gesture), never a swing
+  addEventListener('mousedown', (e) => { if (isSwingButton(e.button)) rightHeld = true; const mc = mouseCode(e.button); if (mc) { keys.add(mc); noteKeyDown(keyEdge, mc); } if (isSwingButton(e.button) && !ctx.uiOverlayActive) ctx.playerAttackInput(0, 0, true); });   // FIX-F: the swing's button is the registry's   // I4: a right-click on a window is the window's (the remove gesture), never a swing
 
   addEventListener('keydown', (e) => {
     // The input map (ui/input.js) owns all bindings.
@@ -432,7 +438,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // character and left them standing wherever they were.
     if (routeKey(e, ctx, (p) => player.spawn(p[0], p[1], p[2]), keys)) e.preventDefault();   // P14: a load clears motion state (DFU CancelMovement + ClearFallingDamage)   // AUDIT 58 (f3/input): + the held-keys Set, so a rebound combo reaches the dispatch (InputManager.cs:1666-1712)
   });
-  addEventListener('mouseup', (e) => { if (isSwingButton(e.button)) rightHeld = false; const mc = mouseCode(e.button); if (mc) keys.delete(mc); if (isSwingButton(e.button)) ctx.playerAttackInput(0, 0, false); });
+  addEventListener('mouseup', (e) => { if (isSwingButton(e.button)) rightHeld = false; const mc = mouseCode(e.button); if (mc) { keys.delete(mc); noteKeyUp(keyEdge, mc); } if (isSwingButton(e.button)) ctx.playerAttackInput(0, 0, false); });
   const inputHooks = {   // GP1: one hooks object for the finger AND the pad   // mobile: stick synthesizes WASD; the right half is classified (TI1)
     look: (dx, dy) => {
       lookFilter.add(dx * lookScale(), -dy * lookScale() * lookInvert());   // AUDIT 28 W7: through the look filter (HANDEDNESS, mat4's law)
@@ -653,6 +659,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   function frame(now) {
     if (!frameAlive(_frameToken)) return;   // P0: a later boot or an unwind killed this loop
     frameBegin(now);   // PERF1: the script time (systems/frameClock.js)
+    beginInputFrame(keyEdge);   // MWCROUCH
     // AUDIT 39 (#160): a full-screen video owns the canvas for its
     // lifetime (DFU pauses the game for it). The loop WAITS - it
     // neither simulates nor draws - and the clock does not accrue.
@@ -800,6 +807,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // the movement half of the same law, not this one.
       player.paralyzed = paralyzed;
       const crouchHeld = held(keys, 'Crouch');
+      const crouchPress = pressed(keyEdge, keys, 'Crouch');   // MWCROUCH: GetKeyDown, not a held-ring derivation - the levitate descent below still reads the HELD key
       const mv = moveHeld(keys);
       mv.analog = touch?.axes() ?? gamepad?.axes() ?? null;   // TI2: the stick's throw, when the layer has one - MoveAxes' joystick arm takes it over the key impulse; GP1: the pad's stick when no finger
       // AUDIT 64 F3: InputManager.cs:542-545 - `if (ToggleAutorun)
@@ -818,7 +826,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // and nothing else. Dropping run/sneak/autoRun/back from this bag read
       // as a RELEASE to the motor's press-edge latches, so a key held
       // through the paralysis fired a synthetic press on the frame it lifted.
-      player.update(dt, paralyzed ? { forward: 0, strafe: 0, run: held(keys, 'Run'), autoRun: held(keys, 'AutoRun'), back: mv.backwards, sneak: held(keys, 'Sneak'), jump: false, up: false, down: false, crouch: crouchHeld && !prevCrouch } : {
+      player.update(dt, paralyzed ? { forward: 0, strafe: 0, run: held(keys, 'Run'), autoRun: held(keys, 'AutoRun'), back: mv.backwards, sneak: held(keys, 'Sneak'), jump: false, up: false, down: false, crouch: crouchPress } : {
         forward: axes.forward,   // AUDIT 28 W8: InputManager's axes - accelerated under MovementAcceleration, the held difference without
         strafe: axes.strafe,
         run: held(keys, 'Run'),
@@ -834,9 +842,8 @@ export async function bootDungeon(canvas, renderer, params, status) {
         // port's own motor contract said so and every host passed
         // FloatDown alone, so C did nothing but toggle the stance.
         down: crouchHeld || held(keys, 'FloatDown'),
-        crouch: crouchHeld && !prevCrouch,
+        crouch: crouchPress,
       }, cam.yaw, cam.pitch);
-      prevCrouch = crouchHeld;
       // FS-slice: PlayerFootsteps - the dungeon stride on stone with
       // the water arms (shallow = the LIVE capsule centre 0.57 under
       // the block water line - AUDIT 64 F4).
@@ -917,17 +924,12 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // (InputManager.cs:1010) - but never read through held(), so a
       // SwingWeapon rebind is inert (recorded departure).
       if (_act.cast) ctx.playerAttackInput(0, 0, true);   // the armed click casts (dungeonContext:1827); firePending sends it down the live look
-      const useHeld = keys.has('KeyE');   // I2 departure, kept beside A8's Mouse0: DFU binds E to AbortSpell
-      const zNow = held(keys, 'ReadyWeapon');   // sheathe toggle (audit 2026-08-17)
-      if (zNow && !zPrev) ctx.readyWeapon?.();   // MAC-O1: the KEY takes WeaponManager.Update's arm (:229-269), not HUDLarge's raw ToggleSheath
-      zPrev = zNow;
+      const useEdge = pressedCode(keyEdge, 'KeyE');   // I2 departure, kept beside A8's Mouse0: DFU binds E to AbortSpell
+      if (pressed(keyEdge, keys, 'ReadyWeapon')) ctx.readyWeapon?.();   // sheathe toggle (audit 2026-08-17)   // MAC-O1: the KEY takes WeaponManager.Update's arm (:229-269), not HUDLarge's raw ToggleSheath
 // a12: SwitchHand (H) - ActionComplete's RELEASE edge
       // (WeaponManager.cs:272), so the latch is inverted against Z's.
-      const hNow = held(keys, 'SwitchHand');
-      if (!hNow && hPrev) ctx.switchHand?.();
-      hPrev = hNow;
-      if (_act.activate || (useHeld && !prevUse)) tryActivate();
-      prevUse = useHeld;
+      if (released(keyEdge, keys, 'SwitchHand')) ctx.switchHand?.();
+      if (_act.activate || useEdge) tryActivate();
       // `held` here USED to be this frame's local overlay boolean; it was
       // renamed overlayHeld (:353) and the name then resolved to the
       // input helper imported at :33 - a function, so `!held` was
@@ -962,7 +964,8 @@ export async function bootDungeon(canvas, renderer, params, status) {
     const mwv = walkMode
       ? mwViewFrame({ fpEye: cam.pos, feet: player.feetAt(), yaw: cam.yaw, pitch: cam.pitch,
           dt, riding: !!player.riding,   // AUDIT-EOTB F3/F4: the host's own clock, and the one state only it has
-          raycast: (o, d, m) => ctx.collider.raycast(o, d, m) })
+          raycast: (o, d, m) => ctx.collider.raycast(o, d, m),
+          spherecast: (o, r, d, m) => { const h = ctx.collider.sphereCast(o, r, d, m).dist; return Number.isFinite(h) ? h : null; } })   // MAC-A: castSphere's seam beside the ray - the camera's two obstacle guards are sphere casts (camera.cpp:186, :200)
       : { eye: cam.pos, thirdPerson: false };
     const target = [mwv.eye[0] + fwd[0], mwv.eye[1] + fwd[1], mwv.eye[2] + fwd[2]];
     const view = betterAmbience.view(lookAt(mwv.eye, target, [0, 1, 0]));   // BA1: the shaker sits between the follower and the camera
@@ -988,7 +991,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // 16-slot shader cap picks from what survives (dungeonLights.js
       // carries the composition and why that order).
       withPlayerLights(nearestLights(ctx.lights, cam.pos, renderer.maxPointLights, ctx.flicker.ranges, null, DUNGEON_LIGHT_BLOCK_RANGE),   // EL1: the installed set's cap
-        ctx.candleLight?.(), playerTorchLight(playerEntity, player.pos, cam.yaw), ...ctx.torchLights()),   // X11 candle; T1 torch; HT1 the dropped lights
+        ctx.candleLight?.(), playerTorchLight(playerEntity, player.pos, cam.yaw), ...ctx.campLights(), ...ctx.torchLights()),   // X11 candle; T1 torch; HT1 the dropped lights
       DUNGEON_LANTERN_F32);
     renderer.setWorldViewport(largeHudViewportRect(canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
     renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR, WORLD_FRAME);   // AUDIT-EL F5: a WORLD frame - the lane replays its records for this one
@@ -1000,7 +1003,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     ctx.flatAnims.tick(dt);   // FA1: whoever draws the flats runs their clock
     // (the blood pool's clock runs inside ctx.drawFoes now - both dungeon
     // hosts call it, so neither can forget it; 2026-08-27)
-    renderer.drawBillboards([...ctx.billboardBatches, ...ctx.torchBatches()], camRight, UP_Y);   // HT1: the dropped torches on the same pass
+    renderer.drawBillboards([...ctx.billboardBatches, ...ctx.campBatches(), ...ctx.torchBatches()], camRight, UP_Y);   // HT1: the dropped torches on the same pass
     // AUDIT 23 (hosts-9 = audio-3) - SongManager.cs:193: Update() runs
     // every frame, windows open or not - THE MUSIC CONTEXT IS FED
     // BEFORE THE MODAL RETURN (AUDIT 21 F1's law, which this host

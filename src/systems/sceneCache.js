@@ -107,11 +107,17 @@ const copyPiles = (piles) => piles.map((p) => ({
  *  the first. Destructuring only two keys made the port's own
  *  LOOT_CONTAINER_TYPES.DroppedLoot unreachable and cleared the floor
  *  of every shop on the way out. */
-export function cacheScene(cache, sceneName, { lootContainers = [], actionDoors = [], droppedPiles = [] } = {}) {
+export function cacheScene(cache, sceneName, { lootContainers = [], actionDoors = [], droppedPiles = [], droppedTorches = [], camps = [] } = {}) {
   cache.scenes.set(sceneName, {
     lootContainers: lootContainers.map((c) => ({ ...c })),
     actionDoors: actionDoors.map((d) => ({ ...d })),
     droppedPiles: copyPiles(droppedPiles),
+    // SURV3: the port's own loose objects ride the same hand-off. HT1's
+    // torches were HANDED to this door and dropped on the floor - the
+    // three keys above were the whole store, so a torch left on a pixel
+    // never came back with it. The camps came with the fix.
+    droppedTorches: droppedTorches.map((t) => ({ ...t, position: [...(t.position ?? [])] })),
+    camps: camps.map((c) => ({ ...c, pos: [...(c.pos ?? [])] })),
   });
 }
 
@@ -189,7 +195,7 @@ export function restoreSceneCache(cache, snap) {
 // HOUSE deed's AddPermanentScene, which needed the building directory
 // to know which building was bought: H1/H2 shipped both halves -
 // banking.js:201 calls the hook inside allocateHouseToPlayer with the
-// bought building's own mapId and key, and worldModes.js:2283 supplies
+// bought building's own mapId and key, and worldModes.js:2286 supplies
 // it as addPermanentScene(sceneCache(), interiorSceneName(mapId, key)),
 // reached from the bank's buy arm (:2144-2148), the knightly gift
 // (:2752) and :4933, with sellHouse dropping the scene again (:2184). The

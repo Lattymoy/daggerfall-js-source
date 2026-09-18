@@ -212,11 +212,12 @@
   {
     "name": "QS6-the-self-routing-hosts-answer-the-polled-three-on-the-down-edge",
     "file": "src/scenes/world.js",
-    "old": "    if (!townTalk.overlayActive && QUICKSLOT_ACTIONS.has(act) && !POLLED_ACTIONS.has(act) && socialMenuCanOpen() && routeAction(act, hudCtx)) { e.preventDefault(); return; }",
-    "new": "    if (!townTalk.overlayActive && QUICKSLOT_ACTIONS.has(act) && socialMenuCanOpen() && routeAction(act, hudCtx)) { e.preventDefault(); return; }",
+    "old": "    if (!townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior' && QUICKSLOT_ACTIONS.has(act) && !POLLED_ACTIONS.has(act) && socialMenuCanOpen()) { if (!e.repeat && routeAction(act, hudCtx)) { e.preventDefault(); return; } if (e.repeat) { e.preventDefault(); return; } }   // MAC-R2: the press edge alone - a held key's auto-repeat is nothing (ui/input.js routeKey has the law)",
+    "new": "    if (!townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior' && QUICKSLOT_ACTIONS.has(act) && socialMenuCanOpen()) { if (!e.repeat && routeAction(act, hudCtx)) { e.preventDefault(); return; } if (e.repeat) { e.preventDefault(); return; } }   // MAC-R2: the press edge alone - a held key's auto-repeat is nothing (ui/input.js routeKey has the law)",
     "tests": [
       "test/qs2_inputs.test.js"
-    ]
+    ],
+    "why_reaimed": " MAC-R2/R3 (2026-09-17) moved the line; re-aimed to its new text."
   },
   {
     "name": "QS6-the-world-host-never-drives-the-hold-machine",

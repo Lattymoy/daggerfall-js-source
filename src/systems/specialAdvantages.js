@@ -298,6 +298,193 @@ export function parseCareerData(career, list) {
   return career;
 }
 
+// ---- MAC-G: THE LIST, READ BACK OFF A FINISHED CAREER
+// (DaggerfallCharacterSheetWindow.GetClassSpecials, :459-762) ----
+//
+// Mac: "the enhanced stat page on the pause menu doesn't have any
+// listing for character advantages/disadvantages."
+//
+// He is right, and so was DFU before him: the classic sheet's HISTORY
+// button pops GetClassSpecials' message box BEFORE the history window
+// (:898-903, :905-918), so the picks a player spent chargen on are
+// readable for the whole game rather than only while making the
+// character. The port had `parseCareerData` - the WRITE - and no read
+// at all, in either skin.
+//
+// THIS IS THE REVERSE OF parseCareerData, and it lives beside it on
+// purpose: the two walk the same bitfields, so a bit that moves
+// breaks both in one file rather than drifting apart across two.
+//
+// It is NOT the pick list read back. The pick list exists only inside
+// the chargen window; what SURVIVES onto a saved character is the
+// career's flags, and a character loaded from a classic save never had
+// a pick list at all. So the flags are the source, exactly as they are
+// for DFU.
+//
+// Everything here is GetClassSpecials' own order and own pairing.
+// What the port adds is the SPLIT: DFU prints one undifferentiated
+// list, and Mac asked for advantages and disadvantages. The split is
+// not invented - it is which of the two chargen lists the primary
+// belongs to (ADVANTAGE_KEYS / DISADVANTAGE_KEYS above), which is the
+// same division the difficulty table signs.
+
+/** GetTolerance (DFCareer.cs:746-762): resistance, then immunity,
+ *  then low tolerance, then critical weakness - the FIRST that holds
+ *  the effect wins. `cannotAdd` makes two of them impossible on one
+ *  effect anyway, so the order only decides what a hand-edited or
+ *  modded CFG shows. */
+const TOLERANCE_READ = Object.freeze([
+  ['resistanceFlags', 'resistance'], ['immunityFlags', 'immunity'],
+  ['lowToleranceFlags', 'lowTolerance'], ['criticalWeaknessFlags', 'criticalWeakness'],
+]);
+/** EffectFlags' own declaration order (DFCareer.cs:398-408), which is
+ *  the order the seven tolerance lines print in. */
+const EFFECT_ORDER = Object.freeze(['toParalysis', 'toMagic', 'toPoison', 'toFire', 'toFrost', 'toShock', 'toDisease']);
+/** ProficiencyFlags' order (:313-322). GetProficiency (:764-776)
+ *  reads FORBIDDEN first, then EXPERT. */
+const PROFICIENCY_ORDER = Object.freeze(['shortBlade', 'longBlade', 'handToHand', 'axe', 'bluntWeapon', 'missileWeapon']);
+/** The four groups, in the order the sheet prints them (:520-537). */
+const ATTACK_ORDER = Object.freeze(['undead', 'daedra', 'humanoid', 'animals']);
+
+const ADVANTAGE_SET = new Set(ADVANTAGE_KEYS);
+const bitsOf = (table, value) => Object.keys(table).filter((k) => (value & table[k]) === table[k] && table[k] !== 0);
+const keyForValue = (table, value) => Object.keys(table).find((k) => table[k] === value) ?? null;
+
+/**
+ * Every special a character carries, as rows rather than strings.
+ *
+ * @param career  a CLASS.CFG career (the shape formats/classFile.js
+ *                mints and parseCareerData writes onto)
+ * @param race    the RaceTemplate, for the racial block GetClassSpecials
+ *                appends (:687-760) - optional, because a career alone
+ *                is a complete answer for the class half
+ * @returns {{primary:string, secondary:string, label:string,
+ *            kind:'advantage'|'disadvantage', source:'career'|'race'}[]}
+ */
+export function classSpecials(career, race = null) {
+  const c = career ?? {};
+  const out = [];
+  const seen = new Set();
+  // The racial block is the only one DFU de-duplicates (:707-739),
+  // because a Breton mage can carry Resistance To Magic twice -
+  // once from the class and once from the blood. One `seen` covers it:
+  // no career arm can emit the same pair twice to begin with.
+  const add = (primary, secondary = '', source = 'career') => {
+    const k = `${primary}|${secondary}`;
+    if (seen.has(k)) return;
+    seen.add(k);
+    out.push({
+      primary,
+      secondary,
+      label: secondary ? `${labelFor(primary)} ${labelFor(secondary)}` : labelFor(primary),
+      kind: ADVANTAGE_SET.has(primary) ? 'advantage' : 'disadvantage',
+      source,
+    });
+  };
+
+  // Tolerances (:465-493)
+  for (const effect of EFFECT_ORDER) {
+    const bit = EFFECT_BITS[effect];
+    const hit = TOLERANCE_READ.find(([field]) => ((c[field] ?? 0) & bit) === bit);
+    if (hit) add(hit[1], effect);
+  }
+  // Weapon proficiencies (:495-518). The port packs FORBIDDEN at bits
+  // 0..5 and EXPERT at 16..21 of the one bitfield.
+  const wasb = c.weaponArmorShieldsBitfield ?? 0;
+  for (const weapon of PROFICIENCY_ORDER) {
+    const bit = PROFICIENCY_BITS[weapon];
+    if ((wasb & bit) === bit) add('forbiddenWeaponry', weapon);
+    else if (((wasb >>> 16) & bit) === bit) add('expertiseIn', weapon);
+  }
+  // Attack modifiers (:520-537)
+  const atk = c.attackModifierFlags ?? 0;
+  for (const group of ATTACK_ORDER) {
+    const [bonus, phobia] = ATTACK_BITS[group];
+    if ((atk & bonus) === bonus) add('bonusToHit', group);
+    else if ((atk & phobia) === phobia) add('phobia', group);
+  }
+  // Darkness- and light-powered magery (:539-554), reduced power
+  // first, as the sheet prints them. The two live at bits 8-9 and 6-7.
+  const ability = c.abilityFlagsAndSpellPointsBitfield ?? 0;
+  const dark = (ability >>> 8) & 0x3;
+  if (dark & 2) add('darknessPoweredMagery', 'lowerMagicAbilityDaylight');
+  if (dark & 1) add('darknessPoweredMagery', 'unableToUseMagicInDaylight');
+  const light = (ability >>> 6) & 0x3;
+  if (light & 2) add('lightPoweredMagery', 'lowerMagicAbilityDarkness');
+  if (light & 1) add('lightPoweredMagery', 'unableToUseMagicInDarkness');
+  // The three forbidden sets, each MULTIPLE (:556-613)
+  for (const material of bitsOf(MATERIAL_BITS, c.forbiddenMaterialsFlags ?? 0)) add('forbiddenMaterial', material);
+  for (const shield of bitsOf(SHIELD_BITS, (wasb >>> 9) & 0xf)) add('forbiddenShieldTypes', shield);
+  for (const armor of bitsOf(ARMOR_BITS, (wasb >>> 6) & 0x7)) add('forbiddenArmorType', armor);
+  // Increased magery (:616-628) - anything but the Times_0_50 default.
+  // The band is only read when the career CARRIES the field: a half
+  // built career object would otherwise read 0 there, and 0 is
+  // Times_3_00 - the strongest magery in the game, announced on a
+  // character who never picked it.
+  if (c.abilityFlagsAndSpellPointsBitfield != null) {
+    const magery = (ability & 0x1C00) >> 8;
+    if (magery !== DEFAULT_MAGERY_BITS) {
+      const key = keyForValue(MAGERY_MULT_BITS, magery);
+      if (key) add('increasedMagery', key);
+    }
+  }
+  // Spell absorption (:630-640)
+  const absorb = keyForValue(ABSORPTION_FLAGS, c.spellAbsorptionFlags ?? 0);
+  if (absorb) add('spellAbsorption', absorb);
+  // The four SpecialAbility talents (:642-654), in the sheet's order
+  if ((ability & SPECIAL_ABILITY_BITS.noRegenSpellPoints) === SPECIAL_ABILITY_BITS.noRegenSpellPoints) add('inabilityToRegen');
+  if ((ability & SPECIAL_ABILITY_BITS.acuteHearing) === SPECIAL_ABILITY_BITS.acuteHearing) add('acuteHearing');
+  if ((ability & SPECIAL_ABILITY_BITS.athleticism) === SPECIAL_ABILITY_BITS.athleticism) add('athleticism');
+  if ((ability & SPECIAL_ABILITY_BITS.adrenalineRush) === SPECIAL_ABILITY_BITS.adrenalineRush) add('adrenalineRush');
+  // Regeneration and rapid healing (:656-678)
+  const regen = keyForValue(REGENERATION_FLAGS, c.regeneration ?? 0);
+  if (regen) add('regenerateHealth', regen);
+  const rapid = keyForValue(RAPID_HEALING_FLAGS, c.rapidHealing ?? 0);
+  if (rapid) add('rapidHealing', rapid);
+  // Damage (:680-685)
+  if ((ability & SPECIAL_ABILITY_BITS.sunDamage) === SPECIAL_ABILITY_BITS.sunDamage) add('damage', 'fromSunlight');
+  if ((ability & SPECIAL_ABILITY_BITS.holyDamage) === SPECIAL_ABILITY_BITS.holyDamage) add('damage', 'fromHolyPlaces');
+
+  // ---- the blood (:687-760) ----
+  //
+  // THE RACE TEMPLATE, not the curse. A vampire or a werewolf in DFU
+  // wears an OVERRIDE template whose flags feed this same block; the
+  // port's systems/races.js has no override templates, and the curses
+  // carry their powers as live effects instead. Writing them in from
+  // here would mean inventing a table, so the blood shows what the
+  // port actually stores and the transformed powers stay with the
+  // curse that grants them. Recorded, not hidden.
+  if (race) {
+    for (const effect of EFFECT_ORDER) {
+      const bit = EFFECT_BITS[effect];
+      // DFU walks resistance, immunity, low tolerance, critical
+      // weakness for each effect in turn (:700-739) - a different
+      // order from GetTolerance's, and ALL FOUR can print, because
+      // these are the race's flags and nothing forbids the overlap.
+      if (((race.resistanceFlags ?? 0) & bit) === bit) add('resistance', effect, 'race');
+      if (((race.immunityFlags ?? 0) & bit) === bit) add('immunity', effect, 'race');
+      if (((race.lowToleranceFlags ?? 0) & bit) === bit) add('lowTolerance', effect, 'race');
+      if (((race.criticalWeaknessFlags ?? 0) & bit) === bit) add('criticalWeakness', effect, 'race');
+    }
+    const abilities = race.specialAbilities ?? 0;
+    // AUDIT MAC-G: DFU's raceAbilities dictionary maps Athleticism to
+    // HardStrings.acuteHearing (:744) - a copy-paste slip that would
+    // print "Acute Hearing" for an athletic race. It is unreachable in
+    // DFU and here: no playable race sets SpecialAbilities at all
+    // (RaceTemplate.cs:172-345, and systems/races.js says so). The
+    // port writes the label the flag means; the slip is recorded
+    // rather than copied, because copying it would be porting a
+    // typo into a screen a player reads.
+    if ((abilities & SPECIAL_ABILITY_BITS.acuteHearing) === SPECIAL_ABILITY_BITS.acuteHearing) add('acuteHearing', '', 'race');
+    if ((abilities & SPECIAL_ABILITY_BITS.athleticism) === SPECIAL_ABILITY_BITS.athleticism) add('athleticism', '', 'race');
+    if ((abilities & SPECIAL_ABILITY_BITS.adrenalineRush) === SPECIAL_ABILITY_BITS.adrenalineRush) add('adrenalineRush', '', 'race');
+    if ((abilities & SPECIAL_ABILITY_BITS.noRegenSpellPoints) === SPECIAL_ABILITY_BITS.noRegenSpellPoints) add('inabilityToRegen', '', 'race');
+    if ((abilities & SPECIAL_ABILITY_BITS.sunDamage) === SPECIAL_ABILITY_BITS.sunDamage) add('damage', 'fromSunlight', 'race');
+    if ((abilities & SPECIAL_ABILITY_BITS.holyDamage) === SPECIAL_ABILITY_BITS.holyDamage) add('damage', 'fromHolyPlaces', 'race');
+  }
+  return out;
+}
+
 // ---- the label block (UpdateLabels, :498-532) ----
 /** maxLabels (:42), labelSpacing (:43), tandemLabelSpacing (:44) and
  *  the block's origin (:262). */

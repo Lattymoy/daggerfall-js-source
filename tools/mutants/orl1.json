@@ -1,0 +1,861 @@
+[
+  {
+    "name": "bar-size",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "export const LEVELUP_TOTAL = 100;",
+    "new": "export const LEVELUP_TOTAL = 90;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "attribute-increase-limit",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "export const ATTRIBUTE_INCREASE_LIMIT = 5;",
+    "new": "export const ATTRIBUTE_INCREASE_LIMIT = 6;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "rollover-boundary-not-strict",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "  if (newProgress > LEVELUP_TOTAL) {",
+    "new": "  if (newProgress >= LEVELUP_TOTAL) {",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ],
+    "equivalent": true,
+    "why": "EQUIVALENT, AND THE MOD'S `>` IS KEPT FOR SHAPE NOT BEHAVIOUR. At the boundary the two agree: newProgress == 100 gives rollUp 0, so `added` is the whole value either way and nothing carries. The Lua writes `>` (helper.lua:132) and the port restates it, but no reachable state tells them apart - the only difference is whether `levelRollUp` is written a 0, which every reader takes through `?? 0`."
+  },
+  {
+    "name": "mastered-skill-still-feeds-the-bar",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "  if (!(MAX_SKILL_VALUE > (entity.skills?.[skillId] ?? 0))) return 0;",
+    "new": "  if (false) return 0;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "rollover-loses-the-excess",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "    entity.levelRollUp = (entity.levelRollUp ?? 0) + rollUp;",
+    "new": "    entity.levelRollUp = (entity.levelRollUp ?? 0);",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "rollover-adds-the-whole-raise",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "    added = value - rollUp;",
+    "new": "    added = value;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "primary-tier-folded-into-major",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "  if (tier === 'primary') return s.primarySkillsImpact;",
+    "new": "  if (tier === 'primary') return s.majorSkillsImpact;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "minor-tier-reads-misc",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "  if (tier === 'minor') return s.minorSkillsImpact;",
+    "new": "  if (tier === 'minor') return s.miscSkillsImpact;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "misc-tier-ignores-its-own-zero-gate",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "  return s.miscSkillsImpact > 0 ? s.miscSkillsImpact : 0;",
+    "new": "  return s.miscSkillsImpact;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ],
+    "equivalent": true,
+    "why": "the gate is the mod's SHAPE, not a distinct behaviour - `miscSkillsImpact` has min 0 and a 0 impact adds 0 either way. It is kept because it is how player.lua:43 is written (an `elseif miscSkillsImpact > 0`), and the port's law table cites that line."
+  },
+  {
+    "name": "primary-tier-not-recognised",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "  if (c.primarySkills?.includes(skillId)) return 'primary';",
+    "new": "  if (false) return 'primary';",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "misc-is-not-the-derived-set",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "  if (c.minorSkills?.includes(skillId)) return 'minor';\n  return 'misc';",
+    "new": "  return 'minor';",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "level-offered-one-short",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "  if ((entity.levelProgress ?? 0) < LEVELUP_TOTAL) return false;",
+    "new": "  if ((entity.levelProgress ?? 0) < LEVELUP_TOTAL - 1) return false;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "pending-level-not-the-one-being-gained",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "  entity.pendingLevel = entity.level + 1;",
+    "new": "  entity.pendingLevel = entity.level;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "big-rollover-does-not-leave-the-bar-full",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "  if (rollUp >= LEVELUP_TOTAL) {\n    entity.levelProgress = LEVELUP_TOTAL;",
+    "new": "  if (rollUp >= LEVELUP_TOTAL) {\n    entity.levelProgress = 0;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "rollover-boundary-off-by-one",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "  if (rollUp >= LEVELUP_TOTAL) {",
+    "new": "  if (rollUp > LEVELUP_TOTAL) {",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ],
+    "equivalent": true,
+    "why": "EQUIVALENT at the only value that separates them. rollUp exactly 100 takes the `>=` arm to progress 100 / rollUp 0, and the `>` arm's else to progress = rollUp = 100 / rollUp 0 - the same state by two routes. The Lua writes `>=` (helper.lua:148) and the port restates it."
+  },
+  {
+    "name": "luck-is-priced-like-anything-else",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "  return (attrKey === LUCK && s.allowLuckIncrease) ? s.luckIncreaseCost : 1;",
+    "new": "  return 1;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "luck-switch-off-does-not-cap-it",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "  return (attrKey === LUCK && !s.allowLuckIncrease) ? 1 : ATTRIBUTE_INCREASE_LIMIT;",
+    "new": "  return ATTRIBUTE_INCREASE_LIMIT;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "headroom-past-the-limit-is-not-capped",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "  if (headroom > limit) return limit * offset;",
+    "new": "  if (headroom > limit) return headroom * offset;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "purse-not-shrunk-to-what-can-be-absorbed",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "  if (total < purse) return total;",
+    "new": "  if (false) return total;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "luck-remainder-not-rounded-down",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "  if (purse > others) purse = others + Math.floor((purse - others) / luckOffset) * luckOffset;",
+    "new": "  if (purse > others) purse = others + (purse - others);",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "plus-allowed-on-an-empty-purse",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "  if (purse === 0) return false;",
+    "new": "  if (false) return false;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ],
+    "equivalent": true,
+    "why": "EQUIVALENT because the NEXT line subsumes it: an offset is always at least 1 (attributeOffset returns 1, or luckIncreaseCost whose minimum is 1), so `purse - offset < 0` already refuses an empty purse. Both lines are kept because both are in the Lua's own condition (player.lua:599-600) and the port's law table cites it."
+  },
+  {
+    "name": "plus-ignores-the-price",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "  if (purse - attributeOffset(attrKey, s) < 0) return false;",
+    "new": "  if (purse - 1 < 0) return false;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "plus-ignores-the-per-row-limit",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "  if (delta === attributeIncreaseLimit(attrKey, s)) return false;",
+    "new": "  if (false) return false;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "plus-ignores-the-attribute-cap",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "  if (stats[attrKey] + delta === MAX_ATTRIBUTE_VALUE) return false;",
+    "new": "  if (stats[attrKey] === MAX_ATTRIBUTE_VALUE) return false;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "plus-ignores-the-three-attribute-cap",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "  if (s.maxUpdatableAttribute <= raised && delta === 0) return false;",
+    "new": "  if (false) return false;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "three-attribute-cap-locks-out-an-already-raised-row",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "  if (s.maxUpdatableAttribute <= raised && delta === 0) return false;",
+    "new": "  if (s.maxUpdatableAttribute <= raised) return false;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "minus-shown-on-an-untouched-row",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "  return (deltas[attrKey] ?? 0) > 0;",
+    "new": "  return (deltas[attrKey] ?? 0) >= 0;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "commit-accepts-an-unspent-purse",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "  if (purse !== 0) return false;",
+    "new": "  if (false) return false;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "commit-without-an-owed-level",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "  if (!entity.readyToLevelUp) return false;\n  if (purse !== 0) return false;",
+    "new": "  if (purse !== 0) return false;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "commit-skips-the-health-roll",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "  entity.maxHealth += hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);",
+    "new": "  entity.maxHealth += 0;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "commit-jumps-the-level",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "  entity.level += 1;\n  rollOverLevelProgress(entity);",
+    "new": "  entity.level += 2;\n  rollOverLevelProgress(entity);",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "commit-leaves-the-flag-set",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "  entity.readyToLevelUp = false;\n  entity.pendingLevel = null;\n  return true;\n}",
+    "new": "  entity.pendingLevel = null;\n  return true;\n}",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "an-old-save-reads-as-the-mod",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "  return entity?.levelingSystem === LEVELING_VIRTUE;",
+    "new": "  return entity?.levelingSystem !== LEVELING_CLASSIC;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-bar-is-fed-for-a-classic-character-too",
+    "file": "src/systems/advancement.js",
+    "old": "      if (virtue) addSkillProgress(entity, i, virtueSettings);",
+    "new": "      addSkillProgress(entity, i, virtueSettings ?? levelingSettings());",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-bar-is-fed-after-the-raise",
+    "file": "src/systems/advancement.js",
+    "old": "      if (virtue) addSkillProgress(entity, i, virtueSettings);\n      entity.skills[i] += 1;",
+    "new": "      entity.skills[i] += 1;\n      if (virtue) addSkillProgress(entity, i, virtueSettings);",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "a-virtue-character-levels-by-the-dfu-sum",
+    "file": "src/systems/advancement.js",
+    "old": "  if (virtue ? checkForVirtueLevelUp(entity) : checkForLevelUp(entity)) {",
+    "new": "  if (checkForLevelUp(entity)) {",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-headless-arm-takes-the-dfu-pool",
+    "file": "src/systems/advancement.js",
+    "old": "      if (virtue) virtueLevelUpHeadless(entity, virtueSettings, rolls);\n      else applyLevelUp",
+    "new": "      if (false) virtueLevelUpHeadless(entity, virtueSettings, rolls);\n      else applyLevelUp",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-classic-sheet-levels-a-virtue-character-too",
+    "file": "src/ui/charsheet.js",
+    "old": "    if (!e.oghmaLevelUp && usesVirtueLeveling(e)) return;",
+    "new": "    if (false) return;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-door-hands-the-oghma-to-the-mods-window",
+    "file": "src/ui/charSheetDoor.js",
+    "old": "  if (deps.entity?.readyToLevelUp && !deps.entity?.oghmaLevelUp && usesVirtueLeveling(deps.entity)) {",
+    "new": "  if (deps.entity?.readyToLevelUp && usesVirtueLeveling(deps.entity)) {",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-window-commits-on-an-unspent-purse",
+    "file": "src/ui/virtueLevelUp.js",
+    "old": "    if (this.purse !== 0) { this.refused = true; return false; }",
+    "new": "    if (false) { this.refused = true; return false; }",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-window-ignores-the-plus-predicate",
+    "file": "src/ui/virtueLevelUp.js",
+    "old": "    if (!canRaiseAttribute(key, this.entity.stats, this.deltas, this.purse, this.s)) return false;",
+    "new": "    if (false) return false;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-window-charges-a-flat-point-for-luck",
+    "file": "src/ui/virtueLevelUp.js",
+    "old": "    this.purse -= attributeOffset(key, this.s);",
+    "new": "    this.purse -= 1;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-hyphen-spelling-is-dropped",
+    "file": "src/ui/virtueLevelUp.js",
+    "old": "    else if (action === 'minus' || action === 'char:-') {",
+    "new": "    else if (action === 'minus') {",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-question-defaults-to-the-mod",
+    "file": "src/ui/levelingChoice.js",
+    "old": "      id: LEVELING_CLASSIC,\n      title: 'Daggerfall',",
+    "new": "      id: LEVELING_VIRTUE,\n      title: 'Daggerfall',",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-question-answers-more-than-once",
+    "file": "src/ui/levelingChoice.js",
+    "old": "  answer(id) {\n    if (this._fired) return false;",
+    "new": "  answer(id) {\n    if (false) return false;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-question-loses-the-raw-key-codes",
+    "file": "src/ui/levelingChoice.js",
+    "old": "    confirm: 'confirm', Enter: 'confirm', NumpadEnter: 'confirm', KeyE: 'confirm',",
+    "new": "    confirm: 'confirm',",
+    "tests": [
+      "test/orl1_leveling.test.js",
+      "test/audit17f.test.js"
+    ]
+  },
+  {
+    "name": "an-unknown-key-answers-the-question",
+    "file": "src/ui/levelingChoice.js",
+    "old": "      default: break;   // every other key is inert: this screen has no way out but an answer",
+    "new": "      default: this.answer(this.options[this.cursor].id); break;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-choice-never-reaches-the-entity",
+    "file": "src/systems/chargenSession.js",
+    "old": "  initVirtueLeveling(playerEntity, result.levelingSystem ?? LEVELING_CLASSIC);",
+    "new": "  initVirtueLeveling(playerEntity, LEVELING_CLASSIC);",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-wizard-fires-before-the-question",
+    "file": "src/systems/chargenSession.js",
+    "old": "    get done() { return fired; },\n    get levelingPrompt() { return prompt; },",
+    "new": "    get done() { return fired || !!prompt; },\n    get levelingPrompt() { return prompt; },",
+    "tests": [
+      "test/orl1_leveling.test.js",
+      "test/audit17f.test.js"
+    ]
+  },
+  {
+    "name": "the-question-is-asked-with-the-mod-off",
+    "file": "src/systems/chargenSession.js",
+    "old": "  if (!oblivionLevelingEnabled()) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-save-drops-the-choice",
+    "file": "src/systems/save.js",
+    "old": "  'levelingSystem', 'levelProgress', 'levelRollUp',",
+    "new": "  'levelProgress', 'levelRollUp',",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "a-classic-import-levels-by-the-mod",
+    "file": "src/systems/classicSave.js",
+    "old": "    levelingSystem: LEVELING_CLASSIC, levelProgress: 0, levelRollUp: 0,",
+    "new": "    levelingSystem: 'virtue', levelProgress: 0, levelRollUp: 0,",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-window-shows-a-plus-it-will-not-honour",
+    "file": "src/ui/virtueLevelUp.js",
+    "old": "      plus: canRaiseAttribute(key, this.entity.stats, this.deltas, this.purse, this.s),",
+    "new": "      plus: true,",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-window-shows-a-minus-it-will-not-honour",
+    "file": "src/ui/virtueLevelUp.js",
+    "old": "      minus: canLowerAttribute(key, this.deltas),",
+    "new": "      minus: true,",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-cursor-skips-a-row-going-up",
+    "file": "src/ui/virtueLevelUp.js",
+    "old": "    if (action === 'up') this.cursor = (this.cursor + 7) % 8;",
+    "new": "    if (action === 'up') this.cursor = (this.cursor + 6) % 8;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-refusal-line-never-clears",
+    "file": "src/ui/virtueLevelUp.js",
+    "old": "    this.deltas[key] += 1;\n    this.purse -= attributeOffset(key, this.s);\n    this.refused = false;",
+    "new": "    this.deltas[key] += 1;\n    this.purse -= attributeOffset(key, this.s);",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-health-roll-reads-the-wrong-stat",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "  entity.maxHealth += hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);",
+    "new": "  entity.maxHealth += hitPointsPerLevelUp(entity.career, entity.stats.strength, rolls);",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-interior-hosts-FIRST-last-resort-forgets-the-mod",
+    "file": "src/scenes/worldModes.js",
+    "old": "          ?? (usesVirtueLeveling(playerEntity) && !playerEntity.oghmaLevelUp\n            ? new VirtueLevelUpScreen(playerEntity)\n            : new LevelUpScreen(playerEntity));",
+    "new": "          ?? new LevelUpScreen(playerEntity);",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ],
+    "firstOfTwo": true,
+    "why": "mutate.mjs replaces the FIRST match and the two interior arms are identical, so this one names the first. The second has its own mutant below (ORL1's deep audit: one mutant was standing for two arms)."
+  },
+  {
+    "name": "the-dungeons-font-less-virtue-escape-is-dropped",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "        else if (activeOverlay?.isVirtueLevelUp) {",
+    "new": "        else if (false) {",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-question-loses-its-pointer-seam",
+    "file": "src/systems/chargenSession.js",
+    "old": "    click(vx, vy) { if (prompt) prompt.click(vx, vy); else inner.click?.(vx, vy); },",
+    "new": "    click(vx, vy) { if (!prompt) inner.click?.(vx, vy); },",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-questions-up-arm-is-dropped",
+    "file": "src/ui/levelingChoice.js",
+    "old": "    up: 'up', ArrowUp: 'up', down: 'up', ArrowDown: 'up',",
+    "new": "    down: 'up', ArrowDown: 'up',",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-tile-ships-a-placeholder-note",
+    "file": "src/systems/modSettings.js",
+    "old": "        description: 'Oblivion Remastered’s leveling in place of Daggerfall’s: every skill you raise fills a 100-point bar, and levelling up hands you a purse of virtues to spend where you choose. New characters are asked which system they want.',",
+    "new": "        description: 'TODO',",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-purse-takes-the-smallest-reachable-cost",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "  for (let c = B; c >= 0; c--) {",
+    "new": "  for (let c = 0; c <= B; c++) {",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-plan-ignores-the-row-budget",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "        if (n2 > slots) continue;",
+    "new": "        if (false) continue;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "an-already-raised-row-costs-a-fresh-slot",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "      slot: taken > 0 ? 0 : 1,   // an already-open row costs no new slot",
+    "new": "      slot: 1,   // an already-open row costs no new slot",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-plan-ignores-the-per-row-limit",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "      room: Math.max(0, Math.min(attributeIncreaseLimit(k, s) - taken, headroom)),",
+    "new": "      room: Math.max(0, headroom),",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-plan-ignores-the-attribute-ceiling",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "    const headroom = MAX_ATTRIBUTE_VALUE - stats[k] - taken;",
+    "new": "    const headroom = MAX_ATTRIBUTE_VALUE;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-plan-charges-a-flat-point",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "          const cc = c + d * row.off;",
+    "new": "          const cc = c + d;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-plan-is-not-walked-back-out",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "    if (d > 0) { plan[rows[i].k] = d; c -= d * rows[i].off; n -= rows[i].slot; }",
+    "new": "    if (d > 0) { plan[rows[i].k] = d; c -= d * rows[i].off; }",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "health-rolls-on-the-endurance-just-bought",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "  entity.maxHealth += hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);\n  entity.health = Math.min(entity.health, entity.maxHealth);\n  for (const key of STAT_KEYS_ORDER) {\n    const d = deltas[key] ?? 0;\n    if (d > 0) entity.stats[key] = entity.stats[key] + d;\n  }",
+    "new": "  for (const key of STAT_KEYS_ORDER) {\n    const d = deltas[key] ?? 0;\n    if (d > 0) entity.stats[key] = entity.stats[key] + d;\n  }\n  entity.maxHealth += hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);\n  entity.health = Math.min(entity.health, entity.maxHealth);",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "a-window-torn-down-mid-question-swallows-the-answer",
+    "file": "src/systems/chargenSession.js",
+    "old": "      prompt?.answer(LEVELING_CLASSIC);",
+    "new": "",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-font-less-escape-finishes-a-corner-instead-of-re-planning",
+    "file": "src/ui/virtueLevelUp.js",
+    "old": "    const { cost, plan } = virtueSpendPlan(this.entity.stats, this.s, this.fullPurse);",
+    "new": "    const { cost, plan } = virtueSpendPlan(this.entity.stats, this.s, this.purse, this.deltas);",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ],
+    "why": "NOT EQUIVALENT, and it was recorded as though it were. The escape assigns the plan WHOLESALE (`this.deltas = plan`) and sets `purse = fullPurse - cost`, so re-planning against the REMAINING purse over the live deltas leaves the purse non-zero, `confirm` refuses, and the window never closes - the host drops it anyway and the level-up is lost with everything already spent. The first record called that an equivalence because no pin drove the escape from a PARTLY SPENT window; one does now (ORL1's deep audit)."
+  },
+  {
+    "name": "the-interior-hosts-SECOND-last-resort-forgets-the-mod",
+    "file": "src/scenes/worldModes.js",
+    "old": "          ?? (usesVirtueLeveling(playerEntity) && !playerEntity.oghmaLevelUp\n            ? new VirtueLevelUpScreen(playerEntity)\n            : new LevelUpScreen(playerEntity));\n      }\n    },\n    day: () => false, inside: () => true,",
+    "new": "          ?? new LevelUpScreen(playerEntity);\n      }\n    },\n    day: () => false, inside: () => true,",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-plan-takes-the-fewest-rows-instead-of-the-most-points",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "          if (have + d > nb[n2][cc]) { nb[n2][cc] = have + d; nt[n2][cc] = d; }",
+    "new": "          if (nb[n2][cc] < 0) { nb[n2][cc] = have + d; nt[n2][cc] = d; }",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-purse-is-picked-without-looking-at-what-it-buys",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "    for (let i = 0; i <= slots; i++) if (best[i][c] > pts) { pts = best[i][c]; n = i; }",
+    "new": "    for (let i = 0; i <= slots; i++) if (best[i][c] >= 0) { pts = best[i][c]; n = i; break; }",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-question-paints-from-the-canvas-origin-again",
+    "file": "src/ui/levelingChoice.js",
+    "old": "      drawText(renderer, font, text, m.ox + x * s, m.oy + y * s, s, colour);",
+    "new": "      drawText(renderer, font, text, x * s, y * s, s, colour);",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-question-centres-on-the-canvas-instead-of-the-game-area",
+    "file": "src/ui/levelingChoice.js",
+    "old": "      at(text, (NATIVE_W - measureText(font.fnt, text)) / 2, y, colour);",
+    "new": "      at(text, (canvas.width - measureText(font.fnt, text)) / 2, y, colour);",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-option-hit-box-goes-back-to-a-literal-height",
+    "file": "src/ui/levelingChoice.js",
+    "old": "  CHOICE_TITLE_H + (opt?.lines?.length ?? 0) * CHOICE_LINE_H;",
+    "new": "  CHOICE_TITLE_H + 4 * CHOICE_LINE_H;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-question-swallows-the-click-again",
+    "file": "src/ui/levelingChoice.js",
+    "old": "    const i = choiceAtNative(vx, vy, this.options);\n    if (i < 0) return false;",
+    "new": "    const i = -1;\n    if (i < 0) return false;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "both-digits-answer-with-the-same-system",
+    "file": "src/ui/levelingChoice.js",
+    "old": "      case 'two': this.answer(this.options[1].id); break;",
+    "new": "      case 'two': this.answer(this.options[0].id); break;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-level-up-window-paints-from-the-canvas-origin-again",
+    "file": "src/ui/virtueLevelUp.js",
+    "old": "      drawText(renderer, font, text, m.ox + x * s, m.oy + y * s, s, colour);",
+    "new": "      drawText(renderer, font, text, x * s, y * s, s, colour);",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-level-up-window-loses-its-pointer-again",
+    "file": "src/ui/virtueLevelUp.js",
+    "old": "    const hit = levelUpHitNative(vx, vy);\n    if (!hit) return false;",
+    "new": "    const hit = null;\n    if (!hit) return false;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-ok-button-commits-without-the-purse-being-spent",
+    "file": "src/ui/virtueLevelUp.js",
+    "old": "    if (hit.press === 'ok') this.confirm();",
+    "new": "    if (hit.press === 'ok') { this.done = true; }",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-stat-name-column-runs-into-its-value-again",
+    "file": "src/ui/virtueLevelUp.js",
+    "old": "    return `${selected ? '>' : ' '} ${label(key).padEnd(13)}${String(this.entity.stats[key] + d).padStart(3)}`",
+    "new": "    return `${selected ? '>' : ' '} ${label(key).padEnd(12)}${String(this.entity.stats[key] + d).padStart(3)}`",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-corner-hint-is-shown-when-a-plus-is-still-legal",
+    "file": "src/ui/virtueLevelUp.js",
+    "old": "    return this.purse > 0 && !STAT_KEYS_ORDER.some((k) => this.rowMarkers(k).plus);",
+    "new": "    return true;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-question-quotes-a-level-divisor-the-law-does-not-use",
+    "file": "src/systems/advancement.js",
+    "old": "export const LEVELUP_SKILL_SUM_PER_LEVEL = 15;",
+    "new": "export const LEVELUP_SKILL_SUM_PER_LEVEL = 14;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "an-owed-level-is-offered-once-and-never-again",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "  if ((entity.levelProgress ?? 0) < LEVELUP_TOTAL) return false;\n  entity.readyToLevelUp = true;",
+    "new": "  if (entity.readyToLevelUp) return false;\n  if ((entity.levelProgress ?? 0) < LEVELUP_TOTAL) return false;\n  entity.readyToLevelUp = true;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-plan-forgets-what-the-player-has-already-taken",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "    const headroom = MAX_ATTRIBUTE_VALUE - stats[k] - taken;",
+    "new": "    const headroom = MAX_ATTRIBUTE_VALUE - stats[k];",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-plan-gives-an-open-row-its-whole-limit-again",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "      room: Math.max(0, Math.min(attributeIncreaseLimit(k, s) - taken, headroom)),",
+    "new": "      room: Math.max(0, Math.min(attributeIncreaseLimit(k, s), headroom)),",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-dp-table-is-sized-off-the-callers-number-again",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "  const B = Math.min(reachable, Math.max(0, budget | 0));",
+    "new": "  const B = Math.max(0, budget | 0);",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-window-stops-carrying-the-flag-the-escape-routes-on",
+    "file": "src/ui/virtueLevelUp.js",
+    "old": "    this.isVirtueLevelUp = true;",
+    "new": "    this.isVirtueLevelUp = false;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-door-sends-a-virtue-character-to-daggerfalls-own-screen",
+    "file": "src/ui/charSheetDoor.js",
+    "old": "  if (deps.entity?.readyToLevelUp && !deps.entity?.oghmaLevelUp && usesVirtueLeveling(deps.entity)) {",
+    "new": "  if (false && deps.entity?.readyToLevelUp && !deps.entity?.oghmaLevelUp && usesVirtueLeveling(deps.entity)) {",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-re-offer-fires-on-top-of-a-pending-oghma",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "  if (entity.oghmaLevelUp) return false;",
+    "new": "  if (false) return false;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  },
+  {
+    "name": "the-window-grows-a-hover-that-drags-the-selection",
+    "file": "src/ui/virtueLevelUp.js",
+    "old": "  click(vx, vy) {\n    if (this.done) return false;",
+    "new": "  hover(vx, vy) { const h = levelUpHitNative(vx, vy); if (h?.row != null) this.cursor = h.row; }\n\n  click(vx, vy) {\n    if (this.done) return false;",
+    "tests": [
+      "test/orl1_leveling.test.js"
+    ]
+  }
+]

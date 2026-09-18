@@ -458,7 +458,7 @@ export function hideHudTextSurfaces(hudText = null) {
 
 export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   { font = null, cursorActive = false, windowCoversHud = null, detected = null, playerXZ = null, largeHud = null, hover = null,
-    readied = null, weapon = null, weaponSheathed = true, quickUse = null, quickSwap = null, quickOffHand = null, quickSpell = null } = {}) {   // PX30b: for the enhanced HUD's hand plaques; AUDIT 28 W2: the arrow counter's gate; AUDIT 64 F35: the host's previousWindow answer; QS3: the diamond's sheathe state and its two phone taps; QS6: the caption's spell chip press
+    readied = null, weapon = null, weaponSheathed = true, quickUse = null, quickSwap = null, quickOffHand = null, quickSpell = null, quickSwitchHand = null } = {}) {   // PX30b: for the enhanced HUD's hand plaques; AUDIT 28 W2: the arrow counter's gate; AUDIT 64 F35: the host's previousWindow answer; QS3: the diamond's sheathe state and its two phone taps; QS6: the caption's spell chip press
   // AUDIT 24 (wave 39): ShowPlayerDamage's red flash, under the bars.
   // THE FOUR HOSTS RULE, applied before the fact: drawHud is the one
   // host-agnostic call all four make, "last, over the viewmodel", so
@@ -608,6 +608,7 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
       quickSwap: quickSwap ?? null,
       quickOffHand: quickOffHand ?? null,   // QS4: the off hand's own press
       quickSpell: quickSpell ?? null,   // QS6: the spell chip's
+      quickSwitchHand: quickSwitchHand ?? null,   // MAC-R3: the main cell's hand switch
     });
     // FE1 + AUDIT 39 F133: the escort column is not the classic skin's
     // - DaggerfallHUD adds it unconditionally (:183-185) and even the

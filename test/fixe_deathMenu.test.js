@@ -121,7 +121,10 @@ test('AUDIT DEATH1 F7: a load that settles AFTER the watchdog cannot take a hold
 
 test('FIX-E: F11 reaches the world host’s quickload from UNDER the death screen, above the rung that eats every key', () => {
   const w = read('src/scenes/world.js');
-  const arm = w.indexOf("if (townTalk.overlayActive && !isTextEntryTarget(e.target) && (modes?.mode ?? 'exterior') === 'exterior' && actionForCode(bindings(), e.code) === 'QuickLoad') { e.preventDefault(); hudCtx.quickLoad(); return; }");
+  // D-ONLINE1 (2026-09-17): the arm grew a respawn door for an online death - F11 on the death screen respawns
+  // where it used to quickload - and kept its place above the rung; test/donline1_respawn.test.js holds the door.
+  const arm = w.indexOf("if (townTalk.overlayActive && !isTextEntryTarget(e.target) && (modes?.mode ?? 'exterior') === 'exterior' && actionForCode(bindings(), e.code) === 'QuickLoad') {\n      e.preventDefault();");
+  assert.ok(w.slice(arm, arm + 900).includes('else hudCtx.quickLoad();'), 'and quickload is still what F11 does when the death was not online');
   const gate = w.indexOf('if (townTalk.keydown(e)) return;');
   assert.ok(arm > 0 && gate > arm, 'the arm stands above the townTalk rung');
   // the same law routeKey has carried for the dungeon and interior hosts
@@ -131,7 +134,7 @@ test('FIX-E: F11 reaches the world host’s quickload from UNDER the death scree
 test('FIX-E: the interior slot releases what it overwrites, and the fixed city offers no F11 it cannot honour', () => {
   assert.match(read('src/scenes/worldModes.js'), /if \(!\(interiorOverlay instanceof DeathScreen\)\) \{[\s\S]{0,600}?interiorOverlay\?\.dispose\?\.\(\);\s*\n\s*interiorOverlay = new DeathScreen\(/, 'dispose before the overwrite, as dungeonContext has always done');
   assert.match(read('src/scenes/exterior.js'), /new DeathScreen\(\{[^\n]*hint: 'ENTER end' \}\)/, 'no save path, no F11 hint');
-  assert.match(read('src/scenes/world.js'), /new DeathScreen\(\{ eyeHeight: player\.eye\[1\] - player\.pos\[1\], capsuleHeight: player\.height, onReset: \(\) => endRunToTitleMenu\(renderer\) \}\)/, 'the world keeps the full hint - its F11 is real now');
+  assert.match(read('src/scenes/world.js'), /new DeathScreen\(\{ eyeHeight: player\.eye\[1\] - player\.pos\[1\], capsuleHeight: player\.height, onReset: \(\) => \(_deathWasOnline \? respawnOnlinePlayer\(\) : endRunToTitleMenu\(renderer\)\) \}\)/, 'the world keeps the full hint - its F11 is real now (D-ONLINE1: and its reset respawns when the death was online)');
   const ds = read('src/ui/deathScreen.js');
   assert.match(ds, /hint = 'ENTER end   F11 load'/, 'the default hint is the full one');
   assert.match(ds, /drawText\(renderer, font, this\.hint,/, 'and the screen draws the hint it was given');

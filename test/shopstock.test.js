@@ -1,5 +1,6 @@
 // E1 economy: item templates + StockShopShelf + CalculateCost
 // (DFU ItemHelper / DaggerfallLoot / FormulaHelper, verbatim).
+import './modsOff.js';   // SURV2: the vendored mods off - the seed and the shelf under test are DFU's own
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {

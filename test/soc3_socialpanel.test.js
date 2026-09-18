@@ -813,7 +813,10 @@ test('AUDIT SOC C8/C13: the touch skin\'s 44px targets, and the panel BELOW the 
   assert.match(SOCIAL_CSS, /\.dfsocial\.touch \.dfsocial-close \{ min-height: 44px; min-width: 44px;/);
   assert.match(SOCIAL_CSS, /\.dfsocial\.touch \.dfsocial-btn, \.dfsocial-toast\.touch \.dfsocial-btn \{ min-height: 44px;/, 'the toast\'s two answers too');
   assert.match(CHAT_CSS, /\.dfchat\.touch \.dfchat-social \{ min-height: 44px; \}/);
-  assert.match(CHAT_CSS, /\.dfchat\.touch \.dfchat-who-row\.act \{ min-height: 44px;/, 'a roster row is a door, so it is a 44px door');
+  // MAC-J: the marker class carries the sheet's own prefix now - a bare `act` is the enhanced skin's BUTTON
+  // (46px, bordered), and this sheet shares its document with that one in every online game.
+  assert.match(CHAT_CSS, /\.dfchat\.touch \.dfchat-who-row\.dfchat-act \{ min-height: 44px;/, 'a roster row is a door, so it is a 44px door');
+  assert.doesNotMatch(CHAT_CSS, /\.dfchat-who-row\.act\b/, 'and never the unprefixed one again');
   assert.match(CHAT_CSS, /\.dfchat\.touch \.dfchat-rowbtn \{ min-height: 44px;/);
   // ...and none of it on a desktop: the mouse's sizes are the mouse's
   assert.doesNotMatch(SOCIAL_CSS, /\n\.dfsocial-tab \{[^}]*min-height: 44px/);

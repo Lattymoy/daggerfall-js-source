@@ -17,7 +17,7 @@
 //
 // HOW IT DRAWS, and why this needs no renderer change at all: the port
 // has ALREADY shipped a first-person pass. renderCharacterSprite
-// (render/renderer.js:873) binds an offscreen target with its OWN depth
+// (render/renderer.js:963) binds an offscreen target with its OWN depth
 // renderbuffer, clears colour AND depth, swaps the frame's proj/view for
 // ones the caller supplies, draws, and restores; drawScreenOverlayQuad
 // (:987) composites it fullscreen with an alpha cut and no depth test.
@@ -75,7 +75,9 @@ import { WEAPONS } from '../characters/weapons.js';
 import { materialName } from '../systems/itemInfo.js';
 import { composeWornArmor, shadowSkinRows, fpWornAdds, mwArmorRecords, mwClothingRecord, CLOTHING_NAME } from '../formats/mwItemMap.js';
 import { correctTexturePath, correctActorModelPath, wrapModes, warningImage, decodeTextureImage } from '../formats/mwTexture.js';
-import { diffuseAt } from '../formats/mwNifMesh.js';
+import { diffuseAt, emissiveAt } from '../formats/mwNifMesh.js';   // MWT2: the emission the pass has always resolved and never read
+import { fpLightingOn } from './fpsWeapon.js';   // MAC-P: the first-person lighting switch, shared with the classic sprite it stands in for
+import { createParticleSystem, packParticleQuads, particleDrawState, affineOfTransform, affineMul, affineApply, affineScale } from '../formats/mwParticles.js';   // MAC-Q: the torch's flame, and any other particle system a part carries
 import { boneSourcesFor, resolveHolsterParts, holsterPartPaths, holsterHidden, HOLSTER_SLOTS } from '../systems/weaponSheathing.js';   // WS1
 import { injectSkeletonNodes } from '../formats/mwSkin.js';   // WS1: the dry injection the holster's bone probe runs
 // MAP3: THE HELD SHEET - the pose deltas over the idle, the paper piece
@@ -402,6 +404,42 @@ export const NIF_TO_PASS = trs(0, 0, 0, -90, 0, 0);
 
 /** files/settings-default.cfg: `first person field of view = 60.0`. */
 export const FP_FIELD_OF_VIEW = Math.PI / 3;
+/** MAC-R1 (2026-09-17, Mac: "Morrowind weapons that go above the screen
+ *  show their blade clipped off"): how much of the frame is rendered
+ *  ABOVE the screen's top edge, as a fraction of the screen's height,
+ *  while a screen transform (the Weapon Widget's bob, inertia and step,
+ *  weaponRig.js's `setScreenTransform`) is set. The arm's frame was
+ *  exactly the screen, and the widget's channels move the COMPOSITE -
+ *  a rect the same size as the screen, shifted down by the bob - so
+ *  the frame's top edge sat a few dozen pixels below the screen's, and
+ *  a blade raised through it ended in a straight cut with nothing
+ *  above. The widget clamps the rect to the screen's height minus its
+ *  own `weaponOffsetHeight` (transformRect), so half a screen of extra
+ *  rows covers every shift it can make; the composite rect is extended
+ *  upward by the same fraction, so the padding lands above the screen
+ *  and only the shift reveals it. Without a transform the frame IS the
+ *  screen and nothing is padded - the fullscreen overlay path is
+ *  untouched. */
+export const FP_TOP_PAD = 0.5;
+/** MAC-R1: the general GL frustum (glFrustum's matrix) - `perspective`
+ *  (world/mat4.js) is its symmetric case (l = -r, b = -t). An OFF-CENTRE
+ *  frame is the one thing perspective cannot say, and this pass is its
+ *  one reader: the padded frame's top edge is further from the axis than
+ *  its bottom. It lives HERE and not in world/mat4.js because the relay
+ *  bundles that module (net/wire.js imports its wrapAngle) and every byte
+ *  of the bundle is under RELAY_VERSION's hash law - a client-only lens
+ *  must not bump the relay. */
+export function frustum(left, right, bottom, top, near, far) {
+  const out = new Float32Array(16);
+  out[0] = (2 * near) / (right - left);
+  out[5] = (2 * near) / (top - bottom);
+  out[8] = (right + left) / (right - left);
+  out[9] = (top + bottom) / (top - bottom);
+  out[10] = (far + near) / (near - far);
+  out[11] = -1;
+  out[14] = (2 * far * near) / (near - far);
+  return out;
+}
 
 // IG6 (Mac's final call, 2026-08-31): NO tilt constants. The IG5 tilt
 // (an under-rotated draw lens) came out INVERTED on the played screen
@@ -414,7 +452,12 @@ export const FP_FIELD_OF_VIEW = Math.PI / 3;
 /** MW-D11: nine floats became eleven - [pos.xyz, colour.rgb, normal.xyz,
  *  uv.xy]. Stated once, here, because the pack and the VAO have to agree
  *  and a second copy of the number is how they stop agreeing. */
-export const FP_FLOATS = 11;
+// MWT2: 14, not 11 - three more for the EMISSION. An emissive surface's
+// diffuse is forced BLACK by the reference's own law (rule 63's
+// LightMode_Emissive arm), so without this channel a self-illuminated
+// mesh - the torch's flame above all - is drawn black times a texture
+// times the scene's light, which is black.
+export const FP_FLOATS = 14;
 
 /** Rule 54's placement, in the pass's axes: the camera node's rig-space
  *  translation, with the Z-up basis turned into the renderer's Y-up. */
@@ -445,7 +488,7 @@ export function armReach(eye, unionBounds) {
 /**
  * PACK THE ASSEMBLY for drawCharacter's vertex stream: 9 floats per
  * vertex, [pos.xyz, colour.rgb, normal.xyz], NON-INDEXED, because
- * drawCharacter issues drawArrays (renderer.js:813). The MW readers hand
+ * drawCharacter issues drawArrays (renderer.js:903). The MW readers hand
  * back indexed triangles, so the indices are expanded here.
  *
  * NORMALS ARE COMPUTED, not read. poseAssembly skins positions with a
@@ -459,7 +502,7 @@ export function armReach(eye, unionBounds) {
  * left arm is lit inside-out - dark where the right arm is bright - and
  * that is a lighting bug that reads as "the mesh is wrong" rather than
  * as "the mirror is wrong". drawCharacter disables back-face culling
- * (renderer.js:811), so the winding costs nothing else.
+ * (renderer.js:901), so the winding costs nothing else.
  */
 export function packFpArm(pieces, out = null) {
   let tris = 0;
@@ -513,6 +556,13 @@ export function packFpArm(pieces, out = null) {
         buf[o++] = nx; buf[o++] = ny; buf[o++] = nz;
         buf[o++] = uvs ? uvs[vi] : 0;
         buf[o++] = uvs ? uvs[vi + 1] : 0;
+        // MWT2: the reference adds the emission INTO the lighting sum and
+        // multiplies the texture by the whole of it (objects.frag's
+        // `gl_FragData[0].xyz *= lighting`, lighting.glsl's
+        // `... + getEmissionColor()`), so an emissive surface keeps its
+        // picture and stops caring what the room is lit by.
+        const [er, eg, eb] = emissiveAt(mat, cols, idx[i + k]);
+        buf[o++] = er; buf[o++] = eg; buf[o++] = eb;
       }
     }
     const count = (idx.length / 3) * 3;
@@ -965,6 +1015,30 @@ export function torchPartPaths({ torch = false, allLights, has = null }) {
  *  skeletonHasBone test the weapon's typed bone takes, injectable for
  *  a fixture without the bone). */
 export const TORCH_BONE = 'Shield Bone';
+/**
+ * MWT1 (2026-09-17, Mac: the Morrowind model's torch "is positioned
+ * incorrectly") - THE ATTITUDE A HELD LIGHT IS GIVEN, AND ONLY A LIGHT.
+ *
+ * The bone was right and the rotation was missing. `SceneUtil::attach`
+ * puts ONE PositionAttitudeTransform between the actor's bone and the
+ * attached model, and the only rotation it can carry is the caller's
+ * `attitude` - which `ActorAnimation::attach` passes for `isLight` ALONE
+ * (actoranimation.cpp:97-103) and never for a weapon (:104-105). It is an
+ * extra -90 degrees about X, and this port's own reference notes wrote it
+ * down at `02-Formats/Morrowind-Rules.md:3228` ("a held light (the torch
+ * in the player's left hand) gets an extra -90 deg X rotation passed as
+ * attitude") beside the two engine-injected transforms it DID port. The
+ * torch hung at Shield Bone unrotated: the right bone, the wrong way up.
+ *
+ * Rx(-90) row-major, which is the shape `preTransform` already takes for
+ * the arrow (`{ a: 3x3, t: 3 }`, applied to the positions before the
+ * bone) - the same place in the chain the reference's PAT sits, and the
+ * bone carries no "Left" so no mirror intervenes.
+ */
+export const LIGHT_ATTITUDE = Object.freeze({
+  a: Object.freeze([1, 0, 0, 0, 0, 1, 0, -1, 0]),
+  t: Object.freeze([0, 0, 0]),
+});
 export function resolveTorchPart({ torch = false, allLights, find, skeletonBytes, has = null, hasBone = null }) {
   const notes = [];
   const parts = [];
@@ -977,8 +1051,8 @@ export function resolveTorchPart({ torch = false, allLights, find, skeletonBytes
   if (!arc) { notes.push(`torch: ${path} (${rec.id}) is not in your archives`); return { parts, torchInfo, notes }; }
   const carries = hasBone ? hasBone(TORCH_BONE) : skeletonHasBone(skeletonBytes, TORCH_BONE);
   if (!carries) { notes.push(`torch: this skeleton has no "${TORCH_BONE}" - nowhere to hold it`); return { parts, torchInfo, notes }; }
-  parts.push({ slot: 'torch', bones: [TORCH_BONE], bytes: arc.get(path).slice() });
-  torchInfo = { id: rec.id, name: rec.name, model: rec.model, bone: TORCH_BONE, fire: !!rec.fire };
+  parts.push({ slot: 'torch', bones: [TORCH_BONE], bytes: arc.get(path).slice(), preTransform: LIGHT_ATTITUDE });   // MWT1
+  torchInfo = { id: rec.id, name: rec.name, model: rec.model, bone: TORCH_BONE, fire: !!rec.fire, attitude: true };
   return { parts, torchInfo, notes };
 }
 
@@ -1184,8 +1258,8 @@ async function buildTpBody({
     // MW-LOAD: covers collectArmTextures' synchronous reads - rule 36's
     // ladder over the names the assembled pieces carry, which are only
     // knowable now that the NIFs are parsed.
-    await preloadArmTextures(arm.pieces, archives, gen);
-    const textures = collectArmTextures(arm.pieces, archives, gen);
+    await preloadArmTextures([...arm.pieces, ...(arm.effects ?? [])], archives, gen);   // MAC-Q: and the flame's
+    const textures = collectArmTextures([...arm.pieces, ...(arm.effects ?? [])], archives, gen);
 
     const sourcePaths = tpAnimSources(skeletonPath, exists);
     if (!sourcePaths.length) {
@@ -1579,8 +1653,9 @@ export async function buildFpArm({
     // MW-LOAD: and for the same reason the texture LOAD can only happen
     // here - preloadArmTextures covers every read collectArmTextures
     // makes, walking rule 36's ladder with `has` alone.
-    if (arm.ok) await preloadArmTextures(arm.pieces, archives, gen);
-    const textures = arm.ok ? collectArmTextures(arm.pieces, archives, gen) : new Map();
+    // MAC-Q: the particle systems' textures ride the same catalog as the pieces'
+    if (arm.ok) await preloadArmTextures([...arm.pieces, ...(arm.effects ?? [])], archives, gen);
+    const textures = arm.ok ? collectArmTextures([...arm.pieces, ...(arm.effects ?? [])], archives, gen) : new Map();
     stage('textures');
     // MW-D38: THE CATALOG the item icons resolve against - the same
     // archives and records this build used, kept on the result so an
@@ -1928,6 +2003,80 @@ function readFollowCamera() {
  * player got a frozen bind-pose arm where the sprite had been correct. A
  * frozen arm is not a reachable state here; the sprite is.
  */
+/**
+ * MAC-Q: THE AFFINE THAT CARRIES A PART'S PARTICLE SPACE ONTO THE RIG - the
+ * very placement its rigid shapes take, composed rather than applied to
+ * vertices. placeAtBone puts a shape's vertex at `at(mirror(v) + offset)`
+ * over positions that were pre-transformed by the part's own attitude
+ * (applyPre) and baked to the file's root by the flattener; a particle
+ * lives in its NODE's space, so the file-root bake is the node's world
+ * transform, taken here as the last term. Read right to left:
+ * particle -> file root -> the part's attitude -> the mirror and rule 14's
+ * offset -> the bone. One composition, so the flame cannot drift from the
+ * torch it burns on.
+ */
+export function effectPlacement(effect, mats, attachmentTransform) {
+  const at = attachmentTransform(mats, effect.attachRef);
+  const mirror = {
+    a: Float32Array.from([effect.mirrored ? -1 : 1, 0, 0, 0, 1, 0, 0, 0, 1]),
+    t: effect.boneOffset ? [effect.boneOffset[0], effect.boneOffset[1], effect.boneOffset[2]] : [0, 0, 0],
+  };
+  let m = affineMul(at, mirror);
+  if (effect.pre) m = affineMul(m, effect.pre);
+  return affineMul(m, affineOfTransform(effect.desc.world));
+}
+
+/**
+ * MAC-Q: ONE FRAME OF A RIG'S PARTICLE SYSTEMS - stepped on the part's
+ * clock, placed on the posed rig, packed, and (with a renderer and a mesh)
+ * uploaded onto the mesh's `effects`, one GL effect per system, created
+ * on first sight and textured through the SAME catalog the ranges use.
+ *
+ * THE TWO REFERENCE FRAMES (nifloader.cpp:1476-1483): under LocalSpace
+ * the particles are kept in the node's own space and PLACED at pack time,
+ * so the flame rides the hand; without it they are kept in the rig's
+ * space - the nearest thing a lens-local arm has to a world - so a swing
+ * leaves them behind for their lifetime, which is Morrowind's own trailing
+ * fire. The size is scaled by the placement's own scale either way,
+ * because LOCAL_COORDINATES (:1486) sizes a particle in the file's units.
+ *
+ * `clock` null is a system with no source: frozen, as the reference
+ * freezes a controller nobody drives (nifosg/controller.cpp:602-603).
+ */
+export function stepRigEffects(assembly, { dt, clock = null, hidden = () => false, renderer = null, mesh = null, textures = null } = {}) {
+  const list = assembly && assembly.effects ? assembly.effects : [];
+  if (!list.length || !assembly.mats || !assembly.fns) return 0;
+  let live = 0;
+  for (let i = 0; i < list.length; i++) {
+    const eff = list[i];
+    const m = effectPlacement(eff, assembly.mats, assembly.fns.attachmentTransform);
+    if (!eff.sim) eff.sim = createParticleSystem(eff.desc);
+    const local = eff.desc.localSpace;
+    eff.sim.update(dt, clock, local ? null : m);
+    const quads = eff.sim.quads();
+    const packed = packParticleQuads(quads, eff.packed || null, {
+      place: local ? (x, y, z) => affineApply(m, x, y, z) : null,
+      sizeScale: affineScale(m),
+    });
+    eff.packed = packed.packed; eff.count = packed.count;
+    live += quads.length;
+    if (renderer && mesh) {
+      if (!mesh.effects) mesh.effects = [];
+      let gpu = mesh.effects[i];
+      if (!gpu) {
+        gpu = renderer.createParticleEffect(eff.sim.quota, particleDrawState(eff.material));
+        const file = eff.material && eff.material.textureFile;
+        const entry = file && textures ? textures.get(file) : null;
+        if (entry && entry.image) gpu.tex = renderer.createCharacterTexture(entry.image.mips, wrapModes(eff.material.clampMode ?? 3));
+        mesh.effects[i] = gpu;
+      }
+      gpu.hidden = !!hidden(eff);
+      renderer.updateParticleEffect(gpu, packed.packed, packed.count);
+    }
+  }
+  return live;
+}
+
 export function createFpArm() {
   let renderer = null;
   let camera = null;
@@ -2179,6 +2328,8 @@ export function createFpArm() {
       // rebuilt on every attach would otherwise leak one upload per
       // piece per build, which is the shape of NT1's teardown leaks.
       for (const r of m.ranges || []) if (r.tex) gl.deleteTexture(r.tex);
+      for (const e of m.effects || []) renderer.releaseParticleEffect(e);   // MAC-Q: the flame's buffer and texture go with the mesh
+      m.effects = null;
     }
   }
   function releaseMesh() { releaseGpu(mesh); mesh = null; }
@@ -2446,6 +2597,14 @@ export function createFpArm() {
    *  group lives in base_anim.kf (mwAnim.js's LOOPING_ANIMATIONS names
    *  it) - a rig whose sources lack it is asked once and holds the
    *  torch in the idle's own left hand. */
+  /** MAC-Q: an effect hides with the part it was authored on - the torch's
+   *  flame with the torch (MW-D51's carried-left rule), a weapon's with
+   *  the weapon. Anything else is always drawn. */
+  function effectHidden(eff) {
+    if (eff.slot === 'torch') return !torchVisible();
+    if (eff.slot === 'weapon') return !weaponShown;
+    return false;
+  }
   function refreshTorch(force = false) {
     if (!torchVisible()) { torchState = null; torchSource = null; torchGroup = null; return; }
     if (!force && torchState && torchState.playing) return;
@@ -3416,8 +3575,9 @@ export function createFpArm() {
           const bindTorch = async (rigBuilt) => {
             const resolved = resolveTorchPart({ torch: true, allLights: token.allLights, find, skeletonBytes: rigBuilt.skeletonBytes, has: archiveHas(archives) });
             rigBuilt.arm.pieces = rigBuilt.arm.pieces.filter((p) => p.slot !== 'torch');
+            rigBuilt.arm.effects = (rigBuilt.arm.effects ?? []).filter((e) => e.slot !== 'torch');   // MAC-Q: the old flame goes with the old torch
             bindPartsInto(rigBuilt.arm, resolved.parts);
-            const fresh = rigBuilt.arm.pieces.filter((p) => p.slot === 'torch');
+            const fresh = [...rigBuilt.arm.pieces.filter((p) => p.slot === 'torch'), ...rigBuilt.arm.effects.filter((e) => e.slot === 'torch')];
             await preloadArmTextures(fresh, archives);
             for (const [file, tex] of collectArmTextures(fresh, archives)) {
               if (!rigBuilt.textures.has(file)) rigBuilt.textures.set(file, tex);
@@ -3614,6 +3774,8 @@ export function createFpArm() {
           accumRoot: t.accumRoot,
         });
         uploadThirdMesh(t);
+        // MAC-Q: the body's particle systems, on the clock its parts ride
+        stepRigEffects(t.arm, { dt, clock: tOverlay ? overlayClock : poseTime(state), renderer, mesh: thirdMesh, textures: t.textures, hidden: effectHidden });
         // Rule 57 hides on the SAME flags: sheathed vanilla shows no
         // weapon on the body, and the arrow follows the shoot keys.
         for (const r of thirdMesh.ranges) {
@@ -3722,6 +3884,9 @@ export function createFpArm() {
       } else {
         renderer.updateCharacterMesh(mesh, packed.packed);
       }
+      // MAC-Q: the arm's particle systems - the torch's flame - on the
+      // same clock the pose took, placed on the rig that was just posed
+      stepRigEffects(built.arm, { dt, clock: fOverlay ? overlayClock : poseTime(state), renderer, mesh, textures: built.textures, hidden: effectHidden });
       // NpcAnimation::showWeapons - the reference REMOVES the part
       // (removeIndividualPart(PRT_Weapon), npcanimation.cpp:981) and
       // re-adds it on show. This port keeps the vertices and flips a
@@ -3753,9 +3918,13 @@ export function createFpArm() {
       // MW-D43: the ARM's dial, not the sprite pass's. See MW_ARM_PIXEL.
       const wantW = canvas.clientWidth / MW_ARM_PIXEL;
       const wantH = canvas.clientHeight / MW_ARM_PIXEL;
-      const s = Math.min(1, CHAR_SPRITE_RT_SIZE / wantW, CHAR_SPRITE_RT_SIZE / wantH);
+      // MAC-R1: the rows above the screen, only under a transform (FP_TOP_PAD's note).
+      const padFrac = screenTransform ? FP_TOP_PAD : 0;
+      const s = Math.min(1, CHAR_SPRITE_RT_SIZE / wantW, CHAR_SPRITE_RT_SIZE / (wantH * (1 + padFrac)));
       const pw = Math.max(2, Math.round(wantW * s));
       const ph = Math.max(2, Math.round(wantH * s));
+      const pad = Math.round(ph * padFrac);   // extra rows on top of the screen's ph
+      const phFull = ph + pad;
 
       // RULE 54: THE WHOLE PASS LIVES IN THE RIG'S OWN SPACE.
       //
@@ -3817,15 +3986,34 @@ export function createFpArm() {
       // AUDIT 37 F1: the near plane off the IDLE reach, the far off the
       // swept one - see the build's note.
       const near = Math.max((built.idleReach ?? built.reach) / 200, 1e-4);
-      const proj = perspective(FP_FIELD_OF_VIEW, pw / ph, near, built.reach * 4);
+      // MAC-R1: the SCREEN's frame is the symmetric perspective it always
+      // was (FP_FIELD_OF_VIEW vertical, pw/ph); the padded frame keeps
+      // that frame's bottom, its sides and its near plane and raises the
+      // top edge by 2 x padFrac half-heights, so the screen still occupies
+      // the bottom ph of the phFull rows at exactly the same pixel scale
+      // and the extra rows see what is above it. With no pad the two
+      // matrices are the same matrix.
+      const far = built.reach * 4;
+      const hh = near * Math.tan(FP_FIELD_OF_VIEW / 2);
+      const hw = hh * (pw / ph);
+      const proj = pad > 0 ? frustum(-hw, hw, -hh, hh * (1 + 2 * padFrac), near, far) : perspective(FP_FIELD_OF_VIEW, pw / ph, near, far);
+      // MAC-P: the room's own light on the arm (render/renderer.js's
+      // viewmodel borrow), off the SAME `flatLightAt` the classic sprites
+      // take under MAC-I - one answer, both lanes. Null keeps the frame's
+      // light exactly as it was, which is what the switch off means.
+      const vmLight = fpLightingOn() ? (renderer.flatLightAt?.() ?? null) : null;
       // MAP3: what this frame composed with, so paperCorners() can put the
-      // sheet's corners where the composite puts them
+      // sheet's corners where the composite puts them. MAC-R1: the pad's
+      // frustum raises the top edge; the SCREEN shows the symmetric frame's
+      // rows at the same pixel scale, so the corners project through the
+      // symmetric matrix into the screen's rect.
       {
         const W = canvas.clientWidth || canvas.width, H = canvas.clientHeight || canvas.height;
-        lastFrame = { model: NIF_TO_PASS, view, proj, rect: screenTransform ? screenTransform({ x: 0, y: 0, w: W, h: H }) : { x: 0, y: 0, w: W, h: H } };
+        const projScreen = pad > 0 ? perspective(FP_FIELD_OF_VIEW, pw / ph, near, far) : proj;
+        lastFrame = { model: NIF_TO_PASS, view, proj: projScreen, rect: screenTransform ? screenTransform({ x: 0, y: 0, w: W, h: H }) : { x: 0, y: 0, w: W, h: H } };
         drewLast = true;
       }
-      const tex = renderer.renderCharacterSprite(mesh, NIF_TO_PASS, proj, view, pw, ph, { lensLocal: true });   // VC5 review: lens-local - no cloud deck on the arm
+      const tex = renderer.renderCharacterSprite(mesh, NIF_TO_PASS, proj, view, pw, phFull, { lensLocal: true, viewmodelLight: vmLight });   // VC5 review: lens-local - no cloud deck on the arm   // MAC-R1: phFull - the screen's rows and the pad above them
       // WW1: Weapon Widget's channels move the composite as they move the
       // classic sprite - a screen-space rect in place of the fullscreen
       // overlay when a transform is set, the same alpha cut either way
@@ -3834,7 +4022,13 @@ export function createFpArm() {
       if (screenTransform) {
         const W = canvas.clientWidth || canvas.width, H = canvas.clientHeight || canvas.height;
         const rect = screenTransform({ x: 0, y: 0, w: W, h: H });
-        renderer.drawScreenQuad(tex, rect, { u0: 0, v0: ph / CHAR_SPRITE_RT_SIZE, u1: pw / CHAR_SPRITE_RT_SIZE, v1: 0 });
+        // MAC-R1: the composite is the SCREEN's rect extended upward by the
+        // pad's share of its height - the padded rows land above the
+        // screen's top when the rect sits at 0, and a rect the widget has
+        // shifted down shows them instead of a cut. The sampled corner is
+        // the whole phFull-tall sub-rect.
+        const up = rect.h * padFrac;
+        renderer.drawScreenQuad(tex, { x: rect.x, y: rect.y - up, w: rect.w, h: rect.h + up }, { u0: 0, v0: phFull / CHAR_SPRITE_RT_SIZE, u1: pw / CHAR_SPRITE_RT_SIZE, v1: 0 });
         return true;
       }
       renderer.drawScreenOverlayQuad(tex, pw / CHAR_SPRITE_RT_SIZE, ph / CHAR_SPRITE_RT_SIZE);
@@ -3884,6 +4078,14 @@ export function createFpArm() {
       return followCam;
     },
     thirdActive,
+    /** TORCH-VIS: whether the carried light is REALLY in this arm's hand this frame - `torchVisible()`, which is
+     *  the reference's own three conditions at once: a Light resolved into the carried-left slot (a rig with no
+     *  LIGH record, no attached mesh or no Shield Bone has none), the light lit, and the stance's carried-left
+     *  visible. The weapon rig's draw ladder asks it before it lets a sheathed player through on this lane: the
+     *  ENTITY knowing a light is equipped is not the same question, and answering the wrong one paints empty
+     *  hands (a lantern, whose held art is the classic lane's alone, is exactly that case). `status()` has carried
+     *  this as `torchShown` all along - this is the same read without building a thirty-field card for it. */
+    torchShown: () => torchVisible(),
     /** Animation::upperBodyReady (animation.cpp:1846-1857), which is
      *  what the camera's queued-mode gate consults (camera.cpp:135):
      *  a stable stance, no action section in flight, no build in
@@ -3918,7 +4120,7 @@ export function createFpArm() {
      *
      * MW-D34, THE MEASURED CHIRALITY (mwArmProbe L5b, through the REAL
      * composite - MW-D23's law): this pass composites through the
-     * WORLD's lens, which is mirrorProjectionX (dungeon.js:661 et al.),
+     * WORLD's lens, which is mirrorProjectionX (dungeon.js:664 et al.),
      * and the port's world convention puts the player's RIGHT at +X at
      * yaw 0 (motor.js:663) - a LEFT-handed convention the mirror turns
      * into correct screen imagery. A right-handed NIF actor placed with

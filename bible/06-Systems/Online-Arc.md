@@ -3951,8 +3951,9 @@ starts from the record and not from memory.
 
 **Shipped and live.** Everything from ONLINE1 through WORLD6b-iii(e)
 and its audit is merged to main; the relay is deployed at `world66`
-and answers on `/health`. The suite stands at 7474 tests across 755
-files, green. In one line each:
+and answers on `/health`. The suite stood at ~~7474 tests across 755
+files~~ at the stop (superseded - Testing.md carries the live count),
+green. In one line each:
 
 - ONLINE1/SLOTS1/MWBODY1/CHAT1/MAC6/MAC7: presence, the doll, the
   chat, the dungeon save, the peer's weapon and swing.
@@ -3972,19 +3973,21 @@ files, green. In one line each:
 see "6b-iii (recorded, next)" above and the explanation given at the
 stop):
 
-- **The guards on a shared crime.** The watch is a crime's response
-  and the crime is the player's own (the flag, the witnesses, the
-  legal reputation). Sharing it is a crime event on the wire, the
-  witness test run once, then the guards as a pool with the laws the
-  encounter foes have. The open decision: whether a peer's murder
-  marks the region for everyone, and whom the watch hunts.
-- **One economy.** The day's rolls are the world's already (WORLD6b);
-  the STATE the walk applies to is each player's (the prices read the
-  player's own faction reputation; a returning player catches up from
-  its own starting state). Sharing it is a region memory like a
-  dungeon's, one owner walking the day, the reputation term split out
-  or dropped; it touches the shop, the bank and the guild halls. The
-  open decision: what a player away a week reads.
+- ~~**The guards on a shared crime.**~~ PAID by WATCH1 (2026-09-17,
+  the smaller reading - see its section below): the crime stays the
+  criminal's, the watch rides the criminal's cell frames as puppets,
+  hunts its owner alone, and a peer's blow on it is not the owner's.
+  Recorded, not paid, in that section: the larger reading (a crime
+  event on the wire, the witness test run once, a peer's murder
+  marking the region for everyone, a watchman hunting a peer).
+- ~~**One economy.**~~ PAID by ECON1 (2026-09-17, see its section
+  below; OL4 the same day put the shops on a night shift online): the
+  region's prices are a pure function of the world's day, computed
+  alike on every client - no memory, no owner, no wire - with the
+  merchants' power tilt dropped (the powers stay each player's: quests
+  move them). A player away a week reads today's index, as one who
+  stayed does. Recorded, not paid, in that section: the powers as a
+  world's, and the bank.
 - Recommended order at the stop: the guards first (contained in a
   cell, the pool laws exist), the economy second.
 
@@ -4159,7 +4162,7 @@ were made to keep it small, each easy to change:
    question, not a correctness one.
 3. **Loiter was left alone.** See above.
 
-`test/restx1_online_rest.test.js` - 7 pins, 8 mutants, 8 dead.
+`test/restx1_online_rest.test.js` - 7 pins, 8 mutants, 8 dead. (RESTX2, 2026-09-17: the lane and its test are RETIRED; `test/restx2_online_rest.test.js` holds the law that replaced it - see RESTX2 below.)
 
 ## AUDIT RESTX + AUDIT OQ (2026-09-15)
 
@@ -4231,7 +4234,7 @@ room exists.
 
 **The boundary that makes that safe is `_layoutFoes`** - the dungeon
 host's index of where the layout's own run ends. Every foe past it "is
-this player's own" (`dungeonContext.js:1045`, AUDIT WORLD B2): a quest
+this player's own" (`dungeonContext.js:1054`, AUDIT WORLD B2): a quest
 foe is minted above it, never streamed, never puppet-ised by the room's
 authority switch, and never touched by a joiner's stream. So a joiner's
 quest foe really does spawn and really can be killed by the player whose
@@ -4600,7 +4603,7 @@ with a marked top-left pixel on its last row).
 
 *"During online play, certain enemies cant be damaged."*
 
-`src/scenes/worldModes.js:5082` read, on one physical line:
+`src/scenes/worldModes.js:5098` read, on one physical line:
 
 ```js
 useMagicItem: (item) => host.useMagicItem?.(item),   // HT1: the torch keys onFoeHit: (hit) => host.onFoeHit?.(hit),   // WORLD2: a puppet's blow goes to the host
@@ -4615,7 +4618,7 @@ appended its own note to the end of the line that already carried
 **Why that is an invulnerable enemy.** Online, a joiner applies no local
 damage to a layout foe - `damageFoe`'s non-authority arm hands the blow
 to the room's host through `opts.onFoeHit?.(...)` and RETURNS
-(`dungeonContext.js:3868`). With the property missing that call is a
+(`dungeonContext.js:3929`). With the property missing that call is a
 no-op on `undefined`: no damage, no frame, no warning, nothing on the
 console. Every layout foe in every online dungeon absorbed every blow
 from everyone but the room's authority, for eight slices, in silence.
@@ -4742,7 +4745,7 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:2750` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:2934` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
   provenance argument `applySpellToFoe` hands them (`hostMagic.js:187`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
@@ -6615,3 +6618,546 @@ to main, because `/health` will report `world79` until it does.
 The patch's two scene files were not taken either: they are a copy of an
 older tree and would have reverted the Enhanced Lighting arc and the
 quickslot arc wholesale. They carried no respawn change of their own.
+
+## RESTX2 (2026-09-17): online, a rest paces on the window's own timer
+
+Mac's "BetterResting" zip, two files cut from an older main. What it
+asked for, in its own comments: monsters should still be able to
+interrupt an online wait, and the hours-remaining counter should
+visibly tick down rather than jump straight to its answer.
+
+RESTX1 (above) made an online REST resolve in ONE frame - the whole
+hourly ladder inside a single `tick()`, no minutes passed, no host
+clock jump, no encounter roll, no countdown - and left LOITER pacing
+off the shared world clock at DFU's TimeScale, five real minutes an
+hour. Both were the same mistake from two sides: the shared clock was
+being read for PACING, when the only thing it has to say online is
+that it cannot be written.
+
+**One law, every mode, online or off:** the window's own real-time
+timer (`REST_WAIT_PER_HOUR` / `LOITER_WAIT_PER_HOUR` real seconds a
+simulated hour - waitTimePerHour / minutesPerTick, DFU's quirk, so an
+hour is six sub-ticks of 0.075 s) paces every sub-tick. `_accrue`
+banks the frame in every lane; `_takeSubTick` consults the timer and
+nothing else. So online the counter ticks down at the offline rate
+(eight hours in under four real seconds), and `advanceMinutes` is
+spent on EVERY sub-tick, so the magic-round catch-up and the hourly
+rest-interruption roll run online as they always have offline: a foe
+that walks up breaks the rest.
+
+**What the roll reads.** The shared clock is still refused every local
+write (worldTick.setWorldMinutes), and `playerTicker.classicMinutes`
+stands under it - so a host reading it under a rest computed a span
+of zero and rolled nothing. The session keeps `_onlineSimMinutes`: a
+counter local to this one session, seeded from the shared clock at
+the first sub-tick (floored), ten a sub-tick from there, forgotten
+when the session ends, handed to the host as the sub-tick's END
+(AUDIT WORLD5 C8's slot; null offline, where the host reads its own
+clock). Nothing here is visible to another player or survives past
+the rest; it only has to look, from the inside, like an hour passed.
+After the rest the host's `_lastEncMinutes` sits ahead of the standing
+clock until it catches up, and those frames roll nothing - the rest
+already rolled them.
+
+**The quest tick alone stays offline-only.** A quest clock is
+cross-player-visible state; ticking it against a locally simulated
+minute would desync this player's quests from everyone else's.
+
+**Retired with the lane:** `_free()`, `FREE_REST_HOUR_CAP`,
+`_freeHours`, `_sharedAt`, `_sharedTaken`, `_holdShared` (a covered
+frame banks nothing because `_accrue` is never reached under a cover -
+the timer's own law, in every lane now), and AUDIT RESTX F1's
+full-health guard on the Medical tally: the exploit it closed ("rest
+99 hours" = 99 tallies on one click) needed an hour that cost no time,
+and every hour costs its real seconds again. DFU's unconditional tally
+stands everywhere. The rest window's OL2 clock line lost its pace half
+("an hour here is 5 real minutes" stopped being true) and says the one
+thing that still is: `World time 15:05 - resting does not move it`;
+`REAL_MINUTES_PER_WORLD_HOUR` went with the sentence.
+
+**THE FOUR HOSTS.** The zip fixed `exterior.js`'s `runEncounterTick`
+alone; `world.js` reads the standing clock the same way and got the
+same seam: `runEncounterTick(playerFeet, simMinutesEnd = null)`, `now`
+is the rest's minute when handed one, and the rest deps hand
+`sharedEnd` through. The dungeon's `_restAdvance` already read it; the
+interior's arm rolls nothing inside a building and is unchanged.
+
+`test/restx2_online_rest.test.js` - 8 pins; WORLD5's loiter pin, AUDIT
+WORLD5 C7/C8 and OL2 (5) re-aimed onto the timer; `restx1_online_rest`
+retired. `tools/mutants/restx2camp.json` carries RESTX2's ten.
+
+## D-ONLINE1 (2026-09-17): online, a death respawns instead of ending the run
+
+Mac's "daggerfalljsWildlifeSpawnsRespawn" zip, the respawn half.
+Players: "when i die i just end up at the title menu", "still see you
+have died then main menu"; Mac: "you should just respawn in this
+case". Classic single-player death is "you die, you load a save"; in
+co-op the party is still playing, and ending the run - or loading a
+save that unwinds everyone's progress - is the wrong cost for one
+death. An original addition, not a DFU system, riding the cemetery
+transfer's own teleport core.
+
+**Three bugs the zip found in the path it built, kept as written.**
+`_actLive` was never "am I online": `isWorldRoom` matches a dungeon or
+a building room alone, and the open world stands in a CELL room, so a
+death OUTDOORS - where a camp lives - read as offline.
+`_onlineWorldSession` counts both. And `onlineFrame` LEAVES the room
+the instant the death screen is up (AUDIT ONLINE D12), every frame,
+before `onReset` ever runs - so a reset that read `online.room` always
+found it null. `_deathWasOnline` is snapshotted at the PRESENTER,
+synchronously (a fast F11 reaches the reset before the next frame),
+and at the frame as a backstop for the modal hosts' deaths, BEFORE the
+leave.
+
+**The reset.** Enter, the three-second timer, or F11 (which used to
+quickload from under the death screen - online, respawn IS "get me
+back in"): `respawnOnlinePlayer`. Two things differ from the zip.
+It left a building's interior standing (only a dungeon was exited);
+any mode but the open world is left first through
+`forceExitToExterior`, which also clears the modal host's death screen
+with its slot. And it landed on the tile's dead centre (the
+`_teleportToPixel` default); the landing is a `RandomStartMarker`, as
+TeleportAway names it (AUDIT 64 F19) - a town's gate, a cemetery's, a
+dungeon's door. Dead underground the door out is the pixel already
+under the player; otherwise `nearestSafeLocation` (systems/
+deathRespawn.js) picks the closest temple, town or CEMETERY graveyard
+by map-pixel distance over the region's mapTable, the same search the
+cemetery transfer makes; a region with none stands where they fell.
+Then `_lastEncMinutes` is reset (no encounter catch-up across the
+trip), half health back and never none, `surfacePlayer`, and a flavour
+line in the death screen's place. The modal hosts ask through one
+door: worldModes' interior death screen calls `host.onlineRespawn`,
+the dungeon context is handed the same as `opts.onlineRespawn`, and
+both end the run as ever when it answers false - offline is untouched,
+and the fixed city keeps the bare form.
+
+Not carried: `window.__online`, a console debug hook the zip left on
+unconditionally. Not verified in a browser: no online session exists in
+this container; the door is pinned by source and the pick by law.
+`test/donline1_respawn.test.js` - 3 pins; FIX-E, AUDIT 21 F6, AUDIT
+WORLD B6 and MWBODY1 re-aimed. Mutants in `tools/mutants/restx2camp.json`.
+
+## WATCH1 (2026-09-17): the criminal's watch rides the cell
+
+**Mac, resuming the STOP list above: "1. Gaurds first 2. Whatever is
+best."** The first open slice at the stop was "the guards on a shared
+crime", with two decisions left open there: whether a peer's murder
+marks the region for everyone, and whom the watch hunts. Both are
+decided here on the SMALLER reading, and the reasons are written down
+so the larger one can be argued from the record.
+
+**What a peer saw before.** A crime is its criminal's alone -
+Multiplayer.md's first lock, every player runs their own world from
+their own save - and so was the city watch it summoned: `cityGuards`
+is a pool the encounter stream never named. A peer standing beside a
+murderer saw the killer swing at nothing while five watchmen chased
+them round the village; a peer who tried to help hit air.
+
+**The reading taken.** The crime STAYS the criminal's: the flag, the
+witnesses, the legal reputation, the spawn law, the hunt and the
+despawn on the crime's clearing are all untouched. What changes is
+that the watch RIDES the criminal's own cell `foes` frames, as `t:
+146` records - Knight_CityWatch, whose ENEMY_BASICS row every client
+holds - behind the encounter foes, in the foes' own record shape.
+Every peer in range stands them as puppets through `applyFoes`'s one
+spawn chain, exactly as a rat of mine is stood (at the streamed feet,
+at the owner's level, no loot, outside the reader's cap); they walk,
+swing and fall where the stream says. The relay reads nothing inside a
+record, so there is no relay change. (`RELAY_VERSION` moved to
+`world81` at AUDIT WATCH1 all the same: `wire.js` gained the reader's
+`CELL_WATCH_PUPPETS_MAX`, and the relay bundle's bytes are its law -
+SLAM8 - so the worker is redeployed with nothing new to do.)
+
+**A FOE IS ITS SPAWNER'S, and so is a watchman.** A peer's blow on a
+watch puppet goes to its owner as a hit by the number the watchman
+rode under - `seq`, minted by the encounter pool's own counter the
+first time he rides, so one number space names one thing and the
+owner's `applyHit` finds a foe or a watchman, never both. At the
+owner the blow lands through `cityGuards`' OWN door (`hurtGuard`) with
+`fromPlayer: false`: DaggerfallEntityBehaviour.cs:203's `source ==
+Player` gate, F035's law, which a peer is outside. So no aggro turn
+(the watch is already the criminal's enemy), and a watchman a peer
+kills is no Murder of the criminal's - the crime stays what it was.
+The knockback still lands (C15's gate is knockDir's), the shield
+still absorbs, the corpse still falls and rides the next frame as `d:
+1` - with NO pile on the wire and none on the body (AUDIT WATCH1 A3,
+below) - and the peer's own screen rang, bled and voiced the blow
+before the divert, as it does for any puppet.
+
+**Whom the watch hunts: its owner and its owner's foes, never a
+peer.** The watch's target candidates are the host's own
+(`_foeSenses().candidates()`, MT-ii) - the roster is the encounter
+pool's alone - so a watchman's `g` on the wire is `'.'` (me) or `''`
+(a foe of mine), and his `_atkB` the same; a puppet of him lands
+nothing at its reader (exteriorFoes' `update`, the puppet arm:
+`recipientIsMe(f, f._pupBlowAt)`) and only draws the swing. The strike
+edge in `cityGuards.update` latches the attack count in the wire's
+spelling (the ranged bit low: the watch never shoots - `rangedAttack =
+false`, AUDIT 18) through the one home, `enemyTargets.bumpAtkCount`
+and `wireRecipient`.
+
+**The seams, by name.** `cityGuards.js`: the guard record gains `seq`
+(null until he rides), `_atkA`, `_atkB`; the strike edge latches the
+count. `exteriorFoes.js`: `setNet` takes `watch` - `{ list, hurt }` -
+`foesFrame` walks `[...foes, ...watchList()]` and numbers an unnumbered
+watchman off `_nextSeq`; `applyHit` looks a number up in the foes then
+the watch (`watchOf`), and routes a watchman to `_net.watch.hurt`.
+`world.js`: the net hands `cityGuards.guards` and `hurtGuard(...,
+{ fromPlayer: false, peer: true })`. The striker's own melee door routes
+by pool membership (`cityGuards.guards.includes(f)`), never by species,
+so a 146 puppet is the encounter pool's and no crime arm of the
+striker's runs. THE FOUR HOSTS: `world.js` alone is online and is
+wired; `exterior.js` (the fixed city, a full encounter pool and a
+watch) and `worldModes.js` (the interior host's `interiorFoes` and
+ROAD-B's indoor watch) mount no net at all - `setNet` is called from
+`world.js` and nowhere else - so their watches stream nothing and are
+flagged here by name; the dungeon's foes are the host's stream
+(WORLD2) and it has no watch on the wire.
+
+**Recorded and NOT carried - the larger reading, if wanted:**
+- A peer who strikes or kills my watch commits nothing: the striker's
+  door is the encounter pool's, which has no crime machinery. In the
+  larger reading that is Assault/Murder at the striker, needing a
+  crime event on the wire.
+- My murder marks no crime and no legal reputation on a peer; the
+  watch hunts only me. The larger reading is the shared crime event
+  with the witness test run once.
+- The townspeople each client converts into watchmen are each client's
+  own roll; a peer sees my converted watchmen as puppets AND its own
+  unconverted townsperson still standing (the civilians are not
+  streamed - that is a slice of its own).
+- A walk-away (the crime cleared) leaves the roll silently and is
+  taken down at the readers by the next FULL frame, the encounter
+  foes' own law for a culled foe; up to FOES_FULL_MS a peer sees a
+  standing watchman the owner no longer runs.
+- `exterior.js` and `worldModes.js` mount no net (see THE FOUR HOSTS
+  above); the world host alone is online.
+- A peer's shafts can stuff a watchman's kit with Arrows up to
+  HIT_ARROWS_MAX (the foes' own bound, pre-existing arm, new target):
+  the kit reads into the knockback weight and, on a kill by the owner,
+  into the pile. Bounded; recorded.
+
+Not verified in a browser: no online session and no second player
+exist in this container; the whole path is pinned by execution across
+two real pools netted together (`test/watch1.test.js`, ~~5 pins~~ 6
+after AUDIT ALL) and `tools/mutants/watch1.json` (~~33 mutants, 32
+dead~~ 39, 38 dead after AUDIT ALL, 1 equivalent as recorded). AUDIT WORLD6b-iii(b)'s C1 source pin, WORLD6b's net pin,
+WORLD6b-ii's and WORLD6b-iii(a)'s spelling pins, WORLD6b-iii(c)'s
+record pin, WORLD6b-iii(e)'s owner-door pin and WORLD2's count pin
+re-aimed.
+
+### AUDIT WATCH1 (2026-09-17, Mac: "Audit this first") - three opus lenses over the first cut
+
+Three lenses (the game law and the net flow; the wire, the relay and
+abuse; the pins, the mutants and the records), every finding
+reproduced against the real pools before it was paid. In severity
+order:
+
+- **A1 THE WATCH NEVER STOOD FOR A BUSY CRIMINAL.** The reader's
+  per-owner puppet cap (CELL_PUPPETS_MAX, 8) was one cap for foes and
+  watch, and the watch rides behind the foes - so a criminal carrying
+  a full encounter roll (the murderer fleeing through the country, the
+  headline case) streamed a watch no peer ever stood, on every frame,
+  for ever (the cap counts STANDING puppets). Paid: the watch has its
+  own allowance, CELL_WATCH_PUPPETS_MAX (10 - SpawnCityGuards stands
+  five, but makeNpcGuardsIntoEnemies converts a town's whole
+  wandering-guard population uncapped), counted apart in
+  `livePuppetsOf`, pending builds included.
+- **A2 THE SWING WAS NEVER AT ANYONE.** The strike edge handed
+  `isPlayerTarget` the target's FEET (`_tgt`), so `_atkB` was always
+  `''` and the `'.'` arm was dead code, while the record and the pin
+  certified it. Latent (a reader compares the recipient against
+  itself), but the field the record claims. Paid through ONE HOME:
+  `enemyTargets.wireRecipient` and `bumpAtkCount`, now read by the
+  encounter pool (which had two hand copies of the spelling), the
+  watch and the dungeon host's count. The dungeon's own recipient
+  spelling (a null target under unarmed targeting is '.') is a
+  deliberate variant and stays.
+- **A3 A BODY NO PEER CAN OPEN, ADVERTISED AS OPEN.** A killed
+  watchman rode with `o` its kit, so every reader offered the body as
+  a loot target; the take arm never reached the watch, the owner
+  answered silence, and the peer clicked a corpse for ever with no
+  line. Paid the smaller way: a watch record rides `o: 0` (its body is
+  the owner's own door, cityGuards.takeLoot). And the no-Murder door
+  was a loot farm: two clients could clear a town's watch at no cost
+  and the owner strip five armed bodies for free. Paid: a body another
+  hand felled carries nothing (the G3 walk-away precedent).
+- **A4 THE OWNER HEARD "City Watch just died." FOR A PEER'S KILL,** and
+  ECV1's reveal flashed for a peer's blow - the foes' door has had
+  WORLD6b B2's peer half since the cell stream landed. Paid: the host
+  hands `peer: true` and `damageGuard` gates the notice and the reveal
+  on it.
+- **A5 A WATCH PUPPET STOOD THREE TO SIX LEVELS ABOVE ITS WATCHMAN.**
+  `makeEnemyEntity` rolls the City Watch bonus for 146 unconditionally
+  and the reader handed it the streamed level, which carries the bonus
+  already - the one species where `builtLevel` and `entity.level`
+  disagreed, and the one term a crafted `t: 146` record could ride.
+  Paid: `exactLevel` on the puppet arm.
+- **B2 FIVE HIT FRAMES FROM ANYWHERE IN THE CELL ENDED THE WATCH.** No
+  reach, no liveness: a socket across the cell (or a halo) could kill
+  every watchman unseen, and with no watchman standing the conversion
+  stops and the surrender box resets - GUARD1's spree re-opened by
+  another player's word. Paid: the take arm's law - the striker must
+  be a peer the hunt sees (the roster's pose), within the PLAYER's own
+  reach of the watchman (WEAPON_REACH for a blade, MAX_RANGED_DISTANCE
+  for a shaft or a spell, plus the pose's slack), or the blow is
+  nothing. A net with `list` and no `hurt` refuses rather than throws.
+  The foes' own hit arm keeps its old law (no reach) - recorded here,
+  not this slice's.
+- **A6/B6 THE FRAME'S TRIM.** Past CELL_FRAME_RECORDS_MAX the trim
+  sorted bodies by a map built from the foes alone, so every watch body
+  read as the oldest; and `_sentKey` was latched before the trim, so a
+  record the trim dropped was unsent until the next full frame
+  (pre-existing, widened). Paid: a body is stamped on the pool's own
+  clock when it first rides, the map reads both pools and never a
+  puppet's number, and a dropped record's key is cleared.
+- **G1** the `dead && !corpse` skip is load-bearing for a watchman
+  world.js's cross-pool remover ended between frames - pinned and
+  mutated now. **The records**: the FOUR HOSTS named; "applyPuppetRecord's
+  gate" named the wrong function (it is `update`'s puppet arm,
+  `recipientIsMe`); EW1 was the wrong citation for `rangedAttack =
+  false` (AUDIT 18); the STOP bullet retired properly; the `_damage`
+  seam comment's caller list; the equivalent mutant recorded, not
+  dropped; the superseded suite figure at the STOP marked.
+
+Not paid, recorded: the take arm for a watch body (a `watch.take` seam
+beside `watch.hurt`, granting out of cityGuards' own emptying door) - a
+slice of its own if a peer is ever to loot the watch; the foes' hit
+arm's reach; the striker's routing door pinned by source (an executed
+pin would have to stand world.js's own `dealDamage` closure).
+
+## OL4 (2026-09-17): shops staffed around the clock online
+
+**A player complaint relayed by Mac: players could not shop at night
+online.** PR #237 ("OL4 - online shop staffing without rewriting
+classic hours"), landed on this branch with the records it lacked.
+
+**The lockout.** DFU closes a shop outside its hours (PlayerActivate
+.IsBuildingOpen, :102-106, the two tables at :91-92) and on Suns Rest
+(:1294-1302), and the single player sleeps or travels to morning. Online
+the clock is the world's (WORLD5) and nobody can move it - RESTX2's rest
+paces on a timer and the shared clock is refused every write - so a
+classic closure is a real-time lockout of hours, for everyone.
+
+**The reading taken.** Classic's schedule stays a pure primitive,
+`classicBuildingOpen`, preserved exactly. `buildingHoursState(type, {
+hour, holidayId, online })` layers the shared-world policy above it and
+answers BOTH - `classicOpen`, what untouched Daggerfall says, and `open`,
+what this running world says - with `staffing` as data (CLOSED, CLASSIC,
+ONLINE_SHIFT). While the shared clock stands (`worldTick.sharedClockOn`
+- AUDIT ALL O1: the clock is the reason for the shift and the one
+predicate every clock-derived online law reads; the first cut read the
+URL, which a dev door can carry with no clock behind it), and for a SHOP
+alone, a classic closure is covered by a continuous relief shift. `isBuildingOpen` and `buildingIsUnlocked`'s
+shop arm route through it, so the door, the entry-time `insideOpenShop`
+latch, the shelves and the interior people stand on one rule; houses,
+guild halls, temples, palaces and ships keep R1's rules online, and
+offline nothing moves. A restored interior (AUDIT ALL O2: Play Online
+always begins on a restore, and a save taken inside a shop entered while
+classically closed carried the latch `false` - the door opened, the
+shelf opened in STEALING mode, no clerk stood) keeps the saved latch and
+adds the effective hours at the restore, never taking the latch away
+(DFU's own law for the saved record). The other direction is recorded:
+a save taken online inside a shop at 03:00 carries `true` home, and an
+offline load stands its clerk in a shop DFU has locked until the player
+leaves. The classic closures are 45 real minutes (the alchemist's night)
+and a two-hour real outage on Suns Rest at TimeScale 12, not a real day.
+
+**Recorded, not carried.** The Bank (8:00-15:00) and the Library
+(9:00-23:00) are not shops and keep their hours online: a night player
+can shop but cannot bank or read - a follow-up if wanted (the tavern is
+0/25, never closed, and OL3 prices the stay). The night clerk is not
+drawn distinctly - the existing shop people stand the shift; ONLINE_SHIFT
+is the hook for that
+presentation slice. The shared ECONOMY (one region memory, one owner
+walking the day, the reputation term) is the STOP list's open slice
+still. Not verified in a browser: no online session exists in this
+container; pinned in `test/lockpicking.test.js` (R1's hours pins,
+extended in place) and `tools/mutants/ol4.json`.
+
+## ECON1 (2026-09-17): the region's prices are the world's
+
+**Mac: "Economy slice next."** The STOP list's last open slice, taken
+the way its own bullet suggested: the reputation term dropped rather
+than split out, and the state made a function of the day rather than
+a memory with an owner.
+
+**What was wrong.** DFU walks each region's price index once a day
+(UpdateRegionalPrices, FormulaHelper.cs:2053-2088) on the PLAYER's own
+state - the 62 indices drawn at the start (RandomizeInitialRegionalPrices,
+750..1250) and tilted each day by The Merchants' power against the
+region's - because DFU has one player. WORLD6b made the day's ROLLS
+the world's (one generator per day, seeded by the world's day and the
+consumer's salt) and left the STATE each player's, and said so: "one
+economy is the region as a world, and a later slice". So two players
+in one shop on one day read two prices, by when each had arrived and
+what each save carried.
+
+**The reading taken: computed, not streamed.** Under the shared clock
+the index is a pure function of the world's day, `worldRegionPricesOn(
+day)` in `systems/worldTick.js`:
+- the opening indices are drawn on the world's EPOCH day - the day the
+  online world stood at the classic start, `ONLINE_EPOCH_MINUTES`
+  (WORLD5's constant, `net/wire.js`) - from that day's generator with
+  its own salt (`DAY_SALT.priceInit`), region-major as DFU draws them;
+- every day since is walked with that day's generator (`DAY_SALT
+  .prices`), one roll a region, region-major - DFU's own step
+  (`priceWalkStep`, 51/50 up on a passed roll, 49/50 down, clamped to
+  250..4000) with the merchants' tilt from the game's own BASE powers
+  (AUDIT ALL E1 - the first cut set the tilt to ZERO because the LIVE
+  powers are each player's, quests move them; but at zero the index
+  never left ~500..1600 in twenty simulated years, so PricesHigh and
+  PricesLow could never light online and The Merchants' power never
+  took its price bump in `regionPower.js` - the only consumer of those
+  flags). The base powers are FACTION.TXT's, identical on every unmodded
+  client, so `worldPriceTiltOf` over the talk host's FILE dict (never
+  the player's store) answers `trunc((merchants - province) / 5)` as
+  DFU does, and null where DFU walks nothing - a region with no
+  Province faction, or a world with no Merchants; the day's roll is
+  still drawn for every region, DFU's stream position. The host installs
+  it once FACTION.TXT is read (`setWorldPriceTilt`), which starts the
+  world over from the epoch; until then the walk is untilted (a boot's
+  first seconds). A MODDED FACTION.TXT desyncs the shared economy;
+  recorded, not guarded;
+- cached by day and walked forward; a day behind the cache is rebuilt
+  from the epoch; a day before the epoch reads the epoch's. Cold or
+  warm, the day's answer is the day's: catching up equals having
+  stayed, and the open decision at the STOP ("what a player away a week
+  reads") answers itself - today's index, the same as everyone's.
+
+**The seam.** `shopStock.regionPriceAdjustment` - the one door every
+consumer reads the index through (the shop, repair, the guild services,
+the quest machine's macro; no host reads `regionPrices` directly, pinned)
+- answers the world's while a price source stands, draws nothing off the
+player's dice and writes nothing. `setSharedClock` installs the source
+with the clock and removes it with it. The player's `regionPrices` are
+never written online: the save keeps its own economy for its own world,
+and offline DFU's own walk, tilt and all, resumes from it. `runDayChange`
+online walks no prices; it applies the CONDITION half (PricesHigh over
+2000, PricesLow under 500, the normal band clearing both - the inputs
+of The Merchants' weekly power bump in `regionPower.js`, their only
+consumer; the player's own store) from the world's index, for the
+regions DFU's own walk reaches (a Province faction in the player's
+store; no Merchants, no walk, no flags - AUDIT ALL E8),
+one day at a time, with the day's own generator (`DAY_SALT.conditions`)
+for the flag's duration draw - so two players who walked different
+spans read the same flags today.
+
+**One home.** The walk's step (`priceWalkStep`), the opening draw
+(`initialRegionPrice`) and the flag half (`applyPriceConditionFlags`)
+are factored out of `updateRegionalPrices` and read by both the player's
+walk and the world's; `dayRng` is the day's generator whoever asks, and
+`dayRollsFor` (WORLD6b's) reads it under the clock.
+
+**Recorded, not carried.**
+- The POWERS stay each player's (WORLD6b's law: the day's rolls, the
+  player's state). A shared power walk would fight every quest's
+  `changePower`; a world's powers are a memory with an owner, which is
+  the larger reading and a slice of its own if wanted.
+- The bank is not region-priced (interest and loans are the player's
+  account's) and is untouched; the guild halls' and repair prices ride
+  the seam and are the world's.
+- A save that went online carries its own prices home unchanged: the
+  world's economy is read, never copied.
+- Offline the merchants' tilt is the LIVE one (DFU's own).
+- The trade window's price now moves under the player at a day boundary
+  with the window open (AUDIT ALL E3, a change in kind): the source
+  reads the raw shared clock, where the player's own walk was gated
+  behind the tick a held window stops. Once every two real hours, one
+  step (<=2%), and a committed price is captured before the Yes/No box,
+  so no transaction bills a number it did not show.
+- Before the relay's welcome corrects the clock offset, a client a few
+  seconds off reads the neighbouring day's index across a boundary
+  (AUDIT ALL E6): one step, self-healing.
+- A rebuild from the epoch grew without bound (twelve game days a real
+  day); a checkpoint every 512 days bounds it (AUDIT ALL E4).
+
+No wire change, no relay change of this slice's (`RELAY_VERSION` is
+`world82` after the main merge - see MERGE below). Not verified in a
+browser: no online session exists in this container;
+`test/econ1_world_prices.test.js` (6 pins) drives the world's function,
+the seam, the day change online and offline, the tilt and the
+checkpoints; `tools/mutants/econ1.json` (27 mutants, 25 dead, 2
+equivalent as recorded). WORLD6b's and AUDIT WORLD6b C4/C5's day-walk
+pins re-aimed to the world's prices.
+
+## MERGE - main onto this branch (2026-09-17), recorded after the fact
+
+Between WATCH1's audit and OL4, `origin/main` had moved twice (PR #243,
+#244) and was merged in (a28a17e): 25 conflicts, every one citation
+line drift, resolved by taking main's side whole and re-applying by hand
+what that dropped - the dungeon host's `foeDeps.bumpAtkCount` fold (a
+real code change that rode a conflicted file). Two things went wrong
+and were found by AUDIT ALL, not by the gates:
+
+- **`citeShift` ran against a stale base mid-merge** - the hazard
+  Hardening.md writes down ("`citeShift` must not run mid-merge") -
+  and DOUBLE-SHIFTED eleven citations into `cityGuards.js`,
+  `exteriorFoes.js` and `enemyEntity.js` that the branch's own commits
+  had already re-aimed; `test/citedrift.test.js` sweeps none of them.
+  Restored to their true lines at AUDIT ALL.
+- **The relay version row was rewritten in place.** The merge moved one
+  comment line in `wire.js` under `world81`, and OL4's commit relabelled
+  `world81` with the new bytes - SLAM5 verbatim, the thing the version
+  pin exists to prevent, and two commits shipped with that pin red.
+  `world81` is restored to the audit's bytes and `world82` names
+  today's; the worker needs a redeploy with nothing new to do.
+
+## AUDIT ALL (2026-09-18, Mac: "Lets audit everything so far") - four opus lenses over the branch
+
+Four lenses over everything since the WATCH1 audit: the audit's own fixes
+(A), OL4 (O), ECON1 (E), and the merge with the records (M). Every
+finding reproduced against the real modules before it was paid.
+
+**A - the audit's own fixes.** A1 (REGRESSION, severe): the per-class
+pending count opened an unbounded puppet stand - a peer re-wording a
+pending build's record without `t` (the wire makes it optional) moved
+the build out of its class's count, and six frames stood sixty watchmen;
+the old class-blind count could not be gamed. Paid: a pending build's
+species is fixed at the build. A3 (the disease one level up): the
+frame's trim cut the watch first past 64 live records, so a criminal
+with a large roll streamed no watch at all; paid: the watch's live share
+is reserved as its puppet share is. B2: the melee reach gate's static
+envelope fit, but its headroom (~1.1 m) was less than the stream's lag
+(a watchman's stride in one foes interval plus the pose gap), so a
+chasing blow on a running watchman vanished at the owner without a
+word; paid: the watchman's own stride in one interval joins the reach.
+A4: a peer's killing shaft put one Arrow into the body A3 had just
+emptied; paid. A6 (pre-existing): `cityGuards.restoreWorld` re-rolled
+every standing watchman's Range(3,7) on a quickload (a free difficulty
+re-roll; online the streamed level moved and every reader rebuilt its
+puppet); paid through A5's `exactLevel`, the snapshot carrying the level.
+Sound: the roster's frame (the floating origin), the lazy roster read,
+the one-home fold, the empty body's loot line, a peer's kill and the
+death event, the other hosts.
+
+**O - OL4.** O1: the whole feature hung on two unpinned default
+parameters keyed on the URL; the predicate is the shared clock now (one
+home with RESTX2, OL3, ECON1), pinned and mutated. O2: a restored
+interior kept the save's closed-shop latch, so every online session that
+began inside a closed shop opened its shelves in stealing mode with no
+clerk; paid (the latch is only ever added to at a restore). Records: the
+outage's real length, the Bank and the Library at night, the latch's
+offline direction, the seam's contract pinned.
+
+**E - ECON1.** E1 (the one that mattered): with the tilt at zero the
+index never left ~500..1600, the flags never lit and The Merchants'
+power never took its bump - paid with the world's tilt off the file's
+base powers. E2: the player's walk leaned on the seam's lazy init the
+source skips (a latent throw); paid. E4: the unbounded rebuild;
+checkpoints. E8: the online flag arm reached regions DFU never walks;
+paid. E3/E6: the mid-window step and the pre-welcome offset, recorded.
+E5: the records named consumers of the flags that do not exist; fixed.
+
+**M - the merge and the records.** Eleven double-shifted citations, the
+version row rewritten in place (see MERGE above), the WATCH1 Ledger
+row's "RELAY_VERSION stands", the Testing.md row's "RELAY_VERSION
+unmoved", four Port-Status ordinals one low and its "eight together"
+count four short, `buildTag.js` carrying a stamp for a commit the branch
+does not contain, a stale cap comment. All corrected here.
+
+Not verified in a browser: no online session exists in this container.
+Pins: `test/watch1.test.js` (6), `test/lockpicking.test.js` (9),
+`test/econ1_world_prices.test.js` (6); mutants: watch1 39 (38 dead, 1
+equivalent), ol4 12 (12 dead), econ1 27 (25 dead, 2 equivalent as
+recorded).

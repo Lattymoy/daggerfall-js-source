@@ -11,10 +11,13 @@ import {
   interiorLockpickingChance, exteriorLockpickingChance,
 } from '../src/world/actionSystem.js';
 import {
-  OPEN_HOURS, CLOSE_HOURS, isBuildingOpen, buildingIsUnlocked, buildingLockValue,
+  OPEN_HOURS, CLOSE_HOURS, classicBuildingOpen, buildingHoursState,
+  SHOP_STAFFING, isBuildingOpen, buildingIsUnlocked, buildingLockValue,
   LOCKED_EXTERIOR_DOOR_TEXT,
 } from '../src/systems/buildingLocks.js';
 import { BUILDING_TYPES } from '../src/world/buildingNames.js';
+import { setSharedClock, sharedClockOn } from '../src/systems/worldTick.js';   // OL4 (AUDIT ALL O1): the PRODUCTION default is the shared clock
+import { readFileSync } from 'node:fs';
 import { HOLIDAYS } from '../src/systems/holidays.js';
 import { getInteractionMode, setInteractionMode, nextInteractionMode, MODES } from '../src/player/interactionMode.js';
 import { MODES as TOWN_MODES } from '../src/scenes/townTalk.js';
@@ -108,15 +111,38 @@ test('R1 hours: the verbatim tables and their edge rows (PlayerActivate.cs:91-10
   assert.ok(!isBuildingOpen(BUILDING_TYPES.House1, 12), 'House1 is 0/0 - NEVER open');
   assert.ok(isBuildingOpen(BUILDING_TYPES.Alchemist, 7) && !isBuildingOpen(BUILDING_TYPES.Alchemist, 22), 'alchemist 7-22, close hour exclusive');
   assert.ok(isBuildingOpen(BUILDING_TYPES.House2, 6) && !isBuildingOpen(BUILDING_TYPES.House2, 18), 'houses 6-18');
+
+  // OL4: the classic primitive remains exactly the same while the
+  // effective online schedule adds a staffed shift for SHOPS only.
+  assert.equal(classicBuildingOpen(BUILDING_TYPES.Alchemist, 23), false,
+    'the preserved DFU law still says the alchemist is closed at 23:00');
+  const afterHours = buildingHoursState(BUILDING_TYPES.Alchemist, { hour: 23, online: true });
+  assert.deepEqual(afterHours, {
+    open: true,
+    classicOpen: false,
+    staffing: SHOP_STAFFING.ONLINE_SHIFT,
+  }, 'online commerce is a layer above classic hours, not a rewritten table');
+  assert.equal(isBuildingOpen(BUILDING_TYPES.Alchemist, 23, { online: true }), true,
+    'the entry-time shop latch reads the effective online answer');
+  assert.equal(isBuildingOpen(BUILDING_TYPES.House2, 23, { online: true }), false,
+    'online staffing does not flatten residence hours');
+  assert.equal(isBuildingOpen(BUILDING_TYPES.Palace, 23, { online: true }), false,
+    'online staffing does not flatten palace hours');
 });
 
 test('R1 unlocked ladder: guild bypasses, the quest override, Suns Rest, ships (PlayerActivate.cs:1258-1312)', () => {
   const b = (buildingType, factionId = 0) => ({ buildingType, factionId, buildingKey: 7, quality: 12 });
-  // shops: open by hours, CLOSED on Suns Rest whatever the hour
-  assert.ok(buildingIsUnlocked(b(BUILDING_TYPES.Alchemist), { hour: 12 }));
-  assert.ok(!buildingIsUnlocked(b(BUILDING_TYPES.Alchemist), { hour: 12, holidayId: HOLIDAYS.Suns_Rest }));
-  // guild hall at 3am: only anytime access opens it
-  assert.ok(!buildingIsUnlocked(b(BUILDING_TYPES.GuildHall, 41), { hour: 3, guildForBuilding: () => ({ hallAccessAnytime: false, isMember: true }) }));
+  // shops: open by hours, CLOSED on Suns Rest whatever the hour offline
+  assert.ok(buildingIsUnlocked(b(BUILDING_TYPES.Alchemist), { hour: 12, online: false }));
+  assert.ok(!buildingIsUnlocked(b(BUILDING_TYPES.Alchemist), { hour: 12, holidayId: HOLIDAYS.Suns_Rest, online: false }));
+  assert.ok(!buildingIsUnlocked(b(BUILDING_TYPES.Alchemist), { hour: 3, online: false }), 'offline still has the classic closed hours');
+  // OL4: online commerce is continuously staffed, including the classic
+  // night and holiday closures. The classic result remains available
+  // through buildingHoursState/classicBuildingOpen above.
+  assert.ok(buildingIsUnlocked(b(BUILDING_TYPES.Alchemist), { hour: 3, online: true }), 'the online night shift did not open the shop');
+  assert.ok(buildingIsUnlocked(b(BUILDING_TYPES.Alchemist), { hour: 12, holidayId: HOLIDAYS.Suns_Rest, online: true }), 'Suns Rest shut the shared-world shop for a real-time day');
+  // guild hall at 3am: only anytime access opens it, online included
+  assert.ok(!buildingIsUnlocked(b(BUILDING_TYPES.GuildHall, 41), { hour: 3, online: true, guildForBuilding: () => ({ hallAccessAnytime: false, isMember: true }) }));
   assert.ok(buildingIsUnlocked(b(BUILDING_TYPES.GuildHall, 41), { hour: 3, guildForBuilding: () => ({ hallAccessAnytime: true, isMember: true }) }));
   // a factioned House2 (TG/DB) is members-only, hours notwithstanding
   assert.ok(!buildingIsUnlocked(b(BUILDING_TYPES.House2, 42), { hour: 12, guildForBuilding: () => ({ hallAccessAnytime: false, isMember: false }) }));
@@ -165,4 +191,26 @@ test('R1 mode: ONE global interaction mode - the singleton, the wrap, and townTa
     assert.equal(setInteractionMode('bogus'), false, 'unknown modes refused');
     assert.equal(getInteractionMode(), 'steal');
   } finally { setInteractionMode(before); }
+});
+
+test('OL4 (AUDIT ALL O1/O2): the PRODUCTION default is the shared clock - no caller passes `online`, so with the clock installed a shop opens at 23:00 through both doors and a residence does not, and with it gone the classic answer returns; the positional hour wins over an `hour` in opts; a restored interior never loses the saved latch and gains the effective hours', () => {
+  assert.equal(sharedClockOn(), false);
+  const shop = { buildingType: BUILDING_TYPES.Alchemist, factionId: 0, buildingKey: 7, quality: 12 };
+  assert.equal(isBuildingOpen(BUILDING_TYPES.Alchemist, 23), false, 'offline: closed at 23:00 (the entry latch and the people pass no opts)');
+  assert.equal(buildingIsUnlocked(shop, { hour: 23 }), false, 'offline: the door (worldModes passes no `online`)');
+  try {
+    setSharedClock(() => 5 * 1440 + 23 * 60);
+    assert.equal(isBuildingOpen(BUILDING_TYPES.Alchemist, 23), true, 'the clock standing, the shop is on its shift with no caller saying so');
+    assert.equal(buildingIsUnlocked(shop, { hour: 23 }), true, 'and its door opens');
+    assert.equal(buildingIsUnlocked(shop, { hour: 12, holidayId: HOLIDAYS.Suns_Rest }), true, 'Suns Rest too');
+    assert.equal(isBuildingOpen(BUILDING_TYPES.House2, 23), false, 'a residence keeps R1');
+    assert.equal(isBuildingOpen(BUILDING_TYPES.Bank, 23), false, 'the bank keeps its hours online (recorded as a follow-up)');
+    assert.equal(isBuildingOpen(BUILDING_TYPES.Alchemist, 23, { hour: 12 }), true, 'the seam\'s contract: the positional hour wins - 23 is the hour asked, open by the shift'); assert.equal(isBuildingOpen(BUILDING_TYPES.Alchemist, 12, { hour: 23, online: false }), true, 'and 12 offline is open by the classic table, whatever opts says');
+  } finally { setSharedClock(null); }
+  assert.equal(isBuildingOpen(BUILDING_TYPES.Alchemist, 23), false, 'the clock gone, the classic answer');
+  const bl = readFileSync(new URL('../src/systems/buildingLocks.js', import.meta.url), 'utf8');
+  assert.equal(/isOnlinePage/.test(bl), false, 'the URL is not the predicate: the clock is (one home with RESTX2, OL3, ECON1)');
+  assert.equal((bl.match(/online = sharedClockOn\(\)/g) ?? []).length, 2, 'both defaults read the clock');
+  const wm = readFileSync(new URL('../src/scenes/worldModes.js', import.meta.url), 'utf8');
+  assert.ok(wm.includes("insideOpenShop = !!interiorBuilding?.insideOpenShop\n          || (interiorBuilding?.buildingType != null && isShop(interiorBuilding.buildingType) && isBuildingOpen(interiorBuilding.buildingType, _hour));"), 'O2: a restored interior keeps the saved latch and adds the effective hours - a session that begins inside a closed shop online stands its clerk and sells, not steals');
 });

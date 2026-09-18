@@ -243,7 +243,7 @@ test('fpsSpellCasting: WeaponManager.cs:247 - the weapon hides while the hands p
   // nothing at all: the weapon's hidden and the hands would be too.
   const draw = rigSrc.slice(rigSrc.indexOf('    draw({ paralyzed = false } = {}) {'));
   const handsAt = draw.indexOf('drawSpellCastHands(');
-  const gateAt = draw.indexOf('if (paralyzed || !shown()) return;');
+  const gateAt = draw.indexOf('if (paralyzed ||');   // the law here is the ORDER, so anchor on the gate's head - its condition has widened once (TORCH-VIS) and may again
   const spriteAt = draw.indexOf('drawFpsWeapon(');
   assert.ok(handsAt > 0 && gateAt > 0 && spriteAt > 0);
   assert.ok(handsAt < gateAt, 'the hands draw before the weapon’s show gate');

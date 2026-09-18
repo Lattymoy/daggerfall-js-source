@@ -1,0 +1,72 @@
+[
+  {
+    "name": "QS7-the-world-host-answers-a-quickslot-over-a-mounted-mode-again-the-double-fire",
+    "file": "src/scenes/world.js",
+    "old": "    if (!townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior' && QUICKSLOT_ACTIONS.has(act)",
+    "new": "    if (!townTalk.overlayActive && QUICKSLOT_ACTIONS.has(act)",
+    "tests": ["test/qs7_one_dispatch.test.js"]
+  },
+  {
+    "name": "QS7-the-exterior-host-answers-a-quickslot-over-a-mounted-mode-again",
+    "file": "src/scenes/exterior.js",
+    "old": "    if (!townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior' && QUICKSLOT_ACTIONS.has(act)",
+    "new": "    if (!townTalk.overlayActive && QUICKSLOT_ACTIONS.has(act)",
+    "tests": ["test/qs7_one_dispatch.test.js"]
+  },
+  {
+    "name": "QS7-the-social-arm-takes-the-mode-gate-too-so-F-dies-in-a-tavern-again",
+    "file": "src/scenes/world.js",
+    "old": "    if (!townTalk.overlayActive && act === 'SocialInteract' && socialMenuCanOpen() && socialInteract()) { e.preventDefault(); return; }",
+    "new": "    if (!townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior' && act === 'SocialInteract' && socialMenuCanOpen() && socialInteract()) { e.preventDefault(); return; }",
+    "tests": ["test/qs7_one_dispatch.test.js"]
+  },
+  {
+    "name": "QS7-the-mod-s-toggle-stops-being-a-flip-so-a-second-press-cannot-re-light",
+    "file": "src/systems/handheldTorches.js",
+    "old": "      say(MESSAGES.douse + torchItemWords(l));\n      setLight(null);\n      oneShot(CLIPS.douse, 1, 1);\n      return;",
+    "new": "      say(MESSAGES.douse + torchItemWords(l));\n      oneShot(CLIPS.douse, 1, 1);\n      return;",
+    "tests": ["test/qs7_one_dispatch.test.js", "test/ht1_handheldtorches.test.js"]
+  },
+  {
+    "name": "TALK-UNKNOWN-the-sentinel-is-spoken-again",
+    "file": "src/systems/talkMacros.js",
+    "old": "  if (typeof text !== 'string' || !text.includes('[undefined]')) return text;",
+    "new": "  if (typeof text !== 'string' || text.includes('[undefined]')) return text;",
+    "tests": ["test/talkunknown.test.js"]
+  },
+  {
+    "name": "TALK-UNKNOWN-the-whitespace-is-left-behind-so-possibilities-reads-possibilities-space-question",
+    "file": "src/systems/talkMacros.js",
+    "old": "    return pre && post ? ' ' : '';",
+    "new": "    return pre + post;",
+    "tests": ["test/talkunknown.test.js"]
+  },
+  {
+    "name": "TALK-UNKNOWN-the-regex-eats-the-other-three-sentinels-too",
+    "file": "src/systems/talkMacros.js",
+    "old": "const UNKNOWN_MACRO = /(\\s*)(%[^[\\s]*)\\[undefined\\](\\s*)/g;",
+    "new": "const UNKNOWN_MACRO = /(\\s*)(%[^[\\s]*)\\[[a-zA-Z]+\\](\\s*)/g;",
+    "tests": ["test/talkunknown.test.js"]
+  },
+  {
+    "name": "TALK-UNKNOWN-the-talk-record-door-skips-the-step",
+    "file": "src/systems/talkMacros.js",
+    "old": "  return speakable(tokensToString(tokens, false));",
+    "new": "  return tokensToString(tokens, false);",
+    "tests": ["test/talkunknown.test.js"]
+  },
+  {
+    "name": "TALK-UNKNOWN-the-message-box-door-skips-the-step",
+    "file": "src/systems/talkMacros.js",
+    "old": "  for (const tk of copy) if (typeof tk.text === 'string') tk.text = speakable(tk.text);",
+    "new": "",
+    "tests": ["test/talkunknown.test.js"]
+  },
+  {
+    "name": "TALK-UNKNOWN-the-symbol-is-warned-every-time-rather-than-once",
+    "file": "src/systems/talkMacros.js",
+    "old": "    if (!seenUnknownMacros.has(symbol)) {",
+    "new": "    if (true) {",
+    "tests": ["test/talkunknown.test.js"]
+  }
+]

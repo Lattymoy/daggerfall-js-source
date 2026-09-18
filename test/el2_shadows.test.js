@@ -186,7 +186,7 @@ test('EL2: the receiver block and the depth shaders - six uniforms, no dynamic m
   for (const [name, fs] of [['mesh', EL_MESH_FS], ['terrain', EL_TERRAIN_FS], ['char', EL_CHAR_FS]]) {
     assert.ok(fs.includes(SHADOW_GLSL), `${name} carries the block`);
     assert.match(fs, /cloudShadowAt\(vWorldPos\) \* sunShadowAt\(vWorldPos, n\)/, `${name}: the sun term wears both shadows`);
-    assert.match(fs, /if \(d >= uPointLights\[i\]\.w\) continue;[^\n]*\n    vec3 Ln = L \/ max\(d, 1e-4\);\n    int k = uCasterOf\[i\];[^\n]*\n(?:    \/\/[^\n]*\n)*    float sh = k >= 0 \? pointShadowAt\(k, wp, n\)\n      : \(d > uPointLights\[i\]\.w \* 0\.7 \|\| length\(uPointLights\[i\]\.xyz - uCamPos\) < 1\.5\) \? 1\.0\n      : contactShadow\(wp, n, Ln, d\);/, `${name}: EL5 - out of the window nothing is computed; EL8: a caster's map by the table, else a contact shadow`);
+    assert.match(fs, /if \(d >= uPointLights\[i\]\.w\) continue;[^\n]*\n    vec3 Ln = L \/ max\(d, 1e-4\);\n    int k = uCasterOf\[i\];[^\n]*\n(?:    \/\/[^\n]*\n)*    float sh = k >= 0 \? pointShadowAt\(k, wp, n\)\n      : \(k == -2 \|\| d > uPointLights\[i\]\.w \* 0\.7 \|\| length\(uPointLights\[i\]\.xyz - uCamPos\) < 1\.5\) \? 1\.0[^\n]*\n      : contactShadow\(wp, n, Ln, d\);/, `${name}: EL5 - out of the window nothing is computed; EL8: a caster's map by the table, else a contact shadow`);
   }
   assert.ok(EL_BB_FS.includes(SHADOW_GLSL));
   assert.match(EL_BB_FS, /in vec3 vBBBase;/);

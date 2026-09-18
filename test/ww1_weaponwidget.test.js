@@ -566,14 +566,16 @@ test('WW1: the rig runs the clone beside the machine - the late update after the
   assert.match(rig, /const look = takeFrameLook\(\);/, 'the look read once a frame'); assert.match(rig, /look, swingHeld: _held, cursorActive: cursorActive\(\), camera: camThunk,/);
   assert.match(rig, /try \{ return drawInner\(\{ paralyzed \}\); \} finally \{ widget\.endOfFrame\(\); \}/, 'WaitForEndOfFrame resumes after the draw');
   assert.match(rig, /fpArm\.setScreenTransform\(widgetOn\(\) \? \(base\) => widget\.armsTransform\(base\) : null\);/);
-  assert.match(rig, /if \(fpArm\.active\(\)\) \{[^}]*fpArm\.draw\(c\);[^}]*return; \}\s*(?:\/\/[^\n]*\n\s*)*if \(handheldOn\(\) && c\) handheld\.draw\(renderer, c\);\s*if \(widgetOn\(\) && c && widget\.draw\(renderer, c\)\) return;/, 'the arms first, the torch (HT1: DFU draws it in OnGUI before the widget) second, the clone third, the classic sprite last');
+  // MAC-I: every sprite in this seam takes the frame's TINT now (FPSWeapon.Tint, off the room's light);
+  // the ORDER and the returns are what this pin holds, and neither moved.
+  assert.match(rig, /if \(fpArm\.active\(\)\) \{[^}]*fpArm\.draw\(c\);[^}]*return; \}\s*(?:\/\/[^\n]*\n\s*)*if \(handheldOn\(\) && c\) handheld\.draw\(renderer, c, fpTint\);\s*if \(torchOnly\) return;[^\n]*\n\s*if \(widgetOn\(\) && c && widget\.draw\(renderer, c, fpTint\)\) return;/, 'the arms first, the torch (HT1: DFU draws it in OnGUI before the widget) second, the clone third, the classic sprite last');
   assert.match(rig, /const envCast = envHit \?\? \(\(reach\) => \{/, 'CheckForEnvDamage\'s cast from the host\'s collider');
   const pw = rd('src/combat/playerWeapon.js');
   assert.match(pw, /this\.onAttackResult\?\.\(\{ foe, damage \}\);/, 'OnAttackDamageCalculated\'s one consumer');
   const arm = rd('src/combat/fpArm.js');
   assert.match(arm, /setScreenTransform\(fn\) \{ screenTransform = typeof fn === 'function' \? fn : null; \}/);
   assert.match(arm, /const rect = screenTransform\(\{ x: 0, y: 0, w: W, h: H \}\);/, 'the composite\'s whole rect through the transform');
-  assert.match(arm, /renderer\.drawScreenQuad\(tex, rect, \{ u0: 0, v0: ph \/ CHAR_SPRITE_RT_SIZE, u1: pw \/ CHAR_SPRITE_RT_SIZE, v1: 0 \}\)/, 'drawn as a screen quad with the overlay\'s own uv');
+  assert.match(arm, /renderer\.drawScreenQuad\(tex, \{ x: rect\.x, y: rect\.y - up, w: rect\.w, h: rect\.h \+ up \}, \{ u0: 0, v0: phFull \/ CHAR_SPRITE_RT_SIZE, u1: pw \/ CHAR_SPRITE_RT_SIZE, v1: 0 \}\)/, 'drawn as a screen quad with the overlay\'s own uv (MAC-R1: the rect extended UP by the pad\'s share, the padded sub-rect sampled whole)');
   // WW2: the motor's words for the bob ride ONE bag (motionBagOf) at every site - a per-file grep let a second, partial
   // site in worldModes.js (the world-hosted dungeon lane) ship without `standing`, and the walking bob played at rest
   for (const [host, sites] of [['src/scenes/world.js', 1], ['src/scenes/exterior.js', 1], ['src/scenes/worldModes.js', 2], ['src/scenes/dungeon.js', 1]]) {
@@ -648,7 +650,7 @@ test('WW4 (Mac\'s curated fix): a clone that chooses silence OWNS the draw seam 
   const none = bench({ weaponType: T.None }); none.frame();
   assert.equal(none.widget.draw(none.renderer, none.ctx.canvas), false, 'no weapon type: not the clone\'s');
   // and the rig's seam reads the answer exactly that way
-  assert.match(rd('src/combat/weaponRig.js'), /if \(widgetOn\(\) && c && widget\.draw\(renderer, c\)\) return;/);
+  assert.match(rd('src/combat/weaponRig.js'), /if \(widgetOn\(\) && c && widget\.draw\(renderer, c, fpTint\)\) return;/);
 });
 
 test('WW4b (Mac\'s curated fix): after a swing under Recovery = Hide the melee idle re-enters on a DRAWABLE frame, so it slides back into view instead of staying at -1 for ever', () => {

@@ -645,3 +645,45 @@ test('IF1: the four stride hosts ask ownsStride before the classic play and driv
   const m = /(\d+) modules\s*\n?\s*live under\s*\n?\s*`src\/systems\/`/.exec(rd('bible/06-Systems/Systems.md'));
   assert.equal(Number(m[1]), readdirSync(join(root, 'src/systems')).filter((f) => f.endsWith('.js')).length, 'Systems.md counts src/systems/ live - IF1 put immersiveFootsteps.js in that count');
 });
+
+// AUDIT QS6 F7's SECOND CATCH. The `host-world-ungated` mutant had been
+// unapplied for waves - its anchor left `scenes/world.js` when BA1 folded
+// both mods' DisableBuiltInFootsteps into ONE gate - so it reported
+// neither dead nor survived, and the law it was the only killer of was
+// checked by nothing. Re-aimed at the gate's real home, it SURVIVED: the
+// file's only claim about that gate was a source regex over the hosts.
+//
+// A source pin over the CALL SITE proves the call exists, not that the
+// gate answers. This drives the gate itself.
+test('IF1/BA1: the one gate - Immersive Footsteps owning the stride silences EVERY classic clip, and it outranks Better Ambience (mutant: the gate ungated, so the classic step plays under the mod that replaced it)', async () => {
+  const { classicFootstepAllowed, betterAmbience } = await import('../src/systems/betterAmbience.js');
+  const { immersiveFootsteps } = await import('../src/systems/immersiveFootsteps.js');   // the gate reads it from its own home
+  const owns = (mod, on) => {
+    const real = mod.ownsStride;
+    mod.ownsStride = () => on;
+    return () => { mod.ownsStride = real; };
+  };
+  // NEITHER mod owns the stride: the classic clip plays, which is the
+  // answer a vanilla install must get.
+  assert.equal(classicFootstepAllowed('step1'), true);
+  // IMMERSIVE FOOTSTEPS owns it: every clip is nulled, whatever it is -
+  // DisableBuiltInFootsteps nulls them all (the mod replaces the stride).
+  let undo = owns(immersiveFootsteps, true);
+  try {
+    for (const clip of ['step1', 'step2', 'anything', '']) {
+      assert.equal(classicFootstepAllowed(clip), false, `${clip || '(empty)'} is silenced`);
+    }
+  } finally { undo(); }
+  assert.equal(classicFootstepAllowed('step1'), true, 'and it comes back when the mod stands down');
+  // AND IT OUTRANKS the other mod: Better Ambience keeps two clips, but
+  // Immersive Footsteps is asked FIRST and its answer is final - the
+  // order is the whole of what this gate is for.
+  const undoB = owns(betterAmbience, true);
+  const keep = betterAmbience.classicClipKept;
+  betterAmbience.classicClipKept = () => true;
+  undo = owns(immersiveFootsteps, true);
+  try {
+    assert.equal(classicFootstepAllowed('step1'), false,
+      'Better Ambience would keep this clip; Immersive Footsteps owns the stride, so it does not play');
+  } finally { undo(); undoB(); betterAmbience.classicClipKept = keep; }
+});

@@ -3196,7 +3196,7 @@ collapse is a bare `RaiseTime(1 * SecondsPerHour)` (`:2429`) that
 returns; `Update` is not re-entered.
 
 The port's hosts implement that same RaiseTime as
-`playerTicker.advance(60)` (`exterior.js:931`, `world.js:869`), fired
+`playerTicker.advance(60)` (`exterior.js:943`, `world.js:883`), fired
 from inside `sinks.drainFatigue` - so it re-enters `tickPlayerMinutes`
 from inside that function's own fatigue band. The nested tick wrote the
 marker an hour ahead, the outer frame's own `setWorldMinutes` then
@@ -3354,7 +3354,7 @@ PNG through the DOM and cached `{ width, height, data }` - the shape
 pass that object straight on as a colour32
 (`const color32 = swap ?? t.getColor32(bitmap, ...)`), and
 `renderer.uploadTexture` reads `color32.colors` and calls `asBytes` on
-it (`renderer.js:2149`). `colors` was `undefined`, `asBytes` reads
+it (`renderer.js:2402`). `colors` was `undefined`, `asBytes` reads
 `.buffer` off it, and the upload threw. Every pin on this door held:
 they asserted the cache stored the object the decoder returned, by
 IDENTITY, which is precisely the assertion that cannot see a wrong
@@ -3365,8 +3365,8 @@ orientation is not its only problem".
 **And orientation was the other half.** The port's texel convention is
 bottom-up: `getColor32` writes `dstRow = (dstHeight - 1 - border - y) *
 dstWidth` (`baseImageFile.js:143`, `BaseImageFile.cs:250`), the upload
-leaves `UNPACK_FLIP_Y_WEBGL` off (`renderer.js:2139`), and `BB_VS`
-samples the quad's top at v=1 (`renderer.js:308-332`). A browser decode
+leaves `UNPACK_FLIP_Y_WEBGL` off (`renderer.js:2392`), and `BB_VS`
+samples the quad's top at v=1 (`renderer.js:387-411`). A browser decode
 is TOP row first. So a swap named correctly would still have drawn
 mirrored beside the classic art in the same batch loop - the exact
 defect AUDIT 62 F26 fixed for the seasons mod's textures, one door over.
@@ -4572,7 +4572,7 @@ the true clause along with the false ones is in the campaign, because
 over-retiring is the equal and opposite failure.
 
 **And one delegation pointed at a flag nobody had ever written.**
-`world.js:1733` said the dungeon-mode enchant ctx was "FLAGGED there
+`world.js:1768` said the dungeon-mode enchant ctx was "FLAGGED there
 with the rest of its enchant wiring" in `dungeonContext.js`. It was
 not. `setDefaultEnchantCtx` had exactly **one** caller in the tree, so
 the standalone `?dungeon` host ran every arm that needs a host
@@ -5550,7 +5550,7 @@ to that cite and moves under the same content check; citeMerge had
 done this since CS2 and citeShift only reported them, so the two
 regexes are one law now, exported from citeShift (`ANY_CITE`,
 `CONTINUATION`) and imported by citeMerge. (2) A TEST'S ESCAPED
-LITERAL FOLLOWS THE ROW IT PINS: `world\.js:4074` in citedrift.test.js
+LITERAL FOLLOWS THE ROW IT PINS: `world\.js:4340` in citedrift.test.js
 is a quote of a Ledger row's text; the row is STRUCK and its number
 held, and the literal used to move anyway, parting the pin from its
 row at every shift. The CLI plans every doc first, learns which
@@ -7763,3 +7763,155 @@ skipped the exit. The pin walks that same class by execution rather
 than trusting one line, and two mutants were run and killed: the exit
 removed, and the exit moved to AFTER the teleport where it is too late
 to help.
+
+## CAMP1 - WILDERNESS CAMPS AND PACKS, AN ORIGINAL ADDITION (2026-09-17)
+
+Mac's "daggerfalljsWildlifeSpawnsRespawn" zip, the wildlife half, with
+his numbers in its comments: "every 15 minutes so it doesn't feel so
+empty", "guaranteed", "15% per chunk". NOT a DFU or classic system and
+the module's header says so first: classic spawns wandering monsters
+ONE AT A TIME (`intermittentEnemySpawn`, RE1). This is a second roll
+that places several, off the same per-climate day/night table
+(`chooseRandomEnemy`), on the same cadence loop (`runEncounterTick`),
+only reached when the single roll came back empty on that minute.
+
+**Camp vs pack is composition and spacing, not movement.** The AI is
+classic's - a foe stands until it notices the player, then closes -
+and there is no wander state to hook a roaming group into. A CAMP is
+three to five stood close (3 m, facing the anchor); a PACK is two to
+four stood loose (6 m). What makes either read as a group is the one
+new behaviour: `wakeCampmates` (exteriorFoes.js) - a member that JUST
+acquired a target hands the SAME target to every campmate within its
+shout radius that has none. The same target, not the player: a peer
+the member saw is a peer the camp hunts. `campId` is set only on foes
+`_standCampEncounter` stood together; a lone wanderer carries none.
+
+**Placement:** one anchor placed exactly as a single encounter is
+(`placeFoeFreely` from the player's position and yaw, the group's own
+band 14-26 m, out of view), then each member by a second
+`placeFoeEnv` centred on the ANCHOR with a random yaw and no view test
+- the same ground and occupancy law that places one foe near the
+player places several near a point, with no new geometry code. A
+member with no ground is skipped, not the group.
+
+**Two triggers.** The timer: `campWindowOpen` is
+`gameMinutes % 180 === 0` - 15 REAL minutes of play through
+`CLASSIC_MINUTES_PER_SECOND` (12 game minutes a real minute), and an
+open window is a group, no chance roll (the 5% `CAMP_CHANCE` is kept
+exported for a lower rate later and not consulted). The chunk: the
+stream's `entered` event in world.js, this port's "a chunk loaded",
+rolls `CAMP_CHANCE_ON_CHUNK_LOAD` (15%) with no time gate, on top of
+the timer - and only with the player OUTDOORS, a gate the zip lacked
+(a dungeon's own streaming crosses pixels too). The wilderness gate is
+one function for both: inside, the widened town rect (day or night,
+unlike the lone wanderer), or a prevented-spawn minute return null
+before any roll is spent.
+
+**Online:** foe ownership here is per player (each streams its own
+spawns to nearby peers), so three players standing together would each
+roll their own camp. `amGroupRollOwner`: among every player within
+100 m (the ring's edge included, height ignored), the LOWEST id rolls -
+a deterministic pick every client computes the same way over the same
+roster (ids compared as strings, whatever their type), so no election
+crosses the wire. Offline, or alone, always this player. The fixed city
+has no peers and no guard. Off by the enhanced pane's `wilderness-camps`
+row (prefs `wildernessCamps`, per player online).
+
+`test/camp1_groups.test.js` - 5 pins; AUDIT 62 F15 re-aimed (the
+anchor is the third street-wide occupancy ask). Mutants in
+`tools/mutants/restx2camp.json`. Not seen in a browser: the placement
+rides the same law RE1 proved.
+
+## WINFOE1 - THE ENEMY POOLS KEEP THEIR CLOCK UNDER A WINDOW (2026-09-17)
+
+The same zip, one line's comment: "enemies should still be able to do
+damage - a window (inventory, status, quest) no longer zeroes their
+clock; only your own input/camera pause". RESTX2's whole point needs
+it: a rest is a window, and a foe frozen under it never walks up.
+
+The four enemy pools - world.js's watch and encounter pool,
+exterior.js's, worldModes' interior pool and indoor watch - drive on
+the frame's own dt now. What a window holds is the player's own motor.
+The frame's encounter ROLL stays gated on no overlay (under a rest the
+session drives it through `advanceMinutes`), and a foe still opens no
+door under a window (the door law is the mode's).
+
+**Not carried:** the zip also un-froze the two POPULATIONS (the
+civilians) and said nothing about it - the line's own comment above it
+("nobody walks away mid-talk", audit 2026-08-17) was left contradicting
+the code. That law was never about enemies and is not what Mac asked
+for; the civilians still freeze under the talk overlay, and the pin
+says so. `test/winfoe1_foes_under_windows.test.js` - 1 pin; ROAD-G G2's
+review pin, the interior-foes pin and ROAD-B's indoor-watch pin
+re-aimed.
+
+## SURV1-SURV7 - CLIMATES & CALORIES, OVERHAULED WITH PERMISSION (2026-09-18) - SHIPPED
+
+Mac (2026-09-17): "Instead of a 1:1 port, we have been given
+permission to completely overhaul this mod, figure out bugs and
+implement it to our desire ... For tents, they are shared world
+objects ... 1. Campfires in dungeons/outside + beds should act as the
+go-to rest options + adding a new campfire item players can buy and
+place. Consumables are another mitigation 2. Resting toggle both
+offline/online should always be a last resort option that comes with
+a cost 3. All on by default." The shipped zip carried a compiled DLL
+and no source; every rule was read off the IL (`tools/ilDump.py`,
+Mod-Registry.md's row) and then restated, not copied. The full
+record is `06-Systems/Climates-Calories.md`; this is the arc's ledger
+line.
+
+- SURV1 the model (`survival/temperature.js`, `needs.js`, `food.js`):
+  the natural and the felt temperature (climate, month, hour, weather,
+  the race's flags and the spell resistances, the clothes by piece and
+  the cloak less the wetness, the armour's metal), five needs on the
+  clock (hunger as minutes since the marker, thirst driven by heat,
+  sleep debt, wet, exposure), one survival entry in liveStat's stat
+  mods capped at five, the eating law and the rot, the waterskin, the
+  hook in `worldTick.js` tickPlayerMinutes. 16 tests.
+- SURV2 the items (`survival/items.js`, `loot.js`, `switch.js`): the
+  mod's eleven templates and the port's campfire kit registered above
+  DFU's 288, the use handlers, the general store's provisions, the
+  starting kit, the corpse's meat and a humanoid's meal on the death
+  registry, the sixteen icons through a vendor-only archive. 9 tests.
+- SURV3 the camps (`survival/camp.js`, `scenes/camps.js`): the tent
+  and the fire as placed world objects with a rest/cook/stoke/pack
+  menu, the water sources under the ray, shared online (a cell's foes
+  frame, a world room's act and memory), the scene cache and the save
+  carrying them. 12 tests.
+- SURV4 the rest law (`survival/rest.js`, `scenes/shared.js`
+  createRestDeps): a bed or a fire sleeps whole; the window alone is
+  rough - half the hour's recovery, the resting roll asked twice, a
+  stiff morning; the felt temperature can refuse the sleep. 7 tests.
+- SURV5 what the player is told (`survival/status.js`,
+  `tavernMenu.js`, `ui/enhancedHud.js`, `ui/tavernWindow.js`): the
+  HUD's needs strip, the status page's third box, the items' info box,
+  the mod's regional tavern menus keyed by climate with the meal, the
+  drink and the blackout. 6 tests.
+- SURV6 the hunt (`survival/hunting.js`, `ui/huntWindow.js`,
+  `scenes/hunting.js`): hunting, foraging and the water search as
+  REAL-TIME events - the wilderness roll, the mod's Yes/No box, a busy
+  page running the search's minutes in real seconds, the finds and the
+  harms, "the hunted" standing when the box closes. 6 tests.
+- SURV7 the feed (`survival/env.js`, the four hosts' readers,
+  `save.js`): every host says where the player stands and the minute
+  law runs in every mode; the rest gate on DFU's prevent-rest seam;
+  the needs aligned at a load and an arrival; fast travel charged two
+  days at most. 4 tests.
+
+Mutants: `tools/mutants/surv1.json` to `surv7.json`, all dead. Every
+leaf under `systems/survival/` imports no scene, ui, combat, spellcast,
+diseases or effects module (pinned per file); the hosts pass the
+formulas in. ONE SWITCH (`survival/switch.js`, the enhanced pane's
+"survival" pref, ON by default - Mac's third point) turns the whole
+mod off, and off it every seam is DFU's own: the bed's hour, the
+eleven-line tavern list, no chips, no gate, no roll.
+
+AUDIT SURV (2026-09-18, Mac: "Let's audit everything so far"): five
+opus lenses over the arc - laws, wiring, surfaces, records, a Chromium
+probe. Three blockers (the harms killed a starting character in two
+hours and a legal rough rest took 480 health a night; the kit never
+reached a chargen character; a dungeon rest paid its night awake), the
+rest gate's handler leak, four camp doors, nine law bugs and a dozen
+surface faults - all fixed, recorded in `06-Systems/Climates-Calories.md`
+"The audit", pinned by `test/auditsurv.test.js` (8) and
+`tools/mutants/auditsurv.json`.

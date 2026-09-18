@@ -93,7 +93,7 @@ export function enclosingScope(lines, i) {
 /** Is line `i` inside a `window.__…` debug probe rather than the
  *  play path? worldModes' inventory probes call `_remote`, `_pick`,
  *  `items`, `labels` and `enabled` straight off the slot, each behind
- *  a DUCK-TYPE test (`isInventory`, worldModes.js:6544) that this
+ *  a DUCK-TYPE test (`isInventory`, worldModes.js:6572) that this
  *  file's guard reader cannot see because the test names a parameter,
  *  not the slot. They are hooks the harness drives with a known window
  *  up, not arms the game calls on whatever is open, so they are not

@@ -625,21 +625,28 @@ test('AUDIT 65 MC-2: a target past its handler\'s reach is HANDED OVER and refus
     const lines = src.split('\n');
     const at = lines.findIndex((l) => l.includes('if (lootKey && _lootPick.distance > _lootPick.reach)'));
     assert.ok(at > 0, `${file}: the corpse refusal (:936-941)`);
-    // the rung plus the opener it guards, however many lines that
-    // opener spans in this host (the streaming host's is a block).
-    let end = at + 1;
+    // the rung plus the opener it guards. MAC-E gave that opener a
+    // BODY (the pool takes the host's inventory door now) and a note
+    // above it, so the walk starts at the `else if` rather than at the
+    // line after the rung - a comment carries no braces and the old
+    // walk closed on the first one it met.
+    const openAt = lines.findIndex((l, i) => i > at && l.includes('else if (lootKey)'));
+    assert.ok(openAt > at, `${file}: the corpse opener under its refusal`);
+    let end = openAt;
     let depth = 0;
     do {
       for (const ch of lines[end]) { if (ch === '{') depth++; else if (ch === '}') depth--; }
       end++;
-    } while (depth > 0 && end < at + 12);
+    } while (depth > 0 && end < openAt + 12);
     const took = [];
     said.length = 0;
     const arm = new Function('lootKey', '_lootPick', 'exteriorFoes', 'cityGuards', 'townTalk',
-      'surfacePlayer', 'setMidScreenText', 'TOO_FAR_AWAY_TEXT', lines.slice(at, end).join('\n'));
+      'surfacePlayer', 'setMidScreenText', 'TOO_FAR_AWAY_TEXT', 'inventoryDoorReady', 'makeInventoryWindow',
+      [lines[at], ...lines.slice(openAt, end)].join('\n'));
     const run = (pick) => arm('foeCorpse:1', pick,
       { takeLoot: (k) => took.push(k) }, { takeLoot: (k) => took.push(k) },
-      { say: () => {} }, () => {}, (t) => said.push(t), TOO_FAR_AWAY_TEXT);
+      { say: () => {}, showOverlay: () => {} }, () => {}, (t) => said.push(t), TOO_FAR_AWAY_TEXT,
+      () => true, (o) => o);
     run({ distance: 8, reach: CORPSE_ACTIVATION_DISTANCE });
     assert.deepEqual(said, [TOO_FAR_AWAY_TEXT], `${file}: a body past 3.75 is refused`);
     assert.deepEqual(took, [], `${file}: ...and not opened`);

@@ -59,7 +59,7 @@ test('SOC1 wire: the hub is the world channel, the bounds are what Mac asked for
   assert.ok(INVITE_TTL_MS >= 60_000 && INVITE_TTL_MS <= 10 * 60_000, 'an invite stands for minutes, not for ever');
   assert.ok(PARTY_OFFLINE_MS >= 60_000, 'a refresh keeps a seat');
   assert.ok(PARTY_SEND_MS * PARTY_HZ_MAX >= 1000, 'the client\'s floor never trips the relay\'s gate');
-  assert.equal(RELAY_VERSION, 'world80', 'SOC1 changed the relay: bumped; AUDIT SOC again; RESPAWN1 again (the foe door\'s team pair)');
+  assert.equal(RELAY_VERSION, 'world82', 'SOC1 changed the relay: bumped; AUDIT SOC again; RESPAWN1 again (the foe door\'s team pair); AUDIT WATCH1 again (wire.js gained CELL_WATCH_PUPPETS_MAX); the main merge again (a comment line in wire.js moved - the bytes are the law)');
   assert.deepEqual(Object.keys(SOCIAL_ACTS), ['friend.request', 'friend.accept', 'friend.decline', 'friend.cancel', 'friend.remove', 'party.invite', 'party.accept', 'party.decline', 'party.leave', 'party.kick']);
   assert.deepEqual(SOCIAL_KINDS, ['state', 'presence', 'party', 'invite', 'note', 'error']);
   assert.ok(NOTE_CODES.includes('party.joined') && NOTE_CODES.includes('friend.requested') && NOTE_CODES.includes('party.leader') && NOTE_CODES.includes('party.lapsed'));
@@ -293,9 +293,22 @@ test('SOC1 hub: presence - a friend\'s hello and leave reach its friends alone, 
   assert.equal(ofKind(c, 'presence').length, 0, 'c is nobody\'s friend and hears no presence');
   const seenAtB2 = r.store.get('acct:acct-b').seen;
   assert.equal(seenAtB2, now() - 600, 'the record takes every hello\'s clock');
+  const atDrop = now();
   await r.drop(b); tick();
   assert.deepEqual(lastOf(a, 'presence').peers, ['peer-b2']); assert.equal(lastOf(a, 'presence').online, true, 'one tab of two gone: still online');
   assert.equal(r.store.get('acct:acct-b').seen, seenAtB2, 'seen is the hello\'s until the last tab goes');
+  // AUDIT QS6 F7's FOURTH CATCH, and it turned out to be a mutant with no
+  // victim. `S13-seen-stamped-on-first-tab` SURVIVED once the sweep made
+  // every record apply again, so the question was what stamping `next`
+  // unconditionally would COST - and the answer is nothing: the store is
+  // written only when the last tab goes (`if (gone) await
+  // this._putAcct(...)`, pinned by the line above) and a friend's
+  // presence row never reads `rec.seen` while the account is online
+  // (`_rowOf`: `seen: socks.length ? now : rec.seen`). So the record is
+  // marked EQUIVALENT with that reasoning rather than pinned by a claim
+  // the code does not make. What is asserted here is the law itself.
+  assert.equal(lastOf(a, 'presence').seen, atDrop,
+    'an ONLINE account\'s row reads the clock AT THE FRAME, never the record - `seen` is what you say about somebody who is not here');
   tick(5000);
   await r.drop(b2); tick();
   assert.deepEqual(lastOf(a, 'presence'), { t: 'social', k: 'presence', acct: 'acct-b', name: 'b', online: false, seen: now() - 600, peers: [] }, 'the last tab gone: offline, last seen now');
@@ -552,5 +565,5 @@ test('SOC1 hub: the source - the account is handled after the channel\'s welcome
   assert.match(s, /if \(!isSocialRoom\(a\.key\) \|\| !a\.acct\) \{ this\._junk\(ws, a\); return; \}/, 'a party pose outside the hub, or without an account, is junk');
   const w = rd('src/net/wire.js');
   assert.match(w, /export const SOCIAL_ROOM = CHAT_WORLD_ROOM;/);
-  assert.match(w, /export const RELAY_VERSION = 'world80';/, 'AUDIT SOC moved it, RESPAWN1 moved it again');
+  assert.match(w, /export const RELAY_VERSION = 'world82';/, 'AUDIT SOC moved it, RESPAWN1 moved it again, AUDIT WATCH1 again, the main merge again');
 });

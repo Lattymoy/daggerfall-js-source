@@ -1,5 +1,21 @@
 # The vendored-work registry (HARD4, 2026-09-15)
 
+> **The counts in the next two sections are HARD4's own moment and are
+> left as it wrote them.** They were true of the fifteen rows that
+> existed on 2026-09-15 and they are the record of what putting those
+> rows side by side found. The live numbers are derived, not written:
+> `vendor/` holds 19 directories and 11 of their READMEs still carry an
+> unfilled permission line, each shown as `RECORD OPEN` in the table.
+> ORL1 (2026-09-17) added the nineteenth, and the first vendored MOD
+> that is not a Daggerfall Unity one - an OpenMW Lua mod for Morrowind.
+> It carries no `*.dfmod.json`, so the gate below reads no version or
+> author cell for it and its own suite checks both instead; its row in
+> *Known deviations* says so. (Eight of the nineteen directories carry no
+> manifest. Six of the other seven are not mods at all - Daggerfall
+> Unity's own shipped data, a font, a road table, Mac's own project - and
+> the seventh, `windmills-kamer`, is a Daggerfall Unity mod shipped as
+> loose meshes rather than as a bundle.)
+
 The fourth slice of `01-Overview/Hardening.md`. One row per directory in
 `vendor/`, and `test/hard4_registry.test.js` derives the row list from
 the filesystem, so a fourteenth entry cannot arrive without one.
@@ -55,12 +71,14 @@ not the date the slice shipped, where those differ.
 | `eye-of-the-beholder` | manifest, settings, presets, the per-sprite offsets folded to one table, and all 3035 sprites re-encoded as indexed PNG | RedRoryOTheGlen | 2.1 | shipped `.zip` `Eye_of_the_Beholder-762-2-1-1775438888`; the DLL and its IL dump vendored (EOTB-IL) | granted (Mac handed the archive over 2026-09-15) - **RECORD OPEN** | EOTB0-EOTB7, AUDIT-EOTB, AUDIT-EOTB2, EOTB-IL (the assembly and its IL dump vendored beside the art; 45 of 61 authored methods ported, every one read off the IL, 16 with no twin here - the count is checked against the dump in `test/eotb_scope.test.js`; see the page) | 2026-09-16 | `06-Systems/Eye-Of-The-Beholder.md` |
 | `immersive-footsteps` | manifest, settings, the two C# sources (the author's MIT repository at `ac03581`), all 210 MP3 clips in both qualities | Kirk.O | 1.01 | shipped `.zip` `Immersive_Footsteps_v1.01_-_DFU_v1.0.0_-_Windows-706-1-01-1713032612`; behaviour off the author's published SOURCE (the bundle's DLL is its build; its FSB5 clips are Unity's import of the same MP3s) | MIT (the main script's header); granted (Mac handed the archive over 2026-09-16) - **RECORD OPEN** | IF1 | 2026-09-16 | `06-Systems/Immersive-Footsteps.md` |
 | `better-ambience` | manifest, settings, all sixteen C# sources (carried inside the bundle as TextAssets), the author's MIT LICENSE, the 29 WAV clips the mod asks for (from the author's repository) | Joshua Steinhauer (joshcamas) | 0.1.4 | shipped `.dfmod` from the Nexus archive `BetterAmbience-139-0-1-5-1666071806` (labelled 0.1.5; the manifest inside says 0.1.4); behaviour off the SOURCES the bundle carries; the clips' FSB5 imports are undecodable here, so the repository's WAVs stand in | MIT (the repository's LICENSE); granted (Mac handed the archive over 2026-09-16) - **RECORD OPEN** | BA1 | 2026-09-16 | `06-Systems/Better-Ambience.md` |
+| `climates-calories` | manifest, the mod's item templates, sixteen item icons | Ralzar | 1.7.1 | shipped zip `Climates_and_Calories-49-1-7-1-1707751069`; the rules off the DLL's IL (`tools/ilDump.py`), then OVERHAULED, not ported | granted - an overhaul, relayed by Mac 2026-09-17 ("we have been given permission to completely overhaul this mod") | SURV1-SURV7 | 2026-09-18 | `06-Systems/Climates-Calories.md` |
 | `dfu-books` | data | Daggerfall Unity (Interkarma and contributors) | - | `Assets/Resources/books.txt` @ `81e89e90` | MIT | route (a) | 2026-08-20 | `10-UI/UI-Arc.md` |
 | `dfu-quests` | data | Daggerfall Unity (Interkarma and contributors) | - | `Assets/StreamingAssets/{Quests,Tables}` @ `81e89e90` | MIT | route (a) | 2026-08-20 | `06-Systems/Quest-Arc.md` |
 | `dfu-settings` | data | Daggerfall Unity (Interkarma and contributors) | - | `defaults.ini.txt` + `Text/GameSettings.txt` @ `81e89e90` | MIT | route (a) | 2026-08-20 | `10-UI/Settings-Screen-Spec.md` |
 | `dynamic-skies` | presets, textures, shader read | BadLuckBurt and carademono | 2.3.4 | `.dfmod` bundle, cross-read against `drcarademono/dynamic-skies` @ `04506e2` | granted to Mac 2026-09-04 - **RECORD OPEN** | DS1, DS2 | 2026-09-04 | `07-Rendering/Dynamic-Skies.md` |
 | `handheld-torches` | 39 textures, manifest, settings | RedRoryOTheGlen | 1.4.1 | shipped zip `Handheld_Torches-780-1-4-1`; behaviour off the DLL's IL | granted (Mac handed the zip over 2026-09-14) - **RECORD OPEN** | HT0-HT4 | 2026-09-14 (AUDIT 66) | `06-Systems/Handheld-Torches.md` |
 | `meanerMonsters` | 46 sprite-scale XML, manifest | Ralzar (header: Hazelnut and Ralzar) | 1.5.2 | shipped zip; code from `Ralzar81/Meaner-Monsters` master | MIT (source header) | MM1 | 2026-09-12 | `04-Characters/Meaner-Monsters.md` |
+| `oblivion-remaster-leveling` | the whole mod: its ten shipped files - the 1,314 lines of Lua, the 487-byte `.omwaddon` (one GMST, `iLevelupTotal` 100), the manifest, both l10n yaml and the author's README | **not named in any shipped file** (Nexus Morrowind 56569) | 0.5.3 | shipped `.zip` `OblivionRemasterLikeLeveling_0.5.3-56569-v0-5-3-1748644502`; behaviour off the author's OWN LUA, which is the mod - there is nothing compiled to read | **the archive states NO LICENCE**; granted (Mac handed the archive over 2026-09-17) - **RECORD OPEN** | ORL1 | 2026-09-17 | `06-Systems/Oblivion-Remaster-Leveling.md` |
 | `pcaao` | manifest, settings | Kirk.O | 1.44 | shipped `.dfmod`, DLL decompiled (ILSpy 8.2.0.7535); **source repo only covers 1.40** (`6e19023`) | repository states none; granted (Mac handed the bundle over 2026-09-12) - **RECORD OPEN** | PCO1 | 2026-09-12 | `05-Combat/Physical-Combat-Overhaul.md` |
 | `raum-book` | the animated book itself | Mac (Lattymoy), project-raum | - | `Lattymoy/project-raum` @ `7fa7119e` | Mac's own work, at his word 2026-09-12 | the enhanced book | 2026-09-12 | `10-UI/UI-Arc.md` |
 | `roads-hazelnut` | four 500,000-byte path masks | Hazelnut | - | `ajrb/dfunity-mods`, `BasicRoads/`, sha256-verified | code MIT; **data carries no licence text** - granted to Mac 2026-09-02 - **RECORD OPEN** | ROADS 22-25 | 2026-09-02 | `03-World/Roads.md` |
@@ -77,6 +95,13 @@ not the date the slice shipped, where those differ.
 Only the ones a maintainer would be surprised by. Each README carries the
 full account; this is the index to it.
 
+- **`oblivion-remaster-leveling`** - the only row that is not a
+  Daggerfall Unity mod: OpenMW Lua for Morrowind, so there is no
+  `*.dfmod.json` and `test/hard4_registry.test.js` reads no version or
+  author cell for it. Its own suite checks both instead, against the
+  author's changelog heading and the Lua's own defaults. The archive
+  names no author and states no licence, so the author cell is the Nexus
+  id and the permission line is still a prompt.
 - **`dynamic-skies`** - the repository's `Resources/*Night.json` presets
   are NOT carried, because they are not in the shipped manifest and the
   mod therefore never loads them.

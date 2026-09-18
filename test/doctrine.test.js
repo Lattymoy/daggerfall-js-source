@@ -244,6 +244,39 @@ const PUBLIC_ALLOWLIST = new Map([
   ['vendor/handheld-torches/Textures/112358_10-0.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - a doused torch, one frame, no emission"],
   ['vendor/handheld-torches/Textures/112358_11-0.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - a doused candle, one frame, no emission"],
   ['vendor/handheld-torches/Textures/112358_12-0.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - a doused holy candle, one frame, no emission"],
+  // CLIMATES & CALORIES (SURV2, vendor/climates-calories/Textures/).
+  // Sixteen of the mod's eighteen PNGs, carried on the author's
+  // permission (vendor/climates-calories/README.md): the spoiled face
+  // of each food, raw meat's three, the waterskin. Archives 532-539 are
+  // the mod's own (its template indices), with no ARENA2 file behind
+  // them - the pipeline stands a vendor archive in for them.
+  ['vendor/climates-calories/Textures/532_0-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a mouldy apple"],
+  ['vendor/climates-calories/Textures/532_1-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a rotten apple"],
+  ['vendor/climates-calories/Textures/533_0-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a mouldy orange"],
+  ['vendor/climates-calories/Textures/533_1-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a rotten orange"],
+  ['vendor/climates-calories/Textures/534_0-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a mouldy bread"],
+  ['vendor/climates-calories/Textures/534_1-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a rotten bread"],
+  ['vendor/climates-calories/Textures/535_0-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a mouldy raw fish"],
+  ['vendor/climates-calories/Textures/535_1-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a rotten raw fish"],
+  ['vendor/climates-calories/Textures/536_0-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a mouldy cooked fish"],
+  ['vendor/climates-calories/Textures/536_1-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a rotten cooked fish"],
+  ['vendor/climates-calories/Textures/537_0-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a mouldy meat"],
+  ['vendor/climates-calories/Textures/537_1-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a rotten meat"],
+  ['vendor/climates-calories/Textures/538_0-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - mouldy raw meat"],
+  ['vendor/climates-calories/Textures/538_1-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - rotten raw meat"],
+  ['vendor/climates-calories/Textures/538_2-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - raw meat, fresh"],
+  ['vendor/climates-calories/Textures/539_0-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - the waterskin"],
+  // FOEBAR1 (2026-09-17): THE TARGET BAR'S BLADE FACE. Two pictures a
+  // friend of Mac's drew for this port and sent through him to be its
+  // alternate enemy health bar - a twin-bladed shape with a skull hub,
+  // the dark one the empty bar, the red one the fill. Original art on
+  // the author's say-so, no ARENA2 pixel, no screenshot; both are one
+  // crop (the union alpha box, 981x130) of the 1000x1000 originals so
+  // they register. They sit under src/ui/assets/ rather than public/
+  // because the game runs at /play/ and public/ is served at the root
+  // alone; Vite bundles them with the page (the workers' pattern).
+  ['src/ui/assets/foe-blade-empty.png', "FOEBAR1: the blade face's empty bar - a friend's original art, given for the port, cropped by us"],
+  ['src/ui/assets/foe-blade-full.png', "FOEBAR1: the blade face's fill - a friend's original art, given for the port, cropped by us"],
 ]);
 
 test('doctrine: nothing ships out of public/ that is not provably ours', () => {

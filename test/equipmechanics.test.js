@@ -1,5 +1,6 @@
 // U8f: the equip MECHANICS layer (systems/equip.js over the C5c
 // assignment foundation) + the paperdoll base render on real art.
+import './modsOff.js';   // SURV2: the vendored mods off - the seed and the shelf under test are DFU's own
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';

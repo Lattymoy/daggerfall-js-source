@@ -103,7 +103,16 @@ test('AUDIT 26 F205: every host gates the RMB press on "no window up" - and none
 test('AUDIT 26 F065: the world-hosted motor stops under a window, as the standalone dungeon host does', () => {
   assert.ok(insideGate(WM, 'if (!overlayHeld) {', 'player.update(dt, paralyzed ?'),
     'worldModes runs the player motor under an open window');
-  assert.ok(insideGate(WM, 'if (!overlayHeld) {', 'latch.crouch = crouchHeld;'),
+  // MWCROUCH retired the `latch.crouch = crouchHeld;` this line used to
+  // name. The law is unchanged and now reads off the host's key-edge
+  // ring: the CONSUMER is the gated motor call above, and the edge
+  // itself is dropped rather than banked because the ring rotates once
+  // at the head of the host's frame whatever the overlay is doing -
+  // which is the paused InputManager (:487-503) the latch was standing
+  // in for. The press is computed outside the gate and spent inside it.
+  assert.match(WM, /const crouchPress = pressed\(latch\.edge, keys, 'Crouch'\);/,
+    'the crouch is GetKeyDown off the host ring');
+  assert.ok(insideGate(WM, 'if (!overlayHeld) {', 'crouch: crouchPress,'),
     'the crouch edge is the motor step, and it toggled under a window');
   assert.ok(insideGate(WM, 'if (!overlayHeld) {', '_footsteps.update(player.pos'),
     'and the footstep clock rides the same gate');
