@@ -33,6 +33,11 @@ export const PREF_DEFAULTS = Object.freeze({
   // to scale - so it belongs in the port's own prefs, beside the other
   // things only this port has.
   hudScale: 1,
+  // FOEBAR1 (2026-09-17, Mac, from a friend's pictures): the target bar's
+  // face - 'bar' is the plain track under the compass, 'blade' the
+  // twin-bladed picture whose fill recedes toward its hub. The port's own,
+  // like hudScale: DFU draws no enemy health at all.
+  foeBarStyle: 'bar',
   // ENHANCED IS THE DEFAULT (Mac, 2026-08-25). Read it through
   // uiSkin.js rather than here - that module resolves the ?skin
   // override on top of this and is the one place the vocabulary lives.

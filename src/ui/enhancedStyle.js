@@ -1901,6 +1901,17 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
   background: rgba(10,12,17,0.75); border: 2px solid rgba(125,116,96,0.55); }
 .hud-fill { display: block; height: 100%; width: 100%; background: #d98074; }
 .hud-foetrack { width: min(280px, 40vw); height: 8px; }
+/* FOEBAR1: THE BLADE FACE. The two pictures are one crop of the friend's
+   1000x1000 art (src/ui/assets/, 981x130 - the union alpha box of both),
+   so they register pixel for pixel; the red one is clipped in from the
+   tips by the draw. The pictures themselves are set by enhancedHud.js's
+   build (module-relative URLs, so the build's base carries them). */
+.hud-foe.blade .hud-foetrack { display: none; }
+.hud-foeblade { display: none; position: relative; width: min(360px, 54vw); aspect-ratio: 981 / 130; }
+.hud-foe.blade .hud-foeblade { display: block; }
+.hud-bladeempty, .hud-bladefull { position: absolute; inset: 0; display: block;
+  background-position: center; background-size: 100% 100%; background-repeat: no-repeat; }
+.hud-bladeempty { opacity: 0.72; }   /* FOEBAR1b: the drained bar lets the world through, as the friend's picture does */
 
 /* THE VITALS. Magicka, health, fatigue - the reference's own order and
    DFU's own three, each with its number beside it. */

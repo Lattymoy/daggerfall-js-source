@@ -1308,6 +1308,26 @@ function portRowsInterface({ pause = false } = {}) {
   const out = [];
   if (!pause) out.push(skinRow());
   out.push(hudScaleRow());
+  // FOEBAR1: the target bar's face is a two-way choice, not a switch - the
+  // stick-position row's shape: a row whose button names the OTHER option.
+  {
+    const blade = getPref('foeBarStyle') === 'blade';
+    const row = el('div', 'row');
+    const main = el('button', 'row-main');
+    main.append(el('div', 'row-name', 'Target bar'));
+    main.append(el('div', 'row-note', blade
+      ? 'Blade: the twin blades under the compass recede toward their hub as the foe\u2019s health falls.'
+      : 'Bar: the plain track under the compass. Takes effect at once.'));
+    const flip = () => { setPref('foeBarStyle', blade ? 'bar' : 'blade'); render(); };
+    main.onclick = flip;
+    row.append(main);
+    const ctl = el('div', 'ctl');
+    const b = el('button', 'act rowact', blade ? 'Blade' : 'Bar');
+    b.onclick = flip;
+    ctl.append(b, el('span', 'tier live'));
+    row.append(ctl);
+    out.push(row);
+  }
   out.push(prefRow('showFps', 'FPS counter',
     'Frames a second in the top-right corner, with the frame\u2019s milliseconds and the slowest frame of the '
     + 'last second. Takes effect at once. ?fps in the address bar forces it on for a probe.'));
