@@ -90,6 +90,24 @@ no stat goes under five.
 
 ### The items (SURV2)
 
+> **AUDIT VC6 (2026-09-18) - THE CORPSE'S FOOD ROLLED ON NOBODY'S
+> STREAM, AND ON A LUCK NOBODY HAD.** Chased down from a city-guards
+> pin that failed one run in eight. The three pools that raise a death
+> (`cityGuards.js`, `exteriorFoes.js`, `dungeonContext.js`) handed
+> `raiseEnemyDeath` an entity and nothing else, so this handler - which
+> ROLLS - fell to `Math.random`: about fifteen per cent of humanoid
+> kills grew one or two items nobody could predict, while
+> `spawnEnemyLoot` three lines away was already taking the pool's own
+> stream. And the luck it rolls against came from
+> `setSurvivalPlayerReader`, **which had no caller anywhere in the
+> tree** - `_player()` answered null at every kill, every player in the
+> game rolled at luck 50, and the whole of the mod's luck term was
+> dead. The reader is deleted, because a seam that looks wired is worse
+> than one plainly absent, and every pool hands its own stream and its
+> own player's luck. Pinned on all three call sites and driven through
+> the live handler (`test/surv2_items.test.js`), 6 mutants.
+
+
 The mod's templates as the port's custom rows above DFU's 288
 (`registerCustomTemplates`), every reader through `templateByIndex`:
 Camping Equipment (50 uses), Rations (250 minutes, stackable), Apple

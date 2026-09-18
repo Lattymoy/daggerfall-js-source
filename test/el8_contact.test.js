@@ -22,7 +22,7 @@ import {
 } from '../src/render/shadowPass.js';
 import { EL_LANE, EL_MAX_LIGHTS, EL_MESH_FS, EL_TERRAIN_FS, EL_CHAR_FS, EL_BB_FS } from '../src/render/enhancedLighting.js';
 import { Renderer, WORLD_FRAME } from '../src/render/renderer.js';
-import { PerfMeter, perfOn, perfLine, PERF_EVERY } from '../src/render/perfMeter.js';
+import { PerfMeter, perfOn, perfLine, PERF_EVERY, perfZones, perfZoneLine, setMeter, meterFor } from '../src/render/perfMeter.js';   // VC6d: the zone door, its line and the per-context registry
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => readFileSync(join(root, p), 'utf8');
@@ -204,7 +204,87 @@ test('EL8: the perf readout - the door, the line, the meter without the extensio
   assert.equal(line, '[perf] gpu n/a | draws 1', 'a line every PERF_EVERY frames, the GPU column n/a without the extension');
   assert.equal(m.frame({ draws: 1 }), null);
   const r = read('src/render/renderer.js');
-  assert.match(r, /this\._perf = perfOn\(\) \? new PerfMeter\(gl\) : null;/);
-  assert.match(r, /if \(world && this\._perf\) \{ this\._perf\.begin\(\); this\.stats\.draws = 0; \}/, 'the clock starts with a world frame');
-  assert.match(r, /this\._perf\.end\(\);\n\s+const line = this\._perf\.frame\(/, 'and stops at the resolve');
+  assert.match(r, /this\._perf = perfOn\(\) \? setMeter\(gl, new PerfMeter\(gl, perfZones\(\)\)\) : null;/);
+  assert.match(r, /if \(world && this\._perf\) \{ this\._perf\.begin\(\); this\._perf\.mark\('shadow'\); this\.stats\.draws = 0; \}/, 'the clock starts with a world frame');
+  assert.match(r, /this\._perf\.end\(\);\n\s+this\._perf\.stop\(\);/, 'and stops at the resolve');
+});
+
+// ═══ VC6d: the per-pass readout ══════════════════════════════════════
+test('VC6d: `?perf=zones` - the spans TILE the frame, the frame\'s own clock stands down, and the meter is found by its context', () => {
+  assert.equal(perfZones('?perf=zones'), true);
+  assert.equal(perfZones('?air=off&perf=zones&x'), true);
+  assert.equal(perfZones('?perf'), false, 'the plain door is still the whole frame');
+  assert.equal(perfOn('?perf=zones'), true, 'and it is still the door');
+  const { gl } = recordingGl();
+  // THE FRAME'S OWN CLOCK STANDS DOWN in zone mode: the extension will
+  // not hold two elapsed-time queries at once, so begin() must be a
+  // no-op or the first mark() would fail to open.
+  const z = new PerfMeter(gl, true);
+  assert.equal(z.zones, true);
+  assert.equal(new PerfMeter(gl).zones, false, 'off by default - `?perf` alone is the frame');
+  // the registry: one meter per context, found by the GL alone, so a
+  // pass the renderer does not run (the sky's cloud march, from
+  // scenes/shared.js) marks its own span with nothing threaded to it
+  assert.equal(meterFor(gl), null, 'nothing registered, nothing found');
+  assert.equal(setMeter(gl, z), z); assert.equal(meterFor(gl), z);
+  assert.equal(setMeter(gl, null), null); assert.equal(meterFor(gl), z, 'a null never unregisters the live one');
+  // the line: heaviest first, and the total is the SUM of the spans -
+  // which is only true because they tile
+  const line = perfZoneLine(new Map([['sky', 3.5], ['world', 6.0], ['air', 1.25], ['shadow', 4.0]]), { draws: 812 });
+  assert.equal(line, '[perf] gpu 14.75ms | world 6.00 | shadow 4.00 | sky 3.50 | air 1.25 | draws 812');
+  assert.equal(perfZoneLine(new Map(), { draws: 7 }), perfLine(null, { draws: 7 }), 'no spans (no extension) falls back to the count line');
+  // without the extension nothing is opened and nothing is reported,
+  // but the marks are still safe to call from every host
+  z.mark('shadow'); z.mark('world'); z.stop();
+  assert.equal(z.zoneQueries.length, 0); assert.equal(z.openZone, null);
+  let out = null;
+  for (let i = 0; i < PERF_EVERY; i++) out = z.frame({ draws: 3 });
+  assert.equal(out, '[perf] gpu n/a | draws 3');
+});
+
+test('VC6d: on a GPU that HAS the timer - the frame\'s own clock stands down under the zones, and a zone marked twice in a frame reads as that frame\'s whole time in it', () => {
+  // The extension holds ONE elapsed-time query at a time. The two laws
+  // below are the two ways that breaks, and neither can be seen without
+  // an extension to drive - the fake above has none, which is exactly
+  // how both survived the first cut of these pins.
+  const timed = (ns) => {
+    const opens = [];
+    let live = null;
+    const ext = { TIME_ELAPSED_EXT: 35007, GPU_DISJOINT_EXT: 36795 };
+    const gl = {
+      getExtension: () => ext,
+      createQuery: () => ({}),
+      deleteQuery: () => {},
+      beginQuery: (t, q) => { assert.equal(live, null, 'two queries open at once - the extension would refuse this'); live = q; opens.push(q); },
+      endQuery: () => { live = null; },
+      getQueryParameter: (q, k) => (k === 34919 ? true : ns.get(q) ?? 0),
+      getParameter: () => false,
+      QUERY_RESULT_AVAILABLE: 34919,
+      QUERY_RESULT: 34918,
+    };
+    return { gl, opens };
+  };
+  // 1. begin() must be a NO-OP under the zones. If it opened the frame's
+  //    own query, the first mark() would be the second open and throw.
+  const ns = new Map();
+  const { gl, opens } = timed(ns);
+  const m = new PerfMeter(gl, true);
+  assert.ok(m.ext, 'this stub has the timer');
+  m.begin();
+  assert.equal(opens.length, 0, 'the frame\'s clock stands down under the zones');
+  assert.equal(m.active, null);
+  // 2. a zone marked TWICE in a frame - the world's draws either side of
+  //    the sky - is that frame's time in the world, not the mean of two
+  //    halves. Two 2 ms spans a frame is a 4 ms world, not a 2 ms one.
+  for (let i = 0; i < PERF_EVERY - 1; i++) {
+    m.mark('world'); m.mark('sky'); m.mark('world'); m.stop();
+    for (const q of opens.splice(0)) ns.set(q, 2e6);   // 2 ms each
+    m.frame({ draws: 1 });
+  }
+  m.mark('world'); m.mark('sky'); m.mark('world'); m.stop();
+  for (const q of opens.splice(0)) ns.set(q, 2e6);
+  const line = m.frame({ draws: 1 });
+  assert.match(line, /world 4\.00/, 'two 2 ms spans in one frame is a 4 ms world');
+  assert.match(line, /sky 2\.00/);
+  assert.match(line, /^\[perf\] gpu 6\.00ms \| world 4\.00 \| sky 2\.00 \| draws 1$/, 'and the total is their sum, because they tile');
 });

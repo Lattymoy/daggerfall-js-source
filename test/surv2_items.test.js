@@ -273,3 +273,60 @@ test('SURV2: by source - the pipeline stands a vendor archive in, the weight law
   assert.match(read('src/systems/survival/switch.js'), /export const survivalOn = \(\) => getPref\(SURVIVAL_PREF\) !== false;/);
   assert.match(read('src/systems/features.js'), /key: 'survival', initial: true, online: true/, 'the row owns the key and the default: on');
 });
+
+// ═══ AUDIT VC6 (2026-09-18): THE DROP ROLLS ON THE POOL'S OWN STREAM ══
+// Chased down from a pin that failed one run in eight: the three pools
+// that raise a death (cityGuards, exteriorFoes, dungeonContext) handed
+// `raiseEnemyDeath` an entity and nothing else, so this handler - which
+// ROLLS - fell to Math.random and read the player's luck as 50. Two
+// faults in one seam: a kill nobody could predict, and the whole of
+// Climates & Calories' luck term dead, because `setSurvivalPlayerReader`
+// had no caller anywhere in the tree and `_player()` always answered
+// null. The reader is gone (a seam that looks wired is worse than one
+// plainly absent) and every raiser hands its own luck.
+test('AUDIT VC6: the corpse\'s food rolls on the roll it is HANDED, and on the luck it is handed - never on Math.random, and never on a luck of 50 it invented', async () => {
+  const { installSurvivalLoot, uninstallSurvivalLoot } = await import('../src/systems/survival/loot.js');
+  const { raiseEnemyDeath } = await import('../src/scenes/corpseMarker.js');
+  const src = (f) => readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', f), 'utf8');
+
+  // THE SEAM THAT LOOKED WIRED IS GONE, with the fallback it fed.
+  const loot = src('src/systems/survival/loot.js');
+  assert.doesNotMatch(loot, /export function setSurvivalPlayerReader/, 'the reader nothing ever set is deleted, not left looking live');
+  assert.doesNotMatch(loot, /_player\(\)\?\./, 'and the fallback it fed goes with it');
+  assert.match(loot, /const luck = opts\.luck \?\? 50;/, 'the raiser\'s own player, or the floor');
+  assert.match(loot, /rolls: opts\.rolls \?\? Math\.random/, 'and the stream it is handed, or the floor');
+
+  // EVERY POOL THAT RAISES A DEATH HANDS BOTH. cityGuards and
+  // exteriorFoes carry a loot stream of their own (the same one
+  // spawnEnemyLoot takes); dungeonContext carries none, so its roll
+  // stays where its spawn loot's already is - but its luck is real.
+  assert.match(src('src/scenes/cityGuards.js'), /raiseEnemyDeath\(g\.entity, \{ rolls: rand, luck: liveStat\(playerEntity, 'luck'\) \}\);/);
+  assert.match(src('src/scenes/exteriorFoes.js'), /raiseEnemyDeath\(f\.entity, \{ rolls, luck: liveStat\(playerEntity, 'luck'\) \}\)/);
+  assert.match(src('src/scenes/dungeonContext.js'), /raiseEnemyDeath\(foe\.entity, \{ luck: liveStat\(playerEntity, 'luck'\) \}\)/);
+  for (const f of ['src/scenes/cityGuards.js', 'src/scenes/exteriorFoes.js', 'src/scenes/dungeonContext.js']) {
+    assert.doesNotMatch(src(f), /raiseEnemyDeath\([a-zA-Z.]+\);/, `${f}: no raiser hands an entity alone any more`);
+  }
+
+  // AND IT IS TRUE OF THE RUNNING HANDLER, not only of the source. A
+  // humanoid killed with a stream that always answers 0.9 carries the
+  // same thing every time; with Math.random it did not.
+  uninstallSurvivalLoot();
+  installSurvivalLoot({ enabled: () => true });
+  const kill = (rolls, luck) => {
+    const entity = { mobileType: MOBILE_TYPES.Knight, items: [] };
+    raiseEnemyDeath(entity, { rolls, luck });
+    return entity.items.map((i) => i.shortName ?? i.name);
+  };
+  const a = kill(() => 0.9, 50), b = kill(() => 0.9, 50);
+  assert.deepEqual(a, b, 'the same stream, the same body - twice');
+  assert.equal(a.length, 1, 'a roll of 19 against HUMANOID_FOOD_ABOVE 17 is one meal, and 19 is not above 19, so not two');
+  // THE LUCK IS READ. A low roll that a lucky player carries over the
+  // line is the whole of the term that was dead: 0.55 is a roll of 12,
+  // which at luck 50 (mod 5) is 12 and carries nothing, and at luck 100
+  // (mod 10) is 17 - still not above 17 - while 0.7 is 15, dead at 50
+  // and 20 at luck 100, which is above BOTH thresholds: two meals.
+  assert.deepEqual(kill(() => 0.55, 50), [], 'unlucky and unfed');
+  assert.equal(kill(() => 0.7, 50).length, 0, 'the same roll at luck 50: nothing');
+  assert.equal(kill(() => 0.7, 100).length, 2, 'and at luck 100 the same roll carries two - the term the tree had never once applied');
+  uninstallSurvivalLoot();
+});

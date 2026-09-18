@@ -969,7 +969,7 @@ export function createWorldModes(host) {
    *  runMagicRoundsFor, so no tickActiveEffects and no updatePoisons
    *  (worldTick.js:306-307), and no killIfAnyLiveStatZero. Both pools
    *  READ the effect list every frame (exteriorFoes.js:847-847 and
-   *  cityGuards.js:803-804 each take `entityIsParalyzed` +
+   *  cityGuards.js:811-812 each take `entityIsParalyzed` +
    *  `applyEnemyMotorEffectFlags`), and nothing ever ended one: a
    *  Continuous Damage bundle on a foe in a shop never took a round,
    *  a poison inflicted at this host's own onInflictPoison never
@@ -3063,7 +3063,16 @@ export function createWorldModes(host) {
    *  portraitIndexFromStaticNPCBillboard (systems/npcSession.js); this
    *  is the host wiring it needs - the faction record from townTalk's
    *  FACTION.TXT and FLATS.CFG's faceIndex column from the data
-   *  pipeline (dataPipeline.js:46, loaded for the captions already). */
+   *  pipeline (dataPipeline.js's `flatFaceIndex`).
+   *
+   *  PORTRAIT1: this comment used to say the column was "loaded for the
+   *  captions already", and that is what licensed the host bag to leave
+   *  `flatFaceIndex` out. It was half true and wholly misleading: the
+   *  file IS loaded and warmed in the host, but the CAPTIONS reach it by
+   *  closing over the host's own `pipeline` variable, never through this
+   *  bag. This read is the bag's only consumer, so it was the only one
+   *  that broke - silently, because the `?.` below never traps. The
+   *  hosts spread the whole pipeline now. */
   function staticNpcPortrait(npcData) {
     return portraitIndexFromStaticNPCBillboard(npcData, {
       factionData: townTalk?.factionDict?.get(npcData?.factionID ?? 0) ?? null,
@@ -6142,7 +6151,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:7360's own wave-46 note); the interior
+          // a blow (world.js:7438's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage(dmg);   // BA1: RemoveHealth carries the amount
@@ -6180,7 +6189,7 @@ export function createWorldModes(host) {
         // (cityGuards.js:580-585), so this seam splits by pool exactly
         // as `dealDamage` above it does rather than dropping the
         // non-encounter half - the zero-damage SWING already reaches
-        // that door (cityGuards.js:1049) and the shaft owes the same.
+        // that door (cityGuards.js:1057) and the shaft owes the same.
         onAttackFromPlayer: (f) => (f._encounter
           ? interiorFoes?.attackFromPlayer(f, player.pos, 'arrow')   // AUDIT WORLD6b-iii(e) A2: the pool's one door, the shaft's kind on it
           : interiorGuards?.handleAttackFromPlayer(f, player.pos)),
@@ -8371,7 +8380,7 @@ export function createWorldModes(host) {
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
      *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:2899-2921), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
-     *  unconditionally (world.js:4839). So an F9 pressed in a shop
+     *  unconditionally (world.js:4917). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them
      *  back into the street's rig; the rig actually in the player's
      *  hands was in no envelope at all.
@@ -8398,7 +8407,7 @@ export function createWorldModes(host) {
      *  presenter for the whole visit) or the interior's? world.js's gate read townTalk's slot alone. */
     deathUp() { return mode === 'dungeon' ? !!dungeonCtx?.deathUp?.() : interiorOverlay instanceof DeathScreen; },
     /** The restore half - and NOT gated on the mode, deliberately.
-     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:4930)
+     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:5008)
      *  and only re-enters the building at :4217, so the mode at apply
      *  time is whatever the LOAD landed in, not whatever the SAVE was
      *  taken in: an outdoor save loaded while the player was indoors
@@ -8408,7 +8417,7 @@ export function createWorldModes(host) {
      *
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
-     *  HARD2c: this used to spell them out, and named `world.js:5043`
+     *  HARD2c: this used to spell them out, and named `world.js:5121`
      *  and `dungeonContext.js:5665` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */

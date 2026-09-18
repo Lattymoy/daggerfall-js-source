@@ -226,6 +226,34 @@ enough. Every reader above the build already guarded on null - the same
 guard a player with Travel Options switched off needs - so nothing else
 changed.
 
+### BOOT-TDZ2, the same day - the line's own test read three more
+
+Hoisting the mod was half of it. The same line decided whether the pixel
+was the player's with `px === playerTravelPixel().x`, and
+`playerTravelPixel` reads `walkMode`, `player` and `cam` - three more
+bindings the boot walk declares below its own first build. So the boot
+died again, one binding along, on exactly the same save.
+
+The builder ASKS THE MOD FIRST now:
+
+    if (travelOptions && dfLocation) {
+      const here = playerTravelPixel();
+      if (px === here.x && py === here.y) travelOptions.initLocationRects(here);
+    }
+
+With no mod there is nothing to initialise, so the mod is both the
+cheaper test and the only one that is safe that early - and the pixel is
+read once per build rather than three times. Before TO1 the pixel
+builder reached none of those bindings; this call was the slice's own.
+
+The gate this deserved is `test/bootorder.test.js`: it walks the boot's
+statements up to and including the first build, follows every call into
+the functions `bootWorld` declares, and names every binding they reach
+that the boot walk has not declared yet. Eight names stand on an
+allow-list, each reachable only down a branch a first build cannot take
+and each older than this arc; a ninth fails the suite rather than a
+player's browser.
+
 Pinned in `test/to1_travelOptions.test.js` as a LAW rather than a
 literal: every one of those bindings must be declared before the line
 `const playerPixel = await buildPixel(first.px, first.py)`, and the mod
@@ -437,6 +465,35 @@ circumnavigation speed limiter (its UI-number quirk included) and the
 expressions now (`AUDIT-TO1 A1` runs two frames with them), which is the
 hole every earlier pin left.
 
+## AUDIT-FIELD (2026-09-18) - the arc audited before it merged
+
+Four adversarial lenses over BOOT-TDZ, BOOT-TDZ2, MAP-FIELD and
+TO-FIELD, plus the browser probe. What it found about this page's own
+subject is folded into the TO-FIELD section above; the two findings that
+belong to the BOOT arc are here because they are the same story.
+
+- **F5 - THE THIRD DEAD ZONE, and it was live.** `buildPixelNow` ends
+  with an unconditional `await standPixelNpcs(entry)`, whose second line
+  reads `questBridge?.machine` - a `let` declared five hundred statements
+  below the boot's own first build. The `?.` is no guard, and the early
+  return above it (`if (!entry?.npcs?.length) return;`) is the SAME
+  town/wilderness split as the two crashes that shipped: a first pixel in
+  the wilderness booted, a first pixel in a town threw. Reproduced on the
+  exact shape, then fixed the way BOOT-TDZ fixed the first one - the
+  binding is declared at the top of the boot now. The pass's own doc
+  comment always said it means to run at boot with no bridge and read it
+  as null; declaring it up there is what makes that sentence true.
+
+- **F6 - and the gate that was meant to catch this did not.** Reverting
+  BOOT-TDZ2's guard left `test/bootorder.test.js` GREEN, because the
+  walker is name-based and cannot see conditions: `walkMode` was
+  allow-listed, so it was blessed down every path. `questBridge` was
+  allow-listed on a reason that was simply false - "quest placements
+  only", where the real guard is `entry.npcs.length` - and the third dead
+  zone sat behind that sentence. Each allow-list entry now carries the
+  source its excuse rests on and fails with it; all three crashes are
+  caught by the gate, checked by reverting each fix in turn.
+
 ## The four hosts
 
 The journey is wired in `scenes/world.js` ALONE, and the other three
@@ -446,6 +503,128 @@ travel map and says so itself (`03-World/Roads.md`);
 hosts, and the mod's own follow key refuses indoors
 (`:1439-1440`, `PlayerEnterExit.IsPlayerInside`). An accelerated
 journey is an exterior thing and lives with the exterior.
+
+## TO-FIELD (2026-09-18) - the three the field found
+
+Mac, on the shipped build: *"Using travel options spawns you under the
+maps, doesn't travel on the road and you instantly collapse from
+exhaustion"*, and then the term that settled the second: *"if you
+actually look at the mod, its pure continous travel along roads instead
+of an instant shift. So im not sure where this port went wrong"*.
+
+**The model was never wrong.** The mod's own readme calls it "time
+accelerated real travel", and the port runs exactly that: the player
+walks, the calendar keeps up with the miles, and nothing on that path
+ever teleports. Two of the three were real defects in the host; the
+third was a thing the port never said out loud.
+
+- **Under the maps - the walk did not wait for the ground.** The journey
+  drove the motor at up to sixty times walking pace across a streamer
+  that builds ONE pixel per call, and `heightAt` answers `-Infinity`
+  over a pixel that is not built yet, which no collider clamp can catch.
+  Every other player-moving path in this host already waits - the boot
+  stand (`playerSpawned && built.has`), the ride-out (TSR4a, *"it just
+  spawns me straight into the ground"*), the season re-skin, a teleport
+  awaiting its pixel - and this one, the fastest of them, did not. The
+  drive now holds while the ground under the feet OR
+  `TRAVEL_LOOKAHEAD = 64` ahead of the bearing is missing AND the
+  streamer is still bringing it; with nothing queued the ground is not
+  coming and holding for ever would be its own bug, so it goes through.
+  The wait is the ride-out's own sentence, deliberately, so the two read
+  alike.
+
+- **Instant exhaustion - the port's own needs charged at the mod's
+  clock.** The vanilla band asks only whether the minute CHANGED this
+  frame and pays ONE minute whatever the jump
+  (`PlayerEntity.cs:402-418`, and `systems/worldTick.js` verbatim), so
+  the journey's vanilla drain IS DFU's - and Travel Options watches that
+  very number with its own cautious stop (`TravelOptionsMod.cs:1079`,
+  ported at `travelOptions.js:758`). The NEEDS are this port's own
+  addition, from a mod Travel Options has never heard of, and they
+  charged on top of it on a traveller who by construction never stops to
+  eat, drink or sleep. An accelerated journey is sat as `resting` now -
+  the needs' OWN knob for exactly this. Every accrual (hunger's marker,
+  thirst, sleep debt, wet, exposure) sits outside it, so the days really
+  pass and the traveller still arrives as hungry as the ride made them.
+
+  **AUDIT-FIELD corrected this bullet's own arithmetic, and it is worth
+  keeping the correction visible.** The first cut of this record said the
+  needs "charge several minutes of fatigue in the frame the vanilla band
+  charges one". That is false. Game-minutes per frame are `dt * 0.2 *
+  scale` with `dt` clamped to 0.1, so a frame carries 0.2 minutes at 60
+  fps and the mod's default limit of sixty, and at most 2 at its ceiling
+  of a hundred; `runSurvivalMinutes` walks `[last+1, now]` and the band
+  asks "did the minute change" - **they run 1:1**. The surcharge is in
+  MAGNITUDE: DFU's band is 11 a minute and the needs stack starving 4,
+  parched 6 or dehydrated 12, exhausted 8, heat 6 and bare feet 4 on top
+  of it once their stages are reached, roughly three times the drain.
+  Nor does the fix make a journey endless, which the first cut also
+  implied: 11 a minute empties a 6400 pool in 582 game-minutes whatever
+  this line does. That is DFU's own number at DFU's own rate, and
+  collapsing on a long RECKLESS ride is the mod's designed loop - camp
+  out, stop at inns, or travel cautiously and be paused at the fatigue
+  floor. What the line removes is the port's own surcharge on top, so an
+  accelerated journey costs what it costs in DFU and no more.
+
+  **And `resting` holds two HEALTH arms with the fatigue ones** (F12),
+  which the first cut did not disclose: the bare-skin block's naked-cold
+  and sunburn ticks (`needs.js:293`), and, for a traveller who is also
+  `byFire`, the exposure damage at `:277`. Harm you cannot answer while
+  the autopilot holds the controls is not a loss worth keeping. The law
+  is executed now, not matched: `test/surv7_feed.test.js` runs ten game
+  hours with the knob both ways and asserts fatigue held at zero while
+  every accrual lands on the same number.
+
+- **"Doesn't travel on the road" - nothing was broken; nothing said
+  how.** The mod does not route along roads to a named destination and
+  never did: an autopilot beelines, and PATH FOLLOWING is a separate
+  mode the player starts with a key while standing on a path and facing
+  the way they mean to go (readme: *"If a key is set, default 'F', then
+  you can follow paths by standing on them and facing the direction you
+  want to travel and pressing the key"*), which stops itself at a
+  location or a junction of more than two ways. The port had to move
+  that key off the mod's own F - this skin spends F on SOC5's
+  SocialInteract (I1) - so it ships on K, the one of the mod's six
+  letters nothing here answers. The only place the port named it was the
+  help text INSIDE a running journey, which a player who has never
+  started one cannot reach. The held map's travel card names it now,
+  whenever roads integration is on and a key is set: *"On the road,
+  press K to follow it."*
+
+- **AUDIT-FIELD F10: and SURV6's hunting roll is held with them.** The
+  wilderness roll fires once a GAME minute, so an accelerated ride rolled
+  it every few real seconds, and every event opens a Yes/No box through
+  `townTalk.showOverlay` - which the mod reads as a foreign window on top
+  and answers with `interruptTravel()` (`TravelOptionsMod.cs:1348-1356`).
+  A wilderness journey could not survive its own first minute. This fits
+  "doesn't travel" better than anything else the arc found, and it is the
+  same shape as the needs' surcharge: a thing the port added that Travel
+  Options has never heard of, charged at the mod's clock.
+
+- **AUDIT-FIELD F7: the look-ahead is a FLOOR, not the whole distance.**
+  `TRAVEL_LOOKAHEAD = 64` was called "more than the fastest accelerated
+  step", which is true of a fixed physics step and false of a FRAME: the
+  motor moves `speed * min(dt, MAX_FRAME_DT) * scale` in one go, so a
+  horse at the shipped default limit covers ~65 units in a 10 fps frame
+  and ~120 at the mod's ceiling - past a 64-unit probe, off the built
+  world, and once the motor is airborne `airControl` is false, so zeroing
+  the drive on the NEXT frame no longer steers. `travelLookaheadFor`
+  measures the frame that is about to run and keeps 64 as its floor.
+
+- **AUDIT-FIELD F8: and the gate is a pure function now.** TO-FIELD
+  pinned this whole fix with regexes over `world.js`'s own source, which
+  pass iff the author's bytes are present and prove nothing about what
+  the gate does - a sign flip on the bearing would have probed the ground
+  BEHIND the traveller, always built, restoring the bug whole with every
+  pin green. `travelDriveForward` and `travelLookaheadFor` live in
+  `systems/travelAutopilot.js` beside the autopilot, for the reason that
+  file is pure: the pins drive them on a table. Six mutants ride them.
+
+Pinned in `test/to1_travelOptions.test.js` (TO-FIELD) with three
+mutants - `travel-drive-ungated`, `needs-at-travel-scale`,
+`follow-key-unsaid`. `tools/mutants/surv7.json`'s
+`SURV7-the-world-feeds-the-dungeon-too` was re-aimed by content onto the
+reader's new three arms.
 
 ## Pins
 

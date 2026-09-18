@@ -216,13 +216,13 @@ blind to the others until the squash: E6 took the spell hands' release
 frame (`combat/fpsSpellCasting.js:178`) and the clear-path term
 (`characters/enemyCasting.js:91`), closing section C's `playSound` row
 with them; E4 took gold-as-a-bag-stack (`systems/inventory.js:48`);
-E7 took `GetValue`'s empty-string arm (`systems/talkMacros.js:289`);
+E7 took `GetValue`'s empty-string arm (`systems/talkMacros.js:314`);
 E5 took the docked bar's occlusion (`ui/hudLarge.js:75`); and E1
 narrowed while E3 closed the two console verbs
 (`ui/exteriorAutomapWindow.js:96` - the site id the flag list was
 measured on; the closure narrates at `:100` today) by building the
 console host they were waiting on. The SHIP LANDING then took a seventh
-(`scenes/world.js:4189`, the two ship pixels): the owner supplied the
+(`scenes/world.js:4267`, the two ship pixels): the owner supplied the
 real MAPS.BSA, the pixels turned out to carry the two "Your Ship"
 locations rather than open sea, and the boarding became an ordinary
 location arrival. **ROAD-F then took three more**: GS1 closed the
