@@ -642,7 +642,15 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       // two clients could clear a town's watch at no cost to anyone. The walk-away precedent (G3: "walk-aways
       // vanish with their items") is the same law: only a body the owner killed is the owner's to loot.
       if (peer) g.entity.items = [];
-      raiseEnemyDeath(g.entity);   // UL1: OnEnemyDeath (:139)
+      // UL1: OnEnemyDeath (:139). AUDIT VC6 (2026-09-18, chasing a test
+      // that failed one run in eight): the handlers ROLL - SURV2's puts
+      // the body's food on it - and this seam handed them neither a
+      // stream nor a luck, so the drop fell to Math.random and read the
+      // player's luck as 50 while `spawnEnemyLoot` three lines up was
+      // already taking this pool's own `rand`. One kill in eight grew
+      // two items nobody could predict, and the guard's rations ignored
+      // the luck DFU rolls them against. Every pool hands both now.
+      raiseEnemyDeath(g.entity, { rolls: rand, luck: liveStat(playerEntity, 'luck') });
       // G4 (HandleAttackFromSource, verbatim): killing the city watch
       // IS Murder, and CG2 landed the second half -
       // DaggerfallEntityBehaviour.cs:267's

@@ -314,8 +314,8 @@ test('ROAD-G G1(b): both hosts route the transform by POOL MEMBERSHIP', () => {
   // (exteriorFoes.js:379-384) never looks a record up in `foes` and
   // both pools share the host's one renderer, so the old arm tore a
   // watchman down exactly as `removeGuard` does - batch freed,
-  // `dead = true`, no corpse, skipped by cityGuards.js:795 and spliced
-  // at :984 in that same pass. The router is an OWNERSHIP fix, not a
+  // `dead = true`, no corpse, skipped by cityGuards.js:803 and spliced
+  // at :992 in that same pass. The router is an OWNERSHIP fix, not a
   // leak fix, and no page may say otherwise again.
   // (the halves are joined at runtime so this very file does not carry
   // the sentence it bans)

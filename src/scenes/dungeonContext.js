@@ -4069,7 +4069,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if ((!foeDeps || !foe.ai?._armedTargeting || foeDeps.isLocalPlayerTarget(foe.ai?.target)) && foe.ai?.detected) setEnemyAlert(playerEntity, false);   // AUDIT WORLD3 C3: mine, not a peer's
       spawnCorpse(foe);
       playRareDrop(audio, foe.ai.feet, foe.entity.items);   // LR3: the chime for a Rare or better on the body
-      raiseEnemyDeath(foe.entity);   // UL1: OnEnemyDeath (EnemyDeath.cs:139) - the kill, not the load's rewind
+      raiseEnemyDeath(foe.entity, { luck: liveStat(playerEntity, 'luck') });   // UL1: OnEnemyDeath (EnemyDeath.cs:139) - the kill, not the load's rewind. AUDIT VC6: the player's luck, which SURV2's food rolls against - this host keeps no loot stream of its own, so the roll stays Math.random as its spawn loot's is
       return;
     }
     // C15 knockback (WeaponManager.WeaponDamage): WEAPON hits carry
