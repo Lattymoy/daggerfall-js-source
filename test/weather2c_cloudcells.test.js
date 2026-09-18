@@ -72,8 +72,9 @@ test('WEATHER2c the field: the cells and the slab declared once for both marches
   assert.match(CLOUD_FIELD_GLSL, /uniform vec4 uCellA\[8\];/); assert.match(CLOUD_FIELD_GLSL, /uniform vec4 uCellB\[8\];/);
   assert.match(CLOUD_FIELD_GLSL, /uniform float uSlabBase;/); assert.match(CLOUD_FIELD_GLSL, /uniform float uSlabTop;/);
   assert.match(CLOUD_FIELD_GLSL, /uniform float uDark;/, 'the dark moved into the field - a cell has its own');
-  assert.match(CLOUD_FIELD_GLSL, /float fBase, fTop, fDensity, fFlat, fShear, fCover, fDark, fGrey;\s*\n\s*vec3 fTint;\s*\n\s*void resolveAt\(vec2 xz\) \{/);   // WEATHER2d: and the tint
-  assert.match(CLOUD_FIELD_GLSL, /fBase = uBase; fTop = uTop; fDensity = uDensity; fFlat = uFlat; fShear = uShear; fCover = uCover; fDark = uDark; fGrey = 0\.0;/, 'the zone\'s terms first');
+  assert.match(CLOUD_FIELD_GLSL, /float fBase, fTop, fDensity, fFlat, fShear, fCover, fDark, fGrey, fVary;\s*\n\s*vec3 fTint;\s*\n\s*void resolveAt\(vec2 xz\) \{/);   // WEATHER2d: and the tint; VC6a: and the type variation
+  assert.match(CLOUD_FIELD_GLSL, /fBase = uBase; fTop = uTop; fDensity = uDensity; fFlat = uFlat; fShear = uShear; fCover = uCover; fDark = uDark; fGrey = 0\.0; fTint = vec3\(1\.0\); fVary = uVary;/, 'the zone\'s terms first');
+  assert.match(CLOUD_FIELD_GLSL, /fVary = mix\(fVary, uCellC\[i\]\.w, w\);/, 'VC6a: a cell brings its own type variation, on the tint array\'s spare lane');
   assert.match(CLOUD_FIELD_GLSL, /for \(int i = 0; i < 8; i\+\+\) \{\s*\n\s*if \(i >= uCellCount\) break;/, 'a fixed loop under a uniform count');
   assert.match(CLOUD_FIELD_GLSL, /float w = 1\.0 - smoothstep\(c\.z - c\.w, c\.z, length\(xz - c\.xy\)\);/, 'the rim\'s weight');
   assert.match(CLOUD_FIELD_GLSL, /fBase = mix\(fBase, a\.x, w\); fTop = mix\(fTop, a\.y, w\); fDensity = mix\(fDensity, a\.z, w\); fFlat = mix\(fFlat, a\.w, w\);/);
@@ -81,12 +82,13 @@ test('WEATHER2c the field: the cells and the slab declared once for both marches
   const dens = CLOUD_FIELD_GLSL.slice(CLOUD_FIELD_GLSL.indexOf('float density(vec3 p, float mip) {'));
   assert.doesNotMatch(dens, /\bu(Base|Top|Density|Flat|Shear|Cover|Dark)\b/, 'the density reads the resolved terms, never the zone\'s uniforms');
   assert.match(dens, /return clamp\(base, 0\.0, 1\.0\) \* fDensity;/);
-  assert.match(CLOUD_FIELD_GLSL, /return mix\(towers, lid, fFlat\);/);
+  assert.match(CLOUD_FIELD_GLSL, /return mix\(towers, lid, lidness\);/, 'VC6a: the flatness is the PLACE\'s, handed in - the zone\'s moved by the variation field');
+  assert.doesNotMatch(CLOUD_FIELD_GLSL, /float heightGradient\(float h, float flat\)/, 'VC6a: never `flat` - GLSL ES 3.00 reserves it as an interpolation qualifier and the shader does not compile');
   // the marches
   assert.match(MARCH_FS, /float t0 = uSlabBase \/ dir\.y, t1 = min\(uSlabTop \/ dir\.y, t0 \+ 24000\.0\);/, 'the sky march walks the union slab');
-  assert.match(MARCH_FS, /resolveAt\(\(cam \+ dir \* t0\)\.xz\);[^\n]*\n\s*for \(int i = 0; i < 96; i\+\+\) \{\s*\n\s*if \(i >= uSteps\) break;\s*\n\s*vec3 p = cam \+ dir \* t;\s*\n\s*if \(uCellCount > 0\) resolveAt\(p\.xz\);/, 'resolved before the march and at every step while cells stand');
+  assert.match(MARCH_FS, /resolveAt\(\(cam \+ dir \* t0\)\.xz\);[^\n]*\n\s*for \(int i = 0; i < 96; i\+\+\) \{[\s\S]{0,600}?vec3 p = cam \+ dir \* t;\s*\n\s*if \(uCellCount > 0\) resolveAt\(p\.xz\);/, 'resolved before the march and at every step while cells stand');
   assert.match(MARCH_FS, /float ds = \(fTop - fBase\) \/ float\(uLightSteps\) \* 0\.5;/, 'the light march reads what the step resolved');
-  assert.match(MARCH_FS, /mix\(uCloudShade, uCloudLit, h \* \(1\.0 - fGrey\)\)/, 'a cell\'s grey');
+  assert.match(MARCH_FS, /mix\(uCloudShade, uCloudLit, sideLit \* \(1\.0 - fGrey\)\)/, 'a cell\'s grey (VC6b: over the height ramp the low sun rolls over)');
   assert.match(MARCH_FS, /\(1\.0 - 0\.8 \* fDark\) \* \(1\.0 - 0\.5 \* fGrey\) \* fTint \+ ambient;/);   // WEATHER2d: and the cell's tint
   assert.doesNotMatch(MARCH_FS.replace(CLOUD_FIELD_GLSL, ''), /uniform float uDark;/, 'declared once, in the field');
   assert.match(SHADOW_FS, /float t0 = uSlabBase \/ uLightDir\.y, t1 = uSlabTop \/ uLightDir\.y;/, 'the shadow march walks the union slab');
@@ -109,10 +111,11 @@ test('WEATHER2c the class and the controller: setState takes the cells (the cont
   assert.match(vc, /setState\(state, row, weather, easeDt, drift, flash = 0, pos = null, cells = null\) \{/);
   assert.match(vc, /if \(this\.testCellSpec && !this\.testCell && pos\) this\.testCell = parseCloudCellDoor\(this\.testCellSpec, pos\);/);
   assert.match(vc, /this\.cells = \(cells \?\? \(this\.testCell \? \[this\.testCell\] : \[\]\)\)\.slice\(0, this\.q\.cells \?\? MAX_CELLS\);/);
-  assert.match(vc, /gl\.uniform1f\(u\.uDark, p\.dark\);\s*\n[^\n]*\n\s*const slab = slabOf\(p, this\.cells\);\s*\n\s*gl\.uniform1f\(u\.uSlabBase, slab\.base\); gl\.uniform1f\(u\.uSlabTop, slab\.top\);/, 'uploaded with the field, for both marches');
+  assert.match(vc, /gl\.uniform1f\(u\.uDark, p\.dark\); gl\.uniform1f\(u\.uVary, p\.vary \?\? 0\);[^\n]*\n[^\n]*\n\s*const slab = slabOf\(p, this\.cells\);\s*\n\s*gl\.uniform1f\(u\.uSlabBase, slab\.base\); gl\.uniform1f\(u\.uSlabTop, slab\.top\);/, 'uploaded with the field, for both marches (VC6a: the zone\'s type variation beside the dark)');
   assert.match(vc, /const k = packCells\(this\.cells, this\.q\.cells \?\? MAX_CELLS, this\._packed\);\s*\n\s*gl\.uniform1i\(u\.uCellCount, k\.count\);\s*\n\s*if \(k\.count > 0\) \{ gl\.uniform4fv\(u\.uCell, k\.c\); gl\.uniform4fv\(u\.uCellA, k\.a\); gl\.uniform4fv\(u\.uCellB, k\.b\); gl\.uniform4fv\(u\.uCellC, k\.t\); \}/, 'the arrays only when there are cells');
   assert.match(vc, /if \(this\.testCell\) \{ this\.testCell\.x \+= offset\[0\]; this\.testCell\.z \+= offset\[2\]; \}/, 'the recenter');
   assert.equal((vc.match(/gl\.uniform1f\(u\.uDark, p\.dark\);/g) || []).length, 1, 'the dark is uploaded once, by the field');
+  assert.equal((vc.match(/gl\.uniform1f\(u\.uVary, p\.vary \?\? 0\);/g) || []).length, 1, 'VC6a: and the variation once, beside it');
   const shared = rd('src/scenes/shared.js');
   assert.match(shared, /if \(clouds\) clouds\.testCellSpec = params\.get\('cloudcell'\);/);
   assert.equal((shared.match(/extra\?\.cells \?\? null\);/g) || []).length, 2, 'the dome path and the mod path both hand the cells');

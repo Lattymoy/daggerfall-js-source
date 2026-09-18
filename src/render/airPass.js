@@ -82,6 +82,7 @@
 
 import { multiply } from '../world/mat4.js';
 import { setFrameTarget } from './renderTarget.js';
+import { CLOUD_SHADOW_GLSL } from './cloudShadow.js';   // VC6c: a covered sun throws no shafts - the same field the ground's shadow reads
 import { BAYER_GLSL, BAYER_MEAN } from './orderedDither.js';   // EL6: the port's one Bayer - the dither at the byte, the AO's rotation
 import { spherePlanes, recordVisible, subMeshVisible, batchVisible } from './bounds.js';   // EL5: the emission replay culls by the records' spheres too (a leaf's import: bounds.js touches no GL)
 
@@ -533,13 +534,34 @@ void main() {
   outColor = vec4(acc, 1.0);
 }`;
 
+// VC6c (2026-09-18, Mac: "when the sun is covered by clouds, there
+// shouldnt be sky rays or sky rays coming through trees/flora"). The
+// mask was SKY DEPTH ALONE - anything at the far plane near the sun's
+// screen position was a light source - so a sun standing behind a bank
+// still threw full-strength rays, and the ones through a tree's canopy
+// were the ones that showed it worst: the leaves cut a hard silhouette
+// out of a beam that should not have been there.
+//
+// A shaft is scattered DIRECT sunlight, so its brightness follows the
+// direct sun's, which is exactly what the cloud shadow map holds at the
+// player's own feet - the transmittance along the sun's ray from where
+// they stand. Reading it here means the rays, the light on the ground
+// and the sky the player is looking at cannot disagree: one field,
+// three consumers. Squared, because a shaft needs a BEAM: half the sun
+// through thin cloud is a quarter of the rays, and a bank takes them
+// away rather than dimming them politely.
+//
+// Off the enhanced lane, and inside every building, uCloudShadowRect.w
+// is 0 and cloudShadowAt answers 1 - the pass is exactly what it was.
 const SHAFT_FS = `#version 300 es
 precision highp float;
 in vec2 vUV;
 ${DEPTH_GLSL}
+${CLOUD_SHADOW_GLSL}
 uniform vec2 uSun;          // the sun's screen position, uv
 uniform vec4 uShaftParams;  // decay, strength, reach, aspect
 uniform vec3 uSunColor;
+uniform vec3 uEye;          // VC6c: the camera's world position - where the cloud shadow is read
 out vec4 outColor;
 float mask(vec2 uv) {
   float sky = depthAt(uv) >= 0.99999 ? 1.0 : 0.0;
@@ -547,6 +569,7 @@ float mask(vec2 uv) {
   return sky * smoothstep(uShaftParams.z, 0.0, length(d));
 }
 void main() {
+  float through = cloudShadowAt(uEye);   // VC6c: how much sun reaches the player at all
   vec2 ray = (uSun - vUV) / ${AIR_SHAFT_TAPS}.0;   // AUDIT-EL F17: not 'step' - a built-in's name
   vec2 uv = vUV;
   float acc = 0.0, w = 1.0;
@@ -555,7 +578,7 @@ void main() {
     w *= uShaftParams.x;
     uv += ray;
   }
-  outColor = vec4(uSunColor * (acc / ${AIR_SHAFT_TAPS}.0 * uShaftParams.y), 1.0);
+  outColor = vec4(uSunColor * (acc / ${AIR_SHAFT_TAPS}.0 * uShaftParams.y * through * through), 1.0);
 }`;
 
 /** The emission-only fragment shaders for the bloom source: a solid's
@@ -685,7 +708,7 @@ export class AirPass {
       ao: P(QUAD_VS, AO_FS, ['uDepth', 'uProjInfo', 'uKernel', 'uAOParams', 'uRect', 'uCanvas']),
       box: P(QUAD_VS, BOX_FS, ['uSrc', 'uTexel', 'uBlurRange', 'uDepth', 'uProjInfo', 'uRect', 'uCanvas']),
       gauss: P(QUAD_VS, GAUSS_FS, ['uSrc', 'uDir']),
-      shaft: P(QUAD_VS, SHAFT_FS, ['uDepth', 'uSun', 'uShaftParams', 'uSunColor', 'uProjInfo', 'uRect', 'uCanvas']),
+      shaft: P(QUAD_VS, SHAFT_FS, ['uDepth', 'uSun', 'uShaftParams', 'uSunColor', 'uProjInfo', 'uRect', 'uCanvas', 'uEye', 'uCloudShadowMap', 'uCloudShadowRect']),   // VC6c: the cloud in front of the sun
       emitMesh: P(opts.vs.mesh, EMIT_MESH_FS, ['uProj', 'uView', 'uModel', 'uEmissionTex', 'uEmissionColor', 'uDepth', 'uProjInfo', 'uRect', 'uCanvas', 'uBloomSize']),
       emitBb: P(opts.vs.bb, EMIT_BB_FS, ['uProj', 'uView', 'uRight', 'uUp', 'uOrigin', 'uSize', 'uTex', 'uEmissionTex', 'uFlatWind', 'uSway', 'uDepth', 'uProjInfo', 'uRect', 'uCanvas', 'uBloomSize']),
       glare: P(GLARE_VS, GLARE_FS, ['uProj', 'uView', 'uCenter', 'uSize', 'uDepth', 'uColor', 'uProjInfo', 'uRect', 'uCanvas']),
@@ -715,6 +738,7 @@ export class AirPass {
     this.projInfo = new Float32Array(4);
     this.aoParams = new Float32Array([AIR_AO_RADIUS, AIR_AO_STRENGTH, AIR_AO_BIAS, 0]);
     this.shaftParams = new Float32Array([AIR_SHAFT_DECAY, AIR_SHAFT_STRENGTH, AIR_SHAFT_REACH, 1]);
+    this._noDeck = new Float32Array([0, 0, 0, 0]);   // VC6c: no cloud field - amount 0, full sun
     this.f = null;   // EL6: the frame's inputs, from prepare() to composite()
     // EL8: the previous frame's view-projection and projection terms, for the contact march; valid once a frame has been prepared
     this.prevVP = new Float32Array(16); this.prevProjInfo = new Float32Array(4); this.prevValid = false;
@@ -886,7 +910,7 @@ export class AirPass {
    * pointLights, pointColors (decoded vec3s), viewport [x,y,w,h], shadows
    * (the ShadowPass: its records and its depth programs), textures,
    * emissionTextures, blackTex, windowEmission, isSpectral, bindVao,
-   * clearColor }. The images are drawn at the resolve, off the frame's own
+   * clearColor, cloudShadow (VC6c: the deck the shafts are gated on) }. The images are drawn at the resolve, off the frame's own
    * depth: the AO, the bloom source (the emitters and the glares, both
    * occluded by that depth), the shafts. Before EL6 they were drawn HERE,
    * off a depth image the records were replayed into - a third walk of the
@@ -959,6 +983,16 @@ export class AirPass {
       this.shaftParams[3] = T.shaft.w / T.shaft.h;
       gl.uniform4fv(this.programs.shaft.uShaftParams, this.shaftParams);
       gl.uniform3fv(this.programs.shaft.uSunColor, f.sunColor);
+      // VC6c: the cloud shadow at the player's feet. No deck (the classic
+      // skin, every interior, `?clouds=off`) means an amount of 0, which
+      // is what makes cloudShadowAt answer full sun without a branch here.
+      const deck = f.cloudShadow;
+      gl.activeTexture(gl.TEXTURE1);
+      gl.bindTexture(gl.TEXTURE_2D, deck?.map ?? f.blackTex ?? null);
+      gl.uniform1i(this.programs.shaft.uCloudShadowMap, 1);
+      gl.uniform4fv(this.programs.shaft.uCloudShadowRect, deck?.rect ?? this._noDeck);
+      gl.uniform3fv(this.programs.shaft.uEye, f.eye);
+      gl.activeTexture(gl.TEXTURE0);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
       this.stats.shafts = true;
     } else {

@@ -1,0 +1,345 @@
+[
+  {
+    "name": "VC6a-the-variation-walks-in-step-with-the-shape-again",
+    "file": "src/render/volumetricClouds.js",
+    "old": "export const VARIATION_METRES = PIXEL_METRES * 80;",
+    "new": "export const VARIATION_METRES = PIXEL_METRES * 16;",
+    "tests": [
+      "test/vc6_clouds.test.js"
+    ]
+  },
+  {
+    "name": "VC6a-the-warp-is-never-applied",
+    "file": "src/render/volumetricClouds.js",
+    "old": "  q.xz += (v.gb * 2.0 - 1.0) * WARP_M;   // VC6a: the warp",
+    "new": "  q.xz += (v.gb * 2.0 - 1.0) * 0.0;   // VC6a: the warp",
+    "tests": [
+      "test/vc6_clouds.test.js"
+    ]
+  },
+  {
+    "name": "VC6a-the-warp-is-applied-after-the-shape-is-sampled",
+    "file": "src/render/volumetricClouds.js",
+    "old": "  q.xz += (v.gb * 2.0 - 1.0) * WARP_M;   // VC6a: the warp\n  vec4 s = textureLod(uShape, q / SHAPE_M, mip);",
+    "new": "  vec4 s = textureLod(uShape, q / SHAPE_M, mip);\n  q.xz += (v.gb * 2.0 - 1.0) * WARP_M;   // VC6a: the warp",
+    "tests": [
+      "test/vc6_clouds.test.js"
+    ]
+  },
+  {
+    "name": "VC6a-the-coverage-falls-back-to-one-frequency",
+    "file": "src/render/volumetricClouds.js",
+    "old": "  float variation = clamp(v.r * 0.65 + v.a * 0.35, 0.0, 1.0);",
+    "new": "  float variation = clamp(v.r, 0.0, 1.0);",
+    "tests": [
+      "test/vc6_clouds.test.js"
+    ]
+  },
+  {
+    "name": "VC6a-every-cloud-is-the-zones-one-flatness-again",
+    "file": "src/render/volumetricClouds.js",
+    "old": "  float flatHere = clamp(fFlat + (variation - 0.5) * fVary, 0.0, 1.0);",
+    "new": "  float flatHere = fFlat;",
+    "tests": [
+      "test/vc6_clouds.test.js"
+    ]
+  },
+  {
+    "name": "VC6a-the-ceiling-never-varies",
+    "file": "src/render/volumetricClouds.js",
+    "old": "  float ceiling = 1.0 - fVary * (1.0 - variation) * 0.8;",
+    "new": "  float ceiling = 1.0;",
+    "tests": [
+      "test/vc6_clouds.test.js"
+    ]
+  },
+  {
+    "name": "VC6a-a-lid-weather-gains-a-type-variation-it-cannot-have",
+    "file": "src/render/volumetricClouds.js",
+    "old": "  fog:      Object.freeze({ base: 150,  top: 600,  density: 1.00, dark: 0.20, flat: 1.00, shear: 0.05, vary: 0.00 }),",
+    "new": "  fog:      Object.freeze({ base: 150,  top: 600,  density: 1.00, dark: 0.20, flat: 1.00, shear: 0.05, vary: 0.30 }),",
+    "tests": [
+      "test/vc6_clouds.test.js"
+    ]
+  },
+  {
+    "name": "VC6a-a-cells-own-variation-never-reaches-the-field",
+    "file": "src/render/volumetricClouds.js",
+    "old": "    fVary = mix(fVary, uCellC[i].w, w);     // VC6a: the cell's own type variation",
+    "new": "    fVary = fVary;     // VC6a: the cell's own type variation",
+    "tests": [
+      "test/vc6_clouds.test.js"
+    ]
+  },
+  {
+    "name": "VC6a-the-zones-variation-is-never-uploaded",
+    "file": "src/render/volumetricClouds.js",
+    "old": "    gl.uniform1f(u.uDark, p.dark); gl.uniform1f(u.uVary, p.vary ?? 0);   // VC6a",
+    "new": "    gl.uniform1f(u.uDark, p.dark);   // VC6a",
+    "tests": [
+      "test/weather2c_cloudcells.test.js"
+    ]
+  },
+  {
+    "name": "VC6a-the-variation-is-dropped-from-the-eased-profile",
+    "file": "src/render/volumetricClouds.js",
+    "old": "const PROFILE_KEYS = ['base', 'top', 'density', 'dark', 'flat', 'shear', 'vary'];",
+    "new": "const PROFILE_KEYS = ['base', 'top', 'density', 'dark', 'flat', 'shear'];",
+    "tests": [
+      "test/volumetricClouds.test.js"
+    ]
+  },
+  {
+    "name": "VC6b-the-deck-sets-with-the-ground-again",
+    "file": "src/render/volumetricClouds.js",
+    "old": "  const w = Math.min(1, Math.max(0, (state.sunDir[1] + horizonDip(mid)) / 0.025));",
+    "new": "  const w = Math.min(1, Math.max(0, (state.sunDir[1] + 0.02) / 0.08));",
+    "tests": [
+      "test/volumetricClouds.test.js"
+    ]
+  },
+  {
+    "name": "VC6b-the-dip-ignores-the-slabs-height",
+    "file": "src/render/volumetricClouds.js",
+    "old": "export const horizonDip = (h) => Math.sqrt(2 * Math.max(0, h) / EARTH_RADIUS_M);",
+    "new": "export const horizonDip = (h) => 0.027;",
+    "tests": [
+      "test/volumetricClouds.test.js"
+    ]
+  },
+  {
+    "name": "VC6b-the-controller-hands-the-light-no-slab",
+    "file": "src/render/volumetricClouds.js",
+    "old": "    const light = cloudLight(s, p);   // VC6b:",
+    "new": "    const light = cloudLight(s);   // VC6b:",
+    "tests": [
+      "test/vc6_clouds.test.js"
+    ]
+  },
+  {
+    "name": "VC6b-the-low-sun-term-never-opens",
+    "file": "src/render/volumetricClouds.js",
+    "old": "  float low = smoothstep(0.30, -0.03, uLightDir.y);",
+    "new": "  float low = 0.0;",
+    "tests": [
+      "test/vc6_clouds.test.js"
+    ]
+  },
+  {
+    "name": "VC6b-the-sky-has-one-colour-at-dusk-instead-of-two",
+    "file": "src/render/volumetricClouds.js",
+    "old": "  vec3 duskTint = mix(hue(uSkyTint), hue(uLightColor), toward);",
+    "new": "  vec3 duskTint = hue(uLightColor);",
+    "tests": [
+      "test/vc6_clouds.test.js"
+    ]
+  },
+  {
+    "name": "VC6b-the-underside-stays-shaded-at-sunset",
+    "file": "src/render/volumetricClouds.js",
+    "old": "      float sideLit = mix(h, 0.25 * h + 0.75, low);   // VC6b: top-lit by day, whole-lit at dusk",
+    "new": "      float sideLit = h;   // VC6b: top-lit by day, whole-lit at dusk",
+    "tests": [
+      "test/vc6_clouds.test.js",
+      "test/weather2c_cloudcells.test.js"
+    ]
+  },
+  {
+    "name": "VC6b-the-tint-turns-the-exposure-up-instead-of-the-hue",
+    "file": "src/render/volumetricClouds.js",
+    "old": "vec3 hue(vec3 c) { return c / max(dot(c, vec3(0.2126, 0.7152, 0.0722)), 1e-4); }",
+    "new": "vec3 hue(vec3 c) { return c * 2.0; }",
+    "tests": [
+      "test/vc6_clouds.test.js"
+    ]
+  },
+  {
+    "name": "VC6b-the-direct-terms-gain-never-opens-at-a-low-sun",
+    "file": "src/render/volumetricClouds.js",
+    "old": "  float gain = mix(0.7, 1.05, low);",
+    "new": "  float gain = 0.7;",
+    "tests": [
+      "test/vc6_clouds.test.js"
+    ]
+  },
+  {
+    "name": "VC6b-the-zenith-never-reaches-the-march",
+    "file": "src/render/volumetricClouds.js",
+    "old": "      gl.uniform3fv(u.uSkyTint, s.zenith);   // VC6b:",
+    "new": "      gl.uniform3fv(u.uSkyTint, s.horizon);   // VC6b:",
+    "tests": [
+      "test/vc6_clouds.test.js"
+    ]
+  },
+  {
+    "name": "VC6b-the-clouds-are-a-quarter-night-at-the-horizon-again",
+    "file": "src/render/enhancedSky.js",
+    "old": "  const twilight = clamp01((elevDeg + 9) / 10);   // 0 by deep dusk, 1 at and above the horizon",
+    "new": "  const twilight = clamp01((elevDeg + 12) / 16);   // 0 by deep dusk, 1 at and above the horizon",
+    "tests": [
+      "test/vc6_clouds.test.js"
+    ]
+  },
+  {
+    "name": "VC6b-the-lit-colour-barely-leans-toward-the-sun",
+    "file": "src/render/enhancedSky.js",
+    "old": "  const lit = mix3(nightLit, mix3(cloudLitDay, pal.sun, 0.55 * lowSun), twilight);",
+    "new": "  const lit = mix3(nightLit, mix3(cloudLitDay, pal.sun, 0.25 * lowSun), twilight);",
+    "tests": [
+      "test/vc6_clouds.test.js"
+    ]
+  },
+  {
+    "name": "VC6b-the-shaded-side-never-takes-the-horizons-glow",
+    "file": "src/render/enhancedSky.js",
+    "old": "  const shade = mix3(nightShade, mix3(cloudShadeDay, pal.glow, 0.30 * (1 - clamp01(elevDeg / 12))), twilight);",
+    "new": "  const shade = mix3(nightShade, cloudShadeDay, twilight);",
+    "tests": [
+      "test/vc6_clouds.test.js"
+    ]
+  },
+  {
+    "name": "VC6c-a-covered-sun-throws-shafts-again",
+    "file": "src/render/airPass.js",
+    "old": "  outColor = vec4(uSunColor * (acc / ${AIR_SHAFT_TAPS}.0 * uShaftParams.y * through * through), 1.0);",
+    "new": "  outColor = vec4(uSunColor * (acc / ${AIR_SHAFT_TAPS}.0 * uShaftParams.y), 1.0);",
+    "tests": [
+      "test/vc6_clouds.test.js"
+    ]
+  },
+  {
+    "name": "VC6c-thin-cloud-dims-the-shafts-politely-instead-of-taking-them",
+    "file": "src/render/airPass.js",
+    "old": "uShaftParams.y * through * through), 1.0);",
+    "new": "uShaftParams.y * through), 1.0);",
+    "tests": [
+      "test/vc6_clouds.test.js"
+    ]
+  },
+  {
+    "name": "VC6c-the-shafts-read-the-cloud-somewhere-other-than-the-player",
+    "file": "src/render/airPass.js",
+    "old": "  float through = cloudShadowAt(uEye);   // VC6c: how much sun reaches the player at all",
+    "new": "  float through = cloudShadowAt(vec3(0.0));   // VC6c: how much sun reaches the player at all",
+    "tests": [
+      "test/vc6_clouds.test.js"
+    ]
+  },
+  {
+    "name": "VC6c-the-renderer-keeps-the-deck-from-the-air-pass",
+    "file": "src/render/renderer.js",
+    "old": "        cloudShadow: this._cloudShadow,   // VC6c: the sun behind a bank throws no shafts\n",
+    "new": "",
+    "tests": [
+      "test/vc6_clouds.test.js"
+    ]
+  },
+  {
+    "name": "VC6c-a-missing-deck-uploads-an-amount-that-shadows",
+    "file": "src/render/airPass.js",
+    "old": "    this._noDeck = new Float32Array([0, 0, 0, 0]);   // VC6c: no cloud field - amount 0, full sun",
+    "new": "    this._noDeck = new Float32Array([0, 0, 0, 1]);   // VC6c: no cloud field - amount 0, full sun",
+    "tests": [
+      "test/vc6_clouds.test.js"
+    ]
+  },
+  {
+    "name": "VC6d-the-band-gate-is-taken-on-the-clamped-height-so-it-never-fires",
+    "file": "src/render/volumetricClouds.js",
+    "old": "  float hr = (p.y - fBase) / max(fTop - fBase, 1.0);\n  if (hr <= 0.0 || hr >= 1.0) return 0.0;",
+    "new": "  float hr = clamp((p.y - fBase) / max(fTop - fBase, 1.0), 0.0, 1.0);\n  if (hr < 0.0 || hr > 1.0) return 0.0;",
+    "tests": [
+      "test/vc6_clouds.test.js"
+    ]
+  },
+  {
+    "name": "VC6d-the-march-never-strides-over-empty-air",
+    "file": "src/render/volumetricClouds.js",
+    "old": "    if (rho <= 0.0) { empty++; t += (empty > 4 ? coarse : ds); continue; }",
+    "new": "    if (rho <= 0.0) { empty++; t += ds; continue; }",
+    "tests": [
+      "test/vc6_clouds.test.js"
+    ]
+  },
+  {
+    "name": "VC6d-the-stride-is-never-backed-out-so-a-clouds-edge-is-resolved-coarsely",
+    "file": "src/render/volumetricClouds.js",
+    "old": "    if (empty > 4) { t -= coarse; empty = 0; continue; }",
+    "new": "    if (empty > 4) { empty = 0; }",
+    "tests": [
+      "test/vc6_clouds.test.js"
+    ]
+  },
+  {
+    "name": "VC6d-the-slack-is-spent-so-a-far-bank-is-lost",
+    "file": "src/render/volumetricClouds.js",
+    "old": "    if (i >= uSteps + ${MARCH_SLACK} || t > t1) break;",
+    "new": "    if (i >= uSteps || t > t1) break;",
+    "tests": [
+      "test/vc6_clouds.test.js"
+    ]
+  },
+  {
+    "name": "VC6d-the-slack-outgrows-the-loops-own-cap",
+    "file": "src/render/volumetricClouds.js",
+    "old": "export const MARCH_SLACK = 12;",
+    "new": "export const MARCH_SLACK = 40;",
+    "tests": [
+      "test/vc6_clouds.test.js"
+    ]
+  },
+  {
+    "name": "VC6d-the-light-march-walks-a-lid-it-cannot-see-through",
+    "file": "src/render/volumetricClouds.js",
+    "old": "    if (sum * EXT > 6.0) break;   // VC6d:",
+    "new": "    if (sum * EXT > 6000.0) break;   // VC6d:",
+    "tests": [
+      "test/vc6_clouds.test.js"
+    ]
+  },
+  {
+    "name": "VC6d-the-frames-first-span-is-never-opened",
+    "file": "src/render/renderer.js",
+    "old": "{ this._perf.begin(); this._perf.mark('shadow'); this.stats.draws = 0; }",
+    "new": "{ this._perf.begin(); this.stats.draws = 0; }",
+    "tests": [
+      "test/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "VC6d-the-sky-keeps-the-clock-instead-of-handing-it-back",
+    "file": "src/scenes/shared.js",
+    "old": "      meter?.mark('world');\n    },",
+    "new": "    },",
+    "tests": [
+      "test/vc6_clouds.test.js"
+    ]
+  },
+  {
+    "name": "VC6d-the-frames-own-clock-runs-under-the-zones-too",
+    "file": "src/render/perfMeter.js",
+    "old": "    if (!this.ext || this.active || this.zones) return;",
+    "new": "    if (!this.ext || this.active) return;",
+    "tests": [
+      "test/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "VC6d-a-null-unregisters-the-live-meter",
+    "file": "src/render/perfMeter.js",
+    "old": "export function setMeter(gl, meter) { if (meter) METERS.set(gl, meter); return meter; }",
+    "new": "export function setMeter(gl, meter) { METERS.set(gl, meter); return meter; }",
+    "tests": [
+      "test/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "VC6d-a-zone-marked-twice-in-a-frame-reads-as-half-its-weight",
+    "file": "src/render/perfMeter.js",
+    "old": "        means.set(name, list.length ? list.reduce((a, b) => a + b, 0) / PERF_EVERY : null);",
+    "new": "        means.set(name, list.length ? list.reduce((a, b) => a + b, 0) / list.length : null);",
+    "tests": [
+      "test/el8_contact.test.js"
+    ]
+  }
+]
