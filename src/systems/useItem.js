@@ -49,6 +49,8 @@ export const USE_PENDING = Object.freeze({
   questItem: 'Nothing happens.',
   enchanted: 'Nothing happens.',
   spellbook: 'You cannot open your spellbook here.',
+  pitchCamp: 'There is nowhere to set that up here.',   // SURV3: a host with no ground for a camp
+  placeFire: 'There is nowhere to set that up here.',
 });
 
 /** The template indices the predicates name (ItemEnums.cs). */

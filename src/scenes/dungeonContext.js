@@ -166,7 +166,9 @@ import { ActionSystem } from '../world/actionSystem.js';
 import { collectDungeonEnemies } from '../characters/dungeonEnemies.js';
 import { ENEMY_BASICS, enemyDisplayName } from '../characters/enemyBasics.js';
 import { createHitEffects, bloodCentre } from './hitEffects.js';
-import { createDroppedTorches } from './droppedTorches.js';   // HT1: Handheld Torches' dropped lights in the dungeon   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
+import { createDroppedTorches } from './droppedTorches.js';
+import { createCamps } from './camps.js';   // SURV3: a fire on the dungeon floor (no tent below - the camp law says so)
+import { campWire, validCampRecord, mergeOwnerCamps } from '../systems/survival/camp.js';   // SURV3: the room's memory carries the camps as the wire says them   // HT1: Handheld Torches' dropped lights in the dungeon   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
 import { EnemySoundSource, acuteHearingMultiplier } from '../characters/enemySounds.js';   // AUDIT 24 (wave 41): EnemySounds.cs, one home
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage
 import { activeMemberships } from '../systems/guilds.js';   // F117
@@ -1413,6 +1415,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (sup) { hudText.add(sup.text); return null; }
     return createInventoryWindow({
       openBook: openBookHook,   // B1: the use-mode book arm
+      placeCamp: (item) => camps.placeItem(item, playerEntity.items ?? []),   // SURV3: a fire on the floor
       say: (l) => hudText.add(l),   // FX1 (F128): the "Equipping %s" cue on close
       items: () => (playerEntity.items ??= []),
       wagonItems: () => (playerEntity.wagonItems ??= []),   // W-slice
@@ -1471,7 +1474,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:7030 / exterior.js:3177), set
+  // host's own townTalk sink (world.js:7080 / exterior.js:3194), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -2635,6 +2638,28 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       forward: [Math.sin(_fpYaw) * Math.cos(_fpPitch), Math.sin(_fpPitch), Math.cos(_fpYaw) * Math.cos(_fpPitch)], right: [Math.cos(_fpYaw), 0, -Math.sin(_fpYaw)], up: [0, 1, 0] } : null),
     inside: () => true, waterLevel: () => (_fpFeet ? blockWaterLevelAt(_fpFeet[0], _fpFeet[2]) : null), say: (l) => hudText.add(l),   // PlayerEnterExit.blockWaterLevel: the player's block
   });
+  // SURV3: THE CAMPS on the dungeon floor - a fire off a Campfire Kit (the camp law refuses a tent below). Online a
+  // dungeon is a WORLD ROOM: a placed fire goes out as an act (`c` beside the doors and the loot) and the room's
+  // memory carries every camp standing, so a fire one player lit is lit for the next - a door's own law. No owner
+  // sweep here: in a world room a camp is the room's, as an opened chest is.
+  const camps = createCamps({
+    renderer, getTexture, uploadRecordFrame, meshes: { getGpuMesh, cpuModels }, entity: playerEntity,
+    camera: () => (_fpFeet ? { feet: _fpFeet, yaw: _fpYaw } : null), collider: () => collider,
+    place: () => ({ insideBuilding: false, insideDungeon: true, inTown: false, enemiesNearby: areEnemiesNearby(foes, { resting: true }), inWater: !!(_fpFeet && Number.isFinite(blockWaterLevelAt(_fpFeet[0], _fpFeet[2])) && blockWaterLevelAt(_fpFeet[0], _fpFeet[2]) !== 10000 && _fpFeet[1] < -blockWaterLevelAt(_fpFeet[0], _fpFeet[2]) * GLOBAL_SCALE) }),
+    say: (l) => hudText.add(l), showOverlay: (w) => pushDungeonWindow(w), openRest: () => { activeOverlay = null; api.toggleRest?.(); },   // the picker leaves the slot first
+    advanceMinutes: (n) => _restAdvance(n),
+    selfId: () => opts.selfId?.() ?? null, onChanged: () => { const c = camps.wireRecords(); opts.onActions?.({ k: _locationKey, c: c.length ? c : [] }); },   // an empty list says "none stand" - the room drops mine
+  });
+  /** SURV3: the room's memory of its camps - every camp standing, each with its owner (`o`). */
+  const campMemory = () => camps.camps.map((c) => ({ ...campWire(c.rec), o: c.owner ?? (opts.selfId?.() ?? 'host') }));
+  function applyCampMemory(list) {
+    if (!Array.isArray(list)) return 0;
+    const byOwner = new Map();
+    for (const raw of list) { if (raw && typeof raw === 'object' && typeof raw.o === 'string' && validCampRecord(raw)) { if (!byOwner.has(raw.o)) byOwner.set(raw.o, []); byOwner.get(raw.o).push(raw); } }
+    let n = 0;
+    for (const [owner, recs] of byOwner) if (camps.applyOwner(owner, recs)) n += recs.length;
+    return n;
+  }
   const weaponRig = createWeaponRig({
     renderer, canvas: () => _weaponCanvas, fetchBytes, palette, audio, entity: playerEntity,
     collider: () => collider, missEffect: (k, p, o) => hitEffects.showMissEffect(k, p, o),   // WW1: the weapon widget's recoil doors
@@ -2927,8 +2952,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:9661,
-              // exterior.js:4590 and worldModes.js:6140 already ran;
+              // playerArrowHitFoe is the one copy world.js:9729,
+              // exterior.js:4614 and worldModes.js:6140 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -3404,6 +3429,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   function applyActions(id, data) {
     if (!data || typeof data !== 'object' || data.k !== _locationKey) return false;
     // WORLD3 the doors, WORLD4 the loot - one frame, either half or both
+    if (Array.isArray(data.c)) camps.applyOwner(id, data.c);   // SURV3: their camps, replacing theirs alone (their word is the whole of theirs)
     const n = (Array.isArray(data.a) ? actions.applyRemote(data.a) : 0) + (Array.isArray(data.l) ? applyLoot(data.l) : 0);
     return n > 0;
   }
@@ -3670,6 +3696,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // what LootContainerData_v1 stores, and a cycled drop icon is
       // lost without it.
       droppedTorches: droppedTorches.snapshot(),   // HT1: HandheldTorchesSaveData
+      camps: camps.snapshot(),   // SURV3: my fires, the same law
       droppedLoot: droppedLoot._piles.map((p) => ({
         pos: [...p.pos], archive: p.archive, record: p.record, items: p.items.map((it) => ({ ...it })),
       })),
@@ -3835,6 +3862,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // clearing restore would delete this player's floor stash and mint the host's under their feet
     if (truncate) droppedLoot.restorePiles(w.droppedLoot);   // AUDIT 23: absent list clears, per rebuild-from-save
     if (truncate) droppedTorches.restore(w.droppedTorches);   // HT1: the same law
+    if (truncate) camps.restore(w.camps);   // SURV3
     // P10 + AUDIT 23 (save-load-11): state, lock and BOTH tweens
     // restore, then each object settles its matrix and collider bucket
     // (an open door no longer restores solid-and-closed, and a door
@@ -4369,6 +4397,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // (a finished splash frees its batch inside tick).
     hitEffects.tick(dt);
     droppedTorches.tick(dt);   // HT1: the burn, the flight, the flames
+    camps.tick(dt);   // SURV3: the fires burn down
     // PX21c: THE HOVER PLAQUE, from the frame function both dungeon
     // hosts already call - the splash clock's reasoning, one slice on.
     // It runs the SAME pick the take runs, at 10Hz rather than every
@@ -5135,6 +5164,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     flatAnims,   // FA1: the host ticks the flats it draws
     hitEffects,  // AUDIT 24 (wave 39): and the blood splashes it draws
     droppedTorches, torchBatches: () => droppedTorches.batches(), torchLights: () => droppedTorches.lights(),   // HT1: the dropped torches, for the hosts' draw pass and light channel
+    camps, campBatches: () => camps.batches(), campLights: () => camps.lights(),   // SURV3: the campfires, on the same two passes; the pool itself for the hosts' env (byFire) and the probes
     lights,
     /** X11: the Light effect's candle. The engine owns the candle (it
      *  is the player's, and every casting host builds one engine); the
@@ -5674,6 +5704,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // AUDIT WORLD34 C2: the memory's action records are the SHARED half, as an act's are (AUDIT WORLD3 B1) - the
       // save record carried the picker's per-player latch, so one host's failed pick silenced every joiner's attempt
       w.actions = (w.actions ?? []).map(sharedRecord);
+      w.camps = campMemory();   // SURV3: every camp standing, with its owner - the save's own rows never ride (they are this player's frame)
       return { locationKey: _locationKey, stamp: _sharedStamp, world: w };
     },
     /** WORLD1: the room's memory applied - the layout's foes patched in place, each its own species (B4), and every
@@ -5705,6 +5736,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // was the odd one out. A failed restore leaves the latch DOWN, and the host's next publish retries it.
       applyWorld({ ...shared.world, piles: undefined, actions: acts, foes: sfoes }, { truncate: false, wire: true });
       applyLoot(shared.world.loot);   // WORLD4: the containers the room has opened, through the live door
+      applyCampMemory(shared.world.camps);   // SURV3: the room's fires, through validCampRecord; mine are refused by applyOwner (the save carries them)
       _sharedApplied = true;
       return true;
     },
@@ -6178,6 +6210,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       });
       targets.push(...droppedLoot.lootTargets());   // U26: the player's own drops
       targets.push(...droppedTorches.targets());   // HT1: the dropped torches, at the mod's 3.2
+      targets.push(...camps.targets());   // SURV3: the fires, at the same 3.2
       return targets;
     },
     /** PX21c: what a loot key HOLDS, without opening it - the same
@@ -6202,6 +6235,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const [kind, iStr] = key.split(':');
       const i = Number(iStr);
       if (kind === 'droppedTorch') return droppedTorches.activate(key, mode) ? 1 : 0;   // HT1: PickUpLightSource
+      if (kind === 'camp') return camps.activate(key, mode) ? 1 : 0;   // SURV3: the fire's menu, or its name
       let source = null;
       let onEmptied = null;
       let lootHooks = null;   // G5: DaggerfallLoot's identity, per kind
@@ -6316,6 +6350,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // The rig's own component goes with it: it holds the burning
       // loop of the torch in the player's HAND and PlayerTorch's
       // position override (AUDIT 66 F8).
+      camps.destroyAll();   // SURV3: a fire's batch is this context's too
       droppedTorches.destroyAll();
       weaponRig.dispose?.();
       // HARD1 (the generative lifetime gate's first catch): the blood

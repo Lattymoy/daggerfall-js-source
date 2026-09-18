@@ -451,7 +451,7 @@ export function localPrimaryAct(item, entity = null) {
  * why `pending` exists and why the classic window's own USE_PENDING
  * strings are reused here rather than reworded.
  */
-export function useResultAction(r, { openBook = null, openSpellbook = null } = {}) {
+export function useResultAction(r, { openBook = null, openSpellbook = null, placeCamp = null } = {}) {
   if (!r) return { kind: 'nothing' };
   // AUDIT 26: DaggerfallUI.PopToHUD() + return (:1687-1688). A watched
   // quest item that is neither parchment nor clothing closes the whole
@@ -469,6 +469,12 @@ export function useResultAction(r, { openBook = null, openSpellbook = null } = {
     return openSpellbook
       ? { kind: 'openSpellbook', closeFirst: true }
       : { kind: 'message', text: USE_PENDING.spellbook };
+  }
+  // SURV3: a placeable - close, then hand the item to the host's ground (the spellbook arm's shape)
+  if (r.kind === 'pitchCamp' || r.kind === 'placeFire') {
+    return placeCamp
+      ? { kind: 'placeCamp', item: r.item, closeFirst: true }
+      : { kind: 'message', text: USE_PENDING[r.kind] };
   }
   // The classic window's own ladder, in its own order: an explicit
   // text, then a TEXT.RSC id, then the pending stand-in. AUDIT 22 F9:
@@ -1088,7 +1094,7 @@ function use(item, collection = deps.items?.() ?? []) {
     // reach. The same seam the transfer ladder's quest arm reads.
     getQuest: deps.getQuest ?? null,
   });
-  const act = useResultAction(r, { openBook: deps.openBook, openSpellbook: deps.openSpellbook });
+  const act = useResultAction(r, { openBook: deps.openBook, openSpellbook: deps.openSpellbook, placeCamp: deps.placeCamp });
   // AUDIT 26's PopToHUD: the window stack goes, nothing is said.
   if (act.kind === 'close') { onExit(); return; }
   // THE HOOKS ARE READ BEFORE ANYTHING CLOSES. `onExit` unmounts, and
@@ -1107,6 +1113,12 @@ function use(item, collection = deps.items?.() ?? []) {
     const open = deps.openSpellbook;
     onExit();   // CLOSE, THEN HAND OVER - no callback, so free the slot
     open();
+    return;
+  }
+  if (act.kind === 'placeCamp') {
+    const place = deps.placeCamp;
+    onExit();   // SURV3: the same law - the host's HUD line says where the camp stands, or why not
+    place(act.item);
     return;
   }
   if (act.textId && deps.rows) {
@@ -1172,7 +1184,7 @@ function stow(item) {
   // 26 F156: planStore answers `{ ok: true, map: true }` for a
   // MiscItems.Map - the reveal runs, the paper is consumed, nothing
   // lands in the destination. The classic window routes it
-  // (nativeInventory.js:777) and this one did not, so dragging a
+  // (nativeInventory.js:787) and this one did not, so dragging a
   // treasure map out of the pack dropped the paper on the floor and
   // revealed nothing.
   if (plan.map) { use(item, deps.items?.() ?? []); return; }
@@ -1187,7 +1199,7 @@ function stow(item) {
   // again on the other side, and a tip that stays open after every
   // press is the quirk being fixed.
   // AUDIT INV2 B-F1: THE ENTITY AND THE PROVENANCE RIDE, as they do at
-  // the classic window's own call (nativeInventory.js:779). Without them
+  // the classic window's own call (nativeInventory.js:789). Without them
   // `clearLightSourceOnLeave` - AUDIT 26 F157's first statement inside
   // applyTransfer - is a no-op, so a LIT TORCH dropped on the ground
   // went on lighting the player from where it lay. INV2 made that a
@@ -1221,7 +1233,7 @@ function take(item) {
   if (plan.map) { use(item, remoteTarget(deps, sessionState())); return; }
   // MAC-O6 (report: "looting gold/items makes no sound"): DoTransferItem's
   // own cue (:1569 gold's clink, :1583 everything else), which the classic
-  // window plays (nativeInventory.js:845) and this one never did - the ONLY
+  // window plays (nativeInventory.js:855) and this one never did - the ONLY
   // difference between the two windows' calls to planTake/applyTransfer was
   // that this one dropped `plan.sound` on the floor. Played here, ahead of
   // the gold interception below, exactly as DFU's own PlayOneShot sits

@@ -73,7 +73,7 @@ test('SURV2: minting - condition as uses, a stack for rations only, a full skin 
   assert.equal(createSurvivalItem(TEMPLATE.Waterskin, { water: 0 }).name, 'Waterskin', 'named by its template at the mint - the shelf sells it empty under its own name');
   assert.equal(itemWeight(sack), 3.0, 'three sacks of rations');
   const kit = createSurvivalItem(TEMPLATE.Campfire, { condition: 2 });
-  assert.equal(kit.condition, 2);
+  assert.equal(kit.currentCondition, 2);
   assert.equal(kit.maxCondition, CAMPFIRE_USES);
   const bread = createSurvivalItem(TEMPLATE.Bread, { foodStage: 2 });
   assert.equal(bread.name, 'Mouldy Bread');
@@ -196,8 +196,8 @@ test('SURV2: the general store shelves provisions after the horse and cart, and 
   assert.deepEqual(kit.map((i) => i.templateIndex), [TEMPLATE.Rations, TEMPLATE.Waterskin, TEMPLATE.CampingEquipment, TEMPLATE.Campfire]);
   assert.equal(kit[0].stackCount, 2);
   assert.equal(waterIn(kit[1]), 2.0);
-  assert.equal(kit[2].condition, CAMPING_USES / 2, 'worn gear');
-  assert.equal(kit[3].condition, 2);
+  assert.equal(kit[2].currentCondition, CAMPING_USES / 2, 'worn gear');
+  assert.equal(kit[3].currentCondition, 2);
   const e = { items: [] };
   seedStartingEquipment(e);
   assert.ok(e.items.some((i) => i.templateIndex === 113), 'the dagger');

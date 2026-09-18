@@ -963,7 +963,7 @@ export function createWorldModes(host) {
    *  This host owned two pools and ran NO fan-out at all - no
    *  runMagicRoundsFor, so no tickActiveEffects and no updatePoisons
    *  (worldTick.js:232-233), and no killIfAnyLiveStatZero. Both pools
-   *  READ the effect list every frame (exteriorFoes.js:845-846 and
+   *  READ the effect list every frame (exteriorFoes.js:846-846 and
    *  cityGuards.js:790-791 each take `entityIsParalyzed` +
    *  `applyEnemyMotorEffectFlags`), and nothing ever ended one: a
    *  Continuous Damage bundle on a foe in a shop never took a round,
@@ -1291,10 +1291,10 @@ export function createWorldModes(host) {
    *  billboard is CENTRE-anchored, so the base ends up ON the marker
    *  inside a building and half a height BELOW it inside a dungeon.
    *  This port's billboard shader is BOTTOM-anchored (position = base,
-   *  the C11 law dungeonContext.js:1603 states), so the same visual
+   *  the C11 law dungeonContext.js:1606 states), so the same visual
    *  result needs the shift on the DUNGEON side - which is exactly the
    *  shift the dungeon's own RDB flats already take
-   *  (dungeonContext.js:1508, `y - size.h / 2`), and which a building's
+   *  (dungeonContext.js:1511, `y - size.h / 2`), and which a building's
    *  flats correctly do not (interiorContext.js passes its centers
    *  straight through).
    *
@@ -5161,7 +5161,7 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:5530), so the OUTER host's one rides in.
+          // (dungeonContext.js:5560), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:629 -> the
@@ -5402,8 +5402,8 @@ export function createWorldModes(host) {
     if (_pick.distance > _pick.reach) { setMidScreenText(TOO_FAR_AWAY_TEXT); return true; }
     // U26: droppedLoot: is the player's own pile - the same three-way
     // arm the standalone dungeon scene carries, kept in step here.
-    if (key.startsWith('loot:') || key.startsWith('corpse:') || key.startsWith('droppedLoot:') || key.startsWith('droppedTorch:')) {
-      dungeonCtx.takeLoot(key, getInteractionMode());   // opens the inventory with the pile as the remote target; HT1: a dropped torch takes the mode
+    if (key.startsWith('loot:') || key.startsWith('corpse:') || key.startsWith('droppedLoot:') || key.startsWith('droppedTorch:') || key.startsWith('camp:')) {
+      dungeonCtx.takeLoot(key, getInteractionMode());   // SURV3: a camp's fire takes the mode too   // opens the inventory with the pile as the remote target; HT1: a dropped torch takes the mode
       return true;
     }
     // ...and the NPC arm ENDS the activation, as the other two rays' do.
@@ -5987,7 +5987,7 @@ export function createWorldModes(host) {
         // 16-slot shader cap picks from what survives (dungeonLights.js
         // carries the composition and why that order).
         withPlayerLights(nearestLights(dungeonCtx.lights, cam.pos, renderer.maxPointLights, dungeonCtx.flicker.ranges, null, DUNGEON_LIGHT_BLOCK_RANGE),   // EL1: the installed set's cap
-          magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw), ...dungeonCtx.torchLights()),   // X11 the Light effect's candle; T1 the torch; HT1 the dropped lights
+          magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw), ...dungeonCtx.campLights(), ...dungeonCtx.torchLights()),   // X11 the Light effect's candle; T1 the torch; HT1 the dropped lights; SURV3 the campfires
         lanternColor(!!renderer.lightingLane, new Float32Array(DUNGEON_LIGHT_COLOR)));   // EL1: the lane's flame at the dungeon's intensity
       renderer.setClearColor(INTERIOR_CLEAR);   // REVIEW 2026-09-05 (PR #55 review): the world-hosted dungeon/interior frame is THIS one - the host's own setClearColor sits after its `modes.frame` return
       renderer.setWorldViewport(largeHudViewportRect(canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
@@ -5998,7 +5998,7 @@ export function createWorldModes(host) {
       for (const d of dungeonCtx.drawList) if (!d._batched) renderer.drawMesh(d.mesh, d.matrix, dungeonCtx.texRemap);
       for (const d of dungeonCtx.dynamicDraws) renderer.drawMesh(d.gpu, d.object.matrix, dungeonCtx.texRemap);
       dungeonCtx.flatAnims.tick(dt);   // FA1
-      renderer.drawBillboards([...dungeonCtx.billboardBatches, ...dungeonCtx.torchBatches(), ...(host.extraBillboards?.() ?? [])], camRight, UP_Y);   // ONLINE1: the peers on the dungeon's own pass; HT1 the dropped torches
+      renderer.drawBillboards([...dungeonCtx.billboardBatches, ...dungeonCtx.campBatches(), ...dungeonCtx.torchBatches(), ...(host.extraBillboards?.() ?? [])], camRight, UP_Y);   // ONLINE1: the peers on the dungeon's own pass; HT1 the dropped torches; SURV3 the campfires
       // AUDIT 17e F1: this MUST return true like every other exit of
       // the dungeon branch. Returning undefined let the host fall
       // through and run its whole exterior frame on top - the town
@@ -6115,7 +6115,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:6797's own wave-46 note); the interior
+          // a blow (world.js:6847's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage(dmg);   // BA1: RemoveHealth carries the amount
@@ -6921,7 +6921,7 @@ export function createWorldModes(host) {
   addEventListener('mousedown', (e) => {
     // AUDIT-MACK F2: THIS HOST DOES NOT FEED THE HELD SET, and MAC-K1
     // briefly made it. `keys` is not this host's - it arrives on the
-    // host bag (`exterior.js:3266`, `world.js`'s twin), and the OUTER
+    // host bag (`exterior.js:3283`, `world.js`'s twin), and the OUTER
     // host's own mousedown writes `keys.add(mouseCode(e.button))`
     // UNGATED, before any mode test, on a listener that is never
     // removed. So the three button codes were already in the Set while
@@ -8336,9 +8336,9 @@ export function createWorldModes(host) {
      *  .cs:175-176 writes `weaponDrawn`/`usingLeftHand` off it,
      *  :420-421 restores them onto it. The port has FOUR PlayerWeapons
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
-     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:2843-2865), and IS1 routed the inside-a-building save to
+     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:2860-2882), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
-     *  unconditionally (world.js:4576). So an F9 pressed in a shop
+     *  unconditionally (world.js:4624). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them
      *  back into the street's rig; the rig actually in the player's
      *  hands was in no envelope at all.
@@ -8365,7 +8365,7 @@ export function createWorldModes(host) {
      *  presenter for the whole visit) or the interior's? world.js's gate read townTalk's slot alone. */
     deathUp() { return mode === 'dungeon' ? !!dungeonCtx?.deathUp?.() : interiorOverlay instanceof DeathScreen; },
     /** The restore half - and NOT gated on the mode, deliberately.
-     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:4658)
+     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:4707)
      *  and only re-enters the building at :4217, so the mode at apply
      *  time is whatever the LOAD landed in, not whatever the SAVE was
      *  taken in: an outdoor save loaded while the player was indoors
@@ -8375,8 +8375,8 @@ export function createWorldModes(host) {
      *
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
-     *  HARD2c: this used to spell them out, and named `world.js:4770`
-     *  and `dungeonContext.js:5602` for its two sibling copies - lines
+     *  HARD2c: this used to spell them out, and named `world.js:4820`
+     *  and `dungeonContext.js:5632` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */
     applyWeaponPose(pose) {

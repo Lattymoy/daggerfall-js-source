@@ -129,7 +129,10 @@ import { seasonValue, SEASONS, MINUTES_PER_DAY, dateFromClassicMinutes, dateTime
 import { regionPriceAdjustment, TRANSPORT_HORSE, TRANSPORT_SMALL_CART } from '../systems/shopStock.js';   // Q4-v: CreateGold's regional term (the shops' own producer); U41: Items.Contains(Transportation, ...)
 import { getNameBankOfRegion, getRandomFullName } from '../characters/nameHelper.js';   // AUDIT 23 (characters-5); AUDIT 58: MacroHelper.GetRandomFullName, one home
 import { createHitEffects } from './hitEffects.js';
-import { createDroppedTorches } from './droppedTorches.js';   // HT1: Handheld Torches' dropped lights, thrown torches and burning foes   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
+import { createDroppedTorches } from './droppedTorches.js';
+import { createCamps } from './camps.js';   // SURV3: the camps this host stands - the tent and the fire
+import { drinkAtSource, isWaterSourceFlat, isDrySourceFlat, WATER_SOURCE_MODELS, DRY_SOURCE_TEXT } from '../systems/survival/items.js';   // SURV3: the mod's water sources under the one ray
+import { survivalOn } from '../systems/survival/switch.js';   // HT1: Handheld Torches' dropped lights, thrown torches and burning foes   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
 import { createCityGuards } from './cityGuards.js';   // G1
 import { createArrestFlow } from './arrestFlow.js';
 import { clearCrimeOnLocationExit, addGold, goldAmount, deductGold, totalGoldAmount, deductGoldPieces } from '../systems/court.js';   // AUDIT 17e F6   // G2   // F-slice: travel gold; U41: GetGoldAmount + the pieces half of DeductFastTravelGold
@@ -138,7 +141,7 @@ import { mwViewFrame, mwViewWheel, mwViewDrawBody, mwViewFootstep, mwViewLoadPos
 import { mwCamera, PITCH_LIMIT } from '../player/mwCamera.js';   // MW-D30: persistence + the reference pitch clamp
 import { pickActivatableHit, pickQuestFoe, pickFoe } from '../player/activate.js';   // G3: corpse loot; QG1: the foe-click door; TI1: the lock-on pick
 import { raceActivation } from '../player/activationRace.js';   // HARD2: one home for "the nearest thing under the one ray takes the click"
-import { RAY_DISTANCE, TOO_FAR_AWAY_TEXT } from '../player/activate.js';   // AUDIT 63 F33: ActivateMobileEnemy (PlayerActivate.cs:800-841); AUDIT 65 MC-2: the loot handlers' refusal
+import { RAY_DISTANCE, DEFAULT_ACTIVATION_DISTANCE, TOO_FAR_AWAY_TEXT } from '../player/activate.js';   // AUDIT 63 F33: ActivateMobileEnemy (PlayerActivate.cs:800-841); AUDIT 65 MC-2: the loot handlers' refusal
 import { setMidScreenText } from '../ui/midScreenText.js';   // AUDIT 64 F34: DaggerfallHUD's centred label, where PlayerActivate's refusals go
 import { tryMobileEnemyActivate } from '../player/mobileEnemyActivate.js';
 import { FOUND_NOTHING_VALUABLE_TEXT_ID } from '../systems/talk.js';   // GetRandomText(8999)
@@ -946,6 +949,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const groups = new Map();
     const pixelLights = []; // archive-210 lanterns, pixel-local (R3)
     const pixelAnimals = []; // A4: archive-201 town animals, pixel-local {pos, sound}
+    const pixelSprings = []; // SURV3: the mod's water sources - fountains and wells (212: 0, 2, 8, 9; 85: 0), the dry fountain (212: 3), the troughs (41220-41222) - pixel-local {pos, dry}
     const pixelNpcFlats = []; // AUDIT 26 (F019): the flats RMBLayout stands as StaticNPCs, pixel-local
     const pixelBoards = [];   // the block's BULLETIN BOARDS (model 41739), pixel-local boxes
     const light210 = await getTexture(LIGHTS_ARCHIVE);
@@ -1034,6 +1038,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           if (!gpu) continue;
           await remapSubMeshes(gpu.subMeshes, texRemap, climateArchive, pipeline);
           const local = multiply(originMatrix, placed.matrix);
+          if (WATER_SOURCE_MODELS.includes(placed.modelIdNum)) pixelSprings.push({ pos: [local[12], local[13], local[14]], dry: false });   // SURV3: a trough is a water source
           const cpu = cpuModels.get(placed.modelIdNum);
           const box = transformedAabb(archAabb(placed.modelIdNum, cpu.positions), local);
           unionBox(box);
@@ -1149,6 +1154,10 @@ export async function bootWorld(canvas, renderer, params, status) {
               pos: [locLocal[0] + b.originX + flat.x, locLocal[1] + flat.y, locLocal[2] + b.originZ + flat.z],
               sound: ANIMAL_SOUND_BY_RECORD[flat.record],
             });
+          }
+          // SURV3: a fountain or a well is a water source (the mod's RegisterCustomActivation list); the dry one only says so
+          if (isWaterSourceFlat(flat.archive, flat.record) || isDrySourceFlat(flat.archive, flat.record)) {
+            pixelSprings.push({ pos: [locLocal[0] + b.originX + flat.x, locLocal[1] + flat.y, locLocal[2] + b.originZ + flat.z], dry: isDrySourceFlat(flat.archive, flat.record) });
           }
           // E3: an exterior StaticNPC's BILLBOARD is stood by
           // standPixelNpcs, not batched here - RMBLayout hands the same
@@ -1309,7 +1318,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     built.set(key, {
       staticBatch,   // PERF4: the merged static models, drawn with the pixel matrix; null when the pixel has none
       _seasonsGen: seasonsGen,   // SIB1: the install this pixel's flats were built under (AUDIT 61: captured at the lookups)
-      px, py, terrain, water, tilemapTex, tilemap, groundArchive, models, windmills, batches, flatAnims, texRemap, lights: pixelLights, animals: pixelAnimals, skyBase: climate.skyBase, samples, natureCount: nature.length,
+      px, py, terrain, water, tilemapTex, tilemap, groundArchive, models, windmills, batches, flatAnims, texRemap, lights: pixelLights, animals: pixelAnimals, springs: pixelSprings, skyBase: climate.skyBase, samples, natureCount: nature.length,
       tilemapBytes, season,   // GR1: the placer reads the tiles and the season
       withRoads,   // ROADS 25: painted with the network present, or before it arrived (see below)
       _box: bounds,   // EV3: pixel-local presentation bounds (terrain + models + flats)
@@ -1498,6 +1507,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // only the F9 envelope brings one back.
     if (collectLoose) droppedLoot.collectPixel(key);
     if (collectLoose) droppedTorches.collectPixel(key);   // HT1: a dropped torch is a loose object too
+    if (collectLoose) camps.collectPixel(key);   // SURV3: and a camp - the scene cache brings it back
     // ...and so does an exterior CORPSE, which is the same kind of
     // loose object (GameObjectHelper.cs:836-839 tracks the marker) and
     // was the half of :1040-1052 the port never wired: nothing removed
@@ -2307,6 +2317,41 @@ export async function bootWorld(canvas, renderer, params, status) {
     inside: () => false, waterLevel: () => null, pixelKeyAt: () => `${playerTravelPixel().x},${playerTravelPixel().y}`, say: (l) => townTalk.say(l),
   });
   let _torchesMode = 'exterior';
+  // SURV3: THE CAMPS this host stands (scenes/camps.js) - a tent or a fire
+  // off the pack's Camping Equipment or Campfire Kit, on the ground the
+  // probe finds ahead of the feet. Unlike the torches they SURVIVE a
+  // building visit (the tent stands outside while you shop); the pixel
+  // sweep takes them with the pixel and the scene cache brings them back.
+  // Online, in a cell, my camps ride my foes frame and a peer's arrive
+  // with theirs (applyOwner in onFoes below); an owner gone quiet is
+  // swept as their puppets are.
+  const camps = createCamps({
+    renderer, getTexture, uploadRecordFrame, meshes: { getGpuMesh, cpuModels }, entity: playerEntity,
+    camera: () => ({ feet: walkMode && playerSpawned ? player.pos : cam.pos, yaw: cam.yaw }), collider: () => collider,
+    place: () => ({ insideBuilding: _mode() === 'interior', insideDungeon: _mode() === 'dungeon', inTown: _isPlayerInTownStrict(), enemiesNearby: areEnemiesNearby(exteriorFoePool(), { resting: true }), inWater: !!player.isPlayerSwimming }),
+    pixelKeyAt: () => `${playerTravelPixel().x},${playerTravelPixel().y}`, say: (l) => townTalk.say(l), showOverlay: (w) => townTalk.showOverlay(w),
+    openRest: () => { townTalk.closeOverlay(); toggleRest(); },   // the menu's picker leaves the slot first (toggleRest refuses under a window); SURV4 takes the camp's own rest law from here
+    advanceMinutes: (n) => playerTicker.advance(n),   // offline the cook's minutes pass; online the clock is nobody's (WORLD5) and advance() stands
+    selfId: () => online?.id ?? null, onChanged: () => { _foesFullAt = -Infinity; },   // a change asks for a full frame, which carries the camps
+  });
+  /** SURV3: the water sources under the ray - every built pixel's, in scene coordinates, and the list the pick indexes. */
+  let _springs = [];
+  const springTargets = () => {
+    _springs = [];
+    if (!survivalOn()) return [];
+    for (const p of built.values()) {
+      if (!p.springs?.length) continue;
+      const t = state.pixelTranslation(p.px, p.py);
+      for (const s of p.springs) _springs.push({ pos: [s.pos[0] + t[0], s.pos[1] + t[1], s.pos[2] + t[2]], dry: s.dry });
+    }
+    return _springs.map((s, i) => ({ key: `water:${i}`, aabb: { min: [s.pos[0] - 0.8, s.pos[1], s.pos[2] - 0.8], max: [s.pos[0] + 0.8, s.pos[1] + 1.6, s.pos[2] + 0.8] }, distance: RAY_DISTANCE, reach: DEFAULT_ACTIVATION_DISTANCE }));
+  };
+  const drinkAtSpring = (key) => {
+    const s = _springs[Number(key.split(':')[1])];
+    if (!s) return false;
+    townTalk.say(s.dry ? DRY_SOURCE_TEXT : drinkAtSource(playerEntity, Math.floor(worldMinutes())).text);
+    return true;
+  };
   // ROAD-B: THE AREA, for GameManager.MakeEnemiesHostile.
   // DFU's ActiveGameObjectDatabase is ONE database for the scene, so
   // "all enemies in an area" is every live enemy this host can reach -
@@ -2806,7 +2851,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2184 mounts the same one, gated on
+  // and dungeonContext.js:2187 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
   // that context through modes.dungeonCtx - so worldModes.js:4627
@@ -3244,6 +3289,7 @@ export async function bootWorld(canvas, renderer, params, status) {
 
   const makeInventoryWindow = (extra = {}) => createInventoryWindow({
     openBook: openBookHook,   // B1: the use-mode book arm
+    placeCamp: (item) => camps.placeItem(item, playerEntity.items ?? []),   // SURV3: Camping Equipment and the Campfire Kit are placed on this host's ground
     say: (l) => townTalk.say(l),   // FX1 (F128): the "Equipping %s" cue on close
     items: () => (playerEntity.items ??= []),
     wagonItems: () => (playerEntity.wagonItems ??= []),   // W-slice: the cart's collection
@@ -3906,7 +3952,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     cacheScene(_sceneCache(), worldSceneName(pixel.x, pixel.y), {
       lootContainers: droppedLoot.snapshotWorld((pos) => state.worldCoords(pos))
         .map((sp) => ({ ...sp, containerType: LOOT_CONTAINER_TYPES.DroppedLoot, y: sp.y - state.compensation[1] })),
-      droppedTorches: droppedTorches.snapshot((pos) => { const wc = state.worldCoords(pos); return [wc.x, pos[1] - state.compensation[1], wc.z]; }),   // HT1: HandheldTorchesSaveData, in natives
+      droppedTorches: droppedTorches.snapshot((pos) => { const wc = state.worldCoords(pos); return [wc.x, pos[1] - state.compensation[1], wc.z]; }),
+        camps: camps.snapshot((pos) => { const wc = state.worldCoords(pos); return [wc.x, pos[1] - state.compensation[1], wc.z]; }),   // SURV3: my camps, in natives   // HT1: HandheldTorchesSaveData, in natives
     });
   }
   /** A scene never cached answers null and the arrival stands as the
@@ -3917,6 +3964,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     droppedLoot.restoreWorld(arrived.lootContainers,
       (nx, nz) => state.localFromWorld(nx, nz), state.compensation[1]);
     droppedTorches.restore(arrived.droppedTorches, (p) => { const [lx, lz] = state.localFromWorld(p[0], p[2]); return [lx, p[1] + state.compensation[1], lz]; });   // HT1
+    camps.restore(arrived.camps, (p) => { const [lx, lz] = state.localFromWorld(p[0], p[2]); return [lx, p[1] + state.compensation[1], lz]; });   // SURV3
     return true;
   }
   /** TR4: TransportManager's ship arm (:360-402). The decision is
@@ -4540,7 +4588,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:5510), so exterior mode and a
+    // composer, dungeonContext.js:5540), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -4583,7 +4631,8 @@ export async function bootWorld(canvas, renderer, params, status) {
         // NATIVES with the compensation-free height, the player
         // half's exact law.
         piles: droppedLoot.snapshotWorld((pos) => state.worldCoords(pos)).map((sp) => ({ ...sp, y: sp.y - state.compensation[1] })),
-        droppedTorches: droppedTorches.snapshot((pos) => { const wc = state.worldCoords(pos); return [wc.x, pos[1] - state.compensation[1], wc.z]; }),   // HT1: the mod's own save data rides the envelope
+        droppedTorches: droppedTorches.snapshot((pos) => { const wc = state.worldCoords(pos); return [wc.x, pos[1] - state.compensation[1], wc.z]; }),
+        camps: camps.snapshot((pos) => { const wc = state.worldCoords(pos); return [wc.x, pos[1] - state.compensation[1], wc.z]; }),   // SURV3: my camps, in natives   // HT1: the mod's own save data rides the envelope
         // AUDIT 26 F216/F217: LIVE ENEMIES ride the envelope - DFU's
         // SaveData_v1 carries enemyData wherever the player stands
         // (:865, restored :1006). Saved nowhere, a quickload during a
@@ -4707,6 +4756,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // saved ones at their native spots.
         droppedLoot.restoreWorld(w.piles, (nx, nz) => state.localFromWorld(nx, nz), state.compensation[1]);
         droppedTorches.restore(w.droppedTorches, (p) => { const [lx, lz] = state.localFromWorld(p[0], p[2]); return [lx, p[1] + state.compensation[1], lz]; });   // HT1
+        camps.restore(w.camps, (p) => { const [lx, lz] = state.localFromWorld(p[0], p[2]); return [lx, p[1] + state.compensation[1], lz]; });   // SURV3
         // F216/F217: the pools re-mint through their one spawn chain,
         // then overlay the saved truth (SerializableEnemy's own
         // rebuild-then-set shape). Async behind the art; the teleport
@@ -7178,6 +7228,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   // hosts, my layout foes are puppets that follow the stream and my blows on them go to the host as hits.
   let _foesSentAt = -Infinity, _foesFullAt = -Infinity, _foesInAt = -Infinity;
   let _foesRoom = null;   // WORLD6b: the room the puppets belong to
+  const campToWire = (p) => { const wc = state.worldCoords(p); return [wc.x, p[1] - state.compensation[1], wc.z]; };   // SURV3: the pose's own law for the world frame
+  const campToScene = (p) => { const l = state.localFromWorld(p[0], p[2]); return [l[0], p[1] + state.compensation[1], l[1]]; };
   const foesStream = (now) => {
     if (!online || online.status !== 'open') return false;
     // WORLD6b: in a CELL everyone streams their own foes; in a world room the host alone
@@ -7188,6 +7240,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const full = now - _foesFullAt >= FOES_FULL_MS;
     const frame = cell ? ((modes?.mode ?? 'exterior') === 'exterior' ? exteriorFoes.foesFrame(full) : null) : modes?.dungeonFoesFrame?.(full);
     if (!frame) return false;
+    if (cell && full) { const c = camps.wireRecords(campToWire); if (c.length) frame.c = c; }   // SURV3: my camps ride my full frame - a shared world object in the cell's own way
     if (!online.sendFoes(frame)) { _foesFullAt = -Infinity; return false; }   // AUDIT WORLD2 A9: a refused frame's deltas were already committed - the next frame carries every foe
     if (full) _foesFullAt = now;
     return true;
@@ -7220,6 +7273,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!_actLive()) { for (const k of [...((data?.a ?? []).map((r) => r.key)), ...((data?.l ?? []).map((r) => r.k))]) _actPend.add(k); return false; }   // AUDIT WORLD34 C3: kept for the socket's return
     // WORLD4: the frame carries the doors (`a`, keyed by the action object) and the room's loot (`l`, keyed by the
     // container) - either half or both, and the pending set holds whichever keys the wire refused
+    // SURV3: a CAMP frame stands alone (the dungeon says every camp it stands, in one word) - it goes now or not at
+    // all: the next change says them all again, and the room's memory carries them for a joiner, so the pending set
+    // that heals a door's delta has nothing to heal here
+    if (Array.isArray(data?.c) && !(data?.a?.length) && !(data?.l?.length)) return actFrameFits(data) ? online.sendAct(data) : false;
     const keys = [...((data?.a ?? []).map((r) => r.key)), ...((data?.l ?? []).map((r) => r.k))];
     if (!keys.length) return false;
     let out = _actPend.size ? (modes?.placeActionRecords?.([...new Set([..._actPend, ...keys])]) ?? data) : data;
@@ -7294,6 +7351,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       toWire: (feet) => { const wc = state.worldCoords(feet); return [wc.x, feet[1] - state.compensation[1], wc.z]; },
       toScene: (p) => { const l = state.localFromWorld(p[0], p[2]); return [l[0], p[1] + state.compensation[1], l[1]]; },
     });
+    exteriorFoes.setOnCamps((from, c, at) => camps.applyOwner(from, c, campToScene, at));   // SURV3: a peer's camps, off their foes frame past the pool's own room test, through validCampRecord
     online.onAct = (id, data) => { modes?.applyPlaceActions?.(id, data); };   // WORLD3: another's door, lever or platform; WORLD6a: in a building too
     // WORLD5: this save's time markers are set to the WORLD's time - a save a month behind catches up no loans and no
     // diseases on its first frame, one a year ahead reads no negative day - and the day's weather is rolled from the
@@ -7724,6 +7782,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     actFlush();        // AUDIT WORLD3 A3: an act the wire refused, re-read and re-sent
     hitFlush(now);     // AUDIT FOES FOE2: and a BLOW the wire refused - a joiner applies none locally, so a lost frame is a lost blow
     modes?.setDungeonAuthority?.(dungeonAuthority(now));   // AUDIT WORLD2 C2: the seat re-read every frame - a dead socket, a terminal close or a silent host hands the foes back
+    if (isCellRoom(online.room)) { const near = peersNear(); if (near) camps.sweepOwners(new Set(near.map((p) => p.id)), now, FOES_STALE_MS); }   // SURV3: a peer's camps go as their puppets do - the same liveness, the same answer-gate   // AUDIT WORLD6b-iii(b) C3/B5: no answer (the socket not open) is not "nobody" - it pruned every owner while the halos kept feeding frames, a spawn-and-discard loop per frame   // AUDIT WORLD6b-ii C2: ONE liveness for the owner - the peers the hunt reads (visible: a pose, in range, inside the timeout) are the peers whose puppets stand
     const drawable = online.drawable();
     peerBodies.sync(drawable, onlineToScene, dt, player.pos);   // the nearest first, the far ones asleep
     remotePlayers.sync(drawable, onlineToScene, { bodyHeight: (id) => peerBodies.heightOf(id) });
@@ -8853,6 +8912,8 @@ export async function bootWorld(canvas, renderer, params, status) {
           const _corpsePick = pickActivatableHit(cam.pos, useFwd, corpseTargets, collider), _pilePick = pickActivatableHit(cam.pos, useFwd, droppedLoot.lootTargets(), collider);   // AUDIT 65 MC-2: BOTH picks run now, because DFU fires ONE ray (:314) and the nearest hit is THE hit.
           const _torchPick = pickActivatableHit(cam.pos, useFwd, droppedTorches.targets(), collider);   // HT1: the mod's RegisterCustomActivation over its six records, the same one ray
           const _wagonPick = pickActivatableHit(cam.pos, useFwd, mwViewWagonTargets(RAY_DISTANCE), collider);   // EOTB-IL: Eye Of The Beholder's cart, RegisterCustomActivation(41239, 3.2), the same one ray
+          const _campPick = pickActivatableHit(cam.pos, useFwd, camps.targets(), collider);   // SURV3: a camp's fire or tent, the same one ray
+          const _springPick = pickActivatableHit(cam.pos, useFwd, springTargets(), collider);   // SURV3: a fountain, a well, a trough
           // HARD2: the race is ONE law now (player/activationRace.js) - the
           // body against the pile, the torch against both and the door,
           // and the two rivals MC-2 split. It was written out by hand in
@@ -8864,6 +8925,8 @@ export async function bootWorld(canvas, renderer, params, status) {
             pile: _pilePick,
             torch: _torchPick,
             wagon: _wagonPick,
+            camp: _campPick,   // SURV3
+            water: _springPick,   // SURV3
             doorDistance: modes.exteriorActivationDistance(cam.pos, useFwd),
             personDistances: _livePersons.map((p) => rayPersonDistance(cam.pos, useFwd, p.pos)),
           });
@@ -8904,7 +8967,10 @@ export async function bootWorld(canvas, renderer, params, status) {
             // did not read it.
             const _torchNearest = _race.torchWins;
             // EOTB-IL: the mod's cart under the same ray (RegisterCustomActivation(41239, CheckWagon, 3.2)) - Info names it, any other mode opens the pack with the wagon
-            if (_race.wagonWins) { if (_wagonPick.distance > _wagonPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT); else mwViewWagonActivate(getInteractionMode(), { say: (l) => townTalk.say(l), openInventoryWithWagon: () => townTalk.showOverlay(makeInventoryWindow(EOTB_WAGON_PACK)) }); }
+            // SURV3: a camp under the ray - Info and Talk name it, any other mode opens its menu; a water source fills the skins
+            if (_race.campWins) { if (_campPick.distance > _campPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT); else camps.activate(_campPick.key, getInteractionMode()); }
+            else if (_race.waterWins) { if (_springPick.distance > _springPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT); else drinkAtSpring(_springPick.key); }
+            else if (_race.wagonWins) { if (_wagonPick.distance > _wagonPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT); else mwViewWagonActivate(getInteractionMode(), { say: (l) => townTalk.say(l), openInventoryWithWagon: () => townTalk.showOverlay(makeInventoryWindow(EOTB_WAGON_PACK)) }); }
             else if (_torchNearest) { if (_torchPick.distance > _torchPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT); else droppedTorches.activate(_torchPick.key, getInteractionMode()); }   // the mod's own activation, ahead of DFU's ladder
             else {
             // AUDIT 65 MC-2: the corpse's own refusal
@@ -8978,6 +9044,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       labGrassField = null;   // AUDIT 49 F2 / GR5: the field is baked in world coordinates - a new world starts empty
       droppedLoot.offsetAll(r.offset);
       droppedTorches.offsetAll(r.offset);   // HT1: the torches too
+      camps.offsetAll(r.offset);   // SURV3: and the camps
       hitEffects.offsetAll(r.offset);   // AUDIT 24 (wave 39): a splash mid-animation follows the origin too
       // AUDIT 18: this line used to be an optional call to a method
       // ArrowFlight has never had, so it was swallowed every time and
@@ -9212,7 +9279,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       }
       renderer.setPointLights(
         withPlayerLights(nearestLights(sceneLights, cam.pos, renderer.maxPointLights, worldLightAnimator.ranges),   // EL1: the installed set's cap (16 classic, 48 on the lane)
-          magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw), ...droppedTorches.lights()),   // X11 candle; T1 torch; HT1 the dropped lights
+          magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw), ...camps.lights(), ...droppedTorches.lights()),   // X11 candle; T1 torch; HT1 the dropped lights
         CITY_LIGHT_COLOR_F32
       );
     } else {
@@ -9221,7 +9288,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // this branch used to send the renderer an empty array, so a
       // daylight Light cast would have lit nothing at all.
       renderer.setPointLights(withPlayerLights(new Float32Array(0),
-        magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw), ...droppedTorches.lights()), CITY_LIGHT_COLOR_F32);   // HT1
+        magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw), ...camps.lights(), ...droppedTorches.lights()), CITY_LIGHT_COLOR_F32);   // HT1
     }
     renderer.setClearColor(SKY_CLEAR);   // INCIDENT 2026-09-04 / REVIEW 2026-09-05: this frame is the EXTERIOR's (the mode frames returned above and clear black in worldModes) - CameraClearManager.cs:51-57
     renderer.setFlashLight(sky.lightningLight());   // DS1: Dynamic Skies' LightningFlash, composed first on the point-light channel just stored
@@ -9232,6 +9299,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.feetAt(), yaw: cam.yaw });
     drawPeerBodies(proj, view, mwv.eye);   // MWBODY1: the others' bodies, the same pass
     mwViewDrawWagon(renderer);   // EOTB-IL: the cart, when the transport is the cart
+    camps.draw(renderer);   // SURV3: the tents, the cart's own pass
 
     // WM2b: read the eased wind ONCE a frame, not once a mill.
     const windNow = sky.wind();
@@ -9499,7 +9567,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     hitEffects.tick(dt);
     livePersonBatches.push(...hitEffects.batches());
     // HT1: the dropped torches burn, the thrown one flies, a burning foe's flame follows it (the transition sweep is at the mode branch above, AUDIT 66 F11)
-    if (_mode() === 'exterior') { droppedTorches.tick(dt); livePersonBatches.push(...droppedTorches.batches()); }
+    if (_mode() === 'exterior') { droppedTorches.tick(dt); livePersonBatches.push(...droppedTorches.batches()); camps.tick(dt); livePersonBatches.push(...camps.batches()); }   // SURV3: the fires burn on the same axis
     if (livePersonBatches.length) renderer.drawBillboards(livePersonBatches, camRight, UP_Y);
     // WX2: what falls is what the front SHOWS - under the enhanced sky the
     // outgoing rain tapers after the sim has cleared and the incoming

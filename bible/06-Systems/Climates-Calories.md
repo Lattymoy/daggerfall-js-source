@@ -38,7 +38,7 @@ carry, and everything static.
 |---|---|---|
 | SURV1 | the model: felt temperature, five needs, food and water, one entry of stat drains | `src/systems/survival/temperature.js`, `needs.js`, `food.js`; the world-minute hook in `worldTick.js`; the record on `entity.survival`, saved |
 | SURV2 | the items: templates 530-541, minting, spoilage, the use handlers, the general store's provisions, the starting kit, the corpse's meat, the mod's icons through a vendor-only archive | `survival/items.js`, `loot.js`, `switch.js`; `itemTemplates.js` custom rows; `textureReplacement.js` vendor art; `useItem.js`, `shopStock.js`, `equip.js` |
-| SURV3 | camps: tent and campfire as placed objects, shared online | (in progress) |
+| SURV3 | camps: the tent and the fire as placed objects with a menu, cooking, the water sources, shared online | `survival/camp.js` (the law), `scenes/camps.js` (the pool), the three hosts' mounts, `player/activationRace.js`, both inventory skins, `sceneCache.js` |
 | SURV4 | the rest law: beds and campfires sleep, the window is costed | (in progress) |
 | SURV5 | the HUD strip, the status page, the tavern menus, the switch | (in progress) |
 | SURV6 | hunting and foraging as real-time events | (in progress) |
@@ -110,3 +110,46 @@ one, a bear six to ten and luck, half of it turning), the slaughterfish
 raw fish, and a humanoid a meal on a high roll. All of it behind the
 one switch (`survival/switch.js`, the `mod-climates-calories` feature
 row, on by default).
+
+### The camps (SURV3)
+
+Two placeables off the pack, decided by `survival/camp.js` and stood
+by `scenes/camps.js` (the dropped torches' shape, one pool per host).
+Camping Equipment pitches a TENT: the mod's model 41606 behind a fire,
+the gear leaving the pack with its uses as the camp's wear and coming
+back with it when packed. A Campfire Kit lights a FIRE alone: one use
+off the kit, the last one taking the kit with it. Both go
+two-and-a-half metres ahead of the feet on the ground a probe finds,
+and nowhere indoors, in a town (the mod's "illegal to camp" line), with
+enemies near (DFU's resting AreEnemiesNearby), in water, or - for a
+tent - underground (Mac: "campfires in dungeons/outside"). Four camps
+an owner. The fire is TEXTURE.210 record 1 on the lights archive's
+twelve frames a second with a point light over it, and it burns eight
+world-clock hours from the lighting; a tent's fire can be stoked (a
+rest will), a kit's cannot, and a kit's camp is swept when its fire
+dies while a cold tent stands. Within four metres of a lit fire you
+are BY it - the needs law's warmth and drying, and SURV4's sleep.
+
+Under the one activation ray (the race takes it, at 3.2) Info and Talk
+name the camp and any other mode opens a list picker: rest here, cook
+food (the raw fish and meat, cooked a stage nearer fresh in half an
+hour, a quarter with a skillet; offline the minutes pass), stoke a
+cold tent, and pack up your own (or put out your own fire). The water
+sources are the mod's list - the fountain and well flats (212: 0, 2,
+8, 9; 85: 0), the dry fountain (212: 3, which only says so) and the
+three trough models (41220-41222) - under the same ray, filling every
+skin and quenching the thirst. Both inventory skins close and hand a
+placeable to the host's ground, and a host with no ground says so.
+
+Online, two doors. In a CELL (the open world) my camps ride my full
+foes frame (`c`) and a peer's arrive with theirs - validCampRecord is
+the door, an owner's word replaces that owner's alone, and an owner
+gone quiet is swept as their puppets are: a tent lives while its owner
+does, which is the cell's law for everything its players stand. In a
+WORLD ROOM (a dungeon) a placed fire goes out as an act beside the
+doors and the loot, and the room's memory carries every camp standing
+with its owner - a fire one player lit is lit for the next, as a door
+stays open. Outdoors a camp survives a building visit, goes with its
+pixel and comes back from the scene cache (which had been dropping
+HT1's torches at that door since HT1, fixed here) and rides the save
+in natives.

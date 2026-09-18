@@ -653,6 +653,16 @@ export class NativeInventoryWindow {
       else this.boxes = [{ rows: [{ text: USE_PENDING.spellbook, center: true }] }];
       return;
     }
+    // SURV3: Camping Equipment and the Campfire Kit are PLACED, and the
+    // ground is the host's - the pack closes first (the one overlay
+    // slot, the spellbook arm's law) and the host's hook decides where
+    // the camp stands and says so on the HUD. A host with no ground
+    // keeps the window and says so.
+    if (r.kind === 'pitchCamp' || r.kind === 'placeFire') {
+      if (this.hooks.placeCamp) { this._closeSilently(); this.hooks.placeCamp(r.item); }
+      else this.boxes = [{ rows: [{ text: USE_PENDING[r.kind], center: true }] }];
+      return;
+    }
     if (r.text) this.boxes = [{ rows: [{ text: r.text, center: true }] }];
     else if (r.textId && this.hooks.rows) this.boxes = [{ rows: this.hooks.rows(r.textId) ?? [] }];
     else if (r.pending) this.boxes = [{ rows: [{ text: USE_PENDING[r.kind] ?? 'Nothing happens.', center: true }] }];

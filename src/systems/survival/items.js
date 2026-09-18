@@ -72,7 +72,7 @@ export function createSurvivalItem(templateIndex, { stackCount = 1, water = null
   const t = templateByIndex(templateIndex);
   if (!t?.custom) return null;
   const item = mintCondition(setItemFields({ group: SURVIVAL_GROUP, templateIndex, material: 0, flags: 0, variant: 0, message: 0, stackCount: t.stackable ? Math.max(1, stackCount) : 1 }));
-  if (condition != null) item.condition = condition;
+  if (condition != null) item.currentCondition = Math.max(0, Math.min(item.maxCondition ?? condition, condition));   // SURV3: the port's condition field (mintCondition), not a field of its own - the uses the pool reads
   if (isWaterskin(item)) item.water = water == null ? WATERSKIN_CAPACITY_KG : Math.max(0, Math.min(WATERSKIN_CAPACITY_KG, water));   // named by its template at the mint (the shelf's law); the name follows the water once it is drunk from or filled
   if (isFood(item) && stage > 0) { for (let i = 0; i < stage; i++) spoilFood(item); }
   return item;
