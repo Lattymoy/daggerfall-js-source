@@ -1,6 +1,7 @@
 // U39: the tavern WINDOW against DaggerfallTavernWindow.cs - the
 // panel's geometry, the two button chains and their closing quirks.
 import { test } from 'node:test';
+import './modsOff.js';   // SURV5: this suite pins DFU's own food-and-drink chain - the survival arc's menu is a mod, off here
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';

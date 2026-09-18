@@ -6,6 +6,7 @@
 // This file replaces the pins written when the Ledger row still said
 // "there isn't one". The row and these pins moved together.
 import { test } from 'node:test';
+import { setPref } from '../src/systems/uiPrefs.js';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -96,6 +97,7 @@ test('settings: the LIVE tier does not lie - each consumer really reads the stor
   assert.equal(loiterLimitHours(), 8);
   assert.ok(cannotLoiterLines()[1].includes('8'), 'the refusal line quotes the live cap');
   // PlayerTorchFromItems - the kit seam
+  setPref('survival', false);   // AUDIT SURV E: the survival kit rides after DFU's bag; this pin is DFU's bag alone
   setValue('Enhancements', 'PlayerTorchFromItems', true);
   const e = { items: [], stats: {}, skills: [] };
   assignStartingGear(e, { classIndex: 0, rolls: () => 0 });

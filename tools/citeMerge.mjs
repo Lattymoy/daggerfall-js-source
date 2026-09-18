@@ -17,6 +17,7 @@
 //
 //   node tools/citeMerge.mjs origin/main <our-head>            # report
 //   node tools/citeMerge.mjs origin/main <our-head> --apply    # rewrite
+//   node tools/citeMerge.mjs origin/main <our-head> --apply --struck   # ...struck lines too (citeShift's --struck; the gated cites CD4/CD5 sometimes need it)
 //
 // Run it on the merged, conflict-free working tree BEFORE the merge
 // commit, once; like citeShift, the sides are spent after --apply.
@@ -109,7 +110,7 @@ export function mapLine(l, t, { map, oldLines, newLines, res = citeSpellings(t),
 // ---- the CLI --------------------------------------------------------------
 
 function main(argv) {
-  const [THEIRS, OURS] = argv.filter((a) => !a.startsWith('--')), apply = argv.includes('--apply');
+  const [THEIRS, OURS] = argv.filter((a) => !a.startsWith('--')), apply = argv.includes('--apply'), moveStruck = argv.includes('--struck');   // SURV merge 2026-09-18: the sibling's --struck, so a merge needs no second tool for the gated struck cites
   if (!THEIRS || !OURS) { console.error('usage: node tools/citeMerge.mjs <their-side> <our-side> [--apply]'); return 2; }
   const git = (...a) => execFileSync('git', a, { cwd: ROOT, encoding: 'utf8', maxBuffer: 1 << 28, stdio: ['ignore', 'pipe', 'ignore'] });
   const sides = { theirs: THEIRS, ours: OURS };
@@ -147,7 +148,7 @@ function main(argv) {
         if (!prov) continue;
         for (const [t, cfg] of targetsOf[prov]) {
           if (t === doc) continue;
-          for (const { a, status, escaped } of mapLine(l, t, cfg).seen) {
+          for (const { a, status, escaped } of mapLine(l, t, { ...cfg, moveStruck }).seen) {
             if (escaped) continue;
             if (status === 'struck') add(struckNums, t, a);
             else if (status === 'move') add(movedNums, t, a);
@@ -174,7 +175,7 @@ function main(argv) {
       let out = l;
       for (const name of names) for (const t of byBase[prov].get(name) ?? []) {
         if (t === doc) continue;
-        const r = mapLine(out, t, { ...targetsOf[prov].get(t), holdEscaped: holdOf.get(t) ?? null });
+        const r = mapLine(out, t, { ...targetsOf[prov].get(t), moveStruck, holdEscaped: holdOf.get(t) ?? null });
         for (const h of r.held) { held++; console.log(`  ${h.status.toUpperCase().padEnd(8)} ${doc}:${i + 1}  ${h.text}${h.continuation ? ' (continuation)' : ''}${h.to ? ' -> ' + h.to : ''}  [${t}]`); }
         if (r.out !== out) { moved += r.moved; console.log(`  ${apply ? 'moved  ' : 'MOVE   '} ${doc}:${i + 1}  ${out.trim().slice(0, 100)}\n        -> ${r.out.trim().slice(0, 100)}`); out = r.out; }
       }

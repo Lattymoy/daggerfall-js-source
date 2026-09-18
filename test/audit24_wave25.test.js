@@ -137,7 +137,7 @@ test('audit24 wave25: the factionListener comments name PlayerActivate, and clai
   // PlayerActivate.StaticNPCClick:1534 - and TalkManager.cs does not
   // contain the word Listener. Three port comments named TalkManager
   // and marked the wiring "(Q4 wires)", over a reader that ships at
-  // worldModes.js:2335.
+  // worldModes.js:2338.
   const m = rd('src/systems/quest/machine.js');
   assert.doesNotMatch(m, /TalkManager reads the map/);
   assert.doesNotMatch(m, /TalkManager's Q4 signal/);
@@ -149,7 +149,7 @@ test('audit24 wave25: the factionListener comments name PlayerActivate, and clai
   // is the `factionListeners.has` line the last assertion holds, and
   // the cite names it now. (The chain is kept: it is the record of how
   // a mechanically-shifted cite comes loose from its subject.)
-  assert.match(m, /src\/scenes\/worldModes\.js:2335/);   // ORL1 re-aimed by content, off the chain below   // QS4 by one more (the offHandQuickslot import)   // AUDIT-EL F5 by one more (the WORLD_FRAME import)   // EL1 by one more (the lantern-colour import)   // BA1 by one more (the Better Ambience import)   // IF1 by one more (the footsteps import)   // HT1 by one more (the dropped-torch import)   // AUDIT WORLD6b-iii(a) C3 by one more (the aim law's import)   // FIX-F/E moved worldModes by eight lines; AUDIT 65 by one more; PERF5 by one more (the identity constant under the imports); UL1 by one more (the Unleveled Loot import); WORLD6a by one more (the interiorShared import)
+  assert.match(m, /src\/scenes\/worldModes\.js:2338/);   // SURV5 by three more (the survival status import and the vampire's); ORL1 re-aimed by content, off the chain below   // QS4 by one more (the offHandQuickslot import)   // AUDIT-EL F5 by one more (the WORLD_FRAME import)   // EL1 by one more (the lantern-colour import)   // BA1 by one more (the Better Ambience import)   // IF1 by one more (the footsteps import)   // HT1 by one more (the dropped-torch import)   // AUDIT WORLD6b-iii(a) C3 by one more (the aim law's import)   // FIX-F/E moved worldModes by eight lines; AUDIT 65 by one more; PERF5 by one more (the identity constant under the imports); UL1 by one more (the Unleveled Loot import); WORLD6a by one more (the interiorShared import)
   assert.doesNotMatch(rd('bible/06-Systems/Quest-Arc.md').slice(0, 40000), /TalkManager reads the map at\n  Q4/);
   // and the reader really is there
   assert.match(rd('src/scenes/worldModes.js'), /factionListeners\.has\(pn\.factionID\)\) return;/);

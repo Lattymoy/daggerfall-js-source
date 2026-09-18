@@ -3,6 +3,7 @@
 // MoveToBed (:601-609), and the IllegalRestWarning confirm the WHILE
 // and HEALED buttons raise ahead of both (:641-692).
 import { test } from 'node:test';
+import './modsOff.js';   // SURV4: this suite pins DFU's own rested hour - the survival arc's costed rest (survival/rest.js) is a mod, off here so the hour is DFU's
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
@@ -495,7 +496,7 @@ test('S40 restVitals: one home for the rested hour, and the dungeon host uses it
   }
   // ...and createRestDeps CALLS them rather than closing over a value.
   assert.match(src('src/scenes/shared.js'),
-    /tickVitals: \(\) => restVitals\(entity, \{ day: day\(\), inside: inside\(\) \}\),/);
+    /tickVitals: \(\) => \{[^\n]*restHour\(entity, _kind, \(\) => restVitals\(entity, \{ day: day\(\), inside: inside\(\) \}\)\); \},/);   // SURV4: the hour by its kind, restVitals still the one home
 
   // Each of the three must be at max INDEPENDENTLY: fill two and the
   // completion must still be false, or FullRest ends early.
@@ -1273,7 +1274,7 @@ test('S40 IsResting: raised on OPEN, cleared on EVERY exit, and the enchant rate
   assert.doesNotMatch(src('src/scenes/world.js'), /isResting stays absent/);
   // ...and the flags are written by the ONE composition, not by four
   // hosts that each have to remember.
-  assert.match(src('src/scenes/shared.js'), /setResting: \(b\) => \{ entity\.isResting = !!b; \},/);
+  assert.match(src('src/scenes/shared.js'), /setResting: \(b\) => \{\s*entity\.isResting = !!b;/);
   assert.match(src('src/scenes/shared.js'), /setLoitering: \(b\) => \{ entity\.isLoitering = !!b; \},/);
   // The window has exactly ONE door that sets `done`.
   assert.equal((src('src/ui/restWindow.js').match(/this\.done = true/g) ?? []).length, 1);

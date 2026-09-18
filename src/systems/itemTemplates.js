@@ -31,7 +31,21 @@ for (const t of TEMPLATES_JSON) {
 }
 export const ITEM_TEMPLATES = Object.freeze(_rows);
 
-export const templateByIndex = (i) => ITEM_TEMPLATES[i] ?? null;
+// SURV2: THE PORT'S OWN TEMPLATES, above DFU's 288. A vendored mod's
+// items (Climates & Calories' food, waterskin, camping gear, 530-540)
+// and the port's own (the campfire, 541) register rows here with the
+// same columns, marked `custom`; every reader that goes through
+// templateByIndex sees them and the frozen DFU table stays what it is.
+const _custom = new Map();
+export function registerCustomTemplates(rows) {
+  for (const t of rows ?? []) {
+    if (!Number.isFinite(t?.index) || t.index < ITEM_TEMPLATES.length) continue;
+    _custom.set(t.index, Object.freeze({ custom: true, variants: 0, rarity: 1, enchantmentPoints: 0, playerTextureArchive: 0, playerTextureRecord: 0, isIngredient: false, ...t, weight: t.baseWeight, worldTexArchive: t.worldTextureArchive, worldTexRecord: t.worldTextureRecord }));
+  }
+  return _custom.size;
+}
+export const customTemplateCount = () => _custom.size;
+export const templateByIndex = (i) => ITEM_TEMPLATES[i] ?? _custom.get(i) ?? null;
 
 /** GetItemTemplate(group, groupIndex) - the group's j-th template. */
 export function templateFor(group, groupIndex) {
@@ -111,6 +125,7 @@ const KATANA_TEMPLATE = 121;
 
 /** UseWorldTexture verbatim. */
 export function usesWorldTexture(item, template = templateByIndex(item.templateIndex)) {
+  if (template?.custom) return true;   // SURV2: a custom template draws its world icon (the item's own fields first, as DFU's world arm does)
   if (WORLD_TEXTURE_GROUPS.has(item.group)) return true;
   if (template?.isIngredient) return true;
   if (item.group === 'Weapons' && item.templateIndex === ARROW_TEMPLATE) return true;

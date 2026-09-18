@@ -1,8 +1,8 @@
 // S3d: STARTING EQUIPMENT - ItemHelper.AssignStartingGear verbatim
 // (ItemHelper.cs:1277-1364, MIT Daggerfall Workshop). This retires
 // the iron-dagger stand-in seedStartingEquipment used to hand out
-// (equip.js:305), which survives only as the PRE-CHARGEN fallback its
-// two hosts gate it to - world.js:2019 and exterior.js:1110 seed it
+// (equip.js:307), which survives only as the PRE-CHARGEN fallback its
+// two hosts gate it to - world.js:2065 and exterior.js:1142 seed it
 // solely for an entity that never ran chargen. A new character now
 // begins dressed, with a spellbook, their CLASS's weapon, and 100
 // gold, exactly as classic does.
@@ -33,6 +33,8 @@ import { templateByIndex, mintCondition, setItemFields } from './itemTemplates.j
 import { CLOTHING_DYES } from '../characters/dyes.js';
 import { createWeapon } from '../combat/enemyEquipment.js';   // ItemBuilder.CreateWeapon's one home (the arrow arm)
 import { getBool } from './settings.js';   // SETT: PlayerTorchFromItems
+import { survivalOn } from './survival/switch.js';   // AUDIT SURV E: the survival kit reaches the character chargen makes
+import { startingProvisions } from './survival/items.js';
 
 // ItemEnums template indices
 const SHORT_SHIRT_M = 165, CASUAL_PANTS_M = 151;
@@ -134,6 +136,11 @@ export function assignStartingGear(entity, { classIndex = 0, isCustom = false, r
     for (let i = 0; i < 2; i++) add({ group: 'UselessItems2', templateIndex: CANDLE });
   }
 
+  // AUDIT SURV E: the mod's OnStartGame kit, plus the port's fire kit (survival/items.js startingProvisions),
+  // AFTER DFU's own bag (the spellbook first, the clothes, the class kit, the torches - 17f's order holds). It
+  // rode equip.js's seedStartingEquipment alone - the retired PRE-CHARGEN fallback - so a character who came
+  // through chargen set out with no water, no food, no gear and no fire while the needs drained.
+  if (survivalOn()) for (const it of startingProvisions()) { addItem(entity.items, it); added.push(it); }
   addStartingGold(entity, STARTING_GOLD);
   return added;
 }

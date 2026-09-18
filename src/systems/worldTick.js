@@ -50,9 +50,15 @@ setPlayerStruckHook((attacker, target, damage) => onPlayerStruckByEnemy(attacker
 installMeanerMonsters();   // MM1: before the overhaul, as DFU Awakes the dependency first
 installPcaao();
 installUnleveledLoot();   // UL1: after everything it would override (its manifest orders it after Roleplay Realism)
+installSurvivalIcons();   // SURV2: the mod's spoiled-food and waterskin icons ride the texture pipeline as the port's own art
+installSurvivalLoot({ enabled: survivalOn });   // SURV2: an animal's corpse carries meat, a humanoid's sometimes a meal (after UL1, which walks the gold); off with the one switch
 import { normalizeReputations, NORMALIZE_INTERVAL_MINUTES } from './court.js';   // AUDIT 23 (C4)
 // S43: the entity update's 7-day and 38-day arms (PlayerEntity.cs:460-472).
 import { regionPowerUpdate } from './regionPower.js';
+import { runSurvivalMinutes, clearSurvivalMods } from './survival/needs.js';   // SURV1: the needs, a world minute at a time; AUDIT SURV A: and the drains dropped when the feed stops
+import { installSurvivalIcons } from './survival/items.js';   // SURV2: the templates register at its import; the icons here
+import { installSurvivalLoot } from './survival/loot.js';   // SURV2: the corpse's food
+import { survivalOn } from './survival/switch.js';   // SURV2: the one switch
 /** :462 - `% 10080`, seven days of game minutes. */
 export const FACTION_POWER_INTERVAL_MINUTES = 10080;
 /** :469 - `% 54720`, thirty-eight days. */
@@ -488,6 +494,9 @@ export function tickPlayerMinutes({
   // Time.deltaTime, so a rested night burns no torch and cannot kill by
   // a drained stat. Defaults to dt, which is the frame case.
   realSeconds = dt,
+  // SURV1: the needs' law, when the host feeds it - { env, deps } as
+  // survival/needs.js survivalMinute takes them; null runs nothing.
+  survival = null,
 } = {}) {
   // WORLD5: under the SHARED clock the world's time moved on its own between two ticks - this tick owes the rounds
   // and the days from the last tick's reading to now, and fabricates nothing from dt (a jump has no dt, and dt
@@ -784,6 +793,16 @@ export function tickPlayerMinutes({
   // the letter never finds the player in a dungeon.
   handleStartingCrimeGuildQuests(entity, { nowClassicMinutes: next, inside });
 
+  // SURV1 - THE NEEDS, one world minute at a time over the minutes this
+  // tick crossed (the same [last, now] the per-minute loop above walks),
+  // capped at two days so a jump charges what a jump can. Nothing here
+  // draws from the day's generator; the felt temperature comes back out
+  // for the HUD.
+  let felt = null;
+  if (survival && nowMinutes > lastMinutes) {
+    felt = runSurvivalMinutes(entity, lastMinutes, nowMinutes, survival.env ?? {}, { ...(survival.deps ?? {}), sinks: survival.deps?.sinks ?? sinks, rolls });
+  } else if (!survival) clearSurvivalMods(entity);   // AUDIT SURV A: the mod off (or a host with no reader) leaves no drain behind
+
   // EntityEffectManager.UpdateEntityMods' tail (:1855-1866), on its own
   // 0.2s real-time cadence: a live stat at zero kills the host. It sits
   // here rather than in runMagicRounds because DFU's is not a magic
@@ -810,7 +829,7 @@ export function tickPlayerMinutes({
   // A jump is only ever forward; a backward move is a load, and a load
   // does not arrive through this function.
   const jumped = worldMinutes() - clockAtEntry;
-  return { classicMinutes: jumped > 0 ? next + jumped : next, rounds, magicRoundWindow };
+  return { classicMinutes: jumped > 0 ? next + jumped : next, rounds, magicRoundWindow, felt };
 }
 
 // --- THE WORLD CLOCK (AUDIT 21 F2) -----------------------------------

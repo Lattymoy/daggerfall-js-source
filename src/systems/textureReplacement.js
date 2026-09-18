@@ -121,17 +121,59 @@ export function setTextureReplacements(fileNames, load) {
 
 export const textureReplacementCount = () => _index.size;
 
+// ---- SURV2: THE PORT'S OWN VENDORED ART ------------------------------
+//
+// A vendored mod's pictures (Climates & Calories' spoiled-food and
+// waterskin icons, archives 532-539) are not a user's pick: they ship
+// with the port, they survive a pick replacing the user index above,
+// and they are not behind the AssetInjection gate - the port owns them.
+// Their archives have no ARENA2 file at all, so the pipeline builds a
+// stand-in TextureFile for them (vendorTextureStandIn) and draws the
+// decoded PNGs through the same swap arm a replacement uses.
+const _vendor = new Map();
+/** Register vendored files: [{ archive, record, frame?, load }] where
+ *  `load()` resolves to the PNG bytes. */
+export function addVendorTextures(entries) {
+  let n = 0;
+  for (const e of entries ?? []) {
+    if (!Number.isFinite(e?.archive) || !Number.isFinite(e?.record) || typeof e.load !== 'function') continue;
+    const key = textureKey(e.archive, e.record, e.frame ?? 0, 'Albedo');
+    _vendor.set(key, { archive: Number(e.archive), record: Number(e.record), frame: Number(e.frame ?? 0), map: 'Albedo', fileName: e.fileName ?? key, load: e.load });
+    n++;
+  }
+  return n;
+}
+export const vendorTextureCount = () => _vendor.size;
+export function clearVendorTextures() { for (const k of _vendor.keys()) _decoded.delete(k); _vendor.clear(); }
+/** An archive that exists ONLY as vendored art (no ARENA2 file). */
+export const isVendorArchive = (archive) => { for (const e of _vendor.values()) if (e.archive === Number(archive)) return true; return false; };
+/** A TextureFile stand-in for a vendor-only archive: sizes from the
+ *  decoded PNGs, a bitmap the swap arm never reads. */
+export function vendorTextureStandIn(archive) {
+  const size = (record) => { const d = _decoded.get(textureKey(archive, record, 0)); return d ? { width: d.width, height: d.height } : { width: 1, height: 1 }; };
+  return {
+    vendor: true,
+    getWidth: (record) => size(record).width,
+    getHeight: (record) => size(record).height,
+    getDFBitmap: (record) => ({ ...size(record), data: null }),
+    getColor32: (record) => _decoded.get(textureKey(archive, record?.record ?? 0, 0)) ?? null,
+  };
+}
+const entryFor = (key) => _index.get(key) ?? _vendor.get(key) ?? null;
+
 export function clearTextureReplacements() {
   _index = new Map();
   _load = null;
-  _decoded.clear();   // a new pick must not inherit the old one's pixels
+  for (const k of _decoded.keys()) if (!_vendor.has(k)) _decoded.delete(k);   // a new pick must not inherit the old one's pixels; the port's own stay
 }
 
 /** Synchronous, and for the same reason music's is: the upload path
  *  has to know which branch it is on before it can proceed. */
 export function hasTextureReplacement(archive, record, frame = 0, map = 'Albedo') {
+  const key = textureKey(archive, record, frame, map);
+  if (_vendor.has(key)) return true;
   if (!textureReplacementEnabled()) return false;
-  return _index.has(textureKey(archive, record, frame, map));
+  return _index.has(key);
 }
 
 /**
@@ -140,10 +182,11 @@ export function hasTextureReplacement(archive, record, frame = 0, map = 'Albedo'
  */
 export async function textureReplacementBytes(archive, record, frame = 0, map = 'Albedo') {
   if (!hasTextureReplacement(archive, record, frame, map)) return null;
-  const entry = _index.get(textureKey(archive, record, frame, map));
-  if (!entry || !_load) return null;
+  const entry = entryFor(textureKey(archive, record, frame, map));
+  const load = entry?.load ?? _load;
+  if (!entry || !load) return null;
   try {
-    const bytes = await _load(entry.fileName);
+    const bytes = await load(entry.fileName);
     return bytes && bytes.byteLength > 0 ? bytes : null;
   } catch (e) {
     console.warn(`[texture] replacement ${entry.fileName} would not load:`, e?.message ?? e);
@@ -214,12 +257,12 @@ export async function decodePng(bytes) {
  * and leaves the rest of the pack working.
  */
 export async function preloadTextureArchive(archive, { decode = decodePng } = {}) {
-  if (!textureReplacementEnabled() || !_load) return 0;
   let done = 0;
-  for (const [key, entry] of _index) {
+  const sources = [..._vendor.entries(), ...(textureReplacementEnabled() && _load ? _index.entries() : [])];   // SURV2: the port's own art first, ungated
+  for (const [key, entry] of sources) {
     if (entry.archive !== Number(archive) || _decoded.has(key)) continue;
     try {
-      const bytes = await _load(entry.fileName);
+      const bytes = await (entry.load ?? _load)(entry.fileName);
       if (!bytes || !bytes.byteLength) continue;
       _decoded.set(key, toColor32(await decode(bytes)));   // H4: into the port's color32 contract at the door, never at the upload sites
       done++;
@@ -236,8 +279,10 @@ export async function preloadTextureArchive(archive, { decode = decodePng } = {}
  *  and upload either without knowing which it got. Null means "draw the
  *  classic". */
 export function decodedTexture(archive, record, frame = 0, map = 'Albedo') {
+  const key = textureKey(archive, record, frame, map);
+  if (_vendor.has(key)) return _decoded.get(key) ?? null;   // SURV2: the port's own, ungated
   if (!textureReplacementEnabled()) return null;
-  return _decoded.get(textureKey(archive, record, frame, map)) ?? null;
+  return _decoded.get(key) ?? null;
 }
 
 export const decodedTextureCount = () => _decoded.size;
