@@ -1521,7 +1521,7 @@ test('AUDIT-TO1 B1/B2/B3: the location rects come off the BUILT terrain, and the
   assert.match(w, /if \(_travelRegionSeen !== null && _region !== _travelRegionSeen\) travelOptions\.onRegionIndexChanged\(\);/, 'OnRegionIndexChanged');
   assert.match(w, /travelOptions\?\.onEnterLocationRect\(_musicLoc \? \{/, 'OnEnterLocationRect, on the rect edge');
   assert.match(w, /raiseOnEncounterEvent: \(\) => \{ travelOptions\?\.onEncounter\(\); modes\?\.raiseOnEncounterEvent\?\.\(\); \},/, 'GameManager.OnEncounter');
-  assert.match(w, /if \(_isPlayersPixel && dfLocation\) travelOptions\?\.initLocationRects\(playerTravelPixel\(\)\);/, 'StreamingWorld.OnUpdateLocationGameObject');
+  assert.match(w, /if \(travelOptions && dfLocation\) \{\n\s*const here = playerTravelPixel\(\);\n\s*if \(px === here\.x && py === here\.y\) travelOptions\.initLocationRects\(here\);/, 'StreamingWorld.OnUpdateLocationGameObject - BOOT-TDZ2: the mod asked first, the pixel read once');
   // the tile rect the C# reads is the terrain's own, extraClearance included
   const t = read('src/world/terrainTiles.js');
   assert.match(t, /const extraClearance = dfLocation\.mapTableData\.locationType === LOCATION_TYPE_TOWN_CITY \? 3 : 2;/);
@@ -1617,7 +1617,7 @@ test('BOOT-TDZ: every Travel Options binding the STREAM reads is declared above 
   // the statement the whole bug hung on: the boot awaits the first build
   const firstBuild = at(/^ {2}const playerPixel = await buildPixel\(first\.px, first\.py\);/, 'the boot\'s first pixel build');
   // ...and these two readers run INSIDE it, above where the mod is built
-  const hook = at(/travelOptions\?\.initLocationRects\(playerTravelPixel\(\)\);/, 'the B3 location-rect hook');
+  const hook = at(/if \(travelOptions && dfLocation\) \{/, 'the B3 location-rect hook');
   assert.ok(hook < firstBuild, `the B3 hook (line ${hook}) is inside the builder the boot awaits (line ${firstBuild})`);
   // the region edge reads its own binding from the topic sync, which the
   // boot calls on the arrival path below the build; the binding is held
@@ -1640,6 +1640,27 @@ test('BOOT-TDZ: every Travel Options binding the STREAM reads is declared above 
   assert.match(w, /\n {2}travelOptions = travelOptionsOn \? createTravelOptions\(\{/, 'built by assignment, not by a second declaration');
   // the readers above the build all guard on null, which is also the
   // guard a player with the mod switched off needs
-  assert.match(w, /travelOptions\?\.initLocationRects/);
+  assert.match(w, /travelOptions\.initLocationRects\(here\);/);
   assert.match(w, /if \(travelOptions\) \{\n\s*travelOptions\.onMapPixelChanged/);
+
+  // BOOT-TDZ2: and the builder ASKS THE MOD FIRST. The first fix hoisted
+  // the mod's own binding; this line still called `playerTravelPixel()`
+  // to decide whether the pixel was the player's, and THAT reads
+  // `walkMode`, `player` and `cam` - three bindings the boot walk
+  // declares below its own first build. With no mod there is nothing to
+  // initialise, so the mod is the cheap test and the only safe one.
+  const from = w.indexOf('async function buildPixelNow(');
+  assert.notEqual(from, -1, 'world.js no longer carries buildPixelNow');
+  // the body opens at the `) {` that closes the parameter list, not at
+  // the first brace (the options bag destructures one of its own)
+  const bodyAt = w.indexOf(') {', from) + 2;
+  const end = (() => { let d = 0; for (let i = bodyAt; i < w.length; i++) { if (w[i] === '{') d += 1; else if (w[i] === '}') { d -= 1; if (d === 0) return i; } } return w.length; })();
+  const builder = w.slice(from, end);
+  assert.doesNotMatch(builder, /_isPlayersPixel/, 'the eager pixel test is gone');
+  assert.match(builder, /if \(travelOptions && dfLocation\) \{\n\s*const here = playerTravelPixel\(\);\n\s*if \(px === here\.x && py === here\.y\) travelOptions\.initLocationRects\(here\);/,
+    'the mod is asked before anything the boot walk has not declared');
+  const code = builder.split('\n').map((l) => l.replace(/\s*\/\/.*$/, '')).join('\n');   // the reasoning above the guard names the call too
+  assert.equal((code.match(/playerTravelPixel\(/g) ?? []).length, 1,
+    'the builder reads the player pixel once, inside the mod\'s own guard');
+  assert.ok(code.indexOf('playerTravelPixel(') > code.indexOf('if (travelOptions && dfLocation)'), 'and only after that guard');
 });
