@@ -533,6 +533,42 @@ third was a thing the port never said out loud.
   The wait is the ride-out's own sentence, deliberately, so the two read
   alike.
 
+> **TO-FIELD3 (Mac, 2026-09-18) REVERSED THE TWO GAMEPLAY CHANGES BELOW.**
+> "Remove the changes the past session did to the traveling system... the
+> two gameplay changes - journeys no longer sit as resting (needs charge
+> normally again, health ticks back), and hunting rolls fire during
+> travel again."
+>
+> Both are gone. `survivalEnv` feeds the journey the world it is actually
+> in (`world.js`, the same one sentence `exterior.js` reads), and the
+> hunting roll is the overworld host's mode and nothing else. The bullets
+> below are KEPT rather than struck, because their arithmetic is right
+> and whoever reads this next should know exactly what was traded away
+> and what it costs.
+>
+> **What the reversal restores, and it is not small.** The needs stack
+> starving 4, parched 6 or dehydrated 12, exhausted 8, heat 6 and bare
+> feet 4 on top of DFU's own 11 a minute, on a traveller who by
+> construction never stops to eat, drink or sleep. A RECKLESS journey has
+> no stop of its own and can collapse; a CAUTIOUS one is paused at the
+> fatigue floor by the mod's own watch. The bare-skin health ticks and
+> the byFire exposure damage run again. And the hunting roll fires once a
+> GAME minute at up to a hundred times real time, opening a box the mod
+> answers with `interruptTravel()` - so a long wilderness ride WILL be
+> interrupted, often.
+>
+> That is the loop as Mac wants it played: camp out, stop at inns, or
+> travel cautiously. The survival mod's own switch turns all of it off
+> for a player who would rather ride through.
+>
+> **And one thing the change that set it never counted:** `resting` is
+> not a fatigue knob, it is the needs' one word for "sat still", and
+> FOUR laws read it - the two fatigue drains it was aimed at, the two
+> health arms F12 later disclosed, and SURV6's hunting roll, which
+> refuses outright on `resting` (`hunting.js:105`). One flag reached
+> three laws nobody had asked it to reach. That is the lesson worth
+> keeping out of this whole exchange.
+
 - **Instant exhaustion - the port's own needs charged at the mod's
   clock.** The vanilla band asks only whether the minute CHANGED this
   frame and pays ONE minute whatever the jump
