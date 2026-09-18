@@ -1895,6 +1895,8 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
   background: linear-gradient(180deg, rgba(23,27,33,0.94), rgba(14,16,19,0.94));
   border: 1px solid rgba(192,138,62,0.45); border-radius: 3px;
   box-shadow: 0 2px 14px rgba(0,0,0,0.55); }
+/* AUDIT-TO1 F1: the bar and the message stand down while the junction disc alone is up */
+.travelpanel-bar.hidden { display: none; }
 .travelpanel-dest { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center;
   padding: 7px 14px; min-width: 0; }
 .travelpanel-label { font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--dim); }

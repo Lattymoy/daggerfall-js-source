@@ -8,7 +8,7 @@
 // `pauseWhileOpened = false` and a clear background (:83-84), which is
 // a window that does not stop the game - the player keeps walking
 // underneath it. The port's overlay slot is the opposite: a townTalk
-// overlay HOLDS the motor and the world clock (scenes/world.js:8379,
+// overlay HOLDS the motor and the world clock (scenes/world.js:8483,
 // `_overlayHeld`), which is exactly what a journey must not do. So this
 // panel lives on the HUD layer, drawn by the host's `drawHud` pass and
 // clicked through the host's pointer ladder beside the large HUD's own
@@ -85,8 +85,18 @@ export async function preloadTravelControlArt(deps = {}) {
     if (res?.ok) {
       const bytes = new Uint8Array(await res.arrayBuffer());
       const { decodePng } = await import('../systems/textureReplacement.js');
-      const png = await decodePng(bytes);
-      strip = { img: png, key: 'TOcontrolUI' };
+      const { toScreenOrder } = await import('../formats/color32Order.js');
+      // AUDIT-TO1 E1: a decoded PNG is `{ width, height, data }`, which is
+      // what uploadTexture EATS, not what drawImg DRAWS - drawImg reads
+      // `img.tex` (ui/nativePanel.js), and a decode stored as-is has none,
+      // so drawScreenQuad ran untextured and painted the whole 320x27
+      // strip as one opaque white bar with the yellow text on top. The
+      // port's idiom for a vendored PNG on a screen quad is
+      // handheldTorches.js:229 - toScreenOrder, then upload, then
+      // `{ tex, w, h }` (loadImg's own shape, ui/nativePanel.js:44-49).
+      const px = toScreenOrder(await decodePng(bytes));
+      const tex = deps.renderer?.uploadTexture?.('img', 'travelopts:TOcontrolUI', px, { mips: false, variant: '#travelopts' }) ?? null;
+      strip = tex ? { tex, w: px.width, h: px.height, key: 'TOcontrolUI' } : null;
     }
   } catch { strip = null; }
   let spinner = null;
@@ -237,7 +247,7 @@ export class TravelControlUI {
     const m = nativeMetrics(canvas);
     const [, , pw, ph] = CONTROL_RECTS.panel;
     const x0 = Math.trunc((NATIVE_W - pw) / 2);   // :99-101 - centred, top
-    if (_art?.strip?.img) drawImg(renderer, _art.strip.img, m, x0, 0, pw, ph);
+    if (_art?.strip?.tex) drawImg(renderer, _art.strip, m, x0, 0, pw, ph);   // AUDIT-TO1 E1: the uploaded strip, in drawImg's own shape
     // :113-115 - the destination label is centred inside its own panel
     const [dx, dy, dw] = CONTROL_RECTS.dest;
     if (this.destinationName) shadowText(renderer, font, this.destinationName, m, x0 + dx, dy, { align: 'center', w: dw });

@@ -11,7 +11,7 @@
 // why an accelerated trip is a REAL walk across real terrain rather
 // than a fade to black: the port does the same through
 // `player.update(dt, { forward, ... }, cam.yaw, cam.pitch)`
-// (scenes/world.js:8436-8456).
+// (scenes/world.js:8551-8571).
 //
 // PURE: it holds its own state and takes the player's position as
 // numbers. No DOM, no renderer, no world reads - which is what lets
@@ -80,6 +80,18 @@ export class TravelAutopilot {
   constructor(targetPixel, targetRect, speedMultiplier = 1, { grow = false, isLocation = false } = {}) {
     this.isLocation = !!isLocation;   // :155 - only a LOCATION destination turns the look at arrival
     this.onArrival = null;
+    // AUDIT-TO1 K1: yawVector is a FIELD initialiser (:33, `new Vector3(0,
+    // 0, 0)`), zeroed once when the object is made and never by
+    // InitTargetRect (:40-50), which writes the pixel, the rect, the
+    // centre, the multiplier, the sentinel, the flag and the pitch and
+    // nothing else. BeginPathTravel reuses the autopilot leg after leg
+    // (TravelOptionsMod.cs:711, `playerAutopilot.InitTargetRect`), and
+    // an interrupt in the rest of that same Update - a foe, a low
+    // fatigue - reads the latched bearing through MouseLookAtDestination
+    // (:169-173): the player is left facing the way they were WALKING.
+    // Zeroing it in the re-init snapped that camera to due north.
+    this.yaw = 0;          // yawVector.y
+    this.pitch = 0;        // :48 - mouseLook.Pitch = 0, and :143 holds it there every frame
     this.initTargetRect(targetPixel, targetRect, speedMultiplier, { grow });
   }
 
@@ -96,8 +108,8 @@ export class TravelAutopilot {
     this.speedMultiplier = speedMultiplier;
     this.lastPlayerMapPixel = { x: NO_PIXEL, y: NO_PIXEL };
     this.inDestinationMapPixel = false;
-    this.yaw = 0;          // yawVector.y
     this.pitch = 0;        // :48 - mouseLook.Pitch = 0, and :143 holds it there every frame
+    // ...and NOT the yaw: see the constructor (AUDIT-TO1 K1).
   }
 
   /** :76-105, Update. Returns what the host must apply this frame:

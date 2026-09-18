@@ -489,7 +489,11 @@ test('U61: Begin mints the classic pick/opts/computed shapes and flies; teleport
       'fastTravelTo\'s own pick shape');
     assert.deepEqual(c.pick.pixel, { x: 9, y: 5 });
     assert.equal(c.pick.name, 'Wayrest', 'the name is the region\'s own mapNames read');
-    assert.deepEqual(Object.keys(c.opts), ['speedCautious', 'sleepModeInn', 'travelShip']);
+    // AUDIT-TO1 C1: ...plus the popup's own word for a WALKED trip, which
+    // world.js forks on - without it the default skin could never start a
+    // Travel Options journey. False here: this rig hands no mod.
+    assert.deepEqual(Object.keys(c.opts), ['speedCautious', 'sleepModeInn', 'travelShip', 'playerControlled']);
+    assert.equal(c.opts.playerControlled, false, 'no mod handed in, so never player-controlled');
     assert.deepEqual(Object.keys(c.computed), ['minutes', 'oceanPixels', 'piecesCost', 'totalCost']);
 
     // ride the flight to the commit: the hooks fire exactly once, at

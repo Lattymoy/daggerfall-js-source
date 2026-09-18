@@ -65,6 +65,10 @@ import {
 import { TravelControlUI, CONTROL_RECTS, fasterAcceleration, slowerAcceleration, MESSAGE_SECONDS, _setTravelControlArtForTests } from '../src/ui/travelControlUI.js';
 import { TravelJunctionMap, JUNCTION_TEX_W, JUNCTION_TEX_H, filterModeName } from '../src/ui/travelJunctionMap.js';
 import { etaText, distanceText } from '../src/ui/enhancedTravelControl.js';
+import { POPUP_RECTS } from '../src/ui/travelPopUp.js';   // AUDIT-TO1 D3/D4: the camp-out and inns rects the wheel pins hover
+// AUDIT-TO1 part 2: the pins for the sweep's confirmed findings
+import { TravelPopUpWindow, isPlayerControlledTravel, enforceShipRestriction as enforceShipRestrictionPure, shipTravelRefusal as shipTravelRefusalPure } from '../src/ui/travelPopUp.js';
+import { travelMapMarkedMapId, setTravelMapMarkedMapId, resetTravelMapState } from '../src/systems/travelMapState.js';
 import { timeScale, setTimeScale, resetTimeScale, accelLimitOf, halfAccelLimitOf, MAX_TIME_SCALE } from '../src/systems/timeScale.js';
 import { FIXED_DT, MAX_FRAME_DT } from '../src/player/motor.js';
 import { MOD_SETTINGS, colorKeyRgba, colorKeyHex, isColorKey, modSetting, _resetModSettings } from '../src/systems/modSettings.js';
@@ -97,7 +101,17 @@ test('TO1: the settings are the mod\'s own modsettings.json, key for key, type f
       else if (kind === 'SliderIntKey') {
         assert.deepEqual([def.default, def.min, def.max], [k.Value, k.Min, k.Max], `${key}'s range`);
       } else if (kind === 'MultipleChoiceKey') {
-        assert.equal(def.default, k.Value, `${key}'s default index`);
+        // AUDIT-TO1 I1: the ONE default the port ships differently, said
+        // here so a second one cannot ride in quietly: the follow key
+        // moves from F (SOC5's SocialInteract) to K, the one letter of
+        // the mod's own six nothing in the port or a vendored mod answers
+        // (G, O, X are Handheld Torches'). The options are the mod's.
+        if (key === 'RoadsIntegration.FollowPathsKey') {
+          assert.equal(k.Value, 1, 'the mod ships F (index 1) - if this moved, re-decide the departure');
+          assert.equal(def.default, 3, 'the port ships K (index 3)');
+          assert.equal(def.options[def.default], 'K');
+          assert.equal(def.keyChoice, true, 'and declares itself a key choice for the HT4 walk');
+        } else assert.equal(def.default, k.Value, `${key}'s default index`);
         assert.deepEqual([...def.options], k.Options, `${key}'s options`);
       } else if (kind === 'TextKey') {
         assert.equal(def.default, k.Value); assert.equal(def.text, true);
@@ -587,7 +601,7 @@ test('TO1: DrawLocation - a city fills its whole cell, a farm the middle of it, 
     'and at the buffer\'s edge it clamps where the mod would run off the end');
 });
 
-test('TO1: the five-texel region page - paths under the dots, the politic gate kept, and rivers only with the mod\'s waterways', () => {
+test('TO1: the five-texel region page - paths under the dots, NO politic gate (the mod\'s own override), and rivers only with the mod\'s waterways', () => {
   const width = 8, height = 8, w5 = width * DOT_SCALE;
   const dots = new Uint32Array(w5 * height * DOT_SCALE);
   const outline = new Uint32Array(width * height);
@@ -610,10 +624,15 @@ test('TO1: the five-texel region page - paths under the dots, the politic gate k
   });
   assert.ok(dots.some((v) => v === packColor(ROAD_COLOR)), 'the road is drawn');
   assert.ok(dots.some((v) => v === colours[11]), 'and the city over it');
-  // the page's containment law: the other province's column carries no dot
+  // AUDIT-TO1 L6: NO containment. DFU's base page keeps `if (sampleRegion
+  // != selectedRegion) continue;` and the port's classic page keeps it
+  // too; the mod's override computes sampleRegion (TravelOptionsMapWindow
+  // .cs:614) and never tests it - the one occurrence in the file - so a
+  // discovered town of the NEIGHBOURING province inside the page rect is
+  // plotted. This pinned the opposite for three days.
   const cell = (x, y) => dots[((height - y - 1) * DOT_SCALE * w5) + (x * DOT_SCALE) + (2 * w5) + 2];
   assert.notEqual(cell(3, 2), 0, 'this region\'s column has its dot');
-  assert.equal(cell(4, 2), 0, 'the neighbour\'s does not');
+  assert.notEqual(cell(4, 2), 0, 'and so does the neighbour\'s - the mod draws every discovered summary in the rect');
   assert.ok(outline.some((v) => v === 99), 'the outline buffer is filled at 1x, as the classic page fills it');
   // with the water flags down, the two water arrays are never even asked
   assert.ok(!calls.includes(2) && !calls.includes(3), 'rivers and streams are not read while their flags are down');
@@ -1024,7 +1043,7 @@ test('TO1: the help text names the follow key and the two bindings', () => {
   const { to } = rig({ deps: { binding: (a) => (a === 'TravelExit' ? 'V' : 'M') } });
   const help = to.helpText();
   assert.match(help, /^Travel Options Help/);
-  assert.match(help, /F - Follow road or track/, 'the follow key is the setting\'s');
+  assert.match(help, /K - Follow road or track/, 'the follow key is the setting\'s - K since AUDIT-TO1 I1');
   assert.match(help, /V - Exit travel/);
   assert.match(help, /M - Open travel map when stopped/);
   assert.ok(!help.includes('{0}'), 'every placeholder is filled');
@@ -1115,8 +1134,8 @@ test('TO1: the wiring - one construction, the fork on the popup\'s word, the pan
   assert.match(w, /const travelOptionsOn = modSetting\(TRAVEL_OPTIONS_VENDOR, 'Enabled'\);/);
   assert.match(w, /const travelOptions = travelOptionsOn \? createTravelOptions\(\{/);
   // the fork
-  assert.match(w, /if \(opts\?\.playerControlled && beginAcceleratedTravel\(pick, opts\)\) return;\s*\n\s*fastTravelTo\(pick, opts, computed\);/,
-    'the walked trip is tried first and fast travel is the fallback');
+  assert.match(w, /if \(opts\?\.playerControlled && beginAcceleratedTravel\(pick, opts, \{ estimateMinutes: computed\?\.minutes \?\? null \}\)\) return;[^\n]*\n\s*fastTravelTo\(pick, opts, computed\);/,
+    'the walked trip is tried first (with the popup\'s estimate riding along - AUDIT-TO1 L5) and fast travel is the fallback');
   assert.match(w, /if \(!travelOptions \|\| sharedClockOn\(\)\) return false;/, 'online the journey stands down');
   // THE COMPATIBILITY CHECK Mac asked for: following is handed HIS network alone
   assert.match(w, /roads: \(\) => \{ const net = terrainGen\.roads\(\); return net\?\.source === 'basic-roads' \? net : null; \},/,
@@ -1128,9 +1147,19 @@ test('TO1: the wiring - one construction, the fork on the popup\'s word, the pan
   assert.equal((client.match(/source: /g) || []).length, 4,
     'AUDIT 58 F3 / BR3: three assembly sites plus the stats fallback - a field on ONE of them is silently inert on the path the game takes');
   // the panel is drawn on the HUD layer, never pushed as an overlay
-  assert.match(w, /if \(travelControlUI\?\.isShowing\) \{/);
-  assert.match(w, /travelControlUI\.draw\(renderer, canvas, townTalk\.font\);/);
+  assert.match(w, /if \(travelControlUI\?\.isShowing\) travelControlUI\.tick\(dt\);/);
+  assert.match(w, /if \(travelControlUI\?\.isShowing\) travelControlUI\.draw\(renderer, canvas, townTalk\.font\);/);
   assert.match(w, /drawEnhancedTravelControl\(\{/, 'and the enhanced lane gets its own');
+  // AUDIT-TO1 F1: THE JUNCTION MAP OUTLIVES THE BAR - drawn off the mod's own
+  // flag, in both lanes, OUTSIDE the panel's gate (the mod's HUD child, :358)
+  assert.match(w, /const _junctionUp = !!\(travelJunctionMap && travelOptions\?\.junctionMapOn\);/);
+  assert.match(w, /travelJunctionMap\.enabled = _junctionUp;/, 'the classic disc follows the flag, not the panel');
+  assert.match(w, /if \(travelControlUI\?\.isShowing \|\| _junctionUp\) \{/, 'and the enhanced mount stays up for the disc alone');
+  assert.match(w, /showing: !!travelControlUI\?\.isShowing,/);
+  // AUDIT-TO1 A1: the HUD is the top window only when the panel is NOT up -
+  // DFU's IsPlayerOnHUD over a pushed travel window (:533)
+  assert.match(w, /isPlayerOnHUD: !townTalk\.overlayActive && !\(modes\?\.overlayHeld \?\? false\) && !travelControlUI\?\.isShowing,/,
+    'the host expression that killed every journey on its first frame, corrected');
   assert.ok(!/showOverlay\(travelControlUI\)/.test(w), 'the panel is NEVER in the overlay slot - an overlay holds the motor and the clock');
   // its keys and its clicks
   assert.match(w, /if \(travelControlUI\?\.isShowing && travelControlUI\.input\(e\.code, e\)\) \{ e\.preventDefault\(\); return; \}/);
@@ -1158,7 +1187,9 @@ test('TO1: the map and the popup carry the mod\'s own additions', () => {
   assert.match(m, /click\(vx, vy, right = false, middle = false\) \{/);
   assert.match(m, /if \(middle\) \{/);
   assert.match(m, /if \(code === 'KeyI' && this\.locationSelected\) \{ this\._displayLocationInfo\(\); return; \}/);
-  assert.match(m, /if \(code === 'KeyH'\) \{ this\.deps\.onHelp\?\.\(\); return; \}/);
+  // AUDIT-TO1 H1: the help is boxed in the window's own slot, a row a line
+  assert.match(m, /if \(code === 'KeyH'\) \{\s*\n\s*const rows = this\.deps\.helpRows\?\.\(\);/);
+  assert.match(m, /this\.infoBox = \{ rows: rows\.map\(\(t\) => \(\{ text: t, center: false \}\)\), anywhere: true \};/);
   assert.match(m, /this\._createCoordsPopUpWindow\(\);/);
   // the resume prompt and the teleport charge are ONE-SHOTS on the first tick
   assert.match(m, /if \(!this\._resumeAsked\) \{/);
@@ -1166,7 +1197,13 @@ test('TO1: the map and the popup carry the mod\'s own additions', () => {
 
   const p = read('src/ui/travelPopUp.js');
   assert.match(p, /isPlayerControlledTravel\(\) \{/);
-  assert.match(p, /return \(s\.cautiousTravel \|\| !this\.speedCautious\) && \(s\.stopAtInnsTravel \|\| !this\.sleepModeInn\) && !this\.travelShip;/);
+  // AUDIT-TO1 C1: the fork is ONE pure law now, shared with the enhanced map
+  assert.match(p, /return \(settings\.cautiousTravel \|\| !speedCautious\) && \(settings\.stopAtInnsTravel \|\| !sleepModeInn\) && !travelShip;/);
+  assert.match(p, /isPlayerControlledTravel\(\) \{\s*\n\s*return isPlayerControlledTravel\(this\._to\?\.settings, this\);/, 'the method is the pure law over its own three toggles');
+  const ov = read('src/ui/overworldMap.js');
+  assert.match(ov, /playerControlled: isPlayerControlledTravel\(st\.to\?\.settings, st\.opts\),/, 'and the DEFAULT skin commits the same word - the mod was unreachable from it before');
+  assert.match(ov, /enforceShipRestriction\(st\.to\.settings, st\.opts, this\._shipCtx\(\)\)/, 'OnPush\'s guard on the default skin');
+  assert.match(ov, /const refusal = shipTravelRefusal\(\{ settings, \.\.\.this\._shipCtx\(\) \}\);/, 'and the ship click\'s');
   assert.match(p, /if \(this\.coordsOnly \|\| this\.isPlayerControlledTravel\(\)\) \{/, 'the fork is in CallFastTravelGoldCheck, where the mod puts it');
   assert.match(p, /playerControlled: true,/);
   assert.match(p, /_scaleTripCost\(c0\)/);
@@ -1269,4 +1306,289 @@ test('AUDIT-TO1 F2: a walked journey costs a Cast-When-Held item no durability a
   assert.match(w, /travelUIShowing: \(\) => !!_travelUIHolder\.ui\?\.isShowing,/);
   assert.match(w, /_travelUIHolder\.ui = travelControlUI;/);
   resetSyntheticTimeIncrease();
+});
+
+
+// ═══ AUDIT-TO1 part 2: the sweep's confirmed findings, each pinned two ways ═══
+
+test('AUDIT-TO1 A1: driven with the HOST\'s own flag expression, a journey survives its first frame - and with the old one it died on it', () => {
+  // world.js handed `isPlayerOnHUD: !overlayActive && !overlayHeld` - the exact
+  // complement of the `gamePaused` beside it - so every frame that reached the
+  // "any other window" arm (:1040) took it. Every earlier journey pin passed
+  // `isPlayerOnHUD: false` by hand. This one passes what the host passes NOW:
+  // the panel standing in for DFU's pushed window (:533).
+  const { to, ui } = rig();
+  to.beginTravel({ pixel: { x: 900, y: 250 }, name: 'Nowhere' }, false);
+  const host = () => ({ topWindowIsTravelUI: !!ui.isShowing, isPlayerOnHUD: !ui.isShowing, gamePaused: false });
+  const r1 = to.update(host());
+  const r2 = to.update(host());
+  assert.equal(r1.interrupted, undefined, 'frame 1: not interrupted');
+  assert.equal(r2.interrupted, undefined, 'frame 2: not interrupted');
+  assert.ok(to.state.autopilot, 'the autopilot is alive');
+  assert.equal(ui.isShowing, true, 'and the panel is still up');
+  assert.ok(r2.drive && r2.drive.forward > 0, 'and the body is being pushed');
+  // the old expression, for the record: dead on frame one
+  const { to: old, ui: oldUi } = rig();
+  old.beginTravel({ pixel: { x: 900, y: 250 }, name: 'Nowhere' }, false);
+  const dead = old.update({ topWindowIsTravelUI: !!oldUi.isShowing, isPlayerOnHUD: true, gamePaused: false });
+  assert.equal(dead.interrupted, true, 'the shipped mapping interrupted every journey on its first unpaused frame');
+  assert.equal(old.state.autopilot, null);
+});
+
+test('AUDIT-TO1 M1: the mod DETACHES its enter-rect handler at the first interrupt under LocationPause "entered" - carried as written', () => {
+  // TravelOptionsMod.cs:994-996 `-=` in InterruptTravel; :381 is the only `+=`.
+  const { to, ui, boxed } = rig({ settings: { locationPause: LOC_PAUSE_ENTER } });
+  to.beginTravel({ pixel: { x: 900, y: 250 }, name: 'Nowhere' }, false);
+  to.onEnterLocationRect({ name: 'Tulanistead' });
+  assert.equal(boxed.length, 1, 'the "entered" stop fires');
+  assert.equal(ui.isShowing, false);
+  to.resumeTravel();
+  assert.equal(ui.isShowing, true, 'resume re-arms the autopilot and pushes the panel (:475-493 -> InitTravelUI)');
+  to.interruptTravel();
+  assert.equal(to.state.enterRectDetached, true, 'the handler is gone for the session');
+  to.resumeTravel();
+  to.onEnterLocationRect({ name: 'Tulanistead' });
+  assert.equal(boxed.length, 1, 'and never fires again - the mod\'s own quirk');
+  // ...and NOT under the other two pause modes
+  const { to: near } = rig({ settings: { locationPause: 1 } });
+  near.beginTravel({ pixel: { x: 900, y: 250 }, name: 'Nowhere' }, false);
+  near.interruptTravel();
+  assert.equal(near.state.enterRectDetached, false);
+});
+
+test('AUDIT-TO1 K1: InitTargetRect keeps the latched yaw - a re-aimed leg interrupted in the same update faces the way it walked', () => {
+  const ap = new TravelAutopilot({ x: 1, y: 1 }, rectOf(0, 0, 10, 10), 1);
+  ap.yaw = 90;
+  ap.initTargetRect({ x: 2, y: 2 }, rectOf(100, 100, 10, 10), 1);
+  assert.equal(ap.yaw, 90, 'PlayerAutoPilot.cs:40-50 never writes yawVector');
+  assert.deepEqual(ap.mouseLookAtDestination(), { yaw: 90, pitch: 0 });
+  assert.equal(ap.inDestinationMapPixel, false, 'and the rest of the re-init still happens');
+  assert.equal(ap.lastPlayerMapPixel.x, Number.MAX_SAFE_INTEGER);
+});
+
+test('AUDIT-TO1 L5: the enhanced panel\'s ETA runs the popup\'s estimate down on the world clock, and a followed path has none', () => {
+  let clock = 0;
+  const { to } = rig({ deps: { worldTimeNow: () => clock } });
+  assert.equal(to.minutesLeft, null, 'no journey, no estimate');
+  to.beginTravel({ pixel: { x: 900, y: 250 }, name: 'Nowhere' }, false, 120);
+  assert.equal(to.minutesLeft, 120);
+  clock = 45;
+  assert.equal(to.minutesLeft, 75);
+  clock = 500;
+  assert.equal(to.minutesLeft, 0, 'clamped - an overrun is "arriving", not owed');
+  to.clearTravelDestination();
+  assert.equal(to.minutesLeft, null);
+  assert.equal(to.state.estimateMinutes, null, 'and the estimate itself is dropped, not merely hidden behind the null autopilot - a resume would otherwise run down a stale trip\'s number');
+  // a followed path: no estimate to run down
+  const { to: f, net, state } = rig({ deps: { worldTimeNow: () => 0 } });
+  net.roads[500 + 250 * 1000] = 32; net.roads[501 + 250 * 1000] = 2; state.yaw = 90;
+  assert.equal(f.followPath(), true);
+  assert.equal(f.minutesLeft, null);
+  assert.equal(etaText(75), '1h 15m');
+});
+
+/** The popup as the map window builds it, with the ports restriction on. */
+function portsPopUp({ here = 1, dest = 199102, destPortsOnly = false, onShip = false, oceanPixels = 0 } = {}) {
+  const w = new TravelPopUpWindow({ x: 230, y: 240 }, {
+    getPlayerPixel: () => ({ x: 500, y: 250 }),
+    getClimateIndex: () => 231,
+    gold: () => 1000, goldPieces: () => 1000, diseaseCount: () => 0,
+    travelOptions: () => ({ settings: { shipTravelPortsOnly: true, shipTravelDestinationPortsOnly: destPortsOnly, cautiousTravel: true, stopAtInnsTravel: false, recklessTravelMultiplier: 1, cautiousTravelMultiplier: 0.8 } }),
+    currentLocationMapId: () => here,
+    isOnShip: () => onShip,
+    locationSummary: () => ({ mapID: dest }),
+  });
+  w.trip.oceanPixels = oceanPixels;
+  return w;
+}
+
+test('AUDIT-TO1 D1: with the player\'s location handed over, the ship is refused inland and ALLOWED at a port - it refused at every quay before', () => {
+  const inland = portsPopUp({ here: 1 });
+  assert.equal(inland.isNotAtPort(), true);
+  assert.equal(inland.shipTravelRefusal(), 'noport');
+  const quay = portsPopUp({ here: 199102, dest: 199111 });   // two of the 378 harbours
+  assert.equal(quay.isNotAtPort(), false, 'IsNotAtPort reads PlayerGPS.CurrentLocation (:85-89)');
+  assert.equal(quay.shipTravelRefusal(), null, 'a port to a port sails');
+  const wild = portsPopUp({ here: null, dest: 199111 });
+  assert.equal(wild.isNotAtPort(), true, 'open wilderness is `!location.Loaded` - not a port');
+});
+
+test('AUDIT-TO1 D2/D3/D4: OnPush\'s guard runs at construction, and the wheel and the camp-out arms carry the mod\'s own checks', () => {
+  // D2: a popup that cannot sail does not OPEN on the ship toggle (:53-67)
+  const w = portsPopUp({ here: 1 });
+  assert.equal(w.travelShip, true, 'DFU\'s own default before OnPush');
+  w.enforceShipRestriction();
+  assert.equal(w.travelShip, false, 'OnPush clears it - the map window calls this after Object.assign now');
+  assert.equal(w.isPlayerControlledTravel(), false, 'cautious/inns with the shipped settings');
+  // D4: the wheel over the transport pair is refused with the box, as the click is (:207-213)
+  w.hover(163 + 54, 61 + 4);   // over the SHIP row
+  w.wheel(1);
+  assert.equal(w.travelShip, false, 'not toggled');
+  assert.equal(w.top, 'noport', 'and the refusal box is up');
+  w.top = null;
+  // ...and at a port the same notch selects it
+  const q = portsPopUp({ here: 199102, dest: 199111 });
+  q.travelShip = false;
+  q.hover(163 + 54, 61 + 4); q.wheel(1);
+  assert.equal(q.travelShip, true);
+  assert.equal(q.top, null);
+  // D3: the camp-out CLICK clears the ship only when the trip cannot sail (:215-224)
+  const c = portsPopUp({ here: 1 });
+  c.travelShip = true;
+  const [cx, cy, cw, ch] = POPUP_RECTS.campout;
+  c.click(cx + cw / 2, cy + ch / 2);
+  assert.equal(c.sleepModeInn, false);
+  assert.equal(c.travelShip, false, 'the camp-out choice is the mod\'s way into a walked trip');
+  const c2 = portsPopUp({ here: 199102, dest: 199111 });
+  c2.travelShip = true;
+  c2.click(cx + cw / 2, cy + ch / 2);
+  assert.equal(c2.travelShip, true, 'at a port it stays');
+  // D3 (wheel): unconditionally over CAMP OUT (:226-232), never over INNS
+  const d = portsPopUp({ here: 199102, dest: 199111 });
+  d.travelShip = true;
+  d.hover(cx + cw / 2, cy + ch / 2); d.wheel(1);
+  assert.equal(d.travelShip, false, 'the scroll arm clears it whether or not the trip could sail');
+  const e = portsPopUp({ here: 199102, dest: 199111 });
+  e.travelShip = true;
+  const [ix, iy, iw, ih] = POPUP_RECTS.inns;
+  e.hover(ix + iw / 2, iy + ih / 2); e.wheel(1);
+  assert.equal(e.travelShip, true, 'a notch over INNS leaves the ship - `sender == campOutToggleButton`');
+  // the pure laws the enhanced map runs
+  const settings = { shipTravelPortsOnly: true, cautiousTravel: true, stopAtInnsTravel: false };
+  assert.equal(isPlayerControlledTravel(settings, { speedCautious: true, sleepModeInn: false, travelShip: false }), true);
+  assert.equal(isPlayerControlledTravel(settings, { speedCautious: true, sleepModeInn: true, travelShip: false }), false);
+  assert.equal(isPlayerControlledTravel(settings, { speedCautious: false, sleepModeInn: false, travelShip: true }), false, 'a ship is never walked');
+  const opts = { speedCautious: true, sleepModeInn: true, travelShip: true };
+  enforceShipRestrictionPure(settings, opts, { currentLocationMapId: 1, isOnShip: false, destinationMapId: 199102, oceanPixels: 0 });
+  assert.equal(opts.travelShip, false);
+  assert.equal(shipTravelRefusalPure({ settings, currentLocationMapId: 199102, destinationMapId: 199111 }), null);
+});
+
+test('AUDIT-TO1 G4: the middle-click mark outlives the window, like the eight filters', () => {
+  resetTravelMapState();
+  assert.equal(travelMapMarkedMapId(), -1);
+  setTravelMapMarkedMapId(199102);
+  assert.equal(travelMapMarkedMapId(), 199102, 'a second window would read the same mark');
+  setTravelMapMarkedMapId(NaN);
+  assert.equal(travelMapMarkedMapId(), -1, 'not a number is no mark');
+  setTravelMapMarkedMapId(7);
+  resetTravelMapState();
+  assert.equal(travelMapMarkedMapId(), -1, 'a new game forgets it');
+  const m = read('src/ui/travelMapWindow.js');
+  assert.match(m, /get: \(\) => travelMapMarkedMapId\(\),/, 'the window reads the store');
+  assert.match(m, /set: \(v\) => setTravelMapMarkedMapId\(v\),/);
+});
+
+test('AUDIT-TO1 E1/E2/E3: the vendored art is UPLOADED before it is drawn, and the junction disc draws through a real quad', () => {
+  const c = read('src/ui/travelControlUI.js');
+  assert.match(c, /uploadTexture\?\.\('img', 'travelopts:TOcontrolUI', px, \{ mips: false, variant: '#travelopts' \}\)/, 'the strip becomes a texture');
+  assert.match(c, /strip = tex \? \{ tex, w: px\.width, h: px\.height, key: 'TOcontrolUI' \} : null;/, 'in drawImg\'s own shape');
+  assert.match(c, /if \(_art\?\.strip\?\.tex\) drawImg\(renderer, _art\.strip, m, x0, 0, pw, ph\);/);
+  assert.ok(!/strip\.img/.test(c), 'the untextured shape is gone');
+  const m = read('src/ui/travelMapWindow.js');
+  assert.match(m, /uploadTexture\?\.\('img', `travelopts:\$\{name\}`, px, \{ mips: false, variant: '#travelopts' \}\)/, 'the two ports buttons too');
+  assert.match(m, /return tex \? \{ tex, w: px\.width, h: px\.height \} : null;/);
+  const j = read('src/ui/travelJunctionMap.js');
+  assert.match(j, /renderer\.drawScreenQuad\?\.\(this\._tex, \{ x: m\.ox \+ x \* m\.s, y: m\.oy \+ y \* m\.s, w: w \* m\.s, h: h \* m\.s \}\);/,
+    'no third argument: that slot is the SOURCE RECT, and `{ filter }` there fed NaN into uSrc');
+  assert.match(j, /\{ smooth: filterModeName\(s\.junctionMapFilterMode \?\? 0\) === 'linear', mips: false, variant: '#travelto' \}/, 'the filter is set where the port sets one - at upload');
+});
+
+test('AUDIT-TO1 F1/L7: the junction disc outlives the bar on the enhanced lane, and a window over the HUD covers the panel', () => {
+  const e = read('src/ui/enhancedTravelControl.js');
+  assert.match(e, /const junctionOnly = !state\.showing && !!state\.junction\?\.on;/);
+  assert.match(e, /if \(!state\.showing && !junctionOnly\) \{ hideEnhancedTravelControl\(\); return null; \}/, 'torn down only when BOTH are down');
+  assert.match(e, /if \(state\.covered\) \{/);
+  assert.match(e, /parts\.root\.style\.display = 'none';/);
+  assert.match(e, /title="\$\{T\.TipMap\}"/, 'and the two tooltips the mod carries reach the DOM (H3)');
+  const css = read('src/ui/enhancedStyle.js');
+  assert.match(css, /\.travelpanel-bar\.hidden \{ display: none; \}/);
+  const w = read('src/scenes/world.js');
+  assert.match(w, /covered: townTalk\.hudCovered \|\| \(modes\?\.hudCovered \?\? false\) \|\| gamePaused\(\),\s*\n\s*destination: travelControlUI\?\.destinationName/);
+  assert.match(w, /minutesLeft: travelOptions\?\.minutesLeft \?\? null,/);
+});
+
+test('AUDIT-TO1 B1/B2/B3: the location rects come off the BUILT terrain, and the mod\'s five Start subscriptions have callers', () => {
+  const w = read('src/scenes/world.js');
+  assert.ok(!/maps\.getLocationAt/.test(w), 'the method MapsFile never had is gone');
+  assert.match(w, /const r = built\.get\(`\$\{pixel\.x\},\$\{pixel\.y\}`\)\?\.locationRect \?\? null;/, 'DaggerfallTerrain.MapData.locationRect, off the built record');
+  assert.match(w, /tileRect: \{ x: r\.xMin, y: r\.yMin, width: r\.xMax - r\.xMin, height: r\.yMax - r\.yMin \},/);
+  assert.match(w, /hasCustomPosition: hasCustomLocationPosition\(loc\),/);
+  assert.match(w, /^      locationRect,\n/m, 'the built record keeps it');
+  // the subscriptions
+  assert.match(w, /travelOptions\.onMapPixelChanged\(playerTravelPixel\(\)\);/, 'PlayerGPS.OnMapPixelChanged');
+  assert.match(w, /if \(_travelRegionSeen !== null && _region !== _travelRegionSeen\) travelOptions\.onRegionIndexChanged\(\);/, 'OnRegionIndexChanged');
+  assert.match(w, /travelOptions\?\.onEnterLocationRect\(_musicLoc \? \{/, 'OnEnterLocationRect, on the rect edge');
+  assert.match(w, /raiseOnEncounterEvent: \(\) => \{ travelOptions\?\.onEncounter\(\); modes\?\.raiseOnEncounterEvent\?\.\(\); \},/, 'GameManager.OnEncounter');
+  assert.match(w, /if \(_isPlayersPixel && dfLocation\) travelOptions\?\.initLocationRects\(playerTravelPixel\(\)\);/, 'StreamingWorld.OnUpdateLocationGameObject');
+  // the tile rect the C# reads is the terrain's own, extraClearance included
+  const t = read('src/world/terrainTiles.js');
+  assert.match(t, /const extraClearance = dfLocation\.mapTableData\.locationType === LOCATION_TYPE_TOWN_CITY \? 3 : 2;/);
+});
+
+test('AUDIT-TO1 G1/G2/G3/I2/I3/I4/I6/J1/K2/H1/H2: the host seams the sweep found dead, each wired and named', () => {
+  const w = read('src/scenes/world.js');
+  // G1: a load clears the destination and the scale
+  assert.match(w, /async function worldQuickLoad\(\{ mostRecent = false, key = null \} = \{\}\) \{\s*\n\s*if \(_loading\) return;[\s\S]{0,700}?travelOptions\?\.clearTravelDestination\(\);\s*\n\s*if \(worldTimeScale\(\) !== 1\) resetTimeScale\(\);/);
+  // G2: the scale's net above every gate, and an indoor mode ends the journey
+  assert.match(w, /if \(travelControlUI\?\.isShowing && \(modes\?\.mode \?\? 'exterior'\) !== 'exterior'\) travelControlUI\.closeWindow\(\);\s*\n\s*if \(!travelControlUI\?\.isShowing && worldTimeScale\(\) !== 1\) resetTimeScale\(\);/);
+  // I2: the strip's click router wants the freed cursor and the primary button
+  assert.match(w, /if \(travelControlUI\?\.isShowing && !gamePaused\(\) && cursorActive\(\) && e\.button === 0 && !\(isEnhanced\(\) && typeof document !== 'undefined'\)\) \{/);
+  // I3: the follow key stands down online, as the map's door does
+  assert.match(w, /function travelFollowPressed\(\) \{[\s\S]{0,600}?if \(sharedClockOn\(\)\) return false;/);
+  // I4: the coordinates door acts on its refusal, and the popup opens only where it is honoured
+  assert.match(w, /if \(!beginAcceleratedTravel\(pick, opts, \{ coords: true \}\)\) townTalk\.say\('You cannot travel there now\.'\);/);
+  assert.match(w, /coordsAllowed: \(\) => !!travelOptions && !sharedClockOn\(\),/);
+  assert.match(read('src/ui/travelMapWindow.js'), /\(this\.deps\.coordsAllowed\?\.\(\) \?\? true\)/);
+  // I6: the discovery store is read by the key its writers use
+  assert.match(w, /return loc\?\.name \? discoveredBuildings\(`\$\{summary\.regionIndex\}:\$\{loc\.name\}`\) : \[\];/);
+  assert.match(w, /discoveryLocationId: \(\) => `\$\{_questLoc\(\)\?\.regionIndex \?\? -1\}:\$\{_questLoc\(\)\?\.name \?\? ''\}`,/, 'the writer\'s own key shape');
+  // J1: the two switches have readers
+  assert.match(w, /\} else if \(precipShown && precip\) \{[\s\S]{0,2500}?if \(!_travelWeatherOff\) \{\s*\n\s*precip\.draw\(precipShown, proj, view/, 'the rain (the branch literal is W1/WX2/WEATHER2d\'s; the switch wraps the draw)');
+  assert.match(w, /const _step = _travelSoundsOff \? null : footsteps\.update\(player\.pos, \{/, 'the classic stride: the component does not RUN (the one-gate line is BA1/IF1\'s literal)');
+  assert.match(w, /paused: _overlayHeld \|\| _seasonHeld \|\| _travelSoundsOff, entity: playerEntity,/, 'the mod\'s stride');
+  assert.match(w, /ridingVolumeScale: \(\) => \(_travelSoundsOff \? 0 : 1\),/, 'the riding loop');
+  assert.match(read('src/player/mountRig.js'), /soundVolume: ridingVolumeScale\(\),/);
+  // K2: the strafe is the player's own
+  assert.ok(!/axes\.strafe = 0;/.test(w), 'ApplyVerticalForce writes the vertical axis alone');
+  // H1: the help is boxed a row a line, in both doors
+  assert.match(w, /townTalk\.showBox\(travelOptions\.helpText\(\)\.split\('\\n'\)\)/);
+  assert.match(w, /helpRows: \(\) => \(travelOptions \? travelOptions\.helpText\(\)\.split\('\\n'\) : null\),/);
+  // H2: the two bindings through their real accessors, `Key` stripped
+  assert.match(w, /const code = action === 'TravelExit' \? sequenceString\(shortcutBinding\('TravelExit'\)\) : getBinding\(bindings\(\), action\);/);
+  assert.match(w, /return String\(code \?\? ''\)\.replace\(\/\^Key\/, ''\);/);
+  // G3: NO on the resume prompt leaves the map open
+  const m = read('src/ui/travelMapWindow.js');
+  assert.match(m, /if \(code === 'KeyN' \|\| code === 'Escape'\) \{ this\._click\(\); this\.top = null; \}\s*\n\s*return;\s*\n\s*\}\s*\n\s*\/\/ TO1 \(:477-497\): the teleport fee/);
+  // D1: the two reads the popup needed
+  assert.match(w, /currentLocationMapId: \(\) => _musicLoc\?\.mapTableData\?\.mapId \?\? null,/);
+  assert.match(w, /isOnShip: \(\) => isOnShip\(playerEntity, playerEntity\.boardShipPosition \?\? null, playerTravelPixel\(\)\),/);
+  assert.match(m, /currentLocationMapId: this\.deps\.currentLocationMapId,\s*\n\s*isOnShip: this\.deps\.isOnShip,/);
+  assert.match(m, /this\.popUp\.enforceShipRestriction\(\);/, 'OnPush\'s guard has a caller');
+  assert.equal((m.match(/this\.popUp\.enforceShipRestriction\(\);/g) || []).length, 2, 'at both construction sites');
+  // I5: the popup's I, and the box drawn above it
+  assert.match(read('src/ui/travelPopUp.js'), /if \(key === 'KeyI' && !this\.coordsOnly\) \{ this\.deps\.displayLocationInfo\?\.\(\); return; \}/);
+  assert.match(m, /displayLocationInfo: \(\) => this\._displayLocationInfo\(\),/);
+  assert.match(m, /this\.popUp\.draw\(renderer, canvas, font\);\s*\n[\s\S]{0,300}?if \(this\.infoBox\) \{\s*\n\s*this\._box = layoutMessageBox\(font, this\.infoBox\.rows, \[\]\);/);
+  // C3: the fee on the default skin
+  const ov = read('src/ui/overworldMap.js');
+  assert.match(ov, /const cost = teleportCost\(this\.deps\.magesGuildRank\?\.\(\) \?\? 0\);/);
+  assert.match(ov, /if \(fee && fee\.canPay && !fee\.paid\) \{ fee\.paid = true; this\.deps\.payTeleport\?\.\(fee\.cost\); \}/);
+  // F2: the junction disc honours the map's filters
+  assert.match(w, /const i = travelPixelColorIndex\(t, travelMapFilters\(\)\);/);
+});
+
+test('AUDIT-TO1 (mutant): a pixel carrying BOTH a road and a track shows the ROAD at the centre texel - the draw order is the law', () => {
+  // tools/mutants/to1.json called `map-section-roads-under-tracks` equivalent
+  // because the pin's fixture kept the two on disjoint pixels. Here they share
+  // one, and the mod draws tracks FIRST so the road wins (:786-787).
+  const buf = new Uint32Array(3 * 3 * DOT_SCALE * DOT_SCALE);
+  drawMapSection(buf, { originX: 0, originY: 0, width: 3, height: 3 }, {
+    pathsAt: (x, y, type) => (x === 1 && y === 1 ? 32 : 0),   // E on both layers
+    locationAt: () => null, colorOf: () => null,
+  });
+  const w5 = 3 * DOT_SCALE;
+  const centre = ((3 - 1 - 1) * DOT_SCALE * w5) + (1 * DOT_SCALE) + (2 * w5) + 2;
+  assert.equal(buf[centre], packColor(ROAD_COLOR), 'the road is drawn over the track');
+  assert.notEqual(buf[centre], packColor(TRACK_COLOR));
 });

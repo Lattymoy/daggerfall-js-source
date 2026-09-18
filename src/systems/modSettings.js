@@ -582,7 +582,19 @@ export const MOD_SETTINGS = Object.freeze({
       // the shipped file's spacer section "__" carries no keys
       'RoadsIntegration.Enable': Object.freeze({ default: true, description: "Enhances the travel map with larger location dots for cities & towns, and shows roads & tracks with toggle buttons" }),
       'RoadsIntegration.VariableSizeDots': Object.freeze({ default: true, description: "All locations, except for cities & towns, are rendered as smaller dots" }),
-      'RoadsIntegration.FollowPathsKey': Object.freeze({ default: 1, options: Object.freeze(["None", "F", "G", "K", "O", "X", "Custom Key Bind"]), description: "Sets the key to initiate time accelerated travelling following paths if roads integration enabled" }),
+      // AUDIT-TO1 I1: the mod ships index 1, "F" - and F is the key SOC5
+      // spent on SocialInteract (inputActions.js DEFAULT_BINDINGS), the
+      // same collision HT4 moved Handheld Torches' light toggle off.
+      // One press did both: the friends card opened AND a road leg
+      // began. Of the mod's own six: F is SOC5's, G is Handheld
+      // Torches' light toggle (HT4), O its ignite and X its throw
+      // (Throwing.ThrowTorchInput above) - so K, index 3, is the one
+      // letter nothing in the port or a vendored mod answers. The
+      // player may still pick F from the list; this is about what
+      // SHIPS. `keyChoice` DECLARES the kind, the way `axis` does, so
+      // the HT4 pin walks this choice list as it walks a TextKey and
+      // never has to guess whether "U" is a key or a bob shape.
+      'RoadsIntegration.FollowPathsKey': Object.freeze({ default: 3, keyChoice: true, options: Object.freeze(["None", "F", "G", "K", "O", "X", "Custom Key Bind"]), description: "Sets the key to initiate time accelerated travelling following paths if roads integration enabled" }),
       'RoadsIntegration.FollowPathsCustomKeyBind': Object.freeze({ default: "", text: true, description: "Custom key bind for following paths used if CustomBind set above" }),
       'RoadsIntegration.EnableWaterways': Object.freeze({ default: false, description: "Enhances the travel map with rivers and streams with a toggle button" }),
       'RoadsIntegration.EnableStreamsToggle': Object.freeze({ default: false, description: "Adds a streams toggle button separate from rivers button" }),

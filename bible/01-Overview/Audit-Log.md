@@ -8,6 +8,28 @@
 
 Newest first.
 
+**2026-09-18 - AUDIT-TO1: TRAVEL OPTIONS, THE AUDIT OF THE PORT.** Mac:
+*"Please do a comprehensive audit on this."* Fourteen finders over the
+mod's eight C# files against the port, three adversarial verifiers a
+finding, and four exact table diffs by hand (417/417 port ids, 44/44
+strings, 51/51 settings, the autopilot method by method - all clean).
+THE HEADLINE: the slice's headline feature never ran. The host handed
+the mod `isPlayerOnHUD` as the exact complement of the `gamePaused`
+beside it, so every accelerated journey interrupted itself on its
+first unpaused frame - and 41 pins were green because every one of them
+supplied the flag by hand. Three of the mod's eight classes had not
+been read (part 1, `68910ff`); the default skin could not start a
+journey at all; the ship restriction was inverted; the strip drew as a
+white bar; the junction map was invisible in the two moments it exists
+for; the follow key shipped on SocialInteract's F; the location rects
+came off a method MapsFile never had. Twenty-odd defects, each with a
+two-way pin and a mutant (55 pins, 113 mutants); departures 6/8/9
+corrected, 10-14 added; the mutant list's one "equivalent" was a live
+survivor. The lesson for the next 1:1 slice, stated once: A PIN THAT
+HANDS THE HOST'S FLAGS IN BY HAND PINS NOTHING ABOUT THE HOST - drive
+the leaf with the host's own expressions, and read every file the
+mod's manifest names. `06-Systems/Travel-Options.md`, AUDIT-TO1.
+
 **2026-09-15 - MENU1: THE ENHANCED MENUS THAT SOMETIMES DO NOT OPEN.**
 Mac, relaying a player: *"sometimes you're unable to open the enhanced
 menus. For example a player might open the radial and select the

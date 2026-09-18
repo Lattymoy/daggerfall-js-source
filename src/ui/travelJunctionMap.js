@@ -113,13 +113,22 @@ export class TravelJunctionMap {
     if (this._dirty || !this._tex) {
       if (this._key) renderer.releaseTexture?.('travelto', this._key);
       // bottom-up to top-down, as every generated texture in this port
-      // is flipped at upload (ui/travelMapWindow.js:1381-1389)
+      // is flipped at upload (ui/travelMapWindow.js:1418-1426)
       const flipped = new Uint32Array(this.buf.length);
       for (let row = 0; row < JUNCTION_TEX_H; row++) {
         flipped.set(this.buf.subarray((JUNCTION_TEX_H - row - 1) * JUNCTION_TEX_W, (JUNCTION_TEX_H - row) * JUNCTION_TEX_W), row * JUNCTION_TEX_W);
       }
       this._key = `junction-${++_texVer}`;
-      this._tex = renderer.uploadTexture('travelto', this._key, { width: JUNCTION_TEX_W, height: JUNCTION_TEX_H, colors: flipped });
+      // AUDIT-TO1 E3: the FILTER is set at upload, which is the only
+      // place the port's renderer sets one (textureParams: `smooth` is
+      // LINEAR, else NEAREST); drawScreenQuad's third argument is the
+      // SOURCE RECT (u0, v0, u1, v1), and handing it `{ filter }` fed
+      // four undefineds into uSrc - a NaN quad that never drew a texel.
+      // Point is the mod's default (:182), Bilinear and Trilinear both
+      // map to the port's linear (departure 7).
+      this._tex = renderer.uploadTexture('travelto', this._key,
+        { width: JUNCTION_TEX_W, height: JUNCTION_TEX_H, colors: flipped },
+        { smooth: filterModeName(s.junctionMapFilterMode ?? 0) === 'linear', mips: false, variant: '#travelto' });
       this._dirty = false;
     }
     // :356-357 - an opaque panel paints its background colour first
@@ -129,8 +138,7 @@ export class TravelJunctionMap {
         { color: [r / 255, g / 255, b / 255, a / 255] });
     }
     if (this._tex) {
-      renderer.drawScreenQuad?.(this._tex, { x: m.ox + x * m.s, y: m.oy + y * m.s, w: w * m.s, h: h * m.s },
-        { filter: filterModeName(s.junctionMapFilterMode ?? 0) });
+      renderer.drawScreenQuad?.(this._tex, { x: m.ox + x * m.s, y: m.oy + y * m.s, w: w * m.s, h: h * m.s });
     }
   }
 

@@ -89,7 +89,7 @@ export function drawRegionPageWithPaths(dotsBuf, outlineBuf, {
   originX, originY, width, height, scale, selectedRegion,
 }, deps) {
   const {
-    politicAt, summaryAt, discovered, colorIndexOf, colors, pathsAt,
+    summaryAt, discovered, colorIndexOf, colors, pathsAt,   // AUDIT-TO1 L6: politicAt is handed in and NOT read - see below
     showPaths = [true, true, false, false], onlyLargeDots = false,
     markedMapId = -1, markColor = null, outlineOn = false, outlineColor = 0,
   } = deps;
@@ -112,7 +112,13 @@ export function drawRegionPageWithPaths(dotsBuf, outlineBuf, {
         if (showPaths[type]) drawPath(dotsBuf, offset5, width5, pathsAt(mpX, mpY, type), px[type]);
       }
       // :630-643 - the dot, under the page's own containment law
-      if (politicAt(mpX, mpY) - 128 !== selectedRegion) continue;
+      // AUDIT-TO1 L6: NO politic containment here. DFU's base page keeps
+      // `if (sampleRegion != selectedRegion) continue;` and the port's
+      // classic page keeps it with it (travelMapWindow.js); the mod's
+      // override computes sampleRegion (TravelOptionsMapWindow.cs:614) and
+      // never tests it - the ONE occurrence in the file - so the five-texel
+      // page plots every discovered location inside the page rectangle,
+      // a neighbouring province's included. Kept as the mod draws it.
       const summary = summaryAt(mpX, mpY);
       if (!summary) continue;
       if (!discovered(summary)) continue;

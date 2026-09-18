@@ -151,6 +151,49 @@ export async function preloadTravelPopUpArt(deps) {
 }
 export const travelPopUpArtLoaded = () => !!_art;
 
+// AUDIT-TO1 C2: THE SHIP LAWS AS PURE FUNCTIONS, so the enhanced map's
+// travel card (ui/overworldMap.js, the DEFAULT skin) runs exactly the
+// ones the classic popup runs. Before this the ports restriction did
+// not exist on the default skin at all.
+
+/** :85-89, IsNotAtPort. `here == null` is the C#'s `!location.Loaded`
+ *  - open wilderness is not a port. */
+export function isNotAtPort(currentLocationMapId) {
+  return currentLocationMapId == null || !hasPort(currentLocationMapId);
+}
+/** :91-94, HasNoOceanTravel. */
+export function hasNoOceanTravel(oceanPixels, isOnShip, destinationMapId) {
+  return (oceanPixels ?? 0) === 0 && !isOnShip && !hasPort(destinationMapId);
+}
+/** :96-99, IsDestNotValidPort. */
+export function isDestNotValidPort(settings, destinationMapId) {
+  return !!settings?.shipTravelDestinationPortsOnly && !hasPort(destinationMapId);
+}
+/** :168-180, IsShipTravelValid's three refusals in the mod's order:
+ *  'noport' | 'nodestport' | 'nosailing' | null. */
+export function shipTravelRefusal({ settings, currentLocationMapId, isOnShip = false, destinationMapId, oceanPixels = 0 }) {
+  if (isNotAtPort(currentLocationMapId)) return 'noport';
+  if (isDestNotValidPort(settings, destinationMapId)) return 'nodestport';
+  if (hasNoOceanTravel(oceanPixels, isOnShip, destinationMapId)) return 'nosailing';
+  return null;
+}
+/** :80-83, IsPlayerControlledTravel over three toggles - the whole fork
+ *  between a walked trip and DFU's fast travel, shared with the
+ *  enhanced map so both skins answer the same word. */
+export function isPlayerControlledTravel(settings, { speedCautious, sleepModeInn, travelShip }) {
+  if (!settings) return false;
+  return (settings.cautiousTravel || !speedCautious) && (settings.stopAtInnsTravel || !sleepModeInn) && !travelShip;
+}
+/** :55-67, OnPush's guard: under the ports restriction a trip that
+ *  cannot sail does not START on the ship toggle. Returns the opts. */
+export function enforceShipRestriction(settings, opts, ctx) {
+  if (!settings?.shipTravelPortsOnly || !opts.travelShip) return opts;
+  if (shipTravelRefusal({ settings, ...ctx })) opts.travelShip = false;
+  return opts;
+}
+/** The refusal messages, by key - the mod's own words. */
+export const SHIP_REFUSAL_TEXT = Object.freeze({ noport: TO_TEXT.MsgNoPort, nodestport: TO_TEXT.MsgNoDestPort, nosailing: TO_TEXT.MsgNoSailing });
+
 export class TravelPopUpWindow {
   /** endPos: the destination MAP PIXEL {x, y}. deps:
    *  { getPlayerPixel, getClimateIndex, gold, goldPieces, hasHorse,
@@ -222,28 +265,19 @@ export class TravelPopUpWindow {
    *  "recklessly by foot/horse with camp out options will ALWAYS
    *  initiate time accelerated travel". A ship is never walked. */
   isPlayerControlledTravel() {
-    const s = this._to?.settings;
-    if (!s) return false;
-    return (s.cautiousTravel || !this.speedCautious) && (s.stopAtInnsTravel || !this.sleepModeInn) && !this.travelShip;
+    return isPlayerControlledTravel(this._to?.settings, this);
   }
 
   /** :85-89, IsNotAtPort - the place the player stands in must be a
    *  port for a ship to sail from it. */
-  isNotAtPort() {
-    const here = this.deps.currentLocationMapId?.();
-    return here == null || !hasPort(here);
-  }
+  isNotAtPort() { return isNotAtPort(this.deps.currentLocationMapId?.()); }
 
   /** :91-94, HasNoOceanTravel - a crossing with no ocean in it and no
    *  ship under the player and no port at the far end needs no ship. */
-  hasNoOceanTravel() {
-    return (this.trip.oceanPixels ?? 0) === 0 && !this.deps.isOnShip?.() && !hasPort(this._destinationMapId());
-  }
+  hasNoOceanTravel() { return hasNoOceanTravel(this.trip.oceanPixels, !!this.deps.isOnShip?.(), this._destinationMapId()); }
 
   /** :96-99, IsDestNotValidPort. */
-  isDestNotValidPort() {
-    return !!this._to?.settings?.shipTravelDestinationPortsOnly && !hasPort(this._destinationMapId());
-  }
+  isDestNotValidPort() { return isDestNotValidPort(this._to?.settings, this._destinationMapId()); }
 
   _destinationMapId() { return this.deps.locationSummary?.()?.mapID ?? this.deps.locationSummary?.()?.mapId ?? null; }
 
@@ -251,10 +285,10 @@ export class TravelPopUpWindow {
    *  up, in the mod's own order. Returns the box key, or null when the
    *  ship is allowed. */
   shipTravelRefusal() {
-    if (this.isNotAtPort()) return 'noport';
-    if (this.isDestNotValidPort()) return 'nodestport';
-    if (this.hasNoOceanTravel()) return 'nosailing';
-    return null;
+    return shipTravelRefusal({
+      settings: this._to?.settings, currentLocationMapId: this.deps.currentLocationMapId?.(),
+      isOnShip: !!this.deps.isOnShip?.(), destinationMapId: this._destinationMapId(), oceanPixels: this.trip.oceanPixels,
+    });
   }
 
   /** :55-70, OnPush's own guard: with the ports restriction on, a trip
@@ -439,6 +473,12 @@ export class TravelPopUpWindow {
     if (this.top === 'gold') { this.top = null; return; }   // ClickAnywhereToClose (:403)
     if (this.top === 'noport' || this.top === 'nodestport' || this.top === 'nosailing') { this.top = null; return; }   // TO1: the three ship refusals, likewise
     if (key === 'Escape') { this.exit(); return; }
+    // AUDIT-TO1 I5 (TravelOptionsPopUp.cs:69-80): the popup's OWN Update
+    // polls I - `travelWindowTO.LocationSelected && infoBox == null` -
+    // because only the top window updates in DFU, so with this popup
+    // pushed the map's own I handler cannot run. The map window supplies
+    // the door (`displayLocationInfo`) and draws the box ABOVE the popup.
+    if (key === 'KeyI' && !this.coordsOnly) { this.deps.displayLocationInfo?.(); return; }
     // A8: the five buttons' Hotkeys, from the table rather than from
     // five literals (DaggerfallTravelPopUp.cs:167/171/176/188/200).
     // The letters do not move - B/E/S/T/N were right - but they are
@@ -483,7 +523,15 @@ export class TravelPopUpWindow {
     }
     if (inRect(POPUP_RECTS.footHorse, vx, vy)) { this._click(); this.travelShip = false; this.refresh(); return true; }
     if (inRect(POPUP_RECTS.inns, vx, vy)) { this._click(); this.sleepModeInn = true; this.refresh(); return true; }
-    if (inRect(POPUP_RECTS.campout, vx, vy)) { this._click(); this.sleepModeInn = false; this.refresh(); return true; }
+    if (inRect(POPUP_RECTS.campout, vx, vy)) {
+      this._click(); this.sleepModeInn = false;
+      // AUDIT-TO1 D3 (:215-224, SleepModeButtonOnClickHandler): under the
+      // ports restriction, choosing CAMP OUT knocks the transport back to
+      // foot when the trip cannot sail - the camp-out choice is the mod's
+      // way into a walked trip, and a ship is never walked.
+      if (this._to?.settings?.shipTravelPortsOnly && this.shipTravelRefusal()) this.travelShip = false;
+      this.refresh(); return true;
+    }
     return true;
   }
 
@@ -500,9 +548,23 @@ export class TravelPopUpWindow {
     if (inRect(POPUP_RECTS.cautious, vx, vy) || inRect(POPUP_RECTS.reckless, vx, vy)) {
       this._click(); this.speedCautious = !this.speedCautious; this.refresh();
     } else if (inRect(POPUP_RECTS.footHorse, vx, vy) || inRect(POPUP_RECTS.ship, vx, vy)) {
+      // AUDIT-TO1 D4 (:207-213, ToggleTransportModeButtonOnScrollHandler):
+      // a notch that would SELECT the ship is refused under the ports
+      // restriction exactly as the click is, box and all - the wheel was
+      // a complete bypass of the check the click enforces.
+      if (this._to?.settings?.shipTravelPortsOnly && this.travelShip === false) {
+        const refusal = this.shipTravelRefusal();
+        if (refusal) { this._click(); this.top = refusal; return; }
+      }
       this._click(); this.travelShip = !this.travelShip; this.refresh();
     } else if (inRect(POPUP_RECTS.inns, vx, vy) || inRect(POPUP_RECTS.campout, vx, vy)) {
-      this._click(); this.sleepModeInn = !this.sleepModeInn; this.refresh();
+      this._click(); this.sleepModeInn = !this.sleepModeInn;
+      // AUDIT-TO1 D3 (:226-232, ToggleSleepModeButtonOnScrollHandler): the
+      // scroll arm clears the ship UNCONDITIONALLY - but only over the
+      // CAMP OUT button (`sender == campOutToggleButton`); a notch over
+      // INNS leaves it, which is why the two rects are told apart here.
+      if (this._to?.settings?.shipTravelPortsOnly && inRect(POPUP_RECTS.campout, vx, vy)) this.travelShip = false;
+      this.refresh();
     }
   }
 

@@ -74,8 +74,8 @@ function build(doc, hooks) {
         </div>
       </div>
       <div class="travelpanel-acts">
-        <button type="button" class="travelpanel-act" data-act="map">Map</button>
-        <button type="button" class="travelpanel-act" data-act="camp">Camp</button>
+        <button type="button" class="travelpanel-act" data-act="map" title="${T.TipMap}">Map</button>
+        <button type="button" class="travelpanel-act" data-act="camp" title="${T.TipCamp}">Camp</button>
         <button type="button" class="travelpanel-act travelpanel-exit" data-act="exit">Exit</button>
       </div>
     </div>
@@ -149,28 +149,50 @@ export function paintJunction(canvas, buf, { mapPixel, direction, settings, deps
   const img = ctx.createImageData(w, h);
   const out = new Uint32Array(img.data.buffer);
   // the buffer is bottom-up, as every generated map texture in this
-  // port is (ui/travelMapWindow.js:1381-1389)
+  // port is (ui/travelMapWindow.js:1418-1426)
   for (let row = 0; row < h; row++) out.set(buf.subarray((h - row - 1) * w, (h - row) * w), row * w);
   ctx.putImageData(img, 0, 0);
   return true;
 }
 
 /** The panel's frame. `state` is what the journey knows:
- *  { showing, destination, following, accel, message, minutesLeft,
+ *  { showing, covered, destination, following, accel, message, minutesLeft,
  *    from, to, junction: { on, mapPixel, direction, settings, deps, buf } }
- *  `hooks` are the five controls, wired once at build. */
+ *  `hooks` are the five controls, wired once at build.
+ *
+ *  AUDIT-TO1 F1: THE JUNCTION MAP OUTLIVES THE BAR. In the mod the
+ *  mini-map is a child of the HUD's native panel (TravelOptionsMod.cs
+ *  :358) whose visibility is `Enabled` alone, and the two moments it
+ *  exists for are both moments the travel window is DOWN: the stop at
+ *  a junction (SelectNextPath enables the panel and then closes the
+ *  window, :735-748) and the off-path toggle (:646-652, no journey at
+ *  all). So `showing: false` with `junction.on` keeps the panel mounted
+ *  with the bar and the message hidden and the disc alone on screen.
+ *
+ *  AUDIT-TO1 L7: `covered` is the HUD's own word (enhancedHud.js) - a
+ *  window over the HUD hides this too. The mod keeps its travel UI up
+ *  under its own map on purpose (:1343-1345) but that map is opaque;
+ *  this port's enhanced overworld is a GL picture under transparent
+ *  chrome, and the brass bar painted straight over the bay. */
 export function drawEnhancedTravelControl(state = {}, hooks = {}) {
   if (typeof document === 'undefined') return null;
-  if (!state.showing) { hideEnhancedTravelControl(); return null; }
+  const junctionOnly = !state.showing && !!state.junction?.on;
+  if (!state.showing && !junctionOnly) { hideEnhancedTravelControl(); return null; }
   if (!host) { last = {}; parts = build(document, hooks); host = parts.root; }
-  cls(parts.root, 'rootClass', state.following ? 'travelpanel following' : 'travelpanel');
+  if (state.covered) {
+    if (last.covered !== true) { last.covered = true; parts.root.style.display = 'none'; }
+    return parts.root;
+  }
+  if (last.covered === true) { last.covered = false; parts.root.style.display = ''; }
+  cls(parts.root, 'rootClass', `travelpanel${state.following ? ' following' : ''}${junctionOnly ? ' junction-only' : ''}`);
+  cls(parts.bar, 'barClass', junctionOnly ? 'travelpanel-bar hidden' : 'travelpanel-bar');
   put(parts.name, 'name', String(state.destination ?? ''));
   const eta = etaText(state.minutesLeft);
   const dist = distanceText(state.from, state.to);
   put(parts.sub, 'sub', [eta, dist].filter(Boolean).join('  ·  '));
   put(parts.accel, 'accel', `×${state.accel ?? 1}`);
   put(parts.msg, 'msg', String(state.message ?? ''));
-  cls(parts.msg, 'msgClass', state.message ? 'travelpanel-msg show' : 'travelpanel-msg');
+  cls(parts.msg, 'msgClass', state.message && !junctionOnly ? 'travelpanel-msg show' : 'travelpanel-msg');
   const j = state.junction;
   cls(parts.junction, 'junctionClass', j?.on ? 'travelpanel-junction show' : 'travelpanel-junction');
   if (j?.on && j.buf) {

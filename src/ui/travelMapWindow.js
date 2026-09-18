@@ -122,7 +122,7 @@ import { getDaggerfallDistance, MatchesCutOff } from '../systems/editDistance.js
 import { hasDiscoveredLocationId } from '../systems/discovery.js';
 import { getBool } from '../systems/settings.js';
 import { registerCommand, consoleLog, HELP_COMMAND } from '../systems/consoleCommands.js';   // E3: the console command database
-import { travelMapFilters, travelMapPopUpState, setTravelMapPopUpState, travelMapSaveData, restoreTravelMapSaveData } from '../systems/travelMapState.js';
+import { travelMapFilters, travelMapPopUpState, setTravelMapPopUpState, travelMapSaveData, restoreTravelMapSaveData, travelMapMarkedMapId, setTravelMapMarkedMapId } from '../systems/travelMapState.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 
@@ -329,7 +329,14 @@ async function loadVendorPng(deps, name) {
     const bytes = new Uint8Array(await res.arrayBuffer());
     const { decodePng } = await import('../systems/textureReplacement.js');
     const { toScreenOrder } = await import('../formats/color32Order.js');
-    return toScreenOrder(await decodePng(bytes));
+    // AUDIT-TO1 E2: toScreenOrder answers `{ width, height, colors }` -
+    // what uploadTexture EATS - and the precedent this loader cited
+    // (handheldTorches.js) uploads it before drawing. Stored as-is, the
+    // pair reached drawImg with no `tex` and the PORTS button painted
+    // as an opaque white 45x11 block in both of its states.
+    const px = toScreenOrder(await decodePng(bytes));
+    const tex = deps?.renderer?.uploadTexture?.('img', `travelopts:${name}`, px, { mips: false, variant: '#travelopts' }) ?? null;
+    return tex ? { tex, w: px.width, h: px.height } : null;
   } catch { return null; }
 }
 
@@ -517,7 +524,17 @@ export class TravelMapWindow {
     // this is the one place the two shapes differ and the bible says so.
     this._to = deps.travelOptions?.() ?? null;
     this.portsFilter = false;
-    this.markedMapId = -1;          // :102, the middle-click mark
+    // AUDIT-TO1 G4: :102's `markedLocationId` is a field on the SAME
+    // persistent window the eight filters ride, so it outlives an
+    // open/close as they do - the whole point of a mark is to steer to
+    // it on the junction map AFTER closing the map. It lives in
+    // systems/travelMapState.js with the filters; the ports filter
+    // remains the one field that does not (departure 6).
+    Object.defineProperty(this, 'markedMapId', {
+      get: () => travelMapMarkedMapId(),
+      set: (v) => setTravelMapMarkedMapId(v),
+      enumerable: true,
+    });
     this.infoBox = null;            // :109, the I key's box
     this._resumeAsked = false;      // :322-345, the resume prompt, once per open
     this._teleportChargeDone = false;
@@ -1187,6 +1204,11 @@ export class TravelMapWindow {
     // The three toggles DFU's persistent popup would still be
     // holding (SetTravelMapFromSaveData's half, :1325-1336).
     Object.assign(this.popUp, travelMapPopUpState());
+    // AUDIT-TO1 D2: ...and THEN the mod's OnPush guard (TravelOptionsPopUp.cs
+    // :53-67), which was ported and never called: with the ports
+    // restriction on, a trip that cannot sail does not START on the
+    // ship toggle. Every popup opened on SHIP before this.
+    this.popUp.enforceShipRestriction();
     this.popUp.refresh();
   }
 
@@ -1214,6 +1236,7 @@ export class TravelMapWindow {
       },
     });
     Object.assign(this.popUp, travelMapPopUpState());
+    this.popUp.enforceShipRestriction();   // AUDIT-TO1 D2: OnPush's guard, here too
     this.popUp.refresh();
   }
 
@@ -1302,6 +1325,15 @@ export class TravelMapWindow {
       playerEntity: this.deps.playerEntity,
       travelOptions: this.deps.travelOptions,
       locationSummary: () => this.locationSummary,
+      // AUDIT-TO1 D1: TravelOptionsPopUp.cs:85-94 read PlayerGPS.CurrentLocation
+      // and TransportManager.IsOnShip - neither was ever handed over, so
+      // IsNotAtPort answered TRUE in every one of the 378 harbours and
+      // the ship button refused at Daggerfall's own quay.
+      currentLocationMapId: this.deps.currentLocationMapId,
+      isOnShip: this.deps.isOnShip,
+      // AUDIT-TO1 I5: the popup's own I (:69-80) - the map draws the box
+      // ABOVE the popup (see draw / input / click below).
+      displayLocationInfo: () => this._displayLocationInfo(),
     };
   }
 
@@ -1336,7 +1368,12 @@ export class TravelMapWindow {
     // coordinates - a journey to a place with no name. The mod runs its
     // own bounds check in the region texture's own coordinates, which
     // is the `y` above, and falls through to DFU's handler otherwise.
-    if (this._to?.settings?.targetCoordsAllowed && this.regionSelected && !this.locationSelected && !this.mouseOverOtherRegion) {
+    // AUDIT-TO1 I4: ...and only where the host can HONOUR it. A bare
+    // pixel has no DFU fast travel to fall back on, so the online lane
+    // (which stands the journey down) must not open a popup that
+    // promises an arrival and then does nothing (`coordsAllowed`).
+    if (this._to?.settings?.targetCoordsAllowed && (this.deps.coordsAllowed?.() ?? true)
+      && this.regionSelected && !this.locationSelected && !this.mouseOverOtherRegion) {
       this._createCoordsPopUpWindow();
       return;
     }
@@ -1415,6 +1452,9 @@ export class TravelMapWindow {
       if (this.telePopUp?.done) this.telePopUp = null;
       return;
     }
+    // AUDIT-TO1 I5: the info box the popup's own I raised is dismissed
+    // ABOVE the popup (ClickAnywhereToClose), or it could never go.
+    if (this.popUp && this.infoBox) { this.infoBox = null; return; }
     if (this.popUp) {
       this.popUp.input(code, e);
       if (this.popUp?.done) this.popUp = null;
@@ -1451,7 +1491,14 @@ export class TravelMapWindow {
     // world rather than to the region page.
     if (this.top === 'resume') {
       if (code === 'KeyY') { this._click(); this.top = null; this.deps.onResumeTravel?.(); this.closeTravelWindows(true); return; }
-      if (code === 'KeyN' || code === 'Escape') { this._click(); this.top = null; this.closeTravelWindows(true); }
+      // AUDIT-TO1 G3 (:334-343): the handler's first CloseWindow pops the
+      // BOX and the second, inside the Yes branch alone, pops the map -
+      // so No leaves the player ON the map to pick somewhere else. The
+      // port closed the whole map on No, and because the window is
+      // per-open the prompt came straight back on the next M: no way
+      // onto the map while a destination was pending short of resuming
+      // the journey just declined.
+      if (code === 'KeyN' || code === 'Escape') { this._click(); this.top = null; }
       return;
     }
     // TO1 (:477-497): the teleport fee. Yes pays it, No closes the map.
@@ -1470,7 +1517,14 @@ export class TravelMapWindow {
       // `infoBox == null`, which the arm above has just made true.
       if (code === 'KeyI' && this.locationSelected) { this._displayLocationInfo(); return; }
       // :367-370 - H anywhere on the map opens the mod's help.
-      if (code === 'KeyH') { this.deps.onHelp?.(); return; }
+      // AUDIT-TO1 H1: the help in this window's own box (the I key's slot),
+    // one row per line as DisplayHelpInfo's Split('\n') gives it.
+    if (code === 'KeyH') {
+      const rows = this.deps.helpRows?.();
+      if (rows?.length) this.infoBox = { rows: rows.map((t) => ({ text: t, center: false })), anywhere: true };
+      else this.deps.onHelp?.();
+      return;
+    }
     }
     // Update's own keys (:378-425)
     // Update's toggle-closed binding and the back button (:376-386)
@@ -1549,6 +1603,7 @@ export class TravelMapWindow {
       if (this.telePopUp?.done) this.telePopUp = null;
       return true;
     }
+    if (this.popUp && this.infoBox) { this.infoBox = null; return true; }   // AUDIT-TO1 I5
     if (this.popUp) {
       this.popUp.click(vx, vy);
       if (this.popUp?.done) this.popUp = null;
@@ -1821,7 +1876,16 @@ export class TravelMapWindow {
     if (label) shadowText(renderer, font, label, m, 0, 2, { align: 'center', w: NATIVE_W });
 
     if (this.telePopUp) { this.telePopUp.draw(renderer, canvas, font); return; }
-    if (this.popUp) { this.popUp.draw(renderer, canvas, font); return; }
+    if (this.popUp) {
+      this.popUp.draw(renderer, canvas, font);
+      // AUDIT-TO1 I5: the mod's info box is pushed OVER the popup
+      // (TravelOptionsPopUp.cs:69-80 raises it from the popup's Update)
+      if (this.infoBox) {
+        this._box = layoutMessageBox(font, this.infoBox.rows, []);
+        this._drawBox(renderer, m, font);
+      }
+      return;
+    }
     if (this.picker) { this.picker.draw(renderer, canvas, font); return; }
     if (this.top === 'find') {
       // DaggerfallInputMessageBox with NULL tokens (:965): the box is

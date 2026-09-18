@@ -307,6 +307,17 @@ export function createTravelOptions(deps = {}) {
     ignoreEncountersTime: 0,
     diseaseCount: 0,
     beginTime: 0,
+    // AUDIT-TO1 L5: the port's own - the popup's estimate for the trip, so
+    // the enhanced panel can say how long is left. The mod keeps no such
+    // number (its strip has no room for one); a followed path has none
+    // to keep, and the panel then shows the distance alone.
+    estimateMinutes: null,
+    // AUDIT-TO1 M1: TravelOptionsMod.cs:994-996. InterruptTravel UNSUBSCRIBES
+    // PlayerGPS_OnEnterLocationRect when LocationPause is "entered", and
+    // Start (:381) is the only `+=` - so after the first interruption of
+    // the session the "entered" stop never fires again. The mod's own
+    // quirk, carried as written and recorded in the bible.
+    enterRectDetached: false,
     circumnavigatePathsDataPt: 0,
     lastCrossed: 0,
     road: false,
@@ -355,13 +366,14 @@ export function createTravelOptions(deps = {}) {
   function clearTravelDestination() {
     st.destinationName = null;
     st.autopilot = null;
+    st.estimateMinutes = null;   // AUDIT-TO1 L5
     if (ui?.isShowing) ui.closeWindow();
   }
 
   /** :456-473, BeginTravel(summary, cautious) - the named destination.
    *  `summary` is the port's map summary: { pixel: {x, y}, mapId,
    *  regionIndex, mapIndex, locationType, name }. */
-  function beginTravel(summary, speedCautious = false) {
+  function beginTravel(summary, speedCautious = false, estimateMinutes = null) {
     const name = deps.localizedLocationName?.(summary) ?? summary?.name ?? null;
     if (name == null) throw new Error('TravelOptions: destination not found!');   // :472
     st.destinationName = name;
@@ -372,6 +384,19 @@ export function createTravelOptions(deps = {}) {
     if (ui) ui.halfLimit = false;
     resumeTravel();
     st.beginTime = deps.worldTimeNow?.() ?? 0;
+    // AUDIT-TO1 L5: the popup's own estimate for THIS trip, the port's
+    // own reading for the enhanced panel; null for a followed path.
+    st.estimateMinutes = Number.isFinite(estimateMinutes) && estimateMinutes > 0 ? estimateMinutes : null;
+  }
+
+  /** AUDIT-TO1 L5: the minutes still to run, or null when there is no
+   *  estimate to run down - a followed path, a coordinate target, or a
+   *  resumed journey whose estimate was for the whole trip. Clamped at
+   *  zero: a walk that overran its estimate is "arriving", not owed. */
+  function minutesLeft() {
+    if (st.estimateMinutes == null || !st.autopilot || st.destinationName == null) return null;
+    const elapsed = (deps.worldTimeNow?.() ?? 0) - st.beginTime;
+    return Math.max(0, st.estimateMinutes - elapsed);
   }
 
   /** :475-493, BeginTravel() with no arguments - "used to continue
@@ -613,6 +638,8 @@ export function createTravelOptions(deps = {}) {
     }
     st.autopilot = null;
     enableWeatherAndSound();
+    // :994-996 - see st.enterRectDetached (AUDIT-TO1 M1)
+    if (st.settings.locationPause === LOC_PAUSE_ENTER) st.enterRectDetached = true;
     if (st.settings.roadsJunctionMap && st.settings.persistentJunctionMap && st.junctionMapOn) {
       drawJunctionMap(pixel());
     }
@@ -798,6 +825,7 @@ export function createTravelOptions(deps = {}) {
   /** :546-555, PlayerGPS_OnEnterLocationRect - the LocationPause
    *  "entered" arm. */
   function onEnterLocationRect(location) {
+    if (st.enterRectDetached) return;   // AUDIT-TO1 M1: the mod's `-=` at :994-996
     if (st.destinationName && st.settings.locationPause === LOC_PAUSE_ENTER) {
       if (ui?.isShowing) ui.closeWindow();
       messageBox(format(T.MsgEnterLocation, deps.locationTypeName?.() ?? '',
@@ -825,6 +853,7 @@ export function createTravelOptions(deps = {}) {
     get isTravelActive() { return !!ui?.isShowing; },
     get isPathFollowing() { return !!ui?.isShowing && st.destinationName == null; },
     get junctionMapOn() { return st.junctionMapOn; },
+    get minutesLeft() { return minutesLeft(); },   // AUDIT-TO1 L5
     beginTravel, resumeTravel, beginTravelToCoords, clearTravelDestination,
     followPath, beginPathTravel, selectNextPath, circumnavigateLocation,
     interruptTravel, update, helpText, messages,

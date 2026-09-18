@@ -75,6 +75,16 @@ import { locationSummaryAt } from '../systems/mapDirectory.js';
 import { calculateTravelTime, calculateTripCost, travelDays, walkTravelPath } from '../systems/travel.js';
 import { guildFastTravel } from '../systems/guildVariants.js';   // TP1: GuildManager.FastTravel
 import { travelMapFilters, travelMapPopUpState, setTravelMapPopUpState, travelMapSaveData } from '../systems/travelMapState.js';
+// AUDIT-TO1 C1/C2: THE MOD REACHES THE DEFAULT SKIN. TO1 wired Travel
+// Options into the classic window alone, and this is the map the
+// travel key opens for every player who never chose a skin
+// (uiSkin.js DEFAULT_SKIN = 'enhanced'): no `playerControlled` on the
+// commit, so world.js's fork always fell to DFU's fast travel and the
+// mod's whole walked journey was unreachable from the map; no ship law
+// at all, so a landlocked village sold sea passage. The laws are the
+// popup's own, as pure functions, so the two skins cannot drift.
+import { isPlayerControlledTravel, enforceShipRestriction, shipTravelRefusal, SHIP_REFUSAL_TEXT } from './travelPopUp.js';
+import { teleportCost, teleportCostPrompt } from './travelMapOptions.js';
 import { getDaggerfallDistance, MatchesCutOff } from '../systems/editDistance.js';
 import { checkLocationDiscovered } from './travelMapWindow.js';
 import {
@@ -744,12 +754,46 @@ export class OverworldMapWindow {
         // not a thing (DFU OnPush)
         hasHorse: readOnce(d.hasHorse), hasCart: readOnce(d.hasCart), hasShip: readOnce(d.hasShip),
         trip: null, confirm: false, notice: null,
+        // AUDIT-TO1 C1: the mod, read once as the card opens - DFU's
+        // `TravelOptionsMod.Instance` in the popup's constructor
+        to: d.travelOptions?.() ?? null,
       };
       this._refreshTrip();
+      // AUDIT-TO1 C2: OnPush's guard (TravelOptionsPopUp.cs:53-67) over
+      // the remembered toggles, with the trip now billed.
+      const st = this._panelState;
+      if (st.to) enforceShipRestriction(st.to.settings, st.opts, this._shipCtx());
+    } else if (kind === 'teleport') {
+      // AUDIT-TO1 C3: ChargeForTeleport (TravelOptionsMapWindow.cs
+      // :470-503) on the default skin - the fee below the rank the
+      // service is free at, asked once as the map opens for a
+      // teleport visit, paid on Yes and the map closed on No or on an
+      // empty purse. The classic window does this in its first tick.
+      const to = this.deps.travelOptions?.() ?? null;
+      let fee = null;
+      if (to?.settings?.teleportCost) {
+        const cost = teleportCost(this.deps.magesGuildRank?.() ?? 0);
+        if (cost > 0) fee = { cost, canPay: (this.deps.gold?.() ?? 0) >= cost, paid: false };
+      }
+      this._panelState = { opts: null, trip: null, confirm: false, notice: null, fee };
     } else {
       this._panelState = { opts: null, trip: null, confirm: false, notice: null };
     }
     this._renderCard();
+  }
+
+  /** AUDIT-TO1 C2: what the ship laws ask of the world, in the popup's
+   *  own names. The destination's MAP id (MapSummary.MapID), not the
+   *  pixel id the flight reads. */
+  _shipCtx() {
+    const d = this.deps;
+    const summary = this._selected?.summary ?? {};
+    return {
+      currentLocationMapId: d.currentLocationMapId?.() ?? null,
+      isOnShip: !!d.isOnShip?.(),
+      destinationMapId: summary.mapID ?? summary.mapId ?? null,
+      oceanPixels: this._panelState?.trip?.oceanPixels ?? 0,
+    };
   }
 
   _closePanel() {
@@ -809,7 +853,7 @@ export class OverworldMapWindow {
     // BETWEEN CalculateTravelTime and CalculateTripCost exactly as DFU
     // orders them, so the Temple of Akatosh's blessing shortens the
     // fare and the days as well as the journey. The classic popup
-    // folds it at ui/travelPopUp.js:173; this is the same fold on the
+    // folds it at ui/travelPopUp.js:216; this is the same fold on the
     // same deps, and everything the card bills or commits reads the
     // blessed minutes. `_journey` stays raw - its memo is keyed on the
     // route, and the flight only wants the path.
@@ -828,7 +872,21 @@ export class OverworldMapWindow {
   _toggleOpt(key) {
     const st = this._panelState;
     if (!st?.opts) return;
+    const settings = st.to?.settings;
+    // AUDIT-TO1 C2 (TravelOptionsPopUp.cs:182-189, the ship click): under
+    // the ports restriction, SELECTING the ship is refused with the
+    // mod's own message instead of toggling.
+    if (key === 'travelShip' && !st.opts.travelShip && settings?.shipTravelPortsOnly) {
+      const refusal = shipTravelRefusal({ settings, ...this._shipCtx() });
+      if (refusal) { st.notice = SHIP_REFUSAL_TEXT[refusal]; this._renderCard(); return; }
+    }
     st.opts[key] = !st.opts[key];
+    st.notice = null;
+    // :215-224 - choosing CAMP OUT knocks the transport back to foot
+    // when the trip cannot sail (the camp-out choice is the mod's way
+    // into a walked trip, and a ship is never walked)
+    if (key === 'sleepModeInn' && !st.opts.sleepModeInn && settings?.shipTravelPortsOnly
+      && shipTravelRefusal({ settings, ...this._shipCtx() })) st.opts.travelShip = false;
     this._refreshTrip();
   }
 
@@ -862,6 +920,9 @@ export class OverworldMapWindow {
       speedCautious: st.opts.speedCautious,
       sleepModeInn: st.opts.sleepModeInn,
       travelShip: st.opts.travelShip,
+      // AUDIT-TO1 C1: the popup's own word for a WALKED trip
+      // (TravelOptionsPopUp.cs:80-83), which world.js forks on
+      playerControlled: isPlayerControlledTravel(st.to?.settings, st.opts),
     };
     const computed = {
       minutes: st.trip.minutes, oceanPixels: st.trip.oceanPixels,
@@ -881,6 +942,9 @@ export class OverworldMapWindow {
       this._closePanel();
       return;
     }
+    // AUDIT-TO1 C3: Yes on the fee prompt DEDUCTS (:487-489) and goes.
+    const fee = this._panelState?.fee ?? null;
+    if (fee && fee.canPay && !fee.paid) { fee.paid = true; this.deps.payTeleport?.(fee.cost); }
     this._commit = { kind: 'teleport', pick: this._pickOf(this._selected) };
     this._panel = null;
     this._panelState = null;
@@ -1313,9 +1377,21 @@ export class OverworldMapWindow {
     card.append(el('p', 'ovmeta', REGION_NAMES[summary.regionIndex] ?? ''));
 
     if (this._panel === 'teleport') {
-      card.append(el('p', 'ovprompt', `Teleport to ${this._selected.name}?`));
+      const fee = this._panelState?.fee ?? null;
+      // AUDIT-TO1 C3: the fee first. No purse for it: the mod's
+      // notEnoughGold box, and the map closes (:497-500).
+      if (fee && !fee.canPay) {
+        card.append(el('p', 'ovprompt', 'You do not have enough gold.'));
+        const row = el('div', 'ovacts');
+        const ok = el('button', 'act ovghost', 'Close');
+        ok.onclick = () => this._confirmTeleport(false);
+        row.append(ok);
+        card.append(row);
+        return;
+      }
+      card.append(el('p', 'ovprompt', fee ? teleportCostPrompt(fee.cost) : `Teleport to ${this._selected.name}?`));
       const row = el('div', 'ovacts');
-      const yes = el('button', 'act', 'Teleport');
+      const yes = el('button', 'act', fee ? `Pay ${fee.cost} gold` : 'Teleport');
       yes.onclick = () => this._confirmTeleport(true);
       const no = el('button', 'act ovghost', 'Not there');
       no.onclick = () => this._confirmTeleport(false);
