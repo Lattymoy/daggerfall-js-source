@@ -441,7 +441,7 @@ test('U61: the trip on the panel is the law\'s own answer, live per toggle', () 
     });
     assert.deepEqual(numbers(st.trip), numbers(expect(st.opts)),
       'the numbers are calculateTravelTime/TripCost verbatim');
-    assert.equal(st.trip.byRoad, false, 'the journey is never by road - there are no roads');
+    assert.equal(st.trip.byRoad, undefined, 'AUDIT-MAP2: the relief map\'s byRoad and path went with it - nothing on the card read them');
     win._toggleOpt('speedCautious');
     assert.deepEqual(numbers(st.trip), numbers(expect(st.opts)), 'and they follow every toggle');
     win._toggleOpt('travelShip');
@@ -601,7 +601,7 @@ test('U61: the window computes no travel law of its own', () => {
     assert.doesNotMatch(src, new RegExp(forbidden.replace(/[*+()]/g, '\\$&')),
       `the law fragment "${forbidden}" must not be re-derived in the view`);
   }
-  for (const needle of ['walkTravelPath(', 'calculateTravelTime(', 'calculateTripCost(', 'travelDays(',
+  for (const needle of ['calculateTravelTime(', 'calculateTripCost(', 'travelDays(',
     'travelMapPopUpState()', 'setTravelMapPopUpState(', 'travelMapFilters()', 'checkLocationDiscovered(']) {
     assert.ok(src.includes(needle), `the view runs the owning module: ${needle}`);
   }
@@ -1230,7 +1230,7 @@ test('MAP2 walked place: when the mod\'s fork says the player drives the trip to
     assert.equal(st.opts.travelShip, true, 'the remembered toggle');
     win._toggleOpt('travelShip');
     assert.equal(st.trip.walked, true, 'now player-controlled');
-    assert.equal(st.trip.byRoad, false);
+    assert.equal(st.trip.path, undefined, 'AUDIT-MAP2: no second walk on the trip');
     const texts = win._chrome.card.children.flatMap((c) => (c.children ?? []).map((k) => k.textContent));
     assert.ok(texts.includes(TO_TEXT.MsgPlayerControlled), 'no fare row');
     assert.ok(!texts.some((t) => /^\d+ days?$/.test(t)), 'no day count');
@@ -1693,6 +1693,14 @@ test('MAP3 hands lane: when the holder says the arm is drawn and takes the sheet
       assert.equal(c.stage.style.width, '100%');
       assert.equal(c.ink.style.left, '0px', 'the canvas sits at the origin under its matrix');
       assert.equal(c.ink.style.transformOrigin, '0 0');
+      // AUDIT-MAP2: the lane class on the root is NOT the thumbs canvas's
+      // class - `.hmhands` is `pointer-events: none`, and the first hands
+      // lane in a browser ignored every click for exactly that reason
+      const src = read('src/ui/heldMap.js'), css = read('src/ui/enhancedStyle.js');
+      assert.match(src, /c\.root\.classList\.toggle\('hmlanehands', true\);/);
+      assert.doesNotMatch(src, /classList\.toggle\('hmhands'/);
+      assert.match(css, /\.hmroot\.hmlanehands \{ background: transparent; \}/);
+      assert.doesNotMatch(css, /\.hmroot\.hmhands\b/);
       const q = quadPlacement(win._paper.w, win._paper.h, TRAPEZIUM);
       assert.equal(c.ink.style.transform, q.css, 'the matrix3d of the corners');
       assert.equal(c.ink.style.opacity, '1');
@@ -1783,26 +1791,277 @@ test('MAP3 the rig that has not posed yet: the holder refuses the first hold, th
   });
 });
 
-test('MAP3 a resize in the hands lane re-holds at the new aspect - the sheet is the 4:3 fit\'s paper again, the canvas stays at the origin, the corners key is dropped so the next tick re-places (mutants: resize-keeps-old-aspect)', () => {
+test('MAP3 a resize in the hands lane: the sheet is the 4:3 fit\'s paper again at the SAME aspect, so the rig is NOT re-asked (AUDIT-MAP2: a hold repacks the whole arm mesh) - the canvas stays at the origin and is re-placed for the new sheet size; a resize while the corners are gone HIDES the ink rather than leaving the old matrix on a new size (the \'\' sentinel collision) (mutants: resize-re-holds, resize-sentinel-collision)', () => {
   withDocument(() => {
     globalThis.innerWidth = 1600; globalThis.innerHeight = 900;
     try {
-      const holder = holderStub({ corners: () => TRAPEZIUM });
+      let corners = TRAPEZIUM;
+      const holder = holderStub({ corners: () => corners });
       const win = open(mkWin({ holder }));
       assert.equal(win._lane, 'hands');
       const holds = () => holder.calls.filter((c) => c[0] === 'hold');
       assert.equal(holds().length, 1);
       const a1 = holds()[0][2];
+      const w1 = win._paper.w;
       globalThis.innerWidth = 700; globalThis.innerHeight = 900;   // a tall window: the 4:3 fit shrinks
       win.tick(0.05);
-      assert.equal(holds().length, 2, 're-held on the layout that moved');
-      assert.ok(Math.abs(holds()[1][2] - win._paper.w / win._paper.h) < 1e-9);
-      assert.ok(Math.abs(a1 - holds()[1][2]) < 1e-9, 'PAPER of a 4:3 stage: the same aspect at any size');
+      assert.equal(holds().length, 1, 'not re-held: PAPER of a 4:3 stage is the same aspect at any size');
+      assert.ok(win._paper.w < w1, 'a smaller sheet');
+      assert.ok(Math.abs(a1 - win._paper.w / win._paper.h) < 1e-9);
       assert.equal(win._chrome.ink.style.left, '0px');
       assert.equal(win._chrome.ink.style.transform, quadPlacement(win._paper.w, win._paper.h, TRAPEZIUM).css, 're-placed for the new sheet size');
+      // the sentinel: a resize with no corners that tick
+      corners = null;
+      globalThis.innerWidth = 1600;
       win.tick(0.05);
-      assert.equal(holds().length, 2, 'a no-op layout does not re-hold');
+      assert.equal(win._chrome.ink.style.opacity, '0', 'no corners after a resize: hidden, not the old matrix on the new size');
+      assert.equal(win._placement, null);
       win.dispose();
     } finally { delete globalThis.innerWidth; delete globalThis.innerHeight; }
+  });
+});
+
+test('AUDIT-MAP2 the way back: an arm that stops answering corners (paralysed, hidden, unloaded, third person) gives the sheet back to the painting after HANDS_LOST_TICKS - the sprite and thumbs return, the root is opaque again, the layout is redone, the rig is released once and not asked again this open; a brief gap does not (mutants: lane-no-fallback, fallback-re-asks)', () => {
+  withDocument(() => {
+    globalThis.innerWidth = 1600; globalThis.innerHeight = 900;
+    try {
+      let corners = TRAPEZIUM;
+      const holder = holderStub({ corners: () => corners });
+      const win = open(mkWin({ holder }));
+      assert.equal(win._lane, 'hands');
+      corners = null;
+      for (let i = 0; i < 20; i++) win.tick(0.016);
+      assert.equal(win._lane, 'hands', 'twenty ticks without corners: still the hands, the ink hidden');
+      assert.equal(win._chrome.ink.style.opacity, '0');
+      corners = TRAPEZIUM;
+      win.tick(0.016);
+      assert.equal(win._chrome.ink.style.opacity, '1', 'the arm came back: so did the ink');
+      corners = null;
+      for (let i = 0; i < 50; i++) win.tick(0.016);
+      assert.equal(win._lane, 'sprite', 'fifty ticks without corners: the painting');
+      assert.equal(win._chrome.sprite.style.display, '');
+      assert.equal(win._chrome.hands.style.display, '');
+      assert.equal(win._chrome.ink.style.transform, '');
+      assert.notEqual(win._chrome.stage.style.width, '100%', 'the 4:3 stage is laid out again');
+      assert.deepEqual(holder.calls.filter((c) => c[0] === 'release'), [['release']], 'released once');
+      const holds = holder.calls.filter((c) => c[0] === 'hold').length;
+      corners = TRAPEZIUM;
+      for (let i = 0; i < 40; i++) win.tick(0.016);
+      assert.equal(win._lane, 'sprite', 'not asked again this open');
+      assert.equal(holder.calls.filter((c) => c[0] === 'hold').length, holds);
+      assert.deepEqual(win._paperPoint(30, 40), [30, 40], 'the plain offset again');
+      win.dispose();
+      assert.equal(holder.calls.filter((c) => c[0] === 'release').length, 2, 'teardown releases too (idempotent on the rig)');
+    } finally { delete globalThis.innerWidth; delete globalThis.innerHeight; }
+  });
+});
+
+test('AUDIT-MAP2 the pointer off the sheet: in the hands lane the stage is the whole viewport, so a press on the world (outside the corners, or beyond the paper\'s vanishing line) starts nothing, a drag that leaves the sheet holds the pan where it was, and the pinch measures the fingers ON THE SHEET; off the paper nothing is hovered, picked or marked in either lane (mutants: off-sheet-press-pans, pinch-in-screen-px, pick-off-paper)', () => {
+  withDocument(() => {
+    globalThis.innerWidth = 1600; globalThis.innerHeight = 900;
+    try {
+      const holder = holderStub({ corners: () => TRAPEZIUM });
+      const win = open(mkWin({ ...bayDeps(), holder }));
+      win._setView({ ox: 450, oy: 220, scale: 8 });
+      const q = win._placement;
+      const stage = win._chrome.stage;
+      const ev = (id, x, y) => ({ pointerId: id, clientX: x, clientY: y, button: 0, preventDefault() {} });
+      const view0 = { ...win._view };
+      // a press on the sky, then a drag: no pan
+      fire(stage, 'pointerdown', ev(1, 20, 20));
+      fire(stage, 'pointermove', ev(1, 120, 80));
+      fire(stage, 'pointerup', ev(1, 120, 80));
+      assert.deepEqual(win._view, view0, 'the world is not the map');
+      // a press on the sky released over the city: not a pick either
+      const [cityX, cityY] = q.toScreen(...toPaper(win._view, 500.5, 250.5));
+      fire(stage, 'pointerdown', ev(9, 20, 20));
+      fire(stage, 'pointerup', ev(9, cityX, cityY));
+      assert.equal(win._selected, null, 'a press that began on the world picks nothing');
+      // a drag that starts on the sheet and leaves it: the pan stops at the edge
+      const [sx, sy] = q.toScreen(200, 150);
+      fire(stage, 'pointerdown', ev(2, sx, sy));
+      fire(stage, 'pointermove', ev(2, sx + 30, sy));
+      const panned = { ...win._view };
+      assert.notDeepEqual(panned, view0, 'on the sheet it pans');
+      fire(stage, 'pointermove', ev(2, 5, 5));
+      assert.deepEqual(win._view, panned, 'off the sheet the pan waits');
+      fire(stage, 'pointerup', ev(2, 5, 5));
+      // the pinch: two fingers a fixed SHEET distance apart, slid up the leaning sheet
+      const rest = win._view.scale;
+      const a0 = q.toScreen(200, 400), b0 = q.toScreen(300, 400);
+      fire(stage, 'pointerdown', ev(3, ...a0));
+      fire(stage, 'pointerdown', ev(4, ...b0));
+      const a1 = q.toScreen(200, 100), b1 = q.toScreen(300, 100);
+      assert.ok(Math.abs((b1[0] - a1[0]) - (b0[0] - a0[0])) > 5, 'the fixture: the screen distance changes with the foreshortening');
+      fire(stage, 'pointermove', ev(3, ...a1));
+      fire(stage, 'pointermove', ev(4, ...b1));
+      assert.ok(Math.abs(win._view.scale - rest) < 1e-9, `the same sheet distance is no pinch (${win._view.scale} vs ${rest})`);
+      fire(stage, 'pointerup', ev(4, ...b1));
+      fire(stage, 'pointerup', ev(3, ...a1));
+      // off the paper: nothing to pick, hover, or mark - both lanes
+      assert.equal(win._onSheet([-9, 10]), false);
+      assert.equal(win._onSheet([win._paper.w + 9, 10]), false);
+      assert.equal(win._onSheet([10, 10]), true);
+      win._selected = { name: 'X' };
+      win._pickAt(-50, -50);
+      assert.equal(win._selected?.name, 'X', 'a pick off the paper does nothing, not even clear');
+      win._hoverLabel(-50, -50);
+      assert.equal(win._chrome.label.textContent, '');
+      win.dispose();
+    } finally { delete globalThis.innerWidth; delete globalThis.innerHeight; }
+  });
+});
+
+test('AUDIT-MAP2 the close: in the hands lane the arms let the sheet go at the START of the close, with the ink, rather than holding a blank parchment through the fade (mutants: close-keeps-sheet)', () => {
+  withDocument(() => {
+    globalThis.innerWidth = 1600; globalThis.innerHeight = 900;
+    try {
+      const holder = holderStub({ corners: () => TRAPEZIUM });
+      const win = open(mkWin({ holder }));
+      assert.equal(win._chrome.ink.style.opacity, '1');
+      win._beginClose(null);
+      assert.deepEqual(holder.calls.filter((c) => c[0] === 'release'), [['release']], 'released as the close begins');
+      assert.equal(win._chrome.ink.style.opacity, '0');
+      assert.equal(win._placement, null);
+      win.tick(0.05);
+      assert.equal(win._chrome.ink.style.opacity, '0', 'and it stays down through the fade');
+      assert.equal(win._lane, 'hands', 'no fallback to the painting mid-fade');
+      for (let i = 0; i < 20; i++) win.tick(0.05);
+      assert.equal(win.done, true);
+    } finally { delete globalThis.innerWidth; delete globalThis.innerHeight; }
+  });
+});
+
+// ── AUDIT-MAP2: the MAP1/MAP2 side ───────────────────────────────
+
+test('AUDIT-MAP2 T1/T2: the teleport box - with no purse for the fee there is NO yes (Y closes the map without a teleport, as the classic\'s teleportpoor box closes on any key), and Escape IS the box\'s No (the fee closes the map, DFU\'s own box leaves it armed) (mutants: poor-y-teleports, escape-skips-fee)', () => {
+  withDocument(() => {
+    const ported = [], paid = [];
+    const mk = (gold) => {
+      const win = open(mkWin({ ...bayDeps(), magesGuildRank: () => 0, gold: () => gold, goldPieces: () => gold, payTeleport: (c) => paid.push(c), onTeleport: (p) => ported.push(p), travelOptions: () => ({ settings: { teleportCost: true }, destinationName: null, isTravelActive: false }) }));
+      win.activateTeleportationTravel();
+      win._select({ summary: summaryOf(500, 250, LOCATION_TYPES.TownCity), name: 'Wayrest', x: 500.5, y: 250.5, colorIndex: 11, kind: 'city' });
+      return win;
+    };
+    let win = mk(0);
+    assert.equal(win._panel, 'teleport');
+    assert.equal(win._panelState.fee?.canPay, false, 'a poor mage');
+    win.input('KeyY');
+    assert.equal(win._phase, 'closing', 'the map closes');
+    assert.equal(win._commit, null, 'with no teleport');
+    assert.deepEqual(paid, []);
+    for (let i = 0; i < 20; i++) win.tick(0.05);
+    assert.deepEqual(ported, []);
+    // the fee, affordable: Escape closes the map, as N does
+    win = mk(10000);
+    assert.equal(win._panelState.fee?.canPay, true);
+    win.input('Escape');
+    assert.equal(win._phase, 'closing', 'Escape on the fee box closes the map (the classic: N or Escape, one arm)');
+    assert.equal(win._commit, null);
+    win.dispose();
+    // no fee (the rank is high enough): Escape closes the box, the map stays armed
+    const w3 = open(mkWin({ ...bayDeps(), magesGuildRank: () => 9, gold: () => 100, goldPieces: () => 100, onTeleport: (p) => ported.push(p), travelOptions: () => ({ settings: { teleportCost: true }, destinationName: null, isTravelActive: false }) }));
+    w3.activateTeleportationTravel();
+    w3._select({ summary: summaryOf(500, 250, LOCATION_TYPES.TownCity), name: 'Wayrest', x: 500.5, y: 250.5, colorIndex: 11, kind: 'city' });
+    assert.equal(w3._panel, 'teleport');
+    assert.equal(w3._panelState.fee, null);
+    w3.input('Escape');
+    assert.equal(w3._phase, 'map', 'DFU\'s TeleportPopUp: Escape is No, the map stays');
+    assert.equal(w3._panel, null);
+    assert.equal(w3.teleportationTravel, true, 'still armed');
+    w3.dispose();
+  });
+});
+
+test('AUDIT-MAP2 T3: the guild\'s teleport map has no travel arm - a travel panel asked for on the armed map is the teleport box, and the card\'s one button is the teleport (mutants: armed-offers-travel)', () => {
+  withDocument(() => {
+    const win = open(mkWin({ ...bayDeps(), magesGuildRank: () => 9, gold: () => 100, goldPieces: () => 100, onTeleport: () => {} }));
+    win.activateTeleportationTravel();
+    win._select({ summary: summaryOf(500, 250, LOCATION_TYPES.TownCity), name: 'Wayrest', x: 500.5, y: 250.5, colorIndex: 11, kind: 'city' });
+    assert.equal(win._panel, 'teleport');
+    win.input('Escape');
+    assert.equal(win._panel, null);
+    const texts = (n) => [n.textContent, ...(n.children ?? []).flatMap(texts)].filter(Boolean);
+    assert.ok(texts(win._chrome.card).includes('Teleport here'), 'the card offers the teleport');
+    assert.ok(!texts(win._chrome.card).includes('Travel here'), 'and never the trip the teleport host has no hook for');
+    win._openPanel('travel');
+    assert.equal(win._panel, 'teleport', 'a travel panel on the armed map IS the teleport box');
+    assert.ok(!win._panelState?.opts, 'no fast-travel state was minted');
+    win.dispose();
+  });
+});
+
+test('AUDIT-MAP2 T4: "bare" is the data\'s word - a click dead on a discovered hamlet the far band hides is not a nameless walk to its pixel (the band still hides it from the pick, MAP1\'s law) (mutants: coords-by-band)', () => {
+  withDocument(() => {
+    const mapDict = new Map();
+    const sm = summaryOf(200, 100, LOCATION_TYPES.TownHamlet); mapDict.set(sm.id, sm);
+    const win = open(mkWin({
+      mapSize: { width: 400, height: 200 }, woods: { heightMapBuffer: new Uint8Array(80000).fill(10) }, mapDict,
+      maps: { regionCount: 1, getRegion: () => ({ mapNames: ['A', 'B', 'C', 'Hamlet'] }), getPoliticIndex: () => 128 },
+      coordsAllowed: () => true, onTravelToCoords: () => {},
+      travelOptions: () => ({ settings: { targetCoordsAllowed: true, cautiousTravel: true, stopAtInnsTravel: true, cautiousTravelMultiplier: 0.8, recklessTravelMultiplier: 1 }, destinationName: null, isTravelActive: false }),
+    }));
+    win._view.scale = 2.0; win._goal = { ...win._view };   // the far band by hand: the clamp would refuse it on a small bay
+    assert.equal(zoomBand(win._view.scale), 'far');
+    assert.ok(win._coordsAllowedHere());
+    const [px, py] = toPaper(win._view, 200.5, 100.5);
+    win._pickAt(px, py);
+    assert.equal(win._selected, null, 'neither the hamlet (the band hides it) nor a coordinates trip');
+    assert.equal(win._panel, null);
+    // a truly bare pixel next to it still opens the coordinates decision
+    const [bx, by] = toPaper(win._view, 210.5, 100.5);
+    win._pickAt(bx, by);
+    assert.equal(win._selected?.coords, true);
+    win.dispose();
+  });
+});
+
+test('AUDIT-MAP2 perf and polish: the kept static layer is not reset on every pan frame, the Ports toggle keeps the bay-wide index (the law is applied at query time), the fuzzy search keeps two hundred not a thousand, the wheel holds still under a box, the journey carries no second walk, the ink\'s region read is the maps file\'s own where the host hands one, the player\'s pixel is polled with the party (mutants: layer-reset-per-frame, ports-drops-index, wheel-under-box, player-snapshot)', () => {
+  const src = read('src/ui/heldMap.js');
+  assert.match(src, /if \(lctx && \(layer\.width !== canvas\.width \|\| layer\.height !== canvas\.height\)\) \{ layer\.width = canvas\.width; layer\.height = canvas\.height; \}/);
+  assert.equal((src.match(/this\._searchIndex = null;/g) || []).length, 1, 'only the constructor');
+  assert.match(src, /distance\.findBestMatches\(name, 200\)/);
+  assert.doesNotMatch(src, /path: walkTravelPath/);
+  assert.doesNotMatch(src, /byRoad: false/);
+  assert.doesNotMatch(src, /walkTravelPath\(/, 'the walk is calculateTravelTime\'s own');
+  assert.match(src, /typeof maps\?\.getRegionIndexAt === 'function' \? maps\.getRegionIndexAt\(x, y\)/);
+  assert.match(read('src/ui/enhancedStyle.js'), /\.hmroot\.hmlanehands \.hmfoot \{ background: rgba\(10, 12, 17, 0\.72\);/, 'the foot has its own scrim over the world');
+  withDocument(() => {
+    // the region read: a host maps file whose getRegionIndexAt carries the fixups
+    const politic = () => 64;   // the High Rock sea coast byte
+    // two byte arrays: the chain cache is keyed on the bytes' identity
+    const noFix = new HeldMapWindow(winDeps({ maps: { regionCount: 62, getPoliticIndex: politic, getRegion: () => null }, woods: { heightMapBuffer: new Uint8Array(100).fill(10) } }));
+    const fixed = new HeldMapWindow(winDeps({ maps: { regionCount: 62, getPoliticIndex: politic, getRegionIndexAt: () => 31, getRegion: () => null }, woods: { heightMapBuffer: new Uint8Array(100).fill(10) } }));
+    assert.equal(noFix._ensureModel().regions.length, 0, 'a bare -128 on byte 64 names nothing');
+    assert.equal(fixed._ensureModel().regions.length, 1, 'the maps file\'s own read names the sea coast');
+    noFix.dispose(); fixed.dispose();
+    // the wheel under a box
+    const win = open(mkWin(bayDeps()));
+    win._setView({ ox: 450, oy: 220, scale: 8 });
+    win._top = 'resume'; win._renderBox();
+    fire(win._chrome.stage, 'wheel', { deltaY: -100, deltaMode: 0, clientX: 300, clientY: 300, preventDefault() {} });
+    assert.equal(win._view.scale, 8, 'held still');
+    win._top = null; win._renderBox();
+    win._info = { rows: ['a'] };
+    fire(win._chrome.stage, 'wheel', { deltaY: -100, deltaMode: 0, clientX: 300, clientY: 300, preventDefault() {} });
+    assert.equal(win._view.scale, 8);
+    win._info = null;
+    win.dispose();
+    // the ports toggle keeps the index (the mod fixture: a real region table)
+    const wp = open(new HeldMapWindow(modDeps({}, { shipTravelPortsOnly: true })));
+    wp._ensureSearchIndex();
+    assert.ok(wp._searchIndex);
+    const idx = wp._searchIndex;
+    wp._togglePorts();
+    assert.equal(wp._searchIndex, idx, 'kept: the ports law is applied per query');
+    wp.dispose();
+    // the player's pixel, polled
+    let p = { x: 5, y: 5 };
+    const w2 = open(mkWin({ getPlayerPixel: () => p }));
+    assert.deepEqual(w2._player, { x: 5, y: 5 });
+    p = { x: 6, y: 7 };
+    for (let i = 0; i < 8; i++) w2.tick(0.05);
+    assert.deepEqual(w2._player, { x: 6, y: 7 }, 'moved with the poll');
+    w2.dispose();
   });
 });

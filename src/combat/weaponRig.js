@@ -914,7 +914,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
      *  scene; any HUD draws over it). Runs the bow guard first. */
     /** MAP3: whether the Morrowind arm was the thing drawn on the last
      *  frame - the held map's holder opens the hands lane on it. */
-    armsDrawn() { return _armDrewLast; },
+    armsDrawn() { return _armDrewLast && fpArm.drewLast(); },   // AUDIT-MAP2: the seam was reached AND the arm composed
     holdPaper(spec, opts) { return fpArm.holdPaper(spec, opts); },
     releasePaper() { return fpArm.releasePaper(); },
     paperCorners() { return fpArm.paperCorners(); },

@@ -39,10 +39,50 @@ const BASE = `http://127.0.0.1:${PORT}`;
 const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
 
 /** The synthetic bay + a live window on the menu page (no game data). */
-async function mount(page, { armed = false, gotoPlace = null, mod = false, party = false } = {}) {
+async function mount(page, { armed = false, gotoPlace = null, mod = false, party = false, hands = false } = {}) {
   await page.goto(`${BASE}/menu.html?skin=enhanced`, { waitUntil: 'networkidle' });
-  await page.evaluate(async ({ armed2, gotoPlace2, mod2, party2 }) => {
+  await page.evaluate(async ({ armed2, gotoPlace2, mod2, party2, hands2 }) => {
     document.getElementById('enhanced-menu')?.remove();
+    // MAP3: the REAL first-person rig on the fixture arm, drawn on a WebGL
+    // canvas under the window, holding the sheet through the same four
+    // closures the world host hands the window
+    let holder, armLoop = null;
+    if (hands2) {
+      const [{ Renderer }, fp] = await Promise.all([import('/src/render/renderer.js'), import('/src/combat/fpArm.js')]);
+      const cv = document.createElement('canvas');
+      cv.id = 'armcv'; cv.width = innerWidth; cv.height = innerHeight;
+      Object.assign(cv.style, { position: 'fixed', inset: '0', width: '100%', height: '100%', zIndex: '1', background: '#223' });
+      document.body.append(cv);
+      const renderer = new Renderer(cv);
+      const arm = fp.createFpArm();
+      arm.attach(renderer, () => ({ pos: [0, 1.6, 0], yaw: 0, pitch: 0 }));
+      const fx = async (n) => new Uint8Array(await (await fetch(`/test/fixtures/mw/${n}`)).arrayBuffer());
+      const files = new Map([
+        [fp.fpSkeletonPath({}), await fx('armfp.nif')], [fp.FP_CLIP_PATH, await fx('armfpidle.kf')],
+        ['meshes/fixture/armfphand.nif', await fx('armfphand.nif')], ['meshes/fixture/armfparm.nif', await fx('armfparm.nif')],
+        ['textures/tx_fixture.dds', await fx('fixture.dds')],
+      ]);
+      const esm = await fx('armfp.esm');
+      const built = await arm.build({ race: 'fprace', deps: {
+        loadMorrowindArchives: async () => [{ has: (q) => files.has(q), get: (q) => files.get(q) }],
+        storedMorrowindNames: async () => ['armfp.esm'], loadMorrowindFile: async () => esm,
+      } });
+      let drew = false;
+      const I = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+      armLoop = (dt) => { renderer.beginFrame(I, I, new Float32Array([0.3, -0.9, 0.2])); arm.update(dt); drew = arm.draw(cv); };
+      // the fixture rig is metre-scaled: the default sheet hangs off the
+      // bottom of its frame, so the probe's pose puts a smaller sheet higher
+      holder = {
+        available: () => drew,
+        hold: (spec, opts) => arm.holdPaper(spec ?? { paper: { width: 0.3, drop: 0.02, forward: 0.6 } }, opts),
+        release: () => arm.releasePaper(),
+        corners: () => arm.paperCorners(),
+      };
+      globalThis.__arm = arm;
+      globalThis.__armRenderer = renderer;
+      globalThis.__armCanvas = cv;
+      globalThis.__armBuilt = { ok: built.ok, stage: built.stage, error: built.error };
+    }
     const { createTravelMapWindow } = await import('/src/ui/travelMapDoor.js');
     const travel = await import('/src/systems/travel.js');
     const ink = await import('/src/ui/inkMap.js');
@@ -117,6 +157,7 @@ async function mount(page, { armed = false, gotoPlace = null, mod = false, party
       onTravelToCoords: (pick, opts) => globalThis.__log.coords.push({ pick, opts }),
       onResumeTravel: () => { globalThis.__log.resumed++; },
       onClose: () => { globalThis.__log.closed++; },
+      holder,
     };
     const win = createTravelMapWindow(deps);
     if (armed2) win.activateTeleportationTravel();
@@ -131,12 +172,13 @@ async function mount(page, { armed = false, gotoPlace = null, mod = false, party
     const loop = (now) => {
       const dt = Math.min(0.1, (now - last) / 1000);
       last = now;
+      if (armLoop) armLoop(dt);
       if (!win.done) { win.tick(dt); win.draw(null, null); globalThis.__frames++; }
       else if (!disposed) { disposed = true; win.dispose(); }
       requestAnimationFrame(loop);
     };
     requestAnimationFrame(loop);
-  }, { armed2: armed, gotoPlace2: gotoPlace, mod2: mod, party2: party });
+  }, { armed2: armed, gotoPlace2: gotoPlace, mod2: mod, party2: party, hands2: hands });
 }
 
 const state = (page) => page.evaluate(() => JSON.parse(globalThis.__heldMap?.() ?? 'null'));
@@ -345,6 +387,82 @@ try {
   await page.waitForFunction(() => globalThis.__win.done, null, { timeout: 5000 });
   const log3 = await page.evaluate(() => globalThis.__log);
   check('Teleport fires onTeleport once', log3.ported.length === 1 && log3.ported[0].name === 'Proofhold');
+
+  // ── 6. MAP3: THE HANDS LANE on the real rig ────────────────────
+  await mount(page, { hands: true });
+  await waitPhase(page, 'map');
+  await page.waitForFunction(() => JSON.parse(globalThis.__heldMap()).placed, null, { timeout: 10000 }).catch(() => {});
+  const hb = await page.evaluate(() => globalThis.__armBuilt);
+  check('the fixture rig built in the page', hb.ok === true, JSON.stringify(hb));
+  const hs = await state(page);
+  check('the window took the hands lane and placed the sheet', hs.lane === 'hands' && hs.placed === true, JSON.stringify({ lane: hs.lane, placed: hs.placed }));
+  const hg = await page.evaluate(() => {
+    const w = globalThis.__win; const c = w._chrome;
+    const cs = getComputedStyle(c.ink);
+    const r = c.ink.getBoundingClientRect();
+    const corners = globalThis.__arm.paperCorners();
+    const xs = corners.map((p) => p[0]), ys = corners.map((p) => p[1]);
+    return {
+      sprite: getComputedStyle(c.sprite).display, hands: getComputedStyle(c.hands).display,
+      rootBg: getComputedStyle(c.root).backgroundColor,
+      transform: cs.transform.slice(0, 9), origin: cs.transformOrigin,
+      box: [r.left, r.top, r.right, r.bottom].map((v) => Math.round(v)),
+      want: [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)].map((v) => Math.round(v)),
+      corners: corners.map((p) => p.map((v) => Math.round(v))),
+    };
+  });
+  check('the painting and its thumbs are gone and the root is clear', hg.sprite === 'none' && hg.hands === 'none' && /rgba\(0, 0, 0, 0\)|transparent/.test(hg.rootBg), JSON.stringify([hg.sprite, hg.hands, hg.rootBg]));
+  check('the ink is under a matrix3d about its top-left', hg.transform === 'matrix3d(' && hg.origin.startsWith('0px 0px'), JSON.stringify([hg.transform, hg.origin]));
+  const near = (a, b) => Math.abs(a - b) <= 2;
+  check('the browser lays the canvas exactly on the rig\'s corners (the bounding box, to 2 px)', hg.box.every((v, i) => near(v, hg.want[i])), JSON.stringify({ box: hg.box, want: hg.want }));
+  check('four corners on screen, a level trapezium wider at the bottom', hg.corners.length === 4 && hg.corners[0][1] === hg.corners[1][1] && hg.corners[2][0] - hg.corners[3][0] > hg.corners[1][0] - hg.corners[0][0], JSON.stringify(hg.corners));
+  // the PARCHMENT is under the ink: the texel at the corners' centre on
+  // the arm's own offscreen target (the pass clears it to alpha 0, so
+  // alpha there is the sheet; the first browser run had none - the
+  // sheet sat past the far plane the arm's reach set)
+  const texel = await page.evaluate(async () => {
+    const { MW_ARM_PIXEL, CHAR_SPRITE_RT_SIZE } = await import('/src/render/renderer.js');
+    const cv = globalThis.__armCanvas, r = globalThis.__armRenderer, gl = r.gl;
+    const wantW = cv.clientWidth / MW_ARM_PIXEL, wantH = cv.clientHeight / MW_ARM_PIXEL;
+    const sc = Math.min(1, CHAR_SPRITE_RT_SIZE / wantW, CHAR_SPRITE_RT_SIZE / wantH);
+    const pw = Math.max(2, Math.round(wantW * sc)), ph = Math.max(2, Math.round(wantH * sc));
+    const c = globalThis.__arm.paperCorners();
+    const cx = (c[0][0] + c[2][0]) / 2, cy = (c[0][1] + c[2][1]) / 2;
+    const tx = Math.min(pw - 1, Math.max(0, Math.round(cx / cv.clientWidth * pw))), ty = Math.min(ph - 1, Math.max(0, Math.round((1 - cy / cv.clientHeight) * ph)));
+    const cs = r._charSpriteRT();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, cs.fbo);
+    const px = new Uint8Array(4);
+    gl.readPixels(tx, ty, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    return { tx, ty, rgba: [...px] };
+  });
+  check('the parchment is drawn under the ink (the arm target\'s texel at the corners\' centre)', texel.rgba[3] > 8 && texel.rgba[0] > texel.rgba[2], JSON.stringify(texel));
+  if (SHOTS) await page.screenshot({ path: `${SHOTS}/held-map-hands.png` });
+  // a click through the angle: the city's sheet point, forward-mapped, hits it
+  await page.evaluate(() => { const w = globalThis.__win; w._focusOn(40.5, 30.5, 8); for (let i = 0; i < 60; i++) w.tick(0.05); });
+  const cityH = await page.evaluate(() => {
+    const w = globalThis.__win;
+    const [px, py] = globalThis.__law.ink.toPaper(w._view, 40.5, 30.5);
+    const [sx, sy] = w._placement.toScreen(px, py);
+    const r = w._chrome.root.getBoundingClientRect();
+    const el = document.elementFromPoint(r.left + sx, r.top + sy);
+    return { x: r.left + sx, y: r.top + sy, px, py, back: w._paperPoint(r.left + sx, r.top + sy), under: el ? `${el.tagName}.${el.className}` : null, marks: w._model.marks.filter((m) => m.name === 'Proofhold').map((m) => [m.x, m.y]) };
+  });
+  await page.mouse.move(cityH.x, cityH.y);
+  await page.waitForTimeout(50);
+  const hoverH = await page.evaluate(() => globalThis.__win._chrome.label.textContent);
+  check('hover through the inverse names the city under the angled sheet', hoverH === 'Daggerfall : Proofhold', JSON.stringify(hoverH));
+  await page.mouse.click(cityH.x, cityH.y);
+  await page.waitForTimeout(50);
+  const pickH = await state(page);
+  check('a click through the inverse picks it', pickH.selected === 'Proofhold', JSON.stringify({ selected: pickH.selected }));
+  if (SHOTS) await page.screenshot({ path: `${SHOTS}/held-map-hands-picked.png` });
+  // the sheet goes with the window
+  await page.evaluate(() => globalThis.__win.input('Escape'));
+  await page.evaluate(() => globalThis.__win.input('Escape'));
+  await page.waitForFunction(() => globalThis.__win.done, null, { timeout: 5000 });
+  const released = await page.evaluate(() => ({ pose: globalThis.__arm.heldPose(), corners: globalThis.__arm.paperCorners() }));
+  check('closing the map releases the sheet from the arm', released.pose === null && released.corners === null, JSON.stringify(released));
 } catch (e) {
   check(`probe threw: ${e.message}`, false);
 } finally {

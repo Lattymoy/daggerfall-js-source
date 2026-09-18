@@ -357,7 +357,7 @@ return; }`, reset at the top of every draw, so a hidden or unloaded or
 third-person arm answers no). On yes it hands the rig a sheet of the
 paper's own aspect (`holdPaper(null, { aspect })`) and takes the HANDS
 lane: the painting and its keyed thumbs go, the root goes clear (the
-world and the arm show through - `.hmroot.hmhands { background:
+world and the arm show through - `.hmroot.hmlanehands { background:
 transparent }`), and the ink canvas is laid over the four corners the
 rig projects. Asked per open, never snapshot: the arm can be built,
 unloaded or hidden between two presses of the key. A rig that has been
@@ -450,3 +450,143 @@ geometric checks pass in this session's headless Chromium; the three
 texel readbacks could not be verified here, where the probe's OWN
 earlier texel layers (the clip's motion, the look) also fail on this
 container's GL, eight before MAP3 touched it.
+
+## AUDIT-MAP2 (2026-09-18) - the last audit before merge, MAP1-MAP3
+
+Mac: "Before we merge, let's do one last audit on the new maps." Three
+reviewer lenses again (the rig's side of MAP3; the window's side of
+MAP3; a fresh pair of eyes on MAP1/MAP2's laws, ink, performance and
+input, told not to repeat AUDIT-MAP), plus a HANDS-LANE layer in
+`tools/heldMapProbe.mjs`: the real fixture rig booted in the page,
+holding the window's sheet through the same four closures the world
+host hands over. Thirty-two findings; twenty-five fixed, four recorded
+as departures or left, three not this slice's. The probe found the
+first two before any reviewer reported.
+
+**The two the browser found.** (1) The root's lane class was
+`hmhands` - the THUMBS canvas's class, whose rule is `pointer-events:
+none` - so the whole window ignored every click in the hands lane; the
+first hands-lane pick in a real browser went to the arm's canvas
+underneath. Now `hmlanehands`. (2) The sheet sat past the pass's FAR
+PLANE (the arm's reach times four, rule 54) and was clipped while its
+corners, which do not clip, still projected: ink over the sky with no
+parchment under it. The reach now grows to the sheet's farthest corner
+and a quarter more while a sheet is held (the perspective line's
+literal stands; the reach is what the sheet is part of), restored on
+release. The probe reads the parchment texel back off the arm's own
+target at the corners' centre.
+
+**The rig's side, fixed.** The quaternions were packed `[x,y,z,w]`
+while everything the rig reads is `[w,x,y,z]` (mwAnim's sampler,
+mwSkin's `quatToMat33`): a forty-degree bend about X reached the rig as
+a hundred-and-forty-degree turn about Z - and the pins, testing the
+module against itself, could not see it. Repacked; the decisive pin now
+poses a delta through mwSkin's OWN `poseSkeleton` and reads the
+matrix. The six default bones were named in the part-attach family
+(`left forearm`) that retail's `.kf` never keys - retail keys `Bip01 L
+Forearm` and hangs the hand off it - so a delta would have turned an
+attach node and left the hand behind; a held bone now resolves to
+whichever of its two spellings the CLIP keys, then to whichever the
+skeleton has (`HELD_BONE_ALIASES`). The paper's second winding was a
+coplanar twin whose normal faced away, fighting the first for the depth
+buffer under a culling-off pass: one winding, facing the eye, pinned
+through `packFpArm`'s normal. The sheet was anchored to the eye ONCE at
+hold time while the camera node moves with the neck: its source is now
+refreshed in place whenever the node's translation moved. `paperCorners`
+answered from a stale frame after the arm stopped drawing (paralysis,
+EOTB, third person - `lastFrame` cleared only at unload): `drewLast()`
+records whether the last draw composed, `armsDrawn()` folds it in, and
+the host's `corners` closure answers null unless the arm drew. A rig
+with no camera node on a rebuild lets the sheet go rather than
+projecting a piece that is not in the mesh. `holdPaper` is refused in
+third person.
+
+**The window's side, fixed.** The hands lane was a one-way latch: corners
+gone for good (the arm unloaded, hidden, third person) left an invisible
+map with no way back. After HANDS_LOST_TICKS without corners the sheet
+is given back to the painting - sprite and thumbs restored, root opaque,
+layout redone, the rig released once and not asked again that open; a
+brief gap only hides the ink. `_layout` reused `''` as its
+force-re-place sentinel, colliding with `_placeOnHands`'s "no corners"
+key: a resize while a corner was behind the lens kept the old matrix on
+the new size (`null` now forces). The resize re-held the sheet at an
+aspect that is provably invariant (PAPER of a 4:3 stage) and repacked
+the whole arm mesh each time: it no longer asks. The stage is the whole
+viewport in the hands lane and nothing clamped the pointer to the
+sheet: a press on the world panned the map, a tap on the sky could
+select an undrawn city, and beyond the paper's vanishing line the
+inverse answered a mirrored point. Now `_paperPoint` answers OFF_SHEET
+for anything not on the sheet (and `toSheet` null past the horizon,
+where the divisor goes negative), a press off the sheet starts nothing,
+a drag that leaves it holds the pan, and in EITHER lane nothing off the
+paper is hovered, picked or marked. The pinch measured the fingers'
+distance in screen pixels - two fingers slid up a leaning sheet read as
+a pinch: measured on the sheet now. The foot (hint, band, legend) had
+the root's black behind it and none over the world: its own scrim in
+the hands lane. The sheet was released at teardown, a blank parchment
+held through the fade: released at the start of the close, with the ink.
+`quadPlacement` refuses a sheet turned all but edge-on (area under a
+fiftieth of the longest edge squared), where absolute guards passed a
+homography that smeared the canvas.
+
+**MAP1/MAP2, fixed.** (T1) A rank-0 mage with an empty purse teleported
+anywhere, free, by pressing Y on the "not enough gold" box: the key arm
+never consulted `canPay`. There is no yes there now - the map closes, as
+the classic's `teleportpoor` box closes on any key. (T2) Escape on the
+FEE prompt left the map up: the generic panel-close arm sat above the
+teleport arm. Escape is the box's No now - the fee closes the map, DFU's
+own fee-less box leaves it armed. (T3) The guild's teleport map offered
+a full fast-travel panel (close the teleport box, "Travel here", Begin)
+that committed into an `onTravel` the teleport host never hands over:
+the visit was spent and the player went nowhere. The armed map's only
+offer is the teleport; a travel panel asked for on it IS the teleport
+box. (T4) "Bare pixel" was the BAND's word, not the data's: at the far
+band a click dead on a discovered hamlet the band hides became a
+nameless walk to its pixel through `onTravelToCoords`. Bare now means no
+discovered place on the pixel (the classic's `locationSelected`); the
+band still hides it from the pick, MAP1's law. Performance: the kept
+static layer was reset (freed and re-zeroed) on every pan frame -
+assigning a canvas's width resets its bitmap even to the same value;
+`placeNames` sorted every named mark in the bay per pan frame before
+culling to the sheet; the Ports toggle threw away the bay-wide search
+index it did not gate (the law is applied per query); the find box
+kept a thousand fuzzy matches per keystroke through the full DP (two
+hundred now, for a box that shows twelve); the trip carried a second
+full path walk (`path`, `byRoad`) that nothing read since the relief
+map's route line went. The ink's region read is the maps file's own
+`getRegionIndexAt` where the host hands a real one - it carries the two
+fixups (politic 64 is the High Rock sea coast; the bad byte 105 is the
+Wrothgarian Mountains) a bare -128 turned into "nameless", and a
+nameless pixel erased the border on its neighbour's side. The wheel
+zoomed under the modal boxes. The player's own pixel was snapshot at
+construction while the party was polled: polled with it now.
+
+**Departures and leaves.** The hover and the coordinates name keep the
+classic window's own bare politic read (they match the classic; only
+the ink's borders and centroids take the fixups). The chrome (card,
+foot, box) is placed against the viewport, not around the held sheet;
+where the tuned pose puts the sheet decides whether they overlap, and
+the pose is not tuned yet - left for the tuning. The ink canvas is
+rasterised at the 4:3 fit's size and minified under its matrix rather
+than right-sized to the quad's box - left; the box is in
+`quadPlacement` for when it is wanted. `_markerAt` still walks every
+discovered mark per pointer move (no spatial index) - left, with the
+cull. `HELD_POSE_DEFAULT` deltas stay zero and the tuning note stands.
+
+**Not this slice's.** The arm probe's own texel layers (the clip's
+motion, the look) fail on this container's headless GL, eight before
+MAP3 touched it, and so do the MAP3 layer's three texel readbacks
+there; the held map probe's parchment readback passes in the same
+Chromium. The two disagree on the page they boot; not chased.
+
+**Pins.** `test/map3_heldpose.test.js` 17 (+1: the alias resolution;
+the packing through mwSkin's poseSkeleton, the normal through packFpArm,
+the reach's growth and restoration, drewLast per call, the eye-synced
+source, the mirrored sheet, the sliver, the horizon), `test/heldmap.test.js`
+78 (+7: the way back, the pointer off the sheet, the close, T1/T2, T3,
+T4, the perf-and-polish sweep; the resize pin re-aimed). Mutants:
+`tools/mutants/map3.json` rewritten, 70 records, 68 dead, 2 equivalent
+as recorded; `to1.json` c3-fee-never-deducted re-aimed. Browser:
+`tools/heldMapProbe.mjs` 47 checks (the hands lane on the real fixture
+rig: the matrix laid on the corners to the pixel, the parchment texel
+under the ink, hover and pick through the inverse, release on close).

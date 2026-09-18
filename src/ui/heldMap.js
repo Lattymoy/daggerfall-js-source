@@ -84,7 +84,7 @@
 import { MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
 import { REGION_NAMES, longitudeLatitudeToMapPixel, getPixelFromPixelID, patchRegionIndex } from '../formats/mapsFile.js';
 import { locationSummaryAt } from '../systems/mapDirectory.js';
-import { calculateTravelTime, calculateTripCost, travelDays, walkTravelPath } from '../systems/travel.js';
+import { calculateTravelTime, calculateTripCost, travelDays } from '../systems/travel.js';
 import { guildFastTravel } from '../systems/guildVariants.js';   // TP1: GuildManager.FastTravel
 import {
   travelMapFilters, travelMapPopUpState, setTravelMapPopUpState, travelMapSaveData,
@@ -146,6 +146,8 @@ const PARTY_POLL_S = 0.25;
 const FOCUS_SCALE = 6;
 /** How often the breathing rings repaint the sheet while one is up. */
 const PULSE_HZ = 10;
+const HANDS_LOST_TICKS = 45;   // AUDIT-MAP2: ticks without corners before the hands lane gives the sheet back to the sprite
+const OFF_SHEET = Object.freeze([-1e9, -1e9]);   // a pointer that is not over the sheet at all
 
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 const el = (t, cls, txt) => {
@@ -198,8 +200,9 @@ export class HeldMapWindow {
     // ticks while the rig has not been posed yet.
     this._lane = 'sprite';
     this._placement = null;    // quadPlacement, in the hands lane
-    this._cornersKey = '';
+    this._cornersKey = null;   // the last corners placed ('' = none); null forces a re-place
     this._handsTries = 0;
+    this._handsLost = 0;       // AUDIT-MAP2: ticks in the hands lane without corners
     this._model = null;     // the ink model, minted on the first layout
     this._marksDirty = true;
     this._marksVersion = 0;
@@ -303,6 +306,10 @@ export class HeldMapWindow {
       // the diseased box steps back to the PANEL, not out of it - the
       // classic popup's No arm
       if (this._panelState?.confirm) { this._confirmDiseased(false); return; }
+      // AUDIT-MAP2: Escape on the teleport box IS its No - the classic's
+      // fee box takes N and Escape in one arm (:1507) and closes the map;
+      // DFU's own TeleportPopUp takes Escape as No and leaves the map armed
+      if (this._panel === 'teleport') { this._confirmTeleport(false); return; }
       if (this._panel) { this._closePanel(); return; }
       if (this._selected) { this._select(null); return; }
       this._beginClose(null);
@@ -378,8 +385,14 @@ export class HeldMapWindow {
     this._layout();
     // MAP3: the hands lane follows the arm every frame; the sprite lane
     // keeps asking for a few ticks in case the rig had not posed yet
-    if (this._lane === 'hands') this._placeOnHands();
-    else if (!first && this._handsTries > 0 && this._handsTries < 30) { this._handsTries++; this._tryHands(); }
+    if (this._lane === 'hands' && this._phase !== 'closing') {   // closing: the sheet was let go at _beginClose
+      this._placeOnHands();
+      // AUDIT-MAP2: an arm that stops drawing (paralysed, hidden, unloaded,
+      // third person) leaves no corners; after HANDS_LOST_TICKS of none the
+      // painting comes back, for the rest of this open
+      if (this._placement) this._handsLost = 0;
+      else if (this._phase === 'map' && ++this._handsLost > HANDS_LOST_TICKS) this._leaveHands();
+    } else if (!first && this._handsTries > 0 && this._handsTries < 30) { this._handsTries++; this._tryHands(); }
     this._t += dt;
     switch (this._phase) {
       case 'opening': {
@@ -476,6 +489,15 @@ export class HeldMapWindow {
     this._info = null;
     this._top = null;
     this._renderBox();
+    // AUDIT-MAP2: in the hands lane the arms let the sheet go NOW, with
+    // the ink, rather than holding a blank parchment through the fade and
+    // dropping it at teardown; the chrome fades on its own
+    if (this._lane === 'hands') {
+      this.deps.holder?.release?.();
+      this._placement = null;
+      this._cornersKey = '';
+      if (this._chrome?.ink) this._chrome.ink.style.opacity = '0';
+    }
     // the fade starts from where the sheet IS - a close answered during
     // the opening fade must not snap to full before lowering
     this._closeFrom = parseFloat(this._chrome?.root?.style?.opacity ?? '1');
@@ -516,12 +538,13 @@ export class HeldMapWindow {
     this._stage = { x: sx, y: sy, w: sw, h: sh };
     if (this._lane === 'hands') {
       // MAP3: the sheet keeps the size the 4:3 fit gives it, but sits at
-      // the root's origin under its matrix; the arm re-places the paper
-      // for the new aspect
+      // the root's origin under its matrix. AUDIT-MAP2: the aspect is
+      // PAPER of a 4:3 stage - the same at any size - so the rig is NOT
+      // re-asked (a hold repacks the whole arm mesh); the placement is
+      // recomputed for the new sheet size on the next tick.
       Object.assign(c.stage.style, { left: '0px', top: '0px', width: '100%', height: '100%' });
       Object.assign(c.ink.style, { left: '0px', top: '0px' });
-      this.deps.holder?.hold?.(null, { aspect: pw / ph });
-      this._cornersKey = '';
+      this._cornersKey = null;
     }
     if (firstLayout) {
       // at rest the whole bay is on the sheet, centred
@@ -551,15 +574,36 @@ export class HeldMapWindow {
     if (!h.hold?.(null, { aspect: this._paper.w / this._paper.h })) return false;
     this._lane = 'hands';
     this._handsTries = 0;
+    this._handsLost = 0;
     const c = this._chrome;
-    c.root.classList.toggle('hmhands', true);
+    c.root.classList.toggle('hmlanehands', true);   // AUDIT-MAP2: NOT 'hmhands' - that is the thumbs canvas's class, and its rule is pointer-events: none
     c.sprite.style.display = 'none';
     c.hands.style.display = 'none';
     Object.assign(c.ink.style, { left: '0px', top: '0px', transformOrigin: '0 0', opacity: '0' });
     Object.assign(c.stage.style, { left: '0px', top: '0px', width: '100%', height: '100%' });
-    this._cornersKey = '';
+    this._cornersKey = null;
     this._dirty = true;
     return true;
+  }
+
+  /** AUDIT-MAP2: the way back. The sheet is given up, the painting and its
+   *  thumbs return, the layout is redone from scratch; the rig is not asked
+   *  again this open. */
+  _leaveHands() {
+    if (this._lane !== 'hands') return;
+    this.deps.holder?.release?.();
+    this._lane = 'sprite';
+    this._handsTries = 30;
+    this._placement = null;
+    this._cornersKey = null;
+    const c = this._chrome;
+    c.root.classList.toggle('hmlanehands', false);
+    c.sprite.style.display = '';
+    c.hands.style.display = '';
+    Object.assign(c.ink.style, { transform: '', transformOrigin: '', opacity: '' });
+    this._layoutKey = '';
+    this._layout();
+    this._dirty = true;
   }
 
   /** The sheet follows the arm: the holder's four corners, into a
@@ -576,6 +620,12 @@ export class HeldMapWindow {
     if (q) { ink.style.transform = q.css; ink.style.opacity = '1'; } else { ink.style.opacity = '0'; }
   }
 
+  /** Whether a paper point lies on the sheet (with a small margin for a
+   *  finger's edge). Off the sheet nothing is hovered, picked or marked. */
+  _onSheet(p) {
+    return p[0] >= -8 && p[1] >= -8 && p[0] <= this._paper.w + 8 && p[1] <= this._paper.h + 8;
+  }
+
   /** The ink model: chains once per data set (cached on the bytes and
    *  the network reference), marks whenever a filter or the discovery
    *  set moved. */
@@ -585,9 +635,15 @@ export class HeldMapWindow {
     const net = this.deps.roads?.() ?? null;
     const maps = this.deps.maps;
     const regionCount = maps?.regionCount ?? 0;
+    // AUDIT-MAP2: the INK's region read is the maps file's own
+    // getRegionIndexAt where the host hands a real MapsFile - it carries
+    // the two fixups (politic 64 is the High Rock sea coast, region 31;
+    // the bad byte 105 is the Wrothgarian Mountains) that a bare -128
+    // turns into "nameless", and a nameless pixel erases the border on
+    // its neighbour's side too. The hover and the coordinates name keep
+    // the classic window's own bare read, as the classic does.
     const regionAt = (x, y) => {
-      const politic = maps?.getPoliticIndex?.(x, y) ?? -1;
-      const r = politic - 128;
+      const r = typeof maps?.getRegionIndexAt === 'function' ? maps.getRegionIndexAt(x, y) : (maps?.getPoliticIndex?.(x, y) ?? -1) - 128;
       return r >= 0 && r < regionCount ? r : -1;
     };
     let rec = _chainCache.get(bytes);
@@ -641,7 +697,10 @@ export class HeldMapWindow {
     if (key !== this._staticKey || !lctx) {
       this._staticKey = key;
       const target = lctx ?? ctx;
-      if (lctx) { layer.width = canvas.width; layer.height = canvas.height; }
+      // AUDIT-MAP2: assigning a canvas's width RESETS its bitmap even to the
+      // same value - the kept layer was being freed and re-zeroed on every
+      // pan frame; paintInkStatic clears it itself
+      if (lctx && (layer.width !== canvas.width || layer.height !== canvas.height)) { layer.width = canvas.width; layer.height = canvas.height; }
       const measure = (text, size, font) => {
         const k = `${font}|${text}`;
         let w = this._measureCache.get(k);
@@ -709,7 +768,10 @@ export class HeldMapWindow {
     if (this._lane === 'hands') {
       const r = this._chrome.root.getBoundingClientRect?.() ?? { left: 0, top: 0 };
       const p = this._placement?.toSheet(clientX - r.left, clientY - r.top);
-      return p ?? [-1e9, -1e9];
+      // AUDIT-MAP2: the stage is the whole viewport here; a point that is
+      // not on the sheet (the world around it, or beyond the paper's
+      // vanishing line) is nowhere on the map
+      return p && this._onSheet(p) ? p : OFF_SHEET;
     }
     const r = this._chrome.ink.getBoundingClientRect?.() ?? { left: 0, top: 0 };
     return [clientX - r.left, clientY - r.top];
@@ -722,6 +784,10 @@ export class HeldMapWindow {
    *  nothing on false, which is the ordinary answer four times a second
    *  while nobody moves. Never dirties the location marks. */
   _refreshParty() {
+    // AUDIT-MAP2: the player's own pixel is polled on the same cadence -
+    // opened during a journey, the cross keeps up with the rings
+    const p = this.deps.getPlayerPixel?.();
+    if (p && (p.x !== this._player.x || p.y !== this._player.y)) { this._player = { x: p.x, y: p.y }; this._dirty = true; }
     const marks = readPartyMarks(this.deps.party, this._size);
     const key = partyMarksKey(marks);
     if (key === this._partyKey) return false;
@@ -808,7 +874,6 @@ export class HeldMapWindow {
     this.portsFilter = !this.portsFilter;
     this._marksDirty = true;
     this._dirty = true;
-    this._searchIndex = null;   // the find box's dictionary is gated by the same law
     this._renderPorts();
   }
 
@@ -825,6 +890,7 @@ export class HeldMapWindow {
    *  place under the cursor, or clears the mark when it is already this
    *  one. The ring is inked by paintInk in MarkLocationColor. */
   _markLocationHandler(sx, sy) {
+    if (!this._onSheet([sx, sy])) return;   // AUDIT-MAP2: off the paper is off the map
     const m = this._markerAt(sx, sy);
     if (!m) return;
     const id = m.mapId ?? -1;
@@ -955,6 +1021,11 @@ export class HeldMapWindow {
 
   _openPanel(kind) {
     if (!this._selected) return;
+    // AUDIT-MAP2: the guild's teleport map has NO travel arm - the classic's
+    // _createPopUpWindow returns the TeleportPopUp whenever the map is
+    // armed (:1162-1182), so a fast-travel panel here would commit into an
+    // onTravel the teleport host never hands over
+    if (kind === 'travel' && this.teleportationTravel) kind = 'teleport';
     this._panel = kind;
     if (kind === 'travel') {
       const d = this.deps;
@@ -1023,20 +1094,17 @@ export class HeldMapWindow {
     if (o) setTravelMapPopUpState(o);
   }
 
-  /** ONE JOURNEY for the card's bill: walkTravelPath priced once by
-   *  calculateTravelTime. `byRoad` stays and stays false - the trip
-   *  card reads it, and a journey by road is a thing this port does
-   *  not have (bible/03-World/Roads.md). Memoised on the inputs,
-   *  because the card re-renders on every toggle. */
+  /** ONE JOURNEY for the card's bill: the walk priced once by
+   *  calculateTravelTime (which walks walkTravelPath itself). AUDIT-MAP2:
+   *  the `path` and `byRoad` the relief map's route line read went with
+   *  it - nothing on the card reads them, and the second walk was a
+   *  thousand objects per toggle. Memoised on the inputs, because the
+   *  card re-renders on every toggle. */
   _journey(dest, opts) {
     const start = this.deps.getPlayerPixel();
     const key = `${start.x},${start.y}>${dest.x},${dest.y}|${JSON.stringify(opts)}`;
     if (this._journeyKey === key) return this._journeyVal;
-    const j = {
-      path: walkTravelPath(start, dest),
-      byRoad: false,
-      ...calculateTravelTime(start, dest, opts, this.deps.getClimateIndex),
-    };
+    const j = { ...calculateTravelTime(start, dest, opts, this.deps.getClimateIndex) };
     this._journeyKey = key;
     this._journeyVal = j;
     return j;
@@ -1192,8 +1260,12 @@ export class HeldMapWindow {
       return;
     }
     // AUDIT-TO1 C3: Yes on the fee prompt DEDUCTS (:487-489) and goes.
+    // AUDIT-MAP2: with no purse for the fee there IS no yes - the classic's
+    // 'teleportpoor' box closes the map on any key (:1510); Y had teleported
+    // an empty-pursed mage for free.
     const fee = this._panelState?.fee ?? null;
-    if (fee && fee.canPay && !fee.paid) { fee.paid = true; this.deps.payTeleport?.(fee.cost); }
+    if (fee && !fee.canPay) { this._beginClose(null); return; }
+    if (fee && !fee.paid) { fee.paid = true; this.deps.payTeleport?.(fee.cost); }
     this._beginClose({ kind: 'teleport', pick: this._pickOf(this._selected) });
   }
 
@@ -1249,7 +1321,7 @@ export class HeldMapWindow {
   _findLocations(name, max = 12) {
     if (!name) return [];
     const { byName, distance } = this._ensureSearchIndex();
-    const matches = distance.findBestMatches(name, 1000);
+    const matches = distance.findBestMatches(name, 200);   // AUDIT-MAP2: the box shows twelve; a thousand kept every name in the bay through the full DP per keystroke
     const out = [];
     let cutoff = null;
     for (const match of matches) {
@@ -1375,12 +1447,21 @@ export class HeldMapWindow {
     let downAt = null, panned = false;
     let second = null;   // { id, x, y }: the pinching finger
     let pinch = null;    // { dist, mx, my, ox, oy, scale }: the pinch's anchor
-    const pinchState = (a, b) => ({ dist: Math.hypot(b.x - a.x, b.y - a.y), mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2 });
+    // AUDIT-MAP2: the fingers' distance is measured ON THE SHEET (through
+    // the inverse in the hands lane, the plain offset in the sprite lane),
+    // so foreshortening does not read as a pinch
+    const pinchState = (a, b) => {
+      const A = this._paperPoint(a.x, a.y), B = this._paperPoint(b.x, b.y);
+      return { dist: Math.hypot(B[0] - A[0], B[1] - A[1]), mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2 };
+    };
     stage.addEventListener('pointerdown', (e) => {
       if (this._phase !== 'map') return;
       if (this._top) return;   // the resume prompt holds the sheet
       // MAP2 (:532-550): the MIDDLE button marks the place under the cursor
       if (e.button === 1) { e.preventDefault?.(); this._markLocationHandler(...this._paperPoint(e.clientX, e.clientY)); return; }
+      // AUDIT-MAP2: in the hands lane a press off the sheet is a press on
+      // the world, not on the map - no pan, no pick, no pinch from it
+      if (this._lane === 'hands' && this._paperPoint(e.clientX, e.clientY) === OFF_SHEET) return;
       if (downAt && !second && e.pointerId !== downAt.id) {
         second = { id: e.pointerId, x: e.clientX, y: e.clientY };
         const p = pinchState({ x: downAt.cx, y: downAt.cy }, second);
@@ -1417,9 +1498,10 @@ export class HeldMapWindow {
         // the drag in SHEET pixels (MAP3: in the hands lane the sheet lies
         // at an angle, so a screen pixel is not a sheet pixel; in the
         // sprite lane the two are the same offset)
-        const [ax, ay] = this._paperPoint(downAt.x, downAt.y);
-        const [bx, by] = this._paperPoint(e.clientX, e.clientY);
-        this._setView({ ox: downAt.ox - (bx - ax) / this._view.scale, oy: downAt.oy - (by - ay) / this._view.scale, scale: this._view.scale });
+        const A = this._paperPoint(downAt.x, downAt.y);
+        const B = this._paperPoint(e.clientX, e.clientY);
+        if (A === OFF_SHEET || B === OFF_SHEET) return;   // dragged off the sheet: the pan waits where it was
+        this._setView({ ox: downAt.ox - (B[0] - A[0]) / this._view.scale, oy: downAt.oy - (B[1] - A[1]) / this._view.scale, scale: this._view.scale });
       } else {
         this._hoverLabel(...this._paperPoint(e.clientX, e.clientY));
       }
@@ -1449,6 +1531,7 @@ export class HeldMapWindow {
     });
     stage.addEventListener('wheel', (e) => {
       if (this._phase !== 'map') return;
+      if (this._top || this._info) return;   // AUDIT-MAP2: a box holds the sheet still under the wheel too
       e.preventDefault();
       // zoom toward the cursor: the map point under it stays still. The
       // delta is PIXELS; a line-mode wheel (Firefox, some mice) reports
@@ -1496,6 +1579,7 @@ export class HeldMapWindow {
   }
 
   _hoverLabel(sx, sy) {
+    if (!this._onSheet([sx, sy])) { this._chrome.label.textContent = ''; return; }   // AUDIT-MAP2: off the paper is off the map
     // SOC6: a party member wins the label over the place they are
     // standing in - the player pointed at the green ring, and "who"
     // is the answer they asked for.
@@ -1530,14 +1614,21 @@ export class HeldMapWindow {
   }
 
   _pickAt(sx, sy) {
+    if (!this._onSheet([sx, sy])) return;   // AUDIT-MAP2: off the paper is off the map (the sprite's hands, the world)
     const m = this._markerAt(sx, sy);
     if (m) { this._select(m); return; }
     // MAP2 (:1375): a bare pixel opens the coordinates decision when the
-    // mod allows it - the classic page's own click, on the sheet
+    // mod allows it - the classic page's own click, on the sheet.
+    // AUDIT-MAP2: "bare" is the DATA's word (the classic's locationSelected
+    // - a discovered place on the pixel - not whether this band inks it):
+    // a click dead on a hamlet the far band hides is not a nameless walk
+    // to its pixel. The band still hides it from the pick (MAP1's law).
     if (this._coordsAllowedHere()) {
       const [mx, my] = toMap(this._view, sx, sy);
       const px = Math.floor(mx), py = Math.floor(my);
-      if (px >= 0 && py >= 0 && px < this._size.width && py < this._size.height) {
+      const marks = this._ensureModel()?.marks ?? [];
+      const placeHere = marks.some((k) => Math.floor(k.x) === px && Math.floor(k.y) === py);
+      if (!placeHere && px >= 0 && py >= 0 && px < this._size.width && py < this._size.height) {
         this._select({ coords: true, x: px + 0.5, y: py + 0.5, colorIndex: -1, kind: 'coords', name: toFormat(TO_TEXT.MsgTargetCoords, px, py), summary: null, mapId: null });
         this._openPanel('travel');
         return;
@@ -1661,8 +1752,9 @@ export class HeldMapWindow {
     }
 
     const row = el('div', 'hmacts');
-    const travel = el('button', 'act', 'Travel here');
-    travel.onclick = () => this._openPanel('travel');
+    const armed = this.teleportationTravel;   // AUDIT-MAP2: the armed map's only offer is the teleport
+    const travel = el('button', 'act', armed ? 'Teleport here' : 'Travel here');
+    travel.onclick = () => this._openPanel(armed ? 'teleport' : 'travel');
     row.append(travel);
     card.append(row);
   }

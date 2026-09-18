@@ -278,7 +278,14 @@ world clock, which is the one thing a journey must not do.
     (the C# consults the stale last-hovered summary); the resume prompt
     answers Enter and E too; the teleport fee is asked with the pick and
     deducted only with the teleport. The classic window carries none of
-    these - they are the enhanced sheet's.
+    these - they are the enhanced sheet's. AUDIT-MAP2 added four on the
+    same sheet (`10-UI/Held-Map-Arc.md`, T1-T4): the poor-purse box has
+    no yes (the classic's teleportpoor closes on any key; Y had teleported
+    for free), Escape on the fee box is its No (the classic's one arm),
+    the armed map offers only the teleport (the classic's popup factory
+    returns the TeleportPopUp whenever the map is armed), and a "bare"
+    pixel is one with no discovered place on it (the classic's
+    locationSelected), not one the zoom band happens not to ink.
 
 ## AUDIT-TO1 (2026-09-18) - the audit of TO1, and what it found
 

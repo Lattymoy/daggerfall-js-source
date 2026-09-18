@@ -1573,7 +1573,7 @@ test('AUDIT-TO1 G1/G2/G3/I2/I3/I4/I6/J1/K2/H1/H2: the host seams the sweep found
   // C3: the fee on the default skin
   const ov = read('src/ui/heldMap.js');
   assert.match(ov, /const cost = teleportCost\(this\.deps\.magesGuildRank\?\.\(\) \?\? 0\);/);
-  assert.match(ov, /if \(fee && fee\.canPay && !fee\.paid\) \{ fee\.paid = true; this\.deps\.payTeleport\?\.\(fee\.cost\); \}/);
+  assert.match(ov, /if \(fee && !fee\.canPay\) \{ this\._beginClose\(null\); return; \}\s*\n\s*if \(fee && !fee\.paid\) \{ fee\.paid = true; this\.deps\.payTeleport\?\.\(fee\.cost\); \}/);
   // F2: the junction disc honours the map's filters
   assert.match(w, /const i = travelPixelColorIndex\(t, travelMapFilters\(\)\);/);
 });

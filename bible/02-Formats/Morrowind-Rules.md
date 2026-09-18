@@ -6777,3 +6777,28 @@ back. The pose Mac lands on becomes the shipped default.
 Pins: `test/map3_heldpose.test.js` (16) on the real fixture rig
 headless; `test/heldmap.test.js` MAP3 (4); `tools/mutants/map3.json` 39
 dead; a MAP3 layer in `tools/mwArmProbe.mjs`.
+
+**AUDIT-MAP2 (the same day) corrected four things above.** (1) The
+quaternions: the first draft packed `[x, y, z, w]`; the rig's sampler
+(mwAnim.js) and `quatToMat33` (mwSkin.js) are `[w, x, y, z]`, so a
+forty-degree bend about X reached the rig as a hundred-and-forty-degree
+turn about Z. Repacked; the pin now poses a delta through
+`poseSkeleton` itself and reads the matrix. (2) The bone names: the six
+defaults were the part-attach family (`left forearm`) - the nodes the
+body parts hang on - but retail's `.kf` keys `Bip01 L Forearm`, and the
+hand is a child of the Bip01 bone, not of the attach node; a delta
+there would have turned the forearm mesh and left the hand behind. A
+held bone now resolves to whichever spelling the clip keys, then to
+whichever the skeleton has (`HELD_BONE_ALIASES`; the fixture keys the
+attach names, retail the Bip01 ones). (3) The paper's second winding
+was a coplanar twin whose normal faced away, fighting the first under a
+culling-off pass: one winding, facing the eye. (4) The sheet was placed
+at the eye once; the camera node moves with the neck (pitch, offset,
+bob), so the sheet's source is refreshed in place whenever the node's
+translation moved. Also: the pass's far plane is the arm's reach times
+four, and the default sheet sat past it on the fixture - a held sheet
+now grows `built.reach` to its farthest corner and a quarter more
+(restored on release); `paperCorners` answers only from a frame the arm
+composed (`drewLast()`, folded into `weaponRig.armsDrawn()`); `holdPaper`
+is refused in third person; a rebuild with no camera node lets the
+sheet go. Record: `bible/10-UI/Held-Map-Arc.md`, AUDIT-MAP2.

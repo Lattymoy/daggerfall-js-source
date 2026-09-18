@@ -80,7 +80,7 @@ import { boneSourcesFor, resolveHolsterParts, holsterPartPaths, holsterHidden, H
 import { injectSkeletonNodes } from '../formats/mwSkin.js';   // WS1: the dry injection the holster's bone probe runs
 // MAP3: THE HELD SHEET - the pose deltas over the idle, the paper piece
 // the hands hold, and where its corners land on the composite
-import { deltaTracks, heldSampler, paperPiece, projectPaperCorners, normaliseHeldPose, HELD_POSE_DEFAULT } from './heldPose.js';
+import { deltaTracks, heldSampler, paperPiece, refreshPaperSource, projectPaperCorners, normaliseHeldPose, HELD_POSE_DEFAULT } from './heldPose.js';
 
 // MW-LOAD (2026-09-08, Mac: "improve the load time when Morrowind assets
 // are enabled"): THE ARCHIVE IS OPENED, NOT READ, AND THIS FILE IS ITS
@@ -2034,9 +2034,28 @@ export function createFpArm() {
   // looks. `heldMemo` keeps the frame allocation-free the way
   // overlayMemo does: one merged map and one sampler per (base, spec,
   // inner sampler), rebuilt only when one of them changes.
-  let held = null;               // { spec, piece, aspect }
+  let held = null;               // { spec, piece, aspect, eye, built, reach0 }
   let heldMemo = null;           // { base, spec, inner, tracks, sampler }
   let lastFrame = null;          // { model, view, proj, rect } - what draw() last composed with
+  let drewLast = false;          // AUDIT-MAP2: whether the LAST draw() call composed the arm
+  /** Put (or re-put) the sheet on the rig at the camera node's translation.
+   *  The reach - which sets the pass's far plane (rule 54: the planes come
+   *  off the arm's own reach) - grows to cover the sheet's farthest corner
+   *  and a quarter more, so a sheet tuned past the arm's sweep is not
+   *  clipped while its corners still project; releasePaper restores it. */
+  const placeSheet = (node) => {
+    const eye = node.t;
+    if (!held.piece || !built.arm.pieces.includes(held.piece)) {
+      held.piece = paperPiece(eye, held.spec.paper, held.aspect);
+      built.arm.pieces = built.arm.pieces.filter((p) => p.slot !== 'paper');
+      built.arm.pieces.push(held.piece);
+      releaseMesh(); packed = null;   // the ranges the textures hang on are the piece list; a new piece is a new list
+    }
+    const far = refreshPaperSource(held.piece, eye, held.spec.paper, held.aspect);
+    held.eye = [eye[0], eye[1], eye[2]];
+    if (held.built !== built) { held.built = built; held.reach0 = built.reach; }
+    built.reach = Math.max(held.reach0, far * 1.25 / 4);
+  };
   const heldTracksFor = (base, inner) => {
     if (!heldMemo || heldMemo.base !== base || heldMemo.spec !== held.spec || heldMemo.inner !== inner) {
       heldMemo = { base, spec: held.spec, inner, tracks: deltaTracks(base, held.spec, built.arm.skeleton), sampler: heldSampler(inner) };
@@ -2941,7 +2960,7 @@ export function createFpArm() {
       buildGen += 1;   // AUDIT MW-TORCH F7: a build in flight lands dead
       pendingBuild = null; lastBuildOpts = null;
       releaseMesh(); built = null; packed = null;
-      held = null; heldMemo = null; lastFrame = null;   // MAP3: the sheet goes with the rig
+      held = null; heldMemo = null; lastFrame = null; drewLast = false;   // MAP3: the sheet goes with the rig
       releaseThirdMesh(); thirdBuilt = null; thirdPacked = null; viewMode = 'first';
       movementState = null; movementGroup = null; movementSource = null; movementBase = null;
       jumpState = null; jumpGroup = null; jumpSource = null; jumpStance = null; jumpKind = null;   // MW-D39
@@ -3327,27 +3346,31 @@ export function createFpArm() {
      *  is read off the last pose); the caller asks again next frame. A
      *  second call re-places the sheet (a new spec, a new aspect). */
     holdPaper(spec = null, { aspect = 1.6 } = {}) {
-      if (!built || !built.ok) return false;
+      if (!built || !built.ok || viewMode !== 'first') return false;   // AUDIT-MAP2: the third-person body holds nothing
       const node = built.arm.mats && built.arm.mats.get(built.cameraRef);
       if (!node) return false;
       const s = normaliseHeldPose(spec, held ? held.spec : HELD_POSE_DEFAULT);   // a partial spec changes only what it names
-      const piece = paperPiece(node.t, s.paper, aspect);
-      built.arm.pieces = built.arm.pieces.filter((p) => p.slot !== 'paper');
-      built.arm.pieces.push(piece);
-      held = { spec: s, piece, aspect };
+      const prev = held;
+      held = { spec: s, piece: null, aspect, eye: null, built: prev?.built ?? null, reach0: prev?.reach0 ?? 0 };
       heldMemo = null;
-      // the ranges the textures hang on are the piece list; a new piece is a new list, so the mesh repacks
-      releaseMesh(); packed = null;
+      placeSheet(node);
       return true;
     },
     /** MAP3: the sheet goes and the arms return to whatever they were doing. */
     releasePaper() {
       if (!held) return false;
-      if (built && built.ok) built.arm.pieces = built.arm.pieces.filter((p) => p.slot !== 'paper');
+      if (built && built.ok) {
+        built.arm.pieces = built.arm.pieces.filter((p) => p.slot !== 'paper');
+        if (held.built === built) built.reach = held.reach0;   // the far plane is the arm's own again
+      }
       held = null; heldMemo = null;
       if (built && built.ok) { releaseMesh(); packed = null; }
       return true;
     },
+    /** AUDIT-MAP2: whether the last draw() call composed the arm - false
+     *  after a draw that returned early (no canvas, no camera, no eye) and
+     *  before any draw. weaponRig.armsDrawn() folds this in. */
+    drewLast() { return drewLast; },
     /** MAP3: the pose in force (null when nothing is held), and the live
      *  tuning door (window.__heldPose) - a new spec re-places the sheet. */
     heldPose() { return held ? held.spec : null; },
@@ -3615,11 +3638,18 @@ export function createFpArm() {
       let fSampler = fOverlay ? overlaySample : sampleTrack;
       if (held) {
         // MAP3: a rebuild (an equip's follow) mints a piece list without
-        // the sheet; it is put back where the eye is now
-        if (!built.arm.pieces.includes(held.piece)) {
-          const node = built.arm.mats && built.arm.mats.get(built.cameraRef);
-          if (node) { held.piece = paperPiece(node.t, held.spec.paper, held.aspect); built.arm.pieces.push(held.piece); releaseMesh(); packed = null; }
-        }
+        // the sheet; it is put back where the eye is now. AUDIT-MAP2: the
+        // eye MOVES (the neck's pitch and offset, the bob), and the sheet
+        // follows it - its source is refreshed whenever the camera node's
+        // translation moved since it was placed (last frame's pose: one
+        // frame of lag on a node that moves a millimetre a frame). A rig
+        // with no camera node cannot hold: the sheet is let go.
+        const node = built.arm.mats && built.arm.mats.get(built.cameraRef);
+        if (!node) { held = null; heldMemo = null; }
+        else if (!built.arm.pieces.includes(held.piece)) placeSheet(node);
+        else if (node.t[0] !== held.eye[0] || node.t[1] !== held.eye[1] || node.t[2] !== held.eye[2]) placeSheet(node);
+      }
+      if (held) {
         const hm = heldTracksFor(fTracks, fSampler);
         fTracks = hm.tracks; fSampler = hm.sampler;
       }
@@ -3711,6 +3741,7 @@ export function createFpArm() {
     },
 
     draw(canvas) {
+      drewLast = false;   // AUDIT-MAP2: true again only past every early return below
       // MW-D24: in third person the first-person overlay does not exist
       // - the reference masks the whole FP root out of the scene
       // (Mask_FirstPerson, npcanimation.cpp:542-546 - setViewMode's
@@ -3792,6 +3823,7 @@ export function createFpArm() {
       {
         const W = canvas.clientWidth || canvas.width, H = canvas.clientHeight || canvas.height;
         lastFrame = { model: NIF_TO_PASS, view, proj, rect: screenTransform ? screenTransform({ x: 0, y: 0, w: W, h: H }) : { x: 0, y: 0, w: W, h: H } };
+        drewLast = true;
       }
       const tex = renderer.renderCharacterSprite(mesh, NIF_TO_PASS, proj, view, pw, ph, { lensLocal: true });   // VC5 review: lens-local - no cloud deck on the arm
       // WW1: Weapon Widget's channels move the composite as they move the

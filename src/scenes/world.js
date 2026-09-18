@@ -5229,7 +5229,9 @@ export async function bootWorld(canvas, renderer, params, status) {
         available: () => !!weaponRig?.armsDrawn?.(),
         hold: (spec, opts) => !!weaponRig?.holdPaper?.(spec, opts),
         release: () => { weaponRig?.releasePaper?.(); },
-        corners: () => weaponRig?.paperCorners?.() ?? null,
+        // AUDIT-MAP2: corners only from a frame the arm DREW - a paralysed,
+        // hidden or third-person arm answers none, and the window hides the ink
+        corners: () => (weaponRig?.armsDrawn?.() ? weaponRig.paperCorners() : null) ?? null,
       },
       ...extra,
     });

@@ -988,7 +988,7 @@
  {
   "name": "c3-fee-never-deducted",
   "file": "src/ui/heldMap.js",
-  "old": "    if (fee && fee.canPay && !fee.paid) { fee.paid = true; this.deps.payTeleport?.(fee.cost); }",
+  "old": "    if (fee && !fee.paid) { fee.paid = true; this.deps.payTeleport?.(fee.cost); }",
   "new": "",
   "tests": [
    "test/to1_travelOptions.test.js"

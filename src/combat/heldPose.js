@@ -25,10 +25,16 @@
 // WHY DELTAS AND NOT ABSOLUTE ROTATIONS. An absolute local rotation is
 // a number about ONE skeleton's rest frames; retail's xbase_anim.1st
 // and the fixtures' armfp do not share them. "Bend the left forearm
-// forty degrees more" means the same thing on both. The numbers below
-// were placed by eye on the fixture arm; they are meant to be tuned on
-// the retail arm through the live surface the host exposes
+// forty degrees more" means the same thing on both. The default deltas
+// are ZERO: the session had the fixture arm only, and the pose is tuned
+// on the retail arm through the live surface the host exposes
 // (window.__heldPose - bible/10-UI/Held-Map-Arc.md, MAP3).
+//
+// QUATERNIONS ARE [w, x, y, z] HERE, because they are everywhere the
+// rig reads them: mwAnim.js's sampler answers [w,x,y,z] and mwSkin.js's
+// quatToMat33 destructures `[w, x, y, z]`. AUDIT-MAP2 found the first
+// draft packed [x,y,z,w] - a 40-degree bend about X reached the rig as
+// a 140-degree turn about Z.
 //
 // THE PAPER is a rigid piece like the weapon and the torch (a `source`
 // of vertices placed by an attachment transform each frame), but its
@@ -69,33 +75,54 @@ export const HELD_POSE_DEFAULT = Object.freeze({
   }),
 });
 
-/** The bones a held pose may name: the two arms, hands to clavicles. */
+/** The bones a held pose may name: the two arms, hands to clavicles,
+ *  in the part-attach names (mwNpc.js PART_BONES, lowercased). */
 export const HELD_BONES = Object.freeze([
-  'bip01 l clavicle', 'left upper arm', 'left forearm', 'left wrist', 'left hand',
-  'bip01 r clavicle', 'right upper arm', 'right forearm', 'right wrist', 'right hand',
+  'left clavicle', 'left upper arm', 'left forearm', 'left wrist', 'left hand',
+  'right clavicle', 'right upper arm', 'right forearm', 'right wrist', 'right hand',
 ]);
+/** AUDIT-MAP2: retail skeletons carry BOTH families - the animated
+ *  `Bip01 L Forearm` and, under it, the part-attach node `Left Forearm`
+ *  the .kf never keys. A delta on the attach node would turn the forearm
+ *  mesh and leave the hand (a child of the Bip01 bone, not of the attach
+ *  node) where it was. So a named bone resolves to whichever of its two
+ *  spellings the CLIP keys, then to whichever the skeleton has - the
+ *  fixture rig keys the attach names, retail keys the Bip01 ones. */
+export const HELD_BONE_ALIASES = Object.freeze({
+  'left clavicle': 'bip01 l clavicle', 'left upper arm': 'bip01 l upperarm', 'left forearm': 'bip01 l forearm', 'left hand': 'bip01 l hand',
+  'right clavicle': 'bip01 r clavicle', 'right upper arm': 'bip01 r upperarm', 'right forearm': 'bip01 r forearm', 'right hand': 'bip01 r hand',
+});
+export function resolveHeldBone(name, base, skeleton) {
+  const key = String(name).toLowerCase();
+  const alias = HELD_BONE_ALIASES[key];
+  const names = alias ? [key, alias] : [key];
+  const has = (n) => skeleton?.byName?.get(n) != null;
+  return names.find((n) => base?.has?.(n) && has(n)) ?? names.find(has) ?? null;
+}
 
-// ── QUATERNIONS ([x, y, z, w], Hamilton) ────────────────────────
+// ── QUATERNIONS ([w, x, y, z], Hamilton - the rig's own packing) ──
+export const QUAT_IDENTITY = Object.freeze([1, 0, 0, 0]);
 export function quatMul(a, b) {
-  const [ax, ay, az, aw] = a, [bx, by, bz, bw] = b;
+  const [aw, ax, ay, az] = a, [bw, bx, by, bz] = b;
   return [
+    aw * bw - ax * bx - ay * by - az * bz,
     aw * bx + ax * bw + ay * bz - az * by,
     aw * by - ax * bz + ay * bw + az * bx,
     aw * bz + ax * by - ay * bx + az * bw,
-    aw * bw - ax * bx - ay * by - az * bz,
   ];
 }
 export function quatAxis(axis, deg) {
   const h = deg * Math.PI / 360;
   const s = Math.sin(h), c = Math.cos(h);
-  return axis === 0 ? [s, 0, 0, c] : axis === 1 ? [0, s, 0, c] : [0, 0, s, c];
+  return axis === 0 ? [c, s, 0, 0] : axis === 1 ? [c, 0, s, 0] : [c, 0, 0, s];
 }
 /** X, then Y, then Z, each about the bone's own (already rotated) axes.
  *  @param {number[]} e degrees about X, Y, Z */
 export function quatFromEulerDeg(e) {
   return quatMul(quatMul(quatAxis(0, e[0] ?? 0), quatAxis(1, e[1] ?? 0)), quatAxis(2, e[2] ?? 0));
 }
-/** A 3x3 (row-major, as mwSkin keeps a node's rest rotation) to a quaternion. */
+/** A 3x3 (row-major, as mwSkin keeps a node's rest rotation) to a
+ *  [w, x, y, z] quaternion - the algebraic inverse of mwSkin's quatToMat33. */
 export function mat33ToQuat(m) {
   const [m00, m01, m02, m10, m11, m12, m20, m21, m22] = m;
   const tr = m00 + m11 + m22;
@@ -113,7 +140,7 @@ export function mat33ToQuat(m) {
     const s = Math.sqrt(1 + m22 - m00 - m11) * 2;
     w = (m10 - m01) / s; x = (m02 + m20) / s; y = (m12 + m21) / s; z = 0.25 * s;
   }
-  return [x, y, z, w];
+  return [w, x, y, z];
 }
 const isZero = (e) => !e || (Math.abs(e[0]) < 1e-9 && Math.abs(e[1]) < 1e-9 && Math.abs(e[2]) < 1e-9);
 
@@ -134,15 +161,15 @@ export function deltaTracks(base, spec, skeleton) {
   const out = new Map(base ?? []);
   const bones = spec?.bones ?? {};
   for (const name of Object.keys(bones)) {
-    const key = String(name).toLowerCase();
     if (isZero(bones[name])) continue;   // a zero delta leaves the idle alone
-    const ref = skeleton?.byName?.get(key);
+    const key = resolveHeldBone(name, base, skeleton);
+    const ref = key != null ? skeleton?.byName?.get(key) : null;
     const node = ref != null ? skeleton?.nodes?.get(ref) : null;
-    if (!node) continue;                 // a bone this skeleton does not have is not posed
+    if (!node) continue;                 // a bone this skeleton does not have (under either name) is not posed
     out.set(key, {
       __delta: quatFromEulerDeg(bones[name]),
       __base: base?.get(key) ?? null,
-      __rest: node.rest?.rotation ? mat33ToQuat(node.rest.rotation) : [0, 0, 0, 1],
+      __rest: node.rest?.rotation ? mat33ToQuat(node.rest.rotation) : [...QUAT_IDENTITY],
     });
   }
   return out;
@@ -191,7 +218,11 @@ export function paperCornersRig(eye, paper, aspect) {
  * coloured, attached to the rig root (`attachRef` null - the identity
  * transform), so its `source` IS its rig-space position. The UVs run
  * the sheet's way (u across, v down from the top-left) so a texture,
- * if one is ever hung on it, reads upright.
+ * if one is ever hung on it, reads upright. ONE winding, the one whose
+ * flat normal faces the eye (-Y of the sheet): the character pass draws
+ * with culling off, so a second winding would only be a coplanar twin
+ * fighting the first for the depth buffer with its normal turned away
+ * (AUDIT-MAP2).
  */
 export function paperPiece(eye, paper, aspect) {
   const c = paperCornersRig(eye, paper, aspect);
@@ -202,11 +233,24 @@ export function paperPiece(eye, paper, aspect) {
     batch: null, source, attachRef: null, boneOffset: null,
     uvs: new Float32Array([0, 0, 1, 0, 1, 1, 0, 1]),
     colors: null,
-    // both windings, so the sheet is seen from either side of a two-sided pass
-    indices: new Uint16Array([0, 1, 2, 0, 2, 3, 0, 2, 1, 0, 3, 2]),
+    indices: new Uint16Array([0, 2, 1, 0, 3, 2]),
     material: { diffuse: [...(paper.colour ?? HELD_POSE_DEFAULT.paper.colour)], vertexColorMode: 0, textureFile: null, clampMode: 3, alphaTest: false },
     positions: new Float32Array(12),
   };
+}
+
+/** Write the sheet's corners for a new eye into a piece's source in
+ *  place (the eye moves with the neck; the sheet follows it - AUDIT-MAP2).
+ *  @returns {number} the farthest corner's distance from the eye, rig units */
+export function refreshPaperSource(piece, eye, paper, aspect) {
+  const c = paperCornersRig(eye, paper, aspect);
+  let far = 0;
+  c.forEach((p, i) => {
+    piece.source[i * 3] = p[0]; piece.source[i * 3 + 1] = p[1]; piece.source[i * 3 + 2] = p[2];
+    const d = Math.hypot(p[0] - eye[0], p[1] - eye[1], p[2] - eye[2]);
+    if (d > far) far = d;
+  });
+  return far;
 }
 
 /**

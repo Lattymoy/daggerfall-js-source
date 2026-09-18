@@ -1240,8 +1240,11 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
 .hmroot:active { cursor: grabbing; }
 /* MAP3: the hands lane - the Morrowind arm and the world show through,
    the ink canvas lies on the held paper under its matrix3d */
-.hmroot.hmhands { background: transparent; }
-.hmroot.hmhands .hmink { will-change: transform; }
+.hmroot.hmlanehands { background: transparent; }
+.hmroot.hmlanehands .hmink { will-change: transform; }
+/* AUDIT-MAP2: the foot had the root's black behind it; over the world it
+   needs its own scrim */
+.hmroot.hmlanehands .hmfoot { background: rgba(10, 12, 17, 0.72); padding: 6px 10px; border-radius: 4px; }
 .hmstage { position: absolute; }
 /* the painting is 1448x1086 and is only ever shown SMALLER than that, so
    it is scaled smooth - a pixelated downscale would alias its dither */

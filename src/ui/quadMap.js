@@ -96,12 +96,37 @@ export function quadPlacement(w, h, corners) {
   const inv = invertH(H);
   if (!inv) return null;
   const xs = corners.map((p) => p[0]), ys = corners.map((p) => p[1]);
+  const box = { x: Math.min(...xs), y: Math.min(...ys), w: Math.max(...xs) - Math.min(...xs), h: Math.max(...ys) - Math.min(...ys) };
+  // AUDIT-MAP2: a sheet turned nearly edge-on is not a place to put the
+  // ink - the guards above are absolute and pass a quad whose corners are
+  // all but collinear, and the browser would smear the canvas across the
+  // screen. Shoelace area against the longest edge squared: under a
+  // fiftieth (a sheet fifty times wider than it is tall on screen),
+  // nothing - it could not be read or picked at that angle anyway.
+  let area = 0, edge2 = 0;
+  for (let i = 0; i < 4; i++) {
+    const a = corners[i], b = corners[(i + 1) % 4];
+    area += a[0] * b[1] - b[0] * a[1];
+    edge2 = Math.max(edge2, (b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2);
+  }
+  if (!(Math.abs(area) / 2 > 0.02 * edge2)) return null;
+  // the inverse's divisor is POSITIVE on the sheet's side of the paper
+  // plane's vanishing line and negative beyond it, for every quad:
+  // adj(H) * H = det * I puts it at exactly 1 on the sheet's own origin,
+  // whichever way the corners wind. So toSheet refuses a non-positive
+  // divisor - a screen point behind the paper's horizon is not a
+  // mirrored sheet point, it is nowhere.
   return {
     H, inv,
     css: matrix3dOf(H),
-    box: { x: Math.min(...xs), y: Math.min(...ys), w: Math.max(...xs) - Math.min(...xs), h: Math.max(...ys) - Math.min(...ys) },
-    /** a screen point to sheet coordinates (CSS px on the untransformed sheet) */
-    toSheet: (sx, sy) => applyH(inv, sx, sy),
+    box,
+    /** a screen point to sheet coordinates (CSS px on the untransformed
+     *  sheet), or null beyond the paper plane's vanishing line */
+    toSheet: (sx, sy) => {
+      const d = inv[6] * sx + inv[7] * sy + inv[8];
+      if (!(d > 1e-12)) return null;
+      return [(inv[0] * sx + inv[1] * sy + inv[2]) / d, (inv[3] * sx + inv[4] * sy + inv[5]) / d];
+    },
     /** a sheet point to the screen */
     toScreen: (px, py) => applyH(H, px, py),
   };

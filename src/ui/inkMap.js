@@ -451,11 +451,14 @@ export function placeNames(marks, view, band, { paperW, paperH, measure }) {
   const size = band === 'near' ? 14 : 13;
   const out = [];
   const boxes = [];
-  const sorted = marks.filter((m) => m.name && named.has(m.colorIndex))
+  // AUDIT-MAP2: culled to the sheet BEFORE the sort - at the near band
+  // every named mark in the bay qualified, and the whole set was sorted
+  // per pan frame to place the dozen on the paper
+  const onSheet = (m) => { const [px, py] = toPaper(view, m.x, m.y); return !(px < -40 || py < -20 || px > paperW + 40 || py > paperH + 20); };
+  const sorted = marks.filter((m) => m.name && named.has(m.colorIndex) && onSheet(m))
     .sort((a, b) => (rank.get(a.colorIndex) ?? 99) - (rank.get(b.colorIndex) ?? 99));
   for (const m of sorted) {
     const [px, py] = toPaper(view, m.x, m.y);
-    if (px < -40 || py < -20 || px > paperW + 40 || py > paperH + 20) continue;
     const measured = measure(m.name, size, nameFont(m, size));
     const w = Number.isFinite(measured) ? measured : 0;   // a stub's NaN would let every name overlap
     const glyph = m.kind === 'city' ? 6 : 4;

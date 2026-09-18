@@ -8,6 +8,30 @@
 
 Newest first.
 
+**2026-09-18 - AUDIT-MAP2: THE HELD MAP, THE LAST AUDIT BEFORE MERGE
+(MAP1-MAP3).** Mac: *"Before we merge, let's do one last audit on the
+new maps."* Three reviewer lenses (the rig's side of MAP3, the window's
+side of MAP3, fresh eyes on MAP1/MAP2) and a hands-lane layer in the
+browser probe on the real fixture rig. Thirty-two findings, twenty-five
+fixed. The browser found the first two: the root's lane class was the
+thumbs canvas's `pointer-events: none` class (every click in the hands
+lane went to the arm underneath), and the sheet sat past the arm's far
+plane (ink over the sky, no parchment). The rig reviewer found the
+quaternions packed `[x,y,z,w]` against the rig's `[w,x,y,z]` - a
+forty-degree bend arriving as a hundred-and-forty-degree turn about the
+wrong axis, invisible to pins that tested the module against itself;
+the bone names in the family retail's clips never key; the coplanar
+second winding; the sheet anchored to a moving eye once; stale corners
+after the arm stopped drawing. The window reviewer found the one-way
+lane latch, the `''` sentinel collision, the repack per resize, the
+pointer unclamped to the sheet over a full-viewport stage, the pinch in
+screen pixels, the foot without a scrim over the world. The fresh eyes
+found a free teleport for a poor mage on Y, Escape bypassing the fee's
+close, the guild's teleport map offering a fast-travel panel that
+committed into no hook, the far band turning a click on a hidden hamlet
+into a nameless walk, and the static layer freed and re-zeroed on every
+pan frame. Record: `10-UI/Held-Map-Arc.md`, AUDIT-MAP2.
+
 **2026-09-18 - AUDIT-MAP: THE HELD MAP, THE AUDIT OF MAP0-MAP2.** Mac:
 *"Let's audit everything so far, wanna make sure this is perfect."*
 Three reviewer lenses (the ink's geometry and cost on the real bay; the
