@@ -1,164 +1,164 @@
 [
-  {
-    "name": "SURV6-the-hunt-rolls-at-night",
-    "file": "src/systems/survival/hunting.js",
-    "old": "  if (!climate || !outdoors || inLocationRect || night || enemiesNear || resting) return null;",
-    "new": "  if (!climate || !outdoors || inLocationRect || enemiesNear || resting) return null;",
-    "tests": [
-      "test/surv6_hunting.test.js"
-    ]
-  },
-  {
-    "name": "SURV6-winter-hunts-like-summer",
-    "file": "src/systems/survival/hunting.js",
-    "old": "  const chance = (1 + luckMod(luck)) / (winter ? HUNT_ODDS.winter : HUNT_ODDS.summer);",
-    "new": "  const chance = (1 + luckMod(luck)) / HUNT_ODDS.summer;",
-    "tests": [
-      "test/surv6_hunting.test.js"
-    ]
-  },
-  {
-    "name": "SURV6-the-seventy-is-gone",
-    "file": "src/systems/survival/hunting.js",
-    "old": "  if (!dice100(HUNT_ODDS.event, rolls())) return null;\n",
-    "new": "",
-    "tests": [
-      "test/surv6_hunting.test.js"
-    ]
-  },
-  {
-    "name": "SURV6-no-cooldown-after-an-event",
-    "file": "src/systems/survival/hunting.js",
-    "old": "  s.huntAt = minute + range(HUNT_COOLDOWN, rolls);\n",
-    "new": "",
-    "tests": [
-      "test/surv6_hunting.test.js"
-    ]
-  },
-  {
-    "name": "SURV6-the-foul-pool-is-safe",
-    "file": "src/systems/survival/hunting.js",
-    "old": "      if (d <= 92) return outcome('foul', { waterKg: POOL_KG.foul, disease: true });",
-    "new": "      if (d <= 92) return outcome('foul', { waterKg: POOL_KG.foul, disease: false });",
-    "tests": [
-      "test/surv6_hunting.test.js"
-    ]
-  },
-  {
-    "name": "SURV6-a-shot-snake-never-bites",
-    "file": "src/systems/survival/hunting.js",
-    "old": "        if (shot()) return dice100(15, rolls()) ? outcome('snakeShotBite', { meat: 1, poison: true, skills: bow }) : outcome('snakeShot', { meat: 1, skills: bow });",
-    "new": "        if (shot()) return outcome('snakeShot', { meat: 1, skills: bow });",
-    "tests": [
-      "test/surv6_hunting.test.js"
-    ]
-  },
-  {
-    "name": "SURV6-luck-counts-for-nothing-in-a-check",
-    "file": "src/systems/survival/hunting.js",
-    "old": "const check = (skill, luck, rolls) => (skill ?? 0) + luckMod(luck) - 5 >= 1 + Math.floor(rolls() * 100);",
-    "new": "const check = (skill, luck, rolls) => (skill ?? 0) >= 1 + Math.floor(rolls() * 100);",
-    "tests": [
-      "test/surv6_hunting.test.js"
-    ]
-  },
-  {
-    "name": "SURV6-the-hunted-meets-one-beast-at-most",
-    "file": "src/systems/survival/hunting.js",
-    "old": "  if (r < 2) return { mobileType: t[0], count: 3 };",
-    "new": "  if (r < 2) return { mobileType: t[0], count: 1 };",
-    "tests": [
-      "test/surv6_hunting.test.js"
-    ]
-  },
-  {
-    "name": "SURV6-the-mountain-fall-is-a-boar",
-    "file": "src/systems/survival/hunting.js",
-    "old": "      if (dice100(10, rolls())) return climate === 'mountain' ? outcome('fall', { hurt: range(FALL_HURT, rolls), skills: hands }) : outcome('boar', { tired: true, skills: hands });",
-    "new": "      if (dice100(10, rolls())) return outcome('boar', { tired: true, skills: hands });",
-    "tests": [
-      "test/surv6_hunting.test.js"
-    ]
-  },
-  {
-    "name": "SURV6-the-goat-is-a-deer",
-    "file": "src/systems/survival/hunting.js",
-    "old": "      const big = climate === 'mountain' ? 'goat' : 'deer';",
-    "new": "      const big = 'deer';",
-    "tests": [
-      "test/surv6_hunting.test.js"
-    ]
-  },
-  {
-    "name": "SURV6-a-fall-can-kill",
-    "file": "src/systems/survival/hunting.js",
-    "old": "  if (o.hurt > 0 && entity) entity.health = Math.max(1, (entity.health ?? 1) - o.hurt);",
-    "new": "  if (o.hurt > 0 && entity) entity.health = Math.max(0, (entity.health ?? 1) - o.hurt);",
-    "tests": [
-      "test/surv6_hunting.test.js"
-    ]
-  },
-  {
-    "name": "SURV6-the-bite-poisons-nobody",
-    "file": "src/systems/survival/hunting.js",
-    "old": "    inflictPoison(entity, range(BITE_POISON_RANGE, rolls), false, { rolls, currentMinute: now });\n",
-    "new": "",
-    "tests": [
-      "test/surv6_hunting.test.js"
-    ]
-  },
-  {
-    "name": "SURV6-the-search-runs-every-tick-after",
-    "file": "src/ui/huntWindow.js",
-    "old": "    if (this.phase !== HUNT_PHASE.Busy) return;\n    this._elapsed += Math.max(0, dt || 0);",
-    "new": "    this._elapsed += Math.max(0, dt || 0);",
-    "tests": [
-      "test/surv6_hunting.test.js"
-    ]
-  },
-  {
-    "name": "SURV6-no-is-yes",
-    "file": "src/ui/huntWindow.js",
-    "old": "      onNo: () => { this._end(false); return null; },",
-    "new": "      onNo: () => { this._begin(); return null; },",
-    "tests": [
-      "test/surv6_hunting.test.js"
-    ]
-  },
-  {
-    "name": "SURV6-the-roll-every-frame",
-    "file": "src/scenes/hunting.js",
-    "old": "    if (minute === _lastMinute) return null;\n",
-    "new": "",
-    "tests": [
-      "test/surv6_hunting.test.js"
-    ]
-  },
-  {
-    "name": "SURV6-the-beast-never-stands",
-    "file": "src/scenes/hunting.js",
-    "old": "        if (searched && outcome?.beast) spawnBeast?.(outcome.beast);   // AUDIT SURV C: only after a search - a window dropped from under (a death) stands nothing\n",
-    "new": "",
-    "tests": [
-      "test/surv6_hunting.test.js"
-    ]
-  },
-  {
-    "name": "SURV6-the-minutes-never-pass",
-    "file": "src/scenes/hunting.js",
-    "old": "        advanceMinutes?.(minutes);\n",
-    "new": "",
-    "tests": [
-      "test/surv6_hunting.test.js"
-    ]
-  },
-  {
-    "name": "SURV6-the-host-never-ticks-the-hunt",
-    "file": "src/scenes/world.js",
-    "old": "    if (_mode() === 'exterior') hunting.tick();   // SURV6: the minute's hunting roll; the window takes the slot\n",
-    "new": "",
-    "tests": [
-      "test/surv6_hunting.test.js"
-    ]
-  }
+ {
+  "name": "SURV6-the-hunt-rolls-at-night",
+  "file": "src/systems/survival/hunting.js",
+  "old": "  if (!climate || !outdoors || inLocationRect || night || enemiesNear || resting) return null;",
+  "new": "  if (!climate || !outdoors || inLocationRect || enemiesNear || resting) return null;",
+  "tests": [
+   "test/surv6_hunting.test.js"
+  ]
+ },
+ {
+  "name": "SURV6-winter-hunts-like-summer",
+  "file": "src/systems/survival/hunting.js",
+  "old": "  const chance = (1 + luckMod(luck)) / (winter ? HUNT_ODDS.winter : HUNT_ODDS.summer);",
+  "new": "  const chance = (1 + luckMod(luck)) / HUNT_ODDS.summer;",
+  "tests": [
+   "test/surv6_hunting.test.js"
+  ]
+ },
+ {
+  "name": "SURV6-the-seventy-is-gone",
+  "file": "src/systems/survival/hunting.js",
+  "old": "  if (!dice100(HUNT_ODDS.event, rolls())) return null;\n",
+  "new": "",
+  "tests": [
+   "test/surv6_hunting.test.js"
+  ]
+ },
+ {
+  "name": "SURV6-no-cooldown-after-an-event",
+  "file": "src/systems/survival/hunting.js",
+  "old": "  s.huntAt = minute + range(HUNT_COOLDOWN, rolls);\n",
+  "new": "",
+  "tests": [
+   "test/surv6_hunting.test.js"
+  ]
+ },
+ {
+  "name": "SURV6-the-foul-pool-is-safe",
+  "file": "src/systems/survival/hunting.js",
+  "old": "      if (d <= 92) return outcome('foul', { waterKg: POOL_KG.foul, disease: true });",
+  "new": "      if (d <= 92) return outcome('foul', { waterKg: POOL_KG.foul, disease: false });",
+  "tests": [
+   "test/surv6_hunting.test.js"
+  ]
+ },
+ {
+  "name": "SURV6-a-shot-snake-never-bites",
+  "file": "src/systems/survival/hunting.js",
+  "old": "        if (shot()) return dice100(15, rolls()) ? outcome('snakeShotBite', { meat: 1, poison: true, skills: bow }) : outcome('snakeShot', { meat: 1, skills: bow });",
+  "new": "        if (shot()) return outcome('snakeShot', { meat: 1, skills: bow });",
+  "tests": [
+   "test/surv6_hunting.test.js"
+  ]
+ },
+ {
+  "name": "SURV6-luck-counts-for-nothing-in-a-check",
+  "file": "src/systems/survival/hunting.js",
+  "old": "const check = (skill, luck, rolls) => (skill ?? 0) + luckMod(luck) - 5 >= 1 + Math.floor(rolls() * 100);",
+  "new": "const check = (skill, luck, rolls) => (skill ?? 0) >= 1 + Math.floor(rolls() * 100);",
+  "tests": [
+   "test/surv6_hunting.test.js"
+  ]
+ },
+ {
+  "name": "SURV6-the-hunted-meets-one-beast-at-most",
+  "file": "src/systems/survival/hunting.js",
+  "old": "  if (r < 2) return { mobileType: t[0], count: 3 };",
+  "new": "  if (r < 2) return { mobileType: t[0], count: 1 };",
+  "tests": [
+   "test/surv6_hunting.test.js"
+  ]
+ },
+ {
+  "name": "SURV6-the-mountain-fall-is-a-boar",
+  "file": "src/systems/survival/hunting.js",
+  "old": "      if (dice100(10, rolls())) return climate === 'mountain' ? outcome('fall', { hurt: range(FALL_HURT, rolls), skills: hands }) : outcome('boar', { tired: true, skills: hands });",
+  "new": "      if (dice100(10, rolls())) return outcome('boar', { tired: true, skills: hands });",
+  "tests": [
+   "test/surv6_hunting.test.js"
+  ]
+ },
+ {
+  "name": "SURV6-the-goat-is-a-deer",
+  "file": "src/systems/survival/hunting.js",
+  "old": "      const big = climate === 'mountain' ? 'goat' : 'deer';",
+  "new": "      const big = 'deer';",
+  "tests": [
+   "test/surv6_hunting.test.js"
+  ]
+ },
+ {
+  "name": "SURV6-a-fall-can-kill",
+  "file": "src/systems/survival/hunting.js",
+  "old": "  if (o.hurt > 0 && entity) entity.health = Math.max(1, (entity.health ?? 1) - o.hurt);",
+  "new": "  if (o.hurt > 0 && entity) entity.health = Math.max(0, (entity.health ?? 1) - o.hurt);",
+  "tests": [
+   "test/surv6_hunting.test.js"
+  ]
+ },
+ {
+  "name": "SURV6-the-bite-poisons-nobody",
+  "file": "src/systems/survival/hunting.js",
+  "old": "    inflictPoison(entity, range(BITE_POISON_RANGE, rolls), false, { rolls, currentMinute: now });\n",
+  "new": "",
+  "tests": [
+   "test/surv6_hunting.test.js"
+  ]
+ },
+ {
+  "name": "SURV6-the-search-runs-every-tick-after",
+  "file": "src/ui/huntWindow.js",
+  "old": "    if (this.phase !== HUNT_PHASE.Busy) return;\n    this._elapsed += Math.max(0, dt || 0);",
+  "new": "    this._elapsed += Math.max(0, dt || 0);",
+  "tests": [
+   "test/surv6_hunting.test.js"
+  ]
+ },
+ {
+  "name": "SURV6-no-is-yes",
+  "file": "src/ui/huntWindow.js",
+  "old": "      onNo: () => { this._end(false); return null; },",
+  "new": "      onNo: () => { this._begin(); return null; },",
+  "tests": [
+   "test/surv6_hunting.test.js"
+  ]
+ },
+ {
+  "name": "SURV6-the-roll-every-frame",
+  "file": "src/scenes/hunting.js",
+  "old": "    if (minute === _lastMinute) return null;\n",
+  "new": "",
+  "tests": [
+   "test/surv6_hunting.test.js"
+  ]
+ },
+ {
+  "name": "SURV6-the-beast-never-stands",
+  "file": "src/scenes/hunting.js",
+  "old": "        if (searched && outcome?.beast) spawnBeast?.(outcome.beast);   // AUDIT SURV C: only after a search - a window dropped from under (a death) stands nothing\n",
+  "new": "",
+  "tests": [
+   "test/surv6_hunting.test.js"
+  ]
+ },
+ {
+  "name": "SURV6-the-minutes-never-pass",
+  "file": "src/scenes/hunting.js",
+  "old": "        advanceMinutes?.(minutes);\n",
+  "new": "",
+  "tests": [
+   "test/surv6_hunting.test.js"
+  ]
+ },
+ {
+  "name": "SURV6-the-host-never-ticks-the-hunt",
+  "file": "src/scenes/world.js",
+  "old": "    if (_mode() === 'exterior' && worldTimeScale() <= 1) hunting.tick();",
+  "new": "    if (false) hunting.tick();",
+  "tests": [
+   "test/surv6_hunting.test.js"
+  ]
+ }
 ]

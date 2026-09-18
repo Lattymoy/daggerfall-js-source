@@ -175,7 +175,7 @@ export async function autoBuildArms(entity, { wanted = () => getPref('mwArms'), 
  *                     pass console is retired: every call site hands
  *                     over a real one - hudText.add
  *                     (dungeonContext.js:2654), townTalk.say
- *                     (exterior.js:1769, world.js:2853) and
+ *                     (exterior.js:1769, world.js:2923) and
  *                     worldModes' own interior sink (worldModes.js:390,
  *                     which warns to console only where a host mounts
  *                     no townTalk at all), so the empty default below
@@ -915,6 +915,11 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     /** MAP3: whether the Morrowind arm was the thing drawn on the last
      *  frame - the held map's holder opens the hands lane on it. */
     armsDrawn() { return _armDrewLast && fpArm.drewLast(); },   // AUDIT-MAP2: the seam was reached AND the arm composed
+    /** MAP-FIELD: whether the Morrowind arm WOULD draw if it were handed
+     *  a sheet - which is what the held map has to ask, because until it
+     *  holds one the arm is sheathed and does not draw at all. The EOTB
+     *  body takes everything, as it does below. */
+    armsAvailable() { return !eotbHidesWeapon() && fpArm.active(); },
     holdPaper(spec, opts) { return fpArm.holdPaper(spec, opts); },
     releasePaper() { return fpArm.releasePaper(); },
     paperCorners() { return fpArm.paperCorners(); },
@@ -1009,7 +1014,32 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       const torchOnly = !shown() && !spellArmed() && !fpsSpellCasting.isPlayingAnim
         && (entity?.equipCountdown ?? 0) <= 0 && isHeldLight(entity?.lightSource)
         && (!fpArm.active() || fpArm.torchShown());
-      if (paralyzed || (!shown() && !torchOnly)) return;
+      // MAP-FIELD (2026-09-18, Mac: "the morrowind doesn't even hold the
+      // map"): A HELD SHEET IS NOT A WEAPON EITHER. `shown()` is the
+      // WEAPON's predicate - TORCH-VIS above says so for the light, and
+      // the same sentence answers the map: a player opening the travel
+      // map is walking about SHEATHED by definition, so the one state
+      // the held pose exists for was the one state the arm never drew
+      // in, and the window fell back to the painted sprite every time.
+      // The hands are holding a map; the weapon, the arrow and the torch
+      // are already hidden while they do (combat/heldPose.js).
+      //
+      // AUDIT-FIELD F1: and it relaxes THE SHEATHE LEG ALONE, which is
+      // why `torchOnly` above re-states its own three. `shown()`
+      // (:430-446) is false for FOUR reasons - a readied spell, a cast
+      // animation playing, an equip countdown, and the sheathe - and the
+      // first cut tested only `!shown()`, so it reopened the gate for all
+      // four. `openTravelMap` (scenes/world.js) guards an overlay, the
+      // art, nearby foes, a give-offer, sun damage and the racial
+      // override, and NOTHING about a spell: ready one and press M and
+      // the arm drew its cast stance blended with the held-map delta,
+      // holding a parchment. An equip countdown is the same shape -
+      // "empty hands by construction", now a pair of them holding a map.
+      // Said POSITIVELY (`playerWeapon.sheathed`), so a leg added to
+      // `shown()` later cannot be relaxed here by accident.
+      const sheetOnly = playerWeapon.sheathed && !spellArmed() && !fpsSpellCasting.isPlayingAnim
+        && (entity?.equipCountdown ?? 0) <= 0 && fpArm.active() && fpArm.holdingPaper();
+      if (paralyzed || (!shown() && !torchOnly && !sheetOnly)) return;
       // THE ONE SEAM. The arm draws whole and RETURNS, or it is inactive
       // and the classic sprite draws exactly as it always has. The return
       // is load-bearing: without it both composite and the player sees a

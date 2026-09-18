@@ -523,6 +523,28 @@ test('MAP3 weaponRig: armsDrawn() is the draw seam\'s own record - reset at the 
   assert.match(src, /_armDrewLast = !eotbHidesWeapon\(\) && fpArm\.active\(\);[^\n]*\n\s*if \(eotbHidesWeapon\(\)\) return;\s*\n\s*if \(fpArm\.active\(\)\) \{ fpArm\.draw\(c\); return; \}/, 'set on the line before the two-line seam (EOTB-IL keeps those two adjacent), with the same two conditions');
   assert.equal([...src.matchAll(/^\s*_armDrewLast = /gm)].length, 2, 'written in exactly those two places');
   assert.match(src, /armsDrawn\(\) \{ return _armDrewLast && fpArm\.drewLast\(\); \},/, 'AUDIT-MAP2: the seam reached AND the arm composed - fpArm.draw(null) under the EOTB spell-hands hide returns before composing');
+  // MAP-FIELD: and the question the HOLDER asks is a different one -
+  // WOULD the arm draw. A player opening the travel map is sheathed by
+  // definition, and a sheathed arm does not draw at all, so asking
+  // "did it draw" could only ever answer no and the hands lane was
+  // unreachable in the game. The sheet then draws it, the way the
+  // torch does (TORCH-VIS: `shown()` is the WEAPON's predicate).
+  assert.match(src, /armsAvailable\(\) \{ return !eotbHidesWeapon\(\) && fpArm\.active\(\); \},/);
+  // AUDIT-FIELD F1: and it relaxes THE SHEATHE LEG ALONE. `shown()` is
+  // false for FOUR reasons - a readied spell, a cast animation playing,
+  // an equip countdown, and the sheathe - and a bare `!shown()` reopened
+  // the gate for all four. `torchOnly` one line above re-states its own
+  // three legs for exactly this reason; the sheet's leg says the same,
+  // and says it POSITIVELY (`playerWeapon.sheathed`) so no later leg of
+  // `shown()` can be relaxed here by accident.
+  assert.match(src, /const sheetOnly = playerWeapon\.sheathed && !spellArmed\(\) && !fpsSpellCasting\.isPlayingAnim\s*\n\s*&& \(entity\?\.equipCountdown \?\? 0\) <= 0 && fpArm\.active\(\) && fpArm\.holdingPaper\(\);\s*\n\s*if \(paralyzed \|\| \(!shown\(\) && !torchOnly && !sheetOnly\)\) return;/,
+    'the held sheet draws the SHEATHED arm, beside the torch\'s own leg - and no other leg of shown()');
+  for (const leg of ['!spellArmed()', '!fpsSpellCasting.isPlayingAnim', '(entity?.equipCountdown ?? 0) <= 0']) {
+    const torch = src.slice(src.indexOf('const torchOnly'), src.indexOf('const sheetOnly'));
+    const sheet = src.slice(src.indexOf('const sheetOnly'), src.indexOf('const sheetOnly') + 400);
+    assert.ok(torch.includes(leg) && sheet.includes(leg), `both exceptions carry ${leg} - neither is a door round shown()`);
+  }
+  assert.match(rd('src/combat/fpArm.js'), /holdingPaper\(\) \{ return !!held; \},/);
   for (const arm of ['holdPaper(spec, opts) { return fpArm.holdPaper(spec, opts); }', 'releasePaper() { return fpArm.releasePaper(); }',
     'paperCorners() { return fpArm.paperCorners(); }', 'heldPose() { return fpArm.heldPose(); }', 'setHeldPose(spec) { return fpArm.setHeldPose(spec); }']) {
     assert.ok(src.includes(arm), arm);
@@ -533,7 +555,7 @@ test('MAP3 world.js: the holder rides the ONE dep bag, asked per open through th
   const src = rd('src/scenes/world.js');
   const at = src.indexOf('createTravelMapWindow({');
   const bag = src.slice(at, src.indexOf('...extra,', at));
-  assert.match(bag, /holder: \{\s*\n\s*available: \(\) => !!weaponRig\?\.armsDrawn\?\.\(\),\s*\n\s*hold: \(spec, opts\) => !!weaponRig\?\.holdPaper\?\.\(spec, opts\),\s*\n\s*release: \(\) => \{ weaponRig\?\.releasePaper\?\.\(\); \},[\s\S]*?corners: \(\) => \(weaponRig\?\.armsDrawn\?\.\(\) \? weaponRig\.paperCorners\(\) : null\) \?\? null,\s*\n\s*\},/, 'AUDIT-MAP2: corners only from a frame the arm drew');
+  assert.match(bag, /holder: \{\s*\n\s*available: \(\) => !!weaponRig\?\.armsAvailable\?\.\(\),[^\n]*\n\s*\s*hold: \(spec, opts\) => !!weaponRig\?\.holdPaper\?\.\(spec, opts\),\s*\n\s*release: \(\) => \{ weaponRig\?\.releasePaper\?\.\(\); \},[\s\S]*?corners: \(\) => \(weaponRig\?\.armsDrawn\?\.\(\) \? weaponRig\.paperCorners\(\) : null\) \?\? null,\s*\n\s*\},/, 'AUDIT-MAP2: corners only from a frame the arm drew');
   assert.match(src, /window\.__heldPose = \(spec\) => \(spec \? weaponRig\?\.setHeldPose\?\.\(spec\) : weaponRig\?\.heldPose\?\.\(\)\);/);
   const css = rd('src/ui/enhancedStyle.js');
   assert.match(css, /\.hmroot\.hmlanehands \{ background: transparent; \}/, 'the world and the arm show through');
