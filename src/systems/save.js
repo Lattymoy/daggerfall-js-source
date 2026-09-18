@@ -29,6 +29,7 @@ import { travelMapSaveData, restoreTravelMapSaveData } from './travelMapState.js
 import { getEscortFacesSaveData, restoreEscortFacesSaveData } from '../ui/hudEscortFaces.js';   // FE1: SaveData_v1.escortingFaces
 import { quickslotSaveData, restoreQuickslotSaveData } from './quickslots.js';   // QS1: the quickslot diamond rides the one composer
 import { resetMagicRoundMarker, sharedClockOn, worldMinutes, alignEntityClocks } from './worldTick.js';   // EntityEffectBroker.InitMagicRoundTimer, on the LOAD arm (:230-233); AUDIT WORLD5 C4: a load online is an arrival
+import { alignSurvival } from './survival/needs.js';   // SURV7: the needs' markers on the load arm
 import { isMembershipStore } from './guilds.js';   // V2e: the two-book membership store rides the save whole
 import { restoreKnightlyOrderFlags } from './knightlyGifts.js';   // D9: KnightlyOrder.RestoreGuildData's armour-bit back-fill
 import { GUILD_GROUPS } from '../formats/factionFile.js';   // the membership book's key IS the guild group
@@ -777,6 +778,7 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // after it: a quick load, a boot ?load or a dungeon's own load restored the save's own clock into every marker,
   // and the next tick caught up the distance to the world (or read it negative).
   if (sharedClockOn()) { alignEntityClocks(entity, worldMinutes()); rollClimateWeathersForDay(worldMinutes()); }
+  if (sharedClockOn()) alignSurvival(entity, Math.floor(worldMinutes()), Math.floor(snap.classicMinutes ?? 0));   // SURV7: the needs' markers - a save from more than a day ago starts fed, watered and rested (WORLD5's law for these)
   // AUDIT 39: the three extras above ride back out too - a save from
   // before they were carried reads the same null/0 they used to.
   return { position: snap.position, pose: snap.pose ?? null, classicMinutes: snap.classicMinutes, readiedSpellIndex: snap.readiedSpellIndex, world: snap.world ?? null, locationKey: snap.locationKey ?? null, quest: snap.quest ?? null, talk: snap.talk ?? null, interior: snap.interior ?? null, dungeon: snap.dungeon ?? null, travelMap: snap.travelMap ?? null, escortingFaces: snap.escortingFaces ?? null, smallerDungeonsState: snap.smallerDungeonsState ?? 0 };

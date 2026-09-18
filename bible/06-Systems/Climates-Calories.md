@@ -42,7 +42,7 @@ carry, and everything static.
 | SURV4 | the rest law: a bed or a fire sleeps whole, the window alone is rough - half the hour, the roll twice, a stiff morning; the felt temperature can refuse the sleep | `survival/rest.js` (the law), `scenes/shared.js` createRestDeps (the composed hour and the kind), `encounters.js` (the second ask), the four hosts' `restKind` |
 | SURV5 | what the player is told: the HUD's needs strip, the status page's third box, the survival items' info box; the mod's regional tavern menus with the meal, the drink and the blackout | `survival/status.js`, `survival/tavernMenu.js`; `ui/enhancedHud.js` + `enhancedStyle.js`; `itemInfo.js`; `ui/tavernWindow.js` + the interior host's hooks; the four hosts' status chain |
 | SURV6 | hunting, foraging and the water search as real-time events: the wilderness roll, the Yes/No box, the busy page, the finds and the harms, the hunted | `survival/hunting.js` (the law), `ui/huntWindow.js` (the three pages), `scenes/hunting.js` (composed), the overworld host's `createHunting` bag and its minute tick |
-| SURV7 | online alignment, records, the probe | (in progress) |
+| SURV7 | the feed: the four hosts say where the player stands and the minute law runs in every mode; the rest gate on DFU's seam; the needs aligned at a load and an arrival; fast travel charged; the records | `survival/env.js` (the feed, the gate); `scenes/shared.js` createPlayerTicker's `survivalEnv`; the four hosts' readers; `save.js`'s load arm; `worldTick.js` tickPlayerMinutes' `survival` |
 
 ### The temperature (SURV1)
 
@@ -182,7 +182,9 @@ The gate: too cold to sleep (freezing or worse) without a fire or a
 roof, too hot to sleep (scorching) anywhere - `restBlock`, installed
 on DFU's own RegisterPreventRestCondition seam by
 `installSurvivalRestGate` with the host's felt-temperature reader
-(SURV7 wires the reader; the two handlers answer nothing until then).
+(SURV7 wires the reader - `survival/env.js` installSurvivalGate, one
+install per ticker, the felt word off the record and the fire and the
+roof off the host's env).
 
 ### What the player is told (SURV5)
 
@@ -296,3 +298,34 @@ tally); it asks once a game minute and never under a window or while
 its own is up. world.js alone stands it - exterior.js lives inside the
 town rect and would never roll. Wildlife meat is SURV2's corpse law:
 the beast that hunted you carries it when it falls.
+
+### The feed (SURV7)
+
+Every host owes the minute law the same question - where does the
+player stand? - and none of them owes the answer's other half, which
+is the body's. `survival/env.js` splits them: the host hands a reader
+(`survivalEnvNow` in world.js and exterior.js: the pixel's or the
+location's climate, the month and the hour off the one clock, the
+weather word, the mode's roof or floor, the sun by day under a clear or
+cloudy sky, swimming, riding, a lit fire within reach, resting and the
+sleep's kind off the entity, the lycanthrope's state and the live fire
+and frost resistances) and `survivalFeed` builds the rest from the
+entity - the equip table's slots as the worn items, the race's
+tolerance flags, the vampire - into tickPlayerMinutes' `survival`
+argument (worldTick.js runs the minutes it crossed, two days at most,
+so a fast travel charges what a jump can - the skins and the rations
+answering by themselves). The mode machine's interior ticker takes the
+outer host's reading with the roof it owns (sheltered, no sun, no
+water, no fire); the dungeon's own tick takes it with the floor it
+owns (timeless underground, its own fire on the floor); the standalone
+dungeon scene, with no outer host, reads the clock itself. THE REST
+GATE (SURV4's restBlock) goes on DFU's RegisterPreventRestCondition
+seam once per ticker with the same reader - the felt word off the
+record's last reading, the fire and the roof off the env - so "too
+cold to sleep" is asked by the same seam that asks "there are enemies
+nearby". THE ALIGNMENT (WORLD5's law for these markers): the load arm
+under the shared clock aligns the needs to the world's time from the
+save's own clock (a day or more away starts fed, watered and rested;
+an hour away keeps its hunger), and the online arrival resets a record
+from further along than the world. With the mod off the feed is null,
+the gate answers nothing, and DFU's tick is DFU's.

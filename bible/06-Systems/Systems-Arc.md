@@ -3196,7 +3196,7 @@ collapse is a bare `RaiseTime(1 * SecondsPerHour)` (`:2429`) that
 returns; `Update` is not re-entered.
 
 The port's hosts implement that same RaiseTime as
-`playerTicker.advance(60)` (`exterior.js:940`, `world.js:867`), fired
+`playerTicker.advance(60)` (`exterior.js:942`, `world.js:870`), fired
 from inside `sinks.drainFatigue` - so it re-enters `tickPlayerMinutes`
 from inside that function's own fatigue band. The nested tick wrote the
 marker an hour ahead, the outer frame's own `setWorldMinutes` then
@@ -4572,7 +4572,7 @@ the true clause along with the false ones is in the campaign, because
 over-retiring is the equal and opposite failure.
 
 **And one delegation pointed at a flag nobody had ever written.**
-`world.js:1726` said the dungeon-mode enchant ctx was "FLAGGED there
+`world.js:1729` said the dungeon-mode enchant ctx was "FLAGGED there
 with the rest of its enchant wiring" in `dungeonContext.js`. It was
 not. `setDefaultEnchantCtx` had exactly **one** caller in the tree, so
 the standalone `?dungeon` host ran every arm that needs a host
@@ -5550,7 +5550,7 @@ to that cite and moves under the same content check; citeMerge had
 done this since CS2 and citeShift only reported them, so the two
 regexes are one law now, exported from citeShift (`ANY_CITE`,
 `CONTINUATION`) and imported by citeMerge. (2) A TEST'S ESCAPED
-LITERAL FOLLOWS THE ROW IT PINS: `world\.js:4191` in citedrift.test.js
+LITERAL FOLLOWS THE ROW IT PINS: `world\.js:4219` in citedrift.test.js
 is a quote of a Ledger row's text; the row is STRUCK and its number
 held, and the literal used to move anyway, parting the pin from its
 row at every shift. The CLI plans every doc first, learns which
@@ -7844,3 +7844,64 @@ for; the civilians still freeze under the talk overlay, and the pin
 says so. `test/winfoe1_foes_under_windows.test.js` - 1 pin; ROAD-G G2's
 review pin, the interior-foes pin and ROAD-B's indoor-watch pin
 re-aimed.
+
+## SURV1-SURV7 - CLIMATES & CALORIES, OVERHAULED WITH PERMISSION (2026-09-18) - SHIPPED
+
+Mac (2026-09-17): "Instead of a 1:1 port, we have been given
+permission to completely overhaul this mod, figure out bugs and
+implement it to our desire ... For tents, they are shared world
+objects ... 1. Campfires in dungeons/outside + beds should act as the
+go-to rest options + adding a new campfire item players can buy and
+place. Consumables are another mitigation 2. Resting toggle both
+offline/online should always be a last resort option that comes with
+a cost 3. All on by default." The shipped zip carried a compiled DLL
+and no source; every rule was read off the IL (`tools/ilDump.py`,
+Mod-Registry.md's row) and then restated, not copied. The full
+record is `06-Systems/Climates-Calories.md`; this is the arc's ledger
+line.
+
+- SURV1 the model (`survival/temperature.js`, `needs.js`, `food.js`):
+  the natural and the felt temperature (climate, month, hour, weather,
+  the race's flags and the spell resistances, the clothes by piece and
+  the cloak less the wetness, the armour's metal), five needs on the
+  clock (hunger as minutes since the marker, thirst driven by heat,
+  sleep debt, wet, exposure), one survival entry in liveStat's stat
+  mods capped at five, the eating law and the rot, the waterskin, the
+  hook in `worldTick.js` tickPlayerMinutes. 16 tests.
+- SURV2 the items (`survival/items.js`, `loot.js`, `switch.js`): the
+  mod's eleven templates and the port's campfire kit registered above
+  DFU's 288, the use handlers, the general store's provisions, the
+  starting kit, the corpse's meat and a humanoid's meal on the death
+  registry, the sixteen icons through a vendor-only archive. 9 tests.
+- SURV3 the camps (`survival/camp.js`, `scenes/camps.js`): the tent
+  and the fire as placed world objects with a rest/cook/stoke/pack
+  menu, the water sources under the ray, shared online (a cell's foes
+  frame, a world room's act and memory), the scene cache and the save
+  carrying them. 12 tests.
+- SURV4 the rest law (`survival/rest.js`, `scenes/shared.js`
+  createRestDeps): a bed or a fire sleeps whole; the window alone is
+  rough - half the hour's recovery, the resting roll asked twice, a
+  stiff morning; the felt temperature can refuse the sleep. 7 tests.
+- SURV5 what the player is told (`survival/status.js`,
+  `tavernMenu.js`, `ui/enhancedHud.js`, `ui/tavernWindow.js`): the
+  HUD's needs strip, the status page's third box, the items' info box,
+  the mod's regional tavern menus keyed by climate with the meal, the
+  drink and the blackout. 6 tests.
+- SURV6 the hunt (`survival/hunting.js`, `ui/huntWindow.js`,
+  `scenes/hunting.js`): hunting, foraging and the water search as
+  REAL-TIME events - the wilderness roll, the mod's Yes/No box, a busy
+  page running the search's minutes in real seconds, the finds and the
+  harms, "the hunted" standing when the box closes. 6 tests.
+- SURV7 the feed (`survival/env.js`, the four hosts' readers,
+  `save.js`): every host says where the player stands and the minute
+  law runs in every mode; the rest gate on DFU's prevent-rest seam;
+  the needs aligned at a load and an arrival; fast travel charged two
+  days at most. 4 tests.
+
+Mutants: `tools/mutants/surv1.json` to `surv7.json`, all dead. Every
+leaf under `systems/survival/` imports no scene, ui, combat, spellcast,
+diseases or effects module (pinned per file); the hosts pass the
+formulas in. ONE SWITCH (`survival/switch.js`, the enhanced pane's
+"survival" pref, ON by default - Mac's third point) turns the whole
+mod off, and off it every seam is DFU's own: the bed's hour, the
+eleven-line tavern list, no chips, no gate, no roll.

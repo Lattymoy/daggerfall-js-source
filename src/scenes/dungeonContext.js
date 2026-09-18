@@ -41,6 +41,9 @@ import { healthStatusRows, statusInfoRows } from '../systems/healthStatus.js';  
 import { survivalStatusRows } from '../systems/survival/status.js';   // SURV5
 import { liveVampirism } from '../systems/racialLive.js';   // SURV5: the vampire's one status line
 import { survivalOn } from '../systems/survival/switch.js';
+import { survivalFeed, installSurvivalGate } from '../systems/survival/env.js';   // SURV7: the needs' feed and the rest gate
+import { registerPreventRestCondition } from '../systems/restSession.js';   // SURV7: the gate's seam
+import { dateFromClassicMinutes } from '../systems/gameDate.js';   // SURV7: the env's month
 import { playerEntity, surfacePlayer, hurtPlayer as hurtEntity, damageShieldPool, setDeathPresenter, setAvoidDeathHook } from '../characters/playerEntity.js';   // AUDIT 58: DecreaseHealth's shield hook is the BASE class's, so every entity's door owes it
 import { addItem, spendArrow, isEnchanted } from '../systems/inventory.js';
 import { useQuickslot, swapQuickslot, offHandQuickslot, spellQuickslotPress, offHandOffersSwap, tickQuickslotHold } from '../systems/quickslots.js';   // QS2/QS4: the diamond's performers   // QS6: the spell slot, the off hand's swap question, and the hold machine
@@ -1477,7 +1480,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:7113 / exterior.js:3201), set
+  // host's own townTalk sink (world.js:7141 / exterior.js:3226), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -1956,7 +1959,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // copied mount would have diverged the first time an arm grew.
   /** DR1: THE TWO SPELL WINDOWS THIS HOST MOUNTS NOW, and the one door
    *  they go through. `mountSpellWindow` is worldModes'
-   *  mountSpellWindow DUNGEON ARM (worldModes.js:1051,
+   *  mountSpellWindow DUNGEON ARM (worldModes.js:1053,
    *  `dungeonCtx?.showOverlay(win)`) resolved to what it actually
    *  calls here - this file's own pushDungeonWindow, which IS
    *  UserInterfaceManager.PushWindow. So a spell window raised over an
@@ -2445,7 +2448,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:996 against :1032; worldModes.js:5994 against :6008).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
+    // (dungeon.js:996 against :1032; worldModes.js:5997 against :6008).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -2647,6 +2650,22 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // dungeon is a WORLD ROOM: a placed fire goes out as an act (`c` beside the doors and the loot) and the room's
   // memory carries every camp standing, so a fire one player lit is lit for the next - a door's own law. No owner
   // sweep here: in a world room a camp is the room's, as an opened chest is.
+  // SURV7 - THE SURVIVAL ENV, underground: the outer host's reading
+  // (the climate, the month, the resistances) with the flags this host
+  // owns - the floor, no sun or water, the fire on the floor; the
+  // standalone scene has no outer host and reads the clock itself.
+  const survivalEnvNow = () => {
+    const outer = opts.survivalEnv?.() ?? null;
+    const wm = classicMinutesRef.value;
+    return {
+      climateIndex: 232, month: dateFromClassicMinutes(wm).month, hour: (((wm % 1440) + 1440) % 1440) / 60,
+      ...(outer ?? {}),
+      insideBuilding: false, insideDungeon: true, inSunlight: false, swimming: false, transport: false,
+      byFire: !!(_fpFeet && camps.byFire(_fpFeet)),
+      resting: !!playerEntity.isResting, sleeping: playerEntity.isResting && !playerEntity.isLoitering ? (playerEntity.restKind ?? 'rough') : null,
+    };
+  };
+  installSurvivalGate(registerPreventRestCondition, () => playerEntity, survivalEnvNow);   // SURV7: the rest gate, this host's readers
   const camps = createCamps({
     renderer, getTexture, uploadRecordFrame, meshes: { getGpuMesh, cpuModels }, entity: playerEntity,
     camera: () => (_fpFeet ? { feet: _fpFeet, yaw: _fpYaw } : null), collider: () => collider,
@@ -2957,8 +2976,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:9764,
-              // exterior.js:4621 and worldModes.js:6148 already ran;
+              // playerArrowHitFoe is the one copy world.js:9794,
+              // exterior.js:4646 and worldModes.js:6151 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -4517,6 +4536,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // the door rather than finding the player underground. The
       // pending clock is untouched; it lands the moment they surface.
       inside: true,
+      survival: survivalFeed(playerEntity, survivalEnvNow(), { say: (msg) => hudText.add(msg) }),   // SURV7: the needs' minute
     });
     classicMinutesRef.value = _tick.classicMinutes;
     // AUDIT 24 (wave 32): the FOE half of the same broker event, on the
@@ -6374,7 +6394,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       //
       // The interior host's `interiorHitEffects.clear()` is NOT the same
       // line and was never a precedent for one: that pool is built with
-      // no `onSpawn` (worldModes.js:525), so it owns its batches and
+      // no `onSpawn` (worldModes.js:527), so it owns its batches and
       // clear() is the only thing that frees them - and it runs on a
       // between-buildings RESET, not a teardown.
       // AUDIT 64 F41: the scene ambience leaves with the scene too -

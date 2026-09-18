@@ -40,7 +40,9 @@ import { FACTION_TYPES } from '../formats/factionFile.js';
 import { killIfAnyLiveStatZero } from '../systems/statMods.js';   // AUDIT 24 (wave 32): the per-entity laws a foe pool owes
 import { hasSpecialAbility, SPECIAL_ABILITY, healthRecoveryRate, fatigueRecoveryRate, spellPointRecoveryRate } from '../systems/rest.js';
 import { entityImprovedAthleticism } from '../systems/enchantments.js';   // AUDIT 26 F044: the ImprovesTalents fatigue arm   // the rested hour's three rates, one home for every host (V5 + S40, same line from two lanes)
-import { getPreventedRestMessage } from '../systems/restSession.js';   // ROAD-B B5: TickRest's per-frame poll (:357-360, :407-410)
+import { getPreventedRestMessage } from '../systems/restSession.js';
+import { registerPreventRestCondition } from '../systems/restSession.js';   // SURV7: the survival rest gate's seam
+import { survivalFeed, installSurvivalGate } from '../systems/survival/env.js';   // SURV7: the needs' feed and the gate, composed from the entity   // ROAD-B B5: TickRest's per-frame poll (:357-360, :407-410)
 import { createNearbyScan, updateNearbyObjects, detectedMarkers, hasLiveDetector } from '../systems/nearbyObjects.js';   // X4: the Detect scan
 import { liveStat, maxFatigue } from '../systems/statMods.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT } from '../player/motor.js';   // AUDIT 62 F23: the standing capsule, the senses context's headless default
@@ -1280,7 +1282,12 @@ export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null, o
   // because a host that has not said where the player stands must not
   // deliver a letter it cannot place, and the dungeon host is inside
   // by construction anyway.
-  isInside = () => true } = {}) {
+  isInside = () => true,
+  // SURV7: the host's survival env reader - () => env, or null for a
+  // tick that runs no needs (the dungeon's own tick feeds its own).
+  // The feed (survival/env.js survivalFeed) is built here from the
+  // entity; the gate rides the same reader.
+  survivalEnv = null } = {}) {
   // AUDIT 21 F2: a VIEW on the one world clock, not an owner. This used to
   // close over its own accumulator, so the three hosts that build a ticker -
   // world, exterior, worldModes - each counted from zero and only while
@@ -1314,6 +1321,9 @@ export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null, o
   // fans it out here, so a pool cannot be forgotten by a host that forgot to
   // add a line to its frame body.
   const subscribers = [];
+  // SURV7: the rest gate on DFU's RegisterPreventRestCondition seam, with this host's readers - too cold without a
+  // fire or a roof, too hot anywhere (survival/rest.js restBlock); inert with the mod off
+  if (survivalEnv) installSurvivalGate(registerPreventRestCondition, () => entity, survivalEnv);
 
   return {
     get classicMinutes() { return worldMinutes(); },
@@ -1334,6 +1344,7 @@ export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null, o
         entity, classicMinutes: worldMinutes(), dt, sinks, activity, realSeconds,
         fatigueMultiplier: fatigueLossMultiplierFor(entity),
         say, inside: isInside(),
+        survival: survivalFeed(entity, survivalEnv?.() ?? null, { say }),   // SURV7: the needs' minute, when the host says where the player stands
       });
       setWorldMinutes(r.classicMinutes);
       // PlayerEntity.Update:380-384's 8-hour alert decay used to be

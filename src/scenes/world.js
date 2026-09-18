@@ -123,6 +123,9 @@ import { SPAWNER_ARMS } from '../systems/encounters.js';   // SURV6: the hunt's 
 import { skillValue } from '../systems/skills.js';   // SURV6: the hunter's four skills
 import { inflictDisease } from '../systems/diseases.js';   // SURV6: a foul pool's water
 import { createHunting } from './hunting.js';   // SURV6: hunting, foraging and the water search as real-time events
+import { alignSurvival } from '../systems/survival/needs.js';   // SURV7: the needs' markers at an arrival
+import { liveLycanthropy } from '../systems/lycanthropy.js';   // SURV7: the env's lycanthrope and beast-form flags
+import { elementalResistanceChance, ELEMENTS } from '../systems/spellcast.js';   // SURV7: the env's fire and frost resistances
 import { rollCampEncounter, rollCampEncounterOnChunkLoad, amGroupRollOwner } from '../systems/campEncounters.js';   // CAMP1: the group-encounter roll - camps and packs, riding the same tick, and the chunk-load twin
 import { nearestSafeLocation, respawnFlavorText, respawnHealth } from '../systems/deathRespawn.js';   // D-ONLINE1: online, a death respawns instead of ending the run   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
 import { snapshotPlayer, restorePlayer, resolvePendingSpells, composeSessionState, restoreSessionState, dungeonPixelFor } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
@@ -1775,6 +1778,30 @@ export async function bootWorld(canvas, renderer, params, status) {
     surfacePlayer();
     if (playerEntity.fatigue <= 0 && playerEntity.health > 0) onExhaustedExterior();
   };
+  // SURV7 - THE SURVIVAL ENV: where the player stands, for the minute
+  // law (survival/env.js survivalFeed builds the body's half from the
+  // entity). Read each tick by this host's ticker; the mode machine's
+  // interior ticker and the dungeon's own tick read the same function
+  // through the host bag (survivalEnv, below) and override the flags
+  // they own - the roof, the floor, the dungeon's fire.
+  const survivalEnvNow = () => {
+    const m = _mode();
+    const feet = walkMode && playerSpawned ? player.pos : cam.pos;
+    const wm = worldMinutes();
+    const weather = currentWeather();
+    const lyc = liveLycanthropy(playerEntity);
+    return {
+      climateIndex: maps.getClimateIndex(playerTravelPixel().x, playerTravelPixel().y),
+      month: dateFromClassicMinutes(wm).month, hour: (((wm % 1440) + 1440) % 1440) / 60, weather,
+      insideBuilding: m === 'interior', insideDungeon: m === 'dungeon',
+      inSunlight: m === 'exterior' && !isNight(minuteNow()) && (weather === 'sunny' || weather === 'cloudy'),
+      swimming: m === 'exterior' && !!(walkMode && playerSpawned && player.isPlayerSwimming), transport: !!player.riding,
+      byFire: m === 'exterior' && camps.byFire(feet),
+      resting: !!playerEntity.isResting, sleeping: playerEntity.isResting && !playerEntity.isLoitering ? (playerEntity.restKind ?? 'rough') : null,
+      lycanthrope: !!lyc, beastForm: !!lyc?.isTransformed,
+      fireResist: elementalResistanceChance(playerEntity, ELEMENTS.Fire), frostResist: elementalResistanceChance(playerEntity, ELEMENTS.Frost),
+    };
+  };
   const playerTicker = createPlayerTicker(playerEntity, {
     // CG2: PlayerEnterExit.IsPlayerInside - the crime-guild letter's
     // gate. The same predicate this host already hands the quest
@@ -1782,6 +1809,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // player is standing.
     isInside: () => (modes?.mode ?? 'exterior') !== 'exterior',
     onExhausted: onExhaustedExterior,
+    survivalEnv: () => (_mode() === 'dungeon' ? null : survivalEnvNow()),   // SURV7: the dungeon's own tick feeds its own
     // AUDIT 64 F27: the ticker's lines are HUD POPUPS, not a log.
     // LoanChecker.CheckOverdueLoans posts its two 6/3/1-month reminders
     // with DaggerfallUI.AddHUDText (LoanChecker.cs:42-45) - the only
@@ -2881,10 +2909,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2192 mounts the same one, gated on
+  // and dungeonContext.js:2195 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:4635
+  // that context through modes.dungeonCtx - so worldModes.js:4637
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -4619,7 +4647,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:5545), so exterior mode and a
+    // composer, dungeonContext.js:5565), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -6034,7 +6062,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7401-7413 -
+  // worldModes answers it in BOTH modes (worldModes.js:7404-7416 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -7395,6 +7423,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // difference on its first corrected tick. A room move's welcome says the same offset again and moves nothing.
     const onlineArrival = () => { alignEntityClocks(playerEntity, worldMinutes()); rollClimateWeathersForDay(worldMinutes()); refreshSeason(worldMinutes()); };
     onlineArrival();
+    alignSurvival(playerEntity, Math.floor(worldMinutes()), Math.floor(worldMinutes()));   // SURV7: a record ahead of the world's clock starts fresh; the gap itself is save.js's load arm
     online.onClock = (offsetMs) => { const was = _sharedOffsetMs; _sharedOffsetMs = offsetMs; if (Math.abs(offsetMs - was) > 1000) onlineArrival(); };   // WORLD5: the relay's clock corrects this machine's
     remotePlayers = new RemotePlayers({ renderer, deps: { fetchBytes, palette, getTexture } });
     // MWBODY1: the enhanced skin with Morrowind data attached puts every peer in a body of its own; otherwise the doll
@@ -7899,6 +7928,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     activateLockOnly: () => _tapLockOnly,   // TS1: the stick-half tap - the modal ladders stop after the lock pick
     currentRegionIndex: () => _questRegionIndex(),   // UL1: PlayerGPS.CurrentRegionIndex for the mode machine's mods
     climateIndex: () => maps.getClimateIndex(playerTravelPixel().x, playerTravelPixel().y),   // SURV5: PlayerGPS.CurrentClimateIndex, for the tavern's menu
+    survivalEnv: () => survivalEnvNow(),   // SURV7: the interior ticker's and the dungeon's env; each overrides the flags it owns
     currentLocation: () => _questLoc(),              // UL1: PlayerGPS.CurrentLocation
     // AUDIT 62 F8 (review): THE FINGER'S PRESS, published. worldModes
     // owns the interior and world-hosted-dungeon activate gate and has
