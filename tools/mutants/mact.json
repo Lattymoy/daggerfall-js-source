@@ -1,0 +1,20 @@
+[
+  {
+    "name": "MACT-the-up-ring-takes-a-release-it-never-captured",
+    "file": "src/ui/input.js",
+    "old": "export function noteKeyUp(edges, code) { if (!edges) return; if (edges.own && !edges.own.delete(code)) return; edges.up.add(code); }",
+    "new": "export function noteKeyUp(edges, code) { if (!edges) return; edges.own?.delete(code); edges.up.add(code); }",
+    "tests": [
+      "test/mact_bugs.test.js"
+    ]
+  },
+  {
+    "name": "MACT-the-chat-lets-the-field's-down-through-to-the-host",
+    "file": "src/ui/chatPanel.js",
+    "old": "      else swallowBrowserKey(e);\n      e.stopPropagation();\n      return;",
+    "new": "      else swallowBrowserKey(e);\n      return;",
+    "tests": [
+      "test/mact_bugs.test.js"
+    ]
+  }
+]
