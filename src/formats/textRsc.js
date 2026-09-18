@@ -17,6 +17,7 @@
 // (positioning, fonts, pages) pend the book/scroll renderers.
 
 import { rand } from './dfRandom.js';   // ROAD-A7: GetRandomTokens' dfRand arm
+import { INTERNAL_RSC } from './rscTable.js';   // MAC-U: DFU's Internal_RSC rows, read before the file (TextProvider.cs:167-188)
 
 export const RSC = Object.freeze({
   NewLine: 0x00, EndOfPage: 0xf6, InputCursorPositioner: 0xf8,
@@ -52,6 +53,35 @@ dfRandPick.dfRand = true;
 function variantIndex(pick, n) {
   if (pick?.dfRand) return ((pick(n) % n) + n) % n;
   return Math.min(n - 1, Math.floor(pick() * n));
+}
+
+/** MAC-U - a table row's bytes in TEXT.RSC's own shape (TextFile.cs): printable
+ *  chars 0x20-0x7f, a break as NewLine 0x00, the variants joined by
+ *  SubrecordSeparator 0xFF, EndOfRecord 0xFE last - exactly what
+ *  TextRsc.bytesById hands its readers off the classic file, so every
+ *  reader (plainText, the variant draws, the token streams) sees a
+ *  table row as it sees a classic record. A char outside the file's
+ *  range is written as '?', the file's own "cannot say" glyph. */
+export function encodeRscRecord(variants) {
+  const out = [];
+  (variants ?? []).forEach((v, i) => {
+    if (i > 0) out.push(RSC.SubrecordSeparator);
+    for (const ch of String(v ?? '')) {
+      if (ch === '\n') { out.push(RSC.NewLine); continue; }
+      const c = ch.charCodeAt(0);
+      out.push(c >= RSC.FirstCharacter && c <= RSC.LastCharacter ? c : 0x3f);
+    }
+  });
+  out.push(RSC.EndOfRecord);
+  return Uint8Array.from(out);
+}
+
+/** The table as TextRsc consumes it: id -> encoded record. */
+export function rscTableBytes(table = INTERNAL_RSC) {
+  const m = new Map();
+  if (!table) return m;
+  for (const [id, variants] of Object.entries(table)) m.set(Number(id), encodeRscRecord(variants));
+  return m;
 }
 
 /** TextFile.ReadTokens (TextFile.cs:421-441), the byte-token stream
@@ -118,12 +148,19 @@ function variantRanges(raw) {
 }
 
 export class TextRsc {
-  load(bytes) {
+  /** MAC-U: `table` is DFU's Internal_RSC string table (rscTable.js),
+   *  the rows a DFU build reads BEFORE the classic file - TextProvider
+   *  .GetRSCTokens (TextProvider.cs:167-188) asks the table by id and
+   *  opens TEXT.RSC only for a key it lacks. The default carries the
+   *  rows the port has verified; `{ table: null }` reads the file
+   *  alone (what the tests that measure classic bytes ask for). */
+  load(bytes, { table = INTERNAL_RSC } = {}) {
     const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
     const headerLength = v.getUint16(0, true);
     const count = Math.floor(headerLength / 6) - 1;
     this._bytes = bytes;
     this._byId = new Map();
+    this._table = rscTableBytes(table);
     let o = 2;
     for (let i = 0; i < count; i++) {
       const id = v.getUint16(o, true);
@@ -135,10 +172,15 @@ export class TextRsc {
   }
 
   get recordCount() { return this._byId.size; }
-  hasRecord(id) { return this._byId.has(id); }
+  hasRecord(id) { return this._table.has(id) || this._byId.has(id); }
 
-  /** Raw record bytes INCLUDING the 0xFE terminator (GetBytesById). */
+  /** Raw record bytes INCLUDING the 0xFE terminator (GetBytesById).
+   *  MAC-U: a table row first, in the file's own byte shape
+   *  (encodeRscRecord), so every reader above this line sees one
+   *  kind of record. */
   bytesById(id) {
+    const row = this._table.get(id);
+    if (row) return row;
     const offset = this._byId.get(id);
     if (offset === undefined) return null;
     let end = offset;

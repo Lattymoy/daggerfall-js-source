@@ -321,7 +321,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
    *  every Text TOKEN of a record and picks among them, where
    *  randomVariant above picks a whole SUBRECORD variant. The two
    *  diverge exactly where a record holds several one-line entries -
-   *  which is the shape of the oath records (textRsc.js:131-134) and
+   *  which is the shape of the oath records (textRsc.js:168-171) and
    *  of 8999 - so a multi-line variant printed all its lines fused. */
   const randomPooledText = (id, fallback) => {
     const t = textRsc?.randomTextById(id, rolls);
@@ -1008,8 +1008,10 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   function answerWhereIs(building, onClosed = null) {
     // GetAnswerWhereIs (the seed-stable knowledge roll picks the
     // knows/doesn't-know table half) + the %hnt hint chain: the T4
-    // fork - a 7333 direction variant (%loc + the %di compass) or the
-    // 7332 map reveal that discovers the building.
+    // fork - a 7333 direction variant (the %di compass in DFU's
+    // Internal_RSC phrase, MAC-U: the answer frame names the building,
+    // the hint must not) or the 7332 map reveal that discovers the
+    // building.
     showAnswer(answerText(building), onClosed);
   }
 
@@ -1049,7 +1051,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     let hint = '';
     if (raw.includes('%hnt')) {
       const h = buildingHint(rolls, false);
-      hint = randomVariant(h.textId, h.reveal ? '... Let me just mark %loc here on your map' : '%loc is %di of here')
+      hint = randomVariant(h.textId, h.reveal ? '... Let me just mark %loc here on your map' : '%di of here')   // MAC-U: the no-data fallback is the table's phrase too
         .replaceAll('%loc', building.name).replaceAll('%di', a.direction);
       // RP1: the discovery key is the CURRENT region's. This read the
       // boot region, so a building revealed after streaming across a
