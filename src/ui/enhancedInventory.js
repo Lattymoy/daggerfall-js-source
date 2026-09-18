@@ -341,8 +341,10 @@ export function itemLine(item, identity = undefined) {
     item,   // MW-D38: the icon door resolves the item itself
     name: parts.name || t?.name || 'Unknown',
     weight: itemWeight(item),
-    condition: (item.maxCondition ?? 0) > 0 ? conditionPercentage(item) : null,
-    word: (item.maxCondition ?? 0) > 0 ? conditionWord(item) : null,
+    // AUDIT SURV C (review): a survival item's condition is its uses or its keeping, said in its own tokens below -
+    // "Condition New 100%" on a stale bread and "Used 50%" beside "25 uses left" were two words for one thing
+    condition: (item.maxCondition ?? 0) > 0 && !isSurvivalItem(item) ? conditionPercentage(item) : null,
+    word: (item.maxCondition ?? 0) > 0 && !isSurvivalItem(item) ? conditionWord(item) : null,
     material: parts.material || null,
     // MAC-M1 (Mac: "Damage values arent showing on weapon tool tips.
     // Also, not sure if armor has values either"): THE TWO NUMBERS A
@@ -2048,7 +2050,11 @@ function detailCol() {
   // thing is swung - and above the weight, which is not. Null for
   // everything that is not a weapon, so no book grows an empty row.
   pair('Hands', line.hands);
-  for (const t of line.survival ?? []) { const i = t.indexOf(': '); if (i > 0) pair(t.slice(0, i), t.slice(i + 2)); else pair('Note', t); }   // AUDIT SURV C
+  for (const t of line.survival ?? []) {   // AUDIT SURV C: the classic popup's tokens, each under a word of its own
+    const i = t.indexOf(': ');
+    if (i > 0) pair(t.slice(0, i), t.slice(i + 2));
+    else pair(/^Nourishes/.test(t) ? 'Food' : /^Raw/.test(t) ? 'Raw' : /uses left/.test(t) ? 'Uses' : /skillet/i.test(t) ? 'Cooking' : 'Note', t);
+  }
   pair('Weight', `${line.weight.toFixed(2)} kg`);
   pair('Condition', line.condition != null ? `${line.word} · ${line.condition}%` : null);
   // HT2: a light source is never WORN - the honest line for one is
