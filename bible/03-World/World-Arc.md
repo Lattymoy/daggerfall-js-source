@@ -1731,6 +1731,7 @@ About 5,200 lines.
   `TRACK_FADE_DIST`) - none had a consumer once the layer went.
   `render/overworldRenderer.js` loses its road pass, its per-chain VAO
   sets and their teardown.
+  (MAP1, 2026-09-18: that renderer is RETIRED whole with the relief map.)
 - **The switch**: the `roads` preference and its row on the Enhanced
   pane.
 - **The host**: `scenes/world.js` loses the bake, the network, the

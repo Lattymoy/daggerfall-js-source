@@ -209,7 +209,7 @@ test('F145: the travel map prices the trip AFTER the guild blessing', () => {
   // Akatosh's rank shortens the fare and the days as well as the
   // journey (Temple.cs:430-436). The classic popup already folds it at
   // ui/travelPopUp.js:216; the enhanced map skipped the middle step.
-  const s = src('ui/overworldMap.js');
+  const s = src('ui/heldMap.js');   // MAP1: the held map, the relief map's successor
   assert.match(s, /import \{ guildFastTravel \} from '\.\.\/systems\/guildVariants\.js';/);
   const trip = s.slice(s.indexOf('_refreshTrip() {'), s.indexOf('_toggleOpt(key) {'));
   const fold = trip.indexOf('guildFastTravel(');

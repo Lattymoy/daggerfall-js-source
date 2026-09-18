@@ -8382,8 +8382,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     // label reads, which box or sub-window is up, and the popup's
     // numbers. The keyed stand-in could be driven blind; a click
     // surface cannot.
-    // U61: the enhanced overworld carries its own probe surface
-    // (globalThis.__overworld); this one reads the CLASSIC window's
+    // U61/MAP1: the enhanced held map carries its own probe surface
+    // (globalThis.__heldMap); this one reads the CLASSIC window's
     // shape and answers null for the other skin rather than throwing
     // on fields it does not have.
     window.__travelMap = () => JSON.stringify(_travelMap && !_travelMap.done && _travelMap.regionLabelText ? {

@@ -92,6 +92,82 @@ The sprite is Mac's, the map is computed, the names are the game's own
 strings drawn in a face the port ships. No ARENA2 raster enters the
 repo through this arc, and the pin that holds the allow-list holds it.
 
+## MAP1 - the held parchment window (SHIPPED 2026-09-18)
+
+`src/ui/heldMap.js` (the window) and `src/ui/inkMap.js` (the ink);
+`src/ui/travelMapDoor.js` opens the window on the enhanced skin.
+RETIRED: `src/ui/overworldMap.js` and `src/render/overworldRenderer.js`;
+RETIRED with them: `tools/overworldProbe.mjs` and `test/overworldmap.test.js`.
+`src/ui/overworldModel.js` stays, because its water, marker, trace and
+chain laws are the ink's own.
+
+**The window.** The sprite fills a 4:3 stage letterboxed into the
+viewport (its own black is the letterbox); the ink canvas lies on
+`PAPER` (x 12.3%-87.0%, y 13.8%-75.5% of the sprite, measured off the
+painting); the thumbs, which rest ON the sheet, are keyed back over the
+ink at load from two `THUMB_ZONES` by a luminance cut (`HAND_LUM` 144:
+the sheet's pixels measure 144-192, the gauntlets almost wholly under).
+Drag pans, the wheel zooms toward the cursor, arrows and +/- do the same
+from the keyboard, and `clampView` keeps the map on the paper: contain at
+rest with the bay centred, pan bounded by the map's edge meeting the
+paper's, `SCALE_MAX` 14 (contain wins over the ceiling on a bay smaller
+than the sheet). The sheet rises over 0.3 s and lowers over 0.3 s; a
+commit fires its hook at the bottom of the lower, with the window alive,
+then closes. No flight: the host's own travel - DFU's, or the mod's
+walked trip - IS the journey. The card is the relief map's, class for
+class (`hm*`), over the same laws; the chip row is gone (the store's
+flags still decide what is inked, and the classic window's chips still
+set them). The party is ink: a ring and the name, stacked on a shared
+pixel by `PARTY_LABEL_STACK`, the hover line naming every member on it,
+the legend in the foot row. The probe surface is `globalThis.__heldMap`.
+
+**The ink.** `buildInkModel` is pure: the coast as the land set's
+boundary along pixel edges (`boundarySegments` + `linkSegments`, then
+simplify and one Chaikin pass); the borders as edges between two LAND
+pixels of different regions (a shore is the coast's, a nameless byte
+bounds nothing); the roads and tracks through `traceChains` ONLY when the
+network says `source: 'basic-roads'`; the high ground as carets thinned
+by band; the province names at each region's land centroid; the marks
+through `buildMarkerModel` (discovery and buckets are the classic
+window's, never re-read here) with the game's own name on each.
+`paintInk` takes the context and draws in paper pixels: the shore as a
+wash under the pen, borders dashed, tracks dotted and never at the far
+band, glyphs by kind, names placed by `placeNames` (greedy in
+`NAME_RANK`, an overlap dropped rather than drawn over, the display face
+`'Cormorant', Georgia, serif`), the player's mark, the selection's gold
+ring, the party in the party green. The zoom bands: far (< 2.4 paper px
+per map px) inks the coast, borders, roads and cities with the region
+names; mid (< 5.5) adds towns, temples, dungeons and the tracks; near
+adds everything the discovery store admits, named. Chains are cached on
+the height bytes and the network reference; the marks alone rebuild when
+a filter or a discovery moves; the paint runs from tick, only when
+something changed, and only where a real 2D context exists.
+
+**Departures recorded.** The flight, the cloud veil and the chip row
+(above); the province pages and the region picker have no meaning on one
+sheet; the enhanced map is DOM and a 2D canvas, so the renderer's
+foreign-pass count fell by one (four passes now).
+
 ## Pins
 
-None yet. MAP1 opens them.
+`test/heldmap.test.js` (40): U61's carried laws (the walk, the height
+and water laws, the buckets, the door both ways, the one construction
+seam, the window's panel laws through a stub document, the source
+sweeps) and MAP1's own - the coast fixture (a 2x2 island: eight edges,
+one closed loop, integer corners; ocean climate is sea at any byte; a
+corner pixel closes), the border fixture (2|3 on both rows, 5|6 on one;
+none on the shore, none against a nameless byte; the centroids over land
+alone), the road fixture (a T junction into three chains, endpoints on
+pixel centres; the generated network never inked), the discovered and
+undiscovered town, the fourteen glyph kinds, the band thresholds and
+tables with the painter honouring them, the clamp (contain, centre,
+edge, ceiling, contain over ceiling), zoom about a point, the name
+placement in rank order, the paint's order and flags, the selection
+(16 px, bare paper clears, a hidden band cannot be picked, the hover
+line), pan/wheel/keys under the clamp, the search's glide, the layout
+on PAPER of a 4:3 stage, the sprite's doctrine row and the hand key.
+`test/soc6_partymap.test.js` (18): the party laws re-driven over the
+ink through a recording context. Mutants: `tools/mutants/map1.json`,
+42 dead, 0 survived. The relief map's records re-aimed: to1 C1/C3 to
+`heldMap.js`, AUDIT SOC D2 to `inkMap.js`, AUDIT-EL F5 retired with
+its pass.

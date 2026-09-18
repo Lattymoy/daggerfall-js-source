@@ -309,8 +309,9 @@ crossing), and the doctrine row the three vendored pictures were owed.
   `OnEncounter` and `OnUpdateLocationGameObject` are wired at the host's
   own edges.
 - **C1/C2/C3 - the default skin.** TO1 wired the mod into the classic
-  window alone, and the travel key opens `OverworldMapWindow` for every
-  player who never chose a skin: no `playerControlled` on its commit (the
+  window alone, and the travel key opens the enhanced map (then
+  `OverworldMapWindow`; `HeldMapWindow` since MAP1, 2026-09-18, carrying
+  the same three laws) for every player who never chose a skin: no `playerControlled` on its commit (the
   mod unreachable from the map), no ship law (a landlocked village sold
   sea passage), no teleport fee. The popup's laws are pure exports now
   (`isPlayerControlledTravel`, `enforceShipRestriction`,
@@ -358,7 +359,7 @@ crossing), and the doctrine row the three vendored pictures were owed.
 - **L5/L7 - the enhanced panel.** Its ETA never rendered (nothing wrote
   `minutesLeft`; the popup's estimate rides `beginTravel` now and runs
   down on the world clock; null for a followed path); it painted over the
-  enhanced overworld (`covered`, the HUD's own word).
+  enhanced map (`covered`, the HUD's own word).
 - **The records.** Departures 6, 8, 9 corrected; five added (10-14); the
   source-gate paragraph's stale ROADS 16 numbers replaced; the mutant
   `map-section-roads-under-tracks` was a live survivor recorded as

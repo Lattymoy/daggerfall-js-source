@@ -833,12 +833,12 @@
  },
  {
   "name": "c1-enhanced-map-never-player-controlled",
-  "file": "src/ui/overworldMap.js",
+  "file": "src/ui/heldMap.js",
   "old": "      playerControlled: isPlayerControlledTravel(st.to?.settings, st.opts),",
   "new": "      playerControlled: false,",
   "tests": [
    "test/to1_travelOptions.test.js",
-   "test/overworldmap.test.js"
+   "test/heldmap.test.js"
   ]
  },
  {
@@ -987,7 +987,7 @@
  },
  {
   "name": "c3-fee-never-deducted",
-  "file": "src/ui/overworldMap.js",
+  "file": "src/ui/heldMap.js",
   "old": "    if (fee && fee.canPay && !fee.paid) { fee.paid = true; this.deps.payTeleport?.(fee.cost); }",
   "new": "",
   "tests": [

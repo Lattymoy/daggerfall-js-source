@@ -360,7 +360,7 @@ test('AUDIT 58 F5 ledger: the RE-INTEGRATED road system has its own section A ro
   assert.match(rootFile('src/world/terrainGen.js'), /paintRoads\(tileData, tilemap/, 'the paint is in the shared kernel');
   const travel = rootFile('src/systems/travel.js');
   assert.ok(!/roadAt\(|path\.roadAt|byRoad/.test(travel), 'travel.js is still the verbatim port - the road term and its two deps stayed gone');
-  assert.match(rootFile('src/ui/overworldMap.js'), /byRoad: false,/, 'and byRoad is still the permanent false the trip card reads');
+  assert.match(rootFile('src/ui/heldMap.js'), /byRoad: false,/, 'and byRoad is still the permanent false the trip card reads (MAP1: on the held map now)');
 
   // ...and the two pages that repeated the stale claim were corrected.
   const status = rootFile('bible/01-Overview/Port-Status-2026-09-02.md');

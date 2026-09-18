@@ -152,7 +152,7 @@ export async function preloadTravelPopUpArt(deps) {
 export const travelPopUpArtLoaded = () => !!_art;
 
 // AUDIT-TO1 C2: THE SHIP LAWS AS PURE FUNCTIONS, so the enhanced map's
-// travel card (ui/overworldMap.js, the DEFAULT skin) runs exactly the
+// travel card (ui/heldMap.js, the DEFAULT skin) runs exactly the
 // ones the classic popup runs. Before this the ports restriction did
 // not exist on the default skin at all.
 

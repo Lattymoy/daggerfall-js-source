@@ -1200,7 +1200,7 @@ test('TO1: the map and the popup carry the mod\'s own additions', () => {
   // AUDIT-TO1 C1: the fork is ONE pure law now, shared with the enhanced map
   assert.match(p, /return \(settings\.cautiousTravel \|\| !speedCautious\) && \(settings\.stopAtInnsTravel \|\| !sleepModeInn\) && !travelShip;/);
   assert.match(p, /isPlayerControlledTravel\(\) \{\s*\n\s*return isPlayerControlledTravel\(this\._to\?\.settings, this\);/, 'the method is the pure law over its own three toggles');
-  const ov = read('src/ui/overworldMap.js');
+  const ov = read('src/ui/heldMap.js');
   assert.match(ov, /playerControlled: isPlayerControlledTravel\(st\.to\?\.settings, st\.opts\),/, 'and the DEFAULT skin commits the same word - the mod was unreachable from it before');
   assert.match(ov, /enforceShipRestriction\(st\.to\.settings, st\.opts, this\._shipCtx\(\)\)/, 'OnPush\'s guard on the default skin');
   assert.match(ov, /const refusal = shipTravelRefusal\(\{ settings, \.\.\.this\._shipCtx\(\) \}\);/, 'and the ship click\'s');
@@ -1571,7 +1571,7 @@ test('AUDIT-TO1 G1/G2/G3/I2/I3/I4/I6/J1/K2/H1/H2: the host seams the sweep found
   assert.match(m, /displayLocationInfo: \(\) => this\._displayLocationInfo\(\),/);
   assert.match(m, /this\.popUp\.draw\(renderer, canvas, font\);\s*\n[\s\S]{0,300}?if \(this\.infoBox\) \{\s*\n\s*this\._box = layoutMessageBox\(font, this\.infoBox\.rows, \[\]\);/);
   // C3: the fee on the default skin
-  const ov = read('src/ui/overworldMap.js');
+  const ov = read('src/ui/heldMap.js');
   assert.match(ov, /const cost = teleportCost\(this\.deps\.magesGuildRank\?\.\(\) \?\? 0\);/);
   assert.match(ov, /if \(fee && fee\.canPay && !fee\.paid\) \{ fee\.paid = true; this\.deps\.payTeleport\?\.\(fee\.cost\); \}/);
   // F2: the junction disc honours the map's filters

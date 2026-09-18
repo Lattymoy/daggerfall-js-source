@@ -381,6 +381,13 @@ vertical relief is one documented exaggeration constant; notices are
 literal strings where the classic popups read TEXT.RSC 454/1010; and
 the countdown-days animation became the flight.
 
+MAP1 (2026-09-18) RETIRED THIS SCREEN WHOLE: ui/overworldMap.js,
+render/overworldRenderer.js, tools/overworldProbe.mjs and
+test/overworldmap.test.js are gone; the enhanced map is the held
+parchment (ui/heldMap.js + ui/inkMap.js, bible/10-UI/Held-Map-Arc.md).
+ui/overworldModel.js stays - its water, marker, trace and chain laws are
+the ink's. What follows is the record of the screen as it shipped.
+
 NEW MODULES: ui/overworldModel.js (pure - the relief grid, tints,
 markers, route points; synthetic-bay testable), render/
 overworldRenderer.js (the self-contained pass: terrain, POINTS

@@ -1224,134 +1224,113 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
   .provlabel { font-size: 7px; }
 }
 
-/* ── THE OVERWORLD (U61) ────────────────────────────────────
-   The travel map whose picture is the GL frame beneath it, so the
-   root is TRANSPARENT - the one deliberate break from the opaque
-   peer div, recorded in ui/overworldMap.js. Everything drawn here
-   is chrome floating over the relief; every class is ov-prefixed
-   (the .detail/.packcol/.empty lesson, three times paid). */
-.ovroot {
+/* ── THE HELD MAP (MAP1, 2026-09-18) ───────────────────────
+   The enhanced travel map is Mac's own sprite of two hands holding a
+   parchment (public/art/held-map.png), with the Iliac Bay inked onto
+   the sheet by ui/inkMap.js. The root is OPAQUE black - the sprite's
+   own ground - so the world beneath is never seen; the stage is the
+   sprite's 4:3 letterboxed into the viewport, the ink canvas lies on
+   the paper's rectangle and the hands canvas keys the thumbs back over
+   it. Every class is hm-prefixed (the .detail/.packcol/.empty lesson). */
+.hmroot {
   position: fixed; inset: 0; z-index: 13; overflow: hidden;
-  background: transparent; cursor: grab; touch-action: none;
+  background: #000; cursor: grab; touch-action: none;
   font-family: var(--body, sans-serif); color: var(--bone);
 }
-.ovroot:active { cursor: grabbing; }
-.ovtop {
+.hmroot:active { cursor: grabbing; }
+.hmstage { position: absolute; }
+/* the painting is 1448x1086 and is only ever shown SMALLER than that, so
+   it is scaled smooth - a pixelated downscale would alias its dither */
+.hmsprite {
+  position: absolute; inset: 0; width: 100%; height: 100%; display: block;
+  user-select: none; -webkit-user-drag: none; pointer-events: none;
+}
+.hmink { position: absolute; display: block; }
+.hmhands {
+  position: absolute; inset: 0; width: 100%; height: 100%; display: block;
+  pointer-events: none;
+}
+.hmtop {
   position: absolute; top: 0; left: 0; right: 0; display: flex;
   align-items: flex-start; gap: 14px; padding: 14px 18px;
   pointer-events: none;
 }
-.ovlabel {
+.hmlabel {
   flex: 1 1 auto; min-width: 0; font-family: var(--display);
   font-weight: 300; font-size: 24px; line-height: 1.2;
   text-shadow: 0 1px 8px rgba(0,0,0,0.8); min-height: 30px;
 }
-.ovsearch { position: relative; flex: 0 1 300px; pointer-events: auto; }
-.ovsearch input {
+.hmsearch { position: relative; flex: 0 1 300px; pointer-events: auto; }
+.hmsearch input {
   width: 100%; min-height: 44px; padding: 8px 12px;
   background: rgba(10, 13, 17, 0.82); border: 1px solid var(--iron);
   color: var(--bone); font-size: 14px;
 }
-.ovsearch input:focus { outline: none; border-color: var(--brass); }
-.ovresults {
+.hmsearch input:focus { outline: none; border-color: var(--brass); }
+.hmresults {
   display: none; position: absolute; top: 100%; left: 0; right: 0;
   margin: 4px 0 0; padding: 0; list-style: none; max-height: 46vh;
   overflow: auto; background: rgba(10, 13, 17, 0.94);
   border: 1px solid var(--iron); z-index: 1;
 }
-.ovresults.open { display: block; }
-.ovresult {
+.hmresults.open { display: block; }
+.hmresult {
   display: flex; justify-content: space-between; gap: 12px; width: 100%;
   min-height: 44px; padding: 9px 12px; text-align: left; font-size: 13.5px;
 }
-.ovresult:hover { background: #12161b; }
-.ovresult-region { color: var(--dim); font-size: 12px; }
-.ovclose { pointer-events: auto; }
-.ovfilters {
-  position: absolute; left: 18px; bottom: 18px; display: flex; gap: 8px;
-  padding-bottom: env(safe-area-inset-bottom);
-}
-.ovchip {
-  min-height: 44px; padding: 9px 16px; font-size: 13px; color: var(--brass);
-  background: rgba(10, 13, 17, 0.82); border: 1px solid var(--brass);
-}
-/* a filter flag TRUE HIDES its bucket - the chip dims with its dots */
-.ovchip.off { color: var(--dim); border-color: var(--iron); }
-.ovcard {
+.hmresult:hover { background: #12161b; }
+.hmresult-region { color: var(--dim); font-size: 12px; }
+.hmclose { pointer-events: auto; }
+.hmcard {
   display: none; position: absolute; right: 18px; bottom: 18px;
   width: min(340px, calc(100vw - 36px)); padding: 18px 20px;
   background: rgba(10, 13, 17, 0.92); border: 1px solid var(--iron);
   margin-bottom: env(safe-area-inset-bottom);
 }
-.ovcard.open { display: block; }
-.ovname { font-family: var(--display); font-weight: 300; font-size: 24px; margin: 0; }
-.ovmeta { color: var(--dim); font-size: 13px; margin: 4px 0 12px; }
-.ovprompt { font-size: 14px; margin: 10px 0 12px; }
-.ovacts { display: flex; gap: 8px; margin-top: 12px; }
-.ovacts .act { flex: 1 1 auto; text-align: center; }
-.act.ovghost { color: var(--dim); border-color: var(--iron); }
-.ovpair { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
-.ovpair-k {
+.hmcard.open { display: block; }
+.hmname { font-family: var(--display); font-weight: 300; font-size: 24px; margin: 0; }
+.hmmeta { color: var(--dim); font-size: 13px; margin: 4px 0 12px; }
+.hmprompt { font-size: 14px; margin: 10px 0 12px; }
+.hmacts { display: flex; gap: 8px; margin-top: 12px; }
+.hmacts .act { flex: 1 1 auto; text-align: center; }
+.act.hmghost { color: var(--dim); border-color: var(--iron); }
+.hmpair { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+.hmpair-k {
   flex: 0 0 64px; color: var(--dim); font-size: 10.5px;
   letter-spacing: 0.12em; text-transform: uppercase;
 }
-.ovpick {
+.hmpick {
   flex: 1 1 auto; min-height: 44px; padding: 8px 6px; font-size: 13px;
   color: var(--dim); background: transparent; border: 1px solid var(--iron);
 }
-.ovpick.on { color: var(--brass); border-color: var(--brass); background: #12161b; }
-.ovtrip { margin: 12px 0 0; }
-.ovnotice { color: #d98074; font-size: 13px; margin: 10px 0 0; }
-.ovskip {
-  display: none; position: absolute; left: 50%; bottom: 42px;
-  transform: translateX(-50%); padding: 10px 18px; font-size: 12px;
-  letter-spacing: 0.14em; text-transform: uppercase; color: var(--bone);
-  background: rgba(10, 13, 17, 0.7); border: 1px solid var(--iron);
-  pointer-events: none;
+.hmpick.on { color: var(--brass); border-color: var(--brass); background: #12161b; }
+.hmtrip { margin: 12px 0 0; }
+.hmnotice { color: #d98074; font-size: 13px; margin: 10px 0 0; }
+/* the foot: the hint, the zoom band and (SOC6) the party legend in ONE
+   row, so nothing floats at a guessed height (AUDIT SOC C10/D5's lesson) */
+.hmfoot {
+  position: absolute; left: 18px; bottom: 18px; display: flex; gap: 12px; align-items: center;
+  padding-bottom: env(safe-area-inset-bottom); pointer-events: none;
 }
-.ovskip.on { display: block; }
-.ovhint {
-  position: absolute; left: 50%; top: 8px; transform: translateX(-50%);
-  color: var(--dim); font-size: 11px; letter-spacing: 0.08em;
-  pointer-events: none; opacity: 0.8;
+.hmhint, .hmband {
+  color: var(--dim); font-size: 11px; letter-spacing: 0.08em; opacity: 0.8;
 }
-/* SOC6 (Mac: "Party members should be able to be seen on the world
-   map, regardless of their location"): the party's layer over the
-   relief. POINTER-TRANSPARENT throughout - a member's mark must never
-   become a hole in the map's own drag, pick and wheel - and positioned
-   by ui/overworldMap.js through the projection the rings are drawn
-   with, so a label cannot drift off its ring. The colour is set INLINE
-   from net/social.js's one party green (grey when that member is
-   offline), because it is data about a person, not a theme. */
-.ovparty { position: absolute; inset: 0; display: none; pointer-events: none; }
-.ovpmark {
-  position: absolute; transform: translate(-50%, 0); white-space: nowrap;
-  text-align: center; text-shadow: 0 1px 4px rgba(0,0,0,0.95), 0 0 2px rgba(0,0,0,0.9);
-}
-.ovpname { display: block; font-size: 13px; letter-spacing: 0.04em; }
-.ovpwhere { display: block; font-size: 11px; opacity: 0.75; }
-/* AUDIT SOC C10/D5: THE LEGEND IS A CHIP, NOT A FLOATING BOX. At
-   left 18px / bottom 70px it was a fixed guess about how tall the
-   filter row happened to be, and under 860px that row WRAPS: measured
-   at 430x860 the chips took two 44px rows from bottom 12 up to 848 and
-   the legend landed inside them. It lives IN the chips row now, so it
-   wraps with them and can never be under or over one - the row's own
-   own bottom edge is the only number either of them needs. */
-.ovlegend {
+.hmband { text-transform: uppercase; letter-spacing: 0.18em; }
+.hmlegend {
   position: static; flex: none; display: none;
   align-items: center; gap: 8px; padding: 6px 10px; font-size: 12px;
   color: var(--bone); background: rgba(10, 13, 17, 0.82);
   border: 1px solid var(--iron); pointer-events: none;
 }
-.ovlegend.open { display: flex; }
-.ovlegdot { width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 0 1px rgba(0,0,0,0.8); }
+.hmlegend.open { display: flex; }
+.hmlegdot { width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 0 1px rgba(0,0,0,0.8); }
 @media (max-width: 860px) {
-  .ovlabel { font-size: 18px; }
-  .ovtop { flex-wrap: wrap; }
-  .ovsearch { flex: 1 1 100%; order: 3; }
-  .ovhint { display: none; }
-  .ovcard { right: 12px; bottom: 76px; }
-  .ovfilters { left: 12px; bottom: 12px; flex-wrap: wrap; max-width: calc(100vw - 24px); }
+  .hmlabel { font-size: 18px; }
+  .hmtop { flex-wrap: wrap; }
+  .hmsearch { flex: 1 1 100%; order: 3; }
+  .hmhint { display: none; }
+  .hmcard { right: 12px; bottom: 76px; }
+  .hmfoot { left: 12px; bottom: 12px; flex-wrap: wrap; max-width: calc(100vw - 24px); }
 }
 
 /* ── PX1: THE PIXEL HOME (Mac, 2026-08-27) ──────────────────
@@ -3354,61 +3333,53 @@ body:has(.dfchat.touch) .hudtext-stack { top: ${HUD_TEXT_TOP_CHAT_TOUCH_PX}px; }
 .px-setwrap .dcard code { font-family: inherit; border: 2px solid rgba(125,116,96,0.4);
   border-radius: 0; background: rgba(0,0,0,0.35); letter-spacing: 0.06em; }
 
-/* ── PX18: THE WORLD MAP WEARS THE PIXELS ── U61's overworld screen
-   (the GL world IS the picture; the chrome floats over it) joins the
-   family: Pixelify chrome, 2px frames, the gold pair on the hand,
-   glass panels at the established scrims, the travel card in the
-   pack's plaque language. The GL frame and every travel law
-   underneath are untouched. */
-#enhanced-travelmap, .ovroot { font-family: ${PIXEL_STACK};
+/* ── PX18: THE WORLD MAP WEARS THE PIXELS ── the held map's chrome
+   (the sprite IS the picture; the label, the search, the card and the
+   foot float over it) joins the family: Pixelify chrome, 2px frames,
+   the gold pair on the hand, glass panels at the established scrims,
+   the travel card in the pack's plaque language. The ink on the sheet
+   and every travel law underneath are untouched. */
+#enhanced-travelmap, .hmroot { font-family: ${PIXEL_STACK};
   -webkit-font-smoothing: none; color: #d8cfae; }
-.ovroot button { transition: none; border-radius: 0; }
-.ovtop { background: rgba(10,12,17,0.45); border-bottom: 2px solid rgba(125,116,96,0.35); }
-.ovlabel { font-family: inherit; letter-spacing: 0.18em; text-indent: 0.18em;
+.hmroot button { transition: none; border-radius: 0; }
+.hmtop { background: linear-gradient(rgba(10,12,17,0.55), rgba(10,12,17,0)); }
+.hmlabel { font-family: inherit; letter-spacing: 0.18em; text-indent: 0.18em;
   text-transform: uppercase; text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
-.ovsearch input { font-family: inherit; font-size: 16px; letter-spacing: 0.06em;
+.hmsearch input { font-family: inherit; font-size: 16px; letter-spacing: 0.06em;
   color: #d8cfae; background: rgba(0,0,0,0.4); border: 2px solid rgba(125,116,96,0.55);
   border-radius: 0; padding: 8px 12px; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
-.ovsearch input:focus { outline: none; border-color: var(--brass); color: rgb(243,239,44);
+.hmsearch input:focus { outline: none; border-color: var(--brass); color: rgb(243,239,44);
   text-shadow: 2px 2px 0 rgb(93,77,12); }
-.ovresult { font-family: inherit; border: 0; border-bottom: 2px solid rgba(125,116,96,0.3);
+.hmresult { font-family: inherit; border: 0; border-bottom: 2px solid rgba(125,116,96,0.3);
   background: rgba(10,12,17,0.72); color: #c5bda2; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
-.ovresult:hover, .ovresult:focus-visible { outline: none; color: rgb(243,239,44);
+.hmresult:hover, .hmresult:focus-visible { outline: none; color: rgb(243,239,44);
   background: rgba(0,0,0,0.5); text-shadow: 2px 2px 0 rgb(93,77,12); }
-.ovresult-region { color: #7d7460; }
-.ovchip { font-family: inherit; font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase;
-  color: #a89f88; background: rgba(10,12,17,0.45); border: 2px solid rgba(125,116,96,0.4);
-  border-radius: 0; min-height: 44px; padding: 6px 12px;
-  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
-.ovchip:hover, .ovchip:focus-visible { outline: none; color: rgb(243,239,44);
-  border-color: var(--brass); text-shadow: 2px 2px 0 rgb(93,77,12); }
-.ovchip.on { color: rgb(243,239,44); border-color: var(--brass);
-  text-shadow: 2px 2px 0 rgb(93,77,12); }
-.ovcard { position: relative; border: 2px solid rgba(216,207,174,0.7);
+.hmresult-region { color: #7d7460; }
+.hmcard { position: absolute; border: 2px solid rgba(216,207,174,0.7);
   outline: 2px solid rgba(125,116,96,0.35); outline-offset: 4px; border-radius: 0;
   background: rgba(10,12,17,0.72); font-family: inherit;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
-.ovcard h3, .ovcard h2 { font-family: inherit; font-weight: 400; letter-spacing: 0.14em;
+.hmcard h3, .hmcard h2 { font-family: inherit; font-weight: 400; letter-spacing: 0.14em;
   text-indent: 0.14em; text-transform: uppercase; text-align: center;
   border-bottom: 2px solid rgba(125,116,96,0.5); padding-bottom: 8px;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
-.ovmeta { color: #7d7460; font-size: 13px; letter-spacing: 0.2em; text-transform: uppercase;
+.hmmeta { color: #7d7460; font-size: 13px; letter-spacing: 0.2em; text-transform: uppercase;
   text-align: center; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
-.ovprompt, .ovnotice { color: #c5bda2; text-align: center; font-size: 15px;
+.hmprompt, .hmnotice { color: #c5bda2; text-align: center; font-size: 15px;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
-.ovpair { display: flex; justify-content: space-between; gap: 14px;
+.hmpair { display: flex; justify-content: space-between; gap: 14px;
   border-bottom: 2px solid rgba(125,116,96,0.3); min-height: 32px; align-items: baseline; }
-.ovpair-k { color: #7d7460; font-size: 13px; letter-spacing: 0.18em; text-transform: uppercase;
+.hmpair-k { color: #7d7460; font-size: 13px; letter-spacing: 0.18em; text-transform: uppercase;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
-.ovacts { display: flex; justify-content: center; gap: 10px; }
-.ovroot .act { border: 2px solid var(--brass); border-radius: 0; background: none;
+.hmacts { display: flex; justify-content: center; gap: 10px; }
+.hmroot .act { border: 2px solid var(--brass); border-radius: 0; background: none;
   color: rgb(243,239,44); font-family: inherit; letter-spacing: 0.14em; text-transform: uppercase;
   min-height: 44px; padding: 8px 16px; text-shadow: 2px 2px 0 rgb(93,77,12); }
-.ovroot .act.ovghost { border-color: rgba(125,116,96,0.55); color: #d8cfae;
+.hmroot .act.hmghost { border-color: rgba(125,116,96,0.55); color: #d8cfae;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
-.ovroot .act:hover, .ovroot .act:focus-visible { outline: none; color: rgb(243,239,44);
+.hmroot .act:hover, .hmroot .act:focus-visible { outline: none; color: rgb(243,239,44);
   border-color: var(--brass); background: rgba(0,0,0,0.35); text-shadow: 2px 2px 0 rgb(93,77,12); }
-.ovskip, .ovhint { color: #7d7460; font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase;
+.hmhint, .hmband, .hmlegend { color: #7d7460; font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
 
 /* ── FT14: ONE ROOF (2026-09-15) ───────────────────────────────
