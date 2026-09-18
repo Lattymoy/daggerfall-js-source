@@ -4706,6 +4706,7 @@ export function createWorldModes(host) {
       player.spawn(spot[0], spot[1], spot[2]);
       mode = 'interior';
       host.unlockOn?.();   // AUDIT 62 F16/F28: the lock never outlives a mode change (its pin wants this on the next line)
+      setWeaponPose(interiorWeapon.playerWeapon, host.weaponPose?.() ?? null);   // JAN1: the pose is the PLAYER's - the interior rig takes the pair the exterior rig held (DFU has one WeaponManager)
       mwViewTransition('Interior');   // AUDIT-EOTB2: AutoTogglePerspective.OnTransitionInterior, on the building's door (PlayerEnterExit.OnTransitionInterior)
       immersiveFootsteps.onTransitionInterior({ buildingType: interiorBuilding?.buildingType ?? null, materials: ctx.floorMaterials });   // IF1: UpdateFootsteps_OnTransitionInterior - the combined mesh's materials, first floor archive wins
       betterAmbience.onTransition({ building: true });   // BA1: OnTransitionInterior - the fog off, the 2D rain source   // AUDIT 62 F16/F28: the lock never outlives a mode change - the foe pool and the coordinate frame both change here, and lockOn breaks only on death, a null chest or 32 m, none of which fire for a street foe you walked away from through a door (the interior is parented at the building's world matrix, so it stays metres away).
@@ -5066,6 +5067,7 @@ export function createWorldModes(host) {
     player.spawn(landing[0], repositionFeetY(player.collider.heightAt(landing[0], landing[2]), landing[1]), landing[2]);
     mode = 'exterior';
     host.unlockOn?.();   // AUDIT 62 F16/F28: the lock never outlives a mode change
+    host.applyWeaponPose?.(weaponPoseOf(interiorWeapon.playerWeapon));   // JAN1: and the exterior rig takes the pair back
     mwViewTransition('Exterior');   // AUDIT-EOTB2: AutoTogglePerspective.OnTransitionExterior, stepping back out of a building (PlayerEnterExit.OnTransitionExterior)
     immersiveFootsteps.onTransitionExterior();   // IF1: UpdateFootsteps_OnTransitionExterior
     betterAmbience.onTransition(null);   // BA1: OnTransitionExterior
@@ -5256,6 +5258,7 @@ export function createWorldModes(host) {
       }
       mode = 'dungeon';
       host.unlockOn?.();   // AUDIT 62 F16/F28: the lock never outlives a mode change
+      setWeaponPose(dungeonCtx?.weaponRig?.()?.playerWeapon ?? null, host.weaponPose?.() ?? null);   // JAN1: the dungeon rig takes the pair the exterior rig held
       mwViewTransition('Interior');   // EOTB-IL: OnTransitionInterior is registered on PlayerEnterExit.OnTransitionDungeonInterior too (Start, IL_06bf)
       immersiveFootsteps.onTransitionDungeonInterior();   // IF1: UpdateFootsteps_OnTransitionDungeonInterior
       betterAmbience.onTransition({ dungeon: { regionName: dfLocation.regionName, name: dfLocation.name, inCastle: () => !!ctx.insideDungeonCastle?.(), exitPos: ctx.enterMarker ? [ctx.enterMarker.x, ctx.enterMarker.y, ctx.enterMarker.z] : null } });   // BA1: OnTransitionDungeonInterior - the fog seeded by the dungeon's name, the rain source at "DungeonExit"
@@ -5466,11 +5469,19 @@ export function createWorldModes(host) {
     const landing = dungeonEntranceLanding(dungeonReturn.candidates.map((e) => e.door));
     host.onDungeonLeave?.();   // WORLD1: the room's memory goes out while the dungeon still stands
     teardownDungeonQuestFlats();   // B2: OnDestroy for the quest stands, before the batch teardown
+    // JAN1 (2026-09-18, Janome: "exiting a dungeon with my sword and torch drawn makes this happen again" - a fist
+    // under the torch flame): THE POSE IS THE PLAYER'S, NOT THE RIG'S. The port has four PlayerWeapons against DFU's
+    // one WeaponManager (HARD2c made the pair one law for the SAVE; no live door carried it). The exterior rig is not
+    // stepped underground, so it hands the screen back with whatever `{ sheathed, usingRightHand }` it held on the way
+    // in - a left hand and an empty left slot is a null weapon, and a null weapon is WEAPON10.CIF, the fist; the torch
+    // is right because it is read off the ENTITY. Read before the teardown, applied through HARD2c's one home.
+    const pose = weaponPoseOf(dungeonCtx.weaponRig?.()?.playerWeapon ?? null);
     dungeonCtx.destroy();
     dungeonCtx = null;
     dungeonLoc = null;
     mode = 'exterior';
     host.unlockOn?.();   // AUDIT 62 F16/F28: the lock never outlives a mode change
+    host.applyWeaponPose?.(pose);   // JAN1: the exterior rig takes the pair the dungeon rig held
     mwViewTransition('Exterior');   // EOTB-IL: OnTransitionExterior is registered on PlayerEnterExit.OnTransitionDungeonExterior too (Start, IL_06e1)
     immersiveFootsteps.onTransitionExterior();   // IF1: OnTransitionDungeonExterior is wired to the same handler (Main.cs:162)
     betterAmbience.onTransition(null);   // BA1: OnTransitionDungeonExterior
@@ -8095,6 +8106,8 @@ export function createWorldModes(host) {
      *  OnDestroy, so the resource side never decoupled. */
     forceExitToExterior({ cacheScene = true } = {}) {
       const wasInside = mode !== 'exterior';
+      // JAN1: the pair the live rig holds, read before either teardown (a load overwrites it a moment later with the save's own)
+      const pose = mode === 'dungeon' ? weaponPoseOf(dungeonCtx?.weaponRig?.()?.playerWeapon ?? null) : mode === 'interior' ? weaponPoseOf(interiorWeapon.playerWeapon) : null;
       if (wasInside) unleveledLootPreTransition();   // UL1: TransitionDungeonExteriorImmediate / the teleport raise OnPreTransition alone (PlayerEnterExit.cs:1209-1215)
       if (interiorCtx) {
         // Teleport.cs:145-148, "Cache scene before departing": inside a
@@ -8147,6 +8160,7 @@ export function createWorldModes(host) {
       player.collider = baseCollider();
       mode = 'exterior';
       host.unlockOn?.();   // AUDIT 62 F16/F28: the lock never outlives a mode change
+      if (pose) host.applyWeaponPose?.(pose);   // JAN1: the exterior rig takes the pair the live rig held
       // AUDIT 63r F30: NO PlayerTeleportedIntoDungeon CLEAR HERE. The
       // first pass put one in, reading Teleport.cs:151's
       // TransitionDungeonExteriorImmediate as PlayerEnterExit.cs

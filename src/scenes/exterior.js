@@ -28,6 +28,7 @@ import { exteriorSurfaces, downProbe, rayDistanceFor, ON_EXTERIOR_WATER, exterio
 import { isOnFoot, TRANSPORT_MODES } from '../systems/transport.js';   // TransportManager.IsOnFoot - the raycast's reach and the mounted footstep gate
 import { jumpSpeedMultiplier, isEnhancedJumping, tallySkill, SKILLS } from '../systems/skills.js';   // AUDIT 64 F2: CheckAirControl's IsEnhancedJumping disjunct
 import { createWeaponRig, autoBuildArms } from '../combat/weaponRig.js';   // MWA1: the arms at boot
+import { weaponPoseOf, applyWeaponPose } from '../combat/playerWeapon.js';   // JAN1: the pose crosses the doors
 import { racialRestBlock } from '../systems/vampirism.js';   // V2b: the vampire's rest gate
 import { ArrowFlight, playerArrowHitFoe } from '../combat/arrowFlight.js';   // C13: visible exterior arrows; AUDIT 39 (#64): and the shaft that LANDS
 import { inflictPoison } from '../systems/poisons.js';   // AUDIT 39 (#64): a poisoned shaft doses its mark
@@ -2127,6 +2128,8 @@ export async function bootExterior(canvas, renderer, params, status) {
     // the slot, so this bypasses toggleSpellbook's already-open guard
     // - the inventory has just run its own close law.
     openSpellbook: () => { const b = makeSpellbookWindow(); if (b) townTalk.showOverlay(b); },
+    weaponPose: () => weaponPoseOf(weaponRig.playerWeapon),   // JAN1: the pose is the player's - a door in or out hands the pair through these
+    applyWeaponPose: (p) => applyWeaponPose(weaponRig.playerWeapon, p),
     openCharSheet: () => { if (charSheetDoorReady()) townTalk.showOverlay(makeCharSheetWindow()); },   // MAC-C: the pack's other window key crosses over rather than doing nothing - the same door the sheet's own Items button takes back the other way
     ...useHooks,   // U53: the one bag
     // U8e: OnPop mints the world pile. G5: with the drop icon the

@@ -1222,7 +1222,19 @@ export async function bootWorld(canvas, renderer, params, status) {
               // by the person's LIVE archive, never the creation one
               frameCount: (rec, a) => personTex.get(a).getFrameCount(rec),
               collider: personCollider,
-              groundY: () => locOrigin[1],
+              // JAN1 (2026-09-18, Janome: "people walking in the sky lol, just outside the city"): THE TERRAIN'S
+              // FLOOR, not the location's average. The navgrid is the BLOCK rect; the flattened rect is the stamped
+              // tiles plus a clearance (terrainTiles.js setLocationTiles) and is smaller by a band of ~70 units on
+              // every side, and blendLocationTerrain only EASES that band toward the average - so a walker there stood
+              // at the average while the real ground fell away under it, ten metres in the air on the flattest city
+              // pixel. Inside the rect heightAt IS the average, so nothing there moves; the fixed city's host
+              // (exterior.js) already asks its collider. Persons are pixel-local vertically: the pixel's translation
+              // comes off the world height. A pixel not built yet answers the old constant.
+              groundY: (x, z) => {
+                const t = state.pixelTranslation(px, py);
+                const h = heightAt(x + locOrigin[0] + t[0], z + locOrigin[2] + t[2]);
+                return Number.isFinite(h) ? h - t[1] + 2.0 * 0.025 : locOrigin[1];
+              },
             });
             personBatches.set(person, renderer.createBillboardBatch(archive, 0, { w: 1, h: 1 }, [[0, 0, 0]]));
             return person;
@@ -3255,6 +3267,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // the slot, so this bypasses toggleSpellbook's already-open guard
     // - the inventory has just run its own close law.
     openSpellbook: () => { const b = makeSpellbookWindow(); if (b) townTalk.showOverlay(b); },
+    // JAN1: the pose is the player's - a door in or out hands the pair through these (HARD2c's one home)
+    weaponPose: () => weaponPoseOf(weaponRig.playerWeapon),
+    applyWeaponPose: (p) => applyWeaponPose(weaponRig.playerWeapon, p),
     openCharSheet: () => { if (charSheetDoorReady()) townTalk.showOverlay(makeCharSheetWindow()); },   // MAC-C: the pack's other window key crosses over rather than doing nothing - the same door the sheet's own Items button takes back the other way
     ...useHooks,   // U53: the one bag (revealMap, drinkPotion, getQuest)
     nowMinute: () => Math.floor(playerTicker.classicMinutes),

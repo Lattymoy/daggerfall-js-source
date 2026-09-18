@@ -645,6 +645,15 @@ void main() {
            + flame(vc + vec4(0.0, s, 0.0, 0.0), lantern) + flame(vc + vec4(0.0, 2.0 * s, 0.0, 0.0), lantern)
            + flame(vc + vec4(0.0, -s, 0.0, 0.0), lantern) + flame(vc + vec4(0.0, -2.0 * s, 0.0, 0.0), lantern)
            + flame(vc + vec4(s, 0.0, 0.0, 0.0), lantern) + flame(vc + vec4(-s, 0.0, 0.0, 0.0), lantern)) / 7.0;
+      // JAN1 (2026-09-18, Janome: "lights still shining thru attics at certain angles" - BUGS-5 F4's remainder).
+      // Presence alone takes a FLOOR for the flame: an oblique surface sweeps a wide range of depths across the
+      // seven taps, and at some pitches one tap lands within the slack of the light's own depth - a 1/7 halo painted
+      // on the floor above a lamp in the room below. The other half of the law: a surface NEARER than the light at
+      // the light's OWN pixel is an occluder, whatever the footprint found. A flame flat is a camera-facing quad
+      // through the light and sits at its exact depth, so it never trips this; a city light at the top of its flat
+      // shows the flat or the wall behind, both at or past the depth; an open-air light's centre is sky.
+      vec2 cuv = ndc.xy * 0.5 + 0.5;
+      if (cuv == clamp(cuv, vec2(0.0), vec2(1.0)) && viewDist(depthAt(cuv)) < lantern - ${glslFloat(AIR_GLARE_SLACK)}) vis = 0.0;
     }
   }
   vVis = vis;
