@@ -1425,7 +1425,11 @@ test('AUDIT-MAP B2/B4: the sprite\'s handler is set before its source, the displ
   const src = read('src/ui/heldMap.js');
   assert.ok(src.indexOf('sprite.onload = () => this._keyHands(sprite, hands);') < src.indexOf('sprite.src = HELD_MAP_URL;'), 'onload before src - a cached picture cannot land first');
   assert.match(src, /\(fonts\?\.load\?\.\("14px 'Cormorant'"\) \?\? fonts\?\.ready\)\?\.then\?\.\(landed\);/, 'the face is ASKED for (a canvas font never triggers a load), and the sheet repainted when it lands');
-  assert.match(src, /const landed = \(\) => \{ if \(!this\.done\) \{ this\._measureCache\.clear\(\); this\._staticKey = ''; this\._dirty = true; \} \};/, 'the measures and the kept layer are dropped with it');
+  // MAP-FIELD2: the measure cache went with the names - nothing else on
+  // the sheet measures text - so the face's landing drops the kept layer
+  // alone. The repaint is still what the landing is FOR.
+  assert.match(src, /const landed = \(\) => \{ if \(!this\.done\) \{ this\._staticKey = ''; this\._dirty = true; \} \};/, 'the kept layer is dropped with it');
+  assert.doesNotMatch(src, /_measureCache/, 'and no measure cache survives the names it existed for');
   assert.match(src, /stage\.addEventListener\('auxclick', \(e\) => \{ if \(e\.button === 1\) e\.preventDefault\?\.\(\); \}\);/, 'auxclick is where the middle click\'s default lives');
   assert.match(src, /stage\.addEventListener\('mousedown', \(e\) => \{ if \(e\.button === 1\) e\.preventDefault\?\.\(\); \}\);/);
 });

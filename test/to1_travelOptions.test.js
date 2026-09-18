@@ -98,7 +98,21 @@ test('TO1: the settings are the mod\'s own modsettings.json, key for key, type f
       assert.ok(def, `${key} is declared`);
       assert.equal(def.description, k.Description, `${key}'s description is the mod's own`);
       const kind = k.$type.split('.').pop();
-      if (kind === 'ToggleKey') assert.equal(def.default, k.Value, `${key}'s default`);
+      if (kind === 'ToggleKey') {
+        // TO-FIELD2 (Mac, 2026-09-18: "travel options instantly
+        // transports you to a destination and theres no travel"). The
+        // SECOND default the port ships differently, said here beside
+        // the first so a third cannot ride in quietly.
+        // IsPlayerControlledTravel is an AND over three toggles, and the
+        // popup opens with `sleepModeInn = true` - classic's own default
+        // - so with this key false the second clause was false and EVERY
+        // default trip fell to DFU's fast travel. The mod is opt-in over
+        // vanilla for Hazelnut; here the walked journey IS the feature.
+        if (key === 'StopAtInnsTravel.PlayerControlledInnsTravel') {
+          assert.equal(k.Value, false, 'the mod ships it OFF - if this moved, re-decide the departure');
+          assert.equal(def.default, true, 'the port ships it ON, so a default trip is walked');
+        } else assert.equal(def.default, k.Value, `${key}'s default`);
+      }
       else if (kind === 'SliderIntKey') {
         assert.deepEqual([def.default, def.min, def.max], [k.Value, k.Min, k.Max], `${key}'s range`);
       } else if (kind === 'MultipleChoiceKey') {
@@ -250,7 +264,16 @@ test('TO1: the shipped defaults reach the game through the store', async () => {
   _resetModSettings();
   const s = readTravelOptionsSettings();
   assert.equal(s.cautiousTravel, true, 'the mod ships Player Controlled cautious ON');
-  assert.equal(s.stopAtInnsTravel, false, '...and stop-at-inns OFF, so a walked trip is cautious or reckless-and-camping');
+  // TO-FIELD2: and stop-at-inns ON, which is the port's own departure -
+  // the mod ships it off, and with the popup opening on Inns that made
+  // every default trip a vanilla fast travel. Pinned on the LAW, not
+  // only on the number: the toggles the popup opens with must add up to
+  // a walked journey, which is the whole of Mac's report.
+  assert.equal(s.stopAtInnsTravel, true, '...and stop-at-inns ON (the port\'s departure)');
+  assert.equal(isPlayerControlledTravel(s, { speedCautious: true, sleepModeInn: true, travelShip: false }), true,
+    'the toggles the popup OPENS with are a walked journey - press Begin and you travel');
+  assert.equal(isPlayerControlledTravel(s, { speedCautious: true, sleepModeInn: true, travelShip: true }), false,
+    'a ship is still DFU\'s own passage, never a walk');
   assert.equal(s.shipTravelPortsOnly, true);
   assert.equal(s.accelerationLimit, 60);
   assert.equal(s.locationPause, LOC_PAUSE_OFF);

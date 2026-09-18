@@ -101,7 +101,7 @@ import { TRAVEL_OPTIONS_TEXT as TO_TEXT, format as toFormat } from '../systems/t
 import { getDaggerfallDistance, MatchesCutOff } from '../systems/editDistance.js';
 import { checkLocationDiscovered } from './travelMapWindow.js';
 import {
-  buildInkModel, buildInkMarks, paintInkStatic, paintInkOverlay, placeNames, zoomBand, clampView, scaleMinOf, SCALE_MAX,
+  buildInkModel, buildInkMarks, paintInkStatic, paintInkOverlay, zoomBand, clampView, scaleMinOf, SCALE_MAX,   // MAP-FIELD2: placeNames is inkMap's law still, but this sheet no longer inks the names
   viewCentredOn, zoomAt, toPaper, toMap, BAND_MARKS, PARTY_LABEL_STACK,
 } from './inkMap.js';
 // SOC6: the party's marks, read the one way both maps read them.
@@ -253,7 +253,6 @@ export class HeldMapWindow {
     this._marksVersion = 0;
     this._layer = null;         // the kept static ink (a canvas), and its key
     this._staticKey = '';
-    this._measureCache = new Map();
     this._dirty = true;     // the canvas wants a repaint
     this._layoutKey = '';
     this._paper = { w: 1, h: 1, dpr: 1 };
@@ -760,16 +759,21 @@ export class HeldMapWindow {
       // same value - the kept layer was being freed and re-zeroed on every
       // pan frame; paintInkStatic clears it itself
       if (lctx && (layer.width !== canvas.width || layer.height !== canvas.height)) { layer.width = canvas.width; layer.height = canvas.height; }
-      const measure = (text, size, font) => {
-        const k = `${font}|${text}`;
-        let w = this._measureCache.get(k);
-        if (w === undefined) { target.font = font; w = target.measureText(text).width; this._measureCache.set(k, w); }
-        return w;
-      };
-      const names = placeNames(model.marks, this._view, band, { paperW, paperH, measure });
+      // MAP-FIELD2 (Mac, 2026-09-18): "all the town names need to be
+      // taken off the map, since its too cluttered". The sheet inks the
+      // GLYPHS alone now - a place is its mark, and its name is read off
+      // the label under the pointer and off the search, which is where a
+      // hand-drawn map puts it anyway. The PROVINCE names stay: they are
+      // far/mid only, a handful of words across the whole bay, and they
+      // are what makes the sheet readable when it is zoomed out.
+      //
+      // `placeNames` itself is NOT deleted - it is inkMap's law and its
+      // own pin stands (test/heldmap.test.js): what went is this sheet's
+      // use of it, and the measure cache it needed. Nothing else on the
+      // sheet measures text, so the cache goes with it.
       paintInkStatic(target, model, this._view, {
         paperW, paperH, dpr, band,
-        filters: this.filters, names, regionNames: REGION_NAMES,
+        filters: this.filters, names: null, regionNames: REGION_NAMES,
         // MAP2: the harbours while the mod restricts ships to ports, and the mark in the mod's colour
         ports: this._portsShown(),
         markedMapId: this.markedMapId,
@@ -1461,7 +1465,7 @@ export class HeldMapWindow {
     // run before it lands, so the sheet is repainted once when it does
     try {
       const fonts = document.fonts;
-      const landed = () => { if (!this.done) { this._measureCache.clear(); this._staticKey = ''; this._dirty = true; } };
+      const landed = () => { if (!this.done) { this._staticKey = ''; this._dirty = true; } };
       (fonts?.load?.("14px 'Cormorant'") ?? fonts?.ready)?.then?.(landed);
       fonts?.ready?.then?.(landed);
     } catch { /* no font set */ }
