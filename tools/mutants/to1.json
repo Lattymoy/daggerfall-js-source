@@ -1022,5 +1022,32 @@
   "tests": [
    "test/to1_travelOptions.test.js"
   ]
+ },
+ {
+  "name": "travel-options-declared-late",
+  "file": "src/scenes/world.js",
+  "old": "  let travelOptions = null;\n",
+  "new": "",
+  "tests": [
+   "test/to1_travelOptions.test.js"
+  ]
+ },
+ {
+  "name": "region-seen-declared-late",
+  "file": "src/scenes/world.js",
+  "old": "  let _travelRegionSeen = null;\n",
+  "new": "",
+  "tests": [
+   "test/to1_travelOptions.test.js"
+  ]
+ },
+ {
+  "name": "holder-declared-late",
+  "file": "src/scenes/world.js",
+  "old": "  const _travelUIHolder = { ui: null };\n",
+  "new": "",
+  "tests": [
+   "test/to1_travelOptions.test.js"
+  ]
  }
 ]
