@@ -224,6 +224,10 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   snap.weather = snapshotWeather();
   for (const k of ENTITY_FIELDS) snap[k] = entity[k];
   snap.stats = { ...entity.stats };
+  // SURV1: the needs record (survival/needs.js) - its markers are classic
+  // minutes and its counters plain numbers; the note throttles are not
+  // state and are not carried.
+  snap.survival = entity.survival ? { ...entity.survival, notes: undefined } : null;
   // AUDIT 17e: pre-chargen the entity carries a flat NUMBER here
   // (the stand-in entity's flat skills, characters/playerEntity.js:28)
   // - spreading it threw. RECORDED, and no divergence from
@@ -508,6 +512,7 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   defineLiveMaxMagicka(entity);
   for (const k of ENTITY_FIELDS) entity[k] = snap[k];
   entity.stats = { ...snap.stats };
+  entity.survival = snap.survival && typeof snap.survival === 'object' ? { ...snap.survival, notes: {} } : null;   // SURV1: a pre-SURV save starts fresh at the host's first tick
   // Pre-S15 saves carry no fatigue: default to rested (MaxFatigue =
   // (Str + End) x 64) - the additive-field shape DFU's serializer
   // gives missing members, so the envelope version holds at 1.
