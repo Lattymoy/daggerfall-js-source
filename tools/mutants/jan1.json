@@ -1,0 +1,22 @@
+[
+  { "name": "JAN1-the-hook-is-read-after-the-close", "file": "src/ui/enhancedInventory.js",
+    "old": "    const openCharSheet = deps.openCharSheet;\n    onExit();                 // the pack's own close law runs FIRST...\n    openCharSheet();", "new": "    onExit();                 // the pack's own close law runs FIRST...\n    deps.openCharSheet();", "tests": ["test/jan1_fixes.test.js"] },
+  { "name": "JAN1-the-arm-takes-a-truthy-bag-entry", "file": "src/ui/enhancedInventory.js",
+    "old": "if (act === 'CharacterSheet' && typeof deps?.openCharSheet === 'function') {", "new": "if (act === 'CharacterSheet' && deps?.openCharSheet) {", "tests": ["test/jan1_fixes.test.js"] },
+  { "name": "JAN1-an-empty-table-restores-empty", "file": "src/systems/save.js",
+    "old": "  entity.bankAccounts = snap.bankAccounts?.length ? snap.bankAccounts.map((a) => ({ ...a })) : createBankAccounts();   // B1", "new": "  entity.bankAccounts = (snap.bankAccounts ?? []).map((a) => ({ ...a }));   // B1", "tests": ["test/jan1_fixes.test.js"] },
+  { "name": "JAN1-the-houses-restore-empty", "file": "src/systems/save.js",
+    "old": "  entity.houses = snap.houses?.length ? snap.houses.map((h) => ({ ...h })) : createHouses(entity.bankAccounts.length);", "new": "  entity.houses = (snap.houses ?? []).map((h) => ({ ...h }));", "tests": ["test/jan1_fixes.test.js"] },
+  { "name": "JAN1-a-saved-table-is-thrown-away", "file": "src/systems/save.js",
+    "old": "  entity.bankAccounts = snap.bankAccounts?.length ? snap.bankAccounts.map((a) => ({ ...a })) : createBankAccounts();   // B1", "new": "  entity.bankAccounts = createBankAccounts();   // B1", "tests": ["test/jan1_fixes.test.js"] },
+  { "name": "JAN1-NaN-is-a-value", "file": "src/systems/itemTemplates.js",
+    "old": "export const itemValueOf = (item) => (Number.isFinite(item?.value) ? item.value : itemBaseValue(item ?? {}));", "new": "export const itemValueOf = (item) => (item?.value ?? itemBaseValue(item ?? {}));", "tests": ["test/jan1_fixes.test.js"] },
+  { "name": "JAN1-the-sell-arm-reads-the-value-raw", "file": "src/systems/tradeModes.js",
+    "old": "        cost += calculateCost(itemValueOf(item), quality, priceAdjustment) * stack;   // JAN1", "new": "        cost += calculateCost(item.value, quality, priceAdjustment) * stack;   // JAN1", "tests": ["test/jan1_fixes.test.js"] },
+  { "name": "JAN1-the-repair-arm-reads-the-value-raw", "file": "src/systems/tradeModes.js",
+    "old": "        cost += calculateItemRepairCost(itemValueOf(item), quality,", "new": "        cost += calculateItemRepairCost(item.value, quality,", "tests": ["test/jan1_fixes.test.js"] },
+  { "name": "JAN1-the-saves-items-come-in-unset", "file": "src/systems/save.js",
+    "old": "  entity.items = snap.items.map((it) => setItemFields(it));", "new": "  entity.items = snap.items.map((it) => ({ ...it }));", "tests": ["test/jan1_fixes.test.js"] },
+  { "name": "JAN1-the-wagons-items-come-in-unset", "file": "src/systems/save.js",
+    "old": "  entity.wagonItems = (snap.wagonItems ?? []).map((it) => setItemFields(it));", "new": "  entity.wagonItems = (snap.wagonItems ?? []).map((it) => ({ ...it }));", "tests": ["test/jan1_fixes.test.js"] }
+]

@@ -48,8 +48,8 @@
   {
     "name": "MAC-C-the-pack-opens-the-sheet-BEFORE-it-closes-itself",
     "file": "src/ui/enhancedInventory.js",
-    "old": "    onExit();                 // the pack's own close law runs FIRST...\n    deps.openCharSheet();     // ...and this replaces the slot it just freed",
-    "new": "    deps.openCharSheet();\n    onExit();",
+    "old": "    const openCharSheet = deps.openCharSheet;\n    onExit();                 // the pack's own close law runs FIRST...\n    openCharSheet();          // ...and this replaces the slot it just freed",
+    "new": "    const openCharSheet = deps.openCharSheet;\n    openCharSheet();\n    onExit();",
     "tests": [
       "test/macc_window_keys.test.js"
     ]

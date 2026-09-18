@@ -134,7 +134,7 @@ import {
   receiveArmorDecision, claimArmor, SPYMASTER_GREETING_TEXT_ID,
   receiveHouseDecision, claimHouse, ALREADY_GIVEN_HOUSE,   // H1
 } from '../systems/knightlyGifts.js';   // G6
-import { mintCondition, setItemFields } from '../systems/itemTemplates.js';   // G6: the gift's pieces mint like any other item; MAC-N1: with SetItem's name and value
+import { mintCondition, setItemFields, itemValueOf } from '../systems/itemTemplates.js';   // G6: the gift's pieces mint like any other item; MAC-N1: with SetItem's name and value
 import { npcServiceKind, freeHealing, freeMagickaRecharge, avoidDeath, AVOID_DEATH_TEXT } from '../systems/guildServices.js';
 import { createGuildForGroup, ORDERS } from '../systems/guildVariants.js';
 import { membershipOf, joinGuild, joinDecision, activeMemberships } from '../systems/guilds.js';   // V2e: GuildManager.Memberships, the per-read vampire book pick
@@ -2059,7 +2059,7 @@ export function createWorldModes(host) {
   // it back for 1; or buy a 20-arrow stack for the price of one).
   // Both branches now share one value resolution (DFU's item.value,
   // which every item carries once minted) and the stack multiplier.
-  function itemValue(it) { return it.value ?? itemBaseValue(it); }
+  function itemValue(it) { return itemValueOf(it); }   // JAN1: the one value read (a non-finite value is an absent one)
   function buyPrice(it) {
     const b = interiorBuilding;
     const cost = calculateCost(itemValue(it), b.quality, regionPriceAdjustment(playerEntity, b.regionIndex ?? 0)) * (it.stackCount ?? 1);
