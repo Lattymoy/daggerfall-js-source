@@ -16,8 +16,8 @@ test('INTRO2: supplied logo and recovered music are byte-exact; timing cannot dr
   assert.equal(createHash('sha256').update(read('src/assets/intro/theme.mp3')).digest('hex'), '7cc0ec09eeee9afe1ecff20ee3cffd824f5e6b295f08ddea79583ea5ab97f577');
 });
 
-test('INTRO2: the logo lands at decoded sample 252800 / 12000; one frame earlier it is still falling', () => {
-  const measured = 252800 / 12000; // reproduced by tools/introAudioCheck.mjs, independently of the cue
+test('INTRO2: the logo lands on the first closing beat at decoded sample 246400 / 12000; one frame earlier it is still falling', () => {
+  const measured = 246400 / 12000; // reproduced by tools/introAudioCheck.mjs, independently of the cue
   assert.ok(Math.abs(TITLE_IMPACT_TIME - measured) < 1e-6);
   const before = introTitleAt(measured - 1 / 60), at = introTitleAt(measured + 1e-8);
   assert.ok(before.y < -0.01);

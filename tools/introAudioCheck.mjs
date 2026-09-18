@@ -54,11 +54,13 @@ function peakBetween(from, to) {
   }
   return { time: (peak * hop + size / 2) / rate, strength: normalized[peak], analysisSample: peak * hop + size / 2 };
 }
-const title = peakBetween(20.7, 21.35), clouds = peakBetween(11.45, 11.95);
+// The closing figure has two distinct hits. Direction calls for the title on
+// the first, subtler beat at sample 246400—not the louder answer at 252800.
+const title = peakBetween(20.35, 20.7), titleAnswer = peakBetween(20.85, 21.25), clouds = peakBetween(11.45, 11.95);
 const report = {
   sha256: createHash('sha256').update(readFileSync(track)).digest('hex'),
   method: 'Positive spectral flux; Hann 1024; hop 128; mono 12000 Hz; local mean ±0.5 s; peak centre',
-  resolutionMs: hop / rate * 1000, title, clouds,
+  resolutionMs: hop / rate * 1000, title, titleAnswer, clouds,
   titleErrorMs: (TITLE_IMPACT_TIME - title.time) * 1000,
   cloudErrorMs: (CLOUD_REVEAL_TIME - clouds.time) * 1000,
 };

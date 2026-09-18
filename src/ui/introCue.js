@@ -1,7 +1,8 @@
 // INTRO2. Seconds in the DECODED recording, not an approximate tempo grid.
 // tools/introAudioCheck.mjs reproduces these landmarks from the shipped MP3.
-// The title uses the attack itself; no capture correction or arbitrary lead.
-export const TITLE_IMPACT_TIME = 252800 / 12000;
+// The title uses the first closing beat itself; the louder answer is
+// deliberately ignored. There is no capture correction or arbitrary lead.
+export const TITLE_IMPACT_TIME = 246400 / 12000;
 export const CLOUD_REVEAL_TIME = 11.712;
 export const TITLE_ENTER_TIME = TITLE_IMPACT_TIME - 0.78;
 export const TITLE_READY_TIME = TITLE_IMPACT_TIME + 1.35;
