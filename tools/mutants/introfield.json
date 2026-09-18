@@ -1,0 +1,65 @@
+[
+ {
+  "name": "INTROFIELD-the-kicker-is-back-on-the-gate",
+  "file": "src/ui/introScreen.js",
+  "old": "  gate.append(begin, status);",
+  "new": "  gate.append(make(doc, 'p', 'intro-kicker', 'The Elder Scrolls II'), begin, status);",
+  "tests": [
+   "test/intro.test.js"
+  ]
+ },
+ {
+  "name": "INTROFIELD-the-title-is-back-on-the-gate",
+  "file": "src/ui/introScreen.js",
+  "old": "  gate.append(begin, status);",
+  "new": "  gate.append(make(doc, 'h1', null, 'The Iliac Bay'), begin, status);",
+  "tests": [
+   "test/intro.test.js"
+  ]
+ },
+ {
+  "name": "INTROFIELD-the-status-line-is-drawn-again",
+  "file": "src/ui/introScreen.js",
+  "old": ".intro-status{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}",
+  "new": ".intro-status{min-height:18px;margin:0;font:12px/1.5 system-ui,sans-serif;color:#aaa99f}",
+  "tests": [
+   "test/intro.test.js"
+  ]
+ },
+ {
+  "name": "INTROFIELD-the-live-region-is-display-none-so-nothing-announces-it",
+  "file": "src/ui/introScreen.js",
+  "old": ".intro-status{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}",
+  "new": ".intro-status{display:none}",
+  "tests": [
+   "test/intro.test.js"
+  ]
+ },
+ {
+  "name": "INTROFIELD-the-score-failure-is-routed-to-the-clipped-line",
+  "file": "src/ui/introScreen.js",
+  "old": "      footer.textContent = 'Music couldn’t load. You can still continue.';",
+  "new": "      status.textContent = 'Music couldn’t load. You can still continue.';",
+  "tests": [
+   "test/intro.test.js"
+  ]
+ },
+ {
+  "name": "INTROFIELD-the-button-never-says-Resume",
+  "file": "src/ui/introScreen.js",
+  "old": "      begin.disabled = false; begin.textContent = 'Resume'; status.textContent = 'Tap anywhere to resume the music and film.';",
+  "new": "      begin.disabled = false; status.textContent = 'Tap anywhere to resume the music and film.';",
+  "tests": [
+   "test/intro.test.js"
+  ]
+ },
+ {
+  "name": "INTROFIELD-the-probe-still-reaches-for-the-kicker",
+  "file": "tools/introProbe.mjs",
+  "old": "    const button = document.querySelector('.intro-begin').getBoundingClientRect();\n    return { x: Math.round(innerWidth / 2), y: Math.round(button.top / 2), clear: button.top / 2 < button.top - 40 };",
+  "new": "    const kicker = document.querySelector('.intro-kicker').getBoundingClientRect();\n    const button = document.querySelector('.intro-begin').getBoundingClientRect();\n    return { x: Math.round(innerWidth / 2), y: Math.round(kicker.top / 2), clear: kicker.top / 2 < button.top - 40 };",
+  "tests": [
+   "test/intro.test.js"
+  ]
+ }
+]

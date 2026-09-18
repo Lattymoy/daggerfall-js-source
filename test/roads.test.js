@@ -536,7 +536,10 @@ test('ROADS 12: the two chips ride the store, default shown, and the relief is k
   const ink = (await import('node:fs')).readFileSync('src/ui/inkMap.js', 'utf8');
   assert.match(ink, /if \(!opts\.filters\?\.roads\) stroke\(model\.roads/, 'a hidden roads flag is not inked');
   assert.match(ink, /if \(band !== 'far' && !opts\.filters\?\.tracks\) stroke\(model\.tracks/, 'the tracks likewise - and never at the far band');
-  assert.match((await import('node:fs')).readFileSync('src/ui/heldMap.js', 'utf8'), /filters: this\.filters, names, regionNames: REGION_NAMES,/, 'and the window hands the LIVE store object to the paint');
+  // MAP-FIELD2: `names` is a literal null now (Mac: the town names are
+  // clutter) - what this pin is about is the FILTERS being the live
+  // store object, which is unchanged.
+  assert.match((await import('node:fs')).readFileSync('src/ui/heldMap.js', 'utf8'), /filters: this\.filters, names: null, regionNames: REGION_NAMES,/, 'and the window hands the LIVE store object to the paint');
 });
 
 // AUDIT 46 A10: NO CHUNK IS EVER BUILT WITHOUT THE NETWORK. The worker

@@ -558,6 +558,10 @@ test('MAP3 world.js: the holder rides the ONE dep bag, asked per open through th
   assert.match(bag, /holder: \{\s*\n\s*available: \(\) => !!weaponRig\?\.armsAvailable\?\.\(\),[^\n]*\n\s*\s*hold: \(spec, opts\) => !!weaponRig\?\.holdPaper\?\.\(spec, opts\),\s*\n\s*release: \(\) => \{ weaponRig\?\.releasePaper\?\.\(\); \},[\s\S]*?corners: \(\) => \(weaponRig\?\.armsDrawn\?\.\(\) \? weaponRig\.paperCorners\(\) : null\) \?\? null,\s*\n\s*\},/, 'AUDIT-MAP2: corners only from a frame the arm drew');
   assert.match(src, /window\.__heldPose = \(spec\) => \(spec \? weaponRig\?\.setHeldPose\?\.\(spec\) : weaponRig\?\.heldPose\?\.\(\)\);/);
   const css = rd('src/ui/enhancedStyle.js');
-  assert.match(css, /\.hmroot\.hmlanehands \{ background: transparent; \}/, 'the world and the arm show through');
+  // MAP-FIELD2: the root is clear for BOTH lanes now (the sprite lane is
+  // held at the bottom of the screen over the world too), so this lane
+  // needs no rule of its own - what it still needs is the world behind it.
+  assert.match(css, /\.hmroot \{[^}]*background: transparent;/, 'the world and the arm show through');
+  assert.doesNotMatch(css, /\.hmroot[^{]*\{[^}]*background: #000/, 'and no lane paints a black over it');
   assert.match(css, /\.hmroot\.hmlanehands \.hmink \{ will-change: transform; \}/);
 });

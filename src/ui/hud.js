@@ -457,7 +457,7 @@ export function hideHudTextSurfaces(hudText = null) {
 }
 
 export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
-  { font = null, cursorActive = false, windowCoversHud = null, detected = null, playerXZ = null, largeHud = null, hover = null,
+  { font = null, cursorActive = false, windowCoversHud = null, hudHidden = false, detected = null, playerXZ = null, largeHud = null, hover = null,
     readied = null, weapon = null, weaponSheathed = true, quickUse = null, quickSwap = null, quickOffHand = null, quickSpell = null, quickSwitchHand = null } = {}) {   // PX30b: for the enhanced HUD's hand plaques; AUDIT 28 W2: the arrow counter's gate; AUDIT 64 F35: the host's previousWindow answer; QS3: the diamond's sheathe state and its two phone taps; QS6: the caption's spell chip press
   // AUDIT 24 (wave 39): ShowPlayerDamage's red flash, under the bars.
   // THE FOUR HOSTS RULE, applied before the fact: drawHud is the one
@@ -538,7 +538,8 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   // stack and answers true the moment ANY window on it fails to paint
   // its own previous - and this call falls back to `cursorActive` only
   // for a caller that answers nothing (the old, blunter law).
-  const hudCovered = (windowCoversHud ?? cursorActive) && !largeHud?.art;
+  // MAP-FIELD2: `hudHidden` is the OTHER question - a window that takes the HUD away outright rather than being painted over it, so it skips the large-HUD carve-out (which is DFU's own law, for DFU's own windows; see windowStack.hidesHud).
+  const hudCovered = hudHidden || ((windowCoversHud ?? cursorActive) && !largeHud?.art);
   const hudDrawn = hudRenderEnabled() && !hudCovered;
   // F-A6 (self-audit): DFU's flicker steps on Time.deltaTime, which a
   // paused game holds at 0 (timeScale) - the tint FREEZES under a

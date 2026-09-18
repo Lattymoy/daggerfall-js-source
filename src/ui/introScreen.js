@@ -30,22 +30,18 @@ const STYLE = `
 .intro-title-fallback{font-size:clamp(28px,7vw,100px);text-align:center;margin:0;letter-spacing:.05em}
 .intro-light{position:absolute;inset:0;opacity:0;pointer-events:none;background:radial-gradient(ellipse at 50% 50%,#ebd3a025,transparent 58%)}
 .intro-gate{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:22px;text-align:center;background:radial-gradient(ellipse at 50% 42%,#14222dcc,#030609 75%);padding:28px;cursor:pointer}
-.intro-kicker{font-size:12px;text-transform:uppercase;letter-spacing:.38em;line-height:1.8;color:#a9a390;margin:0}
-.intro-gate h1{font-weight:400;font-size:clamp(28px,5vw,56px);letter-spacing:.17em;margin:0;text-transform:uppercase}
-.intro-ornament{width:145px;height:1px;background:linear-gradient(90deg,transparent,#a28b51,transparent);position:relative;margin:5px 0}
-.intro-ornament:after{content:'';position:absolute;width:5px;height:5px;border:1px solid #d6bb7e;transform:rotate(45deg);left:calc(50% - 3px);top:-2px;background:#0a1017}
 #intro button{font:inherit;cursor:pointer;touch-action:manipulation;color:inherit}
 .intro-begin{min-height:48px;min-width:168px;padding:13px 26px;background:#08101888;border:1px solid #8c7851;font-size:13px!important;letter-spacing:.18em;text-transform:uppercase}
 .intro-begin:hover{background:#ad8b3a20;border-color:#dec78c}
 #intro button:focus-visible{outline:2px solid #e9d397;outline-offset:6px}
 .intro-begin:disabled{opacity:.5;cursor:wait}
-.intro-status{min-height:18px;margin:0;font:12px/1.5 system-ui,sans-serif;color:#aaa99f}
+.intro-status{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
 .intro-skip{position:absolute;right:max(20px,env(safe-area-inset-right));top:max(16px,env(safe-area-inset-top));z-index:3;min-height:44px;padding:10px 16px;background:#04060899;border:1px solid #b1a17a42;font-size:11px!important;letter-spacing:.15em;text-transform:uppercase}
 .intro-continue{position:absolute;left:50%;bottom:max(13dvh,60px);transform:translateX(-50%);white-space:nowrap;min-height:48px;padding:12px 28px;background:none;border:0;font-size:12px!important;letter-spacing:.25em;text-transform:uppercase;opacity:0}
 .intro-continue:before,.intro-continue:after{content:'◆';display:inline-block;font-size:7px;vertical-align:middle;color:#bfa878;margin:0 18px}
 .intro-footer{position:absolute;bottom:max(18px,env(safe-area-inset-bottom));left:20px;right:20px;text-align:center;font:10px/1.5 system-ui,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#898a82;pointer-events:none}
 @media(max-width:600px){.intro-credit img{max-width:80vw;max-height:24dvh}.intro-credit[data-credit=nexus] img{max-width:72vw}.intro-credit p{font-size:10px;letter-spacing:.18em}.intro-continue{bottom:23dvh;font-size:10px!important;letter-spacing:.16em}.intro-title{width:94vw}.intro-letterbox{border-width:4dvh 0}.intro-footer{font-size:9px}}
-@media(max-height:450px){.intro-continue{bottom:7dvh}.intro-title{width:min(74vw,1000px)}.intro-footer{bottom:6px}.intro-gate{gap:12px}.intro-gate h1{font-size:26px}}
+@media(max-height:450px){.intro-continue{bottom:7dvh}.intro-title{width:min(74vw,1000px)}.intro-footer{bottom:6px}.intro-gate{gap:12px}}
 `;
 
 const make = (doc, tag, cls, text) => {
@@ -90,11 +86,16 @@ export async function runIntro({ theme, onReveal, doc = document, freezeAt = nul
   images.push(decodedImage(logo).then((ok) => { if (!ok) title.append(make(doc, 'h1', 'intro-title-fallback', 'Daggerfall Enhanced')); }));
   const light = make(doc, 'div', 'intro-light'); film.append(title, light);
   const gate = make(doc, 'div', 'intro-gate');
-  const kicker = make(doc, 'p', 'intro-kicker', 'The Elder Scrolls II');
-  const heading = make(doc, 'h1', null, 'The Iliac Bay');
   const begin = make(doc, 'button', 'intro-begin', 'Begin'); begin.type = 'button'; begin.disabled = true;
+  // MAC: the gate is the BUTTON and nothing else - no kicker, no title, no
+  // rule. The film says which game this is, and says it better than a line of
+  // small caps over it. `status` stays as a node because it is the live region
+  // a screen reader is owed (and the only thing that says the tap enables
+  // sound), but it is off the picture: read aloud, never drawn. The one
+  // message a player must SEE - the score failing to load - was never this
+  // line's, it is the footer's.
   const status = make(doc, 'p', 'intro-status', 'Preparing the journey…'); status.setAttribute('role', 'status');
-  gate.append(kicker, heading, make(doc, 'div', 'intro-ornament'), begin, status);
+  gate.append(begin, status);
   const skip = make(doc, 'button', 'intro-skip', 'Skip intro'); skip.type = 'button';
   const next = make(doc, 'button', 'intro-continue', 'Tap to continue'); next.type = 'button'; next.hidden = true;
   // MAC: no wordmark in the letterbox - the logo says it, and says it better.
@@ -217,7 +218,9 @@ export async function runIntro({ theme, onReveal, doc = document, freezeAt = nul
     const time = freezeAt ?? fallbackTime ?? theme.time(stamp + frameInterval);
     const st = introFrameAt(time, reduced);
     if (phase === 'playing' && freezeAt === null && theme.context?.state !== 'running' && !doc.hidden) {
-      phase = 'paused'; gate.hidden = false; heading.textContent = 'The journey awaits';
+      // MAC: the gate has no heading to re-word any more, and does not need
+      // one - the button itself says Resume, which is the whole affordance.
+      phase = 'paused'; gate.hidden = false;
       begin.disabled = false; begin.textContent = 'Resume'; status.textContent = 'Tap anywhere to resume the music and film.';
     }
     if (phase === 'paused' && theme.context?.state === 'running') { phase = 'playing'; gate.hidden = true; }

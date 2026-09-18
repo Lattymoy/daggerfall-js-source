@@ -43,7 +43,7 @@ import { hudScale } from '../ui/hud.js';
 import { hudRenderEnabled } from '../ui/hudShortcuts.js';   // AUDIT 64 F37: DaggerfallHUD's Draw override covers popupText too
 import { setMidScreenText, midScreenText } from '../ui/midScreenText.js';   // AUDIT 64 F34: the HUD's OTHER text surface, and its notebook tail
 import { overlayAction, actionOf, isTextEntryTarget } from '../ui/input.js';   // AUDIT 58: the mode keys read the registry, not e.code; CG2: a DOM field's key is the field's
-import { makeWindowStack, pauseWhileOpen } from '../ui/windowStack.js';   // ROAD-B B1: UserInterfaceManager's stack, under this host's one slot; ROAD-tail: and its PAUSE
+import { makeWindowStack, pauseWhileOpen, hidesHud } from '../ui/windowStack.js';   // ROAD-B B1: UserInterfaceManager's stack, under this host's one slot; ROAD-tail: and its PAUSE
 import { hudFade } from '../ui/fadeLayer.js';   // D4: PushWindow's ClearFade
 import {
   getPeopleOfCurrentRegion, getReactionToPlayer, pickpocket, findFactions,
@@ -1321,6 +1321,10 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
      *  goes with it because a window filled by hand has not been
      *  reconciled onto the stack yet. */
     get hudCovered() { return talkPaused() && windows.hudCovered(overlay); },
+    /** MAP-FIELD2: ...and the overlay that HIDES it outright, which is a
+     *  different question and takes no pause gate - the held map does not
+     *  stop the world, and the vitals go anyway. */
+    get hudHidden() { return hidesHud(overlay); },
     /** U38: the loaded HUD font, for the components drawHud draws
      *  (the crosshair's mode label). This module already owns the ONE
      *  FONT0003 both exterior hosts use; handing it out beats a second

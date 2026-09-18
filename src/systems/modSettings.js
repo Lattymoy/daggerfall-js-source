@@ -628,7 +628,21 @@ export const MOD_SETTINGS = Object.freeze({
       'CautiousTravel.MaxChanceToAvoidEncounter': Object.freeze({ default: 95, min: 60, max: 100, description: "Maximum chance to avoid an encounter when travelling cautiously, as a percentage" }),
       'CautiousTravel.HealthMinimumPercentage': Object.freeze({ default: 5, min: 0, max: 25, description: "Level of health that will automatically pause the journey when travelling cautiously, as a percentage" }),
       'CautiousTravel.FatigueMinimumValue': Object.freeze({ default: 5, min: 0, max: 50, description: "Level of fatigue that will automatically pause the journey when travelling cautiously, absolute value" }),
-      'StopAtInnsTravel.PlayerControlledInnsTravel': Object.freeze({ default: false, description: "Enables the stop for night travel option \"Inns\" to initiate time accelerated travel, instead of fast travel" }),
+      // TO-FIELD2 (Mac, 2026-09-18): "travel options instantly transports
+      // you to a destination and theres no travel". DEPARTURE FROM THE
+      // MOD'S SHIPPED DEFAULT, on Mac's word, and it is the whole of that
+      // report. IsPlayerControlledTravel is an AND over three toggles
+      // (travelPopUp.js:183): `(cautiousTravel || !speedCautious) &&
+      // (stopAtInnsTravel || !sleepModeInn) && !travelShip`. The popup
+      // opens with `sleepModeInn = true` - classic Daggerfall's own
+      // default, stopping at inns - so with this key false the second
+      // clause is false and EVERY default trip fell to DFU's fast
+      // travel. A player had to find the Camp Out toggle before the mod
+      // they turned on ever ran. Hazelnut ships it false because his
+      // mod is opt-in over vanilla; here the walked journey IS the
+      // feature, so it is on. The key is still a key: turning it off in
+      // the Mods pane restores the mod's own default exactly.
+      'StopAtInnsTravel.PlayerControlledInnsTravel': Object.freeze({ default: true, description: "Enables the stop for night travel option \"Inns\" to initiate time accelerated travel, instead of fast travel" }),
       'ShipTravel.OnlyFromPorts': Object.freeze({ default: true, description: "Restricts ship travel to be possible only from places with ports" }),
       'ShipTravel.OnlyToPorts': Object.freeze({ default: false, description: "Restricts ship travel to be possible only if destination has a port, if from ports setting is enabled" }),
       'GeneralOptions.AllowTargetingMapCoordinates': Object.freeze({ default: true, description: "Allows travel map to target any coordinates using time accelerated travel" }),

@@ -382,11 +382,12 @@
  {
   "name": "sprite-shown-in-hands",
   "file": "src/ui/heldMap.js",
-  "old": "    c.sprite.style.display = 'none';\n    c.hands.style.display = 'none';\n    Object.assign(c.ink.style, { left: '0px', top: '0px', transformOrigin: '0 0', opacity: '0' });",
+  "old": "    c.sheet.style.display = 'none';   // MAP-FIELD2: the canvas is what the stage shows\n    c.hands.style.display = 'none';\n    Object.assign(c.ink.style, { left: '0px', top: '0px', transformOrigin: '0 0', opacity: '0' });",
   "new": "    c.hands.style.display = 'none';\n    Object.assign(c.ink.style, { left: '0px', top: '0px', transformOrigin: '0 0', opacity: '0' });",
   "tests": [
    "test/heldmap.test.js"
-  ]
+  ],
+  "why": "MAP-FIELD2 re-aimed by content: the <img> is only the loader now and a canvas is what the stage shows, so the painting the hands lane hides is `c.sheet`."
  },
  {
   "name": "transform-not-set",
@@ -636,11 +637,12 @@
  {
   "name": "foot-no-scrim",
   "file": "src/ui/enhancedStyle.js",
-  "old": ".hmroot.hmlanehands .hmfoot { background: rgba(10, 12, 17, 0.72); padding: 6px 10px; border-radius: 4px; }",
-  "new": ".hmroot.hmlanehands .hmfoot { padding: 6px 10px; border-radius: 4px; }",
+  "old": ".hmroot .hmfoot { background: rgba(10, 12, 17, 0.72); padding: 6px 10px; border-radius: 4px; }",
+  "new": ".hmroot .hmfoot { padding: 6px 10px; border-radius: 4px; }",
   "tests": [
    "test/heldmap.test.js"
-  ]
+  ],
+  "why": "MAP-FIELD2 re-aimed by content: the root is clear on BOTH lanes now, so the foot's scrim is the root's rule rather than the hands lane's."
  },
  {
   "name": "sheathed-arm-does-not-draw",

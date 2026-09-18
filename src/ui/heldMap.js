@@ -101,7 +101,7 @@ import { TRAVEL_OPTIONS_TEXT as TO_TEXT, format as toFormat } from '../systems/t
 import { getDaggerfallDistance, MatchesCutOff } from '../systems/editDistance.js';
 import { checkLocationDiscovered } from './travelMapWindow.js';
 import {
-  buildInkModel, buildInkMarks, paintInkStatic, paintInkOverlay, placeNames, zoomBand, clampView, scaleMinOf, SCALE_MAX,
+  buildInkModel, buildInkMarks, paintInkStatic, paintInkOverlay, zoomBand, clampView, scaleMinOf, SCALE_MAX,   // MAP-FIELD2: placeNames is inkMap's law still, but this sheet no longer inks the names
   viewCentredOn, zoomAt, toPaper, toMap, BAND_MARKS, PARTY_LABEL_STACK,
 } from './inkMap.js';
 // SOC6: the party's marks, read the one way both maps read them.
@@ -177,6 +177,99 @@ export const THUMB_ZONES = Object.freeze([
   Object.freeze({ x0: 0.71, x1: 0.90, y0: 0.42, y1: 0.76 }),
 ]);
 export const HAND_LUM = 144;
+/** MAP-FIELD2 (Mac, 2026-09-18): "...and is full screen with a BLACK
+ *  BACKGROUND". The black is not the page's - it is the painting's own
+ *  matte, and the picture is fully opaque: measured off the file,
+ *  `held-map.png` carries no alpha at all and 47.5% of its pixels sit
+ *  in the bottom sixteenth of the luminance range. Anchoring the sprite
+ *  to the foot of the screen without keying that matte out would have
+ *  moved a black rectangle down the screen, not put hands on it.
+ *
+ *  The separation is clean and was measured, not guessed: in the two
+ *  gauntlet columns the median pixel is 187 and only 154 of 47,499
+ *  non-black pixels lie anywhere between 8 and 32, so a key here costs
+ *  about a tenth of a per cent of the hands. `MATTE_LUM` is where the
+ *  matte ends and `MATTE_EDGE` where the art begins - alpha ramps
+ *  between them rather than cutting, so the anti-aliased rim of the
+ *  gauntlets does not become a black fringe on the sky. */
+export const MATTE_LUM = 8;
+export const MATTE_EDGE = 24;
+
+/** MAP-FIELD2, Mac's second look: "there's still a gap at the bottom of
+ *  the arms, any way you can author the gap?"
+ *
+ *  There is, and cropping alone could not have closed it. Measured by
+ *  column (tools/heldMapArtProbe.mjs), MOST of the forearm reaches
+ *  SPRITE_ART_FOOT, and HELD_MAP_BITE carries those columns off the
+ *  bottom edge on its own - which is why the first fix looked right.
+ *  But 69 of the 366 columns outside the paper stop short, the outer
+ *  edges of the cuffs worst of all: on a 900px screen they end up to
+ *  68px above the bottom, leaving notches bitten out of the arms. No
+ *  further crop closes those - pushing the sprite down far enough to
+ *  bury them takes the paper off the screen with it.
+ *
+ *  So the pixels are AUTHORED. Every column OUTSIDE the paper's own
+ *  rectangle - which is where the two forearms show, and where there is
+ *  no parchment to smear - has its lowest opaque pixel carried straight
+ *  down to the foot of the sprite. The arms read as continuing off the
+ *  bottom edge, which is what a held thing does, and nothing under the
+ *  paper is touched (the parchment's torn bottom edge is art, and
+ *  streaking it would be vandalism).
+ *
+ *  Pure, in place, over RGBA bytes - the same shape as the two keys. */
+export function extendCuffs(data, w, h, paper = PAPER, alphaMin = 8) {
+  const x0 = Math.floor(paper.x0 * w), x1 = Math.ceil(paper.x1 * w);
+  for (let x = 0; x < w; x++) {
+    if (x >= x0 && x < x1) continue;   // under the parchment: leave the art alone
+    let last = -1;
+    for (let y = h - 1; y >= 0; y--) if (data[((y * w) + x) * 4 + 3] > alphaMin) { last = y; break; }
+    if (last < 0 || last >= h - 1) continue;
+    const i = ((last * w) + x) * 4;
+    const r = data[i], g = data[i + 1], b = data[i + 2];
+    for (let y = last + 1; y < h; y++) {
+      const j = ((y * w) + x) * 4;
+      data[j] = r; data[j + 1] = g; data[j + 2] = b; data[j + 3] = 255;
+    }
+  }
+  return data;
+}
+
+/** The matte keyed out of the sprite IN PLACE, over RGBA bytes. Pure -
+ *  the same shape as `keyHandPixels`, and pinned the same way. */
+export function keyMattePixels(data, lum = MATTE_LUM, edge = MATTE_EDGE) {
+  for (let i = 0; i < data.length; i += 4) {
+    const l = Math.max(data[i], data[i + 1], data[i + 2]);
+    if (l <= lum) data[i + 3] = 0;
+    else if (l < edge) data[i + 3] = Math.round(data[i + 3] * ((l - lum) / (edge - lum)));
+  }
+  return data;
+}
+/** MAP-FIELD2 (Mac, 2026-09-18): "the held map should be at the bottom
+ *  of the screen, arms should sit slighty below where there is no gap".
+ *
+ *  The sheet was fitted to the whole viewport and CENTRED, letterboxed
+ *  into the root's own black - a picture of hands, not hands. It is a
+ *  HELD sprite now, on the law every other held thing in this port
+ *  takes: anchored to the BOTTOM edge, the world behind it, and pushed
+ *  a little further down so the arms leave the frame instead of ending
+ *  in mid-air above it. `OVERHANG` is that push, as a fraction of the
+ *  sprite's own height, so it is the same crop at every size.
+ *
+ *  `HEIGHT` is the sprite's height as a fraction of the viewport's.
+ *  It is what the paper's size follows from - PAPER is 0.617 of the
+ *  sprite - so it is the one number to turn if the map reads too small
+ *  to use or too big to see past. */
+export const HELD_MAP_HEIGHT = 0.92;
+export const HELD_MAP_BITE = 0.03;
+/** Where the PAINTING's content ends, as a fraction of the sprite's own
+ *  height - measured off the file, not guessed: below 0.7864 every row
+ *  is matte, so a fifth of `held-map.png` is empty. Anchoring the FILE
+ *  to the foot of the screen therefore left the arms ending in mid-air
+ *  with a fifth of the screen empty under them, which is the gap Mac
+ *  named. The anchor is taken on this line instead, and `HELD_MAP_BITE`
+ *  carries it a little past so the stumps are cropped by the edge
+ *  rather than stopping at it. */
+export const SPRITE_ART_FOOT = 0.7864;
 
 // ── THE CLOCKS (skin) ────────────────────────────────────────────
 const OPEN_S = 0.3;      // the sheet rises into view
@@ -221,6 +314,10 @@ export class HeldMapWindow {
     this.deps = deps;
     this.done = false;
     this.isChoiceWindow = true;
+    // MAP-FIELD2: the vitals and the status icons go while the sheet is
+    // out - it is held in the player's own hands, and a bar drawn over
+    // the knuckles is not a HUD under a window (windowStack.hidesHud).
+    this.hidesHud = true;
     this.filters = travelMapFilters();   // the LIVE store object, edited in place (the classic law)
     this.teleportationTravel = false;    // one-shot, cleared on close
     this._gotoPlace = null;              // one-shot, consumed on first tick
@@ -253,7 +350,6 @@ export class HeldMapWindow {
     this._marksVersion = 0;
     this._layer = null;         // the kept static ink (a canvas), and its key
     this._staticKey = '';
-    this._measureCache = new Map();
     this._dirty = true;     // the canvas wants a repaint
     this._layoutKey = '';
     this._paper = { w: 1, h: 1, dpr: 1 };
@@ -558,9 +654,16 @@ export class HeldMapWindow {
 
   // ── THE SHEET ──────────────────────────────────────────────────
 
-  /** The stage is the sprite's 4:3, letterboxed into the viewport; the
-   *  paper is PAPER of the stage; the canvas is the paper at device
-   *  resolution. Re-run each tick and a no-op unless the viewport moved. */
+  /** MAP-FIELD2: the stage is the sprite's 4:3, sized so the PAINTING
+   *  (not the file - a fifth of the file is matte, SPRITE_ART_FOOT)
+   *  stands HELD_MAP_HEIGHT of the viewport, centred across it, and
+   *  anchored so the painting's own foot sits HELD_MAP_BITE past the
+   *  bottom edge: the arms are cropped by the screen rather than ending
+   *  above it. On a viewport too narrow to hold that width the height
+   *  gives way instead, because a sprite wider than the screen would cut
+   *  the paper's own sides off. The paper is PAPER of the stage; the
+   *  canvas is the paper at device resolution. Re-run each tick and a
+   *  no-op unless the viewport moved. */
   _layout() {
     const root = this._chrome?.root;
     if (!root) return;
@@ -570,8 +673,9 @@ export class HeldMapWindow {
     const key = `${vw}x${vh}@${dpr}`;
     if (key === this._layoutKey) return;
     this._layoutKey = key;
-    const sw = Math.min(vw, vh * SPRITE.w / SPRITE.h), sh = sw * SPRITE.h / SPRITE.w;
-    const sx = (vw - sw) / 2, sy = (vh - sh) / 2;
+    let sh = vh * HELD_MAP_HEIGHT / SPRITE_ART_FOOT, sw = sh * SPRITE.w / SPRITE.h;
+    if (sw > vw) { sw = vw; sh = sw * SPRITE.h / SPRITE.w; }
+    const sx = (vw - sw) / 2, sy = vh - (SPRITE_ART_FOOT - HELD_MAP_BITE) * sh;
     const c = this._chrome;
     Object.assign(c.stage.style, { left: `${sx}px`, top: `${sy}px`, width: `${sw}px`, height: `${sh}px` });
     const pw = sw * (PAPER.x1 - PAPER.x0), ph = sh * (PAPER.y1 - PAPER.y0);
@@ -636,7 +740,7 @@ export class HeldMapWindow {
     this._handsLost = 0;
     const c = this._chrome;
     c.root.classList.toggle('hmlanehands', true);   // AUDIT-MAP2: NOT 'hmhands' - that is the thumbs canvas's class, and its rule is pointer-events: none
-    c.sprite.style.display = 'none';
+    c.sheet.style.display = 'none';   // MAP-FIELD2: the canvas is what the stage shows
     c.hands.style.display = 'none';
     Object.assign(c.ink.style, { left: '0px', top: '0px', transformOrigin: '0 0', opacity: '0' });
     Object.assign(c.stage.style, { left: '0px', top: '0px', width: '100%', height: '100%' });
@@ -657,7 +761,7 @@ export class HeldMapWindow {
     this._cornersKey = null;
     const c = this._chrome;
     c.root.classList.toggle('hmlanehands', false);
-    c.sprite.style.display = '';
+    c.sheet.style.display = '';   // MAP-FIELD2
     c.hands.style.display = '';
     Object.assign(c.ink.style, { transform: '', transformOrigin: '', opacity: '' });
     this._layoutKey = '';
@@ -760,16 +864,21 @@ export class HeldMapWindow {
       // same value - the kept layer was being freed and re-zeroed on every
       // pan frame; paintInkStatic clears it itself
       if (lctx && (layer.width !== canvas.width || layer.height !== canvas.height)) { layer.width = canvas.width; layer.height = canvas.height; }
-      const measure = (text, size, font) => {
-        const k = `${font}|${text}`;
-        let w = this._measureCache.get(k);
-        if (w === undefined) { target.font = font; w = target.measureText(text).width; this._measureCache.set(k, w); }
-        return w;
-      };
-      const names = placeNames(model.marks, this._view, band, { paperW, paperH, measure });
+      // MAP-FIELD2 (Mac, 2026-09-18): "all the town names need to be
+      // taken off the map, since its too cluttered". The sheet inks the
+      // GLYPHS alone now - a place is its mark, and its name is read off
+      // the label under the pointer and off the search, which is where a
+      // hand-drawn map puts it anyway. The PROVINCE names stay: they are
+      // far/mid only, a handful of words across the whole bay, and they
+      // are what makes the sheet readable when it is zoomed out.
+      //
+      // `placeNames` itself is NOT deleted - it is inkMap's law and its
+      // own pin stands (test/heldmap.test.js): what went is this sheet's
+      // use of it, and the measure cache it needed. Nothing else on the
+      // sheet measures text, so the cache goes with it.
       paintInkStatic(target, model, this._view, {
         paperW, paperH, dpr, band,
-        filters: this.filters, names, regionNames: REGION_NAMES,
+        filters: this.filters, names: null, regionNames: REGION_NAMES,
         // MAP2: the harbours while the mod restricts ships to ports, and the mark in the mod's colour
         ports: this._portsShown(),
         markedMapId: this.markedMapId,
@@ -1415,14 +1524,18 @@ export class HeldMapWindow {
     // the stage: the sprite, the ink canvas over its paper, the hands
     // keyed back over the ink
     const stage = el('div', 'hmstage');
-    const sprite = el('img', 'hmsprite');
+    const sprite = el('img');   // MAP-FIELD2: the LOADER - never appended; `sheet` below is what the stage shows
     sprite.alt = '';
     sprite.draggable = false;
     const ink = el('canvas', 'hmink');
     const hands = el('canvas', 'hmhands');
-    stage.append(sprite, ink, hands);
+    // MAP-FIELD2: the sprite the player SEES is a canvas, because the
+    // painting's own black matte has to come off before it is drawn -
+    // the <img> stays as the loader and never enters the document.
+    const sheet = el('canvas', 'hmsprite');
+    stage.append(sheet, ink, hands);
     // the handler BEFORE the source, so a cached picture cannot land first
-    sprite.onload = () => this._keyHands(sprite, hands);
+    sprite.onload = () => { this._keyMatte(sprite, sheet); this._keyHands(sprite, hands); };
     sprite.src = HELD_MAP_URL;
 
     const top = el('div', 'hmtop');
@@ -1454,14 +1567,14 @@ export class HeldMapWindow {
 
     root.append(stage, top, card, foot, box);
     document.body.append(root);
-    this._chrome = { root, stage, sprite, ink, hands, label, search, searchInput, results, close, card, hint, band, legend, ports, box };
+    this._chrome = { root, stage, sprite, sheet, ink, hands, label, search, searchInput, results, close, card, hint, band, legend, ports, box };
     this._renderPorts();
     this._refreshParty();   // SOC6: the marks stand with the window, not a quarter second after it
     // the names are inked in the web display face; the first paint may
     // run before it lands, so the sheet is repainted once when it does
     try {
       const fonts = document.fonts;
-      const landed = () => { if (!this.done) { this._measureCache.clear(); this._staticKey = ''; this._dirty = true; } };
+      const landed = () => { if (!this.done) { this._staticKey = ''; this._dirty = true; } };
       (fonts?.load?.("14px 'Cormorant'") ?? fonts?.ready)?.then?.(landed);
       fonts?.ready?.then?.(landed);
     } catch { /* no font set */ }
@@ -1615,6 +1728,26 @@ export class HeldMapWindow {
    *  THUMB_ZONES darker than HAND_LUM are copied onto the hands canvas,
    *  everything else left clear. Runs once, when the sprite has
    *  loaded; a document with no 2D context (node) skips it. */
+  /** MAP-FIELD2: the painting's black matte, keyed off into the canvas
+   *  the stage actually shows. The <img> is the loader; this is the
+   *  sprite. A failure here leaves the canvas blank rather than putting
+   *  a black rectangle over the world, which is the safer of the two. */
+  _keyMatte(sprite, sheet) {
+    try {
+      const w = sprite.naturalWidth || SPRITE.w, h = sprite.naturalHeight || SPRITE.h;
+      const ctx = sheet.getContext?.('2d');
+      if (!ctx) return;
+      sheet.width = w; sheet.height = h;
+      ctx.drawImage(sprite, 0, 0, w, h);
+      const img = ctx.getImageData(0, 0, w, h);
+      keyMattePixels(img.data);
+      extendCuffs(img.data, w, h);   // MAP-FIELD2: the arms run off the bottom edge instead of ending above it
+      ctx.putImageData(img, 0, 0);
+    } catch (e) {
+      console.warn('[heldmap] the matte would not key', e);
+    }
+  }
+
   _keyHands(sprite, hands) {
     try {
       const w = sprite.naturalWidth || SPRITE.w, h = sprite.naturalHeight || SPRITE.h;

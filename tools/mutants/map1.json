@@ -377,5 +377,149 @@
   "tests": [
    "test/heldmap.test.js"
   ]
+ },
+ {
+  "name": "MAPFIELD2-the-sheet-is-centred-again",
+  "file": "src/ui/heldMap.js",
+  "old": "    const sx = (vw - sw) / 2, sy = vh - (SPRITE_ART_FOOT - HELD_MAP_BITE) * sh;",
+  "new": "    const sx = (vw - sw) / 2, sy = (vh - sh) / 2;",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "MAPFIELD2-the-anchor-is-the-FILEs-foot-so-a-fifth-of-matte-is-the-gap",
+  "file": "src/ui/heldMap.js",
+  "old": "    const sx = (vw - sw) / 2, sy = vh - (SPRITE_ART_FOOT - HELD_MAP_BITE) * sh;",
+  "new": "    const sx = (vw - sw) / 2, sy = vh - (1 - HELD_MAP_BITE) * sh;",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "MAPFIELD2-the-sheet-fills-the-screen-again",
+  "file": "src/ui/heldMap.js",
+  "old": "    let sh = vh * HELD_MAP_HEIGHT / SPRITE_ART_FOOT, sw = sh * SPRITE.w / SPRITE.h;",
+  "new": "    let sh = vh, sw = vw;",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "MAPFIELD2-a-narrow-viewport-cuts-the-papers-sides-off",
+  "file": "src/ui/heldMap.js",
+  "old": "    if (sw > vw) { sw = vw; sh = sw * SPRITE.h / SPRITE.w; }",
+  "new": "",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "MAPFIELD2-the-art-foot-is-the-files-foot",
+  "file": "src/ui/heldMap.js",
+  "old": "export const SPRITE_ART_FOOT = 0.7864;",
+  "new": "export const SPRITE_ART_FOOT = 1;",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "MAPFIELD2-the-root-paints-its-own-black-again",
+  "file": "src/ui/enhancedStyle.js",
+  "old": "  background: transparent; cursor: grab; touch-action: none;",
+  "new": "  background: #000; cursor: grab; touch-action: none;",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "MAPFIELD2-the-sheet-leaves-the-vitals-on-the-knuckles",
+  "file": "src/ui/heldMap.js",
+  "old": "    this.hidesHud = true;",
+  "new": "",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "MAPFIELD2-the-hide-is-the-window-cover-again",
+  "file": "src/ui/windowStack.js",
+  "old": "export const hidesHud = (win) => !!win && win.hidesHud === true;",
+  "new": "export const hidesHud = (win) => !!win && !!win.hidesHud;",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "MAPFIELD2-the-hide-is-subject-to-the-large-HUD-carve-out",
+  "file": "src/ui/hud.js",
+  "old": "  const hudCovered = hudHidden || ((windowCoversHud ?? cursorActive) && !largeHud?.art);",
+  "new": "  const hudCovered = (hudHidden || (windowCoversHud ?? cursorActive)) && !largeHud?.art;",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "MAPFIELD2-the-host-never-asks-whether-the-window-hides-it",
+  "file": "src/scenes/world.js",
+  "old": "          hudHidden: townTalk.hudHidden,   // MAP-FIELD2: the held map takes the vitals and the status icons with it, on both skins",
+  "new": "",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "MAPFIELD2-the-hide-is-gated-on-the-pause-like-the-cover-is",
+  "file": "src/scenes/townTalk.js",
+  "old": "    get hudHidden() { return hidesHud(overlay); },",
+  "new": "    get hudHidden() { return paused && hidesHud(overlay); },",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "MAPFIELD2-the-black-matte-stays-on-the-sprite",
+  "file": "src/ui/heldMap.js",
+  "old": "      keyMattePixels(img.data);\n      extendCuffs(img.data, w, h);",
+  "new": "      extendCuffs(img.data, w, h);",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "MAPFIELD2-the-cuffs-end-in-mid-air",
+  "file": "src/ui/heldMap.js",
+  "old": "      keyMattePixels(img.data);\n      extendCuffs(img.data, w, h);",
+  "new": "      keyMattePixels(img.data);",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "MAPFIELD2-the-extension-smears-the-parchment",
+  "file": "src/ui/heldMap.js",
+  "old": "    if (x >= x0 && x < x1) continue;   // under the parchment: leave the art alone",
+  "new": "",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "MAPFIELD2-the-matte-key-cuts-instead-of-ramping",
+  "file": "src/ui/heldMap.js",
+  "old": "    else if (l < edge) data[i + 3] = Math.round(data[i + 3] * ((l - lum) / (edge - lum)));",
+  "new": "",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "MAPFIELD2-the-key-eats-the-gauntlets",
+  "file": "src/ui/heldMap.js",
+  "old": "export const MATTE_LUM = 8;",
+  "new": "export const MATTE_LUM = 200;",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
  }
 ]

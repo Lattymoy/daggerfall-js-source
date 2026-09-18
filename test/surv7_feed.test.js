@@ -133,11 +133,13 @@ test('SURV7: by source - the four hosts feed their env (the roof, the floor, the
     assert.match(src, /byFire: m === 'exterior' && camps\.byFire\(feet\),/, `${name}: the fire`);
     assert.match(src, /sleeping: playerEntity\.isResting && !playerEntity\.isLoitering \? \(playerEntity\.restKind \?\? 'rough'\) : null,/, `${name}: the sleep and its kind`);
     assert.match(src, /fireResist: elementalResistanceChance\(playerEntity, ELEMENTS\.Fire\), frostResist: elementalResistanceChance\(playerEntity, ELEMENTS\.Frost\),/, `${name}: the resistances`);
-    // TO-FIELD: world.js sits an accelerated journey as `resting` on the way
-    // through - the needs' own drain-only knob - so its reader carries a
-    // third arm exterior.js has no use for (no journey runs on that host).
-    if (name === 'world') assert.match(src, /survivalEnv: \(\) => \(_mode\(\) === 'dungeon' \? null\n\s+: worldTimeScale\(\) > 1 \? \{ \.\.\.survivalEnvNow\(\), resting: true \}\n\s+: survivalEnvNow\(\)\),/, `${name}: the ticker's reader, silent underground and rested on the road`);
-    else assert.match(src, /survivalEnv: \(\) => \(_mode\(\) === 'dungeon' \? null : survivalEnvNow\(\)\),/, `${name}: the ticker's reader, silent underground`);
+    // TO-FIELD3 (Mac, 2026-09-18): BOTH HOSTS READ THE SAME WAY AGAIN.
+    // TO-FIELD had given world.js a third arm that sat an accelerated
+    // journey as `resting`; Mac took it off ("journeys no longer sit as
+    // resting"), and the two readers are one sentence again - which is
+    // what a FOUR HOSTS reader should be.
+    assert.match(src, /survivalEnv: \(\) => \(_mode\(\) === 'dungeon' \? null : survivalEnvNow\(\)\),/, `${name}: the ticker's reader, silent underground`);
+    assert.doesNotMatch(src, /resting: true \}\n?\s*: survivalEnvNow/, `${name}: and no arm sits the traveller down`);
     assert.match(src, /survivalEnv: \(\) => survivalEnvNow\(\),/, `${name}: the host bag's reader`);
   }
   assert.match(world, /climateIndex: maps\.getClimateIndex\(playerTravelPixel\(\)\.x, playerTravelPixel\(\)\.y\),\n\s+month: dateFromClassicMinutes\(wm\)\.month/, 'world: the pixel\'s climate');

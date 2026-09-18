@@ -1929,52 +1929,34 @@ export async function bootWorld(canvas, renderer, params, status) {
     isInside: () => (modes?.mode ?? 'exterior') !== 'exterior',
     onExhausted: onExhaustedExterior,
     // SURV7: the dungeon's own tick feeds its own.
-    // TO-FIELD (2026-09-18, Mac: "you instantly collapse from exhaustion"):
-    // ...and AN ACCELERATED JOURNEY IS SAT AS RESTING, for the needs'
-    // own harm arms alone.
     //
-    // AUDIT-FIELD F11 CORRECTS THIS FIX'S OWN ARITHMETIC. The first cut
-    // said the needs "charge several minutes of fatigue in the frame the
-    // vanilla band charges one". That is FALSE and the numbers say so:
-    // game-minutes per frame are `dt * CLASSIC_MINUTES_PER_SECOND *
-    // scale` = `dt * 0.2 * scale`, and `dt` is clamped to 0.1
-    // (:9001), so even at the mod's ceiling of a hundred a frame carries
-    // 2 minutes and at the shipped default limit of sixty it carries
-    // 0.2 at 60 fps. `runSurvivalMinutes` walks [last+1, now] and the
-    // vanilla band asks "did the minute CHANGE" - they run 1:1.
+    // TO-FIELD3 (Mac, 2026-09-18): "remove the changes the past session
+    // did to the traveling system... journeys no longer sit as resting
+    // (needs charge normally again, health ticks back), and hunting
+    // rolls fire during travel again."
     //
-    // The surcharge is in MAGNITUDE, not in minutes: DFU's band is
-    // `FATIGUE_LOSS.Default` = 11 a minute (PlayerEntity.cs:402-418,
-    // worldTick.js verbatim), and the needs stack starving 4, parched 6
-    // or dehydrated 12, exhausted 8, heat 6 and bare feet 4 ON TOP of it
-    // once their stages are reached - roughly three times the drain, on a
-    // traveller who by construction never stops to eat, drink or sleep.
-    // Travel Options has never heard of them; its cautious stop watches
-    // the entity's live fatigue (TravelOptionsMod.cs:1079,
-    // travelOptions.js:758) and so does catch them, but a RECKLESS
-    // journey has no stop at all and simply collapses.
+    // TO-FIELD sat an accelerated journey as `resting` to take the
+    // port's own fatigue surcharge off a 60x ride. It is REMOVED on
+    // Mac's word, and the whole of it: `resting` is not a fatigue knob,
+    // it is the needs' one word for "sat still", and three other laws
+    // read it. It held the bare-skin block's naked-cold and sunburn
+    // ticks and the byFire exposure damage (needs.js:277, :293) - the
+    // health Mac wants ticking - and, the one TO-FIELD never counted,
+    // it shut the HUNTING roll off entirely (hunting.js:105 refuses on
+    // `resting`), so a traveller could not hunt on the road at all.
+    // One flag, four laws; the journey takes the world as it finds it.
     //
-    // AND IT DOES NOT MAKE THE JOURNEY ENDLESS, which the first cut also
-    // implied. 11 a minute empties a 6400 pool in 582 game-minutes
-    // whatever this line does - that is DFU's own number at DFU's own
-    // rate, and collapsing on a long reckless ride is the mod's designed
-    // loop (camp out, stop at inns, or travel cautiously and be paused at
-    // the fatigue floor). What this line removes is the port's OWN
-    // surcharge on top of it, so an accelerated journey costs what it
-    // costs in DFU and no more.
-    //
-    // `resting` is the needs' own knob for exactly this. Every ACCRUAL -
-    // hunger's marker, thirst, sleep debt, wet, exposure - sits outside
-    // it, so the days really pass and the traveller arrives as hungry as
-    // the ride made them. What it holds is the per-minute fatigue arms,
-    // and - AUDIT-FIELD F12, which the first cut did not disclose - two
-    // HEALTH arms with them: the bare-skin block's naked-cold and sunburn
-    // ticks (needs.js:293), and, when the traveller is also `byFire`, the
-    // exposure damage at :277. Health harm you cannot answer while the
-    // autopilot holds the controls is not a loss worth keeping.
-    survivalEnv: () => (_mode() === 'dungeon' ? null
-      : worldTimeScale() > 1 ? { ...survivalEnvNow(), resting: true }
-        : survivalEnvNow()),
+    // WHAT THIS RESTORES, said plainly so it is not rediscovered as a
+    // bug: the needs stack starving 4, parched 6 or dehydrated 12,
+    // exhausted 8, heat 6 and bare feet 4 on top of DFU's own 11 a
+    // minute, on a traveller who by construction never stops to eat,
+    // drink or sleep. A RECKLESS journey has no stop of its own and can
+    // collapse; a CAUTIOUS one is paused at the fatigue floor by the
+    // mod's own watch (TravelOptionsMod.cs:1079). That is the loop as
+    // Mac wants it played - camp out, stop at inns, or travel
+    // cautiously - and the survival mod's own switch turns all of it
+    // off for anyone who would rather it did not.
+    survivalEnv: () => (_mode() === 'dungeon' ? null : survivalEnvNow()),
     // AUDIT 64 F27: the ticker's lines are HUD POPUPS, not a log.
     // LoanChecker.CheckOverdueLoans posts its two 6/3/1-month reminders
     // with DaggerfallUI.AddHUDText (LoanChecker.cs:42-45) - the only
@@ -10441,19 +10423,23 @@ export async function bootWorld(canvas, renderer, params, status) {
     livePersonBatches.push(...hitEffects.batches());
     // HT1: the dropped torches burn, the thrown one flies, a burning foe's flame follows it (the transition sweep is at the mode branch above, AUDIT 66 F11)
     if (_mode() === 'exterior') { droppedTorches.tick(dt); livePersonBatches.push(...droppedTorches.batches()); camps.tick(dt); livePersonBatches.push(...camps.batches()); }   // SURV3: the fires burn on the same axis
-    // AUDIT-FIELD F10: ...AND NOT WHILE A JOURNEY RUNS. SURV6's roll is
-    // once a GAME minute, and an accelerated journey spends those at up
-    // to a hundred times real time - so a wilderness ride rolled the
-    // hunting event every few real seconds, and every event opens a
-    // Yes/No box through `townTalk.showOverlay`, which the mod reads as
-    // a foreign window on top and answers with `interruptTravel()`
-    // (TravelOptionsMod.cs:1348-1356). The journey could not survive its
-    // own first minute of wilderness. This is the same shape as the
-    // needs' surcharge above - a thing the port added that Travel
-    // Options has never heard of, charged at the mod's clock - and it
-    // takes the same answer: the wilderness waits until you are walking
-    // at your own pace again.
-    if (_mode() === 'exterior' && worldTimeScale() <= 1) hunting.tick();   // SURV6: the minute's hunting roll; the window takes the slot
+    // TO-FIELD3 (Mac, 2026-09-18): "hunting rolls fire during travel
+    // again". TO-FIELD held SURV6's roll while an accelerated journey
+    // ran; the gate is REMOVED on Mac's word, with the `resting` flag
+    // above that was holding the roll a second time from inside
+    // (hunting.js:105).
+    //
+    // WHAT IT MEANS, said plainly so it is not rediscovered as a bug:
+    // the roll fires once a GAME minute, and a journey spends those at
+    // up to a hundred times real time, so a wilderness ride rolls it
+    // every few real seconds. Every event opens a Yes/No box through
+    // `townTalk.showOverlay`, and the mod reads a foreign window on top
+    // as a reason to stop (TravelOptionsMod.cs:1348-1356,
+    // `interruptTravel`). A long wilderness journey will therefore be
+    // interrupted by game, often. That is the wilderness being alive
+    // while you cross it, which is what was asked for; anyone who would
+    // rather ride through it turns the survival mod's hunting off.
+    if (_mode() === 'exterior') hunting.tick();   // SURV6: the minute's hunting roll; the window takes the slot
     if (livePersonBatches.length) renderer.drawBillboards(livePersonBatches, camRight, UP_Y);
     // WX2: what falls is what the front SHOWS - under the enhanced sky the
     // outgoing rain tapers after the sim has cleared and the incoming
@@ -10775,6 +10761,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           // null-previous windows it pushes from :512-530. Same union
           // `gamePaused` takes, asked of the two stacks' chains.
           windowCoversHud: townTalk.hudCovered || (modes?.hudCovered ?? false),
+          hudHidden: townTalk.hudHidden,   // MAP-FIELD2: the held map takes the vitals and the status icons with it, on both skins
           detected: _detected, playerXZ: [enchantFeet()[0], enchantFeet()[2]],
           largeHud: largeHudOptions({ renderer, fetchBytes, palette }, playerEntity),
           // AUDIT 39: the enhanced HUD's two hand plaques. Both values

@@ -64,6 +64,21 @@ export const pauseWhileOpen = (win) => !!win && win.pauseWhileOpen !== false;
  *  every port window that is not a message box wants. */
 export const paintsPreviousWindow = (win) => !!win && win.previousWindow === true;
 
+/** MAP-FIELD2 (Mac, 2026-09-18): "the status and magicka/health/fatigue
+ *  UI element's should go away when it is taken out".
+ *
+ *  A window that HIDES the HUD outright, on both skins. This is not
+ *  `hudCovered`, and the difference is the whole reason it exists:
+ *  hudCovered is DFU's own question, and DFU keeps the LARGE hud
+ *  painted under its windows (DaggerfallUI.cs:485-486 repaints it), so
+ *  hud.js answers the covering question `&& !largeHud?.art`. That law
+ *  is right for DFU's windows and wrong for a thing DFU does not have:
+ *  the held map is a sprite in the player's HANDS, and a vitals bar
+ *  drawn over the knuckles is not a HUD under a window, it is a HUD on
+ *  top of an arm. A window opts in by declaring the field; nothing
+ *  else in the port does, so no DFU window's behaviour moves. */
+export const hidesHud = (win) => !!win && win.hidesHud === true;
+
 /**
  * Build a stack.
  *
