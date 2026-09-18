@@ -122,6 +122,7 @@ import { createExteriorFoes } from './exteriorFoes.js';   // X-slice
 import { StaticBatchBuilder, keyResolver } from '../render/staticBatch.js';   // PERF4: a pixel's static models as one mesh
 import { createBreather } from '../systems/buildBreather.js';   // PERF7: the stream build yields to the frame
 import { pieceIndex } from '../render/labGrass.js';   // PERF8: the piece under a point, by arithmetic
+import { meterFor } from '../render/perfMeter.js';   // GRASS2: the field gets a zone of its own - it was inside the world's
 import { LabGrassRenderer, createGrassField, grassRecordsOf, LAB_GRASS, LAB_DIM } from '../render/labGrass.js';   // GR1: the lab's grass, byte for byte
 import { windDrive, floraSwayOf, floraSwayOn } from '../systems/windDrive.js';   // WIND3: the one wind in every consumer's units; the flats' sway
 import { WindWispsRenderer, wispsOn, SAND_LOOK } from '../render/windWisps.js';   // WIND3: the wind, seen; WEATHER2d: the sandstorm's sand in the same program
@@ -10418,7 +10419,11 @@ export async function bootWorld(canvas, renderer, params, status) {
       };
       if (!labGrassField) labGrassField = createGrassField(labGrass, { keep, ground, density: grassDensity });   // PERF1: the pref's fraction of the lab's field
       labGrassField.update(ex, ez, keep, ground);
-      window.__grassStats = () => ({ blades: labGrass.count, drawn: labGrass.drawn, nearPixels: near.length, cells: labGrassField?.live.size ?? 0, slots: labGrassField?.slots ?? 0 });
+      window.__grassStats = () => ({ blades: labGrass.count, drawn: labGrass.drawn, nearPixels: near.length, cells: labGrassField?.live.size ?? 0, slots: labGrassField?.slots ?? 0,
+        perCell: labGrass.perCell, range: LAB_GRASS.range, height: LAB_GRASS.height, verts: labGrass.verts,
+        // GRASS2: what the field HOLDS, against what a slot-sized draw
+        // would have submitted - the pad, measured rather than assumed.
+        held: labGrass.slotCount ? labGrass.slotCount.reduce((a, b) => a + b, 0) : null });
       // GR2: the sky's row on the lab's slider - a sunny day is the lab's
       // 70. AUDIT 49 F4: the lab's uWind is WIND.speed, which carries the
       // gust; uWindV is the rate without it - the same pair the rain is
@@ -10426,6 +10431,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // strength. WIND3: all of it off the one mapping (`wd`, systems/
       // windDrive.js) - the grass, the rain, the wisps and the flats read
       // the same numbers by construction.
+      meterFor(renderer.gl)?.mark('grass');   // GRASS2
       labGrass.draw(proj, view, new Float32Array(cam.pos), now / 1000,
         // WIND4 (Mac: "grass doesnt get darker at night"): the WHOLE of
         // the scene's light, not three of its five terms - the sun's
@@ -10435,6 +10441,10 @@ export async function bootWorld(canvas, renderer, params, status) {
         { sunDir: renderer._lightDir, amb: renderer._ambient, sunCol: renderer._sunColor, dim: wxNow.dim,
           sunScale: renderer._sunScale, moonDir: renderer._moonDir, moonScale: renderer._moonScale, moonCol: renderer._moonColor },   // WX2: the dim crosses on the front
         { dir: wd.dir, speed: wd.slider * wd.gust, windV: wd.windV });
+      // GRASS2: the field had been inside the WORLD's span, which is the
+      // one number that cannot say whether the grass is worth what it
+      // costs. It marks its own now, and hands the frame straight back.
+      meterFor(renderer.gl)?.mark('world');
       renderer.markForeignPass();   // EV6: the grass changed programs behind the shadows' back
     }
     // C13: streaming-world arrows fly against the live pixel

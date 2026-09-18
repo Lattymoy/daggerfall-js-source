@@ -11,7 +11,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { LabGrassRenderer, createGrassField, grassPerCell, GRASS_CELL } from '../src/render/labGrass.js';
+import { LabGrassRenderer, createGrassField, grassPerCell, GRASS_CELL, LAB_GRASS } from '../src/render/labGrass.js';
 import { perspective, mirrorProjectionX, lookAt } from '../src/world/mat4.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -68,7 +68,13 @@ test('PERF2 grass: only the cells in the frustum and inside the range are drawn 
   // the pointers moved to the drawn slot's run: buffer 0 holds 4 floats a blade
   const ptr = calls.filter((c) => c[0] === 'vertexAttribPointer' && c[1] === 1).pop();
   assert.equal(ptr[6], slotOf.ahead * perCell * 4 * 4, 'the instance pointer is the ahead cell\'s byte offset');
-  assert.deepEqual(r.drawn, { slots: 1, blades: perCell });
+  // GRASS2: `drawn` carries what the frame actually submitted against
+  // what it holds - the pad and the fade are both measurable from here.
+  // This cell is 90 m out with a 200 m range, inside the fade's own
+  // start (0.55 x 200 = 110 m), so its whole count goes.
+  assert.equal(r.drawn.slots, 1); assert.equal(r.drawn.blades, perCell); assert.equal(r.drawn.kept, perCell);
+  assert.equal(r.drawn.verts, perCell * r.verts, 'a near cell is the five-quad blade');
+  assert.equal(r.drawn.farSlots, 0, '...and not the far one');
   // turn round: the behind cell is the one drawn now
   calls.length = 0;
   r.draw(proj, lookAt(eye, [0, 12, -1], [0, 1, 0]), new Float32Array(eye), 0, { sunDir: [0, 1, 0], amb: [0.2, 0.2, 0.2], sunCol: [1, 1, 1], dim: 1 }, { dir: [1, 0], speed: 0, windV: [0, 0] }, 200);
@@ -84,6 +90,47 @@ test('PERF2 grass: only the cells in the frustum and inside the range are drawn 
   calls.length = 0;
   r.draw(proj, view, new Float32Array(eye), 0, { sunDir: [0, 1, 0], amb: [0.2, 0.2, 0.2], sunCol: [1, 1, 1], dim: 1 }, { dir: [1, 0], speed: 0, windV: [0, 0] }, 200);
   assert.equal(calls.filter((c) => c[0] === 'drawArraysInstanced').length, 0);
+  // GRASS2: THE PREFIX. Past the fade's start the host submits only the
+  // blades that can survive `u > vFade * 1.15`, so a far cell is a
+  // SHORTER draw rather than a full one the vertex shader throws away.
+  // The bound is taken at the cell's NEAREST corner, so it never cuts a
+  // blade the shader wanted.
+  r.writeSlot(slotOf.ahead, cellPlaced(0, 3, perCell));   // put the cell back
+  calls.length = 0;
+  r.draw(proj, view, new Float32Array(eye), 0, { sunDir: [0, 1, 0], amb: [0.2, 0.2, 0.2], sunCol: [1, 1, 1], dim: 1 }, { dir: [1, 0], speed: 0, windV: [0, 0] }, 130);
+  const thinned = calls.filter((c) => c[0] === 'drawArraysInstanced');
+  assert.equal(thinned.length, 1, 'the cell is still in range at 130 m');
+  assert.ok(thinned[0][4] < perCell && thinned[0][4] > 0, `and thinned rather than dropped: ${thinned[0][4]} of ${perCell}`);
+  assert.equal(r.drawn.kept, perCell, 'the cell still HOLDS all of them - only the submission is short');
+  // and the shader is told the CELL's count, not the prefix's, or the
+  // fraction it thins by would be over the wrong denominator
+  const slotN = calls.filter((c) => c[0] === 'uniform1f' && c[1] === r.u.uSlotN).pop();
+  assert.ok(slotN, 'uSlotN is set per slot');
+  assert.equal(slotN[2], perCell, 'and it is the cell\'s own count');
+  // GRASS2: THE FAR BLADE. Past GRASS_FAR_AT of the range a cell binds
+  // the one-quad array - a fifth of the vertices for a silhouette no eye
+  // can tell apart at that distance.
+  calls.length = 0;
+  r.draw(proj, view, new Float32Array(eye), 0, { sunDir: [0, 1, 0], amb: [0.2, 0.2, 0.2], sunCol: [1, 1, 1], dim: 1 }, { dir: [1, 0], speed: 0, windV: [0, 0] }, 150);
+  assert.equal(r.drawn.farSlots, 1, '90 m against a 150 m range is past 0.5 of it');
+  assert.ok(calls.some((c) => c[0] === 'bindVertexArray' && c[1] === r.vaoFar), 'the far array is bound');
+  assert.equal(r.drawn.verts, r.drawn.blades * r.vertsFar, 'and the vertex count is the far blade\'s');
+  assert.equal(r.vertsFar * 5, r.verts, 'which is a fifth of the near blade\'s');
+  // GRASS2: THE PAD IS NOT DRAWN. A cell whose placer refused most of
+  // its candidates - a cell on a road, a shoreline, a city block - keeps
+  // a zero-height pad blade for each refusal. A pad blade draws nothing,
+  // but it is still a full blade's worth of vertex shader, and the draw
+  // must be instanced on what the cell HELD, never on the slot's size.
+  const sparse = cellPlaced(0, 3, perCell); sparse.count = 9;
+  r.writeSlot(slotOf.ahead, sparse);
+  calls.length = 0;
+  r.draw(proj, view, new Float32Array(eye), 0, { sunDir: [0, 1, 0], amb: [0.2, 0.2, 0.2], sunCol: [1, 1, 1], dim: 1 }, { dir: [1, 0], speed: 0, windV: [0, 0] }, 200);
+  const padded = calls.filter((c) => c[0] === 'drawArraysInstanced');
+  assert.equal(padded.length, 1);
+  assert.equal(padded[0][4], 9, `nine blades stood, so nine are drawn - not the slot's ${perCell}`);
+  assert.equal(r.drawn.kept, 9, 'and the cell is recorded as holding nine');
+  assert.equal(calls.filter((c) => c[0] === 'uniform1f' && c[1] === r.u.uSlotN).pop()[2], 9, 'the shader is told nine too, or it would thin over the slot');
+  r.clearSlot(slotOf.ahead);
   // the lab's whole scatter still draws whole, at offset 0
   r.set({ inst: new Float32Array(8), inst2: new Float32Array(8), rootY: new Float32Array(2), ground: new Float32Array(6), count: 2 });
   calls.length = 0;
@@ -97,6 +144,17 @@ test('PERF2 grass: the field hands the renderer cells through the same doors, so
   const { gl } = stubGl();
   const r = new LabGrassRenderer(gl);
   const perCell = grassPerCell(1200000, 210, GRASS_CELL);
+  // GRASS2: THE DENSITY IS A RATE, NOT A COUNT OVER THE WINDOW. The
+  // default span here is the lab's `densitySpan`, never the window in
+  // force - pushing the range out must not thin the grass. Measured:
+  // 1,200,000 blades over the lab's 420 m window is 6.80 a square metre,
+  // and that is what a cell holds whatever the window is set to.
+  assert.equal(grassPerCell(), perCell, 'the default is the lab\'s own span, so the rate is fixed');
+  assert.equal(grassPerCell(1200000, LAB_GRASS.densitySpan, GRASS_CELL), perCell);
+  const perM2 = perCell / (GRASS_CELL * GRASS_CELL);
+  assert.ok(Math.abs(perM2 - 1200000 / (420 * 420)) < 0.01, `the lab's rate, ${perM2.toFixed(2)} blades a square metre`);
+  assert.ok(grassPerCell(1200000, LAB_GRASS.span, GRASS_CELL) < perCell * 0.7,
+    'and taking the rate over the WINDOW instead would thin it - which is the bug this default exists to stop');
   const f = createGrassField(r, { keep: () => true, ground: null, density: 1200000 });
   assert.equal(r.slotBox.length, f.slots);
   assert.ok(perCell > 5000 && perCell < 7000, `the lab's density is ~6,100 blades a cell: ${perCell}`);

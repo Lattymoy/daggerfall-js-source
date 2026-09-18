@@ -26,6 +26,39 @@
 // zero, and the text stays the lab's.
 
 import { frustumPlanes, aabbOutside } from './frustum.js';   // PERF2: the field draws only the cells in view
+import { smoothstep } from '../systems/mathf.js';   // GRASS2: the host's blade budget is a bound on the shader's fade, so the two must be the SAME curve
+
+/**
+ * GRASS2: THE DEPARTURES FROM THE LAB, AS DATA.
+ *
+ * GR1's law was that the shaders are the lab's text byte for byte, and
+ * the pin enforced it by slicing `grass-proto.html` at test time. That
+ * law has been broken deliberately, three times, and the honest way to
+ * break it is to say exactly where rather than to loosen the pin: the
+ * lab's text plus THESE edits, and nothing else, is what the game
+ * compiles. Any other drift still fails the pin, which is the whole
+ * value of having had it.
+ *
+ * Each entry is the lab's own text and what the game puts in its place.
+ * The reasons are on the code itself, at the site of each change.
+ */
+export const GRASS2_VS_EDITS = Object.freeze([
+  Object.freeze({
+    why: 'uSlotN: the shader is told how many blades the cell holds, so an index can be a fraction of it',
+    from: 'uniform float uSnowFull;           // PROTO-22: the SAME line the ground draws\n',
+    to: 'uniform float uSnowFull;           // PROTO-22: the SAME line the ground draws\nuniform float uSlotN;              // GRASS2: how many blades this slot holds, so the index can be a fraction\n',
+  }),
+  Object.freeze({
+    why: 'the fade threshold is the blade INDEX, not a hash of its phase - so the host can decline the blades that will fail it',
+    from: '  if (vFade <= 0.001 || fract(aInst.w * 91.7) > vFade * 1.15) { gl_Position = vec4(2,2,2,1); return; }',
+    to: '  float u = uSlotN > 0.5 ? float(gl_InstanceID) / uSlotN : 0.0;\n  if (vFade <= 0.001 || u > vFade * 1.15) { gl_Position = vec4(2,2,2,1); return; }',
+  }),
+  Object.freeze({
+    why: 'the tint is pulled toward a low-frequency world-space noise, so the field has patches instead of reading as one flat carpet',
+    from: '  vTint = aInst2.z;',
+    to: '  float clump = vnoise(root * 0.055) * 0.66 + vnoise(root * 0.017) * 0.34;\n  vTint = clamp(mix(aInst2.z, clump, 0.55), 0.0, 1.0);',
+  }),
+]);
 
 export const LAB_GRASS_HEAD = `#version 300 es
 precision highp float;
@@ -48,6 +81,7 @@ layout(location=4) in vec3 aGround;      // GR4: the ground's own colour under t
 uniform mat4 uVP; uniform float uTime, uWind, uRange; uniform vec3 uEye, uSunDir, uMoonDir;   // WIND4: the moon lights the field at night, as it lights the ground under it
 uniform vec2 uWindDir;
 uniform float uSnowFull;           // PROTO-22: the SAME line the ground draws
+uniform float uSlotN;              // GRASS2: how many blades this slot holds, so the index can be a fraction
 uniform sampler2D uGField; uniform vec2 uGFieldOrigin; uniform float uGFieldM, uSnowGlobal; uniform vec2 uWindV;
 out float vT; out float vTint; out float vFade; out float vLam; out float vSnow; out float vWet;
 out vec3 vGround;                       // GR4
@@ -57,9 +91,22 @@ void main(){
   float d = distance(root, uEye.xz);
   vFade = 1.0 - smoothstep(uRange*0.55, uRange, d);
   // PROTO-18: the fade thins the FIELD, it does not shrink the blades.
-  // A hashed threshold drops whole blades with distance, so the count
-  // falls away and every blade that remains is its true size.
-  if (vFade <= 0.001 || fract(aInst.w * 91.7) > vFade * 1.15) { gl_Position = vec4(2,2,2,1); return; }
+  // A threshold drops whole blades with distance, so the count falls
+  // away and every blade that remains is its true size.
+  //
+  // GRASS2: THE THRESHOLD IS THE BLADE'S INDEX, not a hash of its phase.
+  // Same law, same distribution - the placer already emits a cell's
+  // blades in random order, so the first k of them are a uniform random
+  // k, exactly as a hash of the phase was. What the index buys is that
+  // the HOST CAN KNOW which blades will fail: a hash is only knowable
+  // after the vertex shader has run, so the old field paid thirty vertex
+  // invocations for every blade the fade then threw away - and the band
+  // where that happens is 70% of the field's area. Measured at range
+  // 200: 8.45M vertex invocations a frame, of which the band's were 61%,
+  // for 2% more grass on the screen (tools/grassFieldProbe.mjs). With
+  // the index, the host submits the prefix that can survive and no more.
+  float u = uSlotN > 0.5 ? float(gl_InstanceID) / uSlotN : 0.0;
+  if (vFade <= 0.001 || u > vFade * 1.15) { gl_Position = vec4(2,2,2,1); return; }
   // PROTO-14 (3): THE GRASS KNOWS ABOUT THE GROUND IT STANDS IN.
   // Blades stood up through snow that was supposedly burying them and
   // stayed green in standing water. Snow BURIES them - the depth eats
@@ -133,7 +180,25 @@ void main(){
   // planted on the snow's own surface, so the burial line is the one
   // the ground draws and not an approximation of it
   p.y = terrain(root) + snowSurf + vT * h;
-  vTint = aInst2.z;
+  // GRASS2: THE FIELD HAS PATCHES. aInst2.z is one uniform random per
+  // blade and nothing more, so neighbouring blades were as different as
+  // distant ones and the sward read as a flat carpet of noise at any
+  // distance past a few metres - the eye needs correlation to see a
+  // field rather than a texture. A low-frequency value noise in WORLD
+  // space (so a patch belongs to the ground, not to the camera) pulls
+  // the per-blade tint toward its neighbours' without narrowing the
+  // range: the mean is unchanged and the variance is redistributed from
+  // blade-to-blade to patch-to-patch. Two octaves, tens of metres
+  // across - larger than a blade, smaller than the draw range.
+  //
+  // NOT named "patch": that is a RESERVED WORD in GLSL ES 3.00 (the
+  // tessellation qualifier), and a reserved word used as an identifier
+  // fails the whole program to compile - which takes the entire field
+  // down, not one line of it. The same trap took the sky down at VC6
+  // under the name "flat". The probe below is what catches it; no pin
+  // can, because the pins compile nothing.
+  float clump = vnoise(root * 0.055) * 0.66 + vnoise(root * 0.017) * 0.34;
+  vTint = clamp(mix(aInst2.z, clump, 0.55), 0.0, 1.0);
   vGround = aGround;                      // GR4: carried to the root
   // MAC'S NOTE: the blades take the TIME OF DAY. A blade's normal is
   // roughly its own lean crossed with up, so a leaning blade catches
@@ -201,7 +266,44 @@ void main(){
   o = vec4(c, vFade * smoothstep(0.0, 0.30, vT));
 }`;
 
-export const LAB_GRASS = Object.freeze({ density: 1200000, height: 54, range: 200, span: 210, seed: 0x2f6e2b1 });
+// GRASS2 (Mac: "I also want to shorten the grass length. Little too tall
+// for my liking"): the height was GR1's 54 and is 38. It is the one
+// number the blade law scales by - `(0.22 + rnd*0.42) * (height/34)` -
+// so a blade runs 0.25..0.72 world units now against 0.35..1.02, and
+// nothing else about the field moves.
+//
+// GRASS2 (Mac: "have it be seen at long ranges"): the range was the
+// lab's 200 and is 250. `span` follows it, because the window has to
+// hold the range or the window's edge is a visible wall.
+//
+// WHY 250 AND NOT FURTHER, stated plainly so the next reader does not
+// have to re-derive it. The DRAW cost no longer tracks the area - the
+// host declines the blades the fade would throw away and the far cells
+// take a one-quad blade, so this range submits fewer vertices than the
+// lab's 200 m did. The STORAGE still does: every cell in the window
+// holds near-field density, 48 bytes a blade, whether it is under the
+// player's feet or at the horizon. That is 75 MB of GPU buffer at 200 m,
+// 106 MB here, and 169 MB at 320 m - and 320 m is what "long range"
+// really wants. Going further needs the instance data PACKED (12 floats
+// a blade is x, z, height, phase, lean.xz, tint, width, rootY and an
+// RGB ground colour, most of which are a byte's worth of information)
+// or the far ring stored at a lower density than the near one. Either
+// is its own slice; neither is a reason to ship 169 MB quietly.
+// `density` is a COUNT over `densitySpan`, not a rate - so the range and
+// the span may move only if the rate is held. 1,200,000 blades over the
+// lab's 420 m window is 6.80 blades a square metre, and that is the
+// number the field is actually dense by; a wider window at the same
+// count would be the same grass spread thinner, which is a thinning
+// dressed up as a range increase.
+// `span` is a WHOLE NUMBER OF CELLS either side (2 x 270 = 540 = 18 x
+// GRASS_CELL). It has to be: the window is [eye - span, eye + span] and
+// its two edges are floored independently, so a span that is not a
+// multiple of the cell puts the edges out of phase and a step that adds
+// one column at the front drops TWO at the back. The field still draws
+// correctly - it just churns cells it did not need to, which is the
+// hitch GR5 was built to remove. The lab's 210 was a multiple by luck
+// (420 = 14 x 30); this one is by intent.
+export const LAB_GRASS = Object.freeze({ density: 1200000, height: 38, range: 250, span: 270, densitySpan: 210, seed: 0x2f6e2b1 });
 
 /**
  * GR2 (Mac: there is no wind movement). The lab's wind is a SLIDER,
@@ -262,6 +364,7 @@ export function placeLabGrass(opts) {
 // - only where the randomness is anchored moved.
 export const GRASS_CELL = 30;
 
+
 /** One cell's seed, from its coordinates - the anchor. */
 export function grassCellSeed(cx, cz, seed = LAB_GRASS.seed) {
   let h = (seed ^ 0x9e3779b9) >>> 0;
@@ -297,8 +400,14 @@ export function pieceIndex(pieces, size) {
   };
 }
 
-/** How many blades a cell holds, from the lab's density over its span. */
-export const grassPerCell = (density = LAB_GRASS.density, span = LAB_GRASS.span, cell = GRASS_CELL) =>
+/** How many blades a cell holds, from the lab's density over the span
+ *  that density was MEASURED over - never over the window in force. The
+ *  two were one number until GRASS2 pushed the range out, and using the
+ *  live span here would have quietly thinned the field by the square of
+ *  the range increase: 6.80 blades a square metre became 2.75 and the
+ *  grass looked worse at every distance, including under the player's
+ *  feet, which is not what "seen at long ranges" asks for. */
+export const grassPerCell = (density = LAB_GRASS.density, span = LAB_GRASS.densitySpan, cell = GRASS_CELL) =>
   Math.max(1, Math.round(density * (cell * cell) / ((span * 2) * (span * 2))));
 
 /**
@@ -342,7 +451,7 @@ export function placeLabGrassCell(cx, cz, { keep, ground = null, perCell, height
  * hitches and never has to be time-sliced.
  */
 export function createGrassField(renderer, { keep, ground = null, span = LAB_GRASS.span, density = LAB_GRASS.density, height = LAB_GRASS.height, seed = LAB_GRASS.seed, cell = GRASS_CELL, perFrame = 2 }) {
-  const perCell = grassPerCell(density, span, cell);
+  const perCell = grassPerCell(density);   // GRASS2: the RATE, off the lab's own span - `span` below is the window, and the two are not the same question
   const side = Math.ceil((span * 2) / cell) + 1;
   const slots = side * side;
   renderer.allocSlots(perCell, slots);
@@ -414,14 +523,33 @@ export function* placeLabGrassSteps({ centre, keep, ground = null, density = LAB
 }
 
 /** the lab's blade: five stacked quads */
-export function labBladeCorners() {
+export function labBladeCorners(segments = 5) {
   const corners = [];
-  for (let seg = 0; seg < 5; seg++) {
-    const a = seg / 5, b = (seg + 1) / 5;
+  for (let seg = 0; seg < segments; seg++) {
+    const a = seg / segments, b = (seg + 1) / segments;
     corners.push(0, a, 1, a, 1, b, 0, a, 1, b, 0, b);
   }
   return new Float32Array(corners);
 }
+
+/** GRASS2: THE FAR BLADE IS ONE QUAD. The lab's blade is five stacked
+ *  quads so that it can CURVE - the sway is weighted by height squared
+ *  along the stalk, and a straight blade cannot bend. Past a certain
+ *  distance a blade is a couple of pixels tall and its curve is not a
+ *  thing any eye can resolve, so the four extra segments are four
+ *  extra quads' worth of vertex work spent on a shape nobody sees.
+ *  One segment is the same silhouette, at a fifth of the vertices.
+ *
+ *  It is the same shader, the same instance data and the same draw -
+ *  only the corner buffer differs, so a cell changes level of detail
+ *  by which vertex array is bound and nothing else. */
+export const GRASS_FAR_SEGMENTS = 1;
+/** Where the far blade takes over, as a fraction of the draw range.
+ *  0.5 is inside the fade's own start (0.55), so a blade is already
+ *  thinning by the time its curve goes - the two changes never land on
+ *  the same blade at the same distance, which is what would read as a
+ *  line across the field. */
+export const GRASS_FAR_AT = 0.5;
 
 /**
  * Which records of a ground archive are GRASS, from the archive's own
@@ -477,22 +605,35 @@ export class LabGrassRenderer {
     if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
     this.program = prog;
     this.u = {};
-    for (const n of ['uVP', 'uTime', 'uWind', 'uRange', 'uEye', 'uSunDir', 'uWindDir', 'uSnowFull', 'uGField', 'uGFieldOrigin', 'uGFieldM', 'uSnowGlobal', 'uWindV', 'uAmb', 'uSunCol', 'uDim', 'uSunScale', 'uMoonDir', 'uMoonScale', 'uMoonCol']) this.u[n] = gl.getUniformLocation(prog, n);
+    for (const n of ['uVP', 'uTime', 'uWind', 'uRange', 'uEye', 'uSunDir', 'uWindDir', 'uSnowFull', 'uSlotN', 'uGField', 'uGFieldOrigin', 'uGFieldM', 'uSnowGlobal', 'uWindV', 'uAmb', 'uSunCol', 'uDim', 'uSunScale', 'uMoonDir', 'uMoonScale', 'uMoonCol']) this.u[n] = gl.getUniformLocation(prog, n);
     // the blade, and three instance streams the lab's layout plus the game's root height
     this.vao = gl.createVertexArray();
-    gl.bindVertexArray(this.vao);
-    const cb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, cb);
-    const corners = labBladeCorners();
-    gl.bufferData(gl.ARRAY_BUFFER, corners, gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
-    this.verts = corners.length / 2;
-    this.bufs = [1, 2, 3, 4].map((loc) => {   // GR4: 4 is the ground colour
-      const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b);
-      gl.bufferData(gl.ARRAY_BUFFER, 4, gl.DYNAMIC_DRAW);
-      gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, loc === 3 ? 1 : loc === 4 ? 3 : 4, gl.FLOAT, false, 0, 0);
-      gl.vertexAttribDivisor(loc, 1);
-      return b;
-    });
+    // GRASS2: the instance buffers are made ONCE and shared by both
+    // levels of detail - only the corner buffer differs between them, so
+    // a cell drops to the far blade by binding the other array. Nothing
+    // is uploaded twice and nothing is kept in step by hand.
+    this.bufs = [1, 2, 3, 4].map(() => gl.createBuffer());   // GR4: 4 is the ground colour
+    for (const b of this.bufs) { gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, 4, gl.DYNAMIC_DRAW); }
+    /** one vertex array over a corner buffer of `segments` quads */
+    const buildVao = (segments) => {
+      const vao = gl.createVertexArray();
+      gl.bindVertexArray(vao);
+      const cb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, cb);
+      const corners = labBladeCorners(segments);
+      gl.bufferData(gl.ARRAY_BUFFER, corners, gl.STATIC_DRAW);
+      gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+      for (const [i, loc] of [[0, 1], [1, 2], [2, 3], [3, 4]]) {
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.bufs[i]);
+        gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, loc === 3 ? 1 : loc === 4 ? 3 : 4, gl.FLOAT, false, 0, 0);
+        gl.vertexAttribDivisor(loc, 1);
+      }
+      gl.bindVertexArray(null);
+      return { vao, verts: corners.length / 2, cb };
+    };
+    const near = buildVao(5), far = buildVao(GRASS_FAR_SEGMENTS);
+    this.vao = near.vao; this.verts = near.verts;
+    this.vaoFar = far.vao; this.vertsFar = far.verts;
+    this._cornerBufs = [near.cb, far.cb];
     gl.bindVertexArray(null);
     // the field the lab's grass reads: nothing, so the snow and wet terms are zero
     this.zeroField = gl.createTexture();
@@ -505,7 +646,8 @@ export class LabGrassRenderer {
     this._vp = new Float32Array(16);
     this._planes = new Float32Array(24);   // PERF2
     this.slotBox = null;                    // PERF2: per slot, the cell's world box, or null while empty
-    this.drawn = { slots: 0, blades: 0 };   // PERF2: what the last draw actually submitted
+    this.slotCount = null;                  // GRASS2: per slot, the blades that actually STOOD - the rest of the slot is pad
+    this.drawn = { slots: 0, blades: 0, kept: 0 };   // PERF2: what the last draw actually submitted; GRASS2: and how much of it was not pad
   }
 
   /** GR5: size the buffers for `slots` cells of `perCell` blades each,
@@ -521,6 +663,7 @@ export class LabGrassRenderer {
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
     this.count = slots * perCell;
     this.slotBox = new Array(slots).fill(null);   // PERF2
+    this.slotCount = new Int32Array(slots);       // GRASS2: every slot starts empty, so every slot starts at zero blades
   }
 
   /** GR5: one cell into its slot - one bufferSubData per buffer, no repack. */
@@ -537,6 +680,7 @@ export class LabGrassRenderer {
       if (y < y0) y0 = y; if (y + h > y1) y1 = y + h;
     }
     if (this.slotBox) this.slotBox[slot] = n > 0 ? [x0, y0, z0, x1, y1, z1] : null;
+    if (this.slotCount) this.slotCount[slot] = n;   // GRASS2: what this cell actually grew
     for (const [i, data, stride] of [[0, placed.inst, 4], [1, placed.inst2, 4], [2, placed.rootY, 1], [3, placed.ground, 3]]) {
       gl.bindBuffer(gl.ARRAY_BUFFER, this.bufs[i]);
       gl.bufferSubData(gl.ARRAY_BUFFER, slot * p * stride * 4, data);
@@ -548,6 +692,7 @@ export class LabGrassRenderer {
   clearSlot(slot) {
     const gl = this.gl; const p = this.perCell;
     if (this.slotBox) this.slotBox[slot] = null;   // PERF2
+    if (this.slotCount) this.slotCount[slot] = 0;   // GRASS2
     if (!this._zeros || this._zeros.length !== p * 4) this._zeros = new Float32Array(p * 4);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.bufs[0]);
     gl.bufferSubData(gl.ARRAY_BUFFER, slot * p * 4 * 4, this._zeros);
@@ -609,7 +754,7 @@ export class LabGrassRenderer {
     gl.uniform3fv(u.uMoonCol, light.moonCol ?? WHITE);
     gl.bindVertexArray(this.vao);
     if (this.slotBox) this._drawVisibleSlots(o, eye, range);   // PERF2: the field, culled by cell
-    else { this._point(0); gl.drawArraysInstanced(gl.TRIANGLES, 0, this.verts, this.count); this.drawn.slots = 1; this.drawn.blades = this.count; }   // the lab's one scatter
+    else { gl.uniform1f(u.uSlotN, this.count); this._point(0); gl.drawArraysInstanced(gl.TRIANGLES, 0, this.verts, this.count); this.drawn.slots = 1; this.drawn.blades = this.count; this.drawn.kept = this.count; }   // the lab's one scatter
     gl.bindVertexArray(null);
     gl.disable(gl.BLEND);
     if (culled) gl.enable(gl.CULL_FACE);
@@ -636,7 +781,8 @@ export class LabGrassRenderer {
   _drawVisibleSlots(vp, eye, range) {
     const gl = this.gl; const p = this.perCell;
     const planes = frustumPlanes(vp, this._planes);
-    let slots = 0;
+    let slots = 0, blades = 0, kept = 0, verts_ = 0, farSlots = 0, wasFar = false;
+    gl.bindVertexArray(this.vao);   // GRASS2: the near array is the one the caller bound; the loop tracks it from here
     for (let slot = 0; slot < this.slotBox.length; slot++) {
       const box = this.slotBox[slot];
       if (!box) continue;
@@ -644,17 +790,62 @@ export class LabGrassRenderer {
       const dz = Math.max(box[2] - eye[2], 0, eye[2] - box[5]);
       if (dx * dx + dz * dz > range * range) continue;   // wholly past the fade
       if (aabbOutside(planes, box)) continue;
+      // GRASS2: A SLOT IS NOT A CELL. `perCell` is the slot's SIZE; the
+      // blades that actually stood in it is `slotCount` - every candidate
+      // the placer dropped for standing on a road, in water, off grass or
+      // below the sea line left a zero-height pad blade behind it. A pad
+      // blade draws nothing, but it is still thirty vertex shader
+      // invocations, and a cell crossing a highway or a shoreline can be
+      // mostly pad. Instancing the count instead of the slot is the same
+      // picture for less work - the kept blades are the run's FRONT,
+      // because the placer appends and the pad is what is left over.
+      const n = this.slotCount ? this.slotCount[slot] : p;
+      if (n <= 0) continue;
+      // GRASS2: THE PREFIX THAT CAN SURVIVE. The shader keeps a blade
+      // when its index fraction is under `vFade * 1.15`, and vFade only
+      // ever FALLS with distance - so no blade in this cell can beat the
+      // fade at the cell's NEAREST corner. Everything past that index
+      // would be thrown away by the shader after a full transform, so it
+      // is not submitted at all. Using the nearest corner (rather than
+      // the centre) is what makes the bound SAFE: it is the most
+      // generous any blade in the cell could claim, so no blade the
+      // shader wanted is ever cut by the host.
+      //
+      // WHAT THIS DOES AND DOES NOT PRESERVE, exactly. Against the index
+      // law above it is lossless - every blade the shader would keep is
+      // submitted. Against the OLD hash law it is not blade-for-blade:
+      // a hash of the phase and a prefix of the index are both uniform
+      // random subsets of the same SIZE, so the field has the same
+      // density, the same look and the same statistics, but a different
+      // individual blade here and there. The probe measures that: the
+      // lit pixel count moved by 8 in 67,800.
+      const dn = Math.sqrt(dx * dx + dz * dz);
+      const fade = 1 - smoothstep(range * 0.55, range, dn);
+      const budget = Math.min(n, Math.ceil(n * fade * 1.15));
+      if (budget <= 0) continue;
+      gl.uniform1f(this.u.uSlotN, n);   // the fraction is over the CELL, not over the prefix
+      // GRASS2: the far blade, past GRASS_FAR_AT of the range. Bound per
+      // slot, which is why the level of detail is a CELL's and not a
+      // blade's - one bind for six thousand blades rather than a branch
+      // inside every one of them.
+      const far = dn > range * GRASS_FAR_AT;
+      if (far !== wasFar) { gl.bindVertexArray(far ? this.vaoFar : this.vao); wasFar = far; }
+      const verts = far ? this.vertsFar : this.verts;
       this._point(slot);
-      gl.drawArraysInstanced(gl.TRIANGLES, 0, this.verts, p);
-      slots++;
+      gl.drawArraysInstanced(gl.TRIANGLES, 0, verts, budget);
+      slots++; blades += budget; kept += n; verts_ += verts * budget; if (far) farSlots++;
     }
-    this.drawn.slots = slots; this.drawn.blades = slots * p;
+    this.drawn.slots = slots; this.drawn.blades = blades; this.drawn.kept = kept;
+    this.drawn.slotCapacity = slots * p;   // GRASS2: what the same frame cost before the pad came off
+    this.drawn.verts = verts_; this.drawn.farSlots = farSlots;   // GRASS2: the vertex work, counted rather than inferred from one blade shape
   }
 
   destroy() {
     const gl = this.gl;
     for (const b of this.bufs) gl.deleteBuffer(b);
+    for (const b of this._cornerBufs ?? []) gl.deleteBuffer(b);
     gl.deleteVertexArray(this.vao);
+    if (this.vaoFar) gl.deleteVertexArray(this.vaoFar);
     gl.deleteTexture(this.zeroField);
     gl.deleteProgram(this.program);
   }

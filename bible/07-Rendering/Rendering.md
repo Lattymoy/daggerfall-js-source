@@ -121,6 +121,58 @@ directory by `test/audit18_bible_docs.test.js`:
   whole-field upload, ever. The blade laws are unchanged. Measured
   headless: five metres of walking touches nothing; forty frees one
   edge column of 15 cells and fills the other, of 225 live.
+  **GRASS2 (2026-09-18, Mac: "improve grass, improve grass performance,
+  and also have it be seen at long ranges... I also want to shorten the
+  grass length"): THE FADE IS PAID ON THE HOST.** Measured first, on a
+  real GL context through `tools/grassFieldProbe.mjs` (this container has
+  no ARENA2, so the field is driven over a synthetic all-grass plane -
+  the blade COUNTS are exact and deterministic, the milliseconds are
+  SwiftShader's and are never quoted): 46 cells in frustum, 281,612
+  blades, **8.45M vertex shader invocations a frame**. The same field at
+  range 110 costs 3.31M and shows 2.1% fewer lit pixels - so 61% of the
+  vertex work was buying 2% of the grass. The cause: the fade discarded
+  blades INSIDE the vertex shader (`gl_Position = vec4(2,2,2,1)`), so a
+  blade culled at 180 m cost exactly what one at 5 m cost, and the band
+  where that happens is 70% of the field's area. Two changes, and the
+  picture does not move (67,833 lit pixels to 67,846). **(1)** The
+  fade's threshold is the blade's INDEX rather than a hash of its phase.
+  Same distribution - the placer already emits a cell's blades in random
+  order, so the first k are a uniform random k - but an index is
+  knowable to the HOST, which can then submit only the prefix that can
+  survive and decline the rest before they cost anything. The bound is
+  taken at the cell's NEAREST corner, so it never cuts a blade the
+  shader wanted. **(2)** Cells past half the range bind a ONE-QUAD
+  blade instead of the lab's five stacked quads: the five exist so the
+  stalk can curve, and at that distance the curve is not resolvable.
+  Same instance buffers, same shader, a different vertex array. 30 of
+  the 46 cells qualify. Together: **8.45M to 3.54M, 58% off.** Height is
+  54 to 38 on Mac's word, range 200 to 250, and the tint is pulled
+  toward a low-frequency world-space noise so the sward has patches
+  instead of reading as one flat carpet of per-blade noise.
+  THREE THINGS THIS COST, all caught by pins and probe rather than by
+  eye. Widening the span THINNED the grass, because `density` is a count
+  over the window and not a rate - `densitySpan` now holds the lab's own
+  420 m so blades-a-square-metre is the invariant. The noise variable
+  could not be called `patch`: that is a reserved word in GLSL ES 3.00
+  and took the whole program down, which is the trap that took the sky
+  down at VC6 under the name `flat`. And GR5's own pin caught that the
+  new span was not a whole number of cells, so the window's two edges
+  floored out of phase and a step that added one column dropped two -
+  the lab's 210 was a multiple of the cell by luck, 270 is by intent.
+  WHAT IS NOT DONE, and why, so nobody re-derives it: the range stops at
+  250 m because the DRAW cost no longer tracks the area but the STORAGE
+  still does. Every cell holds near-field density at 48 bytes a blade
+  whether it is underfoot or at the horizon - 75 MB of GPU buffer at
+  200 m, 106 MB at 250, 169 MB at 320. 320 m is what "long range" really
+  wants, and reaching it needs the instance data PACKED (twelve floats a
+  blade is mostly byte-sized information) or the far ring stored sparser
+  than the near one. Either is its own slice; neither is a reason to
+  ship 169 MB quietly. GR1'S LAW IS DEPARTED FROM, on the record: the
+  vertex stage is no longer the lab's text byte for byte. It is the
+  lab's text plus THREE named edits, exported as `GRASS2_VS_EDITS` and
+  applied by the pin to the lab's own slice before comparing - so a
+  fourth change, or a fourth edit nobody declared, still fails. The
+  fragment stage is untouched.
 - `systems/wind.js` - **WIND1 (2026-09-02) THE WIND IS ITS OWN THING.**
   Mac: "wind should be something different from the weather. Imagine a
   time-lapse, seeing a storm rolling in as the wind kicks up, and the

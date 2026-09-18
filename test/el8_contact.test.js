@@ -233,6 +233,22 @@ test('VC6d: `?perf=zones` - the spans TILE the frame, the frame\'s own clock sta
   const line = perfZoneLine(new Map([['sky', 3.5], ['world', 6.0], ['air', 1.25], ['shadow', 4.0]]), { draws: 812 });
   assert.equal(line, '[perf] gpu 14.75ms | world 6.00 | shadow 4.00 | sky 3.50 | air 1.25 | draws 812');
   assert.equal(perfZoneLine(new Map(), { draws: 7 }), perfLine(null, { draws: 7 }), 'no spans (no extension) falls back to the count line');
+  // GRASS2: THE FIELD HAS A ZONE OF ITS OWN. VC6d broke the frame into
+  // shadow / world / air / sky so that "14 ms" could name which pass to
+  // go after - but the grass was drawn from the world HOST, inside the
+  // world's span, so the one pass this slice is about was the one pass
+  // the readout could not see. It marks its own now, and hands the frame
+  // straight back to the world's before the renderer's foreign-pass
+  // reset, or the spans would stop tiling and stop adding to the frame.
+  const world = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
+  const grassMark = world.indexOf("meterFor(renderer.gl)?.mark('grass');");
+  assert.ok(grassMark > 0, 'the field opens a span of its own');
+  const drawAt = world.indexOf('labGrass.draw(', grassMark);
+  assert.ok(drawAt > grassMark && drawAt - grassMark < 200, 'and it opens it immediately before the draw, not somewhere up the frame');
+  const handBack = world.indexOf("meterFor(renderer.gl)?.mark('world');", drawAt);
+  assert.ok(handBack > drawAt, 'the frame goes back to the world\'s span after it');
+  assert.ok(world.indexOf('renderer.markForeignPass();', drawAt) > handBack,
+    'and that happens BEFORE the foreign-pass reset, so the spans still tile');
   // without the extension nothing is opened and nothing is reported,
   // but the marks are still safe to call from every host
   z.mark('shadow'); z.mark('world'); z.stop();

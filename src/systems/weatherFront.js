@@ -82,11 +82,15 @@ const SHOWN_FLOOR = 0.002;
 
 export const lerp = (a, b, t) => a + (b - a) * t;
 
-/** Hermite step, clamped: 0 at or below a, 1 at or above b. */
-export function smoothstep(a, b, x) {
-  const u = Math.min(1, Math.max(0, (x - a) / (b - a)));
-  return u * u * (3 - 2 * u);
-}
+/** Hermite step, clamped: 0 at or below a, 1 at or above b.
+ *  ONE HOME (GRASS2): the law lives in systems/mathf.js now, because the
+ *  grass field's host needs the same curve and a weather module is no
+ *  place for a render leaf to import arithmetic from. Re-exported here
+ *  so this module's own callers are untouched - and IMPORTED, not only
+ *  re-exported, because this module calls it itself three times and a
+ *  bare `export ... from` never binds the name in the module's scope. */
+import { smoothstep } from './mathf.js';
+export { smoothstep };
 
 /** The LOOK a mode has: storm shares the rain's. null for no mode. */
 export const precipKind = (mode) => (mode === 'snow' ? 'snow' : mode === 'sand' ? 'sand' : mode ? 'rain' : null);   // WEATHER2d: the sand is its own look
