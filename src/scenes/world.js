@@ -2517,7 +2517,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // Fast travel resets the anchor (PreventEnemySpawns parity - DFU
   // suppresses the whole post-travel window).
   let _lastEncMinutes = null;
-  function runEncounterTick(playerFeet, simMinutesEnd = null) {
+  function runEncounterTick(playerFeet, simMinutesEnd = null, isResting = false) {
     // RESTX2: online, playerTicker.classicMinutes stands (WORLD5 - playerTicker.advance in shared.js fabricates
     // nothing under the shared clock), so reading it here under a rest made `span` zero and the loop below never
     // rolled - no online rest could be interrupted. `simMinutesEnd`, when given, is the rest session's own
@@ -2595,7 +2595,36 @@ export async function bootWorld(canvas, renderer, params, status) {
       // together would roll their own camp on the same tick and the
       // wilderness would fill with duplicates stacked on each other.
       // Exactly one player within 100m proceeds; the rest skip the roll.
-      if (getPref('wildernessCamps') !== false && amGroupRollOwner(online?.id ?? null, playerFeet, peersNear())) {
+      // CAMP1-REST (2026-09-18, Mac, the wilderness-resting hand-off): NO
+      // GROUP ROLL UNDER A REST. The rest's hourly check asks
+      // `areEnemiesNearby(foes, { resting: true })`, which reports a foe that
+      // has SEEN the player at any range, and otherwise only an unseen one
+      // inside RESTING_DISTANCE (12) - sight first, distance as the fallback.
+      // A lone wanderer is minted by the arm above facing the player ("LookAt
+      // player") in a 10..20 band, so it trips the SIGHT arm on its first
+      // senses tick and breaks the rest: DFU's own flow, which the dungeon's
+      // own rest roll leans on deliberately. A group is minted differently on
+      // both counts - every member faces the ANCHOR rather than the player,
+      // and the whole band (14..26) stands outside the proximity fallback - so
+      // a group whose members happen to face away is the one spawn that can
+      // land in total silence, no interrupt and no line, and be standing over
+      // the player on waking. NOT because the world is frozen: WINFOE1 drives
+      // `exteriorFoes.update` on the frame's own dt under a window, so most
+      // groups DO wake the sleeper through the sight arm, and it is the quiet
+      // minority that reads as a bug. Mac's call is to make groups a
+      // walking-around feature rather than to yaw them at a sleeper, so the
+      // roll stands down while the tick is servicing a rest. The lone-wanderer
+      // roll above is untouched and still interrupts; ITS `isResting` is the
+      // DUNGEON rest table's flag (encounters.js' inDungeon arm), which
+      // dungeonContext passes for its own rest, and is not this one. CAMP1's
+      // other trigger, the chunk-load roll, needs no gate: it fires on a pixel
+      // crossing and a resting player crosses none.
+      // ONLINE COST, taken knowingly: the group roll belongs to the elected
+      // owner (`amGroupRollOwner`), and every client elects the same one, so
+      // while the owner sleeps the whole cluster rolls no groups. Handing the
+      // roll to the next waking peer needs a rest flag on the wire, which this
+      // does not add.
+      if (!isResting && getPref('wildernessCamps') !== false && amGroupRollOwner(online?.id ?? null, playerFeet, peersNear())) {
         const campHit = rollCampEncounter({
           gameMinutes: _lastEncMinutes + l + 1, inside: _m !== 'exterior',
           inLocationRect: _musicInLocationRect(),
@@ -3521,7 +3550,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // whole rested night's rolls fire in one burst the moment the
     // window closes, which is AUDIT 24 wave 30's finding about the
     // magic rounds, one system over.
-    advanceMinutes: (n, sharedEnd) => { playerTicker.advance(n); runEncounterTick(walkMode && playerSpawned ? player.pos : cam.pos, sharedEnd); },   // RESTX2: sharedEnd is the session's local sim-minutes online, so the roll still gets a fresh `now` while the real clock stands
+    advanceMinutes: (n, sharedEnd) => { playerTicker.advance(n); runEncounterTick(walkMode && playerSpawned ? player.pos : cam.pos, sharedEnd, true); },   // CAMP1-REST: every tick this drives IS a rest   // RESTX2: sharedEnd is the session's local sim-minutes online, so the roll still gets a fresh `now` while the real clock stands
     // TickRest :379 - QuestMachine.Instance.Tick() rides the same
     // sub-tick as the clock, UNPACED (DFU calls the machine directly,
     // not through QuestMachine.Update's ticksPerSecond timer). This
@@ -4453,8 +4482,20 @@ export async function bootWorld(canvas, renderer, params, status) {
       // building's interiorOverlay, a dungeon's activeOverlay).
       if (mode !== 'exterior') modes?.forceExitToExterior();
       const px = playerTravelPixel();
+      // D-ONLINE2 (2026-09-18, Mac: "make sure privateers hold does not apply to the respawn mechanic - that
+      // would just skip the dungeon when you die and spawn in front of it"): THE TUTORIAL DUNGEON IS THE ONE
+      // DUNGEON THE DOOR OUT IS NOT A MERCY. D-ONLINE1 respawns a dungeon death at the dungeon's own pixel -
+      // right outside the door the player came in by - which is the whole point everywhere else and a free pass
+      // out of Privateer's Hold, the one dungeon the game means you to solve before you leave it. Read off the
+      // SAME configured start cell the classic start itself reads (StartCellX/Y, 109/158 shipped), never a
+      // hardcoded pixel, so a custom start cell is honoured here exactly as it is there. Falling through costs
+      // the player nothing they were owed: the else arm below is the ordinary death search, and
+      // nearestSafeLocation only ever answers a temple, a city or a graveyard, so it cannot bounce them back
+      // into the Hold. (Tagged D-ONLINE2, not PH1 - PH1 is the collider's one-way floor, and one tag is one law.)
+      const isPrivateersHold = wasInDungeon
+        && px.x === getInt('Startup', 'StartCellX') && px.y === getInt('Startup', 'StartCellY');
       let kind, land = px;
-      if (wasInDungeon) kind = 'dungeon';   // the door out: the pixel already under the player
+      if (wasInDungeon && !isPrivateersHold) kind = 'dungeon';   // the door out: the pixel already under the player
       else {
         const mapTable = maps.getRegion(_questRegionIndex())?.mapTable ?? [];
         const safe = nearestSafeLocation(mapTable, px);

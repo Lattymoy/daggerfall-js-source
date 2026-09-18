@@ -71,7 +71,12 @@ test('D-ONLINE1 by source: the world host snapshots "was this death online" at t
   const fn = w.slice(ri, w.indexOf('\n  }\n', ri));
   assert.match(fn, /_deathWasOnline = null;/, 'armed fresh for the next death');
   assert.match(fn, /if \(mode !== 'exterior'\) modes\?\.forceExitToExterior\(\);/, 'a dungeon AND a building interior are left first - the exit clears the modal host\'s death screen with its slot');
-  assert.match(fn, /if \(wasInDungeon\) kind = 'dungeon';/, 'dead underground: the door out is the pixel already under the player');
+  assert.match(fn, /if \(wasInDungeon && !isPrivateersHold\) kind = 'dungeon';/, 'dead underground: the door out is the pixel already under the player - unless it is the tutorial dungeon (D-ONLINE2)');
+  // D-ONLINE2: the exception, and that it is read off the CONFIGURED start cell rather than a hardcoded pixel,
+  // so a custom Startup.StartCellX/Y moves it. A death in the Hold takes the ordinary search below instead, and
+  // that search answers only a temple, a city or a graveyard - never a dungeon - so it cannot land back inside.
+  assert.match(fn, /const isPrivateersHold = wasInDungeon\s*\n\s*&& px\.x === getInt\('Startup', 'StartCellX'\) && px\.y === getInt\('Startup', 'StartCellY'\);/, 'the tutorial dungeon is the configured start cell, not a magic number');
+  assert.match(read('src/systems/deathRespawn.js'), /'temple'|'city'|'graveyard'/, 'and the fall-through search never answers a dungeon');
   assert.match(fn, /const safe = nearestSafeLocation\(mapTable, px\);\s*\n\s*if \(safe\) \{ land = safe\.mapPixel; kind = safe\.kind; \}\s*\n\s*else kind = 'city';/, 'otherwise the nearest of the three, and a region with none stands where they fell');
   assert.match(fn, /await _teleportToPixel\(land\.x, land\.y, null, \{ reposition: REPOSITION\.RandomStartMarker \}\);/, 'the landing is a start marker, as TeleportAway names it - not the tile\'s dead centre');
   assert.match(fn, /_lastEncMinutes = Math\.floor\(playerTicker\.classicMinutes\);/, 'no encounter catch-up across the trip');

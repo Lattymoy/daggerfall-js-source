@@ -3957,6 +3957,14 @@ export function createFpArm() {
       return followCam;
     },
     thirdActive,
+    /** TORCH-VIS: whether the carried light is REALLY in this arm's hand this frame - `torchVisible()`, which is
+     *  the reference's own three conditions at once: a Light resolved into the carried-left slot (a rig with no
+     *  LIGH record, no attached mesh or no Shield Bone has none), the light lit, and the stance's carried-left
+     *  visible. The weapon rig's draw ladder asks it before it lets a sheathed player through on this lane: the
+     *  ENTITY knowing a light is equipped is not the same question, and answering the wrong one paints empty
+     *  hands (a lantern, whose held art is the classic lane's alone, is exactly that case). `status()` has carried
+     *  this as `torchShown` all along - this is the same read without building a thirty-field card for it. */
+    torchShown: () => torchVisible(),
     /** Animation::upperBodyReady (animation.cpp:1846-1857), which is
      *  what the camera's queued-mode gate consults (camera.cpp:135):
      *  a stable stance, no action section in flight, no build in

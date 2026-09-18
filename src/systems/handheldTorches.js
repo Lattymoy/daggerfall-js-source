@@ -114,6 +114,10 @@ export const SECONDS_PER_CONDITION = 20;
 const T = TEMPLATES;
 const isTorch = (it) => it?.templateIndex === T.Torch;
 const isLantern = (it) => it?.templateIndex === T.Lantern;
+/** TORCH-VIS: the mod's own "is this a light you HOLD" - the two templates its hand law and its sprite both ask
+ *  about. Exported because the weapon rig's draw ladder must ask the SAME question to know a lit hand from an
+ *  empty one, and a second spelling of it there is how the sprite and the ladder drift apart. */
+export const isHeldLight = (it) => isTorch(it) || isLantern(it);
 
 // ---- LoadSettings (IL 0xa44-0x1024): the fields, with the mod's own multipliers ----
 /** The clone's settings from the store, as LoadSettings derives them
