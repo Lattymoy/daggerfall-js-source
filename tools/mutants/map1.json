@@ -217,10 +217,10 @@
   ]
  },
  {
-  "name": "url-off-public",
+  "name": "sprite-url-document-relative",
   "file": "src/ui/heldMap.js",
-  "old": "export const HELD_MAP_URL = 'art/held-map.png';",
-  "new": "export const HELD_MAP_URL = '/art/held-map.png';",
+  "old": "  u.pathname = u.pathname.replace(/\\/(?:assets|src)\\/.*$/, '/');",
+  "new": "  u.pathname = u.pathname.replace(/\\/(?:assets)\\/.*$/, '/');",
   "tests": [
    "test/heldmap.test.js"
   ]

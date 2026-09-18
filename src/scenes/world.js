@@ -5577,7 +5577,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // Asked per open, never snapshot: the arm can be built, unloaded or
       // hidden between two presses of the key.
       holder: {
-        available: () => !!weaponRig?.armsDrawn?.(),
+        available: () => !!weaponRig?.armsAvailable?.(),   // MAP-FIELD: WOULD it draw - the arm is sheathed until it takes the sheet
         hold: (spec, opts) => !!weaponRig?.holdPaper?.(spec, opts),
         release: () => { weaponRig?.releasePaper?.(); },
         // AUDIT-MAP2: corners only from a frame the arm DREW - a paralysed,

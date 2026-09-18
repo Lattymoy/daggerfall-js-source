@@ -26,7 +26,7 @@ import {
 } from '../src/ui/overworldModel.js';
 import { createTravelMapWindow, travelMapDoorReady } from '../src/ui/travelMapDoor.js';
 import {
-  HeldMapWindow, HELD_MAP_URL, SPRITE, PAPER, THUMB_ZONES, HAND_LUM, keyHandPixels, rgbaCss, wheelPixels,
+  HeldMapWindow, HELD_MAP_URL, appRootFrom, SPRITE, PAPER, THUMB_ZONES, HAND_LUM, keyHandPixels, rgbaCss, wheelPixels,
 } from '../src/ui/heldMap.js';
 import { simplifyChain, traceChains } from '../src/ui/overworldModel.js';
 import { travelMapMarkedMapId, setTravelMapMarkedMapId } from '../src/systems/travelMapState.js';
@@ -970,7 +970,27 @@ test('MAP1 window: pan, wheel and keys move the VIEW under a clamp, the search g
 });
 
 test('MAP1: the sprite is the port\'s own under the doctrine row, the paper and thumb geometry are the painting\'s, and the hand key keeps only what is darker than the sheet (mutants: key-threshold-moved, key-clears-hands, url-off-public)', () => {
-  assert.equal(HELD_MAP_URL, 'art/held-map.png');
+  // MAP-FIELD (2026-09-18, Mac: "The sprite I gave to be used is nowhere
+  // to be seen at all"): THE URL IS RESOLVED FROM THE MODULE, NOT THE
+  // DOCUMENT. It was the bare relative 'art/held-map.png' - and this pin
+  // asserted that string, and a mutant that made it absolute DIED here,
+  // so the wrong answer was locked in twice over. The game's document is
+  // /play/index.html: the browser asked for /play/art/held-map.png, got
+  // the page back instead of a PNG, and the window stood with no
+  // parchment and no hands. The build's base is './', so there is no
+  // absolute path to hardcode; the module's own URL carries the root.
+  assert.ok(HELD_MAP_URL.endsWith('/art/held-map.png'), `the sprite hangs off a root: ${HELD_MAP_URL}`);
+  assert.notEqual(HELD_MAP_URL, 'art/held-map.png', 'never the bare document-relative form - that is the bug');
+  assert.equal(appRootFrom('https://daggerfalljs.dev/assets/main-abc123.js'), 'https://daggerfalljs.dev/',
+    'a build serves the module from <root>/assets/');
+  assert.equal(appRootFrom('https://example.test/sub/path/assets/main-abc123.js'), 'https://example.test/sub/path/',
+    '...and under a project sub-path, which is why base is relative');
+  assert.equal(appRootFrom('http://localhost:5173/src/ui/heldMap.js'), 'http://localhost:5173/',
+    'the dev server serves it from <root>/src/');
+  assert.equal(appRootFrom('http://localhost:5173/src/ui/heldMap.js?t=1700000000'), 'http://localhost:5173/',
+    '...with the dev server\'s own cache-busting query cut off');
+  assert.equal(new URL('art/held-map.png', appRootFrom('https://daggerfalljs.dev/assets/main-abc123.js')).href,
+    'https://daggerfalljs.dev/art/held-map.png', 'and the sprite lands at the site root, whatever page asked');
   assert.ok(existsSync(new URL('../public/art/held-map.png', import.meta.url)), 'the file ships');
   assert.match(read('test/doctrine.test.js'), /\['public\/art\/held-map\.png', "OURS - Mac's own painting/, 'under the OURS row');
   assert.deepEqual(SPRITE, { w: 1448, h: 1086 });

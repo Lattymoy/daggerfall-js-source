@@ -641,5 +641,23 @@
   "tests": [
    "test/heldmap.test.js"
   ]
+ },
+ {
+  "name": "sheathed-arm-does-not-draw",
+  "file": "src/combat/weaponRig.js",
+  "old": "    const sheetOnly = !shown() && fpArm.active() && fpArm.holdingPaper();\n    if (paralyzed || (!shown() && !torchOnly && !sheetOnly)) return;",
+  "new": "    if (paralyzed || (!shown() && !torchOnly)) return;",
+  "tests": [
+   "test/map3_heldpose.test.js"
+  ]
+ },
+ {
+  "name": "holder-asks-did-it-draw",
+  "file": "src/scenes/world.js",
+  "old": "        available: () => !!weaponRig?.armsAvailable?.(),   // MAP-FIELD: WOULD it draw - the arm is sheathed until it takes the sheet",
+  "new": "        available: () => !!weaponRig?.armsDrawn?.(),",
+  "tests": [
+   "test/map3_heldpose.test.js"
+  ]
  }
 ]

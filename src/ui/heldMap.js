@@ -115,7 +115,28 @@ import { bindings } from './input.js';
 import { actionForCode } from '../systems/inputActions.js';
 
 // ── THE SPRITE (Mac's, public/art/held-map.png) ──────────────────
-export const HELD_MAP_URL = 'art/held-map.png';
+/** MAP-FIELD (2026-09-18, Mac: "The sprite I gave to be used is nowhere
+ *  to be seen at all"): THE SITE ROOT, READ OFF THIS MODULE.
+ *
+ *  The sprite lives in `public/`, so it is served at `<root>/art/held-map.png`.
+ *  A bare relative `art/held-map.png` is resolved against the DOCUMENT,
+ *  and the game's document is `/play/index.html` - so the browser asked
+ *  for `/play/art/held-map.png`, the host answered with the page itself,
+ *  the decode failed, `onload` never fired, and the window stood with no
+ *  parchment and no hands: ink on black. The build's `base` is './', so
+ *  there is no absolute path to hardcode either.
+ *
+ *  The MODULE's own URL knows where the root is under any base: a build
+ *  serves it from `<root>/assets/`, the dev server from `<root>/src/`.
+ *  Cutting that segment off gives the root, and the sprite hangs off it.
+ *  Pure, so the pin can drive it with the shapes both lanes produce. */
+export function appRootFrom(moduleUrl) {
+  const u = new URL(moduleUrl);
+  u.search = ''; u.hash = '';
+  u.pathname = u.pathname.replace(/\/(?:assets|src)\/.*$/, '/');
+  return u.href;
+}
+export const HELD_MAP_URL = new URL('art/held-map.png', appRootFrom(import.meta.url)).href;
 /** Its own pixels, and the stage's aspect. */
 export const SPRITE = Object.freeze({ w: 1448, h: 1086 });
 /** The parchment's rectangle, as fractions of the sprite - measured
