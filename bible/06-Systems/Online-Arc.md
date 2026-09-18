@@ -4603,7 +4603,7 @@ with a marked top-left pixel on its last row).
 
 *"During online play, certain enemies cant be damaged."*
 
-`src/scenes/worldModes.js:5080` read, on one physical line:
+`src/scenes/worldModes.js:5086` read, on one physical line:
 
 ```js
 useMagicItem: (item) => host.useMagicItem?.(item),   // HT1: the torch keys onFoeHit: (hit) => host.onFoeHit?.(hit),   // WORLD2: a puppet's blow goes to the host
@@ -6839,9 +6839,9 @@ flagged here by name; the dungeon's foes are the host's stream
 
 Not verified in a browser: no online session and no second player
 exist in this container; the whole path is pinned by execution across
-two real pools netted together (`test/watch1.test.js`, 5 pins) and
-`tools/mutants/watch1.json` (33 mutants, 32 dead, 1 equivalent as
-recorded). AUDIT WORLD6b-iii(b)'s C1 source pin, WORLD6b's net pin,
+two real pools netted together (`test/watch1.test.js`, ~~5 pins~~ 6
+after AUDIT ALL) and `tools/mutants/watch1.json` (~~33 mutants, 32
+dead~~ 39, 38 dead after AUDIT ALL, 1 equivalent as recorded). AUDIT WORLD6b-iii(b)'s C1 source pin, WORLD6b's net pin,
 WORLD6b-ii's and WORLD6b-iii(a)'s spelling pins, WORLD6b-iii(c)'s
 record pin, WORLD6b-iii(e)'s owner-door pin and WORLD2's count pin
 re-aimed.
@@ -6944,16 +6944,31 @@ classic closure is a real-time lockout of hours, for everyone.
 hour, holidayId, online })` layers the shared-world policy above it and
 answers BOTH - `classicOpen`, what untouched Daggerfall says, and `open`,
 what this running world says - with `staffing` as data (CLOSED, CLASSIC,
-ONLINE_SHIFT). On the `?online` page (`onlineLane.isOnlinePage`, the
-lane's one answer), and for a SHOP alone, a classic closure is covered
-by a continuous relief shift. `isBuildingOpen` and `buildingIsUnlocked`'s
+ONLINE_SHIFT). While the shared clock stands (`worldTick.sharedClockOn`
+- AUDIT ALL O1: the clock is the reason for the shift and the one
+predicate every clock-derived online law reads; the first cut read the
+URL, which a dev door can carry with no clock behind it), and for a SHOP
+alone, a classic closure is covered by a continuous relief shift. `isBuildingOpen` and `buildingIsUnlocked`'s
 shop arm route through it, so the door, the entry-time `insideOpenShop`
 latch, the shelves and the interior people stand on one rule; houses,
 guild halls, temples, palaces and ships keep R1's rules online, and
-offline nothing moves.
+offline nothing moves. A restored interior (AUDIT ALL O2: Play Online
+always begins on a restore, and a save taken inside a shop entered while
+classically closed carried the latch `false` - the door opened, the
+shelf opened in STEALING mode, no clerk stood) keeps the saved latch and
+adds the effective hours at the restore, never taking the latch away
+(DFU's own law for the saved record). The other direction is recorded:
+a save taken online inside a shop at 03:00 carries `true` home, and an
+offline load stands its clerk in a shop DFU has locked until the player
+leaves. The classic closures are 45 real minutes (the alchemist's night)
+and a two-hour real outage on Suns Rest at TimeScale 12, not a real day.
 
-**Recorded, not carried.** The night clerk is not drawn distinctly - the
-existing shop people stand the shift; ONLINE_SHIFT is the hook for that
+**Recorded, not carried.** The Bank (8:00-15:00) and the Library
+(9:00-23:00) are not shops and keep their hours online: a night player
+can shop but cannot bank or read - a follow-up if wanted (the tavern is
+0/25, never closed, and OL3 prices the stay). The night clerk is not
+drawn distinctly - the existing shop people stand the shift; ONLINE_SHIFT
+is the hook for that
 presentation slice. The shared ECONOMY (one region memory, one owner
 walking the day, the reputation term) is the STOP list's open slice
 still. Not verified in a browser: no online session exists in this
@@ -6988,11 +7003,22 @@ day)` in `systems/worldTick.js`:
 - every day since is walked with that day's generator (`DAY_SALT
   .prices`), one roll a region, region-major - DFU's own step
   (`priceWalkStep`, 51/50 up on a passed roll, 49/50 down, clamped to
-  250..4000) with the merchants' tilt at ZERO. The tilt is dropped
-  because the powers are each player's (quests move them; Multiplayer
-  .md's first lock) - the one input the walk had that could not be the
-  world's. What is left is exactly the mean reversion around 1000 that
-  DFU's own comment describes;
+  250..4000) with the merchants' tilt from the game's own BASE powers
+  (AUDIT ALL E1 - the first cut set the tilt to ZERO because the LIVE
+  powers are each player's, quests move them; but at zero the index
+  never left ~500..1600 in twenty simulated years, so PricesHigh and
+  PricesLow could never light online and The Merchants' power never
+  took its price bump in `regionPower.js` - the only consumer of those
+  flags). The base powers are FACTION.TXT's, identical on every unmodded
+  client, so `worldPriceTiltOf` over the talk host's FILE dict (never
+  the player's store) answers `trunc((merchants - province) / 5)` as
+  DFU does, and null where DFU walks nothing - a region with no
+  Province faction, or a world with no Merchants; the day's roll is
+  still drawn for every region, DFU's stream position. The host installs
+  it once FACTION.TXT is read (`setWorldPriceTilt`), which starts the
+  world over from the epoch; until then the walk is untilted (a boot's
+  first seconds). A MODDED FACTION.TXT desyncs the shared economy;
+  recorded, not guarded;
 - cached by day and walked forward; a day behind the cache is rebuilt
   from the epoch; a day before the epoch reads the epoch's. Cold or
   warm, the day's answer is the day's: catching up equals having
@@ -7008,8 +7034,11 @@ with the clock and removes it with it. The player's `regionPrices` are
 never written online: the save keeps its own economy for its own world,
 and offline DFU's own walk, tilt and all, resumes from it. `runDayChange`
 online walks no prices; it applies the CONDITION half (PricesHigh over
-2000, PricesLow under 500, the normal band clearing both - the rumours'
-and the court's inputs, the player's own store) from the world's index,
+2000, PricesLow under 500, the normal band clearing both - the inputs
+of The Merchants' weekly power bump in `regionPower.js`, their only
+consumer; the player's own store) from the world's index, for the
+regions DFU's own walk reaches (a Province faction in the player's
+store; no Merchants, no walk, no flags - AUDIT ALL E8),
 one day at a time, with the day's own generator (`DAY_SALT.conditions`)
 for the flag's duration draw - so two players who walked different
 spans read the same flags today.
@@ -7030,11 +7059,105 @@ walk and the world's; `dayRng` is the day's generator whoever asks, and
   the seam and are the world's.
 - A save that went online carries its own prices home unchanged: the
   world's economy is read, never copied.
-- Offline the merchants' tilt still applies (DFU's own).
+- Offline the merchants' tilt is the LIVE one (DFU's own).
+- The trade window's price now moves under the player at a day boundary
+  with the window open (AUDIT ALL E3, a change in kind): the source
+  reads the raw shared clock, where the player's own walk was gated
+  behind the tick a held window stops. Once every two real hours, one
+  step (<=2%), and a committed price is captured before the Yes/No box,
+  so no transaction bills a number it did not show.
+- Before the relay's welcome corrects the clock offset, a client a few
+  seconds off reads the neighbouring day's index across a boundary
+  (AUDIT ALL E6): one step, self-healing.
+- A rebuild from the epoch grew without bound (twelve game days a real
+  day); a checkpoint every 512 days bounds it (AUDIT ALL E4).
 
-No wire change, no relay change: `RELAY_VERSION` stands at `world81`.
-Not verified in a browser: no online session exists in this container;
-`test/econ1_world_prices.test.js` (4 pins) drives the world's function,
-the seam, the day change online and offline, and the sources;
-`tools/mutants/econ1.json` (15 mutants, 15 dead). WORLD6b's and AUDIT
-WORLD6b C4/C5's day-walk pins re-aimed to the world's prices.
+No wire change, no relay change of this slice's (`RELAY_VERSION` is
+`world82` after the main merge - see MERGE below). Not verified in a
+browser: no online session exists in this container;
+`test/econ1_world_prices.test.js` (6 pins) drives the world's function,
+the seam, the day change online and offline, the tilt and the
+checkpoints; `tools/mutants/econ1.json` (27 mutants, 25 dead, 2
+equivalent as recorded). WORLD6b's and AUDIT WORLD6b C4/C5's day-walk
+pins re-aimed to the world's prices.
+
+## MERGE - main onto this branch (2026-09-17), recorded after the fact
+
+Between WATCH1's audit and OL4, `origin/main` had moved twice (PR #243,
+#244) and was merged in (a28a17e): 25 conflicts, every one citation
+line drift, resolved by taking main's side whole and re-applying by hand
+what that dropped - the dungeon host's `foeDeps.bumpAtkCount` fold (a
+real code change that rode a conflicted file). Two things went wrong
+and were found by AUDIT ALL, not by the gates:
+
+- **`citeShift` ran against a stale base mid-merge** - the hazard
+  Hardening.md writes down ("`citeShift` must not run mid-merge") -
+  and DOUBLE-SHIFTED eleven citations into `cityGuards.js`,
+  `exteriorFoes.js` and `enemyEntity.js` that the branch's own commits
+  had already re-aimed; `test/citedrift.test.js` sweeps none of them.
+  Restored to their true lines at AUDIT ALL.
+- **The relay version row was rewritten in place.** The merge moved one
+  comment line in `wire.js` under `world81`, and OL4's commit relabelled
+  `world81` with the new bytes - SLAM5 verbatim, the thing the version
+  pin exists to prevent, and two commits shipped with that pin red.
+  `world81` is restored to the audit's bytes and `world82` names
+  today's; the worker needs a redeploy with nothing new to do.
+
+## AUDIT ALL (2026-09-18, Mac: "Lets audit everything so far") - four opus lenses over the branch
+
+Four lenses over everything since the WATCH1 audit: the audit's own fixes
+(A), OL4 (O), ECON1 (E), and the merge with the records (M). Every
+finding reproduced against the real modules before it was paid.
+
+**A - the audit's own fixes.** A1 (REGRESSION, severe): the per-class
+pending count opened an unbounded puppet stand - a peer re-wording a
+pending build's record without `t` (the wire makes it optional) moved
+the build out of its class's count, and six frames stood sixty watchmen;
+the old class-blind count could not be gamed. Paid: a pending build's
+species is fixed at the build. A3 (the disease one level up): the
+frame's trim cut the watch first past 64 live records, so a criminal
+with a large roll streamed no watch at all; paid: the watch's live share
+is reserved as its puppet share is. B2: the melee reach gate's static
+envelope fit, but its headroom (~1.1 m) was less than the stream's lag
+(a watchman's stride in one foes interval plus the pose gap), so a
+chasing blow on a running watchman vanished at the owner without a
+word; paid: the watchman's own stride in one interval joins the reach.
+A4: a peer's killing shaft put one Arrow into the body A3 had just
+emptied; paid. A6 (pre-existing): `cityGuards.restoreWorld` re-rolled
+every standing watchman's Range(3,7) on a quickload (a free difficulty
+re-roll; online the streamed level moved and every reader rebuilt its
+puppet); paid through A5's `exactLevel`, the snapshot carrying the level.
+Sound: the roster's frame (the floating origin), the lazy roster read,
+the one-home fold, the empty body's loot line, a peer's kill and the
+death event, the other hosts.
+
+**O - OL4.** O1: the whole feature hung on two unpinned default
+parameters keyed on the URL; the predicate is the shared clock now (one
+home with RESTX2, OL3, ECON1), pinned and mutated. O2: a restored
+interior kept the save's closed-shop latch, so every online session that
+began inside a closed shop opened its shelves in stealing mode with no
+clerk; paid (the latch is only ever added to at a restore). Records: the
+outage's real length, the Bank and the Library at night, the latch's
+offline direction, the seam's contract pinned.
+
+**E - ECON1.** E1 (the one that mattered): with the tilt at zero the
+index never left ~500..1600, the flags never lit and The Merchants'
+power never took its bump - paid with the world's tilt off the file's
+base powers. E2: the player's walk leaned on the seam's lazy init the
+source skips (a latent throw); paid. E4: the unbounded rebuild;
+checkpoints. E8: the online flag arm reached regions DFU never walks;
+paid. E3/E6: the mid-window step and the pre-welcome offset, recorded.
+E5: the records named consumers of the flags that do not exist; fixed.
+
+**M - the merge and the records.** Eleven double-shifted citations, the
+version row rewritten in place (see MERGE above), the WATCH1 Ledger
+row's "RELAY_VERSION stands", the Testing.md row's "RELAY_VERSION
+unmoved", four Port-Status ordinals one low and its "eight together"
+count four short, `buildTag.js` carrying a stamp for a commit the branch
+does not contain, a stale cap comment. All corrected here.
+
+Not verified in a browser: no online session exists in this container.
+Pins: `test/watch1.test.js` (6), `test/lockpicking.test.js` (9),
+`test/econ1_world_prices.test.js` (6); mutants: watch1 39 (38 dead, 1
+equivalent), ol4 12 (12 dead), econ1 27 (25 dead, 2 equivalent as
+recorded).

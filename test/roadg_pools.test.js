@@ -155,7 +155,7 @@ test('ROAD-G G1(a): the door is gated on the PLAYER being the source (F035\'s la
   // it. The gate is DFU's `sourceEntityBehaviour ==
   // PlayerEntityBehaviour` (DaggerfallEntityBehaviour.cs:203) wrapping
   // the whole aggro block at :250-261: a watchman struck by a rat
-  // (the cross-pool `hurtFromFoe` minted at cityGuards.js:300) or
+  // (the cross-pool `hurtFromFoe` minted at cityGuards.js:295) or
   // killed by a fall (EnemyMotor.ApplyFallDamage calls DecreaseHealth
   // and nothing else, :1398-1401) must turn NOBODY.
   //
@@ -225,7 +225,7 @@ test('ROAD-G G1(a): a ZERO-DAMAGE player ARROW reaches the watch\'s door too', (
 
 test('ROAD-G G1(a): all three arrow hosts ROUTE the hostility seam by pool', () => {
   // The door is PUBLIC now, as the encounter pool's has always been
-  // (exteriorFoes.js:1750), so every host can reach it.
+  // (exteriorFoes.js:1759), so every host can reach it.
   const cg = read('src/scenes/cityGuards.js');
   assert.match(cg, /restoreWorld, removeGuard, handleAttackFromPlayer,/,
     'the watch exports its hostility pair on the returned surface');

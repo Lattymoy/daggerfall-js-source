@@ -219,14 +219,14 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
   const activeCount = () => guards.filter((g) => !g.dead).length;
 
   /** SpawnCityGuard: the C17 class-foe recipe at a position/facing. */
-  async function spawnGuardAt(pos, yaw, attackerFeet = null) {
+  async function spawnGuardAt(pos, yaw, attackerFeet = null, { level = null } = {}) {   // AUDIT ALL A6: a restore hands the saved level in as final
     const basics = ENEMY_BASICS[GUARD_MOBILE_TYPE];
     const pending = { feet: [pos[0], pos[1] + 0.1, pos[2]] };   // AUDIT-39r: shifted by offsetAll until the record lands
     spawning.push(pending);
     const gen = epoch;   // AUDIT-39r: the world this guard is being posted to
     try {
       const career = await ensureCareer();
-      const entity = makeEnemyEntity(GUARD_MOBILE_TYPE, basics, career, playerEntity.level);
+      const entity = makeEnemyEntity(GUARD_MOBILE_TYPE, basics, career, level ?? playerEntity.level, Math.random, { exactLevel: level != null });   // AUDIT ALL A6: a quickload re-rolled every standing watchman's Range(3,7) bonus - a free difficulty re-roll, and online the streamed `l` moved and every reader tore its puppet down
       // RF2: SetEnemyCareer's whole loot chain, one seam
       // (hostCombat.spawnEnemyLoot) - the table on the PLAYER's gender
       // (AUDIT 18; Knight_CityWatch has NO LootTableKey in DFU, so the
@@ -576,7 +576,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
    *  which arrowFlight.js calls unconditionally (arrowFlight.js:230)
    *  because `dealDamage` is inside its own `dmg > 0` fork - so the
    *  door is PUBLIC (the returned surface below), exactly as the
-   *  encounter pool's is (exteriorFoes.js:1772). */
+   *  encounter pool's is (exteriorFoes.js:1781). */
   function handleAttackFromPlayer(g, playerFeet = null) {
     if (!g?.ai) return;
     if (!g.ai.isHostile) makeAreaHostile?.();
@@ -1221,7 +1221,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       const wc = toNative(g.ai.feet);
       return {
         nativeX: wc.x, nativeZ: wc.z, y: g.ai.feet[1], yaw: g.ai.yaw,
-        health: g.entity.health, maxHealth: g.entity.maxHealth,
+        health: g.entity.health, maxHealth: g.entity.maxHealth, level: g.entity.level,   // AUDIT ALL A6: the level the bonus was rolled into
         magicka: g.entity.magicka ?? 0, fatigue: g.entity.fatigue ?? 0,
         items: (g.entity.items ?? []).map((it) => ({ ...it })),
         activeEffects: (g.entity.activeEffects ?? []).map(copyEffectEntry),
@@ -1232,7 +1232,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
   function restoreWorld(saved, fromNative, yOffset = 0) {
     for (const sg of saved ?? []) {
       const [lx, lz] = fromNative(sg.nativeX, sg.nativeZ);
-      spawnGuardAt([lx, sg.y + yOffset, lz], sg.yaw ?? 0, null).then((g) => {
+      spawnGuardAt([lx, sg.y + yOffset, lz], sg.yaw ?? 0, null, { level: Number.isFinite(sg.level) ? sg.level : null }).then((g) => {
         if (!g) return;
         g.entity.maxHealth = sg.maxHealth ?? g.entity.maxHealth;
         g.entity.health = Math.min(sg.health ?? g.entity.health, g.entity.maxHealth);

@@ -1,20 +1,110 @@
 [
-  { "name": "OL4-the-online-shift-never-opens", "file": "src/systems/buildingLocks.js",
-    "old": "  if (shop && online && !classicOpen) {", "new": "  if (false) {", "tests": ["test/lockpicking.test.js"] },
-  { "name": "OL4-every-building-takes-the-shift", "file": "src/systems/buildingLocks.js",
-    "old": "  if (shop && online && !classicOpen) {", "new": "  if (online && !classicOpen) {", "tests": ["test/lockpicking.test.js"] },
-  { "name": "OL4-offline-takes-the-shift-too", "file": "src/systems/buildingLocks.js",
-    "old": "  if (shop && online && !classicOpen) {", "new": "  if (shop && !classicOpen) {", "tests": ["test/lockpicking.test.js"] },
-  { "name": "OL4-suns-rest-is-a-real-time-outage", "file": "src/systems/buildingLocks.js",
-    "old": "  const classicOpen = classicBuildingOpen(type, hour) && !holidayClosed;\n  if (shop && online && !classicOpen) {", "new": "  const classicOpen = classicBuildingOpen(type, hour) && !holidayClosed;\n  if (shop && online && !classicOpen && !holidayClosed) {", "tests": ["test/lockpicking.test.js"] },
-  { "name": "OL4-the-classic-answer-is-rewritten", "file": "src/systems/buildingLocks.js",
-    "old": "    return { open: true, classicOpen: false, staffing: SHOP_STAFFING.ONLINE_SHIFT };", "new": "    return { open: true, classicOpen: true, staffing: SHOP_STAFFING.ONLINE_SHIFT };", "tests": ["test/lockpicking.test.js"] },
-  { "name": "OL4-the-staffing-word-is-the-day-shift", "file": "src/systems/buildingLocks.js",
-    "old": "    return { open: true, classicOpen: false, staffing: SHOP_STAFFING.ONLINE_SHIFT };", "new": "    return { open: true, classicOpen: false, staffing: SHOP_STAFFING.CLASSIC };", "tests": ["test/lockpicking.test.js"] },
-  { "name": "OL4-isBuildingOpen-drops-the-callers-word", "file": "src/systems/buildingLocks.js",
-    "old": "  return buildingHoursState(buildingType, { ...opts, hour }).open;", "new": "  return buildingHoursState(buildingType, { hour }).open;", "tests": ["test/lockpicking.test.js"] },
-  { "name": "OL4-the-unlock-ladder-drops-the-callers-word", "file": "src/systems/buildingLocks.js",
-    "old": "    return buildingHoursState(type, { hour, holidayId, online }).open;", "new": "    return buildingHoursState(type, { hour, holidayId }).open;", "tests": ["test/lockpicking.test.js"] },
-  { "name": "OL4-the-classic-close-hour-is-inclusive", "file": "src/systems/buildingLocks.js",
-    "old": "  return (OPEN_HOURS[buildingType] ?? 0) <= hour && (CLOSE_HOURS[buildingType] ?? 25) > hour;", "new": "  return (OPEN_HOURS[buildingType] ?? 0) <= hour && (CLOSE_HOURS[buildingType] ?? 25) >= hour;", "tests": ["test/lockpicking.test.js"] }
+  {
+    "name": "OL4-the-online-shift-never-opens",
+    "file": "src/systems/buildingLocks.js",
+    "old": "  if (shop && online && !classicOpen) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/lockpicking.test.js"
+    ]
+  },
+  {
+    "name": "OL4-every-building-takes-the-shift",
+    "file": "src/systems/buildingLocks.js",
+    "old": "  if (shop && online && !classicOpen) {",
+    "new": "  if (online && !classicOpen) {",
+    "tests": [
+      "test/lockpicking.test.js"
+    ]
+  },
+  {
+    "name": "OL4-offline-takes-the-shift-too",
+    "file": "src/systems/buildingLocks.js",
+    "old": "  if (shop && online && !classicOpen) {",
+    "new": "  if (shop && !classicOpen) {",
+    "tests": [
+      "test/lockpicking.test.js"
+    ]
+  },
+  {
+    "name": "OL4-suns-rest-is-a-real-time-outage",
+    "file": "src/systems/buildingLocks.js",
+    "old": "  const classicOpen = classicBuildingOpen(type, hour) && !holidayClosed;\n  if (shop && online && !classicOpen) {",
+    "new": "  const classicOpen = classicBuildingOpen(type, hour) && !holidayClosed;\n  if (shop && online && !classicOpen && !holidayClosed) {",
+    "tests": [
+      "test/lockpicking.test.js"
+    ]
+  },
+  {
+    "name": "OL4-the-classic-answer-is-rewritten",
+    "file": "src/systems/buildingLocks.js",
+    "old": "    return { open: true, classicOpen: false, staffing: SHOP_STAFFING.ONLINE_SHIFT };",
+    "new": "    return { open: true, classicOpen: true, staffing: SHOP_STAFFING.ONLINE_SHIFT };",
+    "tests": [
+      "test/lockpicking.test.js"
+    ]
+  },
+  {
+    "name": "OL4-the-staffing-word-is-the-day-shift",
+    "file": "src/systems/buildingLocks.js",
+    "old": "    return { open: true, classicOpen: false, staffing: SHOP_STAFFING.ONLINE_SHIFT };",
+    "new": "    return { open: true, classicOpen: false, staffing: SHOP_STAFFING.CLASSIC };",
+    "tests": [
+      "test/lockpicking.test.js"
+    ]
+  },
+  {
+    "name": "OL4-isBuildingOpen-drops-the-callers-word",
+    "file": "src/systems/buildingLocks.js",
+    "old": "  return buildingHoursState(buildingType, { ...opts, hour }).open;",
+    "new": "  return buildingHoursState(buildingType, { hour }).open;",
+    "tests": [
+      "test/lockpicking.test.js"
+    ]
+  },
+  {
+    "name": "OL4-the-unlock-ladder-drops-the-callers-word",
+    "file": "src/systems/buildingLocks.js",
+    "old": "    return buildingHoursState(type, { hour, holidayId, online }).open;",
+    "new": "    return buildingHoursState(type, { hour, holidayId }).open;",
+    "tests": [
+      "test/lockpicking.test.js"
+    ]
+  },
+  {
+    "name": "OL4-the-classic-close-hour-is-inclusive",
+    "file": "src/systems/buildingLocks.js",
+    "old": "  return (OPEN_HOURS[buildingType] ?? 0) <= hour && (CLOSE_HOURS[buildingType] ?? 25) > hour;",
+    "new": "  return (OPEN_HOURS[buildingType] ?? 0) <= hour && (CLOSE_HOURS[buildingType] ?? 25) >= hour;",
+    "tests": [
+      "test/lockpicking.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ALL-O1-buildingHoursState-defaults-offline",
+    "file": "src/systems/buildingLocks.js",
+    "old": "  online = sharedClockOn(),   // AUDIT ALL O1",
+    "new": "  online = false,   // AUDIT ALL O1",
+    "tests": [
+      "test/lockpicking.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ALL-O1-the-unlock-ladder-defaults-offline",
+    "file": "src/systems/buildingLocks.js",
+    "old": "  hour = 12, holidayId = -1, online = sharedClockOn(),",
+    "new": "  hour = 12, holidayId = -1, online = false,",
+    "tests": [
+      "test/lockpicking.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ALL-O1-opts-override-the-hour",
+    "file": "src/systems/buildingLocks.js",
+    "old": "  return buildingHoursState(buildingType, { ...opts, hour }).open;",
+    "new": "  return buildingHoursState(buildingType, { hour, ...opts }).open;",
+    "tests": [
+      "test/lockpicking.test.js"
+    ]
+  }
 ]

@@ -227,8 +227,8 @@
   {
     "name": "AUDIT-WATCH1-B2-every-blow-reaches-like-a-shaft",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "      const reach = (kind === 'melee' ? WEAPON_REACH : MAX_RANGED_DISTANCE) + PUPPET_LEAP_SLACK;",
-    "new": "      const reach = MAX_RANGED_DISTANCE + PUPPET_LEAP_SLACK;",
+    "old": "      const reach = (kind === 'melee' ? WEAPON_REACH : MAX_RANGED_DISTANCE) + PUPPET_LEAP_SLACK + (f.ai.speed ?? 0) * (FOES_MS / 1000);",
+    "new": "      const reach = MAX_RANGED_DISTANCE + PUPPET_LEAP_SLACK + (f.ai.speed ?? 0) * (FOES_MS / 1000);",
     "tests": [
       "test/watch1.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "AUDIT-WATCH1-B2-a-shaft-reaches-like-a-blade",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "      const reach = (kind === 'melee' ? WEAPON_REACH : MAX_RANGED_DISTANCE) + PUPPET_LEAP_SLACK;",
-    "new": "      const reach = WEAPON_REACH + PUPPET_LEAP_SLACK;",
+    "old": "      const reach = (kind === 'melee' ? WEAPON_REACH : MAX_RANGED_DISTANCE) + PUPPET_LEAP_SLACK + (f.ai.speed ?? 0) * (FOES_MS / 1000);",
+    "new": "      const reach = WEAPON_REACH + PUPPET_LEAP_SLACK + (f.ai.speed ?? 0) * (FOES_MS / 1000);",
     "tests": [
       "test/watch1.test.js"
     ]
@@ -294,6 +294,60 @@
     "new": "  const watchOf = (i) => watchList().find((g) => g.seq === i && !g.dead) ?? null;",
     "equivalent": true,
     "why": "applyHit's own `f.dead` gate refuses a body before onWatch is computed, and watchOf is reached from nowhere else; the dead gate itself is pinned (a blow on a killed watchman is refused).",
+    "tests": [
+      "test/watch1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ALL-A1-a-pending-builds-species-is-the-latest-word",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (_pupPending.has(key)) { _pupPending.set(key, { ...r, t: _pupPending.get(key).t }); continue; }",
+    "new": "      if (_pupPending.has(key)) { _pupPending.set(key, r); continue; }",
+    "tests": [
+      "test/watch1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ALL-A3-the-trim-cuts-the-watch-first",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      const live = [...allLive.filter((r) => r.t !== KNIGHT_CITYWATCH_ID).slice(0, CELL_FRAME_RECORDS_MAX - liveWatch.length), ...liveWatch];",
+    "new": "      const live = allLive.slice(0, CELL_FRAME_RECORDS_MAX);",
+    "tests": [
+      "test/watch1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ALL-A4-the-killing-shaft-lands-in-the-emptied-body",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "if (data.ar === 1 && kind === 'arrow' && !(onWatch && f.dead) && arrowsIn(",
+    "new": "if (data.ar === 1 && kind === 'arrow' && arrowsIn(",
+    "tests": [
+      "test/watch1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ALL-A6-a-restore-rolls-the-bonus-again",
+    "file": "src/scenes/cityGuards.js",
+    "old": "level ?? playerEntity.level, Math.random, { exactLevel: level != null });",
+    "new": "level ?? playerEntity.level);",
+    "tests": [
+      "test/watch1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ALL-A6-the-snapshot-drops-the-level",
+    "file": "src/scenes/cityGuards.js",
+    "old": "        health: g.entity.health, maxHealth: g.entity.maxHealth, level: g.entity.level,",
+    "new": "        health: g.entity.health, maxHealth: g.entity.maxHealth,",
+    "tests": [
+      "test/watch1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ALL-B2-no-lag-budget-on-the-melee-reach",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      const reach = (kind === 'melee' ? WEAPON_REACH : MAX_RANGED_DISTANCE) + PUPPET_LEAP_SLACK + (f.ai.speed ?? 0) * (FOES_MS / 1000);",
+    "new": "      const reach = (kind === 'melee' ? WEAPON_REACH : MAX_RANGED_DISTANCE) + PUPPET_LEAP_SLACK;",
     "tests": [
       "test/watch1.test.js"
     ]

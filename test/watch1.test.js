@@ -35,6 +35,8 @@ import { validFoeRecord, CELL_PUPPETS_MAX, CELL_WATCH_PUPPETS_MAX, CELL_FRAME_RE
 import { PLAYER_TARGET } from '../src/characters/enemyTargets.js';
 import { WEAPON_REACH } from '../src/combat/playerWeapon.js';
 import { MAX_RANGED_DISTANCE } from '../src/characters/enemyMotor.js';
+import { FOES_MS } from '../src/net/online.js';
+const PUPPET_LAG_SLACK = 2 + 12 * (FOES_MS / 1000);   // the pose slack plus the fastest watchman's stride in one foes interval - past this no blow can be honest
 
 const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
 
@@ -84,13 +86,13 @@ async function client(id, { withWatch = true } = {}) {
   const said = [];
   const guards = createCityGuards(rig(pe, said));
   const pool = createExteriorFoes(rig(pe, said));
-  const hits = [], hurt = [], peers = [];
+  const hits = [], hurt = [], peers = [], clock = { ms: 1000 };
   pool.setNet({
-    selfId: () => id, room: () => 'world:3,12', peers: () => peers, onPeerHit: (h, fate) => { hits.push(h); fate?.sent?.(); return true; },
+    selfId: () => id, room: () => 'world:3,12', peers: () => peers, now: () => clock.ms, onPeerHit: (h, fate) => { hits.push(h); fate?.sent?.(); return true; },
     toWire: (feet) => [feet[0], feet[1], feet[2]], toScene: (p) => [p[0], p[1], p[2]],
     ...(withWatch ? { watch: { list: () => guards.guards, hurt: (g, dmg, at, dir) => { hurt.push([g, dmg, at, dir]); guards.hurtGuard(g, dmg, at, dir, { fromPlayer: false, peer: true }); } } } : {}),
   });
-  return { pe, guards, pool, hits, hurt, peers, said };
+  return { pe, guards, pool, hits, hurt, peers, said, clock };
 }
 const summon = (c, at = [5, 0, 5]) => c.guards.spawnCityGuards(true, { playerFeet: [0, 0, 0], playerFwd: [0, 0, 1], pool: [{ pos: at, fwdYaw: 0, guard: true, disable: () => {} }] });
 const puppets = (pool) => pool.foes.filter((f) => !!f.puppet);
@@ -244,19 +246,24 @@ test('WATCH1: the OWNER lands a peer\'s blow on its watchman through the watch\'
   mac.pool.foesFrame(true);   // he rides, he is numbered
   const hp = g.entity.health;
   const near = [g.ai.feet[0] + 1, g.ai.feet[1], g.ai.feet[2]];
-  const blow = (extra = {}) => mac.pool.applyHit('bob-0002', { k: 'world:3,12', i: g.seq, dmg: 3, kind: 'melee', p: near, d: [0, 0, 1], ...extra });
+  const blow = (extra = {}) => { mac.clock.ms += 1000; return mac.pool.applyHit('bob-0002', { k: 'world:3,12', i: g.seq, dmg: 3, kind: 'melee', p: near, d: [0, 0, 1], ...extra }); };   // a second apart: the owner's blow budget (AUDIT WORLD6b-ii) is not this pin's subject
   assert.equal(blow(), false, 'a striker the hunt does not see (no roster): nothing');
-  mac.peers.push({ id: 'bob-0002', feet: [g.ai.feet[0] + WEAPON_REACH + 3, g.ai.feet[1], g.ai.feet[2]], height: 1.8 }); step(mac);
-  assert.equal(blow(), false, 'a peer standing past the player\'s own reach: nothing, whatever `p` says');
+  mac.peers.push({ id: 'bob-0002', feet: [g.ai.feet[0] + WEAPON_REACH + PUPPET_LAG_SLACK + 1, g.ai.feet[1], g.ai.feet[2]], height: 1.8 }); step(mac);
+  assert.equal(blow(), false, 'a peer standing past the player\'s own reach and the stream\'s lag: nothing, whatever `p` says');
+  mac.peers[0].feet = [g.ai.feet[0] + WEAPON_REACH + 2 + g.ai.speed * (FOES_MS / 1000) - 0.05, g.ai.feet[1], g.ai.feet[2]]; step(mac);   // past the static envelope (the pose slack is 2), inside the stride
+  assert.equal(blow(), true, 'AUDIT ALL B2: and lands from where the watchman could have walked since the frame the striker swung at (one foes interval at his speed, plus the pose slack)');
+  assert.equal(g.entity.health, hp - 3); mac.hurt.length = 0;
+  mac.peers[0].feet = [g.ai.feet[0] + WEAPON_REACH + PUPPET_LAG_SLACK + 1, g.ai.feet[1], g.ai.feet[2]]; step(mac);
   assert.equal(blow({ kind: 'arrow' }), true, 'a shaft from there lands (bowshot is the ranged band)');
-  assert.equal(g.entity.health, hp - 3);
-  mac.peers[0].feet = [g.ai.feet[0] + MAX_RANGED_DISTANCE + 3, g.ai.feet[1], g.ai.feet[2]]; step(mac);
+  assert.equal(g.entity.health, hp - 6); mac.hurt.length = 0;
+  mac.peers[0].feet = [g.ai.feet[0] + MAX_RANGED_DISTANCE + PUPPET_LAG_SLACK + 1, g.ai.feet[1], g.ai.feet[2]]; step(mac);
   assert.equal(blow({ kind: 'arrow' }), false, 'and not from past the ranged band');
   assert.equal(blow({ kind: 'spell' }), false);
   mac.peers[0].feet = near; step(mac);
+  const hp2 = g.entity.health;
   assert.equal(blow(), true, 'Bob\'s blow lands from beside him');
-  assert.equal(g.entity.health, hp - 6, 'through the watch\'s door');
-  assert.equal(mac.hurt.length, 2); assert.deepEqual(mac.hurt[1].slice(1, 4), [3, near, [0, 0, 1]], 'the blow\'s number, the striker\'s feet, its direction');
+  assert.equal(g.entity.health, hp2 - 3, 'through the watch\'s door');
+  assert.equal(mac.hurt.length, 1); assert.deepEqual(mac.hurt[0].slice(1, 4), [3, near, [0, 0, 1]], 'the blow\'s number, the striker\'s feet, its direction');
   assert.deepEqual(g.ai.knockbackDir, [0, 0, 1], 'the shove goes the way the blow went (C15, the gate is knockDir\'s)');
   assert.ok(g.ai.knockbackSpeed > 0);
   assert.equal(mac.pe.crimeCommitted, 4, 'Assault stands as it was: a blow on my watch by a peer is nothing of mine');
@@ -276,7 +283,7 @@ test('WATCH1: the OWNER lands a peer\'s blow on its watchman through the watch\'
   mac.pool.foesFrame(true);
   const rhp = rat.entity.health;
   assert.equal(mac.pool.applyHit('bob-0002', { k: 'world:3,12', i: rat.seq, dmg: 2, kind: 'melee' }), true);
-  assert.equal(rat.entity.health, rhp - 2); assert.equal(mac.hurt.length, 3, 'the watch\'s door was not asked again');
+  assert.equal(rat.entity.health, rhp - 2); assert.equal(mac.hurt.length, 2, 'the watch\'s door was not asked again');
   // a host whose net lists a watch but opens no door refuses the blow rather than throwing on a peer\'s frame
   const half = await client('hal-0004');
   await summon(half);
@@ -299,5 +306,55 @@ test('WATCH1 by source: world.js hands the pool the watch (the guards list, hurt
   assert.match(w, /dealDamage: \(f, d\) => \(cityGuards\.guards\.includes\(f\)/, 'by pool membership, never by species - a 146 puppet is the encounter pool\'s');
   assert.match(w, /onAttackFromPlayer: \(f\) => \(cityGuards\.guards\.includes\(f\)/);
   assert.equal(ef.includes('crimeCommitted'), false, 'the striker\'s pool has no crime machinery (exteriorfoes.test.js\'s sweep, still true)');
-  assert.ok(rd('src/net/wire.js').includes("export const RELAY_VERSION = 'world81'"), 'no wire SHAPE change (a record is a record) - the version moved because wire.js gained a reader constant, CELL_WATCH_PUPPETS_MAX, and the relay bundle\'s bytes are its law (SLAM8)');
+  assert.ok(rd('src/net/wire.js').includes("export const RELAY_VERSION = 'world82'"), 'no wire SHAPE change (a record is a record) - the version moved because wire.js gained a reader constant, CELL_WATCH_PUPPETS_MAX (world81), and again at the main merge for a moved comment line (world82): the relay bundle\'s bytes are its law (SLAM8)');
+});
+
+test('AUDIT ALL (the audit of AUDIT WATCH1): a pending build\'s species is fixed at the build - a peer re-wording a pending watch without `t` neither escapes the watch\'s count nor stands a foe (the cap held); the frame\'s trim reserves the watch\'s live share behind a full encounter roll; a peer\'s killing shaft puts no Arrow into the body it emptied; a restore keeps a watchman\'s level', async () => {
+  // A1: the species of a pending build
+  const bob = await client('bob-0002');
+  const watchRecs = (n, i0) => Array.from({ length: n }, (_, k) => ({ i: i0 + k, t: GUARD_MOBILE_TYPE, x: 0, f: [20 + k, 0, 20], y: 0, h: 30, d: 0, a: 0, m: 0, l: 5 }));
+  assert.equal(bob.pool.applyFoes('mac-0001', { n: 1, k: 'world:3,12', full: 0, f: watchRecs(CELL_WATCH_PUPPETS_MAX, 100) }), true);
+  // the same keys again, before a build settles, with no species - then ten fresh watchmen
+  assert.equal(bob.pool.applyFoes('mac-0001', { n: 2, k: 'world:3,12', full: 0, f: watchRecs(CELL_WATCH_PUPPETS_MAX, 100).map(({ t, ...r }) => r) }), true);
+  assert.equal(bob.pool.applyFoes('mac-0001', { n: 3, k: 'world:3,12', full: 0, f: watchRecs(CELL_WATCH_PUPPETS_MAX, 200) }), true);
+  await settle();
+  assert.equal(watchPuppets(bob.pool).length, CELL_WATCH_PUPPETS_MAX, 'ten watchmen and not one more: the re-worded builds kept their class');
+  assert.equal(puppets(bob.pool).length, CELL_WATCH_PUPPETS_MAX, 'and none of them stood as a foe');
+  // a foe re-worded as a watchman mid-build stays a foe: the foes\' cap holds too
+  const eve = await client('eve-0003');
+  const foeRecs = (n, i0) => Array.from({ length: n }, (_, k) => ({ i: i0 + k, t: 0, x: 0, f: [10 + k, 0, 10], y: 0, h: 5, d: 0, a: 0, m: 0 }));
+  for (let round = 0; round < 3; round++) {   // the same eight numbers, re-worded as watchmen while their builds are out, three times over
+    assert.equal(eve.pool.applyFoes('mac-0001', { n: 10 + round * 2, k: 'world:3,12', full: 0, f: foeRecs(CELL_PUPPETS_MAX, 1000) }), true);
+    assert.equal(eve.pool.applyFoes('mac-0001', { n: 11 + round * 2, k: 'world:3,12', full: 0, f: foeRecs(CELL_PUPPETS_MAX, 1000).map((r) => ({ ...r, t: GUARD_MOBILE_TYPE })) }), true);
+  }
+  await settle();
+  assert.equal(puppets(eve.pool).length - watchPuppets(eve.pool).length, CELL_PUPPETS_MAX, 'eight foes, three rounds of re-wording notwithstanding');
+  assert.equal(watchPuppets(eve.pool).length, 0, 'and no watchman minted off a foe\'s word');
+  // A3: the trim reserves the watch\'s live share
+  const mac = await client('mac-0001');
+  await summon(mac);
+  const g = mac.guards.guards[0];
+  for (let i = 0; i < CELL_FRAME_RECORDS_MAX + 4; i++) mac.pool.foes.push({ mobileType: 0, dead: false, corpse: false, seq: 2000 + i, ai: { feet: [i, 0, i], yaw: 0, moving: false, target: null }, entity: { health: 5, level: 1, items: [], weapon: null } });
+  const fr = mac.pool.foesFrame(true);
+  assert.equal(fr.f.length, CELL_FRAME_RECORDS_MAX);
+  assert.ok(fr.f.some((r) => r.i === g.seq), 'the watchman rides behind a full roll of live foes - his share is reserved');
+  // A4: a killing shaft puts no Arrow into the emptied body
+  const mac2 = await client('mac-0004');
+  await summon(mac2);
+  const g2 = mac2.guards.guards[0];
+  mac2.pool.foesFrame(true);
+  mac2.peers.push({ id: 'bob-0002', feet: [g2.ai.feet[0] + 1, g2.ai.feet[1], g2.ai.feet[2]], height: 1.8 }); step(mac2);
+  g2.entity.items = [{ name: 'Gold', group: 'Currency', stackCount: 3 }];
+  assert.equal(mac2.pool.applyHit('bob-0002', { k: 'world:3,12', i: g2.seq, dmg: 9999, kind: 'arrow', ar: 1 }), true);
+  assert.equal(g2.dead, true); assert.deepEqual(g2.entity.items, [], 'a body another hand felled carries nothing - not even the shaft');
+  // A6: a restore keeps the level the bonus was rolled into
+  const mac3 = await client('mac-0005');
+  await summon(mac3);
+  const lvl = mac3.guards.guards[0].entity.level;
+  const snap = mac3.guards.snapshotWorld((feet) => ({ x: feet[0], z: feet[2] }));
+  assert.equal(snap[0].level, lvl, 'the snapshot carries the level');
+  const back = await client('mac-0006');
+  back.guards.restoreWorld(snap, (x, z) => [x, z]);
+  await settle();
+  assert.equal(back.guards.guards.length, 1); assert.equal(back.guards.guards[0].entity.level, lvl, 'restored at exactly that level - the Range(3,7) bonus is not rolled again');
 });

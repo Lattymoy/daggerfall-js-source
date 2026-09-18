@@ -101,7 +101,7 @@ test('IS1: ONE transition core - the click and the restore share TransitionInter
   // (SerializablePlayer.cs:394-400 restores BuildingDiscoveryData +
   // IsPlayerInsideOpenShop rather than recomputing at the load hour).
   const body = src.slice(src.indexOf('async function enterInteriorCore'), src.indexOf('function rayAabbProbe'));
-  assert.match(body, /interiorBuilding = restore\.building \?\? null;\n        insideOpenShop = !!interiorBuilding\?\.insideOpenShop;/,
+  assert.match(body, /interiorBuilding = restore\.building \?\? null;\n(?:\s*\/\/[^\n]*\n)*\s*insideOpenShop = !!interiorBuilding\?\.insideOpenShop\n\s*\|\| \(interiorBuilding\?\.buildingType != null && isShop\(interiorBuilding\.buildingType\) && isBuildingOpen\(interiorBuilding\.buildingType, _hour\)\);/,   // OL4 / AUDIT ALL O2: the saved latch is never taken away, only added to by the effective hours
     'a shop saved open loads open, whatever hour the load happens at');
   assert.match(body, /const spot = restore\?\.pos \?\? floored;/,
     "RestorePosition's interior arm: the saved position lands raw over the door landing");

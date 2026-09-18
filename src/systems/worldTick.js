@@ -73,7 +73,10 @@ import { passiveSpecialsMagicRound } from './passiveSpecials.js';   // V2c: care
 // S41 - the day-change block's four members. They live in their own
 // systems; this file is only the ONE PLACE that runs them on a day
 // boundary, which is where PlayerEntity.Update runs them.
-import { updateRegionalPrices, setWorldPriceSource, initialRegionPrice, priceWalkStep, applyPriceConditionFlags } from './shopStock.js';            // FormulaHelper.UpdateRegionalPrices (:2053); ECON1: the world's price seam and the walk's one-home pieces
+import { updateRegionalPrices, setWorldPriceSource, initialRegionPrice, priceWalkStep, applyPriceConditionFlags } from './shopStock.js';
+import { findFactionByTypeAndRegion } from './talk.js';   // AUDIT ALL E8: the online flag arm skips a region with no Province faction, as DFU's walk does
+import { FACTION_TYPES } from '../formats/factionFile.js';
+import { MERCHANTS_FACTION_ID } from './guilds.js';   // AUDIT ALL E8: no Merchants, no walk, no flags (DFU's own gate)            // FormulaHelper.UpdateRegionalPrices (:2053); ECON1: the world's price seam and the walk's one-home pieces
 import { REGION_COUNT } from './regionConditions.js';   // ECON1: the world's walk is region-major, as DFU's
 import { ONLINE_EPOCH_MINUTES } from '../net/wire.js';   // ECON1: the world's economy begins the day the online world stood at the classic start
 import { rollClimateWeathersForDay, evolveClimateWeathers } from './weatherSim.js';      // WeatherManager.SetClimateWeathers (:419); CLK2: the enhanced lane's hourly evolution
@@ -115,22 +118,46 @@ export const dayRollsFor = (minute, rolls, salt = 0) => (sharedClockOn() ? dayRn
 // every client computes the same numbers from the same day.
 const ECON_EPOCH_DAY = Math.floor(ONLINE_EPOCH_MINUTES / MINUTES_PER_DAY);
 let _worldPrices = null;   // { day, prices: number[REGION_COUNT] } - the last day computed; a later day walks on from it
+// AUDIT ALL E4: a rebuild from the epoch grew without bound (twelve game days a real day: past a frame budget in under
+// two real years) - a checkpoint every CHECKPOINT_DAYS bounds a rebuild to that many steps
+const CHECKPOINT_DAYS = 512;
+const _checkpoints = new Map();   // day -> prices, at multiples of CHECKPOINT_DAYS
+// AUDIT ALL E1: the world's tilt - a function of the region index over the game's own base powers (shopStock
+// .worldPriceTiltOf), installed by the world host once FACTION.TXT is read; null for a region DFU walks nothing for.
+// Until installed the walk is untilted (a boot's first seconds; no shop is open yet) and a later install starts the
+// world over from the epoch, so every client that has the file walks the same numbers.
+let _worldTilt = null;
+/** ECON1 / AUDIT ALL E1: install (a function of a region index answering the tilt, or null to walk nothing) or remove the
+ *  world's tilt; the cache starts over, the tilt being part of every step. */
+export function setWorldPriceTilt(tiltOf) { _worldTilt = typeof tiltOf === 'function' ? tiltOf : null; _worldPrices = null; _checkpoints.clear(); }
+export const worldPriceTiltOn = () => _worldTilt !== null;
+/** AUDIT ALL E4 (a probe): the days a checkpoint stands on, for the pin that proves a rebuild is bounded. */
+export const worldPriceCheckpointDays = () => [..._checkpoints.keys()].sort((a, b) => a - b);
 /** ECON1: every region's index on a world day (an absolute day number, classic minutes / MINUTES_PER_DAY). A day
  *  before the epoch reads the epoch's. Cached by day and walked forward; a day behind the cache is rebuilt from the
  *  epoch, so the answer is the day's whatever was asked before. */
 export function worldRegionPricesOn(day) {
   const d = Math.floor(Number.isFinite(day) ? day : ECON_EPOCH_DAY);
   if (!_worldPrices || _worldPrices.day > d) {   // (a day before the epoch lands here too and reads the epoch's: the walk below has nowhere to go)
-    const init = dayRng(ECON_EPOCH_DAY * MINUTES_PER_DAY, DAY_SALT.priceInit);
-    const prices = new Array(REGION_COUNT);
-    for (let i = 0; i < REGION_COUNT; i++) prices[i] = initialRegionPrice(init());
-    _worldPrices = { day: ECON_EPOCH_DAY, prices };
+    // AUDIT ALL E4: from the newest checkpoint at or before the day, else from the epoch
+    let from = null;
+    for (const [cd, cp] of _checkpoints) if (cd <= d && (!from || cd > from.day)) from = { day: cd, prices: cp };
+    if (from) _worldPrices = { day: from.day, prices: from.prices.slice() };
+    else {
+      const init = dayRng(ECON_EPOCH_DAY * MINUTES_PER_DAY, DAY_SALT.priceInit);
+      const prices = new Array(REGION_COUNT);
+      for (let i = 0; i < REGION_COUNT; i++) prices[i] = initialRegionPrice(init());
+      _worldPrices = { day: ECON_EPOCH_DAY, prices };
+    }
   }
   while (_worldPrices.day < d) {
     const next = _worldPrices.day + 1;
     const gen = dayRng(next * MINUTES_PER_DAY, DAY_SALT.prices);
-    const prices = _worldPrices.prices.map((adj) => priceWalkStep(adj, 0, gen()));
+    // AUDIT ALL E1: the day's roll is DRAWN for every region in order (DFU's stream position), and spent on a step only
+    // where DFU walks - a region with no Province faction, or a world with no Merchants (the tilt answers null), stands
+    const prices = _worldPrices.prices.map((adj, i) => { const roll = gen(); const tilt = _worldTilt ? _worldTilt(i) : 0; return tilt == null ? adj : priceWalkStep(adj, tilt, roll); });
     _worldPrices = { day: next, prices };
+    if (next % CHECKPOINT_DAYS === 0 && !_checkpoints.has(next)) _checkpoints.set(next, prices.slice());
   }
   return _worldPrices.prices;
 }
@@ -390,9 +417,12 @@ export function runDayChange({ entity, lastMinutes, nowMinutes, rolls = Math.ran
   // duration draw - so two players who walked different spans read the same flags.
   if (sharedClockOn()) {
     const firstDay = Math.floor(lastMinutes / MINUTES_PER_DAY) + 1, lastDay = Math.floor(nowMinutes / MINUTES_PER_DAY);
-    for (let d = firstDay; d <= lastDay; d++) {
+    // AUDIT ALL E8: and only for a region DFU's own walk reaches - one with a Province faction in this player's store
+    // (updateRegionalPrices' `continue`); with no store or no Merchants DFU walks nothing and flags nothing
+    const dict = entity.factionRep?.dict ?? null, merchants = dict?.get(MERCHANTS_FACTION_ID) ?? null;
+    for (let d = firstDay; d <= lastDay && merchants; d++) {
       const prices = worldRegionPricesOn(d), flagRolls = dayRng(d * MINUTES_PER_DAY, DAY_SALT.conditions);
-      for (let i = 0; i < REGION_COUNT; i++) applyPriceConditionFlags(entity.regionConditions ?? null, i, prices[i], flagRolls);
+      for (let i = 0; i < REGION_COUNT; i++) if (findFactionByTypeAndRegion(dict, FACTION_TYPES.Province, i)) applyPriceConditionFlags(entity.regionConditions ?? null, i, prices[i], flagRolls);
     }
   } else updateRegionalPrices(entity, entity.factionRep?.dict ?? null, daysPast, rolls, entity.regionConditions ?? null);
 

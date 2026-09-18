@@ -962,8 +962,8 @@ export function createWorldModes(host) {
    *
    *  This host owned two pools and ran NO fan-out at all - no
    *  runMagicRoundsFor, so no tickActiveEffects and no updatePoisons
-   *  (worldTick.js:273-274), and no killIfAnyLiveStatZero. Both pools
-   *  READ the effect list every frame (exteriorFoes.js:845-846 and
+   *  (worldTick.js:300-301), and no killIfAnyLiveStatZero. Both pools
+   *  READ the effect list every frame (exteriorFoes.js:846-847 and
    *  cityGuards.js:803-804 each take `entityIsParalyzed` +
    *  `applyEnemyMotorEffectFlags`), and nothing ever ended one: a
    *  Continuous Damage bundle on a foe in a shop never took a round,
@@ -4544,7 +4544,13 @@ export function createWorldModes(host) {
       if (restore) {
         // The SAVED record stands whole - identity, latch and all.
         interiorBuilding = restore.building ?? null;
-        insideOpenShop = !!interiorBuilding?.insideOpenShop;
+        // OL4 (AUDIT ALL O2): a save taken inside a shop entered while classically closed carries `false`, and Play
+        // Online always begins on a restore - so the online shift never reached a restored interior: the door opened,
+        // the shelf opened in STEALING mode and no clerk stood. The saved latch is never taken away (DFU's own law,
+        // SerializablePlayer.cs:394-400), only added to by the effective hours at the restore - the same
+        // "SetActive(true) and nothing else" shape as updateNpcPresence.
+        insideOpenShop = !!interiorBuilding?.insideOpenShop
+          || (interiorBuilding?.buildingType != null && isShop(interiorBuilding.buildingType) && isBuildingOpen(interiorBuilding.buildingType, _hour));
       } else {
         interiorBuilding = buildingDataForDoor?.(hit) ?? null;
         // PlayerActivate.cs:1120 verbatim - computed once, at the door,

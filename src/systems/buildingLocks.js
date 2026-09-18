@@ -15,7 +15,7 @@
 import { BUILDING_TYPES } from '../world/buildingNames.js';
 import { isShop } from './shopStock.js';
 import { HOLIDAYS } from './holidays.js';
-import { isOnlinePage } from './onlineLane.js';   // OL4: the online lane's one answer to "is this the ?online page"
+import { sharedClockOn } from './worldTick.js';   // OL4 (AUDIT ALL O1): the shared clock IS the reason for the shift, and every other online law keys on it
 
 /** Opening and closing hours by building type (PlayerActivate.cs:
  *  91-92), indexed by DFLocation.BuildingTypes 0..24. closeHours 25
@@ -70,7 +70,7 @@ export const buildingLockValue = (quality) => Math.trunc((quality ?? 0) / 2);
  *                                   door it opens)
  */
 export function buildingIsUnlocked(building, {
-  hour = 12, holidayId = -1, online = isOnlinePage(),
+  hour = 12, holidayId = -1, online = sharedClockOn(),
   isHouseOwned = null, isActiveQuestBuilding = null,
   guildForBuilding = null, ownsShip = false,
 } = {}) {
@@ -146,15 +146,16 @@ export function classicBuildingOpen(buildingType, hour) {
  * Offline they are identical. Online, and only for a shop, a closure is
  * covered by ONLINE_SHIFT. Suns Rest is part of the classic shop closure,
  * so it is covered by the same policy rather than becoming a real-time
- * full-day outage.
+ * two-hour outage (a game day is 120 real minutes at TimeScale 12).
  *
- * `online` is injectable for node tests. Production defaults to the same
- * authoritative ?online page signal used by the rest of the online lane.
+ * `online` is injectable for node tests. Production defaults to the shared
+ * clock standing (worldTick.sharedClockOn) - the one predicate every
+ * clock-derived online law reads (RESTX2, OL3, ECON1).
  */
 export function buildingHoursState(buildingType, {
   hour = 12,
   holidayId = -1,
-  online = isOnlinePage(),
+  online = sharedClockOn(),   // AUDIT ALL O1: the clock, not the URL - a page that says ?online with no clock installed (the fixed city's dev door) is not the shared world
 } = {}) {
   const type = buildingType ?? BUILDING_TYPES.None;
   const shop = isShop(type);

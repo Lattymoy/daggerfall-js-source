@@ -44,6 +44,7 @@ import { setEnemyAlert } from '../systems/encounters.js';
 import { inflictPoison } from '../systems/poisons.js';
 import { onMonsterHit, SPIDER_TOUCH_SPELL_INDEX } from '../systems/diseases.js';   // AUDIT 24 (wave 30): the monster special-attack rider, above ground
 import { MINUTES_PER_DAY } from '../systems/worldTick.js';
+import { FOES_MS } from '../net/online.js';   // AUDIT ALL B2: the watchman moved since the frame the striker swung at
 import { validFoeRecord, CELL_PUPPETS_MAX, CELL_WATCH_PUPPETS_MAX, CELL_FRAME_RECORDS_MAX, POSE_BOUND, POSE_Y_BOUND, tokenGate, FOE_HEALTH_MAX, hitPoisonOf, HIT_ARROWS_MAX } from '../net/wire.js';
 import { CORPSE_ACTIVATION_DISTANCE } from '../player/activate.js';
 import { WEAPON_REACH } from '../combat/playerWeapon.js';   // AUDIT WATCH1 B2: a peer's melee blow on my watch lands from the player's own reach, no farther   // AUDIT WORLD6b-iii(c) A1/C7: the owner reads the taker's reach
@@ -331,7 +332,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       f.puppet = puppet ?? null;
       f.uid = _nextUid++;   // AUDIT WORLD6b B15: the corpse loot's stable key (an index names another body once anything ahead is spliced)
       // AUDIT FOES FOE8: the level this body was BUILT at, which is not always the
-      // level it ended up with - makeEnemyEntity adds Range(3,7) to a Knight_CityWatch
+      // level it ended up with - makeEnemyEntity adds Range(3,7) to a Knight_CityWatch it builds fresh (a PUPPET hands the streamed level in as final - AUDIT WATCH1 A5 - so for it builtLevel and entity.level agree); a fresh watchman's is
       // inside the constructor (enemyEntity.js:87, DFU's own). The stream's `l` is the
       // owner's BUILD level, so comparing it against entity.level found a mismatch on
       // every record and tore the puppet down and rebuilt it five times a second, for
@@ -1473,11 +1474,16 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     // struck out the socket in the end) - the live foes ride first, then the newest bodies; the oldest bodies leave the
     // roll and the readers' full-frame sweep takes them down
     if (out.length > CELL_FRAME_RECORDS_MAX) {
-      const live = out.filter((r) => r.d !== 1), dead = out.filter((r) => r.d === 1);
+      const allLive = out.filter((r) => r.d !== 1), dead = out.filter((r) => r.d === 1);
+      // AUDIT ALL A3: the watch's share of the LIVE slots is reserved, as AUDIT WATCH1 A1 reserved its share of the puppet cap -
+      // the roll is foes-first, so past the bound the watch was the first thing cut, on every frame, and a busy criminal streamed
+      // no watch at all (A1's disease one level up)
+      const liveWatch = allLive.filter((r) => r.t === KNIGHT_CITYWATCH_ID).slice(0, CELL_WATCH_PUPPETS_MAX);
+      const live = [...allLive.filter((r) => r.t !== KNIGHT_CITYWATCH_ID).slice(0, CELL_FRAME_RECORDS_MAX - liveWatch.length), ...liveWatch];
       const diedAt = new Map([...foes, ...watchList()].filter((f) => !f.puppet).map((f) => [f.seq, f._diedAt ?? 0]));   // AUDIT WATCH1 A6: the watch's bodies too, and never a puppet's number (its owner's space)
       dead.sort((a, b) => (diedAt.get(b.i) ?? 0) - (diedAt.get(a.i) ?? 0));
       const before = out.slice();
-      out.length = 0; out.push(...live.slice(0, CELL_FRAME_RECORDS_MAX), ...dead.slice(0, Math.max(0, CELL_FRAME_RECORDS_MAX - live.length)));
+      out.length = 0; out.push(...live, ...dead.slice(0, Math.max(0, CELL_FRAME_RECORDS_MAX - live.length)));
       for (const r of before) if (!out.includes(r)) { const f = src.get(r); if (f) f._sentKey = null; }   // AUDIT WATCH1 B6: a record the trim dropped is UNSENT - its key was latched above, and it rode nothing until the next full frame
     }
     return { n: ++_foesSeq, k: _net.room?.() ?? null, full: full ? 1 : 0, f: out };
@@ -1494,7 +1500,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   }
   /** A peer's foes in - each record PROJECTED (validFoeRecord, AUDIT WORLD6b C2: refused whole otherwise) onto its
    *  puppet; a record for a foe I have no puppet of standing one through the pool's ONE spawn chain (at the streamed
-   *  feet, the streamed species and gender; never a corpse I never saw; at most CELL_PUPPETS_MAX live per owner,
+   *  feet, the streamed species and gender; never a corpse I never saw; at most CELL_PUPPETS_MAX live per owner (the watch apart, under CELL_WATCH_PUPPETS_MAX - AUDIT WATCH1 A1),
    *  B3); a record whose species disagrees, or that says a dead puppet lives, ends the old puppet and stands anew
    *  (B11/B12); a record for a puppet still building is the word that lands when the build does (B13); a full frame
    *  removing every puppet of that owner it no longer names; a frame older than the owner's last, or from another
@@ -1517,7 +1523,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         if ((r.t !== undefined && r.t !== f.mobileType) || (r.d === 0 && f.dead) || (r.l !== undefined && f.mobileType >= 128 && r.l !== (f.builtLevel | 0))) removePuppet(f);   // AUDIT WORLD6b-ii B2: a CLASS foe's level is its owner's word (its skills and health are built from it) - a monster's is its species' (makeEnemyEntity), whatever the record says; AUDIT FOES FOE8: against the level it was BUILT at, which a City Watch's constructor re-rolls
         else { applyPuppetRecord(f, r); continue; }
       }
-      if (_pupPending.has(key)) { _pupPending.set(key, r); continue; }
+      if (_pupPending.has(key)) { _pupPending.set(key, { ...r, t: _pupPending.get(key).t }); continue; }   // AUDIT ALL A1: a pending build's SPECIES is fixed at the build - a later word without `t` (or with another) neither moves it out of its class's count (an unbounded stand: a peer re-worded a pending watch as no species and stood ten more) nor lands a record of the wrong species on the build
       if (r.d === 1 || r.t === undefined || !ENEMY_BASICS[r.t] || !r.f) continue;
       if (r.t === KNIGHT_CITYWATCH_ID ? livePuppetsOf(from, true) >= CELL_WATCH_PUPPETS_MAX : livePuppetsOf(from) >= CELL_PUPPETS_MAX) continue;   // AUDIT WATCH1 A1: the watch has its own allowance - under one cap the foes spent it first and no watchman ever stood
       const feet = _net.toScene(r.f);
@@ -1717,7 +1723,10 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // a host with no door (a net with `list` and no `hurt`) refuses rather than throws on a peer's frame.
       if (!_net?.watch?.hurt) return false;
       const striker = peerCandidate(from);
-      const reach = (kind === 'melee' ? WEAPON_REACH : MAX_RANGED_DISTANCE) + PUPPET_LEAP_SLACK;
+      // AUDIT ALL B2: plus the watchman's own motion since the frame the striker swung at (one foes interval at his speed -
+      // the static envelope fit inside the slack, but a chasing blow on a running watchman had less headroom than the
+      // stream's lag, and a refused blow vanishes without a word at the striker)
+      const reach = (kind === 'melee' ? WEAPON_REACH : MAX_RANGED_DISTANCE) + PUPPET_LEAP_SLACK + (f.ai.speed ?? 0) * (FOES_MS / 1000);
       if (!striker || Math.hypot(striker.feet[0] - f.ai.feet[0], striker.feet[1] - f.ai.feet[1], striker.feet[2] - f.ai.feet[2]) > reach) return false;
     }
     // WORLD6b-ii: the striker's feet (p, the world frame - bounded as a pose is, then this scene's) and the blow's
@@ -1750,7 +1759,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     // WORLD6b-iii(e): the shaft, where BowDamage puts it (:145-147) - the body's pile says so (o) and the grant carries it.
     // AUDIT WORLD6b-iii(e) A1: BOUNDED - HIT_ARROWS_MAX Arrows a body from peers' shafts, past it the blow lands and no
     // Arrow (a crafted stream minted a stack the projection refused whole, and the grant dropped the pile with it)
-    if (data.ar === 1 && kind === 'arrow' && arrowsIn(f.entity.items ??= []) < HIT_ARROWS_MAX) addItem(f.entity.items, bowDamageArrow());   // MAC-N1: minted, not a bare literal
+    if (data.ar === 1 && kind === 'arrow' && !(onWatch && f.dead) && arrowsIn(f.entity.items ??= []) < HIT_ARROWS_MAX) addItem(f.entity.items, bowDamageArrow());   // MAC-N1: minted, not a bare literal; AUDIT ALL A4: not into a watch body a peer's shaft just felled - that body carries nothing (AUDIT WATCH1 A3), and the shaft landed after the kill emptied it
     return true;
   }
   /** The owners gone from the cell (the session's peer map no longer holds them) or gone quiet (no frame in staleMs,
