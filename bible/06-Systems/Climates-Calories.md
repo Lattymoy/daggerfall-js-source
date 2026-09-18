@@ -41,7 +41,7 @@ carry, and everything static.
 | SURV3 | camps: the tent and the fire as placed objects with a menu, cooking, the water sources, shared online | `survival/camp.js` (the law), `scenes/camps.js` (the pool), the three hosts' mounts, `player/activationRace.js`, both inventory skins, `sceneCache.js` |
 | SURV4 | the rest law: a bed or a fire sleeps whole, the window alone is rough - half the hour, the roll twice, a stiff morning; the felt temperature can refuse the sleep | `survival/rest.js` (the law), `scenes/shared.js` createRestDeps (the composed hour and the kind), `encounters.js` (the second ask), the four hosts' `restKind` |
 | SURV5 | what the player is told: the HUD's needs strip, the status page's third box, the survival items' info box; the mod's regional tavern menus with the meal, the drink and the blackout | `survival/status.js`, `survival/tavernMenu.js`; `ui/enhancedHud.js` + `enhancedStyle.js`; `itemInfo.js`; `ui/tavernWindow.js` + the interior host's hooks; the four hosts' status chain |
-| SURV6 | hunting and foraging as real-time events | (in progress) |
+| SURV6 | hunting, foraging and the water search as real-time events: the wilderness roll, the Yes/No box, the busy page, the finds and the harms, the hunted | `survival/hunting.js` (the law), `ui/huntWindow.js` (the three pages), `scenes/hunting.js` (composed), the overworld host's `createHunting` bag and its minute tick |
 | SURV7 | online alignment, records, the probe | (in progress) |
 
 ### The temperature (SURV1)
@@ -229,3 +229,70 @@ falls to a quarter of the endurance, and the morning is a rough one
 (SURV4's stiffness). The counter sobers one a ten minutes and drains
 the stats the mod's way (SURV1). With the mod off the Food button is
 DFU's own chain, unchanged.
+
+### The hunt (SURV6)
+
+Climates & Calories' Hunting class (read off the DLL: HuntingRound
+once a game minute - not paused, no enemies nearby, not night, not in
+a location rect, not inside; the luck mod against Random(1, 200), or
+300 in winter, then Dice100(70); HuntCheck's climate switch to five
+rolls, each a Yes/No box; TimeSkip an hour; the checks by bow -
+Archery, and Stealth for the sneak - or bare hands - Stealth and
+Critical Strike; GiveRawMeat / GiveApples / GiveOranges / RefillWater;
+InflictPoison on a bite; SpawnBeast) is restated in
+`survival/hunting.js`, pure. THE ROLL (`huntRoll`): outdoors in the
+overworld, off the widened town rect, by day, no foe near, not resting
+or fast travelling, in a climate the mod hunted (the desert pair, the
+subtropics, the swamp pair, the woods pair, the mountain pair), the
+odds as the mod's, and a cooldown of Random(100, 500) minutes riding
+the survival record as `huntAt` (saved with it). Each climate has two
+events on a coin: the desert's greener vegetation (WATER) or its rocks
+(a snake); the subtropics' water or trees (FRUIT); the swamp's birds
+or a ripple (a LIZARD); the woods' and the mountain's birds or fresh
+TRACKS (deer or goat, rabbits). THE OUTCOME (`huntOutcome`): a first
+d100 sorts the water by pool (a safe pool fills five kg, a small one
+two, a smelly one nothing, a foul one one kg and the meal's three
+curable diseases, else dust) and the fruit (easily picked, a climb by
+Climbing, a strange fruit that poisons, none left), and past 90 - 95
+among the rocks - says "You are not the hunter, but the hunted!"; the
+bow's shot and the sneak, the hands' strike and the tree's climb are
+the live skill plus the luck mod less five against Random(1, 100).
+Meat by the prey (a snake one, a bird one or a volley's two or three,
+the lizard two, a rabbit one, a deer or a goat four to six), a bite
+that may be poison (any of the twelve, the mod's Random(128, 140)),
+the woods' boar (ten fatigue) and the mountain's fall (one to four
+health, never to death). THE HUNTED stands the mod's SpawnBeast table
+(Random(0, 11): under 2 three, under 4 two, under 9 one, else the
+alternate dragonling - scorpions in the desert and the subtropics, a
+bear then spiders in the swamp, bears then a spriggan in the woods,
+sabre-tooths on the mountain). `applyHuntOutcome` mints the finds into
+the pack (raw meat; apples or oranges on a coin), fills the skins
+(refillSkins; "You have no waterskins to fill." when none), and hands
+the harm to the handlers the host passes (poisons.js inflictPoison,
+diseases.js inflictDisease - the leaf imports neither, as the meal's
+law does not).
+
+THE OVERHAUL (Mac: "hunting and foraging as real-time events"): the
+mod skipped the clock an hour behind a box. The port's window
+(`ui/huntWindow.js`) has three pages in the overlay slot: ASK, the
+mod's Yes/No box on DFU's own ServiceFlowWindow (Y, N, Escape, the
+buttons); BUSY, a real-time page - the search's Random(30, 60) game
+minutes run at HUNT_WAIT_PER_HOUR (eight) real seconds an hour under
+the overlay's `tick(dt)`, a row of dots for the wait, no key or click
+taken (the hunter is committed); RESULT, the outcome's lines and the
+gains in a click-anywhere box. The outcome is rolled and applied ONCE,
+at the turn from busy to result; the search's minutes pass on the
+clock offline (the host's ticker - the survival minutes with them) and
+online the clock stands (WORLD5) so the wait alone is the cost; the
+skills the search used are tallied. The beast stands when the box
+CLOSES, not under it - a foe keeps its clock under a window (WINFOE1)
+and would have had the first blow free - through the overworld host's
+own encounter placement (`_standEncounterFoe` on the wilderness arm,
+one call a head). `scenes/hunting.js` composes it for a host from
+readers (`env()`: the minute, the climate, luck, winter, outdoors,
+the rect, night, foes near, resting, the bow in hand, the four skills)
+and doors (the slot, the ticker, the placement, the two formulas, the
+tally); it asks once a game minute and never under a window or while
+its own is up. world.js alone stands it - exterior.js lives inside the
+town rect and would never roll. Wildlife meat is SURV2's corpse law:
+the beast that hunted you carries it when it falls.

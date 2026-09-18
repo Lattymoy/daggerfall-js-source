@@ -234,7 +234,7 @@ opposite of their own code and deserve a slice's attention:
 ## Line-citation drift (low, batched)
 
 `Port-Ledger.md:521` (save.js:29/:505/:514 → :28/:531/:561), `:523`
-(world.js:2030 → :2412); `Quest-Arc.md:719`/`:2905`
+(world.js:2034 → :2412); `Quest-Arc.md:719`/`:2905`
 (worldModes.js:489 → :903); `Player-Arc.md:955` (worldModes.js:692 →
 :2764), `:304` (world.js "531 lines" → 3,564); `Characters-Arc.md:190`
 (CHAR_PIXEL "7" - `renderer.js:559` ships 9, and the doc missed two
