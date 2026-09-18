@@ -1669,3 +1669,20 @@ test files nearly turned eleven false findings into a report, an hour
 after AUDIT-HARD shipped a gate arguing against exactly that. The
 confirmed survivors above are the ones that survived the DERIVED set.
 
+## MAC-U - THE DIRECTIONS READ AS TWO MESSAGES (2026-09-18)
+
+Mac's screenshot: "It's really easy. You'll want to go The Greensley
+Residence is south of where we're standing." The chain was right and
+the DATA was classic's. GetAnswerWhereIs's frames (7270-7274,
+7285-7289) each carry their subject and end in %hnt; %hnt is
+GetKeySubjectBuildingHint's 7333 draw; and classic's 7333 is nine whole
+sentences ("%loc is %di of here"). Daggerfall Unity reads its
+`Internal_RSC` string table before TEXT.RSC (TextProvider.cs:167-188,
+`GetRSCTokens`) and the table's 7333 is the phrase ("%di of here",
+"that way, just keep going %di"). The port now carries that row -
+`src/formats/rscTable.js`, verbatim from the vendored master CSV
+(`vendor/dfu-text/Internal_RSC.csv`) - and `TextRsc.bytesById` answers a
+table row before the file in the file's own byte shape, so the answer
+pipeline, townTalk's mobile chain and every other TEXT.RSC reader see
+one kind of record. Record: `01-Overview/Mac-Bugs-U.md`. Pinned by
+`test/macu_directions.test.js` (5), `tools/mutants/macu.json` (7 dead).
