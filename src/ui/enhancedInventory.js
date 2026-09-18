@@ -58,7 +58,7 @@
 
 import { USE_PENDING } from './nativeInventory.js';
 import { PACK_PAGES, PAGE_IDS, pageOf, filterByPage } from './packPages.js';   // PX31: the pack's nine pages (the classic keeps DFU's four)
-import { useItem, isLightSource } from '../systems/useItem.js';   // HT2: the light source's own act
+import { useItem, isLightSource, usableItem } from '../systems/useItem.js';   // HT2: the light source's own act; Mac: Use only where the law has an arm
 // QS2: the quickslot model (systems/quickslots.js). This screen is the ONE
 // place a slot is filled - Mac's own words, "in the enhanced menu through the
 // tooltip to slot 1/2" - and it fills one by naming the item's KIND, which is
@@ -81,6 +81,7 @@ import {
   equipItem, unequipSlot, equipTableOf, isEquipped,
   isForbiddenEquip, isBrokenItem,
 } from '../systems/equip.js';
+import { getEquipSlot } from '../systems/equip.js';   // Mac (2026-09-18): Wear only where a slot would take it
 import {
   itemWeight, isEnchanted, totalWeight, addItem, goldStack,
   goldPiecesOf, GOLD_PIECE_WEIGHT_KG,   // E4: the counter and its per-coin weight
@@ -422,6 +423,10 @@ export function localPrimaryAct(item, entity = null) {
       ? { kind: 'douse', label: 'Douse' }
       : { kind: 'light', label: 'Light' };
   }
+  // Mac (2026-09-18, off the audit's review shots): "Hide wear for non wearables" - a waterskin, a raw meat, a
+  // gem offered WEAR. The equip table's own answer decides: no slot would take it, no verb. A throwaway table
+  // answers when no entity is at hand (the slot rules are the item's, not the wearer's).
+  if (getEquipSlot(entity ?? {}, item) === EQUIP_SLOTS.None) return null;
   return { kind: 'wear', label: 'Wear' };
 }
 
@@ -2077,13 +2082,15 @@ function detailCol() {
     // is a use (:1976-1985) and nothing in the equip table will ever
     // take one. The button says which it is doing.
     const act = localPrimaryAct(picked, deps.entity);
-    const b = el('button', 'act primary', act.label);
-    b.onclick = act.kind === 'takeOff' ? () => takeOff(picked.equipSlot)
-      : act.kind === 'wear' ? () => wear(picked)
-      // AUDIT 22 F6: DFU's equip click hands UseItem NO collection
-      // (:1980), so the act that lights a torch can consume nothing.
-      : () => use(picked, null);
-    acts.append(b);
+    if (act) {   // null: nothing would wear it (Mac: no WEAR on a waterskin)
+      const b = el('button', 'act primary', act.label);
+      b.onclick = act.kind === 'takeOff' ? () => takeOff(picked.equipSlot)
+        : act.kind === 'wear' ? () => wear(picked)
+        // AUDIT 22 F6: DFU's equip click hands UseItem NO collection
+        // (:1980), so the act that lights a torch can consume nothing.
+        : () => use(picked, null);
+      acts.append(b);
+    }
     // The verb names the DESTINATION, and the destination is whichever
     // list is showing. Drawn only when the law would either move
     // something or say something (`canStow`).
@@ -2111,6 +2118,8 @@ function detailCol() {
   // appeared only for items this screen believed were usable would be
   // this screen making a judgement the law already makes. DFU offers
   // it on the REMOTE list too (:2048-2051), so this pane does.
+  // Mac (2026-09-18): ...WAS. "Same for use for non-usables" - the law's own predicate (useItem.js usableItem)
+  // says which items an arm would do something with; a sword or a gem gets no Use button.
   const u = el('button', 'act', 'Use');
   // THE COLLECTION IS THE LIVE LIST, not the model's. `useItem`
   // CONSUMES out of what it is handed (:2048-2051 - a potion drunk
@@ -2118,9 +2127,11 @@ function detailCol() {
   // filtered COPY, so passing that would drink the potion and leave it
   // sitting in the pile. The bag travels separately for AUDIT 22 F4's
   // reason, inside `use`.
-  u.onclick = () => use(picked,
-    side === 'remote' ? remoteTarget(deps, sessionState()) : (deps.items?.() ?? []));
-  acts.append(u);
+  if (usableItem(picked)) {
+    u.onclick = () => use(picked,
+      side === 'remote' ? remoteTarget(deps, sessionState()) : (deps.items?.() ?? []));
+    acts.append(u);
+  }
   // QS2: ...and the quickslot buttons, LOCAL ONLY. A slot resolves against the
   // PACK every frame (quickslots resolveConsumable), so slotting something
   // that is still in a corpse would name a kind the player does not carry - a

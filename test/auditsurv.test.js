@@ -25,7 +25,8 @@ import { EQUIP_SLOTS } from '../src/systems/equip.js';
 import { HuntWindow, HUNT_PHASE, BUSY_DOTS } from '../src/ui/huntWindow.js';
 import { createHunting } from '../src/scenes/hunting.js';
 import { TavernWindow } from '../src/ui/tavernWindow.js';
-import { itemLine } from '../src/ui/enhancedInventory.js';
+import { itemLine, localPrimaryAct } from '../src/ui/enhancedInventory.js';
+import { usableItem } from '../src/systems/useItem.js';
 import { ENHANCED_CSS } from '../src/ui/enhancedStyle.js';
 import { survivalInfoTokens } from '../src/systems/itemInfo.js';
 import { snapshotPlayer, restorePlayer } from '../src/systems/save.js';
@@ -266,6 +267,22 @@ test('AUDIT SURV C: what the player is told - a vampire\'s strip has no hunger o
   assert.match(ENHANCED_CSS, /\.hud-needs:empty\s*\{\s*display:\s*none;?\s*\}/, 'no gap for an empty strip');
   const hud = read('src/ui/enhancedHud.js');
   assert.match(hud, /survivalHudChips\(vitals, Math\.floor\(worldMinutes\(\)\), \{ vampire: !!liveVampirism\(vitals\), endurance: liveStat\(vitals, 'endurance'\) \}\)/);
+  // Mac (review): "Hide wear for non wearables. Same for use for non-usables"
+  const wearer = { equip: null, activeEffects: [] };
+  assert.equal(localPrimaryAct(skin, wearer), null, 'no slot takes a waterskin: no Wear');
+  assert.equal(localPrimaryAct(createSurvivalItem(TEMPLATE.RawMeat), null), null, 'nor a raw meat, wearer or none');
+  assert.deepEqual(localPrimaryAct({ group: 'Weapons', templateIndex: 113, name: 'Dagger' }, wearer), { kind: 'wear', label: 'Wear' }, 'a dagger is worn');
+  assert.deepEqual(localPrimaryAct({ group: 'MensClothing', templateIndex: 158 }, null), { kind: 'wear', label: 'Wear' }, 'a shirt is worn');
+  assert.equal(usableItem(skin), true); assert.equal(usableItem(createSurvivalItem(TEMPLATE.Rations)), true);
+  assert.equal(usableItem({ group: 'Books', templateIndex: 0 }), true); assert.equal(usableItem({ group: 'Drugs', templateIndex: 0 }), true, 'a drug');
+  assert.equal(usableItem({ group: 'Weapons', templateIndex: 113 }), false, 'a dagger has no use arm');
+  assert.equal(usableItem({ group: 'Armor', templateIndex: 102 }), false); assert.equal(usableItem({ group: 'Gems', templateIndex: 0 }), false);
+  assert.equal(usableItem({ group: 'Weapons', templateIndex: 113, questItem: true }), true, 'a quest item is watched');
+  assert.equal(usableItem(null), false);
+  const invSrc = read('src/ui/enhancedInventory.js');
+  assert.match(invSrc, /if \(getEquipSlot\(entity \?\? \{\}, item\) === EQUIP_SLOTS\.None\) return null;/, 'the card asks the equip table');
+  assert.match(invSrc, /if \(act\) \{   \/\/ null: nothing would wear it/, 'no button without an act');
+  assert.match(invSrc, /if \(usableItem\(picked\)\) \{\n\s+u\.onclick/, 'Use only where the law has an arm');
 });
 
 test('AUDIT SURV B: the camps - the sweep spares them and the scene cache carries none, an empty word reaches the cell, a restore merges by id, the mod off stands nothing; the dungeon rest pays its night asleep; the clock correction re-aligns', async () => {

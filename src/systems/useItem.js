@@ -33,7 +33,7 @@ import { templateByIndex } from './itemTemplates.js';
 import { doItemEnchantmentPayloads, PAYLOAD } from './enchantments.js';   // E2: the Used payload arm
 import { inflictPoison } from './poisons.js';
 import { inflictDisease } from './diseases.js';   // SURV2: a bad meal's sickness, handed to the food law
-import { getItem } from './inventory.js';   // D9: ItemCollection.GetItem - the oil arm's lantern lookup (:1791)
+import { getItem, isEnchanted as hasEnchantments } from './inventory.js';   // D9: ItemCollection.GetItem - the oil arm's lantern lookup (:1791); the card's usable predicate
 import { isSurvivalItem, useSurvivalItem } from './survival/items.js';   // SURV2: food, water, camp gear
 
 /** THE ARMS WHOSE DESTINATION WINDOW THE PORT HAS NOT BUILT, named so a use
@@ -128,6 +128,19 @@ export const VARIANT_CHANGEABLE = Object.freeze(new Set([
 /** NextVariant, verbatim: cycle to 0 at TotalVariants, which is the
  *  ITEM TEMPLATE's `variants` column. Returns true when the variant
  *  moved (the caller refreshes the doll or the list). */
+/** Mac (2026-09-18): "hide Use for non-usables". TRUE when the ladder below has an arm for the item that
+ *  does something - a quest item's watch, food and water and camp gear, a book, a potion, a map, the
+ *  spellbook, a drug, a light source, oil, a Used enchantment, a garment with variants to cycle. The catch-all's
+ *  "Nothing happens." and the recipe's "cannot use" are the two that are not a use. */
+export function usableItem(item) {
+  if (!item) return false;
+  if (item.questItem) return true;
+  if (isSurvivalItem(item) || isBook(item) || isPotion(item) || isMap(item) || isSpellbook(item) || isDrug(item) || isLightSource(item)) return true;
+  if (item.group === 'UselessItems2' && item.templateIndex === TEMPLATES.Oil) return true;
+  if (hasEnchantments(item)) return true;
+  return VARIANT_CHANGEABLE.has(item.templateIndex) && (templateByIndex(item.templateIndex)?.variants ?? 0) > 1;
+}
+
 export function nextVariant(item) {
   if (!VARIANT_CHANGEABLE.has(item?.templateIndex)) return false;
   const total = templateByIndex(item.templateIndex)?.variants ?? 0;

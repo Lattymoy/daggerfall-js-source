@@ -412,6 +412,15 @@ front door, not the 3D scene). What they found, all fixed and pinned
   the water list reworded here; the mod's feature row now carries
   `'mod'` and the author's name.
 
+The review of the shots (Mac): the enhanced card's survival rows now
+wear their own words (Food, Raw, Uses, Cooking) and carry no condition
+row (a food's keeping and the gear's uses are their own tokens); and
+"hide Wear for non-wearables, Use for non-usables" - `localPrimaryAct`
+asks the equip table for a slot and offers no Wear where none would
+take the item, and `useItem.js` `usableItem` (the ladder's arms
+restated as a predicate) decides the Use button on both sides of the
+pack. Both pinned in `test/auditsurv.test.js`.
+
 Not driven (no ARENA2 in the container): the 3D fire and tent, the
 activation ray, the inventory windows in situ, dungeon-floor camps,
 online camp sharing. The probe's scripts and screenshots are in the
