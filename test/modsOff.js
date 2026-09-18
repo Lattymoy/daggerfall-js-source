@@ -7,10 +7,12 @@
 // Not a .test.js on purpose - the manifest counts suites, and this is
 // a precondition, not one.
 import { MOD_SETTINGS, setModSetting, _resetModSettings } from '../src/systems/modSettings.js';
+import { setPref, _resetForTests } from '../src/systems/uiPrefs.js';   // SURV2: the survival arc is a vendored mod on the prefs shelf
 
 export function modsOff() {
   _resetModSettings();
   for (const [vendor, def] of Object.entries(MOD_SETTINGS)) if (def.keys.Enabled) setModSetting(vendor, 'Enabled', false);   // Basic Roads has no switch: it is the road network itself
+  _resetForTests(); setPref('survival', false);   // SURV2: Climates & Calories rides the prefs shelf (survival/switch.js), not modSettings - off with the rest, so the corpse and the shelf are DFU's
 }
 
 modsOff();

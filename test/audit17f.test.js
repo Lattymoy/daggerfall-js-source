@@ -2,6 +2,7 @@
 // themselves. Every pin below fails under a one-character mutation of
 // the law it names (checked by hand at authoring time).
 import { test } from 'node:test';
+import { setPref } from '../src/systems/uiPrefs.js';
 import assert from 'node:assert/strict';
 import { inventoryItemImage, templateByIndex } from '../src/systems/itemTemplates.js';
 import { paperdollItemImage } from '../src/ui/paperDoll.js';
@@ -96,6 +97,7 @@ test('17f F4: the pants variant rolls over the TEMPLATE variant count', () => {
 });
 
 test('17f F12: item names come from the TEMPLATE, not a hand copy', () => {
+  setPref('survival', false);   // AUDIT SURV E: the survival kit rides after DFU's bag; this pin is DFU's bag alone
   // DaggerfallUnityItem.ItemName is ItemTemplate.name - the port's
   // hand-written "Short shirt"/"Casual pants" were lower-cased.
   const e = { gender: 'female', race: 'Khajiit' };

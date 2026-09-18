@@ -120,8 +120,8 @@ test('F141/F145: the guild and tavern buttons all click; F146: the teleport Yes/
   // four buttons (:135, :155, :264, :339) + the food picker (:307)
   const tavernClick = tavern.slice(tavern.indexOf('click(vx, vy)'));
   assert.equal((tavernClick.match(/audio\.playOneShot\(SOUND\.ButtonClick, 1\);/g) ?? []).length, 4);
-  assert.equal((tavern.match(/audio\.playOneShot\(SOUND\.ButtonClick, 1\);/g) ?? []).length, 6,
-    'the four rects, the food picker, and D1\'s one keyboard-side call');
+  assert.equal((tavern.match(/audio\.playOneShot\(SOUND\.ButtonClick, 1\);/g) ?? []).length, 7,
+    'the four rects, the food picker, D1\'s one keyboard-side call, and SURV5\'s survival picker (the mod\'s Food_OnItemPicked, the same click)');
   // D1: the KEYBOARD side sounds too - one call heading the hotkey
   // switch on each window, which is DFU's OnKeyboardEvent KeyDown arm
   // (and, for the handler-less Room/Join buttons, Button.cs:85-90's

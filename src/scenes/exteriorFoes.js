@@ -162,6 +162,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   // puppet goes to its owner as a hit. The world host installs the net (setNet) with the two frames' converters.
   let _nextSeq = 1, _nextUid = 1;
   let _net = null;              // { room, onPeerHit, toWire, toScene, now, staleMs }
+  let _onCamps = null;          // SURV3: (from, records, nowMs) - a peer's camps off their foes frame, once the frame has passed the room test
   let _foesSeq = 0;             // my frames out, numbered
   // AUDIT WORLD6b B4/C3: an OWNER's record - the last frame number applied (a stale frame is not the world), when it
   // arrived (an owner whose stream has died is swept after staleMs), and the build generation (a build the clear or
@@ -1439,6 +1440,8 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   const watchList = () => (_net?.watch?.list?.() ?? []);
   /** WATCH1: the watchman a peer's blow names - by the number he rode under (applyHit's own dead gate refuses a body). */
   const watchOf = (i) => watchList().find((g) => g.seq === i) ?? null;
+  /** SURV3: the host's door for a peer's camps (scenes/camps.js applyOwner) - beside the net, not in its bag. */
+  function setOnCamps(fn) { _onCamps = typeof fn === 'function' ? fn : null; }
   const _now = () => (_net?.now ? _net.now() : Date.now());
   /** My foes out, and my watch behind them (WATCH1) - every one of MINE whose streamed state changed since its last
    *  frame (every one when full, so a dropped frame heals and a foe I culled is missed from the roll and so removed
@@ -1541,6 +1544,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         .finally(() => _pupPending.delete(key));
     }
     if (data.full === 1) for (const f of [..._pupIndex.values()]) if (f.puppet === from && !seen.has(f.seq)) removePuppet(f);
+    if (Array.isArray(data.c)) _onCamps?.(from, data.c, _now());   // SURV3: the owner's camps ride the same frame, past the same room test - the host's pool lands them
     return true;
   }
   /** One streamed record onto its puppet: the target pose - kept in the WORLD frame and converted every step (AUDIT
@@ -1790,5 +1794,6 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     clearLive: destroy,
     collectPixel, arrowHitFoe, removeFoe: questPoolOps.removeFoe,
     // WORLD6b: the cell's stream - the net installed, my foes out, a peer's in, a peer's blow in, the puppets pruned
-    setNet, foesFrame, applyFoes, applyHit, pruneOwners, clearPuppets };
+    setNet, foesFrame, applyFoes, applyHit, pruneOwners, clearPuppets,
+    setOnCamps };   // SURV3
 }

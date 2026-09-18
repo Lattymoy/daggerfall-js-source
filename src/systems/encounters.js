@@ -171,6 +171,13 @@ export function chooseRandomEnemy(ctx, rolls = Math.random) {
  *  (the catch-up loop) and stops on the first spawn, exactly as
  *  PlayerEntity.Update. */
 export function intermittentEnemySpawn(ctx, rolls = Math.random) {
+  const r = intermittentEnemySpawnOnce(ctx, rolls);
+  // SURV4: a ROUGH rest (survival/rest.js - the window opened on bare ground, no bed and no fire) doubles the
+  // minute's chance: the same decision asked twice, the first spawn taken. Off the flag, one ask, as DFU has it.
+  if (r || !ctx.roughRest) return r;
+  return intermittentEnemySpawnOnce(ctx, rolls);
+}
+function intermittentEnemySpawnOnce(ctx, rolls) {
   // :560 - `if (!timeForSpawn || preventEnemySpawns) return false;`
   if (!timeForSpawn(ctx.gameMinutes) || ctx.preventEnemySpawns) return null;
   const timeOfDay = ctx.gameMinutes % 1440;

@@ -38,7 +38,9 @@ import { soulTrapNameSuffix } from './mysticism.js';   // F077: ResolveItemLongN
 import { potionRecipeByKey } from './potions.js';   // IM1: %po's producer (GetPotionRecipe)
 import { bookTitle } from './books.js';   // IM1: GetBookTitle's legacy-data arm
 import { dfRandPick } from '../formats/textRsc.js';   // ROAD-A7: GetRandomTokens' dfRand draw
-import { hasArtifactEffect, hasArtifactSubtype, ARTIFACTS } from './artifactEffects.js';   // ROAD-U: the identity DFU reads off the item's own record
+import { hasArtifactEffect, hasArtifactSubtype, ARTIFACTS } from './artifactEffects.js';
+import { isSurvivalItem, isCampingEquipment, isCampfireKit, isSkillet } from './survival/items.js';   // SURV5: the survival items' own info box
+import { isFood, foodOf, foodStage, foodSatiety, isWaterskin, waterIn, WATERSKIN_CAPACITY_KG, STAGE_WORDS } from './survival/food.js';   // ROAD-U: the identity DFU reads off the item's own record
 
 /** The thirteen ids GetItemInfo names as constants (:750-762). */
 export const INFO_TEXT = Object.freeze({
@@ -85,7 +87,7 @@ export const potionRecipeTokens = () => [
  *  W3: this read the constant 0 with a "the port has no settings
  *  layer" note that U29 made stale - it reads the setting now, at the
  *  point of use as DFU does. `item.material` IS DFU's raw
- *  nativeMaterialValue (equip.js:138), so the `>=` compares hold. */
+ *  nativeMaterialValue (equip.js:140), so the `>=` compares hold. */
 export function armorShouldShowMaterial(item, setting = getInt('GUI', 'HelmAndShieldMaterialDisplay', 0, 3)) {
   // `artifact` is the classic FLAGS word's artifact bit: minted by
   // loot.js's createArtifact (SetArtifact's :617) and read straight
@@ -648,6 +650,21 @@ export const getBookAuthor = (id) => _bookAuthors.get(id) ?? null;
  *  (or found cached) first and the frozen description comes back with
  *  it. `paintingVariant` is GetRandomTokens(id, dfRand: true) for the
  *  four part records, defaulting to the host's own variant reader. */
+/** SURV5: a survival item's info box - the name, the weight, and what it is for: a food's worth and its stage, a
+ *  skin's water, the gear's uses. Built tokens in the box's own row shape. */
+export function survivalInfoTokens(item) {
+  const t = templateByIndex(item?.templateIndex);
+  const out = [{ text: item?.name ?? t?.name ?? '', center: true }, { text: `Weight: ${unitWeightInKg(item).toFixed(2)} kilograms`, center: true }];
+  if (isFood(item)) {
+    const s = foodStage(item);
+    out.push({ text: `Nourishes for ${foodSatiety(item)} minutes${s > 0 ? ` (${STAGE_WORDS[s].toLowerCase()})` : ''}`, center: true });
+    if (foodOf(item)?.raw) out.push({ text: 'Raw - cook it at a fire.', center: true });
+  } else if (isWaterskin(item)) out.push({ text: `Water: ${waterIn(item).toFixed(1)} of ${WATERSKIN_CAPACITY_KG.toFixed(1)} kg`, center: true });
+  else if (isCampingEquipment(item) || isCampfireKit(item)) out.push({ text: `${item.currentCondition ?? 0} use${item.currentCondition === 1 ? '' : 's'} left`, center: true });
+  else if (isSkillet(item)) out.push({ text: 'Cooking at a campfire goes twice as fast.', center: true });
+  return out;
+}
+
 export function itemInfoRows(item, rows, macros = {}) {
   let painting = macros.painting ?? null;
   let record = null;
@@ -655,6 +672,7 @@ export function itemInfoRows(item, rows, macros = {}) {
   // same shape - GetItemInfo's MiscItems switch (:793-794) hands back
   // BUILT tokens rather than a record id, so both bypass `rows(id)`.
   if (isPotionRecipe(item)) record = potionRecipeTokens();
+  if (isSurvivalItem(item)) record = survivalInfoTokens(item);   // SURV5: built tokens, like the recipe's - the custom rows have no TEXT.RSC record
   if (!painting && item?.group === 'Paintings' && _paintFile) {
     // ROAD-A7: every one of the painting reads is GetRandomTokens with
     // dfRand TRUE (InitPaintingInfo :65 and the four macro readers

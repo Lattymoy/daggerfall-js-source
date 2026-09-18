@@ -173,7 +173,7 @@ test('AUDIT 18 F2: every ARENA2 name live code fetches survives the ingest diet'
 });
 
 test('AUDIT 18 F2: the template-built CLASS**.CFG fetches all survive the diet', () => {
-  // dungeonContext.js:467 and chargenSession.js:94/109 build these by index.
+  // dungeonContext.js:475 and chargenSession.js:94/109 build these by index.
   for (let i = 0; i < 19; i++) {
     assert.ok(KEEP(`CLASS${String(i).padStart(2, '0')}.CFG`, true));
   }

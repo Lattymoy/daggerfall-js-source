@@ -10,7 +10,7 @@ import { isExteriorWindow } from '../world/climateSwaps.js';
 import { isEmissive, FIRE_WALLS_ARCHIVE } from '../world/emissiveTextures.js';   // TextureReader's auto-emissive table (lit lanterns, fireplaces, fire daedra)
 import { dfMeshToModel } from '../world/meshReader.js';
 import { fetchBytes, texName } from './shared.js';
-import { decodedTexture, preloadTextureArchive } from '../systems/textureReplacement.js';   // M-TEX: user-supplied textures override the classic ones
+import { decodedTexture, preloadTextureArchive, isVendorArchive, vendorTextureStandIn } from '../systems/textureReplacement.js';   // M-TEX: user-supplied textures override the classic ones
 import { ROTOR, MACHINERY, MACHINERY_MODEL_ID, MACHINERY_CHILDREN, PLANK_GEAR, ROLLER } from '../world/windmillMesh.js';   // WM2b/WM2d/WM4b: the vendored mill and its machinery, uploaded like any other model
 import { skinnedBody } from '../world/windmills.js';   // WM2e: its walls and roof follow the climate
 
@@ -48,6 +48,16 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
     if (textureFiles.has(archive)) return textureFiles.get(archive);
     if (!texturePromises.has(archive)) {
       texturePromises.set(archive, (async () => {
+        // SURV2: an archive that exists only as the port's vendored art
+        // (a mod's item icons, 532-539) has no TEXTURE file to fetch -
+        // decode the PNGs and stand a sized shell in for the file, and
+        // the swap arm below draws them.
+        if (isVendorArchive(archive)) {
+          await preloadTextureArchive(archive).catch(() => {});
+          const v = vendorTextureStandIn(archive);
+          textureFiles.set(archive, v);
+          return v;
+        }
         const t = new TextureFile();
         t.load(await fetch(texName(archive)), texName(archive), palette);
         // M-TEX: the replacement PNGs for this archive decode HERE,

@@ -301,8 +301,8 @@ reference surface absent · **Departure** = deliberate, ledgered.
 | **formats-mw** | Departure lane, faithful within it | **Departure lane, now consumed** | `clipSweepTimes` has a production caller: `combat/fpArm.js:1734` runs the whole-clip reach sweep the superseded page said had never run in the game. 17 modules / 8,842 lines. |
 | **world-terrain** | Near-1:1 | **Near-1:1** | ROAD-A A1 moved the texture season onto `DaggerfallDateTime.SeasonValue` - climate swaps, the winter sunlight term and sky selection - and demoted `?season` to a debug override. The lightning flash stays a recorded enhanced-lane departure. |
 | **world-layout** | Near-1:1 | **Near-1:1** | `rmbLayout`'s shared-block mutation is gated: `attachWindmillRecord` runs only when `enhanced` is true, is idempotent by a `subs.findIndex(r => r?.windmill)` guard, and the header names `subRecords.length` as the count three subsystems bind on (`world/rmbLayout.js:139-150` the gated call, `:179` the guard). |
-| **scenes-world** | Law 1:1 / seams broken | **Near-1:1** | `currentWeatherKey` reads a live getter (`world.js:5350`). Region identity, the quest region/vampire faction seams and `CleanupUntrackedObjects` were the wave; `world.js:3141` carries the sweep and `hostMagic.js:608` its missile half. |
-| **scenes-modes** | Solid, pause parity broken | **Near-1:1** | ROAD-B B1 put `UserInterfaceManager`'s real stack under this host's slot (`ui/windowStack.js`, 295 lines, imported at `worldModes.js:69`). See "the pause primitive" below - the stack exists, its `paused()` member has no reader. |
+| **scenes-world** | Law 1:1 / seams broken | **Near-1:1** | `currentWeatherKey` reads a live getter (`world.js:5422`). Region identity, the quest region/vampire faction seams and `CleanupUntrackedObjects` were the wave; `world.js:3217` carries the sweep and `hostMagic.js:608` its missile half. |
+| **scenes-modes** | Solid, pause parity broken | **Near-1:1** | ROAD-B B1 put `UserInterfaceManager`'s real stack under this host's slot (`ui/windowStack.js`, 295 lines, imported at `worldModes.js:72`). See "the pause primitive" below - the stack exists, its `paused()` member has no reader. |
 | **scenes-dungeon** | Deep, one lifecycle leak | **Near-1:1** | The three process-global seams return on destroy. ROAD-D D8 made this the fourth caller of `playerArrowHitFoe`, moved its action flats, mounted the enchant ctx off the shared `scenes/hostEnchant.js`, and routed its chargen through the one construction seam. |
 | **scenes-support** | Near-1:1 | **Near-1:1** | ROAD-D D9 stood the city-watch fallback through `FoeSpawner.PlaceFoeFreely` on its own collider. Court reads the live region. |
 | **render-core** | Partial (presentation) | **Near-1:1** | The auto-emissive table is present and byte-exact at 182 records / 24 archives. Fog pass-space was the wave. |
@@ -310,14 +310,14 @@ reference surface absent · **Departure** = deliberate, ledgered.
 | **player** | Near-1:1 / one lethal seam | **Near-1:1** | `cancelMovement` is a real motor field set on the mode edges (`player/motor.js:366,:439,:447`). ROAD-A A6 took the -0.28 doorway head-dip, `PlayerMoveScanner`'s three probes, `controllerSwimHeight` 0.30 with Do(Un)Sinking, and `FreezeMotor` on teleports. |
 | **combat** | Math exact / wiring broken | **Verbatim** | Four hosts resolve a player arrow. ROAD-A A12 shipped the left-hand weapon (ToggleHand/SwitchHand/`usingRightHand`, the classic import's `usingLeftHandWeapon`, the mirrored draw). |
 | **characters-ai** | Verbatim | **Verbatim** | `stopDistance` picks `CLASSIC_MELEE_DISTANCE_VS_AI` per pass (`enemyMotor.js:1271`, `enemyAttack.js:177`). ROAD-A A5 took enemy levitation, invisibility/Shade as live sources, foe fall damage and the Seducer transform pair. |
-| **characters-voxel** | Departure (deliberate) | **Departure, still editor-only** | 86 designs across seven tables - 42 of the 43 monster mobiles, 19 class, 25 villager. The rig is 1,791 lines across 7 modules and is still gated: `worldModes.js:4298` passes `voxelfolk`, `scenes/interiorContext.js:503` consumes it. |
+| **characters-voxel** | Departure (deliberate) | **Departure, still editor-only** | 86 designs across seven tables - 42 of the 43 monster mobiles, 19 class, 25 villager. The rig is 1,791 lines across 7 modules and is still gated: `worldModes.js:4308` passes `voxelfolk`, `scenes/interiorContext.js:503` consumes it. |
 | **sys-entity** | Law byte-exact / three dead seams | **Verbatim** | ROAD-A A11 took the "master of" box (TEXT.RSC 4020) with `ArenaFanfareLevelUp`, `skillsRecentlyRaised` and the sheet's own leveling arm. |
 | **sys-magic** | Near-complete | **Verbatim** | 91 keys, 0 inert; `minimumCastingCost` live; ROAD-D D9 took the held-bundle instant re-fire and the caster block's `BundleType == Spell` test on all three gates. |
 | **sys-quests** | Verbatim | **Verbatim** | 82/82 action templates, 265 quests. `playSound`'s busy-skip was the one recorded delta and the E-group closed it (`systems/audio.js`'s `QuestAudioSource`). |
 | **sys-guilds** | Law exact / two structural holes | **Verbatim** | ROAD-D D9 shipped `KnightlyOrder.RestoreGuildData`'s flag migration through the one load door. `SERVICE_DESTINATION` 20/20. |
 | **sys-items** | Law exact / live money bugs | **Verbatim** | ROAD-A A2 took the daily `stockedDate` restock, book prices off `BookFile`, condition-0 shelf arrows and `SplitStack`'s fresh mint; ROAD-D D7 took the live pack, native Repair, the recipe panel and item tooltips. |
 | **sys-talk** | Engines verbatim / six host seams unfilled | **Verbatim** | `getQuestorName()` is the seeded name bank (`systems/npcSession.js:596-603`) - the last of the superseded page's empty reads. ROAD-A A9 also mounted bulletin boards and the `GrammarManager.ProcessGrammar` pass. |
-| **sys-sim** | Law line-for-line / clock seam broken | **Near-1:1** | `preventEnemySpawns` is live on the fast-travel path (`world.js:2014`, `:1774`). Ledger row `:615`'s residue list is spent - see list 2. |
+| **sys-sim** | Law line-for-line / clock seam broken | **Near-1:1** | `preventEnemySpawns` is live on the fast-travel path (`world.js:2060`, `:1819`). Ledger row `:615`'s residue list is spent - see list 2. |
 | **sys-audio** | Data verbatim / engine risk | **Verbatim** | 133 songs, 39 playlists, 76 named clips. |
 | **sys-save** | Broad / three features silently dropped | **Verbatim** | ROAD-A A4 took the envelope stragglers (resistances, `skillsRecentlyRaised`, `minMetalToHit`, `previousVampireClan`, `timeToBecomeVampireOrWerebeast`, `playerTeleportedIntoDungeon`); ROAD-C C1 built the multi-slot window over the store. |
 | **ui-core** | Verbatim | **Verbatim** | ROAD-A A7 built a real `VerticalScrollBar` with a draggable thumb, the item scroller's arrow states, the list picker's double-click law and the message box's scrolling variant with its image panel - and with it, paintings. |
@@ -332,8 +332,8 @@ reference surface absent · **Departure** = deliberate, ledgered.
 **The pause primitive, precisely.** ROAD-B B1 built the stack DFU's
 `UserInterfaceManager` has, with `PauseWhileOpen` as a real latch
 (`ui/windowStack.js:107`, `:101`, `:279`). It is mounted in the two hosts
-that own overlay slots - `worldModes.js:69` and `dungeonContext.js:38` -
-and `world.js:202` reaches it by mounting `worldModes`. But `grep -rn
+that own overlay slots - `worldModes.js:72` and `dungeonContext.js:38` -
+and `world.js:214` reaches it by mounting `worldModes`. But `grep -rn
 "paused()" src/` returns exactly one hit, the definition at
 `windowStack.js:264`: **no host reads the primitive.** Every host still
 gates on its own `overlayHeld`/depth expression. The class is narrowed,
@@ -388,7 +388,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
 
 **Blocked - no 1:1 target.**
 
-- ~~**`src/scenes/dungeonContext.js:1905`** - the two window seams this
+- ~~**`src/scenes/dungeonContext.js:1921`** - the two window seams this
   host cannot mount (`onTeleport`'s INTERIM shape). *There is no
   standalone dungeon scene in DFU to port from; `?dungeon` is the
   port's own dev route. Closing it means porting the trade window and
@@ -420,7 +420,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
 
 **Blocked - host scope.**
 
-- **`src/scenes/exterior.js:1846`** - Recall pends here; the anchor
+- **`src/scenes/exterior.js:1884`** - Recall pends here; the anchor
   machinery lives in the streaming `?world` host. *(The triage measured
   this row at `:1033`; RE-RESOLVED onto the live refusal at ROAD-G G7,
   because this is the one row in the two lists that is still OPEN - a
@@ -437,7 +437,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   named exactly: a jump to an anchor on ANOTHER map pixel, which is
   `_teleportToPixel`'s - the streamer's - and there is no streamer here.
   Its refusal names the reason instead of eating the cast.*
-- ~~**`src/scenes/exterior.js:1653`** - PX3: this test host mounts no
+- ~~**`src/scenes/exterior.js:1674`** - PX3: this test host mounts no
   quest bridge, so the pause window's Quests tab says so.~~ **SHIPPED
   (QX1, 2026-09-03).** *The triage's premise - "this file has no bridge
   at all and constructs no quest machine" - was a missing construction,
@@ -456,13 +456,13 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   interior pause off the same one walk), and the pause window's
   Chronicle button. The EIGHTH - the exterior static-NPC pass - keeps
   C#'s empty-machine answer for the narrower reason written at its own
-  site. (The `src/scenes/worldModes.js:1935` row below is struck: ROAD-E
+  site. (The `src/scenes/worldModes.js:1940` row below is struck: ROAD-E
   E3 ran that pass above ground in the streaming host, and what the
   sentence names is this host's layout order alone.)*
 
 **Blocked - data, an asset, or a layer the port does not have.**
 
-- ~~**`src/scenes/world.js:3310`** - the port's default landing stands
+- ~~**`src/scenes/world.js:3338`** - the port's default landing stands
   in for `GetPlayerTravelPosition`, flagged for the first session with
   ARENA2.~~ **SHIPPED (ship landing, 2026-09-03).** *The owner supplied
   the real MAPS.BSA and the claim it rested on was FALSE: map pixel
@@ -533,7 +533,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   into DFU's own order so `DoRangedAttack`'s band condition selects
   before the 1/40 roll fires, where the port rolled first and picked
   second.*
-- ~~**`src/scenes/worldModes.js:1864`** - above ground only:
+- ~~**`src/scenes/worldModes.js:1869`** - above ground only:
   `QuestMachine.SetupIndividualStaticNPC`. *Multi-host. The law is
   ported and idle at `systems/quest/machine.js:739` including the
   away arm's `setActive(false)`, but there is no moment to run it: both
@@ -645,12 +645,12 @@ could see the others' closures until the squash, which is how "leaving
   narrowed the header and **E3** built the console host they needed.
 
 Five of the sites that survived Wave E only MOVED, and `Home.md` was
-regenerated onto the new sites: ~~`exterior.js:1314` -> `:1150`~~
+regenerated onto the new sites: ~~`exterior.js:1339` -> `:1176`~~
 (**CLOSED at TP2**: the Recall interim narrowed to the one arm this host
-cannot take, `exterior.js:1655`), ~~`exterior.js:1698` -> `:1402`~~
+cannot take, `exterior.js:1675`), ~~`exterior.js:1719` -> `:1428`~~
 (**CLOSED at QX1**: this host took the quest bridge, so the pause window's
-Quests tab has a machine to read), ~~`world.js:3349` -> `:3194`~~
-(**CLOSED at the ship landing**), ~~`worldModes.js:1860` -> `:1718`~~
+Quests tab has a machine to read), ~~`world.js:3365` -> `:3225`~~
+(**CLOSED at the ship landing**), ~~`worldModes.js:1865` -> `:1723`~~
 (**CLOSED at ROAD-F GS1**, below), `pauseWindow.js:58` -> `:65`. The
 entries in the two lists above still quote the line numbers of the
 measurement, which is older still; `Home.md` is the live list.
@@ -663,7 +663,7 @@ re-resolved, which is why the `exterior.js` row above now reads
 only live inventory.
 
 **ROAD-F (2026-09-03) took the last two this page still owed.**
-- ~~**`src/scenes/worldModes.js:1934`** - above ground only: the GUILD
+- ~~**`src/scenes/worldModes.js:1939`** - above ground only: the GUILD
   SERVICE popup.~~ **SHIPPED (GS1).** *`StaticNPCClick` pushes the
   popup on `Services.HasGuildService` ALONE
   (`PlayerActivate.cs:1552-1568`) - the `BuildingDiscoveryData` beside
@@ -783,7 +783,7 @@ secondary picker's cancel path, the rep window's stale-bar quirk), two are
 world-data halves - M-TEX took the TEXTURE half), three are declared
 departures (the two Morrowind judgement rows, the settings taxonomy), two
 are audit preambles, ~~one is RESERVED by the owner (smaller-dungeon
-generation, to the enhanced lane)~~ (**it read 226 and 21 until `:553` was
+generation, to the enhanced lane)~~ (**it read 226 and 21 until `:554` was
 STRUCK: SHIPPED at AUDIT 28 W4**), and two say inside their own text that
 they are closed (`RegionPowerAndConditionsUpdate`, vampirism/lycanthropy).
 
@@ -882,11 +882,11 @@ ships, which is the warning the section's own preamble opens with.
 *Stale - the row is a claim the tree has outrun:*
 
 9. **`:565` UseItem's unbuilt destinations.** Every arm the row names is
-   built: `DrinkPotion` (`systems/useItem.js:182`, `:260-270`),
+   built: `DrinkPotion` (`systems/useItem.js:197`, `:275-285`),
    `RecordLocationFromMap`/`DiscoverRandomLocation`
-   (`ui/nativeInventory.js:726-730`, `scenes/world.js:3190`), the
-   (`ui/nativeInventory.js:726-730`, `scenes/world.js:3136`), the
-   quest-item click (`useItem.js:214`, `:227-228`) and
+   (`ui/nativeInventory.js:736-740`, `scenes/world.js:3266`), the
+   (`ui/nativeInventory.js:736-740`, `scenes/world.js:3212`), the
+   quest-item click (`useItem.js:229`, `:242-243`) and
    `DoItemEnchantmentPayloads(Used)` (already struck at E2). D10 closed
    the last residue in the row's book-reader clause - the fixed 10px row
    is now `LayoutBookLabels` in each label's own face.
@@ -897,9 +897,9 @@ ships, which is the warning the section's own preamble opens with.
     (`ui/bankWindow.js` + the ships arm of `ui/bankPurchaseWindow.js`
     over the shared `openBankMarket` mount, with `purchaseShip` finally
     having a caller), and `PreventEnemySpawns`-on-arrival is live at
-    `scenes/world.js:4279` (the arrival clamp anchoring the encounter
+    `scenes/world.js:4359` (the arrival clamp anchoring the encounter
     clock, so the traveled window is not replayed) and `:1969` (the
-    `scenes/world.js:4223` (the arrival clamp anchoring the encounter
+    `scenes/world.js:4303` (the arrival clamp anchoring the encounter
     clock, so the traveled window is not replayed) and `:1915` (the
     ":524-525" clear that lets spawns resume). AUDIT 58 re-resolved this
     pair - both cites had drifted off the lines they name.
@@ -908,7 +908,7 @@ ships, which is the warning the section's own preamble opens with.
 12. **`:664` the magic crafting windows.** The row's FLAGGED residue is
     three items and all three are answered: spell icons ship and are
     drawn (`ui/spellIcons.js`, imported at
-    `ui/spellbookWindow.js:135-137`, drawn at `:1000`), the icon picker
+    `ui/spellbookWindow.js:135-137`, drawn at `:1001`), the icon picker
     ships (`ui/spellIconPickerWindow.js`), and the
     inert-catalogue count is gated at 0. What survives is not residue
     ~~but a **departure with no Ledger row**: DFU's native INFO01I0 art
@@ -928,15 +928,15 @@ ships, which is the warning the section's own preamble opens with.
 ## 3. The deliberate departures, which are not on the road
 
 `Road-To-1-1.md` names these at its head so nobody re-opens them, and
-`Port-Ledger.md` section A carries **153 rows, 14 struck - 139 standing
-approved departures** (the 74th is WIND1, 2026-09-02, added after this page's measurement and counted here so the tally follows the tree; the 137th is THE QUICKSLOT DIAMOND, QS1-QS3, 2026-09-17; the 138th is GetKeyDown AND GetKeyUp, THE READS THE PORT NEVER HAD, MWCROUCH, 2026-09-17, inserted directly under it; the 139th is ONE MODE, ONE DISPATCH - AND A DEBUG SENTINEL OUT OF THE PLAYER'S MOUTH, QS7 + TALK-UNKNOWN, 2026-09-17, inserted directly under THAT, ; the 140th is A BODY IS OPENED NOT EMPTIED..., MAC-A/C/D/E, 2026-09-17, inserted directly under THAT; the 141st is A CARD THAT FOLDS, AND A PAGE THAT WAS NEVER DRAWN, MAC-F/MAC-G, 2026-09-17, inserted directly under THAT; the 142nd is THE VIEWMODEL TAKES THE ROOM'S LIGHT, AND A NAME IS NOT A BUTTON, MAC-H/I/J/P, 2026-09-17, inserted directly under THAT; the 143rd is THE TORCH'S FIRE - MORROWIND'S PARTICLE SYSTEMS, PORTED, MAC-Q, 2026-09-17, inserted directly under THAT; the 144th is BETTER RESTING, WILDLIFE GROUPS, FOES UNDER A WINDOW, AND AN ONLINE DEATH THAT RESPAWNS, RESTX2 / CAMP1 / WINFOE1 / D-ONLINE1, 2026-09-17, inserted directly under THAT; the 146th is FOUR OF MAC'S BUGS - THE RAISED BLADE, THE DOUBLED LINE, THE HAND CELLS, THE HOLD UNDER A REPAINT, MAC-R1/R2/R3/R4, 2026-09-17, inserted directly under THAT; the 147th is THE TARGET BAR'S BLADE FACE, FOEBAR1, 2026-09-17, inserted directly under THAT, the 148th is THE CRIMINAL'S WATCH RIDES THE CELL, WATCH1 + AUDIT WATCH1, 2026-09-17, inserted directly under THAT, the 149th is SHOPS STAFFED AROUND THE CLOCK ONLINE, OL4, 2026-09-17, inserted directly under THAT, the 150th is THE REGION'S PRICES ARE THE WORLD'S, ECON1, 2026-09-17, inserted directly under THAT, the 151st is EIGHT OF JANOME'S REPORTS - THE HAND THAT SWITCHED SIDES, THE FIST UNDER THE TORCH, THE WALKERS IN THE SKY, THE GLARE THROUGH THE ATTIC, THE CLASSIC TALK BOX, JAN1, 2026-09-18, inserted directly under THAT, the 152nd is THE LIGHT IN THE HAND SAYS SO, MAC-T1/T2, 2026-09-18, inserted directly under THAT, the 153rd is NO GROUP ROLL UNDER A REST, AND THE TUTORIAL DUNGEON IS NOT A RESPAWN DOOR, CAMP1-REST / D-ONLINE2, 2026-09-18, inserted directly under THAT, and the seventeen together moved every row below - sections B, C and D - down seventeen lines; the 105th is HANDHELD TORCHES, HT1, 2026-09-14, under Weapon Widget's row, with ONE SHAPE FOR EVERY TEXTURE DOOR (TEX1) under it; the 106th to 109th are NO RAIN OVER SNOW, CLOUD TYPES BY PLACE, THE WEATHER FIELD and THE SANDSTORM, WEATHER2a/c/b/d, 2026-09-14, inserted after WX2's row; the 4th is MOBILE TOUCH INPUT, TI1, 2026-09-05, inserted under the windmill row and likewise; the 10th is DS1 - Dynamic Skies vendored 1:1 with permission, 2026-09-04 - inserted directly under the enhanced sky's row it stands beside, which moved every row below it down one; the 11th is SIB1 - Seasons of the Iliac Bay ported 1:1 with permission, 2026-09-05, its textures the player's to supply - inserted directly under DS1, moving every row below down one more; the 12th is ECV1 - Enhanced Combat Visuals, 2026-09-07, the enhanced skin's draw of a concealed foe - inserted directly under SIB1, moving every row below down one more; the 13th is VC - Volumetric Clouds, 2026-09-07, the arc's row, inserted directly under ECV1, moving every row below down one more; the 14th is CLK2 - the weather evolving within the day on the enhanced lane, 2026-09-08, the Clock arc's row, inserted directly under VC, moving every row below down one more; the 2nd is the re-integrated road system, inserted directly under the struck ROADS row it supersedes, added by AUDIT 58 F5; the 77th is the pause window's version line, appended by AUDIT 58's records lane, which found `src/ui/pauseWindow.js` citing a Ledger A approval that had never been written down; rows 78-85 are AUDIT 58's seams lane, which found EIGHT more files declaring a departure as already RECORDED - music replacement, the fuzzy find, travel weather, the conversation save, the colour picker, async art in two windows, the town map's plate and arrow, and the input ladder's E and swing - against a section A that rowed none of them; rows 86-88 are ROAD-G G7's records lane, which widened the doctrine gate from the DEPARTURE token to the `Ledger A` CITE and found seventeen files claiming an approval this page did not name - the `AdvancedClimbing` scaffolding, the merchant service popup's accelerators and the port's scalar clock are the three that were genuinely owed a row rather than a roster line or a corrected comment; the 89th is AUDIT 64 F29's biography name seed, 2026-09-08, appended at the table's foot - `(uint)BiogFile.GetHashCode()` is a CLR identity hash and belongs to neither arm of the ENGINE-PRNG rule; the 90th is WATER1 - Enhanced Water, 2026-09-08, the water surface over the exterior water tiles on the enhanced lane, appended at the foot of the section; the 91st is MAC1 - THE LOOK'S FLOOR, 2026-09-10, the one law departure in Mac's play report, appended below WATER1, which moved sections B, C and D down one line; the 5th is TI2 - THE PHONE IN HAND, TUNED, 2026-09-11, the second touch slice, inserted directly under TI1's row, which moved every row below it - every ordinal from DS1's on in this sentence - down one more; the 28th is THE SMALLER-DUNGEON SAVE STAMP IS THE BUILD, FT1, 2026-09-14, appended at the foot of the first table, which moved every ordinal from WIND1's on down one more; the 118th is WEAPON WIDGET, WW1, 2026-09-14, RedRoryOTheGlen's mod ported 1:1 off its IL with the Morrowind arms riding its channels, appended at the foot of the section; the 109th is THE PACK COULD NOT LIGHT A TORCH, HT2, 2026-09-14, inserted directly under TEX1's row, which moved every row below it down one; the 110th is MODS AND THEIR MODULES ARE ON, MODS-ON, 2026-09-14, inserted directly under HT2's, moving every row below down one more; the 111th is THE WISPS' COUNT, THE SKY'S DIRECTION, THE GRASS AT NIGHT, WIND4, 2026-09-15, inserted directly under MODS-ON's, moving every row below down one more; the 112th is THE HELD SPRITE WAS UPSIDE DOWN, HT3, 2026-09-15, inserted directly under WIND4's, moving every row below down one more; the 113th is THE LOOT LADDER IS THE DEFAULT, LR1-LR5, 2026-09-14/15, inserted directly under HT3's at the foot of the section - the ladder shipped OFF and was dormant, and LR5 making it the DEFAULT is what a departure a player meets without asking owes section A; the 135th is SOCIAL - FRIENDS, PRESENCE AND THE FOUR-SEAT PARTY, SOC1-SOC7, 2026-09-16, inserted directly under AUDIT RESTX + AUDIT OQ's at the foot of the first table, which moved every row below it - sections B, C and D - down one line) plus the DUNGEON SEED bullet, now naming its two files, and the
+`Port-Ledger.md` section A carries **154 rows, 14 struck - 140 standing
+approved departures** (the 74th is WIND1, 2026-09-02, added after this page's measurement and counted here so the tally follows the tree; the 137th is THE QUICKSLOT DIAMOND, QS1-QS3, 2026-09-17; the 138th is GetKeyDown AND GetKeyUp, THE READS THE PORT NEVER HAD, MWCROUCH, 2026-09-17, inserted directly under it; the 139th is ONE MODE, ONE DISPATCH - AND A DEBUG SENTINEL OUT OF THE PLAYER'S MOUTH, QS7 + TALK-UNKNOWN, 2026-09-17, inserted directly under THAT, ; the 140th is A BODY IS OPENED NOT EMPTIED..., MAC-A/C/D/E, 2026-09-17, inserted directly under THAT; the 141st is A CARD THAT FOLDS, AND A PAGE THAT WAS NEVER DRAWN, MAC-F/MAC-G, 2026-09-17, inserted directly under THAT; the 142nd is THE VIEWMODEL TAKES THE ROOM'S LIGHT, AND A NAME IS NOT A BUTTON, MAC-H/I/J/P, 2026-09-17, inserted directly under THAT; the 143rd is THE TORCH'S FIRE - MORROWIND'S PARTICLE SYSTEMS, PORTED, MAC-Q, 2026-09-17, inserted directly under THAT; the 144th is BETTER RESTING, WILDLIFE GROUPS, FOES UNDER A WINDOW, AND AN ONLINE DEATH THAT RESPAWNS, RESTX2 / CAMP1 / WINFOE1 / D-ONLINE1, 2026-09-17, inserted directly under THAT; the 146th is FOUR OF MAC'S BUGS - THE RAISED BLADE, THE DOUBLED LINE, THE HAND CELLS, THE HOLD UNDER A REPAINT, MAC-R1/R2/R3/R4, 2026-09-17, inserted directly under THAT; the 147th is THE TARGET BAR'S BLADE FACE, FOEBAR1, 2026-09-17, inserted directly under THAT, the 148th is THE CRIMINAL'S WATCH RIDES THE CELL, WATCH1 + AUDIT WATCH1, 2026-09-17, inserted directly under THAT, the 149th is SHOPS STAFFED AROUND THE CLOCK ONLINE, OL4, 2026-09-17, inserted directly under THAT, the 150th is THE REGION'S PRICES ARE THE WORLD'S, ECON1, 2026-09-17, inserted directly under THAT, the 151st is EIGHT OF JANOME'S REPORTS - THE HAND THAT SWITCHED SIDES, THE FIST UNDER THE TORCH, THE WALKERS IN THE SKY, THE GLARE THROUGH THE ATTIC, THE CLASSIC TALK BOX, JAN1, 2026-09-18, inserted directly under THAT, the 152nd is THE LIGHT IN THE HAND SAYS SO, MAC-T1/T2, 2026-09-18, inserted directly under THAT, the 153rd is CLIMATES & CALORIES, OVERHAULED WITH PERMISSION, SURV1-SURV7, 2026-09-18, inserted directly under THAT, the 154th is NO GROUP ROLL UNDER A REST, AND THE TUTORIAL DUNGEON IS NOT A RESPAWN DOOR, CAMP1-REST / D-ONLINE2, 2026-09-18, inserted directly under THAT, and the eighteen together moved every row below - sections B, C and D - down eighteen lines; the 105th is HANDHELD TORCHES, HT1, 2026-09-14, under Weapon Widget's row, with ONE SHAPE FOR EVERY TEXTURE DOOR (TEX1) under it; the 106th to 109th are NO RAIN OVER SNOW, CLOUD TYPES BY PLACE, THE WEATHER FIELD and THE SANDSTORM, WEATHER2a/c/b/d, 2026-09-14, inserted after WX2's row; the 4th is MOBILE TOUCH INPUT, TI1, 2026-09-05, inserted under the windmill row and likewise; the 10th is DS1 - Dynamic Skies vendored 1:1 with permission, 2026-09-04 - inserted directly under the enhanced sky's row it stands beside, which moved every row below it down one; the 11th is SIB1 - Seasons of the Iliac Bay ported 1:1 with permission, 2026-09-05, its textures the player's to supply - inserted directly under DS1, moving every row below down one more; the 12th is ECV1 - Enhanced Combat Visuals, 2026-09-07, the enhanced skin's draw of a concealed foe - inserted directly under SIB1, moving every row below down one more; the 13th is VC - Volumetric Clouds, 2026-09-07, the arc's row, inserted directly under ECV1, moving every row below down one more; the 14th is CLK2 - the weather evolving within the day on the enhanced lane, 2026-09-08, the Clock arc's row, inserted directly under VC, moving every row below down one more; the 2nd is the re-integrated road system, inserted directly under the struck ROADS row it supersedes, added by AUDIT 58 F5; the 77th is the pause window's version line, appended by AUDIT 58's records lane, which found `src/ui/pauseWindow.js` citing a Ledger A approval that had never been written down; rows 78-85 are AUDIT 58's seams lane, which found EIGHT more files declaring a departure as already RECORDED - music replacement, the fuzzy find, travel weather, the conversation save, the colour picker, async art in two windows, the town map's plate and arrow, and the input ladder's E and swing - against a section A that rowed none of them; rows 86-88 are ROAD-G G7's records lane, which widened the doctrine gate from the DEPARTURE token to the `Ledger A` CITE and found seventeen files claiming an approval this page did not name - the `AdvancedClimbing` scaffolding, the merchant service popup's accelerators and the port's scalar clock are the three that were genuinely owed a row rather than a roster line or a corrected comment; the 89th is AUDIT 64 F29's biography name seed, 2026-09-08, appended at the table's foot - `(uint)BiogFile.GetHashCode()` is a CLR identity hash and belongs to neither arm of the ENGINE-PRNG rule; the 90th is WATER1 - Enhanced Water, 2026-09-08, the water surface over the exterior water tiles on the enhanced lane, appended at the foot of the section; the 91st is MAC1 - THE LOOK'S FLOOR, 2026-09-10, the one law departure in Mac's play report, appended below WATER1, which moved sections B, C and D down one line; the 5th is TI2 - THE PHONE IN HAND, TUNED, 2026-09-11, the second touch slice, inserted directly under TI1's row, which moved every row below it - every ordinal from DS1's on in this sentence - down one more; the 28th is THE SMALLER-DUNGEON SAVE STAMP IS THE BUILD, FT1, 2026-09-14, appended at the foot of the first table, which moved every ordinal from WIND1's on down one more; the 118th is WEAPON WIDGET, WW1, 2026-09-14, RedRoryOTheGlen's mod ported 1:1 off its IL with the Morrowind arms riding its channels, appended at the foot of the section; the 109th is THE PACK COULD NOT LIGHT A TORCH, HT2, 2026-09-14, inserted directly under TEX1's row, which moved every row below it down one; the 110th is MODS AND THEIR MODULES ARE ON, MODS-ON, 2026-09-14, inserted directly under HT2's, moving every row below down one more; the 111th is THE WISPS' COUNT, THE SKY'S DIRECTION, THE GRASS AT NIGHT, WIND4, 2026-09-15, inserted directly under MODS-ON's, moving every row below down one more; the 112th is THE HELD SPRITE WAS UPSIDE DOWN, HT3, 2026-09-15, inserted directly under WIND4's, moving every row below down one more; the 113th is THE LOOT LADDER IS THE DEFAULT, LR1-LR5, 2026-09-14/15, inserted directly under HT3's at the foot of the section - the ladder shipped OFF and was dormant, and LR5 making it the DEFAULT is what a departure a player meets without asking owes section A; the 135th is SOCIAL - FRIENDS, PRESENCE AND THE FOUR-SEAT PARTY, SOC1-SOC7, 2026-09-16, inserted directly under AUDIT RESTX + AUDIT OQ's at the foot of the first table, which moved every row below it - sections B, C and D - down one line) plus the DUNGEON SEED bullet, now naming its two files, and the
 houses-for-sale A-note. They are design choices, each internally
 faithful to whatever reference it does have, and none of them is a gap.
 
 - **The voxel character engine** (Mac's system, Port-Doctrine). 86
   designs across seven tables - 42 of the 43 monster mobiles, 19 class,
   25 villager - and a 1,791-line rig across 7 modules. Still not shipped
-  by a game host: `worldModes.js:4298` passes `voxelfolk`,
+  by a game host: `worldModes.js:4308` passes `voxelfolk`,
   `scenes/interiorContext.js:503` gates on it, and no default route sets
   it. The departure is faithful and is not in the player's hands.
 - **The enhanced skin and visuals** - 9 `ui/enhanced*.js` modules, 8,940
