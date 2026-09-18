@@ -1315,7 +1315,7 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
 .hmhint, .hmband {
   color: var(--dim); font-size: 11px; letter-spacing: 0.08em; opacity: 0.8;
 }
-.hmband { text-transform: uppercase; letter-spacing: 0.18em; }
+.hmband { text-transform: uppercase; letter-spacing: 0.18em; padding-left: 12px; border-left: 1px solid var(--iron); }
 .hmlegend {
   position: static; flex: none; display: none;
   align-items: center; gap: 8px; padding: 6px 10px; font-size: 12px;
@@ -1335,6 +1335,8 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
   background: rgba(10, 13, 17, 0.94); border: 1px solid var(--iron); z-index: 2;
 }
 .hmbox.open { display: block; }
+/* AUDIT-MAP H6: while a box is up the rest of the chrome is pointer-dead */
+.hmroot.hmmodal .hmtop, .hmroot.hmmodal .hmcard, .hmroot.hmmodal .hmfoot { pointer-events: none; }
 .hmbox-title { font-family: var(--display); font-weight: 300; font-size: 22px; margin: 0 0 10px; text-align: center; }
 .hmbox-row { font-size: 14px; margin: 6px 0; white-space: pre-wrap; }
 .hmbox-prompt { text-align: center; font-size: 15px; margin: 4px 0 14px; }

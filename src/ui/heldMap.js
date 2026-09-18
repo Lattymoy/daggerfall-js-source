@@ -70,6 +70,15 @@
 // stays on the map - AUDIT-TO1 G3), and the walked-trip estimate on the
 // card (TravelOptionsPopUp.cs UpdateLabels: hours and minutes and no
 // fare when the trip is player-controlled). The teleport fee is MAP1's.
+//
+// AUDIT-MAP (2026-09-18, bible/10-UI/Held-Map-Arc.md): the fare is the
+// mod's SCALED one (scaleTripCost, the popup's own export); a walked
+// trip hands its walked minutes to the host's ETA; No on the fee closes
+// the map; online no inn is billed and the arrival is now; the static
+// ink is a kept layer and the rings an overlay. Its recorded departures:
+// the coordinates click refuses a teleport visit, H works under the
+// panel, a bare pixel's ship laws see no destination, the resume prompt
+// answers Enter and E, the fee is asked with the pick.
 // ═══════════════════════════════════════════════════════════════════
 
 import { MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
@@ -83,7 +92,7 @@ import {
 } from '../systems/travelMapState.js';
 // AUDIT-TO1 C1/C2/C3: the mod's laws on the DEFAULT skin, as the pure
 // functions the popup itself calls, so the two skins cannot drift.
-import { isPlayerControlledTravel, enforceShipRestriction, shipTravelRefusal, SHIP_REFUSAL_TEXT } from './travelPopUp.js';
+import { isPlayerControlledTravel, enforceShipRestriction, shipTravelRefusal, scaleTripCost, SHIP_REFUSAL_TEXT, ONLINE_TRAVEL_LINE } from './travelPopUp.js';
 // MAP2: the mod's map additions, through the SAME functions the classic
 // window calls (ui/travelMapOptions.js), so the two skins cannot drift.
 import { teleportCost, teleportCostPrompt, portsFilterAllows, locationInfoRows, resumePrompt } from './travelMapOptions.js';
@@ -92,7 +101,7 @@ import { TRAVEL_OPTIONS_TEXT as TO_TEXT, format as toFormat } from '../systems/t
 import { getDaggerfallDistance, MatchesCutOff } from '../systems/editDistance.js';
 import { checkLocationDiscovered } from './travelMapWindow.js';
 import {
-  buildInkModel, buildInkMarks, paintInk, placeNames, zoomBand, clampView, scaleMinOf,
+  buildInkModel, buildInkMarks, paintInkStatic, paintInkOverlay, placeNames, zoomBand, clampView, scaleMinOf, SCALE_MAX,
   viewCentredOn, zoomAt, toPaper, toMap, BAND_MARKS, PARTY_LABEL_STACK,
 } from './inkMap.js';
 // SOC6: the party's marks, read the one way both maps read them.
@@ -134,6 +143,8 @@ const CLOSE_S = 0.3;     // ...and lowers on a commit or a close
 const PARTY_POLL_S = 0.25;
 /** The scale a search or a journal click-through zooms to. */
 const FOCUS_SCALE = 6;
+/** How often the breathing rings repaint the sheet while one is up. */
+const PULSE_HZ = 10;
 
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 const el = (t, cls, txt) => {
@@ -178,6 +189,10 @@ export class HeldMapWindow {
 
     this._model = null;     // the ink model, minted on the first layout
     this._marksDirty = true;
+    this._marksVersion = 0;
+    this._layer = null;         // the kept static ink (a canvas), and its key
+    this._staticKey = '';
+    this._measureCache = new Map();
     this._dirty = true;     // the canvas wants a repaint
     this._layoutKey = '';
     this._paper = { w: 1, h: 1, dpr: 1 };
@@ -354,7 +369,7 @@ export class HeldMapWindow {
       }
       case 'map': break;
       case 'closing': {
-        this._setOpacity(clamp(1 - this._t / CLOSE_S, 0, 1));
+        this._setOpacity(clamp((this._closeFrom ?? 1) * (1 - this._t / CLOSE_S), 0, 1));
         if (this._t >= CLOSE_S) {
           // THE COMMIT, with the sheet down: the hooks are read while
           // this window is still alive (the pack's lesson), and the
@@ -378,10 +393,18 @@ export class HeldMapWindow {
     if (Math.abs(v.ox - g.ox) > 1e-3 || Math.abs(v.oy - g.oy) > 1e-3 || Math.abs(v.scale - g.scale) > 1e-4) {
       v.ox += (g.ox - v.ox) * k; v.oy += (g.oy - v.oy) * k; v.scale += (g.scale - v.scale) * k;
       if (Math.abs(v.ox - g.ox) < 1e-3 && Math.abs(v.oy - g.oy) < 1e-3 && Math.abs(v.scale - g.scale) < 1e-4) Object.assign(v, g);
+      // AUDIT-MAP A8: every step of the glide is a view the clamp allows -
+      // the straight line between a centred rest view and a zoomed goal
+      // ran through views with blank parchment above the map
+      Object.assign(v, clampView(v, this._limits()));
       this._dirty = true;
     }
-    // the rings breathe, so the sheet is repainted while one is up
-    if (this._selected || this._party.length) this._dirty = true;
+    // the rings breathe, so the sheet is repainted while one is up - at
+    // PULSE_HZ, not per frame: a paint is the whole bay's ink (AUDIT-MAP A2)
+    if (this._selected || this._party.length) {
+      const beat = Math.floor(this._clock * PULSE_HZ);
+      if (beat !== this._beat) { this._beat = beat; this._dirty = true; }
+    }
     if (this._dirty) this._paint();
   }
 
@@ -393,9 +416,10 @@ export class HeldMapWindow {
   }
 
   /** Everything the window holds, released once - in close() rather
-   *  than dispose() alone, because the guild-teleport mount lives in
-   *  worldModes' interiorOverlay, whose drain drops a done window
-   *  WITHOUT a dispose call. Torn down BEFORE done reads true. */
+   *  than dispose() alone, so a window closed from inside (Escape, a
+   *  commit) tears its DOM down the same breath, whichever mount holds
+   *  it (worldModes' interiorOverlay for the guild's teleport map, the
+   *  townTalk slot outdoors). Torn down BEFORE done reads true. */
   _teardown() {
     if (this._tornDown) return;
     this._tornDown = true;
@@ -421,9 +445,20 @@ export class HeldMapWindow {
    *  left to fade in. */
   _beginClose(commit) {
     if (this._phase === 'closing') return;
+    // AUDIT-MAP B1: the toggles are remembered on EVERY way out - the Close
+    // button and the resume prompt's Yes came through here with a panel
+    // open and dropped its state, where Escape and Begin had kept it
+    if (this._panelState) this._rememberPanel();
     this._commit = commit;
     this._panel = null;
     this._panelState = null;
+    this._info = null;
+    this._top = null;
+    this._renderBox();
+    // the fade starts from where the sheet IS - a close answered during
+    // the opening fade must not snap to full before lowering
+    this._closeFrom = parseFloat(this._chrome?.root?.style?.opacity ?? '1');
+    if (!Number.isFinite(this._closeFrom)) this._closeFrom = 1;
     this._phase = 'closing';
     this._t = 0;
     this._renderCard();
@@ -489,19 +524,20 @@ export class HeldMapWindow {
       return r >= 0 && r < regionCount ? r : -1;
     };
     let rec = _chainCache.get(bytes);
-    if (!rec || rec.net !== net || rec.width !== this._size.width) {
+    if (!rec || rec.net !== net || rec.width !== this._size.width || rec.height !== this._size.height) {
       const m = buildInkModel({
         width: this._size.width, height: this._size.height, heightBytes: bytes,
         climateAt: (x, y) => this.deps.getClimateIndex?.(x, y) ?? -1,
         regionAt, regionCount, roads: net,
       });
-      rec = { net, width: this._size.width, chains: m };
+      rec = { net, width: this._size.width, height: this._size.height, chains: m };
       _chainCache.set(bytes, rec);
       this._marksDirty = true;
     }
     if (this._model?.coast !== rec.chains.coast) this._model = { ...rec.chains, marks: [] };
     if (this._marksDirty) {
       this._marksDirty = false;
+      this._marksVersion = (this._marksVersion ?? 0) + 1;
       this._model.marks = buildInkMarks({
         summaries: this.deps.mapDict?.values() ?? [],
         filters: this.filters,
@@ -523,18 +559,48 @@ export class HeldMapWindow {
     const model = this._ensureModel();
     if (!ctx || !model) return;
     const band = zoomBand(this._view.scale);
-    const measure = (text, size) => { ctx.font = `${size}px 'Cormorant', Georgia, serif`; return ctx.measureText(text).width; };
-    const names = placeNames(model.marks, this._view, band, { paperW: this._paper.w, paperH: this._paper.h, measure });
+    const { w: paperW, h: paperH, dpr } = this._paper;
+    // AUDIT-MAP (perf): THE STATIC INK IS KEPT. The coast, the carets, the
+    // borders, the roads, the marks and the names change only with the
+    // view, the band, the sheet, the marks or the mod's state; the rings
+    // that breathe are an overlay. So the static half is painted onto a
+    // kept layer when its key moves, and a pulse frame is one drawImage
+    // and a few arcs - not the whole bay's ink rasterised again.
+    const key = [this._view.ox, this._view.oy, this._view.scale, band, paperW, paperH, dpr,
+      this._marksVersion, this._portsShown() ? 1 : 0, this.markedMapId,
+      this.filters.roads ? 1 : 0, this.filters.tracks ? 1 : 0].join('|');
+    const layer = this._layer ?? (this._layer = document.createElement('canvas'));
+    const lctx = layer.getContext?.('2d');
+    if (key !== this._staticKey || !lctx) {
+      this._staticKey = key;
+      const target = lctx ?? ctx;
+      if (lctx) { layer.width = canvas.width; layer.height = canvas.height; }
+      const measure = (text, size, font) => {
+        const k = `${font}|${text}`;
+        let w = this._measureCache.get(k);
+        if (w === undefined) { target.font = font; w = target.measureText(text).width; this._measureCache.set(k, w); }
+        return w;
+      };
+      const names = placeNames(model.marks, this._view, band, { paperW, paperH, measure });
+      paintInkStatic(target, model, this._view, {
+        paperW, paperH, dpr, band,
+        filters: this.filters, names, regionNames: REGION_NAMES,
+        // MAP2: the harbours while the mod restricts ships to ports, and the mark in the mod's colour
+        ports: this._portsShown(),
+        markedMapId: this.markedMapId,
+        markColor: rgbaCss(this._to?.settings?.markLocationColor),
+      });
+    }
+    if (lctx) {
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(layer, 0, 0);
+    }
     const pulse = 0.5 + 0.5 * Math.sin(this._clock * 3);
-    paintInk(ctx, model, this._view, {
-      paperW: this._paper.w, paperH: this._paper.h, dpr: this._paper.dpr, band,
-      filters: this.filters, names, regionNames: REGION_NAMES,
+    paintInkOverlay(ctx, this._view, {
+      paperW, paperH, dpr, clear: false,
       player: this._player,
       selected: this._selected ? { x: this._selected.x, y: this._selected.y, coords: !!this._selected.coords } : null,
-      // MAP2: the harbours while the mod restricts ships to ports, and the mark in the mod's colour
-      ports: this._portsShown(),
-      markedMapId: this.markedMapId,
-      markColor: rgbaCss(this._to?.settings?.markLocationColor),
       party: this._party.map((m) => ({
         x: m.x, y: m.y, name: partyLabelText(m), online: m.online, stack: m.stack,
         // the colour is DATA, not a theme: online is the party green the
@@ -544,7 +610,7 @@ export class HeldMapWindow {
       })),
       pulse,
     });
-    this._chrome.band.textContent = band;
+    if (this._bandShown !== band) { this._bandShown = band; this._chrome.band.textContent = band; }
   }
 
   _setView(v) {
@@ -553,7 +619,16 @@ export class HeldMapWindow {
     this._dirty = true;
   }
   _nudge(dx, dy) { this._setView({ ox: this._view.ox + dx, oy: this._view.oy + dy, scale: this._view.scale }); }
-  _zoomBy(factor, px, py) { this._setView(zoomAt(this._view, factor, px, py)); }
+  /** Zoom by `factor` about paper point (px, py). The scale is clamped
+   *  FIRST and the anchor computed for the scale that will actually be
+   *  set: anchoring at an over-the-ceiling scale and clamping afterwards
+   *  let the point under the cursor drift at the ends of the range (the
+   *  browser probe caught it at SCALE_MAX). */
+  _zoomBy(factor, px, py) {
+    const lim = this._limits();
+    const target = clamp(this._view.scale * factor, scaleMinOf(lim), SCALE_MAX);
+    this._setView(zoomAt(this._view, target / this._view.scale, px, py));
+  }
   /** Glide to map pixel (x, y) at least this close. */
   _focusOn(x, y, scale = FOCUS_SCALE) {
     const s = Math.max(this._view.scale, scale);
@@ -728,6 +803,10 @@ export class HeldMapWindow {
     const open = !!this._info || this._top === 'resume';
     box.classList.toggle('open', open);
     box.style.display = open ? 'block' : 'none';
+    // AUDIT-MAP H6: a box holds the WHOLE sheet - the search, the Close
+    // button, the ports button and the card go pointer-dead under it, or
+    // a search pick under the resume prompt could begin a second journey
+    this._chrome.root.classList.toggle('hmmodal', open);
     if (!open) return;
     if (this._info) {
       if (this._info.title) box.append(el('h3', 'hmbox-title', this._info.title));
@@ -767,6 +846,9 @@ export class HeldMapWindow {
   // ── SELECTION, TRAVEL, TELEPORT ────────────────────────────────
 
   _summaryName(summary) {
+    // AUDIT-MAP A9: a summary with no region index (a stub, a malformed
+    // row) names nothing rather than throwing out of every paint
+    if (!Number.isInteger(summary?.regionIndex)) return '';
     const region = this.deps.maps?.getRegion?.(summary.regionIndex);
     return region?.mapNames?.[summary.mapIndex] ?? '';
   }
@@ -824,7 +906,10 @@ export class HeldMapWindow {
       // AUDIT-TO1 C3: ChargeForTeleport (TravelOptionsMapWindow.cs
       // :470-503) on the default skin - the fee below the rank the
       // service is free at, paid on Yes and the map closed on No or on
-      // an empty purse.
+      // an empty purse. RECORDED DEPARTURE (AUDIT-MAP D3): the C# asks
+      // the fee ONCE as the map opens, before any pick, and deducts on
+      // Yes whether or not the player then teleports; this sheet asks
+      // with the pick and deducts only with the teleport.
       const to = this.deps.travelOptions?.() ?? null;
       let fee = null;
       if (to?.settings?.teleportCost) {
@@ -903,13 +988,21 @@ export class HeldMapWindow {
     // deps, and everything the card bills or commits reads the blessed
     // minutes.
     const minutes = guildFastTravel(this.deps.playerEntity?.() ?? null, time.minutes);
+    // OL2 / AUDIT-MAP H1: online the world's clock does not wait - no
+    // nights, so no inn is paid and the arrival is now; the popup's own
+    // `sleepModeInn && !noWorldTime()` and its zero days
+    const nwt = !!this.deps.noWorldTime?.();
     const cost = calculateTripCost(minutes, time.oceanPixels, {
-      sleepModeInn: st.opts.sleepModeInn, hasShip: st.hasShip, travelShip: st.opts.travelShip,
+      sleepModeInn: st.opts.sleepModeInn && !nwt, hasShip: st.hasShip, travelShip: st.opts.travelShip,
       // TravelTimeCalculator.cs:163 - the same Knightly Order consult
       // the native popup makes; the enhanced skin bills the same fare.
       freeTavernRooms: !!this.deps.freeTavernRooms?.(),
     });
-    st.trip = { ...time, minutes, ...cost, days: travelDays(minutes) };
+    // AUDIT-MAP D2: the mod's fare scaling (TravelTimeCalculatorTO.cs
+    // :24-40), the popup's own export - the enhanced skin had billed
+    // and CHARGED the unscaled fare since the relief map
+    const scaled = scaleTripCost(cost, st.to?.settings, this.deps.playerEntity?.() ?? null);
+    st.trip = { ...time, minutes, ...scaled, days: nwt ? 0 : travelDays(minutes), online: nwt };
     // MAP2 (TravelOptionsPopUp.cs:104-137, UpdateLabels): a WALKED trip -
     // a bare pixel's, or a place's when the mod's fork says the player
     // drives it - has no fare and its own estimate: the classic one
@@ -1000,7 +1093,11 @@ export class HeldMapWindow {
       playerControlled: isPlayerControlledTravel(st.to?.settings, st.opts),
     };
     const computed = {
-      minutes: st.trip.minutes, oceanPixels: st.trip.oceanPixels,
+      // AUDIT-MAP D1: a walked trip hands its WALKED estimate - the popup's
+      // `{ ...this.trip, minutes: this.travelTimeTotalMins }` - which is what
+      // the host's ETA runs down (world.js estimateMinutes -> minutesLeft)
+      minutes: st.trip.walked ? st.trip.walkedMinutes : st.trip.minutes,
+      oceanPixels: st.trip.oceanPixels,
       piecesCost: st.trip.piecesCost, totalCost: st.trip.totalCost,
     };
     this._rememberPanel();
@@ -1012,8 +1109,12 @@ export class HeldMapWindow {
 
   _confirmTeleport(yes) {
     if (!yes) {
-      // NO closes only the box - the map stays ARMED for another pick,
-      // the teleport popup's own law
+      // AUDIT-MAP D3: on the FEE prompt (TravelOptionsMapWindow.cs:483-499)
+      // No and an empty purse close the MAP, as the classic window's
+      // 'teleportcost'/'teleportpoor' arms do; without a fee it is DFU's
+      // own TeleportPopUp, whose No closes only the box - the map stays
+      // ARMED for another pick
+      if (this._panelState?.fee) { this._beginClose(null); return; }
       this._closePanel();
       return;
     }
@@ -1113,11 +1214,12 @@ export class HeldMapWindow {
     const sprite = el('img', 'hmsprite');
     sprite.alt = '';
     sprite.draggable = false;
-    sprite.src = HELD_MAP_URL;
     const ink = el('canvas', 'hmink');
     const hands = el('canvas', 'hmhands');
     stage.append(sprite, ink, hands);
+    // the handler BEFORE the source, so a cached picture cannot land first
     sprite.onload = () => this._keyHands(sprite, hands);
+    sprite.src = HELD_MAP_URL;
 
     const top = el('div', 'hmtop');
     const label = el('div', 'hmlabel', '');
@@ -1151,6 +1253,14 @@ export class HeldMapWindow {
     this._chrome = { root, stage, sprite, ink, hands, label, search, searchInput, results, close, card, hint, band, legend, ports, box };
     this._renderPorts();
     this._refreshParty();   // SOC6: the marks stand with the window, not a quarter second after it
+    // the names are inked in the web display face; the first paint may
+    // run before it lands, so the sheet is repainted once when it does
+    try {
+      const fonts = document.fonts;
+      const landed = () => { if (!this.done) { this._measureCache.clear(); this._staticKey = ''; this._dirty = true; } };
+      (fonts?.load?.("14px 'Cormorant'") ?? fonts?.ready)?.then?.(landed);
+      fonts?.ready?.then?.(landed);
+    } catch { /* no font set */ }
 
     // MAP2 (:449): the info box is ClickAnywhereToClose - a pointer down
     // ANYWHERE closes it and goes no further, ahead of the stage's own
@@ -1158,7 +1268,17 @@ export class HeldMapWindow {
     root.addEventListener('pointerdown', (e) => {
       if (!this._info) return;
       e.stopPropagation?.();
+      e.preventDefault?.();   // and no focus for the search field under it
       this._closeInfo();
+      // AUDIT-MAP D4: the CLICK that follows this pointer down still fires
+      // on its target - the Close button, Begin, the ports button - so it
+      // is swallowed too: the box eats the whole press (C# :453)
+      this._swallowClick = true;
+    }, { capture: true });
+    root.addEventListener('click', (e) => {
+      if (!this._swallowClick) return;
+      this._swallowClick = false;
+      e.stopPropagation?.(); e.preventDefault?.();
     }, { capture: true });
 
     // the search field owns its keys - the host must never route a
@@ -1171,23 +1291,53 @@ export class HeldMapWindow {
       this._renderSearch(this._findLocations(searchInput.value));
     });
 
+    // the middle button's browser autoscroll is a MOUSE default, which a
+    // cancelled pointerdown does not reach; auxclick is where it is shut
+    stage.addEventListener('mousedown', (e) => { if (e.button === 1) e.preventDefault?.(); });
+    stage.addEventListener('auxclick', (e) => { if (e.button === 1) e.preventDefault?.(); });
     // pointer: pan, zoom to cursor, pick - on the stage, which is the
-    // sprite and the sheet together
+    // sprite and the sheet together. ONE finger pans; a SECOND pinches
+    // (AUDIT-MAP B3: the sheet is a touch surface too - TI3), zooming
+    // about the fingers' midpoint and panning with it; a third is ignored.
     let downAt = null, panned = false;
+    let second = null;   // { id, x, y }: the pinching finger
+    let pinch = null;    // { dist, mx, my, ox, oy, scale }: the pinch's anchor
+    const pinchState = (a, b) => ({ dist: Math.hypot(b.x - a.x, b.y - a.y), mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2 });
     stage.addEventListener('pointerdown', (e) => {
       if (this._phase !== 'map') return;
       if (this._top) return;   // the resume prompt holds the sheet
       // MAP2 (:532-550): the MIDDLE button marks the place under the cursor
       if (e.button === 1) { e.preventDefault?.(); this._markLocationHandler(...this._paperPoint(e.clientX, e.clientY)); return; }
-      // ONE finger pans; a second is ignored rather than adopted
+      if (downAt && !second && e.pointerId !== downAt.id) {
+        second = { id: e.pointerId, x: e.clientX, y: e.clientY };
+        const p = pinchState({ x: downAt.cx, y: downAt.cy }, second);
+        pinch = { ...p, ox: this._view.ox, oy: this._view.oy, scale: this._view.scale };
+        panned = true;   // a pinch is never a pick
+        stage.setPointerCapture?.(e.pointerId);
+        return;
+      }
       if (downAt) return;
-      downAt = { id: e.pointerId, x: e.clientX, y: e.clientY, ox: this._view.ox, oy: this._view.oy };
+      downAt = { id: e.pointerId, x: e.clientX, y: e.clientY, cx: e.clientX, cy: e.clientY, ox: this._view.ox, oy: this._view.oy };
       panned = false;
       stage.setPointerCapture?.(e.pointerId);
     });
     stage.addEventListener('pointermove', (e) => {
-      if (downAt && e.pointerId !== downAt.id) return;
       if (this._phase !== 'map') return;
+      if (second && e.pointerId === second.id) { second.x = e.clientX; second.y = e.clientY; }
+      else if (downAt && e.pointerId === downAt.id) { downAt.cx = e.clientX; downAt.cy = e.clientY; }
+      else if (downAt) return;
+      if (downAt && second && pinch) {
+        // the fingers' distance scales, their midpoint pans: the map point
+        // under the midpoint at the pinch's start stays under it
+        const p = pinchState({ x: downAt.cx, y: downAt.cy }, second);
+        const scale = clamp(pinch.scale * (p.dist / Math.max(1, pinch.dist)), scaleMinOf(this._limits()), SCALE_MAX);
+        const [ax, ay] = this._paperPoint(pinch.mx, pinch.my);
+        const [bx, by] = this._paperPoint(p.mx, p.my);
+        const anchor = { ox: pinch.ox, oy: pinch.oy, scale: pinch.scale };
+        const [mx, my] = toMap(anchor, ax, ay);
+        this._setView({ ox: mx - bx / scale, oy: my - by / scale, scale });
+        return;
+      }
       if (downAt) {
         const dx = e.clientX - downAt.x, dy = e.clientY - downAt.y;
         if (Math.abs(dx) + Math.abs(dy) > 4) panned = true;
@@ -1196,23 +1346,41 @@ export class HeldMapWindow {
         this._hoverLabel(...this._paperPoint(e.clientX, e.clientY));
       }
     });
+    const lift = (e) => {
+      if (second && e.pointerId === second.id) { second = null; pinch = null; if (downAt) { downAt.x = downAt.cx; downAt.y = downAt.cy; downAt.ox = this._view.ox; downAt.oy = this._view.oy; } return true; }
+      if (downAt && e.pointerId === downAt.id) {
+        if (second) {
+          // the first finger left first: the second carries on as the pan
+          downAt = { id: second.id, x: second.x, y: second.y, cx: second.x, cy: second.y, ox: this._view.ox, oy: this._view.oy };
+          second = null; pinch = null;
+          return true;
+        }
+        return false;
+      }
+      return true;   // a finger this sheet never adopted
+    };
     stage.addEventListener('pointerup', (e) => {
-      if (downAt && e.pointerId !== downAt.id) return;
-      if (this._phase !== 'map') { downAt = null; return; }
+      if (this._phase !== 'map') { downAt = null; second = null; pinch = null; return; }
+      if (lift(e)) return;
       if (downAt && !panned) this._pickAt(...this._paperPoint(e.clientX, e.clientY));
       downAt = null;
     });
     stage.addEventListener('pointercancel', (e) => {
-      if (downAt && e.pointerId !== downAt.id) return;
+      if (lift(e)) return;
       downAt = null;
     });
     stage.addEventListener('wheel', (e) => {
       if (this._phase !== 'map') return;
       e.preventDefault();
-      // zoom toward the cursor: the map point under it stays still
+      // zoom toward the cursor: the map point under it stays still. The
+      // delta is PIXELS; a line-mode wheel (Firefox, some mice) reports
+      // lines and a page-mode one pages - normalised (AUDIT-MAP H8)
       const [px, py] = this._paperPoint(e.clientX, e.clientY);
-      this._zoomBy(Math.exp(-e.deltaY * 0.0012), px, py);
+      this._zoomBy(Math.exp(-wheelPixels(e, this._paper.h) * 0.0012), px, py);
     }, { passive: false });
+    // AUDIT-MAP H4: iOS Safari page-pinches under touch-action: none; only
+    // a cancelled touchmove holds a live gesture (INV3's lesson)
+    stage.addEventListener('touchmove', (e) => { e.preventDefault?.(); }, { passive: false });
 
     // mouselook's lock never survives a map - the wizard's law
     try { if (document.pointerLockElement) document.exitPointerLock(); } catch { /* no lock to drop */ }
@@ -1392,8 +1560,9 @@ export class HeldMapWindow {
           const hours = Math.trunc(t.walkedMinutes / 60), mins = t.walkedMinutes % 60;
           add('Journey', toFormat(TO_TEXT.MsgTimeFormat, hours, mins).trim());
           add('Cost', TO_TEXT.MsgPlayerControlled);
+          add('Purse', `${this.deps.goldPieces?.() ?? 0} gold`);   // AUDIT-MAP U5: the popup still shows the coins
         } else {
-          add('Journey', `${t.days} ${t.days === 1 ? 'day' : 'days'}`);
+          add('Journey', t.online ? 'now' : `${t.days} ${t.days === 1 ? 'day' : 'days'}`);   // OL2: online the arrival is now
           add('Cost', `${t.totalCost} gold`);
           // the label shows COINS, never the letters-of-credit total -
           // the popup's own reading
@@ -1401,6 +1570,7 @@ export class HeldMapWindow {
         }
         card.append(dl);
       }
+      if (t?.online) card.append(el('p', 'hmmeta', ONLINE_TRAVEL_LINE));   // OL2: the popup's own line
       if (st.notice) card.append(el('p', 'hmnotice', st.notice));
       const row = el('div', 'hmacts');
       const go = el('button', 'act', 'Begin journey');
@@ -1418,6 +1588,16 @@ export class HeldMapWindow {
     row.append(travel);
     card.append(row);
   }
+}
+
+/** A wheel event's travel in PIXELS whatever its deltaMode: 0 pixels,
+ *  1 lines (sixteen a line, the browsers' own figure), 2 pages (the
+ *  sheet's height). */
+export function wheelPixels(e, pageHeight) {
+  const d = Number(e.deltaY) || 0;
+  if (e.deltaMode === 1) return d * 16;
+  if (e.deltaMode === 2) return d * (pageHeight || 800);
+  return d;
 }
 
 /** MAP2: a mod colour ([r, g, b, a] bytes, modSettings colorKeyRgba) as

@@ -2,8 +2,8 @@
  {
   "name": "coast-through-pixel-centres",
   "file": "src/ui/inkMap.js",
-  "old": "      if (here !== right) segs.push([x + 1, y, x + 1, y + 1]);",
-  "new": "      if (here !== right) segs.push([x + 0.5, y, x + 0.5, y + 1]);",
+  "old": "      if (x + 1 < width && here !== inside(x + 1, y)) segs.push([x + 1, y, x + 1, y + 1]);",
+  "new": "      if (x + 1 < width && here !== inside(x + 1, y)) segs.push([x + 0.5, y, x + 0.5, y + 1]);",
   "tests": [
    "test/heldmap.test.js"
   ]
@@ -192,8 +192,8 @@
  {
   "name": "names-not-in-the-face",
   "file": "src/ui/inkMap.js",
-  "old": "      ctx.font = `${n.mark.kind === 'city' ? '600 ' : ''}${n.size}px ${NAME_FACE}`;",
-  "new": "      ctx.font = `${n.size}px sans-serif`;",
+  "old": "      ctx.font = nameFont(n.mark, n.size);\n      ctx.fillText(n.mark.name, n.x, n.y);",
+  "new": "      ctx.font = `${n.size}px sans-serif`;\n      ctx.fillText(n.mark.name, n.x, n.y);",
   "tests": [
    "test/heldmap.test.js"
   ]
@@ -237,8 +237,8 @@
  {
   "name": "teleport-no-closes-the-map",
   "file": "src/ui/heldMap.js",
-  "old": "      // the teleport popup's own law\n      this._closePanel();\n      return;",
-  "new": "      // the teleport popup's own law\n      this._beginClose(null);\n      return;",
+  "old": "      if (this._panelState?.fee) { this._beginClose(null); return; }\n      this._closePanel();\n      return;",
+  "new": "      this._beginClose(null);\n      return;",
   "tests": [
    "test/heldmap.test.js"
   ]
@@ -309,7 +309,7 @@
  {
   "name": "chains-rebuilt-per-filter",
   "file": "src/ui/heldMap.js",
-  "old": "    if (!rec || rec.net !== net || rec.width !== this._size.width) {",
+  "old": "    if (!rec || rec.net !== net || rec.width !== this._size.width || rec.height !== this._size.height) {",
   "new": "    if (true) {",
   "tests": [
    "test/heldmap.test.js"

@@ -272,6 +272,13 @@ world clock, which is the one thing a journey must not do.
     (`TravelOptionsMapWindow.cs:614`) and never tests it, so a
     neighbouring province's discovered town inside the page rect is
     plotted. The classic page keeps DFU's containment.
+15. **The held map's own five** (AUDIT-MAP U1-U5, `10-UI/Held-Map-Arc.md`):
+    the coordinates click refuses a teleport visit; H works under the
+    travel panel; the ship laws on a bare pixel see no destination
+    (the C# consults the stale last-hovered summary); the resume prompt
+    answers Enter and E too; the teleport fee is asked with the pick and
+    deducted only with the teleport. The classic window carries none of
+    these - they are the enhanced sheet's.
 
 ## AUDIT-TO1 (2026-09-18) - the audit of TO1, and what it found
 
@@ -366,7 +373,11 @@ crossing), and the doctrine row the three vendored pictures were owed.
   `travelMapMarkedMapId`, `locationInfoRows`, `resumePrompt`, the popup's
   walked estimate, `onTravelToCoords` - so the default skin is the mod's
   map too. The junction disc stays this mod's own DrawMapSection in both
-  lanes; it reads the same mark the sheet inks.
+  lanes; it reads the same mark the sheet inks (from the STORE, since
+  AUDIT-MAP). AUDIT-MAP D2: `_scaleTripCost` is the pure export
+  `scaleTripCost` now and the held map's card bills it - the enhanced
+  skin had charged the unscaled fare since the relief map, and this
+  page's "faithful" was true of the classic popup alone until then.
 - **The records.** Departures 6, 8, 9 corrected; five added (10-14); the
   source-gate paragraph's stale ROADS 16 numbers replaced; the mutant
   `map-section-roads-under-tracks` was a live survivor recorded as

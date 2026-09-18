@@ -8,6 +8,28 @@
 
 Newest first.
 
+**2026-09-18 - AUDIT-MAP: THE HELD MAP, THE AUDIT OF MAP0-MAP2.** Mac:
+*"Let's audit everything so far, wanna make sure this is perfect."*
+Three reviewer lenses (the ink's geometry and cost on the real bay; the
+window against the host and a real browser; the mod's laws against the
+classic window and the C#), a browser probe written for the sheet
+(`tools/heldMapProbe.mjs`, 37 checks, screenshots), and the screenshots
+read. Twenty-two fixed: the data's edge drawn as a shore and the corner
+cut chamfering straight runs (the screenshot's own), the pulse
+repainting the whole bay's ink per frame (a kept static layer now), the
+zoom drifting at the ceiling, the recursive simplifier, per-point chain
+culling, the harbour glyph's stray line, gaps at three-province points,
+the glide breaking the clamp, the Close button dropping the toggles, no
+pinch on touch, online billing inn nights, a box holding only the stage,
+the fee's No leaving the map up, the walked trip handing DFU's minutes to
+the ETA, the mod's fare scaling never billed on the enhanced skin (one
+pure export now, both skins), the info box's click reaching the button
+under it, the junction disc reading the mark off the wrong window, and
+the small ones (wheel modes, fonts, onload order, fade-from-current).
+Five departures recorded. `test/heldmap.test.js` +20 (67),
+`tools/mutants/auditmap.json` 26 dead. `10-UI/Held-Map-Arc.md`,
+AUDIT-MAP.
+
 **2026-09-18 - AUDIT-TO1: TRAVEL OPTIONS, THE AUDIT OF THE PORT.** Mac:
 *"Please do a comprehensive audit on this."* Fourteen finders over the
 mod's eight C# files against the port, three adversarial verifiers a

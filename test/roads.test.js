@@ -398,7 +398,7 @@ test('ROADS 25: the network is traced into chains, simplified, rounded and lifte
   // it), never the port's generated one (bible/03-World/Roads.md).
   const ink = fs.readFileSync('src/ui/inkMap.js', 'utf8');
   assert.match(ink, /if \(!net \|\| net\.source !== 'basic-roads'\) return \{ roads: \[\], tracks: \[\] \};/, 'only the mod\'s arrays are inked');
-  assert.match(ink, /traceChains\(mask, width, height\)\.map\(\(c\) => chaikin\(simplifyChain\(centre\(c\)\), 1\)\)/, 'traced, simplified, rounded - the ROADS 25 chain');
+  assert.match(ink, /traceChains\(mask, width, height\)\.map\(\(c\) => roundCorners\(simplifyChain\(centre\(c\)\)\)\)/, 'traced, simplified, rounded (the bounded cut) - the ROADS 25 chain');
   assert.match(ink, /stroke\(model\.roads, band === 'far' \? 1 : 1\.5, PEN\.line\)/, 'the roads are LINES in the pen');
   assert.match(ink, /stroke\(model\.tracks, 1, PEN\.soft, \[2, 3\]\)/, 'the tracks dotted and softer under them');
   // the model's own order of the four classes is still the law the

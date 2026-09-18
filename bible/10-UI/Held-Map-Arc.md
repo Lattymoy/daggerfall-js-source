@@ -55,8 +55,9 @@ a star. The hands and the paper do not move; the map does.
 drawn beside the paper in the enhanced skin's own face; its laws are the
 pure functions TO1's audit extracted (`isPlayerControlledTravel`,
 `enforceShipRestriction`, `shipTravelRefusal`), so a walked trip, the
-ports restriction and the teleport fee behave exactly as they do on the
-classic window.
+ports restriction and the teleport fee behave as they do on the classic
+window (the fee is asked with the pick rather than at open - AUDIT-MAP
+D3, recorded below).
 
 ## What Travel Options gains on it
 
@@ -173,7 +174,9 @@ skins cannot drift:
   box. Any key or any click closes it and does nothing else that press.
 - **The coordinates click.** A bare pixel is a destination when the mod
   allows it, the host can honour it (never online) and the visit is not a
-  teleport; a cross where no mark is; the decision opens itself with the
+  teleport (a DEPARTURE: the C# and the classic window open the walking
+  popup from the guild's teleport map too - AUDIT-MAP U1); a cross where
+  no mark is; the decision opens itself with the
   popup's own walked estimate and no fare; Begin skips the gold gate and
   hands `onTravelToCoords` the coordinates popup's own `{pixel, name}`
   with `playerControlled: true`.
@@ -228,3 +231,108 @@ ink through a recording context. Mutants: `tools/mutants/map1.json`,
 42 dead, 0 survived. The relief map's records re-aimed: to1 C1/C3 to
 `heldMap.js`, AUDIT SOC D2 to `inkMap.js`, AUDIT-EL F5 retired with
 its pass.
+
+## AUDIT-MAP (2026-09-18) - the audit of the held map, and what it found
+
+Mac: *"Let's audit everything so far, wanna make sure this is perfect."*
+Three adversarial reviewers with one lens each (the ink's geometry and
+its cost on the real bay; the window against the host and a real
+browser; the mod's laws against the classic window and the C#), a
+browser probe written for the sheet (`tools/heldMapProbe.mjs` - a
+synthetic bay on the menu page through real pointer events, 37 checks,
+two screenshots a person can look at), and a read of the screenshots.
+Twenty-two findings fixed, five departures recorded, every fix pinned
+two-way (`test/heldmap.test.js` +20, 67 in all) and mutated
+(`tools/mutants/auditmap.json`: 26 dead, 0 survived).
+
+**The screenshot's own two (A1).** The coast tracer emitted the DATA's
+outer edge as a shoreline, so the whole bay sat inside a drawn box; and
+Chaikin's corner cut takes a quarter of each leg, so a long straight run
+(the map edge, a province line) lost its corners to diagonals. The edge
+of the data is not a shore now (no segment along the map's boundary; a
+coast running off the sheet is an open chain), and the cut is
+`roundCorners` - Chaikin's quarter, bounded to a pixel and a half, so a
+staircase rounds and a straight run stays straight, closed loops cut at
+their shared corner too.
+
+**The ink (A2-A9, the reviewer's).** A2 the breathing rings repainted
+the whole bay's ink every frame while a selection or a party stood -
+~2 ms of JS and a full raster of ~28k vertices at 60 fps; the static
+ink is a KEPT layer now, painted when its key moves (view, band, sheet,
+marks, the mod's state), the rings an overlay per pulse at 10 Hz. A3
+zooming at the ceiling anchored at an over-the-ceiling scale and clamped
+after, sliding the map ~90 px a notch at SCALE_MAX; the scale is clamped
+first. A4 the simplifier was recursive with a slice per split and a 20k
+zigzag blew the stack; iterative now, same answer. A5 chains were culled
+per POINT, so a run whose ends were both off the sheet was never drawn
+and a chain leaving the view lifted the pen a segment short; per
+segment now. A6 the harbour glyph's flukes were joined to its stock by a
+stray diagonal; a fresh subpath. A7 three provinces meeting left a gap
+in the dashed border, because the junction was a corner of whichever
+chain got there first and the cut moved it off the third arm's end;
+chains END at junctions now. A8 the glide between a rest view and a
+zoomed goal ran through views with blank parchment above the map;
+re-clamped every step. A9 a summary with no region index threw out of
+every paint; it names nothing. Perf, on a synthetic 1000x500 bay with
+the shipped road masks: the tracer is typed (roads 44 -> 8 ms, tracks
+56 -> 5 ms, the same chains), the carets thinned once per band at build
+(a hundred thousand pixels a frame at far, gone), the name measures
+cached; the model builds in ~100 ms once per open and a pulse frame is a
+drawImage and a few arcs.
+
+**The window (B1-B4, H1-H8).** B1 the Close button and the resume
+prompt's Yes dropped an open panel's toggles; every way out remembers.
+B2 the sprite's onload was set after its source; before it now. B3 touch
+users could not zoom at all; a second finger pinches about the fingers'
+midpoint, a pinch never picks, and iOS's page-pinch is held by a
+cancelled touchmove. B4 the middle click's autoscroll is shut where the
+browser reads it (mousedown, auxclick). H1 ONLINE was ignored: the card
+billed inn nights and showed days the popup waives (`sleepModeInn &&
+!noWorldTime()`); no inn is paid, the journey reads "now", the popup's
+own line is on the card. H6 a box held only the stage - a search pick
+under the resume prompt could begin a second journey; the chrome is
+pointer-dead under any box. H7 a close during the opening fade snapped
+to full before lowering, and the boxes stayed painted through it; the
+fade starts where the sheet is and the boxes come down with it. H8 a
+line-mode wheel zoomed a fraction of a percent a notch; the delta is
+normalised. The display face is ASKED for (`document.fonts.load`; a
+canvas font never triggers a load) and the sheet repainted when it
+lands. Confirmed sound by the host reviewer: every arm the host calls,
+in every mount (outdoors, the guild's teleport map, the journal, the
+mod's journey UI, online); no listener outlives the window; the chain
+cache keyed on a stable network reference; the state machine under
+every sequence tried; the only lost commit is a dispose during the
+0.3 s lowering, the old window's own semantics.
+
+**The mod's laws (D1-D4, the law reviewer's).** D1 a walked place-trip
+handed DFU's minutes to the host's ETA, not the walked estimate (2.8x
+too long on the probe's input); it hands the walked one, the popup's
+own `{ ...trip, minutes: travelTimeTotalMins }`. D2 the fare was billed
+and CHARGED unscaled: the popup runs the mod's `_scaleTripCost`
+(FastTravelCostScaleFactor over the inn nights, ShipTravelCostScaleFactor
+over the passage, each through the shop-price formula), the enhanced
+skin never had since the relief map, and the bible called it faithful;
+the law is one pure export now (`scaleTripCost`, `ui/travelPopUp.js`)
+that both skins call. D3 No on the FEE prompt and an empty purse left
+the map up, where the C#'s ChargeForTeleport and the classic window's
+two arms close it; they close it (DFU's fee-less teleport popup still
+leaves the map armed). D4 the info box closed on the pointer down but
+the CLICK still reached the button under it - Close closed the map,
+Begin began the trip; the whole press is eaten. And the junction disc
+read the mark off the last M window rather than the store, so a mark
+set on the guild's teleport window was invisible to it.
+
+**Departures recorded (U1-U5).** U1 the coordinates click refuses a
+teleport visit (the C# and the classic open the walking popup from the
+guild's teleport map; a bare pixel is no place to appear). U2 H works
+under the travel panel (the classic routes every key to the popup, so H
+is dead there; I matches). U3 the ship laws on a bare pixel see no
+destination and refuse the ship (the C# and the classic consult the
+STALE last-hovered summary). U4 the resume prompt answers Enter and E
+too. U5 the walked card shows the purse (the C# does), and the fee is
+asked with the pick and deducted only with the teleport (the C# asks
+once at open and deducts on Yes whether or not the player then goes).
+
+**Not this slice's.** F5 typed in the search box reloads the page - the
+host's own order skips its browser-key guard for any text target, the
+chargen name field included (pre-existing, host-side).

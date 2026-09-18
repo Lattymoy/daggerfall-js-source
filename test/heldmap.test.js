@@ -26,15 +26,19 @@ import {
 } from '../src/ui/overworldModel.js';
 import { createTravelMapWindow, travelMapDoorReady } from '../src/ui/travelMapDoor.js';
 import {
-  HeldMapWindow, HELD_MAP_URL, SPRITE, PAPER, THUMB_ZONES, HAND_LUM, keyHandPixels, rgbaCss,
+  HeldMapWindow, HELD_MAP_URL, SPRITE, PAPER, THUMB_ZONES, HAND_LUM, keyHandPixels, rgbaCss, wheelPixels,
 } from '../src/ui/heldMap.js';
+import { simplifyChain, traceChains } from '../src/ui/overworldModel.js';
 import { travelMapMarkedMapId, setTravelMapMarkedMapId } from '../src/systems/travelMapState.js';
 import { TRAVEL_OPTIONS_TEXT as TO_TEXT, format as toFormat } from '../src/systems/travelOptionsText.js';
 import { hasPort, PORT_LOCATION_IDS } from '../src/systems/travelPorts.js';
+import { scaleTripCost, ONLINE_TRAVEL_LINE } from '../src/ui/travelPopUp.js';
+import { teleportCost } from '../src/ui/travelMapOptions.js';
 import { guildFastTravel } from '../src/systems/guildVariants.js';
 import {
   buildInkModel, buildInkMarks, paintInk, placeNames, zoomBand, clampView, scaleMinOf, zoomAt, viewCentredOn,
-  toPaper, toMap, boundarySegments, linkSegments, landAt, roadChains, markKind,
+  toPaper, toMap, boundarySegments, linkSegments, landAt, roadChains, markKind, roundCorners,
+  paintInkStatic, paintInkOverlay, nameFont,
   BAND_MARKS, BAND_NAMES, SCALE_MAX, PEN,
 } from '../src/ui/inkMap.js';
 import { PARTY_MARK_CSS } from '../src/ui/partyMapMarks.js';
@@ -667,13 +671,43 @@ test('MAP1 ink: the coast is the land set\'s boundary along pixel edges, closed,
   // the water law is isWaterPixel: an OCEAN climate pixel is sea however high its byte
   const highSea = { ...fx, climateAt: () => CLIMATES.Ocean };
   assert.equal(boundarySegments(landAt(highSea), fx.width, fx.height).length, 0, 'ocean climate over the whole sheet: no coast at all');
-  // the edge of the data counts as outside, so land at the corner closes
+  // the edge of the data is NOT a shore: land at the corner of the sheet
+  // has two edges against the sea and none along the map's edge
   const corner = { width: 2, height: 2, heightBytes: new Uint8Array([40, 0, 0, 0]), climateAt: () => CLIMATES.Woodlands };
-  assert.equal(linkSegments(boundarySegments(landAt(corner), 2, 2))[0].length, 5, 'a corner pixel is a closed square');
+  const cornerChains = linkSegments(boundarySegments(landAt(corner), 2, 2));
+  assert.equal(cornerChains.length, 1);
+  assert.equal(cornerChains[0].length, 3, 'an open chain of two edges, ending at the map\'s edge');
+  // a sheet that is all land draws no coast at all - no box round the bay
+  const allLand = { width: 4, height: 3, heightBytes: new Uint8Array(12).fill(40), climateAt: () => CLIMATES.Woodlands };
+  assert.equal(boundarySegments(landAt(allLand), 4, 3).length, 0, 'the data\'s outer edge is not drawn');
   // ...and the softened chain is what the pen draws
   const model = buildInkModel(fx);
   assert.equal(model.coast.length, 1);
   assert.ok(model.coast[0].length >= 4, 'simplified and rounded, still a loop');
+  const c = model.coast[0];
+  assert.deepEqual(c[0], c[c.length - 1], 'and the softened loop still closes');
+});
+
+test('MAP1 ink: the corner cut is BOUNDED - a pixel staircase rounds, a long straight run keeps its corner (mutants: chaikin-unbounded, closed-loop-notched)', () => {
+  // a square 20 on a side: Chaikin would chamfer each corner by 5; the
+  // bound keeps the cut to 1.5 so the square still reads as a square
+  const square = [{ x: 0, y: 0 }, { x: 20, y: 0 }, { x: 20, y: 20 }, { x: 0, y: 20 }, { x: 0, y: 0 }];
+  const r = roundCorners(square);
+  assert.deepEqual(r[0], r[r.length - 1], 'closed stays closed');
+  const far = r.reduce((m, p) => Math.max(m, Math.min(Math.hypot(p.x, p.y), Math.hypot(p.x - 20, p.y), Math.hypot(p.x - 20, p.y - 20), Math.hypot(p.x, p.y - 20))), 0);
+  assert.ok(far <= 1.5 + 1e-9, `no point further than the bound from its corner (${far})`);
+  assert.ok(r.some((p) => Math.abs(p.x - 1.5) < 1e-9 && p.y === 0), 'cut 1.5 along the leg, not 5');
+  // a one-pixel staircase: the quarter cut, exactly Chaikin's
+  const stair = [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 1, y: 1 }, { x: 2, y: 1 }];
+  const rs = roundCorners(stair);
+  assert.deepEqual(rs[0], { x: 0, y: 0 });
+  assert.deepEqual(rs[rs.length - 1], { x: 2, y: 1 }, 'an open chain keeps its ends');
+  assert.ok(rs.some((p) => Math.abs(p.x - 0.75) < 1e-9 && p.y === 0), 'a quarter along a one-pixel leg');
+  assert.equal(roundCorners([{ x: 0, y: 0 }, { x: 3, y: 0 }]).length, 2, 'two points are a line, untouched');
+  // the roads take the same cut
+  const ink = read('src/ui/inkMap.js');
+  assert.match(ink, /roundCorners\(simplifyChain\(centre\(c\)\)\)/, 'roads');
+  assert.match(ink, /return roundCorners\(simplifyChain\(chain, eps\)\);/, 'and the coast and borders');
 });
 
 test('MAP1 ink: a province border is an edge between two LAND pixels of different regions - never a sea edge, never a nameless one (mutants: border-on-the-coast, border-through-unnamed, border-one-sided)', () => {
@@ -1263,4 +1297,358 @@ test('MAP2: the additions are the classic window\'s own functions, and the probe
     assert.deepEqual([probe.portsFilter, probe.marked, probe.info, probe.top], [false, -1, false, null]);
     win.dispose();
   });
+});
+
+// ═══ AUDIT-MAP (2026-09-18, Mac: "Let's audit everything so far") ═══════
+//
+// The browser probe (tools/heldMapProbe.mjs) and three reviewer lenses
+// over MAP0-MAP2. Each finding below is pinned two-way with the window's
+// own expressions.
+
+test('AUDIT-MAP A1: the edge of the data is not a shore, and the corner cut is bounded - the first screenshot framed the bay in a coastline with chamfered corners (mutants: edge-is-a-shore, corner-cut-unbounded, closed-loop-notched)', () => {
+  // a bay that runs off the sheet on three sides: the coast is ONE open
+  // chain from the top edge to the bottom edge, never a loop round the data
+  const w = 8, h = 6;
+  const bytes = new Uint8Array(w * h);
+  for (let y = 0; y < h; y++) for (let x = 3; x < w; x++) bytes[y * w + x] = 40;
+  const model = buildInkModel({ width: w, height: h, heightBytes: bytes, climateAt: (x) => (x < 3 ? CLIMATES.Ocean : CLIMATES.Woodlands) });
+  assert.equal(model.coast.length, 1);
+  const c = model.coast[0];
+  assert.notDeepEqual(c[0], c[c.length - 1], 'open, not a loop');
+  assert.ok(c.every((p) => Math.abs(p.x - 3) < 1e-9), 'the shore at x=3 and nothing along the data\'s edge');
+  assert.ok(c.some((p) => p.y === 0) && c.some((p) => p.y === h), 'top edge to bottom edge');
+  const square = roundCorners([{ x: 0, y: 0 }, { x: 20, y: 0 }, { x: 20, y: 20 }, { x: 0, y: 20 }, { x: 0, y: 0 }]);
+  assert.ok(Math.abs(square[0].x - 1.5) < 1e-9 && square[0].y === 0, 'a closed loop is cut at its shared corner too - it starts a bound in, not on the raw corner');
+});
+
+test('AUDIT-MAP A3: zooming past the ceiling keeps the point under the cursor - the anchor is computed for the scale that is SET, after the clamp (mutants: zoom-anchor-before-clamp)', () => {
+  withDocument(() => {
+    globalThis.innerWidth = 1600; globalThis.innerHeight = 900;
+    try {
+      const win = open(mkWin({ mapSize: { width: 1000, height: 500 }, woods: { heightMapBuffer: new Uint8Array(500000).fill(10) } }));
+      const [hx, hy] = [win._paper.w / 2, win._paper.h / 2];
+      const [mx, my] = toMap(win._view, hx, hy);
+      win._zoomBy(100, hx, hy);   // far past SCALE_MAX
+      assert.equal(win._view.scale, SCALE_MAX);
+      const [mx2, my2] = toMap(win._view, hx, hy);
+      assert.ok(Math.abs(mx - mx2) < 1e-6 && Math.abs(my - my2) < 1e-6, 'the cursor\'s pixel did not move at the ceiling');
+      win._zoomBy(0.001, hx, hy);   // and back past the floor
+      assert.equal(win._view.scale, scaleMinOf(win._limits()));
+      win.dispose();
+    } finally { delete globalThis.innerWidth; delete globalThis.innerHeight; }
+  });
+});
+
+test('AUDIT-MAP A2: the breathing rings repaint the sheet at PULSE_HZ, not every frame - a paint is the whole bay\'s ink (mutants: pulse-every-frame)', () => {
+  withDocument(() => {
+    const win = open(mkWin());
+    win._selected = { summary: summaryOf(3, 3, LOCATION_TYPES.TownCity), name: 'T', x: 3.5, y: 3.5 };
+    let paints = 0;
+    const paint = win._paint.bind(win);
+    win._paint = () => { paints++; paint(); };
+    for (let i = 0; i < 60; i++) win.tick(1 / 60);   // one second at sixty frames
+    assert.ok(paints >= 9 && paints <= 12, `ten-ish paints a second, not sixty (${paints})`);
+    win.dispose();
+  });
+});
+
+test('AUDIT-MAP B1: every way out remembers an open panel\'s toggles - the Close button and the resume prompt\'s Yes dropped them (mutants: close-drops-toggles)', () => {
+  withDocument(() => {
+    const win = open(mkWin());
+    win._selected = { summary: summaryOf(3, 3, LOCATION_TYPES.TownCity), name: 'T', x: 3.5, y: 3.5 };
+    win._openPanel('travel');
+    win._toggleOpt('speedCautious');
+    assert.equal(travelMapSaveData().speedCautious, true, 'not yet remembered');
+    win._chrome.close.onclick();
+    assert.equal(win._phase, 'closing');
+    assert.equal(travelMapSaveData().speedCautious, false, 'remembered on the Close button');
+    win.dispose();
+  });
+});
+
+test('AUDIT-MAP B2/B4: the sprite\'s handler is set before its source, the display face landing repaints once, the middle button\'s autoscroll is shut where the browser reads it', () => {
+  const src = read('src/ui/heldMap.js');
+  assert.ok(src.indexOf('sprite.onload = () => this._keyHands(sprite, hands);') < src.indexOf('sprite.src = HELD_MAP_URL;'), 'onload before src - a cached picture cannot land first');
+  assert.match(src, /\(fonts\?\.load\?\.\("14px 'Cormorant'"\) \?\? fonts\?\.ready\)\?\.then\?\.\(landed\);/, 'the face is ASKED for (a canvas font never triggers a load), and the sheet repainted when it lands');
+  assert.match(src, /const landed = \(\) => \{ if \(!this\.done\) \{ this\._measureCache\.clear\(\); this\._staticKey = ''; this\._dirty = true; \} \};/, 'the measures and the kept layer are dropped with it');
+  assert.match(src, /stage\.addEventListener\('auxclick', \(e\) => \{ if \(e\.button === 1\) e\.preventDefault\?\.\(\); \}\);/, 'auxclick is where the middle click\'s default lives');
+  assert.match(src, /stage\.addEventListener\('mousedown', \(e\) => \{ if \(e\.button === 1\) e\.preventDefault\?\.\(\); \}\);/);
+});
+
+test('AUDIT-MAP B3: a second finger pinches - the scale follows the fingers\' distance about their midpoint, the map point under the midpoint holds, and a pinch is never a pick (mutants: pinch-ignored, pinch-picks)', () => {
+  withDocument(() => {
+    globalThis.innerWidth = 1600; globalThis.innerHeight = 900;
+    try {
+      const mapDict = new Map();
+      const sm = summaryOf(500, 250, LOCATION_TYPES.TownCity); mapDict.set(sm.id, sm);
+      const win = open(mkWin({ mapSize: { width: 1000, height: 500 }, woods: { heightMapBuffer: new Uint8Array(500000).fill(10) }, mapDict, maps: { regionCount: 1, getRegion: () => ({ mapNames: ['A', 'B', 'C', 'Wayrest'] }), getPoliticIndex: () => 128 } }));
+      const stage = win._chrome.stage;
+      const ev = (id, x, y) => ({ pointerId: id, clientX: x, clientY: y, button: 0, preventDefault() {} });
+      const rest = win._view.scale;
+      const [cx, cy] = toPaper(win._view, 500.5, 250.5);   // the city, under the first finger
+      fire(stage, 'pointerdown', ev(1, cx, cy));
+      fire(stage, 'pointerdown', ev(2, cx + 100, cy));
+      const midBefore = toMap(win._view, cx + 50, cy);
+      fire(stage, 'pointermove', ev(2, cx + 200, cy));   // the fingers part: twice the distance
+      assert.ok(Math.abs(win._view.scale - rest * 2) < 1e-9, `twice the scale (${win._view.scale} vs ${rest * 2})`);
+      const midAfter = toMap(win._view, cx + 100, cy);   // the new midpoint
+      assert.ok(Math.abs(midAfter[0] - midBefore[0]) < 1e-6 && Math.abs(midAfter[1] - midBefore[1]) < 1e-6, 'the map point under the midpoint holds');
+      fire(stage, 'pointerup', ev(2, cx + 200, cy));
+      fire(stage, 'pointerup', ev(1, cx, cy));   // lifted where the city is
+      assert.equal(win._selected, null, 'a pinch is never a pick');
+      // and a plain tap on the city still is
+      fire(stage, 'pointerdown', ev(3, cx, cy));
+      fire(stage, 'pointerup', ev(3, cx, cy));
+      assert.equal(win._selected?.name, 'Wayrest');
+      win.dispose();
+    } finally { delete globalThis.innerWidth; delete globalThis.innerHeight; }
+  });
+});
+
+test('AUDIT-MAP D1: a walked place-trip hands its WALKED estimate as the minutes the host\'s ETA runs down - the popup\'s own `{ ...trip, minutes: travelTimeTotalMins }` (mutants: eta-dfu-minutes)', () => {
+  withDocument(() => {
+    const win = open(mkWin(modDeps({}, { stopAtInnsTravel: true, shipTravelPortsOnly: false })));
+    win._pickAt(...toPaper(win._view, 8.5, 6.5));
+    win._openPanel('travel');
+    win._toggleOpt('travelShip');
+    const st = win._panelState;
+    assert.equal(st.trip.walked, true);
+    assert.notEqual(st.trip.walkedMinutes, st.trip.minutes, 'the two estimates differ (the walked one is divided by twice the multiplier)');
+    win._begin();
+    assert.equal(win._commit.computed.minutes, st.trip.walkedMinutes, 'the ETA reads the walked estimate');
+    win.dispose();
+    // and a fast-travelled place still hands DFU's own
+    const dfu = open(mkWin(modDeps({}, { stopAtInnsTravel: false, cautiousTravel: false, shipTravelPortsOnly: false })));
+    dfu._pickAt(...toPaper(dfu._view, 8.5, 6.5));
+    dfu._openPanel('travel');
+    assert.equal(dfu._panelState.trip.walked, undefined);
+    dfu._begin();
+    assert.equal(dfu._commit.computed.minutes, dfu._panelState?.trip?.minutes ?? dfu._commit.computed.minutes);
+    dfu.dispose();
+  });
+});
+
+test('AUDIT-MAP D2: the card bills the mod\'s SCALED fare through the popup\'s own pure law - FastTravelCostScaleFactor over the inn nights, ShipTravelCostScaleFactor over the passage, each through the shop-price formula at quality 10 (mutants: fare-unscaled, popup-not-delegating)', () => {
+  // the pure law
+  const c = { piecesCost: 100, totalCost: 160 };
+  assert.deepEqual(scaleTripCost(c, null, null), c, 'no mod, no scaling');
+  assert.deepEqual(scaleTripCost(c, { fastTravelCostScaleFactor: 1, shipTravelCostScaleFactor: 1 }, null), c, 'a factor of 1 leaves its half untouched, formula and all');
+  const scaled = scaleTripCost(c, { fastTravelCostScaleFactor: 4, shipTravelCostScaleFactor: 1 }, null);
+  assert.ok(scaled.piecesCost > c.piecesCost, 'the inn nights scaled');
+  assert.equal(scaled.totalCost - scaled.piecesCost, 60, 'the passage untouched at factor 1');
+  const both = scaleTripCost(c, { fastTravelCostScaleFactor: 1, shipTravelCostScaleFactor: 3 }, null);
+  assert.equal(both.piecesCost, 100);
+  assert.ok(both.totalCost - both.piecesCost > 60);
+  // the popup's method IS the export
+  assert.match(read('src/ui/travelPopUp.js'), /_scaleTripCost\(c\) \{[\s\S]{0,400}?return scaleTripCost\(c, this\._to\?\.settings, this\.deps\.playerEntity\?\.\(\) \?\? null\);/);
+  // the card, driven: the same fare the popup would show, and the commit charges it
+  withDocument(() => {
+    const win = open(mkWin(modDeps({ getClimateIndex: (x) => (x >= 8 ? CLIMATES.Ocean : CLIMATES.Woodlands), hasShip: () => true }, { fastTravelCostScaleFactor: 4, shipTravelCostScaleFactor: 3, cautiousTravel: false, stopAtInnsTravel: false, shipTravelPortsOnly: false })));
+    win._pickAt(...toPaper(win._view, 8.5, 6.5));
+    win._openPanel('travel');
+    const st = win._panelState;
+    const raw = calculateTripCost(st.trip.minutes, st.trip.oceanPixels, { sleepModeInn: st.opts.sleepModeInn, hasShip: true, travelShip: st.opts.travelShip });
+    const want = scaleTripCost(raw, win._to.settings, null);
+    assert.deepEqual([st.trip.piecesCost, st.trip.totalCost], [want.piecesCost, want.totalCost], 'the popup\'s scaled fare');
+    assert.ok(st.trip.piecesCost > raw.piecesCost, 'and it is scaled');
+    win._begin();
+    assert.deepEqual([win._commit.computed.piecesCost, win._commit.computed.totalCost], [want.piecesCost, want.totalCost], 'charged as billed');
+    win.dispose();
+  });
+});
+
+test('AUDIT-MAP D3: on the FEE prompt, No and an empty purse close the MAP (the C#\'s two CloseWindows, the classic teleportcost/teleportpoor arms); without a fee, No leaves the map armed (mutants: fee-no-stays)', () => {
+  withDocument(() => {
+    const paid = [];
+    const rich = open(mkWin(modDeps({ magesGuildRank: () => 0, gold: () => 10000, payTeleport: (c) => paid.push(c) }, { teleportCost: true })));
+    rich.activateTeleportationTravel();
+    rich._pickAt(...toPaper(rich._view, 3.5, 3.5));
+    assert.equal(rich._panel, 'teleport');
+    assert.equal(rich._panelState.fee.cost, teleportCost(0));
+    rich._confirmTeleport(false);
+    assert.equal(rich._phase, 'closing', 'No on the fee closes the map');
+    assert.deepEqual(paid, [], 'and nothing was paid');
+    rich.dispose();
+    const poor = open(mkWin(modDeps({ magesGuildRank: () => 0, gold: () => 0, payTeleport: (c) => paid.push(c) }, { teleportCost: true })));
+    poor.activateTeleportationTravel();
+    poor._pickAt(...toPaper(poor._view, 3.5, 3.5));
+    assert.equal(poor._panelState.fee.canPay, false);
+    poor._confirmTeleport(false);   // the no-gold card's Close
+    assert.equal(poor._phase, 'closing', 'an empty purse closes the map');
+    poor.dispose();
+    // Yes pays once and goes
+    const yes = open(mkWin(modDeps({ magesGuildRank: () => 0, gold: () => 10000, payTeleport: (c) => paid.push(c) }, { teleportCost: true })));
+    yes.activateTeleportationTravel();
+    yes._pickAt(...toPaper(yes._view, 3.5, 3.5));
+    yes._confirmTeleport(true);
+    assert.deepEqual(paid, [teleportCost(0)]);
+    assert.equal(yes._commit.kind, 'teleport');
+    yes.dispose();
+  });
+});
+
+test('AUDIT-MAP D4: the box eats the WHOLE press - the click that follows the closing pointer down is swallowed before it reaches a button (mutants: click-not-swallowed)', () => {
+  withDocument(() => {
+    const win = open(mkWin(modDeps({ helpRows: () => ['a row'] })));
+    win.input('KeyH');
+    assert.ok(win._info);
+    const stopped = [];
+    fire(win._chrome.root, 'pointerdown', { button: 0, stopPropagation() { stopped.push('down'); } });
+    assert.equal(win._info, null);
+    fire(win._chrome.root, 'click', { stopPropagation() { stopped.push('click'); }, preventDefault() {} });
+    assert.deepEqual(stopped, ['down', 'click'], 'the down closed the box and the click was eaten');
+    fire(win._chrome.root, 'click', { stopPropagation() { stopped.push('click2'); }, preventDefault() {} });
+    assert.deepEqual(stopped, ['down', 'click'], 'the NEXT click is the player\'s own');
+    win.dispose();
+  });
+});
+
+test('AUDIT-MAP U5/Q2: the walked card still shows the purse, and the junction disc reads the mark from the STORE, not the last M window', () => {
+  withDocument(() => {
+    const win = open(mkWin(modDeps({ goldPieces: () => 777 }, { stopAtInnsTravel: true, shipTravelPortsOnly: false })));
+    win._pickAt(...toPaper(win._view, 8.5, 6.5));
+    win._openPanel('travel');
+    win._toggleOpt('travelShip');
+    const texts = win._chrome.card.children.flatMap((c) => (c.children ?? []).map((k) => k.textContent));
+    assert.ok(texts.includes('777 gold'), 'the purse row on a walked trip (C# UpdateLabels :122 still shows GoldPieces)');
+    win.dispose();
+  });
+  const w = read('src/scenes/world.js');
+  assert.match(w, /markedMapId: \(\) => travelMapMarkedMapId\(\),/, 'the store - a mark set on the guild\'s teleport window was invisible to the disc');
+  assert.match(w, /import \{ travelMapFilters, travelMapMarkedMapId \} from '\.\.\/systems\/travelMapState\.js';/);
+});
+
+test('AUDIT-MAP A5: chains are culled per SEGMENT - a run whose ends are both off the sheet still crosses it, and a chain leaving the view runs to the paper\'s edge (mutants: cull-per-point)', () => {
+  const model = { coast: [[{ x: 0, y: 5 }, { x: 100, y: 5 }]], borders: [], roads: [], tracks: [], regions: [], high: [], marks: [] };
+  const ctx = recordingCtx();
+  paintInk(ctx, model, { ox: 40, oy: 0, scale: 14 }, { paperW: 280, paperH: 140, band: 'near' });
+  assert.ok(ctx.calls.some((c) => c.fn === 'lineTo'), 'the long run across the sheet is drawn though neither end is on it');
+  const leaving = { ...model, coast: [[{ x: 50, y: 5 }, { x: 90, y: 5 }]] };
+  const ctx2 = recordingCtx();
+  paintInk(ctx2, leaving, { ox: 40, oy: 0, scale: 14 }, { paperW: 280, paperH: 140, band: 'near' });
+  const line = ctx2.calls.find((c) => c.fn === 'lineTo');
+  assert.ok(line, 'a chain with one end on the sheet is drawn to its far end');
+  assert.deepEqual(line.args, toPaper({ ox: 40, oy: 0, scale: 14 }, 90, 5), '...past the paper, so the pen never lifts short of the edge');
+});
+
+test('AUDIT-MAP A7: a chain ends at a junction vertex - three provinces meeting leave no gap in the dashed border once the corners are cut (mutants: junction-walked-through)', () => {
+  // three regions meeting at (2,2) on a 4x4 land sheet
+  const w = 4, h = 4;
+  const regionAt = (x, y) => (y < 2 ? 0 : x < 2 ? 1 : 2);
+  const model = buildInkModel({ width: w, height: h, heightBytes: new Uint8Array(16).fill(40), climateAt: () => CLIMATES.Woodlands, regionAt, regionCount: 3 });
+  const raw = linkSegments([[0, 2, 1, 2], [1, 2, 2, 2], [2, 2, 3, 2], [3, 2, 4, 2], [2, 2, 2, 3], [2, 3, 2, 4]]);
+  assert.equal(raw.length, 3, 'three arms');
+  for (const c of raw) {
+    const ends = [c[0], c[c.length - 1]];
+    assert.ok(ends.some((p) => p.x === 2 && p.y === 2), 'each arm ENDS at the junction');
+  }
+  // and the softened model keeps every arm's end ON the junction
+  assert.equal(model.borders.length, 3);
+  for (const c of model.borders) {
+    const ends = [c[0], c[c.length - 1]];
+    assert.ok(ends.some((p) => Math.abs(p.x - 2) < 1e-9 && Math.abs(p.y - 2) < 1e-9), 'the cut never moves a junction end');
+  }
+});
+
+test('AUDIT-MAP A4/perf: the simplifier is iterative (a 20k zigzag no longer blows the stack) and the tracer is typed - the same chains as the string-keyed walk (mutants: simplify-recursive-again is a rewrite, not a mutant; tracer-skips-loops)', () => {
+  const zig = [];
+  for (let i = 0; i < 20000; i++) zig.push({ x: i, y: i % 2 ? 2 : 0 });
+  assert.equal(simplifyChain(zig).length, 20000, 'every corner of a 2-high zigzag is a corner at eps 0.9, and none is lost');
+  assert.deepEqual(simplifyChain([{ x: 0, y: 0 }, { x: 1, y: 0.2 }, { x: 2, y: 0 }, { x: 3, y: 5 }, { x: 4, y: 0 }], 0.5),
+    [{ x: 0, y: 0 }, { x: 2, y: 0 }, { x: 3, y: 5 }, { x: 4, y: 0 }], 'the recursive answer, exactly');
+  // the tracer: a T junction and a pure loop
+  const W = 5, H = 5, E = 32, Wb = 2, N = 128, S = 8;
+  const m = new Uint8Array(W * H);
+  m[2 * W + 0] = E; m[2 * W + 1] = E | Wb; m[2 * W + 2] = E | Wb | N; m[2 * W + 3] = E | Wb; m[2 * W + 4] = Wb;
+  m[1 * W + 2] = S | N; m[0 * W + 2] = S;
+  assert.equal(traceChains(m, W, H).length, 3, 'a junction: three chains');
+  const loop = new Uint8Array(9);   // a 2x2 ring on a 3x3 sheet: pure loop, no node
+  loop[0] = E | S; loop[1] = Wb | S; loop[3] = N | E; loop[4] = N | Wb;
+  const chains = traceChains(loop, 3, 3);
+  assert.equal(chains.length, 1, 'a pure loop is walked from any pixel on it');
+  assert.equal(chains[0].length, 5, 'four edges, five points');
+});
+
+test('AUDIT-MAP perf: the carets are thinned once per band at build; the harbour glyph\'s flukes are a fresh subpath (mutants: carets-thinned-per-paint, harbour-joined)', () => {
+  const w = 12, h = 12;
+  const bytes = new Uint8Array(w * h).fill(120);
+  const model = buildInkModel({ width: w, height: h, heightBytes: bytes, climateAt: () => CLIMATES.Mountain });
+  assert.equal(model.high.length, 144);
+  assert.deepEqual([model.highBands.far.length, model.highBands.mid.length, model.highBands.near.length], [4, 16, 36], 'steps of six, three and two');
+  const ctx = recordingCtx();
+  paintInk(ctx, model, { ox: 0, oy: 0, scale: 5 }, { paperW: 60, paperH: 60, band: 'far' });
+  assert.equal(ctx.calls.filter((c) => c.fn === 'moveTo').length, 4, 'four carets at far, off the thinned list');
+  assert.match(read('src/ui/inkMap.js'), /ctx\.moveTo\(ax \+ 3 \* Math\.cos\(Math\.PI \* 0\.15\), ay \+ 0\.5 \+ 3 \* Math\.sin\(Math\.PI \* 0\.15\)\);\s*\n\s*ctx\.arc\(ax, ay \+ 0\.5, 3, Math\.PI \* 0\.15, Math\.PI \* 0\.85\);/);
+});
+
+test('AUDIT-MAP A8: every step of the glide is a view the clamp allows (mutants: glide-unclamped)', () => {
+  withDocument(() => {
+    globalThis.innerWidth = 1600; globalThis.innerHeight = 900;
+    try {
+      const win = open(mkWin({ mapSize: { width: 1000, height: 500 }, woods: { heightMapBuffer: new Uint8Array(500000).fill(10) } }));
+      win._focusOn(500.5, 10.5, 6);   // a goal near the top edge, from the centred rest view
+      for (let i = 0; i < 40; i++) {
+        win.tick(1 / 60);
+        const v = win._view;
+        const c = clampView(v, win._limits());
+        assert.ok(Math.abs(v.ox - c.ox) < 1e-9 && Math.abs(v.oy - c.oy) < 1e-9 && Math.abs(v.scale - c.scale) < 1e-9, `step ${i}: no blank parchment (${JSON.stringify(v)} vs ${JSON.stringify(c)})`);
+      }
+      win.dispose();
+    } finally { delete globalThis.innerWidth; delete globalThis.innerHeight; }
+  });
+});
+
+test('AUDIT-MAP A9/H8: a summary with no region index names nothing rather than throwing; a line-mode wheel zooms as a pixel one does (mutants: summary-name-throws, wheel-lines-as-pixels)', () => {
+  withDocument(() => {
+    const win = mkWin({ maps: { getRegion: () => { throw new Error('getRegion(undefined)'); } } });
+    assert.equal(win._summaryName({ mapIndex: 0 }), '');
+    assert.equal(win._summaryName(null), '');
+    win.dispose();
+  });
+  assert.equal(wheelPixels({ deltaY: 100, deltaMode: 0 }, 800), 100);
+  assert.equal(wheelPixels({ deltaY: 3, deltaMode: 1 }, 800), 48, 'sixteen pixels a line');
+  assert.equal(wheelPixels({ deltaY: 1, deltaMode: 2 }, 800), 800, 'a page is the sheet');
+  assert.equal(wheelPixels({ deltaY: 'x' }, 800), 0);
+});
+
+test('AUDIT-MAP H1: online the world\'s clock does not wait - no inn is billed, the journey reads "now", and the popup\'s own line is on the card (mutants: online-bills-inns, online-counts-days)', () => {
+  withDocument(() => {
+    const climate = () => CLIMATES.Woodlands;
+    const win = open(mkWin({ noWorldTime: () => true, getClimateIndex: climate }));
+    win._selected = { summary: summaryOf(9, 5, LOCATION_TYPES.TownCity), name: 'Far', x: 9.5, y: 5.5 };
+    win._openPanel('travel');
+    const st = win._panelState;
+    assert.equal(st.opts.sleepModeInn, true, 'the toggle stands');
+    const t = calculateTravelTime({ x: 5, y: 5 }, { x: 9, y: 5 }, { speedCautious: true, sleepModeInn: true, travelShip: true, hasHorse: false, hasCart: false }, climate);
+    const noInn = calculateTripCost(t.minutes, t.oceanPixels, { sleepModeInn: false, hasShip: false, travelShip: true });
+    assert.equal(st.trip.piecesCost, noInn.piecesCost, 'but no inn is paid');
+    assert.equal(st.trip.days, 0, 'and the arrival is now');
+    assert.equal(st.trip.online, true);
+    const texts = win._chrome.card.children.flatMap((c) => (c.children ?? []).map((k) => k.textContent));
+    assert.ok(texts.includes('now'), 'the journey row');
+    assert.ok(win._chrome.card.children.some((c) => c.textContent === ONLINE_TRAVEL_LINE), 'the popup\'s line');
+    win.dispose();
+  });
+});
+
+test('AUDIT-MAP H6/perf: a box holds the whole chrome (the modal class), the static ink is a kept layer painted when its key moves and the overlay per pulse, and the measure uses the paint\'s own font (mutants: modal-class-dropped, static-repainted-per-pulse)', () => {
+  const src = read('src/ui/heldMap.js');
+  assert.match(src, /this\._chrome\.root\.classList\.toggle\('hmmodal', open\);/);
+  assert.match(read('src/ui/enhancedStyle.js'), /\.hmroot\.hmmodal \.hmtop, \.hmroot\.hmmodal \.hmcard, \.hmroot\.hmmodal \.hmfoot \{ pointer-events: none; \}/);
+  assert.match(src, /if \(key !== this\._staticKey \|\| !lctx\) \{/, 'the static half is painted only when its key moves');
+  assert.match(src, /this\._marksVersion, this\._portsShown\(\) \? 1 : 0, this\.markedMapId,/, 'and the key carries what the static half reads');
+  assert.equal((src.match(/paintInkStatic\(/g) || []).length, 1);
+  assert.equal((src.match(/paintInkOverlay\(/g) || []).length, 1);
+  assert.equal(nameFont({ kind: 'city' }, 13), "600 13px 'Cormorant', Georgia, serif");
+  assert.equal(nameFont({ kind: 'hamlet' }, 13), "13px 'Cormorant', Georgia, serif");
+  // the overlay alone, on a stub: clears when asked, draws the rings, never the coast
+  const ctx = recordingCtx();
+  paintInkOverlay(ctx, { ox: 0, oy: 0, scale: 10 }, { paperW: 60, paperH: 40, clear: true, player: { x: 1, y: 1 }, selected: { x: 2.5, y: 2.5 } });
+  assert.equal(ctx.calls[1].fn, 'clearRect');
+  assert.ok(ctx.calls.some((c) => c.fn === 'arc' && c.strokeStyle === PEN.select));
+  assert.ok(!ctx.calls.some((c) => c.fn === 'setLineDash' && c.args[0].length), 'no borders in the overlay');
+  // the static half alone draws no rings
+  const ctx2 = recordingCtx();
+  paintInkStatic(ctx2, { coast: [], borders: [], roads: [], tracks: [], regions: [], high: [], marks: [] }, { ox: 0, oy: 0, scale: 10 }, { paperW: 60, paperH: 40, band: 'near' });
+  assert.ok(!ctx2.calls.some((c) => c.fn === 'arc'));
 });

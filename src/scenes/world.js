@@ -89,7 +89,7 @@ import { WORLD_CONTEXT, makeAnchor, teleportPlan } from '../systems/teleportAnch
 import { isPlayerInTown } from '../systems/nearbyObjects.js';
 import { createTravelMapWindow, travelMapDoorReady, preloadTravelMapArt, canFindPlace } from '../ui/travelMapDoor.js';
 import { checkLocationDiscovered as travelCheckDiscovered, getPixelColorIndex as travelPixelColorIndex } from '../ui/travelMapWindow.js';
-import { travelMapFilters } from '../systems/travelMapState.js';   // AUDIT-TO1 F2: the junction map honours the map's four filters
+import { travelMapFilters, travelMapMarkedMapId } from '../systems/travelMapState.js';   // AUDIT-TO1 F2: the junction map honours the map's four filters; AUDIT-MAP: and reads the mark from the store
 import { shortcutBinding, sequenceString } from '../systems/dialogShortcuts.js';   // AUDIT-TO1 H2: TravelExit is a dialog SHORTCUT, as DFU reads it   // TO1: the junction map draws by the same two laws the page does
 // TO1 (2026-09-17, Mac: "This is the next daggerfall mod we are to
 // implement 1:1"): TRAVEL OPTIONS 1.11 (Hazelnut) - the accelerated
@@ -4952,7 +4952,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         const c = travelOptionsSettings.locationColors?.[i];
         return c ? (((c[3] << 24) >>> 0) | (c[2] << 16) | (c[1] << 8) | c[0]) >>> 0 : null;
       },
-      markedMapId: () => _travelMap?.markedMapId ?? -1,
+      markedMapId: () => travelMapMarkedMapId(),   // AUDIT-MAP: the STORE (AUDIT-TO1 G4) - a mark set on the guild's teleport window, never assigned to _travelMap, was invisible to the disc
     })
     : null;
   // the enhanced panel paints the SAME buffer through the same routine,

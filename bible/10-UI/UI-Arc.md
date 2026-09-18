@@ -13805,7 +13805,7 @@ exactly as the classic did; the enhanced HUD has no arrow counter (AUDIT
 WINDOWS, which the first record did not name: under the enhanced skin the
 death screen (`ui/deathScreen.js:71-72`), the rest window's rows
 (`ui/restWindow.js:839`), the save window (`ui/saveWindow.js`, eight
-`shadowText` sites), the travel popup (`ui/travelPopUp.js:664`), the quest
+`shadowText` sites), the travel popup (`ui/travelPopUp.js:678`), the quest
 journal (`ui/questJournal.js:641-642`), every MessageBox row
 (`ui/messageBox.js:431, 434`) and every ActionTextBox (`ui/actionText.js:41,
 152`) still draw in the bitmap font - each a native window under THE

@@ -119,8 +119,8 @@
  {
   "name": "info-stays-on-click",
   "file": "src/ui/heldMap.js",
-  "old": "      if (!this._info) return;\n      e.stopPropagation?.();\n      this._closeInfo();",
-  "new": "      if (!this._info) return;\n      e.stopPropagation?.();",
+  "old": "      e.preventDefault?.();   // and no focus for the search field under it\n      this._closeInfo();",
+  "new": "      e.preventDefault?.();   // and no focus for the search field under it",
   "tests": [
    "test/heldmap.test.js"
   ]

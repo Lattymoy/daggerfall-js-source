@@ -192,6 +192,30 @@ export function enforceShipRestriction(settings, opts, ctx) {
   return opts;
 }
 /** The refusal messages, by key - the mod's own words. */
+/** TO1 - TravelTimeCalculatorTO.cs:24-40, CalculateTripCost, as a pure
+ *  law over the mod's settings and the player entity: the two halves of
+ *  the fare scaled SEPARATELY (FastTravelCostScaleFactor over the inn
+ *  nights, ShipTravelCostScaleFactor over the passage) and each put
+ *  through the shop-price formula at quality 10 afterwards. A factor of
+ *  1 - the shipped default - leaves its half untouched, formula and all.
+ *  No mod (`settings` null) leaves the fare as DFU billed it. */
+export function scaleTripCost(c, settings, entity) {
+  const s = settings;
+  if (!s) return c;
+  const inns = s.fastTravelCostScaleFactor | 0, ships = s.shipTravelCostScaleFactor | 0;
+  if (inns <= 1 && ships <= 1) return c;
+  const e = entity ?? null;
+  const trade = (cost) => calculateTradePrice(cost, 10, {
+    mercantile: e ? (liveStat(e, 'mercantile') ?? 0) : 0,
+    personality: e ? (liveStat(e, 'personality') ?? 50) : 50,
+  }, false);
+  let piecesCost = c.piecesCost;
+  let shipCost = c.totalCost - c.piecesCost;
+  if (inns > 1) piecesCost = trade(piecesCost * inns);
+  if (ships > 1) shipCost = trade(shipCost * ships);
+  return { piecesCost, totalCost: piecesCost + shipCost };
+}
+
 export const SHIP_REFUSAL_TEXT = Object.freeze({ noport: TO_TEXT.MsgNoPort, nodestport: TO_TEXT.MsgNoDestPort, nosailing: TO_TEXT.MsgNoSailing });
 
 export class TravelPopUpWindow {
@@ -368,20 +392,10 @@ export class TravelPopUpWindow {
    *  A factor of 1 - the shipped default - leaves its half untouched,
    *  formula and all. */
   _scaleTripCost(c) {
-    const s = this._to?.settings;
-    if (!s) return c;
-    const inns = s.fastTravelCostScaleFactor | 0, ships = s.shipTravelCostScaleFactor | 0;
-    if (inns <= 1 && ships <= 1) return c;
-    const e = this.deps.playerEntity?.() ?? null;
-    const trade = (cost) => calculateTradePrice(cost, 10, {
-      mercantile: e ? (liveStat(e, 'mercantile') ?? 0) : 0,
-      personality: e ? (liveStat(e, 'personality') ?? 50) : 50,
-    }, false);
-    let piecesCost = c.piecesCost;
-    let shipCost = c.totalCost - c.piecesCost;
-    if (inns > 1) piecesCost = trade(piecesCost * inns);
-    if (ships > 1) shipCost = trade(shipCost * ships);
-    return { piecesCost, totalCost: piecesCost + shipCost };
+    // AUDIT-MAP D2: the law is the pure export below, so the held map's
+    // card (ui/heldMap.js) bills the same scaled fare - the enhanced
+    // skin had billed calculateTripCost UNSCALED since the relief map.
+    return scaleTripCost(c, this._to?.settings, this.deps.playerEntity?.() ?? null);
   }
 
   /** enoughGoldCheck (:388-392). BOTH halves: GetGoldAmount (coins

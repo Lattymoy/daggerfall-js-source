@@ -35,7 +35,7 @@
 
 import { CLIMATES } from '../formats/mapsFile.js';
 import {
-  isWaterPixel, buildMarkerModel, traceChains, simplifyChain, chaikin,
+  isWaterPixel, buildMarkerModel, traceChains, simplifyChain,
   TREELINE_BYTE, SNOWLINE_BYTE,
 } from './overworldModel.js';
 
@@ -106,9 +106,12 @@ export const CARET_STEP = Object.freeze({ far: 6, mid: 3, near: 2 });
 /**
  * The boundary of a pixel set as unit segments along pixel EDGES:
  * pixel (x, y) owns the square [x, x+1] x [y, y+1], and an edge is
- * emitted wherever `inside` differs across it. The map's outer edge
- * counts as outside, so an island at the corner of the data still
- * closes.
+ * emitted wherever `inside` differs across it. THE EDGE OF THE DATA IS
+ * NOT A SHORE: no segment is emitted along the map's outer edge, so a
+ * coast that runs off the sheet is an open chain ending at the edge
+ * rather than a box drawn round the whole bay (AUDIT-MAP A1 - the
+ * browser probe's first screenshot had the bay framed in a coastline
+ * and its corners chamfered).
  * @param {(x: number, y: number) => boolean} inside
  * @returns {number[][]} [x0, y0, x1, y1] per segment
  */
@@ -117,12 +120,8 @@ export function boundarySegments(inside, width, height) {
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const here = inside(x, y);
-      const right = x + 1 < width ? inside(x + 1, y) : false;
-      const below = y + 1 < height ? inside(x, y + 1) : false;
-      if (here !== right) segs.push([x + 1, y, x + 1, y + 1]);
-      if (here !== below) segs.push([x, y + 1, x + 1, y + 1]);
-      if (x === 0 && here) segs.push([0, y, 0, y + 1]);
-      if (y === 0 && here) segs.push([x, 0, x + 1, 0]);
+      if (x + 1 < width && here !== inside(x + 1, y)) segs.push([x + 1, y, x + 1, y + 1]);
+      if (y + 1 < height && here !== inside(x, y + 1)) segs.push([x, y + 1, x + 1, y + 1]);
     }
   }
   return segs;
@@ -147,15 +146,24 @@ export function linkSegments(segs) {
   });
   const used = new Uint8Array(segs.length);
   const chains = [];
+  const degree = (x, y) => at.get(key(x, y))?.length ?? 0;
   const step = (x, y) => {
     const l = at.get(key(x, y));
     if (!l) return -1;
     for (const i of l) if (!used[i]) return i;
     return -1;
   };
+  // AUDIT-MAP A7: a chain ENDS at a junction vertex (degree other than
+  // two - three provinces meeting, or two loops touching at a corner),
+  // as traceChains ends a road at one. Walked through, the junction was
+  // a corner of whichever chain got there first, and roundCorners cut
+  // that corner away from the third arm's end: a visible gap in the
+  // dashed border at every three-province point.
+  // walk on from (x, y) through vertices of degree two, until a junction
+  // or a loose end; the points reached, in order
   const walk = (x, y) => {
     const out = [];
-    for (;;) {
+    while (degree(x, y) === 2) {
       const i = step(x, y);
       if (i < 0) break;
       used[i] = 1;
@@ -167,23 +175,67 @@ export function linkSegments(segs) {
     }
     return out;
   };
+  const from = (i) => {
+    used[i] = 1;
+    const s = segs[i];
+    const a = { x: s[0], y: s[1] }, b = { x: s[2], y: s[3] };
+    // THIS segment first, then on from both its ends - so an open chain
+    // comes back whole, and a chain starting at a junction starts THERE
+    const forward = walk(b.x, b.y);
+    const backward = walk(a.x, a.y);
+    chains.push([...backward.reverse(), a, b, ...forward]);
+  };
+  // the junction-touching segments first, so every arm starts AT its
+  // junction; then whatever is left (loops of degree-2 vertices)
   for (let i = 0; i < segs.length; i++) {
     if (used[i]) continue;
     const s = segs[i];
-    // walked BOTH ways from wherever the scan found it, so an open
-    // chain comes back whole rather than cut at an arbitrary segment
-    const forward = walk(s[0], s[1]);
-    const backward = walk(s[0], s[1]);
-    const chain = [...backward.reverse(), { x: s[0], y: s[1] }, ...forward];
-    if (chain.length > 1) chains.push(chain);
+    if (degree(s[0], s[1]) !== 2 || degree(s[2], s[3]) !== 2) from(i);
   }
+  for (let i = 0; i < segs.length; i++) if (!used[i]) from(i);
   return chains;
 }
 
+/**
+ * Chaikin's corner cut with a BOUND: each corner is replaced by two
+ * points a quarter of the way along its legs, but never more than
+ * `maxCut` map pixels from the corner. A pixel staircase (legs of a
+ * pixel or two) rounds exactly as Chaikin rounds it; a long straight
+ * run keeps its corner sharp instead of losing a quarter of its length
+ * to a chamfer (AUDIT-MAP A1: the map's edge and the border along a
+ * province line were drawn as diagonals). A closed chain (first point
+ * repeated last) is cut at that shared corner too, so the loop closes
+ * round rather than with a notch.
+ */
+export function roundCorners(line, maxCut = 1.5) {
+  if (line.length < 3) return line.slice();
+  const closed = line[0].x === line[line.length - 1].x && line[0].y === line[line.length - 1].y;
+  const pts = closed ? line.slice(0, -1) : line;
+  const n = pts.length;
+  const cut = (a, b) => {
+    const dx = b.x - a.x, dy = b.y - a.y, len = Math.hypot(dx, dy);
+    const t = len === 0 ? 0 : Math.min(0.25, maxCut / len);
+    return [{ x: a.x + dx * t, y: a.y + dy * t }, { x: b.x - dx * t, y: b.y - dy * t }];
+  };
+  const out = [];
+  if (!closed) out.push(pts[0]);
+  const first = closed ? 0 : 0, last = closed ? n : n - 1;
+  for (let i = first; i < last; i++) {
+    const a = pts[i], b = pts[(i + 1) % n];
+    const [p, q] = cut(a, b);
+    if (closed || i > 0) out.push(p);
+    if (closed || i < n - 2) out.push(q);
+  }
+  if (!closed) out.push(pts[n - 1]);
+  else out.push(out[0]);
+  return out;
+}
+
 /** A chain softened for the pen: the pixel staircase simplified, then
- *  one Chaikin pass so a coast reads as a shore and not a sawtooth. */
+ *  the bounded corner cut so a coast reads as a shore and not a
+ *  sawtooth - and a straight run stays straight. */
 export function inkChain(chain, eps = 0.7) {
-  return chaikin(simplifyChain(chain, eps), 1);
+  return roundCorners(simplifyChain(chain, eps));
 }
 
 /** Water, the ONE law: isWaterPixel over the climate and height byte;
@@ -240,7 +292,7 @@ export function borderChains({ width, height, regionAt, isLand }) {
 export function roadChains(net, width, height) {
   if (!net || net.source !== 'basic-roads') return { roads: [], tracks: [] };
   const centre = (chain) => chain.map((p) => ({ x: p.x + 0.5, y: p.y + 0.5 }));
-  const soften = (mask) => (mask ? traceChains(mask, width, height).map((c) => chaikin(simplifyChain(centre(c)), 1)) : []);
+  const soften = (mask) => (mask ? traceChains(mask, width, height).map((c) => roundCorners(simplifyChain(centre(c)))) : []);
   return { roads: soften(net.roads), tracks: soften(net.tracks) };
 }
 
@@ -291,13 +343,22 @@ export function buildInkModel(deps) {
   const isLand = landAt({ heightBytes, width, climateAt: deps.climateAt });
   const regionAt = deps.regionAt ?? (() => -1);
   const regionCount = deps.regionCount ?? 0;
+  const high = highGround({ heightBytes, width, height, isLand });
   return {
     width, height,
     coast: coastChains({ heightBytes, width, height, climateAt: deps.climateAt }),
     borders: borderChains({ width, height, regionAt, isLand }),
     ...roadChains(deps.roads, width, height),
     regions: regionCentroids({ width, height, regionAt, isLand, regionCount }),
-    high: highGround({ heightBytes, width, height, isLand }),
+    high,
+    // AUDIT-MAP (perf): the carets thinned once per band here, not per
+    // paint - the far band iterated a hundred thousand pixels a frame to
+    // draw three thousand carets
+    highBands: {
+      far: high.filter((h) => h.x % CARET_STEP.far === 0 && h.y % CARET_STEP.far === 0),
+      mid: high.filter((h) => h.x % CARET_STEP.mid === 0 && h.y % CARET_STEP.mid === 0),
+      near: high.filter((h) => h.x % CARET_STEP.near === 0 && h.y % CARET_STEP.near === 0),
+    },
     marks: buildInkMarks(deps),
   };
 }
@@ -342,6 +403,7 @@ export const SCALE_MAX = 14;
  */
 export function clampView(view, { mapW, mapH, paperW, paperH }) {
   const scaleMin = Math.min(paperW / mapW, paperH / mapH);
+  if (!Number.isFinite(view.scale)) view = { ox: 0, oy: 0, scale: scaleMin };   // a total function: a NaN view rests
   // contain wins over the ceiling: a bay smaller than the sheet (a
   // probe's synthetic one) is never let shrink off it
   const scale = Math.max(scaleMin, Math.min(SCALE_MAX, view.scale));
@@ -370,6 +432,12 @@ export const toMap = (view, px, py) => [view.ox + px / view.scale, view.oy + py 
 
 // ── THE NAMES ────────────────────────────────────────────────────
 
+/** The face a mark's name is set in - ONE string for the measure and the
+ *  paint, so a city's bold name is measured as wide as it draws. */
+export function nameFont(mark, size) {
+  return `${mark.kind === 'city' ? '600 ' : ''}${size}px ${NAME_FACE}`;
+}
+
 /**
  * Where the names go, and which ones fit. Greedy in NAME_RANK order: a
  * name that would overlap one already placed is dropped, so a crowded
@@ -380,7 +448,7 @@ export const toMap = (view, px, py) => [view.ox + px / view.scale, view.oy + py 
 export function placeNames(marks, view, band, { paperW, paperH, measure }) {
   const named = BAND_NAMES[band] ?? BAND_NAMES.near;
   const rank = new Map(NAME_RANK.map((c, i) => [c, i]));
-  const size = band === 'far' ? 13 : band === 'mid' ? 13 : 14;
+  const size = band === 'near' ? 14 : 13;
   const out = [];
   const boxes = [];
   const sorted = marks.filter((m) => m.name && named.has(m.colorIndex))
@@ -388,7 +456,8 @@ export function placeNames(marks, view, band, { paperW, paperH, measure }) {
   for (const m of sorted) {
     const [px, py] = toPaper(view, m.x, m.y);
     if (px < -40 || py < -20 || px > paperW + 40 || py > paperH + 20) continue;
-    const w = measure(m.name, size);
+    const measured = measure(m.name, size, nameFont(m, size));
+    const w = Number.isFinite(measured) ? measured : 0;   // a stub's NaN would let every name overlap
     const glyph = m.kind === 'city' ? 6 : 4;
     const box = { x: px + glyph + 3, y: py - size * 0.55, w, h: size * 1.1 };
     if (box.x + w > paperW - 4) { box.x = px - glyph - 3 - w; }   // flip to the left at the paper's edge
@@ -418,14 +487,13 @@ export function placeNames(marks, view, band, { paperW, paperH, measure }) {
  *   ports?: boolean, markedMapId?: number, markColor?: string|null }} opts
  */
 export function paintInk(ctx, model, view, opts) {
-  const { paperW, paperH, dpr = 1 } = opts;
-  const band = opts.band ?? zoomBand(view.scale);
-  const s = view.scale;
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.clearRect(0, 0, paperW, paperH);
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
+  paintInkStatic(ctx, model, view, opts);
+  paintInkOverlay(ctx, view, { ...opts, clear: false });
+}
 
+/** The visible test and the chain stroke, shared by the two halves. */
+function penOf(ctx, view, paperW, paperH) {
+  const s = view.scale;
   const visible = (x, y, pad = 2) => x >= view.ox - pad && y >= view.oy - pad
     && x <= view.ox + paperW / s + pad && y <= view.oy + paperH / s + pad;
   const stroke = (chains, width, style, dash = null) => {
@@ -434,9 +502,18 @@ export function paintInk(ctx, model, view, opts) {
     ctx.setLineDash(dash ?? []);
     ctx.beginPath();
     for (const c of chains) {
+      // AUDIT-MAP A5: culled per SEGMENT, not per point - a point is
+      // drawn when it or a neighbour is on the sheet, so a long straight
+      // run whose ends are both off the paper still crosses it, and a
+      // chain leaving the view runs to the paper's edge instead of
+      // lifting the pen at its last visible vertex
       let on = false;
-      for (const p of c) {
-        if (!visible(p.x, p.y, 8)) { on = false; continue; }
+      for (let i = 0; i < c.length; i++) {
+        const p = c[i];
+        const draw = visible(p.x, p.y, 8)
+          || (i > 0 && meets(view, paperW, paperH, c[i - 1], p))
+          || (i + 1 < c.length && meets(view, paperW, paperH, p, c[i + 1]));
+        if (!draw) { on = false; continue; }
         const [x, y] = toPaper(view, p.x, p.y);
         if (!on) { ctx.moveTo(x, y); on = true; } else ctx.lineTo(x, y);
       }
@@ -444,18 +521,42 @@ export function paintInk(ctx, model, view, opts) {
     ctx.stroke();
     ctx.setLineDash([]);
   };
+  return { visible, stroke };
+}
+/** Whether the segment a-b might cross the sheet: its bounding box meets
+ *  the padded view (the canvas clips the rest). */
+function meets(view, paperW, paperH, a, b) {
+  const x0 = view.ox - 8, y0 = view.oy - 8, x1 = view.ox + paperW / view.scale + 8, y1 = view.oy + paperH / view.scale + 8;
+  return Math.max(a.x, b.x) >= x0 && Math.min(a.x, b.x) <= x1 && Math.max(a.y, b.y) >= y0 && Math.min(a.y, b.y) <= y1;
+}
+
+/**
+ * THE STATIC INK: everything that changes only with the view, the band,
+ * the marks or the mod's state - the window paints it once per such
+ * change onto a kept layer, and the overlay below over it per pulse.
+ */
+export function paintInkStatic(ctx, model, view, opts) {
+  const { paperW, paperH, dpr = 1 } = opts;
+  const band = opts.band ?? zoomBand(view.scale);
+  const s = view.scale;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, paperW, paperH);
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  const { visible, stroke } = penOf(ctx, view, paperW, paperH);
 
   // the shore: a soft shade under a firm line
   stroke(model.coast, Math.max(3, s * 1.6), PEN.wash);
   stroke(model.coast, 1.3, PEN.line);
-  // the high ground: carets, thinned by band
-  const step = CARET_STEP[band] ?? 3;
+  // the high ground: carets, thinned by band (once, at build)
   ctx.strokeStyle = PEN.soft;
   ctx.lineWidth = 1;
   ctx.beginPath();
   const caret = Math.max(2.5, Math.min(7, s * 0.9));
-  for (const h of model.high) {
-    if (h.x % step || h.y % step || !visible(h.x, h.y)) continue;
+  const step = CARET_STEP[band] ?? 3;
+  const carets = model.highBands?.[band] ?? model.high.filter((h) => h.x % step === 0 && h.y % step === 0);
+  for (const h of carets) {
+    if (!visible(h.x, h.y)) continue;
     const [x, y] = toPaper(view, h.x + 0.5, h.y + 0.5);
     const k = h.peak ? caret * 1.3 : caret;
     ctx.moveTo(x - k, y + k * 0.6); ctx.lineTo(x, y - k * 0.6); ctx.lineTo(x + k, y + k * 0.6);
@@ -495,7 +596,7 @@ export function paintInk(ctx, model, view, opts) {
     ctx.textBaseline = 'alphabetic';
     ctx.textAlign = 'left';
     for (const n of opts.names) {
-      ctx.font = `${n.mark.kind === 'city' ? '600 ' : ''}${n.size}px ${NAME_FACE}`;
+      ctx.font = nameFont(n.mark, n.size);
       ctx.fillText(n.mark.name, n.x, n.y);
     }
   }
@@ -512,7 +613,21 @@ export function paintInk(ctx, model, view, opts) {
       ctx.fillText(name.toUpperCase().split('').join(' '), x, y);
     }
   }
-  // the party, the selection, the player
+}
+
+/**
+ * THE OVERLAY: the party, the selection and the player - the marks that
+ * breathe or move without the sheet changing under them. `clear` false
+ * draws over whatever the context holds (the static layer just copied
+ * in); true clears first (a stub driving the overlay alone).
+ */
+export function paintInkOverlay(ctx, view, opts) {
+  const { paperW, paperH, dpr = 1 } = opts;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  if (opts.clear) ctx.clearRect(0, 0, paperW, paperH);
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  const { visible } = penOf(ctx, view, paperW, paperH);
   const pulse = opts.pulse ?? 0;
   for (const m of opts.party ?? []) {
     if (!visible(m.x, m.y)) continue;
@@ -558,7 +673,10 @@ export function paintHarbour(ctx, x, y) {
   ctx.beginPath();
   ctx.moveTo(ax, ay - 4); ctx.lineTo(ax, ay + 3);        // the shank
   ctx.moveTo(ax - 2.5, ay - 2); ctx.lineTo(ax + 2.5, ay - 2);   // the stock
-  ctx.arc(ax, ay + 0.5, 3, Math.PI * 0.15, Math.PI * 0.85);     // the flukes
+  // the flukes: a fresh subpath, or the canvas joins the stock's end to
+  // the arc's start with a stray diagonal (AUDIT-MAP A6)
+  ctx.moveTo(ax + 3 * Math.cos(Math.PI * 0.15), ay + 0.5 + 3 * Math.sin(Math.PI * 0.15));
+  ctx.arc(ax, ay + 0.5, 3, Math.PI * 0.15, Math.PI * 0.85);
   ctx.stroke();
 }
 
